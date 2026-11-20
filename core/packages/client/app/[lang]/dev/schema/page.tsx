@@ -44,6 +44,10 @@ const DOMAINS: { key: DomainKey; name: Bi; sub: Bi }[] = [
 ];
 
 const TABLES: Table[] = [
+  { name: 'workspace_payroll_rates', domain: 'account', origin: '0345', purpose: { zh: '个人日薪的生效日期及历史标准', en: 'Employee day rates and effective history' } },
+  { name: 'workspace_payroll_attendance', domain: 'account', origin: '0345', purpose: { zh: '半天或全天出勤、当日计薪标准及确认状态', en: 'Half-day or full-day attendance, rate snapshots, and approval' } },
+  { name: 'workspace_payroll_payments', domain: 'account', origin: '0345', purpose: { zh: '每人每月的应发金额与付款确认', en: 'Per-employee monthly totals and payment confirmations' } },
+  { name: 'workspace_project_tasks', domain: 'account', origin: '0344', purpose: { zh: '按员工隔离的项目约定、验收及奖金确认，注销级联删除', en: 'Employee-scoped project terms, acceptance and bonus confirmation with account deletion cascade' } },
   { name: 'site_assistant_attachments', domain: 'storage', origin: '0308', purpose: { zh: 'AI 私有会话图片，账号隔离、内容去重、软删除', en: 'Private owner-scoped chat images with deduplication and soft deletion' } },
   { name: 'competition_group_awards', domain: 'comp', origin: '0303', naturalKey: true, purpose: { zh: '赛事分组获奖快照，独立于 WCA 奖牌统计', en: 'Organizer category award snapshots, separate from WCA medals' } },
   { name: 'comp_absences', domain: 'comp', origin: '0302', naturalKey: true, purpose: { zh: '管理员确认的不参加名单及可恢复状态；注销仅清除编辑者引用', en: 'Restorable attendance corrections; account deletion clears only the editor reference' } },
@@ -602,6 +606,9 @@ const TABLES: Table[] = [
 ];
 
 const MIGRATIONS: { n: number; slug: string; desc: Bi }[] = [
+  { n: 346, slug: 'remove_legacy_gan_team', desc: { zh: '删除无成员的旧 GAN 占位战队，保留三支子队的归属。', en: 'Remove the empty legacy GAN entry and preserve memberships in its three rosters.' } },
+  { n: 345, slug: 'workspace_payroll', desc: { zh: '按日薪快照与已验收项目汇总月度报酬并记录付款确认', en: 'Monthly payroll from snapshotted day rates and accepted projects, with payment confirmations' } },
+  { n: 344, slug: 'workspace_project_tasks', desc: { zh: '私有项目任务卡，保存金额、交付日期、验收标准和奖金确认', en: 'Private project task cards with amounts, delivery dates, acceptance criteria and bonus confirmation' } },
   { n: 343, slug: 'platform_homepage_recommendations', desc: { zh: '首页精选推荐与自动栏目配置，以及课程有效学员统计索引', en: 'Homepage featured and automatic recommendations, with an active-course-learner index' } },
   { n: 342, slug: 'workspace_contract_drafts', desc: { zh: '超级管理员从模板复制合同草稿，发布后归档到员工名下', en: 'Super administrator contract drafts copied from templates and filed under an employee on publication' } },
   { n: 341, slug: 'platform_ruimin_public_practice', desc: { zh: '公开颜瑞民课程原有的两节试听课。', en: 'Make the two former trial lessons in Yan Ruimin’s course public.' } },
