@@ -397,7 +397,7 @@ function WalkthroughStages({ stages, active, disabled, onSelect, pickerHost }: {
     <nav className="lbl-walkthrough-stages" aria-label={label}>
       <span>{label}</span>
       <ol>{items.map(({ value, label: title }) => <li key={value}>
-        <button type="button" disabled={disabled} aria-current={value === active ? 'step' : undefined}
+        <button type="button" className="lbl-walkthrough-stage-button" disabled={disabled} aria-current={value === active ? 'step' : undefined}
           onClick={() => onSelect(value)}>{title}</button>
       </li>)}</ol>
     </nav>

@@ -129,7 +129,7 @@
 .course-section-picker { display: none; min-width: 0; }
 .course-section-picker summary { justify-content: start; }
 .course-section-picker summary > span { overflow-wrap: anywhere; }
-.course-section-picker .tutorial-section-popover > :is(a, button) {
+.course-section-picker .tutorial-section-popover > .course-section-option {
   display: block;
   padding: 8px;
   width: 100%;
@@ -137,10 +137,10 @@
   color: inherit;
   text-align: start;
 }
-.course-section-picker .tutorial-section-popover > button { border: 0; background: transparent; cursor: pointer; }
+.course-section-picker .tutorial-section-popover > button.course-section-option { border: 0; background: transparent; cursor: pointer; }
 .course-section-picker .tutorial-section-popover > [aria-current] { color: var(--accent); }
 .course-practice-tools { display: flex; justify-content: center; gap: 8px; }
-.course-footer > button, .course-practice-tools > button {
+.course-footer > .course-control, .course-practice-tools > .course-control {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -154,9 +154,9 @@
   cursor: pointer;
   font: inherit;
 }
-.course-footer > button:disabled, .course-practice-tools > button:disabled { color: var(--faint-foreground); cursor: default; }
+.course-footer > .course-control:disabled, .course-practice-tools > .course-control:disabled { color: var(--faint-foreground); cursor: default; }
 .course-footer > .course-action { color: var(--accent); flex-shrink: 0; white-space: nowrap; }
-.course-footer > button:focus-visible, .course-practice-tools > button:focus-visible, .course-cube:focus-visible,
+.course-footer > .course-control:focus-visible, .course-practice-tools > .course-control:focus-visible, .course-cube:focus-visible,
 .course-overview-diagram:focus-visible {
   outline: 2px solid var(--ring);
   outline-offset: -2px;

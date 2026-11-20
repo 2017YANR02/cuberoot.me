@@ -751,10 +751,10 @@ function Practice({ section, puzzle, orientation }: { section: CourseSection; pu
       </div>
     </LessonPane>
     <div className="course-transport course-practice-tools" data-course-transport>
-      <button type="button" onClick={() => { setReady(false); setHistory([]); reset(value => value + 1); }}>
+      <button type="button" className="course-control" onClick={() => { setReady(false); setHistory([]); reset(value => value + 1); }}>
         <RotateCcw size={16} aria-hidden="true" />{tr(labels.restart)}
       </button>
-      <button type="button" aria-expanded={showHint} disabled={finished} onClick={() => setShowHint(value => !value)}>
+      <button type="button" className="course-control" aria-expanded={showHint} disabled={finished} onClick={() => setShowHint(value => !value)}>
         <Lightbulb size={16} aria-hidden="true" />
         {tr(showHint ? { zh: '关闭提示', en: 'Hide hint' } : { zh: '获取提示', en: 'Show hint' })}
       </button>
@@ -832,17 +832,17 @@ export default function InteractiveTutorial({ title, puzzle, orientation, chapte
       <Observe key={`${chapter.id}:${section.id}:${selection.request}`} section={exerciseSection} task={exerciseSection.observation}
         puzzle={puzzle} orientation={orientation} />}
     <footer className="course-footer" data-course-footer>
-      <button type="button" disabled={!previous} aria-label={tr(labels.previous)} onClick={() => turnPage(-1)}>
+      <button type="button" className="course-control" disabled={!previous} aria-label={tr(labels.previous)} onClick={() => turnPage(-1)}>
         <ArrowLeft size={18} aria-hidden="true" />
       </button>
       {!practice && <div className="course-section-picker">
         <SectionMenu label={tr(section.title)}>
-          {navigation.map(item => <button key={item.id} type="button" aria-current={item.active ? 'page' : undefined} onClick={item.onSelect}>{item.label}</button>)}
-          {basicsHref && <AppLink href={basicsHref} prefetch={false}>{tr(labels.basics)}</AppLink>}
+          {navigation.map(item => <button key={item.id} type="button" className="course-section-option" aria-current={item.active ? 'page' : undefined} onClick={item.onSelect}>{item.label}</button>)}
+          {basicsHref && <AppLink href={basicsHref} prefetch={false} className="course-section-option">{tr(labels.basics)}</AppLink>}
         </SectionMenu>
       </div>}
-      {exerciseSection && <button type="button" className="course-action" onClick={toggleExercise}>{tr(practice ? labels.review : labels.practice)}</button>}
-      <button type="button" disabled={!next} aria-label={tr(labels.next)} onClick={() => turnPage(1)}>
+      {exerciseSection && <button type="button" className="course-control course-action" onClick={toggleExercise}>{tr(practice ? labels.review : labels.practice)}</button>}
+      <button type="button" className="course-control" disabled={!next} aria-label={tr(labels.next)} onClick={() => turnPage(1)}>
         <ArrowRight size={18} aria-hidden="true" />
       </button>
     </footer>

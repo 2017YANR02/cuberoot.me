@@ -608,7 +608,7 @@
   padding-inline-start: 1.6em;
 }
 .lbl-walkthrough-stages li::marker { color: var(--muted-foreground); font-variant-numeric: tabular-nums; }
-.lbl-walkthrough-stages button {
+.lbl-walkthrough-stages .lbl-walkthrough-stage-button {
   width: 100%;
   min-height: 34px;
   padding: 4px 8px;
@@ -620,10 +620,10 @@
   text-align: start;
   cursor: pointer;
 }
-.lbl-walkthrough-stages button:disabled { cursor: default; }
-.lbl-walkthrough-stages button:hover:not(:disabled) { background: var(--muted); }
-.lbl-walkthrough-stages button[aria-current='step'] { background: var(--accent-soft); color: var(--accent); }
-.lbl-walkthrough-stages button:focus-visible { outline: 2px solid var(--ring); outline-offset: -2px; }
+.lbl-walkthrough-stages .lbl-walkthrough-stage-button:disabled { cursor: default; }
+.lbl-walkthrough-stages .lbl-walkthrough-stage-button:hover:not(:disabled) { background: var(--muted); }
+.lbl-walkthrough-stages .lbl-walkthrough-stage-button[aria-current='step'] { background: var(--accent-soft); color: var(--accent); }
+.lbl-walkthrough-stages .lbl-walkthrough-stage-button:focus-visible { outline: 2px solid var(--ring); outline-offset: -2px; }
 .lbl-walkthrough .lbl-walkthrough-stage-picker { display: none; }
 
 @media (max-width: 760px), (orientation: landscape) and (max-height: 500px) {
