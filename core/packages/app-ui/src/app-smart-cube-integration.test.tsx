@@ -295,7 +295,7 @@ describe('installed App GAN lifecycle integration', () => {
     await clickText('[role="menuitem"]', 'PLL');
     await settle();
     expect((memory.data as TimerStoreData).settings.event).toBe('pll');
-    await act(async () => container.querySelector<HTMLButtonElement>('[aria-label="Scramble source"]')!.click());
+    await act(async () => container.querySelector<HTMLButtonElement>('[aria-label="Question source"]')!.click());
     await clickText('[role="option"]', 'Manual input');
     expect((memory.data as TimerStoreData).settings.event).toBe('pll');
     await act(async () => container.querySelector<HTMLButtonElement>('[aria-label="Practice method"]')!.click());
@@ -316,7 +316,7 @@ describe('installed App GAN lifecycle integration', () => {
     expect(handle).not.toBeNull();
     await act(async () => handle.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true })));
     await settle();
-    expect((memory.data as TimerStoreData).settings.soloLayout.timerGap).toBe(24);
+    expect((memory.data as TimerStoreData).settings.soloLayout).toMatchObject({ timerGap: 20, timerOffsetY: 4 });
     const scrambleBefore = container.querySelector('.scramble-moves')!.textContent;
     await act(async () => window.dispatchEvent(new KeyboardEvent('keydown', { code: 'ArrowRight', key: 'ArrowRight', bubbles: true })));
     await settle();
