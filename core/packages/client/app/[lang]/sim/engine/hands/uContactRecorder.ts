@@ -5,6 +5,8 @@ import type { HandDiagnosticFrame } from './handsRig';
 import { IndexSkinSampler, contactAnchor, measureIndexContact, measureMaterialSlip, readDiagnosticPieces,
   type MaterialAnchor } from './uContactGeometry';
 
+import { GestureContactTrace, nailPoints } from './gestureContactTrace';
+
 type Checkpoint = 'start' | '45deg' | '90deg' | 'after-return';
 function pose(frame: HandDiagnosticFrame) {
   // Copy scalar data only. No Three objects or live model references escape in logs.
@@ -25,6 +27,7 @@ interface CheckpointRecord {
   pose: Pose;
   measurement: ReturnType<typeof measureIndexContact>;
   slip: ReturnType<typeof measureMaterialSlip>;
+  surface: 'pad' | 'nail';
   measurementMs: number;
 }
 interface URecord {
@@ -53,6 +56,7 @@ export interface URecorderApi {
 /** Dev-only, opt-in observer. It never seeks, freezes, reposes, or advances the animation. */
 export class UContactRecorder {
   private enabled = false;
+  private readonly contactTrace = new GestureContactTrace();
   private rig: HandsRig | null = null;
   private unsubscribe: (() => void) | null = null;
   private records: URecord[] = [];
@@ -74,6 +78,7 @@ export class UContactRecorder {
   };
 
   bind(rig: HandsRig): void {
+    this.contactTrace.reset();
     this.interrupt('hand-model-replaced');
     this.unsubscribe?.();
     this.rig = rig;
@@ -99,12 +104,14 @@ export class UContactRecorder {
     this.subscribe();
   }
   stop(): void {
+    this.contactTrace.reset();
     this.interrupt('recording-stopped');
     this.enabled = false;
     this.unsubscribe?.();
     this.unsubscribe = null;
   }
   clear(): void {
+    this.contactTrace.clear();
     this.active = null; this.records = []; this.error = null;
     this.stateFrames = []; this.gripEvents = []; this.lastGripState = null;
     this.droppedStateFrames = 0; this.droppedGripEvents = 0;
@@ -113,17 +120,19 @@ export class UContactRecorder {
 
   read() {
     return structuredClone({
-      version: 3, enabled: this.enabled, ready: this.rig?.getLoadState().hands === 'ready', error: this.error,
+      version: 4, enabled: this.enabled, ready: this.rig?.getLoadState().hands === 'ready', error: this.error,
       scope: 'all observed hand grip states; 3x3 prepared single right-index U contact checkpoints in every grip, including home/up/down/half combinations; no drag, U2, U-prime, push or pin',
-      gestureMeaning: 'preparedGesture is the existing selected motion, not a calibration verdict; both-home U uses hook, other grips currently use the existing unstyled sweep',
+      gestureMeaning: 'preparedGesture is the selected motion, not a calibration verdict; both-home U uses hook; right-up single U uses the rotated topPush index path, also reached through anticipated R U; other grips use the unstyled sweep',
       gripStateMeaning: 'home/up/down/half or null for unclassified orientation; grips are logical bases/targets, not proof of arrival; inspect hands.phase and actual root transforms. grip-request/grip-set transforms still describe the last applied pose until the next frame',
       units: 'cube-local units (cubie pitch 64)',
       geometry: 'ideal 64-unit cubie boxes and nominal sticker rectangles; excludes sticker thickness, rounded corners and visible-material details',
-      skin: 'all dominant-index vertices for penetration; distal palmar-half vertices for contact (pad proxy)',
+      skin: 'dominant-index skin and nail for penetration; distal palmar material until rollover, then outward nail surface',
       contactBandU: [0, 2.5],
       sampling: 'actual frames only; 45deg is the first observed crossing, 90deg uses committed cube plus the last displayed hand pose; inspect both angles',
       coverage: 'checkpoint geometry only, not continuous collision verification; slip is net fixed-skin-point displacement, not accumulated frictional slip',
       limits: { records: 20, framesPerRecord: 600, stateFrames: 1200, gripEvents: 200 },
+      gestureContactSamples: this.contactTrace.read(),
+      gestureSampling: 'observed flick frames in 15-degree intervals; first observed touching material point per finger, including marked nails and designated supports',
       stateFrames: this.stateFrames, gripEvents: this.gripEvents,
       droppedStateFrames: this.droppedStateFrames, droppedGripEvents: this.droppedGripEvents,
       records: this.records,
@@ -157,12 +166,20 @@ export class UContactRecorder {
     const began = performance.now();
     const pieces = readDiagnosticPieces(a.cube), points = a.skin.sample(a.cube);
     if (!points.some(p => p.pad)) throw new Error('No distal palmar index vertices available');
-    const measurement = measureIndexContact(points, pieces, 32 * (1 - a.cube.instancedRenderer.stickerGap));
+    const gesture = a.record.preparedGesture;
+    const style = gesture?.kind === 'flick' ? gesture.style : null;
+    const handoff = style === 'indexHook' ? 65 : style === 'topPush' ? 60 : Infinity;
+    const nail = nailPoints(frame.models.R, 'index', a.cube.matrixWorld.clone().invert());
+    const handAngle = THREE.MathUtils.radToDeg(frame.hands.R.flickAngle);
+    const onNail = nail.length > 0 && checkpoint !== 'after-return' && Math.abs(handAngle) >= handoff;
+    const surfacePoints = onNail ? [...points.map(p => ({ ...p, pad: false })), ...nail]
+      : [...points, ...nail.map(p => ({ ...p, pad: false }))];
+    const measurement = measureIndexContact(surfacePoints, pieces, 32 * (1 - a.cube.instancedRenderer.stickerGap));
     if (checkpoint === 'start') a.anchor = contactAnchor(measurement);
     const target = checkpoint === 'start' ? 0 : checkpoint === '45deg' ? 45 : 90;
     a.record.checkpoints[checkpoint] = {
-      checkpoint, targetAngleDeg: target, cubeAngleDeg: angle,
-      handDriverAngleDeg: frame.hands.R.flickAngle * 180 / Math.PI,
+      checkpoint, surface: onNail ? 'nail' : 'pad', targetAngleDeg: target, cubeAngleDeg: angle,
+      handDriverAngleDeg: handAngle,
       cubeAngleErrorDeg: angle - target, sampling: 'observed-frame', pose: pose(frame), measurement,
       slip: measureMaterialSlip(a.anchor, points, pieces, measurement, 32 * (1 - a.cube.instancedRenderer.stickerGap)),
       measurementMs: performance.now() - began,
@@ -181,11 +198,12 @@ export class UContactRecorder {
     }
     this.lastGripState = state;
     if (frame.event === 'grip-request' || frame.event === 'grip-set') {
-      this.interrupt('grip-changed'); return;
+      this.contactTrace.reset(); this.interrupt('grip-changed'); return;
     }
-    if (['reset', 'disabled', 'dispose'].includes(frame.event)) { this.interrupt(frame.event); return; }
+    if (['reset', 'disabled', 'dispose'].includes(frame.event)) { this.contactTrace.reset(); this.interrupt(frame.event); return; }
     const cube = this.getCube();
     if (!cube || cube.order !== 3) { this.interrupt('puzzle-changed'); return; }
+    this.contactTrace.observe(frame, cube);
     if (frame.event === 'prepare-u') {
       this.interrupt('new-action-before-return');
       const probe = cube.cubelets.get(8); // Current UBR slot, regardless of scramble / original identity.

@@ -102,7 +102,7 @@ function fixture(grips: HandGripNames = { R: 'home', L: 'home' }) {
   recorder.bind(rig);
   let time = 0;
   const emit = (event: HandDiagnosticFrame['event'], phase: HandDiagnosticFrame['hands']['R']['phase'] = 'stable', handAngle = 0) => {
-    const hand = { phase, grip: [0, 0, 0, 1], position: [0, 0, 0], quaternion: [0, 0, 0, 1], flickAngle: handAngle, decay: 0 };
+    const hand = { phase, grip: [0, 0, 0, 1], position: [0, 0, 0], quaternion: [0, 0, 0, 1], wristAngle: 0, forearmRoll: 0, forearmQuaternion: null, flickAngle: handAngle, decay: 0 };
     listener?.({ atMs: time += 16, event, grips, preparedGesture: event === 'prepare-u'
       ? classifyHandGesture('y', 'high', 1, grips, { quarters: 1 }) : undefined,
       hands: { L: { ...hand, phase: 'stable' }, R: hand }, active: null, models: { L: model, R: model } });
