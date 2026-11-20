@@ -6,30 +6,30 @@
 import HomeLink from '@/components/HomeLink';
 import { useEffectiveTheme } from '@/lib/theme';
 import { tr } from '@/i18n/tr';
-import { useEffect, useState } from 'react';
 
-export default function CubeRootLogo({
-  className,
-  height = 24,
-  variant = 'lockup',
-}: {
+type LogoProps = {
   className?: string;
   height?: number;
   variant?: 'lockup' | 'mark';
-}) {
-  const eff = useEffectiveTheme();
-  const [mounted, setMounted] = useState(false);
+};
 
-  useEffect(() => setMounted(true), []);
-
-  const isDark = mounted && eff === 'dark';
+export function CubeRootLogoImage({
+  className,
+  height = 24,
+  variant = 'lockup',
+}: LogoProps) {
+  const isDark = useEffectiveTheme() === 'dark';
   const src = variant === 'mark'
     ? (isDark ? '/icons/CubeRoot-mark-dark.svg' : '/icons/CubeRoot-mark.svg')
     : (isDark ? '/icons/CubeRoot-dark.png' : '/icons/CubeRoot.png');
+  return <img className={className} src={src} alt="" height={height} width={variant === 'lockup' ? height : undefined} />;
+}
+
+export default function CubeRootLogo({ className, height, variant }: LogoProps) {
   return (
     <HomeLink className={className} aria-label={tr({ zh: '主页', en: 'Home'
     })}>
-      <img src={src} alt="CubeRoot" height={height} />
+      <CubeRootLogoImage height={height} variant={variant} />
     </HomeLink>
   );
 }

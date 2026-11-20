@@ -230,6 +230,7 @@ body .landing-page.landing-page--navigation {
   }
 }
 .settings-dialog .settings-popover-panel.settings-dialog-panel.home-navigation-drawer {
+  --home-drawer-indent: 48px;
   height: 100dvh;
   max-height: 100dvh;
   border: 0;
@@ -272,7 +273,13 @@ body .landing-page.landing-page--navigation {
 }
 .home-navigation-close:focus-visible { outline: 2px solid var(--ring); outline-offset: -2px; }
 /* Apple reference: 28px type, 46px row pitch, first row at y=47px. */
-.home-navigation-drawer-content { width: 100%; margin-top: -1px; padding: 0 10px 32px 48px; box-sizing: border-box; }
+.home-navigation-drawer-content {
+  width: 100%;
+  margin-top: -1px;
+  padding-block-end: 32px;
+  padding-inline: var(--home-drawer-indent) 10px;
+  box-sizing: border-box;
+}
 .home-navigation-drawer .af-nav-menu { width: 100%; margin: 0; gap: 0; }
 .home-navigation-drawer .af-nav-link:hover { background: transparent; }
 .home-navigation-drawer .af-nav-link,
@@ -342,7 +349,12 @@ body .landing-page.landing-page--navigation {
   .home-navigation-drawer-page[data-direction],
   .home-navigation-drawer-page[data-level='main'] .af-nav-link { animation: none; }
 }
-.home-navigation-drawer-actions { margin-top: auto; width: 100%; padding-top: 24px; }
+.home-navigation-drawer-actions {
+  margin-top: auto;
+  width: 100%;
+  padding-block-start: 24px;
+  padding-inline-start: var(--home-drawer-indent);
+}
 .home-navigation-drawer .home-navigation-drawer-actions .landing-auth {
   position: static;
   inset: auto;
@@ -357,11 +369,12 @@ body .landing-page.landing-page--navigation {
   justify-content: flex-start;
 }
 .home-navigation-drawer-actions .landing-auth-icon.landing-edit-cards { display: none; }
+.home-navigation-drawer-actions :is(.landing-auth-icon, .landing-auth-btn.is-avatar) { justify-content: flex-start; }
 .home-navigation-drawer-actions .landing-auth-btn { order: 1; margin: 0; }
 .home-navigation-drawer-actions .landing-auth-btn.is-login { width: 44px; padding: 0; }
 .home-navigation-drawer-actions .landing-auth-btn.is-login > span { display: none; }
-.home-navigation-drawer-actions .landing-calendar-link .landing-card {
-  display: flex; align-items: center; justify-content: center;
+.home-navigation-drawer .home-navigation-drawer-actions .landing-calendar-link .landing-card {
+  display: flex; flex-direction: row; align-items: center; justify-content: flex-start;
   width: 44px; height: 44px; padding: 0; border: 0;
   background: transparent; color: var(--muted-foreground);
 }

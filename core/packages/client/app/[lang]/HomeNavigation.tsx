@@ -9,6 +9,9 @@ import type { Section } from '@/lib/landing-sections';
 import '@app-foundation/navigation-ui/navigation.css';
 import '@/components/menu-toggle-icon.css';
 
+// Keep this complementary to the mobile breakpoint in home-navigation.css.
+const DESKTOP_NAV_QUERY = '(width > 900px)';
+
 /** Home sections deliberately keep the current URL, as requested by the maintainer. */
 export default function HomeNavigation({ selected, onSelect, isAdmin, sections, brand, actions, flyouts }: {
   selected: string;
@@ -24,6 +27,7 @@ export default function HomeNavigation({ selected, onSelect, isAdmin, sections, 
   const [menuAnchor, setMenuAnchor] = useState({ top: 0, left: 0, right: 0 });
   const [drawerSection, setDrawerSection] = useState<string | null>(null);
   const [drawerDirection, setDrawerDirection] = useState<'forward' | 'back' | null>(null);
+  const drawerDialogRef = useRef<{ close: () => void }>(null);
   const drawerExit = useRef<Animation | null>(null);
   // Keep the last content mounted while the panel and curtain finish closing.
   const [flyout, setFlyout] = useState<string | null>(null);
@@ -76,7 +80,7 @@ export default function HomeNavigation({ selected, onSelect, isAdmin, sections, 
   const shown = expanded && !!allowedFlyout && !open;
   const showFlyout = (id: string) => {
     cancelLeave();
-    if (!window.matchMedia('(min-width: 901px)').matches || !Children.count(flyouts[id])) {
+    if (!window.matchMedia(DESKTOP_NAV_QUERY).matches || !Children.count(flyouts[id])) {
       closeFlyout();
       return;
     }
@@ -84,14 +88,20 @@ export default function HomeNavigation({ selected, onSelect, isAdmin, sections, 
     setExpanded(true);
   };
   useEffect(() => {
+    const desktop = window.matchMedia(DESKTOP_NAV_QUERY);
+    const onDesktopChange = (event: MediaQueryListEvent) => {
+      if (event.matches) drawerDialogRef.current?.close();
+    };
     const onScroll = (event: Event) => {
       if (!(event.target instanceof Node) || !contentRef.current?.parentElement?.contains(event.target)) closeFlyout();
     };
+    desktop.addEventListener('change', onDesktopChange);
     window.addEventListener('resize', closeFlyout);
     window.addEventListener('scroll', onScroll, true);
     return () => {
       cancelLeave();
       if (focusFrame.current !== null) cancelAnimationFrame(focusFrame.current);
+      desktop.removeEventListener('change', onDesktopChange);
       window.removeEventListener('resize', closeFlyout);
       window.removeEventListener('scroll', onScroll, true);
     };
@@ -174,7 +184,7 @@ export default function HomeNavigation({ selected, onSelect, isAdmin, sections, 
         }}>{allowedFlyout ? flyouts[allowedFlyout] : null}</div>
       </div>
     </div>
-    {open && <SettingsDialog curtain motionDuration={650} portalContainer={headerRef.current?.parentElement}
+    {open && <SettingsDialog ref={drawerDialogRef} curtain motionDuration={650} portalContainer={headerRef.current?.parentElement}
       renderCloseButton={(close, closing) => <button type="button" className="home-navigation-close"
         style={{ top: menuAnchor.top, left: menuAnchor.left }}
         aria-label={tr({ zh: '关闭', en: 'Close' })} aria-disabled={closing || undefined} onClick={close} />}

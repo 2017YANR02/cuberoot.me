@@ -25,6 +25,7 @@ import { RecordBadge } from '@/components/RecordBadge';
 import { CubingIcon } from '@cuberoot/event-icon';
 import HeaderToggles from '@/components/HeaderToggles';
 import HomeNavigation from './HomeNavigation';
+import { CubeRootLogoImage } from '@/components/CubeRootLogo';
 import { Tooltip } from '@/components/Tooltip';
 import OnboardingGuideModal from '@/components/OnboardingGuideModal';
 import { isOnboardingGuided, markOnboardingGuided } from '@/lib/onboarding';
@@ -65,7 +66,6 @@ const ForumFeedPreview = dynamic(() => import('@/components/forum/ForumFeedPrevi
   loading: () => <SkeletonBlock className="landing-widget-skeleton" />,
 });
 const ContactDetails = dynamic(() => import('@/components/ContactDetails'), { ssr: false });
-import { useEffectiveTheme } from '@/lib/theme';
 import '../landing.css';
 import './home-navigation.css';
 import { tr } from '@/i18n/tr';
@@ -156,10 +156,7 @@ export default function LandingPage({ initialLayout = null }: { initialLayout?: 
   // The useDocumentTitle('', '') call that used to live here forced the tab back
   // to the bare brand after hydration, which would now overwrite that title.
   const { i18n } = useTranslation();
-  const effectiveTheme = useEffectiveTheme();
-  // `mounted` flips on client after hydration; gates anything that differs
-  // between SSR and CSR (theme-dependent logo src, hostname-based beian)
-  // to avoid React #418 hydration mismatches.
+  // Browser-only onboarding and hostname-based registration display wait for hydration.
   const [mounted, setMounted] = useState(false);
   const [showBeian, setShowBeian] = useState(false);
 
@@ -552,7 +549,7 @@ export default function LandingPage({ initialLayout = null }: { initialLayout?: 
     <div className="landing-page landing-page--navigation" data-home-section={activeSection}>
       <HomeNavigation selected={activeSection} onSelect={selectSection} isAdmin={isAdmin} flyouts={navigationFlyouts}
         sections={SECTIONS} brand={<span className="brand-line">
-        <img src={mounted && effectiveTheme === 'dark' ? '/icons/CubeRoot-dark.png' : '/icons/CubeRoot.png'} alt="" className="brand-logo" />
+        <CubeRootLogoImage className="brand-logo" />
         <span className="brand-name">{t('brand')}</span>
       </span>} actions={<div className="landing-auth">
         {isAdmin && <>

@@ -103,6 +103,7 @@ it('never sends browser history back beyond the iframe root', async () => {
   expect(back).not.toHaveBeenCalled();
 });
 it('keeps standalone and SSR BackHome, hides the installed Account root, and returns subpages to Account', async () => {
+  vi.stubGlobal('matchMedia', () => ({ matches: false, addEventListener() {}, removeEventListener() {} }));
   expect(renderToString(createElement(PageBackLink))).toContain('href="/"');
   await act(async () => root.render(createElement(PageBackLink)));
   expect(host.querySelector('a')).toBeNull();
@@ -110,6 +111,7 @@ it('keeps standalone and SSR BackHome, hides the installed Account root, and ret
   await act(async () => root.render(createElement(PageBackLink)));
   expect(host.querySelector('a')?.getAttribute('href')).toBe('/account');
   expect(host.querySelector('a')?.getAttribute('aria-label')).toBe('Back to previous page');
+  expect(host.querySelector('a svg')).not.toBeNull();
   state.back = '/friends';
   await act(async () => root.render(createElement(PageBackLink)));
   expect(host.querySelector('a')?.getAttribute('href')).toBe('/friends');
@@ -119,6 +121,11 @@ it('keeps standalone and SSR BackHome, hides the installed Account root, and ret
   Object.defineProperty(window, 'parent', { configurable: true, value: window }); state.back = null;
   await act(async () => root.render(createElement(PageBackLink)));
   expect(host.querySelector('a')?.getAttribute('href')).toBe('/');
+  expect(host.querySelector('a img')?.getAttribute('src')).toBe('/icons/CubeRoot.png');
+  state.back = '/zh';
+  await act(async () => root.render(createElement(PageBackLink)));
+  expect(host.querySelector('a')?.getAttribute('href')).toBe('/zh');
+  expect(host.querySelector('a img')?.getAttribute('src')).toBe('/icons/CubeRoot.png');
 });
 it('validates only the three shell tabs and explicit appearance settings capability', () => {
   expect(decodeMobileEmbedSelectTab(mobileEmbedSelectTabMessage('tools', 'timer'))?.tab).toBe('timer');

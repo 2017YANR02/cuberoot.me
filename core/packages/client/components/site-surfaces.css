@@ -276,7 +276,7 @@ body[data-site-scenery] .mem-reminder {
    Important is limited to the neutral fill because legacy pages set it inline. */
 body[data-site-scenery] :is(
   select,
-  textarea:not(.site-assistant-draft),
+  textarea:not(.site-assistant-draft, :where(.scramble-manual-inline textarea)),
   input:not([type]),
   .wca-stats-controls .list-select-trigger,
   .wca-stats-controls .region-picker-trigger,
@@ -308,18 +308,32 @@ body[data-site-scenery] .alg-case-inline-editor .alg-editor-input {
   backdrop-filter: none;
 }
 
+/* Event fields share the dialog surface on desktop and in the mobile sheet. */
+body[data-site-scenery] .cal-event-dialog :is(
+  .cal-title-input,
+  .cal-event-date .date-input__display,
+  .cal-text-input,
+  .cal-textarea,
+  .cal-guest-input,
+  .cal-guest-field
+) {
+  background-color: transparent !important;
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+
 /* Native option popups are browser/OS surfaces and cannot sample the page. */
 body[data-site-scenery] :is(option, optgroup) {
   background: var(--popover);
   color: var(--popover-foreground);
 }
 
+body[data-site-scenery] .date-input__display,
 body[data-site-scenery] :is(
   .compact-select:not(.compact-select--plain) > .compact-select-trigger:not(.compact-select-trigger--unstyled),
   .event-select-trigger,
   .recon-grid-filters .list-select-trigger,
   .region-picker-trigger,
-  .date-input__display,
   .pill-toggle:not(.is-on),
   .t10h-play:not(:hover),
   .t10h-export-btn:not(:hover),

@@ -2,6 +2,7 @@
 import { ArrowLeft, ChevronLeft } from '@app-foundation/icons/lucide';
 import AppLink from './AppLink';
 import HomeLink from './HomeLink';
+import { CubeRootLogoImage } from './CubeRootLogo';
 import { readEntryNavigationBack, subscribeEntryNavigation } from '@/lib/entry-navigation';
 import { tr } from '@/i18n/tr';
 import { useSyncExternalStore, type AnchorHTMLAttributes } from 'react';
@@ -26,12 +27,14 @@ export default function PageBackLink({ fallback = '/', className, label, acceptE
   if (accountFallback && /^\/(?:en\/|zh\/)?account\/?$/.test(pathname ?? '')) return null;
   if (contextOnly && !back) return null;
   const target = accountFallback && isHome(fallback) ? '/account' : back ?? fallback;
-  const ariaLabel = label ?? (back ? undefined : rest['aria-label']) ?? (
-    !back && target === '/' ? tr({ zh: '返回首页', en: 'Back to home' }) : tr({ zh: '返回上一层', en: 'Back to previous page' })
+  const goesHome = isHome(target);
+  const ariaLabel = label ?? (back && !goesHome ? undefined : rest['aria-label']) ?? (
+    goesHome ? tr({ zh: '返回首页', en: 'Back to home' }) : tr({ zh: '返回上一层', en: 'Back to previous page' })
   );
   const props = { ...rest, className: ['back-home', className].filter(Boolean).join(' '), prefetch,
     'aria-label': ariaLabel };
-  const content = label ? <><ArrowLeft size={16} aria-hidden="true" /><span className="sr-only">{label}</span></> : <ChevronLeft size={16} aria-hidden="true" />;
+  const content = label ? <><ArrowLeft size={16} aria-hidden="true" /><span className="sr-only">{label}</span></>
+    : goesHome ? <CubeRootLogoImage /> : <ChevronLeft size={16} aria-hidden="true" />;
   return !back && target === '/' ? <HomeLink {...props} miniProgramTarget={miniProgramTarget}>{content}</HomeLink>
     : <AppLink {...props} href={target} navigation="return">{content}</AppLink>;
 }

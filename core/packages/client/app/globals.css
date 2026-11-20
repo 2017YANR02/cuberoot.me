@@ -106,6 +106,29 @@ html {
   text-size-adjust: 100%;
 }
 
+/* Keep the native scrollbar's geometry stable as its colors change. */
+@media not all and (forced-colors: active) {
+  :where(html, body, body *) {
+    scrollbar-color: transparent transparent !important;
+  }
+  [data-site-scroll-active] {
+    scrollbar-color: var(--muted-foreground) transparent !important;
+  }
+
+  @supports not (scrollbar-color: transparent transparent) {
+    :where(:not([data-site-scroll-active]))::-webkit-scrollbar,
+    :where(:not([data-site-scroll-active]))::-webkit-scrollbar-thumb,
+    :where(:not([data-site-scroll-active]))::-webkit-scrollbar-track,
+    :where(:not([data-site-scroll-active]))::-webkit-scrollbar-track-piece,
+    :where(:not([data-site-scroll-active]))::-webkit-scrollbar-corner,
+    :where(:not([data-site-scroll-active]))::-webkit-scrollbar-button {
+      background: transparent !important;
+      border-color: transparent !important;
+      box-shadow: none !important;
+    }
+  }
+}
+
 body {
   font-family: var(--font-sans);
   background: var(--background);

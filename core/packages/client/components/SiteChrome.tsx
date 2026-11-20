@@ -2,9 +2,10 @@
 
 import { usePathname } from 'next/navigation';
 import type { ReactNode } from 'react';
+import { isContractReaderPath } from '@/lib/contract-reader-route';
 
-/** External simulator frames contain only their player, without site overlays. */
+/** Suppress global overlays on dedicated reading and embedded player surfaces. */
 export default function SiteChrome({ children }: { children: ReactNode }) {
   const pathname = usePathname();
-  return /^\/(?:en\/|zh\/)?sim\/embed\/?$/.test(pathname ?? '') ? null : children;
+  return isContractReaderPath(pathname) || /^\/(?:en\/|zh\/)?sim\/embed\/?$/.test(pathname ?? '') ? null : children;
 }

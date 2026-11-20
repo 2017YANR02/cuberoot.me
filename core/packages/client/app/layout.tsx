@@ -18,6 +18,7 @@ import ThemeColorSync from "@/components/ThemeColorSync";
 import AuthTokenRefresher from "@/components/AuthTokenRefresher";
 import MembershipReminder from "@/components/MembershipReminder";
 import StickyScrollGuard from "@/components/StickyScrollGuard";
+import SiteScrollbars from "@/components/SiteScrollbars";
 import ScreenWakeLock from "@/components/ScreenWakeLock";
 import MobileEmbedBridge from "@/components/MobileEmbedBridge";
 import AppNuqsAdapter from "@/components/AppNuqsAdapter";
@@ -133,6 +134,7 @@ export default function RootLayout({
           <ThemeColorSync />
           <AuthTokenRefresher />
           <StickyScrollGuard />
+          <SiteScrollbars />
           <ScreenWakeLock />
           <MobileEmbedBridge />
         </AppNuqsAdapter>

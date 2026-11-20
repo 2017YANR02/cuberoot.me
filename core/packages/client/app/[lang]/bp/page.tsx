@@ -7,7 +7,6 @@ import { useBpMotion } from './useBpMotion';
 import { ArrowRight, ArrowUpRight, BookOpen, Building2, ChartNoAxesColumnIncreasing, Check, Clock3, Code2, Globe2, Layers3, Printer, Radio, RotateCcw, ScanSearch, School, ShieldCheck, Sparkles, Timer, Users } from '@app-foundation/icons/lucide';
 import AppLink from '@/components/AppLink';
 import PersonLink from '@/components/PersonLink';
-import CubeRootLogo from '@/components/CubeRootLogo';
 import { VisualCube } from '@/components/VisualCube';
 import { tr } from '@/i18n/tr';
 import { CREATOR_AUDIENCE, CREATOR_PROFILE } from '@/lib/creator-profile';
@@ -93,7 +92,6 @@ export default function BusinessPlanPage() {
       <header className="overview-nav overview-wrap">
         <div className="overview-brand">
           <BackHome />
-          <CubeRootLogo height={30} variant="mark" />
           <div>{tr({ zh: '魔方根', en: 'CubeRoot' })}<span>{tr({ zh: '商业计划书', en: 'Business plan' })}</span></div>
         </div>
         <div className="overview-actions">
