@@ -808,6 +808,60 @@
         {"file":".github/workflows/deploy_next.yml","contains":"- 'ops/systemd/cuberoot-next.service'"},
         {"file":"core/packages/client/tests/workflow-path-contract.test.ts","contains":"keeps the Next deploy boundary aligned with its build and runtime inputs"}
       ]
+    },
+    {
+      "id": "assistant-resource-monitor-loss-regression",
+      "from": "apps/api/tests/site_assistant_local_guard.test.ts",
+      "to": "fixed Node IPC test parent and lease worker",
+      "phase": "subprocess-native",
+      "mechanism": "Spawn a fixed inline parent/worker fixture; interrupt or stall its heartbeat while work is pending.",
+      "owner": "server",
+      "rationale": "Verify fail-closed worker termination after supervisor loss without API calls, credentials or production access.",
+      "replacement": "Keep the fixed test code, bounded lease timeout and child cleanup; no arbitrary commands.",
+      "subprocessCalls": [
+        {
+          "file": "apps/api/tests/site_assistant_local_guard.test.ts",
+          "mechanism": "spawn",
+          "target": "<dynamic>",
+          "count": 1
+        }
+      ],
+      "evidence": [
+        {
+          "file": "core/apps/api/scripts/assistant-monitor-lease.mts",
+          "contains": "monitor_disconnected"
+        }
+      ]
+    },
+    {
+      "id": "assistant-local-evaluation-supervisor",
+      "from": "apps/api evaluation scripts",
+      "to": "macOS read-only resource probes and the frozen assistant evaluation runner",
+      "phase": "subprocess-native",
+      "mechanism": "Shell-free execFileSync for vm_stat/sysctl/ps and one isolated Node process group; explicit one-run authorization bound to artifacts and boot/Swapouts",
+      "owner": "server",
+      "rationale": "Run the user-authorized real-model comparison with a 1 GiB process-tree RSS limit, 2 GiB free headroom, 30 minute deadline and stop on new swapouts. No deployment or production database access.",
+      "replacement": "Retain exact read-only probes and the fixed evaluation runner; do not accept arbitrary commands or silently resume stopped runs.",
+      "subprocessCalls": [
+        {
+          "file": "apps/api/scripts/run-assistant-local.mts",
+          "mechanism": "execFileSync",
+          "target": "<dynamic>",
+          "count": 1
+        },
+        {
+          "file": "apps/api/scripts/run-assistant-local.mts",
+          "mechanism": "spawn",
+          "target": "<dynamic>",
+          "count": 1
+        }
+      ],
+      "evidence": [
+        {
+          "file": "core/apps/api/scripts/run-assistant-local.mts",
+          "contains": "assistant-reliability-monitored-local-once"
+        }
+      ]
     }
   ],
   "legacyFindings": [
