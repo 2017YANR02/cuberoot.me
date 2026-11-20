@@ -2,17 +2,12 @@
 import dynamic from 'next/dynamic';
 import { notFound } from 'next/navigation';
 import PageBackLink from '@/components/PageBackLink';
-import { Suspense, useMemo, useState, type AnchorHTMLAttributes } from 'react';
+import { Suspense, useState } from 'react';
 import { parseAsString, useQueryState } from 'nuqs';
-import { useEntryRouter as useRouter } from '@/hooks/useEntryRouter';
-import { WorkspaceProvider, WorkspaceLoginFrame, ReportEditor, Reports, ReportDetailPanel, ErrorNotice, Form, Field, useResource, useWorkspace, value, RequestError, workspaceText, type StaffActor, type MemberDirectory } from '@app-foundation/workspace-ui';
+import { WorkspaceLoginFrame, ReportEditor, Reports, ReportDetailPanel, ErrorNotice, Form, Field, useResource, useWorkspace, value, type StaffActor, type MemberDirectory } from '@app-foundation/workspace-ui';
 import AppLink from '@/components/AppLink';
 import { useT } from '@/hooks/useT';
-import { useLang } from '@/i18n/tr';
 import { useAuthUser, authActions } from '@/lib/auth-store';
-import { apiUrl } from '@/lib/api-base';
-import { authHeaders } from '@/lib/admin-api';
-import { sessionFetch } from '@/lib/session-fetch';
 import '@app-foundation/workspace-ui/workspace.css';
 import '../dev/team/get-started.css';
 import './workspace.css';
@@ -23,34 +18,17 @@ import { LoadingIndicator } from '@/components/LoadingIndicator';
 import Checklists from './Checklists';
 import Schedules from './Schedules';
 import { WorkspaceButton as Button, WorkspaceDialog } from './WorkspaceControls';
-import { DateInput } from '@/components/DateInput';
-import { displayCuberName } from '@/lib/cuber-name-display';
-
+import WorkspaceHost from './WorkspaceHost';
 import { MemberAccessApprovals } from './MemberAccess';
+
+export { workspaceHref } from './WorkspaceHost';
 
 const Contracts = dynamic(() => import('./Contracts'));
 const WorkCalendar = dynamic(() => import('./WorkCalendar'));
+const ProjectTasks = dynamic(() => import('./ProjectTasks'));
+const Payroll = dynamic(() => import('./Payroll'));
 
-// Product adapter: only CubeRoot auth headers and CubeRoot API are used here.
-async function api<T>(action: string, body?: unknown): Promise<T> {
-  const response = await sessionFetch(apiUrl(`/v1/workspace/${action}`), { method: body === undefined ? 'GET' : 'POST', headers: authHeaders(body !== undefined), cache: 'no-store', redirect: 'error', signal: AbortSignal.timeout(20000), ...(body === undefined ? {} : {body:JSON.stringify(body)}) });
-  const data = await response.json().catch(() => ({error:'工作台服务暂不可用 / Workspace unavailable'}));
-  if(!response.ok)throw new RequestError(typeof data.error === 'string' ? data.error : 'Workspace unavailable',response.status);
-  return data as T;
-}
-export function workspaceHref(href: string) {
-  if(!href.startsWith('/workspace'))return href;
-  const parts=href.split('/').filter(Boolean);
-  if(parts[1]==='updates' && parts[2])return `/admin/team?section=detail&id=${encodeURIComponent(parts[2])}`;
-  return parts[1] ? `/admin/team?section=${encodeURIComponent(parts[1])}` : '/admin/team';
-}
-function Link({href,...props}:AnchorHTMLAttributes<HTMLAnchorElement>&{href:string}) { return <AppLink {...props} href={workspaceHref(href)} prefetch={false} />; }
 const sections=['mine','updates','checklists','schedule','work-calendar','members','contracts','detail','onboarding','offboarding','sop'] as const;
-function Workspace() {
-  const lang=useLang();const router=useRouter();
-  const host=useMemo(()=>({api,Link,Button,Dialog:WorkspaceDialog,DateInput,formatName:(name:string)=>displayCuberName(name,lang==='zh'),t:(text:string)=>workspaceText(lang,text),navigate:(href:string)=>router.push(`${lang==='zh'?'/zh':''}${workspaceHref(href)}`)}),[lang,router]);
-  return <WorkspaceProvider host={host}><WorkspaceContent /></WorkspaceProvider>;
-}
 function WorkspaceContent() {
   const t=useT();const user=useAuthUser();
   return user ? <SignedInWorkspace key={user.uid ?? user.wcaId} /> : <WorkspaceLoginFrame brand="CubeRoot"><h1>{t('Workspace','Workspace')}</h1><Button onClick={()=>authActions.login()}>{t('登录 CubeRoot','Sign in to CubeRoot')}</Button></WorkspaceLoginFrame>;
@@ -58,22 +36,27 @@ function WorkspaceContent() {
 function SignedInWorkspace() {
   const t=useT();const [section,setSection]=useQueryState('section',parseAsString.withDefault('mine'));
   const [id]=useQueryState('id',parseAsString.withDefault(''));
+  const [projectRevision, setProjectRevision] = useState(0);
   const session=useResource<{actor:StaffActor;employee:StaffActor;directory:MemberDirectory}>('session');const actor=session.data?.actor;const employee=session.data?.employee;
   if (!(sections as readonly string[]).includes(section)) notFound();
-  const items=[{key:'mine',label:t('我的工作','My work')},{key:'updates',label:t('团队动态','Team updates')},{key:'checklists',label:t('清单','Checklists')},{key:'contracts',label:t('合同与协议','Contracts & agreements')},{key:'schedule',label:t('总排期','Schedule')},...(actor?.kind==='admin'?[{key:'work-calendar',label:t('工作日历','Work calendar')},{key:'members',label:t('成员与权限','Members and access')}]:[])];
+  const items=[{key:'mine',label:t('我的','Mine')},{key:'updates',label:t('动态','Updates')},{key:'checklists',label:t('清单','Checklists')},{key:'contracts',label:t('合同','Contracts')},{key:'schedule',label:t('总排期','Schedule')},...(actor?.kind==='admin'?[{key:'work-calendar',label:t('日历','Calendar')},{key:'members',label:t('成员','Members')}]:[])];
   const lifecycle = section === 'onboarding' || section === 'offboarding';
   const handbookItems = [{ key: 'onboarding', label: t('入/离职','Onboarding / Offboarding') }, { key: 'sop', label: t('开发规范','Development standards') }, { key: 'offboarding', label: t('入/离职','Onboarding / Offboarding') }];
   const handbook = handbookItems.some(item => item.key === section);
   return <main className={handbook ? 'staff-handbook-main' : undefined}>
     <div className="staff-page-heading page-back-heading"><PageBackLink contextOnly /><h1>{[...items,...handbookItems].find(i=>i.key===section)?.label??t('工作记录','Work report')}</h1></div>
-    {lifecycle&&<div className="staff-actions workspace-toolbar"><select className="staff-input workspace-toolbar-select" aria-label={t('入/离职','Onboarding / Offboarding')} value={section} onChange={event=>void setSection(event.target.value)}><option value="onboarding">{t('入职','Onboarding')}</option><option value="offboarding">{t('离职','Offboarding')}</option></select><AppLink href="/admin/team?section=contracts" prefetch={false}>{t('合同与协议','Contracts & agreements')}</AppLink></div>}
+    {lifecycle&&<div className="staff-actions workspace-toolbar"><select className="staff-input workspace-toolbar-select" aria-label={t('入/离职','Onboarding / Offboarding')} value={section} onChange={event=>void setSection(event.target.value)}><option value="onboarding">{t('入职','Onboarding')}</option><option value="offboarding">{t('离职','Offboarding')}</option></select><AppLink href="/admin/team?section=contracts" prefetch={false}>{t('合同','Contracts')}</AppLink></div>}
     {!handbook&&<ErrorNotice error={session.error} retry={session.reload} />}
     {!handbook&&session.error?.status===403&&<AppLink href="/admin/team?section=onboarding" prefetch={false}>{t('前往入职页','Go to onboarding')}</AppLink>}
     {session.error?.status===401&&<Button onClick={()=>authActions.login()}>{t('重新登录','Sign in again')}</Button>}
     {!handbook&&session.loading&&<p role="status"><LoadingIndicator>{t('正在加载…','Loading…')}</LoadingIndicator></p>}
     {handbook&&<div className="staff-start staff-workspace-handbook">{section==='offboarding'?<Offboarding />:section==='sop'?<Sop />:<Onboarding />}</div>}
     {actor&&<>
-      {section==='mine'&&employee&&<WorkReports actor={employee} directory={session.data!.directory} mine />}
+      {section==='mine'&&employee&&<>
+        <Payroll projectRevision={projectRevision} />
+        <ProjectTasks onAccepted={() => setProjectRevision(revision => revision + 1)} />
+        <WorkReports actor={employee} directory={session.data!.directory} mine />
+      </>}
       {section==='updates'&&employee&&<WorkReports actor={employee} directory={session.data!.directory} />}
       {section==='contracts'&&<Contracts />}
       {section==='checklists'&&<Checklists />}
@@ -95,7 +78,7 @@ function WorkReports({ actor, directory, mine }: { actor: StaffActor; directory:
 type Member={id:number;userId:number;name:string;role:'member'|'manager';active:boolean;adminAccess:boolean};
 function Members({onSaved}:{onSaved:()=>void}) {
   const t=useT();const resource=useResource<{members:Member[]}>('members');
-  const {formatName = name => name}=useWorkspace();
+  const {api, formatName = name => name}=useWorkspace();
   const [editing, setEditing] = useState<Member | 'new' | null>(null);
   const [search, setSearch] = useState('');
   const reload=()=>{resource.reload();onSaved();};
@@ -107,12 +90,12 @@ function Members({onSaved}:{onSaved:()=>void}) {
     <div className="staff-actions staff-form-actions"><Button action="save" type="submit">{member?t('保存','Save'):t('开通','Enable')}</Button></div>
   </Form>;
   const members = resource.data?.members.filter(member => `${member.name} ${member.userId}`.toLowerCase().includes(search.trim().toLowerCase()));
-  return <><MemberAccessApprovals onReviewed={reload} /><div className="workspace-toolbar staff-actions"><Field width="medium" label={t('搜索成员','Find a member')}><input value={search} onChange={event => setSearch(event.target.value)} placeholder={t('姓名或 CubeRoot ID','Name or CubeRoot ID')} /></Field><div className="staff-toolbar-actions"><Button action="add" onClick={() => setEditing('new')}>{t('开通员工权限','Enable employee access')}</Button></div></div>
+  return <><MemberAccessApprovals onReviewed={reload} /><div className="workspace-toolbar staff-actions"><div className="staff-field staff-field-medium"><input className="staff-input" aria-label={t('搜索成员','Find a member')} value={search} onChange={event => setSearch(event.target.value)} placeholder={t('姓名或 CubeRoot ID','Name or CubeRoot ID')} /></div><div className="staff-toolbar-actions"><Button action="add" onClick={() => setEditing('new')}>{t('开通员工权限','Enable employee access')}</Button></div></div>
     <ErrorNotice error={resource.error} retry={resource.reload} />
     {resource.loading && <p role="status">{t('正在加载…','Loading…')}</p>}
     {members?.length === 0 && <p className="staff-empty">{t('暂无匹配成员','No matching members')}</p>}
-    <div className="staff-feed">{members?.map(member => <article key={member.id} className="workspace-member-row"><div><h2>{formatName(member.name)}</h2><p className="staff-muted">{t('CubeRoot ID','CubeRoot ID')} · {member.userId}</p></div><span>{member.adminAccess ? t('管理员','Administrator') : member.role === 'manager' ? t('负责人','Manager') : t('成员','Member')}</span><span className="staff-muted">{member.active ? t('已启用','Active') : t('已停用','Inactive')}</span>{member.adminAccess ? <span className="staff-muted">{t('自动开通','Automatic access')}</span> : <Button action="edit" variant="secondary" onClick={() => setEditing(member)}>{t('编辑成员','Edit member')}</Button>}</article>)}</div>
+    <div className="staff-feed">{members?.map(member => <article key={member.id} className="workspace-member-row"><div><h2>{formatName(member.name)}</h2><p className="staff-muted">{t('CubeRoot ID','CubeRoot ID')} · {member.userId}</p></div><span>{member.adminAccess ? t('管理员','Administrator') : member.role === 'manager' ? t('负责人','Manager') : t('成员','Member')}</span><span className="staff-muted">{member.active ? t('已启用','Active') : t('已停用','Inactive')}</span>{member.adminAccess ? <span className="staff-muted">{t('自动开通','Automatic access')}</span> : <Button action="edit" variant="secondary" className="workspace-member-edit" showTooltip={false} onClick={() => setEditing(member)}>{t('编辑成员','Edit member')}</Button>}</article>)}</div>
     {editing && <WorkspaceDialog title={editing === 'new' ? t('开通员工权限','Enable employee access') : t('编辑成员','Edit member')} onClose={() => setEditing(null)}>{form(editing === 'new' ? undefined : editing)}</WorkspaceDialog>}
   </>;
 }
-export default function WorkspacePage(){return <Suspense><Workspace /></Suspense>;}
+export default function WorkspacePage(){return <Suspense><WorkspaceHost><WorkspaceContent /></WorkspaceHost></Suspense>;}

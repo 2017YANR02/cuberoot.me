@@ -18,7 +18,6 @@ export type ChecklistPanelProps = {
   itemStatus: 'active' | 'archived' | 'all'; completionStatus?: 'all' | 'todo' | 'done';
   archiveSupported: boolean; list: Checklist; reload: () => void;
   onSaved: (list: Checklist) => void; onDeleted?: () => void; onMoved?: (lists: Checklist[]) => void;
-  expansion?: { open: boolean; sequence: number };
 };
 export default function ChecklistPanel(props: ChecklistPanelProps) {
   return props.presentation === 'software' ? <SoftwareChecklistPanel {...props} /> : <ChecklistTasks {...props} />;

@@ -11,7 +11,9 @@ import AppLink from '@/components/AppLink';
 import CubeRootLogo from '@/components/CubeRootLogo';
 import { useT } from '@/hooks/useT';
 import { useAuthUser, useIsAdmin } from '@/lib/auth-store';
+import { isContractReaderPath } from '@/lib/contract-reader-route';
 import '@/components/menu-toggle-icon.css';
+import { ADMIN_SECTION_LABELS } from '../admin/sections';
 import './workspace.css';
 import '../admin/admin.css';
 
@@ -22,26 +24,27 @@ function Navigation({ children }: { children: ReactNode }) {
   const pathname = usePathname().replace(/^\/(?:zh|en)(?=\/|$)/, '').replace(/\/$/, '');
   const [section] = useQueryState('section', parseAsString);
   const [view] = useQueryState('view', parseAsString);
-  if (!user) return <>{children}</>;
+  if (!user || isContractReaderPath(pathname)) return <>{children}</>;
 
   const inAdmin = pathname === '/admin' || pathname.startsWith('/admin/') && !pathname.startsWith('/admin/team');
+  const teamSection = section === 'offboarding' ? 'onboarding' : section ?? 'mine';
   const teamItems = [
-    { id: 'mine', label: t('我的工作', 'My work'), Icon: ClipboardList },
-    { id: 'updates', label: t('团队动态', 'Team updates'), Icon: Users },
+    { id: 'mine', label: t('我的', 'Mine'), Icon: ClipboardList },
+    { id: 'updates', label: t('动态', 'Updates'), Icon: Users },
     { id: 'checklists', label: t('清单', 'Checklists'), Icon: ClipboardList },
     { id: 'schedule', label: t('排期', 'Schedule'), Icon: FolderKanban },
-    ...(admin ? [{ id: 'work-calendar', label: t('工作日历', 'Work calendar'), Icon: CalendarDays }, { id: 'members', label: t('成员与权限', 'Members and access'), Icon: ShieldCheck }] : []),
-    { id: 'contracts', label: t('合同与协议', 'Contracts & agreements'), Icon: BookOpen },
+    ...(admin ? [{ id: 'work-calendar', label: t('日历', 'Calendar'), Icon: CalendarDays }, { id: 'members', label: t('成员', 'Members'), Icon: ShieldCheck }] : []),
+    { id: 'contracts', label: t('合同', 'Contracts'), Icon: BookOpen },
     { id: 'onboarding', label: t('入/离职', 'Onboarding / Offboarding'), Icon: UserRoundPlus },
     { id: 'sop', label: t('开发规范', 'Development standards'), Icon: Workflow },
-  ].map(({ id, label, Icon }) => ({ id, label, href: `/admin/team?section=${id}`, icon: <Icon size={18} aria-hidden />, active: !inAdmin && (section === 'offboarding' ? 'onboarding' : section ?? 'mine') === id }));
+  ].map(({ id, label, Icon }) => ({ id, label, href: `/admin/team?section=${id}`, icon: <Icon size={18} aria-hidden />, active: !inAdmin && teamSection === id }));
   const adminItems = [
     { id: 'overview', label: t('总览', 'Overview'), Icon: LayoutDashboard, href: '/admin' },
     { id: 'analytics', label: t('产品使用', 'Product usage'), Icon: Activity, href: '/admin/product-analytics' },
-    { id: 'users', label: t('用户 / 会员', 'Users / Memberships'), Icon: Users, href: '/admin/users' },
+    { id: 'users', label: t(...ADMIN_SECTION_LABELS.users), Icon: Users, href: '/admin/users' },
     { id: 'content', label: t('内容 / 社区', 'Content / Community'), Icon: BookOpen, href: '/admin?section=content' },
     { id: 'commerce', label: t('课程 / 商业', 'Courses / Commerce'), Icon: Activity, href: '/admin?section=commerce' },
-    { id: 'system', label: t('运维', 'Operations'), Icon: Wrench, href: '/admin/disk' },
+    { id: 'system', label: t('磁盘', 'Disk'), Icon: Wrench, href: '/admin/disk' },
     { id: 'work', label: t('工作资料', 'Work resources'), Icon: FolderKanban, href: '/admin?section=system&view=workspace' },
     { id: 'monitoring', label: t('AI 聊天', 'AI chat'), Icon: Activity, href: '/admin?section=system&view=monitoring' },
     { id: 'tax', label: t('税务', 'Tax'), Icon: ShieldCheck, href: '/admin?section=system&view=tax' },

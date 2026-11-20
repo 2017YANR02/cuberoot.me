@@ -3,7 +3,11 @@ import { z } from 'zod';
 import { TiptapTransformer } from '@hocuspocus/transformer';
 import { Doc, applyUpdate } from 'yjs';
 import { isAdminWcaId } from '@cuberoot/shared/admin';
+import { isContractTemplateTitle } from '@cuberoot/shared/workspace-contracts';
+import { PROJECT_MAX_CENTS, isPlanningDate } from '@cuberoot/shared/workspace-planning';
 import type { QueryRunner } from '../db/connection.js';
+import { saveWorkspaceDailyRate } from './payroll.js';
+import { eligibleRecipient } from './project-recipient.js';
 
 const MAX_BYTES = 5 * 1024 * 1024;
 const MAX_DRAFT_BYTES = 190 * 1024;
@@ -17,7 +21,15 @@ const fileName = z.string().trim().min(1).max(200).regex(/^[^/\\\x00-\x1f\x7f]+$
 const newDraftInput = z.object({templateId: uuid, userId: ownerId, title: titleInput});
 const draftRef = z.object({id: uuid, version: draftVersion});
 const saveDraftInput = draftRef.extend({title: titleInput, content: z.json()});
-const publishDraftInput = draftRef.extend({title: titleInput, filename: fileName.refine(value => /\.docx$/i.test(value)), base64: fileBase64});
+const payrollInput = z.strictObject({
+  effectiveFrom: z.string().refine(isPlanningDate),
+  endsOn: z.string().refine(isPlanningDate),
+  dailyRateCents: z.number().int().min(1).max(PROJECT_MAX_CENTS).nullable(),
+}).refine(value => value.effectiveFrom <= value.endsOn);
+const publishDraftInput = draftRef.extend({
+  title: titleInput, filename: fileName.refine(value => /\.docx$/i.test(value)), base64: fileBase64,
+  payroll: payrollInput.optional(),
+});
 const draftDocument = z.object({type: z.literal('doc'), content: z.array(z.json()).min(1)});
 const draftColumns = 'id,user_id::int AS "userId",title,version';
 const uploadInput = z.object({
@@ -39,7 +51,7 @@ export function contractsService(q: QueryRunner, userId: number, fail: (message:
   }
   async function requireMember(memberId: number) {
     const [member] = await q(`SELECT m.id FROM workspace_members m JOIN app_users u ON u.id=m.user_id
-      WHERE m.user_id=? AND u.merged_into_user_id IS NULL AND NOT u.forum_banned`, [memberId]);
+      WHERE m.user_id=? AND ${eligibleRecipient}`, [memberId]);
     if (!member) return fail('员工不存在 / Employee unavailable', 400);
   }
   function checkDraftContent(input: unknown) {
@@ -85,7 +97,7 @@ export function contractsService(q: QueryRunner, userId: number, fail: (message:
         ORDER BY v.created_at DESC,c.id`, [userId, canManage]);
       const members = canManage ? await q(`SELECT m.user_id::int AS "userId",m.name FROM workspace_members m
         JOIN app_users u ON u.id=m.user_id WHERE m.user_id IS NOT NULL
-        AND u.merged_into_user_id IS NULL AND NOT u.forum_banned ORDER BY m.name,m.id`) : [];
+        AND ${eligibleRecipient} ORDER BY m.name,m.id`) : [];
       return {contracts, canManage, members};
     },
     async file(search: URLSearchParams) {
@@ -114,10 +126,10 @@ export function contractsService(q: QueryRunner, userId: number, fail: (message:
       const drafts = await q(`SELECT d.id,d.user_id::int AS "userId",d.title,d.version,m.name
         FROM workspace_contract_drafts d JOIN workspace_members m ON m.user_id=d.user_id
         ORDER BY d.updated_at DESC,d.id`);
-      const templates = await q(`SELECT id,title FROM collaborative_documents
+      const documents = await q<{id: string; title: string}>(`SELECT id,title FROM collaborative_documents
         WHERE owner_key=? AND kind='document' AND general_access='restricted'
         AND octet_length(ydoc_state)<=? ORDER BY updated_at DESC,id`, [key, MAX_TEMPLATE_STATE_BYTES]);
-      return {drafts, templates};
+      return {drafts, templates: documents.filter(document => isContractTemplateTitle(document.title))};
     },
     async draft(search: URLSearchParams) {
       await requireSuperAdmin();
@@ -129,10 +141,10 @@ export function contractsService(q: QueryRunner, userId: number, fail: (message:
       const key = await requireSuperAdmin();
       const {templateId, userId, title} = newDraftInput.parse(input);
       await requireMember(userId);
-      const [template] = await q<{ydoc_state: Uint8Array}>(`SELECT ydoc_state FROM collaborative_documents
+      const [template] = await q<{title: string; ydoc_state: Uint8Array}>(`SELECT title,ydoc_state FROM collaborative_documents
         WHERE id=? AND owner_key=? AND kind='document' AND general_access='restricted'
         AND octet_length(ydoc_state)<=?`, [templateId, key, MAX_TEMPLATE_STATE_BYTES]);
-      if (!template) return fail('模板不可用 / Template unavailable', 404);
+      if (!template || !isContractTemplateTitle(template.title)) return fail('模板不可用 / Template unavailable', 404);
       const document = new Doc();
       let content: ReturnType<typeof checkDraftContent>;
       try {
@@ -160,7 +172,7 @@ export function contractsService(q: QueryRunner, userId: number, fail: (message:
     },
     async publishDraft(input: unknown) {
       await requireSuperAdmin();
-      const {id, version, title, filename, base64} = publishDraftInput.parse(input);
+      const {id, version, title, filename, base64, payroll} = publishDraftInput.parse(input);
       const [draft] = await q<{userId: number; version: number}>(`SELECT user_id::int AS "userId",version FROM workspace_contract_drafts WHERE id=? FOR UPDATE`, [id]);
       if (!draft) {
         const [published] = await q<{id: string}>('SELECT id FROM workspace_contracts WHERE id=?', [id]);
@@ -169,6 +181,7 @@ export function contractsService(q: QueryRunner, userId: number, fail: (message:
       }
       if (draft.version !== version) return fail('草稿已更新，请重新打开 / Draft changed; reopen it', 409);
       const published = await storeFile({userId: draft.userId, title, filename, base64, version: 0}, id);
+      if (payroll) await saveWorkspaceDailyRate(q, {...payroll, userId: draft.userId});
       await q('DELETE FROM workspace_contract_drafts WHERE id=?', [id]);
       return published;
     },

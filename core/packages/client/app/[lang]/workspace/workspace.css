@@ -285,8 +285,9 @@
 .workspace-member-row h2, .workspace-member-row p { margin: 0; }
 .workspace-action.btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 44px; font-size: 16px; font-weight: 500; flex-shrink: 0; }
 .workspace-icon-action.btn { width: 44px; height: 44px; min-width: 44px; padding: 0; border: 0; border-radius: 8px; background: transparent; color: var(--accent); box-shadow: none; cursor: pointer; transition: color .15s, background-color .15s; }
-.workspace-icon-action[data-emphasis="quiet"] { color: var(--muted-foreground); }
+.workspace-icon-action[data-emphasis="quiet"], .workspace-icon-action.workspace-dialog-close { color: var(--muted-foreground); }
 .workspace-icon-action.btn:is(:hover, :focus-visible):not(:disabled) { background: var(--accent-soft); color: var(--accent); }
+.workspace-member-edit.workspace-icon-action.btn:hover:not(:focus-visible) { background: transparent; color: var(--muted-foreground); }
 .workspace-action:active:not(:disabled) { transform: scale(.96); }
 .workspace-dialog.staff-workspace { position: fixed; min-height: 0; width: min(640px, calc(100vw - 32px)); max-width: none; max-height: calc(100dvh - 48px); margin: auto; padding: 0; border: 0; background: transparent; color: var(--foreground); overflow: visible; }
 .workspace-dialog-wide.staff-workspace { width: min(800px, calc(100vw - 32px)); }
@@ -294,6 +295,7 @@
 .workspace-dialog-surface { max-height: inherit; overflow: auto; background: var(--popover); border: 1px solid var(--border-default); border-radius: 16px; }
 .workspace-dialog-heading { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 24px 24px 0; }
 .workspace-dialog-heading h2 { margin: 0; }
+.workspace-dialog-close .clear-btn-icon { width: 20px; height: 20px; }
 .workspace-dialog-body { padding: 24px; }
 .workspace-dialog-body .staff-panel { margin: 0; }
 .workspace-dialog .staff-input, .workspace-dialog .date-input { min-height: 44px; font-size: 16px; }
@@ -390,10 +392,3 @@
 .workspace-category-heading > .more-toggle { color: var(--foreground); }
 
 .workspace-software-group > .more-toggle { min-height: 44px; font-size: 16px; }
-
-.workspace-contract-editor {
-  min-height: 16rem;
-  max-height: 48dvh;
-  overflow-y: auto;
-  overflow-wrap: anywhere;
-}

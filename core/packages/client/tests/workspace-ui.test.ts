@@ -6,7 +6,7 @@ import { NuqsTestingAdapter } from 'nuqs/adapters/testing';
 import { parseAsString, useQueryState } from 'nuqs';
 import { WorkspaceProvider, ReportEditor, Reports, ReportDetailPanel, useResource, workspaceText, type WorkspaceHost, type WorkReport } from '@app-foundation/workspace-ui';
 import { displayCuberName } from '@/lib/cuber-name-display';
-import type { Checklist, Schedule } from '@cuberoot/shared/workspace-planning';
+import type { Checklist, ProjectTask, Schedule } from '@cuberoot/shared/workspace-planning';
 import MacSetupChecklist from '@/components/workspace/MacSetupChecklist';
 import { replaceSortableItems } from '@/components/SortableList';
 import Checklists from '@/app/[lang]/workspace/Checklists';
@@ -14,6 +14,9 @@ import Schedules from '@/app/[lang]/workspace/Schedules';
 import { WorkspaceButton, WorkspaceDialog } from '@/app/[lang]/workspace/WorkspaceControls';
 import { DateInput } from '@/components/DateInput';
 import ScheduleTimeline from '@/app/[lang]/workspace/ScheduleTimeline';
+import ProjectTasks from '@/app/[lang]/workspace/ProjectTasks';
+import InternshipFieldForm from '@/app/[lang]/workspace/InternshipFieldForm';
+import { completeInternshipFields, defaultInternshipSettlement, fillInternshipTemplate, internshipDailyRateCents, MONTHLY_PAYMENT_TIME, readInternshipTemplate } from '@/app/[lang]/workspace/contract-template-fields';
 
 vi.mock('@/hooks/useT', () => { const t = (_zh: string, en: string) => en; return { useT: () => t }; });
 let container: HTMLDivElement;
@@ -77,6 +80,62 @@ async function setInput(input: HTMLInputElement | HTMLSelectElement, value: stri
     input.dispatchEvent(new Event(input instanceof HTMLSelectElement ? 'change' : 'input', { bubbles: true }));
   });
 }
+
+it('shows separate project fee and bonus and confirms the bonus through acceptance', async () => {
+  let task: ProjectTask = { id: crypto.randomUUID(), userId: 2, assignee: 'Employee', title: 'Release',
+    dueDate: '2026-10-15', criteria: 'Provide a preview.', amountCents: 100000, bonusCents: 15000, status: 'submitted', version: 3 };
+  const api: WorkspaceHost['api'] = async <T>(action: string, body?: unknown) => {
+    if (action === 'project-task-status') {
+      calls.push({action, body});
+      task = {...task, status:'accepted', version:4};
+      return {id:task.id, status:task.status, version:task.version} as T;
+    }
+    return {tasks:[task], assignees:[], viewerUserId:1, canManage:true, hasMore:false} as T;
+  };
+  await act(async () => root.render(h(WorkspaceProvider, {host:{...host, api}, children:h(ProjectTasks)})));
+  expect(container.textContent).toMatch(/Project fee .*1,000/);
+  expect(container.textContent).toMatch(/Acceptance bonus .*150/);
+  await click('Accept and confirm bonus');
+  expect(calls).toEqual([{action:'project-task-status', body:{id:task.id, version:3, decision:'accept'}}]);
+  expect(container.textContent).toMatch(/Confirmed bonus .*150/);
+  expect(container.textContent).toMatch(/Project fee .*1,000/);
+});
+
+it('uses project amounts for remote contracts and pays both calculation modes monthly', async () => {
+  const p = (text: string) => ({type:'paragraph', content:[{type:'text', text}]});
+  const list = (text: string) => ({type:'bulletList', content:[{type:'listItem', content:[p(text)]}]});
+  const template = {type:'doc', content:[
+    p('乙方（实习生）：张三'), p('身份证号码：'), p('所在学校及院系：专业：'), p('年级/学制：学号：'),
+    p('联系电话：电子邮箱：'), p('紧急联系人及电话：'), p('2.1 实习岗位：网站开发'),
+    p('2.2 实习内容'), list('开发网站'), p('2.3 实习期限：自2026年11月18日起，至2027年1月1日止。'),
+    p('2.4 实习方式与时间'), list('每周三天'), p('3.1 甲方按月向乙方发放实习津贴，标准为：人民币300元/日，于次月 15 日前支付至乙方银行账户：'),
+    p('开户行：'), p('户名：'), p('账号：'), p('4.1 甲方（指导老师：李四，职位：负责人）负责指导'),
+  ]};
+  const initial = readInternshipTemplate(template)!.values;
+  expect(initial.paymentTime).toBe('次月 15 日');
+  expect(defaultInternshipSettlement(initial, '实习协议（远程）')).toBe('project');
+  expect(internshipDailyRateCents(initial.allowance)).toBe(30000);
+  const onApply = vi.fn();
+  await mount(h(InternshipFieldForm, {initial, title:'实习协议（远程）', onApply, onCancel:vi.fn()}));
+  expect(container.querySelector<HTMLSelectElement>('select[name="settlement"]')?.value).toBe('project');
+  expect(container.querySelector('[name="dailyRate"]')).toBeNull();
+  await click('Fill contract body');
+  expect(onApply).toHaveBeenCalledWith(expect.objectContaining({settlement:'project', allowance:'', paymentTime:MONTHLY_PAYMENT_TIME}));
+  const project = fillInternshipTemplate(template, onApply.mock.calls[0][0]);
+  const paymentLine = (document: typeof project) => document.content?.[12].content?.map(run => run.text).join('');
+  expect(paymentLine(project)).toContain('以双方事先确认的各项目任务卡所列金额为准');
+  expect(paymentLine(project)).toContain('于次月15日支付');
+  expect(paymentLine(project)).not.toContain('300元');
+  expect(JSON.stringify(project)).toContain('延期不自动扣减报酬');
+  const projectFields = readInternshipTemplate(project)!.values;
+  expect(projectFields).toMatchObject({settlement:'project', allowance:'', paymentTime:MONTHLY_PAYMENT_TIME});
+  expect(completeInternshipFields(projectFields)).toBe(true);
+  const daily = fillInternshipTemplate(project, {...projectFields, settlement:'daily', allowance:'300元/日'});
+  expect(paymentLine(daily)).toContain('于次月15日支付');
+  expect(JSON.stringify(daily)).toContain('工作半天按一半日津贴计');
+  expect(JSON.stringify(daily)).not.toContain('延期不自动扣减报酬');
+  expect(readInternshipTemplate(daily)?.values).toMatchObject({settlement:'daily', allowance:'300元/日', paymentTime:MONTHLY_PAYMENT_TIME});
+});
 function ExternalNavigation() {
   const [, setSelected] = useQueryState('schedule', parseAsString.withDefault(''));
   return h('button', { onClick: () => void setSelected('') }, 'External navigation');
@@ -338,8 +397,14 @@ it('keeps the calendar and tooltip inside the native modal layer', async () => {
   expect(escape.defaultPrevented).toBe(true);
   expect(document.querySelector('.date-input__calendar')).toBeNull();
   expect(container.querySelector('dialog')).toBe(dialog);
-  await act(async () => dialog.querySelector<HTMLButtonElement>('[aria-label="Close"]')!.focus());
-  expect(document.querySelector('[role="tooltip"]')?.closest('dialog')).toBe(dialog);
+  const close = dialog.querySelector<HTMLButtonElement>('[aria-label="Close"]')!;
+  await act(async () => close.focus());
+  expect(close.hasAttribute('title')).toBe(false);
+  expect(document.querySelector('[role="tooltip"]')).toBeNull();
+  await act(async () => dialog.querySelector<HTMLButtonElement>('[aria-label="Remove task"]')!.focus());
+  const tooltip = document.querySelector('[role="tooltip"]');
+  expect(tooltip?.textContent).toBe('Remove task');
+  expect(tooltip?.closest('dialog')).toBe(dialog);
 });
 
 it('requires confirmation before removing a schedule task', async () => {
@@ -420,6 +485,10 @@ it('creates an empty category, adds tasks in it, and deletes its hidden archived
   await setInput(container.querySelector<HTMLInputElement>('[aria-label="New task"]')!, '/any literal');
   await click('Save');
   expect(lists[0].items.at(-1)).toMatchObject({ text: '/any literal', categoryId: category.id });
+  const groups = container.querySelectorAll('.workspace-check-category');
+  expect(groups[0].querySelector('.workspace-category-heading')).toBeNull();
+  expect(groups[0].querySelector('.workspace-check-item')?.textContent).toContain('First');
+  expect(groups[1].querySelector('.workspace-check-folder-name')?.textContent).toBe('Development');
   expect(container.querySelector<HTMLInputElement>('[aria-label="New task"]')!.value).toBe('');
   await click('Cancel');
   // Archived task is absent from the current filter, but belongs to the category.
@@ -450,8 +519,9 @@ it('keeps separate drafts when switching the category used for task entry', asyn
   lists[0].categories = [{ id: 'one', name: 'One' }, { id: 'two', name: 'Two' }];
   lists[0].items = [];
   await mount(h(Checklists));
-  await click('Checklist display options'); await click('Expand all');
   const groups = container.querySelectorAll<HTMLElement>('.workspace-check-category');
+  await act(async () => groups[0].querySelector<HTMLButtonElement>('.workspace-category-heading > .more-toggle')!.click());
+  await act(async () => groups[1].querySelector<HTMLButtonElement>('.workspace-category-heading > .more-toggle')!.click());
   await act(async () => groups[0].querySelector<HTMLButtonElement>('.workspace-add-task')!.click());
   await setInput(container.querySelector<HTMLInputElement>('[aria-label="New task"]')!, 'Draft one');
   await act(async () => groups[1].querySelector<HTMLButtonElement>('.workspace-add-task')!.click());

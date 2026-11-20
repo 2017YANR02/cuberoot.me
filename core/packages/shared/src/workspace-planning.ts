@@ -8,6 +8,64 @@ export type WorkspaceBoard = {
 export type ChecklistCategory = { id: string; name: string };
 export type Checklist = WorkspaceBoard & { items: ChecklistItem[]; categories?: ChecklistCategory[] };
 
+export const PROJECT_MAX_CENTS = 100_000_000;
+export type ProjectTask = {
+  id: string;
+  userId: number;
+  assignee: string;
+  title: string;
+  dueDate: string;
+  criteria: string;
+  amountCents: number;
+  bonusCents: number;
+  status: 'proposed' | 'in_progress' | 'submitted' | 'accepted';
+  version: number;
+};
+export type ProjectAssignee = { userId: number; name: string };
+export type ProjectTaskList = {
+  tasks: ProjectTask[];
+  assignees: ProjectAssignee[];
+  viewerUserId: number;
+  canManage: boolean;
+  hasMore: boolean;
+};
+
+export type PayrollAttendance = {
+  date: string;
+  halfDays: 1 | 2;
+  version: number;
+  approved: boolean;
+  dailyRateCents: number;
+  amountCents: number;
+};
+export type PayrollProject = {
+  id: string;
+  title: string;
+  acceptedDate: string;
+  amountCents: number;
+  bonusCents: number;
+};
+export type PayrollEmployee = {
+  userId: number;
+  name: string;
+  dailyRateCents: number | null;
+  canReport: boolean;
+  attendance: PayrollAttendance[];
+  projects: PayrollProject[];
+  onsiteCents: number;
+  projectCents: number;
+  bonusCents: number;
+  totalCents: number;
+  paidAt: string | null;
+};
+export type PayrollMonth = {
+  month: string;
+  payDate: string;
+  closed: boolean;
+  canManage: boolean;
+  rows: PayrollEmployee[];
+};
+
 /** Stable partition: restoring an item returns it to its original position. */
 export function orderChecklistItems(items: readonly ChecklistItem[]): ChecklistItem[] {
   return [...items.filter(item => !item.done), ...items.filter(item => item.done)];

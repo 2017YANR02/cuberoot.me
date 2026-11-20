@@ -1,0 +1,17 @@
+.contract-draft-chrome { position: sticky; top: 0; z-index: 40; background: var(--background); padding-bottom: 4px; }
+.contract-draft-chrome .doc-topbar, .contract-draft-chrome .doc-toolbar { position: static; }
+.contract-draft-chrome .doc-title-input { flex: 1; min-width: 0; }
+.contract-draft-employee { color: var(--muted-foreground); font-size: .875rem; }
+.contract-draft-actions { display: flex; flex-wrap: wrap; gap: 6px; margin-inline-start: auto; }
+.contract-draft-actions .workspace-action { min-height: 38px; font-size: .875rem; }
+.contract-draft-feedback { margin: 6px 12px 0; padding: 0 8px; font-size: .875rem; }
+.contract-draft-page .doc-editor .tiptap { overflow-wrap: anywhere; }
+
+@media (max-width: 780px) {
+  .contract-draft-chrome .doc-topbar { flex-wrap: wrap; }
+  .contract-draft-actions { flex: 0 0 100%; }
+}
+
+@media print {
+  .contract-draft-chrome { display: none; }
+}

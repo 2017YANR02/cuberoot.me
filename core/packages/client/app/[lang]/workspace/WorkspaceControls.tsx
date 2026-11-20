@@ -3,19 +3,20 @@
 import { useEffect, useId, useRef, useState } from 'react';
 import { Plus, Check, Pencil, Trash2, X, RefreshCw, Search, Copy, Settings2, ChevronLeft, ChevronRight, Send } from '@app-foundation/icons/lucide';
 import type { WorkspaceButtonProps, WorkspaceDialogProps } from '@app-foundation/workspace-ui';
+import { ClearButton } from '@/components/ClearButton';
 import { Tooltip } from '@/components/Tooltip';
 import { useModalBackdrop } from '@/hooks/useModalDismiss';
 import { useT } from '@/hooks/useT';
 
 const icons = { add: Plus, save: Check, edit: Pencil, delete: Trash2, cancel: X, reload: RefreshCw, filter: Search, copy: Copy, settings: Settings2, previous: ChevronLeft, next: ChevronRight, send: Send };
-export function WorkspaceButton({ action, iconOnly = true, variant, size, children, className = '', ...props }: WorkspaceButtonProps) {
+export function WorkspaceButton({ action, iconOnly = true, showTooltip = true, variant, size, children, className = '', ...props }: WorkspaceButtonProps & { showTooltip?: boolean }) {
   const Icon = action && icons[action];
   const label = props['aria-label'] ?? (typeof children === 'string' ? children : undefined);
   const compact = Boolean(Icon && iconOnly && label);
   const button = (tip = {}) => <button type="button" {...tip} {...props} aria-label={compact ? label : props['aria-label']} className={`btn ${compact ? 'workspace-icon-action' : variant === 'secondary' ? 'btn-secondary' : 'btn-primary'} workspace-action ${className}`} data-emphasis={variant === 'secondary' ? 'quiet' : 'accent'} data-size={size}>
     {Icon && <Icon size={20} aria-hidden="true" />}{!compact && children}
   </button>;
-  return compact ? <Tooltip content={label!}>{tip => button(tip)}</Tooltip> : button();
+  return compact && showTooltip ? <Tooltip content={label!}>{tip => button(tip)}</Tooltip> : button();
 }
 
 export function WorkspaceDialog({ title, children, onClose, wide }: WorkspaceDialogProps) {
@@ -46,7 +47,7 @@ export function WorkspaceDialog({ title, children, onClose, wide }: WorkspaceDia
   }, []);
   return <dialog ref={ref} {...backdrop} className={`staff-workspace workspace-dialog${wide ? ' workspace-dialog-wide' : ''}`} aria-labelledby={heading} onCancel={event => { event.preventDefault(); requestClose(); }} onKeyDownCapture={event => { if (event.key === 'Escape' && ref.current?.querySelector('[role="dialog"]')) event.preventDefault(); }} onInputCapture={() => setDirty(true)} onChangeCapture={() => setDirty(true)}>
     <div className="workspace-dialog-surface" data-site-surface="popover">
-      <header className="workspace-dialog-heading"><h2 id={heading}>{title}</h2><WorkspaceButton action="cancel" variant="secondary" disabled={busy} onClick={requestClose}>{t('关闭', 'Close')}</WorkspaceButton></header>
+      <header className="workspace-dialog-heading"><h2 id={heading}>{title}</h2><ClearButton variant="standalone" className="btn workspace-icon-action workspace-action workspace-dialog-close" disabled={busy} ariaLabel={t('关闭', 'Close')} onClick={requestClose} /></header>
       {confirmClose && <div className="workspace-discard" role="alert"><p>{t('放弃未保存的更改？', 'Discard unsaved changes?')}</p><div className="staff-actions"><WorkspaceButton variant="secondary" disabled={busy} onClick={() => setConfirmClose(false)}>{t('继续编辑', 'Keep editing')}</WorkspaceButton><WorkspaceButton disabled={busy} onClick={() => { if (!ref.current?.querySelector('[aria-busy="true"]')) onClose(); }}>{t('放弃更改', 'Discard changes')}</WorkspaceButton></div></div>}
       <div className="workspace-dialog-body">{children}</div>
     </div>

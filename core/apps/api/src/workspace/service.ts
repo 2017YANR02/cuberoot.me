@@ -7,6 +7,8 @@ import { reportHoursInput } from './report-hours.js';
 import { planningService } from './planning.js';
 import { workCalendarService } from './work-calendar.js';
 import { contractsService } from './contracts.js';
+import { projectTasksService } from './project-tasks.js';
+import { payrollService } from './payroll.js';
 
 export type Actor = WorkspaceActor & { name: string; memberId?: number; canManageReports?: boolean };
 export type Identity = { uid: number; isAdmin: boolean; name: string };
@@ -153,6 +155,16 @@ export function createWorkspaceService(query: QueryRunner, transact: Transaction
   function contracts(q: QueryRunner, identity: Identity) {
     return contractsService(q, identity.uid, (message, status) => { throw new WorkspaceError(message, status); });
   }
+  function projectTasks(q: QueryRunner, a: Actor, identity: Identity) {
+    return projectTasksService(q, { userId: identity.uid, canManage: a.canManageReports === true,
+      audit: (action, id) => audit(q, a, action, id),
+      fail: (message, status) => { throw new WorkspaceError(message, status); } });
+  }
+  function payroll(q: QueryRunner, a: Actor, identity: Identity) {
+    return payrollService(q, { userId: identity.uid, canManage: a.canManageReports === true,
+      audit: (action, id) => audit(q, a, action, id),
+      fail: (message, status) => { throw new WorkspaceError(message, status); } });
+  }
   return {
     async contractFile(identity: Identity, search: URLSearchParams) {
       return transact(async q => {
@@ -171,6 +183,8 @@ export function createWorkspaceService(query: QueryRunner, transact: Transaction
         case 'contract-drafts': return contracts(query, identity).drafts();
         case 'contract-draft': return contracts(query, identity).draft(search);
         case 'contract-versions': return contracts(query, identity).versions(search);
+        case 'project-tasks': return projectTasks(query, a, identity).list(search);
+        case 'payroll': return payroll(query, a, identity).list(search);
         case 'work-calendar': return workCalendar(query, a, identity).list(search);
         case 'announcement': {
           admin(a);
@@ -211,6 +225,12 @@ export function createWorkspaceService(query: QueryRunner, transact: Transaction
           case 'contract-draft-delete': return contracts(q, identity).deleteDraft(input);
           case 'contract-draft-publish': return contracts(q, identity).publishDraft(input);
           case 'contract-upload': return contracts(q, identity).upload(input);
+          case 'project-task': return projectTasks(q, a, identity).save(input);
+          case 'project-task-status': return projectTasks(q, a, identity).changeStatus(input);
+          case 'payroll-rate': return payroll(q, a, identity).saveRate(input);
+          case 'payroll-attendance': return payroll(q, a, identity).saveAttendance(input);
+          case 'payroll-attendance-approve': return payroll(q, a, identity).approveAttendance(input);
+          case 'payroll-paid': return payroll(q, a, identity).markPaid(input);
           case 'work-pattern': return workCalendar(q, a, identity).savePattern(input);
           case 'work-exception': return workCalendar(q, a, identity).saveException(input);
           case 'checklist': return planning(q, a).saveChecklist(input);

@@ -1,7 +1,6 @@
 'use client';
 /** @module Named team checklists, using the workspace host and forms. */
 import ChecklistPanel from '@/components/workspace/ChecklistPanel';
-import { ChecklistMenu } from '@/components/workspace/ChecklistTasks';
 import { CompactSelect } from '@/components/CompactSelect';
 import LiquidGlassChips from '@/components/LiquidGlassChips';
 import { useEffect, useRef, useState } from 'react';
@@ -20,7 +19,6 @@ export default function Checklists() {
   const resource = useResource<{ checklists: Checklist[]; hasMore: boolean; itemArchiveSupported?: boolean }>(path);
   const [checklists, setChecklists] = useState<Checklist[]>([]);
   const [completionStatus, setCompletionStatus] = useState<'all' | 'todo' | 'done'>('all');
-  const [expansion, setExpansion] = useState<{ open: boolean; sequence: number }>();
   const deletedIds = useRef(new Set<string>());
   const [loadedPath, setLoadedPath] = useState('');
   useEffect(() => {
@@ -43,13 +41,7 @@ export default function Checklists() {
         <div className="workspace-check-filter-group"><span>{t('完成状态', 'Completion')}</span><LiquidGlassChips ariaLabel={t('完成状态', 'Completion')} items={['all', 'todo', 'done'] as const} value={completionStatus} onChange={setCompletionStatus} getLabel={item => item === 'all' ? t('全部', 'All') : item === 'todo' ? t('未完成', 'Incomplete') : t('已完成', 'Completed')} /></div>
         <Button variant="secondary" onClick={() => { void setStatus('active'); void setPage(1); setItemStatus('active'); setCompletionStatus('all'); }}>{t('重置筛选', 'Reset filters')}</Button>
       </div>} />
-      <div className="staff-actions">
-        <Button action="add" variant="secondary" onClick={() => { newId.current = crypto.randomUUID(); setEditing(true); }}>{t('新建清单', 'New checklist')}</Button>
-        <ChecklistMenu label={t('清单显示选项', 'Checklist display options')} actions={[
-          { label: t('全部展开', 'Expand all'), run: () => setExpansion(previous => ({ open: true, sequence: (previous?.sequence ?? 0) + 1 })) },
-          { label: t('全部收起', 'Collapse all'), run: () => setExpansion(previous => ({ open: false, sequence: (previous?.sequence ?? 0) + 1 })) },
-        ]} />
-      </div>
+      <Button action="add" variant="secondary" onClick={() => { newId.current = crypto.randomUUID(); setEditing(true); }}>{t('新建清单', 'New checklist')}</Button>
     </div>
     <ErrorNotice error={resource.error} retry={resource.reload} />
     {resource.loading && <p role="status">{t('正在加载…', 'Loading…')}</p>}
@@ -63,7 +55,7 @@ export default function Checklists() {
       </Form>
     </EditorDialog>}
     {!resource.loading && resource.data && lists.length === 0 && <p className="staff-empty">{t('暂无清单', 'No checklists')}</p>}
-    <div>{lists.map(list => <ChecklistPanel key={list.id} itemStatus={itemStatus} completionStatus={completionStatus} expansion={expansion} archiveSupported={resource.data?.itemArchiveSupported === true} list={list} reload={resource.reload} onSaved={saved => setChecklists(rows => rows.map(row => row.id === saved.id ? saved : row))} onMoved={resource.reload} onDeleted={() => {
+    <div>{lists.map(list => <ChecklistPanel key={list.id} itemStatus={itemStatus} completionStatus={completionStatus} archiveSupported={resource.data?.itemArchiveSupported === true} list={list} reload={resource.reload} onSaved={saved => setChecklists(rows => rows.map(row => row.id === saved.id ? saved : row))} onMoved={resource.reload} onDeleted={() => {
       deletedIds.current.add(list.id);
       setChecklists(rows => rows.filter(row => row.id !== list.id));
       if (lists.length === 1 && page > 1) void setPage(page - 1); else resource.reload();

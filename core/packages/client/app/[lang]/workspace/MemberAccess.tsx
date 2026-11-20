@@ -35,13 +35,9 @@ export function MemberAccessApprovals({onReviewed}: {onReviewed: () => void}) {
   const {api, formatName = (name: string) => name} = useWorkspace();
   const resource = useResource<{requests: MemberRequest[]}>('member-requests');
   return <section className="staff-feed">
-    <div className="staff-actions">
-      <h2>{t('员工权限申请', 'Employee access requests')}</h2>
-      <Button action="reload" variant="secondary" disabled={resource.loading} onClick={resource.reload}>{t('刷新申请', 'Refresh requests')}</Button>
-    </div>
-    <ErrorNotice error={resource.error} />
+    <h2>{t('员工权限申请', 'Employee access requests')}</h2>
+    <ErrorNotice error={resource.error} retry={resource.reload} />
     {resource.loading && <p role="status">{t('正在加载…', 'Loading…')}</p>}
-    {!resource.loading && !resource.error && resource.data?.requests.length === 0 && <p className="staff-muted">{t('暂无待审批申请', 'No requests awaiting review')}</p>}
     {resource.data?.requests.map(request => <article key={request.id} className="workspace-member-row">
       <div><h3>{formatName(request.name)}</h3><p className="staff-muted">CubeRoot ID · {request.userId}</p></div>
       <Form submit={async (_, decision) => {

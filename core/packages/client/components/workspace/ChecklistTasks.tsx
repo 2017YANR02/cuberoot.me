@@ -91,7 +91,7 @@ function MoveTasks({ list, itemIds, saved, close }: { list: Checklist; itemIds: 
   </EditorDialog>;
 }
 
-export default function ChecklistTasks({ list, itemStatus, completionStatus = 'all', archiveSupported, reload, onSaved, onDeleted, onMoved, expansion }: ChecklistPanelProps) {
+export default function ChecklistTasks({ list, itemStatus, completionStatus = 'all', archiveSupported, reload, onSaved, onDeleted, onMoved }: ChecklistPanelProps) {
   const { api, Button } = useWorkspace();
   const t = useT();
   const categories = list.categories ?? [];
@@ -116,10 +116,6 @@ export default function ChecklistTasks({ list, itemStatus, completionStatus = 'a
     setExpanded(next);
     persistItem(storageKey, JSON.stringify(next));
   };
-  useEffect(() => {
-    if (expansion) storeExpanded(Object.fromEntries(['list', '', ...categories.map(category => category.id)].map(id => [id, expansion.open])));
-    // Apply only the explicit toolbar command, not every save or refresh.
-  }, [expansion]);
   const visible = list.items.filter(item => (itemStatus === 'all' || (itemStatus === 'archived' ? item.archived : !item.archived))
     && (completionStatus === 'all' || item.done === (completionStatus === 'done')));
   const visibleIds = new Set(visible.map(item => item.id));
@@ -151,7 +147,7 @@ export default function ChecklistTasks({ list, itemStatus, completionStatus = 'a
   });
   const newCategory = () => { setAddingCategory(true); storeExpanded({ ...expanded, list: true }); };
   const groups: ChecklistCategory[] = [...categories];
-  if (!categories.length || list.items.some(item => !item.categoryId)) groups.push({ id: '', name: t('未分类', 'Uncategorized') });
+  if (!categories.length || list.items.some(item => !item.categoryId)) groups.unshift({ id: '', name: '' });
   const listOpen = expanded.list ?? true;
   return <section className="staff-panel workspace-checklist workspace-task-list" aria-busy={busy}>
     <div className="workspace-list-heading">
@@ -162,7 +158,7 @@ export default function ChecklistTasks({ list, itemStatus, completionStatus = 'a
         { label: t('重命名', 'Rename'), disabled: !!editing, run: () => setEditing({ kind: 'list', id: list.id }) },
         ...(editable ? [
           { label: t('新建分类', 'New category'), run: newCategory, disabled: categories.length >= 100 },
-          { label: t('选择事项', 'Select tasks'), run: () => { setSelecting(true); storeExpanded(Object.fromEntries(['list', ...groups.map(group => group.id)].map(id => [id, true]))); }, disabled: !visible.length },
+          { label: t('选择事项', 'Select tasks'), run: () => { setSelecting(true); storeExpanded(Object.fromEntries(['list', ...categories.map(category => category.id)].map(id => [id, true]))); }, disabled: !visible.length },
         ] : []),
         { label: list.active ? t('归档清单', 'Archive checklist') : t('恢复清单', 'Restore checklist'), run: () => run(() => save({ active: !list.active })) },
         ...(onDeleted ? [{ label: t('删除清单', 'Delete checklist'), danger: true, run: () => setDeleting({ name: list.name, ids: list.items.map(item => item.id), wholeList: true }) }] : []),
@@ -183,21 +179,22 @@ export default function ChecklistTasks({ list, itemStatus, completionStatus = 'a
         <Button action="delete" disabled={busy || !selectedIds.length} onClick={() => setDeleting({ name: t('所选事项', 'Selected tasks'), ids: selectedIds })}>{t('删除所选事项', 'Delete selected tasks')}</Button>
         <Button action="cancel" variant="secondary" disabled={busy} onClick={clearSelection}>{t('结束选择', 'Finish selection')}</Button>
       </div>}
-      <div className="workspace-check-tree">{groups.map((group, index) => {
+      <div className="workspace-check-tree">{groups.map(group => {
+        const index = categories.indexOf(group);
         const allItems = list.items.filter(item => (item.categoryId ?? '') === group.id);
         const activeItems = allItems.filter(item => !item.archived);
         const completedCount = activeItems.filter(item => item.done).length;
         const items = orderChecklistItems(visible.filter(item => (item.categoryId ?? '') === group.id));
-        const open = expanded[group.id] ?? groups.length === 1;
+        const open = !group.id || (expanded[group.id] ?? groups.length === 1);
         return <section key={group.id} className="workspace-check-category">
-          <div className="workspace-category-heading">
+          {group.id && <div className="workspace-category-heading">
             {editing?.kind === 'category' && editing.id === group.id ? <InlineName initial={group.name} label={t('分类名称', 'Category name')} cancel={() => setEditing(null)} save={async name => {
               await save({ categories: categories.map(category => category.id === group.id ? { ...category, name } : category) }); setEditing(null);
             }} /> : <MoreToggle expanded={open} onClick={() => storeExpanded({ ...expanded, [group.id]: !open })}>
               <span className="workspace-check-folder-name">{group.name}</span>
               <span className="workspace-check-count" aria-label={`${t('已完成', 'Completed')}: ${completedCount} / ${activeItems.length}`}>{completedCount}/{activeItems.length}</span>
             </MoreToggle>}
-            {editable && group.id && <ChecklistMenu label={`${t('分类操作', 'Category actions')}: ${group.name}`} disabled={busy} actions={[
+            {editable && <ChecklistMenu label={`${t('分类操作', 'Category actions')}: ${group.name}`} disabled={busy} actions={[
               { label: t('重命名', 'Rename'), disabled: !!editing, run: () => setEditing({ kind: 'category', id: group.id }) },
               ...([-1, 1] as const).map(direction => ({ label: direction < 0 ? t('上移', 'Move up') : t('下移', 'Move down'), disabled: index + direction < 0 || index + direction >= categories.length, run: () => run(async () => {
                 const next = [...categories]; [next[index], next[index + direction]] = [next[index + direction], next[index]]; await save({ categories: next });
@@ -207,7 +204,7 @@ export default function ChecklistTasks({ list, itemStatus, completionStatus = 'a
                 if (!ids.length) run(() => removeItems([], group.id)); else setDeleting({ name: group.name, ids, categoryId: group.id });
               } },
             ]} />}
-          </div>
+          </div>}
           <MoreTogglePanel expanded={open}>
             <ul className="workspace-check-items">{items.map(item => <li key={item.id} className={`workspace-check-item${item.done ? ' is-done' : ''}`}>
               {/* allow-checkbox: Selection and task completion are list actions, not settings switches. */}

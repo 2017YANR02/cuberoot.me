@@ -6,16 +6,19 @@ import { DateRangeInput } from '@/components/DateRangeInput';
 import MoreToggle from '@/components/MoreToggle';
 import { useT } from '@/hooks/useT';
 import { WorkspaceButton as Button } from './WorkspaceControls';
-import { validInternshipPeriod, type InternshipFields } from './contract-template-fields';
+import { defaultInternshipSettlement, internshipDailyRateCents, MONTHLY_PAYMENT_TIME, validInternshipPeriod, type InternshipFields } from './contract-template-fields';
 
-export default function InternshipFieldForm({initial, onApply, onCancel}: {
+export default function InternshipFieldForm({initial, title, onApply, onCancel}: {
   initial: InternshipFields;
+  title: string;
   onApply: (fields: InternshipFields) => void;
   onCancel: () => void;
 }) {
   const t = useT();
   const [period, setPeriod] = useState({from: initial.start, to: initial.end});
-  const field = (key: keyof InternshipFields, label: string, required = false) => (
+  const [settlement, setSettlement] = useState(() => defaultInternshipSettlement(initial, title));
+  const storedDailyRate = internshipDailyRateCents(initial.allowance);
+  const field = (key: Exclude<keyof InternshipFields, 'settlement'>, label: string, required = false) => (
     <Field label={label} width="medium">
       <input name={key} defaultValue={initial[key]} required={required} maxLength={220} />
     </Field>
@@ -24,10 +27,16 @@ export default function InternshipFieldForm({initial, onApply, onCancel}: {
     if ((period.from || period.to) && !validInternshipPeriod(period.from, period.to)) {
       throw new Error(t('请填写完整的实习起止日期，结束日期不能早于开始日期。', 'Enter a complete internship period with the end date on or after the start date.'));
     }
-    const fields = {...initial, start: period.from, end: period.to};
+    const fields = {...initial, start: period.from, end: period.to, settlement, paymentTime: MONTHLY_PAYMENT_TIME};
     for (const key of Object.keys(initial) as (keyof InternshipFields)[]) {
+      if (key === 'settlement' || key === 'allowance') continue;
       if (data.has(key)) fields[key] = value(data,key).trim();
     }
+    const dailyRate = internshipDailyRateCents(value(data, 'dailyRate'));
+    if (settlement === 'daily' && dailyRate === null) {
+      throw new Error(t('请填写有效的日薪金额，最多两位小数。', 'Enter a valid daily rate with up to two decimal places.'));
+    }
+    fields.allowance = dailyRate === null ? '' : `${dailyRate / 100}元/日`;
     onApply(fields);
   }}>
     <h2>{t('合同填写项', 'Contract fields')}</h2>
@@ -44,8 +53,20 @@ export default function InternshipFieldForm({initial, onApply, onCancel}: {
       {field('schedule', t('每周实习安排', 'Weekly schedule'), true)}
       {field('mentor', t('指导老师', 'Mentor'))}
       {field('mentorRole', t('指导老师职位', 'Mentor’s role'))}
-      {field('allowance', t('津贴标准（金额和计费单位）', 'Allowance (amount and unit)'))}
-      {field('paymentTime', t('支付时间', 'Payment schedule'))}
+      <Field label={t('计酬方式', 'Pay calculation')} width="medium">
+        <select name="settlement" value={settlement} onChange={event => setSettlement(event.target.value === 'project' ? 'project' : 'daily')}>
+          <option value="daily">{t('线下 · 按日薪算', 'Onsite · Daily rate')}</option>
+          <option value="project">{t('线上 · 按项目算', 'Remote · Per project')}</option>
+        </select>
+      </Field>
+      {settlement === 'daily' && <Field label={t('日薪（元）', 'Daily rate (CNY)')} width="medium">
+        <input name="dailyRate" inputMode="decimal" pattern="[0-9]+(?:[.][0-9]{1,2})?" required
+          defaultValue={storedDailyRate === null ? '' : String(storedDailyRate / 100)} />
+      </Field>}
+      <div className="staff-field">
+        <span>{t('发薪日', 'Payday')}</span>
+        <p>{t('每月 15 日发放上月报酬', 'Previous month’s pay is issued on the 15th')}</p>
+      </div>
     </div>
     <details>
       <MoreToggle as="summary">{t('学籍、联系方式与收款资料', 'Education, contact and payment details')}</MoreToggle>
