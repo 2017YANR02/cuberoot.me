@@ -11,6 +11,7 @@ on:
       - 'core/package.json'
       - 'scripts/stats/update-local.ts'
       - 'scripts/stats/update-published.ts'
+      - 'scripts/stats/shared-publication-baseline.ts'
       - 'scripts/exact-puzzles/cli.ts'
       - 'core/packages/client/scripts/export-exact-puzzle-distributions.mts'
       - 'core/packages/client/scripts/summarize-double-zbll.mts'

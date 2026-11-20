@@ -23,12 +23,12 @@ export const definitions = [
   {
     id: 'scramble', name: { zh: '比赛打乱阶段难度与最优步数', en: 'Competition scramble difficulty and optimal lengths' },
     category: 'statistics', pages: ['/scramble/stats'], artifacts: ['stats.scramble'],
-    sources: ['scripts/stats/update-local.ts', 'scripts/stats/update-published.ts', 'core/package.json'],
+    sources: ['scripts/stats/update-local.ts', 'scripts/stats/update-published.ts', 'scripts/stats/shared-publication-baseline.ts', 'core/package.json'],
     scope: 'stages (Cross/XCross and other 3x3 goals), 333opt (whole-cube optimal), puzzles (2x2, Pyraminx, Skewb, Clock, SQ1 and selected puzzle jobs).',
     basis: 'Competition scramble corpus, not a uniform full-state distribution.',
     cost: 'Per-scramble stage/optimal solving, including expensive 3x3/SQ1 searches; no measured cross-job CPU ordering.',
     update: { trigger: 'manual', execution: 'Local computation machine', strategy: 'Explicit stages/333opt/puzzles entry: incremental fetching, missing-result backfill and checkpoint continuation. Cached/publish-only modes reuse results. Unresolved puzzle states remain marked unresolved and may accompany a partial publication.' },
-    publication: 'Publishing entry loads relevant PG tables, submits the Release and incrementally publishes static shards. Local-only entry does not publish.'
+    publication: 'The publishing entry synchronizes the published baseline under a shared lock, loads relevant PG tables, submits the Release and incrementally publishes static shards. Local-only entry does not publish.'
   },
   {
     id: 'exact-distributions', name: { zh: '精确分布与全状态数据集', en: 'Exact distributions and full-state datasets' },

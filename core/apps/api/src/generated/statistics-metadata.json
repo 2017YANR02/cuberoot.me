@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "version": "df8303346656f4c1d0e0edc36b9d7ca16f0afa6eea794e531edd4ad7e847c65f",
+  "version": "001624c2a2a031d039d89d4b399f27d7bd616493965597e8c6045867c0dfb357",
   "coverage": {
     "level": "registered-families",
     "statement": "Returns all registered main families including dependencies, not proof that every costly statistic or experimental solver has been enumerated.",
@@ -78,7 +78,7 @@
     },
     {
       "path": "docs/data/artifacts/generated-artifacts.json",
-      "sha256": "8008c606413ecea25724e89a14c9e096e2809b4055bfaeb90c436b8999aed98a",
+      "sha256": "285959707160b04ec3b1a650461d2840871df3e73f701d07147365ec822b952c",
       "href": "https://github.com/2017YANR02/cuberoot.me/blob/main/docs/data/artifacts/generated-artifacts.json"
     },
     {
@@ -88,7 +88,7 @@
     },
     {
       "path": "scripts/assistant/statistics-metadata-definitions.ts",
-      "sha256": "4649b178bd70dd79c6b59511aa53ef0d46e5a14fab96f5c887cb5e00636cdd60",
+      "sha256": "16cbb3a4051971896ea16a666ec310df1a968e41299a6b67b7832bcf8403bc5c",
       "href": "https://github.com/2017YANR02/cuberoot.me/blob/main/scripts/assistant/statistics-metadata-definitions.ts"
     },
     {
@@ -97,13 +97,18 @@
       "href": "https://github.com/2017YANR02/cuberoot.me/blob/main/scripts/exact-puzzles/cli.ts"
     },
     {
+      "path": "scripts/stats/shared-publication-baseline.ts",
+      "sha256": "52f7e23f8e145df75a70b44509dce687dea1702f4453be6828ef1b2ec1e9a5e0",
+      "href": "https://github.com/2017YANR02/cuberoot.me/blob/main/scripts/stats/shared-publication-baseline.ts"
+    },
+    {
       "path": "scripts/stats/update-local.ts",
       "sha256": "ced4b981ad7b8ec3565994e6df10a9859fbfe158dce5496a7875f2bbd5548d2f",
       "href": "https://github.com/2017YANR02/cuberoot.me/blob/main/scripts/stats/update-local.ts"
     },
     {
       "path": "scripts/stats/update-published.ts",
-      "sha256": "34661bb778944bd5729751b5eb4266d63dc6ed0093aecc27d6d7816bbb28a934",
+      "sha256": "2029a5875485e691289d42094cd47a8741ee204f7f5200aa8f6637e3e89f895a",
       "href": "https://github.com/2017YANR02/cuberoot.me/blob/main/scripts/stats/update-published.ts"
     },
     {
@@ -275,6 +280,7 @@
       "sources": [
         "scripts/stats/update-local.ts",
         "scripts/stats/update-published.ts",
+        "scripts/stats/shared-publication-baseline.ts",
         "core/package.json"
       ],
       "scope": "stages (Cross/XCross and other 3x3 goals), 333opt (whole-cube optimal), puzzles (2x2, Pyraminx, Skewb, Clock, SQ1 and selected puzzle jobs).",
@@ -285,7 +291,7 @@
         "execution": "Local computation machine",
         "strategy": "Explicit stages/333opt/puzzles entry: incremental fetching, missing-result backfill and checkpoint continuation. Cached/publish-only modes reuse results. Unresolved puzzle states remain marked unresolved and may accompany a partial publication."
       },
-      "publication": "Publishing entry loads relevant PG tables, submits the Release and incrementally publishes static shards. Local-only entry does not publish.",
+      "publication": "The publishing entry synchronizes the published baseline under a shared lock, loads relevant PG tables, submits the Release and incrementally publishes static shards. Local-only entry does not publish.",
       "commands": {
         "stats:scramble": "tsx ../scripts/stats/update-published.ts --publish",
         "stats:scramble:local": "tsx ../scripts/stats/update-local.ts"
