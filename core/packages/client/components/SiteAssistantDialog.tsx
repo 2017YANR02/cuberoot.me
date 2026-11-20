@@ -369,7 +369,7 @@ export default function SiteAssistantDialog({onAuthSend,authSendLabel,authPlaceh
       {!embedded && <header className="site-assistant-header"><div><h2 id={titleId}>{tr({zh:'问 CubeRoot',en:'Ask CubeRoot'})}</h2><p>{tr({zh:'解答疑问、分析资料、探索魔方',en:'Ask, analyse and explore cubing'})}</p></div>
         <button className="site-assistant-action" type="button" onClick={()=>{imageJob.current++;processing.current=false;setProcessingImages(false);setImageError(null);stop();onNew();setEditing(null);setReference(null);setSelection(null);setDraft('');input.current?.focus();}} title={tr({zh:'新对话',en:'New conversation'})}><MessageSquarePlus size={20}/></button>
         <button className="site-assistant-action site-assistant-expand" type="button" onClick={()=>setExpanded(value=>!value)} title={tr(expanded?{zh:'退出全屏',en:'Exit full screen'}:{zh:'全屏',en:'Full screen'})}>{expanded?<Minimize2 size={19}/>:<Maximize2 size={19}/>}</button>
-        <button className="site-assistant-action" type="button" onClick={onClose} title={tr({zh:'关闭',en:'Close'})}><X size={22}/></button>
+        <ClearButton variant="standalone" className="site-assistant-action site-assistant-close" onClick={onClose} ariaLabel={tr({zh:'关闭',en:'Close'})}/>
       </header>}
       <div className="site-assistant-body"><div ref={messages} onScroll={()=>{const node=messages.current;if(node && turns.length){follow.current=node.scrollHeight-node.scrollTop-node.clientHeight<80;setShowLatest(!follow.current);}}} className="site-assistant-messages" onPointerUp={readSelection} onKeyUp={readSelection} role="log" aria-live="polite">
         {!turns.length && !searchResults && <div className="site-assistant-examples">

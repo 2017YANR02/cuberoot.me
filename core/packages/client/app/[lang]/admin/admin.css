@@ -121,9 +121,46 @@
 .admin-monitoring .admin-dashboard__metrics > * { padding: 14px; gap: 6px; }
 .admin-monitoring .admin-dashboard__metrics strong { font-size: 1.8rem; }
 .admin-monitoring .admin-monitoring__quality { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-.admin-monitoring__disclosure { margin: 0; padding: 8px 0; }
-.admin-monitoring__disclosure > summary { padding: 10px 0; font-weight: 600; }
-.admin-monitoring__disclosure[open] > summary { margin-bottom: 12px; }
+.admin-monitoring .admin-monitoring__review-link {
+  appearance: none;
+  background-color: var(--accent-soft);
+  border-color: var(--accent);
+  cursor: pointer;
+  font: inherit;
+  text-align: start;
+}
+.admin-monitoring .admin-monitoring__review-link:hover { background-color: color-mix(in srgb, var(--accent) 20%, transparent); }
+.admin-monitoring__review-link:focus-visible { outline: 2px solid var(--ring); outline-offset: 3px; }
+.admin-monitoring__review-action {
+  display: inline-flex;
+  align-items: center;
+  align-self: flex-start;
+  gap: 6px;
+  padding: 4px 9px;
+  border-radius: 6px;
+  background-color: var(--primary);
+  color: var(--primary-foreground);
+  font-weight: 650;
+}
+.admin-monitoring__review-action svg { flex-shrink: 0; }
+#chat-monitoring-reviews { scroll-margin-top: 16px; }
+.admin-monitoring > .admin-monitoring__disclosure { margin: 0; padding: 0; border-block-start: 1px solid var(--border-default); }
+.admin-monitoring__disclosure > summary.more-toggle-summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 44px;
+  padding: 8px 12px;
+  color: var(--foreground);
+  font-size: .9375rem;
+  font-weight: 600;
+}
+.admin-monitoring__disclosure > summary.more-toggle-summary > .more-toggle-chevron { margin: 0; color: var(--muted-foreground); }
+.admin-monitoring__disclosure > summary.more-toggle-summary:hover { background-color: var(--muted); }
+.admin-monitoring__disclosure > summary.more-toggle-summary:focus-visible { outline: 2px solid var(--ring); outline-offset: -2px; }
+.admin-monitoring > .admin-monitoring__disclosure[open] { padding-block-end: 12px; }
+.admin-monitoring__disclosure[open] > summary.more-toggle-summary { margin-bottom: 12px; background-color: var(--accent-soft); }
 .admin-monitoring__help { margin: 8px 0; }
 .admin-monitoring__boot .admin-boot__heading { margin: 8px 0 16px; }
 @media (max-width: 640px) {

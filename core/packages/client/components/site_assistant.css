@@ -8,6 +8,8 @@
 .site-assistant-header>div { flex:1; }
 .site-assistant-header h2 { margin:0; font-size:18px; }
 .site-assistant-header p { margin:4px 0 0; color:var(--muted-foreground); font-size:13px; }
+.site-assistant-header .site-assistant-close { width:40px; height:40px; padding:0; }
+.site-assistant-close .clear-btn-icon { width:22px; height:22px; }
 .site-assistant-messages { min-width:0; flex:1; scroll-behavior:auto; overflow:auto; min-height:0; padding:24px 28px 36px; overscroll-behavior:contain; }
 .site-assistant-turn { width:min(100%,720px); margin:0 auto 36px; min-width:0; }
 .site-assistant-question h3 { margin:0; font-weight:400; white-space:pre-wrap; padding:12px 18px; background:var(--accent); color:var(--accent-foreground); border-radius:22px; width:fit-content; max-width:85%; font-size:16px; line-height:1.6; overflow-wrap:anywhere; }

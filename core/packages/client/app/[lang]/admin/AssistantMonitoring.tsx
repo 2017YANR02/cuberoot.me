@@ -1,8 +1,8 @@
 'use client';
 import MoreToggle from '@/components/MoreToggle';
 import { InfoTooltip } from '@/components/InfoTooltip/InfoTooltip';
-import { HelpCircle } from '@app-foundation/icons/lucide';
-import { useEffect, useState } from 'react';
+import { ArrowDown, HelpCircle } from '@app-foundation/icons/lucide';
+import { useEffect, useRef, useState } from 'react';
 import { useT } from '@/hooks/useT';
 import { ClearButton } from '@/components/ClearButton';
 import { SearchInput } from '@/components/SearchInput';
@@ -19,6 +19,8 @@ const wrap = { whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' } as const;
 
 export default function AssistantMonitoring() {
   const t = useT();
+  const reviewsRef = useRef<HTMLDetailsElement>(null);
+  const scrollToLoadedReviews = useRef(false);
   const [billing, setBilling] = useState<ChatBilling | null>(null);
   const [billingError, setBillingError] = useState(false);
   const [insights,setInsights]=useState<ChatInsights|null>(null),[poll,setPoll]=useState(0);
@@ -61,6 +63,14 @@ export default function AssistantMonitoring() {
     return () => controller.abort();
   }, [days, status, q, page, refresh, feedback, conversation]);
   useEffect(() => {
+    if (!scrollToLoadedReviews.current || (!records && !error)) return;
+    scrollToLoadedReviews.current = false;
+    const reviews = reviewsRef.current;
+    if (reviews?.open && reviews.querySelector('summary') === document.activeElement) {
+      reviews.scrollIntoView({ block: 'start' });
+    }
+  }, [records, error]);
+  useEffect(() => {
     setDetail(null); setDetailError(false);
     if (!selected) return;
     const controller = new AbortController();
@@ -72,6 +82,30 @@ export default function AssistantMonitoring() {
   const totals = summary?.totals;
   const settled = totals ? totals.success + totals.errors + totals.interrupted : 0;
   const rate = settled ? `${(totals!.success / settled * 100).toFixed(1)}%` : '—';
+  const pendingReviews = insights?.feedback.filter(r => r.feedback !== 'helpful' && r.review_status === 'open').reduce((n, r) => n + r.requests, 0);
+
+  function openPendingReviews() {
+    const filtersChanged = feedback !== 'unreviewed' || status !== 'all' || q !== '' || conversation !== null || page !== 1;
+    scrollToLoadedReviews.current = filtersChanged || loading;
+    if (filtersChanged) {
+      setRecords(null);
+      setError(false);
+    }
+    setFeedback('unreviewed');
+    setStatus('all');
+    setQ('');
+    setConversation(null);
+    setPage(1);
+    setSelected(null);
+
+    const reviews = reviewsRef.current;
+    if (reviews) {
+      reviews.open = true;
+      reviews.querySelector('summary')?.focus({ preventScroll: true });
+      reviews.scrollIntoView({ block: 'start' });
+    }
+  }
+
   return <section className="admin-dashboard admin-monitoring" id="chat-monitoring" aria-busy={loading}>
     <div className="admin-dashboard__toolbar"><div><h2>{t('AI 聊天监控', 'AI chat monitoring')} <InfoTooltip icon={HelpCircle} iconSize={16} ariaLabel={t('统计口径', 'Metric definitions')} content={t('按北京时间统计已通过身份校验且模型已配置的请求。每次发送或重试单独计数；成功指请求完成，不代表答案正确。', 'Beijing calendar days; authenticated requests with a configured model. Sends and retries count separately. Success means completion, not answer correctness.')} /></h2></div>
       <label>{t('统计范围', 'Period')} <select className="admin-dashboard-select" value={days} onChange={e => { setDays(e.target.value); setSummary(null); setPage(1); setSelected(null); }}>{[7,30,90].map(n => <option key={n} value={n}>{t(`最近 ${n} 天`, `Last ${n} days`)}</option>)}</select></label>
@@ -90,11 +124,17 @@ export default function AssistantMonitoring() {
 
     </>}
     {insights && <>
-      <div className="admin-dashboard__metrics admin-monitoring__quality">{[
-        [t('待复核差评', 'Negative ratings to review'), number(insights.feedback.filter(r => r.feedback !== 'helpful' && r.review_status === 'open').reduce((n, r) => n + r.requests, 0))],
-        [t('有帮助的评价', 'Helpful ratings'), number(insights.feedback.filter(r => r.feedback === 'helpful').reduce((n, r) => n + r.requests, 0))],
-
-      ].map(([label, value]) => <div data-site-surface="panel" key={label}><span>{label}</span><strong>{value}</strong></div>)}</div>
+      <div className="admin-dashboard__metrics admin-monitoring__quality">
+        <button type="button" className="admin-monitoring__review-link" data-site-surface="panel" aria-controls="chat-monitoring-reviews" onClick={openPendingReviews}>
+          <span>{t('待复核差评', 'Negative ratings to review')}</span>
+          <strong>{number(pendingReviews)}</strong>
+          <span className="admin-monitoring__review-action">{t('查看差评', 'View negative ratings')} <ArrowDown size={16} aria-hidden="true" /></span>
+        </button>
+        <div data-site-surface="panel">
+          <span>{t('有帮助的评价', 'Helpful ratings')}</span>
+          <strong>{number(insights.feedback.filter(r => r.feedback === 'helpful').reduce((n, r) => n + r.requests, 0))}</strong>
+        </div>
+      </div>
       <p className="admin-monitoring__health" role={insights.alerts.some(a => a.active) ? 'alert' : 'status'}>{!insights.alerts.length ? t('等待首次后台检查', 'Awaiting the first check') : insights.alerts.some(a => a.active) ? t('存在运行告警，请展开质量与运行诊断查看。', 'Active alerts. Open quality and diagnostics for details.') : t('当前无运行告警', 'No active alerts')}</p>
     </>}
     <section className="admin-monitoring__billing" aria-label={t('余额与费用', 'Balance and costs')}>
@@ -147,7 +187,7 @@ export default function AssistantMonitoring() {
       <div className="admin-dashboard__metrics">{[
         [t('收到评价','Ratings'),number(insights.feedback.reduce((n,r)=>n+r.requests,0))],
         [t('有帮助','Helpful'),number(insights.feedback.filter(r=>r.feedback==='helpful').reduce((n,r)=>n+r.requests,0))],
-        [t('待复核差评','Negative ratings to review'),number(insights.feedback.filter(r=>r.feedback!=='helpful'&&r.review_status==='open').reduce((n,r)=>n+r.requests,0))],
+        [t('待复核差评','Negative ratings to review'),number(pendingReviews)],
         [t('打开推荐页面的回答','Answers with destination clicks'),number(insights.cost.clicked)],
         [t('优惠前估算（元）','Estimate before discounts (CNY)'),insights.cost.gross_cny.toFixed(4)],
         [t('无法估价的调用','Unpriced calls'),number(insights.cost.unpriced_calls)],
@@ -170,11 +210,11 @@ export default function AssistantMonitoring() {
       <details><MoreToggle as="summary">{t('最近管理员访问与复核审计','Recent admin access and review audit')}</MoreToggle>{insights.audit.map((a,i)=><p key={i} style={wrap}>{timestamp(a.at)} · {a.actor} · {a.action} · {a.record_id??'—'}</p>)}</details>
     </>}
     </details>
-    <details className="admin-monitoring__disclosure"><MoreToggle as="summary">{t('逐条问答与复核', 'Questions and reviews')}</MoreToggle>
+    <details className="admin-monitoring__disclosure" id="chat-monitoring-reviews" ref={reviewsRef}><MoreToggle as="summary">{t('逐条问答与复核', 'Questions and reviews')}</MoreToggle>
     <p><InfoTooltip icon={HelpCircle} iconSize={16} ariaLabel={t('记录保留与隐私', 'Retention and privacy')} content={t('问答正文与复核备注保留 30 天，个人明细保留 90 天，无身份日汇总保留 2 年；账号注销删除个人记录。历史未记录的聊天无法补回。图片和思考原文不保存；常见密钥会尝试遮盖，正文仍可能包含个人信息。', 'Text and review notes: 30 days; individual records: 90 days; anonymous daily totals: 2 years. Account deletion removes individual records. Unrecorded history cannot be recovered. Images and reasoning text are excluded. Common credentials are redacted where recognized, but text may still contain personal information.')} /></p>
     <div className="admin-dashboard__toolbar">
       <SearchInput value={q} debounceMs={300} onChange={value => { setQ(value); setPage(1); setSelected(null); }} placeholder={t('搜索最近 30 天的问题或回答', 'Search questions or answers from the last 30 days')} ariaLabel={t('搜索问答', 'Search chats')} maxLength={100} />
-      <label>{t('质量筛选','Quality')} <select className="admin-dashboard-select" value={feedback} onChange={e=>{setFeedback(e.target.value);setPage(1);setSelected(null);}}>{[['all',t('全部评价','All ratings')],['negative',t('没帮助','Not helpful')],['helpful',t('有帮助','Helpful')],['unreviewed',t('待复核差评','Negative ratings to review')]].map(([value,label])=><option key={value} value={value}>{label}</option>)}</select></label>
+      <label>{t('筛选','Filter')} <select className="admin-dashboard-select" value={feedback} onChange={e=>{setFeedback(e.target.value);setPage(1);setSelected(null);}}>{[['all',t('全部评价','All ratings')],['negative',t('没帮助','Not helpful')],['helpful',t('有帮助','Helpful')],['unreviewed',t('待复核差评','Negative ratings to review')]].map(([value,label])=><option key={value} value={value}>{label}</option>)}</select></label>
       {conversation&&<p>{t('正在查看同一用户的完整会话','Viewing this user’s conversation')} <button type="button" className="admin-boot__refresh" onClick={()=>{setConversation(null);setPage(1);}}>{t('清除会话筛选','Clear conversation filter')}</button></p>}
       <label>{t('状态', 'Status')} <select className="admin-dashboard-select" value={status} onChange={e => { setStatus(e.target.value); setPage(1); setSelected(null); }}>{['all', ...statuses].map(s => <option key={s} value={s}>{labels[s]}</option>)}</select></label>
     </div>
