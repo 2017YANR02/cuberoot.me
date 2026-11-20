@@ -67,7 +67,7 @@ export default function RiemannExplorer() {
       <div className={styles.toolbar}>
         <h3>{t('ζ 零点的复平面图', 'Zeros of ζ in the complex plane')}</h3>
         <div className={styles.switches} role="group" aria-label={t('图上显示的区域', 'Region shown')}>
-          {views.map(mode => <button key={mode} type="button" aria-pressed={mode === view} onClick={() => changeView(mode)}>{modeNames[mode]}</button>)}
+          {views.map(mode => <button className={styles.viewButton} key={mode} type="button" aria-pressed={mode === view} onClick={() => changeView(mode)}>{modeNames[mode]}</button>)}
         </div>
       </div>
       <div className={styles.plotRow}>
@@ -103,7 +103,7 @@ export default function RiemannExplorer() {
         </svg>
         <div className={styles.controls}>
           <label htmlFor={id + '-selector'}>{t('选择零点', 'Select a zero')}<span>{index + 1} / {count}</span></label>
-          <input id={id + '-selector'} type="range" min="1" max={count} step="1" value={index + 1}
+          <input className={styles.zeroSlider} id={id + '-selector'} type="range" min="1" max={count} step="1" value={index + 1}
             aria-valuetext={coordinate(index)} onChange={event => setIndex(Number(event.target.value) - 1)} />
           <output className={styles.coordinate} htmlFor={id + '-selector'} aria-live="polite">{coordinate(index)}</output>
           <p>{detail}</p>

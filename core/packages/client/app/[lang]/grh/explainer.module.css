@@ -66,7 +66,7 @@ div.sources { display: flex; flex-wrap: wrap; gap: .25rem 1rem; margin: .65rem 0
 .experiment { min-width: 0; font-variant-numeric: tabular-nums; }
 .experiment label, .axis, .legend { display: flex; justify-content: space-between; gap: .6rem; }
 .experiment label { align-items: baseline; font-size: .94rem; }
-.experiment input { margin: .7rem 0 .9rem; width: 100%; accent-color: var(--accent); }
+.realPartSlider { margin: .7rem 0 .9rem; width: 100%; accent-color: var(--accent); }
 .axis { font-size: .74rem; color: var(--muted-foreground); }
 .pairPlot { position: relative; padding: .22rem 0; }
 .pairPlot::before { content: ''; position: absolute; height: 100%; left: 50%; top: 0; border-left: 1px dashed var(--muted-foreground); }

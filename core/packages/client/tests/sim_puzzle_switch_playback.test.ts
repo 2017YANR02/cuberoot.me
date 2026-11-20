@@ -2,7 +2,10 @@
 
 import { act, createElement, useEffect, useState } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterAll, afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
+import { configureAlgFileLoader, type AlgFile } from '@cuberoot/shared/alg';
 
 vi.mock('react-i18next', async (importOriginal) => ({
   ...await importOriginal<typeof import('react-i18next')>(),
@@ -22,6 +25,16 @@ import { DEFAULT_SETTINGS, mapFrames } from '@/app/[lang]/sim/SettingDrawer';
 import World from '@/app/[lang]/sim/engine/world';
 import Cube from '@/app/[lang]/sim/engine/nxn/cube';
 import { attachInteraction } from '@/app/[lang]/sim/worldInteraction';
+
+// Playback mounts the real ReconAutofill, which looks up algorithms while editing.
+const libraryPath = join(import.meta.dirname, 'fixtures/recon-workbook/libraries.json');
+const libraries = JSON.parse(readFileSync(libraryPath, 'utf8')) as Record<string, AlgFile>;
+configureAlgFileLoader(async (puzzle, set) => {
+  const file = libraries[set];
+  if (file?.puzzle !== puzzle) throw new Error('Missing frozen library: ' + puzzle + '/' + set);
+  return file;
+});
+afterAll(() => configureAlgFileLoader(null));
 
 describe('sim playback across active cube changes', () => {
   let host: HTMLDivElement;

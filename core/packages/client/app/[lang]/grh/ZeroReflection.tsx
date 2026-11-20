@@ -26,7 +26,7 @@ export default function ZeroReflection() {
     </div>
     <div className={styles.experiment}>
       <label htmlFor="grh-beta">{t('假想零点的实部', 'Real part of hypothetical zero')} <strong>β = {beta}</strong></label>
-      <input id="grh-beta" type="range" min="5" max="95" step="5" value={hundredths}
+      <input className={styles.realPartSlider} id="grh-beta" type="range" min="5" max="95" step="5" value={hundredths}
         aria-valuetext={beta} onChange={event => setHundredths(Number(event.target.value))} />
       <div className={styles.axis} aria-hidden="true"><span>0</span><span>½</span><span>1</span></div>
       <div className={styles.pairPlot} aria-hidden="true">
