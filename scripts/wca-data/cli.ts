@@ -53,9 +53,20 @@ async function publish(candidate: string, out: string) {
     const archive = join(out, m.archive.name);
     if (!existsSync(archive)) download(r, m.archive.name, archive);
     unpack(archive, m, join(out, 'verified'));
-    // Match statistics snapshot transfers: a healthy cross-region connection can
-    // take longer than three minutes. SSH still bounds connection/liveness waits.
-    run('scp', [...options, archive, manifestPath, join(scripts, 'common.ts'), join(scripts, 'deploy.ts'), `${host}:${remote}/`], { timeout: 600_000 });
+    const transport = ['ssh', ...options].map(s => `'${s.replaceAll("'", "'\\''")}'`).join(' ');
+    // Keep partial files in the private staging directory for a second attempt.
+    // The existing activation step verifies the finished archive before switching.
+    for (let attempt = 1; ; attempt++) {
+      console.log(`Transferring WCA binary archive (${m.archive.bytes} bytes), attempt ${attempt}/2`);
+      try {
+        console.log(run('rsync', ['--checksum', '--partial-dir=.rsync-partial', '--timeout=90', '--stats', '-e', transport,
+          '--', archive, manifestPath, join(scripts, 'common.ts'), join(scripts, 'deploy.ts'), `${host}:${remote}/`], { timeout: 300_000 }));
+        break;
+      } catch (error) {
+        if (attempt === 2) throw error;
+        console.warn('WCA binary transfer interrupted; retrying from the staged partial files');
+      }
+    }
     const deploy = (action: string) => remoteRun(`flock -w 120 /tmp/cuberoot-wca-data.lock node ${remote}/deploy.ts ${action} /www/wwwroot/toolkit/stats${action === 'activate' ? ` ${remote}/${m.archive.name} ${remote}/${candidate}` : action === 'finalize' ? ` ${m.archive.sha256}` : ''}`);
     // A prior interrupted publish may have switched live data without advancing the Release.
     // Recover to the last committed Release before accepting a new candidate.
