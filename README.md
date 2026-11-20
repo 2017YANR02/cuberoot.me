@@ -1,91 +1,46 @@
 <div align="center">
 
-# CubeRoot
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="./core/packages/client/public/icons/CubeRoot-mark-dark.svg">
+  <img src="./core/packages/client/public/icons/CubeRoot-mark.svg" width="112" alt="">
+</picture>
 
-### Solve · Train · Analyze
+# [CubeRoot](https://cuberoot.me/en)
 
-Solvers, trainers, analytics, and statistics for the Rubik's Cube — all in the browser.
-
-[cuberoot.me](https://cuberoot.me/)
+Time your solves, train algorithms, explore WCA stats, and solve puzzles in your browser.
 
 </div>
 
----
+## Local development
+
+Use the Node.js version in [`.node-version`](./.node-version) and the pnpm version in [`core/package.json`](./core/package.json). Run these commands from the repository root.
+
+```sh
+cd core
+pnpm install --frozen-lockfile
+pnpm --filter @cuberoot/client dev
+```
+
+Open [127.0.0.1:3000](http://127.0.0.1:3000/). The local Web app proxies `/v1/*` requests to the production API by default.
+
+[Setup guide](./docs/contributing/local-setup.md) · [Development and checks](./docs/contributing/development.md) · [Contributing](./CONTRIBUTING.md)
 
 ## Architecture
 
-```
-cuberoot.me/
-├── core/                  pnpm + Turbo monorepo — active apps, shared packages, and offline jobs
-│   ├── apps/
-│   │   ├── api/           Hono + PostgreSQL 13 — WCA OAuth, reconstructions, algorithm library
-│   │   ├── mobile/        Capacitor — Android/iOS thin host
-│   │   ├── desktop/       Tauri — Windows/macOS thin host
-│   │   ├── harmony/       ArkTS + ArkWeb — HarmonyOS NEXT thin host
-│   │   ├── miniprogram/   WeChat/Douyin Mini Programs — independent runtime
-│   │   └── fmc-solver/    Rust FMC solver service — independent Cargo workspace and deployment
-│   ├── packages/
-│   │   ├── client/        React 19 + Next.js 16 (App Router) — current Web application
-│   │   ├── platform/      Retired read-only archive; its product surfaces now live under client /platform
-│   │   ├── app-ui/        Shared React product layer for all five installed clients
-│   │   └── ...            Reusable libraries with public package boundaries
-│   └── jobs/
-│       ├── alg-build/     Offline algorithm data and SQL generators
-│       ├── scramble-stats-build/ Offline scramble analysis generators
-│       ├── stats-build/   Offline WCA statistics and database-load pipeline
-│       └── wb-build/      Offline unofficial world-best dataset generator
-├── solver/                Rust solving engines — native analyzers and WebAssembly builds
-├── research/              Independent research projects
-│   └── reconer/           Automated reconstruction from speedsolving video
-├── tools/                 Upstream forks, served from static.cuberoot.me
-├── stats/                 Generated statistics snapshots (wca-data-latest Release; hydrate locally)
-├── ops/                   nginx vhosts, systemd units, deployment scripts
-└── docs/                  Design notes and runbooks
-```
+| Area | Where to look |
+| --- | --- |
+| Web | [`core/packages/client`](./core/packages/client/README.md) · Next.js |
+| API | [`core/apps/api`](./core/apps/api/README.md) · Hono and PostgreSQL |
+| Apps | [App platform guide](./docs/product/apps/README.md) · mobile, desktop, and mini programs |
+| Solvers | [`solver/`](./solver/README.md) · Rust and WebAssembly |
+| Data | [`core/jobs/`](./core/jobs/) · WCA statistics and data pipelines |
 
-**Frontend** React 19, Next.js 16 with Turbopack, TypeScript.
-**Backend** Hono on PostgreSQL 13, behind nginx.
-**Pipelines** TypeScript jobs over the WCA MySQL export, run by GitHub Actions.
-**Solving** Rust engines, compiled natively for services and statistics pipelines or to WebAssembly for the browser.
-**Hosting** A self-hosted server and Vercel, split by DNS.
-
----
-
-## Local development
-
-Contributions follow the [submission and self-review guide](./CONTRIBUTING.md).
-All contributors with write access may push directly to `main` after self-review
-and necessary validation, then verify CI and deployment results. PRs are optional;
-another person's approval is not required. Force pushes and main deletion remain blocked.
-
-Use the Node version in [`.node-version`](.node-version) and the pnpm version
-declared by [`core/package.json`](./core/package.json).
-
-```bash
-cd core
-pnpm install
-
-pnpm --filter @cuberoot/client dev         # http://127.0.0.1:3000/
-pnpm --filter @cuberoot/client typecheck   # tsgo, the fast daily check
-pnpm --filter @cuberoot/client test
-pnpm --filter @cuberoot/client build       # only with the dev server stopped
-```
-
-API calls are proxied to production through Next.js rewrites, so the full site
-runs without a local backend. Platform is part of that same frontend at
-`/platform`; the archived `packages/platform` app is excluded from the workspace
-and is not built or deployed.
-
-Architecture decisions, document status, and generated-artifact ownership are
-indexed in [`docs/README.md`](./docs/README.md).
-
----
+[Documentation index](./docs/README.md)
 
 ## Credits
 
-This project builds on a great deal of open-source work. The full list is at
-[cuberoot.me/support](https://cuberoot.me/support).
+[Open-source acknowledgments](https://cuberoot.me/en/support)
 
 ## License
 
-See [LICENSE](./LICENSE). Vendored upstream modules keep their original licenses.
+[GNU GPL v3](./LICENSE). Vendored components retain their original licenses.
