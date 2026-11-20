@@ -55,7 +55,8 @@ const APP_PLATFORMS = [
   { label: { zh: '抖音小程序', en: 'Douyin Mini Program' }, value: COMING_SOON, href: null },
   { label: { zh: '安卓', en: 'Android' }, value: COMING_SOON, href: null },
   { label: { zh: '鸿蒙', en: 'HarmonyOS' }, value: COMING_SOON, href: null },
-  { label: { zh: 'Win', en: 'Win' }, value: COMING_SOON, href: null },
+  { label: { zh: 'Win 安装版', en: 'Win installer' }, downloadHref: '/download#download-windows-title' },
+  { label: { zh: 'Win 微软商店', en: 'Win Store' }, value: COMING_SOON, href: null },
 ] as const;
 
 function ContactQr({ id, src, label, alt, href, children }: { id: string; src: string; label: string; alt: string; href?: string; children: ReactNode }) {
@@ -151,7 +152,11 @@ export default function ContactDetails() {
             {APP_PLATFORMS.map((platform) => (
               <span className="contact-app-platform-row" key={platform.label.en}>
                 <span className="contact-app-platform-label">
-                  {platform.href ? (
+                  {'downloadHref' in platform ? (
+                    <AppLink className="contact-app-download" href={platform.downloadHref} prefetch={false}>
+                      {tr(platform.label)}
+                    </AppLink>
+                  ) : platform.href ? (
                     <button type="button" className="contact-qr-trigger" aria-haspopup="dialog"
                       aria-label={tr(platform.label)} onClick={() => setWebsiteOpen(true)}>
                       <span>{tr(platform.label)}</span>

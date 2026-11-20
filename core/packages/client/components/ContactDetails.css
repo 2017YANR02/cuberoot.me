@@ -111,11 +111,17 @@
   min-width: 0;
 }
 
-.contact-app-platform-label .contact-qr-trigger {
+.contact-app-platform-label :is(.contact-qr-trigger, .contact-app-download) {
   justify-content: flex-start;
   width: 100%;
   min-height: 44px;
   white-space: normal;
+}
+
+.contact-app-download {
+  display: inline-flex;
+  align-items: center;
+  color: inherit;
 }
 
 .contact-app-platform-label a,
@@ -123,6 +129,10 @@
 .contact-app-platform-label .contact-qr-trigger,
 .contact-app-platform-label .contact-qr-trigger:hover {
   text-decoration: none;
+}
+
+.contact-app-platform-label .contact-app-download:hover {
+  text-decoration: underline;
 }
 
 .contact-app-platform-row > span:first-child,
