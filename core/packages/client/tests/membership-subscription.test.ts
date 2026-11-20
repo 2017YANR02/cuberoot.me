@@ -120,7 +120,7 @@ describe('membership subscription cancellation', () => {
     await render();
     expect(host.textContent).toContain('暂时无法查询最新状态');
     expect(host.textContent).not.toContain('本站暂无');
-    await click('刷新签约状态');
+    await click('刷新状态');
     expect(host.textContent).toContain('自动续费已签约');
   });
   it('disables cancellation when management is unavailable', async () => {
@@ -134,6 +134,23 @@ describe('membership subscription cancellation', () => {
     await render();
     expect(host.textContent).toContain('签约待确认');
     expect(button('取消自动续费').disabled).toBe(false);
+  });
+  it('offers resuming an unpaid checkout, then waits for closure without prompting for payment', async () => {
+    const checkout = { ...active, state: 'pending' as const, billingMethod: 'checkout' as const,
+      billingStatus: 'submitted' as const, syncStatus: 'unavailable' as const };
+    const closing = { ...checkout, cancellationRequested: true };
+    const closed = { ...closing, state: 'terminated' as const, billingStatus: 'failed' as const, syncStatus: 'verified' as const };
+    mocks.list.mockResolvedValueOnce(result([checkout])).mockResolvedValueOnce(result([closing])).mockResolvedValueOnce(result([closed]));
+    mocks.cancel.mockResolvedValue({ subscription: closing });
+    await render();
+    expect(host.textContent).toContain('选择同一套餐继续付款');
+    await click('关闭付款订单'); await click('确认关闭订单');
+    expect(host.textContent).toContain('正在等待微信确认关单');
+    expect(host.textContent).not.toContain('继续付款');
+    expect(button('重试关单').disabled).toBe(false);
+    await click('刷新状态');
+    expect(host.textContent).toContain('首笔付款未完成，订单已结束');
+    expect(host.textContent).toContain('返回会员页重新购买');
   });
   it('clears private records and confirmations immediately on logout', async () => {
     await render(); await click('取消自动续费');

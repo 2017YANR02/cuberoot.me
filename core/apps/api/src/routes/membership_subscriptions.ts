@@ -3,10 +3,10 @@ import { canPurchaseEnterpriseMembership } from '../utils/enterprise_membership.
 import { HTTPException } from 'hono/http-exception';
 import { bodyLimit } from 'hono/body-limit';
 import { requireAuth, optionalAuth, checkRateLimit } from '../utils/recon_helpers.js';
-import { listMembershipContracts, cancelMembershipContract, synchronizeMembershipNotification } from '../payment/membership-contracts.js';
+import { listMembershipContracts, synchronizeMembershipNotification } from '../payment/membership-contracts.js';
 import { verifyPapayNotification, verifyPapayPaymentNotification, papayConfigured, PapayUnavailable } from '../payment/wechat-papay.js';
 import { enrollMembership } from '../payment/membership-enrollment.js';
-import { reconcileRenewalDebit } from '../payment/membership-renewals.js';
+import { cancelMembershipContract, reconcileRenewalDebit } from '../payment/membership-renewals.js';
 import { renewalReleased, renewalPilotAllowed, renewalPlanConfigured, RENEWAL_TEMPLATES, RENEWAL_TERMS_VERSION } from '../payment/membership-renewal-policy.js';
 import { getIp } from '../utils/analytics_helpers.js';
 import QRCode from 'qrcode';

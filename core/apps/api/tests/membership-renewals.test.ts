@@ -3,8 +3,9 @@ import { randomUUID } from 'node:crypto';
 import postgres from 'postgres';
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { QueryRunner } from '../src/db/connection.js';
+import { ADMIN_WCA_IDS } from '@cuberoot/shared/admin';
 
-const state = vi.hoisted(() => ({ db: null as unknown, apply: vi.fn(), query: vi.fn(), enroll: vi.fn(), checkout: vi.fn(), close: vi.fn(), contract: vi.fn() }));
+const state = vi.hoisted(() => ({ db: null as unknown, apply: vi.fn(), query: vi.fn(), enroll: vi.fn(), checkout: vi.fn(), close: vi.fn(), contract: vi.fn(), revoke: vi.fn() }));
 vi.mock('../src/db/connection.js', () => ({
   query: async (text: string, params: unknown[] = []) => {
     let n = 0;
@@ -18,12 +19,13 @@ vi.mock('../src/db/connection.js', () => ({
 vi.mock('../src/payment/wechat-papay.js', async importOriginal => ({
   ...await importOriginal<typeof import('../src/payment/wechat-papay.js')>(),
   applyPapayDebit: state.apply, queryPapayDebit: state.query, createPapayEnrollment: state.enroll,
-  queryPapayContract: state.contract, createPapayCheckout: state.checkout, closePapayCheckout: state.close,
+  queryPapayContract: state.contract, cancelPapayContract: state.revoke, createPapayCheckout: state.checkout, closePapayCheckout: state.close,
 }));
-vi.mock('../src/payment/membership-payment-notify.js', () => ({ notifyMembershipPayment: vi.fn() }));
+vi.mock('../src/monitors/bark.js', () => ({ sendBark: vi.fn(async () => true) }));
+import { sendBark } from '../src/monitors/bark.js';
 import { enrollMembership } from '../src/payment/membership-enrollment.js';
 import { createMembershipCheckout, getMembershipCheckout } from '../src/payment/membership-checkout.js';
-import { runMembershipRenewalsOnce, reconcileRenewalDebit } from '../src/payment/membership-renewals.js';
+import { cancelMembershipContract, runMembershipRenewalsOnce, reconcileRenewalDebit } from '../src/payment/membership-renewals.js';
 import { renewalReleased, renewalPaymentChannels, RENEWAL_TERMS_VERSION } from '../src/payment/membership-renewal-policy.js';
 import { settleMembershipPayment } from '../src/payment/membership-settlement.js';
 
@@ -71,15 +73,18 @@ describe.skipIf(!databaseUrl)('renewal lifecycle in isolated PostgreSQL, synthet
       INSERT INTO organizations VALUES (1, 'active');
       INSERT INTO organization_members VALUES (1, 1, 'active', 'owner');
       INSERT INTO enterprise_verification_applications VALUES (1, 'verified');`);
-    for (const file of ['0046_membership.sql', '0181_enterprise_membership_plans.sql', '0222_membership_contracts.sql', '0276_membership_renewal_pipeline.sql', '0283_enterprise_membership_renewal.sql', '0333_membership_payment_enrollment.sql']) {
+    for (const file of ['0046_membership.sql', '0070_notifications.sql', '0181_enterprise_membership_plans.sql', '0222_membership_contracts.sql', '0276_membership_renewal_pipeline.sql', '0283_enterprise_membership_renewal.sql', '0333_membership_payment_enrollment.sql']) {
       await db.unsafe(readFileSync(new URL(`../migrations/${file}`, import.meta.url), 'utf8'));
     }
+    const dedupe = readFileSync(new URL('../migrations/0158_teaching_conversations.sql', import.meta.url), 'utf8').split('CREATE TABLE teaching_conversations')[0];
+    await db.unsafe(dedupe);
     await db.unsafe(`INSERT INTO membership_plans(slug,name_zh,name_en,period,price_cents,active) VALUES
       ('monthly_auto_renew','月','Month','month',2999,false), ('yearly_auto_renew','年','Year','year',29900,false)`);
   });
   beforeEach(async () => {
     vi.unstubAllEnvs();
-    await db.unsafe('TRUNCATE membership_renewal_debits, membership_contracts, membership_orders, memberships');
+    await db.unsafe('TRUNCATE membership_renewal_debits, membership_contracts, membership_orders, memberships, notifications');
+    vi.mocked(sendBark).mockClear();
     vi.stubEnv('WECHAT_PAPAY_APPID', 'wx0123456789abcdef'); vi.stubEnv('WECHAT_PAPAY_MCHID', '1234567890');
     vi.stubEnv('WECHAT_PAPAY_API_V2_KEY', '0123456789abcdef0123456789abcdef');
     vi.stubEnv('WECHAT_PAPAY_MONTHLY_APPROVED', '225492'); vi.stubEnv('WECHAT_PAPAY_YEARLY_APPROVED', '225493');
@@ -90,6 +95,7 @@ describe.skipIf(!databaseUrl)('renewal lifecycle in isolated PostgreSQL, synthet
     state.contract.mockReset().mockResolvedValue({ state: 'active', contractId: 'wx-contract' });
     state.checkout.mockReset().mockResolvedValue('weixin://wxpay/s/fixture');
     state.close.mockReset().mockResolvedValue(undefined);
+    state.revoke.mockReset().mockResolvedValue({ state: 'terminated', contractId: 'wx-contract' });
   });
   afterAll(async () => {
     vi.unstubAllEnvs(); await db?.end();
@@ -117,6 +123,9 @@ describe.skipIf(!databaseUrl)('renewal lifecycle in isolated PostgreSQL, synthet
     expect(await reconcileRenewalDebit(order.out_trade_no)).toBe(true);
     const [member] = await db.unsafe('SELECT * FROM memberships');
     expect(member.plan_slug).toBe(planSlug);
+    const notices = await db.unsafe('SELECT user_key, excerpt, title FROM notifications ORDER BY user_key');
+    expect(notices.map(notice => notice.user_key)).toEqual([...ADMIN_WCA_IDS].sort());
+    expect(notices[0]).toMatchObject({ excerpt: expect.stringContaining(planSlug), title: expect.stringContaining('299.00 CNY') });
   });
   async function activated() {
     const result = await enrollMembership('2017TEST01', consent, '127.0.0.1');
@@ -176,6 +185,7 @@ describe.skipIf(!databaseUrl)('renewal lifecycle in isolated PostgreSQL, synthet
     const retry = await createMembershipCheckout('2017TEST01', input, '127.0.0.1');
     expect(retry.outTradeNo).toBe(first.outTradeNo);
     expect(state.checkout).toHaveBeenCalledTimes(1);
+    expect(await db.unsafe('SELECT * FROM notifications')).toHaveLength(0);
     await db.unsafe("UPDATE membership_contracts SET state='active',contract_id='wx-contract'");
     await runMembershipRenewalsOnce();
     expect(state.apply).not.toHaveBeenCalled();
@@ -184,6 +194,10 @@ describe.skipIf(!databaseUrl)('renewal lifecycle in isolated PostgreSQL, synthet
     await Promise.all([reconcileRenewalDebit(first.outTradeNo), reconcileRenewalDebit(first.outTradeNo)]);
     const [contract] = await db.unsafe('SELECT debit_cycle FROM membership_contracts');
     expect(contract.debit_cycle).toBe(1);
+    expect(await db.unsafe('SELECT user_key, dedupe_key, excerpt FROM notifications ORDER BY user_key')).toEqual(
+      [...ADMIN_WCA_IDS].sort().map(user_key => ({ user_key, dedupe_key: `membership-payment:${first.outTradeNo}`, excerpt: expect.stringContaining('微信订阅首笔付款') })),
+    );
+    expect(sendBark).toHaveBeenCalledOnce();
     await runMembershipRenewalsOnce();
     expect(state.apply).not.toHaveBeenCalled();
     await db.unsafe("UPDATE memberships SET expires_at=now()+interval '23 hours'");
@@ -233,6 +247,51 @@ describe.skipIf(!databaseUrl)('renewal lifecycle in isolated PostgreSQL, synthet
     expect(state.close).toHaveBeenCalledWith(first.outTradeNo);
     expect((await db.unsafe('SELECT state FROM membership_contracts ORDER BY created_at'))).toEqual([{ state: 'terminated' }, { state: 'pending' }]);
   });
+  it('resumes an exited H5 checkout and closes it on request before the regular expiry', async () => {
+    vi.stubEnv('WECHAT_PAPAY_PAYMENT_H5_ENABLED', 'true');
+    vi.stubEnv('WECHAT_H5_ENABLED', 'true');
+    const input = { ...paymentMode(), clientType: 'wap' };
+    state.query.mockResolvedValue({ trade_state: 'NOTPAY' });
+    state.contract.mockRejectedValue(new Error('no authorization'));
+    state.checkout.mockResolvedValue('https://wx.tenpay.com/cgi-bin/mmpayweb-bin/checkmweb?prepay_id=fixture');
+
+    const first = await createMembershipCheckout('2017TEST01', input, '127.0.0.1');
+    expect((await createMembershipCheckout('2017TEST01', input, '127.0.0.1')).outTradeNo).toBe(first.outTradeNo);
+    expect(await cancelMembershipContract(first.subscriptionId, '2017TEST01')).toMatchObject({
+      kind: 'pending', subscription: { state: 'pending', cancellationRequested: true },
+    });
+    expect(state.close).not.toHaveBeenCalled();
+    expect(state.revoke).not.toHaveBeenCalled();
+    await expect(createMembershipCheckout('2017TEST01', input, '127.0.0.1')).rejects.toThrow('existing subscription');
+
+    await db.unsafe("UPDATE membership_renewal_debits SET submitted_at = now() - interval '6 minutes'");
+    state.close.mockRejectedValueOnce(new Error('close response lost'));
+    state.query.mockRejectedValueOnce(new Error('unverified'));
+    expect(await cancelMembershipContract(first.subscriptionId, '2017TEST01')).toMatchObject({ kind: 'pending' });
+    expect(state.close).toHaveBeenCalledWith(first.outTradeNo);
+    expect(await db.unsafe('SELECT status FROM membership_orders')).toEqual([{ status: 'pending' }]);
+
+    state.query.mockResolvedValue({ trade_state: 'CLOSED' });
+    await runMembershipRenewalsOnce();
+    expect(await db.unsafe('SELECT status FROM membership_orders')).toEqual([{ status: 'failed' }]);
+    expect(await cancelMembershipContract(first.subscriptionId, '2017TEST01')).toMatchObject({ kind: 'complete' });
+    expect(await db.unsafe('SELECT * FROM memberships')).toHaveLength(0);
+    expect((await createMembershipCheckout('2017TEST01', input, '127.0.0.1')).outTradeNo).not.toBe(first.outTradeNo);
+  });
+
+  it('reconciles a first payment that wins the race with a cancellation request', async () => {
+    const first = await createMembershipCheckout('2017TEST01', paymentMode(), '127.0.0.1');
+    await db.unsafe("UPDATE membership_renewal_debits SET submitted_at = now() - interval '6 minutes'");
+    state.close.mockRejectedValue(new Error('already paid'));
+    state.query.mockResolvedValue({ trade_state: 'SUCCESS', trade_type: 'NATIVE', total_fee: '2999', fee_type: 'CNY', transaction_id: 'paid-before-close' });
+    expect(await cancelMembershipContract(first.subscriptionId, '2017TEST01')).toMatchObject({
+      kind: 'pending', subscription: { state: 'active', cancellationRequested: true },
+    });
+    expect(await db.unsafe('SELECT status FROM membership_orders')).toEqual([{ status: 'paid' }]);
+    expect(await db.unsafe('SELECT * FROM memberships')).toHaveLength(1);
+    expect(await cancelMembershipContract(first.subscriptionId, '2017TEST01')).toMatchObject({ kind: 'complete' });
+  });
+
   function paid() {
     state.query.mockImplementation(async no => ({ trade_state: 'SUCCESS', out_trade_no: no, trade_type: 'PAP',
       total_fee: '2999', fee_type: 'CNY', transaction_id: `tx${no}` }));
@@ -294,6 +353,14 @@ describe.skipIf(!databaseUrl)('renewal lifecycle in isolated PostgreSQL, synthet
     await runMembershipRenewalsOnce();
     expect(state.apply).toHaveBeenCalledTimes(2);
     expect(await db.unsafe('SELECT * FROM membership_renewal_debits')).toHaveLength(2);
+    const [next] = await db.unsafe('SELECT out_trade_no FROM membership_renewal_debits WHERE cycle=1');
+    await reconcileRenewalDebit(next.out_trade_no);
+    const notices = await db.unsafe('SELECT dedupe_key, excerpt FROM notifications ORDER BY id');
+    expect(notices.map(notice => notice.dedupe_key)).toEqual(
+      [no, next.out_trade_no].flatMap(orderNo => ADMIN_WCA_IDS.map(() => `membership-payment:${orderNo}`)),
+    );
+    expect(notices.at(-1)?.excerpt).toContain('微信自动续费');
+    expect(sendBark).toHaveBeenCalledTimes(2);
   });
   it('committed cancellation prevents new debits', async () => {
     await activated();

@@ -267,13 +267,12 @@ export default function MembershipPage() {
   }
 
   function renderPaymentChoice() {
-    const items = [
-      { value: 'renewal' as const, label: tr(MEMBERSHIP_COPY.renewal) },
-      { value: 'manual' as const, label: tr(MEMBERSHIP_COPY.manual) },
-    ];
-    return <CompactSelect className="mem-plan-tag" triggerClassName="mem-plan-mode-trigger" unstyledTrigger
+    const nextMode = paymentMode === 'renewal' ? 'manual' : 'renewal';
+    return <CompactSelect className="mem-plan-tag" triggerClassName="mem-plan-mode-trigger" unstyledTrigger align="center" showArrow
+      popupClassName="mem-plan-mode-popup"
       ariaLabel={tr({ zh: '付费方式', en: 'Payment method' })}
-      label={items.find(item => item.value === paymentMode)!.label} items={items} value={paymentMode}
+      label={tr(MEMBERSHIP_COPY[paymentMode])}
+      items={[{ value: nextMode, label: tr(MEMBERSHIP_COPY[nextMode]) }]}
       onChange={setPaymentMode} />;
   }
 

@@ -10,7 +10,7 @@
  * 邮件按收件人语言发(app_users.lang,0072);语言未知则双语回落 —— 见 rememberLang。
  */
 import jwt from 'jsonwebtoken';
-import { query } from '../db/connection.js';
+import { query, type QueryRunner } from '../db/connection.js';
 import { ADMIN_WCA_IDS } from '@cuberoot/shared/admin';
 import { emailConfigured, sendEmail } from './email.js';
 import { JWT_SECRET } from './session.js';
@@ -216,22 +216,16 @@ function mailBody(
   return { subject, html, text };
 }
 
-/**
- * 写入通知 + 旁路发邮件。收件人为空时直接返回。
- * 邮件不 await(fire-and-forget):常驻 pm2 进程,不存在 serverless 提前 kill。
- */
-export async function notify(input: NotifyInput): Promise<void> {
+/** Write only the inbox rows, using the caller's transaction when needed. */
+export async function insertNotifications(input: NotifyInput, run: QueryRunner) {
   const actor = input.actorKey;
   const targets = [...new Set(input.recipients.filter((r): r is string => !!r && r !== actor))];
-  if (targets.length === 0) return;
-
-  const kindText = KIND_TEXT[input.kind];
   const excerpt = input.excerpt.slice(0, 500);
   const title = input.title.slice(0, 200);
 
   const insertedTargets: string[] = [];
   for (const key of targets) {
-    const inserted = await query<{ id: number }>(
+    const inserted = await run<{ id: number }>(
       `INSERT INTO notifications (user_key, kind, actor_key, actor_name, title, excerpt, link, dedupe_key)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
        ON CONFLICT (user_key, kind, dedupe_key) WHERE dedupe_key IS NOT NULL DO NOTHING
@@ -240,8 +234,17 @@ export async function notify(input: NotifyInput): Promise<void> {
     );
     if (inserted.length) insertedTargets.push(key);
   }
+  return { insertedTargets, excerpt, title };
+}
 
-  if (input.email === false || !emailConfigured()) return;
+/**
+ * 写入通知 + 旁路发邮件。收件人为空时直接返回。
+ * 邮件不 await(fire-and-forget):常驻 pm2 进程,不存在 serverless 提前 kill。
+ */
+export async function notify(input: NotifyInput): Promise<void> {
+  const { insertedTargets, excerpt, title } = await insertNotifications(input, query);
+  if (insertedTargets.length === 0 || input.email === false || !emailConfigured()) return;
+  const kindText = KIND_TEXT[input.kind];
   void (async () => {
     for (const key of insertedTargets) {
       try {

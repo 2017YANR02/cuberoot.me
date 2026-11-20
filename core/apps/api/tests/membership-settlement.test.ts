@@ -4,7 +4,8 @@ import postgres from 'postgres';
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { QueryRunner } from '../src/db/connection.js';
 import { signXunhupay } from '@cuberoot/shared/payment';
-vi.mock('../src/payment/membership-payment-notify.js', () => ({ notifyMembershipPayment: vi.fn(async () => {}) }));
+import { ADMIN_WCA_IDS } from '@cuberoot/shared/admin';
+vi.mock('../src/monitors/bark.js', () => ({ sendBark: vi.fn(async () => true) }));
 
 const state = vi.hoisted(() => ({ db: null as unknown, alipayQuery: vi.fn(), wechatQuery: vi.fn() }));
 vi.mock('../src/db/connection.js', () => ({
@@ -27,11 +28,12 @@ vi.mock('../src/payment/wechat.js', () => ({ wechatConfigured: () => true, wecha
 vi.mock('../src/payment/airwallex.js', () => ({ airwallexAccountId: () => 'aw-merchant', airwallexChannelEnabled: () => false }));
 import { grantMembershipInTransaction, membershipPaymentEvidence, settleMembershipPayment, type MembershipPayment } from '../src/payment/membership-settlement.js';
 import { withTransaction } from '../src/db/connection.js';
-import { notifyMembershipPayment } from '../src/payment/membership-payment-notify.js';
+import { sendBark } from '../src/monitors/bark.js';
 
 describe('payment notice transaction boundary', () => {
   it.each(['commit', 'rollback', 'duplicate'] as const)('notifies only a committed new payment: %s', async (mode) => {
-    vi.mocked(notifyMembershipPayment).mockClear();
+    vi.mocked(sendBark).mockClear();
+    const storeNotice = vi.fn();
     const run: QueryRunner = async <T>(sql: string) => {
       let rows: unknown[] = [];
       if (sql.includes('SELECT * FROM membership_orders')) rows = [{
@@ -41,17 +43,22 @@ describe('payment notice transaction boundary', () => {
       }];
       if (sql.includes('SELECT slug, period')) rows = [{ slug: 'yearly', period: 'year', period_count: 1 }];
       if (sql.includes('INSERT INTO memberships')) rows = [{}];
+      if (sql.includes('INSERT INTO notifications')) {
+        storeNotice();
+        rows = [{ id: 1 }];
+      }
       return rows as T[];
     };
     const result = settleMembershipPayment(evidence(), merchant, async callback => {
       const value = await callback(run);
-      expect(notifyMembershipPayment).not.toHaveBeenCalled();
+      expect(storeNotice).toHaveBeenCalledTimes(mode === 'duplicate' ? 0 : ADMIN_WCA_IDS.length);
+      expect(sendBark).not.toHaveBeenCalled();
       if (mode === 'rollback') throw new Error('commit failed');
       return value;
     });
     if (mode === 'rollback') await expect(result).rejects.toThrow('commit failed');
     else await expect(result).resolves.toBe(mode === 'duplicate' ? 'duplicate' : 'settled');
-    expect(notifyMembershipPayment).toHaveBeenCalledTimes(mode === 'commit' ? 1 : 0);
+    expect(sendBark).toHaveBeenCalledTimes(mode === 'commit' ? 1 : 0);
   });
 });
 
@@ -93,8 +100,13 @@ describe.skipIf(!databaseUrl)('membership settlement with real isolated PostgreS
     db = postgres(databaseUrl!, { max: 12, connection: { search_path: schema, timezone: 'UTC', statement_timeout: 10000 }, onnotice: () => {} });
     state.db = db;
     await db.unsafe(`CREATE FUNCTION trg_set_updated_at() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN NEW.updated_at=NOW(); RETURN NEW; END $$;`);
-    await db.unsafe(readFileSync(new URL('../migrations/0046_membership.sql', import.meta.url), 'utf8'));
-    await db.unsafe(`INSERT INTO membership_plans(slug,name_zh,name_en,period,period_count,price_cents) VALUES('daily','日','Daily','day',1,1000)`);
+    for (const file of ['0046_membership.sql', '0070_notifications.sql']) {
+      await db.unsafe(readFileSync(new URL(`../migrations/${file}`, import.meta.url), 'utf8'));
+    }
+    const dedupe = readFileSync(new URL('../migrations/0158_teaching_conversations.sql', import.meta.url), 'utf8').split('CREATE TABLE teaching_conversations')[0];
+    await db.unsafe(dedupe);
+    await db.unsafe(`INSERT INTO membership_plans(slug,name_zh,name_en,period,period_count,price_cents)
+      VALUES('daily','日','Daily','day',1,1000), ('enterprise_monthly','企业月度','Enterprise monthly','month',1,1000)`);
     vi.stubEnv('ALIPAY_APP_ID', 'ali-app'); vi.stubEnv('WECHAT_MCHID', 'wx-merchant');
     vi.stubEnv('XUNHUPAY_APPID', 'xhp-app'); vi.stubEnv('XUNHUPAY_APPSECRET', 'synthetic-xhp-secret');
     routes = (await import('../src/routes/membership.js')).membershipRoutes;
@@ -105,26 +117,32 @@ describe.skipIf(!databaseUrl)('membership settlement with real isolated PostgreS
     if (admin) { await admin.unsafe(`DROP SCHEMA "${schema}" CASCADE`); await admin.end(); }
   });
   beforeEach(async () => {
-    await db.unsafe('TRUNCATE memberships, membership_orders');
+    await db.unsafe('TRUNCATE memberships, membership_orders, notifications');
+    vi.mocked(sendBark).mockClear();
     await db.unsafe("UPDATE membership_plans SET period='day', period_count=1 WHERE slug='daily'");
     state.alipayQuery.mockReset(); state.wechatQuery.mockReset();
   });
-  async function order(no = 'order-1', provider = 'wechat', txn: string | null = null) {
+  async function order(no = 'order-1', provider = 'wechat', txn: string | null = null, plan = 'daily') {
     await db.unsafe(`INSERT INTO membership_orders(out_trade_no,wca_id,name,plan_slug,amount_cents,currency,provider,provider_txn,pay_channel)
-      VALUES($1,'2017TEST01','Fixture','daily',1000,'CNY',$2,$3,'wechat')`, [no, provider, txn]);
+      VALUES($1,'2017TEST01','Fixture',$4,1000,'CNY',$2,$3,'wechat')`, [no, provider, txn, plan]);
   }
   const settle = (value = evidence()) => settleMembershipPayment(value, merchant);
   async function pending(no = 'order-1') {
     expect((await db.unsafe('SELECT status FROM membership_orders WHERE out_trade_no=$1', [no]))[0].status).toBe('pending');
     expect(await db.unsafe('SELECT * FROM memberships')).toHaveLength(0);
+    expect(await db.unsafe('SELECT * FROM notifications')).toHaveLength(0);
   }
 
-  it('settles once and handles exact repeated notifications without granting twice', async () => {
-    await order();
+  it.each(['daily', 'enterprise_monthly'])('settles %s once and only notifies super administrators', async plan => {
+    await order('order-1', 'wechat', null, plan);
     expect(await settle()).toBe('settled');
     const first = (await db.unsafe('SELECT expires_at FROM memberships'))[0].expires_at;
     expect(await settle()).toBe('duplicate');
     expect((await db.unsafe('SELECT expires_at FROM memberships'))[0].expires_at).toEqual(first);
+    expect(await db.unsafe('SELECT user_key, dedupe_key, link FROM notifications ORDER BY user_key')).toEqual(
+      [...ADMIN_WCA_IDS].sort().map(user_key => ({ user_key, dedupe_key: 'membership-payment:order-1', link: '/admin/users?tab=memberships' })),
+    );
+    expect(sendBark).toHaveBeenCalledOnce();
   });
   it.each([
     { amountMinor: 999 }, { amountMinor: 1001 }, { amountMinor: 0 }, { amountMinor: 1000.1 },

@@ -1,7 +1,7 @@
 /** Shared labels for membership cards, checkout and subscription management. */
 export const MEMBERSHIP_COPY = {
   renewal: { zh: '自动续费', en: 'Auto-renewal' },
-  manual: { zh: '购买本期', en: 'One-time purchase' },
+  manual: { zh: '单次购买', en: 'One-time purchase' },
   monthly: { zh: '个人月度会员', en: 'Personal monthly membership' },
   annual: { zh: '个人年度会员', en: 'Personal annual membership' },
   enterpriseMonthly: { zh: '企业月度会员', en: 'Enterprise monthly membership' },

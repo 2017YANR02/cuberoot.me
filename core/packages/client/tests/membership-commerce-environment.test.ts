@@ -76,16 +76,21 @@ describe('membership in the WeChat browser', () => {
       expect(host.querySelectorAll('.mem-plan-cta')).toHaveLength(1);
       const select = host.querySelector<HTMLButtonElement>('button[aria-label="付费方式"]')!;
       expect(select.textContent).toContain('自动续费');
+      expect(select.querySelector('.compact-select-arrow')).not.toBeNull();
       expect(host.querySelector('.mem-plan-amount')?.textContent).toBe('¥29.99');
       await act(async () => select.click());
-      const manual = [...document.querySelectorAll<HTMLElement>('[role="option"]')].find(item => item.textContent === '购买本期')!;
+      const options = [...document.querySelectorAll<HTMLElement>('[role="option"]')];
+      expect(options.map(item => item.textContent)).toEqual(['单次购买']);
+      const [manual] = options;
       await act(async () => manual.click());
-      expect(host.querySelector('button[aria-label="付费方式"]')?.textContent).toBe('购买本期');
+      expect(host.querySelector('button[aria-label="付费方式"]')?.textContent).toBe('单次购买');
       expect(host.querySelector('.mem-plan-amount')?.textContent).toBe('¥39.99');
       expect(host.textContent).toContain('灵活购买，无后续扣款');
       expect(host.querySelector('.mem-plan-cta')?.textContent).toBe('立即开通');
       await act(async () => (host.querySelector('.mem-plan-cta') as HTMLButtonElement).click());
       expect(mocks.login).toHaveBeenCalledTimes(2);
+      await act(async () => host.querySelector<HTMLButtonElement>('button[aria-label="付费方式"]')!.click());
+      expect([...document.querySelectorAll('[role="option"]')].map(item => item.textContent)).toEqual(['自动续费']);
     }
   });
 });

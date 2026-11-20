@@ -149,14 +149,17 @@
 .mem-plan.is-autorenew .mem-plan-cta:hover {
   background: color-mix(in srgb, var(--signal-success) 88%, black);
 }
-.mem-plan-tag {
+.compact-select.mem-plan-tag,
+.compact-select-popup.mem-plan-mode-popup {
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1.45;
+}
+.compact-select.mem-plan-tag {
   position: absolute;
   top: -10px;
   right: 16px;
-  padding: 2px 10px;
   border-radius: 999px;
-  font-size: 11px;
-  font-weight: 700;
   color: var(--accent-foreground);
   background: var(--accent);
 }
@@ -164,12 +167,22 @@
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  padding: 0;
+  padding: 2px 10px;
+  border-radius: inherit;
   border: 0;
   background: transparent;
   color: inherit;
   font: inherit;
   cursor: pointer;
+}
+.mem-plan-mode-trigger .compact-select-arrow {
+  color: inherit;
+}
+.mem-plan-mode-popup .compact-select-option {
+  padding: 4px 14px;
+  font-size: inherit;
+  text-align: center;
+  white-space: nowrap;
 }
 .mem-plan-name {
   font-size: 16px;

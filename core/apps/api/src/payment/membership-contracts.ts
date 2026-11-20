@@ -11,6 +11,7 @@ export interface MembershipContractRow extends PapayContract {
   period: 'month' | 'year';
   period_count: number;
   state: ContractState;
+  signing_method: 'pure' | 'payment';
   cancellation_requested_at: Date | string | null;
   verified_at: Date | string | null;
   created_at: Date | string;
@@ -42,15 +43,16 @@ export async function synchronizeMembershipContract(id: string, owner: string, c
       || row.plan_id !== notification.plan_id || row.contract_code !== notification.contract_code
       || (row.contract_id && row.contract_id !== notification.contract_id))) return null;
     if (row.state === 'terminated') return publicContract(row, 'verified');
+    // A checkout may still be awaiting its first payment, with no authorization to revoke.
+    const revoke = cancel && !(row.signing_method === 'payment' && row.state === 'pending' && !row.contract_id);
     let remote;
     try {
-      // Cancel directly: query errors must not prevent a user from requesting termination.
-      remote = cancel ? await cancelPapayContract(row)
+      remote = revoke ? await cancelPapayContract(row)
         : await queryPapayContract(notification ? { ...row, contract_id: notification.contract_id } : row, notification?.openid);
     } catch {
       // A timeout may mean WeChat acted but the reply was lost. Preserve the intent and
       // show a pending result; the next refresh queries the provider instead of inventing success.
-      if (!cancel) return publicContract(row, 'unavailable');
+      if (!revoke) return publicContract(row, 'unavailable');
       try { remote = await queryPapayContract(row); }
       catch { return publicContract(row, 'unavailable'); }
     }
@@ -87,20 +89,14 @@ export async function listMembershipContracts(owner: string) {
   return { subscriptions, managementAvailable: papayConfigured() };
 }
 
-export async function cancelMembershipContract(id: string, owner: string) {
+export async function requestMembershipCancellation(id: string, owner: string) {
   // This separate commit is deliberate: even if the provider is offline or the process
   // dies, a future debit worker must reject cancellation_requested_at IS NOT NULL.
-  const row = await withTransaction(async (tx) => {
+  return withTransaction(async (tx) => {
     if (!await lockOwner(tx, owner)) return null;
     const [saved] = await tx<MembershipContractRow>(
       `UPDATE membership_contracts SET cancellation_requested_at = COALESCE(cancellation_requested_at, now()),
          updated_at = now() WHERE id = ? AND wca_id = ? RETURNING *`, [id, owner]);
     return saved;
   });
-  if (!row) return { kind: 'missing' as const };
-  if (row.state === 'terminated') return { kind: 'complete' as const, subscription: publicContract(row, 'verified') };
-  if (!papayConfigured()) return { kind: 'unavailable' as const };
-  const subscription = await synchronizeMembershipContract(id, owner, true);
-  if (!subscription) return { kind: 'missing' as const };
-  return { kind: subscription.state === 'terminated' ? 'complete' as const : 'pending' as const, subscription };
 }

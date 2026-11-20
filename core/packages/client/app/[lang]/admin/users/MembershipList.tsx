@@ -87,7 +87,7 @@ export default function MembershipList({ onChanged }: { onChanged: () => void })
             <td>{member.lifetime ? t('永久', 'Lifetime') : fmtDate(member.expiresAt) || '—'}</td>
             <td>{member.active ? t('有效', 'Active') : t('已失效', 'Inactive')}</td>
             <td>{member.active && <button type="button" className="admin-users-page-button" disabled={revoking !== null} onClick={() => void revoke(member)}>
-              {revoking === member.wcaId ? t('正在撤销…', 'Revoking…') : t('撤销会员', 'Revoke membership')}
+              {revoking === member.wcaId ? t('正在撤销…', 'Revoking…') : t('撤销', 'Revoke')}
             </button>}</td>
           </tr>;
         })}</tbody>

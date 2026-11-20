@@ -11,6 +11,10 @@ import { cancelMySubscription, listMySubscriptions, type MembershipSubscription,
 import { fmtDate, fmtPrice } from '@/lib/membership-format';
 import '../membership.css';
 
+function isPendingCheckout(subscription: MembershipSubscription) {
+  return subscription.billingMethod === 'checkout' && subscription.billingStatus === 'submitted' && subscription.state === 'pending';
+}
+
 function CancellationConfirmation({ subscription, onClose, onConfirm }: {
   subscription: MembershipSubscription;
   onClose: () => void;
@@ -19,16 +23,19 @@ function CancellationConfirmation({ subscription, onClose, onConfirm }: {
   const t = useT();
   const dialog = useRef<HTMLDialogElement>(null);
   const backdrop = useModalBackdrop(onClose);
+  const checkout = isPendingCheckout(subscription);
   useEffect(() => { dialog.current?.showModal(); }, []);
   return (
     <dialog ref={dialog} className="mem-cancel-dialog" aria-labelledby="mem-cancel-title" aria-describedby="mem-cancel-description" onCancel={onClose} {...backdrop}>
       <div className="mem-cancel-body">
-      <h2 id="mem-cancel-title">{t('确认取消自动续费？', 'Cancel auto-renewal?')}</h2>
+      <h2 id="mem-cancel-title">{checkout ? t('关闭未付款订单？', 'Close this unpaid order?') : t('确认取消自动续费？', 'Cancel auto-renewal?')}</h2>
       <p>{fmtPrice(subscription.priceCents, subscription.currency)} / {subscription.periodCount} {subscription.period === 'year' ? t('年', 'year(s)') : t('个月', 'month(s)')}</p>
-      <p id="mem-cancel-description">{t('确认后将向微信申请解除此扣款授权。以微信确认结果为准，确认取消后不再发起后续续费扣款。已购买权益保留至已付服务期结束，本操作不会自动退款。', 'We will ask WeChat to revoke this debit authorization. Cancellation takes effect when WeChat confirms it, and no further renewal charges will be initiated. Paid benefits remain until the paid period ends. This does not issue a refund.')}</p>
+      <p id="mem-cancel-description">{checkout
+        ? t('微信确认关单后，你可以重新购买。订单刚创建时，微信需要等几分钟才允许关单。', 'You can start a new purchase once WeChat confirms closure. WeChat requires a short wait before a new order can be closed.')
+        : t('确认后将向微信申请解除此扣款授权。以微信确认结果为准，确认取消后不再发起后续续费扣款。已购买权益保留至已付服务期结束，本操作不会自动退款。', 'We will ask WeChat to revoke this debit authorization. Cancellation takes effect when WeChat confirms it, and no further renewal charges will be initiated. Paid benefits remain until the paid period ends. This does not issue a refund.')}</p>
       <div className="mem-subscription-actions">
-        <button type="button" className="mem-contact-save" onClick={onConfirm}>{t('确认取消自动续费', 'Confirm cancellation')}</button>
-        <button type="button" className="mem-contact-save" onClick={onClose}>{t('暂不取消', 'Keep auto-renewal')}</button>
+        <button type="button" className="mem-contact-save" onClick={onConfirm}>{checkout ? t('确认关闭订单', 'Confirm order closure') : t('确认取消自动续费', 'Confirm cancellation')}</button>
+        <button type="button" className="mem-contact-save" onClick={onClose}>{checkout ? t('保留订单', 'Keep order') : t('暂不取消', 'Keep auto-renewal')}</button>
       </div>
       </div>
     </dialog>
@@ -86,7 +93,7 @@ function SubscriptionManager() {
       const result = await cancelMySubscription(subscription.id, controller.signal);
       if (!alive.current || controller.signal.aborted) return;
       setData((current) => current && ({
-        ...current, subscriptions: current.subscriptions.map((item) => item.id === subscription.id ? result.subscription : item),
+        ...current, subscriptions: current.subscriptions.map((item) => item.id === subscription.id ? { ...item, ...result.subscription } : item),
       }));
     } catch {
       if (alive.current && !controller.signal.aborted) setCancelFailed(true);
@@ -103,35 +110,47 @@ function SubscriptionManager() {
   return (
     <section aria-label={t('我的自动续费', 'My subscriptions')} aria-busy={loading || busyId !== null}>
       <div className="mem-subscription-actions">
-        <button type="button" className="mem-contact-save" disabled={loading || busyId !== null} onClick={() => void refresh()}>{t('刷新签约状态', 'Refresh authorization status')}</button>
+        <button type="button" className="mem-contact-save" disabled={loading || busyId !== null} onClick={() => void refresh()}>{t('刷新状态', 'Refresh status')}</button>
       </div>
-      {loading && <p role="status">{t('正在查询签约状态…', 'Checking authorization status…')}</p>}
+      {loading && <p role="status">{t('正在查询付款和签约状态…', 'Checking payment and authorization status…')}</p>}
       {loadFailed && <p role="alert">{t('暂时无法查询最新状态，请重试。当前结果不能用于确认微信授权已取消。', 'The latest status could not be retrieved. Please retry. The current result cannot confirm that WeChat authorization has been cancelled.')}</p>}
       {cancelFailed && <p role="alert">{t('取消请求未得到确认。请以下方最新状态为准；若仍未取消，可刷新或重试取消。', 'The cancellation request was not confirmed. Check the latest status below; if it is still not cancelled, refresh or retry cancellation.')}</p>}
       {data && !data.managementAvailable && <p role="status">{t('本站微信退订服务暂不可用，请稍后重试；也可在微信支付的对应扣费服务中解除授权。', 'WeChat cancellation through this site is temporarily unavailable. Retry later, or revoke authorization in the corresponding WeChat Pay debit service.')}</p>}
       {data?.subscriptions.length === 0 && <p>{t('本站暂无与你当前账号关联的签约记录。这不代表微信中不存在扣款授权；如微信中有相关服务，请在微信核对。', 'There are no subscription records linked to your current account on this site. This does not establish that no debit authorization exists in WeChat. Check any relevant service in WeChat.')}</p>}
-      {data?.subscriptions.map((subscription) => (
-        <section className="mem-subscription" key={subscription.id} aria-label={subscription.period === 'year' ? t('连续包年', 'Annual auto-renewal') : t('连续包月', 'Monthly auto-renewal')}>
-          <h2>{subscription.period === 'year' ? t('连续包年', 'Annual auto-renewal') : t('连续包月', 'Monthly auto-renewal')}</h2>
+      {data?.subscriptions.map((subscription) => {
+        const checkout = isPendingCheckout(subscription);
+        const checkoutEnded = subscription.billingMethod === 'checkout' && subscription.billingStatus === 'failed' && subscription.state === 'terminated';
+        const label = subscription.period === 'year' ? t('连续包年', 'Annual auto-renewal') : t('连续包月', 'Monthly auto-renewal');
+        const status = checkoutEnded ? t('首笔付款未完成，订单已结束', 'Order ended before the first payment completed')
+          : checkout ? (subscription.cancellationRequested
+            ? t('正在等待微信确认关单', 'Waiting for WeChat to confirm order closure')
+            : t('首笔付款待完成', 'First payment pending'))
+            : subscription.state === 'terminated' ? t('自动续费已取消', 'Auto-renewal cancelled')
+              : subscription.cancellationRequested ? t('取消申请已提交，等待微信确认，尚未确认取消成功', 'Cancellation requested. Awaiting WeChat confirmation; cancellation is not yet confirmed.')
+                : subscription.state === 'active' ? t('自动续费已签约', 'Auto-renewal authorized') : t('签约待确认', 'Authorization pending confirmation');
+        return <section className="mem-subscription" key={subscription.id} aria-label={label}>
+          <h2>{label}</h2>
           <p>{fmtPrice(subscription.priceCents, subscription.currency)} / {subscription.periodCount} {subscription.period === 'year' ? t('年', 'year(s)') : t('个月', 'month(s)')}</p>
-          <p role="status">{subscription.state === 'terminated'
-            ? t('自动续费已取消', 'Auto-renewal cancelled')
-            : subscription.cancellationRequested
-              ? t('取消申请已提交，等待微信确认，尚未确认取消成功', 'Cancellation requested. Awaiting WeChat confirmation; cancellation is not yet confirmed.')
-              : subscription.state === 'active' ? t('自动续费已签约', 'Auto-renewal authorized') : t('签约待确认', 'Authorization pending confirmation')}</p>
-          {subscription.syncStatus === 'unavailable' && <p>{t('暂未取得微信最新状态。以下为本站保留的记录，请刷新核实。', 'The latest WeChat status is unavailable. This is the record retained by the site; refresh to verify.')}</p>}
+          <p role="status">{status}</p>
+          {!checkout && subscription.syncStatus === 'unavailable' && <p>{t('暂未取得微信最新状态。以下为本站保留的记录，请刷新核实。', 'The latest WeChat status is unavailable. This is the record retained by the site; refresh to verify.')}</p>}
           {subscription.verifiedAt && <p>{t('最近核实日期：', 'Last verified: ')}{fmtDate(subscription.verifiedAt)}</p>}
-          {subscription.billingStatus === 'submitted' && <p>{subscription.billingMethod === 'checkout'
-            ? t('首笔付款尚未确认，请完成微信支付后刷新。', 'The first payment is not confirmed. Complete WeChat checkout, then refresh.')
+          {checkout && (subscription.cancellationRequested
+            ? <p>{t('请等微信确认关单后再重新购买。你可以刷新查看结果。', 'Wait for WeChat to confirm closure before starting a new purchase. Refresh to check the result.')}</p>
+            : <p>{t('如果已退出微信收银台，可以返回会员页选择同一套餐继续付款。', 'If you left WeChat checkout, return to the membership page and select the same plan to continue.')} <AppLink href="/membership" prefetch={false}>{t('返回会员页', 'Return to membership')}</AppLink></p>)}
+          {!checkout && subscription.billingStatus === 'submitted' && (subscription.billingMethod !== 'checkout' || !subscription.cancellationRequested) && subscription.state !== 'terminated' && <p>{subscription.billingMethod === 'checkout'
+            ? t('首笔付款尚未确认，可刷新查看付款结果。', 'The first payment is not confirmed. Refresh to check the payment status.')
             : t('扣款处理中，可能包含微信通知后的 24 小时等待期。到账前不会延长会员，请勿重复购买。', 'Debit pending, possibly within WeChat’s 24-hour notice period. Membership extends after confirmed payment. Avoid purchasing again while this is pending.')}</p>}
           {subscription.billingStatus === 'paid' && <p>{t('本期付款已到账，会员权益已发放。', 'Payment for this period is confirmed and membership benefits have been granted.')}</p>}
           {subscription.billingMethod === 'checkout' && subscription.billingStatus === 'paid' && subscription.state === 'pending' && <p>{t('自动续费尚未确认。若付款时未开启自动续费，本次仅开通已付会员。', 'Auto-renewal is not confirmed. If you left it off at checkout, only the paid membership period is active.')}</p>}
-          {subscription.billingStatus === 'failed' && <p>{t('本期扣款未成功，未延长会员。请联系客服核对后处理，系统不会重复发起本期扣款。', 'This charge failed and membership was not extended. Contact support to reconcile it; the system will not submit this cycle again automatically.')}</p>}
+          {checkoutEnded && <p><AppLink href="/membership" prefetch={false}>{t('返回会员页重新购买', 'Return to membership to try again')}</AppLink></p>}
+          {!checkoutEnded && subscription.billingStatus === 'failed' && <p>{t('本期扣款未成功，未延长会员。请联系客服核对后处理，系统不会重复发起本期扣款。', 'This charge failed and membership was not extended. Contact support to reconcile it; the system will not submit this cycle again automatically.')}</p>}
           {subscription.state !== 'terminated' && <button type="button" className="mem-contact-save" disabled={loading || busyId !== null || !data.managementAvailable} onClick={() => setConfirm(subscription)}>
-            {busyId === subscription.id ? t('正在申请取消…', 'Requesting cancellation…') : subscription.cancellationRequested ? t('重试取消自动续费', 'Retry cancellation') : t('取消自动续费', 'Cancel auto-renewal')}
+            {busyId === subscription.id ? t('正在申请取消…', 'Requesting cancellation…')
+              : checkout ? (subscription.cancellationRequested ? t('重试关单', 'Retry closing order') : t('关闭付款订单', 'Close payment order'))
+                : subscription.cancellationRequested ? t('重试取消自动续费', 'Retry cancellation') : t('取消自动续费', 'Cancel auto-renewal')}
           </button>}
         </section>
-      ))}
+      })}
       {confirm && <CancellationConfirmation subscription={confirm} onClose={() => setConfirm(null)} onConfirm={() => void cancel(confirm)} />}
     </section>
   );

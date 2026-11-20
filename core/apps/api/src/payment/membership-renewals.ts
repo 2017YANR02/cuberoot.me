@@ -1,19 +1,46 @@
 import { randomBytes } from 'node:crypto';
 import { query, withTransaction } from '../db/connection.js';
 import { applyPapayDebit, closePapayCheckout, papayConfig, papayConfigured, queryPapayDebit } from './wechat-papay.js';
-import { synchronizeMembershipContract, type MembershipContractRow } from './membership-contracts.js';
+import { publicContract, requestMembershipCancellation, synchronizeMembershipContract, type MembershipContractRow } from './membership-contracts.js';
+import { pushMembershipPayment, recordMembershipPaymentNotice, type PaidMembershipNotice } from './membership-payment-notify.js';
 import { grantMembershipInTransaction } from './membership-settlement.js';
 import { renewalReleased, renewalPilotAllowed, renewalDebitAllowed, renewalPlanConfigured, RENEWAL_TEMPLATES, type RenewalSlug } from './membership-renewal-policy.js';
 
 type Contract = MembershipContractRow & { consented_at: Date | null; debit_cycle: number; next_debit_at: Date | null };
 type Debit = { out_trade_no: string; contract_id: string; cycle: number; status: string; trade_type: 'PAP' | 'NATIVE' | 'MWEB'; checkout_expires_at: Date | string | null };
 
+export async function cancelMembershipContract(id: string, owner: string) {
+  const row = await requestMembershipCancellation(id, owner);
+  if (!row) return { kind: 'missing' as const };
+  if (row.state === 'terminated') return { kind: 'complete' as const, subscription: publicContract(row, 'verified') };
+  if (!papayConfigured()) return { kind: 'unavailable' as const };
+
+  if (row.signing_method === 'payment' && row.state === 'pending' && !row.contract_id) {
+    const [first] = await query<{ out_trade_no: string }>(`SELECT d.out_trade_no FROM membership_renewal_debits d
+      JOIN membership_contracts c ON c.id = d.contract_id WHERE c.id = ? AND c.wca_id = ?
+      AND d.cycle = 0 AND d.trade_type <> 'PAP' AND d.status = 'submitted'`, [id, owner]);
+    if (first) {
+      try { await reconcileRenewalDebit(first.out_trade_no); }
+      catch { /* Keep the cancellation intent for the next reconciliation. */ }
+    }
+  }
+
+  const subscription = await synchronizeMembershipContract(id, owner, true);
+  if (!subscription) return { kind: 'missing' as const };
+  return { kind: subscription.state === 'terminated' ? 'complete' as const : 'pending' as const, subscription };
+}
+
 /** Provider callbacks only wake reconciliation. The signed query, saved order and merchant must all agree. */
 export async function reconcileRenewalDebit(orderNo: string): Promise<boolean> {
-  const [candidate] = await query<Debit>('SELECT * FROM membership_renewal_debits WHERE out_trade_no = ?', [orderNo]);
+  const [candidate] = await query<Debit & { close_requested: boolean }>(`SELECT d.*,
+      (c.signing_method = 'payment' AND c.state = 'pending' AND c.contract_id IS NULL
+        AND c.cancellation_requested_at IS NOT NULL AND d.submitted_at <= now() - interval '5 minutes') AS close_requested
+    FROM membership_renewal_debits d JOIN membership_contracts c ON c.id = d.contract_id
+    WHERE d.out_trade_no = ?`, [orderNo]);
   if (!candidate) return false;
-  if (candidate.status === 'submitted' && candidate.trade_type !== 'PAP' && candidate.checkout_expires_at
-    && new Date(candidate.checkout_expires_at).getTime() <= Date.now()) {
+  // WeChat V2 accepts a close request five minutes after order creation.
+  const expired = candidate.checkout_expires_at && new Date(candidate.checkout_expires_at).getTime() <= Date.now();
+  if (candidate.status === 'submitted' && candidate.trade_type !== 'PAP' && (expired || candidate.close_requested)) {
     try { await closePapayCheckout(orderNo); } catch { /* Query a paid or uncertain order; never assume closed. */ }
   }
   const remote = await queryPapayDebit(orderNo);
@@ -38,7 +65,8 @@ export async function reconcileRenewalDebit(orderNo: string): Promise<boolean> {
     return false;
   }
   const { appid, mchId } = papayConfig();
-  return withTransaction(async tx => {
+  let notice: PaidMembershipNotice | undefined;
+  const result = await withTransaction(async tx => {
     const [binding] = await tx<{ wca_id: string }>('SELECT wca_id FROM membership_contracts WHERE id = ?', [candidate.contract_id]);
     if (!binding) return false;
     await tx("SELECT id FROM app_users WHERE wca_id = ? OR 'u' || id::text = ? FOR UPDATE", [binding.wca_id, binding.wca_id]);
@@ -70,8 +98,13 @@ export async function reconcileRenewalDebit(orderNo: string): Promise<boolean> {
     // Notify one day before expiry. Calendar periods and lifetime behavior come from the existing grant function.
     await tx(`UPDATE membership_contracts SET debit_cycle = debit_cycle + 1,
       next_debit_at = ?::timestamptz - interval '24 hours' WHERE id = ?`, [membership.expires_at, contract.id]);
+    const paid = { orderNo, name: order.name, memberKey: order.wca_id, plan: contract.plan_slug,
+      amountMinor: order.amount_cents, currency: order.currency, channel: order.pay_channel, renewalCycle: debit.cycle };
+    if (await recordMembershipPaymentNotice(tx, paid)) notice = paid;
     return true;
   });
+  if (notice) void pushMembershipPayment(notice);
+  return result;
 }
 
 async function prepareDebit(id: string, owner: string): Promise<string | null> {

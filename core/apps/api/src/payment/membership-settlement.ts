@@ -1,6 +1,6 @@
 import { decimalToMinor, isRecord, requireText } from '@app-foundation/payments/core';
 import { withTransaction, type QueryRunner } from '../db/connection.js';
-import { notifyMembershipPayment, type PaidMembershipNotice } from './membership-payment-notify.js';
+import { pushMembershipPayment, recordMembershipPaymentNotice, type PaidMembershipNotice } from './membership-payment-notify.js';
 
 export type MembershipProvider = 'alipay' | 'wechat' | 'xunhupay' | 'airwallex';
 export interface MembershipPayment {
@@ -120,10 +120,11 @@ export async function settleMembershipPayment(
     await run(`UPDATE membership_orders SET status = 'paid', paid_at = NOW(), provider_txn = ?, raw_notify = ?::jsonb
       WHERE out_trade_no = ?`, [payment.transactionId, JSON.stringify(payment.raw), payment.orderNo]);
     await grantMembershipInTransaction(run, { wcaId: order.wca_id, name: order.name, plan, source: order.provider, orderNo: order.out_trade_no });
-    notice = { orderNo: order.out_trade_no, name: order.name, memberKey: order.wca_id, plan: order.plan_slug,
+    const paid = { orderNo: order.out_trade_no, name: order.name, memberKey: order.wca_id, plan: order.plan_slug,
       amountMinor: order.amount_cents, currency: order.currency, channel: order.pay_channel || order.provider };
+    if (await recordMembershipPaymentNotice(run, paid)) notice = paid;
     return 'settled' as const;
   });
-  if (notice) void notifyMembershipPayment(notice).catch(() => console.warn(`[membership] payment notification failed for ${payment.orderNo}`));
+  if (notice) void pushMembershipPayment(notice);
   return result;
 }
