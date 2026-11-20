@@ -40,10 +40,13 @@ describe('timer live sharing', () => {
     const original = state();
     const appearance = { timerFont: 'sans', timerFontScale: 1.2, scrambleFont: 'mono', scrambleFontScale: 0.8,
       soloLayout: { scrambleGap: 24, sourceGap: 12, timerGap: 28, cubeGap: 16, sourceScale: 1, cubeScale: 1.2 } };
+    const expected = { ...appearance, soloLayout: { ...appearance.soloLayout,
+      scrambleOffsetY: 0, sourceOffsetY: 0, timerOffsetY: 0, cubeOffsetY: 0,
+      hideCompetitionInfo: false, hideCubePreview: false } };
     const next = parseTimerLiveSnapshot({ ...original, state: { ...original.state,
       appearance: { ...appearance, privateNote: 'do not share' } } })!;
-    expect(next.state.appearance).toEqual(appearance);
-    expect(applyTimerLivePatch(original, diffTimerLiveSnapshot(original, next))?.state.appearance).toEqual(appearance);
+    expect(next.state.appearance).toEqual(expected);
+    expect(applyTimerLivePatch(original, diffTimerLiveSnapshot(original, next))?.state.appearance).toEqual(expected);
     const bounded = parseTimerLiveSnapshot({ ...original, state: { ...original.state,
       appearance: { timerFont: 'invalid', timerFontScale: 100, soloLayout: { timerGap: -10 } } } })!;
     expect(bounded.state.appearance?.timerFont).toBe('lcd');
