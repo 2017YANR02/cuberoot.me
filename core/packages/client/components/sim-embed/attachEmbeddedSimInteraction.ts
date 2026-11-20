@@ -76,7 +76,7 @@ export function attachEmbeddedSimInteraction({
     const crossingAt = (from: number, to: number) => Math.abs(to) <= snapAngle ? Infinity
       : Math.max(0, Math.min(1, (Math.sign(to) * snapAngle - from) / (to - from)));
     let snappedThisDrag = false;
-    let snapFrame = 0;
+    let snapFrame: number | null = null;
     let releasePoint: { x: number; y: number } | null = null;
     const toClientPoint = ({ x, y }: { x: number; y: number }) => {
       const bounds = dom.getBoundingClientRect();
@@ -89,7 +89,7 @@ export function attachEmbeddedSimInteraction({
       pick({ homeIndex: piece.initial, positionIndex: index, ...toClientPoint(releasePoint) });
     };
     const orbitWithSnap = (dx: number, dy: number) => {
-      if (snappedThisDrag || snapFrame || lockView) return;
+      if (snappedThisDrag || snapFrame !== null || lockView) return;
       const rotation = world.scene.rotation;
       const beforeX = rotation.x;
       const beforeY = rotation.y;
@@ -128,7 +128,7 @@ export function attachEmbeddedSimInteraction({
           world.scene.quaternion.copy(view).multiply(spin);
           snapFrame = requestAnimationFrame(animate);
         } else {
-          snapFrame = 0;
+          snapFrame = null;
           // Transfer the animated turn to the puzzle and keep the same viewing offsets.
           const committed = cube.twister.twist(action, true, true);
           rotation.set(fromX, fromY, 0);
@@ -150,19 +150,24 @@ export function attachEmbeddedSimInteraction({
     world.controller.userTwist.push(emit);
     if (pick) controller.taps.push(tap);
     toucher.init(dom, pick || snapAngle || fixedLayerView || onBlockedUserLayerTurn ? action => {
-      if (action.type === 'mousedown' || action.type === 'touchstart') snappedThisDrag = snapFrame !== 0;
+      if (action.type === 'mousedown' || action.type === 'touchstart') snappedThisDrag = snapFrame !== null;
       releasePoint = action.type === 'mouseup' || action.type === 'touchend' ? action : null;
       if (fixedLayerView) action.alt = false;
       controller.touch(action);
       releasePoint = null;
     } : controller.touch);
     return () => {
-      cancelAnimationFrame(snapFrame);
+      if (snapFrame !== null) {
+        cancelAnimationFrame(snapFrame);
+        snapFrame = null;
+      }
       toucher.destroy();
       const index = world.controller.userTwist.indexOf(emit);
       if (index >= 0) world.controller.userTwist.splice(index, 1);
-      const tapIndex = controller.taps.indexOf(tap);
-      if (tapIndex >= 0) controller.taps.splice(tapIndex, 1);
+      if (pick) {
+        const tapIndex = controller.taps.indexOf(tap);
+        if (tapIndex >= 0) controller.taps.splice(tapIndex, 1);
+      }
       controller.allowLayerTurn = null;
       controller.onBlockedLayerTurn = null;
       world.controller.onOrbit = null;
