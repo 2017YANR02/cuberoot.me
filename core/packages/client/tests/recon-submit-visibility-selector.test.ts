@@ -13,11 +13,17 @@ const visibilityRegion = form.slice(
 describe('recon submit visibility selector', () => {
   it('uses one select for all three persisted visibility values', () => {
     expect(visibilityRegion.match(/<select\b/g)).toHaveLength(1);
-    expect(visibilityRegion).toContain("value={form.visibility ?? 'public'}");
+    expect(visibilityRegion).toContain("value={communityDisabled ? 'private' : form.visibility ?? 'public'}");
     expect(visibilityRegion).toContain("setField('visibility', e.target.value as ReconSolve['visibility'])");
     expect(form).toContain("{ value: 'public'");
     expect(form).toContain("{ value: 'unlisted'");
     expect(form).toContain("{ value: 'private'");
+  });
+
+  it('forces private visibility in the restricted App UI and submission', () => {
+    expect(visibilityRegion).toContain('disabled={communityDisabled}');
+    expect(visibilityRegion).toContain("!communityDisabled || opt.value === 'private'");
+    expect(form).toContain("visibility: installedCommunityDisabled() ? 'private' : form.visibility");
   });
 
   it('shows only the selected option description below the menu', () => {
