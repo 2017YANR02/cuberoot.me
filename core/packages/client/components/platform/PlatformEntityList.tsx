@@ -5,8 +5,10 @@ import AppLink from '@/components/AppLink';
 import { entityStatusLabel } from '@/components/teaching/TeachingUi';
 import { useT } from '@/hooks/useT';
 import { PLATFORM_ACTION_LABELS } from '@/lib/platform-gateway';
+import { courseCatalogDetails } from '@/lib/platform-course-catalog';
 import type { PlatformActionId, PlatformEntity, PlatformRouteDefinition } from '@/lib/platform-types';
-import { localDetailHref } from './PlatformRouteHelpers';
+import { instructorApplicationStatus, localDetailHref } from './PlatformRouteHelpers';
+import { PlatformCourseCover, PlatformCourseLabels } from './PlatformCourseCatalog';
 
 function favoriteType(definition: PlatformRouteDefinition, item: PlatformEntity): 'course' | 'product' | 'event' | 'news' {
   const explicit = item.data?.targetType;
@@ -24,7 +26,7 @@ function platformStatusLabel(status: string, t: ReturnType<typeof useT>) {
     unpaid: ['待付款', 'Unpaid'], refunded: ['已退款', 'Refunded'], partially_refunded: ['部分退款', 'Partially refunded'],
     paid_out: ['已结算', 'Paid out'], reconciled: ['已对账', 'Reconciled'], unresolved: ['待核对', 'Unresolved'],
     resolved: ['已处理', 'Resolved'], disabled: ['已停用', 'Disabled'], sold_out: ['已售罄', 'Sold out'],
-    issued: ['已签发', 'Issued'], not_started: ['未开始', 'Not started'],
+    issued: ['已签发', 'Issued'], not_started: ['未开始', 'Not started'], unlisted: ['不公开列出', 'Unlisted'],
   };
   return labels[status] ? t(...labels[status]) : entityStatusLabel(status, t);
 }
@@ -83,15 +85,52 @@ export function PlatformEntityList({
   // Course API fields and publication statuses are not learner-facing content.
   const learnerContent = learnerCourses || definition.id === 'course-lesson';
   const orderContent = definition.resource === 'orders' || definition.resource === 'admin-orders';
+  if (definition.id === 'admin-applications') return <div className="platform-entity-list platform-application-list">
+    {items.map(item => {
+      const href = localDetailHref(definition, item);
+      const application = item.data?.application as Record<string, unknown> | undefined;
+      const specialties = Array.isArray(application?.specialties) ? application.specialties.filter((value): value is string => typeof value === 'string').join(t('、', ', ')) : '';
+      const submitted = typeof item.data?.createdAt === 'string' && Number.isFinite(Date.parse(item.data.createdAt)) ? new Date(item.data.createdAt).toLocaleString(t('zh-CN', 'en-US'), { dateStyle: 'medium', timeStyle: 'short' }) : '';
+      const pending = item.status === 'pending';
+      return <article className="platform-entity platform-application-list-row" key={item.id}>
+        <div className="platform-application-list-name"><h2>{item.title}</h2>{typeof item.data?.wcaId === 'string' && item.data.wcaId && <span>WCA ID: {item.data.wcaId}</span>}</div>
+        <div className="platform-application-list-info">{specialties && <p>{specialties}</p>}{submitted && <span>{t('申请时间', 'Submitted')} <time dateTime={String(item.data?.createdAt)}>{submitted}</time></span>}</div>
+        <span className="platform-status platform-application-status" data-application-state={item.status}>{instructorApplicationStatus(item.status ?? '', t)}</span>
+        {href && <AppLink href={href} className="platform-button" prefetch={false} aria-label={pending ? t(`审核${item.title}的申请`, `Review ${item.title}'s application`) : t(`查看${item.title}的申请`, `View ${item.title}'s application`)}>{pending ? t('审核', 'Review') : t('查看', 'View')}<ArrowRight aria-hidden /></AppLink>}
+      </article>;
+    })}
+  </div>;
   const orderStatuses: Record<string, string> = {
     pending_payment: t('待付款', 'Awaiting payment'), paid: t('已付款', 'Paid'),
     partially_fulfilled: t('部分完成', 'Partially fulfilled'), fulfilled: t('已完成', 'Completed'),
     cancelled: t('已取消', 'Cancelled'), expired: t('已过期', 'Expired'), refunded: t('已退款', 'Refunded'),
   };
+  const instructorCourses = definition.id === 'instructor-courses';
+  const renderActions = (item: PlatformEntity) => quickActions.length ? (
+    <div className="platform-row-actions">
+      {quickActions.map((action) => (
+        <button key={action} type="button" className="platform-text-button"
+          disabled={actionBusy === `${action}:${item.id}`}
+          onClick={() => {
+            if (action === 'admin-delete' && !window.confirm(t('确定归档这条记录吗？', 'Archive this record?'))) return;
+            if (action === 'delete-course' && !window.confirm(t('确定归档这门课程吗？', 'Archive this course?'))) return;
+            if (action === 'cancel-order' && !window.confirm(t('确定取消这笔订单吗？', 'Cancel this order?'))) return;
+            if (action === 'delete-note' && !window.confirm(t('确定删除这条笔记吗？', 'Delete this note?'))) return;
+            const payload = action === 'favorite'
+              ? { targetType: favoriteType(definition, item), active: definition.id !== 'account-favorites' }
+              : action === 'wishlist' ? { active: definition.id !== 'account-wishlist' }
+                : action === 'qr-toggle' ? { disabled: item.data?.status !== 'disabled' } : undefined;
+            onAction(action, item.id, payload);
+          }}>
+          {actionBusy === `${action}:${item.id}` ? t('处理中…', 'Working…') : t(PLATFORM_ACTION_LABELS[action].zh, PLATFORM_ACTION_LABELS[action].en)}
+        </button>
+      ))}
+    </div>
+  ) : null;
   return (
-    <div className={`platform-entity-list${learnerCourses ? ' platform-course-list' : ''}`}>
+    <div className={`platform-entity-list${learnerCourses ? ' platform-course-list' : ''}${instructorCourses ? ' platform-instructor-course-list' : ''}`}>
       {items.map((item) => {
-        const href = item.href?.startsWith('/') ? item.href : localDetailHref(definition, item);
+        const href = instructorCourses ? localDetailHref(definition, item) : item.href?.startsWith('/') ? item.href : localDetailHref(definition, item);
         const title = orderContent ? String(item.data?.orderNumber ?? item.title) : item.title;
         const amount = Number(item.data?.totalAmountMinor);
         const currency = typeof item.data?.currency === 'string' ? item.data.currency : '';
@@ -99,6 +138,32 @@ export function PlatformEntityList({
           ...(Number.isFinite(amount) && /^[A-Z]{3}$/.test(currency) ? [{ label: t('订单金额', 'Order total'), value: amount === 0 ? t('免费', 'Free') : new Intl.NumberFormat(undefined, { style: 'currency', currency }).format(amount / 100) }] : []),
           ...(typeof item.data?.createdAt === 'string' ? [{ label: t('下单时间', 'Created'), value: new Date(item.data.createdAt).toLocaleString(t('zh-CN', 'en-US')) }] : []),
         ] : entityDisplayFields(item, t);
+        if (instructorCourses && href) {
+          const details = courseCatalogDetails(item);
+          const lessonCount = Array.isArray(item.data?.lessons)
+            ? item.data.lessons.filter(lesson => lesson && typeof lesson === 'object' && (lesson as Record<string, unknown>).status !== 'archived').length
+            : details.lessonCount;
+          const courseFields = lessonCount !== undefined && item.data?.lessonCount == null
+            ? [{ label: t('课时', 'Lessons'), value: String(lessonCount) }, ...fields] : fields;
+          return <article key={item.id} className="platform-instructor-course-card" data-site-surface="panel">
+            <AppLink className="platform-instructor-course-card-main" href={href} prefetch={false}>
+              <PlatformCourseCover {...details} />
+              <div className="platform-instructor-course-card-info">
+                <div className="platform-instructor-course-card-title">
+                  <h2>{title}</h2>
+                  {item.status && <span className="platform-status" data-course-status={item.status}>{platformStatusLabel(item.status, t)}</span>}
+                </div>
+                <PlatformCourseLabels details={details} />
+                {item.summary && item.summary.trim() !== title.trim() && <p className="platform-course-card-summary">{item.summary}</p>}
+                {courseFields.length > 0 && <dl>{courseFields.map(field => <div key={field.label}><dt>{field.label}</dt><dd>{field.value}</dd></div>)}</dl>}
+              </div>
+            </AppLink>
+            <div className="platform-instructor-course-card-actions">
+              <AppLink className="platform-button" href={href} prefetch={false}>{t('管理课程', 'Manage course')}<ArrowRight aria-hidden /></AppLink>
+              {renderActions(item)}
+            </div>
+          </article>;
+        }
         return (
           <article className="platform-entity" key={item.id}>
             <div className="platform-entity-heading">
@@ -118,34 +183,7 @@ export function PlatformEntityList({
               </dl>
             ) : null}
             {learnerCourses && href ? <AppLink className="platform-button" href={href} prefetch={false}>{t('查看课程', 'View course')}<ArrowRight aria-hidden /></AppLink> : null}
-            {quickActions.length ? (
-              <div className="platform-row-actions">
-                {quickActions.map((action) => (
-                  <button
-                    key={action}
-                    type="button"
-                    className="platform-text-button"
-                    disabled={actionBusy === `${action}:${item.id}`}
-                    onClick={() => {
-                      if (action === 'admin-delete' && !window.confirm(t('确定归档这条记录吗？', 'Archive this record?'))) return;
-                      if (action === 'delete-course' && !window.confirm(t('确定归档这门课程吗？', 'Archive this course?'))) return;
-                      if (action === 'cancel-order' && !window.confirm(t('确定取消这笔订单吗？', 'Cancel this order?'))) return;
-                      if (action === 'delete-note' && !window.confirm(t('确定删除这条笔记吗？', 'Delete this note?'))) return;
-                      const payload = action === 'favorite'
-                        ? { targetType: favoriteType(definition, item), active: definition.id !== 'account-favorites' }
-                        : action === 'wishlist'
-                          ? { active: definition.id !== 'account-wishlist' }
-                          : action === 'qr-toggle'
-                            ? { disabled: item.data?.status !== 'disabled' }
-                            : undefined;
-                      onAction(action, item.id, payload);
-                    }}
-                  >
-                    {actionBusy === `${action}:${item.id}` ? t('处理中…', 'Working…') : t(PLATFORM_ACTION_LABELS[action].zh, PLATFORM_ACTION_LABELS[action].en)}
-                  </button>
-                ))}
-              </div>
-            ) : null}
+            {renderActions(item)}
           </article>
         );
       })}

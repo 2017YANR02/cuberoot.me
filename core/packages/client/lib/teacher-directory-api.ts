@@ -149,9 +149,9 @@ export async function fetchTeacherDirectory(): Promise<TeacherDirectoryEntry[]> 
   return data.entries.map(normalizeTeacherDirectoryEntry);
 }
 
-export async function fetchMyTeacherDirectory(): Promise<TeacherDirectoryEntry[]> {
+export async function fetchMyTeacherDirectory(signal?: AbortSignal): Promise<TeacherDirectoryEntry[]> {
   const data = await handleApi<{ entries: TeacherDirectoryEntryWire[] }>(
-    await sessionFetch(apiUrl('/v1/teachers/mine'), { headers: authHeaders(false) }),
+    await sessionFetch(apiUrl('/v1/teachers/mine'), { headers: authHeaders(false), signal }),
   );
   return data.entries.map(normalizeTeacherDirectoryEntry);
 }

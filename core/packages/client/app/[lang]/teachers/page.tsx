@@ -14,7 +14,7 @@ import { tr } from '@/i18n/tr';
 import { fetchMyTeacherDirectory, fetchTeacherDirectory, mergeTeacherDirectoryEntries, type TeacherDirectoryEntry } from '@/lib/teacher-directory-api';
 import { fetchTeacherLiveScripts, type TeacherLiveScript } from '@/lib/teacher-live-scripts-api';
 import { creatorProfileHrefForWcaId } from '@/lib/creator-profile';
-import { CONTACT_FIELDS, DIRECTORY_KINDS, URL_CONTACT_KEYS, directoryContactHref, directoryKindLabel, directoryModeLabel, directoryWebsiteLabel, localDirectoryTags, localDirectoryText } from './directory-data';
+import { CONTACT_FIELDS, DIRECTORY_KINDS, URL_CONTACT_KEYS, directoryContactHref, directoryKindLabel, directoryModeLabel, directoryWebsiteLabel, localDirectoryTags, localDirectoryText } from '@/lib/teacher-directory-presentation';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
 import { PlatformNavigationContext } from '@/lib/platform-navigation-context';
 

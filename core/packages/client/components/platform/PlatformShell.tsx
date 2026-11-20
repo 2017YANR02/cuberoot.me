@@ -2,7 +2,7 @@
 
 import { useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { usePathname } from 'next/navigation';
-import { BookOpen, Building2, CalendarDays, Compass, GraduationCap, LayoutDashboard, QrCode, ShoppingBag, UsersRound } from '@app-foundation/icons/lucide';
+import { ArrowRight, BookOpen, Building2, CalendarDays, Compass, GraduationCap, LayoutDashboard, QrCode, ShoppingBag, UsersRound } from '@app-foundation/icons/lucide';
 import PageBackLink from '@/components/PageBackLink';
 import AppLink from '@/components/AppLink';
 import dynamic from 'next/dynamic';
@@ -11,7 +11,7 @@ import { useT } from '@/hooks/useT';
 import { useLang } from '@/i18n/tr';
 import { useAuthUser, useIsAdmin } from '@/lib/auth-store';
 import { SEARCH_CARDS, isLandingSearchCardVisible } from '@/lib/landing-sections';
-import { platformParentHref, PLATFORM_PUBLIC_NAV } from '@/lib/platform-routes';
+import { isPlatformCourseClassroom, isPlatformInstructorCourseEditor, platformParentHref, PLATFORM_PUBLIC_NAV } from '@/lib/platform-routes';
 import { PLATFORM_ADMIN_NAV, PLATFORM_PERSONAL_ROUTES, PLATFORM_SECTION_NAV, platformAdminNavigationState, platformNavigationState, platformPathname, platformWorkspaceRoutes } from '@/lib/platform-navigation';
 import { PlatformNavigationContext, PlatformSearchContext, type PlatformSearchBinding, type PlatformSearchScope } from '@/lib/platform-navigation-context';
 import { PlatformScopedSearch } from './PlatformScopedSearch';
@@ -32,6 +32,11 @@ const AREA_ICONS = {
 const ADMIN_ICONS = { overview: LayoutDashboard, learning: BookOpen, teaching: GraduationCap,
   operations: CalendarDays, commerce: ShoppingBag, qr: QrCode } satisfies Record<(typeof PLATFORM_ADMIN_NAV)[number]['id'], typeof Compass>;
 
+function isLearningSpaceOutsideWorkspace(href: string): boolean {
+  const path = platformPathname(href);
+  return (path === '/platform' || path.startsWith('/platform/')) && !/^\/platform\/(instructor|admin)(\/|$)/.test(path);
+}
+
 export function PlatformShell({ children, shared = false }: { children: ReactNode; shared?: boolean }) {
   const hasShell = useContext(PlatformNavigationContext);
   // Shared rewrites can retain the previous route layout while the destination loads.
@@ -46,16 +51,32 @@ function PlatformShellContent({ children, shared }: { children: ReactNode; share
   const user = useAuthUser();
   const isAdmin = useIsAdmin();
   const [accountOpen, setAccountOpen] = useState(false);
-  const [searchBinding, setSearchBinding] = useState<PlatformSearchBinding | null>(null);
+  const [instructorAccess, setInstructorAccess] = useState<{ owner: string; active: boolean } | null>(null);
+  const owner = user ? String(user.uid ?? user.wcaId) : '';
   const { primary, secondary, definition } = platformNavigationState(pathname);
+  const showInstructorEntry = primary === 'teachers' && definition?.id !== 'teacher-apply';
+  const checkInstructor = Boolean(owner && (accountOpen || showInstructorEntry));
+  useEffect(() => {
+    if (!checkInstructor) return;
+    const controller = new AbortController();
+    setInstructorAccess(null);
+    void import('@/lib/platform-gateway').then(({ loadPlatformResource }) => loadPlatformResource('instructor-application', { params: {}, signal: controller.signal }))
+      .then(result => { if (!controller.signal.aborted) setInstructorAccess({ owner, active: result.items[0]?.data?.instructorStatus === 'active' }); })
+      .catch(() => { if (!controller.signal.aborted) setInstructorAccess({ owner, active: false }); });
+    return () => controller.abort();
+  }, [owner, checkInstructor, pathname]);
+  const isInstructor = instructorAccess?.owner === owner && instructorAccess.active;
+  const [searchBinding, setSearchBinding] = useState<PlatformSearchBinding | null>(null);
   const admin = isAdmin ? platformAdminNavigationState(definition) : null;
-  const searchScope: PlatformSearchScope | null = primary === 'community' ? 'forum'
+  const instructorWorkspace = definition?.area === 'instructor' && definition.id !== 'teacher-apply';
+  const instructorCourseEditor = isPlatformInstructorCourseEditor(definition?.id);
+  const showNavigation = !instructorWorkspace && definition?.id !== 'course-detail' && !isPlatformCourseClassroom(definition?.id);
+  const searchScope: PlatformSearchScope | null = definition?.id === 'instructor-courses' ? 'instructor-courses' : !showNavigation ? null : primary === 'community' ? 'forum'
     : primary === 'courses' ? (secondary === 'paths' ? 'paths' : 'courses')
     : primary === 'discover' && (secondary === 'events' || secondary === 'news') ? secondary : null;
   const searchRouteId = definition?.id;
   const searchOutlet = useMemo(() => searchScope ? { scope: searchScope, routeId: searchRouteId, bind: setSearchBinding } : null, [searchScope, searchRouteId]);
   const currentSearchBinding = searchBinding?.scope === searchScope && searchBinding.routeId === searchRouteId ? searchBinding : null;
-  const showNavigation = definition?.id !== 'course-detail';
   const sections = admin?.group.items ?? (primary ? PLATFORM_SECTION_NAV[primary] : []);
   const primaryLinks = admin ? PLATFORM_ADMIN_NAV.map(group => ({ ...group, href: group.items[0].href, Icon: ADMIN_ICONS[group.id] }))
     : PLATFORM_PUBLIC_NAV.map(item => ({ ...item, Icon: AREA_ICONS[item.id] }));
@@ -73,11 +94,28 @@ function PlatformShellContent({ children, shared }: { children: ReactNode; share
   }, [activeSecondary]);
   const segments = platformPathname(pathname).replace(/^\/platform\/?/, '').split('/').filter(Boolean).map(decodeURIComponent);
   const workspaceRoutes = platformWorkspaceRoutes(definition, Boolean(user), isAdmin);
+  const activeWorkspace = instructorWorkspace ? workspaceRoutes.filter(item => definition?.pattern === item.pattern || definition?.pattern.startsWith(`${item.pattern}/`)).sort((a, b) => b.pattern.length - a.pattern.length)[0]?.id : definition?.id;
+  const workspaceNav = workspaceRoutes.length > 0 && <nav className="platform-workspace-nav" aria-label={t('工作台功能', 'Workspace sections')} data-site-surface="panel">
+    {workspaceRoutes.map(item => <AppLink key={item.id} href={`/platform/${item.pattern}`} scroll={false} prefetch={false}
+      aria-current={activeWorkspace === item.id ? 'page' : undefined}>{t(item.title.zh, item.title.en)}</AppLink>)}
+  </nav>;
+  const contextNav = sections.length > 0 && <nav ref={admin ? adminContextNav : undefined} className={`platform-context-nav${admin ? ' platform-admin-context-nav' : ''}`} data-site-surface="heading" aria-label={t('当前栏目功能', 'Current section navigation')}>
+    {sections.map(item => <AppLink key={item.id} href={item.href} prefetch={false}
+      scroll={false} aria-current={item.id === activeSecondary ? 'page' : undefined}>{t(item.label.zh, item.label.en)}</AppLink>)}
+  </nav>;
   const cards = useMemo(() => SEARCH_CARDS.filter(card => isLandingSearchCardVisible(card, isAdmin)), [isAdmin]);
   const Content = shared ? 'div' : 'main';
 
   return <PlatformNavigationContext value={true}>
     <div className={`platform-shell${shared ? ' platform-shell--shared' : ''}`}>
+      {instructorWorkspace && !instructorCourseEditor && <header className="platform-instructor-navigation">
+        <div className="platform-instructor-masthead">
+          <PageBackLink fallback="/platform" label={t('返回学习空间', 'Back to Learning Space')} showLabel acceptEntry={isLearningSpaceOutsideWorkspace} />
+          <div className="platform-site-search">{searchScope ? <PlatformScopedSearch key={searchScope} lang={lang} scope={searchScope} binding={currentSearchBinding} />
+            : <LandingSearch cards={cards} lang={lang} workspaceEntry />}</div>
+        </div>
+        {workspaceNav}
+      </header>}
       {showNavigation && <>
         <header className="platform-masthead">
           <div className="page-back-heading platform-masthead-brand">
@@ -94,7 +132,7 @@ function PlatformShellContent({ children, shared }: { children: ReactNode; share
             items={[]} onChange={() => {}} panelContent={<>
               {PLATFORM_PERSONAL_ROUTES.map(item => <AppLink key={item.id} href={`/platform/${item.pattern}`} prefetch={false}
                 onClick={() => setAccountOpen(false)}>{t(item.title.zh, item.title.en)}</AppLink>)}
-              {(isAdmin || definition?.area === 'instructor' && definition.id !== 'teacher-apply') && <AppLink href="/platform/instructor" prefetch={false} onClick={() => setAccountOpen(false)}>{t('讲师工作台', 'Instructor workspace')}</AppLink>}
+              {isInstructor && <AppLink href="/platform/instructor" prefetch={false} onClick={() => setAccountOpen(false)}>{t('讲师工作台', 'Instructor workspace')}</AppLink>}
               {isAdmin && <>
                 <AppLink href="/platform/admin" prefetch={false} onClick={() => setAccountOpen(false)}>{t('管理', 'Administration')}</AppLink>
                 <AppLink href={SHOP_ROOT} prefetch={false} onClick={() => setAccountOpen(false)}>{t('商店', 'Shop')}</AppLink>
@@ -118,15 +156,12 @@ function PlatformShellContent({ children, shared }: { children: ReactNode; share
             </AppLink>;
           })}
         </nav>
-        {sections.length > 0 && <nav ref={admin ? adminContextNav : undefined} className={`platform-context-nav${admin ? ' platform-admin-context-nav' : ''}`} data-site-surface="heading" aria-label={t('当前栏目功能', 'Current section navigation')}>
-          {sections.map(item => <AppLink key={item.id} href={item.href} prefetch={false}
-            scroll={false} aria-current={item.id === activeSecondary ? 'page' : undefined}>{t(item.label.zh, item.label.en)}</AppLink>)}
-        </nav>}
+        {showInstructorEntry ? <div className="platform-teacher-context">
+          {contextNav}
+          {isInstructor && <AppLink href="/platform/instructor" className="platform-button platform-button-primary platform-instructor-entry" prefetch={false}><LayoutDashboard aria-hidden />{t('进入讲师工作台', 'Open instructor workspace')}<ArrowRight aria-hidden /></AppLink>}
+        </div> : contextNav}
 
-        {!admin && workspaceRoutes.length > 0 && <nav className="platform-workspace-nav" aria-label={t('工作台功能', 'Workspace sections')} data-site-surface="panel">
-          {workspaceRoutes.map(item => <AppLink key={item.id} href={`/platform/${item.pattern}`} scroll={false} prefetch={false}
-            aria-current={definition?.id === item.id ? 'page' : undefined}>{t(item.title.zh, item.title.en)}</AppLink>)}
-        </nav>}
+        {!admin && workspaceNav}
       </>}
       <Content className="platform-main" role={shared && definition?.kind !== 'canonical' ? 'main' : undefined}>
         <PlatformSearchContext value={searchOutlet}>{children}</PlatformSearchContext>

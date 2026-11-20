@@ -9,11 +9,13 @@ type StateKind = 'loading' | 'empty' | 'error' | 'permission';
 
 export function PlatformState({
   kind,
+  title,
   message,
   onRetry,
   permissionHref = '/account',
 }: {
   kind: StateKind;
+  title?: string;
   message?: string;
   onRetry?: () => void;
   permissionHref?: string;
@@ -54,7 +56,7 @@ export function PlatformState({
     <div className={`platform-state platform-state-${kind}`} role={kind === 'error' ? 'alert' : 'status'}>
       <Icon aria-hidden />
       <div>
-        <strong>{content.title}</strong>
+        <strong>{title ?? content.title}</strong>
         {content.detail ? <p>{content.detail}</p> : null}
         <div className="platform-state-actions">
           {kind === 'error' && onRetry ? (

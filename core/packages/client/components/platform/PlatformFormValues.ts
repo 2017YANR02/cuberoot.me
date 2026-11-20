@@ -30,6 +30,10 @@ export function payloadValue(spec: FieldSpec, value: string | boolean): unknown 
 }
 
 export function validatePayload(routeId: string, payload: Record<string, unknown>, t: ReturnType<typeof useT>): string | null {
+  if (routeId === 'teacher-apply') {
+    if (['city', 'experience', 'contact'].some(key => typeof payload[key] !== 'string' || !payload[key])) return t('请填写所在城市、教学经历及联系方式。', 'Enter your city, teaching experience and contact details.');
+    if (!Array.isArray(payload.specialties) || !payload.specialties.length || payload.specialties.length > 30 || payload.specialties.some(value => typeof value !== 'string' || value.length > 120)) return t('请填写擅长方向，最多 30 项，每项不超过 120 个字符。', 'Enter between 1 and 30 specialties, up to 120 characters each.');
+  }
   if (routeId === 'admin-qr') {
     const rawLinks = payload.links;
     if (!Array.isArray(rawLinks)) return t('落地页链接必须是 JSON 数组。', 'Landing links must be a JSON array.');
@@ -72,9 +76,18 @@ export function validatePayload(routeId: string, payload: Record<string, unknown
   if ((routeId === 'admin-event' || routeId === 'admin-event-new') && String(payload.endsAt ?? '') < String(payload.startsAt ?? '')) {
     return t('结束日期不能早于开始日期。', 'End date cannot be earlier than start date.');
   }
-  if ((routeId === 'admin-course' || routeId === 'admin-course-new' || routeId === 'instructor-course')
+  if ((routeId === 'admin-course' || routeId === 'admin-course-new' || routeId === 'instructor-course' || routeId === 'instructor-course-new')
     && payload.memberAmountMinor != null && Number(payload.memberAmountMinor) > Number(payload.baseAmountMinor)) {
     return t('权益价格不能高于基础价格。', 'The entitlement amount cannot exceed the base amount.');
+  }
+  if (['admin-course', 'admin-course-new', 'instructor-course', 'instructor-course-new'].includes(routeId)) {
+    const presentation = payload.presentation;
+    if (presentation && typeof presentation === 'object') {
+      const fields = presentation as Record<string, unknown>;
+      if (['coverUrl', 'mobileCoverUrl'].some(key => fields[key] && (typeof fields[key] !== 'string' || !/^(?:https?:\/\/|\/(?![/\\]))/i.test(String(fields[key]).trim())))) {
+        return t('封面地址无效，请更换或移除封面后再保存。', 'The cover address is invalid. Replace or remove the cover before saving.');
+      }
+    }
   }
   return null;
 }

@@ -345,14 +345,18 @@
         "/v1/platform/instructor/applications/current"
       ],
       "writeApi": [
-        "/v1/platform/instructor/applications"
+        "/v1/platform/instructor/applications",
+        "/v1/platform/instructor/applications/:id/withdraw",
+        "/v1/platform/instructor/profile-link"
       ],
       "permission": "public directory; signed-in applicant",
       "sideEffects": "application state and shared teacher profile linkage",
       "metadata": "public directory and profiles; application noindex",
       "emptyState": "shared directory empty or application status",
       "tests": [
-        "platform_routes_contract.test.ts"
+        "platform_routes_contract.test.ts",
+        "platform_instructor_application.test.ts",
+        "platform_role_access.test.ts"
       ],
       "implementationStatus": "implemented",
       "reviewStatus": "reviewed"

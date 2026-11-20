@@ -6,6 +6,16 @@ export function titleFor(t: ReturnType<typeof useT>, definition: PlatformRouteDe
   return t(definition.title.zh, definition.title.en);
 }
 
+export function instructorApplicationStatus(status: string, t: ReturnType<typeof useT>): string {
+  switch (status) {
+    case 'pending': return t('待审核', 'Pending review');
+    case 'approved': return t('已通过', 'Approved');
+    case 'rejected': return t('已拒绝', 'Rejected');
+    case 'withdrawn': return t('已撤回', 'Withdrawn');
+    default: return t('状态待确认', 'Status unavailable');
+  }
+}
+
 export function localDetailHref(definition: PlatformRouteDefinition, entity: PlatformEntity): string | null {
   const base = `/platform/${definition.pattern}`.replace(/\/$/, '');
   if (definition.kind !== 'collection') return null;

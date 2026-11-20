@@ -15,6 +15,14 @@ const LEARNING_WORKSPACE_IDS = new Set(['account-courses', 'account-notes', 'acc
   'instructor', 'instructor-students', 'instructor-earnings', 'leaderboard']);
 export function isPlatformLearningWorkspace(id: string): boolean { return LEARNING_WORKSPACE_IDS.has(id); }
 
+export function isPlatformCourseClassroom(id?: string): boolean {
+  return id === 'course-lesson' || Boolean(id?.startsWith('course-section-'));
+}
+
+export function isPlatformInstructorCourseEditor(id?: string): boolean {
+  return id === 'instructor-course-new' || id === 'instructor-course';
+}
+
 export function platformCourseSectionsIncludedBy(slug: string): readonly (typeof PLATFORM_COURSE_SECTIONS)[number][] {
   return PLATFORM_COURSE_SECTIONS.filter(section => section.slug === slug || (slug === 'core' && section.slug === 'trial'));
 }
@@ -92,7 +100,7 @@ export const PLATFORM_ROUTES: readonly PlatformRouteDefinition[] = [
   canonical('teacher-script-page', 'teachers/scripts/:rest*', 'discover', 'public', text('直播话术', 'Livestream scripts'), '/teachers/scripts/:rest*'),
   canonical('teacher-live-guide', 'teachers/live-guide', 'discover', 'public', text('直播指南', 'Livestream guide'), '/teachers/live-guide'),
   route({ id: 'teacher-detail', pattern: 'teachers/:id', area: 'discover', access: 'public', kind: 'canonical', title: text('讲师详情', 'Teacher details'), resource: 'teachers', canonicalHref: '/teachers?teacher=:id', canonicalLabel: text('打开讲师名录', 'Open the teacher directory'), description: text('直接读取主站讲师名录；旧 Platform 自动播种的演示讲师未导入，找不到时请返回主站名录。', 'This reads the main-site teacher directory directly. Auto-seeded demo teachers from the legacy Platform were not imported; use the main-site directory when an entry is not found.') }),
-  route({ id: 'teacher-apply', pattern: 'teachers/apply', area: 'instructor', access: 'account', kind: 'form', title: text('申请成为讲师', 'Apply as an instructor'), resource: 'instructor-application', actions: ['apply-instructor'], description: text('提交教学经历、擅长方向和联系方式，申请进度与主站账号绑定。', 'Submit teaching experience, specialties, and contact details; application status follows the main-site account.') }),
+  route({ id: 'teacher-apply', pattern: 'teachers/apply', area: 'instructor', access: 'account', kind: 'form', title: text('申请成为讲师', 'Apply as an instructor'), resource: 'instructor-application', actions: ['apply-instructor', 'withdraw-instructor-application', 'link-instructor-profile'], description: text('提交教学经历、擅长方向和联系方式，申请进度与主站账号绑定。', 'Submit teaching experience, specialties, and contact details; application status follows the main-site account.') }),
   route({ id: 'community', pattern: 'community', area: 'community', access: 'public', kind: 'canonical', title: text('社区', 'Community'), resource: 'community', canonicalHref: '/forum', canonicalLabel: text('打开完整论坛', 'Open the full forum') }),
   canonical('community-feed', 'community/feed', 'community', 'public', text('动态', 'Feed'), '/forum/feed'),
   canonical('community-mine', 'community/mine', 'community', 'account', text('我的讨论', 'My discussions'), '/forum/mine'),
@@ -131,10 +139,12 @@ export const PLATFORM_ROUTES: readonly PlatformRouteDefinition[] = [
   route({ id: 'account-shipping', pattern: 'account/shipping', area: 'account', access: 'account', kind: 'collection', title: text('收货地址', 'Shipping addresses'), resource: 'shipping-addresses', actions: ['save-shipping-address', 'delete-shipping-address'], description: text('管理实物商品订单使用的收货地址。', 'Manage shipping addresses used by physical-product orders.') }),
 
   route({ id: 'instructor', pattern: 'instructor', area: 'instructor', access: 'instructor', kind: 'dashboard', title: text('讲师工作台', 'Instructor workspace'), resource: 'instructor-courses' }),
-  route({ id: 'instructor-courses', pattern: 'instructor/courses', area: 'instructor', access: 'instructor', kind: 'collection', title: text('讲师课程', 'Instructor courses'), resource: 'instructor-courses', actions: ['save-instructor-course', 'delete-course'] }),
+  route({ id: 'instructor-courses', pattern: 'instructor/courses', area: 'instructor', access: 'instructor', kind: 'collection', title: text('讲师课程', 'Instructor courses'), resource: 'instructor-courses', actions: ['delete-course'] }),
+  route({ id: 'instructor-course-new', pattern: 'instructor/courses/new', area: 'instructor', access: 'instructor', kind: 'form', title: text('创建课程', 'Create course'), resource: 'instructor-application', actions: ['save-instructor-course'] }),
   route({ id: 'instructor-course', pattern: 'instructor/courses/:id', area: 'instructor', access: 'instructor', kind: 'detail', title: text('管理课程', 'Manage course'), resource: 'instructor-courses', actions: ['save-instructor-course', 'delete-course', 'save-course-lesson', 'delete-course-lesson', 'save-course-quiz', 'delete-course-quiz'] }),
   route({ id: 'instructor-students', pattern: 'instructor/students', area: 'instructor', access: 'instructor', kind: 'collection', title: text('学员', 'Learners'), resource: 'instructor-students', actions: ['issue-certificate'] }),
   route({ id: 'instructor-earnings', pattern: 'instructor/earnings', area: 'instructor', access: 'instructor', kind: 'dashboard', title: text('讲师收入', 'Instructor earnings'), resource: 'instructor-earnings' }),
+  route({ id: 'instructor-profile', pattern: 'instructor/profile', area: 'instructor', access: 'instructor', kind: 'detail', title: text('讲师资料', 'Instructor profile'), resource: 'instructor-application' }),
 
   route({ id: 'certificate', pattern: 'cert/:code', area: 'learning', access: 'public', kind: 'detail', title: text('证书验证', 'Certificate verification'), resource: 'certificate' }),
   route({ id: 'qr', pattern: 'qr/:code', area: 'discover', access: 'public', kind: 'detail', title: text('二维码入口', 'QR entry'), resource: 'qr' }),

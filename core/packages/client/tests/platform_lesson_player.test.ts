@@ -482,6 +482,7 @@ it('shows instructor display names and only links an actual teacher directory en
     expect(instructors.querySelectorAll('a')).toHaveLength(1);
     expect(instructors.querySelector('a')?.getAttribute('href')).toBe('/platform/teachers/public-teacher');
     expect(host.querySelector('.platform-course-overview > .back-home')?.getAttribute('href')).toBe('/platform');
+    expect(host.querySelector('.platform-course-overview > .back-home span:not(.sr-only)')?.textContent).toBe('返回学习中心');
   } finally { await act(async () => root.unmount()); }
 });
 

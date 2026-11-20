@@ -82,7 +82,10 @@ const actionContracts: ActionContract[] = [
   { action: 'start-payment', input: { resourceId: 'order id', payload: { provider: 'wechat' } }, method: 'POST', path: '/v1/platform/orders/order%20id/payment-attempts' },
   { action: 'cancel-order', input: { resourceId: 'order id' }, method: 'POST', path: '/v1/platform/orders/order%20id/cancel' },
   { action: 'apply-instructor', input: { payload: { experience: 'Teaching', specialties: ['3x3'], contact: 'mail@example.com' } }, method: 'POST', path: '/v1/platform/instructor/applications' },
+  { action: 'withdraw-instructor-application', route: 'teacher-apply', input: { resourceId: 'application id' }, method: 'POST', path: '/v1/platform/instructor/applications/application%20id/withdraw' },
+  { action: 'link-instructor-profile', route: 'teacher-apply', input: { payload: { teacherEntryId: 7 } }, method: 'POST', path: '/v1/platform/instructor/profile-link' },
   { action: 'save-instructor-course', route: 'instructor-course', input: { resourceId: 'course id', payload: { titleZh: '课程' } }, method: 'PATCH', path: '/v1/platform/instructor/courses/course%20id' },
+  { action: 'save-instructor-course', route: 'instructor-course-new', input: { payload: { titleZh: '课程' } }, method: 'POST', path: '/v1/platform/instructor/courses' },
   { action: 'delete-course', route: 'instructor-course', input: { resourceId: 'course id' }, method: 'DELETE', path: '/v1/platform/instructor/courses/course%20id' },
   { action: 'save-course-lesson', route: 'instructor-course', input: { resourceId: 'course id', payload: { titleZh: '课时' } }, method: 'POST', path: '/v1/platform/instructor/courses/course%20id/lessons' },
   { action: 'delete-course-lesson', route: 'instructor-course', input: { resourceId: 'course id', payload: { lessonId: 'lesson id' } }, method: 'DELETE', path: '/v1/platform/instructor/courses/course%20id/lessons/lesson%20id' },
@@ -122,6 +125,10 @@ const actionContracts: ActionContract[] = [
 afterEach(() => vi.unstubAllGlobals());
 
 describe('Platform route conservation', () => {
+  it('resolves course creation before the instructor course detail route', () => {
+    expect(matchPlatformRoute(['instructor', 'courses', 'new'])?.definition).toMatchObject({ id: 'instructor-course-new', kind: 'form', access: 'instructor' });
+    expect(matchPlatformRoute(['instructor', 'courses', 'course-1'])?.definition.id).toBe('instructor-course');
+  });
   it('reserves real online competition routes independently of generic events and the preview', () => {
     expect(matchPlatformRoute(['events', 'online'])?.definition.id).toBe('online-competitions');
     expect(matchPlatformRoute(['events', 'online', 'event-123'])).toMatchObject({ definition: { id: 'online-competition' }, params: { id: 'event-123' } });
@@ -338,6 +345,30 @@ describe('Platform gateway contracts', () => {
     expect(result.items[0].data).toEqual(record);
   });
 
+  it('uses the actual instructor role separately from the historical application', async () => {
+    const application = { id: 'app-1', status: 'approved' };
+    const fetchMock = vi.fn(async () => response({ application, instructor: { id: 'instructor-1', status: 'archived' } }));
+    vi.stubGlobal('fetch', fetchMock);
+    expect((await loadPlatformResource('instructor-application', { params: {} })).items[0]?.data).toMatchObject({ instructorStatus: 'archived' });
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  it.each([200, 403])('checks actual lecturer access on the older application-only API (%s)', async status => {
+    const fetchMock = vi.fn(async (input: RequestInfo | URL) => requestPath(input).includes('/applications/current')
+      ? response({ application: { id: 'app-1', status: 'approved' } })
+      : new Response(JSON.stringify(status === 200 ? { courses: [] } : { error: 'Active instructor access required' }), { status, headers: { 'Content-Type': 'application/json' } }));
+    vi.stubGlobal('fetch', fetchMock);
+    const result = await loadPlatformResource('instructor-application', { params: {} });
+    expect(result.items[0]?.data).toMatchObject({ instructorStatus: status === 200 ? 'active' : 'unknown', instructorProfileKnown: false });
+    expect(requestPath(fetchMock.mock.calls[1][0])).toBe('/v1/platform/instructor/courses?page=1&pageSize=1');
+  });
+
+  it('recognizes an active instructor with no application history on the older API', async () => {
+    const fetchMock = vi.fn(async (input: RequestInfo | URL) => response(requestPath(input).includes('/applications/current') ? { application: null } : { courses: [] }));
+    vi.stubGlobal('fetch', fetchMock);
+    expect((await loadPlatformResource('instructor-application', { params: {} })).items[0]?.data).toMatchObject({ instructorStatus: 'active', instructorProfileKnown: false });
+  });
+
   it('preserves server pagination and business data while localizing only display fields', async () => {
     const course = { id: 'c1', titleZh: '课程', titleEn: 'Course', summaryZh: '中文', summaryEn: 'English', baseAmountMinor: 1250 };
     const fetchMock = vi.fn(async (_input: RequestInfo | URL) => response({ categories: ['beginner'], courses: [course], total: 61, page: 3, pageSize: 20 }));
@@ -364,7 +395,7 @@ describe('Platform gateway contracts', () => {
   });
 
   it('provides a real GET for every native resource route', async () => {
-    const fetchMock = vi.fn(async (_input: RequestInfo | URL, _init?: RequestInit) => response({ items: [] }));
+    const fetchMock = vi.fn(async (input: RequestInfo | URL, _init?: RequestInit) => response(requestPath(input).includes('/instructor/applications/current') ? { application: null, instructor: null, profiles: [] } : { items: [] }));
     vi.stubGlobal('fetch', fetchMock);
     for (const route of PLATFORM_ROUTES.filter((candidate) => candidate.resource)) {
       await loadPlatformResource(route.resource as PlatformResource, {

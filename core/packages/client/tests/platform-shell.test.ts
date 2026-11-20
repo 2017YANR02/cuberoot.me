@@ -8,13 +8,14 @@ import { describe, expect, it, vi } from 'vitest';
 vi.mock('next/navigation', () => ({ usePathname: vi.fn(() => '/zh/platform/teachers') }));
 vi.mock('@/hooks/useT', () => ({ useT: () => (zh: string) => zh }));
 vi.mock('@/i18n/tr', () => ({ useLang: () => 'zh', tr: ({ zh }: { zh: string }) => zh, T: ({ zh }: { zh: string }) => zh }));
-const auth = vi.hoisted(() => ({ admin: false, user: null as null | { uid: number } }));
+const auth = vi.hoisted(() => ({ admin: false, user: null as null | { uid: number }, loadInstructor: vi.fn() }));
 const navigate = vi.hoisted(() => vi.fn());
 vi.mock('@/lib/auth-store', () => ({ useAuthUser: () => auth.user, useIsAdmin: () => auth.admin }));
+vi.mock('@/lib/platform-gateway', async original => ({ ...await original<object>(), loadPlatformResource: auth.loadInstructor }));
 vi.mock('@/hooks/useEntryRouter', () => ({ useEntryRouter: () => ({ push: navigate }) }));
 vi.mock('@/lib/landing-sections', () => ({ SEARCH_CARDS: [], isLandingSearchCardVisible: () => true }));
 vi.mock('@/components/LandingSearch', () => ({ default: () => createElement('input', { 'aria-label': '搜索' }) }));
-vi.mock('@/components/PageBackLink', () => ({ default: () => createElement('a', { href: '/platform' }, '返回') }));
+vi.mock('@/components/PageBackLink', () => ({ default: ({ fallback = '/platform', label, showLabel }: { fallback?: string; label?: string; showLabel?: boolean }) => createElement('a', { href: fallback, className: 'back-home' }, showLabel ? label : '返回') }));
 vi.mock('@/components/CompactSelect', () => ({ CompactSelect: () => null }));
 vi.mock('@/components/WcaAuth', () => ({ default: () => null }));
 vi.mock('@/components/AppLink', () => ({
@@ -29,6 +30,57 @@ import { PlatformNavigationContext } from '@/lib/platform-navigation-context';
 Object.assign(globalThis, { IS_REACT_ACT_ENVIRONMENT: true });
 
 describe('Platform shell ownership during shared-page navigation', () => {
+  it('shows a prominent directory entry only for actual active instructors, including admins who teach', async () => {
+    const host = document.createElement('div'), root = createRoot(host);
+    const pathname = vi.mocked(usePathname);
+    pathname.mockReturnValue('/zh/platform/teachers');
+    const render = async () => {
+      await act(async () => root.render(createElement(PlatformShell, { children: null })));
+      await act(async () => { await vi.dynamicImportSettled(); });
+    };
+    try {
+      auth.loadInstructor.mockReset();
+      auth.user = null; await render();
+      expect(auth.loadInstructor).not.toHaveBeenCalled();
+      expect(host.querySelector('.platform-instructor-entry')).toBeNull();
+      for (const [uid, role, admin] of [[1, 'active', false], [2, 'archived', false], [3, 'suspended', false], [4, 'unknown', true], [5, 'active', true]] as const) {
+        auth.user = { uid }; auth.admin = admin;
+        auth.loadInstructor.mockResolvedValue({ items: [{ data: { instructorStatus: role } }] });
+        await render();
+        await vi.waitFor(() => expect(auth.loadInstructor).toHaveBeenCalledWith('instructor-application', expect.objectContaining({ params: {} })));
+        expect(host.querySelector('.platform-instructor-entry')?.getAttribute('href') ?? null).toBe(role === 'active' ? '/platform/instructor' : null);
+      }
+      pathname.mockReturnValue('/zh/platform/instructor'); await render();
+      expect(host.querySelector('.platform-instructor-entry')).toBeNull();
+    } finally { auth.user = null; auth.admin = false; auth.loadInstructor.mockReset(); pathname.mockReturnValue('/zh/platform/teachers'); await act(async () => root.unmount()); }
+  });
+  it.each([false, true])('keeps exactly the five instructor workspace sections and hides public chrome (admin=%s)', async admin => {
+    auth.user = { uid: 1 }; auth.admin = admin;
+    const host = document.createElement('div'), root = createRoot(host);
+    const pathname = vi.mocked(usePathname);
+    try {
+      for (const [path, selected] of [['instructor', 'instructor'], ['instructor/courses', 'instructor/courses'], ['instructor/profile', 'instructor/profile']]) {
+        pathname.mockReturnValue(`/zh/platform/${path}`);
+        await act(async () => root.render(createElement(PlatformShell, { children: null })));
+        expect(host.querySelector('.platform-masthead')).toBeNull();
+        expect(host.querySelector('.platform-nav')).toBeNull();
+        expect(host.querySelector('.platform-instructor-masthead .platform-site-search')).not.toBeNull();
+        expect(host.querySelector('.platform-instructor-masthead .back-home')?.textContent).toBe('返回学习空间');
+        expect(host.querySelector('.platform-instructor-masthead .back-home')?.getAttribute('href')).toBe('/platform');
+        expect(host.querySelector('[data-search-scope="instructor-courses"]') !== null).toBe(path === 'instructor/courses');
+        expect([...host.querySelectorAll('.platform-workspace-nav a')].map(link => link.getAttribute('href'))).toEqual(['instructor','instructor/courses','instructor/students','instructor/earnings','instructor/profile'].map(href => `/platform/${href}`));
+        expect(host.querySelector('.platform-workspace-nav [aria-current="page"]')?.getAttribute('href')).toBe(`/platform/${selected}`);
+      }
+      for (const path of ['instructor/courses/new', 'instructor/courses/course-1']) {
+        pathname.mockReturnValue(`/zh/platform/${path}`);
+        await act(async () => root.render(createElement(PlatformShell, { children: null })));
+        expect(host.querySelector('.platform-instructor-navigation')).toBeNull();
+        expect(host.querySelector('.platform-site-search')).toBeNull();
+        expect(host.querySelector('.platform-workspace-nav')).toBeNull();
+        expect(host.querySelector('.platform-nav')).toBeNull();
+      }
+    } finally { auth.user = null; auth.admin = false; pathname.mockReturnValue('/zh/platform/teachers'); await act(async () => root.unmount()); }
+  });
   it('switches between forum, course, path, discovery and general search without reusing the previous scope draft', async () => {
     const host = document.createElement('div'), root = createRoot(host);
     const pathname = vi.mocked(usePathname);
@@ -187,7 +239,7 @@ describe('Platform shell ownership during shared-page navigation', () => {
     }
   });
 
-  it('omits shared navigation only while displaying course details', async () => {
+  it('omits shared navigation on course details and classroom pages, then restores it on the catalog', async () => {
     const host = document.createElement('div');
     const root = createRoot(host);
     const pathname = vi.mocked(usePathname);
@@ -207,8 +259,11 @@ describe('Platform shell ownership during shared-page navigation', () => {
       expect(host.querySelector(chrome)).toBeNull();
       expect(host.querySelector('main h1')?.textContent).toBe('课程名称');
 
-      await render('/zh/platform/courses/example/sections/core', '正式课');
-      expect(host.querySelectorAll(chrome)).toHaveLength(4);
+      for (const path of ['sections/introduction', 'sections/trial', 'sections/core', 'learn/lesson-1']) {
+        await render(`/zh/platform/courses/example/${path}`, '课程内容');
+        expect(host.querySelector(chrome)).toBeNull();
+        expect(host.querySelector('main h1')?.textContent).toBe('课程内容');
+      }
 
       await render('/zh/platform/courses', '全部课程');
       expect(host.querySelectorAll(chrome)).toHaveLength(4);

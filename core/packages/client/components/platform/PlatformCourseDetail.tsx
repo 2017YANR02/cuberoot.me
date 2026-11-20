@@ -83,7 +83,7 @@ export function PlatformCourseDetail({ course, lessons }: { course: PlatformEnti
 
   return <div className="platform-course-detail-content">
     <header className="platform-course-overview">
-      <PageBackLink fallback="/platform" label={t('返回学习空间', 'Back to Learning')} acceptEntry={isLearningSpaceEntry} />
+      <PageBackLink fallback="/platform" label={t('返回学习中心', 'Back to Learning Center')} showLabel acceptEntry={isLearningSpaceEntry} />
       <div className="platform-course-overview-title">
         <h1>{course.title}</h1>
         {instructors.length > 0 ? <div className="platform-course-instructors">

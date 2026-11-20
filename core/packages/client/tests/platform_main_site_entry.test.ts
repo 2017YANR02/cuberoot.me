@@ -155,7 +155,7 @@ describe('Platform capabilities stay in canonical main-site entrypoints', () => 
     expect(shell).toMatch(/className=\{\x60platform-nav platform-glass/);
     expect(view).not.toContain('className="platform-course-portrait"');
     expect(view).not.toContain('className="platform-portrait-link platform-glass"');
-    expect(view).toContain('const showDescription = !courseSection && !courseDetail && !inviteManager && !orderPage && Boolean(pageDescription);');
+    expect(view).toContain('const showDescription = !courseClassroom && !courseDetail && !inviteManager && !orderPage && Boolean(pageDescription);');
     expect(view).toContain('{showDescription && <p>{pageDescription}</p>}');
     expect(view).not.toContain('course?.summary');
     expect(styles).toContain('@supports not (backdrop-filter: blur(1px))');

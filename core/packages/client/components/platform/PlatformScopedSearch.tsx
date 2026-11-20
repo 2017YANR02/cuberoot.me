@@ -14,7 +14,7 @@ export function PlatformScopedSearch({ lang, scope, binding }: { lang: 'zh' | 'e
   const t = useT();
   const router = useEntryRouter();
   const minimumLength = scope === 'forum' ? 2 : 1;
-  const resultPath = scope === 'forum' ? '/platform/community/search' : `/platform/${scope}`;
+  const resultPath = scope === 'forum' ? '/platform/community/search' : scope === 'instructor-courses' ? '/platform/instructor/courses' : `/platform/${scope}`;
   const submitBoundQuery = binding?.submit;
   const committedQuery = submitBoundQuery ? binding?.query : undefined;
   const [draft, setDraft] = useState(committedQuery ?? '');
@@ -40,6 +40,7 @@ export function PlatformScopedSearch({ lang, scope, binding }: { lang: 'zh' | 'e
     : scope === 'paths' ? t('搜索学习路径', 'Search learning paths')
     : scope === 'events' ? t('搜索活动', 'Search events')
     : scope === 'news' ? t('搜索资讯', 'Search news')
+    : scope === 'instructor-courses' ? t('搜索讲师课程', 'Search instructor courses')
     : t('搜索课程、讲师或学习内容', 'Search courses, instructors or topics');
   return <div className="landing-search">
     <div className="landing-search-controls">

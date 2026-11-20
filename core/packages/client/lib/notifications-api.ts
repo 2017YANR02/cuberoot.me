@@ -10,6 +10,7 @@ export type NotificationKind =
   | 'recon_alt' | 'recon_comment' | 'recon_reply'
   | 'forum_thread' | 'forum_reply' | 'forum_report'
   | 'forum_review' | 'forum_approved' | 'forum_rejected'
+  | 'instructor_approved' | 'instructor_rejected'
   | 'comp_reg'
   | 'comp_announcement' | 'comp_registration_open' | 'comp_registration_close'
   | 'wca_record'

@@ -1,9 +1,10 @@
 'use client';
 
 import PageBackLink from '@/components/PageBackLink';
+import LangToggle from '@/components/LangToggle';
 import { currentEntryHref } from '@/lib/entry-navigation';
 import { useContext, useEffect, useMemo, useRef, useState } from 'react';
-import { ArrowRight, ExternalLink, Search } from '@app-foundation/icons/lucide';
+import { ArrowRight, BookOpen, ExternalLink, Plus, Search } from '@app-foundation/icons/lucide';
 import { parseAsFloat, parseAsInteger, parseAsString, parseAsStringEnum, useQueryState } from 'nuqs';
 import AppLink from '@/components/AppLink';
 import Paginator from '@/components/wca-stats/Paginator';
@@ -15,13 +16,13 @@ import { useLang } from '@/i18n/tr';
 import { nextQuery, useAuthUser, useIsAdmin } from '@/lib/auth-store';
 import { executePlatformAction, loadPlatformResource, localizePlatformEntity, PlatformPermissionError } from '@/lib/platform-gateway';
 import { WebSessionRestoreError } from '@/lib/session-fetch';
-import { fillPlatformParams, isPlatformLearningWorkspace, PLATFORM_ROUTES } from '@/lib/platform-routes';
+import { fillPlatformParams, isPlatformCourseClassroom, isPlatformInstructorCourseEditor, isPlatformLearningWorkspace, PLATFORM_ROUTES } from '@/lib/platform-routes';
 import { platformNavigationState, platformWorkspaceRoutes } from '@/lib/platform-navigation';
 import { PlatformNavigationContext, usePlatformSearchBinding, type PlatformFilterGroup } from '@/lib/platform-navigation-context';
 import type { PlatformActionId, PlatformActionResult, PlatformEntity, PlatformResourceResult, PlatformRouteDefinition } from '@/lib/platform-types';
 import { PlatformState } from './PlatformState';
 import dynamic from 'next/dynamic';
-import { titleFor } from './PlatformRouteHelpers';
+import { instructorApplicationStatus, titleFor } from './PlatformRouteHelpers';
 import { PlatformAboutView, PlatformOfflineView, PlatformAccountView, PlatformCanonicalView } from './PlatformInfoViews';
 import { COURSE_TOPIC_IDS, courseCatalogDetails, loadCourseCatalog, loadLegacyCourseLessonAccess, matchesCourseCatalog } from '@/lib/platform-course-catalog';
 import { PlatformCourseCards, PlatformCourseToolbar } from './PlatformCourseCatalog';
@@ -40,6 +41,8 @@ const PlatformQrAdmin = dynamic(() => import('./PlatformQrAdmin').then(module =>
 const PlatformHomepageAdmin = dynamic(() => import('./PlatformHomepageAdmin').then(module => module.PlatformHomepageAdmin),
   { ssr: false, loading: () => <PlatformState kind="loading" /> });
 const PlatformLearningWorkspace = dynamic(() => import('./PlatformLearningWorkspace').then(module => module.PlatformLearningWorkspace),
+  { ssr: false, loading: () => <PlatformState kind="loading" /> });
+const PlatformInstructorProfile = dynamic(() => import('./PlatformInstructorProfile').then(module => module.PlatformInstructorProfile),
   { ssr: false, loading: () => <PlatformState kind="loading" /> });
 const PlatformLanding = dynamic(() => import('./PlatformLanding').then(module => module.PlatformLanding),
   { loading: () => <PlatformState kind="loading" /> });
@@ -68,7 +71,7 @@ export function PlatformResourceRouteView({
   const [rawPage, setPage] = useQueryState('page', parseAsInteger.withDefault(1));
   const updateQuery = (value: string) => { void setPage(null); void setQuery(value || null); };
   const [rawPageSize, setPageSize] = useQueryState('pageSize', parseAsInteger.withDefault(20));
-  const [category, setCategory] = useQueryState('category', parseAsString.withDefault(''));
+  const [category, setCategory] = useQueryState('category', parseAsString.withDefault(definition.id === 'admin-applications' ? 'pending' : ''));
   const [puzzle, setPuzzle] = useQueryState('puzzle', parseAsString.withDefault(''));
   const page = Math.max(1, rawPage);
   const pageSize = [20, 50, 100].includes(rawPageSize) ? rawPageSize : 20;
@@ -78,8 +81,8 @@ export function PlatformResourceRouteView({
   const [owned] = useQueryState('owned', parseAsStringEnum(['0', '1'] as const).withDefault('0'));
   const [stay] = useQueryState('stay', parseAsStringEnum(['0', '1'] as const).withDefault('0'));
   const [result, setResult] = useState<PlatformResourceResult | null>(null);
-  const collectionSearchScope = definition.id === 'paths' || definition.id === 'events' || definition.id === 'news' ? definition.id : null;
-  // These four public lists have no domain-detail content or domain actions.
+  const collectionSearchScope = definition.id === 'paths' || definition.id === 'events' || definition.id === 'news' || definition.id === 'instructor-courses' ? definition.id : null;
+  // Collection-only routes have no domain-detail content or embedded creation forms.
   const catalogOnly = Boolean(collectionSearchScope) || definition.id === 'courses';
   const [collectionCategories, setCollectionCategories] = useState<readonly string[]>([]);
   useEffect(() => {
@@ -99,7 +102,8 @@ export function PlatformResourceRouteView({
   const collectionSearchInMasthead = usePlatformSearchBinding(collectionSearchScope ?? 'paths', query, updateQuery, Boolean(collectionSearchScope), {
     routeId: definition.id, filters: {
       title: collectionSearchScope === 'events' ? t('筛选活动', 'Filter events')
-        : collectionSearchScope === 'news' ? t('筛选资讯', 'Filter news') : t('筛选学习路径', 'Filter learning paths'),
+        : collectionSearchScope === 'news' ? t('筛选资讯', 'Filter news')
+        : collectionSearchScope === 'instructor-courses' ? t('筛选讲师课程', 'Filter instructor courses') : t('筛选学习路径', 'Filter learning paths'),
       groups: collectionFilterGroups,
       apply: values => { void setPage(null); void setCategory(values.category || null); void setSort(values.sort === 'title' ? 'title' : 'updated'); } },
   });
@@ -108,18 +112,23 @@ export function PlatformResourceRouteView({
   const [retry, setRetry] = useState(0);
   const [actionBusy, setActionBusy] = useState<string | null>(null);
   const [actionMessage, setActionMessage] = useState<string | null>(null);
+  const instructorApplicationFlow = definition.id === 'teacher-apply' || definition.id === 'admin-application';
   const [reviewMessage, setReviewMessage] = useState<{ text: string; error?: boolean } | null>(null);
   const [redeemedCourseIds, setRedeemedCourseIds] = useState<ReadonlySet<string>>(() => new Set());
   const qrAdminMode = ({ 'admin-qr': 'manage', 'admin-qr-stats': 'stats', 'admin-qr-prompts': 'prompts' } as const)[definition.id as 'admin-qr' | 'admin-qr-stats' | 'admin-qr-prompts'];
-  const searchable = ['courses', 'paths', 'events', 'news', 'shop', 'search', 'admin-courses', 'admin-paths', 'admin-events', 'admin-news', 'admin-products', 'instructor-courses', 'orders', 'admin-orders', 'admin-coupons', 'admin-payouts', 'admin-reconcile'].includes(definition.id);
+  const searchable = ['courses', 'paths', 'events', 'news', 'shop', 'search', 'admin-courses', 'admin-paths', 'admin-events', 'admin-news', 'admin-products', 'instructor-courses', 'orders', 'admin-orders', 'admin-coupons', 'admin-payouts', 'admin-reconcile', 'admin-applications'].includes(definition.id);
   const sortable = ['courses', 'paths', 'events', 'news', 'shop', 'admin-courses', 'admin-paths', 'admin-events', 'admin-news', 'admin-products', 'instructor-courses'].includes(definition.id);
   const newRoute = PLATFORM_ROUTES.find(route => route.pattern === `${definition.pattern}/new`);
   const learningWorkspace = isPlatformLearningWorkspace(definition.id);
+  const instructorProfile = definition.id === 'instructor-profile';
+  const instructorCourseNew = definition.id === 'instructor-course-new';
+  const instructorCourseEditor = isPlatformInstructorCourseEditor(definition.id);
+  const canCreateInstructorCourse = instructorCourseNew && result?.items[0]?.data?.instructorStatus === 'active';
   const isQrCardStudio = definition.id === 'admin-qr-cards';
   const loadsResource = !isQrCardStudio && !learningWorkspace && !qrAdminMode && definition.kind !== 'canonical' && Boolean(definition.resource)
     && definition.id !== 'account-invites'
     && definition.id !== 'account-privacy'
-    && (definition.kind !== 'form' || definition.id === 'teacher-apply');
+    && (definition.kind !== 'form' || definition.id === 'teacher-apply' || instructorCourseNew);
   const permissionDenied = error instanceof PlatformPermissionError;
   const courseCatalog = definition.id === 'courses';
   const includeCourseAccess = Boolean(user) && (definition.id === 'course-detail' || definition.id.startsWith('course-section-'));
@@ -207,8 +216,16 @@ export function PlatformResourceRouteView({
 
   const sortedItems = useMemo(() => {
     if (!result) return [];
-    return result.items.map(item => localizePlatformEntity(item, lang));
-  }, [result, lang]);
+    return result.items.map(item => {
+      const localized = localizePlatformEntity(item, lang);
+      if (definition.id === 'teacher-apply') return { ...localized, title: t('讲师申请', 'Instructor application') };
+      if (definition.resource === 'admin-applications') {
+        const name = item.data?.applicantDisplayName;
+        return { ...localized, title: typeof name === 'string' && name.trim() ? name.trim() : t('未知申请人', 'Unknown applicant') };
+      }
+      return localized;
+    });
+  }, [result, lang, definition.id, definition.resource, t]);
 
   const courseEntries = useMemo(() => courseCatalog
     ? sortedItems.map(course => ({ course, details: courseCatalogDetails(course) }))
@@ -282,7 +299,7 @@ export function PlatformResourceRouteView({
         return response;
       }
       if (action === 'submit-review') setReviewMessage({ text: t('评价已保存。', 'Review saved.') });
-      else setActionMessage(action === 'start-payment' ? null : response.message ?? t('操作已完成。', 'Action completed.'));
+      else setActionMessage(action === 'start-payment' || instructorApplicationFlow ? null : response.message ?? t('操作已完成。', 'Action completed.'));
       if (definition.id === 'admin-qr-detail' && action === 'admin-save' && params.code
         && response.code && response.code !== params.code) {
         const url = new URL(window.location.href);
@@ -291,7 +308,7 @@ export function PlatformResourceRouteView({
         window.location.replace(url);
         return response;
       }
-      setRetry((value) => value + 1);
+      if (definition.id !== 'instructor-course-new' || action !== 'save-instructor-course') setRetry((value) => value + 1);
       return response;
     } catch (reason) {
       if (isCurrent()) {
@@ -300,6 +317,13 @@ export function PlatformResourceRouteView({
           setReviewMessage({ error: true, text: requiresAccess
             ? t('解锁课程后可评价。', 'Unlock this course to leave a review.')
             : t('评价未保存，请重试。', 'Your review was not saved. Please try again.') });
+        } else if (instructorApplicationFlow) {
+          const message = reason instanceof Error ? reason.message : '';
+          setActionMessage(reason instanceof PlatformPermissionError
+            ? t('当前账号无法执行此操作，请重新登录或联系管理员。', 'This account cannot perform the action. Sign in again or contact an administrator.')
+            : /pending instructor application|already been decided|Only pending applications|already has an instructor record/.test(message)
+              ? t('申请状态已变化，请刷新页面查看最新结果。', 'The application status changed. Refresh to see the latest result.')
+              : t('操作未完成，已保留输入内容，请稍后重试。', 'The action did not complete. Your input is preserved; try again shortly.'));
         } else setActionMessage(reason instanceof Error ? reason.message : t('操作失败。', 'Action failed.'));
       }
     } finally {
@@ -324,6 +348,7 @@ export function PlatformResourceRouteView({
   const courseDetail = definition.id === 'course-detail';
   const inviteManager = definition.id === 'admin-invites';
   const courseSection = definition.id.startsWith('course-section-');
+  const courseClassroom = isPlatformCourseClassroom(definition.id);
   const redemptionReturnPath = `${lang === 'zh' ? '/zh' : ''}/platform/account/invites`;
   const courseSectionLoginHref = `/account${nextQuery(redemptionReturnPath)}`;
   const course = courseDetail && !error ? sortedItems[0] : undefined;
@@ -338,31 +363,37 @@ export function PlatformResourceRouteView({
     ? t('课程会员用于解锁课程，与网站支持会员分开购买。', 'Course memberships unlock lessons and are purchased separately from site supporter memberships.')
     : '');
   const orderUnavailable = ['order-detail', 'admin-order'].includes(definition.id) && (!!error || !result || !sortedItems[0]);
-  const navigation = inPlatformShell && !courseDetail
+  const navigation = inPlatformShell && !courseDetail && !courseClassroom
     ? platformNavigationState(`/platform/${fillPlatformParams(definition.pattern, params)}`) : null;
   const workspaceRoutes = navigation ? platformWorkspaceRoutes(definition, Boolean(user), isAdmin) : [];
   const headingInNavigation = navigation?.secondary === definition.id || workspaceRoutes.some(item => item.id === definition.id);
   const showAreaTitle = !inviteManager && !orderPage && !courseCatalog && areaTitle !== pageTitle
     && !navigation?.primary && workspaceRoutes.length === 0;
-  const showDescription = !courseSection && !courseDetail && !inviteManager && !orderPage && Boolean(pageDescription);
-  const showCourseBack = courseSection && Boolean(params.id);
+  const showDescription = !courseClassroom && !courseDetail && !inviteManager && !orderPage && Boolean(pageDescription);
   const heading = <h1 className={headingInNavigation ? 'sr-only' : undefined}>{pageTitle}</h1>;
-  const showHeader = !headingInNavigation || showAreaTitle || showDescription || showCourseBack;
+  const showHeader = !headingInNavigation || showAreaTitle || showDescription;
 
   return (
-    <div className={`platform-route${courseDetail ? ' platform-course-detail' : ''}${courseSection ? ' platform-course-classroom' : ''}${inviteManager ? ' platform-invite-page' : ''}`}>
-      {!course && (showHeader ? <header className="platform-route-header">
+    <div className={`platform-route${courseDetail ? ' platform-course-detail' : ''}${courseClassroom ? ' platform-course-classroom' : ''}${inviteManager ? ' platform-invite-page' : ''}${instructorCourseEditor ? ' platform-instructor-course-editor-page' : ''}${definition.id === 'instructor-courses' ? ' platform-instructor-course-list-page' : ''}`}>
+      {courseClassroom ? <header className="platform-route-header">
+        <PageBackLink fallback={`/platform/courses/${encodeURIComponent(params.id)}`} label={t('返回课程详情', 'Back to course details')} showLabel />
+        <h1 className="sr-only">{sortedItems[0]?.title ?? pageTitle}</h1>
+      </header> : instructorCourseEditor ? <header className={`platform-route-header${instructorCourseNew ? ' platform-wizard-route-header' : ''}`}>
+        <PageBackLink fallback="/platform/instructor" label={t('返回讲师工作台', 'Back to instructor workspace')} showLabel acceptEntry={() => false} />
+        <h1 className="sr-only">{pageTitle}</h1>
+        {instructorCourseNew && <LangToggle soft showLabel />}
+      </header> : !course && (showHeader ? <header className="platform-route-header">
         <div className="platform-route-heading">
-          {showCourseBack ? <div>
-            <PageBackLink className="platform-home-secondary" fallback={`/platform/courses/${encodeURIComponent(params.id)}`} prefetch={false} />
-          </div> : null}
           {showAreaTitle && <div className="platform-route-labels"><span className="platform-route-area">{areaTitle}</span></div>}
           {heading}
           {showDescription && <p>{pageDescription}</p>}
         </div>
       </header> : heading)}
 
-      {newRoute ? <div className="platform-route-actions"><AppLink className="platform-button platform-button-primary" href={`/platform/${newRoute.pattern}`} prefetch={false}>{titleFor(t, newRoute)}</AppLink></div> : null}
+      {newRoute && (definition.id !== 'instructor-courses' || (result && !error)) ? <div className={`platform-route-actions${definition.id === 'instructor-courses' ? ' platform-instructor-course-create-actions' : ''}`}>
+        {definition.id === 'instructor-courses' && <div className="platform-instructor-course-count"><span className="platform-instructor-course-count-icon"><BookOpen aria-hidden /></span><strong>{pageTotal === undefined ? t(`本页 ${sortedItems.length} 门课程`, `${sortedItems.length} courses on this page`) : t(query ? `找到 ${pageTotal} 门课程` : `共 ${pageTotal} 门课程`, query ? `${pageTotal} matching courses` : `${pageTotal} courses`)}</strong></div>}
+        <AppLink className="platform-button platform-button-primary" href={`/platform/${newRoute.pattern}`} prefetch={false}>{definition.id === 'instructor-courses' && <Plus aria-hidden />}{titleFor(t, newRoute)}</AppLink>
+      </div> : null}
       {['admin', 'admin-event-analytics'].includes(definition.id) && allowed ? <CompactSelect label={t('统计范围', 'Period')} ariaLabel={t('统计范围', 'Period')} value={String(days)} items={[{ value: '7', label: t('最近 7 天', 'Last 7 days') }, { value: '30', label: t('最近 30 天', 'Last 30 days') }, { value: '90', label: t('最近 90 天', 'Last 90 days') }]} onChange={value => { void setDays(Number(value)); }} /> : null}
       {definition.id === 'events' ? <div className="platform-route-actions"><AppLink href="/platform/events/preview" prefetch={false} className="platform-button">{t('体验线上赛事流程', 'Explore online competitions')}<ArrowRight aria-hidden /></AppLink></div> : null}
 
@@ -378,10 +409,15 @@ export function PlatformResourceRouteView({
         !mounted ? <PlatformState kind="loading" /> : !allowed ? <PlatformState kind="permission" /> : <PlatformCanonicalView definition={definition} params={params} />
       ) : !mounted ? (
         <PlatformState kind="loading" />
+      ) : !allowed && definition.id === 'teacher-apply' ? (
+        <section className="platform-application-flow platform-application-guest">
+          <h2>{t('申请成为讲师', 'Apply as an instructor')}</h2><p>{t('分享你的教学经验，审核通过后即可使用讲师工作台。', 'Share your teaching experience and unlock the instructor workspace after approval.')}</p>
+          <AppLink className="platform-button platform-button-primary" href={`/account${nextQuery(`${lang === 'zh' ? '/zh' : ''}/platform/teachers/apply`)}`} prefetch={false}>{t('登录后申请', 'Sign in to apply')}</AppLink>
+        </section>
       ) : !allowed ? (
         <PlatformState
           kind="permission"
-          permissionHref={courseSection ? courseSectionLoginHref : undefined}
+          permissionHref={courseSection ? courseSectionLoginHref : definition.id === 'teacher-apply' ? `/account${nextQuery(`${lang === 'zh' ? '/zh' : ''}/platform/teachers/apply`)}` : undefined}
         />
       ) : isQrCardStudio ? (
         <PlatformQrCardStudio entities={EMPTY_PLATFORM_ENTITIES} query={query} onQueryChange={value => { void setQuery(value || null); }} />
@@ -414,8 +450,8 @@ export function PlatformResourceRouteView({
               <SearchInput
                 value={query}
                 onChange={updateQuery}
-                placeholder={t('搜索当前内容', 'Search this view')}
-                ariaLabel={t('搜索当前内容', 'Search this view')}
+                placeholder={definition.id === 'admin-applications' ? t('搜索申请人或 WCA ID', 'Search applicants or WCA ID') : t('搜索当前内容', 'Search this view')}
+                ariaLabel={definition.id === 'admin-applications' ? t('搜索申请人或 WCA ID', 'Search applicants or WCA ID') : t('搜索当前内容', 'Search this view')}
                 className="platform-search"
                 inputClassName="platform-search-input"
               />
@@ -428,7 +464,9 @@ export function PlatformResourceRouteView({
                   {t('标题', 'Title')}<SortArrow active={sort === 'title'} dir="asc" />
                 </button>
               </div>}
-              {result?.categories?.length ? <CompactSelect label={t('分类', 'Category')} ariaLabel={t('分类', 'Category')} value={category}
+              {definition.id === 'admin-applications' ? <CompactSelect label={t('审核状态', 'Review status')} ariaLabel={t('审核状态', 'Review status')} value={category}
+                items={[{ value: 'all', label: t('全部状态', 'All statuses') }, ...['pending', 'approved', 'rejected', 'withdrawn'].map(value => ({ value, label: instructorApplicationStatus(value, t) }))]}
+                onChange={value => { void setPage(null); void setCategory(value); }} /> : result?.categories?.length ? <CompactSelect label={t('分类', 'Category')} ariaLabel={t('分类', 'Category')} value={category}
                 items={[{ value: '', label: t('全部', 'All') }, ...result.categories.map(value => ({ value, label: value }))]}
                 onChange={value => { void setPage(null); void setCategory(value || null); }} /> : null}
             </div>
@@ -447,6 +485,10 @@ export function PlatformResourceRouteView({
             <PlatformState kind="error" message={error.message} onRetry={() => setRetry((value) => value + 1)} />
           ) : !result ? (
             <PlatformState kind="loading" />
+          ) : instructorProfile ? (
+            <PlatformInstructorProfile entity={sortedItems[0]} />
+          ) : instructorCourseNew ? (
+            canCreateInstructorCourse ? null : <PlatformState kind="permission" message={t('当前账号没有可用的讲师权限。', 'This account does not have active instructor access.')} />
           ) : isQrCardStudio ? (
             <PlatformQrCardStudio
               entities={sortedItems}
@@ -460,14 +502,15 @@ export function PlatformResourceRouteView({
             ) : <PlatformState kind="empty" message={query || puzzle || category
               ? t('没有符合条件的课程。试试清除筛选或更换关键词。', 'No courses match. Clear a filter or try another search.')
               : undefined} />
-          ) : inviteManager ? null : sortedItems.length === 0 && definition.id !== 'membership' && definition.id !== 'me-membership' ? (
+          ) : inviteManager || definition.id === 'teacher-apply' ? null : sortedItems.length === 0 && definition.id !== 'membership' && definition.id !== 'me-membership' ? (
             <PlatformState
               kind="empty"
+              title={definition.id === 'instructor-courses' ? (query ? t('没有匹配的课程', 'No matching courses') : t('还未创建课程', 'No courses created yet')) : undefined}
               message={definition.id === 'teacher-detail'
                 ? t('这个旧讲师标识没有对应的主站讲师资料。旧 Platform 的演示讲师未导入，请返回主站讲师名录查找真实资料。', 'This legacy teacher identifier has no matching main-site profile. Demo teachers from the legacy Platform were not imported; use the main-site directory to find current profiles.')
                 : undefined}
             />
-          ) : courseDetail || courseSection || ['path-detail', 'certificate', 'event-detail', 'news-detail', 'product-detail', 'admin', 'admin-event-analytics'].includes(definition.id) || definition.id === 'membership' || definition.id === 'me-membership' || definition.id === 'qr' ? null : (
+          ) : courseDetail || courseSection || instructorCourseEditor || ['path-detail', 'certificate', 'event-detail', 'news-detail', 'product-detail', 'admin', 'admin-event-analytics', 'admin-application'].includes(definition.id) || definition.id === 'membership' || definition.id === 'me-membership' || definition.id === 'qr' ? null : (
             <PlatformEntityList
               definition={definition}
               items={sortedItems}
@@ -477,6 +520,28 @@ export function PlatformResourceRouteView({
             />
           )}
 
+          {definition.canonicalHref ? (
+            <AppLink href={fillPlatformParams(definition.canonicalHref, params)} className="platform-canonical-link" prefetch={false}>
+              {t(definition.canonicalLabel?.zh ?? '打开完整功能', definition.canonicalLabel?.en ?? 'Open the full feature')}
+              <ExternalLink aria-hidden />
+            </AppLink>
+          ) : null}
+
+          {!instructorProfile && !instructorCourseEditor && !catalogOnly && !permissionDenied && !orderUnavailable ? <PlatformDomainContent definition={definition} params={params} entity={sortedItems[0]} previewRedirect={stay === '1'} selectedLessonId={selectedLessonId} lessonStartTime={lessonStartTime ?? undefined} onSelectLesson={id => { void setLessonStartTime(null); void setSelectedLessonId(id); }} /> : null}
+
+          {instructorProfile || (instructorCourseNew && (!canCreateInstructorCourse || error)) || (definition.id === 'instructor-course' && (!sortedItems[0] || error)) || catalogOnly || permissionDenied || orderUnavailable || definition.id === 'qr' || (courseDetail && !course) || (['membership', 'me-membership'].includes(definition.id) && !result) || (['teacher-apply', 'admin-application'].includes(definition.id) && (!result || error)) ? null : (
+            <PlatformDomainActions
+              definition={definition}
+              params={params}
+              entity={sortedItems[0]}
+              entities={sortedItems}
+              busy={actionBusy}
+              runAction={runAction}
+              reviewMessage={reviewMessage}
+              onSaved={() => setRetry(value => value + 1)}
+            />
+          )}
+          {actionMessage && (definition.id !== 'order-detail' || sortedItems[0]?.status !== 'pending_payment') ? <p className={instructorApplicationFlow ? 'platform-action-message platform-form-error' : 'platform-action-message'} role={instructorApplicationFlow ? 'alert' : 'status'}>{actionMessage}</p> : null}
           {courseCatalog && coursePages > 1 && <Paginator page={coursePage} totalPages={coursePages}
             size={pageSize} pageSizeOptions={[20, 50, 100]} isZh={lang === 'zh'} className="platform-pagination"
             onPageChange={value => { void setPage(value); }} onSizeChange={value => { void setPage(null); void setPageSize(value); }} />}
@@ -490,29 +555,6 @@ export function PlatformResourceRouteView({
                 <button type="button" className="wse-page-btn" disabled={result.items.length < effectivePageSize} onClick={() => { void setPage(page + 1); }}>{t('下一页', 'Next')}</button>
               </nav>
           ) : null}
-
-          {definition.canonicalHref ? (
-            <AppLink href={fillPlatformParams(definition.canonicalHref, params)} className="platform-canonical-link" prefetch={false}>
-              {t(definition.canonicalLabel?.zh ?? '打开完整功能', definition.canonicalLabel?.en ?? 'Open the full feature')}
-              <ExternalLink aria-hidden />
-            </AppLink>
-          ) : null}
-
-          {!catalogOnly && !permissionDenied && !orderUnavailable ? <PlatformDomainContent definition={definition} params={params} entity={sortedItems[0]} previewRedirect={stay === '1'} selectedLessonId={selectedLessonId} lessonStartTime={lessonStartTime ?? undefined} onSelectLesson={id => { void setLessonStartTime(null); void setSelectedLessonId(id); }} /> : null}
-
-          {catalogOnly || permissionDenied || orderUnavailable || definition.id === 'qr' || (courseDetail && !course) || (['membership', 'me-membership'].includes(definition.id) && !result) ? null : (
-            <PlatformDomainActions
-              definition={definition}
-              params={params}
-              entity={sortedItems[0]}
-              entities={sortedItems}
-              busy={actionBusy}
-              runAction={runAction}
-              reviewMessage={reviewMessage}
-              onSaved={() => setRetry(value => value + 1)}
-            />
-          )}
-          {actionMessage && (definition.id !== 'order-detail' || sortedItems[0]?.status !== 'pending_payment') ? <p className="platform-action-message" role="status">{actionMessage}</p> : null}
         </>
       ) : (
         <PlatformCanonicalView definition={definition} params={params} />

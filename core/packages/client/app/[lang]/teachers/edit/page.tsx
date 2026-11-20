@@ -2,7 +2,7 @@
 
 import { Suspense, useEffect, useState } from 'react';
 import { usePathname } from 'next/navigation';
-import { parseAsInteger, useQueryState } from 'nuqs';
+import { parseAsInteger, parseAsStringEnum, useQueryState } from 'nuqs';
 import AppLink from '@/components/AppLink';
 import PageBackLink from '@/components/PageBackLink';
 import { tr } from '@/i18n/tr';
@@ -21,6 +21,7 @@ function TeacherDirectoryEditClient() {
   const ownerKey = useOwnerKey();
   const isAdmin = useIsAdmin();
   const [entryId, setEntryId] = useQueryState('id', parseAsInteger.withOptions({ history: 'replace' }));
+  const [visibility] = useQueryState('visibility', parseAsStringEnum(['hidden', 'public']));
   const [initial, setInitial] = useState<TeacherDirectoryEntry | null>(null);
   const [loading, setLoading] = useState(entryId !== null);
   const [notFound, setNotFound] = useState(false);
@@ -63,12 +64,13 @@ function TeacherDirectoryEditClient() {
 
         <h1>{initial ? tr({ zh: '完善你的教学履历', en: 'Refine your teaching profile' }) : tr({ zh: '建立你的教学主页', en: 'Build your teaching profile' })}</h1>
         <p>{tr({ zh: '这不是一张简单的联系卡。用照片、经历和教学方向，让学员先了解你，再决定是否联系。', en: 'This is more than a contact card. Use photos, experience, and specialties to help students understand you before reaching out.' })}</p>
-        {saved && <p className="directory-save-success" role="status">{tr({ zh: '资料已保存。', en: 'Profile saved.' })} <AppLink href="/teachers">{tr({ zh: '查看名录', en: 'View directory' })}</AppLink></p>}
+        {saved && <p className="directory-save-success" role="status">{tr({ zh: '资料已保存。', en: 'Profile saved.' })} <AppLink href={visibility === 'hidden' ? '/platform/teachers/apply' : '/teachers'}>{visibility === 'hidden' ? tr({ zh: '返回讲师入驻并关联资料', en: 'Return to instructor application and link profile' }) : tr({ zh: '查看名录', en: 'View directory' })}</AppLink></p>}
       </header>
       <TeacherDirectoryEditor
         key={initial?.id ?? 'new'}
         initial={initial}
         isAdmin={isAdmin}
+        defaultVisible={visibility !== 'hidden'}
         onSaved={(entry) => {
           setInitial(entry);
           setSaved(true);

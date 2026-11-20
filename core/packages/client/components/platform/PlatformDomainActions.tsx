@@ -16,6 +16,7 @@ import { PlatformShippingAddressManager } from './PlatformShippingAddressManager
 import { PlatformCommerceActions, PlatformAdminOrderActions } from './PlatformOrderActions';
 import { PlatformInstructorActions } from './PlatformInstructorActions';
 import { type CommonProps } from './PlatformActionTypes';
+import { PlatformInstructorReview } from './PlatformInstructorApplication';
 
 export function PlatformEventActions(props: CommonProps) {
   const { definition, entity, busy, runAction } = props;
@@ -95,7 +96,7 @@ export function PlatformAdminActions(props: CommonProps) {
     return editor;
   }
   if (definition.id === 'admin-application') {
-    return <DomainForm definition={definition} entity={entity} resourceId={params.id} busy={busy} runAction={runAction} spec={{ title: text('审核决定', 'Review decision'), action: 'admin-review', fields: [field('decision', '审核结果', 'Decision', { kind: 'select', options: [option('approved', '通过', 'Approve'), option('rejected', '拒绝', 'Reject')] }), field('note', '审核备注', 'Review note', { kind: 'textarea', rows: 5 })] }} />;
+    return <PlatformInstructorReview {...props} />;
   }
   if (definition.id === 'admin-reconcile') {
     return (

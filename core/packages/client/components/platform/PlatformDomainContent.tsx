@@ -16,6 +16,7 @@ import { PlatformCourseDetail } from './PlatformCourseDetail';
 import { PlatformLearningPath, PlatformCertificate } from './PlatformLearningWorkspace';
 import { PlatformCommerceContent } from './PlatformCommerceContent';
 import { LessonVideoPlayer } from '@/components/video/LessonVideoPlayer';
+import { InstructorApplicationDetails } from './PlatformInstructorApplication';
 
 function record(value: unknown): Record<string, unknown> | null {
   return value && typeof value === 'object' && !Array.isArray(value) ? value as Record<string, unknown> : null;
@@ -273,17 +274,7 @@ export function PlatformDomainContent({ definition, entity, params, previewRedir
   const english = t('zh', 'en') === 'en';
 
   if (definition.id === 'admin-application') {
-    const application = record(data.application) ?? {};
-    const labels: Record<string, string> = { experience: t('教学经历', 'Teaching experience'), specialties: t('擅长项目', 'Specialties'), contact: t('联系方式', 'Contact'), city: t('所在城市', 'City'), wcaId: 'WCA ID', formats: t('授课方式', 'Teaching formats'), introduction: t('自我介绍', 'Introduction') };
-    const readable = (value: unknown): string => typeof value === 'string' ? value : Array.isArray(value) ? value.map(readable).filter(Boolean).join(' · ') : value && typeof value === 'object' ? Object.entries(value).map(([key, item]) => `${labels[key] ?? key}: ${readable(item)}`).join('\n') : typeof value === 'number' || typeof value === 'boolean' ? String(value) : '';
-    return <section className="platform-domain-content"><h2>{t('讲师申请资料', 'Instructor application')}</h2><dl>
-      <dt>{t('申请人', 'Applicant')}</dt><dd>{string(data.applicantDisplayName) ?? entity.title}</dd>
-      <dt>{t('申请时间', 'Submitted')}</dt><dd>{String(data.createdAt ?? '').slice(0, 10)}</dd>
-      <dt>{t('状态', 'Status')}</dt><dd>{data.status === 'approved' ? t('已通过', 'Approved') : data.status === 'rejected' ? t('已拒绝', 'Rejected') : data.status === 'withdrawn' ? t('已撤回', 'Withdrawn') : t('待审核', 'Pending review')}</dd>
-      {Object.entries(application).map(([key, value]) => <div key={key}><dt>{labels[key] ?? key}</dt><dd className="platform-prose">{readable(value).split('\n').map((line, index) => <p key={index}>{line}</p>)}</dd></div>)}
-      {data.decisionNote ? <><dt>{t('审核意见', 'Review note')}</dt><dd>{String(data.decisionNote)}</dd></> : null}
-      {data.decidedAt ? <><dt>{t('审核时间', 'Reviewed')}</dt><dd>{String(data.decidedAt).slice(0, 10)}</dd></> : null}
-    </dl></section>;
+    return <InstructorApplicationDetails entity={entity} admin />;
   }
 
   const selectedSection = PLATFORM_COURSE_SECTIONS.find(section => definition.id === `course-section-${section.slug}`);

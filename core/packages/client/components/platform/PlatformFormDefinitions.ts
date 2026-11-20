@@ -7,6 +7,9 @@ interface PlatformInstructorApplicationPayload {
   experience: string;
   specialties: string[];
   contact: string;
+  city: string;
+  teachingMode: 'online' | 'in_person' | 'both';
+  achievements?: string;
 }
 
 interface PlatformLessonPayload {
@@ -58,22 +61,26 @@ export const field = <const Key extends string>(key: Key, zh: string, en: string
 };
 
 const COURSE_FIELDS = [
-  field('presentation', '课程介绍与大纲', 'Course presentation and outline', { kind: 'structured' }),
-  field('slug', 'Slug', 'Slug', { required: true, pattern: '[a-z0-9][a-z0-9_-]{0,119}', maxLength: 120 }),
-  field('titleZh', '中文标题', 'Chinese title', { required: true, maxLength: 240 }),
+  field('titleZh', '中文标题', 'Chinese title', { sectionTitle: text('基本信息', 'Basic information'), required: true, maxLength: 240 }),
   field('titleEn', '英文标题', 'English title', { required: true, maxLength: 240 }),
   field('summaryZh', '中文摘要', 'Chinese summary', { kind: 'textarea', rows: 3, maxLength: 4000 }),
   field('summaryEn', '英文摘要', 'English summary', { kind: 'textarea', rows: 3, maxLength: 4000 }),
   field('descriptionZh', '中文说明', 'Chinese description', { kind: 'textarea', rows: 7 }),
   field('descriptionEn', '英文说明', 'English description', { kind: 'textarea', rows: 7 }),
-  field('status', '状态', 'Status', { kind: 'select', options: [option('draft', '草稿', 'Draft'), option('published', '已发布', 'Published'), option('unlisted', '不公开列出', 'Unlisted'), option('archived', '已归档', 'Archived')] }),
-  field('enrollmentMode', '报名方式', 'Enrollment mode', { kind: 'select', options: [option('free', '免费', 'Free'), option('purchase', '购买', 'Purchase'), option('invite', '邀请', 'Invite'), option('admin_grant', '管理员授予', 'Administrator grant')] }),
+  field('presentation', '课程介绍与大纲', 'Course presentation and outline', { kind: 'structured', sectionTitle: text('封面与课程内容', 'Cover and course content') }),
+  field('enrollmentMode', '报名方式', 'Enrollment mode', { sectionTitle: text('报名与定价', 'Enrollment and pricing'), kind: 'select', options: [option('free', '免费', 'Free'), option('purchase', '购买', 'Purchase'), option('invite', '邀请', 'Invite'), option('admin_grant', '管理员授予', 'Administrator grant')] }),
+  field('currency', '币种', 'Currency', { kind: 'select', required: true, defaultValue: 'CNY', options: [option('CNY', '人民币（CNY）', 'Chinese yuan (CNY)'), option('USD', '美元（USD）', 'US dollar (USD)')] }),
   field('baseAmountMinor', '基础价格（分）', 'Base amount (minor units)', { kind: 'number', min: 0, step: 1, required: true }),
   field('memberAmountMinor', '权益价格（分）', 'Entitlement amount (minor units)', { kind: 'number', min: 0, step: 1 }),
-  field('currency', '币种', 'Currency', { required: true, pattern: '[A-Z]{3}', minLength: 3, maxLength: 3, defaultValue: 'CNY' }),
+  field('status', '状态', 'Status', { sectionTitle: text('发布设置', 'Publishing'), kind: 'select', options: [option('draft', '草稿', 'Draft'), option('published', '已发布', 'Published'), option('unlisted', '不公开列出', 'Unlisted'), option('archived', '已归档', 'Archived')] }),
+  field('slug', '课程链接标识', 'Course URL identifier', { required: true, pattern: '[a-z0-9][a-z0-9_-]{0,119}', maxLength: 120, placeholder: text('例如 3x3-beginner', 'e.g. 3x3-beginner') }),
 ] satisfies ContractFields<PlatformCourseWrite>;
 
 export const INSTRUCTOR_COURSE_FIELDS = COURSE_FIELDS;
+export const INSTRUCTOR_COURSE_CREATE_FIELDS = COURSE_FIELDS.map(item => item.key === 'slug'
+  ? { ...item, required: false, label: text('课程链接标识（选填）', 'Course URL identifier (optional)'), placeholder: text('留空自动生成', 'Generated if left blank') }
+  : item.key === 'baseAmountMinor' ? { ...item, defaultValue: 0 }
+  : item);
 
 const EVENT_FIELDS = [
   field('slug', 'Slug', 'Slug', { required: true, pattern: '[a-z0-9][a-z0-9_-]{0,119}', maxLength: 120 }),
@@ -128,9 +135,12 @@ const PATH_FIELDS = [
 ] satisfies ContractFields<PlatformPathWrite>;
 
 export const INSTRUCTOR_APPLICATION_FIELDS = [
-  field('experience', '教学经历', 'Teaching experience', { kind: 'textarea', rows: 7, required: true, maxLength: 20000 }),
-  field('specialties', '擅长方向（每行一项）', 'Specialties (one per line)', { kind: 'lines', required: true }),
-  field('contact', '联系方式', 'Contact details', { kind: 'textarea', rows: 3, required: true, maxLength: 500 }),
+  field('city', '所在城市', 'City', { sectionTitle: text('授课信息', 'Teaching details'), required: true, maxLength: 160 }),
+  field('teachingMode', '授课方式', 'Teaching mode', { kind: 'select', required: true, defaultValue: 'both', options: [option('online', '线上', 'Online'), option('in_person', '线下', 'In person'), option('both', '线上及线下', 'Both')] }),
+  field('specialties', '擅长方向（每行一项）', 'Specialties (one per line)', { sectionTitle: text('教学能力', 'Teaching experience'), kind: 'lines', rows: 2, required: true }),
+  field('experience', '教学经历', 'Teaching experience', { kind: 'textarea', rows: 4, required: true, maxLength: 20000 }),
+  field('achievements', '教学成果、比赛成绩或作品链接（选填）', 'Teaching achievements, results or portfolio links (optional)', { kind: 'textarea', rows: 2, maxLength: 5000 }),
+  field('contact', '审核联系信息（不公开）', 'Contact for review (private)', { sectionTitle: text('联系方式', 'Contact'), kind: 'textarea', rows: 2, required: true, maxLength: 500 }),
 ] satisfies ContractFields<PlatformInstructorApplicationPayload>;
 
 export const LESSON_FIELDS = [

@@ -5,7 +5,7 @@ import { createContext, useContext, useEffect, useRef, type Dispatch, type SetSt
 /** Only descendants of the Platform shell adapt shared main-site links. */
 export const PlatformNavigationContext = createContext(false);
 
-export type PlatformSearchScope = 'forum' | 'courses' | 'paths' | 'events' | 'news';
+export type PlatformSearchScope = 'forum' | 'courses' | 'paths' | 'events' | 'news' | 'instructor-courses';
 
 export interface PlatformFilterOption {
   value: string;

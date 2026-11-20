@@ -31,7 +31,7 @@ import {
   localDirectoryTags,
   localDirectoryText,
   splitDirectoryTags,
-} from './directory-data';
+} from '@/lib/teacher-directory-presentation';
 
 const MAX_IMAGES = 8;
 const IMAGE_KINDS: { value: DirectoryImageKind; label: { zh: string; en: string } }[] = [
@@ -48,18 +48,20 @@ function imageKindLabel(kind: DirectoryImageKind): string {
 export default function TeacherDirectoryEditor({
   initial,
   isAdmin,
+  defaultVisible = true,
   onSaved,
   onDeleted,
 }: {
   initial: TeacherDirectoryEntry | null;
   isAdmin: boolean;
+  defaultVisible?: boolean;
   onSaved: (entry: TeacherDirectoryEntry) => void;
   onDeleted: () => void;
 }) {
   const communityDisabled = useInstalledCommunityDisabled();
   const [draft, setDraft] = useState<TeacherDirectoryDraft>(() => initial
     ? directoryEntryToDraft(initial)
-    : { ...EMPTY_DIRECTORY_DRAFT, contacts: {}, images: [], isCurated: isAdmin });
+    : { ...EMPTY_DIRECTORY_DRAFT, contacts: {}, images: [], isCurated: isAdmin, isVisible: defaultVisible });
   const [tagsZh, setTagsZh] = useState(draft.specialtiesZh.join(', '));
   const [tagsEn, setTagsEn] = useState(draft.specialtiesEn.join(', '));
   const [saving, setSaving] = useState(false);

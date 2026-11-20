@@ -16,7 +16,7 @@ import '@/components/sticky-table.css';
 
 type Mode = 'manage' | 'stats' | 'prompts';
 export function PlatformQrAdmin({ mode }: { mode: Mode }) {
-  return <div className={styles.root}>
+  return <div className={`${styles.root} platform-qr-admin`}>
     {mode === 'manage' ? <QrManager /> : mode === 'stats' ? <QrAnalytics /> : <QrPrompts />}
   </div>;
 }
@@ -81,7 +81,7 @@ function QrManager() {
         </div></td>
       </tr>)}</tbody></table></div>
       {!result.items.length ? <PlatformState kind="empty" /> : null}
-      <div className={styles.actions}><button className={styles.actionButton} type="button" disabled={page <= 1} onClick={() => { void setPage(Math.max(1, page - 1)); }}>{t('上一页', 'Previous')}</button><span>{t(`第 ${page} 页，共 ${result.total} 个`, `Page ${page}, ${result.total} codes`)}</span><button className={styles.actionButton} type="button" disabled={page * result.pageSize >= result.total} onClick={() => { void setPage(page + 1); }}>{t('下一页', 'Next')}</button></div>
+      <div className={`${styles.actions} platform-pagination`}><button className={styles.actionButton} type="button" disabled={page <= 1} onClick={() => { void setPage(Math.max(1, page - 1)); }}>{t('上一页', 'Previous')}</button><span>{t(`第 ${page} 页，共 ${result.total} 个`, `Page ${page}, ${result.total} codes`)}</span><button className={styles.actionButton} type="button" disabled={page * result.pageSize >= result.total} onClick={() => { void setPage(page + 1); }}>{t('下一页', 'Next')}</button></div>
     </> : null}
   </>;
 }

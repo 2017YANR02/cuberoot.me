@@ -681,6 +681,8 @@ const ENDPOINTS: Ep[] = [
   // ---- platform: instructor ----
   { d: 'platform', m: 'GET', p: '/v1/platform/instructor/applications/current', g: 'login', c: 'no-store', zh: '当前讲师申请状态', en: 'Current instructor application' },
   { d: 'platform', m: 'POST', p: '/v1/platform/instructor/applications', g: 'login', c: 'no-store', zh: '提交讲师申请', en: 'Submit an instructor application' },
+  { d: 'platform', m: 'POST', p: '/v1/platform/instructor/applications/:id/withdraw', g: 'login', c: 'no-store', zh: '撤回待审核的讲师申请', en: 'Withdraw a pending instructor application' },
+  { d: 'platform', m: 'POST', p: '/v1/platform/instructor/profile-link', g: 'login', c: 'no-store', zh: '关联本人公开讲师资料', en: 'Link your teaching profile' },
   { d: 'platform', m: 'GET', p: '/v1/platform/instructor/courses', g: 'login', c: 'no-store', zh: '讲师自有课程', en: 'Instructor-owned courses' },
   { d: 'platform', m: 'GET', p: '/v1/platform/instructor/courses/:id', g: 'login', c: 'no-store', zh: '讲师课程详情', en: 'Instructor course detail' },
   { d: 'platform', m: 'POST', p: '/v1/platform/instructor/courses', g: 'login', c: 'no-store', zh: '讲师新建课程', en: 'Create an instructor course' },

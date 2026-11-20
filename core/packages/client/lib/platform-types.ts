@@ -117,6 +117,8 @@ export type PlatformActionId =
   | 'start-payment'
   | 'cancel-order'
   | 'apply-instructor'
+  | 'withdraw-instructor-application'
+  | 'link-instructor-profile'
   | 'save-instructor-course'
   | 'delete-course'
   | 'save-course-lesson'
@@ -184,6 +186,7 @@ export interface PlatformActionResult {
   ok?: boolean;
   message?: string;
   entity?: PlatformEntity;
+  course?: { id?: string; slug?: string };
   id?: string;
   entitlementId?: string | null;
   courseId?: string | null;

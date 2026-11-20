@@ -5,6 +5,7 @@ type FieldKind = 'text' | 'textarea' | 'number' | 'rating' | 'date' | 'datetime-
 export interface FieldSpec<Key extends string = string> {
   key: Key;
   label: PlatformLocaleText;
+  sectionTitle?: PlatformLocaleText;
   kind?: FieldKind;
   required?: boolean;
   min?: number;
@@ -21,6 +22,7 @@ export interface FieldSpec<Key extends string = string> {
 
 export interface DomainFormSpec {
   title: PlatformLocaleText;
+  titleHidden?: boolean;
   action: PlatformActionId;
   fields: readonly FieldSpec[];
   submit?: PlatformLocaleText;
