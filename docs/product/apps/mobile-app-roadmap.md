@@ -28,6 +28,8 @@
 
 - iOS `1.0`（构建 4）在 App Store Connect 等待审核，审核通过后自动发布。已重新选中中国大陆，大陆安全评估仍待完成。论坛限制已经通过自有 Next 和 Vercel 两条线路部署，适用于通过中国大陆网络访问的 iOS 和 Mac App Store 客户端，覆盖论坛入口、搜索结果和 App 内直达链接。复盘公开发布和评论、公开反馈讨论仍需单独核对大陆发售信息。
 - 同一 Apple 记录已添加原生 macOS `0.1.0`。Mac App Store 构建使用 `me.cuberoot.app`、App Sandbox 和 Apple Silicon / Intel 通用二进制。构建 2 的签名安装包已由 Apple 处理为 `VALID`，本机验证副本已打开中英文计时界面，商店截图已上传。ASC CLI 预检零阻塞，正式提交时 Apple 因中国大陆安全评估信息缺失拒绝加入审核，版本仍为 `PREPARE_FOR_SUBMISSION`，并保留待重试审核草稿。原生打包与送审入口见 [Desktop README](../../../core/apps/desktop/README.md#mac-app-store)。
+- 维护者随后确认暂停大陆 Apple 客户端的公开发布、评论和链接分享。修订使用上一轮区域判定，地区未知时默认关闭相应功能。覆盖 iOS、Apple Watch 和 Mac App Store 的复盘分享，移动和桌面的计时实况及联机对战，以及嵌入网站上的公开发布、评论和匿名共享。保留本地记录、文件导出、私密复盘及具名文档协作。签名后上传的 iOS 构建 5（含 Watch）与 macOS 构建 3 均已由 Apple 标为 `VALID`，已分别关联首发草稿，送审预检均为零阻塞。
+- 2026-11-20 05:57 PST：大陆限制已随 `a7e26b12a` 在两条生产线路部署，区域接口回读 `private, no-store` 和客户端可用的 CORS 响应。App Store Connect 的安全评估与生成式 AI 两项声明均显示「有效」。已撤回 iOS 构建 4 的首次审核，使用 ASC CLI 重新提交 iOS `1.0`（构建 5，审核记录 `3e8fb127-db47-41bc-b2e0-0f7107e90b6b`），并提交 macOS `0.1.0`（构建 3，审核记录 `62842c24-dd42-42a0-bc54-674988268199`）。回读两端均为 `WAITING_FOR_REVIEW`，以 App Store Connect 的通过与正式上架为后续验收依据。
 
 ### 2026-11-15 Windows Microsoft Store 基础（本地，未送审）
 
