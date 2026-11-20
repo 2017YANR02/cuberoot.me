@@ -16,7 +16,9 @@
  * 复制 + 显式平滑法线),bakeHandTextures(UV 光栅化 + 3D 域特征求值,对
  * 图集布局无要求、只要求单射)与 generic 同路径烘焙,MANO 同享皮肤贴图。
  */
+import { bindPalmArch } from './palmArch';
 import * as THREE from "three";
+import { createNormalKernel, loadPalmModule } from '@/wasm/half-palm/accelerator';
 import { staticUrl } from "@/lib/stats-base";
 import { adaptGltfHand } from "./handModelGltf";
 import { type FingerName, type HandModel } from "./handModel";
@@ -112,6 +114,7 @@ export function buildManoHand(data: ManoHandData, side: 1 | -1, skinMat: THREE.M
   geo.setAttribute("skinWeight", new THREE.BufferAttribute(skinWeight, 4));
   geo.setIndex(new THREE.BufferAttribute(idx, 1));
 
+  const attachPalm = bindPalmArch(src, bones, geo);
   const mesh = new THREE.SkinnedMesh(geo, skinMat);
   mesh.name = `mano-${data.hand}-skin`;
   src.add(mesh);
@@ -124,7 +127,9 @@ export function buildManoHand(data: ManoHandData, side: 1 | -1, skinMat: THREE.M
     forearmDirAsset: data.forearmDir,
     handFrame: data.handFrame,
   });
-  model.poseCorrective = makePoseCorrective(model, geo, data, n);
+  const updatePalm = attachPalm(model);
+  const correct = makePoseCorrective(model, geo, data, n);
+  model.poseCorrective = positionsOnly => { updatePalm(); correct(positionsOnly); };
   return model;
 }
 
@@ -142,15 +147,14 @@ export const MANO_JOINT_BONES: string[] = [
 ];
 export const MANO_JOINT_PARENT = [-1, 0, 1, 2, 0, 4, 5, 0, 7, 8, 0, 10, 11, 0, 13, 14];
 
-const _qj = new THREE.Quaternion();
-const _qp = new THREE.Quaternion();
+const _jointRotations = MANO_JOINT_BONES.map(() => new THREE.Quaternion());
 const _qr = new THREE.Quaternion();
 const _mR = new THREE.Matrix4();
 
 /** 姿态修正改变表面形状后更新平滑法线。UV 岛拆开的同位顶点共用面积加权
  * 法线，不能直接 computeVertexNormals()（会把图集边界变成皮肤硬缝）。
  * 拓扑只在绑定姿态建立一次；每次调用复用缓冲，不改几何位置/蒙皮/UV。 */
-export function createPoseNormalUpdater(geo: THREE.BufferGeometry): () => void {
+export function createPoseNormalUpdater(geo: THREE.BufferGeometry, movingVertices?: Uint8Array): () => void {
   const position = geo.getAttribute("position") as THREE.BufferAttribute;
   const normal = geo.getAttribute("normal") as THREE.BufferAttribute;
   const index = geo.getIndex();
@@ -164,30 +168,75 @@ export function createPoseNormalUpdater(geo: THREE.BufferGeometry): () => void {
   }
   const sum = new Float32Array(groups.size * 3);
   const count = index?.count ?? position.count;
+  const corners = Uint32Array.from({ length: count }, (_, i) => index ? index.getX(i) : i);
+  const allVertices = Uint32Array.from({ length: position.count }, (_, i) => i);
+  const allGroups = Uint32Array.from({ length: groups.size }, (_, i) => i * 3);
+  let changedCorners = corners, changedGroups = allGroups, changedVertices = allVertices;
+  if (movingVertices) {
+    const moves = new Uint8Array(sum.length);
+    for (let i = 0; i < corners.length; i += 3) {
+      const a = corners[i], b = corners[i + 1], c = corners[i + 2];
+      if (movingVertices[a] || movingVertices[b] || movingVertices[c])
+        moves[welded[a]] = moves[welded[b]] = moves[welded[c]] = 1;
+    }
+    // A fixed face can still contribute to a moving normal at the boundary.
+    // Keep those faces in their original order for the same rounded sum.
+    const active: number[] = [];
+    for (let i = 0; i < corners.length; i += 3) {
+      const a = corners[i], b = corners[i + 1], c = corners[i + 2];
+      if (moves[welded[a]] || moves[welded[b]] || moves[welded[c]]) active.push(a, b, c);
+    }
+    changedCorners = Uint32Array.from(active);
+    changedGroups = allGroups.filter(i => moves[i]);
+    changedVertices = allVertices.filter(i => moves[welded[i]]);
+  }
+  let initialized = false;
+  let accelerated: ReturnType<typeof createNormalKernel> | undefined;
+  if (position.array instanceof Float32Array && normal.array instanceof Float32Array
+    && position.itemSize === 3 && normal.itemSize === 3 && !position.normalized && !normal.normalized) {
+    void loadPalmModule().then(module => {
+      if (module) accelerated = createNormalKernel(position.count, {
+        sum, welded, corners, groups: allGroups, vertices: allVertices,
+        changedCorners, changedGroups, changedVertices,
+      }, module);
+    }).catch(() => { /* Keep the JavaScript normal updater. */ });
+  }
   return () => {
+    if (accelerated) {
+      accelerated(position.array as Float32Array, normal.array as Float32Array, initialized);
+      normal.needsUpdate = true;
+      initialized = true;
+      return;
+    }
     sum.fill(0);
-    for (let i = 0; i < count; i += 3) {
-      const a = index ? index.getX(i) : i;
-      const b = index ? index.getX(i + 1) : i + 1;
-      const c = index ? index.getX(i + 2) : i + 2;
-      const bx = position.getX(b) - position.getX(a), by = position.getY(b) - position.getY(a), bz = position.getZ(b) - position.getZ(a);
-      const cx = position.getX(c) - position.getX(a), cy = position.getY(c) - position.getY(a), cz = position.getZ(c) - position.getZ(a);
+    const xyz = position.array;
+    const faces = initialized ? changedCorners : corners;
+    for (let i = 0; i < faces.length; i += 3) {
+      const a = faces[i], b = faces[i + 1], c = faces[i + 2];
+      const ax = xyz[a * 3], ay = xyz[a * 3 + 1], az = xyz[a * 3 + 2];
+      const bx = xyz[b * 3] - ax, by = xyz[b * 3 + 1] - ay, bz = xyz[b * 3 + 2] - az;
+      const cx = xyz[c * 3] - ax, cy = xyz[c * 3 + 1] - ay, cz = xyz[c * 3 + 2] - az;
       const nx = by * cz - bz * cy, ny = bz * cx - bx * cz, nz = bx * cy - by * cx;
       const wa = welded[a], wb = welded[b], wc = welded[c];
       sum[wa] += nx; sum[wa + 1] += ny; sum[wa + 2] += nz;
       sum[wb] += nx; sum[wb + 1] += ny; sum[wb + 2] += nz;
       sum[wc] += nx; sum[wc + 1] += ny; sum[wc + 2] += nz;
     }
-    for (let i = 0; i < sum.length; i += 3) {
-      const len = Math.hypot(sum[i], sum[i + 1], sum[i + 2]);
+    const groupsToUpdate = initialized ? changedGroups : allGroups;
+    for (let j = 0; j < groupsToUpdate.length; j++) {
+      const i = groupsToUpdate[j];
+      const len = Math.sqrt(sum[i] ** 2 + sum[i + 1] ** 2 + sum[i + 2] ** 2);
       if (len > 0) { sum[i] /= len; sum[i + 1] /= len; sum[i + 2] /= len; }
     }
-    for (let i = 0; i < position.count; i++) {
+    const vertices = initialized ? changedVertices : allVertices;
+    for (let j = 0; j < vertices.length; j++) {
+      const i = vertices[j];
       const w = welded[i];
       // 退化面保留原法线，避免零法线进入着色器。
       if (sum[w] !== 0 || sum[w + 1] !== 0 || sum[w + 2] !== 0) normal.setXYZ(i, sum[w], sum[w + 1], sum[w + 2]);
     }
     normal.needsUpdate = true;
+    initialized = true;
   };
 }
 
@@ -196,9 +245,9 @@ export function createPoseNormalUpdater(geo: THREE.BufferGeometry): () => void {
  *  全骨世界四元数 = align(attach 保世界),故 qp⁻¹·qj 直接给出模板系局部旋转
  *  (align 共轭抵消,手根位姿同理)。活手修正与 onepiece 傀儡修正共用。 */
 export function manoPoseCoeffs(bones: THREE.Object3D[], c: Float32Array): void {
+  for (let j = 0; j < MANO_JOINT_BONES.length; j++) bones[j].getWorldQuaternion(_jointRotations[j]);
   for (let j = 1; j <= 15; j++) {
-    bones[j].getWorldQuaternion(_qj);
-    bones[MANO_JOINT_PARENT[j]].getWorldQuaternion(_qp);
+    const _qj = _jointRotations[j], _qp = _jointRotations[MANO_JOINT_PARENT[j]];
     _qr.copy(_qp).invert().multiply(_qj);
     _mR.makeRotationFromQuaternion(_qr);
     const e = _mR.elements; // 列主序
@@ -217,18 +266,31 @@ export function manoPoseCoeffs(bones: THREE.Object3D[], c: Float32Array): void {
  * 位移在模板(资产)空间施加于 geometry.position(蒙皮之前的绑定几何),
  * 修正后同步重算法线，保持关节/鱼际高光随实际曲面变化。
  */
-function makePoseCorrective(model: HandModel, geo: THREE.BufferGeometry, data: ManoHandData, n: number): () => void {
+function makePoseCorrective(model: HandModel, geo: THREE.BufferGeometry, data: ManoHandData, n: number): (positionsOnly?: boolean) => void {
   const q8 = new Int8Array(b64ToArrayBuffer(data.posedirs));         // (n,3,135)
   const scale = new Float32Array(b64ToArrayBuffer(data.posedirsScale)); // (135,)
   if (q8.length !== n * 3 * 135 || scale.length !== 135) {
     throw new Error(`mano posedirs: buffer size mismatch (${q8.length}, ${scale.length})`);
   }
-  // 反量化并转置为 (135, n*3):逐系数累加时内层连续。
-  const pd = new Float32Array(135 * n * 3);
-  for (let i = 0; i < n * 3; i++) {
-    for (let k = 0; k < 135; k++) pd[k * n * 3 + i] = q8[i * 135 + k] * scale[k];
+  // The fused forearm has no MANO offsets and most hand coefficients
+  // affect only part of the mesh. Preserve accumulation order and omit
+  // exact zeros from the quantized asset.
+  const offsets = new Uint32Array(136);
+  for (let i = 0; i < q8.length; i++) if (q8[i]) offsets[i % 135 + 1]++;
+  for (let k = 0; k < 135; k++) offsets[k + 1] += offsets[k];
+  const movingVertices = new Uint8Array(n);
+  const cursor = offsets.slice();
+  const coord = new Uint32Array(offsets[135]), delta = new Float32Array(coord.length);
+  for (let i = 0; i < n * 3; i++) for (let k = 0; k < 135; k++) {
+    const value = q8[i * 135 + k];
+    if (!value) continue;
+    movingVertices[Math.floor(i / 3)] = 1;
+    const slot = cursor[k]++;
+    coord[slot] = i;
+    delta[slot] = value * scale[k];
   }
   const base = new Float32Array((geo.getAttribute("position") as THREE.BufferAttribute).array as Float32Array);
+  model.bindSurface = base;
   const bones = MANO_JOINT_BONES.map((name) => {
     const b = model.group.getObjectByName(name);
     if (!b) throw new Error(`mano posedirs: bone ${name} missing`);
@@ -236,26 +298,46 @@ function makePoseCorrective(model: HandModel, geo: THREE.BufferGeometry, data: M
   });
   const cLast = new Float32Array(135).fill(NaN);
   const c = new Float32Array(135);
-  const updateNormals = createPoseNormalUpdater(geo);
-  return () => {
+  // Capture and display alternate during a half grip. Keep an independent
+  // accumulator for each, so a stationary finger's coefficients contribute
+  // once even while another finger or the entire wrist is moving.
+  const makeCache = () => ({ coefficients: new Float32Array(135), shape: Float64Array.from(base), updates: 0 });
+  const display = makeCache();
+  let captured: ReturnType<typeof makeCache> | undefined;
+  const updateNormals = createPoseNormalUpdater(geo, movingVertices);
+  let normalsPending = false;
+  return (positionsOnly = false) => {
     manoPoseCoeffs(bones, c);
     let dirty = false;
     for (let k = 0; k < 135; k++) {
       if (!(Math.abs(c[k] - cLast[k]) < 1e-3)) { dirty = true; break; }
     }
-    if (!dirty) return;
+    if (!dirty) {
+      if (normalsPending && !positionsOnly) { updateNormals(); normalsPending = false; }
+      return;
+    }
     cLast.set(c);
     const attr = geo.getAttribute("position") as THREE.BufferAttribute;
     const out = attr.array as Float32Array;
-    out.set(base);
-    for (let k = 0; k < 135; k++) {
-      const ck = c[k];
-      if (Math.abs(ck) < 0.01) continue; // int8 量化底噪以下,跳过
-      const row = k * n * 3;
-      for (let i = 0; i < n * 3; i++) out[i] += ck * pd[row + i];
+    const cache = positionsOnly ? (captured ??= makeCache()) : display;
+    // Rebase periodically to bound roundoff on arbitrarily long playback.
+    // Accumulate in double precision and round once at the mesh boundary.
+    if (++cache.updates >= 128) {
+      cache.shape.set(base);
+      cache.coefficients.fill(0);
+      cache.updates = 0;
     }
+    for (let k = 0; k < 135; k++) {
+      const next = Math.abs(c[k]) < 0.01 ? 0 : c[k];
+      const change = next - cache.coefficients[k];
+      if (!change) continue;
+      cache.coefficients[k] = next;
+      for (let i = offsets[k]; i < offsets[k + 1]; i++) cache.shape[coord[i]] += change * delta[i];
+    }
+    out.set(cache.shape);
     attr.needsUpdate = true;
-    updateNormals();
+    normalsPending = positionsOnly;
+    if (!positionsOnly) updateNormals();
   };
 }
 

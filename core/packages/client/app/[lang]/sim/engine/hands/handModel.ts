@@ -16,6 +16,17 @@ import * as THREE from "three";
 import { SIZE } from "../define";
 import type { WrinkleJoint } from "./bakeHandTexture";
 
+/** Signed twist around the binding segment after removing the shortest swing.
+ * A half turn that sends the axis to its opposite has no unique twist. */
+export function segmentAxialRotation(rotation: THREE.Quaternion, segment: THREE.Vector3): number | null {
+  const length = segment.length();
+  if (length < 1e-9) return null;
+  const along = (rotation.x * segment.x + rotation.y * segment.y + rotation.z * segment.z) / length;
+  if (Math.hypot(along, rotation.w) < 1e-8) return null;
+  const angle = 2 * Math.atan2(along, rotation.w);
+  return Math.atan2(Math.sin(angle), Math.cos(angle));
+}
+
 export type FingerName = "thumb" | "index" | "middle" | "ring" | "pinky";
 
 /** 一根手指的三段关节链。root=掌指关节(拇指为腕掌基),mid/tip=远端两关节。
@@ -25,7 +36,11 @@ export interface FingerJoints {
   mid: THREE.Group;
   tip: THREE.Group;
   /** 三段骨长(关节到关节),供 rig 需要时估算指尖位置。 */
+  /** Signed resting PIP/DIP bends in the finger flexion plane. */
+  restBend?: readonly [number, number];
   segLens: [number, number, number];
+  /** Bind endpoint of the distal link, in its proxy frame. */
+  tipOffset?: THREE.Vector3;
   /** 指根基座朝向(四指≈绑定姿态指向,拇指=对掌位)。rig 摆姿态时必须
    *  `root.quaternion = rootBase ∘ R(curl/splay)` 叠加,禁止直接写
    *  rotation(会抹掉拇指基座 —— v1 实测踩过)。 */
@@ -40,12 +55,19 @@ export interface FingerJoints {
 }
 
 export interface HandModel {
+  /** Bit masks of locally corrected skin regions shared with the one-piece body. */
+  surfacePatch?: { vertices: Uint8Array; active: number };
+  /** Weighted palm struts and their distal endpoints in bone-local bind coordinates. */
+  palmSupports?: { bone: THREE.Bone; end: THREE.Vector3 }[];
   group: THREE.Group;
   side: 1 | -1;
+  /** Across-palm direction towards the thumb, perpendicular to neutral forearm. */
+  radialAxis?: THREE.Vector3;
   /** 资产原生单位 → rig 单位的等比缩放(adaptGltfHand 的 s)。兄弟件(SMPL-X
    *  前臂,与 MANO 同为米制)必须共用此值 —— 各自按截面拟合定比例会导致
    *  手/臂粗细失配(2026-07-11 用户抓「手臂比手细」的根因)。 */
   unitScale: number;
+  updatePalmLinks?: () => void;
   fingers: Record<FingerName, FingerJoints>;
   /** 全部蒙皮网格,供 rig 统一开层/透明度/禁 raycast。 */
   meshes: THREE.Mesh[];
@@ -53,11 +75,13 @@ export interface HandModel {
   extraMats?: THREE.Material[];
   /** 立体甲片 mesh(设置「指甲」开关走 visible 显隐,不拆几何)。 */
   nailMeshes?: THREE.Mesh[];
+  /** Immutable MANO material positions, shared with the full-body hand surface. */
+  bindSurface?: Float32Array;
   /** 姿态修正 blendshape 更新器(MANO posedirs:LBS 之外的修正场,对掌时的
    *  鱼际隆起等全靠它)。rig / 探针改完指关节姿态后调用;内部按关节局部旋转
    *  算系数并重写 geometry.position(系数不变时零开销早退 —— 待机呼吸只动
    *  手根,不触发)。 */
-  poseCorrective?: () => void;
+  poseCorrective?: (positionsOnly?: boolean) => void;
   /** 皮肤烘焙时缓存的皱纹环带(bind 手系;computeHandMaps 写入)。onepiece
    *  全身烘焙复用 —— 体烘焙晚于摆姿,bind 关节位届时已不可重建。 */
   bakeWrinkles?: WrinkleJoint[];

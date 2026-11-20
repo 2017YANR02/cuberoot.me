@@ -228,6 +228,8 @@ function buildNailGeometry(args: {
     idx.push(at(0, i1, j1), at(1, i1, j1), at(1, i2, j2), at(0, i1, j1), at(1, i2, j2), at(0, i2, j2));
   }
   const geo = new THREE.BufferGeometry();
+  geo.userData.nailPlateVertexCount = NR * NC;
+  geo.userData.freeEdgeVertexStart = at(1, NR - 2, 0);
   geo.setAttribute("position", new THREE.Float32BufferAttribute(pos, 3));
   geo.setAttribute("color", new THREE.Float32BufferAttribute(col, 3));
   geo.setAttribute("polish", new THREE.Float32BufferAttribute(pol, 3));
@@ -493,7 +495,15 @@ export function adaptGltfHand(src: THREE.Object3D, side: 1 | -1, skinMat: THREE.
     tip.attach(bone(j3));
     tip.attach(bone(chain.end));
 
+    // Binding bones already curve in the local x/z plane. The two hinge
+    // controls add rotation to this rest bend (positive curl is about -y).
+    const distal = p4.clone().sub(p3).applyQuaternion(invBase);
+    const angle = (v: THREE.Vector3) => Math.atan2(v.z, v.x);
+    const midAngle = angle(tip.position);
+    const signed = (v: number) => Math.atan2(Math.sin(v), Math.cos(v));
     fingers[name] = {
+      tipOffset: distal,
+      restBend: [signed(midAngle - angle(mid.position)), signed(angle(distal) - midAngle)],
       root,
       mid,
       tip,
@@ -682,7 +692,13 @@ export function adaptGltfHand(src: THREE.Object3D, side: 1 | -1, skinMat: THREE.
   mesh.material = skinMat;
   mesh.castShadow = mesh.receiveShadow = false;
 
-  return { group, side, unitScale: s, fingers, meshes: [mesh as THREE.Mesh, ...nailMeshes], extraMats: [nailMat], nailMeshes, forearm };
+  // Little-to-index knuckle span defines the radial direction on each mirrored
+  // asset. Project out the bind forearm so a pure wrist flexion has no yaw.
+  const radialAxis = toHand(bindOf(JOINT_CHAINS.index.drive[0])).sub(toHand(bindOf(JOINT_CHAINS.pinky.drive[0])));
+  radialAxis.z = 0;
+  const neutral = forearm?.bindDir ?? new THREE.Vector3(-1, 0, 0);
+  radialAxis.addScaledVector(neutral, -neutral.dot(radialAxis)).normalize();
+  return { group, side, radialAxis, unitScale: s, fingers, meshes: [mesh as THREE.Mesh, ...nailMeshes], extraMats: [nailMat], nailMeshes, forearm };
 }
 
 function bakeVertexTint(mesh: THREE.SkinnedMesh): void {

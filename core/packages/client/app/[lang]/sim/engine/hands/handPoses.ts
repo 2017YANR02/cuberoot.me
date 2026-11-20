@@ -68,6 +68,9 @@ function fingerPose(
   return { thumb, index, middle, ring, pinky };
 }
 
+export const POCKET_MIDDLE_CURL = .0175;
+export const POCKET_MIDDLE_SPLAY = -.030;
+
 /**
  * 右手 home 握持(前后钳形,按用户指位规格):指列竖排绕过右后竖棱 ——
  * 食指尖压 BUR 角块 B 面、中指压 BR 棱 B 面、无名指压 BDR 角块 B 面,拇指从
@@ -81,8 +84,17 @@ function fingerPose(
  * 数值在 SIZE=64(棱长 192、半宽 96)坐标系下;由坐标下降求解 + Playwright 复核,
  * 改 HAND_SCALE / 指根 rz / 掌横弓必须重跑标定(方法见 memory project_sim_hands_rig)。
  */
-export function homeRight(): HandPose {
-  return manoHomeRight();
+export function homeRight(order = 3): HandPose {
+  const pose = manoHomeRight();
+  if (order === 2 || order === 4) {
+    // Seat the central pads just below the equatorial seam, on the lower
+    // corners (2) or inner row (4). Leave the index on the upper back corner.
+    pose.fingers.middle.splay += POCKET_MIDDLE_SPLAY;
+    pose.fingers.middle.curl[0] += POCKET_MIDDLE_CURL;
+    pose.fingers.thumb.curl[0] += .06;
+    pose.fingers.thumb.curl[1] += .03;
+  }
+  return pose;
 }
 
 /**
@@ -184,8 +196,8 @@ function manoHomeRight(): HandPose {
  *  镜像,实测顶点/关节/权重差全 0),指参逐项相同(splay/twist/mid 的镜像
  *  语义由 rig ×side),SOLVE=SYM 顶点级 0 残差。generic 时代的每指左偏移表
  *  (left.glb 雕刻不对称 + 破镜像同步 CG 感)随内置手模一并退役。 */
-export function homeLeft(): HandPose {
-  const r = homeRight();
+export function homeLeft(order = 3): HandPose {
+  const r = homeRight(order);
   // 左手几何在「局部 y=0 平面」镜像(镜像资产,side=+1),世界姿态在「x=0 平面」
   // 镜像:M_x·R·M_y = mirrorQuatX(R) ∘ Rz(π)(M_x·M_y = diag(-1,-1,1) = 绕 z 转 π)。
   // 少乘这个局部 Rz(π) 手指会指向正下方(v1 实测踩过)。

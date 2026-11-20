@@ -4,9 +4,7 @@
  * 掌部 6 点(腕 + 拇指 CMC + 四指 MCP)红、拇指桃、食指紫、中指黄、无名指绿、
  * 小指蓝;掌部连线灰且比指骨线粗(thickness 3 vs 2),关键点带白描边(×1.2)。
  *
- * 全部是静态几何:指骨线在其起点关节的局部系里沿 +x 跨 [0,len],关节点挂在
- * 关节组原点,掌部连线两端(腕点 / 指根)在手根系里本就固定 —— 姿态由现有
- * 关节链自动带动,零逐帧更新。
+ * 指节线使用实际绑定端点，掌部连线取掌骨转动后的指根。
  * 叠加渲染:depthTest=false + renderOrder(线 < 白边 < 点)—— 关键点在指肉
  * 内部,开深度测试整条骨架会埋进皮肤;MediaPipe 原版同样画在图像最上层
  * (会盖过魔方,是刻意的 overlay 观感)。
@@ -80,60 +78,55 @@ function addDot(parent: THREE.Object3D, pos: THREE.Vector3, mat: THREE.Material,
   meshes.push(border, dot);
 }
 
-/** 关节局部系里沿 +x 跨 [0,len] 的骨线(随关节旋转自动跟姿态)。 */
-function addBone(parent: THREE.Object3D, len: number, r: number, mat: THREE.Material, meshes: THREE.Mesh[]): void {
-  const m = makeMesh(unitBone, mat, ORDER_LINE);
-  m.scale.set(len, r, r);
-  m.position.set(len / 2, 0, 0);
-  parent.add(m);
-  meshes.push(m);
+const alongX = new THREE.Vector3(1, 0, 0);
+const linkDirection = new THREE.Vector3();
+
+function placeLink(mesh: THREE.Mesh, a: THREE.Vector3, b: THREE.Vector3, radius: number): void {
+  linkDirection.subVectors(b, a);
+  const length = linkDirection.length();
+  mesh.scale.set(length, radius, radius);
+  mesh.position.addVectors(a, b).multiplyScalar(.5);
+  if (length > 0) mesh.quaternion.setFromUnitVectors(alongX, linkDirection.divideScalar(length));
 }
 
-/** 手根系里两固定点之间的连线(掌部连线用)。 */
-function addLink(parent: THREE.Object3D, a: THREE.Vector3, b: THREE.Vector3, r: number, mat: THREE.Material, meshes: THREE.Mesh[]): void {
-  const dir = new THREE.Vector3().subVectors(b, a);
-  const len = dir.length();
-  const m = makeMesh(unitBone, mat, ORDER_LINE);
-  m.scale.set(len, r, r);
-  m.position.copy(a).addScaledVector(dir, 0.5);
-  m.quaternion.setFromUnitVectors(new THREE.Vector3(1, 0, 0), dir.normalize());
-  parent.add(m);
-  meshes.push(m);
-}
-
-/**
- * 给一只手挂骨架。网格全部 push 进 model.meshes,复用 rig 的补光层开启与
- * dispose 清理(共享几何重复 dispose 幂等,无害)。
- */
 export function addHandSkeleton(model: HandModel, mats: Record<SkeletonMatKey, THREE.MeshBasicMaterial>): void {
   const { group, fingers, meshes } = model;
-
-  // 指链:MCP(掌点红)→ PIP → DIP → TIP,骨线与远端三点用指色。
+  const origin = new THREE.Vector3();
   for (const name of Object.keys(fingers) as FingerName[]) {
     const f = fingers[name];
-    const [l1, l2, l3] = f.segLens;
-    const mat = mats[name];
-    addBone(f.root, l1, FINGER_LINE_R, mat, meshes);
-    addBone(f.mid, l2, FINGER_LINE_R, mat, meshes);
-    addBone(f.tip, l3, FINGER_LINE_R, mat, meshes);
-    addDot(f.root, new THREE.Vector3(), mats.palm, mats.border, meshes);
-    addDot(f.mid, new THREE.Vector3(), mat, mats.border, meshes);
-    addDot(f.tip, new THREE.Vector3(), mat, mats.border, meshes);
-    addDot(f.tip, new THREE.Vector3(l3, 0, 0), mat, mats.border, meshes);
+    const end = f.tipOffset ?? new THREE.Vector3(f.segLens[2], 0, 0);
+    for (const [joint, offset] of [[f.root, f.mid.position], [f.mid, f.tip.position], [f.tip, end]] as const) {
+      const line = makeMesh(unitBone, mats[name], ORDER_LINE);
+      placeLink(line, origin, offset, FINGER_LINE_R);
+      joint.add(line);
+      meshes.push(line);
+      addDot(joint, origin, joint === f.root ? mats.palm : mats[name], mats.border, meshes);
+    }
+    addDot(f.tip, end, mats[name], mats.border, meshes);
   }
 
-  // 掌部:HAND_PALM_CONNECTIONS = 腕-拇CMC、腕-食MCP、食-中、中-无名、
-  // 无名-小、腕-小(指根位置构建时已含 side 镜像,直接取现值)。
-  const wrist = WRIST_LOCAL.clone();
-  const mcp = (name: FingerName): THREE.Vector3 => fingers[name].root.position;
-  const palmPairs: [THREE.Vector3, THREE.Vector3][] = [
-    [wrist, mcp("thumb")],
-    [wrist, mcp("index")],
-    [mcp("index"), mcp("middle")],
-    [mcp("middle"), mcp("ring")],
-    [mcp("ring"), mcp("pinky")],
-    [wrist, mcp("pinky")],
-  ];
-  for (const [a, b] of palmPairs) addLink(group, a, b, PALM_LINE_R, mats.line, meshes);
-  addDot(group, wrist, mats.palm, mats.border, meshes);
+  for (const { bone, end } of model.palmSupports ?? []) {
+    const line = makeMesh(unitBone, mats.line, ORDER_LINE);
+    placeLink(line, origin, end, PALM_LINE_R / bone.scale.x);
+    bone.add(line);
+    meshes.push(line);
+  }
+
+  const points = [WRIST_LOCAL, ...Object.values(fingers).map(() => new THREE.Vector3())];
+  const knuckles = [fingers.thumb, fingers.index, fingers.middle, fingers.ring, fingers.pinky];
+  const links = [[0,1], [0,2], [2,3], [3,4], [4,5], [0,5]].map(([a,b]) => {
+    const mesh = makeMesh(unitBone, mats.line, ORDER_LINE);
+    group.add(mesh);
+    meshes.push(mesh);
+    return { a, b, mesh };
+  });
+  model.updatePalmLinks = () => {
+    knuckles.forEach((finger, i) => {
+      const point = points[i + 1].copy(finger.root.position);
+      if (finger.meta) point.applyQuaternion(finger.meta.quaternion).add(finger.meta.position);
+    });
+    for (const { a, b, mesh } of links) placeLink(mesh, points[a], points[b], PALM_LINE_R);
+  };
+  model.updatePalmLinks();
+  addDot(group, WRIST_LOCAL, mats.palm, mats.border, meshes);
 }

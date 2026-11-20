@@ -20,7 +20,7 @@ describe.skipIf(!process.env.BODYPROBE)("smplx onepiece body probe", () => {
     const right = buildManoHand(JSON.parse(fs.readFileSync(path.join(root, "mano/right.mano.json"), "utf8")) as ManoHandData, -1, skin);
     const left = buildManoHand(JSON.parse(fs.readFileSync(path.join(root, "mano/left.mano.json"), "utf8")) as ManoHandData, 1, skin);
     const body = new SmplxBody(data, { R: right, L: left });
-    body.place(new THREE.Vector3(826, -444, 950), new THREE.Vector3(-826, -444, 950));
+    body.placeFromWrists(new THREE.Vector3(465, -143, 158), new THREE.Vector3(-465, -143, 158));
     body.updateMatrixWorld(true);
     body.syncHands();
     body.updateMatrixWorld(true);

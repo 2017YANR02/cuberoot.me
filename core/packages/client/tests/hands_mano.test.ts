@@ -9,9 +9,10 @@ import { existsSync } from 'node:fs';
 import { readFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import * as THREE from 'three';
-import { buildManoHand, createPoseNormalUpdater, type ManoHandData } from '@/app/[lang]/sim/engine/hands/handModelMano';
+import { buildManoHand, createPoseNormalUpdater, MANO_JOINT_BONES, manoPoseCoeffs, type ManoHandData } from '@/app/[lang]/sim/engine/hands/handModelMano';
 import { JOINT_CHAINS } from '@/app/[lang]/sim/engine/hands/handModelGltf';
 import { computeHandMaps } from '@/app/[lang]/sim/engine/hands/bakeHandTexture';
+import { createPalmKernels, type PalmBuffers } from '@/wasm/half-palm/accelerator';
 import type { FingerName } from '@/app/[lang]/sim/engine/hands/handModel';
 
 const FILES = {
@@ -45,6 +46,37 @@ describe('pose-corrected skin normals', () => {
     expect(Array.from(position.array)).toEqual(corrected);
     geo.dispose();
   });
+});
+
+it('WebAssembly and JavaScript agree on half-palm mesh corrections', async () => {
+  const binary = await readFile(new URL('../wasm/half-palm/math.wasm', import.meta.url));
+  const module = await WebAssembly.compile(Uint8Array.from(binary));
+  const affine = [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0];
+  const buffers: PalmBuffers = {
+    linear: new Float64Array(12), inverse: new Float64Array(12), volume: new Float64Array(12),
+    bone: Float64Array.of(...affine, 1, 0, 0, 0.25, 0, 1, 0, 0, 0, 0, 1, 0),
+    joints: Float64Array.of(0, 0, 0, 1, 0, 0, 0, 0, 1, 1, 1,
+      0, 0, 0, -1, -0.25, 0, 0, 0, 1, 1, 1),
+    blendVertices: Uint32Array.of(0), bones: Uint16Array.of(0, 1, 0, 0, 0, 1, 0, 0),
+    influences: Float32Array.of(0.4, 0.6, 0, 0, 0.4, 0.6, 0, 0), rigid: Uint8Array.of(0, 0),
+    coords: Uint32Array.of(0), weights: Float64Array.of(0.51), means: Float64Array.of(1),
+    offsets: Uint32Array.of(0, 1), neighbors: Uint32Array.of(3),
+    scratch: new Float32Array(6), posed: new Float32Array(6),
+    posedNormals: Float32Array.of(0.3, 0.4, 0.6, 0.1, 0.2, 0.8),
+    positions: Float32Array.of(0.1, 0.2, 0.3, -0.3, 0.2, -0.1),
+    normals: new Float32Array(6), sourceShape: Float32Array.of(0.11, 0.21, 0.32, -0.27, 0.2, -0.1),
+    blendOffsets: Uint32Array.of(0, 0), volumeWeights: Float64Array.of(0.9, 1),
+  };
+  const js = createPalmKernels(buffers);
+  const wasm = createPalmKernels(buffers, module);
+  for (const kernels of [js, wasm]) {
+    kernels.blend();
+    kernels.project(0.71);
+    kernels.smooth(0.71);
+    kernels.encode();
+  }
+  expect(wasm.buffers.positions).toEqual(js.buffers.positions);
+  expect(wasm.buffers.normals).toEqual(js.buffers.normals);
 });
 
 describe.skipIf(!HAVE)('mano hand adapter', () => {
@@ -83,6 +115,37 @@ describe.skipIf(!HAVE)('mano hand adapter', () => {
     }
   });
 
+  it.each([['right', -1], ['left', 1]] as const)('%s: palm rays carry normalized skin weights and retain length under cupping', async (name, side) => {
+    const data = JSON.parse(await readFile(FILES[name], 'utf8')) as ManoHandData;
+    const model = buildManoHand(data, side, new THREE.MeshStandardMaterial());
+    const mesh = model.meshes[0] as THREE.SkinnedMesh;
+    const weights = mesh.geometry.getAttribute('skinWeight'), indices = mesh.geometry.getAttribute('skinIndex');
+    const supports = model.palmSupports!;
+    expect(supports).toHaveLength(4);
+    const counts = new Map(supports.map(({ bone }) => [mesh.skeleton.bones.indexOf(bone), 0]));
+    for (let i = 0; i < weights.count; i++) {
+      let sum = 0;
+      for (let j = 0; j < 4; j++) {
+        const w = weights.getComponent(i, j), id = indices.getComponent(i, j);
+        sum += w;
+        if (w > 0 && counts.has(id)) counts.set(id, counts.get(id)! + 1);
+      }
+      expect(sum).toBeCloseTo(1, 5);
+    }
+    const rest = supports.map(({ bone }) => bone.quaternion.clone());
+    const length = () => supports.map(({ bone, end }) => bone.localToWorld(end.clone()).distanceTo(bone.getWorldPosition(new THREE.Vector3())));
+    const lengths = length();
+    for (const finger of ['index', 'middle', 'ring', 'pinky'] as const) model.fingers[finger].meta!.rotation.y = 1.4;
+    model.poseCorrective!();
+    supports.forEach(({ bone }, i) => {
+      expect(counts.get(mesh.skeleton.bones.indexOf(bone))).toBeGreaterThan(0);
+      const angle = THREE.MathUtils.radToDeg(rest[i].angleTo(bone.quaternion));
+      expect(angle).toBeGreaterThan(1);
+      expect(angle).toBeLessThanOrEqual([8, 7, 12, 18][i] + 1e-5);
+      expect(length()[i]).toBeCloseTo(lengths[i], 6);
+    });
+  });
+
   it.each([
     ['right', -1],
     ['left', 1],
@@ -112,6 +175,35 @@ describe.skipIf(!HAVE)('mano hand adapter', () => {
     const normalVersion = normal.version;
     m.poseCorrective!();
     expect(normal.version, '同一姿态不重复计算法线').toBe(normalVersion);
+  });
+
+  it('alternating captured and displayed shapes match the absolute MANO sum across cache rebases', async () => {
+    const data = JSON.parse(await readFile(FILES.right, 'utf8')) as ManoHandData;
+    const model = buildManoHand(data, -1, new THREE.MeshStandardMaterial());
+    const positions = model.meshes[0].geometry.getAttribute('position').array;
+    const base = Float32Array.from(positions);
+    const q8 = new Int8Array(Uint8Array.from(Buffer.from(data.posedirs, 'base64')).buffer);
+    const scale = new Float32Array(Uint8Array.from(Buffer.from(data.posedirsScale, 'base64')).buffer);
+    const bones = MANO_JOINT_BONES.map(name => model.group.getObjectByName(name)!);
+    const coefficients = new Float32Array(135);
+    let maxError = 0;
+    for (let frame = 0; frame < 264; frame++) {
+      const capture = frame % 2 === 0;
+      model.fingers.index.root.rotation.z = (capture ? 0.3 : -0.5) + 0.2 * Math.sin(frame * 0.3);
+      model.fingers.thumb.mid.rotation.x = frame % 4 === 0 ? 0 : 0.55;
+      model.poseCorrective!(capture);
+      if (frame % 17 > 1 && frame < 252) continue;
+      manoPoseCoeffs(bones, coefficients);
+      for (let i = 0; i < positions.length; i += 37) {
+        let expected = base[i];
+        for (let k = 0; k < coefficients.length; k++) {
+          if (Math.abs(coefficients[k]) >= 0.01)
+            expected += coefficients[k] * Math.fround(q8[i * 135 + k] * scale[k]);
+        }
+        maxError = Math.max(maxError, Math.abs(positions[i] - expected));
+      }
+    }
+    expect(maxError).toBeLessThan(1e-8); // asset coordinates, metres
   });
 
   it.each([
