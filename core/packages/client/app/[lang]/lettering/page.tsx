@@ -48,7 +48,6 @@ export default function LetteringPage() {
   );
   const alg = useMemo(() => segments.join(' '), [segments]);
   const contentLabel = custom?.character ?? word ?? glyph;
-  const usesOuterPieces = word === null && (contentLabel === '生' || contentLabel === '世') && order === 7;
   const patternSize = pattern.length;
   const moveCount = alg.split(/\s+/).filter(Boolean).length;
   const moveDurationMs = Math.max(48, Math.min(360, Math.round(28_000 / moveCount)));
@@ -204,14 +203,9 @@ export default function LetteringPage() {
               </button>
             </fieldset>
             {!pending && <p className="lettering-method">
-              {usesOuterPieces
-                ? tr({
-                  zh: `字形使用完整 7×7 正面点阵，外圈棱块也参与转动，共 ${moveCount} 步。`,
-                  en: `The glyph uses the full 7×7 front-face grid, including outer edge pieces, for ${moveCount} moves.`,
-                })
-                : tr({
-                  zh: `${word ? '词语' : '字形'}使用 ${patternSize}×${patternSize} 中心点阵；相邻层合并成块转动，再补不能合并的部分，共 ${moveCount} 步。棱角保持复原。`,
-                  en: `The ${word ? 'phrase' : 'glyph'} uses a ${patternSize}×${patternSize} centre grid. Adjacent layers turn as blocks before the remaining parts are filled, for ${moveCount} moves; edges and corners stay solved.`,
+              {tr({
+                  zh: `${word ? '词语' : '字形'}使用 ${patternSize}×${patternSize} 中心点阵，共 ${moveCount} 步。完成后六个面的最外圈均保持复原。`,
+                  en: `The ${word ? 'phrase' : 'glyph'} uses a ${patternSize}×${patternSize} centre grid and ${moveCount} moves. The outer border of all six faces is solved at the end.`,
                 })}
             </p>}
           </section>

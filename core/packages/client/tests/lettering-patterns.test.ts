@@ -14,12 +14,27 @@ import {
   type LetteringGlyph,
   type LetteringOrder,
 } from '@/app/[lang]/lettering/_lib/lettering-alg';
-import { fitsCharacterInput, validateCharacter, requiredPatternSize, preservesCharacter } from '@/app/[lang]/lettering/_lib/character-pattern';
+import { createCharacterPlan, fitsCharacterInput, validateCharacter, requiredPatternSize, preservesCharacter } from '@/app/[lang]/lettering/_lib/character-pattern';
+
+function expectSolvedBorders(state: string, solved: string, order: number) {
+  const border = (value: string) => Array.from({ length: 6 }, (_, face) => {
+    const cells: string[] = [];
+    for (let row = 0; row < order; row++) for (let column = 0; column < order; column++) {
+      if (row === 0 || column === 0 || row === order - 1 || column === order - 1) {
+        cells.push(value[face * order * order + row * order + column]);
+      }
+    }
+    return cells.join('');
+  });
+  expect(border(state)).toEqual(border(solved));
+}
 
 function frontFace(alg: string, order: LetteringOrder): string[] {
   const cube = new Cube(order);
+  const solved = cube.serialize();
   cube.twister.setup(alg);
   const state = cube.serialize();
+  expectSolvedBorders(state, solved, order);
   const faceArea = order * order;
   const front = state.slice(2 * faceArea, 3 * faceArea);
   cube.dispose();
@@ -86,7 +101,7 @@ describe('cube lettering construction', () => {
   });
 
   it('builds asymmetric arbitrary grids including centre holes from legal moves', () => {
-    for (const order of [9, 17, 21] as const) {
+    for (const order of LETTERING_ORDERS) {
       const size = order - 2;
       const pattern = Array.from({ length: size }, (_, row) => Array.from({ length: size }, (_, col) =>
         (row * 7 + col * 3) % 11 < 4 ? '1' : '0').join(''));
@@ -178,32 +193,30 @@ describe('cube lettering construction', () => {
     ]);
   });
 
-  it('offers sheng and shi from order seven', () => {
+  it('offers sheng and shi only from order nine', () => {
     expect(availableLetteringGlyphs(5)).not.toContain('生');
     expect(availableLetteringGlyphs(5)).not.toContain('世');
-    expect(availableLetteringGlyphs(7)).toContain('生');
-    expect(availableLetteringGlyphs(7)).toContain('世');
+    expect(availableLetteringGlyphs(7)).not.toContain('生');
+    expect(availableLetteringGlyphs(7)).not.toContain('世');
+    expect(availableLetteringGlyphs(9)).toContain('生');
+    expect(availableLetteringGlyphs(9)).toContain('世');
   });
 
-  it('uses the full requested seven-order sheng and shi patterns', () => {
-    expect(getLetteringPattern('生', 7)).toEqual([
-      '0000000',
-      '0101000',
-      '0111110',
-      '1001000',
-      '0011100',
-      '0001000',
-      '0111110',
-    ]);
-    expect(getLetteringPattern('世', 7)).toEqual([
-      '0000000',
-      '0101010',
-      '1111111',
-      '0101010',
-      '0101110',
-      '0100000',
-      '0111110',
-    ]);
+  it('rejects undersized sheng and shi instead of using outer edges', () => {
+    for (const glyph of ['生', '世'] as const) {
+      expect(createCharacterPlan(glyph, 7)).toEqual({ code: 'order', minimum: 9 });
+      expect(() => getLetteringPattern(glyph, 7)).toThrow();
+      expect(() => buildLetteringAlg(glyph, 7)).toThrow();
+      expect(getLetteringPattern(glyph, 9)).toEqual(LETTERING_GLYPHS[glyph]);
+    }
+  });
+
+  it('rejects full-face grids and preserves borders even for fully filled centre grids', () => {
+    for (const order of LETTERING_ORDERS) {
+      expect(() => buildPatternSegments(Array(order).fill('1'.repeat(order)), order)).toThrow();
+      const pattern = Array(order - 2).fill('1'.repeat(order - 2));
+      expect(frontFace(buildPatternSegments(pattern, order).join(' '), order)).toEqual(expectedPatternFront(pattern, order));
+    }
   });
 
   it('moves sheng up one row from order thirteen', () => {
@@ -213,7 +226,7 @@ describe('cube lettering construction', () => {
     }
   });
 
-  for (const glyph of Object.keys(LETTERING_GLYPHS) as LetteringGlyph[]) {
+  for (const glyph of availableLetteringGlyphs(LETTERING_ORDER)) {
     it(`builds ${glyph} from legal 7x7 turns`, () => {
       const segments = buildLetteringSegments(glyph);
       expect(segments.every(segment => segment.trim().split(/\s+/).length >= 4)).toBe(true);
@@ -233,7 +246,7 @@ describe('cube lettering construction', () => {
     });
   }
 
-  for (const order of [17, 21] as const) {
+  for (const order of [17, 19, 21] as const) {
     it(`builds 一生一世 on ${order}x${order}`, () => {
       const pattern = getLetteringWordPattern('一生一世', order);
       const alg = buildLetteringWordAlg('一生一世', order);

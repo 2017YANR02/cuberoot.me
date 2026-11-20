@@ -35,7 +35,8 @@ const COMPACT_LETTERING_GLYPHS = {
 export function availableLetteringGlyphs(order: LetteringOrder): LetteringGlyph[] {
   return order === 5
     ? Object.keys(COMPACT_LETTERING_GLYPHS) as LetteringGlyph[]
-    : Object.keys(LETTERING_GLYPHS) as LetteringGlyph[];
+    : (Object.keys(LETTERING_GLYPHS) as LetteringGlyph[])
+      .filter(glyph => order >= 9 || (glyph !== '生' && glyph !== '世'));
 }
 
 function scalePattern(pattern: readonly string[], targetSize: number): string[] {
@@ -90,12 +91,14 @@ function scalePattern(pattern: readonly string[], targetSize: number): string[] 
 }
 
 export function getLetteringPattern(glyph: LetteringGlyph, order: LetteringOrder): readonly string[] {
+  if (!availableLetteringGlyphs(order).includes(glyph)) {
+    throw new Error(`${glyph} requires a larger centre grid`);
+  }
   if (order === 5) {
     const pattern = COMPACT_LETTERING_GLYPHS[glyph as keyof typeof COMPACT_LETTERING_GLYPHS];
     if (!pattern) throw new Error(`${glyph} has no compact lettering pattern`);
     return pattern;
   }
-  if (order === 7 && (glyph === '生' || glyph === '世')) return LETTERING_GLYPHS[glyph];
   const pattern = scalePattern(LETTERING_GLYPHS[glyph], order - 2);
   if (glyph === '生' && order >= 13) {
     return [...pattern.slice(1), '0'.repeat(pattern.length)];
@@ -166,7 +169,7 @@ function centerBlockAlg(
 }
 
 export function buildPatternSegments(pattern: readonly string[], order: LetteringOrder): string[] {
-  if (!pattern.length || pattern.length > order || (order - pattern.length) % 2 !== 0
+  if (!pattern.length || pattern.length > order - 2 || (order - pattern.length) % 2 !== 0
     || pattern.some(row => row.length !== pattern.length || /[^01]/.test(row))) {
     throw new Error('Invalid lettering pattern');
   }
@@ -229,39 +232,10 @@ export function buildPatternSegments(pattern: readonly string[], order: Letterin
   return segments;
 }
 
-function buildSevenOrderFullFaceSegments(glyph: '生' | '世'): string[] {
-  const pattern = LETTERING_GLYPHS[glyph];
-  const segments: string[] = [];
-
-  for (let row = 1; row < 6; row++) {
-    const upDepth = row + 1;
-    if (pattern[row][0] === '1') {
-      segments.push(`7-7R ${upDepth}-${upDepth}U' 7-7R' ${upDepth}-${upDepth}U`);
-    }
-    if (pattern[row][6] === '1') {
-      segments.push(`1-1R ${upDepth}-${upDepth}U 1-1R' ${upDepth}-${upDepth}U'`);
-    }
-  }
-
-  const bottomColumns = [...pattern[6]]
-    .map((pixel, column) => pixel === '1' ? column : -1)
-    .filter(column => column > 0 && column < 6);
-  if (bottomColumns.length > 0) {
-    segments.push(centerBlockAlg(7, [6], bottomColumns));
-  }
-
-  const interior = pattern.slice(1, 6).map(line => line.slice(1, 6));
-  segments.push(...buildPatternSegments(interior, 7));
-  return segments;
-}
-
 export function buildLetteringSegments(
   glyph: LetteringGlyph,
   order: LetteringOrder = LETTERING_ORDER,
 ): string[] {
-  if (order === 7 && (glyph === '生' || glyph === '世')) {
-    return buildSevenOrderFullFaceSegments(glyph);
-  }
   return buildPatternSegments(getLetteringPattern(glyph, order), order);
 }
 
