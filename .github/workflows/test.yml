@@ -458,6 +458,8 @@ jobs:
             /ops/bin/provision-assistant-reader.sql
             /tools/cstimer-scramble/
             /tools/solver/rust-cross/cross-solver-worker.js
+            /tools/solver/rust-cross/cross_solver.js
+            /tools/solver/rust-cross/cross_solver_bg.wasm
             /tools/solver/rust-cross/tables/pt_cross.bin.gz
             /tools/blddb/data/cornerManmade.json
             /tools/blddb/data/parityManmade.json
