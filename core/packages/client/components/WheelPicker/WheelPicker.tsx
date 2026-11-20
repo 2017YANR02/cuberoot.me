@@ -7,6 +7,7 @@ import { useEffect, useRef } from 'react';
 import './wheel_picker.css';
 
 const MAX_DEG = 55;
+const WHEEL_GESTURE_IDLE_MS = 160;
 
 export interface WheelPickerProps {
   /** 当前锚点值（中心 slot 显示的值） */
@@ -40,6 +41,10 @@ export interface WheelPickerProps {
   /** 附加 wrapper 类（用于主题覆盖） */
   className?: string;
   ariaLabel?: string;
+  /** Opt in when the surrounding UI delegates keyboard adjustment to the wheel. */
+  keyboard?: boolean;
+  /** Accumulate pixel-based scroll deltas before stepping. Omit to step on each event. */
+  wheelPixelsPerStep?: number;
 }
 
 export function WheelPicker({
@@ -59,6 +64,8 @@ export function WheelPicker({
   tick = true,
   className,
   ariaLabel,
+  keyboard = false,
+  wheelPixelsPerStep = 0,
 }: WheelPickerProps) {
   const rootRef = useRef<HTMLDivElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
@@ -67,8 +74,8 @@ export function WheelPicker({
   const slotWhiteRefs = useRef<(HTMLDivElement | null)[]>([]);
 
   // NOTE: Ref 桥接 props — 避免 useEffect 依赖导致重入
-  const propsRef = useRef({ step, minValue, maxValue, clampProp, renderSlot, onChange, onSettle, settleDelay, tick });
-  propsRef.current = { step, minValue, maxValue, clampProp, renderSlot, onChange, onSettle, settleDelay, tick };
+  const propsRef = useRef({ step, minValue, maxValue, clampProp, renderSlot, onChange, onSettle, settleDelay, tick, wheelPixelsPerStep });
+  propsRef.current = { step, minValue, maxValue, clampProp, renderSlot, onChange, onSettle, settleDelay, tick, wheelPixelsPerStep };
 
   // NOTE: 暴露主 effect 闭包里的同步函数，外部 value 变化时调
   const syncRef = useRef<((v: number) => void) | null>(null);
@@ -185,17 +192,20 @@ export function WheelPicker({
       setListStyle('transform', 'translateY(0px)');
     }
 
-    // NOTE: 单步调整（wheel / 惯性用），返回是否真的动了
-    function adjustByStep(dir: number, animate: boolean): boolean {
-      const { step } = propsRef.current;
-      const newVal = clamp(currentValue + dir * step);
+    function adjustValue(next: number, animateBy = 0): boolean {
+      const newVal = clamp(next);
       if (newVal === currentValue) return false;
       currentValue = newVal;
       playTick();
       propsRef.current.onChange(newVal);
-      if (animate) animateStep(dir);
+      if (animateBy) animateStep(animateBy);
       else fillSlots(newVal);
       return true;
+    }
+
+    // NOTE: 单步调整（wheel / 惯性用），返回是否真的动了
+    function adjustByStep(dir: number, animate: boolean): boolean {
+      return adjustValue(currentValue + dir * propsRef.current.step, animate ? dir : 0);
     }
 
     // ── 外部 value 同步 ──
@@ -300,9 +310,44 @@ export function WheelPicker({
       inertiaRaf = requestAnimationFrame(loop);
     }
 
-    function onWheel(e: WheelEvent) {
-      e.preventDefault();
-      adjustByStep(e.deltaY < 0 ? 1 : -1, true);
+    let wheelDelta = 0;
+    let lastWheelAt = 0;
+
+    function onWheel(event: WheelEvent) {
+      const mode = event.deltaMode;
+      const delta = event.deltaY;
+      if (delta === 0 || event.ctrlKey) return;
+      event.preventDefault();
+
+      const threshold = propsRef.current.wheelPixelsPerStep;
+      let direction = delta < 0 ? 1 : -1;
+      if (threshold > 0 && mode === WheelEvent.DOM_DELTA_PIXEL) {
+        if (event.timeStamp - lastWheelAt > WHEEL_GESTURE_IDLE_MS) wheelDelta = 0;
+        lastWheelAt = event.timeStamp;
+        wheelDelta += delta;
+        if (Math.abs(wheelDelta) < threshold) return;
+        direction = wheelDelta < 0 ? 1 : -1;
+        // A coarse mouse-wheel notch should still adjust by just one step.
+        wheelDelta %= threshold;
+      }
+      adjustByStep(direction, true);
+      scheduleSettle();
+    }
+
+    function onKeyDown(event: KeyboardEvent) {
+      if (root!.tabIndex < 0 || event.altKey || event.ctrlKey || event.metaKey) return;
+      const { minValue, maxValue } = propsRef.current;
+      switch (event.key) {
+        case 'ArrowUp':
+        case 'ArrowRight': adjustByStep(1, true); break;
+        case 'ArrowDown':
+        case 'ArrowLeft': adjustByStep(-1, true); break;
+        case 'Home': if (Number.isFinite(minValue)) adjustValue(minValue); break;
+        case 'End': if (Number.isFinite(maxValue)) adjustValue(maxValue); break;
+        default: return;
+      }
+      event.preventDefault();
+      event.stopPropagation();
       scheduleSettle();
     }
 
@@ -314,6 +359,7 @@ export function WheelPicker({
     document.addEventListener('touchend', onEnd);
     document.addEventListener('touchcancel', onEnd);
     root.addEventListener('wheel', onWheel, { passive: false });
+    root.addEventListener('keydown', onKeyDown);
 
     return () => {
       syncRef.current = null;
@@ -325,6 +371,7 @@ export function WheelPicker({
       document.removeEventListener('touchend', onEnd);
       document.removeEventListener('touchcancel', onEnd);
       root.removeEventListener('wheel', onWheel);
+      root.removeEventListener('keydown', onKeyDown);
       if (inertiaRaf) cancelAnimationFrame(inertiaRaf);
       if (animTimer) clearTimeout(animTimer);
       if (settleTimer) clearTimeout(settleTimer);
@@ -351,8 +398,11 @@ export function WheelPicker({
       className={rootClass}
       style={rootStyle}
       role="slider"
+      tabIndex={keyboard && !disabled ? 0 : undefined}
       aria-label={ariaLabel}
+      aria-orientation="vertical"
       aria-valuenow={value}
+      aria-valuetext={keyboard ? renderSlot(value) : undefined}
       aria-valuemin={Number.isFinite(minValue) ? minValue : undefined}
       aria-valuemax={Number.isFinite(maxValue) ? maxValue : undefined}
     >

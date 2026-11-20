@@ -9,7 +9,7 @@
 import { forwardRef, useEffect, useImperativeHandle, useMemo, useRef } from 'react';
 import FullCalendar from '@fullcalendar/react';
 import './calendar-grid.css';
-import type { CalendarOptions, EventInput, DateSelectArg, EventClickArg, EventDropArg, DatesSetArg } from '@fullcalendar/core';
+import type { CalendarOptions, EventInput, DateSelectArg, EventClickArg, EventDropArg, DatesSetArg, FormatterInput } from '@fullcalendar/core';
 import type { DateClickArg, EventResizeDoneArg } from '@fullcalendar/interaction';
 import timeGridPlugin from '@fullcalendar/timegrid';
 import dayGridPlugin from '@fullcalendar/daygrid';
@@ -51,6 +51,7 @@ interface Props {
   timeZones?: { tz: string; label: string }[];
   isZh: boolean;
   hour24: boolean;
+  omitZeroMinute?: boolean;
   weekStart: 0 | 1;
   weekends: boolean;
   weekNumbers?: boolean;
@@ -131,6 +132,9 @@ const CalendarGrid = forwardRef<GridHandle, Props>(function CalendarGrid(props, 
     fourDay: { type: 'timeGrid', duration: { days: 4 } },
     listMonth: { listDayFormat: { weekday: 'long', month: 'long', day: 'numeric' } },
   }), []);
+  const timeFormat: FormatterInput = props.hour24 && props.omitZeroMinute ? compactTimeFormat : {
+    hour: props.hour24 ? '2-digit' : 'numeric', minute: '2-digit', hour12: !props.hour24, omitZeroMinute: !props.hour24,
+  };
 
   return (
     <div
@@ -180,16 +184,15 @@ const CalendarGrid = forwardRef<GridHandle, Props>(function CalendarGrid(props, 
               .startOf('day').set({ hour: Math.floor(minutes / 60), minute: minutes % 60 });
             return <span className="cal-zone-axes">{props.timeZones!.map(zone => <span key={zone.tz} title={at.setZone(zone.tz).toISO() ?? undefined}>{formatClock(at.toMillis(), zone.tz, props.hour24, props.isZh)}</span>)}</span>;
           } : undefined}
-          slotLabelFormat={{ hour: props.hour24 ? '2-digit' : 'numeric', minute: '2-digit', hour12: !props.hour24, omitZeroMinute: !props.hour24 }}
-          // 24 小时制不能省整点的分钟:中文 locale 会把 12:00 缩成「12时」,Google 那里写的是 12:00。
-          // 12 小时制照 Google 省掉(12 PM)。
-          eventTimeFormat={{ hour: props.hour24 ? '2-digit' : 'numeric', minute: '2-digit', hour12: !props.hour24, omitZeroMinute: !props.hour24 }}
+          slotLabelFormat={timeFormat}
+          eventTimeFormat={timeFormat}
           // 表头日期数字 / 月视图格子里的数字可点 → 只看那一天。视图切换交给上层(URL 是
           // 单一真相),所以这里不用 FullCalendar 自己的跳转,只把日期报上去。
           navLinks
           navLinkDayClick={(date: Date) => { props.onDayLink?.(date.getTime()); }}
           dayHeaderFormat={{ weekday: 'short' }}
           dayHeaderContent={(arg) => {
+            if (arg.view.type.startsWith('list')) return arg.text;
             // Google 的周 / 日表头是两行:星期在上,日号在下(今天的日号套一个实心圆)。
             // 单行交给 Intl 拼会得到「27日周一」这种别扭顺序,所以自己排。
             const weekday = props.mobile ? arg.text.replace(/^(星期|周)/, '') : arg.text;
@@ -274,5 +277,14 @@ const CalendarGrid = forwardRef<GridHandle, Props>(function CalendarGrid(props, 
     </div>
   );
 });
+
+// Keep FullCalendar's hour padding without the hour suffix that Intl can add in Chinese.
+const compactTimeFormat: FormatterInput = ({ start, end, defaultSeparator }) => {
+  const format = ({ hour, minute }: { hour: number; minute: number }) =>
+    `${String(hour).padStart(2, '0')}${minute ? `:${String(minute).padStart(2, '0')}` : ''}`;
+  const startText = format(start);
+  const endText = end ? format(end) : startText;
+  return startText === endText ? startText : `${startText}${defaultSeparator}${endText}`;
+};
 
 export default CalendarGrid;

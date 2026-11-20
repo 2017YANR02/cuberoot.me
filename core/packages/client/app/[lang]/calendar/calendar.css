@@ -75,7 +75,6 @@ html:root:has(.cal-page) {
     --destructive: #f28b82;
     --destructive-foreground: #131314;
     --cal-today-wash: transparent;
-    --cal-picker-invert: 1;
   }
 }
 
@@ -104,7 +103,6 @@ html:root[data-theme=dark]:has(.cal-page) {
   --destructive: #f28b82;
   --destructive-foreground: #131314;
   --cal-today-wash: transparent;
-  --cal-picker-invert: 1;
 }
 
 .cal-page {
@@ -687,7 +685,6 @@ html:root[data-theme=dark]:has(.cal-page) {
 .cal-competition-link { color: var(--accent); overflow-wrap: anywhere; padding: 7px 8px; }
 .cal-competition-link:hover { text-decoration: underline; }
 
-.cal-time,
 .cal-num {
   padding: 6px 8px;
   border: 1px solid transparent;
@@ -700,26 +697,15 @@ html:root[data-theme=dark]:has(.cal-page) {
 
 .cal-text-input:hover,
 .cal-textarea:hover,
-.cal-time:hover,
 .cal-num:hover { background: color-mix(in srgb, var(--foreground) 7%, transparent); }
 
 .cal-text-input:focus,
 .cal-textarea:focus,
-.cal-time:focus,
 .cal-num:focus {
   outline: none;
   background: color-mix(in srgb, var(--foreground) 7%, transparent);
   border-color: var(--accent);
 }
-
-/* 原生日期 / 时间控件的小图标在暗色下是黑的,得反过来 */
-.cal-time::-webkit-calendar-picker-indicator {
-  cursor: pointer;
-  opacity: 0.55;
-  filter: invert(var(--cal-picker-invert, 0));
-}
-
-.cal-time:hover::-webkit-calendar-picker-indicator { opacity: 1; }
 
 .cal-num { width: 68px; }
 
@@ -735,26 +721,50 @@ html:root[data-theme=dark]:has(.cal-page) {
 .cal-event-date .date-input__value { white-space: normal; }
 .cal-event-date[data-readonly] .date-input__display { background: transparent; }
 .cal-event-time {
-  position: relative;
   flex: 0 0 auto;
-  padding: 9px 0;
+  padding: 10px 0;
   text-align: right;
   white-space: nowrap;
 }
-.cal-event-time .cal-time {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  min-width: 0;
-  padding: 6px 0;
+button.cal-event-time {
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: inherit;
   font: inherit;
-  text-align: right;
-  opacity: 0;
   cursor: pointer;
 }
-.cal-event-time:focus-within { min-width: 7.5em; }
-.cal-event-time:focus-within > span { visibility: hidden; }
-.cal-event-time:focus-within .cal-time { opacity: 1; }
+button.cal-event-time:is(:hover, [aria-expanded=true]) { color: var(--accent); }
+.cal-event-time:focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }
+.cal-event-time-picker {
+  /* anchored-panel: clamped (body portal and usePopoverPosition) */
+  position: fixed;
+  visibility: hidden;
+  z-index: 300;
+  display: grid;
+  gap: 10px;
+  width: 176px;
+  padding: 10px;
+  overflow-y: auto;
+  border: 1px solid var(--border-default);
+  border-radius: 10px;
+  background: var(--popover);
+  color: var(--popover-foreground);
+  box-shadow: 0 10px 30px color-mix(in srgb, var(--foreground) 22%, transparent);
+}
+.cal-event-time-columns { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.wheel-picker.cal-event-time-wheel {
+  --wp-bg: transparent;
+  --wp-text: var(--muted-foreground);
+  --wp-text-active: var(--foreground);
+  --wp-text-fade-2: var(--muted-foreground);
+  --wp-text-fade-3: var(--faint-foreground);
+  --wp-text-fade-4: var(--faint-foreground);
+  --wp-highlight: color-mix(in srgb, var(--foreground) 12%, transparent);
+  height: 200px;
+  min-width: 0;
+}
+.cal-event-time-wheel:focus-visible .wheel-picker-highlight { box-shadow: inset 0 0 0 2px var(--ring); }
 .cal-time-opts { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
 
 .cal-row-colors { flex-basis: 100%; padding: 4px 0 6px 22px; }
@@ -885,12 +895,27 @@ html:root[data-theme=dark]:has(.cal-page) {
 .cal-avatar.is-blank { background: var(--muted); }
 
 /* 分享弹窗 */
-.cal-share-field { display: flex; flex-direction: column; gap: 6px; }
-/* column flex 默认 stretch,开关会被拉成整行宽;贴合内容,别钉 min-width。
-   只管开关 —— 下面那段说明文字要占满宽才好换行。 */
-.cal-share-field > .native-select { align-self: flex-start; }
+.cal-share-dialog > .cal-modal-head { justify-content: space-between; }
+.cal-share-dialog > .cal-modal-body { gap: 0; }
+.cal-share-dialog > .cal-modal-body > * { padding-block: 8px; }
+.cal-share-dialog > .cal-modal-body > * + * { border-top: 1px solid var(--border-default); }
+
+.cal-share-field {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(0, 3fr);
+  align-items: center;
+  gap: 8px 12px;
+}
+.cal-share-field > :is(.cal-hint, .cal-share-cals, .cal-share-cals-label) { grid-column: 1 / -1; }
+.cal-share-field > .cal-hint { margin: 0; }
+.cal-share-field > .native-select { align-self: center; justify-self: end; }
+.cal-share-field > .cal-text-input { text-align: end; }
 
 .cal-share-cals { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 4px; }
+.cal-share-cals > li { display: flex; flex-direction: column; }
+.cal-share-cals > li + li { border-top: 1px solid var(--border-default); padding-top: 4px; }
+.cal-share-cals .bool-toggle-label { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.cal-share-cals [role="switch"] { flex-shrink: 0; }
 
 .cal-share-link {
   display: flex;
@@ -1112,7 +1137,7 @@ html:root[data-theme=dark]:has(.cal-page) {
   .cal-modal { max-height: 92dvh; }
   .cal-modal-body { padding: 4px 12px 12px; }
   .cal-event-time-row { gap: 8px; }
-  .cal-date-field, .cal-time { flex: 0 1 auto; }
+  .cal-date-field { flex: 0 1 auto; }
 }
 
 /* Only image scenery clears the shell; the solid mode keeps the corner's surface. */
@@ -1426,6 +1451,8 @@ html:root[data-theme=dark]:has(.cal-page) {
   .cal-event-dialog .cal-guest-input { padding: 6px 0; border: none; border-radius: 0; }
   .cal-event-dialog .cal-guest-input > svg { display: none; }
   .cal-event-dialog :is(.cal-text-input, .cal-textarea) { padding: 5px 0; border: none; border-radius: 0; font-size: 16px; }
+  .cal-event-dialog :is(.cal-title-input, .cal-text-input, .cal-textarea):focus-visible,
+  .cal-event-dialog .cal-guest-input:focus-within { outline: 1px solid var(--ring); outline-offset: 2px; }
   .cal-event-dialog .cal-textarea { min-height: 44px; }
   .cal-event-dialog .list-select { width: 100%; }
   .cal-event-dialog .list-select-trigger { min-height: 34px; width: 100%; padding-inline: 0; font-size: 15px; text-align: left; }
@@ -1440,8 +1467,6 @@ html:root[data-theme=dark]:has(.cal-page) {
   .cal-event-dialog .cal-modal-foot { padding: 4px 20px max(10px, env(safe-area-inset-bottom)); justify-content: flex-start; }
   .cal-event-dialog :is(.cal-event-footer-save, .cal-event-footer-cancel) { display: none; }
   .cal-event-dialog .cal-modal-foot:not(:has(.is-danger, .cal-rsvp)) { display: none; }
-  /* 这些字段直接写在抽屉表面；覆盖全站原生输入的玻璃底，避免出现灰色长方形。 */
-  body[data-site-scenery] .cal-event-dialog :is(.cal-title-input, .cal-text-input, .cal-textarea, .cal-guest-field) { background-color: transparent !important; -webkit-backdrop-filter: none; backdrop-filter: none; }
 }
 
 @media (max-width: 360px) {

@@ -8,11 +8,10 @@
 // token 从 window.location 读(哨兵壳,服务端拿不到路由参数)。
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { CalendarDays, ChevronLeft, ChevronRight, Link2, Check, Copy } from '@app-foundation/icons/lucide';
+import { CalendarDays, ChevronLeft, ChevronRight, Link2 } from '@app-foundation/icons/lucide';
 import PageBackLink from '@/components/PageBackLink';
 import { ListSelect } from '@/components/ListSelect';
 import { UserContactLink } from '@/components/UserIdLabel';
-import { useCopy } from '@/hooks/useCopy';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { tr, useLang } from '@/i18n/tr';
 import { localZone, isValidZone, formatOffset, zoneOffsetMinutes } from '@cuberoot/shared/tz';
@@ -41,7 +40,6 @@ export default function SharedCalendarClient() {
   const theme = useEffectiveTheme();
   const eventColor = useCallback((key: string) => colorHex(key, theme), [theme]);
   const gridRef = useRef<GridHandle>(null);
-  const { copied, copy } = useCopy();
 
   const [mounted, setMounted] = useState(false);
   const [token, setToken] = useState('');
@@ -104,8 +102,6 @@ export default function SharedCalendarClient() {
     });
   }, [data, range.start, range.end, calColor, eventColor, busyLabel]);
 
-  const shareUrl = typeof window === 'undefined' ? '' : window.location.href;
-
   if (mounted && !token) {
     return (
       <div className="cal-page">
@@ -152,14 +148,6 @@ export default function SharedCalendarClient() {
           clearable={false}
           onChange={(v) => { if (isViewKey(v)) setView(v); }}
         />
-        <button
-          type="button"
-          className="cal-icon-btn"
-          aria-label={tr({ zh: '复制链接', en: 'Copy link' })}
-          onClick={() => copy(shareUrl)}
-        >
-          {copied ? <Check size={16} aria-hidden /> : <Copy size={16} aria-hidden />}
-        </button>
       </div>
 
       <div className="cal-body">

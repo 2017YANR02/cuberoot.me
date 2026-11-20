@@ -34,6 +34,7 @@
 }
 
 .cal-grid .fc .fc-day-today .fc-daygrid-day-number,
+.cal-grid .fc .fc-day-today .fc-list-day-text,
 .cal-grid .fc .fc-day-today .fc-col-header-cell-cushion { color: var(--accent); font-weight: 700; }
 
 /* 周 / 日视图表头两行:星期在上、日号在下,今天的日号套实心圆(照 Google)。 */

@@ -3,16 +3,20 @@
 // 新建 / 编辑日程的弹窗。字段顺序照 Google:标题 → 时间 → 重复 → 日历+颜色 →
 // 地点 → 提醒 → 参与者 → 说明。
 //
-// 日期复用 DateInput,时间保留原生 time 控件。墙上时间 ↔ 绝对时刻的换算
+// 日期复用 DateInput，时间通过小时和分钟选择。墙上时间 ↔ 绝对时刻的换算
 // 全走事件自己的时区(@cuberoot/shared/tz),
 // 所以「北京时间 21:00 的会」在洛杉矶的人改起来也不会漂。
 
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useId, useMemo, useRef, useState, type KeyboardEvent } from 'react';
+import { createPortal } from 'react-dom';
 import { Bell, ChevronDown, Clock, MapPin, Palette, Repeat, Text, Trash2, Users, X, Globe } from '@app-foundation/icons/lucide';
+import { usePopoverPosition } from '@cuberoot/timer-ui/popover-position';
 import { useDialogMotion, useModalDismiss } from '@/hooks/useModalDismiss';
+import { usePopoverDismiss } from '@/hooks/usePopoverDismiss';
 import { DateInput } from '@/components/DateInput';
 import AppLink from '@/components/AppLink';
 import { ListSelect } from '@/components/ListSelect';
+import { WheelPicker } from '@/components/WheelPicker';
 import CalendarColorSelect from '@/components/CalendarColorSelect';
 import BoolToggle from '@/components/BoolToggle';
 import { useIsMobile } from '@/hooks/useIsMobile';
@@ -85,6 +89,115 @@ function reminderLabel(min: number): string {
   return tr({ zh: `提前 ${min / 10080} 周`, en: `${min / 10080} weeks before` });
 }
 
+function twoDigits(value: number): string {
+  return String(value).padStart(2, '0');
+}
+
+function renderMinute(value: number): string {
+  return value >= 0 && value <= 59 ? twoDigits(value) : '';
+}
+
+const TIME_WHEEL_PIXELS_PER_STEP = 48;
+
+function EventTimePicker({ label, displayValue, value, hourFormat, readOnly, onChange }: {
+  label: string;
+  displayValue: string;
+  value: string;
+  hourFormat: Intl.DateTimeFormat | null;
+  readOnly: boolean;
+  onChange: (time: string) => void;
+}) {
+  const [draft, setDraft] = useState<{ hour: number; minute: number } | null>(null);
+  const open = draft !== null && !readOnly;
+  const panelId = useId();
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
+  const panelStyle = usePopoverPosition({ open, triggerRef, panelRef, align: 'center', contentKey: label });
+  const positioned = panelStyle?.visibility === 'visible';
+  const renderHour = useCallback((value: number) => {
+    if (value < 0 || value > 23) return '';
+    return hourFormat ? hourFormat.format(Date.UTC(2000, 0, 1, value)) : twoDigits(value);
+  }, [hourFormat]);
+
+  usePopoverDismiss(open, () => setDraft(null), panelRef, triggerRef);
+  useEffect(() => {
+    if (positioned) panelRef.current?.querySelector<HTMLElement>('[role="slider"]')?.focus({ preventScroll: true });
+  }, [positioned]);
+
+  const close = () => {
+    setDraft(null);
+    triggerRef.current?.focus({ preventScroll: true });
+  };
+  const onKeyDown = (event: KeyboardEvent) => {
+    if (event.key !== 'Escape' || !open) return;
+    event.stopPropagation();
+    close();
+  };
+
+  if (readOnly) return <span className="cal-event-time">{displayValue}</span>;
+  return (
+    <>
+      <button
+        type="button"
+        ref={triggerRef}
+        className="cal-event-time"
+        aria-label={`${label} ${displayValue}`}
+        aria-haspopup="dialog"
+        aria-expanded={open}
+        aria-controls={open ? panelId : undefined}
+        onClick={() => {
+          const [hour, minute] = value.split(':').map(Number);
+          setDraft(open ? null : { hour, minute });
+        }}
+        onKeyDown={onKeyDown}
+      >
+        {displayValue}
+      </button>
+      {open && createPortal(
+        <div id={panelId} ref={panelRef} className="cal-event-time-picker" data-site-surface="popover"
+          role="dialog" aria-label={label} style={panelStyle} onKeyDown={onKeyDown}
+        >
+          <div className="cal-event-time-columns">
+            <WheelPicker
+              className="cal-event-time-wheel"
+              width="100%"
+              value={draft.hour}
+              minValue={0}
+              maxValue={23}
+              renderSlot={renderHour}
+              onChange={(hour) => setDraft((current) => current && { ...current, hour })}
+              tick={false}
+              keyboard
+              wheelPixelsPerStep={TIME_WHEEL_PIXELS_PER_STEP}
+              ariaLabel={tr({ zh: '小时', en: 'Hour' })}
+            />
+            <WheelPicker
+              className="cal-event-time-wheel"
+              width="100%"
+              value={draft.minute}
+              minValue={0}
+              maxValue={59}
+              renderSlot={renderMinute}
+              onChange={(minute) => setDraft((current) => current && { ...current, minute })}
+              tick={false}
+              keyboard
+              wheelPixelsPerStep={TIME_WHEEL_PIXELS_PER_STEP}
+              ariaLabel={tr({ zh: '分钟', en: 'Minute' })}
+            />
+          </div>
+          <button type="button" className="cal-btn is-primary" onClick={() => {
+            const nextTime = `${twoDigits(draft.hour)}:${twoDigits(draft.minute)}`;
+            if (nextTime !== value) onChange(nextTime);
+            close();
+          }}>
+            {tr({ zh: '确定', en: 'Apply' })}
+          </button>
+        </div>, document.body,
+      )}
+    </>
+  );
+}
+
 export default function EventDialog(props: Props) {
   const { calendars, meKey } = props;
   const isZh = useLang() === 'zh';
@@ -111,6 +224,9 @@ export default function EventDialog(props: Props) {
   const startIn = toInputs(d.start, d.tz);
   const endIn = toInputs(d.allDay ? d.end - 1 : d.end, d.tz);   // 全天的 end 是次日 0 点,显示要减一天
   const locale = tr({ zh: 'zh-CN', en: 'en-US' });
+  const hourFormat = useMemo(() => props.hour24 ? null : new Intl.DateTimeFormat(locale, {
+    timeZone: 'UTC', hour: 'numeric', hourCycle: 'h12',
+  }), [locale, props.hour24]);
   const formatDate = (date: string): string => {
     const day = new Date(`${date}T00:00:00Z`);
     const label = new Intl.DateTimeFormat(locale, { timeZone: 'UTC', month: 'short', day: 'numeric' }).format(day);
@@ -218,17 +334,14 @@ export default function EventDialog(props: Props) {
                   onChange={(value) => setStart(fromInputs(value, d.allDay ? '00:00' : startIn.time, d.tz, d.start))}
                 />
                 {!d.allDay && (
-                  <label className="cal-event-time">
-                    <span aria-hidden="true">{formatTime(d.start, startIn.time)}</span>
-                    <input
-                      type="time"
-                      className="cal-time"
-                      aria-label={tr({ zh: '开始时间', en: 'Start time' })}
-                      value={startIn.time}
-                      readOnly={readOnly}
-                      onChange={(e) => setStart(fromInputs(startIn.date, e.target.value, d.tz, d.start))}
-                    />
-                  </label>
+                  <EventTimePicker
+                    label={tr({ zh: '开始时间', en: 'Start time' })}
+                    displayValue={formatTime(d.start, startIn.time)}
+                    value={startIn.time}
+                    hourFormat={hourFormat}
+                    readOnly={readOnly}
+                    onChange={(time) => setStart(fromInputs(startIn.date, time, d.tz, d.start))}
+                  />
                 )}
               </div>
               <div className="cal-event-time-row">
@@ -245,17 +358,14 @@ export default function EventDialog(props: Props) {
                   }}
                 />
                 {!d.allDay && (
-                  <label className="cal-event-time">
-                    <span aria-hidden="true">{formatTime(d.end, endIn.time)}</span>
-                    <input
-                      type="time"
-                      className="cal-time"
-                      aria-label={tr({ zh: '结束时间', en: 'End time' })}
-                      value={endIn.time}
-                      readOnly={readOnly}
-                      onChange={(e) => setEnd(fromInputs(endIn.date, e.target.value, d.tz, d.end))}
-                    />
-                  </label>
+                  <EventTimePicker
+                    label={tr({ zh: '结束时间', en: 'End time' })}
+                    displayValue={formatTime(d.end, endIn.time)}
+                    value={endIn.time}
+                    hourFormat={hourFormat}
+                    readOnly={readOnly}
+                    onChange={(time) => setEnd(fromInputs(endIn.date, time, d.tz, d.end))}
+                  />
                 )}
               </div>
               <div className="cal-time-opts cal-event-time-options">

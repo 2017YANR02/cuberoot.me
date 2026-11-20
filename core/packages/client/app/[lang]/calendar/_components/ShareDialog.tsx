@@ -10,7 +10,7 @@ import '@cuberoot/timer-ui/compact-select.css';
 // 链接是 22 位随机 token(不可枚举);发错人了可以「换一条链接」立刻作废旧的。
 // 同一个 token 还提供 .ics 订阅源,Google / Apple 日历能直接订上。
 
-import { useState } from 'react';
+import { useId, useState } from 'react';
 import { Check, Copy, Link2, RefreshCw, X, ExternalLink } from '@app-foundation/icons/lucide';
 import { useDialogMotion, useModalDismiss } from '@/hooks/useModalDismiss';
 import BoolToggle from '@/components/BoolToggle';
@@ -31,6 +31,7 @@ interface Props {
 }
 
 export default function ShareDialog({ share, calendars, lang, onSave, onRotate, onClose }: Props) {
+  const fieldId = useId();
   const [busy, setBusy] = useState(false);
   // 标题受控 + 关闭时兜底提交:只挂 onBlur 的话,输入框还聚焦着按 Esc / 点背景关掉,
   // React 先卸载组件、blur 不再触发,刚打的字就无声丢了。
@@ -63,7 +64,7 @@ export default function ShareDialog({ share, calendars, lang, onSave, onRotate, 
       className="cal-modal-backdrop"
       {...backdrop}
     >
-      <div className="cal-modal is-narrow" role="dialog" aria-modal="true" aria-label={tr({ zh: '对外展示', en: 'Share' })}>
+      <div className="cal-modal is-narrow cal-share-dialog" role="dialog" aria-modal="true" aria-label={tr({ zh: '对外展示', en: 'Share' })}>
         <div className="cal-modal-head">
           <h2>{tr({ zh: '对外展示我的日历', en: 'Share my calendar' })}</h2>
           <button type="button" className="cal-icon-btn" onClick={close} aria-label={tr({ zh: '关闭', en: 'Close' })}>
@@ -79,17 +80,18 @@ export default function ShareDialog({ share, calendars, lang, onSave, onRotate, 
           />
 
           <div className="cal-share-field">
-            <span className="cal-field-label">{tr({ zh: '显示内容', en: 'Detail level' })}</span>
+            <label className="cal-field-label" htmlFor={`${fieldId}-detail`}>{tr({ zh: '显示内容', en: 'Detail level' })}</label>
             <select
+              id={`${fieldId}-detail`}
               value={String(share.detail === 'busy')}
               onChange={event => { const v = event.currentTarget.value === 'true'; void run(() => onSave({ detail: v ? 'busy' : 'full' })); }}
-              aria-label={tr({ zh: '显示内容', en: 'Detail level' })}
+              aria-describedby={`${fieldId}-detail-hint`}
               className="native-select"
             >
-              <option value="true">{tr({ zh: '仅忙碌时段', en: 'Busy only' })}</option>
-              <option value="false">{tr({ zh: '完整内容', en: 'Full details' })}</option>
+              <option value="true">{tr({ zh: '时段', en: 'Busy only' })}</option>
+              <option value="false">{tr({ zh: '内容', en: 'Full details' })}</option>
             </select>
-            <p className="cal-hint">
+            <p className="cal-hint" id={`${fieldId}-detail-hint`}>
               {share.detail === 'busy'
                 ? tr({
                   zh: '别人只看到你哪些时段被占用,标题、说明、地点、参与者都不会离开服务器。',
@@ -103,8 +105,9 @@ export default function ShareDialog({ share, calendars, lang, onSave, onRotate, 
           </div>
 
           <div className="cal-share-field">
-            <span className="cal-field-label">{tr({ zh: '页面标题', en: 'Page title' })}</span>
+            <label className="cal-field-label" htmlFor={`${fieldId}-title`}>{tr({ zh: '页面标题', en: 'Page title' })}</label>
             <input
+              id={`${fieldId}-title`}
               className="cal-text-input"
               type="text"
               value={title}
@@ -117,8 +120,8 @@ export default function ShareDialog({ share, calendars, lang, onSave, onRotate, 
           </div>
 
           <div className="cal-share-field">
-            <span className="cal-field-label">{tr({ zh: '展示哪些日历', en: 'Calendars to include' })}</span>
-            <ul className="cal-share-cals">
+            <span className="cal-field-label cal-share-cals-label" id={`${fieldId}-calendars`}>{tr({ zh: '展示哪些日历', en: 'Calendars to include' })}</span>
+            <ul className="cal-share-cals" aria-labelledby={`${fieldId}-calendars`}>
               {calendars.map((c) => (
                 <li key={c.id}>
                   <BoolToggle

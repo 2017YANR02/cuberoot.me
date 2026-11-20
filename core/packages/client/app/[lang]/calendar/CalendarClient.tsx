@@ -16,7 +16,7 @@ import BackHome from '@/components/BackHome';
 import MoreToggle from '@/components/MoreToggle';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useQueryState, parseAsString, parseAsStringEnum } from 'nuqs';
-import { CalendarDays, ChevronLeft, ChevronRight, Columns3, Download, List, Menu, Plus, Search, Settings, Share2, Square, Undo2, Upload, X } from '@app-foundation/icons/lucide';
+import { CalendarDays, ChevronLeft, ChevronRight, Columns3, Download, ExternalLink, List, Menu, Plus, Search, Settings, Share2, Square, Undo2, Upload, X } from '@app-foundation/icons/lucide';
 import { ContinuousInsetCorner, SidebarToggle } from '@app-foundation/navigation-ui';
 import '@app-foundation/navigation-ui/navigation.css';
 import AppLink from '@/components/AppLink';
@@ -674,7 +674,7 @@ export default function CalendarClient() {
           aria-label={tr({ zh: '对外展示', en: 'Share' })}
           onClick={() => setShareOpen(true)}
         >
-          <Share2 size={17} aria-hidden />
+          <ExternalLink size={17} aria-hidden />
         </button>
       </div>
 

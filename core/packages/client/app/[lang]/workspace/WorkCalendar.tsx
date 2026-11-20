@@ -93,6 +93,7 @@ function WorkCalendarBoard({ now }: { now: number }) {
   const t = useT(), lang = useLang(), theme = useEffectiveTheme(), mobile = useIsMobile();
   const { formatName = name => name } = useWorkspace();
   const grid = useRef<GridHandle>(null);
+  const gridContainer = useRef<HTMLDivElement>(null);
   const [tz, setTz] = useState(WORK_CALENDAR_DEFAULT_ZONE);
   const [viewParam, setView] = useQueryState('workView', parseAsStringEnum(['auto', 'timeGridDay', 'timeGridWeek', 'listMonth']).withDefault('auto'));
   const [person, setPerson] = useQueryState('workPerson', parseAsString.withDefault('all'));
@@ -112,6 +113,37 @@ function WorkCalendarBoard({ now }: { now: number }) {
   }
   const [editing, setEditing] = useState<{ kind: 'weekly'; date: string; data: WorkCalendarData } | { kind: 'day'; draft: DayDraft; data: WorkCalendarData } | null>(null);
   const [message, setMessage] = useState<Error>();
+  useEffect(() => {
+    function onKeyDown(event: KeyboardEvent) {
+      if (event.key !== 'ArrowLeft' && event.key !== 'ArrowRight') return;
+      if (event.defaultPrevented || event.isComposing || event.altKey || event.ctrlKey || event.metaKey || event.shiftKey) return;
+      const target = event.target;
+      if (target instanceof HTMLElement && (target.isContentEditable || target.closest('input, textarea, select, .work-calendar-filters, [role="listbox"], [role="menu"]'))) return;
+      if (document.querySelector('dialog[open], [role="dialog"][aria-modal="true"]')) return;
+      event.preventDefault();
+      if (event.key === 'ArrowLeft') grid.current?.prev();
+      else grid.current?.next();
+    }
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, []);
+  useEffect(() => {
+    const container = gridContainer.current;
+    if (!container || view !== 'listMonth') return;
+    let hideTimer: number;
+    const onScroll = (event: Event) => {
+      if (!(event.target instanceof HTMLElement) || !event.target.matches('.fc-list .fc-scroller')) return;
+      if (!container.hasAttribute('data-scrolling')) container.setAttribute('data-scrolling', '');
+      window.clearTimeout(hideTimer);
+      hideTimer = window.setTimeout(() => container.removeAttribute('data-scrolling'), 450);
+    };
+    container.addEventListener('scroll', onScroll, { capture: true, passive: true });
+    return () => {
+      container.removeEventListener('scroll', onScroll, true);
+      window.clearTimeout(hideTimer);
+      container.removeAttribute('data-scrolling');
+    };
+  }, [view]);
   const occurrences = useMemo(() => data ? expandWorkCalendar(data, range.start, range.end) : [], [data, range.start, range.end]);
   const filtered = occurrences.filter(o => person === 'all' || selectedPeople.includes(String(o.userId)));
   const events: EventInput[] = filtered.map(o => {
@@ -147,14 +179,13 @@ function WorkCalendarBoard({ now }: { now: number }) {
           onChange={togglePerson} /></div>
         <ZonePicker compact value={tz} onChange={setTz} label={t('显示时区', 'Display time zone')} />
       </div>
-      <div className="work-calendar-actions"><Button action="edit" disabled={!ready} onClick={() => data && setEditing({ kind: 'weekly', date: focusDate, data })}>{t('我的工作时间', 'My working hours')}</Button><Button action="settings" variant="secondary" disabled={!ready} onClick={() => openDay(focusDate)}>{t('调整当天', 'Adjust day')}</Button><Button action="reload" variant="secondary" onClick={resource.reload}>{t('重新加载', 'Reload')}</Button></div>
+      <div className="work-calendar-actions"><Button action="edit" disabled={!ready} onClick={() => data && setEditing({ kind: 'weekly', date: focusDate, data })}>{t('我的工作时间', 'My working hours')}</Button><Button action="settings" variant="secondary" disabled={!ready} onClick={() => openDay(focusDate)}>{t('调整当天', 'Adjust day')}</Button></div>
     </div>
-    <div className="work-calendar-legend">{submittedMembers.map(m => <span key={m.userId}><i aria-hidden style={{ backgroundColor: colorHex(workCalendarColor(m.userId), theme) }} />{formatName(m.name)}</span>)}</div>
-    <ErrorNotice error={resource.error} /><ErrorNotice error={message} />
+    <ErrorNotice error={resource.error} retry={resource.reload} /><ErrorNotice error={message} />
     {resource.loading && <p role="status"><LoadingIndicator>{t('正在加载…', 'Loading…')}</LoadingIndicator></p>}
     {!resource.loading && !resource.error && !filtered.length && <p className="staff-muted">{t('此范围暂无工作时间', 'No working hours in this range')}</p>}
-    <div className="work-calendar-grid" aria-busy={resource.loading}>
-      <CalendarGrid ref={grid} initialDate={now} view={view} events={events} tz={tz} tzLabel={tz} isZh={lang === 'zh'} hour24 weekStart={1} weekends mobile={mobile} editable={ready} slotMinutes={60} snapMinutes={60} allDaySlot={false} slotEventOverlap={false}
+    <div ref={gridContainer} className="work-calendar-grid" aria-busy={resource.loading}>
+      <CalendarGrid ref={grid} initialDate={now} view={view} events={events} tz={tz} tzLabel={tz} isZh={lang === 'zh'} hour24 omitZeroMinute weekStart={1} weekends mobile={mobile} editable={ready} slotMinutes={60} snapMinutes={60} allDaySlot={false} slotEventOverlap={false}
         onRangeChange={next => setRange(old => old.start === next.start && old.end === next.end && old.anchor === next.anchor ? old : next)}
         onDayLink={ms => { void setView('timeGridDay'); grid.current?.gotoDate(ms); }}
         onSelect={selectHours} onDateClick={ms => openDay(workDate(tz, ms))}
