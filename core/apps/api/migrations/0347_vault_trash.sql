@@ -1,0 +1,1 @@
+ALTER TABLE vault_items ADD COLUMN trashed_at TIMESTAMPTZ;

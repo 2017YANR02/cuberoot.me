@@ -2,7 +2,7 @@
 
 import { sessionFetch } from '@/lib/session-fetch';
 import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
-import { Check, Copy, Download, KeyRound, Loader2, Lock, Plus, Save, Trash2, UserPlus, X } from '@app-foundation/icons/lucide';
+import { Check, Copy, Download, KeyRound, Loader2, Lock, Plus, RotateCcw, Save, Trash2, UserPlus, X } from '@app-foundation/icons/lucide';
 import BackHome from '@/components/BackHome';
 import { PasswordInput } from '@/components/PasswordInput';
 import { SearchInput } from '@/components/SearchInput';
@@ -31,24 +31,25 @@ import './vault.css';
 interface VaultShare { userId: number; name: string; publicKey: JsonWebKey; }
 interface VaultItemPayload {
   id: string; ownerUserId: number; ownerName: string; ciphertext: string; iv: string;
-  version: number; updatedAt: string; wrappedKey: string; shares: VaultShare[];
+  version: number; updatedAt: string; trashedAt?: string | null; wrappedKey: string; shares: VaultShare[];
 }
 interface VaultPayload {
   userId: number;
   canManage: boolean;
   keyProfile: { publicKey: JsonWebKey; encryptedPrivateKey: EncryptedPrivateKey } | null;
   items: VaultItemPayload[];
+  trash?: VaultItemPayload[];
 }
 interface OpenItem {
   localId: string; serverId: string | null; ownerUserId: number; ownerName: string;
-  version: number; updatedAt: string; shares: VaultShare[]; entry: VaultEntry;
+  version: number; updatedAt: string; trashedAt: string | null; shares: VaultShare[]; entry: VaultEntry;
 }
 interface UserResult { userId: number; name: string; wcaId: string | null; publicKey: JsonWebKey | null; }
 
 const cloneItem = (item: OpenItem): OpenItem => structuredClone(item);
 const decryptOpenItem = async (item: VaultItemPayload, key: CryptoKey): Promise<OpenItem> => ({
   localId: item.id, serverId: item.id, ownerUserId: item.ownerUserId, ownerName: item.ownerName,
-  version: item.version, updatedAt: item.updatedAt, shares: item.shares,
+  version: item.version, updatedAt: item.updatedAt, trashedAt: item.trashedAt ?? null, shares: item.shares,
   entry: await decryptVaultEntry(item.ciphertext, item.iv, item.wrappedKey, key),
 });
 type VaultCategory = NonNullable<VaultEntry['category']>;
@@ -89,12 +90,13 @@ export default function VaultPage() {
   const [shareSearchError, setShareSearchError] = useState(false);
   const [searchingUsers, setSearchingUsers] = useState(false);
   const [failedCount, setFailedCount] = useState(0);
+  const [failedTrashCount, setFailedTrashCount] = useState(0);
+  const [showTrash, setShowTrash] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const imageInput = useRef<HTMLInputElement>(null);
   const [expandedImage, setExpandedImage] = useState<string | null>(null);
   const [categoryFilter, setCategoryFilter] = useState('');
-  const [showMerged, setShowMerged] = useState(false);
   const [mergeTargetId, setMergeTargetId] = useState('');
 
   useEffect(() => { setMounted(true); }, []);
@@ -116,19 +118,25 @@ export default function VaultPage() {
 
   const visibleItems = useMemo(() => {
     const q = filter.trim().toLocaleLowerCase();
-    return items.filter(({ entry }) => Boolean(entry.mergedInto) === showMerged && (!categoryFilter || (entry.category ?? 'other') === categoryFilter)
-      && (!q || [entry.title, entry.notes, ...entry.fields.flatMap((field) => [field.label, ...(field.secret ? [] : [field.value])])]
-        .some((value) => value.toLocaleLowerCase().includes(q))));
-  }, [filter, categoryFilter, items, showMerged]);
+    const matches = (value: string) => value.toLocaleLowerCase().includes(q);
+    return items.filter(({ entry, trashedAt }) => Boolean(trashedAt) === showTrash
+      && (!categoryFilter || (entry.category ?? 'other') === categoryFilter)
+      && (!q || matches(entry.title) || matches(entry.notes)
+        || entry.fields.some(({ label, value }) => matches(label) || matches(value))));
+  }, [filter, categoryFilter, items, showTrash]);
 
   const openVault = async (key: CryptoKey, data: VaultPayload) => {
-    const results = await Promise.allSettled(data.items.map((item) => decryptOpenItem(item, key)));
+    const trash = data.trash ?? [];
+    const results = await Promise.allSettled([...data.items, ...trash].map((item) => decryptOpenItem(item, key)));
     const opened = results.flatMap((result) => result.status === 'fulfilled' ? [result.value] : []);
+    const active = opened.filter((item) => !item.trashedAt);
     setPrivateKey(key);
     setItems(opened);
-    const first = opened.find((item) => !item.entry.mergedInto);
+    const first = active.find((item) => !item.entry.mergedInto) ?? active[0];
     setDraft(first ? cloneItem(first) : null);
-    setFailedCount(results.length - opened.length);
+    setFailedCount(data.items.length - active.length);
+    setFailedTrashCount(trash.length - (opened.length - active.length));
+    setShowTrash(false);
     setDirty(false);
     setPassphrase('');
   };
@@ -216,28 +224,41 @@ export default function VaultPage() {
   const discardUnsavedNew = () => {
     if (draft && !draft.serverId) setItems((current) => current.filter((item) => item.localId !== draft.localId));
   };
-  const selectItem = (item: OpenItem) => {
-    if (!confirmDiscard()) return;
-    discardUnsavedNew();
-    setDraft(cloneItem(item));
+  const showItem = (item: OpenItem | null) => {
+    setDraft(item ? cloneItem(item) : null);
     setDirty(false);
+    setShareQuery('');
     setShareResults([]);
     setExpandedImage(null);
     setMergeTargetId('');
+  };
+  const selectItem = (item: OpenItem) => {
+    if (!confirmDiscard()) return;
+    discardUnsavedNew();
+    showItem(item);
+  };
+  const toggleTrash = () => {
+    if (!confirmDiscard()) return;
+    discardUnsavedNew();
+    showItem(null);
+    setFilter('');
+    setCategoryFilter('');
+    setError(null);
+    setShowTrash((current) => !current);
   };
   const addItem = () => {
     if (!payload?.canManage || !confirmDiscard()) return;
     discardUnsavedNew();
     const item: OpenItem = {
       localId: `new:${crypto.randomUUID()}`, serverId: null, ownerUserId: payload.userId,
-      ownerName: user?.name ?? '', version: 0, updatedAt: new Date().toISOString(), shares: [], entry: emptyEntry((categoryFilter || 'accounts') as VaultCategory),
+      ownerName: user?.name ?? '', version: 0, updatedAt: new Date().toISOString(), trashedAt: null,
+      shares: [], entry: emptyEntry((categoryFilter || 'accounts') as VaultCategory),
     };
     setItems((current) => [item, ...current]);
     setDraft(item);
     setDirty(true);
     setExpandedImage(null);
     setFilter('');
-    setShowMerged(false);
     setMergeTargetId('');
   };
   const updateDraft = (update: (item: OpenItem) => void) => {
@@ -293,8 +314,8 @@ export default function VaultPage() {
     const target = items.find((item) => item.localId === mergeTargetId);
     if (busy || dirty || !draft?.serverId || !target?.serverId || target.localId === draft.localId || !payload?.canManage
       || draft.ownerUserId !== payload.userId || target.ownerUserId !== payload.userId
-      || draft.shares.length || target.shares.length || draft.entry.mergedInto || target.entry.mergedInto) return;
-    if (!window.confirm(tr({ zh: `将「${draft.entry.title}」合并到「${target.entry.title}」？原条目会移入“已合并”，可恢复。`, en: `Merge “${draft.entry.title}” into “${target.entry.title}”? The original will move to Merged items and can be restored.` }))) return;
+      || draft.trashedAt || target.trashedAt || draft.shares.length || target.shares.length || draft.entry.mergedInto || target.entry.mergedInto) return;
+    if (!window.confirm(tr({ zh: `将「${draft.entry.title}」合并到「${target.entry.title}」？原条目会标为已合并，仍可恢复。`, en: `Merge “${draft.entry.title}” into “${target.entry.title}”? The original will be marked as merged and can still be restored.` }))) return;
     setBusy(true);
     setError(null);
     let targetSaved = false;
@@ -312,7 +333,7 @@ export default function VaultPage() {
       setExpandedImage(null);
     } catch (mergeError) {
       setError(targetSaved
-        ? tr({ zh: '目标条目已保存，但原条目未移入“已合并”。资料均保留，请刷新后重试。', en: 'The target was saved, but the original was not archived. All content is retained. Refresh and retry.' })
+        ? tr({ zh: '目标条目已保存，但原条目未标为已合并。资料均保留，请刷新后重试。', en: 'The target was saved, but the original could not be marked as merged. All content is retained. Refresh and retry.' })
         : (mergeError as Error).message === 'vault_entry_limit'
           ? tr({ zh: '合并后超出单条容量限制，原条目均未改动。', en: 'The merged item exceeds the size limit. Neither item was changed.' })
           : tr({ zh: '合并未完成，原条目均保留。请刷新后重试。', en: 'The merge did not complete. Both originals are retained. Refresh and retry.' }));
@@ -329,7 +350,6 @@ export default function VaultPage() {
       const saved = await persistItem(restored);
       setItems((current) => current.map((item) => item.localId === saved.localId ? saved : item));
       setDraft(saved);
-      setShowMerged(false);
       setDirty(false);
     } catch { setError(tr({ zh: '恢复失败，请刷新后重试。', en: 'Could not restore. Refresh and retry.' })); }
     finally { setBusy(false); }
@@ -351,23 +371,57 @@ export default function VaultPage() {
     } finally { setBusy(false); }
   };
 
-  const remove = async () => {
-    if (!draft || !payload?.canManage || draft.ownerUserId !== payload.userId
-      || !window.confirm(tr({ zh: '永久删除这条加密内容？', en: 'Permanently delete this encrypted item?' }))) return;
+  const changeTrash = async (trashed: boolean) => {
+    if (busy || !draft || !payload?.canManage || draft.ownerUserId !== payload.userId || !confirmDiscard()) return;
+    if (!draft.serverId) {
+      discardUnsavedNew();
+      showItem(null);
+      return;
+    }
+    const item = items.find((candidate) => candidate.localId === draft.localId);
+    if (!item || Boolean(item.trashedAt) === trashed) return;
+    if (trashed && item.shares.length && !window.confirm(tr({
+      zh: '移入回收站会停止分享。恢复后可以重新分享。确定移入？',
+      en: 'Moving this item to Trash revokes sharing. You can share it again after restoring it. Move to Trash?',
+    }))) return;
     setBusy(true);
     setError(null);
     try {
-      if (draft.serverId) await handleApi(await sessionFetch(apiUrl(`/v1/vault/items/${draft.serverId}`), { method: 'DELETE', headers: authHeaders(false) }));
-      const next = items.filter((item) => item.localId !== draft.localId);
-      setItems(next);
-      setDraft(next[0] ? cloneItem(next[0]) : null);
-      setDirty(false);
+      const state = await handleApi<{ version: number; updatedAt: string; trashedAt: string | null }>(
+        await sessionFetch(apiUrl(`/v1/vault/items/${draft.serverId}/trash`), {
+          method: 'PUT',
+          headers: authHeaders(),
+          body: JSON.stringify({ trashed, expectedVersion: item.version }),
+        }),
+      );
+      setItems((current) => current.map((candidate) => candidate.localId === item.localId
+        ? { ...item, ...state, shares: [] } : candidate));
+      showItem(null);
     } catch {
-      setError(tr({ zh: '删除失败，请稍后重试。', en: 'Could not delete the item. Try again later.' }));
+      setError(tr(trashed
+        ? { zh: '无法移入回收站，请刷新后重试。', en: 'Could not move the item to Trash. Refresh and try again.' }
+        : { zh: '无法恢复资料，请刷新后重试。', en: 'Could not restore the item. Refresh and try again.' }));
     } finally { setBusy(false); }
   };
 
-  const canSearchUsers = Boolean(user && privateKey && draft && !draft.entry.mergedInto && payload?.canManage && draft.ownerUserId === payload.userId);
+  const emptyTrash = async () => {
+    if (busy || !showTrash || !payload?.canManage || !window.confirm(tr({
+      zh: '永久删除回收站里的所有资料？清空后无法恢复。',
+      en: 'Permanently delete all items in Trash? This cannot be undone.',
+    }))) return;
+    setBusy(true);
+    setError(null);
+    try {
+      await handleApi(await sessionFetch(apiUrl('/v1/vault/trash'), { method: 'DELETE', headers: authHeaders(false) }));
+      setItems((current) => current.filter((item) => !item.trashedAt));
+      setFailedTrashCount(0);
+      showItem(null);
+    } catch {
+      setError(tr({ zh: '无法清空回收站，请刷新后重试。', en: 'Could not empty Trash. Refresh and try again.' }));
+    } finally { setBusy(false); }
+  };
+
+  const canSearchUsers = Boolean(user && privateKey && draft && !draft.trashedAt && !draft.entry.mergedInto && payload?.canManage && draft.ownerUserId === payload.userId);
   useEffect(() => {
     setShareResults([]);
     setShareSearchError(false);
@@ -430,7 +484,7 @@ export default function VaultPage() {
               : { zh: '设置解锁口令以接收好友分享。只有会员和管理员可以新建或管理自己的内容。', en: 'Set a passphrase to receive shares from friends. Only members and administrators can create or manage their own items.' })}</p>}
         <form className="vault-unlock" onSubmit={recoveryMode ? recover : isSetup ? setup : unlock}>
           {recoveryMode && <><label htmlFor="vault-recovery">{tr({ zh: '恢复密钥', en: 'Recovery key' })}</label><input id="vault-recovery" className="vault-unlock-input" value={recoveryCode} autoComplete="off" onChange={(event) => setRecoveryCode(event.target.value)} /></>}
-          <label htmlFor="vault-passphrase">{recoveryMode ? tr({ zh: '新资料库口令', en: 'New vault passphrase' }) : tr({ zh: '资料库口令', en: 'Vault passphrase' })}</label>
+          <label htmlFor="vault-passphrase">{recoveryMode ? tr({ zh: '新口令', en: 'New passphrase' }) : tr({ zh: '口令', en: 'Passphrase' })}</label>
           <PasswordInput wrapperClassName="vault-password-field" id="vault-passphrase" className="vault-unlock-input" value={passphrase} inputMode="numeric" pattern="[0-9]{6}" minLength={6} maxLength={6} autoComplete={isSetup || recoveryMode ? 'new-password' : 'current-password'} onChange={setPassphrase} show={showPassphrases} onShowChange={setShowPassphrases} />
           {(isSetup || recoveryMode) && <><label htmlFor="vault-confirm">{recoveryMode ? tr({ zh: '再次输入新口令', en: 'Confirm new passphrase' }) : tr({ zh: '再次输入', en: 'Confirm passphrase' })}</label><PasswordInput wrapperClassName="vault-password-field" id="vault-confirm" className="vault-unlock-input" value={confirmation} inputMode="numeric" pattern="[0-9]{6}" minLength={6} maxLength={6} autoComplete="new-password" onChange={setConfirmation} show={showPassphrases} onShowChange={setShowPassphrases} /></>}
           <div className="vault-actions">
@@ -444,8 +498,10 @@ export default function VaultPage() {
   }
 
   const manageable = Boolean(draft && payload.canManage && draft.ownerUserId === payload.userId);
-  const editable = manageable && !draft?.entry.mergedInto;
-  const mergeTargets = items.filter((item) => item.serverId && item.localId !== draft?.localId && item.ownerUserId === payload.userId && !item.shares.length && !item.entry.mergedInto);
+  const editable = manageable && !showTrash && !draft?.entry.mergedInto;
+  const mergeTargets = items.filter((item) => item.serverId && !item.trashedAt && item.localId !== draft?.localId && item.ownerUserId === payload.userId && !item.shares.length && !item.entry.mergedInto);
+  const hasTrash = failedTrashCount > 0 || items.some((item) => item.trashedAt);
+  const visibleFailedCount = showTrash ? failedTrashCount : failedCount;
   const accountFields = [
     { label: tr({ zh: '账号', en: 'Username' }), aliases: ['账号', 'Username', 'Account'], secret: false },
     { label: tr({ zh: '密码', en: 'Password' }), aliases: ['密码', 'Password'], secret: true },
@@ -466,43 +522,55 @@ export default function VaultPage() {
         if (confirmDiscard()) window.location.reload();
       }}><Lock />{tr({ zh: '锁定', en: 'Lock' })}</button></div>
       <header className="vault-header">
-        <div><h1>{tr({ zh: '私密资料库', en: 'Private vault' })}</h1></div>
+        <div><h1>{tr(showTrash ? { zh: '回收站', en: 'Trash' } : { zh: '私密资料库', en: 'Private vault' })}</h1></div>
       </header>
       <div className="vault-toolbar">
-        {payload.canManage && <div className="vault-actions">
-          <button type="button" className="vault-button is-primary" disabled={busy} onClick={addItem}><Plus />{tr({ zh: '新建', en: 'New item' })}</button>
-        </div>}
+        <div className="vault-actions">
+          {payload.canManage && !showTrash && <button type="button" className="vault-button is-primary" disabled={busy} onClick={addItem}><Plus />{tr({ zh: '新建', en: 'New item' })}</button>}
+          {(payload.canManage || hasTrash || showTrash) && <button type="button" className="vault-button" disabled={busy} onClick={toggleTrash}>
+            {showTrash ? tr({ zh: '返回资料库', en: 'Back to vault' }) : <><Trash2 aria-hidden="true" />{tr({ zh: '回收站', en: 'Trash' })}</>}
+          </button>}
+          {showTrash && payload.canManage && <button type="button" className="vault-button is-danger" disabled={busy || !hasTrash} onClick={() => void emptyTrash()}>
+            <Trash2 aria-hidden="true" />{tr({ zh: '清空回收站', en: 'Empty Trash' })}
+          </button>}
+        </div>
       </div>
       {!payload.canManage && <p className="vault-muted">{tr({ zh: '你可以查看现有内容；成为会员后才能新建、编辑、删除或分享。', en: 'You can view existing items. Membership is required to create, edit, delete, or share.' })}</p>}
       {!payload.canManage && <button type="button" className="vault-button is-primary" onClick={() => { if (confirmDiscard()) requireMembership(); }}>{tr({ zh: '新建与管理资料', en: 'Create & manage items' })}</button>}
-      {failedCount > 0 && <p className="vault-error" role="alert">{tr({ zh: `${failedCount} 条内容无法解密。`, en: `${failedCount} item(s) could not be decrypted.` })}</p>}
+      {visibleFailedCount > 0 && <p className="vault-error" role="alert">{tr({ zh: `${visibleFailedCount} 条内容无法解密。`, en: `${visibleFailedCount} item(s) could not be decrypted.` })}</p>}
       {error && <p className="vault-error" role="alert">{error}</p>}
 
       <div className="vault-workspace">
         <aside className="vault-sidebar">
-          <CompactSelect items={[{ value: 'active', label: tr({ zh: '当前资料', en: 'Current items' }) }, { value: 'merged', label: tr({ zh: '已合并', en: 'Merged items' }) }]} value={showMerged ? 'merged' : 'active'} onChange={(value) => {
-            if (busy || !confirmDiscard()) return;
-            discardUnsavedNew(); setShowMerged(value === 'merged'); setDraft(null); setDirty(false); setMergeTargetId('');
-          }} label={tr(showMerged ? { zh: '已合并', en: 'Merged items' } : { zh: '当前资料', en: 'Current items' })} ariaLabel={tr({ zh: '查看内容', en: 'Item view' })} disabled={busy} showArrow />
-          <SearchInput value={filter} onChange={setFilter} placeholder={tr({ zh: '搜索资料', en: 'Search items' })} className="vault-filter" inputClassName="vault-input" />
+          <SearchInput value={filter} onChange={setFilter} placeholder={tr({ zh: '搜索资料', en: 'Search items' })} className="vault-filter" inputClassName="vault-input" autoComplete="off" spellCheck={false} autoCapitalize="off" />
           <CompactSelect items={[{ value: '', label: tr({ zh: '全部分类', en: 'All categories' }) }, ...categoryOptions]} value={categoryFilter} onChange={setCategoryFilter} label={categoryFilter ? tr(categoryLabels[categoryFilter as VaultCategory]) : tr({ zh: '全部分类', en: 'All categories' })} ariaLabel={tr({ zh: '筛选分类', en: 'Filter category' })} className="vault-category-filter" showArrow />
           <div className="vault-list">{visibleItems.map((item) => (
             <button key={item.localId} type="button" disabled={busy} className={`vault-list-item${draft?.localId === item.localId ? ' is-active' : ''}`} onClick={() => selectItem(item)}>
               <strong>{item.entry.title || tr({ zh: '未命名', en: 'Untitled' })}</strong>
-              <span>{item.ownerUserId === payload.userId ? tr({ zh: '我的内容', en: 'Mine' }) : item.ownerName}</span>
+              <span>
+                {item.ownerUserId === payload.userId ? tr({ zh: '我的内容', en: 'Mine' }) : item.ownerName}
+                {item.entry.mergedInto && <> · {tr({ zh: '已合并', en: 'Merged' })}</>}
+              </span>
             </button>
-          ))}{!visibleItems.length && <p className="vault-muted">{tr({ zh: '没有内容。', en: 'No items.' })}</p>}</div>
+          ))}{!visibleItems.length && <p className="vault-muted">{tr(showTrash && !hasTrash
+            ? { zh: '回收站为空。', en: 'Trash is empty.' }
+            : { zh: '没有内容。', en: 'No items.' })}</p>}</div>
         </aside>
 
-        <section className="vault-editor">{!draft ? <p className="vault-muted">{tr({ zh: '选择一条内容，或新建一条。', en: 'Select an item or create one.' })}</p> : <fieldset className="vault-editor-fields" disabled={busy}>
+        <section className="vault-editor">{!draft ? (!showTrash && <p className="vault-muted">{tr({ zh: '选择一条内容，或新建一条。', en: 'Select an item or create one.' })}</p>) : <fieldset className="vault-editor-fields" disabled={busy}>
           <div className="vault-editor-head">
             <input className="vault-title-input" value={draft.entry.title} readOnly={!editable} maxLength={200} placeholder={tr({ zh: '标题', en: 'Title' })} onChange={(event) => updateDraft((item) => { item.entry.title = event.target.value; })} />
-            {editable && <div className="vault-actions"><button type="button" className="vault-button is-primary" disabled={busy || !dirty} onClick={() => void save()}><Save />{tr({ zh: '保存', en: 'Save' })}</button><button type="button" className="vault-button is-danger" disabled={busy} onClick={() => void remove()}><Trash2 />{tr({ zh: '删除', en: 'Delete' })}</button></div>}
+            {manageable && <div className="vault-actions">
+              {editable && <button type="button" className="vault-button is-primary" disabled={!dirty} onClick={() => void save()}><Save aria-hidden="true" />{tr({ zh: '保存', en: 'Save' })}</button>}
+              {showTrash
+                ? <button type="button" className="vault-button" onClick={() => void changeTrash(false)}><RotateCcw aria-hidden="true" />{tr({ zh: '恢复', en: 'Restore' })}</button>
+                : <button type="button" className="vault-button is-danger" onClick={() => void changeTrash(true)}><Trash2 aria-hidden="true" />{tr(draft.serverId ? { zh: '移入回收站', en: 'Move to Trash' } : { zh: '丢弃', en: 'Discard' })}</button>}
+            </div>}
           </div>
           {editable && <CompactSelect items={categoryOptions} value={draft.entry.category ?? 'other'} onChange={(value) => updateDraft((item) => { item.entry.category = value as VaultCategory; })} label={tr(categoryLabels[draft.entry.category ?? 'other'])} ariaLabel={tr({ zh: '资料分类', en: 'Item category' })} disabled={busy} className="vault-entry-category" showArrow />}
           {manageable && draft.entry.mergedInto && <div className="vault-actions">
             <span className="vault-muted">{tr({ zh: `已合并到「${draft.entry.mergedInto.title}」`, en: `Merged into “${draft.entry.mergedInto.title}”` })}</span>
-            <button type="button" className="vault-button" onClick={() => void restoreMerged()}>{tr({ zh: '恢复原条目', en: 'Restore original' })}</button>
+            {!showTrash && <button type="button" className="vault-button" onClick={() => void restoreMerged()}>{tr({ zh: '恢复原条目', en: 'Restore original' })}</button>}
           </div>}
           {editable && draft.serverId && !draft.shares.length && <details key={draft.localId}>
             <summary>{tr({ zh: '合并到…', en: 'Merge into…' })}</summary>
@@ -510,7 +578,7 @@ export default function VaultPage() {
               <CompactSelect items={mergeTargets.map((item) => ({ value: item.localId, label: item.entry.title }))} value={mergeTargetId} onChange={setMergeTargetId} label={mergeTargets.find((item) => item.localId === mergeTargetId)?.entry.title || tr({ zh: '选择目标条目', en: 'Choose target item' })} ariaLabel={tr({ zh: '合并目标', en: 'Merge target' })} disabled={busy || dirty} showArrow />
               <button type="button" className="vault-button" disabled={busy || dirty || !mergeTargetId} onClick={() => void merge()}>{tr({ zh: '合并', en: 'Merge' })}</button>
             </div>
-            <p className="vault-muted">{tr(dirty ? { zh: '请先保存修改，再合并。', en: 'Save your changes before merging.' } : { zh: '合并字段、备注和图片；原条目可在“已合并”中恢复。仅支持未分享的条目。', en: 'Combine fields, notes and images. Restore the original from Merged items. Only unshared items are supported.' })}</p>
+            <p className="vault-muted">{tr(dirty ? { zh: '请先保存修改，再合并。', en: 'Save your changes before merging.' } : { zh: '合并字段、备注和图片。合并后可打开原条目恢复。仅支持未分享的条目。', en: 'Combine fields, notes and images. After merging, open the original item to restore it. Only unshared items are supported.' })}</p>
           </details>}
 
           <div className="vault-fields">{editorFields.map((field) => {
@@ -557,7 +625,7 @@ export default function VaultPage() {
             </div>)}</div>
           </section>}
 
-          <section className="vault-sharing">
+          {!showTrash && <section className="vault-sharing">
             <h2>{tr({ zh: '分享给好友', en: 'Share with friends' })}</h2>
             <div className="vault-share-list">{draft.shares.map((share) => <span className="vault-share" key={share.userId}>{share.name}<small>#{share.userId}</small>{editable && <button type="button" className="vault-share-remove" aria-label={tr({ zh: `移除 ${share.name}`, en: `Remove ${share.name}` })} onClick={() => updateDraft((item) => { item.shares = item.shares.filter((candidate) => candidate.userId !== share.userId); })}><X /></button>}</span>)}</div>
             {editable && <div className="vault-user-search"><SearchInput value={shareQuery} onChange={setShareQuery} placeholder={tr({ zh: '搜索好友', en: 'Search friends' })} className="vault-share-search" inputClassName="vault-input" />{searchingUsers && <Loader2 className="vault-spin" aria-label={tr({ zh: '正在搜索', en: 'Searching' })} />}</div>}
@@ -566,7 +634,7 @@ export default function VaultPage() {
               const added = draft.shares.some((share) => share.userId === result.userId);
               return <div key={result.userId}><span><strong>{result.name}</strong><small>#{result.userId}{result.wcaId ? `  ${result.wcaId}` : ''}</small></span><button type="button" className="vault-button" disabled={!result.publicKey || added} onClick={() => { if (result.publicKey) updateDraft((item) => { item.shares.push({ userId: result.userId, name: result.name, publicKey: result.publicKey as JsonWebKey }); }); }}><UserPlus />{added ? tr({ zh: '已添加', en: 'Added' }) : result.publicKey ? tr({ zh: '添加', en: 'Add' }) : tr({ zh: '对方尚未启用接收', en: 'Receiving not enabled' })}</button></div>;
             })}</div>}
-          </section>
+          </section>}
         </fieldset>}</section>
       </div>
     </main>

@@ -27,6 +27,7 @@ const requests: { query: string; signal: AbortSignal; resolve: (value: Response)
 const writes: { ciphertext: string; accesses: { userId: number }[] }[] = [];
 const updates: { path: string; ciphertext: string; expectedVersion: number; accesses: { userId: number }[] }[] = [];
 let failUpdate = '';
+const trashedAt = '2026-01-03T00:00:00Z';
 const response = (data: unknown) => new Response(JSON.stringify(data));
 const type = async (value: string) => {
   const input = host.querySelector<HTMLInputElement>('[placeholder="搜索好友"]')!;
@@ -105,18 +106,30 @@ it('creates an owner-only encrypted account entry through the simplified editor'
   const fields = host.querySelectorAll<HTMLInputElement>('.vault-value-input');
   expect(fields).toHaveLength(2);
   expect(fields[1].placeholder).toBe('密码');
-  await fill(fields[0], 'test-owner');
+  await fill(fields[0], 'test-owner@example.com');
   await fill(fields[1], 'test-secret');
   await click('保存');
   expect(writes).toHaveLength(1);
   expect(writes[0].accesses.map(access => access.userId)).toEqual([1]);
   expect(JSON.parse(writes[0].ciphertext)).toMatchObject({
     title: 'Account one', category: 'accounts', fields: [
-      { label: '账号', value: 'test-owner', secret: false },
+      { label: '账号', value: 'test-owner@example.com', secret: false },
       { label: '密码', value: 'test-secret', secret: true },
     ],
   });
   expect([...host.querySelectorAll('button')].find(item => item.textContent === '保存')?.disabled).toBe(true);
+  const search = host.querySelector<HTMLInputElement>('[placeholder="搜索资料"]')!;
+  const requestCount = vi.mocked(fetch).mock.calls.length;
+  await fill(search, 'TEST-OWNER@example.com');
+  expect(host.querySelector('.vault-list')?.textContent).toContain('Account one');
+  expect(host.querySelector('.vault-list')?.textContent).not.toContain('Test entry');
+  await fill(search, ' SECRET ');
+  expect(host.querySelector('.vault-list')?.textContent).toContain('Account one');
+  expect(host.querySelector('.vault-list')?.textContent).not.toContain('Test entry');
+  await fill(search, 'no matching value');
+  expect(host.querySelector('.vault-list')?.textContent).toContain('没有内容');
+  await advance();
+  expect(vi.mocked(fetch)).toHaveBeenCalledTimes(requestCount);
 });
 
 it('removes a single field only on save and does not recreate it when reopening the entry', async () => {
@@ -175,13 +188,22 @@ it('saves the encrypted target before archiving the source and can restore the o
   expect(JSON.parse(updates[0].ciphertext).fields).toHaveLength(2);
   const archived = JSON.parse(updates[1].ciphertext);
   expect(archived).toMatchObject({ ...JSON.parse(writes[0].ciphertext), mergedInto: { id: 'entry', title: 'Test entry' } });
-  expect(host.querySelector('.vault-list')!.textContent).not.toContain('Source');
-  await choose('查看内容', '已合并');
+  expect(host.querySelector('[aria-label="查看内容"]')).toBeNull();
+  const source = [...host.querySelectorAll('.vault-list-item')].find(item => item.querySelector('strong')?.textContent === 'Source');
+  expect(source?.textContent).toContain('已合并');
+  await act(async () => {
+    const search = host.querySelector<HTMLInputElement>('[placeholder="搜索资料"]')!;
+    Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')!.set!.call(search, 'Source');
+    search.dispatchEvent(new Event('input', { bubbles: true }));
+  });
+  expect(host.querySelector('.vault-list')?.textContent).toContain('Source');
+  expect(host.querySelector('.vault-list')?.textContent).not.toContain('Test entry');
   await clickText('Source');
   await clickText('恢复原条目');
   expect(JSON.parse(updates[2].ciphertext)).toEqual(JSON.parse(writes[0].ciphertext));
   expect(updates[2].expectedVersion).toBe(2);
-  expect(host.querySelector('.vault-list')!.textContent).toContain('Source');
+  expect(host.querySelector('.vault-list')?.textContent).toContain('Source');
+  expect(host.querySelector('.vault-list')?.textContent).not.toContain('已合并');
 });
 
 it.each(['/v1/vault/items/entry', '/v1/vault/items/saved-0'])('keeps the original visible after a failed merge write to %s', async (path) => {
@@ -192,4 +214,41 @@ it.each(['/v1/vault/items/entry', '/v1/vault/items/saved-0'])('keeps the origina
   expect(updates).toHaveLength(path.endsWith('/entry') ? 0 : 1);
   expect(updates.every(({ ciphertext }) => !JSON.parse(ciphertext).mergedInto)).toBe(true);
   expect(host.querySelector('[role="alert"]')).not.toBeNull();
+});
+
+it('moves a saved item to Trash, restores it, and only empties Trash after confirmation', async () => {
+  const fetchMock = vi.mocked(fetch);
+  const confirm = vi.spyOn(window, 'confirm').mockReturnValue(false);
+  const trashPath = '/v1/vault/items/entry/trash';
+  fetchMock.mockResolvedValueOnce(response({ version: 2, updatedAt: trashedAt, trashedAt }));
+  await clickText('移入回收站');
+  const [path, request] = fetchMock.mock.lastCall!;
+  expect(path).toBe(trashPath);
+  expect(request?.method).toBe('PUT');
+  expect(JSON.parse(request?.body as string)).toEqual({ trashed: true, expectedVersion: 1 });
+  expect(host.querySelector('.vault-list')?.textContent).not.toContain('Test entry');
+
+  await clickText('回收站');
+  await clickText('Test entry');
+  expect(host.querySelector<HTMLInputElement>('.vault-title-input')?.readOnly).toBe(true);
+  fetchMock.mockResolvedValueOnce(response({ version: 3, updatedAt: trashedAt, trashedAt: null }));
+  await clickText('恢复');
+  expect(JSON.parse(fetchMock.mock.lastCall?.[1]?.body as string)).toEqual({ trashed: false, expectedVersion: 2 });
+  expect(host.querySelector('.vault-list')?.textContent).toContain('回收站为空');
+
+  await clickText('返回资料库');
+  await clickText('Test entry');
+  fetchMock.mockResolvedValueOnce(response({ version: 4, updatedAt: trashedAt, trashedAt }));
+  await clickText('移入回收站');
+  await clickText('回收站');
+  const requestCount = fetchMock.mock.calls.length;
+  await clickText('清空回收站');
+  expect(fetchMock).toHaveBeenCalledTimes(requestCount);
+  expect(host.querySelector('.vault-list')?.textContent).toContain('Test entry');
+
+  confirm.mockReturnValue(true);
+  fetchMock.mockResolvedValueOnce(response({ ok: true }));
+  await clickText('清空回收站');
+  expect(fetchMock).toHaveBeenLastCalledWith('/v1/vault/trash', expect.objectContaining({ method: 'DELETE' }));
+  expect(host.querySelector('.vault-list')?.textContent).toContain('回收站为空');
 });

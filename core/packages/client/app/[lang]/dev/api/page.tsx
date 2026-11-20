@@ -921,12 +921,14 @@ const ENDPOINTS: Ep[] = [
   { d: 'friend', m: 'DELETE', p: '/v1/friends/blocks/:userId', g: 'login', c: 'no-store', zh: '解除拉黑', en: 'Unblock a user' },
 
   // ---- vault ----
-  { d: 'vault', m: 'GET', p: '/v1/vault', g: 'login', c: 'no-store', zh: '读取本人密钥包、管理权限及本人或好友授权的密文；服务端不持有明文', en: 'Read the user key envelope, management entitlement, and ciphertext owned by or shared from friends; the server never holds plaintext' },
+  { d: 'vault', m: 'GET', p: '/v1/vault', g: 'login', c: 'no-store', zh: '读取本人密钥包、管理权限、可访问的资料密文及本人回收站内的密文', en: 'Read the user key envelope, management entitlement, accessible ciphertext, and owned ciphertext in Trash' },
   { d: 'vault', m: 'PUT', p: '/v1/vault/key', g: 'login', c: 'no-store', zh: '登记接收分享所需的公钥和双重加密私钥；恢复时仅重设口令密钥包', en: 'Register the public key and dual-encrypted private key needed to receive shares; recovery only resets the passphrase envelope' },
   { d: 'vault', m: 'GET', p: '/v1/vault/users', g: 'login', c: 'no-store', zh: '会员或管理员搜索已接受好友并返回其资料库公钥', en: 'Members or administrators search accepted friends and return their vault public keys' },
   { d: 'vault', m: 'POST', p: '/v1/vault/items', g: 'login', c: 'no-store', zh: '会员或管理员创建自有密文，并为本人和指定好友分别封装内容密钥', en: 'Members or administrators create owned ciphertext with content keys separately wrapped for the owner and selected friends' },
   { d: 'vault', m: 'PUT', p: '/v1/vault/items/:id', g: 'login', c: 'no-store', zh: '会员或管理员以版本校验更新本人密文、轮换内容密钥并替换好友授权', en: 'Members or administrators update owned ciphertext with version checking, rotate the content key, and replace friend access' },
-  { d: 'vault', m: 'DELETE', p: '/v1/vault/items/:id', g: 'login', c: 'no-store', zh: '会员或管理员删除本人拥有的密文及全部授权', en: 'Members or administrators delete owned ciphertext and all access grants' },
+  { d: 'vault', m: 'PUT', p: '/v1/vault/items/:id/trash', g: 'login', c: 'no-store', zh: '以版本校验移入回收站或恢复本人资料。移入时撤销好友授权', en: 'Move an owned item to Trash or restore it with version checking. Moving it to Trash revokes friend access' },
+  { d: 'vault', m: 'DELETE', p: '/v1/vault/items/:id', g: 'login', c: 'no-store', zh: '兼容旧客户端，将本人资料移入回收站', en: 'Move an owned item to Trash for legacy clients' },
+  { d: 'vault', m: 'DELETE', p: '/v1/vault/trash', g: 'login', c: 'no-store', zh: '永久删除本人的全部回收站资料', en: 'Permanently delete all owned items in Trash' },
 
   // ---- drive ----
   { d: 'drive', m: 'POST', p: '/v1/drive/compressions/:id/cancel', g: 'login', c: 'no-store', zh: '所有者或超级管理员取消排队、压缩或画质检查中的任务；保留原片及已完成副本', en: 'Owners or superadministrators cancel queued, encoding or validating jobs; retain the original and any completed copy' },

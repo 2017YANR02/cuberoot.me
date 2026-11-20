@@ -827,7 +827,8 @@ CREATE TABLE vault_items (
   byte_size     INTEGER     NOT NULL CHECK (byte_size > 0 AND byte_size <= 4194304),
   version       BIGINT      NOT NULL DEFAULT 1 CHECK (version > 0),
   created_at    TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  updated_at    TIMESTAMPTZ NOT NULL DEFAULT NOW()
+  updated_at    TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  trashed_at    TIMESTAMPTZ
 );
 CREATE INDEX idx_vault_items_owner_updated ON vault_items(owner_user_id, updated_at DESC);
 CREATE TRIGGER vault_items_updated_at BEFORE UPDATE ON vault_items

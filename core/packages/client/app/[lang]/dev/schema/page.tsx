@@ -246,8 +246,8 @@ const TABLES: Table[] = [
   { name: 'user_blocks', domain: 'account', origin: '0175', purpose: { zh: '单向黑名单；拉黑时同步切断好友关系与待处理申请', en: 'Directed blocks; blocking also removes friendships and pending requests' } },
   { name: 'user_wca_friend_contacts', domain: 'account', origin: '0178', purpose: { zh: '账号私有的 WCA 好友条目；对方未注册时只保存在本人列表，不代表双向好友或已发送申请', en: 'Account-private WCA friend entries; an unregistered person is only saved to the owner\'s list and does not imply a mutual friendship or delivered request' } },
   { name: 'vault_user_keys', domain: 'storage', origin: '0192', purpose: { zh: '资料库公钥与由用户口令加密的私钥；服务端无法解密私钥', en: 'Vault public keys and passphrase-encrypted private keys that the server cannot decrypt' } },
-  { name: 'vault_items', domain: 'storage', origin: '0192', purpose: { zh: '会员或管理员拥有的端到端加密文本、字段和备注密文及乐观并发版本', en: 'Member- or administrator-owned end-to-end encrypted text, fields, notes, and optimistic-concurrency versions' } },
-  { name: 'vault_item_access', domain: 'storage', origin: '0192', purpose: { zh: '每条内容对所有者及指定好友分别封装的内容密钥；解除好友时撤销', en: 'Per-item content keys separately wrapped for the owner and selected friends, revoked when friendship ends' } },
+  { name: 'vault_items', domain: 'storage', origin: '0192', evolved: [322, 347], purpose: { zh: '私密资料的端到端加密内容、乐观并发版本和移入回收站的时间', en: 'End-to-end encrypted vault contents, optimistic-concurrency versions, and Trash timestamps' } },
+  { name: 'vault_item_access', domain: 'storage', origin: '0192', purpose: { zh: '每条内容对所有者及指定好友分别封装的内容密钥。解除好友或移入回收站时撤销好友授权', en: 'Per-item keys wrapped for the owner and selected friends. Friend access is revoked when the friendship ends or the item moves to Trash' } },
   { name: 'auth_identities', domain: 'account', origin: '0064', evolved: [78, 103], purpose: { zh: '账号与外部身份的唯一映射；微信小程序与网站扫码登录共用 UnionID', en: 'Unique account-to-provider identity mappings; Mini Program and website QR sign-in share the Weixin UnionID' } },
   { name: 'auth_codes', domain: 'account', origin: '0064', evolved: [240], purpose: { zh: '邮箱与手机登录、绑定使用的短时验证码及核销状态', en: 'Short-lived email and phone verification codes with consumption state' } },
   { name: 'auth_web_session_tickets', domain: 'account', origin: '0139', evolved: [179, 209, 232], purpose: { zh: '小程序、浏览器与原生 App 跨运行时换取会话的短时单次票据；只存密钥 SHA-256，移动端另绑 PKCE challenge，微信已有账号验证由 existing_only 限制新建账号回传', en: 'Short-lived single-use cross-runtime session tickets; hashes only, mobile PKCE binding, and existing_only to prevent a newly created WeChat account from completing existing-account authentication' } },
@@ -606,6 +606,7 @@ const TABLES: Table[] = [
 ];
 
 const MIGRATIONS: { n: number; slug: string; desc: Bi }[] = [
+  { n: 347, slug: 'vault_trash', desc: { zh: '添加资料库回收站时间戳，支持恢复和清空。', en: 'Add a vault Trash timestamp for restore and purge operations.' } },
   { n: 346, slug: 'remove_legacy_gan_team', desc: { zh: '删除无成员的旧 GAN 占位战队，保留三支子队的归属。', en: 'Remove the empty legacy GAN entry and preserve memberships in its three rosters.' } },
   { n: 345, slug: 'workspace_payroll', desc: { zh: '按日薪快照与已验收项目汇总月度报酬并记录付款确认', en: 'Monthly payroll from snapshotted day rates and accepted projects, with payment confirmations' } },
   { n: 344, slug: 'workspace_project_tasks', desc: { zh: '私有项目任务卡，保存金额、交付日期、验收标准和奖金确认', en: 'Private project task cards with amounts, delivery dates, acceptance criteria and bonus confirmation' } },

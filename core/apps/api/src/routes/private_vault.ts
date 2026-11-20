@@ -35,6 +35,7 @@ interface ItemRow {
   iv: string;
   version: number | string;
   updated_at: string;
+  trashed_at: string | null;
   wrapped_key: string;
 }
 
@@ -181,18 +182,18 @@ privateVaultRoutes.get('/vault', async (c) => {
        WHERE user_id = ${userId}`,
     sql<ItemRow[]>`
       SELECT item.id, item.owner_user_id, owner.display_name AS owner_name,
-             item.ciphertext, item.iv, item.version, item.updated_at, access.wrapped_key
+             item.ciphertext, item.iv, item.version, item.updated_at, item.trashed_at, access.wrapped_key
         FROM vault_item_access access
         JOIN vault_items item ON item.id = access.item_id
         JOIN app_users owner ON owner.id = item.owner_user_id
        WHERE access.recipient_user_id = ${userId}
          AND (item.owner_user_id = ${userId}
-           OR EXISTS (
+           OR (item.trashed_at IS NULL AND EXISTS (
              SELECT 1 FROM user_friendships friendship
               WHERE friendship.status = 'accepted'
                 AND friendship.user_low_id = LEAST(item.owner_user_id, ${userId}::bigint)
                 AND friendship.user_high_id = GREATEST(item.owner_user_id, ${userId}::bigint)
-           ))
+           )))
        ORDER BY item.updated_at DESC, item.id`,
     sql<ShareRow[]>`
       SELECT access.item_id, recipient.id AS user_id, recipient.display_name, keys.public_key
@@ -201,6 +202,7 @@ privateVaultRoutes.get('/vault', async (c) => {
         JOIN app_users recipient ON recipient.id = access.recipient_user_id
         JOIN vault_user_keys keys ON keys.user_id = recipient.id
        WHERE item.owner_user_id = ${userId}
+         AND item.trashed_at IS NULL
          AND access.recipient_user_id <> ${userId}
          AND EXISTS (
            SELECT 1 FROM user_friendships friendship
@@ -216,6 +218,18 @@ privateVaultRoutes.get('/vault', async (c) => {
     list.push({ userId: Number(row.user_id), name: row.display_name, publicKey: row.public_key });
     shares.set(row.item_id, list);
   }
+  const items = itemRows.map((row) => ({
+    id: row.id,
+    ownerUserId: Number(row.owner_user_id),
+    ownerName: row.owner_name,
+    ciphertext: row.ciphertext,
+    iv: row.iv,
+    version: Number(row.version),
+    updatedAt: row.updated_at,
+    trashedAt: row.trashed_at,
+    wrappedKey: row.wrapped_key,
+    shares: row.trashed_at ? [] : shares.get(row.id) ?? [],
+  }));
   return c.json({
     userId,
     canManage,
@@ -223,17 +237,8 @@ privateVaultRoutes.get('/vault', async (c) => {
       publicKey: keyRows[0].public_key,
       encryptedPrivateKey: keyRows[0].encrypted_private_key,
     } : null,
-    items: itemRows.map((row) => ({
-      id: row.id,
-      ownerUserId: Number(row.owner_user_id),
-      ownerName: row.owner_name,
-      ciphertext: row.ciphertext,
-      iv: row.iv,
-      version: Number(row.version),
-      updatedAt: row.updated_at,
-      wrappedKey: row.wrapped_key,
-      shares: shares.get(row.id) ?? [],
-    })),
+    items: items.filter((item) => !item.trashedAt),
+    trash: items.filter((item) => item.trashedAt),
   });
 });
 
@@ -334,7 +339,7 @@ privateVaultRoutes.put('/vault/items/:id', vaultBodyLimit, async (c) => {
   const result = await sql.begin(async (tx) => {
     const current = await tx<{ version: number | string }[]>`
       SELECT version FROM vault_items
-       WHERE id = ${id} AND owner_user_id = ${ownerUserId}
+       WHERE id = ${id} AND owner_user_id = ${ownerUserId} AND trashed_at IS NULL
        FOR UPDATE`;
     if (!current.length) return { state: 'missing' as const };
     if (Number(current[0].version) !== input.expectedVersion) return { state: 'conflict' as const };
@@ -359,16 +364,55 @@ privateVaultRoutes.put('/vault/items/:id', vaultBodyLimit, async (c) => {
   return c.json({ version: Number(result.row.version), updatedAt: result.row.updated_at });
 });
 
+async function setItemTrash(id: string, ownerUserId: number, trashed: boolean, expectedVersion: number | null) {
+  return sql.begin(async (tx) => {
+    const [item] = await tx<{ version: number | string; updated_at: string; trashed_at: string | null }[]>`
+      UPDATE vault_items
+         SET trashed_at = CASE WHEN ${trashed}::boolean THEN NOW() ELSE NULL END,
+             version = version + 1
+       WHERE id = ${id} AND owner_user_id = ${ownerUserId}
+         AND (trashed_at IS NULL) = ${trashed}
+         AND (${expectedVersion}::bigint IS NULL OR version = ${expectedVersion})
+       RETURNING version, updated_at, trashed_at`;
+    if (item && trashed) {
+      await tx`DELETE FROM vault_item_access WHERE item_id = ${id} AND recipient_user_id <> ${ownerUserId}`;
+    }
+    return item;
+  });
+}
+
+privateVaultRoutes.put('/vault/items/:id/trash', async (c) => {
+  noStore(c);
+  checkRateLimit(getIp(c), { bucket: 'private-vault-write', max: 30 });
+  const ownerUserId = await requireVaultManager(c);
+  const id = c.req.param('id');
+  if (!UUID_RE.test(id)) return c.json({ error: 'invalid item id' }, 400);
+  const body = await c.req.json<{ trashed?: unknown; expectedVersion?: unknown }>().catch(() => null);
+  if (typeof body?.trashed !== 'boolean' || typeof body.expectedVersion !== 'number'
+    || !Number.isSafeInteger(body.expectedVersion) || body.expectedVersion < 1) {
+    return c.json({ error: 'invalid item state' }, 400);
+  }
+  const item = await setItemTrash(id, ownerUserId, body.trashed, body.expectedVersion);
+  if (!item) return c.json({ error: 'item unavailable or changed' }, 409);
+  return c.json({ version: Number(item.version), updatedAt: item.updated_at, trashedAt: item.trashed_at });
+});
+
+// Older clients use DELETE to remove an item from the main list.
 privateVaultRoutes.delete('/vault/items/:id', async (c) => {
   noStore(c);
   checkRateLimit(getIp(c), { bucket: 'private-vault-write', max: 30 });
   const ownerUserId = await requireVaultManager(c);
   const id = c.req.param('id');
   if (!UUID_RE.test(id)) return c.json({ error: 'invalid item id' }, 400);
-  const rows = await sql`
-    DELETE FROM vault_items
-     WHERE id = ${id} AND owner_user_id = ${ownerUserId}
-     RETURNING id`;
-  if (!rows.length) return c.json({ error: 'item not found' }, 404);
+  const item = await setItemTrash(id, ownerUserId, true, null);
+  if (!item) return c.json({ error: 'item not found' }, 404);
+  return c.json({ ok: true });
+});
+
+privateVaultRoutes.delete('/vault/trash', async (c) => {
+  noStore(c);
+  checkRateLimit(getIp(c), { bucket: 'private-vault-write', max: 30 });
+  const ownerUserId = await requireVaultManager(c);
+  await sql`DELETE FROM vault_items WHERE owner_user_id = ${ownerUserId} AND trashed_at IS NOT NULL`;
   return c.json({ ok: true });
 });
