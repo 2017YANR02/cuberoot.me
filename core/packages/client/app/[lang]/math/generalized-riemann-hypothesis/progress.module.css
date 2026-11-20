@@ -41,9 +41,9 @@
   font-style: italic;
   white-space: nowrap;
 }
-.formula span, .formula strong { display: block; }
-.formula span { color: var(--muted-foreground); font: inherit; font-size: 1rem; }
-.formula strong { font-size: clamp(2rem, 3.6vw, 3.1rem); font-weight: 500; }
+.formula > span, .formula > strong { display: block; }
+.formula > span { color: var(--muted-foreground); font: inherit; font-size: 1rem; }
+.formula > strong { font-size: clamp(2rem, 3.6vw, 3.1rem); font-weight: 500; }
 .page h2 { margin: 0; font-size: 1.16rem; font-weight: 650; line-height: 1.3; }
 .progressPanel {
   padding: clamp(1.25rem, 3.5vw, 2.25rem);

@@ -23,6 +23,12 @@ interface Card {
 
 const CARDS: Card[] = [
   {
+    to: '/math/generalized-riemann-hypothesis',
+    Icon: Sigma,
+    zh: { title: '狄利克雷 L 函数的广义黎曼猜想', desc: '探索 ζ 零点与素数的关系，跟踪 Lean 对经典黎曼猜想候选证明的复核' },
+    en: { title: 'The Generalized Riemann Hypothesis for Dirichlet L-functions', desc: 'Explore how zeta zeros relate to primes and follow the Lean audit of a proposed proof of the classical Riemann Hypothesis' },
+  },
+  {
     to: '/math/cube-graph',
     Icon: Boxes,
     zh: { title: '魔方与图论', desc: '三维魔方与 54 枚贴纸的圆环、扇形映射同步转动，理解置换与凯莱图的区别' },

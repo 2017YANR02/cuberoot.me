@@ -13,18 +13,23 @@ import { Fragment, useMemo, type ReactNode } from 'react';
 import katex from 'katex';
 import 'katex/dist/katex.min.css';
 
-export function TeX({ src }: { src: string }) {
+interface FormulaProps {
+  src: string;
+  withMathML?: boolean;
+}
+
+export function TeX({ src, withMathML = false }: FormulaProps) {
   const html = useMemo(
-    () => katex.renderToString(src, { throwOnError: false, output: 'html', strict: 'ignore' }),
-    [src],
+    () => katex.renderToString(src, { throwOnError: false, output: withMathML ? 'htmlAndMathml' : 'html', strict: 'ignore' }),
+    [src, withMathML],
   );
   return <span className="god-tex" dangerouslySetInnerHTML={{ __html: html }} />;
 }
 
-export function TeXBlock({ src }: { src: string }) {
+export function TeXBlock({ src, withMathML = false }: FormulaProps) {
   const html = useMemo(
-    () => katex.renderToString(src, { throwOnError: false, output: 'html', strict: 'ignore', displayMode: true }),
-    [src],
+    () => katex.renderToString(src, { throwOnError: false, output: withMathML ? 'htmlAndMathml' : 'html', strict: 'ignore', displayMode: true }),
+    [src, withMathML],
   );
   return <span className="god-tex-block" dangerouslySetInnerHTML={{ __html: html }} />;
 }

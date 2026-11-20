@@ -29,16 +29,19 @@
 .steps { padding-inline-start: 1.5rem; }
 .steps > li { padding-inline-start: .35rem; margin-block: 1.25rem; }
 .steps > li::marker { color: var(--muted-foreground); font-variant-numeric: tabular-nums; }
-.math {
+.section .math {
   display: block;
   width: fit-content;
   max-width: 100%;
   overflow-x: auto;
-  padding: .55rem .9rem;
+  overflow-y: hidden;
+  padding: .65rem .9rem;
   margin-block: .8rem;
   background: var(--muted);
   font: 500 clamp(.96rem, 2vw, 1.15rem)/1.55 Georgia, serif;
 }
+.math :global(.katex-display) { margin: 0; }
+.math :global(.katex-display > .katex) { text-align: start; }
 .section code, .exercise code {
   overflow-wrap: anywhere;
   font-size: .88em;

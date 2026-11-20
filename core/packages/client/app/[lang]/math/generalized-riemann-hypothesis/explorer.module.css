@@ -17,9 +17,10 @@
 .boundary { stroke: var(--border-strong); stroke-dasharray: 3 4; }
 .axis { stroke: var(--muted-foreground); stroke-width: 1; }
 .critical { stroke: var(--accent); stroke-width: 2; }
-.tick, .axisLabel, .lineLabel { fill: var(--muted-foreground); font-size: 14px; }
-.axisLabel { font-family: var(--font-serif); font-style: italic; fill: var(--foreground); }
-.lineLabel { fill: var(--foreground); font-size: 13px; }
+.plotLabel { overflow: visible; pointer-events: none; }
+.labelContent { display: flex; align-items: center; justify-content: center; gap: 4px; height: 100%; font-size: 13px; line-height: 1; white-space: nowrap; color: var(--muted-foreground); }
+.labelContent[data-align=start] { justify-content: flex-start; }
+.labelContent[data-align=end] { justify-content: flex-end; }
 .marker { cursor: pointer; }
 .target { fill: transparent; }
 .dot { fill: var(--foreground); stroke: var(--card); stroke-width: 1.25; }

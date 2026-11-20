@@ -1,6 +1,7 @@
 'use client';
 
-import BackHome from '@/components/BackHome';
+import PageBackLink from '@/components/PageBackLink';
+import { MathProse, TeX } from './Math';
 import HeaderToggles from '@/components/HeaderToggles';
 import { useT } from '@/hooks/useT';
 import { useLang } from '@/i18n/tr';
@@ -51,13 +52,16 @@ export default function GrhPage() {
 
   return (
     <main className={styles.page}>
-      <div className={styles.nav}><BackHome /><HeaderToggles /></div>
+      <div className={styles.nav}><PageBackLink fallback="/math" /><HeaderToggles /></div>
       <header className={styles.hero}>
         <div>
-          <h1>{t('黎曼猜想的 Lean 验证', 'Checking the Riemann Hypothesis in Lean')}</h1>
-          <p>{t('我们用 Lean 4.33.1 复核 Levent Alpöge 公布的证明，检验它能否推出黎曼 ζ 函数的每个非平凡零点都在临界线上。', 'This run rebuilds Levent Alpöge’s proposed proof in Lean 4.33.1 to check whether its theorem establishes that every nontrivial zero of the zeta function lies on the critical line.')}</p>
+          <h1><MathProse>{t(String.raw`狄利克雷 \(L\) 函数的广义黎曼猜想`, String.raw`The Generalized Riemann Hypothesis for Dirichlet \(L\)-functions`)}</MathProse></h1>
+          <p><MathProse>{t(
+            String.raw`Levent Alpöge 公布的 Lean 源码声明了狄利克雷 \(L\) 函数的广义黎曼猜想（GRH），并由此推导经典黎曼猜想（RH）。本机编译包含两组定理的整个项目，再单独核对经典 RH 的命题与公理。`,
+            String.raw`Levent Alpöge’s Lean source claims the generalized Riemann hypothesis (GRH) for Dirichlet \(L\)-functions and derives the classical Riemann hypothesis (RH) from it. Our local run compiles both sets of theorems, then separately audits the statement and axioms of classical RH.`,
+          )}</MathProse></p>
         </div>
-        <div className={styles.formula} aria-hidden="true"><span>{t('临界线', 'Critical line')}</span><strong>Re(s) = ½</strong></div>
+        <div className={styles.formula}><span>{t('临界线', 'Critical line')}</span><strong><TeX src={String.raw`\operatorname{Re}(s)=\tfrac12`} /></strong></div>
       </header>
       <nav className={guide.contents} aria-label={t('本页目录', 'On this page')}>
         <a href="#live">{t('实时验证', 'Live verification')}</a>
@@ -127,8 +131,12 @@ export default function GrhPage() {
       </section>}
 
       <aside className={styles.notes}>
-        <p>{t('原项目还提出了狄利克雷 L 函数的广义黎曼猜想。本次定理与公理审计的目标是经典黎曼猜想。', 'The source also claims a generalized Riemann hypothesis for Dirichlet L-functions. This theorem and axiom audit targets the classical Riemann Hypothesis.')}</p>
+        <p><MathProse>{t(
+          String.raw`作者的广义命题涵盖每个正整数模数的所有狄利克雷特征 \(\chi\)。它断言，如果 \(L(s,\chi)=0\) 且 \(0<\operatorname{Re}(s)<1\)，那么 \(\operatorname{Re}(s)=\tfrac12\)。取模 \(1\) 的平凡特征就得到黎曼 \(\zeta\) 函数的情形。`,
+          String.raw`The generalized statement covers every Dirichlet character \(\chi\) of every positive modulus. It says that if \(L(s,\chi)=0\) and \(0<\operatorname{Re}(s)<1\), then \(\operatorname{Re}(s)=\tfrac12\). The trivial character modulo \(1\) gives the Riemann \(\zeta\) function.`,
+        )}</MathProse></p>
         <div><a href="https://alpo.ge/remark.pdf">{t('原始公告（PDF）', 'Original announcement (PDF)')}</a>
+          <a href="https://github.com/Deicyde/riemann-hypothesis/blob/40e56bab026552e089d7afcfeff08d2defb9c005/src/Main.lean#L4-L12">{t('作者声明的五条定理', 'Five theorem statements in the source')}</a>
           <a href="https://github.com/leanprover-community/mathlib4/blob/0df444a360eaa60ab8c11dca51a86af692955474/Mathlib/NumberTheory/LSeries/RiemannZeta.lean#L185-L186">{t('mathlib 中的猜想定义', 'Definition in mathlib')}</a></div>
       </aside>
 

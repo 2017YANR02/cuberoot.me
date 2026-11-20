@@ -510,13 +510,6 @@ export const PAGE_META: Record<string, PageMetaEntry> = {
     },
   },
   'frame-count-about': { title: { zh: '数帧工具说明', en: 'Frame Count Guide' } },
-  'grh': {
-    title: { zh: '黎曼猜想的 Lean 验证', en: 'Checking the Riemann Hypothesis in Lean' },
-    description: {
-      zh: '在交互图上探索黎曼 ζ 函数的零点，了解零点与素数的联系、Alpöge 提出的证明路线以及本机 Lean 验证进度。',
-      en: 'Explore zeta zeros, their connection to primes and Alpöge’s proposed proof of the Riemann Hypothesis. Follow the local Lean verification as it runs.',
-    },
-  },
   'icon': { title: { zh: '图标', en: 'Icons' } },
   'math': {
     title: { zh: '魔方数学', en: 'Cubing Mathematics' },
@@ -549,6 +542,13 @@ export const PAGE_META: Record<string, PageMetaEntry> = {
   },
   'math/kernel': { title: { zh: '群论内核', en: 'Group-theory kernel' } },
   'math/lsll': { title: { zh: 'LSLL 情况计数', en: 'Counting LSLL cases' } },
+  'math/generalized-riemann-hypothesis': {
+    title: { zh: '狄利克雷 L 函数的广义黎曼猜想', en: 'The Generalized Riemann Hypothesis for Dirichlet L-functions' },
+    description: {
+      zh: '从零点和素数认识黎曼猜想，了解 Alpöge 对狄利克雷 L 函数广义黎曼猜想提出的证明，跟踪经典黎曼猜想的 Lean 定理与公理复核。',
+      en: 'Explore zeros and primes in Alpöge’s proposed proof of the generalized Riemann hypothesis for Dirichlet L-functions. Follow the Lean audit of the classical RH theorem and its axioms.',
+    },
+  },
   'math/probability': {
     title: { zh: '情况概率与旋转对称', en: 'Case Probability & Symmetry' },
     description: {
