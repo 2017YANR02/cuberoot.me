@@ -9,6 +9,7 @@ import { FM_FIXED_COLOR, FM_IGNORED } from '@cuberoot/puzzle-render-core/engine/
 import AlgPlayer, { type AlgPlayerHandle } from '@/components/AlgPlayer/AlgPlayer';
 import TutorialCubeCallout from '../components/TutorialCubeCallout';
 import VideoProgress from '../components/VideoProgress';
+import { TUTORIAL_STICKER_PURPLE } from '../components/tutorial-colors';
 import { type CubeFace } from '@/lib/cube-colors';
 import { orientedCubeFaceColors } from '@/lib/cube-orientation';
 import { tr } from '@/i18n/tr';
@@ -73,7 +74,7 @@ export default function SpecialCasePrelude({ scenes, ending, piece, onDone }: {
   const overrides = useMemo(() => Object.fromEntries([
     ...hidden.map(sticker => [sticker, FM_FIXED_COLOR[FM_IGNORED]!]),
     ...preview.highlights.map(sticker => [sticker,
-      new Color(FM_FIXED_COLOR[FM_IGNORED]!).lerp(new Color(purple ? '#a855f7' : colors[sticker[0] as CubeFace]), eased).getStyle(),
+      new Color(FM_FIXED_COLOR[FM_IGNORED]!).lerp(new Color(purple ? TUTORIAL_STICKER_PURPLE : colors[sticker[0] as CubeFace]), eased).getStyle(),
     ]),
   ]), [hidden, preview, purple, eased]);
   useEffect(() => { setToolbar(wrapper.current?.closest('.lbl-learning')?.querySelector('.lbl-demo-toolbar') ?? null); }, []);
