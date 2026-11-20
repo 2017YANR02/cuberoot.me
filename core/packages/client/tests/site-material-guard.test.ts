@@ -152,7 +152,7 @@ describe('site materials have one definition and shared scenery tokens', () => {
     const battle = readFileSync(join(ROOT, 'app/[lang]/timer/_battle/battle.css'), 'utf8');
 
     expect(material).toContain('--glass-dialog-bg: color-mix(in srgb, var(--popover) 96%, transparent);');
-    expect(timer).toMatch(/body\[data-site-scenery\] \.timer-modal\s*\{\s*background: var\(--glass-dialog-bg\);/);
+    expect(timer).toMatch(/body\[data-site-scenery\] \.timer-modal:where\(:not\(\.bt-timer-modal\)\)\s*\{\s*background: var\(--glass-dialog-bg\);/);
     expect(surfaces).toMatch(/body\[data-site-scenery\] \.solver-sheet\s*\{\s*background: var\(--glass-dialog-bg\);/);
     expect(surfaces).toMatch(/:is\(\s*\.timer-history-compare-modal,\s*\.timer-solve-detail-modal,\s*\.timer-room-dialog\s*\)\s*\{\s*background: var\(--glass-dialog-bg\);/);
     expect(battle).toMatch(/body\[data-site-scenery\] \.ao-detail-panel\s*\{\s*background: var\(--glass-dialog-bg\);/);

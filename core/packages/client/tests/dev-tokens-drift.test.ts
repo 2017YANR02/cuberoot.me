@@ -1,6 +1,6 @@
 // /dev/tokens drift guard: the design-tokens reference page (app/[lang]/dev/
 // tokens/_tokens.ts) hand-mirrors color values from app-ui/src/appearance.css. This test
-// re-reads appearance.css and asserts every value the page claims still matches the
+// reads appearance.css and its shared classic colors, then asserts every value the page claims still matches the
 // real token — so changing a token in appearance.css without updating the page
 // turns CI red. Pure read-only; no codegen to maintain.
 //
@@ -13,7 +13,9 @@ import { readFileSync } from 'node:fs';
 import { GROUPS } from '@/app/[lang]/dev/tokens/_tokens';
 
 const require = createRequire(import.meta.url);
-const css = readFileSync(require.resolve('@cuberoot/app-ui/appearance.css'), 'utf8');
+const appearance = readFileSync(require.resolve('@cuberoot/app-ui/appearance.css'), 'utf8');
+const classicPath = '@cuberoot/shared/timer/classic-appearance.css';
+const css = appearance.replace(`@import "${classicPath}";`, () => readFileSync(require.resolve(classicPath), 'utf8'));
 
 // Find the exact selector within a list (tokens also style the native preview).
 function block(selector: string): string {
@@ -37,23 +39,14 @@ function rawVal(name: string, theme: 'light' | 'dark'): string | null {
   return m ? m[1].trim() : null;
 }
 
-// Resolve a appearance.css value to the same concrete form the page stores:
-// plain hex → lowercased hex; bare var() → resolved base hex; color-mix(var) →
-// color-mix with the base var expanded to its hex.
-function resolve(raw: string, theme: 'light' | 'dark'): string {
-  const v = raw.trim();
-  if (/^#[0-9a-fA-F]+$/.test(v)) return v.toLowerCase();
-  const varM = /var\(\s*(--[\w-]+)\s*\)/.exec(v);
-  if (!varM) return v.toLowerCase().replace(/\s+/g, ' ');
-  const baseRaw = rawVal(varM[1], theme);
-  if (baseRaw == null) throw new Error(`base var not found: ${varM[1]}`);
-  const baseHex = resolve(baseRaw, theme);
-  if (v.includes('color-mix')) {
-    const pct = /(\d+)%/.exec(v);
-    if (!pct) throw new Error(`color-mix without percent: ${v}`);
-    return `color-mix(in srgb, ${baseHex} ${pct[1]}%, transparent)`;
-  }
-  return baseHex; // bare var()
+// Follow the same aliases as the browser, including those inside color-mix().
+function resolve(raw: string, theme: 'light' | 'dark', seen = new Set<string>()): string {
+  return raw.replace(/var\(\s*(--[\w-]+)\s*\)/g, (_, name: string) => {
+    if (seen.has(name)) throw new Error(`circular token alias: ${name}`);
+    const base = rawVal(name, theme);
+    if (base == null) throw new Error(`base var not found: ${name}`);
+    return resolve(base, theme, new Set([...seen, name]));
+  });
 }
 
 const norm = (s: string) => s.trim().toLowerCase().replace(/\s+/g, ' ');

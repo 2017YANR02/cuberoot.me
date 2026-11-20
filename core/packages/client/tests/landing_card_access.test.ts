@@ -3,7 +3,7 @@ import { act, createElement, type AnchorHTMLAttributes, type ReactNode } from 'r
 import { NuqsTestingAdapter } from 'nuqs/adapters/testing';
 import { createRoot } from 'react-dom/client';
 import { renderToString } from 'react-dom/server';
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ADMIN_WCA_IDS } from '@cuberoot/shared/admin';
 import type { PublicMember } from '@/lib/membership-api';
 import type { HomeLayoutSnapshot } from '@/lib/home-layout';
@@ -73,6 +73,11 @@ import { PRIMARY_CARDS, WCA_CARDS, SECTIONS } from '@/lib/landing-sections';
 const renderLanding = (initialLayout?: HomeLayoutSnapshot) => createElement(NuqsTestingAdapter, {
   children: createElement(LandingPage, { initialLayout }),
 });
+
+beforeEach(() => {
+  vi.stubGlobal('matchMedia', () => ({ matches: false, addEventListener() {}, removeEventListener() {} }));
+});
+afterEach(() => { vi.unstubAllGlobals(); });
 
 describe('homepage development cards', () => {
   it('keeps navigation in server HTML when query-dependent onboarding suspends', () => {

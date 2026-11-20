@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { act, createElement } from 'react';
 import { createRoot } from 'react-dom/client';
-import { expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 import { timerTrainingHref } from '@/lib/timer-training-location';
 import { resolveTrainingTarget } from '@/lib/timer-training-catalog';
 import { TrainingHostProvider } from '@/lib/training-host';
@@ -16,6 +16,11 @@ vi.mock('@/components/TrainingStatsPanel', () => ({ TrainingManualPractice: () =
 vi.mock('@/i18n/tr', () => ({ T: () => null, tr: (text: { en: string }) => text.en }));
 vi.mock('react-i18next', () => ({ useTranslation: () => ({ i18n: { language: 'en' } }) }));
 import IframePage from '@/components/IframePage';
+
+beforeEach(() => {
+  vi.stubGlobal('matchMedia', () => ({ matches: false, addEventListener() {}, removeEventListener() {} }));
+});
+afterEach(() => { vi.unstubAllGlobals(); });
 
 it('keeps legacy trainer links hosted without changing upstream files, and releases navigation on unmount', async () => {
   (globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
