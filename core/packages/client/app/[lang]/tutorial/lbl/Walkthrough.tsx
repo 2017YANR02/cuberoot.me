@@ -14,6 +14,7 @@ import { LBL_LESSON_RUNS } from './lesson-runs';
 const IGNORE_CASE_CUE = () => {};
 export default function Walkthrough() {
   const [runIndex, setRunIndex] = useState(0);
+  const [stagePickerHost, setStagePickerHost] = useState<HTMLDivElement | null>(null);
   const scramble = LBL_LESSON_RUNS[runIndex].scramble;
   const demo = useMemo(() => buildWalkthroughDemo(scramble), [scramble]);
   const examples = LBL_LESSON_RUNS.map((_, index) => ({
@@ -35,13 +36,13 @@ export default function Walkthrough() {
       <div className="lbl-learning">
         <div className="lbl-lesson-scroll">
           <div className="lbl-complete">
-            <Demonstration key={runIndex} stage="walkthrough" demo={demo} onCaseCueChange={IGNORE_CASE_CUE}
+            <Demonstration key={runIndex} stage="walkthrough" demo={demo} onCaseCueChange={IGNORE_CASE_CUE} stagePickerHost={stagePickerHost}
               opening={<p className="lbl-walkthrough-scramble-row">
                 <span><T zh="打乱：" en="Scramble:" /></span><code className="lbl-walkthrough-scramble">{scramble}</code>
               </p>} />
           </div>
         </div>
-        <div className="lbl-demo-toolbar">
+        <div className="lbl-demo-toolbar" ref={setStagePickerHost}>
           <SectionMenu label={examples[runIndex].label}>{exampleNavigation}</SectionMenu>
         </div>
       </div>

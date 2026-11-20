@@ -542,9 +542,6 @@
 .lbl-walkthrough .lbl-walkthrough-scramble-row > span { flex-shrink: 0; }
 .lbl-walkthrough .lbl-walkthrough-scramble { min-width: 0; overflow-wrap: anywhere; font-size: inherit; color: inherit; line-height: inherit; }
 .lbl-walkthrough .lbl-complete-legend-space { display: none; }
-@media (max-width: 760px) {
-  .lbl-walkthrough .lbl-body { grid-template-columns: minmax(0, 1fr); gap: 0; }
-}
 
 @media (prefers-reduced-motion: reduce) { .lbl-content { animation: none; } }
 
@@ -579,4 +576,95 @@
   .lbl-lesson-scroll .lbl-notation-demonstration > .lbl-notation-player,
   .lbl-lesson-scroll .lbl-complete-playback { height: auto; flex: none; }
   .lbl-lesson-scroll :is(.lbl-demonstration, .lbl-complete .lbl-cube) .alg-sim-player.is-fill { height: auto; flex: none; padding: 0; }
+}
+
+.lbl-walkthrough-guide {
+  display: grid;
+  grid-template-rows: minmax(0, 1fr) minmax(0, min(312px, 66%));
+  gap: 12px;
+  align-self: center;
+  height: 100%;
+  max-height: 488px;
+  min-width: 0;
+  min-height: 0;
+}
+.lbl-walkthrough-guide .lbl-complete-thought {
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior-y: contain;
+  align-items: safe center;
+}
+.lbl-walkthrough-stages {
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior-y: contain;
+  border-top: 1px solid var(--border-default);
+  padding: 8px 4px 4px;
+}
+.lbl-walkthrough-stages > span { color: var(--muted-foreground); font-size: .875rem; }
+.lbl-walkthrough-stages ol {
+  list-style: decimal;
+  margin: 4px 0 0;
+  padding-inline-start: 1.6em;
+}
+.lbl-walkthrough-stages li::marker { color: var(--muted-foreground); font-variant-numeric: tabular-nums; }
+.lbl-walkthrough-stages button {
+  width: 100%;
+  min-height: 34px;
+  padding: 4px 8px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--foreground);
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
+}
+.lbl-walkthrough-stages button:disabled { cursor: default; }
+.lbl-walkthrough-stages button:hover:not(:disabled) { background: var(--muted); }
+.lbl-walkthrough-stages button[aria-current='step'] { background: var(--accent-soft); color: var(--accent); }
+.lbl-walkthrough-stages button:focus-visible { outline: 2px solid var(--ring); outline-offset: -2px; }
+.lbl-walkthrough .lbl-walkthrough-stage-picker { display: none; }
+
+@media (max-width: 760px), (orientation: landscape) and (max-height: 500px) {
+  .lbl-walkthrough .lbl-body { grid-template-columns: minmax(0, 1fr); gap: 0; }
+  .lbl-walkthrough-guide {
+    align-self: stretch;
+    height: auto;
+    max-height: none;
+    grid-template-rows: minmax(0, 1fr);
+  }
+  .lbl-walkthrough-stages { display: none; }
+  .lbl-walkthrough .lbl-demo-toolbar { position: relative; align-items: center; gap: 16px; }
+  .lbl-walkthrough .lbl-demo-toolbar .tutorial-section-menu { position: static; }
+  .lbl-walkthrough .lbl-walkthrough-stage-picker {
+    display: block;
+    min-width: 0;
+  }
+  .lbl-walkthrough-stage-picker .compact-select-trigger { min-height: 44px; max-width: 100%; }
+}
+
+@media (min-width: 761px) and (min-height: 501px) {
+  .compact-select-popup.lbl-walkthrough-stage-popup { display: none; }
+}
+
+@media (orientation: landscape) and (max-height: 500px) {
+  .lbl-page.lbl-walkthrough .lbl-learning { grid-template-rows: minmax(0, 1fr) auto; }
+
+  @container lbl-lesson (width < 480px) or (height < 120px) {
+    .lbl-page.lbl-walkthrough .lbl-lesson-scroll .lbl-complete .lbl-demo.lbl-demo-split {
+      display: flex;
+      flex: none;
+      flex-direction: column;
+      height: auto;
+      min-height: 100%;
+    }
+    .lbl-page.lbl-walkthrough .lbl-lesson-scroll .lbl-complete-player > .lbl-cube {
+      height: auto;
+      aspect-ratio: auto;
+      flex: none;
+    }
+    .lbl-walkthrough-guide { min-height: 88px; }
+    .lbl-walkthrough-guide .lbl-complete-thought { overflow: visible; }
+  }
 }
