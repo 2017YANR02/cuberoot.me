@@ -1,6 +1,4 @@
 'use client';
-
-import { installedCommunityDisabled, useInstalledCommunityDisabled } from '@/lib/installed-content';
 import '@cuberoot/timer-ui/compact-select.css';
 
 import {
@@ -301,7 +299,6 @@ function FileKindIcon({ node }: { node: DriveNode }) {
 }
 
 function DrivePageContent() {
-  const communityDisabled = useInstalledCommunityDisabled();
   const t = useT();
   const lang = useLang();
   const user = useAuthUser();
@@ -615,7 +612,6 @@ function DrivePageContent() {
   };
 
   const openShare = async (node: DriveNode) => {
-    if (installedCommunityDisabled()) return;
     setShareNode(node);
     setShareUrl(null);
     if (node.kind === 'folder' || !node.shared) return;
@@ -631,7 +627,7 @@ function DrivePageContent() {
   };
 
   const changeShareVisibility = async (shared: boolean) => {
-    if (!shareNode || shareBusy || installedCommunityDisabled()) return;
+    if (!shareNode || shareBusy) return;
     setShareBusy(true);
     try {
       if (shareNode.kind === 'folder') {
@@ -1057,9 +1053,9 @@ function DrivePageContent() {
             <div className="drive-file-actions">
               {node.canCompress && <button type="button" className="drive-icon-action" onClick={() => setCompressionNodeId(node.id)} title={t('云端压缩，可选 1080P', 'Cloud compression, with optional 1080p')} aria-label={t(`压缩视频 ${node.name}`, `Compress video ${node.name}`)}>{node.compressions?.some((job) => !['ready', 'failed'].includes(job.status)) ? <Loader2 className="drive-spin" aria-hidden="true" /> : <Shrink aria-hidden="true" />}</button>}
               {view !== 'trash' && node.kind === 'file' && isDrivePreviewableMime(node.mimeType) && <button type="button" className="drive-icon-action" onClick={() => void setPreviewId(node.id)} aria-label={t(`预览 ${node.name}`, `Preview ${node.name}`)}><Eye aria-hidden="true" /></button>}
-              {!communityDisabled && view === 'files' && node.kind === 'file' && <button type="button" className="drive-icon-action" onClick={() => void openShare(node)} aria-label={node.shared ? t(`管理 ${node.name} 的公开链接`, `Manage the public link for ${node.name}`) : t(`分享 ${node.name}`, `Share ${node.name}`)}>{node.shared ? <Link2 aria-hidden="true" /> : <Share2 aria-hidden="true" />}</button>}
+              {view === 'files' && node.kind === 'file' && <button type="button" className="drive-icon-action" onClick={() => void openShare(node)} aria-label={node.shared ? t(`管理 ${node.name} 的公开链接`, `Manage the public link for ${node.name}`) : t(`分享 ${node.name}`, `Share ${node.name}`)}>{node.shared ? <Link2 aria-hidden="true" /> : <Share2 aria-hidden="true" />}</button>}
               {view !== 'trash' && node.kind === 'file' && <button type="button" className="drive-icon-action" onClick={() => void downloadNode(node)} aria-label={t(`下载 ${node.name}`, `Download ${node.name}`)}><Download aria-hidden="true" /></button>}
-              {!communityDisabled && view === 'files' && node.kind === 'folder' && <button type="button" className="drive-icon-action" onClick={() => void openShare(node)} aria-label={t(`共享文件夹 ${node.name}`, `Share folder ${node.name}`)}>{node.memberShared ? <Users aria-hidden="true" /> : <Share2 aria-hidden="true" />}</button>}
+              {view === 'files' && node.kind === 'folder' && <button type="button" className="drive-icon-action" onClick={() => void openShare(node)} aria-label={t(`共享文件夹 ${node.name}`, `Share folder ${node.name}`)}>{node.memberShared ? <Users aria-hidden="true" /> : <Share2 aria-hidden="true" />}</button>}
               {view === 'files' && <button type="button" className="drive-icon-action" onClick={() => setMovingNode(node)} aria-label={t(`移动 ${node.name}`, `Move ${node.name}`)}><FolderInput aria-hidden="true" /></button>}
               {view === 'files' && <button type="button" className="drive-icon-action" onClick={() => void renameNode(node)} aria-label={t(`重命名 ${node.name}`, `Rename ${node.name}`)}><Pencil aria-hidden="true" /></button>}
               {view === 'files' && <button type="button" className="drive-icon-action drive-danger" onClick={() => void moveToTrash(node)} aria-label={t(`移入回收站 ${node.name}`, `Move ${node.name} to Trash`)}><Trash2 aria-hidden="true" /></button>}
@@ -1089,7 +1085,7 @@ function DrivePageContent() {
 
       {compressionNode && <DriveCompressionDialog key={compressionNode.id} node={compressionNode} onQueued={load} onClose={() => setCompressionNodeId(null)} />}
 
-      {!communityDisabled && shareNode && (
+      {shareNode && (
         <DriveShareDialog
           node={shareNode}
           url={shareUrl}

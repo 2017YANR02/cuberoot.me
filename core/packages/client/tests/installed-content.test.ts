@@ -44,15 +44,16 @@ describe('regional community availability on Apple App Store clients', () => {
   it.each([
     '/forum', '/zh/forum/t/42', '/forum/new', '/en/%66orum/search', '/platform/community/posts/new',
     '/zh/platform/admin/community', 'https://www.cuberoot.me/forum/feed', '/zh/feedback', '/quiz/new?edit=1',
-    '/zh/recon/42/alt', '/recon/42/alt/new', '/recon/42/alt/1/edit', '/timer/watch#session',
-    '/zh/timer?share=42', '/timer?r=sample', '/timer?replay=sample', '/timer?players=net&room=sample',
-    '/calendar/s/abc',
+    '/zh/recon/42/alt', '/recon/42/alt/new', '/recon/42/alt/1/edit',
   ])('recognizes the restricted destination %s', href => {
     expect(isInstalledCommunityHref(href)).toBe(true);
   });
 
   it.each(['/forum-guide', '/platform/courses', 'https://community.example/forum', '/recon/submit/42',
-    '/recon/42/alt/1', '/timer', '/timer?players=2', '/drive', '/docs/edit?id=123', '/calendar'])('preserves destinations such as %s', href => {
+    '/recon/42/alt/1', '/timer', '/timer?players=2', '/drive', '/docs/edit?id=123', '/calendar',
+    '/zh/timer?share=example', '/timer?r=sample', '/timer?replay=sample',
+    '/timer?players=net&room=sample', '/timer/watch#session', '/calendar/s/abc',
+  ])('preserves destinations such as %s', href => {
     expect(isInstalledCommunityHref(href)).toBe(false);
   });
 

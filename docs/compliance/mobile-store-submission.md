@@ -1,5 +1,16 @@
 # CubeRoot 移动端商店提交资料
 
+## Apple App Store 上架流程
+
+- iOS 与 macOS 共用 App Store Connect 记录 `6816632957`（`me.cuberoot.app`）。发布默认使用 [rorkai/App-Store-Connect-CLI](https://github.com/rorkai/App-Store-Connect-CLI) 的 `asc`，指定 `--profile CubeRoot`，区分 `IOS` 和 `MAC_OS`。必须用网页处理的表单默认在 Codex 内置浏览器打开。命令及本机设置见 [iOS 发布说明](../../core/apps/mobile/README.md#ios-release-with-asc) 和 [Mac App Store 打包说明](../../core/apps/desktop/README.md#mac-app-store)。
+- Mac mini 与 MacBook Pro 独立配置本机 API 凭据，分别核对实际执行会话的 CLI 登录和本机签名身份。一次发布操作由一台机器执行。切换机器前回读商店状态，避免重复上传、关联或送审。私钥和签名材料留在各自机器。
+- 从只读查询开始，核对平台、版本、已关联的构建、审核状态、发售地区和发布方式。Apple 将构建处理为 `VALID` 后，可关联版本、做预检并按授权送审。分别回读审核结果和实际商店可售状态。
+- 中国大陆是 CubeRoot 的发行地区。每次送审前按最终构建和工具页实际加载的线上内容核对合规声明及审核备注。App ICP 备案、生成式 AI 材料、安全评估各自核对。如果功能需要安全评估，Apple 要求主管平台显示评估通过的截图及盖章报告。变更嵌入网页时先确认在审旧包的行为是否会同步变化，再安排部署与换包顺序。[Apple 大陆合规说明](https://developer.apple.com/help/app-store-connect/manage-compliance-information/view-china-mainland-compliance-information/) · [网信办安全评估规定](https://www.cac.gov.cn/2018-11/15/c_1123716072.htm)
+
+当前在审构建、功能范围和下一步集中记录在 [Apple 商店首发进度](../product/apps/mobile-app-roadmap.md#2026-11-20-apple-商店首发)。
+
+## 历史提交资料快照
+
 > 支付渠道增量（2026-10-13，源码）：Android `play` 保留 Google Play Billing；官网 `direct` 包复用网站支付宝／微信 H5 单次购买。原生读取包内渠道配置，direct 不注册或同步 Billing（当前依赖仍打包），通过系统浏览器经商户域名收银中转页支付，回到 App 后查服务端订单；不传递账号登录凭据，不把回跳当成支付成功。订单、金额、支付方交易记录与必要网络信息的数据流已补入网站隐私政策。既有 Play 订阅须在 Play 管理，换包不取消。此增量不代表 direct 已签名、发布或完成真机支付；证据和阻塞仅在路线图记账。
 
 > 当前发行状态（2026-10-13）：所有者确认 Google Play 已成功上架。下方是旧构建的提交资料快照，其中 `NOT SUBMISSION READY` 及 `versionCode 1000` 不代表当前 Google Play 发行状态或线上版本。正式送审增量和发布证据以 [路线图](../product/apps/mobile-app-roadmap.md) 为准；本次未重新核验 Console。iOS 和后续新版本仍须按最终包独立复核。中国大陆 Android 渠道另见 [分发调研](./china-android-distribution.md)。

@@ -35,10 +35,8 @@ export function isInstalledCommunityHref(href: string, origin = 'https://cuberoo
     const url = new URL(href, origin);
     if (url.origin !== origin && !['cuberoot.me', 'www.cuberoot.me', 'next.cuberoot.me', 'dev.cuberoot.me'].includes(url.hostname)) return false;
     const path = decodeURIComponent(url.pathname).replace(/^\/(?:en|zh)(?=\/|$)/, '').replace(/\/+$/, '');
-    return /^\/(?:forum|feedback|quiz\/(?:new|manage)|calendar\/s|platform\/(?:community|admin\/community)|timer\/watch)(?=\/|$)/.test(path)
-      || /^\/recon\/[^/]+\/alt(?:$|\/(?:new|[^/]+\/edit)(?=\/|$))/.test(path)
-      || (path === '/timer' && (['share', 'r', 'replay'].some(key => url.searchParams.has(key))
-        || url.searchParams.get('players') === 'net' || url.searchParams.has('room')));
+    return /^\/(?:forum|feedback|quiz\/(?:new|manage)|platform\/(?:community|admin\/community))(?=\/|$)/.test(path)
+      || /^\/recon\/[^/]+\/alt(?:$|\/(?:new|[^/]+\/edit)(?=\/|$))/.test(path);
   } catch {
     return true;
   }

@@ -20,13 +20,11 @@ export default function ReconstructActions({
   host, solve, onUseScramble, placement, snapshot = null,
 }: ReconstructActionsProps) {
   const [ui,setUI]=useState(initialReportUI);
-  return <><ReportContent node={reportActions(solve,host.localize,ui,Boolean(onUseScramble),placement,'copy',Boolean(host.replayUrl))} dispatch={action=>{
+  return <><ReportContent node={reportActions(solve,host.localize,ui,Boolean(onUseScramble),placement)} dispatch={action=>{
     if(action.type==='use-scramble')onUseScramble?.(solve.scramble);
     if(action.type==='share')void (async()=>{
       try {
-        const url = await host.replayUrl?.(solve);
-        if (!url) return;
-        await host.writeClipboardText(url);
+        await host.writeClipboardText(await host.replayUrl(solve));
         setUI(state=>reduceReportUI(state,{type:'copied',key:'share'}));
         setTimeout(()=>setUI(state=>reduceReportUI(state,{type:'copied'})),1500);
       }catch(err){console.warn('[reconstruct] copy share link failed:',err);}

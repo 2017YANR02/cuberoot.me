@@ -473,12 +473,6 @@ export function App({ host, loadingMark }: { host: InstalledAppHost; loadingMark
   const selectedView = view === 'appearance' ? appearanceReturnRef.current : view;
   const [settingsCategory, setSettingsCategory] = useState<TimerSettingCategoryId>('timer');
   const [timerMode, setTimerMode] = useState<TimerPlayersValue>(1);
-  useEffect(() => {
-    if (communityAvailability === false && timerMode === 'net') {
-      setTimerMode(1);
-      setBattleModeActive(false);
-    }
-  }, [communityAvailability, timerMode]);
   const wideLayout = useTimerWideLayout({ useHostContent: true });
   const hostViewport = useHostViewportLayout();
   const wideLayoutRef = useRef(wideLayout);
@@ -3087,17 +3081,7 @@ export function App({ host, loadingMark }: { host: InstalledAppHost; loadingMark
       const solve = allSessionSolves.find(s => s.id === id);
       return solve ? timerLiveSolveDetail(solve) : null;
     },
-  }, communityAvailable && !!store && timerMode === 1 && (timerVisible || view === 'history'));
-  const regionRevokedLiveShare = useRef<string | null>(null);
-  useEffect(() => {
-    if (communityAvailability !== false) {
-      regionRevokedLiveShare.current = null;
-      return;
-    }
-    if (liveShare.busy || !liveShare.session || regionRevokedLiveShare.current === liveShare.session.id) return;
-    regionRevokedLiveShare.current = liveShare.session.id;
-    void liveShare.stop();
-  }, [communityAvailability, liveShare.busy, liveShare.session, liveShare.stop]);
+  }, !!store && timerMode === 1 && (timerVisible || view === 'history'));
   if (timer.machine.phase === 'running') timerInstruction = copy.tapToStop;
   if (timer.machine.phase === 'holding') timerInstruction = copy.keepHolding;
   if (timer.machine.phase === 'ready') timerInstruction = copy.releaseToStart;
@@ -3498,13 +3482,11 @@ export function App({ host, loadingMark }: { host: InstalledAppHost; loadingMark
       }}>{label}</a>;
     },
     writeClipboardText: host.writeClipboardText,
-    replayUrl: communityAvailable ? async (solve: Solve) => {
-      if (!communityAvailableRef.current) return null;
+    replayUrl: async (solve: Solve) => {
       const base = SITE_ORIGIN + (language === 'zh' ? '/zh' : '') + '/timer';
       const id = await createTimerReplayShare(solve, activeAuthSession?.token, { apiUrl: mobileApiUrl, fetcher: fetch });
-      if (!communityAvailableRef.current) return null;
       return id ? base + '?share=' + id : encodeReplayUrl(solve, base);
-    } : undefined,
+    },
     recordGyro: store?.settings.recordGyro ?? true,
     onEnableGyro: () => updateSettings({ recordGyro: true }),
   };
@@ -4202,7 +4184,7 @@ export function App({ host, loadingMark }: { host: InstalledAppHost; loadingMark
           availableTopBar: hostViewport?.topBar,
           controls: (
                 <>
-                  {communityAvailable && <TimerLiveShareStatus controller={liveShare} language={language} />}
+                  <TimerLiveShareStatus controller={liveShare} language={language} />
                   {smartCubeDeviceCenter}
                   <TimerSoloControls
                     project={<TimerPuzzlePicker
@@ -4660,7 +4642,6 @@ children: <>
 
         {view === 'timer' && typeof timerMode === 'number' && timerMode >= 2 && (
           <LocalBattleMode
-            onlineAvailable={communityAvailable}
             scrambleProvider={battleScrambleProvider}
             onExportRounds={rounds => shareOrDownloadBackup(host, buildLocalBattleCsv(rounds, [], timerMode as number), {
               filename: `local-battle_${new Date().toISOString().slice(0, 10)}.csv`, mime: 'text/csv;charset=utf-8',
@@ -4690,7 +4671,6 @@ children: <>
             inputBlocked={timerOverlayBlocking}
             onActivityChange={setBattleModeActive}
             onModeChange={(mode) => {
-              if (mode === 'net' && !communityAvailableRef.current) return;
               timerModeRef.current = mode;
               setTimerMode(mode);
             }}
@@ -4704,7 +4684,7 @@ children: <>
           />
         )}
 
-        {view === 'timer' && timerMode === 'net' && communityAvailable && (
+        {view === 'timer' && timerMode === 'net' && (
           <NetBattleMode
             smartCubeSettings={store!.settings}
             sessionId={store!.database.activeSessionId}
@@ -4937,9 +4917,7 @@ children: <>
                 disabled={timer.machine.phase !== 'idle'
                   && timer.machine.phase !== 'stopped'}
                 onlineLabel={copy.online}
-                onlineAvailable={communityAvailable}
                 onChange={(mode) => {
-                  if (mode === 'net' && !communityAvailableRef.current) return;
                   timerModeRef.current = mode;
                   setTimerMode(mode);
                   setView('timer');
@@ -4968,7 +4946,7 @@ children: <>
 
             </>}
             <TimerTimingSettingsSections active={settingsCategory === 'timer'}
-              liveShare={communityAvailable && <TimerLiveShareSettings controller={liveShare} language={language} copy={text => host.writeClipboardText(text)}
+              liveShare={<TimerLiveShareSettings controller={liveShare} language={language} copy={text => host.writeClipboardText(text)}
                 watchBase={`${SITE_ORIGIN}${language === 'zh' ? '/zh' : ''}/timer/watch`} />}
               localize={(value) => value[language]}
               onChange={updateSettings}

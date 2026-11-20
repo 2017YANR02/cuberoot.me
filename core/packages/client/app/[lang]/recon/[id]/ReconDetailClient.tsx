@@ -258,7 +258,7 @@ export default function ReconDetailClient({ initialSolve, initialSameScramble }:
             {' '}
             {solve.method && <span className="detail-method-badge" title={t('recon.method')}>{solve.method}</span>}
             {' '}
-            {solutionText && !communityDisabled && <span className="detail-share-target" ref={setShareTarget} />}
+            {solutionText && (!communityDisabled || solve.visibility !== 'private') && <span className="detail-share-target" ref={setShareTarget} />}
             {' '}
             {(!communityDisabled || solve.visibility === 'private') && <Link href={`/recon/submit/${solve.id}`} className="detail-title-edit detail-title-edit--accent" title={t('recon.edit')} aria-label={t('recon.edit')}>
               <Pencil size={14} />
@@ -457,7 +457,7 @@ function ReconDetailBody({ scramble, solutionText, solve, comments, onUpdate, in
 
       }
       <div className="detail-content-pane">
-        {solutionText && !communityDisabled && (
+        {solutionText && (!communityDisabled || solve.visibility !== 'private') && (
           <ExternalLinks event={solve.event} scramble={playerScramble} alg={sourceView ? solutionText : rawDisplayText} solveId={solve.id} shareTarget={shareTarget} />
         )}
 

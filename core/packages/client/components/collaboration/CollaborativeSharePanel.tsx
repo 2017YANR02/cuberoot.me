@@ -35,7 +35,9 @@ export function CollaborativeSharePanel({ id, kind, details, reload, close }: {
   const [notice, setNotice] = useState('');
   const backdrop = useModalDismiss(close);
   const owner = details.document.role === 'owner';
-  const dirty = JSON.stringify(sharing) !== JSON.stringify(details.sharing ?? DEFAULT_DOCUMENT_SHARING);
+  const publicViewOnly = sharing.access === 'anyone' && communityDisabled;
+  const currentSharing = details.sharing ?? DEFAULT_DOCUMENT_SHARING;
+  const dirty = JSON.stringify(sharing) !== JSON.stringify(currentSharing);
   useEffect(() => {
     if (query.trim().length < 2 || person) { setPeople([]); return; }
     let active = true;
@@ -53,14 +55,16 @@ export function CollaborativeSharePanel({ id, kind, details, reload, close }: {
   };
   const finish = async () => {
     if (!dirty) { close(); return; }
-    if (sharing.access === 'anyone' && installedCommunityDisabled()) return;
+    const publicAccessChanged = currentSharing.access !== 'anyone' || currentSharing.role !== sharing.role;
+    const nextSharing = sharing.access === 'anyone' && publicAccessChanged && installedCommunityDisabled()
+      ? { ...sharing, role: 'viewer' as const }
+      : sharing;
     setBusy(true); setError('');
-    try { await updateDocumentSharing(id, sharing); await reload(); close(); }
+    try { await updateDocumentSharing(id, nextSharing); await reload(); close(); }
     catch (cause) { setError((cause as Error).message); }
     finally { setBusy(false); }
   };
   const copyLink = async () => {
-    if (installedCommunityDisabled() && (sharing.access === 'anyone' || details.sharing?.access === 'anyone')) return;
     try {
       const url = new URL(window.location.href);
       url.pathname = url.pathname.replace(/\/(docs|sheets)\/edit$/, `/${kind === 'document' ? 'docs' : 'sheets'}/edit`);
@@ -106,19 +110,23 @@ export function CollaborativeSharePanel({ id, kind, details, reload, close }: {
         <div className="collab-access-row">
           <span className="collab-avatar"><AccessIcon size={22} /></span>
           <div className="collab-access-description">
-            <select className="collab-access-select" value={sharing.access} disabled={busy || !details.canManage} onChange={event => setSharing({ ...sharing, access: event.target.value as DocumentSharing['access'] })} aria-label={tr({ zh: '常规访问权限', en: 'General access' })}>
-              <option value="restricted">{tr({ zh: '受限', en: 'Restricted' })}</option><option value="admins">{tr({ zh: '所有管理员', en: 'All administrators' })}</option>{(!communityDisabled || sharing.access === 'anyone') && <option value="anyone" disabled={communityDisabled}>{tr({ zh: '知道链接的任何人', en: 'Anyone with the link' })}</option>}
+            <select className="collab-access-select" value={sharing.access} disabled={busy || !details.canManage} onChange={event => {
+              const access = event.target.value as DocumentSharing['access'];
+              const role = access === 'anyone' && communityDisabled ? 'viewer' : sharing.role;
+              setSharing({ ...sharing, access, role });
+            }} aria-label={tr({ zh: '常规访问权限', en: 'General access' })}>
+              <option value="restricted">{tr({ zh: '受限', en: 'Restricted' })}</option><option value="admins">{tr({ zh: '所有管理员', en: 'All administrators' })}</option><option value="anyone">{tr({ zh: '知道链接的任何人', en: 'Anyone with the link' })}</option>
             </select>
             <p>{sharing.access === 'restricted' ? tr({ zh: '只有已添加的人员可以访问', en: 'Only people with access can open this file' }) : sharing.access === 'admins' ? tr({ zh: '本站所有管理员均可访问', en: 'All site administrators can access this file' }) : tr({ zh: '知道链接的任何人均可访问，无需登录', en: 'Anyone with the link can access this file without signing in' })}</p>
           </div>
-          {sharing.access !== 'restricted' && <select className="collab-role-select" value={sharing.role} disabled={busy || !details.canManage} onChange={event => setSharing({ ...sharing, role: event.target.value as MemberRole })} aria-label={tr({ zh: '常规访问角色', en: 'General access role' })}><RoleOptions /></select>}
+          {sharing.access !== 'restricted' && <select className="collab-role-select" value={sharing.role} disabled={busy || !details.canManage || publicViewOnly} onChange={event => setSharing({ ...sharing, role: event.target.value as MemberRole })} aria-label={tr({ zh: '常规访问角色', en: 'General access role' })}><RoleOptions /></select>}
         </div>
       </>}
       {error && <p className="collab-error" role="alert">{error}</p>}
       {notice && <p className="collab-member-role" role="status">{notice}</p>}
       <div className="collab-share-footer">
-        {(!communityDisabled || (sharing.access !== 'anyone' && details.sharing?.access !== 'anyone')) && <button className="collab-button" type="button" onClick={() => void copyLink()}><Link2 size={17} /><T zh="复制链接" en="Copy link" /></button>}
-        <button className="collab-button collab-primary" type="button" disabled={busy || (communityDisabled && dirty && sharing.access === 'anyone')} onClick={() => void finish()}>{busy ? tr({ zh: '正在保存…', en: 'Saving…' }) : dirty ? tr({ zh: '保存', en: 'Save' }) : tr({ zh: '完成', en: 'Done' })}</button>
+        <button className="collab-button" type="button" onClick={() => void copyLink()}><Link2 size={17} /><T zh="复制链接" en="Copy link" /></button>
+        <button className="collab-button collab-primary" type="button" disabled={busy} onClick={() => void finish()}>{busy ? tr({ zh: '正在保存…', en: 'Saving…' }) : dirty ? tr({ zh: '保存', en: 'Save' }) : tr({ zh: '完成', en: 'Done' })}</button>
       </div>
     </section>
   </div>;

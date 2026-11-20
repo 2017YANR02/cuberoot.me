@@ -6,7 +6,7 @@
     "category": "Utility",
     "copyright": "2026 CubeRoot",
     "macOS": {
-      "bundleVersion": "3",
+      "bundleVersion": "4",
       "entitlements": "Entitlements.appstore.plist"
     }
   }

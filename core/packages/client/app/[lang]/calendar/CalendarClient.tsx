@@ -38,7 +38,6 @@ import { importCalendarFile, type ImportProgress } from './_lib/import';
 import CalendarGrid, { type GridHandle, type GridRange } from '@/components/calendar/CalendarGrid';
 import EventDialog, { type DialogDraft } from './_components/EventDialog';
 import ShareDialog from './_components/ShareDialog';
-import { installedCommunityDisabled, useInstalledCommunityDisabled } from '@/lib/installed-content';
 import ScopePrompt from './_components/ScopePrompt';
 import Sidebar from './_components/Sidebar';
 import MobileMonthPicker from './_components/MobileMonthPicker';
@@ -160,17 +159,6 @@ export default function CalendarClient() {
   const owner = user?.wcaId || (user?.uid ? `u${user.uid}` : '');
   const wca = useWcaCalendar(mounted && store.ready && store.loadedTo > 0 && me?.key === owner ? owner : '', todayKey, store.reload);
   const [shareOpen, setShareOpen] = useState(false);
-  const communityDisabled = useInstalledCommunityDisabled();
-  const currentShare = useRef(share);
-  currentShare.current = share;
-  const sharedCalendarWriteBlocked = useCallback(() => {
-    if (!installedCommunityDisabled() || !currentShare.current?.enabled) return false;
-    setToast(tr({ zh: '关闭对外展示后即可编辑。', en: 'Turn off public sharing to edit.' }));
-    return true;
-  }, []);
-  useEffect(() => {
-    if (communityDisabled) setShareOpen(false);
-  }, [communityDisabled]);
   const [saving, setSaving] = useState(false);
   const [scopeAsk, setScopeAsk] = useState<{ mode: 'edit' | 'delete'; run: (s: EditScope) => void } | null>(null);
   const [pendingMove, setPendingMove] = useState<PendingMove | null>(null);
@@ -321,7 +309,6 @@ export default function CalendarClient() {
   });
 
   const doSave = useCallback(async (d: DialogDraft, scope: EditScope) => {
-    if (sharedCalendarWriteBlocked()) return;
     setSaving(true);
     try {
       if (d.id === 0) await store.addEvent(draftToPayload(d));
@@ -333,7 +320,7 @@ export default function CalendarClient() {
       setSaving(false);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [sharedCalendarWriteBlocked]);
+  }, []);
 
   const onSave = useCallback((d: DialogDraft) => {
     const original = events.find((x) => x.id === d.id);
@@ -368,7 +355,6 @@ export default function CalendarClient() {
 
   /** 拖拽 / 缩放落地。重复事件先问作用域,取消就把块弹回原位。 */
   const applyMove = useCallback(async (mv: PendingMove, scope: EditScope) => {
-    if (sharedCalendarWriteBlocked()) { mv.revert(); return; }
     const e = events.find((x) => x.id === mv.id);
     if (!e) return;
     // 全天块的落点由显示时区给出,但事件的「整日」锚在它自己的时区上,换算回去再存。
@@ -387,7 +373,7 @@ export default function CalendarClient() {
       setToast((err as Error).message);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [events, displayTz, sharedCalendarWriteBlocked]);
+  }, [events, displayTz]);
 
   const onEventMove = useCallback((key: string, start: number, end: number, allDay: boolean, revert: () => void) => {
     const parsed = parseOccurrenceKey(key);
@@ -410,7 +396,6 @@ export default function CalendarClient() {
   const [backupReview, setBackupReview] = useState<{ file: File; review: GoogleImportReview } | null>(null);
   useEffect(() => { setBackupReview(null); }, [settingsOpen, user?.uid]);
   const onImportFile = useCallback(async (file: File, confirmed = false) => {
-    if (sharedCalendarWriteBlocked()) return;
     setImporting({ done: 0, total: 0 });
     try {
       if (!confirmed) {
@@ -453,7 +438,7 @@ export default function CalendarClient() {
       setImporting(null);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [defaultCalendarId, displayTz, calendars, sharedCalendarWriteBlocked]);
+  }, [defaultCalendarId, displayTz, calendars]);
 
   // 撤销一次导入。整批走服务端一条 DELETE —— 几千条事件靠前端逐条删既慢又会半途而废。
   const onUndoImport = useCallback(async (im: CalendarImport) => {
@@ -683,22 +668,16 @@ export default function CalendarClient() {
         >
           <Settings size={17} aria-hidden />
         </button>
-        {!communityDisabled && <button
+        <button
           type="button"
           className="cal-icon-btn"
           aria-label={tr({ zh: '对外展示', en: 'Share' })}
           onClick={() => setShareOpen(true)}
         >
           <ExternalLink size={17} aria-hidden />
-        </button>}
+        </button>
       </div>
 
-      {communityDisabled && share?.enabled && <div role="status">
-        <p>{tr({ zh: '关闭对外展示后即可编辑。', en: 'Turn off public sharing to edit.' })}</p>
-        <button type="button" className="cal-btn" onClick={() => {
-          void store.updateShare({ enabled: false }).catch((error: Error) => setToast(error.message));
-        }}>{tr({ zh: '关闭对外展示', en: 'Turn off public sharing' })}</button>
-      </div>}
       {settingsSection && (
         <CalendarSettings
           section={settingsSection}
@@ -825,7 +804,7 @@ export default function CalendarClient() {
           </div>}
           mobileFooter={<div className="cal-mobile-sidebar-foot">
             <button type="button" className="cal-mobile-footer-action" onClick={() => { setSidebarOpen(false); setPickerMonth(null); void setSettingsSection('general'); }}><Settings size={22} aria-hidden />{tr({ zh: '设置', en: 'Settings' })}</button>
-            {!communityDisabled && <button type="button" className="cal-mobile-footer-action" onClick={() => { setSidebarOpen(false); setShareOpen(true); }}><Share2 size={22} aria-hidden />{tr({ zh: '对外展示', en: 'Share' })}</button>}
+            <button type="button" className="cal-mobile-footer-action" onClick={() => { setSidebarOpen(false); setShareOpen(true); }}><Share2 size={22} aria-hidden />{tr({ zh: '对外展示', en: 'Share' })}</button>
           </div>}
           calendars={calendars}
           hidden={hidden}
@@ -838,11 +817,11 @@ export default function CalendarClient() {
           onCreate={() => { openCreateNow(); if (isMobile) setSidebarOpen(false); }}
           onPickDate={(ms) => { gotoDate(ms); if (isMobile) setSidebarOpen(false); }}
           onToggle={store.toggleHidden}
-          onAdd={() => { if (!sharedCalendarWriteBlocked()) void store.addCalendar({
+          onAdd={() => void store.addCalendar({
             name: tr({ zh: '新日历', en: 'New calendar' }), color: 'flamingo', tz: displayTz,
-          }).catch((e: Error) => setToast(e.message)); }}
-          onRename={(id, name) => { if (!sharedCalendarWriteBlocked()) void store.patchCalendar(id, { name }).catch((e: Error) => setToast(e.message)); }}
-          onRecolor={(id, color) => { if (!sharedCalendarWriteBlocked()) void store.patchCalendar(id, { color }).catch((e: Error) => setToast(e.message)); }}
+          }).catch((e: Error) => setToast(e.message))}
+          onRename={(id, name) => void store.patchCalendar(id, { name }).catch((e: Error) => setToast(e.message))}
+          onRecolor={(id, color) => void store.patchCalendar(id, { color }).catch((e: Error) => setToast(e.message))}
           onRemove={(id) => void store.removeCalendar(id).catch((e: Error) => setToast(e.message))}
           onOpenInvite={openInvite}
         />
@@ -948,13 +927,13 @@ export default function CalendarClient() {
         />
       )}
 
-      {!communityDisabled && shareOpen && share && (
+      {shareOpen && share && (
         <ShareDialog
           share={share}
           calendars={calendars}
           lang={lang}
-          onSave={async (patch) => { if (!installedCommunityDisabled()) await store.updateShare(patch); }}
-          onRotate={async () => { if (!installedCommunityDisabled()) await store.rotateShare(); }}
+          onSave={(patch) => store.updateShare(patch)}
+          onRotate={() => store.rotateShare()}
           onClose={() => setShareOpen(false)}
         />
       )}

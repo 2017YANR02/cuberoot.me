@@ -171,11 +171,9 @@ private struct WatchReportNodeView: View {
     @ObservedObject var display: WatchCubeScene
     let replay: WatchReplayState
     let language: String
-    let replaySharingAvailable: Bool
     let dispatch: (ReportAction) -> Void
     private func child(_ item: ReportNode) -> WatchReportNodeView {
-        WatchReportNodeView(node: item, display: display, replay: replay, language: language,
-                            replaySharingAvailable: replaySharingAvailable, dispatch: dispatch)
+        WatchReportNodeView(node: item, display: display, replay: replay, language: language, dispatch: dispatch)
     }
     private func icon(_ value: String) -> String {
         ["check":"checkmark", "copy":"doc.on.doc", "share":"square.and.arrow.up", "thumb-up":"hand.thumbsup", "thumb-down":"hand.thumbsdown", "start":"backward.end.fill", "end":"forward.end.fill", "back":"backward.frame.fill", "next":"forward.frame.fill", "play":"play.fill", "pause":"pause.fill", "swap":"arrow.left.arrow.right"][value] ?? value
@@ -226,8 +224,7 @@ private struct WatchReportNodeView: View {
         case "color":
             return AnyView(HStack(spacing: 0) { ForEach(Array((node.fills ?? []).enumerated()), id: \.offset) { _, color in Rectangle().fill(fill(color)).frame(width: 7, height: 10) } })
         case "button":
-            if node.action?.type == "share" {
-                guard replaySharingAvailable, let url = URL(string: replay.shareUrl) else { return AnyView(EmptyView()) }
+            if node.action?.type == "share", let url = URL(string: replay.shareUrl) {
                 return AnyView(ShareLink(item: url) { label }.disabled(node.disabled == true))
             }
             if node.action?.type == "copy-notation" {
@@ -320,32 +317,14 @@ private struct WatchReplayView: View {
     var onUseScramble: (() -> Void)? = nil
     var onFeedback: ((Bool?) -> Void)? = nil
     @State private var appliedEffect = 0
-    @State private var replaySharingAvailable = false
     @Environment(\.scenePhase) private var scenePhase
     var body: some View {
         ScrollView {
             if let replay = display.replay, let document = replay.document {
-                WatchReportNodeView(node: document, display: display, replay: replay, language: language,
-                                    replaySharingAvailable: replaySharingAvailable) { action in
+                WatchReportNodeView(node: document, display: display, replay: replay, language: language) { action in
                     display.command(["kind":"replay-action", "action":action.object])
                 }
             } else { ProgressView() }
-        }
-        .task(id: scenePhase) {
-            replaySharingAvailable = false
-            guard scenePhase == .active,
-                  let url = URL(string: "https://cuberoot.me/api/installed-forum") else { return }
-            while !Task.isCancelled {
-                let request = URLRequest(url: url, cachePolicy: .reloadIgnoringLocalCacheData, timeoutInterval: 5)
-                let response = try? await URLSession.shared.data(for: request)
-                guard !Task.isCancelled else { return }
-                if let (data, metadata) = response, (metadata as? HTTPURLResponse)?.statusCode == 200 {
-                    replaySharingAvailable = (try? JSONDecoder().decode([String: Bool].self, from: data))?["available"] == true
-                } else {
-                    replaySharingAvailable = false
-                }
-                do { try await Task.sleep(for: .seconds(60)) } catch { return }
-            }
         }
         .onAppear {
             display.setReplayVisible(true)

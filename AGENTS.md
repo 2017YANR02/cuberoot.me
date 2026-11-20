@@ -16,6 +16,7 @@
 | 代码修改、命令、启动/预览、构建/测试、代码量、流量排查、智能魔方验证 | [开发与验证](docs/contributing/development.md)；安装环境另读[本地配置](docs/contributing/local-setup.md) |
 | 源码/模块归属、依赖、架构、upstream/fork | [架构边界](docs/contributing/architecture.md)；判断当前状态另读[跟踪表](docs/architecture/architecture-modernization-tracker.md) |
 | commit/push/PR、CI、部署、数据库迁移 | [发布契约](docs/contributing/release.md) |
+| Apple App Store（iOS、macOS）构建、合规与送审 | [Apple 上架流程](docs/compliance/mobile-store-submission.md#apple-app-store-上架流程)；[在审版本与待办](docs/product/apps/mobile-app-roadmap.md#2026-11-20-apple-商店首发) |
 | React/CSS、组件/交互、身份展示、主题、图片、导航 | [前端规范](docs/contributing/frontend.md) |
 | URL/路由、SSR/SSG、标题/metadata/SEO、API 地址/缓存、nuqs | [网址与渲染](docs/contributing/routing.md) |
 | 文案、多语言、WCA 翻译/规则引用、违禁词 | [多语言与翻译](docs/contributing/localization.md) |
