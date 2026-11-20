@@ -4,7 +4,7 @@ import { elapsedMsToSimTicks } from '../support/sim-timing';
 export type TweenEasing = 'ease-out' | 'linear';
 type FrameListener = (frameMs: number, dtMs: number) => void;
 
-const clock = () => typeof performance !== 'undefined' && typeof performance.now === 'function' ? performance.now() : Date.now();
+export const tweenClock = () => typeof performance !== 'undefined' && typeof performance.now === 'function' ? performance.now() : Date.now();
 
 export class Tween {
   value = 0;
@@ -18,7 +18,7 @@ export class Tween {
     public duration: number,
     public callback: (v: number) => boolean | void,
     public easing: TweenEasing = 'ease-out',
-    startedAtMs = clock(),
+    startedAtMs = tweenClock(),
   ) {
     this.current = begin;
     this.lastUpdateMs = startedAtMs;
@@ -30,7 +30,7 @@ export class Tween {
   setPaused(paused: boolean): void {
     if (this.paused === paused) return;
     this.paused = paused;
-    this.lastUpdateMs = clock();
+    this.lastUpdateMs = tweenClock();
   }
 
   /** Wall time belongs to this animation, never to an earlier global frame. */
@@ -48,7 +48,7 @@ export class Tween {
     this.begin = this.current;
     this.duration = ticks;
     this.value = 0;
-    this.lastUpdateMs = clock();
+    this.lastUpdateMs = tweenClock();
   }
 
   /** Deterministic manual ticks remain available to headless/video exporters. */

@@ -2,7 +2,7 @@
 import * as THREE from "three";
 import Cube from "./cube";
 import Cubelet from "./cubelet";
-import tweener, { type Tween, type TweenEasing } from "@cuberoot/puzzle-render-core/engine/tweener";
+import tweener, { tweenClock, type Tween, type TweenEasing } from "@cuberoot/puzzle-render-core/engine/tweener";
 import { timing } from "@cuberoot/puzzle-render-core/engine/tweenTiming";
 import initStackKernel, { apply_rotates as stackKernelApplyRotates, apply_rotates_no_flat as stackKernelApplyRotatesNoFlat } from "@cuberoot/stack-kernel";
 import { ensureWorkerInit, workerApply } from "./setup_worker_client";
@@ -939,7 +939,7 @@ export default class Twister {
       return true;
     }
     // Slices of one wide turn must start and drop on the same display frame.
-    const startedAtMs = !fast && list.length > 1 ? performance.now() : undefined;
+    const startedAtMs = !fast && list.length > 1 ? tweenClock() : undefined;
     for (const rotate of list) {
       const direction = !fast && list.length === 1 && Math.abs(rotate.twist) === 2
         ? this.halfTurnDirection?.(rotate.group.axis, rotate.group.layer) : undefined;
