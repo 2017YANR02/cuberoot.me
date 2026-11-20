@@ -9,7 +9,7 @@ import { platformNavigationHref, platformPathname } from '@/lib/platform-navigat
 import { useTrainingHref } from '@/lib/training-host';
 import { currentEntryHref, entryNavigationHref, type EntryNavigationMode } from '@/lib/entry-navigation';
 import { LinkPendingIndicator } from '@/components/StartupStatus';
-import { isInstalledWebsiteSurface } from '@/lib/installed-content';
+import { isInstalledForumHref, isInstalledWebsiteSurface, useInstalledForumDisabled } from '@/lib/installed-content';
 
 type Props = ComponentProps<typeof NextLink> & { navigation?: EntryNavigationMode; loadingOverlay?: boolean };
 
@@ -62,7 +62,9 @@ export default function AppLink({ href, navigation = 'push', prefetch = false, l
     const bare = pathname.replace(/^\/(en|zh)(?=\/|$)/, '') || '/';
     h = `/${lang}${bare === '/' ? '' : bare}${h.slice(pathname.length)}`;
   }
-  if (douyin && !douyinContentAvailable(typeof h === 'string' ? h : String(h.pathname ?? '/'))) return null;
+  const contentHref = typeof h === 'string' ? h : String(h.pathname ?? '/');
+  const forumDisabled = useInstalledForumDisabled(isInstalledForumHref(contentHref));
+  if (forumDisabled || (douyin && !douyinContentAvailable(contentHref))) return null;
   // The Platform layout owns its local loading state. Internal links should
   // not replace the persistent workspace chrome with the site-wide overlay.
   const targetPath = typeof h === 'string' ? platformPathname(h) : '';

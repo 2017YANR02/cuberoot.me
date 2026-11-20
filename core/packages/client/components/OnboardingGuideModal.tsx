@@ -15,6 +15,7 @@
 import './onboarding-guide.css';
 import { useModalBackdrop } from '@/hooks/useModalDismiss';
 import { useT } from '@/hooks/useT';
+import { useInstalledForumDisabled } from '@/lib/installed-content';
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
 import {
   Blocks,
@@ -187,6 +188,8 @@ export const ONBOARDING_STEPS: OnboardingStep[] = [
   },
 ];
 
+const STEPS_WITHOUT_FORUM = ONBOARDING_STEPS.filter(step => step.tour !== 'forum');
+
 interface Props {
   open: boolean;
   onClose: () => void;
@@ -206,8 +209,10 @@ const TOOLTIP_WIDTH = 360;
 export default function OnboardingGuideModal({ open, onClose }: Props) {
   const t = useT();
   const backdropProps = useModalBackdrop(onClose);
-  const total = ONBOARDING_STEPS.length;
-  const [step, setStep] = useState(0);
+  const steps = useInstalledForumDisabled() ? STEPS_WITHOUT_FORUM : ONBOARDING_STEPS;
+  const total = steps.length;
+  const [requestedStep, setStep] = useState(0);
+  const step = Math.min(requestedStep, total - 1);
   const [rect, setRect] = useState<TargetRect | null>(null);
   const [viewport, setViewport] = useState({ w: 0, h: 0 });
   const dialogRef = useRef<HTMLDivElement>(null);
@@ -222,10 +227,11 @@ export default function OnboardingGuideModal({ open, onClose }: Props) {
   }, [total]);
 
   const goPrev = useCallback(() => {
-    setStep((s) => Math.max(s - 1, 0));
-  }, []);
+    setStep(Math.max(step - 1, 0));
+  }, [step]);
 
-  const current = ONBOARDING_STEPS[step];
+  const current = steps[step];
+  const tour = current.tour;
 
   // 读取目标元素视口坐标；找不到 / 零尺寸 / 占位骨架（懒加载未挂载等）时
   // 返回 null，调用方回退为底部居中卡片。
@@ -239,7 +245,6 @@ export default function OnboardingGuideModal({ open, onClose }: Props) {
   const measure = useCallback(() => {
     if (typeof window === 'undefined') return;
     setViewport({ w: window.innerWidth, h: window.innerHeight });
-    const tour = ONBOARDING_STEPS[step]?.tour;
     if (!tour) {
       setRect(null);
       return;
@@ -283,7 +288,7 @@ export default function OnboardingGuideModal({ open, onClose }: Props) {
       return;
     }
     setRect({ x: r.left, y: r.top, w: r.width, h: r.height, borderRadius: getComputedStyle(surface).borderRadius });
-  }, [step]);
+  }, [tour]);
 
   // 切换步骤：先清空旧高亮（避免旧框残留闪线），再把目标滚入可视区，
   // 之后（分多次 + 占位替换后补测）测量，兼容 smooth 滚动动画、
@@ -292,7 +297,6 @@ export default function OnboardingGuideModal({ open, onClose }: Props) {
     if (!open) return;
     scrolledTarget.current = null;
     setRect(null);
-    const tour = ONBOARDING_STEPS[step]?.tour;
     if (tour) {
       const el = document.querySelector(`[data-tour="${tour}"]`);
       try {
@@ -321,7 +325,7 @@ export default function OnboardingGuideModal({ open, onClose }: Props) {
       window.clearTimeout(t2);
       window.clearTimeout(t3);
     };
-  }, [open, step, measure]);
+  }, [open, tour, measure]);
 
   // 监听窗口 resize / 任意滚动，保持高亮框与气泡定位准确。
   useEffect(() => {

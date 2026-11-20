@@ -26,6 +26,7 @@ import { blurMobileEmbedAuthEntry, isMobileEmbedAppleLink, mobileEmbedAccountAut
 import { exchangeWebSessionTicket } from '@/lib/web-session-handoff';
 import { tr } from '@/i18n/tr';
 import { installedContentUnavailable } from '@cuberoot/shared/installed-content';
+import { installedForumDisabled, isInstalledForumHref } from '@/lib/installed-content';
 import { setAppleMembershipBridge, receiveAppleMembershipResult } from '@/lib/apple-membership-bridge';
 import { setStoreMembershipBridge } from '@/lib/store-membership-bridge';
 import { setWebMembershipBridge, receiveWebMembershipResult } from '@/lib/web-membership-bridge';
@@ -206,7 +207,7 @@ export default function MobileEmbedBridge() {
       }
       if (!anchor || anchor.hasAttribute('download')) return;
       const next = new URL(anchor.href, window.location.href);
-      if (installedContentUnavailable(next.href, generativeAiDisabled)) {
+      if ((installedForumDisabled() && isInstalledForumHref(next.href)) || installedContentUnavailable(next.href, generativeAiDisabled)) {
         event.preventDefault(); event.stopImmediatePropagation();
         window.alert(tr({ zh: '此内容暂不在 App 中提供。', en: 'This content is not available in the app.' }));
         return;

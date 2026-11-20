@@ -2,8 +2,9 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { installedContentUnavailable } from '@cuberoot/shared/installed-content';
 import { MOBILE_EMBED_FRAME_NAMES, MOBILE_EMBED_NO_GENERATIVE_AI_FRAME_NAMES, mobileEmbedSurfaceFromFrameName } from '@cuberoot/shared/mobile-embed';
 import { resolveAccountAvatar } from '@/lib/account-avatar';
-import { installedGenerativeAiDisabled, installedPetAvailable } from '@/lib/installed-content';
-afterEach(() => vi.unstubAllGlobals());
+import { installedForumDisabled, installedGenerativeAiDisabled, installedPetAvailable, isInstalledForumHref } from '@/lib/installed-content';
+import { GET as installedForumRegion } from '@/app/api/installed-forum/route';
+afterEach(() => { vi.unstubAllGlobals(); vi.unstubAllEnvs(); });
 describe('first-release installed content exclusions', () => {
   it.each(['/music', '/zh/music/song/123', '/alg/sq1/pbl', '/zh/alg/sq1/pbl/case/1', '/alg/sq1/pbl-finder', '/alg/sq1/karnaukh-notation', '/zh/alg/sq1/karnaukh-notation', '/pets?pet=clawd'])('blocks %s', href => {
     expect(installedContentUnavailable(href)).toBe(true);
@@ -36,5 +37,39 @@ describe('first-release installed content exclusions', () => {
     vi.unstubAllGlobals();
     expect(installedPetAvailable('clawd')).toBe(true);
     expect(resolveAccountAvatar(null, null).isClawd).toBe(true);
+  });
+});
+
+describe('regional forum availability on iOS', () => {
+  it.each(['/forum', '/zh/forum/t/42', '/forum/new', '/en/%66orum/search', '/platform/community/posts/new', '/zh/platform/admin/community', 'https://www.cuberoot.me/forum/feed'])('recognizes the forum destination %s', href => {
+    expect(isInstalledForumHref(href)).toBe(true);
+  });
+
+  it.each(['/forum-guide', '/platform/courses', 'https://community.example/forum'])('preserves unrelated destinations such as %s', href => {
+    expect(isInstalledForumHref(href)).toBe(false);
+  });
+
+  it('withholds the forum before region verification only inside the current iOS frames', () => {
+    expect(installedForumDisabled()).toBe(false);
+    vi.stubGlobal('window', { parent: {}, name: MOBILE_EMBED_FRAME_NAMES.tools });
+    expect(installedForumDisabled()).toBe(false);
+    vi.stubGlobal('window', { parent: {}, name: MOBILE_EMBED_NO_GENERATIVE_AI_FRAME_NAMES.tools });
+    expect(installedForumDisabled()).toBe(true);
+  });
+
+  it.each([
+    ['1', { 'x-vercel-ip-country': 'CN', 'x-cuberoot-cn-exempt': '0' }, false],
+    ['1', { 'x-vercel-ip-country': 'HK' }, true],
+    ['1', { 'x-vercel-ip-country': 'US' }, true],
+    ['1', { 'x-vercel-ip-country': 'XX' }, false],
+    ['1', { 'x-cuberoot-cn-exempt': '0' }, false],
+    ['', { 'x-cuberoot-cn-exempt': '1', 'x-vercel-ip-country': 'US' }, false],
+    ['', { 'x-cuberoot-cn-exempt': '0' }, true],
+    ['', {}, false],
+  ] as const)('uses only the visitor region supplied by the active ingress (%s, %j)', async (vercel, headers, available) => {
+    vi.stubEnv('VERCEL', vercel);
+    const response = installedForumRegion(new Request('https://cuberoot.me/api/installed-forum', { headers }));
+    expect(response.headers.get('Cache-Control')).toBe('private, no-store');
+    expect(await response.json()).toEqual({ available });
   });
 });

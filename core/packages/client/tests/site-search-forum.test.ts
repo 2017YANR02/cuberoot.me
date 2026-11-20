@@ -14,6 +14,7 @@ vi.mock('@/app/[lang]/dev/stack/_lib/stack_meta', () => ({ STACK_TOOLS_META: [] 
 vi.mock('@/app/[lang]/wca/about/[id]/_lib/registry', () => ({ ABOUT_REGISTRY: {} }));
 
 import { useSiteSearch, INITIAL_RENDER_CAP, type SiteSearchResult } from '@/lib/site-search';
+import { MOBILE_EMBED_NO_GENERATIVE_AI_FRAME_NAMES } from '@cuberoot/shared/mobile-embed';
 let latest: SiteSearchResult;
 function Probe({ query }: { query: string }) { latest = useSiteSearch(query, 'lazy'); return null; }
 let root: Root;
@@ -36,7 +37,31 @@ beforeEach(() => {
 });
 afterEach(async () => {
   await act(async () => root.unmount());
-  host.remove(); vi.useRealTimers(); vi.unstubAllGlobals();
+  host.remove(); vi.useRealTimers(); vi.unstubAllGlobals(); vi.restoreAllMocks();
+});
+
+it('waits for region confirmation before searching the forum inside the iOS app', async () => {
+  vi.spyOn(window, 'parent', 'get').mockReturnValue({} as Window);
+  vi.stubGlobal('name', MOBILE_EMBED_NO_GENERATIVE_AI_FRAME_NAMES.tools);
+  const fetchOther = vi.mocked(fetch).getMockImplementation()!;
+  let allowForum = false;
+  vi.mocked(fetch).mockImplementation((input, init) => input === '/api/installed-forum'
+    ? Promise.resolve(Response.json({ available: allowForum })) : fetchOther(input, init));
+
+  await render('蓝牙');
+  await advance();
+  expect(searchForum).not.toHaveBeenCalled();
+  expect(latest.forumMatches).toEqual([]);
+
+  allowForum = true;
+  await act(async () => window.dispatchEvent(new Event('online')));
+  await advance();
+  expect(searchForum).toHaveBeenCalledOnce();
+  expect(latest.forumMatches).toEqual([hit]);
+
+  allowForum = false;
+  await act(async () => window.dispatchEvent(new Event('online')));
+  expect(latest.forumMatches).toEqual([]);
 });
 
 it('searches forum content after typing settles and includes its full count', async () => {
