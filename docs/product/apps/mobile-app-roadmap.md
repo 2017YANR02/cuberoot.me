@@ -24,6 +24,11 @@
 
 本节保留总体范围、当前验收入口与待完成检查。按日期的旧实现批次已归入[历史记录](history/mobile-app-history.md)，其中旧开关、商店状态和“未实现”不代表当前状态。只有完成实现并取得对应验证证据后才打勾；只完成代码但缺少真机、账号或商店证据的项目保持未勾选，并注明依赖条件。
 
+### 2026-11-20 Apple 商店首发
+
+- iOS `1.0`（构建 4）在 App Store Connect 等待审核，审核通过后自动发布。已重新选中中国大陆，大陆安全评估仍待完成。论坛限制已经通过自有 Next 和 Vercel 两条线路部署，适用于通过中国大陆网络访问的 iOS 和 Mac App Store 客户端，覆盖论坛入口、搜索结果和 App 内直达链接。复盘公开发布和评论、公开反馈讨论仍需单独核对大陆发售信息。
+- 同一 Apple 记录已添加原生 macOS `0.1.0`。Mac App Store 构建使用 `me.cuberoot.app`、App Sandbox 和 Apple Silicon / Intel 通用二进制。构建 2 的签名安装包已由 Apple 处理为 `VALID`，本机验证副本已打开中英文计时界面，商店截图已上传。ASC CLI 预检零阻塞，正式提交时 Apple 因中国大陆安全评估信息缺失拒绝加入审核，版本仍为 `PREPARE_FOR_SUBMISSION`，并保留待重试审核草稿。原生打包与送审入口见 [Desktop README](../../../core/apps/desktop/README.md#mac-app-store)。
+
 ### 2026-11-15 Windows Microsoft Store 基础（本地，未送审）
 
 - 所有者选定公司账号、免费 MSIX 上架、复用既有会员支付，首版不接微软内购。配置与送审入口见[Windows 上架基础](../../compliance/windows-store-submission.md)。
