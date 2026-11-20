@@ -1,0 +1,46 @@
+.explorer { scroll-margin-top: 2rem; margin-block: 2.5rem; min-width: 0; }
+.explorer > h2 { margin: 0; font: 600 clamp(1.65rem, 3.2vw, 2.3rem)/1.2 var(--font-serif); letter-spacing: -.025em; }
+.intro, .controls p, .figure figcaption, .source { line-height: 1.65; }
+.intro { margin: .7rem 0 1.2rem; max-width: 72ch; }
+.figure { margin: 0; border: 1px solid var(--border-default); border-radius: 1rem; background: var(--card); padding: clamp(1rem, 2.8vw, 1.6rem); }
+.toolbar { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: .7rem 1rem; }
+.toolbar h3 { margin: 0; font-size: 1rem; line-height: 1.4; }
+.switches { display: flex; align-items: center; flex-wrap: wrap; gap: .2rem; }
+.switches button { color: var(--muted-foreground); background: transparent; border: 1px solid transparent; border-radius: .5rem; padding: .4rem .65rem; min-height: 2.2rem; font: inherit; font-size: .83rem; cursor: pointer; }
+.switches button[aria-pressed=true] { background: var(--accent-soft); color: var(--foreground); border-color: var(--border-strong); }
+.switches button:hover { color: var(--foreground); }
+.switches button:focus-visible, .controls input:focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }
+.plotRow { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, .85fr); align-items: center; gap: clamp(1.3rem, 3.2vw, 2.5rem); margin: 1.1rem 0 .8rem; }
+.plot { display: block; width: 100%; max-width: 438px; height: auto; margin-inline: auto; overflow: visible; }
+.strip { fill: color-mix(in srgb, var(--accent) 11%, transparent); }
+.gridLine { stroke: var(--border-default); stroke-dasharray: 2 4; }
+.boundary { stroke: var(--border-strong); stroke-dasharray: 3 4; }
+.axis { stroke: var(--muted-foreground); stroke-width: 1; }
+.critical { stroke: var(--accent); stroke-width: 2; }
+.tick, .axisLabel, .lineLabel { fill: var(--muted-foreground); font-size: 14px; }
+.axisLabel { font-family: var(--font-serif); font-style: italic; fill: var(--foreground); }
+.lineLabel { fill: var(--foreground); font-size: 13px; }
+.marker { cursor: pointer; }
+.target { fill: transparent; }
+.dot { fill: var(--foreground); stroke: var(--card); stroke-width: 1.25; }
+.ring { fill: none; stroke: transparent; stroke-width: 2; }
+.marker[aria-pressed=true] .ring, .marker:hover .ring { stroke: var(--accent); }
+.marker:focus-visible { outline: none; }
+.marker:focus-visible .ring { stroke: var(--ring); stroke-width: 3; }
+.controls { border-inline-start: 1px solid var(--border-default); padding-inline-start: clamp(1rem, 2.7vw, 2rem); min-width: 0; }
+.controls label { display: flex; align-items: baseline; justify-content: space-between; font-size: .86rem; font-weight: 600; }
+.controls label span { font-weight: 400; color: var(--muted-foreground); font-variant-numeric: tabular-nums; }
+.controls input { display: block; width: 100%; margin: .45rem 0 .8rem; min-height: 1.75rem; accent-color: var(--accent); cursor: pointer; }
+.coordinate { display: block; color: var(--foreground); font: 500 clamp(1.18rem, 2.4vw, 1.7rem)/1.3 var(--font-serif); font-variant-numeric: tabular-nums; }
+.controls p, .figure figcaption, .source { color: var(--muted-foreground); }
+.controls p { margin: .6rem 0 0; font-size: .9rem; }
+.figure figcaption { padding-top: .9rem; border-top: 1px solid var(--border-default); font-size: .87rem; }
+.source { margin: .7rem 0 0; font-size: .8rem; }
+.source a { color: var(--foreground); text-decoration: underline; text-underline-offset: .2em; }
+.source a:hover { color: var(--accent); }
+@media (max-width: 42rem) {
+  .plotRow { grid-template-columns: 1fr; gap: .65rem; }
+  .controls { padding-inline: .2rem; border: 0; }
+  .controls input { min-height: 2.2rem; }
+  .switches button { min-height: 2.4rem; }
+}

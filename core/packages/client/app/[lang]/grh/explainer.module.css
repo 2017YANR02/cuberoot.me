@@ -1,0 +1,84 @@
+.contents {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .5rem 1.55rem;
+  margin: -.7rem 0 1.6rem;
+  font-size: .9rem;
+}
+.contents a, .section a, .exercise a {
+  color: var(--foreground);
+  text-underline-offset: .22em;
+  text-decoration-color: var(--muted-foreground);
+}
+.contents a:hover, .section a:hover, .exercise a:hover { color: var(--accent); }
+.section, .exercise { scroll-margin-top: 1.5rem; }
+.section {
+  margin-block: clamp(3rem, 6.5vw, 5rem);
+  color: var(--foreground);
+  line-height: 1.7;
+}
+.section h2 {
+  max-width: 34ch;
+  margin: 0 0 .85rem;
+  font: 600 clamp(1.7rem, 3.5vw, 2.55rem)/1.18 var(--font-serif, Georgia, serif);
+}
+.section h3, .stepTitle { margin: 1.25rem 0 .25rem; font-size: 1.13rem; line-height: 1.35; }
+.section p { max-width: 82ch; margin: .45rem 0 1rem; }
+.kicker, .sources { color: var(--muted-foreground); font-size: .84rem; }
+.intro { font-size: 1.08rem; }
+.steps { padding-inline-start: 1.5rem; }
+.steps > li { padding-inline-start: .35rem; margin-block: 1.25rem; }
+.steps > li::marker { color: var(--muted-foreground); font-variant-numeric: tabular-nums; }
+.math {
+  display: block;
+  width: fit-content;
+  max-width: 100%;
+  overflow-x: auto;
+  padding: .55rem .9rem;
+  margin-block: .8rem;
+  background: var(--muted);
+  font: 500 clamp(.96rem, 2vw, 1.15rem)/1.55 Georgia, serif;
+}
+.section code, .exercise code {
+  overflow-wrap: anywhere;
+  font-size: .88em;
+}
+.detail {
+  padding-inline-start: 1rem;
+  border-inline-start: 2px solid var(--border-default);
+  color: var(--muted-foreground);
+}
+.sources { overflow-wrap: anywhere; }
+div.sources { display: flex; flex-wrap: wrap; gap: .25rem 1rem; margin: .65rem 0; }
+.detail summary { cursor: pointer; }
+.exercise {
+  display: grid;
+  grid-template-columns: minmax(0, .85fr) minmax(0, 1.15fr);
+  gap: 1rem clamp(1.4rem, 5vw, 3.5rem);
+  border: 1px solid var(--border-default);
+  border-radius: 1rem;
+  padding: clamp(1.2rem, 4vw, 2.2rem);
+}
+.exercise h3 { margin: 0; font-size: clamp(1.2rem, 2.5vw, 1.55rem); line-height: 1.3; }
+.exerciseText p, .exerciseFoot { color: var(--muted-foreground); line-height: 1.65; }
+.exerciseText p { margin: .6rem 0 0; }
+.exerciseFoot { grid-column: 1 / -1; margin: .3rem 0 0; font-size: .86rem; }
+.experiment { min-width: 0; font-variant-numeric: tabular-nums; }
+.experiment label, .axis, .legend { display: flex; justify-content: space-between; gap: .6rem; }
+.experiment label { align-items: baseline; font-size: .94rem; }
+.experiment input { margin: .7rem 0 .9rem; width: 100%; accent-color: var(--accent); }
+.axis { font-size: .74rem; color: var(--muted-foreground); }
+.pairPlot { position: relative; padding: .22rem 0; }
+.pairPlot::before { content: ''; position: absolute; height: 100%; left: 50%; top: 0; border-left: 1px dashed var(--muted-foreground); }
+.pairPlot > div { position: relative; border-top: 1px solid var(--border-default); margin: .72rem 0; }
+.pairPlot i, .legend i { display: inline-block; border-radius: 50%; background: var(--accent); border: 2px solid var(--accent); width: .7rem; height: .7rem; }
+.pairPlot i { position: absolute; top: 0; transform: translate(-50%, -50%); }
+i.partnerDot { background: var(--background); border-color: var(--foreground); }
+.legend { justify-content: flex-start; flex-wrap: wrap; font-size: .78rem; gap: .4rem 1.2rem; }
+.legend i { vertical-align: -.02em; margin-right: .3rem; }
+.result { margin: .8rem 0 0; line-height: 1.55; }
+@media (max-width: 42rem) {
+  .exercise { grid-template-columns: 1fr; }
+  .section { margin-block: 2.6rem; }
+  .contents { gap: .45rem 1rem; }
+}

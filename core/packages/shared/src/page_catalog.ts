@@ -513,8 +513,8 @@ export const PAGE_META: Record<string, PageMetaEntry> = {
   'grh': {
     title: { zh: '黎曼猜想的 Lean 验证', en: 'Checking the Riemann Hypothesis in Lean' },
     description: {
-      zh: '追踪一个黎曼猜想证明项目的独立复核，查看编译进度、定理与公理检查以及 Lean 内核重检结果。',
-      en: 'Follow an independent check of a proposed Riemann Hypothesis proof, from source compilation to the theorem, its axioms and kernel replay.',
+      zh: '在交互图上探索黎曼 ζ 函数的零点，了解零点与素数的联系、Alpöge 提出的证明路线以及本机 Lean 验证进度。',
+      en: 'Explore zeta zeros, their connection to primes and Alpöge’s proposed proof of the Riemann Hypothesis. Follow the local Lean verification as it runs.',
     },
   },
   'icon': { title: { zh: '图标', en: 'Icons' } },

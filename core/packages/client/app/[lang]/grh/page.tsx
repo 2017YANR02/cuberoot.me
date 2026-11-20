@@ -5,6 +5,11 @@ import HeaderToggles from '@/components/HeaderToggles';
 import { useT } from '@/hooks/useT';
 import { useLang } from '@/i18n/tr';
 import { phases, type Phase, useBuildSnapshot } from './useBuildSnapshot';
+import RiemannExplorer from './RiemannExplorer';
+import ProofRoute from './ProofRoute';
+import ZeroReflection from './ZeroReflection';
+import TheoryNotes from './TheoryNotes';
+import guide from './explainer.module.css';
 import styles from './progress.module.css';
 
 function duration(seconds: number | null | undefined, locale: string) {
@@ -54,8 +59,15 @@ export default function GrhPage() {
         </div>
         <div className={styles.formula} aria-hidden="true"><span>{t('临界线', 'Critical line')}</span><strong>Re(s) = ½</strong></div>
       </header>
+      <nav className={guide.contents} aria-label={t('本页目录', 'On this page')}>
+        <a href="#live">{t('实时验证', 'Live verification')}</a>
+        <a href="#zeros">{t('认识零点', 'Explore the zeros')}</a>
+        <a href="#proof-route">{t('证明路线', 'The proposed proof')}</a>
+        <a href="#symmetry">{t('对称性实验', 'Try the symmetry')}</a>
+        <a href="#theory-value">{t('素数与理论价值', 'Primes and new ideas')}</a>
+      </nav>
 
-      <section className={styles.progressPanel} data-site-surface="panel" aria-labelledby="grh-progress-title">
+      <section id="live" className={styles.progressPanel} data-site-surface="panel" aria-labelledby="grh-progress-title">
         <div className={styles.sectionHead}>
           <h2 id="grh-progress-title">{t('编译进度', 'Compilation progress')}</h2>
           <div className={styles.status} data-tone={tone} role="status">{status}</div>
@@ -114,11 +126,16 @@ export default function GrhPage() {
         <ul>{data.recent.map((row, i) => <li key={row.name + i}><code>{row.name}</code><span>{row.duration}</span></li>)}</ul>
       </section>}
 
-      <footer className={styles.notes}>
+      <aside className={styles.notes}>
         <p>{t('原项目还提出了狄利克雷 L 函数的广义黎曼猜想。本次定理与公理审计的目标是经典黎曼猜想。', 'The source also claims a generalized Riemann hypothesis for Dirichlet L-functions. This theorem and axiom audit targets the classical Riemann Hypothesis.')}</p>
         <div><a href="https://alpo.ge/remark.pdf">{t('原始公告（PDF）', 'Original announcement (PDF)')}</a>
           <a href="https://github.com/leanprover-community/mathlib4/blob/0df444a360eaa60ab8c11dca51a86af692955474/Mathlib/NumberTheory/LSeries/RiemannZeta.lean#L185-L186">{t('mathlib 中的猜想定义', 'Definition in mathlib')}</a></div>
-      </footer>
+      </aside>
+
+      <RiemannExplorer />
+      <ProofRoute />
+      <ZeroReflection />
+      <TheoryNotes />
     </main>
   );
 }

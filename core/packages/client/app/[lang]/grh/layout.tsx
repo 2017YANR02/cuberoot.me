@@ -1,4 +1,21 @@
-import { pageMetadata } from '@/lib/page-meta';
+import JsonLd, { articleJsonLd, SITE_URL } from '@/components/JsonLd';
+import { PAGE_META, pageMetadata } from '@/lib/page-meta';
 
 export const generateMetadata = pageMetadata('grh');
-export default function Layout({ children }: { children: React.ReactNode }) { return children; }
+export default async function Layout({ children, params }: {
+  children: React.ReactNode;
+  params: Promise<{ lang: string }>;
+}) {
+  const { lang } = await params;
+  const locale = lang === 'zh' ? 'zh' : 'en';
+  const meta = PAGE_META.grh;
+  return <>
+    <JsonLd data={articleJsonLd({
+      headline: meta.title[locale],
+      description: meta.description?.[locale] ?? meta.title[locale],
+      url: SITE_URL + { zh: '/zh/grh', en: '/grh' }[locale],
+      lang: locale,
+    })} />
+    {children}
+  </>;
+}
