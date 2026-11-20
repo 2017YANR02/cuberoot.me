@@ -396,7 +396,7 @@ export default function VaultPage() {
       );
       setItems((current) => current.map((candidate) => candidate.localId === item.localId
         ? { ...item, ...state, shares: [] } : candidate));
-      showItem(null);
+      showItem(visibleItems.find((candidate) => candidate.localId !== item.localId) ?? null);
     } catch {
       setError(tr(trashed
         ? { zh: '无法移入回收站，请刷新后重试。', en: 'Could not move the item to Trash. Refresh and try again.' }

@@ -12,7 +12,18 @@ describe('private vault access contract', () => {
 
     expect(vault).toContain("throw new Error('Vault membership required')");
     expect(vault).toContain('canManage: user.isAdmin || await hasActiveMembership(user.wcaId)');
-    expect(vault.match(/requireVaultManager\(c\)/g)).toHaveLength(4);
+    const managerRoutes = [
+      "get('/vault/users'",
+      "post('/vault/items'",
+      "put('/vault/items/:id'",
+      "put('/vault/items/:id/trash'",
+      "delete('/vault/items/:id'",
+      "delete('/vault/trash'",
+    ];
+    for (const route of managerRoutes) {
+      const handler = vault.split(`privateVaultRoutes.${route}`)[1]?.split('\n});')[0];
+      expect(handler, route).toContain('await requireVaultManager(c)');
+    }
     expect(vault).toContain("friendship.status = 'accepted'");
     expect(vault).toContain('FOR SHARE');
     expect(friends).toContain('async function revokeVaultAccess');
