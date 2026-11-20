@@ -744,6 +744,7 @@ button.cal-event-time:is(:hover, [aria-expanded=true]) { color: var(--accent); }
   display: grid;
   gap: 10px;
   width: 176px;
+  max-width: 100%;
   padding: 10px;
   overflow-y: auto;
   border: 1px solid var(--border-default);

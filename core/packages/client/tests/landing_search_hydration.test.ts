@@ -293,7 +293,7 @@ describe('LandingSearch placeholder hydration', () => {
     const writeText=vi.fn().mockResolvedValue(undefined);vi.stubGlobal('navigator',{...navigator,clipboard:{writeText}});const chat=await mountChat();
     try{await chat.submit();expect(document.querySelector('.site-assistant-prose h2')?.textContent).toBe('练习');expect(document.querySelectorAll('.site-assistant-prose li')).toHaveLength(2);expect(document.querySelectorAll('.site-assistant-prose a')).toHaveLength(1);expect(document.querySelector('.site-assistant-prose script')).toBeNull();
       await click('button[aria-label="复制"]');expect(writeText.mock.calls[0][0]).toContain('项目\t成绩\n三阶\t5.00');
-      await type('textarea[aria-label="继续提问"]','尚未发送');await click('button[title="关闭"]');await chat.submit();expect(document.querySelector<HTMLTextAreaElement>('textarea[aria-label="继续提问"]')?.value).toBe('尚未发送');
+      await type('textarea[aria-label="继续提问"]','尚未发送');await click('button[aria-label="关闭"]');await chat.submit();expect(document.querySelector<HTMLTextAreaElement>('textarea[aria-label="继续提问"]')?.value).toBe('尚未发送');
       await click('button[title="全屏"]');expect(document.querySelector('.site-assistant-dialog')?.classList.contains('is-expanded')).toBe(true);
       await click('button[title="新对话"]');expect(document.querySelector<HTMLTextAreaElement>('textarea[aria-label="继续提问"]')?.value).toBe('');
     }finally{await chat.close();}

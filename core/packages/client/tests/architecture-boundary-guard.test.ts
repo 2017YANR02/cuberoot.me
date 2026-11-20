@@ -60,13 +60,14 @@ describe('architecture boundary guard', () => {
     // One fixed child worker exercises actual assistant process loss and restart.
     // Three language-history subprocess identities are covered by the two
     // reviewed contracts added in 76f68f239.
-    expect(CURRENT).toHaveLength(MANIFEST.legacyFindings.length + 46);
+    // The music publisher and admin deletion coordinate through the registered flock subprocess.
+    expect(CURRENT).toHaveLength(MANIFEST.legacyFindings.length + 47);
     expect(MANIFEST.legacyFindings.filter((finding: { rule: string }) => finding.rule === 'shared-root-import')).toHaveLength(139);
     expect(MANIFEST.legacyFindings.filter((finding: { rule: string }) => finding.rule === 'cross-package-alias-import')).toHaveLength(0);
   });
 
   it('keeps every semantic edge contract tied to live repository evidence', () => {
-    expect(MANIFEST.manualContracts).toHaveLength(41);
+    expect(MANIFEST.manualContracts).toHaveLength(42);
     expect(validateManifestSchema(MANIFEST)).toEqual([]);
     expect(validateManualContracts(MANIFEST.manualContracts)).toEqual([]);
     expect(new Set(MANIFEST.manualContracts.map((item: { phase: string }) => item.phase))).toEqual(new Set([

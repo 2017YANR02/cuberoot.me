@@ -13,7 +13,9 @@ const remoteTable = 'https://static.example/tables/pt_cross.bin.gz?tv=1';
 
 function harness(fetch: typeof globalThis.fetch, loadModule: () => Promise<unknown>) {
   const self = { location: { href: glueUrl }, postMessage: vi.fn(), onmessage: null as unknown };
-  runInNewContext(source.replace('import(glueUrl)', 'loadModule(glueUrl)'), {
+  const script = source.replace('export function attachCrossSolverWorker', 'function attachCrossSolverWorker')
+    .replace('import(glueUrl)', 'loadModule(glueUrl)');
+  runInNewContext(script, {
     self, fetch, loadModule, URL, Response, DecompressionStream, Uint8Array,
   });
   return { self, start: () => (self.onmessage as (event: unknown) => Promise<void>)({ data: {
