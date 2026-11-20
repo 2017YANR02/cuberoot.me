@@ -1,17 +1,22 @@
 'use client';
 
 import { sessionFetch } from '@/lib/session-fetch';
-import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
-import { Check, Copy, Download, KeyRound, Loader2, Lock, Plus, RotateCcw, Save, Trash2, UserPlus, X } from '@app-foundation/icons/lucide';
+import { useEffect, useMemo, useRef, useState, type ComponentPropsWithoutRef, type FormEvent } from 'react';
+import { Check, Copy, Download, KeyRound, Loader2, Lock, Plus, RotateCcw, Save, Trash2, X } from '@app-foundation/icons/lucide';
 import BackHome from '@/components/BackHome';
+import AppLink from '@/components/AppLink';
+import BoolToggle from '@/components/BoolToggle';
+import MoreToggle, { MoreTogglePanel } from '@/components/MoreToggle';
 import { PasswordInput } from '@/components/PasswordInput';
 import { SearchInput } from '@/components/SearchInput';
 import { CompactSelect } from '@/components/CompactSelect';
+import { ListSelect } from '@/components/ListSelect';
 import { Tooltip } from '@/components/Tooltip';
 import { useCopy } from '@/hooks/useCopy';
 import { useRequireMembership } from '@/hooks/useRequireMembership';
 import { tr } from '@/i18n/tr';
 import { apiUrl } from '@/lib/api-base';
+import { fetchFriends } from '@/lib/friends-api';
 import { authHeaders, handleApi } from '@/lib/admin-api';
 import { useAuthUser, authActions } from '@/lib/auth-store';
 import { mergeVaultEntries } from '@/lib/vault-merge';
@@ -45,6 +50,13 @@ interface OpenItem {
   version: number; updatedAt: string; trashedAt: string | null; shares: VaultShare[]; entry: VaultEntry;
 }
 interface UserResult { userId: number; name: string; wcaId: string | null; publicKey: JsonWebKey | null; }
+type ShareFriend = Omit<UserResult, 'publicKey'> & { publicKey?: JsonWebKey | null };
+
+async function fetchVaultUsers(userId?: number, signal?: AbortSignal) {
+  const query = userId === undefined ? '' : `?q=${userId}`;
+  const response = await sessionFetch(apiUrl(`/v1/vault/users${query}`), { headers: authHeaders(false), signal });
+  return (await handleApi<{ users: UserResult[] }>(response)).users;
+}
 
 const cloneItem = (item: OpenItem): OpenItem => structuredClone(item);
 const decryptOpenItem = async (item: VaultItemPayload, key: CryptoKey): Promise<OpenItem> => ({
@@ -59,6 +71,9 @@ const categoryLabels = {
   business: { zh: '企业资料', en: 'Business' },
   other: { zh: '其他', en: 'Other' },
 };
+const passwordFieldAliases = ['密码', 'Password'];
+const emailFieldLabels = new Set(['邮箱', '电子邮箱', '邮箱地址', '电子邮件', '电子邮件地址', 'email', 'e-mail', 'email address', 'e-mail address']);
+const isEmailField = (field: VaultEntry['fields'][number]) => emailFieldLabels.has(field.label.trim().toLowerCase());
 const emptyEntry = (category: VaultCategory): VaultEntry => ({
   id: crypto.randomUUID(), title: '', category, notes: '',
   fields: (category === 'accounts' ? [
@@ -66,6 +81,15 @@ const emptyEntry = (category: VaultCategory): VaultEntry => ({
     { label: tr({ zh: '密码', en: 'Password' }), secret: true },
   ] : []).map((field) => ({ ...field, id: crypto.randomUUID(), value: '' })),
 });
+
+function VaultTextArea({ className, value, ...props }: ComponentPropsWithoutRef<'textarea'> & { value: string }) {
+  return (
+    <div className="vault-grow-textarea">
+      <div className={className} data-vault-text-measure aria-hidden="true">{value}{'\u200b'}</div>
+      <textarea {...props} className={className} value={value} />
+    </div>
+  );
+}
 
 export default function VaultPage() {
   const user = useAuthUser();
@@ -85,13 +109,15 @@ export default function VaultPage() {
   const [recoveryMode, setRecoveryMode] = useState(false);
   const [mustSaveRecoveryCode, setMustSaveRecoveryCode] = useState(false);
   const [filter, setFilter] = useState('');
-  const [shareQuery, setShareQuery] = useState('');
-  const [shareResults, setShareResults] = useState<UserResult[]>([]);
-  const [shareSearchError, setShareSearchError] = useState(false);
-  const [searchingUsers, setSearchingUsers] = useState(false);
+  const [shareFriends, setShareFriends] = useState<ShareFriend[] | null>(null);
+  const [shareLoadError, setShareLoadError] = useState(false);
   const [failedCount, setFailedCount] = useState(0);
   const [failedTrashCount, setFailedTrashCount] = useState(0);
+  const [failedOwnedActiveCount, setFailedOwnedActiveCount] = useState(0);
   const [showTrash, setShowTrash] = useState(false);
+  const [showExport, setShowExport] = useState(false);
+  const [exportScope, setExportScope] = useState<'current' | 'all'>('all');
+  const [includeSensitive, setIncludeSensitive] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const imageInput = useRef<HTMLInputElement>(null);
@@ -136,6 +162,8 @@ export default function VaultPage() {
     setDraft(first ? cloneItem(first) : null);
     setFailedCount(data.items.length - active.length);
     setFailedTrashCount(trash.length - (opened.length - active.length));
+    setFailedOwnedActiveCount(data.items.filter((item) => item.ownerUserId === data.userId).length
+      - active.filter((item) => item.ownerUserId === data.userId).length);
     setShowTrash(false);
     setDirty(false);
     setPassphrase('');
@@ -227,8 +255,6 @@ export default function VaultPage() {
   const showItem = (item: OpenItem | null) => {
     setDraft(item ? cloneItem(item) : null);
     setDirty(false);
-    setShareQuery('');
-    setShareResults([]);
     setExpandedImage(null);
     setMergeTargetId('');
   };
@@ -421,26 +447,55 @@ export default function VaultPage() {
     } finally { setBusy(false); }
   };
 
-  const canSearchUsers = Boolean(user && privateKey && draft && !draft.trashedAt && !draft.entry.mergedInto && payload?.canManage && draft.ownerUserId === payload.userId);
+  const canListFriends = Boolean(user && privateKey && draft && !draft.trashedAt && !draft.entry.mergedInto && payload?.canManage && draft.ownerUserId === payload.userId);
   useEffect(() => {
-    setShareResults([]);
-    setShareSearchError(false);
-    setSearchingUsers(false);
-    const query = shareQuery.trim();
-    if (!canSearchUsers || query.length < 2) return;
+    setShareFriends(null);
+    setShareLoadError(false);
+    if (!canListFriends) return;
     const controller = new AbortController();
-    const timer = setTimeout(() => {
-      setSearchingUsers(true);
-      void sessionFetch(apiUrl(`/v1/vault/users?q=${encodeURIComponent(query)}`), {
-        headers: authHeaders(false), signal: controller.signal,
-      })
-        .then((response) => handleApi<{ users: UserResult[] }>(response))
-        .then((data) => { if (!controller.signal.aborted) setShareResults(data.users); })
-        .catch(() => { if (!controller.signal.aborted) setShareSearchError(true); })
-        .finally(() => { if (!controller.signal.aborted) setSearchingUsers(false); });
-    }, 300);
-    return () => { clearTimeout(timer); controller.abort(); };
-  }, [canSearchUsers, draft?.localId, shareQuery]);
+    const loadFriends = async () => {
+      const friends = await fetchVaultUsers(undefined, controller.signal);
+      if (friends.length || controller.signal.aborted) return friends;
+      // Older APIs return an empty result when the search has no query.
+      const overview = await fetchFriends(controller.signal);
+      return overview.friends.map(({ userId, name, wcaId }) => ({ userId, name, wcaId }));
+    };
+    void loadFriends()
+      .then((friends) => { if (!controller.signal.aborted) setShareFriends(friends); })
+      .catch(() => { if (!controller.signal.aborted) setShareLoadError(true); });
+    return () => controller.abort();
+  }, [canListFriends, user?.uid]);
+
+  const addShareFriend = async (value: string) => {
+    const friend = shareFriends?.find((entry) => String(entry.userId) === value);
+    if (busy || !canListFriends || !friend || friend.publicKey === null
+      || draft?.shares.some((share) => share.userId === friend.userId)) return;
+    const { userId, name } = friend;
+    setError(null);
+    let publicKey: ShareFriend['publicKey'] = friend.publicKey;
+    if (publicKey === undefined) {
+      setBusy(true);
+      try {
+        const results = await fetchVaultUsers(userId);
+        const match = results.find((entry) => entry.userId === userId);
+        if (!match) {
+          setError(tr({ zh: '这位好友暂不可分享，请刷新后重试。', en: 'Sharing with this friend is unavailable. Refresh and try again.' }));
+          return;
+        }
+        publicKey = match.publicKey;
+        setShareFriends((current) => current?.map((entry) => entry.userId === userId ? { ...entry, publicKey: match.publicKey } : entry) ?? null);
+      } catch {
+        setError(tr({ zh: '无法确认好友的接收状态，请稍后重试。', en: 'Could not check whether this friend can receive shares. Try again later.' }));
+        return;
+      } finally { setBusy(false); }
+    }
+    if (!publicKey) {
+      setError(tr({ zh: '这位好友尚未启用接收。', en: 'This friend has not enabled receiving.' }));
+      return;
+    }
+    const recipient = { userId, name, publicKey };
+    updateDraft((item) => { item.shares.push(recipient); });
+  };
 
   if (!mounted) return <main className="vault-page" />;
   if (!user) return (
@@ -472,11 +527,16 @@ export default function VaultPage() {
   );
   if (!privateKey) {
     const isSetup = !payload.keyProfile;
+    const passphraseLabel = tr(recoveryMode
+      ? { zh: '输入新口令', en: 'Enter a new passphrase' }
+      : { zh: '输入口令', en: 'Enter passphrase' });
     return (
       <main className="vault-page vault-gate">
         <div className="vault-topbar"><BackHome /></div>
-        <KeyRound aria-hidden="true" />
-        <h1>{tr({ zh: '私密资料库', en: 'Private vault' })}</h1>
+        <div className="vault-gate-heading">
+          <KeyRound aria-hidden="true" />
+          <h1>{tr({ zh: '私密资料库', en: 'Private vault' })}</h1>
+        </div>
         {(recoveryMode || isSetup) && <p>{recoveryMode
           ? tr({ zh: '输入创建时保存的恢复密钥，再设置一个新口令。', en: 'Enter the recovery key saved during setup, then set a new passphrase.' })
           : tr(payload.canManage
@@ -484,8 +544,7 @@ export default function VaultPage() {
               : { zh: '设置解锁口令以接收好友分享。只有会员和管理员可以新建或管理自己的内容。', en: 'Set a passphrase to receive shares from friends. Only members and administrators can create or manage their own items.' })}</p>}
         <form className="vault-unlock" onSubmit={recoveryMode ? recover : isSetup ? setup : unlock}>
           {recoveryMode && <><label htmlFor="vault-recovery">{tr({ zh: '恢复密钥', en: 'Recovery key' })}</label><input id="vault-recovery" className="vault-unlock-input" value={recoveryCode} autoComplete="off" onChange={(event) => setRecoveryCode(event.target.value)} /></>}
-          <label htmlFor="vault-passphrase">{recoveryMode ? tr({ zh: '新口令', en: 'New passphrase' }) : tr({ zh: '口令', en: 'Passphrase' })}</label>
-          <PasswordInput wrapperClassName="vault-password-field" id="vault-passphrase" className="vault-unlock-input" value={passphrase} inputMode="numeric" pattern="[0-9]{6}" minLength={6} maxLength={6} autoComplete={isSetup || recoveryMode ? 'new-password' : 'current-password'} onChange={setPassphrase} show={showPassphrases} onShowChange={setShowPassphrases} />
+          <PasswordInput wrapperClassName="vault-password-field" id="vault-passphrase" className="vault-unlock-input" aria-label={passphraseLabel} placeholder={passphraseLabel} autoFocus={!recoveryMode} value={passphrase} inputMode="numeric" pattern="[0-9]{6}" minLength={6} maxLength={6} autoComplete={isSetup || recoveryMode ? 'new-password' : 'current-password'} onChange={setPassphrase} show={showPassphrases} onShowChange={setShowPassphrases} />
           {(isSetup || recoveryMode) && <><label htmlFor="vault-confirm">{recoveryMode ? tr({ zh: '再次输入新口令', en: 'Confirm new passphrase' }) : tr({ zh: '再次输入', en: 'Confirm passphrase' })}</label><PasswordInput wrapperClassName="vault-password-field" id="vault-confirm" className="vault-unlock-input" value={confirmation} inputMode="numeric" pattern="[0-9]{6}" minLength={6} maxLength={6} autoComplete="new-password" onChange={setConfirmation} show={showPassphrases} onShowChange={setShowPassphrases} /></>}
           <div className="vault-actions">
             <button type="submit" className="vault-button is-primary" disabled={busy}>{busy && <Loader2 className="vault-spin" />}{tr(recoveryMode ? { zh: '重设口令并解锁', en: 'Reset and unlock' } : isSetup ? payload.canManage ? { zh: '创建并解锁', en: 'Create and unlock' } : { zh: '启用接收并解锁', en: 'Enable receiving and unlock' } : { zh: '解锁', en: 'Unlock' })}</button>
@@ -504,9 +563,9 @@ export default function VaultPage() {
   const visibleFailedCount = showTrash ? failedTrashCount : failedCount;
   const accountFields = [
     { label: tr({ zh: '账号', en: 'Username' }), aliases: ['账号', 'Username', 'Account'], secret: false },
-    { label: tr({ zh: '密码', en: 'Password' }), aliases: ['密码', 'Password'], secret: true },
+    { label: tr({ zh: '密码', en: 'Password' }), aliases: passwordFieldAliases, secret: true },
   ];
-  const editorFields = draft ? (draft.entry.category === 'accounts'
+  const displayFields = draft ? (draft.entry.category === 'accounts'
     ? [
       ...accountFields.flatMap((definition) => {
         const existing = draft.entry.fields.find((field) => definition.aliases.some((alias) => alias.toLowerCase() === field.label.trim().toLowerCase()));
@@ -515,7 +574,40 @@ export default function VaultPage() {
       ...draft.entry.fields.filter((field) => !accountFields.some((definition) => draft.entry.fields.find((candidate) => definition.aliases.some((alias) => alias.toLowerCase() === candidate.label.trim().toLowerCase()))?.id === field.id)),
     ]
     : draft.entry.fields) : [];
+  const passwordIndex = displayFields.findIndex(({ label }) =>
+    passwordFieldAliases.some((alias) => alias.toLowerCase() === label.trim().toLowerCase()));
+  const fieldsFromPassword = passwordIndex < 0 ? [] : displayFields.slice(passwordIndex);
+  const editorFields = passwordIndex < 0 ? displayFields : [
+    ...displayFields.slice(0, passwordIndex),
+    ...fieldsFromPassword.filter(isEmailField),
+    ...fieldsFromPassword.filter((field) => !isEmailField(field)),
+  ];
   const categoryOptions = Object.entries(categoryLabels).map(([value, label]) => ({ value, label: tr(label) }));
+  const ownedItems = items.flatMap((item) => item.serverId && item.ownerUserId === payload.userId
+    ? [{ ...item, serverId: item.serverId }] : []);
+  const currentExportItem = ownedItems.find((item) => item.localId === draft?.localId);
+  const exportItems = exportScope === 'all' ? ownedItems : currentExportItem ? [currentExportItem] : [];
+  const failedOwnedCount = failedOwnedActiveCount + failedTrashCount;
+  const exportVault = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (busy || !showExport || !exportItems.length) return;
+    setBusy(true);
+    setError(null);
+    try {
+      const [{ buildVaultExport }, { saveBlob }] = await Promise.all([import('@/lib/vault-export'), import('@/lib/document-export')]);
+      const exportedAt = new Date().toISOString();
+      const archive = await buildVaultExport(exportItems, {
+        exportedAt,
+        includeSensitive,
+        categoryLabel: (category) => tr(categoryLabels[category]),
+      });
+      saveBlob(archive, `cuberoot-vault-${exportedAt.slice(0, 10)}.zip`);
+      setShowExport(false);
+      setIncludeSensitive(false);
+    } catch {
+      setError(tr({ zh: '无法打包资料，请重试。', en: 'Could not package the vault. Try again.' }));
+    } finally { setBusy(false); }
+  };
   return (
     <main className="vault-page">
       <div className="vault-topbar"><BackHome /><button type="button" className="vault-button" disabled={busy} onClick={() => {
@@ -528,13 +620,37 @@ export default function VaultPage() {
         <div className="vault-actions">
           {payload.canManage && !showTrash && <button type="button" className="vault-button is-primary" disabled={busy} onClick={addItem}><Plus />{tr({ zh: '新建', en: 'New item' })}</button>}
           {(payload.canManage || hasTrash || showTrash) && <button type="button" className="vault-button" disabled={busy} onClick={toggleTrash}>
-            {showTrash ? tr({ zh: '返回资料库', en: 'Back to vault' }) : <><Trash2 aria-hidden="true" />{tr({ zh: '回收站', en: 'Trash' })}</>}
+            {showTrash ? tr({ zh: '返回', en: 'Back' }) : <><Trash2 aria-hidden="true" />{tr({ zh: '回收站', en: 'Trash' })}</>}
           </button>}
+          {ownedItems.length > 0 && <MoreToggle className="vault-button" expanded={showExport} aria-controls="vault-export" disabled={busy} onToggle={() => {
+            setExportScope('all');
+            setIncludeSensitive(false);
+            setShowExport((current) => !current);
+          }}><Download aria-hidden="true" />{tr({ zh: '导出资料', en: 'Export vault' })}</MoreToggle>}
           {showTrash && payload.canManage && <button type="button" className="vault-button is-danger" disabled={busy || !hasTrash} onClick={() => void emptyTrash()}>
             <Trash2 aria-hidden="true" />{tr({ zh: '清空回收站', en: 'Empty Trash' })}
           </button>}
         </div>
       </div>
+      <MoreTogglePanel id="vault-export" expanded={showExport && ownedItems.length > 0}>
+        <form className="vault-export" onSubmit={(event) => void exportVault(event)}>
+          <label htmlFor="vault-export-scope">{tr({ zh: '导出范围', en: 'Export scope' })}</label>
+          <select id="vault-export-scope" className="vault-input" disabled={busy}
+            value={exportScope}
+            onChange={(event) => setExportScope(event.target.value === 'current' ? 'current' : 'all')}>
+            <option value="all">{tr({ zh: '全部自有资料（含回收站）', en: 'All your items, including Trash' })}</option>
+            <option value="current" disabled={!currentExportItem}>{tr({ zh: '当前条目', en: 'Current item' })}</option>
+          </select>
+          <BoolToggle value={includeSensitive} onChange={setIncludeSensitive} disabled={busy} label={tr({ zh: '包含密码等敏感字段', en: 'Include passwords and other sensitive fields' })} />
+          <p className="vault-muted">{tr({ zh: 'ZIP 为明文，包含所选已保存资料的文字和原图。', en: 'The ZIP is unencrypted and contains the saved text and original images for the selected items.' })}</p>
+          {exportScope === 'all' && failedOwnedCount > 0 && <p className="vault-muted">
+            {tr({ zh: `${failedOwnedCount} 条自有资料无法解密，导出时会跳过。`, en: `${failedOwnedCount} owned item(s) could not be decrypted and will be skipped.` })}
+          </p>}
+          <button type="submit" className="vault-button is-primary" disabled={busy || !exportItems.length}>
+            <Download aria-hidden="true" />{tr({ zh: '下载 ZIP', en: 'Download ZIP' })}
+          </button>
+        </form>
+      </MoreTogglePanel>
       {!payload.canManage && <p className="vault-muted">{tr({ zh: '你可以查看现有内容；成为会员后才能新建、编辑、删除或分享。', en: 'You can view existing items. Membership is required to create, edit, delete, or share.' })}</p>}
       {!payload.canManage && <button type="button" className="vault-button is-primary" onClick={() => { if (confirmDiscard()) requireMembership(); }}>{tr({ zh: '新建与管理资料', en: 'Create & manage items' })}</button>}
       {visibleFailedCount > 0 && <p className="vault-error" role="alert">{tr({ zh: `${visibleFailedCount} 条内容无法解密。`, en: `${visibleFailedCount} item(s) could not be decrypted.` })}</p>}
@@ -557,7 +673,7 @@ export default function VaultPage() {
             : { zh: '没有内容。', en: 'No items.' })}</p>}</div>
         </aside>
 
-        <section className="vault-editor">{!draft ? (!showTrash && <p className="vault-muted">{tr({ zh: '选择一条内容，或新建一条。', en: 'Select an item or create one.' })}</p>) : <fieldset className="vault-editor-fields" disabled={busy}>
+        <section className="vault-editor">{draft && <fieldset className="vault-editor-fields" disabled={busy}>
           <div className="vault-editor-head">
             <input className="vault-title-input" value={draft.entry.title} readOnly={!editable} maxLength={200} placeholder={tr({ zh: '标题', en: 'Title' })} onChange={(event) => updateDraft((item) => { item.entry.title = event.target.value; })} />
             {manageable && <div className="vault-actions">
@@ -589,7 +705,7 @@ export default function VaultPage() {
             return <div className="vault-field" key={field.id}>
               <label className="vault-field-label" htmlFor={`vault-field-${field.id}`}>{field.label}</label>
               <div className="vault-value-line">
-                <input id={`vault-field-${field.id}`} className="vault-value-input" value={field.value} readOnly={!editable} maxLength={100_000} placeholder={field.secret ? field.label : tr({ zh: '内容', en: 'Value' })} onChange={(event) => changeValue(event.target.value)} />
+                <VaultTextArea id={`vault-field-${field.id}`} className="vault-value-input" value={field.value} readOnly={!editable} maxLength={100_000} rows={1} placeholder={field.secret ? field.label : tr({ zh: '内容', en: 'Value' })} onChange={(event) => changeValue(event.target.value)} />
                 <button type="button" className="vault-icon-button" aria-label={tr({ zh: '复制', en: 'Copy' })} onClick={() => copy(field.value, field.id)}>{copiedKey === field.id ? <Check /> : <Copy />}</button>
                 {editable && <Tooltip content={tr({ zh: '删除字段', en: 'Remove field' })}>{(tip) => <button {...tip} type="button" className="vault-icon-button is-danger" aria-label={tr({ zh: `删除字段：${field.label}`, en: `Remove field: ${field.label}` })} onClick={() => updateDraft((item) => { item.entry.fields = item.entry.fields.filter((candidate) => candidate.id !== field.id); })}><Trash2 /></button>}</Tooltip>}
               </div>
@@ -597,7 +713,7 @@ export default function VaultPage() {
           })}</div>
 
           <label className="vault-notes-label" htmlFor="vault-notes">{tr({ zh: '备注', en: 'Notes' })}</label>
-          <textarea id="vault-notes" className="vault-notes" value={draft.entry.notes} readOnly={!editable} maxLength={500_000} rows={4} onChange={(event) => updateDraft((item) => { item.entry.notes = event.target.value; })} />
+          <VaultTextArea id="vault-notes" className="vault-notes" value={draft.entry.notes} readOnly={!editable} maxLength={500_000} rows={4} onChange={(event) => updateDraft((item) => { item.entry.notes = event.target.value; })} />
 
           {(editable || Boolean(draft.entry.images?.length)) && <section className="vault-images">
             <div className="vault-image-heading">
@@ -619,8 +735,12 @@ export default function VaultPage() {
               </button>
               <input className="vault-input" aria-label={tr({ zh: `图片名称 ${index + 1}`, en: `Image name ${index + 1}` })} value={image.name} readOnly={!editable} maxLength={200} onChange={(event) => updateDraft((item) => { item.entry.images![index].name = event.target.value; })} />
               <div className="vault-actions">
-                <a className="vault-button" href={image.dataUrl} download={image.name}><Download />{tr({ zh: '下载原图', en: 'Download original' })}</a>
-                {editable && <button type="button" className="vault-button is-danger" aria-label={tr({ zh: `移除图片：${image.name}`, en: `Remove image: ${image.name}` })} onClick={() => updateDraft((item) => { item.entry.images!.splice(index, 1); })}><X />{tr({ zh: '移除', en: 'Remove' })}</button>}
+                <Tooltip content={tr({ zh: '下载原图', en: 'Download original' })}>{(tip) => (
+                  <a {...tip} className="vault-button" href={image.dataUrl} download={image.name} aria-label={tr({ zh: `下载原图：${image.name}`, en: `Download original: ${image.name}` })}><Download aria-hidden="true" /></a>
+                )}</Tooltip>
+                {editable && <Tooltip content={tr({ zh: '移除图片', en: 'Remove image' })}>{(tip) => (
+                  <button {...tip} type="button" className="vault-button is-danger" aria-label={tr({ zh: `移除图片：${image.name}`, en: `Remove image: ${image.name}` })} onClick={() => updateDraft((item) => { item.entry.images!.splice(index, 1); })}><X aria-hidden="true" /></button>
+                )}</Tooltip>}
               </div>
             </div>)}</div>
           </section>}
@@ -628,12 +748,38 @@ export default function VaultPage() {
           {!showTrash && <section className="vault-sharing">
             <h2>{tr({ zh: '分享给好友', en: 'Share with friends' })}</h2>
             <div className="vault-share-list">{draft.shares.map((share) => <span className="vault-share" key={share.userId}>{share.name}<small>#{share.userId}</small>{editable && <button type="button" className="vault-share-remove" aria-label={tr({ zh: `移除 ${share.name}`, en: `Remove ${share.name}` })} onClick={() => updateDraft((item) => { item.shares = item.shares.filter((candidate) => candidate.userId !== share.userId); })}><X /></button>}</span>)}</div>
-            {editable && <div className="vault-user-search"><SearchInput value={shareQuery} onChange={setShareQuery} placeholder={tr({ zh: '搜索好友', en: 'Search friends' })} className="vault-share-search" inputClassName="vault-input" />{searchingUsers && <Loader2 className="vault-spin" aria-label={tr({ zh: '正在搜索', en: 'Searching' })} />}</div>}
-            {editable && shareSearchError && <p role="alert">{tr({ zh: '好友搜索失败，请稍后重试。', en: 'Could not search friends. Try again later.' })}</p>}
-            {editable && shareResults.length > 0 && <div className="vault-user-results">{shareResults.map((result) => {
-              const added = draft.shares.some((share) => share.userId === result.userId);
-              return <div key={result.userId}><span><strong>{result.name}</strong><small>#{result.userId}{result.wcaId ? `  ${result.wcaId}` : ''}</small></span><button type="button" className="vault-button" disabled={!result.publicKey || added} onClick={() => { if (result.publicKey) updateDraft((item) => { item.shares.push({ userId: result.userId, name: result.name, publicKey: result.publicKey as JsonWebKey }); }); }}><UserPlus />{added ? tr({ zh: '已添加', en: 'Added' }) : result.publicKey ? tr({ zh: '添加', en: 'Add' }) : tr({ zh: '对方尚未启用接收', en: 'Receiving not enabled' })}</button></div>;
-            })}</div>}
+            {editable && shareLoadError && <p role="alert">{tr({ zh: '无法加载好友，请刷新后重试。', en: 'Could not load friends. Refresh and try again.' })}</p>}
+            {editable && !shareLoadError && shareFriends === null && <p role="status">{tr({ zh: '正在加载好友…', en: 'Loading friends…' })}</p>}
+            {editable && !shareLoadError && shareFriends?.length === 0 && <p>
+              {tr({ zh: '暂无好友。', en: 'No friends yet.' })}{' '}
+              <AppLink href="/friends" className="vault-button" onNavigate={(event) => { if (!confirmDiscard()) event.preventDefault(); }}>
+                {tr({ zh: '去添加好友', en: 'Add friends' })}
+              </AppLink>
+            </p>}
+            {editable && shareFriends && shareFriends.length > 0 && <ListSelect
+              portal
+              searchable
+              className="vault-friend-select"
+              searchPlaceholder={tr({ zh: '搜索好友', en: 'Search friends' })}
+              allLabel={tr({ zh: '选择好友', en: 'Choose a friend' })}
+              value=""
+              disabled={busy}
+              items={shareFriends.map((friend) => {
+                const added = draft.shares.some((share) => share.userId === friend.userId);
+                const status = added
+                  ? tr({ zh: '已添加', en: 'Added' })
+                  : friend.publicKey === null
+                    ? tr({ zh: '尚未启用接收', en: 'Receiving not enabled' })
+                    : '';
+                return {
+                  value: String(friend.userId),
+                  label: friend.name,
+                  description: [`#${friend.userId}`, friend.wcaId, status].filter(Boolean).join(' · '),
+                  disabled: added || friend.publicKey === null,
+                };
+              })}
+              onChange={(value) => void addShareFriend(value)}
+            />}
           </section>}
         </fieldset>}</section>
       </div>

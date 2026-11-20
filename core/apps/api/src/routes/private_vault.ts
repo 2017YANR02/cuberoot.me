@@ -269,7 +269,7 @@ privateVaultRoutes.get('/vault/users', async (c) => {
   checkRateLimit(getIp(c), { bucket: 'private-vault-user-search', max: 60 });
   const ownerUserId = await requireVaultManager(c);
   const q = (c.req.query('q') ?? '').trim().slice(0, 80);
-  if (q.length < 2 && !/^\d+$/.test(q)) return c.json({ users: [] });
+  if (q.length === 1 && !/^\d$/.test(q)) return c.json({ users: [] });
   const numericId = /^\d+$/.test(q) && Number.isSafeInteger(Number(q)) ? Number(q) : null;
   const like = `%${q.replace(/[\\%_]/g, '\\$&')}%`;
   const rows = await sql<{
@@ -279,22 +279,24 @@ privateVaultRoutes.get('/vault/users', async (c) => {
     public_key: JsonWebKey | null;
   }[]>`
     SELECT users.id, users.display_name, users.wca_id, keys.public_key
-     FROM app_users users
-      JOIN user_friendships friendship
-        ON friendship.user_low_id = LEAST(${ownerUserId}::bigint, users.id)
-       AND friendship.user_high_id = GREATEST(${ownerUserId}::bigint, users.id)
-       AND friendship.status = 'accepted'
+     FROM user_friendships friendship
+      JOIN app_users users ON users.id = CASE
+        WHEN friendship.user_low_id = ${ownerUserId} THEN friendship.user_high_id
+        ELSE friendship.user_low_id
+      END
       LEFT JOIN vault_user_keys keys ON keys.user_id = users.id
-     WHERE users.id <> ${ownerUserId}
+     WHERE friendship.status = 'accepted'
+       AND (friendship.user_low_id = ${ownerUserId} OR friendship.user_high_id = ${ownerUserId})
        AND (
-         (${numericId}::bigint IS NOT NULL AND users.id = ${numericId})
+         ${q} = ''
+         OR (${numericId}::bigint IS NOT NULL AND users.id = ${numericId})
          OR users.display_name ILIKE ${like} ESCAPE '\\'
          OR users.wca_id ILIKE ${like} ESCAPE '\\'
        )
      ORDER BY CASE WHEN users.id = ${numericId} THEN 0 ELSE 1 END,
               CASE WHEN lower(users.display_name) = lower(${q}) THEN 0 ELSE 1 END,
               lower(users.display_name), users.id
-     LIMIT 20`;
+     LIMIT ${q ? 20 : null}`;
   return c.json({
     users: rows.map((row) => ({
       userId: Number(row.id),

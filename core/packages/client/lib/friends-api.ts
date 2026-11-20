@@ -14,10 +14,11 @@ async function write(path: string, method: 'POST' | 'DELETE', body?: unknown): P
   await handleApi<{ ok: boolean }>(response);
 }
 
-export async function fetchFriends(): Promise<FriendsOverview> {
+export async function fetchFriends(signal?: AbortSignal): Promise<FriendsOverview> {
   const response = await sessionFetch(apiUrl('/v1/friends'), {
     headers: authHeaders(false),
     cache: 'no-store',
+    signal,
   });
   return handleApi<FriendsOverview>(response);
 }

@@ -10,6 +10,7 @@ vi.mock('@/lib/auth-store', () => ({ useAuthUser: () => user, authActions: { log
   useAuthStore: () => vi.fn() }));
 vi.mock('@/components/BackHome', () => ({ default: () => null }));
 vi.mock('@/hooks/useCopy', () => ({ useCopy: () => ({ copy: vi.fn(), copiedKey: null }) }));
+vi.mock('@/hooks/usePinnedCountries', () => ({ usePinnedCountries: () => [[], vi.fn()] }));
 vi.mock('@/i18n/tr', () => ({ tr: ({ zh }: { zh: string }) => zh }));
 vi.mock('@/lib/api-base', () => ({ apiUrl: (path: string) => path }));
 vi.mock('@/lib/admin-api', () => ({ authHeaders: () => ({}), handleApi: (response: Response) => response.json() }));
@@ -23,14 +24,13 @@ vi.mock('@/lib/vault-crypto', async (importOriginal) => ({
 
 let host: HTMLDivElement;
 let root: Root;
-const requests: { query: string; signal: AbortSignal; resolve: (value: Response) => void }[] = [];
 const writes: { ciphertext: string; accesses: { userId: number }[] }[] = [];
 const updates: { path: string; ciphertext: string; expectedVersion: number; accesses: { userId: number }[] }[] = [];
 let failUpdate = '';
 const trashedAt = '2026-01-03T00:00:00Z';
 const response = (data: unknown) => new Response(JSON.stringify(data));
 const type = async (value: string) => {
-  const input = host.querySelector<HTMLInputElement>('[placeholder="搜索好友"]')!;
+  const input = document.querySelector<HTMLInputElement>('[placeholder="搜索好友"]')!;
   await act(async () => {
     Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')!.set!.call(input, value);
     input.dispatchEvent(new Event('input', { bubbles: true }));
@@ -39,7 +39,7 @@ const type = async (value: string) => {
 const advance = async (ms = 300) => { await act(async () => { await vi.advanceTimersByTimeAsync(ms); }); };
 beforeEach(async () => {
   (globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
-  vi.useFakeTimers(); requests.length = 0; writes.length = 0; updates.length = 0; failUpdate = '';
+  vi.useFakeTimers(); writes.length = 0; updates.length = 0; failUpdate = '';
   vi.stubGlobal('fetch', vi.fn((path: string, options?: RequestInit) => {
     if (path === '/v1/vault') return Promise.resolve(response({
       userId: 1, canManage: true, keyProfile: { publicKey: {}, encryptedPrivateKey: {} },
@@ -55,34 +55,62 @@ beforeEach(async () => {
       updates.push({ path, ...body });
       return Promise.resolve(response({ version: body.expectedVersion + 1, updatedAt: '2026-01-02' }));
     }
-    if (path.startsWith('/v1/vault/users?')) return new Promise<Response>((resolve) => {
-      requests.push({ query: new URL(path, 'http://localhost').searchParams.get('q')!, signal: options!.signal as AbortSignal, resolve });
-    });
+    if (path === '/v1/vault/users') return Promise.resolve(response({ users: [
+      { userId: 2, name: 'Friend with a key', wcaId: '2026TEST01', publicKey: {} },
+      { userId: 3, name: 'Friend without a key', wcaId: null, publicKey: null },
+    ] }));
     throw new Error(`Unexpected request: ${path}`);
   }));
   host = document.createElement('div'); document.body.append(host); root = createRoot(host);
   await act(async () => root.render(createElement(VaultPage)));
   await act(async () => host.querySelector('form')!.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true })));
-  expect(host.querySelector('[placeholder="搜索好友"]')).not.toBeNull();
+  expect(host.querySelector('[aria-label="选择好友"]')).not.toBeNull();
 });
 afterEach(async () => { await act(async () => root.unmount()); host.remove(); vi.useRealTimers(); vi.unstubAllGlobals(); vi.restoreAllMocks(); });
 
-it('automatically searches valid input, cancels old requests, and ignores late results after clearing', async () => {
-  await type('胡'); await advance(); expect(requests).toHaveLength(0);
-  await type('胡泽'); await advance(200); await type('胡泽亮'); await advance(299);
-  expect(requests).toHaveLength(0);
-  await advance(1); expect(requests.map((request) => request.query)).toEqual(['胡泽亮']);
-  await type('王小明'); expect(requests[0].signal.aborted).toBe(true);
-  await advance();
-  await act(async () => requests[1].resolve(response({ users: [{ userId: 2, name: 'New result', publicKey: {} }] })));
-  expect(host.querySelector('.vault-user-results')?.textContent).toContain('New result');
-  await act(async () => requests[0].resolve(response({ users: [{ userId: 3, name: 'Stale result', publicKey: {} }] })));
-  expect(host.textContent).not.toContain('Stale result');
-  await type('另一位'); await advance(); await type('');
-  expect(requests[2].signal.aborted).toBe(true);
-  await act(async () => requests[2].resolve(response({ users: [{ userId: 4, name: 'Late result', publicKey: {} }] })));
-  expect(host.querySelector('.vault-user-results')).toBeNull();
-  expect(vi.mocked(fetch).mock.calls.every(([, options]) => !options?.method || options.method === 'GET')).toBe(true);
+it('lists friends before searching and adds only an eligible recipient on save', async () => {
+  const trigger = host.querySelector<HTMLButtonElement>('[aria-label="选择好友"]')!;
+  const options = () => [...document.querySelectorAll<HTMLButtonElement>('.list-select-item')];
+  await act(async () => trigger.click());
+  expect(options()).toHaveLength(2);
+  expect(options()[1].textContent).toContain('尚未启用接收');
+  expect(options()[1].disabled).toBe(true);
+  const requestCount = vi.mocked(fetch).mock.calls.length;
+  await type('2026TEST01');
+  expect(options()).toHaveLength(1);
+  await act(async () => options()[0].click());
+  expect(host.querySelector('.vault-share-list')?.textContent).toContain('Friend with a key');
+  expect(vi.mocked(fetch)).toHaveBeenCalledTimes(requestCount);
+  await clickText('保存');
+  expect(updates[0].accesses.map(({ userId }) => userId)).toEqual([1, 2]);
+});
+
+it('falls back to accepted friends when the older vault API returns an empty list', async () => {
+  const fetchMock = vi.mocked(fetch);
+  const originalFetch = fetchMock.getMockImplementation()!;
+  fetchMock.mockImplementation((input, options) => {
+    if (input === '/v1/vault/users') return Promise.resolve(response({ users: [] }));
+    if (input === '/v1/friends') return Promise.resolve(response({
+      friends: [{ userId: 2, name: 'Accepted friend', wcaId: null }],
+      incoming: [{ userId: 3, name: 'Pending request', wcaId: null }],
+    }));
+    if (input === '/v1/vault/users?q=2') return Promise.resolve(response({ users: [
+      { userId: 22, name: 'Another user', publicKey: {} },
+      { userId: 2, name: 'Accepted friend', publicKey: {} },
+    ] }));
+    return originalFetch(input, options);
+  });
+  await clickText('回收站');
+  await clickText('返回');
+  await clickText('Test entry');
+  await clickText('选择好友');
+  const options = document.querySelectorAll<HTMLButtonElement>('.list-select-item');
+  expect(options).toHaveLength(1);
+  expect(options[0].textContent).toContain('Accepted friend');
+  await act(async () => options[0].click());
+  expect(host.querySelector('.vault-share-list')?.textContent).toContain('Accepted friend');
+  await clickText('保存');
+  expect(updates[0].accesses.map(({ userId }) => userId)).toEqual([1, 2]);
 });
 
 it('creates an owner-only encrypted account entry through the simplified editor', async () => {
@@ -92,9 +120,10 @@ it('creates an owner-only encrypted account entry through the simplified editor'
     const button = [...host.querySelectorAll('button')].find(item => item.textContent === label)!;
     await act(async () => button.click());
   };
-  const fill = async (input: HTMLInputElement, value: string) => {
+  const fill = async (input: HTMLInputElement | HTMLTextAreaElement, value: string) => {
     await act(async () => {
-      Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')!.set!.call(input, value);
+      const prototype = input instanceof HTMLTextAreaElement ? HTMLTextAreaElement.prototype : HTMLInputElement.prototype;
+      Object.getOwnPropertyDescriptor(prototype, 'value')!.set!.call(input, value);
       input.dispatchEvent(new Event('input', { bubbles: true }));
     });
   };
@@ -103,7 +132,7 @@ it('creates an owner-only encrypted account entry through the simplified editor'
   expect(writes).toHaveLength(0);
   expect(host.textContent).toContain('请填写标题');
   await fill(host.querySelector<HTMLInputElement>('.vault-title-input')!, 'Account one');
-  const fields = host.querySelectorAll<HTMLInputElement>('.vault-value-input');
+  const fields = host.querySelectorAll<HTMLTextAreaElement>('textarea.vault-value-input');
   expect(fields).toHaveLength(2);
   expect(fields[1].placeholder).toBe('密码');
   await fill(fields[0], 'test-owner@example.com');
@@ -143,11 +172,11 @@ it('removes a single field only on save and does not recreate it when reopening 
     Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')!.set!.call(input, 'Single field');
     input.dispatchEvent(new Event('input', { bubbles: true }));
   });
-  const remainingFieldId = host.querySelector<HTMLInputElement>('.vault-value-input')!.id;
+  const remainingFieldId = host.querySelector<HTMLTextAreaElement>('textarea.vault-value-input')!.id;
   await act(async () => host.querySelector<HTMLButtonElement>('[aria-label="删除字段：密码"]')!.click());
   expect(writes).toHaveLength(0);
-  expect(host.querySelectorAll('.vault-value-input')).toHaveLength(1);
-  expect(host.querySelector<HTMLInputElement>('.vault-value-input')!.id).toBe(remainingFieldId);
+  expect(host.querySelectorAll('textarea.vault-value-input')).toHaveLength(1);
+  expect(host.querySelector<HTMLTextAreaElement>('textarea.vault-value-input')!.id).toBe(remainingFieldId);
   await click('保存');
   expect(writes).toHaveLength(1);
   expect(JSON.parse(writes[0].ciphertext).fields).toEqual([
@@ -155,7 +184,7 @@ it('removes a single field only on save and does not recreate it when reopening 
   ]);
   await click('Test entry');
   await click('Single field');
-  expect(host.querySelectorAll('.vault-value-input')).toHaveLength(1);
+  expect(host.querySelectorAll('textarea.vault-value-input')).toHaveLength(1);
   expect(host.querySelector('[aria-label="删除字段：密码"]')).toBeNull();
 });
 
@@ -163,6 +192,27 @@ const clickText = async (label: string) => {
   const button = [...document.querySelectorAll<HTMLButtonElement>('button')].find(item => item.textContent === label || item.querySelector('strong')?.textContent === label)!;
   await act(async () => button.click());
 };
+
+it('shows the email above the password in an existing account entry', async () => {
+  writes.push({ accesses: [{ userId: 1 }], ciphertext: JSON.stringify({
+    id: 'old-account',
+    title: 'Old account',
+    category: 'accounts',
+    notes: '',
+    fields: [
+      { id: 'pass', label: '密码', value: 'fixture', secret: true },
+      { id: 'email', label: '邮箱', value: 'example@example.com', secret: false },
+      { id: 'site', label: '网站', value: 'example.com', secret: false },
+    ],
+  }) });
+  await act(async () => root.unmount());
+  root = createRoot(host);
+  await act(async () => root.render(createElement(VaultPage)));
+  await act(async () => host.querySelector('form')!.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true })));
+  await clickText('Old account');
+  expect([...host.querySelectorAll('.vault-field-label')].map((label) => label.textContent)).toEqual(['邮箱', '密码', '网站']);
+  expect(updates).toHaveLength(0);
+});
 const choose = async (label: string, option: string) => {
   await act(async () => host.querySelector<HTMLButtonElement>(`[aria-label="${label}"]`)!.click());
   const item = [...document.querySelectorAll<HTMLElement>('[role="option"]')].find(item => item.textContent === option)!;
@@ -236,7 +286,7 @@ it('moves a saved item to Trash, restores it, and only empties Trash after confi
   expect(JSON.parse(fetchMock.mock.lastCall?.[1]?.body as string)).toEqual({ trashed: false, expectedVersion: 2 });
   expect(host.querySelector('.vault-list')?.textContent).toContain('回收站为空');
 
-  await clickText('返回资料库');
+  await clickText('返回');
   await clickText('Test entry');
   fetchMock.mockResolvedValueOnce(response({ version: 4, updatedAt: trashedAt, trashedAt }));
   await clickText('移入回收站');
