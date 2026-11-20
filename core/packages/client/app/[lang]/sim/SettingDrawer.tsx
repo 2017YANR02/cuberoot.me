@@ -34,6 +34,7 @@ import {
   normalizePictureFaces,
   type PictureFaces,
 } from './engine/nxn/pictureCube';
+import { pocketKeyboardMove } from './pocketMoves';
 import { KEYMAP_GROUPS, KEYBOARD_ROWS, keyLabel, displayMove, type KeyMove } from './keymap';
 import './setting-drawer.css';
 import { useT } from "@/hooks/useT";
@@ -161,8 +162,8 @@ export interface SimSettings {
   /** 实时消步:手势 / 键盘转动追加到解法框时,自动 fold/抵消重复转动
    *  (做了 R 再做 R' → 框里 R 出现后又消失)。默认开。 */
   liveReduce: boolean;
-  /** 手指(指法演示):双手握持魔方,转层时腕转 / 弹指跟动画。仅 3x3 生效
-   *  (其它拼图上开关灰禁;设置保留,切回 3x3 自动恢复)。默认关。 */
+  /** 手指(指法演示):双手握持魔方,转层时腕转 / 弹指跟动画。仅标准二、三阶生效
+   *  (其它拼图上开关灰禁;设置保留,切回时自动恢复)。默认关。 */
   hands: boolean;
   /** 全身人物(SMPL-X):完整的人随手出场还原魔方(躯干静态站姿 + 双臂 IK
    *  追手;拉远 Scale 可见全身)。依赖手指开启;资产逐机转换,缺失静默降级。
@@ -433,18 +434,18 @@ export function applySettings(world: World, s: SimSettings, prev?: SimSettings):
     world.directional.intensity = cuberLighting ? CUBER_APPEARANCE.directional : Math.PI * 0.4;
   }
   // 手指(指法演示):意愿写进 world,实际显隐由 world.syncHands 按拼图门控
-  // (仅 3x3);内部已含 resize,所以放最前,后面的 resize 拿到的取景已是最终值。
+  // (标准二、三阶);内部已含 resize,所以放最前,后面的 resize 拿到的取景已是最终值。
   // 手模资产先于开关:切资产要销毁重建 rig,先设好再 syncHands 免得建完又拆。
   world.setHandsWanted(supports.hands && s.hands === true);
-  world.setHandsFullBody(supports.hands && s.hands === true && s.fullBody === true);
+  world.setHandsFullBody(world.puzzleKind === 3 && supports.hands && s.hands === true && s.fullBody === true);
   world.setHandsAvatar(s.bodyAvatar, (s.bodyAvatarX - 50) / 100, (s.bodyAvatarY - 50) / 100, 2 ** ((s.bodyAvatarZoom - 50) / 50));
-  world.hands?.setSkeletonVisible(s.handsSkeleton === true);
+  world.hands?.setSkeletonVisible(supports.handsSkeleton && s.handsSkeleton === true);
   world.hands?.setNailsVisible(s.showNails !== false);
   // 指甲配色(甲油):'' = 自然甲。rig 内部存最后值,手模晚加载时回放。
   world.hands?.setNailPolish(
     s.nailColor ? { color: s.nailColor, tip: s.nailColorTip || '', shade: s.nailShade ?? 50 } : null,
   );
-  world.setSmplxBodyVisible(supports.hands && s.showSmplxBody === true);
+  world.setSmplxBodyVisible(world.puzzleKind === 3 && supports.hands && s.showSmplxBody === true);
   world.controller.sensitivity = mapSensitivity(s.sensitivity);
   world.controller.dragEmpty = s.dragEmpty;
   world.controller.holdPartial = s.holdPartialTurn;
@@ -849,6 +850,7 @@ export function Toggle({ label, value, onChange, disabled, title }: { label: str
 }
 
 interface KeymapModalProps {
+  pocket?: boolean;
   open: boolean;
   onClose: () => void;
   keymap: Record<string, KeyMove>;
@@ -856,7 +858,7 @@ interface KeymapModalProps {
   onResetKeymap: () => void;
 }
 
-export function KeymapModal({ open, onClose, keymap, onKeymapChange, onResetKeymap }: KeymapModalProps) {
+export function KeymapModal({ pocket = false, open, onClose, keymap, onKeymapChange, onResetKeymap }: KeymapModalProps) {
   const t = useT();
   const [editingCode, setEditingCode] = useState<string | null>(null);
   const { motionRef, close } = useDialogMotion(onClose, { enabled: open });
@@ -894,7 +896,8 @@ export function KeymapModal({ open, onClose, keymap, onKeymapChange, onResetKeym
             {KEYBOARD_ROWS.map((row, ri) => (
               <div key={ri} className="sim-keyboard-row">
                 {row.map((code) => {
-                  const m = keymap[code];
+                  const binding = keymap[code];
+                  const m = binding && (!pocket || pocketKeyboardMove(binding.sign)) ? binding : undefined;
                   const editing = editingCode === code;
                   return (
                     <button
@@ -914,7 +917,7 @@ export function KeymapModal({ open, onClose, keymap, onKeymapChange, onResetKeym
 
           {editingCode && (
             <div className="sim-keymap-picker">
-              {KEYMAP_GROUPS.map((g) => (
+              {KEYMAP_GROUPS.filter(g => !pocket || g.moves.some(m => pocketKeyboardMove(m.sign))).map((g) => (
                 <div key={g.zh} className="sim-keymap-picker-group">
                   <div className="sim-keymap-title">{tr(g)}</div>
                   <div className="sim-keymap-picker-row">
@@ -967,20 +970,20 @@ export function KeymapModal({ open, onClose, keymap, onKeymapChange, onResetKeym
             </div>
             <div>
               <span className="sim-mouse-op">&nbsp;&nbsp;{t('— U 面 → z 切片', '— U face → z slice')}</span>
-              <span className="sim-mouse-act">{t('点最前一行 = F,中央 = S,最后 = B', 'front row = F, middle = S, back = B\'')}</span>
+              <span className="sim-mouse-act">{pocket ? t('最前一行 = F，最后一行 = B', 'Front row = F, back row = B') : t('点最前一行 = F,中央 = S,最后 = B', 'front row = F, middle = S, back = B\'')}</span>
             </div>
             <div>
               <span className="sim-mouse-op">&nbsp;&nbsp;{t('— F / R 面 → y 切片', '— F / R face → y slice')}</span>
-              <span className="sim-mouse-act">{t('点最上 = U,中央 = E,最下 = D', 'top = U, middle = E, bottom = D\'')}</span>
+              <span className="sim-mouse-act">{pocket ? t('上排 = U，下排 = D', 'Top row = U, bottom row = D') : t('点最上 = U,中央 = E,最下 = D', 'top = U, middle = E, bottom = D\'')}</span>
             </div>
             <div>
               <span className="sim-mouse-op"><kbd>Shift</kbd> {t('+ 单击 / 右键单击', '+ click / right click')}</span>
               <span className="sim-mouse-act">{t('逆时针', 'Counter-clockwise')}</span>
             </div>
-            <div>
+            {!pocket && <div>
               <span className="sim-mouse-op"><kbd>Alt</kbd> {t('+ 单击 / 拖动', '+ click / drag')}</span>
               <span className="sim-mouse-act">{t('宽层转动 (深度=宽度):内层 → Rw/3Lw/...,中线 → x/y/z', 'Wide turn (depth = width): inner → Rw/3Lw/..., center → x/y/z')}</span>
-            </div>
+            </div>}
             <div>
               <span className="sim-mouse-op">{t('拖动 sticker', 'Drag sticker')}</span>
               <span className="sim-mouse-act">{t('沿手势方向转该层', 'Rotate slice along drag direction')}</span>

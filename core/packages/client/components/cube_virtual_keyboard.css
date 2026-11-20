@@ -212,6 +212,11 @@
     background: #007AFF;
     color: #fff;
 }
+.vkb-marks-popup .vkb-popup-item[aria-pressed="true"] {
+    background: var(--accent-soft);
+    color: var(--accent);
+    box-shadow: inset 0 0 0 1px var(--accent);
+}
 /* NOTE: 让面板内 <u>/<u.wavy>/<s> 渲染对(项目约定的 finger-trick 标签) */
 .vkb-marks-popup u {
     text-decoration: underline;

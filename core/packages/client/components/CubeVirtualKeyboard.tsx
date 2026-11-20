@@ -28,12 +28,17 @@ import { textPointAtOffset, placeCaretAtTextOffset, insertEditorText } from '@/l
 type EditorTarget = HTMLTextAreaElement | HTMLDivElement;
 
 interface Props {
+  pocket?: boolean;
   /** 目标编辑器(textarea 或 contenteditable div)的 ref */
   target: RefObject<EditorTarget | null>;
   /** 输入后的回调(父组件更新统计等) */
   onInput?: () => void;
   /** 启用 space 左侧的"记号"弹层 */
   enableMarks?: boolean;
+  /** A plain-text editor can retain the same marks in an HTML sidecar. */
+  onFingerMark?: (mark: 'u' | 's' | 'em') => void;
+  fingerMarkSelected?: (mark: 'u' | 's' | 'em') => boolean;
+  onMarksOpen?: () => void;
   /** 键盘展开时挪进来的收起按钮(CubeKeyboardSection 传入),挤在触发器行最右侧省一行空间 */
   toggleButton?: ReactNode;
 }
@@ -299,13 +304,14 @@ const MARK_ITEMS: Array<{ key: string; label: ReactNode; tip: { zh: string; en: 
   { key: 'mark-s',     label: <s>U</s>,                  tip: { zh: '删除线', en: 'Strikethrough' } },
   { key: 'mark-up',    label: '↑',   tip: { zh: '上箭头', en: 'Up arrow' } },
   { key: 'mark-down',  label: '↓',   tip: { zh: '下箭头', en: 'Down arrow' } },
-  { key: 'mark-up-double', label: '↑↑', tip: { zh: '半转握姿', en: 'Half-turn grip' } },
+  { key: 'mark-up-double', label: '↑↑', tip: { zh: '向上半转换握', en: 'Half-turn grip via up' } },
+  { key: 'mark-down-double', label: '↓↓', tip: { zh: '向下半转换握', en: 'Half-turn grip via down' } },
   { key: 'mark-both-up', label: '↑｜↑', tip: { zh: '双手上起手', en: 'Both hands up' } },
   { key: 'mark-both-down', label: '↓｜↓', tip: { zh: '双手下起手', en: 'Both hands down' } },
   { key: 'mark-mid',   label: '·',   tip: { zh: '间隔号', en: 'Middle dot' } },
 ];
 
-export default function CubeVirtualKeyboard({ target, onInput, enableMarks = false, toggleButton }: Props) {
+export default function CubeVirtualKeyboard({ pocket = false, target, onInput, enableMarks = false, onFingerMark, fingerMarkSelected, onMarksOpen, toggleButton }: Props) {
   const { t } = useTranslation();
   const [activePage, setActivePage] = useState(0);
   const [shiftState, setShiftState] = useState<ShiftState>('off');
@@ -476,6 +482,7 @@ export default function CubeVirtualKeyboard({ target, onInput, enableMarks = fal
 
   /** 显示记号弹层 */
   const showMarksPopup = useCallback((btn: HTMLButtonElement) => {
+    onMarksOpen?.();
     setMarksPopupVisible(true);
     requestAnimationFrame(() => {
       const rect = btn.getBoundingClientRect();
@@ -486,7 +493,7 @@ export default function CubeVirtualKeyboard({ target, onInput, enableMarks = fal
       left = Math.max(4, Math.min(left, window.innerWidth - popW - 4));
       setMarksPopupPos({ left, top: rect.top - popup.offsetHeight - 6 });
     });
-  }, []);
+  }, [onMarksOpen]);
 
   const hideMarksPopup = useCallback(() => setMarksPopupVisible(false), []);
 
@@ -527,6 +534,7 @@ export default function CubeVirtualKeyboard({ target, onInput, enableMarks = fal
     focusTarget(el);
     if (mk === 'mark-u' || mk === 'mark-s' || mk === 'mark-em' || mk === 'mark-wavy') {
       const kind = mk === 'mark-u' ? 'u' : mk === 'mark-s' ? 's' : mk === 'mark-em' ? 'em' : 'wavy';
+      if (onFingerMark && kind !== 'wavy') { onFingerMark(kind); return; }
       if (wrapPrevToken(el, kind)) {
         // 直接改 contenteditable DOM 不会自动产生 input 事件；主动通知 AlgInput，
         // 让预览、校验状态和最终保存的 algHtml 同步更新。
@@ -538,10 +546,11 @@ export default function CubeVirtualKeyboard({ target, onInput, enableMarks = fal
     if (mk === 'mark-up')   { vkbInsert('↑'); return; }
     if (mk === 'mark-down') { vkbInsert('↓'); return; }
     if (mk === 'mark-up-double') { vkbInsert('↑↑'); return; }
+    if (mk === 'mark-down-double') { vkbInsert('↓↓'); return; }
     if (mk === 'mark-both-up') { vkbInsert('↑｜↑'); return; }
     if (mk === 'mark-both-down') { vkbInsert('↓｜↓'); return; }
     if (mk === 'mark-mid')  { vkbInsert('·'); return; }
-  }, [target, onInput, vkbInsert]);
+  }, [target, onInput, onFingerMark, vkbInsert]);
 
   // NOTE: pointerdown
   const handlePointerDown = useCallback((e: React.PointerEvent) => {
@@ -574,14 +583,15 @@ export default function CubeVirtualKeyboard({ target, onInput, enableMarks = fal
     } else if (LONG_PRESS_VARIANTS[key]) {
       longPressTimerRef.current = setTimeout(() => {
         isLongPressRef.current = true;
-        showPopup(btn, LONG_PRESS_VARIANTS[key]);
+        const variants = LONG_PRESS_VARIANTS[key];
+        showPopup(btn, pocket && FACE_KEYS[key] ? variants.filter(value => value !== key.toLowerCase()) : variants);
       }, 250);
     } else if (DOUBLE_TAP_KEYS[key]) {
       longPressTimerRef.current = setTimeout(() => {
         isLongPressRef.current = true;
       }, 250);
     }
-  }, [showPopup, showMarksPopup, backspaceOnce, startBackspaceRepeat]);
+  }, [pocket, showPopup, showMarksPopup, backspaceOnce, startBackspaceRepeat]);
 
   // NOTE: pointermove
   const handlePointerMove = useCallback((e: React.PointerEvent) => {
@@ -728,7 +738,7 @@ export default function CubeVirtualKeyboard({ target, onInput, enableMarks = fal
       const dy = e.clientY - startYRef.current;
       if (dy > 20) {
         ch = key + "'";
-      } else if (dy < -20) {
+      } else if (dy < -20 && !pocket) {
         ch = key.toLowerCase();
       } else {
         ch = btn.dataset.val || key;
@@ -767,7 +777,7 @@ export default function CubeVirtualKeyboard({ target, onInput, enableMarks = fal
     updateModifierState();
     refreshSuggestions();
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [target, popupVisible, marksPopupVisible, vkbInsert, hidePopup, hideMarksPopup, showMarksPopup, highlightPopupItem, normAndNotify, updateModifierState, refreshSuggestions]);
+  }, [pocket, target, popupVisible, marksPopupVisible, vkbInsert, hidePopup, hideMarksPopup, showMarksPopup, highlightPopupItem, normAndNotify, updateModifierState, refreshSuggestions]);
 
   /** 点击建议按钮——删除已输入前缀,插入完整公式 */
   const handleSuggestionClick = useCallback((e: React.PointerEvent) => {
@@ -932,7 +942,7 @@ export default function CubeVirtualKeyboard({ target, onInput, enableMarks = fal
             <button type="button" data-key="'" className={`vkb-key-btn${primeDisabled ? ' vkb-disabled' : ''}`}>{'\''}
             </button>
             <button type="button" className="vkb-key-btn" data-key="2">2</button>
-            <button type="button" data-key="w" className={`vkb-key-btn${modifierDisabled ? ' vkb-disabled' : ''}`}>w</button>
+            {!pocket && <button type="button" data-key="w" className={`vkb-key-btn${modifierDisabled ? ' vkb-disabled' : ''}`}>w</button>}
             <button type="button" className="vkb-key-btn" data-key="/">/</button>
             <button type="button" className="vkb-key-btn" data-key="()">()</button>
             <button type="button" className="vkb-key-btn" data-key="[]">[]</button>
@@ -941,9 +951,9 @@ export default function CubeVirtualKeyboard({ target, onInput, enableMarks = fal
             <button type="button" className="vkb-key-btn" data-key="x">x</button>
             <button type="button" className="vkb-key-btn" data-key="y">y</button>
             <button type="button" className="vkb-key-btn" data-key="z">z</button>
-            <button type="button" className="vkb-key-btn" data-key="M">M</button>
-            <button type="button" className="vkb-key-btn" data-key="E">E</button>
-            <button type="button" className="vkb-key-btn" data-key="S">S</button>
+            {!pocket && <button type="button" className="vkb-key-btn" data-key="M">M</button>}
+            {!pocket && <button type="button" className="vkb-key-btn" data-key="E">E</button>}
+            {!pocket && <button type="button" className="vkb-key-btn" data-key="S">S</button>}
             <button type="button" className="vkb-key-btn" data-key="+">+</button>
             <button type="button" className="vkb-key-btn" data-key="-">-</button>
           </div>
@@ -1061,14 +1071,22 @@ export default function CubeVirtualKeyboard({ target, onInput, enableMarks = fal
           data-site-surface="popover"
           style={{ left: marksPopupPos.left, top: marksPopupPos.top }}
         >
-          {MARK_ITEMS.filter(it => enableMarks || typeof it.label === 'string').map(it => (
+          {MARK_ITEMS.filter(it => onFingerMark
+            ? it.key !== 'mark-wavy'
+            : enableMarks || typeof it.label === 'string').map(it => (
             <button
               type="button"
               key={it.key}
               className={`vkb-popup-item ${activeMark === it.key ? 'active' : ''}`}
-              title={tr(it.tip)}
-              aria-label={tr(it.tip)}
+              title={onFingerMark && it.key === 'mark-s' ? tr({ zh: '中指', en: 'Middle finger' })
+                : onFingerMark && it.key === 'mark-em' ? tr({ zh: '拇指', en: 'Thumb' })
+                : onFingerMark && it.key === 'mark-u' ? tr({ zh: '指甲', en: 'Fingernail' }) : tr(it.tip)}
+              aria-label={onFingerMark && it.key === 'mark-s' ? tr({ zh: '中指', en: 'Middle finger' })
+                : onFingerMark && it.key === 'mark-em' ? tr({ zh: '拇指', en: 'Thumb' })
+                : onFingerMark && it.key === 'mark-u' ? tr({ zh: '指甲', en: 'Fingernail' }) : tr(it.tip)}
               data-mk={it.key}
+              aria-pressed={onFingerMark && (it.key === 'mark-s' || it.key === 'mark-em' || it.key === 'mark-u')
+                ? fingerMarkSelected?.(it.key.slice(5) as 'u' | 's' | 'em') : undefined}
               onPointerDown={e => e.preventDefault()}
               onClick={() => {
                 handleMarkItem(it.key);

@@ -88,6 +88,26 @@
   background: color-mix(in srgb, var(--destructive) 30%, transparent);
   box-shadow: 0 0 0 1px var(--destructive);
 }
+/* Marked algorithms use the mirror for glyphs as well as highlighting. The
+   textarea keeps native selection, editing and caret geometry without drawing
+   an unformatted copy over the styled moves. */
+.sim-player-hl--formatted {
+  color: var(--foreground);
+}
+.sim-player-hl--formatted s { text-decoration: line-through; }
+.sim-player-hl--formatted u {
+  text-decoration: underline;
+  text-underline-offset: 0.14em;
+}
+.sim-player-hl--formatted em { font-style: italic; }
+.sim-player-input--formatted {
+  color: transparent;
+  caret-color: var(--foreground);
+}
+.sim-player-input--formatted::selection {
+  color: transparent;
+  background: color-mix(in srgb, var(--accent) 35%, transparent);
+}
 /* "Currently playing" move — brand orange, follows playback position (step
    forward/back, play, or clicking into the box). Geometry copied verbatim from
    twizzle's TwistyAlgViewer.css (.wrapper.current-move): the negative margin

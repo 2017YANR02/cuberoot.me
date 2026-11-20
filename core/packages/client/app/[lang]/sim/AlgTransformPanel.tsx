@@ -10,8 +10,9 @@ import { useT } from '@/hooks/useT';
 import { mirrorAlg, rotateAlg } from '@/lib/cube3';
 import { editCubeText, cubeTextMoves, oppositeMove, transformCubeText, hasHandNotation, moveSourceGroup, moveAtFirstExecution } from './alg-manipulation';
 
-export default function AlgTransformPanel({ text, setup, order, onApply, editing, onEditingChange, editorSlot, onSelect, basicTools, undoTool, endTools }: {
+export default function AlgTransformPanel({ text, setup, order, onApply, editing, onEditingChange, editorSlot, onSelect, basicTools, undoTool, endTools, hasFingerMarks = false }: {
   text: string; setup: string; order: number;
+  hasFingerMarks?: boolean;
   basicTools: ReactNode; undoTool: ReactNode; endTools: ReactNode;
   onApply: (setup: string, text: string, caret?: number) => () => void;
   editing: boolean; onEditingChange: (editing: boolean) => void; editorSlot: HTMLElement | null;
@@ -27,10 +28,11 @@ export default function AlgTransformPanel({ text, setup, order, onApply, editing
   const restoreEditFocus = useRef(false);
   const [history, setHistory] = useState<{ setup: string; result: string; undo: () => void }[]>([]);
   const parsed = useMemo(() => {
+    if (hasFingerMarks) return null;
     try {
       return { tokens: cubeTextMoves(text) };
     } catch { return null; }
-  }, [text]);
+  }, [text, hasFingerMarks]);
   const enabled = !!parsed?.tokens.length;
   const index = selected?.text === text && parsed && selected.index < parsed.tokens.length ? selected.index : null;
   // Selecting another source move mounts a new anchored menu; remeasure that anchor.

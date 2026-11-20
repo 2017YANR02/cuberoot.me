@@ -178,10 +178,9 @@ export interface ControlSupport {
   /** 隔离(只看某类块):inverse of carve. True iff the engine is active and the puzzle
    *  declares isolate kinds. The kinds themselves are in ResolvedCaps.isolate. */
   isolate: boolean;
-  /** 手指(指法演示):双手握持 + 腕转/弹指跟层动画。仅 3x3(手势姿态按
-   *  order-3 的几何标定;镜面块形不均不贴手)。 */
+  /** 手指(指法演示):双手握持 + 腕转/弹指跟层动画。适用标准二至四阶。 */
   hands: boolean;
-  /** 调试:手部 MediaPipe 风格骨架叠加线(关节点+连线)。同 hands 一样仅 3x3。 */
+  /** 调试:手部 MediaPipe 风格骨架叠加线(关节点+连线)。仅三阶。 */
   handsSkeleton: boolean;
   /** 按阶段展示色块(twizzle edit 的 Stickering 下拉,issue #27)。NxN(order≥2)走
    *  引擎遮罩(engine/nxn/stickering.ts);megaminx / fto 在 cubing.js 渲染下走原生
@@ -272,8 +271,8 @@ export function resolveCaps(kind: SimPuzzle, renderer: SimRenderer): ResolvedCap
       carve: carve !== null,
       isolate: isolate.length > 0,
       // 手指(指法演示): rig 的握持/手势按 order-3 标定,且要求 NxN 引擎的
-      // table.groups 逐层 angle 可轮询 → 仅 3x3(镜面走 'mirror' kind,不含)。
-      hands: kind === 3,
+      // table.groups 逐层 angle 可轮询 → 标准二至四阶(镜面走 'mirror' kind,不含)。
+      hands: kind === 2 || kind === 3 || kind === 4,
       handsSkeleton: kind === 3,
       // 阶段色块:NxN 引擎(1 阶无层可分)、SQ1 自有 CO/EO/CP/EP 遮罩,
       // 或 cubing.js 原生支持的 megaminx / fto。

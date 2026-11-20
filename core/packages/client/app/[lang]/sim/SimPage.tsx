@@ -128,6 +128,7 @@ import {
   loadKeymap, saveKeymap, resetKeymap as resetKeymapStorage, type KeyMove,
 } from './keymap';
 import { DRAW_PUZZLES, normalizeDrawPuzzle } from './puzzleOptions';
+import { pocketKeyboardMove, pocketInvalidSpans } from './pocketMoves';
 import { engineHistoryAlgorithm } from './engineHistory';
 import './sim.css';
 
@@ -273,6 +274,7 @@ const SIM_QUERY_PARSERS = {
   drawPuzzle: parseAsString,
   imageAlg: parseAsString,
   alg: parseAsString,
+  algHtml: parseAsString,
   setup: parseAsString,
   // The timer uses csTimer's face names. Share the convention with the text:
   // DR/DL already exist in cubing.js but denote different faces there.
@@ -1414,7 +1416,7 @@ function SimEditor({ scope = '', active, seed, snapshotRef, onModeChange, onNew,
       let hintsAnimating = false;
       for (const h of allHints) if (h.tick(dt, h === activeHints ? world.camera : undefined)) hintsAnimating = true;
       if (hintsAnimating) world.dirty = true;
-      // 手部指法 rig(3x3 + 设置开启时才存在):轮询转层角度驱动手势,动着就重渲。
+      // 二、三阶的手部指法 rig:轮询转层角度驱动手势,动着就重渲。
       if (world.hands && world.hands.tick(dt)) world.dirty = true;
       if (world.dirty || world.cube.dirty) {
         // 让 U 面中心 logo 贴片跟住它所贴的实体中心块(转层动画 + 整方旋转都跟手)。
@@ -1785,6 +1787,7 @@ function SimEditor({ scope = '', active, seed, snapshotRef, onModeChange, onNew,
       if (!world) return;
       const cube = asNxN(world);
       if (cube) {
+        if (world.puzzleKind === 2 && !pocketKeyboardMove(k.sign)) return;
         e.preventDefault();
         const action = new TwistAction(k.sign, k.reverse, 1);
         cube.twister.twist(action, false, true);
@@ -1809,19 +1812,19 @@ function SimEditor({ scope = '', active, seed, snapshotRef, onModeChange, onNew,
     return () => window.removeEventListener('keydown', onKey);
   }, [active, animationMode, handleUndo, handleRedo]);
 
-  const onAlgChange = useCallback((alg: string) => {
-    setQuery({ alg: alg || null });
+  const onAlgChange = useCallback((alg: string, algHtml?: string) => {
+    return setQuery({ alg: alg || null, algHtml: algHtml || null });
   }, [setQuery]);
 
   const onSetupChange = useCallback((setup: string) => {
     setQuery({ setup: setup || null });
   }, [setQuery]);
 
-  const copySimLink = useCallback(async (setup: string, alg: string) => {
+  const copySimLink = useCallback(async (setup: string, alg: string, algHtml?: string) => {
     const url = new URL(window.location.href);
     // nuqs updates React before flushing browser history. Merge its current state
     // and the immediate drafts so a copy after a turn / notation switch is complete.
-    for (const [key, value] of Object.entries({ ...query, setup, alg })) {
+    for (const [key, value] of Object.entries({ ...query, setup, alg, algHtml })) {
       if (value == null || value === '') url.searchParams.delete(key);
       else url.searchParams.set(key, value);
     }
@@ -1847,8 +1850,8 @@ function SimEditor({ scope = '', active, seed, snapshotRef, onModeChange, onNew,
   const onAlgPick = useCallback((setup: string, alg: string) => {
     const world = worldRef.current;
     if (!world) return;
-    world.cube.twister.setup(setup);
-    setQuery({ setup: setup || null, alg: alg || null });
+    if (world.puzzleKind !== 2 || (!pocketInvalidSpans(setup) && !pocketInvalidSpans(alg))) world.cube.twister.setup(setup);
+    setQuery({ setup: setup || null, alg: alg || null, algHtml: null });
   }, [setQuery]);
 
   const getCanvas = useCallback((): HTMLCanvasElement | null => {
@@ -2603,6 +2606,7 @@ function SimEditor({ scope = '', active, seed, snapshotRef, onModeChange, onNew,
             activeCube={activeCube}
             clearFrozen={clearPartialFreeze}
             alg={algParam}
+            algHtml={query.algHtml ?? undefined}
             setup={setupParam}
             onAlgChange={onAlgChange}
             onSetupChange={onSetupChange}

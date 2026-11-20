@@ -5,8 +5,10 @@ import AlgInput, { type AlgInputProps } from '@/components/AlgInput';
 import { Play, Shuffle, Search, Loader2 } from '@app-foundation/icons/lucide';
 import { ClearButton } from '@/components/ClearButton';
 import { useT } from '@/hooks/useT';
+import { algHtmlText, sanitizeAlgHtml } from '@/lib/alg_html';
+import { hasFingerMarks, sliceAlgHtml, spliceAlgHtml } from '@/lib/alg-finger-marks';
 
-export type SimAlgHighlightSpan = { text: string; bad?: boolean; current?: boolean };
+export type SimAlgHighlightSpan = { text: string; bad?: boolean; current?: boolean; html?: string };
 
 type Props = {
   idPrefix?: string;
@@ -21,6 +23,9 @@ type Props = {
   };
   alg: {
     text: string;
+    html?: string;
+    onMarkedChange?: (text: string, html: string) => void;
+    onKeyDown?: AlgInputProps['onKeyDown'];
     elementRef: RefObject<HTMLTextAreaElement | null>;
     spans: readonly SimAlgHighlightSpan[];
     showOverlay: boolean;
@@ -59,6 +64,7 @@ export default function SimAlgEditor({
   idPrefix = '', setup, alg, is3x3, algStm, scramble, setupExtras, autofill, notationControls, algHelp, moveEditing, moveEditorRef,
 }: Props) {
   const t = useT();
+  const formatted = !!alg.onMarkedChange && alg.showOverlay && hasFingerMarks(alg.html ?? '');
   return (
     <>
       {scramble.previewing && <div className="sim-preview-notice" role="status">
@@ -142,16 +148,37 @@ export default function SimAlgEditor({
       {setup.error && <p id={`${idPrefix}sim-setup-error`} className="sim-input-error" role="status">{setup.error}</p>}
       <label className="sim-field-label" htmlFor={`${idPrefix}sim-alg`}>{t('公式', 'Algorithm')}</label>
       <div className="sim-player-row">
-        <div className={'sim-player-hlwrap' + (moveEditing ? ' sim-player-hlwrap--editing' : '')}>
+        <div className={'sim-player-hlwrap' + (moveEditing ? ' sim-player-hlwrap--editing' : '')}
+          onCopy={e => {
+            const el = alg.elementRef.current;
+            if (!alg.html || !el || e.target !== el || el.selectionStart === el.selectionEnd) return;
+            e.preventDefault();
+            e.clipboardData.setData('text/plain', el.value.slice(el.selectionStart, el.selectionEnd));
+            e.clipboardData.setData('text/html', sliceAlgHtml(alg.html, el.selectionStart, el.selectionEnd));
+          }}
+          onPaste={e => {
+            const el = alg.elementRef.current;
+            const raw = e.clipboardData.getData('text/html');
+            if (!raw || !el || e.target !== el || !alg.onMarkedChange) return;
+            const html = sanitizeAlgHtml(raw);
+            if (!/<(?:s|u|em)[ >]/.test(html)) return;
+            e.preventDefault();
+            const caret = el.selectionStart + algHtmlText(html).length;
+            const next = spliceAlgHtml(alg.html ?? '', el.selectionStart, el.selectionEnd, html);
+            el.value = algHtmlText(next);
+            el.setSelectionRange(caret, caret);
+            alg.onMarkedChange(el.value, next);
+          }}
+        >
           <div ref={moveEditorRef} hidden={!moveEditing} className="sim-move-editor-slot" />
           {alg.showOverlay && !moveEditing && (
-            <div className="sim-player-hl" aria-hidden="true">
+            <div className={'sim-player-hl' + (formatted ? ' sim-player-hl--formatted' : '')} aria-hidden="true">
               {alg.spans.map((s, i) => (
                 <span
                   key={i}
                   className={[s.bad && 'bad', s.current && 'current'].filter(Boolean).join(' ') || undefined}
                 >
-                  {s.text}
+                  {s.html ? <span dangerouslySetInnerHTML={{ __html: s.html }} /> : s.text}
                 </span>
               ))}
             </div>
@@ -167,12 +194,13 @@ export default function SimAlgEditor({
             spellCheck={false}
             autoSpace={alg.autoSpace}
             autoResize
-            className={alg.showOverlay ? 'sim-player-input sim-player-input--hl' : 'sim-player-input'}
+            className={'sim-player-input' + (alg.showOverlay ? ' sim-player-input--hl' : '') + (formatted ? ' sim-player-input--formatted' : '')}
             placeholder={t('解法', 'Solution')}
-            title={is3x3 ? t('换握：↑ 上起手、↓ 下起手、↑↑ 半转握姿（中起手完成 R2／L2 后的姿态）、· 中起手。↑↑ 后无空格为右手、有空格为左手（含串尾）；↑／↓／· 沿用紧贴为右手、空白或串尾为左手；↑｜↑ 为右、左依次上起手。', 'Grips: ↑ up, ↓ down, ↑↑ half-turn grip (home after R2/L2), · home. ↑↑: no following space means right, whitespace means left, including at the end. ↑/↓/·: glued means right; whitespace or end means left. ↑｜↑ sets right then left hand up.') : undefined}
+            title={is3x3 ? t('换握：↑ 上起手、↓ 下起手、↑↑ 向上半转换握（右手 R2／左手 L′2 方向）、↓↓ 向下半转换握（手指落点相同、腕臂扭转相反）、· 中起手。↑↑／↓↓ 后无空格为右手、有空格为左手（含串尾）；↑／↓／· 沿用紧贴为右手、空白或串尾为左手；↑｜↑ 为右、左依次上起手。', 'Grips: ↑ up, ↓ down, ↑↑ half-turn via up (right R2 / left L′2), ↓↓ half-turn via down (same finger contacts, opposite wrist and forearm twist), · home. ↑↑/↓↓: no following space means right, whitespace means left, including at the end. ↑/↓/·: glued means right; whitespace or end means left. ↑｜↑ sets right then left hand up.') : undefined}
             onFocus={alg.onFocus}
             onClick={alg.onClick}
             onChange={alg.onChange}
+            onKeyDown={alg.onKeyDown}
             onCaretChange={alg.onCaretChange}
           />
           {!moveEditing && autofill}

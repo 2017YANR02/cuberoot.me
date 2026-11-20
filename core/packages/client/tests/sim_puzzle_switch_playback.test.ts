@@ -29,6 +29,7 @@ describe('sim playback across active cube changes', () => {
   let world: World;
   let ordinaryCubes: Set<Cube>;
   let setPuzzle: (kind: SimPuzzle) => void;
+  let publishAlg: (value: string) => void;
   let publishWorld: () => void;
   let setActive: (active: boolean) => void;
 
@@ -61,14 +62,16 @@ describe('sim playback across active cube changes', () => {
     vi.unstubAllGlobals();
   });
 
-  async function mount(initial: SimPuzzle = 3, cold = false) {
+  async function mount(initial: SimPuzzle = 3, cold = false, onAlgChange: () => void | Promise<void> = () => {}, hands = DEFAULT_SETTINGS.hands) {
     function Harness() {
       const [active, changeActive] = useState(true);
       setActive = changeActive;
       const [kind, changeKind] = useState(initial);
       const [readyWorld, setReadyWorld] = useState<World | null>(cold ? null : world);
       const [activeCube, setActiveCube] = useState<World['cube'] | null>(null);
-      const [settings, setSettings] = useState({ ...DEFAULT_SETTINGS, animatePlayback: false });
+      const [settings, setSettings] = useState({ ...DEFAULT_SETTINGS, animatePlayback: false, hands });
+      const [alg, changeAlg] = useState('U F');
+      publishAlg = changeAlg;
       setPuzzle = changeKind;
       publishWorld = () => setReadyWorld(world);
       // Match the production parent/child ordering: the child's effects first see
@@ -81,7 +84,7 @@ describe('sim playback across active cube changes', () => {
       }, [kind, readyWorld]);
       return createElement(PlayerControls, {
         active, world: readyWorld, activeCube, clearFrozen: () => world.controller.clearFrozen(),
-        setup: 'R', alg: 'U F', onSetupChange: () => {}, onAlgChange: () => {},
+        setup: 'R', alg, onSetupChange: () => {}, onAlgChange,
         order: typeof kind === 'number' ? kind : 3,
         puzzleKind: kind,
         settings, onSettingsChange: setSettings, canUseCustomLogo: false,
@@ -109,6 +112,60 @@ describe('sim playback across active cube changes', () => {
     expect(host.querySelector<HTMLTextAreaElement>('textarea[placeholder="Scramble"]')?.value).toBe('R');
     expect(host.querySelector<HTMLTextAreaElement>('textarea[placeholder="Solution"]')?.value).toBe('U F');
   }
+
+  it.each([
+    [true, "R M'", 2, 'r'],
+    [false, "R M'", 1, 'R'],
+    [true, "R U M'", 1, 'R'],
+    [true, "R M2", 1, 'R'],
+  ] as const)('steps through %s hand playback of %s in written-token coordinates', async (hands, alg, step, applied) => {
+    await mount(3, false, undefined, hands);
+    await act(async () => publishAlg(alg));
+    await act(async () => button('Skip to start').click());
+    await act(async () => button('Step forward').click());
+    const timeline = host.querySelector<HTMLInputElement>('input[type="range"]')!;
+    expect(timeline.value).toBe(String(step));
+    expectState('R ' + applied);
+    expect(host.querySelector<HTMLTextAreaElement>('#sim-alg')?.value).toBe(alg);
+    await act(async () => button('Step back').click());
+    expect(timeline.value).toBe('0');
+    expectState('R');
+  });
+
+  it.each(['before flush', 'after flush'])('plays all four pocket moves when a prefix echoes %s', async timing => {
+    let flush!: () => void;
+    const pending = new Promise<void>(resolve => { flush = resolve; });
+    await mount(2, false, () => pending);
+    const input = host.querySelector<HTMLTextAreaElement>('#sim-alg')!;
+    const solution = "R U R' U'";
+    await act(async () => input.focus());
+    for (const text of ['R', 'R U', "R U R'", solution]) {
+      await act(async () => {
+        input.value = text;
+        input.dispatchEvent(new InputEvent('input', { bubbles: true, inputType: 'insertText' }));
+      });
+    }
+    // The URL subscriber may first render a prefix from the same editing burst.
+    const timeline = host.querySelector<HTMLInputElement>('input[aria-label="Scrub playback"]')!;
+    if (timing === 'after flush') await act(async () => flush());
+    await act(async () => publishAlg('R'));
+    if (timing === 'before flush') expect(timeline.max).toBe('4');
+    await act(async () => {
+      flush();
+      publishAlg(solution);
+    });
+    expect(input.value).toBe(solution);
+    expect(timeline.max).toBe('4');
+    await act(async () => button('Skip to start').click());
+    vi.useFakeTimers();
+    const tickMs = Math.max(80, Math.round(mapFrames(DEFAULT_SETTINGS.speed) / 60 * 1000));
+    await act(async () => button('Play').click());
+    for (const [index, prefix] of ['R', 'R U', "R U R'", solution].entries()) {
+      await act(async () => { await vi.advanceTimersByTimeAsync(tickMs); });
+      expect(timeline.value).toBe(String(index + 1));
+      expectState('R ' + prefix); // The harness starts with an R setup.
+    }
+  });
 
   it.each([
     ['Orientation', 'y', 'U L'],

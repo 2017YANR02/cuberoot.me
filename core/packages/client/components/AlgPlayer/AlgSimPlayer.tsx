@@ -452,7 +452,7 @@ const AlgSimPlayer = forwardRef<AlgPlayerHandle, {
             sequence.push({ axis, layers: rotations.map(rotation => rotation.group.layer), quarters: rotations[0].twist });
           }
           const grips = handsModule.simulateGrips(sequence, nxn.order);
-          rig.setGrips(grips.R, grips.L);
+          rig.setGrips(grips.R, grips.L, grips.wristAngles);
         };
         restoreGripsRef.current(movesRef.current.slice(0, stepRef.current));
         const updateHands = () => {

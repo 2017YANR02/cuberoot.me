@@ -271,9 +271,10 @@ export default function SimAppearancePanel({
   const caps = resolveCaps(puzzleKind, renderer);
   const handsEnabled = caps.supports.hands && settings.hands === true;
   const handLoad = useHandsLoadState(world, handsEnabled);
+  const fullBody = puzzleKind === 3 && settings.fullBody;
   const loadPhase = handLoad.hands !== 'ready' ? handLoad.hands
-    : settings.fullBody ? handLoad.body : 'ready';
-  const loadingBody = handLoad.hands === 'ready' && settings.fullBody;
+    : fullBody ? handLoad.body : 'ready';
+  const loadingBody = handLoad.hands === 'ready' && fullBody;
   const roomsActive = roomCubeActive(puzzleKind, settings.roomTheme) && caps.engineActive;
   // Rooms replace only the visible surface; keep the user's ordinary cube settings.
   if (roomsActive) Object.assign(caps.supports, {
@@ -331,7 +332,7 @@ export default function SimAppearancePanel({
   const [avatarPreview, setAvatarPreview] = useState(false);
   useEffect(() => {
     if (!world || !avatarPreview) return;
-    if (!settings.hands || !settings.fullBody || !caps.supports.hands) {
+    if (!settings.hands || !fullBody || !caps.supports.hands) {
       setAvatarPreview(false);
       resetWorldView(world, settings);
       return;
@@ -355,7 +356,7 @@ export default function SimAppearancePanel({
     frame = requestAnimationFrame(focus);
     window.addEventListener('resize', focus);
     return () => { cancelAnimationFrame(frame); window.removeEventListener('resize', focus); };
-  }, [avatarPreview, world, settings, caps.supports.hands]);
+  }, [avatarPreview, world, settings, fullBody, caps.supports.hands]);
   const [avatarError, setAvatarError] = useState('');
   const avatarVersion = useRef(0);
   const latestSettings = useRef({ settings, onSettingsChange });
@@ -632,8 +633,8 @@ export default function SimAppearancePanel({
                 )}
                 <div className="sim-hand-toggles">
                   <Toggle label={t('指甲', 'Nails')} value={settings.showNails} onChange={(v) => set('showNails', v)} />
-                  <Toggle label={t('全身人物', 'Full body')} value={settings.fullBody === true} onChange={(v) => set('fullBody', v)} />
-                  <Toggle label={t('骨架线条', 'Skeleton overlay')} value={settings.handsSkeleton} onChange={(v) => set('handsSkeleton', v)} />
+                  {puzzleKind === 3 && <Toggle label={t('全身人物', 'Full body')} value={settings.fullBody === true} onChange={(v) => set('fullBody', v)} />}
+                  {caps.supports.handsSkeleton && <Toggle label={t('骨架线条', 'Skeleton overlay')} value={settings.handsSkeleton} onChange={(v) => set('handsSkeleton', v)} />}
                 </div>
                 {settings.showNails && (<ColorRow
                   label={t('指甲配色', 'Nail colour')}
@@ -679,7 +680,7 @@ export default function SimAppearancePanel({
                     </>
                   )}
                 </ColorRow>)}
-                {settings.fullBody && (
+                {fullBody && (
                   <div className="sim-person-avatar">
                     <span>{t('人物头像', 'Character face')}</span>
                     {settings.bodyAvatar && <img src={settings.bodyAvatar} alt={t('当前人物头像', 'Current character face')} width={40} height={40} />}
@@ -719,7 +720,7 @@ export default function SimAppearancePanel({
               {/* SMPL-X 全身:藏拼图与手,只看原版 SMPL-X neutral T-pose 人体(手/臂比例上游真值)。
                   资产逐机转换(convert-mano.py),缺失时开了也无效果 —— 不灰,调试自担。
                   平面拼图是唯一的例外:它根本没有 3D 场景可以站人,那不是"资产可能缺",是没地方放。 */}
-              {!caps.flat && (<Toggle label={t('SMPL-X 全身', 'SMPL-X body')} value={settings.showSmplxBody === true} onChange={(v) => set('showSmplxBody', v)} disabled={caps.flat} title={hint(!caps.flat)} />)}
+              {!caps.flat && puzzleKind !== 2 && (<Toggle label={t('SMPL-X 全身', 'SMPL-X body')} value={settings.showSmplxBody === true} onChange={(v) => set('showSmplxBody', v)} disabled={caps.flat} title={hint(!caps.flat)} />)}
               {/* 挖块:仅当该拼图有「原生转动元素」(角/面/棱)可掀起时可选;NxN/SQ1 无单一会动块组,
                   cubing.js 拼图引擎未驱动 → 灰掉。 */}
               {caps.supports.carve && (<label className={'sim-toggle' + (caps.supports.carve ? '' : ' sim-toggle--disabled')} title={hint(caps.supports.carve)}>
