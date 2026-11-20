@@ -1,5 +1,7 @@
 # AI 聊天监控
 
+2026-11-16 本地候选新增：`metrics.policy.version` 为 `2026-11-16-reliability-1`，模型调用记录 `promptFingerprint` 和 `configurationFingerprint`，均为 SHA-256。配置指纹只含非秘密模型、端点 origin、模式、输出与上下文预算、工具名和供应商参数；不保存凭据或提示词正文。可选 `SITE_ASSISTANT_RELEASE_SHA` 通过格式校验后写入 policy.release，未配置则省略。下文旧策略日期是历史记录口径；本轮尚未发布，详见[验证记录](../../product/assistant/benchmarks/assistant-reliability-2026-11-16.md)。
+
 入口：管理员登录后访问 `/zh/admin#chat-monitoring`。前后端及 migration 0277 必须一起发布；旧的未记录聊天无法恢复。
 
 ## 统计口径

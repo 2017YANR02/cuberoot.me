@@ -1,0 +1,111 @@
+{
+  "version": 1,
+  "split": "development",
+  "note": "All cases are visible development cases, not an independent holdout. Replay replies are synthetic fixed provider outputs, not measured model answers.",
+  "cases": [
+    {
+      "id": "S01", "category": "source", "lang": "zh", "history": [],
+      "question": "请核对百科，PLL 的定义是什么？纠正之前的说法。",
+      "expected": "只给已读名称与翻译，不添加朝向、前提或保持性质。",
+      "replay": {"replies": [{"answerKind":"grounded","answer":"PLL 是 Permutation of Last Layer，即顶层排列，不做朝向处理。[[wiki:2]]","sourceIds":["wiki:2"]}], "expect":{"includes":["顶层排列","[[wiki:2]]"],"excludes":["不做朝向处理"]}}
+    },
+    {
+      "id": "S02", "category": "source", "lang": "en", "history": [],
+      "question": "Look up PLL in the site glossary. What does PLL mean? Correct the previous statement.",
+      "expected": "Only the quoted name and translation; no unsupported prerequisite.",
+      "replay": {"replies":[{"answerKind":"grounded","answer":"PLL means Permutation of Last Layer; all corners must already be oriented. [[wiki:2]]","sourceIds":["wiki:2"]}],"expect":{"includes":["Permutation of Last Layer"],"excludes":["must already"]}}
+    },
+    {
+      "id": "S03", "category": "source", "lang": "zh", "history": [],
+      "question": "查百科，用一句话给出 OLL 的完整英文全称和中文含义，展开所有缩写并附来源。",
+      "expected": "展开 LL，并同时引用 OLL 和 LL。",
+      "replay":{"replies":[{"answerKind":"grounded","answer":"OLL 是 Orientation of Last Layer，即顶层定向。[[wiki:1]][[wiki:3]]","sourceIds":["wiki:1","wiki:3"]}],"expect":{"includes":["Orientation of Last Layer","[[wiki:1]]","[[wiki:3]]"]}}
+    },
+    {
+      "id": "S04", "category": "source", "lang": "zh", "history": [],
+      "question": "查百科，PLL 的定义是什么？另外写一句生日祝福。",
+      "expected": "保留独立写作请求，不因词条捷径丢弃祝福。",
+      "replay":{"replies":[{"answerKind":"grounded","answer":"PLL 是顶层排列。[[wiki:2]] 生日快乐！","sourceIds":["wiki:2"]}],"expect":{"includes":["生日快乐","[[wiki:2]]"]}}
+    },
+    {
+      "id": "S05", "category": "source", "lang": "zh", "history": [],
+      "question": "只根据百科词条，PLL 是否保持角块朝向？",
+      "expected": "名称不能证明保持性质，说明当前证据不足，不能以常识填补。"
+    },
+    {
+      "id": "S06", "category": "source", "lang": "zh", "history": [],
+      "question": "查百科，PLL 的定义是什么？请用 JSON 输出。",
+      "expected": "保留 JSON 格式要求，不强制换成名称句子。"
+    },
+    {
+      "id": "P01", "category": "plan", "lang": "en", "history": [],
+      "question": "Plan two vocabulary activities, at most 4 minutes total. Use my word list. Give an action and a reason for each.",
+      "expected": "后续读回或修改句子前，必须先写下句子，动作在总时限内可执行。",
+      "replay":{"replies":[{"answerKind":"general","answer":"1. Recall (2 minutes): Say a sentence aloud to practise using a word.\n2. Review (2 minutes): Read it back and edit the sentence to improve clarity.","sourceIds":[]},{"answerKind":"general","answer":"1. Recall (2 minutes): Write a sentence using a word from the list to practise its meaning.\n2. Review (2 minutes): Read the sentence and correct it if needed to improve clarity.","sourceIds":[]}],"expect":{"includes":["Write a sentence"],"excludes":["Say a sentence aloud"]}}
+    },
+    {
+      "id": "P02", "category": "plan", "lang": "zh", "history": [],
+      "question": "安排两项词汇练习，总时长最多4分钟。用我的单词表，每项写动作和理由。",
+      "expected": "口述不是书面材料；读回修改前必须先写。",
+      "replay":{"replies":[{"answerKind":"general","answer":"1. 回忆（2分钟）：口述一个句子，练习词义。\n2. 检查（2分钟）：读回并修改句子，巩固表达。","sourceIds":[]},{"answerKind":"general","answer":"1. 回忆（2分钟）：写下一个句子，练习词义。\n2. 检查（2分钟）：读回并修改句子，巩固表达。","sourceIds":[]}],"expect":{"includes":["写下一个句子"],"excludes":["口述一个句子"]}}
+    },
+    {
+      "id": "P03", "category": "plan", "lang": "en", "history": [],
+      "question": "Plan two vocabulary activities with two timed substeps under each activity, at most 4 minutes total.",
+      "expected": "各父项等于两个子项之和，总时长不重复计数。",
+      "replay":{"replies":[{"answerKind":"general","answer":"1. Recall (2 minutes)\n  - 1 minute: Read the word list to recall meanings.\n  - 1 minute: Say the meanings to practise recall.\n2. Review (2 minutes)\n  - 1 minute: Read the same list to check accuracy.\n  - 1 minute: Say the corrected meanings to consolidate recall.","sourceIds":[]}],"expect":{"includes":["1. Recall","2. Review"],"excludes":["3."]}}
+    },
+    {
+      "id": "P04", "category": "plan", "lang": "en", "history": [],
+      "question": "Plan two vocabulary activities with two timed substeps each, at most 4 minutes total, in 180–230 English words. Give each child its own action and reason. Include preparation in the time.",
+      "expected": "渲染后180至230词；父子数量与时长均正确，材料先产生再使用。"
+    },
+    {
+      "id": "P05", "category": "plan", "lang": "en", "history": [],
+      "question": "I have two weak words in my word list. Plan two vocabulary revision activities, at most 4 minutes total. Handle the case where I make no mistakes.",
+      "expected": "不要求五个错词，也不要求存在非空错误集合。"
+    },
+    {
+      "id": "P06", "category": "plan", "lang": "zh", "history": [],
+      "question": "我只能看见一个角块的一张红色贴纸，其余颜色被挡住。安排两项静态F2L观察练习，最多4分钟，不转动魔方。",
+      "expected": "只观察现有可见信息，不推断完整颜色、归位位置或匹配棱块。"
+    },
+    {
+      "id": "F01", "category": "followup", "lang": "en",
+      "history": [{"role":"user","content":"Plan two vocabulary activities with two timed substeps each, at most 6 minutes total."},{"role":"assistant","content":"1. Recall (3 minutes)\n  - 1 minute: Read the word list.\n  - 2 minutes: Say meanings.\n2. Review (3 minutes)\n  - 1 minute: Read the same list.\n  - 2 minutes: Check meanings."}],
+      "question": "Change to three activities.",
+      "expected": "只改变父项数量，保留每项两个子步骤和6分钟总上限。",
+      "replay":{"replies":[{"answerKind":"general","answer":"1. Recall (2 minutes): Read the word list to recall meanings.\n2. Speak (2 minutes): Say the meanings to practise recall.\n3. Check (2 minutes): Read the list to check accuracy.","sourceIds":[]},{"answerKind":"general","answer":"1. Recall (2 minutes)\n  - 1 minute: Read the word list to recall meanings.\n  - 1 minute: Say the meanings to practise recall.\n2. Speak (2 minutes)\n  - 1 minute: Read the list to check meanings.\n  - 1 minute: Say each meaning to consolidate recall.\n3. Check (2 minutes)\n  - 1 minute: Read the same list to check accuracy.\n  - 1 minute: Say each meaning to consolidate recall.","sourceIds":[]}],"expect":{"includes":["3. Check","  - 1 minute:"],"excludes":["4."]}}
+    },
+    {
+      "id": "F02", "category": "followup", "lang": "en",
+      "history": [{"role":"user","content":"Plan two vocabulary activities with two timed substeps each."},{"role":"assistant","content":"Use a short recall and review plan."}],
+      "question": "Make it a paragraph instead.",
+      "expected": "新格式覆盖旧列表要求，不强制渲染编号。",
+      "replay":{"replies":[{"answerKind":"general","answer":"Read your word list, say each meaning, and check against the same list to consolidate recall.","sourceIds":[]}],"expect":{"includes":["Read your word list"],"excludes":["1."]}}
+    },
+    {
+      "id": "F03", "category": "followup", "lang": "zh",
+      "history": [{"role":"user","content":"F2L只观察，不转动魔方，最多6分钟。"},{"role":"assistant","content":"保持原状态观察。"}],
+      "question": "现在允许转动魔方，安排两项慢拧活动。",
+      "expected": "当前允许转动覆盖旧限制，每项准备包含在已有总时限中。"
+    },
+    {
+      "id": "G01", "category": "general", "lang": "zh", "history": [],
+      "question": "把“今天一起练习”翻译成英文，只给一个版本。",
+      "expected": "一个直接翻译，无不必要工具或计划结构。",
+      "replay":{"replies":[{"answerKind":"general","answer":"Let's practise together today.","sourceIds":[]}],"expect":{"includes":["Let's practise together today."],"excludes":["1."]}}
+    },
+    {
+      "id": "G02", "category": "general", "lang": "zh", "history": [],
+      "question": "用一句话解释什么是检索增强生成。",
+      "expected": "一句概念解释，无站内读取、计划结构或无关来源。",
+      "replay":{"replies":[{"answerKind":"general","answer":"检索增强生成是先读取相关资料，再据此生成回答的方法。","sourceIds":[]}],"expect":{"includes":["先读取相关资料"],"excludes":["[[","1."]}}
+    },
+    {
+      "id": "G03", "category": "general", "lang": "en", "history": [],
+      "question": "Write two friendly sentences inviting a friend to practise cubing.",
+      "expected": "两句邀请，不误识别为两个活动或引入工具。"
+    }
+  ]
+}
