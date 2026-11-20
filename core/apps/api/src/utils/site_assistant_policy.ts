@@ -1,3 +1,5 @@
+/** Increment when answer contracts change; historical metrics keep their value. */
+export const ASSISTANT_POLICY_VERSION = '2026-11-18-reliability-52';
 import { SITE_ASSISTANT_ANSWER_MAX_LENGTH, type AssistantThinkingMode } from '@cuberoot/shared/site-assistant';
 
 /** Stable request identity; changing an analysis heading is not a new calculation. */

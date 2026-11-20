@@ -49,6 +49,23 @@ it('sends actual image parts in their original turns through the compatible prov
   expect(request.messages.some((message:any)=>message.role==='assistant'&&message.content==='First answer')).toBe(true);
 });
 const response=(message:object,finish='stop')=>Response.json({id:'test',created:1,model:config.model,choices:[{index:0,finish_reason:finish,message:{role:'assistant',...message}}],usage:{prompt_tokens:1,completion_tokens:1,total_tokens:2}});
+const closingPlan={answerKind:'general',answer:'',sourceIds:[],plan:{inputs:[],activities:[{title:'Recall',seconds:60,steps:[{action:'Say the meaning of "brace }" while the reference stays hidden.',reason:'Test recall without copying.',seconds:60,requires:[],produces:[]}]}]}};
+it.each([false,true])('recovers only a terminal plan delimiter without another call (stream=%s)',async streaming=>{
+  const json=JSON.stringify(closingPlan),at=json.lastIndexOf(']');
+  for(const content of [json.slice(0,at)+json.slice(at+1),json+'}',json.slice(0,at)+'}'+json.slice(at+1)]) {
+    const wire=streaming?new Response('data: '+JSON.stringify({id:'test',object:'chat.completion.chunk',created:1,model:config.model,choices:[{index:0,delta:{role:'assistant',content},finish_reason:'stop'}]})+'\n\ndata: [DONE]\n\n',{headers:{'content-type':'text/event-stream'}}):response({content});
+    const fetcher=vi.fn<typeof fetch>().mockResolvedValue(wire);
+    const result=await createAssistantModel(config,fetcher,AbortSignal.timeout(2000),'').complete({...options,thinking:false,...(streaming?{onText:async()=>{}}:{})});
+    expect(result.plan).toEqual(closingPlan.plan);expect(fetcher).toHaveBeenCalledTimes(1);
+  }
+});
+it('does not infer missing text, interior syntax, evidence or a truncated plan',async()=>{
+  const json=JSON.stringify(closingPlan);
+  for(const [content,finish] of [[json+'}','length'],[json+'}}','stop'],[json.replace('"seconds":60,','"seconds":60 '),'stop'],[json.replace('general','grounded')+'}','stop'],[json.replace('"sourceIds":[]','"sourceIds":["wiki:1"]')+'}','stop'],['{"answerKind":"general","answer":"Hello","sourceIds":[]}}','stop']]) {
+    const fetcher=vi.fn<typeof fetch>().mockResolvedValue(response({content},finish));
+    await expect(createAssistantModel(config,fetcher,AbortSignal.timeout(2000),'').complete({...options,thinking:false})).rejects.toMatchObject({code:'model_output_invalid'});
+  }
+});
 it.each([false,true])('classifies output failures and logs only safe validation metadata (stream=%s)',async streaming=>{
   const warn=vi.spyOn(console,'warn').mockImplementation(()=>{});
   const cases=[

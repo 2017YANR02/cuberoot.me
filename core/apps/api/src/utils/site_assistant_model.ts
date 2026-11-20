@@ -4,6 +4,8 @@ import { createOpenAI } from '@ai-sdk/openai';
 import { ASSISTANT_OPENAI_RESPONSES_PATH, ASSISTANT_OPENAI_BODY_BYTES, ASSISTANT_OPENAI_MAX_TOKENS, signAssistantOpenAI } from '@cuberoot/shared/site-assistant-openai';
 import { createOpenAICompatible } from '@ai-sdk/openai-compatible';
 import { z } from 'zod';
+import { createHash } from 'node:crypto';
+import { ASSISTANT_STRUCTURED_PLAN_GUIDE, assistantStructuredPlanSchema, assistantStructuredPlanOutputSchema, type AssistantPlanOutputConstraints } from './site_assistant_plan.js';
 import { SITE_ASSISTANT_ANSWER_MAX_LENGTH, type AssistantImage, type AssistantMessage } from '@cuberoot/shared/site-assistant';
 import { toolCallSchema } from './site_assistant_tools.js';
 import { AssistantFailure, checkAssistantResponse, type AssistantModelDiagnostic } from './site_assistant_diagnostics.js';
@@ -11,7 +13,8 @@ import type { AssistantConfig } from './site_assistant.js';
 import { recordAssistantModel, recordAssistantContextSelection } from './site_assistant_monitor.js';
 import { composeAssistantContext, assistantMemoryPayload, estimateAssistantTokens, assistantHistoryTurns, AssistantContextBudgetError, type AssistantMemory } from './site_assistant_memory.js';
 
-const answerSchema = z.object({ imageTask: z.enum(['cube-state', 'other']).optional(), answerKind: z.enum(['general','site_content','grounded','image']).optional(), answer: z.string().max(SITE_ASSISTANT_ANSWER_MAX_LENGTH).refine(value => !!value.trim()), sourceIds: z.array(z.string()).max(100), reviewedSourceIds: z.array(z.string()).max(12).optional() });
+const answerSchema = z.object({ imageTask: z.enum(['cube-state', 'other']).optional(), answerKind: z.enum(['general','site_content','grounded','image']).optional(), answer: z.string().max(SITE_ASSISTANT_ANSWER_MAX_LENGTH), plan: assistantStructuredPlanSchema.optional(), sourceIds: z.array(z.string()).max(100), reviewedSourceIds: z.array(z.string()).max(12).optional() });
+type ModelPlanOutput = AssistantPlanOutputConstraints & { independentEnding?:boolean };
 
 /** A completed but malformed answer needs format repair, not another tool plan. */
 export class AssistantOutputError extends AssistantFailure {
@@ -19,20 +22,68 @@ export class AssistantOutputError extends AssistantFailure {
     super('model_output_invalid', undefined, { reason, finishReason, issues });
     this.message = reason === 'output_truncated' ? 'Incomplete model output' : 'Invalid assistant answer format';
   }
-  repairInstruction() {
+  repairInstruction(structuredPlan?:ModelPlanOutput) {
     const issues = this.diagnostic?.issues?.map(issue => `${issue.path}: ${issue.code}`).join('; ');
+    if(structuredPlan){
+      const guide=structuredPlan.independentEnding
+        ? ASSISTANT_STRUCTURED_PLAN_GUIDE.replace('Keep answer:"" when plan is present: the server renders it.', 'Write the requested independent ending directly in answer, inside the JSON object. The server renders plan.')
+        : ASSISTANT_STRUCTURED_PLAN_GUIDE;
+      return `The previous answer failed validation (${this.diagnostic!.reason}${issues ? `; ${issues}` : ''}). Repair the JSON while preserving the requested structured plan and all user constraints. Return one complete object with answerKind, answer, sourceIds and plan; do not replace the plan with prose. Preserve verified evidence and supporting source IDs; a source-free general plan uses answerKind:"general" and sourceIds:[]. Required plan shape: ${JSON.stringify(structuredPlan)}. Do not call tools or invent sources. ${guide}`;
+    }
     return `The previous answer failed validation (${this.diagnostic!.reason}${issues ? `; ${issues}` : ''}). Return one complete JSON object with answerKind, answer (a non-empty plain string), sourceIds (an array of source ID strings), and reviewedSourceIds (an array of at most 12 reviewed source ID strings when reviewing analysis). Do not call tools. Preserve verified evidence and do not invent sources. Example shape only: {"answerKind":"general","answer":"A complete answer.","sourceIds":[]}.`;
   }
 }
 
-function parseAssistantAnswer(text: string, finishReason?: string, allowEmptySourceIds=true) {
+/** Recover only one terminal closing-delimiter typo in a complete general plan.
+ * No strings, values, commas or interior nesting are edited. Schema and all
+ * downstream semantic checks still run; truncated outputs never reach here. */
+function recoverPlanClosingDelimiter(json:string):unknown {
+  if(json.length>64000 || !json.startsWith('{'))return;
+  const tail=json.match(/[\]}\s]+$/);if(!tail)return;
+  const prefix=json.slice(0,tail.index),stack:string[]=[];
+  let quoted=false,escaped=false;
+  for(const char of prefix) {
+    if(quoted) {if(escaped)escaped=false;else if(char==='\\')escaped=true;else if(char==='"')quoted=false;continue;}
+    if(char==='"')quoted=true;
+    else if(char==='{' || char==='[') {stack.push(char==='{'?'}':']');if(stack.length>128)return;}
+    else if(char==='}' || char===']') {if(stack.pop()!==char)return;}
+  }
+  if(quoted || !stack.length)return;
+  const actual=tail[0].replace(/\s/g,''),expected=stack.reverse().join('');
+  if(!actual || Math.abs(actual.length-expected.length)>1)return;
+  let i=0;while(i<Math.min(actual.length,expected.length)&&actual[i]===expected[i])i++;
+  const oneEdit=actual.length===expected.length?actual.slice(i+1)===expected.slice(i+1)
+    :actual.length>expected.length?actual.slice(i+1)===expected.slice(i):actual.slice(i)===expected.slice(i+1);
+  if(!oneEdit || actual===expected)return;
+  try {
+    const value=JSON.parse(prefix+expected);
+    if(value.answerKind==='general' && value.answer==='' && Array.isArray(value.sourceIds) && !value.sourceIds.length && assistantStructuredPlanSchema.safeParse(value.plan).success)return value;
+  } catch { /* Interior syntax or missing values still require model repair. */ }
+}
+
+/** A source-free mixed draft can put its ending outside an otherwise complete
+ * JSON object. Move the single paragraph into answer and run all usual checks. */
+function recoverPlanEnding(json:string):unknown {
+  const tail=/\r?\n[^\S\r\n]*\r?\n([^\r\n]+)$/.exec(json);
+  if(!tail || /[{}\[\]`<>]|https?:\/\//i.test(tail[1]))return;
+  try{
+    const value=answerSchema.safeParse(JSON.parse(json.slice(0,tail.index)));
+    if(value.success && value.data.plan && value.data.answerKind==='general' && !value.data.answer.trim() && !value.data.sourceIds.length)
+      return {...value.data,answer:tail[1].trim()};
+  }catch{ /* The plan must be a complete JSON object. */ }
+}
+
+function parseAssistantAnswer(text: string, finishReason?: string, allowEmptySourceIds=true, independentEnding=false) {
   if (finishReason === 'length') throw new AssistantOutputError('output_truncated', finishReason);
   // Compatible endpoints sometimes include a Markdown fence in JSON mode.
   const json = text.trim().replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, '');
   if (!json.trim()) throw new AssistantOutputError('empty_output', finishReason);
   let parsed: unknown;
   try { parsed = JSON.parse(json); }
-  catch { throw new AssistantOutputError('invalid_json', finishReason); }
+  catch {
+    parsed=finishReason==='stop'?(independentEnding?recoverPlanEnding(json):undefined) ?? recoverPlanClosingDelimiter(json):undefined;
+    if(parsed===undefined)throw new AssistantOutputError('invalid_json', finishReason);
+  }
   // Normalize lossless provider shapes; downstream evidence validation still owns IDs.
   // Missing IDs are safe only for a permitted, citation-free general answer.
   if(parsed && typeof parsed==='object' && !Array.isArray(parsed)) {
@@ -50,6 +101,7 @@ function parseAssistantAnswer(text: string, finishReason?: string, allowEmptySou
     }));
     throw new AssistantOutputError('invalid_schema', finishReason, issues);
   }
+  if(!final.data.answer.trim() && !final.data.plan)throw new AssistantOutputError('invalid_schema',finishReason,[{path:'answer',code:'custom'}]);
   return final.data;
 }
 
@@ -147,6 +199,7 @@ export function createAssistantModel(config: AssistantConfig, fetcher: typeof fe
       unavailableTools?: string[];
       allowTools?: boolean; requireStructuredAnswer?: boolean; isolated?: boolean; allowEmptySourceIds?: boolean;
       round?: number; attempt?: number;
+      structuredPlan?: ModelPlanOutput;
     }) {
       const thinking = options.thinking && (openai || deepseek || qwenThinking);
       const allowTools = options.allowTools ?? !options.finalOnly;
@@ -159,7 +212,12 @@ export function createAssistantModel(config: AssistantConfig, fetcher: typeof fe
         pending = [];
       }
       if(options.followUp) transcript.push({role:'user',content:options.followUp});
-      const system = options.system + '\nAll prose and presentation instructions apply inside the answer string. The final response must be one JSON object with answer and sourceIds, without Markdown fences or text outside that object. sourceIds must be an array of source ID strings, even for a single source; use [] when there are none, never a string or null.';
+      const system = options.system + (options.structuredPlan
+        ? (options.structuredPlan.independentEnding
+          ? '\nPut the activities in plan and write the actual independent ending in the answer string inside the same JSON object. Do not restate the instruction or duplicate the plan in answer. The server renders the activities. '
+          : '\nReturn the constrained plan in the plan field with answer:""; the server renders its titles, actions, reasons and time labels. Do not duplicate the plan as prose. ')
+        : '\nAll prose and presentation instructions apply inside the answer string. ')
+        + 'The final response must be one JSON object with answer and sourceIds, without Markdown fences or text outside that object. sourceIds must be an array of source ID strings, even for a single source; use [] when there are none, never a string or null.';
       const activeTools = !allowTools ? undefined : options.unavailableTools?.length
         ? Object.fromEntries(Object.entries(tools).filter(([name])=>!options.unavailableTools!.includes(name))) : tools;
       const currentTranscript: ModelMessage[] = options.isolated
@@ -210,7 +268,7 @@ export function createAssistantModel(config: AssistantConfig, fetcher: typeof fe
           : options.requiredTool ? { type: 'tool' as const, toolName: options.requiredTool } : 'auto' as const,
         system,
         messages: [...memoryMessages, ...(options.isolated ? reviewConversation : conversation), { role: 'user' as const, content: images.length ? [{ type: 'text' as const, text: JSON.stringify(options.context) }, ...imageParts(images)] : JSON.stringify(options.context) }, ...currentTranscript],
-        ...(openai || deepseek ? { output: Output.object({schema:answerSchema}) } : {}),
+        ...(openai || deepseek ? { output: Output.object({schema:options.structuredPlan?answerSchema.extend({plan:assistantStructuredPlanOutputSchema(options.structuredPlan).optional()}):answerSchema.omit({plan:true})}) } : {}),
         maxOutputTokens, maxRetries: 0, abortSignal: signal,
         ...(thinking || openai ? {} : { temperature: 0 }),
         providerOptions: { [openai ? 'openai' : deepseek ? 'deepseek' : 'bailian']: openai
@@ -221,7 +279,12 @@ export function createAssistantModel(config: AssistantConfig, fetcher: typeof fe
           // below. SDK eager JSON parsing cannot handle the provider's fences.
           : { enable_thinking: thinking, ...(!nativeQwenTools || structured ? { response_format: { type: 'json_object' } } : {}), ...(qwenThinking ? { preserve_thinking: false, ...(thinking ? { thinking_budget: options.effort==='low'?1024:4096, max_completion_tokens: 8192 } : {}) } : {}) } },
       };
-      const recordUsage = recordAssistantModel(config.model, thinking, openai ? 'https://api.openai.com' : origin, { round: options.round, attempt: options.attempt });
+      const fingerprint=(value:unknown)=>createHash('sha256').update(JSON.stringify(value)).digest('hex');
+      const recordUsage = recordAssistantModel(config.model, thinking, openai ? 'https://api.openai.com' : origin, {
+        round: options.round, attempt: options.attempt,
+        promptFingerprint:fingerprint(system),
+        configurationFingerprint:fingerprint({model:config.model,origin,thinking,effort:options.effort,maxOutputTokens,windowTokens,tools:Object.keys(activeTools ?? {}),providerOptions:request.providerOptions}),
+      });
       try {
         const response = options.onText ? streamText(request) : generateText(request);
         let result;
@@ -259,7 +322,7 @@ export function createAssistantModel(config: AssistantConfig, fetcher: typeof fe
         // Retain even a malformed final response so the bounded repair is a new
         // user turn, with the provider's reasoning preserved in its own transcript.
         transcript.push(...result.response.messages);
-        return { calls: [] as unknown[], ...parseAssistantAnswer(result.text, result.finishReason, options.allowEmptySourceIds) };
+        return { calls: [] as unknown[], ...parseAssistantAnswer(result.text, result.finishReason, options.allowEmptySourceIds, options.structuredPlan?.independentEnding) };
       } catch (error) {
         // The SDK can wrap a body-read failure in APICallError. Recover only
         // our own classified cause; provider messages/bodies remain private.
@@ -272,7 +335,7 @@ export function createAssistantModel(config: AssistantConfig, fetcher: typeof fe
         if (NoObjectGeneratedError.isInstance(error)) {
           recordUsage(error.usage);
           try {
-            const final = parseAssistantAnswer(error.text ?? '', error.finishReason, options.allowEmptySourceIds);
+            const final = parseAssistantAnswer(error.text ?? '', error.finishReason, options.allowEmptySourceIds, options.structuredPlan?.independentEnding);
             transcript.push({ role: 'assistant', content: error.text ?? '' });
             return { calls: [] as unknown[], ...final };
           }
