@@ -71,15 +71,28 @@ describe('BluetoothModal direct connection attempt', () => {
     const resetDeviceState = vi.fn(async () => {});
     const resetState = vi.fn();
     const connected = { ...disconnectedCube, status: { ...disconnectedCube.status, connected: true, brand: 'gan-v4' }, resetDeviceState, resetState } as BluetoothCubeHandle;
-    const props = { isZh: false, cube: connected, onClose: vi.fn(), onConnect: vi.fn(async () => {}) };
+    const props = {
+      isZh: false, cube: connected, onClose: vi.fn(), onConnect: vi.fn(async () => {}),
+      connections: [
+        { id: 'first', name: 'GAN A', battery: 100, status: 'connected' as const },
+        { id: 'second', name: 'GAN B', battery: 90, status: 'connected' as const },
+      ],
+      selectedConnectionId: 'first',
+    };
     await act(async () => root.render(createElement(BluetoothModal, props)));
     const find = (text: string) => Array.from(modal().querySelectorAll('button')).find(button => button.textContent?.includes(text))!;
     expect(find('Reset').disabled).toBe(false);
     await act(async () => find('Reset').click());
     expect(resetDeviceState).toHaveBeenCalledOnce();
     expect(resetState).not.toHaveBeenCalled();
-    expect(modal().textContent).toContain('State reset');
+    expect(modal().querySelector('.bt-cube-option[aria-pressed="true"] .bt-cube-selected.lucide-badge-check')).not.toBeNull();
+    expect(modal().querySelector('.bt-cube-option[aria-pressed="false"] .bt-cube-selected.lucide-badge-check')).toBeNull();
+    expect(modal().querySelector('.sr-only[role="status"]')?.textContent).toBe('State reset');
+    expect(modal().querySelector('.timer-smart-cube-device__feedback')).toBeNull();
     expect(modal().textContent).not.toContain('calibrate');
+
+    await act(async () => root.render(createElement(BluetoothModal, { ...props, selectedConnectionId: 'second' })));
+    expect(modal().querySelector('.bt-cube-option .lucide-badge-check')).toBeNull();
   });
 
   it('offers the native bridge on iOS WeChat instead of sending the user to Bluefy', async () => {

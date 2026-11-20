@@ -27,6 +27,7 @@ import {
  */
 export const MOBILE_TIMER_SETTING_EFFECT_FIELD_IDS = [
   ...TIMER_TIMING_SETTING_FIELD_IDS,
+  'settings.timer.rolling-statistics',
   ...TIMER_SMART_CUBE_SETTING_FIELD_IDS,
   'settings.training.stage-splits',
   'settings.training.bld-memo-split',

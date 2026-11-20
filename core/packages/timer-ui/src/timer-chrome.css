@@ -322,9 +322,9 @@
 
 .shell-stat {
   display: grid;
-  grid-template-columns: 34px minmax(48px, 1fr);
+  grid-template-columns: var(--solo-stat-label-width, 34px) minmax(var(--solo-stat-value-width, 48px), 1fr);
   align-items: baseline;
-  column-gap: 12px;
+  column-gap: var(--solo-stat-column-gap, 12px);
   align-self: stretch;
   font-family: var(--font-sans);
   font-size: 13px;
@@ -333,19 +333,19 @@
 
 .shell-stat-lbl {
   color: var(--muted-foreground);
-  font-size: 12px;
+  font-size: var(--solo-stat-label-font-size, 12px);
   font-weight: 400;
 }
 
 .shell-stat-val {
   color: var(--foreground);
-  font-size: 13px;
+  font-size: var(--solo-stat-value-font-size, 13px);
   font-weight: 500;
   font-variant-numeric: tabular-nums;
   text-align: right;
 }
 
-.shell-stat-empty { font-family: var(--font-sans); font-size: 13px; line-height: 1.4; }
+.shell-stat-empty { font-family: var(--font-sans); font-size: var(--solo-stat-value-font-size, 13px); line-height: 1.4; }
 
 @media (max-width: 800px) {
   .shell-topbar {

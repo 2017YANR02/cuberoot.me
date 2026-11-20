@@ -342,20 +342,27 @@ html[data-theme='dark'] .stsv {
   align-items: center;
   justify-content: center;
   padding: 20px;
-  background: color-mix(in srgb, var(--foreground) 45%, transparent);
+}
+.stsv-modal-backdrop, .timer-room-overlay.stsv-settings-overlay {
+  background: var(--timer-solver-scrim);
 }
 .stsv-modal {
   width: 100%;
   max-width: 420px;
   max-height: 80vh;
   overflow-y: auto;
-  background: var(--popover, var(--card));
+  background: var(--card);
   color: var(--foreground);
   border: 1px solid var(--border-default);
   border-radius: 12px;
   padding: 16px 18px;
-  box-shadow: 0 12px 40px color-mix(in srgb, var(--foreground) 25%, transparent);
   font-variant-numeric: tabular-nums;
+}
+body[data-site-scenery='transparent'] .stsv-modal[data-site-surface='panel'],
+body[data-site-scenery='transparent'] .timer-room-dialog.stsv-settings-dialog {
+  background: var(--card);
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
 }
 .stsv-modal-head {
   display: flex;
@@ -366,11 +373,15 @@ html[data-theme='dark'] .stsv {
 .stsv-modal-head strong { font-size: 15px; }
 .stsv-modal-x {
   display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 30px;
+  min-height: 30px;
   background: none;
   border: none;
   cursor: pointer;
   color: var(--muted-foreground);
-  padding: 2px;
+  padding: 0;
 }
 .stsv-modal-x:hover { color: var(--foreground); }
 .stsv-modal-kv { margin: 0 0 14px; display: flex; flex-direction: column; gap: 6px; }

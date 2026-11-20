@@ -335,8 +335,7 @@
   .settings-modal .pill-toggle:not(.pill-toggle--switch) { min-height: 44px; }
 }
 
-/* Spacing separates preferences within each group. */
-.settings-modal .settings-row + .settings-row { border-top: 0; }
+.settings-modal .settings-row + .settings-row { border-top: 1px solid var(--border-default); }
 .settings-modal .settings-row-control > .hint:last-child:not(:first-child) { text-align: right; }
 
 .settings-modal .settings-section-head:has(.timer-random-difficulty-help) { justify-content: flex-start; gap: 6px; }
@@ -412,3 +411,35 @@
 }
 .settings-modal :is(.cstimer-import-name, .settings-backup-row strong) { font-size: 16px; }
 .settings-modal .settings-category-button > svg { width: 18px; height: 18px; flex-shrink: 0; }
+
+.settings-modal .timer-settings-actions {
+  display: grid;
+  margin: 0 0 16px;
+  padding: 0 16px;
+  border: 0;
+  border-radius: 12px;
+  background: var(--muted);
+}
+.settings-modal .timer-settings-action {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-width: 0;
+  min-height: 44px;
+  padding: 10px 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: var(--foreground);
+  font: inherit;
+  text-align: left;
+  text-decoration: none;
+  cursor: pointer;
+}
+.settings-modal .timer-settings-action svg { flex: none; color: var(--muted-foreground); }
+.settings-modal .timer-settings-action + .timer-settings-action { border-top: 1px solid var(--border-default); }
+.settings-modal .timer-settings-action:hover:not(:disabled) { background: var(--muted); }
+.settings-modal .timer-settings-action:focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }
+.settings-modal .timer-settings-action:disabled { opacity: .45; cursor: not-allowed; }
+.settings-modal .timer-settings-action-danger { width: 100%; color: var(--destructive); }

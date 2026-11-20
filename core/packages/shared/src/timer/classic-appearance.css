@@ -1,0 +1,16 @@
+/* Default appearance colors before a user palette is applied. */
+:root, .native-timer {
+  --classic-signal-info: #4a9eff;
+  --classic-signal-success: #5aac7e;
+  --classic-signal-warning: #d4a259;
+  --classic-light-background: #fafafa;
+  --classic-light-foreground: #171717;
+  --classic-light-accent: #c15f3c;
+  --classic-light-switch: #34c759;
+  --classic-dark-background: #171717;
+  --classic-dark-foreground: #ededed;
+  --classic-dark-card: #1f1f1f;
+  --classic-dark-accent: #d97757;
+  --classic-dark-switch: #30d158;
+  --timer-solver-scrim: color-mix(in srgb, var(--classic-light-foreground) 32%, transparent);
+}

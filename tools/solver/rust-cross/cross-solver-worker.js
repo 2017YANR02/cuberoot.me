@@ -39,6 +39,10 @@ let skewbSolver = null;   // SkewbSolverWasm(斜转整解最优),拉 opt_skewb(3
 // 表 URL:主线程给 base(prod 直指 static.cuberoot.me,省掉主域 307 一跳)+ 一个长缓存
 // 版本 query(表内容不变,配 nginx immutable → 一次下完永久命中)。
 let tableQuery = '';
+let nativeHost = null;
+const postMessage = (message) => nativeHost ? nativeHost.postMessage(message) : self.postMessage(message);
+const now = () => nativeHost ? nativeHost.now() : performance.now();
+
 function tableUrl(base, name) {
   return `${base}/${name}.bin.gz${tableQuery ? `?${tableQuery}` : ''}`;
 }
@@ -48,7 +52,7 @@ function tableUrl(base, name) {
 // 几十秒到几分钟),不逐格回报的话主线程在整段时间里收不到任何消息,UI 只有六个转圈。
 // 最终那条 { type:'variant'|'f2leo', values } 仍是权威结果,进度只是提前把已定的格子交出去。
 function onFace(id) {
-  return (face, value) => self.postMessage({ type: 'face_progress', id, face, value });
+  return (face, value) => postMessage({ type: 'face_progress', id, face, value });
 }
 
 async function gunzip(buf) {
@@ -71,7 +75,7 @@ async function fetchTable(url) {
 // (首查 ~1s),保证始终可用。
 async function buildOpt(tablesBase, name, Ctor) {
   try {
-    const dist = await fetchTable(tableUrl(tablesBase, name));
+    const dist = await (nativeHost ? nativeHost.readTable(name) : fetchTable(tableUrl(tablesBase, name)));
     return Ctor.from_dist(dist);
   } catch {
     return new Ctor();
@@ -91,18 +95,22 @@ async function init(glueUrl, wasmUrl, tablesBase, need, wantXCross, xcrossGz, xc
     if (!pendingTables.has(n)) {
       // The 49 KB cross table ships beside the engine, including installed hosts.
       // Older deployments can still fall back to their configured table origin.
-      const localUrl = new URL(`tables/${n}.bin.gz${tableQuery ? '?' + tableQuery : ''}`, glueUrl).href;
       const remoteUrl = tableUrl(tablesBase, n);
-      pendingTables.set(n, n === 'pt_cross_C4E0' && xcrossBytes
-        ? Promise.resolve(new Uint8Array(xcrossBytes))
-        : n === 'pt_cross' && localUrl !== remoteUrl
+      if (n === 'pt_cross_C4E0' && xcrossBytes) {
+        pendingTables.set(n, Promise.resolve(new Uint8Array(xcrossBytes)));
+      } else if (nativeHost) {
+        pendingTables.set(n, nativeHost.readTable(n));
+      } else {
+        const localUrl = new URL(`tables/${n}.bin.gz${tableQuery ? '?' + tableQuery : ''}`, glueUrl).href;
+        pendingTables.set(n, n === 'pt_cross' && localUrl !== remoteUrl
           ? fetchTable(localUrl).catch(() => fetchTable(remoteUrl))
           : fetchTable(remoteUrl));
+      }
     }
     return pendingTables.get(n);
   };
   // Independent downloads must overlap, rather than paying three network waits.
-  const moduleReady = Promise.all([import(glueUrl), fetch(wasmUrl)]).then(async ([mod, response]) => {
+  const moduleReady = nativeHost ? nativeHost.loadModule() : Promise.all([import(glueUrl), fetch(wasmUrl)]).then(async ([mod, response]) => {
     if (!response.ok) throw new Error(`fetch ${wasmUrl}: ${response.status}`);
     await mod.default({ module_or_path: response });
     return mod;
@@ -193,49 +201,49 @@ function attachXCross(gz, raw) {
   if (solver.has_xcross()) return Promise.resolve();
   if (!xcrossPending) {
     xcrossPending = (raw ? Promise.resolve(new Uint8Array(raw))
-      : gz ? gunzip(gz) : fetchTable(tableUrl(crossTablesBase, 'pt_cross_C4E0')))
+      : nativeHost ? nativeHost.readTable('pt_cross_C4E0')
+        : gz ? gunzip(gz) : fetchTable(tableUrl(crossTablesBase, 'pt_cross_C4E0')))
       .then((bytes) => { solver.attach_xcross(bytes); })
       .finally(() => { xcrossPending = null; });
   }
   return xcrossPending;
 }
 
-self.onmessage = async (e) => {
-  const msg = e.data;
+async function handleCrossSolverMessage(msg) {
   try {
     if (msg.type === 'init') {
       tableQuery = msg.tableQuery || '';
       initDone = init(msg.glueUrl, msg.wasmUrl, msg.tablesBase, msg.need, msg.xcross, msg.gz, msg.xcrossBytes);
       await initDone;
-      self.postMessage({ type: 'ready' });
+      postMessage({ type: 'ready' });
     } else if (msg.type === 'ensure_xcross') {
       // 池在用户切到 xcross+ 阶段时广播;init 未完成先等它(见 attachXCross 注释)。
       await initDone;
       await attachXCross(msg.gz, msg.xcrossBytes);
-      self.postMessage({ type: 'xcross_ready', id: msg.id });
+      postMessage({ type: 'xcross_ready', id: msg.id });
     } else if (msg.type === 'solve') {
       if (!solver) throw new Error('cross solver not initialized');
       const out = msg.cumulative
         ? solver.solve_cumulative(msg.scramble, msg.variant)
         : solver.solve(msg.scramble, msg.variant);
-      self.postMessage({ type: 'result', id: msg.id, values: Array.from(out) });
+      postMessage({ type: 'result', id: msg.id, values: Array.from(out) });
     } else if (msg.type === 'face') {
       if (!solver) throw new Error('cross solver not initialized');
-      const t0 = performance.now();
+      const t0 = now();
       const v = (msg.mask != null)
         ? solver.solve_face_masked(msg.scramble, msg.variant, msg.face, msg.mask >>> 0)
         : solver.solve_face(msg.scramble, msg.variant, msg.face);
-      self.postMessage({ type: 'face', id: msg.id, value: v, ms: performance.now() - t0 });
+      postMessage({ type: 'face', id: msg.id, value: v, ms: now() - t0 });
     } else if (msg.type === 'moves') {
       if (!solver) throw new Error('cross solver not initialized');
-      const t0 = performance.now();
+      const t0 = now();
       // 流式:每枚举到一条解,Rust 即回调 onSol → 立刻 postMessage 给主线程(算一条出一条)。
       // 同步求解仍最终返回完整 JSON(权威结果);partial 仅作渐进显示。
       const practical = msg.practical === true && (msg.variant === 1 || msg.variant === 2);
       const cap = practical ? Math.max(msg.cap ?? 50, 32) : (msg.cap ?? 50);
       // Practical candidates must be ranked together before they are shown.
       const onSol = (m, c, len) => {
-        if (!practical) self.postMessage({ type: 'moves_partial', id: msg.id, m, c, len });
+        if (!practical) postMessage({ type: 'moves_partial', id: msg.id, m, c, len });
       };
       const json = (msg.mask != null)
         ? solver.solve_moves_masked(
@@ -254,56 +262,56 @@ self.onmessage = async (e) => {
           if (!seen.has(key)) { seen.add(key); data.sols.push(sol); }
         }
       }
-      self.postMessage({ type: 'moves', id: msg.id, data, ms: performance.now() - t0 });
+      postMessage({ type: 'moves', id: msg.id, data, ms: now() - t0 });
     } else if (msg.type === 'cr_face') {
       // 受限最优十字单视角:54-bit allowed mask = (hi<<32)|lo;返回该视角最优步数
       // (含解里的整体旋转计数,与 or18 max_rot 计步一致);受限无解 → 0xFFFFFFFF 哨兵。
       if (!crossRestrictSolver) throw new Error('cross_restrict solver not initialized');
-      const t0 = performance.now();
+      const t0 = now();
       const sol = crossRestrictSolver.solve_cross_restricted(
         msg.scramble, msg.face | 0, msg.lo >>> 0, msg.hi >>> 0, msg.maxRot | 0,
       );
       const value = sol === '' ? 0xffffffff : sol.split(/\s+/).filter(Boolean).length;
-      self.postMessage({ type: 'cr_face', id: msg.id, value, ms: performance.now() - t0 });
+      postMessage({ type: 'cr_face', id: msg.id, value, ms: now() - t0 });
     } else if (msg.type === 'cr_moves') {
       // 受限最优十字多解枚举(长度 ∈ [最优,最优+extra],最多 cap 条,升序)。受限无解 → len=0xFFFFFFFF + 空解集。
       if (!crossRestrictSolver) throw new Error('cross_restrict solver not initialized');
-      const t0 = performance.now();
+      const t0 = now();
       const json = crossRestrictSolver.solve_cross_restricted_moves(
         msg.scramble, msg.face | 0, msg.lo >>> 0, msg.hi >>> 0, msg.maxRot | 0, msg.extra ?? 2, msg.cap ?? 10,
       );
-      self.postMessage({ type: 'cr_moves', id: msg.id, data: JSON.parse(json), ms: performance.now() - t0 });
+      postMessage({ type: 'cr_moves', id: msg.id, data: JSON.parse(json), ms: now() - t0 });
     } else if (msg.type === 'xcr_grid') {
       // 受限最优 xcross 6 视角长度网格(PDB 每次受限集只建一次 ≈40ms,6 视角 × 4 槽共用)。
       // wasm 返 JSON [l0..l5]:-1=真无解 → 0xFFFFFFFF;-2=限制过宽未在预算内判定 → 0xFFFFFFFE(⋯)。
       if (!xcrossRestrictSolver) throw new Error('xcross_restrict solver not initialized');
-      const t0 = performance.now();
+      const t0 = now();
       const json = xcrossRestrictSolver.solve_xcross_restricted_grid(
         msg.scramble, msg.lo >>> 0, msg.hi >>> 0, msg.maxRot | 0, msg.k | 0,
       );
       const arr = JSON.parse(json).map((v) => (v === -2 ? 0xfffffffe : v < 0 ? 0xffffffff : v));
-      self.postMessage({ type: 'xcr_grid', id: msg.id, values: arr, ms: performance.now() - t0 });
+      postMessage({ type: 'xcr_grid', id: msg.id, values: arr, ms: now() - t0 });
     } else if (msg.type === 'xcr_moves') {
       // 受限最优 xcross 多解枚举(长度 ∈ [最优,最优+extra],最多 cap 条,升序)。无解 → len=0xFFFFFFFF。
       if (!xcrossRestrictSolver) throw new Error('xcross_restrict solver not initialized');
-      const t0 = performance.now();
+      const t0 = now();
       // 流式:同 moves,每枚举到一条解即回调 → postMessage partial(xcr 的 c 恒空串)。
-      const onSol = (m, c, len) => self.postMessage({ type: 'xcr_partial', id: msg.id, m, c, len });
+      const onSol = (m, c, len) => postMessage({ type: 'xcr_partial', id: msg.id, m, c, len });
       const json = xcrossRestrictSolver.solve_xcross_restricted_moves(
         msg.scramble, msg.face | 0, msg.lo >>> 0, msg.hi >>> 0, msg.maxRot | 0, msg.extra ?? 2, msg.cap ?? 10, msg.k | 0, msg.combo ?? '', onSol,
       );
-      self.postMessage({ type: 'xcr_moves', id: msg.id, data: JSON.parse(json), ms: performance.now() - t0 });
+      postMessage({ type: 'xcr_moves', id: msg.id, data: JSON.parse(json), ms: now() - t0 });
     } else if (msg.type === 'f2leo') {
       if (!f2leoSolver) throw new Error('f2leo solver not initialized');
-      const t0 = performance.now();
+      const t0 = now();
       // 整变体一次算:返回 24 值 [cross,xc,xxc,xxxc] × 6 朝向(已折叠 z0/z2/z3/z1/x3/x1)。
       const out = msg.pseudo
         ? f2leoSolver.solve_pseudo_f2leo(msg.scramble)
         : f2leoSolver.solve_f2leo(msg.scramble);
-      self.postMessage({ type: 'f2leo', id: msg.id, values: Array.from(out), ms: performance.now() - t0 });
+      postMessage({ type: 'f2leo', id: msg.id, values: Array.from(out), ms: now() - t0 });
     } else if (msg.type === 'f2leo_stage') {
       if (!f2leoSolver) throw new Error('f2leo solver not initialized');
-      const t0 = performance.now();
+      const t0 = now();
       // 单阶段 6 值(stage 0=cross/1=xc/2=xxc/3=xxxc),cross 极快 → UI 先单算 cross 秒出。
       // mask 存在 = 受限步法(f2leo/pseudo_f2leo),无解视角返 u32::MAX 哨兵。
       // 未受限时走 *_progress:每定下一个视角就回调 → 立刻 postMessage(深阶段整格几十秒,
@@ -311,10 +319,10 @@ self.onmessage = async (e) => {
       const out = (msg.mask != null)
         ? f2leoSolver.solve_f2leo_stage_masked(msg.scramble, !!msg.pseudo, msg.stage | 0, msg.mask >>> 0)
         : f2leoSolver.solve_f2leo_stage_progress(msg.scramble, !!msg.pseudo, msg.stage | 0, onFace(msg.id));
-      self.postMessage({ type: 'f2leo', id: msg.id, values: Array.from(out), ms: performance.now() - t0 });
+      postMessage({ type: 'f2leo', id: msg.id, values: Array.from(out), ms: now() - t0 });
     } else if (msg.type === 'f2leo_moves') {
       if (!f2leoSolver) throw new Error('f2leo solver not initialized');
-      const t0 = performance.now();
+      const t0 = now();
       // 单格(F2LEO/Pseudo F2LEO × stage × face)多解步骤。前缀可能含尾随 y(破 y 对称)。
       const json = (msg.mask != null)
         ? f2leoSolver.solve_moves_masked(
@@ -323,16 +331,16 @@ self.onmessage = async (e) => {
         : f2leoSolver.solve_moves(
             msg.scramble, !!msg.pseudo, msg.face | 0, msg.stage | 0, msg.extra ?? 0, msg.cap ?? 20, msg.combo ?? '',
           );
-      self.postMessage({ type: 'f2leo_moves', id: msg.id, data: JSON.parse(json), ms: performance.now() - t0 });
+      postMessage({ type: 'f2leo_moves', id: msg.id, data: JSON.parse(json), ms: now() - t0 });
     } else if (msg.type === 'variant') {
       if (!variantSolver) throw new Error('variant solver not initialized');
-      const t0 = performance.now();
+      const t0 = now();
       // 整变体 24(4 阶段)/30(5 阶段)值 × 6 视角(物理面序 z0/z2/z3/z1/x3/x1)。
       const out = variantSolver.solve(msg.scramble, msg.variant | 0);
-      self.postMessage({ type: 'variant', id: msg.id, values: Array.from(out), ms: performance.now() - t0 });
+      postMessage({ type: 'variant', id: msg.id, values: Array.from(out), ms: now() - t0 });
     } else if (msg.type === 'variant_stage') {
       if (!variantSolver) throw new Error('variant solver not initialized');
-      const t0 = performance.now();
+      const t0 = now();
       // 单阶段 6 值。cross(stage 0)先出,深阶段后台补。
       // mask 存在 = 受限步法(pair/eo/pseudo/pseudo_pair),无解视角返 u32::MAX 哨兵。
       // 未受限时走 solve_stage_progress —— eo xxxxcross 这类整格实测几十秒到几分钟,
@@ -340,161 +348,161 @@ self.onmessage = async (e) => {
       const out = (msg.mask != null)
         ? variantSolver.solve_stage_masked(msg.scramble, msg.variant | 0, msg.stage | 0, msg.mask >>> 0)
         : variantSolver.solve_stage_progress(msg.scramble, msg.variant | 0, msg.stage | 0, onFace(msg.id));
-      self.postMessage({ type: 'variant', id: msg.id, values: Array.from(out), ms: performance.now() - t0 });
+      postMessage({ type: 'variant', id: msg.id, values: Array.from(out), ms: now() - t0 });
     } else if (msg.type === 'block222_stage') {
       if (!block222Solver) throw new Error('block222 solver not initialized');
-      const t0 = performance.now();
+      const t0 = now();
       // 6 视角(每视角 = 该底色 4 个贴底块最小),物理面序 z0/z2/z3/z1/x3/x1。
       const out = block222Solver.solve(msg.scramble);
-      self.postMessage({ type: 'variant', id: msg.id, values: Array.from(out), ms: performance.now() - t0 });
+      postMessage({ type: 'variant', id: msg.id, values: Array.from(out), ms: now() - t0 });
     } else if (msg.type === 'block222_moves') {
       if (!block222Solver) throw new Error('block222 solver not initialized');
-      const t0 = performance.now();
+      const t0 = now();
       // 单视角多解:4 贴底块合并按长度排序;前缀 = rot + y^k,c = 块标签(URF..DRB)。
       const json = block222Solver.solve_moves(
         msg.scramble, msg.face | 0, msg.extra ?? 0, msg.cap ?? 20,
       );
-      self.postMessage({ type: 'block222_moves', id: msg.id, data: JSON.parse(json), ms: performance.now() - t0 });
+      postMessage({ type: 'block222_moves', id: msg.id, data: JSON.parse(json), ms: now() - t0 });
     } else if (msg.type === 'daisy_stage') {
       if (!daisySolver) throw new Error('daisy solver not initialized');
-      const t0 = performance.now();
+      const t0 = now();
       const out = daisySolver.solve(msg.scramble);
-      self.postMessage({ type: 'variant', id: msg.id, values: Array.from(out), ms: performance.now() - t0 });
+      postMessage({ type: 'variant', id: msg.id, values: Array.from(out), ms: now() - t0 });
     } else if (msg.type === 'daisy_moves') {
       if (!daisySolver) throw new Error('daisy solver not initialized');
-      const t0 = performance.now();
+      const t0 = now();
       const json = daisySolver.solve_moves(
         msg.scramble, msg.face | 0, msg.extra ?? 0, msg.cap ?? 20,
       );
-      self.postMessage({ type: 'daisy_moves', id: msg.id, data: JSON.parse(json), ms: performance.now() - t0 });
+      postMessage({ type: 'daisy_moves', id: msg.id, data: JSON.parse(json), ms: now() - t0 });
     } else if (msg.type === 'first_layer_stage') {
       if (!firstLayerSolver) throw new Error('first-layer solver not initialized');
-      const t0 = performance.now();
+      const t0 = now();
       const out = firstLayerSolver.solve_stage(msg.scramble, msg.stage | 0);
-      self.postMessage({ type: 'variant', id: msg.id, values: Array.from(out), ms: performance.now() - t0 });
+      postMessage({ type: 'variant', id: msg.id, values: Array.from(out), ms: now() - t0 });
     } else if (msg.type === 'first_layer_moves') {
       if (!firstLayerSolver) throw new Error('first-layer solver not initialized');
-      const t0 = performance.now();
+      const t0 = now();
       const json = firstLayerSolver.solve_moves(
         msg.scramble, msg.stage | 0, msg.face | 0, msg.extra ?? 0, msg.cap ?? 20,
       );
-      self.postMessage({ type: 'first_layer_moves', id: msg.id, data: JSON.parse(json), ms: performance.now() - t0 });
+      postMessage({ type: 'first_layer_moves', id: msg.id, data: JSON.parse(json), ms: now() - t0 });
     } else if (msg.type === 'roux223_stage') {
       if (!roux223Solver) throw new Error('roux223 solver not initialized');
-      const t0 = performance.now();
+      const t0 = now();
       // 单阶段 6 视角(stage 0=FB方块 1=1x2x3 2=2x2x2 3=2x2x3 4=双1x2x3),物理面序 z0/z2/z3/z1/x3/x1。
       const out = roux223Solver.solve_stage(msg.scramble, msg.stage | 0);
-      self.postMessage({ type: 'variant', id: msg.id, values: Array.from(out), ms: performance.now() - t0 });
+      postMessage({ type: 'variant', id: msg.id, values: Array.from(out), ms: now() - t0 });
     } else if (msg.type === 'roux223_moves') {
       if (!roux223Solver) throw new Error('roux223 solver not initialized');
-      const t0 = performance.now();
+      const t0 = now();
       // 单视角多解:前缀 = rot + y^k,c = 目标标签(方块 "DBL-L" / 1x2x3 "DL" / 2x2x2 角名 / 2x2x3 棱名 / f2b "D(LR)")。
       const json = roux223Solver.solve_moves(
         msg.scramble, msg.stage | 0, msg.face | 0, msg.extra ?? 0, msg.cap ?? 20,
       );
-      self.postMessage({ type: 'roux223_moves', id: msg.id, data: JSON.parse(json), ms: performance.now() - t0 });
+      postMessage({ type: 'roux223_moves', id: msg.id, data: JSON.parse(json), ms: now() - t0 });
     } else if (msg.type === 'eodr_stage') {
       if (!eoDrSolver) throw new Error('eodr solver not initialized');
-      const t0 = performance.now();
+      const t0 = now();
       // 单阶段 6 视角(stage 0=EO 1=EOLine 2=DR),物理面序 z0/z2/z3/z1/x3/x1。
       const out = eoDrSolver.solve_stage(msg.scramble, msg.stage | 0);
-      self.postMessage({ type: 'variant', id: msg.id, values: Array.from(out), ms: performance.now() - t0 });
+      postMessage({ type: 'variant', id: msg.id, values: Array.from(out), ms: now() - t0 });
     } else if (msg.type === 'eodr_moves') {
       if (!eoDrSolver) throw new Error('eodr solver not initialized');
-      const t0 = performance.now();
+      const t0 = now();
       // 单视角多解:前缀 = rot + y^k,c = 目标标签(EO 轴 "FB" / EOLine "D(FB)" / DR 轴 "UD")。
       const json = eoDrSolver.solve_moves(
         msg.scramble, msg.stage | 0, msg.face | 0, msg.extra ?? 0, msg.cap ?? 20,
       );
-      self.postMessage({ type: 'eodr_moves', id: msg.id, data: JSON.parse(json), ms: performance.now() - t0 });
+      postMessage({ type: 'eodr_moves', id: msg.id, data: JSON.parse(json), ms: now() - t0 });
     } else if (msg.type === 'htr_stage') {
       if (!htrSolver) throw new Error('htr solver not initialized');
-      const t0 = performance.now();
+      const t0 = now();
       // 6 视角(物理面序 z0/z2/z3/z1/x3/x1);条件式阶段:非 DR 视角 = 0xFFFFFFFF 哨兵。
       const out = htrSolver.solve(msg.scramble);
-      self.postMessage({ type: 'variant', id: msg.id, values: Array.from(out), ms: performance.now() - t0 });
+      postMessage({ type: 'variant', id: msg.id, values: Array.from(out), ms: now() - t0 });
     } else if (msg.type === 'htr_moves') {
       if (!htrSolver) throw new Error('htr solver not initialized');
-      const t0 = performance.now();
+      const t0 = now();
       // 单视角多解:前缀 = rot(HTR 对 y 不变),c = 轴标签(同 DR,如 "UD");非 DR 视角 len=0xFFFFFFFF。
       const json = htrSolver.solve_moves(
         msg.scramble, msg.face | 0, msg.extra ?? 0, msg.cap ?? 20,
       );
-      self.postMessage({ type: 'htr_moves', id: msg.id, data: JSON.parse(json), ms: performance.now() - t0 });
+      postMessage({ type: 'htr_moves', id: msg.id, data: JSON.parse(json), ms: now() - t0 });
     } else if (msg.type === 'htr2_stage') {
       if (!htr2Solver) throw new Error('htr2 solver not initialized');
-      const t0 = performance.now();
+      const t0 = now();
       // 6 视角(物理面序 z0/z2/z3/z1/x3/x1);条件式阶段:非 HTR 视角 = 0xFFFFFFFF 哨兵。
       const out = htr2Solver.solve(msg.scramble);
-      self.postMessage({ type: 'variant', id: msg.id, values: Array.from(out), ms: performance.now() - t0 });
+      postMessage({ type: 'variant', id: msg.id, values: Array.from(out), ms: now() - t0 });
     } else if (msg.type === 'htr2_moves') {
       if (!htr2Solver) throw new Error('htr2 solver not initialized');
-      const t0 = performance.now();
+      const t0 = now();
       // 单视角多解:前缀 = rot(HTR phase-2 对 y 不变),c = 轴标签(同 DR);非 HTR 视角 len=0xFFFFFFFF。
       const json = htr2Solver.solve_moves(
         msg.scramble, msg.face | 0, msg.extra ?? 0, msg.cap ?? 20,
       );
-      self.postMessage({ type: 'htr2_moves', id: msg.id, data: JSON.parse(json), ms: performance.now() - t0 });
+      postMessage({ type: 'htr2_moves', id: msg.id, data: JSON.parse(json), ms: now() - t0 });
     } else if (msg.type === 'fr_stage') {
       if (!frSolver) throw new Error('fr solver not initialized');
-      const t0 = performance.now();
+      const t0 = now();
       // 6 视角(物理面序 z0/z2/z3/z1/x3/x1);条件式阶段:非 HTR 视角 = 0xFFFFFFFF 哨兵。
       const out = frSolver.solve(msg.scramble);
-      self.postMessage({ type: 'variant', id: msg.id, values: Array.from(out), ms: performance.now() - t0 });
+      postMessage({ type: 'variant', id: msg.id, values: Array.from(out), ms: now() - t0 });
     } else if (msg.type === 'fr_moves') {
       if (!frSolver) throw new Error('fr solver not initialized');
-      const t0 = performance.now();
+      const t0 = now();
       // 单视角多解:前缀 = rot(FR 对 y 不变),c = 该视角 FR 轴标签(UD/FB/LR);非 HTR 视角 len=0xFFFFFFFF。
       const json = frSolver.solve_moves(
         msg.scramble, msg.face | 0, msg.extra ?? 0, msg.cap ?? 20,
       );
-      self.postMessage({ type: 'fr_moves', id: msg.id, data: JSON.parse(json), ms: performance.now() - t0 });
+      postMessage({ type: 'fr_moves', id: msg.id, data: JSON.parse(json), ms: now() - t0 });
     } else if (msg.type === 'chain_solve') {
       if (!chainSolver) throw new Error('chain solver not initialized');
-      const t0 = performance.now();
+      const t0 = now();
       // 链式求解:config = JSON 串(per-stage {enabled,extra,cap,min,max,axes,excluded} + maxChains)。
       // data = { chains:[{steps:[{kind,variant,m,len,cum}],total}] },m 为 HOME 帧步骤串(无视角前缀)。
       const json = chainSolver.solve_chain(msg.scramble, msg.config || '{}');
-      self.postMessage({ type: 'chain_solve', id: msg.id, data: JSON.parse(json), ms: performance.now() - t0 });
+      postMessage({ type: 'chain_solve', id: msg.id, data: JSON.parse(json), ms: now() - t0 });
     } else if (msg.type === 'cube222_len') {
       if (!cube222Solver) throw new Error('cube222 solver not initialized');
-      const t0 = performance.now();
+      const t0 = now();
       // 2x2x2 整解最优 HTM 步数(0..=11)。全 18 记号,D/L/B 经 24 旋转归一。
       const v = cube222Solver.solve(msg.scramble);
-      self.postMessage({ type: 'variant', id: msg.id, values: [v], ms: performance.now() - t0 });
+      postMessage({ type: 'variant', id: msg.id, values: [v], ms: now() - t0 });
     } else if (msg.type === 'cube222_moves') {
       if (!cube222Solver) throw new Error('cube222 solver not initialized');
-      const t0 = performance.now();
+      const t0 = now();
       // 一条最优解:m 前缀 = 整体旋转(打乱含 D/L/B 时归一所需,可为空),c 恒空串。
       const json = cube222Solver.solve_moves(msg.scramble);
-      self.postMessage({ type: 'cube222_moves', id: msg.id, data: JSON.parse(json), ms: performance.now() - t0 });
+      postMessage({ type: 'cube222_moves', id: msg.id, data: JSON.parse(json), ms: now() - t0 });
     } else if (msg.type === 'pyraminx_len') {
       if (!pyraminxSolver) throw new Error('pyraminx solver not initialized');
-      const t0 = performance.now();
+      const t0 = now();
       // 金字塔整解最优 HTM 步数(0..=15,含 tips)。全 WCA pyram 记号(大写核心 + 小写 tips)。
       const v = pyraminxSolver.solve(msg.scramble);
-      self.postMessage({ type: 'variant', id: msg.id, values: [v], ms: performance.now() - t0 });
+      postMessage({ type: 'variant', id: msg.id, values: [v], ms: now() - t0 });
     } else if (msg.type === 'pyraminx_moves') {
       if (!pyraminxSolver) throw new Error('pyraminx solver not initialized');
-      const t0 = performance.now();
+      const t0 = now();
       // 一条最优解:m = 核心大写解 + 小写 tip 收尾(无整体旋转前缀),c 恒空串。
       const json = pyraminxSolver.solve_moves(msg.scramble);
-      self.postMessage({ type: 'pyraminx_moves', id: msg.id, data: JSON.parse(json), ms: performance.now() - t0 });
+      postMessage({ type: 'pyraminx_moves', id: msg.id, data: JSON.parse(json), ms: now() - t0 });
     } else if (msg.type === 'skewb_len') {
       if (!skewbSolver) throw new Error('skewb solver not initialized');
-      const t0 = performance.now();
+      const t0 = now();
       // 斜转整解最优步数(0..=11,每 120° 一步)。全 WCA skewb 记号 U/L/R/B ± '/2。
       const v = skewbSolver.solve(msg.scramble);
-      self.postMessage({ type: 'variant', id: msg.id, values: [v], ms: performance.now() - t0 });
+      postMessage({ type: 'variant', id: msg.id, values: [v], ms: now() - t0 });
     } else if (msg.type === 'skewb_moves') {
       if (!skewbSolver) throw new Error('skewb solver not initialized');
-      const t0 = performance.now();
+      const t0 = now();
       // 一条最优解:m = 最优解序列(无整体旋转前缀),c 恒空串。
       const json = skewbSolver.solve_moves(msg.scramble);
-      self.postMessage({ type: 'skewb_moves', id: msg.id, data: JSON.parse(json), ms: performance.now() - t0 });
+      postMessage({ type: 'skewb_moves', id: msg.id, data: JSON.parse(json), ms: now() - t0 });
     } else if (msg.type === 'variant_moves') {
       if (!variantSolver) throw new Error('variant solver not initialized');
-      const t0 = performance.now();
+      const t0 = now();
       // 单格(variant × stage × face)多解步骤。eo 前缀可能含尾随 y(破 y 对称)。
       const json = (msg.mask != null)
         ? variantSolver.solve_moves_masked(
@@ -503,9 +511,36 @@ self.onmessage = async (e) => {
         : variantSolver.solve_moves(
             msg.scramble, msg.variant | 0, msg.face | 0, msg.stage | 0, msg.extra ?? 0, msg.cap ?? 20, msg.combo ?? '', msg.base ?? -1,
           );
-      self.postMessage({ type: 'variant_moves', id: msg.id, data: JSON.parse(json), ms: performance.now() - t0 });
+      postMessage({ type: 'variant_moves', id: msg.id, data: JSON.parse(json), ms: now() - t0 });
     }
   } catch (err) {
-    self.postMessage({ type: 'error', operation: msg && msg.type, id: msg && msg.id, error: String(err && err.message || err) });
+    postMessage({ type: 'error', operation: msg && msg.type, id: msg && msg.id, error: String(err && err.message || err) });
   }
-};
+}
+
+// Web still uses its browser worker. A native host supplies transport and I/O
+// while sharing every engine dispatch and result message below this boundary.
+if (typeof self !== 'undefined' && self) {
+  self.onmessage = (event) => handleCrossSolverMessage(event.data);
+}
+
+export function attachCrossSolverWorker(host) {
+  if (nativeHost) throw new Error('cross solver worker already attached');
+  nativeHost = host;
+  return {
+    handle: handleCrossSolverMessage,
+    release() {
+      for (const engine of [
+        solver, f2leoSolver, variantSolver, block222Solver, daisySolver,
+        firstLayerSolver, roux223Solver, eoDrSolver, htrSolver, htr2Solver,
+        frSolver, chainSolver, crossRestrictSolver, xcrossRestrictSolver,
+        cube222Solver, pyraminxSolver, skewbSolver,
+      ]) engine?.free();
+      solver = f2leoSolver = variantSolver = block222Solver = daisySolver = null;
+      firstLayerSolver = roux223Solver = eoDrSolver = htrSolver = htr2Solver = null;
+      frSolver = chainSolver = crossRestrictSolver = xcrossRestrictSolver = null;
+      cube222Solver = pyraminxSolver = skewbSolver = null;
+      initDone = xcrossPending = null;
+    },
+  };
+}

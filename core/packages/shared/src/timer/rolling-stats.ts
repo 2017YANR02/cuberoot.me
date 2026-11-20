@@ -24,6 +24,24 @@ export const ROLLING_STAT_PRESETS: RollingStatKey[] = [
   'ao10000',
 ];
 
+export const TIMER_ROLLING_STAT_SETTINGS_COPY = {
+  heading: { en: 'Results', zh: '成绩' },
+  column: { en: ['Statistic 1', 'Statistic 2'], zh: ['统计指标一', '统计指标二'] },
+  clear: { zh: '清除', en: 'Clear' },
+  customPlaceholder: { zh: '自定义 ao', en: 'Custom ao' },
+  customSize: { zh: '自定义 ao 大小', en: 'Custom ao size' },
+  replace: { zh: '替换', en: 'Replace' },
+} as const;
+
+export function timerRollingStatChangeColumnCopy(current: RollingStatKey) {
+  return { zh: `更改统计列，当前 ${current}`, en: `Change stats column, currently ${current}` };
+}
+
+export function customRollingStatKey(draft: string): RollingStatKey | undefined {
+  const size = Math.floor(Number(draft.trim()));
+  return size >= MIN_AO_WINDOW && size <= MAX_AO_WINDOW ? `ao${size}` : undefined;
+}
+
 export interface RollingStatDefinition {
   key: RollingStatKey;
   kind: 'mean' | 'average';

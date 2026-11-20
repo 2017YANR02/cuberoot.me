@@ -9,7 +9,6 @@ const BASE: MobileBackContext = {
   fullscreen: false,
   historyCompareMode: false,
   manualEntryOpen: false,
-  moreOpen: false,
   mutationBusy: false,
   overlayOpen: false,
   phase: 'idle',
@@ -40,11 +39,9 @@ describe('Android Back priority', () => {
       ...BASE,
       fullscreen: true,
       manualEntryOpen: true,
-      moreOpen: true,
       overlayOpen: true,
       phase: 'running',
     })).toBe('close-overlay');
-    expect(mobileBackAction({ ...BASE, moreOpen: true })).toBe('close-more');
     expect(mobileBackAction({ ...BASE, manualEntryOpen: true })).toBe('close-manual-entry');
     expect(mobileBackAction({ ...BASE, historyCompareMode: true, view: 'history' }))
       .toBe('close-history-compare');

@@ -1,3 +1,9 @@
+import { countQtm } from '../scramble_length';
+
+export { bestErgonomicOrientationIndex, bestStageSolverY, rotateMovesToFrame, rotateSolutionY, Y_ROT_LABEL } from './stage-solver-orientation';
+export { formatStageSolverBytes, STAGE_SOLVER_INFO_TITLE, stageSolverInfoModel, summarizeStageSolverTables,
+  type StageSolverTableSize } from './stage-solver-info';
+
 // 打乱分析「变体 + 阶段」的 runtime-neutral 单一真源:变体 key → 显示名(zh/en)+ 规范展示顺序 +
 // 每变体的规范阶段键序 + 阶段显示名。
 //
@@ -204,6 +210,155 @@ export const VARIANT_STAGES: Record<ScrambleVariant, string[]> = {
   htr2: ['htr2'],
   fr: ['fr'],
 };
+
+/** The engine-backed methods offered by the timer's advanced solution view. */
+export const STAGE_SOLVER_METHODS = [
+  'std', 'daisy', 'first_layer', 'eo', 'pair', 'pseudo', 'pseudo_pair', 'f2leo', 'pseudo_f2leo',
+  'block', 'eoline', 'dr', 'htr', 'htr2', 'fr',
+] as const;
+
+export type StageSolverMethod = (typeof STAGE_SOLVER_METHODS)[number];
+export const STAGE_SOLVER_VARIANT_IDS = { pair: 0, eo: 1, pseudo: 2, pseudo_pair: 3 } as const;
+export const STAGE_SOLVER_VARIANT_TABLES = [
+  'pt_cross_C4E0', 'pt_cross_ins_C4', 'pt_pair_C4E0', 'pt_cross', 'pt_ep4eo12', 'pt_pscross',
+] as const;
+export const STAGE_SOLVER_TABLES_BASE = 'https://static.cuberoot.me/tools/solver/rust-cross/tables';
+export const STAGE_SOLVER_TABLE_QUERY = 'tv=1';
+export const STAGE_SOLVER_DEFAULT_SLACK = 2;
+export const STAGE_SOLVER_DEFAULT_LIMIT = 10;
+export const STAGE_SOLVER_SLACK_OPTIONS = [0, 1, 2, 3, 4, 5, 6] as const;
+export const STAGE_SOLVER_LIMIT_OPTIONS = [1, 5, 10, 25, 50, 0] as const;
+export const STAGE_SOLVER_NO_LIMIT_CAP = 100000;
+
+export const STAGE_SOLVER_MOVE_FACES = ['U', 'D', 'L', 'R', 'F', 'B'] as const;
+export const STAGE_SOLVER_MOVE_CELLS = [
+  ...STAGE_SOLVER_MOVE_FACES, 'u', 'd', 'l', 'r', 'f', 'b', 'M', 'E', 'S', 'x', 'y', 'z',
+] as const;
+export const STAGE_SOLVER_DEFAULT_FACES = STAGE_SOLVER_MOVE_FACES.map(() => true);
+export const STAGE_SOLVER_DEFAULT_CELLS = STAGE_SOLVER_MOVE_CELLS.map((_, i) => i < STAGE_SOLVER_MOVE_FACES.length);
+export const STAGE_SOLVER_ALL_FACE_MOVES = (1 << 18) - 1;
+export const STAGE_SOLVER_SLOT_LABELS = ['BL', 'BR', 'FR', 'FL'] as const;
+
+const ONE_FACE_LIMIT_METHODS: ReadonlySet<StageSolverMethod> = new Set([
+  'pair', 'eo', 'pseudo', 'pseudo_pair', 'f2leo', 'pseudo_f2leo',
+]);
+
+/** Full move grid for Standard, one forbidden face for the other masked engines. */
+export function stageSolverRestrictionKind(method: StageSolverMethod) {
+  return method === 'std' ? 'grid' : ONE_FACE_LIMIT_METHODS.has(method) ? 'single-face' : 'none';
+}
+
+export function stageSolverToggleMoveCell(cells: readonly boolean[], index: number, singleFace = false) {
+  if (singleFace) return cells.map((_, i) => index !== i || !cells[index]);
+  return cells.map((on, i) => (i === index ? !on : on));
+}
+
+/** Each cell owns the three quarter, half and inverse-turn bits in solver order. */
+export function stageSolverMoveBits(cells: readonly boolean[]) {
+  let lo = 0;
+  let hi = 0;
+  cells.forEach((on, i) => {
+    if (!on) return;
+    for (let bit = 3 * i; bit < 3 * i + 3; bit++) {
+      if (bit < 32) lo |= 1 << bit;
+      else hi |= 1 << (bit - 32);
+    }
+  });
+  return { lo: lo >>> 0, hi: hi >>> 0 };
+}
+
+export function stageSolverMoveRestriction(method: StageSolverMethod, cells: readonly boolean[]) {
+  const kind = stageSolverRestrictionKind(method);
+  if (kind === 'none') return { restricted: false };
+  const { lo, hi } = stageSolverMoveBits(cells);
+  if (kind === 'grid' && (hi !== 0 || (lo >>> 18) !== 0)) {
+    const maxRot = cells.slice(15, 18).some(Boolean) ? 2 : 0;
+    return { restricted: true, restriction: { lo, hi, maxRot } };
+  }
+  return lo === STAGE_SOLVER_ALL_FACE_MOVES ? { restricted: false } : { restricted: true, mask: lo };
+}
+
+export function stageSolverSlotCount(method: StageSolverMethod, stageIndex: number): number {
+  return method === 'std' || ONE_FACE_LIMIT_METHODS.has(method) ? stageIndex : 0;
+}
+
+export const stageSolverHasBase = (method: StageSolverMethod): boolean => method === 'pair' || method === 'pseudo_pair';
+
+/** F2L slot combinations in the same order as the solver's pair and triplet tables. */
+export function stageSolverSlotCombinations(count: number): number[][] {
+  const result: number[][] = [];
+  const visit = (start: number, slots: number[]) => {
+    if (slots.length === count) { result.push(slots); return; }
+    for (let i = start; i < STAGE_SOLVER_SLOT_LABELS.length; i++) visit(i + 1, [...slots, i]);
+  };
+  visit(0, []);
+  return result;
+}
+
+export const stageSolverComboArity = (combo: string): number => combo ? combo.split(',').length : 0;
+
+const STAGE_SOLVER_ENGINE = {
+  std: 'cross', daisy: 'daisy', first_layer: 'first_layer',
+  eo: 'variant', pair: 'variant', pseudo: 'variant', pseudo_pair: 'variant',
+  f2leo: 'f2leo', pseudo_f2leo: 'f2leo', block: 'roux223',
+  eoline: 'eodr', dr: 'eodr', htr: 'htr', htr2: 'htr2', fr: 'fr',
+} as const satisfies Record<StageSolverMethod, string>;
+
+export function stageSolverNeed(method: StageSolverMethod) {
+  return STAGE_SOLVER_ENGINE[method];
+}
+
+export function stageSolverKind(method: StageSolverMethod, stageKey: string) {
+  if (method === 'std') return 'std';
+  if (method === 'block' && stageKey === 'block222') return 'block222';
+  return STAGE_SOLVER_ENGINE[method];
+}
+
+export function stageSolverStageIndex(method: StageSolverMethod, index: number): number {
+  return method === 'dr' ? 2 : index;
+}
+
+export const STAGE_SOLVER_FACES = ['D', 'U', 'L', 'R', 'F', 'B'] as const;
+export const STAGE_SOLVER_NO_SOLUTION = 0xffffffff;
+export const STAGE_SOLVER_TOO_BROAD = 0xfffffffe;
+
+export function stageSolverCountStatus(value: number | null | undefined) {
+  if (value === STAGE_SOLVER_NO_SOLUTION) return 'no-solution';
+  if (value === STAGE_SOLVER_TOO_BROAD) return 'too-broad';
+  return typeof value === 'number' && Number.isFinite(value) ? 'ready' : 'pending';
+}
+
+export function bestStageSolverFace(
+  counts: readonly (number | null)[],
+  visible: (face: number) => boolean = () => true,
+): number | null {
+  let best: number | null = null;
+  let min = Infinity;
+  counts.forEach((value, i) => {
+    if (value != null && visible(i) && stageSolverCountStatus(value) === 'ready' && value < min) {
+      best = i;
+      min = value;
+    }
+  });
+  return best;
+}
+
+/** Existing solver output places view orientation before move notation. Hosts
+ * fold the initial orientation into the playback setup. */
+export function stageSolverSplitLeadingRotations(algorithm: string): { lead: string; body: string } {
+  const tokens = algorithm.trim().split(/\s+/).filter(Boolean);
+  let cut = 0;
+  while (cut < tokens.length && /^[xyz][2']?$/.test(tokens[cut])) cut++;
+  return { lead: tokens.slice(0, cut).join(' '), body: tokens.slice(cut).join(' ') };
+}
+
+export const stageSolverMoveLength = (solution: string): number =>
+  solution.replace(/^([xyz][2']?\s+)+/, '').split(/\s+/).filter(Boolean).length;
+
+/** Stable ordering for the timer candidate list. */
+export function sortStageSolverCandidates<T extends { m: string }>(solutions: readonly T[]): T[] {
+  return [...solutions].sort((a, b) => stageSolverMoveLength(a.m) - stageSolverMoveLength(b.m) || countQtm(a.m) - countQtm(b.m));
+}
 
 // 聚合方法 'eo' 在阶段下拉里的完整序(跨两个数据变体):EO → EOLine → EO+十字系列。
 // 刻意不塞进 VARIANT_STAGES.eo —— 那个数组是 StageSolver 的 WASM 阶段索引契约(i ↔ 阶段 id)。

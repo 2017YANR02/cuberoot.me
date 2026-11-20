@@ -3,7 +3,7 @@ import { act, createElement, Fragment, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import { expect, it, vi } from 'vitest';
 import { TimerSettingsPanel } from '@cuberoot/timer-ui';
-import type { TimerSettingCategoryId } from '@cuberoot/shared/timer';
+import { TIMER_MORE_ACTION_COPY, visibleTimerMoreActions, type TimerSettingCategoryId } from '@cuberoot/shared/timer';
 
 it.each(['en', 'zh'] as const)('shares rail/dropdown selection, dismissal and focus restoration (%s)', async language => {
   vi.stubGlobal('IS_REACT_ACT_ENVIRONMENT', true);
@@ -58,5 +58,42 @@ it.each(['en', 'zh'] as const)('shares rail/dropdown selection, dismissal and fo
     expect(document.body.style.overflow).not.toBe('hidden');
   } finally {
     await act(async () => root.unmount()); host.remove(); vi.restoreAllMocks(); vi.unstubAllGlobals();
+  }
+});
+
+it('opens a categorized tool after closing settings and keeps unavailable actions disabled', async () => {
+  vi.stubGlobal('IS_REACT_ACT_ENVIRONMENT', true);
+  const host = document.createElement('div');
+  document.body.append(host);
+  const root = createRoot(host);
+  const selectAction = vi.fn(() => {
+    expect(document.querySelector('.settings-modal')).toBeNull();
+  });
+  const actions = visibleTimerMoreActions({
+    compactViewport: false, drillActive: false, event: '333', fullscreen: false, solveCount: 0,
+  }).map(action => ({ ...action, label: TIMER_MORE_ACTION_COPY[action.id].en, onSelect: selectAction }));
+  function Harness() {
+    const [open, setOpen] = useState(true);
+    const [category, setCategory] = useState<TimerSettingCategoryId>('timer');
+    return open ? createElement(TimerSettingsPanel, {
+      language: 'en', activeCategory: category, onCategoryChange: setCategory,
+      onClose: () => setOpen(false), actions, children: null,
+    }) : null;
+  }
+
+  try {
+    await act(async () => root.render(createElement(Harness)));
+    expect(document.querySelector('.timer-settings-actions')).toBeNull();
+    const select = document.querySelector<HTMLSelectElement>('.settings-category-select')!;
+    await act(async () => { select.value = 'data'; select.dispatchEvent(new Event('change', { bubbles: true })); });
+    const tools = [...document.querySelectorAll<HTMLButtonElement>('.timer-settings-action')];
+    expect(tools.map(button => button.textContent)).toEqual(['Manual entry', 'Print']);
+    expect(document.querySelector<HTMLButtonElement>('.timer-settings-action-danger')?.disabled).toBe(true);
+    await act(async () => tools[0].click());
+    expect(selectAction).toHaveBeenCalledOnce();
+  } finally {
+    await act(async () => root.unmount());
+    host.remove();
+    vi.unstubAllGlobals();
   }
 });

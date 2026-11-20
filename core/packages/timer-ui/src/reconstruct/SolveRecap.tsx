@@ -80,7 +80,6 @@ export default function SolveRecap({
           className="shell-recap-x"
           onClick={onDismiss}
           aria-label={tr({ zh: '收起', en: 'Hide' })}
-          title={tr({ zh: '收起', en: 'Hide' })}
         >
           <X size={16} />
         </button>

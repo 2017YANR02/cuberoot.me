@@ -27,7 +27,8 @@ function mountEditor(rotated = false, fitted = false) {
     if (this.matches('.timer-display-wrap')) {
       const scale = parseFloat((this.querySelector('.timer-display') as HTMLElement).style.fontSize) / 40;
       const top = this.closest('[data-flipped]') ? 20 - (scale - 1) * 100 : 100 + gap;
-      return new DOMRect(100, top, 100 * scale, 40 * scale);
+      const offset = parseFloat(surface?.style.getPropertyValue('--solo-timer-offset-y') || '');
+      return new DOMRect(100, top + (Number.isFinite(offset) ? offset : settings.soloLayout.timerOffsetY), 100 * scale, 40 * scale);
     }
     return new DOMRect();
   });
@@ -94,6 +95,81 @@ it('clamps a rotated player at the top edge and permits shrinking back into the 
     expect(editor.host.querySelector('.timer-display-wrap')!.getBoundingClientRect().top).toBeCloseTo(0);
     act(() => editor.handle('size').dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowUp', bubbles: true })));
     expect(editor.settings().timerFontScale).toBe(1.15);
+  } finally { editor.close(); }
+});
+
+it('moves a single Solo box without changing gaps or moving the preview', () => {
+  const editor = mountEditor(false, true);
+  try {
+    const digits = editor.host.querySelector('.timer-display-wrap')!;
+    const preview = editor.host.querySelector('.timing-surface-cube-frame')!;
+    const digitsTop = digits.getBoundingClientRect().top;
+    const previewTop = preview.getBoundingClientRect().top;
+    editor.drag('move', -32);
+    expect(editor.settings().soloLayout.timerOffsetY).toBe(-32);
+    expect(editor.settings().soloLayout.timerGap).toBe(200);
+    expect(digits.getBoundingClientRect().top).toBe(digitsTop - 32);
+    expect(preview.getBoundingClientRect().top).toBe(previewTop);
+    editor.drag('move', 1000);
+    expect(digits.getBoundingClientRect().bottom).toBe(previewTop);
+    expect(preview.getBoundingClientRect().top).toBe(previewTop);
+  } finally { editor.close(); }
+});
+
+it('resizes the region under a trackpad pinch in editors without plain wheel resizing', () => {
+  const editor = mountEditor(true);
+  try {
+    const digits = editor.host.querySelector('.timer-display')!;
+    const wheel = (deltaY: number, ctrlKey: boolean) => {
+      const event = new WheelEvent('wheel', { deltaY, ctrlKey, bubbles: true, cancelable: true });
+      act(() => digits.dispatchEvent(event));
+      return event.defaultPrevented;
+    };
+    expect(wheel(-100, false)).toBe(false);
+    expect(editor.writes).not.toHaveBeenCalled();
+    expect(wheel(-100, true)).toBe(true);
+    expect(editor.settings().timerFontScale).toBe(1.2);
+    expect(wheel(10, true)).toBe(true);
+    expect(editor.settings().timerFontScale).toBe(1.09);
+    expect(editor.settings().soloLayout.cubeScale).toBe(1);
+  } finally { editor.close(); }
+});
+
+it('resizes only the hovered Solo region on a plain wheel event', () => {
+  const editor = mountEditor(false, true);
+  try {
+    const preview = editor.host.querySelector('.timing-surface-cube-frame')!;
+    const wheel = (target: Element, deltaY: number) => {
+      const event = new WheelEvent('wheel', { deltaY, bubbles: true, cancelable: true });
+      act(() => target.dispatchEvent(event));
+      return event.defaultPrevented;
+    };
+    expect(wheel(editor.host.querySelector('[data-rotate]')!, -120)).toBe(false);
+    expect(editor.writes).not.toHaveBeenCalled();
+    expect(wheel(preview, -120)).toBe(true);
+    expect(editor.settings().soloLayout.cubeScale).toBe(1.13);
+    expect(wheel(preview, 120)).toBe(true);
+    expect(editor.settings().soloLayout.cubeScale).toBe(1);
+    expect(editor.settings().timerFontScale).toBe(1);
+  } finally { editor.close(); }
+});
+
+it('uses consecutive WebKit pinch scales to resize a cube preview', () => {
+  const editor = mountEditor();
+  try {
+    const preview = editor.host.querySelector('.timing-surface-cube-frame')!;
+    const gesture = (type: string, scale: number) => {
+      const event = Object.assign(new Event(type, { bubbles: true, cancelable: true }), { scale });
+      act(() => preview.dispatchEvent(event));
+      return event.defaultPrevented;
+    };
+    expect(gesture('gesturestart', 1)).toBe(true);
+    expect(gesture('gesturechange', 1.1)).toBe(true);
+    expect(editor.settings().soloLayout.cubeScale).toBe(1.1);
+    expect(gesture('gesturechange', 0.9)).toBe(true);
+    expect(editor.settings().soloLayout.cubeScale).toBe(0.9);
+    gesture('gestureend', 0.9);
+    expect(editor.settings().timerFontScale).toBe(1);
   } finally { editor.close(); }
 });
 

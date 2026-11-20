@@ -1,6 +1,7 @@
 import { getUsableViewport } from './host-viewport';
 import {
-  searchTimerWcaCompetitions,
+  availableTimerWcaCompetitions,
+  timerWcaCompetitionSuggestions,
   timerWcaRoundGroupOptions,
   type TimerWcaCompetition,
   type TimerWcaScrambleSourceRow,
@@ -360,24 +361,13 @@ export function TimerWcaSourceConfig({
   const filterFrom = competitionFilters?.from ?? '';
   const filterCountry = competitionFilters?.country ?? '';
   const hasCompetitionFilters = Boolean(competitionFilters);
-  const availableCompetitions = useMemo(() => competitions?.filter((competition) => (
-    (!competition.startDate || competition.startDate <= maxDate)
-    && (!filterFrom || (competition.endDate || competition.startDate) >= filterFrom)
-  )) ?? [], [competitions, filterFrom, maxDate]);
+  const availableCompetitions = useMemo(() => availableTimerWcaCompetitions(competitions ?? [], filterFrom, maxDate), [competitions, filterFrom, maxDate]);
   const availableCountries = useMemo(() => (
     [...new Set(availableCompetitions.map((competition) => competition.country))].filter(Boolean)
   ), [availableCompetitions]);
-  const suggestions = useMemo(() => {
-    const filtered = availableCompetitions.filter((competition) => (
-      !filterCountry || competition.country.toUpperCase() === filterCountry.toUpperCase()
-    ));
-    if (settings.wcaCompName.trim()) return searchTimerWcaCompetitions(
-      settings.wcaCompName, filtered, hasCompetitionFilters ? filtered.length : 20,
-    );
-    return hasCompetitionFilters
-      ? filtered.slice().sort((a, b) => b.startDate.localeCompare(a.startDate))
-      : [];
-  }, [availableCompetitions, hasCompetitionFilters, filterCountry, settings.wcaCompName]);
+  const suggestions = useMemo(() => timerWcaCompetitionSuggestions(
+    availableCompetitions, settings.wcaCompName, filterCountry, hasCompetitionFilters,
+  ), [availableCompetitions, hasCompetitionFilters, filterCountry, settings.wcaCompName]);
   // Keep every match reachable without mounting the full historical index.
   const [suggestionPage, setSuggestionPage] = useState<{ rows: readonly TimerWcaCompetition[]; count: number } | null>(null);
   const visibleSuggestionCount = suggestionPage?.rows === suggestions ? suggestionPage.count : 40;

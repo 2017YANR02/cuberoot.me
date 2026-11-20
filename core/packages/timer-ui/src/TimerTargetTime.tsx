@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { Target } from 'lucide-react';
-import { formatTargetTime, type TimerSettingCopy } from '@cuberoot/shared/timer';
+import { timerTargetIndicator, type TimerSettingCopy } from '@cuberoot/shared/timer';
 import './timer-target-time.css';
 
 /** Both hosts use elapsed milliseconds, never formatted display text. */
@@ -27,11 +27,11 @@ export function TimerTargetTime({ targetMs, displayMs, localize }: {
   displayMs: number;
   localize(copy: TimerSettingCopy): string;
 }) {
-  if (targetMs === null) return null;
-  const delta = targetMs - displayMs;
-  return <div className={`timer-target-indicator${delta < 0 ? ' overshot' : ''}`}>
+  const indicator = timerTargetIndicator(targetMs, displayMs, localize);
+  if (!indicator) return null;
+  return <div className={`timer-target-indicator${indicator.overshot ? ' overshot' : ''}`}>
     <Target size={12} />
-    <span className="target-label">{localize({ zh: '目标', en: 'target' })} {formatTargetTime(targetMs)}</span>
-    <span className="target-delta">{`${delta >= 0 ? '+' : '-'}${(Math.abs(delta) / 1000).toFixed(2)}s`}</span>
+    <span className="target-label">{indicator.label}</span>
+    <span className="target-delta">{indicator.delta}</span>
   </div>;
 }

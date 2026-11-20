@@ -46,6 +46,7 @@ import { type GyroSample } from '@cuberoot/shared/smart-cube/gyro-track';
 import { applyReconTextOverride, prepareReconstruction, prepareTrainingReconstruction } from '@cuberoot/shared/timer/reconstruct/recon-text';
 import { timerSupportsTrainingTiming } from '@cuberoot/shared/timer/training-settings';
 import { createLiveReconstructionStream, reconstructionAnalyzer } from './analysis-client';
+import { liveReconstructionStage } from './analysis-live';
 import type { AnalysisInput, AnalysisSnapshot } from './analysis-protocol';
 import StepAnalysis from './StepAnalysis';
 import ReportContent from './ReportContent';
@@ -270,18 +271,13 @@ function ReconstructReportBody({
     // newer move cannot relabel an older stage while analysis is catching up.
     const currentSegs = analysisState?.solveId === solve.id
       ? analysisState.input.text.segs : stageSegs;
-    const stageName = displayedMethod !== 'cfop' ? reconText?.currentStage ? tr(reconText.currentStage) : '…' : currentSegs?.ollEndIdx != null ? 'PLL'
-      : currentSegs?.f2lEndIdx != null ? 'OLL'
-        : currentSegs?.crossEndIdx != null
-          ? `F2L-${Math.min(4, (reconText?.lines.filter(line => line.kind === 'f2l').length ?? 0) + 1)}`
-          : 'Cross';
     // Completed rows stay in the side panel; only the unfinished tail belongs
     // beneath the cube. At a boundary, show the next stage with an empty score.
-    const currentMoves = reconText?.lines.find(line => line.key === 'tail')?.moves ?? [];
+    const stage = liveReconstructionStage(displayedMethod, currentSegs, reconText, tr);
     return <>
       {liveStageTarget && createPortal(<>
-        <div className="timer-live-stage-label">{stageName}</div>
-        <div className="sml-moves">{currentMoves.join(' ') || '…'}</div>
+        <div className="timer-live-stage-label">{stage.label}</div>
+        <div className="sml-moves">{stage.moves}</div>
       </>, liveStageTarget)}
       {reconText ? (
       <StepMoveList method={displayedMethod} recon={reconText} reference={null} slotReference={null} />

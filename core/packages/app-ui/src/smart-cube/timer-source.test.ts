@@ -47,4 +47,23 @@ describe('native smart timer lifecycle', () => {
     await source.connect();expect(source.state).toBe('RUNNING');expect(events).not.toContainEqual({state:'IDLE'});
     await source.disconnect();
   });
+  it('reconnects to the same timer once and cancels a scheduled attempt on manual disconnect', async () => {
+    vi.useFakeTimers();
+    const { transport, source, send } = fixture();
+    try {
+      await source.connect();
+      send(0);
+      expect(source.connected).toBe(false);
+      await vi.advanceTimersByTimeAsync(2499);
+      expect(transport.connect).toHaveBeenCalledTimes(1);
+      await vi.advanceTimersByTimeAsync(1);
+      expect(vi.mocked(transport.connect).mock.calls.map(([id]) => id)).toEqual(['timer', 'timer']);
+      expect(transport.requestDevice).toHaveBeenCalledOnce();
+      expect(source.connected).toBe(true);
+      send(0);
+      await source.disconnect();
+      await vi.advanceTimersByTimeAsync(5000);
+      expect(transport.connect).toHaveBeenCalledTimes(2);
+    } finally { await source.disconnect(); vi.useRealTimers(); }
+  });
 });

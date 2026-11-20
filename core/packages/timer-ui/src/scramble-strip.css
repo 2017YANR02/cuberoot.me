@@ -1,11 +1,7 @@
+@import '@cuberoot/shared/timer/liberation-mono.css';
+
 /* Canonical Web/Android/iOS scramble strip. Hosts provide --timer-scramble-fs
    when they need a shell-specific size; the fallback is the website value. */
-@font-face {
-  font-family: 'LiberationMono';
-  src: url('./assets/LiberationMono-Regular.ttf') format('truetype');
-  font-display: block;
-}
-
 :root { --scramble-fg: #000; }
 @media (prefers-color-scheme: dark) {
   html:not([data-theme=light]) { --scramble-fg: #fff; }
@@ -23,7 +19,7 @@ html[data-theme=dark] { --scramble-fg: #fff; }
   width: 100%;
   min-width: 0;
   max-width: 100%;
-  padding: 4px 8px;
+  padding: var(--solo-scramble-block, 4px) var(--solo-scramble-inline, 8px);
   margin: 0;
   border: 0;
   background: transparent;
@@ -67,7 +63,7 @@ html[data-theme=dark] { --scramble-fg: #fff; }
 .timing-surface-scramble .scramble-strip .scramble-moves {
   min-width: 0;
   max-width: 100%;
-  word-spacing: 0.25em;
+  word-spacing: var(--solo-scramble-spacing, .25em);
   word-break: break-word;
   overflow-wrap: anywhere;
   white-space: pre-wrap;
@@ -95,7 +91,7 @@ html[data-theme=dark] { --scramble-fg: #fff; }
   gap: 6px;
   min-width: 0;
   max-width: 100%;
-  min-height: 44px;
+  min-height: var(--solo-source-control-height, 44px);
   font-size: var(--timer-scramble-src-fs, 12px);
   line-height: 1.3;
   text-decoration: none;

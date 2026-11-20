@@ -7,21 +7,19 @@
  */
 
 import type { TimerSoundSettings } from '@cuberoot/shared/timer';
+import {
+  TIMER_AUDIO_CUES,
+  TIMER_AUDIO_NOTE_ATTACK_MS,
+  TIMER_AUDIO_NOTE_GAIN,
+  TIMER_AUDIO_NOTE_GAP_MS,
+  TIMER_INSPECTION_BEEP,
+  isTimerInspectionVoiceCue,
+  type TimerAudioCue,
+  type TimerAudioNote,
+} from '@cuberoot/shared/timer/sound-feedback';
 import { createTimerVoice } from './timer-voice';
 
-export type Cue =
-  /** Inspection started (15s countdown begins) */
-  | 'inspection-start'
-  /** 8-second warning during inspection */
-  | 'warn-8'
-  /** 12-second warning during inspection */
-  | 'warn-12'
-  /** Timer just started running (release after green) */
-  | 'start'
-  /** Timer just stopped (recorded a solve) */
-  | 'stop'
-  /** Solve was a +2 or DNF (penalty audible cue) */
-  | 'penalty';
+export type Cue = TimerAudioCue;
 
 export function createTimerSound(getSettings: () => TimerSoundSettings & { inspectionBeepAt?: readonly number[] }) {
   const voice = createTimerVoice(getSettings);
@@ -42,31 +40,21 @@ export function createTimerSound(getSettings: () => TimerSoundSettings & { inspe
     }
   }
 
-  interface Note { freq: number; ms: number; type?: OscillatorType; gain?: number }
-
-  const CUES: Record<Cue, Note[]> = {
-    'inspection-start': [{ freq: 660, ms: 80 }],
-    'warn-8':           [{ freq: 880, ms: 100 }, { freq: 880, ms: 100 }],
-    'warn-12':          [{ freq: 990, ms: 120 }, { freq: 990, ms: 120 }, { freq: 990, ms: 120 }],
-    'start':            [{ freq: 440, ms: 50 }],
-    'stop':             [{ freq: 740, ms: 50 }, { freq: 880, ms: 80 }],
-    'penalty':          [{ freq: 220, ms: 200, type: 'sawtooth' }],
-  };
-
-  function playNote(c: AudioContext, note: Note, when: number, volume: number): number {
+  function playNote(c: AudioContext, note: TimerAudioNote, when: number, volume: number): number {
     const osc = c.createOscillator();
     const gain = c.createGain();
     osc.type = note.type ?? 'sine';
     osc.frequency.setValueAtTime(note.freq, when);
-    const peak = (note.gain ?? 0.6) * volume;
+    const peak = TIMER_AUDIO_NOTE_GAIN * volume;
+    const attack = TIMER_AUDIO_NOTE_ATTACK_MS / 1000;
     // Quick attack/release envelope to avoid clicks.
     gain.gain.setValueAtTime(0, when);
-    gain.gain.linearRampToValueAtTime(peak, when + 0.005);
+    gain.gain.linearRampToValueAtTime(peak, when + attack);
     gain.gain.linearRampToValueAtTime(0, when + note.ms / 1000);
     osc.connect(gain).connect(c.destination);
     osc.start(when);
     osc.stop(when + note.ms / 1000 + 0.01);
-    return when + note.ms / 1000 + 0.02; // small gap between notes
+    return when + (note.ms + TIMER_AUDIO_NOTE_GAP_MS) / 1000;
   }
 
   function playBeep(cue: Cue): void {
@@ -77,7 +65,7 @@ export function createTimerSound(getSettings: () => TimerSoundSettings & { inspe
     try {
       if (c.state === 'suspended') void c.resume().catch(() => undefined);
       let when = c.currentTime + 0.005;
-      for (const note of CUES[cue]) when = playNote(c, note, when, s.volume);
+      for (const note of TIMER_AUDIO_CUES[cue]) when = playNote(c, note, when, s.volume);
     } catch { /* Audio failure must not interrupt a timer transition. */ }
   }
 
@@ -87,7 +75,7 @@ export function createTimerSound(getSettings: () => TimerSoundSettings & { inspe
     // Voice override for inspection cues.
     if (
       s.voiceInspection !== 'none' &&
-      (cue === 'warn-8' || cue === 'warn-12' || cue === 'start' || cue === 'inspection-start') &&
+      isTimerInspectionVoiceCue(cue) &&
       isVoiceAvailable()
     ) {
       if (speakInspectionCue(cue, s.voiceInspection.startsWith('zh'), () => playBeep(cue))) return;
@@ -107,7 +95,7 @@ export function createTimerSound(getSettings: () => TimerSoundSettings & { inspe
     if (!c) return;
     try {
       if (c.state === 'suspended') void c.resume().catch(() => undefined);
-      playNote(c, { freq: 1050, ms: 90 }, c.currentTime + 0.005, s.volume);
+      playNote(c, TIMER_INSPECTION_BEEP, c.currentTime + 0.005, s.volume);
     } catch { /* Device audio may be unavailable. */ }
   }
 

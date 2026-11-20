@@ -1,6 +1,6 @@
 import { decodeWatchTimerRecord, watchTimerSolve, type WatchTimerRecord } from '../watch-timer';
 import { consumeTimerSeed, type TimerSeedTicket } from '@cuberoot/shared/timer/sync-seed';
-import { TIMER_BACKUP_KEEP, type TimerLocalBackupEntry } from '@cuberoot/shared/timer/backup-client';
+import { advanceTimerAutoBackupCadence, TIMER_BACKUP_KEEP, type TimerLocalBackupEntry } from '@cuberoot/shared/timer/backup-client';
 import { appendTimerImportSessions, type TimerImportPlan } from '@cuberoot/shared/timer/import-timer';
 import { reanalyzeTimerSession } from '@cuberoot/shared/timer';
 import { upsertNetRecordedSolve } from '@cuberoot/shared/timer';
@@ -691,9 +691,9 @@ export class IndexedDbTimerStoreDriver implements TimerStoreDriver {
       const added = Math.max(0, summarizeTimerDatabase(data.database).solveCount - previousCount);
       const count = Number(await requestResult(store.get('timer-backup-counter')) ?? 0);
       if (canCommit && !canCommit()) { await done; throw new Error('Import cancelled'); }
-      const next = count + added;
-      if (added) store.put(next, 'timer-backup-counter');
-      shouldBackup = added > 0 && data.settings.autoBackupEvery > 0 && Math.floor(next / data.settings.autoBackupEvery) > Math.floor(count / data.settings.autoBackupEvery);
+      const cadence = advanceTimerAutoBackupCadence(count, added, data.settings.autoBackupEvery);
+      if (added) store.put(cadence.next, 'timer-backup-counter');
+      shouldBackup = cadence.due;
       store.put(data, TIMER_KEY);
       if (receipt) store.put(true, `receipt:${receipt}`);
       await done;

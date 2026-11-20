@@ -302,11 +302,11 @@
 
 /* --- Mobile (touch + narrow) --- */
 @media (max-width: 540px) {
-  .scramble-strip { padding: 10px 12px; font-size: 14px; }
-  .timer-display:not(.timing-surface--local .timer-display) { font-size: clamp(48px, 18vw, 120px) !important; }
+  .scramble-strip:not(.timing-surface--solo .scramble-strip) { padding: 10px 12px; font-size: 14px; }
+  .timer-display:not(.timing-surface--local .timer-display, .timing-surface--solo .timer-display) { font-size: clamp(48px, 18vw, 120px) !important; }
 
   /* Modals fill the screen on small phones. */
-  .timer-modal {
+  .timer-modal:where(:not(.bt-timer-modal)) {
     max-width: 100%;
     max-height: 92dvh;
     border-radius: 6px;
@@ -495,7 +495,7 @@
 /* Site scenery: preserve the original surface when scenery is disabled. */
 @media screen {
   body[data-site-scenery] .timer-presence-panel,
-  body[data-site-scenery] .timer-modal {
+  body[data-site-scenery] .timer-modal:where(:not(.bt-timer-modal)) {
     background: var(--glass-surface-bg);
     border-color: var(--glass-border);
     box-shadow: var(--glass-shadow);
@@ -505,37 +505,7 @@
   body[data-site-scenery] .timer-presence-panel {
     background: var(--glass-popover-bg);
   }
-  body[data-site-scenery] .timer-modal {
+  body[data-site-scenery] .timer-modal:where(:not(.bt-timer-modal)) {
     background: var(--glass-dialog-bg);
   }
 }
-.settings-modal .timer-settings-actions {
-  display: grid;
-  margin: 0 0 16px;
-  padding: 0 16px;
-  border: 0;
-  border-radius: 12px;
-  background: var(--muted);
-}
-.settings-modal .timer-settings-action {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  min-width: 0;
-  min-height: 44px;
-  padding: 10px 0;
-  border: 0;
-  border-radius: 0;
-  background: transparent;
-  color: var(--foreground);
-  font: inherit;
-  text-align: left;
-  text-decoration: none;
-  cursor: pointer;
-}
-.settings-modal .timer-settings-action svg { flex: none; color: var(--muted-foreground); }
-.settings-modal .timer-settings-action:hover:not(:disabled) { background: var(--muted); }
-.settings-modal .timer-settings-action:focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }
-.settings-modal .timer-settings-action:disabled { opacity: .45; cursor: not-allowed; }
-.settings-modal .timer-settings-action-danger { width: 100%; color: var(--destructive); }

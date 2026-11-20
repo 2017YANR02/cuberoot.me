@@ -152,6 +152,27 @@ export function snapshotExternalTimer(source: ExternalTimerSource): ExternalTime
   };
 }
 
+/** A lost timer link gets one delayed attempt against the same device. */
+export function createBluetoothTimerReconnect() {
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const cancel = () => {
+    if (timer === undefined) return;
+    clearTimeout(timer);
+    timer = undefined;
+  };
+  return {
+    get pending() { return timer !== undefined; },
+    cancel,
+    schedule(reconnect: () => void) {
+      cancel();
+      timer = setTimeout(() => {
+        timer = undefined;
+        reconnect();
+      }, 2_500);
+    },
+  };
+}
+
 /* ------------------------------------------------------------------ */
 /*  Small shared event bus                                             */
 /* ------------------------------------------------------------------ */

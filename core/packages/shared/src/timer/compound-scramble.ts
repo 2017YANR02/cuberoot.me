@@ -88,6 +88,20 @@ export function formatRelayScramble(
     .join('\n');
 }
 
+/** Relays display the 3×3 sub-scramble instead of mixing all their puzzles. */
+export function timerRelayPreviewScramble(scramble: string): string {
+  const lines = scramble.split(/\r?\n/);
+  for (const line of lines) {
+    const prefix = /^\s*3x3/i.exec(line);
+    if (!prefix) continue;
+    const tail = line.slice(prefix[0].length);
+    const rest = tail.trimStart().replace(/^[:.-]/, '').trimStart();
+    if (rest && !/[\r\n\u2028\u2029]/.test(rest)) return rest;
+    if (!tail.trim().replace(/^[:.-]/, '') && tail && !/[\r\n\u2028\u2029]/.test(tail.at(-1)!)) return tail.at(-1)!;
+  }
+  return scramble;
+}
+
 function magicDirection(random: () => number): 'Forward' | 'Backward' {
   const sample = random();
   if (!Number.isFinite(sample) || sample < 0 || sample >= 1) {

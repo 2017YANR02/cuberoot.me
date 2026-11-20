@@ -1,5 +1,5 @@
 import { useMemo, useState, type ReactNode } from 'react';
-import { toLocalIsoDate } from '@cuberoot/shared/iso-date';
+import { TIMER_WCA_COMPETITION_PERIODS, timerWcaCompetitionPeriodStart, type TimerWcaCompetitionPeriod } from '@cuberoot/shared/timer/wca-source-config';
 import { CountryInput, type CountryInputProps } from './CountryInput';
 import type { TimerWcaSourceConfigProps } from './TimerWcaSourceConfig';
 import './wca-competition-filters.css';
@@ -10,15 +10,9 @@ export function useTimerWcaCompetitionFilters({ today, language, disabled, rende
   disabled?: boolean;
   renderCountry?(props: CountryInputProps): ReactNode;
 }): NonNullable<TimerWcaSourceConfigProps['competitionFilters']> {
-  const [period, setPeriod] = useState('all');
+  const [period, setPeriod] = useState<TimerWcaCompetitionPeriod>('all');
   const [country, setCountry] = useState('');
-  const from = useMemo(() => {
-    if (!today || period === 'all') return '';
-    const [year, month, day] = today.split('-').map(Number);
-    const date = new Date(year, month - 1, day);
-    date.setDate(date.getDate() - Number(period) + 1);
-    return toLocalIsoDate(date);
-  }, [period, today]);
+  const from = useMemo(() => timerWcaCompetitionPeriodStart(today, period), [period, today]);
   const tr = (text: { en: string; zh: string }) => text[language];
   return { from, country, render: countries => {
     const props: CountryInputProps = {
@@ -30,11 +24,8 @@ export function useTimerWcaCompetitionFilters({ today, language, disabled, rende
     };
     return <fieldset className="wca-src-filters" disabled={disabled} aria-label={tr({ zh: '筛选比赛', en: 'Filter competitions' })}>
       <select className="timer-wca-source-select" aria-label={tr({ zh: '时间范围', en: 'Time range' })}
-        value={period} onChange={event => setPeriod(event.target.value)}>
-        <option value="all">{tr({ zh: '全部时间', en: 'All time' })}</option>
-        <option value="7">{tr({ zh: '近一周', en: 'Past week' })}</option>
-        <option value="30">{tr({ zh: '近一个月', en: 'Past month' })}</option>
-        <option value="365">{tr({ zh: '近一年', en: 'Past year' })}</option>
+        value={period} onChange={event => setPeriod(event.target.value as TimerWcaCompetitionPeriod)}>
+        {TIMER_WCA_COMPETITION_PERIODS.map(option => <option key={option.id} value={option.id}>{tr(option.label)}</option>)}
       </select>
       {renderCountry ? renderCountry(props) : <CountryInput {...props} host={{ language }} />}
     </fieldset>;

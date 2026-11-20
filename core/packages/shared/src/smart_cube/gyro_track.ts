@@ -150,7 +150,11 @@ function base64ToBytes(s: string): Uint8Array {
 }
 
 /** 编码成 base64。空数组 → `null`(「没录到」和「录了个空的」是两回事)。 */
-export function encodeGyroTrack(samples: readonly GyroSample[], frame?: 'scramble'): string | null {
+export function encodeGyroTrack(
+  samples: readonly GyroSample[],
+  frame?: 'scramble',
+  encodeBytes: (bytes: Uint8Array) => string = bytesToBase64,
+): string | null {
   if (samples.length === 0) return null;
   const n = Math.min(samples.length, MAX_SAMPLES);
   const buf = new Uint8Array(HEADER_BYTES + n * SAMPLE_BYTES);
@@ -171,17 +175,20 @@ export function encodeGyroTrack(samples: readonly GyroSample[], frame?: 'scrambl
     buf[o + 4] = clampI8(s.q.y) & 0xff;
     buf[o + 5] = clampI8(s.q.z) & 0xff;
   }
-  return bytesToBase64(buf);
+  return encodeBytes(buf);
 }
 
 /**
  * 解码。任何一处对不上就返回 `[]` —— 一条读坏的录像不该把复盘整页拖垮,
  * 也不该冒充成一条能播的。
  */
-export function decodeGyroTrack(encoded: string | null | undefined): GyroSample[] {
+export function decodeGyroTrack(
+  encoded: string | null | undefined,
+  decodeBytes: (encoded: string) => Uint8Array = base64ToBytes,
+): GyroSample[] {
   if (!encoded) return [];
   let buf: Uint8Array;
-  try { buf = base64ToBytes(encoded); } catch { return []; }
+  try { buf = decodeBytes(encoded); } catch { return []; }
   if (buf.length < HEADER_BYTES) return [];
   if (buf[0] !== MAGIC || (buf[1] !== VERSION && buf[1] !== 2)) return [];
   const n = (buf[2] << 8) | buf[3];

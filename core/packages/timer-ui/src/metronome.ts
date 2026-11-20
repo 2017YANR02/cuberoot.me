@@ -1,5 +1,5 @@
 import { useSyncExternalStore } from 'react';
-import { clampBpm, DEFAULT_METRONOME_STATE as DEFAULTS, type MetronomeState } from '@cuberoot/shared/timer/metronome-settings';
+import { clampBpm, createTimerTapTempo, DEFAULT_METRONOME_STATE as DEFAULTS, timerMetronomePulse, type MetronomeState } from '@cuberoot/shared/timer/metronome-settings';
 export interface BeatEvent { index: number; accent: boolean }
 
 /** One audio-clock scheduler per host; persistence and mounting stay with the host. */
@@ -137,14 +137,13 @@ export function createMetronome(options: {
    * consecutive turns into one continuous tone instead of a countable pulse.
    */
   function tick(c: AudioContext, at: number, accent: boolean, interval: number): void {
-    const body = Math.min(0.05, interval * 0.55);
-    const attack = Math.min(0.003, body * 0.2);
+    const { body, attack, frequency, gain: peak } = timerMetronomePulse(interval, accent);
     const osc = c.createOscillator();
     const gain = c.createGain();
     osc.type = 'sine';
-    osc.frequency.setValueAtTime(accent ? 1800 : 1200, at);
+    osc.frequency.setValueAtTime(frequency, at);
     gain.gain.setValueAtTime(0, at);
-    gain.gain.linearRampToValueAtTime(accent ? 0.5 : 0.32, at + attack);
+    gain.gain.linearRampToValueAtTime(peak, at + attack);
     gain.gain.linearRampToValueAtTime(0, at + body);
     osc.connect(gain).connect(c.destination);
     osc.start(at);
@@ -325,28 +324,7 @@ export function createMetronome(options: {
 
   // ── Tap tempo ────────────────────────────────────────────────────
 
-  const TAP_RESET_MS = 3000;
-  const TAP_WINDOW = 4;
-  let _taps: number[] = [];
-
-  /**
-   * Register one tap and return the tempo it implies (null on the first tap of a
-   * run). Taps more than 3s apart start a fresh run.
-   */
-  function tapTempo(): number | null {
-    const now = performance.now();
-    if (_taps.length > 0 && now - _taps[_taps.length - 1] > TAP_RESET_MS) _taps = [];
-    _taps.push(now);
-    if (_taps.length > TAP_WINDOW) _taps.shift();
-    if (_taps.length < 2) return null;
-    const span = _taps[_taps.length - 1] - _taps[0];
-    if (span <= 0) return null;
-    return clampBpm(60000 / (span / (_taps.length - 1)));
-  }
-
-  function resetTapTempo(): void {
-    _taps = [];
-  }
+  const { tap: tapTempo, reset: resetTapTempo } = createTimerTapTempo(() => performance.now());
 
   function attach() {
     disposed = false;

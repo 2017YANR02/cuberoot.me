@@ -53,6 +53,7 @@ export type EventId =
 export type Penalty = 'ok' | '+2' | 'DNF' | 'DNS';
 
 export type TimerScrambleSourceKind = 'wca' | 'random' | 'manual';
+export const DEFAULT_TIMER_SCRAMBLE_SOURCE: TimerScrambleSourceKind = 'wca';
 
 /** Immutable provider identity captured when an attempt starts. */
 export interface TimerScrambleSourceSnapshot {

@@ -130,6 +130,8 @@
       "./engine/magic/MagicCube": "mixed",
       "./engine/magic/magicDrag": "mixed",
       "./native-puzzle-svg": "runtime-neutral",
+      "./native-cube-scene": "mixed",
+      "./native-cube-webgl": "mixed",
       "./clock-svg": "runtime-neutral",
       "./pyraminx-svg": "runtime-neutral",
       "./skewb-svg": "runtime-neutral",
@@ -277,6 +279,11 @@
       "types": "./src/native-puzzle-svg.ts",
       "node": "./dist/native-puzzle-svg.js",
       "default": "./src/native-puzzle-svg.ts"
+    },
+    "./native-cube-scene": "./src/native-cube-scene.ts",
+    "./native-cube-webgl": {
+      "types": "./src/native-cube-webgl-contract.d.ts",
+      "default": "./src/native-cube-webgl.ts"
     },
     "./clock-svg": "./src/clock-svg.ts",
     "./pyraminx-svg": "./src/pyraminx-svg.ts",

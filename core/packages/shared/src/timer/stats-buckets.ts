@@ -6,7 +6,8 @@
  */
 
 import { averageOfN, bestSingle, meanOfAll } from './stats';
-import type { Solve } from './types';
+import { averageSolveMetrics } from './solve-metrics';
+import { effectiveMs, type EventId, type Solve } from './types';
 
 export interface TimerBucketStats {
   count: number;
@@ -186,4 +187,56 @@ export function bucketBoundaries(now: Date): TimerBucketBoundaries {
     prevMonthStart,
     prevYearStart,
   };
+}
+
+export function timerStatsPeriodPairs(solves: readonly Solve[], now = new Date()) {
+  const b = bucketBoundaries(now);
+  return [
+    { key: 'today', current: bucketStats(solves, b.todayStart, b.tomorrowStart), previous: bucketStats(solves, b.yesterdayStart, b.todayStart) },
+    { key: 'week', current: bucketStats(solves, b.weekStart, b.nextWeekStart), previous: bucketStats(solves, b.prevWeekStart, b.weekStart) },
+    { key: 'month', current: bucketStats(solves, b.monthStart, b.nextMonthStart), previous: bucketStats(solves, b.prevMonthStart, b.monthStart) },
+    { key: 'year', current: bucketStats(solves, b.yearStart, b.nextYearStart), previous: bucketStats(solves, b.prevYearStart, b.yearStart) },
+  ] as const;
+}
+
+/** Daily navigation skips days with no solve and compares the last practice day. */
+export function timerStatsDaily(solves: readonly Solve[], event: EventId, total: boolean, back = 0) {
+  const days = solveDayKeys(solves);
+  const offset = Math.min(Math.max(0, days.length - 1), Number.isFinite(back) ? Math.max(0, Math.floor(back)) : 0);
+  const index = days.length - 1 - offset;
+  const day = total ? null : days[index] ?? null;
+  const previousDay = total ? null : days[index - 1] ?? null;
+  const statistic = (list: Solve[]) => ({
+    mean: meanOfAll(list), best: bestSingle(list, event), count: list.length, metrics: averageSolveMetrics(list),
+  });
+  return {
+    days: days.length, day, previousDay, offset,
+    canPrevious: !total && index > 0,
+    canNext: !total && offset > 0,
+    current: statistic(total ? [...solves] : day ? solves.filter(solve => dayKeyOf(solve.ts) === day) : []),
+    previous: previousDay ? statistic(solves.filter(solve => dayKeyOf(solve.ts) === previousDay)) : null,
+  };
+}
+
+/** Local hour and ISO weekday counts and medians for valid scores. */
+export function timerStatsPracticeTimes(solves: readonly Solve[]) {
+  const hours: number[][] = Array.from({ length: 24 }, () => []);
+  const weekdays: number[][] = Array.from({ length: 7 }, () => []);
+  let count = 0;
+  for (const solve of solves) {
+    const value = effectiveMs(solve);
+    const date = new Date(solve.ts);
+    if (!Number.isFinite(value) || !Number.isFinite(date.getTime())) continue;
+    hours[date.getHours()].push(value);
+    weekdays[isoWeekdayIndex(date)].push(value);
+    count++;
+  }
+  const project = (values: number[], index: number) => {
+    const length = values.length;
+    values.sort((a, b) => a - b);
+    const middle = Math.floor(length / 2);
+    const median = !length ? null : length % 2 ? values[middle] : (values[middle - 1] + values[middle]) / 2;
+    return { index, count: length, median };
+  };
+  return { count, hours: hours.map(project), weekdays: weekdays.map(project) };
 }

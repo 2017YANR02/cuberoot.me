@@ -1,12 +1,12 @@
 import type { ReferenceResult, StageReference } from '@cuberoot/shared/timer/reconstruct/reference';
-import type { ReconstructLocalize } from './ReconstructHost';
+import type { ReconstructLocalize } from './report-content';
 import { buildNormalizedSolution, findCrossLineIndex, hasNormalizableCrossMove } from '@cuberoot/shared/recon-ground-truth';
 import { formattedReconMoves, originalReconNotation, simplifyF2lRotations, type ReconTextResult } from '@cuberoot/shared/timer/reconstruct/recon-text';
 import { METHODS } from '@cuberoot/shared/timer/reconstruct/methods';
 import { reconCommentLinks, type ReconCommentCases } from '@cuberoot/shared/recon/comment-links';
 import { cubeColorGroups, cubeColorGroupPunctuation, leadingCubeColors, crossColorFromLabels, f2lDisplayColors } from '../cube-color-model';
 import { CUBE_FILL, CUBE_FACE_FOR_COLOR_LETTER, type CubeColorLetter } from '@cuberoot/puzzle-render-core/support/cube-colors';
-import { sliceReconstruction } from '@cuberoot/shared/timer/reconstruct/slice';
+export { reconstructionSummary } from '@cuberoot/shared/timer/reconstruct/recap';
 import type { ReconstructionType } from '@cuberoot/shared/timer/reconstruct/recon-text';
 import type { SolveMove } from '@cuberoot/shared/timer/reconstruct/stage-segments';
 import type { Solve } from '@cuberoot/shared/timer';
@@ -125,13 +125,6 @@ export function projectReconNotation(recon: ReconTextResult | null, method: Reco
   return { simplifiedRecon, originalRecon, shownRecon, normalizedText, normalized, displayText,
     normalizedLines, crossLine, inspectionOffset, inspection, lines,
     canToggle: method === 'cfop' && Boolean(simplifiedRecon !== recon || originalRecon !== recon || normalizedText) };
-}
-
-export function reconstructionSummary(moves: SolveMove[], timeMs: number, recon: ReconTextResult | null, executionMs: number | null, memoMs?: number) {
-  const slices = sliceReconstruction(moves, timeMs, memoMs);
-  const stm = recon?.stm ?? slices.htmCount;
-  return { stm, tps: slices.executionMs >= 1 ? stm / (slices.executionMs / 1000) : 0,
-    fluency: executionMs !== null && timeMs > 0 ? Math.round(executionMs / timeMs * 100) : null };
 }
 
 export function refKindLabel(tr: ReconstructLocalize, kind: NonNullable<StageReference['kind']>): string {

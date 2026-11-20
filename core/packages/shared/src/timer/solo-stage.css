@@ -1,0 +1,111 @@
+/* Geometry for the solo stage shared by React and the native mini program. */
+.timer-solo-main, .native-timer--solo {
+  --solo-stage-inline: 16px;
+  --solo-stage-bottom: 16px;
+  --solo-scramble-font-min: 16px;
+  --solo-scramble-font-max: 28px;
+  --solo-scramble-inline: 8px;
+  --solo-scramble-block: 4px;
+  --solo-scramble-spacing: .25em;
+  --solo-source-font-size: 12px;
+  --solo-source-control-height: 44px;
+  --solo-stat-rail-top-bottom: 10px;
+  --solo-stat-rail-inline: 12px;
+  --solo-stat-label-width: 34px;
+  --solo-stat-value-width: 48px;
+  --solo-stat-column-gap: 12px;
+  --solo-stat-label-font-size: 12px;
+  --solo-stat-value-font-size: 13px;
+}
+
+/* The Web dialog and the native Mini Program share the same method cards. */
+.timer-solver-compare {
+  --compare-text: var(--foreground, var(--cr-text));
+  --compare-secondary: var(--muted-foreground, var(--cr-muted));
+  --compare-border: var(--border-default, var(--cr-line));
+  --compare-surface: var(--card, var(--cr-surface));
+  --compare-accent: var(--accent, var(--cr-accent));
+  --compare-error: var(--destructive, var(--cr-danger));
+  --compare-mono: var(--font-mono, 'LiberationMono', monospace);
+  box-sizing: border-box;
+  color: var(--compare-text);
+}
+.timer-room-dialog.timer-solver-compare { width: min(100%, 760px); }
+.timer-room-overlay.solver-compare-overlay { background: var(--timer-solver-scrim, var(--modal-overlay)); }
+body[data-site-scenery='transparent'] .timer-room-dialog.timer-solver-compare {
+  background: var(--card);
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+
+.solver-compare-content { display: flex; flex-direction: column; gap: 8px; line-height: 1.5; }
+.solver-compare-scramble, .solver-compare-moves {
+  font-family: var(--compare-mono);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.solver-compare-scramble { font-size: 12.5px; opacity: .85; }
+.solver-compare-status { color: var(--compare-secondary); font-size: 13px; }
+.solver-compare-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(220px, 100%), 1fr));
+  align-items: stretch;
+  gap: 8px;
+}
+.solver-compare-card {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+  padding: 8px 10px;
+  border: 1px solid var(--compare-border);
+  border-radius: 6px;
+  background: var(--compare-surface);
+}
+.solver-compare-card.is-best { border-color: var(--compare-accent); }
+.solver-compare-card.is-best .solver-compare-name { color: var(--compare-accent); }
+.solver-compare-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  min-height: 20px;
+  line-height: 20px;
+  color: var(--compare-text);
+}
+.solver-compare-name { margin-right: auto; font-size: 13px; font-weight: 600; }
+.solver-compare-total { opacity: .85; font-size: 12.5px; font-variant-numeric: tabular-nums; }
+.solver-compare-card .solver-compare-toggle {
+  display: none;
+  width: 100%;
+  padding: 0;
+  border: 0;
+  color: var(--compare-text);
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+}
+.solver-compare-toggle .nt-icon { width: 15px; height: 15px; }
+.solver-compare-toggle.is-open .nt-icon { transform: rotate(180deg); }
+.solver-compare-detail { display: flex; flex-direction: column; gap: 2px; }
+.solver-compare-stage {
+  display: grid;
+  grid-template-columns: 70px 24px minmax(0, 1fr);
+  align-items: baseline;
+  gap: 6px;
+  font-size: 12px;
+  line-height: 18px;
+}
+.solver-compare-label { opacity: .8; overflow-wrap: anywhere; }
+.solver-compare-count { opacity: .7; text-align: right; font-variant-numeric: tabular-nums; }
+.solver-compare-moves { font-size: 11.5px; }
+.solver-compare-error { color: var(--compare-error); font-size: 12px; overflow-wrap: anywhere; }
+.solver-compare-time { margin-top: 2px; color: var(--compare-secondary); font-size: 11px; line-height: 16px; }
+
+@media (max-width: 480px) {
+  .solver-compare-grid { grid-template-columns: minmax(0, 1fr); gap: 6px; }
+  .solver-compare-head.solver-compare-static-head { display: none; }
+  .solver-compare-card .solver-compare-toggle { display: flex; }
+  .solver-compare-detail { display: none; }
+  .solver-compare-detail.is-open { display: flex; }
+}

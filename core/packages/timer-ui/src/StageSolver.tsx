@@ -38,18 +38,29 @@ import { usePanelClamp } from './usePanelClamp';
 import { createContext, useContext } from 'react';
 import { createRustCrossPool, FR_NOT_HTR, HTR_NOT_DR, HTR2_NOT_HTR, type MovesTimed, type RustCrossPool, type SolItem, TABLE_BYTES, TABLE_SETS, XCROSS_TABLES } from './stage-solver/rust-cross-client';
 import { onXCrossProgress, type XCrossProgress } from './stage-solver/rust-cross-tables';
-import { getRustCrossPool, dropRustCrossPool, isRustCrossPoolReady, poolSizeForDevice, type PoolNeed } from './stage-solver/rust-cross-pool';
+import { getRustCrossPool, dropRustCrossPool, isRustCrossPoolReady, poolSizeForDevice } from './stage-solver/rust-cross-pool';
 import { normalizeWcaScramble as normalizeScramble } from '@cuberoot/shared/normalize-wca-scramble';
-import { bestErgonomicOrientationIndex, rotateSolutionY } from './stage-solver/rotate-solution';
 import { rankXCrossSolutions } from './stage-solver/xcross-ranking';
-import { VARIANT_STAGES } from '@cuberoot/shared/timer/scramble-variants';
-import { countQtm } from '@cuberoot/shared/scramble-length';
+import {
+  STAGE_SOLVER_METHODS, STAGE_SOLVER_VARIANT_IDS as VARIANT_ID, VARIANT_STAGES,
+  STAGE_SOLVER_DEFAULT_SLACK as SOL_SLACK, STAGE_SOLVER_DEFAULT_LIMIT,
+  STAGE_SOLVER_SLACK_OPTIONS as SLACK_OPTIONS, STAGE_SOLVER_LIMIT_OPTIONS as LIMIT_OPTIONS,
+  STAGE_SOLVER_NO_LIMIT_CAP as NO_LIMIT_CAP,
+  STAGE_SOLVER_MOVE_FACES as MOVE_FACES, STAGE_SOLVER_MOVE_CELLS as CR_CELLS,
+  STAGE_SOLVER_DEFAULT_FACES, STAGE_SOLVER_DEFAULT_CELLS as CR_DEFAULT,
+  STAGE_SOLVER_SLOT_LABELS as SLOT_LABELS,
+  bestStageSolverFace, stageSolverSplitLeadingRotations as splitLeadRot,
+  stageSolverKind as kindOf, stageSolverNeed as needOf, stageSolverStageIndex,
+  sortStageSolverCandidates, stageSolverMoveLength as moveLen,
+  stageSolverRestrictionKind, stageSolverMoveBits, stageSolverMoveRestriction, stageSolverToggleMoveCell,
+  stageSolverSlotCount as slotCount, stageSolverHasBase as hasBase,
+  stageSolverSlotCombinations as kCombos, stageSolverComboArity as comboArity,
+  bestStageSolverY, rotateSolutionY,
+  formatStageSolverBytes as fmtBytes, STAGE_SOLVER_INFO_TITLE, stageSolverInfoModel, summarizeStageSolverTables,
+  type StageSolverMethod,
+} from '@cuberoot/shared/timer/scramble-variants';
 import './StageSolver.css';
 import './timer-room.css';
-
-function fmtMs(ms: number): string {
-  return ms >= 1000 ? `${(ms / 1000).toFixed(2)}s` : `${Math.round(ms)}ms`;
-}
 
 // 求解已用时。深阶段能跑到几分钟,纯秒数(「214s」)读起来要心算 → 过分钟改 m:ss。
 function fmtElapsed(sec: number): string {
@@ -57,72 +68,19 @@ function fmtElapsed(sec: number): string {
   return `${Math.floor(sec / 60)}:${String(sec % 60).padStart(2, '0')}`;
 }
 
-function fmtBytes(b: number): string {
-  if (b >= 1048576) return `${(b / 1048576).toFixed(1)} MB`;
-  if (b >= 1024) return `${Math.round(b / 1024)} KB`;
-  return `${b} B`;
-}
-
 // 'htr' 是条件式阶段:输入须已处于该视角 DR 才有 DR→HTR 步数;非 DR 视角引擎返回
 // HTR_NOT_DR 哨兵 → 格子显示 '-'(同 native analyzer CSV),且不参与最优(min)统计。
 // 'htr2'(HTR phase-2,G3→solved)同理:输入须已处于该视角 HTR,否则引擎返回
 // HTR2_NOT_HTR 哨兵 → 同样显示 '-' 且不参与 min。
 // 'fr'(Floppy 还原,HTR→FR)同理:输入须已处于该视角 HTR,否则引擎返回 FR_NOT_HTR 哨兵。
-export type Method = 'std' | 'daisy' | 'first_layer' | 'eo' | 'pair' | 'pseudo' | 'pseudo_pair' | 'f2leo' | 'pseudo_f2leo' | 'block' | 'eoline' | 'dr' | 'htr' | 'htr2' | 'fr';
-const VARIANT_ID: Record<'pair' | 'eo' | 'pseudo' | 'pseudo_pair', number> = {
-  pair: 0, eo: 1, pseudo: 2, pseudo_pair: 3,
-};
-// 步法限制(move mask)已支持的方法:std + pair + eo。剪枝表「含边」启发式够紧;受限搜索深度
-// 按禁面数自适应封顶(见 wasm.rs variant_mask_depth):禁 1 面 ~0.25s 全覆盖,禁 ≥2 面压低 cap
-// 秒回(重限制多为无解,浏览器实测 flat cap12 下 stage0 禁2面 pair 15s/eo 30s,故压回 <~1s)。
-// pseudo/pseudo_pair/f2leo/pseudo_f2leo 小表丢边,受限下爆炸更狠(12-90s)→ 按红线不支持。
-// 块族 / BFS 陪集族(eoline/dr/htr/htr2/fr)由后续 agent 评估。
-const MASK_SUPPORTED: ReadonlySet<Method> = new Set<Method>([
-  'std', 'pair', 'eo', 'pseudo', 'pseudo_pair', 'f2leo', 'pseudo_f2leo',
-]);
-// variant/f2leo 族(pair/eo/pseudo/pseudo_pair/f2leo/pseudo_f2leo):禁 1 面恒可解 → IDA* 早终止
-// 有界(浏览器实测 ~0.25-1s);禁 ≥2 面常无解 → 搜满深度爆炸(实测 15-30s,depth cap 压不下来,
-// 因剪枝表是「无限制距离」对受限无解无下界),故 UI 限单面(点另一面 = 换禁的那面),结构性杜绝
-// 重限制卡顿。std(cross/xcross)状态空间小 + 精确距离剪枝,禁多面也秒证无解(<0.6s)→ 不限。
-const SINGLE_FACE_METHODS: ReadonlySet<Method> = new Set<Method>([
-  'pair', 'eo', 'pseudo', 'pseudo_pair', 'f2leo', 'pseudo_f2leo',
-]);
+export type Method = StageSolverMethod;
 // 方法名走全站单一真源 lib/scramble-variants(VARIANT_LABEL),别再本地复制一份。
 // 这里只定引擎支持的方法顺序(按 WASM kind 分组),标签 = variantLabel(key, isZh)。
 // 块族(原 123/222/223)聚合为一个方法 'block',块形状落在阶段下拉。
-export const METHOD_KEYS: Method[] = [
-  'std', 'daisy', 'first_layer', 'eo', 'pair', 'pseudo', 'pseudo_pair', 'f2leo', 'pseudo_f2leo',
-  'block', 'eoline', 'dr', 'htr', 'htr2', 'fr',
-];
+export const METHOD_KEYS: Method[] = [...STAGE_SOLVER_METHODS];
 // 阶段键序 + 显示名同样走 scramble-variants(VARIANT_STAGES / stageLabel),
 // WASM 阶段索引 i ↔ VARIANT_STAGES[method][i],与 /scramble/stats 完全同名。
-type Kind = 'std' | 'daisy' | 'first_layer' | 'variant' | 'f2leo' | 'block222' | 'roux223' | 'eodr' | 'htr' | 'htr2' | 'fr';
-// block 方法按阶段分流:block222 阶段走专用 Block222SolverWasm,其余走 Roux223SolverWasm
-// (其阶段 id 0..4 恰与 VARIANT_STAGES.block 的索引一一对应,无需映射)。
-const kindOf = (m: Method, stageKey: string): Kind =>
-  m === 'std' ? 'std'
-    : m === 'daisy' ? 'daisy'
-    : m === 'first_layer' ? 'first_layer'
-    : m === 'f2leo' || m === 'pseudo_f2leo' ? 'f2leo'
-      : m === 'block' ? (stageKey === 'block222' ? 'block222' : 'roux223')
-        : m === 'eoline' || m === 'dr' ? 'eodr'
-          : m === 'htr' ? 'htr'
-            : m === 'htr2' ? 'htr2'
-              : m === 'fr' ? 'fr' : 'variant';
-// 池按方法选:'block' 全程用 roux223 池(其 worker 表是 block222 的超集,init 时两个
-// 求解器都建),方法内切阶段不换池、不重拉表。
-const needOf = (m: Method): PoolNeed =>
-  m === 'std' ? 'cross'
-    : m === 'daisy' ? 'daisy'
-    : m === 'first_layer' ? 'first_layer'
-    : m === 'f2leo' || m === 'pseudo_f2leo' ? 'f2leo'
-      : m === 'block' ? 'roux223'
-        : m === 'eoline' || m === 'dr' ? 'eodr'
-          : m === 'htr' ? 'htr'
-            : m === 'htr2' ? 'htr2'
-              : m === 'fr' ? 'fr' : 'variant';
-// EoDrSolverWasm 的阶段编号:0=EO 1=EOLine 2=DR。
-const eoDrStage = (m: Method, stage: number) => (m === 'eoline' ? stage : 2);
+type Kind = ReturnType<typeof kindOf>;
 
 // 6 视角:rot ""/z2/z'/z/x'/x → 底面 D/U/L/R/F/B(与 ROTS / solve*Stage 返回序一致)。
 // 视角格直接填该底面十字色(取自 lib/cube-colors 全站单一来源),不再写字母。
@@ -139,26 +97,6 @@ const FACE_LETTER: Record<CubeFace, ColorLetter> = {
   U: 'W', D: 'Y', F: 'G', B: 'B', L: 'O', R: 'R',
 };
 
-// 解法搜索的长度松弛(默认值):最多比最优长 2 步(= 旧「含次优 +2」档)。用户可在「最大步数」下拉
-// 调到 最优+0..6;每个面最优不同 → 用「相对最优」语义,跨面一致、cross 阶段也不会因绝对大值而爆炸。
-const SOL_SLACK = 2;
-// 「最大步数」可选项 = 比该面最优多几步(slack);展示条数(cap)在此深度内按长度升序收集。
-const SLACK_OPTIONS = [0, 1, 2, 3, 4, 5, 6];
-// 「最大数量」可选项;0 = 无上限(枚举 best+slack 深度内全部解,用极大 cap 实现)。
-const LIMIT_OPTIONS = [1, 5, 10, 25, 50, 0];
-const NO_LIMIT_CAP = 100000;
-
-// 步法限制(对齐 or18 /solver 第一行):6 个 move 面 U D L R F B 各自允许/禁止,默认全允许。
-// std 全阶段生效(cross + XCross/F2L,变体 0..4 均接 masked 引擎);其余方法引擎暂无 masked 搜索,
-// 宽层/滑层/转体(u d l r / M E S / x y z)对 HTM 最优引擎无对应记号,不做。
-// move 索引:U=0..2 D=3..5 L=6..8 R=9..11 F=12..14 B=15..17;面 i 的三个 move 位 = 0b111<<(3i)。
-const MOVE_FACES = ['U', 'D', 'L', 'R', 'F', 'B'] as const;
-const ALL_MOVE_MASK = (1 << 18) - 1; // 0x3FFFF = 全部允许
-
-// 纯十字阶段的「全 18 格步法限制」(对齐 or18 /solver 全网格):6 面 + 6 宽 + 3 中层 + 3 旋转。
-// 走 CrossRestrictSolverWasm 的 54-move BFS(or18 式中心追踪 + 真转体);每格 = 该记号的 3 个变体
-// (m, m2, m'),对应 54-move 索引 [3i, 3i+2]:面 0-17 / 宽 18-35 / 中层 36-44 / 旋转 45-53。
-const CR_CELLS = ['U', 'D', 'L', 'R', 'F', 'B', 'u', 'd', 'l', 'r', 'f', 'b', 'M', 'E', 'S', 'x', 'y', 'z'] as const;
 // 3 行,每行 6 列、列宽一致:面 / 宽 / (中层 M E S + 旋转 x y z 同行,严格按列对齐 —— M 在 u 下、
 // x 在 r 下,xyz 落在与 rfb 同列)。
 const CR_ROWS: { key: string; cells: number[] }[] = [
@@ -166,34 +104,6 @@ const CR_ROWS: { key: string; cells: number[] }[] = [
   { key: 'wide', cells: [6, 7, 8, 9, 10, 11] },
   { key: 'sliceRot', cells: [12, 13, 14, 15, 16, 17] },
 ];
-// 默认 = 仅 6 面允许(= 标准 HTM 十字),宽/中层/旋转需用户主动开。
-const CR_DEFAULT: boolean[] = [true, true, true, true, true, true, false, false, false, false, false, false, false, false, false, false, false, false];
-const CR_FACE_LO = (1 << 18) - 1; // 仅 6 面全开时的 lo(hi=0)= 未受限基线
-
-// F2L 槽位标签(对齐 solver wasm SLOT_LABELS:BL=0 BR=1 FR=2 FL=3)。
-const SLOT_LABELS = ['BL', 'BR', 'FR', 'FL'] as const;
-// 某 (方法, 阶段) 的「槽位」下拉需选的固定已解 F2L 槽数 = stage(stage0=纯十字/纯基态无固定槽)。
-// cross 族(std/eo/pseudo/f2leo/pseudo_f2leo)= 已解槽;基态/伪基态(pair/pseudo_pair)= 已解的
-// 固定 xcross 槽(自由对另由「基态」下拉单独选,见 hasBase);其余(block/eoline/dr/htr/fr)= 0。
-const SLOT_METHODS: Method[] = ['std', 'eo', 'pseudo', 'f2leo', 'pseudo_f2leo', 'pair', 'pseudo_pair'];
-function slotCount(method: Method, stageIdx: number): number {
-  return SLOT_METHODS.includes(method) ? stageIdx : 0;
-}
-// 「基态」(对齐 or18 Free Pair)= 自由对槽,仅 pair/pseudo_pair 有;与「槽位」的固定槽不交,
-// 引擎在自由对固定为该槽下挑最优(pseudo 的源件仍自动)。
-const hasBase = (m: Method): boolean => m === 'pair' || m === 'pseudo_pair';
-// {0,1,2,3} 选 k 的全部组合(规范序,与 solver 的 PAIRS/TRIPS 一致)。
-function kCombos(k: number): number[][] {
-  const res: number[][] = [];
-  const rec = (start: number, cur: number[]) => {
-    if (cur.length === k) { res.push(cur.slice()); return; }
-    for (let i = start; i < 4; i++) { cur.push(i); rec(i + 1, cur); cur.pop(); }
-  };
-  rec(0, []);
-  return res;
-}
-const comboArity = (c: string): number => (c ? c.split(',').length : 0);
-
 // ── 槽位 → 两侧贴纸颜色 ─────────────────────────────────────────────────
 // 槽位标签 BL/BR/FR/FL 是方位(后左/后右/前右/前左);要展示的是该槽两片侧面贴纸的颜色。
 // 颜色随视角变:每个视角(FACES[i].rot 把该底面转到 D)转动后,F/R/B/L 位各落在标准配色的哪一面。
@@ -358,24 +268,9 @@ function SlotChipSelect({
   );
 }
 
-// 步骤前缀可能含 1~2 个旋转 token(eo/f2leo 破 y 对称时如 "x' y")。算实际转动数(HTM)时剥掉。
-const moveLen = (sol: string) => sol.replace(/^([xyz][2']?\s+)+/, '').split(/\s+/).filter(Boolean).length;
-// QTM(180°=2)走 shared 的 countQtm,单一来源;它本身会跳过 x/y/z 旋转 token。HTM 相同时按它升序排。
-
-// Timer 保留四种 y 朝向；与双底打乱复用同一套顺手程度评分。
-const bestErgoRot = (alg: string): number =>
-  bestErgonomicOrientationIndex([0, 1, 2, 3].map(n => rotateSolutionY(alg, n)));
-
 // 把解法前导的整体旋转(视角前缀 + y 预转体,如 "z2 y")与实际转动分离。
 // 播放器把 lead 折进 setup(打乱之后),只动画 body → 开头的整体转体不参与动画
 // (用户要从「转体做完」的朝向起步)。无前导旋转时 lead='',行为不变。
-function splitLeadRot(a: string): { lead: string; body: string } {
-  const toks = a.trim().split(/\s+/).filter(Boolean);
-  let p = 0;
-  while (p < toks.length && /^[xyz][2']?$/.test(toks[p])) p++;
-  return { lead: toks.slice(0, p).join(' '), body: toks.slice(p).join(' ') };
-}
-
 // 受限 xcross「限制过宽未在节点预算内判定」哨兵(worker 把 Rust -2 映射成此值):该视角多半可解,但
 // 含较多 wide/slice/rotation 搬中心 move → no-center 启发式偏松、分支爆炸撞预算,价值低 → 显 '⋯' +
 // 提示缩小,而非卡死或误标无解。纯面 / 面+少量 slice 等常用限制恒在预算内秒出精确解。
@@ -465,8 +360,8 @@ export default function StageSolver({ scramble, lang, initialMethod = 'std', ini
   const [errMsg, setErrMsg] = useState('');
   const [method, setMethod] = useState<Method>(initialMethod);
   const [stage, setStage] = useState(initialStage);
-  const [limit, setLimit] = useState(10); // 展示条数(最短优先)
-  const [slack, setSlack] = useState(SOL_SLACK); // 搜索深度 = 最优 + slack(用户可调,默认 +2)
+  const [limit, setLimit] = useState<number>(STAGE_SOLVER_DEFAULT_LIMIT); // 展示条数(最短优先)
+  const [slack, setSlack] = useState<number>(SOL_SLACK); // 搜索深度 = 最优 + slack(用户可调,默认 +2)
   const [counts, setCounts] = useState<(number | null)[]>([null, null, null, null, null, null]);
   const [computing, setComputing] = useState(false);
   const [selFace, setSelFace] = useState<number | null>(null);
@@ -492,26 +387,12 @@ export default function StageSolver({ scramble, lang, initialMethod = 'std', ini
   const faceVisible = useCallback((i: number) => visibleColors.has(FACE_LETTER[FACES[i].face]), [visibleColors]);
 
   // 步法限制:6 个 move 面是否允许(U D L R F B 顺序);默认全允许。仅 std 纯十字阶段生效。
-  const [allowedFaces, setAllowedFaces] = useState<boolean[]>(() => [true, true, true, true, true, true]);
-  // 步法限制(move mask)已支持的方法集:std(cross_solver/xcross_solver)+ IDA* 小表族
-  // (pair/eo/pseudo/pseudo_pair = VariantSolver,f2leo/pseudo_f2leo = F2leoSolver)。这些都
-  // 走可采纳下界 + 迭代加深 masked 搜索,VARIANT_MASK_DEPTH 封顶 ⇒ 受限无解返哨兵不卡 tab。
-  // 块族(block/roux 122/123/223)与 BFS 陪集族(eoline/dr/htr/htr2/fr)暂不支持(后续接 / 不适用)。
-  const maskSupported = MASK_SUPPORTED.has(method);
-  const singleFace = SINGLE_FACE_METHODS.has(method); // pair/eo:UI 限最多禁 1 面(见上方注释)
-  const moveMask = useMemo(() => {
-    let m = 0;
-    allowedFaces.forEach((on, i) => { if (on) m |= 0b111 << (3 * i); });
-    return m >>> 0;
-  }, [allowedFaces]);
-
-  // —— 「全 18 格」受限阶段:纯十字(std stage 0)走 CrossRestrictSolverWasm(54-move BFS),
-  // xcross/xxcross/xxxcross/F2L(std stage 1..4)走 XCrossRestrictSolverWasm(54-move + 中心追踪 +
-  // 多对 PDB IDA*,k=stage 对同时归位)。std 全阶段都铺满 18 格(6面+6宽+3中层+3旋转);其余方法沿用
-  // 上面的 6 面 mask 引擎。纯 6 面子集仍走老快引擎(零回归),仅宽/中层/旋转才落 54-move 受限引擎。
-  const isCrossStage = method === 'std' && stage === 0;
-  const isXfStage = method === 'std' && stage >= 1; // xcross/xxcross/xxxcross/F2L:k=stage 对
-  const isGridStage = isCrossStage || isXfStage; // 渲 18 格 + 走 54-move 受限引擎的阶段
+  const [allowedFaces, setAllowedFaces] = useState<boolean[]>(() => STAGE_SOLVER_DEFAULT_FACES.slice());
+  const restrictionKind = stageSolverRestrictionKind(method);
+  const singleFace = restrictionKind === 'single-face';
+  const maskSupported = restrictionKind !== 'none';
+  const isGridStage = restrictionKind === 'grid';
+  const moveMask = useMemo(() => stageSolverMoveBits(allowedFaces).lo, [allowedFaces]);
   const [crCells, setCrCells] = useState<boolean[]>(() => CR_DEFAULT.slice());
   // 步法限制默认收起(省空间),用户按需展开。受限时头部给个「已限制」提示,收起也可见。
   const [mrOpen, setMrOpen] = useState(true);
@@ -530,44 +411,22 @@ export default function StageSolver({ scramble, lang, initialMethod = 'std', ini
   }, [infoOpen, settingsOpen, onBlockingChange]);
   const settingsId = useId();
   const solutionControlsRef = useRef<HTMLDivElement>(null);
-  // 18 格 → 54-bit allowed:格 i 覆盖 move [3i,3i+2];lo=低 32 位、hi=高 22 位。
-  const crMask = useMemo(() => {
-    let lo = 0, hi = 0;
-    crCells.forEach((on, i) => {
-      if (!on) return;
-      for (let b = 3 * i; b < 3 * i + 3; b++) {
-        if (b < 32) lo |= 1 << b; else hi |= 1 << (b - 32);
-      }
-    });
-    return { lo: lo >>> 0, hi: hi >>> 0 };
-  }, [crCells]);
-  // 任一旋转格(x/y/z = 格 15/16/17)开 → 允许解里含整体旋转(上限 2,够「换面触达」又不爆 BFS)。
-  const crMaxRot = useMemo(() => (crCells[15] || crCells[16] || crCells[17] ? 2 : 0), [crCells]);
-  // 受限 = 偏离「仅 6 面」基线(lo=0x3FFFF, hi=0)。
-  const crRestricted = isGridStage && (crMask.lo !== CR_FACE_LO || crMask.hi !== 0);
-  // 仅当用到「6 面之外」的格(宽/中层/旋转 = 高位 bit)才需 54-move 受限引擎;纯 6 面子集仍走老快引擎
-  // (cross/xcross masked 精确剪枝、零建表)→ 18 格对最常见的 6 面限制零性能回归。
-  const crNeedsEngine = isGridStage && (crMask.hi !== 0 || (crMask.lo >>> 18) !== 0);
+  const crMask = useMemo(() => stageSolverMoveBits(crCells), [crCells]);
+  const moveRestriction = useMemo(() => stageSolverMoveRestriction(method, isGridStage ? crCells : allowedFaces),
+    [method, isGridStage, crCells, allowedFaces]);
+  const crMaxRot = moveRestriction.restriction?.maxRot ?? 0;
+  const crRestricted = isGridStage && moveRestriction.restricted;
   const crMaskRef = useRef(crMask);
   crMaskRef.current = crMask;
   const crMaxRotRef = useRef(crMaxRot);
   crMaxRotRef.current = crMaxRot;
-  // 走 54-move cr 池求解(纯十字阶段且用到 6 面外的格)→ computeAll/fetchMoves 路由到 cr 池。
-  const useCrRef = useRef(crNeedsEngine);
-  useCrRef.current = crNeedsEngine;
-
-  // 统一「受限」语义(驱动:关闭 y-省力转体、无解文案):6 面 mask 受限 或 cross 18 格受限。
-  const restricted = (maskSupported && moveMask !== ALL_MOVE_MASK) || crRestricted;
+  const useCrRef = useRef(!!moveRestriction.restriction);
+  useCrRef.current = !!moveRestriction.restriction;
+  const restricted = moveRestriction.restricted;
   const restrictedRef = useRef(restricted);
   restrictedRef.current = restricted;
-
-  // 实际喂老 6 面 mask 引擎的 mask(未受限 = undefined)。纯十字阶段:6 面子集取 crMask 低 18 位
-  // (与 moveMask 同序同格式),用到 6 面外的格时改走 cr 引擎(此处不喂 mask)。其余阶段取 moveMask。
-  const activeMask: number | undefined = isGridStage
-    ? (crRestricted && !crNeedsEngine ? (crMask.lo & CR_FACE_LO) : undefined)
-    : (maskSupported && moveMask !== ALL_MOVE_MASK ? moveMask : undefined);
-  const activeMaskRef = useRef(activeMask);
-  activeMaskRef.current = activeMask;
+  const activeMaskRef = useRef(moveRestriction.mask);
+  activeMaskRef.current = moveRestriction.mask;
 
   // xcross 受限专用池(零表,worker 构造现场建 54-move transition;PDB 用到才按受限集建)。
   // 纯十字(k=0)、xcross/xxcross/…(k=stage)统一走这一个池;旧 cross-only 池已退役(宽动表有 bug)。
@@ -618,10 +477,9 @@ export default function StageSolver({ scramble, lang, initialMethod = 'std', ini
   // 光看 TABLE_SETS.cross 只会看到 pt_cross 一张 136 KB —— 而 XCross 及以上真正吃的是那张
   // 52 MB 的 pt_cross_C4E0(issue #53)。
   const [xReady, setXReady] = useState(false);
-  const tableRows = useCallback((names: readonly string[]) => {
-    const rows = names.map((name) => ({ name, bytes: TABLE_BYTES[name] ?? 0 })).sort((a, b) => b.bytes - a.bytes);
-    return { rows, total: rows.reduce((s, r) => s + r.bytes, 0) };
-  }, []);
+  const tableRows = useCallback((names: readonly string[]) => (
+    summarizeStageSolverTables(names.map(name => ({ name, bytes: TABLE_BYTES[name] ?? 0 })))
+  ), []);
   // 正在下载的表(按内存降序)+ 合计,用于 loading 提示 —— 只列这一段在拉的。
   const tableInfo = useMemo(
     () => tableRows(xLoading ? XCROSS_TABLES : TABLE_SETS[need]),
@@ -632,6 +490,7 @@ export default function StageSolver({ scramble, lang, initialMethod = 'std', ini
     () => tableRows([...TABLE_SETS[need], ...(need === 'cross' && xReady ? XCROSS_TABLES : [])]),
     [need, xReady, tableRows],
   );
+  const solverInfo = infoOpen ? stageSolverInfoModel({ workers: poolSize, totalMs, enumerationMs: moves?.ms, tables: residentInfo }, lang) : null;
   // 缓存、下载与生成共用一份准备进度；字节进度只表示下载路径。
   const [xProg, setXProg] = useState<XCrossProgress | null>(null);
   const xLoadReq = useRef(0);
@@ -775,7 +634,7 @@ export default function StageSolver({ scramble, lang, initialMethod = 'std', ini
             : kind === 'roux223'
               ? await pool.solveRoux223Stage(scr, stage)
               : kind === 'eodr'
-                ? await pool.solveEoDrStage(scr, eoDrStage(method, stage))
+                ? await pool.solveEoDrStage(scr, stageSolverStageIndex(method, stage))
                 : kind === 'htr'
                   ? await pool.solveHtrStage(scr)
                   : kind === 'htr2'
@@ -839,7 +698,7 @@ export default function StageSolver({ scramble, lang, initialMethod = 'std', ini
     // 这里把「到达」与「揭示」解耦——逐帧少量铺开成肉眼可见的瀑布,跨深度的真实时间间隔原样保留。
     // 同 HTM 再按 QTM 升序;Array.sort 稳定 → 原到达序(长度升序)兜底。
     const sortSols = (xs: SolItem[]) =>
-      practical ? xs : [...xs].sort((a, b) => (moveLen(a.m) - moveLen(b.m)) || (countQtm(a.m) - countQtm(b.m)));
+      practical ? xs : sortStageSolverCandidates(xs);
     const acc: SolItem[] = [];
     const seen = new Set<string>();
     let bestLen = Infinity;
@@ -903,7 +762,7 @@ export default function StageSolver({ scramble, lang, initialMethod = 'std', ini
             : kind === 'roux223'
               ? await pool.solveRoux223Moves(scr, stage, f, { extra: slack, cap })
               : kind === 'eodr'
-                ? await pool.solveEoDrMoves(scr, eoDrStage(method, stage), f, { extra: slack, cap })
+                ? await pool.solveEoDrMoves(scr, stageSolverStageIndex(method, stage), f, { extra: slack, cap })
                 : kind === 'htr'
                   ? await pool.solveHtrMoves(scr, f, { extra: slack, cap })
                   : kind === 'htr2'
@@ -1055,7 +914,7 @@ export default function StageSolver({ scramble, lang, initialMethod = 'std', ini
   useEffect(() => {
     if (!moves || restrictedRef.current) { setRowRot({}); return; }
     const next: Record<number, number> = {};
-    moves.sols.forEach((sol, i) => { const r = bestErgoRot(sol.m); if (r) next[i] = r; });
+    moves.sols.forEach((sol, i) => { const r = bestStageSolverY(sol.m); if (r) next[i] = r; });
     setRowRot(next);
   }, [moves]);
 
@@ -1102,11 +961,7 @@ export default function StageSolver({ scramble, lang, initialMethod = 'std', ini
 
   // 最优视角索引(min-count 的第一个可见面)—— 槽位/基态色标在「未选视角」时用它定色,
   // 否则 SlotChip 无朝向可依 → 退回方位字母(BL/BR…)。选了视角就用 selFace。全 null 时给 null(退字母)。
-  const bestFaceIdx = useMemo(() => {
-    let best = -1, v = Infinity;
-    counts.forEach((c, i) => { if (faceVisible(i) && c != null && !isSentinel(c) && c < v) { v = c; best = i; } });
-    return best >= 0 ? best : null;
-  }, [counts, faceVisible]);
+  const bestFaceIdx = useMemo(() => bestStageSolverFace(counts, faceVisible), [counts, faceVisible]);
   // 槽位/基态下拉的定色视角:优先当前选中面,未选时退最优面(总能出色块,不再显字母)。
   const chipViewIdx = selFace ?? bestFaceIdx;
 
@@ -1342,7 +1197,7 @@ export default function StageSolver({ scramble, lang, initialMethod = 'std', ini
 
       {settingsOpen && (
         <TimerRoomDialog title={t('求解设置', 'Solver settings')} language={lang}
-          className="stsv stsv-settings-dialog" onClose={() => setSettingsOpen(false)}>
+          className="stsv stsv-settings-dialog" overlayClassName="stsv-settings-overlay" onClose={() => setSettingsOpen(false)}>
         <div id={settingsId} className="stsv-settings">
           {allowProgressiveReveal && <BoolToggle value={revealEnabled} onChange={changeRevealEnabled}
             label={t('逐步揭示', 'Progressive reveal')} />}
@@ -1368,8 +1223,8 @@ export default function StageSolver({ scramble, lang, initialMethod = 'std', ini
               type="button"
               className="stsv-diag"
               onClick={() => setInfoOpen(true)}
-              title={t('求解器信息', 'Solver info')}
-              aria-label={t('求解器信息', 'Solver info')}
+              title={STAGE_SOLVER_INFO_TITLE[lang]}
+              aria-label={STAGE_SOLVER_INFO_TITLE[lang]}
             >
               <Info size={15} />
             </button>
@@ -1398,7 +1253,7 @@ export default function StageSolver({ scramble, lang, initialMethod = 'std', ini
                             key={ci}
                             type="button"
                             className={`stsv-mr-cell${crCells[ci] ? ' is-on' : ''}`}
-                            onClick={() => setCrCells((prev) => prev.map((v, j) => (j === ci ? !v : v)))}
+                            onClick={() => setCrCells((prev) => stageSolverToggleMoveCell(prev, ci))}
                             aria-pressed={crCells[ci]}
                             title={crCells[ci]
                               ? t(`允许 ${CR_CELLS[ci]}(点击禁用)`, `${CR_CELLS[ci]} allowed (click to forbid)`)
@@ -1448,16 +1303,7 @@ export default function StageSolver({ scramble, lang, initialMethod = 'std', ini
                         key={f}
                         type="button"
                         className={`stsv-mr-cell${allowedFaces[i] ? ' is-on' : ''}`}
-                        onClick={() => setAllowedFaces((prev) => {
-                          // singleFace(pair/eo):最多禁 1 面 —— 禁已禁的 → 全开;否则只禁这一面(自动放开其余)
-                          if (singleFace) {
-                            if (!prev[i]) return [true, true, true, true, true, true];
-                            const next = [true, true, true, true, true, true];
-                            next[i] = false;
-                            return next;
-                          }
-                          return prev.map((v, j) => (j === i ? !v : v));
-                        })}
+                        onClick={() => setAllowedFaces((prev) => stageSolverToggleMoveCell(prev, i, singleFace))}
                         aria-pressed={allowedFaces[i]}
                         title={allowedFaces[i]
                           ? t(`允许 ${f}(点击禁用)`, `${f} allowed (click to forbid)`)
@@ -1471,7 +1317,7 @@ export default function StageSolver({ scramble, lang, initialMethod = 'std', ini
                     <button
                       type="button"
                       className="stsv-mr-reset"
-                      onClick={() => setAllowedFaces([true, true, true, true, true, true])}
+                      onClick={() => setAllowedFaces(STAGE_SOLVER_DEFAULT_FACES.slice())}
                     >
                       {t('全选', 'All')}
                     </button>
@@ -1683,52 +1529,31 @@ export default function StageSolver({ scramble, lang, initialMethod = 'std', ini
         </>
       )}
 
-      {infoOpen && createPortal(
+      {solverInfo && createPortal(
         <div className="stsv-modal-backdrop" {...infoBackdrop}>
-          <div className="stsv-modal" role="dialog" aria-modal="true" onClick={(e) => e.stopPropagation()}>
+          <div className="stsv-modal" data-site-surface="panel" role="dialog" aria-modal="true" aria-label={STAGE_SOLVER_INFO_TITLE[lang]} onClick={(e) => e.stopPropagation()}>
             <div className="stsv-modal-head">
-              <strong>{t('求解器信息', 'Solver info')}</strong>
+              <strong>{STAGE_SOLVER_INFO_TITLE[lang]}</strong>
               <button className="stsv-modal-x" onClick={() => setInfoOpen(false)} aria-label={t('关闭', 'Close')}>
                 <X size={16} />
               </button>
             </div>
             <dl className="stsv-modal-kv">
-              <div>
-                <dt>{t('引擎', 'Engine')}</dt>
-                <dd>Rust → WASM · {t(`${poolSize ?? '…'} 路并行`, `${poolSize ?? '…'}-way`)}</dd>
-              </div>
-              {totalMs != null && (
-                <div>
-                  <dt>{t('6 视角总耗时', '6-face total')}</dt>
-                  <dd>{fmtMs(totalMs)}</dd>
-                </div>
-              )}
-              {moves && (
-                <div>
-                  <dt>{t('当前解法枚举', 'This enumeration')}</dt>
-                  <dd>{fmtMs(moves.ms)}</dd>
-                </div>
-              )}
+              {solverInfo.entries.map(entry => <div key={entry.key}><dt>{entry.label}</dt><dd>{entry.value}</dd></div>)}
             </dl>
             <div className="stsv-modal-tablehead">
-              {t(`剪枝表 ${residentInfo.rows.length} 张 ≈ ${fmtBytes(residentInfo.total)}`,
-                `Pruning tables: ${residentInfo.rows.length} ≈ ${fmtBytes(residentInfo.total)}`)}
-              <span>{t('每路 worker 各装一份', 'one copy per worker')}</span>
+              {solverInfo.tableHeading}
+              <span>{solverInfo.perWorker}</span>
             </div>
             <ul className="stsv-modal-tables">
-              {residentInfo.rows.map((r) => (
+              {solverInfo.tableRows.map((r) => (
                 <li key={r.name}>
                   <code>{r.name}</code>
-                  <span>{fmtBytes(r.bytes)}</span>
+                  <span>{r.size}</span>
                 </li>
               ))}
             </ul>
-            {/* 表从哪来:pt_* 是预跑好的 BFS 产物(几十分钟起,现场建不出来),压缩后下载;
-                移动表 mt_* 才是 WASM 现场生成的。用户看到 136 KB 时的第一个疑问就是这个。 */}
-            <p className="stsv-modal-note">
-              {t('pt_* 为预计算 BFS 剪枝表,压缩下载后解压进 WASM 内存;移动表 mt_* 一律现场生成,不下载。',
-                'pt_* are precomputed BFS pruning tables — downloaded compressed, expanded into WASM memory. Move tables (mt_*) are always generated on the fly, never downloaded.')}
-            </p>
+            <p className="stsv-modal-note">{solverInfo.note}</p>
           </div>
         </div>,
         document.body,

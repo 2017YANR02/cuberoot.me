@@ -1,4 +1,5 @@
-import { effectiveNetMs, formatMs, playerStats, playerTimeline, roundViews, sortedNetPlayers, type NetRoomState, type NetResult, type NetBattleEventId } from '@cuberoot/shared/timer';
+import { TIMER_ROOM_HISTORY_COPY, formatNetHistoryStat, formatNetHistoryResult } from '@cuberoot/shared/timer/net-battle';
+import { effectiveNetMs, playerStats, playerTimeline, roundViews, sortedNetPlayers, type NetRoomState, type NetBattleEventId } from '@cuberoot/shared/timer';
 import { formatScrambleForEvent } from '@cuberoot/shared/sq1-notation';
 import { Trophy } from 'lucide-react';
 import { Flag } from './CountryFlag';
@@ -13,19 +14,10 @@ export interface TimerRoomHistoryProps {
   precision: 0 | 1 | 2 | 3;
   onClose(): void;
 }
-const COPY = {
-  en: { title: 'Scramble history and results', player: 'Player', wins: 'Wins', best: 'Best', mean: 'Mean', history: 'Scramble history', round: 'Round', live: 'In progress', noScramble: 'No scramble', unknown: 'Former player', cube: 'Scramble preview' },
-  zh: { title: '历史打乱与战绩', player: '选手', wins: '胜场', best: '最佳', mean: '平均', history: '历史打乱', round: '轮次', live: '进行中', noScramble: '打乱未生成', unknown: '已离开玩家', cube: '打乱预览' },
-};
-function stat(value: number | null, precision: 0 | 1 | 2 | 3) {
-  return value === null ? '—' : !Number.isFinite(value) ? 'DNF' : formatMs(value, precision);
-}
-function resultText(result: NetResult | undefined, precision: 0 | 1 | 2 | 3) {
-  return !result ? '—' : result.p === 'dnf' ? 'DNF' : formatMs(effectiveNetMs(result), precision) + (result.p === '+2' ? '+' : '');
-}
+
 
 export function TimerRoomHistory({ room, currentPlayerId, language, precision, onClose }: TimerRoomHistoryProps) {
-  const copy = COPY[language];
+  const copy = TIMER_ROOM_HISTORY_COPY[language];
   const name = (id: string) => room.players[id] ? timerRoomPlayerName(room.players[id], language) : copy.unknown;
   return <TimerRoomDialog title={copy.title} language={language} onClose={onClose}>
     <div className="timer-room-standings-scroll"><table className="timer-room-standings">
@@ -34,9 +26,9 @@ export function TimerRoomHistory({ room, currentPlayerId, language, precision, o
         const stats = playerStats(playerTimeline(room, player.id));
         return <tr key={player.id} className={player.id === currentPlayerId ? 'is-me' : undefined}>
           <td>{player.iso2 && <Flag iso2={player.iso2} className="timer-room-player-flag" />}{name(player.id)} <small>{player.event || room.event}</small></td>
-          <td>{room.scores[player.id] ?? 0}</td><td>{stat(stats.single, precision)}</td><td>{stat(stats.ao5, precision)}</td>
-          <td>{stat(stats.ao12, precision)}</td><td>{stat(stats.ao50, precision)}</td><td>{stat(stats.ao100, precision)}</td>
-          <td>{stat(stats.mean, precision)} <small>mo{stats.count}</small></td>
+          <td>{room.scores[player.id] ?? 0}</td><td>{formatNetHistoryStat(stats.single, precision)}</td><td>{formatNetHistoryStat(stats.ao5, precision)}</td>
+          <td>{formatNetHistoryStat(stats.ao12, precision)}</td><td>{formatNetHistoryStat(stats.ao50, precision)}</td><td>{formatNetHistoryStat(stats.ao100, precision)}</td>
+          <td>{formatNetHistoryStat(stats.mean, precision)} <small>mo{stats.count}</small></td>
         </tr>;
       })}</tbody>
     </table></div>
@@ -53,7 +45,7 @@ export function TimerRoomHistory({ room, currentPlayerId, language, precision, o
               {scramble && <TimerCubePreview event={event} scramble={scramble} height="64px" visualization="2D" ariaLabel={copy.cube} />}
               <div><p><strong>{event}</strong> {scramble ? formatScrambleForEvent(event, scramble) : copy.noScramble}</p>
                 {ids.map((id) => <div className="timer-room-history-result" key={id}>
-                  <span>{round.winners.includes(id) && <Trophy size={14} aria-label={copy.wins} />}{name(id)}</span><strong>{resultText(round.results[id], precision)}</strong>
+                  <span>{round.winners.includes(id) && <Trophy size={14} aria-label={copy.wins} />}{name(id)}</span><strong>{formatNetHistoryResult(round.results[id], precision)}</strong>
                 </div>)}
               </div>
             </section>;

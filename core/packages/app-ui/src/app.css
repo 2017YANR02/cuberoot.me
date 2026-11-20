@@ -710,11 +710,9 @@ button {
 .primary-nav button {
   display: flex;
   min-width: 0;
-  min-height: 50px;
-  flex-direction: column;
+  min-height: 44px;
   align-items: center;
   justify-content: center;
-  gap: 3px;
   border-radius: 10px;
   background: transparent;
   color: var(--muted-foreground);
@@ -888,16 +886,6 @@ button {
   width: 44px;
   padding: 0;
 }
-.app-shell[data-side-navigation] > .primary-nav button span {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  padding: 0;
-  overflow: hidden;
-  clip: rect(0, 0, 0, 0);
-  white-space: nowrap;
-}
-
 /* Native geometry already excludes the system regions. */
 :root[data-host-viewport] .mobile-timer-stage { min-height: 0; overflow: auto; }
 :root[data-host-viewport] .app-titlebar { padding-inline: 18px; }

@@ -5,17 +5,7 @@ import type { TimerDeviceKind } from '@cuberoot/shared/timer/device-contract';
 import { usePopoverDismiss } from './usePopoverDismiss';
 import { usePanelClamp } from './usePanelClamp';
 
-/** Canonical Web copy for every installed device-center consumer. */
-export const TIMER_DEVICE_CENTER_LABELS = {
-  title: { zh: '计时设备', en: 'Timer devices' },
-  menu: { zh: '可用计时设备', en: 'Available timer devices' },
-  trigger: { zh: '设备', en: 'Devices' },
-  connected: { zh: '已连接', en: 'Connected' },
-  listening: { zh: '监听中', en: 'Listening' },
-  'smart-cube': { zh: '智能魔方', en: 'Smart cube' },
-  'smart-timer': { zh: '智能计时器', en: 'Smart timer' },
-  stackmat: { zh: 'Stackmat', en: 'Stackmat' },
-} as const;
+export { TIMER_DEVICE_CENTER_LABELS } from '@cuberoot/shared/timer/device-contract';
 
 export interface TimerDeviceCenterItem {
   active?: boolean;

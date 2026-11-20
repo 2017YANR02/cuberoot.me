@@ -30,7 +30,7 @@ export interface CloudOptimalScrambleResult {
 
 export interface CloudOptimalScrambleRequest {
   url: string;
-  headers?: HeadersInit;
+  headers?: RequestInit['headers'];
   fetcher?: typeof fetch;
   onPhase?: (phase: CloudOptimalScramblePhase) => void;
   signal?: AbortSignal;

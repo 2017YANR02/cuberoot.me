@@ -1561,6 +1561,7 @@ a.alg-community-author:hover {
 }
 .alg-admin-modal-head h2 { margin: 0; font-size: 1rem; }
 .alg-admin-modal-head .alg-admin-modal-head-btn { background: none; border: none; cursor: pointer; color: inherit; }
+.alg-admin-modal-head-btn .clear-btn-icon { width: 16px; height: 16px; }
 .alg-admin-modal-body {
   padding: 12px 16px; overflow-y: auto;
   display: flex; flex-direction: column; gap: 10px;

@@ -1,8 +1,8 @@
+import { TIMER_ROOM_PLAYERS_COPY, timerRoomPlayerName } from '@cuberoot/shared/timer/net-battle';
 import { EventIcon } from '@cuberoot/event-icon/event';
 import { netEventToSelectorId } from '@cuberoot/shared/timer';
 import type { ReactNode } from 'react';
 import { Eye, ShieldCheck, Trophy } from 'lucide-react';
-import { displayCuberName } from '@cuberoot/shared/cuber-name-display';
 import { effectiveNetMs, formatMs, isNetOnline, pendingCount, roundWinners, sortedNetPlayers, type NetRoomState, type NetBattleEventId } from '@cuberoot/shared/timer';
 import { Flag } from './CountryFlag';
 
@@ -19,19 +19,12 @@ export interface TimerRoomPlayersProps {
   eventIcon?(event: NetBattleEventId): ReactNode;
   runningTime?(id: string, elapsedMs: number): ReactNode;
 }
-const COPY = {
-  en: { players: 'Players', me: '(me)', host: 'Host', score: 'Score', view: 'View cube', rename: 'Change name', offline: 'Offline', ready: 'Ready', inspecting: 'Inspecting', waiting: 'Waiting to start' },
-  zh: { players: '玩家', me: '（我）', host: '房主', score: '得分', view: '查看魔方', rename: '改名', offline: '离线', ready: '已准备', inspecting: '观察中', waiting: '待开始' },
-};
 
-export function timerRoomPlayerName(player: { name: string; wcaId?: string }, language: 'en' | 'zh'): string {
-  if (!player.wcaId) return player.name;
-  const base = player.name.replace(/ \(\d+\)$/, '');
-  return displayCuberName(base, language === 'zh') + player.name.slice(base.length);
-}
+
+export { timerRoomPlayerName };
 
 export function TimerRoomPlayers({ room, currentPlayerId, language, precision, nowMs, viewedPlayerId, canViewPlayer, onViewPlayer, onRename, eventIcon, runningTime }: TimerRoomPlayersProps) {
-  const copy = COPY[language];
+  const copy = TIMER_ROOM_PLAYERS_COPY[language];
   const players = sortedNetPlayers(room.players);
   const results = room.results[String(room.round)];
   const winners = pendingCount(room) === 0 ? roundWinners(results, room.players) : [];

@@ -4,21 +4,19 @@ import { usesStackmatPads, STACKMAT_PAD_HOLD_MS } from '@/components/stackmat-ca
 import TimerReadout from './TimerReadout';
 import TimerDisplayModeSetting from './TimerDisplayModeSetting';
 import MoreToggle from '@/components/MoreToggle';
-import { timerFontPreviewStyle } from '@cuberoot/timer-ui/font-picker';
 import { useDouyinToolSurface } from '@/lib/douyin-content';
-import { TimerSyncSeedSettings, TimerRankSettings, TimerBackupSettings, TimerImportSettings, TimerDisplaySettings, TimerSoundSettings, TimerMetronomeSettings } from '@cuberoot/timer-ui';
+import { TimerSyncSeedSettings, TimerRankSettings, TimerBackupSettings, TimerImportSettings, TimerSoloAppearanceSections, TimerSoloResultSettings, TimerSoundSettings, TimerMetronomeSettings } from '@cuberoot/timer-ui';
 
 /**
  * Settings panel — modal launched from the topbar gear button.
  */
 
 import { useEffect, useRef, useState } from 'react';
-import { flushSync } from 'react-dom';
 import { ChevronRight } from '@app-foundation/icons/lucide';
 import AppLink from '@/components/AppLink';
 import type { MoreMenuItem } from './MoreMenu';
 import { getSettings, resetSettings, updateSettings, useSettings } from '../_lib/settings';
-import { TimerKeymapSettings, TimerGoalSettings, TimerRoundSettings, TimerSettingsPanel, TimerSettingRow, TimerTypographySettings } from '@cuberoot/timer-ui';
+import { TimerKeymapSettings, TimerGoalSettings, TimerRoundSettings, TimerSettingsPanel } from '@cuberoot/timer-ui';
 import { warmupSound, play, playInspectionBeep } from '../_lib/sound';
 import { isVoiceAvailable } from '../_lib/sound/voice';
 import { resetTimerSyncSeed } from '@cuberoot/shared/timer/sync-seed';
@@ -41,7 +39,7 @@ import {
   type TimerSettingCategoryId,
   type TimerSettingFieldId,
 } from '@cuberoot/shared/timer';
-import { TimerRollingStatsPicker, TimerAttemptSplitSettings, TimerScramblePreviewSettings, TimerBooleanSettingRow, TimerTimingSettingsSections, TimerSmartCubeSettingsFields, type TimerBooleanControlProps } from '@cuberoot/timer-ui';
+import { TimerAttemptSplitSettings, TimerBooleanSettingRow, TimerTimingSettingsSections, TimerSmartCubeSettingsFields, type TimerBooleanControlProps } from '@cuberoot/timer-ui';
 import { canUseRandomOptimal333 } from '../_lib/scramble/optimal333_pool';
 import { TimerPreScrambleSettings, TimerColorNeutralSetting } from '@cuberoot/timer-ui';
 import { useMetronome, setMetronome, tapTempo } from '@/lib/metronome';
@@ -68,23 +66,6 @@ interface Props {
   /** Called after the local DB is wholesale-replaced (cloud restore) so the host can refresh. */
   onDataReplaced?: () => void;
 }
-
-// Keep every existing action in its natural settings category; visibility,
-// availability and effects still come from the canonical timer action registry.
-const ACTION_CATEGORY = {
-  'more.marks': 'scramble',
-  'more.stats-mobile': 'data',
-  'more.language-mobile': 'appearance',
-  'more.drill': 'training',
-  'more.bld-helper': 'training',
-  'more.fullscreen': 'appearance',
-  'more.manual-entry': 'data',
-  'more.replay': 'training',
-  'more.solver': 'training',
-  'more.bulk': 'scramble',
-  'more.print': 'data',
-  'more.clear-event': 'data',
-} satisfies Record<MoreMenuItem['id'], TimerSettingCategoryId>;
 
 interface SettingsSectionProps {
   category: TimerSettingCategoryId;
@@ -254,25 +235,11 @@ export default function SettingsPanel({ onClose, event, actions, presenceControl
 
   return (
     <TimerSettingsPanel categories={douyin ? ['timer', 'smart-cube', 'appearance', 'sound', 'data', 'advanced'] : undefined} language={tr({ en: 'en', zh: 'zh' }) as 'en' | 'zh'}
+      actions={actions} renderActionLink={props => <AppLink {...props} prefetch={false} />}
       playersControl={playersControl}
       presenceControl={presenceControl}
       resetControl={<TimerResetSettings onReset={resetSettings} confirmReset={message => confirm(message)} localize={tr} />}
       activeCategory={activeCategory} onCategoryChange={setActiveCategory} onClose={onClose}>
-            {activeCategory === 'appearance' && (
-              <div
-                className="settings-appearance-preview"
-                style={{
-                  '--settings-time-scale': s.timerFontScale,
-                  '--settings-scramble-scale': s.scrambleFontScale,
-                } as React.CSSProperties}
-                aria-label={tr({ zh: '外观预览', en: 'Appearance preview' })}
-              >
-                <span className="settings-preview-label">{tr({ zh: '预览', en: 'Preview' })}</span>
-                <strong style={timerFontPreviewStyle(s.timerFont)}><TimerReadout text="12.34" /></strong>
-                <span style={timerFontPreviewStyle(s.scrambleFont, 400)}>R U R&apos; U&apos; F2</span>
-              </div>
-            )}
-
         <TimerTimingSettingsSections
           liveShare={liveShare}
           active={activeCategory === 'timer'}
@@ -282,20 +249,8 @@ export default function SettingsPanel({ onClose, event, actions, presenceControl
           renderBooleanControl={renderTimingBooleanControl}
           value={s}
         />
-        <SettingsSection category="timer" activeCategory={activeCategory} title={tr({ zh: '成绩', en: 'Results' })}>
-          {s.statsRollingColumns.map((column, index) => <TimerSettingRow key={index} field={timerSettingFieldContract('settings.timer.rolling-statistics')}
-            label={tr({ zh: `统计指标${index === 0 ? '一' : '二'}`, en: `Statistic ${index + 1}` })}>
-          <TimerRollingStatsPicker variant="settings" columns={s.statsRollingColumns}
-            triggerColumns={[column]} onColumnsChange={statsRollingColumns => updateSettings({ statsRollingColumns })}
-            labels={{
-              changeColumn: current => tr({ zh: `更改统计列，当前 ${current}`, en: `Change stats column, currently ${current}` }),
-              clear: tr({ zh: '清除', en: 'Clear' }),
-              customPlaceholder: tr({ zh: '自定义 ao', en: 'Custom ao' }),
-              customSize: tr({ zh: '自定义 ao 大小', en: 'Custom ao size' }),
-              replace: tr({ zh: '替换', en: 'Replace' }),
-            }} />
-          </TimerSettingRow>)}
-        </SettingsSection>
+        {activeCategory === 'timer' && <TimerSoloResultSettings language={tr({ en: 'en', zh: 'zh' }) as 'en' | 'zh'}
+          columns={s.statsRollingColumns} onColumnsChange={statsRollingColumns => updateSettings({ statsRollingColumns })} />}
 
         {activeCategory === 'smart-cube' && <>
           <TimerSmartCubeSettingsFields value={s} localize={tr} onChange={updateSettings} renderBooleanControl={renderTimingBooleanControl}
@@ -372,17 +327,11 @@ export default function SettingsPanel({ onClose, event, actions, presenceControl
           <TimerColorNeutralSetting event={event} value={s.cnMode} onChange={cnMode => updateSettings({ cnMode })} localize={tr} />
         </SettingsSection>
 
-        <SettingsSection
-          category="sound"
-          activeCategory={activeCategory}
-          title={tr({ zh: '声音', en: 'Sound'
-        })}
-        >
-          <TimerSoundSettings value={s} onChange={updateSettings} localize={tr} voiceAvailable={isVoiceAvailable()} onWarmup={warmupSound} onPreview={() => play('start')} />
-        </SettingsSection>
-
         {activeCategory === 'sound' && (
-          <TimerMetronomeSettings value={s} bpm={metro.bpm} onChange={updateSettings} onBpmChange={bpm => setMetronome({ bpm })} onTap={tapTempo} onWarmup={warmupSound} onPreviewBeep={playInspectionBeep} localize={tr} />
+          <>
+            <TimerSoundSettings value={s} onChange={updateSettings} localize={tr} voiceAvailable={isVoiceAvailable()} onWarmup={warmupSound} onPreview={() => play('start')} />
+            <TimerMetronomeSettings value={s} bpm={metro.bpm} onChange={updateSettings} onBpmChange={bpm => setMetronome({ bpm })} onTap={tapTempo} onWarmup={warmupSound} onPreviewBeep={playInspectionBeep} localize={tr} />
+          </>
         )}
 
         {activeCategory === 'data' && <TimerBackupSettings language={tr({ en: 'en', zh: 'zh' }) as 'en' | 'zh'} every={s.autoBackupEvery} onEveryChange={autoBackupEvery => updateSettings({ autoBackupEvery })}
@@ -423,35 +372,13 @@ export default function SettingsPanel({ onClose, event, actions, presenceControl
           )}
         </SettingsSection>
 
-        <SettingsSection
-          category="appearance"
-          activeCategory={activeCategory}
-          title={tr({ zh: '字体', en: 'Fonts' })}
-        >
-          <TimerTypographySettings showScaleControls={false} value={s} onChange={updateSettings} language={tr({ en: 'en', zh: 'zh' }) as 'en' | 'zh'} />
-          <p className="settings-section-note">{tr({ zh: '字号和布局可通过计时器顶部的“调整布局”修改。', en: 'Use “Edit layout” in the timer toolbar to resize text and arrange the layout.' })}</p>
-        </SettingsSection>
-        <SettingsSection category="appearance" activeCategory={activeCategory} title={tr({ zh: '显示与操作', en: 'Display and interaction' })}>
-          <TimerDisplayModeSetting />
-          <TimerDisplaySettings value={s} onChange={updateSettings} localize={tr} renderBooleanControl={props => <SharedBoolToggle {...props} />}>
-          <TimerScramblePreviewSettings
-            localize={tr}
-            onChange={updateSettings}
-            renderBooleanControl={({ disabled, label, onChange, value }) => (
-              <SharedBoolToggle
-                disabled={disabled}
-                label={label}
-                onChange={onChange}
-                value={value}
-              />
-            )}
-            value={s}
+        {activeCategory === 'appearance' && (
+          <TimerSoloAppearanceSections language={tr({ en: 'en', zh: 'zh' }) as 'en' | 'zh'}
+            value={s} onChange={updateSettings} renderBooleanControl={renderTimingBooleanControl}
+            renderReadout={text => <TimerReadout text={text} />} displayMode={<TimerDisplayModeSetting />}
+            rankings={<TimerRankSettings language={tr({ en: 'en', zh: 'zh' }) as 'en' | 'zh'} scopes={s.rankScopes} country={s.rankCountry ?? ''} accountCountry={rankAccountCountry} onScopes={rankScopes => updateSettings({ rankScopes })} onCountry={rankCountry => updateSettings({ rankCountry })} renderCountry={() => <CountryInput value={(s.rankCountry ?? '').toLowerCase()} onChange={iso2 => updateSettings({ rankCountry: iso2.toUpperCase() })} placeholder="" />} login={!user ? login : undefined} />}
           />
-          </TimerDisplaySettings>
-        </SettingsSection>
-        <SettingsSection category="appearance" activeCategory={activeCategory} title={tr({ zh: '成绩排名', en: 'Result rankings' })}>
-          <TimerRankSettings language={tr({ en: 'en', zh: 'zh' }) as 'en' | 'zh'} scopes={s.rankScopes} country={s.rankCountry ?? ''} accountCountry={rankAccountCountry} onScopes={rankScopes => updateSettings({ rankScopes })} onCountry={rankCountry => updateSettings({ rankCountry })} renderCountry={() => <CountryInput value={(s.rankCountry ?? '').toLowerCase()} onChange={iso2 => updateSettings({ rankCountry: iso2.toUpperCase() })} placeholder="" />} login={!user ? login : undefined} />
-        </SettingsSection>
+        )}
 
         {activeCategory === 'training' && <TimerRoundSettings value={s} onChange={patch => updateSettings({ round: { ...getSettings().round, ...patch } })} localize={tr} />}
 
@@ -472,36 +399,6 @@ export default function SettingsPanel({ onClose, event, actions, presenceControl
           </details>
         </SettingsSection>
 
-        {actions.some(action => action.visible && !action.danger && ACTION_CATEGORY[action.id] === activeCategory) && (
-          <div className="timer-settings-actions" aria-label={tr({ en: 'Tools', zh: '工具' })}>
-            {actions.filter(action => action.visible && !action.danger && ACTION_CATEGORY[action.id] === activeCategory).map(action => {
-              const label = action.id === 'more.fullscreen' && action.active
-                ? tr({ en: 'Exit fullscreen', zh: '退出全屏' }) : action.label;
-              const content = <><span>{label}</span><ChevronRight size={16} aria-hidden="true" /></>;
-              return action.href && !action.disabled ? (
-                <AppLink key={action.id} className="timer-settings-action" href={action.href} prefetch={false} onClick={onClose}>{content}</AppLink>
-              ) : (
-                <button key={action.id} type="button" className="timer-settings-action"
-                  disabled={action.disabled || !action.onSelect}
-                  onClick={() => {
-                    // Unmount the dialog before prompts/print or opening another
-                    // tool, while preserving fullscreen's user activation.
-                    flushSync(onClose);
-                    action.onSelect?.();
-                  }}>{content}</button>
-              );
-            })}
-          </div>
-        )}
-        {actions.filter(action => action.visible && action.danger && ACTION_CATEGORY[action.id] === activeCategory).map(action => (
-          <div className="settings-reset-row settings-danger-actions" key={action.id}>
-            <button type="button" className="hint-btn timer-settings-action-danger"
-              disabled={action.disabled || !action.onSelect}
-              onClick={() => { flushSync(onClose); action.onSelect?.(); }}>
-              <span>{action.label}</span>
-            </button>
-          </div>
-        ))}
     </TimerSettingsPanel>
   );
 }

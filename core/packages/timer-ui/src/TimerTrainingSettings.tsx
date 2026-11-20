@@ -4,6 +4,7 @@ import './compact-select.css';
 import { useEffect, useState } from 'react';
 import { formatTargetTime, parseTargetTime, parseDailySolveGoal, timerSettingFieldContract,
   TRAINING_START_MODES, TRAINING_START_MODE_COPY, timerSupportsTrainingTiming,
+  TIMER_TRAINING_COPY, timerRoundFormatChoices, timerTrainingTargetPatch,
   type EventId, type RoundConfig, type RoundFormat, type TimerSettingCopy, type TimerSettingFieldId, type TimerTrainingSettings } from '@cuberoot/shared/timer';
 import { TimerSettingRow, TimerSettingsSection } from './TimerTimingSettingsSections';
 
@@ -46,13 +47,7 @@ export function TimerGoalSettings({ value: s, onChange: updateSettings, localize
 
   function commitTargetInput(raw: string): void {
     const parsed = parseTargetTime(raw);
-    const next = { ...s.targetMsByEvent };
-    if (parsed === null) {
-      delete next[event];
-    } else {
-      next[event] = parsed;
-    }
-    updateSettings({ targetMsByEvent: next });
+    updateSettings(timerTrainingTargetPatch(s, event, parsed));
     setTargetInput(formatTargetTime(parsed));
   }
 
@@ -91,8 +86,7 @@ export function TimerGoalSettings({ value: s, onChange: updateSettings, localize
               type="text"
               aria-label={tr(timerSettingFieldContract('settings.training.target-time').copy)}
               value={targetInput}
-              placeholder={tr({ zh: '留空关闭', en: 'Blank = off'
-            })}
+              placeholder={tr(TIMER_TRAINING_COPY.targetPlaceholder)}
               onChange={(e) => setTargetInput(e.target.value)}
               onBlur={(e) => commitTargetInput(e.target.value)}
               onKeyDown={(e) => { if (e.key === 'Enter') commitTargetInput((e.target as HTMLInputElement).value); }}
@@ -108,8 +102,7 @@ export function TimerGoalSettings({ value: s, onChange: updateSettings, localize
               aria-label={tr(timerSettingFieldContract('settings.training.daily-goal').copy)}
               value={goalInput}
               style={{ width: '100%' }}
-              placeholder={tr({ zh: '留空 / 0 关闭', en: 'Blank / 0 = off'
-            })}
+              placeholder={tr(TIMER_TRAINING_COPY.goalPlaceholder)}
               onChange={(e) => setGoalInput(e.target.value)}
               onBlur={(e) => commitGoalInput(e.target.value)}
               onKeyDown={(e) => { if (e.key === 'Enter') commitGoalInput((e.target as HTMLInputElement).value); }}
@@ -142,7 +135,7 @@ export function TimerRoundSettings({ value: s, onChange, localize: tr }: Omit<Pr
   return (
         <TimerSettingsSection
 
-          title={tr({ zh: '轮次模拟', en: 'Round simulation' })}
+          title={settingLabel('settings.training.round-enabled')}
           headerControl={
             <span data-setting-id="settings.training.round-enabled">
               <BoolToggle
@@ -163,10 +156,9 @@ export function TimerRoundSettings({ value: s, onChange, localize: tr }: Omit<Pr
               value={s.round.format}
               onChange={(e) => onChange({ format: e.target.value as RoundFormat })}
             >
-              <option value="ao5">{tr({ zh: '五次去头尾平均 (ao5)', en: 'Average of 5' })}</option>
-              <option value="mo3">{tr({ zh: '三次均值 (mo3)', en: 'Mean of 3' })}</option>
-              <option value="bo3">{tr({ zh: '三次取最好 (bo3)', en: 'Best of 3' })}</option>
-              <option value="bo1">{tr({ zh: '一次 (bo1)', en: 'Best of 1' })}</option>
+              {timerRoundFormatChoices(s.round.format).map(option => (
+                <option key={option.value} value={option.value}>{tr(option.copy)}</option>
+              ))}
             </select>
           </TimerSettingRow>
           <TimerSettingRow field={timerSettingFieldContract('settings.training.round-cutoff')} label={tr(timerSettingFieldContract('settings.training.round-cutoff').copy)}>
@@ -175,7 +167,7 @@ export function TimerRoundSettings({ value: s, onChange, localize: tr }: Omit<Pr
               type="text"
               aria-label={tr(timerSettingFieldContract('settings.training.round-cutoff').copy)}
               value={roundCutoffInput}
-              placeholder={tr({ zh: '留空 = 无', en: 'blank = none' })}
+              placeholder={tr(TIMER_TRAINING_COPY.limitPlaceholder)}
               onChange={(e) => setRoundCutoffInput(e.target.value)}
               onBlur={(e) => commitRoundLimitField('cutoffMs', e.target.value)}
               onKeyDown={(e) => { if (e.key === 'Enter') commitRoundLimitField('cutoffMs', (e.target as HTMLInputElement).value); }}
@@ -187,7 +179,7 @@ export function TimerRoundSettings({ value: s, onChange, localize: tr }: Omit<Pr
               type="text"
               aria-label={tr(timerSettingFieldContract('settings.training.round-time-limit').copy)}
               value={roundLimitInput}
-              placeholder={tr({ zh: '留空 = 无', en: 'blank = none' })}
+              placeholder={tr(TIMER_TRAINING_COPY.limitPlaceholder)}
               onChange={(e) => setRoundLimitInput(e.target.value)}
               onBlur={(e) => commitRoundLimitField('limitMs', e.target.value)}
               onKeyDown={(e) => { if (e.key === 'Enter') commitRoundLimitField('limitMs', (e.target as HTMLInputElement).value); }}
@@ -199,8 +191,8 @@ export function TimerRoundSettings({ value: s, onChange, localize: tr }: Omit<Pr
                 aria-label={settingLabel('settings.training.round-cumulative')}
                 className="settings-row-control-select"
               >
-                <option value="true">{tr({ zh: '累计', en: 'cumulative' })}</option>
-                <option value="false">{tr({ zh: '每把', en: 'per attempt' })}</option>
+                <option value="true">{tr(TIMER_TRAINING_COPY.cumulative)}</option>
+                <option value="false">{tr(TIMER_TRAINING_COPY.perAttempt)}</option>
               </select>
             </span>
           </TimerSettingRow>

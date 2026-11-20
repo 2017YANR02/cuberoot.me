@@ -8,6 +8,7 @@ import { useModalBackdrop } from './useModalDismiss';
 export interface TimerRoomDialogProps {
   title: string;
   className?: string;
+  overlayClassName?: string;
   headerControls?: ReactNode;
   hideHeader?: boolean;
   /** Open above native popover menus that launched this dialog. */
@@ -17,7 +18,7 @@ export interface TimerRoomDialogProps {
   children: ReactNode;
 }
 
-export function TimerRoomDialog({ title, className, headerControls, hideHeader = false, topLayer = false, language, onClose: onClosed, children }: TimerRoomDialogProps) {
+export function TimerRoomDialog({ title, className, overlayClassName, headerControls, hideHeader = false, topLayer = false, language, onClose: onClosed, children }: TimerRoomDialogProps) {
   const { motionRef, close: onClose } = useDialogMotion(onClosed);
   const ref = useRef<HTMLDivElement>(null);
   const closeRef = useRef(onClose);
@@ -47,7 +48,7 @@ export function TimerRoomDialog({ title, className, headerControls, hideHeader =
   }, []);
   if (typeof document === 'undefined') return null;
   const close = { en: 'Close', zh: '关闭' }[language];
-  return createPortal(<div ref={motionRef} popover={topLayer ? 'manual' : undefined} className="timer-room-overlay timer-no-selection" data-no-timer {...backdrop}>
+  return createPortal(<div ref={motionRef} popover={topLayer ? 'manual' : undefined} className={['timer-room-overlay timer-no-selection', overlayClassName].filter(Boolean).join(' ')} data-no-timer {...backdrop}>
     <div className={`timer-room-dialog${className ? ` ${className}` : ''}`} data-site-surface="panel" role="dialog" aria-modal="true" aria-labelledby={titleId}
       ref={ref} tabIndex={-1} onKeyUp={(event) => event.stopPropagation()} onKeyDown={(event) => {
         event.stopPropagation();

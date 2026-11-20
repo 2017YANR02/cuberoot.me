@@ -38,6 +38,7 @@ export * from './scramble-runtime';
 export * from './redi-notation';
 export * from '../kilominx-notation';
 export * from './scramble-status';
+export * from './bulk-scramble';
 export * from './scramble-variants';
 export * from './session';
 export * from './settings-contract';
@@ -67,6 +68,7 @@ export * from './wca-practice';
 export * from './typography';
 
 export * from './training-settings';
+export * from './training-view';
 export * from './goals';
 export * from './display-settings';
 export * from './cube-orientation';

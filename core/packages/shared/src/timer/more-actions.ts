@@ -1,4 +1,5 @@
 import type { EventId } from './types';
+import type { TimerSettingCategoryId } from './settings-contract';
 
 /**
  * Stable IDs for every action currently reachable from Web `/timer`'s More
@@ -22,6 +23,21 @@ export const TIMER_MORE_ACTION_IDS = [
 ] as const;
 
 export type TimerMoreActionId = (typeof TIMER_MORE_ACTION_IDS)[number];
+
+export const TIMER_SETTING_ACTION_CATEGORY = {
+  'more.marks': 'scramble',
+  'more.stats-mobile': 'data',
+  'more.language-mobile': 'appearance',
+  'more.drill': 'training',
+  'more.bld-helper': 'training',
+  'more.fullscreen': 'appearance',
+  'more.manual-entry': 'data',
+  'more.replay': 'training',
+  'more.solver': 'training',
+  'more.bulk': 'scramble',
+  'more.print': 'data',
+  'more.clear-event': 'data',
+} satisfies Record<TimerMoreActionId, TimerSettingCategoryId>;
 
 export type TimerMoreActionEffect =
   | 'navigate-scramble-marks'

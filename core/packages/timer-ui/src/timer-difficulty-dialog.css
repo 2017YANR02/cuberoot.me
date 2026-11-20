@@ -39,6 +39,21 @@
   gap: 16px;
   margin: 0;
 }
+.timer-difficulty-dialog .timer-difficulty-close {
+  justify-content: flex-end;
+  margin: 0;
+}
+.timer-difficulty-dialog:has(.timer-random-difficulty-options, .timer-wca-difficulty-options, .timer-wca-difficulty-warning) .timer-difficulty-close {
+  position: absolute;
+  inset-block-start: 16px;
+  inset-inline-end: 16px;
+  inline-size: 44px;
+}
+.timer-difficulty-dialog :is(.timer-random-difficulty-options, .timer-wca-difficulty-options, .timer-wca-difficulty-warning) {
+  box-sizing: border-box;
+  min-block-size: 44px;
+  padding-inline-end: 44px;
+}
 .timer-difficulty-dialog .timer-random-difficulty-range,
 .timer-difficulty-dialog .timer-wca-difficulty-range {
   flex: none;

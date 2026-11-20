@@ -1,7 +1,9 @@
+import { STAGE_SOLVER_TABLES_BASE, STAGE_SOLVER_TABLE_QUERY } from '@cuberoot/shared/timer/scramble-variants';
+
 // One verified XCross table per acquisition, shared by every solver worker.
 const BASE = '/tools/solver/rust-cross';
-const TABLES_BASE = 'https://static.cuberoot.me/tools/solver/rust-cross/tables';
-const TV = 'tv=1';
+const TABLES_BASE = STAGE_SOLVER_TABLES_BASE;
+const TV = STAGE_SOLVER_TABLE_QUERY;
 // Worker, glue and WASM must change versions together; table contents are unchanged.
 const V = 'v=20261025a';
 export { BASE, TABLES_BASE, TV, V };

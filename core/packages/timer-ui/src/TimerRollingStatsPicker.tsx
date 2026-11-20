@@ -8,6 +8,7 @@ import {
   sanitizeRollingStatColumns,
   type RollingStatKey,
 } from '@cuberoot/shared/timer';
+import { customRollingStatKey } from '@cuberoot/shared/timer/rolling-stats';
 import { useState } from 'react';
 
 import { ClearButton } from './ClearButton';
@@ -62,12 +63,8 @@ export function TimerRollingStatsPicker({
       } : undefined}
     >
       {triggerColumns.map(current => {
-        const customSize = Math.floor(Number(customDraft.trim()));
-        const customKey: RollingStatKey = `ao${customSize}`;
-        const customDisabled = !Number.isFinite(customSize)
-          || customSize < MIN_AO_WINDOW
-          || customSize > MAX_AO_WINDOW
-          || columns.includes(customKey);
+        const customKey = customRollingStatKey(customDraft);
+        const customDisabled = customKey === undefined || columns.includes(customKey);
 
         return (
           <CompactSelect
@@ -113,6 +110,7 @@ export function TimerRollingStatsPicker({
                   className="rolling-stats-custom-add"
                   disabled={customDisabled}
                   onClick={() => {
+                    if (customDisabled) return;
                     replaceColumn(current, customKey);
                     close();
                   }}

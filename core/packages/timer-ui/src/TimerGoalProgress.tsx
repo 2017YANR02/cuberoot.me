@@ -12,7 +12,7 @@
 import { useMemo } from 'react';
 import { CheckCircle2, Flame } from 'lucide-react';
 import type { Solve } from '@cuberoot/shared/timer';
-import { countSolvesToday, consecutiveGoalDays } from '@cuberoot/shared/timer';
+import { localizeTimerGoalProgress, timerGoalProgress } from '@cuberoot/shared/timer';
 import type { TimerSettingCopy } from '@cuberoot/shared/timer';
 
 interface Props {
@@ -22,22 +22,10 @@ interface Props {
 }
 
 export function TimerGoalProgress({ solves, goal, localize: tr }: Props) {
-  const count = useMemo(() => countSolvesToday(solves), [solves]);
-  const validGoal =
-    typeof goal === 'number' && Number.isFinite(goal) && goal > 0 ? Math.floor(goal) : null;
-  const streak = useMemo(
-    () => (validGoal !== null ? consecutiveGoalDays(solves, validGoal) : 0),
-    [solves, validGoal],
-  );
-
-  // Disabled or "be quiet on first visit": no goal, or 0 solves today AND
-  // no solves at all today (fresh open with no scramble taken).
-  if (validGoal === null) return null;
-  if (count === 0 && solves.length === 0) return null;
-
-  const reached = count >= validGoal;
-  const pct = Math.max(0, Math.min(1, count / validGoal));
-
+  const progress = useMemo(() => timerGoalProgress(solves, goal), [solves, goal]);
+  const view = localizeTimerGoalProgress(progress, tr);
+  if (!view) return null;
+  const { count, goal: validGoal, reached, percent, label, title, streakLabel, streakTitle } = view;
   const pillStyle: React.CSSProperties = {
     display: 'inline-flex',
     alignItems: 'center',
@@ -60,7 +48,7 @@ export function TimerGoalProgress({ solves, goal, localize: tr }: Props) {
     overflow: 'hidden',
   };
   const barFillStyle: React.CSSProperties = {
-    width: `${pct * 100}%`,
+    width: `${percent}%`,
     height: '100%',
     background: reached ? 'var(--signal-success)' : 'var(--signal-info)',
 
@@ -79,12 +67,6 @@ export function TimerGoalProgress({ solves, goal, localize: tr }: Props) {
     fontVariantNumeric: 'tabular-nums',
   };
 
-  const label = tr({ zh: '今日目标', en: 'today'
-});
-  const streakLabel = tr({ zh: `${streak} 天连续达标`, en: `${streak} day${streak === 1 ? '' : 's'} streak` });
-  const streakTitle = tr({ zh: '连续每日达成日目标', en: 'Consecutive days hitting the daily goal'
-});
-
   return (
     <div
       style={{
@@ -97,9 +79,7 @@ export function TimerGoalProgress({ solves, goal, localize: tr }: Props) {
     >
       <span
         style={pillStyle}
-        title={
-          tr({ zh: `今日完成 ${count} / ${validGoal} 次`, en: `${count} of ${validGoal} solves today` })
-        }
+        title={title}
       >
         <span style={{ opacity: 0.8 }}>{label}</span>
         <span>
@@ -110,7 +90,7 @@ export function TimerGoalProgress({ solves, goal, localize: tr }: Props) {
         </span>
         {reached && <CheckCircle2 size={12} aria-hidden />}
       </span>
-      {streak >= 2 && (
+      {streakLabel && (
         <span style={flameStyle} title={streakTitle}>
           <Flame size={11} aria-hidden />
           <span>{streakLabel}</span>

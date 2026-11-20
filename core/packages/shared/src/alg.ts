@@ -168,7 +168,8 @@ async function fetchAlgFile(puzzle: AlgPuzzle, set: string, opts?: { fresh?: boo
   const queryString = query.toString();
   const url = `${base}/${encodeURIComponent(puzzle)}/${encodeURIComponent(set)}`
     + (queryString ? `?${queryString}` : '');
-  const res = await fetch(url, { cache: 'no-cache' });
+  const init: RequestInit & { cache: 'no-cache' } = { cache: 'no-cache' };
+  const res = await fetch(url, init);
   if (!res.ok) throw new Error(`Failed to load alg ${puzzle}/${set}: HTTP ${res.status}`);
   return await res.json() as AlgFile;
 }

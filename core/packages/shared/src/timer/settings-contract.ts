@@ -17,6 +17,18 @@ export interface TimerSettingCopy {
   zh: string;
 }
 
+export const TIMER_RESET_SETTINGS_COPY = {
+  description: { zh: '恢复全部计时器设置，不会删除成绩', en: 'Reset all timer settings without deleting solves' },
+  confirmation: { zh: '把所有设置恢复为默认值？', en: 'Reset all settings to defaults?' },
+} satisfies Record<string, TimerSettingCopy>;
+
+export const TIMER_COLOR_NEUTRAL_MODE_COPY = {
+  none: { zh: '禁用', en: 'Disabled' },
+  single: { zh: '单色', en: 'Single color' },
+  dual: { zh: '双色', en: 'Dual color' },
+  six: { zh: '六色', en: 'Six colors' },
+} satisfies Record<string, TimerSettingCopy>;
+
 export const TIMER_SETTING_CATEGORY_IDS = [
   'timer',
   'smart-cube',
@@ -178,8 +190,29 @@ function normalizedBoolean(value: unknown, fallback: boolean): boolean {
 
 export const TIMER_SMART_CUBE_AUTO_READY_MODES = ['scrambled', 'still', 'double-flick'] as const;
 export const TIMER_SMART_CUBE_LIVE_VIEWS = ['3d', 'twizzle', 'q2look', 'net', '2d'] as const;
+export const TIMER_SMART_CUBE_LIVE_VIEW_COPY = {
+  '3d': { zh: 'three.js', en: 'three.js' },
+  twizzle: { zh: 'cubing.js', en: 'cubing.js' },
+  q2look: { zh: 'q2Look', en: 'q2Look' },
+  net: { zh: '展开图', en: 'Net' },
+  '2d': { zh: '立体图', en: 'Isometric' },
+} satisfies Record<TimerSmartCubeSettings['liveCubeView'], TimerSettingCopy>;
+export const TIMER_SMART_CUBE_LIVE_VIEW_LABEL = { zh: '实况魔方渲染方式', en: 'Live cube rendering' };
 export const DEFAULT_SMART_CUBE_CORRECTION_LIMIT = 6;
 export const MAX_SMART_CUBE_CORRECTION_LIMIT = 100;
+export const TIMER_SMART_CUBE_CORRECTION_HINT = {
+  zh: '合并后的逆序纠错超过此步数时重新规划；0 为立即重新规划。',
+  en: 'Replan when the merged undo sequence exceeds this limit; 0 replans immediately.',
+};
+export const TIMER_SMART_CUBE_SECTION_COPY = {
+  ready: { en: 'Ready and start', zh: '预备与起表' },
+  live: { en: 'Live view and orientation', zh: '实况与姿态' },
+  solved: { en: 'After solving', zh: '结束后' },
+} as const;
+export const TIMER_SMART_CUBE_AUTO_CALIBRATE_HINT = {
+  en: 'Reset the orientation after the penultimate scramble move.',
+  zh: '在打乱完成倒数第二步时进行朝向重置',
+};
 
 export function normalizeSmartCubeCorrectionLimit(value: unknown): number {
   return typeof value === 'number' && Number.isFinite(value)

@@ -1,6 +1,6 @@
 'use client';
 
-import { stageLabel, uiVariantOf, variantLabel } from '@cuberoot/shared/timer';
+import { TIMER_RANDOM_DIFFICULTY_CASE_COPY as COPY, timerRandomDifficultyCaseLabels } from '@cuberoot/shared/timer/random-difficulty';
 import { trainerSpecKey, type TrainerSpec } from '@cuberoot/puzzle-solvers/cross-trainer';
 import { useEffect, useRef, useState } from 'react';
 
@@ -19,15 +19,6 @@ export interface TimerRandomDifficultyCaseBarProps {
   solve(signal: AbortSignal): Promise<TimerRandomDifficultySolution | null>;
   spec: TrainerSpec;
 }
-
-const COPY = {
-  answer: { en: 'Answer', zh: '答案' },
-  error: { en: 'Could not solve.', zh: '求解失败。' },
-  hide: { en: 'Hide', zh: '收起' },
-  moves: { en: 'moves', zh: '步' },
-  retry: { en: 'Retry', zh: '重试' },
-  solving: { en: 'Solving', zh: '求解中' },
-} as const;
 
 /** The exact difficulty case/answer row shared by every timer host. */
 export function TimerRandomDifficultyCaseBar({
@@ -100,13 +91,7 @@ export function TimerRandomDifficultyCaseBar({
     }
   };
 
-  const stage = stageLabel(spec.stage, language === 'zh');
-  const uiVariant = uiVariantOf(spec.variant);
-  const methodName = uiVariant === 'std' ? '' : variantLabel(uiVariant, language === 'zh');
-  const method = methodName && !stage.startsWith(methodName) ? `${methodName} ` : '';
-  const depthLabel = language === 'zh'
-    ? `${depth} ${text(COPY.moves)}`
-    : `${depth} move${depth === 1 ? '' : 's'}`;
+  const labels = timerRandomDifficultyCaseLabels(spec, depth, language);
 
   return (
     <div
@@ -115,8 +100,8 @@ export function TimerRandomDifficultyCaseBar({
       onClick={(event) => event.stopPropagation()}
     >
       <span className="trainer-case-what">
-        {method}{stage}
-        <span className="trainer-case-depth">{depthLabel}</span>
+        {labels.label}
+        <span className="trainer-case-depth">{labels.depth}</span>
       </span>
       <button
         className="trainer-case-reveal"

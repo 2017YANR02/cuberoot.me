@@ -1,3 +1,5 @@
+import type { ExternalTimerKind, ExternalTimerState } from './external/types';
+
 /**
  * Runtime-neutral contract for timer hardware surfaces.
  *
@@ -7,6 +9,83 @@
  */
 
 export type TimerDeviceKind = 'smart-cube' | 'smart-timer' | 'stackmat';
+
+export const TIMER_DEVICE_CENTER_LABELS = {
+  title: { zh: '计时设备', en: 'Timer devices' },
+  menu: { zh: '可用计时设备', en: 'Available timer devices' },
+  trigger: { zh: '设备', en: 'Devices' },
+  connected: { zh: '已连接', en: 'Connected' },
+  listening: { zh: '监听中', en: 'Listening' },
+  'smart-cube': { zh: '智能魔方', en: 'Smart cube' },
+  'smart-timer': { zh: '智能计时器', en: 'Smart timer' },
+  stackmat: { zh: 'Stackmat', en: 'Stackmat' },
+} as const;
+
+export const BLUETOOTH_TIMER_DIALOG_COPY = {
+  title: { zh: '蓝牙智能计时器', en: 'Bluetooth smart timer' },
+  instructions: {
+    zh: '打开计时器蓝牙，点击搜索，然后选择 QY-Timer、QY-Adapter 或 GAN Timer。',
+    en: 'Turn on the timer’s Bluetooth, search, then choose QY-Timer, QY-Adapter, or GAN Timer in the device picker.',
+  },
+  supported: {
+    zh: '支持 GAN 智能计时器、奇艺智能计时器和奇艺转接器。停表后会自动记入当前项目。',
+    en: 'Supports GAN Smart Timer, QiYi Timer, and QiYi Adapter. A stopped time is recorded in the current event automatically.',
+  },
+  connect: { zh: '搜索并连接', en: 'Search & connect' },
+  connecting: { zh: '连接中…', en: 'Connecting…' },
+  available: { zh: '可用计时器', en: 'Available timers' },
+  notFound: { zh: '未找到计时器', en: 'No timer found' },
+  searching: {
+    zh: '正在搜索计时器…请唤醒计时器并保持靠近。',
+    en: 'Searching for timers… Wake your timer and keep it nearby.',
+  },
+  device: { zh: '设备', en: 'Device' },
+  state: { zh: '状态', en: 'State' },
+  lastResult: { zh: '最近成绩', en: 'Last result' },
+  connectedHelp: {
+    zh: '现在直接使用计时器。停表时，设备读数会自动保存并换下一条打乱。',
+    en: 'Use the timer normally. When it stops, the device reading is saved and the next scramble is loaded.',
+  },
+  macLabel: { zh: '计时器 MAC 地址', en: 'Timer MAC address' },
+  clearMac: { zh: '清除地址', en: 'Clear address' },
+  invalidMac: {
+    zh: '请输入 6 组十六进制地址，例如 AA:BB:CC:DD:EE:FF。',
+    en: 'Enter six hexadecimal pairs, for example AA:BB:CC:DD:EE:FF.',
+  },
+  macTip: {
+    zh: '地址通常可在奇艺 App 的设备信息或计时器标签中找到。取消后不会建立一个无数据的连接。',
+    en: 'The address is usually shown in the QiYi app device info or on the timer label. Cancelling will not create a silent connection.',
+  },
+  submitMac: { zh: '确定', en: 'Confirm' },
+  cancelMac: { zh: '取消连接', en: 'Cancel connection' },
+} as const;
+
+export function bluetoothTimerMacInstructions(deviceName: string) {
+  return {
+    zh: `没有自动读到 ${deviceName || '奇艺计时器'} 的蓝牙地址，请输入设备的 MAC 地址。`,
+    en: `The Bluetooth address for ${deviceName || 'the QiYi timer'} could not be detected. Enter its MAC address.`,
+  };
+}
+
+export const BLUETOOTH_TIMER_KIND_LABELS = {
+  'gan-timer': { zh: 'GAN 智能计时器', en: 'GAN Smart Timer' },
+  'qiyi-timer': { zh: '奇艺智能计时器 / 转接器', en: 'QiYi Timer / Adapter' },
+  'stackmat-mic': { zh: 'Stackmat', en: 'Stackmat' },
+  unknown: { zh: '—', en: '—' },
+} as const satisfies Record<ExternalTimerKind, { zh: string; en: string }>;
+
+export const BLUETOOTH_TIMER_STATE_LABELS = {
+  DISCONNECT: { zh: '未连接', en: 'Disconnected' },
+  GET_SET: { zh: '已就绪', en: 'Ready' },
+  HANDS_OFF: { zh: '手已离开', en: 'Hands off' },
+  RUNNING: { zh: '计时中', en: 'Running' },
+  STOPPED: { zh: '已停表', en: 'Stopped' },
+  IDLE: { zh: '空闲', en: 'Idle' },
+  HANDS_ON: { zh: '双手在垫上', en: 'Hands on' },
+  FINISHED: { zh: '成绩已记录', en: 'Result recorded' },
+  INSPECTION: { zh: '观察中', en: 'Inspection' },
+  GAN_RESET: { zh: '已复位', en: 'Reset' },
+} as const satisfies Record<ExternalTimerState, { zh: string; en: string }>;
 
 export type TimerDeviceConnectionPhase =
   | 'idle'

@@ -58,11 +58,42 @@ export interface TimerLivePatch {
 }
 export type TimerLivePublication = { type: 'snapshot'; snapshot: TimerLiveSnapshot }
   | { type: 'patch'; base: number; patch: TimerLivePatch };
+export type TimerLiveConnection = 'idle' | 'connecting' | 'connected' | 'disconnected' | 'ended' | 'error';
+export interface TimerLiveSource {
+  snapshot(): TimerLiveSnapshot;
+  detail(id: string, context: string): Solve | null;
+}
+
+export const TIMER_LIVE_SHARE_COPY = {
+  title: { en: 'Live sharing', zh: '实时分享' },
+  description: { en: 'Share up to the latest 200 solves in this session, timer and smart-cube reconstruction. Anyone with the link can watch. Expires after 4 hours.',
+    zh: '分享当前分组最近最多 200 条成绩、计时与智能魔方复原过程。持有链接的人可以观看，4 小时后失效。' },
+  create: { en: 'Create share link', zh: '生成分享链接' },
+  creating: { en: 'Creating…', zh: '正在创建…' },
+  copy: { en: 'Copy link', zh: '复制链接' },
+  copied: { en: 'Copied', zh: '已复制' },
+  qr: { en: 'QR code', zh: '二维码' },
+  end: { en: 'End sharing', zh: '结束分享' },
+  paused: { en: 'Sharing paused', zh: '分享已暂停' },
+  disconnected: { en: 'Sharing disconnected', zh: '分享连接已断开' },
+  connecting: { en: 'Reconnecting…', zh: '正在连接…' },
+  unavailable: { en: 'Sharing unavailable. End this share and try again.', zh: '分享不可用，请结束后重新创建。' },
+  revokeError: { en: 'Link revocation failed. Retry End sharing.', zh: '链接撤销失败，请重试“结束分享”。' },
+  error: { en: 'Operation failed. Please retry.', zh: '操作失败，请重试。' },
+  watching: (viewers: number) => ({ en: `${viewers} watching`, zh: `${viewers} 人观看` }),
+};
 
 export const isTimerLiveId = (v: unknown): v is string => typeof v === 'string' && /^[A-Za-z0-9_-]{22}$/.test(v);
 export const isTimerLiveToken = (v: unknown): v is string => typeof v === 'string' && /^[A-Za-z0-9_-]{43}$/.test(v);
 export const isTimerLiveShortToken = (v: unknown): boolean => typeof v === 'string' && /^[A-Za-z0-9_-]{21}[AQgw]$/.test(v);
 export const isTimerLiveViewerToken = (v: unknown): v is string => isTimerLiveToken(v) || isTimerLiveShortToken(v);
+export function parseTimerLiveSession(value: unknown, now = Date.now()): TimerLiveSession | null {
+  if (!record(value)) return null;
+  const { id, token, viewerToken, expiresAt } = value;
+  return isTimerLiveId(id) && isTimerLiveToken(token) && isTimerLiveViewerToken(viewerToken)
+    && typeof expiresAt === 'number' && Number.isFinite(expiresAt) && expiresAt > now
+    ? { id, token, viewerToken, expiresAt } : null;
+}
 /** A one-way room locator: knowing the room ID does not grant viewer access. */
 export async function timerLiveShortId(token: string): Promise<string> {
   const digest = await globalThis.crypto.subtle.digest('SHA-256', new TextEncoder().encode(`timer-live:${token}`));
@@ -155,13 +186,13 @@ function parseSnapshot(v: unknown, previous?: TimerLiveSnapshot): TimerLiveSnaps
 export function parseTimerLiveSnapshot(v: unknown): TimerLiveSnapshot | null { return parseSnapshot(v); }
 
 /** Bounded lesson history keeps live traffic independent of a student’s full archive. */
-export function timerLiveHistory(solves: Solve[]): Solve[] {
+export function timerLiveHistory(solves: Solve[], measureBytes = (value: string) => new TextEncoder().encode(value).byteLength): Solve[] {
   const recent = solves.slice().sort((a, b) => b.ts - a.ts).slice(0, 200);
   const result: Solve[] = [];
   let bytes = 0;
   for (const solve of recent) {
     const summary = timerLiveSolveSummary(solve);
-    bytes += new TextEncoder().encode(JSON.stringify(summary)).byteLength;
+    bytes += measureBytes(JSON.stringify(summary));
     if (bytes > 512 * 1024) break;
     result.push(summary);
   }
@@ -214,6 +245,59 @@ export function diffTimerLiveSnapshot(previous: TimerLiveSnapshot, next: TimerLi
   }
   return patch;
 }
+
+/** One acknowledged publication at a time on both the browser and native relay. */
+export function createTimerLivePublisher(options: {
+  source: TimerLiveSource;
+  send(message: unknown): boolean;
+  now(): number;
+}) {
+  let ready = false, revision = 0, offset = 0, bestRtt = Infinity, sentAt = -Infinity;
+  let last: TimerLiveSnapshot | null = null, pending: TimerLiveSnapshot | null = null;
+  let forceSnapshot = false;
+  const { source, send, now } = options;
+  const ping = () => { if (ready) send({ type: 'ping', sentAt: now() }); };
+  function flush() {
+    const time = now();
+    if (!ready || pending || time - sentAt < 40) return;
+    const sample = source.snapshot();
+    const next = { ...sample, state: { ...sample.state, sampledAt: sample.state.sampledAt + offset } };
+    if (!last) {
+      if (send({ type: 'snapshot', snapshot: next } satisfies TimerLivePublication)) { pending = next; sentAt = time; }
+      return;
+    }
+    const patch = diffTimerLiveSnapshot(last, next);
+    if (!Object.keys(patch).length) return;
+    if (send({ type: 'patch', base: revision, patch } satisfies TimerLivePublication)) {
+      pending = { state: patch.state ?? last.state, cube: patch.cube ?? last.cube, history: patch.history ?? last.history,
+        attempt: patch.attempt !== undefined ? next.attempt : last.attempt };
+      sentAt = time;
+    }
+  }
+  return {
+    flush, ping,
+    refresh() { if (pending) forceSnapshot = true; else last = null; ping(); flush(); },
+    receive(message: Record<string, unknown>) {
+      if (message.type === 'ready') {
+        ready = true;
+        if (typeof message.serverNow === 'number' && Number.isFinite(message.serverNow)) offset = message.serverNow - now();
+        ping(); flush();
+      } else if (message.type === 'pong' && typeof message.sentAt === 'number' && typeof message.serverNow === 'number') {
+        const rtt = now() - message.sentAt;
+        if (rtt >= 0 && rtt < bestRtt) { bestRtt = rtt; offset = message.serverNow - (message.sentAt + rtt / 2); }
+      } else if (message.type === 'ack' && Number.isSafeInteger(message.revision) && pending) {
+        last = forceSnapshot ? null : pending; pending = null; forceSnapshot = false;
+        revision = message.revision as number; flush();
+      } else if (message.type === 'resync') {
+        last = pending = null; forceSnapshot = false; flush();
+      } else if (message.type === 'detail' && typeof message.solveId === 'string'
+        && typeof message.context === 'string' && typeof message.requestId === 'string') {
+        const solve = source.detail(message.solveId, message.context);
+        if (solve) send({ type: 'detail', context: message.context, requestId: message.requestId, solve: timerLiveSolveDetail(solve) });
+      }
+    },
+  };
+}
 /** Applies only ordered deltas. Validation also bounds the assembled state, not just each packet. */
 export function applyTimerLivePatch(previous: TimerLiveSnapshot, raw: unknown): TimerLiveSnapshot | null {
   if (!record(raw) || Object.keys(raw).some(k => !['state', 'cube', 'attempt', 'history'].includes(k))) return null;
@@ -233,8 +317,11 @@ export function applyTimerLivePatch(previous: TimerLiveSnapshot, raw: unknown): 
 }
 export function timerLiveWatchUrl(base: string, session: TimerLiveSession): string {
   const url = new URL(base);
-  url.hash = isTimerLiveShortToken(session.viewerToken) ? session.viewerToken : `${session.id}.${session.viewerToken}`;
+  url.hash = timerLiveWatchFragment(session);
   return url.toString();
+}
+export function timerLiveWatchFragment(session: TimerLiveSession): string {
+  return isTimerLiveShortToken(session.viewerToken) ? session.viewerToken : `${session.id}.${session.viewerToken}`;
 }
 export async function parseTimerLiveWatchHash(hash: string): Promise<TimerLiveCredential | null> {
   const value = hash.replace(/^#/, '');

@@ -1,5 +1,5 @@
 import { getUsableViewport } from './host-viewport';
-import { Bluetooth, CircleCheck, LoaderCircle, RefreshCw, X } from 'lucide-react';
+import { BadgeCheck, Bluetooth, CircleCheck, LoaderCircle, RefreshCw, X } from 'lucide-react';
 import {
   useEffect,
   useId,
@@ -40,7 +40,7 @@ export interface TimerSmartCubeDeviceModalProps {
   capabilities?: TimerDeviceCapabilities;
   className?: string;
   connectionFailure?: ReactNode;
-  deviceSelector?: ReactNode;
+  deviceSelector?: ReactNode | ((resetSucceeded: boolean) => ReactNode);
   closeOnDisconnect?: boolean;
   intro?: ReactNode;
   actionsStart?: ReactNode;
@@ -160,7 +160,7 @@ export function TimerSmartCubeDeviceModal({
   const [macError, setMacError] = useState(false);
   const [action, setAction] = useState<DeviceAction>(null);
   const [connectingDeviceId, setConnectingDeviceId] = useState<string | null>(null);
-  const [feedback, setFeedback] = useState<string | null>(null);
+  const [feedback, setFeedback] = useState<'reset' | 'reset-failed' | null>(null);
   const closeBlockedRef = useRef(false);
   const dialogRef = useRef<HTMLDivElement>(null);
   const mountedRef = useRef(true);
@@ -170,6 +170,8 @@ export function TimerSmartCubeDeviceModal({
   onCloseRef.current = onClose;
 
   const connected = snapshot.phase === 'connected';
+  const resetSucceeded = connected && feedback === 'reset';
+  const ConnectedIcon = resetSucceeded ? BadgeCheck : CircleCheck;
   const deviceName = snapshot.deviceName?.trim();
   const anchored = Boolean(anchorRef?.current);
   const canConnect = capabilities ? capabilities.connect === true : onConnect !== undefined;
@@ -320,9 +322,9 @@ export function TimerSmartCubeDeviceModal({
       // Calibrate even if writing the solved state back to the device fails.
       if (canResetGyro && snapshot.hasGyro) onResetGyro?.();
       if (canReset) await onResetState?.();
-      if (mountedRef.current) setFeedback(copy.stateReset);
+      if (mountedRef.current) setFeedback('reset');
     } catch {
-      if (mountedRef.current) setFeedback(copy.resetFailed);
+      if (mountedRef.current) setFeedback('reset-failed');
     } finally {
       if (mountedRef.current) setAction(null);
     }
@@ -407,7 +409,7 @@ export function TimerSmartCubeDeviceModal({
           <>
             {!connected && intro}
             {deviceSelector && <fieldset className="timer-smart-cube-device__controls" disabled={action !== null || connecting}>
-              {deviceSelector}
+              {typeof deviceSelector === 'function' ? deviceSelector(resetSucceeded) : deviceSelector}
             </fieldset>}
             {!deviceSelector && (connected || !listMode) && <section className="timer-smart-cube-device__summary bt-connected-summary modal-section">
               <div className="timer-smart-cube-device__primary bt-connected-primary">
@@ -421,7 +423,7 @@ export function TimerSmartCubeDeviceModal({
                   className={`timer-smart-cube-device__state bt-connected-state bt-value${connected ? ' is-ok' : connecting ? ' is-connecting' : snapshot.phase === 'error' ? ' is-error' : ''}`}
                   role="status"
                 >
-                  {connected ? <CircleCheck size={16} aria-hidden="true" /> : connecting ? <LoaderCircle size={16} aria-hidden="true" /> : null}
+                  {connected ? <ConnectedIcon size={16} aria-hidden="true" /> : connecting ? <LoaderCircle size={16} aria-hidden="true" /> : null}
                   {!connected && stateText}
                 </span>
               </div>
@@ -489,7 +491,8 @@ export function TimerSmartCubeDeviceModal({
               </button>
             )}
 
-            {feedback && <p className="timer-smart-cube-device__feedback" role="status">{feedback}</p>}
+            <span className="sr-only" role="status">{resetSucceeded ? copy.stateReset : ''}</span>
+            {feedback === 'reset-failed' && <p className="timer-smart-cube-device__feedback" role="status">{copy.resetFailed}</p>}
             {(actionsStart || canReset && onResetState || canResetGyro && onResetGyro || canDisconnect && onDisconnect) && (
               <div className="timer-smart-cube-device__actions bt-connected-actions modal-actions">
                 {actionsStart && <fieldset className="timer-smart-cube-device__controls timer-smart-cube-device__actions-start"

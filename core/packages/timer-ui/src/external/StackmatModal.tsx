@@ -19,6 +19,7 @@ import type { ExternalTimerLocalize } from './types';
 
 import { formatMs } from '@cuberoot/shared/timer';
 import type { StackmatHandle, StackmatInputDevice } from './use-stackmat';
+import { STACKMAT_DIALOG_COPY as copy, STACKMAT_HEALTH_LABELS, STACKMAT_PHASE_LABELS, stackmatHealth, type StackmatHealth } from '@cuberoot/shared/timer/external/stackmat-state';
 
 export interface StackmatModalProps {
   localize: ExternalTimerLocalize;
@@ -33,43 +34,12 @@ export interface StackmatModalProps {
   connectAttempt?: Promise<void> | null;
 }
 
-/** Level below which we call the input silent. */
-const SILENT_LEVEL = 0.02;
-
-type Health = 'off' | 'silent' | 'wrong-signal' | 'ok';
-
-function healthOf(s: StackmatHandle): Health {
-  if (!s.status.listening) return 'off';
-  if (s.status.signalPresent) return 'ok';
-  return s.signalLevel < SILENT_LEVEL ? 'silent' : 'wrong-signal';
-}
-
-const HEALTH_COLOR: Record<Health, string> = {
+const HEALTH_COLOR: Record<StackmatHealth, string> = {
   off: 'var(--faint-foreground)',
   silent: 'var(--muted-foreground)',
   'wrong-signal': 'var(--signal-warning)',
   ok: 'var(--signal-success)',
 };
-
-function healthLabel(h: Health, tr: ExternalTimerLocalize): string {
-  switch (h) {
-    case 'off': return tr({ zh: '未监听', en: 'Not listening' });
-    case 'silent': return tr({ zh: '没有输入信号', en: 'No input signal' });
-    case 'wrong-signal': return tr({ zh: '有声音，但不是 Stackmat 数据', en: 'Audio present, but not Stackmat data' });
-    case 'ok': return tr({ zh: '已连接，正在解码', en: 'Connected, decoding' });
-  }
-}
-
-function phaseLabel(phase: StackmatHandle['status']['phase'], tr: ExternalTimerLocalize): string {
-  switch (phase) {
-    case 'idle': return tr({ zh: '空闲', en: 'Idle' });
-    case 'one-hand': return tr({ zh: '单手在垫上', en: 'One hand down' });
-    case 'starting': return tr({ zh: '双手就绪', en: 'Both hands, ready' });
-    case 'running': return tr({ zh: '计时中', en: 'Running' });
-    case 'stopped': return tr({ zh: '已停表', en: 'Stopped' });
-    case 'unknown': return tr({ zh: '—', en: '—' });
-  }
-}
 
 function micErrorMessage(err: unknown, tr: ExternalTimerLocalize): string {
   const detail = typeof err === 'object' && err !== null
@@ -145,7 +115,7 @@ export default function StackmatModal({ stackmat, onClose, connectAttempt, local
     await begin(deviceId);
   }, [begin, stop]);
 
-  const health = healthOf(stackmat);
+  const health = stackmatHealth({ ...status, signalLevel });
 
   const backdrop = useDeviceModal(dialogRef, close);
   return (
@@ -160,23 +130,17 @@ export default function StackmatModal({ stackmat, onClose, connectAttempt, local
         style={isMobile ? { padding: 14, maxWidth: '100%' } : undefined}
         onClick={(e) => e.stopPropagation()}
       >
-        <h2 id={titleId}>
-          <Mic size={20} style={{ verticalAlign: 'middle', marginRight: 6 }} />
-          {tr({ zh: 'Stackmat 计时器', en: 'Stackmat timer' })}
+        <h2 id={titleId} className="bt-timer-heading">
+          <Mic size={20} />
+          {tr(copy.title)}
         </h2>
 
         <div className="modal-section">
           <p style={{ margin: 0 }}>
-            {tr({
-              zh: '用一根 3.5 mm 音频线把计时器的数据口接到设备的麦克风输入，本页直接解码它发出的信号，停表后自动记成绩。',
-              en: 'Run a 3.5 mm cable from the timer’s data jack into your device’s microphone input. This page decodes the signal directly and records the solve when the timer stops.',
-            })}
+            {tr(copy.instructions)}
           </p>
           <p style={{ fontSize: 12, color: 'var(--muted-foreground)', margin: '6px 0 0' }}>
-            {tr({
-              zh: '支持 Gen 3 / Gen 4，毫秒和百分秒两种固件都行，线的极性接反也能解。',
-              en: 'Works with Gen 3 / Gen 4, both millisecond and centisecond firmwares, and with either cable polarity.',
-            })}
+            {tr(copy.compatibility)}
           </p>
         </div>
 
@@ -190,7 +154,7 @@ export default function StackmatModal({ stackmat, onClose, connectAttempt, local
                 flex: '0 0 auto',
               }}
             />
-            <span style={{ color: HEALTH_COLOR[health] }}>{healthLabel(health, tr)}</span>
+            <span style={{ color: HEALTH_COLOR[health] }}>{tr(STACKMAT_HEALTH_LABELS[health])}</span>
           </div>
 
           {listening && (
@@ -199,7 +163,7 @@ export default function StackmatModal({ stackmat, onClose, connectAttempt, local
                   "nothing plugged in". */}
               <div style={{ marginTop: 10, display: 'flex', alignItems: 'center', gap: 8 }}>
                 <span style={{ fontSize: 12, color: 'var(--muted-foreground)', minWidth: '3.5em' }}>
-                  {tr({ zh: '电平', en: 'Level' })}
+                  {tr(copy.level)}
                 </span>
                 <span
                   style={{
@@ -226,9 +190,9 @@ export default function StackmatModal({ stackmat, onClose, connectAttempt, local
                   fontSize: 13,
                 }}
               >
-                <dt style={{ color: 'var(--muted-foreground)' }}>{tr({ zh: '计时器状态', en: 'Timer state' })}</dt>
-                <dd style={{ margin: 0 }}>{phaseLabel(status.phase, tr)}</dd>
-                <dt style={{ color: 'var(--muted-foreground)' }}>{tr({ zh: '显示读数', en: 'Reading' })}</dt>
+                <dt style={{ color: 'var(--muted-foreground)' }}>{tr(copy.state)}</dt>
+                <dd style={{ margin: 0 }}>{tr(STACKMAT_PHASE_LABELS[status.phase])}</dd>
+                <dt style={{ color: 'var(--muted-foreground)' }}>{tr(copy.reading)}</dt>
                 <dd style={{ margin: 0, fontFamily: 'var(--font-mono)' }}>
                   {status.signalPresent ? formatMs(status.ms) : '—'}
                 </dd>
@@ -236,15 +200,15 @@ export default function StackmatModal({ stackmat, onClose, connectAttempt, local
                   aria-hidden={status.unit === 0}
                   style={{ color: 'var(--muted-foreground)', visibility: status.unit === 0 ? 'hidden' : undefined }}
                 >
-                  {tr({ zh: '精度', en: 'Resolution' })}
+                  {tr(copy.resolution)}
                 </dt>
                 <dd
                   aria-hidden={status.unit === 0}
                   style={{ margin: 0, visibility: status.unit === 0 ? 'hidden' : undefined }}
                 >
                   {status.unit === 1
-                    ? tr({ zh: '毫秒（Gen 4）', en: 'milliseconds (Gen 4)' })
-                    : tr({ zh: '百分秒（Gen 3）', en: 'centiseconds (Gen 3)' })}
+                    ? tr(copy.ms)
+                    : tr(copy.cs)}
                 </dd>
               </dl>
             </>
@@ -253,15 +217,9 @@ export default function StackmatModal({ stackmat, onClose, connectAttempt, local
           {listening && (
             <p className="stackmat-health-guidance" style={{ fontSize: 12, color: 'var(--muted-foreground)', margin: '8px 0 0' }}>
               {health === 'wrong-signal'
-                ? tr({
-                    zh: '听到的多半是内置麦克风。在下面选中计时器所接的那个输入设备。',
-                    en: 'That is probably the built-in microphone. Pick the input the timer is plugged into below.',
-                  })
+                ? tr(copy.wrongSignal)
                 : health === 'silent'
-                  ? tr({
-                      zh: '检查：线是否插在麦克风/输入口（不是耳机口）、计时器是否开机、系统输入音量是否为 0。',
-                      en: 'Check: cable in the mic/line input (not the headphone jack), timer powered on, and system input volume above zero.',
-                    })
+                  ? tr(copy.silent)
                   : '\u00a0'}
             </p>
           )}
@@ -271,7 +229,7 @@ export default function StackmatModal({ stackmat, onClose, connectAttempt, local
           <div className="modal-section">
             <label style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
               <span style={{ fontSize: 13, color: 'var(--muted-foreground)' }}>
-                {tr({ zh: '输入设备', en: 'Input device' })}
+                {tr(copy.input)}
               </span>
               <select
                 value={status.deviceId}
@@ -279,7 +237,7 @@ export default function StackmatModal({ stackmat, onClose, connectAttempt, local
                 onChange={(e) => { void onPickDevice(e.target.value); }}
                 style={{ width: 'fit-content', maxWidth: '100%', fontSize: 14, padding: '4px 6px' }}
               >
-                <option value="">{tr({ zh: '系统默认', en: 'System default' })}</option>
+                <option value="">{tr(copy.defaultInput)}</option>
                 {devices.filter(d => d.deviceId && d.deviceId !== 'default').map((d) => (
                   <option key={d.deviceId} value={d.deviceId}>{d.label}</option>
                 ))}
@@ -297,16 +255,16 @@ export default function StackmatModal({ stackmat, onClose, connectAttempt, local
         <div className="modal-actions" style={isMobile ? { flexDirection: 'column', alignItems: 'stretch' } : undefined}>
           {listening ? (
             <button className="modal-action-btn" onClick={stop}>
-              {tr({ zh: '停止监听', en: 'Stop listening' })}
+              {tr(copy.stop)}
             </button>
           ) : (
             <button className="primary modal-action-btn" disabled={busy} onClick={() => { void begin(); }}>
-              {busy ? tr({ zh: '正在启用…', en: 'Starting…' }) : tr({ zh: '开始监听', en: 'Start listening' })}
+              {busy ? tr(copy.starting) : tr(copy.start)}
             </button>
           )}
           <ClearButton
             variant="standalone"
-            ariaLabel={tr({ zh: '关闭', en: 'Close' })}
+            ariaLabel={tr(copy.close)}
             onClick={close}
           />
         </div>

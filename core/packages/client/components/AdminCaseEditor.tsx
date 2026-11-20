@@ -15,7 +15,8 @@ import { useState, useMemo, useRef, useCallback, useEffect, type ComponentProps 
 import { useTranslation } from 'react-i18next';
 import { parseAsStringEnum } from 'nuqs';
 import { useTrainingQueryState as useQueryState } from '@/lib/training-host';
-import { X, Save, Shuffle } from '@app-foundation/icons/lucide';
+import { Save, Shuffle } from '@app-foundation/icons/lucide';
+import { ClearButton } from '@/components/ClearButton';
 import { loadAlg, MIRROR_ALG_SYNC_SETS, requires3x3AlgCaseSetup, type AlgCase, type AlgEntry, type AlgPuzzle, type AlgSticker } from '@cuberoot/shared';
 import { mirrorCascadeOnDelete, VIEWS } from '@cuberoot/shared/alg-mirror';
 import { canonicalSq1Alg, formatScrambleForEvent } from '@cuberoot/shared/sq1-notation';
@@ -708,9 +709,7 @@ export default function AdminCaseEditor({ puzzle, setSlug, state, initialInvalid
       <div className="alg-admin-modal alg-admin-modal-fullscreen" onClick={e => e.stopPropagation()}>
         <div className="alg-admin-modal-head">
           <h2>{title}</h2>
-          <button type="button" className="alg-admin-modal-head-btn" onClick={onClose} title={tr({ zh: '关闭', en: 'Close' })}>
-            <X size={16} />
-          </button>
+          <ClearButton variant="standalone" className="alg-admin-modal-head-btn" onClick={onClose} ariaLabel={tr({ zh: '关闭', en: 'Close' })} />
         </div>
 
         <div className="alg-admin-modal-main">

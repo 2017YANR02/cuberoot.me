@@ -34,7 +34,7 @@ export function ClearButton({
       onMouseDown={preserveFocus ? (event) => event.preventDefault() : undefined}
       onClick={onClick}
       aria-label={ariaLabel}
-      title={title ?? ariaLabel}
+      title={title ?? (variant === 'inline' ? ariaLabel : undefined)}
     >
       <svg className="clear-btn-icon" viewBox="0 0 10 10" aria-hidden="true">
         <path

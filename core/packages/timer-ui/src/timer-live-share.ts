@@ -1,8 +1,8 @@
 'use client';
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
-import { applyTimerLivePatch, diffTimerLiveSnapshot, isTimerLiveId, isTimerLiveToken, isTimerLiveViewerToken, parseTimerLiveDetail,
+import { applyTimerLivePatch, createTimerLivePublisher, parseTimerLiveSession, parseTimerLiveDetail,
   parseTimerLiveSnapshot, TIMER_LIVE_MAX_BYTES, TIMER_LIVE_PATH, TIMER_LIVE_STALE_MS,
-  type TimerLiveCredential, type TimerLiveSession, type TimerLiveSnapshot } from '@cuberoot/shared/timer/live-share';
+  type TimerLiveCredential, type TimerLiveSession, type TimerLiveSnapshot, type TimerLiveSource, type TimerLiveConnection } from '@cuberoot/shared/timer/live-share';
 import type { Solve } from '@cuberoot/shared/timer';
 
 export interface TimerLiveTransport {
@@ -10,15 +10,8 @@ export interface TimerLiveTransport {
   websocketUrl: string;
   fetcher?: typeof fetch;
 }
-export type TimerLiveConnection = 'idle' | 'connecting' | 'connected' | 'disconnected' | 'ended' | 'error';
-interface LiveSource { snapshot(): TimerLiveSnapshot; detail(id: string, context: string): Solve | null }
+export type { TimerLiveConnection } from '@cuberoot/shared/timer/live-share';
 const STORAGE_KEY = 'cuberoot.timer.live-share.v1';
-function parseSession(v: unknown): TimerLiveSession | null {
-  if (!v || typeof v !== 'object') return null;
-  const s = v as TimerLiveSession;
-  return isTimerLiveId(s.id) && isTimerLiveToken(s.token) && isTimerLiveViewerToken(s.viewerToken)
-    && Number.isFinite(s.expiresAt) && s.expiresAt > Date.now() ? s : null;
-}
 function saveSession(session: TimerLiveSession | null, paused = false) {
   try { if (session) sessionStorage.setItem(STORAGE_KEY, JSON.stringify({ ...session, paused })); else sessionStorage.removeItem(STORAGE_KEY); } catch { /* in-memory sharing still works */ }
 }
@@ -31,7 +24,7 @@ async function shareRequest(transport: TimerLiveTransport, path: string, init: R
 
 /** Shared Web/App transport. Only the publisher gets a data source; viewers cannot publish. */
 export function useTimerLiveConnection(transport: TimerLiveTransport, credential: TimerLiveCredential | null,
-  role: 'host' | 'viewer', source?: LiveSource) {
+  role: 'host' | 'viewer', source?: TimerLiveSource) {
   const [connection, setConnection] = useState<TimerLiveConnection>('idle');
   const [online, setOnline] = useState(false), [viewers, setViewers] = useState(0);
   const [snapshot, setSnapshot] = useState<TimerLiveSnapshot | null>(null);
@@ -51,9 +44,9 @@ export function useTimerLiveConnection(transport: TimerLiveTransport, credential
     requestedDetail.current = null;
     if (!credential) { setConnection('idle'); return; }
     let disposed = false, socket: WebSocket | null = null, retry: ReturnType<typeof setTimeout> | undefined;
-    let ready = false, revision = 0, last: TimerLiveSnapshot | null = null, inflight: TimerLiveSnapshot | null = null;
+    let ready = false, revision = 0, last: TimerLiveSnapshot | null = null;
     let lastReceived = performance.now(), offset = 0, bestRtt = Infinity, reconnects = 0;
-    let lastSent = 0, snapshotReceived = false, forceSnapshot = false;
+    let snapshotReceived = false, publisher: ReturnType<typeof createTimerLivePublisher> | undefined;
     const send = (message: unknown): boolean => {
       if (!socket || socket.readyState !== WebSocket.OPEN) return false;
       const data = JSON.stringify(message);
@@ -64,27 +57,16 @@ export function useTimerLiveConnection(transport: TimerLiveTransport, credential
       try { socket.send(data); return true; } catch { return false; }
     };
     sendRef.current = send;
-    const flush = () => {
-      if (!ready || role !== 'host' || !sourceRef.current || inflight || performance.now() - lastSent < 40) return;
-      const next = sourceRef.current.snapshot();
-      next.state = { ...next.state, sampledAt: next.state.sampledAt + offset };
-      if (!last) {
-        if (send({ type: 'snapshot', snapshot: next })) { inflight = next; lastSent = performance.now(); }
-        return;
-      }
-      const patch = diffTimerLiveSnapshot(last, next);
-      if (!Object.keys(patch).length) return;
-      if (send({ type: 'patch', base: revision, patch })) {
-        inflight = { state: patch.state ?? last.state, cube: patch.cube ?? last.cube,
-          history: patch.history ?? last.history, attempt: patch.attempt !== undefined ? next.attempt : last.attempt };
-        lastSent = performance.now();
-      }
-    };
+    const flush = () => publisher?.flush();
     flushRef.current = flush;
     const connect = () => {
       if (disposed) return;
-      setConnection('connecting'); ready = false; inflight = null; last = null; snapshotReceived = false;
-      lastReceived = performance.now(); lastSent = 0; bestRtt = Infinity;
+      setConnection('connecting'); ready = false; last = null; snapshotReceived = false;
+      lastReceived = performance.now(); bestRtt = Infinity;
+      publisher = role === 'host' && sourceRef.current ? createTimerLivePublisher({ send, now: Date.now, source: {
+        snapshot: () => sourceRef.current!.snapshot(),
+        detail: (id, context) => sourceRef.current?.detail(id, context) ?? null,
+      } }) : undefined;
       const current = new WebSocket(transport.websocketUrl); socket = current;
       current.onopen = () => {
         if (disposed || socket !== current) return;
@@ -98,9 +80,11 @@ export function useTimerLiveConnection(transport: TimerLiveTransport, credential
         if (m.type === 'ready') {
           ready = true; reconnects = 0; setConnection('connected');
           if (typeof m.serverNow === 'number') { offset = m.serverNow - Date.now(); setClockOffset(offset); }
-          send({ type: 'ping', sentAt: Date.now() }); flush(); return;
+          if (publisher) publisher.receive(m); else send({ type: 'ping', sentAt: Date.now() });
+          return;
         }
         if (m.type === 'pong' && typeof m.sentAt === 'number' && typeof m.serverNow === 'number') {
+          publisher?.receive(m);
           const rtt = Date.now() - m.sentAt;
           if (rtt >= 0 && rtt < bestRtt) { bestRtt = rtt; offset = m.serverNow - (m.sentAt + rtt / 2); setClockOffset(offset); }
           return;
@@ -108,16 +92,7 @@ export function useTimerLiveConnection(transport: TimerLiveTransport, credential
         if (m.type === 'status' && typeof m.online === 'boolean' && typeof m.viewers === 'number') {
           setOnline(m.online); setViewers(m.viewers); return;
         }
-        if (role === 'host') {
-          if (m.type === 'ack' && Number.isSafeInteger(m.revision) && inflight) {
-            last = forceSnapshot ? null : inflight; forceSnapshot = false; inflight = null; revision = m.revision as number; flush();
-          } else if (m.type === 'resync') { last = inflight = null; flush(); }
-          else if (m.type === 'detail' && typeof m.solveId === 'string' && typeof m.context === 'string' && typeof m.requestId === 'string') {
-            const solve = sourceRef.current?.detail(m.solveId, m.context);
-            if (solve) send({ type: 'detail', context: m.context, requestId: m.requestId, solve });
-          }
-          return;
-        }
+        if (role === 'host') { publisher?.receive(m); return; }
         if (m.type === 'detail' && typeof m.requestId === 'string' && typeof m.context === 'string') {
           const solve = parseTimerLiveDetail(m.solve);
           if (solve && requestedDetail.current?.requestId === m.requestId && requestedDetail.current.context === m.context
@@ -137,7 +112,7 @@ export function useTimerLiveConnection(transport: TimerLiveTransport, credential
       };
       current.onclose = e => {
         if (disposed || socket !== current) return;
-        ready = false; setOnline(false);
+        ready = false; publisher = undefined; setOnline(false);
         if (e.code === 4001) { setConnection('ended'); setSnapshot(null); setDetail(null); return; }
         if (e.code === 1008 || e.code === 4000 || e.code === 4003) { setConnection('error'); return; }
         setConnection('disconnected');
@@ -146,15 +121,19 @@ export function useTimerLiveConnection(transport: TimerLiveTransport, credential
       current.onerror = () => { if (socket === current && current.readyState === WebSocket.OPEN) current.close(4002, 'transport error'); };
     };
     connect();
-    const publisher = role === 'host' ? setInterval(flush, 50) : undefined;
+    const publicationTimer = role === 'host' ? setInterval(flush, 50) : undefined;
     const heartbeat = setInterval(() => {
       if (performance.now() - lastReceived > TIMER_LIVE_STALE_MS) { setOnline(false); socket?.close(4002, 'heartbeat timeout'); }
       else if (ready) send({ type: 'ping', sentAt: Date.now() });
     }, 2000);
-    const wake = () => { if (ready) { send({ type: 'ping', sentAt: Date.now() }); if (role === 'viewer') send({ type: 'resync' }); else { if (inflight) forceSnapshot = true; else last = null; flush(); } } };
+    const wake = () => {
+      if (!ready) return;
+      if (publisher) publisher.refresh();
+      else if (role === 'viewer') { send({ type: 'ping', sentAt: Date.now() }); send({ type: 'resync' }); }
+    };
     window.addEventListener('online', wake); document.addEventListener('visibilitychange', wake);
     return () => {
-      disposed = true; ready = false; clearInterval(publisher); clearInterval(heartbeat); clearTimeout(retry);
+      disposed = true; ready = false; clearInterval(publicationTimer); clearInterval(heartbeat); clearTimeout(retry);
       sendRef.current = () => false; flushRef.current = () => {};
       window.removeEventListener('online', wake); document.removeEventListener('visibilitychange', wake);
       socket?.close(1000, 'page closed');
@@ -163,7 +142,7 @@ export function useTimerLiveConnection(transport: TimerLiveTransport, credential
   return { connection, online, viewers, snapshot, detail, clockOffset, requestDetail };
 }
 
-export function useTimerLiveShare(transport: TimerLiveTransport, source: LiveSource, enabled = true) {
+export function useTimerLiveShare(transport: TimerLiveTransport, source: TimerLiveSource, enabled = true) {
   const [session, setSession] = useState<TimerLiveSession | null>(null);
   const [busy, setBusy] = useState(false), [error, setError] = useState(false);
   const [paused, setPaused] = useState(false);
@@ -172,7 +151,7 @@ export function useTimerLiveShare(transport: TimerLiveTransport, source: LiveSou
   useEffect(() => {
     mounted.current = true;
     try { const raw = sessionStorage.getItem(STORAGE_KEY); if (raw) {
-      const value = JSON.parse(raw), restored = parseSession(value);
+      const value = JSON.parse(raw), restored = parseTimerLiveSession(value);
       setPaused(!!restored && value?.paused === true); setSession(restored);
       if (!restored) saveSession(null);
     } } catch { /* optional restore */ }
@@ -201,7 +180,7 @@ export function useTimerLiveShare(transport: TimerLiveTransport, source: LiveSou
       const t = transportRef.current;
       const res = await shareRequest(t, TIMER_LIVE_PATH, { method: 'POST' });
       if (!res.ok) throw new Error();
-      const next = parseSession(await res.json()); if (!next) throw new Error();
+      const next = parseTimerLiveSession(await res.json()); if (!next) throw new Error();
       if (!mounted.current) {
         void (t.fetcher ?? fetch)(t.apiUrl(`${TIMER_LIVE_PATH}/${next.id}`), { method: 'DELETE', headers: { Authorization: `Bearer ${next.token}` } }).catch(() => {});
         return;

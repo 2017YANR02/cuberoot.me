@@ -1,4 +1,5 @@
 import { roundChronologicalOrder } from '../wca_round';
+import { toLocalIsoDate } from '../iso-date';
 import type { EventId } from './types';
 import {
   DEFAULT_TIMER_WCA_DIFFICULTY_SETTINGS,
@@ -28,6 +29,16 @@ export const TIMER_WCA_SCRAMBLE_SOURCE_COPY = {
 } as const;
 
 export type TimerWcaSourceMode = 'date' | 'comp';
+
+export const TIMER_SCRAMBLE_SOURCE_COPY = {
+  title: { en: 'Question source', zh: '出题来源' },
+  wca: { en: 'Real', zh: '真题' },
+  wcaOption: { en: 'WCA real', zh: 'WCA 真题' },
+  random: { en: 'Random', zh: '随机' },
+  randomOption: { en: 'Random state', zh: '随机状态' },
+  manual: { en: 'Manual', zh: '手动' },
+  manualOption: { en: 'Manual input', zh: '手动输入' },
+} as const;
 
 /**
  * Runtime-neutral settings owned by the real-WCA scramble source.  The website
@@ -80,6 +91,33 @@ export interface TimerWcaCompetition {
   endDate: string;
   /** Additional canonical aliases (for example the Chinese competition name). */
   searchAliases?: readonly string[];
+}
+
+export const TIMER_WCA_COMPETITION_PERIODS = [
+  { id: 'all', label: { en: 'All time', zh: '全部时间' } },
+  { id: '7', label: { en: 'Past week', zh: '近一周' } },
+  { id: '30', label: { en: 'Past month', zh: '近一个月' } },
+  { id: '365', label: { en: 'Past year', zh: '近一年' } },
+] as const;
+export type TimerWcaCompetitionPeriod = (typeof TIMER_WCA_COMPETITION_PERIODS)[number]['id'];
+
+export function timerWcaCompetitionPeriodStart(today: string, period: TimerWcaCompetitionPeriod): string {
+  if (!today || period === 'all') return '';
+  const [year, month, day] = today.split('-').map(Number);
+  const date = new Date(year, month - 1, day);
+  date.setDate(date.getDate() - Number(period) + 1);
+  return toLocalIsoDate(date);
+}
+
+export function availableTimerWcaCompetitions(competitions: readonly TimerWcaCompetition[], from: string, max: string) {
+  return competitions.filter(row => (!row.startDate || row.startDate <= max)
+    && (!from || (row.endDate || row.startDate) >= from));
+}
+
+export function timerWcaCompetitionSuggestions(competitions: readonly TimerWcaCompetition[], query: string, country: string, browsing: boolean) {
+  const filtered = competitions.filter(row => !country || row.country.toUpperCase() === country.toUpperCase());
+  if (query.trim()) return searchTimerWcaCompetitions(query, filtered, browsing ? filtered.length : 20);
+  return browsing ? filtered.sort((a, b) => b.startDate.localeCompare(a.startDate)) : [];
 }
 
 export interface TimerWcaScrambleSourceRow {

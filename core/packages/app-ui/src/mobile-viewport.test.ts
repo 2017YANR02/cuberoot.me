@@ -142,7 +142,7 @@ describe('mobile visible viewport layout', () => {
     // Workspace extraction changes the JSX count; require each actual overlay
     // owner (including both save-failure and undo toasts) to receive the inset.
     expect(insetConsumers.sort()).toEqual([
-      'TimerHistoryWorkspace', 'TimerInfoToast', 'TimerInfoToast', 'TimerMoreMenu',
+      'TimerHistoryWorkspace', 'TimerInfoToast', 'TimerInfoToast',
       'TimerNetOutboxNotice', 'TimerResultsSessionBar', 'TimerStatisticsWorkspace',
       'TimerWcaScrambleProgress',
     ].sort());
@@ -175,10 +175,10 @@ describe('mobile visible viewport layout', () => {
     expect(surfaceCss.split(compactWords)).toHaveLength(3);
     expect(surfaceCss).toContain('@media (max-height: 650px)');
     expect(surfaceCss).toContain('@container timer-stage (max-height: 650px)');
-    expect(surfaceCss).toContain('@media (min-width: 520px) and (max-height: 650px) and (orientation: landscape)');
-    expect(surfaceCss).toContain('@container timer-stage (min-width: 520px) and (max-height: 650px) and (min-aspect-ratio: 1/1)');
+    expect(surfaceCss).toContain('@media (min-width: 520px) and (max-height: 460px) and (orientation: landscape)');
+    expect(surfaceCss).toContain('@container timer-stage (min-width: 520px) and (max-height: 460px) and (min-aspect-ratio: 1/1)');
     // Scramble and readout stay vertically arranged. Footer/statistic grids
-    // may add columns, keeping the one preview in the lower-right normal flow.
+    // may add columns around the one centered preview in the footer flow.
     const fitRules = [...surfaceCss.matchAll(/([^{}]*\.timer-workspace\[data-fit-viewport\][^{}]*)\{([^}]*)\}/g)];
     for (const [, selector, declarations] of fitRules) {
       const columns = declarations.match(/grid-template-columns:\s*([^;]+);/)?.[1];
@@ -186,15 +186,15 @@ describe('mobile visible viewport layout', () => {
       if (selector.includes('.timer-stage-preview')) expect(declarations).not.toMatch(/position:\s*(?:absolute|fixed)/);
     }
     expect(surfaceCss).toMatch(/\.timer-workspace\[data-fit-viewport\] \.timing-surface-core \{[^}]*display: flex;[^}]*flex-direction: column;/);
-    expect(surfaceCss).toContain('.timer-stage-preview .timing-surface-cube { align-items: flex-end; }');
-    expect(surfaceCss).toMatch(/\.timer-stage-footer:not\(\[hidden\]\) \.timer-stage-preview \{[^}]*--timer-preview-docked: 1;[^}]*justify-content: flex-end;[^}]*margin-left: auto;/);
+    expect(surfaceCss).toMatch(/\.timer-stage-footer:not\(\[hidden\]\):has\(> \.timer-stage-preview > \*\) \{[^}]*"statistics preview devices" auto\s*\/ minmax\(0, 1fr\) auto minmax\(0, 1fr\);/);
+    expect(surfaceCss).toMatch(/\.timer-stage-footer:not\(\[hidden\]\) \.timer-stage-preview \{[^}]*--timer-preview-docked: 1;[^}]*display: flex;/);
     expect(surfaceCss).toContain('@container timer-stage (max-height: 240px)');
     expect(surfaceCss).toContain('@media (max-height: 350px)');
     expect(surfaceCss).toContain('--timer-readout-max-size: clamp(40px, 18cqh, 64px)');
     expect(surfaceCss).toContain('--timer-cube-h: clamp(36px, 18cqh, 72px)');
     expect(surfaceCss).toContain('.timing-surface-sub { flex: 0 0 auto; height: auto; max-height: none; }');
     expect(surfaceCss).toMatch(/\.timer-workspace\[data-fit-viewport\] \.timing-surface--solo \{\s*flex: 1 0 auto;\s*min-height: min-content;/);
-    expect(surfaceCss).toContain('.timer-workspace[data-fit-viewport] .timer-solo-main { overflow: auto; }');
+    expect(surfaceCss).toMatch(/\.timer-workspace\[data-fit-viewport\] \.timer-solo-main \{\s*overflow: auto;/);
     expect(surfaceCss).toMatch(/\.timer-workspace\[data-fit-viewport\] \.timing-surface-scramble-top \{\s*max-height: none;\s*overflow: visible;/);
     expect(surfaceCss).toContain('padding-top: var(--solo-scramble-gap, 16px)');
     expect(surfaceCss).toContain('row-gap: var(--solo-timer-gap, 20px)');

@@ -179,9 +179,12 @@ describe('installed App GAN lifecycle integration', () => {
   it('routes embedded timer links to the existing shell tab and rejects foreign or hidden frames', async () => {
     const onlineHost = { ...host, getNetworkStatus: async () => true };
     await act(async () => root.render(<App host={onlineHost} />));
+    const tabs = [...container.querySelectorAll<HTMLButtonElement>('.primary-nav button')];
+    expect(tabs.map(tab => tab.getAttribute('aria-label'))).toEqual(['Timer', 'Tools', 'Me']);
+    expect(tabs.map(tab => tab.textContent)).toEqual(['', '', '']);
     const select = async (name: string) => {
       const button = [...container.querySelectorAll<HTMLButtonElement>('.primary-nav button')]
-        .find(item => item.textContent?.trim() === name)!;
+        .find(item => item.getAttribute('aria-label') === name)!;
       await act(async () => button.click());
     };
     await select('Tools');
@@ -196,18 +199,18 @@ describe('installed App GAN lifecycle integration', () => {
     expect(frame.closest<HTMLElement>('.web-surface')?.hidden).toBe(false);
     await send('https://cuberoot.me', frame.contentWindow);
     expect(frame.closest<HTMLElement>('.web-surface')?.hidden).toBe(true);
-    expect(container.querySelector('.primary-nav [aria-current="page"]')?.textContent).toBe('Timer');
+    expect(container.querySelector('.primary-nav [aria-current="page"]')?.getAttribute('aria-label')).toBe('Timer');
     expect(container.querySelectorAll('iframe')).toHaveLength(1);
     await select('Me');
     await send('https://cuberoot.me', frame.contentWindow);
-    expect(container.querySelector('.primary-nav [aria-current="page"]')?.textContent).toBe('Me');
+    expect(container.querySelector('.primary-nav [aria-current="page"]')?.getAttribute('aria-label')).toBe('Me');
   });
 
   it('opens App appearance offline, blocks timer input and returns to the original account surface', async () => {
     expect(localStorage.getItem('theme')).toBe((memory.data as TimerStoreData).settings.theme);
     expect(localStorage.getItem('trainer-lang')).toBe('en');
     const account = [...container.querySelectorAll<HTMLButtonElement>('.primary-nav button')]
-      .find(button => button.textContent?.trim() === 'Me')!;
+      .find(button => button.getAttribute('aria-label') === 'Me')!;
     await act(async () => account.click());
     const frame = container.querySelector<HTMLIFrameElement>('.web-surface--account iframe')!;
     await act(async () => container.querySelector<HTMLButtonElement>('.app-account-toolbar button')!.click());
@@ -231,7 +234,7 @@ describe('installed App GAN lifecycle integration', () => {
     };
     await act(async () => root.render(<App host={accountHost} />));
     const accountButton = [...container.querySelectorAll<HTMLButtonElement>('button')]
-      .find(button => button.textContent?.trim() === 'Me');
+      .find(button => button.getAttribute('aria-label') === 'Me');
     expect(accountButton).toBeDefined();
     await act(async () => accountButton!.click());
     const frame = container.querySelector<HTMLIFrameElement>('.web-surface--account iframe')!;
@@ -818,12 +821,19 @@ it('blocks cube starts in full statistics and Back closes the dialog before hist
   expect(container.querySelector('.history-view')).not.toBeNull();
 });
 
-it('keeps a More tool in Solo, blocks cube starts, and routes Back through its nested picker', async () => {
-  await act(async () => container.querySelector<HTMLButtonElement>('.more-menu-btn')!.click());
-  await act(async () => [...document.querySelectorAll<HTMLButtonElement>('.more-menu-item')].find(button => button.textContent === 'Bulk scrambles')!.click());
+it('opens a tool from the gear, blocks cube starts, and routes Back through its nested picker', async () => {
+  expect(container.querySelector('.more-menu-btn')).toBeNull();
+  await act(async () => container.querySelector<HTMLButtonElement>('.timer-solo-topbar .settings-popover-trigger')!.click());
+  const categories = document.querySelector<HTMLSelectElement>('.settings-category-select')!;
+  await act(async () => {
+    categories.value = 'scramble';
+    categories.dispatchEvent(new Event('change', { bubbles: true }));
+  });
+  await act(async () => [...document.querySelectorAll<HTMLButtonElement>('.timer-settings-action')].find(button => button.textContent === 'Bulk scrambles')!.click());
   await vi.waitFor(async () => { await settle(); expect(document.querySelector('.bulk-scramble-modal')).not.toBeNull(); });
+  expect(document.querySelector('.settings-modal')).toBeNull();
   expect(container.querySelector('.timer-solo-main')).not.toBeNull();
-  expect(container.querySelector('.primary-nav [aria-current="page"]')?.textContent).toContain('Timer');
+  expect(container.querySelector('.primary-nav [aria-current="page"]')?.getAttribute('aria-label')).toContain('Timer');
   await act(async () => move('R', 1_100));
   await act(async () => move('U', 2_000));
   expect(phase).not.toBe('running');

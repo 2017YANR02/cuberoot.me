@@ -45,6 +45,8 @@ export class SmartCubeAttemptProducer {
   private grip: SmartCubeStartingGrip | undefined;
   private liveGyro: readonly GyroSample[] = [];
 
+  constructor(private readonly encodeGyro: typeof encodeGyroTrack = encodeGyroTrack) {}
+
   begin(startedAtMs: number, device?: SmartCubeAttemptDevice, grip?: SmartCubeStartingGrip, cubeStart?: CubeTimerStart): void {
     this.moves.begin(startedAtMs, cubeStart);
     this.gyro.reset();
@@ -92,14 +94,14 @@ export class SmartCubeAttemptProducer {
     return {
       moves,
       device: moves.length > 0 && this.device ? { ...this.device } : undefined,
-      gyro: moves.length > 0 ? encodeGyroTrack(this.alignGyro(this.gyro.snapshot()), this.grip ? 'scramble' : undefined) : null,
+      gyro: moves.length > 0 ? this.encodeGyro(this.alignGyro(this.gyro.snapshot()), this.grip ? 'scramble' : undefined) : null,
     };
   }
 
   finish(): SmartCubeAttemptResult {
     const samples = this.alignGyro(this.gyro.take());
     const moves = this.moves.take();
-    const gyro = moves.length > 0 ? encodeGyroTrack(samples, this.grip ? 'scramble' : undefined) : null;
+    const gyro = moves.length > 0 ? this.encodeGyro(samples, this.grip ? 'scramble' : undefined) : null;
     const device = moves.length > 0 ? this.device : undefined;
     this.device = undefined;
     this.active = false;

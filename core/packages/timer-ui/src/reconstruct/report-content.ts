@@ -4,8 +4,8 @@ import type { Solve } from '@cuberoot/shared/timer';
 import type { trainingRepetitionMetrics, trainingCaseStatistics } from './report-presentation';
 import { effectiveMs } from '@cuberoot/shared/timer/types';
 import { formatMs } from '@cuberoot/shared/timer/stats';
+import { rawRecapMoveRows } from '@cuberoot/shared/timer/reconstruct/recap';
 import { timerEventNxnSize } from '@cuberoot/shared/timer/event-catalog';
-import type { ReconstructLocalize } from './ReconstructHost';
 import type { AnalysisSnapshot } from './analysis-protocol';
 import type { TrainingStageMetrics, ReconTextResult } from '@cuberoot/shared/timer/reconstruct/recon-text';
 import type { MethodId } from '@cuberoot/shared/timer/reconstruct/methods';
@@ -14,6 +14,7 @@ import type { ReferenceResult } from '@cuberoot/shared/timer/reconstruct/referen
 import { columnTotals, stageAverageDelta, reportTableVisibility, type Col } from './report-columns';
 import { projectReferenceRows, reportSeconds as sec } from './report-presentation';
 
+export type ReconstructLocalize = <T>(text: { en: T; zh: T }) => T;
 export type ReportAction = { type: string; key?: string; value?: number | boolean | string; timeMs?: number; copyText?: string };
 export interface ReportNode {
   notation?: { line: string; crossColor: import('@cuberoot/shared/timer').TimerColorLetter | null;
@@ -161,9 +162,8 @@ export function reportRawMoves(solve:Solve,wasted:ReadonlySet<number>,tr:Reconst
     textNode('ts', tr({zh:'时间 (s)',en:'Time (s)'}), 'reconstruct-move-ts'),
     textNode('gap', tr({zh:'间隔 (s)',en:'Gap (s)'}), 'reconstruct-move-gap'),
   ], 'reconstruct-move-row reconstruct-move-header', 'row');
-  return groupNode('raw-list',[header,...moves.map((m,i)=>{
-    const gap=i?m.ts-moves[i-1].ts:null;
-    return {...groupNode(String(i),[textNode('idx',String(i+1),'reconstruct-move-idx'),textNode('move',m.m,'reconstruct-move-token'),textNode('ts',sec(m.ts),'reconstruct-move-ts'),textNode('gap',gap==null?'—':sec(gap),'reconstruct-move-gap')],`reconstruct-move-row${gap!=null&&gap>500?' slow':''}${wasted.has(i)?' wasted':''}`,'row'),title:wasted.has(i)?tr({zh:'废步:这一段转完回到了之前的状态',en:'wasted: this run returns to a prior state'}):undefined};
+  return groupNode('raw-list',[header,...rawRecapMoveRows(moves,wasted).map(row=>{
+    return {...groupNode(String(row.index-1),[textNode('idx',String(row.index),'reconstruct-move-idx'),textNode('move',row.move,'reconstruct-move-token'),textNode('ts',sec(row.ts),'reconstruct-move-ts'),textNode('gap',row.gap==null?'—':sec(row.gap),'reconstruct-move-gap')],`reconstruct-move-row${row.slow?' slow':''}${row.wasted?' wasted':''}`,'row'),title:row.wasted?tr({zh:'废步:这一段转完回到了之前的状态',en:'wasted: this run returns to a prior state'}):undefined};
   })],'reconstruct-move-list');
 }
 export function reportFeedback(state:ReportUIState,tr:ReconstructLocalize) {

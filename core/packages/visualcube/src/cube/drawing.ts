@@ -18,9 +18,6 @@ import { parseArrows } from './parsing/arrow.js'
  *
  * Pure-string output: no DOM, no svg.js. Safe to call from Node (SSR).
  * `renderCubeSVG(opts)` returns a complete `<svg>...</svg>` document.
- * `renderCube(container, geometry, options)` is a thin DOM shim that
- * sets `container.innerHTML` to the rendered string (kept for backwards
- * compatibility with the original imperative API).
  */
 
 // Rotation vectors to track visibility of each face
@@ -298,16 +295,6 @@ function renderQCubeSVG(options: ResolvedCubeOptions): string {
     ],
     cells,
   )
-}
-
-/**
- * Backwards-compatible imperative API. Mounts rendered SVG into a DOM
- * container. Use `renderCubeSVG` directly for SSR / pure-string output.
- */
-export function renderCube(container: HTMLElement | string, geometry: CubeGeometry, options: ResolvedCubeOptions) {
-  const el = typeof container === 'string' ? (document.querySelector(container) as HTMLElement) : container
-  if (!el) return
-  el.innerHTML = renderCubeSVG(geometry, options)
 }
 
 /**

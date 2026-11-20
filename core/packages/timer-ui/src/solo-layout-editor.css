@@ -48,7 +48,8 @@
   background: transparent;
 }
 .solo-layout-handle--size { right: -13px; bottom: -13px; width: 44px; height: 44px; }
-.solo-layout-size-knob {
+.solo-layout-handle--hide { right: -7px; top: -7px; width: 36px; height: 36px; cursor: pointer; }
+.solo-layout-knob {
   display: grid;
   place-items: center;
   width: 22px;

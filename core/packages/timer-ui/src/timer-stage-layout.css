@@ -10,31 +10,33 @@
 .timer-stage-source { flex: 0 0 auto; min-width: 0; }
 
 .timer-stage-footer {
+  --timer-footer-inline-end: max(var(--solo-stat-rail-inline, 12px), env(safe-area-inset-right));
+  position: relative;
   display: flex;
   flex: 0 0 auto;
   align-items: flex-end;
   justify-content: space-between;
   gap: 12px;
-  padding: 10px max(12px, env(safe-area-inset-right)) 10px max(12px, env(safe-area-inset-left));
+  padding: var(--solo-stat-rail-top-bottom, 10px) var(--timer-footer-inline-end) var(--solo-stat-rail-top-bottom, 10px) max(var(--solo-stat-rail-inline, 12px), env(safe-area-inset-left));
 }
 
 .timer-stage-footer[hidden], .timer-stage-source[hidden] { display: none; }
 .timer-stage-statistics { min-width: 0; }
 .timer-stage-devices { flex: 0 0 auto; }
-.timer-stage-rankings { min-width: 0; margin-inline: auto; }
-.timer-stage-footer[data-has-rankings="true"]:not([hidden]) {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
-  padding-bottom: max(10px, env(safe-area-inset-bottom));
+.timer-stage-rankings {
+  /* A stopped solve's badge can arrive asynchronously and disappears at ready. */
+  position: absolute;
+  inset-inline-end: var(--timer-footer-inline-end);
+  inset-block-end: max(var(--solo-stat-rail-top-bottom, 10px), env(safe-area-inset-bottom));
+  max-inline-size: calc(50% - var(--timer-footer-inline-end));
 }
-.timer-stage-footer[data-has-rankings="true"] .timer-stage-devices { justify-self: end; }
+.timer-stage-rankings .rank-badge-row { align-items: flex-end; }
+.timer-stage-statistics :is(.shell-stat-rail, .shell-stat-lbl, .shell-stat-val),
+.timer-stage-rankings :is(.rank-pill, .rank-chip-sep) {
+  color: var(--muted-foreground);
+}
 @media (max-width: 480px) {
-  /* Keep the statistics on the bottom edge when rankings appear. The rank
-     component fits its text into the remaining width instead of adding a row. */
-  .timer-stage-footer[data-has-rankings="true"]:not([hidden]) { display: flex; }
   .timer-stage-statistics { flex: 0 0 auto; }
-  .timer-stage-rankings { flex: 1 1 0; margin-inline: 0; text-align: right; }
-  .timer-stage-rankings .rank-badge-row { align-items: flex-end; }
   .timer-stage-devices:empty { display: none; }
 }
 

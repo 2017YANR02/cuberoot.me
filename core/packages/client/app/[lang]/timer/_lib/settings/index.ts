@@ -11,6 +11,7 @@ import { normalizeTimerSyncSeed, consumeTimerSeed, type TimerSeedTicket } from '
 
 import {
   DEFAULT_TIMER_SCRAMBLE_CLICK_ACTION,
+  DEFAULT_TIMER_SCRAMBLE_SOURCE,
   DEFAULT_TIMER_SCRAMBLE_PREVIEW_SETTINGS,
   DEFAULT_TIMER_RANDOM_DIFFICULTY_SETTINGS,
   DEFAULT_ROUND_CONFIG,
@@ -286,7 +287,7 @@ export const DEFAULTS: TimerSettings = {
   cnMode: 'none',
   voiceInspection: 'none',
   statsRollingColumns: [...DEFAULT_ROLLING_STAT_COLUMNS],
-  scrambleSource: 'wca',
+  scrambleSource: DEFAULT_TIMER_SCRAMBLE_SOURCE,
   manualScrambles: '',
   wcaScrambleMode: 'comp',
   wcaComp: '',

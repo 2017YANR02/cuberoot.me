@@ -21,6 +21,25 @@
   color: var(--foreground);
   opacity: 1;
 }
+.shell-topbar.timer-solo-topbar .pp-trigger--active .pp-trigger-icon {
+  color: var(--foreground);
+}
+.timer-solo-control {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: var(--timer-topbar-control-size, 32px);
+  height: var(--timer-topbar-control-size, 32px);
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--foreground);
+  cursor: pointer;
+}
+.timer-solo-control:focus-visible { outline: 2px solid var(--ring); outline-offset: -2px; }
 .shell-topbar.timer-solo-topbar .solver-light-trigger {
   position: relative;
   display: inline-flex;
@@ -91,4 +110,25 @@
     padding-inline: 2px;
     justify-content: center;
   }
+}
+
+/* The native host supplies a clear rectangle beside the system status items. */
+.shell-topbar.timer-solo-topbar[data-use-top-bar] {
+  position: fixed;
+  inset: var(--timer-topbar-top) auto auto var(--timer-topbar-left);
+  z-index: 5;
+  width: var(--timer-topbar-width);
+  height: var(--timer-topbar-height);
+  min-height: 0;
+  grid-template-columns: minmax(0, 1fr) max-content minmax(0, 1fr);
+  gap: 8px;
+  padding: 0;
+}
+.shell-topbar.timer-solo-topbar[data-use-top-bar] .shell-topbar-left {
+  position: relative;
+  /* Center on the full screen even when the right-side status area is wider. */
+  left: calc(50vw - var(--timer-topbar-left) - var(--timer-topbar-width) / 2);
+  width: max-content;
+  flex-wrap: nowrap;
+  justify-self: center;
 }

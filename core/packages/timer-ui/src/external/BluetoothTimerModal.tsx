@@ -5,14 +5,9 @@ import { ClearButton } from '../ClearButton';
 import { Bluetooth, ExternalLink } from 'lucide-react';
 import { useDeviceModal } from './use-device-modal';
 import type { ExternalTimerLocalize } from './types';
-
-
 import { normalizeMac } from '@cuberoot/shared/timer/external/mac';
-import type {
-  BluetoothTimerHandle,
-  ExternalTimerKind,
-  ExternalTimerState,
-} from './use-bluetooth-timer';
+import { BLUETOOTH_TIMER_DIALOG_COPY as copy, BLUETOOTH_TIMER_KIND_LABELS, BLUETOOTH_TIMER_STATE_LABELS, bluetoothTimerMacInstructions } from '@cuberoot/shared/timer/device-contract';
+import type { BluetoothTimerHandle } from './use-bluetooth-timer';
 import { formatMs } from '@cuberoot/shared/timer';
 
 export interface BluetoothTimerModalProps {
@@ -29,30 +24,6 @@ export interface BluetoothTimerModalProps {
   onSubmitMac: (mac: string) => void;
   onCancelMac: () => void;
   onClose: () => void;
-}
-
-function kindLabel(kind: ExternalTimerKind, tr: ExternalTimerLocalize): string {
-  switch (kind) {
-    case 'gan-timer': return tr({ zh: 'GAN 智能计时器', en: 'GAN Smart Timer' });
-    case 'qiyi-timer': return tr({ zh: '奇艺智能计时器 / 转接器', en: 'QiYi Timer / Adapter' });
-    case 'stackmat-mic': return 'Stackmat';
-    case 'unknown': return '—';
-  }
-}
-
-function stateLabel(state: ExternalTimerState, tr: ExternalTimerLocalize): string {
-  switch (state) {
-    case 'DISCONNECT': return tr({ zh: '未连接', en: 'Disconnected' });
-    case 'GET_SET': return tr({ zh: '已就绪', en: 'Ready' });
-    case 'HANDS_OFF': return tr({ zh: '手已离开', en: 'Hands off' });
-    case 'RUNNING': return tr({ zh: '计时中', en: 'Running' });
-    case 'STOPPED': return tr({ zh: '已停表', en: 'Stopped' });
-    case 'IDLE': return tr({ zh: '空闲', en: 'Idle' });
-    case 'HANDS_ON': return tr({ zh: '双手在垫上', en: 'Hands on' });
-    case 'FINISHED': return tr({ zh: '成绩已记录', en: 'Result recorded' });
-    case 'INSPECTION': return tr({ zh: '观察中', en: 'Inspection' });
-    case 'GAN_RESET': return tr({ zh: '已复位', en: 'Reset' });
-  }
 }
 
 function connectErrorMessage(err: unknown, tr: ExternalTimerLocalize): string {
@@ -139,10 +110,7 @@ export default function BluetoothTimerModal({
   const submitMac = useCallback(() => {
     const normalized = normalizeMac(macInput);
     if (!normalized) {
-      setMacError(tr({
-        zh: '请输入 6 组十六进制地址，例如 AA:BB:CC:DD:EE:FF。',
-        en: 'Enter six hexadecimal pairs, for example AA:BB:CC:DD:EE:FF.',
-      }));
+      setMacError(tr(copy.invalidMac));
       return;
     }
     onSubmitMac(normalized);
@@ -156,25 +124,22 @@ export default function BluetoothTimerModal({
       <div
         ref={dialogRef}
         tabIndex={-1}
-        data-site-surface="popover" className="timer-modal bluetooth-modal"
+        data-site-surface="popover" className="timer-modal bluetooth-modal bt-timer-modal"
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
         style={isMobile ? { padding: 14, maxWidth: '100%', maxHeight: '90dvh' } : undefined}
         onClick={(event) => event.stopPropagation()}
       >
-        <h2 id={titleId}>
-          <Bluetooth size={20} style={{ verticalAlign: 'middle', marginRight: 6 }} />
-          {tr({ zh: '蓝牙智能计时器', en: 'Bluetooth smart timer' })}
+        <h2 id={titleId} className="bt-timer-heading">
+          <Bluetooth size={20} />
+          {tr(copy.title)}
         </h2>
 
         {macPrompt && (
           <div className="modal-section">
             <p style={{ marginTop: 0 }}>
-              {tr({
-                zh: `没有自动读到 ${macPrompt.deviceName || '奇艺计时器'} 的蓝牙地址，请输入设备的 MAC 地址。`,
-                en: `The Bluetooth address for ${macPrompt.deviceName || 'the QiYi timer'} could not be detected. Enter its MAC address.`,
-              })}
+              {tr(bluetoothTimerMacInstructions(macPrompt.deviceName))}
             </p>
             <input
               value={macInput}
@@ -183,27 +148,24 @@ export default function BluetoothTimerModal({
                 setMacError('');
               }}
               onKeyDown={(event) => { if (event.key === 'Enter') submitMac(); }}
-              aria-label={tr({en: 'Timer MAC address', zh: '计时器 MAC 地址'})}
+              aria-label={tr(copy.macLabel)}
               placeholder="AA:BB:CC:DD:EE:FF"
               autoCapitalize="characters"
               autoComplete="off"
               spellCheck={false}
               style={{ width: 'min(100%, 20em)' }}
             />
-            {macInput && <ClearButton ariaLabel={tr({en: 'Clear address', zh: '清除地址'})} onClick={() => { setMacInput(''); setMacError(''); }} />}
+            {macInput && <ClearButton ariaLabel={tr(copy.clearMac)} onClick={() => { setMacInput(''); setMacError(''); }} />}
             {macError && <p className="bt-error-detail">{macError}</p>}
             <p className="bt-tip">
-              {tr({
-                zh: '地址通常可在奇艺 App 的设备信息或计时器标签中找到。取消后不会建立一个无数据的连接。',
-                en: 'The address is usually shown in the QiYi app device info or on the timer label. Cancelling will not create a silent connection.',
-              })}
+              {tr(copy.macTip)}
             </p>
             <div className="modal-actions" style={isMobile ? { flexDirection: 'column', alignItems: 'stretch' } : undefined}>
               <button className="primary modal-action-btn" onClick={submitMac}>
-                {tr({ zh: '确定', en: 'Confirm' })}
+                {tr(copy.submitMac)}
               </button>
               <button className="modal-action-btn" onClick={onCancelMac}>
-                {tr({ zh: '取消连接', en: 'Cancel connection' })}
+                {tr(copy.cancelMac)}
               </button>
             </div>
           </div>
@@ -229,26 +191,18 @@ export default function BluetoothTimerModal({
         {!macPrompt && supported && !connected && (
           <div className="modal-section">
             <p style={{ marginTop: 0 }}>
-              {tr({
-                zh: '打开计时器蓝牙，点击搜索，然后选择 QY-Timer、QY-Adapter 或 GAN Timer。',
-                en: 'Turn on the timer’s Bluetooth, search, then choose QY-Timer, QY-Adapter, or GAN Timer in the device picker.',
-              })}
+              {tr(copy.instructions)}
             </p>
             <p className="bt-tip">
-              {tr({
-                zh: '支持 GAN 智能计时器、奇艺智能计时器和奇艺转接器。停表后会自动记入当前项目。',
-                en: 'Supports GAN Smart Timer, QiYi Timer, and QiYi Adapter. A stopped time is recorded in the current event automatically.',
-              })}
+              {tr(copy.supported)}
             </p>
             <button className="bt-connect-btn" disabled={busy} onClick={() => { void connect(); }}>
               <Bluetooth size={14} />
-              <span>{busy
-                ? tr({ zh: '连接中…', en: 'Connecting…' })
-                : tr({ zh: '搜索并连接', en: 'Search & connect' })}</span>
+              <span>{tr(busy ? copy.connecting : copy.connect)}</span>
             </button>
-            {busy && devices && <div role="list" aria-label={tr({en: 'Available timers', zh: '可用计时器'})}>
+            {busy && devices && <div role="list" aria-label={tr(copy.available)}>
               {devices.map(device => <div role="listitem" key={device.id}><button className="bt-connect-btn" onClick={() => onSelectDevice?.(device.id)}>{device.name}</button></div>)}
-              {devices.length === 0 && <p>{tr({en: 'Searching for timers… Wake your timer and keep it nearby.', zh: '正在搜索计时器…请唤醒计时器并保持靠近。'})}</p>}
+              {devices.length === 0 && <p>{tr(copy.searching)}</p>}
             </div>}
             {error && <p className="bt-error-detail">{error}</p>}
           </div>
@@ -264,21 +218,18 @@ export default function BluetoothTimerModal({
                 </span>
               </div>
               <dl style={{ margin: '10px 0 0', display: 'grid', gridTemplateColumns: 'max-content max-content', gap: '4px 14px' }}>
-                <dt className="bt-label">{tr({ zh: '设备', en: 'Device' })}</dt>
-                <dd style={{ margin: 0 }}>{kindLabel(timer.status.kind, tr)}</dd>
-                <dt className="bt-label">{tr({ zh: '状态', en: 'State' })}</dt>
-                <dd style={{ margin: 0 }}>{stateLabel(timer.status.state, tr)}</dd>
-                <dt className="bt-label">{tr({ zh: '最近成绩', en: 'Last result' })}</dt>
+                <dt className="bt-label">{tr(copy.device)}</dt>
+                <dd style={{ margin: 0 }}>{tr(BLUETOOTH_TIMER_KIND_LABELS[timer.status.kind])}</dd>
+                <dt className="bt-label">{tr(copy.state)}</dt>
+                <dd style={{ margin: 0 }}>{tr(BLUETOOTH_TIMER_STATE_LABELS[timer.status.state])}</dd>
+                <dt className="bt-label">{tr(copy.lastResult)}</dt>
                 <dd style={{ margin: 0, fontFamily: 'var(--font-mono)' }}>
                   {timer.status.lastTimeMs > 0 ? formatMs(timer.status.lastTimeMs) : '—'}
                 </dd>
               </dl>
             </div>
             <p className="modal-section bt-connected-help">
-              {tr({
-                zh: '现在直接使用计时器。停表时，设备读数会自动保存并换下一条打乱。',
-                en: 'Use the timer normally. When it stops, the device reading is saved and the next scramble is loaded.',
-              })}
+              {tr(copy.connectedHelp)}
             </p>
           </>
         )}

@@ -59,6 +59,10 @@ export function TimerWorkspace({ active = true, panelOpen = false, recap, soloLa
       '--solo-source-gap': `${soloLayout.sourceGap}px`,
       '--solo-timer-gap': `${soloLayout.timerGap}px`,
       '--solo-cube-gap': `${soloLayout.cubeGap}px`,
+      '--solo-scramble-offset-y': `${soloLayout.scrambleOffsetY}px`,
+      '--solo-source-offset-y': `${soloLayout.sourceOffsetY}px`,
+      '--solo-timer-offset-y': `${soloLayout.timerOffsetY}px`,
+      '--solo-cube-offset-y': `${soloLayout.cubeOffsetY}px`,
       '--solo-source-scale': soloLayout.sourceScale,
       '--solo-cube-scale': soloLayout.cubeScale,
     }) } as CSSProperties}

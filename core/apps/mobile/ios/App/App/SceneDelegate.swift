@@ -106,6 +106,7 @@ final class CubeRootBridgeViewController: CAPBridgeViewController {
         #if compiler(>=6.4)
         if #available(iOS 27.1, *) {
             _ = view.layoutGuide(for: .safeArea(cornerAdaptation: .vertical))
+            _ = view.layoutGuide(for: .bar(onEdge: NSDirectionalRectEdge.top, extent: 44))
             _ = view.layoutGuide(for: .bar(onEdge: NSDirectionalRectEdge.leading, extent: 52))
             _ = view.layoutGuide(for: .bar(onEdge: NSDirectionalRectEdge.trailing, extent: 52))
         }
@@ -161,6 +162,15 @@ final class ViewportLayoutPlugin: CAPPlugin, CAPBridgedPlugin {
             }
             var result: [String: Any] = ["bounds": rect(bounds), "content": rect(content)]
             if let bar { result["bar"] = rect(bar) }
+            // A flat inner display still reports its inactive hinge region.
+            let folds = view.reservedRegions(kind: .division, options: .includeInactive)
+            if edge == .unspecified, bounds.height > bounds.width, !folds.isEmpty, !folds.contains(where: \.isActive) {
+                let topBar = view.layoutGuide(for: .bar(onEdge: NSDirectionalRectEdge.top, extent: 44)).layoutFrame
+                if bounds.contains(topBar), topBar.width > 0, topBar.height >= 44, topBar.maxY <= content.minY,
+                   !regions.contains(where: { $0.frame.intersects(topBar) }) {
+                    result["topBar"] = rect(topBar)
+                }
+            }
             return result
         }
         #endif

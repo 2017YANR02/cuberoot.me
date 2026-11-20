@@ -1,5 +1,5 @@
 import { EVENTS, type EventId } from './types';
-import { DEFAULT_ROUND_CONFIG, type RoundConfig } from './round';
+import { DEFAULT_ROUND_CONFIG, type RoundConfig, type RoundFormat } from './round';
 import { TIMER_333_SCRAMBLE_TYPES } from './event-catalog';
 
 export const TRAINING_START_MODES = ['first-turn', 'scrambled', 'manual'] as const;
@@ -20,6 +20,36 @@ export interface TimerTrainingSettings {
   targetMsByEvent: Partial<Record<EventId, number>>;
   dailySolveGoal: number | null;
   round: RoundConfig;
+}
+
+export const TIMER_TRAINING_COPY = {
+  targetPlaceholder: { zh: '留空关闭', en: 'Blank = off' },
+  goalPlaceholder: { zh: '留空 / 0 关闭', en: 'Blank / 0 = off' },
+  limitPlaceholder: { zh: '留空 = 无', en: 'blank = none' },
+  perAttempt: { zh: '每把', en: 'per attempt' },
+  cumulative: { zh: '累计', en: 'cumulative' },
+};
+
+const roundFormats = ['ao5', 'mo3', 'bo3', 'bo1'] as const;
+const roundFormatCopy = {
+  ao5: { zh: '五次去头尾平均 (ao5)', en: 'Average of 5' },
+  mo3: { zh: '三次均值 (mo3)', en: 'Mean of 3' },
+  bo3: { zh: '三次取最好 (bo3)', en: 'Best of 3' },
+  bo1: { zh: '一次 (bo1)', en: 'Best of 1' },
+  bo2: { zh: '两次取最好 (bo2)', en: 'Best of 2' },
+  bo5: { zh: '五次取最好 (bo5)', en: 'Best of 5' },
+};
+
+export function timerRoundFormatChoices(selected: RoundFormat) {
+  const values = selected === 'bo2' || selected === 'bo5' ? [...roundFormats, selected] : roundFormats;
+  return values.map(value => ({ value, copy: roundFormatCopy[value] }));
+}
+
+export function timerTrainingTargetPatch(settings: TimerTrainingSettings, event: EventId, targetMs: number | null) {
+  const targets = { ...settings.targetMsByEvent };
+  if (targetMs === null) delete targets[event];
+  else targets[event] = targetMs;
+  return { targetMsByEvent: targets };
 }
 
 export function normalizeTimerTrainingSettings(value: Record<string, unknown> = {}): TimerTrainingSettings {

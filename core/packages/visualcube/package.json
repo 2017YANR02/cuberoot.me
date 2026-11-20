@@ -7,6 +7,7 @@
     "kind": "library",
     "runtime": {
       ".": "mixed",
+      "./render": "runtime-neutral",
       "./svg": "mixed"
     }
   },
@@ -21,6 +22,11 @@
     "./svg": {
       "types": "./dist/preset.d.ts",
       "default": "./src/preset.ts"
+    },
+    "./render": {
+      "types": "./dist/render.d.ts",
+      "cuberoot-miniprogram": "./src/render.ts",
+      "default": "./dist/render.js"
     }
   },
   "files": ["dist", "src"],

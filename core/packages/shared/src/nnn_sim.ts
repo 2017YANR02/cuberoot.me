@@ -17,6 +17,7 @@
  *   - `R` `R2` `R'`                 single outer-slice
  *   - `Rw` `Rw2` `Rw'`              2-layer wide (default)
  *   - `2Rw`..`<N>Rw` + 2/' mods     N-layer wide (any width, no [2-9] limit)
+ *   - `x` `y` `z` + 2/' mods        whole-cube rotations
  * Unknown tokens silently skipped.
  */
 
@@ -35,6 +36,12 @@ const MOVE_TO_FACE: Record<string, number> = {
 /** Layer-prefix + face + optional w + optional 2/' mod. Layer is `\d+` so
  *  `10Rw` parses correctly (visualcube's old `[2-9]+` only matched 2..9). */
 const TOKEN_RE = /^(\d+)?([URFDLB])(w)?([2'])?$/;
+const ROTATION_RE = /^([xyz])([2'])?$/;
+const ROTATION_FACES = { x: [FACE_R, FACE_L], y: [FACE_U, FACE_D], z: [FACE_F, FACE_B] } as const;
+
+function turnCount(suffix: string | undefined): number {
+  return suffix === '2' ? 2 : suffix === "'" ? 3 : 1;
+}
 
 /** Any array the sim can permute: `Uint8Array` for the color model, `Int32Array`
  *  for the sticker-id model (ids exceed 255 from N=7 up). */
@@ -114,16 +121,22 @@ export function applyScrambleTo(size: number, scramble: string, posit: PositArra
   const tokens = scramble.trim().split(/\s+/);
   for (const tok of tokens) {
     if (!tok) continue;
-    // A 1×1 has only whole-cube rotations; each is its single outer slice.
-    const move = size === 1 && /^[xyz][2']?$/.test(tok)
-      ? tok.replace(/^[xyz]/, (axis) => ({ x: 'R', y: 'U', z: 'F' })[axis]!)
-      : tok;
-    const m = TOKEN_RE.exec(move);
+    const rotation = ROTATION_RE.exec(tok);
+    if (rotation) {
+      const [near, far] = ROTATION_FACES[rotation[1] as keyof typeof ROTATION_FACES];
+      const turns = turnCount(rotation[2]);
+      // Spin both outer faces. Only the near face spins when doslice is called
+      // from that side, so the far slice is turned from the opposite side.
+      for (let d = 0; d < Math.max(1, size - 1); d++) doslice(near, d, turns, size, posit);
+      if (size > 1) doslice(far, 0, 4 - turns, size, posit);
+      continue;
+    }
+    const m = TOKEN_RE.exec(tok);
     if (!m) continue;
     const face = MOVE_TO_FACE[m[2]];
     const widthPrefix = m[1] ? parseInt(m[1], 10) : 0;
     const isWide = !!m[3];
-    const q = m[4] === '2' ? 2 : m[4] === "'" ? 3 : 1;
+    const q = turnCount(m[4]);
     // Width: explicit prefix takes precedence; `Rw` defaults to 2-layer; `R` = 1.
     // Cap at size — `10Rw` on a N=5 cube means whole cube, no-op for the puzzle
     // but cycling still happens cleanly thanks to the cap.

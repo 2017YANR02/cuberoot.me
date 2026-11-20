@@ -7,6 +7,9 @@ import { describe, expect, it } from 'vitest';
 import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import { dirname, join, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { createElement } from 'react';
+import { renderToStaticMarkup } from 'react-dom/server';
+import { ClearButton } from '@cuberoot/timer-ui/clear-button';
 import {
   COMPONENT_REUSE_RULES,
   personPickersInsideLabels,
@@ -19,7 +22,7 @@ import {
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const REPO_ROOT = join(ROOT, '..', '..', '..');
 const SCAN_DIRS = ['app', 'components'];
-const BASELINE = 79; // 2026-08-07 legacy close/clear cross buttons; ratchet down only.
+const BASELINE = 62; // Legacy close/clear cross buttons; ratchet down only.
 const BACK_HOME_ROOT_ALLOWLIST = new Set([
   'app/[lang]/calc/page.tsx',
   'app/[lang]/courses/TeachingClient.tsx',
@@ -115,6 +118,16 @@ describe('component reuse rule registry', () => {
       </button>`;
     expect(scanComponentReimplementations(source)).toHaveLength(1);
     expect(COMPONENT_REUSE_RULES.find((rule) => rule.id === 'clear-button')?.component).toBe('ClearButton');
+  });
+
+  it('keeps the standalone cross accessible without a default hover caption', () => {
+    const close = renderToStaticMarkup(createElement(ClearButton, {
+      variant: 'standalone', ariaLabel: 'Close', onClick() {},
+    }));
+    const clear = renderToStaticMarkup(createElement(ClearButton, { ariaLabel: 'Clear', onClick() {} }));
+    expect(close).toContain('aria-label="Close"');
+    expect(close).not.toContain('title=');
+    expect(clear).toContain('title="Clear"');
   });
 
   it('recognizes page-local project dropdowns and native project selects', () => {

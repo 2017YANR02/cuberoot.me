@@ -17,21 +17,27 @@ export function fitSoloSpacing(stage: HTMLElement, layout: SoloLayout) {
   const fits = () => stage.scrollHeight <= stage.clientHeight;
   // Probe synchronously and restore the final fit before paint. A bounded
   // search handles line wrapping and preview docking without feedback guesses.
-  apply(1);
-  if (!fits()) {
-    apply(0);
-    if (fits()) {
-      let low = 0, high = 1;
-      for (let attempt = 0; attempt < 8; attempt++) {
-        const middle = (low + high) / 2;
-        apply(middle);
-        if (fits()) low = middle;
-        else high = middle;
+  // Position offsets must not take space away from any other region.
+  stage.style.setProperty('--solo-apply-offsets', '0');
+  try {
+    apply(1);
+    if (!fits()) {
+      apply(0);
+      if (fits()) {
+        let low = 0, high = 1;
+        for (let attempt = 0; attempt < 8; attempt++) {
+          const middle = (low + high) / 2;
+          apply(middle);
+          if (fits()) low = middle;
+          else high = middle;
+        }
+        apply(low);
       }
-      apply(low);
+      // If content itself exceeds the viewport, zero whitespace leaves the
+      // existing whole-stage scroller available instead of clipping content.
     }
-    // If content itself exceeds the viewport, zero whitespace leaves the
-    // existing whole-stage scroller available instead of clipping content.
+  } finally {
+    stage.style.removeProperty('--solo-apply-offsets');
   }
 }
 

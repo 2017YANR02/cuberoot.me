@@ -31,15 +31,15 @@ export interface ReplayPayload {
   c?: string;
 }
 
-function base64UrlEncode(input: string): string {
+function base64UrlEncode(input: string, encodeBinary: (value: string) => string): string {
   const bin = unescape(encodeURIComponent(input));
-  return btoa(bin)
+  return encodeBinary(bin)
     .replace(/\+/g, '-')
     .replace(/\//g, '_')
     .replace(/=+$/, '');
 }
 
-export function encodeReplayPayload(solve: Solve): string {
+export function encodeReplayPayload(solve: Solve, encodeBinary: (value: string) => string = btoa): string {
   const moves = solve.moves ?? [];
   const base = !solve.trainingStartMode && moves.length > 0 ? moves[0].ts : 0;
   const compactMoves: Array<[string, number]> = moves.map(({ m, ts }) => [m, Math.round(ts - base)]);
@@ -54,7 +54,7 @@ export function encodeReplayPayload(solve: Solve): string {
   if (solve.reconstruction?.length) payload.r = solve.reconstruction;
   if (solve.trainingStartMode) payload.a = solve.trainingStartMode;
   if (solve.caseId) payload.c = solve.caseId;
-  return base64UrlEncode(JSON.stringify(payload));
+  return base64UrlEncode(JSON.stringify(payload), encodeBinary);
 }
 
 export function encodeReplayUrl(solve: Solve, baseUrl: string): string {

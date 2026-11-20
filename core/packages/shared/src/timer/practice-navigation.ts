@@ -1,6 +1,6 @@
 import type { AlgPuzzle } from '../alg_catalog';
 import { SCRAMBLE_222_TYPE_CATALOG, isScramble222Type, type Scramble222Type } from './scramble-222';
-import { TIMER_333_SCRAMBLE_TYPES, TIMER_333_TRAINING_GROUPS, timerEventIdFromSelector } from './event-catalog';
+import { TIMER_333_SCRAMBLE_TYPES, TIMER_333_TRAINING_GROUPS, timerEventIdFromSelector, timerFullPracticeContent } from './event-catalog';
 import { eventInfo, type EventId } from './types';
 import { resolveAlgPuzzle } from './training-events';
 import {
@@ -123,14 +123,7 @@ export function timerPracticeContents(event: string, capabilities: { pllChain?: 
   const groupOrder: readonly string[] = [...TIMER_333_TRAINING_GROUPS.map(group => group.id), 'other-formulas'];
   formulas.sort((a, b) => groupOrder.indexOf(a.group?.id ?? '') - groupOrder.indexOf(b.group?.id ?? ''));
 
-  // Only scramble subtypes return to their full-solve event. OH/FMC/BLD and
-  // other real event identities must survive choosing their ordinary solve.
-  const solveEvent = timerEvent === 'eg1' || timerEvent === 'eg2' ? '222'
-    : TIMER_333_SCRAMBLE_TYPES.some(type => type.event === timerEvent) ? '333' : timerEvent;
-  return [{
-    id: 'solve', title: { zh: '完整', en: 'Full' },
-    timer: { event: solveEvent, ...(solveEvent === '222' ? { type222: 'full' as const } : {}) },
-  }, ...formulas, ...randomOnly, ...tools];
+  return [timerFullPracticeContent(timerEvent), ...formulas, ...randomOnly, ...tools];
 }
 
 function matchesTarget(path: string | undefined, target: TrainingTarget): boolean {

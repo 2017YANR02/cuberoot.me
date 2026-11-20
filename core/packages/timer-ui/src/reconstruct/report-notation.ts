@@ -3,9 +3,15 @@ import type { ReconTextResult } from '@cuberoot/shared/timer/reconstruct/recon-t
 import { reconTextForClipboard } from '@cuberoot/shared/timer/reconstruct/recon-text';
 import type { ReconstructionType } from '@cuberoot/shared/timer/reconstruct/recon-text';
 import { reconCommentLinks, type ReconCommentCases } from '@cuberoot/shared/recon/comment-links';
-import type { ReconstructLocalize } from './ReconstructHost';
+import type { ReconstructLocalize } from './report-content';
 import { reportHasLibraryNotation, projectReconNotation, projectReconComment, reconCommentFills, reconNotationState } from './report-presentation';
 import { groupNode, textNode, buttonNode, type ReportNode, type ReportUIState, type ReportAction } from './report-content';
+
+export const RECON_NOTATION_COPY = {
+  original: { zh: '显示原始记录', en: 'Show original record' },
+  simplified: { zh: '显示化简记录', en: 'Show simplified record' },
+  copy: { zh: '复制成 /recon 的格式', en: 'Copy in /recon format' },
+};
 
 export function reportNotation(recon:ReconTextResult|null,method:ReconstructionType,state:ReportUIState,tr:ReconstructLocalize,options:{
   copyMode?:'copy'|'system';prepared?:ReturnType<typeof prepareReportNotation>;currentIdx?:number|null; canSeek?:boolean; cases?:ReconCommentCases;
@@ -60,8 +66,8 @@ export function reportNotation(recon:ReconTextResult|null,method:ReconstructionT
     ...groups,options.notice,
     groupNode('head',[
       options.feedback,
-      projection.canToggle&&buttonNode('simplified',state.simplified?tr({zh:'显示原始记录',en:'Show original record'}):tr({zh:'显示化简记录',en:'Show simplified record'}),{type:'simplified'},`recon-cross-toggle${state.simplified?' active':''}`,{selected:state.simplified,icon:'swap'}),
-      buttonNode('copy',options.copyMode==='system'?tr({zh:'分享还原步骤',en:'Share solution steps'}):tr({zh:'复制成 /recon 的格式',en:'Copy in /recon format'}),{type:'copy-notation'},'sml-copy',{icon:state.copied==='notation'?'check':'copy'}),
+      projection.canToggle&&buttonNode('simplified',tr(state.simplified?RECON_NOTATION_COPY.original:RECON_NOTATION_COPY.simplified),{type:'simplified'},`recon-cross-toggle${state.simplified?' active':''}`,{selected:state.simplified,icon:'swap'}),
+      buttonNode('copy',options.copyMode==='system'?tr({zh:'分享还原步骤',en:'Share solution steps'}):tr(RECON_NOTATION_COPY.copy),{type:'copy-notation'},'sml-copy',{icon:state.copied==='notation'?'check':'copy'}),
     ],'sml-head','row'),
   ],'sml recon-notation-list')};
 }

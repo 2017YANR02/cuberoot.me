@@ -433,6 +433,32 @@ export function timer333StageLabel(
   return language === 'en' ? label.en : label.zh;
 }
 
+export const TIMER_333_STEP_COPY = {
+  method: { en: 'Method', zh: '还原方法' },
+  compare: { en: 'Compare all', zh: '对比全部' },
+  loading: { en: 'Computing…', zh: '计算中…' },
+  failed: { en: 'Unable to compute solution', zh: '未能计算解法' },
+  skip: { en: 'skip', zh: '跳过' },
+  noSolution: { en: 'no solution', zh: '未找到' },
+  copyLine: { en: 'Copy this line', zh: '复制本行' },
+  seekLine: { en: 'Copy this line and seek playback', zh: '复制本行并定位回放' },
+  copyFailed: { en: 'Unable to copy', zh: '复制失败' },
+} as const;
+
+export function timer333StepNotation(result: SolveResult, method: MethodId, language: Timer333SolverLanguage) {
+  const moves: string[] = [];
+  const lines = result.stages.map(stage => {
+    const fromIdx = moves.length;
+    moves.push(...stage.moves);
+    const status = stage.failed ? TIMER_333_STEP_COPY.noSolution : stage.moves.length ? null : TIMER_333_STEP_COPY.skip;
+    const name = timer333StageLabel(method, stage.head, language);
+    const label = status ? `${name} · ${status[language === 'en' ? 'en' : 'zh']}` : name;
+    const moveText = stage.moves.join(' ');
+    return { key: stage.head, label, fromIdx, toIdx: moves.length - 1, moves: stage.moves, moveText, text: `${moveText} // ${label}` };
+  });
+  return { moves, lines, text: lines.map(line => line.text).join('\n') };
+}
+
 function thistleToSolveResult(r: ThistleResult): SolveResult {
   return {
     stages: r.stages.map(s => ({ head: s.head, moves: s.moves, failed: s.failed })),
@@ -481,6 +507,95 @@ export function scheduleTimer333StepSolve(
   });
   return () => {
     if (cancelled) return;
+    cancelled = true;
+    unschedule();
+  };
+}
+
+export interface Timer333ComparisonOutcome {
+  id: MethodId;
+  result: SolveResult | null;
+  ms: number | null;
+  err?: string;
+}
+
+export function initialTimer333Comparison(): Timer333ComparisonOutcome[] {
+  return METHOD_REGISTRY.map(method => ({ id: method.id, result: null, ms: null }));
+}
+
+export function timer333ComparisonBestTotal(outcomes: readonly Timer333ComparisonOutcome[]): number | null {
+  const valid = outcomes.flatMap(({ result, err }) => result && err === undefined && !result.stages.some(stage => stage.failed) ? [result.totalMoves] : []);
+  return valid.length ? Math.min(...valid) : null;
+}
+
+export const TIMER_333_COMPARISON_COPY = {
+  title: { en: 'Method comparison', zh: '解法对比' },
+  loading: { en: 'Computing… (first run builds prune tables)', zh: '计算中…（首次运行需要构建剪枝表）' },
+  failed: { en: 'Failed', zh: '失败' },
+  moves: { en: 'moves', zh: '步' },
+} as const;
+
+export function timer333ComparisonRows(
+  outcomes: readonly Timer333ComparisonOutcome[],
+  language: Timer333SolverLanguage,
+) {
+  const locale = language === 'en' ? 'en' : 'zh';
+  const bestTotal = timer333ComparisonBestTotal(outcomes);
+  return METHOD_REGISTRY.map(method => {
+    const outcome = outcomes.find(current => current.id === method.id);
+    const result = outcome?.result;
+    const error = outcome?.err ?? '';
+    const failed = outcome?.err !== undefined || Boolean(result?.stages.some(stage => stage.failed));
+    return {
+      id: method.id,
+      name: method.nameEn,
+      error,
+      best: Boolean(result && !failed && result.totalMoves === bestTotal),
+      totalLabel: failed ? TIMER_333_COMPARISON_COPY.failed[locale]
+        : result ? `${result.totalMoves} ${TIMER_333_COMPARISON_COPY.moves[locale]}` : '…',
+      stages: result?.stages.map(stage => ({
+        key: stage.head,
+        label: timer333StageLabel(method.id, stage.head, language),
+        countLabel: stage.failed ? '—' : String(stage.moves.length),
+        moveText: stage.failed ? TIMER_333_STEP_COPY.noSolution[locale]
+          : stage.moves.length ? stage.moves.join(' ') : `(${TIMER_333_STEP_COPY.skip[locale]})`,
+      })) ?? [],
+      elapsedLabel: outcome?.ms == null ? '' : `${outcome.ms.toFixed(0)} ms`,
+    };
+  });
+}
+
+export function scheduleTimer333Comparison(
+  scramble: string,
+  publish: (outcome: Timer333ComparisonOutcome) => void,
+  complete: () => void,
+  schedule: (run: () => void) => () => void,
+  now: () => number = Date.now,
+): () => void {
+  let index = 0;
+  let cancelled = false;
+  let unschedule = () => {};
+  function step() {
+    if (cancelled) return;
+    const method = METHOD_REGISTRY[index++];
+    if (!method) { complete(); return; }
+    unschedule = schedule(() => {
+      if (cancelled) return;
+      const { id } = method;
+      const started = now();
+      let outcome: Timer333ComparisonOutcome;
+      try {
+        const result = solveByMethodId(scramble, id);
+        outcome = { id, result, ms: now() - started };
+      } catch (error: unknown) {
+        outcome = { id, result: null, ms: null, err: error instanceof Error ? error.message : String(error) };
+      }
+      if (!cancelled) publish(outcome);
+      step();
+    });
+  }
+  step();
+  return () => {
     cancelled = true;
     unschedule();
   };

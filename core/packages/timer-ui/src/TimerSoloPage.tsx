@@ -1,5 +1,6 @@
 'use client';
 import { useRef, useState, useSyncExternalStore, type ComponentProps, type ReactNode } from 'react';
+import { LayoutTemplate, Settings } from 'lucide-react';
 import { SolverTriggerContext } from './solver-trigger-context';
 import { TimerTopbar, type TimerTopbarProps } from './TimerChrome';
 import { TimerStageLayout, type TimerStageLayoutProps } from './TimerStageLayout';
@@ -7,6 +8,35 @@ import { TimerWorkspaceDivider, useTimerWideLayout } from './TimerWorkspace';
 import './timer-solo-page.css';
 import { TimerTools, type TimerToolsProps } from './TimerTools';
 import TimingSurface from './TimingSurface';
+import { Tooltip } from './Tooltip';
+
+export interface TimerSoloControlsProps {
+  project?: ReactNode;
+  content?: ReactNode;
+  method?: ReactNode;
+  source?: ReactNode;
+  afterSource?: ReactNode;
+  layout?: { label: string; editing: boolean; disabled?: boolean; hideTooltip?: boolean; onToggle(): void };
+  settings?: { label: string; disabled?: boolean; onOpen(): void };
+}
+
+export function TimerSoloControls({ project, content, method, source, afterSource, layout, settings }: TimerSoloControlsProps) {
+  return <>
+    {project}
+    {content}
+    {method}
+    {source}
+    {afterSource}
+    {layout && <Tooltip content={layout.label} disabled={layout.hideTooltip}>{tip => (
+      <button {...tip} type="button" className="timer-solo-control solo-layout-toggle" data-no-timer
+        aria-label={layout.label} aria-pressed={layout.editing} disabled={layout.disabled}
+        onClick={layout.onToggle}><LayoutTemplate size={18} strokeWidth={1.6} aria-hidden="true" /></button>
+    )}</Tooltip>}
+    {settings && <button type="button" className="timer-solo-control settings-popover-trigger" data-no-timer
+      aria-label={settings.label} aria-haspopup="dialog" disabled={settings.disabled}
+      onClick={settings.onOpen}><Settings size={18} aria-hidden="true" /></button>}
+  </>;
+}
 
 export interface TimerSoloPageProps {
   title?: string;

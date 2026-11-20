@@ -23,11 +23,11 @@ export interface DecodedReplay {
   caseId?: string;
 }
 
-function base64UrlDecode(input: string): string {
+function base64UrlDecode(input: string, decodeBase64: (value: string) => string): string {
   const padded = input.replace(/-/g, '+').replace(/_/g, '/');
   const pad = padded.length % 4;
   const full = pad === 0 ? padded : padded + '='.repeat(4 - pad);
-  const bin = atob(full);
+  const bin = decodeBase64(full);
   // Reverse the unescape(encodeURIComponent(...)) trick from the encoder so
   // unicode round-trips correctly.
   return decodeURIComponent(escape(bin));
@@ -35,11 +35,11 @@ function base64UrlDecode(input: string): string {
 
 const VALID_EVENTS = new Set<string>(EVENTS.map(e => e.id));
 
-export function decodeReplayParam(param: string): DecodedReplay | null {
+export function decodeReplayParam(param: string, decodeBase64: (value: string) => string = value => atob(value)): DecodedReplay | null {
   if (!param || typeof param !== 'string') return null;
   let json: string;
   try {
-    json = base64UrlDecode(param);
+    json = base64UrlDecode(param, decodeBase64);
   } catch {
     return null;
   }

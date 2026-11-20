@@ -1,4 +1,5 @@
 import type { TimerSettingCopy } from '@cuberoot/shared/timer';
+import { TIMER_RESET_SETTINGS_COPY } from '@cuberoot/shared/timer/settings-contract';
 import './reset-defaults-button.css';
 
 export interface ResetDefaultsButtonProps {
@@ -26,9 +27,9 @@ export function TimerResetSettings({ onReset, confirmReset, disabled, localize: 
 }) {
   return <div className="settings-reset-row" data-setting-id={TIMER_RESET_SETTING_FIELD_IDS[0]}>
     <ResetDefaultsButton disabled={disabled} localize={tr}
-      title={tr({ zh: '恢复全部计时器设置，不会删除成绩', en: 'Reset all timer settings without deleting solves' })}
+      title={tr(TIMER_RESET_SETTINGS_COPY.description)}
       onReset={() => {
-        if (confirmReset(tr({ zh: '把所有设置恢复为默认值？', en: 'Reset all settings to defaults?' }))) onReset();
+        if (confirmReset(tr(TIMER_RESET_SETTINGS_COPY.confirmation))) onReset();
       }} />
   </div>;
 }

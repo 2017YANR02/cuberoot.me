@@ -24,6 +24,7 @@ import { ivyScrambleForMode } from '@/lib/scramble-ivy-mode';
 import { get222Mode } from '@/lib/scramble-222-mode';
 import { browserTimerToolTransport, type TimerTool } from '@cuberoot/timer-ui/TimerTools';
 import { timerSeedTicket } from '@cuberoot/shared/timer/sync-seed';
+import { TIMER_SCRAMBLE_SOURCE_COPY } from '@cuberoot/shared/timer/wca-source-config';
 import type { TimerSeedRequest } from '@cuberoot/shared/timer/seeded/generate';
 import { nextSeededScramble } from '../_lib/scramble/sync-seed';
 import { commitTimerSeed } from '../_lib/settings';
@@ -58,7 +59,7 @@ import dynamic from 'next/dynamic';
 import { isMiniProgramWebView } from '@/lib/miniprogram-bridge';
 import { useTranslation } from 'react-i18next';
 import { useQueryState, parseAsBoolean, parseAsString, parseAsStringEnum } from 'nuqs';
-import { AlertTriangle, LayoutTemplate, ListOrdered, Box } from '@app-foundation/icons/lucide';
+import { AlertTriangle, ListOrdered, Box } from '@app-foundation/icons/lucide';
 import { petReact } from '@/lib/deskpet';
 import {
   parseTrainingAssignmentDestination,
@@ -228,6 +229,7 @@ import {
 import { useSettings, getSettings, updateSettings } from '../_lib/settings';
 import { warmupSound } from '../_lib/sound';
 import { setMetronomeHold } from '@/lib/metronome';
+import { timerMetronomeActive } from '@cuberoot/shared/timer/metronome-settings';
 import { mayUseMiniProgramBridge, type ConnectPickOptions, type CubeMoveMetadata } from '../_lib/bluetooth';
 import {
   classifyUnifiedBluetoothDevice,
@@ -2108,6 +2110,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
     if (ownsTimer && (timer.phase === 'ready' || timer.phase === 'holding')) return 'active';
     return stage ?? 'connected';
   };
+  const hasLiveCubePreview = showTrainingCubes || cubeConnected || cubeStartedRef.current;
   const centerCubeSlot = showTrainingCubes ? (
     <div className="training-cube-previews" data-no-timer role="region" tabIndex={0}
       aria-label={tr({ zh: '已连接智能魔方实时状态，按连接顺序排列', en: 'Connected smart cubes in connection order' })}>
@@ -2117,7 +2120,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
         calibrateToken={cubeCalibrateTokens[id] ?? 0}
         gyros={cubeGyrosRef} onSource={registerPreviewAnchor} />)}
     </div>
-  ) : (cubeConnected || cubeStartedRef.current) ? (
+  ) : hasLiveCubePreview ? (
     <div
       className="timer-live-cube"
       data-no-timer
@@ -2143,7 +2146,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
         mirror={mirrorForBrand(bluetoothCube.status.brand)}
       />
     </div>
-  ) : !isPllChain && settings.showCubePreview ? (
+  ) : !isPllChain && settings.showCubePreview && !settings.soloLayout.hideCubePreview ? (
     <CubePreview event={event} scramble={previewScramble} fill visualization={settings.prefer3D ? '3D' : '2D'} />
   ) : undefined;
 
@@ -2375,8 +2378,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
   // panel afterwards (and never stops a panel the user started themselves).
   // Releasing only on unmount keeps the beat continuous across inspect→run.
   useEffect(() => {
-    setMetronomeHold('timer',
-      settings.metronomeOn && (timer.phase === 'inspecting' || timer.phase === 'running'));
+    setMetronomeHold('timer', timerMetronomeActive(timer.phase, settings.metronomeOn));
   }, [settings.metronomeOn, timer.phase]);
 
   useEffect(() => () => setMetronomeHold('timer', false), []);
@@ -3103,7 +3105,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
   }, [realSourceAvailable, settings.scrambleSource]);
   const randomSourceOptionLabel = nativeRandomMoves
     ? tr({ zh: '练习用随机转动', en: 'Practice random moves' })
-    : tr({ zh: '随机状态', en: 'Random state' });
+    : tr(TIMER_SCRAMBLE_SOURCE_COPY.randomOption);
   // 「难度」开关的挂点。开关的可用性归打乱来源那两个配置组件(只有它们知道当前项目 / 当前
   // 比赛能不能按难度筛),但它属于顶栏这排常驻控件 —— 所以状态留在原处,DOM 用 portal 送上来。
   // 用 state 而非 ref:portal 的目标必须在子组件渲染时已存在,ref.current 那一帧还是 null。
@@ -3478,13 +3480,13 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
             triggerClassName="shell-players-select"
             popupClassName="shell-scramble-source-popup"
             labels={{
-              ariaLabel: tr({ zh: '出题来源', en: 'Question source' }),
-              real: tr({ zh: '真题', en: 'Real' }),
-              realOption: tr({ zh: 'WCA 真题', en: 'WCA real' }),
-              random: tr({ zh: '随机', en: 'Random' }),
+              ariaLabel: tr(TIMER_SCRAMBLE_SOURCE_COPY.title),
+              real: tr(TIMER_SCRAMBLE_SOURCE_COPY.wca),
+              realOption: tr(TIMER_SCRAMBLE_SOURCE_COPY.wcaOption),
+              random: tr(TIMER_SCRAMBLE_SOURCE_COPY.random),
               randomOption: randomSourceOptionLabel,
-              manual: tr({ zh: '手动', en: 'Manual' }),
-              manualOption: tr({ zh: '手动输入', en: 'Manual input' }),
+              manual: tr(TIMER_SCRAMBLE_SOURCE_COPY.manual),
+              manualOption: tr(TIMER_SCRAMBLE_SOURCE_COPY.manualOption),
             }}
             value={effectiveScrambleSource}
             realAvailable={realSourceAvailable}
@@ -3506,17 +3508,17 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
               onClick={() => pllChain.setOrderOpen(true)}><ListOrdered size={18} /></button>
           )}</Tooltip>}
           <span className="shell-topbar-diff" data-no-timer ref={setDiffSlot} />
-          <Tooltip content={tr({ zh: '调整布局', en: 'Edit layout' })}>{tip => (
-            <button {...tip} type="button" className="tb-btn solo-layout-toggle" data-no-timer
-              aria-label={tr({ zh: '调整布局', en: 'Edit layout' })}
-              disabled={!layoutEditing && timer.phase !== 'idle' && timer.phase !== 'stopped'}
-              aria-pressed={layoutEditing}
-              onClick={() => {
+            </>}
+            layout={{
+              label: tr({ zh: '调整布局', en: 'Edit layout' }),
+              hideTooltip: true,
+              editing: layoutEditing,
+              disabled: !layoutEditing && timer.phase !== 'idle' && timer.phase !== 'stopped',
+              onToggle: () => {
                 if (layoutEditing) finishLayoutEditing();
                 else { layoutEditingRef.current = true; setLayoutEditing(true); }
-              }}><LayoutTemplate size={18} strokeWidth={1.6} /></button>
-          )}</Tooltip>
-            </>}
+              },
+            }}
           />
           {/* 解法提示(手机形态)。桌面同一个组件挂在左侧 .shell-rail 里(见下),
               这里是二选一 —— 两处同时挂就有两个实例抢同一个 ?hints。 */}
@@ -3644,7 +3646,7 @@ scrambleSlot: isPllChain ? <>
                     spec={currentScrambleEntry.trainerMeta.spec}
                   />
                 )}
-              {wcaSrcDisplay && wcaSource && (
+              {wcaSrcDisplay && wcaSource && !settings.soloLayout.hideCompetitionInfo && (
                 <TimerWcaScrambleSource
                   competitionName={wcaSrcDisplay.name}
                   country={wcaSrcDisplay.iso2}
@@ -3856,6 +3858,7 @@ children: <>
 
       {layoutEditing && <SoloLayoutEditor surfaceRef={surfaceRef}
         contentKey={`${displayScramble}:${settings.showCubePreview}:${cubeConnected}`}
+        hideableRegions={hasLiveCubePreview ? ['sourceGap'] : ['sourceGap', 'cubeGap']}
         onDone={finishLayoutEditing} />}
       {settingsOpen && <SettingsPanel liveShare={liveShareSettings} event={event} actions={douyin ? moreItems.filter(item => !['more.drill', 'more.bld-helper', 'more.solver', 'more.bulk'].includes(item.id)) : moreItems} playersControl={playersControl} presenceControl={presenceControl} mergeSlotRef={setMergeSlot} onClose={closeSettings} onDataReplaced={() => { trainingRound.reset(); setByEvent(loadAll()); }} />}
 

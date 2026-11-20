@@ -3,6 +3,7 @@ import type { ReconstructLocalize } from './ReconstructHost';
 import { playbackSeek, rawPlaybackTarget, playbackIndexAt, type PlaybackMove } from './playback-track';
 import { groupNode, textNode, buttonNode, type ReportNode, type ReportAction } from './report-content';
 import { reportSeconds } from './report-presentation';
+export { playbackMoveDurationTicks } from '@cuberoot/shared/timer/reconstruct/recap';
 export const REPLAY_SPEEDS=[0.5,1,2] as const;
 export interface ReportPlayerState {index:number;timeMs:number;playing:boolean;speed:number;posed:boolean;run:number}
 export function reportPlayerAction(state:ReportPlayerState,action:ReportAction,track:PlaybackMove[],raw:SolveMove[],lastTs:number,hasGyro:boolean) {
@@ -43,11 +44,4 @@ export function reportPlayback(state:ReportPlayerState,total:number,totalMs:numb
     ],'reconstruct-playback-main'),
     hasSide&&groupNode('side',[{id:'notation',kind:'slot'}],'reconstruct-playback-side'),
   ],`reconstruct-playback${hasSide?' has-side':''}`);
-}
-
-export function playbackMoveDurationTicks(moves:PlaybackMove[],index:number,totalMs:number,speed:number) {
-  if(index<=0)return undefined;
-  const move=moves[index-1];
-  const interval=move.endTs>move.ts?move.endTs-move.ts:Infinity;
-  return Math.max(1,Math.min(500,interval,(moves[index]?.ts??totalMs)-move.ts)*60/(1000*speed));
 }

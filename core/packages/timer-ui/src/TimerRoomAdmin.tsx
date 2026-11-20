@@ -1,3 +1,4 @@
+import { TIMER_ROOM_ADMIN_COPY } from '@cuberoot/shared/timer/net-battle';
 import { useState } from 'react';
 import { sortedNetPlayers, type NetRoomState } from '@cuberoot/shared/timer';
 import { Flag } from './CountryFlag';
@@ -15,13 +16,10 @@ export interface TimerRoomAdminProps {
   onKick(id: string): void;
   onClose(): void;
 }
-const COPY = {
-  en: { title: 'Room settings', sync: 'Synchronized start', me: '(me)', host: 'Host', transfer: 'Make host', kick: 'Remove', confirm: 'Confirm removal', confirmTransfer: 'Confirm host transfer' },
-  zh: { title: '房间管理', sync: '同时开始计时', me: '（我）', host: '房主', transfer: '设为房主', kick: '移出房间', confirm: '确认移出', confirmTransfer: '确认转让房主' },
-};
+
 
 export function TimerRoomAdmin({ room, currentPlayerId, language, busy, onSyncStart, onTransfer, onKick, onClose }: TimerRoomAdminProps) {
-  const copy = COPY[language];
+  const copy = TIMER_ROOM_ADMIN_COPY[language];
   const [confirm, setConfirm] = useState<string | null>(null);
   return <TimerRoomDialog title={copy.title} language={language} onClose={onClose}>
     <BoolToggle label={copy.sync} value={room.syncStart} disabled={busy} onChange={onSyncStart} />

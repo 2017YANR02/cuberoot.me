@@ -1,11 +1,13 @@
 import { decodeTimerSolve } from './persistence';
 import { EVENTS, type Solve } from './types';
 import { decodeReplayParam, solveFromReplay } from './replay-decode';
-import { extractReplayParam } from './replay-input';
+import { extractReplayParam, timerReplaySearchParams } from './replay-input';
+import type { TimerHttpRequest, TimerHttpResponse } from './http';
 
 export interface TimerReplayTransport {
   apiUrl(path: string): string;
-  fetcher: typeof fetch;
+  fetcher(url: string, init?: TimerHttpRequest & { cache?: 'no-store' }): Promise<TimerHttpResponse>;
+  decodeBase64?(value: string): string;
 }
 
 const validShareId = (id: string) => /^[A-Za-z0-9_-]{8,16}$/.test(id);
@@ -37,13 +39,11 @@ export async function fetchTimerReplayShare(id: string, transport: TimerReplayTr
 export async function readTimerReplay(input: string, candidates: readonly Solve[], transport: TimerReplayTransport, signal?: AbortSignal): Promise<Solve | null> {
   const param = extractReplayParam(input);
   if (param) {
-    const decoded = decodeReplayParam(param);
+    const decoded = decodeReplayParam(param, transport.decodeBase64);
     return decoded ? solveFromReplay(decoded, candidates) : null;
   }
   try {
-    const params = /^https?:\/\//i.test(input.trim())
-      ? new URL(input.trim()).searchParams : new URLSearchParams(input.trim().replace(/^\?/, ''));
-    const share = params.get('share');
+    const share = timerReplaySearchParams(input).get('share');
     return share ? fetchTimerReplayShare(share, transport, signal) : null;
   } catch { return null; }
 }

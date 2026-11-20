@@ -32,8 +32,6 @@
 .stepsolve-player .recon-player-canvas { flex: 0 0 auto; width: 100%; aspect-ratio: 1 / 1; }
 
 
-.timer-room-dialog.timer-solver-compare { width: min(100%, 760px); }
-.timer-solver-compare .solver-compare-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(220px, 100%), 1fr)); gap: 8px; }
 .solver-panel-scramble {
   margin: 0 0 10px;
   font-family: var(--font-mono);

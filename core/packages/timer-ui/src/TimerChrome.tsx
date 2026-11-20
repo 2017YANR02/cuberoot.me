@@ -1,5 +1,9 @@
+'use client';
+
+import { TIMER_SOLO_STAT_RAIL_KEYS, timerSoloStatRailRows } from '@cuberoot/shared/timer/solo-layout';
 import { Bluetooth, Mic } from 'lucide-react';
-import type { ReactNode } from 'react';
+import { useLayoutEffect, useRef, type ReactNode } from 'react';
+import type { ViewportRect } from './host-viewport';
 
 export type TimerPlayersValue = 1 | 2 | 3 | 4 | 'net';
 
@@ -63,14 +67,63 @@ export interface TimerTopbarProps {
   controls: ReactNode;
   actions?: ReactNode;
   className?: string;
+  availableTopBar?: ViewportRect;
 }
 
-export function TimerTopbar({ brand, controls, actions, className }: TimerTopbarProps) {
+export function TimerTopbar({ brand, controls, actions, className, availableTopBar }: TimerTopbarProps) {
+  const headerRef = useRef<HTMLElement>(null);
+  const controlsRef = useRef<HTMLDivElement>(null);
+  const actionsRef = useRef<HTMLDivElement>(null);
+
+  useLayoutEffect(() => {
+    const header = headerRef.current;
+    const controls = controlsRef.current;
+    const actions = actionsRef.current;
+    if (!availableTopBar || brand || !header || !controls || !actions) return;
+
+    const { x, y, width, height } = availableTopBar;
+    header.style.setProperty('--timer-topbar-left', `${x}px`);
+    header.style.setProperty('--timer-topbar-top', `${y}px`);
+    header.style.setProperty('--timer-topbar-width', `${width}px`);
+    header.style.setProperty('--timer-topbar-height', `${height}px`);
+
+    const fit = () => {
+      // Measure the same controls in one row, including their labels.
+      header.setAttribute('data-use-top-bar', '');
+      const controlSize = controls.getBoundingClientRect();
+      const actionSize = actions.getBoundingClientRect();
+      const { columnGap, paddingLeft, paddingRight } = getComputedStyle(header);
+      const rightLimit = actionSize.width > 0
+        ? actionSize.left - parseFloat(columnGap)
+        : x + width - parseFloat(paddingRight);
+      const fits = x + width <= window.innerWidth && (window.visualViewport?.scale ?? 1) <= 1
+        && controlSize.left >= x + parseFloat(paddingLeft)
+        && controlSize.right <= rightLimit
+        && Math.max(controlSize.height, actionSize.height) <= height;
+      header.toggleAttribute('data-use-top-bar', fits);
+    };
+    fit();
+    const sizeObserver = new ResizeObserver(fit);
+    sizeObserver.observe(controls);
+    sizeObserver.observe(actions);
+    const contentObserver = new MutationObserver(fit);
+    contentObserver.observe(header, { childList: true, characterData: true, subtree: true });
+    window.addEventListener('resize', fit);
+    window.visualViewport?.addEventListener('resize', fit);
+    return () => {
+      sizeObserver.disconnect();
+      contentObserver.disconnect();
+      window.removeEventListener('resize', fit);
+      window.visualViewport?.removeEventListener('resize', fit);
+      header.removeAttribute('data-use-top-bar');
+    };
+  }, [availableTopBar, brand]);
+
   return (
-    <header className={`shell-topbar surface-chrome${className ? ` ${className}` : ''}`} data-topbar-actions={actions ? 'true' : undefined}>
+    <header ref={headerRef} className={`shell-topbar surface-chrome${className ? ` ${className}` : ''}`} data-topbar-actions={actions ? 'true' : undefined}>
       {brand}
-      <div className="shell-topbar-left">{controls}</div>
-      <div className="shell-topbar-right">{actions}</div>
+      <div ref={controlsRef} className="shell-topbar-left">{controls}</div>
+      <div ref={actionsRef} className="shell-topbar-right">{actions}</div>
     </header>
   );
 }
@@ -102,7 +155,6 @@ const STAT_RAIL_COPY = {
   en: { empty: 'Times', count: 'Count', title: 'Open times and statistics' },
   zh: { empty: '成绩', count: '次数', title: '打开成绩与统计' },
 } as const;
-const STAT_RAIL_KEYS = ['count', 'best', 'ao5', 'ao12'] as const;
 
 export function TimerStatRail({
   ariaExpanded,
@@ -114,9 +166,7 @@ export function TimerStatRail({
   onClick,
 }: TimerStatRailProps) {
   const copy = STAT_RAIL_COPY[language];
-  const items: TimerStatItem[] = summary.count > 0 ? STAT_RAIL_KEYS.map(key => key === 'count'
-    ? { value: `${summary.solved}/${summary.count}` }
-    : { label: key, value: summary[key] }) : [];
+  const items = timerSoloStatRailRows(summary);
   return (
     <button
       aria-expanded={ariaExpanded}
@@ -129,12 +179,12 @@ export function TimerStatRail({
     >
       {trainingSummaries ? <span className="shell-stat-training">
         <span />
-        {STAT_RAIL_KEYS.map(key =>
+        {TIMER_SOLO_STAT_RAIL_KEYS.map(key =>
           <span key={key} className="shell-stat-lbl">{key === 'count' ? copy.count : key}</span>)}
         {[{ en: 'Observation', zh: '观察' }, { en: 'Execution', zh: '执行' }, { en: 'Total', zh: '总时间' }].map((copy, index) =>
           <span className="shell-stat-training-row" key={copy.en}>
             <span className="shell-stat-lbl">{copy[language]}</span>
-            {STAT_RAIL_KEYS.map(key =>
+            {TIMER_SOLO_STAT_RAIL_KEYS.map(key =>
               <span className="shell-stat-val" key={key}>{trainingSummaries[index]?.[key]}</span>)}
           </span>)}
       </span> : items.length > 0 ? items.map(({ label, value }, index) => (

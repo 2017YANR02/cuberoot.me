@@ -2,7 +2,12 @@ import { useSyncExternalStore } from 'react';
 import './host-viewport.css';
 
 export interface ViewportRect { x: number; y: number; width: number; height: number }
-export interface HostViewportLayout { bounds: ViewportRect; content: ViewportRect; bar?: ViewportRect }
+export interface HostViewportLayout {
+  bounds: ViewportRect;
+  content: ViewportRect;
+  bar?: ViewportRect;
+  topBar?: ViewportRect;
+}
 
 let layout: HostViewportLayout | null = null;
 const listeners = new Set<() => void>();

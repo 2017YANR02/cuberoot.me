@@ -101,7 +101,7 @@ export function createTimerWorkerRpc<Payload, Value>(
       }
       const id = nextId++;
       return new Promise<Value>((resolve, reject) => {
-        let timer: ReturnType<typeof globalThis.setTimeout> | null = null;
+        let timer: ReturnType<typeof setTimeout> | null = null;
         const onAbort = (): void => {
           const current = pending.get(id);
           if (!current) return;
@@ -119,16 +119,16 @@ export function createTimerWorkerRpc<Payload, Value>(
           reject,
           cleanup: () => {
             signal?.removeEventListener('abort', onAbort);
-            if (timer !== null) globalThis.clearTimeout(timer);
+            if (timer !== null) clearTimeout(timer);
           },
         });
-        if (timeoutMs !== undefined) timer = globalThis.setTimeout(onAbort, timeoutMs);
+        if (timeoutMs !== undefined) timer = setTimeout(onAbort, timeoutMs);
         try {
           target.postMessage(options.makeRequest(id, payload));
         } catch (error: unknown) {
           pending.delete(id);
           signal?.removeEventListener('abort', onAbort);
-          if (timer !== null) globalThis.clearTimeout(timer);
+          if (timer !== null) clearTimeout(timer);
           reject(error instanceof Error ? error : new Error(String(error)));
         }
       });

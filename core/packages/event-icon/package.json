@@ -11,13 +11,19 @@
     "runtime": {
       ".": "react-dom",
       "./event": "react-dom",
-      "./maps": "runtime-neutral"
+      "./maps": "runtime-neutral",
+      "./svg/event/*.svg": "asset",
+      "./svg/unofficial/*.svg": "asset",
+      "./svg/puzzle/*.svg": "asset"
     }
   },
   "exports": {
     ".": "./src/index.tsx",
     "./event": "./src/event.tsx",
-    "./maps": "./src/maps.ts"
+    "./maps": "./src/maps.ts",
+    "./svg/event/*.svg": "./svg/event/*.svg",
+    "./svg/unofficial/*.svg": "./svg/unofficial/*.svg",
+    "./svg/puzzle/*.svg": "./svg/puzzle/*.svg"
   },
   "sideEffects": true,
   "scripts": {

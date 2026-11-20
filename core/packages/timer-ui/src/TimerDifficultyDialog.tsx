@@ -1,5 +1,5 @@
 import { getUsableViewport } from './host-viewport';
-import { useEffect, useLayoutEffect, useRef, useId, type ReactNode, type RefObject } from 'react';
+import { useEffect, useLayoutEffect, useRef, type ReactNode, type RefObject } from 'react';
 import { createPortal } from 'react-dom';
 import { X } from 'lucide-react';
 import { usePopoverDismiss } from './usePopoverDismiss';
@@ -18,7 +18,6 @@ export function TimerDifficultyDialog({ anchorRef, language, disabled, canApply 
   children: ReactNode;
 }) {
   const panelRef = useRef<HTMLDivElement>(null);
-  const titleId = useId();
   usePopoverDismiss(true, onClose, panelRef, anchorRef);
   useLayoutEffect(() => {
     const position = () => {
@@ -51,16 +50,15 @@ export function TimerDifficultyDialog({ anchorRef, language, disabled, canApply 
       if (panel?.contains(document.activeElement)) anchorRef.current?.focus();
     };
   }, [anchorRef]);
-  return createPortal(<div ref={panelRef} role="dialog" aria-labelledby={titleId} tabIndex={-1}
+  return createPortal(<div ref={panelRef} role="dialog" aria-label={{ en: 'Difficulty', zh: '难度' }[language]} tabIndex={-1}
     className="timer-room-dialog timer-difficulty-dialog" data-site-surface="popover" data-no-timer
     onKeyUp={event => event.stopPropagation()} onKeyDown={event => {
       event.stopPropagation();
       if (event.key === 'Escape') { onClose(); anchorRef.current?.focus(); }
     }}>
-    <header className="timer-room-dialog-head">
-      <h2 id={titleId}>{{ en: 'Difficulty', zh: '难度' }[language]}</h2>
-      <button type="button" aria-label={{ en: 'Close', zh: '关闭' }[language]} onClick={onClose}><X size={16} /></button>
-    </header>
+    <div className="timer-room-dialog-head timer-difficulty-close">
+      <button type="button" aria-label={{ en: 'Close', zh: '关闭' }[language]} onClick={onClose}><X size={16} aria-hidden="true" /></button>
+    </div>
     {children}
     <footer className="timer-difficulty-actions">
       <button type="button" disabled={disabled} onClick={onClear}>

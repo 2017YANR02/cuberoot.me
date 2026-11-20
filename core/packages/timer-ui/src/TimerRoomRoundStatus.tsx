@@ -1,3 +1,4 @@
+import { TIMER_ROOM_ROUND_STATUS_COPY } from '@cuberoot/shared/timer/net-battle';
 import { isNetRoundParticipant, pendingCount, roundWinners, syncGate, type NetRoomState, type NetPenalty } from '@cuberoot/shared/timer';
 import { TimerPenaltyActions } from './TimerPenaltyActions';
 import { timerRoomPlayerName } from './TimerRoomPlayers';
@@ -13,12 +14,9 @@ export interface TimerRoomRoundStatusProps {
   onReady(): void;
   onNext(force: boolean): void;
 }
-const COPY = {
-  en: { ready: "I'm ready", cancel: 'Cancel ready', skip: 'Skip waiting — next round', next: 'Next round', noResult: 'No valid result this round', pending: (n: number) => `Waiting for others to finish (${n} left)…`, waiting: (n: number) => `Waiting for others to get ready (${n} left)…`, sync: 'A 3s countdown begins once everyone is ready', auto: 'Auto-ready is off during a synchronized start. Tap ready; the cube stops the timer when solved.', spectator: 'This round has started. You can watch and join the next round.', countdown: 'Starting together — get ready!' },
-  zh: { ready: '我准备好了', cancel: '取消准备', skip: '不等了，直接开下一轮', next: '下一轮', noResult: '本轮无有效成绩', pending: (n: number) => `等待其他玩家完成（还差 ${n} 人）…`, waiting: (n: number) => `等其他人准备（还差 ${n} 人）…`, sync: '全员准备后，3 秒倒计时一起开始', auto: '同时起表期间不自动预备，请手动准备；魔方还原时停表。', spectator: '本轮已经开始，你可以旁观并等待下一轮', countdown: '一起起表，准备！' },
-};
+
 export function TimerRoomRoundStatus({ room, currentPlayerId, language, idle, countdown, cubeAutoReadySuspended, onPenalty, onReady, onNext }: TimerRoomRoundStatusProps) {
-  const copy = COPY[language];
+  const copy = TIMER_ROOM_ROUND_STATUS_COPY[language];
   const result = room.results[String(room.round)]?.[currentPlayerId];
   const gate = syncGate(room, currentPlayerId);
   const waiting = pendingCount(room);

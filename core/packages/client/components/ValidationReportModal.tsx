@@ -17,7 +17,8 @@
  */
 import { useEffect, useState, useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import { X, Play, ExternalLink } from '@app-foundation/icons/lucide';
+import { Play, ExternalLink } from '@app-foundation/icons/lucide';
+import { ClearButton } from '@/components/ClearButton';
 import { ALG_CATALOG, type AlgCase, type AlgPuzzle } from '@cuberoot/shared';
 import { scanCases, scanTargets, allTargets, type AlgFailure } from '@/lib/alg_validation_scan';
 import { tr } from '@/i18n/tr';
@@ -136,9 +137,7 @@ export default function ValidationReportModal({
       <div className="alg-admin-modal alg-validation-modal" onClick={e => e.stopPropagation()}>
         <div className="alg-admin-modal-head">
           <h2>{title}</h2>
-          <button type="button" className="alg-admin-modal-head-btn" onClick={onClose} title={tr({ zh: '关闭', en: 'Close' })}>
-            <X size={16} />
-          </button>
+          <ClearButton variant="standalone" className="alg-admin-modal-head-btn" onClick={onClose} ariaLabel={tr({ zh: '关闭', en: 'Close' })} />
         </div>
 
         <div className="alg-admin-modal-body alg-validation-body">

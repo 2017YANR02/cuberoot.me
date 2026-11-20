@@ -16,12 +16,7 @@
  */
 
 import { RotateCcw } from 'lucide-react';
-import type { Solve, EventId } from '@cuberoot/shared/timer';
-import { effectiveMs } from '@cuberoot/shared/timer';
-import { formatMs, formatEventMs } from '@cuberoot/shared/timer';
-import type { RoundConfig, RoundAttempt } from '@cuberoot/shared/timer';
-import { roundResult, roundProjection } from '@cuberoot/shared/timer';
-import type { TimerSettingCopy } from '@cuberoot/shared/timer';
+import { timerRoundProgress, type Solve, type EventId, type RoundConfig, type TimerSettingCopy } from '@cuberoot/shared/timer';
 
 export interface RoundPanelProps {
   localize(copy: TimerSettingCopy): string;
@@ -95,206 +90,38 @@ export function TimerRoundPanel({
   precision = 2,
   onReset,
 }: RoundPanelProps) {
-  // Subscribe to the language toggle so the tr() calls below re-resolve.
-
-
-  if (!config.on) return null;
-
-  const res = roundResult(solves, config);
-  const proj = roundProjection(solves, config, targetMs ?? null);
-
-  const fmt = (ms: number | null): string =>
-    event ? formatEventMs(event, ms, precision) : formatMs(ms, precision);
-
-  const statusLabel =
-    res.status === 'idle' ? tr({ zh: '待开始', en: 'ready' })
-      : res.status === 'running' ? tr({ zh: '进行中', en: 'in progress' })
-        : res.status === 'cut' ? tr({ zh: '未过关', en: 'cut' })
-          : tr({ zh: '完成', en: 'final' });
-
-  const shown = res.complete ? res.official : res.value;
-  const hitTarget =
-    targetMs !== null && targetMs > 0 && shown !== null && shown <= targetMs;
-  const mainTone: Tone =
-    res.status === 'cut' ? 'warn'
-      : res.complete ? (hitTarget ? 'success' : shown === null || !Number.isFinite(shown) ? 'warn' : 'info')
-        : 'info';
-
-  // A cut ao5 / mo3 has no average at all (9f5+), so show a dash rather than
-  // a number that never counted.
-  const valueText = res.complete && res.official === null && res.done > 0
-    ? '—'
-    : fmt(shown);
-
-  const averaging = res.format === 'ao5' || res.format === 'mo3';
-  const showProjection = averaging && res.remaining > 0 && res.done > 0;
-  const showCutoffHint = res.cutoffActive && !res.cutoffMade && res.status !== 'cut';
-  const showBudget = config.cumulative && res.budgetMs !== null && !res.complete;
-
-  const attemptTitle = tr({
-    zh: '本轮每一把;灰色的把数是未过关后不再计入的',
-    en: 'Every attempt of the round; greyed ones no longer count after a missed cutoff',
-  });
-
+  const panel = timerRoundProgress(solves, config, targetMs, event, precision, tr);
+  if (!panel) return null;
   return (
-    <div
-      style={{
-        display: 'inline-flex',
-        alignItems: 'center',
-        gap: 8,
-        margin: '6px 0',
-        flexWrap: 'wrap',
-      }}
-    >
-      <span
-        style={pillStyle(mainTone)}
-        title={tr({
-          zh: `第 ${Math.min(res.done + 1, res.attempts)} 把 / 共 ${res.attempts} 把`,
-          en: `attempt ${Math.min(res.done + 1, res.attempts)} of ${res.attempts}`,
-        })}
-      >
-        <span>{res.done}/{res.attempts}</span>
-        <span style={{ opacity: 0.75 }}>{res.format}</span>
-        <span style={{ opacity: 0.75 }}>{statusLabel}</span>
-        <span>{valueText}</span>
+    <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, margin: '6px 0', flexWrap: 'wrap' }}>
+      <span style={pillStyle(panel.tone)} title={panel.title}>
+        <span>{panel.count}</span>
+        <span style={{ opacity: 0.75 }}>{panel.format}</span>
+        <span style={{ opacity: 0.75 }}>{panel.status}</span>
+        <span>{panel.value}</span>
       </span>
-
-      <span
-        style={{ display: 'inline-flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}
-        title={attemptTitle}
-      >
-        {res.list.map(a => (
-          <AttemptToken localize={tr} key={a.index} attempt={a} fmt={fmt} />
+      <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }} title={panel.attemptsTitle}>
+        {panel.attempts.map(attempt => (
+          <span key={attempt.index} title={attempt.title || undefined} style={{
+            fontFamily: 'var(--font-mono)', fontSize: 11, lineHeight: 1.2,
+            fontVariantNumeric: 'tabular-nums', whiteSpace: 'nowrap',
+            color: attempt.overLimit ? 'var(--destructive)' : attempt.state === 'done' ? 'var(--foreground)' : 'var(--faint-foreground)',
+            opacity: attempt.state === 'ineligible' ? 0.55 : undefined,
+            textDecoration: attempt.state === 'ineligible' ? 'line-through' : undefined,
+          }}>{attempt.value}</span>
         ))}
       </span>
-
-      {showProjection && (
-        <span style={pillStyle('muted')}>
-          <span>BPA {fmt(proj.bpa)}</span>
-          <span style={{ opacity: 0.5 }}>/</span>
-          <span>WPA {fmt(proj.wpa)}</span>
-        </span>
-      )}
-
-      {showCutoffHint && (
-        <span
-          style={pillStyle('muted')}
-          title={tr({
-            zh: '前几把里至少有一把严格快于过关线,才能继续后面的把数(WCA 9g)',
-            en: 'One of the first attempts must be strictly better than the cutoff to earn the rest (WCA 9g)',
-          })}
-        >
-          {tr({
-            zh: `过关线 ${fmt(config.cutoffMs)} (前 ${res.cutoffPhase} 把)`,
-            en: `cutoff ${fmt(config.cutoffMs)} (first ${res.cutoffPhase})`,
-          })}
-        </span>
-      )}
-
-      {showBudget && (
-        <span
-          style={pillStyle('muted')}
-          title={tr({
-            zh: '整轮累计时限剩余额度(WCA A1a2)',
-            en: 'Cumulative time limit left for the round (WCA A1a2)',
-          })}
-        >
-          {tr({ zh: `累计余额 ${fmt(res.budgetMs)}`, en: `cumulative left ${fmt(res.budgetMs)}` })}
-        </span>
-      )}
-
-      {proj.target && (
-        <span style={pillStyle(proj.target.achieved ? 'success' : proj.target.impossible ? 'muted' : 'info')}>
-          {proj.target.achieved
-            ? tr({ zh: `${fmt(proj.target.ms)} 已锁定`, en: `${fmt(proj.target.ms)} secured` })
-            : proj.target.impossible
-              ? tr({ zh: `${fmt(proj.target.ms)} 已无望`, en: `${fmt(proj.target.ms)} out of reach` })
-              : proj.target.needMs === null
-                ? tr({ zh: `目标 ${fmt(proj.target.ms)}`, en: `target ${fmt(proj.target.ms)}` })
-                : res.remaining > 1
-                  ? tr({
-                    zh: `想破 ${fmt(proj.target.ms)} 需每把 ≤ ${fmt(proj.target.needMs)}`,
-                    en: `beat ${fmt(proj.target.ms)}: need ≤ ${fmt(proj.target.needMs)} each`,
-                  })
-                  : tr({
-                    zh: `想破 ${fmt(proj.target.ms)} 需 ≤ ${fmt(proj.target.needMs)}`,
-                    en: `beat ${fmt(proj.target.ms)}: need ≤ ${fmt(proj.target.needMs)}`,
-                  })}
-        </span>
-      )}
-
-      {res.complete && onReset && (
-        <button
-          type="button"
-          onClick={onReset}
-          style={{
-            ...pillStyle('muted'),
-            cursor: 'pointer',
-            color: 'var(--foreground)',
-          }}
-        >
-          <RotateCcw size={11} aria-hidden />
-          <span>{tr({ zh: '新一轮', en: 'new round' })}</span>
-        </button>
-      )}
+      {panel.projection && <span style={pillStyle('muted')}>
+        <span>{panel.projection.best}</span><span style={{ opacity: 0.5 }}>/</span><span>{panel.projection.worst}</span>
+      </span>}
+      {panel.cutoff && <span style={pillStyle('muted')} title={panel.cutoff.title}>{panel.cutoff.label}</span>}
+      {panel.budget && <span style={pillStyle('muted')} title={panel.budget.title}>{panel.budget.label}</span>}
+      {panel.targetLabel && <span style={pillStyle(panel.targetTone)}>{panel.targetLabel}</span>}
+      {panel.reset && onReset && <button type="button" onClick={onReset}
+        style={{ ...pillStyle('muted'), cursor: 'pointer', color: 'var(--foreground)' }}>
+        <RotateCcw size={11} aria-hidden />
+        <span>{panel.reset}</span>
+      </button>}
     </div>
-  );
-}
-
-/** One attempt slot — a time, a dash, or a greyed-out slot that never counted. */
-function AttemptToken({
-  localize: tr,
-  attempt,
-  fmt,
-}: {
-  localize(copy: TimerSettingCopy): string;
-  attempt: RoundAttempt;
-  fmt: (ms: number | null) => string;
-}) {
-  const base: React.CSSProperties = {
-    fontFamily: 'var(--font-mono)',
-    fontSize: 11,
-    lineHeight: 1.2,
-    fontVariantNumeric: 'tabular-nums',
-    whiteSpace: 'nowrap',
-  };
-
-  if (attempt.state === 'pending') {
-    return <span style={{ ...base, color: 'var(--faint-foreground)' }}>–</span>;
-  }
-  if (attempt.state === 'ineligible') {
-    // 9f5+ — no result at all for an attempt the competitor never qualified for.
-    return (
-      <span
-        style={{ ...base, color: 'var(--faint-foreground)', opacity: 0.55, textDecoration: 'line-through' }}
-        title={tr({ zh: '未过关,这把不计入', en: 'cut — this attempt does not count' })}
-      >
-        {attempt.solve ? fmt(effectiveMs(attempt.solve)) : '–'}
-      </span>
-    );
-  }
-  if (attempt.state === 'dns') {
-    // A1a2+++++ — cumulative limit reached, the rest of the round is DNS.
-    return (
-      <span
-        style={{ ...base, color: 'var(--faint-foreground)' }}
-        title={tr({ zh: '累计时限用尽,记为 DNS', en: 'cumulative limit reached — recorded as DNS' })}
-      >
-        DNS
-      </span>
-    );
-  }
-  return (
-    <span
-      style={{
-        ...base,
-        color: attempt.overLimit ? 'var(--destructive)' : 'var(--foreground)',
-      }}
-      title={attempt.overLimit
-        ? tr({ zh: '超过时限,记为 DNF(WCA A1a4)', en: 'over the time limit — DNF (WCA A1a4)' })
-        : undefined}
-    >
-      {fmt(attempt.ms)}
-    </span>
   );
 }

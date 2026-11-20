@@ -3,6 +3,7 @@ import './reconstruct/solve-recap.css';
 import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
 import type { Solve } from '@cuberoot/shared/timer';
 import type { SmartCubeAttemptProducer } from '@cuberoot/shared/timer/smart-cube-attempt';
+import { TIMER_LIVE_SOLUTION_COPY } from './reconstruct/analysis-live';
 
 type LiveSolve = Solve & { liveGyroSamples: ReturnType<SmartCubeAttemptProducer['snapshotLive']>['gyroSamples'] };
 type Context = Pick<Solve, 'event' | 'scramble'> & { startedAt: number };
@@ -42,7 +43,7 @@ export function useLiveSmartCubeAttempt(producer: SmartCubeAttemptProducer, getC
 }
 
 export function TimerLiveSolutionPanel({ language, children }: { language: 'en' | 'zh'; children: ReactNode }) {
-  const label = language === 'zh' ? '实时解法' : 'Live solution';
+  const label = TIMER_LIVE_SOLUTION_COPY[language];
   return <section className="shell-recap timer-live-solution" data-no-timer aria-label={label}>
     <div className="shell-recap-head timer-live-solution-label">{label}</div>
     <div className="shell-recap-body">{children}</div>

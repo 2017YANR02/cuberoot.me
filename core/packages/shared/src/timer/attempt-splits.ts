@@ -1,6 +1,8 @@
 import { STAGE_SEGMENT_EVENTS } from './stage-segments-producer';
 import { IncrementalCfopProgress } from './reconstruct/orient';
+import type { TimerSettingCopy } from './settings-contract';
 import type { SolveMove } from './stage-segments';
+import { formatMs } from './stats';
 import type { Solve } from './types';
 
 export type TimerManualStage = 'cross' | 'f2l' | 'oll';
@@ -36,6 +38,48 @@ export function normalizeTimerAttemptSplitSettings(
 export type TimerAttemptSplitResult = Pick<Solve, 'bld' | 'stages'>;
 
 const MANUAL_STAGES: readonly TimerManualStage[] = ['cross', 'f2l', 'oll'];
+
+export const TIMER_ATTEMPT_SPLIT_COPY = {
+  cross: { en: 'Cross', zh: '十字' },
+  executing: { en: 'Executing…', zh: '执行中…' },
+  memo: { en: 'Memo', zh: '记忆' },
+  memoAction: { en: 'Memo… press Enter or tap', zh: '记忆中… 按 Enter 或点这里' },
+  stageHint: { en: 'Press 1=Cross, 2=F2L, 3=OLL', zh: '按 1=Cross 完成，2=F2L，3=OLL' },
+  bldHint: { en: 'Press Enter while running to mark memo complete', zh: '运行中按 Enter 标记记忆完成' },
+  touchStageHint: { en: 'Tap a stage while running to mark it complete', zh: '运行中点按阶段按钮，标记该阶段完成' },
+  touchBldHint: { en: 'Tap Memo while running to mark memo complete', zh: '运行中点按「记忆中」，标记记忆完成' },
+  touchMemoAction: { en: 'Memo… tap here', zh: '记忆中… 点这里' },
+} as const satisfies Record<string, TimerSettingCopy>;
+
+export interface TimerAttemptSplitChip {
+  key: TimerManualStage | 'memo' | 'executing';
+  label: string;
+  action: boolean;
+  time: string;
+}
+
+export function timerAttemptSplitChips(
+  state: TimerAttemptSplitState,
+  options: TimerAttemptSplitOptions,
+  precision: 2 | 3,
+  localize: (copy: TimerSettingCopy) => string,
+  touchOnly = false,
+) {
+  const copy = TIMER_ATTEMPT_SPLIT_COPY;
+  const stages: TimerAttemptSplitChip[] = options.multiStage ? MANUAL_STAGES.map(key => {
+    const ms = state.stages[key];
+    return { key, label: key === 'cross' ? localize(copy.cross) : key.toUpperCase(), action: ms === undefined,
+      time: ms === undefined ? '' : formatMs(ms, precision) };
+  }) : [];
+  const memo: TimerAttemptSplitChip[] = [];
+  if (options.bldMemo) {
+    const marked = state.memoMs !== undefined;
+    memo.push({ key: 'memo', label: localize(marked ? copy.memo : touchOnly ? copy.touchMemoAction : copy.memoAction),
+      action: !marked, time: state.memoMs === undefined ? '' : formatMs(state.memoMs, precision) });
+    if (marked) memo.push({ key: 'executing', label: localize(copy.executing), action: false, time: '' });
+  }
+  return { stages, memo };
+}
 
 function validElapsed(value: number): number | null {
   return Number.isFinite(value) && value >= 0 ? value : null;

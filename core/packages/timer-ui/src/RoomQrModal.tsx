@@ -1,7 +1,7 @@
 import { Check, Copy, X } from 'lucide-react';
 import { useEffect, useId, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { renderSVG } from 'uqr';
+import { timerRoomQrSvg } from './room-qr';
 
 import './room-qr-modal.css';
 import { useModalBackdrop } from './useModalDismiss';
@@ -32,7 +32,7 @@ const FOCUSABLE_SELECTOR = [
 ].join(',');
 
 export function RoomQrCode({ url }: { url: string }) {
-  const svg = useMemo(() => renderSVG(url, { border: 2, ecc: 'M', blackColor: '#111', whiteColor: '#fff' }), [url]);
+  const svg = useMemo(() => timerRoomQrSvg(url), [url]);
   return <div className="room-qr-code" dangerouslySetInnerHTML={{ __html: svg }} />;
 }
 

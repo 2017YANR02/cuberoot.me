@@ -30,6 +30,16 @@ export const TIMER_333_SCRAMBLE_TYPES = [
 
 export type Timer333ScrambleType = (typeof TIMER_333_SCRAMBLE_TYPES)[number]['id'];
 
+/** Keep real event identities when choosing the ordinary solve from content. */
+export function timerFullPracticeContent(event: EventId) {
+  const solveEvent = event === 'eg1' || event === 'eg2' ? '222'
+    : TIMER_333_SCRAMBLE_TYPES.some(type => type.event === event) ? '333' : event;
+  return {
+    id: 'solve', title: { zh: '完整', en: 'Full' },
+    timer: { event: solveEvent, ...(solveEvent === '222' ? { type222: 'full' as const } : {}) },
+  };
+}
+
 /** Training navigation only; each entry keeps its existing event/provider identity. */
 export const TIMER_333_TRAINING_GROUPS = [
   { id: 'cfop', label: { en: 'CFOP', zh: 'CFOP' }, events: ['cross', 'f2l', 'll', 'oll', 'pll', 'pll-chain', 'coll', 'cll', 'ell', 'eocp', '2gll', 'ollcp'] },
@@ -196,6 +206,18 @@ function pickerItem(entry: TimerEventPickerLayoutItem): TimerEventPickerItem {
 export const TIMER_EVENT_PICKER_ITEMS: readonly TimerEventPickerItem[] = Object.freeze(
   TIMER_EVENT_PICKER_LAYOUT.map(pickerItem),
 );
+
+/** Ordinary Timer projects exclude practice cases and stage drills. */
+export const TIMER_ORDINARY_EVENT_IDS: readonly EventId[] = Object.freeze(TIMER_EVENT_PICKER_ITEMS
+  .filter(({ id }) => {
+    const { group } = eventInfo(id);
+    return group !== 'cfop' && group !== 'll';
+  }).map(({ id }) => id));
+const ordinaryEvents: ReadonlySet<string> = new Set(TIMER_ORDINARY_EVENT_IDS);
+
+export function isTimerOrdinaryEvent(value: string): value is EventId {
+  return ordinaryEvents.has(value);
+}
 
 /** Canonical two-group catalog shared by Web, Android, and iOS timer surfaces. */
 export const TIMER_EVENT_PICKER_GROUPS: readonly TimerEventPickerGroup[] = Object.freeze([

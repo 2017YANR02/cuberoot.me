@@ -9,7 +9,8 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   METHOD_REGISTRY,
   scheduleTimer333StepSolve,
-  timer333StageLabel,
+  TIMER_333_STEP_COPY,
+  timer333StepNotation,
   type MethodId,
   type SolveResult,
 } from '@cuberoot/puzzle-solvers/timer-333-step';
@@ -103,28 +104,20 @@ export default function TimerStepSolve({ scramble, isZh, onDismissChange, onBloc
   const requestKey = `${methodId}\u0000${scramble}`;
   const language = isZh ? 'zh' : 'en';
 
-  const fullMoves = useMemo(() => (result ? result.stages.flatMap((s) => s.moves) : []), [result]);
+  const notation = useMemo(() => result && timer333StepNotation(result, methodId, language), [result, methodId, language]);
   const recon = useMemo<ReconTextResult | null>(() => {
-    if (!result) return null;
-    let offset = 0;
-    const lines = result.stages.map(stage => {
-      const fromIdx = offset;
-      offset += stage.moves.length;
-      const label = timer333StageLabel(methodId, stage.head, language)
-        + (stage.failed ? tr({ zh: ' · 未找到', en: ' · no solution' })
-          : stage.moves.length === 0 ? tr({ zh: ' · 跳过', en: ' · skip' }) : '');
-      return {
-        key: stage.head, kind: 'training' as const, moves: stage.moves, label,
-        fromIdx, toIdx: offset - 1,
-        recognitionMs: null, executionMs: null, stepMs: null,
-      };
-    });
+    if (!result || !notation) return null;
     return {
-      scramble, inspection: '', lines, turns: result.totalMoves, stm: fullMoves.length,
+      scramble, inspection: '',
+      lines: notation.lines.map(({ key, label, moves, fromIdx, toIdx }) => ({
+        key, label, moves, fromIdx, toIdx, kind: 'training',
+        recognitionMs: null, executionMs: null, stepMs: null,
+      })),
+      turns: result.totalMoves, stm: notation.moves.length,
       seconds: 0, tps: null, rotations: [], blindPairs: 0,
-      text: lines.map(line => `${line.moves.join(' ')} // ${line.label}`).join('\n'),
+      text: notation.text,
     };
-  }, [result, scramble, methodId, language, fullMoves]);
+  }, [result, scramble, notation]);
 
   return (
     <div className="stepsolve" data-no-timer>
@@ -132,7 +125,7 @@ export default function TimerStepSolve({ scramble, isZh, onDismissChange, onBloc
           <div className="stepsolve-tabs">
             <label className="sa-method">
             <select className="sa-method-select stepsolve-method" value={methodId}
-              aria-label={tr({ zh: '还原方法', en: 'Method' })}
+              aria-label={tr(TIMER_333_STEP_COPY.method)}
               onChange={event => {
                 const method = event.target.value as MethodId;
                 setMethodId(method);
@@ -146,18 +139,18 @@ export default function TimerStepSolve({ scramble, isZh, onDismissChange, onBloc
             </select>
             </label>
             <button type="button" className="stepsolve-compare" onClick={() => setCompareOpen(true)}>
-              {tr({ zh: '对比全部', en: 'Compare all' })}
+              {tr(TIMER_333_STEP_COPY.compare)}
             </button>
             <div className="stepsolve-notation-actions" ref={setNotationToolbar} />
           </div>
 
           {computing && !result && (
-            <div className="stepsolve-status">{tr({ zh: '计算中…', en: 'Computing…' })}</div>
+            <div className="stepsolve-status">{tr(TIMER_333_STEP_COPY.loading)}</div>
           )}
 
           {errorKey === requestKey && !result && (
             <div className="stepsolve-status" role="alert">
-              {tr({ zh: '未能计算解法', en: 'Unable to compute solution' })}
+              {tr(TIMER_333_STEP_COPY.failed)}
             </div>
           )}
 
@@ -170,13 +163,13 @@ export default function TimerStepSolve({ scramble, isZh, onDismissChange, onBloc
                   onSeek={index => playerRef.current?.jumpToMoveCount(index, true)} />
               </ReconstructHostContext.Provider>
 
-              {fullMoves.length > 0 && (
+              {!!notation?.moves.length && (
                 <div className="stepsolve-player">
                   {/* Keep the lossless sequence independent of notation formatting. */}
                   <CuberReconPlayer key={selectionKey}
                     order={3}
                     scramble={scramble}
-                    alg={fullMoves.join(' ')}
+                    alg={notation.moves.join(' ')}
                     playerRef={playerRef}
                     backView={false}
                   />

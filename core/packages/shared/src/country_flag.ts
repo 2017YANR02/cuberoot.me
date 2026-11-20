@@ -91,6 +91,20 @@ export function countryToIso2(countryOrIso2: string): string {
   return WCA_COUNTRY_TO_ISO2[value] ?? '';
 }
 
+const MULTI_REGION = new Set(['xa', 'xe', 'xf', 'xn', 'xo', 'xs', 'xm', 'xw']);
+
+export function countryFlagIdentity(countryOrIso2: string): {
+  kind: 'flag' | 'chinese-taipei' | 'world' | 'continent' | 'unknown';
+  code: string;
+} {
+  const rawCode = countryOrIso2.trim().toLowerCase();
+  const code = countryToIso2(countryOrIso2) || (MULTI_REGION.has(rawCode) ? rawCode : '');
+  if (code === 'tw') return { kind: 'chinese-taipei', code };
+  if (code === 'xw') return { kind: 'world', code };
+  if (MULTI_REGION.has(code)) return { kind: 'continent', code };
+  return code ? { kind: 'flag', code } : { kind: 'unknown', code: rawCode };
+}
+
 const ISO2_TO_CANONICAL_NAME: Readonly<Record<string, string>> = (() => {
   const out: Record<string, string> = {};
   for (const [name, iso2] of Object.entries(WCA_COUNTRY_TO_ISO2)) {

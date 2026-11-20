@@ -7,7 +7,8 @@
  */
 import { useEffect, useState } from 'react';
 import NextLink from '@/components/AppLink';
-import { X, Inbox } from '@app-foundation/icons/lucide';
+import { Inbox } from '@app-foundation/icons/lucide';
+import { ClearButton } from '@/components/ClearButton';
 import type { AlgSubmission } from '@cuberoot/shared';
 import { fetchRecentSubmissions, markSubmissionsSeen } from '@/lib/alg_api';
 import { setAlgSubmissionUnread } from '@/lib/alg-submission-unread';
@@ -24,9 +25,10 @@ const CSS = `
 .alg-subnotify-head{display:flex;align-items:center;gap:8px;padding:10px 12px;border-bottom:1px solid var(--border);
   font-weight:600;font-size:14px;flex-shrink:0;}
 .alg-subnotify-head .sn-spacer{flex:1;}
-.alg-subnotify-head button{display:flex;align-items:center;justify-content:center;width:26px;height:26px;
+.alg-subnotify-head .sn-close{display:flex;align-items:center;justify-content:center;width:26px;height:26px;
   border:none;background:none;color:var(--muted-foreground);border-radius:6px;cursor:pointer;}
-.alg-subnotify-head button:hover{background:var(--accent-soft);color:var(--foreground);}
+.alg-subnotify-head .sn-close:hover{background:var(--accent-soft);color:var(--foreground);}
+.sn-close .clear-btn-icon{width:16px;height:16px;}
 .alg-subnotify-list{overflow-y:auto;padding:4px;}
 .alg-subnotify-empty{display:flex;flex-direction:column;align-items:center;gap:8px;
   padding:28px 12px;color:var(--muted-foreground);font-size:13px;}
@@ -76,9 +78,7 @@ export default function AdminSubmissionsPanel({ lang, onClose }: Props) {
           <Inbox size={15} />
           <span>{t('新公式投稿', 'New alg submissions')}</span>
           <span className="sn-spacer" />
-          <button type="button" onClick={onClose} title={t('关闭', 'Close')} aria-label={t('关闭', 'Close')}>
-            <X size={16} />
-          </button>
+          <ClearButton variant="standalone" className="sn-close" onClick={onClose} ariaLabel={t('关闭', 'Close')} />
         </div>
         <div className="alg-subnotify-list">
           {items === null && (

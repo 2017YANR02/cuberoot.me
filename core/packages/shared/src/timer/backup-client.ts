@@ -29,4 +29,4 @@ export function createTimerBackupClient(transport: TimerBackupTransport) {
 }
 export interface TimerLocalBackupEntry { key: string; ts: number; size: number; }
 export const TIMER_BACKUP_KEEP = 10;
-export { DEFAULT_TIMER_AUTO_BACKUP_EVERY, normalizeTimerAutoBackupEvery } from './backup-settings';
+export { DEFAULT_TIMER_AUTO_BACKUP_EVERY, normalizeTimerAutoBackupEvery, advanceTimerAutoBackupCadence } from './backup-settings';

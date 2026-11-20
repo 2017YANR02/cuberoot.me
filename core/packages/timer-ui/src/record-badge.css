@@ -50,6 +50,11 @@
 .record-wcr { background: #f97316; color: #fff; }
 .record-other { background: #6b7280; color: #fff; }
 
+.timer-stage-rankings .record-badge {
+    background: var(--muted);
+    color: var(--muted-foreground);
+}
+
 /* 「日掩」合并 badge — 成绩够到了某级地区纪录,但同一日历日已有更快的,
    按 WCA Reg 9i2 只认当日最好,这一级不予认定。
    左段 = 实际生效的级别(实色);右段 = 被掩掉的级别(降饱和 + 对角划线)。

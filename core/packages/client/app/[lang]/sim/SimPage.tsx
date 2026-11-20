@@ -2576,7 +2576,6 @@ function SimEditor({ scope = '', active, seed, snapshotRef, onModeChange, onNew,
               type="button"
               className="sim-float-close sim-float-close--backview"
               onClick={() => setSettings((prev) => ({ ...prev, backView: false }))}
-              title={t('关闭小窗', 'Hide back view')}
               aria-label={t('关闭小窗', 'Hide back view')}
             >
               <X size={12} />

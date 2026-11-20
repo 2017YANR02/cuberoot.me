@@ -2,15 +2,9 @@ import type { CubieCube } from '@cuberoot/puzzle-solvers/kociemba/cube';
 import type { TrainerSpec } from '@cuberoot/puzzle-solvers/cross-trainer';
 import { createTimerWorkerRpc, createTimerRandomDifficultyPool,
   type TimerRandomDifficultyBatch, type TimerRandomDifficultyResult } from '@cuberoot/shared/timer';
+import type { TrainerWorkerRequest, TrainerWorkerResult } from '@cuberoot/shared/timer/random-difficulty-worker';
 
-export type TrainerWorkerRequest =
-  | Readonly<{ kind: 'solve-state'; state: CubieCube }>
-  | Readonly<{ kind: 'difficulty-batch'; spec: TrainerSpec; count: number; budgetMs: number }>
-  | Readonly<{ kind: 'trainer-solution'; spec: TrainerSpec; state: CubieCube; isZh: boolean }>;
-export type TrainerWorkerResult =
-  | Readonly<{ kind: 'scramble'; scramble: string }>
-  | Readonly<{ kind: 'difficulty-batch'; batch: TimerRandomDifficultyBatch }>
-  | Readonly<{ kind: 'trainer-solution'; notation: string; frame: string }>;
+export type { TrainerWorkerRequest, TrainerWorkerResult } from '@cuberoot/shared/timer/random-difficulty-worker';
 
 const createRpc = (label: string) => createTimerWorkerRpc<TrainerWorkerRequest, TrainerWorkerResult>({
   createWorker: () => new Worker(new URL('./trainer.worker.ts', import.meta.url), { type: 'module' }),

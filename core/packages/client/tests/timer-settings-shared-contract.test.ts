@@ -315,12 +315,14 @@ describe('canonical timer settings surface manifest', () => {
 describe('Web SettingsPanel is a checked shared-contract consumer', () => {
   const panel = readFileSync('app/[lang]/timer/_components/SettingsPanel.tsx', 'utf8');
   const settings = readFileSync('app/[lang]/timer/_lib/settings/index.ts', 'utf8');
+  const soloSections = readFileSync('../timer-ui/src/TimerSoloSettingsSections.tsx', 'utf8');
 
   it('references the exact canonical field set, so additions/removals cannot drift silently', () => {
     const directPanelIds = [...panel.matchAll(/settings\.[a-z0-9-]+\.[a-z0-9-]+/g)]
       .map((match) => match[0] as TimerSettingFieldId);
     const sharedFieldIds = [
       ...TIMER_TIMING_SETTING_FIELD_IDS,
+      'settings.timer.rolling-statistics' as const,
       ...TIMER_SCRAMBLE_PREVIEW_SETTING_FIELD_IDS,
       ...TIMER_SMART_CUBE_SETTING_FIELD_IDS,
       ...TIMER_TYPOGRAPHY_SETTING_FIELD_IDS,
@@ -340,15 +342,13 @@ describe('Web SettingsPanel is a checked shared-contract consumer', () => {
       ...TIMER_REANALYZE_SETTING_FIELD_IDS,
     ];
     expect(directPanelIds.filter((id) => sharedFieldIds.includes(id))).toEqual([]);
-    const panelIds = [...directPanelIds];
     expect(panel).toContain('<TimerSmartCubeSettingsFields');
-    expect(panel).toContain('<TimerTypographySettings');
+    expect(panel).toContain('<TimerSoloAppearanceSections');
+    expect(soloSections).toContain('<TimerTypographySettings');
+    expect(panel).toMatch(/<TimerSoloResultSettings[^>]*columns=\{s\.statsRollingColumns\}/);
     // The click selector is rendered once inside shared TimerDisplaySettings.
     expect(panel).not.toContain('<TimerScrambleClickActionSetting');
-    if (panel.includes('<TimerScramblePreviewSettings')) {
-      panelIds.push(...TIMER_SCRAMBLE_PREVIEW_SETTING_FIELD_IDS);
-    }
-    expect([...new Set([...panelIds, ...sharedFieldIds])].sort())
+    expect([...new Set([...directPanelIds, ...sharedFieldIds])].sort())
       .toEqual([...TIMER_SETTING_FIELD_IDS].sort());
   });
 
@@ -367,7 +367,7 @@ describe('Web SettingsPanel is a checked shared-contract consumer', () => {
     expect(panel).toContain('timerSettingFieldStates({');
     expect(panel).toContain('<TimerTimingSettingsSections');
     expect(panel).not.toContain('<TimerScrambleClickActionSetting');
-    expect(panel).toContain('<TimerScramblePreviewSettings');
+    expect(soloSections).toContain('<TimerScramblePreviewSettings');
     expect(panel).toContain('<TimerBooleanSettingRow');
     expect(panel).toContain("field={timerSettingFieldContract('settings.scramble.optimal')}");
     expect(panel).toContain('renderBooleanControl={renderTimingBooleanControl}');

@@ -1,9 +1,10 @@
 'use client';
 
-import { useEffect, useId, useRef, type ReactNode } from 'react';
-import { createPortal } from 'react-dom';
-import { Bluetooth, Database, Dices, Keyboard, Palette, Timer, Trophy, Volume2, X } from 'lucide-react';
-import { TIMER_SETTING_CATEGORY_CONTRACTS, type TimerSettingCategoryId } from '@cuberoot/shared/timer';
+import { Fragment, useEffect, useId, useRef, type ReactNode } from 'react';
+import { createPortal, flushSync } from 'react-dom';
+import { Bluetooth, ChevronRight, Database, Dices, Keyboard, Palette, Timer, Trophy, Volume2, X } from 'lucide-react';
+import { TIMER_SETTING_ACTION_CATEGORY, TIMER_SETTING_CATEGORY_CONTRACTS, type TimerSettingCategoryId } from '@cuberoot/shared/timer';
+import type { TimerMoreMenuItem } from './TimerMoreMenu';
 import { useDialogMotion } from './useDialogMotion';
 import { useModalDismiss } from './useModalDismiss';
 import './timer-settings-panel.css';
@@ -11,8 +12,15 @@ import './timer-settings-panel.css';
 const icons = { timer: Timer, 'smart-cube': Bluetooth, scramble: Dices, training: Trophy,
   appearance: Palette, sound: Volume2, data: Database, advanced: Keyboard };
 
+interface SettingsActionLinkProps {
+  href: string;
+  children: ReactNode;
+  className: string;
+  onClick: () => void;
+}
+
 /** One responsive settings dialog. Hosts supply supported categories and their fields. */
-export function TimerSettingsPanel({ language, activeCategory, onCategoryChange, onClose, categories, playersControl, presenceControl, resetControl, children }: {
+export function TimerSettingsPanel({ language, activeCategory, onCategoryChange, onClose, categories, playersControl, presenceControl, resetControl, actions, renderActionLink, children }: {
   language: 'en' | 'zh';
   activeCategory: TimerSettingCategoryId;
   onCategoryChange(category: TimerSettingCategoryId): void;
@@ -21,6 +29,8 @@ export function TimerSettingsPanel({ language, activeCategory, onCategoryChange,
   playersControl?: ReactNode;
   presenceControl?: ReactNode;
   resetControl?: ReactNode;
+  actions?: readonly TimerMoreMenuItem[];
+  renderActionLink?: (props: SettingsActionLinkProps) => ReactNode;
   children: ReactNode;
 }) {
   const dialogRef = useRef<HTMLDivElement>(null);
@@ -30,6 +40,13 @@ export function TimerSettingsPanel({ language, activeCategory, onCategoryChange,
   const backdrop = useModalDismiss(close);
   const items = TIMER_SETTING_CATEGORY_CONTRACTS.filter(category => !categories || categories.includes(category.id));
   const label = (en: string, zh: string) => language === 'zh' ? zh : en;
+  const currentActions = actions?.filter(action => action.visible && TIMER_SETTING_ACTION_CATEGORY[action.id] === activeCategory) ?? [];
+  const regularActions = currentActions.filter(action => !action.danger);
+  const runAction = (action: TimerMoreMenuItem) => {
+    // Close before launching the next dialog, prompt or print, preserving user activation.
+    flushSync(onClose);
+    action.onSelect?.();
+  };
   useEffect(() => {
     if (mainRef.current) mainRef.current.scrollTop = 0;
   }, [activeCategory]);
@@ -95,6 +112,29 @@ export function TimerSettingsPanel({ language, activeCategory, onCategoryChange,
               </section>
             )}
             {children}
+            {regularActions.length > 0 && (
+              <div className="timer-settings-actions" aria-label={label('Tools', '工具')}>
+                {regularActions.map(action => {
+                  const name = action.id === 'more.fullscreen' && action.active
+                    ? label('Exit fullscreen', '退出全屏') : action.label;
+                  const content = <><span>{name}</span><ChevronRight size={16} aria-hidden="true" /></>;
+                  if (action.href && !action.disabled) {
+                    const props = { href: action.href, children: content, className: 'timer-settings-action', onClick: onClose };
+                    return renderActionLink
+                      ? <Fragment key={action.id}>{renderActionLink(props)}</Fragment>
+                      : <a key={action.id} {...props} />;
+                  }
+                  return <button key={action.id} type="button" className="timer-settings-action"
+                    disabled={action.disabled || !action.onSelect} onClick={() => runAction(action)}>{content}</button>;
+                })}
+              </div>
+            )}
+            {currentActions.filter(action => action.danger).map(action => (
+              <div className="settings-reset-row settings-danger-actions" key={action.id}>
+                <button type="button" className="hint-btn timer-settings-action-danger"
+                  disabled={action.disabled || !action.onSelect} onClick={() => runAction(action)}>{action.label}</button>
+              </div>
+            ))}
           </div>
         </div>
       </div>

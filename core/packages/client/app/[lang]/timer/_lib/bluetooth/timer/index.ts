@@ -41,6 +41,7 @@ import { qiyiTimerMacFromName } from './mac';
 import { qiyiTimerDriver } from './qiyi_timer';
 import {
   createExternalTimerBus,
+  createBluetoothTimerReconnect,
   type ExternalTimerEvent,
   type ExternalTimerKind,
   type ExternalTimerListener,
@@ -176,7 +177,7 @@ export function createBluetoothTimerSource(
   let tearingDown = false;
   /** Invalidates async work from an older connection attempt. */
   let generation = 0;
-  let reconnectTimer: ReturnType<typeof setTimeout> | null = null;
+  const reconnect = createBluetoothTimerReconnect();
 
   const emit = (ev: ExternalTimerEvent): void => {
     state = ev.state;
@@ -184,12 +185,6 @@ export function createBluetoothTimerSource(
       lastTimeMs = ev.solveTime;
     }
     bus.emit(ev);
-  };
-
-  const cancelReconnect = (): void => {
-    if (reconnectTimer === null) return;
-    clearTimeout(reconnectTimer);
-    reconnectTimer = null;
   };
 
   const releaseConnection = (forgetDevice: boolean): void => {
@@ -247,7 +242,7 @@ export function createBluetoothTimerSource(
 
       const onDisc = (): void => {
         if (tearingDown || currentGeneration !== generation) return;
-        handleConnectionLost(currentGeneration);
+        handleConnectionLost(currentGeneration, reconnecting);
       };
       onGattDisconnected = onDisc;
       picked.addEventListener('gattserverdisconnected', onDisc);
@@ -255,7 +250,7 @@ export function createBluetoothTimerSource(
       const started = await pickedDriver.start(server, (ev) => {
         if (currentGeneration !== generation) return;
         if (ev.state === 'DISCONNECT') {
-          handleConnectionLost(currentGeneration);
+          handleConnectionLost(currentGeneration, reconnecting);
           return;
         }
         emit(ev);
@@ -283,9 +278,7 @@ export function createBluetoothTimerSource(
   };
 
   const scheduleReconnect = (expectedGeneration: number): void => {
-    cancelReconnect();
-    reconnectTimer = setTimeout(() => {
-      reconnectTimer = null;
+    reconnect.schedule(() => {
       if (expectedGeneration !== generation || !device || !driver) return;
       const reconnectDevice = device;
       const reconnectDriver = driver;
@@ -294,17 +287,18 @@ export function createBluetoothTimerSource(
         // The source is already in DISCONNECT. Match csTimer's single delayed
         // retry and leave a further attempt to an explicit user action.
       });
-    }, 2500);
+    });
   };
 
-  function handleConnectionLost(currentGeneration: number): void {
+  function handleConnectionLost(currentGeneration: number, reconnecting: boolean): void {
     if (tearingDown || currentGeneration !== generation) return;
     if (!connected && !connecting) return;
 
+    const canRetry = connected || !reconnecting;
     generation += 1;
     const reconnectGeneration = generation;
     releaseConnection(false);
-    scheduleReconnect(reconnectGeneration);
+    if (canRetry) scheduleReconnect(reconnectGeneration);
     // Notify the owner before the generic DISCONNECT event clears its active
     // attempt bookkeeping. The connection has already been released, so both
     // callbacks still observe connected=false.
@@ -315,7 +309,7 @@ export function createBluetoothTimerSource(
   const connectDevice = async (picked: BluetoothDevice): Promise<void> => {
     if (connected || connecting) return;
 
-    cancelReconnect();
+    reconnect.cancel();
     generation += 1;
     releaseConnection(true);
 
@@ -374,6 +368,7 @@ export function createBluetoothTimerSource(
 
     async connect(): Promise<void> {
       if (connected || connecting) return;
+      reconnect.cancel();
       const pickerGeneration = ++generation;
       connecting = true;
       let picked: BluetoothDevice | null;
@@ -393,8 +388,8 @@ export function createBluetoothTimerSource(
 
     async disconnect(): Promise<void> {
       const wasActive = connected || connecting;
-      if (!wasActive && !device && reconnectTimer === null) return;
-      cancelReconnect();
+      if (!wasActive && !device && !reconnect.pending) return;
+      reconnect.cancel();
       generation += 1;
       releaseConnection(true);
       if (wasActive) emit({ state: 'DISCONNECT' });

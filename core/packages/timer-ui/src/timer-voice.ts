@@ -5,30 +5,11 @@
  */
 
 import type { TimerSoundSettings } from '@cuberoot/shared/timer';
+import { TIMER_INSPECTION_VOICE_PHRASES, type TimerInspectionVoiceCue } from '@cuberoot/shared/timer/sound-feedback';
 
 export function createTimerVoice(getSettings: () => TimerSoundSettings) {
-
-  type VoiceCue = 'warn-8' | 'warn-12' | 'start' | 'inspection-start';
-
-  const _last: Partial<Record<VoiceCue, number>> = {};
+  const _last: Partial<Record<TimerInspectionVoiceCue, number>> = {};
   let generation = 0;
-
-  function phrase(cue: VoiceCue, isZh: boolean): string {
-    if (isZh) {
-      switch (cue) {
-        case 'warn-8':           return '8 秒';
-        case 'warn-12':          return '12 秒';
-        case 'start':            return '开始';
-        case 'inspection-start': return '观察';
-      }
-    }
-    switch (cue) {
-      case 'warn-8':           return '8 seconds';
-      case 'warn-12':          return '12 seconds';
-      case 'start':            return 'go';
-      case 'inspection-start': return 'inspection';
-    }
-  }
 
   function isVoiceAvailable(): boolean {
     return typeof window !== 'undefined' && typeof window.speechSynthesis?.speak === 'function'
@@ -38,7 +19,7 @@ export function createTimerVoice(getSettings: () => TimerSoundSettings) {
   /** Cancel any in-flight or queued utterances. Wire to visibilitychange + unmount. */
   function cancelVoice(): void {
     generation++;
-    for (const cue of Object.keys(_last) as VoiceCue[]) delete _last[cue];
+    for (const cue of Object.keys(_last) as TimerInspectionVoiceCue[]) delete _last[cue];
     if (!isVoiceAvailable()) return;
     try { window.speechSynthesis.cancel(); } catch { /* ignore */ }
   }
@@ -72,7 +53,7 @@ export function createTimerVoice(getSettings: () => TimerSoundSettings) {
     return langMatches[0] ?? null;
   }
 
-  function speakInspectionCue(cue: VoiceCue, isZh: boolean, onUnavailable?: () => void): boolean {
+  function speakInspectionCue(cue: TimerInspectionVoiceCue, isZh: boolean, onUnavailable?: () => void): boolean {
     if (!isVoiceAvailable()) return false;
     const now = Date.now();
     if (_last[cue] && now - _last[cue]! < 1000) return true;
@@ -87,7 +68,7 @@ export function createTimerVoice(getSettings: () => TimerSoundSettings) {
         variant = setting;
       }
       const phraseIsZh = variant.startsWith('zh');
-      const u = new SpeechSynthesisUtterance(phrase(cue, phraseIsZh));
+      const u = new SpeechSynthesisUtterance(TIMER_INSPECTION_VOICE_PHRASES[cue][phraseIsZh ? 'zh' : 'en']);
       u.lang = phraseIsZh ? 'zh-CN' : 'en-US';
       u.rate = 1.1;
       u.volume = getSettings().volume;

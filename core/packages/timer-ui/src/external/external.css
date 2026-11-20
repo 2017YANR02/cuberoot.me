@@ -69,6 +69,8 @@
 /* --- Bluetooth modal --- */
 .bluetooth-modal { position: relative; max-width: 520px; }
 .bluetooth-modal h2 { padding-right: 38px; }
+.timer-modal .bt-timer-heading { display: flex; align-items: center; gap: 6px; }
+.bt-timer-heading svg { flex: none; }
 .bluetooth-modal h3 { margin: 0 0 8px; font-size: 14px; }
 .bluetooth-modal .bt-modal-close {
   position: absolute;

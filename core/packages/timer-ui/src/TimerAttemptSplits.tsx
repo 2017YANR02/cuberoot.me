@@ -1,27 +1,14 @@
 import {
   TIMER_SETTING_FIELD_CONTRACTS,
-  formatMs,
+  TIMER_ATTEMPT_SPLIT_COPY as COPY,
+  timerAttemptSplitChips,
+  type TimerAttemptSplitChip,
   type TimerAttemptSplitOptions,
   type TimerAttemptSplitState,
   type TimerSettingCopy,
   type TimerSettingFieldId,
 } from '@cuberoot/shared/timer';
 import type { ReactNode } from 'react';
-
-const COPY = {
-  cross: { en: 'Cross', zh: '十字' },
-  executing: { en: 'Executing…', zh: '执行中…' },
-  memo: { en: 'Memo', zh: '记忆' },
-  memoAction: { en: 'Memo… press Enter or tap', zh: '记忆中… 按 Enter 或点这里' },
-  stageHint: {
-    en: 'Press 1=Cross, 2=F2L, 3=OLL',
-    zh: '按 1=Cross 完成，2=F2L，3=OLL',
-  },
-  bldHint: {
-    en: 'Press Enter while running to mark memo complete',
-    zh: '运行中按 Enter 标记记忆完成',
-  },
-} as const satisfies Record<string, TimerSettingCopy>;
 
 export interface TimerAttemptSplitStatusProps {
   bldMemoActive: boolean;
@@ -43,22 +30,24 @@ export function TimerAttemptSplitStatus({
   precision = 2,
   state,
 }: TimerAttemptSplitStatusProps) {
-  const stageChip = (stage: 'cross' | 'f2l' | 'oll', label: string) => {
-    const time = state.stages[stage];
-    return time === undefined ? (
+  const { stages, memo } = timerAttemptSplitChips(state, { bldMemo: bldMemoActive, multiStage: multiStageActive }, precision, localize);
+  const renderChip = ({ key, label, action, time }: TimerAttemptSplitChip) => {
+    return action && key !== 'executing' ? (
       <button
         aria-label={label}
         className="stage-chip stage-chip-action"
         data-no-timer
+        key={key}
         onClick={(event) => {
           event.stopPropagation();
-          onMarkStage(stage);
+          if (key === 'memo') onMarkMemo();
+          else onMarkStage(key);
         }}
         type="button"
       >{label}</button>
     ) : (
-      <span className={`stage-chip ${time === undefined ? '' : 'done'}`.trim()}>
-        {label} {formatMs(time, precision)}
+      <span key={key} className={time ? 'stage-chip done' : 'stage-chip'}>
+        {time ? `${label} ${time}` : label}
       </span>
     );
   };
@@ -66,33 +55,10 @@ export function TimerAttemptSplitStatus({
   return (
     <>
       {multiStageActive && (
-        <div className="timer-stage-splits">
-          {stageChip('cross', localize(COPY.cross))}
-          {stageChip('f2l', 'F2L')}
-          {stageChip('oll', 'OLL')}
-        </div>
+        <div className="timer-stage-splits">{stages.map(renderChip)}</div>
       )}
       {bldMemoActive && (
-        <div className="timer-stage-splits">
-          {state.memoMs === undefined ? (
-            <button
-              className="stage-chip stage-chip-action"
-              data-no-timer
-              onClick={(event) => {
-                event.stopPropagation();
-                onMarkMemo();
-              }}
-              type="button"
-            >{localize(COPY.memoAction)}</button>
-          ) : (
-            <>
-              <span className="stage-chip done">
-                {localize(COPY.memo)} {formatMs(state.memoMs, precision)}
-              </span>
-              <span className="stage-chip">{localize(COPY.executing)}</span>
-            </>
-          )}
-        </div>
+        <div className="timer-stage-splits">{memo.map(renderChip)}</div>
       )}
     </>
   );

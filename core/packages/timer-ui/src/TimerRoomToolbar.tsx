@@ -1,3 +1,4 @@
+import { TIMER_ROOM_TOOLBAR_COPY } from '@cuberoot/shared/timer/net-battle';
 import type { ReactNode } from 'react';
 import { Check, Copy, History, LogOut, QrCode, ShieldCheck } from 'lucide-react';
 
@@ -18,14 +19,11 @@ export interface TimerRoomToolbarProps {
   onLeave(): void;
   children?: ReactNode;
 }
-const COPY = {
-  en: { round: 'Round', room: 'Room', sync: 'Synchronized start', code: 'Copy room code', invite: 'Copy invite link', copiedCode: 'Room code copied', copiedInvite: 'Invite link copied', qr: 'Room QR code', history: 'Scramble history and results', admin: 'Room settings', leave: 'Leave room' },
-  zh: { round: '轮次', room: '房间', sync: '同时开始计时', code: '复制房间码', invite: '复制邀请链接', copiedCode: '已复制房间码', copiedInvite: '已复制邀请链接', qr: '房间二维码', history: '历史打乱与战绩', admin: '房间管理', leave: '离开房间' },
-};
+
 
 /** Shared room actions; clipboard and room lifecycle remain host capabilities. */
 export function TimerRoomToolbar({ language, code, round, syncStart, copied, copyKind, disabled, historyOpen, adminOpen, onCopy, onQr, onHistory, onAdmin, onLeave, children }: TimerRoomToolbarProps) {
-  const copy = COPY[language];
+  const copy = TIMER_ROOM_TOOLBAR_COPY[language];
   return <div className="timer-room-toolbar surface-chrome" data-no-timer>
     <span>{copy.round} {round}</span>
     {syncStart && <span>{copy.sync}</span>}

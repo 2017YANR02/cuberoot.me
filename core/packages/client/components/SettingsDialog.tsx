@@ -1,13 +1,14 @@
 'use client';
 
-import { useEffect, useRef, type ReactNode } from 'react';
+import { useEffect, useImperativeHandle, useRef, type ReactNode, type Ref } from 'react';
 import { createPortal } from 'react-dom';
 import { ClearButton } from '@/components/ClearButton';
 import { useDialogMotion, useModalDismiss } from '@/hooks/useModalDismiss';
 import { tr } from '@/i18n/tr';
 import './training-settings.css';
 
-export default function SettingsDialog({ label, heading = false, panelClassName, drawer = false, curtain = false, renderCloseButton, motionDuration, portalContainer, onCloseStart, onClose: onClosed, children }: {
+export default function SettingsDialog({ ref, label, heading = false, panelClassName, drawer = false, curtain = false, renderCloseButton, motionDuration, portalContainer, onCloseStart, onClose: onClosed, children }: {
+  ref?: Ref<{ close: () => void }>;
   label: string;
   heading?: ReactNode;
   panelClassName?: string;
@@ -21,6 +22,7 @@ export default function SettingsDialog({ label, heading = false, panelClassName,
   children: ReactNode | ((close: () => void) => ReactNode);
 }) {
   const { motionRef, close: onClose, isClosing } = useDialogMotion(onClosed, { drawer, curtain, duration: motionDuration, onCloseStart });
+  useImperativeHandle(ref, () => ({ close: onClose }), [onClose]);
   const backdropProps = useModalDismiss(onClose);
   const dialogRef = useRef<HTMLDivElement>(null);
   useEffect(() => {

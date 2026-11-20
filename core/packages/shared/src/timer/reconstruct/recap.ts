@@ -6,8 +6,33 @@
  * 的东西,却让复盘顶掉半屏,那是每把都要点一下收起。
  */
 
-import type { Solve } from '../types';
+import type { Solve, SolveMove } from '../types';
 import type { TimerSmartCubeSettings } from '../settings-contract';
+import { sliceReconstruction } from './solve-metrics';
+
+export {
+  RECON_NOTATION_PLAY_INTERVAL_MS,
+  playbackTrack, playbackEndMs, playbackSeek, rawPlaybackTarget, playbackFrame, playbackMoveDurationTicks,
+  reconstructedTrack, playbackIndexAt, playbackIndexForRaw, type PlaybackMove,
+} from './playback-track';
+
+export function reconstructionSummary(
+  moves: SolveMove[], timeMs: number, recon: { stm: number } | null, executionMs: number | null, memoMs?: number,
+) {
+  const slices = sliceReconstruction(moves, timeMs, memoMs);
+  const stm = recon?.stm ?? slices.htmCount;
+  return {
+    stm, tps: slices.executionMs >= 1 ? stm / (slices.executionMs / 1000) : 0,
+    fluency: executionMs !== null && timeMs > 0 ? Math.round(executionMs / timeMs * 100) : null,
+  };
+}
+
+export function rawRecapMoveRows(moves: readonly SolveMove[], wasted: ReadonlySet<number>) {
+  return moves.map(({ m, ts }, index) => {
+    const gap = index === 0 ? null : ts - moves[index - 1].ts;
+    return { index: index + 1, move: m, ts, gap, slow: gap !== null && gap > 500, wasted: wasted.has(index) };
+  });
+}
 
 /**
  * 刚记下的这把该不该自动展开复盘。

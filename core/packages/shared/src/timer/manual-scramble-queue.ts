@@ -19,6 +19,18 @@ export const TIMER_MANUAL_SCRAMBLE_EMPTY_COPY = Object.freeze({
   zh: '每行一条',
 });
 
+export const TIMER_SOLVER_SCRAMBLE_EDITOR_COPY = {
+  edit: { en: 'Edit scramble', zh: '编辑打乱' },
+  input: { en: 'Manual scramble input', zh: '手动输入打乱' },
+  apply: { en: 'Apply scramble', zh: '应用打乱' },
+  cancel: { en: 'Cancel', zh: '取消' },
+} as const;
+
+/** Only a non-blank solver draft can replace the manual queue. */
+export function normalizeSolverScrambleDraft(input: string): string | null {
+  return input.trim() || null;
+}
+
 export interface ManualScrambleQueueTake {
   scramble: string;
   /** Cursor to pass into the next call. Zero for an empty queue. */

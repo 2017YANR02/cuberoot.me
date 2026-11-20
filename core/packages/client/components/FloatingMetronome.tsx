@@ -293,7 +293,6 @@ export default function FloatingMetronome({ lang, onClose, embedded = false }: {
           className="cr-metro-icon"
           onPointerDown={(e) => e.stopPropagation()}
           onClick={() => { pauseMusic(); setMetronome({ on: false }); onClose(); }}
-          title={t('关闭', 'Close')}
           aria-label={t('关闭', 'Close')}
         >
           <X size={15} />

@@ -18,7 +18,7 @@
  *   other unsupported ids                               → blank "no preview"
  */
 
-import { timerEventNxnSize, type EventId } from '@cuberoot/shared/timer';
+import { timerEventNxnSize, timerRelayPreviewScramble, type EventId } from '@cuberoot/shared/timer';
 import { isNativePuzzleId } from '@cuberoot/puzzle-solvers/native-puzzles';
 import type { JSX } from 'react';
 
@@ -66,25 +66,6 @@ function NoPreview({ ariaLabel, fill, size = 14, className }: { ariaLabel?: stri
       </text>
     </svg>
   );
-}
-
-/**
- * Extract the first NxN-cube scramble from a multi-line/relay scramble.
- * Used by relay events whose scramble contains multiple sub-scrambles.
- */
-function firstNxnScramble(s: string): string {
-  const lines = s.split(/\r?\n/);
-  for (const line of lines) {
-    const prefix = /^\s*3x3/i.exec(line);
-    if (!prefix) continue;
-    const tail = line.slice(prefix[0].length);
-    const rest = tail.trimStart().replace(/^[:.-]/, '').trimStart();
-    if (rest && !/[\r\n\u2028\u2029]/.test(rest)) return rest;
-    // Greedy whitespace/separator parsing must leave the same final character
-    // as the former (.+) capture when the line contains no move text.
-    if (!tail.trim().replace(/^[:.-]/, '') && tail && !/[\r\n\u2028\u2029]/.test(tail.at(-1)!)) return tail.at(-1)!;
-  }
-  return s;
 }
 
 /** Map any NxN-class event id to its base nxn event id (for scramble-display). */
@@ -138,7 +119,7 @@ export function TimerCubePreview(props: TimerCubePreviewProps): JSX.Element {
     return <NoPreview ariaLabel={ariaLabel} fill={fill} size={noPreviewSize} className={className} />;
   }
   const previewScramble = event === 'r3' || event === 'r4' || event === 'r5'
-    ? firstNxnScramble(scramble)
+    ? timerRelayPreviewScramble(scramble)
     : scramble;
   return <TimerScramblePreview ariaLabel={ariaLabel} event={target} fill={fill} scramble={previewScramble} size={size} height={height} className={className} visualization={v} />;
 }

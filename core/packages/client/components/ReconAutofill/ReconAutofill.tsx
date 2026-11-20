@@ -650,8 +650,7 @@ export default function ReconAutofill({ textareaRef, value, setValue, scramble, 
               type="button"
               className="recon-autofill-close recon-autofill-cols-close"
               onMouseDown={e => { e.preventDefault(); e.stopPropagation(); dismiss(); }}
-              aria-label={tr({ zh: '关闭自动补全', en: 'Close suggestions' })}
-              title={tr({ zh: '关闭(本行不再自动弹)', en: 'Close (won\'t reopen on this line)' })}
+              aria-label={tr({ zh: '关闭自动补全，本行不再自动弹出', en: 'Close suggestions for this line' })}
             >
               <X size={12} />
             </button>
@@ -713,9 +712,7 @@ export default function ReconAutofill({ textareaRef, value, setValue, scramble, 
                 tabIndex={-1}
                 className="recon-autofill-close"
                 onMouseDown={e => { e.preventDefault(); e.stopPropagation(); dismiss(); }}
-                aria-label={tr({ zh: '关闭自动补全', en: 'Close suggestions'
-                })}
-                title={tr({ zh: '关闭(本行不再自动弹)', en: 'Close (won\'t reopen on this line)'
+                aria-label={tr({ zh: '关闭自动补全，本行不再自动弹出', en: 'Close suggestions for this line'
                 })}
               >
                 <X size={12} />

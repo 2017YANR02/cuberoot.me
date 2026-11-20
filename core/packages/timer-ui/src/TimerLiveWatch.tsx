@@ -78,7 +78,7 @@ export function TimerLiveWatch({ transport, credential, language, host, classNam
   const status = !credential ? tr({ en: 'Invalid share link', zh: '分享链接无效' })
     : live.connection === 'ended' ? tr({ en: 'Sharing has ended or expired', zh: '分享已结束或过期' })
       : live.connection === 'error' ? tr({ en: 'Unable to watch this share', zh: '无法观看此分享' })
-        : online ? tr({ en: 'Live · Read only', zh: '实时观看 · 只读' })
+        : online ? tr({ en: 'Live', zh: '实时观看' })
           : live.connection === 'connected' ? tr({ en: 'Waiting for the sharer to reconnect', zh: '等待分享者重新连接' })
             : tr({ en: 'Connecting…', zh: '正在连接…' });
   const openDetail = (solve: Solve) => {

@@ -150,7 +150,8 @@ describe('Mobile timer More effect adapter', () => {
   it('wires every implemented effect into App and removes the old sheet/fallback menu', () => {
     const app = readFileSync('src/App.tsx', 'utf8');
     const css = readFileSync('src/app.css', 'utf8');
-    expect(app).toContain('<TimerMoreMenu');
+    expect(app).toMatch(/<TimerSettingsPanel[\s\S]*?actions=\{moreItems\}/);
+    expect(app).not.toContain('<TimerMoreMenu');
     expect(app).toContain("'more.marks': () => openToolsRoute('/timer/marks')");
     expect(app).toContain("'more.stats-mobile': () => { setView('history'); setHistoryTab('stats'); }");
     expect(app).toContain("'more.language-mobile': toggleMoreLanguage");

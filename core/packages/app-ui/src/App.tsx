@@ -12,7 +12,7 @@ import { useTimerWcaCompetitionFilters, TimerPracticeContentPicker, TimerPractic
 import { timerPracticeContents, selectedTimerPracticeContent, type TimerPracticeContent } from '@cuberoot/shared/timer';
 import { SiteCorners } from "@2017yanr02/continuous-corners/react";
 import { shareOrDownloadBackup } from './file-export';
-import { TimerSoloPage, timerSoloModalState, useTimerSoloCompactLayout } from '@cuberoot/timer-ui/TimerSoloPage';
+import { TimerSoloControls, TimerSoloPage, timerSoloModalState, useTimerSoloCompactLayout } from '@cuberoot/timer-ui/TimerSoloPage';
 import { InstalledBleHost, installedBleRequestPort } from './installed-ble-host';
 import { pickInstalledBleDevice, type InstalledBlePicker } from './installed-ble-picker';
 import { createRandomScrambleClient } from '@cuberoot/timer-ui/random-scramble';
@@ -36,13 +36,14 @@ import { useExternalDevices } from './hooks/use-external-devices';
 import { installedContentUnavailable } from '@cuberoot/shared/installed-content';
 import { decodeAppleMembershipRequest } from '@cuberoot/shared/apple-membership';
 import { decodeGoogleMembershipRequest } from '@cuberoot/shared/google-membership';
-import { TimerDisplaySettings, TimerPreScrambleSettings, TimerColorNeutralSetting, createTimerSound, useTimerSoundFeedback } from '@cuberoot/timer-ui';
+import { TimerPreScrambleSettings, TimerColorNeutralSetting, createTimerSound, useTimerSoundFeedback } from '@cuberoot/timer-ui';
 import { normalizeTimerSoundSettings, resetTimerStoreSettings } from '@cuberoot/shared/timer';
 import { TimerResetSettings } from '@cuberoot/timer-ui';
 import { TimerExportSettings, type TimerExportFormat } from '@cuberoot/timer-ui';
 import { exportTimerCstimerJson, exportTimerSolvesCsv, exportSpeedstacks } from '@cuberoot/shared/timer';
 import { TimerSoundSettings, TimerMetronomeSettings } from '@cuberoot/timer-ui';
 import { createMetronome } from '@cuberoot/timer-ui/metronome';
+import { timerMetronomeActive } from '@cuberoot/shared/timer/metronome-settings';
 import { applyOrientationPrefix, preScrambleFor, timerSmartCubeTrainingOrientation, timerSmartCubeAttemptScramble } from '@cuberoot/shared/timer';
 import { timerHidesRunningUi } from '@cuberoot/shared/timer';
 import { startWatchTimerSync } from './watch-timer-sync';
@@ -175,6 +176,7 @@ import {
   timerSettingFieldContract,
   variantLabel,
   TIMER_WCA_SCRAMBLE_SOURCE_COPY,
+  DEFAULT_TIMER_SCRAMBLE_SOURCE,
   TIMER_WCA_MIN_DATE,
   timerSupportsRealWcaScrambles,
   timerSupportsStageSplits,
@@ -225,13 +227,11 @@ import {
   timerCubePreviewAspect,
   TimerDrillPicker,
   TimerManualEntryModal,
-  TimerMoreMenu,
   TimerPillToggle,
   TimerPlayersSelect,
   TimerPuzzlePicker,
   TimerPrintController,
   TimerScramble222Config,
-  TimerScramblePreviewSettings,
   TimerScrambleStrip,
   TimerWcaScrambleSource,
   TimerWcaScrambleProgress,
@@ -243,7 +243,8 @@ import {
   TimerWorkspace,
   useTimerWideLayout,
   useHostViewportLayout,
-  TimerTypographySettings,
+  TimerSoloAppearanceSections,
+  TimerSoloResultSettings,
   TimerSettingsPanel,
   TimerTimingSettingsSections,
   TimerWcaSourceConfig,
@@ -272,7 +273,6 @@ import {
 import {
   Clock3,
   Grid2X2,
-  LayoutTemplate,
   Settings as SettingsIcon,
   UserRound,
   X,
@@ -511,7 +511,7 @@ export function App({ host, loadingMark }: { host: InstalledAppHost; loadingMark
   const wcaMarksCacheRef = useRef(new Map<string, TimerWcaScrambleMarksResponse>());
   const wcaMarksRequestsRef = useRef(new Map<string, Promise<TimerWcaScrambleMarksResponse>>());
   const [, refreshWcaMarks] = useState(0);
-  const [scrambleSource, setScrambleSource] = useState<ScrambleSource>('wca');
+  const [scrambleSource, setScrambleSource] = useState<ScrambleSource>(DEFAULT_TIMER_SCRAMBLE_SOURCE);
   const [scrambleHistory, setScrambleHistory] = useState<ScrambleHistory<MobileScrambleHistoryEntry>>({
     list: [],
     idx: -1,
@@ -542,7 +542,6 @@ export function App({ host, loadingMark }: { host: InstalledAppHost; loadingMark
   historyDetailRef.current = historyDetail;
   const closeDeviceOverlayRef = useRef<() => void>(() => {});
   const [openOverlay, setOpenOverlay] = useState<TimerOverlayId | null>(null);
-  const [moreOpen, setMoreOpen] = useState(false);
   const [fullscreen, setFullscreen] = useState(false);
   const fullscreenRef = useRef(fullscreen);
   const [manualEntryOpen, setManualEntryOpen] = useState(false);
@@ -620,7 +619,6 @@ export function App({ host, loadingMark }: { host: InstalledAppHost; loadingMark
   const solverDismissRef = useRef<(() => boolean) | null>(null);
   const registerSolverDismiss = useCallback((dismiss: (() => boolean) | null) => { solverDismissRef.current = dismiss; }, []);
   const wcaMarksOverlayIdentityRef = useRef<string | null>(null);
-  const moreOpenRef = useRef(moreOpen);
   const manualEntryOpenRef = useRef(manualEntryOpen);
   const printControllerRef = useRef<TimerPrintControllerHandle>(null);
   const surfaceRef = useRef<HTMLDivElement>(null);
@@ -982,7 +980,6 @@ export function App({ host, loadingMark }: { host: InstalledAppHost; loadingMark
   timerModeRef.current = timerMode;
   battleModeActiveRef.current = battleModeActive;
   openOverlayRef.current = openOverlay;
-  moreOpenRef.current = moreOpen;
   manualEntryOpenRef.current = manualEntryOpen;
   fullscreenRef.current = fullscreen;
 
@@ -2276,7 +2273,6 @@ export function App({ host, loadingMark }: { host: InstalledAppHost; loadingMark
         fullscreen: fullscreenRef.current,
         historyCompareMode: false,
         manualEntryOpen: manualEntryOpenRef.current,
-        moreOpen: moreOpenRef.current,
         mutationBusy: timerContextMutationBusyRef.current,
         overlayOpen: openOverlayRef.current !== null || solverBlockingRef.current,
         phase: timerPhaseRef.current,
@@ -2301,10 +2297,6 @@ export function App({ host, loadingMark }: { host: InstalledAppHost; loadingMark
       }
       if (action === 'close-history-compare') {
         historyWorkspaceRef.current?.dismiss();
-        return;
-      }
-      if (action === 'close-more') {
-        setMoreOpen(false);
         return;
       }
       if (action === 'close-manual-entry') {
@@ -2587,7 +2579,6 @@ export function App({ host, loadingMark }: { host: InstalledAppHost; loadingMark
     enabled: view !== 'settings' && timerVisible
       && timerMode === 1
       && timingEnabled
-      && !moreOpen
       && !manualEntryOpen
       && !timerOverlayBlocking
       && !timerContextMutationBusy,
@@ -2844,7 +2835,7 @@ export function App({ host, loadingMark }: { host: InstalledAppHost; loadingMark
     enabled: view !== 'settings' && timerVisible && timerMode === 1 && smartCube.phase === 'connected' && timingEnabled
       && !trainingTimingMode()
       && attemptCanStart
-      && !moreOpen && !manualEntryOpen && !timerOverlayBlocking
+      && !manualEntryOpen && !timerOverlayBlocking
       && (timer.machine.phase === 'idle' || timer.machine.phase === 'inspecting' || timer.machine.phase === 'stopped')
       && !timerContextMutationBusy
       && (store?.settings.bluetoothAutoReady === 'still' || store?.settings.bluetoothAutoReady === 'double-flick'),
@@ -3025,8 +3016,8 @@ export function App({ host, loadingMark }: { host: InstalledAppHost; loadingMark
   }, [connectSmartCube, scanSmartCubes, smartCube]);
 
   useEffect(() => {
-    metronome.setMetronomeHold('timer', timerMode === 1 && !!store?.settings.metronomeOn
-      && (timer.machine.phase === 'inspecting' || timer.machine.phase === 'running'));
+    metronome.setMetronomeHold('timer', timerMode === 1
+      && timerMetronomeActive(timer.machine.phase, !!store?.settings.metronomeOn));
   }, [metronome, store?.settings.metronomeOn, timer.machine.phase, timerMode]);
 
   const displayMs = timer.machine.phase === 'running'
@@ -3317,12 +3308,20 @@ export function App({ host, loadingMark }: { host: InstalledAppHost; loadingMark
     updateSettings(next);
   }, [announce, copy.finishAttemptFirst, invalidateCurrentScramble, sourceControlsEnabled, updateSettings]);
 
-  const updateManualScrambles = useCallback((value: string) => {
-    if (!sourceControlsEnabled) {
+  const updateManualScrambles = useCallback((value: string, selectManualSource = false) => {
+    if (!sourceControlsEnabled || (selectManualSource && !canSwitchScramble())) {
       announce(copy.finishAttemptFirst);
       return;
     }
-    if (manualScramblesRef.current === value) return;
+    const sourceChanged = selectManualSource && scrambleSourceRef.current !== 'manual';
+    if (sourceChanged) {
+      scrambleSourceRef.current = 'manual';
+      setScrambleSource('manual');
+    }
+    if (manualScramblesRef.current === value) {
+      if (sourceChanged) invalidateCurrentScramble();
+      return;
+    }
     const revision = storeSnapshotGateRef.current.beginMutation();
     manualSourceRevisionRef.current = advanceTimerSourceRevision(
       manualSourceRevisionRef.current,
@@ -3340,7 +3339,7 @@ export function App({ host, loadingMark }: { host: InstalledAppHost; loadingMark
       void recoverLatestStoreSnapshot(revision).catch(() => undefined);
       announce(copy.actionFailed);
     });
-  }, [announce, applyStoreSnapshot, copy.actionFailed, copy.finishAttemptFirst, invalidateCurrentScramble, recoverLatestStoreSnapshot, sourceControlsEnabled]);
+  }, [announce, applyStoreSnapshot, canSwitchScramble, copy.actionFailed, copy.finishAttemptFirst, invalidateCurrentScramble, recoverLatestStoreSnapshot, sourceControlsEnabled]);
 
   const selectTimerEvent = useCallback((id: string) => {
     const nextEvent = timerEventIdFromSelector(id);
@@ -3675,7 +3674,6 @@ export function App({ host, loadingMark }: { host: InstalledAppHost; loadingMark
     const file = event.target.files?.[0];
     event.target.value = '';
     if (!file) return;
-    setMoreOpen(false);
     if (file.size > MAX_TIMER_BACKUP_BYTES) {
       announce(copy.importTooLarge);
       return;
@@ -3837,7 +3835,6 @@ export function App({ host, loadingMark }: { host: InstalledAppHost; loadingMark
       || !timerVisibleRef.current
       || (openOverlayRef.current !== null && openOverlayRef.current !== TIMER_OVERLAY_IDS.stageSolver)
       || solverBlockingRef.current || statsOpenRef.current || historyModalOpenRef.current || replayBlockingRef.current
-      || moreOpenRef.current
       || manualEntryOpenRef.current,
       openOverlayRef.current === TIMER_OVERLAY_IDS.stageSolver
     );
@@ -3970,7 +3967,6 @@ export function App({ host, loadingMark }: { host: InstalledAppHost; loadingMark
       && view !== 'settings'
       && timerVisible
       && !timerOverlayBlocking
-      && !moreOpen
       && !manualEntryOpen,
     surfaceRef,
     canGesture: () => timerCanUseGestureWheel(timerPhaseRef.current),
@@ -4086,6 +4082,7 @@ export function App({ host, loadingMark }: { host: InstalledAppHost; loadingMark
     <StageSolverDialog scramble={scramble} language={language}
       sheetOpen={openOverlay === TIMER_OVERLAY_IDS.stageSolver} onSheetOpenChange={changeSolverSheet}
       onDismissChange={registerSolverDismiss} onBlockingChange={setSolverBlocking} autoOpenOnSolve={solverOpenRequest}
+      onScrambleChange={sourceControlsEnabled && timerCanSwitchScramble(timer.machine.phase) ? value => updateManualScrambles(value, true) : undefined}
       autoCollapseOnReady={timer.machine.phase === 'ready' && smartCube.phase === 'connected'}
       onPrevScramble={previousDisplayedScramble} onNextScramble={nextDisplayedScramble} />
   </Suspense> : null;
@@ -4168,104 +4165,92 @@ export function App({ host, loadingMark }: { host: InstalledAppHost; loadingMark
           onDismissChange: registerToolDismiss
         }} title={copy.timer}
         topbar={{
-          actions: (
-                <>
-                  <TimerMoreMenu
-                    items={moreItems}
-                    onOpenChange={setMoreOpen}
-                    open={moreOpen}
-                    triggerClassName="timer-toolbar-icon"
-                    triggerDisabled={timer.machine.phase === 'running' || timerContextMutationBusy}
-                    triggerLabel={copy.more}
-                    viewportBottomInset={primaryNavBottomInset}
-                  />
-                </>
-              ),
+          availableTopBar: hostViewport?.topBar,
           controls: (
                 <>
                   <TimerLiveShareStatus controller={liveShare} language={language} />
                   {smartCubeDeviceCenter}
-                  <TimerPuzzlePicker
-                    showArrow={false}
-                    combineScrambleTypes
-                    dataNoTimer
-                    disabled={timer.machine.phase === 'running' || timerContextMutationBusy}
-                    groups={eventPickerGroups}
-                    onOpenChange={handleTimerOverlayOpenChange}
-                    onSelect={id => {
-                      if (id === '222') updateScramble222Type('full');
-                      selectTimerEvent(id);
+                  <TimerSoloControls
+                    project={<TimerPuzzlePicker
+                        showArrow={false}
+                        combineScrambleTypes
+                        dataNoTimer
+                        disabled={timer.machine.phase === 'running' || timerContextMutationBusy}
+                        groups={eventPickerGroups}
+                        onOpenChange={handleTimerOverlayOpenChange}
+                        onSelect={id => {
+                          if (id === '222') updateScramble222Type('full');
+                          selectTimerEvent(id);
+                        }}
+                        open={openOverlay === TIMER_OVERLAY_IDS.puzzlePicker}
+                        puzzleLabel={copy.puzzle}
+                        scrambleTypeLabel={copy.scrambleType}
+                        selectedEvent={activeEvent}
+                      />}
+                    content={<TimerPracticeContentPicker entries={practiceContents} selectedId={practiceContent?.id}
+                        label={practiceContent?.title[language] ?? (language === 'zh' ? '请选择' : 'Choose content')}
+                        disabled={!sourceControlsEnabled} language={language} onSelect={choosePracticeContent}
+                        open={openOverlay === TIMER_OVERLAY_IDS.practiceContent} onOpenChange={handleTimerOverlayOpenChange} />}
+                    method={practiceContent && (practiceContent.runPath || practiceContent.recognizePath) && <TimerPracticeMethodPicker
+                        value="train" recall={!!practiceContent.runPath} recognize={!!practiceContent.recognizePath}
+                        disabled={!sourceControlsEnabled} language={language}
+                        open={openOverlay === TIMER_OVERLAY_IDS.practiceMethod}
+                        onOpenChange={open => handleTimerOverlayOpenChange(open, { id: TIMER_OVERLAY_IDS.practiceMethod, reason: 'trigger' })}
+                        onChange={method => { if (method !== 'train') openPractice(practiceContent, method); }} />}
+                    source={<TimerScrambleSourceSelect
+                        showArrow={false}
+                        language={language}
+                        trainingItems={practiceContent?.selectPath ? [{ value: 'cases', label: language === 'zh' ? '选定情况' : 'Selected cases' }] : []}
+                        onTrainingChange={() => { if (practiceContent) openPractice(practiceContent, 'train', true); }}
+                        className="shell-scramble-source-select"
+                        disabled={!sourceControlsEnabled}
+                        labels={{
+                          ariaLabel: copy.scrambleSource,
+                          real: copy.real,
+                          realOption: copy.realOption,
+                          random: copy.random,
+                          randomOption: copy.randomOption,
+                          manual: copy.manual,
+                          manualOption: copy.manualOption,
+                        }}
+                        onChange={(source) => {
+                          if (!sourceControlsEnabled) {
+                            announce(copy.finishAttemptFirst);
+                            return;
+                          }
+                          if (source === scrambleSourceRef.current) return;
+                          invalidateCurrentScramble();
+                          setScrambleSource(source);
+                        }}
+                        onOpenChange={handleTimerOverlayOpenChange}
+                        open={openOverlay === TIMER_OVERLAY_IDS.scrambleSource}
+                        popupClassName="shell-scramble-source-popup"
+                        realAvailable={timerSupportsRealWcaScrambles(activeEvent)}
+                        realMenuContent={<div ref={setWcaSourceSlot} />}
+                        realValue="wca"
+                        triggerClassName="shell-players-select"
+                        value={scrambleSource}
+                      />}
+                    afterSource={<span
+                        className="mobile-wca-shared-controls"
+                        data-no-timer
+                        ref={setWcaDifficultyToggleSlot}
+                      />}
+                    layout={{
+                      label: { en: 'Edit layout', zh: '调整布局' }[language],
+                      editing: layoutEditing,
+                      disabled: !layoutEditing && (timer.machine.phase !== 'idle' && timer.machine.phase !== 'stopped' || timerContextMutationBusy),
+                      onToggle: () => {
+                        if (layoutEditing) finishLayoutEditing();
+                        else { layoutEditingRef.current = true; setLayoutEditing(true); }
+                      },
                     }}
-                    open={openOverlay === TIMER_OVERLAY_IDS.puzzlePicker}
-                    puzzleLabel={copy.puzzle}
-                    scrambleTypeLabel={copy.scrambleType}
-                    selectedEvent={activeEvent}
-                  />
-                  <TimerPracticeContentPicker entries={practiceContents} selectedId={practiceContent?.id}
-                    label={practiceContent?.title[language] ?? (language === 'zh' ? '请选择' : 'Choose content')}
-                    disabled={!sourceControlsEnabled} language={language} onSelect={choosePracticeContent}
-                    open={openOverlay === TIMER_OVERLAY_IDS.practiceContent} onOpenChange={handleTimerOverlayOpenChange} />
-                  {practiceContent && (practiceContent.runPath || practiceContent.recognizePath) && <TimerPracticeMethodPicker
-                    value="train" recall={!!practiceContent.runPath} recognize={!!practiceContent.recognizePath}
-                    disabled={!sourceControlsEnabled} language={language}
-                    open={openOverlay === TIMER_OVERLAY_IDS.practiceMethod}
-                    onOpenChange={open => handleTimerOverlayOpenChange(open, { id: TIMER_OVERLAY_IDS.practiceMethod, reason: 'trigger' })}
-                    onChange={method => { if (method !== 'train') openPractice(practiceContent, method); }} />}
-                  <TimerScrambleSourceSelect
-                    showArrow={false}
-                    language={language}
-                    trainingItems={practiceContent?.selectPath ? [{ value: 'cases', label: language === 'zh' ? '选定情况' : 'Selected cases' }] : []}
-                    onTrainingChange={() => { if (practiceContent) openPractice(practiceContent, 'train', true); }}
-                    className="shell-scramble-source-select"
-                    disabled={!sourceControlsEnabled}
-                    labels={{
-                      ariaLabel: copy.scrambleSource,
-                      real: copy.real,
-                      realOption: copy.realOption,
-                      random: copy.random,
-                      randomOption: copy.randomOption,
-                      manual: copy.manual,
-                      manualOption: copy.manualOption,
+                    settings={{
+                      label: copy.settings,
+                      disabled: timer.machine.phase === 'running' || timerContextMutationBusy,
+                      onOpen: () => { setSettingsCategory('timer'); setView('settings'); },
                     }}
-                    onChange={(source) => {
-                      if (!sourceControlsEnabled) {
-                        announce(copy.finishAttemptFirst);
-                        return;
-                      }
-                      if (source === scrambleSourceRef.current) return;
-                      invalidateCurrentScramble();
-                      setScrambleSource(source);
-                    }}
-                    onOpenChange={handleTimerOverlayOpenChange}
-                    open={openOverlay === TIMER_OVERLAY_IDS.scrambleSource}
-                    popupClassName="shell-scramble-source-popup"
-                    realAvailable={timerSupportsRealWcaScrambles(activeEvent)}
-                    realMenuContent={<div ref={setWcaSourceSlot} />}
-                    realValue="wca"
-                    triggerClassName="shell-players-select"
-                    value={scrambleSource}
                   />
-                  <span
-                    className="mobile-wca-shared-controls"
-                    data-no-timer
-                    ref={setWcaDifficultyToggleSlot}
-                  />
-                  <button type="button" className="timer-toolbar-icon solo-layout-toggle" data-no-timer
-                    aria-label={language === 'zh' ? '调整布局' : 'Edit layout'} aria-pressed={layoutEditing}
-                    disabled={!layoutEditing && (timer.machine.phase !== 'idle' && timer.machine.phase !== 'stopped' || timerContextMutationBusy)}
-                    onClick={() => {
-                      if (layoutEditing) finishLayoutEditing();
-                      else { layoutEditingRef.current = true; setLayoutEditing(true); }
-                    }}><LayoutTemplate size={18} strokeWidth={1.6} /></button>
-                  <button
-                    aria-label={copy.settings}
-                    className="timer-toolbar-icon settings-popover-trigger"
-                    data-no-timer
-                    disabled={timer.machine.phase === 'running' || timerContextMutationBusy}
-                    onClick={() => { setSettingsCategory('timer'); setView('settings'); }}
-                    type="button"
-                  ><SettingsIcon aria-hidden="true" size={17} /></button>
-
                 </>
               )}}
         stage={{
@@ -4448,7 +4433,7 @@ cornerSlot: smartCube.phase === 'connected' || smartCubeAttemptDeviceRef.current
                       quatRef={store!.settings.gyroEnabled ? smartCubeQuatRef : undefined}
                     />
                   </div>
-                ) : store!.settings.showCubePreview && scrambleReady && scramble.length > 0 ? (
+                ) : store!.settings.showCubePreview && !store!.settings.soloLayout.hideCubePreview && scrambleReady && scramble.length > 0 ? (
                   <TimerCubePreview
                     ariaLabel={copy.cubeState}
                     event={activeEvent}
@@ -4527,7 +4512,7 @@ scrambleSlot: (
                         spec={currentScrambleEntry.trainerMeta.spec}
                       />
                     )}
-                    {currentReal && scrambleSource === 'wca' && (
+                    {currentReal && scrambleSource === 'wca' && !store!.settings.soloLayout.hideCompetitionInfo && (
                       <TimerWcaScrambleSource
                         competitionName={currentRealCompetition?.selectedDisplayName
                           ?? displayMobileWcaCompetitionName(
@@ -4903,6 +4888,7 @@ children: <>
         {view === 'settings' && (
           <TimerSettingsPanel language={language} activeCategory={settingsCategory}
             onCategoryChange={setSettingsCategory} onClose={() => setView('timer')}
+            actions={moreItems}
             playersControl={
               <TimerPlayersSelect
                 ariaLabel={copy.onePlayer}
@@ -4929,8 +4915,12 @@ children: <>
               </button>
             </div>
 
-            <TimerRankSettings language={language} scopes={store!.settings.rankScopes} country={store!.settings.rankCountry} accountCountry={rankAccountCountry} onScopes={rankScopes => updateSettings({ rankScopes })} onCountry={rankCountry => updateSettings({ rankCountry })} login={!activeAuthSession ? () => void auth.login() : undefined} />
-            <TimerTypographySettings value={store!.settings} language={language} onChange={updateSettings} />
+            <TimerSoloAppearanceSections language={language} value={store!.settings} onChange={updateSettings}
+              renderBooleanControl={({ disabled, label, onChange, value }) => (
+                <TimerPillToggle ariaLabel={label} disabled={disabled} onChange={onChange} value={value} />
+              )}
+              rankings={<TimerRankSettings language={language} scopes={store!.settings.rankScopes} country={store!.settings.rankCountry} accountCountry={rankAccountCountry} onScopes={rankScopes => updateSettings({ rankScopes })} onCountry={rankCountry => updateSettings({ rankCountry })} login={!activeAuthSession ? () => void auth.login() : undefined} />}
+            />
 
             </>}
             <TimerTimingSettingsSections active={settingsCategory === 'timer'}
@@ -4949,6 +4939,8 @@ children: <>
               value={store!.settings}
             />
 
+            {settingsCategory === 'timer' && <TimerSoloResultSettings language={language}
+              columns={store!.settings.statsRollingColumns} onColumnsChange={statsRollingColumns => updateSettings({ statsRollingColumns })} />}
             {settingsCategory === 'smart-cube' && <>
               <TimerSmartCubeSettingsFields
                 localize={(value) => value[language]}
@@ -5039,29 +5031,6 @@ children: <>
 
             {settingsCategory === 'training' && <TimerRoundSettings value={store!.settings} onChange={patch => updateSettings(current => ({ round: { ...current.round, ...patch } }))} localize={value => value[language]} />}
 
-            {settingsCategory === 'appearance' && <>
-            <section className="settings-section">
-              <h2>{TIMER_SETTING_CATEGORY_CONTRACTS.find((category) => (
-                category.id === 'appearance'
-              ))?.label[language]}</h2>
-              <TimerDisplaySettings value={store!.settings} onChange={updateSettings} localize={value => value[language]} renderBooleanControl={({ disabled, label, onChange, value }) => (<TimerPillToggle value={value} onChange={onChange} disabled={disabled} ariaLabel={label} />)}>
-              <TimerScramblePreviewSettings
-                localize={(value) => value[language]}
-                onChange={updateSettings}
-                renderBooleanControl={({ disabled, label, onChange, value }) => (
-                  <TimerPillToggle
-                    ariaLabel={label}
-                    disabled={disabled}
-                    onChange={onChange}
-                    value={value}
-                  />
-                )}
-                value={store!.settings}
-              />
-              </TimerDisplaySettings>
-            </section>
-
-            </>}
             {settingsCategory === 'sound' && <TimerSoundSettings value={store!.settings} onChange={updateSettings} localize={value => value[language]} voiceAvailable={timerSound.isVoiceAvailable()} onWarmup={timerSound.warmupSound} onPreview={() => timerSound.play('start')} />}
             {settingsCategory === 'sound' && <TimerMetronomeSettings value={store!.settings} bpm={store!.settings.metronomeBpm} onChange={updateSettings} onBpmChange={metronomeBpm => updateSettings({ metronomeBpm })} onTap={metronome.tapTempo} onWarmup={timerSound.warmupSound} onPreviewBeep={timerSound.playInspectionBeep} localize={value => value[language]} />}
             {settingsCategory === 'training' && (activeEvent === 'oll' || activeEvent === 'pll') && <button type="button" className="hint-btn" disabled={!sourceControlsEnabled} onClick={() => setTrainerSubsetOpen(activeEvent)}>{{ en: 'Pick training subset', zh: '选择训练子集' }[language]}</button>}
@@ -5193,7 +5162,8 @@ children: <>
         {layoutEditing && store && <TimerSoloLayoutEditor surfaceRef={surfaceRef}
           contentKey={`${scramble}:${store.settings.showCubePreview}:${smartCube.phase}`}
           getSettings={() => storeRef.current!.settings} updateSettings={updateSettings}
-          language={language} onDone={finishLayoutEditing} />}
+          language={language} onDone={finishLayoutEditing}
+          hideableRegions={smartCube.phase === 'connected' || smartCubeAttemptDeviceRef.current ? ['sourceGap'] : ['sourceGap', 'cubeGap']} />}
       </TimerWorkspace>
 
       {replayImportOpen && <TimerReplayImportModal language={language} onClose={() => setReplayImportOpen(false)}
@@ -5261,6 +5231,7 @@ children: <>
         style={sideNavigation && hostViewport?.bar ? { left: hostViewport.bar.x, top: hostViewport.bar.y,
           width: hostViewport.bar.width, height: Math.min(hostViewport.bar.height, Math.max(0, viewportHeight - hostViewport.bar.y)) } : undefined}>
         <button
+          aria-label={copy.timer}
           aria-current={selectedView === 'timer' || selectedView === 'history' || selectedView === 'settings' ? 'page' : undefined}
           data-no-timer
           disabled={timerContextMutationBusy}
@@ -5268,9 +5239,10 @@ children: <>
           type="button"
         >
           <Clock3 aria-hidden="true" size={20} />
-          <span>{copy.timer}</span>
+          {wideLayout && !sideNavigation && <span>{copy.timer}</span>}
         </button>
         <button
+          aria-label={copy.tools}
           aria-current={selectedView === 'tools' ? 'page' : undefined}
           data-no-timer
           disabled={timer.machine.phase === 'running' || timerContextMutationBusy}
@@ -5278,9 +5250,10 @@ children: <>
           type="button"
         >
           <Grid2X2 aria-hidden="true" size={20} />
-          <span>{copy.tools}</span>
+          {wideLayout && !sideNavigation && <span>{copy.tools}</span>}
         </button>
         <button
+          aria-label={copy.my}
           aria-current={selectedView === 'account' ? 'page' : undefined}
           data-no-timer
           disabled={timer.machine.phase === 'running' || timerContextMutationBusy}
@@ -5288,7 +5261,7 @@ children: <>
           type="button"
         >
           <UserRound aria-hidden="true" size={20} />
-          <span>{copy.my}</span>
+          {wideLayout && !sideNavigation && <span>{copy.my}</span>}
         </button>
       </nav>
 

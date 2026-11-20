@@ -11,7 +11,9 @@ import {
   timerEventSelectorId,
 } from './event-catalog';
 import type { EventId } from './types';
-import { trimmedMean } from './stats';
+import type { TimerHttpFetch, TimerHttpRequest, TimerHttpResponse } from './http';
+import { trimmedMean, formatMs } from './stats';
+import { displayCuberName } from '../cuber_name_display';
 
 export const NET_BATTLE_TOKEN_HEADER = 'X-Battle-Token';
 export const NET_BATTLE_ROOM_CODE_LENGTH = 4;
@@ -195,7 +197,7 @@ export interface NetRoomState {
 
 export interface NetBattleClientOptions {
   apiUrl(path: string): string;
-  fetcher?: typeof fetch;
+  fetcher?: TimerHttpFetch;
 }
 
 export interface NetAdmissionGate {
@@ -255,7 +257,7 @@ export interface NetBattleClient {
   leaveNetRoom(code: string, credentials: NetBattleCredentials): Promise<void>;
 }
 
-async function responseError(response: Response): Promise<Error> {
+async function responseError(response: TimerHttpResponse): Promise<Error> {
   const payload = await response.json().catch(() => ({}));
   if (response.status >= 500) return new Error(`HTTP ${response.status}`);
   return new Error(isRecord(payload) && typeof payload.error === 'string' ? payload.error : `HTTP ${response.status}`);
@@ -265,7 +267,7 @@ async function responseError(response: Response): Promise<Error> {
 export function createNetBattleClient(options: NetBattleClientOptions): NetBattleClient {
   const request = options.fetcher ?? fetch;
 
-  async function requestWithTimeout(input: string, init: RequestInit = {}): Promise<Response> {
+  async function requestWithTimeout(input: string, init: TimerHttpRequest = {}): Promise<TimerHttpResponse> {
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), NET_BATTLE_REQUEST_TIMEOUT_MS);
     try {
@@ -280,7 +282,7 @@ export function createNetBattleClient(options: NetBattleClientOptions): NetBattl
     return `/v1/battle/rooms/${code}${suffix}`;
   }
 
-  async function readState(response: Response): Promise<NetRoomState> {
+  async function readState(response: TimerHttpResponse): Promise<NetRoomState> {
     return decodeNetRoomState(await response.json());
   }
 
@@ -402,7 +404,9 @@ export function netErrorMessage(error: unknown): { zh: string; en: string } {
   if (message === 'not admin') return { zh: '你已不是房主了', en: 'You are no longer the host' };
   if (message === 'player not in room') return { zh: 'TA 已经不在房间里了', en: 'That player is no longer in the room' };
   if (message === 'invalid player capability') return { zh: '房间身份已失效，请重新加入', en: 'Your room session expired — rejoin the room' };
-  if (error instanceof DOMException && error.name === 'AbortError') return { zh: '请求超时，请检查网络后重试', en: 'Request timed out — check your connection and retry' };
+  if (error instanceof Error && error.name === 'AbortError' || message === 'request timed out' || message === 'request cancelled') {
+    return { zh: '请求超时，请检查网络后重试', en: 'Request timed out — check your connection and retry' };
+  }
   if (/HTTP 404/.test(message)) return { zh: '联机服务暂不可用,请稍后重试', en: 'Online service is unavailable — please try again later' };
   if (/HTTP 5\d\d/.test(message)) return { zh: '服务器开小差了,请稍后重试', en: 'Server error — please try again later' };
   if (/failed to fetch|networkerror|load failed/i.test(message)) return { zh: '网络连接失败,请检查网络', en: 'Network error — check your connection' };
@@ -809,4 +813,47 @@ export function decodeNetRoomState(value: unknown): NetRoomState {
     startAt: value.startAt as number | null,
     now: value.now,
   };
+}
+
+export const TIMER_ROOM_LOBBY_COPY = {
+  en: { title: 'Online battle', create: 'Create room', code: 'Room code', or: 'or enter', joining: 'Joining room…', retry: 'Retry', own: 'Create my own room', exit: 'Exit online mode' },
+  zh: { title: '联机对战', create: '创建房间', code: '房间码', or: '或输入', joining: '正在进入房间…', retry: '重试', own: '创建自己的房间', exit: '退出联机' },
+};
+
+export const TIMER_ROOM_TOOLBAR_COPY = {
+  en: { round: 'Round', room: 'Room', sync: 'Synchronized start', code: 'Copy room code', invite: 'Copy invite link', copiedCode: 'Room code copied', copiedInvite: 'Invite link copied', qr: 'Room QR code', history: 'Scramble history and results', admin: 'Room settings', leave: 'Leave room' },
+  zh: { round: '轮次', room: '房间', sync: '同时开始计时', code: '复制房间码', invite: '复制邀请链接', copiedCode: '已复制房间码', copiedInvite: '已复制邀请链接', qr: '房间二维码', history: '历史打乱与战绩', admin: '房间管理', leave: '离开房间' },
+};
+
+export const TIMER_ROOM_ROUND_STATUS_COPY = {
+  en: { ready: "I'm ready", cancel: 'Cancel ready', skip: 'Skip waiting — next round', next: 'Next round', noResult: 'No valid result this round', pending: (n: number) => `Waiting for others to finish (${n} left)…`, waiting: (n: number) => `Waiting for others to get ready (${n} left)…`, sync: 'A 3s countdown begins once everyone is ready', auto: 'Auto-ready is off during a synchronized start. Tap ready; the cube stops the timer when solved.', spectator: 'This round has started. You can watch and join the next round.', countdown: 'Starting together — get ready!' },
+  zh: { ready: '我准备好了', cancel: '取消准备', skip: '不等了，直接开下一轮', next: '下一轮', noResult: '本轮无有效成绩', pending: (n: number) => `等待其他玩家完成（还差 ${n} 人）…`, waiting: (n: number) => `等其他人准备（还差 ${n} 人）…`, sync: '全员准备后，3 秒倒计时一起开始', auto: '同时起表期间不自动预备，请手动准备；魔方还原时停表。', spectator: '本轮已经开始，你可以旁观并等待下一轮', countdown: '一起起表，准备！' },
+};
+
+export const TIMER_ROOM_ADMIN_COPY = {
+  en: { title: 'Room settings', sync: 'Synchronized start', me: '(me)', host: 'Host', transfer: 'Make host', kick: 'Remove', confirm: 'Confirm removal', confirmTransfer: 'Confirm host transfer' },
+  zh: { title: '房间管理', sync: '同时开始计时', me: '（我）', host: '房主', transfer: '设为房主', kick: '移出房间', confirm: '确认移出', confirmTransfer: '确认转让房主' },
+};
+
+export const TIMER_ROOM_PLAYERS_COPY = {
+  en: { players: 'Players', me: '(me)', host: 'Host', score: 'Score', view: 'View cube', rename: 'Change name', offline: 'Offline', ready: 'Ready', inspecting: 'Inspecting', waiting: 'Waiting to start' },
+  zh: { players: '玩家', me: '（我）', host: '房主', score: '得分', view: '查看魔方', rename: '改名', offline: '离线', ready: '已准备', inspecting: '观察中', waiting: '待开始' },
+};
+
+export function timerRoomPlayerName(player: { name: string; wcaId?: string }, language: 'en' | 'zh'): string {
+  if (!player.wcaId) return player.name;
+  const base = player.name.replace(/ \(\d+\)$/, '');
+  return displayCuberName(base, language === 'zh') + player.name.slice(base.length);
+}
+
+export const TIMER_ROOM_HISTORY_COPY = {
+  en: { title: 'Scramble history and results', player: 'Player', wins: 'Wins', best: 'Best', mean: 'Mean', history: 'Scramble history', round: 'Round', live: 'In progress', noScramble: 'No scramble', unknown: 'Former player', cube: 'Scramble preview' },
+  zh: { title: '历史打乱与战绩', player: '选手', wins: '胜场', best: '最佳', mean: '平均', history: '历史打乱', round: '轮次', live: '进行中', noScramble: '打乱未生成', unknown: '已离开玩家', cube: '打乱预览' },
+};
+
+export function formatNetHistoryStat(value: number | null, precision: 0 | 1 | 2 | 3) {
+  return value === null ? '—' : !Number.isFinite(value) ? 'DNF' : formatMs(value, precision);
+}
+export function formatNetHistoryResult(result: NetResult | undefined, precision: 0 | 1 | 2 | 3) {
+  return !result ? '—' : result.p === 'dnf' ? 'DNF' : formatMs(effectiveNetMs(result), precision) + (result.p === '+2' ? '+' : '');
 }

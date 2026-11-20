@@ -4,7 +4,7 @@ import { useDouyinToolSurface } from '@/lib/douyin-content';
 import { DOUYIN_BASIC_TIMER_EVENTS } from '@cuberoot/shared/douyin-content';
 
 import { useMemo, type ReactNode } from 'react';
-import { Settings } from '@app-foundation/icons/lucide';
+import { TimerSoloControls, type TimerSoloControlsProps } from '@cuberoot/timer-ui/TimerSoloPage';
 import { TimerPracticeMethodPicker, TimerPracticeContentPicker, TimerPuzzlePicker } from '@cuberoot/timer-ui';
 import { TIMER_EVENT_PICKER_GROUPS, timerEventIdFromSelector, type EventId } from '@cuberoot/shared/timer';
 import { useTimerSearchParams as useSearchParams } from '@/lib/timer-practice-url-adapter';
@@ -24,7 +24,7 @@ import { selectSessionForEvent } from '../_lib/storage/db';
 type PracticeMethod = 'train' | 'memo' | 'recognize';
 
 /** One content identity, with existing timer/trainer engines as its practice methods. */
-export default function TimerTrainingMenu({ currentEvent, disabled = false, showProject = false, onTimerEventChange, sourceControl, onAdvancedSettings, beforeSettings }: {
+export default function TimerTrainingMenu({ currentEvent, disabled = false, showProject = false, onTimerEventChange, sourceControl, onAdvancedSettings, beforeSettings, layout }: {
   currentEvent?: string;
   disabled?: boolean;
   showProject?: boolean;
@@ -32,6 +32,7 @@ export default function TimerTrainingMenu({ currentEvent, disabled = false, show
   sourceControl?: (onSelectCases?: () => void) => ReactNode;
   onAdvancedSettings?: () => void;
   beforeSettings?: ReactNode;
+  layout?: TimerSoloControlsProps['layout'];
 }) {
   const douyin = useDouyinToolSurface();
   const [training] = useQueryState('training');
@@ -105,8 +106,13 @@ export default function TimerTrainingMenu({ currentEvent, disabled = false, show
     void setNavigation(next);
   };
 
-  if (douyin) return <>
-    <TimerPuzzlePicker showArrow={false} disabled={disabled} dataNoTimer
+  const settingsControl = onAdvancedSettings && {
+    label: tr({ zh: '设置', en: 'Settings' }),
+    onOpen: onAdvancedSettings,
+  };
+
+  if (douyin) return <TimerSoloControls
+    project={<TimerPuzzlePicker showArrow={false} disabled={disabled} dataNoTimer
       puzzleLabel={tr({ zh: '项目', en: 'Puzzle' })} selectedEvent={event}
       groups={TIMER_EVENT_PICKER_GROUPS.map(group => ({
         id: group.id, label: tr({ zh: group.nameZh, en: group.nameEn }),
@@ -115,11 +121,11 @@ export default function TimerTrainingMenu({ currentEvent, disabled = false, show
         })),
       })).filter(group => group.items.length > 0)}
       onSelect={id => { const next = timerEventIdFromSelector(id); if (next && DOUYIN_BASIC_TIMER_EVENTS.includes(next)) onTimerEventChange?.(next); }}
-    />
-    {beforeSettings}
-    {onAdvancedSettings && <button type="button" className="settings-popover-trigger" data-no-timer
-      aria-label={tr({ zh: '设置', en: 'Settings' })} onClick={onAdvancedSettings}><Settings size={18} /></button>}
-  </>;
+    />}
+    afterSource={beforeSettings}
+    layout={layout}
+    settings={settingsControl}
+  />;
 
   const startTimer = (entry: TimerPracticeContent, sameContent = true, source?: 'random' | 'manual') => {
     if (!entry.timer) return;
@@ -207,8 +213,8 @@ export default function TimerTrainingMenu({ currentEvent, disabled = false, show
     </>}
   </span>;
 
-  return <>
-    {(showProject || training) && <span className="timer-practice-control">
+  return <TimerSoloControls
+    project={(showProject || training) && <span className="timer-practice-control">
       <TimerPuzzlePicker
         showArrow={false}
         disabled={navigationDisabled} puzzleLabel={tr({ zh: '项目', en: 'Puzzle' })}
@@ -225,19 +231,14 @@ export default function TimerTrainingMenu({ currentEvent, disabled = false, show
         }}
       />
     </span>}
-    <TimerPracticeContentPicker entries={contents} selectedId={content?.id} label={contentLabel}
-      disabled={navigationDisabled} language={tr({ en: 'en', zh: 'zh' }) as 'en' | 'zh'} onSelect={chooseContent} />
-    {hasPractice && !fixedPracticeMethod && (content?.runPath || content?.recognizePath) && <TimerPracticeMethodPicker
+    content={<TimerPracticeContentPicker entries={contents} selectedId={content?.id} label={contentLabel}
+      disabled={navigationDisabled} language={tr({ en: 'en', zh: 'zh' }) as 'en' | 'zh'} onSelect={chooseContent} />}
+    method={hasPractice && !fixedPracticeMethod && (content?.runPath || content?.recognizePath) && <TimerPracticeMethodPicker
       value={method} recall={!!content.runPath} recognize={!!content.recognizePath} disabled={navigationDisabled}
       language={tr({ en: 'en', zh: 'zh' }) as 'en' | 'zh'} onChange={chooseMethod} />}
-    {practiceSource}
-    {beforeSettings}
-    {practiceSource && !isRun && onAdvancedSettings && <>
-      <button type="button" className="settings-popover-trigger" data-no-timer
-        aria-label={tr({ zh: '设置', en: 'Settings' })} aria-haspopup="dialog"
-        onClick={onAdvancedSettings}>
-        <Settings size={18} aria-hidden="true" />
-      </button>
-    </>}
-  </>;
+    source={practiceSource}
+    afterSource={beforeSettings}
+    layout={layout}
+    settings={practiceSource && !isRun ? settingsControl : undefined}
+  />;
 }

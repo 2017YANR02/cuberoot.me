@@ -1,4 +1,4 @@
-import { createExternalTimerBus, type ExternalTimerSource, type ExternalTimerEvent, type ExternalTimerKind, type ExternalTimerState } from '@cuberoot/shared/timer/external/types';
+import { createBluetoothTimerReconnect, createExternalTimerBus, type ExternalTimerSource, type ExternalTimerEvent, type ExternalTimerKind, type ExternalTimerState } from '@cuberoot/shared/timer/external/types';
 import { GAN_TIMER_SERVICE, GAN_TIMER_STATE_CHAR, GAN_TIMER_NAME_PREFIXES } from '@cuberoot/shared/timer/external/gan';
 import { QIYI_TIMER_SERVICE, QIYI_TIMER_READ_CHAR, QIYI_TIMER_WRITE_CHAR, QIYI_TIMER_NAME_PREFIXES } from '@cuberoot/shared/timer/external/qiyi';
 import { startGanTimer, startQiyiTimer } from '@cuberoot/shared/timer/external/session';
@@ -20,7 +20,7 @@ export function createNativeTimerSource(transport: BleTransport, labels: BleDevi
   let cleanup: (() => void) | null = null;
   let pendingScan: Promise<() => Promise<void>> | null = null;
   let cancelPick: (() => void) | null = null;
-  let retry: ReturnType<typeof setTimeout> | undefined;
+  const retry = createBluetoothTimerReconnect();
   let mac: string | null = null;
   const emit = (event: ExternalTimerEvent) => {
     state = event.state;
@@ -42,7 +42,7 @@ export function createNativeTimerSource(transport: BleTransport, labels: BleDevi
     });
     return releaseTail;
   };
-  const attach = async (picked: BleDeviceRef, token: number) => {
+  const attach = async (picked: BleDeviceRef, token: number, reconnecting = false) => {
     const ensure = () => { if (token !== generation) throw new Error('Connection cancelled'); };
     const qiyi = /^QY-(Timer|Adapter)/i.test(picked.name);
     device = picked;
@@ -50,12 +50,13 @@ export function createNativeTimerSource(transport: BleTransport, labels: BleDevi
     connecting = true;
     const lost = () => {
       if (token !== generation) return;
+      const canRetry = connected || !reconnecting;
       generation++;
       const next = generation;
       void release();
       options.onConnectionLost?.();
       emit({state: 'DISCONNECT'});
-      retry = setTimeout(() => { if (generation === next) void attach(picked, next).catch(() => {}); }, 2500);
+      if (canRetry) retry.schedule(() => { if (generation === next) void attach(picked, next, true).catch(() => {}); });
     };
     try {
       await releaseTail; ensure();
@@ -85,7 +86,7 @@ export function createNativeTimerSource(transport: BleTransport, labels: BleDevi
     subscribe: listener => bus.subscribe(listener),
     async connect() {
       if (connected || connecting) return;
-      clearTimeout(retry); const token = ++generation; connecting = true;
+      retry.cancel(); const token = ++generation; connecting = true;
       try {
         await releaseTail;
         if(token !== generation) return;
@@ -131,7 +132,7 @@ export function createNativeTimerSource(transport: BleTransport, labels: BleDevi
       } finally { if(token === generation) connecting = false; }
     },
     async disconnect() {
-      generation++; cancelPick?.(); clearTimeout(retry); const pending = release(); device = null; kind = 'unknown'; emit({state: 'DISCONNECT'}); await pending;
+      generation++; cancelPick?.(); retry.cancel(); const pending = release(); device = null; kind = 'unknown'; emit({state: 'DISCONNECT'}); await pending;
     },
   };
 }

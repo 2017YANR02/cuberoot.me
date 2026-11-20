@@ -347,7 +347,7 @@ describe('mobile scramble-source parity contract', () => {
     expect(app).toContain("const dockHistory = wideLayout && view === 'history' && timerMode === 1;");
     expect(app).toContain("const timerVisible = view === 'timer' || view === 'settings' || dockHistory;");
     expect(app).toMatch(
-      /canStart: attemptCanStart,[\s\S]*?enabled: view !== 'settings' && timerVisible\s+&& timerMode === 1\s+&& timingEnabled\s+&& !moreOpen\s+&& !manualEntryOpen\s+&& !timerOverlayBlocking\s+&& !timerContextMutationBusy/,
+      /canStart: attemptCanStart,[\s\S]*?enabled: view !== 'settings' && timerVisible\s+&& timerMode === 1\s+&& timingEnabled\s+&& !manualEntryOpen\s+&& !timerOverlayBlocking\s+&& !timerContextMutationBusy/,
     );
     expect(app).toContain('&& !manualEntryOpen');
     expect(app).toContain('&& !timerOverlayBlocking');

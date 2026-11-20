@@ -1,13 +1,19 @@
 import {
   TIMER_SETTING_FIELD_CONTRACTS,
   TIMER_SMART_CUBE_AUTO_READY_MODES,
+  TIMER_SMART_CUBE_AUTO_CALIBRATE_HINT,
+  TIMER_SMART_CUBE_CORRECTION_HINT,
   TIMER_SMART_CUBE_LIVE_VIEWS,
+  TIMER_SMART_CUBE_LIVE_VIEW_COPY,
+  TIMER_SMART_CUBE_LIVE_VIEW_LABEL,
+  TIMER_SMART_CUBE_SECTION_COPY,
   normalizeTimerSmartCubeSettings,
   normalizeSmartCubeCorrectionLimit,
   type TimerSettingCopy,
   type TimerSettingFieldContract,
   type TimerSmartCubeSettings,
 } from '@cuberoot/shared/timer';
+import { TIMER_SMART_CUBE_AUTO_READY_COPY } from '@cuberoot/shared/timer/auto-ready';
 import { useEffect, useState, type ReactNode } from 'react';
 import { TimerBooleanSettingRow, TimerSettingRow, TimerSettingsSection, type TimerBooleanControlProps } from './TimerTimingSettingsSections';
 
@@ -24,19 +30,6 @@ const FIELDS = TIMER_SETTING_FIELD_CONTRACTS.filter((field) => (
 ));
 export const TIMER_SMART_CUBE_SETTING_FIELD_IDS = FIELDS.map(field => field.id);
 const field = (path: keyof TimerSmartCubeSettings): TimerSettingFieldContract => FIELDS.find((candidate) => candidate.storagePath === path)!;
-
-const AUTO_READY_COPY = {
-  scrambled: { zh: '打乱正确', en: 'When scrambled' },
-  still: { zh: '无操作 2 秒', en: 'Idle for 2 seconds' },
-  'double-flick': { zh: "来回转动（U U'）", en: "Turn and return (U U')" },
-} satisfies Record<TimerSmartCubeSettings['bluetoothAutoReady'], TimerSettingCopy>;
-const LIVE_VIEW_COPY = {
-  '3d': { zh: 'three.js', en: 'three.js' },
-  twizzle: { zh: 'cubing.js', en: 'cubing.js' },
-  q2look: { zh: 'q2Look', en: 'q2Look' },
-  net: { zh: '展开图', en: 'Net' },
-  '2d': { zh: '立体图', en: 'Isometric' },
-} satisfies Record<TimerSmartCubeSettings['liveCubeView'], TimerSettingCopy>;
 
 /** The shared smart-cube rows; hosts only persist patches. */
 export function TimerSmartCubeSettingsFields({ value, localize, onChange, renderBooleanControl, orientationControl }: TimerSmartCubeSettingsFieldsProps) {
@@ -58,11 +51,11 @@ export function TimerSmartCubeSettingsFields({ value, localize, onChange, render
   const solution = field('autoOpenSolution');
   return (
     <>
-      <TimerSettingsSection title={localize({ zh: '预备与起表', en: 'Ready and start' })}>
+      <TimerSettingsSection title={localize(TIMER_SMART_CUBE_SECTION_COPY.ready)}>
       <TimerSettingRow field={autoReady} label={localize(autoReady.copy)}>
         <select className="settings-row-control-select" aria-label={localize(autoReady.copy)} value={settings.bluetoothAutoReady}
           onChange={(event) => onChange({ bluetoothAutoReady: normalizeTimerSmartCubeSettings({ bluetoothAutoReady: event.target.value }).bluetoothAutoReady })}>
-          {TIMER_SMART_CUBE_AUTO_READY_MODES.map((mode) => <option key={mode} value={mode}>{localize(AUTO_READY_COPY[mode])}</option>)}
+          {TIMER_SMART_CUBE_AUTO_READY_MODES.map((mode) => <option key={mode} value={mode}>{localize(TIMER_SMART_CUBE_AUTO_READY_COPY[mode])}</option>)}
         </select>
       </TimerSettingRow>
       <TimerSettingRow field={correctionLimit} label={localize(correctionLimit.copy)}>
@@ -70,25 +63,25 @@ export function TimerSmartCubeSettingsFields({ value, localize, onChange, render
           aria-label={localize(correctionLimit.copy)} value={limitInput} onChange={(event) => setLimitInput(event.target.value)}
           onBlur={commitLimit} onKeyDown={(event) => { if (event.key === 'Enter') commitLimit(); }} />
       </TimerSettingRow>
-      <p className="hint">{localize({ zh: '合并后的逆序纠错超过此步数时重新规划；0 为立即重新规划。', en: 'Replan when the merged undo sequence exceeds this limit; 0 replans immediately.' })}</p>
+      <p className="hint">{localize(TIMER_SMART_CUBE_CORRECTION_HINT)}</p>
       </TimerSettingsSection>
-      <TimerSettingsSection title={localize({ zh: '实况与姿态', en: 'Live view and orientation' })}>
+      <TimerSettingsSection title={localize(TIMER_SMART_CUBE_SECTION_COPY.live)}>
       <TimerBooleanSettingRow field={gyro} label={localize(gyro.copy)} value={settings.gyroEnabled}
         onChange={(gyroEnabled) => onChange({ gyroEnabled })} renderBooleanControl={renderBooleanControl} />
       <TimerBooleanSettingRow field={calibration} label={localize(calibration.copy)} value={settings.autoCalibrateGyro}
         onChange={(autoCalibrateGyro) => onChange({ autoCalibrateGyro })} renderBooleanControl={renderBooleanControl}
-        hint={localize({ zh: '在打乱完成倒数第二步时进行朝向重置', en: 'Reset the orientation after the penultimate scramble move.' })} />
+        hint={localize(TIMER_SMART_CUBE_AUTO_CALIBRATE_HINT)} />
       <TimerSettingRow field={liveView} label={localize(liveView.copy)}>
-        <select className="settings-row-control-select" aria-label={localize({ zh: '实况魔方渲染方式', en: 'Live cube rendering' })} value={settings.liveCubeView}
+        <select className="settings-row-control-select" aria-label={localize(TIMER_SMART_CUBE_LIVE_VIEW_LABEL)} value={settings.liveCubeView}
           onChange={(event) => onChange({ liveCubeView: normalizeTimerSmartCubeSettings({ liveCubeView: event.target.value }).liveCubeView })}>
-          {TIMER_SMART_CUBE_LIVE_VIEWS.map((view) => <option key={view} value={view}>{localize(LIVE_VIEW_COPY[view])}</option>)}
+          {TIMER_SMART_CUBE_LIVE_VIEWS.map((view) => <option key={view} value={view}>{localize(TIMER_SMART_CUBE_LIVE_VIEW_COPY[view])}</option>)}
         </select>
       </TimerSettingRow>
       {orientationControl}
       <TimerBooleanSettingRow field={liveAnalysis} label={localize(liveAnalysis.copy)} value={settings.liveSolutionAnalysis}
         onChange={(liveSolutionAnalysis) => onChange({ liveSolutionAnalysis })} renderBooleanControl={renderBooleanControl} />
       </TimerSettingsSection>
-      <TimerSettingsSection title={localize({ zh: '结束后', en: 'After solving' })}>
+      <TimerSettingsSection title={localize(TIMER_SMART_CUBE_SECTION_COPY.solved)}>
       <TimerBooleanSettingRow field={recap} label={localize(recap.copy)} value={settings.autoRecap}
         onChange={(autoRecap) => onChange({ autoRecap })} renderBooleanControl={renderBooleanControl} />
       <TimerBooleanSettingRow field={solution} label={localize(solution.copy)} value={settings.autoOpenSolution}

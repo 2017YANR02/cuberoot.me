@@ -5,7 +5,8 @@ import type { ReconSnapshot } from '@cuberoot/shared/recon-ground-truth';
 import type { ReconTextLine } from '@cuberoot/shared/timer/reconstruct/recon-text';
 import BoolToggle, { type BoolToggleProps } from '../BoolToggle';
 
-export type ReconstructLocalize = <T>(text: { en: T; zh: T }) => T;
+import type { ReconstructLocalize } from './report-content';
+export type { ReconstructLocalize } from './report-content';
 
 /** Only host capabilities; analysis, report structure and playback stay shared. */
 export interface ReconstructHost {

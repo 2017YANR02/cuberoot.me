@@ -7,7 +7,7 @@ import { generateNativePuzzleScramble, isNativePuzzleId } from '@cuberoot/puzzle
 import { rngFor } from './seeded_rng';
 import * as nx from './nxnxn';
 import * as bld from './bld';
-import { generateTimedWcaScramble, isTimedWcaEvent } from './wca';
+import { generateBasicWcaScramble, generateSeededBasicWcaScramble, isSeededBasicWcaEvent } from './wca';
 import { formatTimerCompoundScramble, TIMER_COMPOUND_SCRAMBLE_CHILDREN } from '../compound-scramble';
 import { generateTimerTrainerScramble, isTimerTrainerEvent, generateTimerDrillScramble } from '../trainer-scramble';
 import { applyColorNeutral, isCnEligible } from '../color-neutral';
@@ -62,13 +62,17 @@ export async function generateSeededTimerScrambleAsync(request: TimerSeedRequest
 
 export function generateSeededTimerScramble(request: TimerSeedRequest): TimerSeedResult {
   const { event, ticket } = request;
+  if (!request.drill && isSeededBasicWcaEvent(event)
+    && !(event === '222' && request.scramble222Type && request.scramble222Type !== 'full')) {
+    return { scramble: generateSeededBasicWcaScramble({ ...request, event }), caseId: null };
+  }
   const random = rngFor(ticket.seed, ticket.index);
   let caseId: string | null = null;
   const cstimer = (key: string, length = 0) => generateSeededCstimerScramble(key, length,
     JSON.stringify([ticket.seed, ticket.index, key]));
   const generate = (id: EventId): string => {
-    if (isTimedWcaEvent(id) && !(id === '222' && event === '222' && request.scramble222Type && request.scramble222Type !== 'full')) {
-      return generateTimedWcaScramble(id, random, request.scramble222Mode);
+    if (isSeededBasicWcaEvent(id) && !(id === '222' && event === '222' && request.scramble222Type && request.scramble222Type !== 'full')) {
+      return generateBasicWcaScramble(id, random, request.scramble222Mode);
     }
     if (isNativePuzzleId(id)) return generateNativePuzzleScramble(id, random);
     if (id === 'lse' || id === 'l10p') return generateTimerTrainingStateScramble(id, () =>
@@ -88,7 +92,7 @@ export function generateSeededTimerScramble(request: TimerSeedRequest): TimerSee
         }
         return nx.scramble222(random, request.scramble222Mode);
       }
-      case '333fm': case '333mr': case 'sphere': case 'cross': return nx.scramble333(random);
+      case '333mr': case 'sphere': case 'cross': return nx.scramble333(random);
       case '333ni': return bld.scramble333Bld(random);
       case 'gear': return generateGearTimerScramble(random);
       case 'ivy': return generateIvyTimerScramble(random);
@@ -97,7 +101,7 @@ export function generateSeededTimerScramble(request: TimerSeedRequest): TimerSee
       case 'redi': return cstimer('redim', 8);
       case 'kilominx': return cstimer('klmso');
       case 'mpyram': return cstimer('mpyrso');
-      case 'r3': case 'r4': case 'r5': case '333mbld': case '666bld': case '777bld': case 'magic': case 'mmagic':
+      case 'r3': case 'r4': case 'r5': case '666bld': case '777bld': case 'magic': case 'mmagic':
         return formatTimerCompoundScramble(id, TIMER_COMPOUND_SCRAMBLE_CHILDREN[id].map(generate), random);
       case 'custom': case 'pll-chain': return '';
       default: throw new Error(`Unsupported seeded event: ${id}`);

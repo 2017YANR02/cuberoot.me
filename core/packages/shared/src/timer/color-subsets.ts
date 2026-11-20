@@ -46,6 +46,16 @@ export const TIMER_COLOR_MODE_ORDER: readonly TimerColorMode[] = [
   'dual', 'cn', 'single', 'quad',
 ];
 
+export const TIMER_COLOR_SWATCH_ORDER: readonly TimerColorLetter[] = ['B', 'O', 'Y', 'G', 'R', 'W'];
+
+export function timerColorSwatchBackground(colors: readonly TimerColorLetter[]): string | undefined {
+  if (colors.length <= 1) return colors[0] ? TIMER_COLOR_HEX[colors[0]] : undefined;
+  const ordered = TIMER_COLOR_SWATCH_ORDER.filter(color => colors.includes(color));
+  const step = 360 / ordered.length;
+  const stops = ordered.map((color, i) => `${TIMER_COLOR_HEX[color]} ${(i * step).toFixed(3)}deg ${((i + 1) * step).toFixed(3)}deg`);
+  return `conic-gradient(from -90deg, ${stops.join(', ')})`;
+}
+
 export interface TimerColorSubsetOption {
   colors: readonly TimerColorLetter[];
   id: string;

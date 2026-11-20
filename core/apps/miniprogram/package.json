@@ -8,7 +8,10 @@
   "type": "module",
   "dependencies": {
     "@cuberoot/puzzle-render-core": "workspace:*",
+    "@cuberoot/puzzle-solvers": "workspace:*",
     "@cuberoot/shared": "workspace:*",
+    "@cuberoot/timer-ui": "workspace:*",
+    "@cuberoot/visualcube": "workspace:*",
     "@ungap/url-search-params": "^0.2.2",
     "@xmldom/xmldom": "^0.9.12",
     "abort-controller": "^3.0.0",
@@ -30,9 +33,11 @@
     "verify": "tsc --noEmit && vitest run"
   },
   "devDependencies": {
+    "@cuberoot/event-icon": "workspace:*",
     "@napi-rs/canvas": "^0.1.100",
     "@types/node": "^22.0.0",
     "esbuild": "^0.28.1",
+    "fflate": "0.8.3",
     "lucide-static": "1.8.0",
     "miniprogram-api-typings": "^5.2.3",
     "sharp": "0.35.5",

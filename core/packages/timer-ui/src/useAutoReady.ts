@@ -18,13 +18,11 @@
  */
 
 import { useEffect, useRef } from 'react';
-import { parseScrambleStrict, type ParsedMove } from '@cuberoot/puzzle-solvers/cube-moves';
-
-const STILL_THRESHOLD_MS = 2000;
+import { createTimerAutoReadyController, type TimerAutoReadyMode } from '@cuberoot/shared/timer/auto-ready';
 
 export interface AutoReadyOpts {
   enabled: boolean;
-  mode: 'still' | 'double-flick';
+  mode: TimerAutoReadyMode;
   onReady: () => void;
   /**
    * Called once on subscribe.  Should register `cb` against the upstream
@@ -46,61 +44,9 @@ export function useAutoReady(opts: AutoReadyOpts): void {
   useEffect(() => {
     if (!enabled) return;
 
-    let firedOnce = false;
-    const fire = () => {
-      if (firedOnce) return;
-      firedOnce = true;
-      try {
-        onReadyRef.current();
-      } catch (err) {
-        console.error('[auto-ready] onReady threw', err);
-      }
-    };
-
-    if (mode === 'still') {
-      let timer: number | null = null;
-      // Don't arm until the user has actually touched the cube — otherwise a
-      // user who just connected and never moved could be auto-readied without
-      // any signal of intent.
-      let hasSeenMove = false;
-      const armTimer = () => {
-        if (!hasSeenMove) return;
-        if (timer !== null) window.clearTimeout(timer);
-        timer = window.setTimeout(() => {
-          timer = null;
-          fire();
-        }, STILL_THRESHOLD_MS);
-      };
-      const cb = (_move: string, _ts: number) => {
-        if (firedOnce) return;
-        hasSeenMove = true;
-        armTimer();
-      };
-      const unsub = onMoveSubRef.current(cb);
-      return () => {
-        unsub();
-        if (timer !== null) window.clearTimeout(timer);
-      };
-    }
-
-    // Keep the persisted enum compatible; only the previous layer turn is needed.
-    let previous: ParsedMove[] | null = null;
-    const cb = (move: string, _ts: number) => {
-      if (firedOnce) return;
-      const { moves, bad } = parseScrambleStrict(move);
-      // One stream event is one turn; slices expand into two commuting blocks.
-      if (/\s|,/.test(move.trim()) || bad.length || !moves.length
-        || moves.some(turn => turn.isRotation || Math.abs(turn.amount) !== 1)) {
-        previous = null;
-        return;
-      }
-      if (previous?.length === moves.length && moves.every((turn, index) => {
-        const last = previous![index];
-        return turn.face === last.face && turn.layers === last.layers && turn.amount === -last.amount;
-      })) fire();
-      previous = moves;
-    };
-    const unsub = onMoveSubRef.current(cb);
-    return () => { unsub(); };
+    const controller = createTimerAutoReadyController(() => onReadyRef.current());
+    controller.setMode(mode);
+    const unsubscribe = onMoveSubRef.current(controller.move);
+    return () => { unsubscribe(); controller.dispose(); };
   }, [enabled, mode]);
 }

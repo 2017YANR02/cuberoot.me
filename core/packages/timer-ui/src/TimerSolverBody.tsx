@@ -1,5 +1,6 @@
 import { lazy, Suspense, useCallback, useEffect, useRef, useState } from 'react';
 import { Check, Pencil, X } from 'lucide-react';
+import { normalizeSolverScrambleDraft, TIMER_SOLVER_SCRAMBLE_EDITOR_COPY } from '@cuberoot/shared/timer/manual-scramble-queue';
 import { ManualScrambleQueueEditor } from './ManualScrambleQueueEditor';
 import StageSolver from './StageSolver';
 import './TimerStepSolve.css';
@@ -24,9 +25,10 @@ export default function TimerSolverBody({ view = 'solutions', scramble, onScramb
     setEditing(false);
     return true;
   }, [editing]);
+  const submittedScramble = normalizeSolverScrambleDraft(draft);
   const applyScramble = () => {
-    if (!draft.trim() || !onScrambleChange) return;
-    onScrambleChange(draft.trim());
+    if (!submittedScramble || !onScrambleChange) return;
+    onScrambleChange(submittedScramble);
     setEditing(false);
   };
   const [stageBlocking, setStageBlocking] = useState(false);
@@ -54,18 +56,18 @@ export default function TimerSolverBody({ view = 'solutions', scramble, onScramb
             event.preventDefault(); event.stopPropagation(); applyScramble();
           }
         }}>
-        <ManualScrambleQueueEditor ariaLabel={tr({ zh: '手动输入打乱', en: 'Manual scramble input' })}
+        <ManualScrambleQueueEditor ariaLabel={tr(TIMER_SOLVER_SCRAMBLE_EDITOR_COPY.input)}
           value={draft} onChange={setDraft} />
-        <button type="submit" className="solver-layout-action" disabled={!draft.trim() || !onScrambleChange}
-          aria-label={tr({ zh: '应用打乱', en: 'Apply scramble' })}><Check size={16} /></button>
+        <button type="submit" className="solver-layout-action" disabled={!submittedScramble || !onScrambleChange}
+          aria-label={tr(TIMER_SOLVER_SCRAMBLE_EDITOR_COPY.apply)}><Check size={16} /></button>
         <button type="button" className="solver-layout-action" onClick={dismissEditor}
-          aria-label={tr({ zh: '取消', en: 'Cancel' })}><X size={16} /></button>
+          aria-label={tr(TIMER_SOLVER_SCRAMBLE_EDITOR_COPY.cancel)}><X size={16} /></button>
       </form> : (scramble.trim() || onScrambleChange) && <div className="solver-panel-scramble solver-scramble-row">
         <span>{scramble}</span>
       </div>}
       <StageSolver allowProgressiveReveal scramble={scramble} lang={language} compact={compact} expandedSolutions={!compact} settingsSlot={settingsSlot} navigationSlot={navigationSlot}
         scrambleEditAction={onScrambleChange && <button type="button" className="stsv-settings-toggle" data-no-swipe
-          disabled={editing} aria-label={tr({ zh: '编辑打乱', en: 'Edit scramble' })}
+          disabled={editing} aria-expanded={editing} aria-label={tr(TIMER_SOLVER_SCRAMBLE_EDITOR_COPY.edit)}
           onClick={() => { setDraft(scramble); setEditing(true); }}><Pencil size={18} /></button>}
         onPrevScramble={onPrevScramble} onNextScramble={onNextScramble} onDismissChange={registerStage} onBlockingChange={setStageBlocking} />
     </> : <Suspense fallback={null}>

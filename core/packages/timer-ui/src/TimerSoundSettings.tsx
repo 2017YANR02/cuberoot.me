@@ -1,16 +1,10 @@
 import BoolToggle from './BoolToggle';
 import { timerSettingFieldContract, type TimerSoundSettings as Value, type TimerSettingCopy } from '@cuberoot/shared/timer';
+import { TIMER_INSPECTION_VOICE_COPY, TIMER_SOUND_SETTINGS_COPY } from '@cuberoot/shared/timer/sound-feedback';
 import { TimerBooleanSettingRow, TimerSettingRow } from './TimerTimingSettingsSections';
 import './compact-select.css';
 
 export const TIMER_SOUND_SETTING_FIELD_IDS = ['settings.sound.enabled', 'settings.sound.volume', 'settings.sound.voice-inspection'] as const;
-const VOICES: readonly { value: Value['voiceInspection']; copy: TimerSettingCopy }[] = [
-  { value: 'none', copy: { zh: '关闭（用提示音）', en: 'Off (beeps)' } },
-  { value: 'en-male', copy: { zh: '英文 男声', en: 'English (male)' } },
-  { value: 'en-female', copy: { zh: '英文 女声', en: 'English (female)' } },
-  { value: 'zh-male', copy: { zh: '中文 男声', en: 'Chinese (male)' } },
-  { value: 'zh-female', copy: { zh: '中文 女声', en: 'Chinese (female)' } },
-];
 
 export function TimerSoundSettings({ value, onChange, localize: tr, voiceAvailable, onWarmup, onPreview }: {
   value: Value; onChange(patch: Partial<Value>): void; localize(copy: TimerSettingCopy): string;
@@ -29,15 +23,15 @@ export function TimerSoundSettings({ value, onChange, localize: tr, voiceAvailab
         onChange={e => onChange({ volume: Number(e.target.value) })} />
       <span className="settings-volume-value">{Math.round(value.volume * 100)}%</span>
       <button type="button" className="hint-btn" style={{ minWidth: 44, minHeight: 44 }} disabled={!value.soundsEnabled}
-        aria-label={tr({ zh: '试听', en: 'Test' })} onClick={() => { onWarmup(); onPreview(); }}>♪</button>
+        aria-label={tr(TIMER_SOUND_SETTINGS_COPY.test)} onClick={() => { onWarmup(); onPreview(); }}>♪</button>
     </TimerSettingRow>
     <TimerSettingRow field={voice} label={tr(voice.copy)}>
       <select className="settings-row-control-select" aria-label={tr(voice.copy)} value={value.voiceInspection}
         disabled={!value.soundsEnabled || !voiceAvailable}
         onChange={e => { onWarmup(); onChange({ voiceInspection: e.target.value as Value['voiceInspection'] }); }}>
-        {VOICES.map(option => <option key={option.value} value={option.value}>{tr(option.copy)}</option>)}
+        {Object.entries(TIMER_INSPECTION_VOICE_COPY).map(([value, copy]) => <option key={value} value={value}>{tr(copy)}</option>)}
       </select>
-      {!voiceAvailable && <span className="hint">{tr({ zh: '当前设备不支持语音', en: 'Voice unavailable on this device' })}</span>}
+      {!voiceAvailable && <span className="hint">{tr(TIMER_SOUND_SETTINGS_COPY.voiceUnavailable)}</span>}
     </TimerSettingRow>
   </>;
 }

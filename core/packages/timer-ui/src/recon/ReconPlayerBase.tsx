@@ -22,11 +22,10 @@ import {
 } from 'react';
 import type World from '@cuberoot/puzzle-render-core/engine/world';
 import type { BackView } from '@cuberoot/puzzle-render-core/engine/backView';
+import { RECON_NOTATION_PLAY_INTERVAL_MS as PLAY_INTERVAL_MS } from '@cuberoot/shared/timer/reconstruct/recap';
 import ReconPlayOverlay from './ReconPlayOverlay';
 import PlaybackBar, { type PlaybackBarLabels } from '../PlaybackBar';
 import './recon-player.css';
-
-const PLAY_INTERVAL_MS = 520;
 
 /** 播放器的外部控制入口(回填到调用方的 `playerRef`)。
  *  `__kind` 是拼图标签,卸载时用它确认「这个 ref 还是我放的」再清空。 */

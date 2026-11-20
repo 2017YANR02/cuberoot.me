@@ -1,6 +1,6 @@
 'use client';
 
-import { countryToIso2 } from '@cuberoot/shared/country-flag';
+import { countryFlagIdentity } from '@cuberoot/shared/country-flag';
 import type { JSX } from 'react';
 
 // A package-owned URL lets both Next and Vite fingerprint the asset. Capacitor
@@ -10,37 +10,31 @@ export const CHINESE_TAIPEI_FLAG_PATH = new URL(
   import.meta.url,
 ).href;
 
-// WCA multi-region identifiers do not represent a country flag. Keep the
-// neutral outlined marker used by the Web UI instead of inventing a flag.
-const MULTI_REGION = new Set(['xa', 'xe', 'xf', 'xn', 'xo', 'xs', 'xm', 'xw']);
-
 export type FlagInfo =
   | { kind: 'img'; src: string; alt: string }
   | { kind: 'span'; className: string; ariaLabel: string };
 
 export function flagInfo(countryOrIso2: string): FlagInfo {
-  const normalized = countryToIso2(countryOrIso2);
-  const rawCode = countryOrIso2.trim().toLowerCase();
-  const code = normalized || (MULTI_REGION.has(rawCode) ? rawCode : '');
-  if (code === 'tw') {
+  const { kind, code } = countryFlagIdentity(countryOrIso2);
+  if (kind === 'chinese-taipei') {
     return { kind: 'img', src: CHINESE_TAIPEI_FLAG_PATH, alt: 'Chinese Taipei' };
   }
-  if (code === 'xw') {
+  if (kind === 'world') {
     return {
       kind: 'span',
       className: 'fi flag-multi flag-multi-world',
       ariaLabel: code,
     };
   }
-  if (MULTI_REGION.has(code)) {
+  if (kind === 'continent') {
     return {
       kind: 'span',
       className: 'fi flag-multi flag-multi-continent',
       ariaLabel: code,
     };
   }
-  if (!code) {
-    return { kind: 'span', className: 'fi flag-multi', ariaLabel: rawCode };
+  if (kind === 'unknown') {
+    return { kind: 'span', className: 'fi flag-multi', ariaLabel: code };
   }
   return { kind: 'span', className: `fi fi-${code}`, ariaLabel: code };
 }

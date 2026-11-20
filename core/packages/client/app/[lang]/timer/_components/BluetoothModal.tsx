@@ -27,7 +27,7 @@ import {
   mayUseMiniProgramBridge,
 } from '../_lib/bluetooth';
 import type { BluetoothCubeHandle, ConnectStage, ConnectPickOptions } from '../_lib/bluetooth';
-import { Check, ExternalLink, LoaderCircle, Plus } from '@app-foundation/icons/lucide';
+import { BadgeCheck, Check, ExternalLink, LoaderCircle, Plus } from '@app-foundation/icons/lucide';
 import { tr } from '@/i18n/tr';
 import { trainingCubeStatusLabel, type TrainingCubeStatus } from '../_lib/training-cube-status';
 
@@ -260,7 +260,7 @@ export default function BluetoothModal({ title, anchorRef, isZh, cube, onClose, 
         reset: allowDeviceCalibration,
       }}
       className={`timer-modal bluetooth-modal${!macPrompt && !connectError ? ' bt-connected-modal' : ''}${connections?.length ? ' bt-training-modal' : ''}`}
-      deviceSelector={connections?.length ? <ol className="bt-cube-list" aria-label={tr({ zh: '智能魔方连接顺序', en: 'Smart cubes in connection order' })}>
+      deviceSelector={connections?.length ? resetSucceeded => <ol className="bt-cube-list" aria-label={tr({ zh: '智能魔方连接顺序', en: 'Smart cubes in connection order' })}>
         {connections.map((connection, index) => <li key={connection.id}>
           <button type="button" className="bt-cube-option" aria-pressed={selectedConnectionId === connection.id}
             aria-busy={connecting && selectedConnectionId === connection.id}
@@ -283,7 +283,9 @@ export default function BluetoothModal({ title, anchorRef, isZh, cube, onClose, 
                 </span>}
               </span>
             </span>
-            <Check className="bt-cube-selected" size={16} aria-hidden="true" />
+            {resetSucceeded && selectedConnectionId === connection.id
+              ? <BadgeCheck className="bt-cube-selected" size={16} aria-hidden="true" />
+              : <Check className="bt-cube-selected" size={16} aria-hidden="true" />}
           </button>
         </li>)}
       </ol> : undefined}

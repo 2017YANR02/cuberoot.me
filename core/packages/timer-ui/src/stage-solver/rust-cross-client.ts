@@ -14,6 +14,7 @@
 // 产物自包含在 /tools/solver/rust-cross/(dev 经 Next catch-all,prod 直取 static)。
 
 import { normalizeWcaScramble as normalizeScramble } from '@cuberoot/shared/normalize-wca-scramble';
+import { STAGE_SOLVER_VARIANT_TABLES } from '@cuberoot/shared/timer/scramble-variants';
 // 表的位置与完整性校验后的下载/生成竞速单例。
 import { BASE, TV, V, claimXCrossTable, tablesBaseUrl } from './rust-cross-tables';
 
@@ -56,10 +57,7 @@ export const TABLE_SETS: Record<'cross' | 'cross_restrict' | 'xcross_restrict' |
   // 受限最优 xcross:零表下载,worker 构造现场建 54-move transition + 双 PDB(用到才建)。
   xcross_restrict: [],
   f2leo: ['pt_cross'],
-  variant: [
-    'pt_cross_C4E0', 'pt_cross_ins_C4', 'pt_pair_C4E0',
-    'pt_cross', 'pt_ep4eo12', 'pt_pscross',
-  ],
+  variant: [...STAGE_SOLVER_VARIANT_TABLES],
   block222: [],
   daisy: [],
   first_layer: ['opt_first_layer'],

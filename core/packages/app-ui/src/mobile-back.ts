@@ -5,7 +5,6 @@ export type MobileBackView = 'timer' | 'tools' | 'account' | 'history' | 'settin
 export type MobileBackAction =
   | 'close-overlay'
   | 'close-history-compare'
-  | 'close-more'
   | 'close-manual-entry'
   | 'exit-fullscreen'
   | 'cancel-arm'
@@ -18,7 +17,6 @@ export interface MobileBackContext {
   historyCompareMode: boolean;
   fullscreen: boolean;
   manualEntryOpen: boolean;
-  moreOpen: boolean;
   mutationBusy: boolean;
   overlayOpen: boolean;
   phase: TimerPhase;
@@ -30,7 +28,6 @@ export interface MobileBackContext {
 export function mobileBackAction(context: MobileBackContext): MobileBackAction {
   if (context.overlayOpen) return 'close-overlay';
   if (context.view === 'history' && context.historyCompareMode) return 'close-history-compare';
-  if (context.moreOpen) return 'close-more';
   if (context.manualEntryOpen) return 'close-manual-entry';
   // Settings is now a modal over the mounted timer, so dismiss it first.
   if (context.view === 'settings') return 'close-subview';

@@ -60,7 +60,9 @@ describe('shared smart-cube device modal', () => {
       .find((candidate) => candidate.textContent?.includes(label))!;
     await act(async () => button('Reset').click());
     expect(onResetState).toHaveBeenCalledOnce();
-    expect(dialog.textContent).toContain('State reset');
+    expect(dialog.querySelector('.timer-smart-cube-device__state .lucide-badge-check')).not.toBeNull();
+    expect(dialog.querySelector('.sr-only[role="status"]')?.textContent).toBe('State reset');
+    expect(dialog.querySelector('.timer-smart-cube-device__feedback')).toBeNull();
     expect(button('Reset').querySelector('svg')).toBeNull();
     expect(dialog.textContent).not.toContain('Reset gyroscope');
     expect(onResetGyro).toHaveBeenCalledOnce();

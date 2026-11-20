@@ -3,10 +3,11 @@ import type { AnalysisInput, AnalysisWorkerRequest, AnalysisResponse, AnalysisSn
 export type { AnalysisInput, AnalysisRequest, AnalysisResponse, AnalysisSnapshot } from './analysis-protocol';
 
 type Listener = (snapshot: AnalysisSnapshot) => void;
+type WorkerListener<T> = { handle(event: T): void }['handle'];
 export interface AnalysisWorker {
-  onmessage: ((event: MessageEvent<AnalysisResponse>) => void) | null;
-  onerror: ((event: ErrorEvent) => void) | null;
-  onmessageerror: ((event: MessageEvent) => void) | null;
+  onmessage: WorkerListener<{ data: AnalysisResponse }> | null;
+  onerror: WorkerListener<{ message: string }> | null;
+  onmessageerror: WorkerListener<{ data?: unknown }> | null;
   postMessage(message: AnalysisWorkerRequest): void;
   terminate(): void;
 }

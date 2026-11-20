@@ -38,6 +38,7 @@ describe('Mobile timer settings parity ledger', () => {
   it('records all real shared effects and no unverified device parity', () => {
     expect(MOBILE_TIMER_SETTING_EFFECT_FIELD_IDS).toEqual([
       ...TIMER_TIMING_SETTING_FIELD_IDS,
+      'settings.timer.rolling-statistics',
       ...TIMER_SMART_CUBE_SETTING_FIELD_IDS,
       'settings.training.stage-splits',
       'settings.training.bld-memo-split',
@@ -65,7 +66,7 @@ describe('Mobile timer settings parity ledger', () => {
     );
     expect(TIMER_SETTING_FIELD_IDS.filter(id =>
       !MOBILE_TIMER_SETTING_EFFECT_FIELD_IDS.some(effect => effect === id),
-    )).toEqual(['settings.timer.rolling-statistics', 'settings.smart-cube.fake-cube', 'settings.training.start-mode']);
+    )).toEqual(['settings.smart-cube.fake-cube', 'settings.training.start-mode']);
     expect(MOBILE_TIMER_SETTING_PARITY_FIELD_IDS).toEqual([]);
   });
 
@@ -92,7 +93,8 @@ describe('Mobile timer settings parity ledger', () => {
     expect(app).toContain('<TimerAttemptSplitSettings');
     expect(app).toContain('<TimerAttemptSplitStatus');
     expect(app).not.toContain('<TimerScrambleClickActionSetting');
-    expect(app).toContain('<TimerScramblePreviewSettings');
+    expect(app).toContain('<TimerSoloAppearanceSections');
+    expect(app).toMatch(/<TimerSoloResultSettings[^>]*columns=\{store!\.settings\.statsRollingColumns\}/);
     expect(app).toContain('<TimerPreScrambleSettings');
     expect(app).toContain("'timer', 'smart-cube', 'scramble', 'training', 'appearance', 'sound', 'data', 'advanced'");
     expect(app).toContain('applyOrientationPrefix(scramble, preScrambleFor(activeEvent, store!.settings.preScr, store!.settings.preScrT))');

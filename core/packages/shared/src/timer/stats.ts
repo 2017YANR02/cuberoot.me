@@ -667,6 +667,42 @@ export interface StatsSummary {
   wpa12: string;
 }
 
+/** Plot at most the recent window, retaining earlier solves for the first ao12 samples. */
+export function timerStatsScatterSeries(solves: Solve[], windowSize = 200) {
+  const start = Math.max(0, solves.length - windowSize);
+  const pb = bestSingle(solves);
+  let lo = Infinity;
+  let hi = -Infinity;
+  const points = solves.slice(start).map((solve, index) => {
+    const value = effectiveMs(solve);
+    const valid = Number.isFinite(value);
+    if (valid) { lo = Math.min(lo, value); hi = Math.max(hi, value); }
+    const globalIndex = start + index;
+    const average = globalIndex < 11 ? null : averageOfN(solves.slice(globalIndex - 11, globalIndex + 1), 12);
+    return { solve, index: index + 1, value: valid ? value : null, ao12: average !== null && Number.isFinite(average) ? average : null };
+  });
+  const best = pb !== null && Number.isFinite(pb) ? pb : null;
+  if (!Number.isFinite(lo)) return { points, best, min: null, max: null };
+  if (best !== null) { lo = Math.min(lo, best); hi = Math.max(hi, best); }
+  const pad = lo === hi ? Math.max(lo * 0.05, 100) : (hi - lo) * 0.08;
+  return { points, best, min: Math.max(0, lo - pad), max: hi + pad };
+}
+
+export function timerStatsCfopCases(solves: readonly Solve[], stage: 'oll' | 'pll') {
+  const groups = new Map<string, { id: string; count: number; sum: number; best: number; worst: number }>();
+  for (const solve of solves) {
+    const id = solve.stageSegments?.[stage === 'oll' ? 'ollCase' : 'pllCase'];
+    const value = solve.stageSegments?.[stage === 'oll' ? 'ollMs' : 'pllMs'];
+    if (!id || typeof value !== 'number' || !Number.isFinite(value)) continue;
+    const row = groups.get(id);
+    if (row) {
+      row.count++; row.sum += value; row.best = Math.min(row.best, value); row.worst = Math.max(row.worst, value);
+    } else groups.set(id, { id, count: 1, sum: value, best: value, worst: value });
+  }
+  return Array.from(groups.values(), ({ sum, ...row }) => ({ ...row, avg: sum / row.count }))
+    .sort((a, b) => a.avg - b.avg);
+}
+
 /**
  * @param event optional — pass it and every value is formatted for that event
  *   (FMC renders move counts instead of times). Omitted = plain time strings,
