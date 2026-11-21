@@ -359,7 +359,7 @@ import {
 import type { InstalledAppHost } from './platform';
 import { startWebSurfaceHandshake } from './web-surface-handshake';
 import { installedWebEntryUrl } from './web-surface-url';
-import { usePrimaryNavigation } from './use-primary-navigation';
+import { usePrimaryNavigation, useTimerNavigationAvoidance } from './use-primary-navigation';
 import {
   solveMobileRandomDifficultyCase,
   solveMobileSmartCubeFixup,
@@ -4128,6 +4128,8 @@ export function App({ host, loadingMark }: { host: InstalledAppHost; loadingMark
     if (view !== 'tools') setToolsSearchOpen(false);
   }, [view]);
   const primaryDestination = selectedView === 'tools' || selectedView === 'account' ? selectedView : 'timer';
+  useTimerNavigationAvoidance(primaryNavRef,
+    floatingNavigation && !host.primaryNavigation && !sideNavigation && navVisible && view === 'timer' && timerMode === 1);
   const nativeNavigation = usePrimaryNavigation(host.primaryNavigation, primaryNavRef, {
     visible: navVisible,
     selected: primaryDestination,

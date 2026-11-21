@@ -915,6 +915,12 @@ button {
   grid-template-columns: repeat(3, minmax(0, 1fr));
   --app-nav-highlight-index: 0;
 }
+.app-shell[data-floating-navigation]:not([data-side-navigation]) > .primary-nav {
+  --app-nav-safe-right: env(safe-area-inset-right, 0px);
+  transform: translateX(var(--app-nav-offset-x, 0px));
+  transition: transform 200ms ease;
+}
+:root[data-host-viewport] .app-shell[data-floating-navigation] > .primary-nav { --app-nav-safe-right: 0px; }
 .app-shell[data-floating-navigation] > :is(.primary-nav, .tools-search-toggle) {
   background-color: var(--glass-popover-bg);
   background-image: var(--glass-capsule-glint, none);
@@ -946,6 +952,7 @@ button {
   color: var(--foreground);
 }
 @media (prefers-reduced-motion: reduce) {
+  .app-shell[data-floating-navigation]:not([data-side-navigation]) > .primary-nav,
   .app-shell[data-floating-navigation] > .primary-nav::before { transition: none; }
 }
 .app-shell[data-floating-navigation] :is(.primary-nav button, .tools-search-toggle) > svg {
@@ -1013,6 +1020,9 @@ button {
 }
 .app-shell[data-floating-navigation] :is(.timer-solo-main, .mobile-timer-stage, .timer-workspace-panel-body, .app-appearance-settings-scroll) {
   scroll-padding-bottom: var(--app-nav-clearance, 8px);
+}
+.app-shell[data-floating-navigation] .timer-stage-footer[data-nav-clearance] {
+  margin-block-end: var(--app-nav-clearance, 0px);
 }
 :root[data-host-top-bar] .app-shell[data-floating-navigation] .app-appearance-settings-header {
   position: fixed;
