@@ -8,6 +8,7 @@ const style = document.createElement('style');
 style.textContent = styles;
 const searchField = '.landing-page > .landing-search .landing-search-field';
 const isInset = value => Number.isFinite(value) && value >= 0 && value <= 512;
+let searchExpanded = false;
 
 window.addEventListener('message', ({ source, origin, data }) => {
   if (source !== window.parent || !parentOrigins.includes(origin)
@@ -30,11 +31,19 @@ window.addEventListener('message', ({ source, origin, data }) => {
     root.toggleAttribute('data-native-tools-insets', supportedPage && insetByHost === true);
     const wasExpanded = root.hasAttribute('data-embedded-search-open');
     const expanded = search && toolsSearch.expanded;
+    const opening = expanded && !searchExpanded;
+    const keyboard = window.webkit?.messageHandlers?.cuberootSearchKeyboard;
+    root.toggleAttribute('data-embedded-ios-search', Boolean(search && keyboard));
+    searchExpanded = expanded;
     root.toggleAttribute('data-embedded-search-button', search);
     root.toggleAttribute('data-embedded-search-open', expanded);
+    root.toggleAttribute('data-embedded-search-keyboard', expanded && toolsSearch.keyboard === true);
     if (search && isInset(bottom)) root.style.setProperty('--embedded-search-clearance', bottom + 'px');
     else root.style.removeProperty('--embedded-search-clearance');
-    if (expanded && !wasExpanded) document.querySelector(searchField)?.focus();
+    if (opening) {
+      if (keyboard) keyboard.postMessage(null);
+      else if (!wasExpanded) document.querySelector(searchField)?.focus();
+    }
     if (!expanded && wasExpanded && document.activeElement?.matches(searchField)) document.activeElement.blur();
   } else {
     root.toggleAttribute('data-native-account-frame', supportedPage);

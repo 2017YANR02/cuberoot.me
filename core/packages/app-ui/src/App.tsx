@@ -527,6 +527,8 @@ export function App({ host, loadingMark }: { host: InstalledAppHost; loadingMark
   const toolsSearchRef = useRef<HTMLButtonElement>(null);
   const [toolsSearchReady, setToolsSearchReady] = useState(false);
   const [toolsSearchOpen, setToolsSearchOpen] = useState(false);
+  const [dockedKeyboardTop, setDockedKeyboardTop] = useState<number | null>(null);
+  const [searchViewportTop, setSearchViewportTop] = useState(0);
   const floatingNavigation = Boolean(host.floatingNavigation || host.primaryNavigation);
   const labeledCapsule = host.floatingNavigation === 'labeled';
   const showNavigationLabels = labeledCapsule || (wideLayout && !floatingNavigation && !sideNavigation);
@@ -2165,6 +2167,17 @@ export function App({ host, loadingMark }: { host: InstalledAppHost; loadingMark
   useEffect(() => {
     return observeVisibleViewportHeight(setViewportHeight);
   }, []);
+
+  useEffect(() => {
+    let active = true;
+    const listener = host.addDockedKeyboardListener?.(top => {
+      if (active) setDockedKeyboardTop(top);
+    });
+    return () => {
+      active = false;
+      void listener?.then(handle => handle.remove()).catch(() => {});
+    };
+  }, [host]);
 
   useLayoutEffect(() => {
     const frame = primaryNavRef.current?.getBoundingClientRect();
@@ -4129,11 +4142,32 @@ export function App({ host, loadingMark }: { host: InstalledAppHost; loadingMark
   });
 
   const hideRunningChrome = timerMode === 1 && store && timerHidesRunningUi(timer.machine.phase, store.settings);
-  const navVisible = Boolean(store && !fullscreen && !hideRunningChrome && (!floatingNavigation
+  const canShowNavigation = Boolean(store && !fullscreen && !hideRunningChrome && (!floatingNavigation
     || (view !== 'settings' && !timerOverlayBlocking && !manualEntryOpen && !toolsBlePicker)));
-  const showToolsSearch = Boolean(floatingNavigation && (toolsSearchReady || webChrome.tools) && navVisible && view === 'tools'
+  const canShowToolsSearch = Boolean(floatingNavigation && (toolsSearchReady || webChrome.tools) && canShowNavigation && view === 'tools'
     && connection === 'online' && webSurfaceStatus.tools === 'ready');
-  const toolsSearchExpanded = showToolsSearch && toolsSearchOpen;
+  const toolsSearchExpanded = canShowToolsSearch && toolsSearchOpen;
+  const searchKeyboardVisible = toolsSearchExpanded && dockedKeyboardTop !== null;
+  const navVisible = canShowNavigation && !searchKeyboardVisible;
+  const showToolsSearch = canShowToolsSearch && !searchKeyboardVisible;
+  useLayoutEffect(() => {
+    if (!toolsSearchExpanded || !host.addDockedKeyboardListener) {
+      setSearchViewportTop(0);
+      return;
+    }
+    const viewport = window.visualViewport;
+    // WebKit can pan its visible viewport to reveal the focused iframe field.
+    const update = () => setSearchViewportTop(Math.max(0, viewport?.pageTop ?? window.scrollY));
+    viewport?.addEventListener('scroll', update);
+    viewport?.addEventListener('resize', update);
+    window.addEventListener('scroll', update);
+    update();
+    return () => {
+      viewport?.removeEventListener('scroll', update);
+      viewport?.removeEventListener('resize', update);
+      window.removeEventListener('scroll', update);
+    };
+  }, [host, toolsSearchExpanded]);
   useEffect(() => {
     if (view !== 'tools') setToolsSearchOpen(false);
   }, [view]);
@@ -4239,7 +4273,7 @@ export function App({ host, loadingMark }: { host: InstalledAppHost; loadingMark
     if (!floatingNavigation) return;
     embeddedChromeRef.current = {
       insetByHost: frameInsetByHost ? true : undefined,
-      toolsSearch: { expanded: toolsSearchExpanded },
+      toolsSearch: { expanded: toolsSearchExpanded, keyboard: searchKeyboardVisible || undefined },
       top: embeddedTopBar?.left !== undefined && embeddedTopBar.right !== undefined
         ? { left: embeddedTopBar.left, right: embeddedTopBar.right } : undefined,
       bottom: embeddedBottom,
@@ -4247,7 +4281,7 @@ export function App({ host, loadingMark }: { host: InstalledAppHost; loadingMark
     for (const surface of MOBILE_EMBED_SURFACES) {
       if (webBridgeReadyRef.current[surface]) postWebSurfaceInit(surface);
     }
-  }, [floatingNavigation, frameInsetByHost, embeddedTopBar?.left, embeddedTopBar?.right, embeddedBottom, toolsSearchExpanded, postWebSurfaceInit]);
+  }, [floatingNavigation, frameInsetByHost, embeddedTopBar?.left, embeddedTopBar?.right, embeddedBottom, toolsSearchExpanded, searchKeyboardVisible, postWebSurfaceInit]);
 
   if (!store && !loadError) {
     return <main className="loading-screen">{loadingMark ?? <strong>{copy.title}</strong>}</main>;
@@ -4338,7 +4372,9 @@ export function App({ host, loadingMark }: { host: InstalledAppHost; loadingMark
   const frameUsesTopBar = (view === 'account' || view === 'tools') && (webChrome[view] || nativeTopBars[view]);
   const webTop = embeddedTopBar && frameUsesTopBar ? nativeTopBar?.y : undefined;
   const shellTop = webTop ?? contentRect?.y ?? 0;
-  const shellHeight = contentRect ? Math.max(1, Math.min(contentRect.y + contentRect.height, viewportHeight) - shellTop) : viewportHeight;
+  const trackSearchViewport = toolsSearchExpanded && (searchKeyboardVisible || searchViewportTop > 0);
+  const shellBottom = searchKeyboardVisible ? dockedKeyboardTop : viewportHeight;
+  const shellHeight = contentRect ? Math.max(1, Math.min(contentRect.y + contentRect.height, shellBottom) - shellTop) : Math.max(1, shellBottom);
   const shellViewport = mobileShellViewportLayout(shellHeight);
   const solverHintPanel = activeEvent === '333' ? <Suspense fallback={null}>
     <StageSolverDialog scramble={scramble} language={language}
@@ -4361,6 +4397,12 @@ export function App({ host, loadingMark }: { host: InstalledAppHost; loadingMark
       data-layout-editing={layoutEditing ? '' : undefined}
       style={{ ...shellViewport.style,
         ...(contentRect ? { position: 'fixed', left: contentRect.x, top: shellTop, width: contentRect.width, paddingTop: 0 } : {}),
+        ...(trackSearchViewport ? {
+          position: 'absolute',
+          top: shellTop + searchViewportTop,
+          left: contentRect?.x ?? 0,
+          width: contentRect?.width ?? '100%',
+        } : {}),
         '--solo-scramble-gap': `${store?.settings.soloLayout.scrambleGap ?? 16}px`,
         '--solo-source-gap': `${store?.settings.soloLayout.sourceGap ?? 16}px`,
         '--solo-timer-gap': `${store?.settings.soloLayout.timerGap ?? 20}px`,

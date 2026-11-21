@@ -87,6 +87,26 @@ final class NativeFilesPlugin: CAPPlugin, CAPBridgedPlugin {
     }
 }
 
+private final class EmbeddedSearchKeyboard: NSObject, WKScriptMessageHandler {
+    func userContentController(_ controller: WKUserContentController, didReceive message: WKScriptMessage) {
+        let frame = message.frameInfo
+        guard let webView = message.webView, !frame.isMainFrame, frame.securityOrigin.protocol == "https",
+              frame.securityOrigin.host == "cuberoot.me",
+              frame.request.url.map({ ["", "/", "/en", "/en/", "/zh", "/zh/"].contains($0.path) }) == true else { return }
+        // Native evaluation can activate the keyboard in the destination frame.
+        webView.evaluateJavaScript("""
+            (() => {
+                if (!document.documentElement.hasAttribute('data-embedded-search-open')) return;
+                const field = document.querySelector('.landing-page > .landing-search .landing-search-field');
+                if (!field) return;
+                if (document.activeElement === field) field.blur();
+                field.focus({ preventScroll: true });
+            })()
+            """, in: frame, in: .defaultClient, completionHandler: nil)
+        _ = webView.becomeFirstResponder()
+    }
+}
+
 final class CubeRootBridgeViewController: CAPBridgeViewController {
     private let viewportPlugin = ViewportLayoutPlugin()
 
@@ -95,6 +115,7 @@ final class CubeRootBridgeViewController: CAPBridgeViewController {
         if let controller = bridge?.webView?.configuration.userContentController,
            let asset = Bundle.main.url(forResource: "embedded-layout", withExtension: "js", subdirectory: "public"),
            let script = try? String(contentsOf: asset, encoding: .utf8) {
+            controller.add(EmbeddedSearchKeyboard(), contentWorld: .defaultClient, name: "cuberootSearchKeyboard")
             controller.addUserScript(WKUserScript(source: script, injectionTime: .atDocumentStart, forMainFrameOnly: false, in: .defaultClient))
         }
         if #available(iOS 16.4, *) {
@@ -141,6 +162,37 @@ final class ViewportLayoutPlugin: CAPPlugin, CAPBridgedPlugin {
     let jsName = "ViewportLayout"
     let pluginMethods: [CAPPluginMethod] = [CAPPluginMethod(name: "getLayout", returnType: CAPPluginReturnPromise)]
     private var lastLayout: NSDictionary?
+    private var keyboardTop: CGFloat?
+
+    override func load() {
+        let center = NotificationCenter.default
+        center.addObserver(self, selector: #selector(keyboardFrameChanged(_:)),
+                           name: UIResponder.keyboardWillChangeFrameNotification, object: nil)
+        center.addObserver(self, selector: #selector(keyboardHidden),
+                           name: UIResponder.keyboardDidHideNotification, object: nil)
+    }
+
+    @objc private func keyboardFrameChanged(_ notification: Notification) {
+        guard let view = bridge?.webView, let window = view.window,
+              let frame = notification.userInfo?[UIResponder.keyboardFrameEndUserInfoKey] as? CGRect else { return }
+        let keyboard = view.convert(frame, from: window.screen.coordinateSpace)
+        let overlap = keyboard.intersection(view.bounds)
+        // A hardware-keyboard accessory bar can briefly remain during dismissal.
+        let coversBottom = !overlap.isNull && overlap.maxY >= view.bounds.maxY - 1
+            && overlap.height > max(view.safeAreaInsets.bottom + 1, 80)
+        updateKeyboard(top: coversBottom ? overlap.minY - view.bounds.minY : nil)
+    }
+
+    @objc private func keyboardHidden() {
+        updateKeyboard(top: nil)
+    }
+
+    private func updateKeyboard(top: CGFloat?) {
+        guard top != keyboardTop else { return }
+        keyboardTop = top
+        notifyListeners("keyboardChanged", data: top.map { ["top": $0] } ?? [:])
+    }
+
 
     private func layout() -> [String: Any] {
         guard let view = bridge?.viewController?.view else { return [:] }

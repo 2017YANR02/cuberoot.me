@@ -93,6 +93,16 @@
   transform: none;
   transition-delay: 0s;
 }
+/* Small focused inputs can make iOS zoom the entire embedded viewport. */
+:root[data-embedded-ios-search] .landing-page > .landing-search .landing-search-field {
+  font-size: max(16px, .95rem);
+}
+
+/* The embedded viewport now ends at the iOS keyboard. */
+:root[data-embedded-search-keyboard] .landing-page > .landing-search {
+  bottom: 8px;
+}
+
 @media (prefers-reduced-motion: reduce) {
   :root[data-embedded-search-button] .landing-page > .landing-search { transition: none; }
 }

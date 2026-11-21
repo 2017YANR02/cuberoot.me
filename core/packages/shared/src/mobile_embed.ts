@@ -22,7 +22,7 @@ export type MobileEmbedSurface = keyof typeof MOBILE_EMBED_FRAME_NAMES;
 
 export interface MobileEmbedChrome {
   insetByHost?: true;
-  toolsSearch?: { expanded: boolean };
+  toolsSearch?: { expanded: boolean; keyboard?: true };
   top?: { left: number; right: number };
   bottom: number;
 }
@@ -286,7 +286,8 @@ function isMobileEmbedChrome(value: unknown): value is MobileEmbedChrome {
   const { top, bottom, insetByHost, toolsSearch } = value as Partial<MobileEmbedChrome>;
   return (insetByHost === undefined || insetByHost === true) && isMobileEmbedInset(bottom)
     && (top === undefined || Boolean(top && isMobileEmbedInset(top.left) && isMobileEmbedInset(top.right)))
-    && (toolsSearch === undefined || Boolean(toolsSearch && typeof toolsSearch.expanded === 'boolean'));
+    && (toolsSearch === undefined || Boolean(toolsSearch && typeof toolsSearch.expanded === 'boolean'
+      && (toolsSearch.keyboard === undefined || (toolsSearch.keyboard === true && toolsSearch.expanded))));
 }
 
 export function decodeMobileEmbedInit(value: unknown): MobileEmbedInitMessage | null {

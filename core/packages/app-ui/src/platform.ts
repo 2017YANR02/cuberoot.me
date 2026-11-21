@@ -115,6 +115,7 @@ export interface InstalledAppHost {
   uuRemote?: import('./uu-remote').UURemoteClient;
   watchTimer?: import('./watch-timer').WatchTimerPort;
   listenDesktopNavigation?(language: SupportedLanguage, listener: (command: 'timer' | 'tools' | 'account' | 'back' | 'refresh' | 'search') => void): Promise<InstalledAppListener>;
+  addDockedKeyboardListener?(listener: (top: number | null) => void): Promise<InstalledAppListener>;
   timerMoreMenu?: {
     render(state: {
       frame: PrimaryNavigationFrame;
