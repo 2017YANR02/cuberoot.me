@@ -29,9 +29,10 @@ export class TimerReconstruction {
   private windows=new Map<string,Window>();
   constructor(private factory:TimerSearchFactory,private update:(id:string,value:TimerReconstructionResult)=>void,
     private finished:(id:string)=>void=()=>{}) {}
-  start(id:string,scramble:string,start:number,fps:number,diagnostics=true) {
-    const config=createSearchConfig({scramble,fps,camera:true,originSeconds:start,startSeconds:start,diagnostics,bidirectional:true});
-    this.windows.set(id,{id,start,config,frames:0,submitted:new Set(),closed:false,disposed:false,paused:false,
+  start(id:string,scramble:string,start:number,fps:number,diagnostics=true,captureStart=start) {
+    const config=createSearchConfig({scramble,fps,camera:true,originSeconds:captureStart,startSeconds:start,
+      openingHoldSeconds:Math.max(0,start-captureStart),diagnostics,bidirectional:true});
+    this.windows.set(id,{id,start:captureStart,config,frames:0,submitted:new Set(),closed:false,disposed:false,paused:false,
       searchReady:false,remainingMs:TIMER_SEARCH_LIMIT_MS});
     this.update(id,{status:'collecting'});this.prioritize();return config;
   }
@@ -108,7 +109,8 @@ export class TimerReconstruction {
     this.update(window.id,{status,message,frames:window.frames,result:window.result,
       moves:window.result?.steps.flatMap(step=>step.state_moves),
       config:{scramble:config.scramble,fps:config.fps,source_fps:config.source_fps,frame_clock:config.frame_clock,
-        requested_start_seconds:window.start,source_origin_seconds:config.source_origin_seconds??window.start,
+        turning_start_frame:config.turning_start_frame,
+        requested_start_seconds:config.requested_start_seconds??window.start,source_origin_seconds:config.source_origin_seconds??window.start,
         source_end_seconds:window.end??config.source_origin_seconds??window.start}});
   }
   private open(window:Window) {

@@ -98,8 +98,8 @@ export async function startCameraCapture(
       pause() {
         worker.postMessage({ type: "pause" });
       },
-      resume() {
-        worker.postMessage({ type: "resume" });
+      resume(captureStart?: number) {
+        worker.postMessage({ type: "resume", captureStart });
       },
       acknowledge() {
         if (!ended) worker.postMessage({ type: "ack" });

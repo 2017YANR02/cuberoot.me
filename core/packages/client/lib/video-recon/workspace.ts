@@ -13,7 +13,7 @@ import { FrameQueue, openVideoFile } from "./engine/frame-stream";
 import type { SourceFrame, VideoFileSource } from "./engine/frame-stream";
 import { startCameraCapture } from "./engine/camera-source";
 import type { CameraCapture } from "./engine/camera-source";
-import { PoseFitter } from "./engine/pose-fitter";
+import { PoseFitter, type PoseFittingOptions } from "./engine/pose-fitter";
 import type { FittedPose } from "./engine/pose-types";
 import { OrderedStage } from "./engine/ordered-stage";
 import { VideoResultCache, videoResultKey } from "./engine/video-result-cache";
@@ -163,6 +163,7 @@ export function createVideoWorkspace(stage: HTMLCanvasElement, initialTab: Works
     if(clip.id===state.latestTimerSolveId)state.latestTimerReplay=clip;
   });
   const timerCaptureGate=new TimerCaptureGate();
+  const timerPoseOptions = new Map<string, PoseFittingOptions>();
   const archivedDiagnostics = new Map<string, Promise<Blob>>();
 
   const timerReconstruction = new TimerReconstruction(
@@ -202,11 +203,14 @@ export function createVideoWorkspace(stage: HTMLCanvasElement, initialTab: Works
   }
   function startTimerSolve(id: string, scramble: string, clockMs: number) {
     if (state.cameraClockOriginMs === undefined) return;
-    const config = timerReconstruction.start(id, scramble, (clockMs - state.cameraClockOriginMs) / 1000, state.sourceFps || 30, state.searchDiagnostics);
+    const start = (clockMs - state.cameraClockOriginMs) / 1000;
+    const captureStart = timerCaptureGate.start(id, start);
+    const config = timerReconstruction.start(id, scramble, start, state.sourceFps || 30, state.searchDiagnostics, captureStart);
+    timerPoseOptions.set(id, { scramble, turningStartFrame: config.turning_start_frame, camera: true });
     state.latestTimerSolveId=id;state.latestTimerReplay=undefined;state.latestReplayPosition=undefined;state.latestReplaySeek=undefined;
     timerReplayCache.begin(id);
-    timerReplayStore.start(id,config.requested_start_seconds!,config.fps);
-    timerCaptureGate.start(id,config.requested_start_seconds!);state.timerCapturePhase='capturing';capture?.resume();
+    timerReplayStore.start(id,start,config.fps,captureStart);
+    state.timerCapturePhase='capturing';capture?.resume(captureStart);
     const runId = timerDiagnostics.start(id, generation, config, {
       policyVersion: POLICY_VERSION, appOrigin: location.origin, poseWorkers: poseWorkerCount(navigator.hardwareConcurrency),
       admissionCapacity: ADMISSION_CAPACITY,
@@ -225,6 +229,8 @@ export function createVideoWorkspace(stage: HTMLCanvasElement, initialTab: Works
   }
   function closeTimerInput(message?: string) {
     if (!state.timerCamera) return;
+    timerCaptureGate.clear();
+    timerPoseOptions.clear();
     timerReplayStore.closeInput();
     timerReconstruction.closeInput(message);
   }
@@ -295,7 +301,7 @@ export function createVideoWorkspace(stage: HTMLCanvasElement, initialTab: Works
 
   let fileEnded = false;
   type CameraEnd={timerEnd:true;id:string;timestamp:number;close():void};
-  type CameraFrame=SourceFrame&{close():void;timerReset?:boolean};
+  type CameraFrame=SourceFrame&{close():void;timerReset?:boolean;timerPose?:PoseFittingOptions};
   const cameraQueue = new FrameQueue<CameraFrame|CameraEnd>();
   const presenter = new FramePresenter();
   let timer = 0,
@@ -310,6 +316,7 @@ export function createVideoWorkspace(stage: HTMLCanvasElement, initialTab: Works
         snapshot: OffscreenCanvas;
         generation: number;
         fitPose: boolean;
+        fittingOptions: PoseFittingOptions;
         resetPose: boolean;
         timestamp: number;
         counted: boolean;
@@ -597,6 +604,7 @@ export function createVideoWorkspace(stage: HTMLCanvasElement, initialTab: Works
     if('timerEnd' in packet){
       if(packet.generation===generation&&!disposed){
         timerReplayStore.finishThrough(packet.timestamp);timerReconstruction.finishThrough(packet.timestamp);
+        timerPoseOptions.delete(packet.id);
         if(timerCaptureGate.finish(packet.id)){
           state.timerCapturePhase='idle';presentationTimes=[];lastResultTime=0;state.fps=0;previousFrameStart=0;
         }
@@ -784,7 +792,7 @@ export function createVideoWorkspace(stage: HTMLCanvasElement, initialTab: Works
               packet.fitStartedAtMs = performance.now();
               try {
                 packet.fitting = poseFitter.fit(data.result, completed.resetPose,
-                  completed.timestamp, completed.recording.sourceFps, poseFittingOptions()).finally(() => {
+                  completed.timestamp, completed.recording.sourceFps, completed.fittingOptions).finally(() => {
                     packet.fitCompletedAtMs = performance.now();
                   });
               } catch (cause) { packet.fitting = Promise.reject(cause); }
@@ -828,9 +836,8 @@ export function createVideoWorkspace(stage: HTMLCanvasElement, initialTab: Works
 
   function stopSource() {
     closeCrop(); state.uploadedFile = undefined; state.sourceCrop = undefined; state.cropLocked = false; state.cropLoading = false;
-    timerCaptureGate.clear();state.timerCapturePhase='idle';
-    timerReplayStore.closeInput();
-    timerReconstruction.closeInput('Camera disconnected before the complete solve window was processed');
+    closeTimerInput('Camera disconnected before the complete solve window was processed');
+    state.timerCapturePhase='idle';
     state.captureFps=0;
     state.timerCamera = false; state.cameraClockOriginMs = undefined;
     activeRunId=undefined;
@@ -918,21 +925,23 @@ export function createVideoWorkspace(stage: HTMLCanvasElement, initialTab: Works
             return;
           }
           state.cameraClockOriginMs = frame.clockOriginMs;
-          let timerReset=false;
-          if(state.timerCamera){
-            const admission=timerCaptureGate.admit(frame.timestamp);
-            if(admission.type!=='frame'){
-              frame.bitmap.close();capture?.acknowledge();
-              if(admission.type==='end'){
-                capture?.idle();state.timerCapturePhase='draining';
-                cameraQueue.push({timerEnd:true,id:admission.id,timestamp:admission.timestamp,close(){}});
-                state.queuedFrames=cameraQueue.length;scheduleNext();
-              }else if(state.timerCapturePhase==='idle')capture?.idle();
-              return;
+          const admission = state.timerCamera ? timerCaptureGate.admit(frame.timestamp) : undefined;
+          for (const end of admission?.ends ?? []) {
+            cameraQueue.push({timerEnd:true,id:end.id,timestamp:end.timestamp,close(){}});
+            if (end.latest) {
+              capture?.idle();
+              state.timerCapturePhase='draining';
             }
-            timerReset=admission.reset;
           }
-          cameraQueue.push({ ...frame,timerReset, close: () => frame.bitmap.close() });
+          if (admission && !admission.frame) {
+            frame.bitmap.close();
+            capture?.acknowledge();
+            if (state.timerCapturePhase==='idle') capture?.idle();
+          } else {
+            const attempt = admission?.frame;
+            cameraQueue.push({ ...frame, timerReset:attempt?.reset,
+              timerPose:attempt ? timerPoseOptions.get(attempt.id) : undefined, close:() => frame.bitmap.close() });
+          }
           state.queuedFrames = cameraQueue.length;
           scheduleNext();
         },
@@ -1011,7 +1020,7 @@ export function createVideoWorkspace(stage: HTMLCanvasElement, initialTab: Works
     }
   }
 
-  function dispatch(bitmap: ImageBitmap, timestamp: number, counted: boolean,captureMetrics?:CameraCaptureMetrics, crop?:PixelCrop) {
+  function dispatch(bitmap: ImageBitmap, timestamp: number, counted: boolean,captureMetrics?:CameraCaptureMetrics, crop?:PixelCrop, timerPose?:PoseFittingOptions) {
     // Recheck after asynchronous decoding/bitmap creation: search can finish
     // while a frame is being acquired, before it reaches the neural worker.
     if(!inferenceAllowed()){
@@ -1021,10 +1030,12 @@ export function createVideoWorkspace(stage: HTMLCanvasElement, initialTab: Works
     const snapshot = presenter.captureFrame(bitmap, crop);
     const sentAt = performance.now();
     const appliedSettings = settings();
+    const fittingOptions = timerPose ?? poseFittingOptions();
     currentFrame = {
       snapshot,
       generation,
       fitPose: needsPose(),
+      fittingOptions,
       resetPose,
       timestamp,
       counted,
@@ -1041,7 +1052,7 @@ export function createVideoWorkspace(stage: HTMLCanvasElement, initialTab: Works
         settings: appliedSettings,
         runId:activeRunId,
       },
-      cacheKey: videoResultKey(size, backend, appliedSettings, needsPose(), poseFittingOptions()),
+      cacheKey: videoResultKey(size, backend, appliedSettings, needsPose(), fittingOptions),
       sentAt,
       drawMs: sentAt - drawStart,
       acquireMs: counted ? acquireMs : 0,
@@ -1150,7 +1161,7 @@ export function createVideoWorkspace(stage: HTMLCanvasElement, initialTab: Works
       closeTimerInput(state.mediaError);
     }
   }
-  function admitFrame(frame: SourceFrame) {
+  function admitFrame(frame: SourceFrame & Pick<CameraFrame,'timerPose'>) {
       const crop = inputCrop(frame.bitmap);
       const saved = state.sourceKind === "video" ? findSavedResult(frame.timestamp) : undefined;
       if (saved) {
@@ -1171,7 +1182,7 @@ export function createVideoWorkspace(stage: HTMLCanvasElement, initialTab: Works
           state.result=undefined;state.position=frame.timestamp;state.presentedTimestamp=frame.timestamp;
         } finally {frame.bitmap.close();markIdle();}
         continuePipeline();
-      } else dispatch(frame.bitmap, frame.timestamp, true,frame.captureMetrics, crop);
+      } else dispatch(frame.bitmap, frame.timestamp, true,frame.captureMetrics, crop, frame.timerPose);
   }
 
   function presentSavedFrame(bitmap: ImageBitmap, saved: SavedVideoResult) {
@@ -1429,6 +1440,7 @@ export function createVideoWorkspace(stage: HTMLCanvasElement, initialTab: Works
     timerReconstruction.cancel('Page closed before reconstruction finished');
     timerReplayStore.clear();timerReplayCache.clear();state.latestTimerReplay=undefined;
     timerCaptureGate.clear();
+    timerPoseOptions.clear();
     archivedDiagnostics.clear();
     generation++;
     cancelScheduled();

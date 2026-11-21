@@ -4,6 +4,8 @@ import type { FrameResult } from '@/lib/video-recon/engine/detector';
 import type { FittedPose } from '@/lib/video-recon/engine/pose-types';
 import type { MoveSearchResult } from '@/lib/video-recon/engine/move-search-types';
 import { TimerReconstruction, type TimerSearchFactory } from '@/lib/video-recon/engine/timer-reconstruction';
+import { CameraPreRoll, TimerCaptureGate } from '@/lib/video-recon/engine/timer-capture';
+import { TimerReplayStore } from '@/lib/video-recon/engine/timer-replay';
 import { ParallelSearch } from '@/lib/video-recon/pose-fitter/runtime/parallel-search.mjs';
 
 describe('camera reconstruction search', () => {
@@ -66,5 +68,55 @@ describe('camera reconstruction search', () => {
     expect(expand).toHaveBeenCalledTimes(2);
     expect(error).not.toHaveBeenCalled();
     driver.dispose();
+  });
+});
+
+describe('camera solve capture windows', () => {
+  it('releases only recent buffered frames and preserves source order', () => {
+    const buffer = new CameraPreRoll<{ timestamp: number; close: () => void }>();
+    const frames = [1, 1.3, 1.5, 1.6].map(timestamp => ({ timestamp, close: vi.fn() }));
+    frames.forEach(frame => buffer.push(frame));
+    expect(frames[0].close).toHaveBeenCalledOnce();
+    expect(buffer.take(1.5)).toEqual(frames.slice(2));
+    expect(frames[1].close).toHaveBeenCalledOnce();
+    expect(frames[2].close).not.toHaveBeenCalled();
+    expect(buffer.take(1.5)).toEqual([]);
+  });
+
+  it('closes the previous tail before admitting the first frame of the next solve', () => {
+    const gate = new TimerCaptureGate();
+    expect(gate.start('first', 2)).toBe(1.5);
+    expect(gate.admit(1.6).frame).toEqual({ id: 'first', reset: true });
+    gate.stop('first', 10);
+    expect(gate.start('second', 10.5)).toBe(10.3);
+    expect(gate.admit(10.2).frame).toEqual({ id: 'first', reset: false });
+    expect(gate.admit(10.4)).toEqual({
+      ends: [{ id: 'first', timestamp: 10.3, latest: false }],
+      frame: { id: 'second', reset: true },
+    });
+    expect(gate.finish('first')).toBe(false);
+    expect(gate.admit(10.5).frame).toEqual({ id: 'second', reset: false });
+  });
+
+  it('includes pre-roll in search and replay while keeping the stopwatch origin', async () => {
+    const update = vi.fn();
+    const search = { submit: vi.fn(), end: vi.fn(async () => {}), dispose: vi.fn() };
+    const reconstruction = new TimerReconstruction(() => search, update);
+    const config = reconstruction.start('solve', 'R', 2, 30, true, 1.5);
+    expect(config.turning_start_frame).toBe(2000);
+    reconstruction.submit(1.6, {} as FrameResult, Promise.resolve({} as FittedPose));
+    expect(search.submit).toHaveBeenCalledOnce();
+    expect(update.mock.lastCall?.[1].config).toMatchObject({ requested_start_seconds: 2, source_origin_seconds: 1.6 });
+    const publish = vi.fn();
+    const replay = new TimerReplayStore(publish);
+    replay.start('solve', 2, 1000, 1.5);
+    const encode = async () => new Blob();
+    for (const timestamp of [1.4, 1.6, 2.1]) replay.capture(timestamp, {} as FrameResult, encode);
+    replay.stop('solve', 3);
+    replay.finishThrough(3.3);
+    await vi.waitFor(() => expect(publish.mock.lastCall?.[0].complete).toBe(true));
+    expect(publish.mock.lastCall?.[0].start).toBe(2);
+    expect(publish.mock.lastCall?.[0].frames.map((frame: { timestamp: number }) => frame.timestamp)).toEqual([1.6, 2.1]);
+    reconstruction.cancel();
   });
 });

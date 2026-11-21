@@ -9,28 +9,27 @@ export function replayWithoutImages(clip:TimerReplay):TimerReplay {
   if(!clip.frames.some(frame=>frame.image))return clip;
   return {...clip,frames:clip.frames.map(({image:_image,...frame})=>frame),missingImages:clip.frames.length};
 }
-interface Clip {id:string;start:number;end?:number;clockFps:number;closed:boolean;frames:Promise<TimerReplayFrame>[];
+interface Clip {id:string;start:number;captureStart:number;end?:number;clockFps:number;closed:boolean;frames:Promise<TimerReplayFrame>[];
   ready:TimerReplayFrame[];published:number;timer?:ReturnType<typeof setTimeout>}
 
-/** Only processed frames inside a timed solve are encoded. No camera images or
- * detections from idle time are retained, and encoding never blocks fitting. */
+/** Encode the admitted opening, solve and tail. Encoding never blocks fitting. */
 export class TimerReplayStore {
   private clips=new Map<string,Clip>();
   private latestId?:string;
   constructor(private publish:(clip:TimerReplay)=>void) {}
-  start(id:string,start:number,clockFps:number){
+  start(id:string,start:number,clockFps:number,captureStart=start){
     this.latestId=id;
     for(const previous of this.clips.values()){
       previous.ready=previous.ready.map(({image:_image,...frame})=>frame);
       previous.frames=previous.frames.map(promise=>promise.then(({image:_image,...frame})=>frame));
     }
-    this.clips.set(id,{id,start,clockFps,closed:false,frames:[],ready:[],published:0});
+    this.clips.set(id,{id,start,captureStart,clockFps,closed:false,frames:[],ready:[],published:0});
   }
   stop(id:string,stop:number){const clip=this.clips.get(id);if(clip&&!clip.closed){clip.end=stop+TIMER_TAIL_SECONDS;this.emit(clip);}}
   capture(timestamp:number,result:FrameResult,encode:()=>Promise<Blob>){
     let image:Promise<Blob|undefined>|undefined;
     for(const clip of this.clips.values()){
-      if(clip.closed||timestamp<clip.start)continue;
+      if(clip.closed||timestamp<clip.captureStart)continue;
       if(clip.end!==undefined&&timestamp>=clip.end){void this.finish(clip);continue;}
       // convertToBlob snapshots pixels synchronously; the presenter's canvas
       // can then be reused while the browser encodes that snapshot off-thread.

@@ -1,5 +1,6 @@
 import { FrameSelector } from "./frame-stream";
 import {CameraFrameRate,CameraFrameBuffer} from './camera-metrics';
+import { CameraPreRoll } from './timer-capture';
 
 interface Processor {
   readable: ReadableStream<VideoFrame>;
@@ -17,9 +18,19 @@ interface CaptureScope {
 const scope = self as unknown as CaptureScope;
 let paused = false, stopped = false, resetRate=false, processing=true;
 const buffer=new CameraFrameBuffer();
+type CapturedFrame = { timestamp: number; bitmap: ImageBitmap; close(): void; clockOriginMs: number;
+  metrics: { captureFps: number; browserSkippedFrames: number; copyMs: number } };
+const preRoll = new CameraPreRoll<CapturedFrame>();
 let track: MediaStreamTrack | undefined;
 let reader: ReadableStreamDefaultReader<VideoFrame> | undefined;
 let canvas: OffscreenCanvas | undefined;
+
+function deliver(frame: CapturedFrame) {
+  const { bitmap, timestamp, clockOriginMs, metrics } = frame;
+  scope.postMessage({ type: 'frame', bitmap, timestamp, clockOriginMs,
+    sentAtEpochMs: performance.timeOrigin + performance.now(),
+    metrics: { ...metrics, skippedFrames: buffer.skipped } }, [bitmap]);
+}
 
 scope.onmessage = async ({ data }) => {
   if (data.type === "ack") {
@@ -28,6 +39,7 @@ scope.onmessage = async ({ data }) => {
   }
   if (data.type === "pause") {
     paused = true;
+    preRoll.clear();
     return;
   }
   if(data.type==='idle'){
@@ -36,6 +48,10 @@ scope.onmessage = async ({ data }) => {
   }
   if (data.type === "resume") {
     paused = false;processing=true;resetRate=true;
+    for (const frame of preRoll.take(data.captureStart ?? Infinity)) {
+      if (buffer.admit(frame.timestamp)) deliver(frame);
+      else frame.close();
+    }
     return;
   }
   if (data.type !== "start") return;
@@ -73,9 +89,8 @@ scope.onmessage = async ({ data }) => {
         if(!processing){
           if(timestamp-lastStats>=.5){lastStats=timestamp;scope.postMessage({type:'stats',metrics:{captureFps,
             skippedFrames:buffer.skipped,browserSkippedFrames:processor?.discardedFrames??0}});}
-          continue;
         }
-        if(!buffer.admit(timestamp)){
+        if(processing&&!buffer.admit(timestamp)){
           if(timestamp-lastStats>=.5){lastStats=timestamp;scope.postMessage({type:'stats',metrics:{captureFps,
             skippedFrames:buffer.skipped,browserSkippedFrames:processor?.discardedFrames??0}});}
           continue;
@@ -94,17 +109,10 @@ scope.onmessage = async ({ data }) => {
         context.drawImage(frame, 0, 0);
         const bitmap = canvas.transferToImageBitmap();
         const copyMs=performance.now()-copyStart;
-        scope.postMessage(
-          {
-            type: "frame",
-            bitmap,
-            timestamp,
-            clockOriginMs,
-            sentAtEpochMs:performance.timeOrigin+performance.now(),
-            metrics:{captureFps,skippedFrames:buffer.skipped,browserSkippedFrames:processor?.discardedFrames??0,copyMs},
-          },
-          [bitmap],
-        );
+        const captured = { bitmap, timestamp, clockOriginMs, close: () => bitmap.close(),
+          metrics: { captureFps, browserSkippedFrames: processor?.discardedFrames ?? 0, copyMs } };
+        if (processing) deliver(captured);
+        else preRoll.push(captured);
       } finally {
         frame.close();
       }
@@ -117,6 +125,7 @@ scope.onmessage = async ({ data }) => {
     });
   } finally {
     stopped = true;
+    preRoll.clear();
     track?.stop();
     await reader?.cancel().catch(() => {});
     scope.postMessage({ type: "ended" });

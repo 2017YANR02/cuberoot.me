@@ -11,7 +11,8 @@ export interface TimerReconstructionResult {
   frames?: number;
   moves?: string[];
   turnEvents?: TurnEvent[];
-  config?: { scramble: string; fps: number; source_fps?:number;frame_clock?:'camera_milliseconds';requested_start_seconds: number; source_origin_seconds: number; source_end_seconds: number };
+  config?: { scramble: string; fps: number; source_fps?:number;frame_clock?:'camera_milliseconds';turning_start_frame?:number|null;
+    requested_start_seconds: number; source_origin_seconds: number; source_end_seconds: number };
   result?: MoveSearchResult;
   diagnosticRunId?: string;
 }
