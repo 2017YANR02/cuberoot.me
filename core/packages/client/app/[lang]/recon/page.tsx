@@ -964,8 +964,8 @@ export default function ReconListPage() {
                           onClick={item.toggle}
                         >
                           <span className="recon-filter-option">
-                            <Check size={14} aria-hidden="true" style={{ visibility: item.selected ? 'visible' : 'hidden' }} />
                             {item.label}
+                            {item.selected && <Check size={16} aria-hidden="true" />}
                           </span>
                         </button>
                       ))}

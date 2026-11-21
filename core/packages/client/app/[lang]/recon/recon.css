@@ -654,29 +654,55 @@ img.recon-inline-flag {
 
 .recon-featured { margin-bottom: 2rem; }
 
-/* Keep this short menu free of scrollbar chrome, including fractional zoom overflow. */
-.recon-filter-popup { scrollbar-width: none; }
-.recon-filter-popup::-webkit-scrollbar { display: none; }
-.recon-filter-popup .compact-select-option.active {
-  color: var(--foreground);
-  background: var(--secondary);
+/* Grouped title filter, rendered in CompactSelect's viewport-clamped popup. */
+.compact-select-popup.recon-filter-popup {
+  min-width: min(11rem, calc(100vw - 16px));
+  padding: 6px;
+  scrollbar-width: none;
 }
+.recon-filter-popup::-webkit-scrollbar { display: none; }
 
-/* Grouped reconstruction filters share CompactSelect surfaces and option states. */
-.recon-filter-groups {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
+.recon-filter-groups > [role="group"] + [role="group"] {
+  margin-top: 5px;
+  padding-top: 5px;
+  border-top: 1px solid var(--border-default);
 }
 
 .recon-filter-heading {
-  padding: 6px 16px;
+  padding: 4px 10px;
+  color: var(--muted-foreground);
   font-size: 12px;
   font-weight: 600;
+  line-height: 1.4;
+}
+
+.recon-filter-popup .compact-select-option {
+  min-height: 34px;
+  padding: 5px 10px;
+}
+
+.recon-filter-popup .compact-select-option.active {
+  background: transparent;
+  color: var(--foreground);
+  font-weight: 500;
+}
+
+.recon-filter-popup .compact-select-option:is(:hover, :focus-visible) {
+  background: var(--secondary);
 }
 
 .recon-filter-option {
   display: flex;
   align-items: center;
-  gap: 8px;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.recon-filter-option svg {
+  flex: none;
+  color: var(--accent);
+}
+
+@media (pointer: coarse) {
+  .recon-filter-popup .compact-select-option { min-height: 44px; }
 }
