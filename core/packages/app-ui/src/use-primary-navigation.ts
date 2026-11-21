@@ -83,6 +83,7 @@ export function usePrimaryNavigation(
     running: boolean;
     viewport: HostViewportLayout | null;
     viewportHeight: number;
+    viewportTop: number;
     searchRef: RefObject<HTMLButtonElement | null>;
     showSearch: boolean;
     searchExpanded: boolean;
@@ -156,9 +157,22 @@ export function usePrimaryNavigation(
       });
     };
     update();
+    const frame = requestAnimationFrame(update);
+    const visualViewport = window.visualViewport;
+    const resize = new ResizeObserver(update);
+    const shell = nav.current?.parentElement;
+    if (shell) resize.observe(shell);
     window.addEventListener('resize', update);
-    return () => window.removeEventListener('resize', update);
-  }, [host, nav, connected, visible, selected, vertical, horizontalOffset, dark, language, disabled, running, viewport, viewportHeight, searchRef, showSearch, searchExpanded]);
+    visualViewport?.addEventListener('scroll', update);
+    visualViewport?.addEventListener('resize', update);
+    return () => {
+      cancelAnimationFrame(frame);
+      resize.disconnect();
+      window.removeEventListener('resize', update);
+      visualViewport?.removeEventListener('scroll', update);
+      visualViewport?.removeEventListener('resize', update);
+    };
+  }, [host, nav, connected, visible, selected, vertical, horizontalOffset, dark, language, disabled, running, viewport, viewportHeight, options.viewportTop, searchRef, showSearch, searchExpanded]);
 
   return connected && rendered;
 }

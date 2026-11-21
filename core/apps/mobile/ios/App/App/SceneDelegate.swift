@@ -134,6 +134,7 @@ final class CubeRootBridgeViewController: CAPBridgeViewController {
 
     override func viewDidLoad() {
         super.viewDidLoad()
+        viewportPlugin.observeKeyboard(in: view)
         // Keep older SDK builds working; these guides are optional host geometry.
         #if compiler(>=6.4)
         if #available(iOS 27.1, *) {
@@ -165,27 +166,25 @@ final class ViewportLayoutPlugin: CAPPlugin, CAPBridgedPlugin {
     private var lastLayout: NSDictionary?
     private var keyboardTop: CGFloat?
 
-    override func load() {
-        let center = NotificationCenter.default
-        center.addObserver(self, selector: #selector(keyboardFrameChanged(_:)),
-                           name: UIResponder.keyboardWillChangeFrameNotification, object: nil)
-        center.addObserver(self, selector: #selector(keyboardHidden),
-                           name: UIResponder.keyboardDidHideNotification, object: nil)
-    }
-
-    @objc private func keyboardFrameChanged(_ notification: Notification) {
-        guard let view = bridge?.webView, let window = view.window,
-              let frame = notification.userInfo?[UIResponder.keyboardFrameEndUserInfoKey] as? CGRect else { return }
-        let keyboard = view.convert(frame, from: window.screen.coordinateSpace)
-        let overlap = keyboard.intersection(view.bounds)
-        // A hardware-keyboard accessory bar can briefly remain during dismissal.
-        let coversBottom = !overlap.isNull && overlap.maxY >= view.bounds.maxY - 1
-            && overlap.height > max(view.safeAreaInsets.bottom + 1, 80)
-        updateKeyboard(top: coversBottom ? overlap.minY - view.bounds.minY : nil)
-    }
-
-    @objc private func keyboardHidden() {
-        updateKeyboard(top: nil)
+    func observeKeyboard(in view: UIView) {
+        let keyboard = KeyboardViewportProbe()
+        keyboard.onLayout = { [weak self, weak view, weak keyboard] in
+            guard let self, let view, let keyboard else { return }
+            // The guide includes the bottom safe area and can include a hardware
+            // keyboard's accessory bar. Only the docked software keyboard needs avoidance.
+            let top: CGFloat? = keyboard.bounds.height > max(view.safeAreaInsets.bottom + 1, 80)
+                ? keyboard.frame.minY : nil
+            self.updateKeyboard(top: top)
+        }
+        keyboard.translatesAutoresizingMaskIntoConstraints = false
+        keyboard.isUserInteractionEnabled = false
+        view.addSubview(keyboard)
+        NSLayoutConstraint.activate([
+            keyboard.topAnchor.constraint(equalTo: view.keyboardLayoutGuide.topAnchor),
+            keyboard.bottomAnchor.constraint(equalTo: view.bottomAnchor),
+            keyboard.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            keyboard.widthAnchor.constraint(equalToConstant: 0)
+        ])
     }
 
     private func updateKeyboard(top: CGFloat?) {
@@ -250,6 +249,15 @@ final class ViewportLayoutPlugin: CAPPlugin, CAPBridgedPlugin {
         guard lastLayout == nil || !dictionary.isEqual(lastLayout!) else { return }
         lastLayout = dictionary
         notifyListeners("layoutChanged", data: current)
+    }
+}
+
+private final class KeyboardViewportProbe: UIView {
+    var onLayout: (() -> Void)?
+
+    override func layoutSubviews() {
+        super.layoutSubviews()
+        onLayout?()
     }
 }
 

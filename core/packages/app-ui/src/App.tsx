@@ -2190,6 +2190,10 @@ export function App({ host, loadingMark }: { host: InstalledAppHost; loadingMark
   useEffect(() => {
     const onMessage = (event: MessageEvent) => {
       if (event.origin !== SITE_ORIGIN) return;
+      if (event.data?.type === 'cuberoot:mobile:embedded-search-blur') {
+        if (event.source === webFrameRefs.current.tools?.contentWindow) setDockedKeyboardTop(null);
+        return;
+      }
       if (event.data?.type === 'cuberoot:mobile:embedded-top-ready') {
         const surface: unknown = event.data.surface;
         if (floatingNavigation && (surface === 'account' || surface === 'tools')) {
@@ -4161,7 +4165,17 @@ export function App({ host, loadingMark }: { host: InstalledAppHost; loadingMark
     }
     const viewport = window.visualViewport;
     // WebKit can pan its visible viewport to reveal the focused iframe field.
-    const update = () => setSearchViewportTop(Math.max(0, viewport?.pageTop ?? window.scrollY));
+    let contracted = false;
+    const update = () => {
+      setSearchViewportTop(Math.max(0, viewport?.pageTop ?? window.scrollY));
+      if (!viewport || viewport.scale !== 1) return;
+      const occlusion = window.innerHeight - viewport.height;
+      if (occlusion > 80) contracted = true;
+      else if (contracted && occlusion < 8) {
+        contracted = false;
+        setDockedKeyboardTop(null);
+      }
+    };
     viewport?.addEventListener('scroll', update);
     viewport?.addEventListener('resize', update);
     window.addEventListener('scroll', update);
@@ -4188,6 +4202,7 @@ export function App({ host, loadingMark }: { host: InstalledAppHost; loadingMark
     language,
     viewport: hostViewport,
     viewportHeight,
+    viewportTop: searchViewportTop,
     searchRef: toolsSearchRef,
     showSearch: showToolsSearch,
     searchExpanded: toolsSearchExpanded,

@@ -9,10 +9,20 @@ style.textContent = styles;
 const searchField = '.landing-page > .landing-search .landing-search-field';
 const isInset = value => Number.isFinite(value) && value >= 0 && value <= 512;
 let searchExpanded = false;
+let shellOrigin;
+
+if (surface === 'tools') {
+  document.addEventListener('focusout', event => {
+    if (!searchExpanded || !shellOrigin || !event.target?.matches?.(searchField)
+      || !window.webkit?.messageHandlers?.cuberootSearchKeyboard) return;
+    window.parent.postMessage({ type: 'cuberoot:mobile:embedded-search-blur' }, shellOrigin);
+  });
+}
 
 window.addEventListener('message', ({ source, origin, data }) => {
   if (source !== window.parent || !parentOrigins.includes(origin)
     || data?.type !== 'cuberoot:mobile:init' || data.surface !== surface) return;
+  shellOrigin = origin;
 
   const pathname = location.pathname.replace(/^\/(?:en|zh)(?=\/|$)/, '').replace(/\/$/, '') || '/';
   const supportedPage = pathname === (surface === 'tools' ? '/' : '/account');
