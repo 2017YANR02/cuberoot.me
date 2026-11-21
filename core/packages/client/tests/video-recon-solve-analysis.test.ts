@@ -1,0 +1,64 @@
+import { describe, expect, it } from 'vitest';
+import { facePermFor } from '@cuberoot/shared/timer/reconstruct/gyro-orient';
+import { decodeUrlAlg } from '@/lib/cubedb-url';
+import { buildReconSubmitQuery } from '@/lib/sim-recon-link';
+import { axisAngle, type CubePose, type Quaternion, type V3 } from '@/lib/video-recon/engine/cube-motion';
+import type { MoveStep } from '@/lib/video-recon/engine/move-search-types';
+import type { MeasuredCubeFrame } from '@/lib/video-recon/engine/projected-cube';
+import { analyzeVideoSolve, observeVideoSolve, playerGrip, videoNotationTimeline } from '@/lib/video-recon/solve-analysis';
+
+const fps = 30;
+const identity: Quaternion = [0, 0, 0, 1];
+const state: CubePose['state'] = { colors: [], stickers: [], moves: [] };
+const frames = (rotation: Quaternion): MeasuredCubeFrame[] => Array.from({ length: 35 }, (_, frame) => ({
+  frame,
+  timestamp: frame / fps,
+  pose: { rotation: frame < 11 ? identity : rotation, axis: 0, angles: [0, 0, 0], state },
+}));
+const commit = (frame_index: number, ...state_moves: string[]): MoveStep => ({
+  frame_index, state_moves, geometry_option_index: 0,
+});
+
+describe('video solve reconstruction', () => {
+  it.each([
+    { token: 'x', vector: [-Math.PI / 2, 0, 0], scramble: 'U R', first: "R'", last: "U'", renamed: "B'" },
+    { token: 'y', vector: [0, 0, -Math.PI / 2], scramble: 'R U', first: "U'", last: "R'", renamed: "F'" },
+    { token: 'z', vector: [0, Math.PI / 2, 0], scramble: 'U R', first: "R'", last: "U'", renamed: "R'" },
+  ])('preserves the physical $token and writes the following turn in the solver’s frame', async ({
+    token, vector, scramble, first, last, renamed,
+  }) => {
+    const steps = [commit(6, first), commit(24, last)];
+    const observation = observeVideoSolve(scramble, steps, frames(axisAngle(vector as V3)), fps, 0, 1.15);
+    expect(observation.core.events).toMatchObject([{ token, tMs: 367, regripOnly: true }]);
+    const analysis = await analyzeVideoSolve(observation, playerGrip('U', 'F')!.rotation, 'en');
+    expect(analysis).toMatchObject({ solved: true, fallback: false });
+    expect(analysis?.result.lines.flatMap(line => line.moves)).toEqual([first, token, renamed]);
+    const result = analysis!.result;
+    const query = new URLSearchParams(buildReconSubmitQuery('3x3', result.scramble, result.text, { method: 'CFOP' }));
+    expect(decodeUrlAlg(query.get('alg')!)).toBe(result.text);
+    expect(decodeUrlAlg(query.get('scramble')!)).toBe(scramble);
+  });
+
+  it('preserves the timing of a same-frame move batch and marks a pose gap', async () => {
+    const rows = frames(identity).filter(row => row.frame <= 4 || row.frame >= 16);
+    const observation = observeVideoSolve('R U', [commit(16, "U'", "R'")], rows, fps, 0, 1);
+    expect(observation.moves).toEqual([{ m: "U'", ts: 533 }, { m: "R'", ts: 533 }]);
+    expect(observation.uncertain).toEqual([{ startMs: 133, endMs: 533 }]);
+    expect(observation.core.events).toHaveLength(0);
+    const analysis = await analyzeVideoSolve(observation, playerGrip('U', 'R')!.rotation, 'zh');
+    expect(analysis).toMatchObject({ method: 'cfop', solved: true, fallback: false });
+    expect(analysis?.result.inspection).toBe('y');
+    expect(analysis?.result.lines.flatMap(line => line.moves)).toEqual(["U'", "F'"]);
+    expect(analysis?.result.text).not.toContain('(0.000)');
+    const text = analysis!.result.text;
+    expect(videoNotationTimeline(analysis!.result, 0).map(({ offset, timestampMs }) => [text.slice(0, offset).split(/\s+/).at(-1), timestampMs]))
+      .toEqual([['y', 0], ["U'", 533], ["F'", 533]]);
+  });
+
+  it('converts the 6.98 opening grip with a half-turn around the solver’s up axis', () => {
+    const camera = playerGrip('F', 'D')!;
+    const solver = playerGrip('F', 'U')!;
+    expect(facePermFor(solver.rotation)).toEqual(facePermFor(`${camera.rotation} y2`));
+    expect(facePermFor(solver.rotation)).toEqual(facePermFor("x' z2"));
+  });
+});

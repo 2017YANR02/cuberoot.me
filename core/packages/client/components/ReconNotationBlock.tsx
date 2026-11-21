@@ -6,11 +6,12 @@ import { tr } from '@/i18n/tr';
 import { ScramblePreview2D } from './ScramblePreview2D';
 import SolutionView from './SolutionView';
 
-export function ReconNotationBlock({ captionHeader, scramble, scrambleCubeOrder, displayScramble, optimalScrambleTag = '', solutionText, displayText, rawDisplayText, solve, playerRef, canToggle, crossLineIdx, crossNormalized, setCrossNormalized, canRemoveWaste = false, wasteRemoved = false, setWasteRemoved = () => {}, cancellationLines, expandedCancellationLine, onToggleCancellation }: {
+export function ReconNotationBlock({ captionHeader, scramble, scrambleCubeOrder, displayScramble, optimalScrambleTag = '', solutionText, displayText, rawDisplayText, solve, playerRef, playback, canToggle = false, crossLineIdx = -1, crossNormalized = false, setCrossNormalized, canRemoveWaste = false, wasteRemoved = false, setWasteRemoved = () => {}, cancellationLines, expandedCancellationLine, onToggleCancellation }: {
   captionHeader: string; scramble: string; scrambleCubeOrder: number | null; displayScramble: string; optimalScrambleTag?: string;
   solutionText: string; displayText: string; rawDisplayText: string; solve: { solutionHtml?: string; event: string; pickupTime?: number | null; putdownTime?: number | null };
-  playerRef: ComponentProps<typeof SolutionView>['playerRef']; canToggle: boolean; crossLineIdx: number; crossNormalized: boolean;
-  setCrossNormalized: (update: (value: boolean) => boolean) => void;
+  playerRef?: ComponentProps<typeof SolutionView>['playerRef']; playback?: ComponentProps<typeof SolutionView>['playback'];
+  canToggle?: boolean; crossLineIdx?: number; crossNormalized?: boolean;
+  setCrossNormalized?: (update: (value: boolean) => boolean) => void;
   canRemoveWaste?: boolean; wasteRemoved?: boolean; setWasteRemoved?: (update: (value: boolean) => boolean) => void;
   cancellationLines?: ReadonlySet<number>; expandedCancellationLine?: number | null; onToggleCancellation?: (line: number) => void;
 }) {
@@ -60,9 +61,10 @@ export function ReconNotationBlock({ captionHeader, scramble, scrambleCubeOrder,
                 scramble={scramble}
                 sourceText={rawDisplayText}
                 playerRef={playerRef}
-                crossLineIdx={canToggle ? crossLineIdx : -1}
+                playback={playback}
+                crossLineIdx={canToggle && setCrossNormalized ? crossLineIdx : -1}
                 crossNormalized={crossNormalized}
-                onToggleCross={() => setCrossNormalized(v => !v)}
+                onToggleCross={setCrossNormalized ? () => setCrossNormalized(v => !v) : undefined}
               />
             )}
   </>;

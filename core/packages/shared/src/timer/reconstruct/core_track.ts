@@ -61,6 +61,8 @@ export const CORE_EVENT_SLACK_MS = 250;
 
 export interface CoreTrack {
   frame?: 'scramble';
+  /** Layer motion is observable. Require positive evidence to infer slices. */
+  layerMotionMeasured?: boolean;
   /** 姿态流里认下来的每一次核心换格,按时刻。中层带的那些也在里面。 */
   events: readonly RotationEvent[];
 }
@@ -224,7 +226,7 @@ export function coreTurnsIn(
     // unrelated y rotation into an M/S gesture merely because both overlapped.
     // Slice tables store the encoder frame compensation, the inverse of the
     // physical core motion recorded by calibrated v2 tracks.
-    if (expectedToken !== undefined && track.frame === 'scramble' && track.events[i].wide) continue;
+    if (expectedToken !== undefined && track.events[i].regripOnly) continue;
     if (expectedToken !== undefined && !supportsRotation(track.events[i].token,
       track.frame === 'scramble' ? inverseRotation(expectedToken) : expectedToken)) continue;
     const event = track.events[i];

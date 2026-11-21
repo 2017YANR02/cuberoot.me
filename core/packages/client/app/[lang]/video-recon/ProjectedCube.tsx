@@ -1,4 +1,4 @@
-import { useEffect, useId, useMemo, useRef, useState, type PointerEvent } from 'react';
+import { useEffect, useId, useMemo, useRef, useState, type PointerEvent, type ReactNode } from 'react';
 import { parseAsStringEnum, useQueryState } from 'nuqs';
 import { Copy, RotateCcw } from '@app-foundation/icons/lucide';
 import { useT } from '@/hooks/useT';
@@ -22,11 +22,13 @@ interface Props {
   sourceFrame: number;
   sourceFps: number;
   playbackSpeed: number;
+  analysis?: ReactNode;
+  controls?: ReactNode;
 }
 
 type Drag = { id: number; kind: CubeDragKind; start: DragPoint; view: Quaternion; x: number; y: number; radius: number };
 
-export function ProjectedCube({ pose, sourceTimestamp, timestamp, solved, steps, timeline, sourceFrame, sourceFps, playbackSpeed }: Props) {
+export function ProjectedCube({ pose, sourceTimestamp, timestamp, solved, steps, timeline, sourceFrame, sourceFps, playbackSpeed, analysis, controls }: Props) {
   const t = useT();
   const instructions = useId();
   const engineHost = useRef<HTMLDivElement>(null);
@@ -42,11 +44,12 @@ export function ProjectedCube({ pose, sourceTimestamp, timestamp, solved, steps,
   const ready = engineState?.engine === engine && engineState.ready;
   const unavailable = engineState?.engine === engine && !engineState.ready;
   const [copy, setCopy] = useState<{ algorithm: string; ok: boolean }>();
+  const notationView = analysis ? CAMERA_ORIENTATION : orientation;
   const tokens = useMemo(() => displayMoveTokens(timeline.length
-    ? reorientedMoveTimeline(timeline, steps, orientation, { fps: sourceFps })
+    ? reorientedMoveTimeline(timeline, steps, notationView, { fps: sourceFps })
     : steps.map(step => ({ frame: step.frame_index, moves: step.state_moves, rotation: false }))),
-  [timeline, steps, orientation, sourceFps]);
-  const setup = useMemo(() => initialGripMoves(timeline, orientation), [timeline, orientation]);
+  [timeline, steps, notationView, sourceFps]);
+  const setup = useMemo(() => initialGripMoves(timeline, notationView), [timeline, notationView]);
   const algorithm = [...setup, ...tokens.map(token => token.move)].join(' ');
   const activeFrame = tokens.findLast(token => token.frame <= sourceFrame)?.frame;
 
@@ -194,6 +197,13 @@ export function ProjectedCube({ pose, sourceTimestamp, timestamp, solved, steps,
         <RotateCcw size={15} aria-hidden />{t('重置视角', 'Reset view')}
       </button>
     </div>}
-    {sourceNotation}
+    {controls}
+    {analysis ? <>
+      {analysis}
+      {sourceNotation && <details>
+        <summary>{t('查看相机视角动作', 'View camera-relative moves')}</summary>
+        {sourceNotation}
+      </details>}
+    </> : sourceNotation}
   </section>;
 }

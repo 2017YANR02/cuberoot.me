@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState, useSyncExternalStore } from 'react';
+import dynamic from 'next/dynamic';
 import { parseAsStringEnum, useQueryState } from 'nuqs';
 import { Camera, Crop, Download, Eraser, Film, Unplug, Upload } from '@app-foundation/icons/lucide';
 import PageHeading from '@/components/PageHeading';
@@ -19,6 +20,7 @@ import { TimerReplay } from './TimerReplay';
 import { TpsGraph } from './TpsGraph';
 import './video-recon.css';
 
+const VideoSolveAnalysis = dynamic(() => import('./VideoSolveAnalysis').then(module => module.VideoSolveAnalysis));
 const NO_MOVES: readonly MoveStep[] = [];
 const VIDEO_MODES: WorkspaceTab[] = ['detector', 'timer'];
 const noWorkspace = () => null;
@@ -77,9 +79,15 @@ export default function VideoReconClient() {
   const downloadProgress = view?.modelProgress;
   const selectedSource = view?.sourceKind === 'camera' ? t('实时摄像头', 'Live camera') : view?.sourceName;
   const guide = detector
-    ? t('上传视频和打乱，复盘三阶还原。图片也可用于检测。', 'Use a video and scramble to reconstruct a 3×3 solve. You can also detect a cube in an image.')
+    ? t('上传固定机位的视频和已知打乱，复盘三阶还原。图片也可用于检测。', 'Use a fixed-camera video and the known scramble to reconstruct a 3×3 solve. You can also detect a cube in an image.')
     : t('用摄像头记录还原，计时结束后查看逐帧回放。', 'Record a solve with your camera and review it frame by frame.');
   const mediaError = view?.mediaError || view?.poseError;
+  const renderReviewControls = (label: string) => workspace && view && reviewing && (
+    <ReviewControls label={label} playing={view.running} speed={view.playbackSpeed}
+      start={view.solveStart} end={view.solveEnd} position={view.presentedTimestamp} index={view.currentReviewIndex} length={view.reviewLength}
+      onPlay={() => void workspace.togglePlayback()} onSpeed={workspace.changePlaybackSpeed}
+      onSeek={time => void workspace.requestReview(time)} onStep={workspace.stepReview} />
+  );
   return <main className="video-recon-page">
     <header className="video-recon-heading">
       <PageHeading backHref="/recon">{title}</PageHeading>
@@ -139,10 +147,7 @@ export default function VideoReconClient() {
             {detector ? t('清除', 'Clear') : t('断开摄像头', 'Disconnect camera')}
           </button>
         </div>}
-        {workspace && view && reviewing && <ReviewControls playing={view.running} speed={view.playbackSpeed}
-          start={view.solveStart} end={view.solveEnd} position={view.position} index={view.currentReviewIndex} length={view.reviewLength}
-          onPlay={() => void workspace.togglePlayback()} onSpeed={workspace.changePlaybackSpeed}
-          onSeek={time => void workspace.requestReview(time)} onStep={workspace.stepReview} />}
+        {renderReviewControls(t('视频播放控件', 'Video playback controls'))}
         {workspace && view?.trimming && <SolveRange view={view} workspace={workspace} />}
         {view?.status === 'loading' && <p className="video-recon-muted" role="status">
           {downloadProgress !== undefined && downloadProgress < 100 ? t(`正在下载识别模型 ${downloadProgress}%`, `Downloading detector models ${downloadProgress}%`)
@@ -177,7 +182,13 @@ export default function VideoReconClient() {
       {reviewing && <ProjectedCube pose={view.coloredProjection} sourceTimestamp={view.presentedTimestamp}
         timestamp={timecode(view.presentedTimestamp)} solved={view.cubeSolved} steps={searchSteps} timeline={view.projectedTimeline}
         sourceFrame={view.result?.fittedPose?.sourceFrame ?? Math.round(view.presentedTimestamp * view.sourceFps)}
-        sourceFps={view.sourceFps} playbackSpeed={view.running ? view.playbackSpeed : 1} />}
+        sourceFps={view.sourceFps} playbackSpeed={view.running ? view.playbackSpeed : 1}
+        controls={renderReviewControls(t('实况魔方播放控件', 'Tracked cube playback controls'))}
+        analysis={workspace && view.reconstructedScramble && view.measuredCubeTimeline && searchSteps.some(step => step.state_moves.length)
+          ? <VideoSolveAnalysis scramble={view.reconstructedScramble} steps={searchSteps} measured={view.measuredCubeTimeline}
+            fps={view.sourceFps} start={view.solveStart} end={view.solveEnd} position={view.presentedTimestamp}
+            onSeek={timestamp => void workspace.requestReview(timestamp)} />
+          : undefined} />}
       {!detector && workspace && view?.latestTimerReplay && view.latestReplayReconstruction && <section className="video-recon-panel" data-site-surface="panel">
         <h2>{t('最近一次回放', 'Latest solve replay')}</h2>
         <TimerReplay key={view.latestTimerReplay.id} clip={view.latestTimerReplay} reconstruction={view.latestReplayReconstruction}

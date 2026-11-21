@@ -51,7 +51,7 @@ function computeHighlightRange(plainText: string, offset: number): [number, numb
   return [p.start, p.end];
 }
 
-export default function SolutionView({ text, html, event, scramble = '', sourceText = text, playerRef, crossLineIdx = -1, crossNormalized = false, onToggleCross, autoWaste = false, cancellationLines, expandedCancellationLine, onToggleCancellation }: {
+export default function SolutionView({ text, html, event, scramble = '', sourceText = text, playerRef, playback, crossLineIdx = -1, crossNormalized = false, onToggleCross, autoWaste = false, cancellationLines, expandedCancellationLine, onToggleCancellation }: {
   text: string;
   html?: string;
   event?: string;
@@ -62,7 +62,9 @@ export default function SolutionView({ text, html, event, scramble = '', sourceT
   expandedCancellationLine?: number | null;
   onToggleCancellation?: (line: number) => void;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  playerRef: MutableRefObject<any>;
+  playerRef?: MutableRefObject<any>;
+  /** A recorded timeline can seek by notation offset and drive the caret from its own clock. */
+  playback?: { offset: number | null; onSeek: (offset: number) => void };
   /** cross 行索引;>=0 时该行末尾渲染内联切换按钮。-1 表示不渲染 */
   crossLineIdx?: number;
   crossNormalized?: boolean;
@@ -83,6 +85,10 @@ export default function SolutionView({ text, html, event, scramble = '', sourceT
   const wasteBrackets = useMemo(() => autoWaste && linkComments
     ? reconWasteBrackets(plainText, scramble) : new Map<number, string>(), [autoWaste, linkComments, plainText, scramble]);
   const commentCases = useNotationCases(plainText, linkComments);
+  const playbackOffset = playback?.offset;
+  const activeOffset = playbackOffset === undefined ? cursorOffset : playbackOffset;
+  const activeRange = useMemo(() => playbackOffset === undefined ? hlRange : playbackOffset === null ? null
+    : computeHighlightRange(plainText, playbackOffset), [plainText, playbackOffset, hlRange]);
 
   useEffect(() => {
     cursorOffsetRef.current = null;
@@ -91,6 +97,7 @@ export default function SolutionView({ text, html, event, scramble = '', sourceT
   }, [text]);
 
   useEffect(() => {
+    if (!playerRef) return;
     const positions = reconPlaybackTokenPositions(plainText);
     let bound: ReconPlayerHandle | null = null;
     let unsubscribe: (() => void) | undefined;
@@ -121,15 +128,20 @@ export default function SolutionView({ text, html, event, scramble = '', sourceT
   }, [plainText, playerRef]);
 
   const syncToOffset = useCallback((text: string, offset: number, autoplay = false) => {
-    syncReconPlayerCursorFromText(playerRef.current, text.substring(0, offset), autoplay);
+    syncReconPlayerCursorFromText(playerRef?.current, text.substring(0, offset), autoplay);
   }, [playerRef]);
 
+  const seekPlayback = playback?.onSeek;
   const moveCaret = useCallback((plainText: string, offset: number, autoplay = false) => {
+    if (seekPlayback) {
+      seekPlayback(offset);
+      return;
+    }
     cursorOffsetRef.current = offset;
     setCursorOffset(offset);
     setHlRange(computeHighlightRange(plainText, offset));
     syncToOffset(plainText, offset, autoplay);
-  }, [syncToOffset]);
+  }, [seekPlayback, syncToOffset]);
 
   // NOTE: 点击解法文本——计算偏移 → 磁吸到 token 边界 → 更新光标 + 高亮 + 同步 player
   const handleClick = useCallback((e: React.MouseEvent) => {
@@ -138,21 +150,22 @@ export default function SolutionView({ text, html, event, scramble = '', sourceT
     if (!el) return;
     let offset = getTextOffsetInElement(el, { x: e.clientX, y: e.clientY });
     if (offset < 0) return;
-    const result = findTokenPositions(plainText);
-    offset = snapCaretToLine(offset, plainText, result);
+    const tokens = findTokenPositions(plainText);
+    const hit = seekPlayback ? tokens.find(token => token.start <= offset && offset <= token.end) : undefined;
+    offset = hit?.end ?? snapCaretToLine(offset, plainText, tokens);
     moveCaret(plainText, offset, true);
-  }, [moveCaret, plainText]);
+  }, [moveCaret, plainText, seekPlayback]);
 
   // NOTE: 方向键导航——左右按 token 跳转,上下按行跳转
   const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
     if ((e.target as Element).closest('a, button')) return;
     if (!['ArrowRight', 'ArrowLeft', 'ArrowUp', 'ArrowDown'].includes(e.key)) return;
     const el = preRef.current;
-    if (!el || !playerRef.current) return;
+    if (!el || (!seekPlayback && !playerRef?.current)) return;
     const fullText = plainText;
     const tokens = findTokenPositions(fullText);
     if (tokens.length === 0) return;
-    const cur = cursorOffsetRef.current ?? 0;
+    const cur = (seekPlayback ? activeOffset : cursorOffsetRef.current) ?? 0;
     let newPos = cur;
 
     if (e.key === 'ArrowRight') {
@@ -189,7 +202,7 @@ export default function SolutionView({ text, html, event, scramble = '', sourceT
     if (newPos === cur) return;
     e.preventDefault();
     moveCaret(fullText, newPos);
-  }, [playerRef, moveCaret, plainText]);
+  }, [playerRef, seekPlayback, activeOffset, moveCaret, plainText]);
 
   const lines = useMemo(() => plainText.split('\n'), [plainText]);
   const freePairLines = useMemo(() => linkComments ? reconFreePairLines(sourceText) : new Set<number>(), [sourceText, linkComments]);
@@ -230,7 +243,7 @@ export default function SolutionView({ text, html, event, scramble = '', sourceT
         return <span key={i}>{nl}<NotationLine annotations={annotations} line={line} lineStart={lineStart} className="recon-counted-line"
           onToggleCancellation={cancellationLines?.has(i) && onToggleCancellation ? () => onToggleCancellation(i) : undefined}
           cancellationExpanded={expandedCancellationLine === i}
-          cursorOffset={cursorOffset} hlRange={hlRange} wasteBrackets={wasteBrackets}
+          cursorOffset={activeOffset} hlRange={activeRange} wasteBrackets={wasteBrackets}
           crossColor={crossColor} links={links} colorHref={colors => linkComments ? f2lLinks.get(i)?.get(colors) : undefined}
           inspectionColors={inspectionColors.get(i)} diagram={diagramAt(i)} trailing={<>{toggle}
             {freePairLines.has(i) && <span className="recon-annotation-badge recon-line-free-pair" data-recon-text-length="0"

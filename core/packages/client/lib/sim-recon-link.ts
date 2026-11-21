@@ -63,6 +63,7 @@ export function buildReconSubmitQuery(reconEvent: string, scramble: string, solu
   sourceEn?: string;
   sourceZh?: string;
   sourceColors?: string;
+  method?: string;
 }): string {
   const params = new URLSearchParams();
   params.set('event', reconEvent);
@@ -71,6 +72,7 @@ export function buildReconSubmitQuery(reconEvent: string, scramble: string, solu
   if (scr) params.set(options?.optimal ? 'optimal' : 'scramble', scr);
   if (sol) params.set('alg', sol);
   if (options?.practice) params.set('official', 'practice');
+  if (options?.method) params.set('method', options.method);
   if (options?.competition) {
     params.set('compWcaId', options.competition.ci);
     params.set('comp', options.competition.cn);

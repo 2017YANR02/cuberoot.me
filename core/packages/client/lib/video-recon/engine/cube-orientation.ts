@@ -99,6 +99,29 @@ export function initialGripMoves(rows: readonly ProjectedCubeFrame[], view: Quat
   return rotationWords.get(basis)!;
 }
 
+export const CUBE_GRIP_ROTATIONS: readonly string[] = [...rotationWords.values()].map(word => word.join(' '));
+
+function rotationAngle(q: Quaternion) {
+ return 2 * Math.acos(Math.min(1, Math.abs(q[3]))) * 180 / Math.PI;
+}
+
+/** Compare measured cube-to-camera poses in the fixed colour axes. */
+export function relativeCubeGrip(reference: Quaternion, observed: Quaternion) {
+ const relative = multiply(inverse(reference), observed);
+ const basis = nearestOrientation(relative);
+ const exact = orientationQuaternions[basis];
+ // Local-axis turns compose on the right of the cube-to-camera pose.
+ const moves = [...rotationWords.get(basis)!].reverse();
+ return {
+  basis,
+  moves,
+  target: multiply(reference, exact),
+  degrees: rotationAngle(relative),
+  errorDegrees: rotationAngle(multiply(inverse(exact), relative)),
+  axis: moves.length === 1 ? moveTurns[moves[0]].axis : undefined,
+ };
+}
+
 export interface ReorientedMoveStep { frame:number; moves:string[]; rotation:boolean }
 export interface DisplayMoveToken { frame:number;move:string;rotation:boolean }
 /** Frame batches carry timing, not visual grouping. Merge adjacent matching

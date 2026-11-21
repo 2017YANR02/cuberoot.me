@@ -756,6 +756,15 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
   const [methodUserTouched, setMethodUserTouched] = useState(false);
   const [cubeUserTouched, setCubeUserTouched] = useState(false);
   useEffect(() => {
+    if (isEditing || fromId) return;
+    const method = searchParams?.get('method');
+    if (!method || !METHODS.includes(method)) return;
+    setForm(prev => ({ ...prev, method }));
+    setMethodUserTouched(true);
+    // Match the scramble and solution handoff, which only seeds a new form.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+  useEffect(() => {
     if (!form.personId || !form.event) { setMethodCubeHistory(null); return; }
     let cancelled = false;
     fetchMethodCubeHistory(form.personId, form.event).then(h => { if (!cancelled) setMethodCubeHistory(h); });

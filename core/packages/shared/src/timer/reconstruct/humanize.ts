@@ -382,7 +382,7 @@ export function humanizeStream(
         return a.ts >= start - CORE_EVENT_SLACK_MS && b.endTs <= event.tMs + CORE_EVENT_SLACK_MS;
       });
   });
-  const eligible = counted.map(() => true);
+  const eligible = counted.map((_, index) => !core?.layerMotionMeasured || forced[index]);
   if (core?.frame === 'scramble') {
     for (let i = 0; i + 1 < counted.length; i++) {
       if (core.events.some(e => e.wide && e.wideEndIdx !== undefined

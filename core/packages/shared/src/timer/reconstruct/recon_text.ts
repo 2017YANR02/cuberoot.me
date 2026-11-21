@@ -179,20 +179,22 @@ export interface ReconTextResult {
 /** The report and native replay must analyze the same physical stream and viewing frame. */
 export function prepareReconstruction(record: {
   scramble: string; moves?: SolveMove[]; timeMs: number; gyro?: string; device?: { model?: string };
-}, method: MethodId, language: 'zh' | 'en', samples?: GyroSample[]) {
+}, method: MethodId, language: 'zh' | 'en', samples?: GyroSample[],
+capture?: { grip?: string; core: CoreTrack }) {
   const moves = record.moves ?? [];
   const gyroSamples = samples ?? decodeGyroTrack(record.gyro);
-  const rotation = initialPoseRotation(gyroSamples, record.device?.model);
-  const view = method === 'cfop' ? normalizeSolve(record.scramble, moves, {
-    preferredRotation: rotation, measuredGrip: gyroSamples[0]?.frame === 'scramble',
+  const rotation = capture?.grip ?? initialPoseRotation(gyroSamples, record.device?.model);
+  const view = method === 'cfop' || capture?.grip !== undefined ? normalizeSolve(record.scramble, moves, {
+    preferredRotation: rotation, measuredGrip: capture?.grip !== undefined || gyroSamples[0]?.frame === 'scramble',
   }) : methodFrame(method, record.scramble, moves, rotation);
   const stageSegs = computeStageSegments(record.scramble, moves, record.timeMs);
   const stepMx = stageSegs ? computeStepMetrics(record.scramble, moves, record.timeMs) : null;
   const slots = stageSegs ? computeF2lSlots(record.scramble, moves, record.timeMs, stageSegs) : null;
-  const core = gyroSamples.length ? buildCoreTrack(gyroSamples, { brand: record.device?.model, moves }) : null;
+  const core = capture?.core ?? (gyroSamples.length ? buildCoreTrack(gyroSamples, { brand: record.device?.model, moves }) : null);
   const text: ReconTextInput | null = stageSegs && moves.length ? {
     method, language, scramble: view.scramble, moves: view.moves, totalMs: record.timeMs,
     segs: stageSegs, metrics: stepMx, slots, core, physical: { scramble: record.scramble, moves }, viewRotation: view.rotation,
+    ...(capture ? { preferExecutedColl: true } : {}),
   } : null;
   return { gyroSamples, view, stageSegs, stepMx, slots, core, text };
 }
@@ -1014,6 +1016,7 @@ export function formattedReconMoves(line: ReconTextLine): string[] {
 }
 
 export interface ReconTextInput {
+  preferExecutedColl?: boolean;
   /** Completed, corrected prefix from this same physical attempt. */
   confirmed?: ReconTextResult;
   method?: MethodId;
@@ -1131,7 +1134,7 @@ const WIDE_TURN_SLACK_MS = 120;
 export function preferF2lBoundaryRegrips(
   core: CoreTrack | null, moves: readonly SolveMove[], pairEnds: readonly number[],
 ): CoreTrack | null {
-  if (!core || core.frame !== 'scramble') return core;
+  if (!core || core.frame !== 'scramble' || core.layerMotionMeasured) return core;
   const events = core.events.map((event, eventIdx) => {
     if (event.notationMs === undefined || !/^[xyz]'?$/.test(event.token)) return event;
     for (const end of pairEnds) {
@@ -1190,7 +1193,7 @@ function markWideCoreEvents(
     for (let i = 0; i < core.events.length; i++) {
       const a = core.events[i], b = core.events[i + 1];
       const half = `${a.token[0]}2${a.token.endsWith("'") ? "'" : ''}`;
-      const match = b && a.token === b.token && /^[xyz]'?$/.test(a.token)
+      const match = b && !a.regripOnly && !b.regripOnly && a.token === b.token && /^[xyz]'?$/.test(a.token)
         && !belongsToSlice(i) && !belongsToSlice(i + 1)
         && counted.some((move, moveIdx) => {
           if (!WIDE_PAIRS.has(`${move.m} ${half}`)) return false;
@@ -1207,6 +1210,7 @@ function markWideCoreEvents(
     core = { ...core, events: grouped };
   }
   core.events.forEach((event, idx) => {
+    if (event.regripOnly) return;
     const inverse = inverseRotationToken(event.token);
     if (!inverse) return;
     const eventMs = event.startMs !== undefined && event.tMs - event.startMs <= 1200
@@ -1510,7 +1514,6 @@ export async function buildReconText(input: ReconTextInput): Promise<ReconTextRe
   // 识别走真颜色那一份(见 `physical`);显示走换过名的 `moves`。两者一一对应,
   // 下标通用 —— 换名不增不减记号。
   const phys = input.physical ?? { scramble, moves };
-  const physCounted = phys.moves === moves ? counted : htmMoves(phys.moves);
   const viewRot = input.viewRotation ?? '';
   const crossFace = /^([URFLBD])-cross$/.exec(segs.crossSide ?? '')?.[1];
   const alg = (...parts: string[]) => parts.filter(t => t.trim() !== '').join(' ');
@@ -1593,10 +1596,12 @@ export async function buildReconText(input: ReconTextInput): Promise<ReconTextRe
           crossFaceHome: labelCrossFace,
           prevPattern: effectivePrev,
           currPattern,
-          // 局面是真颜色的,喂给它的动作也必须是同一系的原始记号。
-          lineMovesText: tokensForRange(phys.moves, physCounted, from, span.endIdx).join(' '),
+          // Match the exact stage range. A half turn merged across a stage
+          // boundary would move the first quarter of this alg into the prior stage.
+          lineMovesText: phys.moves.slice(from, span.endIdx + 1).map(move => move.m).join(' '),
           prevMovesText: prevEnd >= 0 ? rawUpTo(prevEnd) : '',
           moveCount: turnTokens.length,
+          preferExecutedColl: input.preferExecutedColl,
           explicit: true,
         }));
       }

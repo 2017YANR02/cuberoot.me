@@ -23,7 +23,7 @@ import type { MoveSearchResult } from "./engine/move-search-types";
 import { trimRange } from "./engine/solve-range";
 import { projectedWireframe, poseIsFlagged } from "./engine/reconstruction-view";
 import { buildColorTimeline } from "./engine/cube-colors";
-import { buildProjectedCubeTimeline, projectedCubeAtFrame } from "./engine/projected-cube";
+import { buildCubeReplayTimelines, projectedCubeAtFrame } from "./engine/projected-cube";
 import { reviewIndex, steppedTimestamp, frameArrow } from "./engine/frame-review";
 import { PLAYBACK_SPEEDS, playbackTiming } from "./engine/playback-timing";
 import type { PlaybackSpeed } from "./engine/playback-timing";
@@ -1431,9 +1431,9 @@ export function createVideoWorkspace(stage: HTMLCanvasElement, initialTab: Works
     solved: boolean,
     search: MoveSearchResult | undefined,
     turningStartFrame: number | null | undefined,
-  ) => colors ? buildProjectedCubeTimeline(rows, colors, {
+  ) => colors ? buildCubeReplayTimelines(rows, colors, {
     fps, solved, steps: search?.steps ?? [], turningStartFrame,
-  }) : []);
+  }) : undefined);
 
   const derived = {
     get latestReplayReconstruction() {
@@ -1462,11 +1462,12 @@ export function createVideoWorkspace(stage: HTMLCanvasElement, initialTab: Works
       return readReview(state.sourceKind, key, state.solveStart, state.solveEnd, videoResults.revision);
     },
     get currentReviewIndex() { return reviewIndex(derived.reviewRows, state.presentedTimestamp); },
-    get projectedTimeline() {
-      if (!derived.reconstructionComplete || state.trimming || state.sourceKind !== 'video') return [];
+    get cubeReplayTimelines() {
+      if (!derived.reconstructionComplete || state.trimming || state.sourceKind !== 'video') return undefined;
       return projection(derived.reviewRows, searchMetadata(state.searchResult, moveSearch?.config.scramble ?? '').colors,
         state.sourceFps, derived.cubeSolved, state.searchResult, moveSearch?.config.turning_start_frame);
     },
+    get projectedTimeline() { return derived.cubeReplayTimelines?.projected ?? []; },
     get coloredProjection() {
       return projectedCubeAtFrame(derived.projectedTimeline,
         state.result?.fittedPose?.sourceFrame ?? Math.round(state.presentedTimestamp * state.sourceFps));
@@ -1509,6 +1510,7 @@ export function createVideoWorkspace(stage: HTMLCanvasElement, initialTab: Works
       solveStart: state.solveStart,
       solveEnd: state.solveEnd,
       initialScramble: state.initialScramble,
+      reconstructedScramble: moveSearch?.config.scramble ?? '',
       cropLocked: state.cropLocked,
       cropLoading: state.cropLoading,
       cropPreview: state.cropPreview,
@@ -1520,6 +1522,7 @@ export function createVideoWorkspace(stage: HTMLCanvasElement, initialTab: Works
       cubeSolved: derived.cubeSolved,
       coloredProjection: derived.coloredProjection,
       projectedTimeline: derived.projectedTimeline,
+      measuredCubeTimeline: derived.cubeReplayTimelines?.measured,
       currentReviewIndex: reviewing ? derived.currentReviewIndex : -1,
       reviewLength: reviewing ? derived.reviewRows.length : 0,
       presentedTimestamp: state.presentedTimestamp,

@@ -76,6 +76,17 @@ describe.each(['cfop', 'roux', 'zz'] as const)('%s waste notation', method => {
 });
 
 describe('COLL versus OLL(CP)', () => {
+  it.each([
+    "R' U' R U' R' U2 R U U U",
+    "B' D' B D' B' D2' B D'",
+  ])('labels an executed Antisune followed only by AUF as COLL with PLL skip (%s)', async (alg) => {
+    const prevPattern = await patternFromAlg(invertAlg(alg));
+    const suggestions = await buildCommentSuggestions({
+      prevPattern, currPattern: prevPattern.applyAlg(alg),
+      lineMovesText: alg, moveCount: 10, explicit: true, preferExecutedColl: true,
+    });
+    expect(suggestions[0]).toBe('// COLL-S-/PLL Skip');
+  });
   it('keeps a cross-ending turn and its reversal in the next stage out of waste brackets', async () => {
     const moves = ["F'", 'F', 'U', "U'"].map((m, i) => ({ m, ts: 100 + i * 500 }));
     const segs = computeStageSegments('F', moves, 2200)!;

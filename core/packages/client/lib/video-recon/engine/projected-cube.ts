@@ -10,6 +10,7 @@ import type { V3 } from "./cube-motion";
 import {displaySliceCommits} from './cube-display-slices';
 
 export interface ProjectedCubeFrame { frame:number; pose:CubePose }
+export interface MeasuredCubeFrame extends ProjectedCubeFrame { timestamp:number }
 const linear=(t:number)=>t;
 const moveTurns=turns as Record<string,{axis:number;angles:number[]}>;
 
@@ -61,10 +62,10 @@ export function projectedCubeAtFrame(rows:readonly ProjectedCubeFrame[],frame:nu
 
 /** Rejected fits never become render anchors. Bridge them using accepted
  * orientations and legal layer transitions, including commits in pose gaps. */
-export function buildProjectedCubeTimeline(rows:readonly {timestamp:number;result:Pick<FrameResult,'fittedPose'>}[],colors:ColorTimeline,
- options:{fps:number;solved:boolean;steps:readonly MoveStep[];turningStartFrame?:number|null}):ProjectedCubeFrame[] {
+export function buildCubeReplayTimelines(rows:readonly {timestamp:number;result:Pick<FrameResult,'fittedPose'>}[],colors:ColorTimeline,
+ options:{fps:number;solved:boolean;steps:readonly MoveStep[];turningStartFrame?:number|null}) {
  const steps=new Map(options.steps.map(step=>[step.frame_index,step]));
- const accepted:ProjectedCubeFrame[]=[];
+ const measured:MeasuredCubeFrame[]=[];
  for(const row of rows){
   const pose=row.result.fittedPose,frame=pose?.sourceFrame??Math.round(row.timestamp*options.fps),step=steps.get(frame);
   if(!pose?.pose||poseIsFlagged(pose,step?.pose_flagged))continue;
@@ -72,18 +73,23 @@ export function buildProjectedCubeTimeline(rows:readonly {timestamp:number;resul
   const index=projectedGeometryIndex(pose,step?.geometry_option_index,
    options.turningStartFrame!=null&&frame<=options.turningStartFrame);
   const fit=pose.bank[index],cube=state&&fit?makeCubePose(fit,state,step?.orientation_symmetry_index):undefined;
-  if(cube)accepted.push({frame,pose:cube});
+  if(cube)measured.push({frame,pose:cube,timestamp:row.timestamp});
  }
- accepted.sort((a,b)=>a.frame-b.frame);
- if(!accepted.length)return [];
- const timeline=new Map(accepted.map(row=>[row.frame,row]));
+ measured.sort((a,b)=>a.frame-b.frame);
+ if(!measured.length)return {measured,projected:[]};
+ const timeline=new Map<number,ProjectedCubeFrame>(measured.map(row=>[row.frame,row]));
  for(const [index,state] of colors.frames.entries()){
   // A commit with no accepted geometry still gets an aligned target at its
   // own source frame. Keep the initial state before a leading pose gap too.
   if(timeline.has(state.frame)||(index!==0&&!steps.get(state.frame)?.state_moves.length))continue;
-  const nearest=projectedCubeAtFrame(accepted,state.frame)!;
+  const nearest=projectedCubeAtFrame(measured,state.frame)!;
   timeline.set(state.frame,{frame:state.frame,pose:{...nearest,angles:[0,0,0],state}});
  }
  const result=[...timeline.values()].sort((a,b)=>a.frame-b.frame);
- return options.solved?hideUncommittedMisalignments(result,options.steps,options.fps):result;
+ const projected=options.solved?hideUncommittedMisalignments(result,options.steps,options.fps):result;
+ return {measured,projected};
+}
+
+export function buildProjectedCubeTimeline(...args:Parameters<typeof buildCubeReplayTimelines>):ProjectedCubeFrame[] {
+ return buildCubeReplayTimelines(...args).projected;
 }

@@ -19,12 +19,44 @@
  */
 import type { KPattern } from 'cubing/kpuzzle';
 import type { F2lSlotId, Stage, StageInfo } from './stage_detect';
-import { detectStage, F2L_SLOT_DEFS, topEdgesOriented, crossOnDRotation } from './stage_detect';
+import { detectStage, F2L_SLOT_DEFS, topEdgesOriented, crossOnDRotation, ORIENTATION_ALGS } from './stage_detect';
+import { simplifyAlg } from './cube3';
+import { facePermFor, conjugateSequence } from '../timer/reconstruct/orient';
+import { cleanReconAlgForPlayer } from '../recon_completion';
+import ollData from '../../data/oll.json';
 import { EDGE_STICKERS } from './sticker_tables';
 import { lookupOllAlgs } from './oll_lookup';
 import { lookupPllAlgs } from './pll_lookup';
 import { lookupZbllAlgsRobust } from './zbll_lookup';
 import { ollCommentName, pllCommentLabel, isEpll, zbllCommentLabel } from './alg_case_display';
+
+/** Recognize an executed corner-orientation alg by its move order, not by
+ * the final state (a ZBLL for the same state would have the same effect).
+ * AUF and the choice of starting grip do not change the executed alg. */
+function executedCornerOrientation(text: string): string | undefined {
+  const trimRotations = (alg: string) => alg.trim().replace(/^(?:[xyz](?:2'?|')?\s+)+|(?:\s+[xyz](?:2'?|')?)+$/g, '');
+  const normalized = simplifyAlg(trimRotations(cleanReconAlgForPlayer(text))).replace(/([rludfb])/g, face => face.toUpperCase() + 'w');
+  const stripAuf = (alg: string, top: string) => {
+    const tokens = alg.split(/\s+/);
+    const isAuf = (token: string) => token === top || token === `${top}'` || token === `${top}2`;
+    while (tokens.length && isAuf(tokens[0])) tokens.shift();
+    while (tokens.length && isAuf(tokens[tokens.length - 1])) tokens.pop();
+    return tokens.join(' ');
+  };
+  const entries = Object.entries(ollData).filter(([, entry]) => entry.group === 'All Edges Oriented Correctly');
+  for (const rotation of ORIENTATION_ALGS) {
+    const perm = facePermFor(rotation);
+    const executed = stripAuf(normalized, perm.U);
+    for (const [name, entry] of entries) {
+      for (const alg of [entry.alg, entry.alg2]) {
+        if (!alg) continue;
+        const reference = simplifyAlg(trimRotations(alg)).replace(/([rludfb])/g, face => face.toUpperCase() + 'w');
+        const moved = conjugateSequence(reference, perm);
+        if (moved && executed === stripAuf(moved, perm.U)) return ollCommentName(name);
+      }
+    }
+  }
+}
 
 /**
  * 识别一个 OLL 待解状态(F2L 完、顶层未朝向)的 DB case 名,如 "OLL 27"。
@@ -399,6 +431,8 @@ export interface SuggestArgs {
   prevMovesText?: string;
   /** Move count to display in `(N)` suffix. */
   moveCount: number;
+  /** Prefer an exact executed COLL match over a ZBLL state label. */
+  preferExecutedColl?: boolean;
   /**
    * 用户主动按 Tab 触发(非边打边自动弹)。仅此时才做「cancel into」前瞻——
    * 当前行没真正解出 pair,但某 pair 差 ≤2 步就能补完时,给出该 pair 标签。
@@ -470,6 +504,10 @@ export async function buildCommentSuggestions(args: SuggestArgs): Promise<string
     return out;
   }
   if (t.kind === 'oll') {
+    if (args.preferExecutedColl && curr.stage === 'solved' && topEdgesOriented(prev.canonicalPattern)) {
+      const executed = executedCornerOrientation(lineMovesText);
+      if (executed) return [`// COLL-${executed}/PLL Skip`, `// OLL-${executed}/PLL Skip`];
+    }
     // 精确 case 名(识别不出回退泛标签 // OLL),不再给中间那条泛 // OLL。
     const ollRaw = await recognizeOllCase(prevPattern);
     const ollName = ollRaw ? ollCommentName(ollRaw) : null;

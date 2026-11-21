@@ -12,6 +12,7 @@ interface Props {
   index: number;
   length: number;
   origin?: number;
+  label?: string;
   disabled?: boolean;
   onPlay: () => void;
   onSpeed: (speed: PlaybackSpeed) => void;
@@ -20,13 +21,13 @@ interface Props {
 }
 
 export function ReviewControls({
-  playing, speed, start, end, position, index, length, origin = 0, disabled,
+  playing, speed, start, end, position, index, length, origin = 0, label, disabled,
   onPlay, onSpeed, onSeek, onStep,
 }: Props) {
   const t = useT();
   const previous = t('上一帧', 'Previous frame');
   const next = t('下一帧', 'Next frame');
-  return <div className="video-recon-transport">
+  return <div className="video-recon-transport" role={label ? 'group' : undefined} aria-label={label}>
     <div className="video-recon-actions">
       <button type="button" className="btn-secondary" disabled={disabled || length < 2} onClick={onPlay}>
         {playing ? <Pause size={16} aria-hidden /> : <Play size={16} aria-hidden />}

@@ -155,7 +155,7 @@ export interface StageInfo {
  * Total = 24, covering every cube orientation. Used to find the orientation
  * that maximises stage progress for stage_detect.
  */
-const ORIENTATION_ALGS: string[] = (() => {
+export const ORIENTATION_ALGS: readonly string[] = (() => {
   const out: string[] = [];
   const tops = ['', 'x', 'x2', "x'", 'z', "z'"];
   const ys = ['', 'y', 'y2', "y'"];

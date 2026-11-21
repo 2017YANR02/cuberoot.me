@@ -116,6 +116,8 @@ export interface RotationEvent {
   token: string;
   /** 这次转体本身的角度(弧度),90° 或 180°。 */
   angleRad: number;
+  /** The source saw the core rotate without matching layer motion. */
+  regripOnly?: boolean;
   /** A core rotation compensated by the opposite outer face: a wide turn, not a view change. */
   wide?: boolean;
   /** Rotation token to weave beside the compensating outer face. */
