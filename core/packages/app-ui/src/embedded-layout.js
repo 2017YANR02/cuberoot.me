@@ -18,6 +18,10 @@ window.addEventListener('message', ({ source, origin, data }) => {
   const root = document.documentElement;
   if (!style.isConnected) (document.head ?? root).append(style);
   const { bottom, top, insetByHost, toolsSearch } = data.chrome ?? {};
+  // The membership reminder can appear on child routes as well as the frame home.
+  root.toggleAttribute('data-embedded-bottom-nav', isInset(bottom) && bottom > 0);
+  if (isInset(bottom)) root.style.setProperty('--embedded-nav-clearance', bottom + 'px');
+  else root.style.removeProperty('--embedded-nav-clearance');
   if (supportedPage && isInset(bottom)) root.style.setProperty('--native-embed-bottom', bottom + 'px');
   else root.style.removeProperty('--native-embed-bottom');
 

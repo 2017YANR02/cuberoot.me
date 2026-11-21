@@ -103,3 +103,15 @@
 :root[data-native-account-frame] .settings-panel-page > .settings-panel-content {
   padding-bottom: calc(24px + max(var(--sab), var(--installed-chrome-bottom, var(--native-embed-bottom, 0px))));
 }
+
+/* Keep the renewal banner above the installed navigation on every frame route. */
+:root[data-embedded-bottom-nav] .mem-reminder {
+  bottom: max(var(--embedded-nav-clearance), env(safe-area-inset-bottom, 0px));
+  width: max-content;
+  max-width: calc(100% - 24px);
+}
+@media (max-width: 480px) {
+  :root[data-embedded-bottom-nav] .mem-reminder { width: auto; }
+}
+/* Give the search composer and its results exclusive use of this space while open. */
+:root[data-embedded-search-open] .mem-reminder { visibility: hidden; }
