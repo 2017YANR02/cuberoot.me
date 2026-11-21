@@ -9,7 +9,7 @@ import { build } from 'esbuild';
 import { BUILD_ASSETS, DOUYIN_TIMER_VOICE_ASSETS } from './build-assets.mjs';
 import { buildWechatBundle } from './build-wechat-bundle.mjs';
 import { nativePdfPlugin } from './build-pdf-runtime.mjs';
-import { buildDouyinTabIcons, TIMER_PROJECT_ICONS } from './build-tab-icons.mjs';
+import { buildDouyinTimerIcons, buildTabIcons, TIMER_PROJECT_ICONS } from './build-tab-icons.mjs';
 import { buildDouyinStageSolver } from './build-douyin-stage-solver.mjs';
 import { buildDouyinWcaScramble } from './build-douyin-wca-scramble.mjs';
 import { buildDouyinSq1Hint } from './build-douyin-sq1-hint.mjs';
@@ -215,6 +215,8 @@ async function buildProject() {
     await normalizeDouyinAppConfig();
     await writeFile(join(stagingRoot, 'project.config.json'), `${JSON.stringify(config, null, 2)}\n`, 'utf8');
     await validateDouyinOutput();
+  } else {
+    await addWechatTabIcons();
   }
   await writeFile(projectConfigPath, `${JSON.stringify(config, null, 2)}\n`, 'utf8');
   await publishStagedDirectory({
@@ -252,6 +254,33 @@ async function convertToDouyin() {
   });
 }
 
+async function addWechatTabIcons() {
+  const appConfigPath = join(stagingRoot, 'app.json');
+  const themePath = join(stagingRoot, 'theme.json');
+  const config = JSON.parse(await readFile(appConfigPath, 'utf8'));
+  const theme = JSON.parse(await readFile(themePath, 'utf8'));
+  const { list } = config.tabBar;
+  for (const mode of ['light', 'dark']) {
+    const { tabBarColor, tabBarSelectedColor } = theme[mode];
+    const tabs = await buildTabIcons(stagingRoot, {
+      list, color: tabBarColor, selectedColor: tabBarSelectedColor,
+    }, mode === 'dark' ? '-dark' : '');
+    for (const [index, tab] of tabs.entries()) {
+      theme[mode][`tabIcon${index}`] = tab.iconPath;
+      theme[mode][`tabSelectedIcon${index}`] = tab.selectedIconPath;
+    }
+  }
+  config.tabBar.list = list.map((tab, index) => ({
+    ...tab,
+    iconPath: `@tabIcon${index}`,
+    selectedIconPath: `@tabSelectedIcon${index}`,
+  }));
+  await Promise.all([
+    writeFile(appConfigPath, `${JSON.stringify(config, null, 2)}\n`, 'utf8'),
+    writeFile(themePath, `${JSON.stringify(theme, null, 2)}\n`, 'utf8'),
+  ]);
+}
+
 async function normalizeDouyinAppConfig() {
   const appConfigPath = join(stagingRoot, 'app.json');
   const themePath = join(stagingRoot, 'theme.json');
@@ -273,7 +302,8 @@ async function normalizeDouyinAppConfig() {
   };
   // No Douyin page uses the WeChat-only web container after native routing.
   await rm(join(stagingRoot, 'templates/web-route-view.ttml'), { force: true });
-  normalized.tabBar.list = (await buildDouyinTabIcons(stagingRoot, normalized.tabBar)).map(tab => ({ ...tab, text: '' }));
+  normalized.tabBar.list = await buildTabIcons(stagingRoot, normalized.tabBar);
+  await buildDouyinTimerIcons(stagingRoot, normalized.tabBar.selectedColor);
   await writeFile(appConfigPath, `${JSON.stringify(normalized, null, 2)}\n`, 'utf8');
   await Promise.all([
     rm(themePath, { force: true }),

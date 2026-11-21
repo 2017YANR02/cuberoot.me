@@ -2,7 +2,7 @@ import { mkdir, mkdtemp, readFile, rm } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
 import sharp from 'sharp';
 import { afterEach, describe, expect, it } from 'vitest';
-import { buildDouyinTabIcons } from '../scripts/build-tab-icons.mjs';
+import { buildDouyinTimerIcons, buildTabIcons } from '../scripts/build-tab-icons.mjs';
 
 const directories = [];
 afterEach(async () => {
@@ -17,13 +17,13 @@ async function fixture() {
   return directory;
 }
 
-describe('Douyin native tab assets', () => {
+describe('Native tab assets', () => {
   it('generates all six local PNGs using the source tabs and existing theme', async () => {
     const directory = await fixture();
     const config = JSON.parse(await readFile(new URL('../src/app.json', import.meta.url), 'utf8'));
     const theme = JSON.parse(await readFile(new URL('../src/theme.json', import.meta.url), 'utf8'));
     const original = structuredClone(config.tabBar);
-    const tabs = await buildDouyinTabIcons(directory, {
+    const tabs = await buildTabIcons(directory, {
       ...config.tabBar, color: theme.light.tabBarColor, selectedColor: theme.light.tabBarSelectedColor,
     });
     expect(config.tabBar).toEqual(original);
@@ -46,6 +46,7 @@ describe('Douyin native tab assets', () => {
       expect(buffers[0].equals(buffers[1])).toBe(false);
     }
     expect(paths.size).toBe(6);
+    await buildDouyinTimerIcons(directory, theme.light.tabBarSelectedColor);
     for (const icon of ['project-magic', 'project-unofficial-666bf', 'project-puzzle-radiofathom']) {
       const path = join(directory, `assets/tabbar/${icon}.png`);
       expect(await sharp(path).metadata()).toMatchObject({ format: 'png', width: 81, height: 81 });
@@ -54,7 +55,7 @@ describe('Douyin native tab assets', () => {
   });
 
   it('fails the build for an unmapped tab instead of shipping a broken icon', async () => {
-    await expect(buildDouyinTabIcons(await fixture(), { list: [{ pagePath: 'pages/new/index' }] }))
-      .rejects.toThrow('Missing Douyin tab icon');
+    await expect(buildTabIcons(await fixture(), { list: [{ pagePath: 'pages/new/index' }] }))
+      .rejects.toThrow('Missing tab icon');
   });
 });

@@ -24,25 +24,37 @@ const iconsByPage = new Map([
   ['pages/account/index', 'user-round'],
 ]);
 
-/** Native Douyin tabs use local PNGs; reuse Lucide artwork and the resolved tab theme. */
-export async function buildDouyinTabIcons(outputRoot, tabBar) {
-  const icons = tabBar.list.map((tab) => {
-    const icon = iconsByPage.get(tab.pagePath);
-    if (!icon) throw new Error(`Missing Douyin tab icon: ${tab.pagePath}`);
-    return icon;
-  });
+/** Both native tab bars use local PNGs generated from the same Lucide artwork. */
+export async function buildTabIcons(outputRoot, tabBar, suffix = '') {
   const directory = join(outputRoot, 'assets', 'tabbar');
   await mkdir(directory, { recursive: true });
   await copyFile(require.resolve('lucide-static/LICENSE'), join(directory, 'LICENSE.txt'));
-  if (!/^#[\da-f]{6}$/i.test(tabBar.selectedColor)) throw new Error('Invalid resolved icon color');
+  return Promise.all(tabBar.list.map(async (tab) => {
+    const icon = iconsByPage.get(tab.pagePath);
+    if (!icon) throw new Error(`Missing tab icon: ${tab.pagePath}`);
+    const svg = await readFile(require.resolve(`lucide-static/icons/${icon}.svg`), 'utf8');
+    const iconPath = `assets/tabbar/${icon}${suffix}.png`;
+    const selectedIconPath = `assets/tabbar/${icon}${suffix}-selected.png`;
+    for (const [path, color] of [[iconPath, tabBar.color], [selectedIconPath, tabBar.selectedColor]]) {
+      if (!/^#[\da-f]{6}$/i.test(color)) throw new Error(`Invalid resolved tab color: ${color}`);
+      await sharp(Buffer.from(svg.replaceAll('currentColor', color)), { density: 243 })
+        .resize(81, 81).png().toFile(join(outputRoot, path));
+    }
+    return { ...tab, iconPath, selectedIconPath };
+  }));
+}
+
+export async function buildDouyinTimerIcons(outputRoot, selectedColor) {
+  const directory = join(outputRoot, 'assets', 'tabbar');
+  if (!/^#[\da-f]{6}$/i.test(selectedColor)) throw new Error('Invalid resolved icon color');
   await Promise.all(projectIconSources.map(async ({ name, path }) => {
     const svg = await readFile(path, 'utf8');
-    const tinted = svg.replaceAll('currentColor', tabBar.selectedColor).replace(/<svg\b([^>]*)>/, (tag, attributes) => (
-      /\sfill\s*=/.test(attributes) ? tag : `<svg fill="${tabBar.selectedColor}"${attributes}>`
+    const tinted = svg.replaceAll('currentColor', selectedColor).replace(/<svg\b([^>]*)>/, (tag, attributes) => (
+      /\sfill\s*=/.test(attributes) ? tag : `<svg fill="${selectedColor}"${attributes}>`
     ));
     await sharp(Buffer.from(tinted)).resize(81, 81).png().toFile(join(directory, `project-${name}.png`));
   }));
-  const toolbarColors = { bluetooth: '#0082fc', 'chevron-left': tabBar.selectedColor, 'chevron-right': tabBar.selectedColor };
+  const toolbarColors = { bluetooth: '#0082fc', 'chevron-left': selectedColor, 'chevron-right': selectedColor };
   for (const icon of ['settings', 'lightbulb', 'layout-template', 'grip-horizontal', 'move-diagonal-2', 'rotate-ccw', 'check',
     'layout-dashboard', 'calendar-days', 'bar-chart-3', 'layers', 'x', 'chevron-left', 'chevron-right', 'chevron-down', 'bluetooth', 'timer', 'mic', 'arrow-left', 'arrow-right', 'pencil', 'sliders-horizontal', 'skip-back', 'skip-forward', 'play', 'pause',
     'dices', 'trophy', 'palette', 'volume-2', 'database', 'keyboard', 'download', 'info', 'circle-help', 'copy', 'target', 'circle-check', 'flame', 'arrow-right-left',
@@ -56,16 +68,4 @@ export async function buildDouyinTabIcons(outputRoot, tabBar) {
     await sharp(Buffer.from(svg.replaceAll('currentColor', color)), { density: 243 })
       .resize(81, 81).png().toFile(join(directory, `${name}.png`));
   }
-  return Promise.all(tabBar.list.map(async (tab, index) => {
-    const icon = icons[index];
-    const svg = await readFile(require.resolve(`lucide-static/icons/${icon}.svg`), 'utf8');
-    const iconPath = `assets/tabbar/${icon}.png`;
-    const selectedIconPath = `assets/tabbar/${icon}-selected.png`;
-    for (const [path, color] of [[iconPath, tabBar.color], [selectedIconPath, tabBar.selectedColor]]) {
-      if (!/^#[\da-f]{6}$/i.test(color)) throw new Error(`Invalid resolved tab color: ${color}`);
-      await sharp(Buffer.from(svg.replaceAll('currentColor', color)), { density: 243 })
-        .resize(81, 81).png().toFile(join(outputRoot, path));
-    }
-    return { ...tab, iconPath, selectedIconPath };
-  }));
 }
