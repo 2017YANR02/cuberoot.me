@@ -193,7 +193,7 @@ export class NativeTimer {
     this.nextScramble();
   }
 
-  onChange?: () => void;
+  onChange?: (reason?: 'cube-state') => void;
   onPersistedSolve?: () => void;
   onCubeMove?: (move: string, facelets: string, timestamp: number) => void;
   onCubePose?: (pose: Quat | null) => void;
@@ -380,7 +380,7 @@ export class NativeTimer {
     });
     this.cube = new SmartCubeSessionController<{ futureHistory?: boolean }>({
       now: this.now,
-      onChange: () => this.onChange?.(),
+      onChange: () => this.onChange?.('cube-state'),
       onMove: event => {
         if (!this.visible) return;
         const outcome = this.solo.move(event);

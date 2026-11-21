@@ -4,7 +4,7 @@ import {
   TIMER_LIVE_STALE_MS, timerLiveWatchFragment, type TimerLiveConnection, type TimerLiveSession, type TimerLiveSource,
 } from '@cuberoot/shared/timer/live-share';
 import { ApiError, requestJson } from './auth';
-import { localizedWebsitePath, tr } from './i18n';
+import { getMiniProgramLocale, localizedWebsitePath, tr } from './i18n';
 import { nativeTimerTextBytes } from './native-timer-text';
 import { miniProgramApi } from './platform';
 import { API_ORIGIN, SITE_ORIGIN } from './runtime-config';
@@ -168,8 +168,8 @@ export function createNativeTimerLiveShare(source: TimerLiveSource, onChange: ()
   };
 }
 
-export function nativeTimerLiveShareCopy() {
+export function nativeTimerLiveShareCopy(language = getMiniProgramLocale()) {
   const t = TIMER_LIVE_SHARE_COPY;
-  return { title: tr(t.title), description: tr(t.description), create: tr(t.create), creating: tr(t.creating),
-    copy: tr(t.copy), copied: tr(t.copied), qr: tr(t.qr), end: tr(t.end), error: tr(t.error) };
+  return { title: tr(t.title, language), description: tr(t.description, language), create: tr(t.create, language), creating: tr(t.creating, language),
+    copy: tr(t.copy, language), copied: tr(t.copied, language), qr: tr(t.qr, language), end: tr(t.end, language), error: tr(t.error, language) };
 }

@@ -23,13 +23,19 @@ vi.mock('../src/lib/native-timer-wca', () => ({
 }));
 vi.mock('../src/lib/platform', async importOriginal => ({
   ...await importOriginal<typeof import('../src/lib/platform')>(), miniProgramApi: () => ({
-    openBluetoothAdapter: vi.fn(), setClipboardData: clipboard.write, showToast: clipboard.toast,
+    openBluetoothAdapter: vi.fn(), setClipboardData: clipboard.write, showToast: clipboard.toast, setNavigationBarTitle: vi.fn(),
   }),
 }));
 vi.mock('../src/lib/auth', () => ({ getStoredSessionSnapshot: () => ({ session: null }), requestJson: vi.fn() }));
 vi.mock('../src/lib/appearance', () => ({ applyNativeAppearance: vi.fn() }));
 vi.mock('../src/lib/external-timer/session', () => ({ disconnectExternalTimer: vi.fn(), startExternalTimer: vi.fn() }));
-vi.mock('../src/lib/smart-cube/session', () => ({ getSmartCubeSession: () => ({ stopLocal: vi.fn() }) }));
+vi.mock('../src/lib/smart-cube/session', () => ({ getSmartCubeSession: () => ({
+  stopLocal: vi.fn(),
+  subscribe(listener: (snapshot: { phase: string; battery: null }) => void) {
+    listener({ phase: 'disconnected', battery: null });
+    return () => {};
+  },
+}) }));
 
 function deferred<T>() {
   let resolve!: (value: T) => void;
@@ -37,15 +43,17 @@ function deferred<T>() {
   const promise = new Promise<T>((yes, no) => { resolve = yes; reject = no; });
   return { promise, resolve, reject };
 }
-function fixture(useWca = false) {
+function fixture(useWca = false, now?: () => number) {
   const pool = useWca ? {
     sourceKey: () => 'test-wca', isWcaCompUnindexed: () => false, cancelSource: vi.fn(),
     startNext: () => ({ cancel: vi.fn(), result: new Promise(() => {}) }),
   } as unknown as ConstructorParameters<typeof NativeTimer>[2] : undefined;
-  const timer = new NativeTimer({ getStorageSync: () => undefined, setStorageSync: vi.fn(), removeStorageSync: vi.fn() }, undefined, pool);
+  const timer = new NativeTimer({ getStorageSync: () => undefined, setStorageSync: vi.fn(), removeStorageSync: vi.fn() }, now, pool);
   timer.settings.wcaComp = 'Test2026';
   const options = createNativeTimerPageOptions() as {
     data: Record<string, unknown>;
+    onShow(): void;
+    markAttemptSplit(event: WechatMiniprogram.TouchEvent): void;
     openSheet(event: WechatMiniprogram.TouchEvent): void;
     clearWca(event: WechatMiniprogram.TouchEvent): void;
     closeSheet(): void;
@@ -80,6 +88,7 @@ function fixture(useWca = false) {
     saveDifficulty(): void;
     timerUp(): void;
     stageTouch(event: WechatMiniprogram.TouchEvent): void;
+    pageTimerTouch(event: WechatMiniprogram.TouchEvent): void;
     editResult(event: WechatMiniprogram.TouchEvent): void;
     changeDetailPenalty(event: WechatMiniprogram.PickerChange): void;
     resultAction(event: WechatMiniprogram.TouchEvent): void;
@@ -204,19 +213,68 @@ describe('native timer source sheet lifecycle', () => {
     expect(page.data.hideChrome).toBe(false);
   });
 
+  it('updates only the clock and changed training indicators during a solo solve', () => {
+    vi.useFakeTimers();
+    const { page, timer } = fixture(false, Date.now);
+    try {
+      timer.setManualScrambles('R U');
+      timer.settings.multiStage = true;
+      timer.settings.targetMsByEvent = { '333': 1000 };
+      const write = vi.spyOn(page, 'setData');
+      const summary = vi.spyOn(timer, 'summary');
+      page.onShow();
+      expect(summary).toHaveBeenCalledTimes(1);
+      expect(page.data.settingsCategories).toBeUndefined();
+
+      page.openSheet(event({ sheet: 'settings' }));
+      expect(page.data.settingsCategories).toBeDefined();
+      expect(summary).toHaveBeenCalledTimes(1);
+      page.closeSheet();
+
+      timer.dispatch({ type: 'start-now', nowMs: Date.now() });
+      timer.onChange?.();
+      const summaryCalls = summary.mock.calls.length;
+      write.mockClear();
+      vi.advanceTimersByTime(50);
+      expect(write).toHaveBeenCalledTimes(1);
+      expect(Object.keys(write.mock.calls[0][0]).sort()).toEqual(['display', 'trainingTarget']);
+      expect(page.data.display).toBe('0.050');
+      expect(page.data.trainingTarget).toMatchObject({ overshot: false });
+
+      write.mockClear();
+      page.markAttemptSplit(event({ mark: 'cross' }));
+      expect(write.mock.calls[0][0]).toEqual({ attemptSplitChips: expect.any(Array) });
+      expect(page.data.attemptSplitChips).toEqual(expect.arrayContaining([
+        expect.objectContaining({ key: 'cross', action: false, time: '0.050' }),
+      ]));
+      vi.advanceTimersByTime(1000);
+      expect(page.data.trainingTarget).toMatchObject({ overshot: true });
+      expect(summary).toHaveBeenCalledTimes(summaryCalls);
+    } finally {
+      timer.dispose();
+      vi.clearAllTimers();
+      vi.useRealTimers();
+    }
+  });
+
   it('uses empty stage space to time while ignoring controls and cancelling a swipe', () => {
     vi.useFakeTimers();
     try {
       const { page, timer } = fixture();
       timer.setManualScrambles('R U\nF R');
       page.data.generating = false;
-      const touch = (type: string, y = 20, timerSurface?: string) => {
+      const touch = (type: string, y = 20, timerSurface?: string, insideStage = true) => {
         const point = { identifier: 1, clientX: 20, clientY: y, pageX: 20, pageY: y };
         const target = { id: '', offsetTop: 0, offsetLeft: 0, dataset: { timerSurface } };
-        page.stageTouch({ type, detail: {}, timeStamp: 0, target, currentTarget: target,
-          touches: type === 'touchend' ? [] : [point], changedTouches: [point] });
+        const event = { type, detail: {}, timeStamp: 0, target, currentTarget: target,
+          touches: type === 'touchend' ? [] : [point], changedTouches: [point] };
+        if (insideStage) page.stageTouch(event);
+        if (type === 'touchstart') page.pageTimerTouch(event);
       };
       touch('touchstart');
+      touch('touchstart', 20, 'page', false);
+      timer.settings.scrambleClickAction = 'copy';
+      touch('touchstart', 20, 'scramble');
       expect(timer.state.phase).toBe('idle');
       touch('touchstart', 20, 'stage');
       expect(timer.state.phase).toBe('holding');
@@ -229,10 +287,24 @@ describe('native timer source sheet lifecycle', () => {
       touch('touchend');
       expect(timer.state.phase).toBe('running');
       vi.advanceTimersByTime(1234);
-      touch('touchstart', 20, 'stage');
-      touch('touchend');
+      touch('touchstart');
+      touch('touchstart', 20, undefined, false);
+      expect(timer.state.phase).toBe('running');
+      touch('touchstart', 20, 'page', false);
+      touch('touchend', 20, 'page', false);
       expect(timer.state.phase).toBe('stopped');
       expect(timer.solves).toHaveLength(1);
+
+      timer.settings.scrambleClickAction = 'start';
+      touch('touchstart', 20, 'scramble');
+      vi.advanceTimersByTime(timer.settings.holdMs);
+      touch('touchend', 20, 'scramble');
+      expect(timer.state.phase).toBe('running');
+      vi.advanceTimersByTime(1234);
+      touch('touchstart', 20, 'stage');
+      touch('touchend', 20, 'stage');
+      expect(timer.state.phase).toBe('stopped');
+      expect(timer.solves).toHaveLength(2);
     } finally { vi.useRealTimers(); }
   });
 
@@ -490,7 +562,8 @@ describe('native timer source sheet lifecycle', () => {
     const { page, timer } = fixture();
     timer.updateSettings({ timerFontScale: 1.23 });
     page.openSheet(event({ sheet: 'settings' }));
-    const rows = page.data.settingRows as { key: string; value: number; valueText: string }[];
+    const sections = page.data.settingSections as { rows: { key: string; value: number; valueText: string }[] }[];
+    const rows = sections.flatMap(section => section.rows);
     const row = rows.find(row => row.key === 'timerFontScale')!;
     expect(row).toMatchObject({ value: 1.23, valueText: '123%' });
     expect(timer.settings.timerFontScale).toBe(1.23);

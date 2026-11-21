@@ -170,10 +170,10 @@
   <button wx:if="{{showColors}}" class="nt-control nt-difficulty-palette" bindtap="toggleDifficultyMenu" data-field="colors" disabled="{{colorsDisabled}}" aria-label="{{copy.difficultyColors}}" aria-expanded="{{panel === 'colors'}}" hover-class="press-feedback"><view class="nt-difficulty-swatch" style="background: {{swatch}}"></view></button>
   <button class="nt-control nt-difficulty-method" bindtap="toggleDifficultyMenu" data-field="method" aria-label="{{copy.difficultyMethod}} · {{copy.difficultyStage}}" aria-expanded="{{panel === 'method'}}" hover-class="press-feedback">{{methodLabel}}</button>
 </template>
-<view class="native-timer nt-theme-{{appearanceScheme}} {{!battle && !netMode ? 'native-timer--solo' : ''}} {{layoutEditing ? 'native-timer--layout-editing' : ''}}" style="{{appearanceStyle}}{{!battle && !netMode && soloViewportHeight ? ';height:' + soloViewportHeight + 'px' : ''}}">
+<view data-timer-surface="page" bindtouchstart="pageTimerTouch" class="native-timer nt-theme-{{appearanceScheme}} {{!battle && !netMode ? 'native-timer--solo' : ''}} {{layoutEditing ? 'native-timer--layout-editing' : ''}}" style="{{appearanceStyle}}{{!battle && !netMode && soloViewportHeight ? ';height:' + soloViewportHeight + 'px' : ''}}">
   <view id="nt-navigation-palette" aria-hidden="true"></view>
   <block wx:if="{{!battle && !netMode}}">
-  <view id="nt-toolbar" class="nt-toolbar" hidden="{{hideChrome}}">
+  <view data-timer-surface="page" id="nt-toolbar" class="nt-toolbar {{hideChrome ? 'nt-solo-chrome-hidden' : ''}}" aria-hidden="{{hideChrome}}">
     <button class="nt-tool" bindtap="openSheet" data-sheet="solver" disabled="{{busy || layoutEditing || generating || event !== '333' || !scramble}}" aria-label="{{copy.solver}}" hover-class="press-feedback">
       <image class="nt-icon nt-icon-light" src="/assets/tabbar/lightbulb-light.png" aria-hidden="true" />
       <image class="nt-icon nt-icon-dark" src="/assets/tabbar/lightbulb-dark.png" aria-hidden="true" />
@@ -194,23 +194,24 @@
       <image class="nt-icon nt-icon-dark" src="/assets/tabbar/settings-dark.png" aria-hidden="true" />
     </button>
   </view>
-  <view wx:if="{{deviceName}}" hidden="{{hideChrome}}" class="nt-device">{{deviceName}} <text wx:if="{{battery !== null}}"> · {{battery}}%</text></view>
-  <view wx:if="{{externalName}}" hidden="{{hideChrome}}" class="nt-device">{{externalName}}</view>
-  <text wx:if="{{liveShare.badge}}" hidden="{{hideChrome}}" class="nt-live-share-status" aria-role="status">{{liveShare.badge}}</text>
+  <view wx:if="{{deviceName}}" class="nt-device {{hideChrome ? 'nt-solo-chrome-hidden' : ''}}" aria-hidden="{{hideChrome}}">{{deviceName}} <text wx:if="{{battery !== null}}"> · {{battery}}%</text></view>
+  <view wx:if="{{externalName}}" class="nt-device {{hideChrome ? 'nt-solo-chrome-hidden' : ''}}" aria-hidden="{{hideChrome}}">{{externalName}}</view>
+  <text wx:if="{{liveShare.badge}}" class="nt-live-share-status {{hideChrome ? 'nt-solo-chrome-hidden' : ''}}" aria-hidden="{{hideChrome}}" aria-role="status">{{liveShare.badge}}</text>
   <text wx:if="{{error}}" class="nt-error" aria-role="alert">{{error}}</text>
   <button wx:if="{{randomDifficultyStatus === 'error' || randomDifficultyStatus === 'empty' || randomDifficultyStatus === 'rare'}}" class="nt-control" bindtap="retryRandomDifficulty" hover-class="press-feedback">{{copy.retry}}</button>
-  <view class="nt-live-workspace {{liveAnalysis ? 'nt-live-workspace--active' : ''}}">
-  <view class="nt-solo-stage {{soloCompactStage ? 'nt-solo-stage--compact' : ''}}" style="padding-top: {{liveAnalysis ? 0 : soloScrambleGap}}px" data-timer-surface="stage" bindtouchstart="stageTouch" bindtouchmove="stageTouch" bindtouchend="stageTouch" bindtouchcancel="stageTouch">
-  <view class="nt-solo-scramble" hidden="{{!!liveAnalysis}}">
-  <view hidden="{{hideChrome}}" id="nt-layout-scrambleGap" class="nt-layout-region" style="top: {{timerLayout.scrambleOffsetY}}px">
+  <view data-timer-surface="page" class="nt-live-workspace {{liveAnalysis ? 'nt-live-workspace--active' : ''}}">
+  <view class="nt-solo-stage {{soloCompactStage ? 'nt-solo-stage--compact' : ''}} {{timingEnabled && !manualEditing && !layoutEditing && !liveAnalysis ? 'nt-solo-stage--anchored' : ''}}" style="padding-top: {{liveAnalysis ? 0 : soloScrambleGap}}px; --nt-solo-timer-gap: {{soloTimerGap}}px; --nt-solo-readout-size: {{soloReadoutSize}}px" data-timer-surface="stage" bindtouchstart="stageTouch" bindtouchmove="stageTouch" bindtouchend="stageTouch" bindtouchcancel="stageTouch">
+  <view data-timer-surface="stage" class="nt-solo-scramble" hidden="{{!!liveAnalysis}}">
+  <view data-timer-surface="stage" class="nt-solo-scramble-content {{hideChrome ? 'nt-solo-chrome-hidden' : ''}}" aria-hidden="{{hideChrome}}">
+  <view data-timer-surface="stage" id="nt-layout-scrambleGap" class="nt-layout-region" style="top: {{timerLayout.scrambleOffsetY}}px">
     <view wx:if="{{manualEditing && !layoutEditing}}">
       <textarea class="nt-draft" value="{{manualText}}" bindinput="inputManualScrambles" bindblur="finishManualScrambles" maxlength="-1" placeholder="{{copy.queuePlaceholder}}" aria-label="{{copy.manualScrambles}}" />
     </view>
-    <button wx:else hover-class="press-feedback" class="nt-scramble nt-scramble-font--{{soloScrambleFont}} {{compactScramble ? 'nt-scramble--compact' : ''}}" style="--nt-scramble-scale: {{soloScrambleScale}}; --nt-scramble-length: {{soloScrambleLengthScale}}" bindtap="scrambleTap" bindtouchstart="scrambleDown" bindtouchend="scrambleUp" bindtouchcancel="timerCancel" disabled="{{generating || phase === 'running'}}" aria-label="{{scramble}}">{{generating ? copy.loading : event === 'custom' && !scramble ? '—' : scramble}}</button>
-    <button wx:if="{{source === 'manual' && !manualEditing && !busy && !layoutEditing}}" class="nt-control" bindtap="editManualScrambles" hover-class="press-feedback">{{copy.manualScrambles}}</button>
+    <button wx:else hover-class="press-feedback" class="nt-scramble nt-scramble-font--{{soloScrambleFont}} {{compactScramble ? 'nt-scramble--compact' : ''}}" style="--nt-scramble-scale: {{soloScrambleScale}}; --nt-scramble-length: {{soloScrambleLengthScale}}" bindtap="scrambleTap" data-timer-surface="scramble" disabled="{{generating || (phase === 'running' && settings.scrambleClickAction !== 'start')}}" aria-label="{{scramble}}">{{generating ? copy.loading : event === 'custom' && !scramble ? '—' : scramble}}</button>
+    <button wx:if="{{source === 'manual' && !manualEditing && !layoutEditing}}" class="nt-control {{busy ? 'nt-solo-chrome-hidden' : ''}}" aria-hidden="{{busy}}" bindtap="editManualScrambles" hover-class="press-feedback">{{copy.manualScrambles}}</button>
     <template wx:if="{{layoutEditing}}" is="nt-layout-handles" data="{{region: 'scrambleGap', copy: copy}}" />
   </view>
-  <view wx:if="{{sourceLine && !timerLayout.hideCompetitionInfo}}" hidden="{{hideChrome}}" id="nt-layout-sourceGap" class="nt-layout-region" style="margin-top: {{soloSourceGap}}px; top: {{timerLayout.sourceOffsetY}}px">
+  <view wx:if="{{sourceLine && !timerLayout.hideCompetitionInfo}}" id="nt-layout-sourceGap" class="nt-layout-region" style="margin-top: {{soloSourceGap}}px; top: {{timerLayout.sourceOffsetY}}px">
     <button class="nt-hint nt-source" bindtap="openSheet" data-sheet="wca" style="font-size: calc(var(--solo-source-font-size) * {{soloSourceSize}})" hover-class="press-feedback">
       <template is="nt-country-flag" data="{{flag: competitionSourceFlag}}" />
       <text class="nt-source-title">{{sourceDetails.title}}</text>
@@ -219,35 +220,36 @@
     </button>
     <template wx:if="{{layoutEditing}}" is="nt-layout-handles" data="{{region: 'sourceGap', copy: copy, canHide: true}}" />
   </view>
-  <view wx:if="{{trainerCase}}" hidden="{{hideChrome}}" class="nt-trainer-case">
+  <view wx:if="{{trainerCase}}" class="nt-trainer-case {{hideChrome ? 'nt-solo-chrome-hidden' : ''}}" aria-hidden="{{hideChrome}}">
     <text>{{trainerCase.label}} · {{trainerCase.depth}}</text>
     <button class="nt-control" bindtap="toggleTrainerAnswer" hover-class="press-feedback" disabled="{{busy || trainerBusy}}">{{trainerBusy ? copy.caseSolving : trainerShown ? copy.caseHide : trainerError ? copy.retry : copy.caseAnswer}}</button>
     <text wx:if="{{trainerError}}" class="nt-error" aria-role="status">{{copy.caseError}}</text>
     <text wx:if="{{trainerShown && trainerAnswer}}" class="nt-comment" selectable="{{true}}">{{trainerAnswer.frame}} {{trainerAnswer.notation}}</text>
   </view>
   </view>
-  <view class="nt-solo-center" style="margin-top: {{soloTimerGap}}px" data-timer-surface="stage">
-  <view class="nt-clock-region">
-    <view wx:if="{{timingEnabled}}" id="nt-layout-timerGap" class="nt-layout-region {{trainingTarget || attemptSplitChips.length ? 'nt-clock-with-details' : ''}}" style="top: {{timerLayout.timerOffsetY}}px">
-      <button class="nt-clock nt-clock--{{phase}} {{trainingTarget.overshot ? 'nt-target-overshot' : ''}} {{targetPulse ? 'nt-target-pulse-' + targetPulse : ''}}" bindtouchstart="timerDown" bindtouchend="timerUp" bindtouchcancel="timerCancel" aria-label="{{hint}}" hover-class="press-feedback">
-        <text class="nt-time nt-time-font--{{soloReadoutFont}}" style="font-size: {{soloReadoutSize}}px">{{display}}</text>
+  </view>
+  <view data-timer-surface="stage" class="nt-clock-region">
+    <view data-timer-surface="stage" wx:if="{{timingEnabled}}" id="nt-layout-timerGap" class="nt-layout-region" style="top: {{timerLayout.timerOffsetY}}px">
+      <button data-timer-surface="stage" class="nt-clock nt-clock--{{phase}} {{trainingTarget.overshot ? 'nt-target-overshot' : ''}} {{targetPulse ? 'nt-target-pulse-' + targetPulse : ''}}" aria-label="{{hint}}" hover-class="press-feedback">
+        <text data-timer-surface="stage" class="nt-time nt-time-font--{{soloReadoutFont}}" style="font-size: {{soloReadoutTextSize}}px">{{display}}</text>
       </button>
-      <view wx:if="{{trainingTarget}}" class="nt-training-target nt-training-pill {{trainingTarget.overshot ? 'nt-training-pill--over' : 'nt-training-pill--info'}}">
+      <template wx:if="{{layoutEditing}}" is="nt-layout-handles" data="{{region: 'timerGap', copy: copy}}" />
+    </view>
+    <button wx:else class="nt-clock nt-manual-entry" bindtap="openSheet" data-sheet="manual" disabled="{{generating || layoutEditing || !canUseCurrentScramble}}" hover-class="press-feedback">{{copy.manualEntry}}</button>
+  </view>
+  <view data-timer-surface="stage" class="nt-solo-below">
+      <view wx:if="{{hasTrainingTarget}}" aria-hidden="{{!trainingTarget}}" class="{{trainingTarget ? '' : 'nt-solo-chrome-hidden'}} nt-training-target nt-training-pill {{trainingTarget.overshot ? 'nt-training-pill--over' : 'nt-training-pill--info'}}">
         <template is="nt-settings-icon" data="{{icon: 'target'}}" />
         <text>{{trainingTarget.label}}</text><text class="nt-training-delta">{{trainingTarget.delta}}</text>
       </view>
-      <view wx:if="{{attemptSplitChips.length}}" class="nt-attempt-splits">
+      <view data-timer-surface="stage" wx:if="{{showStageSplits || showMemoSplit}}" class="nt-attempt-splits" aria-hidden="{{!attemptSplitChips.length}}">
         <block wx:for="{{attemptSplitChips}}" wx:key="key">
           <button wx:if="{{item.action}}" class="nt-attempt-split nt-attempt-split-action" catchtap="markAttemptSplit" data-mark="{{item.key}}" aria-label="{{item.label}}" hover-class="press-feedback">{{item.label}}</button>
           <text wx:else class="nt-attempt-split {{item.time ? 'nt-attempt-split-done' : ''}}">{{item.label}}{{item.time ? ' ' + item.time : ''}}</text>
         </block>
       </view>
-      <template wx:if="{{layoutEditing}}" is="nt-layout-handles" data="{{region: 'timerGap', copy: copy}}" />
-    </view>
-    <button wx:else class="nt-clock nt-manual-entry" bindtap="openSheet" data-sheet="manual" disabled="{{generating || layoutEditing || !canUseCurrentScramble}}" hover-class="press-feedback">{{copy.manualEntry}}</button>
-  </view>
-  <view wx:if="{{(preview || livePreview) && (!soloCompactStage || livePreview)}}" hidden="{{hideChrome}}" id="nt-layout-cubeGap" class="nt-previews nt-layout-region {{livePreview ? '' : 'nt-layout-preview-frame'}}" style="margin-top: {{soloCubeGap}}px; top: {{timerLayout.cubeOffsetY}}px; --nt-layout-preview-height: {{soloCubeDrawHeight}}px">
-    <view wx:if="{{preview && !livePreview && !liveAnalysis}}" class="nt-preview" style="height: {{soloCubeHeight}}px"><image mode="aspectFit" src="{{preview}}" style="height: {{soloCubeDrawHeight}}px" binderror="imageError" aria-label="{{copy.preview}}" /></view>
+  <view data-timer-surface="stage" wx:if="{{(preview || livePreview) && (!soloCompactStage || livePreview)}}" id="nt-layout-cubeGap" aria-hidden="{{hideChrome}}" class="nt-previews nt-layout-region {{hideChrome ? 'nt-solo-chrome-hidden' : ''}} {{livePreview ? '' : 'nt-layout-preview-frame'}}" style="margin-top: {{soloCubeGap}}px; top: {{timerLayout.cubeOffsetY}}px; --nt-layout-preview-height: {{soloCubeDrawHeight}}px">
+    <view data-timer-surface="stage" wx:if="{{preview && !livePreview && !liveAnalysis}}" class="nt-preview" style="height: {{soloCubeHeight}}px"><image data-timer-surface="stage" mode="aspectFit" src="{{preview}}" style="height: {{soloCubeDrawHeight}}px" binderror="imageError" aria-label="{{copy.preview}}" /></view>
     <view wx:if="{{livePreview}}" class="nt-preview" >
       <view class="nt-live-cube" style="height: {{soloCubeHeight}}px">
         <image wx:if="{{!liveCanvasReady}}" mode="aspectFit" src="{{livePreview}}" style="height: 100%" binderror="imageError" aria-label="{{copy.live}}" />
@@ -289,10 +291,9 @@
     <button class="nt-layout-done" bindtap="toggleLayout" hover-class="press-feedback"><image class="nt-icon-light" src="/assets/tabbar/check-dark.png" aria-hidden="true" /><image class="nt-icon-dark" src="/assets/tabbar/check-light.png" aria-hidden="true" />{{copy.layoutDone}}</button>
   </view>
   <text wx:if="{{previewError}}" class="nt-error">{{previewError}}</text>
-  <text wx:if="{{cubeConnected && !liveAnalysis}}" hidden="{{hideChrome}}" class="nt-hint nt-cube-hint">{{guidance}}</text>
-  <button hover-class="press-feedback" wx:if="{{phase === 'ready' || phase === 'inspecting'}}" class="nt-control" bindtap="cancelAttempt">{{copy.cancel}}</button>
-  <button wx:if="{{puzzleHintTitle}}" hidden="{{hideChrome}}" class="nt-control" bindtap="openSheet" data-sheet="puzzle-hints" disabled="{{busy || generating || !scramble || layoutEditing}}" hover-class="press-feedback">{{puzzleHintTitle}}</button>
-  <view wx:if="{{trainingGoal || trainingRound}}" hidden="{{hideChrome}}" class="nt-training-summary">
+  <text wx:if="{{cubeConnected && !liveAnalysis}}" class="nt-hint nt-cube-hint {{hideChrome ? 'nt-solo-chrome-hidden' : ''}}" aria-hidden="{{hideChrome}}">{{guidance}}</text>
+  <button wx:if="{{puzzleHintTitle}}" class="nt-control {{hideChrome ? 'nt-solo-chrome-hidden' : ''}}" aria-hidden="{{hideChrome}}" bindtap="openSheet" data-sheet="puzzle-hints" disabled="{{busy || generating || !scramble || layoutEditing}}" hover-class="press-feedback">{{puzzleHintTitle}}</button>
+  <view data-timer-surface="page" wx:if="{{trainingGoal || trainingRound}}" class="nt-training-summary {{hideChrome ? 'nt-solo-chrome-hidden' : ''}}" aria-hidden="{{hideChrome}}">
     <view wx:if="{{trainingGoal}}" class="nt-training-row">
       <view class="nt-training-pill nt-training-pill--{{trainingGoal.reached ? 'success' : 'info'}}" aria-label="{{trainingGoal.title}}">
         <text class="nt-training-muted">{{trainingGoal.label}}</text><text>{{trainingGoal.count}} / {{trainingGoal.goal}}</text>
@@ -320,14 +321,14 @@
       </button>
     </view>
   </view>
-  <view class="nt-solo-footer {{soloTightFooter ? 'nt-solo-footer--tight' : ''}} {{soloHorizontalStats ? 'nt-solo-footer--horizontal' : ''}} {{soloCompactStage && preview && !livePreview ? 'nt-solo-footer--docked' : ''}}" hidden="{{hideChrome || !!liveAnalysis}}">
+  <view data-timer-surface="page" class="nt-solo-footer {{soloTightFooter ? 'nt-solo-footer--tight' : ''}} {{soloHorizontalStats ? 'nt-solo-footer--horizontal' : ''}} {{soloCompactStage && preview && !livePreview ? 'nt-solo-footer--docked' : ''}} {{hideChrome ? 'nt-solo-chrome-hidden' : ''}}" aria-hidden="{{hideChrome}}" hidden="{{!!liveAnalysis}}">
     <button hover-class="press-feedback" class="nt-stats" bindtap="openSheet" data-sheet="history" disabled="{{busy}}" aria-label="{{copy.results}}">
       <view wx:if="{{soloStatRows.length}}" wx:for="{{soloStatRows}}" wx:key="label" class="nt-solo-stat"><text>{{item.label}}</text><text>{{item.value}}</text></view>
       <text wx:if="{{!soloStatRows.length}}" class="nt-solo-stat-empty">{{copy.results}}</text>
     </button>
-    <text wx:if="{{rankLine}}" class="nt-rank" aria-label="{{copy.rankHint}}">{{rankLine}}</text>
-    <view wx:if="{{soloCompactStage && preview && !livePreview}}" id="nt-layout-docked-cubeGap" class="nt-solo-docked-preview nt-layout-region">
-      <image mode="aspectFit" src="{{preview}}" style="height: {{soloCompactCubeHeight}}px" binderror="imageError" aria-label="{{copy.preview}}" />
+    <text data-timer-surface="page" wx:if="{{rankLine}}" class="nt-rank" aria-label="{{copy.rankHint}}">{{rankLine}}</text>
+    <view data-timer-surface="page" wx:if="{{soloCompactStage && preview && !livePreview}}" id="nt-layout-docked-cubeGap" class="nt-solo-docked-preview nt-layout-region">
+      <image data-timer-surface="page" mode="aspectFit" src="{{preview}}" style="height: {{soloCompactCubeHeight}}px" binderror="imageError" aria-label="{{copy.preview}}" />
       <template wx:if="{{layoutEditing}}" is="nt-layout-handles" data="{{region: 'cubeGap', copy: copy, docked: true, canHide: true}}" />
     </view>
   </view>

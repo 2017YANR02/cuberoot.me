@@ -7,21 +7,21 @@ import { isTimerOrdinaryEvent, TIMER_EVENT_PICKER_GROUPS } from '@cuberoot/share
 import { generateTimedWcaScramble, isTimedWcaEvent } from '@cuberoot/shared/timer/seeded/wca';
 import type { TimerStoreSettings } from '@cuberoot/shared/timer/persistence';
 import type { EventId } from '@cuberoot/shared/timer/types';
-import { tr } from './i18n';
+import { getMiniProgramLocale, tr } from './i18n';
 
 export type NativeTimerEvent = EventId;
 export const isNativeTimerEvent = isTimerOrdinaryEvent;
 
-export function nativeTimerProjectGroups() {
+export function nativeTimerProjectGroups(language = getMiniProgramLocale()) {
   return TIMER_EVENT_PICKER_GROUPS.map(group => ({
     id: group.id,
-    name: tr({ en: group.nameEn, zh: group.nameZh }),
+    name: tr({ en: group.nameEn, zh: group.nameZh }, language),
     items: group.items.flatMap(item => {
       const { id } = item;
       if (!isNativeTimerEvent(id)) return [];
       return [{
         id,
-        name: tr({ en: item.nameEn, zh: item.nameZh }),
+        name: tr({ en: item.nameEn, zh: item.nameZh }, language),
         icon: item.iconClass?.startsWith('event-') ? item.iconClass.slice(6) : item.iconClass ?? null,
         textLabel: item.textLabel ?? id,
       }];
@@ -29,8 +29,8 @@ export function nativeTimerProjectGroups() {
   })).filter(group => group.items.length > 0);
 }
 
-export function nativeTimerEvents() {
-  return nativeTimerProjectGroups().flatMap(group => group.items);
+export function nativeTimerEvents(language = getMiniProgramLocale()) {
+  return nativeTimerProjectGroups(language).flatMap(group => group.items);
 }
 
 export function generateNativeTimerScramble(event: NativeTimerEvent, mode: TimerStoreSettings['scramble222Mode']): string {
