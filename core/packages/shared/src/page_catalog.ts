@@ -896,6 +896,10 @@ export const PAGE_META: Record<string, PageMetaEntry> = {
     title: { zh: '二阶魔方层先法', en: '2×2 Layer by Layer' },
     description: { zh: '用连续动画和可操作的魔方学习二阶层先法。', en: 'Learn the 2×2 layer-by-layer method with animated lessons and interactive practice.' },
   },
+  'tutorial/2x2-fl': {
+    title: { zh: '二阶魔方 FL（第一层）', en: '2×2 First Layer (FL)' },
+    description: { zh: '先拼左侧白角对，再学习二阶第一层的 44 种盘面。每种盘面都有识别图、分步公式演示和交互练习。', en: 'Build the left pair and learn all 44 first-layer cases with recognition diagrams, step-by-step algorithms and interactive practice.' },
+  },
   'tutorial/f2l': {
     title: { zh: '三阶魔方 F2L 教程', en: '3×3 F2L Tutorial' },
     description: { zh: '从层先法走向 F2L：认识四种三步基态，理解顶面调整，逐步学习右前槽角棱对的还原。', en: 'Move from LBL to F2L: recognize four three-move cases, understand top-layer alignment and learn front-right pair insertions step by step.' },

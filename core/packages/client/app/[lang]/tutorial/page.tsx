@@ -273,6 +273,10 @@ export default function TutorialPage() {
           thumb={<VisualCube algorithm="" view="iso" puzzleSize={2} size={112} local />}
           title={<T zh="层先法" en="Layer by Layer" />}
           sub={<T zh="底层与黄面样板" en="First-layer and yellow-face preview" />} />
+        <AlgCard href="/tutorial/2x2-fl" prefetch={false}
+          thumb={<VisualCube setup="U2 R2" view="iso" puzzleSize={2} size={112} local />}
+          title={<T zh="FL（第一层）" en="First Layer (FL)" />}
+          sub={<T zh="先做左侧白角对，再处理 44 种盘面" en="Start with the left pair, then learn 44 cases" />} />
       </div>}
       {puzzle === '3x3' && <div className="tutorial-methods">
         <AlgCard href="/tutorial/lbl" prefetch={false}

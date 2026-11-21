@@ -1,0 +1,68 @@
+.fl-reading {
+  width: min(100%, 52rem);
+  margin-inline: auto;
+  padding: clamp(10px, 3cqw, 24px);
+  line-height: 1.55;
+}
+
+.fl-reading > :first-child { margin-block-start: 0; }
+.fl-reading h2 { margin-block: 1.15rem .5rem; font-size: clamp(1.1rem, 3cqw, 1.35rem); }
+.fl-reading p { margin-block: .65rem; }
+.fl-reading .fl-lead { font-size: clamp(1.06rem, 2.8cqw, 1.25rem); }
+.fl-reading .fl-source, .fl-case-note { color: var(--muted-foreground); font-size: .88rem; }
+
+.fl-overview-stages, .fl-chapter-links, .fl-case-grid {
+  display: grid;
+  gap: clamp(6px, 1.8cqw, 14px);
+}
+
+.fl-overview-stages { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.fl-chapter-links, .fl-case-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.fl-case-grid { margin: 0; padding: 0; list-style: none; }
+
+.fl-diagram-card {
+  display: grid;
+  justify-items: center;
+  align-content: start;
+  gap: 4px;
+  width: 100%;
+  min-height: 100%;
+  padding: 8px;
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  line-height: 1.35;
+  text-wrap: balance;
+  cursor: pointer;
+}
+
+.fl-diagram-card:hover { background: var(--accent-soft); border-color: var(--accent); }
+.fl-diagram-card:focus-visible { outline: 2px solid var(--ring); outline-offset: -2px; }
+.fl-diagram-card .puzzle-art { max-width: 100%; }
+.fl-diagram-card svg { width: 100%; height: auto; }
+.fl-case-grid code { overflow-wrap: anywhere; font-size: .93rem; font-weight: 650; }
+.fl-case-group + .fl-case-group { margin-block-start: 1.35rem; }
+
+.fl-pair-figure { display: grid; justify-items: center; margin: 0; text-align: center; }
+.fl-instructions { padding-inline-start: 1.45rem; }
+.fl-instructions li + li { margin-block-start: .65rem; }
+
+.course-alternatives { min-inline-size: 0; margin: .5rem 0 0; padding: 0; border: 0; }
+.course-alternatives legend { padding: 0; color: var(--muted-foreground); font-size: .88rem; }
+
+.course-demonstration { display: grid; min-width: 0; min-height: 0; }
+.fl-demo-cube { width: min(100%, 350px, 78cqh); }
+.fl-demo-copy .fl-scramble { font-size: .9rem; overflow-wrap: anywhere; }
+.fl-demo-stages { margin-block: .75rem 0; padding: 0; list-style: none; }
+.fl-demo-stages li { padding: .65rem; border-block-start: 1px solid var(--border-default); }
+.fl-demo-stages li[aria-current] { background: var(--accent-soft); }
+.fl-demo-stages h3 { margin: 0; font-size: 1.125rem; }
+.fl-demo-stages code { display: block; margin-block: .2rem; font-weight: 650; }
+.fl-demo-stages p { font-size: 1rem; }
+
+@container course-reading (max-width: 460px) {
+  .fl-case-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .fl-chapter-links .fl-diagram-card { font-size: .88rem; padding-inline: 4px; }
+}
