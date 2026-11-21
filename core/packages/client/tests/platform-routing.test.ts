@@ -240,7 +240,8 @@ describe('Platform route conservation', () => {
 
   it('resolves canonical SEO targets without losing dynamic parameters', () => {
     expect(resolvePlatformCanonicalPath(['timer'])).toEqual({ path: '/timer', rewritten: true });
-    expect(resolvePlatformCanonicalPath(['teachers'])).toEqual({ path: '/teachers', rewritten: true });
+    expect(resolvePlatformCanonicalPath(['teachers'])).toEqual({ path: '/teachers', rewritten: false });
+    expect(resolvePlatformCanonicalPath(['teachers','12'])).toEqual({ path: '/teachers?teacher=12', rewritten: false });
     expect(resolvePlatformCanonicalPath(['org', 'cube root', 'classes', 'group/1'])).toEqual({
       path: '/org/cube%20root/classes/group%2F1',
       rewritten: true,

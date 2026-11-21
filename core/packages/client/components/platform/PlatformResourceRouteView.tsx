@@ -17,7 +17,7 @@ import { useLang } from '@/i18n/tr';
 import { nextQuery, useAuthUser, useIsAdmin } from '@/lib/auth-store';
 import { executePlatformAction, loadPlatformResource, localizePlatformEntity, PlatformPermissionError } from '@/lib/platform-gateway';
 import { WebSessionRestoreError } from '@/lib/session-fetch';
-import { fillPlatformParams, isPlatformCourseClassroom, isPlatformInstructorCourseEditor, isPlatformLearningWorkspace, PLATFORM_ROUTES } from '@/lib/platform-routes';
+import { fillPlatformParams, isPlatformCourseClassroom, isPlatformInstructorCourseEditor, isPlatformLearningWorkspace, PLATFORM_INSTRUCTOR_PAGE_SIZES, PLATFORM_ROUTES } from '@/lib/platform-routes';
 import { isInstructorCourseListEntry, platformNavigationState, platformWorkspaceRoutes } from '@/lib/platform-navigation';
 import { PlatformNavigationContext, PlatformInstructorAccessRefreshContext, usePlatformSearchBinding, type PlatformFilterGroup } from '@/lib/platform-navigation-context';
 import type { PlatformActionId, PlatformActionResult, PlatformEntity, PlatformResourceResult, PlatformRouteDefinition } from '@/lib/platform-types';
@@ -28,6 +28,7 @@ import { PlatformAboutView, PlatformOfflineView, PlatformAccountView, PlatformCa
 import { COURSE_TOPIC_IDS, courseCatalogDetails, loadCourseCatalog, loadLegacyCourseLessonAccess, matchesCourseCatalog } from '@/lib/platform-course-catalog';
 import { PlatformCourseCards, PlatformCourseToolbar } from './PlatformCourseCatalog';
 import { PlatformEntityList } from './PlatformEntityList';
+import { PlatformScopedSearch } from './PlatformScopedSearch';
 
 const PlatformDomainActions = dynamic(() => import('./PlatformDomainActions').then(module => module.PlatformDomainActions),
   { ssr: false, loading: () => <PlatformState kind="loading" /> });
@@ -68,15 +69,18 @@ export function PlatformResourceRouteView({
   const isAdmin = useIsAdmin();
   const inPlatformShell = useContext(PlatformNavigationContext);
   const refreshInstructorAccess = useContext(PlatformInstructorAccessRefreshContext);
+  const instructorCourseList = definition.id === 'instructor-courses';
+  const pageSizeOptions = definition.area === 'instructor' && definition.id !== 'teacher-apply' ? PLATFORM_INSTRUCTOR_PAGE_SIZES : [20, 50, 100];
+  const defaultPageSize = pageSizeOptions[0];
   const [mounted, setMounted] = useState(false);
   const [query, setQuery] = useQueryState('q', parseAsString.withDefault(''));
   const [rawPage, setPage] = useQueryState('page', parseAsInteger.withDefault(1));
   const updateQuery = (value: string) => { void setPage(null); void setQuery(value || null); };
-  const [rawPageSize, setPageSize] = useQueryState('pageSize', parseAsInteger.withDefault(20));
+  const [rawPageSize, setPageSize] = useQueryState('pageSize', parseAsInteger.withDefault(defaultPageSize));
   const [category, setCategory] = useQueryState('category', parseAsString.withDefault(definition.id === 'admin-applications' ? 'pending' : ''));
   const [puzzle, setPuzzle] = useQueryState('puzzle', parseAsString.withDefault(''));
   const page = Math.max(1, rawPage);
-  const pageSize = [20, 50, 100].includes(rawPageSize) ? rawPageSize : 20;
+  const pageSize = pageSizeOptions.includes(rawPageSize) ? rawPageSize : defaultPageSize;
   const [selectedLessonId, setSelectedLessonId] = useQueryState('lesson', parseAsString.withOptions({ history: 'push', scroll: false }));
   const [lessonStartTime, setLessonStartTime] = useQueryState('t', parseAsFloat);
   const [sort, setSort] = useQueryState('sort', parseAsStringEnum(['title', 'updated'] as const).withDefault('updated'));
@@ -101,13 +105,15 @@ export function PlatformResourceRouteView({
   });
   collectionFilterGroups.push({ id: 'sort', label: t('排序', 'Sort'), value: sort, defaultValue: 'updated',
     options: [{ value: 'updated', label: t('最近更新', 'Updated') }, { value: 'title', label: t('标题', 'Title') }] });
-  const collectionSearchInMasthead = usePlatformSearchBinding(collectionSearchScope ?? 'paths', query, updateQuery, Boolean(collectionSearchScope), {
-    routeId: definition.id, filters: {
+  const collectionFilters = {
       title: collectionSearchScope === 'events' ? t('筛选活动', 'Filter events')
         : collectionSearchScope === 'news' ? t('筛选资讯', 'Filter news')
         : collectionSearchScope === 'instructor-courses' ? t('筛选讲师课程', 'Filter instructor courses') : t('筛选学习路径', 'Filter learning paths'),
       groups: collectionFilterGroups,
-      apply: values => { void setPage(null); void setCategory(values.category || null); void setSort(values.sort === 'title' ? 'title' : 'updated'); } },
+      apply: (values: Record<string, string>) => { void setPage(null); void setCategory(values.category || null); void setSort(values.sort === 'title' ? 'title' : 'updated'); },
+  };
+  const collectionSearchInMasthead = usePlatformSearchBinding(collectionSearchScope ?? 'paths', query, updateQuery, Boolean(collectionSearchScope) && !instructorCourseList, {
+    routeId: definition.id, filters: collectionFilters,
   });
   const [error, setError] = useState<Error | null>(null);
   const [days, setDays] = useQueryState('days', parseAsInteger.withDefault(30));
@@ -392,6 +398,7 @@ export function PlatformResourceRouteView({
   const workspaceRoutes = navigation ? platformWorkspaceRoutes(definition, Boolean(user), isAdmin) : [];
   const headingInNavigation = navigation?.secondary === definition.id || workspaceRoutes.some(item => item.id === definition.id);
   const showAreaTitle = !inviteManager && !orderPage && !courseCatalog && areaTitle !== pageTitle
+    && !(inPlatformShell && definition.area === 'instructor' && definition.id !== 'teacher-apply' && !instructorCourseEditor)
     && !navigation?.primary && workspaceRoutes.length === 0;
   const showDescription = !courseClassroom && !courseDetail && !inviteManager && !orderPage && Boolean(pageDescription);
   const heading = <h1 className={headingInNavigation ? 'sr-only' : undefined}>{pageTitle}</h1>;
@@ -412,6 +419,7 @@ export function PlatformResourceRouteView({
           {heading}
           {showDescription && <p>{pageDescription}</p>}
         </div>
+        {instructorCourseList && mounted && allowed && !permissionDenied && <PlatformScopedSearch compact lang={lang} scope="instructor-courses" binding={{ scope:'instructor-courses', routeId:definition.id, query, submit:updateQuery, filters:collectionFilters }} />}
       </header> : heading)}
 
       {newRoute && (definition.id !== 'instructor-courses' || (result && !error)) ? <div className={`platform-route-actions${definition.id === 'instructor-courses' ? ' platform-instructor-course-create-actions' : ''}`}>
@@ -468,6 +476,7 @@ export function PlatformResourceRouteView({
             && !isQrCardStudio
             && !inviteManager
             && searchable
+            && !instructorCourseList
             && !collectionSearchInMasthead
             && !permissionDenied ? (
             <div className="platform-toolbar">
@@ -567,11 +576,11 @@ export function PlatformResourceRouteView({
           )}
           {actionMessage && (definition.id !== 'order-detail' || sortedItems[0]?.status !== 'pending_payment') ? <p className={instructorApplicationFlow ? 'platform-action-message platform-form-error' : 'platform-action-message'} role={instructorApplicationFlow ? 'alert' : 'status'}>{actionMessage}</p> : null}
           {courseCatalog && coursePages > 1 && <Paginator page={coursePage} totalPages={coursePages}
-            size={pageSize} pageSizeOptions={[20, 50, 100]} isZh={lang === 'zh'} className="platform-pagination"
+            size={pageSize} pageSizeOptions={pageSizeOptions} isZh={lang === 'zh'} className="platform-pagination"
             onPageChange={value => { void setPage(value); }} onSizeChange={value => { void setPage(null); void setPageSize(value); }} />}
           {result?.page && !courseCatalog && definition.kind === 'collection' && !isQrCardStudio && !inviteManager ? (
             pageTotal !== undefined ? <Paginator page={page} totalPages={Math.max(1, Math.ceil(pageTotal / effectivePageSize))}
-              size={effectivePageSize} pageSizeOptions={[20, 50, 100]} isZh={lang === 'zh'} className="platform-pagination"
+              size={effectivePageSize} pageSizeOptions={pageSizeOptions} isZh={lang === 'zh'} className="platform-pagination"
               onPageChange={value => { void setPage(value); }} onSizeChange={value => { void setPage(null); void setPageSize(value); }} />
               : <nav className="platform-pagination" aria-label={t('分页', 'Pagination')}>
                 <button type="button" className="wse-page-btn" disabled={page <= 1} onClick={() => { void setPage(page - 1); }}>{t('上一页', 'Previous')}</button>

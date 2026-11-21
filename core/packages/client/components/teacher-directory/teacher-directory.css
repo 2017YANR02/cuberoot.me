@@ -7,6 +7,8 @@
   color: var(--foreground);
 }
 
+.teachers-page.teachers-page--platform { width:100%; margin:0; padding:0; }
+
 .teachers-back-row,
 .teacher-editor-back-row { width: 100%; }
 .teachers-hero { max-width: 760px; padding: 48px 0 42px; }

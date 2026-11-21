@@ -125,7 +125,7 @@ function platformSeoRoute(rest: string): { rest: string; ownsCanonical: boolean;
     : rest;
   return {
     rest: canonicalRest,
-    ownsCanonical: match.definition.kind !== 'canonical',
+    ownsCanonical: match.definition.kind !== 'canonical' && !match.definition.canonicalHref,
     noindex,
   };
 }

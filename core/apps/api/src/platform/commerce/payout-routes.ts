@@ -12,7 +12,7 @@ import {
 } from '../db.js';
 import { notFound, PlatformApiError, conflict, badRequest } from '../errors.js';
 import { privateNoStore } from '../http.js';
-import { createInstructorPayout } from '../instructor_payout.js';
+import { createInstructorPayout, readInstructorAvailableMinor } from '../instructor_payout.js';
 import { readJsonObject, enumField, stringField, resourceId, pagination, integerField } from '../validation.js';
 import {
   payoutProfile,
@@ -295,8 +295,7 @@ export function registerPayoutRoutes(platformCommerceRoutes: Hono): void {
     const actor=await requirePlatformActor(c), instructorId=await requireInstructor(platformDb(),actor);
     privateNoStore(c);
     const rows=await platformQuery(platformDb(),`SELECT p.id::text,p.payout_number AS "payoutNumber",p.amount_minor::text AS "amountMinor",p.currency,p.status,t.state AS "transferState" FROM platform_instructor_payouts p LEFT JOIN platform_wechat_payout_transfers t ON t.payout_id=p.id WHERE p.instructor_id=$1::uuid ORDER BY p.created_at DESC LIMIT 100`,[instructorId]);
-    const [balance] = await platformQuery<{ amount: string }>(platformDb(), `SELECT COALESCE(SUM(r.delta_amount_minor),0)::text AS amount FROM platform_instructor_revenue_ledger r WHERE r.instructor_id=$1::uuid AND r.currency='CNY' AND NOT EXISTS (SELECT 1 FROM platform_instructor_payout_items i WHERE i.revenue_ledger_id=r.id AND i.released_at IS NULL)`, [instructorId]);
-    const availableMinor = Math.max(0, safeSignedMoney(balance.amount));
+    const availableMinor = await readInstructorAvailableMinor(platformDb(), instructorId);
     return c.json({payouts:rows, availableMinor});
   });
 

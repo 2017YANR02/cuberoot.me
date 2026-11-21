@@ -9,8 +9,8 @@ import type { PlatformSearchBinding, PlatformSearchScope } from '@/lib/platform-
 import { PlatformSearchFilter } from './PlatformSearchFilter';
 import '../landing_search.css';
 
-/** Match the masthead search's visual shell without loading the Agent or site search. */
-export function PlatformScopedSearch({ lang, scope, binding }: { lang: 'zh' | 'en'; scope: PlatformSearchScope; binding: PlatformSearchBinding | null }) {
+/** Scoped search for the masthead or a compact collection heading. */
+export function PlatformScopedSearch({ lang, scope, binding, compact = false }: { lang: 'zh' | 'en'; scope: PlatformSearchScope; binding: PlatformSearchBinding | null; compact?: boolean }) {
   const t = useT();
   const router = useEntryRouter();
   const minimumLength = scope === 'forum' ? 2 : 1;
@@ -43,10 +43,9 @@ export function PlatformScopedSearch({ lang, scope, binding }: { lang: 'zh' | 'e
     : scope === 'teachers' ? t('搜索讲师姓名、地点或擅长方向', 'Search instructor names, places or specialties')
     : scope === 'instructor-courses' ? t('搜索讲师课程', 'Search instructor courses')
     : t('搜索课程、讲师或学习内容', 'Search courses, instructors or topics');
-  return <div className="landing-search">
-    <div className="landing-search-controls">
-      {/* allow-manual-search: Bound result pages search onChange; submit navigates from detail or forum pages to their results. */}
-      <form className="landing-search-input platform-scoped-search" data-search-scope={scope} role="search" aria-label={placeholder}
+  const form = (
+      // allow-manual-search: Bound result pages search onChange; submit navigates from detail or forum pages to their results.
+      <form className={`landing-search-input platform-scoped-search${compact ? ' platform-scoped-search--compact' : ''}`} data-search-scope={scope} role="search" aria-label={placeholder}
         onSubmit={event => { event.preventDefault(); submit(String(new FormData(event.currentTarget).get('q') ?? '')); }}>
         <span className="landing-search-plus platform-scoped-search-icon" aria-hidden="true"><Search size={18} strokeWidth={1.75} /></span>
         {/* allow-manual-search: onChange performs live bound search; Enter additionally opens the result page when there is no page binding. */}
@@ -55,9 +54,9 @@ export function PlatformScopedSearch({ lang, scope, binding }: { lang: 'zh' | 'e
           onChange={value => { setDraft(value); submitBoundQuery?.(value); }}
           onKeyDown={event => { if (event.key === 'Enter') { event.preventDefault(); submit(event.currentTarget.value); } }} />
         {binding?.filters && <PlatformSearchFilter key={binding.routeId} filters={binding.filters} />}
-        <button type="submit" className="landing-search-mic landing-search-send landing-search-auth-send"
-          disabled={!submitBoundQuery && draft.trim().length < minimumLength}>{t('搜索', 'Search')}</button>
+        {!compact && <button type="submit" className="landing-search-mic landing-search-send landing-search-auth-send"
+          disabled={!submitBoundQuery && draft.trim().length < minimumLength}>{t('搜索', 'Search')}</button>}
       </form>
-    </div>
-  </div>;
+  );
+  return compact ? form : <div className="landing-search"><div className="landing-search-controls">{form}</div></div>;
 }

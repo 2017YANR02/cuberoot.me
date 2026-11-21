@@ -23,7 +23,9 @@ it('applies course-scoped teaching-team and validity checks to both instructor l
  state.db = { unsafe };
  state.userId = 42;
  try {
-  expect((await app.request('/instructor/dashboard')).status).toBe(200);
+  const dashboard=await app.request('/instructor/dashboard?view=overview&v=2');
+  expect(dashboard.status).toBe(200);
+  expect(await dashboard.json()).toMatchObject({availableMinor:0,availableCurrency:'CNY',currentMonth:expect.stringMatching(/^\d{4}-\d{2}$/),recentCourses:[],payouts:[]});
   expect((await app.request('/instructor/students')).status).toBe(200);
   const statements = unsafe.mock.calls.map(call => call[0]).filter(statement => statement.includes('JOIN platform_course_entitlements e'));
   expect(statements).toHaveLength(2);
@@ -33,6 +35,8 @@ it('applies course-scoped teaching-team and validity checks to both instructor l
    expect(statement).toContain('e.valid_until>NOW()');
    expect(statement).toContain('reversal.reversal_of_ledger_id=l.id');
   }
+  expect(unsafe.mock.calls.map(call=>call[0]).find(statement=>statement.includes('AS "learnerCount"'))).toContain('teaching_owner.course_id=e.course_id AND teaching_instructor.user_id=e.user_id');
+  expect(unsafe.mock.calls.map(call=>call[0]).find(statement=>statement.includes('AS "learnerCount"'))).toContain("c.status<>'archived'");
  } finally {
   state.db = previousDb;
   state.userId = previousUser;
@@ -180,6 +184,9 @@ describe.skipIf(!url)('learning HTTP routes with isolated PostgreSQL',()=>{
    state.userId = teacherA;
    const dashboardA = await json(await app.request('/instructor/dashboard'));
    expect(dashboardA.studentCount).toBe(2);
+   expect(dashboardA.availableMinor).toBe(0);
+   expect(dashboardA.recentCourses).toHaveLength(2);
+   expect(dashboardA.recentCourses).toEqual(expect.arrayContaining([expect.objectContaining({id:courseA,learnerCount:1}),expect.objectContaining({id:courseB,learnerCount:2})]));
    const studentsA = await json(await app.request('/instructor/students?page=1&pageSize=20'));
    expect(studentsA.total).toBe(3);
    expect(studentsA.items.map((item: { userId: string; courseId: string }) => [Number(item.userId), item.courseId])).toEqual(expect.arrayContaining([
@@ -198,6 +205,18 @@ describe.skipIf(!url)('learning HTTP routes with isolated PostgreSQL',()=>{
    const studentsB = await json(await app.request('/instructor/students?page=1&pageSize=20'));
    expect(studentsB.total).toBe(2);
    expect(studentsB.items.map((item: { userId: string; courseId: string }) => [Number(item.userId), item.courseId])).toEqual(expect.arrayContaining([[learner, courseA], [teacherA, courseC]]));
+   await db.unsafe("INSERT INTO platform_instructor_revenue_ledger(instructor_id,entry_type,delta_amount_minor,currency,reason,actor_user_id) VALUES($1,'adjustment',1200,'CNY','fixture',$3),($1,'adjustment',-200,'CNY','fixture',$3),($2,'adjustment',900,'CNY','fixture',$4)",[idA,idB,teacherA,teacherB]);
+   state.userId=teacherA;
+   const earnings=await json(await app.request('/instructor/earnings?page=1&pageSize=1&v=2'));
+   expect(earnings.total).toBe(2);
+   expect(earnings.items).toHaveLength(1);
+   expect(earnings.items[0].entryType).toBe('adjustment');
+   const secondPage=await json(await app.request('/instructor/earnings?page=2&pageSize=1&v=2'));
+   expect(secondPage.total).toBe(2);
+   expect(secondPage.items[0].id).not.toBe(earnings.items[0].id);
+   expect([Number(earnings.items[0].amountMinor),Number(secondPage.items[0].amountMinor)].sort((a,b)=>a-b)).toEqual([-200,1200]);
+   expect(await json(await app.request('/instructor/earnings?page=3&pageSize=1&v=2'))).toMatchObject({items:[],total:2});
+   expect(await json(await app.request('/instructor/dashboard?view=earnings&v=2'))).toMatchObject({availableMinor:1000,availableCurrency:'CNY',recentCourses:[]});
   } finally {
    state.userId = first;
   }

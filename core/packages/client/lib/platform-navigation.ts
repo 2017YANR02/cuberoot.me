@@ -98,8 +98,9 @@ export function platformSharedPathname(pathname: string): string {
   return resolvePlatformCanonicalPath(segments)?.path.split('?', 1)[0] ?? path;
 }
 
-// Inverse of the existing rewrite catalog. More specific destinations precede catch-alls.
-const sharedRoutes = PLATFORM_ROUTES.filter(isPlatformSharedRoute).toSorted((a, b) => {
+// Native teacher directory routes still share canonical links with the original directory.
+// More specific destinations precede catch-alls.
+const sharedRoutes = PLATFORM_ROUTES.filter(route => isPlatformSharedRoute(route) || route.id === 'teachers' || route.id === 'teacher-detail').toSorted((a, b) => {
   const score = (route: PlatformRouteDefinition) => (route.canonicalHref?.split(/[/?]/).filter(part => part && !part.startsWith(':')).length ?? 0) * 10
     + (route.canonicalHref?.includes('?') ? 2 : 0) - (route.canonicalHref?.includes('*') ? 1 : 0);
   return score(b) - score(a);

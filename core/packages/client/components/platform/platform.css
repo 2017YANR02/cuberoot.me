@@ -113,6 +113,14 @@ body[data-site-scenery] :is(
 .landing-search-input.platform-scoped-search .platform-scoped-search-icon { cursor: default; pointer-events: none; }
 .platform-scoped-search .platform-scoped-search-field .landing-search-field { min-height: 0; box-shadow: none; line-height: inherit; }
 .platform-scoped-search .platform-scoped-search-field .search-control--with-clear { padding-inline-end: 28px; }
+.platform-instructor-course-list-page > .platform-route-header { display:flex; align-items:center; justify-content:space-between; gap:12px 20px; flex-wrap:wrap; }
+.platform-instructor-course-list-page > .platform-route-header h1 { margin:0; }
+.landing-search-input.platform-scoped-search--compact { width:min(100%,320px); box-sizing:border-box; gap:8px; padding:4px 8px 4px 12px; border-radius:10px; }
+.landing-search-input.platform-scoped-search--compact .platform-scoped-search-icon { flex:0 0 18px; width:18px; height:18px; margin:0; }
+.landing-search-input.platform-scoped-search--compact .landing-search-field { font-size:.875rem; }
+.platform-scoped-search--compact .platform-filter-control { padding-inline-start:4px; }
+.platform-scoped-search--compact .platform-filter-trigger { min-height:32px; }
+@media(max-width:600px) { .landing-search-input.platform-scoped-search--compact { width:100%; } }
 /* Match the negative block margins of the standard search action buttons:
    a 36px filter remains fully clickable without enlarging the 54px shell. */
 .platform-site-search .platform-filter-control { margin-block: -4px; }
@@ -2674,6 +2682,35 @@ a.platform-course-lesson-row:hover { color: var(--accent); }
 .platform-instructor-masthead:not(:has(.platform-site-search)) { display: flex; }
 .platform-instructor-masthead > .back-home { min-height: 36px; white-space: nowrap; }
 .platform-instructor-masthead > .back-home { grid-area: brand; }
+.platform-instructor-studio.af-navigation {
+  display: flex;
+  flex-direction: column;
+  --af-nav-expanded: 168px;
+  --af-nav-header-height: 80px;
+  --af-nav-sidebar-bg: var(--muted);
+  --af-nav-content-bg: var(--background);
+  --af-nav-text: var(--muted-foreground);
+  --af-nav-active: var(--foreground);
+  --af-nav-hover: var(--card);
+  --af-nav-selected: var(--card);
+  --af-nav-font-size: .875rem;
+}
+.platform-instructor-studio > .af-nav-body { flex:1 0 auto; }
+.platform-instructor-studio .af-nav-sidebar > .af-nav-toggle { margin-inline-start:auto; }
+.platform-instructor-studio .platform-instructor-studio-header { position:sticky; top:0; z-index:45; width:100%; min-height:var(--af-nav-header-height); box-sizing:border-box; padding:12px clamp(16px,3vw,28px); align-content:center; background:var(--af-nav-sidebar-bg); }
+.platform-instructor-studio .platform-instructor-masthead { grid-template-columns:auto minmax(0, min(100%,720px)); grid-template-areas:"brand search"; gap:12px 24px; }
+.platform-instructor-studio-brand { display:flex; align-items:center; gap:12px; grid-area:brand; font-size:1rem; font-weight:650; white-space:nowrap; }
+.platform-instructor-studio-brand .back-home { display:inline-flex; align-items:center; min-height:36px; }
+.platform-instructor-studio .platform-instructor-studio-main { width:min(calc(100% - clamp(32px,5vw,64px)),1320px); padding-block:24px 64px; }
+@media (min-width:768px) {
+  .platform-instructor-studio[data-navigation="true"] .platform-instructor-mobile-tasks { display:none; }
+}
+@media (max-width:767px) {
+  .platform-instructor-studio.af-navigation > .af-nav-body { display:flex; flex-direction:column; }
+  .platform-instructor-studio .platform-instructor-studio-header { position:relative; background:var(--background); }
+  .platform-instructor-studio .platform-instructor-masthead { grid-template-columns:minmax(0,1fr); grid-template-areas:"brand" "search"; }
+  .platform-instructor-studio .platform-instructor-studio-main { flex:1 0 auto; padding-block:16px 48px; }
+}
 @media (max-width: 839px) {
   .platform-instructor-masthead { grid-template-columns: minmax(0, 1fr); grid-template-areas: "brand" "search"; }
 }
@@ -2712,6 +2749,13 @@ a.platform-course-lesson-row:hover { color: var(--accent); }
 }
 .platform-shell > .platform-main:has(:is(.platform-pagination, .forum-pagination, .teaching-pagination, .shop-pagination):last-child) {
   padding-block-end: max(24px, env(safe-area-inset-bottom));
+}
+/* Instructor studio adds a navigation frame between the shell and the main.
+   Let the list take the remaining height while leaving its pager in document flow. */
+.platform-instructor-studio .platform-instructor-studio-main:has(.platform-pagination:last-child) {
+  display:flex;
+  flex-direction:column;
+  padding-block-end:max(24px, env(safe-area-inset-bottom));
 }
 .platform-main :is(.forum-page, .shop-main):has(:is(.forum-pagination, .shop-pagination):last-child) {
   width: 100%;

@@ -9,7 +9,7 @@ import { ContentSkeleton } from '@/components/ContentSkeleton';
 import { commerceMoney } from '@/lib/platform-commerce-format';
 
 type Payout = { id: string; amountMinor: string; status: string; currency: string; transferState?: string | null; payoutNumber?: string; paidAt?: string; providerReference?: string };
-export function InstructorPayoutSettings({ history = [] }: { history?: readonly Record<string, unknown>[] } = {}) {
+export function InstructorPayoutSettings({ history = [], active = true, onBalanceChange }: { history?: readonly Record<string, unknown>[]; active?: boolean; onBalanceChange?: (snapshot: { availableMinor: number; payouts: Payout[] }) => void } = {}) {
   const t = useT();
   const [channel, setChannel] = useState('wechat');
   const [configured, setConfigured] = useState(false);
@@ -30,10 +30,11 @@ export function InstructorPayoutSettings({ history = [] }: { history?: readonly 
       sessionFetch(apiUrl('/v1/platform/instructor/payout-profile'), { headers: authHeaders(false), cache: 'no-store', signal }).then(handleApi<{configured: boolean; method?: string}>),
       sessionFetch(apiUrl('/v1/platform/instructor/payouts'), { headers: authHeaders(false), cache: 'no-store', signal }).then(handleApi<{payouts:Payout[]; availableMinor:number}>),
     ]);
-    if (!signal?.aborted && sequence===refreshSequence.current) { if(initialMethod.current){initialMethod.current=false;if(profile.method==='bank_transfer')setChannel('bank_transfer');}setConfigured(profile.configured && profile.method === 'wechat'); setSavedMethod(profile.method ?? null); setPayouts(result.payouts); setAvailableMinor(result.availableMinor); setLoaded(true); setRefreshError(false); }
+    if (!signal?.aborted && sequence===refreshSequence.current) { if(initialMethod.current){initialMethod.current=false;if(profile.method==='bank_transfer')setChannel('bank_transfer');}setConfigured(profile.configured && profile.method === 'wechat'); setSavedMethod(profile.method ?? null); setPayouts(result.payouts); setAvailableMinor(result.availableMinor); setLoaded(true); setRefreshError(false); onBalanceChange?.(result); }
     } catch(reason) { if(!signal?.aborted && sequence===refreshSequence.current)throw reason; }
-  }, []);
+  }, [onBalanceChange]);
   useEffect(() => {
+    if (!active) return;
     const controller = new AbortController();
     let refreshing = false;
     const update = async () => {
@@ -53,7 +54,7 @@ export function InstructorPayoutSettings({ history = [] }: { history?: readonly 
       window.removeEventListener('focus', update);
       document.removeEventListener('visibilitychange', update);
     };
-  }, [refresh]);
+  }, [refresh, active]);
   // The dashboard contains the complete ledger history; payout polling supplies
   // newer statuses and newly requested transfers. Render each payout only once.
   const pastPayouts: Payout[] = history.map(entry => ({

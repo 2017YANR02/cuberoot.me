@@ -101,7 +101,7 @@ function readPath(resource: PlatformResource, options: PlatformLoadOptions): str
   const reviewsOnly = resource === 'courses' && id && options.reviewPage;
   const version = resource === 'courses' ? (reviewsOnly ? 6 : 7)
     : ['paths', 'events', 'news', 'products', 'search'].includes(resource) ? 3
-    : ['orders', 'admin-orders', 'admin-applications', 'account-courses', 'instructor-students'].includes(resource) ? 2 : null;
+    : ['orders', 'admin-orders', 'admin-applications', 'account-courses', 'instructor-students', 'instructor-earnings'].includes(resource) ? 2 : null;
   const query = version ? rawQuery + (rawQuery ? '&' : '?') + 'v=' + version : rawQuery;
   switch (resource) {
     case 'search': return `/v1/platform/search${query}`;

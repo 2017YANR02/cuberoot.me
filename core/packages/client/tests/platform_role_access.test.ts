@@ -177,19 +177,16 @@ it('searches and sorts learning paths from the same masthead', async () => {
   } finally { vi.useRealTimers(); }
 });
 
-it('searches and sorts the instructor-owned course collection from the masthead without hiding course creation', async () => {
+it('searches and sorts the instructor-owned course collection from the compact page heading without hiding course creation', async () => {
   state.user = { uid: 1 };
   state.load.mockImplementation(async (_resource, options) => ({ items: options.query
     ? [{ id: 'managed-1', title: '三阶入门课' }]
     : [{ id: 'managed-1', title: '三阶入门课' }, { id: 'managed-2', title: '进阶课程' }] }));
-  function Embedded() {
-    const [binding, setBinding] = useState<PlatformSearchBinding | null>(null);
-    return createElement('div', null, createElement(PlatformScopedSearch, { lang: 'zh', scope: 'instructor-courses', binding }),
-      createElement(PlatformNavigationContext, { value: true }, createElement(PlatformSearchContext, { value: { scope: 'instructor-courses', routeId: 'instructor-courses', bind: setBinding } },
-        createElement(PlatformRouteView, { definition: PLATFORM_ROUTES.find(route => route.id === 'instructor-courses')!, params }))));
-  }
-  await act(async () => root.render(createElement(Embedded)));
+  await act(async () => root.render(createElement(PlatformNavigationContext, { value: true },
+    createElement(PlatformRouteView, { definition: PLATFORM_ROUTES.find(route => route.id === 'instructor-courses')!, params }))));
   await act(async () => { await vi.dynamicImportSettled(); });
+  expect(host.querySelectorAll('[data-search-scope="instructor-courses"]')).toHaveLength(1);
+  expect(host.querySelector('.platform-route-header .platform-scoped-search--compact')).not.toBeNull();
   expect(host.querySelector('.platform-toolbar')).toBeNull();
   expect(host.querySelector('a[href="/platform/instructor/courses/new"]')?.textContent).toBe('创建课程');
   expect(host.querySelector('.platform-domain-form')).toBeNull();
@@ -213,6 +210,23 @@ it('searches and sorts the instructor-owned course collection from the masthead 
     expect(state.load).toHaveBeenLastCalledWith('instructor-courses', expect.objectContaining({ query: null, page: 1 }));
     expect(host.textContent).toContain('进阶课程');
   } finally { vi.useRealTimers(); }
+});
+
+it('uses smaller course-list page sizes and resets the page when the size changes', async () => {
+  state.user = { uid: 1 };
+  state.load.mockImplementation(async (_resource, options) => ({ items: [{id:'managed-1',title:'课程示例'}], total:24, page:options.page, pageSize:options.pageSize }));
+  await render('instructor-courses');
+  expect(state.load).toHaveBeenLastCalledWith('instructor-courses',expect.objectContaining({page:1,pageSize:5}));
+  const pager=host.querySelector('.platform-instructor-course-list-page > .platform-pagination:last-child');
+  expect(pager).not.toBeNull();
+  const select=pager!.querySelector<HTMLSelectElement>('select')!;
+  expect([...select.options].map(option=>option.value)).toEqual(['5','10','20']);
+  expect(select.value).toBe('5');
+  await act(async()=>pager!.querySelector<HTMLButtonElement>('button[aria-label="下一页"]')!.click());
+  expect(state.load).toHaveBeenLastCalledWith('instructor-courses',expect.objectContaining({page:2,pageSize:5}));
+  const size=host.querySelector<HTMLSelectElement>('.platform-pagination select')!;
+  await act(async()=>{size.value='10';size.dispatchEvent(new Event('change',{bubbles:true}));});
+  expect(state.load).toHaveBeenLastCalledWith('instructor-courses',expect.objectContaining({page:1,pageSize:10}));
 });
 
 it('opens the dedicated creation form only for an active instructor and navigates to the new course after saving', async () => {
@@ -708,12 +722,14 @@ it('blocks guests and ordinary accounts before requesting admin resources, then 
 });
 
 it('shows instructor data only after a successful instructor response and handles denial', async () => {
-  state.learning.mockResolvedValueOnce({ courseCount: 3, studentCount: 5, months: [{month:'2026-10',currency:'CNY',netAmountMinor:1000},{month:'2026-11',currency:'CNY',netAmountMinor:2500},{month:'2026-11',currency:'USD',netAmountMinor:3500}], payouts: [], recent: [{id:'preview-order',studentName:'示例学员',currency:'CNY',amountMinor:2500,createdAt:'2026-11-21T00:00:00Z'}] });
+  state.learning.mockResolvedValueOnce({ courseCount: 3, studentCount: 5, currentMonth:'2026-11',availableMinor:1200,availableCurrency:'CNY',recentCourses:[{id:'course-1',titleZh:'近期课程示例',status:'published',publishedLessons:2,learnerCount:3}], months: [{month:'2026-10',currency:'CNY',netAmountMinor:1000},{month:'2026-11',currency:'CNY',netAmountMinor:2500},{month:'2026-11',currency:'USD',netAmountMinor:3500}], payouts: [], recent: [{id:'preview-order',studentName:'示例学员',currency:'CNY',amountMinor:2500,createdAt:'2026-11-21T00:00:00Z'}] });
   await render('instructor');
-  expect(state.learning).toHaveBeenCalledWith('/instructor/dashboard', undefined, 'GET', expect.any(AbortSignal));
+  expect(state.learning).toHaveBeenCalledWith('/instructor/dashboard?view=overview&v=2', undefined, 'GET', expect.any(AbortSignal));
   expect(host.textContent).toContain('课程管理');
   expect(host.querySelector('.platform-instructor-metrics')?.textContent).toContain('2026-11');
   expect(host.querySelector('.platform-instructor-metrics')?.textContent).not.toContain('2026-10');
+  expect(host.querySelector('.platform-instructor-metrics')?.textContent).toContain('可提现金额');
+  expect(host.querySelector('.platform-studio-course-list')?.textContent).toContain('近期课程示例');
   expect(host.querySelector('.platform-instructor-activity-list')?.textContent).toContain('示例学员');
   expect([...host.querySelectorAll('.platform-instructor-task-grid a')].map(link=>link.getAttribute('href'))).toEqual(['/platform/instructor/courses','/platform/instructor/students','/platform/instructor/earnings','/platform/instructor/profile']);
   expect(host.textContent).not.toContain('月度收入');
@@ -725,14 +741,51 @@ it('shows instructor data only after a successful instructor response and handle
 });
 
 it('opens the earnings task with financial details and payout controls, without repeating the workspace overview', async () => {
-  state.learning.mockResolvedValueOnce({ courseCount:3,studentCount:5,months:[],payouts:[],recent:[] });
+  state.learning.mockResolvedValueOnce({ courseCount:3,studentCount:5,months:[],payouts:[],recent:[],currentMonth:'2026-11',availableMinor:0,availableCurrency:'CNY' });
   await render('instructor-earnings');
   expect(host.textContent).toContain('月度收入');
-  expect(host.textContent).toContain('收款方式');
+  expect(host.textContent).not.toContain('收款方式');
   expect(host.querySelector('.platform-instructor-task-grid')).toBeNull();
   expect(host.textContent).not.toContain('有效学员');
   expect(host.textContent).toContain('暂无收入记录');
+  const transactionButton=[...host.querySelectorAll('button')].find(button=>button.textContent==='交易明细')!;
+  state.learning.mockResolvedValueOnce({items:[],total:0});
+  await act(async()=>transactionButton.click());
+  expect(state.learning).toHaveBeenCalledWith('/instructor/earnings?page=1&pageSize=5&v=2',undefined,'GET',expect.any(AbortSignal));
   expect(host.textContent).toContain('暂无交易记录');
+  const select=host.querySelector<HTMLSelectElement>('.platform-instructor-earnings > .platform-pagination:last-child select')!;
+  expect([...select.options].map(option=>option.value)).toEqual(['5','10','20']);
+  expect(select.value).toBe('5');
+  state.learning.mockResolvedValueOnce({items:[],total:0});
+  await act(async()=>{select.value='10';select.dispatchEvent(new Event('change',{bubbles:true}));});
+  expect(state.learning).toHaveBeenLastCalledWith('/instructor/earnings?page=1&pageSize=10&v=2',undefined,'GET',expect.any(AbortSignal));
+  await act(async()=>[...host.querySelectorAll('button')].find(button=>button.textContent==='收款与结算')!.click());
+  expect(host.textContent).toContain('收款方式');
+  state.learning.mockResolvedValueOnce({items:[],total:0});
+  await act(async()=>[...host.querySelectorAll('button')].find(button=>button.textContent==='交易明细')!.click());
+  expect(host.querySelector('.platform-instructor-earnings > .platform-pagination:last-child')).not.toBeNull();
+});
+
+it('uses actual older API data when overview extensions are not deployed yet', async () => {
+  state.learning.mockResolvedValueOnce({courseCount:2,studentCount:1,months:[{month:'2026-10',currency:'CNY',netAmountMinor:1200}],recent:[]});
+  state.learning.mockResolvedValueOnce({courses:[{id:'old',titleZh:'已归档示例',status:'archived'},{id:'live',titleZh:'当前课程',status:'published',lessons:[{status:'published'},{status:'draft'}]}]});
+  state.learning.mockResolvedValueOnce({availableMinor:300,payouts:[]});
+  await render('instructor');
+  expect(host.textContent).toContain('最近月净收入');
+  expect(host.querySelector('.platform-studio-course-list')?.textContent).toContain('当前课程');
+  expect(host.querySelector('.platform-studio-course-list')?.textContent).toContain('1 节已发布课时');
+  expect(host.querySelector('.platform-studio-course-list')?.textContent).not.toContain('已归档示例');
+  expect(host.querySelector('.platform-studio-course-list')?.textContent).not.toContain('位有效学员');
+  expect(host.querySelector('.platform-studio-metrics')?.textContent).toContain('3.00');
+});
+
+it('draws negative ledger months on the negative side and keeps all recorded months', async () => {
+  const months=Array.from({length:13},(_,index)=>({month:`${index===12?'2025':'2026'}-${String(index===12?12:12-index).padStart(2,'0')}`,currency:'CNY',orders:1,saleAmountMinor:1000,refundAmountMinor:index===0?-1500:0,netAmountMinor:index===0?-500:1000}));
+  state.learning.mockResolvedValueOnce({months,payouts:[],currentMonth:'2026-12',availableMinor:0,availableCurrency:'CNY'});
+  await render('instructor-earnings');
+  expect(host.querySelectorAll('.platform-studio-chart-row')).toHaveLength(12);
+  expect(host.querySelector('.platform-studio-chart-negative i')).not.toBeNull();
+  expect(host.querySelectorAll('.platform-studio-month-table tbody tr')).toHaveLength(13);
 });
 
 it('shows learner progress, retries certificate issuance with the same operation key, and prevents another issuance after success', async () => {
@@ -740,6 +793,10 @@ it('shows learner progress, retries certificate issuance with the same operation
   state.learning.mockRejectedValueOnce(new Error('Connection interrupted'));
   state.learning.mockResolvedValueOnce({ id:'certificate',verificationCode:'verification-code' });
   await render('instructor-students');
+  expect(state.learning).toHaveBeenCalledWith('/instructor/students?page=1&pageSize=5&v=2',undefined,'GET',expect.any(AbortSignal));
+  const select=host.querySelector<HTMLSelectElement>('.platform-learning-workspace > .platform-pagination:last-child select')!;
+  expect([...select.options].map(option=>option.value)).toEqual(['5','10','20']);
+  expect(select.value).toBe('5');
   expect(host.querySelector('progress')?.value).toBe(2);
   const issue=[...host.querySelectorAll('button')].find(button=>button.textContent==='签发证书')!;
   await act(async()=>issue.click());

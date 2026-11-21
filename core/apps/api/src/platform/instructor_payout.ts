@@ -8,6 +8,16 @@ import { validateWechatPayout } from './wechat_payout.js';
 
 function payoutNumber() { return `PLT-PO-${randomBytes(8).toString('hex').toUpperCase()}`; }
 
+/** Read the same unreserved ledger balance used by the payout request. */
+export async function readInstructorAvailableMinor(db: PlatformDb, instructorId: string, currency = 'CNY'): Promise<number> {
+  const [balance] = await platformQuery<{ amount: string }>(db, `
+    SELECT COALESCE(SUM(r.delta_amount_minor),0)::text AS amount FROM platform_instructor_revenue_ledger r
+    WHERE r.instructor_id=$1::uuid AND r.currency=$2 AND NOT EXISTS (
+      SELECT 1 FROM platform_instructor_payout_items i WHERE i.revenue_ledger_id=r.id AND i.released_at IS NULL
+    )`, [instructorId, currency]);
+  return Math.max(0, safeSignedMoney(balance?.amount ?? 0));
+}
+
 /** Admin and instructor requests reserve the same signed ledger entries atomically. */
 export async function createInstructorPayout(db: PlatformDb, actor: PlatformActor, instructorId: string, currency: string, expected?: { amountMinor: number; method: string }): Promise<PlatformMutationResult> {
   const instructors = await platformQuery<{

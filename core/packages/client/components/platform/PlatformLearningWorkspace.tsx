@@ -6,16 +6,15 @@ import { parseAsInteger, parseAsStringEnum, useQueryState } from 'nuqs';
 import Paginator from '@/components/wca-stats/Paginator';
 import AppLink from '@/components/AppLink';
 import { ContentSkeleton } from '@/components/ContentSkeleton';
-import { ArrowRight, BookOpen, Plus, Receipt, UserRound, UsersRound, Wallet } from '@app-foundation/icons/lucide';
 import { useT } from '@/hooks/useT';
 import { useAuthUser } from '@/lib/auth-store';
 import { apiUrl } from '@/lib/api-base';
 import { renderArticleMarkdown } from '@/lib/article-markdown';
 import { platformLearningRequest, learningTime, type LearningNote } from '@/lib/platform-learning';
-import { commerceMoney as money } from '@/lib/platform-commerce-format';
 import type { PlatformEntity, PlatformRouteDefinition } from '@/lib/platform-types';
+import { PLATFORM_INSTRUCTOR_PAGE_SIZES } from '@/lib/platform-routes';
 import { PlatformState } from './PlatformState';
-import { InstructorPayoutSettings } from './InstructorPayoutSettings';
+import { InstructorOverview, InstructorEarnings } from './PlatformInstructorStudio';
 import './platform-learning.css';
 
 type Row = Record<string, unknown>;
@@ -27,14 +26,16 @@ export { isPlatformLearningWorkspace } from '@/lib/platform-routes';
 export function PlatformLearningWorkspace({definition}:{definition:PlatformRouteDefinition;params?:Record<string,string>;entity?:PlatformEntity;entities?:PlatformEntity[]}){
   const t=useT();const english=t('zh','en')==='en';const owner=useAuthUser()?.uid;const [loaded,setLoaded]=useState<{owner: number|undefined; data:Row}|null>(null);const data=loaded&&loaded.owner===owner?loaded.data:null;const [error,setError]=useState('');const [revision,setRevision]=useState(0);const [busy,setBusy]=useState(false);
   const id=definition.id;
+  const pageSizeOptions=id.startsWith('instructor')?PLATFORM_INSTRUCTOR_PAGE_SIZES:[12,30,60];
+  const defaultSize=pageSizeOptions[0];
   const [page,setPage]=useQueryState('page',parseAsInteger.withDefault(1));
-  const [requestedSize,setSize]=useQueryState('pageSize',parseAsInteger.withDefault(12));
-  const size=[12,30,60].includes(requestedSize)?requestedSize:12;
+  const [requestedSize,setSize]=useQueryState('pageSize',parseAsInteger.withDefault(defaultSize));
+  const size=pageSizeOptions.includes(requestedSize)?requestedSize:defaultSize;
   const [metric,setMetric]=useQueryState('metric',parseAsStringEnum(['points','learning'] as const).withDefault('points'));
   const [period,setPeriod]=useQueryState('period',parseAsStringEnum(['week','month','all'] as const).withDefault('all'));
-  const pageQuery=`?page=${Math.max(1,page)}&pageSize=${[12,30,60].includes(size)?size:12}`;
+  const pageQuery=`?page=${Math.max(1,page)}&pageSize=${size}`;
   const accountCourses=['account-courses','progress','account-progress'].includes(id);
-  const requestPath=accountCourses?`/me/courses${pageQuery}`:id==='leaderboard'?`/leaderboard${pageQuery}&metric=${metric}&period=${period}&v=3`:id==='account-notes'?`/me/notes${pageQuery}`:id==='account-badges'?'/me/badges':id==='instructor-students'?`/instructor/students${pageQuery}&v=2`:'/instructor/dashboard';
+  const requestPath=accountCourses?`/me/courses${pageQuery}`:id==='leaderboard'?`/leaderboard${pageQuery}&metric=${metric}&period=${period}&v=3`:id==='account-notes'?`/me/notes${pageQuery}`:id==='account-badges'?'/me/badges':id==='instructor-students'?`/instructor/students${pageQuery}&v=2`:`/instructor/dashboard?view=${id==='instructor'?'overview':'earnings'}&v=2`;
   const reload=()=>setRevision(value=>value+1);
   useEffect(()=>{const abort=new AbortController();setLoaded(null);setError('');void(async()=>{
     let result:Row;
@@ -42,12 +43,21 @@ export function PlatformLearningWorkspace({definition}:{definition:PlatformRoute
       const [courses,certificates,checkins]=await Promise.all([platformLearningRequest<Row>(requestPath,undefined,'GET',abort.signal),platformLearningRequest<Row>('/me/certificates',undefined,'GET',abort.signal),platformLearningRequest<Row>(`/me/checkins?timezone=${encodeURIComponent(Intl.DateTimeFormat().resolvedOptions().timeZone)}`,undefined,'GET',abort.signal)]);
       result={...courses,certificates:certificates.items,checkins};
     }else result=await platformLearningRequest<Row>(requestPath,undefined,'GET',abort.signal);
+    if(id==='instructor'||id==='instructor-earnings'){
+      // Older API deployments lack the additional overview fields. Only fetch missing data.
+      const [courses,payouts]=await Promise.allSettled([
+        id==='instructor'&&!Array.isArray(result.recentCourses)?platformLearningRequest<Row>('/instructor/courses?page=1&pageSize=12',undefined,'GET',abort.signal):null,
+        result.availableMinor==null?platformLearningRequest<Row>('/instructor/payouts',undefined,'GET',abort.signal):null,
+      ]);
+      if(courses.status==='fulfilled'&&Array.isArray(courses.value?.courses))result={...result,recentCourses:rows(courses.value.courses).filter(course=>course.status!=='archived').slice(0,4).map(course=>({...course,publishedLessons:Array.isArray(course.lessons)?rows(course.lessons).filter(lesson=>lesson.status==='published').length:undefined}))};
+      if(payouts.status==='fulfilled'&&payouts.value?.availableMinor!=null)result={...result,availableMinor:payouts.value.availableMinor,availableCurrency:'CNY'};
+    }
     if(!abort.signal.aborted)setLoaded({owner,data:result});
   })().catch(reason=>{if(!abort.signal.aborted)setError(String(reason.message??reason));});return()=>abort.abort();},[id,revision,requestPath,accountCourses,owner]);
   const mutate=async(path:string,payload:Row,method='POST')=>{setBusy(true);setError('');try{const result=await platformLearningRequest<Row>(path,payload,method);reload();return result;}catch(reason){setError(String(reason));return null;}finally{setBusy(false);}};
   if(!data)return error?<PlatformState kind="error" message={error} onRetry={reload}/>:id.startsWith('instructor')?<ContentSkeleton variant={id==='instructor-students'?'list':'cards'} rows={id==='instructor'?4:3} label={t('正在加载讲师数据…','Loading instructor data…')}/>:<PlatformState kind="loading"/>;
   const items=rows(data.items);
-  const pager=<Paginator page={Math.max(1,page)} totalPages={Math.max(1,Math.ceil(Number(data.total??items.length)/size))} size={size} pageSizeOptions={[12,30,60]} isZh={!english} className="platform-pagination" onPageChange={value=>void setPage(value)} onSizeChange={value=>{void setSize(value);void setPage(1);}}/>;
+  const pager=<Paginator page={Math.max(1,page)} totalPages={Math.max(1,Math.ceil(Number(data.total??items.length)/size))} size={size} pageSizeOptions={pageSizeOptions} isZh={!english} className="platform-pagination" onPageChange={value=>void setPage(value)} onSizeChange={value=>{void setSize(value);void setPage(1);}}/>;
   if(id==='leaderboard')return <div className="platform-learning-workspace"><div className="platform-toolbar"><label>{t('榜单','Leaderboard')}<select className="platform-field-control" value={metric} onChange={event=>{void setMetric(event.target.value as 'points'|'learning');void setPage(1);}}><option value="points">{t('积分','Points')}</option><option value="learning">{t('学习','Learning')}</option></select></label><label>{t('时间','Period')}<select className="platform-field-control" value={period} onChange={event=>{void setPeriod(event.target.value as 'week'|'month'|'all');void setPage(1);}}><option value="week">{t('近七天','Last 7 days')}</option><option value="month">{t('近三十天','Last 30 days')}</option><option value="all">{t('全部时间','All time')}</option></select></label><AppLink href="/timer">{t('前往计时器','Open timer')}</AppLink></div>{items.map(item=><article key={String(item.id)} className="platform-learning-panel" data-site-surface="panel"><strong>{Number(item.rank)} · {text(item.title)}</strong><p>{text(item.value)} {metric==='points'?t('积分','points'):t('节已完成课时','completed lessons')}</p></article>)}{!items.length?<PlatformState kind="empty"/>:null}{pager}</div>;
   if(id==='account-courses'||id==='progress'||id==='account-progress'){
     const checkin=data.checkins as Row;
@@ -66,47 +76,8 @@ export function PlatformLearningWorkspace({definition}:{definition:PlatformRoute
   }
   if(id==='account-badges')return <div className="platform-learning-workspace"><p>{t('已解锁','Unlocked')} {items.filter(item=>item.awardedAt).length}/{items.length}</p><button className="platform-button" type="button" disabled={busy} onClick={()=>void mutate('/me/badges/refresh',{})}>{t('检查新成就','Check for new achievements')}</button>{error?<p role="alert">{error}</p>:null}<div className="platform-learning-cards">{items.map(item=>{const rule=(item.rule??{}) as Row;return <article key={String(item.id)} className="platform-learning-panel" data-site-surface="panel"><h2>{localized(item,'title',english)}</h2><p>{localized(item,'description',english)}</p><p>{item.awardedAt?t('已解锁','Unlocked'):t('尚未解锁','Locked')} · +{Number(item.pointReward)}</p><progress value={Math.min(Number(item.progress),Number(rule.threshold))} max={Number(rule.threshold)||1}/>{item.awardedAt?<time>{new Date(String(item.awardedAt)).toLocaleDateString()}</time>:<p>{Number(item.progress)}/{Number(rule.threshold)}</p>}</article>;})}</div></div>;
   if(id==='instructor-students')return <InstructorLearners key={String(owner)} items={items} pager={pager}/>;
-  if(id==='instructor') {
-    const tasks = [
-      { href:'/platform/instructor/courses', icon:BookOpen, title:t('课程管理','Manage courses'), description:t('创建、编辑和发布课程','Create, edit and publish courses') },
-      { href:'/platform/instructor/students', icon:UsersRound, title:t('学员管理','Manage learners'), description:t('学员进度与结课证书','Learner progress and completion certificates') },
-      { href:'/platform/instructor/earnings', icon:Wallet, title:t('收入与结算','Earnings and payouts'), description:t('查看分成、订单、收款及提现','Review earnings, orders and request payouts') },
-      { href:'/platform/instructor/profile', icon:UserRound, title:t('讲师资料','Teaching profile'), description:t('编辑资料、公开设置与直播话术','Manage your profile, visibility and livestream scripts') },
-    ];
-    const months=rows(data.months).filter(month=>/^\d{4}-\d{2}$/.test(text(month.month)) && /^[A-Z]{3}$/.test(text(month.currency)));
-    const latestMonth=months.map(month=>text(month.month)).sort().at(-1);
-    const recent=rows(data.recent).slice(0,4);
-    return <div className="platform-learning-workspace platform-instructor-dashboard">
-      <section className="platform-learning-panel platform-instructor-overview" data-site-surface="panel">
-        <div className="platform-instructor-overview-heading">
-          <h2>{t('教学概览','Teaching overview')}</h2>
-          <AppLink className="platform-button platform-button-primary" href="/platform/instructor/courses/new" prefetch={false}><Plus aria-hidden />{t('创建课程','Create course')}</AppLink>
-        </div>
-        <dl className="platform-instructor-metrics">
-          <div><dt><BookOpen size={18} aria-hidden />{t('课程总数','Total courses')}</dt><dd>{Number(data.courseCount??0)}</dd></div>
-          <div><dt><UsersRound size={18} aria-hidden />{t('有效学员','Active learners')}</dt><dd>{Number(data.studentCount??0)}</dd></div>
-          <div className="platform-instructor-revenue-metric"><dt><Wallet size={18} aria-hidden />{t('最近月净收入','Latest monthly net earnings')}</dt><dd>{latestMonth?months.filter(month=>month.month===latestMonth).map(month=><span key={text(month.currency)}>{money(month.netAmountMinor,month.currency)}</span>):<span className="platform-instructor-metric-empty">{t('暂无收入记录','No earnings yet')}</span>}{latestMonth&&<small>{latestMonth}</small>}</dd></div>
-        </dl>
-      </section>
-      <div className="platform-instructor-dashboard-body">
-        <section className="platform-instructor-task-section">
-          <h2>{t('常用操作','Teaching tasks')}</h2>
-          <div className="platform-instructor-task-grid">{tasks.map(({href,icon:Icon,title,description})=><AppLink key={href} href={href} prefetch={false} className="platform-learning-panel platform-instructor-task" data-site-surface="panel">
-            <span className="platform-instructor-task-icon"><Icon size={23} aria-hidden /></span><div><h3>{title}</h3><p>{description}</p></div><ArrowRight className="platform-instructor-task-arrow" size={18} aria-hidden />
-          </AppLink>)}</div>
-        </section>
-        <section className="platform-learning-panel platform-instructor-activity" data-site-surface="panel">
-          <div className="platform-instructor-activity-heading"><h2>{t('近期交易','Recent activity')}</h2><AppLink href="/platform/instructor/earnings" prefetch={false}>{t('查看全部','View all')}<ArrowRight size={15} aria-hidden /></AppLink></div>
-          {recent.length?<ul className="platform-instructor-activity-list">{recent.map(order=><li key={String(order.id)}><span className="platform-instructor-activity-icon"><Receipt size={19} aria-hidden /></span><div><strong>{text(order.studentName)||text(order.orderNumber)||t('课程订单','Course order')}</strong><small>{text(order.createdAt).slice(0,10)}</small></div><strong>{money(order.amountMinor,order.currency)}</strong></li>)}</ul>:<div className="platform-instructor-activity-empty"><Receipt size={30} aria-hidden /><p>{t('暂无交易记录','No transactions yet')}</p></div>}
-        </section>
-      </div>
-    </div>;
-  }
-  return <div className="platform-learning-workspace platform-instructor-earnings">
-    <section className="platform-instructor-section"><h2>{t('月度收入','Monthly earnings')}</h2><p>{t('实际分成，按币种分别统计，退款与调整计入对应账本月份。','Revenue share by currency and ledger month, including refunds and adjustments.')}</p>{rows(data.months).length ? <div className="platform-learning-cards">{rows(data.months).map(month=><article key={`${month.month}-${month.currency}`} className="platform-learning-panel platform-instructor-month" data-site-surface="panel"><h3>{text(month.month)} <small>{text(month.currency)}</small></h3><div className="platform-instructor-month-net"><span>{t('净收入','Net earnings')}</span><strong>{money(month.netAmountMinor,month.currency)}</strong></div><dl><div><dt>{t('订单','Orders')}</dt><dd>{Number(month.orders)}</dd></div><div><dt>{t('销售分成','Sales share')}</dt><dd>{money(month.saleAmountMinor,month.currency)}</dd></div><div><dt>{t('退款','Refunds')}</dt><dd>{money(month.refundAmountMinor,month.currency)}</dd></div></dl></article>)}</div>:<PlatformState kind="empty" title={t('暂无收入记录','No earnings yet')}/>}</section>
-    <InstructorPayoutSettings history={rows(data.payouts)} />
-    <section className="platform-instructor-section"><h2>{t('近期交易','Recent transactions')}</h2>{rows(data.recent).length?<ul className="platform-instructor-activity-list">{rows(data.recent).map(order=><li key={String(order.id)}><span className="platform-instructor-activity-icon"><Receipt size={19} aria-hidden/></span><div><strong>{text(order.studentName)||t('课程交易','Course transaction')}</strong><small>{text(order.createdAt).slice(0,10)}</small>{order.orderNumber!=null&&<small>{text(order.orderNumber)}</small>}</div><strong>{money(order.amountMinor,order.currency)}</strong></li>)}</ul>:<PlatformState kind="empty" title={t('暂无交易记录','No transactions yet')}/>}</section>
-  </div>;
+  if(id==='instructor')return <InstructorOverview data={data}/>;
+  return <InstructorEarnings key={String(owner)} data={data}/>;
 }
 
 function InstructorLearners({items,pager}:{items:Row[];pager:ReactNode}){

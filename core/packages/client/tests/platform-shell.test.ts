@@ -114,21 +114,35 @@ describe('Platform shell ownership during shared-page navigation', () => {
       expect(host.querySelector('.platform-instructor-entry')).toBeNull();
     } finally { auth.user = null; auth.loadInstructor.mockReset(); pathname.mockReturnValue('/zh/platform/teachers'); await act(async () => root.unmount()); }
   });
-  it.each([false, true])('keeps a single instructor workspace hierarchy without a tab bar (admin=%s)', async admin => {
+  it.each([false, true])('shows an isolated instructor studio sidebar and focused editors (admin=%s)', async admin => {
     auth.user = { uid: 1 }; auth.admin = admin;
+    auth.loadInstructor.mockResolvedValue({ items: [{ data: { instructorStatus: 'active' } }] });
     const host = document.createElement('div'), root = createRoot(host);
     const pathname = vi.mocked(usePathname);
     try {
       for (const path of ['instructor','instructor/courses','instructor/students','instructor/earnings','instructor/profile']) {
         pathname.mockReturnValue(`/zh/platform/${path}`);
         await act(async () => root.render(createElement(PlatformShell, { children: null })));
+        await act(async () => { await vi.dynamicImportSettled(); });
         expect(host.querySelector('.platform-masthead')).toBeNull();
         expect(host.querySelector('.platform-nav')).toBeNull();
-        expect(Boolean(host.querySelector('.platform-instructor-masthead .platform-site-search'))).toBe(path === 'instructor/courses');
+        expect(host.querySelector('.platform-instructor-masthead .platform-site-search')).toBeNull();
+        expect(host.querySelector('.platform-instructor-masthead .af-nav-toggle')).toBeNull();
+        expect(host.querySelector('.platform-instructor-studio-brand')?.firstElementChild?.classList.contains('back-home')).toBe(true);
+        expect(host.querySelector('.af-nav-sidebar > .af-nav-toggle')).not.toBeNull();
         expect(host.querySelector('.platform-instructor-masthead .back-home')?.getAttribute('aria-label')).toBe(path === 'instructor' ? '返回学习空间' : '返回讲师工作台');
         expect(host.querySelector('.platform-instructor-masthead .back-home')?.getAttribute('href')).toBe(path === 'instructor' ? '/platform' : '/platform/instructor');
-        expect(host.querySelector('[data-search-scope="instructor-courses"]') !== null).toBe(path === 'instructor/courses');
+        expect(host.querySelector('[data-search-scope="instructor-courses"]')).toBeNull();
         expect(host.querySelector('.platform-workspace-nav')).toBeNull();
+        const sidebar=host.querySelector('nav[aria-label="讲师工作台导航"]');
+        expect(sidebar?.querySelectorAll('a')).toHaveLength(5);
+        expect(sidebar?.querySelector('a[aria-current="page"]')?.getAttribute('href')).toBe(`/platform/${path}`);
+        if(path==='instructor'){
+          await act(async()=>host.querySelector<HTMLButtonElement>('.af-nav-toggle')!.click());
+          expect(host.querySelector('.platform-instructor-studio')?.getAttribute('data-collapsed')).toBe('true');
+        }else{
+          expect(host.querySelector('.platform-instructor-studio')?.getAttribute('data-collapsed')).toBe('true');
+        }
       }
       for (const path of ['instructor/courses/new', 'instructor/courses/course-1']) {
         pathname.mockReturnValue(`/zh/platform/${path}`);
@@ -137,8 +151,9 @@ describe('Platform shell ownership during shared-page navigation', () => {
         expect(host.querySelector('.platform-site-search')).toBeNull();
         expect(host.querySelector('.platform-workspace-nav')).toBeNull();
         expect(host.querySelector('.platform-nav')).toBeNull();
+        expect(host.querySelector('.platform-instructor-studio')).toBeNull();
       }
-    } finally { auth.user = null; auth.admin = false; pathname.mockReturnValue('/zh/platform/teachers'); await act(async () => root.unmount()); }
+    } finally { auth.user = null; auth.admin = false; auth.loadInstructor.mockReset(); pathname.mockReturnValue('/zh/platform/teachers'); await act(async () => root.unmount()); }
   });
   it('switches between forum, course, path, discovery and general search without reusing the previous scope draft', async () => {
     const host = document.createElement('div'), root = createRoot(host);

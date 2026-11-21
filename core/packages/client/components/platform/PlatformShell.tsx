@@ -2,7 +2,9 @@
 
 import { useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { usePathname } from 'next/navigation';
-import { BookOpen, Building2, CalendarDays, Compass, GraduationCap, LayoutDashboard, QrCode, ShoppingBag, UsersRound } from '@app-foundation/icons/lucide';
+import { BookOpen, Building2, CalendarDays, Compass, GraduationCap, LayoutDashboard, QrCode, ShoppingBag, UserRound, UsersRound, Wallet } from '@app-foundation/icons/lucide';
+import { NavigationShell } from '@app-foundation/navigation-ui';
+import '@app-foundation/navigation-ui/navigation.css';
 import PageBackLink from '@/components/PageBackLink';
 import CubeRootLogo from '@/components/CubeRootLogo';
 import AppLink from '@/components/AppLink';
@@ -64,8 +66,9 @@ function PlatformShellContent({ children, shared }: { children: ReactNode; share
   const instructorWorkspace = definition?.area === 'instructor' && definition.id !== 'teacher-apply';
   const instructorHome = definition?.id === 'instructor';
   const instructorCourseEditor = isPlatformInstructorCourseEditor(definition?.id);
+  const instructorStudio = instructorWorkspace && !instructorCourseEditor;
   const showNavigation = !instructorWorkspace && definition?.id !== 'course-detail' && !isPlatformCourseClassroom(definition?.id);
-  const checkInstructor = Boolean(owner && showNavigation && !admin);
+  const checkInstructor = Boolean(owner && (showNavigation || instructorStudio) && !admin);
   useEffect(() => {
     if (!checkInstructor) return;
     const controller = new AbortController();
@@ -77,7 +80,7 @@ function PlatformShellContent({ children, shared }: { children: ReactNode; share
   }, [owner, checkInstructor, instructorRevision]);
   const isInstructor = checkInstructor && instructorAccess?.owner === owner && instructorAccess.active;
   const [searchBinding, setSearchBinding] = useState<PlatformSearchBinding | null>(null);
-  const searchScope: PlatformSearchScope | null = definition?.id === 'instructor-courses' ? 'instructor-courses' : !showNavigation ? null : primary === 'community' ? 'forum'
+  const searchScope: PlatformSearchScope | null = !showNavigation ? null : primary === 'community' ? 'forum'
     : primary === 'courses' ? (secondary === 'paths' ? 'paths' : 'courses')
     : definition?.id === 'teachers' || definition?.id === 'teacher-detail' ? 'teachers'
     : primary === 'discover' && (secondary === 'events' || secondary === 'news') ? secondary : null;
@@ -113,16 +116,33 @@ function PlatformShellContent({ children, shared }: { children: ReactNode; share
   const cards = useMemo(() => SEARCH_CARDS.filter(card => isLandingSearchCardVisible(card, isAdmin)), [isAdmin]);
   const Content = shared ? 'div' : 'main';
 
+  const pageContent = <PlatformInstructorAccessRefreshContext value={refreshInstructorAccess}><PlatformSearchContext value={searchOutlet}>{children}</PlatformSearchContext></PlatformInstructorAccessRefreshContext>;
+  if (instructorStudio) {
+    const studioItems = [
+      { id: 'instructor', href: '/platform/instructor', label: t('概览','Overview'), icon: <LayoutDashboard size={19}/> },
+      { id: 'instructor-courses', href: '/platform/instructor/courses', label: t('课程','Courses'), icon: <BookOpen size={19}/> },
+      { id: 'instructor-students', href: '/platform/instructor/students', label: t('学员','Learners'), icon: <UsersRound size={19}/> },
+      { id: 'instructor-earnings', href: '/platform/instructor/earnings', label: t('收入','Earnings'), icon: <Wallet size={19}/> },
+      { id: 'instructor-profile', href: '/platform/instructor/profile', label: t('个人主页','Personal profile'), icon: <UserRound size={19}/> },
+    ];
+    const accessKnown = instructorAccess?.owner === owner;
+    return <PlatformNavigationContext value={true}><div className="platform-shell platform-instructor-studio-shell">
+      <NavigationShell className="platform-instructor-studio" mainClassName="platform-main platform-instructor-studio-main" contentAs={Content}
+        showNavigation={Boolean(owner) && (!accessKnown || isInstructor)} items={isInstructor ? studioItems.map(item=>({...item,active:item.id===definition?.id})) : []}
+        labels={{ navigation:t('讲师工作台导航','Instructor studio navigation'), show:t('展开侧栏','Expand sidebar'), hide:t('收起侧栏','Collapse sidebar'), openMobile:t('打开导航','Open navigation'), closeMobile:t('关闭导航','Close navigation') }}
+        renderLink={props=><AppLink {...props} prefetch={false} scroll={false}/>}
+        togglePlacement="sidebar"
+        header={()=><header className="platform-instructor-navigation platform-instructor-studio-header" data-site-surface="heading">
+          <div className="platform-instructor-masthead"><div className="platform-instructor-studio-brand"><PageBackLink fallback={instructorHome?'/platform':'/platform/instructor'}
+            label={instructorHome?t('返回学习空间','Back to Learning Space'):t('返回讲师工作台','Back to instructor workspace')}
+            acceptEntry={instructorHome?isLearningSpaceOutsideWorkspace:href=>platformPathname(href)==='/platform/instructor'}/><span>{t('讲师工作台','Instructor studio')}</span></div></div>
+        </header>}
+      >{pageContent}</NavigationShell>
+    </div></PlatformNavigationContext>;
+  }
+
   return <PlatformNavigationContext value={true}>
     <div className={`platform-shell${shared ? ' platform-shell--shared' : ''}`}>
-      {instructorWorkspace && !instructorCourseEditor && <header className="platform-instructor-navigation">
-        <div className="platform-instructor-masthead">
-          <PageBackLink fallback={instructorHome ? '/platform' : '/platform/instructor'}
-            label={instructorHome ? t('返回学习空间', 'Back to Learning Space') : t('返回讲师工作台', 'Back to instructor workspace')}
-            acceptEntry={instructorHome ? isLearningSpaceOutsideWorkspace : href => platformPathname(href) === '/platform/instructor'} />
-          {searchScope && <div className="platform-site-search"><PlatformScopedSearch key={searchScope} lang={lang} scope={searchScope} binding={currentSearchBinding} /></div>}
-        </div>
-      </header>}
       {showNavigation && <>
         <header className="platform-masthead">
           <div className="page-back-heading platform-masthead-brand">
@@ -165,7 +185,7 @@ function PlatformShellContent({ children, shared }: { children: ReactNode; share
         {!admin && workspaceNav}
       </>}
       <Content className="platform-main" role={shared && definition?.kind !== 'canonical' ? 'main' : undefined}>
-        <PlatformInstructorAccessRefreshContext value={refreshInstructorAccess}><PlatformSearchContext value={searchOutlet}>{children}</PlatformSearchContext></PlatformInstructorAccessRefreshContext>
+        {pageContent}
       </Content>
     </div>
   </PlatformNavigationContext>;

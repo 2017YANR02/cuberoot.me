@@ -288,7 +288,7 @@ const nextConfig: NextConfig = {
         // Platform canonical aliases keep their /platform/* URL while serving
         // the existing main-site implementation. This is the complete shared
         // functionality, not a duplicate page or a link-only placeholder.
-        // Parameter aliases exclude native forms such as teachers/apply.
+        // Native teacher catalog, details and application render inside Platform itself.
         ...PLATFORM_CANONICAL_REWRITES,
         // Legacy WCA OAuth callback URL — registered with WCA as /callback.html.
         // Internal rewrite (not redirect) so the URL bar stays /callback.html and

@@ -67,9 +67,10 @@ describe('Platform navigation context', () => {
     expect(platformSharedPathname('/zh/forum/t/123')).toBe('/forum/t/123');
   });
 
-  it('does not rewrite the native instructor application as a teacher ID', () => {
-    const matched = PLATFORM_CANONICAL_REWRITES.filter(rule => getPathMatch(rule.source)('/zh/platform/teachers/apply'));
-    expect(matched).toEqual([]);
-    expect(PLATFORM_CANONICAL_REWRITES.some(rule => getPathMatch(rule.source)('/zh/platform/teachers/12'))).toBe(true);
+  it('keeps the teacher catalog, detail and application under the native Platform layout', () => {
+    for(const path of ['/zh/platform/teachers','/zh/platform/teachers/apply','/zh/platform/teachers/12']) {
+      expect(PLATFORM_CANONICAL_REWRITES.filter(rule => getPathMatch(rule.source)(path))).toEqual([]);
+    }
+    expect(PLATFORM_CANONICAL_REWRITES.some(rule => getPathMatch(rule.source)('/zh/platform/teachers/scripts/12'))).toBe(true);
   });
 });
