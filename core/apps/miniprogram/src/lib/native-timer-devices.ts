@@ -22,6 +22,7 @@ export interface NativeTimerDevicesState {
   bluetoothAvailable: boolean;
   busy: boolean;
   connecting?: boolean;
+  cubeConnectingId?: string;
   cube?: Omit<SmartCubeSessionSnapshot, 'devices'> & Partial<Pick<SmartCubeSessionSnapshot, 'devices'>>;
   cubeConnected: boolean;
   canResetCube: boolean;
@@ -133,11 +134,12 @@ export function nativeTimerDeviceManagement(
     deviceName: item.detail,
     active: item.active,
     searching,
-    scanning: kind === 'smart-cube' && state.connecting && cube?.phase !== 'connecting',
+    // The transport retains the scanning phase while its finished results are selectable.
+    scanning: kind === 'smart-cube' && Boolean(state.connecting) && !state.cubeConnectingId && cube?.phase !== 'connecting',
     timerScanning: timerScan !== undefined && !state.connecting,
-    connecting: kind === 'smart-cube' ? cube?.phase === 'connecting' : state.connecting,
+    connecting: kind === 'smart-cube' ? Boolean(state.cubeConnectingId) || cube?.phase === 'connecting' : state.connecting,
     devices: cube?.devices?.map(device => ({
-      ...device, signal: device.rssi == null ? '' : cubeCopy[timerSmartCubeSignalLabel(device.rssi)],
+      ...device, signal: cubeCopy[timerSmartCubeSignalLabel(device.rssi)], connecting: device.deviceId === state.cubeConnectingId,
     })) ?? timerScan ?? [],
     stackmat: kind === 'stackmat' ? nativeStackmatManagement(state, language) : null,
     timerMac: timerMac ? { value: timerMac.value, instructions: tr(bluetoothTimerMacInstructions(timerMac.name), language) } : null,
@@ -149,12 +151,17 @@ export function nativeTimerDeviceManagement(
     status,
     error: cube?.error ?? '',
     battery: battery === null ? '' : `${battery}%`,
+    batteryPercent: battery,
     protocol: cube?.brand ?? '',
     lastMove: cube?.lastMove ?? '',
     canDisconnect: item.active && !item.disabled,
+    supportsCalibrate: kind === 'smart-cube' && item.active && state.canResetCube,
     canCalibrate: kind === 'smart-cube' && item.active && !item.disabled && state.canResetCube && !state.calibrating,
+    calibrating: kind === 'smart-cube' && state.calibrating,
     copy: {
       battery: cubeCopy.battery,
+      close: cubeCopy.close,
+      connectionFailed: cubeCopy.connectionFailed,
       protocol: tr({ en: 'Protocol', zh: '协议' }, language),
       lastMove: cubeCopy.lastMove,
       disconnect: cubeCopy.disconnect,

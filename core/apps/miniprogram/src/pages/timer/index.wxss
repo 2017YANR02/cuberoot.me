@@ -748,11 +748,14 @@
 .nt-choice-label { min-width: 0; overflow-wrap: anywhere; }
 .nt-sheet--project .nt-project-choice:not(.is-current) .nt-icon { filter: grayscale(1); }
 .nt-theme-dark .nt-sheet--project .nt-project-choice:not(.is-current) .nt-icon { filter: grayscale(1) brightness(1.5); }
-.nt-sheet--devices { padding-block: 6px; }
-.nt-sheet--devices .nt-result { width: 100%; min-height: 46px; font-weight: 600; }
-.nt-device-menu-item { display: flex; align-items: center; gap: 11px; min-width: 0; }
-.nt-device-menu-item image { width: 15px; height: 15px; flex: 0 0 auto; }
-.nt-device-menu-item .nt-hint { font-weight: 400; font-size: 11px; }
+.nt-sheet--devices { padding: 6px; border-radius: 12px; }
+.nt-device-menu-option { width: 100%; min-height: 46px; padding: 9px 10px; border-radius: 8px; text-align: left; }
+.nt-device-menu-option.is-active { color: var(--cr-ready); }
+.nt-device-menu-option[disabled] { opacity: .55; }
+.nt-device-menu-item { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.nt-device-menu-item image { width: 16px; height: 16px; margin-inline: 6px; flex: none; }
+.nt-device-menu-copy { display: grid; gap: 2px; min-width: 0; font-size: 13px; font-weight: 600; }
+.nt-device-menu-detail { overflow: hidden; color: var(--cr-muted); font-size: 11px; font-weight: 400; text-overflow: ellipsis; white-space: nowrap; }
 .nt-backdrop.nt-device-backdrop { align-items: center; justify-content: center; padding: 8px; }
 .nt-sheet.nt-device-dialog { width: min(100%, 420px); padding: 14px; border: 1px solid var(--cr-line); border-radius: 14px; font-size: 14px; }
 .nt-backdrop.nt-smart-timer-backdrop { background: color-mix(in srgb, var(--cr-text) 70%, transparent); }
@@ -773,17 +776,47 @@
 .nt-device-dialog .nt-setting { min-height: 36px; }
 .nt-device-intro, .nt-device-note { display: block; line-height: 1.45; margin-bottom: 8px; }
 .nt-device-note { color: var(--cr-muted); font-size: 12px; }
-.nt-device-picker-head, .nt-device-picker-row, .nt-device-actions { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
-.nt-device-picker-head .nt-control, .nt-device-actions .nt-control { min-height: 36px; }
-.nt-device-picker-row { min-height: 38px; padding: 0 10px; border: 1px solid var(--cr-line); border-radius: 8px; margin-bottom: 6px; width: 100%; text-align: left; }
-.nt-device-picker-row text + text { color: var(--cr-accent); }
-.nt-cube-device-summary { display: flex; align-items: center; gap: 8px; min-height: 44px; font-weight: 600; }
-.nt-cube-device-summary > text:first-child { flex: 1; min-width: 0; overflow-wrap: anywhere; }
-.nt-cube-device-connected { display: flex; align-items: center; }
-.nt-cube-device-scan { gap: 6px; }
-.nt-cube-device-name { flex: 1; min-width: 0; padding-block: 6px; overflow-wrap: anywhere; }
-.nt-cube-device-name text + text { display: block; color: var(--cr-muted); }
-.nt-cube-device-name + text { flex: none; color: var(--cr-accent); }
+.nt-cube-panel {
+  --foreground: var(--cr-text);
+  --muted-foreground: var(--cr-muted);
+  --border-default: var(--cr-line);
+  --popover: var(--cr-surface);
+  --accent: var(--cr-accent);
+  --signal-info: var(--classic-signal-info);
+  --signal-success: var(--cr-ready);
+  --destructive: var(--cr-danger);
+  box-sizing: border-box;
+}
+.nt-cube-panel .timer-smart-cube-device__modal { max-height: 85vh; }
+.nt-cube-panel .timer-smart-cube-device__empty { box-sizing: border-box; }
+.nt-cube-panel .nt-settings-icon { width: 16px; height: 16px; flex: none; }
+.nt-cube-panel .timer-smart-cube-device__heading > .nt-settings-icon { width: 20px; height: 20px; }
+.nt-cube-panel .timer-smart-cube-device__heading-title { font-weight: 650; }
+.nt-cube-panel .timer-smart-cube-device__device-action { display: flex; align-items: center; gap: 4px; }
+.nt-cube-panel .nt-cube-battery--low { color: var(--cr-danger); }
+.nt-cube-battery {
+  position: relative;
+  display: flex;
+  align-items: center;
+  box-sizing: border-box;
+  width: 26px;
+  height: 14px;
+  margin-right: 4px;
+  padding: 2px;
+  border: 1px solid currentColor;
+  border-radius: 4px;
+}
+.nt-cube-battery::after {
+  content: '';
+  position: absolute;
+  inset: 3px -4px 3px auto;
+  width: 2px;
+  border-radius: 1px;
+  background: currentColor;
+}
+.nt-cube-battery-fill, .nt-cube-battery-unknown { height: 100%; border-radius: 2px; background: currentColor; }
+.nt-cube-battery-unknown { height: 2px; width: 7px; margin: auto; opacity: .45; }
+.nt-cube-failure-title { display: block; font-weight: 650; }
 .nt-smart-timer-backdrop .nt-device-intro { margin-bottom: 13px; line-height: 1.4; }
 .nt-device-timer-actions { display: flex; flex-direction: column; gap: 8px; margin-top: 8px; }
 .nt-device-close { width: 100%; min-height: 34px; padding: 7px 14px; border: 1px solid var(--cr-line); border-radius: 6px; color: var(--cr-text); background: color-mix(in srgb, var(--cr-text) 5%, transparent); }

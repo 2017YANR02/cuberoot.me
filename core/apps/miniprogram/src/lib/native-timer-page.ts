@@ -17,7 +17,7 @@ import { isNativeTimerStatisticsTab, NATIVE_TIMER_STATISTICS_COMPACT_WIDTH, nati
   type NativeTimerStatisticsOptions } from './native-timer-statistics';
 import { DEFAULT_SOLO_LAYOUT, TIMER_SOLO_LAYOUT_COPY, TIMER_SOLO_LAYOUT_REGIONS, timerSoloDragValue, timerSoloRegionPatch, timerSoloRegionValue, timerSoloStatRailRows,
   type TimerSoloLayoutGesture, type TimerSoloLayoutRegion, type TimerSoloLayoutSettings } from '@cuberoot/shared/timer/solo-layout';
-import { BLUETOOTH_TIMER_DIALOG_COPY, TIMER_DEVICE_CENTER_LABELS } from '@cuberoot/shared/timer/device-contract';
+import { BLUETOOTH_TIMER_DIALOG_COPY, TIMER_DEVICE_CENTER_LABELS, TIMER_SMART_CUBE_DEVICE_COPY, timerSmartCubeBatteryPercent } from '@cuberoot/shared/timer/device-contract';
 import { normalizeTimerWcaDifficultySettings, reconcileTimerWcaDifficultySettings, timerInclusiveRange, timerWcaDifficultyUiModel,
   timerWcaSupportsDifficulty, type TimerWcaDifficultyCatalog, type TimerWcaDifficultyCoverage, type TimerWcaDifficultySettings } from '@cuberoot/shared/timer/wca-difficulty';
 import { canTrainerDifficulty, EO_AXIS_LABELS, normalizeTimerRandomDifficultySettings, reconcileTimerRandomDifficultySettings,
@@ -416,6 +416,8 @@ interface NativePage {
   battlePreview?: string;
   connecting?: boolean;
   deviceError?: string;
+  cubeConnectingId?: string;
+  cubeConnectingDevices?: SmartCubeSessionSnapshot['devices'];
   cubeDeviceSnapshot?: SmartCubeSessionSnapshot;
   deviceManagementKind?: NativeTimerDeviceKind;
   externalTimerScan?: {
@@ -900,7 +902,10 @@ function nativeStageOptions(p: NativePage, method: StageSolverMethod, stage: num
 function nativeDeviceState(p: NativePage, timer: NativeTimer) {
   return {
     bluetoothAvailable: typeof miniProgramApi().openBluetoothAdapter === 'function',
-    busy: timer.busy, connecting: p.connecting, cube: p.cubeDeviceSnapshot,
+    busy: timer.busy, connecting: p.connecting, cubeConnectingId: p.cubeConnectingId,
+    cube: p.cubeDeviceSnapshot && p.cubeConnectingDevices
+      ? { ...p.cubeDeviceSnapshot, devices: p.cubeConnectingDevices }
+      : p.cubeDeviceSnapshot,
     cubeConnected: timer.cubeConnected, canResetCube: timer.canResetCube, calibrating: timer.calibrating,
     externalConnected: timer.externalConnected, externalName: timer.externalName,
     externalKind: timer.externalKind, externalState: timer.externalState, externalLastTime: timer.externalLastTime,
@@ -3547,7 +3552,7 @@ export function createNativeTimerPageOptions(): WechatMiniprogram.Page.Options<R
     },
     async connectCube() {
       const p = this as unknown as NativePage, t = p.nativeTimer;
-      if (!t || t.busy || p.connecting || p.sheet !== 'device-management' || p.deviceManagementKind !== 'smart-cube') return;
+      if (!t || t.busy || p.connecting || p.cubeConnectingId || p.sheet !== 'device-management' || p.deviceManagementKind !== 'smart-cube') return;
       if (t.cubeConnected) return;
       if (t.event !== '333' && t.event !== '333oh') {
         p.deviceError = tr({ en: 'Select 3×3 or OH first', zh: '请先选择三阶或单手' }); refresh(p, true); return;
@@ -3569,18 +3574,31 @@ export function createNativeTimerPageOptions(): WechatMiniprogram.Page.Options<R
     },
     async connectListedCube(e: WechatMiniprogram.TouchEvent) {
       const p = this as unknown as NativePage;
-      if (p.sheet !== 'device-management' || p.deviceManagementKind !== 'smart-cube'
+      if (p.sheet !== 'device-management' || p.deviceManagementKind !== 'smart-cube' || p.cubeConnectingId
         || p.cubeDeviceSnapshot?.phase !== 'scanning') return;
       const id = e.currentTarget.dataset.id;
-      if (!p.cubeDeviceSnapshot.devices.some(device => device.deviceId === id)) return;
+      if (typeof id !== 'string' || !p.cubeDeviceSnapshot.devices.some(device => device.deviceId === id)) return;
       const sheetGeneration = p.sheetGeneration;
+      p.cubeConnectingId = id;
+      p.cubeConnectingDevices = p.cubeDeviceSnapshot.devices;
+      p.deviceError = '';
+      refresh(p, true);
       try { await getSmartCubeSession().connectDevice(id); }
       catch (error) {
         if (p.active && p.sheetGeneration === sheetGeneration) {
           p.deviceError = error instanceof Error ? error.message : String(error);
-          refresh(p, true);
         }
+      } finally {
+        p.cubeConnectingId = undefined;
+        p.cubeConnectingDevices = undefined;
+        if (p.active && p.sheetGeneration === sheetGeneration) refresh(p, true);
       }
+    },
+    showCubeBattery() {
+      const p = this as unknown as NativePage;
+      const battery = timerSmartCubeBatteryPercent(p.cubeDeviceSnapshot?.battery);
+      const label = TIMER_SMART_CUBE_DEVICE_COPY[getMiniProgramLocale()].battery;
+      miniProgramApi().showToast({ title: `${label} ${battery == null ? '—' : `${battery}%`}`, icon: 'none' });
     },
     scanExternalTimers() {
       const p = this as unknown as NativePage, t = p.nativeTimer;

@@ -196,7 +196,7 @@ async function buildProject() {
   if (douyin) {
     graphInputFiles.push(...TIMER_PROJECT_ICONS, ...DOUYIN_TIMER_VOICE_ASSETS.map(asset => asset.source));
     await convertToDouyin();
-    for (const stylesheet of ['segment-font.css', 'solo-stage.css', 'results-tabs.css', 'liberation-mono.css', 'classic-appearance.css']) {
+    for (const stylesheet of ['segment-font.css', 'solo-stage.css', 'results-tabs.css', 'smart-cube-device-modal.css', 'liberation-mono.css', 'classic-appearance.css']) {
       const source = new URL(import.meta.resolve(`@cuberoot/shared/timer/${stylesheet}`));
       let css = await readFile(source, 'utf8');
       if (stylesheet === 'liberation-mono.css') {

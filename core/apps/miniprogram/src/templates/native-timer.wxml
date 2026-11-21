@@ -22,6 +22,71 @@
   <image class="nt-settings-icon nt-icon-light" src="/assets/tabbar/{{icon}}-light.png" aria-hidden="true" />
   <image class="nt-settings-icon nt-icon-dark" src="/assets/tabbar/{{icon}}-dark.png" aria-hidden="true" />
 </template>
+<template name="nt-smart-cube-device">
+  <view id="nt-backdrop" class="timer-smart-cube-device__overlay nt-cube-panel" bindtap="closeSheet">
+    <view class="timer-smart-cube-device__modal" aria-role="dialog" aria-label="{{device.title}}">
+      <button class="timer-smart-cube-device__close" bindtap="closeSheet" aria-label="{{device.copy.close}}" hover-class="press-feedback">
+        <template is="nt-settings-icon" data="{{icon: 'x'}}" />
+      </button>
+      <view class="timer-smart-cube-device__heading">
+        <template is="nt-settings-icon" data="{{icon: 'bluetooth'}}" />
+        <text class="timer-smart-cube-device__heading-title">{{device.title}}</text>
+        <button wx:if="{{device.active}}" class="timer-smart-cube-device__battery{{device.batteryPercent !== null && device.batteryPercent <= 20 ? ' nt-cube-battery--low' : ''}}" bindtap="showCubeBattery" aria-label="{{device.copy.battery}} {{device.battery || '—'}}" hover-class="press-feedback">
+          <view class="nt-cube-battery" aria-hidden="true">
+            <view wx:if="{{device.batteryPercent !== null}}" class="nt-cube-battery-fill" style="width: {{device.batteryPercent}}%"></view>
+            <view wx:else class="nt-cube-battery-unknown"></view>
+          </view>
+        </button>
+      </view>
+      <block wx:if="{{device.active}}">
+        <view class="timer-smart-cube-device__summary">
+          <view class="timer-smart-cube-device__primary">
+            <text class="timer-smart-cube-device__name">{{device.deviceName}}</text>
+            <view class="timer-smart-cube-device__state is-ok" aria-role="status" aria-label="{{device.status}}">
+              <template is="nt-settings-icon" data="{{icon: 'circle-check'}}" />
+            </view>
+          </view>
+        </view>
+        <view class="timer-smart-cube-device__actions">
+          <button wx:if="{{device.supportsCalibrate}}" class="timer-smart-cube-device__action" disabled="{{!device.canCalibrate}}" aria-busy="{{device.calibrating}}" hover-class="press-feedback" bindtap="calibrateCube">{{device.copy.calibrate}}</button>
+          <button class="timer-smart-cube-device__action timer-smart-cube-device__action--danger" disabled="{{!device.canDisconnect || device.calibrating}}" hover-class="press-feedback" bindtap="disconnectDevice">{{device.copy.disconnect}}</button>
+        </view>
+      </block>
+      <block wx:else>
+        <view wx:if="{{error && !device.scanning && !device.connecting}}" class="timer-smart-cube-device__failure" aria-role="alert">
+          <text class="nt-cube-failure-title">{{device.copy.connectionFailed}}</text>
+          <text>{{error}}</text>
+        </view>
+        <view class="timer-smart-cube-device__picker" aria-label="{{device.copy.availableDevices}}">
+          <view class="timer-smart-cube-device__picker-header">
+            <text class="timer-smart-cube-device__picker-title">{{device.copy.availableDevices}}</text>
+            <button class="timer-smart-cube-device__scan" bindtap="connectCube" disabled="{{device.scanning || device.connecting}}" aria-busy="{{device.scanning}}" hover-class="press-feedback">
+              <view class="{{device.scanning ? 'is-scanning' : ''}}"><template is="nt-settings-icon" data="{{icon: 'refresh-cw'}}" /></view>
+              <text>{{device.scanning ? device.copy.scanning : device.copy.scanAgain}}</text>
+            </button>
+          </view>
+          <view wx:if="{{device.devices.length}}" class="timer-smart-cube-device__list" aria-role="list">
+            <view wx:for="{{device.devices}}" wx:key="deviceId" class="timer-smart-cube-device__list-item" aria-role="listitem">
+              <button class="timer-smart-cube-device__device" aria-label="{{device.copy.connect}} {{item.deviceName}}" aria-busy="{{item.connecting}}" data-id="{{item.deviceId}}" bindtap="connectListedCube" disabled="{{device.connecting}}" hover-class="press-feedback">
+                <view class="timer-smart-cube-device__device-copy">
+                  <text class="timer-smart-cube-device__device-name">{{item.deviceName}}</text>
+                  <text class="timer-smart-cube-device__device-signal">{{item.signal}}</text>
+                </view>
+                <view class="timer-smart-cube-device__device-action">
+                  <view wx:if="{{item.connecting}}" class="is-connecting"><template is="nt-settings-icon" data="{{icon: 'loader-circle'}}" /></view>
+                  <text>{{item.connecting ? device.copy.connecting : device.copy.connect}}</text>
+                </view>
+              </button>
+            </view>
+          </view>
+          <view wx:elif="{{!error || device.connecting || device.scanning}}" class="timer-smart-cube-device__empty" aria-role="status">
+            {{device.connecting ? device.copy.connecting : device.scanning ? device.copy.scanning : device.copy.noDevices}}
+          </view>
+        </view>
+      </block>
+    </view>
+  </view>
+</template>
 <template name="nt-source-choices">
   <block wx:for="{{copy.sourceChoices}}" wx:key="id">
     <button wx:if="{{officialAvailable || item.id !== 'wca'}}" class="nt-source-option {{source === item.id ? 'is-current' : ''}}" bindtap="chooseSource" data-source="{{item.id}}" aria-pressed="{{source === item.id}}" hover-class="press-feedback">
@@ -346,7 +411,8 @@
     </block>
     <text wx:if="{{netBattle.error}}" class="nt-error nt-room-label" aria-role="alert">{{netBattle.error}}</text>
   </block>
-  <view wx:if="{{sheet}}" id="nt-backdrop" class="nt-backdrop {{toolbarMenu ? 'nt-backdrop--popover' : ''}} {{sheet === 'statistics' && !resultsWorkspace ? 'nt-statistics-backdrop' : ''}} {{resultsWorkspace && (sheet === 'history' || sheet === 'statistics') ? 'nt-results-backdrop' : ''}} {{sheet === 'settings' ? 'nt-settings-backdrop' : ''}} {{sheet === 'bulk' ? 'nt-bulk-backdrop' : ''}} {{sheet === 'solver' ? 'nt-solver-screen-backdrop' : ''}} {{sheet === 'device-management' ? 'nt-device-backdrop' : ''}} {{sheet === 'device-management' && deviceManagement.kind !== 'smart-cube' ? 'nt-smart-timer-backdrop' : ''}} {{sheet === 'device-management' && deviceManagement.kind === 'stackmat' ? 'nt-stackmat-backdrop' : ''}}" bindtap="closeSheet">
+  <template wx:if="{{sheet === 'device-management' && deviceManagement.kind === 'smart-cube'}}" is="nt-smart-cube-device" data="{{device: deviceManagement, error: deviceError || deviceManagement.error}}" />
+  <view wx:elif="{{sheet}}" id="nt-backdrop" class="nt-backdrop {{toolbarMenu ? 'nt-backdrop--popover' : ''}} {{sheet === 'statistics' && !resultsWorkspace ? 'nt-statistics-backdrop' : ''}} {{resultsWorkspace && (sheet === 'history' || sheet === 'statistics') ? 'nt-results-backdrop' : ''}} {{sheet === 'settings' ? 'nt-settings-backdrop' : ''}} {{sheet === 'bulk' ? 'nt-bulk-backdrop' : ''}} {{sheet === 'solver' ? 'nt-solver-screen-backdrop' : ''}} {{sheet === 'device-management' ? 'nt-device-backdrop nt-smart-timer-backdrop' : ''}} {{sheet === 'device-management' && deviceManagement.kind === 'stackmat' ? 'nt-stackmat-backdrop' : ''}}" bindtap="closeSheet">
     <view class="nt-sheet {{toolbarMenu ? 'nt-sheet--popover nt-sheet--' + sheet : ''}} {{sheet === 'statistics' && !resultsWorkspace ? 'nt-statistics-dialog' : ''}} {{resultsWorkspace && (sheet === 'history' || sheet === 'statistics') ? 'nt-results-panel' : ''}} {{sheet === 'settings' ? 'nt-settings' : ''}} {{sheet === 'bulk' ? 'nt-bulk-dialog' : ''}} {{sheet === 'solver' ? 'nt-solver-screen' : ''}} {{sheet === 'device-management' ? 'nt-device-dialog' : ''}}" style="{{toolbarMenuStyle}}">
       <view wx:if="{{resultsWorkspace && (sheet === 'history' || sheet === 'statistics')}}" class="shell-panel-tabs">
         <button class="shell-panel-tab {{sheet === 'history' ? 'active' : ''}}" data-sheet="history" bindtap="switchResultsTab" aria-pressed="{{sheet === 'history'}}" hover-class="press-feedback">{{copy.resultsPanel.times}}</button>
@@ -375,7 +441,6 @@
       <view wx:elif="{{sheet === 'device-management' && deviceManagement}}" class="nt-sheet-header nt-device-dialog-header">
         <template is="nt-solver-icon" data="{{icon: deviceManagement.kind === 'stackmat' ? 'mic' : 'bluetooth'}}" />
         <text>{{deviceManagement.title}}</text>
-        <button wx:if="{{deviceManagement.kind === 'smart-cube'}}" class="nt-control" bindtap="closeSheet" aria-label="{{copy.close}}" hover-class="press-feedback"><template is="nt-solver-icon" data="{{icon: 'x'}}" /></button>
       </view>
       <view wx:elif="{{!toolbarMenu && sheet !== 'solver'}}" class="nt-sheet-header"><text>{{sheet === 'puzzle-hints' ? puzzleHintTitle : copy.sheetTitles[sheet] || copy.results}}</text><button hover-class="press-feedback" class="nt-control" bindtap="closeSheet">{{copy.close}}</button></view>
       <view wx:if="{{sheet === 'solver'}}" class="nt-solver-screen-header">
@@ -726,11 +791,11 @@
         </view>
       </block>
       <block wx:elif="{{sheet === 'devices'}}">
-        <button wx:for="{{deviceCenter.items}}" wx:key="id" class="nt-result" hover-class="press-feedback" bindtap="selectDevice" data-kind="{{item.kind}}" disabled="{{item.disabled}}">
+        <button wx:for="{{deviceCenter.items}}" wx:key="id" class="nt-device-menu-option{{item.active ? ' is-active' : ''}}" hover-class="press-feedback" bindtap="selectDevice" data-kind="{{item.kind}}" disabled="{{item.disabled}}">
           <view class="nt-device-menu-item">
             <image class="nt-icon-light" src="/assets/tabbar/{{item.kind === 'smart-timer' ? 'timer' : item.kind === 'stackmat' ? 'mic' : 'bluetooth'}}-light.png" aria-hidden="true" />
             <image class="nt-icon-dark" src="/assets/tabbar/{{item.kind === 'smart-timer' ? 'timer' : item.kind === 'stackmat' ? 'mic' : 'bluetooth'}}-dark.png" aria-hidden="true" />
-            <view><text>{{item.label}}</text><text wx:if="{{item.detail}}" class="nt-hint">{{item.detail}}</text></view>
+            <view class="nt-device-menu-copy"><text>{{item.label}}</text><text wx:if="{{item.detail}}" class="nt-device-menu-detail">{{item.detail}}</text></view>
           </view>
         </button>
       </block>
@@ -780,30 +845,6 @@
             <text>{{deviceManagement.copy.timerLastResult}}</text><text>{{deviceManagement.timerDetails.lastResult}}</text>
           </view>
           <text class="nt-device-note">{{deviceManagement.copy.timerConnectedHelp}}</text>
-        </block>
-        <block wx:elif="{{deviceManagement.active}}">
-          <view class="nt-cube-device-summary">
-            <text>{{deviceManagement.deviceName}}</text>
-            <text class="nt-device-note" aria-label="{{deviceManagement.copy.battery}}">{{deviceManagement.battery || '—'}}</text>
-            <view class="nt-cube-device-connected" aria-role="status" aria-label="{{deviceManagement.status}}"><template is="nt-settings-icon" data="{{icon: 'circle-check'}}" /></view>
-          </view>
-          <view class="nt-setting" wx:if="{{deviceManagement.protocol}}"><text>{{deviceManagement.copy.protocol}}</text><text>{{deviceManagement.protocol}}</text></view>
-          <view class="nt-setting" wx:if="{{deviceManagement.lastMove}}"><text>{{deviceManagement.copy.lastMove}}</text><text>{{deviceManagement.lastMove}}</text></view>
-          <view class="nt-device-actions">
-            <button wx:if="{{deviceManagement.canCalibrate}}" class="nt-control" hover-class="press-feedback" bindtap="calibrateCube">{{deviceManagement.copy.calibrate}}</button>
-            <button wx:if="{{deviceManagement.canDisconnect}}" class="nt-control" hover-class="press-feedback" bindtap="disconnectDevice">{{deviceManagement.copy.disconnect}}</button>
-          </view>
-        </block>
-        <block wx:elif="{{deviceManagement.kind === 'smart-cube'}}">
-          <view class="nt-device-picker-head">
-            <text>{{deviceManagement.copy.availableDevices}}</text>
-            <button class="nt-control nt-cube-device-scan" bindtap="connectCube" disabled="{{deviceManagement.scanning || deviceManagement.connecting}}" hover-class="press-feedback"><template is="nt-settings-icon" data="{{icon: 'refresh-cw'}}" />{{deviceManagement.scanning ? deviceManagement.copy.scanning : deviceManagement.copy.scanAgain}}</button>
-          </view>
-          <button wx:for="{{deviceManagement.devices}}" wx:key="deviceId" class="nt-device-picker-row" data-id="{{item.deviceId}}" bindtap="connectListedCube" disabled="{{deviceManagement.connecting}}" hover-class="press-feedback">
-            <view class="nt-cube-device-name"><text>{{item.deviceName}}</text><text wx:if="{{item.signal}}" class="nt-device-note">{{item.signal}}</text></view>
-            <text>{{deviceManagement.connecting ? deviceManagement.copy.connecting : deviceManagement.copy.connect}}</text>
-          </button>
-          <text wx:if="{{!deviceManagement.devices.length && !deviceError && !deviceManagement.error}}" class="nt-device-note" aria-role="status">{{deviceManagement.connecting ? deviceManagement.copy.connecting : deviceManagement.scanning ? deviceManagement.copy.scanning : deviceManagement.copy.noDevices}}</text>
         </block>
         <block wx:elif="{{deviceManagement.kind === 'smart-timer'}}">
           <text class="nt-device-intro">{{deviceManagement.copy.timerInstructions}}</text>

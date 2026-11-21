@@ -23,7 +23,7 @@ const disconnectedCube = {
 
 const originalUserAgent = navigator.userAgent;
 const sharedDeviceCss = readFileSync(
-  new URL('./smart-cube-device-modal.css', new URL(import.meta.resolve('@cuberoot/timer-ui'))),
+  new URL(import.meta.resolve('@cuberoot/shared/timer/smart-cube-device-modal.css')),
   'utf8',
 );
 

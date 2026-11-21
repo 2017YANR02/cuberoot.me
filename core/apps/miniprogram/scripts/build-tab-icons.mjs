@@ -58,7 +58,7 @@ export async function buildDouyinTimerIcons(outputRoot, selectedColor) {
   for (const icon of ['settings', 'lightbulb', 'layout-template', 'grip-horizontal', 'move-diagonal-2', 'rotate-ccw', 'check',
     'layout-dashboard', 'calendar-days', 'bar-chart-3', 'layers', 'x', 'chevron-left', 'chevron-right', 'chevron-down', 'bluetooth', 'timer', 'mic', 'arrow-left', 'arrow-right', 'pencil', 'sliders-horizontal', 'skip-back', 'skip-forward', 'play', 'pause',
     'dices', 'trophy', 'palette', 'volume-2', 'database', 'keyboard', 'download', 'info', 'circle-help', 'copy', 'target', 'circle-check', 'flame', 'arrow-right-left',
-    'search', 'ellipsis', 'refresh-cw']) {
+    'search', 'ellipsis', 'refresh-cw', 'loader-circle']) {
     toolbarColors[`${icon}-light`] = '#171717';
     toolbarColors[`${icon}-dark`] = '#f5f5f5';
   }

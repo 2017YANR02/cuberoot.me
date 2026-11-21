@@ -65,6 +65,24 @@ describe('native timer device center', () => {
     expect(nativeTimerDeviceManagement(fixture({ calibrating: true, cubeConnected: true, canResetCube: true }), 'smart-cube')?.canCalibrate).toBe(false);
   });
 
+  it('leaves rescan available after discovery and marks only the chosen cube as connecting', () => {
+    const cube = {
+      phase: 'scanning' as const, deviceName: '', battery: null, lastMove: '', brand: '' as const, error: '',
+      devices: [
+        { deviceId: 'gan', deviceName: 'GAN 16', driver: 'gan-v4' as const, driverLabel: 'GAN', rssi: -52 },
+        { deviceId: 'qiyi', deviceName: 'QiYi', driver: 'qiyi' as const, driverLabel: 'QiYi', rssi: -80 },
+      ],
+    };
+    expect(nativeTimerDeviceManagement(fixture({ cube }), 'smart-cube', 'en')).toMatchObject({
+      scanning: false, connecting: false,
+      devices: [{ deviceId: 'gan', signal: 'Good signal' }, { deviceId: 'qiyi', signal: 'Weak signal' }],
+    });
+    expect(nativeTimerDeviceManagement(fixture({ cube, cubeConnectingId: 'gan' }), 'smart-cube')).toMatchObject({
+      connecting: true, scanning: false,
+      devices: [{ deviceId: 'gan', connecting: true }, { deviceId: 'qiyi', connecting: false }],
+    });
+  });
+
   it('models discovery, manual MAC and connected timer details', () => {
     const externalScan = [{ deviceId: 'opaque', deviceName: 'QY-Adapter' }];
     expect(nativeTimerDeviceManagement(fixture({ externalScan }), 'smart-timer', 'zh')).toMatchObject({
