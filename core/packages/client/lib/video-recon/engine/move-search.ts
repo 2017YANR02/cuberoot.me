@@ -16,8 +16,10 @@ export class MoveSearch {
   private solutionFound=false;
   private deadline:ReturnType<typeof setTimeout>|undefined;
   private terminal=false;
+  private preview?: MoveSearch;
   get solved(){return this.solutionFound;}
-  constructor(baseUrl:string,readonly config:MoveSearchConfig,onResult:(value:MoveSearchResult,ended:boolean)=>void,onError:(message:string)=>void,private video=false){
+  constructor(baseUrl:string,readonly config:MoveSearchConfig,onResult:(value:MoveSearchResult,ended:boolean)=>void,onError:(message:string)=>void,private video=false,
+    onPreview?:(value:MoveSearchResult)=>void){
     this.onError=onError;
     this.worker=config.bidirectional?new ParallelMoveSearch(baseUrl):createVideoWorker("move-search");
     this.worker.onmessage=({data})=>{
@@ -33,6 +35,18 @@ export class MoveSearch {
     };
     this.worker.onerror=()=>{this.dispose();onError("The Rust move-search worker stopped");};
     this.worker.postMessage({type:"init",baseUrl,config});
+    if (video && config.bidirectional && onPreview) {
+      // The preview consumes admitted fits without changing the two-sided search
+      // or its recorded actions. Give it a smaller budget and yield between batches.
+      this.preview = new MoveSearch(baseUrl, {
+        ...config, bidirectional: false, diagnostics: false, state_limit: Math.min(20_000, config.state_limit),
+        postprocess_identity_loops: false, postprocess_pose_cleanup: false,
+      }, value => {
+        onPreview(value);
+        if (this.preview?.terminal) this.stopPreview();
+      }, () => this.stopPreview(), true);
+      this.preview.setPacing(4);
+    }
   }
   private onError:(message:string)=>void;
   submit(timestamp:number,frame:FrameResult,fitting:Promise<FittedPose>){
@@ -42,6 +56,7 @@ export class MoveSearch {
     if(sequence<0)return;
     if(this.seen.has(sequence))return;
     this.seen.add(sequence);this.lastSequence=Math.max(this.lastSequence,sequence);
+    this.preview?.submit(timestamp, frame, fitting);
     const task=fitting.then(pose=>{
       if(this.closed||this.ended||this.solutionFound)return;
       let landmarkCount=0;const colors:string[]=[];
@@ -57,6 +72,7 @@ export class MoveSearch {
   }
   async end(){
     if(this.closed||this.ended)return;this.endRequested=true;
+    this.stopPreview();
     this.startDeadline();
     if(!this.solutionFound)await Promise.all([...this.pending]);this.maybeEnd();
   }
@@ -73,7 +89,12 @@ export class MoveSearch {
       this.ended=true;this.worker.postMessage({type:"end"});
     }
   }
-  dispose(){clearTimeout(this.deadline);this.deadline=undefined;this.closed=true;this.worker.terminate();}
+  private stopPreview() {
+    const preview = this.preview;
+    this.preview = undefined;
+    if (preview && !preview.closed) preview.dispose();
+  }
+  dispose(){clearTimeout(this.deadline);this.deadline=undefined;this.closed=true;this.stopPreview();this.worker.terminate();}
   pause(){if(!this.closed)this.worker.postMessage({type:'pause'});}
   resume(){if(!this.closed)this.worker.postMessage({type:'resume'});}
   setPacing(delayMs:number){if(!this.closed)this.worker.postMessage({type:'pace',delayMs});}

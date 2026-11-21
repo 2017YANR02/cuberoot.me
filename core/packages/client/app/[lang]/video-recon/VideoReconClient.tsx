@@ -4,7 +4,7 @@ import { useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import dynamic from 'next/dynamic';
 import { parseAsStringEnum, useQueryState } from 'nuqs';
 import { Camera, Download, Film, Unplug, Upload } from '@app-foundation/icons/lucide';
-import { ContentSkeleton, SkeletonBlock } from '@/components/ContentSkeleton';
+import { ContentSkeleton } from '@/components/ContentSkeleton';
 import PageHeading from '@/components/PageHeading';
 import HeaderToggles from '@/components/HeaderToggles';
 import { INITIAL_VIDEO_TRANSFORM, VideoImageTools, videoImageTransformCss } from '@/components/VideoImageTools';
@@ -40,20 +40,6 @@ function VideoReconProgress({ label, value }: { label: string; value?: number })
     </div>
     <progress aria-label={label} max={100} value={value} />
   </div>;
-}
-
-function VideoReconResultPlaceholder() {
-  const t = useT();
-  return <section className="video-recon-panel video-recon-cube" data-site-surface="panel"
-    aria-label={t('复盘结果', 'Reconstruction')} aria-busy="true">
-    <div className="video-recon-orbit">
-      <div className="video-recon-orbit-interaction">
-        <SkeletonBlock className="video-recon-orbit-shimmer" />
-      </div>
-    </div>
-    <SkeletonBlock />
-    <SkeletonBlock style={{ width: '64%' }} />
-  </section>;
 }
 
 export default function VideoReconClient() {
@@ -109,9 +95,11 @@ export default function VideoReconClient() {
   const reconstructing = detector && view?.sourceKind === 'video' && !view.trimming && !view.reconstructionComplete;
   const pendingResult = reconstructing && !view.mediaError && view.status !== 'error';
   const showResults = reviewing || pendingResult;
-  const resultTime = view?.presentedTimestamp ?? 0;
+  const liveResult = pendingResult ? view.liveReconstruction : undefined;
+  const resultTime = liveResult?.timestamp ?? view?.presentedTimestamp ?? 0;
   const fileCanCrop = view?.sourceKind === 'image' || view?.trimming;
   const searchSteps = view?.searchResult?.steps ?? NO_MOVES;
+  const shownSteps = pendingResult ? liveResult?.steps ?? NO_MOVES : searchSteps;
   const measured = view?.measuredCubeTimeline;
   const downloadProgress = view?.modelProgress;
   const downloading = downloadProgress !== undefined && downloadProgress < 100;
@@ -231,11 +219,11 @@ export default function VideoReconClient() {
           </button>
         </footer>
       </section>
-      {pendingResult && <VideoReconResultPlaceholder />}
-      {reviewing && <ProjectedCube pose={view.coloredProjection} sourceTimestamp={resultTime}
-        solved={view.cubeSolved} steps={searchSteps}
+      {showResults && view && <ProjectedCube live={pendingResult}
+        pose={pendingResult ? liveResult?.cube?.pose : view.coloredProjection} sourceTimestamp={resultTime}
+        solved={view.cubeSolved} steps={shownSteps}
         timeline={view.projectedTimeline}
-        sourceFrame={view.result?.fittedPose?.sourceFrame ?? Math.round(resultTime * view.sourceFps)}
+        sourceFrame={liveResult?.cube?.frame ?? (reviewing ? view.result?.fittedPose?.sourceFrame : undefined) ?? Math.round(resultTime * view.sourceFps)}
         sourceFps={view.sourceFps} playbackSpeed={view.running ? view.playbackSpeed : 1}
         controls={renderReviewControls(t('实况魔方播放控件', 'Tracked cube playback controls'))}
         analysis={reviewing && workspace && view.reconstructedScramble && measured && searchSteps.some(step => step.state_moves.length)
@@ -243,8 +231,8 @@ export default function VideoReconClient() {
             fps={view.sourceFps} start={view.solveStart} end={view.solveEnd} position={view.presentedTimestamp}
             onSeek={timestamp => void workspace.requestReview(timestamp)} />
           : undefined} />}
-      {workspace && view && showResults && <TpsGraph compact pending={pendingResult}
-        steps={searchSteps}
+      {workspace && view && showResults && <TpsGraph compact pending={pendingResult && resultTime <= view.solveStart}
+        live={pendingResult} steps={shownSteps}
         fps={view.sourceFps} start={view.solveStart} end={view.solveEnd} cursor={resultTime} complete={reviewing && view.cubeSolved}
         onSeek={reviewing ? timestamp => void workspace.requestReview(timestamp) : undefined} />}
       {!detector && workspace && view?.latestTimerReplay && view.latestReplayReconstruction && <section className="video-recon-panel" data-site-surface="panel">

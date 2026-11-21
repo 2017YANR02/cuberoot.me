@@ -60,6 +60,23 @@ export function projectedCubeAtFrame(rows:readonly ProjectedCubeFrame[],frame:nu
  return layerTransition(before.pose,after.pose).sample((frame-before.frame)/(after.frame-before.frame),linear);
 }
 
+/** Build one display target from accepted geometry and the matching sticker state. */
+export function measuredCubeFrame(
+  row: { timestamp: number; result: Pick<FrameResult, 'fittedPose'> },
+  colors: ColorTimeline,
+  { fps, solved, turningStartFrame }: { fps: number; solved: boolean; turningStartFrame?: number | null },
+  step?: MoveStep,
+): MeasuredCubeFrame | undefined {
+  const fit = row.result.fittedPose;
+  if (!fit?.pose || poseIsFlagged(fit, step?.pose_flagged)) return;
+  const frame = fit.sourceFrame ?? Math.round(row.timestamp * fps);
+  const state = stateAtFrame(colors, frame, solved);
+  const geometry = fit.bank[projectedGeometryIndex(fit, step?.geometry_option_index,
+    turningStartFrame != null && frame <= turningStartFrame)];
+  const pose = state && geometry ? makeCubePose(geometry, state, step?.orientation_symmetry_index) : undefined;
+  if (pose) return { frame, pose, timestamp: row.timestamp };
+}
+
 /** Rejected fits never become render anchors. Bridge them using accepted
  * orientations and legal layer transitions, including commits in pose gaps. */
 export function buildCubeReplayTimelines(rows:readonly {timestamp:number;result:Pick<FrameResult,'fittedPose'>}[],colors:ColorTimeline,
@@ -67,13 +84,9 @@ export function buildCubeReplayTimelines(rows:readonly {timestamp:number;result:
  const steps=new Map(options.steps.map(step=>[step.frame_index,step]));
  const measured:MeasuredCubeFrame[]=[];
  for(const row of rows){
-  const pose=row.result.fittedPose,frame=pose?.sourceFrame??Math.round(row.timestamp*options.fps),step=steps.get(frame);
-  if(!pose?.pose||poseIsFlagged(pose,step?.pose_flagged))continue;
-  const state=stateAtFrame(colors,frame,options.solved);
-  const index=projectedGeometryIndex(pose,step?.geometry_option_index,
-   options.turningStartFrame!=null&&frame<=options.turningStartFrame);
-  const fit=pose.bank[index],cube=state&&fit?makeCubePose(fit,state,step?.orientation_symmetry_index):undefined;
-  if(cube)measured.push({frame,pose:cube,timestamp:row.timestamp});
+  const frame = row.result.fittedPose?.sourceFrame ?? Math.round(row.timestamp * options.fps);
+  const cube = measuredCubeFrame(row, colors, options, steps.get(frame));
+  if (cube) measured.push(cube);
  }
  measured.sort((a,b)=>a.frame-b.frame);
  if(!measured.length)return {measured,projected:[]};

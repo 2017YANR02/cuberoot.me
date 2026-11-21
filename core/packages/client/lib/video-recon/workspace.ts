@@ -23,7 +23,7 @@ import type { MoveSearchResult } from "./engine/move-search-types";
 import { trimRange } from "./engine/solve-range";
 import { projectedWireframe, poseIsFlagged } from "./engine/reconstruction-view";
 import { buildColorTimeline } from "./engine/cube-colors";
-import { buildCubeReplayTimelines, projectedCubeAtFrame } from "./engine/projected-cube";
+import { buildCubeReplayTimelines, measuredCubeFrame, projectedCubeAtFrame } from "./engine/projected-cube";
 import { reviewIndex, steppedTimestamp, frameArrow } from "./engine/frame-review";
 import { PLAYBACK_SPEEDS, playbackTiming } from "./engine/playback-timing";
 import type { PlaybackSpeed } from "./engine/playback-timing";
@@ -108,6 +108,7 @@ export function createVideoWorkspace(stage: HTMLCanvasElement, initialTab: Works
     searchCleanup: true,
     searchCleanupTolerance: 0.08,
     searchResult: undefined as MoveSearchResult | undefined,
+    previewSearch: undefined as MoveSearchResult | undefined,
     searchError: "",
     poseError: "",
     fitBufferedFrames: 0,
@@ -366,6 +367,7 @@ export function createVideoWorkspace(stage: HTMLCanvasElement, initialTab: Works
   }
   function startMoveSearch() {
     moveSearch?.dispose(); moveSearch = undefined; state.searchResult = undefined; state.searchError = "";
+    state.previewSearch = undefined;
     if (state.timerCamera || state.activeTab === 'timer' || !state.searchEnabled || state.sourceKind === "none") return;
     if (!state.initialScramble.trim()) { state.searchError = "Enter the initial scramble to start move search."; return; }
     if(state.searchCleanup&&(!Number.isFinite(state.searchCleanupTolerance)||state.searchCleanupTolerance<0||state.searchCleanupTolerance>1)){
@@ -401,7 +403,10 @@ export function createVideoWorkspace(stage: HTMLCanvasElement, initialTab: Works
         state.running=false;seekResume=false;state.videoInputComplete=true;fileEnded=true;cancelScheduled();
       }
       recording.saveError(runId,message,moveSearch?.actions??[]);
-    } }, state.sourceKind === "video");
+    } }, state.sourceKind === "video", value => {
+      if (token === generation && !disposed && (value.steps.length || state.previewSearch?.steps.length))
+        state.previewSearch = value;
+    });
   }
   async function finishMoveSearch() {
     const token = generation, activeSearch = moveSearch;
@@ -555,6 +560,7 @@ export function createVideoWorkspace(stage: HTMLCanvasElement, initialTab: Works
     if (!derived.reconstructionComplete) return;
     state.running = false; cancelScheduled(); await waitForPipelineIdle();
     moveSearch?.dispose(); moveSearch = undefined; state.searchResult = undefined; state.searchError = "";
+    state.previewSearch = undefined;
     state.trimming = true; state.videoInputComplete = false; await previewTrim(state.solveStart);
   }
   function send(message: WorkerRequest, transfer: Transferable[] = []) {
@@ -837,6 +843,7 @@ export function createVideoWorkspace(stage: HTMLCanvasElement, initialTab: Works
     poseFitter?.dispose();
     poseFitter = undefined;
     moveSearch?.dispose(); moveSearch = undefined; state.searchResult = undefined; state.searchError = "";
+    state.previewSearch = undefined;
     completionQueue.clear();
     state.poseError = "";
     capture?.stop();
@@ -1461,6 +1468,34 @@ export function createVideoWorkspace(stage: HTMLCanvasElement, initialTab: Works
   ) => colors ? buildCubeReplayTimelines(rows, colors, {
     fps, solved, steps: search?.steps ?? [], turningStartFrame,
   }) : undefined);
+  const previewMetadata = memoizeLast((search: MoveSearchResult | undefined, scramble: string) => {
+    const steps = (search?.steps ?? []).filter(step => step.state_moves.length > 0);
+    try { return { steps, colors: buildColorTimeline(scramble, steps) }; }
+    catch { return { steps, colors: undefined }; }
+  });
+  const previewFrame = memoizeLast((
+    timestamp: number, result: FrameResult, colors: NonNullable<ReturnType<typeof previewMetadata>['colors']>,
+    fps: number, turningStartFrame: number | null, step: MoveSearchResult['steps'][number] | undefined,
+  ) => measuredCubeFrame({ timestamp, result }, colors, { fps, solved: true, turningStartFrame }, step));
+
+  function liveReconstruction() {
+    if (state.sourceKind !== 'video' || state.trimming || derived.reconstructionComplete || !moveSearch) return;
+    const { fps, scramble, turning_start_frame } = moveSearch.config;
+    const search = state.previewSearch ?? state.searchResult;
+    const { steps, colors } = previewMetadata(search, scramble);
+    const current = state.result;
+    const currentFrame = current?.fittedPose?.sourceFrame ?? Math.round(state.presentedTimestamp * fps);
+    const step = search?.steps.findLast(candidate => candidate.frame_index <= currentFrame);
+    // The forward search can be behind the detector. Render the frame that
+    // owns its sticker state instead of applying that state to a later fit.
+    const earlier = step && step.frame_index < currentFrame;
+    const saved = earlier ? videoResults.get(currentCacheKey(true), step.frame_index / fps, 0.5 / fps + 0.00001) : undefined;
+    const timestamp = saved?.timestamp ?? (earlier ? step.frame_index / fps : state.presentedTimestamp);
+    const result = earlier ? saved?.result : current;
+    const cube = result && colors ? previewFrame(timestamp, result, colors, fps, turning_start_frame, step) : undefined;
+    return { steps, timestamp, cube };
+  }
+
   const derived = {
     get latestReplayReconstruction() {
       const id = state.latestTimerSolveId;
@@ -1546,6 +1581,7 @@ export function createVideoWorkspace(stage: HTMLCanvasElement, initialTab: Works
       stream: state.stream,
       reconstructionComplete: derived.reconstructionComplete,
       videoInputComplete: state.videoInputComplete,
+      liveReconstruction: liveReconstruction(),
       cubeSolved: derived.cubeSolved,
       coloredProjection: derived.coloredProjection,
       projectedTimeline: derived.projectedTimeline,

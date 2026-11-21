@@ -24,13 +24,14 @@ interface Props {
   sourceFrame: number;
   sourceFps: number;
   playbackSpeed: number;
+  live?: boolean;
   analysis?: ReactNode;
   controls?: ReactNode;
 }
 
 type Drag = { id: number; kind: CubeDragKind; start: DragPoint; view: Quaternion; x: number; y: number; radius: number };
 
-export function ProjectedCube({ pose, sourceTimestamp, solved, steps, timeline, sourceFrame, sourceFps, playbackSpeed, analysis, controls }: Props) {
+export function ProjectedCube({ pose, sourceTimestamp, solved, steps, timeline, sourceFrame, sourceFps, playbackSpeed, live, analysis, controls }: Props) {
   const t = useT();
   const resetLabel = t('重置视角', 'Reset view');
   const engineHost = useRef<HTMLDivElement>(null);
@@ -54,6 +55,7 @@ export function ProjectedCube({ pose, sourceTimestamp, solved, steps, timeline, 
   const setup = useMemo(() => initialGripMoves(timeline, notationView), [timeline, notationView]);
   const algorithm = [...setup, ...tokens.map(token => token.move)].join(' ');
   const activeFrame = tokens.findLast(token => token.frame <= sourceFrame)?.frame;
+  const liveMove = live ? steps.findLast(step => step.frame_index <= sourceFrame && step.state_moves.length) : undefined;
 
   function draw() {
     if (!renderer.current) return;
@@ -94,7 +96,7 @@ export function ProjectedCube({ pose, sourceTimestamp, solved, steps, timeline, 
     const previous = rendered.current;
     const adjacent = previousTimestamp.current !== undefined && Math.abs(sourceTimestamp - previousTimestamp.current) <= 0.15;
     previousTimestamp.current = sourceTimestamp;
-    if (!previous || !pose || !adjacent) {
+    if (live || !previous || !pose || !adjacent) {
       rendered.current = pose;
       draw();
       return;
@@ -109,7 +111,7 @@ export function ProjectedCube({ pose, sourceTimestamp, solved, steps, timeline, 
       if (progress < 1) animation = requestAnimationFrame(tick);
     });
     return () => cancelAnimationFrame(animation);
-  }, [pose, sourceTimestamp, sourceFps, playbackSpeed]);
+  }, [pose, sourceTimestamp, sourceFps, playbackSpeed, live]);
 
   function beginDrag(event: PointerEvent<HTMLDivElement>) {
     if (!pose || !ready || !event.isPrimary || event.button !== 0) return;
@@ -171,8 +173,8 @@ export function ProjectedCube({ pose, sourceTimestamp, solved, steps, timeline, 
         <div className="video-recon-cube-renderer" ref={engineHost} data-engine={engine}
           role="img" aria-label={t('复盘的三维魔方', 'Reconstructed 3D cube')} aria-hidden={!pose || !ready} />
         {pose && ready && <span className="video-recon-roll-ring" aria-hidden="true" />}
-        {!pose && <p>{t('此帧暂无复盘状态', 'No reconstructed cube state for this frame')}</p>}
-        {pose && !ready && (unavailable
+        {!pose && !live && <p>{t('此帧暂无复盘状态', 'No reconstructed cube state for this frame')}</p>}
+        {(live || pose) && (!ready || !pose) && (unavailable
           ? <div className="video-recon-orbit-status" role="status">
             <p>{t('无法加载此渲染引擎。', 'Could not load this rendering engine.')}</p>
             <button type="button" className="btn-secondary" onClick={() => setRetry(value => value + 1)}>{t('重试', 'Retry')}</button>
@@ -195,7 +197,10 @@ export function ProjectedCube({ pose, sourceTimestamp, solved, steps, timeline, 
       }</Tooltip>}
     </div>
     {controls}
-    {analysis ? <>
+    {live ? <div className="video-recon-section-heading">
+      <span className="video-recon-muted">{t('实时预览', 'Live preview')}</span>
+      {liveMove && <code aria-label={t('最近识别的动作', 'Latest detected moves')}>{liveMove.state_moves.join(' ')}</code>}
+    </div> : analysis ? <>
       {analysis}
       {sourceNotation && <details>
         <MoreToggle as="summary">{t('查看相机视角动作', 'View camera-relative moves')}</MoreToggle>
