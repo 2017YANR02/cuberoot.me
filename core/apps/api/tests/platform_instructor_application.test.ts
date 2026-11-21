@@ -2,7 +2,7 @@ import { beforeEach, expect, it, vi } from 'vitest';
 import type { Context } from 'hono';
 import { platformRouter } from '../src/platform/http.js';
 
-const state = vi.hoisted(() => ({ user: 7, admin: false, status: '', instructor: '', profile: 0, extraProfile: 0, linkedProfile: 0, snapshot: {} as Record<string, unknown>, note: '', query: vi.fn() }));
+const state = vi.hoisted(() => ({ user: 7, admin: false, status: '', instructor: '', profile: 0, extraProfile: 0, linkedProfile: 0, snapshot: {} as Record<string, unknown>, note: '', imageOwner:'u7', query: vi.fn() }));
 const id = '00000000-0000-4000-8000-000000000001';
 const instructorId = '00000000-0000-4000-8000-000000000002';
 vi.mock('../src/utils/account.js', () => ({ ownerKey: (uid: number, wcaId: string | null) => wcaId || `u${uid}` }));
@@ -27,10 +27,11 @@ const post = (path: string, body: object = {}) => app.request(`/platform/${path}
 const form = { experience: 'Three years', specialties: ['333'], contact: 'demo@example.test', city: 'Shanghai', teachingMode: 'both' };
 
 beforeEach(() => {
-  Object.assign(state, { user: 7, admin: false, status: '', instructor: '', profile: 0, extraProfile: 0, linkedProfile: 0, snapshot: {}, note: '' });
+  Object.assign(state, { user: 7, admin: false, status: '', instructor: '', profile: 0, extraProfile: 0, linkedProfile: 0, snapshot: {}, note: '',imageOwner:'u7' });
   state.query.mockReset().mockImplementation(async (sql: string, args: unknown[]) => {
     if (sql.includes('SELECT wca_id FROM app_users')) return [{ wca_id: null }];
     if (sql.includes('SELECT id FROM app_users')) return [{ id: 7 }];
+    if(sql.includes('FROM article_image'))return [{id:91,owner_wca_id:state.imageOwner}];
     if (sql.includes('SELECT id, status') && sql.includes('FROM platform_instructors WHERE user_id')) return args[0] === 7 && state.instructor ? [{ id: instructorId, status: state.instructor, teacher_entry_id: state.linkedProfile || null }] : [];
     if (sql.includes('SELECT id,teacher_entry_id FROM platform_instructors WHERE id::text')) return state.instructor === 'active' ? [{ id: instructorId, teacher_entry_id: state.linkedProfile || null }] : [];
     if (sql.includes("status = 'pending'")) return state.status === 'pending' ? [{ id }] : [];
@@ -86,6 +87,36 @@ it('creates and links one profile at approval without copying private review inf
   expect(insert[1]).not.toContain(form.experience);
   expect(insert[1][6]).toBe(true);
   expect(state.linkedProfile).toBe(42);
+});
+
+it('creates a hidden profile with the selected author name when homepage setup is deferred',async()=>{
+  expect((await post('instructor/applications',{...form,publicName:'Deferred teacher',profileDeferred:true,profileVisible:true})).status).toBe(201);
+  expect(state.snapshot).toMatchObject({publicName:'Deferred teacher',publicBio:'',profileDeferred:true,profileVisible:false});
+  expect(state.query.mock.calls.some(([sql])=>sql.includes('INSERT INTO teacher_directory_entries'))).toBe(false);
+  state.admin=true;
+  expect((await post(`admin/instructor-applications/${id}/decision`,{decision:'approved'})).status).toBe(200);
+  const insert=state.query.mock.calls.find(([sql])=>sql.includes('INSERT INTO teacher_directory_entries'))!;
+  expect(insert[1][0]).toBe('Deferred teacher');expect(insert[1][2]).toBe('');expect(insert[1][6]).toBe(false);
+});
+
+it('validates homepage assets, stores a private snapshot and applies it only on approval',async()=>{
+  const homepage={kind:'teacher',nameZh:'讲师名',nameEn:'Teacher',locationZh:'上海',descriptionZh:'公开介绍',descriptionEn:'Public introduction',specialtiesZh:['三阶：入门复原'],teachingMode:'both',contacts:{email:'public@example.test'},website:'https://example.test',images:[{id:91,kind:'portrait',captionZh:'照片',url:'https://untrusted.test/photo'}],isVisible:true,isCurated:true,wcaId:'2017YANR02'};
+  state.imageOwner='u8';
+  expect((await post('instructor/applications',{...form,homepage})).status).toBe(400);
+  state.imageOwner='u7';
+  expect((await post('instructor/applications',{...form,homepage})).status).toBe(201);
+  expect(state.snapshot).toMatchObject({homepage:{nameZh:'讲师名',descriptionEn:'Public introduction',contacts:{email:'public@example.test'},isCurated:false,wcaId:'',images:[{id:91,kind:'portrait',captionZh:'照片',captionEn:''}]}});
+  expect(JSON.stringify(state.snapshot.homepage)).not.toContain('untrusted.test');
+  expect(state.query.mock.calls.some(([sql])=>sql.includes('INSERT INTO teacher_directory_entries'))).toBe(false);
+  state.admin=true;
+  state.imageOwner='u8';
+  expect((await post(`admin/instructor-applications/${id}/decision`,{decision:'approved'})).status).toBe(400);
+  expect(state.status).toBe('pending');
+  state.imageOwner='u7';
+  expect((await post(`admin/instructor-applications/${id}/decision`,{decision:'approved'})).status).toBe(200);
+  const insert=state.query.mock.calls.find(([sql])=>sql.includes('INSERT INTO teacher_directory_entries'))!;
+  expect(insert[1][5]).toBe('Public introduction');expect(insert[1][9]).toEqual({email:'public@example.test'});expect(insert[1][10]).toEqual([{id:91,kind:'portrait',captionZh:'照片',captionEn:''}]);
+  expect(JSON.stringify(insert[1])).not.toContain(form.contact);expect(JSON.stringify(insert[1])).not.toContain(form.experience);
 });
 
 it('does not guess among multiple legacy profiles and never switches a canonical link', async () => {

@@ -15,6 +15,7 @@ import { privateNoStore } from '../http.js';
 import { pagination, readJsonObject } from '../validation.js';
 import { requiredParam, authorizeCourseWrite } from './course-access.js';
 import { COURSE_PROJECTION, courseFields, requireBilingualTitle, hashJson } from './course-fields.js';
+import { requiresContentReview, contentReviewIntent, nextContentRevision, submitContentReview, withdrawPendingContentReview, assertNoPendingContentReview } from './content-review.js';
 import { type Context, type Hono } from 'hono';
 
 async function listManagedCourses(c: Context, admin: boolean): Promise<Response> {
@@ -27,20 +28,36 @@ async function listManagedCourses(c: Context, admin: boolean): Promise<Response>
   const id = c.req.param('id') ? requiredParam(c, 'id') : null;
   const rows = await platformQuery(db, `
     SELECT ${COURSE_PROJECTION}, COUNT(*) OVER()::int AS "resultTotal",
+      review.id::text AS "reviewId", review.status AS "reviewStatus", review.decision_note AS "reviewNote",
+      review.target_status AS "reviewTargetStatus", review.metadata AS "reviewMetadata", review.submitted_at AS "reviewSubmittedAt",
+      (SELECT display_name_snapshot FROM platform_instructors WHERE user_id=review.submitted_by_user_id) AS "reviewSubmittedBy",
       COALESCE((SELECT jsonb_agg(jsonb_build_object('id', l.id::text, 'slug', l.slug,
         'ordinal', l.ordinal, 'status', l.status, 'accessScope', l.access_scope,
         'titleZh', lr.title_zh, 'titleEn', lr.title_en,
-        'coverMediaId', lr.cover_media_id::text,
+        'coverMediaId', lr.cover_media_id::text, 'bodyZh', CASE WHEN $2::text IS NOT NULL THEN lr.body_zh END,
+        'bodyEn', CASE WHEN $2::text IS NOT NULL THEN lr.body_en END,
+        'reviewId', lreview.id::text, 'reviewStatus', lreview.status, 'reviewNote', lreview.decision_note,
+        'reviewMetadata', lreview.metadata, 'reviewTargetStatus', lreview.target_status, 'reviewSubmittedAt', lreview.submitted_at,
+        'reviewSubmittedBy', (SELECT display_name_snapshot FROM platform_instructors WHERE user_id=lreview.submitted_by_user_id),
         'driveVideo', (SELECT media.metadata->>'driveNodeId' FROM platform_media_assets media WHERE media.id = lr.media_id)) ORDER BY l.ordinal)
-      FROM platform_lessons l LEFT JOIN platform_lesson_revisions lr
-        ON lr.lesson_id = l.id AND lr.revision = l.current_revision WHERE l.course_id = c.id), '[]'::jsonb) AS lessons
+      FROM platform_lessons l LEFT JOIN LATERAL (
+        SELECT * FROM platform_content_reviews WHERE lesson_id=l.id AND base_revision=l.current_revision AND l.status<>'archived' ORDER BY submitted_at DESC, id DESC LIMIT 1
+      ) lreview ON true
+      LEFT JOIN platform_lesson_revisions lr ON lr.lesson_id = l.id AND lr.revision =
+        CASE WHEN lreview.status IN ('pending','rejected','withdrawn') THEN lreview.candidate_revision ELSE l.current_revision END
+      WHERE l.course_id = c.id), '[]'::jsonb) AS lessons
     FROM platform_courses c
-    LEFT JOIN platform_course_revisions r ON r.course_id = c.id AND r.revision = c.current_revision
+    LEFT JOIN LATERAL (
+      SELECT * FROM platform_content_reviews WHERE course_id=c.id AND lesson_id IS NULL AND base_revision=c.current_revision AND c.status<>'archived' ORDER BY submitted_at DESC, id DESC LIMIT 1
+    ) review ON true
+    LEFT JOIN platform_course_revisions r ON r.course_id = c.id AND r.revision =
+      CASE WHEN review.status IN ('pending','rejected','withdrawn') THEN review.candidate_revision ELSE c.current_revision END
     WHERE ($1::uuid IS NULL OR EXISTS (
       SELECT 1 FROM platform_course_owners co WHERE co.course_id = c.id AND co.instructor_id = $1::uuid AND co.status = 'active'
     )) AND ($2::text IS NULL OR c.id::text = $2 OR c.slug = $2)
     AND ($5='' OR r.title_zh ILIKE '%'||$5||'%' OR r.title_en ILIKE '%'||$5||'%')
-    ORDER BY CASE WHEN $6='title' THEN COALESCE(NULLIF(r.title_zh,''),r.title_en) END ASC, c.updated_at DESC, c.id LIMIT $3 OFFSET $4
+    ORDER BY CASE WHEN $1::uuid IS NULL AND (review.status='pending' OR EXISTS (SELECT 1 FROM platform_content_reviews pending WHERE pending.course_id=c.id AND pending.status='pending')) THEN 0 ELSE 1 END,
+      CASE WHEN $6='title' THEN COALESCE(NULLIF(r.title_zh,''),r.title_en) END ASC, c.updated_at DESC, c.id LIMIT $3 OFFSET $4
   `, [instructorId, id, pageSize, offset,q,c.req.query('sort')??'updated']);
   if (id && !rows[0]) notFound('Course');
   privateNoStore(c);
@@ -50,10 +67,12 @@ async function listManagedCourses(c: Context, admin: boolean): Promise<Response>
 async function createCourse(c: Context, admin: boolean): Promise<Response> {
   const actor = admin ? await requirePlatformAdmin(c) : await requirePlatformActor(c);
   const body = await readJsonObject(c);
-  const input = courseFields(body, true);
+  const input = courseFields(contentReviewIntent(body, admin), true);
   if (platformTrialLessonIds(input.presentation)?.length) badRequest('Select trial lessons after creating the course');
   requireBilingualTitle(input.titleZh, input.titleEn);
-  const status = input.status ?? 'draft';
+  const requestedStatus = input.status ?? 'draft';
+  const reviewRequired = requiresContentReview(admin, requestedStatus);
+  const status = reviewRequired ? 'draft' : requestedStatus;
   const revisionStatus = status === 'published' || status === 'unlisted' ? 'published' : 'draft';
   if (input.memberAmountMinor != null && input.baseAmountMinor != null && input.memberAmountMinor > input.baseAmountMinor) {
     badRequest('memberAmountMinor cannot exceed baseAmountMinor');
@@ -92,9 +111,14 @@ async function createCourse(c: Context, admin: boolean): Promise<Response> {
           VALUES ($1::uuid, $2::uuid, 'owner', 10000, $3)
         `, [row.id, instructorId, actor.userId]);
       }
+      if (reviewRequired) await submitContentReview(db, {
+        courseId: row.id, baseRevision: 1, candidateRevision: 1, targetStatus: requestedStatus, userId: actor.userId,
+        metadata: { slug: row.slug, baseAmountMinor: input.baseAmountMinor ?? 0, memberAmountMinor: input.memberAmountMinor ?? null,
+          currency: input.currency ?? 'CNY', enrollmentMode: input.enrollmentMode ?? 'purchase' },
+      });
       await enqueuePlatformEvent(db, 'platform.course.created', 'course', row.id,
         `course:${row.id}:created`, { courseId: row.id, status });
-      return { status: 201, body: { course: row }, resourceType: 'course', resourceId: row.id };
+      return { status: 201, body: { course: { ...row, status, reviewStatus: reviewRequired ? 'pending' : null } }, resourceType: 'course', resourceId: row.id };
     } catch (error) {
       if (isPostgresConflict(error)) conflict('Course data conflicts with an existing record');
       throw error;
@@ -125,27 +149,37 @@ async function updateCourse(c: Context, admin: boolean): Promise<Response> {
   const actor = admin ? await requirePlatformAdmin(c) : await requirePlatformActor(c);
   const key = requiredParam(c, 'id');
   const body = await readJsonObject(c);
-  const input = courseFields(body, false);
+  const input = courseFields(contentReviewIntent(body, admin), false);
   const result = await withIdempotency(c, actor, `platform.${admin ? 'admin' : 'instructor'}.course.update:${key}`, body, async (db) => {
     const id = await authorizeCourseWrite(db, actor, key);
     const existing = await platformQuery<Record<string, unknown>>(db, `
       SELECT c.slug, c.status, c.base_amount_minor AS "baseAmountMinor", c.member_amount_minor AS "memberAmountMinor",
         c.currency, c.enrollment_mode AS "enrollmentMode", c.current_revision AS "currentRevision",
         r.title_zh AS "titleZh", r.title_en AS "titleEn", r.summary_zh AS "summaryZh", r.summary_en AS "summaryEn",
-        r.description_zh AS "descriptionZh", r.description_en AS "descriptionEn", r.presentation
-      FROM platform_courses c JOIN platform_course_revisions r ON r.course_id = c.id AND r.revision = c.current_revision
-      WHERE c.id = $1::uuid FOR UPDATE
+        r.description_zh AS "descriptionZh", r.description_en AS "descriptionEn", r.presentation,
+        live.presentation AS "livePresentation",
+        CASE WHEN review.status IN ('rejected','withdrawn') THEN review.metadata END AS "candidateMetadata"
+      FROM platform_courses c
+      JOIN platform_course_revisions live ON live.course_id=c.id AND live.revision=c.current_revision
+      LEFT JOIN LATERAL (SELECT candidate_revision,status,metadata FROM platform_content_reviews WHERE course_id=c.id AND lesson_id IS NULL AND base_revision=c.current_revision ORDER BY submitted_at DESC,id DESC LIMIT 1) review ON true
+      JOIN platform_course_revisions r ON r.course_id=c.id AND r.revision=CASE WHEN review.status IN ('rejected','withdrawn') AND c.status<>'archived' THEN review.candidate_revision ELSE c.current_revision END
+      WHERE c.id = $1::uuid FOR UPDATE OF c
     `, [id]);
-    const old = existing[0];
-    if (!old) notFound('Course');
-    const previousSelection = platformTrialLessonIds(old.presentation);
+    const current = existing[0];
+    if (!current) notFound('Course');
+    const old = { ...current, ...(current.status !== 'archived' && current.candidateMetadata && typeof current.candidateMetadata === 'object' ? current.candidateMetadata : {}) };
+    await assertNoPendingContentReview(db, id, null);
+    const status = input.status ?? String(old.status);
+    const reviewRequired = requiresContentReview(admin, status);
+    const previousSelection = platformTrialLessonIds(old.livePresentation);
+    const editingSelection = platformTrialLessonIds(old.presentation);
     const selection = platformTrialLessonIds(input.presentation);
     const presentation = input.presentation ? { ...input.presentation } : old.presentation ?? {};
     // Older editors may omit the new key when changing unrelated presentation fields.
-    if (input.presentation && selection === undefined && previousSelection !== undefined) {
-      (presentation as Record<string, unknown>).trialLessonIds = previousSelection;
+    if (input.presentation && selection === undefined && editingSelection !== undefined) {
+      (presentation as Record<string, unknown>).trialLessonIds = editingSelection;
     }
-    if (selection !== undefined && (previousSelection === undefined || JSON.stringify(selection) !== JSON.stringify([...previousSelection].sort()))) {
+    if (!reviewRequired && selection !== undefined && (previousSelection === undefined || JSON.stringify(selection) !== JSON.stringify([...previousSelection].sort()))) {
       await saveCourseTrialLessonSelection(db, id, selection);
     }
     const revision = {
@@ -154,12 +188,11 @@ async function updateCourse(c: Context, admin: boolean): Promise<Response> {
       descriptionZh: input.descriptionZh ?? String(old.descriptionZh), descriptionEn: input.descriptionEn ?? String(old.descriptionEn), presentation,
     };
     requireBilingualTitle(revision.titleZh, revision.titleEn);
-    const status = input.status ?? String(old.status);
     const baseAmountMinor = input.baseAmountMinor ?? Number(old.baseAmountMinor);
     const memberAmountMinor = input.memberAmountMinor === undefined ? old.memberAmountMinor : input.memberAmountMinor;
     if (memberAmountMinor != null && Number(memberAmountMinor) > baseAmountMinor) badRequest('memberAmountMinor cannot exceed baseAmountMinor');
-    const nextRevision = Number(old.currentRevision) + 1;
-    const revisionStatus = status === 'published' || status === 'unlisted' ? 'published' : 'draft';
+    const nextRevision = await nextContentRevision(db, id);
+    const revisionStatus = !reviewRequired && (status === 'published' || status === 'unlisted') ? 'published' : 'draft';
     await platformQuery(db, `
       INSERT INTO platform_course_revisions (
         course_id, revision, title_zh, title_en, summary_zh, summary_en, description_zh, description_en,
@@ -168,6 +201,12 @@ async function updateCourse(c: Context, admin: boolean): Promise<Response> {
         CASE WHEN $9::varchar = 'published' THEN $11::bigint ELSE NULL END, CASE WHEN $9::varchar = 'published' THEN NOW() ELSE NULL END, $12::jsonb)
     `, [id, nextRevision, revision.titleZh, revision.titleEn, revision.summaryZh, revision.summaryEn,
       revision.descriptionZh, revision.descriptionEn, revisionStatus, hashJson(revision), actor.userId, revision.presentation]);
+    if (reviewRequired) {
+      const reviewId = await submitContentReview(db, { courseId: id, baseRevision: Number(old.currentRevision), candidateRevision: nextRevision,
+        targetStatus: status, userId: actor.userId, metadata: { slug: input.slug ?? old.slug, baseAmountMinor, memberAmountMinor,
+          currency: input.currency ?? old.currency, enrollmentMode: input.enrollmentMode ?? old.enrollmentMode } });
+      return { status: 200, body: { course: { id, status: old.status, reviewId, reviewStatus: 'pending' } }, resourceType: 'course', resourceId: id };
+    }
     await platformQuery(db, `
       UPDATE platform_courses SET slug = $2, status = $3, current_revision = $4,
         base_amount_minor = $5, member_amount_minor = $6, currency = $7, enrollment_mode = $8,
@@ -188,6 +227,8 @@ async function archiveCourse(c: Context, admin: boolean): Promise<Response> {
   const key = requiredParam(c, 'id');
   const result = await withIdempotency(c, actor, `platform.${admin ? 'admin' : 'instructor'}.course.archive:${key}`, {}, async (db) => {
     const id = await authorizeCourseWrite(db, actor, key);
+    await platformQuery(db, 'SELECT id FROM platform_courses WHERE id=$1::uuid FOR UPDATE', [id]);
+    await withdrawPendingContentReview(db, id, null, true);
     await platformQuery(db, `
       UPDATE platform_courses SET status='archived', archived_at=COALESCE(archived_at,NOW()) WHERE id=$1::uuid
     `, [id]);

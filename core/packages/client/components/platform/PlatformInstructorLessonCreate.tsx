@@ -205,8 +205,8 @@ function LessonCreator({ courseId, draftKey, nextOrdinal, ...props }: CommonProp
     </section>
     {error && <p className="platform-form-error" role="alert">{error}</p>}
     <footer className="platform-lesson-create-footer">
-      <p>{draft.mode === 'video' && !video?.nodeId ? t('上传完成后即可发布，离开页面会暂停上传。', 'Publish after uploading. Leaving this page pauses the upload.') : t('保存草稿不会向学员公开课时。', 'Saving a draft does not publish the lesson.')}</p>
-      <div><button type="button" className="platform-button" disabled={saving} onClick={() => void save('draft')}>{t('保存草稿', 'Save draft')}</button><button type="button" className="platform-button platform-button-primary" disabled={saving || (draft.mode === 'video' && !video?.nodeId)} onClick={() => void save('published')}>{t('发布课时', 'Publish lesson')}</button></div>
+      <p>{draft.mode === 'video' && !video?.nodeId ? t('上传完成后即可提交审核，离开页面会暂停上传。', 'Submit for review after uploading. Leaving this page pauses the upload.') : t('图文和视频课时均须经过管理员审核后才会发布。你也可以先保存草稿。', 'Text and video lessons require administrator approval before publication. You can also save a draft.')}</p>
+      <div><button type="button" className="platform-button" disabled={saving} onClick={() => void save('draft')}>{t('保存草稿', 'Save draft')}</button><button type="button" className="platform-button platform-button-primary" disabled={saving || (draft.mode === 'video' && !video?.nodeId)} onClick={() => void save('published')}>{t('提交审核', 'Submit for review')}</button></div>
     </footer>
   </section>;
 }

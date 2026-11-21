@@ -7,6 +7,7 @@ import { registerCourseRoutes } from '../platform/catalog/course-routes.js';
 import { registerLessonMediaRoutes } from '../platform/catalog/lesson-media-routes.js';
 import { registerQuizRoutes } from '../platform/catalog/quiz-routes.js';
 import { registerHomepageRoutes } from '../platform/catalog/homepage-routes.js';
+import { registerContentReviewRoutes } from '../platform/catalog/content-review-routes.js';
 
 export { driveVideoNodeId } from '../platform/catalog/drive-media.js';
 
@@ -20,3 +21,4 @@ registerCourseRoutes(platformCatalogRoutes);
 registerLessonMediaRoutes(platformCatalogRoutes);
 registerQuizRoutes(platformCatalogRoutes);
 registerHomepageRoutes(platformCatalogRoutes);
+registerContentReviewRoutes(platformCatalogRoutes);

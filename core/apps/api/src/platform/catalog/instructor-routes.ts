@@ -24,6 +24,7 @@ import {
   booleanField,
 } from '../validation.js';
 import { requiredParam } from './course-access.js';
+import { readDraft, validateDraft, type DirectoryDraft } from '../../utils/teacher-directory-draft.js';
 import { type Context, type Hono } from 'hono';
 
 const APPLICATION_STATUSES = ['pending', 'approved', 'rejected', 'withdrawn'] as const;
@@ -31,7 +32,14 @@ const APPLICATION_STATUSES = ['pending', 'approved', 'rejected', 'withdrawn'] as
 type ProfileDraft = {
   publicName?: string; publicNameEn?: string; publicBio?: string; profileVisible?: boolean;
   city?: string; teachingMode?: string; specialties?: unknown[];
+  profileDeferred?: boolean; homepage?: DirectoryDraft;
 };
+
+async function requireOwnedProfileImages(db:PlatformDb,profile:DirectoryDraft,owner:string):Promise<void>{
+  if(!profile.images.length)return;
+  const rows=await platformQuery<{id:number;owner_wca_id:string}>(db,'SELECT id,owner_wca_id FROM article_image WHERE id=ANY($1::bigint[])',[profile.images.map(image=>image.id)]);
+  if(rows.length!==profile.images.length||rows.some(row=>row.owner_wca_id!==owner))badRequest('Invalid or unowned teaching profile image');
+}
 
 /** Called only inside the account/identity write transaction. Existing profile
  * identifiers and unrelated public contact/image fields are preserved. */
@@ -61,9 +69,29 @@ async function ensureApprovedProfile(db: PlatformDb, input: {
       await platformQuery(db, `UPDATE teacher_directory_entries SET owner_key=$2,owner_name=$3 WHERE id=$1`, [entryId, input.ownerKey, input.accountName]);
     }
   }
-  const { publicName, publicNameEn, publicBio, profileVisible, city, teachingMode, specialties } = input.draft;
+  const { publicName, publicNameEn, publicBio, profileVisible, city, teachingMode, specialties, profileDeferred, homepage } = input.draft;
   const tags = Array.isArray(specialties) ? specialties.filter((value): value is string => typeof value === 'string').slice(0, 8).map(value => value.slice(0, 50)) : [];
+  if(homepage&&input.updateExisting!==false){
+    const profile=readDraft({...homepage,kind:'teacher',isCurated:false,wcaId:input.wcaId??'',contact:''});
+    const problem=validateDraft(profile);if(problem)badRequest(`Invalid teaching profile: ${problem}`);
+    await requireOwnedProfileImages(db,profile,input.ownerKey);
+    const values=[profile.nameZh,profile.nameEn,profile.locationZh,profile.locationEn,profile.descriptionZh,profile.descriptionEn,profile.specialtiesZh,profile.specialtiesEn,profile.teachingMode,profile.contacts,profile.images,profile.contact,profile.website,profile.isVisible];
+    if(entryId!=null){
+      const owned=await platformQuery(db,`SELECT id FROM teacher_directory_entries WHERE id=$1 AND owner_key=$2 AND kind='teacher' FOR UPDATE`,[entryId,input.ownerKey]);
+      if(!owned.length)conflict('Canonical teaching profile ownership requires administrator review');
+      await platformQuery(db,`UPDATE teacher_directory_entries SET name_zh=$1,name_en=$2,location_zh=$3,location_en=$4,description_zh=$5,description_en=$6,specialties_zh=$7::jsonb,specialties_en=$8::jsonb,teaching_mode=$9,contacts=$10::jsonb,images=$11::jsonb,contact=$12,website=$13,is_visible=$14 WHERE id=$15 AND kind='teacher'`,[...values,entryId]);
+      return entryId;
+    }
+    const [created]=await platformQuery<{id:number}>(db,`INSERT INTO teacher_directory_entries(kind,name_zh,name_en,location_zh,location_en,description_zh,description_en,specialties_zh,specialties_en,teaching_mode,contacts,images,contact,website,is_visible,owner_key,owner_name,wca_id) VALUES('teacher',$1,$2,$3,$4,$5,$6,$7::jsonb,$8::jsonb,$9,$10::jsonb,$11::jsonb,$12,$13,$14,$15,$16,$17) RETURNING id`,[...values,input.ownerKey,input.accountName,input.wcaId]);
+    return Number(created.id);
+  }
   if (entryId != null) {
+    if(input.updateExisting!==false&&profileDeferred){
+      const owned=await platformQuery(db,`SELECT id FROM teacher_directory_entries WHERE id=$1 AND owner_key=$2 AND kind='teacher' FOR UPDATE`,[entryId,input.ownerKey]);
+      if(!owned.length)conflict('Canonical teaching profile ownership requires administrator review');
+      await platformQuery(db,`UPDATE teacher_directory_entries SET name_zh=COALESCE($2,name_zh),name_en=COALESCE($3,name_en),is_visible=false WHERE id=$1 AND kind='teacher'`,[entryId,publicName??null,publicNameEn??null]);
+      return entryId;
+    }
     if (input.updateExisting !== false && publicName && publicBio) {
       const owned = await platformQuery(db, `SELECT id FROM teacher_directory_entries WHERE id=$1 AND owner_key=$2 AND kind='teacher' FOR UPDATE`, [entryId, input.ownerKey]);
       if (!owned.length) conflict('Canonical teaching profile ownership requires administrator review');
@@ -189,13 +217,14 @@ export function registerInstructorRoutes(platformCatalogRoutes: Hono): void {
     `, [actor.userId]), platformQuery(db, `
       SELECT t.id, t.name_zh AS "nameZh", t.name_en AS "nameEn", t.is_visible AS "isVisible",
         t.description_zh AS "descriptionZh",t.description_en AS "descriptionEn",t.location_zh AS "locationZh",
-        t.specialties_zh AS "specialtiesZh",t.teaching_mode AS "teachingMode"
+        t.location_en AS "locationEn",t.specialties_zh AS "specialtiesZh",t.specialties_en AS "specialtiesEn",t.teaching_mode AS "teachingMode",
+        t.contacts,t.images,t.website
       FROM teacher_directory_entries t WHERE t.owner_key=$1 AND t.kind='teacher' AND (t.wca_id IS NULL OR t.wca_id=$3)
       AND NOT EXISTS (SELECT 1 FROM platform_instructors i WHERE i.teacher_entry_id=t.id AND i.user_id IS DISTINCT FROM $2)
       ORDER BY t.updated_at DESC, t.id
     `, [actor.ownerKey, actor.userId, actor.wcaId])]);
     privateNoStore(c);
-    return c.json({ application: rows[0] ?? null, instructor: instructors[0] ?? null, profiles });
+    return c.json({ application: rows[0] ?? null, instructor: instructors[0] ?? null, profiles, homepageDraftSupported:true });
   });
 
   platformCatalogRoutes.post('/platform/instructor/applications', async (c) => {
@@ -207,11 +236,21 @@ export function registerInstructorRoutes(platformCatalogRoutes: Hono): void {
     const city = stringField(body, 'city', { max: 160 });
     const teachingMode = enumField(body, 'teachingMode', ['online', 'in_person', 'both'] as const);
     const achievements = stringField(body, 'achievements', { max: 5000 });
-    const publicName = stringField(body, 'publicName', { max: 160 });
-    const publicNameEn = stringField(body, 'publicNameEn', { max: 160 });
-    const publicBio = stringField(body, 'publicBio', { max: 2000 });
-    const profileVisible = booleanField(body, 'profileVisible');
-    if ((publicName !== undefined || publicBio !== undefined || profileVisible !== undefined) && (!publicName || !publicBio)) {
+    let publicName = stringField(body, 'publicName', { max: 160 });
+    let publicNameEn = stringField(body, 'publicNameEn', { max: 160 });
+    let publicBio = stringField(body, 'publicBio', { max: 2000 });
+    let profileVisible = booleanField(body, 'profileVisible');
+    const profileDeferred=booleanField(body,'profileDeferred')===true;
+    let homepage:DirectoryDraft|undefined;
+    if(body.homepage!=null){
+      if(profileDeferred||typeof body.homepage!=='object'||Array.isArray(body.homepage))badRequest('Invalid teaching profile draft');
+      homepage=readDraft({...body.homepage as Partial<DirectoryDraft>,kind:'teacher',isCurated:false,wcaId:actor.wcaId??'',contact:''});
+      const problem=validateDraft(homepage);if(problem)badRequest(`Invalid teaching profile: ${problem}`);
+      publicName=homepage.nameZh||homepage.nameEn;publicNameEn=homepage.nameEn;publicBio=homepage.descriptionZh||homepage.descriptionEn;profileVisible=homepage.isVisible;
+    }else if(profileDeferred){
+      if(!publicName)badRequest('Public instructor name is required');
+      publicBio='';profileVisible=false;
+    }else if ((publicName !== undefined || publicBio !== undefined || profileVisible !== undefined) && (!publicName || !publicBio)) {
       badRequest('Public instructor name and biography are required');
     }
     if (!specialties?.length || !specialties.every((value) => typeof value === 'string' && value.trim().length > 0 && value.length <= 120)) {
@@ -228,13 +267,14 @@ export function registerInstructorRoutes(platformCatalogRoutes: Hono): void {
         WHERE applicant_user_id = $1 AND status = 'pending'
       `, [actor.userId]);
       if (existing[0]) conflict('A pending instructor application already exists');
+      if(homepage)await requireOwnedProfileImages(db,homepage,actor.ownerKey);
       const rows = await platformQuery<{ id: string; status: string }>(db, `
         INSERT INTO platform_instructor_applications (
           applicant_user_id, applicant_display_name_snapshot, application_snapshot
         ) VALUES ($1, $2, $3::jsonb)
         RETURNING id::text AS id, status
       `, [actor.userId, actor.displayName, { experience, specialties, contact, ...(city ? { city } : {}), ...(teachingMode ? { teachingMode } : {}), ...(achievements ? { achievements } : {}),
-        ...(publicName && publicBio ? { publicName, publicNameEn: publicNameEn ?? '', publicBio, profileVisible: profileVisible ?? false } : {}) }]);
+        ...(publicName && (publicBio || profileDeferred || homepage) ? { publicName, publicNameEn: publicNameEn ?? '', publicBio:publicBio??'', profileVisible: profileVisible ?? false } : {}),...(profileDeferred?{profileDeferred:true}:{}),...(homepage?{homepage}:{}) }]);
       await enqueuePlatformEvent(db, 'platform.instructor.application_submitted', 'instructor_application', rows[0].id,
         `instructor-application:${rows[0].id}:submitted`, { applicationId: rows[0].id });
       return { status: 201, body: { application: rows[0] }, resourceType: 'instructor_application', resourceId: rows[0].id };

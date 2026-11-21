@@ -14,7 +14,7 @@ import { useT } from '@/hooks/useT';
 import { useLang } from '@/i18n/tr';
 import { useAuthUser, useIsAdmin } from '@/lib/auth-store';
 import { SEARCH_CARDS, isLandingSearchCardVisible } from '@/lib/landing-sections';
-import { isPlatformCourseClassroom, isPlatformInstructorCourseEditor, platformParentHref, PLATFORM_PUBLIC_NAV } from '@/lib/platform-routes';
+import { isPlatformCourseClassroom, isPlatformInstructorApplication, isPlatformInstructorCourseEditor, platformParentHref, PLATFORM_PUBLIC_NAV } from '@/lib/platform-routes';
 import { PLATFORM_ADMIN_NAV, PLATFORM_PERSONAL_ROUTES, PLATFORM_SECTION_NAV, platformAdminNavigationState, platformNavigationState, platformPathname, platformWorkspaceRoutes } from '@/lib/platform-navigation';
 import { PlatformNavigationContext, PlatformInstructorAccessRefreshContext, PlatformSearchContext, type PlatformSearchBinding, type PlatformSearchScope } from '@/lib/platform-navigation-context';
 import { PlatformScopedSearch } from './PlatformScopedSearch';
@@ -63,11 +63,11 @@ function PlatformShellContent({ children, shared }: { children: ReactNode; share
   const owner = user ? String(user.uid ?? user.wcaId) : '';
   const { primary, secondary, definition } = platformNavigationState(pathname);
   const admin = isAdmin ? platformAdminNavigationState(definition) : null;
-  const instructorWorkspace = definition?.area === 'instructor' && definition.id !== 'teacher-apply';
+  const instructorWorkspace = definition?.area === 'instructor' && !isPlatformInstructorApplication(definition.id);
   const instructorHome = definition?.id === 'instructor';
   const instructorCourseEditor = isPlatformInstructorCourseEditor(definition?.id);
   const instructorStudio = instructorWorkspace && !instructorCourseEditor;
-  const showNavigation = !instructorWorkspace && definition?.id !== 'course-detail' && !isPlatformCourseClassroom(definition?.id);
+  const showNavigation = !instructorWorkspace && definition?.id !== 'teacher-apply-start' && definition?.id !== 'course-detail' && !isPlatformCourseClassroom(definition?.id);
   const checkInstructor = Boolean(owner && (showNavigation || instructorStudio) && !admin);
   useEffect(() => {
     if (!checkInstructor) return;

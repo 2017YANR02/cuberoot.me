@@ -80,8 +80,10 @@ const COURSE_FIELDS = [
   field('slug', '课程链接标识', 'Course URL identifier', { required: true, pattern: '[a-z0-9][a-z0-9_-]{0,119}', maxLength: 120, placeholder: text('例如 3x3-beginner', 'e.g. 3x3-beginner') }),
 ] satisfies ContractFields<PlatformCourseWrite>;
 
-export const INSTRUCTOR_COURSE_FIELDS = COURSE_FIELDS;
-export const INSTRUCTOR_COURSE_CREATE_FIELDS = COURSE_FIELDS.map(item => item.key === 'slug'
+export const INSTRUCTOR_COURSE_FIELDS = COURSE_FIELDS.map(item => item.key === 'status'
+  ? { ...item, label: text('发布方式', 'Publication'), options: [option('draft', '保存草稿', 'Save draft'), option('published', '提交审核 · 公开发布', 'Submit for public publication'), option('unlisted', '提交审核 · 不公开列出', 'Submit for unlisted publication'), option('archived', '已归档', 'Archived')] }
+  : item);
+export const INSTRUCTOR_COURSE_CREATE_FIELDS = INSTRUCTOR_COURSE_FIELDS.map(item => item.key === 'slug'
   ? { ...item, required: false, label: text('课程链接标识（选填）', 'Course URL identifier (optional)'), placeholder: text('留空自动生成', 'Generated if left blank') }
   : item.key === 'baseAmountMinor' ? { ...item, defaultValue: 0 }
   : item);
@@ -143,7 +145,7 @@ export const INSTRUCTOR_APPLICATION_FIELDS = [
   field('publicNameEn', '英文姓名（选填）', 'English name (optional)', { maxLength: 160 }),
   field('publicBio', '公开教学简介', 'Public teaching biography', { kind: 'textarea', rows: 4, required: true, maxLength: 2000 }),
   field('profileVisible', '审核通过后在讲师名录公开展示', 'Show in the directory after approval', { kind: 'boolean', defaultValue: false }),
-  field('city', '所在城市（公开）', 'City (public)', { sectionTitle: text('授课信息', 'Teaching details'), required: true, maxLength: 160 }),
+  field('city', '所在城市（公开，线下授课必填）', 'City (public, required for in-person teaching)', { sectionTitle: text('授课信息', 'Teaching details'), maxLength: 160 }),
   field('teachingMode', '授课方式（公开）', 'Teaching mode (public)', { kind: 'select', required: true, defaultValue: 'both', options: [option('online', '线上', 'Online'), option('in_person', '线下', 'In person'), option('both', '线上及线下', 'Both')] }),
   field('specialties', '擅长方向（公开，每行一项）', 'Specialties (public, one per line)', { kind: 'lines', rows: 2, required: true }),
   field('experience', '教学经历（审核专用）', 'Teaching experience (review only)', { sectionTitle: text('私密审核资料', 'Private review details'), kind: 'textarea', rows: 4, required: true, maxLength: 20000 }),

@@ -3,6 +3,7 @@ import { platformQrLinksProblem, platformQrTargetProblem, type PlatformQrLink, t
 import type { PlatformEntity } from '@/lib/platform-types';
 import { platformLocalDateTime, platformMajorToMinor, platformMinorToMajor } from '@/lib/platform-commerce-fields';
 import { type FieldSpec } from './PlatformActionTypes';
+import { isPlatformInstructorApplication } from '@/lib/platform-routes';
 
 export function initialValue(spec: FieldSpec, entity?: PlatformEntity): string | boolean {
   const value = entity?.data?.[spec.key] ?? spec.defaultValue ?? (spec.kind === 'boolean' ? false : spec.kind === 'select' ? spec.options?.[0]?.value ?? '' : '');
@@ -30,10 +31,11 @@ export function payloadValue(spec: FieldSpec, value: string | boolean): unknown 
 }
 
 export function validatePayload(routeId: string, payload: Record<string, unknown>, t: ReturnType<typeof useT>): string | null {
-  if (routeId === 'teacher-apply') {
-    if (!payload.publicName || !payload.publicBio) return t('请填写公开姓名及教学简介。', 'Enter a public name and teaching biography.');
-    if (['city', 'experience', 'contact'].some(key => typeof payload[key] !== 'string' || !payload[key])) return t('请填写所在城市、教学经历及联系方式。', 'Enter your city, teaching experience and contact details.');
-    if (!Array.isArray(payload.specialties) || !payload.specialties.length || payload.specialties.length > 30 || payload.specialties.some(value => typeof value !== 'string' || value.length > 120)) return t('请填写擅长方向，最多 30 项，每项不超过 120 个字符。', 'Enter between 1 and 30 specialties, up to 120 characters each.');
+  if (isPlatformInstructorApplication(routeId)) {
+    if (!payload.publicName || (!payload.publicBio && !payload.profileDeferred && (!payload.homepage || payload.profileVisible))) return t('请填写公开姓名及教学简介。', 'Enter a public name and teaching biography.');
+    if (payload.teachingMode !== 'online' && !payload.city) return t('线下授课需要填写所在城市。', 'Enter your city for in-person teaching.');
+    if (['experience', 'contact'].some(key => typeof payload[key] !== 'string' || !payload[key])) return t('请填写教学经历及联系方式。', 'Enter your teaching experience and contact details.');
+    if (!Array.isArray(payload.specialties) || !payload.specialties.length || payload.specialties.length > 8 || payload.specialties.some(value => typeof value !== 'string' || value.length > 50)) return t('请填写擅长方向，最多 8 项，每项不超过 50 个字符。', 'Enter between 1 and 8 specialties, up to 50 characters each.');
   }
   if (routeId === 'admin-qr') {
     const rawLinks = payload.links;

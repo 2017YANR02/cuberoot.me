@@ -17,8 +17,8 @@ import { useLang } from '@/i18n/tr';
 import { nextQuery, useAuthUser, useIsAdmin } from '@/lib/auth-store';
 import { executePlatformAction, loadPlatformResource, localizePlatformEntity, PlatformPermissionError } from '@/lib/platform-gateway';
 import { WebSessionRestoreError } from '@/lib/session-fetch';
-import { fillPlatformParams, isPlatformCourseClassroom, isPlatformInstructorCourseEditor, isPlatformLearningWorkspace, PLATFORM_INSTRUCTOR_PAGE_SIZES, PLATFORM_ROUTES } from '@/lib/platform-routes';
-import { isInstructorCourseListEntry, platformNavigationState, platformWorkspaceRoutes } from '@/lib/platform-navigation';
+import { fillPlatformParams, isPlatformCourseClassroom, isPlatformInstructorApplication, isPlatformInstructorCourseEditor, isPlatformLearningWorkspace, PLATFORM_INSTRUCTOR_PAGE_SIZES, PLATFORM_ROUTES } from '@/lib/platform-routes';
+import { isInstructorCourseListEntry, platformNavigationState, platformPathname, platformWorkspaceRoutes } from '@/lib/platform-navigation';
 import { PlatformNavigationContext, PlatformInstructorAccessRefreshContext, usePlatformSearchBinding, type PlatformFilterGroup } from '@/lib/platform-navigation-context';
 import type { PlatformActionId, PlatformActionResult, PlatformEntity, PlatformResourceResult, PlatformRouteDefinition } from '@/lib/platform-types';
 import { PlatformState } from './PlatformState';
@@ -29,6 +29,7 @@ import { COURSE_TOPIC_IDS, courseCatalogDetails, loadCourseCatalog, loadLegacyCo
 import { PlatformCourseCards, PlatformCourseToolbar } from './PlatformCourseCatalog';
 import { PlatformEntityList } from './PlatformEntityList';
 import { PlatformScopedSearch } from './PlatformScopedSearch';
+import { InstructorAdmissionIntro, INSTRUCTOR_APPLICATION_START } from './PlatformInstructorAdmission';
 
 const PlatformDomainActions = dynamic(() => import('./PlatformDomainActions').then(module => module.PlatformDomainActions),
   { ssr: false, loading: () => <PlatformState kind="loading" /> });
@@ -70,6 +71,8 @@ export function PlatformResourceRouteView({
   const inPlatformShell = useContext(PlatformNavigationContext);
   const refreshInstructorAccess = useContext(PlatformInstructorAccessRefreshContext);
   const instructorCourseList = definition.id === 'instructor-courses';
+  const instructorApplication = isPlatformInstructorApplication(definition.id);
+  const applicationStart = definition.id === 'teacher-apply-start';
   const pageSizeOptions = definition.area === 'instructor' && definition.id !== 'teacher-apply' ? PLATFORM_INSTRUCTOR_PAGE_SIZES : [20, 50, 100];
   const defaultPageSize = pageSizeOptions[0];
   const [mounted, setMounted] = useState(false);
@@ -120,7 +123,7 @@ export function PlatformResourceRouteView({
   const [retry, setRetry] = useState(0);
   const [actionBusy, setActionBusy] = useState<string | null>(null);
   const [actionMessage, setActionMessage] = useState<string | null>(null);
-  const instructorApplicationFlow = definition.id === 'teacher-apply' || definition.id === 'admin-application';
+  const instructorApplicationFlow = instructorApplication || definition.id === 'admin-application';
   const [reviewMessage, setReviewMessage] = useState<{ text: string; error?: boolean } | null>(null);
   const [redeemedCourseIds, setRedeemedCourseIds] = useState<ReadonlySet<string>>(() => new Set());
   const qrAdminMode = ({ 'admin-qr': 'manage', 'admin-qr-stats': 'stats', 'admin-qr-prompts': 'prompts' } as const)[definition.id as 'admin-qr' | 'admin-qr-stats' | 'admin-qr-prompts'];
@@ -137,7 +140,7 @@ export function PlatformResourceRouteView({
   const loadsResource = !isQrCardStudio && !learningWorkspace && !qrAdminMode && definition.kind !== 'canonical' && Boolean(definition.resource)
     && definition.id !== 'account-invites'
     && definition.id !== 'account-privacy'
-    && (definition.kind !== 'form' || definition.id === 'teacher-apply' || instructorCourseNew || instructorLessonNew);
+    && (definition.kind !== 'form' || instructorApplication || instructorCourseNew || instructorLessonNew);
   const permissionDenied = error instanceof PlatformPermissionError;
   const courseCatalog = definition.id === 'courses';
   const includeCourseAccess = Boolean(user) && (definition.id === 'course-detail' || definition.id.startsWith('course-section-'));
@@ -227,14 +230,14 @@ export function PlatformResourceRouteView({
     if (!result) return [];
     return result.items.map(item => {
       const localized = localizePlatformEntity(item, lang);
-      if (definition.id === 'teacher-apply') return { ...localized, title: t('讲师申请', 'Instructor application') };
+      if (instructorApplication) return { ...localized, title: t('讲师申请', 'Instructor application') };
       if (definition.resource === 'admin-applications') {
         const name = item.data?.applicantDisplayName;
         return { ...localized, title: typeof name === 'string' && name.trim() ? name.trim() : t('未知申请人', 'Unknown applicant') };
       }
       return localized;
     });
-  }, [result, lang, definition.id, definition.resource, t]);
+  }, [result, lang, definition.id, definition.resource, instructorApplication, t]);
 
   const courseEntries = useMemo(() => courseCatalog
     ? sortedItems.map(course => ({ course, details: courseCatalogDetails(course) }))
@@ -289,6 +292,10 @@ export function PlatformResourceRouteView({
     const profileEntityId = definition.id === 'instructor-profile' ? result?.items[0]?.id : undefined;
     const isCurrent = () => actionScope.current.active && actionScope.current.epoch === epoch;
     if (!isCurrent()) return undefined;
+    if(action==='apply-instructor'&&applicationStart&&result?.instructorHomepageDraft===false){
+      setActionMessage(t('新版讲师申请需要更新服务后才能提交。已填写资料暂时保留，请联系管理员。','The service must be updated before this application can be submitted. Your entries remain available; contact an administrator.'));
+      return undefined;
+    }
     const key = id ? `${action}:${id}` : action;
     setActionBusy(key);
     setActionMessage(null);
@@ -320,7 +327,9 @@ export function PlatformResourceRouteView({
         return response;
       }
       if (action === 'submit-review') setReviewMessage({ text: t('评价已保存。', 'Review saved.') });
-      else setActionMessage(action === 'start-payment' || instructorApplicationFlow ? null : response.message ?? t('操作已完成。', 'Action completed.'));
+      else setActionMessage(action === 'start-payment' || instructorApplicationFlow ? null
+        : response.course?.reviewStatus === 'pending' || response.lesson?.reviewStatus === 'pending' ? t('已提交发布审核。', 'Submitted for publication review.')
+        : response.message ?? t('操作已完成。', 'Action completed.'));
       if (definition.id === 'admin-qr-detail' && action === 'admin-save' && params.code
         && response.code && response.code !== params.code) {
         const url = new URL(window.location.href);
@@ -405,8 +414,8 @@ export function PlatformResourceRouteView({
   const showHeader = !headingInNavigation || showAreaTitle || showDescription;
 
   return (
-    <div className={`platform-route${courseDetail ? ' platform-course-detail' : ''}${courseClassroom ? ' platform-course-classroom' : ''}${inviteManager ? ' platform-invite-page' : ''}${instructorCourseEditor ? ' platform-instructor-course-editor-page' : ''}${definition.id === 'instructor-courses' ? ' platform-instructor-course-list-page' : ''}`}>
-      {courseClassroom ? <header className="platform-route-header">
+    <div className={`platform-route${courseDetail ? ' platform-course-detail' : ''}${courseClassroom ? ' platform-course-classroom' : ''}${inviteManager ? ' platform-invite-page' : ''}${instructorCourseEditor ? ' platform-instructor-course-editor-page' : ''}${definition.id === 'instructor-courses' ? ' platform-instructor-course-list-page' : ''}${applicationStart ? ' platform-instructor-application-page' : ''}`}>
+      {applicationStart ? <header className="platform-route-header platform-wizard-route-header"><PageBackLink fallback="/platform/teachers/apply" label={t('返回讲师入驻','Back to instructor admission')} acceptEntry={href=>platformPathname(href)==='/platform/teachers/apply'} /><h1 className="sr-only">{pageTitle}</h1><LangToggle soft showLabel /></header> : courseClassroom ? <header className="platform-route-header">
         <PageBackLink fallback={`/platform/courses/${encodeURIComponent(params.id)}`} label={t('返回课程详情', 'Back to course details')} />
         <h1 className="sr-only">{sortedItems[0]?.title ?? pageTitle}</h1>
       </header> : instructorCourseEditor ? <header className={`platform-route-header${instructorCourseNew ? ' platform-wizard-route-header' : instructorLessonNew ? ' platform-lesson-route-header' : ''}`}>
@@ -441,10 +450,10 @@ export function PlatformResourceRouteView({
         !mounted ? <PlatformState kind="loading" /> : !allowed ? <PlatformState kind="permission" /> : <PlatformCanonicalView definition={definition} params={params} />
       ) : !mounted ? (
         <PlatformState kind="loading" />
-      ) : !allowed && definition.id === 'teacher-apply' ? (
+      ) : !allowed && definition.id === 'teacher-apply' ? <InstructorAdmissionIntro signedIn={false}/> : !allowed && applicationStart ? (
         <section className="platform-application-flow platform-application-guest">
           <h2>{t('申请成为讲师', 'Apply as an instructor')}</h2><p>{t('分享你的教学经验，审核通过后即可使用讲师工作台。', 'Share your teaching experience and unlock the instructor workspace after approval.')}</p>
-          <AppLink className="platform-button platform-button-primary" href={`/account${nextQuery(`${lang === 'zh' ? '/zh' : ''}/platform/teachers/apply`)}`} prefetch={false}>{t('登录后申请', 'Sign in to apply')}</AppLink>
+          <AppLink className="platform-button platform-button-primary" href={`/account${nextQuery(`${lang === 'zh' ? '/zh' : ''}${INSTRUCTOR_APPLICATION_START}`)}`} prefetch={false}>{t('登录后申请', 'Sign in to apply')}</AppLink>
         </section>
       ) : !allowed ? (
         <PlatformState
@@ -535,7 +544,7 @@ export function PlatformResourceRouteView({
             ) : <PlatformState kind="empty" message={query || puzzle || category
               ? t('没有符合条件的课程。试试清除筛选或更换关键词。', 'No courses match. Clear a filter or try another search.')
               : undefined} />
-          ) : inviteManager || definition.id === 'teacher-apply' ? null : sortedItems.length === 0 && definition.id !== 'membership' && definition.id !== 'me-membership' ? (
+          ) : inviteManager || instructorApplication ? null : sortedItems.length === 0 && definition.id !== 'membership' && definition.id !== 'me-membership' ? (
             <PlatformState
               kind="empty"
               title={definition.id === 'instructor-courses' ? (query ? t('没有匹配的课程', 'No matching courses') : t('还未创建课程', 'No courses created yet')) : undefined}
@@ -562,7 +571,7 @@ export function PlatformResourceRouteView({
 
           {!instructorProfile && !instructorCourseEditor && !catalogOnly && !permissionDenied && !orderUnavailable ? <PlatformDomainContent definition={definition} params={params} entity={sortedItems[0]} previewRedirect={stay === '1'} selectedLessonId={selectedLessonId} lessonStartTime={lessonStartTime ?? undefined} onSelectLesson={id => { void setLessonStartTime(null); void setSelectedLessonId(id); }} /> : null}
 
-          {instructorProfile || (instructorCourseNew && (!canCreateInstructorCourse || error)) || ((definition.id === 'instructor-course' || instructorLessonNew) && (!sortedItems[0] || error)) || catalogOnly || permissionDenied || orderUnavailable || definition.id === 'qr' || (courseDetail && !course) || (['membership', 'me-membership'].includes(definition.id) && !result) || (['teacher-apply', 'admin-application'].includes(definition.id) && (!result || error)) ? null : (
+          {instructorProfile || (instructorCourseNew && (!canCreateInstructorCourse || error)) || ((definition.id === 'instructor-course' || instructorLessonNew) && (!sortedItems[0] || error)) || catalogOnly || permissionDenied || orderUnavailable || definition.id === 'qr' || (courseDetail && !course) || (['membership', 'me-membership'].includes(definition.id) && !result) || (instructorApplicationFlow && (!result || error)) ? null : (
             <PlatformDomainActions
               definition={definition}
               params={params}
@@ -571,7 +580,7 @@ export function PlatformResourceRouteView({
               busy={actionBusy}
               runAction={runAction}
               reviewMessage={reviewMessage}
-              onSaved={() => { setRetry(value => value + 1); if (definition.id === 'teacher-apply') refreshInstructorAccess(); }}
+              onSaved={() => { setRetry(value => value + 1); if (instructorApplication) refreshInstructorAccess(); }}
             />
           )}
           {actionMessage && (definition.id !== 'order-detail' || sortedItems[0]?.status !== 'pending_payment') ? <p className={instructorApplicationFlow ? 'platform-action-message platform-form-error' : 'platform-action-message'} role={instructorApplicationFlow ? 'alert' : 'status'}>{actionMessage}</p> : null}

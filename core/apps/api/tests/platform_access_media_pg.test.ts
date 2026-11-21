@@ -29,7 +29,9 @@ import { requirePlatformActor, requirePlatformAdmin } from '../src/platform/auth
 import { platformRouter } from '../src/platform/http.js';
 import { createPlatformMediaToken } from '../src/platform/media_access.js';
 import { authorizeCourseWrite } from '../src/platform/catalog/course-access.js';
-import { saveCourseTrialLessonSelection } from '../src/platform/catalog/course-routes.js';
+import { registerCourseRoutes, saveCourseTrialLessonSelection } from '../src/platform/catalog/course-routes.js';
+import { registerContentReviewRoutes } from '../src/platform/catalog/content-review-routes.js';
+import { contentReviewIntent, requiresContentReview } from '../src/platform/catalog/content-review.js';
 import { registerLessonRoutes } from '../src/platform/catalog/lesson-routes.js';
 import { registerMediaRoutes } from '../src/platform/learning/media-routes.js';
 import { platformDb, type PlatformDb } from '../src/platform/db.js';
@@ -68,6 +70,19 @@ describe('Platform authentication adapter', () => {
     expect(await valid.json()).toMatchObject({ userId: null, viaApiKey: true, isAdmin: true });
     expect((await authApp.request('/admin', { headers: { 'X-Admin-Key': 'invalid', 'X-Fixture-Actor': '5' } })).status).toBe(403);
   });
+
+  it('only gates publication, and denies instructor access to the decision route', async () => {
+    expect(['draft', 'published', 'unlisted', 'archived'].map(status => requiresContentReview(false, status))).toEqual([false, true, true, false]);
+    expect(requiresContentReview(true, 'published')).toBe(false);
+    expect(contentReviewIntent({ status: 'pending_review', targetStatus: 'published' }, false)).toMatchObject({ status: 'published' });
+    expect(() => contentReviewIntent({ status: 'pending_review', targetStatus: 'unlisted' }, false, true)).toThrow();
+    const app = platformRouter();
+    registerContentReviewRoutes(app);
+    const response = await app.request(`/platform/admin/courses/${randomUUID()}/content-reviews/${randomUUID()}/decision`, {
+      method: 'POST', headers: { 'X-Fixture-Actor': '3', 'Content-Type': 'application/json' }, body: JSON.stringify({ decision: 'approved' }),
+    });
+    expect(response.status).toBe(403);
+  });
 });
 
 const databaseUrl = process.env.PLATFORM_MEDIA_TEST_DATABASE_URL;
@@ -84,6 +99,8 @@ describe.skipIf(!databaseUrl)('course access and signed media with PostgreSQL an
   const app = platformRouter();
   registerMediaRoutes(app);
   registerLessonRoutes(app);
+  registerCourseRoutes(app);
+  registerContentReviewRoutes(app);
   app.get('/course/:id/write-access', async c => c.json({
     id: await authorizeCourseWrite(platformDb(), await requirePlatformActor(c), c.req.param('id')),
   }));
@@ -110,7 +127,7 @@ describe.skipIf(!databaseUrl)('course access and signed media with PostgreSQL an
     await db.unsafe(`CREATE FUNCTION trg_set_updated_at() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN NEW.updated_at=NOW(); RETURN NEW; END $$;
       CREATE TABLE app_users(id BIGINT PRIMARY KEY);
       CREATE TABLE teacher_directory_entries(id BIGINT PRIMARY KEY);`);
-    for (const migration of ['0167_platform_core.sql', '0184_drive.sql', '0189_drive_shares.sql', '0216_drive_member_folders.sql', '0218_drive_compressions.sql', '0219_platform_lesson_grants.sql', '0244_platform_lesson_covers.sql']) {
+    for (const migration of ['0167_platform_core.sql', '0184_drive.sql', '0189_drive_shares.sql', '0216_drive_member_folders.sql', '0218_drive_compressions.sql', '0219_platform_lesson_grants.sql', '0244_platform_lesson_covers.sql', '0259_platform_learning_completion.sql', '0349_platform_content_reviews.sql']) {
       await db.unsafe(await readFile(new URL(`../migrations/${migration}`, import.meta.url), 'utf8'));
     }
     await db.unsafe('INSERT INTO app_users VALUES (1),(2),(3),(4),(5)');
@@ -202,6 +219,41 @@ describe.skipIf(!databaseUrl)('course access and signed media with PostgreSQL an
     expect(results.map(response => response.status)).toEqual([201, 201]);
     const rows = await db.unsafe(`SELECT ordinal FROM platform_lessons WHERE course_id=$1 AND slug LIKE 'append-%' ORDER BY ordinal`, [courseId]);
     expect(rows.map(row => Number(row.ordinal))).toEqual([3, 4]);
+  });
+
+  it('requires administrator approval for publication and preserves the live revision during review', async () => {
+    const mutation = (url: string, method: string, actor: number, body: unknown) => app.request(url, {
+      method, headers: { ...headers(actor), 'Content-Type': 'application/json', 'Idempotency-Key': randomUUID() },
+      body: JSON.stringify(body),
+    });
+    const create = await mutation('/platform/instructor/courses', 'POST', 3, { slug: 'review-course-fixture', titleEn: 'Draft course', status: 'draft' });
+    expect(create.status).toBe(201);
+    const { course: { id } } = await create.json();
+    expect((await db.unsafe('SELECT status FROM platform_courses WHERE id=$1', [id]))[0].status).toBe('draft');
+    const submit = await mutation(`/platform/instructor/courses/${id}`, 'PATCH', 3, { status: 'pending_review', targetStatus: 'published', titleEn: 'Reviewed course' });
+    expect(submit.status).toBe(200);
+    const { course: { reviewId } } = await submit.json();
+    expect((await db.unsafe('SELECT status FROM platform_courses WHERE id=$1', [id]))[0].status).toBe('draft');
+    const decision = `/platform/admin/courses/${id}/content-reviews/${reviewId}/decision`;
+    expect((await mutation(decision, 'POST', 3, { decision: 'approved' })).status).toBe(403);
+    expect((await mutation(decision, 'POST', 5, { decision: 'approved' })).status).toBe(200);
+    expect((await db.unsafe('SELECT status FROM platform_courses WHERE id=$1', [id]))[0].status).toBe('published');
+    const lessonCreate = await mutation(`/platform/instructor/courses/${id}/lessons`, 'POST', 3, {
+      slug: 'text-lesson', ordinal: 1, status: 'published', titleEn: 'Original lesson', bodyEn: { markdown: 'Original text' },
+    });
+    expect(lessonCreate.status).toBe(201);
+    const { lesson: { id: lessonId } } = await lessonCreate.json();
+    const query = () => db.unsafe(`SELECT l.status,r.body_en FROM platform_lessons l JOIN platform_lesson_revisions r ON r.lesson_id=l.id AND r.revision=l.current_revision WHERE l.id=$1`, [lessonId]);
+    expect((await query())[0].status).toBe('draft');
+    const lessonReviews = await db.unsafe('SELECT id FROM platform_content_reviews WHERE lesson_id=$1 AND status=$2', [lessonId, 'pending']);
+    expect((await mutation(`/platform/admin/courses/${id}/content-reviews/${lessonReviews[0].id}/decision`, 'POST', 5, { decision: 'approved' })).status).toBe(200);
+    expect((await query())[0]).toMatchObject({ status: 'published', body_en: { markdown: 'Original text' } });
+    const edit = await mutation(`/platform/instructor/courses/${id}/lessons/${lessonId}`, 'PATCH', 3, { status: 'published', bodyEn: { markdown: 'Revision for review' } });
+    expect(edit.status).toBe(200);
+    expect((await query())[0].body_en).toEqual({ markdown: 'Original text' });
+    const { lesson: { reviewId: editReview } } = await edit.json();
+    expect((await mutation(`/platform/admin/courses/${id}/content-reviews/${editReview}/decision`, 'POST', 5, { decision: 'rejected', note: 'Please revise' })).status).toBe(200);
+    expect((await query())[0].body_en).toEqual({ markdown: 'Original text' });
   });
 
   it('denies new media access when an entitlement expires or is revoked', async () => {

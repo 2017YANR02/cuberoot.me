@@ -13,16 +13,18 @@ import { privateNoStore } from '../http.js';
 import { createPlatformMediaToken, platformMediaPath } from '../media_access.js';
 import { authorizeCourseWrite, courseKey, requiredParam } from './course-access.js';
 import { hashJson } from './course-fields.js';
+import { assertNoPendingContentReview, nextContentRevision, requiresContentReview, submitContentReview } from './content-review.js';
 import { type Context, type Hono } from 'hono';
 import { createHash, randomUUID } from 'node:crypto';
 import { createReadStream, promises as fs } from 'node:fs';
 import path from 'node:path';
 
 function managedLessonAssetUrl(c: Context, lessonId: string, revision: number, asset: { id: string }, kind: 'media' | 'cover') {
-  const binding = `${kind === 'media' ? 'lesson' : 'lesson-cover'}:${lessonId}:${revision}`;
+  const binding = `${kind === 'media' ? 'lesson-review' : 'lesson-review-cover'}:${lessonId}:${revision}`;
   const signed = createPlatformMediaToken({ mediaId: asset.id, binding });
   const url = new URL(`/v1/platform/lessons/${encodeURIComponent(lessonId)}/${kind}`, c.req.url);
   url.searchParams.set('token', signed.token);
+  url.searchParams.set('revision', String(revision));
   return { url: url.toString(), expiresAt: signed.expiresAt };
 }
 
@@ -36,12 +38,14 @@ async function managedLessonMedia(c: Context, admin: boolean): Promise<Response>
     mediaId: string | null; mediaMimeType: string | null; mediaSizeBytes: number | string | null;
     coverMediaId: string | null; coverMimeType: string | null; coverSizeBytes: number | string | null;
   }>(db, `
-    SELECT lesson.id::text AS "lessonId", lesson.current_revision AS revision,
+    SELECT lesson.id::text AS "lessonId", revision.revision,
       media.id::text AS "mediaId", media.mime_type AS "mediaMimeType", media.size_bytes AS "mediaSizeBytes",
       cover.id::text AS "coverMediaId", cover.mime_type AS "coverMimeType", cover.size_bytes AS "coverSizeBytes"
     FROM platform_lessons lesson
+    LEFT JOIN LATERAL (SELECT * FROM platform_content_reviews WHERE lesson_id=lesson.id AND base_revision=lesson.current_revision ORDER BY submitted_at DESC,id DESC LIMIT 1) review ON true
     JOIN platform_lesson_revisions revision
-      ON revision.lesson_id = lesson.id AND revision.revision = lesson.current_revision
+      ON revision.lesson_id = lesson.id AND revision.revision = CASE
+        WHEN review.status IN ('pending','rejected','withdrawn') THEN review.candidate_revision ELSE lesson.current_revision END
     LEFT JOIN platform_media_assets media ON media.id = revision.media_id AND media.status = 'ready'
     LEFT JOIN platform_media_assets cover ON cover.id = revision.cover_media_id AND cover.status = 'ready'
     WHERE lesson.course_id = $1::uuid AND (lesson.id::text = $2 OR lesson.slug = $2)
@@ -87,20 +91,23 @@ async function uploadLessonCover(c: Context, admin: boolean): Promise<Response> 
       `platform.${admin ? 'admin' : 'instructor'}.lesson.cover:${courseKeyValue}:${lessonKey}`,
       { sha256, sizeBytes: received.sizeBytes, mimeType: received.mime }, async (db) => {
         const id = await authorizeCourseWrite(db, actor, courseKeyValue);
+        await platformQuery(db, 'SELECT id FROM platform_courses WHERE id=$1::uuid FOR UPDATE', [id]);
         const rows = await platformQuery<Record<string, unknown>>(db, `
           SELECT lesson.id::text AS id, lesson.current_revision AS "currentRevision",
             revision.title_zh AS "titleZh", revision.title_en AS "titleEn",
             revision.body_zh AS "bodyZh", revision.body_en AS "bodyEn",
             revision.media_id::text AS "mediaId", revision.duration_seconds AS "durationSeconds",
-            revision.status
+            lesson.status, lesson.slug, lesson.ordinal, lesson.access_scope AS "accessScope"
           FROM platform_lessons lesson
+          LEFT JOIN LATERAL (SELECT candidate_revision,status FROM platform_content_reviews WHERE lesson_id=lesson.id AND base_revision=lesson.current_revision ORDER BY submitted_at DESC,id DESC LIMIT 1) review ON true
           JOIN platform_lesson_revisions revision
-            ON revision.lesson_id = lesson.id AND revision.revision = lesson.current_revision
+            ON revision.lesson_id = lesson.id AND revision.revision = CASE WHEN review.status IN ('rejected','withdrawn') THEN review.candidate_revision ELSE lesson.current_revision END
           WHERE lesson.course_id = $1::uuid AND (lesson.id::text = $2 OR lesson.slug = $2)
-          FOR UPDATE
+          FOR UPDATE OF lesson
         `, [id, lessonKey]);
         const old = rows[0];
         if (!old) notFound('Lesson');
+        await assertNoPendingContentReview(db, id, String(old.id));
         await fs.mkdir(path.dirname(finalPath), { recursive: true });
         await fs.rename(received.tempPath, finalPath);
         stored = true;
@@ -111,7 +118,8 @@ async function uploadLessonCover(c: Context, admin: boolean): Promise<Response> 
           RETURNING id::text AS id
         `, [actor.userId, storageKey, received.mime, received.sizeBytes, sha256, { source: 'lesson_cover' }]);
         const coverMediaId = assets[0]!.id;
-        const nextRevision = Number(old.currentRevision) + 1;
+        const nextRevision = await nextContentRevision(db, id, String(old.id));
+        const reviewRequired = requiresContentReview(admin, String(old.status));
         const revision = {
           titleZh: old.titleZh, titleEn: old.titleEn, bodyZh: old.bodyZh, bodyEn: old.bodyEn,
           mediaId: old.mediaId ?? null, coverMediaId,
@@ -125,11 +133,14 @@ async function uploadLessonCover(c: Context, admin: boolean): Promise<Response> 
             CASE WHEN $10::varchar = 'published' THEN $12::bigint ELSE NULL END,
             CASE WHEN $10::varchar = 'published' THEN NOW() ELSE NULL END)
         `, [old.id, nextRevision, old.titleZh, old.titleEn, old.bodyZh, old.bodyEn, old.mediaId ?? null,
-          coverMediaId, old.durationSeconds, old.status, hashJson(revision), actor.userId]);
-        await platformQuery(db, `UPDATE platform_lessons SET current_revision = $2 WHERE id = $1::uuid`, [old.id, nextRevision]);
+          coverMediaId, old.durationSeconds, reviewRequired || old.status !== 'published' ? 'draft' : 'published', hashJson(revision), actor.userId]);
+        if (reviewRequired) await submitContentReview(db, { courseId: id, lessonId: String(old.id), baseRevision: Number(old.currentRevision),
+          candidateRevision: nextRevision, targetStatus: 'published', userId: actor.userId,
+          metadata: { slug: old.slug, ordinal: old.ordinal, accessScope: old.accessScope } });
+        else await platformQuery(db, `UPDATE platform_lessons SET current_revision = $2 WHERE id = $1::uuid`, [old.id, nextRevision]);
         return {
           status: 200,
-          body: { lesson: { id: old.id, revision: nextRevision, coverMediaId } },
+          body: { lesson: { id: old.id, revision: nextRevision, coverMediaId, reviewStatus: reviewRequired ? 'pending' : null } },
           resourceType: 'lesson', resourceId: String(old.id),
         };
       });
@@ -149,6 +160,7 @@ export function registerLessonMediaRoutes(platformCatalogRoutes: Hono): void {
   platformCatalogRoutes.get('/platform/admin/courses/:courseId/lessons/:lessonId/media', (c) => managedLessonMedia(c, true));
 
   platformCatalogRoutes.put('/platform/instructor/courses/:courseId/lessons/:lessonId/cover', (c) => uploadLessonCover(c, false));
+  platformCatalogRoutes.put('/platform/instructor/courses/:courseId/lessons/:lessonId/cover-review', (c) => uploadLessonCover(c, false));
 
   platformCatalogRoutes.put('/platform/admin/courses/:courseId/lessons/:lessonId/cover', (c) => uploadLessonCover(c, true));
 }

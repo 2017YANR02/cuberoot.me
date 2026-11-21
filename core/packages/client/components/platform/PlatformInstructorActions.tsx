@@ -4,12 +4,14 @@ import { useRef } from 'react';
 import { useAuthUser } from '@/lib/auth-store';
 import { useEntryRouter } from '@/hooks/useEntryRouter';
 import { useLang } from '@/i18n/tr';
+import { isPlatformInstructorApplication } from '@/lib/platform-routes';
 import { text, INSTRUCTOR_COURSE_FIELDS, INSTRUCTOR_COURSE_CREATE_FIELDS } from './PlatformFormDefinitions';
 import { ActionButton, DomainForm } from './PlatformForm';
 import { PlatformCourseContentManager } from './PlatformCourseManager';
 import { type CommonProps } from './PlatformActionTypes';
 import { PlatformInstructorApplication } from './PlatformInstructorApplication';
 import { PlatformInstructorLessonCreate } from './PlatformInstructorLessonCreate';
+import { PlatformContentReview, reviewEditableEntity } from './PlatformContentReview';
 
 function InstructorCourseCreateForm({ definition, busy, runAction }: CommonProps) {
   const user = useAuthUser();
@@ -36,18 +38,19 @@ function InstructorCourseCreateForm({ definition, busy, runAction }: CommonProps
 
 export function PlatformInstructorActions(props: CommonProps) {
   const { definition, params, entity, busy, runAction } = props;
-  if (definition.id === 'teacher-apply') {
+  if (isPlatformInstructorApplication(definition.id)) {
     return <PlatformInstructorApplication {...props} />;
   }
   if (definition.id === 'instructor-course') {
     return (
       <div className="platform-domain-stack platform-instructor-course-management">
+        <PlatformContentReview entity={entity} courseId={entity?.id ?? params.id} admin={false} busy={busy} runAction={runAction} />
         <PlatformCourseContentManager {...props} />
         <section className="platform-instructor-course-info">
-          <DomainForm definition={definition} entity={entity} resourceId={params.id} busy={busy} runAction={runAction}
+          {entity?.data?.reviewStatus !== 'pending' && <DomainForm definition={definition} entity={reviewEditableEntity(entity)} resourceId={params.id} busy={busy} runAction={runAction}
             spec={{ title: text('课程信息', 'Course information'), action: 'save-instructor-course', fields: INSTRUCTOR_COURSE_FIELDS, submit: text('保存课程信息', 'Save course information') }}
             secondaryAction={<ActionButton action="delete-course" resourceId={entity?.id ?? params.id} label={text('归档课程', 'Archive course')}
-              confirm={text('确定归档整门课程？归档后课程停止公开展示及学习访问，历史记录仍保留。', 'Archive this course? It will no longer be public or accessible for learning. History will be retained.')} secondary busy={busy} runAction={runAction} />} />
+              confirm={text('确定归档整门课程？归档后课程停止公开展示及学习访问，历史记录仍保留。', 'Archive this course? It will no longer be public or accessible for learning. History will be retained.')} secondary busy={busy} runAction={runAction} />} />}
         </section>
       </div>
     );

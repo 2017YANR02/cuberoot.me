@@ -54,17 +54,19 @@ export default function TeacherDirectoryEditor({
   onSaved,
   onDeleted,
   onCancel,
+  application,
 }: {
   initial: TeacherDirectoryEntry | null;
   isAdmin: boolean;
   defaultVisible?: boolean;
   defaultKind?: DirectoryEntryKind;
-  onSaved: (entry: TeacherDirectoryEntry) => void;
+  onSaved?: (entry: TeacherDirectoryEntry) => void;
   onDeleted?: () => void;
   onCancel?: () => void;
+  application?: { initial: TeacherDirectoryDraft; onContinue: (draft:TeacherDirectoryDraft)=>void; onBack: (draft:TeacherDirectoryDraft)=>void; onSkip: ()=>void };
 }) {
   const communityDisabled = useInstalledCommunityDisabled();
-  const [draft, setDraft] = useState<TeacherDirectoryDraft>(() => initial
+  const [draft, setDraft] = useState<TeacherDirectoryDraft>(() => application?application.initial:initial
     ? directoryEntryToDraft(initial)
     : { ...EMPTY_DIRECTORY_DRAFT, kind: defaultKind, contacts: {}, images: [], isCurated: isAdmin, isVisible: defaultVisible });
   const [tagsZh, setTagsZh] = useState(draft.specialtiesZh.join(', '));
@@ -128,17 +130,19 @@ export default function TeacherDirectoryEditor({
     }
   };
 
-  const submit = async (event: FormEvent) => {
-    event.preventDefault();
-    setError('');
+  const collectDraft=():TeacherDirectoryDraft=>{
     const publicationDisabled = installedCommunityDisabled();
-    if (publicationDisabled && initial?.isVisible && draft.isVisible) {
-      return setError(tr({ zh: '关闭公开显示后即可编辑。', en: 'Turn off public visibility to edit.' }));
-    }
     const contacts = Object.fromEntries(
       Object.entries(draft.contacts).map(([key, value]) => [key, value.trim()]).filter(([, value]) => value),
     ) as DirectoryContacts;
-    const payload = { ...draft, isVisible: !publicationDisabled && draft.isVisible, contacts, specialtiesZh: splitDirectoryTags(tagsZh), specialtiesEn: splitDirectoryTags(tagsEn) };
+    return {...draft,isVisible:!publicationDisabled&&draft.isVisible,contacts,specialtiesZh:splitDirectoryTags(tagsZh),specialtiesEn:splitDirectoryTags(tagsEn)};
+  };
+
+  const submit = async (event: FormEvent) => {
+    event.preventDefault();
+    setError('');
+    if (installedCommunityDisabled() && initial?.isVisible && draft.isVisible) return setError(tr({ zh: '关闭公开显示后即可编辑。', en: 'Turn off public visibility to edit.' }));
+    const payload=collectDraft();
     if (!(payload.nameZh.trim() || payload.nameEn.trim())) return setError(tr({ zh: '请至少填写一个语言的名称。', en: 'Add a name in at least one language.' }));
     if ((payload.kind !== 'teacher' || payload.isVisible) && !(payload.descriptionZh.trim() || payload.descriptionEn.trim())) return setError(tr({ zh: '请至少填写一个语言的介绍。', en: 'Add a description in at least one language.' }));
     if (payload.kind === 'organization' && !(Object.keys(payload.contacts).length || payload.website.trim())) return setError(tr({ zh: '请至少填写一种公开联系方式或网站。', en: 'Add at least one public contact method or website.' }));
@@ -148,10 +152,11 @@ export default function TeacherDirectoryEditor({
     if (payload.contacts.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(payload.contacts.email)) return setError(tr({ zh: '邮箱格式不正确。', en: 'The email address is invalid.' }));
     if (payload.wcaId && !/^\d{4}[A-Z]{4}\d{2}$/.test(payload.wcaId.trim().toUpperCase())) return setError(tr({ zh: 'WCA ID 格式不正确。', en: 'The WCA ID format is invalid.' }));
     payload.wcaId = payload.wcaId.trim().toUpperCase();
+    if(application){application.onContinue(payload);return;}
     setSaving(true);
     try {
       const saved = initial ? await updateTeacherDirectoryEntry(initial.id, payload) : await createTeacherDirectoryEntry(payload);
-      onSaved(saved);
+      onSaved?.(saved);
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : tr({ zh: '保存失败。', en: 'Could not save.' }));
     } finally {
@@ -187,6 +192,7 @@ export default function TeacherDirectoryEditor({
         {(draft.locationZh || draft.locationEn) && <p className="directory-preview-location">{localDirectoryText(draft.locationZh, draft.locationEn)}</p>}
         <p className="directory-preview-description">{previewDescription}</p>
         {previewTags.length > 0 && <div className="directory-tags">{previewTags.map((tag) => <span key={tag}>{tag}</span>)}</div>}
+        {application&&<button type="button" className="platform-button" disabled={uploading} onClick={application.onSkip}>{tr({zh:'以后再设置',en:'Set up later'})}</button>}
       </aside>
 
       <form onSubmit={submit} className="directory-form">
@@ -238,14 +244,14 @@ export default function TeacherDirectoryEditor({
           <div className="directory-section-heading"><span>04</span><div><h2 id="directory-contact-heading">{tr({ zh: '联系与公开', en: 'Contact and visibility' })}</h2><p>{tr({ zh: '只填写愿意公开的信息，空项目不会显示。', en: 'Only add information you want to publish. Empty fields stay hidden.' })}</p></div></div>
           <fieldset className="directory-contact-fields"><legend>{tr({ zh: '公开联系方式', en: 'Public contact methods' })}</legend><div className="directory-form-grid">{CONTACT_FIELDS.map((field) => <label key={field.key}><span>{tr(field.label)}</span><input className="directory-field-control" type={field.key === 'email' ? 'email' : field.key === 'phone' ? 'tel' : 'text'} value={draft.contacts[field.key] ?? ''} onChange={(event) => setContact(field.key, event.target.value)} maxLength={500} /></label>)}</div></fieldset>
           <label><span>{tr({ zh: '个人网站或机构官网', en: 'Personal or organization website' })}</span><input className="directory-field-control" type="url" value={draft.website} onChange={(event) => setField('website', event.target.value)} placeholder="https://" maxLength={2000} /></label>
-          <label className="directory-wca-field"><span>WCA ID</span><input autoComplete="off" className="directory-field-control" value={draft.wcaId} onChange={(event) => setField('wcaId', event.target.value.toUpperCase())} placeholder="2017YANR02" maxLength={10} /></label>
+          <label className="directory-wca-field"><span>WCA ID</span><input autoComplete="off" className="directory-field-control" value={draft.wcaId} readOnly={Boolean(application)} onChange={(event) => setField('wcaId', event.target.value.toUpperCase())} placeholder="2017YANR02" maxLength={10} /></label>
           <BoolToggle value={draft.isVisible && (!communityDisabled || initial?.isVisible === true)} disabled={communityDisabled && (!initial?.isVisible || !draft.isVisible)} onChange={(value) => setField('isVisible', value)} label={tr({ zh: '公开显示', en: 'Show publicly' })} />
           {draft.kind === 'teacher' && initial?.instructorStatus && initial.instructorStatus !== 'active' && <p className="directory-form-note">{tr({ zh: '讲师资格生效后才会在公开名录展示。', en: 'Your directory profile is public only when instructor access is active.' })}</p>}
           {!draft.isVisible && <p className="directory-form-note">{draft.kind === 'teacher' ? tr({ zh: '隐藏后不在名录展示；已发布课程仍显示公开作者姓名。', en: 'Hidden from the directory; published courses still show your public author name.' }) : tr({ zh: '隐藏后，只有你登录时能看到这条资料。', en: 'When hidden, only you can see this entry while signed in.' })}</p>}
         </section>
 
         {error && <p className="directory-form-error" role="alert">{error}</p>}
-        <div className="directory-form-actions"><button type="submit" className="directory-primary-button" disabled={saving || uploading}>{saving ? tr({ zh: '保存中…', en: 'Saving…' }) : tr({ zh: '保存资料', en: 'Save profile' })}</button>{onCancel ? <button type="button" className="directory-secondary-button" onClick={onCancel} disabled={saving}>{tr({ zh: '取消', en: 'Cancel' })}</button> : <AppLink href={draft.kind === 'teacher' ? '/platform/instructor' : '/teachers'} className="directory-secondary-button">{tr({ zh: '取消', en: 'Cancel' })}</AppLink>}{initial?.kind === 'organization' && onDeleted && <button type="button" className="directory-delete-button" onClick={remove} disabled={saving}>{tr({ zh: '删除资料', en: 'Delete profile' })}</button>}</div>
+        {application?<div className="directory-form-actions platform-admission-profile-actions"><button type="button" className="platform-button" disabled={uploading} onClick={()=>application.onBack(collectDraft())}>{tr({zh:'上一步',en:'Previous'})}</button><button type="submit" className="platform-button platform-button-primary" disabled={uploading}>{tr({zh:'下一步',en:'Next'})}</button></div>:<div className="directory-form-actions"><button type="submit" className="directory-primary-button" disabled={saving || uploading}>{saving ? tr({ zh: '保存中…', en: 'Saving…' }) : tr({ zh: '保存资料', en: 'Save profile' })}</button>{onCancel ? <button type="button" className="directory-secondary-button" onClick={onCancel} disabled={saving}>{tr({ zh: '取消', en: 'Cancel' })}</button> : <AppLink href={draft.kind === 'teacher' ? '/platform/instructor' : '/teachers'} className="directory-secondary-button">{tr({ zh: '取消', en: 'Cancel' })}</AppLink>}{initial?.kind === 'organization' && onDeleted && <button type="button" className="directory-delete-button" onClick={remove} disabled={saving}>{tr({ zh: '删除资料', en: 'Delete profile' })}</button>}</div>}
       </form>
     </div>
   );

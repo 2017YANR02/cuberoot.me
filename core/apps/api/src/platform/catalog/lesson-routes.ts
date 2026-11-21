@@ -5,6 +5,7 @@ import { type JsonObject, isObject, stringField, integerField, enumField, boolea
 import { courseKey, requiredParam, authorizeCourseWrite } from './course-access.js';
 import { SLUG, requireBilingualTitle, hashJson } from './course-fields.js';
 import { driveVideoNodeId, driveVideoMediaId, cleanupUnattachedCourseVideo } from './drive-media.js';
+import { requiresContentReview, contentReviewIntent, nextContentRevision, submitContentReview, withdrawPendingContentReview, assertNoPendingContentReview } from './content-review.js';
 import { courseDriveUploadHandlers } from '../../routes/drive.js';
 import { type Context, type Hono } from 'hono';
 
@@ -36,7 +37,7 @@ async function saveLesson(c: Context, admin: boolean, creating: boolean): Promis
   const courseKeyValue = courseKey(c);
   const lessonKey = creating ? null : requiredParam(c, 'lessonId');
   const body = await readJsonObject(c);
-  const input = lessonFields(body, creating);
+  const input = lessonFields(contentReviewIntent(body, admin, true), creating);
   if (creating) requireBilingualTitle(input.titleZh, input.titleEn);
   let stagedVideo: string | undefined;
   const onStage = (nodeId: string) => { stagedVideo = nodeId; };
@@ -46,7 +47,9 @@ async function saveLesson(c: Context, admin: boolean, creating: boolean): Promis
     // Serialize creation and reordering within the course.
     await platformQuery(db, 'SELECT id FROM platform_courses WHERE id = $1::uuid FOR UPDATE', [id]);
     if (creating) {
-      const status = input.status ?? 'draft';
+      const requestedStatus = input.status ?? 'draft';
+      const reviewRequired = requiresContentReview(admin, requestedStatus);
+      const status = reviewRequired ? 'draft' : requestedStatus;
       const revisionStatus = status === 'published' ? 'published' : 'draft';
       const ordinal = input.appendToCourse
         ? Number((await platformQuery<{ ordinal: number }>(db, 'SELECT COALESCE(MAX(ordinal), 0) + 1 AS ordinal FROM platform_lessons WHERE course_id = $1::uuid', [id]))[0]?.ordinal)
@@ -67,7 +70,9 @@ async function saveLesson(c: Context, admin: boolean, creating: boolean): Promis
             CASE WHEN $8::varchar = 'published' THEN $10::bigint ELSE NULL END, CASE WHEN $8::varchar = 'published' THEN NOW() ELSE NULL END)
         `, [rows[0].id, revision.titleZh, revision.titleEn, revision.bodyZh, revision.bodyEn,
           mediaId, input.durationSeconds ?? null, revisionStatus, hashJson(revision), actor.userId]);
-        return { status: 201, body: { lesson: rows[0] }, resourceType: 'lesson', resourceId: rows[0].id };
+        if (reviewRequired) await submitContentReview(db, { courseId: id, lessonId: rows[0].id, baseRevision: 1, candidateRevision: 1,
+          targetStatus: requestedStatus, userId: actor.userId, metadata: { slug: input.slug, ordinal, accessScope: input.accessScope ?? 'entitled' } });
+        return { status: 201, body: { lesson: { ...rows[0], status, reviewStatus: reviewRequired ? 'pending' : null } }, resourceType: 'lesson', resourceId: rows[0].id };
       } catch (error) {
         if (isPostgresConflict(error)) conflict('Lesson slug or order conflicts with an existing lesson');
         throw error;
@@ -79,19 +84,24 @@ async function saveLesson(c: Context, admin: boolean, creating: boolean): Promis
         r.media_id::text AS "mediaId", r.cover_media_id::text AS "coverMediaId",
         (SELECT metadata->>'driveNodeId' FROM platform_media_assets WHERE id = r.media_id) AS "driveNodeId",
         r.duration_seconds AS "durationSeconds"
-      FROM platform_lessons l JOIN platform_lesson_revisions r ON r.lesson_id = l.id AND r.revision = l.current_revision
-      WHERE l.course_id = $1::uuid AND (l.id::text = $2 OR l.slug = $2) FOR UPDATE
+      FROM platform_lessons l
+      LEFT JOIN LATERAL (SELECT candidate_revision,status FROM platform_content_reviews WHERE lesson_id=l.id AND base_revision=l.current_revision ORDER BY submitted_at DESC,id DESC LIMIT 1) review ON true
+      JOIN platform_lesson_revisions r ON r.lesson_id = l.id AND r.revision =
+        CASE WHEN review.status IN ('rejected','withdrawn') THEN review.candidate_revision ELSE l.current_revision END
+      WHERE l.course_id = $1::uuid AND (l.id::text = $2 OR l.slug = $2) FOR UPDATE OF l
     `, [id, lessonKey]);
     const old = found[0];
     if (!old) notFound('Lesson');
+    await assertNoPendingContentReview(db, id, String(old.id));
     const revision = {
       titleZh: input.titleZh ?? String(old.titleZh), titleEn: input.titleEn ?? String(old.titleEn),
       bodyZh: input.bodyZh ?? old.bodyZh, bodyEn: input.bodyEn ?? old.bodyEn,
     };
     requireBilingualTitle(revision.titleZh, revision.titleEn);
     const status = input.status ?? String(old.status);
-    const revisionStatus = status === 'published' ? 'published' : 'draft';
-    const nextRevision = Number(old.currentRevision) + 1;
+    const reviewRequired = requiresContentReview(admin, status);
+    const revisionStatus = !reviewRequired && status === 'published' ? 'published' : 'draft';
+    const nextRevision = await nextContentRevision(db, id, String(old.id));
     const mediaId = input.driveVideo && input.driveVideo !== old.driveNodeId ? await driveVideoMediaId(db, actor, input.driveVideo, onStage) : old.mediaId ?? null;
     const coverMediaId = old.coverMediaId ?? null;
     const revisionWithMedia = { ...revision, mediaId, coverMediaId };
@@ -104,6 +114,12 @@ async function saveLesson(c: Context, admin: boolean, creating: boolean): Promis
     `, [old.id, nextRevision, revision.titleZh, revision.titleEn, revision.bodyZh, revision.bodyEn,
       mediaId, coverMediaId, input.durationSeconds === undefined ? old.durationSeconds : input.durationSeconds,
       revisionStatus, hashJson(revisionWithMedia), actor.userId]);
+    if (reviewRequired) {
+      const reviewId = await submitContentReview(db, { courseId: id, lessonId: String(old.id), baseRevision: Number(old.currentRevision),
+        candidateRevision: nextRevision, targetStatus: status, userId: actor.userId,
+        metadata: { slug: input.slug ?? old.slug, ordinal: input.ordinal ?? old.ordinal, accessScope: input.accessScope ?? old.accessScope } });
+      return { status: 200, body: { lesson: { id: old.id, status: old.status, reviewId, reviewStatus: 'pending' } }, resourceType: 'lesson', resourceId: String(old.id) };
+    }
     await platformQuery(db, `
       UPDATE platform_lessons SET slug=$2, ordinal=$3, status=$4, access_scope=$5, current_revision=$6
       WHERE id=$1::uuid
@@ -123,11 +139,13 @@ async function archiveLesson(c: Context, admin: boolean): Promise<Response> {
   const scope = `platform.${admin ? 'admin' : 'instructor'}.lesson.archive:${courseKeyValue}:${lessonKey}`;
   const result = await withIdempotency(c, actor, scope, {}, async (db) => {
     const id = await authorizeCourseWrite(db, actor, courseKeyValue);
+    await platformQuery(db, 'SELECT id FROM platform_courses WHERE id=$1::uuid FOR UPDATE', [id]);
     const rows = await platformQuery<{ id: string }>(db, `
       UPDATE platform_lessons SET status='archived'
       WHERE course_id=$1::uuid AND (id::text=$2 OR slug=$2) RETURNING id::text AS id
     `, [id, lessonKey]);
     if (!rows[0]) notFound('Lesson');
+    await withdrawPendingContentReview(db, id, rows[0].id);
     return { status: 200, body: { lesson: { ...rows[0], status: 'archived' } }, resourceType: 'lesson', resourceId: rows[0].id };
   });
   return sendMutation(c, result);

@@ -57,6 +57,7 @@ describe('Platform navigation context', () => {
     expect(resolvePlatformCanonicalPath(['org', 'cube', 'training', 'assignments', 'one'])?.path)
       .toBe('/org/cube/training/assignments/one');
     expect(matchPlatformRoute(['teachers', 'apply'])?.definition.id).toBe('teacher-apply');
+    expect(matchPlatformRoute(['teachers', 'apply','start'])?.definition.id).toBe('teacher-apply-start');
     expect(matchPlatformRoute(['org', 'cube', 'classes', 'one'])?.definition.id).toBe('org-class');
   });
 
@@ -68,7 +69,7 @@ describe('Platform navigation context', () => {
   });
 
   it('keeps the teacher catalog, detail and application under the native Platform layout', () => {
-    for(const path of ['/zh/platform/teachers','/zh/platform/teachers/apply','/zh/platform/teachers/12']) {
+    for(const path of ['/zh/platform/teachers','/zh/platform/teachers/apply','/zh/platform/teachers/apply/start','/zh/platform/teachers/12']) {
       expect(PLATFORM_CANONICAL_REWRITES.filter(rule => getPathMatch(rule.source)(path))).toEqual([]);
     }
     expect(PLATFORM_CANONICAL_REWRITES.some(rule => getPathMatch(rule.source)('/zh/platform/teachers/scripts/12'))).toBe(true);

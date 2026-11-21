@@ -62,7 +62,7 @@ export function PlatformLessonCoverEditor({
     setUploading(true);
     setMessage('');
     try {
-      await uploadPlatformLessonCover(scope, courseId, lessonId, file);
+      const result = await uploadPlatformLessonCover(scope, courseId, lessonId, file);
       setFramePicker(false);
       if (currentVideo) {
         if (previewObjectUrl.current) URL.revokeObjectURL(previewObjectUrl.current);
@@ -72,7 +72,7 @@ export function PlatformLessonCoverEditor({
         const updated = await load();
         if (updated) onCoverUpdated?.(updated.posterUrl);
       }
-      setMessage(t('封面已更新。', 'Cover updated.'));
+      setMessage(result?.lesson?.reviewStatus === 'pending' ? t('封面已提交审核，通过后更新线上版本。', 'Cover submitted for review. The live version changes after approval.') : t('封面已更新。', 'Cover updated.'));
     } catch (error) {
       setMessage(error instanceof Error ? error.message : t('封面上传失败。', 'Cover upload failed.'));
     } finally {

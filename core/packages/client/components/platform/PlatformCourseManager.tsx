@@ -11,8 +11,11 @@ import { PlatformState } from './PlatformState';
 import { type RunAction, type CommonProps } from './PlatformActionTypes';
 import { text, LESSON_FIELDS, QUIZ_FIELDS, LESSON_EDIT_FIELDS } from './PlatformFormDefinitions';
 import { DomainForm, ActionButton } from './PlatformForm';
+import { PlatformContentReview, ContentReviewBadge, reviewEditableEntity } from './PlatformContentReview';
 
-const INSTRUCTOR_LESSON_EDIT_FIELDS = LESSON_EDIT_FIELDS.filter(field => field.key !== 'accessScope');
+const INSTRUCTOR_LESSON_EDIT_FIELDS = LESSON_FIELDS.filter(field => !['accessScope', 'durationSeconds'].includes(field.key)).map(field => field.key === 'status'
+  ? { ...field, options: field.options?.map(option => option.value === 'published' ? { ...option, label: text('提交审核后发布', 'Publish after approval') } : option) }
+  : field.key === 'bodyZh' || field.key === 'bodyEn' ? { ...field, kind: 'markdown' as const, required: false, label: field.key === 'bodyZh' ? text('中文图文内容', 'Chinese lesson content') : text('英文图文内容', 'English lesson content') } : field);
 
 function entityFromRecord(value: unknown, fallbackId: string): PlatformEntity | null {
   if (!value || typeof value !== 'object' || Array.isArray(value)) return null;
@@ -108,16 +111,17 @@ function PlatformManagedQuizPanel({ definition, courseId, lessonId, busy, runAct
   );
 }
 
-function PlatformManagedLessonEditor({ definition, courseId, lesson, busy, runAction, compact = false }: {
-  definition: PlatformRouteDefinition; courseId: string; lesson: PlatformEntity; busy: string | null; runAction: RunAction; compact?: boolean;
+function PlatformManagedLessonEditor({ definition, courseId, lesson, busy, runAction, onSaved, compact = false }: {
+  definition: PlatformRouteDefinition; courseId: string; lesson: PlatformEntity; busy: string | null; runAction: RunAction; onSaved?: () => void; compact?: boolean;
 }) {
   return <section className={`platform-course-editor-section${compact ? ' platform-instructor-lesson-editor' : ''}`}>
-    <DomainForm definition={definition} entity={lesson} resourceId={courseId} busy={busy} runAction={runAction}
+    <PlatformContentReview entity={lesson} courseId={courseId} lesson admin={definition.area === 'admin'} busy={busy} runAction={runAction} />
+    {lesson.data?.reviewStatus !== 'pending' && <><DomainForm definition={definition} entity={reviewEditableEntity(lesson)} resourceId={courseId} busy={busy} runAction={runAction}
       spec={{ title: text(`编辑课时：${lesson.title}`, `Edit lesson: ${lesson.title}`), titleHidden: compact, action: 'save-course-lesson', payloadBase: { lessonId: lesson.id }, fields: compact ? INSTRUCTOR_LESSON_EDIT_FIELDS : LESSON_EDIT_FIELDS }} />
-    <PlatformLessonCoverEditor scope={definition.area === 'instructor' ? 'instructor' : 'admin'} courseId={courseId} lessonId={lesson.id} />
+    <PlatformLessonCoverEditor scope={definition.area === 'instructor' ? 'instructor' : 'admin'} courseId={courseId} lessonId={lesson.id} onCoverUpdated={() => onSaved?.()} />
     <ActionButton action="delete-course-lesson" resourceId={courseId} payload={{ lessonId: lesson.id }}
       label={text('归档课时', 'Archive lesson')} confirm={text('确定归档这个课时吗？', 'Archive this lesson?')}
-      secondary={compact} busy={busy} runAction={runAction} />
+      secondary={compact} busy={busy} runAction={runAction} /></>}
     <PlatformManagedQuizPanel definition={definition} courseId={courseId} lessonId={lesson.id} busy={busy} runAction={runAction} />
   </section>;
 }
@@ -150,10 +154,10 @@ export function PlatformCourseContentManager(props: CommonProps) {
             onToggle={() => setExpandedLesson(expanded ? null : lesson.id)}>
             <span className="platform-instructor-lesson-index">{String(index + 1).padStart(2, '0')}</span>
             <span className="platform-instructor-lesson-title"><strong>{title}</strong>{scope && <small>{scope}</small>}</span>
-            {lesson.status && <span className="platform-status" data-lesson-status={lesson.status}>{entityStatusLabel(lesson.status, t)}</span>}
+            <span className="platform-instructor-lesson-statuses">{lesson.status && <span className="platform-status" data-lesson-status={lesson.status}>{entityStatusLabel(lesson.status, t)}</span>}<ContentReviewBadge entity={lesson} /></span>
           </MoreToggle>
           <MoreTogglePanel id={controls} expanded={expanded} className="platform-instructor-lesson-panel">
-            <PlatformManagedLessonEditor definition={definition} courseId={courseId} lesson={lesson} busy={busy} runAction={runAction} compact />
+            <PlatformManagedLessonEditor definition={definition} courseId={courseId} lesson={lesson} busy={busy} runAction={runAction} onSaved={props.onSaved} compact />
           </MoreTogglePanel>
         </li>;
       })}
@@ -175,7 +179,7 @@ export function PlatformCourseContentManager(props: CommonProps) {
       {lessons.length === 0 ? <PlatformState kind="empty" /> : (
         <div className="platform-domain-stack">
           {lessons.map((lesson) => (
-            <PlatformManagedLessonEditor key={lesson.id} definition={definition} courseId={courseId} lesson={lesson} busy={busy} runAction={runAction} />
+            <PlatformManagedLessonEditor key={lesson.id} definition={definition} courseId={courseId} lesson={lesson} busy={busy} runAction={runAction} onSaved={props.onSaved} />
           ))}
         </div>
       )}

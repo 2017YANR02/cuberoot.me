@@ -43,6 +43,11 @@ describe('Platform shell ownership during shared-page navigation', () => {
         expect(tabs.find(tab => tab.getAttribute('aria-current') === 'page')?.getAttribute('href')).toBe(path.slice(3));
         expect(Boolean(host.querySelector('[data-search-scope="teachers"]'))).toBe(!path.endsWith('/apply'));
       }
+      pathname.mockReturnValue('/zh/platform/teachers/apply/start');
+      await act(async()=>root.render(createElement(PlatformShell,{children:null})));
+      expect(host.querySelector('.platform-masthead')).toBeNull();
+      expect(host.querySelector('.platform-nav')).toBeNull();
+      expect(host.querySelector('.platform-instructor-studio')).toBeNull();
     } finally { pathname.mockReturnValue('/zh/platform/teachers'); await act(async () => root.unmount()); }
   });
   it('keeps the same home logo in public sections independently of the selected tab', async () => {

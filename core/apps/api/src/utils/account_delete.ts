@@ -97,6 +97,7 @@ export const PLATFORM_ACCOUNT_DELETE_TABLES = [
   'platform_course_owners',
   'platform_course_revisions',
   'platform_lesson_revisions',
+  'platform_content_reviews',
   'platform_learning_paths',
   'platform_quiz_revisions',
   'platform_products',

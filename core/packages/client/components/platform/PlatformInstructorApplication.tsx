@@ -7,11 +7,15 @@ import MoreToggle from '@/components/MoreToggle';
 import { CompactSelect } from '@/components/CompactSelect';
 import { useT } from '@/hooks/useT';
 import { useAuthUser } from '@/lib/auth-store';
+import { useEntryRouter } from '@/hooks/useEntryRouter';
 import type { PlatformEntity } from '@/lib/platform-types';
 import { ActionButton, DomainForm } from './PlatformForm';
 import { INSTRUCTOR_APPLICATION_FIELDS, text } from './PlatformFormDefinitions';
 import { type CommonProps } from './PlatformActionTypes';
 import { instructorApplicationStatus } from './PlatformRouteHelpers';
+import { InstructorAdmissionIntro, INSTRUCTOR_APPLICATION_START } from './PlatformInstructorAdmission';
+import { normalizeDirectoryImages } from '@/lib/teacher-directory-api';
+import { CONTACT_FIELDS } from '@/lib/teacher-directory-presentation';
 
 function record(value: unknown): Record<string, unknown> {
   return value && typeof value === 'object' && !Array.isArray(value) ? value as Record<string, unknown> : {};
@@ -36,10 +40,12 @@ export function InstructorApplicationDetails({ entity, admin = false, embedded =
   const t = useT();
   const data = entity.data ?? {};
   const application = record(data.application);
+  const homepage=record(application.homepage), photos=normalizeDirectoryImages(homepage.images);
+  const publicContacts=record(homepage.contacts);
   const list = (value: unknown) => Array.isArray(value) ? value.filter(item => typeof item === 'string').join(t('、', ', ')) : valueText(value);
   const teachingMode = application.teachingMode === 'online' ? t('线上', 'Online') : application.teachingMode === 'in_person' ? t('线下', 'In person') : application.teachingMode === 'both' ? t('线上及线下', 'Both') : list(application.formats);
   const groups = [
-    { title: t('讲师公开资料', 'Public teaching profile'), fields: [[t('公开姓名', 'Public name'), valueText(application.publicName)], [t('英文姓名', 'English name'), valueText(application.publicNameEn)], [t('公开简介', 'Public biography'), valueText(application.publicBio)], [t('名录展示', 'Directory visibility'), typeof application.profileVisible === 'boolean' ? application.profileVisible ? t('公开', 'Public') : t('隐藏', 'Hidden') : '']] },
+    { title: t('讲师公开资料', 'Public teaching profile'), fields: [[t('公开姓名', 'Public name'), valueText(application.publicName)], [t('英文姓名', 'English name'), valueText(application.publicNameEn)], [t('公开简介', 'Public biography'), valueText(application.publicBio)], [t('英文简介','English biography'),valueText(homepage.descriptionEn)],[t('英文地点','Location in English'),valueText(homepage.locationEn)],[t('英文擅长方向','English specialties'),list(homepage.specialtiesEn)],[t('个人网站','Website'),valueText(homepage.website)],...CONTACT_FIELDS.map(field=>[t(field.label.zh,field.label.en),valueText(publicContacts[field.key])]), [t('名录展示', 'Directory visibility'), application.profileDeferred===true?t('以后再设置，暂不公开','Set up later; hidden for now'):typeof application.profileVisible === 'boolean' ? application.profileVisible ? t('公开', 'Public') : t('隐藏', 'Hidden') : '']] },
     { title: t('授课信息', 'Teaching details'), fields: [[t('所在城市', 'City'), valueText(application.city)], [t('授课方式', 'Teaching mode'), teachingMode]] },
     { title: t('教学能力', 'Teaching experience'), fields: [[t('擅长方向', 'Specialties'), list(application.specialties)], [t('教学经历', 'Teaching experience'), valueText(application.experience) || valueText(application.introduction)], [t('教学成果及作品', 'Achievements and portfolio'), valueText(application.achievements)]] },
     { title: t('审核联系方式', 'Contact for review'), fields: [[t('联系方式', 'Contact details'), valueText(application.contact)]] },
@@ -63,6 +69,7 @@ export function InstructorApplicationDetails({ entity, admin = false, embedded =
         <dl className="platform-application-fields" data-layout={group === groups[0] ? 'paired' : 'stacked'}>{fields.map(([label, value]) => <div key={label}><dt>{label}</dt><dd>{value}</dd></div>)}</dl>
       </section> : null;
     })}
+    {photos.length>0&&<section className="platform-application-detail-group"><h3>{t('公开主页照片','Public profile photos')}</h3><div className="directory-gallery">{photos.map(photo=><figure key={photo.id}><img src={photo.url} alt={t(photo.captionZh||photo.captionEn,photo.captionEn||photo.captionZh)} loading="lazy"/>{(photo.captionZh||photo.captionEn)&&<figcaption>{t(photo.captionZh||photo.captionEn,photo.captionEn||photo.captionZh)}</figcaption>}</figure>)}</div></section>}
     {showFeedback && valueText(data.decisionNote) && <section className="platform-application-detail-group"><h3>{t('审核意见', 'Review feedback')}</h3><p className="platform-application-feedback">{valueText(data.decisionNote)}</p></section>}
     {admin && <>
       <section className="platform-application-detail-group"><h3>{t('已有讲师资料', 'Existing teaching profiles')}</h3>
@@ -77,31 +84,37 @@ export function PlatformInstructorApplication(props: CommonProps) {
   const { entity, definition, runAction, busy } = props;
   const t = useT();
   const user = useAuthUser();
-  const [editing, setEditing] = useState(false);
+  const router=useEntryRouter();
+  const editing=definition.id==='teacher-apply-start';
   const data = entity?.data ?? {};
   const status = entity?.status;
   const role = data.instructorStatus;
   const linked = data.teacherEntryId;
   const formEntity = useMemo(() => {
-    if (!entity) return undefined;
-    const entries = Array.isArray(entity.data?.directoryProfiles) ? entity.data.directoryProfiles.map(record) : [];
+    const accountName=valueText(user?.name).trim();
+    const defaultName=/^\d+$/.test(accountName)?'':accountName;
+    const entries = Array.isArray(entity?.data?.directoryProfiles) ? entity.data.directoryProfiles.map(record) : [];
     const existing = entries.length === 1 ? entries[0] : {};
-    return { ...entity, data: {
-      publicName: valueText(existing.nameZh) || valueText(existing.nameEn),
+    const previous=record(entity?.data?.application);
+    const existingHomepage=entries.length===1?existing:undefined;
+    return { ...entity, id:entity?.id??'application', title:entity?.title??'', data: {
+      publicName: valueText(existing.nameZh) || valueText(existing.nameEn) || defaultName,
       publicNameEn: valueText(existing.nameEn),
       publicBio: valueText(existing.descriptionZh) || valueText(existing.descriptionEn),
       profileVisible: existing.isVisible === true,
       city: valueText(existing.locationZh), specialties: existing.specialtiesZh, teachingMode: existing.teachingMode,
-      ...record(entity.data?.application),
+      ...previous,
+      homepage:role==='archived'&&existingHomepage?existingHomepage:previous.homepage??existingHomepage,
+      wcaId:user?.wcaId??'',
     } };
-  }, [entity]);
+  }, [entity,user?.name,user?.wcaId,role]);
 
   if (role === 'suspended') return <div className="platform-application-flow"><ApplicationOverview state="unavailable" title={t('讲师权限已暂停', 'Instructor access is suspended')} description={t('请联系管理员恢复权限。', 'Contact an administrator to restore access.')} /></div>;
   if (role === 'active') return <div className="platform-domain-stack platform-application-flow">
     <ApplicationOverview state="approved" title={t('已成为讲师', 'You are an instructor')} description={t('你可以管理课程、学员及收益。', 'Manage your courses, learners and earnings.')}>
       <button type="button" className="platform-button" disabled={Boolean(busy)} onClick={() => {
         if (!window.confirm(t('确定注销讲师身份吗？注销后将关闭讲师工作台权限、隐藏公开讲师资料并停用课程归属权限，历史记录不会删除。请先处理未结算收益；再次入驻需要重新审核。', 'Deactivate your instructor account? Workspace access and course ownership permissions will be revoked, and your public profile will be hidden. History is preserved. Settle outstanding earnings first; rejoining requires approval.'))) return;
-        void runAction('archive-instructor').then(result => { if (result) setEditing(false); });
+        void runAction('archive-instructor');
       }}>{busy === 'archive-instructor' ? t('处理中…', 'Working…') : t('注销讲师身份', 'Deactivate instructor account')}</button>
     </ApplicationOverview>
     {data.instructorProfileKnown !== false && <section className="platform-application-profile-section">
@@ -124,23 +137,24 @@ export function PlatformInstructorApplication(props: CommonProps) {
 
   if (entity && (status === 'rejected' || status === 'withdrawn') && !editing) return <div className="platform-domain-stack platform-application-flow">
     <ApplicationOverview state={status} title={status === 'rejected' ? t('申请未通过', 'Application not approved') : t('申请已撤回', 'Application withdrawn')} description={valueText(data.decisionNote) || (status === 'withdrawn' ? t('你可以修改资料后重新申请。', 'You can update the details and apply again.') : undefined)}>
-      <button className="platform-button platform-button-primary" type="button" onClick={() => setEditing(true)}>{t('修改并重新申请', 'Edit and apply again')}<ArrowRight aria-hidden /></button>
+      <AppLink className="platform-button platform-button-primary" href={INSTRUCTOR_APPLICATION_START} prefetch={false}>{t('修改并重新申请', 'Edit and apply again')}<ArrowRight aria-hidden /></AppLink>
     </ApplicationOverview>
     <InstructorApplicationDetails entity={entity} showFeedback={false} />
   </div>;
 
   if (entity && !editing && (role === 'archived' || (status === 'approved' && role === null))) return <div className="platform-domain-stack platform-application-flow">
     <ApplicationOverview state="unavailable" title={t('讲师身份已结束', 'Instructor access has ended')} description={t('你可以重新提交申请，审核通过后恢复讲师权限。', 'Apply again to restore instructor access after approval.')}>
-      <button className="platform-button platform-button-primary" type="button" onClick={() => setEditing(true)}>{t('修改并重新申请', 'Edit and apply again')}<ArrowRight aria-hidden /></button>
+      <AppLink className="platform-button platform-button-primary" href={INSTRUCTOR_APPLICATION_START} prefetch={false}>{t('修改并重新申请', 'Edit and apply again')}<ArrowRight aria-hidden /></AppLink>
     </ApplicationOverview>
     {status && <InstructorApplicationDetails entity={entity} showFeedback={false} />}
   </div>;
 
   if (entity && status === 'approved' && role !== 'archived' && role !== null) return <div className="platform-application-flow"><ApplicationOverview state="unavailable" title={t('暂无法确认讲师权限', 'Instructor access could not be confirmed')} description={t('请刷新状态，或联系管理员。', 'Refresh your status or contact an administrator.')}><button className="platform-button" type="button" onClick={props.onSaved}>{t('刷新状态', 'Refresh status')}</button></ApplicationOverview></div>;
 
+  if(!editing)return <InstructorAdmissionIntro signedIn/>;
   return <div className="platform-application-flow platform-application-edit">
-    <header className="platform-application-edit-header"><h2>{editing ? t('重新申请', 'Apply again') : t('申请成为讲师', 'Apply as an instructor')}</h2><div className="platform-application-applicant"><span>{t('申请人', 'Applicant')}</span><strong>{user?.name}</strong>{user?.wcaId && <span>WCA ID: {user.wcaId}</span>}</div></header>
-    <DomainForm definition={definition} entity={formEntity} busy={busy} runAction={runAction} spec={{ title: text('申请资料', 'Application'), titleHidden: true, action: 'apply-instructor', fields: INSTRUCTOR_APPLICATION_FIELDS }} />
+    <header className="platform-application-edit-header"><h2>{status?t('重新申请','Apply again'):t('申请成为讲师','Apply as an instructor')}</h2><div className="platform-application-applicant"><span>{t('已登录账号','Signed-in account')}</span>{user?.name&&!/^\d+$/.test(user.name.trim())&&<strong>{user.name}</strong>}{user?.wcaId && <span>WCA ID: {user.wcaId}</span>}</div></header>
+    <DomainForm definition={definition} entity={formEntity} busy={busy} runAction={runAction} spec={{ title: text('申请资料', 'Application'), titleHidden: true, action: 'apply-instructor', fields: INSTRUCTOR_APPLICATION_FIELDS }} onResult={()=>router.replace('/platform/teachers/apply')} />
   </div>;
 }
 

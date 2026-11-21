@@ -9,6 +9,7 @@ import { courseCatalogDetails } from '@/lib/platform-course-catalog';
 import type { PlatformActionId, PlatformEntity, PlatformRouteDefinition } from '@/lib/platform-types';
 import { instructorApplicationStatus, localDetailHref } from './PlatformRouteHelpers';
 import { PlatformCourseCover, PlatformCourseLabels } from './PlatformCourseCatalog';
+import { ContentReviewBadge } from './PlatformContentReview';
 
 function favoriteType(definition: PlatformRouteDefinition, item: PlatformEntity): 'course' | 'product' | 'event' | 'news' {
   const explicit = item.data?.targetType;
@@ -153,6 +154,7 @@ export function PlatformEntityList({
                 <div className="platform-instructor-course-card-title">
                   <h2>{title}</h2>
                   {item.status && <span className="platform-status" data-course-status={item.status}>{platformStatusLabel(item.status, t)}</span>}
+                  <ContentReviewBadge entity={item} />
                 </div>
                 <PlatformCourseLabels details={details} />
                 {item.summary && item.summary.trim() !== title.trim() && <p className="platform-course-card-summary">{item.summary}</p>}
@@ -174,6 +176,7 @@ export function PlatformEntityList({
               </div>
               {learnerCourses && redeemedCourseIds.has(item.id) ? <span className="platform-course-redeemed">{t('已兑换', 'Redeemed')}</span> : null}
               {!learnerContent && item.status ? <span className="platform-status">{orderContent ? orderStatuses[item.status] ?? t('等待确认', 'Awaiting confirmation') : platformStatusLabel(item.status, t)}</span> : null}
+              {definition.id === 'admin-courses' && <><ContentReviewBadge entity={item} />{Array.isArray(item.data?.lessons) && item.data.lessons.some(lesson => !!lesson && typeof lesson === 'object' && 'reviewStatus' in lesson && lesson.reviewStatus === 'pending') && <span className="platform-status">{t('课时待审核', 'Lessons awaiting review')}</span>}</>}
             </div>
             {item.summary ? <p>{item.summary}</p> : null}
             {fields?.length ? (

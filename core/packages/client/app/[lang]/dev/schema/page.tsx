@@ -396,6 +396,9 @@ const TABLES: Table[] = [
   ] },
 
   // ── main-site Platform ─────────────────────────────────
+  { name: 'platform_content_reviews', domain: 'platform', origin: '0349', purpose: { zh: '课程及课时的版本化发布审核，保留提交、撤回与审核记录', en: 'Versioned publication reviews for courses and lessons, retaining submissions, withdrawals and decisions' }, cols: [
+    { name: 'id UUID (PK), course_id, lesson_id' }, { name: 'base_revision, candidate_revision, target_status, metadata' }, { name: 'status, submitted_by_user_id, decided_by_user_id, decision_note, submitted_at, decided_at' },
+  ] },
   { name: 'platform_homepage_settings', domain: 'platform', origin: '0343', naturalKey: true, purpose: { zh: '学习空间首页的精选内容、展示时间和自动推荐栏目顺序', en: 'Learning homepage featured content, display schedules and automatic recommendation order' }, cols: [
     { name: 'singleton BOOLEAN (PK), featured_items JSONB, sections JSONB, updated_at' },
   ] },
@@ -606,6 +609,7 @@ const TABLES: Table[] = [
 ];
 
 const MIGRATIONS: { n: number; slug: string; desc: Bi }[] = [
+  { n: 349, slug: 'platform_content_reviews', desc: { zh: '课程及课时发布审核，线上版本在审核期间保持不变。', en: 'Course and lesson publication review, preserving live revisions while pending.' } },
   { n: 347, slug: 'vault_trash', desc: { zh: '添加资料库回收站时间戳，支持恢复和清空。', en: 'Add a vault Trash timestamp for restore and purge operations.' } },
   { n: 346, slug: 'remove_legacy_gan_team', desc: { zh: '删除无成员的旧 GAN 占位战队，保留三支子队的归属。', en: 'Remove the empty legacy GAN entry and preserve memberships in its three rosters.' } },
   { n: 345, slug: 'workspace_payroll', desc: { zh: '按日薪快照与已验收项目汇总月度报酬并记录付款确认', en: 'Monthly payroll from snapshotted day rates and accepted projects, with payment confirmations' } },

@@ -133,7 +133,7 @@ function readPath(resource: PlatformResource, options: PlatformLoadOptions): str
     case 'account-privacy': return '/v1/platform/me/privacy/consents';
     case 'shipping-addresses': return '/v1/platform/me/shipping-addresses';
     case 'instructor-courses': return `/v1/platform/instructor/courses${id ? `/${id}` : ''}${query}`;
-    case 'instructor-application': return '/v1/platform/instructor/applications/current?v=4';
+    case 'instructor-application': return '/v1/platform/instructor/applications/current?v=5';
     case 'instructor-students': return `/v1/platform/instructor/students${query}`;
     case 'instructor-earnings': return `/v1/platform/instructor/earnings${query}`;
     case 'admin-algorithms': return `/v1/platform/admin/algorithms${id ? `/${id}` : ''}${query}`;
@@ -276,6 +276,7 @@ export async function loadPlatformResource(
   const result = normalizeResource(payload);
   if (resource === 'instructor-application') {
     const envelope = asRecord(payload);
+    const instructorHomepageDraft=envelope?.homepageDraftSupported===true;
     const application = asRecord(envelope?.application);
     const instructor = asRecord(envelope?.instructor);
     const reportsInstructor = envelope != null && Object.hasOwn(envelope, 'instructor');
@@ -295,12 +296,12 @@ export async function loadPlatformResource(
         instructorStatus = 'active';
       }
     }
-    if (!application && !instructor && instructorStatus !== 'active' && !(Array.isArray(envelope?.profiles) && envelope.profiles.length)) return { items: [] };
+    if (!application && !instructor && instructorStatus !== 'active' && !(Array.isArray(envelope?.profiles) && envelope.profiles.length)) return { items: [],instructorHomepageDraft };
     const item = entity({ ...application, id: application?.id ?? instructor?.id ?? 'instructor-access',
       instructorStatus, instructorProfileKnown: reportsInstructor, instructorDisplayName: instructor?.displayName,
       instructorBioZh: instructor?.bioZh, instructorBioEn: instructor?.bioEn, teacherEntryId: instructor?.teacherEntryId,
       profileVisible: instructor?.profileVisible, directoryProfiles: envelope?.profiles ?? [] }, 0);
-    return { items: item ? [item] : [] };
+    return { items: item ? [item] : [],instructorHomepageDraft };
   }
   const id = idFrom(options);
   if (resource === 'teachers' && id) {
@@ -391,7 +392,7 @@ export async function uploadPlatformLessonCover(
   file: File,
 ): Promise<PlatformActionResult> {
   const response = await sessionFetch(apiUrl(
-    `/v1/platform/${scope}/courses/${encodeURIComponent(courseId)}/lessons/${encodeURIComponent(lessonId)}/cover`,
+    `/v1/platform/${scope}/courses/${encodeURIComponent(courseId)}/lessons/${encodeURIComponent(lessonId)}/${scope === 'instructor' ? 'cover-review' : 'cover'}`,
   ), {
     method: 'PUT',
     headers: { ...authHeaders(false), 'Content-Type': file.type, 'Idempotency-Key': idempotencyKey() },
@@ -469,6 +470,12 @@ function courseManagementScope(route: PlatformRouteDefinition): 'admin' | 'instr
   if (route.area === 'admin') return 'admin';
   if (route.area === 'instructor') return 'instructor';
   throw new Error('This route cannot manage course content.');
+}
+
+function publicationReviewPayload(payload: Record<string, unknown>): Record<string, unknown> {
+  return payload.status === 'published' || payload.status === 'unlisted'
+    ? { ...payload, status: 'pending_review', targetStatus: payload.status }
+    : payload;
 }
 
 function adminSavePath(route: PlatformRouteDefinition, resourceId?: string): string {
@@ -552,7 +559,9 @@ export async function executePlatformAction(
     case 'archive-instructor': return write('/v1/platform/instructor/archive', 'POST', {});
     case 'link-instructor-profile': return write('/v1/platform/instructor/profile-link', 'POST', payload);
     case 'initialize-instructor-profile': return write('/v1/platform/instructor/profile', 'POST', {});
-    case 'save-instructor-course': return write(`/v1/platform/instructor/courses${id ? `/${encodeURIComponent(id)}` : ''}`, id ? 'PATCH' : 'POST', payload);
+    case 'save-instructor-course': return write(`/v1/platform/instructor/courses${id ? `/${encodeURIComponent(id)}` : ''}`, id ? 'PATCH' : 'POST', publicationReviewPayload(payload));
+    case 'decide-content-review': return write(`/v1/platform/admin/courses/${requiredId(input)}/content-reviews/${requiredPayloadId(payload, 'reviewId')}/decision`, 'POST', withoutPayloadKeys(payload, ['reviewId']));
+    case 'withdraw-content-review': return write(`/v1/platform/instructor/courses/${requiredId(input)}/content-reviews/${requiredPayloadId(payload, 'reviewId')}/withdraw`, 'POST', {});
     case 'delete-course': return write(`/v1/platform/${courseManagementScope(route)}/courses/${requiredId(input)}`, 'DELETE');
     case 'save-course-lesson': {
       const courseId = requiredId(input);
@@ -562,7 +571,7 @@ export async function executePlatformAction(
       return write(
         `/v1/platform/${courseManagementScope(route)}/courses/${courseId}/lessons${lessonId ? `/${lessonId}` : ''}`,
         lessonId ? 'PATCH' : 'POST',
-        withoutPayloadKeys(payload, ['lessonId']),
+        withoutPayloadKeys(route.area === 'instructor' ? publicationReviewPayload(payload) : payload, ['lessonId']),
       );
     }
     case 'delete-course-lesson': {
@@ -651,6 +660,8 @@ export const PLATFORM_ACTION_LABELS: Record<PlatformActionId, { zh: string; en: 
   'link-instructor-profile': { zh: '关联讲师资料', en: 'Link teaching profile' },
   'initialize-instructor-profile': { zh: '创建个人主页', en: 'Create personal profile' },
   'save-instructor-course': { zh: '保存讲师课程', en: 'Save instructor course' },
+  'decide-content-review': { zh: '审核发布', en: 'Review publication' },
+  'withdraw-content-review': { zh: '撤回审核', en: 'Withdraw review' },
   'delete-course': { zh: '归档课程', en: 'Archive course' },
   'save-course-lesson': { zh: '保存课时', en: 'Save lesson' },
   'delete-course-lesson': { zh: '归档课时', en: 'Archive lesson' },

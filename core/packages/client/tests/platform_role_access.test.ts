@@ -22,7 +22,7 @@ vi.mock('nuqs', async original => {
 vi.mock('@/lib/platform-gateway', async original => ({ ...await original<object>(), loadPlatformResource: state.load, executePlatformAction: state.execute, loadPlatformManagedQuizzes: state.managedQuizzes }));
 vi.mock('@/lib/platform-learning', async original => ({ ...await original<object>(), platformLearningRequest: state.learning }));
 vi.mock('@/components/platform/InstructorPayoutSettings', () => ({ InstructorPayoutSettings: () => createElement('div', {}, '收款方式') }));
-vi.mock('@/lib/teacher-directory-api', () => ({ fetchMyTeacherDirectory: state.myDirectory, updateTeacherDirectoryEntry: state.updateDirectory, createTeacherDirectoryEntry: state.createDirectory, deleteTeacherDirectoryEntry: vi.fn() }));
+vi.mock('@/lib/teacher-directory-api', async original => ({ ...await original<object>(), fetchMyTeacherDirectory: state.myDirectory, updateTeacherDirectoryEntry: state.updateDirectory, createTeacherDirectoryEntry: state.createDirectory, deleteTeacherDirectoryEntry: vi.fn() }));
 vi.mock('@/lib/image-upload', () => ({ prepareImageUpload: state.prepareImage, uploadImageBlob: state.uploadImage }));
 vi.mock('@/lib/drive-api', async original => ({ ...await original<object>(), createDriveUpload: state.createUpload, uploadDriveChunk: state.chunk }));
 vi.mock('@/components/AppLink', () => ({ default: ({ children, href }: { children: ReactNode; href: string }) => createElement('a', { href }, children) }));
@@ -33,7 +33,7 @@ vi.mock('@/components/platform/PlatformDomainActions', async () => {
   const { PlatformInstructorActions } = await import('@/components/platform/PlatformInstructorActions');
   return { PlatformDomainActions: (props: import('@/components/platform/PlatformActionTypes').CommonProps) => {
     state.action = props.runAction;
-    if (props.definition.id === 'teacher-apply') return createElement(PlatformInstructorApplication, props);
+    if (['teacher-apply','teacher-apply-start'].includes(props.definition.id)) return createElement(PlatformInstructorApplication, props);
     if (props.definition.id === 'admin-application') return createElement(PlatformInstructorReview, props);
     if (['instructor-course-new', 'instructor-course', 'instructor-lesson-new'].includes(props.definition.id)) return createElement(PlatformInstructorActions, props);
     return createElement('button', {}, '操作');
@@ -82,6 +82,7 @@ const fillCourseField = async (name: string, value: string) => act(async () => {
   input!.dispatchEvent(new Event('input', { bubbles: true }));
 });
 const advanceCourse = async () => act(async () => host.querySelector('form.platform-course-wizard')!.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true })));
+const advanceApplication = async () => act(async () => host.querySelector('form.platform-admission-wizard, .platform-admission-homepage-step form.directory-form')!.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true })));
 const currentCourseStep = () => host.querySelector('.platform-wizard-progress [aria-current="step"]')?.getAttribute('aria-label');
 
 it('combines real catalog facets with the masthead and applies or resets them together', async () => {
@@ -429,7 +430,7 @@ it('uploads a video before publishing an independent lesson and keeps its course
   expect([...host.querySelectorAll('.platform-lesson-create-details label span')].map(label => label.textContent)).toEqual(['中文标题', '英文标题']);
   expect(host.querySelector('.platform-lesson-create-details select')).toBeNull();
   expect(host.querySelector('.platform-lesson-create-details input[type=number]')).toBeNull();
-  const publish = [...host.querySelectorAll('button')].find(button => button.textContent === '发布课时')!;
+  const publish = [...host.querySelectorAll('button')].find(button => button.textContent === '提交审核')!;
   expect(publish.disabled).toBe(true);
   const input = host.querySelector<HTMLInputElement>('input[type=file]')!;
   await act(async () => {
@@ -447,6 +448,26 @@ it('uploads a video before publishing an independent lesson and keeps its course
   expect(state.execute.mock.calls.at(-1)?.[1].payload).not.toHaveProperty('accessScope');
   expect(state.replace).toHaveBeenCalledWith('/zh/platform/instructor/courses');
   expect(localStorage.getItem(key)).toBeNull();
+});
+
+it('shows a submitted publication as pending and gives administrators explicit decision controls', async () => {
+  const { PlatformContentReview } = await import('@/components/platform/PlatformContentReview');
+  const runAction = vi.fn().mockResolvedValue({});
+  const entity = { id: 'review-course', title: '待审核课程', status: 'draft', data: {
+    reviewId: 'review-1', reviewStatus: 'pending', titleZh: '待审核课程', reviewTargetStatus: 'published',
+    reviewMetadata: { currency: 'CNY', baseAmountMinor: 1000 }, descriptionZh: '课程介绍',
+  } };
+  await act(async () => root.render(createElement(PlatformContentReview, { entity, courseId: entity.id, admin: false, busy: null, runAction })));
+  expect(host.textContent).toContain('待审核');
+  expect(host.textContent).toContain('撤回审核');
+  expect(host.textContent).not.toContain('审核通过并发布');
+  await act(async () => root.render(createElement(PlatformContentReview, { entity, courseId: entity.id, admin: true, busy: null, runAction })));
+  expect(host.textContent).toContain('课程介绍');
+  const reject = [...host.querySelectorAll('button')].find(button => button.textContent === '驳回')!;
+  expect(reject.disabled).toBe(true);
+  const approve = [...host.querySelectorAll('button')].find(button => button.textContent === '审核通过并发布')!;
+  await act(async () => approve.click());
+  expect(runAction).toHaveBeenCalledWith('decide-content-review', entity.id, { reviewId: 'review-1', decision: 'approved', note: '' });
 });
 
 it.each([
@@ -546,9 +567,105 @@ it.each([
   expect(host.textContent).not.toContain(applicationId);
 });
 
+it('introduces instructor benefits before the independent application flow, including for guests', async () => {
+  state.user=null;
+  await renderInShell('teacher-apply');
+  expect(host.querySelector('.platform-admission-benefit-grid')?.children).toHaveLength(4);
+  expect(host.querySelector('.platform-admission-cta a')?.getAttribute('href')).toBe('/account');
+  expect(host.querySelector('form')).toBeNull();
+  expect(state.load).not.toHaveBeenCalled();
+  state.user={uid:1};
+  await renderInShell('teacher-apply');
+  await act(async()=>{await vi.dynamicImportSettled();});
+  expect(host.querySelector('.platform-admission-cta a')?.getAttribute('href')).toBe('/platform/teachers/apply/start');
+  expect(host.querySelector('form')).toBeNull();
+});
+
+it('keeps four application steps private until one final submission and preserves edits', async () => {
+  state.execute.mockRejectedValueOnce(new Error('Connection interrupted'));
+  state.execute.mockResolvedValueOnce({ok:true});
+  await render('teacher-apply-start');
+  expect(currentCourseStep()).toBe('基本资料');
+  await advanceApplication();
+  expect(currentCourseStep()).toBe('基本资料');
+  expect(state.execute).not.toHaveBeenCalled();
+  await fillCourseField('公开姓名（也用于课程作者）','测试讲师');
+  await fillCourseField('所在城市（公开，线下授课必填）','上海');
+  await advanceApplication();
+  expect(currentCourseStep()).toBe('教学能力');
+  const pickPuzzle=async(label:string)=>{
+    await act(async()=>host.querySelector<HTMLButtonElement>('.platform-admission-specialty-options button[aria-haspopup="menu"]')!.click());
+    await act(async()=>[...host.querySelectorAll<HTMLButtonElement>('.platform-admission-specialty-options .pp-item')].find(button=>button.querySelector('.pp-item-label')?.textContent===label)!.click());
+  };
+  const chooseTopic=async(label:string)=>act(async()=>[...host.querySelectorAll<HTMLButtonElement>('.platform-admission-specialty-options .platform-filter-option')].find(button=>button.textContent===label)!.click());
+  const selectedSpecialties=()=>host.querySelector<HTMLTextAreaElement>('.platform-admission-specialties textarea')!.value;
+  expect(host.querySelector<HTMLButtonElement>('.platform-admission-specialty-options .platform-filter-option')?.disabled).toBe(true);
+  await pickPuzzle('三阶');
+  expect(selectedSpecialties()).toBe('');
+  await chooseTopic('入门复原');
+  expect(selectedSpecialties()).toBe('三阶：入门复原');
+  await chooseTopic('速度提升');
+  await pickPuzzle('二阶');await chooseTopic('入门复原');
+  expect(selectedSpecialties()).toBe('三阶：入门复原\n三阶：速度提升\n二阶：入门复原');
+  await chooseTopic('入门复原');
+  expect(selectedSpecialties()).toBe('三阶：入门复原\n三阶：速度提升');
+  await pickPuzzle('三阶');await chooseTopic('速度提升');
+  expect(selectedSpecialties()).toBe('三阶：入门复原');
+  await fillCourseField('教学经历（审核专用）','私密教学经历');
+  await advanceApplication();
+  expect(currentCourseStep()).toBe('公开主页');
+  await fillCourseField('中文介绍','欢迎学习三阶魔方');
+  await fillCourseField('英文介绍','Learn the cube');
+  await fillCourseField('邮箱','public@example.test');
+  expect(host.querySelector('.directory-profile-preview')?.textContent).toContain('测试讲师');
+  expect(host.querySelector('.directory-profile-preview')?.textContent).toContain('欢迎学习三阶魔方');
+  expect(host.querySelector('.directory-profile-preview')?.textContent).not.toContain('私密教学经历');
+  await advanceApplication();
+  expect(currentCourseStep()).toBe('确认提交');
+  await fillCourseField('审核联系信息（不公开）','demo@example.test');
+  await act(async()=>host.querySelector<HTMLButtonElement>('.platform-admission-review-heading button')!.click());
+  expect(currentCourseStep()).toBe('基本资料');
+  expect([...host.querySelectorAll('input')].some(input=>input.value==='测试讲师')).toBe(true);
+  await advanceApplication();await advanceApplication();await advanceApplication();
+  expect([...host.querySelectorAll('textarea')].some(input=>input.value==='demo@example.test')).toBe(true);
+  expect(state.execute).not.toHaveBeenCalled();
+  await advanceApplication();
+  expect(state.execute).toHaveBeenCalledTimes(1);
+  expect(state.replace).not.toHaveBeenCalled();
+  expect(currentCourseStep()).toBe('确认提交');
+  expect([...host.querySelectorAll('textarea')].some(input=>input.value==='demo@example.test')).toBe(true);
+  await advanceApplication();
+  expect(state.execute).toHaveBeenCalledTimes(2);
+  expect(state.execute).toHaveBeenCalledWith(expect.objectContaining({id:'teacher-apply-start'}),expect.objectContaining({action:'apply-instructor',payload:expect.objectContaining({publicName:'测试讲师',city:'上海',specialties:['三阶：入门复原'],experience:'私密教学经历',publicBio:'欢迎学习三阶魔方',contact:'demo@example.test',profileVisible:false,homepage:expect.objectContaining({descriptionZh:'欢迎学习三阶魔方',descriptionEn:'Learn the cube',contacts:{email:'public@example.test'}})})}));
+  expect(state.createDirectory).not.toHaveBeenCalled();expect(state.updateDirectory).not.toHaveBeenCalled();
+  expect(state.replace).toHaveBeenCalledWith('/platform/teachers/apply');
+});
+
+it.each([true,false])('can defer the public homepage without a biography and protects older APIs (supported=%s)',async supported=>{
+  state.load.mockResolvedValue({items:[],instructorHomepageDraft:supported});
+  if(supported)state.execute.mockResolvedValueOnce({ok:true});
+  await render('teacher-apply-start');
+  await fillCourseField('公开姓名（也用于课程作者）','待完善讲师');
+  await fillCourseField('所在城市（公开，线下授课必填）','上海');
+  await advanceApplication();
+  await fillCourseField('擅长方向（公开，每行一项）','三阶：入门复原');
+  await fillCourseField('教学经历（审核专用）','私密经历');
+  await advanceApplication();
+  expect(host.querySelector('.directory-editor-layout')).not.toBeNull();
+  await act(async()=>[...host.querySelectorAll('button')].find(button=>button.textContent==='以后再设置')!.click());
+  expect(currentCourseStep()).toBe('确认提交');
+  expect(host.textContent).toContain('暂不公开');
+  await fillCourseField('审核联系信息（不公开）','review@example.test');
+  await advanceApplication();
+  if(!supported){expect(state.execute).not.toHaveBeenCalled();expect(host.textContent).toContain('新版讲师申请需要更新服务');expect([...host.querySelectorAll('textarea')].some(field=>field.value==='review@example.test')).toBe(true);return;}
+  const payload=state.execute.mock.calls[0][1].payload;
+  expect(payload).toMatchObject({publicName:'待完善讲师',profileDeferred:true,profileVisible:false,publicBio:null,contact:'review@example.test'});
+  expect(payload.homepage).toBeUndefined();
+});
+
 it('locks pending applications, restores rejected drafts and opens the approved instructor workspace', async () => {
   const id = 'demo-app';
-  const data = { application: { city: '上海', teachingMode: 'both', experience: '教学经历样例', specialties: ['三阶'], contact: 'demo@example.test' }, createdAt: '2026-11-19T00:00:00Z' };
+  const data = { application: { publicName:'测试讲师',publicBio:'简介',city: '上海', teachingMode: 'both', experience: '教学经历样例', specialties: ['三阶'], contact: 'demo@example.test' }, createdAt: '2026-11-19T00:00:00Z' };
   const show = async (status: string, extra: Record<string, unknown> = {}) => {
     state.load.mockResolvedValue({ items: [{ id, title: id, status, data: { ...data, ...extra } }] });
     await renderInShell('teacher-apply', { id: status });
@@ -559,7 +676,8 @@ it('locks pending applications, restores rejected drafts and opens the approved 
   expect(host.querySelector('form')).toBeNull();
   await show('rejected', { decisionNote: '补充教学成果' });
   expect(host.textContent).toContain('补充教学成果');
-  await act(async () => [...host.querySelectorAll('button')].find(button => button.textContent === '修改并重新申请')!.click());
+  expect(host.querySelector('a[href="/platform/teachers/apply/start"]')).not.toBeNull();
+  await render('teacher-apply-start');await advanceApplication();
   expect([...host.querySelectorAll('textarea')].some(textarea => textarea.value === '教学经历样例')).toBe(true);
   await show('approved', { instructorStatus: 'active', teacherEntryId: 42, profileVisible: false });
   expect(host.querySelector('a[href="/platform/instructor"]')).toBeNull();
@@ -570,7 +688,7 @@ it('locks pending applications, restores rejected drafts and opens the approved 
 
 it('lets archived instructors apply again, preserves pending review and blocks suspended instructors', async () => {
   const id = 'demo-archived-app';
-  const data = { application: { city: '上海', teachingMode: 'both', experience: '原教学经历', specialties: ['三阶'], contact: 'demo@example.test' } };
+  const data = { application: { publicName:'测试讲师',publicBio:'简介',city: '上海', teachingMode: 'both', experience: '原教学经历', specialties: ['三阶'], contact: 'demo@example.test' } };
   const show = async (status: string, instructorStatus: string) => {
     state.load.mockResolvedValue({ items: [{ id, title: id, status, data: { ...data, instructorStatus } }] });
     await renderInShell('teacher-apply', { id: `${status}-${instructorStatus}` });
@@ -578,7 +696,8 @@ it('lets archived instructors apply again, preserves pending review and blocks s
   };
   await show('approved', 'archived');
   expect(host.textContent).toContain('讲师身份已结束');
-  await act(async () => [...host.querySelectorAll('button')].find(button => button.textContent === '修改并重新申请')!.click());
+  expect(host.querySelector('a[href="/platform/teachers/apply/start"]')).not.toBeNull();
+  await render('teacher-apply-start');await advanceApplication();
   expect([...host.querySelectorAll('textarea')].some(textarea => textarea.value === '原教学经历')).toBe(true);
   await show('pending', 'archived');
   expect(host.textContent).toContain('等待审核');

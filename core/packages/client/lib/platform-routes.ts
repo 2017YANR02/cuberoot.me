@@ -24,6 +24,10 @@ export function isPlatformInstructorCourseEditor(id?: string): boolean {
   return id === 'instructor-course-new' || id === 'instructor-course' || id === 'instructor-lesson-new';
 }
 
+export function isPlatformInstructorApplication(id?: string): boolean {
+  return id === 'teacher-apply' || id === 'teacher-apply-start';
+}
+
 export const PLATFORM_INSTRUCTOR_PAGE_SIZES = [5, 10, 20];
 
 export function platformCourseSectionsIncludedBy(slug: string): readonly (typeof PLATFORM_COURSE_SECTIONS)[number][] {
@@ -105,6 +109,7 @@ export const PLATFORM_ROUTES: readonly PlatformRouteDefinition[] = [
   canonical('teacher-live-guide', 'teachers/live-guide', 'discover', 'public', text('直播指南', 'Livestream guide'), '/teachers/live-guide'),
   route({ id: 'teacher-detail', pattern: 'teachers/:id', area: 'discover', access: 'public', kind: 'detail', title: text('讲师详情', 'Teacher details'), resource: 'teachers', canonicalHref: '/teachers?teacher=:id', description: text('直接读取主站讲师名录；旧 Platform 自动播种的演示讲师未导入，找不到时请返回主站名录。', 'This reads the main-site teacher directory directly. Auto-seeded demo teachers from the legacy Platform were not imported; use the main-site directory when an entry is not found.') }),
   route({ id: 'teacher-apply', pattern: 'teachers/apply', area: 'instructor', access: 'account', kind: 'form', title: text('申请成为讲师', 'Apply as an instructor'), resource: 'instructor-application', actions: ['apply-instructor', 'withdraw-instructor-application', 'archive-instructor'], description: text('提交教学经历、擅长方向和联系方式，申请进度与主站账号绑定。', 'Submit teaching experience, specialties, and contact details; application status follows the main-site account.') }),
+  route({ id: 'teacher-apply-start', pattern: 'teachers/apply/start', area: 'instructor', access: 'account', kind: 'form', title: text('填写讲师申请', 'Instructor application'), resource: 'instructor-application', actions: ['apply-instructor', 'withdraw-instructor-application', 'archive-instructor'], description: text('填写讲师资料并提交审核。', 'Complete your instructor application and submit it for review.') }),
   route({ id: 'community', pattern: 'community', area: 'community', access: 'public', kind: 'canonical', title: text('社区', 'Community'), resource: 'community', canonicalHref: '/forum', canonicalLabel: text('打开完整论坛', 'Open the full forum') }),
   canonical('community-feed', 'community/feed', 'community', 'public', text('动态', 'Feed'), '/forum/feed'),
   canonical('community-mine', 'community/mine', 'community', 'account', text('我的讨论', 'My discussions'), '/forum/mine'),
@@ -145,7 +150,7 @@ export const PLATFORM_ROUTES: readonly PlatformRouteDefinition[] = [
   route({ id: 'instructor', pattern: 'instructor', area: 'instructor', access: 'instructor', kind: 'dashboard', title: text('讲师工作台', 'Instructor workspace'), resource: 'instructor-courses' }),
   route({ id: 'instructor-courses', pattern: 'instructor/courses', area: 'instructor', access: 'instructor', kind: 'collection', title: text('讲师课程', 'Instructor courses'), resource: 'instructor-courses', actions: ['delete-course'] }),
   route({ id: 'instructor-course-new', pattern: 'instructor/courses/new', area: 'instructor', access: 'instructor', kind: 'form', title: text('创建课程', 'Create course'), resource: 'instructor-application', actions: ['save-instructor-course'] }),
-  route({ id: 'instructor-course', pattern: 'instructor/courses/:id', area: 'instructor', access: 'instructor', kind: 'detail', title: text('管理课程', 'Manage course'), resource: 'instructor-courses', actions: ['save-instructor-course', 'delete-course', 'save-course-lesson', 'delete-course-lesson', 'save-course-quiz', 'delete-course-quiz'] }),
+  route({ id: 'instructor-course', pattern: 'instructor/courses/:id', area: 'instructor', access: 'instructor', kind: 'detail', title: text('管理课程', 'Manage course'), resource: 'instructor-courses', actions: ['save-instructor-course', 'delete-course', 'save-course-lesson', 'delete-course-lesson', 'save-course-quiz', 'delete-course-quiz', 'withdraw-content-review'] }),
   route({ id: 'instructor-lesson-new', pattern: 'instructor/courses/:id/lessons/new', area: 'instructor', access: 'instructor', kind: 'form', title: text('新增课时', 'Add lesson'), resource: 'instructor-courses', actions: ['save-course-lesson'] }),
   route({ id: 'instructor-students', pattern: 'instructor/students', area: 'instructor', access: 'instructor', kind: 'collection', title: text('学员', 'Learners'), resource: 'instructor-students', actions: ['issue-certificate'] }),
   route({ id: 'instructor-earnings', pattern: 'instructor/earnings', area: 'instructor', access: 'instructor', kind: 'dashboard', title: text('收入与结算', 'Earnings and payouts'), resource: 'instructor-earnings' }),
@@ -177,7 +182,7 @@ export const PLATFORM_ROUTES: readonly PlatformRouteDefinition[] = [
   route({ id: 'admin-applications', pattern: 'admin/teacher-applications', area: 'admin', access: 'admin', kind: 'collection', title: text('讲师申请', 'Instructor applications'), resource: 'admin-applications' }),
   route({ id: 'admin-coupons', pattern: 'admin/coupons', area: 'admin', access: 'admin', kind: 'collection', title: text('优惠券', 'Coupons'), resource: 'admin-coupons', actions: ['admin-save', 'admin-delete'] }),
   route({ id: 'admin-course-new', pattern: 'admin/courses/new', area: 'admin', access: 'admin', kind: 'form', title: text('新建课程', 'New course'), resource: 'admin-courses', actions: ['admin-save'] }),
-  route({ id: 'admin-course', pattern: 'admin/courses/:id', area: 'admin', access: 'admin', kind: 'detail', title: text('编辑课程', 'Edit course'), resource: 'admin-courses', actions: ['admin-save', 'delete-course', 'save-course-lesson', 'delete-course-lesson', 'save-course-quiz', 'delete-course-quiz'] }),
+  route({ id: 'admin-course', pattern: 'admin/courses/:id', area: 'admin', access: 'admin', kind: 'detail', title: text('编辑课程', 'Edit course'), resource: 'admin-courses', actions: ['admin-save', 'delete-course', 'save-course-lesson', 'delete-course-lesson', 'save-course-quiz', 'delete-course-quiz', 'decide-content-review'] }),
   route({ id: 'admin-courses', pattern: 'admin/courses', area: 'admin', access: 'admin', kind: 'collection', title: text('课程管理', 'Course management'), resource: 'admin-courses', actions: ['delete-course'] }),
   route({ id: 'admin-paths', pattern: 'admin/paths', area: 'admin', access: 'admin', kind: 'collection', title: text('学习路径管理', 'Learning path management'), resource: 'admin-paths', actions: ['admin-save'] }),
   route({ id: 'admin-event-new', pattern: 'admin/events/new', area: 'admin', access: 'admin', kind: 'form', title: text('新建活动', 'New event'), resource: 'admin-events', actions: ['admin-save'] }),

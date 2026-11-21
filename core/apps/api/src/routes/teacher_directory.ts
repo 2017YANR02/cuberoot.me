@@ -7,6 +7,7 @@ import type { Context } from 'hono';
 import { getIp } from '../utils/analytics_helpers.js';
 import { query } from '../db/connection.js';
 import { PUBLIC_DIRECTORY_ENTRY_PREDICATE } from '../platform/db.js';
+import { cleanText, cleanContacts, cleanImages, isHttpUrl, readDraft, validateDraft, type DirectoryDraft, type DirectoryImage, type DirectoryContacts, type EntryKind, type TeachingMode } from '../utils/teacher-directory-draft.js';
 import {
   checkRateLimit,
   requireAdminOrApiKey,
@@ -15,45 +16,6 @@ import {
 } from '../utils/recon_helpers.js';
 
 export const teacherDirectoryRoutes = new Hono();
-
-type EntryKind = 'teacher' | 'organization';
-type TeachingMode = 'online' | 'in_person' | 'both';
-type ImageKind = 'portrait' | 'organization' | 'teaching' | 'other';
-interface DirectoryImage {
-  id: number;
-  kind: ImageKind;
-  captionZh: string;
-  captionEn: string;
-}
-const CONTACT_KEYS = [
-  'wechat', 'qq', 'email', 'phone', 'youtube', 'bilibili', 'douyin', 'kuaishou',
-  'xiaohongshu', 'wechatChannels', 'facebook', 'other',
-] as const;
-type ContactKey = typeof CONTACT_KEYS[number];
-type DirectoryContacts = Partial<Record<ContactKey, string>>;
-const URL_CONTACT_KEYS = new Set<ContactKey>([
-  'youtube', 'bilibili', 'douyin', 'kuaishou', 'xiaohongshu', 'facebook',
-]);
-
-interface DirectoryDraft {
-  kind: EntryKind;
-  nameZh: string;
-  nameEn: string;
-  locationZh: string;
-  locationEn: string;
-  descriptionZh: string;
-  descriptionEn: string;
-  specialtiesZh: string[];
-  specialtiesEn: string[];
-  teachingMode: TeachingMode;
-  contacts: DirectoryContacts;
-  images: DirectoryImage[];
-  contact: string;
-  website: string;
-  wcaId: string;
-  isCurated: boolean;
-  isVisible: boolean;
-}
 
 interface DirectoryRow {
   id: number | string;
@@ -143,9 +105,6 @@ const DIRECTORY_OWNER_PREDICATE = `NOT EXISTS (
   WHERE i.teacher_entry_id=t.id
     AND COALESCE(NULLIF(u.wca_id,''),'u'||u.id::text) IS DISTINCT FROM ?
 )`;
-const KINDS: readonly EntryKind[] = ['teacher', 'organization'];
-const MODES: readonly TeachingMode[] = ['online', 'in_person', 'both'];
-const IMAGE_KINDS: readonly ImageKind[] = ['portrait', 'organization', 'teaching', 'other'];
 const SCRIPT_CUE_KINDS: readonly ScriptCueKind[] = ['action', 'interaction', 'transition', 'optional'];
 const SCRIPT_COLUMNS = `s.id, s.teacher_entry_id, s.title_zh, s.title_en, s.summary_zh, s.summary_en,
   s.duration_minutes, s.content, s.is_visible, s.created_at, s.updated_at,
@@ -154,102 +113,6 @@ const SCRIPT_COLUMNS = `s.id, s.teacher_entry_id, s.title_zh, s.title_en, s.summ
 
 function noStore(c: { header: (key: string, value: string) => void }): void {
   c.header('Cache-Control', 'no-cache, no-store, must-revalidate');
-}
-
-function cleanText(value: unknown, max: number): string {
-  return String(value ?? '').trim().slice(0, max);
-}
-
-function cleanTags(value: unknown): string[] {
-  if (!Array.isArray(value)) return [];
-  const seen = new Set<string>();
-  const result: string[] = [];
-  for (const item of value) {
-    const tag = cleanText(item, 50);
-    const key = tag.toLocaleLowerCase();
-    if (!tag || seen.has(key)) continue;
-    seen.add(key);
-    result.push(tag);
-    if (result.length === 8) break;
-  }
-  return result;
-}
-
-function cleanContacts(value: unknown, legacyContact = ''): DirectoryContacts {
-  const contacts: DirectoryContacts = {};
-  if (value && typeof value === 'object' && !Array.isArray(value)) {
-    const source = value as Record<string, unknown>;
-    for (const key of CONTACT_KEYS) {
-      const contactValue = cleanText(source[key], 500);
-      if (contactValue) contacts[key] = contactValue;
-    }
-  }
-  if (Object.keys(contacts).length === 0 && legacyContact) {
-    contacts.other = cleanText(legacyContact, 500);
-  }
-  return contacts;
-}
-
-function cleanImages(value: unknown): DirectoryImage[] {
-  if (!Array.isArray(value)) return [];
-  const seen = new Set<number>();
-  const result: DirectoryImage[] = [];
-  for (const item of value) {
-    if (!item || typeof item !== 'object') continue;
-    const source = item as Record<string, unknown>;
-    const id = Number(source.id);
-    if (!Number.isSafeInteger(id) || id <= 0 || seen.has(id)) continue;
-    seen.add(id);
-    result.push({
-      id,
-      kind: IMAGE_KINDS.includes(source.kind as ImageKind) ? source.kind as ImageKind : 'other',
-      captionZh: cleanText(source.captionZh, 160),
-      captionEn: cleanText(source.captionEn, 160),
-    });
-    if (result.length === 8) break;
-  }
-  return result;
-}
-
-function isHttpUrl(value: string): boolean {
-  try {
-    const url = new URL(value);
-    return url.protocol === 'http:' || url.protocol === 'https:';
-  } catch {
-    return false;
-  }
-}
-
-function readDraft(
-  body: Partial<DirectoryDraft>,
-  defaults?: { isVisible: boolean; contacts: DirectoryContacts; images: DirectoryImage[]; contact: string },
-): DirectoryDraft {
-  const wcaId = cleanText(body.wcaId, 20).toUpperCase();
-  const rawContact = cleanText(body.contact, 300);
-  const contacts = body.contacts === undefined && defaults
-    ? cleanContacts(defaults.contacts, defaults.contact)
-    : cleanContacts(body.contacts, rawContact);
-  return {
-    kind: KINDS.includes(body.kind as EntryKind) ? body.kind as EntryKind : 'teacher',
-    nameZh: cleanText(body.nameZh, 160),
-    nameEn: cleanText(body.nameEn, 160),
-    locationZh: cleanText(body.locationZh, 160),
-    locationEn: cleanText(body.locationEn, 160),
-    descriptionZh: cleanText(body.descriptionZh, 2000),
-    descriptionEn: cleanText(body.descriptionEn, 2000),
-    specialtiesZh: cleanTags(body.specialtiesZh),
-    specialtiesEn: cleanTags(body.specialtiesEn),
-    teachingMode: MODES.includes(body.teachingMode as TeachingMode)
-      ? body.teachingMode as TeachingMode
-      : 'both',
-    contacts,
-    images: body.images === undefined && defaults ? cleanImages(defaults.images) : cleanImages(body.images),
-    contact: rawContact || cleanText(Object.values(contacts)[0], 300),
-    website: cleanText(body.website, 2000),
-    wcaId,
-    isCurated: body.isCurated === true,
-    isVisible: typeof body.isVisible === 'boolean' ? body.isVisible : defaults?.isVisible ?? true,
-  };
 }
 
 async function validateImageOwnership(
@@ -265,21 +128,6 @@ async function validateImageOwnership(
   );
   if (rows.length !== images.length) return 'image_not_found';
   if (!admin && rows.some((row) => row.owner_wca_id !== user.wcaId)) return 'image_not_owned';
-  return null;
-}
-
-function validateDraft(draft: DirectoryDraft): string | null {
-  if (!draft.nameZh && !draft.nameEn) return 'name_required';
-  if ((draft.kind !== 'teacher' || draft.isVisible) && !draft.descriptionZh && !draft.descriptionEn) return 'description_required';
-  if (draft.kind === 'organization' && Object.keys(draft.contacts).length === 0 && !draft.website) return 'contact_required';
-  if (draft.website && !isHttpUrl(draft.website)) return 'website_invalid';
-  for (const key of URL_CONTACT_KEYS) {
-    if (draft.contacts[key] && !isHttpUrl(draft.contacts[key])) return `${key}_invalid`;
-  }
-  if (draft.contacts.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(draft.contacts.email)) {
-    return 'email_invalid';
-  }
-  if (draft.wcaId && !/^\d{4}[A-Z]{4}\d{2}$/.test(draft.wcaId)) return 'wca_id_invalid';
   return null;
 }
 

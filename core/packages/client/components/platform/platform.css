@@ -2033,6 +2033,67 @@ a.platform-course-lesson-row:hover { color: var(--accent); }
 .platform-application-applicant > span { color: var(--muted-foreground); }
 .platform-application-edit .platform-domain-form { margin: 0; padding: 0; }
 .platform-application-edit .platform-form-grid { max-width: none; }
+.platform-admission-intro { display:grid; gap:clamp(28px,5vw,52px); min-width:0; padding-block:8px 16px; }
+.platform-admission-hero { display:grid; grid-template-columns:minmax(0,1.6fr) minmax(180px,.8fr); align-items:center; gap:32px; padding:clamp(24px,5vw,54px); border-radius:22px; background:var(--accent-soft); }
+.platform-admission-hero-copy { display:grid; gap:14px; }
+.platform-admission-eyebrow { width:fit-content; color:var(--accent); font-weight:650; font-size:.875rem; }
+.platform-admission-hero h2 { margin:0; font-size:clamp(1.8rem,3.7vw,3rem); line-height:1.28; max-width:700px; letter-spacing:-.025em; }
+.platform-admission-hero p { margin:0; max-width:580px; color:var(--muted-foreground); font-size:1rem; line-height:1.8; }
+.platform-admission-hero-art { display:grid; gap:18px; align-content:center; justify-items:center; min-height:190px; color:var(--accent); }
+.platform-admission-hero-art > svg { box-sizing:content-box; padding:24px; background:var(--card); border:1px solid var(--border-default); border-radius:22px; }
+.platform-admission-hero-art > div { display:flex; gap:12px; }
+.platform-admission-hero-art > div > svg { box-sizing:content-box; padding:14px; border-radius:14px; background:var(--card); border:1px solid var(--border-default); }
+.platform-admission-benefits h2,.platform-admission-process h2 { margin:0 0 22px; font-size:1.375rem; line-height:1.4; }
+.platform-admission-benefit-grid { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:18px; }
+.platform-admission-benefit-grid article { display:grid; align-content:start; gap:9px; min-width:0; padding:16px; border:1px solid var(--border-default); border-radius:14px; }
+.platform-admission-benefit-icon { display:grid; place-items:center; width:44px; height:44px; border-radius:12px; color:var(--accent); background:var(--accent-soft); margin-bottom:4px; }
+.platform-admission-benefit-grid h3,.platform-admission-process h3 { margin:0; font-size:1rem; font-weight:620; }
+.platform-admission-benefit-grid p,.platform-admission-process p { margin:0; color:var(--muted-foreground); line-height:1.7; }
+.platform-admission-process ol { list-style:none; margin:0; padding:0; display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:22px; }
+.platform-admission-process li { display:flex; align-items:flex-start; gap:12px; min-width:0; }
+.platform-admission-step-number { display:grid; place-items:center; flex:0 0 34px; height:34px; background:var(--muted); border:1px solid var(--border-default); border-radius:50%; font-weight:650; }
+.platform-admission-process h3 { margin:3px 0 6px; }
+.platform-admission-cta { display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:20px; padding:clamp(20px,3vw,32px); background:var(--muted); border-radius:16px; }
+.platform-admission-cta h2 { margin:0 0 6px; font-size:1.25rem; }
+.platform-admission-cta p { margin:0; color:var(--muted-foreground); }
+.platform-instructor-application-page { max-width:880px; margin-inline:auto; }
+.platform-instructor-application-page .platform-application-edit { max-width:none; }
+.platform-admission-wizard.platform-domain-form { display:flex; flex-direction:column; gap:24px; min-height:min(570px,calc(100svh - 150px)); }
+.platform-instructor-application-page:has(.platform-admission-homepage-step) { max-width:1120px; }
+.platform-admission-homepage-step { display:grid; gap:20px; min-width:0; }
+.platform-admission-homepage-step .directory-editor-layout { width:100%; }
+.platform-admission-profile-actions { display:flex; flex-wrap:wrap; gap:10px; }
+.platform-admission-profile-actions > button:last-child { margin-inline-start:auto; }
+.platform-admission-wizard .platform-wizard-progress { grid-template-columns:repeat(4,minmax(0,1fr)); }
+.platform-admission-wizard-heading { display:grid; gap:5px; }
+.platform-admission-wizard-heading > span { font-size:.75rem; color:var(--muted-foreground); }
+.platform-admission-wizard-heading h2 { margin:0; font-size:1.5rem; }
+.platform-admission-wizard-heading p { margin:0; color:var(--muted-foreground); }
+.platform-admission-step-content { min-width:0; }
+.platform-admission-step-content .platform-form-grid { align-content:start; gap:18px; }
+.platform-admission-private-note,.platform-admission-specialties small { margin:0; color:var(--muted-foreground); font-size:.8125rem; }
+.platform-admission-specialties { display:grid; gap:9px; }
+.platform-admission-specialties label { display:grid; gap:5px; }
+.platform-admission-specialty-options { display:flex; align-items:center; flex-wrap:wrap; gap:8px; }
+.platform-admission-specialty-options .platform-filter-option:disabled { opacity:.5; cursor:default; }
+.platform-admission-review { display:grid; gap:16px; }
+.platform-admission-review section { padding:16px; border:1px solid var(--border-default); border-radius:12px; }
+.platform-admission-review-heading { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:12px; }
+.platform-admission-review-heading h3 { margin:0; font-size:1rem; }
+.platform-admission-review dl { display:grid; gap:12px; margin:0; }
+.platform-admission-review dl > div { display:grid; gap:4px; }
+.platform-admission-review dt { font-size:.8125rem; color:var(--muted-foreground); }
+.platform-admission-review dd { margin:0; white-space:pre-wrap; overflow-wrap:anywhere; }
+@media(max-width:900px){ .platform-admission-benefit-grid { grid-template-columns:repeat(2,minmax(0,1fr)); } }
+@media(max-width:640px){
+  .platform-admission-hero { grid-template-columns:1fr; gap:16px; }
+  .platform-admission-hero-art { display:none; }
+  .platform-admission-benefit-grid { gap:10px; }
+  .platform-admission-benefit-grid article { padding:12px; }
+  .platform-admission-process ol { grid-template-columns:1fr; gap:14px; }
+  .platform-admission-cta > .platform-button { width:100%; justify-content:center; }
+  .platform-admission-wizard.platform-domain-form { gap:18px; }
+}
 .platform-application-details.platform-domain-content { display: grid; gap: 22px; margin: 0; padding: 0; }
 .platform-application-detail-head { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
 .platform-application-detail-head h2 { margin: 0; font-size: 1.125rem; overflow-wrap: anywhere; }
@@ -2262,6 +2323,12 @@ a.platform-course-lesson-row:hover { color: var(--accent); }
 .platform-instructor-lesson-title strong { font-size: 0.9375rem; font-weight: 600; }
 .platform-instructor-lesson-title small { color: var(--muted-foreground); font-size: 0.75rem; }
 .platform-instructor-lesson-toggle .platform-status { margin: 0; align-self: center; }
+.platform-instructor-lesson-statuses { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 6px; }
+.platform-content-review { display: grid; gap: 12px; border: 1px solid var(--border-default); border-radius: 12px; padding: 16px; min-width: 0; }
+.platform-content-review :is(h3, h4, p) { margin: 0; }
+.platform-content-review-copy { overflow-wrap: anywhere; white-space: pre-wrap; }
+.platform-content-review-video { width: min(100%, 720px); max-height: 440px; border-radius: 8px; }
+.platform-content-review-cover { max-width: min(100%, 360px); max-height: 240px; object-fit: contain; border-radius: 8px; }
 .platform-instructor-lesson-toggle .more-toggle-chevron { grid-column: -2; color: var(--muted-foreground); }
 .platform-instructor-lesson-toggle:is(:hover, :focus-visible) .platform-instructor-lesson-title strong { color: var(--accent); }
 .platform-lesson-route-header { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
@@ -2510,9 +2577,9 @@ a.platform-course-lesson-row:hover { color: var(--accent); }
 .platform-instructor-events svg { width: 16px; height: 16px; }
 .platform-instructor-availability { margin-top: 20px; color: var(--muted-foreground); font-size: 0.8125rem; }
 @media (hover: hover) and (prefers-reduced-motion: no-preference) {
-  .platform-instructor-card:hover .platform-instructor-cover img { transform: scale(1.035); }
+  a.platform-instructor-card:hover .platform-instructor-cover img { transform: scale(1.035); }
 }
-.platform-instructor-card:hover :is(h2, h3) { text-decoration: underline; text-underline-offset: 3px; }
+a.platform-instructor-card:hover :is(h2, h3) { text-decoration: underline; text-underline-offset: 3px; }
 @media (max-width: 960px) {
   .platform-home-action-list { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
