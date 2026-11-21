@@ -1,5 +1,11 @@
 [
   {
+    "name": "Magic Stew / joongpa",
+    "url": "https://github.com/joongpa/magic-stew",
+    "zh": "视频复盘使用 Magic Stew 的检测器、摄像头计时器、ONNX 模型和 Rust/WASM 姿态拟合与动作搜索。CubeRoot 版在复制公式时补入起手转体。",
+    "en": "Video Reconstruction uses Magic Stew’s detector, camera timer, ONNX models and Rust/WASM pose fitting and move search. The CubeRoot version includes the initial grip when copying moves."
+  },
+  {
     "name": "Roboto Condensed / Google · Fontsource",
     "url": "https://fontsource.org/fonts/roboto-condensed",
     "zh": "复盘 PNG 可选 Roboto Condensed Regular 字体；通过 Fontsource 5.3.0 分发，遵循 SIL OFL 1.1 许可。",

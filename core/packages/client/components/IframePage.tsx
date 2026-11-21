@@ -19,6 +19,7 @@ import { TrainingManualPractice } from '@/components/TrainingStatsPanel';
 interface IframePageProps {
   /** iframe 加载的 URL（如 /tools/solver/ 或独立应用 origin） */
   src: string;
+  allow?: string;
   /** 页面标题 */
   title: string;
   /** 独立应用地址；提供后在标题栏显示新标签页入口 */
@@ -38,6 +39,7 @@ function IframeDocumentTitle({ title }: { title: string }) {
 
 export default function IframePage({
   src,
+  allow,
   title,
   fullAppHref,
   fullAppLabel = { en: 'Open full app', zh: '打开完整应用' },
@@ -92,6 +94,7 @@ export default function IframePage({
       {/* NOTE: iframe 全屏填满剩余空间 */}
       <iframe
         src={src}
+        allow={allow}
         title={title}
         style={{
           flex: 1,

@@ -1,0 +1,1 @@
+self.onmessage=async({data:s})=>{try{const e=await fetch(new URL("__diagnostics/run",s.baseUrl),{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(s.capture)});if(!e.ok)throw Error(await e.text());self.postMessage({ok:!0})}catch(e){self.postMessage({ok:!1,error:e instanceof Error?e.message:String(e)})}};

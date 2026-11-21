@@ -1,0 +1,81 @@
+{
+  "version": 3,
+  "viewSize": 256,
+  "name": "Cube acquisition + independent pose tracking",
+  "defaultSize": 256,
+  "source": "runs/pose/runs/26m-pose/weights/best.pt",
+  "sourceSha256": "304fa78e178b548fd35c1ab0d60ce3c621d0cf6e91439baae29f1d31c0c11dfc",
+  "classes": [
+    "corner",
+    "corner-edge",
+    "corner-edge-center",
+    "white",
+    "yellow",
+    "orange",
+    "red",
+    "blue",
+    "green"
+  ],
+  "classThresholds": [
+    0.25,
+    0.4,
+    0.25,
+    0.9,
+    0.9,
+    0.9,
+    0.9,
+    0.9,
+    0.9
+  ],
+  "keypointShape": [
+    1,
+    3
+  ],
+  "presenceThreshold": 0.05,
+  "stickerPresenceThreshold": 0.25,
+  "iouThreshold": 0.7,
+  "maxDetections": 128,
+  "layout": "NCHW-xywh-classes-keypoint",
+  "variants": [
+    {
+      "size": 256,
+      "file": "cube-pose-256.1a86b6967d443136.onnx",
+      "bytes": 85012985,
+      "inputName": "images",
+      "outputName": "output0",
+      "outputShape": [
+        1,
+        16,
+        1344
+      ]
+    }
+  ],
+  "bbox": {
+    "size": 640,
+    "file": "cube-bbox-640.eb8735b0c9b90b6e.onnx",
+    "bytes": 11007731,
+    "inputName": "images",
+    "outputName": "output0",
+    "outputShape": [
+      1,
+      5,
+      8400
+    ],
+    "source": "runs/500ExamplesWeights.pt",
+    "sourceSha256": "180bb6f14b150556bfca421cd3241a5862fcce7ba074cb01c2a1c8f277147627",
+    "classes": [
+      "cube"
+    ],
+    "threshold": 0.25,
+    "dynamic": true,
+    "rect": true,
+    "stride": 32,
+    "layout": "NCHW-xywh-classes"
+  },
+  "tracking": {
+    "roiPadding": 0.4,
+    "gain": 1.4,
+    "padding": 0.18,
+    "presenceThreshold": 0.05
+  }
+}
