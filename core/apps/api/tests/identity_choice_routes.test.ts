@@ -1,3 +1,4 @@
+import { createHash } from 'node:crypto';
 import { Hono } from 'hono';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 const mocks = vi.hoisted(() => ({
@@ -36,7 +37,10 @@ vi.mock('../src/utils/apple_login.js', () => ({
 vi.mock('../src/utils/google.js', () => ({ googleConfigured: () => true, verifyGoogleAssertion: () => ({ sub: 'subject', email: 'untrusted@example.test' }) }));
 vi.mock('../src/utils/douyin_miniprogram.js', async (original) => ({
   ...await original<typeof import('../src/utils/douyin_miniprogram.js')>(),
-  douyinMiniProgramConfigured: () => true, exchangeDouyinMiniProgramCode: mocks.douyinExchange,
+  getDouyinMiniProgramCredentials: (appId?: string) => appId === 'ttcompany'
+    ? { appId, secret: 'company-secret', legacy: false }
+    : { appId: 'ttlegacy', secret: 'legacy-secret', legacy: true },
+  exchangeDouyinMiniProgramCode: mocks.douyinExchange,
 }));
 vi.mock('../src/utils/douyin_allied_id.js', () => ({ getDouyinAlliedId: mocks.douyinAllied }));
 vi.mock('../src/utils/wechat_miniprogram.js', async (original) => ({
@@ -117,8 +121,28 @@ describe('unified provider account-choice routes', () => {
     const response = await post('/auth/douyin/miniprogram', { code: 'verified-code' });
 
     expect(response.status).toBe(200);
-    expect(mocks.douyinAllied).toHaveBeenCalledWith('miniprogram', 'mini-openid');
+    expect(mocks.douyinAllied).toHaveBeenCalledWith(
+      { appId: 'ttlegacy', secret: 'legacy-secret', legacy: true }, 'mini-openid',
+    );
     expect(mocks.addIdentity).toHaveBeenCalledWith(42, 'douyin', 'allied:same-person');
+  });
+
+  it('uses the company credentials and resolves an existing account via the verified AlliedID', async () => {
+    mocks.douyinExchange.mockResolvedValue({ openid: 'mini-openid' });
+    mocks.douyinAllied.mockResolvedValue('allied:same-person');
+    mocks.findUser.mockImplementation(async (_provider: string, key: string) => key === 'allied:same-person' ? user : null);
+    mocks.begin.mockResolvedValue({ user, isNew: false });
+
+    const response = await post('/auth/douyin/miniprogram', { code: 'verified-code', appId: 'ttcompany' });
+
+    expect(response.status).toBe(200);
+    const credentials = { appId: 'ttcompany', secret: 'company-secret', legacy: false };
+    expect(mocks.douyinExchange).toHaveBeenCalledWith('verified-code', credentials);
+    expect(mocks.douyinAllied).toHaveBeenCalledWith(credentials, 'mini-openid');
+    const providerUid = `mini:ttcompany:${createHash('sha256').update('mini-openid').digest('hex')}`;
+    expect(mocks.findUser).toHaveBeenCalledWith('douyin', providerUid);
+    expect(mocks.addIdentity).toHaveBeenCalledWith(42, 'douyin', providerUid);
+    expect(mocks.begin).toHaveBeenCalledWith(expect.objectContaining({ providerUid }));
   });
 
   it('rejects a Douyin AlliedID already owned by another account', async () => {

@@ -1,15 +1,18 @@
+import type { DouyinMiniProgramCredentials } from './douyin_miniprogram.js';
+
+const tokens = new Map<string, { value: string; expiresAt: number }>();
+
 /** 同主体网站应用与小程序的共同用户标识；各应用必须用自己的凭据查询自己的 OpenID。 */
-const credentials = {
-  website: () => [process.env.DOUYIN_LOGIN_CLIENT_KEY, process.env.DOUYIN_LOGIN_CLIENT_SECRET],
-  miniprogram: () => [process.env.DOUYIN_MINI_APP_ID, process.env.DOUYIN_MINI_APP_SECRET],
-} as const;
-
-const tokens = new Map<'website' | 'miniprogram', { value: string; expiresAt: number }>();
-
-export async function getDouyinAlliedId(application: 'website' | 'miniprogram', openId: string): Promise<string | null> {
-  const [clientKey, clientSecret] = credentials[application]();
+export async function getDouyinAlliedId(
+  application: 'website' | DouyinMiniProgramCredentials,
+  openId: string,
+): Promise<string | null> {
+  const website = application === 'website';
+  const clientKey = website ? process.env.DOUYIN_LOGIN_CLIENT_KEY : application.appId;
+  const clientSecret = website ? process.env.DOUYIN_LOGIN_CLIENT_SECRET : application.secret;
   if (!clientKey || !clientSecret) return null;
-  let token = tokens.get(application);
+  const tokenKey = website ? 'website' : application.appId;
+  let token = tokens.get(tokenKey);
   if (!token || token.expiresAt <= Date.now()) {
     const response = await fetch('https://open.douyin.com/oauth/client_token/', {
       method: 'POST',
@@ -26,9 +29,9 @@ export async function getDouyinAlliedId(application: 'website' | 'miniprogram', 
       value: body.data.access_token,
       expiresAt: Date.now() + Math.max(0, (body.data.expires_in ?? 0) - 300) * 1000,
     };
-    tokens.set(application, token);
+    tokens.set(tokenKey, token);
   }
-  const path = application === 'website'
+  const path = website
     ? '/api/douyin/v1/auth/get_related_id/'
     : '/api/apps/v1/auth/get_related_id/';
   const response = await fetch(`https://open.douyin.com${path}`, {

@@ -19,13 +19,27 @@ describe('Douyin cross-application identity', () => {
     vi.stubGlobal('fetch', fetchMock);
 
     const { getDouyinAlliedId } = await import('../src/utils/douyin_allied_id.js');
-    await expect(getDouyinAlliedId(application, 'app-open-id')).resolves.toBe('allied:same-person');
+    const { getDouyinMiniProgramCredentials } = await import('../src/utils/douyin_miniprogram.js');
+    const source = application === 'website' ? application : getDouyinMiniProgramCredentials()!;
+    await expect(getDouyinAlliedId(source, 'app-open-id')).resolves.toBe('allied:same-person');
     expect(fetchMock).toHaveBeenCalledTimes(2);
     expect(fetchMock.mock.calls[0][0]).toBe('https://open.douyin.com/oauth/client_token/');
     expect(JSON.parse(fetchMock.mock.calls[0][1].body)).toMatchObject({ client_key: `${application}-key`, client_secret: `${application}-secret` });
     expect(fetchMock.mock.calls[1][0]).toBe(`https://open.douyin.com${path}`);
     expect(fetchMock.mock.calls[1][1].headers).toMatchObject({ 'access-token': 'client-token' });
     expect(JSON.parse(fetchMock.mock.calls[1][1].body)).toEqual({ open_id: 'app-open-id' });
+  });
+
+  it('keeps company, legacy and unknown AppIDs separate', async () => {
+    vi.stubEnv('DOUYIN_MINI_APP_ID', 'ttlegacy');
+    vi.stubEnv('DOUYIN_MINI_APP_SECRET', 'legacy-secret');
+    vi.stubEnv('DOUYIN_COMPANY_MINI_APP_ID', 'ttcompany');
+    vi.stubEnv('DOUYIN_COMPANY_MINI_APP_SECRET', 'company-secret');
+    const { getDouyinMiniProgramCredentials } = await import('../src/utils/douyin_miniprogram.js');
+    expect(getDouyinMiniProgramCredentials()).toEqual({ appId: 'ttlegacy', secret: 'legacy-secret', legacy: true });
+    expect(getDouyinMiniProgramCredentials('ttlegacy')).toEqual(getDouyinMiniProgramCredentials());
+    expect(getDouyinMiniProgramCredentials('ttcompany')).toEqual({ appId: 'ttcompany', secret: 'company-secret', legacy: false });
+    expect(getDouyinMiniProgramCredentials('ttunknown')).toBeUndefined();
   });
 
   it('rejects an invalid related ID rather than creating an unsafe alias', async () => {
