@@ -63,6 +63,18 @@ describe('video solve reconstruction', () => {
     expect(facePermFor(solver.rotation)).toEqual(facePermFor("x' z2"));
   });
 
+  it('uses the camera millisecond clock while keeping the actual frame interval for analysis', () => {
+    const rows = [4600, 4980, 5900].map(frame => ({
+      frame, timestamp: frame / 1000,
+      pose: { rotation: identity, axis: 0, angles: [0, 0, 0], state } satisfies CubePose,
+    }));
+    const observation = observeVideoSolve('R', [commit(5333, "R'")], rows, 30, 5, 6, 1000);
+    expect(observation.opening?.frame).toBe(4980);
+    expect(observation.moves).toEqual([{ m: "R'", ts: 333 }]);
+    expect(observation.frameMs).toBeCloseTo(1000 / 30);
+    expect(observation.timeMs).toBe(1000);
+  });
+
   it('maps the timer picker’s color pair to the actual center faces after a scramble rotation', () => {
     const observation = observeVideoSolve('y2 R U', [], frames(identity), fps, 0, 1.1);
     const options = videoGripOptions(observation.centers);

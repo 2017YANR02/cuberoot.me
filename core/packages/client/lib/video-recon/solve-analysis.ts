@@ -43,9 +43,9 @@ const GRIP_ERROR_DEGREES = 30;
 /** Observation comes from admitted geometry. Interpolated playback samples
  * must never prove a grip change or the ordering of a turn. */
 export function observeVideoSolve(scramble: string, steps: readonly MoveStep[], rows: readonly MeasuredCubeFrame[],
-  fps: number, start: number, end: number) {
+  fps: number, start: number, end: number, clockFps = fps) {
   const measuredTimes = new Map(rows.map(row => [row.frame, row.timestamp]));
-  const movesAt = (frame: number) => timeMs(Math.max(0, (measuredTimes.get(frame) ?? frame / fps) - start));
+  const movesAt = (frame: number) => timeMs(Math.max(0, (measuredTimes.get(frame) ?? frame / clockFps) - start));
   const commits = steps.filter(step => step.state_moves.length);
   const moves = commits.flatMap(step => step.state_moves.map(m => ({
     m: m.replaceAll('’', "'"),
@@ -53,8 +53,9 @@ export function observeVideoSolve(scramble: string, steps: readonly MoveStep[], 
   })));
   const firstTurn = commits[0]?.frame_index ?? Infinity;
   const lastTurn = commits.at(-1)?.frame_index ?? -Infinity;
-  const lastTurnTime = measuredTimes.get(lastTurn) ?? lastTurn / fps;
-  const opening = rows.find(row => row.frame < firstTurn);
+  const lastTurnTime = measuredTimes.get(lastTurn) ?? lastTurn / clockFps;
+  const opening = rows.findLast(row => row.frame < firstTurn && row.timestamp <= start)
+    ?? rows.find(row => row.frame < firstTurn);
   const estimatedGrip = opening
     ? grips.find(grip => grip.rotation === initialGripMoves([opening], CAMERA_ORIENTATION).join(' '))!
     : undefined;

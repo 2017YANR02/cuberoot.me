@@ -1,11 +1,9 @@
 'use client';
 
 import { useEffect, useRef, useState, useSyncExternalStore } from 'react';
-import dynamic from 'next/dynamic';
 import { parseAsStringEnum, useQueryState } from 'nuqs';
 import { Camera, Download, Film, HelpCircle, Unplug, Upload } from '@app-foundation/icons/lucide';
 import Link from '@/components/AppLink';
-import { ContentSkeleton } from '@/components/ContentSkeleton';
 import PageHeading from '@/components/PageHeading';
 import HeaderToggles from '@/components/HeaderToggles';
 import { INITIAL_VIDEO_TRANSFORM, VideoImageTools, videoImageTransformCss } from '@/components/VideoImageTools';
@@ -24,9 +22,6 @@ import { TimerReplay } from './TimerReplay';
 import { TpsGraph } from './TpsGraph';
 import './video-recon.css';
 
-const VideoSolveAnalysis = dynamic(() => import('./VideoSolveAnalysis').then(module => module.VideoSolveAnalysis), {
-  loading: () => <ContentSkeleton variant="text" />,
-});
 const NO_MOVES: readonly MoveStep[] = [];
 const VIDEO_MODES: WorkspaceTab[] = ['detector', 'timer'];
 const noWorkspace = () => null;
@@ -233,10 +228,9 @@ export default function VideoReconClient() {
         sourceFps={view.sourceFps} playbackSpeed={view.running ? view.playbackSpeed : 1}
         controls={renderReviewControls(t('实况魔方播放控件', 'Tracked cube playback controls'))}
         analysis={reviewing && workspace && view.reconstructedScramble && measured && searchSteps.some(step => step.state_moves.length)
-          ? onOpeningView => <VideoSolveAnalysis scramble={view.reconstructedScramble} steps={searchSteps} measured={measured}
-            fps={view.sourceFps} start={view.solveStart} end={view.solveEnd} position={view.presentedTimestamp}
-            onOpeningView={onOpeningView}
-            onSeek={timestamp => void workspace.requestReview(timestamp)} />
+          ? { scramble:view.reconstructedScramble, steps:searchSteps, measured,
+            fps:view.sourceFps, start:view.solveStart, end:view.solveEnd, position:view.presentedTimestamp,
+            onSeek:timestamp => void workspace.requestReview(timestamp) }
           : undefined} />}
       {workspace && view && showResults && <TpsGraph compact pending={pendingResult && resultTime <= view.solveStart}
         live={pendingResult} steps={shownSteps}

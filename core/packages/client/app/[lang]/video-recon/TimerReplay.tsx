@@ -1,12 +1,13 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useT } from '@/hooks/useT';
 import { buildColorTimeline } from '@/lib/video-recon/engine/cube-colors';
-import type { TimerReconstructionResult } from '@/lib/video-recon/engine/cube-timer';
+import { TIMER_TAIL_SECONDS, type TimerReconstructionResult } from '@/lib/video-recon/engine/cube-timer';
 import { frameArrow, reviewIndex, steppedTimestamp } from '@/lib/video-recon/engine/frame-review';
 import type { PlaybackSpeed } from '@/lib/video-recon/engine/playback-timing';
-import { buildProjectedCubeTimeline, projectedCubeAtFrame } from '@/lib/video-recon/engine/projected-cube';
+import { buildCubeReplayTimelines, projectedCubeAtFrame } from '@/lib/video-recon/engine/projected-cube';
 import { poseIsFlagged, projectedWireframe } from '@/lib/video-recon/engine/reconstruction-view';
-import type { TimerReplay as ReplayClip } from '@/lib/video-recon/engine/timer-replay';
+import { timerReplayFrameId, type TimerReplay as ReplayClip } from '@/lib/video-recon/engine/timer-replay';
+import { timecode } from '@/lib/video-recon/engine/solve-range';
 import { ProjectedCube } from './ProjectedCube';
 import { ReviewControls } from './ReviewControls';
 
@@ -28,22 +29,37 @@ export function TimerReplay({ clip, reconstruction, disabled, seekRequest, onPos
   const [speed, setSpeed] = useState<PlaybackSpeed>(1);
   const [drawError, setDrawError] = useState(false);
   const currentPosition = useRef(position);
-  const { steps, solved, timeline } = useMemo(() => {
+  const { steps, solved, measured, timeline, coverage } = useMemo(() => {
     const steps = reconstruction.result?.steps ?? [];
     const solved = ['solved', 'already_solved'].includes(reconstruction.result?.status ?? '');
-    let timeline: ReturnType<typeof buildProjectedCubeTimeline> = [];
+    const lastStep = steps.at(-1);
+    const coverageIndex = !solved && lastStep
+      ? clip.frames.findLastIndex(row => timerReplayFrameId(row, clip.clockFps) <= lastStep.frame_index)
+      : -1;
+    const coverage = coverageIndex >= 0 ? { ordinal: coverageIndex + 1, timestamp: clip.frames[coverageIndex].timestamp } : undefined;
+    let timelines: ReturnType<typeof buildCubeReplayTimelines> = { measured: [], projected: [] };
     try {
       const colors = buildColorTimeline(reconstruction.config?.scramble ?? '', steps);
-      timeline = buildProjectedCubeTimeline(clip.frames, colors, { fps: clip.clockFps, solved, steps });
+      timelines = buildCubeReplayTimelines(clip.frames, colors, {
+        fps: clip.clockFps, solved, steps, turningStartFrame: reconstruction.config?.turning_start_frame,
+      });
     } catch { /* The saved clip can be reviewed without a valid cube state. */ }
-    return { steps, solved, timeline };
+    return { steps, solved, measured: timelines.measured, timeline: timelines.projected, coverage };
   }, [clip.frames, clip.clockFps, reconstruction]);
   const hasRecording = useMemo(() => clip.frames.some(frame => !!frame.image), [clip.frames]);
   const index = reviewIndex(clip.frames, position);
   const current = clip.frames[index];
-  const frame = current?.result.fittedPose?.sourceFrame ?? Math.round(position * clip.clockFps);
+  const frame = current ? timerReplayFrameId(current, clip.clockFps) : Math.round(position * clip.clockFps);
   const step = steps.find(step => step.frame_index === frame);
-  const pose = solved || frame <= (steps.at(-1)?.frame_index ?? -Infinity) ? projectedCubeAtFrame(timeline, frame) : undefined;
+  // The timeline only contains accepted states. Beyond its end it holds the
+  // last state, while the source video can continue into unrecognized frames.
+  const pose = projectedCubeAtFrame(timeline, frame);
+  const sourceFps = reconstruction.config?.source_fps ?? (clip.clockFps === 1000 ? 30 : clip.clockFps);
+  const solveStart = reconstruction.config?.requested_start_seconds ?? clip.start;
+  const stop = Math.max(solveStart, (reconstruction.config?.source_end_seconds ?? clip.end) - TIMER_TAIL_SECONDS);
+  const scramble = reconstruction.config?.scramble;
+  const showAnalysis = clip.complete && scramble && steps.some(move => move.state_moves.length)
+    && (reconstruction.status === 'solved' || reconstruction.status === 'failed');
 
   useEffect(() => { setPlaying(false); setPosition(start); }, [start]);
   useEffect(() => { if (disabled) setPlaying(false); }, [disabled]);
@@ -122,20 +138,27 @@ export function TimerReplay({ clip, reconstruction, disabled, seekRequest, onPos
     const direction = frameArrow(event.nativeEvent, event.target instanceof Element ? event.target : null);
     if (direction) { event.preventDefault(); advance(direction); }
   }}>
-    <ReviewControls playing={playing} speed={speed} end={end} origin={clip.start}
+    <ReviewControls playing={playing} speed={speed} end={end} origin={start}
       position={position} index={index} length={clip.frames.length} disabled={disabled}
       onPlay={() => { if (position >= end) setPosition(start); setPlaying(value => !value); }}
       onSpeed={setSpeed} onSeekIndex={frame => {
         const row = clip.frames[frame];
         if (row) seek(row.timestamp);
       }} onStep={advance} />
+    {coverage && reconstruction.status === 'failed' && <p className="video-recon-muted" role="status">
+      {t(`部分复盘 · 已识别至第 ${coverage.ordinal} 帧（${timecode(coverage.timestamp - start)}）`,
+        `Partial reconstruction · Recognized through frame ${coverage.ordinal} (${timecode(coverage.timestamp - start)})`)}
+      {pose && index >= coverage.ordinal && t('。当前显示最后一个有效局面。', '. Showing the last available cube state.')}
+    </p>}
     <div className={hasRecording ? 'video-recon-columns' : undefined}>
       {hasRecording && <div className="video-recon-stage">
         <canvas ref={canvas} aria-label={t('回放相机画面', 'Replay camera frame')} />
         {drawError && <p role="status">{t('无法显示此帧的相机画面。', 'The camera image is unavailable for this frame.')}</p>}
       </div>}
       <ProjectedCube pose={pose} sourceTimestamp={current?.timestamp ?? position}
-        solved={solved} steps={steps} timeline={timeline} sourceFrame={frame} sourceFps={clip.clockFps} playbackSpeed={playing ? speed : 1} />
+        solved={solved} steps={steps} timeline={timeline} sourceFrame={frame} sourceFps={sourceFps} playbackSpeed={playing ? speed : 1}
+        analysis={showAnalysis ? { scramble, steps, measured, fps:sourceFps, clockFps:clip.clockFps,
+          start:solveStart, end:stop, position, onSeek:seek } : undefined} />
     </div>
   </section>;
 }

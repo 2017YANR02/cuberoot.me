@@ -4,6 +4,9 @@ import type {FittedPose} from './pose-types';
 
 export interface TimerReplayFrame {timestamp:number;result:Pick<FrameResult,'fittedPose'>;image?:Blob}
 export interface TimerReplay {id:string;start:number;end:number;clockFps:number;frames:readonly TimerReplayFrame[];missingImages:number;complete:boolean;reconstruction?:TimerReconstructionResult}
+export function timerReplayFrameId(frame:TimerReplayFrame,clockFps:number) {
+  return frame.result.fittedPose?.sourceFrame ?? Math.round(frame.timestamp*clockFps);
+}
 /** Historical replays retain geometry and source timing, never camera footage. */
 export function replayWithoutImages(clip:TimerReplay):TimerReplay {
   if(!clip.frames.some(frame=>frame.image))return clip;

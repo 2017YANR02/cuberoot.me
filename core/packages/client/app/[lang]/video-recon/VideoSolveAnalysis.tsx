@@ -20,11 +20,12 @@ import {
   analyzeVideoSolve, observeVideoSolve, playerGrip, videoGripOptions, videoNotationTimeline, type VideoSolveObservation,
 } from '@/lib/video-recon/solve-analysis';
 
-interface Props {
+export interface VideoSolveAnalysisProps {
   scramble: string;
   steps: readonly MoveStep[];
   measured: readonly MeasuredCubeFrame[];
   fps: number;
+  clockFps?: number;
   start: number;
   end: number;
   position: number;
@@ -34,11 +35,11 @@ interface Props {
 
 type Analysis = Awaited<ReturnType<typeof analyzeVideoSolve>>;
 
-export function VideoSolveAnalysis({ scramble, steps, measured, fps, start, end, position, onSeek, onOpeningView }: Props) {
+export function VideoSolveAnalysis({ scramble, steps, measured, fps, clockFps, start, end, position, onSeek, onOpeningView }: VideoSolveAnalysisProps) {
   const t = useT();
   const language = useLang();
-  const observation = useMemo(() => observeVideoSolve(scramble, steps, measured, fps, start, end),
-    [scramble, steps, measured, fps, start, end]);
+  const observation = useMemo(() => observeVideoSolve(scramble, steps, measured, fps, start, end, clockFps),
+    [scramble, steps, measured, fps, start, end, clockFps]);
   const [confirmed, setConfirmed] = useState<{ observation: VideoSolveObservation; rotation: string }>();
   const selection = confirmed?.observation === observation ? confirmed.rotation : undefined;
   const grip = selection ?? observation.estimatedGrip?.rotation;

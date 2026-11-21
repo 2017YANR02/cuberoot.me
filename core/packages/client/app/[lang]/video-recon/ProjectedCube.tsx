@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type PointerEvent, type ReactNode } from 'react';
+import dynamic from 'next/dynamic';
 import { parseAsStringEnum, useQueryState } from 'nuqs';
 import { Copy, RotateCcw } from '@app-foundation/icons/lucide';
-import { SkeletonBlock } from '@/components/ContentSkeleton';
+import { ContentSkeleton, SkeletonBlock } from '@/components/ContentSkeleton';
 import MoreToggle from '@/components/MoreToggle';
 import { Tooltip } from '@/components/Tooltip';
 import { useT } from '@/hooks/useT';
@@ -14,6 +15,11 @@ import type { MoveStep } from '@/lib/video-recon/engine/move-search-types';
 import { playbackTiming } from '@/lib/video-recon/engine/playback-timing';
 import type { ProjectedCubeFrame } from '@/lib/video-recon/engine/projected-cube';
 import { mountVideoCubingView, mountVideoThreeView, VIDEO_CUBE_ENGINES, type VideoCubeViewEngine } from './cube-view-engines';
+import type { VideoSolveAnalysisProps } from './VideoSolveAnalysis';
+
+const VideoSolveAnalysis = dynamic(() => import('./VideoSolveAnalysis').then(module => module.VideoSolveAnalysis), {
+  loading: () => <ContentSkeleton variant="text" />,
+});
 
 interface Props {
   pose?: CubePose;
@@ -25,7 +31,7 @@ interface Props {
   sourceFps: number;
   playbackSpeed: number;
   live?: boolean;
-  analysis?: (onOpeningView: (view: Quaternion) => void) => ReactNode;
+  analysis?: Omit<VideoSolveAnalysisProps, 'onOpeningView'>;
   controls?: ReactNode;
 }
 
@@ -206,7 +212,7 @@ export function ProjectedCube({ pose, sourceTimestamp, solved, steps, timeline, 
       <span className="video-recon-muted">{t('实时预览', 'Live preview')}</span>
       {liveMove && <code aria-label={t('最近识别的动作', 'Latest detected moves')}>{liveMove.state_moves.join(' ')}</code>}
     </div> : analysis ? <>
-      {analysis(applyOpeningView)}
+      <VideoSolveAnalysis {...analysis} onOpeningView={applyOpeningView} />
       {sourceNotation && <details>
         <MoreToggle as="summary">{t('查看相机视角动作', 'View camera-relative moves')}</MoreToggle>
         {sourceNotation}
