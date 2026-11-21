@@ -9,8 +9,12 @@ import { useT } from '@/hooks/useT';
 import { T } from '@/i18n/tr';
 import { orientedCubeFaceColors } from '@/lib/cube-orientation';
 import { stageStickerColors } from '@/lib/sim-stage-thumbnail';
-import InteractiveTutorial, { type CoursePosition } from '../components/InteractiveTutorial';
+import InteractiveTutorial, { type CourseFlowSection, type CoursePosition } from '../components/InteractiveTutorial';
 import { BOTTOM_OVERVIEW, TWO_BY_TWO_ORIENTATION, TWO_BY_TWO_OVERVIEW, TWO_BY_TWO_SAMPLE } from './lesson-data';
+import YellowFaceOverview from './YellowFaceOverview';
+import FishRecognitionHelp from './FishRecognitionHelp';
+import CornerPositionOverview from './CornerPositionOverview';
+import HeadlightsHelp from './HeadlightsHelp';
 
 const overviewTitle = { zh: '概览', en: 'Overview' };
 const overviewPitch = -30;
@@ -44,12 +48,30 @@ const introduction = {
     zh: '层先法先复原底层，再分两步完成顶层。', en: 'Layer by layer solves the first layer, then finishes the top layer in two steps.',
   }} /> }],
 };
-const [bottom, yellow] = TWO_BY_TWO_SAMPLE;
+const [bottom, yellow, corners] = TWO_BY_TWO_SAMPLE;
 const bottomOverview = { id: 'bottom-overview', title: overviewTitle, content: <Overview steps={bottomSteps} intro={{
   zh: '按下面的顺序归位四个白角。完成后底面全白，每个侧面的底排也要同色。',
   en: 'Solve the four white corners in order. The bottom should be all white, with matching stickers in the bottom row of each side.',
 }} /> };
-const chapters = [introduction, { ...bottom, sections: [bottomOverview, ...bottom.sections] }, yellow];
+const yellowOverview: CourseFlowSection = {
+  id: 'yellow-overview',
+  title: overviewTitle,
+  flowchart: select => <YellowFaceOverview onSelect={select} />,
+};
+const yellowSections = yellow.sections.map(section => section.id === 'right-fish' || section.id === 'left-fish'
+  ? { ...section, guided: { ...section.guided, recognition: { ...section.guided.recognition, Help: FishRecognitionHelp } } }
+  : section);
+const cornerOverview: CourseFlowSection = {
+  id: 'corner-overview',
+  title: overviewTitle,
+  flowchart: select => <CornerPositionOverview onSelect={select} />,
+};
+const cornerSections = corners.sections.map(section => ({
+  ...section, guided: { ...section.guided, recognition: { ...section.guided.recognition, Help: HeadlightsHelp } },
+}));
+const chapters = [introduction, { ...bottom, sections: [bottomOverview, ...bottom.sections] },
+  { ...yellow, sections: [yellowOverview, ...yellowSections] },
+  { ...corners, sections: [cornerOverview, ...cornerSections] }];
 
 function positionFor(step: string | null, section: string | null): CoursePosition {
   const chapterIndex = chapters.findIndex((chapter, index) => step === `lesson-${index + 1}` || step === chapter.id);

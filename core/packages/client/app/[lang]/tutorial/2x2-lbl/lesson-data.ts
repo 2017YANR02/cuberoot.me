@@ -1,18 +1,17 @@
-import { Alg, Move } from 'cubing/alg';
-import { AllFaces, CubeData, Face, parseAlgorithm } from '@cuberoot/visualcube';
+import { Alg } from 'cubing/alg';
+import { Face } from '@cuberoot/visualcube';
 import { FACE } from '@cuberoot/puzzle-render-core/engine/define';
 import { ENGINE_TO_VC_FACE, netIndexOf } from '@cuberoot/puzzle-render-core/engine/nxn/netIndex';
 import { CUBE_ORIENTATIONS } from '@/lib/cube-orientation';
 import type { CubeFace } from '@/lib/cube-colors';
 import type { AlgStickerPlacement } from '@/components/AlgPlayer/AlgPlayer';
-import type { CourseChapter, CourseExercise } from '../components/InteractiveTutorial';
+import type { CourseChapter, CourseExercise, GuidedCourseLesson } from '../components/InteractiveTutorial';
+import { isWhiteFirstLayer as firstLayer, twoByTwoState as sampleCubeState } from '../lib/2x2-state';
 import { getLblAlgGroups } from '../lbl/alg-cues';
-import { LEFT as leftTrigger } from '../lbl/content';
+import { LEFT as leftTrigger, LEFT_SUNE as leftFish, RIGHT_SUNE as rightFish } from '../lbl/content';
 
-// The source uses yellow up, red front, blue left and orange back.
-export const TWO_BY_TWO_ORIENTATION = "z2 y'";
+export { TWO_BY_TWO_ORIENTATION, twoByTwoState as sampleCubeState } from '../lib/2x2-state';
 const rightTrigger = "R U R' U'";
-const rightFish = "R U R' U R U2' R'";
 const finalCornerAlg = "x' R2 D2 R' U' R D2 R' U R' x";
 const yellowStart = "L' U2' L U L' U L R U2 R' U' R U' R' U";
 const secondSolution = `U ${leftTrigger}`;
@@ -24,7 +23,6 @@ const fourthStart = before(bottomDone, fourthSolution);
 const thirdStart = before(fourthStart, thirdSolution);
 const secondStart = before(thirdStart, secondSolution);
 const firstStart = before(secondStart, 'z');
-const supportedColors = ['Y', 'G', 'R', 'W', 'B', 'O'] as const;
 const text = (zh: string, en: string) => ({ zh, en });
 const bottomTitles = [
   text('白橙蓝角', 'White–orange–blue corner'),
@@ -102,19 +100,6 @@ export const TWO_BY_TWO_OVERVIEW = [
   },
 ] as const;
 
-/** Read room-relative facelets, including rotations. Color overrides are display-only. */
-export function sampleCubeState(moves: string) {
-  const cube = new CubeData(2, Object.fromEntries(AllFaces.map(face => [face, Array<string>(4).fill(supportedColors[face])])));
-  // A fast drag can commit more than one revolution; normalize before parsing facelets.
-  const quarterTurns = Array.from(new Alg(moves).expand().childAlgNodes()).flatMap(node => {
-    if (!(node instanceof Move)) return [];
-    const turns = ((node.amount % 4) + 4) % 4;
-    return turns ? [node.quantum.toString() + ['', '', '2', "'"][turns]] : [];
-  });
-  for (const move of parseAlgorithm(quarterTurns.join(' '))) cube.turn(move);
-  return cube.faces as Record<Face, string[]>;
-}
-
 function describeWhiteCorner({ positionIndex, face }: AlgStickerPlacement) {
   const position = cornerPositions[positionIndex];
   return text(`现在在${position.zh}，${whiteDirections[face].zh}。`,
@@ -130,11 +115,13 @@ const secondCorner = (state: ReturnType<typeof sampleCubeState>) => firstCorner(
 const thirdCorner = (state: ReturnType<typeof sampleCubeState>) => secondCorner(state)
   && state[Face.D][1] === 'W' && state[Face.F][3] === 'R' && state[Face.R][2] === 'G';
 
-const firstLayer = (state: ReturnType<typeof sampleCubeState>) => state[Face.D].every(color => color === 'W')
-  && [Face.R, Face.F, Face.L, Face.B].every(face => state[face][2] === state[face][3]);
-
 const fish = (state: ReturnType<typeof sampleCubeState>) => firstLayer(state)
   && state[Face.U].filter(color => color === 'Y').length === 1;
+const yellowFace = (state: ReturnType<typeof sampleCubeState>) => firstLayer(state) && state[Face.U].every(color => color === 'Y');
+const sides = [Face.F, Face.R, Face.B, Face.L];
+const eyeAt = (state: ReturnType<typeof sampleCubeState>, side: Face) => state[side][0] === state[side][1];
+const hasEyes = (state: ReturnType<typeof sampleCubeState>) => yellowFace(state) && sides.filter(side => eyeAt(state, side)).length === 1;
+const solved = (state: ReturnType<typeof sampleCubeState>) => Object.values(state).every(face => face.every(color => color === face[0]));
 
 function exercise(setup: string, moves: string, goal: CourseExercise['goal'],
   complete: (state: ReturnType<typeof sampleCubeState>) => boolean,
@@ -156,7 +143,6 @@ function exercise(setup: string, moves: string, goal: CourseExercise['goal'],
 const cornerViewLimit = 30;
 const cornerViewTilt = cornerViewLimit * Math.PI / 180;
 const frontRightView = { x: cornerViewTilt, y: -cornerViewTilt, z: 0 };
-const above = { x: .97, y: .23, z: 0 };
 const topFace = { face: 'U', label: text('顶面', 'Top') } as const;
 const rightFace = { face: 'R', label: text('右面', 'Right') } as const;
 const rightInsertion = (target: ReturnType<typeof text>, demoSetup: string, solvedStickers: ReturnType<typeof solvedCornerStickers>) => ({
@@ -169,6 +155,109 @@ const rightInsertion = (target: ReturnType<typeof text>, demoSetup: string, solv
   helpLabel: text('看看右手做法', 'Watch the right-hand trigger'),
   solvedStickers,
 });
+const recognizeLabel = text('观察', 'Inspect');
+const alignLabel = text('摆到位', 'Align');
+const applyLabel = text('做公式', 'Apply algorithm');
+const watchLabel = text('看公式演示', 'Watch the algorithm');
+const yellowGoal = text('保持底层复原，把四个黄格翻到顶面。', 'Keep the first layer solved and turn all four yellow stickers up.');
+const fishGoal = text('保持底层复原，把顶面变成左鱼或右鱼。', 'Keep the first layer solved and make either fish.');
+const fishCompletion = text('顶面只剩一个黄格，已经变成小鱼。接下来按鱼鳍方向选左鱼或右鱼。', 'Only one yellow sticker faces up. Check the fins to choose the left or right fish next.');
+const fourAligned = before(before('', rightFish), rightFish);
+
+function yellowCase(id: string, title: CourseExercise['goal'], setup: string, alignMove: string, alg: string,
+  recognition: Omit<GuidedCourseLesson['recognition'], 'progressLabel'>,
+  alignment: Pick<NonNullable<GuidedCourseLesson['alignment']>, 'heading' | 'prompt'>,
+  isAligned: (state: ReturnType<typeof sampleCubeState>) => boolean, toFish = false) {
+  const left = alg === leftFish;
+  const demoTitle = left ? text('左鱼公式', 'Left Sune') : text('右鱼公式', 'Right Sune');
+  const guided: GuidedCourseLesson = {
+    view: { ...frontRightView, y: left ? cornerViewTilt : -cornerViewTilt },
+    recognition: { ...recognition, progressLabel: recognizeLabel },
+    alignment: { ...alignment, progressLabel: alignLabel, axis: 'U', showLeftThumb: toFish,
+      matches: history => isAligned(sampleCubeState([setup, ...history].join(' '))) },
+    algorithm: {
+      progressLabel: applyLabel,
+      heading: demoTitle,
+      prompt: text('跟着贴纸箭头做「上、勾、下、勾、上、连拨、下」。连拨可以分两下转。',
+        'Follow the arrows: up, hook, down, hook, up, double flick, down. You can do the double flick as two turns.'),
+      steps: getLblAlgGroups('yellow-face', alg).flat(), demoSetup: `${setup} ${alignMove}`, demoTitle, helpLabel: watchLabel,
+      showHands: 'left',
+    },
+    completion: toFish ? fishCompletion : text('顶面全黄，白色底层仍然复原。', 'The top is all yellow and the white first layer is still solved.'),
+  };
+  return { id, title, guided, exercise: exercise(setup, `${alignMove} ${alg}`, toFish ? fishGoal : yellowGoal, toFish ? fish : yellowFace) };
+}
+
+function countGreys(count: 2 | 4) {
+  return {
+    heading: text('顶面有几个非黄格？', 'How many top stickers are non-yellow?'),
+    prompt: text('只数朝上的四格。', 'Count only the four stickers facing up.'),
+    choices: [2, 3, 4].map(n => text(`${n} 格`, `${n} stickers`)),
+    answer: count - 2,
+    explanation: count === 2 ? text('顶面有两个非黄格，是二碰。', 'Two top stickers are non-yellow. This is the touch case.')
+      : text('顶面四格都是非黄格，是四不碰。', 'All four top stickers are non-yellow. This is the avoid-yellow case.'),
+  };
+}
+
+function inspectFins(left: boolean) {
+  return {
+    heading: text('鱼鳍朝哪一边？', 'Which way do the fins point?'),
+    prompt: text('顶面唯一的黄格是鱼头。想象鱼头朝向你，看侧面的三片黄鱼鳍偏左还是偏右。',
+      'The only yellow on top is the head. Imagine the head pointing toward you and check whether the three yellow fins point left or right.'),
+    choices: [text('朝左', 'Left'), text('朝右', 'Right')],
+    answer: left ? 0 : 1,
+    explanation: left ? text('三片鱼鳍朝左，用左鱼公式。', 'The fins point left. Use left Sune.')
+      : text('三片鱼鳍朝右，用右鱼公式。', 'The fins point right. Use right Sune.'),
+  };
+}
+
+const cornerDemoTitle = text('角位置公式', 'Corner placement algorithm');
+const cornerCues = [text('黄面朝前', 'Yellow forward'), text('上上', 'Up twice'), text('底底', 'Bottom twice'),
+  text('下', 'Down'), text('右', 'Right'), text('上', 'Up'), text('底底', 'Bottom twice'),
+  text('下', 'Down'), text('左', 'Left'), text('下', 'Down'), text('黄面朝上', 'Yellow up')];
+const noEyesSetup = before('', `${finalCornerAlg} y ${finalCornerAlg}`);
+const eyesSetup = `${noEyesSetup} ${finalCornerAlg}`;
+
+function cornerCase(withEyes: boolean) {
+  const setup = withEyes ? eyesSetup : noEyesSetup;
+  const goal = withEyes ? text('让四个顶角归位，完成六面复原。', 'Position all four top corners to solve all six faces.')
+    : text('保持顶面全黄和底层复原，造出一对眼。', 'Create headlights while keeping the top yellow and the first layer solved.');
+  const guided: GuidedCourseLesson = {
+    view: frontRightView,
+    recognition: {
+      progressLabel: recognizeLabel,
+      heading: text('哪一面有眼？', 'Where are the headlights?'),
+      prompt: text('观察四个侧面的顶排。同一面上两个顶角的贴纸同色，就叫一对眼。',
+        'Check the top row of each side. A pair of matching corner stickers on the same side is called headlights.'),
+      choices: [text('前面', 'Front'), text('右面', 'Right'), text('背面', 'Back'), text('左面', 'Left'), text('没有眼', 'No headlights')],
+      answer: withEyes ? 2 : 4,
+      explanation: withEyes ? text('背面有一对眼。接下来把有眼的一面转到右边。', 'The back has headlights. Put that side on the right next.')
+        : text('四个侧面都没有眼。先做一次公式造眼。', 'There are no headlights on any side. Apply the algorithm once to make a pair.'),
+    },
+    alignment: withEyes ? {
+      progressLabel: alignLabel, axis: 'y',
+      heading: text('把眼放在右面', 'Put the headlights on the right'),
+      prompt: text('左右转体，让同色的两个顶角贴纸一起朝右。', 'Rotate the entire cube until the matching top stickers face right.'),
+      matches: history => {
+        const state = sampleCubeState([setup, ...history].join(' '));
+        return yellowFace(state) && eyeAt(state, Face.R);
+      },
+    } : undefined,
+    algorithm: {
+      progressLabel: applyLabel,
+      heading: withEyes ? cornerDemoTitle : text('做公式造眼', 'Apply the algorithm to make headlights'),
+      prompt: text('先转体让黄面朝前，按箭头做完口诀，最后转回黄面朝上。',
+        'Rotate yellow to the front, follow the arrows through the algorithm, then rotate yellow back up.'),
+      steps: finalCornerAlg.split(' ').map((notation, index) => ({ notation, cue: cornerCues[index] })),
+      demoSetup: withEyes ? `${setup} y` : setup, demoTitle: cornerDemoTitle, helpLabel: watchLabel,
+    },
+    completion: withEyes ? text('四个顶角都已归位，六面复原。', 'All four top corners are in place. The cube is solved.')
+      : text('已经造出一对眼。接下来按「有眼」的做法，把眼放右，再做一次角位置公式。', 'You have a pair now. Put the pair on the right and apply the algorithm again as shown in the Headlights lesson.'),
+  };
+  return { id: withEyes ? 'headlights' : 'no-headlights', title: withEyes ? text('有眼', 'Headlights') : text('无眼', 'No headlights'), guided,
+    exercise: exercise(setup, withEyes ? `y ${finalCornerAlg}` : finalCornerAlg, goal, withEyes ? solved : hasEyes) };
+}
+
 export const TWO_BY_TWO_SAMPLE = [
   {
     id: 'bottom', title: TWO_BY_TWO_OVERVIEW[0].title,
@@ -290,8 +379,8 @@ export const TWO_BY_TWO_SAMPLE = [
               solvedStickers: solvedCornerStickers([0, 4, 5], true),
               progressLabel: text('转体换方向', 'Rotate the cube'),
               heading: text('把右后的空位转到右前', 'Bring the back-right slot to the front-right'),
-              prompt: text('最后一个空位在底层右后。横向拖动整颗魔方，向左转四分之一圈。',
-                'The last slot is at bottom back-right. Drag the whole cube sideways a quarter turn to the left.'),
+              prompt: text('最后一个空位在底层右后。向左拖过 30° 的视角边界，让魔方转体四分之一圈。',
+                'The last slot is at bottom back-right. Drag left past the 30° viewing limit to rotate the cube a quarter turn.'),
               done: text('空位到了右前，接下来就能用右手「上钩下回」。', 'The slot is at front-right, ready for the right-hand trigger.'),
             },
             protectedCorners: text('已经归位的角块', 'one or more of the corners you have solved'),
@@ -314,16 +403,24 @@ export const TWO_BY_TWO_SAMPLE = [
   },
   {
     id: 'yellow', title: TWO_BY_TWO_OVERVIEW[1].title,
-    sections: [{
-      id: 'two-touch', title: text('二碰', 'Two non-yellow stickers'),
-      observation: {
-        view: above, stickers: ['U2'],
-        steps: [
-          text('顶面有两格不是黄色。找到侧面的黄格，转顶层让它来到前面左上角。', 'Two top stickers are not yellow. Find a yellow sticker on the side and turn the top to bring it to front-left.'),
-          text('做右小鱼，直到顶面只剩一格黄色。核对底层仍然对齐。', 'Apply the right Sune so only one top sticker is yellow. Check that the first layer is still solved.'),
-        ],
-      },
-      exercise: exercise(yellowStart, `U' ${rightFish}`, text('保持底层复原，把二碰变成小鱼。', 'Keep the first layer solved and make a fish.'), fish),
-    }],
+    sections: [
+      yellowCase('right-fish', text('右鱼', 'Right fish'), `${before('', rightFish)} U`, "U'", rightFish, inspectFins(false), {
+        heading: text('把右鱼的鱼头放左前', 'Place the right fish head at front-left'),
+        prompt: text('转顶层 U，让唯一朝上的黄格来到左前。前面右上会看见一片黄鱼鳍。', 'Turn U until the only yellow on top is at front-left. A yellow fin will be visible at front upper-right.'),
+      }, state => state[Face.U][2] === 'Y' && state[Face.F][1] === 'Y'),
+      yellowCase('left-fish', text('左鱼', 'Left fish'), `${before('', leftFish)} U'`, 'U', leftFish, inspectFins(true), {
+        heading: text('把左鱼的鱼头放右前', 'Place the left fish head at front-right'),
+        prompt: text('转顶层 U，让唯一朝上的黄格来到右前。前面左上会看见一片黄鱼鳍。', 'Turn U until the only yellow on top is at front-right. A yellow fin will be visible at front upper-left.'),
+      }, state => state[Face.U][3] === 'Y' && state[Face.F][0] === 'Y'),
+      yellowCase('two-touch', text('二碰', 'Touch yellow'), yellowStart, "U'", rightFish, countGreys(2), {
+        heading: text('让左拇指碰黄', 'Touch yellow with the left thumb'),
+        prompt: text('看左拇指旁的前面左上格。转顶层 U，把黄色转到拇指旁。', 'Look at the front upper-left sticker beside the left thumb. Turn U to bring yellow beside the thumb.'),
+      }, state => state[Face.F][0] === 'Y', true),
+      yellowCase('four-no-touch', text('四不碰', 'Avoid yellow'), `${fourAligned} U`, "U'", rightFish, countGreys(4), {
+        heading: text('让左拇指避开黄色', 'Keep the left thumb off yellow'),
+        prompt: text('看左拇指旁的前面左上格。转顶层 U，把黄色从拇指旁转开。', 'Look at the front upper-left sticker beside the left thumb. Turn U to move yellow away from the thumb.'),
+      }, state => state[Face.F][0] !== 'Y', true),
+    ],
   },
+  { id: 'corner-position', title: TWO_BY_TWO_OVERVIEW[2].title, sections: [cornerCase(true), cornerCase(false)] },
 ] as const satisfies readonly CourseChapter[];

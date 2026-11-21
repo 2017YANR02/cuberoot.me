@@ -5,9 +5,9 @@ import Cube from '@/app/[lang]/sim/engine/nxn/cube';
 import { BOTTOM_OVERVIEW, sampleCubeState, TWO_BY_TWO_OVERVIEW, TWO_BY_TWO_SAMPLE } from '@/app/[lang]/tutorial/2x2-lbl/lesson-data';
 
 describe('the 2×2 LBL tutorial', () => {
-  const [bottom, yellow] = TWO_BY_TWO_SAMPLE;
+  const [bottom, yellow, corners] = TWO_BY_TWO_SAMPLE;
   const [positioning, insertion, third, fourth] = bottom.sections.map(section => section.exercise);
-  const twoTouch = yellow.sections[0].exercise;
+  const twoTouch = yellow.sections.find(section => section.id === 'two-touch')!.exercise;
 
   it('illustrates the end of each stage with a different cube state', () => {
     const [firstLayer, yellowTop, solved] = TWO_BY_TWO_OVERVIEW.map(step => sampleCubeState(step.setup));
@@ -31,6 +31,20 @@ describe('the 2×2 LBL tutorial', () => {
     expect(positioning.isComplete(["z'", 'z2'])).toBe(true);
     expect(positioning.isComplete(['y', "x'"])).toBe(false);
     expect(positioning.isComplete(['y', "x'", "y'"])).toBe(true);
+  });
+
+  it('teaches headlights first and uses a matching front pair in the concept video', () => {
+    const [headlights, noHeadlights] = TWO_BY_TWO_SAMPLE[2].sections;
+    expect([headlights.id, noHeadlights.id]).toEqual(['headlights', 'no-headlights']);
+    const sides = [Face.F, Face.R, Face.B, Face.L];
+    const eyeFaces = (setup: string) => {
+      const state = sampleCubeState(setup);
+      expect(state[Face.U]).toEqual(['Y', 'Y', 'Y', 'Y']);
+      return sides.filter(side => state[side][0] === state[side][1]);
+    };
+    expect(eyeFaces(headlights.exercise.setup)).toEqual([Face.B]);
+    expect(eyeFaces(headlights.exercise.setup + ' y2')).toEqual([Face.F]);
+    expect(eyeFaces(noHeadlights.exercise.setup)).toEqual([]);
   });
 
   it('uses the same puzzle states in the overview and the exercises', () => {
@@ -194,5 +208,42 @@ describe('the 2×2 LBL tutorial', () => {
     expect(countYellow(twoTouch.setup + ' ' + twoTouch.solution)).toBe(1);
     expect(twoTouch.isComplete([...twoTouch.solution.split(' '), 'z'])).toBe(true);
     expect(twoTouch.isComplete(["(" + twoTouch.setup + ")'"])).toBe(false);
+  });
+
+  it('reaches the correct goal from every accepted yellow-face alignment', () => {
+    const topTurns = [[], ['U'], ['U2'], ["U'"]];
+    expect(yellow.sections.map(section => section.id)).toEqual(['right-fish', 'left-fish', 'two-touch', 'four-no-touch']);
+    for (const section of yellow.sections) {
+      const { exercise, guided } = section;
+      const alignment = guided.alignment!;
+      const formula = guided.algorithm.steps.map(({ notation }) => notation);
+      expect(alignment.matches([]), section.id).toBe(false);
+      expect(exercise.isComplete([]), section.id).toBe(false);
+      const starts = topTurns.filter(turns => alignment.matches(turns));
+      expect(starts.length, section.id).toBeGreaterThan(0);
+      for (const turns of starts) {
+        const history = [...turns, ...formula];
+        const state = sampleCubeState([exercise.setup, ...history].join(' '));
+        const toFish = section.id === 'two-touch' || section.id === 'four-no-touch';
+        expect(state[Face.U].filter(color => color === 'Y'), section.id).toHaveLength(toFish ? 1 : 4);
+        expect(exercise.isComplete(history), section.id).toBe(true);
+        expect(exercise.isComplete([...history, 'z']), section.id).toBe(true);
+      }
+    }
+  });
+
+  it('creates one pair of eyes before placing that pair on the right and solving', () => {
+    const [eyes, noEyes] = corners.sections;
+    const align = eyes.guided.alignment!;
+    const noEyesResult = sampleCubeState(`${noEyes.exercise.setup} ${noEyes.exercise.solution}`);
+    expect(noEyes.exercise.isComplete([])).toBe(false);
+    expect(noEyes.exercise.isComplete(noEyes.exercise.solution.split(' '))).toBe(true);
+    expect(noEyesResult).toEqual(sampleCubeState(eyes.exercise.setup));
+    expect(align.matches([])).toBe(false);
+    expect(align.matches(["y'"])).toBe(false);
+    expect(align.matches(['y'])).toBe(true);
+    expect(eyes.exercise.isComplete(['y'])).toBe(false);
+    expect(eyes.exercise.isComplete(eyes.exercise.solution.split(' '))).toBe(true);
+    expect(eyes.exercise.isComplete([...eyes.exercise.solution.split(' '), 'x'])).toBe(true);
   });
 });

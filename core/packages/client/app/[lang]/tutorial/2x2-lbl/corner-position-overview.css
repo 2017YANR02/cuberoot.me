@@ -1,0 +1,49 @@
+.corner-flow-graph {
+  --corner-flow-gap: 2.4rem;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) var(--corner-flow-gap) minmax(0, 1fr);
+  align-items: stretch;
+  gap: 6px 0;
+}
+.corner-flow-start {
+  grid-column: 1 / -1;
+  min-block-size: 3rem;
+  background: var(--muted);
+}
+.corner-flow-branches {
+  position: relative;
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) var(--corner-flow-gap) minmax(0, 1fr);
+  padding-block-start: 6px;
+}
+.corner-flow-branches::before, .corner-flow-branches::after {
+  content: '';
+  position: absolute;
+  color: var(--muted-foreground);
+}
+.corner-flow-branches::before {
+  inset-inline: calc(25% - var(--corner-flow-gap) / 4);
+  inset-block-start: 4px;
+  block-size: 7px;
+  border: 1px solid currentColor;
+  border-block-end: 0;
+}
+.corner-flow-branches::after {
+  inset-inline-start: 50%;
+  inset-block-start: -6px;
+  block-size: 10px;
+  border-inline-start: 1px solid currentColor;
+}
+.corner-flow-graph > svg, .corner-flow-branches > svg { color: var(--muted-foreground); justify-self: center; }
+.corner-flow-branches svg:last-child { grid-column: 3; }
+.corner-flow-graph [data-eye-case] { grid-row: 3; min-block-size: 8.5rem; }
+.corner-flow-graph [data-eye-case='headlights'] { grid-column: 1; }
+.corner-flow-graph [data-eye-case='no-headlights'] { grid-column: 3; }
+.corner-flow-make { grid-area: 3 / 2; align-self: center; }
+.corner-flow-finish-arrow { grid-area: 4 / 1; }
+.yellow-flow-finish.corner-flow-finish {
+  grid-area: 5 / 1;
+  justify-content: center;
+  text-align: center;
+}
