@@ -27,6 +27,12 @@ body:has(.settings-panel) .settings-typography { font-size: 16px !important; }
   background: color-mix(in srgb, var(--foreground) 3%, var(--background));
 }
 .settings-panel-heading { display: flex; align-items: center; gap: 12px; }
+.settings-panel-heading > .settings-panel-back {
+  justify-content: center;
+  width: var(--compact-header-control-size, 44px);
+  height: var(--compact-header-control-size, 44px);
+}
+.settings-panel-heading > .settings-panel-back + h1 { display: none; }
 .settings-panel-header h1 { margin: 0; font-size: 1.25rem; font-weight: 650; }
 .settings-panel-close {
   position: absolute;

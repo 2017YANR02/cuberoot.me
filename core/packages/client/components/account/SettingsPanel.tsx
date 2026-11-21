@@ -5,7 +5,7 @@ import dynamic from 'next/dynamic';
 import { parseAsStringEnum, useQueryStates } from 'nuqs';
 import { Settings, Sun, ShieldCheck, UserRound, X } from '@app-foundation/icons/lucide';
 import AppearanceToggle from '@/components/AppearanceToggle';
-import BackHome from '@/components/BackHome';
+import PageBackLink from '@/components/PageBackLink';
 import { ClientLoadStatus } from '@/components/StartupStatus';
 import { useT } from '@/hooks/useT';
 import { openInstalledAppearance, useInlineInstalledAccountSettings, useInstalledShellNavigation, useInstalledShellSurface } from '@/lib/installed-shell-navigation';
@@ -52,7 +52,7 @@ export default function SettingsPanel({ embedded = false, onClose }: { embedded?
   return <section className={`settings-panel${embedded ? ' settings-panel-embedded' : ' settings-panel-page'}`} data-site-surface="panel" aria-labelledby={accountShell && !inlineSettings ? undefined : titleId} aria-label={accountShell && !inlineSettings ? t('设置', 'Settings') : undefined}>
     {(!accountShell || inlineSettings) && <header className="settings-panel-header">
       <div className="settings-panel-heading">
-        {!embedded && !accountShell && <BackHome prefetch={false} miniProgramTarget="account" />}
+        {!embedded && !accountShell && <PageBackLink className="settings-panel-back" label={t('返回', 'Back')} miniProgramTarget="account" />}
         <h1 id={titleId}>{t('设置', 'Settings')}</h1>
       </div>
       {onClose && <button type="button" className="settings-panel-close" aria-label={t('关闭设置', 'Close settings')} onClick={onClose}><X size={20} aria-hidden="true" /></button>}
