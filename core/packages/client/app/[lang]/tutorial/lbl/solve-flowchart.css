@@ -3,50 +3,6 @@
 .lbl-lesson-scroll:has(> .lbl-solve-flow)::after { display: none; }
 .lbl-page .lbl-lesson-scroll > .lbl-content.lbl-solve-flow { display: flex; flex-direction: column; align-items: stretch; height: 100%; min-height: 0; }
 .lbl-solve-flow h2 { font-size: var(--lbl-text-emphasis); }
-.lbl-flow-canvas {
-  flex: 1; min-height: 0; overflow: auto; max-width: 100%; padding-block: 8px;
-  overscroll-behavior: contain; touch-action: pinch-zoom; cursor: grab;
-  user-select: none; -webkit-user-select: none;
-}
-.lbl-flow-canvas[data-panning], .lbl-flow-canvas[data-panning] * { cursor: grabbing; }
-/* Animate the shared color so native and WebKit scrollbar thumbs fade together. */
-@property --flow-scroll-thumb {
-  syntax: '<color>';
-  inherits: true;
-  initial-value: transparent;
-}
-/* Keep scrollbar geometry fixed so showing the thumb never shifts the diagram. */
-.lbl-lesson-scroll:has(.lbl-solve-flow), .lbl-solve-flow .lbl-flow-canvas {
-  --flow-scroll-thumb: transparent;
-  scrollbar-width: thin;
-  scrollbar-color: var(--flow-scroll-thumb) transparent;
-  scrollbar-gutter: stable;
-  transition: --flow-scroll-thumb 360ms ease-out;
-}
-.lbl-lesson-scroll:has(.lbl-solve-flow)[data-flow-scrolling], .lbl-solve-flow .lbl-flow-canvas[data-flow-scrolling] {
-  --flow-scroll-thumb: var(--muted-foreground);
-  transition-duration: 120ms;
-}
-.lbl-lesson-scroll:has(.lbl-solve-flow)::-webkit-scrollbar, .lbl-solve-flow .lbl-flow-canvas::-webkit-scrollbar {
-  display: block;
-  width: 8px;
-  height: 8px;
-}
-.lbl-lesson-scroll:has(.lbl-solve-flow)::-webkit-scrollbar-track, .lbl-solve-flow .lbl-flow-canvas::-webkit-scrollbar-track,
-.lbl-lesson-scroll:has(.lbl-solve-flow)::-webkit-scrollbar-corner, .lbl-solve-flow .lbl-flow-canvas::-webkit-scrollbar-corner {
-  background: transparent;
-}
-.lbl-lesson-scroll:has(.lbl-solve-flow)::-webkit-scrollbar-thumb, .lbl-solve-flow .lbl-flow-canvas::-webkit-scrollbar-thumb {
-  background: var(--flow-scroll-thumb);
-  border-radius: 4px;
-}
-@media (forced-colors: active) {
-  .lbl-lesson-scroll:has(.lbl-solve-flow), .lbl-solve-flow .lbl-flow-canvas { scrollbar-color: auto; }
-}
-@media (prefers-reduced-motion: reduce) {
-  .lbl-lesson-scroll:has(.lbl-solve-flow), .lbl-solve-flow .lbl-flow-canvas { transition: none; }
-}
-.lbl-flow-canvas:focus-visible { outline: 2px solid var(--ring); outline-offset: -2px; }
 .lbl-flow-canvas > .lbl-flow-graph { display: block; width: 100%; min-width: 760px; height: auto; }
 .lbl-flow-graph > text, .lbl-flow-graph > g > text, .lbl-flow-graph > g > g > text { fill: var(--foreground); font-family: inherit; font-size: var(--lbl-text-body); }
 .lbl-flow-graph > path, .lbl-flow-graph > g > path, .lbl-flow-graph > g > g > path { fill: none; stroke: var(--muted-foreground); stroke-width: 1.5; stroke-linejoin: round; stroke-linecap: round; }
