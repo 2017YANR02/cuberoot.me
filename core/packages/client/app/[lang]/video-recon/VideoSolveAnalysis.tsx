@@ -88,7 +88,6 @@ export function VideoSolveAnalysis({ scramble, steps, measured, fps, start, end,
     {!current && <ContentSkeleton variant="text" label={t('正在识别解法和分段…', 'Identifying the method and stages…')} />}
     {current && !result && <span role="status" className="video-recon-muted">{t('无法生成局面一致的分段复盘。', 'Could not generate a reconstruction consistent with the recognized states.')}</span>}
     {result && <>
-      <strong>{t('分段复盘', 'Stage breakdown')} · {displayMethod}</strong>
       {fallback && <span className="video-recon-muted">{t('转体换算未通过局面核对，以下使用固定朝向。',
         'The reoriented moves failed state verification. The steps below use a fixed orientation.')}</span>}
       {!fallback && observation.uncertain.length > 0 && <details className="video-recon-muted">
@@ -111,7 +110,7 @@ export function VideoSolveAnalysis({ scramble, steps, measured, fps, start, end,
       </div>
       <div className="video-recon-actions">
         <Tooltip content={copied ? t('已复制', 'Copied') : copyLabel}>{tip =>
-          <button {...tip} type="button" className="btn-secondary" aria-label={copyLabel} onClick={() => copy(clipboard, clipboard)}>
+          <button {...tip} type="button" className="playback-bar-btn" aria-label={copyLabel} onClick={() => copy(clipboard, clipboard)}>
             {copied ? <Check size={15} aria-hidden /> : <Copy size={15} aria-hidden />}
           </button>
         }</Tooltip>
