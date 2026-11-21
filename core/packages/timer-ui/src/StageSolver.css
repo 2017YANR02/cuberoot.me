@@ -514,6 +514,9 @@ body[data-site-scenery='transparent'] .timer-room-dialog.stsv-settings-dialog {
   overflow-x: auto;
   text-align: left;
 }
+/* Keep the formula scrollable without moving its text above the rotation and chevron. */
+.stsv-solution-select .compact-select-current code { scrollbar-width: none; }
+.stsv-solution-select .compact-select-current code::-webkit-scrollbar { display: none; }
 .stsv-solution-menu {
   --sv-text-mute: var(--muted-foreground);
   --sv-accent: var(--accent);
