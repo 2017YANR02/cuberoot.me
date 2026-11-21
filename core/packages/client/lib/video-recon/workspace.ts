@@ -469,23 +469,45 @@ export function createVideoWorkspace(stage: HTMLCanvasElement, initialTab: Works
     // results from the old crop before any new cropped frame can be admitted.
     await openFile(file, crop, range);
   }
-  async function previewTrim(timestamp: number) {
-    const request = ++previewVersion, token = generation, source = fileSource;
-    if (!source || !state.trimming) return;
+  let pendingPreview: { timestamp: number; direction?: -1 | 1 } | undefined;
+  let previewing = false;
+  async function previewTrim(timestamp: number, direction?: -1 | 1) {
+    const source = fileSource;
+    if (!source || !state.trimming || !Number.isFinite(timestamp)) return;
+    const job = { timestamp, direction };
+    pendingPreview = job;
+    const request = ++previewVersion, token = generation;
+    if (previewing) return;
+    previewing = true;
     try {
-      const frame = await source.preview(timestamp);
+      const frame = direction ? await source.previewAdjacent(timestamp, direction) : await source.preview(timestamp);
       if (!frame) return;
       try {
         if (request !== previewVersion || token !== generation || !state.trimming) return;
+        if (direction && (frame.timestamp >= state.solveEnd || frame.timestamp < state.solveStart)) return;
         presenter.presentFrame(stage, presenter.captureFrame(frame.bitmap, inputCrop(frame.bitmap)));
         state.position = frame.timestamp; state.result = undefined;
       } finally { frame.bitmap.close(); }
     } catch (cause) { if (token === generation) state.mediaError = cause instanceof Error ? cause.message : String(cause); }
+    finally {
+      previewing = false;
+      const next = pendingPreview;
+      pendingPreview = undefined;
+      if (next && next !== job) {
+        void previewTrim(next.timestamp, next.direction);
+      }
+    }
+  }
+  function previewSelection(timestamp: number) {
+    void previewTrim(Math.max(state.solveStart, Math.min(timestamp, state.solveEnd - 1 / 1_000_000)));
+  }
+  function stepPreview(direction: -1 | 1) {
+    void previewTrim(state.position, direction);
   }
   function changeTrim(edge: "start" | "end", value: number) {
     const range = trimRange({ start: state.solveStart, end: state.solveEnd }, edge, value, state.duration, state.sourceFps);
     state.solveStart = range.start; state.solveEnd = range.end;
-    void previewTrim(edge === "start" ? state.solveStart : Math.max(state.solveStart, state.solveEnd - 1 / (state.sourceFps || 30)));
+    void previewTrim(edge === "start" ? state.solveStart : Math.max(state.solveStart, state.solveEnd - 1 / 1_000_000));
   }
   async function makeThumbnails(token: number) {
     const source = fileSource; if (!source) return;
@@ -1297,6 +1319,10 @@ export function createVideoWorkspace(stage: HTMLCanvasElement, initialTab: Works
       }
     } finally { if(token===generation)reviewInProgress=false; }
   }
+  function seekReviewIndex(index: number) {
+    const row = derived.reviewRows[index];
+    if (row) void requestReview(row.timestamp);
+  }
   function stepReview(direction:-1|1) {
     if(state.sourceKind!=="video"||!derived.reconstructionComplete||state.trimming)return;
     const timestamp=steppedTimestamp(derived.reviewRows,requestedReviewTimestamp??state.presentedTimestamp,direction);
@@ -1309,7 +1335,7 @@ export function createVideoWorkspace(stage: HTMLCanvasElement, initialTab: Works
   }
   async function seekFile(timestamp: number) {
     if (!fileSource) return;
-    timestamp = Math.max(state.solveStart, Math.min(timestamp, state.solveEnd - 1 / (state.sourceFps || 30)));
+    timestamp = Math.max(state.solveStart, Math.min(timestamp, derived.reviewRows.at(-1)?.timestamp ?? state.solveEnd));
     const request = ++seekVersion;
     if (!seeking) {
       seekResume = state.running;
@@ -1373,7 +1399,8 @@ export function createVideoWorkspace(stage: HTMLCanvasElement, initialTab: Works
       await camera();
       return;
     }
-    if (state.sourceKind === "video" && fileEnded) {
+    if (state.sourceKind === "video" &&
+      (fileEnded || state.presentedTimestamp === derived.reviewRows.at(-1)?.timestamp)) {
       await seekFile(state.solveStart);
     }
     state.running = true;
@@ -1434,7 +1461,6 @@ export function createVideoWorkspace(stage: HTMLCanvasElement, initialTab: Works
   ) => colors ? buildCubeReplayTimelines(rows, colors, {
     fps, solved, steps: search?.steps ?? [], turningStartFrame,
   }) : undefined);
-
   const derived = {
     get latestReplayReconstruction() {
       const id = state.latestTimerSolveId;
@@ -1553,7 +1579,7 @@ export function createVideoWorkspace(stage: HTMLCanvasElement, initialTab: Works
   }
 
   return {
-    selectTab, camera, startTimerSolve, stopTimerSolve, deleteTimerSolve, clearTimerSession, seekLatestTimerReplay, openFile, stopSource, editCrop, applyCrop, closeCrop, changeTrim, beginReconstruction, editSolveRange, togglePlayback, changePlaybackSpeed, requestReview, stepReview, downloadDetections, downloadTimerDiagnostics, loadModel, cleanup, reviewKeydown,
+    selectTab, camera, startTimerSolve, stopTimerSolve, deleteTimerSolve, clearTimerSession, seekLatestTimerReplay, openFile, stopSource, editCrop, applyCrop, closeCrop, changeTrim, previewSelection, stepPreview, beginReconstruction, editSolveRange, togglePlayback, changePlaybackSpeed, requestReview, seekReviewIndex, stepReview, downloadDetections, downloadTimerDiagnostics, loadModel, cleanup, reviewKeydown,
     getSnapshot: () => view,
     subscribe(listener: () => void) {
       listeners.add(listener);

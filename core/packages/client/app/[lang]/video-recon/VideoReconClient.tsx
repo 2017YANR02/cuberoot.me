@@ -3,15 +3,17 @@
 import { useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import dynamic from 'next/dynamic';
 import { parseAsStringEnum, useQueryState } from 'nuqs';
-import { Camera, Crop, Download, Eraser, Film, Unplug, Upload } from '@app-foundation/icons/lucide';
+import { Camera, Download, Film, Unplug, Upload } from '@app-foundation/icons/lucide';
+import { ContentSkeleton, SkeletonBlock } from '@/components/ContentSkeleton';
 import PageHeading from '@/components/PageHeading';
 import HeaderToggles from '@/components/HeaderToggles';
+import { INITIAL_VIDEO_TRANSFORM, VideoImageTools, videoImageTransformCss } from '@/components/VideoImageTools';
+import { useVideoViewport } from '@/hooks/useVideoViewport';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
 import { useT } from '@/hooks/useT';
 import { createVideoWorkspace, type VideoWorkspace, type WorkspaceTab } from '@/lib/video-recon/workspace';
 import { prepareOfflineVideoRecon } from '@/lib/video-recon/offline';
 import type { MoveStep } from '@/lib/video-recon/engine/move-search-types';
-import { timecode } from '@/lib/video-recon/engine/solve-range';
 import { CameraTimer } from './CameraTimer';
 import { ProjectedCube } from './ProjectedCube';
 import { ReviewControls } from './ReviewControls';
@@ -21,7 +23,9 @@ import { TimerReplay } from './TimerReplay';
 import { TpsGraph } from './TpsGraph';
 import './video-recon.css';
 
-const VideoSolveAnalysis = dynamic(() => import('./VideoSolveAnalysis').then(module => module.VideoSolveAnalysis));
+const VideoSolveAnalysis = dynamic(() => import('./VideoSolveAnalysis').then(module => module.VideoSolveAnalysis), {
+  loading: () => <ContentSkeleton variant="text" />,
+});
 const NO_MOVES: readonly MoveStep[] = [];
 const VIDEO_MODES: WorkspaceTab[] = ['detector', 'timer'];
 const noWorkspace = () => null;
@@ -38,9 +42,24 @@ function VideoReconProgress({ label, value }: { label: string; value?: number })
   </div>;
 }
 
+function VideoReconResultPlaceholder() {
+  const t = useT();
+  return <section className="video-recon-panel video-recon-cube" data-site-surface="panel"
+    aria-label={t('复盘结果', 'Reconstruction')} aria-busy="true">
+    <div className="video-recon-orbit">
+      <div className="video-recon-orbit-interaction">
+        <SkeletonBlock className="video-recon-orbit-shimmer" />
+      </div>
+    </div>
+    <SkeletonBlock />
+    <SkeletonBlock style={{ width: '64%' }} />
+  </section>;
+}
+
 export default function VideoReconClient() {
   const t = useT();
   const stage = useRef<HTMLCanvasElement>(null);
+  const viewportRef = useRef<HTMLDivElement>(null);
   const fileInput = useRef<HTMLInputElement>(null);
   const cameraPreview = useRef<HTMLVideoElement>(null);
   const [workspace, setWorkspace] = useState<VideoWorkspace>();
@@ -48,6 +67,9 @@ export default function VideoReconClient() {
   const [mode, setMode] = useQueryState('mode', parseAsStringEnum(VIDEO_MODES).withDefault('detector'));
   const view = useSyncExternalStore(workspace?.subscribe ?? noSubscription, workspace?.getSnapshot ?? noWorkspace, noWorkspace);
   const detector = (view?.activeTab ?? mode) === 'detector';
+  const [imageTransform, setImageTransform] = useState(INITIAL_VIDEO_TRANSFORM);
+  const fileSelected = detector && (view?.sourceKind === 'image' || view?.sourceKind === 'video');
+  const viewport = useVideoViewport(viewportRef, fileSelected, !!view?.cropPreview);
   const initialMode = useRef(mode);
 
   useEffect(() => {
@@ -85,9 +107,12 @@ export default function VideoReconClient() {
   const timerLabel = t('摄像头计时', 'Camera timer');
   const reviewing = detector && view?.sourceKind === 'video' && view.reconstructionComplete && !view.trimming;
   const reconstructing = detector && view?.sourceKind === 'video' && !view.trimming && !view.reconstructionComplete;
-  const fileSelected = !!view && (view.sourceKind === 'image' || view.sourceKind === 'video');
+  const pendingResult = reconstructing && !view.mediaError && view.status !== 'error';
+  const showResults = reviewing || pendingResult;
+  const resultTime = view?.presentedTimestamp ?? 0;
   const fileCanCrop = view?.sourceKind === 'image' || view?.trimming;
   const searchSteps = view?.searchResult?.steps ?? NO_MOVES;
+  const measured = view?.measuredCubeTimeline;
   const downloadProgress = view?.modelProgress;
   const downloading = downloadProgress !== undefined && downloadProgress < 100;
   const frameProgress = reconstructing && !view.videoInputComplete && view.solveEnd > view.solveStart
@@ -100,10 +125,16 @@ export default function VideoReconClient() {
   const mediaError = view?.mediaError || view?.poseError;
   const renderReviewControls = (label: string) => workspace && view && reviewing && (
     <ReviewControls label={label} playing={view.running} speed={view.playbackSpeed}
-      start={view.solveStart} end={view.solveEnd} position={view.presentedTimestamp} index={view.currentReviewIndex} length={view.reviewLength}
+      end={view.solveEnd} position={view.presentedTimestamp} index={view.currentReviewIndex} length={view.reviewLength}
       onPlay={() => void workspace.togglePlayback()} onSpeed={workspace.changePlaybackSpeed}
-      onSeek={time => void workspace.requestReview(time)} onStep={workspace.stepReview} />
+      onSeekIndex={workspace.seekReviewIndex} onStep={workspace.stepReview} />
   );
+  function openMedia(file?: File) {
+    if (!file) return;
+    viewport.reset();
+    setImageTransform(INITIAL_VIDEO_TRANSFORM);
+    void workspace?.openFile(file);
+  }
   return <main className="video-recon-page">
     <header className="video-recon-heading">
       <PageHeading backHref="/recon">{title}</PageHeading>
@@ -116,8 +147,8 @@ export default function VideoReconClient() {
       <HeaderToggles />
     </header>
     <p className="video-recon-intro">{guide}</p>
-    <div className={reviewing || !detector && view?.latestTimerReplay ? 'video-recon-columns' : undefined}>
-      <section className="video-recon-panel" data-site-surface="panel" aria-label={detector ? detectorLabel : timerLabel}>
+    <div className={showResults ? 'video-recon-columns video-recon-results' : !detector && view?.latestTimerReplay ? 'video-recon-columns' : undefined}>
+      <section className="video-recon-panel video-recon-source-panel" data-site-surface="panel" aria-label={detector ? detectorLabel : timerLabel}>
         <div className="video-recon-section-heading">
           <h2>{detector ? t('源画面', 'Source') : t('摄像头画面', 'Camera preview')}</h2>
           {selectedSource && <span className="video-recon-file-name" dir="auto">{selectedSource}</span>}
@@ -130,10 +161,14 @@ export default function VideoReconClient() {
           if (!detector) return;
           event.preventDefault();
           setDragOver(false);
-          void workspace?.openFile(event.dataTransfer.files[0]);
+          openMedia(event.dataTransfer.files[0]);
         }}>
-          <canvas ref={stage} hidden={!view || view.sourceKind === 'none' || showCamera}
-            aria-label={t('检测后的源画面', 'Processed source frame')} />
+          <div ref={viewportRef} className="video-recon-source-viewport"
+            hidden={!view || view.sourceKind === 'none' || showCamera} data-zoomed={viewport.zoomed}
+            style={viewport.style} {...viewport.interaction}>
+            <canvas ref={stage} style={fileSelected ? { transform: videoImageTransformCss(imageTransform) } : undefined}
+              aria-label={t('检测后的源画面', 'Processed source frame')} />
+          </div>
           <video ref={cameraPreview} hidden={!showCamera} muted autoPlay playsInline aria-label={t('摄像头预览', 'Camera preview')} />
           {(!view || view.sourceKind === 'none') && <div className="video-recon-empty">
             {detector ? <Film size={34} strokeWidth={1.5} aria-hidden /> : <Camera size={34} strokeWidth={1.5} aria-hidden />}
@@ -149,19 +184,16 @@ export default function VideoReconClient() {
         </div>
         {workspace && view && view.sourceKind !== 'none' && <div className="video-recon-actions">
           {detector && <button type="button" className="btn-secondary" onClick={() => fileInput.current?.click()}>
-            <Upload size={16} aria-hidden />{t('更换文件', 'Replace file')}
+            <Upload size={16} aria-hidden />{t('更换', 'Replace')}
           </button>}
-          {fileSelected && <button type="button" className="btn-secondary" disabled={view.cropLocked || view.cropLoading || !fileCanCrop}
-            onClick={() => void workspace.editCrop()}>
-            <Crop size={16} aria-hidden />{view.cropLocked ? t('裁剪已锁定', 'Crop locked') : t('裁剪画面', 'Crop frame')}
-          </button>}
+          {fileSelected && <VideoImageTools transform={imageTransform} onTransform={setImageTransform}
+            cropDisabled={view.cropLocked || view.cropLoading || !fileCanCrop} onCrop={() => void workspace.editCrop()} />}
           {reviewing && <button type="button" className="btn-secondary" onClick={() => void workspace.editSolveRange()}>
             {t('调整还原区间', 'Adjust solve range')}
           </button>}
-          <button type="button" className="btn-secondary" disabled={view.timerBusy} onClick={workspace.stopSource}>
-            {detector ? <Eraser size={16} aria-hidden /> : <Unplug size={16} aria-hidden />}
-            {detector ? t('清除', 'Clear') : t('断开摄像头', 'Disconnect camera')}
-          </button>
+          {!detector && <button type="button" className="btn-secondary" disabled={view.timerBusy} onClick={workspace.stopSource}>
+            <Unplug size={16} aria-hidden />{t('断开摄像头', 'Disconnect camera')}
+          </button>}
         </div>}
         {renderReviewControls(t('视频播放控件', 'Video playback controls'))}
         {workspace && view?.trimming && <SolveRange view={view} workspace={workspace} />}
@@ -190,7 +222,7 @@ export default function VideoReconClient() {
           <button type="button" className="btn-secondary" onClick={() => void workspace.loadModel()}>{t('重新加载检测器', 'Reload detector')}</button>
         </div>}
         <footer className="video-recon-section-heading video-recon-muted">
-          <span>{t('媒体在本机处理', 'Media is processed on this device')}
+          <span>{t('仅在浏览器本地处理', 'Processed locally in your browser only')}
             {view?.sourceKind && view.sourceKind !== 'none' ? ` · ${(showCamera ? view.captureFps : view.fps).toFixed(1)} FPS` : ''}
           </span>
           <button type="button" className="btn-secondary" disabled={!view?.savedFrames || view.timerBusy} onClick={() => void workspace?.downloadDetections()}>
@@ -199,16 +231,22 @@ export default function VideoReconClient() {
           </button>
         </footer>
       </section>
-      {reviewing && <ProjectedCube pose={view.coloredProjection} sourceTimestamp={view.presentedTimestamp}
-        timestamp={timecode(view.presentedTimestamp)} solved={view.cubeSolved} steps={searchSteps} timeline={view.projectedTimeline}
-        sourceFrame={view.result?.fittedPose?.sourceFrame ?? Math.round(view.presentedTimestamp * view.sourceFps)}
+      {pendingResult && <VideoReconResultPlaceholder />}
+      {reviewing && <ProjectedCube pose={view.coloredProjection} sourceTimestamp={resultTime}
+        solved={view.cubeSolved} steps={searchSteps}
+        timeline={view.projectedTimeline}
+        sourceFrame={view.result?.fittedPose?.sourceFrame ?? Math.round(resultTime * view.sourceFps)}
         sourceFps={view.sourceFps} playbackSpeed={view.running ? view.playbackSpeed : 1}
         controls={renderReviewControls(t('实况魔方播放控件', 'Tracked cube playback controls'))}
-        analysis={workspace && view.reconstructedScramble && view.measuredCubeTimeline && searchSteps.some(step => step.state_moves.length)
-          ? <VideoSolveAnalysis scramble={view.reconstructedScramble} steps={searchSteps} measured={view.measuredCubeTimeline}
+        analysis={reviewing && workspace && view.reconstructedScramble && measured && searchSteps.some(step => step.state_moves.length)
+          ? <VideoSolveAnalysis scramble={view.reconstructedScramble} steps={searchSteps} measured={measured}
             fps={view.sourceFps} start={view.solveStart} end={view.solveEnd} position={view.presentedTimestamp}
             onSeek={timestamp => void workspace.requestReview(timestamp)} />
           : undefined} />}
+      {workspace && view && showResults && <TpsGraph compact pending={pendingResult}
+        steps={searchSteps}
+        fps={view.sourceFps} start={view.solveStart} end={view.solveEnd} cursor={resultTime} complete={reviewing && view.cubeSolved}
+        onSeek={reviewing ? timestamp => void workspace.requestReview(timestamp) : undefined} />}
       {!detector && workspace && view?.latestTimerReplay && view.latestReplayReconstruction && <section className="video-recon-panel" data-site-surface="panel">
         <h2>{t('最近一次回放', 'Latest solve replay')}</h2>
         <TimerReplay key={view.latestTimerReplay.id} clip={view.latestTimerReplay} reconstruction={view.latestReplayReconstruction}
@@ -216,13 +254,11 @@ export default function VideoReconClient() {
       </section>}
     </div>
     {workspace && view && <CameraTimer active={!detector} workspace={workspace} view={view} />}
-    {workspace && reviewing && <TpsGraph steps={searchSteps} fps={view.sourceFps} start={view.solveStart} end={view.solveEnd}
-      cursor={view.presentedTimestamp} complete={view.cubeSolved} onSeek={timestamp => void workspace.requestReview(timestamp)} />}
     {workspace && view?.cropPreview && <SourceCropDialog key={view.cropPreview.url} {...view.cropPreview} initial={view.sourceCrop}
       onApply={crop => void workspace.applyCrop(crop)} onCancel={workspace.closeCrop} />}
     <input ref={fileInput} type="file" accept="image/*,video/*" aria-label={t('视频或图片', 'Video or image')} hidden
       onChange={event => {
-        void workspace?.openFile(event.currentTarget.files?.[0]);
+        openMedia(event.currentTarget.files?.[0]);
         event.currentTarget.value = '';
       }} />
   </main>;

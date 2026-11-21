@@ -145,6 +145,21 @@ export async function openVideoFile(file: File) {
         if (!value || closed) return null;
         return { bitmap: await createImageBitmap(value.canvas), timestamp: value.timestamp };
       },
+      async previewAdjacent(timestamp: number, direction: -1 | 1) {
+        const boundary = timestamp + direction / 1_000_000;
+        if (direction < 0) {
+          const value = await previewSink.getCanvas(boundary);
+          if (!value || closed) return null;
+          return { bitmap: await createImageBitmap(value.canvas), timestamp: value.timestamp };
+        }
+        for await (const value of previewSink.canvases(boundary)) {
+          if (closed) return null;
+          // A range iterator can yield the frame already covering the starting time.
+          if (value.timestamp <= timestamp) continue;
+          return { bitmap: await createImageBitmap(value.canvas), timestamp: value.timestamp };
+        }
+        return null;
+      },
       seek(timestamp: number) {
         prefetch.reset();
         void iterator.return().catch(() => {});

@@ -129,6 +129,17 @@
   display: none;
 }
 
+.video-recon-results {
+  grid-template-areas:
+    "source result"
+    "tps result";
+  grid-template-rows: auto 1fr;
+}
+
+.video-recon-results > .video-recon-source-panel { grid-area: source; }
+.video-recon-results > .video-recon-cube { grid-area: result; }
+.video-recon-results > .video-recon-tps { grid-area: tps; }
+
 .video-recon-timer > .video-recon-tps {
   grid-column: 1 / -1;
 }
@@ -198,8 +209,7 @@
 .video-recon-transport,
 .video-recon-modal-body,
 .video-recon-replay,
-.video-recon-notation,
-.video-recon-trim-controls {
+.video-recon-notation {
   display: grid;
   min-width: 0;
   gap: 10px;
@@ -208,6 +218,47 @@
 .video-recon-setup {
   border-top: 1px solid var(--border-default);
   padding-top: 12px;
+}
+
+.video-recon-transport {
+  container-type: inline-size;
+}
+
+.video-recon-transport-time {
+  margin-inline-end: auto;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.video-recon-transport-speed {
+  margin-inline-start: auto;
+  flex-wrap: nowrap;
+}
+
+@container (max-width: 430px) {
+  .video-recon-transport .playback-bar-controls { gap: 3px; }
+  .video-recon-transport .playback-bar-btn {
+    min-width: 30px;
+    height: 44px;
+    padding-inline: 6px;
+  }
+  .video-recon-transport-time { font-size: 0.8125rem; }
+  .video-recon-transport-speed > span { display: none; }
+  .video-recon-transport .video-recon-transport-speed select {
+    width: 3.75rem;
+    padding-inline: 5px;
+    font-size: 0.8125rem;
+  }
+}
+
+@container (max-width: 335px) {
+  .video-recon-transport .playback-bar-controls {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+  }
+  .video-recon-transport .playback-bar-btn { grid-row: 1; }
+  .video-recon-transport-time { grid-area: 2 / 1 / 3 / 4; }
+  .video-recon-transport-speed { grid-area: 2 / 4 / 3 / 6; }
 }
 
 .video-recon-field {
@@ -238,45 +289,32 @@
   gap: 8px 16px;
 }
 
-.video-recon-range {
-  display: grid;
-  grid-template-columns: minmax(3ch, auto) minmax(0, 1fr) auto;
-  align-items: center;
-  gap: 10px;
-  font-variant-numeric: tabular-nums;
+/* Leave room for the timeline handles at the boundaries. */
+.video-recon-setup .video-timeline-trimmer {
+  margin: 1.5rem 14px 0;
 }
 
-.video-recon-range-input {
-  width: 100%;
-  accent-color: var(--accent);
-}
-
-.video-recon-thumbnails {
-  position: relative;
-  display: grid;
-  grid-template-columns: repeat(10, minmax(0, 1fr));
-  overflow: hidden;
-  border-radius: 6px;
-  min-height: 38px;
-  background: var(--muted);
-}
-
-.video-recon-thumbnails > div:not(.video-recon-clip-selection) {
-  aspect-ratio: 4 / 3;
-}
-
-.video-recon-thumbnails img {
+.video-recon-setup .video-timeline-thumb img {
   display: block;
   width: 100%;
   height: 100%;
   object-fit: cover;
 }
 
-.video-recon-clip-selection {
-  position: absolute;
-  inset-block: 0;
-  border: 2px solid var(--accent);
-  box-shadow: 0 0 0 1200px color-mix(in srgb, var(--background) 56%, transparent);
+.video-recon-source-viewport {
+  max-width: 100%;
+}
+
+.video-recon-source-viewport[data-zoomed='true'] {
+  cursor: grab;
+}
+
+.video-recon-source-viewport[data-zoomed='true']:active {
+  cursor: grabbing;
+}
+
+.video-recon-source-viewport:has(canvas) {
+  touch-action: none;
 }
 
 .video-recon-error {
@@ -293,12 +331,43 @@
 
 .video-recon-orbit {
   position: relative;
-  display: grid;
-  place-items: center;
   aspect-ratio: 4 / 3;
   border-radius: 8px;
   background: var(--muted);
+}
+
+.video-recon-orbit-interaction {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  border-radius: inherit;
   touch-action: none;
+}
+
+.video-recon-orbit-engine {
+  position: absolute;
+  inset-block-start: 8px;
+  inset-inline-end: 8px;
+  max-inline-size: calc(100% - 16px);
+  z-index: 2;
+}
+
+.video-recon-orbit-reset.playback-bar-btn {
+  position: absolute;
+  inset-block-end: 8px;
+  inset-inline-start: 8px;
+  inline-size: 44px;
+  block-size: 44px;
+  z-index: 2;
+}
+
+.video-recon-orbit-interaction > .video-recon-orbit-shimmer {
+  position: absolute;
+  inset: 0;
+  height: auto;
+  border-radius: inherit;
+  pointer-events: none;
 }
 
 .video-recon-cube-renderer {
@@ -361,6 +430,18 @@
 .video-recon-tps text {
   fill: var(--muted-foreground);
   font-size: 11px;
+}
+
+.video-recon-tps--compact svg {
+  max-height: none;
+}
+
+.video-recon-tps--compact text {
+  font-size: 14px;
+}
+
+.video-recon-tps .video-recon-tps-shimmer {
+  height: auto;
 }
 
 .video-recon-graph-grid {
@@ -502,6 +583,11 @@
   .video-recon-columns,
   .video-recon-timer {
     grid-template-columns: minmax(0, 1fr);
+  }
+
+  .video-recon-results {
+    grid-template-areas: "source" "result" "tps";
+    grid-template-rows: auto;
   }
 
   .video-recon-page :is(.btn-primary, .btn-secondary),

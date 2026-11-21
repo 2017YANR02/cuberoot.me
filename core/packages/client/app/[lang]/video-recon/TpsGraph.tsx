@@ -1,4 +1,5 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useState, type MouseEvent } from 'react';
+import { SkeletonBlock } from '@/components/ContentSkeleton';
 import { useT } from '@/hooks/useT';
 import { formatTimer } from '@/lib/video-recon/engine/cube-timer';
 import type { MoveStep } from '@/lib/video-recon/engine/move-search-types';
@@ -14,19 +15,21 @@ interface Props {
   solveSeconds?: number;
   cursor?: number;
   complete: boolean;
-  onSeek: (time: number) => void;
+  compact?: boolean;
+  pending?: boolean;
+  onSeek?: (time: number) => void;
 }
 
 const NO_STEPS: readonly MoveStep[] = [];
-const WIDTH = 640;
 const HEIGHT = 142;
 const LEFT = 30;
-const RIGHT = 624;
 const BASE = 118;
 
-export function TpsGraph({ steps = NO_STEPS, turns, moves, fps, start, end, solveSeconds, cursor, complete, onSeek }: Props) {
+export function TpsGraph({ steps = NO_STEPS, turns, moves, fps, start, end, solveSeconds, cursor, complete, compact, pending, onSeek }: Props) {
   const t = useT();
   const [hover, setHover] = useState<number>();
+  const width = compact ? 400 : 640;
+  const right = width - 16;
   const points = useMemo(() => {
     const events = complete ? turns ?? turnEvents(steps, fps) : [];
     const curve = tpsCurve(events, start, end);
@@ -35,28 +38,33 @@ export function TpsGraph({ steps = NO_STEPS, turns, moves, fps, start, end, solv
     return { events, curve, ceiling, summary: tpsSummary(events, solveSeconds ?? committedTurnSpan(steps, fps), count) };
   }, [complete, turns, steps, fps, start, end, moves, solveSeconds]);
   const duration = Math.max(0, end - start);
-  const x = (time: number) => LEFT + (time - start) / Math.max(0.001, duration) * (RIGHT - LEFT);
+  const x = (time: number) => LEFT + (time - start) / Math.max(0.001, duration) * (right - LEFT);
   const y = (rate: number) => BASE - rate / points.ceiling * (BASE - 10);
   const line = points.curve.map((point, index) => `${index ? 'L' : 'M'}${x(point.timestamp)},${y(point.tps)}`).join(' ');
   const time = Math.max(start, Math.min(end, hover ?? cursor ?? start));
-  const seek = (next: number) => onSeek(Math.max(start, Math.min(end, next)));
-  return <section className="video-recon-panel video-recon-tps" data-site-surface="panel">
+  const rate = gaussianTpsAt(points.events, time);
+  const seek = (next: number) => onSeek?.(Math.max(start, Math.min(end, next)));
+  function timeAtPointer({ currentTarget, clientX, clientY }: MouseEvent<SVGSVGElement>) {
+    const matrix = currentTarget.getScreenCTM();
+    if (!matrix) return time;
+    const point = new DOMPoint(clientX, clientY).matrixTransform(matrix.inverse());
+    const ratio = Math.max(0, Math.min(1, (point.x - LEFT) / (right - LEFT)));
+    return start + ratio * duration;
+  }
+  return <section className={`video-recon-panel video-recon-tps${compact ? ' video-recon-tps--compact' : ''}`}
+    data-site-surface="panel" aria-busy={pending || undefined}>
     <div className="video-recon-section-heading">
       <h2>{t('转速曲线', 'Turns per second')}</h2>
-      {complete && points.events.length > 0 && <span>{gaussianTpsAt(points.events, time).toFixed(1)} TPS</span>}
+      {complete && points.events.length > 0 && <span>{rate.toFixed(1)} TPS</span>}
     </div>
-    {complete ? <>
-      {points.events.length > 0 ? <svg viewBox={`0 0 ${WIDTH} ${HEIGHT}`} role="slider" tabIndex={0}
-        aria-label={t('按转速曲线跳转', 'Seek on TPS graph')}
-        aria-valuemin={0} aria-valuemax={duration} aria-valuenow={time - start}
+    {pending ? <SkeletonBlock className="video-recon-tps-shimmer" style={{ aspectRatio: `${width} / ${HEIGHT}` }} /> : complete ? <>
+      {points.events.length > 0 ? <svg viewBox={`0 0 ${width} ${HEIGHT}`} role={onSeek ? 'slider' : 'img'} tabIndex={onSeek ? 0 : undefined}
+        aria-label={onSeek ? t('按转速曲线跳转', 'Seek on TPS graph') : t('实时转速曲线', 'Live TPS graph')}
+        aria-valuemin={onSeek ? 0 : undefined} aria-valuemax={onSeek ? duration : undefined} aria-valuenow={onSeek ? time - start : undefined}
         onPointerLeave={() => setHover(undefined)}
-        onPointerMove={event => {
-          const rect = event.currentTarget.getBoundingClientRect();
-          const ratio = ((event.clientX - rect.left) / rect.width * WIDTH - LEFT) / (RIGHT - LEFT);
-          setHover(start + Math.max(0, Math.min(1, ratio)) * duration);
-        }}
-        onClick={() => seek(time)}
-        onKeyDown={event => {
+        onPointerMove={onSeek ? event => { if (event.pointerType === 'mouse') setHover(timeAtPointer(event)); } : undefined}
+        onClick={onSeek ? event => seek(timeAtPointer(event)) : undefined}
+        onKeyDown={onSeek ? event => {
           const offsets = { ArrowLeft: -0.05, ArrowRight: 0.05 };
           if (!(event.key in offsets) && !['Home', 'End', 'Enter', ' '].includes(event.key)) return;
           event.preventDefault();
@@ -64,20 +72,21 @@ export function TpsGraph({ steps = NO_STEPS, turns, moves, fps, start, end, solv
           if (event.key === 'Home') seek(start);
           else if (event.key === 'End') seek(end);
           else seek(time + (offsets[event.key as keyof typeof offsets] ?? 0));
-        }}>
+        } : undefined}>
         {[0, points.ceiling / 2, points.ceiling].map(rate => <g key={rate}>
-          <line className="video-recon-graph-grid" x1={LEFT} x2={RIGHT} y1={y(rate)} y2={y(rate)} />
+          <line className="video-recon-graph-grid" x1={LEFT} x2={right} y1={y(rate)} y2={y(rate)} />
           <text x={LEFT - 5} y={y(rate) + 4} textAnchor="end">{rate}</text>
         </g>)}
         {[0, 0.25, 0.5, 0.75, 1].map(ratio => <text key={ratio} x={x(start + duration * ratio)} y={HEIGHT - 5}
           textAnchor={ratio === 0 ? 'start' : ratio === 1 ? 'end' : 'middle'}>{(duration * ratio).toFixed(1)}s</text>)}
-        <path className="video-recon-graph-area" d={`${line} L${RIGHT},${BASE} L${LEFT},${BASE} Z`} />
+        <path className="video-recon-graph-area" d={`${line} L${right},${BASE} L${LEFT},${BASE} Z`} />
         <path className="video-recon-graph-line" d={line} />
         <line className="video-recon-graph-grid" x1={x(time)} x2={x(time)} y1={10} y2={BASE} />
-        <circle cx={x(time)} cy={y(gaussianTpsAt(points.events, time))} r="3" />
+        <circle cx={x(time)} cy={y(rate)} r="3" />
       </svg> : <p className="video-recon-muted">{points.summary.moves ? t('暂无动作时间戳。', 'Turn timestamps are unavailable.') : t('暂无已识别动作。', 'No reconstructed turns yet.')}</p>}
       <dl className="video-recon-stats">
-        <div><dt>{t('还原用时', 'Solve time')}</dt><dd>{formatTimer(points.summary.seconds === undefined ? undefined : points.summary.seconds * 1000)}</dd></div>
+        <div><dt>{t('还原用时', 'Solve time')}</dt>
+          <dd>{formatTimer(points.summary.seconds === undefined ? undefined : points.summary.seconds * 1000)}</dd></div>
         <div><dt>{t('步数', 'Moves')}</dt><dd>{points.summary.moves}</dd></div>
         <div><dt>{t('平均 TPS', 'Average TPS')}</dt><dd>{points.summary.averageTps?.toFixed(2) ?? '—'}</dd></div>
       </dl>

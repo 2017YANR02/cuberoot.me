@@ -1,6 +1,9 @@
-import { useEffect, useId, useMemo, useRef, useState, type PointerEvent, type ReactNode } from 'react';
+import { useEffect, useMemo, useRef, useState, type PointerEvent, type ReactNode } from 'react';
 import { parseAsStringEnum, useQueryState } from 'nuqs';
 import { Copy, RotateCcw } from '@app-foundation/icons/lucide';
+import { SkeletonBlock } from '@/components/ContentSkeleton';
+import MoreToggle from '@/components/MoreToggle';
+import { Tooltip } from '@/components/Tooltip';
 import { useT } from '@/hooks/useT';
 import { dragCubeView, nudgeCubeView, type CubeDragKind, type DragPoint } from '@/lib/video-recon/engine/cube-drag';
 import { layerTransition, type CubePose, type Quaternion } from '@/lib/video-recon/engine/cube-motion';
@@ -15,7 +18,6 @@ import { mountVideoCubingView, mountVideoThreeView, VIDEO_CUBE_ENGINES, type Vid
 interface Props {
   pose?: CubePose;
   sourceTimestamp: number;
-  timestamp: string;
   solved: boolean;
   steps: readonly MoveStep[];
   timeline: readonly ProjectedCubeFrame[];
@@ -28,9 +30,9 @@ interface Props {
 
 type Drag = { id: number; kind: CubeDragKind; start: DragPoint; view: Quaternion; x: number; y: number; radius: number };
 
-export function ProjectedCube({ pose, sourceTimestamp, timestamp, solved, steps, timeline, sourceFrame, sourceFps, playbackSpeed, analysis, controls }: Props) {
+export function ProjectedCube({ pose, sourceTimestamp, solved, steps, timeline, sourceFrame, sourceFps, playbackSpeed, analysis, controls }: Props) {
   const t = useT();
-  const instructions = useId();
+  const resetLabel = t('重置视角', 'Reset view');
   const engineHost = useRef<HTMLDivElement>(null);
   const renderer = useRef<VideoCubeViewEngine | null>(null);
   const [engine, setEngine] = useQueryState('renderer', parseAsStringEnum([...VIDEO_CUBE_ENGINES]).withDefault('three'));
@@ -152,56 +154,51 @@ export function ProjectedCube({ pose, sourceTimestamp, timestamp, solved, steps,
     </div>}
   </div>;
 
-  return <section className="video-recon-panel video-recon-cube" data-site-surface="panel">
-    <div className="video-recon-section-heading">
-      <h2>{t('复盘结果', 'Reconstruction')}</h2>
-      <div className="video-recon-actions">
-        <label className="video-recon-inline-label">
-          {t('渲染引擎', 'Rendering engine')}
-          <select value={engine} onChange={event => void setEngine(event.currentTarget.value as typeof engine)}>
-            <option value="three">{t('本站引擎（Three.js）', 'CubeRoot engine (Three.js)')}</option>
-            <option value="cubing">cubing.js</option>
-          </select>
-        </label>
-        <span className="video-recon-muted">{timestamp}</span>
+  return <section className="video-recon-panel video-recon-cube" data-site-surface="panel" aria-label={t('复盘结果', 'Reconstruction')}>
+    <div className="video-recon-orbit">
+      <div className="video-recon-orbit-interaction" tabIndex={pose && ready ? 0 : -1} role="application"
+        aria-label={t('调整魔方视角', 'Adjust cube view')}
+        aria-keyshortcuts="ArrowUp ArrowDown ArrowLeft ArrowRight Q E"
+        onPointerDown={beginDrag} onPointerMove={moveDrag} onLostPointerCapture={() => { drag.current = null; }}
+        onKeyDown={event => {
+          if (!pose || !ready || event.altKey || event.ctrlKey || event.metaKey) return;
+          const next = nudgeCubeView(orientation, event.key, event.shiftKey);
+          if (!next) return;
+          event.preventDefault();
+          event.stopPropagation();
+          setOrientation(next);
+        }}>
+        <div className="video-recon-cube-renderer" ref={engineHost} data-engine={engine}
+          role="img" aria-label={t('复盘的三维魔方', 'Reconstructed 3D cube')} aria-hidden={!pose || !ready} />
+        {pose && ready && <span className="video-recon-roll-ring" aria-hidden="true" />}
+        {!pose && <p>{t('此帧暂无复盘状态', 'No reconstructed cube state for this frame')}</p>}
+        {pose && !ready && (unavailable
+          ? <div className="video-recon-orbit-status" role="status">
+            <p>{t('无法加载此渲染引擎。', 'Could not load this rendering engine.')}</p>
+            <button type="button" className="btn-secondary" onClick={() => setRetry(value => value + 1)}>{t('重试', 'Retry')}</button>
+          </div>
+          : <>
+            <SkeletonBlock className="video-recon-orbit-shimmer" />
+            <span className="sr-only" role="status">{t('正在加载三维魔方…', 'Loading the 3D cube…')}</span>
+          </>)}
       </div>
+      <select className="video-recon-orbit-engine" aria-label={t('渲染引擎', 'Rendering engine')}
+        value={engine} onChange={event => void setEngine(event.currentTarget.value as typeof engine)}>
+        <option value="three">{t('本站引擎（Three.js）', 'CubeRoot engine (Three.js)')}</option>
+        <option value="cubing">cubing.js</option>
+      </select>
+      {pose && ready && <Tooltip content={resetLabel}>{tip =>
+        <button {...tip} type="button" className="playback-bar-btn video-recon-orbit-reset"
+          aria-label={resetLabel} onClick={() => setOrientation(CAMERA_ORIENTATION)}>
+          <RotateCcw size={16} aria-hidden="true" />
+        </button>
+      }</Tooltip>}
     </div>
-    <div className="video-recon-orbit" tabIndex={pose && ready ? 0 : -1} role="application"
-      aria-label={t('调整魔方视角', 'Adjust cube view')} aria-describedby={instructions}
-      aria-keyshortcuts="ArrowUp ArrowDown ArrowLeft ArrowRight Q E"
-      onPointerDown={beginDrag} onPointerMove={moveDrag} onLostPointerCapture={() => { drag.current = null; }}
-      onKeyDown={event => {
-        if (!pose || !ready || event.altKey || event.ctrlKey || event.metaKey) return;
-        const next = nudgeCubeView(orientation, event.key, event.shiftKey);
-        if (!next) return;
-        event.preventDefault();
-        event.stopPropagation();
-        setOrientation(next);
-      }}>
-      <div className="video-recon-cube-renderer" ref={engineHost} data-engine={engine}
-        role="img" aria-label={t('复盘的三维魔方', 'Reconstructed 3D cube')} aria-hidden={!pose || !ready} />
-      {pose && ready && <span className="video-recon-roll-ring" aria-hidden="true" />}
-      {!pose && <p>{t('此帧暂无复盘状态', 'No reconstructed cube state for this frame')}</p>}
-      {pose && !ready && <div className="video-recon-orbit-status" role="status">
-        {unavailable ? <>
-          <p>{t('无法加载此渲染引擎。', 'Could not load this rendering engine.')}</p>
-          <button type="button" className="btn-secondary" onClick={() => setRetry(value => value + 1)}>{t('重试', 'Retry')}</button>
-        </> : <p>{t('正在加载三维魔方…', 'Loading the 3D cube…')}</p>}
-      </div>}
-    </div>
-    {pose && ready && <div className="video-recon-section-heading">
-      <span id={instructions} className="video-recon-muted">
-        {t('拖动魔方调整视角，拖动外圈旋转。方向键和 Q / E 也可操作。', 'Drag the cube to orbit or the ring to roll. Arrow keys and Q / E also work.')}
-      </span>
-      <button type="button" className="btn-secondary" onClick={() => setOrientation(CAMERA_ORIENTATION)}>
-        <RotateCcw size={15} aria-hidden />{t('重置视角', 'Reset view')}
-      </button>
-    </div>}
     {controls}
     {analysis ? <>
       {analysis}
       {sourceNotation && <details>
-        <summary>{t('查看相机视角动作', 'View camera-relative moves')}</summary>
+        <MoreToggle as="summary">{t('查看相机视角动作', 'View camera-relative moves')}</MoreToggle>
         {sourceNotation}
       </details>}
     </> : sourceNotation}

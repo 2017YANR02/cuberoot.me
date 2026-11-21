@@ -6,7 +6,6 @@ import { frameArrow, reviewIndex, steppedTimestamp } from '@/lib/video-recon/eng
 import type { PlaybackSpeed } from '@/lib/video-recon/engine/playback-timing';
 import { buildProjectedCubeTimeline, projectedCubeAtFrame } from '@/lib/video-recon/engine/projected-cube';
 import { poseIsFlagged, projectedWireframe } from '@/lib/video-recon/engine/reconstruction-view';
-import { timecode } from '@/lib/video-recon/engine/solve-range';
 import type { TimerReplay as ReplayClip } from '@/lib/video-recon/engine/timer-replay';
 import { ProjectedCube } from './ProjectedCube';
 import { ReviewControls } from './ReviewControls';
@@ -123,16 +122,19 @@ export function TimerReplay({ clip, reconstruction, disabled, seekRequest, onPos
     const direction = frameArrow(event.nativeEvent, event.target instanceof Element ? event.target : null);
     if (direction) { event.preventDefault(); advance(direction); }
   }}>
-    <ReviewControls playing={playing} speed={speed} start={start} end={end} origin={clip.start}
+    <ReviewControls playing={playing} speed={speed} end={end} origin={clip.start}
       position={position} index={index} length={clip.frames.length} disabled={disabled}
       onPlay={() => { if (position >= end) setPosition(start); setPlaying(value => !value); }}
-      onSpeed={setSpeed} onSeek={seek} onStep={advance} />
+      onSpeed={setSpeed} onSeekIndex={frame => {
+        const row = clip.frames[frame];
+        if (row) seek(row.timestamp);
+      }} onStep={advance} />
     <div className={hasRecording ? 'video-recon-columns' : undefined}>
       {hasRecording && <div className="video-recon-stage">
         <canvas ref={canvas} aria-label={t('回放相机画面', 'Replay camera frame')} />
         {drawError && <p role="status">{t('无法显示此帧的相机画面。', 'The camera image is unavailable for this frame.')}</p>}
       </div>}
-      <ProjectedCube pose={pose} sourceTimestamp={current?.timestamp ?? position} timestamp={timecode(position - clip.start)}
+      <ProjectedCube pose={pose} sourceTimestamp={current?.timestamp ?? position}
         solved={solved} steps={steps} timeline={timeline} sourceFrame={frame} sourceFps={clip.clockFps} playbackSpeed={playing ? speed : 1} />
     </div>
   </section>;

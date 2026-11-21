@@ -1,3 +1,5 @@
+import { videoCropBounds } from '../../video-tools/crop';
+
 export interface SourceCrop {x: number; y: number; width: number; height: number}
 export interface PixelCrop extends SourceCrop {}
 export interface InputCrop extends PixelCrop {sourceWidth: number; sourceHeight: number}
@@ -24,9 +26,8 @@ export function cropPixels(crop: SourceCrop | undefined, width: number, height: 
 }
 
 export function cropFromPoints(a: {x: number; y: number}, b: {x: number; y: number}): SourceCrop {
-  const x = clamp(Math.min(a.x, b.x), 0, 1), y = clamp(Math.min(a.y, b.y), 0, 1);
-  return boundedCrop({x, y, width: Math.abs(clamp(a.x, 0, 1) - clamp(b.x, 0, 1)),
-    height: Math.abs(clamp(a.y, 0, 1) - clamp(b.y, 0, 1))});
+  const { left, right, top, bottom } = videoCropBounds(a, b);
+  return boundedCrop({ x: left, y: top, width: right - left, height: bottom - top });
 }
 
 export function dragCrop(start: SourceCrop, handle: CropHandle, dx: number, dy: number): SourceCrop {
