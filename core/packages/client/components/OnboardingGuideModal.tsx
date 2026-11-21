@@ -28,7 +28,7 @@ const steps: Step[] = [
   { selector: ':root[data-embedded-search-button] .home-navigation-toggle', Icon: Menu, title: navigation,
     body: { zh: '在「工具」页打开这个菜单可按栏目找功能。底部可切换到「计时」或「我的」，放大镜可打开全站搜索。', en: 'Open this menu to browse Tools by section. Use the bottom bar for Timer or Account, or tap the magnifying glass to search.' } },
   { selector: ':root:not([data-embedded-search-button]) .home-navigation-toggle', Icon: Menu, title: navigation,
-    body: { zh: '打开菜单，选择训练、工具等栏目，再点选功能或「总览」。点击 CubeRoot 标志回到首页。', en: 'Open the menu and choose a section such as Training or Tools. Select a link or Overview. Tap the CubeRoot logo to return home.' } },
+    body: { zh: '打开菜单，展开训练、工具等栏目，再点选功能或「总览」。点击 CubeRoot 标志回到首页。', en: 'Open the menu and expand a section such as Training or Tools. Select a link or Overview. Tap the CubeRoot logo to return home.' } },
   { selector: '.landing-page > .landing-search .landing-search-controls', Icon: Search, title: { zh: '全站搜索', en: 'Site search' },
     body: { zh: '输入功能名称、选手姓名或比赛名称，从搜索结果直达对应页面。', en: 'Search for a tool, competitor or competition and open it from the results.' } },
   card('timer', TEXTS.timer, Timer, '开始计时，保存每次还原的用时，在计时器中回看练习成绩。', 'Time a solve and review your practice results in the timer.'),

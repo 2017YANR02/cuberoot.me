@@ -262,36 +262,43 @@ body[data-site-scenery] .landing-edit-options[data-site-surface='popover'] {
   }
 }
 .settings-dialog .settings-popover-panel.settings-dialog-panel.home-navigation-drawer {
-  --home-drawer-indent: 48px;
+  --home-drawer-gutter-start: max(var(--home-inline-gutter), var(--sal));
+  --home-drawer-gutter-end: max(var(--home-inline-gutter), var(--sar));
+  --home-drawer-row-inset: 12px;
+  --home-drawer-icon-size: 20px;
   height: 100dvh;
   max-height: 100dvh;
   border: 0;
   border-radius: 0;
   box-shadow: none;
   background: transparent;
-  padding: var(--sat) var(--sar) max(20px, var(--sab), var(--installed-chrome-bottom, 0px)) var(--sal);
+  overflow: hidden;
+  padding: var(--sat) 0 max(12px, var(--sab), var(--installed-chrome-bottom, 0px));
   gap: 0;
-
 }
 .home-navigation .brand-name { display: none; }
-.home-navigation-drawer .settings-dialog-heading { min-height: 48px; }
-.home-navigation-drawer .settings-dialog-heading .clear-btn { width: 44px; height: 44px; }
-.home-navigation-drawer .settings-dialog-heading .clear-btn-icon { width: 28px; height: 28px; }
-.home-navigation-drawer .settings-dialog-heading .clear-btn-icon path { stroke-width: .55; }
-.home-navigation-back {
-  display: flex; align-items: center; justify-content: center;
-  width: 44px; height: 44px; padding: 0; border: 0;
-  background: transparent; color: var(--foreground); cursor: pointer;
+.home-navigation-drawer :is(.settings-dialog-heading, .home-navigation-drawer-content) {
+  width: min(100%, 640px);
+  margin-inline: auto;
+  padding-inline: var(--home-drawer-gutter-start) var(--home-drawer-gutter-end);
+  box-sizing: border-box;
+  scrollbar-gutter: stable;
 }
-.home-navigation-back:focus-visible { outline: 2px solid var(--ring); outline-offset: -2px; }
-.home-navigation-close {
-  position: fixed;
-  display: flex; align-items: center; justify-content: center;
-  width: 48px; height: 48px; padding: 0; border: 0;
-  background: transparent; color: var(--foreground); cursor: pointer;
+.home-navigation-drawer .settings-dialog-heading {
+  min-height: 48px;
+  padding-inline-start: calc(var(--home-drawer-gutter-start) + var(--home-drawer-row-inset));
+  overflow: hidden;
 }
-/* Keep the glyph above the curtain so it stays visible until the drawer unmounts. */
-.home-navigation[data-drawer-open] { z-index: 1001; pointer-events: none; }
+.home-navigation-drawer .settings-dialog-heading .clear-btn {
+  width: calc(var(--home-drawer-row-inset) * 2 + var(--home-drawer-icon-size));
+  height: 44px;
+}
+.home-navigation-drawer .settings-dialog-heading .clear-btn-icon,
+.home-navigation-drawer .home-navigation-submenu-toggle > .more-toggle-chevron {
+  width: var(--home-drawer-icon-size);
+  height: var(--home-drawer-icon-size);
+}
+.home-navigation-drawer .settings-dialog-heading .clear-btn-icon path { stroke-width: .9; }
 .home-navigation > .landing-auth,
 .home-navigation > .home-navigation-brand,
 .home-navigation > .home-navigation-desktop { transition: opacity 280ms ease; }
@@ -303,90 +310,64 @@ body[data-site-scenery] .landing-edit-options[data-site-surface='popover'] {
   .home-navigation > .home-navigation-brand,
   .home-navigation > .home-navigation-desktop { transition: none; }
 }
-.home-navigation-close:focus-visible { outline: 2px solid var(--ring); outline-offset: -2px; }
-/* Apple reference: 28px type, 46px row pitch, first row at y=47px. */
 .home-navigation-drawer-content {
-  width: 100%;
-  margin-top: -1px;
-  padding-block-end: 32px;
-  padding-inline: var(--home-drawer-indent) 10px;
-  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  padding-block-start: 8px;
+  overflow-y: auto;
+  overscroll-behavior-y: contain;
 }
-.home-navigation-drawer .af-nav-menu { width: 100%; margin: 0; gap: 0; }
-.home-navigation-drawer .af-nav-link:hover { background: transparent; }
-.home-navigation-drawer .af-nav-link,
-.home-navigation-drawer .af-nav-row[data-active="true"] .af-nav-link,
-.home-navigation-drawer .af-nav-link[aria-current] {
-  height: 53px; min-height: 53px; padding: 3px 0 4px; margin-block: 0 -7px;
+.home-navigation-drawer .af-nav-menu { width: 100%; gap: 4px; }
+.home-navigation-drawer .af-nav-link {
+  height: 48px;
+  margin-block: 0;
+  padding-inline: var(--home-drawer-row-inset);
+  font-family: var(--font-sans);
+  font-size: 16px;
+  font-weight: 500;
 }
-/* Both navigation levels share typography and interactive text treatment. */
-.home-navigation-drawer .af-nav-link,
-.home-navigation-drawer .af-nav-row[data-active="true"] .af-nav-link,
-.home-navigation-drawer .af-nav-link[aria-current],
-.home-navigation-drawer .home-navigation-submenu .home-navigation-card {
-  font-family: -apple-system, BlinkMacSystemFont, 'Helvetica Neue', Helvetica, Arial, sans-serif;
-  font-size: 28px; font-weight: 600; line-height: 28px; letter-spacing: .007em;
-  background: transparent;
-  color: color-mix(in srgb, var(--foreground) 90%, var(--background));
-  transition: color 200ms ease;
+.home-navigation-drawer .af-nav-link:focus-visible { outline-offset: -2px; }
+.home-navigation-drawer .home-navigation-submenu-toggle { justify-content: space-between; }
+.home-navigation-submenu-toggle > .more-toggle-chevron { color: var(--muted-foreground); }
+.home-navigation-drawer .af-nav-row[data-active="true"] .af-nav-link { font-weight: 600; }
+.home-navigation-submenu-links {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 2px 8px;
+  padding: 2px 4px 8px 12px;
 }
-.home-navigation-drawer .af-nav-row .af-nav-link:hover,
-.home-navigation-drawer .af-nav-row .af-nav-link:focus-visible,
-.home-navigation-drawer .home-navigation-submenu .home-navigation-card:hover,
-.home-navigation-drawer .home-navigation-submenu .home-navigation-card:focus-visible { color: var(--foreground); }
-.home-navigation-drawer .home-navigation-next {
-  margin-inline-start: auto;
-  flex-shrink: 0;
-  opacity: 0;
-  transition: opacity 280ms ease-out;
+@media (min-width: 480px) {
+  .home-navigation-submenu-links { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 }
-@media (hover: hover) {
-  .home-navigation-drawer .af-nav-link:hover .home-navigation-next { opacity: 1; transition-duration: 160ms; }
-}
-.home-navigation-drawer .af-nav-link:focus-visible .home-navigation-next { opacity: 1; }
-@media (prefers-reduced-motion: reduce) {
-  .home-navigation-drawer .home-navigation-next { transition: none; }
-  .home-navigation-drawer .af-nav-row .af-nav-link,
-  .home-navigation-drawer .home-navigation-submenu .home-navigation-card { transition: none; }
-}
-.home-navigation-submenu-links { display: flex; flex-direction: column; align-items: flex-start; }
 .home-navigation-submenu .home-navigation-card {
-  display: flex; align-items: center; min-width: 0; min-height: 46px;
-  padding: 9px 0; text-decoration: none; overflow-wrap: anywhere;
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  min-height: 44px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  color: var(--foreground);
+  text-decoration: none;
+  overflow-wrap: anywhere;
 }
 .home-navigation-submenu button.home-navigation-card {
-  border: 0; text-align: start; cursor: pointer;
+  border: 0;
+  background: transparent;
+  text-align: start;
+  cursor: pointer;
 }
-.home-navigation-submenu .home-navigation-card:focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }
+.home-navigation-submenu .home-navigation-card:is(:hover, :focus-visible) { background: var(--muted); }
+.home-navigation-submenu .home-navigation-card:focus-visible { outline: 2px solid var(--ring); outline-offset: -2px; }
 .home-navigation-submenu .landing-card-icon { display: none; }
 .home-navigation-submenu .landing-card-name {
-  margin: 0; font: inherit; letter-spacing: inherit; color: inherit;
+  margin: 0;
+  font-family: var(--font-sans);
+  font-size: 14px;
+  line-height: 1.45;
 }
-.home-navigation-drawer-page[data-direction] { animation: home-drawer-page-in 650ms cubic-bezier(.22, .61, .36, 1); }
-.home-navigation-drawer-page[data-direction='back'] { --home-menu-enter-x: -24px; }
-.home-navigation-drawer-page[data-direction='forward'] { --home-menu-enter-x: 24px; }
-.home-navigation-drawer-page[data-level='main'] .af-nav-link {
-  animation: home-menu-item-in 420ms ease-out backwards;
-  animation-delay: calc(60ms + var(--home-menu-index, 0) * 75ms);
-}
-@keyframes home-menu-item-in {
-  from { opacity: 0; transform: translateY(-6px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-@keyframes home-drawer-page-in {
-  from { opacity: 0; transform: translateX(var(--home-menu-enter-x, 24px)); }
-  to { opacity: 1; transform: translateX(0); }
-}
-@media (prefers-reduced-motion: reduce) {
-  .home-navigation-drawer-page[data-direction],
-  .home-navigation-drawer-page[data-level='main'] .af-nav-link { animation: none; }
-}
-.home-navigation-drawer-actions {
-  margin-top: auto;
-  width: 100%;
-  padding-block-start: 24px;
-  padding-inline-start: var(--home-drawer-indent);
-}
+.home-navigation-drawer-actions { margin-top: auto; padding-block-start: 16px; }
 .home-navigation-drawer .home-navigation-drawer-actions .landing-auth {
   position: static;
   inset: auto;
@@ -394,19 +375,15 @@ body[data-site-scenery] .landing-edit-options[data-site-surface='popover'] {
   width: 100%;
   min-height: 44px;
   margin: 0;
-  gap: 0;
-  flex-direction: column;
-  flex-wrap: nowrap;
-  align-items: flex-start;
+  gap: 4px;
   justify-content: flex-start;
 }
 .home-navigation-drawer-actions .landing-edit-menu { display: none; }
-.home-navigation-drawer-actions :is(.landing-auth-icon, .landing-auth-btn.is-avatar) { justify-content: flex-start; }
 .home-navigation-drawer-actions .landing-auth-btn { order: 1; margin: 0; }
 .home-navigation-drawer-actions .landing-auth-btn.is-login { width: 44px; padding: 0; }
 .home-navigation-drawer-actions .landing-auth-btn.is-login > span { display: none; }
 .home-navigation-drawer .home-navigation-drawer-actions .landing-calendar-link .landing-card {
-  display: flex; flex-direction: row; align-items: center; justify-content: flex-start;
+  display: flex; align-items: center; justify-content: center;
   width: 44px; height: 44px; padding: 0; border: 0;
   background: transparent; color: var(--muted-foreground);
 }
