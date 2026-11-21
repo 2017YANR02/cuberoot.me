@@ -6,18 +6,26 @@ type NativeNavigation = NonNullable<InstalledAppHost['primaryNavigation']>;
 type NavigationState = NonNullable<Parameters<NativeNavigation['render']>[0]>;
 type NavigationId = NavigationState['selected'];
 
+function centeredCapsuleLeft(container: DOMRect, width: number) {
+  return container.left + (container.width - width) / 2;
+}
+
 export function useTimerNavigationAvoidance(nav: RefObject<HTMLElement | null>, enabled: boolean) {
+  const [offset, setOffset] = useState(0);
   useLayoutEffect(() => {
     const capsule = nav.current;
     const shell = capsule?.parentElement;
     const footer = shell?.querySelector<HTMLElement>('.timer-solo-main > .timer-stage-footer');
-    if (!enabled || !capsule || !shell || !footer) return;
+    if (!enabled || !capsule || !shell || !footer) {
+      setOffset(0);
+      return;
+    }
 
     const gap = 8;
     const update = () => {
       const { top, bottom, width } = capsule.getBoundingClientRect();
       const frame = shell.getBoundingClientRect();
-      const center = frame.left + (frame.width - width) / 2;
+      const center = centeredCapsuleLeft(frame, width);
       const safeRight = parseFloat(getComputedStyle(capsule).getPropertyValue('--app-nav-safe-right')) || 0;
       const reserved = footer.hasAttribute('data-nav-clearance');
       const obstacles = Array.from(footer.querySelectorAll(
@@ -34,8 +42,7 @@ export function useTimerNavigationAvoidance(nav: RefObject<HTMLElement | null>, 
       }
       const reserve = left > center && left + width > frame.right - safeRight - gap;
       footer.toggleAttribute('data-nav-clearance', reserve);
-      const offset = reserve ? 0 : left - center;
-      capsule.style.setProperty('--app-nav-offset-x', `${offset}px`);
+      setOffset(reserve ? 0 : left - center);
     };
 
     const resize = new ResizeObserver(update);
@@ -57,9 +64,9 @@ export function useTimerNavigationAvoidance(nav: RefObject<HTMLElement | null>, 
       shell.removeEventListener('scroll', update, true);
       window.removeEventListener('resize', update);
       footer.removeAttribute('data-nav-clearance');
-      capsule.style.removeProperty('--app-nav-offset-x');
     };
   }, [nav, enabled]);
+  return enabled ? offset : 0;
 }
 
 export function usePrimaryNavigation(
@@ -69,6 +76,7 @@ export function usePrimaryNavigation(
     visible: boolean;
     selected: NavigationId;
     vertical: boolean;
+    horizontalOffset: number;
     dark: boolean;
     language: string;
     disabled: boolean;
@@ -103,7 +111,7 @@ export function usePrimaryNavigation(
   }, [host]);
 
   const {
-    visible, selected, vertical, dark, language, disabled, running, viewport, viewportHeight,
+    visible, selected, vertical, horizontalOffset, dark, language, disabled, running, viewport, viewportHeight,
     searchRef, showSearch, searchExpanded,
   } = options;
   // Measure after every relevant React commit, including a native fold geometry
@@ -117,8 +125,12 @@ export function usePrimaryNavigation(
       const searchFrame = searchButton?.getBoundingClientRect();
       let state: NavigationState | null = null;
       if (visible && element && frame?.width && frame.height) {
+        const container = element.parentElement?.getBoundingClientRect();
+        // The native host animates to the target independently of the CSS transition.
+        const x = !vertical && container
+          ? centeredCapsuleLeft(container, frame.width) + horizontalOffset : frame.x;
         state = {
-          frame: { x: frame.x, y: frame.y, width: frame.width, height: frame.height },
+          frame: { x, y: frame.y, width: frame.width, height: frame.height },
           search: searchButton && searchFrame?.width && searchFrame.height ? {
             frame: { x: searchFrame.x, y: searchFrame.y, width: searchFrame.width, height: searchFrame.height },
             label: searchButton.getAttribute('aria-label') ?? '',
@@ -146,7 +158,7 @@ export function usePrimaryNavigation(
     update();
     window.addEventListener('resize', update);
     return () => window.removeEventListener('resize', update);
-  }, [host, nav, connected, visible, selected, vertical, dark, language, disabled, running, viewport, viewportHeight, searchRef, showSearch, searchExpanded]);
+  }, [host, nav, connected, visible, selected, vertical, horizontalOffset, dark, language, disabled, running, viewport, viewportHeight, searchRef, showSearch, searchExpanded]);
 
   return connected && rendered;
 }

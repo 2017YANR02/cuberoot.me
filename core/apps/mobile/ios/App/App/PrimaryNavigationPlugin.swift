@@ -41,9 +41,25 @@ final class PrimaryNavigationPlugin: CAPPlugin, CAPBridgedPlugin {
 
             let view = self.overlay ?? self.installOverlay(in: parent)
             view.overrideUserInterfaceStyle = state["dark"] as? Bool == true ? .dark : .light
-            self.model.state = .init(items: items, selected: selected, vertical: state["vertical"] as? Bool == true)
-            view.view.frame = webView.convert(CGRect(x: x, y: y, width: width, height: height), to: parent.view)
-            view.view.isHidden = false
+            let vertical = state["vertical"] as? Bool == true
+            let wasVertical = self.model.state.vertical
+            self.model.state = .init(items: items, selected: selected, vertical: vertical)
+            let capsule = view.view!
+            let target = webView.convert(CGRect(x: x, y: y, width: width, height: height), to: parent.view)
+            let current = capsule.frame
+            if target != current {
+                if !vertical && !wasVertical && !capsule.isHidden && !UIAccessibility.isReduceMotionEnabled
+                    && current.minY == target.minY && current.size == target.size {
+                    UIView.animate(withDuration: 0.2, delay: 0,
+                                   options: [.beginFromCurrentState, .allowUserInteraction, .curveEaseInOut]) {
+                        capsule.frame = target
+                    }
+                } else {
+                    capsule.layer.removeAnimation(forKey: "position")
+                    capsule.frame = target
+                }
+            }
+            capsule.isHidden = false
 
             if let search = state["search"] as? [String: Any],
                let frame = search["frame"] as? [String: Double],

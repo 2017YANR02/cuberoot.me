@@ -4137,12 +4137,13 @@ export function App({ host, loadingMark }: { host: InstalledAppHost; loadingMark
     if (view !== 'tools') setToolsSearchOpen(false);
   }, [view]);
   const primaryDestination = selectedView === 'tools' || selectedView === 'account' ? selectedView : 'timer';
-  useTimerNavigationAvoidance(primaryNavRef,
-    floatingNavigation && !host.primaryNavigation && !sideNavigation && navVisible && view === 'timer' && timerMode === 1);
+  const navHorizontalOffset = useTimerNavigationAvoidance(primaryNavRef,
+    floatingNavigation && !sideNavigation && navVisible && view === 'timer' && timerMode === 1);
   const nativeNavigation = usePrimaryNavigation(host.primaryNavigation, primaryNavRef, {
     visible: navVisible,
     selected: primaryDestination,
     vertical: sideNavigation,
+    horizontalOffset: navHorizontalOffset,
     disabled: timerContextMutationBusy,
     running: timer.machine.phase === 'running',
     language,
@@ -5518,7 +5519,8 @@ children: <>
         style={sideNavigation && hostViewport?.bar ? { left: hostViewport.bar.x,
           width: hostViewport.bar.width, ...(floatingNavigation
             ? { top: Math.min(hostViewport.bar.y + hostViewport.bar.height, viewportHeight) - 148 }
-            : { top: hostViewport.bar.y, height: Math.min(hostViewport.bar.height, Math.max(0, viewportHeight - hostViewport.bar.y)) }) } : undefined}>
+            : { top: hostViewport.bar.y, height: Math.min(hostViewport.bar.height, Math.max(0, viewportHeight - hostViewport.bar.y)) }) }
+          : { '--app-nav-offset-x': `${navHorizontalOffset}px` } as CSSProperties}>
         <button
           data-destination="timer"
           aria-label={copy.timer}
