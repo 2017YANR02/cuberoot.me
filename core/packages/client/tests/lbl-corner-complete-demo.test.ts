@@ -3,7 +3,7 @@ import { AllFaces, CubeData, Face, parseAlgorithm } from '@cuberoot/visualcube';
 import { describe, expect, it } from 'vitest';
 import { buildWalkthroughDemo, completeDemoPool, demoGoalReached } from '@/app/[lang]/tutorial/lbl/complete-demo-state';
 import { LBL_LESSON_RUNS, LBL_LESSON_STAGE_IDS } from '@/app/[lang]/tutorial/lbl/lesson-runs';
-import { CORNER_ALIGNMENT_COPY, CORNER_POSITION_COPY, J_ALG, LBL_STEPS, RIGHT } from '@/app/[lang]/tutorial/lbl/content';
+import { CORNER_ALIGNMENT_COPY, J_ALG, LBL_STEPS, RIGHT } from '@/app/[lang]/tutorial/lbl/content';
 
 const demos = completeDemoPool('corners');
 const state = (alg: string) => {
@@ -82,6 +82,12 @@ describe('LBL bottom-corner complete demos', () => {
       }
       const playedMoves = demo.phases.flatMap(({ start, end }) => Array.from({ length: end - start }, (_, index) => start + index));
       expect(playedMoves).toEqual(moves.map((_, index) => index));
+      const cornerTurns = demo.phases.filter(phase => phase.stage === 'corner-position' && phase.end > phase.start);
+      const lastCornerTurn = cornerTurns.at(-1);
+      if (lastCornerTurn) {
+        expect(moves.slice(lastCornerTurn.start, lastCornerTurn.end).join(' ')).toBe(J_ALG);
+      }
+      expect(demo.phases.some(phase => phase.act.text.zh === '转顶层，让顶角先对齐侧面中心')).toBe(false);
     }
   });
 });
@@ -94,18 +100,18 @@ describe('LBL top-corner placement', () => {
     return sides.filter(face => faces[face][0][0] === faces[face][2][0]).length;
   };
 
-  it('uses one J for the no-headlights case and a separate top turn for the headlights case', () => {
+  it('ends both individual headlights examples at the final turn of J', () => {
     const [withEyes, withoutEyes] = LBL_STEPS.find(step => step.id === stage)!.examples;
     expect(eyeCount(withoutEyes.setup!)).toBe(0);
     expect(withoutEyes.alg).toBe(J_ALG);
     expect(eyeCount(`${withoutEyes.setup} ${withoutEyes.alg}`)).toBe(1);
-    const beforeAlignment = `${withEyes.setup} y ${J_ALG}`;
+    expect(withEyes.alg).toBe(`y ${J_ALG}`);
+    const beforeAlignment = `${withEyes.setup} ${withEyes.alg}`;
     expect(eyeCount(beforeAlignment)).toBe(4);
-    expect(demoGoalReached(stage, beforeAlignment)).toBe(false);
-    expect(demoGoalReached(stage, `${withEyes.setup} ${withEyes.alg}`)).toBe(true);
+    expect(demoGoalReached(stage, beforeAlignment)).toBe(true);
   });
 
-  it('stops each J at the final R prime and shows a distinct top turn only when necessary', () => {
+  it('ends the corner-position demonstrations as soon as all four sides have matching corners', () => {
     for (const demo of completeDemoPool(stage)) {
       const moves = demo.alg.split(' ');
       const phases = demo.phases.filter(phase => phase.end > phase.start);
@@ -117,14 +123,7 @@ describe('LBL top-corner placement', () => {
           expect(eyeCount(`${demo.setup} ${moves.slice(0, phase.end).join(' ')}`)).toBe(1);
         }
       }
-      const afterJ = jPhases.at(-1)!.end;
-      const prefix = `${demo.setup} ${moves.slice(0, afterJ).join(' ')}`;
-      const alignments = phases.filter(phase => phase.act.text === CORNER_POSITION_COPY.align);
-      expect(alignments).toHaveLength(demoGoalReached(stage, prefix) ? 0 : 1);
-      for (const phase of alignments) {
-        expect(phase.start).toBe(afterJ);
-        expect(phase.act.alg).toMatch(/^U(?:2|')?$/);
-      }
+      expect(jPhases.at(-1)!.end).toBe(moves.length);
       expect(demoGoalReached(stage, `${demo.setup} ${demo.alg}`)).toBe(true);
     }
   });

@@ -128,7 +128,7 @@ export function demoGoalReached(stage: string, alg: string): boolean {
     case 'middle': return firstTwoLayers(cube);
     case 'yellow-cross': return firstTwoLayers(cube) && yellowCross(cube);
     case 'yellow-face': return firstTwoLayers(cube) && yellowFace(cube);
-    case 'corner-position': return firstTwoLayers(cube) && yellowFace(cube) && topCorners(cube);
+    case 'corner-position': return firstTwoLayers(cube) && yellowFace(cube) && eyes(cube).length === sides.length;
     case 'edge-position': return solved(cube);
     default: return false;
   }
@@ -149,9 +149,10 @@ const done: Record<CompleteDemoStage, Text> = {
   middle: t('四条中层棱归位，前两层完成', 'All four middle edges are in place. First two layers complete.'),
   'yellow-cross': t('四条棱朝黄，黄十字完成', 'Four yellow edges: the cross is complete.'),
   'yellow-face': t('所有黄色朝上，黄面完成', 'All yellow stickers face up. Yellow face complete.'),
-  'corner-position': t('四个顶角与侧面中心对齐', 'All four top corners match the side centers.'),
+  'corner-position': t('每个侧面的两个顶角都已同色', 'The two top corners match on each side.'),
   'edge-position': t('六面同色，魔方复原', 'Every face has one color. Cube solved.'),
 };
+const edgeCornerAlignment = t('转顶层，让顶角先对齐侧面中心', 'Turn the top to match the corners with the side centers.');
 
 export function buildFishAlignment(left: boolean) {
   const alg = left ? LEFT_SUNE : RIGHT_SUNE;
@@ -511,31 +512,26 @@ export function buildCompleteDemo(stage: CompleteDemoStage, setup: string): Comp
       }
       action(choice.alg, choice.index === 1 ? t('做左鱼公式', 'Do left Sune.') : t('做右鱼公式', 'Do right Sune.'), choice.index, rec);
     } else if (stage === 'corner-position') {
-      const align = turns.find(u => topCorners(state(join(base, u))));
-      if (align) {
-        add(align, { text: CORNER_POSITION_COPY.align, alg: align });
-      } else {
-        // F and R are visible; two quarter-turn inspections expose the other sides.
-        let inspected = current();
-        let visibleEyes = eyes(inspected).filter(face => face === Face.F || face === Face.R);
-        for (let scan = 0; !visibleEyes.length && scan < 2; scan++) {
-          action('y', t('转体观察另一侧，找两端同色的眼', 'Rotate to inspect the next side for matching corner stickers.'), eyes(cube).length ? 0 : 1, undefined, false);
-          inspected = current();
-          visibleEyes = eyes(inspected).filter(face => face === Face.F || face === Face.R);
-        }
-        const eyeFaces = eyes(inspected);
-        const index = eyeFaces.length ? 0 : 1;
-        const outlines = visibleEyes.slice(0, 1).flatMap(face => [inspected.faces[face][0], inspected.faces[face][2]]);
-        let rec: DemoContent | undefined = recognize(index === 0 ? t('找到一对眼：两端角格同色', 'Found headlights: the two corner stickers match') : t('四面都没有眼', 'No headlights on any side'), index, outlines);
-        const y = index === 0 ? rotations.find(y => eyes(state(join(currentAlg(), y))).includes(Face.L))! : '';
-        rec = prepare(y, CORNER_POSITION_COPY.headlightsLeft, index, rec);
-        action(J_ALG, index === 0 ? CORNER_POSITION_COPY.applyJ : CORNER_POSITION_COPY.makeHeadlights, index, rec);
-        if (index === 1) look(t('造出一对眼\n接下来按有眼的情况处理', 'One pair of headlights has appeared\nContinue with the headlights case'));
+      // F and R are visible; two quarter-turn inspections expose the other sides.
+      let inspected = current();
+      let visibleEyes = eyes(inspected).filter(face => face === Face.F || face === Face.R);
+      for (let scan = 0; !visibleEyes.length && scan < 2; scan++) {
+        action('y', t('转体观察另一侧，找两端同色的眼', 'Rotate to inspect the next side for matching corner stickers.'), eyes(cube).length ? 0 : 1, undefined, false);
+        inspected = current();
+        visibleEyes = eyes(inspected).filter(face => face === Face.F || face === Face.R);
       }
+      const eyeFaces = eyes(inspected);
+      const index = eyeFaces.length ? 0 : 1;
+      const outlines = visibleEyes.slice(0, 1).flatMap(face => [inspected.faces[face][0], inspected.faces[face][2]]);
+      let rec: DemoContent | undefined = recognize(index === 0 ? t('找到一对眼：两端角格同色', 'Found headlights: the two corner stickers match') : t('四面都没有眼', 'No headlights on any side'), index, outlines);
+      const y = index === 0 ? rotations.find(y => eyes(state(join(currentAlg(), y))).includes(Face.L))! : '';
+      rec = prepare(y, CORNER_POSITION_COPY.headlightsLeft, index, rec);
+      action(J_ALG, index === 0 ? CORNER_POSITION_COPY.applyJ : CORNER_POSITION_COPY.makeHeadlights, index, rec);
+      if (index === 1) look(t('造出一对眼\n接下来按有眼的情况处理', 'One pair of headlights has appeared\nContinue with the headlights case'));
     } else if (stage === 'edge-position') {
       const align = turns.find(u => topCorners(state(join(base, u))));
       if (align) {
-        add(align, { text: t('转顶层，让顶角先对齐侧面中心', 'Turn the top to match the corners with the side centers.') });
+        add(align, { text: edgeCornerAlignment });
         continue;
       }
       const wallFaces = walls(cube);
@@ -588,7 +584,7 @@ export function walkthroughCompletionStickers(stage: LblLessonStageId, alg: stri
     case 'middle': return sides.flatMap(face => at(face, [3, 4, 5]));
     case 'yellow-cross': return at(Face.U, [...edgeIndices, 4]);
     case 'yellow-face': return at(Face.U, [0, 1, 2, 3, 4, 5, 6, 7, 8]);
-    case 'corner-position': return [...at(Face.U, cornerIndices), ...sides.flatMap(face => at(face, [0, 2, 4]))];
+    case 'corner-position': return [...at(Face.U, cornerIndices), ...sides.flatMap(face => at(face, [0, 2]))];
     case 'edge-position': return AllFaces.flatMap(face => at(face, [0, 1, 2, 3, 4, 5, 6, 7, 8]));
   }
 }
@@ -626,8 +622,12 @@ export function buildWalkthroughDemo(scramble: string): CompleteDemo {
     const demo = stage === 'cross' ? buildWalkthroughCrossDemo(setup) : buildCompleteDemo(stage, setup);
     const offset = moves.length;
     const title = LBL_STEPS.find(step => step.id === stage)!.title;
-    phases.push({ start: offset, end: offset, stage, holdMs: 2000, act: { text: t(`下面开始${title.zh}`, `Next: ${title.en}`) } });
-    phases.push(...demo.phases.map(phase => ({ ...phase, stage, start: phase.start + offset, end: phase.end + offset })));
+    const first = demo.phases[0];
+    const edgePreparation = stage === 'edge-position' && first?.act.text === edgeCornerAlignment ? first : undefined;
+    phases.push({ start: offset, end: offset + (edgePreparation?.end ?? 0), stage, holdMs: 2000,
+      act: { text: t(`下面开始${title.zh}`, `Next: ${title.en}`) } });
+    const section = edgePreparation ? demo.phases.slice(1) : demo.phases;
+    phases.push(...section.map(phase => ({ ...phase, stage, start: phase.start + offset, end: phase.end + offset })));
     moves.push(...movesOf(demo.alg));
     setup = join(setup, demo.alg);
     if (!demoGoalReached(stage, setup)) throw new Error(`Walkthrough did not complete ${stage}`);

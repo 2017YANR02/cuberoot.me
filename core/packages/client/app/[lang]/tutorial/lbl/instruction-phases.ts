@@ -9,7 +9,7 @@ const phase = (zh: string, en: string, first: number, last = first): Instruction
   text: { zh, en }, moves: Array.from({ length: last - first + 1 }, (_, i) => first + i),
 });
 const jMoves = J_ALG.split(' ').length;
-const { headlightsLeft, applyJ, makeHeadlights, align } = CORNER_POSITION_COPY;
+const { headlightsLeft, applyJ, makeHeadlights } = CORNER_POSITION_COPY;
 export const INSTRUCTION_PHASES: Record<string, InstructionPhase[][]> = {
   daisy: [
     [phase('转体，把标出的白格放到前面右侧', 'Rotate the cube to put the outlined white sticker on the right side of the front face', 1), phase('右手上', 'lift with the right face', 2)],
@@ -53,7 +53,7 @@ export const INSTRUCTION_PHASES: Record<string, InstructionPhase[][]> = {
     [phase('转顶层让拇指不碰黄', 'Turn the top so it does not touch yellow', 1), phase('做右鱼公式', 'do right Sune', 2, 8)],
   ],
   'corner-position': [
-    [phase(headlightsLeft.zh, headlightsLeft.en, 1), phase(applyJ.zh, applyJ.en, 2, jMoves + 1), phase(align.zh, align.en, jMoves + 2)],
+    [phase(headlightsLeft.zh, headlightsLeft.en, 1), phase(applyJ.zh, applyJ.en, 2, jMoves + 1)],
     [phase(makeHeadlights.zh, makeHeadlights.en, 1, jMoves)],
   ],
   'edge-position': [

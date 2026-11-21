@@ -42,7 +42,6 @@ export const CORNER_POSITION_COPY = {
   headlightsLeft: text('转体把眼放左', 'Rotate the cube to put the headlights on the left'),
   applyJ: text('做 J 公式', 'Do the J algorithm'),
   makeHeadlights: text('做一遍 J 公式造眼', 'Do the J algorithm once to create headlights'),
-  align: text('转顶层让角格与侧面中心同色', 'Turn the top until the corner stickers match the side centers'),
 };
 export const EDGE_POSITION_LEFT = `${RIGHT_SUNE} U ${LEFT_SUNE} U'`;
 export const EDGE_POSITION_RIGHT = `${LEFT_SUNE} U' ${RIGHT_SUNE} U`;
@@ -82,12 +81,12 @@ export const LBL_STAGE_GOALS: Record<string, { before: Text; after: Text; summar
     summary: text('保持黄十字，将四个顶角翻至黄色朝上', 'Keep the yellow cross and orient all four top corners with yellow facing up.'),
   },
   'corner-position': {
-    before: text('顶面全黄，顶角位置未对齐', 'Yellow face solved; corner positions unfinished'), after: text('四个顶角与侧面中心对齐', 'All four top corners match side centers'),
-    summary: text('保持黄面，将四个顶角移到与侧面中心对齐的位置', 'Keep the yellow face and position all four top corners to match the side centers.'),
+    before: text('顶面全黄，侧面顶角还未全部配对', 'Yellow face solved; some top corners still need pairing'), after: text('每个侧面的两个顶角都已同色', 'The two top corners match on each side'),
+    summary: text('保持顶面全黄，让每个侧面的两个顶角同色', 'Keep the top yellow and match the two top corners on each side.'),
   },
   'edge-position': {
-    before: text('顶角已归位，顶棱未归位', 'Top corners solved; top edges unfinished'), after: text('六面全部复原', 'All six faces solved'),
-    summary: text('保持顶角归位，将顶层棱归位，完成六面还原', 'Keep the top corners in place and position the top edges to finish all six faces.'),
+    before: text('侧面顶角已配对，顶棱未归位', 'Top corners paired; top edges unfinished'), after: text('六面全部复原', 'All six faces solved'),
+    summary: text('保持顶角配对，将顶层棱归位，完成六面还原', 'Keep the top corners paired and position the top edges to finish all six faces.'),
   },
 };
 export const LBL_BASICS = [
@@ -187,14 +186,14 @@ export const LBL_STEPS: Step[] = [
     ],
   },
   {
-    id: 'corner-position', title: text('角位置', 'Position the corners'), goal: text('顶面保持全黄，让四个顶角归位', 'Keep the top yellow and put all four top corners in place.'),
+    id: 'corner-position', title: text('角位置', 'Position the corners'), goal: text('顶面保持全黄，让每个侧面的两个顶角同色', 'Keep the top yellow and match the two top corners on each side.'),
     paragraphs: [
       text("先找眼", "First look for headlights"),
     ],
     examples: [
-      example('有眼：眼放左', 'Headlights: Hold on the left', `y ${J_ALG} U'`,
-        [CORNER_POSITION_COPY.headlightsLeft.zh, CORNER_POSITION_COPY.applyJ.zh, CORNER_POSITION_COPY.align.zh].join(' → '),
-        [CORNER_POSITION_COPY.headlightsLeft.en, CORNER_POSITION_COPY.applyJ.en, CORNER_POSITION_COPY.align.en].join(' → '), `(y ${J_ALG})' d`),
+      example('有眼：眼放左', 'Headlights: Hold on the left', `y ${J_ALG}`,
+        [CORNER_POSITION_COPY.headlightsLeft.zh, CORNER_POSITION_COPY.applyJ.zh].join(' → '),
+        [CORNER_POSITION_COPY.headlightsLeft.en, CORNER_POSITION_COPY.applyJ.en].join(' → '), `(y ${J_ALG})' d`),
       example('无眼：先造眼', 'No headlights: Create a pair', J_ALG,
         CORNER_POSITION_COPY.makeHeadlights.zh, CORNER_POSITION_COPY.makeHeadlights.en, `(${CORNER_POSITION} U2 ${CORNER_POSITION} U2)'`),
     ],
