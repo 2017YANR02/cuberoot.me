@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState, type PointerEvent, type ReactNode } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type PointerEvent, type ReactNode } from 'react';
 import { parseAsStringEnum, useQueryState } from 'nuqs';
 import { Copy, RotateCcw } from '@app-foundation/icons/lucide';
 import { SkeletonBlock } from '@/components/ContentSkeleton';
@@ -25,7 +25,7 @@ interface Props {
   sourceFps: number;
   playbackSpeed: number;
   live?: boolean;
-  analysis?: ReactNode;
+  analysis?: (onOpeningView: (view: Quaternion) => void) => ReactNode;
   controls?: ReactNode;
 }
 
@@ -41,6 +41,11 @@ export function ProjectedCube({ pose, sourceTimestamp, solved, steps, timeline, 
   const previousTimestamp = useRef<number | undefined>(undefined);
   const drag = useRef<Drag | null>(null);
   const [orientation, setOrientation] = useState(CAMERA_ORIENTATION);
+  const openingView = useRef(CAMERA_ORIENTATION);
+  const applyOpeningView = useCallback((next: Quaternion) => {
+    openingView.current = next;
+    setOrientation(next);
+  }, []);
   const view = useRef(orientation);
   const [engineState, setEngineState] = useState<{ engine: typeof engine; ready: boolean }>();
   const [retry, setRetry] = useState(0);
@@ -191,7 +196,7 @@ export function ProjectedCube({ pose, sourceTimestamp, solved, steps, timeline, 
       </select>
       {pose && ready && <Tooltip content={resetLabel}>{tip =>
         <button {...tip} type="button" className="playback-bar-btn video-recon-orbit-reset"
-          aria-label={resetLabel} onClick={() => setOrientation(CAMERA_ORIENTATION)}>
+          aria-label={resetLabel} onClick={() => setOrientation(openingView.current)}>
           <RotateCcw size={16} aria-hidden="true" />
         </button>
       }</Tooltip>}
@@ -201,7 +206,7 @@ export function ProjectedCube({ pose, sourceTimestamp, solved, steps, timeline, 
       <span className="video-recon-muted">{t('实时预览', 'Live preview')}</span>
       {liveMove && <code aria-label={t('最近识别的动作', 'Latest detected moves')}>{liveMove.state_moves.join(' ')}</code>}
     </div> : analysis ? <>
-      {analysis}
+      {analysis(applyOpeningView)}
       {sourceNotation && <details>
         <MoreToggle as="summary">{t('查看相机视角动作', 'View camera-relative moves')}</MoreToggle>
         {sourceNotation}

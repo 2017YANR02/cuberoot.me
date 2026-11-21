@@ -23,7 +23,10 @@
   column-gap: 16px;
 }
 
-.video-recon-heading .page-heading {
+.video-recon-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
   flex: 1 0 auto;
 }
 

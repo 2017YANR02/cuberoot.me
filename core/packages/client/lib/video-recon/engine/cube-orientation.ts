@@ -99,7 +99,19 @@ export function initialGripMoves(rows: readonly ProjectedCubeFrame[], view: Quat
   return rotationWords.get(basis)!;
 }
 
-export const CUBE_GRIP_ROTATIONS: readonly string[] = [...rotationWords.values()].map(word => word.join(' '));
+const gripBasis = new Map([...rotationWords].map(([basis, word]) => [word.join(' '), basis]));
+export const CUBE_GRIP_ROTATIONS: readonly string[] = [...gripBasis.keys()];
+
+/** Keep the opening frame's camera tilt while changing which faces it shows as U/F.
+ * The same camera-space offset then carries through all later tracked poses. */
+export function openingGripView(opening: Quaternion, grip: string): Quaternion {
+  const observed = displayCubeBasis(opening);
+  const selected = gripBasis.get(grip);
+  if (selected === undefined || observed === selected) return CAMERA_ORIENTATION;
+  const camera = multiply(opening, inverse(orientationQuaternions[observed]));
+  const target = multiply(camera, orientationQuaternions[selected]);
+  return multiply(target, inverse(opening));
+}
 
 function rotationAngle(q: Quaternion) {
  return 2 * Math.acos(Math.min(1, Math.abs(q[3]))) * 180 / Math.PI;

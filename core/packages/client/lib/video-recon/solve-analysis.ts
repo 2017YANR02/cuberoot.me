@@ -1,11 +1,13 @@
 import { getCube3 } from '@cuberoot/shared/recon/cube3';
+import { CUBE_ORIENTATIONS, orientedFaceColors } from '@cuberoot/shared/timer';
 import type { CoreTrack } from '@cuberoot/shared/timer/reconstruct/core-track';
 import { facePermFor, type CubeFace } from '@cuberoot/shared/timer/reconstruct/gyro-orient';
 import { detectSolveMethod } from '@cuberoot/shared/timer/reconstruct/method-walk';
 import { buildReconText, formattedReconMoves, formatReconLine, prepareReconstruction, type ReconTextResult } from '@cuberoot/shared/timer/reconstruct/recon-text';
 import type { RotationEvent } from '@cuberoot/shared/timer/reconstruct/rotation-detect';
 import { findTokenPositions } from '@/lib/recon-alg-utils';
-import { centerColorsForScramble } from './engine/cube-colors';
+import { CUBE_COLOR_NAMES } from '@/lib/cube-colors';
+import { centerColorsForScramble, type CubeColor } from './engine/cube-colors';
 import { CAMERA_ORIENTATION, CUBE_GRIP_ROTATIONS, initialGripMoves, relativeCubeGrip } from './engine/cube-orientation';
 import type { MoveStep } from './engine/move-search-types';
 import type { MeasuredCubeFrame } from './engine/projected-cube';
@@ -20,6 +22,18 @@ const grips = CUBE_GRIP_ROTATIONS.map(rotation => {
 
 export function playerGrip(top: CubeFace, front: CubeFace) {
   return grips.find(grip => grip.top === top && grip.front === front);
+}
+
+/** The picker uses standard colors. Convert them to the centers after this scramble. */
+export function videoGripOptions(centers: ReadonlyMap<CubeFace, CubeColor>) {
+  const faceByColor = new Map<string, CubeFace>(Array.from(centers, ([face, color]) => [color, face]));
+  return CUBE_ORIENTATIONS.flatMap(({ value }) => {
+    const colors = orientedFaceColors(value);
+    const top = faceByColor.get(CUBE_COLOR_NAMES[colors.U].en);
+    const front = faceByColor.get(CUBE_COLOR_NAMES[colors.F].en);
+    const grip = top && front ? playerGrip(top, front) : undefined;
+    return grip ? [{ value, grip }] : [];
+  });
 }
 
 const timeMs = (seconds: number) => Math.round(seconds * 1000);

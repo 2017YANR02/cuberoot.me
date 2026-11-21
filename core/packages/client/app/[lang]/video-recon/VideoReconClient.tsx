@@ -3,10 +3,11 @@
 import { useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import dynamic from 'next/dynamic';
 import { parseAsStringEnum, useQueryState } from 'nuqs';
-import { Camera, Download, Film, Unplug, Upload } from '@app-foundation/icons/lucide';
+import { Camera, Download, Film, HelpCircle, Unplug, Upload } from '@app-foundation/icons/lucide';
 import { ContentSkeleton } from '@/components/ContentSkeleton';
 import PageHeading from '@/components/PageHeading';
 import HeaderToggles from '@/components/HeaderToggles';
+import { InfoTooltip } from '@/components/InfoTooltip/InfoTooltip';
 import { INITIAL_VIDEO_TRANSFORM, VideoImageTools, videoImageTransformCss } from '@/components/VideoImageTools';
 import { useVideoViewport } from '@/hooks/useVideoViewport';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
@@ -107,9 +108,6 @@ export default function VideoReconClient() {
     ? Math.max(0, Math.min(99, Math.floor(100 * (view.position - view.solveStart) / (view.solveEnd - view.solveStart))))
     : undefined;
   const selectedSource = view?.sourceKind === 'camera' ? t('实时摄像头', 'Live camera') : view?.sourceName;
-  const guide = detector
-    ? t('上传固定机位的视频和已知打乱，复盘三阶还原。图片也可用于检测。', 'Use a fixed-camera video and the known scramble to reconstruct a 3×3 solve. You can also detect a cube in an image.')
-    : t('用摄像头记录还原，计时结束后查看逐帧回放。', 'Record a solve with your camera and review it frame by frame.');
   const mediaError = view?.mediaError || view?.poseError;
   const renderReviewControls = (label: string) => workspace && view && reviewing && (
     <ReviewControls label={label} playing={view.running} speed={view.playbackSpeed}
@@ -125,7 +123,13 @@ export default function VideoReconClient() {
   }
   return <main className="video-recon-page">
     <header className="video-recon-heading">
-      <PageHeading backHref="/recon">{title}</PageHeading>
+      <div className="video-recon-title">
+        <PageHeading backHref="/recon">{title}</PageHeading>
+        {detector && <InfoTooltip icon={HelpCircle} iconSize={18}
+          ariaLabel={t('视频复盘说明', 'About video reconstruction')}
+          content={t('上传固定机位的视频和已知打乱，复盘三阶还原。图片也可用于检测。',
+            'Use a fixed-camera video and the known scramble to reconstruct a 3×3 solve. You can also detect a cube in an image.')} />}
+      </div>
       <div className="video-recon-modes" role="group" aria-label={t('复盘工具', 'Reconstruction tools')}>
         <button type="button" className="btn-secondary" aria-pressed={detector} disabled={view?.timerBusy}
           onClick={() => void setMode('detector')}><Film size={17} aria-hidden />{detectorLabel}</button>
@@ -134,7 +138,9 @@ export default function VideoReconClient() {
       </div>
       <HeaderToggles />
     </header>
-    <p className="video-recon-intro">{guide}</p>
+    {!detector && <p className="video-recon-intro">
+      {t('用摄像头记录还原，计时结束后查看逐帧回放。', 'Record a solve with your camera and review it frame by frame.')}
+    </p>}
     <div className={showResults ? 'video-recon-columns video-recon-results' : !detector && view?.latestTimerReplay ? 'video-recon-columns' : undefined}>
       <section className="video-recon-panel video-recon-source-panel" data-site-surface="panel" aria-label={detector ? detectorLabel : timerLabel}>
         <div className="video-recon-section-heading">
@@ -227,8 +233,9 @@ export default function VideoReconClient() {
         sourceFps={view.sourceFps} playbackSpeed={view.running ? view.playbackSpeed : 1}
         controls={renderReviewControls(t('实况魔方播放控件', 'Tracked cube playback controls'))}
         analysis={reviewing && workspace && view.reconstructedScramble && measured && searchSteps.some(step => step.state_moves.length)
-          ? <VideoSolveAnalysis scramble={view.reconstructedScramble} steps={searchSteps} measured={measured}
+          ? onOpeningView => <VideoSolveAnalysis scramble={view.reconstructedScramble} steps={searchSteps} measured={measured}
             fps={view.sourceFps} start={view.solveStart} end={view.solveEnd} position={view.presentedTimestamp}
+            onOpeningView={onOpeningView}
             onSeek={timestamp => void workspace.requestReview(timestamp)} />
           : undefined} />}
       {workspace && view && showResults && <TpsGraph compact pending={pendingResult && resultTime <= view.solveStart}

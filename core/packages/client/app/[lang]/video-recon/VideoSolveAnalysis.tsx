@@ -1,19 +1,23 @@
-import { useEffect, useMemo, useState, type ReactNode } from 'react';
-import { Copy, ExternalLink } from '@app-foundation/icons/lucide';
-import type { CubeFace } from '@cuberoot/shared/timer/reconstruct/gyro-orient';
+import { useEffect, useMemo, useState } from 'react';
+import { Check, Copy, ExternalLink } from '@app-foundation/icons/lucide';
 import AppLink from '@/components/AppLink';
+import { ContentSkeleton } from '@/components/ContentSkeleton';
+import CubeOrientationSelect from '@/components/CubeOrientationSelect';
 import { ReconNotationBlock } from '@/components/ReconNotationBlock';
+import { Tooltip } from '@/components/Tooltip';
+import { useCopy } from '@/hooks/useCopy';
 import { useT } from '@/hooks/useT';
 import { useLang } from '@/i18n/tr';
 import { CUBE_OPPOSITE_FACE } from '@/lib/cube-colors';
 import { buildCaptionHeader } from '@/lib/recon-stats';
 import { buildReconSubmitQuery } from '@/lib/sim-recon-link';
-import type { CubeColor } from '@/lib/video-recon/engine/cube-colors';
+import type { Quaternion } from '@/lib/video-recon/engine/cube-motion';
+import { openingGripView } from '@/lib/video-recon/engine/cube-orientation';
 import type { MoveStep } from '@/lib/video-recon/engine/move-search-types';
 import type { MeasuredCubeFrame } from '@/lib/video-recon/engine/projected-cube';
 import { timecode } from '@/lib/video-recon/engine/solve-range';
 import {
-  analyzeVideoSolve, observeVideoSolve, playerGrip, videoNotationTimeline, VIDEO_FACES, type VideoSolveObservation,
+  analyzeVideoSolve, observeVideoSolve, playerGrip, videoGripOptions, videoNotationTimeline, type VideoSolveObservation,
 } from '@/lib/video-recon/solve-analysis';
 
 interface Props {
@@ -25,20 +29,12 @@ interface Props {
   end: number;
   position: number;
   onSeek: (timestamp: number) => void;
+  onOpeningView: (view: Quaternion) => void;
 }
-
-const colorNames: Record<CubeColor, { zh: string; en: string }> = {
-  white: { zh: '白', en: 'White' },
-  yellow: { zh: '黄', en: 'Yellow' },
-  red: { zh: '红', en: 'Red' },
-  orange: { zh: '橙', en: 'Orange' },
-  blue: { zh: '蓝', en: 'Blue' },
-  green: { zh: '绿', en: 'Green' },
-};
 
 type Analysis = Awaited<ReturnType<typeof analyzeVideoSolve>>;
 
-export function VideoSolveAnalysis({ scramble, steps, measured, fps, start, end, position, onSeek }: Props) {
+export function VideoSolveAnalysis({ scramble, steps, measured, fps, start, end, position, onSeek, onOpeningView }: Props) {
   const t = useT();
   const language = useLang();
   const observation = useMemo(() => observeVideoSolve(scramble, steps, measured, fps, start, end),
@@ -49,7 +45,7 @@ export function VideoSolveAnalysis({ scramble, steps, measured, fps, start, end,
   const [analysis, setAnalysis] = useState<{
     observation: VideoSolveObservation; grip?: string; language: typeof language; value?: Analysis;
   }>();
-  const [copied, setCopied] = useState<{ text: string; ok: boolean }>();
+  const { copiedKey, copy } = useCopy();
   const current = analysis?.observation === observation && analysis.grip === grip && analysis.language === language
     ? analysis : undefined;
 
@@ -71,23 +67,25 @@ export function VideoSolveAnalysis({ scramble, steps, measured, fps, start, end,
   const displayMethod = method === 'roux' ? 'Roux' : method?.toUpperCase();
   const captionHeader = useMemo(() => result ? buildCaptionHeader(result.text, result.seconds, '3x3') : '', [result]);
   const clipboard = result ? [captionHeader, result.scramble, result.text].filter(Boolean).join('\n') : '';
+  const copied = copiedKey === clipboard;
+  const copyLabel = t('复制分段复盘', 'Copy stage breakdown');
   const editorHref = result && displayMethod && solved
     ? `/recon/submit?${buildReconSubmitQuery('3x3', result.scramble, result.text, { method: displayMethod })}`
     : undefined;
-  const option = (face: CubeFace) => {
-    const color = observation.centers.get(face);
-    const name = color ? colorNames[color] : undefined;
-    return <option key={face} value={face}>{name ? t(name.zh, name.en) : face}</option>;
-  };
-
+  function showOpeningView(rotation: string) {
+    if (observation.opening) onOpeningView(openingGripView(observation.opening.pose.rotation, rotation));
+  }
   return <div className="video-recon-notation">
     {observation.opening && observation.estimatedGrip ? (
       <OpeningGrip key={`${scramble}/${start}/${end}/${observation.opening.frame}`}
-        initial={observation.estimatedGrip} accepted={selection} option={option}
-        onPreview={() => onSeek(observation.opening!.timestamp)}
-        onConfirm={rotation => setConfirmed({ observation, rotation })} />
+        initial={observation.estimatedGrip} accepted={selection} centers={observation.centers}
+        onSelect={showOpeningView}
+        onConfirm={rotation => {
+          showOpeningView(rotation);
+          setConfirmed({ observation, rotation });
+        }} />
     ) : <span className="video-recon-muted">{t('起手姿态未拍清，按固定朝向分段。', 'The opening grip is unavailable. Stages use a fixed orientation.')}</span>}
-    {!current && <span role="status" className="video-recon-muted">{t('正在识别解法和分段…', 'Identifying the method and stages…')}</span>}
+    {!current && <ContentSkeleton variant="text" label={t('正在识别解法和分段…', 'Identifying the method and stages…')} />}
     {current && !result && <span role="status" className="video-recon-muted">{t('无法生成局面一致的分段复盘。', 'Could not generate a reconstruction consistent with the recognized states.')}</span>}
     {result && <>
       <strong>{t('分段复盘', 'Stage breakdown')} · {displayMethod}</strong>
@@ -111,54 +109,51 @@ export function VideoSolveAnalysis({ scramble, steps, measured, fps, start, end,
             onSeek(start + (move?.timestampMs ?? openingMs) / 1000);
           } }} />
       </div>
-      <span className="video-recon-muted">{t('时间按视频帧估算。', 'Timing is estimated from video frames.')}</span>
       <div className="video-recon-actions">
-        <button type="button" className="btn-secondary" onClick={async () => {
-          try { await navigator.clipboard.writeText(clipboard); setCopied({ text: clipboard, ok: true }); }
-          catch { setCopied({ text: clipboard, ok: false }); }
-        }}><Copy size={15} aria-hidden />{t('复制分段复盘', 'Copy stage breakdown')}</button>
+        <Tooltip content={copied ? t('已复制', 'Copied') : copyLabel}>{tip =>
+          <button {...tip} type="button" className="btn-secondary" aria-label={copyLabel} onClick={() => copy(clipboard, clipboard)}>
+            {copied ? <Check size={15} aria-hidden /> : <Copy size={15} aria-hidden />}
+          </button>
+        }</Tooltip>
         {editorHref && <AppLink className="btn-secondary" href={editorHref}>
           <ExternalLink size={15} aria-hidden />{t('在复盘中编辑', 'Edit in Reconstruction')}
         </AppLink>}
-        <span role="status">{copied?.text === clipboard && (copied.ok ? t('已复制', 'Copied') : t('无法复制', 'Could not copy'))}</span>
+        <span className="sr-only" role="status">{copied && t('已复制', 'Copied')}</span>
       </div>
     </>}
   </div>;
 }
 
-function OpeningGrip({ initial, accepted, option, onPreview, onConfirm }: {
+function OpeningGrip({ initial, accepted, centers, onSelect, onConfirm }: {
   initial: NonNullable<VideoSolveObservation['estimatedGrip']>;
   accepted?: string;
-  option: (face: CubeFace) => ReactNode;
-  onPreview: () => void;
+  centers: VideoSolveObservation['centers'];
+  onSelect: (rotation: string) => void;
   onConfirm: (rotation: string) => void;
 }) {
   const t = useT();
-  const [top, setTop] = useState(initial.top);
-  const [front, setFront] = useState(initial.front);
-  const fronts = VIDEO_FACES.filter(face => playerGrip(top, face));
-  const selectedFront = fronts.includes(front) ? front : fronts[0];
-  const selected = playerGrip(top, selectedFront)!;
-  return <>
-    <span className="video-recon-muted">{accepted === undefined
-      ? t('按选手视角确认视频开头的顶面和前面。当前是相机视角的估计。',
-        'Confirm the top and front faces from the solver’s view at the start. The current selection is a camera-based estimate.')
-      : t('已确认选手起手视角。', 'Solver’s opening grip confirmed.')}</span>
-    <div className="video-recon-actions">
-      <label className="video-recon-inline-label">{t('顶面', 'Top face')}
-        <select value={top} onChange={event => setTop(event.target.value as CubeFace)}>{VIDEO_FACES.map(option)}</select>
-      </label>
-      <label className="video-recon-inline-label">{t('前面', 'Front face')}
-        <select value={selectedFront} onChange={event => setFront(event.target.value as CubeFace)}>{fronts.map(option)}</select>
-      </label>
-      <button type="button" className="btn-secondary" onClick={onPreview}>{t('看起手帧', 'View opening frame')}</button>
-      <button type="button" className="btn-secondary" disabled={accepted === selected.rotation}
-        onClick={() => onConfirm(selected.rotation)}>{t('确认视角', 'Confirm grip')}</button>
-      <button type="button" className="btn-secondary" onClick={() => {
-        const opposite = CUBE_OPPOSITE_FACE[selectedFront];
-        setFront(opposite);
-        onConfirm(playerGrip(top, opposite)!.rotation);
-      }}>{t('前后转 180°（y2）', 'Turn 180° (y2)')}</button>
+  const options = useMemo(() => videoGripOptions(centers), [centers]);
+  const [selected, setSelected] = useState(initial);
+  const value = options.find(option => option.grip.rotation === selected.rotation)?.value ?? '';
+  return <div className="video-recon-actions">
+    <div className="video-recon-inline-label">
+      <span>{t('朝向', 'Orientation')}</span>
+      <CubeOrientationSelect value={value} ariaLabel={t('起手朝向', 'Opening orientation')}
+        onChange={next => {
+          const grip = options.find(option => option.value === next)?.grip;
+          if (grip) {
+            setSelected(grip);
+            onSelect(grip.rotation);
+          }
+        }} />
     </div>
-  </>;
+    <button type="button" className="btn-secondary" disabled={accepted === selected.rotation}
+      onClick={() => onConfirm(selected.rotation)}>{t('确认朝向', 'Confirm orientation')}</button>
+    <button type="button" className="btn-secondary" onClick={() => {
+      const opposite = playerGrip(selected.top, CUBE_OPPOSITE_FACE[selected.front]);
+      if (!opposite) return;
+      setSelected(opposite);
+      onConfirm(opposite.rotation);
+    }}>{t('前后转 180°（y2）', 'Turn 180° (y2)')}</button>
+  </div>;
 }

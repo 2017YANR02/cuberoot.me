@@ -2,10 +2,11 @@ import { describe, expect, it } from 'vitest';
 import { facePermFor } from '@cuberoot/shared/timer/reconstruct/gyro-orient';
 import { decodeUrlAlg } from '@/lib/cubedb-url';
 import { buildReconSubmitQuery } from '@/lib/sim-recon-link';
-import { axisAngle, type CubePose, type Quaternion, type V3 } from '@/lib/video-recon/engine/cube-motion';
+import { axisAngle, multiply, type CubePose, type Quaternion, type V3 } from '@/lib/video-recon/engine/cube-motion';
+import { CAMERA_ORIENTATION, CUBE_GRIP_ROTATIONS, initialGripMoves, openingGripView, relativeCubeGrip } from '@/lib/video-recon/engine/cube-orientation';
 import type { MoveStep } from '@/lib/video-recon/engine/move-search-types';
 import type { MeasuredCubeFrame } from '@/lib/video-recon/engine/projected-cube';
-import { analyzeVideoSolve, observeVideoSolve, playerGrip, videoNotationTimeline } from '@/lib/video-recon/solve-analysis';
+import { analyzeVideoSolve, observeVideoSolve, playerGrip, videoGripOptions, videoNotationTimeline } from '@/lib/video-recon/solve-analysis';
 
 const fps = 30;
 const identity: Quaternion = [0, 0, 0, 1];
@@ -60,5 +61,26 @@ describe('video solve reconstruction', () => {
     const solver = playerGrip('F', 'U')!;
     expect(facePermFor(solver.rotation)).toEqual(facePermFor(`${camera.rotation} y2`));
     expect(facePermFor(solver.rotation)).toEqual(facePermFor("x' z2"));
+  });
+
+  it('maps the timer picker’s color pair to the actual center faces after a scramble rotation', () => {
+    const observation = observeVideoSolve('y2 R U', [], frames(identity), fps, 0, 1.1);
+    const options = videoGripOptions(observation.centers);
+    expect(options).toHaveLength(24);
+    expect(options.find(option => option.value === 'y2')?.grip).toEqual(playerGrip('U', 'F'));
+    expect(options.find(option => option.value === '')?.grip).toEqual(playerGrip('U', 'B'));
+  });
+
+  it('displays the selected opening grip while preserving later measured rotations', () => {
+    const rounded = axisAngle([0.16, -0.28, 0.12]);
+    const opening = { ...frames(identity)[0], pose: { ...frames(identity)[0].pose, rotation: rounded } };
+    const next = multiply(rounded, axisAngle([0, 0, Math.PI / 2]));
+    for (const grip of CUBE_GRIP_ROTATIONS) {
+      const view = openingGripView(rounded, grip);
+      expect(initialGripMoves([opening], view).join(' ')).toBe(grip);
+      expect(relativeCubeGrip(multiply(view, rounded), multiply(view, next)).moves)
+        .toEqual(relativeCubeGrip(rounded, next).moves);
+    }
+    expect(openingGripView(rounded, initialGripMoves([opening], CAMERA_ORIENTATION).join(' '))).toBe(CAMERA_ORIENTATION);
   });
 });
