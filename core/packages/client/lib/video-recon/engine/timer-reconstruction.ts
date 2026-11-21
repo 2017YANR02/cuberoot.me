@@ -11,7 +11,6 @@ export interface TimerSearch {
   dispose():void;
   pause?():void;
   resume?():void;
-  setPacing?(delayMs:number):void;
 }
 export type TimerSearchFactory=(config:MoveSearchConfig,result:(value:MoveSearchResult,ended:boolean)=>void,
   error:(message:string)=>void,solveId:string)=>TimerSearch;
@@ -19,6 +18,7 @@ interface Window {
   id:string;start:number;end?:number;config:MoveSearchConfig;frames:number;
   submitted:Set<number>;
   search?:TimerSearch;failure?:string;result?:MoveSearchResult;closed:boolean;disposed:boolean;paused:boolean;
+  searchReady:boolean; remainingMs:number; activeSince?:number;
   deadline?:ReturnType<typeof setTimeout>;
 }
 
@@ -27,34 +27,23 @@ interface Window {
  * A newer solve pauses older search expansions rather than adding CPU workers. */
 export class TimerReconstruction {
   private windows=new Map<string,Window>();
-  private cameraBackpressure=false;
   constructor(private factory:TimerSearchFactory,private update:(id:string,value:TimerReconstructionResult)=>void,
     private finished:(id:string)=>void=()=>{}) {}
   start(id:string,scramble:string,start:number,fps:number,diagnostics=true) {
-    const config=createSearchConfig({scramble,fps,camera:true,originSeconds:start,startSeconds:start,diagnostics,bidirectional:false});
-    this.windows.set(id,{id,start,config,frames:0,submitted:new Set(),closed:false,disposed:false,paused:false});
+    const config=createSearchConfig({scramble,fps,camera:true,originSeconds:start,startSeconds:start,diagnostics,bidirectional:true});
+    this.windows.set(id,{id,start,config,frames:0,submitted:new Set(),closed:false,disposed:false,paused:false,
+      searchReady:false,remainingMs:TIMER_SEARCH_LIMIT_MS});
     this.update(id,{status:'collecting'});this.prioritize();return config;
   }
   stop(id:string,stop:number) {
     const window=this.windows.get(id);if(!window||window.closed)return;
     window.end=stop+TIMER_TAIL_SECONDS;window.config.source_end_seconds=window.end;
-    if(!window.failure&&!this.terminal(window.result)){
-      this.report(window,'waiting','Searching; waiting for stop + 0.3s to finish fitting');
-      // Run the deadline on the UI thread: a synchronous WASM expansion may
-      // block the search worker from receiving a cooperative cancel message.
-      // Start after the capture tail, without waiting for fitting to drain.
-      window.deadline??=setTimeout(()=>{
-        window.deadline=undefined;
-        if(!window.disposed&&!window.failure&&!this.terminal(window.result))
-          this.fail(window,'Reconstruction timed out after 30 seconds');
-      },TIMER_TAIL_SECONDS*1000+TIMER_SEARCH_LIMIT_MS);
-    }
+    if(!window.failure&&!this.terminal(window.result))this.report(window,'waiting');
   }
   includes(timestamp:number){return this.solveIds(timestamp).length>0;}
   finishThrough(timestamp:number){
     for(const window of [...this.windows.values()])if(!window.closed&&window.end!==undefined&&timestamp>=window.end)this.close(window);
   }
-  setBackpressure(paused:boolean){if(paused!==this.cameraBackpressure){this.cameraBackpressure=paused;this.prioritize();}}
   solveIds(timestamp:number):string[]{
     return [...this.windows.values()].filter(w=>!w.closed&&timestamp>=w.start&&
       (w.end===undefined||timestamp<w.end)).map(w=>w.id);
@@ -127,12 +116,16 @@ export class TimerReconstruction {
       if(window.disposed||window.failure)return;
       window.result=result;
       const solved=result.status==='solved'||result.status==='already_solved';
-      if(this.terminal(result))this.clearDeadline(window);
-      this.report(window,solved?'solved':this.terminal(result)?'failed':'searching',
-        this.terminal(result)&&!solved?`Search ${result.status.replaceAll('_',' ')}`:window.paused?'Search paused for a newer solve':this.cameraBackpressure&&!window.closed?'Searching while camera processing catches up':undefined);
+      // The parallel driver reports running only after both search sides have
+      // prepared their frames. Fitting and search preparation use no budget.
+      if(window.closed&&ended&&result.status==='running')window.searchReady=true;
+      this.syncDeadline(window);
+      if(this.terminal(result))this.report(window,solved?'solved':'failed',
+        solved?undefined:`Search ${result.status.replaceAll('_',' ')}`);
+      else this.reportProgress(window);
       if(ended&&this.terminal(result)&&window.closed){this.remove(window);this.prioritize();}
     },message=>this.fail(window,message),window.id);
-    this.report(window,'searching');
+    this.reportProgress(window);
   }
   private close(window:Window) {
     window.closed=true;
@@ -144,31 +137,49 @@ export class TimerReconstruction {
   }
   private fail(window:Window,message:string) {
     if(window.disposed)return;
-    this.clearDeadline(window);
+    this.pauseDeadline(window);
     window.failure??=message;window.search?.dispose();window.search=undefined;
     this.report(window,'failed',window.failure);
     if(window.closed){this.remove(window);this.prioritize();}
   }
   private remove(window:Window) {
     if(window.disposed)return;
-    this.clearDeadline(window);
+    this.pauseDeadline(window);
     window.disposed=true;window.search?.dispose();this.windows.delete(window.id);
     this.finished(window.id);
   }
-  private clearDeadline(window:Window){clearTimeout(window.deadline);window.deadline=undefined;}
+  private reportProgress(window:Window) {
+    if(window.paused)this.report(window,'queued','Search paused for a newer solve');
+    else this.report(window,window.searchReady?'searching':window.end===undefined?'collecting':'waiting');
+  }
+  private pauseDeadline(window:Window) {
+    clearTimeout(window.deadline);
+    window.deadline=undefined;
+    if(window.activeSince!==undefined){
+      window.remainingMs=Math.max(0,window.remainingMs-(performance.now()-window.activeSince));
+      window.activeSince=undefined;
+    }
+  }
+  private syncDeadline(window:Window) {
+    if(!window.searchReady||window.paused||this.terminal(window.result)){
+      this.pauseDeadline(window);
+      return;
+    }
+    if(window.deadline!==undefined)return;
+    window.activeSince=performance.now();
+    window.deadline=setTimeout(()=>this.fail(window,'Reconstruction timed out after 30 seconds'),window.remainingMs);
+  }
   private prioritize() {
     const runnable=[...this.windows.values()].filter(window=>!window.failure&&!window.disposed);
     const newest=runnable.at(-1);
     for(const window of runnable){
       if(!window.search)continue;
-      // Persistent camera saturation must not starve search. Space expansion
-      // chunks apart while busy, but keep preparing frames and making progress.
-      window.search.setPacing?.(this.cameraBackpressure&&!window.closed?25:0);
       const paused=window!==newest;
       if(paused===window.paused)continue;
       window.paused=paused;
-      if(paused){window.search.pause?.();if(!this.terminal(window.result))this.report(window,'searching','Search paused for a newer solve');}
-      else{window.search.resume?.();if(!this.terminal(window.result))this.report(window,'searching');}
+      if(paused)window.search.pause?.();else window.search.resume?.();
+      this.syncDeadline(window);
+      if(!this.terminal(window.result))this.reportProgress(window);
     }
   }
 }

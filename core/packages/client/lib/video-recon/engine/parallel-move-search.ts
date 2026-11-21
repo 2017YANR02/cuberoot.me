@@ -16,8 +16,8 @@ export class ParallelMoveSearch {
     return {request:(request:any)=>new Promise<any>((resolve,reject)=>{const id=next++;pending.set(id,{resolve,reject});worker.postMessage({id,request,baseUrl});}),
      dispose:()=>{worker.terminate();for(const task of pending.values())task.reject(Error('Search disposed'));pending.clear();}};
    },
-   report:message=>this.onmessage?.({data:{type:'result',...message}} as MessageEvent),
-   error:cause=>this.onmessage?.({data:{type:'error',message:cause instanceof Error?cause.message:String(cause)}} as MessageEvent),
+   report:message=>queueMicrotask(()=>this.onmessage?.({data:{type:'result',...message}} as MessageEvent)),
+   error:cause=>queueMicrotask(()=>this.onmessage?.({data:{type:'error',message:cause instanceof Error?cause.message:String(cause)}} as MessageEvent)),
   });
  }
  postMessage(data:any){this.driver.request(data);}

@@ -2,12 +2,14 @@
  * neither direction can mutate the other's queue or candidate admission. */
 export class ParallelSearch {
   constructor({spawn,report,error,now=()=>performance.now()}) {
-    Object.assign(this,{spawn,report,error,now});this.workers=[];this.stopped=false;
+    Object.assign(this,{spawn,report,error,now});this.workers=[];this.stopped=false;this.paused=false;this.ready=false;
     this.frames=[];this.actions=[];this.snapshots=[];this.inflight=[null,null];this.reserved=[0,0];this.finished=[false,false];
     this.seen=[new Map(),new Map()];this.lastReport=0;this.prepareMs=0;this.searchStart=0;
   }
   request(request) {
     if(this.stopped)return;
+    if(request.type==='pause'){this.paused=true;return;}
+    if(request.type==='resume'){this.paused=false;this.pump(0);this.pump(1);return;}
     if(request.type==='init'){
       this.config=request.config;this.diagnostics=request.config.diagnostics!==false;
       this.version=request.version??'';this.publish(this.waiting(),true);return;
@@ -55,7 +57,7 @@ export class ParallelSearch {
     if(this.snapshots[0]?.bidirectional_fallback){this.fallback=this.snapshots[0].bidirectional_fallback;this.finished[1]=true;this.workers[1].dispose();}
     // Preparing has finished even if the first expansion batch is expensive.
     // Do not leave the app displaying "Waiting for fitted frames" during it.
-    this.publish(this.snapshot(),true);
+    this.ready=true;this.publish(this.snapshot(),true);
     this.pump(0);this.pump(1);
   }
   stats(){
@@ -72,7 +74,7 @@ export class ParallelSearch {
       pending:this.snapshots.reduce((n,s)=>n+(s?.pending??0),0),deferred:this.snapshots.reduce((n,s)=>n+(s?.deferred??0),0),ended:true};
   }
   pump(direction){
-    if(this.stopped||this.finishing||this.finished[direction]||this.inflight[direction])return;
+    if(!this.ready||this.paused||this.stopped||this.finishing||this.finished[direction]||this.inflight[direction])return;
     // Each direction retains its full allowance. Reverse work must never spend
     // the original forward frontier's budget or stop it before its usual cap.
     const remaining=this.config.state_limit-(this.snapshots[direction]?.stats?.evaluated_states??0);

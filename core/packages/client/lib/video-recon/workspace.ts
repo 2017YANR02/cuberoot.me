@@ -223,6 +223,11 @@ export function createVideoWorkspace(stage: HTMLCanvasElement, initialTab: Works
       timerCaptureGate.stop(id,timestamp);
     }
   }
+  function closeTimerInput(message?: string) {
+    if (!state.timerCamera) return;
+    timerReplayStore.closeInput();
+    timerReconstruction.closeInput(message);
+  }
   function deleteTimerSolve(id:string){
     if(state.latestTimerSolveId===id){state.latestTimerSolveId=undefined;state.latestTimerReplay=undefined;state.latestReplayPosition=undefined;state.latestReplaySeek=undefined;}
     archivedDiagnostics.delete(id);
@@ -413,7 +418,7 @@ export function createVideoWorkspace(stage: HTMLCanvasElement, initialTab: Works
     activeSearch?.startDeadline();
     await waitForPipelineIdle();
     if (token !== generation || disposed || activeSearch !== moveSearch) return;
-    if (state.timerCamera && state.captureStopped) {timerReplayStore.closeInput();timerReconstruction.closeInput();}
+    if (state.captureStopped) closeTimerInput();
     if (state.sourceKind === "video") state.videoInputComplete = true;
     try { await activeSearch?.end(); } catch (cause) { if (token === generation) state.searchError = cause instanceof Error ? cause.message : String(cause); }
   }
@@ -581,17 +586,12 @@ export function createVideoWorkspace(stage: HTMLCanvasElement, initialTab: Works
   }
   function continuePipeline() {
     if (disposed) return;
-    updateSearchPressure();
     if(!inferenceAllowed())refreshPending=false;
     if (!busy && (refreshPending || !state.running || state.status !== "ready")) void flushPose();
     if (refreshPending && !busy && !completionQueue.size && !seeking && state.status === "ready") {
       refreshPending = false;
       void inferFrame();
     } else scheduleNext();
-  }
-  function updateSearchPressure(){
-    if(!state.timerCamera||state.queuedFrames<=2)timerReconstruction.setBackpressure(false);
-    else if(state.queuedFrames>=8)timerReconstruction.setBackpressure(true);
   }
   async function completeFrame(packet: DetectedFrame | CachedFrame | TimerEnd) {
     if('timerEnd' in packet){
@@ -766,6 +766,7 @@ export function createVideoWorkspace(stage: HTMLCanvasElement, initialTab: Works
           state.status = "error";
           state.error = data.message;
           capture?.pause();
+          closeTimerInput(data.message);
           if (currentFrame) presenter.releaseFrame(currentFrame.snapshot);
           currentFrame = undefined;
           markIdle();
@@ -806,6 +807,7 @@ export function createVideoWorkspace(stage: HTMLCanvasElement, initialTab: Works
         state.status = "error";
         state.error = "The detector worker could not start. Reload the detector.";
         capture?.pause();
+        closeTimerInput(state.error);
         if (currentFrame) presenter.releaseFrame(currentFrame.snapshot);
         currentFrame = undefined;
         markIdle();
@@ -932,7 +934,6 @@ export function createVideoWorkspace(stage: HTMLCanvasElement, initialTab: Works
           }
           cameraQueue.push({ ...frame,timerReset, close: () => frame.bitmap.close() });
           state.queuedFrames = cameraQueue.length;
-          updateSearchPressure();
           scheduleNext();
         },
         (message) => {
@@ -940,7 +941,7 @@ export function createVideoWorkspace(stage: HTMLCanvasElement, initialTab: Works
           state.captureStopped = true;
           state.stream?.getTracks().forEach((track) => track.stop());
           if (message) state.mediaError = message;
-          if (!cameraQueue.length && !busy) state.running = false;
+          scheduleNext();
         },
         metrics=>{if(token===generation&&!disposed){state.captureFps=metrics.captureFps;}},
       );
@@ -1146,6 +1147,7 @@ export function createVideoWorkspace(stage: HTMLCanvasElement, initialTab: Works
       state.running = false;
       capture?.pause();
       state.mediaError = cause instanceof Error ? cause.message : String(cause);
+      closeTimerInput(state.mediaError);
     }
   }
   function admitFrame(frame: SourceFrame) {
