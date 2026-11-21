@@ -6,7 +6,7 @@ import { CSS } from '@dnd-kit/utilities';
 import type { UniqueIdentifier } from '@dnd-kit/core';
 import { tr } from '@/i18n/tr';
 
-export default function SortableCard({ as: Tag = 'div', id, draggable, disabled = false, children, className = '', dragLabel, dragIcon, stretch = true, tourKey = '' }: {
+export default function SortableCard({ as: Tag = 'div', id, draggable, disabled = false, children, className = '', dragLabel, dragIcon, stretch = true }: {
   as?: 'div' | 'tr';
   id: UniqueIdentifier;
   draggable: boolean;
@@ -16,8 +16,6 @@ export default function SortableCard({ as: Tag = 'div', id, draggable, disabled 
   dragLabel?: string;
   dragIcon?: React.ReactNode;
   stretch?: boolean;
-  /** 新手引导锚点：透传为 data-tour，供 OnboardingGuideModal 高亮定位。 */
-  tourKey?: string;
 }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id, disabled: !draggable || disabled });
   const handle = draggable ? (
@@ -29,7 +27,6 @@ export default function SortableCard({ as: Tag = 'div', id, draggable, disabled 
     <Tag
       ref={setNodeRef}
       className={`sortable-card ${className}`}
-      data-tour={tourKey || undefined}
       style={{
         transform: CSS.Transform.toString(transform),
         transition,

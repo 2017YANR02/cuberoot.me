@@ -1,523 +1,185 @@
 'use client';
 
-// 新手功能引导（Element Highlighting Tooltip Tour，Driver.js / Intro.js 风格）。
-//
-// 打开后直接进入第 1 步；12 步通过 getBoundingClientRect() 定位高亮与气泡。
-// 首页主入口卡片与挂件提供 data-tour；论坛已移到「社区与探索」，
-// 由 HomeNavigation 的对应栏目按钮提供导览锚点。
-// 本组件用 document.querySelector + getBoundingClientRect 定位。
-//
-// 视觉：只复用站内 Design System 的 Tailwind 类名与 CSS 变量
-// （`--popover` / `--foreground` / `--border-default` / `--muted` /
-// `--muted-foreground` / `--card` / `--accent` / `--accent-foreground` /
-// `--accent-soft` / `--border-strong`），不引入自定义色值。
-
 import './onboarding-guide.css';
-import { useModalBackdrop } from '@/hooks/useModalDismiss';
 import { useT } from '@/hooks/useT';
-import { useInstalledCommunityDisabled } from '@/lib/installed-content';
-import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
+import { TEXTS } from '@/lib/landing-sections';
+import { useLayoutEffect, useRef, useState, type CSSProperties } from 'react';
 import {
-  Blocks,
-  Box,
-  ChevronLeft,
-  ChevronRight,
-  Film,
-  History,
-  ListOrdered,
-  MessagesSquare,
-  Radio,
-  ScanSearch,
-  Shuffle,
-  Sigma,
-  Timer as TimerIcon,
-  Trophy,
-  X,
-  type LucideIcon,
+  Blocks, BookOpen, Box, Calendar, ChevronLeft, ChevronRight, Film, History,
+  Menu, Search, Shuffle, Sigma, Timer, Trophy, X, type LucideIcon,
 } from '@app-foundation/icons/lucide';
 
-
-
-export interface OnboardingStep {
+type Copy = { zh: string; en: string };
+interface Step {
+  selector: string;
   Icon: LucideIcon;
-  title: { zh: string; en: string };
-  body: { zh: string; en: string };
-  href: string;
-  cta: { zh: string; en: string };
-  /** 对应页面上的 data-tour 锚点。 */
-  tour: string;
+  title: Copy;
+  body: Copy;
 }
 
-// 12 步固定文案（中文一字不改）：
-// 1 计时 timer / 2 公式 formulas / 3 模拟 simulator / 4 复盘 replay /
-// 5 打乱 scramble / 6 比赛 competition / 7 纪录 records / 8 排名 rankings /
-// 9 统计 statistics / 10 近期打乱 recent-scrambles /
-// 11 今日复盘 today-replay / 12 论坛 forum。
-export const ONBOARDING_STEPS: OnboardingStep[] = [
-  {
-    Icon: TimerIcon,
-    title: { zh: '计时', en: 'Timer' },
-    body: {
-      zh: '魔方速拧训练，记录还原时间，自动保存你的个人最佳PB。',
-      en: 'Speedcubing training that times every solve and auto-saves your personal best.',
-    },
-    href: '/timer',
-    cta: { zh: '前往计时', en: 'Open timer' },
-    tour: 'timer',
-  },
-  {
-    Icon: Blocks,
-    title: { zh: '公式', en: 'Algorithms' },
-    body: {
-      zh: '查阅OLL/PLL等魔方公式，搭配3D魔方动画直观学习。',
-      en: 'Look up OLL/PLL and other algorithms with intuitive 3D animations.',
-    },
-    href: '/alg',
-    cta: { zh: '前往公式', en: 'Open algorithms' },
-    tour: 'formulas',
-  },
-  {
-    Icon: Box,
-    title: { zh: '模拟', en: 'Simulator' },
-    body: {
-      zh: '3D魔方模拟器，自由转动魔方，预览公式效果、练习观察。',
-      en: 'A 3D cube simulator: turn freely, preview algorithms and practise lookahead.',
-    },
-    href: '/sim',
-    cta: { zh: '前往模拟', en: 'Open simulator' },
-    tour: 'simulator',
-  },
-  {
-    Icon: ScanSearch,
-    title: { zh: '复盘', en: 'Reconstructions' },
-    body: {
-      zh: '回看你的还原过程，分析拧法，找到可以优化的地方。',
-      en: 'Replay your solves, analyse your turning, and find room to improve.',
-    },
-    href: '/recon',
-    cta: { zh: '前往复盘', en: 'Open reconstructions' },
-    tour: 'replay',
-  },
-  {
-    Icon: Shuffle,
-    title: { zh: '打乱', en: 'Scrambles' },
-    body: {
-      zh: '生成WCA官方标准打乱序列，用于日常练习和比赛模拟。',
-      en: 'Generate official WCA scramble sequences for daily practice and mock comps.',
-    },
-    href: '/scramble',
-    cta: { zh: '前往打乱', en: 'Open scrambles' },
-    tour: 'scramble',
-  },
-  {
-    Icon: Radio,
-    title: { zh: '比赛', en: 'Compete' },
-    body: {
-      zh: '在线魔方竞速对战，和其他玩家实时PK。',
-      en: 'Online speedcubing battles — race other players in real time.',
-    },
-    href: '/comp-sim',
-    cta: { zh: '前往比赛', en: 'Open competitions' },
-    tour: 'competition',
-  },
-  {
-    Icon: Trophy,
-    title: { zh: '纪录', en: 'Records' },
-    body: {
-      zh: '查看全部历史还原成绩，浏览每一次练习记录。',
-      en: 'Browse your full solve history and every practice record.',
-    },
-    href: '/wca/results?tab=records',
-    cta: { zh: '前往纪录', en: 'Open records' },
-    tour: 'records',
-  },
-  {
-    Icon: ListOrdered,
-    title: { zh: '排名', en: 'Rankings' },
-    body: {
-      zh: '全网玩家排行榜，看看你的水平在什么位置。',
-      en: 'A network-wide leaderboard — see where you stand.',
-    },
-    href: '/wca/results',
-    cta: { zh: '前往排名', en: 'Open rankings' },
-    tour: 'rankings',
-  },
-  {
-    Icon: Sigma,
-    title: { zh: '统计', en: 'Statistics' },
-    body: {
-      zh: '练习数据分析，查看平均成绩，跟踪你的进步趋势。',
-      en: 'Practice analytics: averages and trends that track your progress.',
-    },
-    href: '/wca',
-    cta: { zh: '前往统计', en: 'Open statistics' },
-    tour: 'statistics',
-  },
-  {
-    Icon: History,
-    title: { zh: '打乱', en: 'Scrambles' },
-    body: {
-      zh: '查看比赛官方打乱、历史打乱记录，直接点开就能复盘这把还原。',
-      en: 'Official and historical scrambles — open any of them to reconstruct the solve.',
-    },
-    href: '/scramble',
-    cta: { zh: '前往打乱', en: 'Open scrambles' },
-    tour: 'recent-scrambles',
-  },
-  {
-    Icon: Film,
-    title: { zh: '复盘', en: 'Reconstructions' },
-    body: {
-      zh: '浏览顶级选手的比赛复盘案例，学习高手的观察与还原思路。',
-      en: 'Top solvers’ competition reconstructions — learn how the best look ahead.',
-    },
-    href: '/recon',
-    cta: { zh: '前往复盘', en: 'Open reconstructions' },
-    tour: 'today-replay',
-  },
-  {
-    Icon: MessagesSquare,
-    title: { zh: '论坛', en: 'Forum' },
-    body: {
-      zh: '魔方玩家交流社区，可以发帖提问、分享练习经验、讨论成绩。',
-      en: 'A cubing community: ask questions, share practice tips and discuss results.',
-    },
-    href: '/forum/feed',
-    cta: { zh: '前往论坛', en: 'Open forum' },
-    tour: 'forum',
-  },
-];
+function card(id: string, title: Copy, Icon: LucideIcon, zh: string, en: string): Step {
+  return { selector: `.hero-grids a#card-${id}`, title, Icon, body: { zh, en } };
+}
 
-const STEPS_WITHOUT_FORUM = ONBOARDING_STEPS.filter(step => step.tour !== 'forum');
+const navigation = { zh: '网站导航', en: 'Site navigation' };
+const steps: Step[] = [
+  { selector: '.home-navigation-desktop', Icon: Menu, title: navigation,
+    body: { zh: '将鼠标移到栏目上可展开快捷入口。点击栏目查看总览，点击 CubeRoot 标志回到首页。', en: 'Hover over a section to see its links, or select it to open the overview. Select the CubeRoot logo to return home.' } },
+  { selector: ':root[data-embedded-search-button] .home-navigation-toggle', Icon: Menu, title: navigation,
+    body: { zh: '在「工具」页打开这个菜单可按栏目找功能。底部可切换到「计时」或「我的」，放大镜可打开全站搜索。', en: 'Open this menu to browse Tools by section. Use the bottom bar for Timer or Account, or tap the magnifying glass to search.' } },
+  { selector: ':root:not([data-embedded-search-button]) .home-navigation-toggle', Icon: Menu, title: navigation,
+    body: { zh: '打开菜单，选择训练、工具等栏目，再点选功能或「总览」。点击 CubeRoot 标志回到首页。', en: 'Open the menu and choose a section such as Training or Tools. Select a link or Overview. Tap the CubeRoot logo to return home.' } },
+  { selector: '.landing-page > .landing-search .landing-search-controls', Icon: Search, title: { zh: '全站搜索', en: 'Site search' },
+    body: { zh: '输入功能名称、选手姓名或比赛名称，从搜索结果直达对应页面。', en: 'Search for a tool, competitor or competition and open it from the results.' } },
+  card('timer', TEXTS.timer, Timer, '开始计时，保存每次还原的用时，在计时器中回看练习成绩。', 'Time a solve and review your practice results in the timer.'),
+  card('algdb', TEXTS.algdb, Blocks, '按情况查找公式，播放动画查看每一步转动。', 'Find algorithms by case and play an animation to see each turn.'),
+  card('sim', TEXTS.sim, Box, '在屏幕上转动魔方，观察每一步如何改变块的位置。', 'Turn a virtual puzzle to see how each move changes the positions of its pieces.'),
+  card('recon', TEXTS.recon, Film, '按选手或成绩查找比赛复盘，查看一次还原的步骤。', 'Browse competition reconstructions and follow a solve move by move.'),
+  card('scramble', TEXTS.scramble, Shuffle, '生成练习打乱，或输入一个打乱，查看它的解法。', 'Generate a practice scramble, or enter a scramble to find a solution.'),
+  card('alg', TEXTS.alg, BookOpen, '从教程选择还原方法，跟着图示和动画分步学习。', 'Choose a solving method and follow the illustrated steps and animations.'),
+  card('competitions', TEXTS.competitions, Calendar, '查找 WCA 比赛，查看比赛日期、地点和项目。', 'Find WCA competitions and check their dates, locations and events.'),
+  card('wca-results', TEXTS.rankings, Trophy, '进入「成绩」后可查看 WCA 比赛成绩、排名和纪录。', 'Open Results to explore WCA competition results, rankings and records.'),
+  card('wca-stats', TEXTS.statistics, Sigma, '浏览根据 WCA 比赛成绩整理的统计榜单。', 'Explore statistics compiled from WCA competition results.'),
+  { selector: '.landing-widget--scrambles [data-tour="recent-scrambles"]:not([aria-hidden]) .rs-topbar', Icon: History, title: { zh: '近期打乱', en: 'Recent scrambles' },
+    body: { zh: '切换项目查看近期比赛打乱，点击箭头查看完整列表。', en: 'Choose an event to see recent competition scrambles. Open the arrow for the full list.' } },
+  { selector: '.landing-widget--recons .tr-head', Icon: Film, title: { zh: '首页复盘', en: 'Featured reconstructions' },
+    body: { zh: '点开一条复盘查看选手的还原步骤，或用箭头浏览更多复盘。', en: 'Select a solve to see its reconstruction, or use the arrow to browse more.' } },
+  { selector: '.landing-widget--comps .ongoing-comps-tabbar', Icon: Calendar, title: { zh: '比赛动态', en: 'Competition updates' },
+    body: { zh: '切换标签查看近期比赛和报名动态。', en: 'Switch tabs to see recent competition and registration updates.' } },
+];
 
 interface Props {
   open: boolean;
   onClose: () => void;
 }
 
-interface TargetRect {
-  x: number;
-  y: number;
-  w: number;
-  h: number;
-  borderRadius?: string;
+export default function OnboardingGuideModal({ open, onClose }: Props) {
+  return open ? <Tour onClose={onClose} /> : null;
 }
 
-const TOOLTIP_GAP = 12;
-const TOOLTIP_WIDTH = 360;
-
-export default function OnboardingGuideModal({ open, onClose }: Props) {
+function Tour({ onClose }: Pick<Props, 'onClose'>) {
   const t = useT();
-  const backdropProps = useModalBackdrop(onClose);
-  const steps = useInstalledCommunityDisabled() ? STEPS_WITHOUT_FORUM : ONBOARDING_STEPS;
-  const total = steps.length;
-  const [requestedStep, setStep] = useState(0);
-  const step = Math.min(requestedStep, total - 1);
-  const [rect, setRect] = useState<TargetRect | null>(null);
-  const [viewport, setViewport] = useState({ w: 0, h: 0 });
-  const dialogRef = useRef<HTMLDivElement>(null);
-  const scrolledTarget = useRef<Element | null>(null);
-  // 自动触发与手动重看都从第一步开始。
-  useEffect(() => {
-    if (open) setStep(0);
-  }, [open]);
+  const dialog = useRef<HTMLDialogElement>(null);
+  const bounds = useRef<HTMLDivElement>(null);
+  const panel = useRef<HTMLDivElement>(null);
+  const [selected, select] = useState(0);
+  const [visible, setVisible] = useState<number[]>([]);
+  const [layout, setLayout] = useState({ x: 0, y: 0, w: 0, h: 0, left: 0, top: 0, maxHeight: 0, radius: '0px' });
+  const lastTarget = useRef<Element | null>(null);
+  const active = visible.includes(selected) ? selected : visible.find(index => index >= selected) ?? visible.at(-1);
+  const step = visible.indexOf(active ?? -1);
+  const total = visible.length;
+  const goPrev = () => select(visible[Math.max(0, step - 1)]);
+  const goNext = () => select(visible[Math.min(total - 1, step + 1)]);
 
-  const goNext = useCallback(() => {
-    setStep((s) => Math.min(s + 1, total - 1));
-  }, [total]);
+  useLayoutEffect(() => {
+    const layer = dialog.current!;
+    layer.showModal();
+    return () => layer.close();
+  }, []);
 
-  const goPrev = useCallback(() => {
-    setStep(Math.max(step - 1, 0));
-  }, [step]);
-
-  const current = steps[step];
-  const tour = current.tour;
-
-  // 读取目标元素视口坐标；找不到 / 零尺寸 / 占位骨架（懒加载未挂载等）时
-  // 返回 null，调用方回退为底部居中卡片。
-  // 滚动动画中途 rect 可能短暂为负值/超视口，渲染层会再做钳制，
-  // 这里保留原始值以便动画连续。
-  // 关键：10/11 步（today-replay / forum）的数据是异步到达的，首帧先渲染
-  // 高 320~360px 的 --loading 占位骨架，数据到后才替换为真实内容。
-  // 若在占位阶段锁定 rect，高 360px 的骨架框会闪一下再跳到真实高度，
-  // 遮罩缺口与描边框跟着跳 = 你看到的那条“线”与大块闪动。
-  // 因此占位骨架一律视为“未就绪”，等真实内容挂载后再定位。
-  const measure = useCallback(() => {
-    if (typeof window === 'undefined') return;
-    setViewport({ w: window.innerWidth, h: window.innerHeight });
-    if (!tour) {
-      setRect(null);
-      return;
-    }
-    // 跳过本次渲染已卸载的旧目标：step 切换瞬间旧卡片可能已不在 DOM，
-    // 此时 querySelector 会命中新目标但 getBoundingClientRect 尚未稳定，
-    // 先清空旧 rect，避免旧高亮框残留成横贯细线。
-    // 注：必须用 getElementById 先确认是 data-tour 宿主本身，避免命中其内部
-    // 嵌套了同名 data-tour 的子元素（其 rect 更小，会导致遮罩错位闪线）。
-    const el = document.querySelector(`[data-tour="${tour}"]`);
-    if (!el) {
-      setRect(null);
-      return;
-    }
-    // 占位骨架（loading / aria-busy）不是真实内容：视为未就绪。
-    if (
-      el.classList.contains('today-recon--loading') ||
-      el.classList.contains('recent-scrambles--loading') ||
-      el.getAttribute('aria-busy') === 'true'
-    ) {
-      setRect(null);
-      return;
-    }
-    if (scrolledTarget.current !== el) {
-      scrolledTarget.current = el;
-      el.scrollIntoView({ behavior: 'instant', block: 'center', inline: 'nearest' });
-    }
-    // Card anchors live on sortable wrappers; outline the visible card itself.
-    const surface = el.querySelector(':scope > .landing-card') ?? el;
-    const r = surface.getBoundingClientRect();
-    // 目标完全在视口外（滚动中途）时清空，避免遮罩算出负 height/width 闪线。
-    if (
-      r.width < 8 ||
-      r.height < 8 ||
-      r.bottom < 0 ||
-      r.right < 0 ||
-      r.top > window.innerHeight ||
-      r.left > window.innerWidth
-    ) {
-      setRect(null);
-      return;
-    }
-    setRect({ x: r.left, y: r.top, w: r.width, h: r.height, borderRadius: getComputedStyle(surface).borderRadius });
-  }, [tour]);
-
-  // 切换步骤：先清空旧高亮（避免旧框残留闪线），再把目标滚入可视区，
-  // 之后（分多次 + 占位替换后补测）测量，兼容 smooth 滚动动画、
-  // 懒加载挂件的延迟挂载，以及 10/11 步异步数据到达时的骨架→内容替换。
-  useEffect(() => {
-    if (!open) return;
-    scrolledTarget.current = null;
-    setRect(null);
-    if (tour) {
-      const el = document.querySelector(`[data-tour="${tour}"]`);
-      try {
-        (el as HTMLElement | null)?.scrollIntoView({
-          // 10→11→12 在页面底部相邻，instant 瞬切比 smooth 更稳：
-          // smooth 的长滚动动画中途 rect 全程越界，高亮框反复横跳闪线。
-          behavior: 'instant' as ScrollBehavior,
-          block: 'center',
-          inline: 'center',
-        });
-      } catch {
-        /* 旧浏览器忽略滚动选项，回退到默认行为 */
-      }
-    }
-    measure();
-    let raf = 0;
-    raf = requestAnimationFrame(measure);
-    const t1 = window.setTimeout(measure, 350);
-    const t2 = window.setTimeout(measure, 800);
-    // 占位骨架→真实内容的替换发生在数据到达时（晚于 800ms 也可能），
-    // 补一次 1.8s 测量兜住 10/11 步的异步挂载。
-    const t3 = window.setTimeout(measure, 1800);
-    return () => {
-      cancelAnimationFrame(raf);
-      window.clearTimeout(t1);
-      window.clearTimeout(t2);
-      window.clearTimeout(t3);
-    };
-  }, [open, tour, measure]);
-
-  // 监听窗口 resize / 任意滚动，保持高亮框与气泡定位准确。
-  useEffect(() => {
-    if (!open) return;
-    let queued = false;
-    const schedule = () => {
-      if (queued) return;
-      queued = true;
-      requestAnimationFrame(() => {
-        queued = false;
-        measure();
+  useLayoutEffect(() => {
+    const area = bounds.current!;
+    const page = document.querySelector('.landing-page')!;
+    const measure = () => {
+      const entries = steps.flatMap(({ selector }, index) => {
+        const target = page.querySelector<HTMLElement>(selector);
+        return target && target.getClientRects().length && getComputedStyle(target).visibility === 'visible'
+          ? [{ index, target }] : [];
       });
+      const indices = entries.map(entry => entry.index);
+      setVisible(prev => prev.length === indices.length && prev.every((id, i) => id === indices[i]) ? prev : indices);
+      const entry = entries.find(item => item.index >= selected) ?? entries.at(-1);
+      if (!entry) return;
+      const target = entry.target;
+      const available = area.getBoundingClientRect();
+      if (target !== lastTarget.current) {
+        lastTarget.current = target;
+        target.scrollIntoView({ block: available.height < 480 ? 'start' : 'center', inline: 'nearest', behavior: 'instant' });
+      }
+      const r = target.getBoundingClientRect();
+      const width = panel.current?.offsetWidth ?? Math.min(360, available.width);
+      const naturalHeight = (panel.current?.scrollHeight ?? 0) + 2;
+      const clamp = (value: number, min: number, max: number) => Math.max(min, Math.min(value, max));
+      const below = r.bottom + 12;
+      const roomBelow = available.bottom - below;
+      const roomAbove = r.top - 12 - available.top;
+      const placeBelow = roomBelow >= naturalHeight || roomBelow >= roomAbove;
+      const room = placeBelow ? roomBelow : roomAbove;
+      const maxHeight = Math.min(available.height, room >= 100 ? room : available.height);
+      const height = Math.min(naturalHeight, maxHeight);
+      const top = placeBelow ? below : r.top - height - 12;
+      const x = clamp(r.left, 0, window.innerWidth);
+      const y = clamp(r.top, 0, available.bottom);
+      const next = { x, y, maxHeight, w: Math.max(0, Math.min(r.right, window.innerWidth) - x),
+        h: Math.max(0, Math.min(r.bottom, available.bottom) - y), radius: getComputedStyle(target).borderRadius,
+        left: clamp(r.left + (r.width - width) / 2, available.left, available.right - width),
+        top: clamp(top, available.top, available.bottom - height) };
+      setLayout(prev => prev.x === next.x && prev.y === next.y && prev.w === next.w && prev.h === next.h
+        && prev.maxHeight === next.maxHeight && prev.left === next.left && prev.top === next.top && prev.radius === next.radius ? prev : next);
     };
+    measure();
+    let frame = 0;
+    const schedule = () => {
+      if (!frame) frame = requestAnimationFrame(() => { frame = 0; measure(); });
+    };
+    const observer = new ResizeObserver(schedule);
+    observer.observe(area);
+    observer.observe(page);
+    if (panel.current) observer.observe(panel.current);
     window.addEventListener('resize', schedule);
     window.addEventListener('scroll', schedule, true);
-    window.addEventListener('orientationchange', schedule);
     return () => {
+      observer.disconnect();
+      cancelAnimationFrame(frame);
       window.removeEventListener('resize', schedule);
       window.removeEventListener('scroll', schedule, true);
-      window.removeEventListener('orientationchange', schedule);
     };
-  }, [open, measure]);
+  }, [selected, active]);
 
-  // 打开期间：Esc 关闭，左右方向键切换，自动聚焦。巡游模式下不锁 body 滚动，
-  // 否则 scrollIntoView 无法把目标带入可视区。
-  useEffect(() => {
-    if (!open) return;
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
-      else if (e.key === 'ArrowRight') goNext();
-      else if (e.key === 'ArrowLeft') goPrev();
-    };
-    window.addEventListener('keydown', onKey);
-    dialogRef.current?.focus({ preventScroll: true });
-    return () => {
-      window.removeEventListener('keydown', onKey);
-    };
-  }, [open, onClose, goNext, goPrev]);
-
-  const tooltipLayout = useMemo(() => {
-    if (!rect || viewport.w === 0) return null;
-    const width = Math.min(TOOLTIP_WIDTH, Math.max(0, viewport.w - 32));
-    const centerX = rect.x + rect.w / 2;
-    const left = Math.min(
-      Math.max(8, centerX - width / 2),
-      Math.max(8, viewport.w - width - 8),
-    );
-    const arrowLeft = Math.min(Math.max(16, centerX - left), width - 16);
-    const spaceBelow = viewport.h - (rect.y + rect.h);
-    // 下方空间不足（< 320px）且上方更宽敞时，气泡翻到目标上方。
-    const placement: 'below' | 'above' =
-      spaceBelow < 320 && rect.y > spaceBelow ? 'above' : 'below';
-    return { width, left, arrowLeft, placement };
-  }, [rect, viewport]);
-
-  if (!open) return null;
-
-
-  const StepIcon = current.Icon;
+  const current = active === undefined ? undefined : steps[active];
+  const StepIcon = current?.Icon ?? Menu;
   const isFirst = step === 0;
   const isLast = step === total - 1;
-  const hasTarget = Boolean(current.tour && rect && tooltipLayout);
-
-  const renderCardBody = () => (
-    <>
-      <div className="onboarding-guide-heading">
-        <span className="onboarding-guide-icon"><StepIcon size={20} strokeWidth={1.8} aria-hidden="true" /></span>
-        <span className="onboarding-guide-count">{t('新手指南', 'Beginner guide')} <span>{step + 1} / {total}</span></span>
-        <button type="button" onClick={onClose} className="onboarding-guide-button onboarding-guide-close" aria-label={t('关闭导览', 'Close tour')}><X size={18} aria-hidden="true" /></button>
-      </div>
-      <div className="onboarding-guide-copy" aria-live="polite" aria-atomic="true">
-        <h2>{t(current.title.zh, current.title.en)}</h2>
-        <p>{t(current.body.zh, current.body.en)}</p>
-      </div>
-      <div className="onboarding-guide-progress" role="progressbar" aria-label={t('导览进度', 'Tour progress')} aria-valuemin={1} aria-valuemax={total} aria-valuenow={step + 1}>
-        <span style={{ width: ((step + 1) / total) * 100 + '%' }} />
-      </div>
-      <div className="onboarding-guide-actions">
-        <button type="button" onClick={onClose} className="onboarding-guide-button onboarding-guide-skip">{t('跳过', 'Skip')}</button>
-        <div className="onboarding-guide-navigation">
-          {!isFirst && <button type="button" onClick={goPrev} className="onboarding-guide-button onboarding-guide-back" aria-label={t('上一步', 'Previous step')}><ChevronLeft size={17} aria-hidden="true" /></button>}
-          <button type="button" onClick={isLast ? onClose : goNext} className="onboarding-guide-button onboarding-guide-next">
-            {isLast ? t('完成', 'Done') : t('下一步', 'Next')}
-            {!isLast && <ChevronRight size={16} aria-hidden="true" />}
-          </button>
-        </div>
-      </div>
-    </>
-  );
-
-  // 四块遮罩（中间留出高亮缺口）+ 高亮描边 + 吸附气泡。
-  // 四块遮罩而非整屏遮罩，是为了让目标保持明亮并拦截误触跳转。
-  // 高亮坐标钳制到视口内：rect 在滚动动画中途可能为负值或超出视口，
-  // 不钳制的话上/左遮罩 height/width 会溢出成横贯全屏的细线。
-  // 顺序注意：clampedRect 必须先算出来，回退分支要用到它。
-  const vw = viewport.w || (typeof window !== 'undefined' ? window.innerWidth : 0);
-  const vh = viewport.h || (typeof window !== 'undefined' ? window.innerHeight : 0);
-  const clampedRect: TargetRect | null =
-    rect && vw > 0 && vh > 0
-      ? {
-          x: Math.min(Math.max(rect.x, 0), vw),
-          y: Math.min(Math.max(rect.y, 0), vh),
-          w: Math.max(0, Math.min(rect.w, vw - Math.min(Math.max(rect.x, 0), vw))),
-          h: Math.max(0, Math.min(rect.h, vh - Math.min(Math.max(rect.y, 0), vh))),
-        }
-      : null;
-
-  // 目标未渲染 / 越界（滚动中途）：优雅回退为屏幕下方居中卡片 + 整屏遮罩，
-  // 不拼四块缺口遮罩，避免负 height/width 闪出横贯细线。
-  if (!hasTarget || !rect || !tooltipLayout || !clampedRect) {
-    return (
-      <div className="onboarding-guide-layer onboarding-guide-mask" role="presentation" {...backdropProps}>
-        <div
-          ref={dialogRef}
-          tabIndex={-1}
-          role="dialog"
-          aria-modal="true"
-          aria-label={t(current.title.zh, current.title.en)}
-          className="onboarding-guide-card onboarding-guide-fallback" data-site-surface="popover"
-        >
-          {renderCardBody()}
-        </div>
-      </div>
-    );
-  }
-
-  // 能走到四块遮罩分支时 clampedRect 必存在（回退分支已拦截 null）。
-  // 高亮缺口与描边框统一使用钳制坐标，遮罩 height/width 恒 ≥ 0。
-  const hx = clampedRect.x;
-  const hy = clampedRect.y;
-  const hw = clampedRect.w;
-  const hh = clampedRect.h;
-  const mask = 'onboarding-guide-mask';
-  const tooltipStyle: CSSProperties =
-    tooltipLayout.placement === 'below'
-      ? {
-          top: rect.y + rect.h + TOOLTIP_GAP,
-          left: tooltipLayout.left,
-          width: tooltipLayout.width,
-        }
-      : {
-          bottom: Math.max(8, viewport.h - rect.y + TOOLTIP_GAP),
-          left: tooltipLayout.left,
-          width: tooltipLayout.width,
-        };
-
+  const { x, y, w, h } = layout;
+  const maskStyle: CSSProperties = { clipPath: `polygon(evenodd, 0 0, 100% 0, 100% 100%, 0 100%, 0 0, ${x}px ${y}px, ${x + w}px ${y}px, ${x + w}px ${y + h}px, ${x}px ${y + h}px, ${x}px ${y}px)` };
   return (
-    <div className="onboarding-guide-layer" role="presentation" {...backdropProps}>
-      {/* 上 / 下 / 左 / 右四块半透明遮罩 */}
-      <div className={mask} {...backdropProps} style={{ left: 0, right: 0, top: 0, height: Math.max(0, hy) }}  />
-      <div
-        className={mask} {...backdropProps}
-        style={{ left: 0, right: 0, top: hy + hh, bottom: 0 }}
-
-      />
-      <div
-        className={mask} {...backdropProps}
-        style={{ left: 0, width: Math.max(0, hx), top: hy, height: hh }}
-
-      />
-      <div
-        className={mask} {...backdropProps}
-        style={{ left: hx + hw, right: 0, top: hy, height: hh }}
-
-      />
-      {/* 高亮缺口上的透明点击拦截层：展示目标但阻止巡游中误触跳转 */}
-      <div
-        className="onboarding-guide-target"
-        style={{ left: hx, top: hy, width: hw, height: hh }}
-
-        aria-hidden="true"
-      />
-      {/* 高亮描边框 */}
-      <div
-        aria-hidden="true"
-        className="onboarding-guide-highlight"
-        style={{ left: hx, top: hy, width: hw, height: hh, borderRadius: rect.borderRadius }}
-      />
-
-      {/* 吸附气泡：定位在目标正下方（空间不足时翻到上方），小箭头指向目标 */}
-      <div
-        ref={dialogRef}
-        tabIndex={-1}
-        role="dialog"
-        aria-modal="true"
-        aria-label={t(current.title.zh, current.title.en)}
-        className="onboarding-guide-card" data-site-surface="popover"
-        style={tooltipStyle}
-
-      >
-        {renderCardBody()}
+    <dialog ref={dialog} className="onboarding-guide-layer" aria-label={t('新手指南', 'Beginner guide')}
+      onCancel={event => { event.preventDefault(); onClose(); }}
+      onKeyDown={event => {
+        if (event.key === 'ArrowLeft' && !isFirst) goPrev();
+        if (event.key === 'ArrowRight' && !isLast) goNext();
+      }}>
+      <div className="onboarding-guide-mask" style={maskStyle} aria-hidden="true" onClick={onClose} />
+      <div className="onboarding-guide-highlight" aria-hidden="true"
+        style={{ left: x, top: y, width: w, height: h, borderRadius: layout.radius }} />
+      <div ref={bounds} className="onboarding-guide-bounds">
+        {current && <div ref={panel} className="onboarding-guide-card" data-site-surface="popover"
+          style={{ left: layout.left, top: layout.top, maxHeight: layout.maxHeight || undefined }}>
+          <div className="onboarding-guide-heading">
+            <span className="onboarding-guide-icon"><StepIcon size={20} strokeWidth={1.8} aria-hidden="true" /></span>
+            <span className="onboarding-guide-count">{t('新手指南', 'Beginner guide')} <span>{step + 1} / {total}</span></span>
+            <button type="button" onClick={onClose} className="onboarding-guide-button onboarding-guide-close" aria-label={t('关闭导览', 'Close tour')}><X size={18} aria-hidden="true" /></button>
+          </div>
+          <div className="onboarding-guide-copy" aria-live="polite" aria-atomic="true">
+            <h2>{t(current.title.zh, current.title.en)}</h2>
+            <p>{t(current.body.zh, current.body.en)}</p>
+          </div>
+          <div className="onboarding-guide-progress" role="progressbar" aria-label={t('导览进度', 'Tour progress')} aria-valuemin={1} aria-valuemax={total} aria-valuenow={step + 1}>
+            <span style={{ width: ((step + 1) / total) * 100 + '%' }} />
+          </div>
+          <div className="onboarding-guide-actions">
+            <button type="button" onClick={onClose} className="onboarding-guide-button onboarding-guide-skip">{t('跳过', 'Skip')}</button>
+            <div className="onboarding-guide-navigation">
+              {!isFirst && <button type="button" onClick={goPrev} className="onboarding-guide-button onboarding-guide-back" aria-label={t('上一步', 'Previous step')}><ChevronLeft size={17} aria-hidden="true" /></button>}
+              <button type="button" onClick={isLast ? onClose : goNext} className="onboarding-guide-button onboarding-guide-next">
+                {isLast ? t('完成', 'Done') : t('下一步', 'Next')}
+                {!isLast && <ChevronRight size={16} aria-hidden="true" />}
+              </button>
+            </div>
+          </div>
+        </div>}
       </div>
-    </div>
+    </dialog>
   );
 }

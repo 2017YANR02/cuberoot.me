@@ -157,7 +157,7 @@ function LandingCardContent({ label, Icon, iconImg, record, iconText, puzzleIcon
 type ReconSolve = Awaited<ReturnType<typeof getPinnedRecons>>[number];
 
 // Only the guide consumes query state; its production prerender bailout must not hide the homepage.
-function LandingOnboarding({ mounted, personalLoading }: { mounted: boolean; personalLoading: boolean }) {
+function LandingOnboarding({ mounted, personalLoading, isHome, selectHome }: { mounted: boolean; personalLoading: boolean; isHome: boolean; selectHome: () => void }) {
   const user = useAuthUser();
   const [guideOpen, setGuideOpen] = useState(false);
   const [replayGuide, setReplayGuide] = useQueryState('guide', parseAsBoolean.withDefault(false));
@@ -167,20 +167,21 @@ function LandingOnboarding({ mounted, personalLoading }: { mounted: boolean; per
     let timer: number | undefined;
     setGuideOpen(false);
     if (replayGuide) {
-      setGuideOpen(true);
-    } else {
+      if (!isHome) selectHome();
+      else setGuideOpen(true);
+    } else if (isHome) {
       void isOnboardingGuided(user).then(seen => {
         if (active && !seen) timer = window.setTimeout(() => setGuideOpen(true), 600);
       });
     }
     return () => { active = false; window.clearTimeout(timer); };
-  }, [mounted, user?.uid, user?.wcaId, replayGuide]);
+  }, [mounted, user?.uid, user?.wcaId, replayGuide, isHome, selectHome]);
   const closeGuide = useCallback(() => {
     setGuideOpen(false);
     void markOnboardingGuided(user);
     if (replayGuide) void setReplayGuide(null);
   }, [user, replayGuide, setReplayGuide]);
-  return <OnboardingGuideModal open={guideOpen && !personalLoading} onClose={closeGuide} />;
+  return <OnboardingGuideModal open={isHome && guideOpen && !personalLoading} onClose={closeGuide} />;
 }
 
 export default function LandingPage({ initialLayout = null }: { initialLayout?: HomeLayoutSnapshot | null }) {
@@ -209,6 +210,7 @@ export default function LandingPage({ initialLayout = null }: { initialLayout?: 
   const onPersonalReady = useCallback(() => setPersonalReadyKey(personalKey), [personalKey, setPersonalReadyKey]);
   // Maintainer requested URL-stable home sections; retain only within this session.
   const [selectedSection, setSelectedSection] = useRetainedState('home:section', 'home');
+  const selectHome = useCallback(() => setSelectedSection('home'), [setSelectedSection]);
   const personalLoading = Boolean(user && (!compFollows.loaded || personalReadyKey !== personalKey));
   const isAdmin = Boolean(user?.isAdmin || isAdminWcaId(user?.wcaId));
   const activeSection = selectedSection === 'admin' && !isAdmin ? 'home' : selectedSection;
@@ -364,27 +366,6 @@ export default function LandingPage({ initialLayout = null }: { initialLayout?: 
   const isCardLocked = (card: CardConfig) => Boolean(card.adminOnly)
     || (cardLocks[card.id] ?? Boolean(card.lockedForNonAdmin || card.comingSoon));
 
-  // 新手引导锚点：card.id -> data-tour（OnboardingGuideModal 用
-  // document.querySelector('[data-tour="..."]') + getBoundingClientRect() 定位）。
-  // 直接从计时开始依次高亮，共 12 步：
-  // 1 计时 timer / 2 公式 formulas / 3 模拟 simulator / 4 复盘 replay /
-  // 5 打乱 scramble / 6 比赛 competition / 7 纪录 records / 8 排名 rankings /
-  // 9 统计 statistics；10~12 为下方挂件（近期打乱 / 今日复盘 / 论坛），
-  // 锚点见下方 LazyVisible 外层包裹 div。
-  // 纪录与排名为独立步骤：wca-records -> records，wca-results -> rankings。
-  const CARD_ID_TO_TOUR: Record<string, string> = {
-    timer: 'timer',               // Step 1 计时
-    algdb: 'formulas',            // Step 2 公式
-    sim: 'simulator',             // Step 3 模拟
-    recon: 'replay',              // Step 4 复盘
-    scramble: 'scramble',         // Step 5 打乱
-    competitions: 'competition',  // Step 6 比赛（WCA 比赛入口，同组）
-    'comp-sim': 'competition',    // Step 6 比赛（模拟正式比赛，直达 CTA）
-    'wca-records': 'records',     // Step 7 纪录（个人计时成绩）
-    'wca-results': 'rankings',    // Step 8 排名（全球排行榜）
-    'wca-stats': 'statistics',    // Step 9 统计
-  };
-
   const renderCard = (card: CardConfig) => {
     const locked = isCardLocked(card);
     const isLocked = locked && !isAdmin;
@@ -437,7 +418,6 @@ export default function LandingPage({ initialLayout = null }: { initialLayout?: 
         key={card.id}
         id={card.id}
         draggable={canEditCards}
-        tourKey={CARD_ID_TO_TOUR[card.id]}
       >
         {renderLock(card.id, locked, card.adminOnly)}
         {cardElement}
@@ -691,14 +671,10 @@ export default function LandingPage({ initialLayout = null }: { initialLayout?: 
         </div>
       </div>
 
-      {/* 两行 hero 的共同外壳。桌面是 5 + 4 两个独立网格;手机端外壳自己变成 3 列网格、
-          两个子网格 display:contents,9 张卡直接排成 3 行 3 个(见 landing.css)。 */}
       {entryStatus}
       <div className="hero-grids">
-        {/* 主入口 — 标语正下方,五张最常用直达卡(计时器 / 公式 / 模拟 / 复盘 / 打乱) */}
         {renderCardGrid('main', PRIMARY_CARDS, 'primary-hero-grid')}
 
-        {/* WCA 入口 — 紧接主入口,原单张「WCA 统计」hero 拆成四张直达卡:比赛 / 纪录 / 排名 / 统计 */}
         {renderCardGrid('wca', WCA_CARDS, 'wca-hero-grid')}
       </div>
 
@@ -815,7 +791,7 @@ export default function LandingPage({ initialLayout = null }: { initialLayout?: 
       </div>
       </div>
       </footer>
-      {activeSection === 'home' && <Suspense fallback={null}><LandingOnboarding mounted={mounted} personalLoading={personalLoading} /></Suspense>}
+      <Suspense fallback={null}><LandingOnboarding mounted={mounted} personalLoading={personalLoading} isHome={activeSection === 'home'} selectHome={selectHome} /></Suspense>
     </div>
     </>
   );

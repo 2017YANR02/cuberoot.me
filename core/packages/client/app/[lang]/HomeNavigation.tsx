@@ -138,7 +138,7 @@ export default function HomeNavigation({ selected, onSelect, isAdmin, sections, 
       id={`home-nav-${href}`}
       aria-expanded={shown && allowedFlyout === href}
       aria-controls="home-navigation-flyout"
-      data-home-section={href} data-tour={href === 'other' ? 'forum' : undefined}
+      data-home-section={href}
       onPointerEnter={event => { if (event.pointerType === 'mouse') showFlyout(href); }}
       onFocus={() => { if (shown) showFlyout(href); }}
       onKeyDown={event => {
