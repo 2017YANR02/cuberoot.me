@@ -10,6 +10,7 @@ allowBuilds:
   better-sqlite3: true
   core-js: true
   esbuild: true
+  protobufjs: false # ONNX needs the packaged runtime only.
   sharp: false # next/image native build,POC 不用图片优化跳过
 patchedDependencies:
   '@2017yanr02/continuous-corners@0.3.2': patches/@2017yanr02__continuous-corners@0.3.2.patch

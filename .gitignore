@@ -195,3 +195,6 @@ core/packages/client/public/maplibre/
 
 # Durable local assets and resumable work; ignored does not mean disposable.
 .local-data/
+
+# Video reconstruction workers are bundled from the checked-in engine.
+/core/packages/client/public/vendor/video-recon/workers/

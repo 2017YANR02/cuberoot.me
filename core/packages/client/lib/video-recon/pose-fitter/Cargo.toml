@@ -1,0 +1,32 @@
+[package]
+name = "cube-pose-fitter"
+version = "0.1.0"
+edition = "2021"
+publish = false
+
+[features]
+cpu-pipeline = []
+
+[lib]
+crate-type = ["rlib", "cdylib"]
+
+[[bin]]
+name = "pose-benchmark"
+path = "src/main.rs"
+
+[[bin]]
+name = "move-search-benchmark"
+path = "src/move_search_main.rs"
+
+[[example]]
+name = "final_flat_probe"
+required-features = ["cpu-pipeline"]
+
+[dependencies]
+nalgebra = { version = "0.34", default-features = false, features = ["std"] }
+serde = { version = "1", features = ["derive", "rc"] }
+serde_json = { version = "1", features = ["float_roundtrip"] }
+
+[profile.release]
+codegen-units = 1
+lto = true

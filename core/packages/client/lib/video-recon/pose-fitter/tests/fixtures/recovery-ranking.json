@@ -1,0 +1,17 @@
+{
+  "scope": "User-confirmed correct candidate 2 at Jeff1551 t=8.687; measured score components from a fresh raw-detection replay. These score-only regression values are never used as PnP/fitting inputs.",
+  "rigid": {
+    "active_layers": 0,
+    "observation_count": 17,
+    "observation_loss": 8.465167257876807,
+    "pose_prior_loss": 0.5104407304514119,
+    "reprojection_weight": 4
+  },
+  "correct_articulated": {
+    "active_layers": 2,
+    "observation_count": 17,
+    "observation_loss": 4.401182341935664,
+    "pose_prior_loss": 1.3246225130998552,
+    "reprojection_weight": 4
+  }
+}

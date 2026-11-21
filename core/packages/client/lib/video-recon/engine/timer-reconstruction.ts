@@ -1,0 +1,174 @@
+import type { FrameResult } from './detector';
+import type { MoveSearchConfig, MoveSearchResult } from './move-search-types';
+import type { FittedPose } from './pose-types';
+import { createSearchConfig } from '../pose-fitter/runtime/reconstruction-policy.mjs';
+import { TIMER_TAIL_SECONDS, TIMER_SEARCH_LIMIT_MS } from './cube-timer';
+import type { TimerReconstructionResult } from './cube-timer';
+
+export interface TimerSearch {
+  submit(timestamp:number,frame:FrameResult,fitting:Promise<FittedPose>):void;
+  end():Promise<void>;
+  dispose():void;
+  pause?():void;
+  resume?():void;
+  setPacing?(delayMs:number):void;
+}
+export type TimerSearchFactory=(config:MoveSearchConfig,result:(value:MoveSearchResult,ended:boolean)=>void,
+  error:(message:string)=>void,solveId:string)=>TimerSearch;
+interface Window {
+  id:string;start:number;end?:number;config:MoveSearchConfig;frames:number;
+  submitted:Set<number>;
+  search?:TimerSearch;failure?:string;result?:MoveSearchResult;closed:boolean;disposed:boolean;paused:boolean;
+  deadline?:ReturnType<typeof setTimeout>;
+}
+
+/** Fitting promises go straight to search, before the ordered display queue.
+ * Source-time membership controls admission; input closes after stop + tail.
+ * A newer solve pauses older search expansions rather than adding CPU workers. */
+export class TimerReconstruction {
+  private windows=new Map<string,Window>();
+  private cameraBackpressure=false;
+  constructor(private factory:TimerSearchFactory,private update:(id:string,value:TimerReconstructionResult)=>void,
+    private finished:(id:string)=>void=()=>{}) {}
+  start(id:string,scramble:string,start:number,fps:number,diagnostics=true) {
+    const config=createSearchConfig({scramble,fps,camera:true,originSeconds:start,startSeconds:start,diagnostics,bidirectional:false});
+    this.windows.set(id,{id,start,config,frames:0,submitted:new Set(),closed:false,disposed:false,paused:false});
+    this.update(id,{status:'collecting'});this.prioritize();return config;
+  }
+  stop(id:string,stop:number) {
+    const window=this.windows.get(id);if(!window||window.closed)return;
+    window.end=stop+TIMER_TAIL_SECONDS;window.config.source_end_seconds=window.end;
+    if(!window.failure&&!this.terminal(window.result)){
+      this.report(window,'waiting','Searching; waiting for stop + 0.3s to finish fitting');
+      // Run the deadline on the UI thread: a synchronous WASM expansion may
+      // block the search worker from receiving a cooperative cancel message.
+      // Start after the capture tail, without waiting for fitting to drain.
+      window.deadline??=setTimeout(()=>{
+        window.deadline=undefined;
+        if(!window.disposed&&!window.failure&&!this.terminal(window.result))
+          this.fail(window,'Reconstruction timed out after 30 seconds');
+      },TIMER_TAIL_SECONDS*1000+TIMER_SEARCH_LIMIT_MS);
+    }
+  }
+  includes(timestamp:number){return this.solveIds(timestamp).length>0;}
+  finishThrough(timestamp:number){
+    for(const window of [...this.windows.values()])if(!window.closed&&window.end!==undefined&&timestamp>=window.end)this.close(window);
+  }
+  setBackpressure(paused:boolean){if(paused!==this.cameraBackpressure){this.cameraBackpressure=paused;this.prioritize();}}
+  solveIds(timestamp:number):string[]{
+    return [...this.windows.values()].filter(w=>!w.closed&&timestamp>=w.start&&
+      (w.end===undefined||timestamp<w.end)).map(w=>w.id);
+  }
+  /** Called in source order at detector completion, before fits resolve. Search
+   * assigns ordinals now and prepares each bank as soon as its promise resolves. */
+  submit(timestamp:number,frame:FrameResult,fitting:Promise<FittedPose>) {
+    for(const id of this.solveIds(timestamp)){
+      const window=this.windows.get(id)!;
+      if(!this.register(window,timestamp)||window.failure||window.disposed||this.terminal(window.result))continue;
+      const observed=fitting.catch(error=>{
+        if(!window.disposed&&!this.terminal(window.result))this.fail(window,
+          `Pose fitting failed at ${timestamp.toFixed(3)}s: ${error instanceof Error?error.message:String(error)}`);
+        throw error;
+      });
+      void observed.catch(()=>{});
+      try{
+        if(!window.search){this.open(window);this.prioritize();}
+        window.search?.submit(timestamp,frame,observed);
+      }catch(error){this.fail(window,error instanceof Error?error.message:String(error));}
+    }
+  }
+  /** Ordered presentation acknowledges/records results and closes input only
+   * after every earlier frame in the solve + tail has finished. */
+  accept(timestamp:number,frame:FrameResult) {
+    for(const window of [...this.windows.values()]){
+      if(window.closed||timestamp<window.start)continue;
+      if(window.end!==undefined&&timestamp>=window.end){this.close(window);continue;}
+      if(!frame.fittedPose){
+        this.register(window,timestamp);
+        if(!this.terminal(window.result))this.fail(window,`Pose fitting failed at ${timestamp.toFixed(3)}s: ${frame.fittingError??'Fitted result missing; no fitter error was reported'}`);
+        continue;
+      }
+      if(!window.submitted.has(timestamp))this.submit(timestamp,frame,Promise.resolve(frame.fittedPose));
+    }
+  }
+  /** Disconnecting capture cannot invalidate an already closed, immutable solve. */
+  closeInput(message='Camera ended before the complete solve window was processed') {
+    for(const window of [...this.windows.values()]){
+      if(window.closed)continue;
+      window.closed=true;this.fail(window,message);this.remove(window);
+    }
+    this.prioritize();
+  }
+  cancel(message='Page closed; reconstruction cancelled') {
+    for(const window of [...this.windows.values()]){
+      window.closed=true;this.fail(window,message);this.remove(window);
+    }
+  }
+  cancelSolve(id:string,message='Solve deleted'){
+    const window=this.windows.get(id);if(!window)return;
+    window.closed=true;this.fail(window,message);this.remove(window);this.prioritize();
+  }
+  private terminal(result:MoveSearchResult|undefined){return !!result&&['solved','already_solved','exhausted','state_limit'].includes(result.status);}
+  private register(window:Window,timestamp:number){
+    if(window.submitted.has(timestamp))return false;
+    if(!window.frames)window.config.source_origin_seconds=timestamp;
+    window.submitted.add(timestamp);window.frames++;return true;
+  }
+  private report(window:Window,status:TimerReconstructionResult['status'],message?:string) {
+    const config=window.config;
+    this.update(window.id,{status,message,frames:window.frames,result:window.result,
+      moves:window.result?.steps.flatMap(step=>step.state_moves),
+      config:{scramble:config.scramble,fps:config.fps,source_fps:config.source_fps,frame_clock:config.frame_clock,
+        requested_start_seconds:window.start,source_origin_seconds:config.source_origin_seconds??window.start,
+        source_end_seconds:window.end??config.source_origin_seconds??window.start}});
+  }
+  private open(window:Window) {
+    window.search=this.factory(window.config,(result,ended)=>{
+      if(window.disposed||window.failure)return;
+      window.result=result;
+      const solved=result.status==='solved'||result.status==='already_solved';
+      if(this.terminal(result))this.clearDeadline(window);
+      this.report(window,solved?'solved':this.terminal(result)?'failed':'searching',
+        this.terminal(result)&&!solved?`Search ${result.status.replaceAll('_',' ')}`:window.paused?'Search paused for a newer solve':this.cameraBackpressure&&!window.closed?'Searching while camera processing catches up':undefined);
+      if(ended&&this.terminal(result)&&window.closed){this.remove(window);this.prioritize();}
+    },message=>this.fail(window,message),window.id);
+    this.report(window,'searching');
+  }
+  private close(window:Window) {
+    window.closed=true;
+    this.prioritize();
+    if(window.failure||!window.search){
+      this.fail(window,window.failure??'No fitted camera frames in this solve');this.remove(window);this.prioritize();return;
+    }
+    void window.search.end().catch(error=>this.fail(window,error instanceof Error?error.message:String(error)));
+  }
+  private fail(window:Window,message:string) {
+    if(window.disposed)return;
+    this.clearDeadline(window);
+    window.failure??=message;window.search?.dispose();window.search=undefined;
+    this.report(window,'failed',window.failure);
+    if(window.closed){this.remove(window);this.prioritize();}
+  }
+  private remove(window:Window) {
+    if(window.disposed)return;
+    this.clearDeadline(window);
+    window.disposed=true;window.search?.dispose();this.windows.delete(window.id);
+    this.finished(window.id);
+  }
+  private clearDeadline(window:Window){clearTimeout(window.deadline);window.deadline=undefined;}
+  private prioritize() {
+    const runnable=[...this.windows.values()].filter(window=>!window.failure&&!window.disposed);
+    const newest=runnable.at(-1);
+    for(const window of runnable){
+      if(!window.search)continue;
+      // Persistent camera saturation must not starve search. Space expansion
+      // chunks apart while busy, but keep preparing frames and making progress.
+      window.search.setPacing?.(this.cameraBackpressure&&!window.closed?25:0);
+      const paused=window!==newest;
+      if(paused===window.paused)continue;
+      window.paused=paused;
+      if(paused){window.search.pause?.();if(!this.terminal(window.result))this.report(window,'searching','Search paused for a newer solve');}
+      else{window.search.resume?.();if(!this.terminal(window.result))this.report(window,'searching');}
+    }
+  }
+}

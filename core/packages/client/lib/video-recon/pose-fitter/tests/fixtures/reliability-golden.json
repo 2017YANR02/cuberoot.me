@@ -1,0 +1,227 @@
+[
+  {
+    "case": "jeff",
+    "frame": 0,
+    "robust_error": 0.01774640139243914,
+    "inlier_count": 21,
+    "landmarks": 11,
+    "stickers": 10,
+    "reason": null
+  },
+  {
+    "case": "jeff",
+    "frame": 346,
+    "robust_error": 0.11886381268733784,
+    "inlier_count": 12,
+    "landmarks": 11,
+    "stickers": 7,
+    "reason": "moderate_error_with_weak_support"
+  },
+  {
+    "case": "jeff",
+    "frame": 356,
+    "robust_error": 0.14793070508200679,
+    "inlier_count": 14,
+    "landmarks": 13,
+    "stickers": 7,
+    "reason": "moderate_error_with_weak_support"
+  },
+  {
+    "case": "jeff",
+    "frame": 358,
+    "robust_error": 0.1496177398012734,
+    "inlier_count": 4,
+    "landmarks": 7,
+    "stickers": 5,
+    "reason": "moderate_error_with_weak_support"
+  },
+  {
+    "case": "jeff",
+    "frame": 408,
+    "robust_error": 0.14279594953929747,
+    "inlier_count": 7,
+    "landmarks": 7,
+    "stickers": 4,
+    "reason": "moderate_error_with_weak_support"
+  },
+  {
+    "case": "jeff",
+    "frame": 410,
+    "robust_error": 0.12182971713383461,
+    "inlier_count": 8,
+    "landmarks": 7,
+    "stickers": 3,
+    "reason": "moderate_error_with_weak_support"
+  },
+  {
+    "case": "jeff",
+    "frame": 458,
+    "robust_error": 0.16173508274800882,
+    "inlier_count": 12,
+    "landmarks": 10,
+    "stickers": 7,
+    "reason": "high_robust_geometric_error"
+  },
+  {
+    "case": "jeff",
+    "frame": 670,
+    "robust_error": 0.14460978220281667,
+    "inlier_count": 7,
+    "landmarks": 8,
+    "stickers": 6,
+    "reason": "moderate_error_with_weak_support"
+  },
+  {
+    "case": "jeff",
+    "frame": 770,
+    "robust_error": 0.08047910124954644,
+    "inlier_count": 9,
+    "landmarks": 5,
+    "stickers": 5,
+    "reason": "sparse_pose_evidence"
+  },
+  {
+    "case": "jeff",
+    "frame": 790,
+    "robust_error": 0.11134183539031645,
+    "inlier_count": 12,
+    "landmarks": 9,
+    "stickers": 7,
+    "reason": "moderate_error_with_weak_support"
+  },
+  {
+    "case": "jeff",
+    "frame": 800,
+    "robust_error": 0.12097359342626872,
+    "inlier_count": 13,
+    "landmarks": 11,
+    "stickers": 7,
+    "reason": "moderate_error_with_weak_support"
+  },
+  {
+    "case": "jeff",
+    "frame": 806,
+    "robust_error": 0.05364864023111598,
+    "inlier_count": 9,
+    "landmarks": 4,
+    "stickers": 5,
+    "reason": "sparse_pose_evidence"
+  },
+  {
+    "case": "jeff",
+    "frame": 938,
+    "robust_error": 0.005731844719324796,
+    "inlier_count": 6,
+    "landmarks": 5,
+    "stickers": 1,
+    "reason": "sparse_pose_evidence"
+  },
+  {
+    "case": "matty",
+    "frame": 54,
+    "robust_error": 0.10818787598282123,
+    "inlier_count": 40,
+    "landmarks": 24,
+    "stickers": 23,
+    "reason": null
+  },
+  {
+    "case": "matty",
+    "frame": 574,
+    "robust_error": 0.4043529031062194,
+    "inlier_count": 4,
+    "landmarks": 8,
+    "stickers": 8,
+    "reason": "high_robust_geometric_error"
+  },
+  {
+    "case": "tommy2",
+    "frame": 692,
+    "robust_error": 0.11613406216758877,
+    "inlier_count": 15,
+    "landmarks": 10,
+    "stickers": 8,
+    "reason": null
+  },
+  {
+    "case": "tommy2",
+    "frame": 804,
+    "robust_error": 0.10011412644796533,
+    "inlier_count": 24,
+    "landmarks": 15,
+    "stickers": 12,
+    "reason": null
+  },
+  {
+    "case": "yiheng",
+    "frame": 80,
+    "robust_error": 0.0518873047675639,
+    "inlier_count": 28,
+    "landmarks": 17,
+    "stickers": 12,
+    "reason": null
+  },
+  {
+    "case": "yiheng",
+    "frame": 81,
+    "robust_error": 0.1924553661524866,
+    "inlier_count": 9,
+    "landmarks": 13,
+    "stickers": 7,
+    "reason": "high_robust_geometric_error"
+  },
+  {
+    "case": "yiheng",
+    "frame": 82,
+    "robust_error": 0.20277290227859793,
+    "inlier_count": 9,
+    "landmarks": 8,
+    "stickers": 5,
+    "reason": "high_robust_geometric_error"
+  },
+  {
+    "case": "yiheng",
+    "frame": 83,
+    "robust_error": 0.022790005787954863,
+    "inlier_count": 22,
+    "landmarks": 12,
+    "stickers": 10,
+    "reason": null
+  },
+  {
+    "case": "tommy",
+    "frame": 348,
+    "robust_error": 0.02930817732129625,
+    "inlier_count": 27,
+    "landmarks": 12,
+    "stickers": 15,
+    "reason": null
+  },
+  {
+    "case": "tommy",
+    "frame": 350,
+    "robust_error": 0.9766359869404551,
+    "inlier_count": 2,
+    "landmarks": 9,
+    "stickers": 9,
+    "reason": "high_robust_geometric_error"
+  },
+  {
+    "case": "tommy",
+    "frame": 352,
+    "robust_error": 0.01757051875308115,
+    "inlier_count": 10,
+    "landmarks": 6,
+    "stickers": 4,
+    "reason": null
+  },
+  {
+    "case": "tommy",
+    "frame": 354,
+    "robust_error": 0.052869054626501544,
+    "inlier_count": 15,
+    "landmarks": 9,
+    "stickers": 6,
+    "reason": null
+  }
+]
