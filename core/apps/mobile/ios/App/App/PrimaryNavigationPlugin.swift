@@ -9,6 +9,7 @@ final class PrimaryNavigationPlugin: CAPPlugin, CAPBridgedPlugin {
     let jsName = "PrimaryNavigation"
     let pluginMethods: [CAPPluginMethod] = [CAPPluginMethod(name: "setNavigation", returnType: CAPPluginReturnPromise)]
     private var overlay: UIHostingController<NavigationCapsule>?
+    private var systemCapsule: SystemNavigationCapsule?
     private var searchOverlay: UIHostingController<NavigationSearchButton>?
     private let model = NavigationCapsule.Model()
 
@@ -26,6 +27,7 @@ final class PrimaryNavigationPlugin: CAPPlugin, CAPBridgedPlugin {
                   let rawItems = state["items"] as? [[String: Any]],
                   let selected = state["selected"] as? String else {
                 self.overlay?.view.isHidden = true
+                self.systemCapsule?.isHidden = true
                 self.searchOverlay?.view.isHidden = true
                 call.resolve(["rendered": false])
                 return
@@ -34,17 +36,29 @@ final class PrimaryNavigationPlugin: CAPPlugin, CAPBridgedPlugin {
             guard items.count == 3, Set(items.map(\.id)).count == items.count,
                   items.contains(where: { $0.id == selected }) else {
                 self.overlay?.view.isHidden = true
+                self.systemCapsule?.isHidden = true
                 self.searchOverlay?.view.isHidden = true
                 call.resolve(["rendered": false])
                 return
             }
 
-            let view = self.overlay ?? self.installOverlay(in: parent)
-            view.overrideUserInterfaceStyle = state["dark"] as? Bool == true ? .dark : .light
+            let style: UIUserInterfaceStyle = state["dark"] as? Bool == true ? .dark : .light
             let vertical = state["vertical"] as? Bool == true
             let wasVertical = self.model.state.vertical
             self.model.state = .init(items: items, selected: selected, vertical: vertical)
-            let capsule = view.view!
+            let capsule: UIView
+            if #available(iOS 26, *), !vertical {
+                let control = self.systemCapsule ?? self.installSystemCapsule(in: parent)
+                self.overlay?.view.isHidden = true
+                control.apply(items: items, selected: selected)
+                control.overrideUserInterfaceStyle = style
+                capsule = control
+            } else {
+                let overlay = self.overlay ?? self.installOverlay(in: parent)
+                self.systemCapsule?.isHidden = true
+                overlay.overrideUserInterfaceStyle = style
+                capsule = overlay.view
+            }
             let target = webView.convert(CGRect(x: x, y: y, width: width, height: height), to: parent.view)
             let current = capsule.frame
             if target != current {
@@ -76,7 +90,7 @@ final class PrimaryNavigationPlugin: CAPPlugin, CAPBridgedPlugin {
                     self.searchOverlay = accessory
                 }
                 accessory.rootView = action
-                accessory.overrideUserInterfaceStyle = view.overrideUserInterfaceStyle
+                accessory.overrideUserInterfaceStyle = style
                 accessory.view.frame = webView.convert(CGRect(x: x, y: y, width: width, height: height), to: parent.view)
                 accessory.view.isHidden = false
             } else {
@@ -84,6 +98,16 @@ final class PrimaryNavigationPlugin: CAPPlugin, CAPBridgedPlugin {
             }
             call.resolve(["rendered": true])
         }
+    }
+
+    private func installSystemCapsule(in parent: UIViewController) -> SystemNavigationCapsule {
+        let control = SystemNavigationCapsule { [weak self] id in
+            self?.notifyListeners("select", data: ["id": id])
+        }
+        control.isHidden = true
+        parent.view.addSubview(control)
+        systemCapsule = control
+        return control
     }
 
     private func installOverlay(in parent: UIViewController) -> UIHostingController<NavigationCapsule> {
@@ -101,6 +125,80 @@ final class PrimaryNavigationPlugin: CAPPlugin, CAPBridgedPlugin {
         controller.view.backgroundColor = .clear
         parent.view.addSubview(controller.view)
         controller.didMove(toParent: parent)
+    }
+}
+
+/// A standalone system tab bar with a hit region equal to the shared capsule frame.
+@available(iOS 16.4, *)
+private final class SystemNavigationCapsule: UIView, UITabBarDelegate {
+    private let tabBar = UITabBar()
+    private let onSelect: (String) -> Void
+    private var ids: [String] = []
+    private var committedSelection: String?
+    private var pendingSelection: Task<Void, Never>?
+
+    init(onSelect: @escaping (String) -> Void) {
+        self.onSelect = onSelect
+        super.init(frame: .zero)
+        tabBar.delegate = self
+        tabBar.tintColor = .label
+        tabBar.unselectedItemTintColor = .label
+        addSubview(tabBar)
+    }
+
+    required init?(coder: NSCoder) { nil }
+
+    override func layoutSubviews() {
+        super.layoutSubviews()
+        // The floating pill is inset from the tab bar's side and bottom edges.
+        tabBar.frame = CGRect(x: -22, y: -2, width: bounds.width + 44, height: bounds.height + 22)
+    }
+
+    func apply(items: [NavigationCapsule.Item], selected: String) {
+        let incomingIDs = items.map(\.id)
+        let replacedItems = incomingIDs != ids
+        if replacedItems {
+            ids = incomingIDs
+            let configuration = UIImage.SymbolConfiguration(pointSize: 18, weight: .medium)
+            tabBar.setItems(items.map { item in
+                UITabBarItem(
+                    title: nil,
+                    image: UIImage(systemName: item.symbol, withConfiguration: configuration),
+                    selectedImage: nil
+                )
+            }, animated: false)
+        }
+        let barItems = tabBar.items ?? []
+        for (tab, item) in zip(barItems, items) {
+            tab.accessibilityLabel = item.label
+            tab.isEnabled = !item.disabled
+        }
+        // Geometry updates can arrive during a scrub. Only apply a new host selection.
+        if replacedItems || selected != committedSelection || isHidden,
+           let index = ids.firstIndex(of: selected), barItems.indices.contains(index) {
+            pendingSelection?.cancel()
+            tabBar.selectedItem = barItems[index]
+            committedSelection = selected
+        }
+    }
+
+    func tabBar(_ tabBar: UITabBar, didSelect item: UITabBarItem) {
+        guard item.isEnabled,
+              let index = tabBar.items?.firstIndex(where: { $0 === item }),
+              ids.indices.contains(index) else { return }
+        let id = ids[index]
+        pendingSelection?.cancel()
+        if id != committedSelection {
+            // UIKit selects immediately. Restore the host selection if navigation was rejected.
+            pendingSelection = Task { @MainActor [weak self] in
+                try? await Task.sleep(for: .milliseconds(400))
+                guard !Task.isCancelled, let self,
+                      let index = self.ids.firstIndex(where: { $0 == self.committedSelection }),
+                      let items = self.tabBar.items, items.indices.contains(index) else { return }
+                self.tabBar.selectedItem = items[index]
+            }
+        }
+        onSelect(id)
     }
 }
 
@@ -136,10 +234,20 @@ private struct NavigationCapsule: View {
         @Published var state = State()
     }
 
+    private struct Touch {
+        var progress: CGFloat?
+    }
+
     @ObservedObject var model: Model
     let onSelect: (String) -> Void
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
-    @GestureState private var dragIndex: Int?
+    @GestureState private var touch: Touch?
+    @State private var landingItem: String?
+    @State private var settleTask: Task<Void, Never>?
+
+    private static let settleDuration = 0.28
+    private let lift = Animation.spring(response: 0.17, dampingFraction: 0.85)
+    private var settle: Animation { .spring(response: Self.settleDuration, dampingFraction: 0.82) }
 
     var body: some View {
         GeometryReader { geometry in
@@ -148,23 +256,31 @@ private struct NavigationCapsule: View {
             let slotWidth = vertical ? geometry.size.width : geometry.size.width / 3
             let slotHeight = vertical ? geometry.size.height / 3 : geometry.size.height
             let selectedIndex = state.items.firstIndex(where: { $0.id == state.selected }) ?? 0
-            let highlightedIndex = CGFloat(dragIndex ?? selectedIndex)
+            let landingIndex = state.items.firstIndex(where: { $0.id == landingItem && !$0.disabled })
+            let dragPosition = touch?.progress
+            let progress = dragPosition ?? CGFloat(landingIndex ?? selectedIndex)
+            let raised = !reduceMotion && (touch != nil || landingIndex != nil)
+            let alongScale: CGFloat = raised ? 1.20 : 1
+            let crossScale: CGFloat = raised ? 1.24 : 1
             let layout = vertical ? AnyLayout(VStackLayout(spacing: 0)) : AnyLayout(HStackLayout(spacing: 0))
 
             ZStack(alignment: .topLeading) {
-                Capsule()
-                    .fill(Color(uiColor: .tertiarySystemFill))
-                    .padding(4)
-                    .frame(width: slotWidth, height: slotHeight)
-                    .offset(x: vertical ? 0 : highlightedIndex * slotWidth, y: vertical ? highlightedIndex * slotHeight : 0)
-                    .animation(reduceMotion ? nil : .spring(response: 0.32, dampingFraction: 0.8), value: highlightedIndex)
+                NavigationSelectionLens(raised: raised)
+                    .frame(
+                        width: max(1, slotWidth - 8) * (vertical ? crossScale : alongScale),
+                        height: max(1, slotHeight - 8) * (vertical ? alongScale : crossScale)
+                    )
+                    .animation(reduceMotion ? nil : (raised ? lift : settle), value: raised)
+                    .position(x: slotWidth * (vertical ? 0.5 : progress + 0.5),
+                              y: slotHeight * (vertical ? progress + 0.5 : 0.5))
+                    .animation(reduceMotion || dragPosition != nil ? nil : settle, value: progress)
                     .allowsHitTesting(false)
                     .accessibilityHidden(true)
 
                 layout {
                     ForEach(state.items) { item in
                         Button {
-                            onSelect(item.id)
+                            select(item)
                         } label: {
                             NavigationIcon(symbol: item.symbol)
                                 .frame(width: slotWidth, height: slotHeight)
@@ -179,29 +295,90 @@ private struct NavigationCapsule: View {
             }
             .contentShape(Capsule())
             .simultaneousGesture(
-                DragGesture(minimumDistance: 10)
-                    .updating($dragIndex) { drag, highlight, _ in
-                        highlight = destination(for: drag, size: geometry.size, state: state)
+                DragGesture(minimumDistance: 0)
+                    .updating($touch) { drag, contact, _ in
+                        guard state.items.contains(where: { !$0.disabled }) else { return }
+                        contact = Touch(progress: position(
+                            for: drag, size: geometry.size, state: state, tracking: contact?.progress != nil
+                        ))
                     }
                     .onEnded { drag in
-                        if let index = destination(for: drag, size: geometry.size, state: state) {
-                            onSelect(state.items[index].id)
-                        }
+                        guard let progress = position(
+                            for: drag, size: geometry.size, state: state, tracking: touch?.progress != nil
+                        ) else { return }
+                        let index = Int(progress.rounded())
+                        guard state.items.indices.contains(index) else { return }
+                        select(state.items[index])
                     }
             )
         }
-        .modifier(NavigationGlass())
+        .modifier(NavigationGlass(interactive: false))
+        .onDisappear {
+            settleTask?.cancel()
+            landingItem = nil
+        }
     }
 
-    private func destination(for drag: DragGesture.Value, size: CGSize, state: State) -> Int? {
+    private func position(for drag: DragGesture.Value, size: CGSize, state: State, tracking: Bool) -> CGFloat? {
         let distance = state.vertical ? drag.translation.height : drag.translation.width
         let crossDistance = state.vertical ? drag.translation.width : drag.translation.height
         let length = state.vertical ? size.height : size.width
-        let point = state.vertical ? drag.location.y : drag.location.x
-        guard length > 0, abs(distance) > abs(crossDistance) else { return nil }
+        let start = state.vertical ? drag.startLocation.y : drag.startLocation.x
+        guard length > 0, tracking || (abs(distance) >= 2 && abs(distance) > abs(crossDistance)) else { return nil }
 
-        let index = min(2, Int(max(0, point) / (length / 3)))
-        return state.items.indices.contains(index) && !state.items[index].disabled ? index : nil
+        // Preserve the original offset between the finger and the lens center.
+        let slotLength = length / 3
+        let startSlot = min(2, max(0, (start / slotLength).rounded(.down)))
+        return min(2, max(0, startSlot + distance / slotLength))
+    }
+
+    private func select(_ item: Item) {
+        guard !item.disabled else { return }
+        if !reduceMotion {
+            // Start settling locally while the host commits the destination.
+            settleTask?.cancel()
+            landingItem = item.id
+            settleTask = Task { @MainActor in
+                try? await Task.sleep(for: .seconds(Self.settleDuration))
+                guard !Task.isCancelled else { return }
+                landingItem = nil
+            }
+        }
+        onSelect(item.id)
+    }
+}
+
+private struct NavigationSelectionLens: View {
+    let raised: Bool
+    @Namespace private var lensNamespace
+    @Environment(\.accessibilityReduceTransparency) private var reduceTransparency
+
+    var body: some View {
+        ZStack {
+            Capsule()
+                .fill(Color(uiColor: .tertiarySystemFill))
+                .opacity(usesGlass ? 0 : 1)
+            #if compiler(>=6.2)
+            if #available(iOS 26, *) {
+                // Keep the moving lens separate from the bar's fixed backdrop.
+                GlassEffectContainer {
+                    if usesGlass {
+                        Color.clear
+                            .glassEffect(.regular.interactive(), in: .capsule)
+                            .glassEffectID("selection", in: lensNamespace)
+                            .glassEffectTransition(.materialize)
+                    }
+                }
+            }
+            #endif
+        }
+    }
+
+    private var usesGlass: Bool {
+        #if compiler(>=6.2)
+        if #available(iOS 26, *) { return raised && !reduceTransparency }
+        #endif
+        return false
     }
 }
 
@@ -242,10 +419,12 @@ private struct NavigationIcon: View {
 }
 
 private struct NavigationGlass: ViewModifier {
+    var interactive = true
+
     func body(content: Content) -> some View {
         #if compiler(>=6.2)
         if #available(iOS 26, *) {
-            content.glassEffect(.regular.interactive(), in: .capsule)
+            content.glassEffect(.regular.interactive(interactive), in: .capsule)
         } else {
             content.background(.regularMaterial, in: Capsule())
         }
