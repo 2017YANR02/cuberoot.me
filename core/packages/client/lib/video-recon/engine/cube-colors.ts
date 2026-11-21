@@ -3,9 +3,6 @@ import geometry from "../pose-fitter/tables/render-geometry.json";
 import type { MoveStep } from "./move-search-types";
 
 export type CubeColor = "white" | "yellow" | "orange" | "red" | "blue" | "green";
-export const CUBE_PALETTE: Record<CubeColor,string> = {
-  white:"#f5f6f2",yellow:"#ffd83d",orange:"#ff922d",red:"#e83b3b",blue:"#236ee8",green:"#23b86d",
-};
 export interface CubeStateSnapshot {colors:CubeColor[];stickers:number[];moves:readonly string[]}
 export interface ColorTimeline { initial:CubeColor[]; initialStickers:number[]; initialMoves:readonly string[];frames:({frame:number}&CubeStateSnapshot)[] }
 const sources = tables.moves as Record<string,number[]>;
