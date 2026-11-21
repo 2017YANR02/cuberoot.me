@@ -104,6 +104,7 @@ export async function openVideoFile(file: File) {
         "This browser cannot decode this video. Try an H.264 MP4.",
       );
     const duration = await track.computeDuration();
+    const firstTimestamp = await track.getFirstTimestamp();
     const metrics = await track.computeFrameRateMetrics();
     const sink = new CanvasSink(track, { poolSize: 2 });
     const previewSink = new CanvasSink(track, { poolSize: 1 });
@@ -140,8 +141,7 @@ export async function openVideoFile(file: File) {
       next: () => prefetch.next(),
       async preview(timestamp: number, thumbnail = false) {
         const selectedSink = thumbnail ? thumbnailSink : previewSink;
-        const value = await selectedSink.getCanvas(Math.max(timestamp, 0.001)) ??
-          (timestamp < 1 / metrics.averageFrameRate ? await selectedSink.getCanvas(1 / metrics.averageFrameRate) : null);
+        const value = await selectedSink.getCanvas(Math.max(timestamp, firstTimestamp));
         if (!value || closed) return null;
         return { bitmap: await createImageBitmap(value.canvas), timestamp: value.timestamp };
       },
