@@ -10,7 +10,7 @@ const searchField = '.landing-page > .landing-search .landing-search-field';
 const isInset = value => Number.isFinite(value) && value >= 0 && value <= 512;
 
 window.addEventListener('message', ({ source, origin, data }) => {
-  if (source !== window.parent || (origin !== 'capacitor://localhost' && origin !== 'https://localhost')
+  if (source !== window.parent || !parentOrigins.includes(origin)
     || data?.type !== 'cuberoot:mobile:init' || data.surface !== surface) return;
 
   const pathname = location.pathname.replace(/^\/(?:en|zh)(?=\/|$)/, '').replace(/\/$/, '') || '/';

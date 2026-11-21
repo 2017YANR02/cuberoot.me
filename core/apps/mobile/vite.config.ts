@@ -7,7 +7,7 @@ const resolve = createRequire(import.meta.url).resolve;
 const startupMark = readFileSync(new URL('../../assets/brand/CubeRoot-mark.svg', import.meta.url), 'utf8')
   .replace('<g>', '<style>@media (prefers-color-scheme: dark) { path { fill: #fff; } }</style><g>');
 const embeddedStyles = readFileSync(resolve('@cuberoot/app-ui/embedded-layout.css'), 'utf8');
-const embeddedLayoutScript = readFileSync(new URL('./src/embedded-layout.js', import.meta.url), 'utf8');
+const embeddedLayoutScript = readFileSync(resolve('@cuberoot/app-ui/embedded-layout.js'), 'utf8');
 
 export default defineConfig({
   build: {
@@ -28,7 +28,7 @@ export default defineConfig({
       this.emitFile({
         type: 'asset',
         fileName: 'embedded-layout.js',
-        source: `(() => { const styles = ${JSON.stringify(embeddedStyles)};\n${embeddedLayoutScript}\n})();`,
+        source: `(() => { const parentOrigins = ['capacitor://localhost', 'https://localhost']; const styles = ${JSON.stringify(embeddedStyles)};\n${embeddedLayoutScript}\n})();`,
       });
     },
   }],

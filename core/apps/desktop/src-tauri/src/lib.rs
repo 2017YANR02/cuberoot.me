@@ -64,7 +64,13 @@ fn secure_remove(key: String) -> Result<(), String> {
 }
 
 pub fn run() {
+    let layout_script = format!(
+        "(() => {{ const parentOrigins = ['tauri://localhost', 'https://tauri.localhost', 'http://127.0.0.1:1420']; const styles = {};\n{}\n}})();",
+        serde_json::json!(include_str!("../../../../packages/app-ui/src/embedded-layout.css")),
+        include_str!("../../../../packages/app-ui/src/embedded-layout.js")
+    );
     tauri::Builder::default()
+        .plugin(tauri::plugin::Builder::<_>::new("embedded-layout").js_init_script_on_all_frames(layout_script).build())
         .plugin(tauri_plugin_single_instance::init(|app, _args, _cwd| {
             if let Some(window) = app.get_webview_window("main") {
                 let _ = window.show();
