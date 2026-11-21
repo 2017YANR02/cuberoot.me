@@ -6,7 +6,7 @@ interface PopoverPositionOptions {
   triggerRef: RefObject<HTMLElement | null>;
   panelRef: RefObject<HTMLElement | null>;
   contentAnchorRef?: RefObject<HTMLElement | null>;
-  align?: 'start' | 'center';
+  align?: 'start' | 'center' | 'end';
   side?: 'vertical' | 'right' | 'top';
   viewportBottomInset?: number;
   /** Use the full viewport when neither side of the trigger fits the menu. */
@@ -22,6 +22,7 @@ interface PanelGeometry {
   maxHeight: number;
   maxWidth: number;
   top: number;
+  translate?: string;
 }
 
 const VIEWPORT_MARGIN = 8;
@@ -62,26 +63,31 @@ export function usePopoverPosition({
         viewportTop + viewportHeight - VIEWPORT_MARGIN - Math.max(0, viewportBottomInset),
       );
       const anchor = (contentAnchorRef?.current ?? trigger).getBoundingClientRect();
+      const rightLeft = Math.max(safeLeft, Math.min(anchor.right + POPOVER_GAP, safeRight));
+      const safeWidth = Math.max(0, safeRight - (side === 'right' ? rightLeft : safeLeft));
       // A previous search may have shrunk the menu. Measure without that cap:
       // nested flex/scroll containers otherwise report the old, clipped height.
       const previousMaxHeight = panel.style.maxHeight;
+      const previousMaxWidth = panel.style.maxWidth;
       panel.style.maxHeight = 'none';
+      if (align === 'end') {
+        panel.style.maxWidth = `min(${safeWidth}px, var(--popover-max-width, 100%))`;
+      }
       const panelRect = panel.getBoundingClientRect();
       const optionContent = contentAnchorRef ? panel.querySelector('.compact-select-option')?.firstElementChild : null;
       const contentInset = contentAnchorRef?.current && optionContent
         ? optionContent.getBoundingClientRect().left - panelRect.left
         : 0;
-      const rightLeft = Math.max(safeLeft, Math.min(anchor.right + POPOVER_GAP, safeRight));
-      const safeWidth = Math.max(0, safeRight - (side === 'right' ? rightLeft : safeLeft));
       const naturalWidth = Math.max(panel.scrollWidth, panelRect.width) || anchor.width;
-      const desiredWidth = Math.min(naturalWidth, safeWidth);
+      const desiredWidth = align === 'end' ? panelRect.width : Math.min(naturalWidth, safeWidth);
       const left = side === 'right' ? rightLeft : Math.min(
         Math.max(align === 'center' ? anchor.left + (anchor.width - desiredWidth) / 2 : anchor.left - contentInset, safeLeft),
         Math.max(safeLeft, safeRight - desiredWidth),
       );
-      const belowTop = anchor.bottom + POPOVER_GAP;
+      const belowTop = align === 'end' ? Math.max(safeTop, anchor.bottom + POPOVER_GAP) : anchor.bottom + POPOVER_GAP;
+      const aboveBottom = align === 'end' ? Math.min(safeBottom, anchor.top - POPOVER_GAP) : anchor.top - POPOVER_GAP;
       const belowSpace = Math.max(0, safeBottom - belowTop);
-      const aboveSpace = Math.max(0, anchor.top - POPOVER_GAP - safeTop);
+      const aboveSpace = Math.max(0, aboveBottom - safeTop);
       const panelCss = getComputedStyle(panel);
       const borderHeight = (parseFloat(panelCss.borderTopWidth) || 0) + (parseFloat(panelCss.borderBottomWidth) || 0);
       // scrollHeight includes padding, but the border-box height also needs both borders.
@@ -91,20 +97,28 @@ export function usePopoverPosition({
       const contentHeight = columnHeight || panel.scrollHeight;
       const desiredHeight = contentHeight ? contentHeight + borderHeight : panelRect.height;
       panel.style.maxHeight = previousMaxHeight;
+      if (align === 'end') panel.style.maxWidth = previousMaxWidth;
       const placeBelow = side === 'top'
         ? aboveSpace < Math.min(desiredHeight, belowSpace)
         : belowSpace >= Math.min(desiredHeight, aboveSpace);
       const availableHeight = side === 'right' || allowAnchorOverlap
         ? safeBottom - safeTop : placeBelow ? belowSpace : aboveSpace;
-      const maxHeight = Math.min(Math.max(0, desiredHeight), availableHeight);
-      const top = side === 'right'
+      // Keep the aligned edge fixed if live content changes the panel's size.
+      const alignEnd = align === 'end' && side !== 'right';
+      const panelRight = Math.min(safeRight, Math.max(safeLeft + desiredWidth, anchor.right));
+      const maxWidth = alignEnd ? Math.max(0, panelRight - safeLeft) : safeWidth;
+      const maxHeight = alignEnd ? (placeBelow ? belowSpace : aboveSpace) : Math.min(Math.max(0, desiredHeight), availableHeight);
+      const top = alignEnd ? (placeBelow ? belowTop : aboveBottom)
+        : side === 'right'
         ? Math.max(safeTop, Math.min(anchor.top, safeBottom - maxHeight))
         : placeBelow
         ? Math.max(safeTop, Math.min(belowTop, safeBottom - maxHeight))
         : Math.max(safeTop, anchor.top - POPOVER_GAP - maxHeight);
-      setGeometry(previous => previous?.left === left && previous.top === top
-        && previous.maxHeight === maxHeight && previous.maxWidth === safeWidth
-        ? previous : { left, maxHeight, maxWidth: safeWidth, top });
+      const horizontalOrigin = alignEnd ? panelRight : left;
+      const translate = alignEnd ? (placeBelow ? '-100% 0' : '-100% -100%') : undefined;
+      setGeometry(previous => previous?.left === horizontalOrigin && previous.top === top
+        && previous.maxHeight === maxHeight && previous.maxWidth === maxWidth && previous.translate === translate
+        ? previous : { left: horizontalOrigin, maxHeight, maxWidth, top, translate });
     };
 
     const onScroll = (event: Event) => {
@@ -132,8 +146,11 @@ export function usePopoverPosition({
   return geometry ? {
     left: geometry.left,
     maxHeight: geometry.maxHeight,
-    maxWidth: geometry.maxWidth,
+    maxWidth: align === 'end'
+      ? `min(${geometry.maxWidth}px, var(--popover-max-width, 100%))`
+      : geometry.maxWidth,
     top: geometry.top,
+    translate: geometry.translate,
     visibility: 'visible',
   } satisfies CSSProperties : undefined;
 }

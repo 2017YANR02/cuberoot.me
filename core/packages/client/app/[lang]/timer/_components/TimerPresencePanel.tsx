@@ -35,6 +35,7 @@ export default function TimerPresencePanel({ snapshot }: { snapshot: TimerPresen
       className="timer-presence"
       triggerClassName="timer-presence-trigger"
       popupClassName="timer-presence-panel"
+      align="end"
       unstyledTrigger
       showArrow={false}
       ariaLabel={title}

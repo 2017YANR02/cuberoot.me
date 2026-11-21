@@ -46,7 +46,7 @@ export interface CompactSelectProps<T extends string | number> {
   popupClassName?: string;
   /** Align option content with an external row containing the trigger. */
   contentAnchorRef?: RefObject<HTMLElement | null>;
-  align?: 'start' | 'center';
+  align?: 'start' | 'center' | 'end';
   /** Prefer above for message actions, or right for sidebars; still clamp to the viewport. */
   side?: 'vertical' | 'right' | 'top';
   variant?: 'pill' | 'plain';

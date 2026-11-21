@@ -39,11 +39,13 @@
   line-height: 1;
 }
 .timer-presence-panel {
-  /* Shared CompactSelect owns fixed/top-layer positioning and viewport limits. */
+  --popover-max-width: 420px;
+  box-sizing: border-box;
   margin: 0;
   width: max-content;
-  max-width: min(420px, calc(100vw - 16px));
   overflow-y: auto;
+  overscroll-behavior: contain;
+  overflow-wrap: anywhere;
   padding: 8px;
   border: 1px solid var(--border-default);
   border-radius: 6px;
