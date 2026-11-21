@@ -21,6 +21,24 @@
   },
   "manualContracts": [
     {
+      "id": "video-recon-opencv-wasm-build",
+      "from": "packages/client/lib/video-recon/pose-fitter/tools/build-opencv-wasm.mjs",
+      "to": "CMake and the operator-provided Emscripten SDK",
+      "phase": "subprocess-native",
+      "mechanism": "One shell-free spawnSync adapter runs emcmake, cmake and em++ to configure, build and link the OpenCV 5.0.0 pose kernels.",
+      "owner": "video reconstruction maintainers",
+      "rationale": "The offline rebuild CLI produces the pinned PnP bindings consumed by the browser worker.",
+      "replacement": "Keep tool execution in the opt-in offline rebuild CLI and use the generated WASM and JavaScript in the product.",
+      "subprocessCalls": [
+        { "file": "packages/client/lib/video-recon/pose-fitter/tools/build-opencv-wasm.mjs", "mechanism": "spawnSync", "target": "<dynamic>", "count": 1 }
+      ],
+      "evidence": [
+        { "file": "core/packages/client/lib/video-recon/pose-fitter/tools/build-opencv-wasm.mjs", "contains": "run(join(emscripten, 'emcmake'), ['cmake'" },
+        { "file": "core/packages/client/lib/video-recon/pose-fitter/tools/build-opencv-wasm.mjs", "contains": "run('cmake', ['--build'" },
+        { "file": "core/packages/client/lib/video-recon/pose-fitter/tools/build-opencv-wasm.mjs", "contains": "run(join(emscripten, 'em++')," }
+      ]
+    },
+    {
       "id": "server-static-music-manifest-lock",
       "from": "apps/api/src/utils/music_static_library.ts",
       "to": "Linux advisory lock shared with the music publisher",
