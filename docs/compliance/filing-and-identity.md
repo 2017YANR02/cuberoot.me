@@ -24,4 +24,9 @@
 
 Google Play 开发者身份资料与商家收款资料分开维护；旧资料类型是“组织”，不能因银行户名为个人就记成个人商家账号。暂不迁移是本轮操作决定，不代表已确认新公司可长期使用旧主体收款。应用级声明送审及检查说明见[移动端进度](../product/apps/history/mobile-app-history.md#2026-11-15备案主体迁移与-google-play-交易者声明)。
 
-2026-11-20 更新。阿里云已显示 CubeRoot iOS App 备案管局审核通过，App 备案号 `沪ICP备2025130431号-2A` 已存入 App Store Connect。安卓新增接入可进入下一步，实际提交状态待重新核对。Apple 审核和大陆安全评估见 [Apple 商店首发进度](../product/apps/mobile-app-roadmap.md#2026-11-20-apple-商店首发)。
+## 2026-11-20 更新
+
+- 阿里云显示 CubeRoot iOS App 于北京时间 11 月 20 日 12:24（太平洋时间 11 月 19 日 20:24）通过管局审核。App 备案号 `沪ICP备2025130431号-2A` 已存入 App Store Connect。
+- iOS `1.0`（构建 5）和 macOS `0.1.0`（构建 3）于太平洋时间 11 月 20 日 05:57 提交商店审核，提交后均显示等待审核。见 [Apple 商店首发进度](../product/apps/mobile-app-roadmap.md#2026-11-20-apple-商店首发)。
+- Android 在阿里云现有 CubeRoot App 上通过「变更」添加安卓运行平台，使用官网正式 APK `1.0.3 (1000003)` 的包名和签名特征。平台信息已填，待 App 负责人短信验证后提交。
+- 工作台排期已更新并回读为版本 10，共 48 项。iOS 备案通过和 Apple 两端送审已记为完成，Android 变更备案排在 11 月 20 日，当前待提交。
