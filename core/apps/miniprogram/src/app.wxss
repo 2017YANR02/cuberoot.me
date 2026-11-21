@@ -1,14 +1,34 @@
 page {
-  --cr-bg: #fafafa;
-  --cr-surface: #ffffff;
-  --cr-text: #171717;
-  --cr-muted: #737373;
-  --cr-faint: #a3a3a3;
-  --cr-line: #e5e5e5;
-  --cr-accent: #a94f31;
-  --cr-accent-soft: #f4e7e1;
-  --cr-ready: #2f7d4a;
-  --cr-danger: #b33a3a;
+  --cr-light-bg: #fafafa;
+  --cr-light-surface: #ffffff;
+  --cr-light-text: #171717;
+  --cr-light-muted: #737373;
+  --cr-light-faint: #a3a3a3;
+  --cr-light-line: #e5e5e5;
+  --cr-light-accent: #a94f31;
+  --cr-light-accent-soft: #f4e7e1;
+  --cr-light-ready: #2f7d4a;
+  --cr-light-danger: #b33a3a;
+  --cr-dark-bg: #111111;
+  --cr-dark-surface: #191919;
+  --cr-dark-text: #f5f5f5;
+  --cr-dark-muted: #a3a3a3;
+  --cr-dark-faint: #737373;
+  --cr-dark-line: #303030;
+  --cr-dark-accent: #d47a58;
+  --cr-dark-accent-soft: #35241e;
+  --cr-dark-ready: #67b580;
+  --cr-dark-danger: #e47777;
+  --cr-bg: var(--cr-light-bg);
+  --cr-surface: var(--cr-light-surface);
+  --cr-text: var(--cr-light-text);
+  --cr-muted: var(--cr-light-muted);
+  --cr-faint: var(--cr-light-faint);
+  --cr-line: var(--cr-light-line);
+  --cr-accent: var(--cr-light-accent);
+  --cr-accent-soft: var(--cr-light-accent-soft);
+  --cr-ready: var(--cr-light-ready);
+  --cr-danger: var(--cr-light-danger);
   background: var(--cr-bg);
   color: var(--cr-text);
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
@@ -19,18 +39,20 @@ page {
 
 @media (prefers-color-scheme: dark) {
   page {
-    --cr-bg: #111111;
-    --cr-surface: #191919;
-    --cr-text: #f5f5f5;
-    --cr-muted: #a3a3a3;
-    --cr-faint: #737373;
-    --cr-line: #303030;
-    --cr-accent: #d47a58;
-    --cr-accent-soft: #35241e;
-    --cr-ready: #67b580;
-    --cr-danger: #e47777;
+    --cr-bg: var(--cr-dark-bg);
+    --cr-surface: var(--cr-dark-surface);
+    --cr-text: var(--cr-dark-text);
+    --cr-muted: var(--cr-dark-muted);
+    --cr-faint: var(--cr-dark-faint);
+    --cr-line: var(--cr-dark-line);
+    --cr-accent: var(--cr-dark-accent);
+    --cr-accent-soft: var(--cr-dark-accent-soft);
+    --cr-ready: var(--cr-dark-ready);
+    --cr-danger: var(--cr-dark-danger);
   }
 }
+
+.native-tab-surface { min-height: 100vh; background: var(--cr-bg); color: var(--cr-text); }
 
 button {
   background: transparent;

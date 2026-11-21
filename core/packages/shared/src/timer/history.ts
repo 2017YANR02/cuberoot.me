@@ -3,6 +3,12 @@ import type { TimerHistoryTagId } from './history-tags';
 import { effectiveMs, type Penalty, type Solve } from './types';
 import { formatSolveResult } from './stats';
 
+export const TIMER_RESULTS_TABS_COPY = {
+  times: { en: 'Times', zh: '成绩' },
+  stats: { en: 'Stats', zh: '统计' },
+  close: { en: 'Close', zh: '关闭' },
+} as const;
+
 /** Web `/timer` row-menu actions, in the exact order users reach them. */
 export const TIMER_HISTORY_QUICK_ACTION_IDS = [
   'history.quick.penalty-ok',

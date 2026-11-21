@@ -1,4 +1,5 @@
 import { X } from 'lucide-react';
+import { TIMER_RESULTS_TABS_COPY } from '@cuberoot/shared/timer/history';
 import './timer-results-tabs.css';
 
 /** The compact results rail has two views; statistics includes its chart. */
@@ -12,9 +13,9 @@ export function TimerResultsTabs({ value, onChange, onClose, language }: {
     {(['times', 'stats'] as const).map(tab => <button key={tab} type="button"
       className={`shell-panel-tab${value === tab ? ' active' : ''}`} aria-pressed={value === tab}
       onClick={() => onChange(tab)}>
-      {tab === 'times' ? language === 'zh' ? '成绩' : 'Times' : language === 'zh' ? '统计' : 'Stats'}
+      {TIMER_RESULTS_TABS_COPY[tab][language]}
     </button>)}
     <button type="button" className="shell-panel-close" onClick={onClose}
-      aria-label={language === 'zh' ? '关闭' : 'Close'}><X size={16} /></button>
+      aria-label={TIMER_RESULTS_TABS_COPY.close[language]}><X size={16} /></button>
   </div>;
 }

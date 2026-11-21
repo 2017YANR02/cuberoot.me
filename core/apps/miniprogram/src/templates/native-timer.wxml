@@ -105,7 +105,7 @@
   <button wx:if="{{showColors}}" class="nt-control nt-difficulty-palette" bindtap="toggleDifficultyMenu" data-field="colors" disabled="{{colorsDisabled}}" aria-label="{{copy.difficultyColors}}" aria-expanded="{{panel === 'colors'}}" hover-class="press-feedback"><view class="nt-difficulty-swatch" style="background: {{swatch}}"></view></button>
   <button class="nt-control nt-difficulty-method" bindtap="toggleDifficultyMenu" data-field="method" aria-label="{{copy.difficultyMethod}} · {{copy.difficultyStage}}" aria-expanded="{{panel === 'method'}}" hover-class="press-feedback">{{methodLabel}}</button>
 </template>
-<view class="native-timer {{!battle && !netMode ? 'native-timer--solo' : ''}} {{layoutEditing ? 'native-timer--layout-editing' : ''}}" style="{{appearanceStyle}}{{!battle && !netMode && soloViewportHeight ? ';height:' + soloViewportHeight + 'px' : ''}}">
+<view class="native-timer nt-theme-{{appearanceScheme}} {{!battle && !netMode ? 'native-timer--solo' : ''}} {{layoutEditing ? 'native-timer--layout-editing' : ''}}" style="{{appearanceStyle}}{{!battle && !netMode && soloViewportHeight ? ';height:' + soloViewportHeight + 'px' : ''}}">
   <view id="nt-navigation-palette" aria-hidden="true"></view>
   <block wx:if="{{!battle && !netMode}}">
   <view id="nt-toolbar" class="nt-toolbar" hidden="{{hideChrome}}">
@@ -135,7 +135,7 @@
   <text wx:if="{{error}}" class="nt-error" aria-role="alert">{{error}}</text>
   <button wx:if="{{randomDifficultyStatus === 'error' || randomDifficultyStatus === 'empty' || randomDifficultyStatus === 'rare'}}" class="nt-control" bindtap="retryRandomDifficulty" hover-class="press-feedback">{{copy.retry}}</button>
   <view class="nt-live-workspace {{liveAnalysis ? 'nt-live-workspace--active' : ''}}">
-  <view class="nt-solo-stage {{soloCompactStage ? 'nt-solo-stage--compact' : ''}}" style="padding-top: {{liveAnalysis ? 0 : soloScrambleGap}}px">
+  <view class="nt-solo-stage {{soloCompactStage ? 'nt-solo-stage--compact' : ''}}" style="padding-top: {{liveAnalysis ? 0 : soloScrambleGap}}px" data-timer-surface="stage" bindtouchstart="stageTouch" bindtouchmove="stageTouch" bindtouchend="stageTouch" bindtouchcancel="stageTouch">
   <view class="nt-solo-scramble" hidden="{{!!liveAnalysis}}">
   <view hidden="{{hideChrome}}" id="nt-layout-scrambleGap" class="nt-layout-region" style="top: {{timerLayout.scrambleOffsetY}}px">
     <view wx:if="{{manualEditing && !layoutEditing}}">
@@ -161,7 +161,7 @@
     <text wx:if="{{trainerShown && trainerAnswer}}" class="nt-comment" selectable="{{true}}">{{trainerAnswer.frame}} {{trainerAnswer.notation}}</text>
   </view>
   </view>
-  <view class="nt-solo-center" style="margin-top: {{soloTimerGap}}px">
+  <view class="nt-solo-center" style="margin-top: {{soloTimerGap}}px" data-timer-surface="stage">
   <view class="nt-clock-region">
     <view wx:if="{{timingEnabled}}" id="nt-layout-timerGap" class="nt-layout-region {{trainingTarget || attemptSplitChips.length ? 'nt-clock-with-details' : ''}}" style="top: {{timerLayout.timerOffsetY}}px">
       <button class="nt-clock nt-clock--{{phase}} {{trainingTarget.overshot ? 'nt-target-overshot' : ''}} {{targetPulse ? 'nt-target-pulse-' + targetPulse : ''}}" bindtouchstart="timerDown" bindtouchend="timerUp" bindtouchcancel="timerCancel" aria-label="{{hint}}" hover-class="press-feedback">
@@ -182,7 +182,7 @@
     <button wx:else class="nt-clock nt-manual-entry" bindtap="openSheet" data-sheet="manual" disabled="{{generating || layoutEditing || !canUseCurrentScramble}}" hover-class="press-feedback">{{copy.manualEntry}}</button>
   </view>
   <view wx:if="{{(preview || livePreview) && (!soloCompactStage || livePreview)}}" hidden="{{hideChrome}}" id="nt-layout-cubeGap" class="nt-previews nt-layout-region {{livePreview ? '' : 'nt-layout-preview-frame'}}" style="margin-top: {{soloCubeGap}}px; top: {{timerLayout.cubeOffsetY}}px; --nt-layout-preview-height: {{soloCubeDrawHeight}}px">
-    <view wx:if="{{preview && !liveAnalysis}}" class="nt-preview" style="height: {{soloCubeHeight}}px"><image mode="aspectFit" src="{{preview}}" style="height: {{soloCubeDrawHeight}}px" binderror="imageError" aria-label="{{copy.preview}}" /><text wx:if="{{cubeConnected}}" class="nt-hint">{{copy.preview}}</text></view>
+    <view wx:if="{{preview && !livePreview && !liveAnalysis}}" class="nt-preview" style="height: {{soloCubeHeight}}px"><image mode="aspectFit" src="{{preview}}" style="height: {{soloCubeDrawHeight}}px" binderror="imageError" aria-label="{{copy.preview}}" /></view>
     <view wx:if="{{livePreview}}" class="nt-preview" >
       <view class="nt-live-cube" style="height: {{soloCubeHeight}}px">
         <image wx:if="{{!liveCanvasReady}}" mode="aspectFit" src="{{livePreview}}" style="height: 100%" binderror="imageError" aria-label="{{copy.live}}" />
@@ -191,7 +191,6 @@
       <view wx:if="{{liveAnalysis}}" class="nt-live-stage">
         <text class="nt-live-stage-label">{{liveAnalysis.stage.label}}</text><text class="nt-live-stage-moves">{{liveAnalysis.stage.moves}}</text>
       </view>
-      <text wx:else class="nt-hint">{{copy.live}}</text>
     </view>
     <template wx:if="{{layoutEditing}}" is="nt-layout-handles" data="{{region: 'cubeGap', copy: copy, canHide: !livePreview}}" />
   </view>
@@ -256,7 +255,7 @@
       </button>
     </view>
   </view>
-  <view class="nt-solo-footer" hidden="{{hideChrome || !!liveAnalysis}}">
+  <view class="nt-solo-footer {{soloTightFooter ? 'nt-solo-footer--tight' : ''}} {{soloHorizontalStats ? 'nt-solo-footer--horizontal' : ''}} {{soloCompactStage && preview && !livePreview ? 'nt-solo-footer--docked' : ''}}" hidden="{{hideChrome || !!liveAnalysis}}">
     <button hover-class="press-feedback" class="nt-stats" bindtap="openSheet" data-sheet="history" disabled="{{busy}}" aria-label="{{copy.results}}">
       <view wx:if="{{soloStatRows.length}}" wx:for="{{soloStatRows}}" wx:key="label" class="nt-solo-stat"><text>{{item.label}}</text><text>{{item.value}}</text></view>
       <text wx:if="{{!soloStatRows.length}}" class="nt-solo-stat-empty">{{copy.results}}</text>
@@ -347,9 +346,14 @@
     </block>
     <text wx:if="{{netBattle.error}}" class="nt-error nt-room-label" aria-role="alert">{{netBattle.error}}</text>
   </block>
-  <view wx:if="{{sheet}}" id="nt-backdrop" class="nt-backdrop {{toolbarMenu ? 'nt-backdrop--popover' : ''}} {{sheet === 'statistics' ? 'nt-statistics-backdrop' : ''}} {{sheet === 'settings' ? 'nt-settings-backdrop' : ''}} {{sheet === 'bulk' ? 'nt-bulk-backdrop' : ''}} {{sheet === 'solver' ? 'nt-solver-screen-backdrop' : ''}} {{sheet === 'device-management' ? 'nt-device-backdrop' : ''}} {{sheet === 'device-management' && deviceManagement.kind !== 'smart-cube' ? 'nt-smart-timer-backdrop' : ''}} {{sheet === 'device-management' && deviceManagement.kind === 'stackmat' ? 'nt-stackmat-backdrop' : ''}}" bindtap="closeSheet">
-    <view class="nt-sheet {{toolbarMenu ? 'nt-sheet--popover nt-sheet--' + sheet : ''}} {{sheet === 'statistics' ? 'nt-statistics-dialog' : ''}} {{sheet === 'settings' ? 'nt-settings' : ''}} {{sheet === 'bulk' ? 'nt-bulk-dialog' : ''}} {{sheet === 'solver' ? 'nt-solver-screen' : ''}} {{sheet === 'device-management' ? 'nt-device-dialog' : ''}}" style="{{toolbarMenuStyle}}">
-      <view wx:if="{{sheet === 'statistics'}}" class="nt-statistics-dialog-head">
+  <view wx:if="{{sheet}}" id="nt-backdrop" class="nt-backdrop {{toolbarMenu ? 'nt-backdrop--popover' : ''}} {{sheet === 'statistics' && !resultsWorkspace ? 'nt-statistics-backdrop' : ''}} {{resultsWorkspace && (sheet === 'history' || sheet === 'statistics') ? 'nt-results-backdrop' : ''}} {{sheet === 'settings' ? 'nt-settings-backdrop' : ''}} {{sheet === 'bulk' ? 'nt-bulk-backdrop' : ''}} {{sheet === 'solver' ? 'nt-solver-screen-backdrop' : ''}} {{sheet === 'device-management' ? 'nt-device-backdrop' : ''}} {{sheet === 'device-management' && deviceManagement.kind !== 'smart-cube' ? 'nt-smart-timer-backdrop' : ''}} {{sheet === 'device-management' && deviceManagement.kind === 'stackmat' ? 'nt-stackmat-backdrop' : ''}}" bindtap="closeSheet">
+    <view class="nt-sheet {{toolbarMenu ? 'nt-sheet--popover nt-sheet--' + sheet : ''}} {{sheet === 'statistics' && !resultsWorkspace ? 'nt-statistics-dialog' : ''}} {{resultsWorkspace && (sheet === 'history' || sheet === 'statistics') ? 'nt-results-panel' : ''}} {{sheet === 'settings' ? 'nt-settings' : ''}} {{sheet === 'bulk' ? 'nt-bulk-dialog' : ''}} {{sheet === 'solver' ? 'nt-solver-screen' : ''}} {{sheet === 'device-management' ? 'nt-device-dialog' : ''}}" style="{{toolbarMenuStyle}}">
+      <view wx:if="{{resultsWorkspace && (sheet === 'history' || sheet === 'statistics')}}" class="shell-panel-tabs">
+        <button class="shell-panel-tab {{sheet === 'history' ? 'active' : ''}}" data-sheet="history" bindtap="switchResultsTab" aria-pressed="{{sheet === 'history'}}" hover-class="press-feedback">{{copy.resultsPanel.times}}</button>
+        <button class="shell-panel-tab {{sheet === 'statistics' ? 'active' : ''}}" data-sheet="statistics" bindtap="switchResultsTab" aria-pressed="{{sheet === 'statistics'}}" hover-class="press-feedback">{{copy.resultsPanel.stats}}</button>
+        <button class="shell-panel-close" bindtap="closeSheet" aria-label="{{copy.resultsPanel.close}}" hover-class="press-feedback"><template is="nt-settings-icon" data="{{icon: 'x'}}" /></button>
+      </view>
+      <view wx:elif="{{sheet === 'statistics'}}" class="nt-statistics-dialog-head">
         <text>{{statistics.title || copy.sheetTitles.statistics}}</text>
         <button class="nt-statistics-dismiss" hover-class="press-feedback" bindtap="closeSheet" aria-label="{{copy.close}}"><image class="nt-icon-light" src="/assets/tabbar/x-light.png" aria-hidden="true" /><image class="nt-icon-dark" src="/assets/tabbar/x-dark.png" aria-hidden="true" /></button>
       </view>
@@ -778,8 +782,11 @@
           <text class="nt-device-note">{{deviceManagement.copy.timerConnectedHelp}}</text>
         </block>
         <block wx:elif="{{deviceManagement.active}}">
-          <view class="nt-setting"><text>{{deviceManagement.deviceName}}</text><text>{{deviceManagement.status}}</text></view>
-          <view class="nt-setting" wx:if="{{deviceManagement.battery}}"><text>{{deviceManagement.copy.battery}}</text><text>{{deviceManagement.battery}}</text></view>
+          <view class="nt-cube-device-summary">
+            <text>{{deviceManagement.deviceName}}</text>
+            <text class="nt-device-note" aria-label="{{deviceManagement.copy.battery}}">{{deviceManagement.battery || '—'}}</text>
+            <view class="nt-cube-device-connected" aria-role="status" aria-label="{{deviceManagement.status}}"><template is="nt-settings-icon" data="{{icon: 'circle-check'}}" /></view>
+          </view>
           <view class="nt-setting" wx:if="{{deviceManagement.protocol}}"><text>{{deviceManagement.copy.protocol}}</text><text>{{deviceManagement.protocol}}</text></view>
           <view class="nt-setting" wx:if="{{deviceManagement.lastMove}}"><text>{{deviceManagement.copy.lastMove}}</text><text>{{deviceManagement.lastMove}}</text></view>
           <view class="nt-device-actions">
@@ -790,10 +797,13 @@
         <block wx:elif="{{deviceManagement.kind === 'smart-cube'}}">
           <view class="nt-device-picker-head">
             <text>{{deviceManagement.copy.availableDevices}}</text>
-            <button class="nt-control" bindtap="connectCube" disabled="{{deviceManagement.scanning || deviceManagement.connecting}}" hover-class="press-feedback">{{deviceManagement.scanning ? deviceManagement.copy.scanning : deviceManagement.copy.scanAgain}}</button>
+            <button class="nt-control nt-cube-device-scan" bindtap="connectCube" disabled="{{deviceManagement.scanning || deviceManagement.connecting}}" hover-class="press-feedback"><template is="nt-settings-icon" data="{{icon: 'refresh-cw'}}" />{{deviceManagement.scanning ? deviceManagement.copy.scanning : deviceManagement.copy.scanAgain}}</button>
           </view>
-          <button wx:for="{{deviceManagement.devices}}" wx:key="deviceId" class="nt-device-picker-row" data-id="{{item.deviceId}}" bindtap="connectListedCube" disabled="{{deviceManagement.connecting}}" hover-class="press-feedback"><text>{{item.deviceName}}</text><text>{{deviceManagement.copy.connect}}</text></button>
-          <text wx:if="{{!deviceManagement.devices.length && !deviceError && !deviceManagement.error}}" class="nt-device-note">{{deviceManagement.searching || deviceManagement.scanning ? deviceManagement.copy.scanning : deviceManagement.copy.noDevices}}</text>
+          <button wx:for="{{deviceManagement.devices}}" wx:key="deviceId" class="nt-device-picker-row" data-id="{{item.deviceId}}" bindtap="connectListedCube" disabled="{{deviceManagement.connecting}}" hover-class="press-feedback">
+            <view class="nt-cube-device-name"><text>{{item.deviceName}}</text><text wx:if="{{item.signal}}" class="nt-device-note">{{item.signal}}</text></view>
+            <text>{{deviceManagement.connecting ? deviceManagement.copy.connecting : deviceManagement.copy.connect}}</text>
+          </button>
+          <text wx:if="{{!deviceManagement.devices.length && !deviceError && !deviceManagement.error}}" class="nt-device-note" aria-role="status">{{deviceManagement.connecting ? deviceManagement.copy.connecting : deviceManagement.scanning ? deviceManagement.copy.scanning : deviceManagement.copy.noDevices}}</text>
         </block>
         <block wx:elif="{{deviceManagement.kind === 'smart-timer'}}">
           <text class="nt-device-intro">{{deviceManagement.copy.timerInstructions}}</text>
@@ -1007,17 +1017,30 @@
         </view>
       </block>
       <block wx:elif="{{sheet === 'history'}}">
-        <view class="nt-actions nt-history-tools">
-          <button class="nt-control" bindtap="previousScramble" disabled="{{busy || generating || !canPrevious}}" aria-label="{{copy.previous}}" hover-class="press-feedback"><image class="nt-icon" src="/assets/tabbar/chevron-left.png" aria-hidden="true" /></button>
-          <button class="nt-control" bindtap="openSheet" data-sheet="statistics" hover-class="press-feedback">{{copy.statistics}}</button>
-          <button class="nt-control" bindtap="nextScramble" disabled="{{busy || generating}}" aria-label="{{copy.next}}" hover-class="press-feedback"><image class="nt-icon" src="/assets/tabbar/chevron-right.png" aria-hidden="true" /></button>
-        </view>
-        <view class="nt-setting nt-search"><input value="{{historyQuery}}" placeholder="{{copy.search}}" bindinput="searchHistory" /><button hover-class="press-feedback" class="nt-control {{historyQuery ? '' : 'nt-clear-empty'}}" disabled="{{!historyQuery}}" bindtap="clearHistorySearch">{{copy.clear}}</button></view>
-        <view class="nt-actions"><button hover-class="press-feedback" class="nt-control" bindtap="exportResults" disabled="{{!summary.count}}">{{copy.export}}</button><button hover-class="press-feedback" class="nt-control" bindtap="exportResults" data-format="cstimer" disabled="{{!summary.count}}">csTimer JSON</button><button hover-class="press-feedback" class="nt-control" bindtap="exportResults" data-format="speedstacks" disabled="{{!summary.count}}">Speedstacks</button><button hover-class="press-feedback" class="nt-control" bindtap="openSheet" data-sheet="manual">{{copy.manualEntry}}</button></view>
+        <view class="timer-results-panel-body">
+          <view class="nt-results-toolbar">
+            <picker class="nt-results-groups" range="{{sessions}}" range-key="name" value="{{sessionIndex}}" bindchange="selectSession" aria-label="{{copy.session}}">
+              <view class="nt-results-group"><text>{{sessions[sessionIndex].name}}</text><template is="nt-settings-icon" data="{{icon: 'chevron-down'}}" /></view>
+            </picker>
+            <button wx:if="{{!historySearchOpen}}" class="nt-results-action" bindtap="sessionAction" data-action="create" aria-label="{{copy.newSession}}" hover-class="press-feedback">{{copy.resultsPanel.newGroup}}</button>
+            <input wx:if="{{historySearchOpen}}" class="nt-results-search" value="{{historyQuery}}" placeholder="{{copy.resultsPanel.query}}" aria-label="{{copy.resultsPanel.search}}" focus="{{historySearchOpen}}" bindinput="searchHistory" />
+            <button class="nt-results-icon" bindtap="toggleHistorySearch" aria-label="{{historySearchOpen ? copy.close : copy.resultsPanel.search}}" aria-expanded="{{historySearchOpen}}" hover-class="press-feedback"><template is="nt-settings-icon" data="{{icon: historySearchOpen ? 'x' : 'search'}}" /></button>
+            <button wx:if="{{!historySearchOpen}}" class="nt-results-icon" bindtap="openHistoryActions" aria-label="{{copy.resultsPanel.actions}}" hover-class="press-feedback"><template is="nt-settings-icon" data="{{icon: 'ellipsis'}}" /></button>
+          </view>
           <text wx:if="{{!summary.count}}" class="nt-hint">{{copy.empty}}</text>
           <text wx:elif="{{!summary.filteredCount}}" class="nt-hint">{{copy.noMatches}}</text>
-          <button hover-class="press-feedback" wx:for="{{summary.rows}}" wx:key="id" class="nt-result" data-id="{{item.id}}" bindtap="editResult"><view class="nt-result-title"><text>{{summary.filteredCount - index}}</text><text>{{item.result}}{{item.penalty === '+2' ? ' (+2)' : ''}}</text></view><text class="nt-result-scramble">{{item.scramble}}</text><text wx:if="{{item.comment}}" class="nt-hint">{{item.comment}}</text></button>
-        <button hover-class="press-feedback" wx:if="{{summary.rows.length < summary.filteredCount}}" class="nt-control" bindtap="loadMoreHistory">{{copy.more}}</button>
+          <view wx:else class="nt-results-table" style="--results-rolling-columns: {{summary.rolling.length + 1}}">
+            <view class="nt-results-row nt-results-columns"><text>#</text><text>{{event === '333mbld' ? copy.resultsPanel.result : copy.resultsPanel.time}}</text><text wx:for="{{summary.rolling}}" wx:key="key">{{item.key}}</text></view>
+            <button class="nt-results-record" wx:for="{{summary.rows}}" wx:key="id" data-id="{{item.id}}" bindtap="editResult" hover-class="press-feedback">
+              <view class="nt-results-row">
+                <text>{{item.number}}</text>
+                <view class="nt-results-time"><text>{{item.result}}</text><text wx:if="{{item.penalty === '+2'}}" class="nt-results-mark"> (+2)</text><text wx:if="{{item.hasComment}}" class="nt-results-mark"> ·</text></view>
+                <text wx:for="{{item.rolling}}" wx:for-item="stat" wx:key="key" class="{{stat.isPb ? 'nt-results-pb' : ''}}">{{stat.value}}</text>
+              </view>
+            </button>
+          </view>
+          <button hover-class="press-feedback" wx:if="{{summary.rows.length < summary.filteredCount}}" class="nt-control" bindtap="loadMoreHistory">{{copy.more}}</button>
+        </view>
       </block>
       <block wx:elif="{{sheet === 'statistics'}}">
         <view wx:if="{{statistics}}" class="nt-statistics-sheet">

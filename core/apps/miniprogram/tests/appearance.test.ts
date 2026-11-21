@@ -8,6 +8,26 @@ function appearance(): NativeAppearance {
 afterEach(() => { vi.resetModules(); vi.unstubAllGlobals(); });
 
 describe('native appearance', () => {
+  it('applies the same Douyin fallback colors to every tab when no palette is saved', async () => {
+    let theme: 'light' | 'dark' = 'light';
+    const timer = { data: { nativeTimerPage: true }, setData: vi.fn() };
+    const tools = { setData: vi.fn() };
+    const account = { setData: vi.fn() };
+    vi.stubGlobal('__MINI_PROGRAM_TARGET__', 'douyin');
+    vi.stubGlobal('getCurrentPages', () => [timer, tools, account]);
+    vi.stubGlobal('tt', { getStorageSync: () => null, getAppBaseInfo: () => ({ theme }) });
+    const { applyNativeAppearance } = await import('../src/lib/appearance');
+    for (const mode of ['light', 'dark'] as const) {
+      theme = mode;
+      applyNativeAppearance();
+      const appearanceStyle = tools.setData.mock.lastCall?.[0]?.appearanceStyle;
+      expect(appearanceStyle).toContain(`--cr-bg:var(--cr-${mode}-bg)`);
+      expect(appearanceStyle).toContain(`--cr-text:var(--cr-${mode}-text)`);
+      expect(timer.setData).toHaveBeenLastCalledWith({ appearanceStyle, appearanceScheme: mode });
+      expect(account.setData).toHaveBeenLastCalledWith({ appearanceStyle });
+    }
+  });
+
   it('validates the complete color boundary and rejects CSS injection', () => {
     const value = appearance();
     expect(decodeNativeAppearance(value)).toEqual(value);
@@ -71,6 +91,8 @@ describe('native background inheritance', () => {
     [false, 'dark', 'light', '01'], [false, 'light', 'dark', '03'],
   ] as const)('resolves system and explicit schemes (%s, %s, %s)', async (followSystem, system, scheme, id) => {
     let stored: unknown = null;
+    const setData = vi.fn();
+    vi.stubGlobal('getCurrentPages', () => [{ data: { nativeTimerPage: true }, setData }]);
     vi.stubGlobal('wx', { getStorageSync: () => stored,
       setStorageSync: (_key: string, value: unknown) => { stored = value; },
       getAppBaseInfo: () => ({ theme: system }) });
@@ -78,6 +100,9 @@ describe('native background inheritance', () => {
     native.receiveNativeAppearance({ ...appearance(), followSystem, scheme,
       backgrounds: { light: { id: '01', position: '50%' }, dark: { id: '03', position: '65%' } }, softBackground: true });
     expect(native.nativeAppearanceStyle()).toContain(`/assets/home-backgrounds/v1/${id}.webp`);
+    expect(setData).toHaveBeenLastCalledWith({
+      appearanceStyle: native.nativeAppearanceStyle(), appearanceScheme: followSystem ? system : scheme,
+    });
     expect(native.nativeAppearanceStyle()).toContain('--cr-scene-filter:saturate(.65) contrast(.85)');
     native.receiveNativeAppearance({ ...appearance(), followSystem, scheme, backgrounds: { light: null, dark: null } });
     expect(native.nativeAppearanceStyle()).toContain('--cr-scene-image:none');

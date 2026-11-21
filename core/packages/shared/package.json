@@ -25,6 +25,7 @@
       "./timer/solution-hints": "runtime-neutral",
       "./timer/segment-font.css": "asset",
       "./timer/solo-stage.css": "asset",
+      "./timer/results-tabs.css": "asset",
       "./timer/classic-appearance.css": "asset",
       "./timer/liberation-mono.css": "asset",
       "./timer/random-scramble-pool": "runtime-neutral",
@@ -349,6 +350,7 @@
     "./timer/solution-hints": "./src/timer/solution-hints.ts",
     "./timer/segment-font.css": "./src/timer/segment-font.css",
     "./timer/solo-stage.css": "./src/timer/solo-stage.css",
+    "./timer/results-tabs.css": "./src/timer/results-tabs.css",
     "./timer/classic-appearance.css": "./src/timer/classic-appearance.css",
     "./timer/liberation-mono.css": "./src/timer/liberation-mono.css",
     "./timer/random-scramble-pool": {

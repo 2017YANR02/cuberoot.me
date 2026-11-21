@@ -21,6 +21,78 @@ export const TIMER_DEVICE_CENTER_LABELS = {
   stackmat: { zh: 'Stackmat', en: 'Stackmat' },
 } as const;
 
+export const TIMER_SMART_CUBE_DEVICE_COPY = {
+  en: {
+    macLabel: 'Cube MAC address',
+    macHint: 'Enter the real Bluetooth MAC address shown for this cube on your Windows computer or in the manufacturer’s app. The name suffix is not a complete address.',
+    macInvalid: 'Enter six colon-separated hex octets.',
+    clearMac: 'Clear address',
+    confirm: 'Confirm',
+    battery: 'Battery',
+    availableDevices: 'Available devices',
+    cancel: 'Cancel',
+    close: 'Close',
+    connect: 'Connect',
+    connected: 'Connected',
+    connecting: 'Connecting…',
+    connectionFailed: 'Connection failed',
+    disconnect: 'Disconnect',
+    lastMove: 'Last move',
+    notConnected: 'Not connected',
+    noDevices: 'No supported smart cubes found',
+    resetFailed: 'Software state was reset, but writing to the device failed. Check the connection and retry.',
+    resetGyroHint: 'Solve the cube and hold white on top and green in front, then reset the cube',
+    resetState: 'Reset',
+    retry: 'Retry connection',
+    scanAgain: 'Scan again',
+    scanning: 'Scanning…',
+    signalGood: 'Good signal',
+    signalLow: 'Weak signal',
+    signalMedium: 'Fair signal',
+    stateReset: 'State reset',
+    title: 'Smart cube',
+  },
+  zh: {
+    macLabel: '魔方 MAC 地址',
+    macHint: '请输入在 Windows 电脑或厂商 App 中查到的这颗魔方的真实蓝牙 MAC 地址。名称末尾的四位字符不是完整地址。',
+    macInvalid: '请输入六组用冒号分隔的两位十六进制数。',
+    clearMac: '清除地址',
+    confirm: '确定',
+    battery: '电量',
+    availableDevices: '可用设备',
+    cancel: '取消',
+    close: '关闭',
+    connect: '连接',
+    connected: '已连接',
+    connecting: '连接中…',
+    connectionFailed: '连接失败',
+    disconnect: '断开',
+    lastMove: '最近一步',
+    notConnected: '未连接',
+    noDevices: '未发现支持的智能魔方',
+    resetFailed: '软件状态已重置，但设备回写失败，请检查连接后重试',
+    resetGyroHint: '还原魔方并按白顶绿前握好，再重置魔方',
+    resetState: '重置',
+    retry: '重新连接',
+    scanAgain: '重新扫描',
+    scanning: '正在扫描…',
+    signalGood: '信号良好',
+    signalLow: '信号较弱',
+    signalMedium: '信号一般',
+    stateReset: '状态已重置',
+    title: '智能魔方',
+  },
+} as const;
+
+export function timerSmartCubeBatteryPercent(level?: number | null): number | null {
+  return typeof level === 'number' && Number.isFinite(level) ? Math.round(Math.max(0, Math.min(100, level))) : null;
+}
+
+export function timerSmartCubeSignalLabel(rssi?: number | null): 'signalGood' | 'signalMedium' | 'signalLow' {
+  if (rssi == null || rssi >= -60) return 'signalGood';
+  return rssi >= -75 ? 'signalMedium' : 'signalLow';
+}
+
 export const BLUETOOTH_TIMER_DIALOG_COPY = {
   title: { zh: '蓝牙智能计时器', en: 'Bluetooth smart timer' },
   instructions: {

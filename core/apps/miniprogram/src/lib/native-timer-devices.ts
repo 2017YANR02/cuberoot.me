@@ -6,6 +6,9 @@ import {
   createTimerDeviceRegistry,
   TIMER_DEVICE_CENTER_LABELS,
   TIMER_DEVICE_REGISTRATIONS,
+  TIMER_SMART_CUBE_DEVICE_COPY,
+  timerSmartCubeBatteryPercent,
+  timerSmartCubeSignalLabel,
 } from '@cuberoot/shared/timer/device-contract';
 import type { ExternalTimerKind, ExternalTimerState } from '@cuberoot/shared/timer/external/types';
 import { STACKMAT_DIALOG_COPY, STACKMAT_HEALTH_LABELS, STACKMAT_IDLE_SNAPSHOT, STACKMAT_PHASE_LABELS, stackmatHealth, type StackmatSnapshot } from '@cuberoot/shared/timer/external/stackmat-state';
@@ -51,7 +54,7 @@ export function nativeTimerDeviceCenter(state: NativeTimerDevicesState, language
       label: tr(TIMER_DEVICE_CENTER_LABELS[kind], language),
       active,
       detail: active ? name || tr(TIMER_DEVICE_CENTER_LABELS[kind === 'stackmat' ? 'listening' : 'connected'], language)
-        : pairing ? tr({ en: 'Connecting…', zh: '正在连接…' }, language) : '',
+        : pairing ? TIMER_SMART_CUBE_DEVICE_COPY[language].connecting : '',
       disabled: state.busy || state.connecting === true || pairing,
     };
   });
@@ -116,7 +119,8 @@ export function nativeTimerDeviceManagement(
   const item = nativeTimerDeviceCenter(state, language).items.find(candidate => candidate.kind === kind);
   if (!item) return;
   const cube = kind === 'smart-cube' ? state.cube : undefined;
-  const battery = cube?.battery;
+  const cubeCopy = TIMER_SMART_CUBE_DEVICE_COPY[language];
+  const battery = timerSmartCubeBatteryPercent(cube?.battery);
   const timerScan = kind === 'smart-timer' ? state.externalScan : undefined;
   const timerMac = kind === 'smart-timer' ? state.externalMac : undefined;
   const searching = kind === 'smart-cube' && (cube?.phase === 'scanning' || cube?.phase === 'connecting');
@@ -132,7 +136,9 @@ export function nativeTimerDeviceManagement(
     scanning: kind === 'smart-cube' && state.connecting && cube?.phase !== 'connecting',
     timerScanning: timerScan !== undefined && !state.connecting,
     connecting: kind === 'smart-cube' ? cube?.phase === 'connecting' : state.connecting,
-    devices: cube?.devices ?? timerScan ?? [],
+    devices: cube?.devices?.map(device => ({
+      ...device, signal: device.rssi == null ? '' : cubeCopy[timerSmartCubeSignalLabel(device.rssi)],
+    })) ?? timerScan ?? [],
     stackmat: kind === 'stackmat' ? nativeStackmatManagement(state, language) : null,
     timerMac: timerMac ? { value: timerMac.value, instructions: tr(bluetoothTimerMacInstructions(timerMac.name), language) } : null,
     timerDetails: kind === 'smart-timer' && item.active ? {
@@ -142,23 +148,23 @@ export function nativeTimerDeviceManagement(
     } : null,
     status,
     error: cube?.error ?? '',
-    battery: battery != null && Number.isFinite(battery)
-      ? `${Math.min(100, Math.max(0, Math.round(battery)))}%` : '',
+    battery: battery === null ? '' : `${battery}%`,
     protocol: cube?.brand ?? '',
     lastMove: cube?.lastMove ?? '',
     canDisconnect: item.active && !item.disabled,
     canCalibrate: kind === 'smart-cube' && item.active && !item.disabled && state.canResetCube && !state.calibrating,
     copy: {
-      battery: tr({ en: 'Battery', zh: '电量' }, language),
+      battery: cubeCopy.battery,
       protocol: tr({ en: 'Protocol', zh: '协议' }, language),
-      lastMove: tr({ en: 'Last move', zh: '最近一步' }, language),
-      disconnect: tr({ en: 'Disconnect', zh: '断开' }, language),
-      calibrate: tr({ en: 'Reset', zh: '重置' }, language),
-      availableDevices: tr({ en: 'Available devices', zh: '可用设备' }, language),
-      scanning: tr({ en: 'Scanning…', zh: '正在扫描…' }, language),
-      scanAgain: tr({ en: 'Scan again', zh: '重新扫描' }, language),
-      noDevices: tr({ en: 'No supported smart cubes found', zh: '未发现支持的智能魔方' }, language),
-      connect: tr({ en: 'Connect', zh: '连接' }, language),
+      lastMove: cubeCopy.lastMove,
+      disconnect: cubeCopy.disconnect,
+      calibrate: cubeCopy.resetState,
+      availableDevices: cubeCopy.availableDevices,
+      scanning: cubeCopy.scanning,
+      connecting: cubeCopy.connecting,
+      scanAgain: cubeCopy.scanAgain,
+      noDevices: cubeCopy.noDevices,
+      connect: cubeCopy.connect,
       search: tr(BLUETOOTH_TIMER_DIALOG_COPY.connect, language),
       timerConnecting: tr(BLUETOOTH_TIMER_DIALOG_COPY.connecting, language),
       timerInstructions: tr(BLUETOOTH_TIMER_DIALOG_COPY.instructions, language),

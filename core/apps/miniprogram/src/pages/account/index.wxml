@@ -1,5 +1,6 @@
 <page-meta page-style="{{appearanceStyle}}" />
 <import src="../../templates/native-appearance.wxml" />
+<view class="native-tab-surface" style="{{appearanceStyle}}">
 <template is="native-scenery" wx:if="{{!isTimelineEntry}}" />
 <scroll-view class="account-scroll" scroll-y="{{true}}" scroll-x="{{false}}" enhanced="{{true}}" show-scrollbar="{{false}}">
 <view wx:if="{{isTimelineEntry}}" class="page account-entry-page">
@@ -176,3 +177,4 @@
   <include src="../../templates/native-contact.wxml" />
 </view>
 </scroll-view>
+</view>

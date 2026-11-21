@@ -19,7 +19,7 @@
 - `native-timer.ts` 复用共享计时状态机、打乱、罚时、统计与智能魔方控制器；`timer-store.ts` 从早期微信原生计时器（`7cb3e75349`，当时位于 `core/packages/miniprogram`）恢复，沿用 `cuberoot:timer` 存储格式与 `TimerStoreSettings`。网站 WebView 的 localStorage 成绩不会自动迁入原生存储。
 - `native-timer-page.ts` / `templates/native-timer.wxml` 适配小程序触摸、设置、成绩及生命周期。支持15个计时项目的本地打乱图、智能魔方实况图、观察计时、分组/成绩编辑、共享滚动统计、手动打乱、真题搜索与日期选择、单行排名、CSV/csTimer/Speedstacks导出及备份恢复；不包含FMC、多盲成绩录入或旧网页全部高级设置。接入与实际验收状态见[原生计时器跟踪](docs/douyin-native-timer-tracker.md)。
 - 顶部直接选择项目与打乱来源；设置按共享契约分为计时、智能魔方、打乱、外观和数据，已接紧凑打乱、字号及运行中隐藏界面。统计支持日期范围、汇总、滚动均值和共享分箱的原生成绩分布；详情显示原始时间、罚时、来源、设备及已有分段，修改罚时/备注后保留详情上下文。未提供的声音、3D/姿态、跨组图表等仍按跟踪表记为缺口。
-- `native-tools-page.ts` 通过现有公共 API 原生展示近期公示比赛、近期纪录与 WCA ID 个人成绩/排名。教程、课程与专项训练继续下线。
+- `native-tools-page.ts` 通过现有公共 API 原生展示近期公示比赛、近期纪录与 WCA ID 个人成绩/排名。新公司首版继续使用原生工具页。教程、课程和专项训练不开放，助手页面及其分享入口从抖音构建移除，以免问答带回教程和培训内容。
 - 蓝牙由 `getSmartCubeSession()` 保存在 App 实例，避免每个独立页面 bundle 创建不同连接；原生模式不需要网页中继 WebSocket。旧微信网页中继路径保留。
 - 抖音构建直接选择原生 TTML 主页面；旧网页主功能深链重定向到原生 tab，隐私和账号辅助页也使用原生视图；构建递归验证全部登记页面无 WebView。
 - 构建/模拟器检查不替代 iOS、Android 的 GAN 16 UI 真机连接与自动计时回归，也不表示已经上传、提审或上线。
@@ -75,7 +75,7 @@ pnpm --filter @cuberoot/miniprogram audit:douyin
 
 ## 助手 PDF 导出
 
-微信、抖音的 `pages/assistant` 每条回答下提供 PDF 入口，分享只读页也可导出。导出读取当前会话中的回答快照，保留卡片最新选择的 `alg`、`setup` 和 `sticker`；切换公式与导出互斥，离页、换账号或新建对话会取消未完成的导出。不会为导出重新请求助手或创建公开分享。
+微信的 `pages/assistant` 每条回答下提供 PDF 入口，分享只读页也可导出。导出读取当前会话中的回答快照，保留卡片最新选择的 `alg`、`setup` 和 `sticker`；切换公式与导出互斥，离页、换账号或新建对话会取消未完成的导出。不会为导出重新请求助手或创建公开分享。
 
 内容转换、排版和字体注册与网站共用 `@cuberoot/shared/assistant-pdf`、`document-export`、`pdf-fonts`；状态图复用 `@cuberoot/puzzle-render-core/alg-case-image`。小程序只适配原生 Canvas 2D、字体请求、私有文件缓存及 `wx/tt.openDocument`，不依赖 WebView 或浏览器 DOM。首次导出按需请求现有 `SITE_ORIGIN/fonts/*.ttf`，远程状态图使用既有网站/API 资源域名；须使用平台已配置的请求域名。
 

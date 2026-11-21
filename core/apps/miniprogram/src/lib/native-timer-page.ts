@@ -6,11 +6,12 @@ import { TIMER_SESSION_UI_COPY, timerSessionDeleteConfirmation, timerSessionClea
 import { checkTimerFmcSolvedness, createTimerManualEntryDraft, timerManualEntryCopy, timerManualEntryKind, validateTimerManualEntry, type TimerManualEntryDraft } from '@cuberoot/shared/timer/manual-entry';
 import { TIMER_MORE_ACTION_COPY } from '@cuberoot/shared/timer/more-actions';
 import { normalizeSolverScrambleDraft, TIMER_MANUAL_SCRAMBLE_EMPTY_COPY, TIMER_SOLVER_SCRAMBLE_EDITOR_COPY } from '@cuberoot/shared/timer/manual-scramble-queue';
-import { TIMER_HISTORY_QUICK_ACTION_IDS, TIMER_HISTORY_QUICK_ACTION_COPY, TIMER_HISTORY_PENALTIES, timerHistoryQuickActionPenalty, timerHistoryMoveTargets, timerSolveDetailStageRows, timerSolveDetailBldTimes } from '@cuberoot/shared/timer/history';
+import { TIMER_RESULTS_TABS_COPY, TIMER_HISTORY_QUICK_ACTION_IDS, TIMER_HISTORY_QUICK_ACTION_COPY, TIMER_HISTORY_PENALTIES, timerHistoryQuickActionPenalty, timerHistoryMoveTargets, timerSolveDetailStageRows, timerSolveDetailBldTimes } from '@cuberoot/shared/timer/history';
 import type { EventId, Solve } from '@cuberoot/shared/timer/types';
 import { BATTLE_EVENT_IDS, effectiveMs } from '@cuberoot/shared/timer/types';
 import { timerScrambleClickEffect, timerSettingFieldContract, TIMER_SETTING_CATEGORY_CONTRACTS, TIMER_SETTING_FIELD_CONTRACTS } from '@cuberoot/shared/timer/settings-contract';
 import { timerHidesRunningUi } from '@cuberoot/shared/timer/display-settings';
+import { TIMER_RADIAL_POINTER_PROFILES } from '@cuberoot/shared/timer/input-contract';
 import { TIMER_STATS_DATE_RANGES } from '@cuberoot/shared/timer/stats-buckets';
 import { isNativeTimerStatisticsTab, NATIVE_TIMER_STATISTICS_COMPACT_WIDTH, nativeTimerStatistics,
   type NativeTimerStatisticsOptions } from './native-timer-statistics';
@@ -140,20 +141,25 @@ function nativeLayoutData(layout: TimerSoloLayoutSettings, display: string) {
 function soloStageData(timer: NativeTimer, display: string, layout: TimerSoloLayoutSettings, viewport?: { width: number; height: number }) {
   const width = viewport?.width ?? 393;
   const height = viewport?.height ?? 658;
-  const landscape = width >= 520 && width >= height && height - 56 <= 650;
+  // The App's timer-stage container starts below the toolbar.
+  const stageHeight = Math.max(0, height - 56);
+  const compactStage = width >= 520 && width >= stageHeight && stageHeight <= 460;
   const layoutStyle = layout.soloLayout;
-  const gap = (value: number) => landscape ? Math.min(4, value) : value;
+  const gap = (value: number) => compactStage ? Math.min(4, value) : value;
   const timerSize = Math.max(48, Math.min(width * .1, 132)) * layout.timerFontScale;
-  const timerLimit = landscape ? Math.max(40, Math.min(64, (height - 56) * .18))
-    : Math.min(width * .22, (height - 56) * .24);
+  const timerLimit = compactStage ? Math.max(40, Math.min(64, stageHeight * .18))
+    : Math.min(width * .22, stageHeight * .24);
   const characterWidth = display.length - (display.includes('.') ? .58 : 0);
   const readoutSize = Math.min(timerSize, timerLimit, (width - 34) / Math.max(1, characterWidth * .6));
-  const cubeHeight = Math.min(width * .3, Math.max(60, (height - 56) * .26), 260) * layoutStyle.cubeScale;
+  const cubeHeight = Math.min(width * .3, Math.max(60, stageHeight * .26), 260) * layoutStyle.cubeScale;
   const cubeGap = gap(layoutStyle.cubeGap);
   const scrambleLengthScale = Math.min(1, Math.sqrt(80 / Math.max(1, timer.scramble.length)));
   const last = timer.settings;
   return {
-    soloViewportHeight: viewport?.height ?? null, soloCompactStage: landscape,
+    soloViewportHeight: viewport?.height ?? null,
+    soloCompactStage: compactStage,
+    soloTightFooter: stageHeight <= 350,
+    soloHorizontalStats: stageHeight <= 240,
     soloScrambleGap: gap(layoutStyle.scrambleGap), soloSourceGap: gap(layoutStyle.sourceGap),
     soloTimerGap: gap(layoutStyle.timerGap), soloCubeGap: cubeGap,
     soloReadoutSize: readoutSize,
@@ -163,7 +169,7 @@ function soloStageData(timer: NativeTimer, display: string, layout: TimerSoloLay
     soloSourceSize: layoutStyle.sourceScale,
     soloCubeHeight: cubeHeight,
     soloCubeDrawHeight: Math.min(cubeHeight, (readoutSize + cubeGap + cubeHeight) * .55),
-    soloCompactCubeHeight: Math.max(60, Math.min(120, (height - 56) * .24)) * layoutStyle.cubeScale,
+    soloCompactCubeHeight: Math.max(60, Math.min(120, stageHeight * .24)) * layoutStyle.cubeScale,
   };
 }
 
@@ -215,7 +221,15 @@ function copy() {
   battlePenalties: ['OK', '+2', 'DNF'],
   title: tr({ en: 'Timer', zh: '计时器' }), bluetooth: tr({ en: 'Bluetooth', zh: '蓝牙' }), settings: tr({ en: 'Settings', zh: '设置' }),
   next: tr({ en: 'Next scramble', zh: '下一条打乱' }), results: tr({ en: 'Results', zh: '成绩' }), best: tr({ en: 'Best', zh: '最佳' }),
-  previous: tr({ en: 'Previous scramble', zh: '上一条打乱' }), search: tr({ en: 'Search comments or scrambles', zh: '搜索备注或打乱' }), moveSession: tr({ en: 'Move to group', zh: '移至分组' }),
+  previous: tr({ en: 'Previous scramble', zh: '上一条打乱' }), moveSession: tr({ en: 'Move to group', zh: '移至分组' }),
+  resultsPanel: {
+    times: tr(TIMER_RESULTS_TABS_COPY.times), stats: tr(TIMER_RESULTS_TABS_COPY.stats), close: tr(TIMER_RESULTS_TABS_COPY.close),
+    search: tr({ en: 'Search solves', zh: '搜索成绩' }),
+    query: tr({ en: 'Time, scramble, comment', zh: '时间、打乱、注释' }),
+    newGroup: tr({ en: 'New', zh: '新建' }),
+    actions: tr({ en: 'Results actions', zh: '成绩操作' }),
+    time: tr({ en: 'Time', zh: '时间' }), result: tr({ en: 'Result', zh: '成绩' }),
+  },
   hold: tr({ en: 'Hold, then release to start', zh: '按住，准备后松手开始' }), ready: tr({ en: 'Release to start', zh: '松手开始' }),
   stop: tr({ en: 'Tap to stop', zh: '点击停止' }), inspection: tr({ en: 'Inspection · hold to start', zh: '观察中 · 按住准备开始' }),
   loading: tr({ en: 'Generating scramble…', zh: '正在生成打乱…' }), retry: tr({ en: 'Retry', zh: '重试' }),
@@ -380,6 +394,7 @@ interface NativePage {
   liveAnalysis?: ReturnType<typeof createNativeTimerLiveAnalysis>;
   liveAnalysisCopyTimer?: ReturnType<typeof setTimeout>;
   holdTimer?: ReturnType<typeof setTimeout>;
+  stagePress?: WechatMiniprogram.TouchDetail;
   ticker?: ReturnType<typeof setInterval>;
   unsubscribe?: () => void;
   sheet?: string;
@@ -1213,7 +1228,7 @@ function refresh(page: NativePage, history = false) {
   const labels = copy();
   const deviceState = nativeDeviceState(page, t);
   const deviceCenter = nativeTimerDeviceCenter(deviceState);
-  const summary = history ? t.summary(page.historyLimit) : undefined;
+  const summary = history ? t.summary(page.historyLimit, page.sheet === 'history') : undefined;
   const settingsModel = history ? nativeTimerSettingsModel(t, nativeSettingsContext(page)) : null;
   const targetMs = t.settings.targetMsByEvent[t.event] ?? null;
   const target = t.state.phase === 'running' ? timerTargetIndicator(targetMs, t.displayMilliseconds(), tr) : null;
@@ -1222,9 +1237,9 @@ function refresh(page: NativePage, history = false) {
     ? (t.displayMilliseconds() <= targetMs ? 'good' : 'bad') : '';
   const project = nativeTimerEvents().find(e => e.id === t.event);
   const previewScramble = applyOrientationPrefix(t.scramble, preScrambleFor(t.event, t.settings.preScr, t.settings.preScrT));
-  const showPreview = t.settings.showCubePreview && !t.settings.soloLayout.hideCubePreview;
-  const previewKey = `${showPreview}|${t.event}|${previewScramble}`;
   const liveFacelets = t.cubeConnected ? t.facelets : null;
+  const showPreview = !liveFacelets && t.settings.showCubePreview && !t.settings.soloLayout.hideCubePreview;
+  const previewKey = `${showPreview}|${t.event}|${previewScramble}`;
   const liveMode = nativeTimerLiveView(t.settings.liveCubeView);
   const liveKey = liveFacelets ? `${liveMode}|${liveFacelets}` : '';
   const images: Record<string, unknown> = {};
@@ -1361,7 +1376,7 @@ function generate(page: NativePage, event?: string) {
 }
 export function createNativeTimerPageOptions(): WechatMiniprogram.Page.Options<Record<string, unknown>, WechatMiniprogram.Page.CustomOption> {
   return {
-    data: { nativeTimerPage: true, appearanceStyle: '', copy: copy(), display: '0.000', phase: 'idle', scramble: '', generating: true, sheet: '', settingsCategory: 'timer', settingsCategoryIndex: 0, playerCountIndex: 0, netCode: '', summary: { rows: [] } },
+    data: { nativeTimerPage: true, appearanceStyle: '', appearanceScheme: 'light', copy: copy(), display: '0.000', phase: 'idle', scramble: '', generating: true, sheet: '', settingsCategory: 'timer', settingsCategoryIndex: 0, playerCountIndex: 0, netCode: '', summary: { rows: [] } },
     onLoad() {
       const p = this as unknown as NativePage;
       p.nativeTimer = new NativeTimer(miniProgramApi(), undefined, createNativeWcaPool());
@@ -1506,6 +1521,7 @@ export function createNativeTimerPageOptions(): WechatMiniprogram.Page.Options<R
       stopLiveCube(p);
       stopLocalBattle(p);
       p.active = false;
+      p.stagePress = undefined;
       if (this.data.inspectionAlertsHelp) this.setData({ inspectionAlertsHelp: null });
       p.liveShare?.setEnabled(false);
       p.nativeTimer?.releaseLiveShare();
@@ -1559,6 +1575,27 @@ export function createNativeTimerPageOptions(): WechatMiniprogram.Page.Options<R
     toggleLiveShareQr() {
       const p = this as unknown as NativePage;
       if (p.active && p.sheet === 'settings') this.setData({ liveShareQr: this.data.liveShareQr ? '' : p.liveShare?.qr() ?? '' });
+    },
+    stageTouch(e: WechatMiniprogram.TouchEvent) {
+      const p = this as unknown as NativePage;
+      if (e.type === 'touchstart') {
+        if (p.stagePress || !p.active || p.sheet || p.layoutEditing || p.manualEditing
+          || e.target.dataset.timerSurface !== 'stage' || !p.nativeTimer?.timingEnabled
+          || !p.nativeTimer.canUseCurrentScramble || this.data.generating || e.touches.length !== 1) return;
+        p.stagePress = e.changedTouches[0];
+        if (p.stagePress) this.timerDown();
+        return;
+      }
+      const press = p.stagePress;
+      if (!press) return;
+      const touch = e.changedTouches.find(item => item.identifier === press.identifier);
+      if (!touch && e.type !== 'touchcancel') return;
+      const moved = touch && Math.hypot(touch.clientX - press.clientX, touch.clientY - press.clientY)
+        > TIMER_RADIAL_POINTER_PROFILES.touch.tapSlopPx;
+      if (e.type === 'touchmove' && !moved) return;
+      p.stagePress = undefined;
+      if (e.type === 'touchend' && !moved && !p.sheet && !p.layoutEditing) this.timerUp();
+      else this.timerCancel();
     },
     timerDown() {
       const p = this as unknown as NativePage, t = p.nativeTimer;
@@ -1686,7 +1723,10 @@ export function createNativeTimerPageOptions(): WechatMiniprogram.Page.Options<R
       stopNativeBulkScrambles(p);
       p.localBattle?.cancelTouches();
       p.detailPreviewController?.abort(); p.detailPreviewController = undefined;
+      const previousSheet = p.sheet;
       p.sheet = String(e.currentTarget.dataset.sheet);
+      const resultsWorkspace = p.sheet === 'history'
+        || (previousSheet === 'history' && (p.sheet === 'statistics' || p.sheet === 'manual'));
       updateTimerTabBar(p, p.sheet === 'settings' || p.sheet === 'solver' || p.sheet === 'bulk');
       p.nativeTimer?.setAutoReadyBlocked(Boolean(p.sheet || p.netMode || p.manualEditing));
       p.importBusy = false;
@@ -1708,7 +1748,7 @@ export function createNativeTimerPageOptions(): WechatMiniprogram.Page.Options<R
       p.replayRequest?.abort(); p.replayRequest = undefined;
       p.difficultyPress = undefined;
       p.draft = '';
-      this.setData({ sheet: p.sheet, orientationMenu: null, toolbarMenu: Boolean(menu), toolbarMenuStyle: menu ? menuPosition() : '', draft: p.draft, formError: '' });
+      this.setData({ sheet: p.sheet, resultsWorkspace, orientationMenu: null, toolbarMenu: Boolean(menu), toolbarMenuStyle: menu ? menuPosition() : '', draft: p.draft, formError: '' });
       refresh(p, true);
       const api = miniProgramApi();
       if (menu && typeof api.createSelectorQuery === 'function') {
@@ -1819,12 +1859,14 @@ export function createNativeTimerPageOptions(): WechatMiniprogram.Page.Options<R
         if (!fromLink && showDetail(p)) return;
       }
       if (p.sheet === 'comment' && showDetail(p)) return;
-      if (p.sheet === 'detail') { this.openSheet({ currentTarget: { dataset: { sheet: 'history' } } }); return; }
+      if (p.sheet === 'detail' || (this.data.resultsWorkspace && (p.sheet === 'manual' || p.sheet === 'create'))) {
+        this.openSheet({ currentTarget: { dataset: { sheet: 'history' } } }); return;
+      }
       stopNativeSolver(p, true);
       stopNativeBulkScrambles(p);
       p.sheet = ''; p.nativeTimer?.setAutoReadyBlocked(Boolean(p.localBattle || p.netMode || p.layoutEditing || p.manualEditing)); p.sheetGeneration = (p.sheetGeneration ?? 0) + 1;
       p.competitionRequest = (p.competitionRequest ?? 0) + 1;
-      this.setData({ sheet: '', orientationMenu: null, inspectionAlertsHelp: null, bulkProjectMenu: null });
+      this.setData({ sheet: '', resultsWorkspace: false, orientationMenu: null, inspectionAlertsHelp: null, bulkProjectMenu: null });
       refresh(p);
     },
     choosePlayerCount(e: WechatMiniprogram.PickerChange) {
@@ -2734,6 +2776,38 @@ export function createNativeTimerPageOptions(): WechatMiniprogram.Page.Options<R
       });
     },
     loadMoreHistory() { const p = this as unknown as NativePage; p.historyLimit = (p.historyLimit ?? 100) + 100; refresh(p, true); },
+    switchResultsTab(e: WechatMiniprogram.TouchEvent) {
+      const sheet = e.currentTarget.dataset.sheet;
+      if ((sheet === 'history' || sheet === 'statistics') && this.data.resultsWorkspace && sheet !== this.data.sheet) {
+        this.openSheet({ currentTarget: { dataset: { sheet } } });
+      }
+    },
+    toggleHistorySearch() {
+      const open = !this.data.historySearchOpen;
+      this.setData({ historySearchOpen: open });
+      if (!open) this.clearHistorySearch();
+    },
+    openHistoryActions() {
+      const p = this as unknown as NativePage, t = p.nativeTimer;
+      if (!t || t.busy || p.sheet !== 'history') return;
+      const labels = copy();
+      const actions: { label: string; run: () => void }[] = [
+        { label: labels.manualEntry, run: () => this.openSheet({ currentTarget: { dataset: { sheet: 'manual' } } }) },
+      ];
+      if (!this.data.generating) {
+        if (this.data.canPrevious) actions.push({ label: labels.previous, run: () => this.previousScramble() });
+        actions.push({ label: labels.next, run: () => this.nextScramble() });
+      }
+      if (t.solves.length) actions.push(
+        { label: labels.export, run: () => this.exportResults('csv') },
+        { label: 'csTimer JSON', run: () => this.exportResults('cstimer') },
+        { label: 'Speedstacks', run: () => this.exportResults('speedstacks') },
+      );
+      const generation = p.sheetGeneration;
+      miniProgramApi().showActionSheet({ itemList: actions.map(action => action.label), success: result => {
+        if (p.active && p.sheet === 'history' && p.sheetGeneration === generation && !t.busy) actions[result.tapIndex]?.run();
+      } });
+    },
     searchHistory(e: WechatMiniprogram.Input) {
       const p = this as unknown as NativePage;
       if (p.nativeTimer) p.nativeTimer.historyFilters.query = e.detail.value;
@@ -3732,12 +3806,11 @@ export function createNativeTimerPageOptions(): WechatMiniprogram.Page.Options<R
       const target = timerHistoryMoveTargets(t.sessions.sessions, t.sessions.activeSessionId)[Number(e.detail.value)];
       if (target && t.moveResult(p.resultId, target.id)) { this.closeSheet(); refresh(p, true); }
     },
-    exportResults(e: WechatMiniprogram.TouchEvent) {
+    exportResults(format: 'csv' | 'cstimer' | 'speedstacks') {
       const t = (this as unknown as NativePage).nativeTimer;
       if (!t) return;
       const byEvent: Partial<Record<EventId, Solve[]>> = {};
       for (const solve of t.records) (byEvent[solve.event] ??= []).push(solve);
-      const format = e.currentTarget.dataset.format;
       const data = format === 'cstimer' ? exportTimerCstimerJson(byEvent).json : format === 'speedstacks' ? exportSpeedstacks(t.records) : exportTimerSolvesCsv(byEvent).csv;
       miniProgramApi().setClipboardData({ data });
     },

@@ -58,7 +58,9 @@ function fixture(useWca = false) {
     openSettingsAction(event: WechatMiniprogram.TouchEvent): void;
     changeStatistics(event: WechatMiniprogram.TouchEvent): void;
     chooseStatisticsMode(event: WechatMiniprogram.PickerChange): void;
-    onResize(event: WechatMiniprogram.Page.IResizeOption | { windowWidth: number }): void;
+    switchResultsTab(event: WechatMiniprogram.TouchEvent): void;
+    searchHistory(event: WechatMiniprogram.Input): void;
+    onResize(event: WechatMiniprogram.Page.IResizeOption | { windowWidth: number; windowHeight?: number }): void;
     inputBulkCount(event: WechatMiniprogram.Input): void;
     generateBulkScrambles(): void;
     toggleBulkProjectMenu(): void;
@@ -77,6 +79,7 @@ function fixture(useWca = false) {
     chooseDifficultyStage(event: WechatMiniprogram.TouchEvent): void;
     saveDifficulty(): void;
     timerUp(): void;
+    stageTouch(event: WechatMiniprogram.TouchEvent): void;
     editResult(event: WechatMiniprogram.TouchEvent): void;
     changeDetailPenalty(event: WechatMiniprogram.PickerChange): void;
     resultAction(event: WechatMiniprogram.TouchEvent): void;
@@ -201,6 +204,38 @@ describe('native timer source sheet lifecycle', () => {
     expect(page.data.hideChrome).toBe(false);
   });
 
+  it('uses empty stage space to time while ignoring controls and cancelling a swipe', () => {
+    vi.useFakeTimers();
+    try {
+      const { page, timer } = fixture();
+      timer.setManualScrambles('R U\nF R');
+      page.data.generating = false;
+      const touch = (type: string, y = 20, timerSurface?: string) => {
+        const point = { identifier: 1, clientX: 20, clientY: y, pageX: 20, pageY: y };
+        const target = { id: '', offsetTop: 0, offsetLeft: 0, dataset: { timerSurface } };
+        page.stageTouch({ type, detail: {}, timeStamp: 0, target, currentTarget: target,
+          touches: type === 'touchend' ? [] : [point], changedTouches: [point] });
+      };
+      touch('touchstart');
+      expect(timer.state.phase).toBe('idle');
+      touch('touchstart', 20, 'stage');
+      expect(timer.state.phase).toBe('holding');
+      touch('touchmove', 70);
+      vi.advanceTimersByTime(timer.settings.holdMs);
+      touch('touchend', 70);
+      expect(timer.state.phase).toBe('idle');
+      touch('touchstart', 20, 'stage');
+      vi.advanceTimersByTime(timer.settings.holdMs);
+      touch('touchend');
+      expect(timer.state.phase).toBe('running');
+      vi.advanceTimersByTime(1234);
+      touch('touchstart', 20, 'stage');
+      touch('touchend');
+      expect(timer.state.phase).toBe('stopped');
+      expect(timer.solves).toHaveLength(1);
+    } finally { vi.useRealTimers(); }
+  });
+
   it('switches the native live image with the same connected cube state and updates it after a move', () => {
     const { page, timer } = fixture();
     const facelets = smartCubeTargetFacelets('R U')!;
@@ -280,6 +315,36 @@ describe('native timer source sheet lifecycle', () => {
     page.openSheet(event({ sheet: 'statistics' }));
     expect(page.data.statistics).toMatchObject({ tab: 'overview', range: 'all' });
     expect(page.data.statisticsExpanded).toBe(false);
+  });
+
+  it('keeps original solve numbers and rolling columns when switching the results tabs or searching', () => {
+    const { page, timer } = fixture();
+    timer.setManualScrambles('R U');
+    for (const value of ['10.00', '11.00', '12.00', '13.00', '14.00']) timer.manualEntry(value);
+    page.openSheet(event({ sheet: 'history' }));
+    const summary = () => page.data.summary as { rows: Array<{ number: number; rolling: { key: string; value: string }[] }> };
+    expect(summary().rows[0]).toMatchObject({ number: 5, rolling: expect.arrayContaining([{ key: 'ao5', value: '12.00', isPb: true }]) });
+    page.searchHistory({ detail: { value: '10.00' } } as WechatMiniprogram.Input);
+    expect(summary().rows.map(row => row.number)).toEqual([1]);
+    page.switchResultsTab(event({ sheet: 'statistics' }));
+    expect(page.data).toMatchObject({ sheet: 'statistics', resultsWorkspace: true });
+    page.switchResultsTab(event({ sheet: 'history' }));
+    expect(summary().rows.map(row => row.number)).toEqual([1]);
+  });
+
+  it('preserves roomy spacing and compacts the preview and stats independently on resize', () => {
+    const { page, timer } = fixture();
+    const savedGap = timer.settings.soloLayout.scrambleGap;
+    page.onResize({ windowWidth: 800, windowHeight: 600 });
+    expect(page.data).toMatchObject({ soloCompactStage: false, soloScrambleGap: savedGap });
+    page.onResize({ windowWidth: 800, windowHeight: 516 });
+    expect(page.data).toMatchObject({ soloCompactStage: true, soloScrambleGap: 4, soloTightFooter: false });
+    page.onResize({ windowWidth: 800, windowHeight: 406 });
+    expect(page.data).toMatchObject({ soloTightFooter: true, soloHorizontalStats: false });
+    page.onResize({ windowWidth: 800, windowHeight: 296 });
+    expect(page.data.soloHorizontalStats).toBe(true);
+    page.onResize({ windowWidth: 393, windowHeight: 658 });
+    expect(page.data).toMatchObject({ soloCompactStage: false, soloScrambleGap: savedGap, soloTightFooter: false });
   });
 
   it('generates an independent native bulk batch and drops scheduled work on close', async () => {

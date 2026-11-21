@@ -48,6 +48,8 @@ const douyinTimerWorker = `${douyinWorkersDirectory}/timer.js`;
 const converterLogRoot = join(packageRoot, '.tmp', 'wx-to-tt-log');
 const backupRoot = join(packageRoot, '.tmp', douyin ? 'dist-douyin-previous' : 'dist-previous');
 const projectConfigPath = join(packageRoot, douyin ? 'project.douyin.config.json' : 'project.config.json');
+const douyinExcludedPages = new Set(['assistant', 'membership', 'training']);
+const isDouyinExcludedPage = (path) => path.startsWith('pages/') && douyinExcludedPages.has(path.split('/')[1]);
 const douyinUnsupportedAppConfigKeys = [
   'darkmode',
   'lazyCodeLoading',
@@ -86,6 +88,8 @@ async function prepareOutput(sourceFiles) {
       if (douyin && path === 'app.json') {
         const appConfig = JSON.parse(await readFile(file, 'utf8'));
         appConfig.workers = douyinWorkersDirectory;
+        appConfig.pages = appConfig.pages.filter(page => !isDouyinExcludedPage(page));
+        appConfig.tabBar.list = appConfig.tabBar.list.filter(tab => !isDouyinExcludedPage(tab.pagePath));
         await writeFile(output, `${JSON.stringify(appConfig, null, 2)}\n`, 'utf8');
         return;
       }
@@ -143,7 +147,7 @@ async function buildProject() {
       templateLabel: 'project.douyin.config.template.json',
     } : {}),
   });
-  const sourceFiles = (await walkFiles(sourceRoot)).filter(file => !douyin || !normalizedRelativePath(sourceRoot, file).startsWith('pages/membership/'));
+  const sourceFiles = (await walkFiles(sourceRoot)).filter(file => !douyin || !isDouyinExcludedPage(normalizedRelativePath(sourceRoot, file)));
   const appConfigPath = join(sourceRoot, 'app.json');
   const sourceJsonFiles = [
     appConfigPath,
@@ -191,7 +195,7 @@ async function buildProject() {
   if (douyin) {
     graphInputFiles.push(...TIMER_PROJECT_ICONS, ...DOUYIN_TIMER_VOICE_ASSETS.map(asset => asset.source));
     await convertToDouyin();
-    for (const stylesheet of ['segment-font.css', 'solo-stage.css', 'liberation-mono.css', 'classic-appearance.css']) {
+    for (const stylesheet of ['segment-font.css', 'solo-stage.css', 'results-tabs.css', 'liberation-mono.css', 'classic-appearance.css']) {
       const source = new URL(import.meta.resolve(`@cuberoot/shared/timer/${stylesheet}`));
       let css = await readFile(source, 'utf8');
       if (stylesheet === 'liberation-mono.css') {
@@ -266,9 +270,6 @@ async function normalizeDouyinAppConfig() {
     ...normalized.permission,
     'scope.record': { desc: '用于在本机解码 Stackmat 计时器的音频信号' },
   };
-  normalized.pages = normalized.pages.filter(page => page !== 'pages/training/index' && page !== 'pages/membership/index');
-  normalized.tabBar.list = normalized.tabBar.list.filter(tab => tab.pagePath !== 'pages/training/index');
-  await rm(join(stagingRoot, 'pages/training'), { recursive: true, force: true });
   // No Douyin page uses the WeChat-only web container after native routing.
   await rm(join(stagingRoot, 'templates/web-route-view.ttml'), { force: true });
   normalized.tabBar.list = (await buildDouyinTabIcons(stagingRoot, normalized.tabBar)).map(tab => ({ ...tab, text: '' }));

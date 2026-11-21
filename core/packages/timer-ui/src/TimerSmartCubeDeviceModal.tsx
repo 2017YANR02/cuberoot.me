@@ -12,6 +12,7 @@ import {
 import { createPortal } from 'react-dom';
 
 import { normalizeMac } from '@cuberoot/shared/timer/external/mac';
+import { TIMER_SMART_CUBE_DEVICE_COPY, timerSmartCubeBatteryPercent, timerSmartCubeSignalLabel } from '@cuberoot/shared/timer/device-contract';
 import { useDialogMotion } from './useDialogMotion';
 import { useModalBackdrop } from './useModalDismiss';
 import { ClearButton } from './ClearButton';
@@ -64,69 +65,6 @@ export interface TimerSmartCubeDeviceModalProps {
   title?: string;
 }
 
-const COPY = {
-  en: {
-    macLabel: 'Cube MAC address',
-    macHint: 'Enter the real Bluetooth MAC address shown for this cube on your Windows computer or in the manufacturer’s app. The name suffix is not a complete address.',
-    macInvalid: 'Enter six colon-separated hex octets.',
-    clearMac: 'Clear address',
-    confirm: 'Confirm',
-    battery: 'Battery',
-    availableDevices: 'Available devices',
-    cancel: 'Cancel',
-    close: 'Close',
-    connect: 'Connect',
-    connected: 'Connected',
-    connecting: 'Connecting…',
-    connectionFailed: 'Connection failed',
-    disconnect: 'Disconnect',
-    lastMove: 'Last move',
-    notConnected: 'Not connected',
-    noDevices: 'No supported smart cubes found',
-    resetFailed: 'Software state was reset, but writing to the device failed. Check the connection and retry.',
-    resetGyroHint: 'Solve the cube and hold white on top and green in front, then reset the cube',
-    resetState: 'Reset',
-    retry: 'Retry connection',
-    scanAgain: 'Scan again',
-    scanning: 'Scanning…',
-    signalGood: 'Good signal',
-    signalLow: 'Weak signal',
-    signalMedium: 'Fair signal',
-    stateReset: 'State reset',
-    title: 'Smart cube',
-  },
-  zh: {
-    macLabel: '魔方 MAC 地址',
-    macHint: '请输入在 Windows 电脑或厂商 App 中查到的这颗魔方的真实蓝牙 MAC 地址。名称末尾的四位字符不是完整地址。',
-    macInvalid: '请输入六组用冒号分隔的两位十六进制数。',
-    clearMac: '清除地址',
-    confirm: '确定',
-    battery: '电量',
-    availableDevices: '可用设备',
-    cancel: '取消',
-    close: '关闭',
-    connect: '连接',
-    connected: '已连接',
-    connecting: '连接中…',
-    connectionFailed: '连接失败',
-    disconnect: '断开',
-    lastMove: '最近一步',
-    notConnected: '未连接',
-    noDevices: '未发现支持的智能魔方',
-    resetFailed: '软件状态已重置，但设备回写失败，请检查连接后重试',
-    resetGyroHint: '还原魔方并按白顶绿前握好，再重置魔方',
-    resetState: '重置',
-    retry: '重新连接',
-    scanAgain: '重新扫描',
-    scanning: '正在扫描…',
-    signalGood: '信号良好',
-    signalLow: '信号较弱',
-    signalMedium: '信号一般',
-    stateReset: '状态已重置',
-    title: '智能魔方',
-  },
-} as const;
-
 type DeviceAction = 'connect' | 'disconnect' | 'reset' | null;
 
 /** Shared smart-cube status and recovery surface. Hosts only provide transport actions. */
@@ -155,7 +93,7 @@ export function TimerSmartCubeDeviceModal({
   title,
 }: TimerSmartCubeDeviceModalProps) {
   const { motionRef, close: onClose } = useDialogMotion(onClosed);
-  const copy = COPY[language];
+  const copy = TIMER_SMART_CUBE_DEVICE_COPY[language];
   const [macInput, setMacInput] = useState('');
   const [macError, setMacError] = useState(false);
   const [action, setAction] = useState<DeviceAction>(null);
@@ -461,7 +399,7 @@ export function TimerSmartCubeDeviceModal({
                         >
                           <span className="timer-smart-cube-device__device-copy">
                             <strong>{device.name}</strong>
-                            <span>{signalText(device.rssi, copy)}</span>
+                            <span>{copy[timerSmartCubeSignalLabel(device.rssi)]}</span>
                           </span>
                           <span className="timer-smart-cube-device__device-action">
                             {action === 'connect' && connectingDeviceId === device.id && <LoaderCircle className="is-connecting" size={16} aria-hidden="true" />}
@@ -531,7 +469,7 @@ export function TimerSmartCubeDeviceModal({
 
 export function BatteryLevelIcon({ level, width = 30, height = 16 }: { level?: number | null; width?: number; height?: number }) {
   const clipId = useId();
-  const percent = typeof level === 'number' && Number.isFinite(level) ? Math.round(Math.max(0, Math.min(100, level))) : null;
+  const percent = timerSmartCubeBatteryPercent(level);
   return <svg width={width} height={height} viewBox="0 0 30 16" fill="currentColor" aria-hidden="true">
     <defs><clipPath id={clipId}><rect x="3" y="3" width="21" height="10" rx="2" /></clipPath></defs>
     <rect x="1" y="1" width="25" height="14" rx="4" fill="none" stroke="currentColor" strokeWidth="1.5" opacity="0.45" />
@@ -542,7 +480,7 @@ export function BatteryLevelIcon({ level, width = 30, height = 16 }: { level?: n
 }
 
 function DeviceBattery({ label, level }: { label: string; level?: number | null }) {
-  const percent = typeof level === 'number' && Number.isFinite(level) ? Math.round(Math.max(0, Math.min(100, level))) : null;
+  const percent = timerSmartCubeBatteryPercent(level);
   const description = `${label} ${percent === null ? '—' : `${percent}%`}`;
   return (
     <Tooltip content={description} openOnClick>
@@ -552,13 +490,4 @@ function DeviceBattery({ label, level }: { label: string; level?: number | null 
       </button>}
     </Tooltip>
   );
-}
-
-function signalText(
-  rssi: number | undefined,
-  copy: { signalGood: string; signalLow: string; signalMedium: string },
-): string {
-  if (rssi === undefined || rssi >= -60) return copy.signalGood;
-  if (rssi >= -75) return copy.signalMedium;
-  return copy.signalLow;
 }

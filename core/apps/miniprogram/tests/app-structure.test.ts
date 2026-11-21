@@ -109,19 +109,17 @@ describe('mini program app structure', () => {
       .map((match) => match[1]);
     expect(pageBlocks).toHaveLength(2);
 
-    const readToken = (block: string, token: string) => {
-      const match = block.match(new RegExp(`--cr-${token}:\\s*(#[0-9a-f]{6})`, 'i'));
-      expect(match, `missing --cr-${token}`).not.toBeNull();
-      return match?.[1].toLowerCase() ?? '';
-    };
-    const light = Object.fromEntries(
-      ['bg', 'text', 'muted', 'accent', 'accent-soft', 'ready', 'danger']
-        .map((token) => [token, readToken(pageBlocks[0], token)]),
+    const readPalette = (scheme: 'light' | 'dark', block: string) => Object.fromEntries(
+      ['bg', 'text', 'muted', 'accent', 'accent-soft', 'ready', 'danger'].map((token) => {
+        const source = `--cr-${scheme}-${token}`;
+        expect(block).toContain(`--cr-${token}: var(${source})`);
+        const match = pageBlocks[0].match(new RegExp(`${source}:\\s*(#[0-9a-f]{6})`, 'i'));
+        expect(match, `missing ${source}`).not.toBeNull();
+        return [token, match?.[1].toLowerCase() ?? ''];
+      }),
     );
-    const dark = Object.fromEntries(
-      ['bg', 'text', 'muted', 'accent', 'accent-soft', 'ready', 'danger']
-        .map((token) => [token, readToken(pageBlocks[1], token)]),
-    );
+    const light = readPalette('light', pageBlocks[0]);
+    const dark = readPalette('dark', pageBlocks[1]);
 
     expect(light.accent).toBe(themeConfig.light.tabBarSelectedColor);
     expect(dark.accent).toBe(themeConfig.dark.tabBarSelectedColor);

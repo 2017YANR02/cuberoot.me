@@ -43,6 +43,13 @@ describe('public Douyin route restriction in native runtimes', () => {
     expect(request).not.toHaveBeenCalled();
     open({ key: 'privacy' });
     expect(redirectTo).toHaveBeenLastCalledWith(expect.objectContaining({ url: '/pages/privacy/index' }));
+    redirectTo.mockClear();
+    for (const path of ['/zh/chat', '/zh/chat/share?id=abcdefghijklmnopqrstuvwx', '/zh/courses', '/zh/learn']) {
+      open({ key: 'home', path: encodeURIComponent(path) });
+      expect(context.data.src).toBe('');
+      expect(context.data.errorMessage).toBeTruthy();
+    }
+    expect(redirectTo).not.toHaveBeenCalled();
   });
   it('shares the native BLE session between independently bundled pages', async () => {
     const result = await build({

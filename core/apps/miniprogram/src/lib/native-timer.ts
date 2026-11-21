@@ -12,7 +12,7 @@ import { planTimerImport, appendTimerImportSessions, type TimerImportPlan } from
 import { createTimerSourceRevision, advanceTimerSourceRevision, timerManualSourceIdentity } from '@cuberoot/shared/timer/source-revision';
 import { updateTimerHistorySolve, deleteTimerHistorySolve, filterTimerHistorySolves, createTimerHistoryFilters } from '@cuberoot/shared/timer/history';
 import { histPush, histBack, histForward, type ScrambleHistory } from '@cuberoot/shared/timer/scramble-history';
-import { rollingStatColumnsForEvent, rollingStatCurrent, rollingStatBest, ROLLING_STAT_PRESETS } from '@cuberoot/shared/timer/rolling-stats';
+import { projectRollingStats, rollingStatColumnsForEvent, rollingStatCurrent, rollingStatBest, ROLLING_STAT_PRESETS } from '@cuberoot/shared/timer/rolling-stats';
 import type { createWcaScramblePool, WcaSourceSpec, WcaDispensedScramble } from '@cuberoot/shared/timer/wca-scramble-pool';
 import { timerWcaScrambleSourceLine, resolveTimerWcaSourceCore, normalizeTimerWcaSourceCoreSettings } from '@cuberoot/shared/timer/wca-source-config';
 import { timerWcaDifficultyFilter } from '@cuberoot/shared/timer/wca-difficulty';
@@ -565,19 +565,29 @@ export class NativeTimer {
   displayMilliseconds(now = this.now()) {
     return this.state.startedAtMs === null ? this.state.lastMs ?? 0 : Math.max(0, now - this.state.startedAtMs);
   }
-  summary(limit = 100) {
+  summary(limit = 100, includeHistoryColumns = false) {
     const solves = this.solves;
     const filtered = filterTimerHistorySolves(solves, this.historyFilters).solves;
     const f = (value: number | null) => formatEventMs(this.event, value, this.settings.precision);
     const mbld = this.event === '333mbld';
     const bestAttempt = mbld ? bestMbldSolve(solves) : null;
+    const columns = rollingStatColumnsForEvent(this.event, this.settings.statsRollingColumns);
+    const indices = new Map(solves.map((solve, index) => [solve.id, index]));
+    const projection = includeHistoryColumns ? projectRollingStats(solves, columns) : null;
     return { count: solves.length, solved: solves.filter(s => Number.isFinite(effectiveMs(s))).length,
       mean: mbld ? '-' : f(meanOfAll(solves)), mo3: mbld ? '-' : f(meanOfN(solves, 3)),
-      rolling: rollingStatColumnsForEvent(this.event, this.settings.statsRollingColumns)
-        .map(key => ({ key, value: f(rollingStatCurrent(solves, key)) })),
+      rolling: columns.map(key => ({ key, value: f(rollingStatCurrent(solves, key)) })),
       filteredCount: filtered.length, best: mbld ? bestAttempt ? formatMbldResult(bestAttempt) : '-' : f(bestSingle(solves, this.event)),
       ao5: mbld ? '-' : f(averageOfN(solves, 5)), ao12: mbld ? '-' : f(averageOfN(solves, 12)),
-      rows: filtered.slice(0, limit).map(s => ({ id: s.id, result: formatSolveResult(s, this.settings.precision), scramble: s.scramble, penalty: s.penalty, comment: s.comment ?? '' })) };
+      rows: filtered.slice(0, limit).map(s => {
+        const index = indices.get(s.id)!;
+        return { id: s.id, number: index + 1, result: formatSolveResult(s, this.settings.precision),
+          penalty: s.penalty, hasComment: Boolean(s.comment),
+          rolling: projection ? columns.map(key => {
+            const point = projection.get(key)?.[index];
+            return { key, value: formatEventMs(this.event, point?.value ?? null), isPb: Boolean(point?.isPb) };
+          }) : [] };
+      }) };
   }
   statistics(range: TimerStatsDateRange = 'all', now = Date.now()) {
     const solves = filterSolvesByStatsDateRange(this.solves, range, now);

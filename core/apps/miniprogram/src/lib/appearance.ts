@@ -1,5 +1,5 @@
-import { decodeNativeAppearance, NATIVE_BACKGROUND_ASSETS, type NativeAppearance } from '@cuberoot/shared/appearance';
-import { miniProgramApi } from './platform';
+import { decodeNativeAppearance, NATIVE_APPEARANCE_TOKENS, NATIVE_BACKGROUND_ASSETS, type NativeAppearance } from '@cuberoot/shared/appearance';
+import { isDouyinMiniProgram, miniProgramApi } from './platform';
 import themes from '../theme.json';
 import { SITE_ORIGIN } from './runtime-config';
 
@@ -22,20 +22,29 @@ function systemIsDark(): boolean {
   } catch { return false; }
 }
 
-function appearanceColors(appearance: NativeAppearance | null) {
+function appearanceScheme(appearance: NativeAppearance | null): 'light' | 'dark' {
+  return appearance && !appearance.followSystem ? appearance.scheme : systemIsDark() ? 'dark' : 'light';
+}
+
+function appearanceColors(appearance: NativeAppearance | null, scheme: 'light' | 'dark') {
   if (!appearance) return null;
   if (!appearance.followSystem) return appearance.colors;
-  return appearance.systemColors?.[systemIsDark() ? 'dark' : 'light'] ?? null;
+  return appearance.systemColors?.[scheme] ?? null;
 }
 
 export function nativeAppearanceStyle(): string {
   const appearance = readAppearance();
-  const colors = appearanceColors(appearance);
+  const scheme = appearanceScheme(appearance);
+  return styleForAppearance(appearance, scheme, appearanceColors(appearance, scheme));
+}
+
+function styleForAppearance(appearance: NativeAppearance | null, scheme: 'light' | 'dark', colors: NativeAppearance['colors'] | null): string {
   const styles = colors
     ? Object.entries(colors).map(([key, value]) => `${key}:${value}`)
-    : [];
+    : isDouyinMiniProgram()
+      ? Object.keys(NATIVE_APPEARANCE_TOKENS).map(key => `${key}:var(--cr-${scheme}-${key.slice('--cr-'.length)})`)
+      : [];
   if (appearance?.backgrounds) {
-    const scheme = appearance.followSystem ? (systemIsDark() ? 'dark' : 'light') : appearance.scheme;
     const scene = appearance.backgrounds[scheme];
     styles.push(`--cr-scene-image:${scene ? `url("${SITE_ORIGIN}${NATIVE_BACKGROUND_ASSETS}/${scene.id}.webp")` : 'none'}`);
     styles.push(`--cr-scene-position:${scene?.position ?? '50%'}`);
@@ -48,15 +57,20 @@ export function applyNativeAppearance(): void {
   const api = miniProgramApi();
   try { if (api.getLaunchOptionsSync?.().scene === 1154) return; } catch { /* optional host API */ }
   const appearance = readAppearance();
-  const systemDark = systemIsDark();
-  const dark = appearance && !appearance.followSystem ? appearance.scheme === 'dark' : systemDark;
-  const defaults = dark ? themes.dark : themes.light;
-  const colors = appearanceColors(appearance);
+  const scheme = appearanceScheme(appearance);
+  const dark = scheme === 'dark';
+  const defaults = themes[scheme];
+  const colors = appearanceColors(appearance, scheme);
   const backgroundColor = colors?.['--cr-bg'] ?? defaults.backgroundColor;
   // Existing pages (including the visible native account page) update when the
   // hidden tools WebView finally delivers its queued appearance message.
   if (typeof getCurrentPages === 'function') {
-    for (const page of getCurrentPages()) page.setData({ appearanceStyle: nativeAppearanceStyle() });
+    const appearanceStyle = styleForAppearance(appearance, scheme, colors);
+    for (const page of getCurrentPages()) {
+      page.setData(page.data?.nativeTimerPage
+        ? { appearanceStyle, appearanceScheme: scheme }
+        : { appearanceStyle });
+    }
   }
   try { api.setNavigationBarColor({ backgroundColor, frontColor: dark ? '#ffffff' : '#000000' }); } catch { /* optional host API */ }
   try { api.setBackgroundColor({ backgroundColor }); } catch { /* optional host API */ }
