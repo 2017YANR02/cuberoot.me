@@ -95,6 +95,7 @@ export default function SolveModal({
       onDelete={onDelete}
       onEntered={onDisplayed}
       onMoveToSession={onMoveToSession}
+      onUseScramble={handleUseScramble}
       preview={solve.event !== 'pll-chain' ? <CubePreview event={solve.event} scramble={solve.scramble} size={14} /> : undefined}
       report={hasMoves ? (
         <ReconstructReport

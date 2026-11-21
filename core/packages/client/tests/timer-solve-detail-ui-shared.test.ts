@@ -105,6 +105,27 @@ describe('shared timer solve detail UI', () => {
     expect(onClose).toHaveBeenCalledOnce();
   });
 
+  it('reuses the stored scramble for a solve without a move log', async () => {
+    const onUseScramble = vi.fn();
+    const renderDetail = (scramble: string) => createElement(TimerSolveDetailModal, {
+      index: 0,
+      localize,
+      onClose: vi.fn(),
+      onUseScramble,
+      solve: { ...baseSolve, scramble },
+    });
+    const retryButton = () => [...document.body.querySelectorAll('button')]
+      .find((button) => button.textContent === 'Use this scramble');
+
+    await act(async () => root.render(renderDetail('   ')));
+    expect(retryButton()).toBeUndefined();
+
+    const scramble = "1. R U R'\n2. F D F'";
+    await act(async () => root.render(renderDetail(scramble)));
+    await act(async () => retryButton()!.click());
+    expect(onUseScramble).toHaveBeenCalledExactlyOnceWith(scramble);
+  });
+
   it('keeps Escape inside an active comment edit and suppresses duplicate report content', async () => {
     vi.useFakeTimers();
     const onClose = vi.fn();

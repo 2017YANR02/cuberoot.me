@@ -3816,7 +3816,13 @@ children: <>
               if (isLatest) setLastPenalty(null);
             }}
             history={byEvent[modalSolve.s.event] ?? []}
-            onUseScramble={useScramble}
+            onUseScramble={modalSolve.s.event === event
+              && !competition.enabled && !multiEnabled && timerCanSwitchScramble(timer.phase)
+              ? (text) => {
+                useScramble(text);
+                if (isMobile) closeResultsPanel();
+              }
+              : undefined}
             // Two writes because the page reads a *snapshot*: the store keeps
             // the answer, and the copy being rendered has to agree with it or
             // the button won't look pressed.

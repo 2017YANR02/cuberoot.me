@@ -31,8 +31,10 @@ import {
 import { createPortal } from 'react-dom';
 
 import { modalFocusableElements } from './modal-focus';
+import { TIMER_USE_SCRAMBLE_COPY } from './scramble/action-copy';
 import { TimerHistoryCommentEditor } from './TimerHistoryRow';
 import { TimerReconstructMetrics } from './TimerReconstructMetrics';
+import { useModalBackdrop } from './useModalDismiss';
 
 const COPY = {
   attempted: { en: 'Attempted', zh: '已尝试' },
@@ -104,6 +106,8 @@ export interface TimerSolveDetailModalProps {
   /** Fires after the full-detail page has painted and its entrance motion has settled. */
   onEntered?: () => void;
   onMoveToSession?: (targetSessionId: string) => void;
+  /** Retry from the compact detail. The host applies the scramble and handles dismissal. */
+  onUseScramble?: (scramble: string) => void;
   preview?: ReactNode;
   /** Host-owned reconstruction/report slot. Timer UI never imports Web code. */
   report?: ReactNode;
@@ -158,6 +162,7 @@ export function TimerSolveDetailModal({
   onDelete,
   onEntered,
   onMoveToSession,
+  onUseScramble,
   preview,
   report,
   solve,
@@ -216,6 +221,7 @@ export function TimerSolveDetailModal({
       reducedMotionRequested() ? 0 : FULL_DETAIL_EXIT_MS,
     );
   }, [finishClose, full]);
+  const backdrop = useModalBackdrop(requestClose, closing);
 
   const markEnteredIfReady = useCallback(() => {
     if (enteredRef.current || closeStartedRef.current) return;
@@ -453,10 +459,10 @@ export function TimerSolveDetailModal({
   if (typeof document === 'undefined') return null;
   return createPortal(
     <div
+      {...backdrop}
       className={`timer-solve-detail-overlay timer-no-selection${full ? ' timer-solve-detail-overlay--full' : ''}${closing ? ' timer-solve-detail-overlay--closing' : ''}`}
       data-no-timer
       onAnimationEnd={onOverlayAnimationEnd}
-      onClick={full ? undefined : requestClose}
     >
       <div
         aria-labelledby={titleId}
@@ -511,7 +517,16 @@ export function TimerSolveDetailModal({
             </section>
             <section className="timer-solve-detail-section">{penalty}</section>
             {solve.scramble && <section className="timer-solve-detail-section">
-              <div>{localize(COPY.scramble)}:</div>
+              <div className="timer-solve-detail-header-actions">
+                <span>{localize(COPY.scramble)}</span>
+                {onUseScramble && solve.scramble.trim() && (
+                  <button
+                    className="timer-solve-detail-action"
+                    onClick={() => onUseScramble(solve.scramble)}
+                    type="button"
+                  >{localize(TIMER_USE_SCRAMBLE_COPY)}</button>
+                )}
+              </div>
               <div className="timer-solve-detail-scramble">{solve.scramble}</div>
             </section>}
             {preview && <section className="timer-solve-detail-preview">{preview}</section>}

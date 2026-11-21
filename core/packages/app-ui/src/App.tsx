@@ -5209,6 +5209,7 @@ children: <>
                     if (moved) closeHistorySolveDetail(historyDetail);
                   });
                 }}
+                onUseScramble={useReconstructionScramble}
                 preview={(
                   <TimerCubePreview
                     ariaLabel={copy.cubeState}

@@ -321,6 +321,23 @@
   .timer-solve-detail-modal--full { height: 100dvh; max-height: 100dvh; }
 }
 
+@media (min-width: 900px) and (hover: hover) and (pointer: fine) {
+  .timer-solve-detail-overlay--full { padding: 24px; }
+
+  .timer-solve-detail-modal--full {
+    box-sizing: border-box;
+    height: min(900px, 90vh);
+    max-height: 100%;
+    max-width: 1040px;
+    border: 1px solid var(--border-default);
+    border-radius: 8px;
+  }
+
+  @supports (height: 100dvh) {
+    .timer-solve-detail-modal--full { height: min(900px, 90dvh); }
+  }
+}
+
 .timer-solve-detail-overlay--full.timer-solve-detail-overlay--closing {
   pointer-events: none;
   animation: timer-solve-detail-overlay-out 160ms ease-in forwards;
@@ -396,6 +413,7 @@
   min-height: 0;
   overflow-x: hidden;
   overflow-y: auto;
+  overscroll-behavior-y: contain;
   padding: 16px max(16px, env(safe-area-inset-right))
     max(40px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left));
 }
