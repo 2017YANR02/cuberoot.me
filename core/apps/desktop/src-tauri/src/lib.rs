@@ -1,6 +1,7 @@
+mod navigation_menu;
 mod screen_awake;
 use keyring::{Entry, Error as KeyringError};
-use tauri::Manager;
+use tauri::{Emitter, Manager};
 
 mod ble_notifications;
 mod ble_address;
@@ -65,9 +66,10 @@ fn secure_remove(key: String) -> Result<(), String> {
 
 pub fn run() {
     let layout_script = format!(
-        "(() => {{ const parentOrigins = ['tauri://localhost', 'https://tauri.localhost', 'http://127.0.0.1:1420']; const styles = {};\n{}\n}})();",
+        "(() => {{ const parentOrigins = ['tauri://localhost', 'https://tauri.localhost', 'http://127.0.0.1:1420']; const styles = {};\n(() => {{ {} }})();\n{}\n}})();",
         serde_json::json!(include_str!("../../../../packages/app-ui/src/embedded-layout.css")),
-        include_str!("../../../../packages/app-ui/src/embedded-layout.js")
+        include_str!("../../../../packages/app-ui/src/embedded-layout.js"),
+        include_str!("tools-input.js")
     );
     tauri::Builder::default()
         .plugin(tauri::plugin::Builder::<_>::new("embedded-layout").js_init_script_on_all_frames(layout_script).build())
@@ -81,12 +83,27 @@ pub fn run() {
         .plugin(tauri_plugin_blec::init())
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_dialog::init())
+        .setup(|_app| {
+            #[cfg(target_os = "macos")]
+            if let Some(window) = _app.get_webview_window("main") {
+                window.with_webview(|view| {
+                    unsafe extern "C" { fn cuberoot_install_tools_search(view: *mut std::ffi::c_void); }
+                    unsafe { cuberoot_install_tools_search(view.inner()); }
+                })?;
+            }
+            Ok(())
+        })
+        .on_menu_event(|app, event| {
+            if let Some(command) = event.id().as_ref().strip_prefix("nav-") {
+                let _ = app.emit_to("main", "desktop-navigation", command);
+            }
+        })
         .on_window_event(|_, event| {
             if matches!(event, tauri::WindowEvent::Destroyed) {
                 let _ = screen_awake::apply(false);
             }
         })
-        .invoke_handler(tauri::generate_handler![desktop_distribution, prepare_auth_callback, screen_awake::set_keep_awake, native_print::print_document, file_export::export_file, secure_get, secure_set, secure_remove, ble_notifications::ble_subscribe, ble_address::ble_device_mac])
+        .invoke_handler(tauri::generate_handler![navigation_menu::configure_navigation_menu, desktop_distribution, prepare_auth_callback, screen_awake::set_keep_awake, native_print::print_document, file_export::export_file, secure_get, secure_set, secure_remove, ble_notifications::ble_subscribe, ble_address::ble_device_mac])
         .run(tauri::generate_context!())
         .expect("error while running CubeRoot");
 }

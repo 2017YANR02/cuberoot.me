@@ -616,6 +616,8 @@ export function App({ host, loadingMark }: { host: InstalledAppHost; loadingMark
   });
   const previousConnectionRef = useRef<ConnectionState>('checking');
   const webDepthRef = useRef<Record<MobileEmbedSurface, number>>({ account: 0, tools: 0 });
+  // The site's in-document back stack starts over after a full frame refresh.
+  const desktopToolsHistory = useRef<string[]>([]);
   const webBridgeReadyRef = useRef<Record<MobileEmbedSurface, boolean>>({
     account: false,
     tools: false,
@@ -1994,6 +1996,7 @@ export function App({ host, loadingMark }: { host: InstalledAppHost; loadingMark
 
   useEffect(() => {
     webLastHrefRef.current.tools = toolsWebUrl;
+    desktopToolsHistory.current = [];
     webBridgeReadyRef.current.tools = false;
     webSurfaceLoadedRef.current.tools = false;
     setWebSurfaceStatus((current) => current.tools === 'loading'
@@ -2283,6 +2286,12 @@ export function App({ host, loadingMark }: { host: InstalledAppHost; loadingMark
       }
       const previousHref = webLastHrefRef.current[navigation.surface];
       webLastHrefRef.current[navigation.surface] = navigation.href;
+      if (host.listenDesktopNavigation && navigation.surface === 'tools') {
+        const history = desktopToolsHistory.current;
+        const index = history.lastIndexOf(navigation.href);
+        if (index === -1) history.push(navigation.href);
+        else history.length = index + 1;
+      }
       if (!isEmbeddedTopBarRoute(navigation.surface, destination.pathname)) {
         setNativeTopBars(current => current[navigation.surface] ? { ...current, [navigation.surface]: false } : current);
         if (navigation.surface === 'tools') {
@@ -4149,6 +4158,76 @@ export function App({ host, loadingMark }: { host: InstalledAppHost; loadingMark
     } else if (navVisible) selectPrimaryView(id);
   });
 
+  const desktopCommand = useRef<(command: string) => void>(() => {});
+  useLayoutEffect(() => {
+    desktopCommand.current = command => {
+      if (command === 'timer' || command === 'tools' || command === 'account') {
+        if (navVisible) selectPrimaryView(command);
+        return;
+      }
+      if (view !== 'tools') return;
+      if (command === 'refresh') {
+        if (webSurfaceStatus.tools === 'ready') {
+          webFrameRefs.current.tools?.contentWindow?.postMessage({ type: 'cuberoot:desktop:reload-tool' }, SITE_ORIGIN);
+        } else retryWebSurface('tools');
+      } else if (command === 'back') {
+        if (webDepthRef.current.tools > 0) {
+          webFrameRefs.current.tools?.contentWindow?.postMessage(mobileEmbedBackMessage('tools'), SITE_ORIGIN);
+        } else if (desktopToolsHistory.current.length > 1) {
+          const history = desktopToolsHistory.current;
+          history.pop();
+          const previous = history[history.length - 1]!;
+          setWebSurfaceReloadUrl(current => ({ ...current, tools: previous }));
+          setWebSurfaceRevision(current => ({ ...current, tools: current.tools + 1 }));
+        } else if (toolsEntryRoute || !isEmbeddedTopBarRoute('tools', new URL(webLastHrefRef.current.tools || toolsWebUrl, SITE_ORIGIN).pathname)) {
+          setToolsEntryRoute(null);
+          setWebSurfaceReloadUrl(current => ({ ...current, tools: installedWebEntryUrl(siteUrl(language), language) }));
+          setWebSurfaceRevision(current => ({ ...current, tools: current.tools + 1 }));
+        }
+      } else if (command === 'search' && showToolsSearch) {
+        const frame = webFrameRefs.current.tools;
+        frame?.focus();
+        if (toolsSearchExpanded) frame?.contentWindow?.postMessage({ type: 'cuberoot:desktop:focus-search' }, SITE_ORIGIN);
+        setToolsSearchOpen(true);
+      } else if (command === 'escape' && toolsSearchExpanded) {
+        setToolsSearchOpen(false);
+        toolsSearchRef.current?.focus();
+      }
+    };
+  });
+  useEffect(() => {
+    if (!host.listenDesktopNavigation) return;
+    let active = true;
+    const subscription = host.listenDesktopNavigation(language, command => {
+      if (active) desktopCommand.current(command);
+    }).catch(() => undefined);
+    const onMessage = (event: MessageEvent) => {
+      if (event.origin !== SITE_ORIGIN || event.source !== webFrameRefs.current.tools?.contentWindow) return;
+      if (event.data?.type === 'cuberoot:desktop:tools-input' && ['back', 'escape'].includes(event.data.command)) {
+        desktopCommand.current(event.data.command);
+      }
+    };
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === 'Escape' && !event.defaultPrevented) desktopCommand.current('escape');
+    };
+    const onMouse = (event: MouseEvent) => {
+      if (event.button === 3 && viewRef.current === 'tools') {
+        event.preventDefault();
+        desktopCommand.current('back');
+      }
+    };
+    window.addEventListener('message', onMessage);
+    window.addEventListener('keydown', onKey);
+    window.addEventListener('mouseup', onMouse);
+    return () => {
+      active = false;
+      void subscription.then(handle => handle?.remove());
+      window.removeEventListener('message', onMessage);
+      window.removeEventListener('keydown', onKey);
+      window.removeEventListener('mouseup', onMouse);
+    };
+  }, [host, language]);
+
   const embeddedBottom = navVisible && !sideNavigation
     ? Math.max(0, primaryNavBottomInset - (hostViewport
       ? Math.max(0, viewportHeight - hostViewport.content.y - hostViewport.content.height) : 0)) + 8
@@ -4937,7 +5016,9 @@ children: <>
                 </div>
               )}
               <iframe
-                allow={surface === 'tools' ? 'clipboard-write; fullscreen; camera; microphone' : 'clipboard-write; fullscreen'}
+                allow={surface === 'tools'
+                  ? `clipboard-write; fullscreen; camera; microphone${host.listenDesktopNavigation ? '; focus-without-user-activation https://cuberoot.me' : ''}`
+                  : 'clipboard-write; fullscreen'}
                 aria-hidden={showState}
                 inert={host.generativeAiDisabled && showState}
                 key={`${surface}-${webSurfaceRevision[surface]}`}

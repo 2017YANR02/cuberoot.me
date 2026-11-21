@@ -2,6 +2,7 @@ import { printDesktopDocument } from './native-print';
 import { openDesktopExternal } from './native-external';
 import { createStackmatMicSource } from '@cuberoot/timer-ui/external';
 import { invoke, isTauri } from '@tauri-apps/api/core';
+import { listen } from '@tauri-apps/api/event';
 import { getVersion } from '@tauri-apps/api/app';
 import { getCurrent, onOpenUrl } from '@tauri-apps/plugin-deep-link';
 import { openUrl } from '@tauri-apps/plugin-opener';
@@ -69,6 +70,17 @@ const requestDesktopScreenWakeLock = createNativeScreenWakeLock(
 
 export const desktopHost: InstalledAppHost = {
   floatingNavigation: 'labeled',
+  async listenDesktopNavigation(language, listener) {
+    if (!isTauri()) return { remove: async () => {} };
+    const unlisten = await listen<Parameters<typeof listener>[0]>('desktop-navigation', event => listener(event.payload), { target: 'main' });
+    try {
+      await invoke('configure_navigation_menu', { language });
+    } catch (error) {
+      unlisten();
+      throw error;
+    }
+    return { remove: async () => unlisten() };
+  },
   createBleTransport: () => new TauriBleTransport(),
   createStackmatSource: createStackmatMicSource,
   async addNetworkListener(listener) {

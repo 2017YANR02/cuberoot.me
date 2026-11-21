@@ -114,6 +114,7 @@ export interface InstalledAppHost {
   addNotificationOpenListener?(listener: (value: import('@cuberoot/shared/notification-push').NotificationOpen) => void): Promise<InstalledAppListener>;
   uuRemote?: import('./uu-remote').UURemoteClient;
   watchTimer?: import('./watch-timer').WatchTimerPort;
+  listenDesktopNavigation?(language: SupportedLanguage, listener: (command: 'timer' | 'tools' | 'account' | 'back' | 'refresh' | 'search') => void): Promise<InstalledAppListener>;
   floatingNavigation?: boolean | 'labeled';
   primaryNavigation?: {
     render(state: PrimaryNavigationState | null): Promise<boolean>;
