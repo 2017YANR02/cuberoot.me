@@ -194,20 +194,6 @@ button {
 
 .web-surface.web-surface--account:not([hidden]) { display: flex; flex-direction: column; }
 .web-surface.web-surface--account iframe { flex: 1; min-height: 0; }
-.app-account-toolbar {
-  position: relative;
-  z-index: 1;
-  display: flex;
-  flex: 0 0 auto;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  min-height: 48px;
-  padding: 4px 16px;
-  border-bottom: 1px solid var(--shell-divider);
-  background: var(--background);
-}
-.web-surface--account .web-surface-state { padding-top: 56px; }
 .android-update-notice { flex: 0 1 auto; max-height: 45%; overflow: auto; padding: 8px 12px; border-bottom: 1px solid var(--shell-divider); }
 .android-update-notice .action-row { flex-wrap: wrap; }
 .android-update-notice p { margin: 6px 0; font-size: 0.85rem; }
@@ -829,7 +815,7 @@ button {
 }
 
 /* Host navigation offsets; shared TimerWorkspace owns the dock geometry. */
-.app-shell[data-wide='true']:not(.app-shell--timer-fullscreen) { grid-template-rows: auto minmax(0, 1fr); }
+.app-shell[data-wide='true']:not(.app-shell--timer-fullscreen, [data-floating-navigation]) { grid-template-rows: auto minmax(0, 1fr); }
 .app-shell[data-wide='true'].app-shell--settings { grid-template-rows: auto auto minmax(0, 1fr); }
 .app-shell[data-wide='true'] > .primary-nav {
   grid-row: 1;
@@ -892,3 +878,140 @@ button {
 :root[data-host-viewport] .shell-topbar.timer-solo-topbar { padding-inline: 4px; }
 :root[data-host-viewport] .timer-stage-footer { padding-inline: 12px; padding-bottom: 10px; }
 :root[data-host-viewport] .primary-nav:not([style]) { padding: 5px 8px; }
+
+/* The capsule overlays the full-height content and never sizes its scrollports. */
+.app-shell[data-floating-navigation] {
+  position: relative;
+  grid-template-rows: minmax(0, 1fr);
+  --app-nav-height: 56px;
+  --app-nav-width: calc(3 * var(--app-nav-height));
+  --app-nav-accessory-gap: 8px;
+  --app-nav-bottom: calc(8px + var(--safe-area-inset-bottom, var(--sab)));
+}
+:root[data-host-viewport] .app-shell[data-floating-navigation] { --app-nav-bottom: 8px; }
+.app-shell[data-floating-navigation] > .view-container { grid-row: 1; }
+.app-shell[data-floating-navigation] > .primary-nav {
+  position: absolute;
+  z-index: 7;
+  inset: auto 0 var(--app-nav-bottom);
+  width: var(--app-nav-width);
+  height: var(--app-nav-height);
+  margin-inline: auto;
+  gap: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  --app-nav-highlight-index: 0;
+}
+.app-shell[data-floating-navigation] > :is(.primary-nav, .tools-search-toggle) {
+  background-color: var(--glass-popover-bg);
+  background-image: var(--glass-capsule-glint, none);
+  -webkit-backdrop-filter: var(--glass-capsule-filter, var(--glass-filter));
+  backdrop-filter: var(--glass-capsule-filter, var(--glass-filter));
+  box-shadow: var(--glass-capsule-shadow, inset 0 0 0 1px var(--glass-edge));
+}
+.app-shell[data-floating-navigation] > .primary-nav[data-selected='tools'] { --app-nav-highlight-index: 1; }
+.app-shell[data-floating-navigation] > .primary-nav[data-selected='account'] { --app-nav-highlight-index: 2; }
+.app-shell[data-floating-navigation] > .primary-nav::before {
+  content: '';
+  position: absolute;
+  inset-block-start: 4px;
+  inset-inline-start: calc(4px + var(--app-nav-highlight-index) * 100% / 3);
+  width: calc(100% / 3 - 8px);
+  height: calc(100% - 8px);
+  border-radius: 999px;
+  background: var(--shell-hover);
+  pointer-events: none;
+  transition: inset-inline-start 200ms ease, inset-block-start 200ms ease;
+}
+.app-shell[data-floating-navigation] > .primary-nav button,
+.app-shell[data-floating-navigation] > .primary-nav button[aria-current='page'] {
+  position: relative;
+  min-height: 44px;
+  padding: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--foreground);
+}
+@media (prefers-reduced-motion: reduce) {
+  .app-shell[data-floating-navigation] > .primary-nav::before { transition: none; }
+}
+.app-shell[data-floating-navigation] :is(.primary-nav button, .tools-search-toggle) > svg {
+  width: 22px;
+  height: 22px;
+}
+.app-shell[data-floating-navigation][data-side-navigation] > .primary-nav {
+  position: fixed;
+  inset: auto;
+  height: 148px;
+  margin: 0;
+  justify-content: center;
+  gap: 0;
+}
+.app-shell[data-floating-navigation][data-side-navigation] > .primary-nav::before {
+  inset-block-start: calc(4px + var(--app-nav-highlight-index) * 100% / 3);
+  inset-inline-start: 4px;
+  width: calc(100% - 8px);
+  height: calc(100% / 3 - 8px);
+}
+.app-shell[data-floating-navigation][data-side-navigation] > .primary-nav button {
+  flex: 1;
+  width: 100%;
+}
+.app-shell[data-floating-navigation] > .primary-nav[data-native-navigation],
+.app-shell[data-navigation-covered] > .primary-nav {
+  visibility: hidden;
+  pointer-events: none;
+}
+/* The standalone Tools action sits beside the capsule, outside its three slots. */
+.tools-search-toggle {
+  display: grid;
+  position: absolute;
+  z-index: 7;
+  left: calc(50% + var(--app-nav-width) / 2 + var(--app-nav-accessory-gap));
+  bottom: var(--app-nav-bottom);
+  width: var(--app-nav-height);
+  height: var(--app-nav-height);
+  place-items: center;
+  padding: 0;
+  border-radius: 50%;
+  color: var(--foreground);
+  cursor: pointer;
+}
+.app-shell[data-side-navigation] > .tools-search-toggle { position: fixed; }
+.tools-search-toggle[data-native-navigation] { visibility: hidden; pointer-events: none; }
+.tools-search-toggle > svg {
+  grid-area: 1 / 1;
+  transition: opacity 180ms ease, transform 180ms ease;
+}
+.tools-search-toggle[aria-expanded='false'] > svg:last-child,
+.tools-search-toggle[aria-expanded='true'] > svg:first-child {
+  opacity: 0;
+  transform: scale(.8);
+}
+@media (prefers-reduced-motion: reduce) {
+  .tools-search-toggle > svg { transition: none; }
+}
+
+.app-shell[data-floating-navigation]:not([data-side-navigation], [data-navigation-covered]) {
+  --app-nav-clearance: calc(var(--app-nav-height) + var(--app-nav-bottom) + 8px);
+}
+.app-shell[data-floating-navigation] > .view-container {
+  scroll-padding-bottom: var(--app-nav-clearance, 8px);
+}
+.app-shell[data-floating-navigation] :is(.timer-solo-main, .mobile-timer-stage, .timer-workspace-panel-body, .app-appearance-settings-scroll) {
+  scroll-padding-bottom: var(--app-nav-clearance, 8px);
+}
+:root[data-host-top-bar] .app-shell[data-floating-navigation] .app-appearance-settings-header {
+  position: fixed;
+  z-index: 5;
+  top: var(--host-top-bar-top);
+  left: var(--host-top-bar-left);
+  right: var(--host-top-bar-right);
+  height: var(--host-top-bar-height);
+  min-height: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+}

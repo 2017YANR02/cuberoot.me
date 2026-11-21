@@ -1,7 +1,9 @@
+@import '@cuberoot/app-ui/embedded-layout.css';
+
 /* Scoped to the homepage: existing subpage shells keep their own geometry. */
 body .landing-page.landing-page--navigation {
   padding-top: var(--sat);
-  padding-bottom: max(16px, var(--sab));
+  padding-bottom: max(16px, var(--sab), var(--installed-chrome-bottom, 0px));
   min-height: calc(100dvh - var(--page-notice-h, 0px));
 }
 .home-navigation {
@@ -237,7 +239,7 @@ body .landing-page.landing-page--navigation {
   border-radius: 0;
   box-shadow: none;
   background: transparent;
-  padding: var(--sat) var(--sar) max(20px, var(--sab)) var(--sal);
+  padding: var(--sat) var(--sar) max(20px, var(--sab), var(--installed-chrome-bottom, 0px)) var(--sal);
   gap: 0;
 
 }
@@ -399,7 +401,7 @@ body .landing-page.landing-page--navigation {
 /* Keep LandingSearch a direct child: its existing viewport anchor and upward
    popovers are owned by landing.css. Only the home view reserves its space. */
 body .landing-page.landing-page--navigation[data-home-section="home"] {
-  padding-bottom: calc(7rem + var(--sab));
+  padding-bottom: calc(7rem + max(var(--sab), var(--installed-chrome-bottom, 0px)));
 }
 .landing-page--navigation:not([data-home-section="home"]) > .landing-search {
   display: none;

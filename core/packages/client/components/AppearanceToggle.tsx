@@ -30,14 +30,16 @@ import { useHomeBackgroundChoice } from '@/hooks/useHomeBackgroundChoice';
 import { usePanelClamp } from '@/hooks/usePanelClamp';
 import { useT } from '@/hooks/useT';
 import { useLang } from '@/i18n/tr';
-import { openInstalledAppearance, useInstalledShellNavigation } from '@/lib/installed-shell-navigation';
+import { openInstalledAppearance, useInlineInstalledAccountSettings, useInstalledShellNavigation } from '@/lib/installed-shell-navigation';
 
 const HOVER_CLOSE_DELAY_MS = 120;
 
 export default function AppearanceToggle({ className, triggerClassName, triggerLabel, labelClassName = 'toolbar-label', showLabel = false, menuContent, column = false, embedded = false, section = 'all', open: controlledOpen, onOpenChange }: { className?: string; triggerClassName?: string; triggerLabel?: string; labelClassName?: string; showLabel?: boolean; menuContent?: ReactNode; column?: boolean; embedded?: boolean; section?: 'all' | 'general' | 'appearance'; open?: boolean; onOpenChange?: (open: boolean) => void }) {
   const t = useT();
   const language = useLang();
-  const shellNavigation = useInstalledShellNavigation();
+  const installedNavigation = useInstalledShellNavigation();
+  const inlineSettings = useInlineInstalledAccountSettings();
+  const shellNavigation = installedNavigation && !(embedded && inlineSettings);
   const L = {
     title: triggerLabel ?? t('设置', 'Settings'),
     more: t('比较全部', 'Compare all'),

@@ -11,6 +11,7 @@ import {
   decodeMobileEmbedWebSession,
   isMobileEmbedExternalHref,
   mobileEmbedAuthClearMessage,
+  mobileEmbedAppearanceMessage,
   mobileEmbedAccountManageMessage,
   mobileEmbedExternalMessage,
   mobileEmbedNavigationMessage,
@@ -114,11 +115,65 @@ export default function MobileEmbedBridge() {
       if (parentOrigin) window.parent.postMessage(message, parentOrigin);
     };
 
+    const inlineAccount = () => surface === 'account' && capabilities?.inlineAccountSettings === true;
+    const commitAppearance = () => {
+      if (applyingAppearance) return;
+      if (!inlineAccount()) {
+        restoreHostAppearance();
+        return;
+      }
+      const url = new URL(window.location.href);
+      if (!/^\/(?:en\/|zh\/)?account\/?$/.test(url.pathname)
+        || !['general', 'appearance'].includes(url.searchParams.get('settings') ?? '')) return;
+      try { localStorage.getItem('trainer-lang'); }
+      catch {
+        restoreHostAppearance();
+        return;
+      }
+      const preferences = readAppearancePreferences();
+      if (JSON.stringify(hostAppearance) === JSON.stringify(preferences)) return;
+      // Keep the latest committed value until its echo arrives from the shell.
+      hostAppearance = preferences;
+      postToParent(mobileEmbedAppearanceMessage('account', preferences));
+    };
+
+    const applyToolsSearch = (chrome: MobileEmbedInitMessage['chrome'], home: boolean) => {
+      const root = document.documentElement;
+      const search = home ? chrome?.toolsSearch : undefined;
+      const wasExpanded = root.hasAttribute('data-embedded-search-open');
+      const expanded = search?.expanded === true;
+      root.toggleAttribute('data-embedded-search-button', Boolean(search));
+      root.toggleAttribute('data-embedded-search-open', expanded);
+      if (search && chrome) rootStyle.setProperty('--embedded-search-clearance', `${chrome.bottom}px`);
+      else rootStyle.removeProperty('--embedded-search-clearance');
+      if (expanded && !wasExpanded) document.querySelector<HTMLInputElement>('.landing-page > .landing-search .landing-search-field')?.focus();
+      if (!expanded && wasExpanded && document.activeElement instanceof HTMLInputElement
+        && document.activeElement.matches('.landing-search-field')) document.activeElement.blur();
+    };
+
+    const applyChrome = () => {
+      const chrome = capabilities?.chrome;
+      const pathname = window.location.pathname.replace(/^\/(?:en|zh)(?=\/|$)/, '') || '/';
+      const supportedPage = pathname === (surface === 'tools' ? '/' : '/account');
+      if (surface === 'tools') applyToolsSearch(chrome, supportedPage);
+      document.documentElement.toggleAttribute('data-installed-top-bar', Boolean(chrome?.top && supportedPage));
+      document.documentElement.toggleAttribute('data-installed-tools-insets', surface === 'tools' && supportedPage && chrome?.insetByHost === true);
+      for (const [side, value] of Object.entries({
+        left: chrome?.top?.left, right: chrome?.top?.right, bottom: chrome?.bottom,
+      })) {
+        if (supportedPage && value != null) rootStyle.setProperty(`--installed-chrome-${side}`, `${value}px`);
+        else rootStyle.removeProperty(`--installed-chrome-${side}`);
+      }
+      return Boolean(chrome && supportedPage);
+    };
+
     const postNavigation = () => {
       postToParent(mobileEmbedNavigationMessage(
         surface,
         stack[index] ?? window.location.href,
         index,
+        applyChrome(),
+        inlineAccount(),
       ));
     };
 
@@ -174,7 +229,7 @@ export default function MobileEmbedBridge() {
       const target = event.target;
       if (delegateAccountInteraction(event)) return;
       const anchor = target instanceof Element ? target.closest<HTMLAnchorElement>('a[href]') : null;
-      if (parentOrigin && capabilities?.shellNavigation && event.button === 0
+      if (parentOrigin && (capabilities?.shellNavigation || inlineAccount()) && event.button === 0
         && !event.metaKey && !event.ctrlKey && !event.shiftKey && !event.altKey) {
         let destination: 'timer' | 'account' | 'appearance' | 'timer-external' | null = target instanceof Element
           && target.closest('[data-mobile-open-settings="appearance"]') ? 'appearance' : null;
@@ -186,7 +241,7 @@ export default function MobileEmbedBridge() {
               const onlyTracking = [...next.searchParams.keys()].every(key => /^utm_/.test(key) || ['gclid', 'fbclid', 'msclkid'].includes(key));
               destination = onlyTracking && !next.hash ? 'timer' : 'timer-external';
             }
-            else if (path === '/appearance' || path === '/account'
+            else if (path === '/appearance' || !inlineAccount() && path === '/account'
               && ['appearance', 'general'].includes(next.searchParams.get('settings') ?? next.searchParams.get('view') ?? '')) destination = 'appearance';
             else if (surface === 'tools' && path === '/account' && !next.hash
               && [...next.searchParams.keys()].every(key => key === 'next')) {
@@ -234,11 +289,12 @@ export default function MobileEmbedBridge() {
         // The installed shell already positions this iframe below the status bar.
         // WKWebView still exposes its top inset inside the frame; don't apply it twice.
         rootStyle.setProperty('--sat', '0px');
+        if (surface === 'account') document.documentElement.setAttribute('data-installed-account-frame', '');
         hostOwnsSafeTop = true;
         parentOrigin = event.origin;
         capabilities = init;
-        setInstalledShellNavigation(init.shellNavigation === true
-          ? () => postToParent(mobileEmbedOpenSettingsMessage(surface)) : null, surface);
+        setInstalledShellNavigation(init.shellNavigation === true || inlineAccount()
+          ? () => postToParent(mobileEmbedOpenSettingsMessage(surface)) : null, surface, inlineAccount());
         if (init.appearance) applyHostAppearance(init.appearance);
         setInstalledBleBridge(surface === 'tools' && init.bluetooth === true ? event.origin : null);
         setAppleMembershipBridge(init.appleMembership === true, postToParent);
@@ -311,12 +367,19 @@ export default function MobileEmbedBridge() {
     document.addEventListener('click', onClick, true);
     document.addEventListener('keydown', onKeyDown, true);
     window.addEventListener('message', onMessage);
-    window.addEventListener(APPEARANCE_CHANGE_EVENT, restoreHostAppearance);
-    window.addEventListener('theme-change', restoreHostAppearance);
-    window.addEventListener('home-background-change', restoreHostAppearance);
+    window.addEventListener(APPEARANCE_CHANGE_EVENT, commitAppearance);
+    window.addEventListener('theme-change', commitAppearance);
+    window.addEventListener('home-background-change', commitAppearance);
     window.addEventListener('storage', restoreHostAppearance);
     return () => {
       active = false;
+      document.documentElement.removeAttribute('data-installed-top-bar');
+      if (surface === 'tools') {
+        document.documentElement.removeAttribute('data-installed-tools-insets');
+        applyToolsSearch(undefined, false);
+      }
+      if (surface === 'account') document.documentElement.removeAttribute('data-installed-account-frame');
+      for (const side of ['left', 'right', 'bottom']) rootStyle.removeProperty(`--installed-chrome-${side}`);
       if (hostOwnsSafeTop) rootStyle.setProperty('--sat', previousSafeTop, previousSafeTopPriority);
       setInstalledShellNavigation(null);
       setInstalledBleBridge(null);
@@ -329,9 +392,9 @@ export default function MobileEmbedBridge() {
       document.removeEventListener('click', onClick, true);
       document.removeEventListener('keydown', onKeyDown, true);
       window.removeEventListener('message', onMessage);
-      window.removeEventListener(APPEARANCE_CHANGE_EVENT, restoreHostAppearance);
-      window.removeEventListener('theme-change', restoreHostAppearance);
-      window.removeEventListener('home-background-change', restoreHostAppearance);
+      window.removeEventListener(APPEARANCE_CHANGE_EVENT, commitAppearance);
+      window.removeEventListener('theme-change', commitAppearance);
+      window.removeEventListener('home-background-change', commitAppearance);
       window.removeEventListener('storage', restoreHostAppearance);
       unsubscribeAuth();
     };

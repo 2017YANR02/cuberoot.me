@@ -5,6 +5,7 @@ import type { MobileEmbedSurface } from '@cuberoot/shared/mobile-embed';
 
 let openAppearance: (() => void) | null = null;
 let surface: MobileEmbedSurface | null = null;
+let inlineAccountSettings = false;
 const listeners = new Set<() => void>();
 const subscribe = (listener: () => void) => {
   listeners.add(listener);
@@ -16,12 +17,14 @@ const surfaceSnapshot = () => surface;
 const serverSurfaceSnapshot = () => null;
 
 /** Set only after MobileEmbedBridge validates the parent init and capability. */
-export function setInstalledShellNavigation(open: (() => void) | null, nextSurface: MobileEmbedSurface | null = null): void {
+export function setInstalledShellNavigation(open: (() => void) | null, nextSurface: MobileEmbedSurface | null = null, inlineSettings = false): void {
   const wasAvailable = snapshot();
   const previousSurface = surface;
+  const previousInlineSettings = inlineAccountSettings;
   openAppearance = open;
   surface = open ? nextSurface : null;
-  if (wasAvailable !== snapshot() || previousSurface !== surface) for (const listener of listeners) listener();
+  inlineAccountSettings = surface === 'account' && inlineSettings;
+  if (wasAvailable !== snapshot() || previousSurface !== surface || previousInlineSettings !== inlineAccountSettings) for (const listener of listeners) listener();
 }
 
 export function useInstalledShellSurface(): MobileEmbedSurface | null {
@@ -36,4 +39,8 @@ export function openInstalledAppearance(): boolean {
   if (!openAppearance) return false;
   openAppearance();
   return true;
+}
+
+export function useInlineInstalledAccountSettings(): boolean {
+  return useSyncExternalStore(subscribe, () => inlineAccountSettings, serverSnapshot);
 }

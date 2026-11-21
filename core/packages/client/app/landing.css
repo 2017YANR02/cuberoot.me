@@ -307,7 +307,7 @@ body:has(.page-notice-wrap) .landing-page .brand-line {
    their own layout. Reserve page padding so the footer remains reachable. */
 .landing-page > .landing-search {
     position: fixed;
-    inset: auto max(16px, var(--sar)) calc(2.5rem + var(--sab)) max(16px, var(--sal));
+    inset: auto max(16px, var(--sar)) calc(2.5rem + max(var(--sab), var(--installed-chrome-bottom, 0px))) max(16px, var(--sal));
     z-index: 30;
     width: auto;
     max-width: 600px;
@@ -332,7 +332,7 @@ body:has(.page-notice-wrap) .landing-page .brand-line {
     /* anchored-panel: safe (bottom-fixed host; panels open upward within the viewport). */
     top: auto;
     bottom: calc(100% + 0.5rem);
-    max-height: min(60dvh, calc(100dvh - 10rem - var(--sat) - var(--sab)));
+    max-height: min(60dvh, calc(100dvh - 10rem - var(--sat) - max(var(--sab), var(--installed-chrome-bottom, 0px))));
     overflow-y: auto;
 }
 .landing-page > .wp-upcoming-card {

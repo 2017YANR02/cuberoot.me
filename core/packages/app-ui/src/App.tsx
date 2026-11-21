@@ -71,6 +71,7 @@ import { SmartCubeSoloTimerController } from '@cuberoot/shared/smart-cube/solo-t
 import {
   decodeMobileEmbedAuthClear,
   decodeMobileEmbedAccountManage,
+  decodeMobileEmbedAppearance,
   decodeMobileEmbedAuthRequest,
   decodeMobileEmbedExternal,
   decodeMobileEmbedNavigation,
@@ -86,6 +87,7 @@ import {
   mobileEmbedInitMessage,
   mobileEmbedWebSessionMessage,
   type MobileEmbedSurface,
+  type MobileEmbedChrome,
 } from '@cuberoot/shared/mobile-embed';
 import { MOBILE_AUTH_PROVIDERS } from '@cuberoot/shared/auth/web-session';
 import { openInstalledAccountManagement } from './auth/account-management';
@@ -276,6 +278,7 @@ import {
   Clock3,
   Grid2X2,
   Settings as SettingsIcon,
+  Search,
   UserRound,
   X,
 } from 'lucide-react';
@@ -356,6 +359,7 @@ import {
 import type { InstalledAppHost } from './platform';
 import { startWebSurfaceHandshake } from './web-surface-handshake';
 import { installedWebEntryUrl } from './web-surface-url';
+import { usePrimaryNavigation } from './use-primary-navigation';
 import {
   solveMobileRandomDifficultyCase,
   solveMobileSmartCubeFixup,
@@ -368,6 +372,11 @@ const ReconstructReport = lazy(() => import('@cuberoot/timer-ui/reconstruct-repo
 const StageSolverDialog = lazy(() => import('./StageSolverDialog'));
 const SolveRecap = lazy(() => import('@cuberoot/timer-ui/solve-recap'));
 const MOBILE_EMBED_SURFACES = ['tools', 'account'] as const;
+
+function isEmbeddedTopBarRoute(surface: MobileEmbedSurface, pathname: string) {
+  const path = pathname.replace(/^\/(?:en|zh)(?=\/|$)/, '').replace(/\/$/, '') || '/';
+  return path === (surface === 'tools' ? '/' : '/account');
+}
 const MOBILE_EMBED_INIT_RETRY_MS = 400;
 const MOBILE_EMBED_INIT_RETRIES = 25;
 const MOBILE_EMBED_AUTH_TIMEOUT_MS = 10_000;
@@ -432,6 +441,8 @@ export function App({ host, loadingMark }: { host: InstalledAppHost; loadingMark
   const [store, setStore] = useState<TimerStoreData | null>(null);
   const [appearance, setAppearance] = useState<AppearancePreferences | null>(null);
   const appearanceRef = useRef(appearance);
+  const accountInlineSettingsRef = useRef(false);
+  const [accountFrameLocale, setAccountFrameLocale] = useState<SupportedLanguage | null>(null);
   const [systemDark, setSystemDark] = useState(() => window.matchMedia('(prefers-color-scheme: dark)').matches);
   useEffect(() => {
     const query = window.matchMedia('(prefers-color-scheme: dark)');
@@ -512,6 +523,21 @@ export function App({ host, loadingMark }: { host: InstalledAppHost; loadingMark
   const sideNavigation = Boolean(hostViewport?.bar && viewportHeight - hostViewport.bar.y >= 148);
   const [primaryNavBottomInset, setPrimaryNavBottomInset] = useState(0);
   const primaryNavRef = useRef<HTMLElement>(null);
+  const toolsSearchRef = useRef<HTMLButtonElement>(null);
+  const [toolsSearchReady, setToolsSearchReady] = useState(false);
+  const [toolsSearchOpen, setToolsSearchOpen] = useState(false);
+  const floatingNavigation = Boolean(host.floatingNavigation || host.primaryNavigation);
+  const [webChrome, setWebChrome] = useState({ tools: false, account: false });
+  const [nativeTopBars, setNativeTopBars] = useState({ tools: false, account: false });
+  const nativeTopBar = hostViewport?.topBar;
+  const embeddedTopBar = floatingNavigation && nativeTopBar && hostViewport && nativeTopBar.width >= 400
+    && hostViewport.content.width <= 767
+    ? {
+      left: Math.max(0, nativeTopBar.x - hostViewport.content.x),
+      right: Math.max(0, hostViewport.content.x + hostViewport.content.width - nativeTopBar.x - nativeTopBar.width),
+    }
+    : undefined;
+  const embeddedChromeRef = useRef<MobileEmbedChrome | undefined>(undefined);
   const [connection, setConnection] = useState<ConnectionState>('checking');
   const [wcaDifficultyCoverage, setWcaDifficultyCoverage] = useState<TimerWcaDifficultyCoverage>('idle');
   const [wcaSourceSlot, setWcaSourceSlot] = useState<HTMLDivElement | null>(null);
@@ -642,7 +668,8 @@ export function App({ host, loadingMark }: { host: InstalledAppHost; loadingMark
   const toolsWebUrl = installedWebEntryUrl(toolsEntryRoute
     ? siteRouteUrl(language, toolsEntryRoute)
     : siteUrl(language), language);
-  const accountWebUrl = installedWebEntryUrl(accountUrl(language), language);
+  const accountEntryLocale = accountFrameLocale ?? language;
+  const accountWebUrl = installedWebEntryUrl(accountUrl(accountEntryLocale), accountEntryLocale);
   const auth = host.useAuth(language);
   const activeAuthSession = wcaAutoMarkLiveSession(auth.session, auth.busy);
   const authSessionRef = useRef(auth.session);
@@ -1824,15 +1851,29 @@ export function App({ host, loadingMark }: { host: InstalledAppHost; loadingMark
     webHandshakeRetryRef.current[surface] = null;
   }, []);
 
+  const postWebSurfaceInit = useCallback((surface: MobileEmbedSurface) => {
+    webFrameRefs.current[surface]?.contentWindow?.postMessage(
+      mobileEmbedInitMessage(surface, {
+        authProviders: MOBILE_AUTH_PROVIDERS,
+        accountManagement: true,
+        // Older websites use this flag to hide the Account Settings tab.
+        shellNavigation: surface === 'tools',
+        inlineAccountSettings: surface === 'account' ? true : undefined,
+        appearance: surface === 'tools' || accountInlineSettingsRef.current ? appearanceRef.current ?? undefined : undefined,
+        appleMembership: Boolean(host.appleMembership),
+        googleMembership: Boolean(host.googleMembership),
+        webMembership: Boolean(host.webMembership),
+        bluetooth: surface === 'tools' && Boolean(host.createBleTransport),
+        chrome: embeddedChromeRef.current,
+      }), SITE_ORIGIN,
+    );
+  }, [host.appleMembership, host.googleMembership, host.webMembership, host.createBleTransport]);
+
   const beginWebSurfaceHandshake = useCallback((surface: MobileEmbedSurface) => {
     clearWebSurfaceHandshake(surface);
     if (connection !== 'online') return;
-    const postInit = () => webFrameRefs.current[surface]?.contentWindow?.postMessage(
-      mobileEmbedInitMessage(surface, { authProviders: MOBILE_AUTH_PROVIDERS, accountManagement: true, shellNavigation: true, appearance: appearanceRef.current ?? undefined, appleMembership: Boolean(host.appleMembership), googleMembership: Boolean(host.googleMembership), webMembership: Boolean(host.webMembership), bluetooth: surface === 'tools' && Boolean(host.createBleTransport) }),
-      SITE_ORIGIN,
-    );
     webHandshakeRetryRef.current[surface] = startWebSurfaceHandshake(
-      postInit,
+      () => postWebSurfaceInit(surface),
       MOBILE_EMBED_INIT_RETRY_MS,
       MOBILE_EMBED_INIT_RETRIES,
       host.generativeAiDisabled ? () => {
@@ -1840,7 +1881,7 @@ export function App({ host, loadingMark }: { host: InstalledAppHost; loadingMark
           ? { ...current, [surface]: 'error' } : current);
       } : undefined,
     );
-  }, [clearWebSurfaceHandshake, connection, host.generativeAiDisabled]);
+  }, [clearWebSurfaceHandshake, connection, host.generativeAiDisabled, postWebSurfaceInit]);
 
   const markWebSurfaceLoaded = useCallback((surface: MobileEmbedSurface) => {
     webSurfaceLoadedRef.current[surface] = true;
@@ -1852,7 +1893,7 @@ export function App({ host, loadingMark }: { host: InstalledAppHost; loadingMark
   const finishWebSurfaceHandshake = useCallback((surface: MobileEmbedSurface) => {
     clearWebSurfaceHandshake(surface);
     webBridgeReadyRef.current[surface] = true;
-    if (appearanceRef.current) webFrameRefs.current[surface]?.contentWindow?.postMessage(
+    if (appearanceRef.current && (surface === 'tools' || accountInlineSettingsRef.current)) webFrameRefs.current[surface]?.contentWindow?.postMessage(
       mobileEmbedAppearanceMessage(surface, appearanceRef.current), SITE_ORIGIN,
     );
     webSurfaceLoadedRef.current[surface] = true;
@@ -1964,6 +2005,7 @@ export function App({ host, loadingMark }: { host: InstalledAppHost; loadingMark
   useEffect(() => {
     clearAccountSyncTimeout();
     webBridgeReadyRef.current.account = false;
+    accountInlineSettingsRef.current = false;
     accountSyncInFlightRef.current = null;
     webLastHrefRef.current.account = accountWebUrl;
     webSurfaceLoadedRef.current.account = false;
@@ -2119,13 +2161,27 @@ export function App({ host, loadingMark }: { host: InstalledAppHost; loadingMark
   }, []);
 
   useLayoutEffect(() => {
-    const height = primaryNavRef.current?.getBoundingClientRect().height ?? 0;
-    setPrimaryNavBottomInset(wideLayout || sideNavigation ? 0 : height);
-  }, [fullscreen, storeLoaded, viewportHeight, wideLayout, sideNavigation]);
+    const frame = primaryNavRef.current?.getBoundingClientRect();
+    const height = frame?.height ?? 0;
+    const inset = floatingNavigation && frame && height > 0 ? viewportHeight - frame.top : height;
+    setPrimaryNavBottomInset(sideNavigation || (wideLayout && !floatingNavigation) ? 0 : inset);
+  }, [floatingNavigation, fullscreen, storeLoaded, viewportHeight, wideLayout, sideNavigation]);
 
   useEffect(() => {
     const onMessage = (event: MessageEvent) => {
       if (event.origin !== SITE_ORIGIN) return;
+      if (event.data?.type === 'cuberoot:mobile:embedded-top-ready') {
+        const surface: unknown = event.data.surface;
+        if (floatingNavigation && (surface === 'account' || surface === 'tools')) {
+          const frame = webFrameRefs.current[surface]?.contentWindow;
+          const top = event.data.top === true;
+          if (frame && event.source === frame) {
+            setNativeTopBars(current => current[surface] === top ? current : { ...current, [surface]: top });
+            if (surface === 'tools') setToolsSearchReady(event.data.search === true);
+          }
+        }
+        return;
+      }
       const selectTab = decodeMobileEmbedSelectTab(event.data);
       const openSettings = decodeMobileEmbedOpenSettings(event.data);
       const shellAction = selectTab ?? openSettings;
@@ -2216,13 +2272,30 @@ export function App({ host, loadingMark }: { host: InstalledAppHost; loadingMark
       if (!navigation) return;
       const frame = webFrameRefs.current[navigation.surface];
       if (!frame || event.source !== frame.contentWindow) return;
+      let destination: URL;
       try {
-        if (new URL(navigation.href).origin !== SITE_ORIGIN) return;
+        destination = new URL(navigation.href);
+        if (destination.origin !== SITE_ORIGIN) return;
       } catch {
         return;
       }
+      const previousHref = webLastHrefRef.current[navigation.surface];
       webLastHrefRef.current[navigation.surface] = navigation.href;
+      if (!isEmbeddedTopBarRoute(navigation.surface, destination.pathname)) {
+        setNativeTopBars(current => current[navigation.surface] ? { ...current, [navigation.surface]: false } : current);
+        if (navigation.surface === 'tools') {
+          setToolsSearchReady(false);
+          setToolsSearchOpen(false);
+        }
+      } else if (floatingNavigation && previousHref !== navigation.href &&
+        (!previousHref || !isEmbeddedTopBarRoute(navigation.surface, new URL(previousHref, SITE_ORIGIN).pathname))) {
+        postWebSurfaceInit(navigation.surface);
+      }
       webDepthRef.current[navigation.surface] = navigation.depth;
+      const usesChrome = navigation.usesChrome === true;
+      setWebChrome(current => current[navigation.surface] === usesChrome
+        ? current : { ...current, [navigation.surface]: usesChrome });
+      if (navigation.surface === 'account') accountInlineSettingsRef.current = navigation.inlineAccountSettings === true;
       finishWebSurfaceHandshake(navigation.surface);
       if (navigation.surface === 'account') {
         void syncAccountWebSession();
@@ -2239,6 +2312,8 @@ export function App({ host, loadingMark }: { host: InstalledAppHost; loadingMark
     copy.actionFailed,
     copy.authError,
     finishWebSurfaceHandshake,
+    floatingNavigation,
+    postWebSurfaceInit,
     selectPrimaryView,
     openAppAppearance,
     host,
@@ -3197,24 +3272,41 @@ export function App({ host, loadingMark }: { host: InstalledAppHost; loadingMark
     });
   }, [announce, applyStoreSnapshot, copy.actionFailed, recoverLatestStoreSnapshot]);
 
-  const updateAppAppearance = useCallback((changes: Partial<AppearancePreferences>) => {
-    if (!appearanceRef.current) return;
-    const next = { ...appearanceRef.current, ...changes };
+  const updateAppAppearance = useCallback((changes: Partial<AppearancePreferences>, fromAccount = false) => {
+    const previous = appearanceRef.current;
+    if (!previous) return;
+    const next = { ...previous, ...changes };
     try {
       persistAppearancePreferences(next);
       applyAppearancePreferences(next);
+      if (next.locale !== previous.locale) {
+        setAccountFrameLocale(current => fromAccount ? current ?? previous.locale : null);
+      }
       appearanceRef.current = next;
       setAppearance(next);
       for (const surface of MOBILE_EMBED_SURFACES) {
-        if (webBridgeReadyRef.current[surface]) webFrameRefs.current[surface]?.contentWindow?.postMessage(
-          mobileEmbedAppearanceMessage(surface, next), SITE_ORIGIN,
-        );
+        if (webBridgeReadyRef.current[surface] && (surface === 'tools' || accountInlineSettingsRef.current)) {
+          webFrameRefs.current[surface]?.contentWindow?.postMessage(mobileEmbedAppearanceMessage(surface, next), SITE_ORIGIN);
+        }
       }
       if (storeRef.current?.settings.theme !== next.theme || storeRef.current?.settings.language !== next.locale) {
         updateSettings({ theme: next.theme, language: next.locale });
       }
     } catch { announce(copy.actionFailed); }
   }, [announce, copy.actionFailed, updateSettings]);
+
+  useEffect(() => {
+    const receiveAccountAppearance = (event: MessageEvent) => {
+      const accountWindow = webFrameRefs.current.account?.contentWindow;
+      if (event.origin !== SITE_ORIGIN || !accountWindow || event.source !== accountWindow
+        || !accountInlineSettingsRef.current || viewRef.current !== 'account') return;
+      const change = decodeMobileEmbedAppearance(event.data);
+      if (change?.surface !== 'account' || JSON.stringify(change.preferences) === JSON.stringify(appearanceRef.current)) return;
+      updateAppAppearance(change.preferences, true);
+    };
+    window.addEventListener('message', receiveAccountAppearance);
+    return () => window.removeEventListener('message', receiveAccountAppearance);
+  }, [updateAppAppearance]);
 
   const updateWcaSourceSettings = useCallback((
     patch: Partial<TimerWcaSourceSettings>,
@@ -4024,6 +4116,54 @@ export function App({ host, loadingMark }: { host: InstalledAppHost; loadingMark
     ignoreTarget: shouldIgnoreTimerTarget,
   });
 
+  const hideRunningChrome = timerMode === 1 && store && timerHidesRunningUi(timer.machine.phase, store.settings);
+  const navVisible = Boolean(store && !fullscreen && !hideRunningChrome && (!floatingNavigation
+    || (view !== 'settings' && !timerOverlayBlocking && !manualEntryOpen && !toolsBlePicker)));
+  const showToolsSearch = Boolean(floatingNavigation && (toolsSearchReady || webChrome.tools) && navVisible && view === 'tools'
+    && connection === 'online' && webSurfaceStatus.tools === 'ready');
+  const toolsSearchExpanded = showToolsSearch && toolsSearchOpen;
+  useEffect(() => {
+    if (view !== 'tools') setToolsSearchOpen(false);
+  }, [view]);
+  const primaryDestination = selectedView === 'tools' || selectedView === 'account' ? selectedView : 'timer';
+  const nativeNavigation = usePrimaryNavigation(host.primaryNavigation, primaryNavRef, {
+    visible: navVisible,
+    selected: primaryDestination,
+    vertical: sideNavigation,
+    disabled: timerContextMutationBusy,
+    running: timer.machine.phase === 'running',
+    language,
+    viewport: hostViewport,
+    viewportHeight,
+    searchRef: toolsSearchRef,
+    showSearch: showToolsSearch,
+    searchExpanded: toolsSearchExpanded,
+    dark: appearance ? resolveAppearanceScheme(appearance, systemDark) === 'dark' : systemDark,
+  }, id => {
+    if (id === 'search') {
+      if (showToolsSearch) setToolsSearchOpen(open => !open);
+    } else if (navVisible) selectPrimaryView(id);
+  });
+
+  const embeddedBottom = navVisible && !sideNavigation
+    ? Math.max(0, primaryNavBottomInset - (hostViewport
+      ? Math.max(0, viewportHeight - hostViewport.content.y - hostViewport.content.height) : 0)) + 8
+    : 0;
+  const frameInsetByHost = Boolean(hostViewport);
+  useLayoutEffect(() => {
+    if (!floatingNavigation) return;
+    embeddedChromeRef.current = {
+      insetByHost: frameInsetByHost ? true : undefined,
+      toolsSearch: { expanded: toolsSearchExpanded },
+      top: embeddedTopBar?.left !== undefined && embeddedTopBar.right !== undefined
+        ? { left: embeddedTopBar.left, right: embeddedTopBar.right } : undefined,
+      bottom: embeddedBottom,
+    };
+    for (const surface of MOBILE_EMBED_SURFACES) {
+      if (webBridgeReadyRef.current[surface]) postWebSurfaceInit(surface);
+    }
+  }, [floatingNavigation, frameInsetByHost, embeddedTopBar?.left, embeddedTopBar?.right, embeddedBottom, toolsSearchExpanded, postWebSurfaceInit]);
+
   if (!store && !loadError) {
     return <main className="loading-screen">{loadingMark ?? <strong>{copy.title}</strong>}</main>;
   }
@@ -4110,7 +4250,10 @@ export function App({ host, loadingMark }: { host: InstalledAppHost; loadingMark
     />
   );
   const contentRect = hostViewport?.content;
-  const shellHeight = contentRect ? Math.max(1, Math.min(contentRect.height, viewportHeight - contentRect.y)) : viewportHeight;
+  const frameUsesTopBar = (view === 'account' || view === 'tools') && (webChrome[view] || nativeTopBars[view]);
+  const webTop = embeddedTopBar && frameUsesTopBar ? nativeTopBar?.y : undefined;
+  const shellTop = webTop ?? contentRect?.y ?? 0;
+  const shellHeight = contentRect ? Math.max(1, Math.min(contentRect.y + contentRect.height, viewportHeight) - shellTop) : viewportHeight;
   const shellViewport = mobileShellViewportLayout(shellHeight);
   const solverHintPanel = activeEvent === '333' ? <Suspense fallback={null}>
     <StageSolverDialog scramble={scramble} language={language}
@@ -4124,12 +4267,14 @@ export function App({ host, loadingMark }: { host: InstalledAppHost; loadingMark
   return (
     <main
       className={`app-shell app-shell--${dockHistory || view === 'settings' ? 'timer' : view}${shellViewport.classNameSuffix}${fullscreen ? ' app-shell--timer-fullscreen' : ''}${timer.machine.phase === 'running' ? ' is-solving' : ''}`}
-      data-timer-hide-ui={timerMode === 1 && store && timerHidesRunningUi(timer.machine.phase, store.settings) ? '' : undefined}
+      data-timer-hide-ui={hideRunningChrome ? '' : undefined}
       data-wide={wideLayout ? 'true' : undefined}
       data-side-navigation={sideNavigation ? '' : undefined}
+      data-floating-navigation={floatingNavigation ? '' : undefined}
+      data-navigation-covered={floatingNavigation && !navVisible ? '' : undefined}
       data-layout-editing={layoutEditing ? '' : undefined}
       style={{ ...shellViewport.style,
-        ...(contentRect ? { position: 'fixed', left: contentRect.x, top: contentRect.y, width: contentRect.width, paddingTop: 0 } : {}),
+        ...(contentRect ? { position: 'fixed', left: contentRect.x, top: shellTop, width: contentRect.width, paddingTop: 0 } : {}),
         '--solo-scramble-gap': `${store?.settings.soloLayout.scrambleGap ?? 16}px`,
         '--solo-source-gap': `${store?.settings.soloLayout.sourceGap ?? 16}px`,
         '--solo-timer-gap': `${store?.settings.soloLayout.timerGap ?? 20}px`,
@@ -4141,7 +4286,7 @@ export function App({ host, loadingMark }: { host: InstalledAppHost; loadingMark
       {appearance && <AppearanceBackground
         choice={resolveAppearanceScheme(appearance, systemDark) === 'dark' ? appearance.darkBackground : appearance.lightBackground}
         scheme={resolveAppearanceScheme(appearance, systemDark)} assetRoot={`${SITE_ORIGIN}/assets/home-backgrounds/v1`} />}
-      <SiteCorners exclude=".site-glass-engine, .maplibregl-map" containers=".cg-card, .rc-card, .recon-card, .sortable-card, .timer-workspace-panel" />
+      <SiteCorners exclude=".site-glass-engine, .maplibregl-map, [data-floating-navigation] > .primary-nav, .tools-search-toggle" containers=".cg-card, .rc-card, .recon-card, .sortable-card, .timer-workspace-panel" />
       {view === 'timer' && timerMode === 1 && timer.machine.phase === 'running' && smartCubeAttemptDeviceRef.current && (
         <button type="button" className="smart-cube-abort" data-no-timer aria-label={copy.stopSmartCube}
           onClick={() => {
@@ -4767,11 +4912,6 @@ children: <>
               hidden={view !== surface}
               key={surface}
             >
-              {surface === 'account' && <header className="app-account-toolbar" data-site-surface="heading">
-                <strong>{copy.my}</strong>
-                <button type="button" className="timer-toolbar-icon" onClick={openAppAppearance}
-                  aria-label={copy.appAppearance} title={copy.appAppearance}><SettingsIcon size={20} aria-hidden="true" /></button>
-              </header>}
               {showState && (
                 <div className="web-surface-state" role={status === 'error' ? 'alert' : 'status'}>
                   <p>{stateLabel}</p>
@@ -4798,8 +4938,16 @@ children: <>
                 key={`${surface}-${webSurfaceRevision[surface]}`}
                 name={(host.generativeAiDisabled ? MOBILE_EMBED_NO_GENERATIVE_AI_FRAME_NAMES : MOBILE_EMBED_FRAME_NAMES)[surface]}
                 onLoad={() => {
-                  if (surface === 'tools') void revokeToolsBle();
+                  if (surface === 'tools') {
+                    void revokeToolsBle();
+                    setToolsSearchReady(false);
+                    setToolsSearchOpen(false);
+                  } else {
+                    accountInlineSettingsRef.current = false;
+                  }
                   webBridgeReadyRef.current[surface] = false;
+                  setNativeTopBars(current => current[surface] ? { ...current, [surface]: false } : current);
+                  setWebChrome(current => current[surface] ? { ...current, [surface]: false } : current);
                   if (connection === 'offline') {
                     webSurfaceLoadedRef.current[surface] = false;
                     return;
@@ -5277,42 +5425,66 @@ children: <>
       />}
 
       <nav data-timer-hide-while-running className="primary-nav" aria-label={copy.title} ref={primaryNavRef}
-        style={sideNavigation && hostViewport?.bar ? { left: hostViewport.bar.x, top: hostViewport.bar.y,
-          width: hostViewport.bar.width, height: Math.min(hostViewport.bar.height, Math.max(0, viewportHeight - hostViewport.bar.y)) } : undefined}>
+        data-site-surface={floatingNavigation ? 'popover' : undefined}
+        data-selected={floatingNavigation ? primaryDestination : undefined}
+        data-native-navigation={nativeNavigation ? '' : undefined}
+        aria-hidden={nativeNavigation || !navVisible || undefined} inert={nativeNavigation || !navVisible}
+        style={sideNavigation && hostViewport?.bar ? { left: hostViewport.bar.x,
+          width: hostViewport.bar.width, ...(floatingNavigation
+            ? { top: Math.min(hostViewport.bar.y + hostViewport.bar.height, viewportHeight) - 148 }
+            : { top: hostViewport.bar.y, height: Math.min(hostViewport.bar.height, Math.max(0, viewportHeight - hostViewport.bar.y)) }) } : undefined}>
         <button
+          data-destination="timer"
           aria-label={copy.timer}
-          aria-current={selectedView === 'timer' || selectedView === 'history' || selectedView === 'settings' ? 'page' : undefined}
+          aria-current={primaryDestination === 'timer' ? 'page' : undefined}
           data-no-timer
           disabled={timerContextMutationBusy}
           onClick={() => selectPrimaryView('timer')}
           type="button"
         >
           <Clock3 aria-hidden="true" size={20} />
-          {wideLayout && !sideNavigation && <span>{copy.timer}</span>}
+          {wideLayout && !floatingNavigation && !sideNavigation && <span>{copy.timer}</span>}
         </button>
         <button
+          data-destination="tools"
           aria-label={copy.tools}
-          aria-current={selectedView === 'tools' ? 'page' : undefined}
+          aria-current={primaryDestination === 'tools' ? 'page' : undefined}
           data-no-timer
           disabled={timer.machine.phase === 'running' || timerContextMutationBusy}
           onClick={() => selectPrimaryView('tools')}
           type="button"
         >
           <Grid2X2 aria-hidden="true" size={20} />
-          {wideLayout && !sideNavigation && <span>{copy.tools}</span>}
+          {wideLayout && !floatingNavigation && !sideNavigation && <span>{copy.tools}</span>}
         </button>
         <button
+          data-destination="account"
           aria-label={copy.my}
-          aria-current={selectedView === 'account' ? 'page' : undefined}
+          aria-current={primaryDestination === 'account' ? 'page' : undefined}
           data-no-timer
           disabled={timer.machine.phase === 'running' || timerContextMutationBusy}
           onClick={() => selectPrimaryView('account')}
           type="button"
         >
           <UserRound aria-hidden="true" size={20} />
-          {wideLayout && !sideNavigation && <span>{copy.my}</span>}
+          {wideLayout && !floatingNavigation && !sideNavigation && <span>{copy.my}</span>}
         </button>
       </nav>
+
+      {showToolsSearch && <button type="button" className="tools-search-toggle" ref={toolsSearchRef}
+        data-site-surface="popover" data-native-navigation={nativeNavigation ? '' : undefined}
+        aria-label={copy.siteSearch} aria-expanded={toolsSearchExpanded} aria-hidden={nativeNavigation || undefined}
+        inert={nativeNavigation} data-no-timer
+        style={sideNavigation && hostViewport?.bar ? {
+          left: hostViewport.bar.x,
+          top: Math.max(hostViewport.bar.y, Math.min(hostViewport.bar.y + hostViewport.bar.height, viewportHeight) - 208),
+          width: hostViewport.bar.width,
+          height: hostViewport.bar.width,
+        } : undefined}
+        onClick={() => setToolsSearchOpen(open => !open)}>
+        <Search aria-hidden="true" />
+        <X aria-hidden="true" />
+      </button>}
 
       {manualEntryOpen && (
         <TimerManualEntryModal

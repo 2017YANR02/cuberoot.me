@@ -120,15 +120,40 @@
   width: var(--timer-topbar-width);
   height: var(--timer-topbar-height);
   min-height: 0;
-  grid-template-columns: minmax(0, 1fr) max-content minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1fr) max-content;
   gap: 8px;
   padding: 0;
 }
 .shell-topbar.timer-solo-topbar[data-use-top-bar] .shell-topbar-left {
-  position: relative;
-  /* Center on the full screen even when the right-side status area is wider. */
-  left: calc(50vw - var(--timer-topbar-left) - var(--timer-topbar-width) / 2);
+  grid-column: 1;
   width: max-content;
   flex-wrap: nowrap;
   justify-self: center;
+}
+
+.shell-topbar.timer-solo-topbar[data-use-top-bar] .shell-topbar-right { grid-column: 2; }
+
+.shell-topbar.timer-solo-topbar[data-use-top-bar] {
+  --timer-topbar-control-size: 44px;
+  --timer-topbar-icon-size: 21px;
+}
+
+.shell-topbar.timer-solo-topbar[data-use-top-bar] :is(
+  .shell-players-select, .pp-trigger, .compact-select-trigger, .timer-difficulty-trigger, .more-menu-btn
+) {
+  min-width: var(--timer-topbar-control-size);
+  height: var(--timer-topbar-control-size);
+  font-size: 16px;
+}
+
+.shell-topbar.timer-solo-topbar[data-use-top-bar] .pp-trigger-icon {
+  font-size: var(--timer-topbar-icon-size);
+}
+
+.shell-topbar.timer-solo-topbar[data-use-top-bar] :is(
+  svg.pp-trigger-icon, .timer-solo-control > svg, .solver-light-trigger > svg,
+  .shell-device-center-trigger > svg, .more-menu-btn > svg
+) {
+  width: var(--timer-topbar-icon-size);
+  height: var(--timer-topbar-icon-size);
 }

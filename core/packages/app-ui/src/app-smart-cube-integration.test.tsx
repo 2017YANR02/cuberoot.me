@@ -13,6 +13,7 @@ import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { InstalledAppHost, InstalledAppSmartCube, InstalledAppSmartCubeOptions } from './platform';
 import { writeRealScrambleCache } from './data/real-scramble-pool';
+import { readAppearancePreferences } from './appearance';
 
 const memory = vi.hoisted(() => ({ data: undefined as unknown,
   fixup: vi.fn<(from: string, to: string) => Promise<string | null>>(),
@@ -206,24 +207,26 @@ describe('installed App GAN lifecycle integration', () => {
     expect(container.querySelector('.primary-nav [aria-current="page"]')?.getAttribute('aria-label')).toBe('Me');
   });
 
-  it('opens App appearance offline, blocks timer input and returns to the original account surface', async () => {
-    expect(localStorage.getItem('theme')).toBe((memory.data as TimerStoreData).settings.theme);
-    expect(localStorage.getItem('trainer-lang')).toBe('en');
-    const account = [...container.querySelectorAll<HTMLButtonElement>('.primary-nav button')]
-      .find(button => button.getAttribute('aria-label') === 'Me')!;
+  it('applies committed Account appearance without opening a new surface or reloading the frame', async () => {
+    const account = container.querySelector<HTMLButtonElement>('.primary-nav button[aria-label="Me"]')!;
     await act(async () => account.click());
     const frame = container.querySelector<HTMLIFrameElement>('.web-surface--account iframe')!;
-    await act(async () => container.querySelector<HTMLButtonElement>('.app-account-toolbar button')!.click());
-    expect(container.querySelector('.app-shell--appearance')).not.toBeNull();
-    await act(async () => {
-      window.dispatchEvent(new KeyboardEvent('keydown', { key: ' ', code: 'Space', bubbles: true }));
-      window.dispatchEvent(new KeyboardEvent('keyup', { key: ' ', code: 'Space', bubbles: true }));
+    const previousSrc = frame.src;
+    const send = (data: object, source: Window | null = frame.contentWindow) => act(async () => {
+      window.dispatchEvent(new MessageEvent('message', { origin: 'https://cuberoot.me', source, data }));
     });
-    expect(phase).not.toBe('running');
-    await act(async () => backListener?.());
+    await send({ type: 'cuberoot:mobile:navigation', surface: 'account',
+      href: 'https://cuberoot.me/en/account?settings=general', depth: 0, inlineAccountSettings: true });
+    const appearance = { type: 'cuberoot:mobile:appearance', surface: 'account',
+      preferences: { ...readAppearancePreferences(), theme: 'dark', locale: 'zh' } };
+    await send(appearance, window);
+    expect(localStorage.getItem('trainer-lang')).toBe('en');
+    await send(appearance);
+    expect(localStorage.getItem('trainer-lang')).toBe('zh');
     expect(container.querySelector('.app-shell--account')).not.toBeNull();
+    expect(container.querySelector('.app-shell--appearance')).toBeNull();
     expect(container.querySelector('.web-surface--account iframe')).toBe(frame);
-    expect(frame.closest<HTMLElement>('.web-surface')?.hidden).toBe(false);
+    expect(frame.src).toBe(previousSrc);
   });
 
   it('keeps a loaded account form visible when native sign-in fails', async () => {

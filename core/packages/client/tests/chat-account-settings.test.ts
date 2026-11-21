@@ -128,3 +128,25 @@ it.each(['general', 'appearance'])('delegates a direct %s query without showing 
   await click(nav('我的空间'));
   expect(mocks.mounted).toHaveBeenCalledTimes(1);
 });
+
+it('keeps all three Account categories in one panel for the installed shell', async () => {
+  const open = vi.fn();
+  setInstalledShellNavigation(open, 'account', true);
+  await render('?view=signin');
+  const panel = host.querySelector('.settings-panel');
+  const draft = host.querySelector('input')!;
+  draft.value = '保留草稿';
+  expect(Array.from(host.querySelectorAll('nav button'), button => button.textContent)).toEqual(['设置', '我的空间', '账号与安全']);
+
+  await click(nav('设置'));
+  expect(nav('设置').getAttribute('aria-current')).toBe('page');
+  expect(host.querySelector('[data-general]')).not.toBeNull();
+  expect(open).not.toHaveBeenCalled();
+
+  await click(nav('我的空间'));
+  expect(nav('我的空间').getAttribute('aria-current')).toBe('page');
+  await click(nav('账号与安全'));
+  expect(host.querySelector('.settings-panel')).toBe(panel);
+  expect(host.querySelector('input')).toBe(draft);
+  expect(draft.value).toBe('保留草稿');
+});

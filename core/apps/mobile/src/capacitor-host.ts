@@ -1,3 +1,4 @@
+import { primaryNavigation } from './primary-navigation';
 import { addNotificationOpenListener } from './native/notification-open';
 import { watchTimerPort } from './watch-timer';
 import { uuRemote } from './uu-remote';
@@ -31,6 +32,8 @@ export const capacitorHost: InstalledAppHost = {
   uuRemote,
   addNotificationOpenListener,
   watchTimer: isIos ? watchTimerPort : undefined,
+  floatingNavigation: Capacitor.isNativePlatform(),
+  primaryNavigation: isIos ? primaryNavigation : undefined,
   createBleTransport: () => new NativeBleTransport(),
   createStackmatSource: createStackmatMicSource,
   appleMembership: isIos ? handleAppleMembership : undefined,

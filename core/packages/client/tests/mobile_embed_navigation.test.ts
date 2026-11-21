@@ -62,6 +62,29 @@ it.each(['tools', 'account'] as const)('uses the host top safe area only after t
   expect(style.getPropertyValue('--sat')).toBe('59px');
   style.removeProperty('--sat');
 });
+it('acknowledges floating navigation only on supported routes after trusted init', async () => {
+  const url = window.location.href;
+  const rootElement = document.documentElement;
+  const chrome = { top: { left: 16, right: 144 }, bottom: 72 };
+  try {
+    window.history.replaceState(null, '', '/en/account');
+    await act(async () => root.render(createElement(MobileEmbedBridge)));
+    const init = mobileEmbedInitMessage('account', { chrome });
+    send(init, {}, origin);
+    expect(rootElement.hasAttribute('data-installed-top-bar')).toBe(false);
+    send(init);
+    expect(rootElement.style.getPropertyValue('--installed-chrome-bottom')).toBe('72px');
+    expect(state.post).toHaveBeenLastCalledWith(expect.objectContaining({ usesChrome: true }), origin);
+
+    window.history.replaceState(null, '', '/en/account/manage');
+    send(init);
+    expect(rootElement.hasAttribute('data-installed-top-bar')).toBe(false);
+    expect(rootElement.style.getPropertyValue('--installed-chrome-bottom')).toBe('');
+    expect(state.post.mock.lastCall?.[0]).not.toHaveProperty('usesChrome');
+  } finally {
+    window.history.replaceState(null, '', url);
+  }
+});
 it.each(['tools', 'account'] as const)('delegates locale timer links in %s without invoking Web navigation', async surface => {
   window.name = `cuberoot-mobile-${surface}`;
   await act(async () => root.render(createElement(MobileEmbedBridge)));
@@ -134,6 +157,30 @@ it('validates only the three shell tabs and explicit appearance settings capabil
   expect(decodeMobileEmbedOpenSettings(mobileEmbedOpenSettingsMessage('account'))?.category).toBe('appearance');
   expect(decodeMobileEmbedOpenSettings({ surface: 'tools', type: 'cuberoot:mobile:open-settings', category: 'unknown' })).toBeNull();
   expect(decodeMobileEmbedInit({ ...mobileEmbedInitMessage('tools'), shellNavigation: 'yes' })).toBeNull();
+});
+
+it('publishes a committed change from the inline Account Settings tab', async () => {
+  const previousUrl = window.location.href;
+  try {
+    window.history.replaceState(null, '', '/en/account?settings=general');
+    await act(async () => root.render(createElement(MobileEmbedBridge)));
+    const preferences = { ...DEFAULT_APPEARANCE_PREFERENCES, theme: 'light' } as const;
+    send(mobileEmbedInitMessage('account', { inlineAccountSettings: true, appearance: preferences }));
+    expect(state.post).toHaveBeenLastCalledWith(expect.objectContaining({ inlineAccountSettings: true }), origin);
+    state.post.mockClear();
+
+    document.documentElement.dataset.theme = 'dark';
+    window.dispatchEvent(new Event('theme-change'));
+    expect(state.post).not.toHaveBeenCalled();
+
+    localStorage.setItem('theme', 'dark');
+    window.dispatchEvent(new Event('theme-change'));
+    expect(state.post).toHaveBeenLastCalledWith(
+      mobileEmbedAppearanceMessage('account', { ...preferences, theme: 'dark' }), origin,
+    );
+  } finally {
+    window.history.replaceState(null, '', previousUrl);
+  }
 });
 
 it('applies only trusted, complete appearance messages for the current frame', async () => {

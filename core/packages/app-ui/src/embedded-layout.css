@@ -1,0 +1,105 @@
+/* The installed shell already constrains the iframe to the safe content area. */
+:root:is([data-installed-account-frame], [data-native-account-frame])
+  .settings-panel-page > .settings-panel-header .settings-panel-heading > a {
+  display: none;
+}
+
+/* Web and the installed Account page share the compact header. */
+@media (max-width: 767px) {
+  .settings-panel-page {
+    --account-header-top-inset: var(--sat, 0px);
+    --account-header-left-inset: var(--sal, 0px);
+    --account-header-right-inset: var(--sar, 0px);
+  }
+
+  .settings-panel-page > .settings-panel-header {
+    min-height: 0;
+    padding: max(4px, var(--account-header-top-inset)) 12px 4px max(16px, var(--account-header-left-inset));
+  }
+
+  .settings-panel-page > .settings-panel-nav {
+    grid-template-columns: repeat(3, 44px);
+    justify-content: end;
+    gap: 8px;
+    padding: max(4px, var(--account-header-top-inset)) max(16px, var(--account-header-right-inset)) 4px 0;
+  }
+
+  :root:is([data-installed-account-frame], [data-native-account-frame]) .settings-panel-page {
+    --account-header-top-inset: 0px;
+    --account-header-left-inset: 0px;
+    --account-header-right-inset: 0px;
+  }
+
+  :root:is([data-installed-account-frame], [data-native-account-frame]) .settings-panel-page > .settings-panel-content {
+    padding-inline: 20px;
+    scrollbar-gutter: auto;
+  }
+
+  :root:is([data-installed-account-frame], [data-native-account-frame])
+    .settings-panel-page:not(:has(> .settings-panel-header)) > .settings-panel-nav {
+    grid-column: 1 / -1;
+    grid-template-columns: repeat(2, 44px);
+    justify-content: center;
+    padding-inline: 16px;
+  }
+
+  :root:is([data-installed-top-bar], [data-native-embed-top]) .settings-panel-page > .settings-panel-header {
+    padding-block: 0;
+    padding-left: var(--installed-chrome-left, var(--native-embed-left, 16px));
+    background: transparent;
+  }
+
+  :root:is([data-installed-top-bar], [data-native-embed-top]) .settings-panel-page > .settings-panel-nav {
+    justify-content: end;
+    padding-block: 0;
+    padding-right: var(--installed-chrome-right, var(--native-embed-right, 16px));
+    background: transparent;
+  }
+}
+
+/* The native Tools frame starts inside the Duo safe rectangle already. */
+:root:is([data-installed-tools-insets], [data-native-tools-insets]) :is(.landing-page, .home-navigation-drawer) {
+  --sat: 0px;
+  --sal: 0px;
+  --sar: 0px;
+  --sab: 0px;
+}
+
+/* Align the existing Tools header with the host's unobstructed top bar. */
+:root:is([data-installed-top-bar], [data-native-embed-top]) .landing-page > .home-navigation {
+  min-height: 44px;
+  margin-left: calc(max(16px, var(--installed-chrome-left, var(--native-embed-left, 0px))) - max(var(--landing-inline-gutter), var(--sal)));
+  margin-right: calc(max(16px, var(--installed-chrome-right, var(--native-embed-right, 0px))) - max(var(--landing-inline-gutter), var(--sar)));
+}
+:root:is([data-installed-top-bar], [data-native-embed-top]) .home-navigation .home-navigation-toggle {
+  width: 44px;
+  height: 44px;
+}
+
+/* Reuse the home search and its upward results menu when the shell reveals it. */
+:root[data-embedded-search-button] .landing-page > .landing-search {
+  display: block;
+  bottom: max(calc(2.5rem + var(--sab)), var(--embedded-search-clearance, 0px));
+  visibility: hidden;
+  pointer-events: none;
+  opacity: 0;
+  transform: translateY(8px) scale(.98);
+  transition: opacity 180ms ease, transform 180ms ease, visibility 0s linear 180ms;
+}
+:root[data-embedded-search-button][data-embedded-search-open] .landing-page > .landing-search {
+  visibility: visible;
+  pointer-events: auto;
+  opacity: 1;
+  transform: none;
+  transition-delay: 0s;
+}
+@media (prefers-reduced-motion: reduce) {
+  :root[data-embedded-search-button] .landing-page > .landing-search { transition: none; }
+}
+:root[data-embedded-search-button]:not([data-embedded-search-open]) body .landing-page--navigation[data-home-section="home"] {
+  padding-bottom: max(16px, var(--sab), var(--installed-chrome-bottom, var(--native-embed-bottom, 0px)));
+}
+
+:root[data-native-account-frame] .settings-panel-page > .settings-panel-content {
+  padding-bottom: calc(24px + max(var(--sab), var(--installed-chrome-bottom, var(--native-embed-bottom, 0px))));
+}

@@ -98,10 +98,27 @@ export interface InstalledAppNetBattle {
   sessions: InstalledAppNetBattleSessionStore;
 }
 
+type PrimaryNavigationId = 'timer' | 'tools' | 'account';
+type PrimaryNavigationFrame = { x: number; y: number; width: number; height: number };
+
+interface PrimaryNavigationState {
+  frame: PrimaryNavigationFrame;
+  search?: { frame: PrimaryNavigationFrame; label: string; expanded: boolean };
+  items: { id: PrimaryNavigationId; label: string; disabled: boolean }[];
+  selected: PrimaryNavigationId;
+  vertical: boolean;
+  dark: boolean;
+}
+
 export interface InstalledAppHost {
   addNotificationOpenListener?(listener: (value: import('@cuberoot/shared/notification-push').NotificationOpen) => void): Promise<InstalledAppListener>;
   uuRemote?: import('./uu-remote').UURemoteClient;
   watchTimer?: import('./watch-timer').WatchTimerPort;
+  floatingNavigation?: boolean;
+  primaryNavigation?: {
+    render(state: PrimaryNavigationState | null): Promise<boolean>;
+    addSelectListener(listener: (id: PrimaryNavigationId | 'search') => void): Promise<InstalledAppListener>;
+  };
   createBleTransport?(): BleTransport;
   createStackmatSource?(): StackmatMicSource;
   appleMembership?(request: AppleMembershipRequest, session: WebSession): Promise<Omit<AppleMembershipResult, 'type' | 'requestId'>>;

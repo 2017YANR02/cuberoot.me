@@ -119,7 +119,8 @@ describe('mobile visible viewport layout', () => {
     }
     expect(css).not.toMatch(/\.mobile-timer-stage \.timing-surface-(?:core|sub)\s*\{/);
     expect(app).toContain('const primaryNavRef = useRef<HTMLElement>(null)');
-    expect(app).toContain('primaryNavRef.current?.getBoundingClientRect().height ?? 0');
+    expect(app).toContain('primaryNavRef.current?.getBoundingClientRect()');
+    expect(app).toContain('viewportHeight - frame.top');
     const primaryNav = app.match(/<nav\b[^>]*>/g)?.find((tag) => tag.includes('className="primary-nav"'));
     expect(primaryNav).toBeDefined();
     expect(primaryNav).toContain('aria-label={copy.title}');

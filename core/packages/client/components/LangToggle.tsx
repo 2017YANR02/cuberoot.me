@@ -9,6 +9,7 @@
 
 import type { MouseEvent } from 'react';
 import { tr } from '@/i18n/tr';
+import { APPEARANCE_CHANGE_EVENT } from '@cuberoot/app-ui/appearance';
 import { useRouter, usePathname } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
 import { changeAppLanguage, normalizeAppLang, persistAppLanguage, syncLangToUrl, type AppLang } from '@/i18n/i18n-client';
@@ -56,6 +57,7 @@ export default function LangToggle({ variant = 'inline', className, soft = false
     if (soft) {
       changeAppLanguage(next);
       syncLangToUrl(next);
+      window.dispatchEvent(new Event(APPEARANCE_CHANGE_EVENT));
       return;
     }
 
@@ -72,6 +74,7 @@ export default function LangToggle({ variant = 'inline', className, soft = false
     // URL first wakes the old locale provider and nuqs while navigation is
     // pending, allowing them to restore the old language/query state.
     persistAppLanguage(next);
+    window.dispatchEvent(new Event(APPEARANCE_CHANGE_EVENT));
     router.replace(`${path || '/'}${query}${url.hash}`);
   };
 

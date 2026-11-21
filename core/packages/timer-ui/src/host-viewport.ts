@@ -29,6 +29,17 @@ export function setHostViewportLayout(value: HostViewportLayout | null) {
   layout = value;
   const root = document.documentElement;
   root.toggleAttribute('data-host-viewport', Boolean(value));
+  const bar = value?.topBar;
+  root.toggleAttribute('data-host-top-bar', Boolean(bar));
+  for (const [edge, pixels] of Object.entries({
+    left: bar?.x,
+    top: bar?.y,
+    right: value && bar ? value.bounds.width - bar.x - bar.width : undefined,
+    height: bar?.height,
+  })) {
+    if (pixels === undefined) root.style.removeProperty(`--host-top-bar-${edge}`);
+    else root.style.setProperty(`--host-top-bar-${edge}`, `${pixels}px`);
+  }
   if (!observing) {
     observing = true;
     window.addEventListener('resize', updateSafeInsets);

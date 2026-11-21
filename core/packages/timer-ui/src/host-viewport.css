@@ -59,6 +59,11 @@
       max(16px, var(--host-safe-left));
   }
 }
+@media (max-width: 720px) {
+  :root[data-host-top-bar] .settings-modal-head {
+    padding: var(--host-top-bar-top) max(16px, var(--host-top-bar-right)) 8px max(16px, var(--host-top-bar-left));
+  }
+}
 :root[data-host-viewport] .timer-info-toast {
   left: calc(var(--host-safe-left) + (100% - var(--host-safe-left) - var(--host-safe-right)) / 2);
   max-width: calc(100% - var(--host-safe-left) - var(--host-safe-right) - 24px);

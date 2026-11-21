@@ -15,6 +15,7 @@
     "runtime": {
       ".": "react-dom",
       "./app.css": "asset",
+      "./embedded-layout.css": "asset",
       "./chat": "react-dom",
       "./chat.css": "asset",
       "./watch-cube": "runtime-neutral",
@@ -31,6 +32,7 @@
   "exports": {
     ".": "./src/index.ts",
     "./app.css": "./src/app.css",
+    "./embedded-layout.css": "./src/embedded-layout.css",
     "./chat": "./src/chat/index.ts",
     "./chat.css": "./src/chat/chat.css",
     "./watch-cube": "./src/watch-cube.ts",

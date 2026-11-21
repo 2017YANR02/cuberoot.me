@@ -1,6 +1,7 @@
 package me.cuberoot.app;
 
 import android.os.Bundle;
+import android.util.Log;
 import android.view.Gravity;
 import android.webkit.WebView;
 import android.widget.TextView;
@@ -11,6 +12,10 @@ import androidx.webkit.WebViewFeature;
 
 import com.getcapacitor.BridgeActivity;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 
 public class MainActivity extends BridgeActivity {
@@ -38,7 +43,23 @@ public class MainActivity extends BridgeActivity {
             setContentView(message);
             return;
         }
+        installEmbeddedLayout();
         super.load();
+    }
+
+    private void installEmbeddedLayout() {
+        if (!WebViewFeature.isFeatureSupported(WebViewFeature.DOCUMENT_START_SCRIPT)) return;
+        WebView webView = findViewById(com.getcapacitor.android.R.id.webview);
+        try (InputStream asset = getAssets().open("public/embedded-layout.js");
+             ByteArrayOutputStream contents = new ByteArrayOutputStream()) {
+            byte[] buffer = new byte[4096];
+            int size;
+            while ((size = asset.read(buffer)) != -1) contents.write(buffer, 0, size);
+            String script = new String(contents.toByteArray(), StandardCharsets.UTF_8);
+            WebViewCompat.addDocumentStartJavaScript(webView, script, Collections.singleton("https://cuberoot.me"));
+        } catch (IOException | RuntimeException error) {
+            Log.w("CubeRoot", "Embedded layout unavailable", error);
+        }
     }
 
     private boolean canInstallMainFrameBridge() {

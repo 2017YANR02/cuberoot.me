@@ -1,6 +1,7 @@
 import UIKit
 import UserNotifications
 import Capacitor
+import WebKit
 
 @objc(TimerPrintPlugin)
 final class TimerPrintPlugin: CAPPlugin, CAPBridgedPlugin {
@@ -91,6 +92,14 @@ final class CubeRootBridgeViewController: CAPBridgeViewController {
 
     override func capacitorDidLoad() {
         bridge?.registerPluginInstance(viewportPlugin)
+        if let controller = bridge?.webView?.configuration.userContentController,
+           let asset = Bundle.main.url(forResource: "embedded-layout", withExtension: "js", subdirectory: "public"),
+           let script = try? String(contentsOf: asset, encoding: .utf8) {
+            controller.addUserScript(WKUserScript(source: script, injectionTime: .atDocumentStart, forMainFrameOnly: false, in: .defaultClient))
+        }
+        if #available(iOS 16.4, *) {
+            bridge?.registerPluginInstance(PrimaryNavigationPlugin())
+        }
         bridge?.registerPluginInstance(TimerPrintPlugin())
         bridge?.registerPluginInstance(NativeFilesPlugin())
         bridge?.registerPluginInstance(ScreenAwakePlugin())
