@@ -10,12 +10,15 @@ export interface SavedVideoResult { timestamp: number; result: FrameResult }
 /** Results only: video pixels are decoded on demand, rather than retained. */
 export class VideoResultCache {
   private variants = new Map<string, SavedVideoResult[]>();
+  private version = 0;
+  get revision() { return this.version; }
   put(key: string, timestamp: number, result: FrameResult) {
     const rows = this.variants.get(key) ?? [];
     const index = this.lowerBound(rows, timestamp);
     if (index < rows.length && Math.abs(rows[index].timestamp - timestamp) < 0.00001) rows[index] = { timestamp, result };
     else rows.splice(index, 0, { timestamp, result });
     this.variants.set(key, rows);
+    this.version++;
     return rows.length;
   }
   get(key: string, timestamp: number, tolerance = 0.00001): SavedVideoResult | undefined {
@@ -29,7 +32,7 @@ export class VideoResultCache {
   }
   count(key: string) { return this.variants.get(key)?.length ?? 0; }
   entries(key: string): readonly SavedVideoResult[] { return [...(this.variants.get(key) ?? [])]; }
-  clear() { this.variants.clear(); }
+  clear() { this.variants.clear(); this.version++; }
   private lowerBound(rows: SavedVideoResult[], timestamp: number) {
     let lo = 0, hi = rows.length;
     while (lo < hi) { const mid = (lo + hi) >>> 1; if (rows[mid].timestamp < timestamp) lo = mid + 1; else hi = mid; }
