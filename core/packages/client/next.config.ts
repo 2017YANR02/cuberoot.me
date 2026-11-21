@@ -256,9 +256,6 @@ const nextConfig: NextConfig = {
       .map(id => id.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|');
     return {
       beforeFiles: [
-        { source: '/vendor/video-recon/', destination: '/vendor/video-recon/index.html' },
-        { source: '/vendor/video-recon/timer', destination: '/vendor/video-recon/timer/index.html' },
-        { source: '/vendor/video-recon/timer/', destination: '/vendor/video-recon/timer/index.html' },
         ...(isProd ? [{
           source: '/_origin/_next/static/:path*',
           destination: isVercel ? 'https://next.cuberoot.me/_next/static/:path*' : '/_next/static/:path*',
@@ -269,6 +266,9 @@ const nextConfig: NextConfig = {
           source: `/:lang(en|zh)?${route.path}${'descendants' in route ? '/:path*' : ''}`,
           destination: '/404',
         })),
+        { source: '/vendor/video-recon/', destination: '/vendor/video-recon/index.html' },
+        { source: '/vendor/video-recon/timer', destination: '/vendor/video-recon/timer/index.html' },
+        { source: '/vendor/video-recon/timer/', destination: '/vendor/video-recon/timer/index.html' },
         ...RETIRED_COMP_VIEWS.map(view => ({
           source: '/:lang(en|zh)?/wca/comp/:slug',
           has: [{ type: 'query' as const, key: 'view', value: view }],
