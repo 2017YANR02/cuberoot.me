@@ -146,6 +146,26 @@ fn explores_disjoint_layer_orderings_but_never_reorders_noncommuting_moves() {
     assert_eq!(cleaned["postprocess"]["simultaneous_frames"], 0);
 }
 #[test]
+fn color_checks_a_closed_half_turn_excursion_around_an_independent_commit() {
+    let moves: &[&[&str]] = &[&["R2"], &["L", "R'"], &["R'"]];
+    let faces = {
+        let t = Tables::load();
+        // Observe the R slab only, so the other layer can turn without
+        // invalidating observations that hold the R slab still.
+        t.face_groups[1].iter().filter_map(|position| {
+            t.geometry_positions.iter().position(|face| face == position)
+        }).collect::<Vec<_>>()
+    };
+    let (engine, raw) = recording("L'", moves, true, Some(faces));
+    let cleaned = engine.postprocess_result(raw).unwrap();
+    assert_eq!(names(&cleaned), ["L"]);
+    assert_eq!(cleaned["steps"][1]["state_moves"], json!(["L"]));
+
+    let (engine, raw) = recording("L'", moves, false, None);
+    let cleaned = engine.postprocess_result(raw).unwrap();
+    assert_eq!(names(&cleaned), ["R2", "L", "R'", "R'"]);
+}
+#[test]
 fn explores_all_three_disjoint_slabs_without_a_full_solution_cartesian_product() {
     let (engine, raw) = recording("L'", &[&["R"], &["M"], &["L", "R'", "M'"]], true, None);
     let cleaned = engine.postprocess_result(raw).unwrap();

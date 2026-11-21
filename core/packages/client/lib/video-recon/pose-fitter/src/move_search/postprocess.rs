@@ -12,7 +12,7 @@ use std::collections::HashMap;
 mod normalize;
 
 const EPS: f64 = 1e-12;
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
 struct MoveRef {
     frame: usize,
     index: usize,
@@ -154,6 +154,86 @@ fn removed_tokens(nodes: &[Node], from: usize, to: usize, moves: &[Vec<String>])
         }
     }
     result
+}
+
+/// A fast false excursion can straddle commits on an independent layer.
+/// Keep that layer on its original frames and color-check the changed path.
+fn remove_interleaved_loops(
+    t: &Tables,
+    c: &Config,
+    steps: &[Value],
+    observations: &[Observation<'_>],
+    colors: &[usize],
+    groups: &HashMap<String, Option<Group>>,
+    occupied: &mut [bool],
+    moves: &mut [Vec<String>],
+) -> Result<(usize, Vec<Value>), String> {
+    let tokens: Vec<_> = moves.iter().enumerate().flat_map(|(frame, names)| {
+        (0..names.len()).map(move |index| MoveRef { frame, index })
+    }).collect();
+    let frames: Vec<_> = steps.iter().map(|step| step["frame_index"].as_u64().unwrap()).collect();
+    let mut removed = vec![vec![]; moves.len()];
+    let mut sections = vec![];
+    for (from, &first) in tokens.iter().enumerate() {
+        let Some(group) = groups.get(&moves[first.frame][first.index]).and_then(Option::as_ref) else { continue };
+        let slabs: Vec<_> = (0..3).filter(|&i| group.offsets[i] != 0).collect();
+        let [slab] = slabs.as_slice() else { continue };
+        let mut turn = group.offsets[*slab];
+        let mut cycle = vec![first];
+        let mut interleaved = false;
+        for &next in &tokens[from + 1..] {
+            if (frames[next.frame] - frames[first.frame]) as f64 > c.fps * 0.15
+                || occupied[first.frame..=next.frame].iter().any(|&used| used) {
+                break;
+            }
+            let other = groups.get(&moves[next.frame][next.index]).and_then(Option::as_ref);
+            if independent(Some(group), other) {
+                interleaved = true;
+                continue;
+            }
+            let Some(other) = other.filter(|other| other.axis == group.axis &&
+                (0..3).all(|i| (other.offsets[i] != 0) == (i == *slab))) else { break };
+            cycle.push(next);
+            turn += other.offsets[*slab];
+            if turn.rem_euclid(4) != 0 { continue; }
+            if !interleaved || next.frame == first.frame { break; }
+
+            let mut state = t.identity.clone();
+            let mut increase = 0.;
+            let mut scored = 0;
+            for (frame, names) in moves[..next.frame].iter().enumerate() {
+                for (index, name) in names.iter().enumerate() {
+                    if !cycle.contains(&MoveRef { frame, index }) && !removed[frame].contains(&index) {
+                        state = apply(t, &state, name)?;
+                    }
+                }
+                if frame < first.frame { continue; }
+                let observed = &observations[frame];
+                if let Some((error, original)) = held(t, observed, &state, colors).1.zip(observed.original) {
+                    increase += error - original;
+                    scored += 1;
+                }
+            }
+            // The exit state is identical. Score the intervening frames
+            // without diluting evidence with the unchanged exit frame.
+            if scored > 0 && increase.is_finite() && increase <= (c.postprocess_color_tolerance + EPS) * scored as f64 {
+                for token in &cycle { removed[token.frame].push(token.index); }
+                occupied[first.frame..=next.frame].fill(true);
+                sections.push(json!({
+                    "kind": "interleaved", "start_frame": frames[first.frame], "end_frame": frames[next.frame],
+                    "removed_moves": cycle.iter().map(|r| &moves[r.frame][r.index]).collect::<Vec<_>>(),
+                    "scored_frames": scored, "mean_color_increase": increase / scored as f64
+                }));
+            }
+            break;
+        }
+    }
+    let count = removed.iter().map(Vec::len).sum();
+    for (names, indices) in moves.iter_mut().zip(removed) {
+        let mut index = 0;
+        names.retain(|_| { let keep = !indices.contains(&index); index += 1; keep });
+    }
+    Ok((count, sections))
 }
 
 pub(super) fn clean(
@@ -447,7 +527,7 @@ pub(super) fn clean(
     loops.reverse();
     // A half-turn is atomic in the ordering DAG. Reduce same-frame layer
     // algebra too: R' R2 is R, with identical state at every observed frame.
-    let replay_moves: Vec<_> = kept
+    let mut replay_moves: Vec<_> = kept
         .iter()
         .enumerate()
         .map(|(frame, indices)| {
@@ -457,13 +537,25 @@ pub(super) fn clean(
             )
         })
         .collect();
-    let moves_after: usize = replay_moves.iter().map(Vec::len).sum();
-    let simplified_moves = offset - best.removed - moves_after;
+    let simplified_moves = offset - best.removed - replay_moves.iter().map(Vec::len).sum::<usize>();
     let simplified_frames = kept
         .iter()
         .zip(&replay_moves)
         .filter(|(indices, names)| indices.len() > names.len())
         .count();
+    let mut occupied = vec![false; moves.len()];
+    for (from, to) in &loops {
+        occupied[nodes[*from].frame..=nodes[*to].frame].fill(true);
+    }
+    for name in replay_moves.iter().flatten() {
+        groups.entry(name.clone()).or_insert_with(|| {
+            t.groups.iter().find(|g| g.sources == t.moves[name]).map(|g| g.group.clone())
+        });
+    }
+    let (interleaved_removed, interleaved_sections) = remove_interleaved_loops(
+        t, c, &original, &observations, &colors, &groups, &mut occupied, &mut replay_moves,
+    )?;
+    let moves_after: usize = replay_moves.iter().map(Vec::len).sum();
     let mut cleaned = original.clone();
     let mut state = t.identity.clone();
     let mut deltas = vec![];
@@ -479,7 +571,7 @@ pub(super) fn clean(
             return Err("Combined loop removal has a nonfinite color score".into());
         }
         deltas.push(delta);
-        if best.removed == 0 && !normalized && simplified_moves == 0 {
+        if best.removed == 0 && interleaved_removed == 0 && !normalized && simplified_moves == 0 {
             continue;
         }
         let step = cleaned[frame].as_object_mut().unwrap();
@@ -544,8 +636,10 @@ pub(super) fn clean(
     if state != final_state {
         return Err("Loop removal changed the final cube state".into());
     }
-    let mut sections = vec![];
-    let mut max_segment_mean_color_increase = 0_f64;
+    let interleaved_count = interleaved_sections.len();
+    let mut max_segment_mean_color_increase = interleaved_sections.iter()
+        .filter_map(|section| section["mean_color_increase"].as_f64()).fold(0., f64::max);
+    let mut sections = interleaved_sections;
     for (from, to) in &loops {
         let tokens = removed_tokens(&nodes, *from, *to, &moves);
         if tokens.len() != nodes[*to].rank - nodes[*from].rank {
@@ -581,16 +675,16 @@ pub(super) fn clean(
         }
     }
     result.as_object_mut().unwrap().remove("unprocessed_steps");
-    if (best.removed > 0 || normalized || simplified_moves > 0) && c.diagnostics {
+    if (best.removed > 0 || interleaved_removed > 0 || normalized || simplified_moves > 0) && c.diagnostics {
         result["unprocessed_steps"] = json!(raw_original);
     }
     result["steps"] = json!(cleaned);
     result["postprocess"] = json!({"enabled":true,"color_tolerance":c.postprocess_color_tolerance,"color_aggregation":"segment_mean",
         "pose_cleanup":c.postprocess_pose_cleanup,"center_frame_normalized":normalized,"reselected_geometries":geometry_changes,
         "raw_moves_before":raw_original.iter().filter_map(|s| s["state_moves"].as_array()).map(Vec::len).sum::<usize>(),
-        "moves_before":offset,"moves_after":moves_after,"removed_moves":best.removed+simplified_moves,
+        "moves_before":offset,"moves_after":moves_after,"removed_moves":best.removed+interleaved_removed+simplified_moves,
         "simplified_moves":simplified_moves,"simplified_frames":simplified_frames,
-        "removed_sections":best.sections,"candidate_sections":checked,"ordering_states":nodes.len(),
+        "removed_sections":best.sections+interleaved_count,"candidate_sections":checked,"ordering_states":nodes.len(),
         "simultaneous_frames":simultaneous_frames,"color_evaluations":color_evaluations,
         "max_segment_mean_color_increase":max_segment_mean_color_increase,
         "max_color_increase":deltas.iter().flatten().copied().fold(0.,f64::max)});

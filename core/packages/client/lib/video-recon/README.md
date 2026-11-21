@@ -11,13 +11,13 @@ The pinned source revision does not declare a repository-wide license. The
 [author's weights repository](https://huggingface.co/joongpa/you-only-cube-once)
 labels its two PyTorch checkpoints MIT. The browser runs the separately
 published ONNX exports from Magic Stew's `docs/models/`. The hashes below
-match both the pinned source checkout and the assets already on this branch.
+identify the assets used by this integration. The CPU pipeline includes CubeRoot’s replay cleanup changes.
 
 | Asset | SHA-256 |
 | --- | --- |
 | Cube bounding-box ONNX | `eb8735b0c9b90b6eb2c8612681ad005bbdcc003b0f8c2a2f35d632e7eef17382` |
 | Cube pose ONNX | `1a86b6967d44313662a8d4dc784fd638634f0949c724dc9fdc4830cff06d91aa` |
-| CPU pipeline WASM | `d0cffffd9cf47463a227979e521bcf51a5334fc28248004dba6714265cd3edb5` |
+| CPU pipeline WASM | `79e81450f08a30dbc52f7db878e7bf438cf4d96061350d0d402f940f4f0cf355` |
 | OpenCV PnP WASM | `83e9da3fbae4564ded4fb316d4853892e407979ac18881bb09f1c4edc9f8d96b` |
 
 Confirm permission for the source and ONNX exports with the author before
@@ -28,7 +28,7 @@ The Next development and production build commands compile the five worker
 entries using `core/scripts/build-video-recon-workers.mjs`. Worker bundles are
 generated into `public/vendor/video-recon/workers/`. The same build step copies
 the pinned ONNX Runtime distribution into `public/vendor/video-recon/runtime/`.
-The checked-in model weights and pose WASM use the matching upstream manifests.
+The model weights use the upstream manifest. The pose manifest selects the current CPU pipeline build.
 The original CubeRoot opening-grip fix now lives in `engine/cube-orientation.ts`.
 
 The React workspace is at `/video-recon`, or `/video-recon?mode=timer` for the camera timer.
