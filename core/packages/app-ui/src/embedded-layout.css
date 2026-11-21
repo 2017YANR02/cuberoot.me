@@ -57,19 +57,33 @@
   }
 }
 
-/* The native Tools frame starts inside the Duo safe rectangle already. */
-:root:is([data-installed-tools-insets], [data-native-tools-insets]) :is(.landing-page, .home-navigation-drawer) {
+/* The native Tools frame already insets the homepage and its announcement. */
+:root:is([data-installed-tools-insets], [data-native-tools-insets])
+  :is(.landing-page, .home-navigation-drawer, .page-notice-wrap:where([data-home])) {
   --sat: 0px;
   --sal: 0px;
   --sar: 0px;
   --sab: 0px;
 }
 
-/* Align the existing Tools header with the host's unobstructed top bar. */
+/* Use the same unobstructed top band for the announcement and navigation. */
+:root:is([data-installed-top-bar], [data-native-embed-top]) {
+  --tools-top-left: max(16px, var(--installed-chrome-left, var(--native-embed-left, 0px)));
+  --tools-top-right: max(16px, var(--installed-chrome-right, var(--native-embed-right, 0px)));
+}
+
+:root:is([data-installed-top-bar], [data-native-embed-top]) .page-notice-wrap[data-home] {
+  padding-left: var(--tools-top-left);
+  padding-right: var(--tools-top-right);
+}
+
 :root:is([data-installed-top-bar], [data-native-embed-top]) .landing-page > .home-navigation {
+  --tools-header-left-margin: calc(var(--tools-top-left) - max(var(--landing-inline-gutter), var(--sal)));
+  --tools-header-right-margin: calc(var(--tools-top-right) - max(var(--landing-inline-gutter), var(--sar)));
   min-height: 44px;
-  margin-left: calc(max(16px, var(--installed-chrome-left, var(--native-embed-left, 0px))) - max(var(--landing-inline-gutter), var(--sal)));
-  margin-right: calc(max(16px, var(--installed-chrome-right, var(--native-embed-right, 0px))) - max(var(--landing-inline-gutter), var(--sar)));
+  width: min(var(--landing-content-max), calc(100% - var(--tools-header-left-margin) - var(--tools-header-right-margin)));
+  margin-left: var(--tools-header-left-margin);
+  margin-right: var(--tools-header-right-margin);
 }
 :root:is([data-installed-top-bar], [data-native-embed-top]) .home-navigation .home-navigation-toggle {
   width: 44px;
