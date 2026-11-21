@@ -1,5 +1,6 @@
 import { primaryNavigation } from './primary-navigation';
 import { timerMoreMenu } from './timer-more-menu';
+import { timerManualEntry } from './timer-manual-entry';
 import { addDockedKeyboardListener } from './viewport-layout';
 import { addNotificationOpenListener } from './native/notification-open';
 import { watchTimerPort } from './watch-timer';
@@ -37,6 +38,7 @@ export const capacitorHost: InstalledAppHost = {
   floatingNavigation: Capacitor.isNativePlatform(),
   primaryNavigation: isIos ? primaryNavigation : undefined,
   addDockedKeyboardListener: isIos ? addDockedKeyboardListener : undefined,
+  manualEntrySheet: isIos && Capacitor.isPluginAvailable('TimerManualEntry') ? timerManualEntry : undefined,
   timerMoreMenu: isIos && Capacitor.isPluginAvailable('TimerMoreMenu') ? timerMoreMenu : undefined,
   createBleTransport: () => new NativeBleTransport(),
   createStackmatSource: createStackmatMicSource,

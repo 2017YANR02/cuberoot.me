@@ -122,6 +122,7 @@ final class CubeRootBridgeViewController: CAPBridgeViewController {
             bridge?.registerPluginInstance(PrimaryNavigationPlugin())
         }
         bridge?.registerPluginInstance(TimerMoreMenuPlugin())
+        bridge?.registerPluginInstance(TimerManualEntryPlugin())
         bridge?.registerPluginInstance(TimerPrintPlugin())
         bridge?.registerPluginInstance(NativeFilesPlugin())
         bridge?.registerPluginInstance(ScreenAwakePlugin())

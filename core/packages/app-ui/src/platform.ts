@@ -116,6 +116,7 @@ export interface InstalledAppHost {
   watchTimer?: import('./watch-timer').WatchTimerPort;
   listenDesktopNavigation?(language: SupportedLanguage, listener: (command: 'timer' | 'tools' | 'account' | 'back' | 'refresh' | 'search') => void): Promise<InstalledAppListener>;
   addDockedKeyboardListener?(listener: (top: number | null) => void): Promise<InstalledAppListener>;
+  manualEntrySheet?: import('./NativeTimerManualEntry').ManualEntrySheetHost;
   timerMoreMenu?: {
     render(state: {
       frame: PrimaryNavigationFrame;

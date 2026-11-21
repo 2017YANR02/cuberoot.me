@@ -339,6 +339,7 @@ import {
 } from './mobile-scramble-history';
 import { mobileTimerMoreMenuItems } from './mobile-more-actions';
 import { NativeTimerMoreMenu } from './NativeTimerMoreMenu';
+import { NativeTimerManualEntry } from './NativeTimerManualEntry';
 import {
   displayMobileWcaCompetitionName,
   loadMobileWcaCompetitionScrambles,
@@ -3659,15 +3660,18 @@ export function App({ host, loadingMark }: { host: InstalledAppHost; loadingMark
     }
   }, [announce, commitSessionMutation, copy.actionFailed]);
 
-  const addManualSolve = useCallback((value: TimerManualEntryValue) => {
+  const addManualSolve = useCallback(async (value: TimerManualEntryValue) => {
     const revision = storeSnapshotGateRef.current.beginMutation();
-    void repository.addSolve(value).then((data) => {
+    try {
+      const data = await repository.addSolve(value);
       storeSnapshotGateRef.current.commitIfLatest(revision, data, applyStoreSnapshot);
       setManualEntryOpen(false);
-    }).catch(() => {
+      return true;
+    } catch {
       void recoverLatestStoreSnapshot(revision).catch(() => undefined);
       announce(copy.actionFailed);
-    });
+      return false;
+    }
   }, [announce, applyStoreSnapshot, copy.actionFailed, recoverLatestStoreSnapshot]);
 
   const deleteSolveNow = useCallback(async (solve: Solve): Promise<boolean> => {
@@ -5626,7 +5630,17 @@ children: <>
         <X aria-hidden="true" />
       </button>}
 
-      {manualEntryOpen && (
+      {manualEntryOpen && (host.manualEntrySheet ? (
+        <NativeTimerManualEntry
+          host={host.manualEntrySheet}
+          currentScramble={scramble}
+          event={activeEvent}
+          labels={manualEntryLabels}
+          saveError={copy.actionFailed}
+          onClose={() => setManualEntryOpen(false)}
+          onSubmit={addManualSolve}
+        />
+      ) : (
         <TimerManualEntryModal
           currentScramble={scramble}
           event={activeEvent}
@@ -5634,7 +5648,7 @@ children: <>
           onClose={() => setManualEntryOpen(false)}
           onSubmit={addManualSolve}
         />
-      )}
+      ))}
 
       <GestureWheel ref={gestureWheelRef} isZh={language === 'zh'} />
 
