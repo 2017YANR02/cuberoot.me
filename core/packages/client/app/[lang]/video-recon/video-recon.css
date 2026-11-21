@@ -30,6 +30,18 @@
   flex: 1 0 auto;
 }
 
+.video-recon-title-help {
+  display: inline-grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  color: var(--muted-foreground);
+}
+
+.video-recon-title-help:hover {
+  color: var(--accent);
+}
+
 .video-recon-intro,
 .video-recon-muted,
 .video-recon-file-name {

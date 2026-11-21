@@ -4,10 +4,10 @@ import { useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import dynamic from 'next/dynamic';
 import { parseAsStringEnum, useQueryState } from 'nuqs';
 import { Camera, Download, Film, HelpCircle, Unplug, Upload } from '@app-foundation/icons/lucide';
+import Link from '@/components/AppLink';
 import { ContentSkeleton } from '@/components/ContentSkeleton';
 import PageHeading from '@/components/PageHeading';
 import HeaderToggles from '@/components/HeaderToggles';
-import { InfoTooltip } from '@/components/InfoTooltip/InfoTooltip';
 import { INITIAL_VIDEO_TRANSFORM, VideoImageTools, videoImageTransformCss } from '@/components/VideoImageTools';
 import { useVideoViewport } from '@/hooks/useVideoViewport';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
@@ -125,10 +125,10 @@ export default function VideoReconClient() {
     <header className="video-recon-heading">
       <div className="video-recon-title">
         <PageHeading backHref="/recon">{title}</PageHeading>
-        {detector && <InfoTooltip icon={HelpCircle} iconSize={18}
-          ariaLabel={t('视频复盘说明', 'About video reconstruction')}
-          content={t('上传固定机位的视频和已知打乱，复盘三阶还原。图片也可用于检测。',
-            'Use a fixed-camera video and the known scramble to reconstruct a 3×3 solve. You can also detect a cube in an image.')} />}
+        {detector && <Link href="/video-recon-about" className="video-recon-title-help"
+          aria-label={t('视频复盘说明', 'Video Reconstruction Guide')}>
+          <HelpCircle size={18} strokeWidth={1.75} aria-hidden />
+        </Link>}
       </div>
       <div className="video-recon-modes" role="group" aria-label={t('复盘工具', 'Reconstruction tools')}>
         <button type="button" className="btn-secondary" aria-pressed={detector} disabled={view?.timerBusy}

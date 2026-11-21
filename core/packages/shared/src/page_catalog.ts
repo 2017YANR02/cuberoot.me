@@ -509,6 +509,13 @@ export const PAGE_META: Record<string, PageMetaEntry> = {
       en: 'Reconstruct a 3×3 solve from video and a scramble, or time and replay a camera solve.',
     },
   },
+  'video-recon-about': {
+    title: { zh: '视频复盘说明', en: 'Video Reconstruction Guide' },
+    description: {
+      zh: '了解三阶视频复盘如何识别转动、重建解法，以及拍摄条件和浏览器要求。',
+      en: 'Learn how 3×3 video reconstruction recovers moves, what makes footage usable, and which browser features it requires.',
+    },
+  },
   'frame-count': {
     title: { zh: '数帧', en: 'Frame Count' },
     description: {

@@ -1,5 +1,6 @@
 [
   {
+    "id": "magic-stew",
     "name": "Magic Stew / joongpa",
     "url": "https://github.com/joongpa/magic-stew",
     "zh": "视频复盘使用 Magic Stew 的识别内核、ONNX 模型和 Rust/WASM 姿态拟合与动作搜索。界面由 CubeRoot 实现，复制公式时包含起手转体。",
