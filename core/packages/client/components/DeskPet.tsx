@@ -165,6 +165,11 @@ const MINI_KEYS: Record<string, keyof MiniTheme['files']> = {
   'mini-happy': 'happy', 'mini-sleep': 'sleep', 'mini-enter-sleep': 'enterSleep',
 };
 
+// Only CubeRoot popovers should hide the pet. Browser extensions can keep a
+// native popover open even while their overlay is invisible.
+const blockingOverlays = `[aria-modal="true"], dialog[open], .pp-popup,
+  :is([data-site-surface="popover"], .settings-popover-layer, .contact-qr-popover):popover-open`;
+
 const CSS = `
 .clawd-deskpet{position:fixed;right:max(20px,var(--sar,0px));bottom:max(20px,var(--sab,0px));
   z-index:100000;pointer-events:none;--pet-scale:1; /* above every page modal so it stays draggable */
@@ -290,8 +295,8 @@ const CSS = `
 /* The homepage's fixed search occupies the bottom 2.5rem + 54px on narrow screens. */
 @media (max-width:1024px){body:has(.landing-page) .deskpet-compact{bottom:calc(7rem + var(--sab,0px));}}
 /* Open modal/menu surfaces take precedence over either pet presentation. */
-body:has([aria-modal="true"], dialog[open], [popover]:popover-open, .pp-popup) :is(.clawd-deskpet,.deskpet-compact){visibility:hidden;}
-body:has([aria-modal="true"], dialog[open], [popover]:popover-open, .pp-popup) :is(.clawd-deskpet,.deskpet-compact) *{pointer-events:none;}
+body:has(${blockingOverlays}) :is(.clawd-deskpet,.deskpet-compact){visibility:hidden;}
+body:has(${blockingOverlays}) :is(.clawd-deskpet,.deskpet-compact) *{pointer-events:none;}
 @media print{.clawd-deskpet,.deskpet-compact{display:none;}}
 `;
 
