@@ -6,19 +6,21 @@ import { parseAsString, parseAsStringEnum, useQueryState } from 'nuqs';
 import { BadgeCheck, ExternalLink, EyeOff, GraduationCap, MapPin, Mic2, Pencil, Plus, UserRound } from '@app-foundation/icons/lucide';
 import AppLink from '@/components/AppLink';
 import { PlatformTeacherCourses } from '@/components/platform/PlatformTeacherCourses';
+import { PlatformInstructorCard } from '@/components/platform/PlatformInstructorCard';
 import BackHome from '@/components/BackHome';
 import PersonLink from '@/components/PersonLink';
 import SearchInput from '@/components/SearchInput';
-import { nextQuery, useAuthUser, useIsAdmin, useOwnerKey } from '@/lib/auth-store';
+import { useIsAdmin, useOwnerKey } from '@/lib/auth-store';
 import { tr } from '@/i18n/tr';
 import { fetchMyTeacherDirectory, fetchTeacherDirectory, mergeTeacherDirectoryEntries, type TeacherDirectoryEntry } from '@/lib/teacher-directory-api';
 import { fetchTeacherLiveScripts, type TeacherLiveScript } from '@/lib/teacher-live-scripts-api';
 import { creatorProfileHrefForWcaId } from '@/lib/creator-profile';
 import { CONTACT_FIELDS, DIRECTORY_KINDS, URL_CONTACT_KEYS, directoryContactHref, directoryKindLabel, directoryModeLabel, directoryWebsiteLabel, localDirectoryTags, localDirectoryText } from '@/lib/teacher-directory-presentation';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
-import { PlatformNavigationContext } from '@/lib/platform-navigation-context';
+import { PlatformNavigationContext, usePlatformSearchBinding } from '@/lib/platform-navigation-context';
+import { platformPathname } from '@/lib/platform-navigation';
 
-function DirectoryEntry({ entry, canEdit, scripts }: { entry: TeacherDirectoryEntry; canEdit: boolean; scripts: TeacherLiveScript[] }) {
+function DirectoryEntry({ entry, canEdit, isAdmin, scripts }: { entry: TeacherDirectoryEntry; canEdit: boolean; isAdmin: boolean; scripts: TeacherLiveScript[] }) {
   const name = localDirectoryText(entry.nameZh, entry.nameEn);
   const alternateName = [entry.nameZh, entry.nameEn].find((candidate) => candidate && candidate !== name);
   const location = localDirectoryText(entry.locationZh, entry.locationEn);
@@ -36,13 +38,17 @@ function DirectoryEntry({ entry, canEdit, scripts }: { entry: TeacherDirectoryEn
       <div className="directory-entry-heading">
         <div className="directory-entry-labels">
           <span>{directoryKindLabel(entry.kind)}</span>
+          {entry.kind === 'teacher' && entry.instructorStatus === 'active' && <span className="directory-curated"><BadgeCheck size={14} />{tr({ zh: '认证讲师', en: 'Verified instructor' })}</span>}
+          {entry.kind === 'teacher' && entry.instructorStatus && entry.instructorStatus !== 'active' && <span className="directory-curated"><EyeOff size={14} />{tr({ zh: '未公开：讲师权限尚未生效', en: 'Not public: instructor access is inactive' })}</span>}
           {entry.isCurated && <span className="directory-curated"><BadgeCheck size={14} />{tr({ zh: '站方录入', en: 'Curated' })}</span>}
           {!entry.isVisible && <span className="directory-curated"><EyeOff size={14} />{tr({ zh: '仅自己可见', en: 'Only visible to you' })}</span>}
         </div>
         <h2>{profileHref ? <AppLink className="directory-profile-name" href={profileHref}>{name}</AppLink> : name}</h2>
         {alternateName && <p className="directory-alt-name">{alternateName}</p>}
         {location && <p className="directory-location"><MapPin size={15} />{location}</p>}
-        {canEdit && <div className="directory-owner-actions"><AppLink href={`/teachers/edit?id=${entry.id}`} prefetch={false} className="directory-edit-button"><Pencil size={15} />{tr({ zh: '编辑资料', en: 'Edit profile' })}</AppLink><AppLink href={`/teachers/scripts/manage?teacher=${entry.id}`} prefetch={false} className="directory-edit-button"><Mic2 size={15} />{tr({ zh: '管理话术', en: 'Manage scripts' })}</AppLink></div>}
+        {canEdit && <div className="directory-owner-actions">{entry.kind === 'teacher' && !isAdmin
+          ? <AppLink href={entry.instructorStatus === 'active' ? '/platform/instructor/profile' : '/platform/teachers/apply'} prefetch={false} className="directory-edit-button"><Pencil size={15} />{tr({ zh: '讲师资料', en: 'Instructor profile' })}</AppLink>
+          : <><AppLink href={`/teachers/edit?id=${entry.id}`} prefetch={false} className="directory-edit-button"><Pencil size={15} />{tr({ zh: '编辑资料', en: 'Edit profile' })}</AppLink><AppLink href={`/teachers/scripts/manage?teacher=${entry.id}`} prefetch={false} className="directory-edit-button"><Mic2 size={15} />{tr({ zh: '管理话术', en: 'Manage scripts' })}</AppLink></>}</div>}
       </div>
       <div className="directory-entry-body">
         {cover && <figure className="directory-cover"><img src={cover.url} alt={localDirectoryText(cover.captionZh, cover.captionEn) || name} />{localDirectoryText(cover.captionZh, cover.captionEn) && <figcaption>{localDirectoryText(cover.captionZh, cover.captionEn)}</figcaption>}</figure>}
@@ -59,14 +65,16 @@ function DirectoryEntry({ entry, canEdit, scripts }: { entry: TeacherDirectoryEn
 }
 
 function TeachersDirectoryClient() {
-  const pathname = usePathname();
   const inPlatformShell = useContext(PlatformNavigationContext);
-  const user = useAuthUser();
+  const pathname = usePathname();
   const ownerKey = useOwnerKey();
   const isAdmin = useIsAdmin();
-  const [teacher, setTeacher] = useQueryState('teacher', parseAsString.withDefault(''));
+  const [teacherQuery, setTeacher] = useQueryState('teacher', parseAsString.withDefault(''));
+  const detailId = inPlatformShell ? platformPathname(pathname ?? '').match(/^\/platform\/teachers\/(\d+)$/)?.[1] : undefined;
+  const teacher = detailId ?? teacherQuery;
   const [query, setQuery] = useQueryState('q', parseAsString.withDefault(''));
   const [kind, setKind] = useQueryState('type', parseAsStringEnum([...DIRECTORY_KINDS]).withDefault('all'));
+  usePlatformSearchBinding('teachers', query, value => { void setQuery(value || null); void setTeacher(null); }, inPlatformShell, { routeId: 'teachers' });
   const [publicEntries, setPublicEntries] = useState<TeacherDirectoryEntry[]>([]);
   const [myEntries, setMyEntries] = useState<TeacherDirectoryEntry[]>([]);
   const [scripts, setScripts] = useState<TeacherLiveScript[]>([]);
@@ -78,55 +86,66 @@ function TeachersDirectoryClient() {
   useEffect(() => {
     let active = true;
     fetchTeacherDirectory().then((data) => { if (active) setPublicEntries(data); }).catch(() => { if (active) setLoadError(tr({ zh: '名录暂时无法加载。', en: 'The directory could not be loaded.' })); }).finally(() => { if (active) setLoading(false); });
-    fetchTeacherLiveScripts().then((data) => { if (active) setScripts(data); }).catch(() => {});
     return () => { active = false; };
   }, []);
 
+  const showDetails = !inPlatformShell || Boolean(teacher);
   useEffect(() => {
-    if (!ownerKey) { setMyEntries([]); setLoadedOwnerKey(''); setMyLoadError(''); return; }
+    if (!showDetails) return;
+    let active = true;
+    fetchTeacherLiveScripts().then(data => { if (active) setScripts(data); }).catch(() => {});
+    return () => { active = false; };
+  }, [showDetails]);
+
+  useEffect(() => {
+    if (inPlatformShell || !ownerKey) { setMyEntries([]); setLoadedOwnerKey(''); setMyLoadError(''); return; }
     let active = true;
     setMyLoadError('');
     fetchMyTeacherDirectory().then((data) => { if (active) setMyEntries(data); }).catch(() => { if (active) { setMyEntries([]); setMyLoadError(tr({ zh: '你的资料暂时无法加载。', en: 'Your entries could not be loaded.' })); } }).finally(() => { if (active) setLoadedOwnerKey(ownerKey); });
     return () => { active = false; };
-  }, [ownerKey]);
+  }, [ownerKey, inPlatformShell]);
 
   const ownedEntries = loadedOwnerKey === ownerKey ? myEntries : [];
-  const entries = useMemo(() => mergeTeacherDirectoryEntries(publicEntries, ownedEntries), [ownedEntries, publicEntries]);
+  const entries = useMemo(() => inPlatformShell ? publicEntries : mergeTeacherDirectoryEntries(publicEntries, ownedEntries), [inPlatformShell, ownedEntries, publicEntries]);
   const myIds = useMemo(() => new Set(ownedEntries.map((entry) => entry.id)), [ownedEntries]);
   const scriptsByEntry = useMemo(() => {
     const map = new Map<number, TeacherLiveScript[]>();
     for (const script of scripts) map.set(script.teacherEntryId, [...(map.get(script.teacherEntryId) ?? []), script]);
     return map;
   }, [scripts]);
-  const directoryLoading = loading || (!!ownerKey && loadedOwnerKey !== ownerKey);
+  const directoryLoading = loading || (!inPlatformShell && !!ownerKey && loadedOwnerKey !== ownerKey);
   const filtered = useMemo(() => {
     const needle = query.trim().toLocaleLowerCase();
     return entries.filter((entry) => {
       if (teacher && String(entry.id) !== teacher) return false;
-      if (kind !== 'all' && entry.kind !== kind) return false;
+      if (inPlatformShell) {
+        // Explicit organization detail links still work, but the instructor catalog is teachers only.
+        if (!teacher && entry.kind !== 'teacher') return false;
+        if (!entry.isVisible || (entry.kind === 'teacher' && entry.instructorStatus != null && entry.instructorStatus !== 'active')) return false;
+      } else if (kind !== 'all' && entry.kind !== kind) return false;
       if (!needle) return true;
       return [entry.nameZh, entry.nameEn, entry.locationZh, entry.locationEn, entry.descriptionZh, entry.descriptionEn, entry.wcaId, ...Object.values(entry.contacts), ...entry.specialtiesZh, ...entry.specialtiesEn].join('\n').toLocaleLowerCase().includes(needle);
     });
-  }, [entries, kind, query, teacher]);
+  }, [entries, inPlatformShell, kind, query, teacher]);
 
   return (
     <main className="teachers-page">
-      <div className="teachers-back-row"><BackHome /></div>
-      <header className="teachers-hero">
+      {!inPlatformShell && <div className="teachers-back-row"><BackHome /></div>}
+      {inPlatformShell ? <h1 className="sr-only">{tr({ zh: '全部讲师', en: 'All instructors' })}</h1> : <header className="teachers-hero">
 
-        <h1 className={inPlatformShell ? 'sr-only' : undefined}>{tr({ zh: '魔方老师与机构', en: 'Cube Teachers & Schools' })}</h1>
-        <p className="teachers-intro">{tr({ zh: '寻找适合自己的魔方老师、线上课程或本地培训机构，也可以把自己的教学服务加入名录。', en: 'Find a cube teacher, online lesson, or local training school—or add your own teaching service.' })}</p>
-        <p className="teachers-trust">{tr({ zh: '资料由站方或用户提交。联系、付费或报名之前，请自行核实教学内容与身份。', en: 'Entries are submitted by CubeRoot or its users. Verify identity and course details before contacting, paying, or enrolling.' })}</p>
-        <div className="teachers-hero-actions">{user ? <AppLink href="/teachers/edit" prefetch={false} className="directory-primary-button teachers-add-button"><Plus size={17} />{tr({ zh: '建立教学主页', en: 'Build a profile' })}</AppLink> : <AppLink href={`/account${nextQuery(pathname)}`} prefetch={false} className="directory-primary-button teachers-add-button"><Plus size={17} />{tr({ zh: '登录后添加', en: 'Sign in to add' })}</AppLink>}<AppLink href="/teachers/scripts" className="directory-edit-button teachers-script-library"><Mic2 size={15} />{tr({ zh: '浏览直播话术', en: 'Browse scripts' })}</AppLink></div>
-      </header>
-      {teacher && <button type="button" className="directory-edit-button" onClick={() => { void setTeacher(null); }}>{tr({ zh: '查看全部老师与机构', en: 'Show all teachers and schools' })}</button>}
-      <div className="directory-toolbar"><SearchInput value={query} onChange={(value) => { void setQuery(value || null); }} className="directory-search" inputClassName="directory-search-input" placeholder={tr({ zh: '搜索姓名、地点或擅长方向', en: 'Search names, places, or specialties' })} /><label className="directory-kind-filter"><span>{tr({ zh: '类型', en: 'Type' })}</span><select className="directory-kind-control" value={kind} onChange={(event) => { void setKind(event.target.value as typeof kind); }}><option value="all">{tr({ zh: '全部', en: 'All' })}</option><option value="teacher">{tr({ zh: '魔方老师', en: 'Teachers' })}</option><option value="organization">{tr({ zh: '培训机构', en: 'Schools' })}</option></select></label></div>
-      <section className="directory-list" aria-label={tr({ zh: '老师与机构名录', en: 'Teacher and school directory' })}>
+        <h1>{tr({ zh: '魔方老师与机构', en: 'Cube Teachers & Schools' })}</h1>
+        <p className="teachers-intro">{tr({ zh: '寻找认证讲师、线上课程或本地培训机构。讲师入驻审核通过后即可完善并公开资料。', en: 'Find verified instructors, online courses or local schools. Approved instructors can complete and publish their profiles.' })}</p>
+        <div className="teachers-hero-actions"><AppLink href="/platform/teachers/apply" prefetch={false} className="directory-primary-button teachers-add-button"><Plus size={17} />{tr({ zh: '讲师入驻', en: 'Teach with us' })}</AppLink><AppLink href="/teachers/edit?kind=organization" prefetch={false} className="directory-edit-button">{tr({ zh: '添加培训机构', en: 'Add a school' })}</AppLink><AppLink href="/teachers/scripts" className="directory-edit-button teachers-script-library"><Mic2 size={15} />{tr({ zh: '浏览直播话术', en: 'Browse scripts' })}</AppLink></div>
+      </header>}
+      {teacher && (inPlatformShell ? <AppLink href="/platform/teachers" prefetch={false} className="directory-edit-button">{tr({ zh: '查看全部讲师', en: 'View all instructors' })}</AppLink> : <button type="button" className="directory-edit-button" onClick={() => { void setTeacher(null); }}>{tr({ zh: '查看全部老师与机构', en: 'Show all teachers and schools' })}</button>)}
+      {!inPlatformShell && <div className="directory-toolbar"><SearchInput value={query} onChange={(value) => { void setQuery(value || null); }} className="directory-search" inputClassName="directory-search-input" placeholder={tr({ zh: '搜索姓名、地点或擅长方向', en: 'Search names, places, or specialties' })} /><label className="directory-kind-filter"><span>{tr({ zh: '类型', en: 'Type' })}</span><select className="directory-kind-control" value={kind} onChange={(event) => { void setKind(event.target.value as typeof kind); }}><option value="all">{tr({ zh: '全部', en: 'All' })}</option><option value="teacher">{tr({ zh: '魔方老师', en: 'Teachers' })}</option><option value="organization">{tr({ zh: '培训机构', en: 'Schools' })}</option></select></label></div>}
+      <section className="directory-list" aria-label={inPlatformShell ? tr({ zh: '全部讲师', en: 'All instructors' }) : tr({ zh: '老师与机构名录', en: 'Teacher and school directory' })}>
         {directoryLoading && <p className="directory-state"><LoadingIndicator>{tr({ zh: '正在加载名录…', en: 'Loading the directory…' })}</LoadingIndicator></p>}
         {!directoryLoading && loadError && <p className="directory-state directory-load-error">{loadError}</p>}
-        {!directoryLoading && !loadError && myLoadError && <p className="directory-state directory-load-error">{myLoadError}</p>}
+        {!inPlatformShell && !directoryLoading && !loadError && myLoadError && <p className="directory-state directory-load-error">{myLoadError}</p>}
         {!directoryLoading && !loadError && filtered.length === 0 && <p className="directory-state">{tr({ zh: '没有找到符合条件的资料。', en: 'No matching entries.' })}</p>}
-        {filtered.map((entry) => <DirectoryEntry key={entry.id} entry={entry} canEdit={isAdmin || myIds.has(entry.id)} scripts={scriptsByEntry.get(entry.id) ?? []} />)}
+        {!showDetails && filtered.length > 0 ? <div className="platform-instructor-grid">{filtered.map(entry => <PlatformInstructorCard key={entry.id} teacher={entry} heading="h2" />)}</div>
+          : filtered.map((entry) => <DirectoryEntry key={entry.id} entry={entry} isAdmin={isAdmin} canEdit={!inPlatformShell && (isAdmin || myIds.has(entry.id))} scripts={scriptsByEntry.get(entry.id) ?? []} />)}
       </section>
     </main>
   );

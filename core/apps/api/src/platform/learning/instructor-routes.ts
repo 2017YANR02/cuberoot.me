@@ -1,5 +1,5 @@
 import { requirePlatformActor } from '../auth.js';
-import { requireInstructor, platformDb, platformQuery } from '../db.js';
+import { ACTIVE_COURSE_LEARNER_PREDICATE, requireInstructor, platformDb, platformQuery } from '../db.js';
 import { privateNoStore } from '../http.js';
 import { pagination } from '../validation.js';
 import { type Hono } from 'hono';
@@ -15,7 +15,8 @@ export function registerInstructorRoutes(platformLearningRoutes: Hono): void {
              e.course_id::text AS "courseId", cr.title_zh AS "courseTitleZh", cr.title_en AS "courseTitleEn", COALESCE(NULLIF(cr.title_zh, ''), cr.title_en) AS "courseTitle",
              e.status, e.valid_from AS "validFrom", e.valid_until AS "validUntil",
              (SELECT COUNT(*)::int FROM platform_lesson_progress p JOIN platform_lessons l ON l.id=p.lesson_id WHERE p.user_id=e.user_id AND l.course_id=e.course_id AND p.status='completed' AND l.status='published') AS "completedLessons",
-             (SELECT COUNT(*)::int FROM platform_lessons l WHERE l.course_id=e.course_id AND l.status='published') AS "totalLessons"
+             (SELECT COUNT(*)::int FROM platform_lessons l WHERE l.course_id=e.course_id AND l.status='published') AS "totalLessons",
+             EXISTS (SELECT 1 FROM platform_certificates cert WHERE cert.user_id=e.user_id AND cert.course_id=e.course_id AND cert.status='issued') AS "hasCertificate"
       FROM platform_course_owners owner
       JOIN platform_instructors instructor ON instructor.id = owner.instructor_id
       JOIN platform_course_entitlements e ON e.course_id = owner.course_id
@@ -23,7 +24,7 @@ export function registerInstructorRoutes(platformLearningRoutes: Hono): void {
       JOIN platform_courses course ON course.id = e.course_id
       LEFT JOIN platform_course_revisions cr ON cr.course_id = course.id AND cr.revision = course.current_revision
       WHERE instructor.user_id = $1 AND instructor.status = 'active' AND owner.status = 'active'
-        AND e.user_id IS NOT NULL
+        AND ${ACTIVE_COURSE_LEARNER_PREDICATE}
       ORDER BY "validFrom" DESC, "userId" LIMIT $2 OFFSET $3
     `, [actor.userId,paged?pageSize:null,paged?offset:0]);
     privateNoStore(c);
@@ -50,7 +51,7 @@ export function registerInstructorRoutes(platformLearningRoutes: Hono): void {
     const actor=await requirePlatformActor(c); const db=platformDb(); const instructorId=await requireInstructor(db,actor);
     const [courses,students,months,payouts,recent]=await Promise.all([
       platformQuery(db,`SELECT COUNT(*)::int AS count FROM platform_course_owners o JOIN platform_courses c ON c.id=o.course_id WHERE o.instructor_id=$1::uuid AND o.status='active' AND c.status<>'archived'`,[instructorId]),
-      platformQuery(db,`SELECT COUNT(DISTINCT e.user_id)::int AS count FROM platform_course_owners o JOIN platform_course_entitlements e ON e.course_id=o.course_id WHERE o.instructor_id=$1::uuid AND o.status='active' AND e.status='active'`,[instructorId]),
+      platformQuery(db,`SELECT COUNT(DISTINCT e.user_id)::int AS count FROM platform_course_owners o JOIN platform_course_entitlements e ON e.course_id=o.course_id WHERE o.instructor_id=$1::uuid AND o.status='active' AND ${ACTIVE_COURSE_LEARNER_PREDICATE}`,[instructorId]),
       platformQuery(db,`SELECT to_char(l.created_at AT TIME ZONE 'Asia/Shanghai','YYYY-MM') AS month,l.currency,
         COUNT(DISTINCT l.order_id) FILTER(WHERE l.entry_type='sale')::int AS orders,
         COALESCE(SUM(l.delta_amount_minor) FILTER(WHERE l.entry_type='sale'),0)::text AS "saleAmountMinor",

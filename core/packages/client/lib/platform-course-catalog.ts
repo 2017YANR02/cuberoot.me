@@ -41,9 +41,12 @@ export function courseCatalogDetails(course: PlatformEntity) {
   const ruiminCourse = data.slug === 'yan-ruimin-3x3-beginner';
   const coverUrl = courseCoverUrl(presentation.coverUrl);
   const mobileCoverUrl = courseCoverUrl(presentation.mobileCoverUrl);
-  const instructors = Array.isArray(data.instructors)
-    ? data.instructors.map(instructor => nonEmptyText(commerceRecord(instructor).displayName)).filter(Boolean)
-    : [];
+  const instructorRecords = Array.isArray(data.instructors) ? data.instructors.map(commerceRecord) : [];
+  const instructorNames = (language: 'Zh' | 'En', other: 'Zh' | 'En') => instructorRecords
+    .map(instructor => nonEmptyText(instructor[`displayName${language}`]) || nonEmptyText(instructor[`displayName${other}`]) || nonEmptyText(instructor.displayName))
+    .filter(Boolean);
+  const instructors = instructorNames('Zh', 'En');
+  const instructorsEn = instructorNames('En', 'Zh');
   const lessonCount = Number(data.lessonCount);
   return {
     puzzles: ruiminCourse && !puzzles.length ? ['333'] : puzzles,
@@ -51,8 +54,8 @@ export function courseCatalogDetails(course: PlatformEntity) {
     coverUrl: coverUrl ?? (ruiminCourse ? '/images/ruimin/gallery/photo-03.webp' : mobileCoverUrl),
     mobileCoverUrl: mobileCoverUrl ?? (ruiminCourse && !coverUrl ? '/images/ruimin/gallery/course-cover-portrait.webp' : undefined),
     instructors: instructors.length || !ruiminCourse ? instructors : ['颜瑞民'],
-    fallbackInstructorEn: ruiminCourse && !instructors.length ? 'Yan Ruimin' : undefined,
-    lessonCount: Number.isInteger(lessonCount) && lessonCount > 0 ? lessonCount : undefined,
+    instructorsEn: instructorsEn.length || !ruiminCourse ? instructorsEn : ['Yan Ruimin'],
+    lessonCount: data.lessonCount != null && Number.isInteger(lessonCount) && lessonCount >= 0 ? lessonCount : undefined,
     level: nonEmptyText(presentation.level),
     tags,
   };
@@ -70,7 +73,7 @@ export function matchesCourseCatalog(
   const data = course.data ?? {};
   const searchable = [
     course.title, course.summary, data.titleZh, data.titleEn, data.summaryZh, data.summaryEn,
-    ...details.instructors, details.level, ...details.tags,
+    ...details.instructors, ...details.instructorsEn, details.level, ...details.tags,
     ...details.topics.flatMap(topic => [COURSE_TOPICS[topic].zh, COURSE_TOPICS[topic].en]),
     ...details.puzzles.flatMap(id => [eventDisplayName(id, true), eventDisplayName(id, false)]),
   ].join(' ').toLowerCase();

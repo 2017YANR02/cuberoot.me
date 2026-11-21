@@ -9,7 +9,7 @@ export const PLATFORM_SECTION_NAV: Record<PlatformPrimary, readonly NavItem[]> =
   discover: [item('home', '/platform', '推荐', 'Recommended'), item('events', '/platform/events', '活动', 'Events'), item('news', '/platform/news', '资讯', 'News')],
   courses: [item('courses', '/platform/courses', '全部课程', 'All courses'), item('paths', '/platform/paths', '学习路径', 'Learning paths'), item('membership', '/platform/membership', '课程会员', 'Course membership')],
   community: [item('community-feed', '/platform/community/feed', '动态', 'Feed'), item('community', '/platform/community', '版块', 'Boards'), item('leaderboard', '/platform/leaderboard', '学习榜', 'Learning leaderboard')],
-  teachers: [item('teachers', '/platform/teachers', '讲师名录', 'Teacher directory'), item('teacher-apply', '/platform/teachers/apply', '讲师入驻', 'Teach with us')],
+  teachers: [item('teachers', '/platform/teachers', '全部讲师', 'All instructors'), item('teacher-apply', '/platform/teachers/apply', '讲师入驻', 'Teach with us')],
   organizations: [item('org', '/platform/org', '机构工作台', 'Organization workspace')],
 };
 
@@ -52,8 +52,7 @@ export function platformWorkspaceRoutes(definition: PlatformRouteDefinition | un
     ? platformAdminNavigationState(definition)?.group.items.map(entry => entry.route) ?? [] : [];
   const personalPage = definition?.area === 'account' || definition?.id === 'progress' || definition?.id === 'orders' || definition?.id === 'order-detail';
   return PLATFORM_ROUTES.filter(item => !item.pattern.includes(':') && item.kind !== 'form'
-    && (definition?.area === 'instructor' && definition.id !== 'teacher-apply' ? signedIn && item.access === 'instructor'
-        : personalPage ? signedIn && PLATFORM_PERSONAL_ROUTES.includes(item) : false));
+    && personalPage && signedIn && PLATFORM_PERSONAL_ROUTES.includes(item));
 }
 
 export function platformPathname(pathname: string): string {

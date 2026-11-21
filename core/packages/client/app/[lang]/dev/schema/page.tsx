@@ -557,7 +557,7 @@ const TABLES: Table[] = [
   { name: 'home_card_positions', domain: 'community', origin: '0213', purpose: { zh: '管理员定义的首页各分组卡片顺序', en: 'Admin-defined homepage card order within each directory group' }, cols: [
     { name: 'group_id + item_id (PK)' }, { name: 'position' }, { name: 'updated_at' },
   ] },
-  { name: 'teacher_directory_entries', domain: 'community', origin: '0126', purpose: { zh: '/teachers 魔方老师与培训机构目录;登录用户维护自己的资料,管理员维护全部资料', en: 'The /teachers cube teacher and training-school directory; signed-in users maintain their own profiles and admins maintain all profiles' }, cols: [
+  { name: 'teacher_directory_entries', domain: 'community', origin: '0126', purpose: { zh: '统一讲师的公开资料与培训机构目录；讲师资格由 platform_instructors 决定，隐藏资料与历史未认证资料保留', en: 'Canonical public teaching profiles and school directory; instructor access is controlled by platform_instructors, and hidden or unverified legacy profiles are retained' }, cols: [
     { name: 'kind', note: { zh: 'teacher / organization', en: 'teacher / organization' } },
     { name: 'name_zh / name_en, location_zh / location_en, description_zh / description_en' },
     { name: 'specialties_zh / specialties_en JSONB, teaching_mode, contacts JSONB, images JSONB, contact (legacy), website, wca_id' },

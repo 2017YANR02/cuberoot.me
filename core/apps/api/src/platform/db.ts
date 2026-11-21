@@ -184,6 +184,35 @@ export async function requireCourseOwner(
   return instructorId;
 }
 
+/** Analytics only: an effective learner has a current grant and is not a
+ * teaching-team member of this particular course. The entitlement alias is e.
+ * Course access itself deliberately uses the separate predicate below. */
+export const ACTIVE_COURSE_LEARNER_PREDICATE = `
+  e.user_id IS NOT NULL AND e.status='active' AND e.valid_from<=NOW()
+  AND (e.valid_until IS NULL OR e.valid_until>NOW())
+  AND (NOT EXISTS (SELECT 1 FROM platform_entitlement_ledger l WHERE l.entitlement_id=e.id)
+    OR EXISTS (SELECT 1 FROM platform_entitlement_ledger l WHERE l.entitlement_id=e.id AND l.delta_access=1
+      AND l.valid_from<=NOW() AND (l.valid_until IS NULL OR l.valid_until>NOW())
+      AND NOT EXISTS (SELECT 1 FROM platform_entitlement_ledger reversal WHERE reversal.reversal_of_ledger_id=l.id)))
+  AND NOT EXISTS (
+    SELECT 1 FROM platform_course_owners teaching_owner
+    JOIN platform_instructors teaching_instructor ON teaching_instructor.id=teaching_owner.instructor_id
+    WHERE teaching_owner.course_id=e.course_id AND teaching_instructor.user_id=e.user_id
+      AND teaching_owner.status='active' AND teaching_instructor.status='active'
+  )
+`;
+
+/** Public directory and associated content share this eligibility rule.
+ * t.is_visible is the user's preference; only an active instructor can publish
+ * a teacher profile. Organization directory entries retain their own behavior. */
+export const PUBLIC_DIRECTORY_ENTRY_PREDICATE = `
+  t.is_visible=TRUE AND (t.kind='organization' OR EXISTS (
+    SELECT 1 FROM platform_instructors directory_instructor
+    WHERE directory_instructor.teacher_entry_id=t.id
+      AND directory_instructor.status='active' AND directory_instructor.user_id IS NOT NULL
+  ))
+`;
+
 /** Shared with the course directory. Arguments are fixed SQL expressions from our queries. */
 export function courseEntitlementPredicate(courseId: '$2::uuid' | 'lesson.course_id', lessonId: '$3::uuid' | 'lesson.id'): string {
   return `EXISTS (

@@ -46,6 +46,7 @@ export interface TeacherDirectoryEntry {
   wcaId: string;
   isCurated: boolean;
   isVisible: boolean;
+  instructorStatus?: 'active' | 'suspended' | 'archived' | 'unverified';
   images: DirectoryImage[];
   ownerKey?: string;
   createdAt: string;
@@ -144,7 +145,7 @@ export function mergeTeacherDirectoryEntries(
 
 export async function fetchTeacherDirectory(): Promise<TeacherDirectoryEntry[]> {
   const data = await handleApi<{ entries: TeacherDirectoryEntryWire[] }>(
-    await sessionFetch(apiUrl('/v1/teachers?v=4')),
+    await sessionFetch(apiUrl('/v1/teachers?v=5')),
   );
   return data.entries.map(normalizeTeacherDirectoryEntry);
 }
@@ -154,6 +155,11 @@ export async function fetchMyTeacherDirectory(signal?: AbortSignal): Promise<Tea
     await sessionFetch(apiUrl('/v1/teachers/mine'), { headers: authHeaders(false), signal }),
   );
   return data.entries.map(normalizeTeacherDirectoryEntry);
+}
+
+export async function fetchAdminTeacherDirectoryEntry(id: number): Promise<TeacherDirectoryEntry> {
+  const data = await handleApi<{ entry: TeacherDirectoryEntryWire }>(await sessionFetch(apiUrl(`/v1/teachers/admin/${id}`), { headers: authHeaders(false), cache: 'no-store' }));
+  return normalizeTeacherDirectoryEntry(data.entry);
 }
 
 export async function createTeacherDirectoryEntry(draft: TeacherDirectoryDraft): Promise<TeacherDirectoryEntry> {

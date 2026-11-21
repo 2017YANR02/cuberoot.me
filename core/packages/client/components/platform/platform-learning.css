@@ -13,6 +13,85 @@
 .platform-learning-panel :is(input,textarea,select) { max-width:100%; }
 .platform-learning-panel fieldset { border:1px solid var(--border-default); margin:16px 0; padding:16px; border-radius:12px; }
 .platform-learning-cards { display:grid; grid-template-columns:repeat(auto-fit,minmax(min(100%,280px),1fr)); gap:16px; }
+.platform-instructor-dashboard { gap:28px; }
+.platform-instructor-overview { padding:clamp(18px,3vw,30px); }
+.platform-instructor-overview-heading { display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:16px; }
+.platform-instructor-overview-heading h2 { font-size:clamp(1.25rem,2.5vw,1.65rem); margin:0 0 4px; }
+.platform-instructor-overview-heading p { margin:0; color:var(--muted-foreground); font-size:.875rem; }
+.platform-instructor-metrics { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); margin:24px 0 0; padding-top:20px; border-top:1px solid var(--border-default); }
+.platform-instructor-metrics > div { display:grid; align-content:start; gap:8px; min-width:0; padding-inline:22px; }
+.platform-instructor-metrics > div:first-child { padding-inline-start:0; }
+.platform-instructor-metrics > div + div { border-inline-start:1px solid var(--border-default); }
+.platform-instructor-metrics dt { display:flex; align-items:center; gap:7px; font-size:.875rem; color:var(--muted-foreground); }
+.platform-instructor-metrics dt svg { flex:none; color:var(--accent); }
+.platform-instructor-metrics dd { display:flex; flex-wrap:wrap; align-items:baseline; gap:5px 12px; margin:0; font-size:clamp(1.45rem,3vw,2.1rem); font-weight:650; line-height:1.2; font-variant-numeric:tabular-nums; }
+.platform-instructor-metrics small { flex-basis:100%; color:var(--muted-foreground); font-size:.75rem; font-weight:400; }
+.platform-instructor-metrics .platform-instructor-metric-empty { font-size:1rem; color:var(--muted-foreground); font-weight:500; }
+.platform-instructor-dashboard-body { display:grid; grid-template-columns:minmax(0,1.55fr) minmax(0,1fr); gap:20px; align-items:start; }
+.platform-instructor-task-section { min-width:0; }
+.platform-instructor-task-section > h2 { margin:0 0 14px; font-size:1.125rem; font-weight:600; }
+.platform-instructor-task-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; }
+.platform-instructor-task { display:grid; grid-template-columns:auto minmax(0,1fr) auto; align-items:center; gap:12px; min-height:112px; padding:16px; color:var(--foreground); text-decoration:none; }
+.platform-instructor-task h3 { margin:0 0 4px; font-size:1rem; }
+.platform-instructor-task p { margin:0; color:var(--muted-foreground); font-size:.8125rem; line-height:1.5; }
+.platform-instructor-task-icon,.platform-instructor-activity-icon { width:44px; height:44px; display:grid; place-items:center; border-radius:12px; flex:none; background:var(--accent-soft); color:var(--accent); }
+.platform-instructor-task-arrow { color:var(--muted-foreground); }
+.platform-instructor-task:is(:hover,:focus-visible) { border-color:var(--accent); }
+.platform-instructor-activity { padding:18px; }
+.platform-instructor-activity-heading { display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap; }
+.platform-instructor-activity-heading h2 { margin:0; }
+.platform-instructor-activity-heading a { display:inline-flex; align-items:center; gap:4px; color:var(--accent); text-decoration:none; font-size:.8125rem; }
+.platform-instructor-activity-list { list-style:none; padding:0; margin:12px 0 0; }
+.platform-instructor-activity-list li { display:grid; grid-template-columns:auto minmax(0,1fr) auto; align-items:center; gap:9px; min-width:0; padding:12px 0; }
+.platform-instructor-activity-list li + li { border-top:1px solid var(--border-default); }
+.platform-instructor-activity-list strong { display:block; font-size:.875rem; font-weight:600; overflow-wrap:anywhere; }
+.platform-instructor-activity-list small { display:block; margin-top:3px; color:var(--muted-foreground); font-size:.75rem; }
+.platform-instructor-activity-list li > strong { text-align:end; font-variant-numeric:tabular-nums; }
+.platform-instructor-activity-icon { width:36px; height:36px; border-radius:9px; }
+.platform-instructor-activity-empty { display:grid; place-items:center; gap:5px; min-height:140px; color:var(--muted-foreground); font-size:.875rem; }
+.platform-instructor-section { display:grid; gap:14px; min-width:0; }
+.platform-instructor-section > h2 { margin:0; font-size:1.125rem; font-weight:600; }
+.platform-instructor-section > p { margin:0; color:var(--muted-foreground); font-size:.875rem; }
+.platform-instructor-earnings { gap:32px; }
+.platform-instructor-month h3 small { font-weight:400; color:var(--muted-foreground); }
+.platform-instructor-month-net { display:grid; gap:4px; margin:12px 0 18px; }
+.platform-instructor-month-net > span { color:var(--muted-foreground); font-size:.8125rem; }
+.platform-instructor-month-net > strong { font-size:1.5rem; font-variant-numeric:tabular-nums; }
+.platform-instructor-month dl { display:grid; gap:8px; margin:0; }
+.platform-instructor-month dl > div { display:flex; justify-content:space-between; align-items:baseline; gap:12px; }
+.platform-instructor-month dt { color:var(--muted-foreground); }
+.platform-instructor-month dd { margin:0; font-variant-numeric:tabular-nums; }
+.platform-instructor-learner-list { display:grid; }
+.platform-instructor-learner-row { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1.1fr) minmax(0,.6fr); gap:20px; align-items:center; padding-block:18px; min-width:0; }
+.platform-instructor-learner-row + .platform-instructor-learner-row { border-top:1px solid var(--border-default); }
+.platform-instructor-learner-identity h3,.platform-instructor-learner-identity p,.platform-instructor-learner-actions p { margin:0; overflow-wrap:anywhere; }
+.platform-instructor-learner-identity p,.platform-instructor-learner-progress small { color:var(--muted-foreground); font-size:.8125rem; }
+.platform-instructor-learner-progress,.platform-instructor-learner-actions { display:grid; gap:6px; min-width:0; }
+.platform-instructor-learner-actions { justify-items:start; }
+.platform-instructor-learner-actions [role=status] { color:var(--signal-success); }
+.platform-instructor-learner-actions [role=alert] { color:var(--destructive); font-size:.8125rem; }
+.platform-instructor-payout-method { display:flex; align-items:center; flex-wrap:wrap; gap:10px; }
+.platform-instructor-bank-form { display:grid; gap:14px; min-width:0; border:0; margin:0; padding:0; }
+.platform-instructor-bank-form > button { justify-self:start; }
+.platform-instructor-payouts [role=status] { color:var(--signal-success); }
+.platform-instructor-payouts [role=alert] { color:var(--destructive); }
+.platform-instructor-payout-row { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr) minmax(0,1fr); gap:12px; align-items:center; padding-block:12px; border-bottom:1px solid var(--border-default); overflow-wrap:anywhere; }
+.platform-instructor-payout-row > div { display:grid; gap:4px; }
+.platform-instructor-payout-row small { color:var(--muted-foreground); }
+@media(max-width:1000px) {
+  .platform-instructor-dashboard-body { grid-template-columns:minmax(0,1fr); }
+}
+@media(max-width:600px) {
+  .platform-instructor-overview-heading { align-items:flex-start; }
+  .platform-instructor-metrics { grid-template-columns:repeat(2,minmax(0,1fr)); gap:16px 0; }
+  .platform-instructor-metrics > div { padding-inline:12px; }
+  .platform-instructor-metrics > .platform-instructor-revenue-metric { grid-column:1/-1; padding:14px 0 0; border-inline-start:0; border-top:1px solid var(--border-default); }
+  .platform-instructor-task-grid { grid-template-columns:minmax(0,1fr); }
+  .platform-instructor-task { min-height:84px; }
+  .platform-instructor-learner-row { grid-template-columns:minmax(0,1fr); gap:12px; }
+  .platform-instructor-payout-row { grid-template-columns:minmax(0,1fr) minmax(0,1fr); }
+  .platform-instructor-payout-row > small { grid-column:1/-1; }
+}
 .platform-learning-cover { display:block; width:100%; max-height:480px; object-fit:contain; border-radius:12px; }
 .platform-learning-price { font-size:1.6rem; font-weight:650; color:var(--accent); }
 .platform-learning-course-intro { display:grid; gap:12px; }

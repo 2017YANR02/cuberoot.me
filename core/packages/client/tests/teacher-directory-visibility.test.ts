@@ -53,7 +53,10 @@ describe('teacher directory visibility', () => {
       source.indexOf("teacherDirectoryRoutes.get('/teachers'"),
       source.indexOf("teacherDirectoryRoutes.get('/teachers/mine'"),
     );
-    expect(publicRoute).toContain('WHERE is_visible = TRUE');
+    expect(publicRoute).toContain('WHERE ${PUBLIC_DIRECTORY_ENTRY_PREDICATE}');
+    const predicate = readFileSync(join(SERVER_ROOT, 'src', 'platform', 'db.ts'), 'utf8');
+    expect(predicate).toContain("t.is_visible=TRUE AND (t.kind='organization' OR EXISTS");
+    expect(predicate).toContain("directory_instructor.status='active'");
   });
 
   it('normalizes supported contact methods and preserves legacy contact text', () => {

@@ -42,7 +42,7 @@ describe('teacher livestream scripts', () => {
       source.indexOf("teacherDirectoryRoutes.get('/teachers/scripts/:id'"),
       source.indexOf("teacherDirectoryRoutes.post('/teachers/scripts'"),
     );
-    expect(publicRoutes.match(/s\.is_visible = TRUE AND t\.is_visible = TRUE/g)).toHaveLength(2);
+    expect(publicRoutes.match(/s\.is_visible = TRUE AND \$\{PUBLIC_DIRECTORY_ENTRY_PREDICATE\}/g)).toHaveLength(2);
   });
 
   it('keeps private preview behind ownership and stores structured content as JSONB', () => {

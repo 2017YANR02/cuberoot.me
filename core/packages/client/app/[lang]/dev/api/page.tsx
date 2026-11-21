@@ -681,9 +681,11 @@ const ENDPOINTS: Ep[] = [
 
   // ---- platform: instructor ----
   { d: 'platform', m: 'GET', p: '/v1/platform/instructor/applications/current', g: 'login', c: 'no-store', zh: '当前讲师申请状态', en: 'Current instructor application' },
-  { d: 'platform', m: 'POST', p: '/v1/platform/instructor/applications', g: 'login', c: 'no-store', zh: '提交讲师申请', en: 'Submit an instructor application' },
+  { d: 'platform', m: 'POST', p: '/v1/platform/instructor/applications', g: 'login', c: 'no-store', zh: '提交讲师公开资料及私密审核申请', en: 'Submit public teaching profile and private admission application' },
   { d: 'platform', m: 'POST', p: '/v1/platform/instructor/applications/:id/withdraw', g: 'login', c: 'no-store', zh: '撤回待审核的讲师申请', en: 'Withdraw a pending instructor application' },
-  { d: 'platform', m: 'POST', p: '/v1/platform/instructor/profile-link', g: 'login', c: 'no-store', zh: '关联本人公开讲师资料', en: 'Link your teaching profile' },
+  { d: 'platform', m: 'POST', p: '/v1/platform/instructor/archive', g: 'login', c: 'no-store', zh: '归档本人的讲师身份及课程归属权限', en: 'Archive own instructor identity and course ownership access' },
+  { d: 'platform', m: 'POST', p: '/v1/platform/instructor/profile-link', g: 'login', c: 'no-store', zh: '确认尚未关联的本人历史讲师资料', en: 'Confirm an unlinked legacy teaching profile' },
+  { d: 'platform', m: 'POST', p: '/v1/platform/instructor/profile', g: 'login', c: 'no-store', zh: '为没有历史资料的本人讲师身份初始化隐藏主页', en: 'Initialize a private teaching profile for an instructor without legacy entries' },
   { d: 'platform', m: 'GET', p: '/v1/platform/instructor/courses', g: 'login', c: 'no-store', zh: '讲师自有课程', en: 'Instructor-owned courses' },
   { d: 'platform', m: 'GET', p: '/v1/platform/instructor/courses/:id', g: 'login', c: 'no-store', zh: '讲师课程详情', en: 'Instructor course detail' },
   { d: 'platform', m: 'POST', p: '/v1/platform/instructor/courses', g: 'login', c: 'no-store', zh: '讲师新建课程', en: 'Create an instructor course' },
@@ -1019,11 +1021,12 @@ const ENDPOINTS: Ep[] = [
   { d: 'wechat', m: 'POST', p: '/v1/wechat/pc-opensdk-ticket', g: 'public', c: 'no-store', zh: '签发网站应用 PC OpenSDK 五分钟一次性分享 ticket', en: 'Issue a five-minute single-use sharing ticket for the Website App PC OpenSDK' },
 
   // ---- content ----
-  { d: 'content', m: 'GET', p: '/v1/teachers', g: 'public', c: 'cdn', zh: '魔方老师与培训机构目录', en: 'Cube teacher and training-school directory' },
-  { d: 'content', m: 'GET', p: '/v1/teachers/mine', g: 'login', c: 'no-store', zh: '我发布的老师与机构资料', en: 'Teacher and school profiles I published' },
-  { d: 'content', m: 'POST', p: '/v1/teachers', g: 'login', zh: '发布老师或机构资料', en: 'Publish a teacher or school profile' },
+  { d: 'content', m: 'GET', p: '/v1/teachers', g: 'public', c: 'cdn', zh: '已认证且公开的讲师与培训机构目录', en: 'Public approved instructors and training schools' },
+  { d: 'content', m: 'GET', p: '/v1/teachers/mine', g: 'login', c: 'no-store', zh: '本人讲师与机构资料（含未公开）', en: 'Owned teaching and school profiles including private entries' },
+  { d: 'content', m: 'GET', p: '/v1/teachers/admin/:id', g: 'admin', c: 'no-store', zh: '管理员查看指定名录资料', en: 'Administrator reads a directory profile' },
+  { d: 'content', m: 'POST', p: '/v1/teachers', g: 'login', zh: '新增培训机构资料；讲师通过入驻创建', en: 'Create a school profile; teachers use instructor admission' },
   { d: 'content', m: 'PUT', p: '/v1/teachers/:id', g: 'login', zh: '作者改自己的资料,管理员可改任意资料', en: 'Authors edit their own profiles; admins edit any' },
-  { d: 'content', m: 'DELETE', p: '/v1/teachers/:id', g: 'login', zh: '作者删自己的资料,管理员可删任意资料', en: 'Authors delete their own profiles; admins delete any' },
+  { d: 'content', m: 'DELETE', p: '/v1/teachers/:id', g: 'login', zh: '隐藏讲师资料或删除机构资料', en: 'Hide a teaching profile or delete a school profile' },
   { d: 'content', m: 'GET', p: '/v1/teachers/scripts', g: 'public', c: 'cdn', zh: '公开的话术库', en: 'Public livestream-script library' },
   { d: 'content', m: 'GET', p: '/v1/teachers/scripts/mine', g: 'login', c: 'no-store', zh: '我名下的全部话术', en: 'All livestream scripts owned by my profiles' },
   { d: 'content', m: 'GET', p: '/v1/teachers/scripts/owned/:id', g: 'login', c: 'no-store', zh: '作者预览自己未公开的话术;管理员可查看任意话术', en: 'Authors preview their private scripts; admins may view any script' },

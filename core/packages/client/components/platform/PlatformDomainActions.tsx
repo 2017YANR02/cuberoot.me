@@ -1,6 +1,7 @@
 'use client';
 
 import { useT } from '@/hooks/useT';
+import AppLink from '@/components/AppLink';
 import { apiUrl } from '@/lib/api-base';
 import { PlatformQrMetadataEditor } from './PlatformQrMetadataEditor';
 import { PlatformPurchaseForm } from './PlatformPurchaseForm';
@@ -79,8 +80,18 @@ export function PlatformAdminActions(props: CommonProps) {
       return <div className="platform-domain-stack">{editor}<PlatformCourseContentManager {...props} /></div>;
     }
     if (definition.id === 'admin-teacher') {
+      const entryId = entity?.data?.teacherEntryId;
+      const profileLink = entryId != null ? <AppLink href={`/teachers/edit?id=${encodeURIComponent(String(entryId))}`} className="platform-button" prefetch={false}>{t('编辑统一讲师资料', 'Edit canonical teaching profile')}</AppLink> : null;
+      if (entity?.status === 'unverified') return <div className="platform-domain-stack"><p>{t('历史名录资料尚未通过讲师入驻审核，不具有课程发布权限。', 'This legacy directory profile is not approved to publish courses.')}</p>{profileLink}<AppLink href="/platform/admin/teacher-applications" className="platform-button" prefetch={false}>{t('查看入驻申请', 'View admission applications')}</AppLink></div>;
       return (
         <div className="platform-domain-stack">
+          {profileLink}
+          {entryId == null && <p>{t('尚未关联统一讲师资料，请核对历史记录。', 'The canonical teaching profile has not yet been linked. Verify legacy records.')}</p>}
+          {entryId == null && Array.isArray(entity?.data?.profiles) && entity.data.profiles.map((raw, index) => {
+            if (!raw || typeof raw !== 'object') return null;
+            const profile = raw as Record<string, unknown>;
+            return <div key={index} className="platform-application-profile"><span>{t(String(profile.nameZh || profile.nameEn), String(profile.nameEn || profile.nameZh))}</span><ActionButton action="admin-save" resourceId={params.id} payload={{ teacherEntryId: Number(profile.id) }} label={text('确认关联资料', 'Confirm profile link')} confirm={text('确认这份历史资料属于该讲师？', 'Confirm this legacy profile belongs to the instructor?')} busy={busy} runAction={runAction} /></div>;
+          })}
           {editor}
           <ActionButton
             action="admin-delete"

@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Image from 'next/image';
-import { ArrowRight, Bell, BookOpen, ChartNoAxesColumnIncreasing, IdCard, Layers, MessagesSquare, Timer, UserRound } from '@app-foundation/icons/lucide';
+import { ArrowRight, Bell, BookOpen, ChartNoAxesColumnIncreasing, IdCard, Layers, MessagesSquare, Timer } from '@app-foundation/icons/lucide';
 import AppLink from '@/components/AppLink';
 import { SHOP_ROOT } from '@/lib/shop';
 import { fetchTeacherDirectory, type TeacherDirectoryEntry } from '@/lib/teacher-directory-api';
@@ -14,8 +14,9 @@ import type { TeachingLearningContext } from '@cuberoot/shared/teaching';
 import type { TeachingOrganizationAccess } from '@/lib/teaching-saas-api';
 import type { PlatformEntity } from '@/lib/platform-types';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
-import { courseCatalogDetails } from '@/lib/platform-course-catalog';
+import { courseCatalogDetails, loadCourseCatalog } from '@/lib/platform-course-catalog';
 import { PlatformHomepageCarousel } from './PlatformHomepageCarousel';
+import { PlatformInstructorCard } from './PlatformInstructorCard';
 
 export function PlatformLanding() {
   const t = useT();
@@ -34,7 +35,7 @@ export function PlatformLanding() {
   const isAdmin = useIsAdmin();
   const [mounted, setMounted] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [courses, setCourses] = useState<PlatformEntity[]>([]);
+  const [publicCourses, setPublicCourses] = useState<PlatformEntity[]>([]);
   const [progress, setProgress] = useState<PlatformEntity[]>([]);
   const [learningContexts, setLearningContexts] = useState<TeachingLearningContext[]>([]);
   const [organizations, setOrganizations] = useState<TeachingOrganizationAccess[]>([]);
@@ -43,7 +44,7 @@ export function PlatformLanding() {
   useEffect(() => { setMounted(true); }, []);
   useEffect(() => {
     if (!mounted || !user) {
-      setCourses([]);
+      setPublicCourses([]);
       setProgress([]);
       setLearningContexts([]);
       setOrganizations([]);
@@ -54,7 +55,7 @@ export function PlatformLanding() {
     let active = true;
     const controller = new AbortController();
     setLoading(true);
-    setCourses([]);
+    setPublicCourses([]);
     setProgress([]);
     setLearningContexts([]);
     setOrganizations([]);
@@ -62,13 +63,20 @@ export function PlatformLanding() {
     const platformOptions = { params: {}, signal: controller.signal };
     const hasTeachingSession = Boolean(getSessionToken());
     void Promise.allSettled([
-      loadPlatformResource('account-courses', platformOptions),
+      loadPlatformResource('account-courses', platformOptions).then(async result => {
+        // Enrollment history includes non-public courses. Older backends omit courseStatus.
+        const publicIds = result.items.some(item => item.data?.courseStatus == null)
+          ? new Set((await loadCourseCatalog(controller.signal)).map(item => item.id))
+          : null;
+        return result.items.filter(item => item.data?.courseStatus === 'published'
+          || (item.data?.courseStatus == null && publicIds?.has(item.id)));
+      }),
       loadPlatformResource('account-progress', platformOptions),
       hasTeachingSession ? listTeachingOrganizations() : Promise.resolve([]),
       hasTeachingSession ? listTeachingLearningContexts() : Promise.resolve([]),
     ]).then(([courseResult, progressResult, organizationResult, contextResult]) => {
       if (!active) return;
-      setCourses(courseResult.status === 'fulfilled' ? courseResult.value.items : []);
+      setPublicCourses(courseResult.status === 'fulfilled' ? courseResult.value : []);
       setProgress(progressResult.status === 'fulfilled' ? progressResult.value.items : []);
       setOrganizations(organizationResult.status === 'fulfilled' ? organizationResult.value : []);
       setLearningContexts(contextResult.status === 'fulfilled' ? contextResult.value : []);
@@ -88,8 +96,10 @@ export function PlatformLanding() {
   }, [mounted, user]);
 
   const signedIn = mounted && Boolean(user);
-  const nextProgress = progress.find((item) => item.data?.status !== 'completed') ?? progress[0];
-  const currentCourse = courses.find((item) => item.id === nextProgress?.data?.courseId) ?? courses[0];
+  const publicCourseIds = new Set(publicCourses.map(item => item.id));
+  const publicProgress = progress.filter(item => typeof item.data?.courseId === 'string' && publicCourseIds.has(item.data.courseId));
+  const nextProgress = publicProgress.find((item) => item.data?.status !== 'completed') ?? publicProgress[0];
+  const currentCourse = publicCourses.find((item) => item.id === nextProgress?.data?.courseId) ?? publicCourses[0];
   const progressBps = typeof currentCourse?.data?.progressBps === 'number' && Number.isFinite(currentCourse.data.progressBps)
     ? Math.min(10_000, Math.max(0, currentCourse.data.progressBps))
     : null;
@@ -116,7 +126,7 @@ export function PlatformLanding() {
 
   const discovery = [
     { href: '/platform/courses', title: t('系统课程', 'Structured courses'), description: t('按主题与学习阶段选课', 'Courses by topic and skill level'), icon: BookOpen },
-    { href: '/platform/teachers', title: t('讲师名录', 'Teacher directory'), description: t('认识讲师与他们的教学方向', 'Meet teachers and explore their specialties'), icon: IdCard },
+    { href: '/platform/teachers', title: t('全部讲师', 'All instructors'), description: t('认识讲师与他们的教学方向', 'Meet teachers and explore their specialties'), icon: IdCard },
     { href: '/platform/community', title: t('学习社区', 'Learning community'), description: t('分享练习、心得与学习成果', 'Share practice, insights, and progress'), icon: MessagesSquare },
     { href: '/platform/events', title: t('活动与实践', 'Events and practice'), description: t('参加活动与专项练习', 'Join events and practice your skills'), icon: Timer },
   ];
@@ -147,24 +157,7 @@ export function PlatformLanding() {
         </div>
         {teachers.length > 0 ? (
           <div className="platform-instructor-grid">
-            {teachers.map(teacher => {
-              const photo = teacher.images.find(item => item.kind === 'teaching')
-                ?? teacher.images.find(item => item.kind === 'portrait') ?? teacher.images[0];
-              const specialties = t(
-                teacher.specialtiesZh.join(' · ') || teacher.specialtiesEn.join(' · '),
-                teacher.specialtiesEn.join(' · ') || teacher.specialtiesZh.join(' · '),
-              );
-              return <AppLink key={teacher.id} className="platform-instructor-card" href={`/teachers?teacher=${teacher.id}`} prefetch={false}>
-                <div className="platform-instructor-cover">
-                  <UserRound aria-hidden />
-                  {photo && <img src={photo.url} alt="" loading="lazy" onError={event => { event.currentTarget.hidden = true; }} />}
-                </div>
-                <div className="platform-instructor-info">
-                  <h3>{t(teacher.nameZh || teacher.nameEn, teacher.nameEn || teacher.nameZh)}</h3>
-                  <p>{specialties || t(teacher.descriptionZh || teacher.descriptionEn, teacher.descriptionEn || teacher.descriptionZh)}</p>
-                </div>
-              </AppLink>;
-            })}
+            {teachers.map(teacher => <PlatformInstructorCard key={teacher.id} teacher={teacher} />)}
           </div>
         ) : (
           <div className="platform-instructors-empty" role="status">

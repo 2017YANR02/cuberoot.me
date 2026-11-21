@@ -99,14 +99,14 @@ function readPath(resource: PlatformResource, options: PlatformLoadOptions): str
   const id = encodedId(options);
   const rawQuery = queryString(options);
   const reviewsOnly = resource === 'courses' && id && options.reviewPage;
-  const version = resource === 'courses' ? (reviewsOnly ? 6 : id ? 5 : 4)
+  const version = resource === 'courses' ? (reviewsOnly ? 6 : 7)
     : ['paths', 'events', 'news', 'products', 'search'].includes(resource) ? 3
-    : ['orders', 'admin-orders', 'admin-applications'].includes(resource) ? 2 : null;
+    : ['orders', 'admin-orders', 'admin-applications', 'account-courses', 'instructor-students'].includes(resource) ? 2 : null;
   const query = version ? rawQuery + (rawQuery ? '&' : '?') + 'v=' + version : rawQuery;
   switch (resource) {
     case 'search': return `/v1/platform/search${query}`;
     case 'leaderboard': return `/v1/platform/leaderboard${query}`;
-    case 'teachers': return `/v1/teachers?v=4${id ? `&id=${id}` : ''}`;
+    case 'teachers': return `/v1/teachers?v=5${id ? `&id=${id}` : ''}`;
     case 'community': return `/v1/forum/latest?limit=30`;
     case 'community-circle': return `/v1/forum/f/${encodeURIComponent(options.params.id ?? '')}?page=1&size=30&sort=activity`;
     case 'community-post': return `/v1/forum/t/${encodeURIComponent(options.params.id ?? '')}?page=1&size=30`;
@@ -133,7 +133,7 @@ function readPath(resource: PlatformResource, options: PlatformLoadOptions): str
     case 'account-privacy': return '/v1/platform/me/privacy/consents';
     case 'shipping-addresses': return '/v1/platform/me/shipping-addresses';
     case 'instructor-courses': return `/v1/platform/instructor/courses${id ? `/${id}` : ''}${query}`;
-    case 'instructor-application': return '/v1/platform/instructor/applications/current?v=3';
+    case 'instructor-application': return '/v1/platform/instructor/applications/current?v=4';
     case 'instructor-students': return `/v1/platform/instructor/students${query}`;
     case 'instructor-earnings': return `/v1/platform/instructor/earnings${query}`;
     case 'admin-algorithms': return `/v1/platform/admin/algorithms${id ? `/${id}` : ''}${query}`;
@@ -295,7 +295,7 @@ export async function loadPlatformResource(
         instructorStatus = 'active';
       }
     }
-    if (!application && !instructor && instructorStatus !== 'active') return { items: [] };
+    if (!application && !instructor && instructorStatus !== 'active' && !(Array.isArray(envelope?.profiles) && envelope.profiles.length)) return { items: [] };
     const item = entity({ ...application, id: application?.id ?? instructor?.id ?? 'instructor-access',
       instructorStatus, instructorProfileKnown: reportsInstructor, instructorDisplayName: instructor?.displayName,
       instructorBioZh: instructor?.bioZh, instructorBioEn: instructor?.bioEn, teacherEntryId: instructor?.teacherEntryId,
@@ -549,7 +549,9 @@ export async function executePlatformAction(
     case 'cancel-order': return write(`/v1/platform/orders/${requiredId(input)}/cancel`, 'POST', payload);
     case 'apply-instructor': return write('/v1/platform/instructor/applications', 'POST', payload);
     case 'withdraw-instructor-application': return write(`/v1/platform/instructor/applications/${requiredId(input)}/withdraw`, 'POST', {});
+    case 'archive-instructor': return write('/v1/platform/instructor/archive', 'POST', {});
     case 'link-instructor-profile': return write('/v1/platform/instructor/profile-link', 'POST', payload);
+    case 'initialize-instructor-profile': return write('/v1/platform/instructor/profile', 'POST', {});
     case 'save-instructor-course': return write(`/v1/platform/instructor/courses${id ? `/${encodeURIComponent(id)}` : ''}`, id ? 'PATCH' : 'POST', payload);
     case 'delete-course': return write(`/v1/platform/${courseManagementScope(route)}/courses/${requiredId(input)}`, 'DELETE');
     case 'save-course-lesson': {
@@ -645,7 +647,9 @@ export const PLATFORM_ACTION_LABELS: Record<PlatformActionId, { zh: string; en: 
   'cancel-order': { zh: '取消订单', en: 'Cancel order' },
   'apply-instructor': { zh: '提交讲师申请', en: 'Submit instructor application' },
   'withdraw-instructor-application': { zh: '撤回申请', en: 'Withdraw application' },
+  'archive-instructor': { zh: '注销讲师身份', en: 'Deactivate instructor account' },
   'link-instructor-profile': { zh: '关联讲师资料', en: 'Link teaching profile' },
+  'initialize-instructor-profile': { zh: '创建个人主页', en: 'Create personal profile' },
   'save-instructor-course': { zh: '保存讲师课程', en: 'Save instructor course' },
   'delete-course': { zh: '归档课程', en: 'Archive course' },
   'save-course-lesson': { zh: '保存课时', en: 'Save lesson' },

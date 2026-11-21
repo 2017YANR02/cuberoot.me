@@ -106,7 +106,7 @@ function normalizeLiveScript(script: LiveScriptWire): TeacherLiveScript {
 }
 
 export async function fetchTeacherLiveScripts(): Promise<TeacherLiveScript[]> {
-  const data = await handleApi<{ scripts: LiveScriptWire[] }>(await sessionFetch(apiUrl('/v1/teachers/scripts?v=1')));
+  const data = await handleApi<{ scripts: LiveScriptWire[] }>(await sessionFetch(apiUrl('/v1/teachers/scripts?v=2')));
   return data.scripts.map(normalizeLiveScript);
 }
 
@@ -117,7 +117,7 @@ export async function fetchMyTeacherLiveScripts(): Promise<TeacherLiveScript[]> 
 
 export async function fetchTeacherLiveScript(id: number): Promise<TeacherLiveScript> {
   try {
-    const data = await handleApi<{ script: LiveScriptWire }>(await sessionFetch(apiUrl(`/v1/teachers/scripts/${id}?v=1`)));
+    const data = await handleApi<{ script: LiveScriptWire }>(await sessionFetch(apiUrl(`/v1/teachers/scripts/${id}?v=2`)));
     return normalizeLiveScript(data.script);
   } catch (publicError) {
     try {

@@ -4,6 +4,7 @@ import { useRef, useState, type ChangeEvent, type FormEvent } from 'react';
 import { ChevronDown, ChevronUp, ImagePlus, Trash2 } from '@app-foundation/icons/lucide';
 import AppLink from '@/components/AppLink';
 import BoolToggle from '@/components/BoolToggle';
+import { CompactSelect } from '@/components/CompactSelect';
 import { tr } from '@/i18n/tr';
 import { installedCommunityDisabled, useInstalledCommunityDisabled } from '@/lib/installed-content';
 import { prepareImageUpload, uploadImageBlob } from '@/lib/image-upload';
@@ -49,19 +50,23 @@ export default function TeacherDirectoryEditor({
   initial,
   isAdmin,
   defaultVisible = true,
+  defaultKind = 'organization',
   onSaved,
   onDeleted,
+  onCancel,
 }: {
   initial: TeacherDirectoryEntry | null;
   isAdmin: boolean;
   defaultVisible?: boolean;
+  defaultKind?: DirectoryEntryKind;
   onSaved: (entry: TeacherDirectoryEntry) => void;
-  onDeleted: () => void;
+  onDeleted?: () => void;
+  onCancel?: () => void;
 }) {
   const communityDisabled = useInstalledCommunityDisabled();
   const [draft, setDraft] = useState<TeacherDirectoryDraft>(() => initial
     ? directoryEntryToDraft(initial)
-    : { ...EMPTY_DIRECTORY_DRAFT, contacts: {}, images: [], isCurated: isAdmin, isVisible: defaultVisible });
+    : { ...EMPTY_DIRECTORY_DRAFT, kind: defaultKind, contacts: {}, images: [], isCurated: isAdmin, isVisible: defaultVisible });
   const [tagsZh, setTagsZh] = useState(draft.specialtiesZh.join(', '));
   const [tagsEn, setTagsEn] = useState(draft.specialtiesEn.join(', '));
   const [saving, setSaving] = useState(false);
@@ -135,8 +140,8 @@ export default function TeacherDirectoryEditor({
     ) as DirectoryContacts;
     const payload = { ...draft, isVisible: !publicationDisabled && draft.isVisible, contacts, specialtiesZh: splitDirectoryTags(tagsZh), specialtiesEn: splitDirectoryTags(tagsEn) };
     if (!(payload.nameZh.trim() || payload.nameEn.trim())) return setError(tr({ zh: '请至少填写一个语言的名称。', en: 'Add a name in at least one language.' }));
-    if (!(payload.descriptionZh.trim() || payload.descriptionEn.trim())) return setError(tr({ zh: '请至少填写一个语言的介绍。', en: 'Add a description in at least one language.' }));
-    if (!(Object.keys(payload.contacts).length || payload.website.trim())) return setError(tr({ zh: '请至少填写一种公开联系方式或网站。', en: 'Add at least one public contact method or website.' }));
+    if ((payload.kind !== 'teacher' || payload.isVisible) && !(payload.descriptionZh.trim() || payload.descriptionEn.trim())) return setError(tr({ zh: '请至少填写一个语言的介绍。', en: 'Add a description in at least one language.' }));
+    if (payload.kind === 'organization' && !(Object.keys(payload.contacts).length || payload.website.trim())) return setError(tr({ zh: '请至少填写一种公开联系方式或网站。', en: 'Add at least one public contact method or website.' }));
     if (payload.website && !isDirectoryHttpUrl(payload.website)) return setError(tr({ zh: '网站地址需以 http:// 或 https:// 开头。', en: 'The website must begin with http:// or https://.' }));
     const invalidUrlContact = CONTACT_FIELDS.find(({ key }) => URL_CONTACT_KEYS.has(key) && payload.contacts[key] && !isDirectoryHttpUrl(payload.contacts[key]));
     if (invalidUrlContact) return setError(tr({ zh: `${invalidUrlContact.label.zh}需填写以 http:// 或 https:// 开头的主页链接。`, en: `${invalidUrlContact.label.en} must be a profile URL beginning with http:// or https://.` }));
@@ -155,7 +160,7 @@ export default function TeacherDirectoryEditor({
   };
 
   const remove = async () => {
-    if (!initial || !window.confirm(tr({ zh: '确定删除这条资料吗？', en: 'Delete this entry?' }))) return;
+    if (!initial || !onDeleted || !window.confirm(tr({ zh: '确定删除这条资料吗？', en: 'Delete this entry?' }))) return;
     setSaving(true);
     setError('');
     try {
@@ -186,8 +191,7 @@ export default function TeacherDirectoryEditor({
 
       <form onSubmit={submit} className="directory-form">
         <section className="directory-form-section" aria-labelledby="directory-identity-heading">
-          <div className="directory-section-heading"><span>01</span><div><h2 id="directory-identity-heading">{tr({ zh: '身份与地点', en: 'Identity and location' })}</h2><p>{tr({ zh: '先说明你是谁，以及主要面向哪里的学员。', en: 'Start with who you are and where your students are based.' })}</p></div></div>
-          <label><span>{tr({ zh: '类型', en: 'Type' })}</span><select className="directory-field-control" value={draft.kind} onChange={(event) => setField('kind', event.target.value as DirectoryEntryKind)}><option value="teacher">{tr({ zh: '魔方老师', en: 'Teacher' })}</option><option value="organization">{tr({ zh: '培训机构', en: 'School' })}</option></select></label>
+          <div className="directory-section-heading"><span>01</span><div><h2 id="directory-identity-heading">{tr({ zh: '身份与地点', en: 'Identity and location' })}</h2></div></div>
           <div className="directory-form-grid">
             <label><span>{tr({ zh: '中文名称', en: 'Chinese name' })}</span><input className="directory-field-control" value={draft.nameZh} onChange={(event) => setField('nameZh', event.target.value)} maxLength={160} /></label>
             <label><span>{tr({ zh: '英文名称', en: 'English name' })}</span><input className="directory-field-control" value={draft.nameEn} onChange={(event) => setField('nameEn', event.target.value)} maxLength={160} /></label>
@@ -197,8 +201,8 @@ export default function TeacherDirectoryEditor({
         </section>
 
         <section className="directory-form-section" aria-labelledby="directory-resume-heading">
-          <div className="directory-section-heading"><span>02</span><div><h2 id="directory-resume-heading">{tr({ zh: '教学履历', en: 'Teaching profile' })}</h2><p>{tr({ zh: '写清擅长方向、授课方式、经历和教学特点。', en: 'Describe your specialties, format, experience, and teaching style.' })}</p></div></div>
-          <label><span>{tr({ zh: '授课方式', en: 'Teaching mode' })}</span><select className="directory-field-control" value={draft.teachingMode} onChange={(event) => setField('teachingMode', event.target.value as DirectoryTeachingMode)}><option value="both">{tr({ zh: '线上及线下', en: 'Online and in person' })}</option><option value="online">{tr({ zh: '线上教学', en: 'Online' })}</option><option value="in_person">{tr({ zh: '线下教学', en: 'In person' })}</option></select></label>
+          <div className="directory-section-heading"><span>02</span><div><h2 id="directory-resume-heading">{tr({ zh: '教学履历', en: 'Teaching profile' })}</h2></div></div>
+          <div className="directory-form-select"><span>{tr({ zh: '授课方式', en: 'Teaching mode' })}</span><CompactSelect value={draft.teachingMode} label={directoryModeLabel(draft.teachingMode)} ariaLabel={tr({ zh: '授课方式', en: 'Teaching mode' })} items={(['both','online','in_person'] as const).map(value=>({value,label:directoryModeLabel(value)}))} onChange={value=>setField('teachingMode',value as DirectoryTeachingMode)} showArrow /></div>
           <div className="directory-form-grid">
             <label><span>{tr({ zh: '中文擅长方向', en: 'Specialties in Chinese' })}</span><input autoComplete="off" className="directory-field-control" value={tagsZh} onChange={(event) => setTagsZh(event.target.value)} placeholder={tr({ zh: '逗号分隔，最多 8 项', en: 'Comma-separated, up to 8' })} /></label>
             <label><span>{tr({ zh: '英文擅长方向', en: 'Specialties in English' })}</span><input autoComplete="off" className="directory-field-control" value={tagsEn} onChange={(event) => setTagsEn(event.target.value)} placeholder={tr({ zh: '逗号分隔，最多 8 项', en: 'Comma-separated, up to 8' })} /></label>
@@ -217,7 +221,7 @@ export default function TeacherDirectoryEditor({
             {draft.images.map((image, index) => <div className="directory-photo-editor" key={image.id}>
               <img src={image.url} alt="" />
               <div className="directory-photo-fields">
-                <label><span>{tr({ zh: '照片类型', en: 'Photo type' })}</span><select className="directory-field-control" value={image.kind} onChange={(event) => updateImage(index, { kind: event.target.value as DirectoryImageKind })}>{IMAGE_KINDS.map((option) => <option value={option.value} key={option.value}>{tr(option.label)}</option>)}</select></label>
+                <div className="directory-form-select"><span>{tr({ zh: '照片类型', en: 'Photo type' })}</span><CompactSelect value={image.kind} label={imageKindLabel(image.kind)} ariaLabel={tr({ zh: `第 ${index+1} 张照片类型`, en: `Photo ${index+1} type` })} items={IMAGE_KINDS.map(option=>({value:option.value,label:tr(option.label)}))} onChange={value=>updateImage(index,{kind:value as DirectoryImageKind})} showArrow /></div>
                 <label><span>{tr({ zh: '中文说明', en: 'Chinese caption' })}</span><input autoComplete="off" className="directory-field-control" value={image.captionZh} maxLength={160} onChange={(event) => updateImage(index, { captionZh: event.target.value })} placeholder={imageKindLabel(image.kind)} /></label>
                 <label><span>{tr({ zh: '英文说明', en: 'English caption' })}</span><input autoComplete="off" className="directory-field-control" value={image.captionEn} maxLength={160} onChange={(event) => updateImage(index, { captionEn: event.target.value })} /></label>
               </div>
@@ -236,11 +240,12 @@ export default function TeacherDirectoryEditor({
           <label><span>{tr({ zh: '个人网站或机构官网', en: 'Personal or organization website' })}</span><input className="directory-field-control" type="url" value={draft.website} onChange={(event) => setField('website', event.target.value)} placeholder="https://" maxLength={2000} /></label>
           <label className="directory-wca-field"><span>WCA ID</span><input autoComplete="off" className="directory-field-control" value={draft.wcaId} onChange={(event) => setField('wcaId', event.target.value.toUpperCase())} placeholder="2017YANR02" maxLength={10} /></label>
           <BoolToggle value={draft.isVisible && (!communityDisabled || initial?.isVisible === true)} disabled={communityDisabled && (!initial?.isVisible || !draft.isVisible)} onChange={(value) => setField('isVisible', value)} label={tr({ zh: '公开显示', en: 'Show publicly' })} />
-          {!draft.isVisible && <p className="directory-form-note">{tr({ zh: '隐藏后，只有你登录时能看到这条资料。', en: 'When hidden, only you can see this entry while signed in.' })}</p>}
+          {draft.kind === 'teacher' && initial?.instructorStatus && initial.instructorStatus !== 'active' && <p className="directory-form-note">{tr({ zh: '讲师资格生效后才会在公开名录展示。', en: 'Your directory profile is public only when instructor access is active.' })}</p>}
+          {!draft.isVisible && <p className="directory-form-note">{draft.kind === 'teacher' ? tr({ zh: '隐藏后不在名录展示；已发布课程仍显示公开作者姓名。', en: 'Hidden from the directory; published courses still show your public author name.' }) : tr({ zh: '隐藏后，只有你登录时能看到这条资料。', en: 'When hidden, only you can see this entry while signed in.' })}</p>}
         </section>
 
         {error && <p className="directory-form-error" role="alert">{error}</p>}
-        <div className="directory-form-actions"><button type="submit" className="directory-primary-button" disabled={saving || uploading}>{saving ? tr({ zh: '保存中…', en: 'Saving…' }) : tr({ zh: '保存资料', en: 'Save profile' })}</button><AppLink href="/teachers" className="directory-secondary-button">{tr({ zh: '取消', en: 'Cancel' })}</AppLink>{initial && <button type="button" className="directory-delete-button" onClick={remove} disabled={saving}>{tr({ zh: '删除资料', en: 'Delete profile' })}</button>}</div>
+        <div className="directory-form-actions"><button type="submit" className="directory-primary-button" disabled={saving || uploading}>{saving ? tr({ zh: '保存中…', en: 'Saving…' }) : tr({ zh: '保存资料', en: 'Save profile' })}</button>{onCancel ? <button type="button" className="directory-secondary-button" onClick={onCancel} disabled={saving}>{tr({ zh: '取消', en: 'Cancel' })}</button> : <AppLink href={draft.kind === 'teacher' ? '/platform/instructor' : '/teachers'} className="directory-secondary-button">{tr({ zh: '取消', en: 'Cancel' })}</AppLink>}{initial?.kind === 'organization' && onDeleted && <button type="button" className="directory-delete-button" onClick={remove} disabled={saving}>{tr({ zh: '删除资料', en: 'Delete profile' })}</button>}</div>
       </form>
     </div>
   );

@@ -1,6 +1,7 @@
 import { requirePlatformActor } from '../auth.js';
 import { encryptPlatformPrivateData, decryptPlatformPrivateData } from '../data_encryption.js';
 import {
+  ACTIVE_COURSE_LEARNER_PREDICATE,
   platformQuery,
   platformDb,
   withIdempotency,
@@ -73,12 +74,14 @@ export function registerCertificateRoutes(platformLearningRoutes: Hono): void {
     const imageMediaId = body.imageMediaId == null ? null : resourceId(stringField(body, 'imageMediaId', { max: 128 })!, 'imageMediaId');
     const result = await withIdempotency(c, actor, `learning.certificate:${courseId}:${userId}`, body, async (db) => {
       const instructorId = await requireCourseOwner(db, actor, courseId);
+      // Serialize issuance with the learner's own certificate claim.
+      await platformQuery(db, 'SELECT id FROM app_users WHERE id=$1 FOR UPDATE', [userId]);
       const entitlements = await platformQuery<{ id: string; title: string }>(db, `
         SELECT e.id::text, COALESCE(NULLIF(cr.title_zh, ''), cr.title_en) AS title
         FROM platform_course_entitlements e
         JOIN platform_courses course ON course.id = e.course_id
         JOIN platform_course_revisions cr ON cr.course_id = course.id AND cr.revision = course.current_revision
-        WHERE e.user_id = $1 AND e.course_id = $2::uuid AND e.status = 'active'
+        WHERE e.user_id = $1 AND e.course_id = $2::uuid AND ${ACTIVE_COURSE_LEARNER_PREDICATE}
       `, [userId, courseId]);
       if (!entitlements[0]) badRequest('Recipient does not have an active entitlement');
       if (imageMediaId) {
@@ -89,6 +92,12 @@ export function registerCertificateRoutes(platformLearningRoutes: Hono): void {
         `, [imageMediaId, actor.userId, instructorId]);
         if (!media[0]) notFound('Owned ready certificate image');
       }
+      // A transport retry with a new key must not mint another identical certificate.
+      const [existing] = await platformQuery(db, `SELECT id::text, status, issued_at AS "issuedAt", verification_code_encrypted, verification_key_version
+        FROM platform_certificates WHERE user_id=$1 AND course_id=$2::uuid AND recipient_name_snapshot=$3
+          AND image_media_id IS NOT DISTINCT FROM $4::uuid AND status='issued' ORDER BY issued_at DESC LIMIT 1`, [userId, courseId, recipientName, imageMediaId]);
+      if (existing) return { status: 200, body: { id: existing.id, status: existing.status, issuedAt: existing.issuedAt,
+        ...(existing.verification_code_encrypted ? decryptPlatformPrivateData(Buffer.from(existing.verification_code_encrypted as Uint8Array), Number(existing.verification_key_version)) : {}) }, resourceType: 'certificate', resourceId: String(existing.id) };
       const verificationCode = randomBytes(24).toString('base64url');
       const hash = createHash('sha256').update(verificationCode, 'utf8').digest('hex');
       const encryptedCode = encryptPlatformPrivateData({ verificationCode });

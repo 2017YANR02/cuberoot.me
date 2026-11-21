@@ -9,6 +9,26 @@ import { type Hono } from 'hono';
 
 const REVIEW_PAGE_SIZE = 10;
 const MAX_REVIEW_PAGE = 10000;
+// Keep the list and detail views on the same public instructor identity.
+// A published course uses the chosen author name even when its teaching
+// directory page is hidden; hidden profiles never receive a public link.
+const PUBLIC_COURSE_INSTRUCTORS = `
+  COALESCE((SELECT jsonb_agg(jsonb_build_object(
+    'id', i.id::text,
+    'displayName', COALESCE(NULLIF(t.name_zh, ''), NULLIF(t.name_en, ''), i.display_name_snapshot),
+    'displayNameZh', COALESCE(NULLIF(t.name_zh, ''), NULLIF(t.name_en, ''), i.display_name_snapshot),
+    'displayNameEn', COALESCE(NULLIF(t.name_en, ''), NULLIF(t.name_zh, ''), i.display_name_snapshot),
+    'teacherEntryId', CASE WHEN t.is_visible THEN t.id ELSE NULL END, 'role', co.role
+  ) ORDER BY CASE co.role WHEN 'owner' THEN 0 ELSE 1 END, i.display_name_snapshot)
+  FROM platform_course_owners co JOIN platform_instructors i ON i.id = co.instructor_id
+  LEFT JOIN teacher_directory_entries t ON t.id = i.teacher_entry_id AND t.kind = 'teacher'
+  WHERE co.course_id = c.id AND co.status = 'active' AND i.status = 'active'), '[]'::jsonb) AS instructors
+`;
+const PUBLIC_COURSE_LESSON_COUNT = `
+  (SELECT COUNT(*)::int FROM platform_lessons l
+    JOIN platform_lesson_revisions lr ON lr.lesson_id = l.id AND lr.revision = l.current_revision
+    WHERE l.course_id = c.id AND l.status = 'published') AS "lessonCount"
+`;
 const PUBLIC_COURSE_BY_KEY = `
   FROM platform_courses c
   JOIN platform_course_revisions r ON r.course_id = c.id AND r.revision = c.current_revision
@@ -35,7 +55,7 @@ export function registerPublicRoutes(platformCatalogRoutes: Hono): void {
     const { page, pageSize, offset } = pagination(c, 60);
     const q = c.req.query('q')?.trim().slice(0, 200) ?? '';
     const rows = await platformQuery(platformDb(), `
-      SELECT ${COURSE_PROJECTION}
+      SELECT ${COURSE_PROJECTION}, ${PUBLIC_COURSE_INSTRUCTORS}, ${PUBLIC_COURSE_LESSON_COUNT}
       FROM platform_courses c
       JOIN platform_course_revisions r ON r.course_id = c.id AND r.revision = c.current_revision
       WHERE c.status = 'published'
@@ -81,12 +101,7 @@ export function registerPublicRoutes(platformCatalogRoutes: Hono): void {
         FROM platform_lessons l
         JOIN platform_lesson_revisions lr ON lr.lesson_id = l.id AND lr.revision = l.current_revision
         WHERE l.course_id = c.id AND l.status = 'published'), '[]'::jsonb) AS lessons,
-        COALESCE((SELECT jsonb_agg(jsonb_build_object(
-          'id', i.id::text, 'displayName', i.display_name_snapshot,
-          'teacherEntryId', i.teacher_entry_id, 'role', co.role
-        ) ORDER BY CASE co.role WHEN 'owner' THEN 0 ELSE 1 END, i.display_name_snapshot)
-        FROM platform_course_owners co JOIN platform_instructors i ON i.id = co.instructor_id
-        WHERE co.course_id = c.id AND co.status = 'active' AND i.status = 'active'), '[]'::jsonb) AS instructors
+        ${PUBLIC_COURSE_INSTRUCTORS}, ${PUBLIC_COURSE_LESSON_COUNT}
       ${PUBLIC_COURSE_BY_KEY}
     `, [key]);
     if (!rows[0]) notFound('Course');
@@ -171,7 +186,9 @@ export function registerPublicRoutes(platformCatalogRoutes: Hono): void {
     const id = integerField({id:c.req.param('id')},'id',{required:true,min:1})!;
     const rows=await platformQuery(platformDb(),`SELECT ${COURSE_PROJECTION}
       FROM platform_courses c JOIN platform_course_revisions r ON r.course_id=c.id AND r.revision=c.current_revision
-      WHERE c.status='published' AND EXISTS(SELECT 1 FROM platform_course_owners o JOIN platform_instructors i ON i.id=o.instructor_id WHERE o.course_id=c.id AND o.status='active' AND i.status='active' AND i.teacher_entry_id=$1)
+      WHERE c.status='published' AND EXISTS(SELECT 1 FROM platform_course_owners o JOIN platform_instructors i ON i.id=o.instructor_id
+        JOIN teacher_directory_entries t ON t.id=i.teacher_entry_id AND t.kind='teacher' AND t.is_visible=TRUE
+        WHERE o.course_id=c.id AND o.status='active' AND i.status='active' AND i.user_id IS NOT NULL AND i.teacher_entry_id=$1)
       ORDER BY c.published_at DESC`,[id]);
     publicCache(c,rows.length>0);return c.json({items:rows});
   });

@@ -1,28 +1,31 @@
 'use client';
 import { isCourseCatalogTag } from '@/lib/platform-course-catalog';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { parseAsInteger, parseAsStringEnum, useQueryState } from 'nuqs';
 import Paginator from '@/components/wca-stats/Paginator';
 import AppLink from '@/components/AppLink';
+import { ContentSkeleton } from '@/components/ContentSkeleton';
+import { ArrowRight, BookOpen, Plus, Receipt, UserRound, UsersRound, Wallet } from '@app-foundation/icons/lucide';
 import { useT } from '@/hooks/useT';
 import { useAuthUser } from '@/lib/auth-store';
 import { apiUrl } from '@/lib/api-base';
 import { renderArticleMarkdown } from '@/lib/article-markdown';
 import { platformLearningRequest, learningTime, type LearningNote } from '@/lib/platform-learning';
+import { commerceMoney as money } from '@/lib/platform-commerce-format';
 import type { PlatformEntity, PlatformRouteDefinition } from '@/lib/platform-types';
 import { PlatformState } from './PlatformState';
+import { InstructorPayoutSettings } from './InstructorPayoutSettings';
 import './platform-learning.css';
 
 type Row = Record<string, unknown>;
 const rows=(value:unknown):Row[]=>Array.isArray(value)?value.filter((item):item is Row=>!!item&&typeof item==='object'):[];
 const text=(value:unknown)=>typeof value==='string'?value:'';
 const localized=(row:Row,key:string,english:boolean)=>text(row[`${key}${english?'En':'Zh'}`])||text(row[`${key}Zh`])||text(row[`${key}En`])||text(row[key]);
-function money(value:unknown,currency:unknown){return new Intl.NumberFormat(undefined,{style:'currency',currency:/^[A-Z]{3}$/.test(String(currency))?String(currency):'CNY'}).format(Number(value??0)/100);}
 export { isPlatformLearningWorkspace } from '@/lib/platform-routes';
 
 export function PlatformLearningWorkspace({definition}:{definition:PlatformRouteDefinition;params?:Record<string,string>;entity?:PlatformEntity;entities?:PlatformEntity[]}){
-  const t=useT();const english=t('zh','en')==='en';const [data,setData]=useState<Row|null>(null);const [error,setError]=useState('');const [revision,setRevision]=useState(0);const [busy,setBusy]=useState(false);
+  const t=useT();const english=t('zh','en')==='en';const owner=useAuthUser()?.uid;const [loaded,setLoaded]=useState<{owner: number|undefined; data:Row}|null>(null);const data=loaded&&loaded.owner===owner?loaded.data:null;const [error,setError]=useState('');const [revision,setRevision]=useState(0);const [busy,setBusy]=useState(false);
   const id=definition.id;
   const [page,setPage]=useQueryState('page',parseAsInteger.withDefault(1));
   const [requestedSize,setSize]=useQueryState('pageSize',parseAsInteger.withDefault(12));
@@ -30,17 +33,19 @@ export function PlatformLearningWorkspace({definition}:{definition:PlatformRoute
   const [metric,setMetric]=useQueryState('metric',parseAsStringEnum(['points','learning'] as const).withDefault('points'));
   const [period,setPeriod]=useQueryState('period',parseAsStringEnum(['week','month','all'] as const).withDefault('all'));
   const pageQuery=`?page=${Math.max(1,page)}&pageSize=${[12,30,60].includes(size)?size:12}`;
+  const accountCourses=['account-courses','progress','account-progress'].includes(id);
+  const requestPath=accountCourses?`/me/courses${pageQuery}`:id==='leaderboard'?`/leaderboard${pageQuery}&metric=${metric}&period=${period}&v=3`:id==='account-notes'?`/me/notes${pageQuery}`:id==='account-badges'?'/me/badges':id==='instructor-students'?`/instructor/students${pageQuery}&v=2`:'/instructor/dashboard';
   const reload=()=>setRevision(value=>value+1);
-  useEffect(()=>{const abort=new AbortController();setData(null);setError('');void(async()=>{
+  useEffect(()=>{const abort=new AbortController();setLoaded(null);setError('');void(async()=>{
     let result:Row;
-    if(id==='account-courses'||id==='progress'||id==='account-progress'){
-      const [courses,certificates,checkins]=await Promise.all([platformLearningRequest<Row>(`/me/courses${pageQuery}`,undefined,'GET',abort.signal),platformLearningRequest<Row>('/me/certificates',undefined,'GET',abort.signal),platformLearningRequest<Row>(`/me/checkins?timezone=${encodeURIComponent(Intl.DateTimeFormat().resolvedOptions().timeZone)}`,undefined,'GET',abort.signal)]);
+    if(accountCourses){
+      const [courses,certificates,checkins]=await Promise.all([platformLearningRequest<Row>(requestPath,undefined,'GET',abort.signal),platformLearningRequest<Row>('/me/certificates',undefined,'GET',abort.signal),platformLearningRequest<Row>(`/me/checkins?timezone=${encodeURIComponent(Intl.DateTimeFormat().resolvedOptions().timeZone)}`,undefined,'GET',abort.signal)]);
       result={...courses,certificates:certificates.items,checkins};
-    }else result=await platformLearningRequest<Row>(id==='leaderboard'?`/leaderboard${pageQuery}&metric=${metric}&period=${period}&v=3`:id==='account-notes'?`/me/notes${pageQuery}`:id==='account-badges'?'/me/badges':id==='instructor-students'?`/instructor/students${pageQuery}`:'/instructor/dashboard',undefined,'GET',abort.signal);
-    if(!abort.signal.aborted)setData(result);
-  })().catch(reason=>{if(!abort.signal.aborted)setError(String(reason.message??reason));});return()=>abort.abort();},[id,revision,pageQuery,metric,period]);
+    }else result=await platformLearningRequest<Row>(requestPath,undefined,'GET',abort.signal);
+    if(!abort.signal.aborted)setLoaded({owner,data:result});
+  })().catch(reason=>{if(!abort.signal.aborted)setError(String(reason.message??reason));});return()=>abort.abort();},[id,revision,requestPath,accountCourses,owner]);
   const mutate=async(path:string,payload:Row,method='POST')=>{setBusy(true);setError('');try{const result=await platformLearningRequest<Row>(path,payload,method);reload();return result;}catch(reason){setError(String(reason));return null;}finally{setBusy(false);}};
-  if(!data)return <PlatformState kind={error?'error':'loading'} message={error} onRetry={reload}/>;
+  if(!data)return error?<PlatformState kind="error" message={error} onRetry={reload}/>:id.startsWith('instructor')?<ContentSkeleton variant={id==='instructor-students'?'list':'cards'} rows={id==='instructor'?4:3} label={t('正在加载讲师数据…','Loading instructor data…')}/>:<PlatformState kind="loading"/>;
   const items=rows(data.items);
   const pager=<Paginator page={Math.max(1,page)} totalPages={Math.max(1,Math.ceil(Number(data.total??items.length)/size))} size={size} pageSizeOptions={[12,30,60]} isZh={!english} className="platform-pagination" onPageChange={value=>void setPage(value)} onSizeChange={value=>{void setSize(value);void setPage(1);}}/>;
   if(id==='leaderboard')return <div className="platform-learning-workspace"><div className="platform-toolbar"><label>{t('榜单','Leaderboard')}<select className="platform-field-control" value={metric} onChange={event=>{void setMetric(event.target.value as 'points'|'learning');void setPage(1);}}><option value="points">{t('积分','Points')}</option><option value="learning">{t('学习','Learning')}</option></select></label><label>{t('时间','Period')}<select className="platform-field-control" value={period} onChange={event=>{void setPeriod(event.target.value as 'week'|'month'|'all');void setPage(1);}}><option value="week">{t('近七天','Last 7 days')}</option><option value="month">{t('近三十天','Last 30 days')}</option><option value="all">{t('全部时间','All time')}</option></select></label><AppLink href="/timer">{t('前往计时器','Open timer')}</AppLink></div>{items.map(item=><article key={String(item.id)} className="platform-learning-panel" data-site-surface="panel"><strong>{Number(item.rank)} · {text(item.title)}</strong><p>{text(item.value)} {metric==='points'?t('积分','points'):t('节已完成课时','completed lessons')}</p></article>)}{!items.length?<PlatformState kind="empty"/>:null}{pager}</div>;
@@ -60,12 +65,77 @@ export function PlatformLearningWorkspace({definition}:{definition:PlatformRoute
     return <div className="platform-learning-workspace">{error?<p role="alert">{error}</p>:null}{[...groups].map(([courseId,notes])=><section key={courseId}><h2><AppLink href={`/platform/courses/${courseId}`} prefetch={false}>{localized(notes[0] as unknown as Row,'courseTitle',english)||t('课程','Course')}</AppLink></h2>{notes.map(note=><article key={note.id} className="platform-learning-panel" data-site-surface="panel"><h3>{note.title}</h3><AppLink href={`/platform/courses/${courseId}/learn/${note.lessonId}?t=${note.positionSeconds??0}`} prefetch={false}>{learningTime(note.positionSeconds??0)} · {t('回到视频','Return to video')}</AppLink><div className="platform-prose">{renderArticleMarkdown(note.body)}</div><div className="platform-write-actions"><AppLink href={`/platform/courses/${courseId}/learn/${note.lessonId}?t=${note.positionSeconds??0}`} prefetch={false}>{t('在课堂编辑','Edit in classroom')}</AppLink><button type="button" className="platform-text-button" disabled={busy} onClick={()=>{if(window.confirm(t('删除这条笔记？','Delete this note?')))void mutate(`/me/notes/${note.id}`,{},'DELETE');}}>{t('删除','Delete')}</button></div></article>)}</section>)}{!items.length?<PlatformState kind="empty"/>:null}{pager}</div>;
   }
   if(id==='account-badges')return <div className="platform-learning-workspace"><p>{t('已解锁','Unlocked')} {items.filter(item=>item.awardedAt).length}/{items.length}</p><button className="platform-button" type="button" disabled={busy} onClick={()=>void mutate('/me/badges/refresh',{})}>{t('检查新成就','Check for new achievements')}</button>{error?<p role="alert">{error}</p>:null}<div className="platform-learning-cards">{items.map(item=>{const rule=(item.rule??{}) as Row;return <article key={String(item.id)} className="platform-learning-panel" data-site-surface="panel"><h2>{localized(item,'title',english)}</h2><p>{localized(item,'description',english)}</p><p>{item.awardedAt?t('已解锁','Unlocked'):t('尚未解锁','Locked')} · +{Number(item.pointReward)}</p><progress value={Math.min(Number(item.progress),Number(rule.threshold))} max={Number(rule.threshold)||1}/>{item.awardedAt?<time>{new Date(String(item.awardedAt)).toLocaleDateString()}</time>:<p>{Number(item.progress)}/{Number(rule.threshold)}</p>}</article>;})}</div></div>;
-  if(id==='instructor-students')return <div className="platform-learning-workspace">{error?<p role="alert">{error}</p>:null}{items.map(student=><article className="platform-learning-panel" data-site-surface="panel" key={String(student.id)}><h2>{text(student.title)}</h2><p>{localized(student,'courseTitle',english)}</p><p>{t('完成课时','Completed lessons')} {Number(student.completedLessons)}/{Number(student.totalLessons)}</p><p>{text(student.validFrom)?.slice(0,10)} — {text(student.validUntil)?.slice(0,10)||t('长期有效','No expiry')}</p><button type="button" className="platform-button" disabled={busy||student.status!=='active'} onClick={()=>void mutate('/instructor/certificates',{courseId:student.courseId,userId:Number(student.userId),recipientName:student.title})}>{t('签发证书','Issue certificate')}</button></article>)}{!items.length?<PlatformState kind="empty"/>:null}{pager}</div>;
-  return <div className="platform-learning-workspace"><div className="platform-learning-cards"><article className="platform-learning-panel" data-site-surface="panel"><h2>{t('课程','Courses')}</h2><strong>{Number(data.courseCount)}</strong></article><article className="platform-learning-panel" data-site-surface="panel"><h2>{t('有效学员','Active learners')}</h2><strong>{Number(data.studentCount)}</strong></article></div>
-    <h2>{t('月度收入','Monthly earnings')}</h2><p>{t('金额为你的实际分成，退款与调整按账本计入对应月份，币种分别统计。','Amounts are your actual revenue share. Refunds and adjustments follow their ledger month; currencies remain separate.')}</p><div className="platform-learning-cards">{rows(data.months).map(month=><article key={`${month.month}-${month.currency}`} className="platform-learning-panel" data-site-surface="panel"><h3>{text(month.month)} · {text(month.currency)}</h3><dl><dt>{t('订单','Orders')}</dt><dd>{Number(month.orders)}</dd><dt>{t('销售分成','Sales share')}</dt><dd>{money(month.saleAmountMinor,month.currency)}</dd><dt>{t('退款','Refunds')}</dt><dd>{money(month.refundAmountMinor,month.currency)}</dd><dt>{t('净收入','Net earnings')}</dt><dd>{money(month.netAmountMinor,month.currency)}</dd></dl></article>)}</div>
-    <h2>{t('结算记录','Payouts')}</h2>{rows(data.payouts).map(payout=><article key={String(payout.id)} className="platform-learning-panel" data-site-surface="panel"><h3>{text(payout.payoutNumber)}</h3><p>{money(payout.amountMinor,payout.currency)} · {payout.status==='paid'?t('已到账','Paid'):payout.status==='failed'?t('失败','Failed'):payout.status==='cancelled'?t('已取消','Cancelled'):t('处理中','Processing')}</p><p>{text(payout.paidAt)?.slice(0,10)} {text(payout.providerReference)}</p></article>)}{!rows(data.payouts).length?<p>{t('暂无结算记录','No payouts yet')}</p>:null}
-    <h2>{t('最近订单','Recent orders')}</h2>{rows(data.recent).map(order=><article key={String(order.id)} className="platform-learning-panel" data-site-surface="panel"><h3>{text(order.studentName)}</h3><p>{text(order.orderNumber)} · {money(order.amountMinor,order.currency)} · {text(order.createdAt)?.slice(0,10)}</p></article>)}
+  if(id==='instructor-students')return <InstructorLearners key={String(owner)} items={items} pager={pager}/>;
+  if(id==='instructor') {
+    const tasks = [
+      { href:'/platform/instructor/courses', icon:BookOpen, title:t('课程管理','Manage courses'), description:t('创建、编辑和发布课程','Create, edit and publish courses') },
+      { href:'/platform/instructor/students', icon:UsersRound, title:t('学员管理','Manage learners'), description:t('学员进度与结课证书','Learner progress and completion certificates') },
+      { href:'/platform/instructor/earnings', icon:Wallet, title:t('收入与结算','Earnings and payouts'), description:t('查看分成、订单、收款及提现','Review earnings, orders and request payouts') },
+      { href:'/platform/instructor/profile', icon:UserRound, title:t('讲师资料','Teaching profile'), description:t('编辑资料、公开设置与直播话术','Manage your profile, visibility and livestream scripts') },
+    ];
+    const months=rows(data.months).filter(month=>/^\d{4}-\d{2}$/.test(text(month.month)) && /^[A-Z]{3}$/.test(text(month.currency)));
+    const latestMonth=months.map(month=>text(month.month)).sort().at(-1);
+    const recent=rows(data.recent).slice(0,4);
+    return <div className="platform-learning-workspace platform-instructor-dashboard">
+      <section className="platform-learning-panel platform-instructor-overview" data-site-surface="panel">
+        <div className="platform-instructor-overview-heading">
+          <h2>{t('教学概览','Teaching overview')}</h2>
+          <AppLink className="platform-button platform-button-primary" href="/platform/instructor/courses/new" prefetch={false}><Plus aria-hidden />{t('创建课程','Create course')}</AppLink>
+        </div>
+        <dl className="platform-instructor-metrics">
+          <div><dt><BookOpen size={18} aria-hidden />{t('课程总数','Total courses')}</dt><dd>{Number(data.courseCount??0)}</dd></div>
+          <div><dt><UsersRound size={18} aria-hidden />{t('有效学员','Active learners')}</dt><dd>{Number(data.studentCount??0)}</dd></div>
+          <div className="platform-instructor-revenue-metric"><dt><Wallet size={18} aria-hidden />{t('最近月净收入','Latest monthly net earnings')}</dt><dd>{latestMonth?months.filter(month=>month.month===latestMonth).map(month=><span key={text(month.currency)}>{money(month.netAmountMinor,month.currency)}</span>):<span className="platform-instructor-metric-empty">{t('暂无收入记录','No earnings yet')}</span>}{latestMonth&&<small>{latestMonth}</small>}</dd></div>
+        </dl>
+      </section>
+      <div className="platform-instructor-dashboard-body">
+        <section className="platform-instructor-task-section">
+          <h2>{t('常用操作','Teaching tasks')}</h2>
+          <div className="platform-instructor-task-grid">{tasks.map(({href,icon:Icon,title,description})=><AppLink key={href} href={href} prefetch={false} className="platform-learning-panel platform-instructor-task" data-site-surface="panel">
+            <span className="platform-instructor-task-icon"><Icon size={23} aria-hidden /></span><div><h3>{title}</h3><p>{description}</p></div><ArrowRight className="platform-instructor-task-arrow" size={18} aria-hidden />
+          </AppLink>)}</div>
+        </section>
+        <section className="platform-learning-panel platform-instructor-activity" data-site-surface="panel">
+          <div className="platform-instructor-activity-heading"><h2>{t('近期交易','Recent activity')}</h2><AppLink href="/platform/instructor/earnings" prefetch={false}>{t('查看全部','View all')}<ArrowRight size={15} aria-hidden /></AppLink></div>
+          {recent.length?<ul className="platform-instructor-activity-list">{recent.map(order=><li key={String(order.id)}><span className="platform-instructor-activity-icon"><Receipt size={19} aria-hidden /></span><div><strong>{text(order.studentName)||text(order.orderNumber)||t('课程订单','Course order')}</strong><small>{text(order.createdAt).slice(0,10)}</small></div><strong>{money(order.amountMinor,order.currency)}</strong></li>)}</ul>:<div className="platform-instructor-activity-empty"><Receipt size={30} aria-hidden /><p>{t('暂无交易记录','No transactions yet')}</p></div>}
+        </section>
+      </div>
+    </div>;
+  }
+  return <div className="platform-learning-workspace platform-instructor-earnings">
+    <section className="platform-instructor-section"><h2>{t('月度收入','Monthly earnings')}</h2><p>{t('实际分成，按币种分别统计，退款与调整计入对应账本月份。','Revenue share by currency and ledger month, including refunds and adjustments.')}</p>{rows(data.months).length ? <div className="platform-learning-cards">{rows(data.months).map(month=><article key={`${month.month}-${month.currency}`} className="platform-learning-panel platform-instructor-month" data-site-surface="panel"><h3>{text(month.month)} <small>{text(month.currency)}</small></h3><div className="platform-instructor-month-net"><span>{t('净收入','Net earnings')}</span><strong>{money(month.netAmountMinor,month.currency)}</strong></div><dl><div><dt>{t('订单','Orders')}</dt><dd>{Number(month.orders)}</dd></div><div><dt>{t('销售分成','Sales share')}</dt><dd>{money(month.saleAmountMinor,month.currency)}</dd></div><div><dt>{t('退款','Refunds')}</dt><dd>{money(month.refundAmountMinor,month.currency)}</dd></div></dl></article>)}</div>:<PlatformState kind="empty" title={t('暂无收入记录','No earnings yet')}/>}</section>
+    <InstructorPayoutSettings history={rows(data.payouts)} />
+    <section className="platform-instructor-section"><h2>{t('近期交易','Recent transactions')}</h2>{rows(data.recent).length?<ul className="platform-instructor-activity-list">{rows(data.recent).map(order=><li key={String(order.id)}><span className="platform-instructor-activity-icon"><Receipt size={19} aria-hidden/></span><div><strong>{text(order.studentName)||t('课程交易','Course transaction')}</strong><small>{text(order.createdAt).slice(0,10)}</small>{order.orderNumber!=null&&<small>{text(order.orderNumber)}</small>}</div><strong>{money(order.amountMinor,order.currency)}</strong></li>)}</ul>:<PlatformState kind="empty" title={t('暂无交易记录','No transactions yet')}/>}</section>
   </div>;
+}
+
+function InstructorLearners({items,pager}:{items:Row[];pager:ReactNode}){
+  const t=useT();const english=t('zh','en')==='en';
+  const pending=useRef<string|null>(null);
+  const requests=useRef(new Map<string,string>());
+  const [busy,setBusy]=useState<string|null>(null);
+  const [issued,setIssued]=useState<Record<string,string>>({});
+  const [failure,setFailure]=useState<{id:string;message:string}|null>(null);
+  const issue=async(student:Row,name:string)=>{
+    if(pending.current)return;
+    const id=String(student.id);const key=requests.current.get(id)??crypto.randomUUID();requests.current.set(id,key);
+    pending.current=id;setBusy(id);setFailure(null);
+    try{
+      const result=await platformLearningRequest<Row>('/instructor/certificates',{courseId:student.courseId,userId:Number(student.userId),recipientName:name},'POST',undefined,key);
+      setIssued(previous=>({...previous,[id]:text(result.verificationCode)}));requests.current.delete(id);
+    }catch{setFailure({id,message:t('签发结果未确认，请重试。','Issuance is unconfirmed. Retry the request.')});}
+    finally{pending.current=null;setBusy(null);}
+  };
+  return <div className="platform-learning-workspace"><section className="platform-instructor-section"><h2>{t('有效学员','Active learners')}</h2>{items.length?<div className="platform-instructor-learner-list">{items.map(student=>{
+    const id=String(student.id);const name=text(student.title);const named=Boolean(name&&name!==String(student.userId));
+    const completed=Math.max(0,Number(student.completedLessons)||0);const total=Math.max(0,Number(student.totalLessons)||0);
+    const certificate=student.hasCertificate===true||Object.hasOwn(issued,id);
+    return <article className="platform-instructor-learner-row" key={id}>
+      <div className="platform-instructor-learner-identity"><h3>{named?name:t('未设置姓名','Unnamed learner')}</h3><p>{localized(student,'courseTitle',english)}</p></div>
+      <div className="platform-instructor-learner-progress"><span>{t('完成课时','Completed lessons')} {completed}/{total}</span>{total>0&&<progress value={Math.min(completed,total)} max={total} aria-label={t('课程进度','Course progress')}/>}<small>{text(student.validFrom).slice(0,10)} — {text(student.validUntil).slice(0,10)||t('长期有效','No expiry')}</small></div>
+      <div className="platform-instructor-learner-actions">{certificate?<><span role="status">{t('已签发证书','Certificate issued')}</span>{issued[id]&&<AppLink className="platform-button" href={`/platform/cert/${encodeURIComponent(issued[id])}`} prefetch={false}>{t('查看证书','View certificate')}</AppLink>}</>:<button type="button" className="platform-button" disabled={Boolean(busy)||student.status!=='active'||!named} onClick={()=>void issue(student,name)}>{busy===id?t('签发中…','Issuing…'):failure?.id===id?t('重试签发','Retry issuance'):t('签发证书','Issue certificate')}</button>}{failure?.id===id&&<p role="alert">{failure.message}</p>}</div>
+    </article>;
+  })}</div>:<PlatformState kind="empty" title={t('暂无有效学员','No active learners yet')}/>}</section>{items.length>0&&pager}</div>;
 }
 
 export function PlatformCoursePresentation({ entity }: { entity: PlatformEntity }) {

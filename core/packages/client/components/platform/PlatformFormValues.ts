@@ -31,6 +31,7 @@ export function payloadValue(spec: FieldSpec, value: string | boolean): unknown 
 
 export function validatePayload(routeId: string, payload: Record<string, unknown>, t: ReturnType<typeof useT>): string | null {
   if (routeId === 'teacher-apply') {
+    if (!payload.publicName || !payload.publicBio) return t('请填写公开姓名及教学简介。', 'Enter a public name and teaching biography.');
     if (['city', 'experience', 'contact'].some(key => typeof payload[key] !== 'string' || !payload[key])) return t('请填写所在城市、教学经历及联系方式。', 'Enter your city, teaching experience and contact details.');
     if (!Array.isArray(payload.specialties) || !payload.specialties.length || payload.specialties.length > 30 || payload.specialties.some(value => typeof value !== 'string' || value.length > 120)) return t('请填写擅长方向，最多 30 项，每项不超过 120 个字符。', 'Enter between 1 and 30 specialties, up to 120 characters each.');
   }

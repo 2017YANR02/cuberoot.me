@@ -78,6 +78,20 @@ it.each([{ count: 5, average: 4.8 }, { count: 0, average: null }])('returns real
   expect(reviews.statement).not.toContain('email');
 });
 
+it('uses the same public instructor identity and published lesson count in catalog and detail', async () => {
+  expect((await platformCatalogRoutes.request('/platform/courses')).status).toBe(200);
+  expect((await platformCatalogRoutes.request('/platform/courses/yan-ruimin-3x3-beginner')).status).toBe(200);
+  const projections = state.queries.filter(query => query.statement.includes('AS instructors') && query.statement.includes('AS "lessonCount"'));
+  expect(projections).toHaveLength(2);
+  for (const { statement } of projections) {
+    expect(statement).toContain('CASE WHEN t.is_visible THEN t.id ELSE NULL END');
+    expect(statement).toContain("'displayNameZh'");
+    expect(statement).toContain("'displayNameEn'");
+    expect(statement).toContain("co.status = 'active' AND i.status = 'active'");
+    expect(statement).toContain("l.status = 'published'");
+  }
+});
+
 it('only returns personal course lesson access when explicitly requested', async () => {
   const path = '/platform/courses/yan-ruimin-3x3-beginner';
   const publicCourse = await (await platformCatalogRoutes.request(path)).json();

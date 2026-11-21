@@ -1,11 +1,12 @@
 /**
- * /teachers 公开名录。条目直接上线：本人可改自己的，管理员可改全部。
- * 将来如改成仅会员可投稿，只需收紧 requireDirectoryEditor 的非管理员分支。
+ * /teachers 与 Platform 共用的名录。讲师身份由 Platform 审核，
+ * 名录只维护公开资料；机构沿用原有独立目录。
  */
 import { Hono } from 'hono';
 import type { Context } from 'hono';
 import { getIp } from '../utils/analytics_helpers.js';
 import { query } from '../db/connection.js';
+import { PUBLIC_DIRECTORY_ENTRY_PREDICATE } from '../platform/db.js';
 import {
   checkRateLimit,
   requireAdminOrApiKey,
@@ -77,6 +78,7 @@ interface DirectoryRow {
   owner_name: string;
   created_at: Date;
   updated_at: Date;
+  instructor_status?: string | null;
 }
 
 type ScriptCueKind = 'action' | 'interaction' | 'transition' | 'optional';
@@ -132,6 +134,15 @@ interface LiveScriptRow {
 const COLUMNS = `id, kind, name_zh, name_en, location_zh, location_en,
   description_zh, description_en, specialties_zh, specialties_en, teaching_mode,
   contacts, images, contact, website, wca_id, is_curated, is_visible, owner_key, owner_name, created_at, updated_at`;
+const INSTRUCTOR_STATUS = `CASE WHEN t.kind='teacher' THEN COALESCE(
+  (SELECT i.status FROM platform_instructors i WHERE i.teacher_entry_id=t.id), 'unverified') END AS instructor_status`;
+// A legacy directory creator must not retain control over another account's
+// now-canonical profile. Non-teacher and unattached entries keep owner_key.
+const DIRECTORY_OWNER_PREDICATE = `NOT EXISTS (
+  SELECT 1 FROM platform_instructors i LEFT JOIN app_users u ON u.id=i.user_id
+  WHERE i.teacher_entry_id=t.id
+    AND COALESCE(NULLIF(u.wca_id,''),'u'||u.id::text) IS DISTINCT FROM ?
+)`;
 const KINDS: readonly EntryKind[] = ['teacher', 'organization'];
 const MODES: readonly TeachingMode[] = ['online', 'in_person', 'both'];
 const IMAGE_KINDS: readonly ImageKind[] = ['portrait', 'organization', 'teaching', 'other'];
@@ -259,8 +270,8 @@ async function validateImageOwnership(
 
 function validateDraft(draft: DirectoryDraft): string | null {
   if (!draft.nameZh && !draft.nameEn) return 'name_required';
-  if (!draft.descriptionZh && !draft.descriptionEn) return 'description_required';
-  if (Object.keys(draft.contacts).length === 0 && !draft.website) return 'contact_required';
+  if ((draft.kind !== 'teacher' || draft.isVisible) && !draft.descriptionZh && !draft.descriptionEn) return 'description_required';
+  if (draft.kind === 'organization' && Object.keys(draft.contacts).length === 0 && !draft.website) return 'contact_required';
   if (draft.website && !isHttpUrl(draft.website)) return 'website_invalid';
   for (const key of URL_CONTACT_KEYS) {
     if (draft.contacts[key] && !isHttpUrl(draft.contacts[key])) return `${key}_invalid`;
@@ -392,7 +403,7 @@ function liveScriptToJson(row: LiveScriptRow, withOwner = false) {
 }
 
 async function requireOwnedTeacherEntry(id: number, user: WcaUser, admin: boolean): Promise<DirectoryRow | null> {
-  const rows = await query<DirectoryRow>(`SELECT ${COLUMNS} FROM teacher_directory_entries WHERE id = ?`, [id]);
+  const rows = await query<DirectoryRow>(`SELECT ${COLUMNS} FROM teacher_directory_entries t WHERE id = ?${admin ? '' : ` AND owner_key=? AND ${DIRECTORY_OWNER_PREDICATE}`}`, admin ? [id] : [id, user.wcaId, user.wcaId]);
   if (rows.length === 0 || (!admin && rows[0].owner_key !== user.wcaId)) return null;
   return rows[0];
 }
@@ -417,6 +428,7 @@ function toJson(row: DirectoryRow, withOwner = false) {
     wcaId: row.wca_id ?? '',
     isCurated: row.is_curated,
     isVisible: row.is_visible,
+    ...(row.instructor_status ? { instructorStatus: row.instructor_status } : {}),
     ...(withOwner ? { ownerKey: row.owner_key, ownerName: row.owner_name } : {}),
     createdAt: row.created_at,
     updatedAt: row.updated_at,
@@ -433,8 +445,8 @@ async function requireDirectoryEditor(c: Context): Promise<{ user: WcaUser; admi
 
 teacherDirectoryRoutes.get('/teachers', async (c) => {
   const rows = await query<DirectoryRow>(
-    `SELECT ${COLUMNS} FROM teacher_directory_entries
-     WHERE is_visible = TRUE
+    `SELECT ${COLUMNS}, ${INSTRUCTOR_STATUS} FROM teacher_directory_entries t
+     WHERE ${PUBLIC_DIRECTORY_ENTRY_PREDICATE}
      ORDER BY is_curated DESC, created_at, id`,
   );
   if (rows.length === 0) noStore(c);
@@ -446,11 +458,22 @@ teacherDirectoryRoutes.get('/teachers/mine', async (c) => {
   noStore(c);
   const user = await requireAuth(c);
   const rows = await query<DirectoryRow>(
-    `SELECT ${COLUMNS} FROM teacher_directory_entries
-     WHERE owner_key = ? ORDER BY updated_at DESC, id DESC`,
-    [user.wcaId],
+    `SELECT ${COLUMNS}, ${INSTRUCTOR_STATUS} FROM teacher_directory_entries t
+     WHERE owner_key = ? AND ${DIRECTORY_OWNER_PREDICATE} ORDER BY updated_at DESC, id DESC`,
+    [user.wcaId,user.wcaId],
   );
   return c.json({ entries: rows.map((row) => toJson(row, true)) });
+});
+
+teacherDirectoryRoutes.get('/teachers/admin/:id', async (c) => {
+  noStore(c);
+  const { admin } = await requireDirectoryEditor(c);
+  if (!admin) return c.json({ error: 'Admin access required' }, 403);
+  const id = Number(c.req.param('id'));
+  if (!Number.isSafeInteger(id) || id <= 0) return c.json({ error: 'Invalid entry id' }, 400);
+  const rows = await query<DirectoryRow>(`SELECT ${COLUMNS}, ${INSTRUCTOR_STATUS} FROM teacher_directory_entries t WHERE id = ?`, [id]);
+  if (!rows[0]) return c.json({ error: 'Directory entry not found' }, 404);
+  return c.json({ entry: toJson(rows[0], true) });
 });
 
 teacherDirectoryRoutes.get('/teachers/scripts', async (c) => {
@@ -458,7 +481,7 @@ teacherDirectoryRoutes.get('/teachers/scripts', async (c) => {
     `SELECT ${SCRIPT_COLUMNS}
      FROM teacher_live_scripts s
      JOIN teacher_directory_entries t ON t.id = s.teacher_entry_id
-     WHERE s.is_visible = TRUE AND t.is_visible = TRUE
+     WHERE s.is_visible = TRUE AND ${PUBLIC_DIRECTORY_ENTRY_PREDICATE}
      ORDER BY s.updated_at DESC, s.id DESC`,
   );
   if (rows.length === 0) noStore(c);
@@ -473,9 +496,9 @@ teacherDirectoryRoutes.get('/teachers/scripts/mine', async (c) => {
     `SELECT ${SCRIPT_COLUMNS}
      FROM teacher_live_scripts s
      JOIN teacher_directory_entries t ON t.id = s.teacher_entry_id
-     WHERE t.owner_key = ?
+     WHERE t.owner_key = ? AND ${DIRECTORY_OWNER_PREDICATE}
      ORDER BY s.updated_at DESC, s.id DESC`,
-    [user.wcaId],
+    [user.wcaId,user.wcaId],
   );
   return c.json({ scripts: rows.map((row) => liveScriptToJson(row, true)) });
 });
@@ -494,6 +517,7 @@ teacherDirectoryRoutes.get('/teachers/scripts/owned/:id', async (c) => {
   );
   if (rows.length === 0) return c.json({ error: 'Live script not found' }, 404);
   if (!admin && rows[0].owner_key !== user.wcaId) return c.json({ error: 'Cannot view this live script' }, 403);
+  if (!admin && !await requireOwnedTeacherEntry(Number(rows[0].teacher_entry_id),user,admin)) return c.json({ error: 'Cannot view this live script' }, 403);
   return c.json({ script: liveScriptToJson(rows[0], true) });
 });
 
@@ -504,7 +528,7 @@ teacherDirectoryRoutes.get('/teachers/scripts/:id', async (c) => {
     `SELECT ${SCRIPT_COLUMNS}
      FROM teacher_live_scripts s
      JOIN teacher_directory_entries t ON t.id = s.teacher_entry_id
-     WHERE s.id = ? AND s.is_visible = TRUE AND t.is_visible = TRUE`,
+     WHERE s.id = ? AND s.is_visible = TRUE AND ${PUBLIC_DIRECTORY_ENTRY_PREDICATE}`,
     [id],
   );
   if (rows.length === 0) {
@@ -558,6 +582,7 @@ teacherDirectoryRoutes.put('/teachers/scripts/:id', async (c) => {
   );
   if (existing.length === 0) return c.json({ error: 'Live script not found' }, 404);
   if (!admin && existing[0].owner_key !== user.wcaId) return c.json({ error: 'Cannot edit this live script' }, 403);
+  if (!admin && !await requireOwnedTeacherEntry(Number(existing[0].teacher_entry_id),user,admin)) return c.json({ error: 'Cannot edit this live script' }, 403);
   const draft = readLiveScriptDraft(await c.req.json<Partial<LiveScriptDraft>>(), { isVisible: existing[0].is_visible });
   const error = validateLiveScriptDraft(draft);
   if (error) return c.json({ error: 'Invalid live script', code: error }, 400);
@@ -589,13 +614,14 @@ teacherDirectoryRoutes.delete('/teachers/scripts/:id', async (c) => {
   const { user, admin } = await requireDirectoryEditor(c);
   const id = Number(c.req.param('id'));
   if (!Number.isSafeInteger(id) || id <= 0) return c.json({ error: 'Invalid script id' }, 400);
-  const rows = await query<{ owner_key: string }>(
-    `SELECT t.owner_key FROM teacher_live_scripts s
+  const rows = await query<{ owner_key: string; teacher_entry_id: number }>(
+    `SELECT t.owner_key,s.teacher_entry_id FROM teacher_live_scripts s
      JOIN teacher_directory_entries t ON t.id = s.teacher_entry_id WHERE s.id = ?`,
     [id],
   );
   if (rows.length === 0) return c.json({ error: 'Live script not found' }, 404);
   if (!admin && rows[0].owner_key !== user.wcaId) return c.json({ error: 'Cannot delete this live script' }, 403);
+  if (!admin && !await requireOwnedTeacherEntry(Number(rows[0].teacher_entry_id),user,admin)) return c.json({ error: 'Cannot delete this live script' }, 403);
   await query('DELETE FROM teacher_live_scripts WHERE id = ?', [id]);
   return c.json({ ok: true });
 });
@@ -605,6 +631,7 @@ teacherDirectoryRoutes.post('/teachers', async (c) => {
   checkRateLimit(getIp(c));
   const { user, admin } = await requireDirectoryEditor(c);
   const draft = readDraft(await c.req.json<Partial<DirectoryDraft>>());
+  if (draft.kind === 'teacher') return c.json({ error: 'Apply through the instructor admission flow', code: 'instructor_application_required' }, 403);
   const error = validateDraft(draft) ?? await validateImageOwnership(draft.images, user, admin);
   if (error) return c.json({ error: 'Invalid directory entry', code: error }, 400);
 
@@ -640,6 +667,7 @@ teacherDirectoryRoutes.put('/teachers/:id', async (c) => {
   if (!admin && existing[0].owner_key !== user.wcaId) {
     return c.json({ error: 'Cannot edit this directory entry' }, 403);
   }
+  if (!admin && !await requireOwnedTeacherEntry(id,user,admin)) return c.json({ error: 'Cannot edit this canonical directory entry' }, 403);
 
   const draft = readDraft(await c.req.json<Partial<DirectoryDraft>>(), {
     isVisible: existing[0].is_visible,
@@ -647,22 +675,24 @@ teacherDirectoryRoutes.put('/teachers/:id', async (c) => {
     images: existing[0].images ?? [],
     contact: existing[0].contact,
   });
+  if (draft.kind !== existing[0].kind) return c.json({ error: 'Directory entry type cannot be changed', code: 'kind_immutable' }, 400);
   const error = validateDraft(draft) ?? await validateImageOwnership(draft.images, user, admin);
   if (error) return c.json({ error: 'Invalid directory entry', code: error }, 400);
   const rows = await query<DirectoryRow>(
-    `UPDATE teacher_directory_entries SET
+    `UPDATE teacher_directory_entries t SET
        kind = ?, name_zh = ?, name_en = ?, location_zh = ?, location_en = ?,
        description_zh = ?, description_en = ?, specialties_zh = ?::jsonb,
        specialties_en = ?::jsonb, teaching_mode = ?, contacts = ?::jsonb, images = ?::jsonb, contact = ?, website = ?,
        wca_id = ?, is_curated = ?, is_visible = ?
-     WHERE id = ? RETURNING ${COLUMNS}`,
+     WHERE id = ?${admin ? '' : ` AND owner_key=? AND ${DIRECTORY_OWNER_PREDICATE}`} RETURNING ${COLUMNS}, ${INSTRUCTOR_STATUS}`,
     [
       draft.kind, draft.nameZh, draft.nameEn, draft.locationZh, draft.locationEn,
       draft.descriptionZh, draft.descriptionEn, draft.specialtiesZh, draft.specialtiesEn,
       draft.teachingMode, draft.contacts, draft.images, draft.contact, draft.website, draft.wcaId || null,
-      admin ? draft.isCurated : existing[0].is_curated, draft.isVisible, id,
+      admin ? draft.isCurated : existing[0].is_curated, draft.isVisible, id, ...(admin ? [] : [user.wcaId,user.wcaId]),
     ],
   );
+  if (!rows[0]) return c.json({ error: 'Cannot edit this canonical directory entry' }, 403);
   return c.json({ entry: toJson(rows[0], true) });
 });
 
@@ -672,14 +702,18 @@ teacherDirectoryRoutes.delete('/teachers/:id', async (c) => {
   const { user, admin } = await requireDirectoryEditor(c);
   const id = Number(c.req.param('id'));
   if (!Number.isInteger(id) || id <= 0) return c.json({ error: 'Invalid entry id' }, 400);
-  const rows = await query<{ owner_key: string }>(
-    'SELECT owner_key FROM teacher_directory_entries WHERE id = ?',
+  const rows = await query<{ owner_key: string; kind: EntryKind }>(
+    'SELECT owner_key,kind FROM teacher_directory_entries WHERE id = ?',
     [id],
   );
   if (rows.length === 0) return c.json({ error: 'Directory entry not found' }, 404);
   if (!admin && rows[0].owner_key !== user.wcaId) {
     return c.json({ error: 'Cannot delete this directory entry' }, 403);
   }
-  await query('DELETE FROM teacher_directory_entries WHERE id = ?', [id]);
+  if (!admin && !await requireOwnedTeacherEntry(id,user,admin)) return c.json({ error: 'Cannot edit this canonical directory entry' }, 403);
+  if (rows[0].kind === 'teacher') {
+    const hidden = await query(`UPDATE teacher_directory_entries t SET is_visible=FALSE WHERE id = ?${admin ? '' : ` AND owner_key=? AND ${DIRECTORY_OWNER_PREDICATE}`} RETURNING id`, admin ? [id] : [id,user.wcaId,user.wcaId]);
+    if (!hidden.length) return c.json({ error: 'Cannot hide this canonical directory entry' }, 403);
+  } else await query('DELETE FROM teacher_directory_entries WHERE id = ?', [id]);
   return c.json({ ok: true });
 });

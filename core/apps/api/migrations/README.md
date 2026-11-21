@@ -84,6 +84,8 @@ WCA 自学来源增量 `0185_wca_self_taught.sql` 允许老师关系的老师 ID
 
 ## 待发布迁移
 
+`0348_platform_unified_instructor_profiles.sql` 保留原讲师身份、课程归属及公开设置，按唯一且可信的账号资料关联历史名录；无候选资料的 active 讲师建立隐藏草稿，多候选或跨账号归属待人工核对。讲师公开联系方式可选，机构保留原约束。未认证资料不获得讲师权限。迁移随 API 发布自动应用，未授权时不要手工修改生产数据库。
+
 `0328_wca_multiple_teams.sql` 将 WCA ID 唯一约束改为 `(wca_id, team_id)` 组合唯一，保留旧成员编号及全部归属。`0329_cubicle_roster.sql` 按维护者名单增加 Cubicle 的 14 位成员归属，不替换原厂商战队；身份核对及姓名差异确认见 [导入记录](../../../../docs/data/imports/cubicle-2026-11-12.md)。目录按 WCA ID 去重，无 WCA ID 的同名成员仍按独立 `member_id` 计数。先迁移并部署 API，再发布客户端；新版 PUT 要求 `names` 数组，旧版单个 `name` 请求会被拒绝，避免旧编辑器清空新增归属。
 
 2026-11-13 只读核对生产 ledger：`0325_assistant_share_versions.sql`、`0326_assistant_context.sql`、`0327_assistant_knowledge_metadata.sql` 已应用，两个 WCA 文件未应用。因此仅将尚未提交的 WCA 文件从冲突的 0325/0326 改为 0328/0329，SQL 字节和 SHA-256 保持不变，并同步文档与测试引用。不得修改已应用的助手迁移。

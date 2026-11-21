@@ -36,7 +36,7 @@ export function registerEnrollmentRoutes(platformLearningRoutes: Hono): void {
     const {page,pageSize,offset}=pagination(c);
     const paged=c.req.query('page')!==undefined;
     const rows = await platformQuery(platformDb(), `
-      SELECT COUNT(*) OVER()::int AS "resultTotal", e.course_id::text AS id, course.slug, e.status,
+      SELECT COUNT(*) OVER()::int AS "resultTotal", e.course_id::text AS id, course.slug, e.status, course.status AS "courseStatus",
              COALESCE(NULLIF(cr.title_zh, ''), cr.title_en) AS title,
              cr.title_zh AS "titleZh", cr.title_en AS "titleEn", cr.presentation,
              COUNT(lesson.id)::int AS "totalLessons", COUNT(lesson.id) FILTER (WHERE progress.status = 'completed')::int AS "completedLessons",
@@ -52,7 +52,7 @@ export function registerEnrollmentRoutes(platformLearningRoutes: Hono): void {
       LEFT JOIN platform_lesson_progress progress
         ON progress.lesson_id = lesson.id AND progress.user_id = e.user_id
       WHERE e.user_id = $1 AND ($4::text IS NULL OR ((e.course_id::text=$4 OR course.slug=$4) AND e.status='active' AND e.valid_from<=NOW() AND (e.valid_until IS NULL OR e.valid_until>NOW())))
-      GROUP BY e.course_id, e.user_id, course.slug, e.status, cr.title_zh, cr.title_en, cr.presentation
+      GROUP BY e.course_id, e.user_id, course.slug, e.status, course.status, cr.title_zh, cr.title_en, cr.presentation
       ORDER BY MAX(e.updated_at) DESC, e.course_id LIMIT $2 OFFSET $3
     `, [actor.userId,paged?pageSize:null,paged?offset:0,c.req.query('courseId')??null]);
     privateNoStore(c);

@@ -98,14 +98,14 @@ export function PlatformCourseDetail({ course, lessons }: { course: PlatformEnti
               : <span key={String(instructor.id ?? index)}>{name}</span>;
           })}
         </div> : details.instructors.length > 0 && <div className="platform-course-instructors">
-          {details.fallbackInstructorEn ? t(details.instructors[0], details.fallbackInstructorEn) : details.instructors.join(t('、', ', '))}
+          {t(details.instructors.join('、'), details.instructorsEn.join(', '))}
         </div>}
         <div className="platform-course-overview-labels">
           <PlatformCourseLabels details={details} />
           {directory.length > 0 && <span>{t(`${directory.length} 课时`, `${directory.length} lessons`)}</span>}
         </div>
       </div>
-      {details.coverUrl && <PlatformCourseCover {...details} eager />}
+      <PlatformCourseCover {...details} eager />
       <div className="platform-course-overview-copy">
         {summary && <p>{summary}</p>}
         <div className="platform-home-actions">

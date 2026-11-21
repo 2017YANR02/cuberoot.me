@@ -1,9 +1,10 @@
 'use client';
 
-import { useId, useMemo, useRef, useState, type ReactNode } from 'react';
-import { ArrowRight, CircleAlert, CircleCheck, CircleX, Clock3, Undo2, Upload } from '@app-foundation/icons/lucide';
+import { useEffect, useId, useMemo, useRef, useState, type ReactNode } from 'react';
+import { ArrowRight, CircleAlert, CircleCheck, CircleX, Clock3, Undo2 } from '@app-foundation/icons/lucide';
 import AppLink from '@/components/AppLink';
 import MoreToggle from '@/components/MoreToggle';
+import { CompactSelect } from '@/components/CompactSelect';
 import { useT } from '@/hooks/useT';
 import { useAuthUser } from '@/lib/auth-store';
 import type { PlatformEntity } from '@/lib/platform-types';
@@ -38,6 +39,7 @@ export function InstructorApplicationDetails({ entity, admin = false, embedded =
   const list = (value: unknown) => Array.isArray(value) ? value.filter(item => typeof item === 'string').join(t('、', ', ')) : valueText(value);
   const teachingMode = application.teachingMode === 'online' ? t('线上', 'Online') : application.teachingMode === 'in_person' ? t('线下', 'In person') : application.teachingMode === 'both' ? t('线上及线下', 'Both') : list(application.formats);
   const groups = [
+    { title: t('讲师公开资料', 'Public teaching profile'), fields: [[t('公开姓名', 'Public name'), valueText(application.publicName)], [t('英文姓名', 'English name'), valueText(application.publicNameEn)], [t('公开简介', 'Public biography'), valueText(application.publicBio)], [t('名录展示', 'Directory visibility'), typeof application.profileVisible === 'boolean' ? application.profileVisible ? t('公开', 'Public') : t('隐藏', 'Hidden') : '']] },
     { title: t('授课信息', 'Teaching details'), fields: [[t('所在城市', 'City'), valueText(application.city)], [t('授课方式', 'Teaching mode'), teachingMode]] },
     { title: t('教学能力', 'Teaching experience'), fields: [[t('擅长方向', 'Specialties'), list(application.specialties)], [t('教学经历', 'Teaching experience'), valueText(application.experience) || valueText(application.introduction)], [t('教学成果及作品', 'Achievements and portfolio'), valueText(application.achievements)]] },
     { title: t('审核联系方式', 'Contact for review'), fields: [[t('联系方式', 'Contact details'), valueText(application.contact)]] },
@@ -64,7 +66,7 @@ export function InstructorApplicationDetails({ entity, admin = false, embedded =
     {showFeedback && valueText(data.decisionNote) && <section className="platform-application-detail-group"><h3>{t('审核意见', 'Review feedback')}</h3><p className="platform-application-feedback">{valueText(data.decisionNote)}</p></section>}
     {admin && <>
       <section className="platform-application-detail-group"><h3>{t('已有讲师资料', 'Existing teaching profiles')}</h3>
-        {Array.isArray(data.profiles) && data.profiles.length ? data.profiles.map((raw, index) => { const profile = record(raw); return <div className="platform-application-profile" key={index}><span>{t(valueText(profile.nameZh) || valueText(profile.nameEn), valueText(profile.nameEn) || valueText(profile.nameZh))}</span><span className="platform-application-meta">{profile.isVisible === true ? t('公开', 'Public') : t('隐藏', 'Hidden')}</span></div>; }) : <p>{t('暂无资料，审核通过后由讲师完善。', 'No profile yet. The instructor can create one after approval.')}</p>}
+        {Array.isArray(data.profiles) && data.profiles.length ? data.profiles.map((raw, index) => { const profile = record(raw); return <div className="platform-application-profile" key={index}><span>{t(valueText(profile.nameZh) || valueText(profile.nameEn), valueText(profile.nameEn) || valueText(profile.nameZh))}</span><span className="platform-application-meta">{profile.isVisible === true ? t('公开设置', 'Public preference') : t('隐藏设置', 'Hidden preference')}</span></div>; }) : <p>{t('审核通过时自动建立讲师资料。', 'A teaching profile is created automatically on approval.')}</p>}
       </section>
       {Array.isArray(data.history) && data.history.length > 0 && <details className="platform-application-history"><MoreToggle as="summary">{t('历史申请', 'Previous applications')}</MoreToggle>{data.history.map((raw, index) => { const entry = record(raw); return <div className="platform-application-history-row" key={index}><div className="platform-application-meta"><span>{date(entry.createdAt)}</span><span>{instructorApplicationStatus(String(entry.status), t)}</span></div>{valueText(entry.decisionNote) && <p>{valueText(entry.decisionNote)}</p>}</div>; })}</details>}
     </>}
@@ -79,21 +81,34 @@ export function PlatformInstructorApplication(props: CommonProps) {
   const data = entity?.data ?? {};
   const status = entity?.status;
   const role = data.instructorStatus;
-  const profiles = Array.isArray(data.directoryProfiles) ? data.directoryProfiles.map(record) : [];
   const linked = data.teacherEntryId;
-  const formEntity = useMemo(() => entity ? { ...entity, data: record(entity.data?.application) } : undefined, [entity]);
+  const formEntity = useMemo(() => {
+    if (!entity) return undefined;
+    const entries = Array.isArray(entity.data?.directoryProfiles) ? entity.data.directoryProfiles.map(record) : [];
+    const existing = entries.length === 1 ? entries[0] : {};
+    return { ...entity, data: {
+      publicName: valueText(existing.nameZh) || valueText(existing.nameEn),
+      publicNameEn: valueText(existing.nameEn),
+      publicBio: valueText(existing.descriptionZh) || valueText(existing.descriptionEn),
+      profileVisible: existing.isVisible === true,
+      city: valueText(existing.locationZh), specialties: existing.specialtiesZh, teachingMode: existing.teachingMode,
+      ...record(entity.data?.application),
+    } };
+  }, [entity]);
 
   if (role === 'suspended') return <div className="platform-application-flow"><ApplicationOverview state="unavailable" title={t('讲师权限已暂停', 'Instructor access is suspended')} description={t('请联系管理员恢复权限。', 'Contact an administrator to restore access.')} /></div>;
   if (role === 'active') return <div className="platform-domain-stack platform-application-flow">
     <ApplicationOverview state="approved" title={t('已成为讲师', 'You are an instructor')} description={t('你可以管理课程、学员及收益。', 'Manage your courses, learners and earnings.')}>
-      <AppLink href="/platform/instructor/courses" className="platform-button platform-button-primary" prefetch={false}>{t('发布课程', 'Publish course')}<Upload aria-hidden /></AppLink>
+      <button type="button" className="platform-button" disabled={Boolean(busy)} onClick={() => {
+        if (!window.confirm(t('确定注销讲师身份吗？注销后将关闭讲师工作台权限、隐藏公开讲师资料并停用课程归属权限，历史记录不会删除。请先处理未结算收益；再次入驻需要重新审核。', 'Deactivate your instructor account? Workspace access and course ownership permissions will be revoked, and your public profile will be hidden. History is preserved. Settle outstanding earnings first; rejoining requires approval.'))) return;
+        void runAction('archive-instructor').then(result => { if (result) setEditing(false); });
+      }}>{busy === 'archive-instructor' ? t('处理中…', 'Working…') : t('注销讲师身份', 'Deactivate instructor account')}</button>
     </ApplicationOverview>
     {data.instructorProfileKnown !== false && <section className="platform-application-profile-section">
       <h2>{t('公开讲师资料', 'Public teaching profile')}</h2>
-      {linked != null ? <div className="platform-application-profile"><p>{data.profileVisible === true ? t('已在讲师名录公开展示', 'Visible in the teacher directory') : t('当前资料已隐藏', 'Profile is hidden')}</p><AppLink href={`/teachers/edit?id=${encodeURIComponent(String(linked))}`} className="platform-button" prefetch={false}>{t('编辑资料与公开设置', 'Edit profile and visibility')}</AppLink></div> : <>
+      {linked != null ? <div className="platform-application-profile"><p>{data.profileVisible === true ? t('已在讲师名录公开展示', 'Visible in the teacher directory') : t('当前资料已隐藏', 'Profile is hidden')}</p></div> : <>
         <p>{t('申请中的私人联系信息不会自动公开。', 'Private application contact details are not published automatically.')}</p>
-        {profiles.map(profile => <div className="platform-application-profile" key={String(profile.id)}><div><strong>{t(valueText(profile.nameZh) || valueText(profile.nameEn), valueText(profile.nameEn) || valueText(profile.nameZh))}</strong><p>{profile.isVisible === true ? t('公开', 'Public') : t('隐藏', 'Hidden')}</p></div><ActionButton action="link-instructor-profile" resourceId={String(profile.id)} payload={{ teacherEntryId: Number(profile.id) }} label={text('关联此资料', 'Link this profile')} secondary busy={busy} runAction={runAction} /></div>)}
-        <AppLink href="/teachers/edit?visibility=hidden" className="platform-button" prefetch={false}>{t('创建公开讲师资料', 'Create teaching profile')}</AppLink>
+        <p>{t('请在讲师工作台的讲师资料中确认历史资料。', 'Resolve legacy teaching profiles in the instructor workspace.')}</p>
       </>}
     </section>}
     {entity && status && <details className="platform-application-history"><MoreToggle as="summary">{t('查看原申请资料', 'View original application')}</MoreToggle><InstructorApplicationDetails entity={entity} embedded /></details>}
@@ -134,20 +149,26 @@ export function PlatformInstructorReview({ entity, params, busy, runAction }: Co
   const [note, setNote] = useState('');
   const [validation, setValidation] = useState('');
   const [decisionPending, setDecisionPending] = useState<'approved' | 'rejected' | null>(null);
+  const [selectedProfile, setSelectedProfile] = useState('');
   const noteRef = useRef<HTMLTextAreaElement>(null);
   const errorId = useId();
+  useEffect(() => {setSelectedProfile('');setNote('');setValidation('');},[entity?.id]);
   if (!entity) return null;
   if (entity.status !== 'pending') return <div className="platform-write-actions"><AppLink href="/platform/admin/teacher-applications" className="platform-button" prefetch={false}>{t('返回申请列表', 'Back to applications')}</AppLink>{typeof entity.data?.approvedInstructorId === 'string' && <AppLink href={`/platform/admin/teachers/${encodeURIComponent(entity.data.approvedInstructorId)}`} className="platform-button" prefetch={false}>{t('查看讲师资料', 'View instructor')}</AppLink>}</div>;
+  const profiles = Array.isArray(entity.data?.profiles) ? entity.data.profiles.map(record) : [];
+  const chooseProfile = entity.data?.currentTeacherEntryId == null && (profiles.length > 1 || profiles.some(profile => profile.owned === false));
   const decide = async (decision: 'approved' | 'rejected') => {
     if (decision === 'rejected' && !note.trim()) { setValidation(t('请填写拒绝原因。', 'Enter a reason for rejection.')); noteRef.current?.focus(); return; }
+    if (decision === 'approved' && chooseProfile && !selectedProfile) { setValidation(t('请先确认要关联的历史讲师资料。', 'Confirm the legacy teaching profile first.')); return; }
     setValidation('');
     if (!window.confirm(decision === 'approved' ? t('确认通过申请并开通讲师权限？', 'Approve and grant instructor access?') : t('确认拒绝这次申请？', 'Reject this application?'))) return;
     setDecisionPending(decision);
-    try { await runAction('admin-review', params.id, { decision, note: note.trim() }); }
+    try { await runAction('admin-review', params.id, { decision, note: note.trim(), ...(chooseProfile && selectedProfile ? { teacherEntryId: Number(selectedProfile) } : {}) }); }
     finally { setDecisionPending(null); }
   };
   return <section className="platform-domain-form platform-application-review">
     <h2>{t('审核决定', 'Review decision')}</h2>
+    {chooseProfile && <label className="platform-application-note"><span>{t('确认历史讲师资料归属', 'Confirm legacy teaching profile')}</span><CompactSelect label={t('选择资料', 'Select profile')} ariaLabel={t('选择历史讲师资料', 'Select legacy teaching profile')} value={selectedProfile} items={profiles.map(profile => ({ value: String(profile.id), label: t(valueText(profile.nameZh) || valueText(profile.nameEn), valueText(profile.nameEn) || valueText(profile.nameZh)) }))} onChange={setSelectedProfile} /></label>}
     <label className="platform-application-note"><span>{t('审核意见（拒绝时必填）', 'Review feedback (required for rejection)')}</span><textarea autoComplete="off" ref={noteRef} className="platform-field-control platform-field-textarea" rows={3} maxLength={10000} value={note} aria-invalid={Boolean(validation)} aria-describedby={validation ? errorId : undefined} onChange={event => { setNote(event.target.value); setValidation(''); }} /></label>
     {validation && <p id={errorId} className="platform-form-error" role="alert">{validation}</p>}
     <div className="platform-write-actions"><button className="platform-button platform-button-primary" type="button" disabled={Boolean(busy || decisionPending)} onClick={() => void decide('approved')}>{decisionPending === 'approved' ? t('正在通过…', 'Approving…') : t('通过申请', 'Approve application')}</button><button className="platform-button" type="button" disabled={Boolean(busy || decisionPending)} onClick={() => void decide('rejected')}>{decisionPending === 'rejected' ? t('正在拒绝…', 'Rejecting…') : t('拒绝申请', 'Reject application')}</button></div>

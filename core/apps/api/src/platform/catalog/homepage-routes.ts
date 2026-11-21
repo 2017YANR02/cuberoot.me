@@ -1,7 +1,7 @@
 import type { Hono } from 'hono';
 import { PLATFORM_HOME_AUTO_SECTIONS, PLATFORM_HOME_CONTENT_TYPES, isPlatformHomepageCover, type PlatformHomeAutoSection, type PlatformHomeContent, type PlatformHomeFeaturedItem, type PlatformHomepageSettings, type PlatformHomeReference, type PlatformHomeSlide } from '@cuberoot/shared/platform';
 import { requirePlatformAdmin } from '../auth.js';
-import { platformDb, platformQuery, sendMutation, withIdempotency, type PlatformDb } from '../db.js';
+import { ACTIVE_COURSE_LEARNER_PREDICATE, PUBLIC_DIRECTORY_ENTRY_PREDICATE, platformDb, platformQuery, sendMutation, withIdempotency, type PlatformDb } from '../db.js';
 import { badRequest } from '../errors.js';
 import { privateNoStore, publicCache } from '../http.js';
 import { enumField, isObject, isoTimestampField, nullableStringField, readJsonObject, stringArrayField, stringField } from '../validation.js';
@@ -25,18 +25,19 @@ async function readContent(db: PlatformDb, refs: PlatformHomeReference[] | null)
       SELECT 'course'::text AS type, c.id::text AS id, r.title_zh AS "titleZh", r.title_en AS "titleEn",
         LEFT(r.summary_zh, 480) AS "summaryZh", LEFT(r.summary_en, 480) AS "summaryEn",
         COALESCE(NULLIF(r.presentation->>'coverUrl', ''), NULLIF(r.presentation->>'mobileCoverUrl', '')) AS "coverUrl",
-        (SELECT string_agg(i.display_name_snapshot, ' · ' ORDER BY i.display_name_snapshot)
+        (SELECT string_agg(COALESCE(NULLIF(t.name_zh,''),NULLIF(t.name_en,''),i.display_name_snapshot), ' · ' ORDER BY i.display_name_snapshot)
          FROM platform_course_owners co JOIN platform_instructors i ON i.id=co.instructor_id
+         LEFT JOIN teacher_directory_entries t ON t.id=i.teacher_entry_id AND t.kind='teacher'
          WHERE co.course_id=c.id AND co.status='active' AND i.status='active') AS "instructorNames"
       FROM platform_courses c JOIN platform_course_revisions r ON r.course_id=c.id AND r.revision=c.current_revision
       WHERE c.status='published'
       UNION ALL
-      SELECT d.kind, d.id::text, d.name_zh, d.name_en, LEFT(d.description_zh, 480), LEFT(d.description_en, 480),
-        (SELECT image->>'url' FROM jsonb_array_elements(d.images) image
+      SELECT t.kind, t.id::text, t.name_zh, t.name_en, LEFT(t.description_zh, 480), LEFT(t.description_en, 480),
+        (SELECT image->>'url' FROM jsonb_array_elements(t.images) image
          WHERE NULLIF(image->>'url', '') IS NOT NULL
-         ORDER BY CASE WHEN image->>'kind' = CASE WHEN d.kind='teacher' THEN 'teaching' ELSE 'organization' END THEN 0
+         ORDER BY CASE WHEN image->>'kind' = CASE WHEN t.kind='teacher' THEN 'teaching' ELSE 'organization' END THEN 0
                        WHEN image->>'kind'='portrait' THEN 1 ELSE 2 END LIMIT 1), NULL::text
-      FROM teacher_directory_entries d WHERE d.is_visible=TRUE
+      FROM teacher_directory_entries t WHERE ${PUBLIC_DIRECTORY_ENTRY_PREDICATE}
       UNION ALL
       SELECT 'event', e.id::text, e.title_zh, e.title_en, LEFT(e.description_zh, 480), LEFT(e.description_en, 480), NULL::text, NULL::text
       FROM platform_events e WHERE e.status='published' AND e.ends_at>NOW()
@@ -54,12 +55,7 @@ async function readRankedContent(db: PlatformDb): Promise<RankedContent[]> {
       SELECT e.course_id, COUNT(DISTINCT e.user_id) AS total,
         COUNT(DISTINCT e.user_id) FILTER (WHERE e.created_at >= (date_trunc('week', NOW() AT TIME ZONE 'Asia/Shanghai') AT TIME ZONE 'Asia/Shanghai')) AS weekly
       FROM platform_course_entitlements e
-      WHERE e.status='active' AND e.user_id IS NOT NULL AND e.valid_from<=NOW()
-        AND (e.valid_until IS NULL OR e.valid_until>NOW())
-        AND (NOT EXISTS (SELECT 1 FROM platform_entitlement_ledger l WHERE l.entitlement_id=e.id)
-          OR EXISTS (SELECT 1 FROM platform_entitlement_ledger l WHERE l.entitlement_id=e.id AND l.delta_access=1
-            AND l.valid_from<=NOW() AND (l.valid_until IS NULL OR l.valid_until>NOW())
-            AND NOT EXISTS (SELECT 1 FROM platform_entitlement_ledger reversal WHERE reversal.reversal_of_ledger_id=l.id)))
+      WHERE ${ACTIVE_COURSE_LEARNER_PREDICATE}
       GROUP BY e.course_id
     ), ranked AS (
       SELECT c.id::text AS id, c.published_at, COALESCE(l.total, 0) AS total, COALESCE(l.weekly, 0) AS weekly
@@ -71,7 +67,7 @@ async function readRankedContent(db: PlatformDb): Promise<RankedContent[]> {
     UNION ALL
     (SELECT 'latest', 'course', id FROM ranked ORDER BY published_at DESC, id LIMIT 1)
     UNION ALL
-    (SELECT 'teacher', 'teacher', id::text FROM teacher_directory_entries WHERE is_visible AND is_curated AND kind='teacher' ORDER BY updated_at DESC, id LIMIT 1)
+    (SELECT 'teacher', 'teacher', id::text FROM teacher_directory_entries t WHERE ${PUBLIC_DIRECTORY_ENTRY_PREDICATE} AND is_curated AND kind='teacher' ORDER BY updated_at DESC, id LIMIT 1)
     UNION ALL
     (SELECT 'organization', 'organization', id::text FROM teacher_directory_entries WHERE is_visible AND is_curated AND kind='organization' ORDER BY updated_at DESC, id LIMIT 1)
     UNION ALL

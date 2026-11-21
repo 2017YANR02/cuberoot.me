@@ -56,7 +56,7 @@ it('uses the course catalog link and a genuine empty teacher state when the back
 
 it('shows the actual course title, lesson, cover and progress supplied by the backend', async () => {
   mocks.load.mockImplementation(async (resource: PlatformResource) => {
-    if (resource === 'account-courses') return { items: [{ id: 'course-1', title: '测试课程', data: { progressBps: 3500, presentation: { coverUrl: '/test-course.webp' } } }] };
+    if (resource === 'account-courses') return { items: [{ id: 'course-1', title: '测试课程', data: { courseStatus: 'published', progressBps: 3500, presentation: { coverUrl: '/test-course.webp' } } }] };
     if (resource === 'account-progress') return { items: [{ id: 'lesson-1', title: '测试课时', data: { courseId: 'course-1', lessonId: 'lesson-1', status: 'in_progress' } }] };
     return { items: [] };
   });
@@ -73,6 +73,48 @@ it('shows the actual course title, lesson, cover and progress supplied by the ba
   } finally { await act(async () => root.unmount()); }
 });
 
+it.each(['unlisted', 'archived', 'draft', undefined])('never recommends a course with visibility %s, even with recent progress', async courseStatus => {
+  const hiddenCourse = { id: 'hidden', title: '不公开的课程', data: { courseStatus, progressBps: 5000 } };
+  const hiddenProgress = { id: 'hidden-lesson', title: '不公开的课时', data: { courseId: 'hidden', status: 'in_progress' } };
+  const publicCourse = { id: 'public', title: '公开课', data: { courseStatus: 'published' } };
+  for (const includePublic of [true, false]) {
+    mocks.load.mockImplementation(async (resource: PlatformResource) => {
+      if (resource === 'account-courses') return { items: includePublic ? [hiddenCourse, publicCourse] : [hiddenCourse] };
+      if (resource === 'account-progress') return { items: [hiddenProgress] };
+      return { items: [] };
+    });
+    const host = document.createElement('div');
+    const root = createRoot(host);
+    try {
+      await act(async () => root.render(createElement(PlatformLanding)));
+      const learning = host.querySelector('.platform-home-resume');
+      const href = includePublic ? '/platform/courses/public' : '/platform/courses';
+      expect(learning?.getAttribute('href')).toBe(href);
+      expect(host.querySelector('.platform-home-actions .platform-button-primary')?.getAttribute('href')).toBe(href);
+      expect(learning?.textContent).not.toContain('不公开');
+      expect(learning?.textContent).toContain(includePublic ? '公开课' : '开始你的第一门课');
+    } finally { await act(async () => root.unmount()); }
+  }
+});
+
+it('verifies course visibility against the public catalog when the enrollment response is from an older backend', async () => {
+  mocks.load.mockImplementation(async (resource: PlatformResource) => {
+    if (resource === 'account-courses') return { items: [{ id: 'hidden', title: '不公开的课程' }, { id: 'public', title: '公开课' }] };
+    if (resource === 'account-progress') return { items: [{ id: 'hidden-lesson', title: '不公开的课时', data: { courseId: 'hidden', status: 'in_progress' } }] };
+    if (resource === 'courses') return { items: [{ id: 'public', title: '公开课' }], total: 1 };
+    return { items: [] };
+  });
+  const host = document.createElement('div');
+  const root = createRoot(host);
+  try {
+    await act(async () => root.render(createElement(PlatformLanding)));
+    const learning = host.querySelector('.platform-home-resume');
+    expect(learning?.getAttribute('href')).toBe('/platform/courses/public');
+    expect(learning?.textContent).toContain('公开课');
+    expect(learning?.textContent).not.toContain('不公开');
+  } finally { await act(async () => root.unmount()); }
+});
+
 it('displays the real teacher name, specialty and photo from the directory response', async () => {
   mocks.teachers.mockResolvedValue([{
     id: 42, kind: 'teacher', nameZh: '测试讲师', nameEn: 'Test Teacher',
@@ -84,7 +126,7 @@ it('displays the real teacher name, specialty and photo from the directory respo
   try {
     await act(async () => root.render(createElement(PlatformLanding)));
     const card = host.querySelector('.platform-instructor-card');
-    expect(card?.getAttribute('href')).toBe('/teachers?teacher=42');
+    expect(card?.getAttribute('href')).toBe('/platform/teachers/42');
     expect(card?.textContent).toContain('测试讲师');
     expect(card?.textContent).toContain('三阶');
     expect(card?.querySelector('img')?.getAttribute('src')).toBe('/test-teaching.webp');

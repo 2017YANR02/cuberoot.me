@@ -8,12 +8,35 @@ vi.mock('../src/platform/auth.js',()=>({requirePlatformActor:async()=>({userId:s
 import {platformLearningRoutes as app} from '../src/routes/platform_learning.js';
 import {encryptPlatformPrivateData} from '../src/platform/data_encryption.js';
 import {learningDate,learningStreak} from '../src/platform/learning_completion.js';
+import {PUBLIC_DIRECTORY_ENTRY_PREDICATE} from '../src/platform/db.js';
 const url=process.env.PLATFORM_LEARNING_TEST_DATABASE_URL;
 it('uses local calendar days and preserves consecutive streaks across DST',()=>{
  expect(learningDate('America/Los_Angeles',new Date('2026-03-08T07:59:00Z'))).toBe('2026-03-07');
  expect(learningDate('Asia/Shanghai',new Date('2026-03-08T07:59:00Z'))).toBe('2026-03-08');
  expect(learningStreak(['2026-03-07','2026-03-08','2026-03-08','2026-03-09'],'2026-03-10')).toEqual({current:3,longest:3,checkedToday:false,total:3});
  expect(learningStreak(['2026-03-07'],'2026-03-10').current).toBe(0);
+});
+it('applies course-scoped teaching-team and validity checks to both instructor learner queries', async () => {
+ const previousDb = state.db;
+ const previousUser = state.userId;
+ const unsafe = vi.fn(async (statement: string) => statement.includes('FROM platform_instructors\n    WHERE user_id') ? [{ id: randomUUID() }] : []);
+ state.db = { unsafe };
+ state.userId = 42;
+ try {
+  expect((await app.request('/instructor/dashboard')).status).toBe(200);
+  expect((await app.request('/instructor/students')).status).toBe(200);
+  const statements = unsafe.mock.calls.map(call => call[0]).filter(statement => statement.includes('JOIN platform_course_entitlements e'));
+  expect(statements).toHaveLength(2);
+  for (const statement of statements) {
+   expect(statement).toContain('teaching_owner.course_id=e.course_id AND teaching_instructor.user_id=e.user_id');
+   expect(statement).toContain('e.valid_from<=NOW()');
+   expect(statement).toContain('e.valid_until>NOW()');
+   expect(statement).toContain('reversal.reversal_of_ledger_id=l.id');
+  }
+ } finally {
+  state.db = previousDb;
+  state.userId = previousUser;
+ }
 });
 describe.skipIf(!url)('learning HTTP routes with isolated PostgreSQL',()=>{
  const schema=`platform_learning_${randomUUID().replaceAll('-','')}`;
@@ -29,9 +52,8 @@ describe.skipIf(!url)('learning HTTP routes with isolated PostgreSQL',()=>{
   process.env.PLATFORM_DATA_ENCRYPTION_KEY_V1=Buffer.alloc(32,47).toString('base64');
   db=postgres(url!,{max:4,onnotice:()=>{},connection:{search_path:schema}});state.db=db;
   await db.unsafe(`CREATE FUNCTION trg_set_updated_at() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN NEW.updated_at=NOW(); RETURN NEW; END $$;
-    CREATE TABLE app_users(id BIGSERIAL PRIMARY KEY, display_name TEXT NOT NULL);
-    CREATE TABLE teacher_directory_entries(id BIGINT PRIMARY KEY);`);
-  for(const file of ['0066_forum.sql','0074_forum_review.sql','0167_platform_core.sql','0219_platform_lesson_grants.sql','0259_platform_learning_completion.sql']) {
+    CREATE TABLE app_users(id BIGSERIAL PRIMARY KEY, display_name TEXT NOT NULL,wca_id VARCHAR(20) UNIQUE);`);
+  for(const file of ['0066_forum.sql','0074_forum_review.sql','0126_teacher_directory.sql','0128_teacher_directory_visibility.sql','0130_teacher_directory_contacts.sql','0141_teacher_directory_images.sql','0167_platform_core.sql','0219_platform_lesson_grants.sql','0259_platform_learning_completion.sql']) {
     await db.unsafe(readFileSync(new URL(`../migrations/${file}`,import.meta.url),'utf8'));
   }
   await db.begin(async tx=>{
@@ -59,7 +81,7 @@ describe.skipIf(!url)('learning HTTP routes with isolated PostgreSQL',()=>{
   await json(await write('/me/certificates',{courseId:course}),409);
   await json(await write(`/me/progress/${lesson}`,{progressBps:10000,positionSeconds:90,status:'completed'},'PUT'));
   await json(await write(`/me/progress/${lesson}`,{progressBps:10000,positionSeconds:90,status:'completed'},'PUT'));
-  const courses=await json(await app.request(`/me/courses?courseId=${course}`));expect(Number(courses.items[0].progressBps)).toBe(5000);
+  const courses=await json(await app.request(`/me/courses?courseId=${course}`));expect(Number(courses.items[0].progressBps)).toBe(5000);expect(courses.items[0].courseStatus).toBe('published');
   await json(await write('/me/certificates',{courseId:course}),409);
   await json(await write(`/me/progress/${otherLesson}`,{progressBps:10000,status:'completed'},'PUT'));
   const issued=await json(await write('/me/certificates',{courseId:course}),201);const repeated=await json(await write('/me/certificates',{courseId:course}));expect(repeated).toEqual(issued);
@@ -105,6 +127,16 @@ describe.skipIf(!url)('learning HTTP routes with isolated PostgreSQL',()=>{
   const rewards=await db.unsafe("SELECT SUM(delta_points)::int points FROM platform_point_ledger WHERE user_id=$1 AND entry_type='achievement'",[user]);await json(await write('/me/badges/refresh',{}));expect(await db.unsafe("SELECT SUM(delta_points)::int points FROM platform_point_ledger WHERE user_id=$1 AND entry_type='achievement'",[user])).toEqual(rewards);
  });
 
+ it.each(['unlisted', 'draft', 'archived'])('reports %s course visibility without deleting learning history', async status => {
+  state.userId = first;
+  await db.unsafe("UPDATE platform_courses SET status=$2,archived_at=CASE WHEN $2::varchar='archived' THEN NOW() END WHERE id=$1", [course, status]);
+  try {
+   const courses = await json(await app.request('/me/courses'));
+   expect(courses.items).toContainEqual(expect.objectContaining({ id: course, courseStatus: status, status: 'active' }));
+  } finally {
+   await db.unsafe("UPDATE platform_courses SET status='published',archived_at=NULL WHERE id=$1", [course]);
+  }
+ });
  it.each(['draft', 'archived'])('conceals %s course lessons from active learning routes', async status => {
   await db.unsafe("UPDATE platform_courses SET status=$2,archived_at=CASE WHEN $2::varchar='archived' THEN NOW() END WHERE id=$1", [course, status]);
   try {
@@ -125,5 +157,85 @@ describe.skipIf(!url)('learning HTTP routes with isolated PostgreSQL',()=>{
    await db.unsafe("UPDATE platform_courses SET status='published',archived_at=NULL WHERE id=$1", [course]);
    await db.unsafe("UPDATE platform_lessons SET access_scope='entitled' WHERE id=$1", [lesson]);
   }
+ });
+ it('counts only effective learners, excludes each course teaching team and deduplicates across courses', async () => {
+  const [teacherA, teacherB, learner, invalid] = (await db.unsafe(
+   "INSERT INTO app_users(display_name) VALUES('Teacher A'),('Teacher B'),('Learner'),('Invalid learner') RETURNING id"
+  )).map(row => Number(row.id));
+  const [idA, idB] = [randomUUID(), randomUUID()];
+  const [courseA, courseB, courseC] = [randomUUID(), randomUUID(), randomUUID()];
+  try {
+   await db.begin(async tx => {
+    await tx.unsafe("INSERT INTO platform_instructors(id,user_id,display_name_snapshot) VALUES($1,$2,'Teacher A'),($3,$4,'Teacher B')", [idA, teacherA, idB, teacherB]);
+    for (const id of [courseA, courseB, courseC]) {
+     await tx.unsafe("INSERT INTO platform_courses(id,slug,status,current_revision,published_at) VALUES($1,$2,'published',1,NOW())", [id, `learners-${id}`]);
+     await tx.unsafe("INSERT INTO platform_course_revisions(course_id,revision,title_en,status,content_hash,published_at) VALUES($1,1,'Learner stats fixture','published',decode(repeat('ab',32),'hex'),NOW())", [id]);
+    }
+    await tx.unsafe("INSERT INTO platform_course_owners(course_id,instructor_id,role) VALUES($1,$4,'owner'),($1,$5,'co_instructor'),($2,$4,'owner'),($3,$5,'owner')", [courseA, courseB, courseC, idA, idB]);
+    for (const [user, id] of [[teacherA, courseA], [teacherA, courseB], [teacherA, courseC], [teacherB, courseA], [teacherB, courseB], [learner, courseA], [learner, courseB]]) {
+     await tx.unsafe("INSERT INTO platform_course_entitlements(user_id,course_id,valid_from) VALUES($1,$2,NOW())", [user, id]);
+    }
+    await tx.unsafe("INSERT INTO platform_course_entitlements(user_id,course_id,status,valid_from,valid_until) VALUES($1,$2,'active',NOW()-INTERVAL '2 days',NOW()-INTERVAL '1 day'),($1,$3,'revoked',NOW()-INTERVAL '1 day',NULL),($1,$4,'active',NOW()+INTERVAL '1 day',NULL)", [invalid, courseA, courseB, courseC]);
+   });
+   state.userId = teacherA;
+   const dashboardA = await json(await app.request('/instructor/dashboard'));
+   expect(dashboardA.studentCount).toBe(2);
+   const studentsA = await json(await app.request('/instructor/students?page=1&pageSize=20'));
+   expect(studentsA.total).toBe(3);
+   expect(studentsA.items.map((item: { userId: string; courseId: string }) => [Number(item.userId), item.courseId])).toEqual(expect.arrayContaining([
+    [learner, courseA], [learner, courseB], [teacherB, courseB],
+   ]));
+   await json(await write('/instructor/certificates',{courseId:courseA,userId:invalid,recipientName:'Invalid'}),400);
+   await json(await write('/instructor/certificates',{courseId:courseA,userId:teacherA,recipientName:'Teacher A'}),400);
+   const granted=await json(await write('/instructor/certificates',{courseId:courseA,userId:learner,recipientName:'Learner'}),201);
+   const repeated=await json(await write('/instructor/certificates',{courseId:courseA,userId:learner,recipientName:'Learner'}),200);
+   expect(repeated.id).toBe(granted.id);expect(repeated.verificationCode).toBe(granted.verificationCode);
+   const updatedStudents=await json(await app.request('/instructor/students?page=1&pageSize=20'));
+   expect(updatedStudents.items.find((item:{userId:string;courseId:string})=>Number(item.userId)===learner&&item.courseId===courseA).hasCertificate).toBe(true);
+   state.userId = teacherB;
+   const dashboardB = await json(await app.request('/instructor/dashboard'));
+   expect(dashboardB.studentCount).toBe(2);
+   const studentsB = await json(await app.request('/instructor/students?page=1&pageSize=20'));
+   expect(studentsB.total).toBe(2);
+   expect(studentsB.items.map((item: { userId: string; courseId: string }) => [Number(item.userId), item.courseId])).toEqual(expect.arrayContaining([[learner, courseA], [teacherA, courseC]]));
+  } finally {
+   state.userId = first;
+  }
+ });
+ it('migrates existing instructors without deleting profiles, guessing ambiguous ownership or granting new roles', async () => {
+  const [existing,missing,ambiguous,unverified,suspended] = (await db.unsafe(
+   "INSERT INTO app_users(display_name) VALUES('Existing'),('Missing'),('Ambiguous'),('Unverified'),('Suspended') RETURNING id"
+  )).map(row=>Number(row.id));
+  const [existingInstructor,missingInstructor,ambiguousInstructor,suspendedInstructor]=[randomUUID(),randomUUID(),randomUUID(),randomUUID()];
+  const profile=async(userId:number,name:string,visible:boolean,kind='teacher')=>Number((await db.unsafe(
+   "INSERT INTO teacher_directory_entries(kind,name_zh,description_zh,website,is_visible,owner_key,owner_name) VALUES($1,$2,'Introduction','https://example.test',$3,$4,$2) RETURNING id",
+   [kind,name,visible,'u'+userId]
+  ))[0].id);
+  const hidden=await profile(existing,'Existing profile',false);
+  await profile(ambiguous,'Choice A',true);await profile(ambiguous,'Choice B',true);
+  const legacy=await profile(unverified,'Unverified profile',true);
+  const school=await profile(unverified,'School',true,'organization');
+  const suspendedProfile=await profile(suspended,'Suspended profile',true);
+  await db.unsafe("INSERT INTO platform_instructors(id,user_id,display_name_snapshot,status) VALUES($1,$2,'Existing','active'),($3,$4,'Missing','active'),($5,$6,'Ambiguous','active'),($7,$8,'Suspended','suspended')",[existingInstructor,existing,missingInstructor,missing,ambiguousInstructor,ambiguous,suspendedInstructor,suspended]);
+  await db.unsafe(readFileSync(new URL('../migrations/0348_platform_unified_instructor_profiles.sql',import.meta.url),'utf8'));
+  const migrated=await db.unsafe("SELECT i.id::text,i.teacher_entry_id,t.is_visible FROM platform_instructors i LEFT JOIN teacher_directory_entries t ON t.id=i.teacher_entry_id WHERE i.id=ANY($1::uuid[])",[[existingInstructor,missingInstructor,ambiguousInstructor,suspendedInstructor]]);
+  const byId=(id:string)=>migrated.find(row=>row.id===id);
+  expect(Number(byId(existingInstructor)?.teacher_entry_id)).toBe(hidden);
+  expect(byId(existingInstructor)?.is_visible).toBe(false);
+  expect(byId(missingInstructor)?.teacher_entry_id).not.toBeNull();
+  expect(byId(missingInstructor)?.is_visible).toBe(false);
+  expect(byId(ambiguousInstructor)?.teacher_entry_id).toBeNull();
+  expect(Number(byId(suspendedInstructor)?.teacher_entry_id)).toBe(suspendedProfile);
+  expect(await db.unsafe('SELECT id FROM platform_instructors WHERE user_id=$1',[unverified])).toHaveLength(0);
+  const created=Number(byId(missingInstructor)?.teacher_entry_id);
+  await db.unsafe("UPDATE teacher_directory_entries SET description_zh='Publishable profile',is_visible=TRUE WHERE id=$1",[created]);
+  const publicEntries=await db.unsafe('SELECT t.id FROM teacher_directory_entries t WHERE '+PUBLIC_DIRECTORY_ENTRY_PREDICATE);
+  const visibleIds=publicEntries.map(row=>Number(row.id));
+  expect(visibleIds).toContain(school);
+  expect(visibleIds).toContain(created);
+  expect(visibleIds).not.toContain(legacy);
+  expect(visibleIds).not.toContain(hidden);
+  expect(visibleIds).not.toContain(suspendedProfile);
+  expect((await db.unsafe("SELECT is_visible FROM teacher_directory_entries WHERE id=$1",[legacy]))[0].is_visible).toBe(true);
  });
 });

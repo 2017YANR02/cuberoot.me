@@ -57,8 +57,11 @@ it('serves public references only and ranks from distinct active learners and pu
   expect((await response.json()).items.map((item: PlatformHomeContent) => item.id)).toEqual([course.id, school.id, event.id]);
   const sql = state.query.mock.calls.map(call => call[0]).join('\n');
   expect(sql).toContain('COUNT(DISTINCT e.user_id)');
+  expect(sql).toContain('teaching_owner.course_id=e.course_id AND teaching_instructor.user_id=e.user_id');
+  expect(sql).toContain("teaching_owner.status='active' AND teaching_instructor.status='active'");
   expect(sql).toContain("AT TIME ZONE 'Asia/Shanghai'");
-  expect(sql).toContain('d.is_visible=TRUE');
+  expect(sql).toContain('t.is_visible=TRUE');
+  expect(sql).toContain("directory_instructor.status='active'");
   expect(sql).toContain("e.status='published' AND e.ends_at>NOW()");
   expect(sql).not.toContain('FROM organizations');
 });

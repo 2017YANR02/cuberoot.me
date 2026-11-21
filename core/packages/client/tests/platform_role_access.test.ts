@@ -6,7 +6,7 @@ import type { PlatformActionId, PlatformActionResult } from '@/lib/platform-type
 
 const state = vi.hoisted(() => ({
   user: null as null | { uid: number }, admin: false, load: vi.fn(), execute: vi.fn(), learning: vi.fn(), entry: vi.fn((path: string) => path), t: (zh: string) => zh,
-  myDirectory: vi.fn(), replace: vi.fn(), prepareImage: vi.fn(), uploadImage: vi.fn(), managedQuizzes: vi.fn(), createUpload: vi.fn(), chunk: vi.fn(),
+  myDirectory: vi.fn(), updateDirectory: vi.fn(), createDirectory: vi.fn(), replace: vi.fn(), prepareImage: vi.fn(), uploadImage: vi.fn(), managedQuizzes: vi.fn(), createUpload: vi.fn(), chunk: vi.fn(),
   action: null as null | ((action: PlatformActionId, id?: string, payload?: Record<string, unknown>) => Promise<PlatformActionResult | undefined>),
 }));
 vi.mock('@/hooks/useT', () => ({ useT: () => state.t }));
@@ -21,7 +21,8 @@ vi.mock('nuqs', async original => {
 });
 vi.mock('@/lib/platform-gateway', async original => ({ ...await original<object>(), loadPlatformResource: state.load, executePlatformAction: state.execute, loadPlatformManagedQuizzes: state.managedQuizzes }));
 vi.mock('@/lib/platform-learning', async original => ({ ...await original<object>(), platformLearningRequest: state.learning }));
-vi.mock('@/lib/teacher-directory-api', () => ({ fetchMyTeacherDirectory: state.myDirectory }));
+vi.mock('@/components/platform/InstructorPayoutSettings', () => ({ InstructorPayoutSettings: () => createElement('div', {}, '收款方式') }));
+vi.mock('@/lib/teacher-directory-api', () => ({ fetchMyTeacherDirectory: state.myDirectory, updateTeacherDirectoryEntry: state.updateDirectory, createTeacherDirectoryEntry: state.createDirectory, deleteTeacherDirectoryEntry: vi.fn() }));
 vi.mock('@/lib/image-upload', () => ({ prepareImageUpload: state.prepareImage, uploadImageBlob: state.uploadImage }));
 vi.mock('@/lib/drive-api', async original => ({ ...await original<object>(), createDriveUpload: state.createUpload, uploadDriveChunk: state.chunk }));
 vi.mock('@/components/AppLink', () => ({ default: ({ children, href }: { children: ReactNode; href: string }) => createElement('a', { href }, children) }));
@@ -52,7 +53,7 @@ vi.mock('@/components/platform/OnlineCompetitionPreview', () => ({ OnlineCompeti
 import { PlatformRouteView } from '@/components/platform/PlatformRouteView';
 import { PlatformLearningPath } from '@/components/platform/PlatformLearningWorkspace';
 import { PLATFORM_ROUTES } from '@/lib/platform-routes';
-import { PlatformNavigationContext, PlatformSearchContext, type PlatformSearchBinding } from '@/lib/platform-navigation-context';
+import { PlatformNavigationContext, PlatformInstructorAccessRefreshContext, PlatformSearchContext, type PlatformSearchBinding } from '@/lib/platform-navigation-context';
 import { PlatformScopedSearch } from '@/components/platform/PlatformScopedSearch';
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
@@ -86,7 +87,7 @@ const currentCourseStep = () => host.querySelector('.platform-wizard-progress [a
 it('combines real catalog facets with the masthead and applies or resets them together', async () => {
   state.user = null;
   state.load.mockResolvedValue({ items: [
-    { id: 'course-1', title: '三阶入门课程', data: { presentation: { tags: ['puzzle:333', 'topic:beginner'] } } },
+    { id: 'course-1', title: '三阶入门课程', data: { presentation: { tags: ['puzzle:333', 'topic:beginner'] }, instructors: [{ displayName: 'legacy', displayNameZh: '示例讲师', displayNameEn: 'Example teacher' }], lessonCount: 3 } },
     { id: 'course-2', title: '二阶进阶课程', data: { presentation: { tags: ['puzzle:222', 'topic:speed'] } } },
   ] });
   function Embedded() {
@@ -99,6 +100,9 @@ it('combines real catalog facets with the masthead and applies or resets them to
   expect(host.querySelector('.platform-course-toolbar')).toBeNull();
   expect(host.querySelector('.platform-filter-panel')).toBeNull();
   expect(host.querySelectorAll('.platform-course-card')).toHaveLength(2);
+  expect(host.querySelector('.platform-course-card-byline')?.textContent).toContain('示例讲师');
+  expect(host.querySelector('.platform-course-card-byline')?.textContent).toContain('3 课时');
+  expect(host.querySelector('.platform-course-card-byline')?.textContent).not.toContain('legacy');
   await openFilters();
   expect(host.querySelector('.platform-filter-panel')?.textContent).toContain('全部项目');
   expect(host.querySelector('.platform-filter-panel')?.textContent).toContain('全部学习方向');
@@ -544,7 +548,8 @@ it('locks pending applications, restores rejected drafts and opens the approved 
   await act(async () => [...host.querySelectorAll('button')].find(button => button.textContent === '修改并重新申请')!.click());
   expect([...host.querySelectorAll('textarea')].some(textarea => textarea.value === '教学经历样例')).toBe(true);
   await show('approved', { instructorStatus: 'active', teacherEntryId: 42, profileVisible: false });
-  expect(host.querySelector('a[href="/platform/instructor/courses"]')?.textContent).toBe('发布课程');
+  expect(host.querySelector('a[href="/platform/instructor"]')).toBeNull();
+  expect(host.textContent).toContain('注销讲师身份');
   expect(host.textContent).toContain('当前资料已隐藏');
   expect(host.querySelector('form')).toBeNull();
 });
@@ -568,17 +573,57 @@ it('lets archived instructors apply again, preserves pending review and blocks s
   expect(host.textContent).toContain('讲师权限已暂停');
   expect(host.querySelector('form')).toBeNull();
   await show('approved', 'active');
-  expect(host.querySelector('a[href="/platform/instructor/courses"]')?.textContent).toBe('发布课程');
+  expect(host.querySelector('a[href="/platform/instructor"]')).toBeNull();
+  expect(host.textContent).toContain('注销讲师身份');
+});
+
+it('confirms self-archival, refreshes the workspace entry and shows the reapplication state', async () => {
+  const refresh = vi.fn();
+  const active = { id: 'application', title: 'application', status: 'approved', data: { instructorStatus: 'active' } };
+  state.load.mockResolvedValue({ items: [active] });
+  state.execute.mockImplementationOnce(async () => {
+    state.load.mockResolvedValue({ items: [{ ...active, data: { instructorStatus: 'archived' } }] });
+    return { ok: true };
+  });
+  const confirm = vi.spyOn(window, 'confirm').mockReturnValue(false);
+  try {
+    await act(async () => root.render(createElement(PlatformNavigationContext, { value: true },
+      createElement(PlatformInstructorAccessRefreshContext, { value: refresh }, createElement(PlatformRouteView, {
+        definition: PLATFORM_ROUTES.find(route => route.id === 'teacher-apply')!, params: {},
+      })))));
+    await act(async () => { await vi.dynamicImportSettled(); });
+    const button = [...host.querySelectorAll('button')].find(item => item.textContent === '注销讲师身份')!;
+    await act(async () => button.click());
+    expect(state.execute).not.toHaveBeenCalled();
+    expect(refresh).not.toHaveBeenCalled();
+    confirm.mockReturnValue(true);
+    await act(async () => button.click());
+    expect(state.execute).toHaveBeenCalledWith(expect.objectContaining({ id: 'teacher-apply' }), expect.objectContaining({ action: 'archive-instructor', resourceId: undefined }));
+    expect(refresh).toHaveBeenCalledTimes(1);
+    expect(host.textContent).toContain('讲师身份已结束');
+    expect(host.textContent).not.toContain('注销讲师身份');
+  } finally { confirm.mockRestore(); }
 });
 
 it('shows the actual owned teaching profile within the instructor workspace and denies inactive accounts', async () => {
-  state.myDirectory.mockReset().mockResolvedValue([{ id: 42, kind: 'teacher', nameZh: '演示讲师', nameEn: 'Demo instructor', locationZh: '上海', locationEn: 'Shanghai', specialtiesZh: ['三阶'], specialtiesEn: ['3x3'], teachingMode: 'both', descriptionZh: '教学履历', descriptionEn: '', contacts: {}, website: '', isVisible: false, images: [] }]);
+  const profile = { id: 42, kind: 'teacher', nameZh: '演示讲师', nameEn: 'Demo instructor', locationZh: '上海', locationEn: 'Shanghai', specialtiesZh: ['三阶'], specialtiesEn: ['3x3'], teachingMode: 'both', descriptionZh: '教学履历', descriptionEn: '', contacts: { wechat: 'demo' }, website: '', wcaId: '', isVisible: false, images: [{ id: 1, url: '/test-photo.png', kind: 'portrait', captionZh: '形象照', captionEn: '' }] };
+  state.myDirectory.mockReset().mockResolvedValue([profile]);
   state.load.mockResolvedValue({ items: [{ id: 'fixture', title: 'fixture', data: { instructorStatus: 'active', instructorDisplayName: '示例账号', teacherEntryId: 42 } }] });
   await renderInShell('instructor-profile');
   await act(async () => { await vi.dynamicImportSettled(); });
   expect(host.textContent).toContain('演示讲师');
   expect(host.textContent).toContain('教学履历');
   expect(host.textContent).toContain('仅自己可见');
+  expect(host.querySelector('form.directory-form')).not.toBeNull();
+  expect(host.querySelector('.directory-preview-photo')?.getAttribute('src')).toBe('/test-photo.png');
+  expect([...host.querySelectorAll('form.directory-form input')].some(input => (input as HTMLInputElement).value === 'demo')).toBe(true);
+  state.updateDirectory.mockResolvedValue({ ...profile, nameZh: '更新讲师' });
+  await fillCourseField('中文名称', '更新讲师');
+  await act(async () => host.querySelector('form.directory-form')!.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true })));
+  expect(state.updateDirectory).toHaveBeenCalledWith(42, expect.objectContaining({ nameZh: '更新讲师', contacts: { wechat: 'demo' }, images: profile.images }));
+  expect(state.createDirectory).not.toHaveBeenCalled();
+  expect(host.textContent).toContain('个人主页已保存');
+  expect(host.querySelector('form.directory-form')).not.toBeNull();
   expect(host.querySelector('a[href="/platform/teachers/apply"]')).toBeNull();
   state.myDirectory.mockClear();
   state.load.mockResolvedValue({ items: [{ id: 'fixture', title: 'fixture', data: { instructorStatus: 'archived' } }] });
@@ -587,6 +632,64 @@ it('shows the actual owned teaching profile within the instructor workspace and 
   expect(host.textContent).toContain('当前账号没有可用的讲师权限');
   expect(host.textContent).not.toContain('演示讲师');
   expect(state.myDirectory).not.toHaveBeenCalled();
+});
+
+it('automatically connects a uniquely owned legacy profile and does not offer editing for ambiguous records', async () => {
+  const profile = { id: 42, kind: 'teacher', nameZh: '历史资料', nameEn: '', locationZh: '', locationEn: '', specialtiesZh: [], specialtiesEn: [], teachingMode: 'both', descriptionZh: '教学简介', descriptionEn: '', contacts: {}, website: '', wcaId: '', isVisible: false, images: [] };
+  state.myDirectory.mockResolvedValue([profile]);
+  const active = { id: 'fixture', title: 'fixture', data: { instructorStatus: 'active', directoryProfiles: [{ id: 42 }] } };
+  state.load.mockResolvedValue({ items: [active] });
+  state.execute.mockImplementationOnce(async () => {
+    state.load.mockResolvedValue({ items: [{ ...active, data: { ...active.data, teacherEntryId: 42 } }] });
+    return { ok: true };
+  });
+  await renderInShell('instructor-profile');
+  await act(async () => { await vi.dynamicImportSettled(); });
+  expect(host.textContent).not.toContain('接入已有个人主页');
+  expect(state.execute).toHaveBeenCalledWith(expect.objectContaining({ id: 'instructor-profile' }), expect.objectContaining({ action: 'link-instructor-profile', payload: { teacherEntryId: 42 } }));
+  expect(host.querySelector('form.directory-form')).not.toBeNull();
+  state.myDirectory.mockResolvedValue([profile, { ...profile, id: 43 }]);
+  state.load.mockResolvedValue({ items: [{ ...active, data: { instructorStatus: 'active', directoryProfiles: [{ id: 42 }, { id: 43 }] } }] });
+  await renderInShell('instructor-profile', { id: 'ambiguous' });
+  await act(async () => { await vi.dynamicImportSettled(); });
+  expect(host.querySelector('form.directory-form')).toBeNull();
+  expect(host.textContent).toContain('请联系管理员');
+  state.myDirectory.mockResolvedValue([profile]);
+  state.load.mockResolvedValue({ items: [{ ...active, data: { instructorStatus: 'active', instructorProfileKnown: false } }] });
+  await renderInShell('instructor-profile', { id: 'legacy-api' });
+  await act(async () => { await vi.dynamicImportSettled(); });
+  expect(host.querySelector('form.directory-form')).not.toBeNull();
+  expect(host.textContent).not.toContain('接入已有个人主页');
+});
+
+it('automatically creates a hidden homepage for an active instructor with no legacy profile', async () => {
+  const active = { id: 'fixture', title: 'fixture', data: { instructorStatus: 'active', teacherEntryId: null, directoryProfiles: [] } };
+  state.myDirectory.mockResolvedValue([]);
+  state.load.mockResolvedValue({ items: [active] });
+  state.execute.mockImplementationOnce(async () => {
+    state.myDirectory.mockResolvedValue([{ id: 42, kind: 'teacher', nameZh: '新讲师', nameEn: '', locationZh: '', locationEn: '', specialtiesZh: [], specialtiesEn: [], teachingMode: 'both', descriptionZh: '', descriptionEn: '', contacts: {}, website: '', wcaId: '', isVisible: false, images: [] }]);
+    state.load.mockResolvedValue({ items: [{ ...active, data: { ...active.data, teacherEntryId: 42 } }] });
+    return { ok: true, teacherEntryId: 42 };
+  });
+  await renderInShell('instructor-profile');
+  await act(async () => { await vi.dynamicImportSettled(); });
+  expect(host.textContent).not.toContain('创建个人主页');
+  expect(host.textContent).not.toContain('请联系管理员');
+  expect(state.execute).toHaveBeenCalledTimes(1);
+  expect(state.execute).toHaveBeenCalledWith(expect.objectContaining({ id: 'instructor-profile' }), expect.objectContaining({ action: 'initialize-instructor-profile' }));
+  expect(host.querySelector('form.directory-form')).not.toBeNull();
+  expect(host.textContent).toContain('仅自己可见');
+});
+
+it('does not continuously retry a failed automatic profile repair', async () => {
+  state.myDirectory.mockResolvedValue([]);
+  state.load.mockResolvedValue({ items: [{ id: 'fixture', title: 'fixture', data: { instructorStatus: 'active', teacherEntryId: null, directoryProfiles: [] } }] });
+  state.execute.mockRejectedValueOnce(new Error('Profile unavailable'));
+  await renderInShell('instructor-profile');
+  await act(async () => { await vi.dynamicImportSettled(); });
+  expect(state.execute).toHaveBeenCalledTimes(1);
+  expect(host.textContent).toContain('个人主页暂时无法同步');
+  expect(host.querySelector('form.directory-form')).toBeNull();
 });
 
 it('blocks guests and ordinary accounts before requesting admin resources, then permits admin loading', async () => {
@@ -605,15 +708,48 @@ it('blocks guests and ordinary accounts before requesting admin resources, then 
 });
 
 it('shows instructor data only after a successful instructor response and handles denial', async () => {
-  state.learning.mockResolvedValueOnce({ totals: {}, courses: [], months: [], payouts: [], recent: [] });
+  state.learning.mockResolvedValueOnce({ courseCount: 3, studentCount: 5, months: [{month:'2026-10',currency:'CNY',netAmountMinor:1000},{month:'2026-11',currency:'CNY',netAmountMinor:2500},{month:'2026-11',currency:'USD',netAmountMinor:3500}], payouts: [], recent: [{id:'preview-order',studentName:'示例学员',currency:'CNY',amountMinor:2500,createdAt:'2026-11-21T00:00:00Z'}] });
   await render('instructor');
   expect(state.learning).toHaveBeenCalledWith('/instructor/dashboard', undefined, 'GET', expect.any(AbortSignal));
-  expect(host.textContent).toContain('月度收入');
+  expect(host.textContent).toContain('课程管理');
+  expect(host.querySelector('.platform-instructor-metrics')?.textContent).toContain('2026-11');
+  expect(host.querySelector('.platform-instructor-metrics')?.textContent).not.toContain('2026-10');
+  expect(host.querySelector('.platform-instructor-activity-list')?.textContent).toContain('示例学员');
+  expect([...host.querySelectorAll('.platform-instructor-task-grid a')].map(link=>link.getAttribute('href'))).toEqual(['/platform/instructor/courses','/platform/instructor/students','/platform/instructor/earnings','/platform/instructor/profile']);
+  expect(host.textContent).not.toContain('月度收入');
   state.user = { uid: 2 };
   state.learning.mockRejectedValueOnce(new Error('Instructor access required'));
   await render('instructor');
   expect(host.textContent).toContain('Instructor access required');
-  expect(host.textContent).not.toContain('月度收入');
+  expect(host.textContent).not.toContain('课程管理');
+});
+
+it('opens the earnings task with financial details and payout controls, without repeating the workspace overview', async () => {
+  state.learning.mockResolvedValueOnce({ courseCount:3,studentCount:5,months:[],payouts:[],recent:[] });
+  await render('instructor-earnings');
+  expect(host.textContent).toContain('月度收入');
+  expect(host.textContent).toContain('收款方式');
+  expect(host.querySelector('.platform-instructor-task-grid')).toBeNull();
+  expect(host.textContent).not.toContain('有效学员');
+  expect(host.textContent).toContain('暂无收入记录');
+  expect(host.textContent).toContain('暂无交易记录');
+});
+
+it('shows learner progress, retries certificate issuance with the same operation key, and prevents another issuance after success', async () => {
+  state.learning.mockResolvedValueOnce({ items: [{ id:'entitlement',userId:'12',title:'测试学员',courseId:'course',courseTitle:'测试课程',status:'active',completedLessons:2,totalLessons:3,hasCertificate:false }], total:1 });
+  state.learning.mockRejectedValueOnce(new Error('Connection interrupted'));
+  state.learning.mockResolvedValueOnce({ id:'certificate',verificationCode:'verification-code' });
+  await render('instructor-students');
+  expect(host.querySelector('progress')?.value).toBe(2);
+  const issue=[...host.querySelectorAll('button')].find(button=>button.textContent==='签发证书')!;
+  await act(async()=>issue.click());
+  expect(host.textContent).toContain('签发结果未确认');
+  await act(async()=>[...host.querySelectorAll('button')].find(button=>button.textContent==='重试签发')!.click());
+  const writes=state.learning.mock.calls.filter(args=>args[0]==='/instructor/certificates');
+  expect(writes).toHaveLength(2);expect(writes[0][4]).toBe(writes[1][4]);
+  expect(host.textContent).toContain('已签发证书');
+  expect(host.querySelector('a[href="/platform/cert/verification-code"]')).not.toBeNull();
+  expect([...host.querySelectorAll('button')].some(button=>button.textContent==='签发证书')).toBe(false);
 });
 
 it('does not continue a former account redemption after its response arrives', async () => {

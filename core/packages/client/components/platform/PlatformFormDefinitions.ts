@@ -4,6 +4,10 @@ import { SHOP_CATEGORIES, SHOP_CATEGORY } from '@/lib/shop';
 import { type FieldSpec, type DomainFormSpec, type ContractFields } from './PlatformActionTypes';
 
 interface PlatformInstructorApplicationPayload {
+  publicName: string;
+  publicNameEn?: string;
+  publicBio: string;
+  profileVisible: boolean;
   experience: string;
   specialties: string[];
   contact: string;
@@ -135,11 +139,15 @@ const PATH_FIELDS = [
 ] satisfies ContractFields<PlatformPathWrite>;
 
 export const INSTRUCTOR_APPLICATION_FIELDS = [
-  field('city', '所在城市', 'City', { sectionTitle: text('授课信息', 'Teaching details'), required: true, maxLength: 160 }),
-  field('teachingMode', '授课方式', 'Teaching mode', { kind: 'select', required: true, defaultValue: 'both', options: [option('online', '线上', 'Online'), option('in_person', '线下', 'In person'), option('both', '线上及线下', 'Both')] }),
-  field('specialties', '擅长方向（每行一项）', 'Specialties (one per line)', { sectionTitle: text('教学能力', 'Teaching experience'), kind: 'lines', rows: 2, required: true }),
-  field('experience', '教学经历', 'Teaching experience', { kind: 'textarea', rows: 4, required: true, maxLength: 20000 }),
-  field('achievements', '教学成果、比赛成绩或作品链接（选填）', 'Teaching achievements, results or portfolio links (optional)', { kind: 'textarea', rows: 2, maxLength: 5000 }),
+  field('publicName', '公开姓名（也用于课程作者）', 'Public name (also used as course author)', { sectionTitle: text('讲师公开资料', 'Public teaching profile'), required: true, maxLength: 160 }),
+  field('publicNameEn', '英文姓名（选填）', 'English name (optional)', { maxLength: 160 }),
+  field('publicBio', '公开教学简介', 'Public teaching biography', { kind: 'textarea', rows: 4, required: true, maxLength: 2000 }),
+  field('profileVisible', '审核通过后在讲师名录公开展示', 'Show in the directory after approval', { kind: 'boolean', defaultValue: false }),
+  field('city', '所在城市（公开）', 'City (public)', { sectionTitle: text('授课信息', 'Teaching details'), required: true, maxLength: 160 }),
+  field('teachingMode', '授课方式（公开）', 'Teaching mode (public)', { kind: 'select', required: true, defaultValue: 'both', options: [option('online', '线上', 'Online'), option('in_person', '线下', 'In person'), option('both', '线上及线下', 'Both')] }),
+  field('specialties', '擅长方向（公开，每行一项）', 'Specialties (public, one per line)', { kind: 'lines', rows: 2, required: true }),
+  field('experience', '教学经历（审核专用）', 'Teaching experience (review only)', { sectionTitle: text('私密审核资料', 'Private review details'), kind: 'textarea', rows: 4, required: true, maxLength: 20000 }),
+  field('achievements', '教学成果、比赛成绩或作品链接（审核用，选填）', 'Teaching achievements, results or portfolio links (optional, review only)', { kind: 'textarea', rows: 2, maxLength: 5000 }),
   field('contact', '审核联系信息（不公开）', 'Contact for review (private)', { sectionTitle: text('联系方式', 'Contact'), kind: 'textarea', rows: 2, required: true, maxLength: 500 }),
 ] satisfies ContractFields<PlatformInstructorApplicationPayload>;
 
@@ -192,11 +200,7 @@ export const ADMIN_FORMS: Readonly<Record<string, DomainFormSpec>> = {
     field('bioEn', '英文简介', 'English biography', { kind: 'textarea', rows: 6, maxLength: 50000 }),
   ] },
   'admin-teacher': { title: text('讲师资料', 'Instructor profile'), action: 'admin-save', fields: [
-    field('displayName', '显示名称', 'Display name', { required: true, maxLength: 200 }),
-    field('teacherEntryId', '公开讲师资料 ID', 'Public teacher profile ID', { kind: 'number', min: 1, step: 1 }),
     field('status', '状态', 'Status', { kind: 'select', options: [option('active', '启用', 'Active'), option('suspended', '暂停', 'Suspended'), option('archived', '归档', 'Archived')] }),
-    field('bioZh', '中文简介', 'Chinese biography', { kind: 'textarea', rows: 6, maxLength: 50000 }),
-    field('bioEn', '英文简介', 'English biography', { kind: 'textarea', rows: 6, maxLength: 50000 }),
   ] },
   'admin-news-new': { title: text('资讯正文', 'Article content'), action: 'admin-save', fields: NEWS_FIELDS },
   'admin-product-new': { title: text('商品资料', 'Product details'), action: 'admin-save', fields: PRODUCT_FIELDS },

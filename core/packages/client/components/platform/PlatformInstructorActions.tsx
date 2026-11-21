@@ -1,6 +1,5 @@
 'use client';
 
-import { InstructorPayoutSettings } from './InstructorPayoutSettings';
 import { useRef } from 'react';
 import { useAuthUser } from '@/lib/auth-store';
 import { useEntryRouter } from '@/hooks/useEntryRouter';
@@ -37,7 +36,6 @@ function InstructorCourseCreateForm({ definition, busy, runAction }: CommonProps
 
 export function PlatformInstructorActions(props: CommonProps) {
   const { definition, params, entity, busy, runAction } = props;
-  if (definition.id === 'instructor-earnings') return <InstructorPayoutSettings />;
   if (definition.id === 'teacher-apply') {
     return <PlatformInstructorApplication {...props} />;
   }
@@ -49,7 +47,7 @@ export function PlatformInstructorActions(props: CommonProps) {
           <DomainForm definition={definition} entity={entity} resourceId={params.id} busy={busy} runAction={runAction}
             spec={{ title: text('课程信息', 'Course information'), action: 'save-instructor-course', fields: INSTRUCTOR_COURSE_FIELDS, submit: text('保存课程信息', 'Save course information') }}
             secondaryAction={<ActionButton action="delete-course" resourceId={entity?.id ?? params.id} label={text('归档课程', 'Archive course')}
-              confirm={text('确定归档整门课程吗？', 'Archive this entire course?')} secondary busy={busy} runAction={runAction} />} />
+              confirm={text('确定归档整门课程？归档后课程停止公开展示及学习访问，历史记录仍保留。', 'Archive this course? It will no longer be public or accessible for learning. History will be retained.')} secondary busy={busy} runAction={runAction} />} />
         </section>
       </div>
     );

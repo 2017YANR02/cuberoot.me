@@ -126,16 +126,15 @@ export function PlatformCourseCards({ courses, definition, redeemedCourseIds }: 
       const price = data.baseAmountMinor ?? data.fromAmountMinor ?? data.amountMinor;
       const memberPrice = data.memberAmountMinor ?? data.fromMemberAmountMinor;
       const currency = typeof data.currency === 'string' && /^[A-Z]{3}$/.test(data.currency) ? data.currency : 'CNY';
-      const instructors = details.fallbackInstructorEn ? t(details.instructors[0], details.fallbackInstructorEn) : details.instructors.join(t('、', ', '));
+      const instructors = t(details.instructors.join('、'), details.instructorsEn.join(', '));
       return <article className="platform-course-card" data-site-surface="panel" key={course.id}>
         <AppLink className="platform-course-card-link" href={href} prefetch={false}>
           <PlatformCourseCover {...details} eager={index === 0} />
           <div className="platform-course-card-body">
             <div className="platform-course-card-title"><h2>{course.title}</h2><ArrowRight size={16} aria-hidden /></div>
-            {instructors && <p>{instructors}</p>}
-            <PlatformCourseLabels details={details} />
-            {details.lessonCount && <p>{t(`${details.lessonCount} 课时`, `${details.lessonCount} lessons`)}</p>}
-            {course.summary && <p className="platform-course-card-summary">{course.summary}</p>}
+            <p className="platform-course-card-byline"><span>{instructors}</span>{details.lessonCount !== undefined && <span>{t(`${details.lessonCount} 课时`, `${details.lessonCount} lessons`)}</span>}</p>
+            <div className="platform-course-card-tag-slot"><PlatformCourseLabels details={details} /></div>
+            <p className="platform-course-card-summary">{course.summary}</p>
             <div className="platform-course-card-meta">
               {redeemedCourseIds.has(course.id) && <span className="platform-course-redeemed">{t('已兑换', 'Redeemed')}</span>}
               {price != null && Number.isFinite(Number(price)) && <span>{t('价格', 'Price')} {commerceMoney(price, currency)}</span>}

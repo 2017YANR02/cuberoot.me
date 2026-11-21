@@ -40,6 +40,7 @@ export function PlatformScopedSearch({ lang, scope, binding }: { lang: 'zh' | 'e
     : scope === 'paths' ? t('搜索学习路径', 'Search learning paths')
     : scope === 'events' ? t('搜索活动', 'Search events')
     : scope === 'news' ? t('搜索资讯', 'Search news')
+    : scope === 'teachers' ? t('搜索讲师姓名、地点或擅长方向', 'Search instructor names, places or specialties')
     : scope === 'instructor-courses' ? t('搜索讲师课程', 'Search instructor courses')
     : t('搜索课程、讲师或学习内容', 'Search courses, instructors or topics');
   return <div className="landing-search">

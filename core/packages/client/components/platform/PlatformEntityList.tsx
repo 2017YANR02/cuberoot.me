@@ -22,6 +22,7 @@ function favoriteType(definition: PlatformRouteDefinition, item: PlatformEntity)
 function platformStatusLabel(status: string, t: ReturnType<typeof useT>) {
   const labels: Record<string, [string, string]> = {
     pending: ['待处理', 'Pending'], approved: ['已批准', 'Approved'], rejected: ['已拒绝', 'Rejected'],
+    unverified: ['未认证', 'Unverified'],
     submitted: ['已提交', 'Submitted'], failed: ['失败', 'Failed'], paid: ['已付款', 'Paid'],
     unpaid: ['待付款', 'Unpaid'], refunded: ['已退款', 'Refunded'], partially_refunded: ['部分退款', 'Partially refunded'],
     paid_out: ['已结算', 'Paid out'], reconciled: ['已对账', 'Reconciled'], unresolved: ['待核对', 'Unresolved'],
@@ -106,7 +107,7 @@ export function PlatformEntityList({
     cancelled: t('已取消', 'Cancelled'), expired: t('已过期', 'Expired'), refunded: t('已退款', 'Refunded'),
   };
   const instructorCourses = definition.id === 'instructor-courses';
-  const renderActions = (item: PlatformEntity) => quickActions.length ? (
+  const renderActions = (item: PlatformEntity) => quickActions.length && !(definition.id === 'admin-teachers' && item.status === 'unverified') ? (
     <div className="platform-row-actions">
       {quickActions.map((action) => (
         <button key={action} type="button" className="platform-text-button"
@@ -156,12 +157,12 @@ export function PlatformEntityList({
                 <PlatformCourseLabels details={details} />
                 {item.summary && item.summary.trim() !== title.trim() && <p className="platform-course-card-summary">{item.summary}</p>}
                 {courseFields.length > 0 && <dl>{courseFields.map(field => <div key={field.label}><dt>{field.label}</dt><dd>{field.value}</dd></div>)}</dl>}
+                <span className="platform-instructor-course-manage-link">{t('管理课程', 'Manage course')}<ArrowRight aria-hidden /></span>
               </div>
             </AppLink>
-            <div className="platform-instructor-course-card-actions">
-              <AppLink className="platform-button platform-button-primary" href={`${href}/lessons/new`} prefetch={false}>{t('新增课时', 'Add lesson')}<Plus aria-hidden /></AppLink>
-              <AppLink className="platform-button" href={href} prefetch={false}>{t('管理课程', 'Manage course')}<ArrowRight aria-hidden /></AppLink>
-            </div>
+            {item.status !== 'archived' && <div className="platform-instructor-course-card-actions">
+              <AppLink className="platform-button" href={`${href}/lessons/new`} prefetch={false}>{t('新增课时', 'Add lesson')}<Plus aria-hidden /></AppLink>
+            </div>}
           </article>;
         }
         return (

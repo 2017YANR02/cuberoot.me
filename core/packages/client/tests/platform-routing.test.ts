@@ -83,7 +83,9 @@ const actionContracts: ActionContract[] = [
   { action: 'cancel-order', input: { resourceId: 'order id' }, method: 'POST', path: '/v1/platform/orders/order%20id/cancel' },
   { action: 'apply-instructor', input: { payload: { experience: 'Teaching', specialties: ['3x3'], contact: 'mail@example.com' } }, method: 'POST', path: '/v1/platform/instructor/applications' },
   { action: 'withdraw-instructor-application', route: 'teacher-apply', input: { resourceId: 'application id' }, method: 'POST', path: '/v1/platform/instructor/applications/application%20id/withdraw' },
-  { action: 'link-instructor-profile', route: 'teacher-apply', input: { payload: { teacherEntryId: 7 } }, method: 'POST', path: '/v1/platform/instructor/profile-link' },
+  { action: 'archive-instructor', route: 'teacher-apply', input: {}, method: 'POST', path: '/v1/platform/instructor/archive' },
+  { action: 'link-instructor-profile', route: 'instructor-profile', input: { payload: { teacherEntryId: 7 } }, method: 'POST', path: '/v1/platform/instructor/profile-link' },
+  { action: 'initialize-instructor-profile', route: 'instructor-profile', input: {}, method: 'POST', path: '/v1/platform/instructor/profile' },
   { action: 'save-instructor-course', route: 'instructor-course', input: { resourceId: 'course id', payload: { titleZh: '课程' } }, method: 'PATCH', path: '/v1/platform/instructor/courses/course%20id' },
   { action: 'save-instructor-course', route: 'instructor-course-new', input: { payload: { titleZh: '课程' } }, method: 'POST', path: '/v1/platform/instructor/courses' },
   { action: 'delete-course', route: 'instructor-course', input: { resourceId: 'course id' }, method: 'DELETE', path: '/v1/platform/instructor/courses/course%20id' },
@@ -375,7 +377,7 @@ describe('Platform gateway contracts', () => {
     const fetchMock = vi.fn(async (_input: RequestInfo | URL) => response({ categories: ['beginner'], courses: [course], total: 61, page: 3, pageSize: 20 }));
     vi.stubGlobal('fetch', fetchMock);
     const result = await loadPlatformResource('courses', { routeId: 'courses', params: {}, page: 3, pageSize: 20, query: ' cube ', category: 'beginner', sort: 'title' });
-    expect(requestPath(fetchMock.mock.calls[0][0])).toBe('/v1/platform/courses?q=cube&sort=title&page=3&pageSize=20&category=beginner&v=4');
+    expect(requestPath(fetchMock.mock.calls[0][0])).toBe('/v1/platform/courses?q=cube&sort=title&page=3&pageSize=20&category=beginner&v=7');
     expect(result).toMatchObject({ total: 61, page: 3, pageSize: 20, categories: ['beginner'] });
     expect(localizePlatformEntity(result.items[0], 'en')).toMatchObject({ title: 'Course', summary: 'English', data: course });
     fetchMock.mockImplementation(async () => response({ items: [course], page: 1, pageSize: 20 }));

@@ -10,6 +10,7 @@ import AppLink from '@/components/AppLink';
 import Paginator from '@/components/wca-stats/Paginator';
 import { CompactSelect } from '@/components/CompactSelect';
 import SearchInput from '@/components/SearchInput';
+import { ContentSkeleton } from '@/components/ContentSkeleton';
 import SortArrow from '@/components/SortArrow';
 import { useT } from '@/hooks/useT';
 import { useLang } from '@/i18n/tr';
@@ -18,7 +19,7 @@ import { executePlatformAction, loadPlatformResource, localizePlatformEntity, Pl
 import { WebSessionRestoreError } from '@/lib/session-fetch';
 import { fillPlatformParams, isPlatformCourseClassroom, isPlatformInstructorCourseEditor, isPlatformLearningWorkspace, PLATFORM_ROUTES } from '@/lib/platform-routes';
 import { isInstructorCourseListEntry, platformNavigationState, platformWorkspaceRoutes } from '@/lib/platform-navigation';
-import { PlatformNavigationContext, usePlatformSearchBinding, type PlatformFilterGroup } from '@/lib/platform-navigation-context';
+import { PlatformNavigationContext, PlatformInstructorAccessRefreshContext, usePlatformSearchBinding, type PlatformFilterGroup } from '@/lib/platform-navigation-context';
 import type { PlatformActionId, PlatformActionResult, PlatformEntity, PlatformResourceResult, PlatformRouteDefinition } from '@/lib/platform-types';
 import { PlatformState } from './PlatformState';
 import dynamic from 'next/dynamic';
@@ -66,6 +67,7 @@ export function PlatformResourceRouteView({
   const user = useAuthUser();
   const isAdmin = useIsAdmin();
   const inPlatformShell = useContext(PlatformNavigationContext);
+  const refreshInstructorAccess = useContext(PlatformInstructorAccessRefreshContext);
   const [mounted, setMounted] = useState(false);
   const [query, setQuery] = useQueryState('q', parseAsString.withDefault(''));
   const [rawPage, setPage] = useQueryState('page', parseAsInteger.withDefault(1));
@@ -278,6 +280,7 @@ export function PlatformResourceRouteView({
 
   const runAction = async (action: PlatformActionId, id?: string, payload: Record<string, unknown> = {}): Promise<PlatformActionResult | undefined> => {
     const epoch = actionScope.current.epoch;
+    const profileEntityId = definition.id === 'instructor-profile' ? result?.items[0]?.id : undefined;
     const isCurrent = () => actionScope.current.active && actionScope.current.epoch === epoch;
     if (!isCurrent()) return undefined;
     const key = id ? `${action}:${id}` : action;
@@ -286,7 +289,18 @@ export function PlatformResourceRouteView({
     if (action === 'submit-review') setReviewMessage(null);
     try {
       const response = await executePlatformAction(definition, { action, resourceId: id, payload });
+      if (action === 'archive-instructor') refreshInstructorAccess();
       if (!isCurrent()) return undefined;
+      if (definition.id === 'instructor-profile' && (action === 'initialize-instructor-profile' || action === 'link-instructor-profile')) {
+        const teacherEntryId = Number(response.teacherEntryId ?? (action === 'link-instructor-profile' ? payload.teacherEntryId : undefined));
+        if (!Number.isSafeInteger(teacherEntryId) || teacherEntryId <= 0) throw new Error(t('暂时无法确认个人主页，请重试。', 'Unable to confirm the personal profile. Try again.'));
+        // Use the committed association immediately; do not remount and repeat
+        // the repair while an older read response may still be in flight.
+        setResult(previous => previous ? { ...previous, items: previous.items.map(item => item.id === profileEntityId ? {
+          ...item, data: { ...item.data, teacherEntryId },
+        } : item) } : previous);
+        return response;
+      }
       if (action === 'redeem-invite') {
         let courseId = response.courseId;
         if (!courseId && response.entitlementId) {
@@ -318,11 +332,20 @@ export function PlatformResourceRouteView({
           setReviewMessage({ error: true, text: requiresAccess
             ? t('解锁课程后可评价。', 'Unlock this course to leave a review.')
             : t('评价未保存，请重试。', 'Your review was not saved. Please try again.') });
+        } else if (action === 'initialize-instructor-profile' || action === 'link-instructor-profile') {
+          const message = reason instanceof Error ? reason.message : '';
+          setActionMessage(reason instanceof PlatformPermissionError
+            ? t('讲师权限已失效，请重新登录或联系管理员。', 'Instructor access is unavailable. Sign in again or contact an administrator.')
+            : /legacy teacher profile|already linked|canonical profile|administrator selection/i.test(message)
+              ? t('存在尚未确认的历史资料，请联系管理员核对。', 'Unconfirmed legacy profiles exist. Contact an administrator.')
+              : /404|not found/i.test(message)
+                ? t('个人主页同步接口尚不可用，请联系管理员更新服务。', 'The profile sync endpoint is unavailable. Contact an administrator to update the service.')
+                : t('个人主页同步失败，请重试。', 'Profile synchronization failed. Try again.'));
         } else if (instructorApplicationFlow) {
           const message = reason instanceof Error ? reason.message : '';
           setActionMessage(reason instanceof PlatformPermissionError
             ? t('当前账号无法执行此操作，请重新登录或联系管理员。', 'This account cannot perform the action. Sign in again or contact an administrator.')
-            : /pending instructor application|already been decided|Only pending applications|already has an instructor record/.test(message)
+            : /pending instructor application|already been decided|Only pending applications|already has an instructor record|Only active instructors/.test(message)
               ? t('申请状态已变化，请刷新页面查看最新结果。', 'The application status changed. Refresh to see the latest result.')
               : t('操作未完成，已保留输入内容，请稍后重试。', 'The action did not complete. Your input is preserved; try again shortly.'));
         } else setActionMessage(reason instanceof Error ? reason.message : t('操作失败。', 'Action failed.'));
@@ -485,9 +508,9 @@ export function PlatformResourceRouteView({
           ) : error ? (
             <PlatformState kind="error" message={error.message} onRetry={() => setRetry((value) => value + 1)} />
           ) : !result ? (
-            <PlatformState kind="loading" />
+            definition.id === 'instructor-courses' ? <ContentSkeleton variant="cards" rows={3} media label={t('正在加载讲师课程…','Loading instructor courses…')}/> : <PlatformState kind="loading" />
           ) : instructorProfile ? (
-            <PlatformInstructorProfile entity={sortedItems[0]} />
+            <PlatformInstructorProfile entity={sortedItems[0]} busy={actionBusy} runAction={runAction} />
           ) : instructorCourseNew ? (
             canCreateInstructorCourse ? null : <PlatformState kind="permission" message={t('当前账号没有可用的讲师权限。', 'This account does not have active instructor access.')} />
           ) : isQrCardStudio ? (
@@ -539,7 +562,7 @@ export function PlatformResourceRouteView({
               busy={actionBusy}
               runAction={runAction}
               reviewMessage={reviewMessage}
-              onSaved={() => setRetry(value => value + 1)}
+              onSaved={() => { setRetry(value => value + 1); if (definition.id === 'teacher-apply') refreshInstructorAccess(); }}
             />
           )}
           {actionMessage && (definition.id !== 'order-detail' || sortedItems[0]?.status !== 'pending_payment') ? <p className={instructorApplicationFlow ? 'platform-action-message platform-form-error' : 'platform-action-message'} role={instructorApplicationFlow ? 'alert' : 'status'}>{actionMessage}</p> : null}
