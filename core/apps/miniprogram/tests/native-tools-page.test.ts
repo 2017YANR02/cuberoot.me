@@ -9,11 +9,12 @@ function fixture() {
   const options = createNativeToolsPageOptions();
   return {
     ...options, active: true,
-    data: { ...options.data, mode: 'person', query: '2017YANR02' },
+    data: { ...options.data, mode: 'person' as const, query: '2017YANR02' },
     setData(data: Record<string, unknown>) { Object.assign(this.data, data); },
   };
 }
 const input = (value: string) => ({ detail: { value } }) as WechatMiniprogram.Input;
+const tap = (dataset: Record<string, string>) => ({ currentTarget: { dataset } }) as WechatMiniprogram.TouchEvent;
 const flush = async () => { await Promise.resolve(); await Promise.resolve(); };
 const person = { profile: { person: { name: 'Test Person' }, personal_records: {} }, comps: [] };
 
@@ -65,5 +66,35 @@ describe('native personal results query', () => {
     resolve(person);
     await flush();
     expect(page.data).toMatchObject({ mode: 'records', personName: '', rows: [], loading: false });
+  });
+});
+
+describe('native offline utilities', () => {
+  beforeEach(() => { vi.clearAllMocks(); });
+
+  it('calculates timed averages with shared DNF handling and clears stale results after edits', () => {
+    const page = fixture();
+    page.selectTool(tap({ section: 'average' }));
+    page.inputAverage(input('12.34\n11.75\nDNF\n13.20\n10.95'));
+    page.calculateAverage();
+    expect(page.data.averageResults.map(result => result.value)).toEqual(['10.95', 'DNF', '12.43', '—']);
+
+    page.inputAverage(input('12.34\ninvalid'));
+    page.calculateAverage();
+    expect(page.data.averageResults).toEqual([]);
+    expect(page.data.averageError).not.toBe('');
+    expect(requestJson).not.toHaveBeenCalled();
+  });
+
+  it('supports compact inverse notation and retains grouping in mirror transforms', () => {
+    const page = fixture();
+    page.selectTool(tap({ section: 'alg' }));
+    page.inputAlg(input("RUR'U'"));
+    page.transformAlg(tap({ action: 'inverse' }));
+    expect(page.data.algOutput).toBe("U R U' R'");
+    page.inputAlg(input('[R, U]'));
+    page.transformAlg(tap({ action: 'M' }));
+    expect(page.data.algOutput).toBe("[L', U']");
+    expect(requestJson).not.toHaveBeenCalled();
   });
 });

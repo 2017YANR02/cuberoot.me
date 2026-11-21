@@ -7,15 +7,47 @@ import { applyNativeAppearance } from './appearance';
 import { getMiniProgramLocale, tr } from './i18n';
 import { miniProgramApi } from './platform';
 import { WCA_ID_REGEX } from '@cuberoot/shared/wca-person';
+import { mean, parseTimeToken, trimmedAverage } from '@cuberoot/shared/timer/average-calculator';
+import { parseCubeAlg } from '@cuberoot/shared/alg-transform';
+import { mirrorAlg } from '@cuberoot/shared/recon/cube3';
 
 interface Row { id: string; title: string; detail: string; result?: string }
 interface PersonResponse {
   profile: { person: { name: string }; personal_records: Record<string, { single?: { best: number; world_rank: number }; average?: { best: number; world_rank: number } }> };
   comps: { id: string; name: string; city: string; start_date: string; end_date: string }[];
 }
-interface ToolPage { data: { mode: string; query: string; [key: string]: unknown }; setData(value: Record<string, unknown>): void; requestId?: number; active?: boolean }
+const WCA_MODES = ['competitions', 'records', 'person'] as const;
+type ToolSection = 'wca' | 'average' | 'alg';
+interface ToolPage {
+  data: {
+    mode: typeof WCA_MODES[number]; query: string; section: ToolSection;
+    averageInput: string; algInput: string; algOutput: string;
+    [key: string]: unknown;
+  };
+  setData(value: Record<string, unknown>): void;
+  requestId?: number;
+  active?: boolean;
+}
 function labels() { return {
-  title: tr({ en: 'Tools', zh: '工具' }), timer: tr({ en: 'Timer', zh: '基础计时' }),
+  title: tr({ en: 'Tools', zh: '工具' }),
+  sections: [
+    { id: 'wca', label: tr({ en: 'WCA', zh: 'WCA 查询' }) },
+    { id: 'average', label: tr({ en: 'Average calculator', zh: '平均计算' }) },
+    { id: 'alg', label: tr({ en: 'Alg transforms', zh: '公式变换' }) },
+  ],
+  averageInputLabel: tr({ en: 'Times', zh: '计时成绩' }),
+  averageHelp: tr({ en: 'Enter times in order, one per line or separated by commas. DNF and DNS are supported.', zh: '按顺序输入成绩，每行一个或用逗号分隔。支持 DNF 和 DNS。' }),
+  averageExample: '12.34\n11.75\nDNF\n13.20\n10.95',
+  averageInvalid: tr({ en: 'Check the time format. Use 12.34, 1:23.45, DNF or DNS.', zh: '请检查成绩格式，可输入 12.34、1:23.45、DNF 或 DNS。' }),
+  averageMissing: tr({ en: 'Enter the times to calculate.', zh: '请输入要计算的成绩。' }),
+  best: tr({ en: 'Best single', zh: '最快单次' }),
+  calculate: tr({ en: 'Calculate', zh: '计算' }),
+  algInputLabel: tr({ en: 'Cube alg', zh: '魔方公式' }),
+  algInvalid: tr({ en: 'Check the move notation.', zh: '请检查转动记号。' }),
+  algInverse: tr({ en: 'Inverse', zh: '逆公式' }),
+  algMirrorLeft: tr({ en: 'Left–right mirror', zh: '左右镜像' }),
+  algMirrorFront: tr({ en: 'Front–back mirror', zh: '前后镜像' }),
+  copyResult: tr({ en: 'Copy result', zh: '复制结果' }),
   choices: [tr({ en: 'Recent competitions', zh: '近期公示比赛' }), tr({ en: 'Recent records', zh: '近期纪录' }), tr({ en: 'Personal results & rankings', zh: '个人成绩与排名' })],
   search: tr({ en: 'Search', zh: '查询' }), clear: tr({ en: 'Clear', zh: '清除' }), retry: tr({ en: 'Refresh', zh: '刷新' }),
   placeholder: tr({ en: 'WCA ID, e.g. 2017YANR02', zh: 'WCA ID，例如 2017YANR02' }),
@@ -28,7 +60,33 @@ function eventName(event: string) {
   const found = EVENTS.find(e => e.id === fromWcaSpelling(event));
   return found ? tr({ en: found.nameEn, zh: found.nameZh }) : event;
 }
+function formatAverage(value: number, kind: 'single' | 'average' = 'average') {
+  return Number.isFinite(value) ? formatWcaResult(value, '333', kind) : '—';
+}
+
+function calculateAverages(text: string) {
+  const tokens = text.split(/[\n,，;；]+/).map(token => token.trim()).filter(Boolean);
+  if (!tokens.length) return { averageError: labels().averageMissing };
+  const values: number[] = [];
+  for (const token of tokens) {
+    const value = parseTimeToken(token);
+    if (value === null || !Number.isSafeInteger(value) || value === 0) return { averageError: labels().averageInvalid };
+    values.push(value);
+  }
+  const completed = values.filter(value => value > 0);
+  return {
+    averageError: '',
+    averageResults: [
+      { label: labels().best, value: formatAverage(completed.length ? Math.min(...completed) : NaN, 'single') },
+      { label: 'Mo3', value: formatAverage(mean(values, 3)) },
+      { label: 'Ao5', value: formatAverage(trimmedAverage(values, 5)) },
+      { label: 'Ao12', value: formatAverage(trimmedAverage(values, 12)) },
+    ],
+  };
+}
+
 async function load(page: ToolPage) {
+  if (page.data.section !== 'wca') return;
   const id = page.requestId = (page.requestId ?? 0) + 1;
   const mode = page.data.mode;
   const query = page.data.query.trim().toUpperCase();
@@ -62,20 +120,61 @@ async function load(page: ToolPage) {
 }
 export function createNativeToolsPageOptions() {
   return {
-    data: { nativeToolsPage: true, appearanceStyle: '', copy: labels(), mode: 'competitions', modeIndex: 0, query: '', rows: [] as Row[], error: '', loading: false, personName: '', searched: false },
-    onShow() { this.active = true; this.setData({ copy: labels() }); applyNativeAppearance(); miniProgramApi().setNavigationBarTitle({ title: labels().title }); if (this.data.mode !== 'person' || this.data.query) void load(this); },
+    data: {
+      nativeToolsPage: true, appearanceStyle: '', copy: labels(), section: 'wca', mode: 'competitions', modeIndex: 0, query: '',
+      rows: [] as Row[], error: '', loading: false, personName: '', searched: false,
+      averageInput: '', averageResults: [] as { label: string; value: string }[], averageError: '',
+      algInput: '', algOutput: '', algError: '',
+    },
+    onShow() {
+      this.active = true;
+      const copy = labels();
+      this.setData({ copy });
+      applyNativeAppearance();
+      miniProgramApi().setNavigationBarTitle({ title: copy.title });
+      if (this.data.mode !== 'person' || this.data.query) void load(this);
+    },
     onHide() { this.active = false; this.requestId = (this.requestId ?? 0) + 1; },
     onUnload() { this.onHide(); },
     active: false, requestId: 0,
-    openTimer() { miniProgramApi().switchTab({ url: '/pages/timer/index' }); },
+    selectTool(event: WechatMiniprogram.TouchEvent) {
+      const section: unknown = event.currentTarget.dataset.section;
+      if (section !== 'wca' && section !== 'average' && section !== 'alg') return;
+      if (section === this.data.section) return;
+      ++this.requestId;
+      this.setData({ section, loading: false });
+      if (section === 'wca' && (this.data.mode !== 'person' || this.data.query)) void load(this);
+    },
     changeMode(e: WechatMiniprogram.PickerChange) {
       const index = Number(e.detail.value);
-      this.setData({ modeIndex: index, mode: ['competitions', 'records', 'person'][index] ?? 'competitions', rows: [], error: '', personName: '', loading: false, searched: false });
+      if (!WCA_MODES[index]) return;
+      this.setData({ modeIndex: index, mode: WCA_MODES[index], rows: [], error: '', personName: '', loading: false, searched: false });
       ++this.requestId;
       if (this.data.mode !== 'person' || this.data.query) void load(this);
     },
     inputQuery(e: WechatMiniprogram.Input) { ++this.requestId; this.setData({ query: e.detail.value, rows: [], error: '', personName: '', loading: false, searched: false }); },
     clearQuery() { ++this.requestId; this.setData({ query: '', rows: [], error: '', loading: false, personName: '', searched: false }); },
     search() { void load(this); },
+    inputAverage(event: WechatMiniprogram.Input) {
+      this.setData({ averageInput: event.detail.value, averageResults: [], averageError: '' });
+    },
+    calculateAverage() { this.setData({ averageResults: [], ...calculateAverages(this.data.averageInput) }); },
+    inputAlg(event: WechatMiniprogram.Input) {
+      this.setData({ algInput: event.detail.value, algOutput: '', algError: '' });
+    },
+    transformAlg(event: WechatMiniprogram.TouchEvent) {
+      const action: unknown = event.currentTarget.dataset.action;
+      if (action !== 'inverse' && action !== 'M' && action !== 'S') return;
+      try {
+        const alg = parseCubeAlg(this.data.algInput.trim());
+        const output = action === 'inverse' ? alg.invert().toString() : mirrorAlg(alg.toString(), action);
+        this.setData({ algOutput: output, algError: output ? '' : labels().algInvalid });
+      } catch {
+        this.setData({ algOutput: '', algError: labels().algInvalid });
+      }
+    },
+    copyAlg() {
+      if (this.data.algOutput) miniProgramApi().setClipboardData({ data: this.data.algOutput });
+    },
   } satisfies WechatMiniprogram.Page.Options<ToolPage['data'], WechatMiniprogram.Page.CustomOption>;
 }

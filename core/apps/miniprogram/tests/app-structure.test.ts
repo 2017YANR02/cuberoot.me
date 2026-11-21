@@ -219,7 +219,7 @@ describe('mini program app structure', () => {
     expect(accountTemplate).toContain('{{release.version}}');
     expect(accountTemplate).toContain('{{release.notesTitle}}');
     expect(timerStyles).toContain('.native-timer');
-    expect(toolsStyles).toContain('.tools-heading');
+    expect(toolsStyles).toContain('.tools-sections');
     expect(accountStyles).toContain('var(--cr-muted)');
     expect(genericWebStyles.trim()).toBe('');
   });
