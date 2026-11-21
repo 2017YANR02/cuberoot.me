@@ -46,6 +46,29 @@ test('table plan follows EO profile and optional table flags; unknown binaries f
   assert.equal(tableBudget('sq1_slash_mitm', {}, 64 * GiB, inspect).workingBytes, 20_736_638_976);
 });
 
+test('SQ1 auto sizes the cache within machine and startup limits before spawn', () => {
+  const inspect = (() => ({ isFile: () => true, size: 13_005_619_200, mtimeMs: 0, ino: 1, dev: 1 })) as Parameters<typeof tableBudget>[3];
+  const plan = (available: number, physicalBytes = 64 * GiB, env: NodeJS.ProcessEnv = {}) =>
+    statsResourcePlan(['sq1_analyzer'], env, false, { available, physicalBytes, inspect })[0] as TableBudget & {
+      startupRequiredBytes: number; sq1TtSelection: { ttEntries: number; frozen: boolean };
+    };
+  const incident = plan(42_803_412_992);
+  assert.equal(incident.sq1TtSelection.frozen, false);
+  assert(incident.rssLimit <= 32 * GiB);
+  assert(incident.startupRequiredBytes <= 34.5 * GiB);
+  assert.equal(incident.workingBytes, incident.sq1TtSelection.ttEntries * 114);
+  assert.equal(tableBudget('sq1_analyzer', { SQ1_TT_BUDGET: String(incident.sq1TtSelection.ttEntries) }, 64 * GiB, inspect).rssLimit, incident.rssLimit);
+  assert.equal(plan(100 * GiB, 128 * GiB).sq1TtSelection.ttEntries, 240_000_000);
+  const constrained = plan(24 * GiB);
+  assert(constrained.sq1TtSelection.ttEntries > 0 && constrained.sq1TtSelection.ttEntries < incident.sq1TtSelection.ttEntries);
+  assert(constrained.startupRequiredBytes <= 24 * GiB);
+  const insufficient = plan(16 * GiB);
+  assert.equal(insufficient.sq1TtSelection.ttEntries, 0);
+  assert.equal(statsAnalyzerStartupDecision(16 * GiB, insufficient.rssLimit, false), 'reject');
+  assert.equal(plan(24 * GiB, 64 * GiB, { SQ1_SLASH_VIA_WCA: '1' }).tableBytes, 0);
+  assert.equal(plan(30 * GiB, 64 * GiB, { SQ1_TT_BUDGET: '240000000' }).startupRequiredBytes, 47_344_941_056);
+});
+
 test('new stage PDBs enter budgets only for their requested consumers', () => {
   const names = (binary: string, env: NodeJS.ProcessEnv) => analyzerTableNames(binary, env, 128 * GiB).names;
   assert(names('pair_analyzer', { CUBE_PAIR_JOINT_MODE: 'first' }).includes('pt_cross_pair_C4E0.bin'));

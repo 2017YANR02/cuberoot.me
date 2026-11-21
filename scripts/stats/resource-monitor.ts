@@ -12,6 +12,8 @@ import { repoRoot, tableDir } from '../../core/jobs/scramble-stats-build/pipelin
 
 export const GiB = 2 ** 30;
 const reserve = GiB / 2;
+const defaultSq1TtEntries = 240_000_000;
+const sq1TtBytesPerEntry = 114;
 const runEnv = 'CUBEROOT_STATS_RESOURCE_RUN';
 const defaultStateDir = join(tableDir, 'stats-resources');
 const ownFile = fileURLToPath(import.meta.url);
@@ -139,11 +141,11 @@ export function tableBudget(binary: string, env: NodeJS.ProcessEnv, physicalByte
     // capacity can approach twice the entry count; growth retains the old
     // half-sized allocation. Sum this bound across all globally-budgeted maps.
     // 4GiB additionally covers small maps, thread overshoot and workspaces.
-    const rawEntries = env.SQ1_TT_BUDGET ?? '240000000';
+    const rawEntries = env.SQ1_TT_BUDGET ?? String(defaultSq1TtEntries);
     if (!/^\+?\d+$/.test(rawEntries)) throw Error('Invalid SQ1_TT_BUDGET');
     const entries = Number(rawEntries);
-    if (!Number.isSafeInteger(entries) || entries < 0 || !Number.isSafeInteger(entries * 114)) throw Error('Invalid SQ1_TT_BUDGET');
-    workingBytes = entries * 114;
+    if (!Number.isSafeInteger(entries) || entries < 0 || !Number.isSafeInteger(entries * sq1TtBytesPerEntry)) throw Error('Invalid SQ1_TT_BUDGET');
+    workingBytes = entries * sq1TtBytesPerEntry;
   } else if (name === 'sq1_slash_mitm') {
     // MEM_CAP=100M/side, at most 144 inserts before a cap check. Reserve two
     // HashMaps plus one old map during growth (33B/bucket), and three Vecs of
@@ -154,8 +156,8 @@ export function tableBudget(binary: string, env: NodeJS.ProcessEnv, physicalByte
   }
   return { binary, profile, files, tableBytes, workingBytes, mapped: name !== 'sq1_analyzer', rssLimit: tableBytes + workingBytes + 4 * GiB };
 }
-type StandardStagePlanContext = { available: number; physicalBytes: number; inspect?: typeof statSync; readHeader?: (path: string) => Buffer };
-export function statsResourcePlan(binaries: string[], env: NodeJS.ProcessEnv, includeOptimal = false, context?: StandardStagePlanContext): unknown[] {
+type StatsResourcePlanContext = { available: number; physicalBytes: number; inspect?: typeof statSync; readHeader?: (path: string) => Buffer };
+export function statsResourcePlan(binaries: string[], env: NodeJS.ProcessEnv, includeOptimal = false, context?: StatsResourcePlanContext): unknown[] {
   const result: unknown[] = binaries.map(binary => {
     try {
       if (basename(binary).replace(/\.exe$/, '') === 'std_analyzer') {
@@ -166,6 +168,11 @@ export function statsResourcePlan(binaries: string[], env: NodeJS.ProcessEnv, in
         });
         return { ...preview.budget, startupRequiredBytes: startupRequiredBytes(preview.budget.rssLimit),
           standardStageSelection: { ...preview.selection, frozen: false, selectionPoint: 'analyzer-start-under-monitor' } };
+      }
+      if (basename(binary) === 'sq1_analyzer' && (context || process.platform === 'darwin')) {
+        const preview = sq1BudgetDecision(binary, env, context ?? { available: observe().available, physicalBytes: totalmem() });
+        return { ...preview.budget, startupRequiredBytes: startupRequiredBytes(preview.budget.rssLimit),
+          sq1TtSelection: { ...preview.selection, frozen: false, selectionPoint: 'analyzer-start-under-monitor' } };
       }
       return tableBudget(binary, env);
     }
@@ -209,6 +216,22 @@ function inheritedRun(): string | undefined {
 export const startupRequiredBytes = (rssLimit: number) => rssLimit + 2 * GiB + reserve;
 export function statsAnalyzerStartupDecision(available: number, rssLimit: number, optional: boolean): 'start' | 'skip' | 'reject' {
   return available >= startupRequiredBytes(rssLimit) ? 'start' : optional ? 'skip' : 'reject';
+}
+
+function sq1BudgetDecision(binary: string, env: NodeJS.ProcessEnv, context: StatsResourcePlanContext) {
+  const { available, physicalBytes, inspect } = context;
+  const automatic = env.SQ1_TT_BUDGET === undefined;
+  let resolved = env;
+  if (automatic) {
+    const base = tableBudget(binary, { ...env, SQ1_TT_BUDGET: '0' }, physicalBytes, inspect);
+    const roomAtStartup = available - startupRequiredBytes(base.rssLimit);
+    const roomUnderCap = physicalBytes < 128 * GiB ? 32 * GiB - base.rssLimit : Infinity;
+    const entries = Math.max(0, Math.min(defaultSq1TtEntries, Math.floor(Math.min(roomAtStartup, roomUnderCap) / sq1TtBytesPerEntry)));
+    resolved = { ...env, SQ1_TT_BUDGET: String(entries) };
+  }
+  const budget = tableBudget(binary, resolved, physicalBytes, inspect);
+  return { env: resolved, budget, selection: { requested: automatic ? 'auto' : 'explicit',
+    ttEntries: Number(resolved.SQ1_TT_BUDGET), available, physicalBytes } };
 }
 /** Explicit choices stay fixed, including when this is called again at spawn. */
 export function selectStatsEoProfile(env: NodeJS.ProcessEnv, available: number, highRssLimit: () => number, physicalBytes = totalmem()): NodeJS.ProcessEnv {
@@ -283,7 +306,7 @@ export function selectStatsStandardStageMode(env: NodeJS.ProcessEnv, available: 
   return available >= startupRequiredBytes(limit) ? { ...env, CUBE_STAGE_JOINT_MODE: 'deep', CUBE_STAGE_DEEP_NO_DIAG: '1' } : off;
 }
 
-function standardStageDecision(binary: string, env: NodeJS.ProcessEnv, context: StandardStagePlanContext) {
+function standardStageDecision(binary: string, env: NodeJS.ProcessEnv, context: StatsResourcePlanContext) {
   const { available, physicalBytes } = context, inspect = context.inspect ?? statSync;
   let optionalDeep: { budget: TableBudget; startupRequiredBytes: number; metadata: ReturnType<typeof validateStatsDeepTableMetadata> } | null = null;
   let optionalStatus = hasExplicitStandardStage(env) ? 'explicit' : 'ineligible';
@@ -307,6 +330,17 @@ function standardStageDecision(binary: string, env: NodeJS.ProcessEnv, context: 
  * A later startup check still rejects either profile if resources have changed.
  */
 export function resolveStatsAnalyzerEnv(binary: string, env: NodeJS.ProcessEnv): NodeJS.ProcessEnv {
+  if (process.platform === 'darwin' && basename(binary) === 'sq1_analyzer' && env.SQ1_TT_BUDGET === undefined) {
+    const dir = inheritedRun();
+    if (!dir) return env;
+    const now = observe();
+    const decision = sq1BudgetDecision(binary, env, { available: now.available, physicalBytes: totalmem() });
+    const required = startupRequiredBytes(decision.budget.rssLimit);
+    appendFileSync(join(dir, 'sq1-tt-selection.jsonl'), JSON.stringify({ binary, ...decision.selection, required,
+      rssLimit: decision.budget.rssLimit, sampledAt: now.sampledAt, boot: now.boot, swapouts: now.swapouts }) + '\n');
+    console.log(`[统计 SQ1] 自动选择 TT ${decision.selection.ttEntries} 条，启动需要 ${required} bytes，当前可用 ${now.available} bytes`);
+    return decision.env;
+  }
   if (process.platform === 'darwin' && basename(binary) === 'std_analyzer' && !hasExplicitStandardStage(env)) {
     const dir = inheritedRun();
     if (!dir) return env;
@@ -365,7 +399,7 @@ export function prepareStatsTask(budget: TableBudget): (pid: number) => () => vo
   const now = observe();
   try {
     validateStatsRun(owner.baseline, now);
-    if (statsAnalyzerStartupDecision(now.available, budget.rssLimit, false) === 'reject') throw Error(`Insufficient startup memory for ${basename(budget.binary)}: requires ${startupRequiredBytes(budget.rssLimit)} bytes`);
+    if (statsAnalyzerStartupDecision(now.available, budget.rssLimit, false) === 'reject') throw Error(`Insufficient startup memory for ${basename(budget.binary)}: requires ${startupRequiredBytes(budget.rssLimit)} bytes, available ${now.available} bytes`);
   } catch (error) {
     atomic(join(dir, 'request-stop.json'), { reason: String(error) });
     throw error;

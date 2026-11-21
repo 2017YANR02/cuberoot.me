@@ -26,6 +26,8 @@ pnpm stats:scramble:local --jobs puzzles --puzzles sq1
 
 SQ1 使用统一 `table_generator` 产出的 `sq1_wca_jsqfull.bin`（13,005,619,200 字节）。TypeScript 管道按 ID 续跑 WCA 12c4 精确解，并从最优解派生 slash 下界；仅 `W=2s−1` 的歧义态需要 via-WCA 搜索，超时残留由 `sq1_slash_mitm` 判定。CSV 分别为 `sq1_wca_exact.csv` 和 `sq1_slash_exact.csv`，后者同时写 `sq1_slash_meta.json` 的 `fallback/provisional`。分布和示例构建只统计可证结果，未解态保留明确部分状态。
 
+受监控的 macOS 日常入口在每次启动 `sq1_analyzer` 前按可回收内存选择搜索缓存上限，最多 2.4 亿条。物理内存不足 128 GiB 时，自动档进程树 RSS 预算最多 32 GiB，启动仍须另留 2.5 GiB。选择会写入当轮 `sq1-tt-selection.jsonl`。缓存缩小可能增加搜索耗时和超时条数，精确性判定不变。显式 `SQ1_TT_BUDGET` 和怪物重试阶梯仍按原预算独立准入。
+
 手动维护使用同一个 TypeScript 入口（仓库根）：
 
 ```sh
