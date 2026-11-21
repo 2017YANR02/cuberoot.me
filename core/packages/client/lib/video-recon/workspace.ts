@@ -78,10 +78,6 @@ export function createVideoWorkspace(stage: HTMLCanvasElement, initialTab: Works
     cameraClockOriginMs: undefined as number | undefined,
     timerReconstructions: {} as Record<string, TimerReconstructionResult>,
     timerReplays: {} as Record<string,TimerReplay>,
-    latestTimerSolveId: undefined as string | undefined,
-    latestReplayPosition: undefined as number | undefined,
-    latestTimerReplay: undefined as TimerReplay | undefined,
-    latestReplaySeek: undefined as {timestamp:number;revision:number} | undefined,
     replayLoading: false,
     replayStorageError: '',
     timerCapturePhase: 'idle' as 'idle'|'capturing'|'draining',
@@ -147,20 +143,10 @@ export function createVideoWorkspace(stage: HTMLCanvasElement, initialTab: Works
   });
 
 
-  let latestReplaySeekRevision=0;
-
-  function seekLatestTimerReplay(id:string,timestamp:number){
-    if(id!==state.latestTimerSolveId||!state.latestTimerReplay)return false;
-    state.latestReplaySeek={timestamp,revision:++latestReplaySeekRevision};return true;
-  }
-
   const timerReplayCache=new TimerReplayCache(new LocalReplayStorage(),(clip,loading=false,error='')=>{
     state.timerReplays=clip?{[clip.id]:clip}:{};state.replayLoading=loading;state.replayStorageError=error;
   });
-  const timerReplayStore=new TimerReplayStore(clip=>{
-    timerReplayCache.publish(clip);
-    if(clip.id===state.latestTimerSolveId)state.latestTimerReplay=clip;
-  });
+  const timerReplayStore=new TimerReplayStore(clip=>timerReplayCache.publish(clip));
   const timerCaptureGate=new TimerCaptureGate();
   const timerPoseOptions = new Map<string, PoseFittingOptions>();
   const archivedDiagnostics = new Map<string, Promise<Blob>>();
@@ -205,7 +191,6 @@ export function createVideoWorkspace(stage: HTMLCanvasElement, initialTab: Works
     const captureStart = timerCaptureGate.start(id, start);
     const config = timerReconstruction.start(id, scramble, start, state.sourceFps || 30, state.searchDiagnostics, captureStart);
     timerPoseOptions.set(id, { scramble, turningStartFrame: config.turning_start_frame, camera: true });
-    state.latestTimerSolveId=id;state.latestTimerReplay=undefined;state.latestReplayPosition=undefined;state.latestReplaySeek=undefined;
     timerReplayCache.begin(id);
     timerReplayStore.start(id,start,config.fps,captureStart);
     state.timerCapturePhase='capturing';capture?.resume(captureStart);
@@ -233,14 +218,12 @@ export function createVideoWorkspace(stage: HTMLCanvasElement, initialTab: Works
     timerReconstruction.closeInput(message);
   }
   function deleteTimerSolve(id:string){
-    if(state.latestTimerSolveId===id){state.latestTimerSolveId=undefined;state.latestTimerReplay=undefined;state.latestReplayPosition=undefined;state.latestReplaySeek=undefined;}
     archivedDiagnostics.delete(id);
     timerReconstruction.cancelSolve(id);timerReplayStore.remove(id);timerReplayCache.remove(id);
     void timerDiagnostics.forget(id).catch(error=>{state.mediaError=String(error);});
     const remaining={...state.timerReconstructions};delete remaining[id];state.timerReconstructions=remaining;
   }
   function clearTimerSession(ids:string[]){
-    state.latestTimerSolveId=undefined;state.latestTimerReplay=undefined;state.latestReplayPosition=undefined;state.latestReplaySeek=undefined;
     timerReconstruction.cancel('Session cleared');timerReplayStore.clear();timerReplayCache.clear();
     archivedDiagnostics.clear();
     for (const id of ids) { timerReplayCache.remove(id); void timerDiagnostics.forget(id); }
@@ -1418,7 +1401,7 @@ export function createVideoWorkspace(stage: HTMLCanvasElement, initialTab: Works
     disposed = true;
     closeCrop();
     timerReconstruction.cancel('Page closed before reconstruction finished');
-    timerReplayStore.clear();timerReplayCache.clear();state.latestTimerReplay=undefined;
+    timerReplayStore.clear();timerReplayCache.clear();
     timerCaptureGate.clear();
     timerPoseOptions.clear();
     archivedDiagnostics.clear();
@@ -1491,10 +1474,6 @@ export function createVideoWorkspace(stage: HTMLCanvasElement, initialTab: Works
   }
 
   const derived = {
-    get latestReplayReconstruction() {
-      const id = state.latestTimerSolveId;
-      return id ? state.timerReconstructions[id] ?? state.latestTimerReplay?.reconstruction : undefined;
-    },
     get reconstructionChoices() { return searchMetadata(state.searchResult, moveSearch?.config.scramble ?? '').choices; },
     get reconstructionFlags() { return searchMetadata(state.searchResult, moveSearch?.config.scramble ?? '').flags; },
     get reconstructionComplete() {
@@ -1537,10 +1516,6 @@ export function createVideoWorkspace(stage: HTMLCanvasElement, initialTab: Works
       timerBuffering: derived.timerBuffering,
       timerReconstructions: state.timerReconstructions,
       timerReplays: state.timerReplays,
-      latestTimerReplay: state.latestTimerReplay,
-      latestReplayReconstruction: derived.latestReplayReconstruction,
-      latestReplayPosition: state.latestReplayPosition,
-      latestReplaySeek: state.latestReplaySeek,
       replayLoading: state.replayLoading,
       replayStorageError: state.replayStorageError,
       status: state.status,
@@ -1608,7 +1583,7 @@ export function createVideoWorkspace(stage: HTMLCanvasElement, initialTab: Works
   }
 
   return {
-    selectTab, camera, startTimerSolve, stopTimerSolve, deleteTimerSolve, clearTimerSession, seekLatestTimerReplay, openFile, stopSource, editCrop, applyCrop, closeCrop, changeTrim, previewSelection, stepPreview, beginReconstruction, editSolveRange, togglePlayback, changePlaybackSpeed, requestReview, seekReviewIndex, stepReview, downloadTimerDiagnostics, loadModel, cleanup, reviewKeydown,
+    selectTab, camera, startTimerSolve, stopTimerSolve, deleteTimerSolve, clearTimerSession, openFile, stopSource, editCrop, applyCrop, closeCrop, changeTrim, previewSelection, stepPreview, beginReconstruction, editSolveRange, togglePlayback, changePlaybackSpeed, requestReview, seekReviewIndex, stepReview, downloadTimerDiagnostics, loadModel, cleanup, reviewKeydown,
     getSnapshot: () => view,
     subscribe(listener: () => void) {
       listeners.add(listener);
@@ -1617,7 +1592,6 @@ export function createVideoWorkspace(stage: HTMLCanvasElement, initialTab: Works
     setScramble: (value: string) => { state.initialScramble = value; },
     setTimerBusy: (value: boolean) => { state.timerBusy = value; },
     selectTimerReplay: (id?: string) => { timerReplayCache.select(id); },
-    setLatestReplayPosition: (value: number) => { state.latestReplayPosition = value; },
   };
 }
 
