@@ -186,7 +186,8 @@ export class InstalledAuthClient {
       if (!response.ok) return session;
       const envelope = decodeWebSessionUserEnvelope(await response.json());
       if (revision !== this.sessionRevision) return null;
-      if (!envelope) return session;
+      // Both profiles have the canonical field order from decodeWebSessionUser.
+      if (!envelope || JSON.stringify(envelope.user) === JSON.stringify(session.user)) return session;
       const validated = { ...session, user: envelope.user };
       return await this.saveSession(validated, revision) ? validated : null;
     } catch {

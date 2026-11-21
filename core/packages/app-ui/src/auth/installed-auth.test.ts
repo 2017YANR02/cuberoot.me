@@ -185,6 +185,20 @@ describe('mobile auth', () => {
     expect(storage.values.has('session')).toBe(false);
   });
 
+  it('only writes a validated session when its profile changes', async () => {
+    const fetcher = vi.fn<typeof fetch>()
+      .mockResolvedValueOnce(response({ user: USER }))
+      .mockResolvedValueOnce(response({ user: { ...USER, name: 'Updated' } }));
+    const { storage, client } = setup(fetcher);
+    storage.values.set('session', JSON.stringify({ token: token(), user: USER }));
+    const write = vi.spyOn(storage, 'setItem');
+    await expect(client.restore()).resolves.toMatchObject({ user: USER });
+    expect(write).not.toHaveBeenCalled();
+    await expect(client.restore()).resolves.toMatchObject({ user: { name: 'Updated' } });
+    expect(write).toHaveBeenCalledTimes(1);
+    expect(JSON.parse(storage.values.get('session')!).user.name).toBe('Updated');
+  });
+
   it('keeps a valid cached session while offline and clears it on an explicit 401', async () => {
     const offline = vi.fn<typeof fetch>().mockRejectedValue(new TypeError('offline'));
     const first = setup(offline);
@@ -262,7 +276,7 @@ describe('mobile auth', () => {
   });
 
   it('clears an already-running native storage write before logout completes', async () => {
-    const fetcher = vi.fn<typeof fetch>().mockResolvedValue(response({ user: USER }));
+    const fetcher = vi.fn<typeof fetch>().mockResolvedValue(response({ user: { ...USER, name: 'Updated' } }));
     const { client, storage } = setup(fetcher);
     storage.values.set('session', JSON.stringify({ token: token(), user: USER }));
     let releaseWrite!: () => void;
