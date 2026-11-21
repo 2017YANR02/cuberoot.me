@@ -21,13 +21,9 @@ interface Card {
   en: { title: string; desc: string };
 }
 
+const GRH_PATH = '/math/generalized-riemann-hypothesis';
+
 const CARDS: Card[] = [
-  {
-    to: '/math/generalized-riemann-hypothesis',
-    Icon: Sigma,
-    zh: { title: '狄利克雷 L 函数的广义黎曼猜想', desc: '探索 ζ 零点与素数的关系，跟踪 Lean 对经典黎曼猜想候选证明的复核' },
-    en: { title: 'The Generalized Riemann Hypothesis for Dirichlet L-functions', desc: 'Explore how zeta zeros relate to primes and follow the Lean audit of a proposed proof of the classical Riemann Hypothesis' },
-  },
   {
     to: '/math/cube-graph',
     Icon: Boxes,
@@ -95,6 +91,16 @@ export default function MathLandingPage() {
       <header className="hub-header">
         <h1>{t('数学', 'Math')}</h1>
       </header>
+      <section className="hub-feature" aria-labelledby="grh-feature-title">
+        <h2 id="grh-feature-title">
+          <Link href={GRH_PATH}>{t('广义黎曼猜想', 'Generalized Riemann Hypothesis')}</Link>
+        </h2>
+        <p>{t('了解狄利克雷 L 函数的零点，看看 Lean 怎样检验这份候选证明。', 'Explore the zeros of Dirichlet L-functions and follow the Lean verification of a proposed proof.')}</p>
+        <div className="hub-feature-links">
+          <Link href={GRH_PATH + '#proof-route'}>{t('查看证明路线', 'Explore the proof')}</Link>
+          <Link href={GRH_PATH + '#live'}>{t('查看实时验证进度', 'View live verification')}</Link>
+        </div>
+      </section>
       <div className="hub-grid">
         {CARDS.map((c) => (
           <Link key={c.to} href={c.to} prefetch={false} className="hub-card">
@@ -132,6 +138,18 @@ const INLINE_CSS = `
   font-weight: 600;
   letter-spacing: -0.01em;
 }
+.math-hub-page .hub-feature {
+  margin: 1rem 0 1.5rem;
+  padding: 1rem 1.25rem;
+  border-inline-start: .2rem solid var(--accent);
+  background: var(--card);
+}
+.hub-feature h2 { margin: 0; font-size: 1.4rem; line-height: 1.3; }
+.hub-feature h2 a { color: inherit; }
+.hub-feature p { margin: .4rem 0 .7rem; color: var(--muted-foreground); }
+.hub-feature-links { display: flex; flex-wrap: wrap; gap: .35rem 1.5rem; }
+.hub-feature a { text-underline-offset: .2em; }
+.hub-feature-links a, .hub-feature a:hover { color: var(--accent); text-decoration: underline; }
 .hub-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));

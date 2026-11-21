@@ -1,7 +1,24 @@
-const DOUYIN_MINI_APP_ID = process.env.DOUYIN_MINI_APP_ID?.trim() ?? '';
-const DOUYIN_MINI_APP_SECRET = process.env.DOUYIN_MINI_APP_SECRET?.trim() ?? '';
 const CONTROL_CHARACTER_PATTERN = /[\u0000-\u001F\u007F]/;
 const MAX_PROVIDER_UID_LENGTH = 320;
+
+export interface DouyinMiniProgramCredentials {
+  appId: string;
+  secret: string;
+  legacy: boolean;
+}
+
+export function getDouyinMiniProgramCredentials(appId?: string): DouyinMiniProgramCredentials | undefined {
+  const legacyAppId = process.env.DOUYIN_MINI_APP_ID?.trim();
+  const companyAppId = process.env.DOUYIN_COMPANY_MINI_APP_ID?.trim();
+  if (appId === undefined || appId === legacyAppId) {
+    const secret = process.env.DOUYIN_MINI_APP_SECRET?.trim();
+    return legacyAppId && secret ? { appId: legacyAppId, secret, legacy: true } : undefined;
+  }
+  if (appId === companyAppId) {
+    const secret = process.env.DOUYIN_COMPANY_MINI_APP_SECRET?.trim();
+    return secret ? { appId, secret, legacy: false } : undefined;
+  }
+}
 
 export type DouyinMiniProgramErrorCode =
   | 'invalid-code'
@@ -55,19 +72,18 @@ export function parseDouyinMiniProgramSession(value: unknown): { openid: string;
   return { openid, ...(typeof unionid === 'string' ? { unionid } : {}) };
 }
 
-export function douyinMiniProgramConfigured(): boolean {
-  return Boolean(DOUYIN_MINI_APP_ID && DOUYIN_MINI_APP_SECRET);
-}
-
-export async function exchangeDouyinMiniProgramCode(code: string): Promise<{ openid: string; unionid?: string }> {
+export async function exchangeDouyinMiniProgramCode(
+  code: string,
+  credentials: DouyinMiniProgramCredentials,
+): Promise<{ openid: string; unionid?: string }> {
   let response: Response;
   try {
     response = await fetch('https://developer.toutiao.com/api/apps/v2/jscode2session', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        appid: DOUYIN_MINI_APP_ID,
-        secret: DOUYIN_MINI_APP_SECRET,
+        appid: credentials.appId,
+        secret: credentials.secret,
         code,
       }),
       signal: AbortSignal.timeout(12_000),

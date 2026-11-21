@@ -1,3 +1,4 @@
+import { createHash } from 'node:crypto';
 import { DEFAULT_OPEN_PETS, type DeskPetEntry } from '@cuberoot/shared/deskpet';
 import { registrationReport, membershipSummaryReport } from '../utils/admin_reports.js';
 /**
@@ -64,7 +65,7 @@ import {
   wechatMiniProgramConfigured,
 } from '../utils/wechat_miniprogram.js';
 import {
-  douyinMiniProgramConfigured,
+  getDouyinMiniProgramCredentials,
   exchangeDouyinMiniProgramCode,
   DouyinMiniProgramError,
 } from '../utils/douyin_miniprogram.js';
@@ -519,20 +520,29 @@ accountAuthRoutes.post('/auth/douyin/miniprogram', async (c) => {
   c.header('Cache-Control', 'no-store');
   const rateLimited = authRateLimitResponse(c);
   if (rateLimited) return rateLimited;
-  if (!douyinMiniProgramConfigured()) {
+  const body = await c.req.json<{ code?: unknown; appId?: unknown }>().catch(() => null);
+  const appId = body?.appId;
+  if (appId !== undefined && (typeof appId !== 'string' || !/^tt[\da-z]+$/i.test(appId) || appId.length > 64)) {
+    return c.json(webSessionError('INVALID_REQUEST', 'invalid app id'), 400);
+  }
+  const credentials = getDouyinMiniProgramCredentials(appId);
+  if (!credentials) {
     return c.json(webSessionError('DOUYIN_NOT_CONFIGURED', 'douyin miniprogram not configured'), 503);
   }
-  const body = await c.req.json<{ code?: unknown }>().catch(() => ({ code: undefined }));
-  const code = typeof body.code === 'string' ? body.code.trim() : '';
+  const code = typeof body?.code === 'string' ? body.code.trim() : '';
   if (!code || code.length > 512) {
     return c.json(webSessionError('INVALID_REQUEST', 'invalid code'), 400);
   }
 
   try {
-    const { openid, unionid } = await exchangeDouyinMiniProgramCode(code);
+    const { openid: platformOpenId, unionid } = await exchangeDouyinMiniProgramCode(code, credentials);
+    // Keep legacy IDs intact and scope new OpenIDs to their app within the DB column limit.
+    const openid = credentials.legacy
+      ? platformOpenId
+      : `mini:${credentials.appId}:${createHash('sha256').update(platformOpenId).digest('hex')}`;
     let alliedId: string | null = null;
     try {
-      alliedId = await getDouyinAlliedId('miniprogram', openid);
+      alliedId = await getDouyinAlliedId(credentials, platformOpenId);
     } catch (error) {
       console.warn('[auth] douyin miniprogram allied id unavailable:', error instanceof Error ? error.message : 'unknown');
     }

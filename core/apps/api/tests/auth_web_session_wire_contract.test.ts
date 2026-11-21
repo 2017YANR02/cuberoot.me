@@ -15,7 +15,7 @@ const mocks = vi.hoisted(() => ({
   consumeMobileSessionTicket: vi.fn(),
   consumeWechatBrowserSession: vi.fn(),
   consumeWebSessionTicket: vi.fn(),
-  douyinMiniProgramConfigured: vi.fn(),
+  getDouyinMiniProgramCredentials: vi.fn(),
   exchangeDouyinMiniProgramCode: vi.fn(),
   exchangeWechatMiniProgramCode: vi.fn(),
   generateWechatMiniProgramUrlLink: vi.fn(),
@@ -86,7 +86,7 @@ vi.mock('../src/utils/wechat_miniprogram.js', () => ({
   wechatMiniProgramConfigured: mocks.wechatMiniProgramConfigured,
 }));
 vi.mock('../src/utils/douyin_miniprogram.js', () => ({
-  douyinMiniProgramConfigured: mocks.douyinMiniProgramConfigured,
+  getDouyinMiniProgramCredentials: mocks.getDouyinMiniProgramCredentials,
   exchangeDouyinMiniProgramCode: mocks.exchangeDouyinMiniProgramCode,
   DouyinMiniProgramError: class DouyinMiniProgramError extends Error {
     constructor(public readonly code: string, message: string) {
@@ -249,7 +249,7 @@ describe('auth route wire contracts', () => {
   });
 
   it('uses only Douyin openid in the existing identity and session flow', async () => {
-    mocks.douyinMiniProgramConfigured.mockReturnValue(true);
+    mocks.getDouyinMiniProgramCredentials.mockReturnValue({ appId: 'ttlegacy', secret: 'legacy-secret', legacy: true });
     mocks.exchangeDouyinMiniProgramCode.mockResolvedValue({ openid: 'douyin-openid-1' });
     mocks.loginWithIdentity.mockResolvedValue({ user: account, isNew: true });
 
@@ -271,7 +271,7 @@ describe('auth route wire contracts', () => {
   });
 
   it('maps an expired Douyin code to the stable auth error envelope', async () => {
-    mocks.douyinMiniProgramConfigured.mockReturnValue(true);
+    mocks.getDouyinMiniProgramCredentials.mockReturnValue({ appId: 'ttlegacy', secret: 'legacy-secret', legacy: true });
     mocks.exchangeDouyinMiniProgramCode.mockRejectedValue(
       new DouyinMiniProgramError('invalid-code', 'expired code'),
     );

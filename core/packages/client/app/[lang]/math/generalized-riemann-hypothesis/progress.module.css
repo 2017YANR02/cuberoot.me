@@ -13,9 +13,8 @@
 .nav { min-height: 2.7rem; }
 .hero {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
-  gap: clamp(1rem, 5vw, 4rem);
+  gap: 1.25rem;
   padding: clamp(2rem, 6vw, 4.25rem) 0 2.3rem;
 }
 .hero h1 {
@@ -35,8 +34,7 @@
 }
 .hero p { margin: 1.15rem 0 0; }
 .formula {
-  border-inline-start: 1px solid var(--border-strong);
-  padding-inline: clamp(1.25rem, 3.5vw, 3rem) .6rem;
+  text-align: center;
   font-family: var(--font-serif);
   font-style: italic;
   white-space: nowrap;
@@ -109,8 +107,6 @@
 .notes a { color: var(--foreground); text-decoration: underline; text-underline-offset: .22em; }
 .notes a:hover { color: var(--accent); }
 @media (max-width: 43rem) {
-  .hero { grid-template-columns: 1fr; gap: .95rem; }
-  .formula { display: none; }
   .columns { grid-template-columns: 1fr; gap: 1.5rem; }
 }
 @media (max-width: 30rem) {
