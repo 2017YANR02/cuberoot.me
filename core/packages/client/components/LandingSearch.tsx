@@ -1237,7 +1237,8 @@ export default function LandingSearch({
           {/* allow-manual-search: Results update while typing; Enter submits a natural-language question. */}
           <input
             ref={textInputRef}
-            type="text"
+            type="search"
+            autoComplete="off"
             // iOS Chromium autofill adds __gcruniqueid before hydration; tolerate it on this control only.
             suppressHydrationWarning
             autoFocus={autoFocus}
@@ -1251,8 +1252,9 @@ export default function LandingSearch({
             }}
             onKeyDown={e => {
               if (e.key === 'Escape') {
+                e.preventDefault();
                 setOpen(false);
-                (e.target as HTMLInputElement).blur();
+                e.currentTarget.blur();
               } else if (e.key === 'ArrowRight' && assistantAllowed && !query && !e.nativeEvent.isComposing && e.keyCode !== 229
                 && !e.altKey && !e.ctrlKey && !e.metaKey && !e.shiftKey
                 && !listening && micStatus !== 'starting' && micStatus !== 'stopping') {
