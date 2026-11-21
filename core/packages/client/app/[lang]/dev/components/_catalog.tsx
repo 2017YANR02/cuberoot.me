@@ -1508,6 +1508,20 @@ export const CATALOG: ComponentEntry[] = [
     en: 'Shared simulator and reconstruction back-view button, supporting an open action or a persistent toggle.',
   },
   {
+    name: 'VideoImageTools',
+    import: "import { VideoImageTools } from '@/components/VideoImageTools';",
+    category: 'input',
+    zh: '数帧和视频复盘共用的画面工具栏，提供水平翻转、垂直翻转、旋转和裁剪入口。',
+    en: 'Shared frame-count and video reconstruction toolbar for mirroring, rotating, and cropping video.',
+  },
+  {
+    name: 'VideoTrimTimeline',
+    import: "import { VideoTrimTimeline } from '@/components/VideoTrimTimeline';",
+    category: 'input',
+    zh: '数帧和视频复盘共用的缩略图时间轴，可跳转播放位置和拖动裁剪范围。',
+    en: 'Shared thumbnail timeline for seeking and adjusting the trim range in frame count and video reconstruction.',
+  },
+  {
     name: 'PlaybackBar',
     import: "import PlaybackBar from '@cuberoot/timer-ui/PlaybackBar';",
     category: 'input',

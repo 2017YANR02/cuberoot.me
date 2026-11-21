@@ -317,6 +317,14 @@ export const CATALOG: UtilEntry[] = [
     en: 'Controlled alg <textarea>: only half-width moves land, even with a CJK IME on. Skips composition, restores the caret after stripping.',
   },
   {
+    name: 'useVideoViewport',
+    sig: 'useVideoViewport(element: RefObject<HTMLDivElement | null>, enabled: boolean, cropping = false)',
+    imp: "import { useVideoViewport } from '@/hooks/useVideoViewport';",
+    category: 'hook',
+    zh: '数帧与视频复盘共用的滚轮缩放、双指缩放和平移交互。',
+    en: 'Shared wheel zoom, pinch zoom, and panning for frame count and video reconstruction.',
+  },
+  {
     name: 'useCopy',
     sig: 'useCopy(resetMs?: number): { copied: boolean; copiedKey: string | null; copy: (text: string, key?: string) => void }',
     imp: "import { useCopy } from '@/hooks/useCopy';",

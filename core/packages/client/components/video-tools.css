@@ -1,0 +1,142 @@
+.video-image-tools {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+/* 工具栏图标按钮 */
+.video-image-tool {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: none;
+  border-radius: 0;
+  background: none;
+  color: var(--muted-foreground);
+  cursor: pointer;
+  transition: color 0.15s;
+  flex-shrink: 0;
+}
+.video-image-tool:hover { color: var(--foreground); }
+.video-image-tool[aria-pressed='true'] { color: var(--accent); }
+
+/* ── iOS-style Timeline Trimmer ── */
+.video-timeline-trimmer {
+  position: relative;
+  height: 44px;
+  border-radius: 6px;
+  overflow: visible;
+  margin-bottom: 0.5rem;
+  background: var(--muted);
+  user-select: none;
+}
+
+.video-timeline-filmstrip {
+  display: flex;
+  width: 100%;
+  height: 100%;
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.video-timeline-thumb {
+  flex: 1;
+  min-width: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  pointer-events: none;
+}
+
+/* Dimmed overlay outside trim */
+.video-timeline-dim {
+  position: absolute;
+  top: 0;
+  height: 100%;
+  background: color-mix(in srgb, black 60%, transparent);
+  pointer-events: none;
+  z-index: 2;
+}
+.video-timeline-dim-left { left: 0; border-radius: 6px 0 0 6px; }
+.video-timeline-dim-right { right: 0; border-radius: 0 6px 6px 0; }
+
+/* Trim handles */
+.video-timeline-handle {
+  position: absolute;
+  top: 0;
+  width: 14px;
+  height: 100%;
+  background: var(--accent);
+  cursor: ew-resize;
+  color: var(--accent-foreground);
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  touch-action: none;
+  justify-content: center;
+  transition: background 0.15s;
+}
+.video-timeline-handle-left { border-radius: 6px 0 0 6px; }
+.video-timeline-handle-right { border-radius: 0 6px 6px 0; }
+/* Top/bottom border between handles */
+.video-timeline-border {
+  position: absolute;
+  top: 0;
+  height: 100%;
+  border-top: 2px solid var(--accent);
+  border-bottom: 2px solid var(--accent);
+  pointer-events: none;
+  z-index: 4;
+}
+
+/* Playhead */
+.video-timeline-playhead {
+  position: absolute;
+  top: -2px;
+  width: 2px;
+  height: calc(100% + 4px);
+  background: var(--accent-foreground);
+  box-shadow: 0 0 4px color-mix(in srgb, black 60%, transparent);
+  z-index: 6;
+  pointer-events: none;
+  transform: translateX(-50%);
+  border-radius: 1px;
+}
+
+.video-timeline-time {
+  position: absolute;
+  bottom: calc(100% + 6px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: color-mix(in srgb, var(--popover) 92%, transparent);
+  color: var(--foreground);
+  font-size: 0.72rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  padding: 2px 6px;
+  border-radius: 4px;
+  white-space: nowrap;
+  pointer-events: none;
+  letter-spacing: 0.02em;
+}
+
+/* Seek overlay */
+.video-timeline-seek-area {
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%;
+  height: 100%;
+  cursor: pointer;
+  z-index: 3;
+  touch-action: none;
+}
+
+
+.video-timeline-trimmer [role='slider']:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}

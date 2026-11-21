@@ -3,7 +3,7 @@ import {
   drawOrientedFrame,
   orientedDimensions,
   trackMatrixToRotation,
-} from '@/app/[lang]/frame-count/video-orientation';
+} from '@/lib/video-tools/orientation';
 
 const ONE = 1 << 16;
 const W = 1 << 30;

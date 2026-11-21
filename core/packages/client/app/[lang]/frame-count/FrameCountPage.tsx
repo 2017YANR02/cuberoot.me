@@ -9,13 +9,16 @@ import {
   ChevronDown, Keyboard as IconKeyboard, Upload as IconUpload,
   Play as IconPlay, Pause as IconPause, Rewind as IconSkipBack,
   FastForward as IconSkipForward, ChevronLeft as IconFrameBack,
-  ChevronRight as IconFrameForward, Crop as IconCrop, Download as IconExport,
-  MoveVertical, MoveHorizontal, RotateCcw, CirclePlus, X, HelpCircle, MonitorDown,
+  ChevronRight as IconFrameForward, Download as IconExport,
+  CirclePlus, X, HelpCircle, MonitorDown,
 } from '@app-foundation/icons/lucide';
 import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import Link from '@/components/AppLink';
 import BackHome from '@/components/BackHome';
 import HeaderToggles from '@/components/HeaderToggles';
+import { INITIAL_VIDEO_TRANSFORM, VideoImageTools, videoImageTransformCss } from '@/components/VideoImageTools';
+import { VideoTrimTimeline } from '@/components/VideoTrimTimeline';
+import { useVideoViewport } from '@/hooks/useVideoViewport';
 import { useModalDismiss } from '@/hooks/useModalDismiss';
 import { useTranslation } from 'react-i18next';
 import type mediaInfoFactoryT from 'mediainfo.js';
@@ -33,8 +36,8 @@ async function loadMediaInfo() {
   mediaInfoFactory = mod.default;
   return mediaInfoFactory;
 }
-import { FFmpeg } from '@ffmpeg/ffmpeg';
-import { fetchFile, toBlobURL } from '@ffmpeg/util';
+import { videoCropBounds } from '@/lib/video-tools/crop';
+import { exportVideoClip, exportVideoFrame } from '@/lib/video-tools/export';
 import { useFrameBuffer, IS_MOBILE } from './useFrameBuffer';
 import { VideoInfoButton, DecodeErrorCard, LoadingProgressOverlay } from './VideoInfoPanels';
 import { FrameCountDiag } from './FrameCountDiag';
@@ -47,8 +50,6 @@ import { tr } from '@/i18n/tr';
 // ── 类型定义 ──────────────────────────────────────────────────────────────
 
 /** 旋转角度循环: 0 → 90 → 180 → 270 → 0 */
-type RotationDeg = 0 | 90 | 180 | 270;
-const NEXT_ROTATION: Record<RotationDeg, RotationDeg> = { 0: 90, 90: 180, 180: 270, 270: 0 };
 
 /** WCA 单次截断到厘秒。先取整到毫秒消掉浮点误差(裸 5.02*100 = 501.9999… 会被
  *  floor 成 501 → 5.01,4.10 → 4.09),再截断——否则算错帧数 / 显示。 */
@@ -226,7 +227,7 @@ function ThumbnailCanvas({ bitmap }: { bitmap: ImageBitmap }) {
     const ctx = c.getContext('2d');
     if (ctx) ctx.drawImage(bitmap, 0, 0);
   }, [bitmap]);
-  return <canvas ref={ref} className="fc-timeline-thumb" />;
+  return <canvas ref={ref} className="video-timeline-thumb" />;
 }
 
 // ── 组件 ──────────────────────────────────────────────────────────────────
@@ -337,29 +338,12 @@ export default function FrameCountPage() {
 
 
   // 图像变换（独立状态）
-  const [rotation, setRotation] = useState<RotationDeg>(0);
-  const [flipH, setFlipH] = useState(false);
-  const [flipV, setFlipV] = useState(false);
+  const [imageTransform, setImageTransform] = useState(INITIAL_VIDEO_TRANSFORM);
   const [cropMode, setCropMode] = useState(false);
   const [cropRect, setCropRect] = useState<{ top: number; left: number; bottom: number; right: number } | null>(null);
   const cropStartRef = useRef<{ x: number; y: number } | null>(null);
 
-  // 缩放 + 平移（鼠标滚轮缩放，鼠标/触摸拖动平移）
-  const [zoom, setZoom] = useState(1);
-  const [pan, setPan] = useState({ x: 0, y: 0 });
-  const isPanningRef = useRef(false);
-  const lastPanPosRef = useRef({ x: 0, y: 0 });
-  // Ref 跟踪最新值，避免快速滚轮事件中闭包捕获的值过时
-  const zoomRef = useRef(1);
-  const panRef = useRef({ x: 0, y: 0 });
-  // 双指 pinch 状态: 记录起点距离 + zoom + 中心 + pan
-  const pinchRef = useRef<{
-    startDist: number;
-    startZoom: number;
-    startPan: { x: number; y: number };
-    midX: number;
-    midY: number;
-  } | null>(null);
+  const viewport = useVideoViewport(wrapperRef, !!videoSrc, cropMode);
 
   // Timeline trimmer
   const [thumbnails, setThumbnails] = useState<string[]>([]);
@@ -371,146 +355,10 @@ export default function FrameCountPage() {
   const playheadRef = useRef<HTMLDivElement>(null);
   const playheadTooltipRef = useRef<HTMLSpanElement>(null);
 
-  // FFmpeg export
-  const ffmpegRef = useRef<FFmpeg | null>(null);
   const [exporting, setExporting] = useState(false);
   const [exportProgress, setExportProgress] = useState(0);
   const [showExportMenu, setShowExportMenu] = useState(false);
   const exportMenuRef = useRef<HTMLDivElement>(null);
-
-  // wrapper 的 transform（translate 在 scale 之前，translate 单位是屏幕像素）
-  const getZoomStyle = useCallback((): React.CSSProperties => {
-    if (zoom <= 1 && pan.x === 0 && pan.y === 0) return {};
-    return {
-      transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom})`,
-      transformOrigin: 'center center',
-    };
-  }, [zoom, pan]);
-
-  // 滚轮缩放 — 鼠标位置为不动点（支持鼠标滚轮 + 触控板双指缩放）
-  const handleVideoZoom = useCallback((e: WheelEvent) => {
-    if (e.shiftKey || cropMode) return;
-    e.preventDefault();
-    e.stopPropagation();
-    const target = wrapperRef.current;
-    if (!target) return;
-    const rect = target.getBoundingClientRect();
-
-    // getBoundingClientRect() 返回的是变换后的 rect
-    // rect center = naturalCenter + panX（因为 translate 在 scale 之前）
-    // 所以要减去当前 pan 才能得到鼠标相对于未变换中心的偏移
-    const curPan = panRef.current;
-    const curZoom = zoomRef.current;
-    const mx = e.clientX - (rect.left + rect.width / 2) + curPan.x;
-    const my = e.clientY - (rect.top + rect.height / 2) + curPan.y;
-
-    // Magic Mouse / 触控板会连续发送很小的像素增量，不能每个事件都固定缩放。
-    // 与站内画布一致，先统一滚动单位，再按距离缩放；大幅滚动单次最多约 10%。
-    const delta = e.deltaY * (e.deltaMode === 1 ? 16 : e.deltaMode === 2 ? target.clientHeight : 1);
-    if (!Number.isFinite(delta) || delta === 0) return;
-    const factor = Math.exp(-Math.max(-100, Math.min(100, delta)) * 0.001);
-    const newZoom = Math.max(1, Math.min(8, curZoom * factor));
-    if (newZoom === curZoom) return;
-
-    if (newZoom <= 1) {
-      zoomRef.current = 1;
-      panRef.current = { x: 0, y: 0 };
-      setZoom(1);
-      setPan({ x: 0, y: 0 });
-      return;
-    }
-
-    // 不动点公式：newPan = mx*(1-r) + prevPan*r，其中 r = newZoom/prevZoom
-    const r = newZoom / curZoom;
-    const newPan = {
-      x: mx * (1 - r) + curPan.x * r,
-      y: my * (1 - r) + curPan.y * r,
-    };
-    zoomRef.current = newZoom;
-    panRef.current = newPan;
-    setZoom(newZoom);
-    setPan(newPan);
-  }, [cropMode]);
-
-  // 拖动开始（鼠标 + 触摸）
-  const handlePanStart = useCallback((clientX: number, clientY: number) => {
-    if (cropMode) return;
-    isPanningRef.current = true;
-    lastPanPosRef.current = { x: clientX, y: clientY };
-  }, [cropMode]);
-
-  // 拖动移动
-  const handlePanMove = useCallback((clientX: number, clientY: number) => {
-    if (!isPanningRef.current) return;
-    const dx = clientX - lastPanPosRef.current.x;
-    const dy = clientY - lastPanPosRef.current.y;
-    lastPanPosRef.current = { x: clientX, y: clientY };
-    setPan(prev => {
-      const next = { x: prev.x + dx, y: prev.y + dy };
-      panRef.current = next;
-      return next;
-    });
-  }, []);
-
-  // 拖动结束
-  const handlePanEnd = useCallback(() => {
-    isPanningRef.current = false;
-  }, []);
-
-  // 双指 pinch 缩放处理 (移动端 video wrapper) — 用结构化类型避免 React.Touch vs DOM Touch 冲突
-  const handlePinchStart = useCallback((t1: { clientX: number; clientY: number }, t2: { clientX: number; clientY: number }) => {
-    if (cropMode) return;
-    const target = wrapperRef.current;
-    if (!target) return;
-    const rect = target.getBoundingClientRect();
-    const dx = t2.clientX - t1.clientX;
-    const dy = t2.clientY - t1.clientY;
-    const dist = Math.hypot(dx, dy);
-    const cx = (t1.clientX + t2.clientX) / 2;
-    const cy = (t1.clientY + t2.clientY) / 2;
-    // 中心相对 wrapper 未变换中心的偏移 (与 wheel zoom 一致的算法)
-    const midX = cx - (rect.left + rect.width / 2) + panRef.current.x;
-    const midY = cy - (rect.top + rect.height / 2) + panRef.current.y;
-    pinchRef.current = {
-      startDist: dist,
-      startZoom: zoomRef.current,
-      startPan: { ...panRef.current },
-      midX, midY,
-    };
-    isPanningRef.current = false;
-  }, [cropMode]);
-
-  const handlePinchMove = useCallback((t1: { clientX: number; clientY: number }, t2: { clientX: number; clientY: number }) => {
-    const p = pinchRef.current;
-    if (!p) return;
-    const dx = t2.clientX - t1.clientX;
-    const dy = t2.clientY - t1.clientY;
-    const dist = Math.hypot(dx, dy);
-    if (dist === 0 || p.startDist === 0) return;
-    const ratio = dist / p.startDist;
-    const newZoom = Math.max(1, Math.min(8, p.startZoom * ratio));
-    if (newZoom <= 1) {
-      zoomRef.current = 1;
-      panRef.current = { x: 0, y: 0 };
-      setZoom(1);
-      setPan({ x: 0, y: 0 });
-      return;
-    }
-    // 不动点公式: midX 在 startZoom/startPan 下的位置, 缩放后保持视觉位置不变
-    const r = newZoom / p.startZoom;
-    const newPan = {
-      x: p.midX * (1 - r) + p.startPan.x * r,
-      y: p.midY * (1 - r) + p.startPan.y * r,
-    };
-    zoomRef.current = newZoom;
-    panRef.current = newPan;
-    setZoom(newZoom);
-    setPan(newPan);
-  }, []);
-
-  const handlePinchEnd = useCallback(() => {
-    pinchRef.current = null;
-  }, []);
 
   // iOS Safari 全局禁缩放: 拦截 gesture* 事件 (双指 pinch 和双击 zoom)
   useEffect(() => {
@@ -653,16 +501,15 @@ export default function FrameCountPage() {
         transforms.push(`scale(${scale}) translate(${50 - centerX}%, ${50 - centerY}%)`);
       }
     }
-    if (rotation !== 0) transforms.push(`rotate(${rotation}deg)`);
-    if (flipH) transforms.push('scaleX(-1)');
-    if (flipV) transforms.push('scaleY(-1)');
+    const orientation = videoImageTransformCss(imageTransform);
+    if (orientation) transforms.push(orientation);
     return {
       transform: transforms.length > 0 ? transforms.join(' ') : 'none',
       clipPath: (cropRect && !cropMode)
         ? `inset(${cropRect.top}% ${cropRect.right}% ${cropRect.bottom}% ${cropRect.left}%)`
         : undefined,
     };
-  }, [rotation, flipH, flipV, cropRect, cropMode]);
+  }, [imageTransform, cropRect, cropMode]);
 
 
 
@@ -1559,21 +1406,6 @@ export default function FrameCountPage() {
     return () => window.removeEventListener('wheel', onWheel);
   }, [stepFrames, videoSrc]);
 
-  // 视频区域缩放 — 非 passive 以阻止浏览器默认缩放（触控板双指缩放）+ 阻止页面滚动
-  useEffect(() => {
-    const el = wrapperRef.current;
-    if (!el) return;
-    const handler = (e: WheelEvent) => {
-      // 鼠标在视频上时，始终阻止页面滚动和浏览器缩放
-      e.preventDefault();
-      // shift+scroll 由 window 级别的 frame-stepping handler 处理
-      if (e.shiftKey) return;
-      handleVideoZoom(e);
-    };
-    el.addEventListener('wheel', handler, { passive: false });
-    return () => el.removeEventListener('wheel', handler);
-  }, [handleVideoZoom, videoSrc]);
-
   // ── 生成缩略图 (WebCodecs 不可用 或 mp4box 解析 0 samples 时 fallback 到 <video>+seek) ──
   useEffect(() => {
     if (!videoSrc || totalFrames <= 0 || videoFps <= 0) return;
@@ -1902,53 +1734,7 @@ export default function FrameCountPage() {
         a.click();
         URL.revokeObjectURL(url);
       } else {
-        // ── Trim-only: fast stream copy with ffmpeg.wasm ──
-        if (!ffmpegRef.current) {
-          showToast(t('frameCount.toast.loadingFfmpeg'));
-          const ff = new FFmpeg();
-          ff.on('progress', ({ progress }) => setExportProgress(Math.round(progress * 100)));
-          ff.on('log', ({ message }) => console.log('[ffmpeg]', message));
-          const coreURL = await toBlobURL('/ffmpeg/ffmpeg-core.js', 'text/javascript');
-          const wasmURL = await toBlobURL('/ffmpeg/ffmpeg-core.wasm', 'application/wasm');
-          const workerURL = await toBlobURL('/ffmpeg/ffmpeg-core.worker.js', 'text/javascript');
-          await ff.load({ coreURL, wasmURL, workerURL });
-          ffmpegRef.current = ff;
-        }
-        const ff = ffmpegRef.current;
-        const inputName = 'input' + (videoFile.name.substring(videoFile.name.lastIndexOf('.')) || '.mp4');
-        const inputData = await fetchFile(videoFile);
-        console.log('[Export] Input file size:', inputData.length, 'bytes');
-        await ff.writeFile(inputName, inputData);
-
-        // Build args — -ss BEFORE -i for input-level seeking (avoids frozen keyframe gap)
-        const ffArgs: string[] = [];
-        if (hasTrim && videoFps > 0) {
-          ffArgs.push('-ss', startTime.toFixed(4));
-        }
-        ffArgs.push('-i', inputName);
-        if (hasTrim && videoFps > 0) {
-          ffArgs.push('-t', (endTime - startTime).toFixed(4));
-        }
-        ffArgs.push('-c', 'copy', '-movflags', '+faststart', 'output.mp4');
-
-        console.log('[Export] ffmpeg args:', ffArgs.join(' '));
-        const exitCode = await ff.exec(ffArgs);
-        console.log('[Export] ffmpeg exit code:', exitCode);
-        if (exitCode !== 0) throw new Error(t('frameCount.error.ffmpegExit', { code: exitCode }));
-
-        const outData = await ff.readFile('output.mp4');
-        const buf = outData instanceof Uint8Array ? new Uint8Array(outData) : new TextEncoder().encode(outData as string);
-        console.log('[Export] Output file size:', buf.length, 'bytes');
-        const blob = new Blob([buf], { type: 'video/mp4' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `${baseName}_export.mp4`;
-        a.click();
-        URL.revokeObjectURL(url);
-
-        await ff.deleteFile(inputName);
-        await ff.deleteFile('output.mp4');
+        await exportVideoClip(videoFile, hasTrim && videoFps > 0 ? { start: startTime, end: endTime } : undefined, setExportProgress);
       }
       showToast(t('frameCount.toast.exportComplete'));
     } catch (err) {
@@ -1960,52 +1746,21 @@ export default function FrameCountPage() {
     }
   }, [videoFile, videoSrc, exporting, trimStart, trimEnd, totalFrames, videoFps, cropRect, showToast, frameBufferReady, fbSamples, fbDecoderConfig, t]);
 
-  // 导出当前帧为 PNG。优先用 canvas(WebCodecs 解出的精确帧),fallback 到 video 元素截图。
   const exportCurrentFrame = useCallback(async () => {
     const video = videoRef.current;
     if (!videoFile || !video) return;
-    let blob: Blob | null = null;
-
-    // Tier 1: 已经在 canvas 显示精确帧
-    if (useCanvasDisplay && canvasRef.current && canvasRef.current.width > 0) {
-      blob = await new Promise<Blob | null>((res) => canvasRef.current!.toBlob(res, 'image/png'));
-    }
-
-    // Tier 2: 从 video 元素截图
-    if (!blob) {
-      const w = video.videoWidth;
-      const h = video.videoHeight;
-      if (w === 0 || h === 0) {
-        showToast(t('frameCount.toast.videoNotReady'));
-        return;
-      }
-      const tmp = document.createElement('canvas');
-      tmp.width = w;
-      tmp.height = h;
-      const ctx = tmp.getContext('2d');
-      if (!ctx) return;
-      try {
-        ctx.drawImage(video, 0, 0, w, h);
-        blob = await new Promise<Blob | null>((res) => tmp.toBlob(res, 'image/png'));
-      } catch (e) {
-        showToast(t('frameCount.toast.frameCaptureFailed', { msg: e instanceof Error ? e.message : String(e) }));
-        return;
-      }
-    }
-
-    if (!blob) {
-      showToast(t('frameCount.toast.encodePngFailed'));
+    const canvas = useCanvasDisplay ? canvasRef.current : null;
+    if (!canvas?.width && !video.videoWidth) {
+      showToast(t('frameCount.toast.videoNotReady'));
       return;
     }
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    const baseName = videoFile.name.replace(/\.[^.]+$/, '');
-    a.href = url;
-    a.download = `${baseName}.frame_${currentFrame}.png`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    setTimeout(() => URL.revokeObjectURL(url), 1000);
+    try {
+      if (!await exportVideoFrame(videoFile.name, currentFrame, canvas, video)) {
+        showToast(t('frameCount.toast.encodePngFailed'));
+      }
+    } catch (error) {
+      showToast(t('frameCount.toast.frameCaptureFailed', { msg: error instanceof Error ? error.message : String(error) }));
+    }
   }, [videoFile, useCanvasDisplay, currentFrame, showToast, t]);
 
   // 总帧数 + 首帧到达信号 (用于隐藏 loading overlay + gate WebCodecs ingestion).
@@ -2157,43 +1912,11 @@ export default function FrameCountPage() {
 
               {/* Row 2: 图像变换 + New/Folder/Export + Shortcuts (New/Folder/Shortcuts 即便没视频也可用) */}
               <div className="fc-toolbar-row2">
-                <div className="fc-toolbar-controls">
-                  <button
-                    className={`fc-toolbar-icon ${flipV ? 'active' : ''}`}
-                    title={t('frameCount.toolbar.flipV')}
-                    disabled={!videoSrc}
-                    onClick={() => setFlipV(v => !v)}
-                  >
-                    <MoveVertical size={16} />
-                  </button>
-                  <button
-                    className={`fc-toolbar-icon ${flipH ? 'active' : ''}`}
-                    title={t('frameCount.toolbar.flipH')}
-                    disabled={!videoSrc}
-                    onClick={() => setFlipH(v => !v)}
-                  >
-                    <MoveHorizontal size={16} />
-                  </button>
-                  <button
-                    className="fc-toolbar-icon"
-                    title={t('frameCount.toolbar.rotate', { angle: rotation })}
-                    disabled={!videoSrc}
-                    onClick={() => setRotation(prev => NEXT_ROTATION[prev])}
-                  >
-                    <RotateCcw size={16} />
-                  </button>
-                  <button
-                    className={`fc-toolbar-icon ${cropMode ? 'active' : ''}`}
-                    title={t(cropMode ? 'frameCount.toolbar.cropExit' : 'frameCount.toolbar.crop')}
-                    disabled={!videoSrc}
-                    onClick={() => {
-                      if (cropMode) { setCropMode(false); }
-                      else { setCropMode(true); setCropRect(null); }
-                    }}
-                  >
-                    <IconCrop size={16} />
-                  </button>
-                </div>
+                <VideoImageTools transform={imageTransform} onTransform={setImageTransform} disabled={!videoSrc}
+                  cropping={cropMode} onCrop={() => {
+                    setCropMode(!cropMode);
+                    if (!cropMode) setCropRect(null);
+                  }} />
 
                 <button className="fc-change-video fc-new-btn" onClick={() => fileInputRef.current?.click()} title={t('frameCount.toolbar.newVideo')}>
                   <CirclePlus size={18} />
@@ -2236,31 +1959,9 @@ export default function FrameCountPage() {
                 {/* 视频 wrapper — 紧贴视频尺寸，crop overlay / zoom / pan 都在这里 */}
                 <div
                   ref={wrapperRef}
-                  className={`fc-video-wrapper${cropMode ? '' : (zoom > 1 ? ' fc-panning' : ' fc-pannable')}`}
-                  style={getZoomStyle()}
-                  onMouseDown={(e) => { if (!cropMode) { e.preventDefault(); handlePanStart(e.clientX, e.clientY); } }}
-                  onMouseMove={(e) => handlePanMove(e.clientX, e.clientY)}
-                  onMouseUp={handlePanEnd}
-                  onMouseLeave={handlePanEnd}
-                  onTouchStart={(e) => {
-                    if (cropMode) return;
-                    if (e.touches.length >= 2) {
-                      handlePinchStart(e.touches[0], e.touches[1]);
-                    } else {
-                      handlePanStart(e.touches[0].clientX, e.touches[0].clientY);
-                    }
-                  }}
-                  onTouchMove={(e) => {
-                    if (e.touches.length >= 2 && pinchRef.current) {
-                      handlePinchMove(e.touches[0], e.touches[1]);
-                    } else if (e.touches.length === 1 && !pinchRef.current) {
-                      handlePanMove(e.touches[0].clientX, e.touches[0].clientY);
-                    }
-                  }}
-                  onTouchEnd={(e) => {
-                    if (e.touches.length < 2) handlePinchEnd();
-                    if (e.touches.length === 0) handlePanEnd();
-                  }}
+                  className={`fc-video-wrapper${cropMode ? '' : viewport.zoomed ? ' fc-panning' : ' fc-pannable'}`}
+                  style={viewport.style}
+                  {...viewport.interaction}
                 >
                   <video
                     ref={videoRef}
@@ -2302,21 +2003,18 @@ export default function FrameCountPage() {
                       className="fc-crop-overlay"
                       onMouseDown={(e) => {
                         const rect = e.currentTarget.getBoundingClientRect();
-                        const x = ((e.clientX - rect.left) / rect.width) * 100;
-                        const y = ((e.clientY - rect.top) / rect.height) * 100;
+                        const x = (e.clientX - rect.left) / rect.width;
+                        const y = (e.clientY - rect.top) / rect.height;
                         cropStartRef.current = { x, y };
                         setCropRect(null);
                       }}
                       onMouseMove={(e) => {
                         if (!cropStartRef.current) return;
                         const rect = e.currentTarget.getBoundingClientRect();
-                        const x = Math.min(100, Math.max(0, ((e.clientX - rect.left) / rect.width) * 100));
-                        const y = Math.min(100, Math.max(0, ((e.clientY - rect.top) / rect.height) * 100));
-                        const s = cropStartRef.current;
-                        setCropRect({
-                          top: Math.min(s.y, y), left: Math.min(s.x, x),
-                          bottom: 100 - Math.max(s.y, y), right: 100 - Math.max(s.x, x),
-                        });
+                        const x = (e.clientX - rect.left) / rect.width;
+                        const y = (e.clientY - rect.top) / rect.height;
+                        const { top, left, bottom, right } = videoCropBounds(cropStartRef.current, { x, y });
+                        setCropRect({ top: top * 100, left: left * 100, bottom: (1 - bottom) * 100, right: (1 - right) * 100 });
                       }}
                       onMouseUp={() => {
                         cropStartRef.current = null;
@@ -2366,88 +2064,24 @@ export default function FrameCountPage() {
                 </div>
               )}
 
-              {/* iOS-style timeline trimmer */}
-              <div className="fc-timeline-trimmer" ref={trimTrackRef}>
-                {/* Thumbnail filmstrip — 优先用 WebCodecs 增量缩略图 (视频加载后立即开始出现) */}
-                <div className="fc-timeline-filmstrip">
-                  {timelineThumbs.length > 0
-                    ? timelineThumbs.map(({ bitmap }, i) => (
-                        <ThumbnailCanvas key={i} bitmap={bitmap} />
-                      ))
-                    : thumbnails.map((src, i) => (
-                        <img key={i} src={src} className="fc-timeline-thumb" alt="" draggable={false} />
-                      ))}
-                </div>
-
-                {/* Dimmed areas outside trim range */}
-                {(() => {
-                  const effEnd = trimEnd || totalFrames;
-                  const leftPct = totalFrames > 0 ? (trimStart / totalFrames) * 100 : 0;
-                  const rightPct = totalFrames > 0 ? ((totalFrames - effEnd) / totalFrames) * 100 : 0;
-                  return (
-                    <>
-                      <div className="fc-timeline-dim fc-timeline-dim-left" style={{ width: `${leftPct}%` }} />
-                      <div className="fc-timeline-dim fc-timeline-dim-right" style={{ width: `${rightPct}%` }} />
-                      {/* Yellow border between handles */}
-                      <div className="fc-trim-border" style={{ left: `${leftPct}%`, width: `${100 - leftPct - rightPct}%` }} />
-                    </>
-                  );
-                })()}
-
-                {/* Left trim handle */}
-                <div
-                  className="fc-trim-handle fc-trim-handle-left"
-                  style={{ left: `calc(${totalFrames > 0 ? (trimStart / totalFrames) * 100 : 0}% - 14px)` }}
-                  onPointerDown={(e) => {
-                    e.preventDefault(); e.stopPropagation();
-                    trimDragRef.current = { side: 'left', startX: e.clientX, startVal: trimStart };
-                  }}
-                >
-                  <span className="fc-trim-chevron">‹</span>
-                </div>
-
-                {/* Right trim handle */}
-                <div
-                  className="fc-trim-handle fc-trim-handle-right"
-                  style={{ left: `${totalFrames > 0 ? ((trimEnd || totalFrames) / totalFrames) * 100 : 100}%` }}
-                  onPointerDown={(e) => {
-                    e.preventDefault(); e.stopPropagation();
-                    trimDragRef.current = { side: 'right', startX: e.clientX, startVal: trimEnd || totalFrames };
-                  }}
-                >
-                  <span className="fc-trim-chevron">›</span>
-                </div>
-
-                {/* Playhead with time tooltip */}
-                {totalFrames > 0 && (() => {
-                  const effEnd = trimEnd || totalFrames;
-                  const clampedFrame = Math.max(trimStart, Math.min(currentFrame, effEnd));
-                  const pct = (clampedFrame / totalFrames) * 100;
-                  return (
-                    <div ref={playheadRef} className="fc-timeline-playhead" style={{ left: `${pct}%` }}>
-                      <span ref={playheadTooltipRef} className="fc-playhead-tooltip">{`${formatTime(currentFrame / videoFps)} (${currentFrame})`}</span>
-                    </div>
-                  );
-                })()}
-
-                {/* Click/drag to seek overlay */}
-                <div
-                  className="fc-timeline-seek-area"
-                  onPointerDown={(e) => {
-                    e.preventDefault();
-                    const track = trimTrackRef.current;
-                    if (!track || totalFrames <= 0) return;
-                    const rect = track.getBoundingClientRect();
-                    const frac = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
-                    const effEnd = trimEnd || totalFrames;
-                    const frame = Math.max(trimStart, Math.min(Math.round(frac * totalFrames), effEnd));
-                    // 先做一次精确 seek —— 纯单击(无 drag)时画面即为最高画质
-                    // 若用户继续拖动,onMove 首次触发时再切到 scrub 模式
-                    seekToFrame(frame);
-                    trimDragRef.current = { side: 'seek', startX: e.clientX, startVal: frame };
-                  }}
-                />
-
+              <VideoTrimTimeline total={totalFrames} start={trimStart} end={trimEnd || totalFrames}
+                position={currentFrame} timeLabel={videoFps > 0 ? `${formatTime(currentFrame / videoFps)} (${currentFrame})` : ''}
+                trackRef={trimTrackRef} playheadRef={playheadRef} tooltipRef={playheadTooltipRef}
+                labels={{
+                  start: tr({ zh: '裁剪起点', en: 'Trim start' }),
+                  end: tr({ zh: '裁剪终点', en: 'Trim end' }),
+                  seek: tr({ zh: '视频进度', en: 'Video position' }),
+                }}
+                onSeek={seekToFrame} onDragStart={drag => { trimDragRef.current = drag; }}
+                onTrim={(side, frame) => {
+                  const next = side === 'left' ? Math.min(frame, (trimEnd || totalFrames) - 1) : Math.max(frame, trimStart + 1);
+                  if (side === 'left') setTrimStart(next);
+                  else setTrimEnd(next);
+                  seekToFrame(next);
+                }}
+                thumbnails={timelineThumbs.length > 0
+                  ? timelineThumbs.map(({ bitmap }, i) => <ThumbnailCanvas key={i} bitmap={bitmap} />)
+                  : thumbnails.map((src, i) => <img key={i} src={src} className="video-timeline-thumb" alt="" draggable={false} />)}>
                 {/* Mark indicators */}
                 {activeSolve.marks.map((m, i) => {
                   if (totalFrames <= 0) return null;
@@ -2488,7 +2122,7 @@ export default function FrameCountPage() {
                     </div>
                   );
                 })}
-              </div>
+              </VideoTrimTimeline>
 
               <div className="fc-controls">
                 <div className="fc-rate-group">

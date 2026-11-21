@@ -216,9 +216,7 @@
   flex-shrink: 0;
 }
 
-.fc-toolbar-controls {
-  display: flex;
-  align-items: center;
+.fc-toolbar-row2 .video-image-tools {
   gap: 6px;
   flex: 1;
   min-width: 0;
@@ -323,25 +321,6 @@
 }
 .fc-export-menu-item:hover { background: color-mix(in srgb, var(--foreground) 10%, transparent); color: var(--foreground); }
 
-/* 工具栏图标按钮 */
-.fc-toolbar-icon {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 28px;
-  height: 28px;
-  padding: 0;
-  border: none;
-  border-radius: 0;
-  background: none;
-  color: var(--muted-foreground);
-  cursor: pointer;
-  transition: color 0.15s;
-  flex-shrink: 0;
-}
-.fc-toolbar-icon:hover { color: var(--foreground); }
-.fc-toolbar-icon.active { color: var(--accent); }
-
 /* 视频 overlay — 帧号/时间 */
 .fc-video-overlay {
   position: absolute;
@@ -416,126 +395,6 @@
 .fc-controls-wrap {
   padding: 0.75rem 1rem;
   flex-shrink: 0;
-}
-
-/* ── iOS-style Timeline Trimmer ── */
-.fc-timeline-trimmer {
-  position: relative;
-  height: 44px;
-  border-radius: 6px;
-  overflow: visible;
-  margin-bottom: 0.5rem;
-  background: var(--muted);
-  user-select: none;
-}
-
-.fc-timeline-filmstrip {
-  display: flex;
-  width: 100%;
-  height: 100%;
-  border-radius: 6px;
-  overflow: hidden;
-}
-
-.fc-timeline-thumb {
-  flex: 1;
-  min-width: 0;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  display: block;
-  pointer-events: none;
-}
-
-/* Dimmed overlay outside trim */
-.fc-timeline-dim {
-  position: absolute;
-  top: 0;
-  height: 100%;
-  background: rgba(0,0,0,0.6);
-  pointer-events: none;
-  z-index: 2;
-}
-.fc-timeline-dim-left { left: 0; border-radius: 6px 0 0 6px; }
-.fc-timeline-dim-right { right: 0; border-radius: 0 6px 6px 0; }
-
-/* Trim handles */
-.fc-trim-handle {
-  position: absolute;
-  top: 0;
-  width: 14px;
-  height: 100%;
-  background: var(--accent);
-  cursor: ew-resize;
-  z-index: 5;
-  display: flex;
-  align-items: center;
-  touch-action: none;
-  justify-content: center;
-  transition: background 0.15s;
-}
-.fc-trim-handle:hover { background: var(--accent); }
-.fc-trim-handle-left { border-radius: 6px 0 0 6px; }
-.fc-trim-handle-right { border-radius: 0 6px 6px 0; }
-.fc-trim-chevron {
-  color: var(--accent-foreground);
-  font-size: 16px;
-  font-weight: 700;
-  line-height: 1;
-  user-select: none;
-}
-
-/* Top/bottom border between handles */
-.fc-trim-border {
-  position: absolute;
-  top: 0;
-  height: 100%;
-  border-top: 2px solid var(--accent);
-  border-bottom: 2px solid var(--accent);
-  pointer-events: none;
-  z-index: 4;
-}
-
-/* Playhead */
-.fc-timeline-playhead {
-  position: absolute;
-  top: -2px;
-  width: 2px;
-  height: calc(100% + 4px);
-  background: #fff;
-  box-shadow: 0 0 4px rgba(0,0,0,0.6);
-  z-index: 6;
-  pointer-events: none;
-  transform: translateX(-50%);
-  border-radius: 1px;
-}
-
-.fc-playhead-tooltip {
-  position: absolute;
-  bottom: calc(100% + 6px);
-  left: 50%;
-  transform: translateX(-50%);
-  background: color-mix(in srgb, var(--popover) 92%, transparent);
-  color: var(--foreground);
-  font-size: 0.72rem;
-  font-weight: 600;
-  font-variant-numeric: tabular-nums;
-  padding: 2px 6px;
-  border-radius: 4px;
-  white-space: nowrap;
-  pointer-events: none;
-  letter-spacing: 0.02em;
-}
-
-/* Seek overlay */
-.fc-timeline-seek-area {
-  position: absolute;
-  top: 0; left: 0;
-  width: 100%;
-  height: 100%;
-  cursor: pointer;
-  z-index: 3;
-  touch-action: none;
 }
 
 /* Mark 三角标行 — 贴在时间轴下方 */
@@ -1591,7 +1450,7 @@
     white-space: nowrap;
   }
   /* Row 2: 图像变换按钮靠左, 其他紧随其后, Export 靠右 */
-  .fc-toolbar-row2 .fc-toolbar-controls {
+  .fc-toolbar-row2 .video-image-tools {
     flex: 0 0 auto;
     flex-wrap: nowrap;
   }
@@ -1599,7 +1458,7 @@
     margin-left: 0;
   }
   /* 把变换组 (flip/rotate/crop) 推开, 让后面 New/Export/键盘 整组贴右; 比给 export 单独 margin-left:auto 更不易挤换行 */
-  .fc-toolbar-row2 .fc-toolbar-controls {
+  .fc-toolbar-row2 .video-image-tools {
     margin-right: auto;
   }
   /* 手机端不需要 Folder — 本地文件系统 API 在移动浏览器基本不可用 */

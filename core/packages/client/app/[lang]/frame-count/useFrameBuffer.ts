@@ -24,7 +24,7 @@ import {
   orientedDimensions,
   trackMatrixToRotation,
   type VideoRotation,
-} from './video-orientation';
+} from '@/lib/video-tools/orientation';
 
 // mp4box 对 QuickTime/.MOV 里的私有 / 元数据 atom 会用 console.error 抛 "Invalid box type"。
 // 这对抽帧无害 (视频轨样本照常解析,真失败时我们用 parseFailed 兜底切 <video>),
