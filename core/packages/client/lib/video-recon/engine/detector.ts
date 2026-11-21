@@ -140,7 +140,7 @@ export type WorkerRequest =
       preserveAlpha?: boolean;
     };
 export type WorkerResponse =
-  | { type: "progress"; fraction: number; stage: string }
+  | { type: "progress"; fraction: number; receivedBytes?: number; stage: string }
   | {
       type: "ready";
       threads: number;

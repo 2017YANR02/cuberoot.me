@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import { parseAsStringEnum, useQueryState } from 'nuqs';
-import { Camera, Download, Film, HelpCircle, Unplug, Upload } from '@app-foundation/icons/lucide';
+import { Camera, Film, HelpCircle, Unplug, Upload } from '@app-foundation/icons/lucide';
 import Link from '@/components/AppLink';
 import PageHeading from '@/components/PageHeading';
 import HeaderToggles from '@/components/HeaderToggles';
@@ -27,14 +27,14 @@ const VIDEO_MODES: WorkspaceTab[] = ['detector', 'timer'];
 const noWorkspace = () => null;
 const noSubscription = () => () => {};
 
-function VideoReconProgress({ label, value }: { label: string; value?: number }) {
+function VideoReconProgress({ label, value, detail }: { label: string; value?: number; detail?: string }) {
   if (value === undefined) return <LoadingIndicator>{label}</LoadingIndicator>;
   return <div className="video-recon-progress">
     <div className="video-recon-section-heading">
       <span role="status">{label}</span>
-      <strong aria-hidden="true">{value}%</strong>
+      <strong aria-hidden="true">{detail ? `${detail} · ` : ''}{value}%</strong>
     </div>
-    <progress aria-label={label} max={100} value={value} />
+    <progress aria-label={label} aria-valuetext={detail ? `${detail} · ${value}%` : undefined} max={100} value={value} />
   </div>;
 }
 
@@ -97,7 +97,11 @@ export default function VideoReconClient() {
   const searchSteps = view?.searchResult?.steps ?? NO_MOVES;
   const shownSteps = pendingResult ? liveResult?.steps ?? NO_MOVES : searchSteps;
   const measured = view?.measuredCubeTimeline;
-  const downloadProgress = view?.modelProgress;
+  const modelDownload = view?.modelDownload;
+  const downloadProgress = modelDownload && modelDownload.totalBytes > 0
+    ? Math.floor(modelDownload.receivedBytes / modelDownload.totalBytes * 100) : undefined;
+  const downloadSize = modelDownload
+    ? `${(modelDownload.receivedBytes / 1_000_000).toFixed(1)} / ${(modelDownload.totalBytes / 1_000_000).toFixed(1)} MB` : undefined;
   const downloading = downloadProgress !== undefined && downloadProgress < 100;
   const frameProgress = reconstructing && !view.videoInputComplete && view.solveEnd > view.solveStart
     ? Math.max(0, Math.min(99, Math.floor(100 * (view.position - view.solveStart) / (view.solveEnd - view.solveStart))))
@@ -190,7 +194,7 @@ export default function VideoReconClient() {
           label={downloading ? t('正在下载识别模型', 'Downloading detector models')
             : downloadProgress === 100 ? t('正在初始化识别模型', 'Initializing detector models')
               : t('正在准备识别模型', 'Preparing detector models')}
-          value={downloading ? downloadProgress : undefined} />}
+          value={downloading ? downloadProgress : undefined} detail={downloadSize} />}
         {view?.status !== 'loading' && (reconstructing || view?.timerBuffering) && <VideoReconProgress
           label={frameProgress === undefined ? t('正在复盘 · 重建动作', 'Reconstructing · Recovering moves')
             : t('正在复盘 · 分析视频帧', 'Reconstructing · Analyzing video frames')}
@@ -210,15 +214,6 @@ export default function VideoReconClient() {
           <details><summary>{t('技术详情', 'Technical details')}</summary>{view.error}</details>
           <button type="button" className="btn-secondary" onClick={() => void workspace.loadModel()}>{t('重新加载检测器', 'Reload detector')}</button>
         </div>}
-        <footer className="video-recon-section-heading video-recon-muted">
-          <span>{t('仅在浏览器本地处理', 'Processed locally in your browser only')}
-            {view?.sourceKind && view.sourceKind !== 'none' ? ` · ${(showCamera ? view.captureFps : view.fps).toFixed(1)} FPS` : ''}
-          </span>
-          <button type="button" className="btn-secondary" disabled={!view?.savedFrames || view.timerBusy} onClick={() => void workspace?.downloadDetections()}>
-            <Download size={16} aria-hidden />{t('下载检测数据', 'Download detections')}
-            {view?.savedFrames ? ` (${view.savedFrames})` : ''}
-          </button>
-        </footer>
       </section>
       {showResults && view && <ProjectedCube live={pendingResult}
         pose={pendingResult ? liveResult?.cube?.pose : view.coloredProjection} sourceTimestamp={resultTime}

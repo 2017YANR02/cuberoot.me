@@ -51,22 +51,29 @@ async function download(
   expectedBytes: number,
   stage: string,
 ): Promise<Uint8Array> {
+  const report = (receivedBytes: number) => {
+    send({ type: "progress", fraction: Math.min(1, receivedBytes / expectedBytes), receivedBytes, stage });
+  };
+  report(0);
   const response = await fetch(url);
   if (!response.ok)
     throw new Error(
       `Model download failed (${response.status}).`,
     );
-  if (!response.body) return new Uint8Array(await response.arrayBuffer());
+  if (!response.body) {
+    const bytes = new Uint8Array(await response.arrayBuffer());
+    report(bytes.length);
+    return bytes;
+  }
   const reader = response.body.getReader();
   const chunks: Uint8Array[] = [];
   let received = 0;
-  const total = Number(response.headers.get("content-length")) || expectedBytes;
   while (true) {
     const { done, value } = await reader.read();
     if (done) break;
     chunks.push(value);
     received += value.length;
-    send({ type: "progress", fraction: Math.min(1, received / total), stage });
+    report(received);
   }
   const result = new Uint8Array(received);
   let offset = 0;

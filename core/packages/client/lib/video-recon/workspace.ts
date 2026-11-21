@@ -87,7 +87,7 @@ export function createVideoWorkspace(stage: HTMLCanvasElement, initialTab: Works
     timerCapturePhase: 'idle' as 'idle'|'capturing'|'draining',
     manifest: undefined as ModelManifest | undefined,
     status: "loading" as "loading" | "ready" | "error",
-    modelProgress: undefined as number | undefined,
+    modelDownload: undefined as { receivedBytes: number; totalBytes: number } | undefined,
     error: "",
     mediaError: "",
     sourceName: "",
@@ -125,7 +125,6 @@ export function createVideoWorkspace(stage: HTMLCanvasElement, initialTab: Works
     thumbnails: [] as string[],
     reviewInitialized: false,
     captureFps: 0,
-    savedFrames: 0,
     thresholds: [0.25, 0.4, 0.25, 0.9, 0.9, 0.9, 0.9, 0.9, 0.9],
     presenceThreshold: 0.05,
     result: undefined as FrameResult | undefined,
@@ -185,7 +184,6 @@ export function createVideoWorkspace(stage: HTMLCanvasElement, initialTab: Works
       void pending.then(async () => {
         if (disposed || archivedDiagnostics.get(id) !== pending) return;
         await timerDiagnostics.finish(id);
-        state.savedFrames = recording.length;
       }).catch(() => {
         if (archivedDiagnostics.get(id) === pending) archivedDiagnostics.delete(id);
       });
@@ -662,7 +660,6 @@ export function createVideoWorkspace(stage: HTMLCanvasElement, initialTab: Works
       if (completed.camera && state.timerCamera) {
         for (const id of timerReconstruction.solveIds(completed.timestamp)) timerDiagnostics.frame(id, sequence);
       }
-      state.savedFrames = recording.length;
     }
     if (completed.camera && state.timerCamera) {
       timerReplayStore.capture(completed.timestamp,packet.result,()=>completed.snapshot.convertToBlob({type:'image/jpeg',quality:.8}));
@@ -716,7 +713,7 @@ export function createVideoWorkspace(stage: HTMLCanvasElement, initialTab: Works
       state.status = "error";
       return;
     }
-    state.modelProgress = undefined;
+    state.modelDownload = undefined;
     try {
       if (backend === "webgpu") {
         const available = await hasWebGpuAdapter(navigator.gpu);
@@ -759,8 +756,13 @@ export function createVideoWorkspace(stage: HTMLCanvasElement, initialTab: Works
         if (data.type === "progress") {
           const bboxBytes = state.manifest?.bbox.bytes ?? 0;
           const poseBytes = state.manifest?.variants.find(variant => variant.size === size)?.bytes ?? 0;
-          const bytes = data.stage === 'Cube detector' ? bboxBytes * data.fraction : bboxBytes + poseBytes * data.fraction;
-          state.modelProgress = Math.round(bytes / Math.max(1, bboxBytes + poseBytes) * 100);
+          const bboxStage = data.stage === 'Cube detector';
+          const stageBytes = bboxStage ? bboxBytes : poseBytes;
+          const received = data.receivedBytes ?? Math.round(stageBytes * data.fraction);
+          state.modelDownload = {
+            receivedBytes: (bboxStage ? 0 : bboxBytes) + Math.min(received, stageBytes),
+            totalBytes: bboxBytes + poseBytes,
+          };
         }
         if (data.type === "ready") {
           detectorIdentity=data.models;detectorPreprocessing=data.preprocessing;
@@ -1281,28 +1283,6 @@ export function createVideoWorkspace(stage: HTMLCanvasElement, initialTab: Works
   function redrawOverlay() {
     if (state.result) presenter.redraw(stage, state.showRoi || displayPose() ? drawOverlay : undefined);
   }
-  async function downloadDetections() {
-    if (!recording.length) return;
-    try { await recording.readyAll(); }
-    catch (cause) { state.mediaError = `Unable to prepare diagnostic metadata: ${String(cause)}`; return; }
-    const blob = new Blob(
-      [
-        JSON.stringify({
-          ...compactDetectionCapture(recording.toJSON()),
-          model: state.manifest,
-        }),
-      ],
-      {
-        type: "application/json",
-      },
-    );
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = "cube-detections.json";
-    link.click();
-    window.setTimeout(() => URL.revokeObjectURL(url), 1000);
-  }
   async function timerDiagnosticBlob(id: string) {
     const run = timerDiagnostics.runId(id);
     if (!run) throw new Error('Diagnostics are unavailable for this solve');
@@ -1564,7 +1544,7 @@ export function createVideoWorkspace(stage: HTMLCanvasElement, initialTab: Works
       replayLoading: state.replayLoading,
       replayStorageError: state.replayStorageError,
       status: state.status,
-      modelProgress: state.modelProgress,
+      modelDownload: state.modelDownload,
       error: state.error,
       mediaError: state.mediaError,
       sourceName: state.sourceName,
@@ -1576,7 +1556,6 @@ export function createVideoWorkspace(stage: HTMLCanvasElement, initialTab: Works
       searchError: state.searchError,
       searchResult: state.searchResult,
       poseError: state.poseError,
-      savedFrames: state.savedFrames,
       fps: state.fps,
       captureFps: state.captureFps,
       duration: state.duration,
@@ -1629,7 +1608,7 @@ export function createVideoWorkspace(stage: HTMLCanvasElement, initialTab: Works
   }
 
   return {
-    selectTab, camera, startTimerSolve, stopTimerSolve, deleteTimerSolve, clearTimerSession, seekLatestTimerReplay, openFile, stopSource, editCrop, applyCrop, closeCrop, changeTrim, previewSelection, stepPreview, beginReconstruction, editSolveRange, togglePlayback, changePlaybackSpeed, requestReview, seekReviewIndex, stepReview, downloadDetections, downloadTimerDiagnostics, loadModel, cleanup, reviewKeydown,
+    selectTab, camera, startTimerSolve, stopTimerSolve, deleteTimerSolve, clearTimerSession, seekLatestTimerReplay, openFile, stopSource, editCrop, applyCrop, closeCrop, changeTrim, previewSelection, stepPreview, beginReconstruction, editSolveRange, togglePlayback, changePlaybackSpeed, requestReview, seekReviewIndex, stepReview, downloadTimerDiagnostics, loadModel, cleanup, reviewKeydown,
     getSnapshot: () => view,
     subscribe(listener: () => void) {
       listeners.add(listener);
