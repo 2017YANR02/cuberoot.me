@@ -43,7 +43,8 @@ export interface AlgPlayerHandle {
   /** Settled puzzle coordinates for a simulated NxN sticker, independent of the camera. */
   getStickerPlacement?: (homeIndex: number, homeFace: CubeFace) => AlgStickerPlacement | null;
   subscribeRenderedView?: (callback: () => void) => () => void;
-  subscribeSettledCube?: (callback: () => void) => () => void;
+  /** Called between settled turns, before the remaining queued moves start. */
+  subscribeSettledCube?: (callback: (queuedMoves: number) => void) => () => void;
   resetView?: (durationMs?: number) => void | Promise<void>;
   /** Manual NxN practice input, available with turn interaction and no playback controls. */
   applyUserMove?: (move: string) => boolean;
@@ -162,8 +163,12 @@ interface Props {
   /** Sim 3x3: frame each daisy petal whose side matches the center below it. */
   highlightDaisyAlignment?: boolean;
   daisyAlignmentFace?: 'F' | 'R';
-  /** Sim engine, 3×3 only: render the simulator's animated hands. */
-  showHands?: boolean;
+  /** Sim 2×2/3×3: true loads both hands; the left modes load one model. */
+  showHands?: boolean | 'left' | 'left-thumb';
+  /** Toggle the loaded rig without replacing the cube. */
+  handsVisible?: boolean;
+  /** Keep the reference thumb on its target after the last tap. */
+  holdReferenceThumb?: boolean;
   /** 每个 STM 的动画时长(ms)，默认 1000。 */
   moveDurationMs?: number;
   /** 自定义尺寸,默认 260px;`fillPane=true` 时忽略 */
@@ -248,6 +253,8 @@ const AlgPlayer = forwardRef<AlgPlayerHandle, Props>(function AlgPlayer(props, r
         highlightDaisyAlignment={props.highlightDaisyAlignment}
         daisyAlignmentFace={props.daisyAlignmentFace}
         showHands={props.showHands}
+        handsVisible={props.handsVisible}
+        holdReferenceThumb={props.holdReferenceThumb}
         startSolved={props.startSolved} autoPlay={props.autoPlay} loop={props.loop}
         resetAfterPlayback={props.resetAfterPlayback}
         stageOverlay={props.stageOverlay}

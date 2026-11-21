@@ -21,7 +21,7 @@
 
 import { forwardRef, useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState, type CSSProperties, type ReactNode } from 'react';
 import { invertMoveString } from '@cuberoot/shared/alg-notation';
-import SimStage from '@/components/sim-embed/SimStage';
+import SimStage, { afterFirstPaint } from '@/components/sim-embed/SimStage';
 import { useT } from '@/hooks/useT';
 import type { SimMount } from '@/components/sim-embed/mountSimWorld';
 import type { BlockedLayerTurnHandler, CubeletTap, EmbeddedWholeCubeDrag } from '@/components/sim-embed/attachEmbeddedSimInteraction';
@@ -144,14 +144,16 @@ const AlgSimPlayer = forwardRef<AlgPlayerHandle, {
   stickeringAtStep?: (step: number) => import('@cuberoot/puzzle-render-core/engine/nxn/stickering').StickeringMaskFn;
   highlightDaisyAlignment?: boolean;
   daisyAlignmentFace?: 'F' | 'R';
-  showHands?: boolean;
+  showHands?: boolean | 'left' | 'left-thumb';
+  handsVisible?: boolean;
+  holdReferenceThumb?: boolean;
   moveDurationMs?: number;
   size?: number;
   /** 撑满父容器。给编辑器那种「右半屏放预览」的布局用。 */
   fillPane?: boolean;
 }>(function AlgSimPlayer({
   alg, puzzle, puzzleOrder, set, additionalStickering, hiddenStickers, outlinedStickers, highlightedStickers, frontFaceArrow, moveHint, moveHintRecovery = false, stickerColorOverrides, setup, orientation = '', sceneRot, startSolved = false, autoPlay = false, playRequest = 0, loop = false, resetAfterPlayback = false, controlMode = 'full', stepMarkers, hideResetView = false, interactionMode = 'view', lockView = false, wholeCubeDrag, onUserMove, onCubeletTap, orbitSnapDegrees, orbitSnapLocked, pauseAfterSteps, sectionPauseMs, onStepChange, onReady, stickeringAtStep, highlightDaisyAlignment = false, showHands = false, moveDurationMs, size = 260, fillPane = false,
-  stageOverlay, daisyAlignmentFace, hintFacelets = false, maxFramingEdge, allowUserLayerTurn, onBlockedUserLayerTurn, cornerSlotHint,
+  stageOverlay, daisyAlignmentFace, hintFacelets = false, maxFramingEdge, allowUserLayerTurn, onBlockedUserLayerTurn, cornerSlotHint, handsVisible = true, holdReferenceThumb = false,
 }, ref) {
   const t = useT();
   const [handsUnavailable, setHandsUnavailable] = useState(false);
@@ -160,6 +162,8 @@ const AlgSimPlayer = forwardRef<AlgPlayerHandle, {
   const puzzleKind = NXN_ORDER[puzzle] !== undefined && puzzleOrder !== undefined
     ? clampNxNOrder(puzzleOrder)
     : canonicalPuzzleKind;
+  const handsEnabled = showHands && (puzzleKind === 2 || puzzleKind === 3);
+  const loadedHands = typeof showHands === 'string' ? showHands : 'both';
 
   /**
    * 逐步切开。库里存的是**人写的**文本(换握记号、连写、分组括号都有),
@@ -234,6 +238,24 @@ const AlgSimPlayer = forwardRef<AlgPlayerHandle, {
     [moves.length, jumpToStep],
   );
   const viewListeners = useRef(new Set<() => void>());
+  const handsRef = useRef<HandsRig | null>(null);
+  const handsVisibleRef = useRef(handsVisible);
+  handsVisibleRef.current = handsVisible;
+  const holdReferenceThumbRef = useRef(holdReferenceThumb);
+  holdReferenceThumbRef.current = holdReferenceThumb;
+  const queuedThumbTaps = useRef(0);
+  const onUserMoveRef = useRef(onUserMove);
+  onUserMoveRef.current = onUserMove;
+  const reportUserMove = useCallback((move: string) => {
+    if (loadedHands === 'left-thumb' && handsVisibleRef.current) {
+      const topTurn = /^U(\d+)?'?$/.exec(move);
+      if (topTurn && Number(topTurn[1] ?? 1) % 4 !== 0) {
+        if (handsRef.current) handsRef.current.queueReferenceThumbTaps();
+        else queuedThumbTaps.current++;
+      }
+    }
+    onUserMoveRef.current?.(move);
+  }, [loadedHands]);
   useImperativeHandle(ref, () => ({
     getPlayer: () => seekPlayer,
     setAnimationPaused: (paused: boolean) => {
@@ -305,11 +327,12 @@ const AlgSimPlayer = forwardRef<AlgPlayerHandle, {
     subscribeSettledCube: callback => {
       const mount = mountRef.current;
       if (!mount || !ready || typeof puzzleKind !== 'number') return () => {};
-      const { callbacks } = mount.world.cube as Cube;
+      const { callbacks, twister } = mount.world.cube as Cube;
+      const report = () => callback(twister.backlog);
       // Observe the settled slots before the twister starts the next queued turn.
-      callbacks.unshift(callback);
+      callbacks.unshift(report);
       return () => {
-        const index = callbacks.indexOf(callback);
+        const index = callbacks.indexOf(report);
         if (index >= 0) callbacks.splice(index, 1);
       };
     },
@@ -321,8 +344,10 @@ const AlgSimPlayer = forwardRef<AlgPlayerHandle, {
     },
     isUserMovePending: (includeHands = true) => {
       const mount = mountRef.current;
-      const handPhase = handsRef.current?.getLoadState().hands;
-      const handsPending = showHands && puzzleKind === 3 && !handsUnavailable && handPhase !== 'ready' && handPhase !== 'error';
+      const handRig = handsRef.current;
+      const handPhase = handRig?.getLoadState().hands;
+      const handsPending = handsEnabled && !handsUnavailable && ((handPhase !== 'ready' && handPhase !== 'error')
+        || (handsVisibleRef.current && (queuedThumbTaps.current > 0 || handRig?.hasPendingThumbTaps)));
       return !mount || !ready || (includeHands && handsPending)
         || (typeof mount.world.puzzleKind === 'number' && (mount.world.cube as Cube).twister.backlog > 0);
     },
@@ -336,7 +361,7 @@ const AlgSimPlayer = forwardRef<AlgPlayerHandle, {
         return false;
       }
       (mount.world.cube as Cube).twister.push(steps.join(' '));
-      for (const step of steps) onUserMoveRef.current?.(step);
+      for (const step of steps) reportUserMove(step);
       mount.invalidate();
       return true;
     },
@@ -351,7 +376,7 @@ const AlgSimPlayer = forwardRef<AlgPlayerHandle, {
       mount.invalidate();
       return true;
     },
-  }), [seekPlayer, ready, interactionMode, controlMode, puzzle, puzzleKind, moves.length, showHands, handsUnavailable]);
+  }), [seekPlayer, ready, interactionMode, controlMode, puzzle, puzzleKind, moves.length, handsEnabled, handsUnavailable, reportUserMove]);
   const mountRef = useRef<SimMount | null>(null);
   useEffect(() => {
     const mount = mountRef.current;
@@ -362,7 +387,10 @@ const AlgSimPlayer = forwardRef<AlgPlayerHandle, {
     const mount = mountRef.current;
     if (ready && animationPaused.current && mount && typeof mount.world.puzzleKind === 'number') (mount.world.cube as Cube).twister.setAnimationPaused(true);
   }, [ready]);
-  const handsRef = useRef<HandsRig | null>(null);
+  useEffect(() => {
+    if (!handsVisible) queuedThumbTaps.current = 0;
+    if (handsRef.current) mountRef.current?.world.setHandsWanted(handsVisible && !handsUnavailable, 'cube');
+  }, [handsVisible, handsUnavailable]);
   const restoreGripsRef = useRef<((prefix: string[]) => void) | null>(null);
   const alignmentRef = useRef<ReturnType<typeof import('./daisy-alignment').attachDaisyAlignment> | null>(null);
   const daisyAlignmentFaceRef = useRef(daisyAlignmentFace);
@@ -374,8 +402,6 @@ const AlgSimPlayer = forwardRef<AlgPlayerHandle, {
   interactionOptionsRef.current = { interactionMode, lockView, wholeCubeDrag, handlesCubeletTaps, orbitSnapDegrees };
   const updateInteractionRef = useRef<(() => void) | null>(null);
   useEffect(() => { updateInteractionRef.current?.(); }, [interactionMode, lockView, wholeCubeDrag, handlesCubeletTaps, orbitSnapDegrees]);
-  const onUserMoveRef = useRef(onUserMove);
-  onUserMoveRef.current = onUserMove;
   const layerTurnGuard = useRef(allowUserLayerTurn);
   layerTurnGuard.current = allowUserLayerTurn;
   const blockedLayerTurnCallback = useRef(onBlockedUserLayerTurn);
@@ -422,7 +448,7 @@ const AlgSimPlayer = forwardRef<AlgPlayerHandle, {
     let alignment: ReturnType<NonNullable<typeof alignmentModule>['attachDaisyAlignment']> | undefined;
     const m = mountSimWorld({ host, puzzle: puzzleKind, interactive: true, sceneRot, maxFramingEdge,
       onFrame: (_world, dt) => {
-        const handsChanged = hands?.tick(dt);
+        const handsChanged = hands?.tick(dt, holdReferenceThumbRef.current);
         const hintChanged = updateMoveHintRef.current?.() ?? false;
         const cornerHintChanged = updateCornerSlotHint.current?.() ?? false;
         return (alignment?.update() ?? false) || (handsChanged ?? false) || hintChanged || cornerHintChanged;
@@ -474,7 +500,7 @@ const AlgSimPlayer = forwardRef<AlgPlayerHandle, {
       detachInteraction = attachEmbeddedSimInteraction({
         world, dom: m.renderer.domElement, mode: options.interactionMode,
         lockView: options.lockView, wholeCubeDrag: options.wholeCubeDrag,
-        onUserMove: move => onUserMoveRef.current?.(move),
+        onUserMove: reportUserMove,
         allowUserLayerTurn: move => layerTurnGuard.current?.(move) !== false,
         onBlockedUserLayerTurn: (move, point) => blockedLayerTurnCallback.current?.(move, point),
         onCubeletTap: options.handlesCubeletTaps ? selection => onCubeletTapRef.current?.(selection) : undefined,
@@ -509,17 +535,23 @@ const AlgSimPlayer = forwardRef<AlgPlayerHandle, {
 
     let disposed = false;
     let unsubscribeHands: (() => void) | undefined;
-    if (showHands && puzzleKind === 3) {
-      void Promise.all([
-        import('@/app/[lang]/sim/engine/hands/handsRig'),
-        import('@/app/[lang]/sim/engine/nxn/twister'),
-      ]).then(([handsModule, twisterModule]) => {
+    if (handsEnabled) {
+      const mountHands = async () => {
+        // Let the cube paint before the hand chunk and models start loading.
+        await afterFirstPaint();
         if (disposed) return;
-        const rig = new handsModule.default();
+        const [handsModule, twisterModule] = await Promise.all([
+          import('@/app/[lang]/sim/engine/hands/handsRig'),
+          import('@/app/[lang]/sim/engine/nxn/twister'),
+        ]);
+        if (disposed) return;
+        const rig = new handsModule.default(loadedHands);
         hands = rig;
         handsRef.current = rig;
         world.handsFactory = () => rig;
-        world.setHandsWanted(true);
+        world.setHandsWanted(handsVisibleRef.current, 'cube');
+        rig.queueReferenceThumbTaps(queuedThumbTaps.current);
+        queuedThumbTaps.current = 0;
         const nxn = cube as Cube;
         restoreGripsRef.current = prefix => {
           const sequence: GripSimStep[] = [];
@@ -542,7 +574,8 @@ const AlgSimPlayer = forwardRef<AlgPlayerHandle, {
         };
         unsubscribeHands = rig.subscribeLoadState(updateHands);
         updateHands();
-      }).catch(() => {
+      };
+      void mountHands().catch(() => {
         if (!disposed) setHandsUnavailable(true);
       });
     }
@@ -561,6 +594,7 @@ const AlgSimPlayer = forwardRef<AlgPlayerHandle, {
       unsubscribeHands?.();
       hands?.dispose();
       handsRef.current = null;
+      queuedThumbTaps.current = 0;
       restoreGripsRef.current = null;
       m.dispose();
       mountRef.current = null;
@@ -568,7 +602,7 @@ const AlgSimPlayer = forwardRef<AlgPlayerHandle, {
       lastRef.current = null;
       instantStepRef.current = null;
     };
-  }, [puzzleKind, puzzle, set, additionalStickering, hiddenStickers, outlinedStickers, previewTiming.frames, sceneRot, maxFramingEdge, highlightDaisyAlignment, showHands]);
+  }, [puzzleKind, puzzle, set, additionalStickering, hiddenStickers, outlinedStickers, previewTiming.frames, sceneRot, maxFramingEdge, highlightDaisyAlignment, handsEnabled, loadedHands, reportUserMove]);
 
   const resetView = useCallback(() => resetViewRef.current?.(), []);
 
@@ -842,7 +876,7 @@ const AlgSimPlayer = forwardRef<AlgPlayerHandle, {
 
   return (
     <div className={`alg-sim-player${fillPane ? ' is-fill' : ''}`} style={{ '--alg-player-size': `${size}px` } as CSSProperties}>
-      {showHands && handsUnavailable && <small role="status">{t('手部模型加载失败', 'Could not load the hand models')}</small>}
+      {showHands && handsVisible && handsUnavailable && <small role="status">{t('手部模型加载失败', 'Could not load the hand models')}</small>}
       <SimStage
         size={size}
         mount={mount}

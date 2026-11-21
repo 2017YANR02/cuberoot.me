@@ -62,7 +62,7 @@ import { MARKED_CLEARANCE, MARKED_FINGER_PROFILES } from './markedFingerPoses';
 export interface HandsCubeLike {
   order: number;
   table: { groups: Record<"x" | "y" | "z", { angle: number; targetAngle?: number; isDragging?: boolean }[]> };
-  twister?: { halfTurnDirection?: (axis: string, layer: number) => 1 | -1 | undefined };
+  twister?: { backlog?: number; halfTurnDirection?: (axis: string, layer: number) => 1 | -1 | undefined };
 }
 
 /** group.ts CubeGroup.AXIS_VECTOR 的同款轴向(x=(-1,0,0) 等)。这里复制而非
@@ -388,6 +388,8 @@ export function simulateGrips(steps: GripSimStep[], order: number): { R: THREE.Q
 const FINGER_HINGES = { middleMin: .03, middleMax: 130 * Math.PI / 180, distalMax: 100 * Math.PI / 180 };
 const THUMB_HINGES = { middleMin: -.5, middleMax: 95 * Math.PI / 180, distalMax: 100 * Math.PI / 180 };
 const FADE_MS = 240;
+// Reach the sticker once, then lift the pad slightly between the two taps.
+const REFERENCE_THUMB_TAP = [[0, 0], [170, 1], [190, 1], [280, .84], [370, 1], [390, 1], [550, 0]] as const;
 const RECOVER_MS = 300;
 const IDLE_KEEPALIVE_MS = 6000;
 /** 手势判向的最小角度 — angle 起步为 0,超过此值才提交方向。 */
@@ -1081,6 +1083,32 @@ function disposeHandModel(model: HandModel): void {
   model.group.removeFromParent();
 }
 
+// Keep the support-hand kinematics for one-handed previews without a second mesh or asset.
+function rightHandPoseFrom(left: HandModel): HandModel {
+  const reflect = ({ x, y, z, w }: THREE.Quaternion) => new THREE.Quaternion(-x, y, -z, w);
+  const group = new THREE.Group();
+  const joints = new Map<THREE.Object3D, THREE.Group>([[left.group, group]]);
+  const mirrorJoint = (source: THREE.Object3D): THREE.Group => {
+    const existing = joints.get(source);
+    if (existing) return existing;
+    const joint = new THREE.Group();
+    joint.position.set(source.position.x, -source.position.y, source.position.z);
+    joint.quaternion.copy(reflect(source.quaternion));
+    joint.scale.copy(source.scale);
+    (source.parent ? mirrorJoint(source.parent) : group).add(joint);
+    joints.set(source, joint);
+    return joint;
+  };
+  const fingers = Object.fromEntries(Object.entries(left.fingers).map(([name, finger]) => [name, {
+    ...finger,
+    root: mirrorJoint(finger.root), mid: mirrorJoint(finger.mid), tip: mirrorJoint(finger.tip),
+    rootBase: reflect(finger.rootBase),
+    meta: finger.meta && mirrorJoint(finger.meta), metaBase: finger.metaBase && reflect(finger.metaBase),
+    tipOffset: finger.tipOffset?.clone().multiply(new THREE.Vector3(1, -1, 1)),
+  }])) as HandModel['fingers'];
+  return { group, fingers, side: -1, unitScale: left.unitScale, meshes: [] };
+}
+
 export default class HandsRig extends THREE.Group {
   private diagnosticListeners = new Set<(frame: HandDiagnosticFrame) => void>();
   private ruPreparation: 'preparing' | 'turning' | 'held' | null = null;
@@ -1227,7 +1255,13 @@ export default class HandsRig extends THREE.Group {
    *  lastAngle 保存本帧层角。 */
   private active: { axis: Axis; cls: LayerClass; layers: readonly number[]; dir: 0 | 1 | -1; gesture: HandGesture | null; halfTurn?: boolean; lastAngle: number } | null = null;
 
-  constructor() {
+  private thumbReferenceSeated = false;
+  private thumbTapCount = 0;
+  private thumbTapElapsed = 0;
+  private thumbTapReach = 0;
+  private thumbGripClearance = 0;
+
+  constructor(private readonly loadedHands: 'both' | 'left' | 'left-thumb' = 'both') {
     super();
     this.name = "handsRig";
     // 皮肤(前臂 + 烘焙失败时的手部回退):物理材质 + 顶点血色(几何侧烘)+
@@ -1281,26 +1315,26 @@ export default class HandsRig extends THREE.Group {
     this.visible = false;
   }
 
-  /** 加载两只 MANO 手 → 烘焙皮肤贴图 → 建前臂 / 骨架叠加 / HandState。魔方
-   *  右侧 = 解剖学右手(side=-1 语义只剩 splay 镜像);左侧 = 镜像资产。 */
+  /** 加载所需的 MANO 手 → 烘焙皮肤贴图 → 建前臂 / 骨架叠加 / HandState。 */
   private async initAsync(): Promise<void> {
     this.updateLoadState('hands', 'loading');
     // MANO 资产是逐机转换的 gitignored 文件(授权数据不入公开仓库):缺失时
     // 手部功能整体不可用(内置 generic-hand 已退役,无回退)。
     const loaded = await Promise.allSettled([
-      loadManoHand(-1, this.skinMat, this.abort.signal),
+      this.loadedHands === 'both' ? loadManoHand(-1, this.skinMat, this.abort.signal) : Promise.resolve(null),
       loadManoHand(1, this.skinMat, this.abort.signal),
     ]);
     const [r, l] = loaded;
     if (this.disposed || r.status === 'rejected' || l.status === 'rejected') {
-      for (const result of loaded) if (result.status === 'fulfilled') disposeHandModel(result.value);
+      for (const result of loaded) if (result.status === 'fulfilled' && result.value) disposeHandModel(result.value);
       if (!this.disposed) {
         this.updateLoadState('hands', 'error');
         console.warn('[sim hands] Hand model load failed:', loaded.find(result => result.status === 'rejected'));
       }
       return;
     }
-    const right = r.value, left = l.value;
+    const left = l.value;
+    const models = r.value ? [r.value, left] : [left];
     this.updateLoadState('hands', 'texturing');
     // 程序化皮肤贴图烘焙(albedo/bump/roughness + 指甲)。必须在入场景 / 摆
     // home 姿态之前(烘焙契约:绑定姿态 + group 无父级)。UV 布局左右手不一致
@@ -1308,7 +1342,7 @@ export default class HandsRig extends THREE.Group {
     // MANO 同路径烘焙(转换器 @2 起给盒式投影无重叠 UV 图集 —— 烘焙器在 3D
     // 域求值特征,对图集布局无要求,只要求单射)。
     try {
-      for (const model of [right, left]) {
+      for (const model of models) {
         const maps = await bakeHandTextures(model, 1024, this.abort.signal);
         if (this.disposed) {
           maps.albedo.dispose(); maps.bump.dispose(); maps.rough.dispose();
@@ -1323,10 +1357,10 @@ export default class HandsRig extends THREE.Group {
       if (!this.disposed) console.warn("[sim hands] skin texture bake failed:", e);
     }
     if (this.disposed) {
-      disposeHandModel(right);
-      disposeHandModel(left);
+      for (const model of models) disposeHandModel(model);
       return;
     }
+    const right = r.value ?? rightHandPoseFrom(left);
     this.add(right.group, left.group);
     // 前臂:@4 起已在转换期缝进手网格(单一网格 —— 腕缝几何/法线/贴图天然
     // 连续,根治两件套时代的台阶与「手臂比手细」;旧 stumpFit 对齐层还犯过
@@ -1335,18 +1369,20 @@ export default class HandsRig extends THREE.Group {
     // 断口裸露肤色封盖。此处只剩旧资产兜底 → 程序化锥形管。
     let rArm: { group: THREE.Group; meshes: THREE.Mesh[] } | null = null;
     let lArm: { group: THREE.Group; meshes: THREE.Mesh[] } | null = null;
-    if (!right.forearm || !left.forearm) {
+    if (!left.forearm || (r.value && !right.forearm)) {
       console.info("[sim hands] 资产无融合前臂(@4 前旧格式?),使用程序化前臂");
-      rArm = buildForearm(this.skinMat);
       lArm = buildForearm(this.skinMat);
-      this.add(rArm.group, lArm.group);
-      right.meshes.push(...rArm.meshes);
+      this.add(lArm.group);
       left.meshes.push(...lArm.meshes);
+      if (r.value) {
+        rArm = buildForearm(this.skinMat);
+        this.add(rArm.group);
+        right.meshes.push(...rArm.meshes);
+      }
     }
     // 21 关键点骨架叠加(MediaPipe Hands 默认画风)—— 静态几何挂关节组,
     // 姿态自动跟随;网格进 model.meshes 复用补光层 / dispose。
-    addHandSkeleton(right, this.skelMatMap);
-    addHandSkeleton(left, this.skelMatMap);
+    for (const model of models) addHandSkeleton(model, this.skelMatMap);
     // 肘锚 = home 腕点沿「手局部 −x(腕→肘,即手轴的反向延长)」推远:静止时
     // 前臂就是手的自然延长线(腕部不打折 —— 固定世界锚曾让前臂垂直下垂 /
     // 斜插,2026-07-11 用户两次抓的);锚仍是固定点(距离 ≫ 臂长),腕转 /
@@ -1399,7 +1435,8 @@ export default class HandsRig extends THREE.Group {
     if (!this.hands) return;
     const puppet = this.fullBodyOn;
     for (const s of ["R", "L"] as const) {
-      this.hands[s].model.meshes[0].visible = !puppet;
+      const skin = this.hands[s].model.meshes[0];
+      if (skin) skin.visible = !puppet;
     }
   }
 
@@ -1408,6 +1445,7 @@ export default class HandsRig extends THREE.Group {
    *  缺失时保留手模并提供重试。依赖手模就位(unitScale / 傀儡常量预算 /
    *  home 放置),手未加载完时由 initAsync 尾部回放。 */
   setFullBody(want: boolean): void {
+    if (this.loadedHands !== 'both') return;
     if (this.bodyWanted !== want && this.hands) {
       for (const hand of Object.values(this.hands)) hand.forearmRotation.reset();
       this.body?.resetPlacement();
@@ -1563,6 +1601,11 @@ export default class HandsRig extends THREE.Group {
   /** rig 在标准二至四阶上活动;其它拼图/关开关时传 null。 */
   attachCube(cube: HandsCubeLike | null): void {
     if (this.cube === cube) return;
+    this.thumbReferenceSeated = false;
+    this.thumbTapCount = 0;
+    this.thumbTapElapsed = 0;
+    this.thumbTapReach = 0;
+    this.thumbGripClearance = 0;
     if (this.hands && cube && cube.order !== this.cube?.order) {
       this.hands.R.home = homeRight(cube.order);
       this.hands.L.home = homeLeft(cube.order);
@@ -1811,7 +1854,7 @@ export default class HandsRig extends THREE.Group {
   prepareTwist(axis: Axis, layers: number[], dir: 1 | -1, quarters = 1, push = false, pin?: PinSpec, nextIsU = false, annotation?: FingerAnnotation, nextSupport?: MarkedTurnRequest | 'right-weld', explicitPath = false): boolean {
     const hands = this.hands;
     const cube = this.cube;
-    if (!cube || !this.enabled || this.disposed) return false;
+    if (!cube || !this.enabled || this.disposed || this.loadedHands === 'left-thumb') return false;
     if (!hands) return this.loadState.hands !== 'error';
     this.settleCompletedGesture();
     const explicit = !!(push || pin || annotation?.finger || annotation?.contact || explicitPath);
@@ -2150,8 +2193,47 @@ export default class HandsRig extends THREE.Group {
     return this.enabled;
   }
 
+  get hasPendingThumbTaps(): boolean {
+    return this.thumbTapCount > 0;
+  }
+
+  queueReferenceThumbTaps(turns = 1): void {
+    if (this.loadedHands === 'left-thumb' && this.enabled) this.thumbTapCount += turns;
+  }
+
+  private tickReferenceThumb(cube: HandsCubeLike, dt: number, holdOnSticker: boolean): boolean {
+    const upper = cube.table.groups.y[cube.order - 1];
+    const angle = upper?.angle ?? 0;
+    const sweep = Math.abs(Math.cos(angle)) + Math.abs(Math.sin(angle)) - 1;
+    const clearance = THREE.MathUtils.clamp(sweep / .24, 0, 1);
+    const still = !cube.twister?.backlog && !upper?.isDragging && !clearance;
+    const holdAfterTap = still && holdOnSticker && this.thumbTapCount <= 1;
+    let reach = holdAfterTap ? 1 : 0;
+    let finished = false;
+    if (this.thumbTapCount && still) {
+      this.thumbTapElapsed += dt;
+      const next = REFERENCE_THUMB_TAP.findIndex(([time]) => time > this.thumbTapElapsed);
+      // On a match, finish the last pair at the second tap and keep its contact pose.
+      if (next < 0 || (holdAfterTap && next === REFERENCE_THUMB_TAP.length - 1)) {
+        this.thumbTapCount--;
+        this.thumbTapElapsed = 0;
+        finished = true;
+      } else {
+        const [start, from] = REFERENCE_THUMB_TAP[next - 1];
+        const [end, to] = REFERENCE_THUMB_TAP[next];
+        reach = THREE.MathUtils.lerp(from, to, THREE.MathUtils.smoothstep(this.thumbTapElapsed, start, end));
+      }
+    }
+    if (this.thumbReferenceSeated && reach === this.thumbTapReach && clearance === this.thumbGripClearance) return finished;
+    this.thumbReferenceSeated = true;
+    this.thumbTapReach = reach;
+    this.thumbGripClearance = clearance;
+    this.applyHand('L', false);
+    return true;
+  }
+
   /** 每帧驱动;返回 true = 画面有变化需要重渲。 */
-  tick(dtMs: number): boolean {
+  tick(dtMs: number, holdReferenceThumb = false): boolean {
     if (!this.visible) return false;
     const dt = Math.min(dtMs, 100); // 掉帧保护
     let animating = false;
@@ -2172,6 +2254,9 @@ export default class HandsRig extends THREE.Group {
     if (!this.visible) return true;
     const hands = this.hands;
     if (!hands) return animating; // GLTF 加载中:fade 照走,姿态等模型
+    if (this.loadedHands === 'left-thumb') {
+      return (!!this.cube && this.tickReferenceThumb(this.cube, dt, holdReferenceThumb)) || animating;
+    }
     if (this.wideSupport) {
       const moving = this.wideSupport.returning || this.wideSupport.progress < 1;
       this.wideSupport.advance(dt);
@@ -2904,6 +2989,8 @@ export default class HandsRig extends THREE.Group {
     q.multiply(h.grip);
     g.quaternion.copy(q).multiply(h.home.quat);
     g.position.copy(h.home.pos).applyQuaternion(q);
+    const referenceGrip = side === 'L' && this.loadedHands === 'left-thumb';
+    if (referenceGrip) g.position.x += 20 * SIZE / 64;
 
     // topPush 有效原角(活跃 = 本值;提交后退场 = 虚拟续转 release / 原地缩回;
     // 收指段钳各自终点。姿态推导统一走它,见 TOP_PUSH.retreatSplit 注释)。
@@ -3087,6 +3174,25 @@ export default class HandsRig extends THREE.Group {
       // topPush 伸指是时间驱动(reachT),层角为零的前置/回收期间也要摆位。
       let hookPose: number[] | undefined;
       let pm = pose.mid;
+      if (referenceGrip) {
+        const reach = this.thumbTapReach;
+        const clearance = this.thumbGripClearance;
+        // Keep the palm in home grip. Only the pads near U yield to its corners.
+        if (name === 'thumb' && pm) {
+          // Keep the middle joint flexed as the pad reaches the UFL/F sticker.
+          c1 += .027 - .3348 * reach;
+          c2 -= .0665 * reach;
+          c3 = .03 + .2925 * reach;
+          splay += .022 + .0315 * reach;
+          twist += .3280 * reach;
+          pm = [pm[0] - .1694 * reach, pm[1] + .1310 * reach];
+        } else if (name === 'index') {
+          c1 -= .18 * clearance;
+          splay += .16 * clearance ** 2;
+        } else if (name === 'middle') {
+          splay -= .11 * clearance;
+        }
+      }
       const secondTopPush = h.flickStyle === 'topPush' && h.flickFinger2 === name;
       const topPush = h.flickStyle === "topPush" && (h.flickFinger === name || secondTopPush);
       // 本指角色与负担扫角(带符号):单指 = 全量;连拨首指钳 90°、次指接后半。

@@ -13,6 +13,7 @@ import { homeLeft, homeRight } from '@/app/[lang]/sim/engine/hands/handPoses';
 import { findGripMarks } from '@cuberoot/shared/alg-notation';
 import { HalfPalmPose } from '@/app/[lang]/sim/engine/hands/halfPalmPose';
 import { UContactRecorder } from '@/app/[lang]/sim/engine/hands/uContactRecorder';
+import { FingerSurfaceSampler } from '@/app/[lang]/sim/engine/hands/fingerCollision';
 
 // Keep the real animation lifecycle; substitute only asset IO / browser texture creation.
 vi.mock('@/app/[lang]/sim/engine/hands/handModelMano', async original => ({
@@ -576,6 +577,117 @@ describe('hand playback and loading lifecycle', () => {
     // Right-down F uses a down-push, while home F would require a top-push reach.
     expect(rig.prepareTwist('z', [2], 1)).toBe(false);
     expect(rig.isReachPreparing).toBe(false);
+  });
+
+  it.runIf(haveManoHands)('taps inside the front sticker twice after U and holds there on a match', async () => {
+    const { buildManoHand } = await vi.importActual<typeof import('@/app/[lang]/sim/engine/hands/handModelMano')>('@/app/[lang]/sim/engine/hands/handModelMano');
+    let model!: HandModel;
+    vi.mocked(loadManoHand).mockImplementation(async (side, material) => {
+      expect(side).toBe(1);
+      const data = JSON.parse(readFileSync(new URL('../public/sim/hands/mano/left.mano.json', import.meta.url), 'utf8'));
+      return model = buildManoHand(data, side, material, 'left.mano.json');
+    });
+    const rig = new HandsRig('left-thumb');
+    rigs.push(rig);
+    const cube = new Cube(2);
+    const twister = { backlog: 0 };
+    const upper = { angle: 0 };
+    rig.attachCube({ order: cube.order, twister, table: { groups: {
+      x: cube.table.groups.x, y: [{ angle: 0 }, upper], z: cube.table.groups.z,
+    } } });
+    rig.setEnabled(true);
+    try {
+      await ready(rig);
+      rig.tick(16);
+      const half = cube.order * cube.scale.x * SIZE / 2;
+      const sampler = new FingerSurfaceSampler(model);
+      const handClearance = (angle = 0) => {
+        model.group.updateMatrixWorld(true);
+        const cos = Math.cos(angle), sin = Math.sin(angle), point = new THREE.Vector3();
+        let closest = Infinity;
+        // Inverse-rotate the skin points against the moving top slab; the bottom slab stays fixed.
+        for (const mesh of model.meshes) for (let i = 0; i < mesh.geometry.attributes.position.count; i++) {
+          const { x, y, z } = mesh.getVertexPosition(i, point).applyMatrix4(mesh.matrixWorld);
+          const u = y > 0 ? cos * x - sin * z : x;
+          const v = y > 0 ? sin * x + cos * z : z;
+          closest = Math.min(closest, Math.max(Math.abs(u), Math.abs(y), Math.abs(v)) - half);
+        }
+        return closest;
+      };
+      const frontPadGap = () => Math.min(...sampler.samplePoints('thumb')
+        .filter(({ pad, point: { x, y } }) => pad && x > -.8 * half && x < -.2 * half && y > .25 * half && y < .75 * half)
+        .map(({ point }) => point.z - half));
+      const lowerSupport = sampler.samplePoints('ring').filter(({ pad, point: { x, y } }) => pad && x > -half && x < 0 && y < 0);
+      expect(Math.min(...lowerSupport.map(({ point }) => -point.z - half))).toBeLessThan(5);
+
+      const root = model.fingers.thumb.root;
+      const neutral = root.quaternion.clone();
+      const palm = model.group.position.clone();
+      twister.backlog = 1;
+      rig.queueReferenceThumbTaps();
+      let minClearance = Infinity, worstAngle = 0;
+      for (let degree = -90; degree <= 90; degree++) {
+        upper.angle = THREE.MathUtils.degToRad(degree);
+        rig.tick(16);
+        const distance = handClearance(upper.angle);
+        if (distance < minClearance) { minClearance = distance; worstAngle = degree; }
+      }
+      expect(minClearance, `near ${worstAngle}° of U`).toBeGreaterThanOrEqual(0);
+      expect(root.quaternion.equals(neutral)).toBe(true);
+      expect(rig.hasPendingThumbTaps).toBe(true);
+
+      upper.angle = 0;
+      twister.backlog = 0;
+      const checkTapPair = (hold: boolean) => {
+        let touches = 0;
+        let wasNear = false;
+        for (let i = 0; i < 110; i++) {
+          rig.tick(5, hold);
+          expect(handClearance(), `tap at ${(i + 1) * 5} ms`).toBeGreaterThanOrEqual(0);
+          const near = frontPadGap() <= 2;
+          if (near && !wasNear) touches++;
+          wasNear = near;
+        }
+        expect(touches).toBe(2);
+        expect(rig.hasPendingThumbTaps).toBe(false);
+      };
+      checkTapPair(false);
+      expect(root.quaternion.equals(neutral)).toBe(true);
+
+      rig.queueReferenceThumbTaps();
+      checkTapPair(true);
+      const contact = root.quaternion.clone();
+      expect(contact.equals(neutral)).toBe(false);
+      for (let i = 0; i < 10; i++) rig.tick(100, true);
+      expect(root.quaternion.equals(contact)).toBe(true);
+      expect(frontPadGap()).toBeLessThanOrEqual(2);
+      expect(model.group.position.equals(palm)).toBe(true);
+    } finally { cube.dispose(); }
+  });
+
+  it.each([2, 3])('keeps the order-%i cube projection when an embedded demo enables hands', async order => {
+    const { rig } = createRig();
+    await ready(rig);
+    const world = new World();
+    world.setPuzzle(order);
+    world.width = 800;
+    world.height = 600;
+    world.handsFactory = () => rig;
+    world.resize();
+    const distance = world.camera.position.z;
+    const fov = world.camera.fov;
+    const far = world.camera.far;
+    try {
+      world.setHandsWanted(true, 'cube');
+      expect(world.camera.position.z).toBe(distance);
+      expect(world.camera.fov).toBe(fov);
+      expect(world.camera.far).toBeGreaterThan(far);
+      world.setHandsWanted(true);
+      expect(world.camera.position.z).toBeGreaterThan(distance);
+    } finally {
+      world.setHandsWanted(false);
+      world.cube.dispose();
+    }
   });
 
   it('settles a dropped turn before polling and waits for the same finger to return', async () => {

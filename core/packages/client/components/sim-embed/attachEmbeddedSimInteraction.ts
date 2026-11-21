@@ -70,8 +70,9 @@ export function attachEmbeddedSimInteraction({
     const rotateOnly = mode === 'turn' && wholeCubeDrag === 'rotate-only';
     const pick = mode === 'view' && onCubeletTap;
     const fixedLayerView = world.puzzleKind === 2 && mode === 'turn' && !wholeCubeDrag && isOrbitSnapLocked?.() === true;
-    const snapAngle = (mode === 'view' || isOrbitSnapLocked?.()) && orbitSnapDegrees > 0 && orbitSnapDegrees < 90
+    const snapAngle = (mode === 'view' || rotateOnly || isOrbitSnapLocked?.()) && orbitSnapDegrees > 0 && orbitSnapDegrees < 90
       ? orbitSnapDegrees * Math.PI / 180 : 0;
+    const dragToSnap = rotateOnly && snapAngle > 0;
     const clampAngle = (angle: number) => Math.max(-snapAngle, Math.min(snapAngle, angle));
     const crossingAt = (from: number, to: number) => Math.abs(to) <= snapAngle ? Infinity
       : Math.max(0, Math.min(1, (Math.sign(to) * snapAngle - from) / (to - from)));
@@ -113,6 +114,13 @@ export function attachEmbeddedSimInteraction({
       const action = new TwistAction(axis, direction > 0, 1);
       const fromX = pitchFirst ? direction * snapAngle : clampAngle(beforeX + (rotation.x - beforeX) * crossing);
       const fromY = pitchFirst ? clampAngle(beforeY + (rotation.y - beforeY) * crossing) : direction * snapAngle;
+      if (mode === 'turn' && allowUserLayerTurn?.(action.value) === false) {
+        snappedThisDrag = true;
+        rotation.set(fromX, fromY, 0);
+        world.scene.updateMatrix();
+        onBlockedUserLayerTurn?.(action.value);
+        return;
+      }
       const quarterTurn = direction * Math.PI / 2;
       const start = performance.now();
       snappedThisDrag = true;
@@ -141,7 +149,7 @@ export function attachEmbeddedSimInteraction({
     };
     world.controller.paintMode = mode === 'view';
     world.controller.turnsLocked = false;
-    world.controller.dragEmpty = mode === 'turn' && wholeCubeDrag ? 'rotate' : 'view';
+    world.controller.dragEmpty = mode === 'turn' && wholeCubeDrag && !dragToSnap ? 'rotate' : 'view';
     world.controller.wholeCubeOnly = rotateOnly;
     controller.allowLayerTurn = mode === 'turn' ? allowUserLayerTurn ?? null : null;
     controller.onBlockedLayerTurn = mode === 'turn' && onBlockedUserLayerTurn

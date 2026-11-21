@@ -43,6 +43,7 @@ export interface SmplxBodyAsset { geometry: THREE.BufferGeometry; heightM: numbe
  *  lives here so `world.cube` / the twister contract hold and the player controls drive
  *  it unchanged. */
 export type PuzzleKind = number | 'sq1' | 'sq2' | 'sq4' | 'ivy' | 'dino' | 'redi' | 'rex' | 'heli' | 'gear' | 'skewb' | 'pyraminx' | 'pyraminx_duo' | 'megaminx' | 'fto' | 'ghost' | 'mirror' | 'mirror2' | 'sphere' | 'clock' | 'magic' | 'mmagic';
+type HandsFraming = 'hands' | 'cube';
 
 export default class World<HandsRig extends WorldHands = WorldHands> {
   public width = 1;
@@ -93,6 +94,7 @@ export default class World<HandsRig extends WorldHands = WorldHands> {
   public hands: HandsRig | null = null;
   /** 记录「手指」开关，syncHands 只为标准二至四阶挂载手模。 */
   private handsWanted = false;
+  private handsFraming: HandsFraming = 'hands';
 
   /** 调试:「SMPL-X 全身」查看 —— 开 = 藏拼图与手,只显示原版 SMPL-X neutral
    *  T-pose 全身(米制原样零变形,等比缩放满框)。手/前臂比例的上游解剖真值
@@ -499,9 +501,10 @@ export default class World<HandsRig extends WorldHands = WorldHands> {
   }
 
   /** 设置面板「手指」开关(applySettings 驱动)。实际显隐还看当前拼图。 */
-  setHandsWanted(want: boolean): void {
-    if (this.handsWanted === want) return;
+  setHandsWanted(want: boolean, framing: HandsFraming = 'hands'): void {
+    if (this.handsWanted === want && this.handsFraming === framing) return;
     this.handsWanted = want;
+    this.handsFraming = framing;
     this.syncHands();
     this.resize(); // refHalf 随手显隐变化(见 resize)
   }
@@ -639,8 +642,9 @@ export default class World<HandsRig extends WorldHands = WorldHands> {
     // Dino/Redi/Rex/Heli/Skewb cubes span [-2,2]·SIZE (corners at ~3.5·SIZE); the megaminx
     // dodecahedron reaches ~3.0·SIZE at its vertices; the FTO octahedron ~3.2·SIZE; ~4.0
     // frames them to the NxN-3 fill.
-    // 手开着时把 3x3 取景拉宽(手/前臂环在魔方外围,SIZE*3 会顶出画框)。
-    const refHalf = this.puzzleKind === 'magic' ? SIZE * 3.25 : this.puzzleKind === 'mmagic' ? SIZE * 4.25 : isSquare ? SIZE * 4.6 : (isDino || isRedi || isRex || isHeli || isGear || isSkewb || isMega || isFto || isGhost) ? SIZE * 4.0 : handsOn ? SIZE * 3.9 : SIZE * 3;
+    // Wide framing fits the forearms. Cube framing keeps the embedded demo's puzzle scale.
+    const frameHands = bodyOn || (handsOn && this.handsFraming === 'hands');
+    const refHalf = this.puzzleKind === 'magic' ? SIZE * 3.25 : this.puzzleKind === 'mmagic' ? SIZE * 4.25 : isSquare ? SIZE * 4.6 : (isDino || isRedi || isRex || isHeli || isGear || isSkewb || isMega || isFto || isGhost) ? SIZE * 4.0 : frameHands ? SIZE * 3.9 : SIZE * 3;
     const distance = refHalf * this.perspective * dolly;
     this.camera.position.x = this.panX;
     this.camera.position.y = this.panY;
