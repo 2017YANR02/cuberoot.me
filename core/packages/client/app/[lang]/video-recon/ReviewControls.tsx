@@ -41,7 +41,7 @@ export function ReviewControls({
     </div>
     <label className="video-recon-range">
       <span>{timecode(Math.max(0, position - origin))}</span>
-      <input type="range" aria-label={t('回放位置', 'Playback position')} min={start} max={end}
+      <input className="video-recon-range-input" type="range" aria-label={t('回放位置', 'Playback position')} min={start} max={end}
         step={0.001} value={position} disabled={disabled || length < 2}
         onChange={event => onSeek(Number(event.currentTarget.value))} />
       <span>{timecode(Math.max(0, end - origin))}</span>

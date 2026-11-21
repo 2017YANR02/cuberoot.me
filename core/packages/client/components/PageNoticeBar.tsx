@@ -8,7 +8,7 @@ import { useContentRefreshKey } from '@/hooks/useContentRefreshKey';
 // 数据走 /v1/page-notices(公开读 + admin 写),鉴权 authHeaders(WCA OAuth / X-Admin-Key)。
 import { useCallback, useEffect, useRef, useState, type ReactNode, type CSSProperties } from 'react';
 import { usePathname } from 'next/navigation';
-import { ArrowRight, ExternalLink, X, Pencil, Trash2 } from '@app-foundation/icons/lucide';
+import { ArrowRight, ExternalLink, Pencil, Trash2 } from '@app-foundation/icons/lucide';
 import { useIsAdmin } from '@/lib/auth-store';
 import { useDouyinToolSurface } from '@/lib/douyin-content';
 import { douyinContentAvailable } from '@cuberoot/shared/douyin-content';
@@ -16,6 +16,7 @@ import { tr, T, useLang } from '@/i18n/tr';
 import BoolToggle from './BoolToggle';
 import { DateInput } from './DateInput';
 import AppLink from './AppLink';
+import { ClearButton } from './ClearButton';
 import SettingsDialog from './SettingsDialog';
 import { persistItem } from '@/lib/safe-storage';
 import { regulationPostForHref } from '@/lib/regulation-posts';
@@ -346,10 +347,8 @@ export default function PageNoticeBar() {
                   : <div className="page-notice-content">{content}</div>}
               {!isAdmin && n.dismissible && (
                 <div className="page-notice-actions">
-                  <button type="button" className="page-notice-btn" onClick={() => dismiss(n)}
-                    aria-label={tr({ en: 'Dismiss', zh: '关闭' })}>
-                    <X size={16} aria-hidden />
-                  </button>
+                  <ClearButton variant="standalone" className="page-notice-btn" onClick={() => dismiss(n)}
+                    ariaLabel={tr({ en: 'Dismiss', zh: '关闭' })} />
                 </div>
               )}
             </div>

@@ -105,7 +105,8 @@ html[data-theme=dark] {
 
 .page-notice-actions { flex: none; padding-inline-end: 4px; }
 
-.page-notice-btn {
+.page-notice-btn,
+.page-notice-btn.clear-btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -115,6 +116,7 @@ html[data-theme=dark] {
   color: var(--muted-foreground);
   border-radius: 4px;
 }
+.page-notice-btn .clear-btn-icon { width: 16px; height: 16px; }
 .page-notice-btn:hover {
   color: var(--foreground);
   background: color-mix(in srgb, var(--foreground) 8%, transparent);
@@ -256,8 +258,8 @@ body:has(.page-notice-editor) > .date-input__calendar { z-index: 1001; }
   border-top: 1px solid var(--border-default);
 }
 .page-notice-apply { margin-inline-start: auto; }
-.page-notice-editor-actions button { min-height: 38px; }
-.page-notice-editor-actions button:disabled { opacity: 0.5; }
+:is(.page-notice-save, .page-notice-cancel, .page-notice-delete) { min-height: 38px; }
+:is(.page-notice-save, .page-notice-cancel, .page-notice-delete):disabled { opacity: 0.5; }
 
 .page-notice-save {
   padding: 5px 14px;

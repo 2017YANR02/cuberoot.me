@@ -34,7 +34,10 @@ describe('website frontend is Next-only', () => {
 
   it('uses Next for development, build, and production start', () => {
     expect(pkg.scripts?.dev).toContain('turbo watch dev:serve');
-    expect(pkg.scripts?.['dev:serve']).toBe('node ../../scripts/next-dev.mts');
+    expect(pkg.scripts?.['dev:serve']?.split(' && ')).toEqual([
+      'node ../../scripts/build-video-recon-workers.mjs',
+      'node ../../scripts/next-dev.mts',
+    ]);
     const launcher = readFileSync(new URL('../../../scripts/next-dev.mts', import.meta.url), 'utf8');
     expect(launcher).toContain("require.resolve('next/dist/bin/next')");
     expect(launcher).toContain("[nextBin, 'dev',");

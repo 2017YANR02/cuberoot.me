@@ -35,6 +35,7 @@ on:
       - 'core/vendor/app-foundation/app-foundation-registration-ui-*.tgz'
       - 'core/scripts/resolve-workspace-path.mjs'
       - 'core/scripts/build-cubing-worker.mjs'
+      - 'core/scripts/build-video-recon-workers.mjs'
       - 'core/scripts/copy-maplibre-assets.mts'
       - 'core/scripts/vercel-ignore-build.ts'
       - 'core/scripts/ci/wait-web-checks.ts'

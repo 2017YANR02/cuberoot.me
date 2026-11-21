@@ -251,6 +251,7 @@ const NEXT_PATHS = [
     .map(name => corePath('vendor', 'app-foundation', `app-foundation-${name}-*.tgz`)),
   corePath('scripts', 'resolve-workspace-path.mjs'),
   corePath('scripts', 'build-cubing-worker.mjs'),
+  corePath('scripts', 'build-video-recon-workers.mjs'),
   corePath('scripts', 'copy-maplibre-assets.mts'),
   corePath('scripts', 'vercel-ignore-build.ts'),
   corePath('scripts', 'ci', 'wait-web-checks.ts'),

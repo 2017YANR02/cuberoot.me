@@ -24,13 +24,13 @@ export function SolveRange({ view, workspace }: { view: ReturnType<VideoWorkspac
     <div className="video-recon-trim-controls">
       <label className="video-recon-range">
         <span>{start}</span>
-        <input type="range" min={0} max={duration} step={0.001} value={solveStart}
+        <input className="video-recon-range-input" type="range" min={0} max={duration} step={0.001} value={solveStart}
           onChange={event => workspace.changeTrim('start', Number(event.currentTarget.value))} />
         <span>{timecode(solveStart)}</span>
       </label>
       <label className="video-recon-range">
         <span>{end}</span>
-        <input type="range" min={0} max={duration} step={0.001} value={solveEnd}
+        <input className="video-recon-range-input" type="range" min={0} max={duration} step={0.001} value={solveEnd}
           onChange={event => workspace.changeTrim('end', Number(event.currentTarget.value))} />
         <span>{timecode(solveEnd)}</span>
       </label>

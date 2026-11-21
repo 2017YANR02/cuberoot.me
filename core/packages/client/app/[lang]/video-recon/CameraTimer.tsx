@@ -3,6 +3,7 @@ import { Download, RefreshCw, Trash2 } from '@app-foundation/icons/lucide';
 import SettingsDialog from '@/components/SettingsDialog';
 import { VisualCube } from '@/components/VisualCube';
 import { useT } from '@/hooks/useT';
+import { persistItem } from '@/lib/safe-storage';
 import {
   CubeTimerClock, TIMER_HOLD_MS, compactTimerReconstruction, formatTimer, readTimerSolves, solveTime,
   timerAverage, timerReconstructionStatus, timerSessionRows, type Penalty, type TimerReconstructionResult, type TimerSolve,
@@ -82,8 +83,9 @@ export function CameraTimer({ active, view, workspace }: { active: boolean; view
       reconstruction: compactTimerReconstruction(view.timerReconstructions[solve.id] ?? solve.reconstruction),
     })));
     if (saved === lastSaved.current) return;
-    try { localStorage.setItem(STORAGE_KEY, saved); lastSaved.current = saved; setStorageError(false); }
-    catch { setStorageError(true); }
+    const persisted = persistItem(STORAGE_KEY, saved);
+    if (persisted) lastSaved.current = saved;
+    setStorageError(!persisted);
   }, [history, view.timerReconstructions]);
 
   useEffect(() => {

@@ -108,10 +108,10 @@ function HomeEditMenu({ editingCards, onToggleCards }: { editingCards: boolean; 
     </button>
     {open && <div id={menuId} ref={panel} className="landing-edit-options" data-site-surface="popover"
       onBlur={event => { if (!event.currentTarget.contains(event.relatedTarget) && event.relatedTarget !== trigger.current) setOpen(false); }}>
-      <button type="button" onClick={() => select(() => openPageNoticeEditor('page_top'))}>
+      <button type="button" className="landing-edit-option" onClick={() => select(() => openPageNoticeEditor('page_top'))}>
         <Megaphone size={16} aria-hidden />{tr({ zh: '编辑顶部公告', en: 'Edit top announcement' })}
       </button>
-      <button type="button" onClick={() => select(onToggleCards)}>
+      <button type="button" className="landing-edit-option" onClick={() => select(onToggleCards)}>
         <LayoutDashboard size={16} aria-hidden />{tr({ zh: '编辑首页卡片', en: 'Edit homepage cards' })}
       </button>
     </div>}

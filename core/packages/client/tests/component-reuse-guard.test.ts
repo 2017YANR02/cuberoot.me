@@ -22,7 +22,7 @@ import {
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const REPO_ROOT = join(ROOT, '..', '..', '..');
 const SCAN_DIRS = ['app', 'components'];
-const BASELINE = 62; // Legacy close/clear cross buttons; ratchet down only.
+const BASELINE = 61; // Legacy close/clear cross buttons; ratchet down only.
 const BACK_HOME_ROOT_ALLOWLIST = new Set([
   'app/[lang]/calc/page.tsx',
   'app/[lang]/courses/TeachingClient.tsx',

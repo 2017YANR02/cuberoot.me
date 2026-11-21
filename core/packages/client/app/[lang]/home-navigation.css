@@ -70,7 +70,7 @@ body .landing-page.landing-page--navigation {
 body[data-site-scenery] .landing-edit-options[data-site-surface='popover'] {
   background: var(--glass-menu-bg, var(--glass-popover-bg));
 }
-.landing-edit-options button {
+.landing-edit-option {
   display: flex;
   align-items: center;
   gap: 8px;
@@ -79,7 +79,7 @@ body[data-site-scenery] .landing-edit-options[data-site-surface='popover'] {
   border-radius: 6px;
   text-align: start;
 }
-.landing-edit-options button:is(:hover, :focus-visible) { background: var(--muted); }
+.landing-edit-option:is(:hover, :focus-visible) { background: var(--muted); }
 :is(.home-navigation, .home-navigation-drawer) .landing-auth :is(.landing-auth-icon, .landing-calendar-link .landing-card) { color: var(--muted-foreground); }
 :is(.home-navigation, .home-navigation-drawer) .landing-auth :is(.landing-auth-icon, .landing-calendar-link .landing-card):is(:hover, :focus-visible) { color: var(--foreground); }
 :is(.home-navigation, .home-navigation-drawer) .landing-auth .landing-card-icon { color: inherit; }

@@ -74,8 +74,7 @@
   color: var(--accent);
 }
 
-.video-recon-page button:disabled,
-.video-recon-modal-body button:disabled {
+:is(.video-recon-page, .video-recon-modal-body) :is(.btn-primary, .btn-secondary):disabled {
   opacity: 0.55;
   cursor: not-allowed;
 }
@@ -209,7 +208,7 @@
   font-variant-numeric: tabular-nums;
 }
 
-.video-recon-range input {
+.video-recon-range-input {
   width: 100%;
   accent-color: var(--accent);
 }
@@ -384,7 +383,7 @@
   color: var(--timer-ready);
 }
 
-.video-recon-clock button {
+.video-recon-clock .btn-secondary {
   touch-action: none;
   user-select: none;
 }

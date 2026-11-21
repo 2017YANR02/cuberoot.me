@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import { parseAsStringEnum, useQueryState } from 'nuqs';
-import { Camera, Crop, Download, Film, Upload, X } from '@app-foundation/icons/lucide';
+import { Camera, Crop, Download, Eraser, Film, Unplug, Upload } from '@app-foundation/icons/lucide';
 import PageHeading from '@/components/PageHeading';
 import HeaderToggles from '@/components/HeaderToggles';
 import { useT } from '@/hooks/useT';
@@ -135,7 +135,8 @@ export default function VideoReconClient() {
             {t('调整还原区间', 'Adjust solve range')}
           </button>}
           <button type="button" className="btn-secondary" disabled={view.timerBusy} onClick={workspace.stopSource}>
-            <X size={16} aria-hidden />{detector ? t('清除', 'Clear') : t('断开摄像头', 'Disconnect camera')}
+            {detector ? <Eraser size={16} aria-hidden /> : <Unplug size={16} aria-hidden />}
+            {detector ? t('清除', 'Clear') : t('断开摄像头', 'Disconnect camera')}
           </button>
         </div>}
         {workspace && view && reviewing && <ReviewControls playing={view.running} speed={view.playbackSpeed}
