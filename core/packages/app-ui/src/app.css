@@ -888,6 +888,17 @@ button {
   --app-nav-accessory-gap: 8px;
   --app-nav-bottom: calc(8px + var(--safe-area-inset-bottom, var(--sab)));
 }
+/* Leave room on both sides so the Tools accessory never moves the capsule. */
+.app-shell[data-labeled-capsule] {
+  --app-nav-height: 46px;
+  --app-nav-width: min(288px, calc(100% - 2 * (var(--app-nav-height) + var(--app-nav-accessory-gap) + 8px)));
+  --app-nav-bottom: 12px;
+}
+.app-shell[data-labeled-capsule] > .primary-nav button {
+  flex-direction: row;
+  gap: 5px;
+  font-size: .84rem;
+}
 :root[data-host-viewport] .app-shell[data-floating-navigation] { --app-nav-bottom: 8px; }
 .app-shell[data-floating-navigation] > .view-container { grid-row: 1; }
 .app-shell[data-floating-navigation] > .primary-nav {

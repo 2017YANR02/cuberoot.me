@@ -527,6 +527,8 @@ export function App({ host, loadingMark }: { host: InstalledAppHost; loadingMark
   const [toolsSearchReady, setToolsSearchReady] = useState(false);
   const [toolsSearchOpen, setToolsSearchOpen] = useState(false);
   const floatingNavigation = Boolean(host.floatingNavigation || host.primaryNavigation);
+  const labeledCapsule = host.floatingNavigation === 'labeled';
+  const showNavigationLabels = labeledCapsule || (wideLayout && !floatingNavigation && !sideNavigation);
   const [webChrome, setWebChrome] = useState({ tools: false, account: false });
   const [nativeTopBars, setNativeTopBars] = useState({ tools: false, account: false });
   const nativeTopBar = hostViewport?.topBar;
@@ -4270,6 +4272,7 @@ export function App({ host, loadingMark }: { host: InstalledAppHost; loadingMark
       data-timer-hide-ui={hideRunningChrome ? '' : undefined}
       data-wide={wideLayout ? 'true' : undefined}
       data-side-navigation={sideNavigation ? '' : undefined}
+      data-labeled-capsule={labeledCapsule ? '' : undefined}
       data-floating-navigation={floatingNavigation ? '' : undefined}
       data-navigation-covered={floatingNavigation && !navVisible ? '' : undefined}
       data-layout-editing={layoutEditing ? '' : undefined}
@@ -5443,7 +5446,7 @@ children: <>
           type="button"
         >
           <Clock3 aria-hidden="true" size={20} />
-          {wideLayout && !floatingNavigation && !sideNavigation && <span>{copy.timer}</span>}
+          {showNavigationLabels && <span>{copy.timer}</span>}
         </button>
         <button
           data-destination="tools"
@@ -5455,7 +5458,7 @@ children: <>
           type="button"
         >
           <Grid2X2 aria-hidden="true" size={20} />
-          {wideLayout && !floatingNavigation && !sideNavigation && <span>{copy.tools}</span>}
+          {showNavigationLabels && <span>{copy.tools}</span>}
         </button>
         <button
           data-destination="account"
@@ -5467,7 +5470,7 @@ children: <>
           type="button"
         >
           <UserRound aria-hidden="true" size={20} />
-          {wideLayout && !floatingNavigation && !sideNavigation && <span>{copy.my}</span>}
+          {showNavigationLabels && <span>{copy.my}</span>}
         </button>
       </nav>
 

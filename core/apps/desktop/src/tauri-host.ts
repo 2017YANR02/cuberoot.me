@@ -68,6 +68,7 @@ const requestDesktopScreenWakeLock = createNativeScreenWakeLock(
 );
 
 export const desktopHost: InstalledAppHost = {
+  floatingNavigation: 'labeled',
   createBleTransport: () => new TauriBleTransport(),
   createStackmatSource: createStackmatMicSource,
   async addNetworkListener(listener) {
