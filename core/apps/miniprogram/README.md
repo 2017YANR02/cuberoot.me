@@ -93,7 +93,7 @@ WebView 的 `postMessage` 不保证即时送达。新版页面确认设置后，
 
 ## 安全和发布
 
-后端按目标需要 `WECHAT_MINI_APP_ID` / `WECHAT_MINI_APP_SECRET` 或 `DOUYIN_MINI_APP_ID` / `DOUYIN_MINI_APP_SECRET`。密钥只放服务端环境变量，不写入本目录、构建产物、URL 或文档。
+后端用 `WECHAT_MINI_APP_ID` / `WECHAT_MINI_APP_SECRET` 配置微信登录。抖音旧主体继续使用 `DOUYIN_MINI_APP_ID` / `DOUYIN_MINI_APP_SECRET`，公司主体使用 `DOUYIN_COMPANY_MINI_APP_ID` / `DOUYIN_COMPANY_MINI_APP_SECRET`。抖音构建把公开的项目 AppID 随登录请求发送给服务端。未发送 AppID 的既有版本继续走旧主体配置。密钥只放服务端环境变量，不写入本目录、构建产物、URL 或文档。
 
 两个平台后台都必须配置网络、业务域名和真实隐私声明。抖音登录会在用户手动同意用户协议与隐私政策后调用 `tt.login({ force: true })`，本机退出只清除本机小程序会话。抖音资质审核期间可以继续开发；正式 AppID、后台能力与域名配置、开发者工具和真机回归、平台审核全部完成前不得宣称上线。
 

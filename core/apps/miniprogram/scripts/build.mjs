@@ -185,6 +185,7 @@ async function buildProject() {
     target: 'chrome91',
     define: {
       __MINI_PROGRAM_TARGET__: JSON.stringify(target),
+      __DOUYIN_MINI_PROGRAM_APP_ID__: JSON.stringify(douyin && config.appid !== 'testAppId' ? config.appid : ''),
     },
     plugins:[nativePdfPlugin(packageRoot)],
   });

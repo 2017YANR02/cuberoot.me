@@ -814,6 +814,7 @@ describe('mini program account page', () => {
   });
 
   it('requires manual consent before starting Douyin sign-in', async () => {
+    vi.stubGlobal('__DOUYIN_MINI_PROGRAM_APP_ID__', 'ttcompany');
     const token = 'd'.repeat(20);
     const login = vi.fn((options: {
       force?: boolean;
@@ -828,7 +829,7 @@ describe('mini program account page', () => {
       url: string;
     }) => {
       expect(options.url).toBe('https://api.cuberoot.me/v1/auth/douyin/miniprogram');
-      expect(options.data).toEqual({ code: 'douyin-code' });
+      expect(options.data).toEqual({ code: 'douyin-code', appId: 'ttcompany' });
       options.success({
         statusCode: 200,
         data: {

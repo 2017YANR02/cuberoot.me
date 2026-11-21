@@ -23,6 +23,8 @@ import {
 } from './platform';
 import { tr } from './i18n';
 
+declare const __DOUYIN_MINI_PROGRAM_APP_ID__: string;
+
 const SESSION_STORAGE_KEY = 'cuberoot:session';
 const MAX_AVATAR_LENGTH = 2048;
 const MAX_DISPLAY_NAME_LENGTH = 200;
@@ -336,9 +338,15 @@ export async function loginWithMiniProgram(
   if (options.phoneCode && isDouyinMiniProgram()) throw new ApiError(400, 'unsupported phone authorization');
   const code = await miniProgramLoginCode();
   if (options.isCurrent && !options.isCurrent()) throw new ApiError(0, 'account choice canceled');
+  const appId = typeof __DOUYIN_MINI_PROGRAM_APP_ID__ === 'string' ? __DOUYIN_MINI_PROGRAM_APP_ID__ : '';
   const response = await requestJson<unknown>(MINI_PROGRAM_LOGIN_ENDPOINT, {
     method: 'POST',
-    body: { code, ...(options.createAccount ? { create: true } : {}), ...(options.phoneCode ? { phoneCode: options.phoneCode } : {}) },
+    body: {
+      code,
+      ...(appId ? { appId } : {}),
+      ...(options.createAccount ? { create: true } : {}),
+      ...(options.phoneCode ? { phoneCode: options.phoneCode } : {}),
+    },
   });
   return saveLoginResponse(response, options.isCurrent);
 }
