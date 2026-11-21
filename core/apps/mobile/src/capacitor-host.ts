@@ -28,13 +28,14 @@ import {
   mobileNetBattleSessionStore,
 } from './net-battle/mobile-net-battle';
 
-const isIos = Capacitor.getPlatform() === 'ios';
+const platform = Capacitor.getPlatform();
+const isIos = platform === 'ios';
 
 export const capacitorHost: InstalledAppHost = {
   uuRemote,
   addNotificationOpenListener,
   watchTimer: isIos ? watchTimerPort : undefined,
-  floatingNavigation: Capacitor.isNativePlatform(),
+  floatingNavigation: platform === 'android' ? 'draggable' : Capacitor.isNativePlatform(),
   primaryNavigation: isIos ? primaryNavigation : undefined,
   addDockedKeyboardListener: isIos ? addDockedKeyboardListener : undefined,
   manualEntrySheet: isIos && Capacitor.isPluginAvailable('TimerManualEntry') ? timerManualEntry : undefined,
@@ -67,7 +68,7 @@ export const capacitorHost: InstalledAppHost = {
   version: packageInfo.version,
   icpFilingNumber: isIos ? '沪ICP备2025130431号-2A' : undefined,
   generativeAiDisabled: isIos,
-  getAndroidUpdateInfo: Capacitor.getPlatform() === 'android' ? async () => {
+  getAndroidUpdateInfo: platform === 'android' ? async () => {
     const info = await NativeApp.getInfo();
     const versionCode = Number(info.build);
     if (info.id !== 'me.cuberoot.app' || !Number.isSafeInteger(versionCode) || versionCode < 1) {

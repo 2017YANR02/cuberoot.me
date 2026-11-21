@@ -117,7 +117,7 @@ export interface InstalledAppHost {
   listenDesktopNavigation?(language: SupportedLanguage, listener: (command: 'timer' | 'tools' | 'account' | 'back' | 'refresh' | 'search') => void): Promise<InstalledAppListener>;
   addDockedKeyboardListener?(listener: (top: number | null) => void): Promise<InstalledAppListener>;
   manualEntrySheet?: import('./NativeTimerManualEntry').ManualEntrySheetHost;
-  floatingNavigation?: boolean | 'labeled';
+  floatingNavigation?: boolean | 'labeled' | 'draggable';
   primaryNavigation?: {
     render(state: PrimaryNavigationState | null): Promise<boolean>;
     addSelectListener(listener: (id: PrimaryNavigationId | 'search') => void): Promise<InstalledAppListener>;

@@ -66,6 +66,19 @@ body[data-site-scenery='transparent'] {
       inset 0 1px 2px color-mix(in srgb, white 44%, transparent),
       inset 0 0 0 1px var(--glass-edge),
       0 5px 16px color-mix(in srgb, var(--foreground) 12%, transparent);
+    --glass-nav-lens-tint: color-mix(in srgb, var(--popover) 13%, transparent);
+    --glass-nav-lens-filter: blur(5px) saturate(1.65);
+    --glass-nav-lens-shadow:
+      inset 0 1px 1px color-mix(in srgb, white 93%, transparent),
+      inset 0 -2px 3px color-mix(in srgb, black 23%, transparent),
+      inset 0 0 0 1px var(--glass-edge),
+      0 2px 3px color-mix(in srgb, black 14%, transparent),
+      0 7px 16px color-mix(in srgb, black 21%, transparent);
+  }
+  .primary-nav[data-drag-lens] {
+    --glass-nav-lens-glint:
+      radial-gradient(ellipse 80% 52% at calc(38% - var(--app-nav-lens-travel, 0px) * .15) -8%, color-mix(in srgb, white 85%, transparent), transparent 82%),
+      radial-gradient(ellipse 70% 48% at 82% 110%, color-mix(in srgb, white 66%, transparent), transparent 74%);
   }
 }
 @media (prefers-reduced-transparency: reduce) {

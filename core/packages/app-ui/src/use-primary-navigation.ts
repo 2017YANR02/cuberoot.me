@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useRef, useState, type RefObject } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState, type HTMLAttributes, type PointerEvent, type RefObject } from 'react';
 import type { HostViewportLayout } from '@cuberoot/timer-ui';
 import type { InstalledAppHost } from './platform';
 
@@ -10,7 +10,110 @@ function centeredCapsuleLeft(container: DOMRect, width: number) {
   return container.left + (container.width - width) / 2;
 }
 
-export function useTimerNavigationAvoidance(nav: RefObject<HTMLElement | null>, enabled: boolean) {
+interface NavigationDrag {
+  pointerId: number;
+  holdTimer: number;
+  nav: HTMLElement;
+  maxTravel: number;
+  startX: number;
+  travel: number;
+}
+
+function clearNavigationDrag({ nav, pointerId, holdTimer }: NavigationDrag) {
+  window.clearTimeout(holdTimer);
+  nav.removeAttribute('data-lens-pressed');
+  nav.removeAttribute('data-lens-dragging');
+  nav.style.removeProperty('--app-nav-lens-travel');
+  if (nav.hasPointerCapture(pointerId)) nav.releasePointerCapture(pointerId);
+}
+
+export function useDraggablePrimaryNavigation(
+  enabled: boolean,
+  select: (destination: NavigationId) => void,
+): HTMLAttributes<HTMLElement> | undefined {
+  const drag = useRef<NavigationDrag | null>(null);
+  const handledPointer = useRef(false);
+
+  useLayoutEffect(() => {
+    return () => {
+      const active = drag.current;
+      drag.current = null;
+      if (active) clearNavigationDrag(active);
+    };
+  }, [enabled]);
+
+  if (!enabled) return;
+
+  const finish = (event: PointerEvent<HTMLElement>) => {
+    const active = drag.current;
+    if (!active || active.pointerId !== event.pointerId) return;
+    drag.current = null;
+    handledPointer.current = true;
+    const { nav } = active;
+    clearNavigationDrag(active);
+    if (event.type !== 'pointerup') return;
+    const button = document.elementFromPoint(event.clientX, event.clientY)?.closest<HTMLButtonElement>('button[data-destination]');
+    if (!button || button.parentElement !== nav || button.disabled) return;
+    const destination = button.dataset.destination;
+    if (destination === 'timer' || destination === 'tools' || destination === 'account') select(destination);
+  };
+
+  return {
+    onPointerDown(event) {
+      if (!event.isPrimary || event.button !== 0 || drag.current) return;
+      handledPointer.current = false;
+      const nav = event.currentTarget;
+      const button = event.target instanceof Element && event.target.closest<HTMLButtonElement>('button[data-destination]');
+      if (!button || button.parentElement !== nav || button.disabled) return;
+      const bounds = nav.getBoundingClientRect();
+      const slot = button.getBoundingClientRect();
+      if (!bounds.width || !slot.width) return;
+      try { nav.setPointerCapture(event.pointerId); } catch { return; }
+      const travel = slot.left - bounds.left;
+      const active: NavigationDrag = {
+        pointerId: event.pointerId,
+        nav,
+        maxTravel: bounds.width - slot.width,
+        startX: event.clientX,
+        travel,
+        // A tap should slide the settled lens without flashing the held glass.
+        holdTimer: window.setTimeout(() => {
+          if (drag.current !== active) return;
+          nav.style.setProperty('--app-nav-lens-travel', `${travel}px`);
+          nav.setAttribute('data-lens-pressed', '');
+        }, 120),
+      };
+      drag.current = active;
+    },
+    onPointerMove(event) {
+      const active = drag.current;
+      if (!active || active.pointerId !== event.pointerId) return;
+      const delta = event.clientX - active.startX;
+      if (!active.nav.hasAttribute('data-lens-dragging')) {
+        if (Math.abs(delta) < 4) return;
+        window.clearTimeout(active.holdTimer);
+        active.nav.setAttribute('data-lens-pressed', '');
+        active.nav.setAttribute('data-lens-dragging', '');
+      }
+      const travel = Math.max(0, Math.min(active.maxTravel, active.travel + delta));
+      active.nav.style.setProperty('--app-nav-lens-travel', `${travel}px`);
+    },
+    onPointerUp: finish,
+    onPointerCancel: finish,
+    onLostPointerCapture: finish,
+    onClickCapture(event) {
+      if (!handledPointer.current || event.detail === 0) return;
+      handledPointer.current = false;
+      event.stopPropagation();
+      event.preventDefault();
+    },
+    onContextMenu(event) {
+      if (drag.current) event.preventDefault();
+    },
+  };
+}
+
+export function useTimerNavigationAvoidance(nav: RefObject<HTMLElement | null>, enabled: boolean, keepCentered: boolean) {
   const [offset, setOffset] = useState(0);
   useLayoutEffect(() => {
     const capsule = nav.current;
@@ -40,7 +143,7 @@ export function useTimerNavigationAvoidance(nav: RefObject<HTMLElement | null>, 
       for (const rect of obstacles) {
         if (left < rect.right + gap && left + width > rect.left - gap) left = rect.right + gap;
       }
-      const reserve = left > center && left + width > frame.right - safeRight - gap;
+      const reserve = left > center && (keepCentered || left + width > frame.right - safeRight - gap);
       footer.toggleAttribute('data-nav-clearance', reserve);
       setOffset(reserve ? 0 : left - center);
     };
@@ -65,7 +168,7 @@ export function useTimerNavigationAvoidance(nav: RefObject<HTMLElement | null>, 
       window.removeEventListener('resize', update);
       footer.removeAttribute('data-nav-clearance');
     };
-  }, [nav, enabled]);
+  }, [nav, enabled, keepCentered]);
   return enabled ? offset : 0;
 }
 

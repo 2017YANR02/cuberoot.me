@@ -360,7 +360,8 @@ import {
 import type { InstalledAppHost } from './platform';
 import { startWebSurfaceHandshake } from './web-surface-handshake';
 import { installedWebEntryUrl } from './web-surface-url';
-import { usePrimaryNavigation, useTimerNavigationAvoidance } from './use-primary-navigation';
+import { useDraggablePrimaryNavigation, usePrimaryNavigation, useTimerNavigationAvoidance } from './use-primary-navigation';
+import { PrimaryNavigationOptics } from './PrimaryNavigationOptics';
 import {
   solveMobileRandomDifficultyCase,
   solveMobileSmartCubeFixup,
@@ -4189,8 +4190,9 @@ export function App({ host, loadingMark }: { host: InstalledAppHost; loadingMark
     if (view !== 'tools') setToolsSearchOpen(false);
   }, [view]);
   const primaryDestination = selectedView === 'tools' || selectedView === 'account' ? selectedView : 'timer';
+  const keepNavigationCentered = host.floatingNavigation === 'draggable';
   const navHorizontalOffset = useTimerNavigationAvoidance(primaryNavRef,
-    floatingNavigation && !sideNavigation && navVisible && view === 'timer' && timerMode === 1);
+    floatingNavigation && !sideNavigation && navVisible && view === 'timer' && timerMode === 1, keepNavigationCentered);
   const nativeNavigation = usePrimaryNavigation(host.primaryNavigation, primaryNavRef, {
     visible: navVisible,
     selected: primaryDestination,
@@ -4211,6 +4213,8 @@ export function App({ host, loadingMark }: { host: InstalledAppHost; loadingMark
       if (showToolsSearch) setToolsSearchOpen(open => !open);
     } else if (navVisible) selectPrimaryView(id);
   });
+  const draggableNavigation = keepNavigationCentered && !sideNavigation && !nativeNavigation;
+  const navigationDragHandlers = useDraggablePrimaryNavigation(draggableNavigation && navVisible, selectPrimaryView);
 
   const desktopCommand = useRef<(command: string) => void>(() => {});
   useLayoutEffect(() => {
@@ -5573,8 +5577,9 @@ children: <>
         connectAttempt={externalConnectAttempt?.kind === 'stackmat' ? externalConnectAttempt.promise : null}
       />}
 
-      <nav data-timer-hide-while-running className="primary-nav" aria-label={copy.title} ref={primaryNavRef}
+      <nav {...navigationDragHandlers} data-timer-hide-while-running className="primary-nav" aria-label={copy.title} ref={primaryNavRef}
         data-site-surface={floatingNavigation ? 'popover' : undefined}
+        data-drag-lens={draggableNavigation ? '' : undefined}
         data-selected={floatingNavigation ? primaryDestination : undefined}
         data-native-navigation={nativeNavigation ? '' : undefined}
         aria-hidden={nativeNavigation || !navVisible || undefined} inert={nativeNavigation || !navVisible}
@@ -5583,6 +5588,7 @@ children: <>
             ? { top: Math.min(hostViewport.bar.y + hostViewport.bar.height, viewportHeight) - 148 }
             : { top: hostViewport.bar.y, height: Math.min(hostViewport.bar.height, Math.max(0, viewportHeight - hostViewport.bar.y)) }) }
           : { '--app-nav-offset-x': `${navHorizontalOffset}px` } as CSSProperties}>
+        {draggableNavigation && <PrimaryNavigationOptics navigation={primaryNavRef} />}
         <button
           data-destination="timer"
           aria-label={copy.timer}
