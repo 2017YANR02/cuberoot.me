@@ -1519,6 +1519,7 @@ export function createVideoWorkspace(stage: HTMLCanvasElement, initialTab: Works
       showCameraPreview: derived.showCameraPreview,
       stream: state.stream,
       reconstructionComplete: derived.reconstructionComplete,
+      videoInputComplete: state.videoInputComplete,
       cubeSolved: derived.cubeSolved,
       coloredProjection: derived.coloredProjection,
       projectedTimeline: derived.projectedTimeline,

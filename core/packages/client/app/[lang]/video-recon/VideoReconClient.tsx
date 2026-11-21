@@ -6,6 +6,7 @@ import { parseAsStringEnum, useQueryState } from 'nuqs';
 import { Camera, Crop, Download, Eraser, Film, Unplug, Upload } from '@app-foundation/icons/lucide';
 import PageHeading from '@/components/PageHeading';
 import HeaderToggles from '@/components/HeaderToggles';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 import { useT } from '@/hooks/useT';
 import { createVideoWorkspace, type VideoWorkspace, type WorkspaceTab } from '@/lib/video-recon/workspace';
 import { prepareOfflineVideoRecon } from '@/lib/video-recon/offline';
@@ -25,6 +26,17 @@ const NO_MOVES: readonly MoveStep[] = [];
 const VIDEO_MODES: WorkspaceTab[] = ['detector', 'timer'];
 const noWorkspace = () => null;
 const noSubscription = () => () => {};
+
+function VideoReconProgress({ label, value }: { label: string; value?: number }) {
+  if (value === undefined) return <LoadingIndicator>{label}</LoadingIndicator>;
+  return <div className="video-recon-progress">
+    <div className="video-recon-section-heading">
+      <span role="status">{label}</span>
+      <strong aria-hidden="true">{value}%</strong>
+    </div>
+    <progress aria-label={label} max={100} value={value} />
+  </div>;
+}
 
 export default function VideoReconClient() {
   const t = useT();
@@ -77,6 +89,10 @@ export default function VideoReconClient() {
   const fileCanCrop = view?.sourceKind === 'image' || view?.trimming;
   const searchSteps = view?.searchResult?.steps ?? NO_MOVES;
   const downloadProgress = view?.modelProgress;
+  const downloading = downloadProgress !== undefined && downloadProgress < 100;
+  const frameProgress = reconstructing && !view.videoInputComplete && view.solveEnd > view.solveStart
+    ? Math.max(0, Math.min(99, Math.floor(100 * (view.position - view.solveStart) / (view.solveEnd - view.solveStart))))
+    : undefined;
   const selectedSource = view?.sourceKind === 'camera' ? t('实时摄像头', 'Live camera') : view?.sourceName;
   const guide = detector
     ? t('上传固定机位的视频和已知打乱，复盘三阶还原。图片也可用于检测。', 'Use a fixed-camera video and the known scramble to reconstruct a 3×3 solve. You can also detect a cube in an image.')
@@ -149,11 +165,15 @@ export default function VideoReconClient() {
         </div>}
         {renderReviewControls(t('视频播放控件', 'Video playback controls'))}
         {workspace && view?.trimming && <SolveRange view={view} workspace={workspace} />}
-        {view?.status === 'loading' && <p className="video-recon-muted" role="status">
-          {downloadProgress !== undefined && downloadProgress < 100 ? t(`正在下载识别模型 ${downloadProgress}%`, `Downloading detector models ${downloadProgress}%`)
-            : t('正在初始化识别模型…', 'Initializing detector models…')}
-        </p>}
-        {(reconstructing || view?.timerBuffering) && <p className="video-recon-muted" role="status">{t('正在复盘…', 'Reconstructing…')}</p>}
+        {view?.status === 'loading' && <VideoReconProgress
+          label={downloading ? t('正在下载识别模型', 'Downloading detector models')
+            : downloadProgress === 100 ? t('正在初始化识别模型', 'Initializing detector models')
+              : t('正在准备识别模型', 'Preparing detector models')}
+          value={downloading ? downloadProgress : undefined} />}
+        {view?.status !== 'loading' && (reconstructing || view?.timerBuffering) && <VideoReconProgress
+          label={frameProgress === undefined ? t('正在复盘 · 重建动作', 'Reconstructing · Recovering moves')
+            : t('正在复盘 · 分析视频帧', 'Reconstructing · Analyzing video frames')}
+          value={frameProgress} />}
         {reviewing && !view.cubeSolved && <div className="video-recon-muted" role="status">
           <strong>{t('未能完成复盘', 'Reconstruction incomplete')}</strong>
           <span> · {searchSteps.length ? t('已保留识别出的动作。', 'Recovered moves are available.') : t('未识别到可用动作。', 'No moves were recovered.')}</span>
