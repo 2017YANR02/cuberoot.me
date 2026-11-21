@@ -338,6 +338,7 @@ import {
   type MobileScrambleSource as ScrambleSource,
 } from './mobile-scramble-history';
 import { mobileTimerMoreMenuItems } from './mobile-more-actions';
+import { NativeTimerMoreMenu } from './NativeTimerMoreMenu';
 import {
   displayMobileWcaCompetitionName,
   loadMobileWcaCompetitionScrambles,
@@ -4430,6 +4431,15 @@ export function App({ host, loadingMark }: { host: InstalledAppHost; loadingMark
         }} title={copy.timer}
         topbar={{
           availableTopBar: hostViewport?.topBar,
+          actions: host.timerMoreMenu && (
+            <NativeTimerMoreMenu
+              host={host.timerMoreMenu}
+              label={copy.more}
+              items={moreItems}
+              enabled={!hideRunningChrome && !timerOverlayBlocking && !manualEntryOpen && !layoutEditing
+                && !timerContextMutationBusy && (timer.machine.phase === 'idle' || timer.machine.phase === 'stopped')}
+            />
+          ),
           controls: (
                 <>
                   {communityAvailable && <TimerLiveShareStatus controller={liveShare} language={language} />}

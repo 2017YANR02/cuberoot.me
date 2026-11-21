@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		9582B6842FE993A70072D4E8 /* PrimaryNavigationPlugin.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9582B6852FE993A70072D4E8 /* PrimaryNavigationPlugin.swift */; };
+		71B2B6842FE993A70072D4E8 /* TimerMoreMenuPlugin.swift in Sources */ = {isa = PBXBuildFile; fileRef = 71B2B6852FE993A70072D4E8 /* TimerMoreMenuPlugin.swift */; };
 		A99200000000000000000001 /* SmartCubePickerPlugin.swift in Sources */ = {isa = PBXBuildFile; fileRef = A99200000000000000000002 /* SmartCubePickerPlugin.swift */; };
 		A77C00000000000000000091 = {isa = PBXBuildFile; fileRef = A77C00000000000000000092; };
 		A24900000000000000000001 /* RecordPushPlugin.swift in Sources */ = {isa = PBXBuildFile; fileRef = A24900000000000000000002 /* RecordPushPlugin.swift */; };
@@ -50,6 +51,7 @@ A77C00000000000000000080 = {isa = PBXBuildFile; fileRef = A77C000000000000000000
 /* End PBXTargetDependency section */
 /* Begin PBXFileReference section */
 		9582B6852FE993A70072D4E8 /* PrimaryNavigationPlugin.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PrimaryNavigationPlugin.swift; sourceTree = "<group>"; };
+		71B2B6852FE993A70072D4E8 /* TimerMoreMenuPlugin.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TimerMoreMenuPlugin.swift; sourceTree = "<group>"; };
 		A99200000000000000000002 /* SmartCubePickerPlugin.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SmartCubePickerPlugin.swift; sourceTree = "<group>"; };
 		A77C00000000000000000092 = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = WatchScramble.js; sourceTree = DERIVED_FILE_DIR; };
 		A24900000000000000000002 /* RecordPushPlugin.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecordPushPlugin.swift; sourceTree = "<group>"; };
@@ -121,6 +123,7 @@ A77C00000000000000000081 = {isa = PBXFileReference; lastKnownFileType = folder; 
                 A99200000000000000000002 /* SmartCubePickerPlugin.swift */,
 				9582B6822FE993A50072D4E8 /* SceneDelegate.swift */,
 				9582B6852FE993A70072D4E8 /* PrimaryNavigationPlugin.swift */,
+				71B2B6852FE993A70072D4E8 /* TimerMoreMenuPlugin.swift */,
                 A24900000000000000000002 /* RecordPushPlugin.swift */,
                 A24900000000000000000003 /* App.entitlements */,
 				50379B222058CBB4000EE86E /* capacitor.config.json */,
@@ -233,6 +236,7 @@ A77C00000000000000000081 = {isa = PBXFileReference; lastKnownFileType = folder; 
                 A99200000000000000000001 /* SmartCubePickerPlugin.swift in Sources */,
 				9582B6832FE993A70072D4E8 /* SceneDelegate.swift in Sources */,
 				9582B6842FE993A70072D4E8 /* PrimaryNavigationPlugin.swift in Sources */,
+				71B2B6842FE993A70072D4E8 /* TimerMoreMenuPlugin.swift in Sources */,
                 A24900000000000000000001 /* RecordPushPlugin.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
