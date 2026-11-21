@@ -121,7 +121,6 @@ final class CubeRootBridgeViewController: CAPBridgeViewController {
         if #available(iOS 16.4, *) {
             bridge?.registerPluginInstance(PrimaryNavigationPlugin())
         }
-        bridge?.registerPluginInstance(TimerMoreMenuPlugin())
         bridge?.registerPluginInstance(TimerManualEntryPlugin())
         bridge?.registerPluginInstance(TimerPrintPlugin())
         bridge?.registerPluginInstance(NativeFilesPlugin())

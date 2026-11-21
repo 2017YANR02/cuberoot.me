@@ -47,10 +47,10 @@ final class PrimaryNavigationPlugin: CAPPlugin, CAPBridgedPlugin {
             let wasVertical = self.model.state.vertical
             self.model.state = .init(items: items, selected: selected, vertical: vertical)
             let capsule: UIView
-            if #available(iOS 26, *), !vertical {
+            if #available(iOS 26, *) {
                 let control = self.systemCapsule ?? self.installSystemCapsule(in: parent)
                 self.overlay?.view.isHidden = true
-                control.apply(items: items, selected: selected)
+                control.apply(items: items, selected: selected, vertical: vertical)
                 control.overrideUserInterfaceStyle = style
                 capsule = control
             } else {
@@ -133,6 +133,7 @@ final class PrimaryNavigationPlugin: CAPPlugin, CAPBridgedPlugin {
 private final class SystemNavigationCapsule: UIView, UITabBarDelegate {
     private let tabBar = UITabBar()
     private let onSelect: (String) -> Void
+    private var vertical = false
     private var ids: [String] = []
     private var committedSelection: String?
     private var pendingSelection: Task<Void, Never>?
@@ -151,19 +152,29 @@ private final class SystemNavigationCapsule: UIView, UITabBarDelegate {
     override func layoutSubviews() {
         super.layoutSubviews()
         // The floating pill is inset from the tab bar's side and bottom edges.
-        tabBar.frame = CGRect(x: -22, y: -2, width: bounds.width + 44, height: bounds.height + 22)
+        let length = vertical ? bounds.height : bounds.width
+        let thickness = vertical ? bounds.width : bounds.height
+        tabBar.bounds = CGRect(x: 0, y: 0, width: length + 44, height: thickness + 22)
+        tabBar.transform = vertical ? CGAffineTransform(rotationAngle: .pi / 2) : .identity
+        tabBar.center = CGPoint(x: bounds.midX - (vertical ? 9 : 0),
+                                y: bounds.midY + (vertical ? 0 : 9))
     }
 
-    func apply(items: [NavigationCapsule.Item], selected: String) {
+    func apply(items: [NavigationCapsule.Item], selected: String, vertical: Bool) {
         let incomingIDs = items.map(\.id)
-        let replacedItems = incomingIDs != ids
+        let replacedItems = incomingIDs != ids || self.vertical != vertical
         if replacedItems {
+            self.vertical = vertical
+            // Keep the shared top-to-bottom order in every system language.
+            tabBar.semanticContentAttribute = vertical ? .forceLeftToRight : .unspecified
+            setNeedsLayout()
             ids = incomingIDs
             let configuration = UIImage.SymbolConfiguration(pointSize: 18, weight: .medium)
             tabBar.setItems(items.map { item in
-                UITabBarItem(
+                let symbol = UIImage(systemName: item.symbol, withConfiguration: configuration)
+                return UITabBarItem(
                     title: nil,
-                    image: UIImage(systemName: item.symbol, withConfiguration: configuration),
+                    image: vertical ? symbol.map(uprightSidebarImage) : symbol,
                     selectedImage: nil
                 )
             }, animated: false)
@@ -180,6 +191,16 @@ private final class SystemNavigationCapsule: UIView, UITabBarDelegate {
             tabBar.selectedItem = barItems[index]
             committedSelection = selected
         }
+    }
+
+    // Counter-rotate the glyph while UIKit rotates the entire interactive tab bar.
+    private func uprightSidebarImage(_ image: UIImage) -> UIImage {
+        let size = CGSize(width: image.size.height, height: image.size.width)
+        return UIGraphicsImageRenderer(size: size).image { context in
+            context.cgContext.translateBy(x: 0, y: size.height)
+            context.cgContext.rotate(by: -.pi / 2)
+            image.draw(at: .zero)
+        }.withRenderingMode(.alwaysTemplate)
     }
 
     func tabBar(_ tabBar: UITabBar, didSelect item: UITabBarItem) {

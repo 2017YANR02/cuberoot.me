@@ -41,7 +41,7 @@ export function TimerSoloControls({ project, content, method, source, afterSourc
 export interface TimerSoloPageProps {
   title?: string;
   resizeLabel?: string;
-  topbar: TimerTopbarProps;
+  topbar: Omit<TimerTopbarProps, 'actions'> & { liveStatus?: string };
   stage: Omit<TimerStageLayoutProps, 'children'>;
   timing: Omit<ComponentProps<typeof TimingSurface>, 'layout'>;
   solver?: ReactNode;
@@ -60,7 +60,9 @@ export function TimerSoloPage({ title, resizeLabel = 'Resize panel', topbar, sta
   const canvasRef = useRef<HTMLDivElement>(null);
   const { surfaceRef, onContextMenu, onMouseDown, onMouseUp, onPointerDown, onPointerUp, onPointerCancel, ...canvas } = timing;
   return <SolverTriggerContext.Provider value={solverTriggerSlot}>
-    <TimerTopbar {...topbar} className={`timer-solo-topbar${stage.fullscreen ? ' timer-solo-topbar--fullscreen' : ''}${topbar.className ? ` ${topbar.className}` : ''}`}
+    <TimerTopbar brand={topbar.brand} availableTopBar={topbar.availableTopBar}
+      actions={topbar.liveStatus && <span role="status" className="timer-live-watch-status">{topbar.liveStatus}</span>}
+      className={`timer-solo-topbar${stage.fullscreen ? ' timer-solo-topbar--fullscreen' : ''}${topbar.className ? ` ${topbar.className}` : ''}`}
       controls={<>{solver && <span className="solver-trigger-slot" ref={setSolverTriggerSlot} />}{topbar.controls}</>} />
     <TimerStageLayout {...stage} inputRef={surfaceRef} previewHostRef={timing.cornerSlot ? setPreviewHost : undefined}
       inputHandlers={{ onContextMenu, onMouseDown, onMouseUp, onPointerDown, onPointerUp, onPointerCancel }}

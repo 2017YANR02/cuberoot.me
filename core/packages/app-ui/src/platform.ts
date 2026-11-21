@@ -117,14 +117,6 @@ export interface InstalledAppHost {
   listenDesktopNavigation?(language: SupportedLanguage, listener: (command: 'timer' | 'tools' | 'account' | 'back' | 'refresh' | 'search') => void): Promise<InstalledAppListener>;
   addDockedKeyboardListener?(listener: (top: number | null) => void): Promise<InstalledAppListener>;
   manualEntrySheet?: import('./NativeTimerManualEntry').ManualEntrySheetHost;
-  timerMoreMenu?: {
-    render(state: {
-      frame: PrimaryNavigationFrame;
-      label: string;
-      items: readonly Pick<import('@cuberoot/timer-ui').TimerMoreMenuItem, 'id' | 'label' | 'active' | 'disabled' | 'danger'>[];
-    } | null): Promise<boolean>;
-    addSelectListener(listener: (id: string) => void): Promise<InstalledAppListener>;
-  };
   floatingNavigation?: boolean | 'labeled';
   primaryNavigation?: {
     render(state: PrimaryNavigationState | null): Promise<boolean>;

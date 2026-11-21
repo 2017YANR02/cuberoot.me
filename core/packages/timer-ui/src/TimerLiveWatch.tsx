@@ -124,7 +124,7 @@ export function TimerLiveWatch({ transport, credential, language, host, classNam
             random: tr({ zh: '随机', en: 'Random' }), randomOption: tr({ zh: '随机', en: 'Random' }),
             manual: tr({ zh: '手动', en: 'Manual' }), manualOption: tr({ zh: '手动输入', en: 'Manual input' }) }} onChange={() => {}} /></span>
       </>,
-        actions: <span role="status" className="timer-live-watch-status">{status}</span> }}
+        liveStatus: status }}
       stage={{ statistics: <TimerStatRail language={language} summary={stats} ariaExpanded={historyOpen} onClick={() => setHistoryOpen(v => !v)} /> }}
       timing={{ surfaceRef: surface, phase: state?.phase ?? 'idle', colorClass: `tf-${appearance.timerFont}`, fontScale: appearance.timerFontScale,
         digits: <LiveDigits state={state} online={online} clockOffset={live.clockOffset} />, interactive: false,

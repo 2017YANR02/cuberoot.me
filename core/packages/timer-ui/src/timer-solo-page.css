@@ -124,6 +124,13 @@
   gap: 8px;
   padding: 0;
 }
+/* An empty action column would still reserve its gap and shift the controls. */
+.shell-topbar.timer-solo-topbar[data-use-top-bar]:not([data-topbar-actions]) {
+  grid-template-columns: minmax(0, 1fr);
+}
+.shell-topbar.timer-solo-topbar[data-use-top-bar] .shell-topbar-right:empty {
+  display: none;
+}
 .shell-topbar.timer-solo-topbar[data-use-top-bar] .shell-topbar-left {
   grid-column: 1;
   width: max-content;
