@@ -123,8 +123,8 @@ describe('清单 ↔ schema', () => {
   });
 
   it('Platform 每张直接引用 app_users 的表都进入数据库注销守卫', () => {
-    expect(PLATFORM_ACCOUNT_DELETE_TABLES).toHaveLength(49);
-    expect(new Set(PLATFORM_ACCOUNT_DELETE_TABLES).size).toBe(49);
+    expect(PLATFORM_ACCOUNT_DELETE_TABLES).toHaveLength(50);
+    expect(new Set(PLATFORM_ACCOUNT_DELETE_TABLES).size).toBe(50);
     for (const table of PLATFORM_ACCOUNT_DELETE_TABLES) {
       expect(SCHEMA.has(table), `表 ${table} 不在 schema 里`).toBe(true);
     }
