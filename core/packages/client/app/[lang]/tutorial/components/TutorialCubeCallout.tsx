@@ -9,11 +9,15 @@ type Placement = 'left' | 'right' | 'above' | 'hidden';
 
 const gutter = 8; // Leave room for the bubble's tail at the pane boundary.
 
-export default function TutorialCubeCallout({ side = 'right', anchorY = .5, player, targetStickers, ...props }: Omit<ChatBubbleProps, 'tail' | 'ref'> & {
+export default function TutorialCubeCallout({
+  side = 'right', anchorY = .5, player, targetStickers, paneRef, requireAnchor, ...props
+}: Omit<ChatBubbleProps, 'tail' | 'ref'> & {
   side?: 'left' | 'right';
   anchorY?: number;
   player?: RefObject<AlgPlayerHandle | null> | (() => AlgPlayerHandle | null);
   targetStickers?: readonly string[];
+  paneRef?: RefObject<HTMLElement | null>;
+  requireAnchor?: boolean;
 }) {
   const overlay = useRef<HTMLDivElement>(null);
   const bubble = useRef<HTMLDivElement>(null);
@@ -23,7 +27,7 @@ export default function TutorialCubeCallout({ side = 'right', anchorY = .5, play
   useLayoutEffect(() => {
     const layer = overlay.current;
     const note = bubble.current;
-    const pane = layer?.closest('.lbl-demonstration, .f2l-video-viewport, .f2l-case-introduction');
+    const pane = paneRef?.current ?? layer?.closest('.lbl-demonstration, .f2l-video-viewport, .f2l-case-introduction');
     const canvas = layer?.closest('.sim-stage') ?? pane?.querySelector('[data-selected="true"] .sim-stage, .f2l-concept-cube .sim-stage');
     if (!layer || !note || !pane || !canvas) return;
     const caption = pane.querySelector('.f2l-concept-caption, .f2l-case-narration');
@@ -72,6 +76,10 @@ export default function TutorialCubeCallout({ side = 'right', anchorY = .5, play
       };
 
       const anchor = stickers.length ? getPlayer()?.getStickerAnchor?.(stickers) : null;
+      if (requireAnchor && !anchor) {
+        place('hidden', origin.left, origin.top, 0);
+        return;
+      }
       const targetX = anchor?.x ?? cx;
       const targetY = anchor?.y ?? cube.top + cube.height * anchorY;
       let fallback: { placement: Placement; x: number; y: number; width: number } | undefined;
@@ -130,7 +138,7 @@ export default function TutorialCubeCallout({ side = 'right', anchorY = .5, play
       window.removeEventListener('resize', schedule);
       cancelAnimationFrame(frame);
     };
-  }, [side, anchorY, player, targetKey]);
+  }, [side, anchorY, player, targetKey, paneRef, requireAnchor]);
 
   return <div className="tutorial-cube-callout" ref={overlay} data-placement={placement}>
     <ChatBubble {...props} ref={bubble} tail={placement === 'left' ? 'right' : placement === 'right' ? 'left' : 'bottom'} />

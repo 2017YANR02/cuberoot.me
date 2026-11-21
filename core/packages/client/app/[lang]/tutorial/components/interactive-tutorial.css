@@ -38,6 +38,7 @@
   container-type: size;
   container-name: course-reading;
 }
+.course-flow { overflow: hidden; }
 .course-overview { width: min(100%, 860px); padding: 12px min(4cqw, 24px); margin-inline: auto; }
 .course-overview p { margin: 0; line-height: 1.5; }
 .course-overview-steps { display: grid; gap: 10px; margin: 12px 0 0; padding: 0; list-style: none; }

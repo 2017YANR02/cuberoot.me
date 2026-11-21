@@ -14,7 +14,7 @@ export function InteractiveQuestionProgress({ steps, activeIndex, currentComplet
     {steps.map(({ progressLabel }, index) => {
       const done = index < activeIndex || (currentComplete && index === activeIndex);
       return <li key={index} data-done={done} aria-current={index === activeIndex ? 'step' : undefined}>
-        <span>{done && <Check size={13} aria-hidden="true" />}{tr(progressLabel)}</span>
+        <span><Check size={13} aria-hidden="true" />{tr(progressLabel)}</span>
       </li>;
     })}
   </ol>;

@@ -34,12 +34,17 @@
 .course-question-progress li[aria-current='step'] { font-weight: 650; }
 .course-question-progress span { display: flex; align-items: flex-start; gap: 3px; }
 .course-question-progress svg { flex-shrink: 0; margin-block-start: .12em; color: var(--signal-success); }
+.course-question-progress li[data-done='false'] svg,
+.course-turn-faces li[data-tried='false'] svg { visibility: hidden; }
 .course-question-copy .course-question-hint, .course-question-status:not(:empty) {
   margin-block-start: 10px;
   color: var(--muted-foreground);
   font-size: .95rem;
   line-height: 1.45;
 }
+.course-question-opening-status { display: grid; }
+.course-question-opening-status > span { grid-area: 1 / 1; }
+.course-question-opening-status > span[aria-hidden='true'] { visibility: hidden; }
 .course-question-copy[data-course-answer='correct'] h2 { color: var(--signal-success); }
 .course-question-action { min-block-size: 44px; max-inline-size: 100%; margin-block-start: 10px; }
 .course-question-action:disabled { cursor: default; opacity: .65; }
@@ -49,28 +54,97 @@
   inset: 0;
   margin: auto;
   padding: 0;
-  border: 0;
-  inline-size: min(24rem, calc(100% - 1.5rem));
+  border: 1px solid var(--border-default);
+  border-radius: 14px;
+  inline-size: min(30rem, calc(100% - 1.5rem));
   max-block-size: calc(100dvh - 1.5rem);
-  background: transparent;
+  background: var(--popover);
   color: var(--foreground);
 }
-.course-demo-dialog::backdrop { background: color-mix(in srgb, var(--background) 72%, transparent); }
-.course-demo-panel { padding: 10px 16px 14px; }
-.course-demo-panel header { display: flex; align-items: center; justify-content: space-between; }
-.course-question-copy .course-demo-panel h2 { margin: 0; font-size: 1.15rem; }
+.course-demo-dialog::backdrop { background: color-mix(in srgb, var(--foreground) 24%, transparent); }
+.course-demo-panel { padding: clamp(8px, 3vw, 20px); }
+.course-demo-panel > header { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-block-end: 10px; }
+.course-question-copy .course-demo-panel h2 { margin: 0; font-size: clamp(1.1rem, 3vw, 1.4rem); }
 .course-demo-panel .clear-btn { min-inline-size: 44px; min-block-size: 44px; }
-.course-demo-player { block-size: clamp(9rem, 54dvh, 19rem); }
-.course-demo-panel .course-demo-cues {
+.course-demo-body { display: grid; gap: 14px; }
+.course-demo-stage {
+  position: relative;
+  min-inline-size: 0;
+  block-size: clamp(10rem, calc(100dvh - 12rem), 24rem);
+}
+.course-demo-player { block-size: 100%; }
+.course-demo-player .alg-sim-player.is-fill { padding-block: 0; }
+.course-demo-player .alg-sim-player.is-fill .sim-stage { background: var(--muted); border-radius: 10px; }
+.course-demo-player .playback-bar { inline-size: min(100%, 23rem); }
+.course-demo-loading {
+  position: absolute;
+  top: 8px;
+  inset-inline: 8px;
+  text-align: center;
+  font-size: .875rem;
+  color: var(--muted-foreground);
+  pointer-events: none;
+}
+.course-demo-guide { min-inline-size: 0; align-self: center; }
+.course-demo-cues {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 6px;
   padding: 0;
-  margin: 6px 0 0;
+  margin: 0;
   list-style: none;
-  text-align: center;
-  font-size: 1rem;
 }
-.course-demo-cues li { display: grid; }
+.course-demo-cues .course-demo-cue {
+  display: grid;
+  align-content: center;
+  justify-items: center;
+  gap: 1px;
+  inline-size: 100%;
+  min-block-size: 52px;
+  padding: 4px 2px;
+  border: 1px solid var(--border-default);
+  border-radius: 8px;
+  background: var(--background);
+  color: var(--foreground);
+  font: inherit;
+  line-height: 1.25;
+  cursor: pointer;
+}
+.course-demo-cues .course-demo-cue:disabled { cursor: default; }
+.course-demo-cues .course-demo-cue:enabled:hover { border-color: var(--border-strong); }
+.course-demo-cues li[aria-current='step'] > .course-demo-cue { border-color: var(--accent); background: var(--accent-soft); }
+.course-demo-cues .course-demo-cue > span { font-weight: 650; }
+.course-demo-cues code { font-size: .85em; color: var(--muted-foreground); }
+.course-question-copy .course-demo-guide .course-demo-detail {
+  min-block-size: 2.8em;
+  margin-block-start: 10px;
+  color: var(--muted-foreground);
+  font-size: .925rem;
+}
+@media (orientation: landscape) and (min-width: 580px) {
+  .course-demo-dialog { inline-size: min(50rem, calc(100% - 1.5rem)); }
+  .course-demo-body { grid-template-columns: minmax(0, 1.65fr) minmax(0, 1fr); gap: clamp(14px, 3vw, 26px); }
+  .course-demo-stage { block-size: clamp(11rem, calc(100dvh - 8rem), 26rem); }
+  .course-demo-cues { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+  .course-demo-cues .course-demo-cue { min-block-size: 61px; }
+}
+.course-demo-dialog[data-long-alg] .course-demo-cues { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+@media (max-width: 579px) and (max-height: 420px) {
+  .course-demo-panel { padding: 6px 8px 8px; }
+  .course-demo-panel > header { margin-block-end: 3px; }
+  .course-demo-body { gap: 5px; }
+  .course-demo-stage { block-size: max(7rem, calc(100dvh - 9.25rem)); }
+  .course-demo-dialog[data-long-alg] .course-demo-stage { block-size: max(7rem, calc(100dvh - 13rem)); }
+  .course-demo-dialog[data-long-alg] .course-demo-cues { grid-template-columns: repeat(6, minmax(0, 1fr)); }
+  .course-demo-dialog[data-long-alg] .course-demo-cues .course-demo-cue {
+    min-block-size: 44px;
+    padding-block: 2px;
+    font-size: .875rem;
+    line-height: 1.1;
+  }
+  .course-demo-cues .course-demo-cue { min-block-size: 46px; }
+  .course-demo-guide .course-demo-detail { display: none; }
+}
 .course-turn-faces { display: flex; flex-wrap: wrap; gap: 6px 16px; margin: 10px 0 0; padding: 0; list-style: none; }
 .course-turn-faces li { display: flex; align-items: center; gap: 4px; }
 .course-turn-faces svg { color: var(--signal-success); }
@@ -85,6 +159,12 @@
   margin: 0;
   max-inline-size: min(19rem, calc(100% - 16px));
   font-size: .875rem;
+}
+.course-round-bubble.chat-bubble {
+  inset-block-start: 8px;
+  inset-inline: 0;
+  inline-size: max-content;
+  margin-inline: auto;
 }
 @container course-stage (orientation: landscape) and (min-width: 440px) and (min-height: 120px) {
   .course-caption:has(> .course-question-copy) {
