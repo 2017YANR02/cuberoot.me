@@ -177,3 +177,108 @@
   margin-top: 0.62em;
   width: 7rpx;
 }
+
+.account-native .page {
+  margin: 0 auto;
+  max-width: 640px;
+  padding-top: 32rpx;
+}
+
+.account-native .page-title {
+  font-size: 42rpx;
+  margin-top: 0;
+  overflow-wrap: anywhere;
+}
+
+.account-native .account-login-page > .account-primary-button,
+.account-native .account-link-actions > .account-primary-button {
+  border-radius: 20rpx;
+  margin-top: 32rpx;
+}
+
+.account-native .account-policy-links .account-policy-link,
+.account-native .account-consent-toggle {
+  padding-inline: 0;
+}
+
+.account-section-tabs {
+  background: var(--cr-surface);
+  border: 1px solid var(--cr-line);
+  border-radius: 24rpx;
+  display: flex;
+  gap: 8rpx;
+  margin-bottom: 44rpx;
+  padding: 8rpx;
+}
+
+.account-section-tab {
+  border-radius: 16rpx;
+  color: var(--cr-muted);
+  flex: 1;
+  font-size: 28rpx;
+  min-height: 84rpx;
+  min-width: 0;
+  padding: 8rpx;
+}
+
+.account-section-tab--active {
+  background: var(--cr-accent-soft);
+  color: var(--cr-accent);
+  font-weight: 650;
+}
+
+.account-native .account-profile {
+  align-items: center;
+  display: flex;
+  gap: 24rpx;
+}
+
+.account-profile-initial {
+  align-items: center;
+  background: var(--cr-accent-soft);
+  border-radius: 50%;
+  color: var(--cr-accent);
+  display: flex;
+  flex: none;
+  font-size: 38rpx;
+  font-weight: 650;
+  height: 104rpx;
+  justify-content: center;
+  width: 104rpx;
+}
+
+.account-profile-details { min-width: 0; }
+.account-profile-wca { display: block; }
+
+.account-native .account-user-meta {
+  font-size: 25rpx;
+  margin-top: 8rpx;
+}
+
+.account-native .account-security {
+  display: flex;
+  flex-direction: column;
+}
+
+.account-native .account-security-row {
+  border-bottom: 1px solid var(--cr-line);
+  color: var(--cr-text);
+  font-size: 28rpx;
+  justify-content: flex-start;
+  margin: 0;
+  min-height: 92rpx;
+  padding: 0;
+  text-align: left;
+  width: 100%;
+}
+
+.account-native .account-security-row--danger { color: var(--cr-danger); }
+
+.account-native .account-identities {
+  background: var(--cr-surface);
+  border-radius: 16rpx;
+  margin: 12rpx 0;
+  padding: 16rpx 24rpx;
+}
+
+.account-native .account-release { margin-top: 40rpx; }

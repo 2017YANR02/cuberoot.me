@@ -37,6 +37,8 @@ function createAccountCopy() {
     : { en: 'WeChat', zh: '微信' });
   return {
     accountEyebrow: tr({ en: 'ACCOUNT', zh: '账号' }),
+    spaceLabel: tr({ en: 'My space', zh: '我的空间' }),
+    securityLabel: tr({ en: 'Account & security', zh: '账号与安全' }),
     payouts: isDouyinMiniProgram() ? null : tr({ en: 'Commission payouts', zh: '佣金提现' }),
     editName: tr({ en: 'Edit display name', zh: '修改展示名' }),
     saveName: tr({ en: 'Save', zh: '保存' }),
@@ -116,8 +118,8 @@ function createAccountCopy() {
     linkExistingAccountLabel: tr({ en: 'Sign in to an existing CubeRoot account', zh: '登录已有 CubeRoot 账号' }),
     loginIntro: isDouyinMiniProgram()
       ? tr({
-        en: 'Sign in to use your CubeRoot account. If this Douyin account is not linked yet, choose whether to use an existing account or create a new one.',
-        zh: '登录后使用 CubeRoot 账号。抖音尚未绑定时，先选择登录已有账号或创建新账号。',
+        en: 'Sign in to your CubeRoot account.',
+        zh: '登录你的 CubeRoot 账号。',
       })
       : tr({
         en: 'Sign in with the same CubeRoot account you use on the website. If you have already used WeChat there, the same account is recognized automatically.',
@@ -181,6 +183,8 @@ interface ContactCopyEvent {
 
 interface AccountPageData {
   appearanceStyle: string;
+  nativeAccountSections: boolean;
+  accountSection: 'space' | 'security';
   accountError: string;
   accountLinkPending: boolean;
   accountLinkRequired: boolean;
@@ -197,6 +201,7 @@ interface AccountPageData {
   contact: typeof CONTACT_VIEW;
   copy: typeof ACCOUNT_COPY;
   displayName: string;
+  profileInitial: string;
   editingName: boolean;
   nameDraft: string;
   nameBusy: boolean;
@@ -401,19 +406,22 @@ function setNormalNavigationTitle(): void {
 }
 
 function sessionView(session: SessionData | null): Pick<
-  AccountPageData,
-  'displayName' | 'loginRequired' | 'uidText' | 'wcaId'
-> {
+  AccountPageData, 'displayName' | 'profileInitial' | 'loginRequired' | 'uidText' | 'wcaId'
+> & Partial<Pick<AccountPageData, 'accountSection'>> {
   if (!session) {
     return {
       displayName: '',
+      profileInitial: '',
+      accountSection: 'space',
       loginRequired: true,
       uidText: '',
       wcaId: '',
     };
   }
+  const displayName = session.user.name || ACCOUNT_COPY.defaultUser;
   return {
-    displayName: session.user.name || ACCOUNT_COPY.defaultUser,
+    displayName,
+    profileInitial: Array.from(displayName.trim())[0]?.toUpperCase() ?? '',
     loginRequired: false,
     uidText: session.user.uid === undefined ? '' : String(session.user.uid),
     wcaId: session.user.wcaId ?? '',
@@ -510,6 +518,8 @@ async function completeMiniProgramLogin(
 Page<AccountPageData, WechatMiniprogram.Page.CustomOption>({
   data: {
     appearanceStyle: '',
+    nativeAccountSections: isDouyinMiniProgram(),
+    accountSection: 'space',
     accountError: '',
     accountLinkPending: false,
     accountLinkRequired: false,
@@ -524,6 +534,7 @@ Page<AccountPageData, WechatMiniprogram.Page.CustomOption>({
     contact: CONTACT_VIEW,
     copy: ACCOUNT_COPY,
     displayName: '',
+    profileInitial: '',
     editingName: false,
     nameDraft: '',
     nameBusy: false,
@@ -943,6 +954,11 @@ Page<AccountPageData, WechatMiniprogram.Page.CustomOption>({
     } finally {
       if (current()) { profileAttempts.delete(this); this.setData({ nameBusy: false }); }
     }
+  },
+
+  selectAccountSection(event: WechatMiniprogram.TouchEvent) {
+    const section: unknown = event.currentTarget.dataset.section;
+    if (section === 'space' || section === 'security') this.setData({ accountSection: section });
   },
 
   openPayouts() { miniProgramApi().navigateTo({ url: '/pages/payouts/index' }); },
