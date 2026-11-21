@@ -973,7 +973,6 @@ export default function ReconListPage() {
                 ))}
               </div>}
             />
-            <Link href="/video-recon">{tr({ zh: '视频复盘', en: 'Video reconstruction' })}</Link>
             <Link href="/recon/submit" className="recon-add-btn" title={t('recon.add')} aria-label={t('recon.add')}>
               <CirclePlus size={18} />
             </Link>
@@ -987,6 +986,7 @@ export default function ReconListPage() {
             >
               <HelpCircle size={18} strokeWidth={1.75} />
             </Link>
+            <Link href="/video-recon">{tr({ zh: '视频复盘', en: 'Video reconstruction' })}</Link>
           </PageHeading>
         </div>
         <div className="recon-view-toggle">
