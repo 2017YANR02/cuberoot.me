@@ -28,7 +28,9 @@ export function usePopoverDismiss(
       if (!inside(event)) latest.current('outside');
     };
     const onKey = (event: KeyboardEvent) => {
-      if (event.key !== 'Escape') return;
+      if (event.key !== 'Escape' || event.defaultPrevented) return;
+      // The open popover handles Escape before its containing dialog.
+      event.preventDefault();
       latest.current('escape');
       trigger?.current?.focus();
     };

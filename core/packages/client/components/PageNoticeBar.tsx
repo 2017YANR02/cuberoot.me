@@ -4,15 +4,19 @@ import { useContentRefreshKey } from '@/hooks/useContentRefreshKey';
 
 // 每页顶部管理员通知条(维护中 / WIP / 已知 bug)。全站注入(见 app/[lang]/layout.tsx)。
 //   - 访客:看到匹配当前页的 enabled 通知,可关闭(内容变更后重新出现)。
-//   - 管理员:从桌宠打开新增编辑器;已有通知仍可在顶部直接编辑 / 删除。
+//   - 管理员:首页顶部公告从导航栏进入编辑，其他页面仍支持直接编辑。
 // 数据走 /v1/page-notices(公开读 + admin 写),鉴权 authHeaders(WCA OAuth / X-Admin-Key)。
 import { useCallback, useEffect, useRef, useState, type ReactNode, type CSSProperties } from 'react';
 import { usePathname } from 'next/navigation';
-import { X, Pencil, Trash2 } from '@app-foundation/icons/lucide';
+import { ArrowRight, ExternalLink, X, Pencil, Trash2 } from '@app-foundation/icons/lucide';
 import { useIsAdmin } from '@/lib/auth-store';
+import { useDouyinToolSurface } from '@/lib/douyin-content';
+import { douyinContentAvailable } from '@cuberoot/shared/douyin-content';
 import { tr, T, useLang } from '@/i18n/tr';
 import BoolToggle from './BoolToggle';
 import { DateInput } from './DateInput';
+import AppLink from './AppLink';
+import SettingsDialog from './SettingsDialog';
 import { persistItem } from '@/lib/safe-storage';
 import { regulationPostForHref } from '@/lib/regulation-posts';
 import {
@@ -82,6 +86,14 @@ function linkifyText(text: string): ReactNode {
   return out;
 }
 
+function targetKind(href: string | undefined): 'internal' | 'external' | null {
+  if (!href || /[\u0000-\u001f\u007f]/.test(href)) return null;
+  if (/^\/(?![/\\])/.test(href)) return 'internal';
+  if (!/^https?:\/\//i.test(href)) return null;
+  try { return new URL(href).hostname ? 'external' : null; }
+  catch { return null; }
+}
+
 interface FormState {
   id: number | null;   // null = 新建
   path: string;
@@ -145,6 +157,7 @@ export default function PageNoticeBar() {
   const pathname = usePathname();
   const lang = useLang();
   const isAdmin = useIsAdmin();
+  const douyin = useDouyinToolSurface();
   const key = pageKeyFromPathname(pathname || '/');
 
   const [notices, setNotices] = useState<PageNotice[]>([]);
@@ -278,10 +291,11 @@ export default function PageNoticeBar() {
 
   const matched = matchNotices(notices, key);
   const visible = matched.filter((n) => isAdmin || !(n.dismissible && dismissed[n.id] === n.updatedAt));
-  const renders = form != null || visible.length > 0;
+  const hasBanner = visible.length > 0;
+  const onHome = key === '/';
 
   // 把本条实际高度写进 --page-notice-h,供全屏页(position:fixed;inset:0,如 /sim /paint)
-  // 顶部让位——否则那些页会盖住通知或编辑器。无内容时置 0。
+  // 顶部让位。编辑器在独立弹窗里，无横幅时置 0。
   const wrapRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
     const root = document.documentElement;
@@ -292,226 +306,242 @@ export default function PageNoticeBar() {
     const ro = new ResizeObserver(write);
     ro.observe(el);
     return () => { ro.disconnect(); root.style.setProperty('--page-notice-h', '0px'); };
-  }, [renders]);
+  }, [hasBanner]);
 
-  if (!renders) return null;
-
-  const linkedPost = form?.placement === 'home_featured' ? regulationPostForHref(form.href.trim()) : undefined;
+  const target = form?.href.trim() ?? '';
+  const invalidTarget = target !== '' && !targetKind(target);
+  const linkedPost = form?.placement === 'home_featured' ? regulationPostForHref(target) : undefined;
   const canSave = form != null
     && form.path.trim() !== ''
     && (linkedPost != null || form.bodyZh.trim() !== '' || form.bodyEn.trim() !== '')
-    && (form.placement !== 'home_featured' || form.href.trim() !== '');
+    && !invalidTarget
+    && (form.placement !== 'home_featured' || target !== '');
 
   return (
-    <div className="page-notice-wrap" ref={wrapRef}>
-      {visible.map((n) => {
-        const Icon = iconFor(n);
-        return (
-          <div key={n.id} className="page-notice" data-level={n.level}
-            data-color={isColor(n.color) ? n.color : undefined} role="status">
-            {isAdmin && (
-              <button type="button" className="page-notice-btn page-notice-edit" onClick={() => openEdit(n)}
-                aria-label={tr({ en: 'Edit notice', zh: '编辑通知' })}>
-                <Pencil size={15} aria-hidden />
-              </button>
-            )}
+    <>
+      {hasBanner && <div className="page-notice-wrap" data-home={onHome || undefined} ref={wrapRef}>
+        {visible.map((n) => {
+          const Icon = iconFor(n);
+          const kind = douyin && n.href?.startsWith('/') && !douyinContentAvailable(n.href) ? null : targetKind(n.href);
+          const content = <>
             <Icon className="page-notice-icon" size={17} aria-hidden />
-            <div className="page-notice-body">{linkifyText(pick(n))}</div>
-            {!isAdmin && n.dismissible && (
-              <div className="page-notice-actions">
-                <button type="button" className="page-notice-btn" onClick={() => dismiss(n)}
-                  aria-label={tr({ en: 'Dismiss', zh: '关闭' })}>
-                  <X size={16} aria-hidden />
+            <span className="page-notice-body">{kind ? pick(n) : linkifyText(pick(n))}</span>
+            {kind === 'internal' && <ArrowRight className="page-notice-arrow" size={16} aria-hidden />}
+            {kind === 'external' && <ExternalLink className="page-notice-arrow" size={15} aria-hidden />}
+          </>;
+          return (
+            <div key={n.id} className="page-notice" data-level={n.level}
+              data-color={isColor(n.color) ? n.color : undefined} role="status">
+              {isAdmin && (!onHome || n.path !== '/' || douyin) && (
+                <button type="button" className="page-notice-btn page-notice-edit" onClick={() => openEdit(n)}
+                  aria-label={tr({ en: 'Edit notice', zh: '编辑通知' })}>
+                  <Pencil size={15} aria-hidden />
+                </button>
+              )}
+              {/* allow-nested-link: linked banners use plain text; inline URLs are rendered only without a target. */}
+              {n.href && kind === 'internal'
+                ? <AppLink className="page-notice-content page-notice-target" href={n.href}>{content}</AppLink>
+                : n.href && kind === 'external'
+                  ? <a className="page-notice-content page-notice-target" href={n.href} target="_blank" rel="noopener noreferrer">{content}</a>
+                  : <div className="page-notice-content">{content}</div>}
+              {!isAdmin && n.dismissible && (
+                <div className="page-notice-actions">
+                  <button type="button" className="page-notice-btn" onClick={() => dismiss(n)}
+                    aria-label={tr({ en: 'Dismiss', zh: '关闭' })}>
+                    <X size={16} aria-hidden />
+                  </button>
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>}
+      {isAdmin && form && (
+        <SettingsDialog label={tr({ zh: '编辑公告', en: 'Edit announcement' })} heading panelClassName="page-notice-editor"
+          dismissDisabled={saving} onClose={() => { setForm(null); setErr(null); }}>
+          {close => <form className="page-notice-form" autoComplete="off" aria-busy={saving} onSubmit={event => { event.preventDefault(); if (canSave && !saving) void save(); }}>
+            <div className="page-notice-editor-scroll">
+              <fieldset className="page-notice-fields" disabled={saving}>
+                <div className="page-notice-editor-grid">
+                  <label className="page-notice-field">
+                    <span><T en="Chinese text" zh="中文" /></span>
+                    <textarea className="page-notice-input" readOnly={!!linkedPost} value={linkedPost?.title.zh ?? form.bodyZh}
+                      onChange={(e) => setForm({ ...form, bodyZh: e.target.value })} />
+                  </label>
+                  <label className="page-notice-field">
+                    <span><T en="English text" zh="英文" /></span>
+                    <textarea className="page-notice-input" readOnly={!!linkedPost} value={linkedPost?.title.en ?? form.bodyEn}
+                      onChange={(e) => setForm({ ...form, bodyEn: e.target.value })} />
+                  </label>
+                </div>
+                {linkedPost && <p className="page-notice-hint"><T en="Title follows the article." zh="标题随文章同步。" /></p>}
+                <label className="page-notice-field">
+                  <span>{form.placement === 'home_featured'
+                    ? <T en="Target link" zh="目标链接" />
+                    : <T en="Target link (optional)" zh="目标链接（可选）" />}</span>
+                  <input className="page-notice-input" value={form.href} aria-invalid={invalidTarget || undefined}
+                    onChange={(e) => setForm({ ...form, href: e.target.value })}
+                    autoCapitalize="none" spellCheck={false} placeholder="/math/generalized-riemann-hypothesis" />
+                  {invalidTarget && <span className="page-notice-err"><T en="Enter a path starting with / or an HTTP(S) URL." zh="请输入以 / 开头的站内路径或 HTTP(S) 网址。" /></span>}
+                </label>
+
+                <div className="page-notice-editor-grid">
+                  <label className="page-notice-field">
+                    <span><T en="Placement" zh="展示位" /></span>
+                    <select className="page-notice-input" value={form.placement}
+                      onChange={(e) => {
+                        const placement = e.target.value as NoticePlacement;
+                        setForm({
+                          ...form,
+                          placement,
+                          path: placement === 'home_featured' ? '/' : form.path,
+                          dismissible: placement === 'home_featured' ? false : form.dismissible,
+                        });
+                      }}>
+                      <option value="page_top">{tr({ en: 'Page top', zh: '页面顶部' })}</option>
+                      <option value="home_featured">{tr({ en: 'Homepage feature', zh: '首页焦点' })}</option>
+                    </select>
+                  </label>
+                  <label className="page-notice-field">
+                    <span><T en="Page path (/* for the whole site)" zh="作用路径（/* 覆盖全站）" /></span>
+                    <input className="page-notice-input" value={form.path} disabled={form.placement === 'home_featured'}
+                      onChange={(e) => setForm({ ...form, path: e.target.value })} placeholder="/scramble/stats" />
+                  </label>
+                </div>
+
+                <div className="page-notice-editor-grid">
+                  <div className="page-notice-field">
+                    <span><T en="Starts (optional)" zh="开始时间（可选）" /></span>
+                    <div className="page-notice-datetime">
+                      <DateInput value={datePart(form.startsAt)} className="page-notice-date-input"
+                        aria-label={tr({ en: 'Start date', zh: '开始日期' })}
+                        onChange={(date) => setForm({ ...form, startsAt: withDate(form.startsAt, date) })} />
+                      <input type="time" className="page-notice-input page-notice-time-input"
+                        aria-label={tr({ en: 'Start time', zh: '开始时刻' })}
+                        value={timePart(form.startsAt)} disabled={!datePart(form.startsAt)}
+                        onChange={(e) => setForm({ ...form, startsAt: withTime(form.startsAt, e.target.value) })} />
+                    </div>
+                  </div>
+                  <div className="page-notice-field">
+                    <span><T en="Ends (optional)" zh="结束时间（可选）" /></span>
+                    <div className="page-notice-datetime">
+                      <DateInput value={datePart(form.endsAt)} className="page-notice-date-input"
+                        aria-label={tr({ en: 'End date', zh: '结束日期' })}
+                        onChange={(date) => setForm({ ...form, endsAt: withDate(form.endsAt, date) })} />
+                      <input type="time" className="page-notice-input page-notice-time-input"
+                        aria-label={tr({ en: 'End time', zh: '结束时刻' })}
+                        value={timePart(form.endsAt)} disabled={!datePart(form.endsAt)}
+                        onChange={(e) => setForm({ ...form, endsAt: withTime(form.endsAt, e.target.value) })} />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="page-notice-editor-row">
+                  <label className="page-notice-field">
+                    <span><T en="Level" zh="级别" /></span>
+                    <select className="page-notice-input" value={form.level} onChange={(e) => setForm({ ...form, level: e.target.value as NoticeLevel })}>
+                      <option value="info">{tr({ en: 'Info', zh: '信息' })}</option>
+                      <option value="warning">{tr({ en: 'Warning', zh: '警告' })}</option>
+                      <option value="maintenance">{tr({ en: 'Maintenance', zh: '维护' })}</option>
+                    </select>
+                  </label>
+                  <BoolToggle value={form.enabled} onChange={(v) => setForm({ ...form, enabled: v })}
+                    label={<T en="Enabled" zh="启用" />} ariaLabel={tr({ en: 'Enabled', zh: '启用' })} />
+                  {form.placement === 'page_top' && (
+                    <BoolToggle value={form.dismissible} onChange={(v) => setForm({ ...form, dismissible: v })}
+                      label={<T en="Dismissible" zh="可关闭" />} ariaLabel={tr({ en: 'Dismissible', zh: '可关闭' })} />
+                  )}
+                </div>
+
+                <div className="page-notice-field">
+                  <span><T en="Icon" zh="图标" /></span>
+                  <div className="page-notice-iconpicker">
+                    {(() => {
+                      const AutoIcon = LEVEL_ICON[form.level];
+                      return (
+                        <button type="button"
+                          className={`page-notice-iconbtn${form.icon === '' ? ' is-active' : ''}`}
+                          onClick={() => setForm({ ...form, icon: '' })}
+                          title={tr({ en: 'Auto (by level)', zh: '自动(按级别)' })}
+                          aria-label={tr({ en: 'Auto icon by level', zh: '按级别自动图标' })}
+                          aria-pressed={form.icon === ''}>
+                          <AutoIcon size={16} aria-hidden />
+                        </button>
+                      );
+                    })()}
+                    {ICON_KEYS.map((k) => {
+                      const KIcon = ICONS[k];
+                      return (
+                        <button key={k} type="button"
+                          className={`page-notice-iconbtn${form.icon === k ? ' is-active' : ''}`}
+                          onClick={() => setForm({ ...form, icon: k })}
+                          title={k} aria-label={k} aria-pressed={form.icon === k}>
+                          <KIcon size={16} aria-hidden />
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                <div className="page-notice-field">
+                  <span><T en="Banner color" zh="横幅颜色" /></span>
+                  <div className="page-notice-colorpicker">
+                    <button type="button"
+                      className={`page-notice-swatch is-auto${form.color === '' ? ' is-active' : ''}`}
+                      onClick={() => setForm({ ...form, color: '' })}
+                      title={tr({ en: 'Auto (by level)', zh: '自动(按级别)' })}
+                      aria-label={tr({ en: 'Auto color by level', zh: '按级别自动配色' })}
+                      aria-pressed={form.color === ''} />
+                    {COLOR_KEYS.map((c) => (
+                      <button key={c} type="button"
+                        className={`page-notice-swatch${form.color === c ? ' is-active' : ''}`}
+                        style={{ '--pn-swatch-c': colorVar(c) } as CSSProperties}
+                        onClick={() => setForm({ ...form, color: c })}
+                        title={c} aria-label={c} aria-pressed={form.color === c} />
+                    ))}
+                  </div>
+                </div>
+
+                {!linkedPost && <div className="page-notice-field">
+                  <span><T en="Templates" zh="模板" /></span>
+                  <div className="page-notice-presets">
+                    {PRESETS.map((p) => {
+                      const PIcon = ICONS[p.icon] ?? LEVEL_ICON[p.level];
+                      return (
+                        <button key={p.label.en} type="button" className="page-notice-preset"
+                          style={{ '--pn-preset-c': colorVar(p.color) } as CSSProperties}
+                          onClick={() => setForm({ ...form, level: p.level, icon: p.icon, color: p.color, bodyZh: p.bodyZh, bodyEn: p.bodyEn })}>
+                          <PIcon size={13} aria-hidden />
+                          {tr(p.label)}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>}
+
+              </fieldset>
+            </div>
+
+            {err && <div className="page-notice-err" role="alert">{err}</div>}
+            <div className="page-notice-editor-actions">
+              {form.id != null && (
+                <button type="button" className="page-notice-delete" onClick={remove} disabled={saving}
+                  aria-label={tr({ en: 'Delete notice', zh: '删除通知' })}>
+                  <Trash2 size={16} aria-hidden /><T en="Delete" zh="删除" />
+                </button>
+              )}
+              <div className="page-notice-apply">
+                <button type="button" className="page-notice-cancel" disabled={saving} onClick={close}>
+                  <T en="Cancel" zh="取消" />
+                </button>
+                <button type="submit" className="page-notice-save" disabled={saving || !canSave}>
+                  {saving ? <T en="Working…" zh="处理中…" /> : <T en="Save" zh="保存" />}
                 </button>
               </div>
-            )}
-          </div>
-        );
-      })}
-
-      {isAdmin && form && (
-        <div className="page-notice-editor">
-          <div className="page-notice-editor-row">
-            <label className="page-notice-field">
-              <span><T en="Placement" zh="展示位" /></span>
-              <select className="page-notice-input" value={form.placement}
-                onChange={(e) => {
-                  const placement = e.target.value as NoticePlacement;
-                  setForm({
-                    ...form,
-                    placement,
-                    path: placement === 'home_featured' ? '/' : form.path,
-                    dismissible: placement === 'home_featured' ? false : form.dismissible,
-                  });
-                }}>
-                <option value="page_top">{tr({ en: 'Page top', zh: '页面顶部' })}</option>
-                <option value="home_featured">{tr({ en: 'Homepage feature', zh: '首页焦点' })}</option>
-              </select>
-            </label>
-          </div>
-          <label className="page-notice-field">
-            <span><T en="Applies to path (use /* for whole site)" zh="作用路径(填 /* 覆盖全站)" /></span>
-            <input autoComplete="off" className="page-notice-input" value={form.path} disabled={form.placement === 'home_featured'}
-              onChange={(e) => setForm({ ...form, path: e.target.value })} placeholder="/scramble/stats" />
-          </label>
-
-          <label className="page-notice-field">
-            <span><T en="Target link (required for homepage feature)" zh="目标链接(首页焦点必填)" /></span>
-            <input autoComplete="off" className="page-notice-input" value={form.href}
-              onChange={(e) => setForm({ ...form, href: e.target.value })}
-              placeholder="/regulation/post#4-pad-2027" />
-          </label>
-
-          <div className="page-notice-editor-row">
-            <div className="page-notice-field page-notice-datetime-field">
-              <span><T en="Starts (optional)" zh="开始时间(可选)" /></span>
-              <div className="page-notice-datetime">
-                <DateInput value={datePart(form.startsAt)} size="compact" className="page-notice-date-input"
-                  aria-label={tr({ en: 'Start date', zh: '开始日期' })}
-                  onChange={(date) => setForm({ ...form, startsAt: withDate(form.startsAt, date) })} />
-                <input type="time" className="page-notice-input page-notice-time-input"
-                  aria-label={tr({ en: 'Start time', zh: '开始时刻' })}
-                  value={timePart(form.startsAt)} disabled={!datePart(form.startsAt)}
-                  onChange={(e) => setForm({ ...form, startsAt: withTime(form.startsAt, e.target.value) })} />
-              </div>
             </div>
-            <div className="page-notice-field page-notice-datetime-field">
-              <span><T en="Ends (optional)" zh="结束时间(可选)" /></span>
-              <div className="page-notice-datetime">
-                <DateInput value={datePart(form.endsAt)} size="compact" className="page-notice-date-input"
-                  aria-label={tr({ en: 'End date', zh: '结束日期' })}
-                  onChange={(date) => setForm({ ...form, endsAt: withDate(form.endsAt, date) })} />
-                <input type="time" className="page-notice-input page-notice-time-input"
-                  aria-label={tr({ en: 'End time', zh: '结束时刻' })}
-                  value={timePart(form.endsAt)} disabled={!datePart(form.endsAt)}
-                  onChange={(e) => setForm({ ...form, endsAt: withTime(form.endsAt, e.target.value) })} />
-              </div>
-            </div>
-          </div>
-
-          <div className="page-notice-editor-row">
-            <label className="page-notice-field">
-              <select className="page-notice-input" value={form.level} onChange={(e) => setForm({ ...form, level: e.target.value as NoticeLevel })}
-                aria-label={tr({ en: 'Level', zh: '级别' })}>
-                <option value="info">{tr({ en: 'Info', zh: '信息' })}</option>
-                <option value="warning">{tr({ en: 'Warning', zh: '警告' })}</option>
-                <option value="maintenance">{tr({ en: 'Maintenance', zh: '维护' })}</option>
-              </select>
-            </label>
-            <BoolToggle value={form.enabled} onChange={(v) => setForm({ ...form, enabled: v })}
-              label={<T en="Enabled" zh="启用" />} ariaLabel={tr({ en: 'Enabled', zh: '启用' })} />
-            {form.placement === 'page_top' && (
-              <BoolToggle value={form.dismissible} onChange={(v) => setForm({ ...form, dismissible: v })}
-                label={<T en="Dismissible" zh="可关闭" />} ariaLabel={tr({ en: 'Dismissible', zh: '可关闭' })} />
-            )}
-          </div>
-
-          <div className="page-notice-field">
-            <span><T en="Icon" zh="图标" /></span>
-            <div className="page-notice-iconpicker">
-              {(() => {
-                const AutoIcon = LEVEL_ICON[form.level];
-                return (
-                  <button type="button"
-                    className={`page-notice-iconbtn${form.icon === '' ? ' is-active' : ''}`}
-                    onClick={() => setForm({ ...form, icon: '' })}
-                    title={tr({ en: 'Auto (by level)', zh: '自动(按级别)' })}
-                    aria-label={tr({ en: 'Auto icon by level', zh: '按级别自动图标' })}
-                    aria-pressed={form.icon === ''}>
-                    <AutoIcon size={16} aria-hidden />
-                  </button>
-                );
-              })()}
-              {ICON_KEYS.map((k) => {
-                const KIcon = ICONS[k];
-                return (
-                  <button key={k} type="button"
-                    className={`page-notice-iconbtn${form.icon === k ? ' is-active' : ''}`}
-                    onClick={() => setForm({ ...form, icon: k })}
-                    title={k} aria-label={k} aria-pressed={form.icon === k}>
-                    <KIcon size={16} aria-hidden />
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-
-          <div className="page-notice-field">
-            <span><T en="Banner color" zh="横幅颜色" /></span>
-            <div className="page-notice-colorpicker">
-              <button type="button"
-                className={`page-notice-swatch is-auto${form.color === '' ? ' is-active' : ''}`}
-                onClick={() => setForm({ ...form, color: '' })}
-                title={tr({ en: 'Auto (by level)', zh: '自动(按级别)' })}
-                aria-label={tr({ en: 'Auto color by level', zh: '按级别自动配色' })}
-                aria-pressed={form.color === ''} />
-              {COLOR_KEYS.map((c) => (
-                <button key={c} type="button"
-                  className={`page-notice-swatch${form.color === c ? ' is-active' : ''}`}
-                  style={{ '--pn-swatch-c': colorVar(c) } as CSSProperties}
-                  onClick={() => setForm({ ...form, color: c })}
-                  title={c} aria-label={c} aria-pressed={form.color === c} />
-              ))}
-            </div>
-          </div>
-
-          <p className="page-notice-hint">
-            {form.placement === 'home_featured'
-              ? <T en="Enabled: whether this feature is shown during its active window." zh="启用:这条焦点新闻是否在生效时间窗内展示。" />
-              : (
-                  <T
-                    en="Enabled: whether this notice shows at all (off = saved but hidden from everyone). Dismissible: whether visitors can click × to close it (off = always shown, cannot be dismissed)."
-                    zh="启用:这条通知是否显示(关掉则保存但不展示给任何人)。可关闭:访客能否点 × 关掉它(关掉则常驻,访客无法关闭)。"
-                  />
-                )}
-          </p>
-
-          {!linkedPost && <div className="page-notice-field">
-            <div className="page-notice-presets">
-              {PRESETS.map((p) => {
-                const PIcon = ICONS[p.icon] ?? LEVEL_ICON[p.level];
-                return (
-                  <button key={p.label.en} type="button" className="page-notice-preset"
-                    style={{ '--pn-preset-c': colorVar(p.color) } as CSSProperties}
-                    onClick={() => setForm({ ...form, level: p.level, icon: p.icon, color: p.color, bodyZh: p.bodyZh, bodyEn: p.bodyEn })}>
-                    <PIcon size={13} aria-hidden />
-                    {tr(p.label)}
-                  </button>
-                );
-              })}
-            </div>
-          </div>}
-
-          {linkedPost && <p className="page-notice-hint"><T en="Title follows the article." zh="标题随文章同步。" /></p>}
-          <label className="page-notice-field">
-            <span><T en="Chinese text" zh="中文" /></span>
-            <textarea autoComplete="off" className="page-notice-input" readOnly={!!linkedPost} value={linkedPost?.title.zh ?? form.bodyZh} onChange={(e) => setForm({ ...form, bodyZh: e.target.value })}
-              placeholder={tr({ en: 'e.g. This page is under maintenance', zh: '例:本页正在维护,稍后恢复' })} />
-          </label>
-          <label className="page-notice-field">
-            <span><T en="English text" zh="英文" /></span>
-            <textarea autoComplete="off" className="page-notice-input" readOnly={!!linkedPost} value={linkedPost?.title.en ?? form.bodyEn} onChange={(e) => setForm({ ...form, bodyEn: e.target.value })}
-              placeholder="e.g. This page is under maintenance" />
-          </label>
-
-          {err && <div className="page-notice-err">{err}</div>}
-
-          <div className="page-notice-editor-actions">
-            <button type="button" className="page-notice-save" onClick={save} disabled={saving || !canSave}>
-              <T en="Save" zh="保存" />
-            </button>
-            <button type="button" className="page-notice-cancel" onClick={() => { setForm(null); setErr(null); }}>
-              <T en="Cancel" zh="取消" />
-            </button>
-            {form.id != null && (
-              <button type="button" className="page-notice-delete" onClick={remove} disabled={saving}
-                aria-label={tr({ en: 'Delete notice', zh: '删除通知' })}>
-                <Trash2 size={15} aria-hidden />
-              </button>
-            )}
-          </div>
-        </div>
+          </form>}
+        </SettingsDialog>
       )}
-    </div>
+    </>
   );
 }

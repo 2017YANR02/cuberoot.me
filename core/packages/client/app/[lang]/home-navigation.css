@@ -1,18 +1,19 @@
 @import '@cuberoot/app-ui/embedded-layout.css';
 
 /* Scoped to the homepage: existing subpage shells keep their own geometry. */
+body:has(.landing-page--navigation) {
+  --home-inline-gutter: 2rem;
+}
 body .landing-page.landing-page--navigation {
-  padding-top: var(--sat);
+  --landing-inline-gutter: var(--home-inline-gutter);
+  padding-top: max(0px, calc(var(--sat) - var(--page-notice-h, 0px)));
   padding-bottom: max(16px, var(--sab), var(--installed-chrome-bottom, 0px));
   min-height: calc(100dvh - var(--page-notice-h, 0px));
 }
 .home-navigation {
   position: relative;
   z-index: 100;
-  width: auto;
-  align-self: stretch;
-  margin-inline: calc(max(16px, var(--sal)) - max(var(--landing-inline-gutter), var(--sal)))
-    calc(max(var(--home-nav-end-gutter, 16px), var(--sar)) - max(var(--landing-inline-gutter), var(--sar)));
+  width: min(100%, var(--landing-content-max));
   display: flex;
   align-items: center;
   min-height: 48px;
@@ -51,6 +52,34 @@ body .landing-page.landing-page--navigation {
   --af-nav-selected: var(--accent-soft);
 }
 .landing-page--navigation .home-navigation .landing-auth { flex: 0 0 auto; margin-inline-start: auto; }
+.landing-edit-menu { position: relative; }
+.landing-edit-options {
+  /* The pencil is the first of the right-aligned actions, with room to its right. */
+  position: absolute;
+  inset: calc(100% + 4px) auto auto 0;
+  z-index: 3;
+  display: grid;
+  gap: 2px;
+  width: max-content;
+  padding: 4px;
+  border: 1px solid var(--border-default);
+  border-radius: 10px;
+  background: var(--popover);
+  color: var(--popover-foreground);
+}
+body[data-site-scenery] .landing-edit-options[data-site-surface='popover'] {
+  background: var(--glass-menu-bg, var(--glass-popover-bg));
+}
+.landing-edit-options button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 0 12px;
+  border-radius: 6px;
+  text-align: start;
+}
+.landing-edit-options button:is(:hover, :focus-visible) { background: var(--muted); }
 :is(.home-navigation, .home-navigation-drawer) .landing-auth :is(.landing-auth-icon, .landing-calendar-link .landing-card) { color: var(--muted-foreground); }
 :is(.home-navigation, .home-navigation-drawer) .landing-auth :is(.landing-auth-icon, .landing-calendar-link .landing-card):is(:hover, :focus-visible) { color: var(--foreground); }
 :is(.home-navigation, .home-navigation-drawer) .landing-auth .landing-card-icon { color: inherit; }
@@ -131,6 +160,7 @@ body .landing-page.landing-page--navigation {
   height: 0;
   max-height: max(0px, calc(100dvh - var(--home-nav-bottom, 0px) - 40px));
   overflow: hidden auto;
+  padding-inline: max(var(--home-inline-gutter), var(--sal)) max(var(--home-inline-gutter), var(--sar));
   overscroll-behavior: contain;
   scrollbar-width: none;
   background: var(--background);
@@ -139,9 +169,9 @@ body .landing-page.landing-page--navigation {
 }
 .home-navigation-flyout::-webkit-scrollbar { display: none; }
 .home-navigation-flyout-content {
-  width: min(100%, 1164px);
+  width: min(100%, var(--landing-content-max));
   margin-inline: auto;
-  padding: 24px 32px 40px;
+  padding-block: 24px 40px;
   box-sizing: border-box;
   opacity: 0;
   transition: opacity 160ms var(--home-nav-ease);
@@ -370,7 +400,7 @@ body .landing-page.landing-page--navigation {
   align-items: flex-start;
   justify-content: flex-start;
 }
-.home-navigation-drawer-actions .landing-auth-icon.landing-edit-cards { display: none; }
+.home-navigation-drawer-actions .landing-edit-menu { display: none; }
 .home-navigation-drawer-actions :is(.landing-auth-icon, .landing-auth-btn.is-avatar) { justify-content: flex-start; }
 .home-navigation-drawer-actions .landing-auth-btn { order: 1; margin: 0; }
 .home-navigation-drawer-actions .landing-auth-btn.is-login { width: 44px; padding: 0; }
@@ -386,14 +416,17 @@ body .landing-page.landing-page--navigation {
 /* Duo's inner display is 951 CSS px wide in landscape; keep full navigation
    while narrower viewports retain the drawer. Match HomeNavigation's flyouts. */
 @media (max-width: 900px) {
-  .home-navigation { --home-nav-end-gutter: 0px; gap: 8px; }
+  .home-navigation { gap: 8px; }
   .home-navigation-toggle { display: grid; width: 48px; height: 48px; }
   .home-navigation-desktop { display: none; }
   .home-navigation::before, .home-navigation-curtain, .home-navigation-flyout { display: none; }
 }
+@media (max-width: 860px) {
+  body:has(.landing-page--navigation) { --home-inline-gutter: 1rem; }
+}
 @media (max-width: 420px) {
-  body .landing-page.landing-page--navigation { --landing-inline-gutter: 12px; }
-  .home-navigation { gap: 4px; margin-inline-start: 0; }
+  body:has(.landing-page--navigation) { --home-inline-gutter: 12px; }
+  .home-navigation { gap: 4px; }
   .home-navigation .brand-name { display: none; }
   .home-navigation .landing-auth { gap: 4px; }
 }

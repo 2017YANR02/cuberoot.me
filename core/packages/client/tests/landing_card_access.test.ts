@@ -74,6 +74,18 @@ const renderLanding = (initialLayout?: HomeLayoutSnapshot) => createElement(Nuqs
   children: createElement(LandingPage, { initialLayout }),
 });
 
+async function enterCardEditing(host: HTMLElement) {
+  const pencil = host.querySelector<HTMLButtonElement>('button[aria-label="编辑首页"]');
+  if (!pencil) return;
+  expect(host.querySelector('.landing-card-lock')).toBeNull();
+  await act(async () => pencil.click());
+  expect(pencil.getAttribute('aria-expanded')).toBe('true');
+  const editCards = host.querySelector<HTMLButtonElement>('.landing-edit-options button:last-child');
+  expect(editCards?.textContent).toBe('编辑首页卡片');
+  await act(async () => editCards!.click());
+  expect(pencil.getAttribute('aria-label')).toBe('完成卡片编辑');
+}
+
 beforeEach(() => {
   vi.stubGlobal('matchMedia', () => ({ matches: false, addEventListener() {}, removeEventListener() {} }));
 });
@@ -208,12 +220,7 @@ describe('homepage development cards', () => {
       const host = document.createElement('div');
       const root = createRoot(host);
       await act(async () => root.render(renderLanding()));
-      const edit = host.querySelector<HTMLButtonElement>('button[aria-label="编辑"]');
-      if (edit) {
-        expect(host.querySelector('.landing-card-lock')).toBeNull();
-        await act(async () => edit.click());
-        expect(edit.getAttribute('aria-pressed')).toBe('true');
-      }
+      await enterCardEditing(host);
       const result = host.querySelector('[data-testid="home-upcoming-comps"]')?.cloneNode(true) as Element | undefined;
       await act(async () => root.unmount());
       return result ?? null;
@@ -234,12 +241,7 @@ describe('homepage development cards', () => {
     const root = createRoot(host);
     try {
       await act(async () => root.render(renderLanding()));
-      const edit = host.querySelector<HTMLButtonElement>('button[aria-label="编辑"]');
-      if (edit) {
-        expect(host.querySelector('.landing-card-lock')).toBeNull();
-        await act(async () => edit.click());
-        expect(edit.getAttribute('aria-pressed')).toBe('true');
-      }
+      await enterCardEditing(host);
       const admin = user?.wcaId === ADMIN_WCA_IDS[0];
       expect(host.querySelector('a[href="/zh/shop"]') !== null).toBe(admin);
       for (const [id, href] of [['platform', '/zh/platform'], ['teaching-management', '/zh/org'], ['learning-center', '/zh/learn']]) {
@@ -308,12 +310,7 @@ describe('homepage development cards', () => {
     const button = () => card().parentElement!.querySelector<HTMLButtonElement>('.landing-card-lock')!;
     try {
       await act(async () => root.render(renderLanding()));
-      const edit = host.querySelector<HTMLButtonElement>('button[aria-label="编辑"]');
-      if (edit) {
-        expect(host.querySelector('.landing-card-lock')).toBeNull();
-        await act(async () => edit.click());
-        expect(edit.getAttribute('aria-pressed')).toBe('true');
-      }
+      await enterCardEditing(host);
       expect(card().classList.contains('is-disabled')).toBe(false);
       expect(card().closest('#landing-admin-content')).not.toBeNull();
       expect(button().disabled).toBe(false);
@@ -343,12 +340,7 @@ describe('homepage development cards', () => {
     const alert = vi.spyOn(window, 'alert').mockImplementation(() => {});
     try {
       await act(async () => root.render(renderLanding()));
-      const edit = host.querySelector<HTMLButtonElement>('button[aria-label="编辑"]');
-      if (edit) {
-        expect(host.querySelector('.landing-card-lock')).toBeNull();
-        await act(async () => edit.click());
-        expect(edit.getAttribute('aria-pressed')).toBe('true');
-      }
+      await enterCardEditing(host);
       const card = () => host.querySelector('#card-teaching')!;
       const button = () => card().parentElement!.querySelector<HTMLButtonElement>('.landing-card-lock')!;
       expect(card().closest('#landing-admin-content')).toBeNull();
@@ -393,12 +385,7 @@ describe('homepage development cards', () => {
     const button = (id: string) => section(id)!.querySelector<HTMLButtonElement>('button')!;
     try {
       await act(async () => root.render(renderLanding()));
-      const edit = host.querySelector<HTMLButtonElement>('button[aria-label="编辑"]');
-      if (edit) {
-        expect(host.querySelector('.landing-card-lock')).toBeNull();
-        await act(async () => edit.click());
-        expect(edit.getAttribute('aria-pressed')).toBe('true');
-      }
+      await enterCardEditing(host);
       expect(button('enterprise').getAttribute('aria-pressed')).toBe('true');
       expect(button('individual').getAttribute('aria-pressed')).toBe('true');
       expect(section('enterprise')?.closest('#landing-admin-content')).not.toBeNull();
@@ -447,12 +434,7 @@ describe('homepage development cards', () => {
     });
     try {
       await act(async () => root.render(renderLanding()));
-      const edit = host.querySelector<HTMLButtonElement>('button[aria-label="编辑"]');
-      if (edit) {
-        expect(host.querySelector('.landing-card-lock')).toBeNull();
-        await act(async () => edit.click());
-        expect(edit.getAttribute('aria-pressed')).toBe('true');
-      }
+      await enterCardEditing(host);
       const expected = ['ONE', 'TWO', 'TEN', 'BIG1', 'BIG2', 'NONE', 'INVALID'];
       expect(ids('individual')).toEqual(expected);
       for (const query of ['测试二', 'two', ' vip2 ', 'VIP000002']) {
@@ -481,12 +463,7 @@ describe('homepage development cards', () => {
     const root = createRoot(host);
     try {
       await act(async () => root.render(renderLanding()));
-      const edit = host.querySelector<HTMLButtonElement>('button[aria-label="编辑"]');
-      if (edit) {
-        expect(host.querySelector('.landing-card-lock')).toBeNull();
-        await act(async () => edit.click());
-        expect(edit.getAttribute('aria-pressed')).toBe('true');
-      }
+      await enterCardEditing(host);
       expect(host.querySelector('[id^="card-"]')).toBeNull();
       expect(host.querySelector('#enterprise-members-title')).toBeNull();
       expect(host.querySelector('#individual-members-title')).toBeNull();

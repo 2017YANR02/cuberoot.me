@@ -33,15 +33,19 @@ html[data-theme=dark] {
   width: 100%;
   --pn-max-w: 1100px;
 }
+.page-notice-wrap[data-home] {
+  --pn-max-w: var(--landing-content-max, 1100px);
+  padding: max(8px, var(--sat)) max(var(--home-inline-gutter, 16px), var(--sar)) 0 max(var(--home-inline-gutter, 16px), var(--sal));
+}
+.page-notice-wrap[data-home] .page-notice { border-radius: 8px; }
+.page-notice-wrap[data-home] .page-notice + .page-notice { margin-top: 6px; }
 
 .page-notice {
   --pn-color: var(--signal-info);
   display: flex;
-  align-items: flex-start;
-  gap: 0.5rem;
+  align-items: center;
   max-width: var(--pn-max-w);
   margin-inline: auto;
-  padding: 0.5rem 0.9rem;
   background: color-mix(in srgb, var(--pn-color) 12%, transparent);
   border-left: 3px solid var(--pn-color);
   font-size: 0.9rem;
@@ -62,24 +66,32 @@ html[data-theme=dark] {
 .page-notice[data-color="cyan"]       { --pn-color: var(--pn-c-cyan); }
 .page-notice[data-color="pink"]       { --pn-color: var(--pn-c-pink); }
 
-.page-notice-icon { flex: none; color: var(--pn-color); margin-top: 2px; }
-
-/* 首页 44px 操作热区与登录文字需要更宽预留；窄屏通知独立一行，操作栏仍单行。 */
-body:has(.landing-page) .page-notice-wrap .page-notice { padding-right: 21rem; min-height: 44px; }
-@media (min-width: 601px) {
-  body:has(.landing-page) .page-notice-wrap .page-notice { padding-left: 10rem; }
+.page-notice-content {
+  display: flex;
+  align-items: center;
+  flex: 1;
+  gap: 8px;
+  min-width: 0;
+  min-height: 40px;
+  padding: 7px 12px;
+  border-radius: inherit;
 }
-@media (max-width: 600px) {
-  body:has(.landing-page) .page-notice-wrap .page-notice { padding-right: 0.9rem; }
+.page-notice-target {
+  color: inherit;
+  text-decoration: none;
 }
-/* admin:编辑入口放最左,与图标同起始行 */
-.page-notice-edit { flex: none; margin: -1px 0 0 -2px; }
+.page-notice-target:is(:hover, :focus-visible) {
+  background: color-mix(in srgb, var(--pn-color) 10%, transparent);
+}
+.page-notice-target:focus-visible { outline-offset: -2px; }
+.page-notice-icon, .page-notice-arrow { flex: none; color: var(--pn-color); }
+.page-notice-edit { margin-inline-start: 4px; }
 
 .page-notice-body {
   flex: 1 1 auto;
   min-width: 0;
   white-space: pre-wrap;   /* 保留管理员输入的换行 */
-  word-break: break-word;
+  overflow-wrap: anywhere;
 }
 
 /* 正文里自动识别的超链接:跟随当前级别色,长 URL 允许任意处断行不撑破窄屏 */
@@ -91,13 +103,15 @@ body:has(.landing-page) .page-notice-wrap .page-notice { padding-right: 21rem; m
 }
 .page-notice-link:hover { text-decoration-thickness: 2px; }
 
-.page-notice-actions { flex: none; display: flex; align-items: center; gap: 2px; }
+.page-notice-actions { flex: none; padding-inline-end: 4px; }
 
 .page-notice-btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 3px;
+  flex: none;
+  width: 36px;
+  height: 36px;
   color: var(--muted-foreground);
   border-radius: 4px;
 }
@@ -106,38 +120,68 @@ body:has(.landing-page) .page-notice-wrap .page-notice { padding-right: 21rem; m
   background: color-mix(in srgb, var(--foreground) 8%, transparent);
 }
 
-/* 行内编辑器 */
-.page-notice-editor {
+.settings-dialog:has(.page-notice-editor) { width: min(100%, 720px); }
+.settings-dialog .settings-popover-panel.page-notice-editor {
+  gap: 0;
+  overflow: hidden;
+  padding: 0;
+}
+body[data-site-scenery] .page-notice-editor[data-site-surface='popover'] {
+  background: var(--glass-dialog-bg, var(--glass-popover-bg));
+}
+.page-notice-editor > .settings-dialog-heading {
+  flex: none;
+  padding: 12px 20px;
+  border-bottom: 1px solid var(--border-default);
+}
+.page-notice-form {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  width: min(560px, 100%);
-  margin: 6px auto;
-  padding: 10px 12px;
-  background: var(--card);
-  border: 1px solid var(--border-default);
-  border-radius: 8px;
-  font-size: 0.85rem;
-  color: var(--foreground);
+  min-height: 0;
+  width: 100%;
+  font-size: 0.875rem;
 }
-.page-notice-field { display: flex; flex-direction: column; gap: 3px; }
-.page-notice-field > span { font-size: 0.75rem; color: var(--muted-foreground); }
+.page-notice-editor-scroll {
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 16px 20px;
+}
+.page-notice-fields {
+  display: grid;
+  gap: 14px;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+.page-notice-editor-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr));
+  gap: 10px 16px;
+}
+.page-notice-field { display: flex; flex-direction: column; gap: 5px; min-width: 0; }
+.page-notice-field > span:first-child { font-size: 0.8125rem; color: var(--muted-foreground); }
 .page-notice-input {
   font: inherit;
+  font-size: 1rem;
+  min-width: 0;
+  min-height: 38px;
   color: var(--foreground);
   background: var(--background);
   border: 1px solid var(--input);
   border-radius: 6px;
-  padding: 5px 8px;
+  padding: 6px 9px;
 }
-textarea.page-notice-input { resize: vertical; min-height: 46px; }
+textarea.page-notice-input { resize: vertical; min-height: 64px; }
 .page-notice-input:focus { outline: none; border-color: var(--ring); }
 
-.page-notice-editor-row { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 16px; }
-.page-notice-datetime-field { flex: 1 1 240px; min-width: 0; }
+.page-notice-editor-row { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 12px 16px; }
 .page-notice-datetime { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 6px; }
-.page-notice-date-input { width: 100%; }
+.page-notice-date-input .date-input__display { min-height: 38px; }
 .page-notice-time-input { width: 7.5em; min-width: 0; }
+/* DateInput positions its calendar in a body portal above the editor. */
+body:has(.page-notice-editor) > .date-input__calendar { z-index: 1001; }
 
 .page-notice-presets { display: flex; flex-wrap: wrap; gap: 6px; }
 .page-notice-preset {
@@ -200,7 +244,20 @@ textarea.page-notice-input { resize: vertical; min-height: 46px; }
 .page-notice-swatch.is-active {
   box-shadow: 0 0 0 2px var(--background), 0 0 0 4px var(--foreground);
 }
-.page-notice-editor-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.page-notice-editor-actions,
+.page-notice-apply {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.page-notice-editor-actions {
+  flex: none;
+  padding: 10px 20px;
+  border-top: 1px solid var(--border-default);
+}
+.page-notice-apply { margin-inline-start: auto; }
+.page-notice-editor-actions button { min-height: 38px; }
+.page-notice-editor-actions button:disabled { opacity: 0.5; }
 
 .page-notice-save {
   padding: 5px 14px;
@@ -209,18 +266,19 @@ textarea.page-notice-input { resize: vertical; min-height: 46px; }
   background: var(--primary);
   border-radius: 6px;
 }
-.page-notice-save:disabled { opacity: 0.5; }
 .page-notice-cancel { padding: 5px 10px; color: var(--muted-foreground); }
 .page-notice-delete {
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  gap: 5px;
   padding: 5px 7px;
   color: var(--destructive);
   border-radius: 6px;
 }
 .page-notice-delete:hover { background: color-mix(in srgb, var(--destructive) 12%, transparent); }
 .page-notice-err { color: var(--destructive); font-size: 0.78rem; }
+.page-notice-form > .page-notice-err { padding: 4px 20px; overflow-wrap: anywhere; }
 
 .page-notice-hint {
   margin: -2px 0 0;
@@ -230,5 +288,8 @@ textarea.page-notice-input { resize: vertical; min-height: 46px; }
 }
 
 @media (max-width: 480px) {
-  .page-notice { font-size: 0.9375rem; padding: 0.5rem 0.75rem; }
+  .page-notice-content { min-height: 44px; }
+  .page-notice-editor > .settings-dialog-heading,
+  .page-notice-editor-scroll,
+  .page-notice-editor-actions { padding-inline: 14px; }
 }

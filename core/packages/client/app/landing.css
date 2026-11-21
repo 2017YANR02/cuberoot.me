@@ -2,6 +2,8 @@
  * LandingPage — Claude 风浅色主题 + Bento Grid
  * ========================================================================== */
 
+body:has(.landing-page) { --landing-content-max: 1100px; }
+
 /* NOTE: 这些变量原来定义在 :root,会污染所有页面 — 比如 /scramble hub 用了
    var(--text) 当卡片字色,从 / 导航过去后 --text=#171717(landing 浅色字)落
    在暗主题卡片上,文字就消失了。改 scope 到 .landing-page,只在 landing 内生效。 */
@@ -46,7 +48,7 @@
     position: absolute;
     /* 基准位(页面顶部没有通知条时):页首 1.1rem。 */
     top: calc(1.1rem + var(--sat));
-    right: max(2rem, var(--sar), calc((100vw - 1100px) / 2));
+    right: max(2rem, var(--sar), calc((100vw - var(--landing-content-max)) / 2));
     z-index: 5;
     display: flex;
     align-items: center;
@@ -87,18 +89,6 @@
 :is(.landing-page, .home-navigation-drawer) .landing-auth-icon:focus-visible {
     background: var(--muted);
     color: var(--foreground);
-}
-/* 三行合一(issue #41):有通知条时把语言/头像上提、覆盖到通知条那一行,而不是被挤到下面。
-   通知条实际高度由 PageNoticeBar 写入 --page-notice-h;本容器覆盖那一行(top = -通知条高度、
-   min-height = 通知条高度)+ align-items:center → 行内垂直居中,不依赖具体像素。
-   必须是 min-height 不是 height:高度为 0 时(通知条被访客关掉 / 该页没有通知 / 首帧还没写入)
-   height:0 配 align-items:center 会把控件上半截推出视口 —— 登录按钮从中间被截断。
-   :has 不支持的浏览器整条规则失效,退回上面的基准位(通知条下方),同样完整可见。
-   通知条那一行右端要给这块悬浮让位(padding-right / 管理员条锚点),见 PageNoticeBar.css
-   的 .page-notice-wrap:has(+ .landing-page) 两条 —— 改这里的宽度要同步改那边的预留。 */
-body:has(.page-notice-wrap) :is(.landing-page, .home-navigation-drawer) .landing-auth {
-    top: calc(var(--sat) - var(--page-notice-h, 0px));
-    min-height: var(--page-notice-h, 0px);
 }
 :is(.landing-page, .home-navigation-drawer) .landing-auth-btn {
     display: inline-flex;
@@ -180,7 +170,7 @@ body:has(.page-notice-wrap) :is(.landing-page, .home-navigation-drawer) .landing
 .landing-page .brand-line {
     position: absolute;
     top: calc(1.1rem + var(--sat));
-    left: max(2rem, var(--sal), calc((100vw - 1100px) / 2));
+    left: max(2rem, var(--sal), calc((100vw - var(--landing-content-max)) / 2));
     display: flex;
     align-items: center;
     gap: 0.5rem;
@@ -190,11 +180,6 @@ body:has(.page-notice-wrap) :is(.landing-page, .home-navigation-drawer) .landing
     color: var(--text-sub);
     letter-spacing: 0.02em;
     margin-bottom: 0;
-}
-
-body:has(.page-notice-wrap) .landing-page .brand-line {
-    top: calc(var(--sat) - var(--page-notice-h, 0px));
-    min-height: var(--page-notice-h, 0px);
 }
 
 .landing-page .brand-logo {
@@ -228,7 +213,7 @@ body:has(.page-notice-wrap) .landing-page .brand-line {
     grid-template-columns: repeat(4, minmax(0, 1fr));
     gap: 1rem;
     width: 100%;
-    max-width: 1100px;
+    max-width: var(--landing-content-max);
     margin-bottom: 1rem;
     align-items: start;
 }
@@ -299,7 +284,7 @@ body:has(.page-notice-wrap) .landing-page .brand-line {
     grid-template-columns: repeat(5, 1fr);
     gap: 1rem;
     width: 100%;
-    max-width: 1100px;
+    max-width: var(--landing-content-max);
     margin-bottom: 1.25rem;
 }
 
@@ -337,7 +322,7 @@ body:has(.page-notice-wrap) .landing-page .brand-line {
 }
 .landing-page > .wp-upcoming-card {
     width: 100%;
-    max-width: 1100px;
+    max-width: var(--landing-content-max);
     box-sizing: border-box;
     margin: 0 auto 2.5rem;
     padding-inline: 0;
@@ -347,7 +332,7 @@ body:has(.page-notice-wrap) .landing-page .brand-line {
     grid-template-columns: repeat(4, minmax(0, 1fr));
     gap: 0.75rem;
     width: 100%;
-    max-width: 1100px;
+    max-width: var(--landing-content-max);
     margin-bottom: 0.75rem;
 }
 .landing-page .landing-featured-notices:empty { display: none; }
@@ -589,12 +574,10 @@ body:has(.page-notice-wrap) .landing-page .brand-line {
 
 @media (max-width: 600px) {
     /* 品牌与操作区共用一行，通知条存在时也保留自己的顶部空间。 */
-    body .landing-page,
-    body:has(.page-notice-wrap) .landing-page {
+    body .landing-page {
         padding-top: calc(4rem + var(--sat));
     }
-    :is(.landing-page, .home-navigation-drawer) .landing-auth,
-    body:has(.page-notice-wrap) :is(.landing-page, .home-navigation-drawer) .landing-auth {
+    :is(.landing-page, .home-navigation-drawer) .landing-auth {
         top: calc(0.5rem + var(--sat));
         right: max(1rem, var(--sar));
         min-height: 44px;
@@ -603,8 +586,7 @@ body:has(.page-notice-wrap) .landing-page .brand-line {
     :is(.landing-page, .home-navigation-drawer) .landing-auth .header-toggles {
         gap: clamp(0px, calc((100vw - 288px) / 16), 8px);
     }
-    .landing-page .brand-line,
-    body:has(.page-notice-wrap) .landing-page .brand-line {
+    .landing-page .brand-line {
         top: calc(0.5rem + var(--sat));
         left: max(1rem, var(--sal));
         min-height: 44px;
@@ -630,7 +612,7 @@ body:has(.page-notice-wrap) .landing-page .brand-line {
     display: flex;
     flex-direction: column;
     gap: var(--section-spacing);
-    max-width: 1100px;
+    max-width: var(--landing-content-max);
     width: 100%;
 }
 .landing-page .cards-sections + .cards-sections {
@@ -953,7 +935,7 @@ body:has(.page-notice-wrap) .landing-page .brand-line {
     flex-wrap: wrap;
     align-items: flex-start;
     gap: 0.75rem 2rem;
-    width: min(100%, 1100px);
+    width: min(100%, var(--landing-content-max));
     margin: 2rem auto 1rem;
 }
 
@@ -1195,7 +1177,7 @@ body:has(.page-notice-wrap) .landing-page .brand-line {
 .landing-page .landing-widget {
     --home-widget-placeholder-height: 320px;
     width: 100%;
-    max-width: 1100px;
+    max-width: var(--landing-content-max);
     flex-shrink: 0;
     margin: 0 auto 1.25rem;
 }
@@ -1219,7 +1201,7 @@ body:has(.page-notice-wrap) .landing-page .brand-line {
     align-items: center;
     gap: 0.75rem;
     width: 100%;
-    max-width: 1100px;
+    max-width: var(--landing-content-max);
     margin-bottom: 0.75rem;
 }
 .landing-page .landing-personal-comps {

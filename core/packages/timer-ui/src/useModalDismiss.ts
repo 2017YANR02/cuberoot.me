@@ -33,7 +33,7 @@ export function useModalBackdrop(onClose: () => void, disabled = false) {
 export function useModalDismiss(onClose: () => void, disabled = false) {
   const backdropProps = useModalBackdrop(onClose, disabled);
   useEffect(() => {
-    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape' && !disabled) onClose(); };
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape' && !e.defaultPrevented && !disabled) onClose(); };
     window.addEventListener('keydown', onKey);
     const prevOverflow = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
