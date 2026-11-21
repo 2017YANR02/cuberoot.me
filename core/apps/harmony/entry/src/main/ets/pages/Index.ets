@@ -156,6 +156,8 @@ struct Index {
             'setKeepScreenOn',
             'bleInitialize',
             'bleRequestDevice',
+            'bleStartScan',
+            'bleStopScan',
             'bleConnect',
             'bleDisconnect',
             'bleGetMtu',

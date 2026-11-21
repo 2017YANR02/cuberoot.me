@@ -9,6 +9,7 @@ import {
 } from '@cuberoot/app-ui';
 import type { TimerPhase } from '@cuberoot/shared/timer';
 import { browserClipboardTransport, browserPrintTransport } from '@cuberoot/timer-ui';
+import { createStackmatMicSource } from '@cuberoot/timer-ui/external';
 
 import packageInfo from '../package.json';
 import {
@@ -61,6 +62,8 @@ function useHarmonyTimerEffects(phase: TimerPhase): void {
 }
 
 export const harmonyHost: InstalledAppHost = {
+  createBleTransport: () => new HarmonyBleTransport(),
+  createStackmatSource: createStackmatMicSource,
   async addBackButtonListener(listener) {
     const remove = addBackEventListener(listener);
     await bridgeCall<void>(nativeBridge().setBackHandlerReady('true'));

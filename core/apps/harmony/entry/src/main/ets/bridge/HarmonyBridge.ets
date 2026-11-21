@@ -4,7 +4,7 @@ import { abilityAccessCtrl, common, type Permissions } from '@kit.AbilityKit';
 import { window } from '@kit.ArkUI';
 
 import { DeepLinkInbox } from './DeepLinkInbox';
-import { HarmonyBle, type BleEventSink } from './HarmonyBle';
+import { HarmonyBle, type BleEventSink, type SelectedBleDevice } from './HarmonyBle';
 import { SecureAuthStore } from './SecureAuthStore';
 
 function success(): string {
@@ -23,7 +23,10 @@ function isExternalUrl(url: string): boolean {
   return url.startsWith('https://') || url.startsWith('http://');
 }
 
+interface ScanEvent { id: string; devices: SelectedBleDevice[]; }
+
 export class HarmonyBridge {
+  private eventSink: BleEventSink | undefined = undefined;
   backHandlerReady: boolean = false;
   private context: common.UIAbilityContext | undefined = undefined;
   private getNetworkStatusValue: (() => boolean) | undefined = undefined;
@@ -33,10 +36,12 @@ export class HarmonyBridge {
   bind(context: common.UIAbilityContext, getNetworkStatus: () => boolean, eventSink: BleEventSink): void {
     this.context = context;
     this.getNetworkStatusValue = getNetworkStatus;
+    this.eventSink = eventSink;
     this.bluetooth.setEventSink(eventSink);
   }
 
   async release(): Promise<void> {
+    this.eventSink = undefined;
     await this.bluetooth.release();
     await this.setKeepScreenOn('false');
   }
@@ -148,13 +153,38 @@ export class HarmonyBridge {
     }
   }
 
+  private decodePrefixes(json: string): string[] {
+    const decoded = JSON.parse(json) as Object;
+    if (!Array.isArray(decoded)) throw new Error('Invalid scan filters');
+    const prefixes = decoded as string[];
+    const allowed: string[] = ['GAN', 'Gan', 'gan', 'QY-Timer', 'QY-Adapter', 'MG', 'AiCube', 'Gi', 'WCU_MY3', 'QY-QYSC', 'XMD-TornadoV4-i', 'Mi Smart Magic Cube', 'Hi-', 'GoCube', 'Rubik', 'MHC', 'MoYu', 'MY-'];
+    if (prefixes.some((prefix: string): boolean => !allowed.includes(prefix))) throw new Error('Unsupported device prefix');
+    return prefixes;
+  }
+
+  async bleStartScan(id: string, names: string, serviceFilter: string): Promise<string> {
+    try {
+      const prefixes = this.decodePrefixes(names);
+      const decoded = JSON.parse(serviceFilter) as Object;
+      if (!Array.isArray(decoded)) return failure();
+      const services = decoded as string[];
+      if (!id || (!prefixes.length && !services.length)) return failure();
+      this.bluetooth.startScan(id, prefixes, services, (devices: SelectedBleDevice[]): void => {
+        const event: ScanEvent = { id, devices };
+        this.eventSink?.('cuberoot:ble-scan', event);
+      });
+      return success();
+    } catch (_) { return failure(); }
+  }
+
+  async bleStopScan(id: string): Promise<string> {
+    try { this.bluetooth.stopScan(id); return success(); } catch (_) { return failure(); }
+  }
+
   async bleRequestDevice(namePrefix: string): Promise<string> {
     try {
-      const decoded = JSON.parse(namePrefix) as Object;
-      if (!Array.isArray(decoded)) return failure();
-      const prefixes = decoded as string[];
-      const allowed: string[] = ['GAN', 'MG', 'AiCube', 'Gi', 'WCU_MY3', 'QY-QYSC', 'XMD-TornadoV4-i', 'Mi Smart Magic Cube', 'Hi-', 'GoCube', 'Rubik', 'MHC', 'MoYu', 'MY-'];
-      if (prefixes.length === 0 || prefixes.some((prefix: string): boolean => !allowed.includes(prefix))) return failure();
+      const prefixes = this.decodePrefixes(namePrefix);
+      if (!prefixes.length) return failure();
       return successValue(await this.bluetooth.requestDevice(prefixes));
     } catch (_) {
       return failure();

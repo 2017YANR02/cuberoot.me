@@ -6,6 +6,8 @@ interface CubeRootHarmonyBridge {
   bleGetMtu(deviceId: string): Promise<string>;
   bleInitialize(): Promise<string>;
   bleRead(deviceId: string, service: string, characteristic: string): Promise<string>;
+  bleStartScan(id: string, prefixes: string, services: string): Promise<string>;
+  bleStopScan(id: string): Promise<string>;
   bleRequestDevice(namePrefix: string): Promise<string>;
   bleSubscribe(deviceId: string, service: string, characteristic: string): Promise<string>;
   bleUnsubscribe(deviceId: string, service: string, characteristic: string): Promise<string>;

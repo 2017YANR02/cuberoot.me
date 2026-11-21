@@ -168,7 +168,7 @@
 - [x] 已从 Mobile 提取有真实多宿主消费者的 `@cuberoot/app-ui`；Mobile、Desktop 和 Harmony 只通过公开入口消费，无 app→app 源码或 `dist` 依赖。
 - [x] 已建立 `core/apps/desktop`，Windows 和 macOS 共用同一 Tauri 工程。
 - [ ] Desktop 两平台构建、安装、实体机功能、签名与发布验收完成。macOS 本机已有可启动 `.app` 和经 `hdiutil verify` 的未签名 DMG；Windows 当前源码的 release 可执行文件已构建，并有 Desktop 实际运行与 GAN v4 BLE 使用证据，但正式安装包、升级、签名和完整功能矩阵仍未验收。
-- [ ] `core/apps/harmony` 完成设备安装、ArkWeb/bridge 交互、BLE、签名与发布验收。ArkWeb 本地 bundle、ArkTS bridge 和 unsigned HAP 已本地构建成功，但当前 `hdc` 无设备，不能记为鸿蒙适配完成。
+- [ ] `core/apps/harmony` 完成设备安装、ArkWeb/bridge 交互、BLE、签名与发布验收。已在官方手机模拟器安装并验证离线成绩持久化；真机 BLE、发布签名和商店验收仍待完成。
 - [ ] BLE、安全存储、认证、文件、分享、打印、保亮和生命周期 capability contracts 与宿主 adapters 逐项完成。Desktop BLEC 已接共享多协议扫描、选择和连接链路，Windows 的 GAN v4 已实测；其他 Desktop 型号、macOS 与 Harmony 仍缺实体设备 BLE 证据。
 - [ ] 建立五端 build/安装/真机或实体电脑/签名/发布矩阵；五端全部通过前总体状态保持 `NOT COMPLETE`。
 
@@ -176,8 +176,8 @@
 
 - `@cuberoot/app-ui` 已是五端唯一 React 产品层；`@cuberoot/app-ui` typecheck 与自动化测试已本地通过。
 - Desktop 源码已共用 Tauri 宿主、系统 keyring、深链、外链和 BLEC transport；BLEC 通过 `tauri-plugin-blec` / `btleplug` 使用 Windows 与 macOS 的系统 BLE 栈，并复用 `@cuberoot/app-ui` 中的 GAN v2/v3/v4、MoYu32 和 QiYi connection。2026-09-22 当前源码执行 `tauri build --no-bundle` 成功，产出 `src-tauri/target/release/cuberoot-desktop.exe`；所有者同日确认 Windows Desktop 上 GAN v4 可以正常连接和使用。这只证明 Windows 原生编译和该型号主链，不替代正式安装包、其他协议或压力矩阵。2026-09-01 当前源码的 macOS `CubeRoot.app` 已启动；`CubeRoot_0.1.0_x64.dmg` 为 6,297,645 bytes，`hdiutil verify` 通过，SHA-256 为 `94af17fe41d3dade835ebe929a83858d6d2ea0ff2acfc386c5fea29bf3d61fea`。该包未签名、未公证，也没有 macOS 实机 BLE 证据。
-- Harmony 的本地 Web bundle、ArkWeb/ArkTS bridge、ConnectivityKit BLE bridge、安全存储与 unsigned HAP 已通过官方 Hvigor 构建。2026-09-01 在当前 Intel `x86_64` Mac 上使用 DevEco Studio `26.0.0.821` 的官方 SDK 再次执行 `assembleHap`，日志为 `BUILD SUCCESSFUL`，产物是 `entry-default-unsigned.hap`。当前 `hdc list targets` 为 `[Empty]`，所以安装、ArkWeb 运行、系统交互、真实 GAN 16 UI BLE、签名和发布仍未验收，`HARMONY-01` 保持进行中。
-- Harmony 首次 BLE 现由 `UIAbilityContext` 显式请求 `ACCESS_BLUETOOTH`，Asset Store 机密限定为 `DEVICE_UNLOCKED`，系统备份关闭，native 版本由 build guard 对齐 `package.json`；BLE connect 以 generation + GATT identity 拒绝超时连接的迟到回调，避免同设备快速重连被旧请求断开。ArkTS/HAP 目前只能在已安装的官方 CLT 上本地编译；GitHub CI 尚无官方 Harmony SDK runner，不能把 Vite build 当成 native 回归。所有者已完成华为企业开发者认证；自动调试签名现因未连接 HarmonyOS NEXT 设备而无法生成 profile，`build-profile.json5` 的 `signingConfigs` 仍为空，Hvigor 明确跳过签名。模拟器不需要签名，真机才需要把设备写入调试 profile；不得为绕过设备门槛手填、生成或提交 `.p12`、密码或本机 profile。
+- Harmony 的本地 Web bundle、ArkWeb/ArkTS bridge、ConnectivityKit BLE bridge、安全存储与 unsigned HAP 已通过官方 Hvigor 构建。2026-09-01 在当前 Intel `x86_64` Mac 上使用 DevEco Studio `26.0.0.821` 的官方 SDK 再次执行 `assembleHap`，日志为 `BUILD SUCCESSFUL`，产物是 `entry-default-unsigned.hap`。当时 `hdc list targets` 为 `[Empty]`，仅取得编译证据，`HARMONY-01` 保持进行中。
+- Harmony 首次 BLE 现由 `UIAbilityContext` 显式请求 `ACCESS_BLUETOOTH`，Asset Store 机密限定为 `DEVICE_UNLOCKED`，系统备份关闭，native 版本由 build guard 对齐 `package.json`；BLE connect 以 generation + GATT identity 拒绝超时连接的迟到回调，避免同设备快速重连被旧请求断开。ArkTS/HAP 目前只能在已安装的官方 CLT 上本地编译；GitHub CI 尚无官方 Harmony SDK runner，不能把 Vite build 当成 native 回归。旧工作室账号曾完成企业认证；当时自动调试签名因未连接 HarmonyOS NEXT 设备而无法生成 profile，`build-profile.json5` 的 `signingConfigs` 仍为空，Hvigor 明确跳过签名。模拟器不需要签名，真机才需要把设备写入调试 profile；不得为绕过设备门槛手填、生成或提交 `.p12`、密码或本机 profile。
 - Desktop BLE 现有 8 秒实时扫描、按地址去重、RSSI 排序、名称列表选择、连接后 service/characteristic discovery、通知、读写和写入模式选择；关闭弹层、重扫和发起连接都会停止旧扫描。2026-09-27 所有者在 Windows 持续拧动 GAN v4 / MoYu32 时复现假连接，原生日志确认 `tauri-plugin-blec 0.12.0` 的容量 1 通知队列在 `commands.rs:179` 因 `Full(..)` panic，终止 `listen_notify` 却没有断连事件。Desktop 现通过插件公开的 Rust `Handler.subscribe` 直接转发到 Tauri IPC Channel，取消该中间队列；其余扫描、连接、退订与 GATT 仍由 BLEC 管理，不复制厂商协议。IPC 转发失败通过独立错误通道使所属前端会话断开，并等待原生清理后重连；已关闭的 WebView 无法保证收到错误通知。Rust 测试覆盖 4,096 帧顺序完整性和 IPC 失败，adapter 测试覆盖清理屏障及旧订阅迟到错误，Desktop CI 同时运行原生测试。新构建的 GAN v4 / MoYu32 持续拧动及 macOS 真机验证仍待验收，不能用自动化代替实物压力测试。
 - Android 对不支持安全 main-frame message listener 的旧 WebView 启动即 fail closed，并锁定 release manifest 的 10 项权限及 legacy 权限 `maxSdkVersion=30`/扫描 `neverForLocation`。Capacitor 内部仍注册 Cookies/Http/SystemBars 辅助 JS interface；通用 plugin dispatcher 已主 frame 隔离，但远端 iframe 的 cookie 边界仍是发布前 P2 审核项，文档不得声称“所有原生接口均仅主 frame”。
 - `@cuberoot/app-ui` 已接真实 2/3/4 人 `LocalBattleMode` 与 `NetBattleMode`，三个宿主均注入同一联机 client/session contract；本地模式已有原子轮次、胜场/次数/最佳、按键冲突交换、共享一颗智能魔方轮换与打乱失败的 12 秒超时/原位重试；联机已有 WCA 身份、邀请二维码、房主转让/踢人、历史打乱及 single/ao5/mean。Web 仍有另一套 Battle/Net React 视图，完整设置/视频/每人独立 BLE/高级历史展示、staged API 部署、真实双设备和五平台交互仍未完成。
@@ -204,7 +204,7 @@
 | QA-02 | 进行中 | OPPO Tools/Account 主内容为 360/360，但生产首页 DeskPet 固定层右缘仍约溢出 30 CSS px；五端全弹层/键盘/安全区/动态字号仍未关闭 |
 | XPLAT-01 | 已完成 | `@cuberoot/app-ui` 已有 Mobile、Desktop 和 Harmony 真实消费者，无 app→app import |
 | DESKTOP-01 | 进行中 | 同一 Tauri 工程与 BLEC adapter 已落地；macOS `.app` 已启动、未签名 DMG 已校验，Windows CI 定义未实际跑；签名/公证、Windows 构建安装和两端 BLE 证据未齐 |
-| HARMONY-01 | 进行中 | ArkWeb 本地 bundle、ArkTS/系统 bridge 与 unsigned HAP 已构建；当前 Intel Mac 不支持 DevEco 本地模拟器且无 `hdc` 设备。待 Apple silicon Mac mini 到货后创建模拟器，安装、运行、BLE、签名和发布证据仍待验 |
+| HARMONY-01 | 进行中 | 官方手机模拟器安装、断网计时及重启后成绩保留已验；蓝牙计时器接线已构建，待真机验证、发布签名和上架 |
 
 ### 阶段 3：PWA 补强和网站兜底
 
@@ -1208,11 +1208,12 @@ CubeRoot 应以这些证据证明不是简单套壳：
 | Windows 10/11 x64 | Windows 64-bit | 支持 | 与 Mac ARM 相同，仍须独立保存实际运行证据 |
 | HarmonyOS NEXT 真机 | 与开发主机架构无关 | 不适用 | 安装、系统能力、BLE 和真机签名证据 |
 
-当前事实（2026-09-01）：
+2026-11-21 实测记录：
 
-- 现用 Intel Mac 已安装并验证 DevEco Studio X86、Harmony SDK 和官方 Hvigor；工程可生成 unsigned HAP，但不能在本机创建 HarmonyOS 模拟器。
-- 华为企业开发者实名认证已完成。自动签名提示“缺少设备”是正常的真机 profile 门槛，不是网络、翻墙或账号认证故障；当前 Android OPPO 不能充当 HarmonyOS NEXT 设备。
-- 仓库所有者预计 2026-09-22 收到 Apple silicon Mac mini。到货后的唯一流程是：现场确认 `uname -m` 为 `arm64` → 安装 DevEco Studio Mac ARM 版 → 登录同一企业开发者账号 → 打开现有 `core/apps/harmony` → Device Manager 创建模拟器 → 安装运行同一 HAP。不得复制 Intel 版 DevEco，也不得新建 Harmony 业务工程。
+- 在 Apple silicon Mac 上使用 DevEco Studio 6.0.2.642 和 API 22 的 nova 16 Pro 官方模拟器安装本地构建的 unsigned HAP。关闭模拟器外网后手动计时一次，成绩为 3.10 秒；强制停止并重新打开 App 后，历史仍显示 1 条成绩，最佳为 3.10 秒。
+- 鸿蒙宿主已接入共享蓝牙计时器设备选择、GAN / 奇艺协议和 Stackmat 麦克风输入，工具页通过原有宿主桥接入设备扫描。该版通过宿主类型检查、共享测试及 Hvigor 构建；上述离线计时验收使用此前安装的版本。蓝牙实物连接、成绩回传及工具页真机交互待验。
+- 新公司开发者实名认证已提交，进度见[备案与主体记录](../../compliance/filing-and-identity.md#2026-11-21-华为开发者企业认证)。
+
 - 模拟器验证不需要配置签名；需要真机验证时，先连接 HarmonyOS NEXT 设备并确认 `hdc list targets` 可见，再让 DevEco 自动生成调试 profile。证书、密码和本机签名材料不得进入 Git。
 
 ### 19.2 Android 智能魔方桥接进度（2026-09-20）

@@ -15,6 +15,7 @@ interface NativeManufacturerData {
 interface NativeBleDevice {
   id: string;
   manufacturerData: NativeManufacturerData[];
+  rssi: number;
   name: string;
 }
 
@@ -63,6 +64,25 @@ window.addEventListener('cuberoot:ble-value', (event) => {
     ?.forEach((listener) => listener(dataView(detail.value!)));
 });
 
+function deviceRef(selected: NativeBleDevice): BleDeviceRef {
+  const manufacturerData = new Map(selected.manufacturerData.map(
+    entry => [entry.companyId, Uint8Array.from(entry.value)] as const,
+  ));
+  return {
+    id: selected.id,
+    name: selected.name,
+    rssi: selected.rssi,
+    manufacturerData: manufacturerData.size ? manufacturerData : undefined,
+  };
+}
+
+interface ConnectionLease {
+  transport: HarmonyBleTransport;
+  deviceId: string;
+}
+
+let connectionOwner: ConnectionLease | undefined;
+
 export class HarmonyBleTransport implements BleTransport {
   initialize(): Promise<void> {
     return bridgeCall<void>(nativeBridge().bleInitialize());
@@ -72,41 +92,85 @@ export class HarmonyBleTransport implements BleTransport {
     const selected = await bridgeCall<NativeBleDevice>(
       nativeBridge().bleRequestDevice(JSON.stringify(options.namePrefixes ?? [options.namePrefix])),
     );
-    const manufacturerData = new Map<number, Uint8Array>();
-    for (const entry of selected.manufacturerData) {
-      manufacturerData.set(entry.companyId, Uint8Array.from(entry.value));
+    return deviceRef(selected);
+  }
+
+  async scanDevices(options: BleRequestOptions, onDevices: (devices: readonly BleDeviceRef[]) => void): Promise<() => Promise<void>> {
+    const id = crypto.randomUUID();
+    const found = new Map<string, BleDeviceRef>();
+    const onScan = (event: Event) => {
+      const detail = (event as CustomEvent<{ id: string; devices: NativeBleDevice[] }>).detail;
+      if (detail?.id !== id) return;
+      for (const entry of detail.devices) {
+        const device = deviceRef(entry);
+        device.manufacturerData ??= found.get(device.id)?.manufacturerData;
+        found.set(device.id, device);
+      }
+      onDevices([...found.values()]);
+    };
+    window.addEventListener('cuberoot:ble-scan', onScan);
+    try {
+      const prefixes = options.namePrefixes ?? (options.namePrefix ? [options.namePrefix] : []);
+      await bridgeCall<void>(nativeBridge().bleStartScan(id, JSON.stringify(prefixes), JSON.stringify(options.services ?? [])));
+    } catch (error) {
+      window.removeEventListener('cuberoot:ble-scan', onScan);
+      throw error;
     }
-    return {
-      id: selected.id,
-      manufacturerData: manufacturerData.size > 0 ? manufacturerData : undefined,
-      name: selected.name,
+    return async () => {
+      window.removeEventListener('cuberoot:ble-scan', onScan);
+      await bridgeCall<void>(nativeBridge().bleStopScan(id));
     };
   }
 
   async connect(deviceId: string, onDisconnect: () => void): Promise<void> {
-    disconnectListeners.set(deviceId, onDisconnect);
+    if (connectionOwner) throw new Error('Bluetooth connection already active');
+    const lease = { transport: this, deviceId };
+    connectionOwner = lease;
+    disconnectListeners.set(deviceId, () => {
+      if (connectionOwner !== lease) return;
+      connectionOwner = undefined;
+      onDisconnect();
+    });
     try {
       await bridgeCall<void>(nativeBridge().bleConnect(deviceId));
     } catch (error) {
-      disconnectListeners.delete(deviceId);
+      if (connectionOwner === lease) {
+        connectionOwner = undefined;
+        disconnectListeners.delete(deviceId);
+      }
       throw error;
     }
   }
 
   async disconnect(deviceId: string): Promise<void> {
+    const lease = connectionOwner;
+    if (lease?.transport !== this || lease.deviceId !== deviceId) return;
     clearDeviceListeners(deviceId);
-    await bridgeCall<void>(nativeBridge().bleDisconnect(deviceId));
+    try {
+      await bridgeCall<void>(nativeBridge().bleDisconnect(deviceId));
+    } finally {
+      if (connectionOwner === lease) connectionOwner = undefined;
+    }
+  }
+
+  private requireConnection(deviceId: string): void {
+    if (connectionOwner?.transport !== this || connectionOwner.deviceId !== deviceId) {
+      throw new Error('No active Bluetooth connection');
+    }
   }
 
   getServices(deviceId: string): Promise<BleServiceRef[]> {
+    this.requireConnection(deviceId);
     return bridgeCall<BleServiceRef[]>(nativeBridge().bleGetServices(deviceId));
   }
 
   getMtu(deviceId: string): Promise<number | null> {
+    this.requireConnection(deviceId);
     return bridgeCall<number | null>(nativeBridge().bleGetMtu(deviceId));
   }
 
   async read(deviceId: string, service: string, characteristic: string): Promise<DataView> {
+    this.requireConnection(deviceId);
     return dataView(await bridgeCall<number[]>(nativeBridge().bleRead(deviceId, service, characteristic)));
   }
 
@@ -116,6 +180,7 @@ export class HarmonyBleTransport implements BleTransport {
     characteristic: string,
     value: Uint8Array,
   ): Promise<void> {
+    this.requireConnection(deviceId);
     await bridgeCall<void>(nativeBridge().bleWrite(
       deviceId,
       service,
@@ -130,6 +195,8 @@ export class HarmonyBleTransport implements BleTransport {
     characteristic: string,
     onValue: (value: DataView) => void,
   ): Promise<() => Promise<void>> {
+    this.requireConnection(deviceId);
+    const lease = connectionOwner;
     const key = characteristicKey(deviceId, service, characteristic);
     const listeners = valueListeners.get(key) ?? new Set<(value: DataView) => void>();
     listeners.add(onValue);
@@ -146,7 +213,8 @@ export class HarmonyBleTransport implements BleTransport {
       if (!active) return;
       active = false;
       listeners.delete(onValue);
-      if (listeners.size === 0) valueListeners.delete(key);
+      if (listeners.size || valueListeners.get(key) !== listeners || connectionOwner !== lease) return;
+      valueListeners.delete(key);
       await bridgeCall<void>(nativeBridge().bleUnsubscribe(deviceId, service, characteristic));
     };
   }

@@ -3,8 +3,8 @@ import { BusinessError } from '@kit.BasicServicesKit';
 
 const SCAN_TIMEOUT_MS = 8_000;
 const CONNECT_TIMEOUT_MS = 12_000;
-// Native bridge security boundary; services from shared smart-cube protocol exports.
-const CUBE_SERVICES: string[] = ["6e400001-b5a3-f393-e0a9-e50e24dc4179","8653000a-43e6-47b7-9cb0-5fc21d4ae340","00000010-0000-fff7-fff6-fff5fff4fff0","0783b03e-7735-b5a0-1760-a305d2795cb0","0000fff0-0000-1000-8000-00805f9b34fb","0000aadb-0000-1000-8000-00805f9b34fb","0000aaaa-0000-1000-8000-00805f9b34fb","6e400001-b5a3-f393-e0a9-e50e24dcca9e","00001000-0000-1000-8000-00805f9b34fb"];
+// Native bridge security boundary; services from shared smart-cube protocol and external-timer protocols.
+const SUPPORTED_SERVICES: string[] = ["0000fd50-0000-1000-8000-00805f9b34fb","6e400001-b5a3-f393-e0a9-e50e24dc4179","8653000a-43e6-47b7-9cb0-5fc21d4ae340","00000010-0000-fff7-fff6-fff5fff4fff0","0783b03e-7735-b5a0-1760-a305d2795cb0","0000fff0-0000-1000-8000-00805f9b34fb","0000aadb-0000-1000-8000-00805f9b34fb","0000aaaa-0000-1000-8000-00805f9b34fb","6e400001-b5a3-f393-e0a9-e50e24dcca9e","00001000-0000-1000-8000-00805f9b34fb"];
 
 interface CharacteristicProperties { read: boolean; write: boolean; writeWithoutResponse: boolean; notify: boolean; indicate: boolean; }
 interface CharacteristicInfo { uuid: string; properties: CharacteristicProperties; }
@@ -20,6 +20,7 @@ interface ManufacturerDataEntry {
 export interface SelectedBleDevice {
   id: string;
   manufacturerData: ManufacturerDataEntry[];
+  rssi: number;
   name: string;
 }
 
@@ -96,70 +97,79 @@ export class HarmonyBle {
     });
   }
 
-  requestDevice(namePrefixes: string[]): Promise<SelectedBleDevice> {
-    return new Promise((resolve, reject) => {
-      let selected: ble.ScanResult | undefined = undefined;
-      let finished = false;
-      const finish = (): void => {
-        if (finished) return;
-        finished = true;
-        clearTimeout(timeout);
-        try {
-          ble.stopBLEScan();
-        } catch (_) {
-        }
-        try {
-          ble.off('BLEDeviceFind', onDeviceFind);
-        } catch (_) {
-        }
-        if (!selected) {
-          reject(new Error('No smart cube found'));
-          return;
-        }
+  private scanCleanup: (() => void) | undefined = undefined;
+  private scanId: string = '';
+  private readonly discoveredIds: Set<string> = new Set();
+
+  startScan(scanId: string, prefixes: string[], services: string[], onDevices: (devices: SelectedBleDevice[]) => void): void {
+    if (this.scanCleanup) throw new Error('Bluetooth scan already active');
+    if (services.some((uuid: string): boolean => !SUPPORTED_SERVICES.includes(uuid))) {
+      throw new Error('Unsupported scan service');
+    }
+    this.discoveredIds.clear();
+    const onFound = (results: ble.ScanResult[]): void => {
+      if (this.scanId !== scanId) return;
+      const devices: SelectedBleDevice[] = [];
+      for (const result of results) {
+        const name = result.deviceName || '';
+        const matchesName = prefixes.some((prefix: string): boolean => name.startsWith(prefix));
+        const matchesService = result.serviceUuids?.some((uuid: string): boolean => services.includes(uuid.toLowerCase()));
+        if (!matchesName && !matchesService) continue;
         const manufacturerData: ManufacturerDataEntry[] = [];
-        selected.manufacturerDataMap?.forEach((value: Uint8Array, companyId: number) => {
-          manufacturerData.push({ companyId, value: bytes(value.buffer as ArrayBuffer) });
+        result.manufacturerDataMap?.forEach((value: Uint8Array, companyId: number) => {
+          manufacturerData.push({ companyId, value: Array.from(value) });
         });
-        this.selectedDeviceIds.add(selected.deviceId);
-        resolve({
-          id: selected.deviceId,
-          manufacturerData,
-          name: selected.deviceName || namePrefixes[0]
-        });
-      };
-      const onDeviceFind = (results: ble.ScanResult[]): void => {
-        for (const result of results) {
-          if (!namePrefixes.some((prefix: string): boolean => result.deviceName.startsWith(prefix))) continue;
-          if (!selected || result.rssi > selected.rssi) selected = result;
-        }
-      };
-      const timeout = setTimeout(finish, SCAN_TIMEOUT_MS);
-      try {
-        ble.on('BLEDeviceFind', onDeviceFind);
-        const options: ble.ScanOptions = {
-          interval: 0,
-          dutyMode: ble.ScanDuty.SCAN_MODE_LOW_LATENCY,
-          matchMode: ble.MatchMode.MATCH_MODE_AGGRESSIVE
-        };
-        ble.startBLEScan([], options);
-      } catch (error) {
-        clearTimeout(timeout);
-        try {
-          ble.stopBLEScan();
-        } catch (_) {
-        }
-        try {
-          ble.off('BLEDeviceFind', onDeviceFind);
-        } catch (_) {
-        }
-        reject(error as Error);
+        this.discoveredIds.add(result.deviceId);
+        devices.push({ id: result.deviceId, name: name || result.deviceId, rssi: result.rssi, manufacturerData });
       }
+      if (devices.length) onDevices(devices);
+    };
+    this.scanId = scanId;
+    this.scanCleanup = (): void => {
+      try { ble.stopBLEScan(); } finally { ble.off('BLEDeviceFind', onFound); }
+    };
+    try {
+      ble.on('BLEDeviceFind', onFound);
+      ble.startBLEScan([], { interval: 0, dutyMode: ble.ScanDuty.SCAN_MODE_LOW_LATENCY,
+        matchMode: ble.MatchMode.MATCH_MODE_AGGRESSIVE });
+    } catch (error) {
+      this.stopScan(scanId);
+      throw error as Error;
+    }
+  }
+
+  stopScan(scanId: string): void {
+    if (scanId !== this.scanId) return;
+    const cleanup = this.scanCleanup;
+    this.scanCleanup = undefined;
+    this.scanId = '';
+    cleanup?.();
+  }
+
+  requestDevice(prefixes: string[]): Promise<SelectedBleDevice> {
+    return new Promise((resolve, reject) => {
+      let selected: SelectedBleDevice | undefined = undefined;
+      const id = 'single-device';
+      this.startScan(id, prefixes, [], (devices: SelectedBleDevice[]): void => {
+        for (const device of devices) {
+          if (!selected || device.rssi > selected.rssi) selected = device;
+        }
+      });
+      setTimeout(() => {
+        if (this.scanId !== id) { reject(new Error('Scan canceled')); return; }
+        try {
+          this.stopScan(id);
+          if (selected) resolve(selected);
+          else reject(new Error('No smart cube found'));
+        } catch (error) { reject(error); }
+      }, SCAN_TIMEOUT_MS);
     });
   }
 
   async connect(deviceId: string): Promise<void> {
-    if (!this.selectedDeviceIds.has(deviceId)) throw new Error('Bluetooth device was not selected');
-    if (this.gatt) await this.disconnect(this.deviceId);
+    if (!this.discoveredIds.has(deviceId) && !this.selectedDeviceIds.has(deviceId)) throw new Error('Bluetooth device was not selected');
+    if (this.gatt) throw new Error('Bluetooth connection already active');
+    this.selectedDeviceIds.add(deviceId);
     const generation = ++this.connectionGeneration;
     this.deviceId = deviceId;
     let gatt: ble.GattClientDevice;
@@ -265,6 +275,8 @@ export class HarmonyBle {
   }
 
   async release(): Promise<void> {
+    this.stopScan(this.scanId);
+    this.discoveredIds.clear();
     if (this.gatt) await this.disconnect(this.deviceId);
     this.eventSink = undefined;
     this.selectedDeviceIds.clear();
@@ -272,7 +284,7 @@ export class HarmonyBle {
 
   getServices(deviceId: string): ServiceInfo[] {
     this.requireGatt(deviceId);
-    return this.services.filter((service: ble.GattService): boolean => CUBE_SERVICES.includes(service.serviceUuid.toLowerCase()))
+    return this.services.filter((service: ble.GattService): boolean => SUPPORTED_SERVICES.includes(service.serviceUuid.toLowerCase()))
       .map((service: ble.GattService): ServiceInfo => {
         const characteristics: CharacteristicInfo[] = service.characteristics.map((characteristic: ble.BLECharacteristic): CharacteristicInfo => {
           const properties: CharacteristicProperties = {
@@ -367,7 +379,7 @@ export class HarmonyBle {
   }
 
   private ensureCubeCharacteristic(service: string, characteristic: string): void {
-    if (!CUBE_SERVICES.includes(service.toLowerCase())) throw new Error('Bluetooth characteristic denied');
+    if (!SUPPORTED_SERVICES.includes(service.toLowerCase())) throw new Error('Bluetooth characteristic denied');
     this.findCharacteristic(service, characteristic);
   }
 }
