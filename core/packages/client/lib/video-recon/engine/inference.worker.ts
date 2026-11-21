@@ -54,7 +54,7 @@ async function download(
   const response = await fetch(url);
   if (!response.ok)
     throw new Error(
-      `Model download failed (${response.status}). Add the detector files described in web/README.md.`,
+      `Model download failed (${response.status}).`,
     );
   if (!response.body) return new Uint8Array(await response.arrayBuffer());
   const reader = response.body.getReader();
@@ -87,7 +87,12 @@ async function loadStage(
     variant.bytes,
     label,
   );
-  const digest=crypto.subtle.digest('SHA-256',bytes.buffer as ArrayBuffer);
+  const digest = await crypto.subtle.digest('SHA-256', bytes.buffer as ArrayBuffer);
+  const sha256 = [...new Uint8Array(digest)].map(value => value.toString(16).padStart(2, '0')).join('');
+  const revision = variant.file.match(/\.([0-9a-f]{16})\.onnx$/)?.[1];
+  if (bytes.length !== variant.bytes || (revision && !sha256.startsWith(revision))) {
+    throw new Error(`Model integrity check failed: ${variant.file}`);
+  }
   const session = await ort.InferenceSession.create(bytes, {
     executionProviders: [backend],
     graphOptimizationLevel: "all",
@@ -120,7 +125,7 @@ async function loadStage(
         ).GpuPreprocessor.create(await ort.env.webgpu.device)
       : undefined;
   const identity={file:variant.file,size:variant.size,bytes:bytes.length,
-    sha256:[...new Uint8Array(await digest)].map(v=>v.toString(16).padStart(2,'0')).join('')};
+    sha256};
   return { session, variant, canvas, context, gpu,identity };
 }
 

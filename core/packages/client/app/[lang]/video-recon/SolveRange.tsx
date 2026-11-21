@@ -4,10 +4,9 @@ import type { VideoWorkspace } from '@/lib/video-recon/workspace';
 
 export function SolveRange({ view, workspace }: { view: ReturnType<VideoWorkspace['getSnapshot']>; workspace: VideoWorkspace }) {
   const t = useT();
-  const { solveStart, solveEnd, duration, sourceFps, thumbnails } = view;
+  const { solveStart, solveEnd, duration, thumbnails } = view;
   const start = t('开始', 'Start');
   const end = t('结束', 'End');
-  const step = Math.min(0.001, 1 / (sourceFps || 30));
   return <section className="video-recon-setup">
     <div className="video-recon-section-heading">
       <h3>{t('选择还原区间', 'Select the solve range')}</h3>
@@ -25,13 +24,13 @@ export function SolveRange({ view, workspace }: { view: ReturnType<VideoWorkspac
     <div className="video-recon-trim-controls">
       <label className="video-recon-range">
         <span>{start}</span>
-        <input type="range" min={0} max={duration} step={step} value={solveStart}
+        <input type="range" min={0} max={duration} step={0.001} value={solveStart}
           onChange={event => workspace.changeTrim('start', Number(event.currentTarget.value))} />
         <span>{timecode(solveStart)}</span>
       </label>
       <label className="video-recon-range">
         <span>{end}</span>
-        <input type="range" min={0} max={duration} step={step} value={solveEnd}
+        <input type="range" min={0} max={duration} step={0.001} value={solveEnd}
           onChange={event => workspace.changeTrim('end', Number(event.currentTarget.value))} />
         <span>{timecode(solveEnd)}</span>
       </label>

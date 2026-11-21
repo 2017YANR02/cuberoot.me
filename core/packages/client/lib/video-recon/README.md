@@ -26,8 +26,17 @@ and [OpenCV notices](pose-fitter/vendor/opencv/README.md).
 
 The Next development and production build commands compile the five worker
 entries using `core/scripts/build-video-recon-workers.mjs`. Worker bundles are
-generated into `public/vendor/video-recon/workers/`. The checked-in ONNX and
-WASM assets use the compatible manifest formats from upstream.
+generated into `public/vendor/video-recon/workers/`. The same build step copies
+the pinned ONNX Runtime distribution into `public/vendor/video-recon/runtime/`.
+The checked-in model weights and pose WASM use the matching upstream manifests.
+The original CubeRoot opening-grip fix now lives in `engine/cube-orientation.ts`.
+
+The React workspace is at `/video-recon`, or `/video-recon?mode=timer` for the camera timer.
+Next serves COOP/COEP on the page and COEP/CORP on the worker assets. The existing
+nginx proxy passes those Next headers through on the self-hosted line.
+The production video tool installs a route-scoped offline service worker. It
+warms the anonymous page shell and runtime, then caches each model on first use.
+Uploaded frames and camera video are processed in the browser.
 
 To rebuild the numerical pipeline, install the Rust
 `wasm32-unknown-unknown` target, CMake, Ninja and Emscripten 4.0.20. From the

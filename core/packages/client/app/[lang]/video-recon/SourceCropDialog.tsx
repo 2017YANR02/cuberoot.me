@@ -1,7 +1,7 @@
 import { useId, useRef, useState } from 'react';
 import SettingsDialog from '@/components/SettingsDialog';
 import { useT } from '@/hooks/useT';
-import { FULL_CROP, boundedCrop, cropFromPoints, dragCrop, type CropHandle, type SourceCrop } from '@/lib/video-recon/engine/source-crop';
+import { FULL_CROP, boundedCrop, cropFromPoints, cropPixels, dragCrop, type CropHandle, type SourceCrop } from '@/lib/video-recon/engine/source-crop';
 
 const HANDLES = ['nw', 'n', 'ne', 'e', 'se', 's', 'sw', 'w'] as const;
 type Point = { x: number; y: number };
@@ -19,6 +19,8 @@ export function SourceCropDialog({ url, width, height, initial, onApply, onCance
   const [crop, setCrop] = useState(() => boundedCrop(initial ?? FULL_CROP));
   const drag = useRef<{ id: number; rect: SourceCrop; start: Point; handle?: CropHandle } | null>(null);
   const ratio = width / height;
+  const pixels = cropPixels(crop, width, height);
+  const fullFrame = !pixels;
   const selection = { left: `${crop.x * 100}%`, top: `${crop.y * 100}%`, width: `${crop.width * 100}%`, height: `${crop.height * 100}%` };
   function point(element: HTMLDivElement, clientX: number, clientY: number) {
     const bounds = element.getBoundingClientRect();
@@ -26,14 +28,15 @@ export function SourceCropDialog({ url, width, height, initial, onApply, onCance
   }
   return <SettingsDialog label={t('裁剪检测区域', 'Crop detection area')} heading panelClassName="video-recon-modal" onClose={onCancel}>
     <div className="video-recon-modal-body">
-      <p id={hint} className="video-recon-muted">{t('拖动绘制选区，或拖动边缘调整大小。', 'Drag to select an area or drag an edge to resize it.')}</p>
-      <div className="video-recon-crop" role="group" aria-describedby={hint}
+      <p id={hint} className="video-recon-muted">{t('拖动绘制选区。选区内可移动，拖动边缘可调整大小。', 'Drag to draw a selection. Drag inside to move it, or drag an edge to resize it.')}</p>
+      <div className="video-recon-crop" role="group" aria-describedby={hint} data-full-frame={fullFrame}
         style={{ width: `min(100%, ${56 * ratio}dvh)` }}
         onPointerDown={event => {
           if (event.button !== 0 || !event.isPrimary) return;
           const start = point(event.currentTarget, event.clientX, event.clientY);
           const handle = (event.target as HTMLElement).closest<HTMLElement>('[data-crop-handle]')?.dataset.cropHandle as CropHandle | undefined;
-          drag.current = { id: event.pointerId, rect: crop, start, handle };
+          const resizeOrMove = fullFrame && handle === 'move' ? undefined : handle;
+          drag.current = { id: event.pointerId, rect: crop, start, handle: resizeOrMove };
           event.currentTarget.setPointerCapture(event.pointerId);
           event.preventDefault();
         }}
@@ -63,7 +66,9 @@ export function SourceCropDialog({ url, width, height, initial, onApply, onCance
       </div>
       <div className="video-recon-actions">
         <button type="button" className="btn-secondary" onClick={() => setCrop(FULL_CROP)}>{t('重置', 'Reset')}</button>
-        <button type="button" className="btn-primary" onClick={() => onApply(crop)}>{t('应用裁剪', 'Apply crop')}</button>
+        <button type="button" className="btn-primary" onClick={() => onApply(pixels ? {
+          x: pixels.x / width, y: pixels.y / height, width: pixels.width / width, height: pixels.height / height,
+        } : undefined)}>{t('应用裁剪', 'Apply crop')}</button>
       </div>
     </div>
   </SettingsDialog>;

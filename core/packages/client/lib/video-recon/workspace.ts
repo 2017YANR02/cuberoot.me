@@ -196,7 +196,7 @@ export function createVideoWorkspace(stage: HTMLCanvasElement, initialTab: Works
       activeRunId = undefined;
       if (state.sourceKind === 'camera') state.timerCamera = true;
     }
-    if (tab === 'detector' && state.sourceKind === 'camera') stopSource();
+    if (tab === 'detector' && (state.timerCamera || state.sourceKind === 'camera')) stopSource();
     state.activeTab = tab;
   }
   function startTimerSolve(id: string, scramble: string, clockMs: number) {
@@ -695,7 +695,7 @@ export function createVideoWorkspace(stage: HTMLCanvasElement, initialTab: Works
           !response.headers.get("content-type")?.includes("json")
         )
           throw new Error(
-            "Detector files are missing. Add the files described in web/README.md.",
+            "The detector manifest could not be loaded.",
           );
         state.manifest = await response.json();
         if (
@@ -708,7 +708,7 @@ export function createVideoWorkspace(stage: HTMLCanvasElement, initialTab: Works
           state.manifest.keypointShape.join(",") !== "1,3"
         )
           throw new Error(
-            "Incompatible detector manifest. Re-export the checkpoint.",
+            "The deployed detector manifest is incompatible with this engine.",
           );
         state.thresholds = [...state.manifest.classThresholds];
         state.presenceThreshold = state.manifest.presenceThreshold;
@@ -721,7 +721,10 @@ export function createVideoWorkspace(stage: HTMLCanvasElement, initialTab: Works
       currentWorker.onmessage = async ({ data }: MessageEvent<WorkerResponse>) => {
         if (currentWorker !== worker) return;
         if (data.type === "progress") {
-          state.modelProgress = Math.round((data.stage === 'Cube detector' ? data.fraction * 0.115 : 0.115 + data.fraction * 0.885) * 100);
+          const bboxBytes = state.manifest?.bbox.bytes ?? 0;
+          const poseBytes = state.manifest?.variants.find(variant => variant.size === size)?.bytes ?? 0;
+          const bytes = data.stage === 'Cube detector' ? bboxBytes * data.fraction : bboxBytes + poseBytes * data.fraction;
+          state.modelProgress = Math.round(bytes / Math.max(1, bboxBytes + poseBytes) * 100);
         }
         if (data.type === "ready") {
           detectorIdentity=data.models;detectorPreprocessing=data.preprocessing;

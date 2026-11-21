@@ -225,11 +225,20 @@ const nextConfig: NextConfig = {
           { key: "Cross-Origin-Opener-Policy", value: "same-origin" },
         ],
       },
-      // The standalone video recognizer runs WASM and camera capture in a same-origin frame.
-      ...["/:lang(zh|en)?/video-recon", "/vendor/video-recon/:path*"].map(source => ({
-        source,
+      // Video reconstruction uses its own document and module workers.
+      {
+        source: "/:lang(zh|en)?/video-recon",
         headers: [...workerAsset, { key: "Cross-Origin-Opener-Policy", value: "same-origin" }],
-      })),
+      },
+      { source: "/vendor/video-recon/:path*", headers: workerAsset },
+      {
+        source: "/vendor/video-recon/models/:file(.*\\.onnx)",
+        headers: [{ key: "Cache-Control", value: "public, max-age=31536000, immutable" }],
+      },
+      {
+        source: "/video-recon-sw.js",
+        headers: [...workerAsset, { key: "Cache-Control", value: "no-cache" }],
+      },
       // cubeopt-wasm: 主 worker + 9 个 emscripten pthread 模块 + .wasm。
       // wasm/mjs 内容稳定 → immutable(同时保留 COEP/CORP);大文件,缓存还省 Origin Transfer。
       {
@@ -256,9 +265,6 @@ const nextConfig: NextConfig = {
       .map(id => id.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|');
     return {
       beforeFiles: [
-        { source: '/vendor/video-recon/', destination: '/vendor/video-recon/index.html' },
-        { source: '/vendor/video-recon/timer', destination: '/vendor/video-recon/timer/index.html' },
-        { source: '/vendor/video-recon/timer/', destination: '/vendor/video-recon/timer/index.html' },
         ...(isProd ? [{
           source: '/_origin/_next/static/:path*',
           destination: isVercel ? 'https://next.cuberoot.me/_next/static/:path*' : '/_next/static/:path*',

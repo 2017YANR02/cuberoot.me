@@ -7,6 +7,8 @@ import PageHeading from '@/components/PageHeading';
 import HeaderToggles from '@/components/HeaderToggles';
 import { useT } from '@/hooks/useT';
 import { createVideoWorkspace, type VideoWorkspace, type WorkspaceTab } from '@/lib/video-recon/workspace';
+import { prepareOfflineVideoRecon } from '@/lib/video-recon/offline';
+import type { MoveStep } from '@/lib/video-recon/engine/move-search-types';
 import { timecode } from '@/lib/video-recon/engine/solve-range';
 import { CameraTimer } from './CameraTimer';
 import { ProjectedCube } from './ProjectedCube';
@@ -17,7 +19,7 @@ import { TimerReplay } from './TimerReplay';
 import { TpsGraph } from './TpsGraph';
 import './video-recon.css';
 
-const NO_MOVES: NonNullable<NonNullable<ReturnType<VideoWorkspace['getSnapshot']>['searchResult']>['steps']> = [];
+const NO_MOVES: readonly MoveStep[] = [];
 const VIDEO_MODES: WorkspaceTab[] = ['detector', 'timer'];
 const noWorkspace = () => null;
 const noSubscription = () => () => {};
@@ -39,11 +41,13 @@ export default function VideoReconClient() {
     if (!canvas) return;
     const session = createVideoWorkspace(canvas, initialMode.current);
     setWorkspace(session);
-    void session.loadModel();
+    let mounted = true;
+    void prepareOfflineVideoRecon().then(() => { if (mounted) void session.loadModel(); });
     window.addEventListener('keydown', session.reviewKeydown);
     const pagehide = (event: PageTransitionEvent) => { if (!event.persisted) session.cleanup(); };
     window.addEventListener('pagehide', pagehide);
     return () => {
+      mounted = false;
       window.removeEventListener('keydown', session.reviewKeydown);
       window.removeEventListener('pagehide', pagehide);
       session.cleanup();

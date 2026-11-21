@@ -435,6 +435,10 @@
   cursor: move;
 }
 
+.video-recon-crop[data-full-frame='true'] .video-recon-crop-selection {
+  cursor: crosshair;
+}
+
 .video-recon-crop-handle {
   position: absolute;
   width: 12px;

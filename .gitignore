@@ -198,3 +198,4 @@ core/packages/client/public/maplibre/
 
 # Video reconstruction workers are bundled from the checked-in engine.
 /core/packages/client/public/vendor/video-recon/workers/
+/core/packages/client/public/vendor/video-recon/runtime/
