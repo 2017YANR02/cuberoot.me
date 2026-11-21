@@ -1,8 +1,8 @@
 import { spawn } from 'node:child_process';
 import { availableParallelism } from 'node:os';
-import { mkdir, readdir, readFile, unlink, writeFile } from 'node:fs/promises';
+import { mkdir, readdir, readFile, rename, unlink, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
-import { analyzer, exe, exists, lines, puzzleDir, reapUnregisteredAnalyzer } from './common.js';
+import { analyzer, exe, exists, lines, puzzleDir, reapUnregisteredAnalyzer, taskProgress } from './common.js';
 import { prepareStatsAnalyzer } from './resource-monitor.js';
 
 type Wca = { moves: number; slashes: number; optimal: string };
@@ -20,7 +20,8 @@ function numeric(value: string): boolean { return /^\d+$/.test(value); }
 function addResolved(map: Map<string, Resolved>, ambiguous: Set<string>, id: string, value: string, optimal: string): void {
   if (!ambiguous.has(id)) return;
   const current = map.get(id);
-  if (!current || (numeric(value) && (!numeric(current.value) || Number(value) < Number(current.value)))) {
+  if (!current || (numeric(value) && (!numeric(current.value) || Number(value) < Number(current.value))) ||
+      (current.value === '-' && value === 'M')) {
     map.set(id, { value, optimal });
   }
 }
@@ -42,7 +43,9 @@ async function ingestDir(folder: string, map: Map<string, Resolved>, ambiguous: 
 }
 async function saveResolved(map: Map<string, Resolved>): Promise<void> {
   const rows = [header, ...[...map].map(([id, result]) => `${id},${result.value},${result.optimal}`)];
-  await writeFile(ambiguousFile, `${rows.join('\n')}\n`);
+  const temp = `${ambiguousFile}.${process.pid}.new`;
+  await writeFile(temp, `${rows.join('\n')}\n`);
+  await rename(temp, ambiguousFile);
 }
 async function saveFinal(wca: Map<string, Wca>, ambiguous: Set<string>, resolved: Map<string, Resolved>): Promise<number> {
   const rows = [header];
@@ -110,7 +113,8 @@ export async function runSq1Slash(options: SlashOptions = {}): Promise<number> {
   await saveResolved(resolved);
   const todo: string[] = [];
   for (const id of ambiguous) {
-    if (!resolved.has(id) && compact.has(id)) todo.push(`${id},${compact.get(id)},${wca.get(id)!.moves}`);
+    const prior = resolved.get(id);
+    if ((!prior || prior.value === '-') && compact.has(id)) todo.push(`${id},${compact.get(id)},${wca.get(id)!.moves}`);
   }
   console.log(`[SQ1 slash] 歧义态 ${ambiguous.size}，本次待判 ${todo.length}`);
   if (todo.length && !options.mergeOnly) {
@@ -142,18 +146,21 @@ export async function runSq1Slash(options: SlashOptions = {}): Promise<number> {
   }
   const mitm = exe('sq1_slash_mitm');
   if (!options.noMitm && !options.mergeOnly && await exists(mitm)) {
+    const pending = [...ambiguous].filter(id => !numeric(resolved.get(id)?.value ?? '') && compact.has(id));
     let confirmed = 0;
-    for (const id of ambiguous) {
-      if (numeric(resolved.get(id)?.value ?? '') || !compact.has(id)) continue;
+    if (pending.length) taskProgress('SQ1 slash MITM', 0, pending.length);
+    for (const [index, id] of pending.entries()) {
       const entry = wca.get(id)!;
       const result = await decideOne(mitm, `${id},${entry.optimal},${entry.slashes}`);
       const match = result.match(/^\d+,(\d+)$/);
       if (match && Number(match[1]) === entry.slashes) {
         addResolved(resolved, ambiguous, id, match[1], '');
+        await saveResolved(resolved);
         confirmed++;
       }
+      taskProgress('SQ1 slash MITM', index + 1, pending.length);
     }
-    if (confirmed) { console.log(`[SQ1 slash] MITM 确认 ${confirmed} 条`); await saveResolved(resolved); }
+    if (confirmed) console.log(`[SQ1 slash] MITM 确认 ${confirmed} 条`);
   }
   const monsters: string[] = [];
   for (const id of ambiguous) {

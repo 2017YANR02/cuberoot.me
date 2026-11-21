@@ -55,13 +55,20 @@ fn use_compactify() -> bool {
 }
 
 /// `SQ1_SLASH_VIA_WCA=1` ⇒ slash 最优(twist)**经 WCA 机器可证**(不需 13GB jsq_full,轻量解器)。
-/// 输入 `id,compact,W`(W = 已知 WCA 12c4 最优,PS 从 sq1_wca_exact.csv 传;compact 无逗号 ⇒ 末段干净切)。
+/// 输入 `id,scramble,W`，W 为 sq1_wca_exact.csv 中已知的 WCA 12c4 最优值。
 /// 歧义态(W=2s-1):找 (s-1)-slash 解 ⇒ t=s-1;穷举无 ⇒ t=s(可证)。输出 `id,slash_exact,opt_scramble`
 /// (opt 空 = t=s 用 WCA 最优打乱;`id,M` = 看门狗超时怪物)。配 `SQ1_SOLVE_TIMEOUT_SECS` 看门狗。
 fn use_slash_via_wca() -> bool {
     std::env::var("SQ1_SLASH_VIA_WCA")
         .map(|v| v == "1")
         .unwrap_or(false)
+}
+
+fn parse_slash_request(input: &str) -> Option<(&str, u8)> {
+    // WCA notation includes commas in (top,bottom). The final comma separates W.
+    let (scramble, cost) = input.rsplit_once(',')?;
+    let cost = cost.trim().parse::<u8>().ok()?;
+    (cost > 0 && cost <= 27 && cost % 2 == 1).then_some((scramble, cost))
 }
 
 /// `SQ1_WCA_SOLN=1`(配合 `SQ1_WCA_EXACT=1`)⇒ 多出第 3 列 `opt_scramble`:最优等价打乱
@@ -115,23 +122,11 @@ fn sq1_line(alg: &str, id: &str) -> String {
             }
         };
     }
-    // slash 最优 via WCA:输入 alg = "compact,W"(compact 无逗号 ⇒ 首逗号前=记号、后=W)。
+    // slash 最优 via WCA:输入 alg = "scramble,W"。
     if use_slash_via_wca() {
-        let (scr, w) = match alg.find(',') {
-            Some(p) => match alg[p + 1..].trim().parse::<u8>() {
-                Ok(w) => (&alg[..p], w),
-                Err(_) => {
-                    eprintln!(
-                        "[ERROR] id={}: SQ1_SLASH_VIA_WCA needs id,compact,W (bad W)",
-                        id
-                    );
-                    return format!("{},-", id);
-                }
-            },
-            None => {
-                eprintln!("[ERROR] id={}: SQ1_SLASH_VIA_WCA needs id,compact,W", id);
-                return format!("{},-", id);
-            }
+        let Some((scr, w)) = parse_slash_request(alg) else {
+            eprintln!("[ERROR] id={}: SQ1_SLASH_VIA_WCA needs id,scramble,W (bad W)", id);
+            return format!("{},-", id);
         };
         let st = match state_from_scramble(scr) {
             Ok(s) => s,
@@ -388,6 +383,16 @@ mod tests {
             .unwrap()
             .parse()
             .expect("numeric slash")
+    }
+
+    #[test]
+    fn slash_request_accepts_both_scramble_notations() {
+        let wca = "(0,2) / (-3,-3) / (-2,4)";
+        assert_eq!(parse_slash_request(&format!("{wca},21")), Some((wca, 21)));
+        assert_eq!(parse_slash_request("02/99/a4,21"), Some(("02/99/a4", 21)));
+        assert_eq!(parse_slash_request(wca), None);
+        assert_eq!(parse_slash_request("02/99/a4,22"), None);
+        assert_eq!(parse_slash_request("02/99/a4,255"), None);
     }
 
     #[test]
