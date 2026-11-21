@@ -610,6 +610,7 @@ const TABLES: Table[] = [
 
 const MIGRATIONS: { n: number; slug: string; desc: Bi }[] = [
   { n: 349, slug: 'platform_content_reviews', desc: { zh: '课程及课时发布审核，线上版本在审核期间保持不变。', en: 'Course and lesson publication review, preserving live revisions while pending.' } },
+  { n: 348, slug: 'platform_unified_instructor_profiles', desc: { zh: '统一讲师身份与公开资料，保留隐藏设置并对明确归属的历史资料建立关联。', en: 'Unify instructor identity and public profiles, preserving visibility and linking unambiguous legacy ownership.' } },
   { n: 347, slug: 'vault_trash', desc: { zh: '添加资料库回收站时间戳，支持恢复和清空。', en: 'Add a vault Trash timestamp for restore and purge operations.' } },
   { n: 346, slug: 'remove_legacy_gan_team', desc: { zh: '删除无成员的旧 GAN 占位战队，保留三支子队的归属。', en: 'Remove the empty legacy GAN entry and preserve memberships in its three rosters.' } },
   { n: 345, slug: 'workspace_payroll', desc: { zh: '按日薪快照与已验收项目汇总月度报酬并记录付款确认', en: 'Monthly payroll from snapshotted day rates and accepted projects, with payment confirmations' } },

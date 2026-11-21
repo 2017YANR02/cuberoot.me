@@ -2063,7 +2063,7 @@ a.platform-course-lesson-row:hover { color: var(--accent); }
 .platform-admission-homepage-step { display:grid; gap:20px; min-width:0; }
 .platform-admission-homepage-step .directory-editor-layout { width:100%; }
 .platform-admission-profile-actions { display:flex; flex-wrap:wrap; gap:10px; }
-.platform-admission-profile-actions > button:last-child { margin-inline-start:auto; }
+.platform-admission-profile-actions > .platform-button:last-child { margin-inline-start:auto; }
 .platform-admission-wizard .platform-wizard-progress { grid-template-columns:repeat(4,minmax(0,1fr)); }
 .platform-admission-wizard-heading { display:grid; gap:5px; }
 .platform-admission-wizard-heading > span { font-size:.75rem; color:var(--muted-foreground); }

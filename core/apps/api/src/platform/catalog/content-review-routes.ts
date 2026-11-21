@@ -89,7 +89,7 @@ async function decideReview(c: Context, admin: boolean) {
   return sendMutation(c, result);
 }
 
-export function registerContentReviewRoutes(routes: Hono) {
-  routes.post('/platform/admin/courses/:courseId/content-reviews/:reviewId/decision', c => decideReview(c, true));
-  routes.post('/platform/instructor/courses/:courseId/content-reviews/:reviewId/withdraw', c => decideReview(c, false));
+export function registerContentReviewRoutes(platformCatalogRoutes: Hono) {
+  platformCatalogRoutes.post('/platform/admin/courses/:courseId/content-reviews/:reviewId/decision', c => decideReview(c, true));
+  platformCatalogRoutes.post('/platform/instructor/courses/:courseId/content-reviews/:reviewId/withdraw', c => decideReview(c, false));
 }
