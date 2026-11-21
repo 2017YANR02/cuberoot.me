@@ -102,7 +102,7 @@ export const desktopHost: InstalledAppHost = {
   async exportFile(text, filename) {
     if (!await invoke<boolean>('export_file', { text, filename })) throw new DOMException('Export cancelled', 'AbortError');
   },
-  writeClipboardText: browserClipboardTransport,
+  writeClipboardText: text => isTauri() ? invoke<void>('copy_text', { text }) : browserClipboardTransport(text),
   useAuth: (language) => useInstalledAuth(language, desktopAuthPort),
   useSmartCube: (options) => useInstalledSmartCube(() => new TauriBleTransport(), options),
   useTimerEffects: (phase) => useInstalledTimerEffects(phase, undefined, requestDesktopScreenWakeLock),

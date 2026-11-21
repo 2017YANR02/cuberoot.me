@@ -18,6 +18,7 @@ cc = "1"
 tauri-build = { version = "2.5.6", features = [] }
 
 [dependencies]
+arboard = { version = "3.6", default-features = false }
 keyring = "4.2.0"
 serde_json = "1"
 tauri = { version = "2.11.5", features = [] }

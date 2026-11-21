@@ -11,6 +11,13 @@ mod native_print;
 const SERVICE: &str = "me.cuberoot.app";
 
 #[tauri::command]
+fn copy_text(text: String) -> Result<(), String> {
+    arboard::Clipboard::new()
+        .and_then(|mut clipboard| clipboard.set_text(text))
+        .map_err(|error| error.to_string())
+}
+
+#[tauri::command]
 fn desktop_distribution() -> &'static str {
     if cfg!(all(target_os = "windows", feature = "microsoft-store")) {
         "microsoft-store"
@@ -103,7 +110,7 @@ pub fn run() {
                 let _ = screen_awake::apply(false);
             }
         })
-        .invoke_handler(tauri::generate_handler![navigation_menu::configure_navigation_menu, desktop_distribution, prepare_auth_callback, screen_awake::set_keep_awake, native_print::print_document, file_export::export_file, secure_get, secure_set, secure_remove, ble_notifications::ble_subscribe, ble_address::ble_device_mac])
+        .invoke_handler(tauri::generate_handler![copy_text, navigation_menu::configure_navigation_menu, desktop_distribution, prepare_auth_callback, screen_awake::set_keep_awake, native_print::print_document, file_export::export_file, secure_get, secure_set, secure_remove, ble_notifications::ble_subscribe, ble_address::ble_device_mac])
         .run(tauri::generate_context!())
         .expect("error while running CubeRoot");
 }

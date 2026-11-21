@@ -13,6 +13,7 @@ import {
   filterTimerHistorySolves,
   pruneTimerHistoryCompareSelection,
   resolveTimerHistoryComparePair,
+  formatSolveResult,
   timerHistoryCopyText,
   toggleTimerHistoryCompareSelection,
   toggleTimerHistoryTag,
@@ -52,6 +53,7 @@ export interface TimerHistoryWorkspaceProps {
   rollingPickerLabels: TimerRollingStatsPickerLabels;
   onRollingColumnsChange(columns: RollingStatKey[]): void;
   onCopyText?(text: string): Promise<void>;
+  desktopCommands?: boolean;
   viewportBottomInset?: number;
 
   historyContextKey: string;
@@ -79,7 +81,7 @@ const MOBILE_QUERY = '(max-width: 480px)';
 
 export function TimerHistoryWorkspace({
   minimal = false, searchQuery, onSearchQueryChange,
-  ref, onBlockingChange, quickMenuOpen, onQuickMenuOpenChange, dateRangeLabels, rollingPickerLabels, onRollingColumnsChange, onCopyText, viewportBottomInset,
+  ref, onBlockingChange, quickMenuOpen, onQuickMenuOpenChange, dateRangeLabels, rollingPickerLabels, onRollingColumnsChange, onCopyText, viewportBottomInset, desktopCommands,
   historyContextKey, solves, isZh, onRowClick, onBulkDelete,
   onQuickPenalty, onQuickDelete, onQuickComment,
   rollingStatColumns = DEFAULT_ROLLING_STAT_COLUMNS,
@@ -161,13 +163,15 @@ export function TimerHistoryWorkspace({
 
   const quickMenuLabels = useMemo<TimerHistoryQuickMenuLabels>(() => ({
     actions: Object.fromEntries(TIMER_HISTORY_QUICK_ACTION_IDS.map(actionId => (
-      [actionId, tr(TIMER_HISTORY_QUICK_ACTION_COPY[actionId])]
+      [actionId, tr(desktopCommands && actionId === 'history.quick.comment'
+        ? { zh: '编辑备注', en: 'Edit note' } : TIMER_HISTORY_QUICK_ACTION_COPY[actionId])]
     ))) as Record<TimerHistoryQuickActionId, string>,
+    copyResult: tr({ zh: '复制成绩', en: 'Copy result' }),
     actionTitles: {
       'history.quick.penalty-dns': tr({ zh: '未开始（DNS）', en: 'Did Not Start' }),
     },
     menu: tr({ zh: '更多操作', en: 'More actions' }),
-  }), [isZh]);
+  }), [desktopCommands, isZh]);
   const compareLabels = useMemo<TimerHistoryCompareLabels>(() => ({
     bBetter: tr({ zh: 'B 更好', en: 'B better' }),
     bWorse: tr({ zh: 'B 更差', en: 'B worse' }),
@@ -214,14 +218,15 @@ export function TimerHistoryWorkspace({
         ? (solve, penalty) => onQuickPenalty(solve.id, penalty)
         : undefined,
       onComment: onQuickComment,
+      onCopyResult: desktopCommands && onCopyText ? solve => onCopyText(formatSolveResult(solve)) : undefined,
       onCopyScramble: async solve => {
         try { await (onCopyText ? onCopyText(timerHistoryCopyText(solve)) : navigator.clipboard.writeText(timerHistoryCopyText(solve))); } catch { /* ignore */ }
       },
       onDelete: onQuickDelete ? solve => onQuickDelete(solve.id) : undefined,
       viewportBottomInset,
-      variant: isMobile ? 'sheet' : 'popup',
+      variant: isMobile && !desktopCommands ? 'sheet' : 'popup',
     };
-  }, [isMobile, onQuickComment, onQuickDelete, onQuickPenalty, quickMenuLabels, onCopyText, viewportBottomInset, quickMenuOpen, onQuickMenuOpenChange]);
+  }, [desktopCommands, isMobile, onQuickComment, onQuickDelete, onQuickPenalty, quickMenuLabels, onCopyText, viewportBottomInset, quickMenuOpen, onQuickMenuOpenChange]);
 
   // Structured filters
   const [filtersExpanded, setFiltersExpanded] = useState(false);

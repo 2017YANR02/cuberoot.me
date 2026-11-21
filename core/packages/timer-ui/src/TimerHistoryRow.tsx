@@ -41,6 +41,7 @@ export interface TimerHistoryQuickMenuLabels {
   actions: Readonly<Record<TimerHistoryQuickActionId, string>>;
   /** Optional explanatory tooltips, keyed by the same shared action IDs. */
   actionTitles?: Readonly<Partial<Record<TimerHistoryQuickActionId, string>>>;
+  copyResult?: string;
   menu: string;
 }
 
@@ -51,6 +52,7 @@ export interface TimerHistoryQuickMenuLabels {
 export interface TimerHistoryQuickMenuActions {
   onChangePenalty?: (solve: Solve, penalty: Penalty) => void;
   onComment?: (solve: Solve, index: number) => void;
+  onCopyResult?: (solve: Solve) => void | Promise<void>;
   onCopyScramble?: (solve: Solve) => void | Promise<void>;
   onDelete?: (solve: Solve) => void;
 }
@@ -294,6 +296,16 @@ function TimerHistoryQuickMenu({
     else items[(current - 1 + items.length) % items.length]?.focus();
   };
 
+  const copyResultItem = actions.onCopyResult && labels.copyResult && (
+    <button className="timer-history-quick-item" role="menuitem" type="button" onClick={() => {
+      onClose();
+      void actions.onCopyResult?.(solve);
+      restoreRowFocus();
+    }}>
+      <span className="timer-history-quick-icon"><Clipboard aria-hidden="true" size={14} /></span>
+      <span className="timer-history-quick-label">{labels.copyResult}</span>
+    </button>
+  );
   const items = groups.map((group, groupIndex) => (
     <Fragment key={group[0]!.id}>
       {groupIndex > 0 && <div className="timer-history-quick-separator" role="separator" />}
@@ -362,6 +374,7 @@ function TimerHistoryQuickMenu({
         width: geometry.width,
       } : undefined}
     >
+      {copyResultItem}
       {items}
     </div>,
     document.body,
@@ -482,13 +495,25 @@ export function TimerHistoryRow({
           selected ? 'is-selected' : '',
           className ?? '',
         ].filter(Boolean).join(' ')}
+        onCopy={event => {
+          if (!quickMenu?.onCopyResult || !window.getSelection()?.isCollapsed) return;
+          event.clipboardData.setData('text/plain', formatSolveResult(solve));
+          event.preventDefault();
+        }}
         onClick={activate}
         onContextMenu={(event) => {
           if (!quickEnabled) return;
           event.preventDefault();
+          event.currentTarget.focus();
           openMenu(event.clientX, event.clientY);
         }}
         onKeyDown={(event) => {
+          if (quickMenu?.onCopyResult && event.key.toLowerCase() === 'c' && (event.metaKey || event.ctrlKey)
+            && !event.altKey && !event.shiftKey && window.getSelection()?.isCollapsed) {
+            event.preventDefault();
+            void quickMenu.onCopyResult(solve);
+            return;
+          }
           if (event.key !== 'ContextMenu' && !(event.shiftKey && event.key === 'F10')) return;
           if (!quickEnabled) return;
           event.preventDefault();

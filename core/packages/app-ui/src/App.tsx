@@ -5094,7 +5094,7 @@ children: <>
               sessionData={store!.database.sessions.map(session => ({session,byEvent:store!.database.dataBySession[session.id] ?? {}}))}
               activeSessionId={store!.database.activeSessionId} onOpenFull={() => setStatsOpen(true)} viewportBottomInset={primaryNavBottomInset} />}
             <div hidden={historyTab !== 'history'}>
-            <TimerHistoryWorkspace minimal searchQuery={historyQuery} onSearchQueryChange={setHistoryQuery} onBlockingChange={setHistoryModalOpen} quickMenuOpen={openOverlay === TIMER_OVERLAY_IDS.historyQuickMenu} onQuickMenuOpenChange={handleTimerOverlayOpenChange} ref={historyWorkspaceRef} historyContextKey={historyContext} solves={solves} isZh={language === 'zh'}
+            <TimerHistoryWorkspace desktopCommands={Boolean(host.listenDesktopNavigation)} minimal searchQuery={historyQuery} onSearchQueryChange={setHistoryQuery} onBlockingChange={setHistoryModalOpen} quickMenuOpen={openOverlay === TIMER_OVERLAY_IDS.historyQuickMenu} onQuickMenuOpenChange={handleTimerOverlayOpenChange} ref={historyWorkspaceRef} historyContextKey={historyContext} solves={solves} isZh={language === 'zh'}
               dateRangeLabels={dateRangeLabels} rollingPickerLabels={rollingPickerLabels}
               rollingStatColumns={store!.settings.statsRollingColumns}
               onRollingColumnsChange={statsRollingColumns => updateSettings({statsRollingColumns})}
