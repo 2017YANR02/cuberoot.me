@@ -1212,8 +1212,13 @@ export default function LandingSearch({
               aria-label={tr({ zh: '发送语音提问', en: 'Send voice question' })}
               onClick={() => { setVoiceAction('send'); micStop(); }}><ArrowUp size={24} /></button>
           </div>
-        ) : <div
+        ) : (
+        // allow-manual-search: Results update on change. The form identifies the field to password managers.
+        <form
           className="landing-search-input"
+          role="search"
+          method="get"
+          onSubmit={event => event.preventDefault()}
           onMouseDown={e => {
             // 点击容器自身(上下 padding / 元素间 gap 死区)→ 聚焦输入框
             if (e.target === e.currentTarget) {
@@ -1238,6 +1243,7 @@ export default function LandingSearch({
           <input
             ref={textInputRef}
             type="search"
+            name="search"
             autoComplete="off"
             // iOS Chromium autofill adds __gcruniqueid before hydration; tolerate it on this control only.
             suppressHydrationWarning
@@ -1297,7 +1303,7 @@ export default function LandingSearch({
               aria-label={assistantAllowed ? tr({ zh: '提问', en: 'Ask' }) : authSendLabel} title={assistantAllowed ? tr({ zh: '提问（回车）', en: 'Ask (Enter)' }) : authSendLabel}>
               {assistantAllowed ? <ArrowUp size={20} strokeWidth={1.75} /> : authSendLabel}
             </button>}
-        </div>}
+        </form>)}
         {plusMenuOpen && (
           <div ref={plusMenuRef} className="landing-search-plus-menu" data-site-surface="popover" role="menu">
             {!searchOnly && <button type="button" className="landing-search-plus-menu-btn" role="menuitem" aria-label={tr({zh:'图片提问',en:'Ask with images'})} onClick={() => {
