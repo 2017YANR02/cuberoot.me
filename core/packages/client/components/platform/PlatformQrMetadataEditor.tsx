@@ -169,11 +169,11 @@ export function PlatformQrMetadataEditor({ entity, resourceId, busy, runAction, 
       <div className="platform-form-grid">
         <label>
           <span>{t('编码', 'Code')}</span>
-          <input className="platform-field-control" value={values.code} disabled={Boolean(entity.data?.isPrinted) || Boolean(cardDraft)} pattern="[a-z0-9][a-z0-9_-]{5,79}" minLength={6} maxLength={80} onChange={(event) => setValues((current) => ({ ...current, code: event.target.value }))} />
+          <input autoComplete="off" className="platform-field-control" value={values.code} disabled={Boolean(entity.data?.isPrinted) || Boolean(cardDraft)} pattern="[a-z0-9][a-z0-9_-]{5,79}" minLength={6} maxLength={80} onChange={(event) => setValues((current) => ({ ...current, code: event.target.value }))} />
         </label>
         <label>
           <span>{t('内部名称', 'Internal label')}</span>
-          <input className="platform-field-control" value={values.label} required maxLength={160} onChange={(event) => setValues((current) => ({ ...current, label: event.target.value }))} />
+          <input autoComplete="off" className="platform-field-control" value={values.label} required maxLength={160} onChange={(event) => setValues((current) => ({ ...current, label: event.target.value }))} />
         </label>
         <label>
           <span>{t('页面行为', 'Page behavior')}</span>
@@ -192,23 +192,23 @@ export function PlatformQrMetadataEditor({ entity, resourceId, busy, runAction, 
         </label>
         <label className="platform-form-wide">
           <span>{values.targetKind === 'content' ? t('文字内容', 'Content') : t('目标值', 'Target value')}</span>
-          <textarea className="platform-field-control platform-field-textarea" rows={values.targetKind === 'content' ? 4 : 2} required maxLength={4000} value={values.targetValue} onChange={(event) => setValues((current) => ({ ...current, targetValue: event.target.value }))} />
+          <textarea autoComplete="off" className="platform-field-control platform-field-textarea" rows={values.targetKind === 'content' ? 4 : 2} required maxLength={4000} value={values.targetValue} onChange={(event) => setValues((current) => ({ ...current, targetValue: event.target.value }))} />
         </label>
         <label>
           <span>{t('中文标题', 'Chinese title')}</span>
-          <input className="platform-field-control" value={values.titleZh} maxLength={240} onChange={(event) => setValues((current) => ({ ...current, titleZh: event.target.value }))} />
+          <input autoComplete="off" className="platform-field-control" value={values.titleZh} maxLength={240} onChange={(event) => setValues((current) => ({ ...current, titleZh: event.target.value }))} />
         </label>
         <label>
           <span>{t('英文标题', 'English title')}</span>
-          <input className="platform-field-control" value={values.titleEn} maxLength={240} onChange={(event) => setValues((current) => ({ ...current, titleEn: event.target.value }))} />
+          <input autoComplete="off" className="platform-field-control" value={values.titleEn} maxLength={240} onChange={(event) => setValues((current) => ({ ...current, titleEn: event.target.value }))} />
         </label>
         <label className="platform-form-wide">
           <span>{t('落地页介绍与卡片背面副文案', 'Landing introduction and card back subline')}</span>
-          <textarea className="platform-field-control platform-field-textarea" rows={4} maxLength={1000} value={values.intro} onChange={(event) => setValues((current) => ({ ...current, intro: event.target.value }))} />
+          <textarea autoComplete="off" className="platform-field-control platform-field-textarea" rows={4} maxLength={1000} value={values.intro} onChange={(event) => setValues((current) => ({ ...current, intro: event.target.value }))} />
         </label>
         <label className="platform-form-wide">
           <span>{t('卡片术语', 'Card term')}</span>
-          <input className="platform-field-control" maxLength={160} value={values.term} onChange={(event) => setValues((current) => ({ ...current, term: event.target.value }))} />
+          <input autoComplete="off" className="platform-field-control" maxLength={160} value={values.term} onChange={(event) => setValues((current) => ({ ...current, term: event.target.value }))} />
         </label>
         <BoolToggle value={values.isPrinted} onChange={(isPrinted) => setValues((current) => ({ ...current, isPrinted }))} label={t('已经印刷', 'Already printed')} />
       </div>
@@ -226,9 +226,9 @@ export function PlatformQrMetadataEditor({ entity, resourceId, busy, runAction, 
             {values.links.map((item, index) => (
               <li key={index} className={index === 0 ? styles.primaryLink : undefined}>
                 <div className={styles.linkFields}>
-                  <label><span>{t('名称', 'Label')}</span><input className={styles.linkField} value={item.label} maxLength={160} onChange={(event) => updateLink(index, 'label', event.target.value)} /></label>
-                  <label><span>{t('链接', 'URL')}</span><input className={styles.linkField} value={item.href} maxLength={4000} inputMode="url" onChange={(event) => updateLink(index, 'href', event.target.value)} /></label>
-                  <label className={styles.noteField}><span>{t('说明（可选）', 'Note (optional)')}</span><input className={styles.linkField} value={item.note ?? ''} maxLength={240} onChange={(event) => updateLink(index, 'note', event.target.value)} /></label>
+                  <label><span>{t('名称', 'Label')}</span><input autoComplete="off" className={styles.linkField} value={item.label} maxLength={160} onChange={(event) => updateLink(index, 'label', event.target.value)} /></label>
+                  <label><span>{t('链接', 'URL')}</span><input autoComplete="off" className={styles.linkField} value={item.href} maxLength={4000} inputMode="url" onChange={(event) => updateLink(index, 'href', event.target.value)} /></label>
+                  <label className={styles.noteField}><span>{t('说明（可选）', 'Note (optional)')}</span><input autoComplete="off" className={styles.linkField} value={item.note ?? ''} maxLength={240} onChange={(event) => updateLink(index, 'note', event.target.value)} /></label>
                 </div>
                 <div className={styles.linkActions}>
                   <button type="button" className={styles.linkDrag} aria-label={t('拖动排序', 'Drag to reorder')} onPointerDown={event => { dragIndex.current = index; event.currentTarget.setPointerCapture(event.pointerId); }} onPointerMove={event => {

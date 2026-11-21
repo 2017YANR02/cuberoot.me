@@ -575,6 +575,7 @@ export default function ChainExplorer({ scramble, lang }: Props) {
                 ))}
                 <span className="chx-inline-add">
                   <input
+                    autoComplete="off"
                     className="chx-inline-add-input"
                     value={triggerInput}
                     placeholder={t('如 R U R', "e.g. R U R")}
@@ -602,6 +603,7 @@ export default function ChainExplorer({ scramble, lang }: Props) {
                 ))}
                 <span className="chx-inline-add">
                   <input
+                    autoComplete="off"
                     className="chx-inline-add-input"
                     value={subsetInput}
                     placeholder={t('如 4a1', 'e.g. 4a1')}

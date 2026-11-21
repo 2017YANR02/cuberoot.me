@@ -889,6 +889,7 @@ export function WcaStudentAdder({
             <label className="wca-student-batch-names">
               <span>{tr({ zh: '学生名单', en: 'Student list' })}</span>
               <textarea
+                autoComplete="off"
                 className="wca-student-batch-input"
                 value={batchNamesText}
                 rows={4}

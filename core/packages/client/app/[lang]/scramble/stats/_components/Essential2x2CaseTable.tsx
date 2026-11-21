@@ -94,6 +94,7 @@ export default function Essential2x2CaseTable({ isZh, rows }: { isZh: boolean; r
       <div className="ess-cases-controls">
         <div className="ess-search">
           <input
+            autoComplete="off"
             className="ess-search-input"
             type="text"
             value={query}

@@ -497,12 +497,14 @@ function BilingualFields(props: { v: TermInput; set: (patch: Partial<TermInput>)
     <>
       <div className="wiki-form-bi">
         <input
+          autoComplete="off"
           type="text" className="wiki-form-input" value={v.headEn}
           onChange={e => set({ headEn: e.target.value })}
           placeholder={tr({ zh: '标题 EN(如 OLL (Orientation of LL))', en: 'Head EN (e.g. OLL (Orientation of LL))' })}
           maxLength={200}
         />
         <input
+          autoComplete="off"
           type="text" className="wiki-form-input" value={v.headZh}
           onChange={e => set({ headZh: e.target.value })}
           placeholder={tr({ zh: '标题中文(如 顶层色向)', en: 'Head ZH (e.g. 顶层色向)' })}
@@ -511,12 +513,14 @@ function BilingualFields(props: { v: TermInput; set: (patch: Partial<TermInput>)
       </div>
       <div className="wiki-form-bi">
         <textarea
+          autoComplete="off"
           className="wiki-form-textarea" value={v.bodyEn}
           onChange={e => set({ bodyEn: e.target.value })}
           placeholder={tr({ zh: '描述 EN(可选,可多段)', en: 'Body EN (optional, multi-line)' })}
           rows={3} maxLength={8192}
         />
         <textarea
+          autoComplete="off"
           className="wiki-form-textarea" value={v.bodyZh}
           onChange={e => set({ bodyZh: e.target.value })}
           placeholder={tr({ zh: '描述中文(可选,可多段)', en: 'Body ZH (optional, multi-line)' })}
@@ -593,6 +597,7 @@ function AdditionForm(props: {
   return (
     <div className="wiki-form wiki-form-addition">
       <textarea
+        autoComplete="off"
         className="wiki-form-textarea"
         value={body}
         onChange={e => setBody(e.target.value)}

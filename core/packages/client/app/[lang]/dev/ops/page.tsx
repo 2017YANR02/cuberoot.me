@@ -443,7 +443,7 @@ function OpsEditor({ mode, initial, onClose, onSaved }: {
             <label className="ops-field">
               <span>id <em>{tr({ zh: '(小写 kebab,创建后不可改)', en: '(lowercase kebab, immutable after create)'
             })}</em></span>
-              <input className="ops-field-input" value={form.id ?? ''} onChange={(e) => set('id', e.target.value)} placeholder="my-new-command" />
+              <input autoComplete="off" className="ops-field-input" value={form.id ?? ''} onChange={(e) => set('id', e.target.value)} placeholder="my-new-command" />
             </label>
           )}
           <div className="ops-field-row">
@@ -456,27 +456,27 @@ function OpsEditor({ mode, initial, onClose, onSaved }: {
             </label>
             <label className="ops-field">
               <span>cwd <em>(optional)</em></span>
-              <input className="ops-field-input" value={form.cwd ?? ''} onChange={(e) => set('cwd', e.target.value)} placeholder="core/" />
+              <input autoComplete="off" className="ops-field-input" value={form.cwd ?? ''} onChange={(e) => set('cwd', e.target.value)} placeholder="core/" />
             </label>
           </div>
           <div className="ops-field-row">
             <label className="ops-field">
               <span>title_zh</span>
-              <input className="ops-field-input" value={form.title_zh} onChange={(e) => set('title_zh', e.target.value)} />
+              <input autoComplete="off" className="ops-field-input" value={form.title_zh} onChange={(e) => set('title_zh', e.target.value)} />
             </label>
             <label className="ops-field">
               <span>title_en</span>
-              <input className="ops-field-input" value={form.title_en} onChange={(e) => set('title_en', e.target.value)} />
+              <input autoComplete="off" className="ops-field-input" value={form.title_en} onChange={(e) => set('title_en', e.target.value)} />
             </label>
           </div>
           <div className="ops-field-row">
             <label className="ops-field">
               <span>desc_zh</span>
-              <textarea className="ops-field-textarea" value={form.desc_zh} onChange={(e) => set('desc_zh', e.target.value)} rows={3} />
+              <textarea autoComplete="off" className="ops-field-textarea" value={form.desc_zh} onChange={(e) => set('desc_zh', e.target.value)} rows={3} />
             </label>
             <label className="ops-field">
               <span>desc_en</span>
-              <textarea className="ops-field-textarea" value={form.desc_en} onChange={(e) => set('desc_en', e.target.value)} rows={3} />
+              <textarea autoComplete="off" className="ops-field-textarea" value={form.desc_en} onChange={(e) => set('desc_en', e.target.value)} rows={3} />
             </label>
           </div>
           <label className="ops-field">
@@ -484,8 +484,8 @@ function OpsEditor({ mode, initial, onClose, onSaved }: {
             <div className="ops-chip-edit">
               {form.chips.map((c, i) => (
                 <div key={i} className="ops-chip-row">
-                  <input className="ops-field-input ops-chip-row-input" placeholder="zh" value={c.zh} onChange={(e) => onChipChange(i, 'zh', e.target.value)} />
-                  <input className="ops-field-input ops-chip-row-input" placeholder="en" value={c.en} onChange={(e) => onChipChange(i, 'en', e.target.value)} />
+                  <input autoComplete="off" className="ops-field-input ops-chip-row-input" placeholder="zh" value={c.zh} onChange={(e) => onChipChange(i, 'zh', e.target.value)} />
+                  <input autoComplete="off" className="ops-field-input ops-chip-row-input" placeholder="en" value={c.en} onChange={(e) => onChipChange(i, 'en', e.target.value)} />
                   <button type="button" className="ops-chip-del" onClick={() => onChipDel(i)} aria-label="remove"><X size={12} /></button>
                 </div>
               ))}
@@ -495,12 +495,12 @@ function OpsEditor({ mode, initial, onClose, onSaved }: {
           <label className="ops-field">
             <span>cmd <em>{form.category === 'prompt' ? tr({ zh: '(提示词正文)', en: '(prompt body)'
                                   }) : tr({ zh: '(shell 命令,多行 \\n)', en: '(shell command, multi-line ok)' })}</em></span>
-            <textarea className="ops-field-mono ops-field-textarea" value={form.cmd} onChange={(e) => set('cmd', e.target.value)} rows={6} />
+            <textarea autoComplete="off" className="ops-field-mono ops-field-textarea" value={form.cmd} onChange={(e) => set('cmd', e.target.value)} rows={6} />
           </label>
           <label className="ops-field">
             <span>variants <em>{tr({ zh: '(JSON 数组,留空即无)', en: '(JSON array, leave empty for none)'
             })}</em></span>
-            <textarea className="ops-field-mono ops-field-textarea" value={variantsJson} onChange={(e) => setVariantsJson(e.target.value)} rows={5} spellCheck={false} />
+            <textarea autoComplete="off" className="ops-field-mono ops-field-textarea" value={variantsJson} onChange={(e) => setVariantsJson(e.target.value)} rows={5} spellCheck={false} />
           </label>
           {error && <div className="ops-modal-error">{error}</div>}
         </div>

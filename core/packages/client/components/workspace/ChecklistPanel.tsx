@@ -102,14 +102,14 @@ function SoftwareChecklistPanel({ list, allowItemDelete = false, itemStatus, arc
       </section>;
     })}</div>
 
-    {editable && <Form submit={async () => { if (!text.trim()) return; const item = { id: crypto.randomUUID(), text: text.trim(), done: false }; await save([...list.items, item]); setExpandedGroups(previous => ({ ...previous, [isOptional(item) ? 'optional' : 'required']: true })); setText(''); }}><div className="workspace-add-item"><input className="workspace-add-input" aria-label={t('新增事项', 'New task')} placeholder={t('新增事项…', 'Add a task…')} value={text} onChange={event => setText(event.target.value)} required maxLength={160} /><Button action="add" type="submit" disabled={!text.trim() || busy || list.items.length >= 200}>{t('添加', 'Add')}</Button></div></Form>}
+    {editable && <Form submit={async () => { if (!text.trim()) return; const item = { id: crypto.randomUUID(), text: text.trim(), done: false }; await save([...list.items, item]); setExpandedGroups(previous => ({ ...previous, [isOptional(item) ? 'optional' : 'required']: true })); setText(''); }}><div className="workspace-add-item"><input autoComplete="off" className="workspace-add-input" aria-label={t('新增事项', 'New task')} placeholder={t('新增事项…', 'Add a task…')} value={text} onChange={event => setText(event.target.value)} required maxLength={160} /><Button action="add" type="submit" disabled={!text.trim() || busy || list.items.length >= 200}>{t('添加', 'Add')}</Button></div></Form>}
     {renaming && list.canEdit && <EditorDialog title={t('修改清单名称', 'Rename checklist')} onClose={() => setRenaming(false)}>
       <Form submit={async data => { await save(list.items, value(data, 'name').trim()); setRenaming(false); }}>
-        <Field label={t('名称', 'Name')}><input name="name" required maxLength={80} defaultValue={list.name} /></Field>
+        <Field label={t('名称', 'Name')}><input autoComplete="off" name="name" required maxLength={80} defaultValue={list.name} /></Field>
         <div className="staff-actions staff-form-actions"><Button action="save" type="submit" disabled={busy}>{t('保存', 'Save')}</Button></div>
       </Form>
     </EditorDialog>}
-    {editing && editable && <EditorDialog title={t('编辑事项', 'Edit task')} onClose={() => setEditing(null)}><Form submit={async data => { await save(list.items.map(row => row.id === editing ? { ...row, text: value(data, 'text') } : row)); setEditing(null); }}><Field label={t('事项', 'Task')}><input name="text" required maxLength={160} defaultValue={list.items.find(item => item.id === editing)?.text} /></Field><div className="staff-actions staff-form-actions"><Button action="save" type="submit" disabled={busy}>{t('保存', 'Save')}</Button></div></Form></EditorDialog>}
+    {editing && editable && <EditorDialog title={t('编辑事项', 'Edit task')} onClose={() => setEditing(null)}><Form submit={async data => { await save(list.items.map(row => row.id === editing ? { ...row, text: value(data, 'text') } : row)); setEditing(null); }}><Field label={t('事项', 'Task')}><input autoComplete="off" name="text" required maxLength={160} defaultValue={list.items.find(item => item.id === editing)?.text} /></Field><div className="staff-actions staff-form-actions"><Button action="save" type="submit" disabled={busy}>{t('保存', 'Save')}</Button></div></Form></EditorDialog>}
 
   </section>;
 }

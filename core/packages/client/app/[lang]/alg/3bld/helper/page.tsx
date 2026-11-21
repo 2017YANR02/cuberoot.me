@@ -437,6 +437,7 @@ export default function HelperPage(): JSX.Element {
           </div>
           <div className="bld-input-wrap bld-helper-scr-wrap">
             <textarea
+              autoComplete="off"
               className="bld-modal-textarea bld-helper-scr"
               value={rawScramble}
               onChange={(e) => setRawScramble(e.target.value)}

@@ -552,6 +552,7 @@ export default function QuickMode({ t, subMode, showPreview, onTogglePreview, sq
                 <EventIcon event={ev} title={eventDisplayName(ev, isZh)} />
               </div>
               <textarea
+                autoComplete="off"
                 className="gen-tn-paste-area"
                 value={pasteTexts[ev] ?? ''}
                 onChange={(e) => setPasteTexts((prev) => ({ ...prev, [ev]: e.target.value }))}

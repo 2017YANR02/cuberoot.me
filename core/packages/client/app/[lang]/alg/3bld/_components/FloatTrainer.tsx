@@ -370,6 +370,7 @@ export function FloatTrainer({ piece }: FloatTrainerProps): JSX.Element {
           <label className="bld-field-label" htmlFor="bld-floatorder">{orderLabel}</label>
           <div className="bld-input-wrap">
             <input
+              autoComplete="off"
               id="bld-floatorder"
               className="bld-input"
               value={floatOrder}
@@ -389,6 +390,7 @@ export function FloatTrainer({ piece }: FloatTrainerProps): JSX.Element {
           <label className="bld-field-label" htmlFor="bld-ejectpos">{ejectLabel}</label>
           <div className="bld-input-wrap">
             <input
+              autoComplete="off"
               id="bld-ejectpos"
               className="bld-input"
               value={ejectPos}

@@ -176,6 +176,7 @@ function SettingsPanel({
                 <div className="cmt-setting-row">
                     <span>{t('阶数', 'Order')}:</span>
                     <input
+                        autoComplete="off"
                         type="text"
                         inputMode="numeric"
                         className="cmt-num-input"
@@ -217,6 +218,7 @@ function SettingsPanel({
                 <div className="cmt-setting-row">
                     <span>{t('最大深度', 'Max Depth')}:</span>
                     <input
+                        autoComplete="off"
                         type="text"
                         inputMode="numeric"
                         className="cmt-num-input"
@@ -233,6 +235,7 @@ function SettingsPanel({
                 <div className="cmt-setting-row">
                     <span>{t('C:[A,B] 评分 = ', 'Score of C:[A,B] = ')}</span>
                     <input
+                        autoComplete="off"
                         type="text"
                         inputMode="decimal"
                         className="cmt-num-input"
@@ -242,6 +245,7 @@ function SettingsPanel({
                     />
                     <span>· stm(A) +</span>
                     <input
+                        autoComplete="off"
                         type="text"
                         inputMode="decimal"
                         className="cmt-num-input"
@@ -256,6 +260,7 @@ function SettingsPanel({
                 <div className="cmt-setting-row">
                     <span>{t('加项惩罚', 'Addition penalty')}:</span>
                     <input
+                        autoComplete="off"
                         type="text"
                         inputMode="decimal"
                         className="cmt-num-input"

@@ -168,7 +168,7 @@ function ReviewForm({ orgSlug, assignmentId, studentId, onCreated }: { orgSlug: 
           </select>
         </label>
         <label>{t('评分（可留空）', 'Rating (optional)')}<input className="org-form-control" name="rating" type="number" min={1} max={5} step={1} /></label>
-        <label className="org-field-wide">{t('反馈', 'Feedback')}<textarea className="org-form-control org-form-textarea" name="feedback" required maxLength={8_000} /></label>
+        <label className="org-field-wide">{t('反馈', 'Feedback')}<textarea autoComplete="off" className="org-form-control org-form-textarea" name="feedback" required maxLength={8_000} /></label>
         <div className="org-form-actions"><button className="org-form-button" type="submit">{submitting ? t('保存中…', 'Saving…') : t('保存批改', 'Save review')}</button></div>
       </fieldset>
       <MutationMessage message={error || message} error={!!error} />

@@ -236,6 +236,7 @@ export default function ClockSolver() {
           ) : (
             <div className="clocks-recon">
               <textarea
+                autoComplete="off"
                 className="clocks-recon-input"
                 value={reconInput}
                 onChange={(e) => setReconInput(e.target.value)}

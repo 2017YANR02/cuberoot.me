@@ -606,7 +606,7 @@ function SessionDetailContent({
                 </label>
                 <label className="org-field-wide">
                   <span>{t('请假原因', 'Leave reason')}</span>
-                  <textarea className="org-form-control org-form-textarea" required maxLength={500} value={leaveReason} onChange={(event) => { setLeaveReason(event.target.value); leaveOperation.reset(); setMessage(''); setMutationError(''); }} />
+                  <textarea autoComplete="off" className="org-form-control org-form-textarea" required maxLength={500} value={leaveReason} onChange={(event) => { setLeaveReason(event.target.value); leaveOperation.reset(); setMessage(''); setMutationError(''); }} />
                 </label>
                 <div className="org-form-actions"><button className="org-form-button org-secondary-button" type="submit">{savingLeave ? t('录入中…', 'Recording…') : t('代学员录入请假', 'Record leave for student')}</button></div>
               </fieldset>
@@ -633,7 +633,7 @@ function SessionDetailContent({
                       <div className="org-row-action">
                         <label>
                           <span>{t('审批或取消说明', 'Decision or cancellation note')}</span>
-                          <input className="org-table-control" maxLength={500} value={decisionReasons[request.id] ?? ''} onChange={(event) => { setDecisionReasons((value) => ({ ...value, [request.id]: event.target.value })); leaveDecisionOperation.reset(); setMessage(''); setMutationError(''); }} />
+                          <input autoComplete="off" className="org-table-control" maxLength={500} value={decisionReasons[request.id] ?? ''} onChange={(event) => { setDecisionReasons((value) => ({ ...value, [request.id]: event.target.value })); leaveDecisionOperation.reset(); setMessage(''); setMutationError(''); }} />
                         </label>
                         <button type="button" className="org-primary-button" disabled={savingLeave} onClick={() => { void decideLeave(request, 'approved'); }}>{t('批准', 'Approve')}</button>
                         <button type="button" className="org-secondary-button" disabled={savingLeave} onClick={() => { void decideLeave(request, 'rejected'); }}>{t('驳回', 'Reject')}</button>
@@ -671,7 +671,7 @@ function SessionDetailContent({
               </label>
               <label className="org-field-wide">
                 <span>{t('安排说明', 'Arrangement note')}</span>
-                <textarea className="org-form-control org-form-textarea" required maxLength={500} value={makeupReason} onChange={(event) => { setMakeupReason(event.target.value); makeupOperation.reset(); setMessage(''); setMutationError(''); }} />
+                <textarea autoComplete="off" className="org-form-control org-form-textarea" required maxLength={500} value={makeupReason} onChange={(event) => { setMakeupReason(event.target.value); makeupOperation.reset(); setMessage(''); setMutationError(''); }} />
               </label>
               <div className="org-form-actions"><button className="org-form-button org-primary-button" type="submit" disabled={!makeupTargetSessionId}>{t('安排补课', 'Arrange makeup')}</button></div>
             </fieldset>
@@ -702,7 +702,7 @@ function SessionDetailContent({
             <fieldset className="org-plain-fieldset" disabled={cancellingSession}>
               <label className="org-field-wide">
                 <span>{t('取消原因', 'Cancellation reason')}</span>
-                <textarea className="org-form-control org-form-textarea" required maxLength={500} value={sessionCancelReason} onChange={(event) => { setSessionCancelReason(event.target.value); sessionCancelOperation.reset(); setMessage(''); setMutationError(''); }} />
+                <textarea autoComplete="off" className="org-form-control org-form-textarea" required maxLength={500} value={sessionCancelReason} onChange={(event) => { setSessionCancelReason(event.target.value); sessionCancelOperation.reset(); setMessage(''); setMutationError(''); }} />
               </label>
               <div className="org-form-actions"><button className="org-form-button org-secondary-button" type="submit">{cancellingSession ? t('取消中…', 'Cancelling…') : t('确认取消课次', 'Confirm session cancellation')}</button></div>
             </fieldset>
@@ -747,6 +747,7 @@ function SessionDetailContent({
                 <label>
                   <span>{t('本次课摘要', 'Lesson summary')}</span>
                   <textarea
+                    autoComplete="off"
                     className="org-form-textarea"
                     required
                     maxLength={2000}
@@ -756,19 +757,19 @@ function SessionDetailContent({
                 </label>
                 <label>
                   <span>{t('表现好的地方', 'Strengths')}</span>
-                  <textarea className="org-form-textarea" maxLength={4000} value={feedbackStrengths} onChange={(event) => { setFeedbackStrengths(event.target.value); resetFeedbackIntent(); }} />
+                  <textarea autoComplete="off" className="org-form-textarea" maxLength={4000} value={feedbackStrengths} onChange={(event) => { setFeedbackStrengths(event.target.value); resetFeedbackIntent(); }} />
                 </label>
                 <label>
                   <span>{t('需要改进', 'Challenges')}</span>
-                  <textarea className="org-form-textarea" maxLength={4000} value={feedbackChallenges} onChange={(event) => { setFeedbackChallenges(event.target.value); resetFeedbackIntent(); }} />
+                  <textarea autoComplete="off" className="org-form-textarea" maxLength={4000} value={feedbackChallenges} onChange={(event) => { setFeedbackChallenges(event.target.value); resetFeedbackIntent(); }} />
                 </label>
                 <label>
                   <span>{t('下阶段目标', 'Next goals')}</span>
-                  <textarea className="org-form-textarea" maxLength={4000} value={feedbackNextGoals} onChange={(event) => { setFeedbackNextGoals(event.target.value); resetFeedbackIntent(); }} />
+                  <textarea autoComplete="off" className="org-form-textarea" maxLength={4000} value={feedbackNextGoals} onChange={(event) => { setFeedbackNextGoals(event.target.value); resetFeedbackIntent(); }} />
                 </label>
                 <label>
                   <span>{t('内部备注', 'Internal notes')}</span>
-                  <textarea className="org-form-textarea" maxLength={4000} value={feedbackInternalNotes} onChange={(event) => { setFeedbackInternalNotes(event.target.value); resetFeedbackIntent(); }} />
+                  <textarea autoComplete="off" className="org-form-textarea" maxLength={4000} value={feedbackInternalNotes} onChange={(event) => { setFeedbackInternalNotes(event.target.value); resetFeedbackIntent(); }} />
                   <small className="org-help">{t('内部备注始终仅教职员工可见。', 'Internal notes always remain staff-only.')}</small>
                 </label>
                 <div className="org-form-actions">

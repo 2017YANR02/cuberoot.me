@@ -155,6 +155,7 @@ export default function TeachingConversationList({
               <label className="teaching-field-wide">
                 {t('主题', 'Subject')}
                 <input
+                  autoComplete="off"
                   className="teaching-form-control"
                   value={subject}
                   onChange={(event) => setSubject(event.target.value)}
@@ -165,6 +166,7 @@ export default function TeachingConversationList({
               <label className="teaching-field-wide">
                 {t('消息内容', 'Message')}
                 <textarea
+                  autoComplete="off"
                   className="teaching-form-control teaching-form-textarea teaching-conversation-compose"
                   value={body}
                   onChange={(event) => setBody(event.target.value)}

@@ -547,6 +547,7 @@ export function PlatformQrCardStudio({
                   {guides.y != null ? <span className={`${styles.snapGuide} ${styles.snapGuideY}`} style={{ top: guides.y }} aria-hidden /> : null}
                   {inlineEdit ? (
                     <textarea
+                      autoComplete="off"
                       autoFocus
                       className={styles.inlineEditor}
                       value={inlineEdit.value}
@@ -602,31 +603,31 @@ export function PlatformQrCardStudio({
               <div className={styles.contentFields}>
                 <label>
                   <span>{t('正面文案', 'Front copy')}</span>
-                  <textarea className={`${styles.fieldControl} ${styles.fieldTextarea}`} rows={3} maxLength={500} value={activeCard.quote} placeholder={resolveQrCardContent(DEFAULT_QR_CARD, activeEntity?.title ?? '', activeIndex).quote} onFocus={() => setSelectedElement('quote')} onChange={(event) => updateDraft((card) => ({ ...card, quote: event.target.value }))} />
+                  <textarea autoComplete="off" className={`${styles.fieldControl} ${styles.fieldTextarea}`} rows={3} maxLength={500} value={activeCard.quote} placeholder={resolveQrCardContent(DEFAULT_QR_CARD, activeEntity?.title ?? '', activeIndex).quote} onFocus={() => setSelectedElement('quote')} onChange={(event) => updateDraft((card) => ({ ...card, quote: event.target.value }))} />
                 </label>
                 <label>
                   <span>{t('品牌名', 'Brand')}</span>
-                  <input className={styles.fieldControl} maxLength={160} value={activeCard.brand} placeholder={t('魔方开放社群', 'CubeRoot Cubing Community')} onFocus={() => setSelectedElement('brand')} onChange={(event) => updateDraft((card) => ({ ...card, brand: event.target.value }))} />
+                  <input autoComplete="off" className={styles.fieldControl} maxLength={160} value={activeCard.brand} placeholder={t('魔方开放社群', 'CubeRoot Cubing Community')} onFocus={() => setSelectedElement('brand')} onChange={(event) => updateDraft((card) => ({ ...card, brand: event.target.value }))} />
                 </label>
                 <label>
                   <span>{t('短标题', 'Short title')}</span>
-                  <input className={styles.fieldControl} maxLength={160} value={activeCard.term} placeholder={activeEntity?.title} onFocus={() => setSelectedElement('term')} onChange={(event) => updateDraft((card) => ({ ...card, term: event.target.value }))} />
+                  <input autoComplete="off" className={styles.fieldControl} maxLength={160} value={activeCard.term} placeholder={activeEntity?.title} onFocus={() => setSelectedElement('term')} onChange={(event) => updateDraft((card) => ({ ...card, term: event.target.value }))} />
                 </label>
                 <label className={styles.fieldWide}>
                   <span>{t('背面介绍', 'Back introduction')}</span>
-                  <textarea className={`${styles.fieldControl} ${styles.fieldTextarea}`} rows={4} maxLength={1000} value={activeCard.intro} onFocus={() => setSelectedElement('backText')} onChange={(event) => updateDraft((card) => ({ ...card, intro: event.target.value }))} />
+                  <textarea autoComplete="off" className={`${styles.fieldControl} ${styles.fieldTextarea}`} rows={4} maxLength={1000} value={activeCard.intro} onFocus={() => setSelectedElement('backText')} onChange={(event) => updateDraft((card) => ({ ...card, intro: event.target.value }))} />
                 </label>
                 <label>
                   <span>{t('公式名称', 'Algorithm name')}</span>
-                  <input className={styles.fieldControl} maxLength={160} value={activeCard.alg?.name ?? ''} placeholder="PLL T" onFocus={() => setSelectedElement('alg')} onChange={(event) => updateDraft((card) => patchAlgorithm(card, 'name', event.target.value))} />
+                  <input autoComplete="off" className={styles.fieldControl} maxLength={160} value={activeCard.alg?.name ?? ''} placeholder="PLL T" onFocus={() => setSelectedElement('alg')} onChange={(event) => updateDraft((card) => patchAlgorithm(card, 'name', event.target.value))} />
                 </label>
                 <label>
                   <span>{t('公式链接', 'Algorithm link')}</span>
-                  <input className={styles.fieldControl} type="url" maxLength={2000} value={activeCard.alg?.url ?? ''} placeholder="https://…" onFocus={() => setSelectedElement('alg')} onChange={(event) => updateDraft((card) => patchAlgorithm(card, 'url', event.target.value))} />
+                  <input autoComplete="off" className={styles.fieldControl} type="url" maxLength={2000} value={activeCard.alg?.url ?? ''} placeholder="https://…" onFocus={() => setSelectedElement('alg')} onChange={(event) => updateDraft((card) => patchAlgorithm(card, 'url', event.target.value))} />
                 </label>
                 <label className={styles.fieldWide}>
                   <span>{t('公式', 'Algorithm moves')}</span>
-                  <textarea className={`${styles.fieldControl} ${styles.fieldTextarea}`} rows={2} maxLength={500} value={activeCard.alg?.moves ?? ''} placeholder="R U R' U' R' F R2 U' R' U' R U R' F'" onFocus={() => setSelectedElement('alg')} onChange={(event) => updateDraft((card) => patchAlgorithm(card, 'moves', event.target.value))} spellCheck={false} autoCapitalize="off" />
+                  <textarea autoComplete="off" className={`${styles.fieldControl} ${styles.fieldTextarea}`} rows={2} maxLength={500} value={activeCard.alg?.moves ?? ''} placeholder="R U R' U' R' F R2 U' R' U' R U R' F'" onFocus={() => setSelectedElement('alg')} onChange={(event) => updateDraft((card) => patchAlgorithm(card, 'moves', event.target.value))} spellCheck={false} autoCapitalize="off" />
                 </label>
               </div>
 

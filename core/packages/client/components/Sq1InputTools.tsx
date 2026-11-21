@@ -38,6 +38,7 @@ function UrlTextarea({
   useEffect(() => { if (!composing) setDraft(value); }, [composing, value]);
   return (
     <textarea
+      autoComplete="off"
       className={styles.textarea}
       value={draft}
       placeholder={placeholder}

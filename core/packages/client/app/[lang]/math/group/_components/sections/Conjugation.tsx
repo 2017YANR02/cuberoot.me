@@ -24,11 +24,11 @@ function ConjugateViewer() {
       </p>
       <div className="gt-panel-input-row">
         <label>A (setup)</label>
-        <input className="gt-input" value={a} onChange={e => setA(e.target.value)} />
+        <input autoComplete="off" className="gt-input" value={a} onChange={e => setA(e.target.value)} />
       </div>
       <div className="gt-panel-input-row">
         <label>B (insert)</label>
-        <input className="gt-input" value={b} onChange={e => setB(e.target.value)} />
+        <input autoComplete="off" className="gt-input" value={b} onChange={e => setB(e.target.value)} />
       </div>
       <div className="gt-panel-input-row" style={{ marginTop: 4 }}>
         {[

@@ -178,7 +178,7 @@ export function ListSelect({ portal = false, showArrow = true, hideSelectedLabel
   const menuContent = <>
     {searchable && <div className="list-select-search-row">
       {items.some(item => item.description) && <Search size={20} aria-hidden="true" />}
-      <input ref={inputRef} type="text" className="list-select-search" value={query} placeholder={searchPlaceholder}
+      <input autoComplete="off" ref={inputRef} type="text" className="list-select-search" value={query} placeholder={searchPlaceholder}
         aria-label={searchPlaceholder ?? tr({ zh: '搜索', en: 'Search' })}
         onChange={e => setQuery(e.target.value)} autoFocus />
       {query && <ClearButton variant="standalone" onClick={() => { setQuery(''); inputRef.current?.focus(); }} />}

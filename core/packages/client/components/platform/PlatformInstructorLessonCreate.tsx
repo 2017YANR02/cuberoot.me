@@ -195,11 +195,11 @@ function LessonCreator({ courseId, draftKey, nextOrdinal, ...props }: CommonProp
     <section className="platform-lesson-create-details">
       <h2>{t('课时标题', 'Lesson title')}</h2>
       <div className="platform-form-grid">
-        <label><span>{t('中文标题', 'Chinese title')}</span><input className="platform-field-control" value={draft.titleZh} disabled={saving} maxLength={240} onChange={event => update({ titleZh: event.target.value })} /></label>
-        <label><span>{t('英文标题', 'English title')}</span><input className="platform-field-control" value={draft.titleEn} disabled={saving} maxLength={240} onChange={event => update({ titleEn: event.target.value })} /></label>
+        <label><span>{t('中文标题', 'Chinese title')}</span><input autoComplete="off" className="platform-field-control" value={draft.titleZh} disabled={saving} maxLength={240} onChange={event => update({ titleZh: event.target.value })} /></label>
+        <label><span>{t('英文标题', 'English title')}</span><input autoComplete="off" className="platform-field-control" value={draft.titleEn} disabled={saving} maxLength={240} onChange={event => update({ titleEn: event.target.value })} /></label>
         {draft.mode === 'text' && <>
-          <label><span>{t('中文课时内容', 'Chinese lesson content')}</span><textarea className="platform-field-control platform-field-textarea" rows={4} value={draft.bodyZh} disabled={saving} onChange={event => update({ bodyZh: event.target.value })} /></label>
-          <label><span>{t('英文课时内容', 'English lesson content')}</span><textarea className="platform-field-control platform-field-textarea" rows={4} value={draft.bodyEn} disabled={saving} onChange={event => update({ bodyEn: event.target.value })} /></label>
+          <label><span>{t('中文课时内容', 'Chinese lesson content')}</span><textarea autoComplete="off" className="platform-field-control platform-field-textarea" rows={4} value={draft.bodyZh} disabled={saving} onChange={event => update({ bodyZh: event.target.value })} /></label>
+          <label><span>{t('英文课时内容', 'English lesson content')}</span><textarea autoComplete="off" className="platform-field-control platform-field-textarea" rows={4} value={draft.bodyEn} disabled={saving} onChange={event => update({ bodyEn: event.target.value })} /></label>
         </>}
       </div>
     </section>

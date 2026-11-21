@@ -46,7 +46,7 @@ export default function InternshipFieldForm({initial, title, onApply, onCancel}:
     </div>
     <DateRangeInput from={period.from} to={period.to} onChange={(from,to) => setPeriod({from,to})} ariaLabel={t('实习期限', 'Internship period')} fromLabel={t('实习开始日期', 'Internship start date')} toLabel={t('实习结束日期', 'Internship end date')} />
     <Field label={t('工作内容（每行一项）', 'Duties (one per line)')} width="wide">
-      <textarea name="duties" defaultValue={initial.duties} rows={5} maxLength={3500} required />
+      <textarea autoComplete="off" name="duties" defaultValue={initial.duties} rows={5} maxLength={3500} required />
     </Field>
     <div className="staff-form-row staff-actions">
       {field('location', t('实习地点与方式', 'Work location and arrangement'))}
@@ -60,7 +60,7 @@ export default function InternshipFieldForm({initial, title, onApply, onCancel}:
         </select>
       </Field>
       {settlement === 'daily' && <Field label={t('日薪（元）', 'Daily rate (CNY)')} width="medium">
-        <input name="dailyRate" inputMode="decimal" pattern="[0-9]+(?:[.][0-9]{1,2})?" required
+        <input autoComplete="off" name="dailyRate" inputMode="decimal" pattern="[0-9]+(?:[.][0-9]{1,2})?" required
           defaultValue={storedDailyRate === null ? '' : String(storedDailyRate / 100)} />
       </Field>}
       <div className="staff-field">

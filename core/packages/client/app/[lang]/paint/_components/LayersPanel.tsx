@@ -180,6 +180,7 @@ export default function LayersPanel() {
 
                   {renaming === id ? (
                     <input
+                      autoComplete="off"
                       className="paint-layer-rename"
                       autoFocus
                       defaultValue={meta?.custom ?? label}

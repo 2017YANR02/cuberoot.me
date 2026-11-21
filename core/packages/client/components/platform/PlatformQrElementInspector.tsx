@@ -59,7 +59,7 @@ export function ElementInspector({
         <>
           <label className={styles.fieldWide}>
             <span>{t('文字', 'Text')}</span>
-            <textarea className={`${styles.fieldControl} ${styles.fieldTextarea}`} value={custom.text} maxLength={200} rows={3} onChange={(event) => update((current) => ({ ...current, customTexts: current.customTexts.map((item) => item.id === custom.id ? { ...item, text: event.target.value } : item) }))} />
+            <textarea autoComplete="off" className={`${styles.fieldControl} ${styles.fieldTextarea}`} value={custom.text} maxLength={200} rows={3} onChange={(event) => update((current) => ({ ...current, customTexts: current.customTexts.map((item) => item.id === custom.id ? { ...item, text: event.target.value } : item) }))} />
           </label>
           <label>
             <span>{t('卡片面', 'Card side')}</span>

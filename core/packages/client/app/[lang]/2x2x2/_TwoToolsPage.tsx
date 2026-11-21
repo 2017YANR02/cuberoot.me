@@ -201,6 +201,7 @@ export default function TwoToolsPage() {
         <label htmlFor="two-tools-scramble">{t('打乱', 'Scramble')}</label>
         <div className={`tt-search-row${invalid ? ' is-invalid' : ''}`}>
           <input
+            autoComplete="off"
             id="two-tools-scramble"
             className="tt-scramble-input"
             value={draft}

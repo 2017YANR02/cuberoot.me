@@ -116,8 +116,8 @@ function OrganizationsAccountPage({ user }: { user: ReturnType<typeof useAuthUse
         <form className="org-form" onSubmit={submit} onChange={() => { operationKey.reset(); setMessage(''); }}>
           <fieldset disabled={submitting}>
             <label>{t('企业名称', 'Enterprise name')}<input className="org-form-control" name="name" required maxLength={160} autoComplete="organization" /></label>
-            <label>{t('企业页面地址', 'Enterprise page address')}<input className="org-form-control" name="slug" required maxLength={64} pattern="[a-z0-9](?:[a-z0-9-]{0,62}[a-z0-9])?" placeholder="cuberoot-academy" autoCapitalize="none" /><span className="org-help">{t('填写小写字母、数字或短横线，用于生成企业链接。', 'Use lowercase letters, numbers or hyphens for your enterprise link.')}</span></label>
-            <label className="org-field-wide">{t('时区', 'Time zone')}<input className="org-form-control" name="timezone" required maxLength={64} defaultValue="Asia/Shanghai" autoCapitalize="none" /></label>
+            <label>{t('企业页面地址', 'Enterprise page address')}<input autoComplete="off" className="org-form-control" name="slug" required maxLength={64} pattern="[a-z0-9](?:[a-z0-9-]{0,62}[a-z0-9])?" placeholder="cuberoot-academy" autoCapitalize="none" /><span className="org-help">{t('填写小写字母、数字或短横线，用于生成企业链接。', 'Use lowercase letters, numbers or hyphens for your enterprise link.')}</span></label>
+            <label className="org-field-wide">{t('时区', 'Time zone')}<input autoComplete="off" className="org-form-control" name="timezone" required maxLength={64} defaultValue="Asia/Shanghai" autoCapitalize="none" /></label>
             <div className="org-form-actions"><button className="org-form-button" type="submit">{submitting ? t('创建中…', 'Creating…') : t('创建企业', 'Create enterprise')}</button></div>
           </fieldset>
           <MutationMessage message={error || message} error={!!error} />

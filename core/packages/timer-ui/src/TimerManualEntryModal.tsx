@@ -154,6 +154,7 @@ export function TimerManualEntryModal({
             <label className="timer-manual-entry__label">
               {labels.fmcSolution}
               <textarea
+                autoComplete="off"
                 aria-describedby={validation.fmc?.kind === 'invalid' ? errorId : undefined}
                 aria-invalid={validation.fmc?.kind === 'invalid' || undefined}
                 className="timer-manual-entry__textarea timer-manual-entry__textarea--fmc"
@@ -174,6 +175,7 @@ export function TimerManualEntryModal({
             <label className="timer-manual-entry__label timer-manual-entry__label--spaced">
               {labels.fmcMoveCount}
               <input
+                autoComplete="off"
                 aria-describedby={visibleError ? errorId : undefined}
                 aria-invalid={visibleError ? true : undefined}
                 className="timer-manual-entry__input"
@@ -194,6 +196,7 @@ export function TimerManualEntryModal({
               <label className="timer-manual-entry__label">
                 {labels.solved}
                 <input
+                  autoComplete="off"
                   aria-describedby={visibleError ? errorId : undefined}
                   aria-invalid={visibleError ? true : undefined}
                   className="timer-manual-entry__input"
@@ -208,6 +211,7 @@ export function TimerManualEntryModal({
               <label className="timer-manual-entry__label">
                 {labels.attempted}
                 <input
+                  autoComplete="off"
                   aria-describedby={visibleError ? errorId : undefined}
                   aria-invalid={visibleError ? true : undefined}
                   className="timer-manual-entry__input"
@@ -222,6 +226,7 @@ export function TimerManualEntryModal({
             <label className="timer-manual-entry__label timer-manual-entry__label--spaced">
               {labels.mbldTime}
               <input
+                autoComplete="off"
                 aria-describedby={visibleError ? errorId : undefined}
                 aria-invalid={visibleError ? true : undefined}
                 className="timer-manual-entry__input"
@@ -250,6 +255,7 @@ export function TimerManualEntryModal({
             <label className="timer-manual-entry__label">
               {labels.time}
               <input
+                autoComplete="off"
                 aria-describedby={visibleError ? errorId : undefined}
                 aria-invalid={visibleError ? true : undefined}
                 className="timer-manual-entry__input"
@@ -288,6 +294,7 @@ export function TimerManualEntryModal({
           <label className="timer-manual-entry__label">
             {labels.scramble}
             <textarea
+              autoComplete="off"
               className="timer-manual-entry__textarea"
               onChange={(inputEvent) => patchDraft({ scramble: inputEvent.target.value })}
               placeholder={currentScramble}
@@ -301,6 +308,7 @@ export function TimerManualEntryModal({
           <label className="timer-manual-entry__label">
             {validation.kind === 'fmc' ? labels.fmcComment : labels.comment}
             <textarea
+              autoComplete="off"
               className="timer-manual-entry__textarea"
               onChange={(inputEvent) => patchDraft({ comment: inputEvent.target.value })}
               placeholder={labels.commentPlaceholder}

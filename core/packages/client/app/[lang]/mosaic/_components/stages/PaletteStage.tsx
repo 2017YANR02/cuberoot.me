@@ -116,6 +116,7 @@ export default function PaletteStage() {
               </td>
               <td>
                 <input
+                  autoComplete="off"
                   type="text"
                   value={c.name}
                   maxLength={24}
@@ -135,6 +136,7 @@ export default function PaletteStage() {
               {advanced && (
                 <td style={{ width: 80 }}>
                   <input
+                    autoComplete="off"
                     type="text"
                     value={c.notation}
                     maxLength={4}

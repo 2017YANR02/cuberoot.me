@@ -1191,6 +1191,7 @@ export default function Canvas({ viewport }: Props) {
           const h = Math.max(s.height, s.fontSize * 1.25) * camera.zoom;
           return (
             <textarea
+              autoComplete="off"
               ref={textAreaRef}
               className="paint-text-edit"
               spellCheck={false}

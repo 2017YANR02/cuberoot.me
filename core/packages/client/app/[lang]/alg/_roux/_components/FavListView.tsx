@@ -153,6 +153,7 @@ export default function FavListView(props: { state: AppState; dispatch: React.Di
         })}
       </p>
       <textarea
+        autoComplete="off"
         autoFocus
         className="roux-fav-add-input"
         rows={4}

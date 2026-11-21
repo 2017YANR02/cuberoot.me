@@ -1063,6 +1063,7 @@ function SitesPageInner() {
             <div className="sites-search">
               <Search size={14} className="sites-search-icon" />
               <input
+                autoComplete="off"
                 className="sites-search-input"
                 placeholder={TEXTS.searchPh[lang]}
                 value={inputValue}
@@ -1214,7 +1215,7 @@ function SitesPageInner() {
               }}>
                 <label className="site-editor-row">{t('话题名称（英文 中文）', 'Topic name (English Chinese)')}
                   <span className="sites-topic-input-wrap">
-                    <input className="site-editor-input" required maxLength={160} value={topicName} disabled={topicBusy}
+                    <input autoComplete="off" className="site-editor-input" required maxLength={160} value={topicName} disabled={topicBusy}
                       onChange={(event) => setTopicName(event.target.value)} />
                     {topicName && !topicBusy && <ClearButton onClick={() => setTopicName('')} />}
                   </span>

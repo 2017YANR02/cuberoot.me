@@ -444,6 +444,7 @@ export default function Sq1PblFinder() {
               <label>
                 <span>{tr({ zh: '新增辅助公式', en: 'New auxiliary algorithm' })}</span>
                 <input
+                  autoComplete="off"
                   className={styles.auxiliaryInput}
                   value={newAuxiliary}
                   onChange={event => setNewAuxiliary(event.target.value)}

@@ -117,7 +117,7 @@ export default function AlgsPanel({ onSelect, activePuzzle }: Props) {
         </label>
         <label className="sim-algs-search">
           <Search size={14} aria-hidden="true" />
-          <input type="search" value={query} onChange={event => setQuery(event.target.value)}
+          <input autoComplete="off" type="search" value={query} onChange={event => setQuery(event.target.value)}
             aria-label={t('搜索公式', 'Search algorithms')} placeholder={t('搜索公式', 'Search algorithms')} />
         </label>
       </div>

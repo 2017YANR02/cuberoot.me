@@ -378,6 +378,7 @@ export default function CommunityAlgs({
               <div className="alg-community-edit">
                 {isAdmin && (
                   <input
+                    autoComplete="off"
                     className="alg-community-case-input"
                     value={editCaseName}
                     onChange={e => setEditCaseName(e.target.value)}
@@ -386,12 +387,14 @@ export default function CommunityAlgs({
                   />
                 )}
                 <textarea
+                  autoComplete="off"
                   className="alg-community-textarea"
                   value={editAlg}
                   {...editAlgField}
                   rows={1}
                 />
                 <input
+                  autoComplete="off"
                   className="alg-community-notes-input"
                   value={editNotes}
                   onChange={e => setEditNotes(e.target.value)}
@@ -450,6 +453,7 @@ export default function CommunityAlgs({
       {allowAdd && (user && adding ? (
         <div className="alg-community-add">
           <textarea
+            autoComplete="off"
             className="alg-community-textarea"
             value={draftAlg}
             {...draftAlgField}
@@ -458,6 +462,7 @@ export default function CommunityAlgs({
             autoFocus
           />
           <input
+            autoComplete="off"
             className="alg-community-notes-input"
             value={draftNotes}
             onChange={e => setDraftNotes(e.target.value)}

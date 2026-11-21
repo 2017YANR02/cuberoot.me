@@ -28,6 +28,12 @@ beforeEach(async () => {
 });
 afterEach(async () => { await act(async () => root.unmount()); host.remove(); vi.useRealTimers(); });
 
+it('opts search fields out of browser autofill by default and honors an explicit override', async () => {
+  expect(input().getAttribute('autocomplete')).toBe('off');
+  await act(async () => root.render(createElement(SearchInput, { value: '', onChange, autoComplete: 'on' })));
+  expect(input().getAttribute('autocomplete')).toBe('on');
+});
+
 it('debounces rapid typing and clears immediately without a late callback', async () => {
   await type('h'); await advance(200); await type('hu'); await advance(299);
   expect(onChange).not.toHaveBeenCalled();

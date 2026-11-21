@@ -245,6 +245,7 @@ export function ManualInputDialog({ onClose }: { onClose: () => void }) {
         </div>
         <div style={{ padding: '8px 0' }}>
           <input
+            autoComplete="off"
             type="text"
             placeholder={tr({ zh: '输入时间 (如 8.55 或 1:23.456)', en: 'Enter time (e.g. 8.55 or 1:23.456)'
             })}

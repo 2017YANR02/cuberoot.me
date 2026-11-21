@@ -218,6 +218,7 @@ export default function Topbar({ viewport, onOpenShorthand, onOpenDrawings, onOp
       <div className="paint-doc-status">
         {editingTitle ? (
           <input
+            autoComplete="off"
             className="paint-doc-title-input"
             value={titleDraft}
             autoFocus

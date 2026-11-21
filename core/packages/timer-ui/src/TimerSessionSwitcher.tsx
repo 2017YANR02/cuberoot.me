@@ -429,6 +429,7 @@ export function TimerSessionSwitcher({
                 <div className="tsession-edit">
                   <div className="tsession-input-wrap">
                     <input
+                      autoComplete="off"
                       aria-label={labels.sessionName}
                       className="tsession-input"
                       disabled={busy !== null}
@@ -507,6 +508,7 @@ export function TimerSessionSwitcher({
           <div className="tsession-edit">
             <div className="tsession-input-wrap">
               <input
+                autoComplete="off"
                 aria-label={labels.newSessionName}
                 className="tsession-input"
                 disabled={busy !== null}
@@ -598,7 +600,7 @@ export function TimerResultsSessionBar({ language, query, onQueryChange, ...prop
     labels={{ ...props.labels, newSession: { en: 'New', zh: '新建' }[language] }}
     trailing={<div className={`tsession-search${searchOpen ? ' is-open' : ''}`}>
       <div className="tsession-search-field" inert={!searchOpen}>
-        <input ref={searchInput} type="search" value={query} tabIndex={searchOpen ? 0 : -1}
+        <input autoComplete="off" ref={searchInput} type="search" value={query} tabIndex={searchOpen ? 0 : -1}
           onChange={event => onQueryChange(event.target.value)}
           placeholder={{ en: 'Time, scramble, comment', zh: '时间、打乱、注释' }[language]} aria-label={label} />
       </div>

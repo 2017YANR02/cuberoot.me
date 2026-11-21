@@ -53,11 +53,11 @@ function QrManager() {
     <form className="platform-domain-form" onSubmit={create} data-site-surface="panel">
       <h2>{t('批量生成二维码', 'Create QR codes')}</h2>
       <div className="platform-form-grid">
-        <label>{t('批次标签', 'Batch label')}<input className="platform-field-control" name="label" required maxLength={160} /></label>
-        <label>{t('前缀', 'Prefix')}<input className="platform-field-control" name="prefix" defaultValue="qr" pattern="[a-z0-9][a-z0-9_-]{0,47}" /></label>
+        <label>{t('批次标签', 'Batch label')}<input autoComplete="off" className="platform-field-control" name="label" required maxLength={160} /></label>
+        <label>{t('前缀', 'Prefix')}<input autoComplete="off" className="platform-field-control" name="prefix" defaultValue="qr" pattern="[a-z0-9][a-z0-9_-]{0,47}" /></label>
         <label>{t('数量', 'Quantity')}<input className="platform-field-control" type="number" name="count" min={1} max={500} defaultValue={1} required /></label>
         <label>{t('扫码行为', 'Scan behavior')}<select className="platform-field-control" name="type"><option value="redirect">{t('直接跳转', 'Redirect')}</option><option value="landing">{t('多链接落地页', 'Landing page')}</option></select></label>
-        <label>{t('目标路径或网址', 'Destination path or URL')}<input className="platform-field-control" name="target" defaultValue="/" required /></label>
+        <label>{t('目标路径或网址', 'Destination path or URL')}<input autoComplete="off" className="platform-field-control" name="target" defaultValue="/" required /></label>
       </div>
       <button className="platform-button platform-button-primary" disabled={busy}>{t('生成', 'Create')}</button>
     </form>
@@ -112,12 +112,12 @@ function QrPromptForm({ item, busy, save }: { item?: QrTemplate; busy: boolean; 
   };
   return <form className="platform-domain-form" onSubmit={submit}>
     <div className="platform-form-grid">
-      <label>{t('中文名称', 'Chinese name')}<input className="platform-field-control" name="nameZh" defaultValue={item?.nameZh} required maxLength={160} /></label>
-      <label>{t('英文名称（可选）', 'English name (optional)')}<input className="platform-field-control" name="nameEn" defaultValue={item?.nameEn} maxLength={160} /></label>
+      <label>{t('中文名称', 'Chinese name')}<input autoComplete="off" className="platform-field-control" name="nameZh" defaultValue={item?.nameZh} required maxLength={160} /></label>
+      <label>{t('英文名称（可选）', 'English name (optional)')}<input autoComplete="off" className="platform-field-control" name="nameEn" defaultValue={item?.nameEn} maxLength={160} /></label>
       <label>{t('用途 / 维度', 'Kind / dimension')}<select className="platform-field-control" name="dimension" defaultValue={item?.template.dimension || ''}><option value="">{t('整套模板', 'Complete preset')}</option>{QR_PROMPT_DIMENSIONS.map(d => <option key={d.key} value={d.key}>{t(d.zh, d.en)}</option>)}</select></label>
-      <label>{t('分组（整套模板）', 'Category (presets)')}<input className="platform-field-control" name="category" defaultValue={item?.template.category} /></label>
+      <label>{t('分组（整套模板）', 'Category (presets)')}<input autoComplete="off" className="platform-field-control" name="category" defaultValue={item?.template.category} /></label>
     </div>
-    <label>{t('画面描述', 'Image description')}<textarea className="platform-field-control platform-field-textarea" name="body" rows={5} defaultValue={item?.template.body} required maxLength={3600} /></label>
+    <label>{t('画面描述', 'Image description')}<textarea autoComplete="off" className="platform-field-control platform-field-textarea" name="body" rows={5} defaultValue={item?.template.body} required maxLength={3600} /></label>
     <button className="platform-button" disabled={busy}>{item ? t('保存修改', 'Save changes') : t('添加提示词', 'Add prompt')}</button>
   </form>;
 }

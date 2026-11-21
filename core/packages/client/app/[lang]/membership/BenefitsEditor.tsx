@@ -76,7 +76,7 @@ export default function BenefitsEditor({ onSaved, children, group: targetGroup, 
           <SortableList items={visibleItems} disabled={busy} onReorder={reordered => setDraft(current => current && ({ ...current, items: replaceSortableItems(current.items, reordered) }))}>
               <div className="mem-benefits-edit-list">
                 {visibleItems.map(item => <SortableCard className="mem-benefit-edit-row" key={item.id} id={item.id} draggable disabled={busy} stretch={false} dragLabel={tr({ zh: '拖动调整权益顺序', en: 'Drag to reorder benefits' })}>
-                  <textarea className="mem-benefit-inline-input" rows={1} maxLength={editLanguage === 'zh' ? 1000 : 2000} disabled={busy} aria-label={tr({ zh: '权益内容', en: 'Benefit text' })} value={item[editLanguage]} placeholder={editLanguage === 'en' ? item.zh : undefined} onChange={event => update(item.id, editLanguage === 'zh' ? { zh: event.target.value, en: '' } : { en: event.target.value })} onKeyDown={event => {
+                  <textarea autoComplete="off" className="mem-benefit-inline-input" rows={1} maxLength={editLanguage === 'zh' ? 1000 : 2000} disabled={busy} aria-label={tr({ zh: '权益内容', en: 'Benefit text' })} value={item[editLanguage]} placeholder={editLanguage === 'en' ? item.zh : undefined} onChange={event => update(item.id, editLanguage === 'zh' ? { zh: event.target.value, en: '' } : { en: event.target.value })} onKeyDown={event => {
                     if (event.key === 'Escape') { event.preventDefault(); close(); }
                   }} />
                 </SortableCard>)}

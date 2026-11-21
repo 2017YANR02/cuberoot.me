@@ -70,7 +70,7 @@ export default function ReconIntakeAction({ solve, snapshot, host }: {
     {saved && <Link href="/recon/ground-truth?view=smart" prefetch={false}>{tr({ zh: '已收录 · 查看样例', en: 'Saved · View case' })}</Link>}
     {open && <div ref={panel} className="ri-popover" data-site-surface="popover">
       <label>{tr({ zh: '其他复盘链接（选填，留空使用当前复盘）', en: 'Another replay link (optional; blank uses this replay)' })}
-        <span className="ri-input"><input className="ri-field ri-link-input" value={link} disabled={busy} onChange={e => { setLink(e.target.value); setTarget(null); }} />
+        <span className="ri-input"><input autoComplete="off" className="ri-field ri-link-input" value={link} disabled={busy} onChange={e => { setLink(e.target.value); setTarget(null); }} />
           {link && <ClearButton onClick={() => { if (!busy) { setLink(''); setTarget(null); } }} />}</span>
       </label>
       {unresolvedLink && <button className="ri-button" type="button" disabled={busy} onClick={() => void resolveTarget()}>{tr({ zh: '读取链接', en: 'Load link' })}</button>}
@@ -154,9 +154,9 @@ export function ReconIntakeEditor({ solve, host, mode, source, existing, onClose
         <p>{tr({ zh: '点击步骤旁的“批注”定位。未批注的部分不代表已确认正确。', en: 'Select Annotate beside a step. Unannotated steps are not automatically approved.' })}</p>
         <button className="ri-button" type="button" onClick={() => { setSelected(null); setObserved(''); }}>{tr({ zh: '批注整条复盘', en: 'Annotate whole replay' })}</button>
         <p>{selected ? `${selected.fromIdx + 1}–${selected.toIdx + 1}` : tr({ zh: '整条复盘', en: 'Whole replay' })} {observed}</p>
-        <label>{tr({ zh: '问题说明', en: 'Problem' })}<textarea className="ri-field ri-textarea" ref={form} value={problem} onChange={e => setProblem(e.target.value)} maxLength={4000} /></label>
-        <label>{tr({ zh: '预期公式（选填，精确匹配默认化简步骤）', en: 'Expected algorithm (optional; exact default notation)' })}<textarea className="ri-field ri-textarea" value={algorithm} onChange={e => setAlgorithm(e.target.value)} maxLength={4000} /></label>
-        <label>{tr({ zh: '预期效果（选填）', en: 'Expected behavior (optional)' })}<textarea className="ri-field ri-textarea" value={effect} onChange={e => setEffect(e.target.value)} maxLength={4000} /></label>
+        <label>{tr({ zh: '问题说明', en: 'Problem' })}<textarea autoComplete="off" className="ri-field ri-textarea" ref={form} value={problem} onChange={e => setProblem(e.target.value)} maxLength={4000} /></label>
+        <label>{tr({ zh: '预期公式（选填，精确匹配默认化简步骤）', en: 'Expected algorithm (optional; exact default notation)' })}<textarea autoComplete="off" className="ri-field ri-textarea" value={algorithm} onChange={e => setAlgorithm(e.target.value)} maxLength={4000} /></label>
+        <label>{tr({ zh: '预期效果（选填）', en: 'Expected behavior (optional)' })}<textarea autoComplete="off" className="ri-field ri-textarea" value={effect} onChange={e => setEffect(e.target.value)} maxLength={4000} /></label>
         <button className="ri-button" type="button" disabled={!problem.trim()} onClick={add}>{tr({ zh: '添加批注，继续下一条', en: 'Add annotation and continue' })}</button>
         {annotations.map(note => <div key={note.id} className="ri-note"><p>{note.observed}</p><p>{note.problem}</p><p>{note.expectedAlgorithm} {note.expectedEffect}</p>
           <button className="ri-button" type="button" onClick={() => setAnnotations(items => items.filter(item => item.id !== note.id))}>{tr({ zh: '移除批注', en: 'Remove annotation' })}</button></div>)}

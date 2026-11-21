@@ -198,6 +198,7 @@ export default function SkewbSolver() {
               {view === 'recon' && (
                 <div className="skewb-paint-recon">
                   <textarea
+                    autoComplete="off"
                     className="skewb-paint-recon-input"
                     value={reconInput}
                     onChange={(e) => setReconInput(e.target.value)}

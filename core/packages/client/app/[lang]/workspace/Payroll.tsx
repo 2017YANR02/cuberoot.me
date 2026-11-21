@@ -193,7 +193,7 @@ function PayrollEditor({ edit, employee, month, today, money, onClose, onSaved }
       </strong></p>}
       {edit.kind === 'rate' && <>
         <Field label={t('日薪（元）', 'Daily rate (CNY)')} width="medium">
-          <input name="rate" inputMode="decimal" pattern="[0-9]+(?:[.][0-9]{1,2})?" required maxLength={10}
+          <input autoComplete="off" name="rate" inputMode="decimal" pattern="[0-9]+(?:[.][0-9]{1,2})?" required maxLength={10}
             defaultValue={employee.dailyRateCents === null ? '' : String(employee.dailyRateCents / 100)} />
         </Field>
         <Field label={t('生效日期', 'Effective date')} width="date">

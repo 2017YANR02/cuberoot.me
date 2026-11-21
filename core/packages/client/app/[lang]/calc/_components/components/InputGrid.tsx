@@ -458,6 +458,7 @@ export function InputGrid({
             <div className="time-cell-wrapper">
               <span className="tavg-emoji">{getGhostEmoji(p)}</span>
               <input
+                autoComplete="off"
                 className="time-cell tavg-cell calc-input"
                 type="text"
                 inputMode="none"
@@ -517,6 +518,7 @@ export function InputGrid({
                   {/* WR badge */}
                   {wrSingle && <span className="wr-badge">WR</span>}
                   <input
+                    autoComplete="off"
                     ref={el => {
                       if (!inputRefs.current[p]) inputRefs.current[p] = [];
                       inputRefs.current[p][t] = el;

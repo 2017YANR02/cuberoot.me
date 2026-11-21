@@ -55,6 +55,7 @@ export default function GuestPicker({ guests, onChange, meKey, disabled, placeho
       <div className="cal-guest-input">
         <UserPlus size={15} aria-hidden />
         <input
+          autoComplete="off"
           type="text"
           className="cal-guest-field"
           value={q}

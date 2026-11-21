@@ -2157,6 +2157,7 @@ function DeskPetOverlay() {
           the soft keyboard before the (async) search input mounts. Must stay a
           real, non-readonly, non-display:none input or the keyboard won't show. */}
       <input
+        autoComplete="off"
         ref={kbdRef}
         aria-hidden
         tabIndex={-1}

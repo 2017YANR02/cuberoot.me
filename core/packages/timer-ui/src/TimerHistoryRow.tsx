@@ -574,6 +574,7 @@ export const TimerHistoryCommentEditor = forwardRef<
 
   return (
     <textarea
+      autoComplete="off"
       aria-label={ariaLabel}
       className={['timer-history-comment-textarea', className ?? ''].filter(Boolean).join(' ')}
       data-history-action-id="solve.detail.comment"

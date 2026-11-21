@@ -82,6 +82,7 @@ export default function SimAlgEditor({
             </div>
           )}
           <textarea
+            autoComplete="off"
             ref={setup.elementRef}
             id={`${idPrefix}sim-setup`}
             aria-describedby={setup.error ? `${idPrefix}sim-setup-error` : undefined}

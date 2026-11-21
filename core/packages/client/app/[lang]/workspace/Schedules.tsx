@@ -82,7 +82,7 @@ export default function Schedules({ actor }: { actor: StaffActor }) {
         const tasks = editing === 'copy' && schedule ? copyScheduleTasks(schedule.tasks, value(data, 'start'), () => crypto.randomUUID()) : current?.tasks ?? [];
         await mutate({ id: current?.id ?? newId.current, version: current?.version ?? 0, name: value(data, 'name'), active: value(data, 'active') === 'true', tasks }, saved => { void setSelected(saved.id); setEditing(null); });
       }}>
-        <Field label={t('名称', 'Name')}><input name="name" required maxLength={80} defaultValue={editing === 'settings' ? schedule?.name : editing === 'copy' ? `${schedule?.name ?? ''} ${t('副本', 'copy')}`.slice(0, 80) : ''} /></Field>
+        <Field label={t('名称', 'Name')}><input autoComplete="off" name="name" required maxLength={80} defaultValue={editing === 'settings' ? schedule?.name : editing === 'copy' ? `${schedule?.name ?? ''} ${t('副本', 'copy')}`.slice(0, 80) : ''} /></Field>
         <div className="staff-form-row">
           <Field label={t('状态', 'Status')}><select name="active" defaultValue={String(editing === 'settings' ? schedule?.active : true)}><option value="true">{t('进行中', 'Active')}</option><option value="false">{t('已归档', 'Archived')}</option></select></Field>
         </div>
@@ -120,8 +120,8 @@ function TaskEditor({ task, groups, existing, onSave, onCancel }: { task: Schedu
     if (start > end) throw new Error(t('结束日期须不早于开始日期', 'End date must not precede start date'));
     await onSave({ id: task.id, name: value(data, 'name'), group: value(data, 'group'), owner: value(data, 'owner'), start, end, kind, progress: completed ? 100 : 0 });
   }}>
-    <Field label={t('名称', 'Name')}><input name="name" required maxLength={120} defaultValue={task.name} /></Field>
-    <div className="staff-form-row"><Field label={t('分组', 'Group')}><input name="group" required maxLength={60} defaultValue={task.group} list="workspace-schedule-groups" /><datalist id="workspace-schedule-groups">{groups.map(group => <option key={group} value={group} />)}</datalist></Field><Field label={t('负责人（选填）', 'Owner (optional)')}><input name="owner" maxLength={60} defaultValue={task.owner} /></Field></div>
+    <Field label={t('名称', 'Name')}><input autoComplete="off" name="name" required maxLength={120} defaultValue={task.name} /></Field>
+    <div className="staff-form-row"><Field label={t('分组', 'Group')}><input autoComplete="off" name="group" required maxLength={60} defaultValue={task.group} list="workspace-schedule-groups" /><datalist id="workspace-schedule-groups">{groups.map(group => <option key={group} value={group} />)}</datalist></Field><Field label={t('负责人（选填）', 'Owner (optional)')}><input name="owner" maxLength={60} defaultValue={task.owner} /></Field></div>
     <div className="staff-form-row"><Field label={t('类型', 'Type')}><select value={kind} onChange={event => setKind(event.target.value as ScheduleTask['kind'])}><option value="task">{t('任务', 'Task')}</option><option value="milestone">{t('里程碑', 'Milestone')}</option></select></Field><Field width="short" label={t('状态', 'Status')}><BoolToggle value={completed} onChange={setCompleted} label={t('完成', 'Complete')} /></Field></div>
     <div className="staff-form-row"><Field width="date" label={t('开始日期', 'Start date')}><DateInput name="start" required value={start} onChange={setStart} /></Field>{kind === 'task' && <Field width="date" label={t('结束日期', 'End date')}><DateInput name="end" required min={start} defaultValue={task.end} /></Field>}</div>
     {removing && <p role="alert">{t('移除这个任务？保存后将不再显示在排期中。', 'Remove this task from the schedule?')}</p>}

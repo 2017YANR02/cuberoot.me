@@ -243,6 +243,7 @@ export default function TeachingConversationThread({
               <label className="teaching-field-wide">
                 {t('回复内容', 'Reply')}
                 <textarea
+                  autoComplete="off"
                   className="teaching-form-control teaching-form-textarea teaching-conversation-compose"
                   value={replyBody}
                   onChange={(event) => setReplyBody(event.target.value)}

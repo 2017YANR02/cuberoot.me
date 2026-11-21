@@ -229,7 +229,7 @@ function SessionsContent({ orgSlug, page, role, timezone }: { orgSlug: string; p
           <h2>{t('安排课次', 'Schedule session')}</h2>
           <form className="org-form" onSubmit={submit} onChange={() => { operationKey.reset(); setMessage(''); }}>
             <fieldset disabled={submitting}>
-              <label className="org-field-wide">{t('课次标题', 'Session title')}<input className="org-form-control" name="title" required maxLength={160} /></label>
+              <label className="org-field-wide">{t('课次标题', 'Session title')}<input autoComplete="off" className="org-form-control" name="title" required maxLength={160} /></label>
               <label>{t('开始时间', 'Starts at')}<input className="org-form-control" name="startsAt" type="datetime-local" required /></label>
               <label>{t('结束时间', 'Ends at')}<input className="org-form-control" name="endsAt" type="datetime-local" required /></label>
               <p className="org-help org-field-wide">

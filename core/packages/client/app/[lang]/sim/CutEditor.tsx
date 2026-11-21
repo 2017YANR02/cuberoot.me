@@ -143,6 +143,7 @@ export default function CutEditor({
 
       <div className="cut-desc-row">
         <input
+          autoComplete="off"
           type="text"
           className="cut-desc"
           value={value}

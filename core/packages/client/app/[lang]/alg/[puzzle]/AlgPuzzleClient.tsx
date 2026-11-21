@@ -551,6 +551,7 @@ export default function AlgPuzzleClient({ initialCatalog = null }: { initialCata
           {canMix && (
             <>
               <input
+                autoComplete="off"
                 className="alg-mix-bar-name"
                 value={mixName}
                 onChange={e => setMixName(e.target.value)}

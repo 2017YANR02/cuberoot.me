@@ -438,6 +438,7 @@ export function Sq1DrawPanel({ onDocumentChange }: Sq1DrawPanelProps) {
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(40px, 1fr))', gap: 6 }}>
             {topLabels.map((label, index) => (
               <input
+                autoComplete="off"
                 key={`top-label-${index}`}
                 value={label}
                 maxLength={1}
@@ -475,6 +476,7 @@ export function Sq1DrawPanel({ onDocumentChange }: Sq1DrawPanelProps) {
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(40px, 1fr))', gap: 6 }}>
             {bottomLabels.map((label, index) => (
               <input
+                autoComplete="off"
                 key={`bottom-label-${index}`}
                 value={label}
                 maxLength={1}

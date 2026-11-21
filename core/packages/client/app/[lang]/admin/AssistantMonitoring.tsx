@@ -236,7 +236,7 @@ export default function AssistantMonitoring() {
         <p>{t('用户评价','User feedback')}: {detail.feedback?feedbackLabels[detail.feedback]:'—'} · {t('复核状态','Review')}: {reviewLabels[detail.review_status]}</p>
         {!detail.content_expired&&<form style={{display:'grid',gap:12}} onSubmit={e=>{e.preventDefault();setReviewBusy(true);setReviewError(false);void reviewAssistantRequest(detail.id,reviewStatus,reviewNote).then(()=>setRefresh(n=>n+1)).catch(()=>setReviewError(true)).finally(()=>setReviewBusy(false));}}>
           <label>{t('管理员复核','Admin review')} <select className="admin-dashboard-select" value={reviewStatus} onChange={e=>setReviewStatus(e.target.value)}>{Object.entries(reviewLabels).map(([value,label])=><option key={value} value={value}>{label}</option>)}</select></label>
-          <label>{t('改进记录','Review note')} <textarea className="admin-dashboard-select" style={{display:'block',width:'100%'}} value={reviewNote} maxLength={500} onChange={e=>setReviewNote(e.target.value)} rows={2}/></label>{reviewNote&&<ClearButton onClick={()=>setReviewNote('')}/>}
+          <label>{t('改进记录','Review note')} <textarea autoComplete="off" className="admin-dashboard-select" style={{display:'block',width:'100%'}} value={reviewNote} maxLength={500} onChange={e=>setReviewNote(e.target.value)} rows={2}/></label>{reviewNote&&<ClearButton onClick={()=>setReviewNote('')}/>}
           <button className="admin-boot__refresh" type="submit" disabled={reviewBusy}>{t('保存复核','Save review')}</button>{reviewError&&<p role="alert">{t('复核未保存，请重试。','Review was not saved. Please retry.')}</p>}
         </form>}
         <h4>{t('各阶段耗时', 'Stage timings')}</h4><p>{t('并行或嵌套阶段可能重叠，阶段耗时不可直接相加。', 'Parallel or nested stages may overlap; durations are not additive.')}</p>

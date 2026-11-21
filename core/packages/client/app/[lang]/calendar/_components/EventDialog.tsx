@@ -291,6 +291,7 @@ export default function EventDialog(props: Props) {
 
         <div className="cal-modal-body">
           <input
+            autoComplete="off"
             ref={titleRef}
             className="cal-title-input"
             type="text"
@@ -524,6 +525,7 @@ export default function EventDialog(props: Props) {
                 {competitionUrl}
               </AppLink>}
               <textarea
+                autoComplete="off"
                 className="cal-textarea"
                 value={notes}
                 readOnly={readOnly}

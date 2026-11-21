@@ -52,7 +52,7 @@ export function TimerMetronomeSettings({ value, bpm, onChange, onBpmChange, onTa
         content={tr(TIMER_INSPECTION_ALERTS_COPY.help)} />}>
 
     <TimerSettingRow field={beeps} label={tr(beeps.copy)}>
-      <input className="settings-row-control-input" type="text" value={input}
+      <input autoComplete="off" className="settings-row-control-input" type="text" value={input}
         aria-label={tr(beeps.copy)} placeholder={tr(TIMER_SOUND_SETTINGS_COPY.beepPlaceholder)}
         onChange={e => setInput(e.target.value)} onBlur={commit} onKeyDown={e => { if (e.key === 'Enter') commit(); }} />
       <button type="button" className="hint-btn" style={{ minHeight: 44 }}

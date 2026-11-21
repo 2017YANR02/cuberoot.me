@@ -188,7 +188,7 @@ function SessionsContent({ orgSlug, studentId, page }: { orgSlug: string; studen
               <fieldset className="teaching-plain-fieldset" disabled={saving}>
                 <label className="teaching-field-wide">
                   <span>{t('请假原因', 'Leave reason')}</span>
-                  <textarea className="teaching-form-control teaching-form-textarea" required maxLength={500} value={reason} onChange={(event) => { setReason(event.target.value); resetIntent(); }} />
+                  <textarea autoComplete="off" className="teaching-form-control teaching-form-textarea" required maxLength={500} value={reason} onChange={(event) => { setReason(event.target.value); resetIntent(); }} />
                 </label>
                 <div className="teaching-form-actions"><button className="teaching-form-button teaching-primary-button" type="submit">{saving ? t('提交中…', 'Submitting…') : t('提交请假申请', 'Submit leave request')}</button></div>
               </fieldset>
@@ -214,7 +214,7 @@ function SessionsContent({ orgSlug, studentId, page }: { orgSlug: string; studen
                     <div className="teaching-row-action">
                       <label>
                         <span>{t('取消原因', 'Cancellation reason')}</span>
-                        <input className="teaching-table-control" maxLength={500} value={cancelReason} onChange={(event) => { setCancelReason(event.target.value); resetIntent(); }} />
+                        <input autoComplete="off" className="teaching-table-control" maxLength={500} value={cancelReason} onChange={(event) => { setCancelReason(event.target.value); resetIntent(); }} />
                       </label>
                       <button className="teaching-secondary-button" type="button" disabled={saving} onClick={() => { void cancelLeave(request); }}>{t('取消申请', 'Cancel request')}</button>
                     </div>

@@ -553,6 +553,7 @@ export default function MemoRecallPage(): JSX.Element {
                     {p.a} {opSymbol(p.op)} {p.b} =
                   </span>
                   <input
+                    autoComplete="off"
                     className="bld-input bld-memo-math-input"
                     inputMode="numeric"
                     value={val}
@@ -616,6 +617,7 @@ export default function MemoRecallPage(): JSX.Element {
           </p>
 
           <textarea
+            autoComplete="off"
             ref={recallRef}
             className="bld-modal-textarea bld-memo-recall-input"
             value={recallText}

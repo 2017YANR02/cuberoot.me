@@ -307,6 +307,7 @@ export default function WcaEventSelector({
       <div className="wca-evsel-search">
         <Search size={14} className="wca-evsel-search-icon" />
         <input
+          autoComplete="off"
           type="text"
           className="wca-evsel-search-input"
           value={query}

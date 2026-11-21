@@ -312,7 +312,7 @@ export default function SupportEditor({ target, onClose, onSaved }: Props) {
           <label className="sponsor-editor-row">
             <span>{tr({ zh: '头像链接', en: 'Avatar URL'
             })}</span>
-            <input className="sponsor-editor-input" value={draft.avatarUrl} onChange={e => set('avatarUrl', e.target.value)} placeholder="https://…" />
+            <input autoComplete="off" className="sponsor-editor-input" value={draft.avatarUrl} onChange={e => set('avatarUrl', e.target.value)} placeholder="https://…" />
           </label>
 
           {target.kind === 'contributor' ? (
@@ -350,6 +350,7 @@ export default function SupportEditor({ target, onClose, onSaved }: Props) {
                         </button>
                       </div>
                       <textarea
+                        autoComplete="off"
                         className="sponsor-editor-textarea"
                         rows={2}
                         value={ct.zh}
@@ -357,6 +358,7 @@ export default function SupportEditor({ target, onClose, onSaved }: Props) {
                         placeholder={tr({ zh: '中文描述', en: 'Chinese description' })}
                       />
                       <textarea
+                        autoComplete="off"
                         className="sponsor-editor-textarea"
                         rows={2}
                         value={ct.en}
@@ -392,7 +394,7 @@ export default function SupportEditor({ target, onClose, onSaved }: Props) {
 
               <label className="sponsor-editor-row">
                 <span>{tr({ zh: '留言', en: 'Message' })}</span>
-                <textarea className="sponsor-editor-textarea" rows={2} value={draft.message} onChange={e => set('message', e.target.value)} />
+                <textarea autoComplete="off" className="sponsor-editor-textarea" rows={2} value={draft.message} onChange={e => set('message', e.target.value)} />
               </label>
             </>
           )}

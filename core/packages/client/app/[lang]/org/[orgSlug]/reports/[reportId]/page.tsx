@@ -129,10 +129,10 @@ function ReportContent({ orgSlug, reportId, role }: {
           <form className="org-form" onSubmit={publish} onChange={() => { operationKey.reset(); setMessage(''); }}>
             <fieldset disabled={submitting}>
               <label className="org-field-wide">{t('本周总结', 'Weekly summary')}
-                <textarea className="org-form-control org-form-textarea" name="teacherSummary" required minLength={1} maxLength={5_000} defaultValue={report.teacherSummary} />
+                <textarea autoComplete="off" className="org-form-control org-form-textarea" name="teacherSummary" required minLength={1} maxLength={5_000} defaultValue={report.teacherSummary} />
               </label>
               <label className="org-field-wide">{t('下周计划', 'Next week plan')}
-                <textarea className="org-form-control org-form-textarea" name="nextWeekPlan" required minLength={1} maxLength={5_000} defaultValue={report.nextWeekPlan} />
+                <textarea autoComplete="off" className="org-form-control org-form-textarea" name="nextWeekPlan" required minLength={1} maxLength={5_000} defaultValue={report.nextWeekPlan} />
               </label>
               <label>{t('发布范围', 'Publication audience')}
                 <select className="org-form-control" name="visibility" defaultValue={report.visibility}>

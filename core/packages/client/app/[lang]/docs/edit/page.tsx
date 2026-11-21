@@ -102,7 +102,7 @@ export default function DocumentEditorPage() {
     <main className="doc-workspace">
       <header className="doc-topbar">
         <PageBackLink fallback="/docs" prefetch={false} className="doc-back" />
-        <input className="doc-title-input" value={title} readOnly={publicDocumentReadOnly || details?.document.role !== 'owner'} onChange={(event) => setTitle(event.target.value)}
+        <input autoComplete="off" className="doc-title-input" value={title} readOnly={publicDocumentReadOnly || details?.document.role !== 'owner'} onChange={(event) => setTitle(event.target.value)}
           onBlur={() => void saveTitle()} onKeyDown={(event) => { if (event.key === 'Enter') event.currentTarget.blur(); }}
           aria-label={tr({ zh: '文档标题', en: 'Document title' })} />
         <div className={`doc-sync is-${status}`}><span aria-hidden="true" />

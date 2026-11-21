@@ -42,7 +42,7 @@ export default function TeamAnnouncement() {
     <ErrorNotice error={resource.error} retry={resource.reload} />
     {resource.loading && !notice && <p role="status">{t('正在加载…', 'Loading…')}</p>}
     {draft && <form className="team-announcement-editor" aria-busy={busy} onSubmit={event => { event.preventDefault(); void save(); }}>
-      <textarea autoFocus aria-label={t('团队公告', 'Team announcements')} className="team-announcement-input" name="announcement" id="team-announcement-input" value={draft.text} rows={7} maxLength={16000} disabled={busy} placeholder={t('输入第一条公告，换行自动编号', 'Write the first announcement. New lines are numbered automatically.')} onChange={event => {
+      <textarea autoComplete="off" autoFocus aria-label={t('团队公告', 'Team announcements')} className="team-announcement-input" name="announcement" id="team-announcement-input" value={draft.text} rows={7} maxLength={16000} disabled={busy} placeholder={t('输入第一条公告，换行自动编号', 'Write the first announcement. New lines are numbered automatically.')} onChange={event => {
         if (composing.current) setDraft({ ...draft, text: event.target.value }); else normalize(event.target);
       }} onCompositionStart={() => { composing.current = true; }} onCompositionEnd={event => { composing.current = false; normalize(event.currentTarget); }} />
       {error && <p role="alert">{error}</p>}

@@ -71,6 +71,7 @@ function ScrambleView(props: {
       <div className="roux-analyzer-scramble-field">
         <FieldLabel>{t('Scramble')}</FieldLabel>
         <textarea
+          autoComplete="off"
           className="roux-analyzer-scramble-input"
           rows={2}
           value={value}

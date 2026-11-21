@@ -113,6 +113,7 @@ export default function DrawingsPanel({ open, onClose }: Props) {
                 <div className="paint-drawing-meta">
                   {editingId === d.id ? (
                     <input
+                      autoComplete="off"
                       className="paint-drawing-rename"
                       value={draft}
                       autoFocus

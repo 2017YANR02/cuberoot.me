@@ -1062,6 +1062,7 @@ export default function Cube3Solver() {
           ) : viewMode === 'scramble' ? (
             <div className="move-input">
               <textarea
+                autoComplete="off"
                 className="move-input-area"
                 rows={4}
                 spellCheck={false}
@@ -1101,6 +1102,7 @@ export default function Cube3Solver() {
           ) : (
             <div className="move-input">
               <textarea
+                autoComplete="off"
                 className="move-input-area"
                 rows={3}
                 spellCheck={false}

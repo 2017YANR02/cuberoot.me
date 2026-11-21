@@ -94,9 +94,9 @@ function CampusesContent({ orgSlug, page, organization }: {
               <h2>{t('新建校区', 'Create campus')}</h2>
               <form className="org-form" onSubmit={submit} onChange={() => { operationKey.reset(); setMessage(''); }}>
                 <fieldset disabled={submitting}>
-                  <label>{t('校区名称', 'Campus name')}<input className="org-form-control" name="name" required maxLength={160} /></label>
-                  <label>{t('校区代码（可选）', 'Campus code (optional)')}<input className="org-form-control" name="code" maxLength={64} pattern="[a-z0-9][a-z0-9_-]{0,63}" autoCapitalize="none" /></label>
-                  <label className="org-field-wide">{t('时区（可选）', 'Time zone (optional)')}<input className="org-form-control" name="timezone" maxLength={64} placeholder={organization.timezone} autoCapitalize="none" /></label>
+                  <label>{t('校区名称', 'Campus name')}<input autoComplete="off" className="org-form-control" name="name" required maxLength={160} /></label>
+                  <label>{t('校区代码（可选）', 'Campus code (optional)')}<input autoComplete="off" className="org-form-control" name="code" maxLength={64} pattern="[a-z0-9][a-z0-9_-]{0,63}" autoCapitalize="none" /></label>
+                  <label className="org-field-wide">{t('时区（可选）', 'Time zone (optional)')}<input autoComplete="off" className="org-form-control" name="timezone" maxLength={64} placeholder={organization.timezone} autoCapitalize="none" /></label>
                   <div className="org-form-actions"><button className="org-form-button" type="submit">{submitting ? t('创建中…', 'Creating…') : t('新建校区', 'Create campus')}</button></div>
                 </fieldset>
                 <MutationMessage message={mutationError || message} error={!!mutationError} />

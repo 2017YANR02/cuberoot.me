@@ -614,7 +614,7 @@ export default function CalendarClient() {
         {mobileSearch ? <>
           {/* allow-manual-search: 仅关闭搜索页面，结果已由输入实时更新。 */}
           <button type="button" className="cal-mobile-action cal-mobile-glass cal-mobile-back" aria-label={tr({ zh: '关闭搜索', en: 'Close search' })} onClick={closeSearch}><ChevronLeft size={26} aria-hidden /></button>
-          <input ref={mobileSearchRef} className="cal-mobile-search-input" type="search" value={query} placeholder={tr({ zh: '搜索', en: 'Search' })} aria-label={tr({ zh: '搜索日程', en: 'Search events' })} onChange={(e) => setQuery(e.target.value)} />
+          <input autoComplete="off" ref={mobileSearchRef} className="cal-mobile-search-input" type="search" value={query} placeholder={tr({ zh: '搜索', en: 'Search' })} aria-label={tr({ zh: '搜索日程', en: 'Search events' })} onChange={(e) => setQuery(e.target.value)} />
           {query && <ClearButton onClick={() => setQuery('')} />}
         </> : <>
           <BackHome className="cal-mobile-action" />

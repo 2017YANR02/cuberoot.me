@@ -134,6 +134,7 @@ function MarksFeed() {
       <div className="scrmarks-search">
         <Search size={15} className="scrmarks-search-icon" />
         <input
+          autoComplete="off"
           className="scrmarks-search-input"
           value={searchInput}
           onChange={(e) => setSearchInput(e.target.value)}

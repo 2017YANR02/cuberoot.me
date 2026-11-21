@@ -94,6 +94,7 @@ export function BldConfigBar({ show }: BldConfigBarProps): JSX.Element {
                 </label>
                 <div className="bld-input-wrap">
                   <input
+                    autoComplete="off"
                     id="bld-corder"
                     className="bld-input"
                     value={config.cOrder}
@@ -134,6 +135,7 @@ export function BldConfigBar({ show }: BldConfigBarProps): JSX.Element {
                 </label>
                 <div className="bld-input-wrap">
                   <input
+                    autoComplete="off"
                     id="bld-eorder"
                     className="bld-input"
                     value={config.eOrder}

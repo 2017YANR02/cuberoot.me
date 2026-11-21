@@ -232,6 +232,7 @@ export default function MccPage() {
             )}
           </div>
           <textarea
+            autoComplete="off"
             className="mcc-textarea"
             value={input}
             onChange={(e) => setInput(e.target.value)}

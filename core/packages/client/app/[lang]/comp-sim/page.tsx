@@ -820,6 +820,7 @@ export default function CompSimPage() {
                     {tr({ zh: '给下次的提醒（可选）', en: 'Note for next time (optional)' })}
                   </label>
                   <textarea
+ autoComplete="off"
  className="practice-textarea"
                     id="practice-note"
                     rows={2}
@@ -1009,6 +1010,7 @@ export default function CompSimPage() {
             </label>
             <div className="practice-input-wrap">
               <input
+ autoComplete="off"
  className="practice-input"
                 id="practice-target"
                 inputMode="decimal"

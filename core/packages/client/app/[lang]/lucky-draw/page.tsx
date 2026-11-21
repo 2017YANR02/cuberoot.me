@@ -156,6 +156,7 @@ export default function DrawPage() {
                 <label>
                   <span className="draw-section-title">{l.list}</span>
                   <textarea
+                    autoComplete="off"
                     className="draw-input draw-list-input"
                     value={v.draft}
                     maxLength={500000}
@@ -185,6 +186,7 @@ export default function DrawPage() {
                     <label>
                       {l.letters}
                       <input
+                        autoComplete="off"
                         className="draw-input"
                         value={v.letters}
                         onChange={(e) => input("letters", e.target.value)}
@@ -204,6 +206,7 @@ export default function DrawPage() {
                   <h2 className="draw-section-title">{l.saved}</h2>
                   <div className="draw-actions draw-input-row">
                     <input
+                      autoComplete="off"
                       className="draw-input"
                       aria-label={l.name}
                       placeholder={l.name}

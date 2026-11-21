@@ -110,8 +110,8 @@ function ClassesContent({ orgSlug, page, role }: { orgSlug: string; page: number
               <h2>{t('新建班级', 'Create class')}</h2>
               <form className="org-form" onSubmit={submit} onChange={() => { operationKey.reset(); setMessage(''); }}>
                 <fieldset disabled={submitting}>
-                  <label>{t('班级名称', 'Class name')}<input className="org-form-control" name="name" required maxLength={160} /></label>
-                  <label>{t('班级代码（可选）', 'Class code (optional)')}<input className="org-form-control" name="code" maxLength={64} pattern="[a-z0-9][a-z0-9_-]{0,63}" autoCapitalize="none" /></label>
+                  <label>{t('班级名称', 'Class name')}<input autoComplete="off" className="org-form-control" name="name" required maxLength={160} /></label>
+                  <label>{t('班级代码（可选）', 'Class code (optional)')}<input autoComplete="off" className="org-form-control" name="code" maxLength={64} pattern="[a-z0-9][a-z0-9_-]{0,63}" autoCapitalize="none" /></label>
                   <label className="org-field-wide">{t('校区（可选）', 'Campus (optional)')}
                     <select className="org-form-control" name="campusId" defaultValue="">
                       <option value="">{t('不指定校区', 'No campus')}</option>

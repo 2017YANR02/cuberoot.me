@@ -186,6 +186,7 @@ export default function FeedbackModal({ lang, onClose: onClosed, embedded = fals
             <h2 className="fb-title">{t('反馈', 'Feedback')}</h2>
 
             <textarea
+              autoComplete="off"
               className="fb-textarea"
               value={text}
               maxLength={BODY_MAX}
@@ -198,6 +199,7 @@ export default function FeedbackModal({ lang, onClose: onClosed, embedded = fals
             <label className="fb-url-field">
               <span className="fb-url-label">{t('网址', 'URL')}</span>
               <input
+                autoComplete="off"
                 className="fb-url-input"
                 type="url"
                 inputMode="url"

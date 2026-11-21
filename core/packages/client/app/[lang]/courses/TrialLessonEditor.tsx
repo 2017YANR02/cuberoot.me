@@ -87,16 +87,16 @@ export default function TrialLessonEditor({
       </div>
       <div className="teaching-advanced-editor-grid">
         <label><T zh="中文标题" en="Chinese title" />
-          <input className="teaching-advanced-field-control" maxLength={200} required value={draft.titleZh} onChange={(event) => setDraft((current) => ({ ...current, titleZh: event.target.value }))} />
+          <input autoComplete="off" className="teaching-advanced-field-control" maxLength={200} required value={draft.titleZh} onChange={(event) => setDraft((current) => ({ ...current, titleZh: event.target.value }))} />
         </label>
         <label><T zh="本节目标" en="Lesson goal" />
-          <textarea className="teaching-advanced-field-control teaching-advanced-textarea-control" maxLength={1000} rows={3} required value={draft.outcomeZh} onChange={(event) => setDraft((current) => ({ ...current, outcomeZh: event.target.value }))} />
+          <textarea autoComplete="off" className="teaching-advanced-field-control teaching-advanced-textarea-control" maxLength={1000} rows={3} required value={draft.outcomeZh} onChange={(event) => setDraft((current) => ({ ...current, outcomeZh: event.target.value }))} />
         </label>
         <label><T zh="拍摄清单（一行一项）" en="Shot list (one item per line)" />
-          <textarea className="teaching-advanced-field-control teaching-advanced-textarea-control" rows={7} required value={shotsText} onChange={(event) => setShotsText(event.target.value)} />
+          <textarea autoComplete="off" className="teaching-advanced-field-control teaching-advanced-textarea-control" rows={7} required value={shotsText} onChange={(event) => setShotsText(event.target.value)} />
         </label>
         <label><T zh="完整口播（一行一段）" en="Complete narration (one paragraph per line)" />
-          <textarea className="teaching-advanced-field-control teaching-advanced-textarea-control" rows={14} required value={scriptText} onChange={(event) => setScriptText(event.target.value)} />
+          <textarea autoComplete="off" className="teaching-advanced-field-control teaching-advanced-textarea-control" rows={14} required value={scriptText} onChange={(event) => setScriptText(event.target.value)} />
         </label>
       </div>
       <label className="teaching-advanced-duration"><T zh="时长（分钟）" en="Duration (minutes)" />

@@ -184,6 +184,7 @@ export default function TimerBldHelperModal({ scramble, event, isZh, onClose }: 
                 })}</label>
                   <div className="bld-helper-input-wrap">
                     <input
+                      autoComplete="off"
                       className="bld-helper-input"
                       id="bldh-corder"
                       value={config.cOrder}
@@ -199,6 +200,7 @@ export default function TimerBldHelperModal({ scramble, event, isZh, onClose }: 
                 })}</label>
                   <div className="bld-helper-input-wrap">
                     <input
+                      autoComplete="off"
                       className="bld-helper-input"
                       id="bldh-eorder"
                       value={config.eOrder}

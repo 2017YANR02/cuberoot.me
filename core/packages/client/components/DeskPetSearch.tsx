@@ -506,8 +506,8 @@ export default function DeskPetSearch({
                   {currentCharacter.removed ? tr({ zh: '恢复', en: 'Restore' }) : tr({ zh: '移除', en: 'Remove' })}
                 </button>
                 {editingName && <form onSubmit={event => { event.preventDefault(); void patchCharacter({ label: { zh: nameZh.trim(), en: nameEn.trim() } }).then(saved => { if (saved) setEditingName(false); }); }}>
-                  <label>{tr({ zh: '中文名称', en: 'Chinese name' })}<input value={nameZh} maxLength={80} onChange={event => setNameZh(event.target.value)} /></label>
-                  <label>{tr({ zh: '英文名称', en: 'English name' })}<input value={nameEn} maxLength={80} onChange={event => setNameEn(event.target.value)} /></label>
+                  <label>{tr({ zh: '中文名称', en: 'Chinese name' })}<input autoComplete="off" value={nameZh} maxLength={80} onChange={event => setNameZh(event.target.value)} /></label>
+                  <label>{tr({ zh: '英文名称', en: 'English name' })}<input autoComplete="off" value={nameEn} maxLength={80} onChange={event => setNameEn(event.target.value)} /></label>
                   <button type="submit" disabled={catalogDisabled || !nameZh.trim() || !nameEn.trim()}>{tr({ zh: '保存', en: 'Save' })}</button>
                   <button type="button" onClick={() => setEditingName(false)}>{tr({ zh: '取消', en: 'Cancel' })}</button>
                 </form>}
@@ -641,7 +641,7 @@ export default function DeskPetSearch({
               <span className="sr-only" role="status">{unreadReplies.length > 0 ? tr({ zh: `有 ${unreadReplies.length} 个聊天的回答已完成`, en: `${unreadReplies.length} conversations have new replies` }) : ''}</span>
               <button type="button" className="deskpet-chat-action" aria-label={t('搜索聊天', 'Search conversations')} aria-expanded={chatSearchOpen} onClick={() => { setChatSearchOpen(value => !value); setChatSearch(''); }}><Search size={18}/></button>
             </div>
-            {chatSearchOpen && <input className="deskpet-chat-search" value={chatSearch} onChange={event => setChatSearch(event.target.value)} placeholder={t('搜索聊天', 'Search conversations')} aria-label={t('搜索聊天', 'Search conversations')} />}
+            {chatSearchOpen && <input autoComplete="off" className="deskpet-chat-search" value={chatSearch} onChange={event => setChatSearch(event.target.value)} placeholder={t('搜索聊天', 'Search conversations')} aria-label={t('搜索聊天', 'Search conversations')} />}
             <button type="button" className="af-nav-link" onClick={newChat}>
               <span className="af-nav-icon" aria-hidden="true"><SquarePen size={18}/></span><span>{t('新聊天', 'New chat')}</span>
             </button>
@@ -655,7 +655,7 @@ export default function DeskPetSearch({
                   setEditingChat(null);
                 }}>
                   <div className="deskpet-chat-name-field">
-                    <input autoFocus maxLength={120} value={editingChat.title} aria-label={tr({ zh: '聊天名称', en: 'Conversation name' })}
+                    <input autoComplete="off" autoFocus maxLength={120} value={editingChat.title} aria-label={tr({ zh: '聊天名称', en: 'Conversation name' })}
                       onFocus={event => event.currentTarget.select()} onChange={event => setEditingChat({ id: chat.id, title: event.target.value })} />
                     {editingChat.title && <ClearButton onClick={() => setEditingChat({ id: chat.id, title: '' })} />}
                   </div>

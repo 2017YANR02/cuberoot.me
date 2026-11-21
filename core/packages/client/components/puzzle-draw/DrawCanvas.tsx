@@ -410,6 +410,7 @@ export function DrawCanvas({
             {t('文件名', 'Filename')}
           </label>
           <input
+            autoComplete="off"
             id={`${controlId}-filename`}
             className="vc-num draw-canvas-text-input"
             type="text"

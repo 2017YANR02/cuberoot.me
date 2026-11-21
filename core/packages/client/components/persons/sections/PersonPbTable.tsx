@@ -401,6 +401,7 @@ export default function PersonPbTable({ wcaId, isZh, onVisibilityControlChange }
                               <span>{t('成绩', 'Result')}</span>
                               <span className="wp-pb-input-wrap">
                                 <input
+                                  autoComplete="off"
                                   className="wp-pb-form-control wp-pb-clearable-control"
                                   value={resultInput}
                                   onChange={(inputEvent) => setResultInput(inputEvent.target.value)}
@@ -419,6 +420,7 @@ export default function PersonPbTable({ wcaId, isZh, onVisibilityControlChange }
                               <span>{t('魔方', 'Cube')}</span>
                               <span className="wp-pb-input-wrap">
                                 <input
+                                  autoComplete="off"
                                   className="wp-pb-form-control wp-pb-clearable-control"
                                   value={cubeName}
                                   onChange={(inputEvent) => setCubeName(inputEvent.target.value)}
@@ -433,6 +435,7 @@ export default function PersonPbTable({ wcaId, isZh, onVisibilityControlChange }
                             <span>{t('备注', 'Comments')}</span>
                             <span className="wp-pb-input-wrap">
                               <textarea
+                                autoComplete="off"
                                 className="wp-pb-form-control wp-pb-form-textarea wp-pb-clearable-control"
                                 value={comments}
                                 onChange={(inputEvent) => setComments(inputEvent.target.value)}

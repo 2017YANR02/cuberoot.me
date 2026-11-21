@@ -317,6 +317,7 @@ export default function ThreadClient() {
             {editingTitle ? (
               <div className="forum-title-edit">
                 <input
+                  autoComplete="off"
                   className="forum-title-input"
                   value={titleDraft}
                   maxLength={200}

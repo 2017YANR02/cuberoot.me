@@ -148,7 +148,7 @@ export function PlatformInstructorReview({ entity, params, busy, runAction }: Co
   };
   return <section className="platform-domain-form platform-application-review">
     <h2>{t('审核决定', 'Review decision')}</h2>
-    <label className="platform-application-note"><span>{t('审核意见（拒绝时必填）', 'Review feedback (required for rejection)')}</span><textarea ref={noteRef} className="platform-field-control platform-field-textarea" rows={3} maxLength={10000} value={note} aria-invalid={Boolean(validation)} aria-describedby={validation ? errorId : undefined} onChange={event => { setNote(event.target.value); setValidation(''); }} /></label>
+    <label className="platform-application-note"><span>{t('审核意见（拒绝时必填）', 'Review feedback (required for rejection)')}</span><textarea autoComplete="off" ref={noteRef} className="platform-field-control platform-field-textarea" rows={3} maxLength={10000} value={note} aria-invalid={Boolean(validation)} aria-describedby={validation ? errorId : undefined} onChange={event => { setNote(event.target.value); setValidation(''); }} /></label>
     {validation && <p id={errorId} className="platform-form-error" role="alert">{validation}</p>}
     <div className="platform-write-actions"><button className="platform-button platform-button-primary" type="button" disabled={Boolean(busy || decisionPending)} onClick={() => void decide('approved')}>{decisionPending === 'approved' ? t('正在通过…', 'Approving…') : t('通过申请', 'Approve application')}</button><button className="platform-button" type="button" disabled={Boolean(busy || decisionPending)} onClick={() => void decide('rejected')}>{decisionPending === 'rejected' ? t('正在拒绝…', 'Rejecting…') : t('拒绝申请', 'Reject application')}</button></div>
   </section>;

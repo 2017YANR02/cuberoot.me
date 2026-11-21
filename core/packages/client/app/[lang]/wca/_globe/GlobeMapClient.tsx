@@ -3179,6 +3179,7 @@ export default function GlobeMapClient({ embedded = false }: { embedded?: boolea
           <Search className="globe-search-icon" size={14} strokeWidth={1.75} />
           {/* allow-manual-search: Results update while typing; Enter moves the map to the first result. */}
           <input
+            autoComplete="off"
             className="globe-search-input"
             type="text"
             placeholder={tr({ zh: '搜索比赛 / 选手 / 城市 / 地点', en: 'Search comp / cuber / city / place'

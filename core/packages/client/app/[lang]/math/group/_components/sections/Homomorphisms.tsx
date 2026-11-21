@@ -39,11 +39,11 @@ function HomomorphismPanel() {
       </p>
       <div className="gt-panel-input-row">
         <label>g</label>
-        <input className="gt-input" value={g} onChange={e => setG(e.target.value)} />
+        <input autoComplete="off" className="gt-input" value={g} onChange={e => setG(e.target.value)} />
       </div>
       <div className="gt-panel-input-row">
         <label>h</label>
-        <input className="gt-input" value={h} onChange={e => setH(e.target.value)} />
+        <input autoComplete="off" className="gt-input" value={h} onChange={e => setH(e.target.value)} />
       </div>
       <div className="gt-panel-input-row" style={{ marginTop: 4, flexWrap: 'wrap' }}>
         {presets.map(p => (

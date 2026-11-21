@@ -199,7 +199,7 @@ export function PlatformRedemptionCodeManager({ definition, entities = [], busy,
           <details className="platform-invite-options">
             <MoreToggle as="summary">{t('更多设置', 'More options')}</MoreToggle>
             <div className="platform-form-grid">
-              <label><span>{t('备注（选填）', 'Note (optional)')}</span><input name="label" className="platform-field-control" maxLength={160} /></label>
+              <label><span>{t('备注（选填）', 'Note (optional)')}</span><input autoComplete="off" name="label" className="platform-field-control" maxLength={160} /></label>
               <label><span>{t('可用人数（留空不限）', 'Learners (blank for unlimited)')}</span><input name="maxRedemptions" className="platform-field-control" type="number" min={1} max={1000000000} step={1} defaultValue={1} /></label>
               <InviteExpiryField label={t('兑换截止时间（选填）', 'Redeem by (optional)')} name="expiresAt" value={expiresAt} onChange={setExpiresAt} />
             </div>

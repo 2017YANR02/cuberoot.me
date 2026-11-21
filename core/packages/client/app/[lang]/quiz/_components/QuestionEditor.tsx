@@ -169,6 +169,7 @@ export default function QuestionEditor({ draft, onChange }: Props) {
           <label className="quiz-lang-box">
             <span className="quiz-lang-tag">中文</span>
             <textarea
+              autoComplete="off"
               className="quiz-textarea"
               rows={2}
               maxLength={QUIZ_LIMITS.question}
@@ -180,6 +181,7 @@ export default function QuestionEditor({ draft, onChange }: Props) {
           <label className="quiz-lang-box">
             <span className="quiz-lang-tag">English</span>
             <textarea
+              autoComplete="off"
               className="quiz-textarea"
               rows={2}
               maxLength={QUIZ_LIMITS.question}
@@ -209,6 +211,7 @@ export default function QuestionEditor({ draft, onChange }: Props) {
                   <Check size={14} aria-hidden />
                 </button>
                 <input
+                  autoComplete="off"
                   className="quiz-input"
                   maxLength={QUIZ_LIMITS.option}
                   value={o.zh}
@@ -216,6 +219,7 @@ export default function QuestionEditor({ draft, onChange }: Props) {
                   placeholder={tr({ zh: `选项 ${i + 1}(中文)`, en: `Option ${i + 1} (Chinese)` })}
                 />
                 <input
+                  autoComplete="off"
                   className="quiz-input"
                   maxLength={QUIZ_LIMITS.option}
                   value={o.en}
@@ -253,6 +257,7 @@ export default function QuestionEditor({ draft, onChange }: Props) {
               <label className="quiz-lang-box">
                 <span className="quiz-lang-tag">中文</span>
                 <input
+                  autoComplete="off"
                   className="quiz-input"
                   maxLength={QUIZ_LIMITS.answer}
                   value={draft.answerZh}
@@ -262,6 +267,7 @@ export default function QuestionEditor({ draft, onChange }: Props) {
               <label className="quiz-lang-box">
                 <span className="quiz-lang-tag">English</span>
                 <input
+                  autoComplete="off"
                   className="quiz-input"
                   maxLength={QUIZ_LIMITS.answer}
                   value={draft.answerEn}
@@ -274,6 +280,7 @@ export default function QuestionEditor({ draft, onChange }: Props) {
           <div className="quiz-field">
             <span className="quiz-field-label">{tr({ zh: '判对关键词', en: 'Accepted keywords' })}</span>
             <input
+              autoComplete="off"
               className="quiz-input"
               value={draft.accept.join(', ')}
               onChange={(e) => set({ accept: e.target.value.split(',').map((k) => k.trim()) })}
@@ -308,6 +315,7 @@ export default function QuestionEditor({ draft, onChange }: Props) {
           <label className="quiz-lang-box">
             <span className="quiz-lang-tag">中文</span>
             <textarea
+              autoComplete="off"
               className="quiz-textarea"
               rows={2}
               maxLength={QUIZ_LIMITS.why}
@@ -318,6 +326,7 @@ export default function QuestionEditor({ draft, onChange }: Props) {
           <label className="quiz-lang-box">
             <span className="quiz-lang-tag">English</span>
             <textarea
+              autoComplete="off"
               className="quiz-textarea"
               rows={2}
               maxLength={QUIZ_LIMITS.why}

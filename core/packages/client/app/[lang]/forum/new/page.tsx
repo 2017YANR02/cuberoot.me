@@ -140,6 +140,7 @@ export default function ForumNewThreadPage() {
               <span className="forum-new-label"><T zh="标题" en="Title" /></span>
               <div className="forum-new-title-wrap">
                 <input
+                  autoComplete="off"
                   className="forum-title-input"
                   value={title}
                   maxLength={MAX_TITLE_LEN}

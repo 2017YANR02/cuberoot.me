@@ -73,6 +73,7 @@ export default function WbPage() {
         <div className="wb-search">
           <Search size={16} />
           <input
+            autoComplete="off"
             className="wb-search-input"
             type="text"
             value={query}

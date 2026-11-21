@@ -750,6 +750,7 @@ function ColorField({
             />
           </span>
           <input
+            autoComplete="off"
             className="paint-input paint-hex"
             value={isNone ? 'none' : hex}
             onChange={(e) => setHex(e.target.value)}

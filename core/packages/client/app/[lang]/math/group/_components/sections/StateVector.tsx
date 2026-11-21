@@ -26,7 +26,7 @@ function CubeStateInspector() {
       </p>
       <div className="gt-panel-input-row">
         <label>alg</label>
-        <input className="gt-input" value={alg} onChange={e => setAlg(e.target.value)} placeholder="R U R' U' …" />
+        <input autoComplete="off" className="gt-input" value={alg} onChange={e => setAlg(e.target.value)} placeholder="R U R' U' …" />
         <button className="gt-btn-ghost gt-btn" onClick={() => setAlg('')}>{tr({ zh: '清空', en: 'reset' })}</button>
       </div>
 

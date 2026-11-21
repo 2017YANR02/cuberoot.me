@@ -61,7 +61,7 @@ export default function CalendarSettings({ section, onSection, prefs, onPrefs, d
               </div>
               <label className="cal-settings-field">
                 <span>{tr({ zh: '主要时区标签', en: 'Primary time zone label' })}</span>
-                <span className="cal-zone-label-wrap"><input className="cal-zone-label" value={prefs.tzLabel} maxLength={20} placeholder={tr({ zh: '标签（可选）', en: 'Label (optional)' })} onChange={e => onPrefs({ tzLabel: e.target.value })} />{prefs.tzLabel && <ClearButton onClick={() => onPrefs({ tzLabel: '' })} />}</span>
+                <span className="cal-zone-label-wrap"><input autoComplete="off" className="cal-zone-label" value={prefs.tzLabel} maxLength={20} placeholder={tr({ zh: '标签（可选）', en: 'Label (optional)' })} onChange={e => onPrefs({ tzLabel: e.target.value })} />{prefs.tzLabel && <ClearButton onClick={() => onPrefs({ tzLabel: '' })} />}</span>
               </label>
               </div>
               <BoolToggle value={prefs.showOtherZones} label={tr({ zh: '显示其他时区', en: 'Show other time zones' })} onChange={showOtherZones => onPrefs({ showOtherZones })} />
@@ -77,7 +77,7 @@ export default function CalendarSettings({ section, onSection, prefs, onPrefs, d
                     </div>
                     <label className="cal-settings-field">
                       <span>{tr({ zh: '标签', en: 'Label' })}</span>
-                      <span className="cal-zone-label-wrap"><input className="cal-zone-label" aria-label={`${title} ${tr({ zh: '标签', en: 'label' })}`} value={prefs[labelKey]} disabled={!prefs[zoneKey]} maxLength={20} onChange={e => onPrefs({ [labelKey]: e.target.value })} />{prefs[labelKey] && <ClearButton onClick={() => onPrefs({ [labelKey]: '' })} />}</span>
+                      <span className="cal-zone-label-wrap"><input autoComplete="off" className="cal-zone-label" aria-label={`${title} ${tr({ zh: '标签', en: 'label' })}`} value={prefs[labelKey]} disabled={!prefs[zoneKey]} maxLength={20} onChange={e => onPrefs({ [labelKey]: e.target.value })} />{prefs[labelKey] && <ClearButton onClick={() => onPrefs({ [labelKey]: '' })} />}</span>
                     </label>
                   </div>;
                 })}

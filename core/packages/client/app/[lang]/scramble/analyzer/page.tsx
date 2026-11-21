@@ -554,6 +554,7 @@ function AnalyzePageInner() {
         {/* 输入框 + 右侧清除按钮:非空才显示,点击清空并保持焦点(统一 components/ClearButton)。 */}
         <div className="analyze-scramble-wrap">
           <textarea
+            autoComplete="off"
             ref={scrambleRef}
             className="analyze-scramble"
             rows={1}

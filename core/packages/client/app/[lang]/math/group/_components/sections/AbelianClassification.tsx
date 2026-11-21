@@ -614,6 +614,7 @@ export default function AbelianClassification() {
 
         <div className="gt-panel-input-row">
           <input
+            autoComplete="off"
             className="gt-input"
             placeholder={tr({ zh: '输入素幂，如 2^3 或 5', en: 'Enter prime power, e.g. 2^3 or 5'
             })}

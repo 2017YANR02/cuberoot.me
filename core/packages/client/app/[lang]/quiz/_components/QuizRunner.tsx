@@ -281,6 +281,7 @@ export default function QuizRunner({ level, cat, category, community }: Props) {
       ) : (
         <div className="quiz-open">
           <input
+            autoComplete="off"
             className="quiz-input"
             value={typed}
             onChange={(e) => setTyped(e.target.value)}
@@ -365,6 +366,7 @@ export default function QuizRunner({ level, cat, category, community }: Props) {
           {q.by && reportOpen && (
             <div className="quiz-report">
               <input
+                autoComplete="off"
                 className="quiz-input"
                 value={reportText}
                 onChange={(e) => setReportText(e.target.value)}

@@ -50,11 +50,11 @@ function CommutatorViewer() {
       </p>
       <div className="gt-panel-input-row">
         <label>A</label>
-        <input className="gt-input" value={a} onChange={e => setA(e.target.value)} />
+        <input autoComplete="off" className="gt-input" value={a} onChange={e => setA(e.target.value)} />
       </div>
       <div className="gt-panel-input-row">
         <label>B</label>
-        <input className="gt-input" value={b} onChange={e => setB(e.target.value)} />
+        <input autoComplete="off" className="gt-input" value={b} onChange={e => setB(e.target.value)} />
       </div>
       <div className="gt-panel-input-row" style={{ marginTop: 4 }}>
         {presets.filter(p => !p.a.includes('[')).map((p, i) => (
@@ -134,7 +134,7 @@ function CentreVerifier() {
       </p>
       <div className="gt-panel-input-row">
         <label>g</label>
-        <input className="gt-input" value={alg} onChange={e => setAlg(e.target.value)} />
+        <input autoComplete="off" className="gt-input" value={alg} onChange={e => setAlg(e.target.value)} />
       </div>
       <div className="gt-panel-input-row" style={{ marginTop: 4, flexWrap: 'wrap' }}>
         {presets.map(p => (

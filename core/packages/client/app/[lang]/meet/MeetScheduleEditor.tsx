@@ -61,7 +61,7 @@ export default function MeetScheduleEditor({ plan, onClose, onSaved }: {
         finally { pending.current = false; setSaving(false); }
       }}>
         <fieldset disabled={saving}>
-          <label>{tr({ zh: '会议主题', en: 'Meeting title' })}<input className="meet-schedule-input" autoFocus required maxLength={120} value={title} onChange={event => setTitle(event.target.value)} /></label>
+          <label>{tr({ zh: '会议主题', en: 'Meeting title' })}<input autoComplete="off" className="meet-schedule-input" autoFocus required maxLength={120} value={title} onChange={event => setTitle(event.target.value)} /></label>
           <div className="meet-form-row">
             <label>{tr({ zh: '开始日期', en: 'Start date' })}<DateInput value={date} onChange={setDate} required /></label>
             <label>{tr({ zh: '开始时间', en: 'Start time' })}<input className="meet-schedule-input" type="time" required value={time} onChange={event => setTime(event.target.value)} /></label>

@@ -92,7 +92,7 @@ function ProjectTaskEditor({ target, assignees, onClose, onSaved }: {
   const t = useT();
   const { api, formatName = name => name } = useWorkspace();
   const { id, task } = target;
-  const moneyInput = (name: string, cents: number | undefined, required = false) => <input name={name}
+  const moneyInput = (name: string, cents: number | undefined, required = false) => <input autoComplete="off" name={name}
     inputMode="decimal" pattern="[0-9]+(?:[.][0-9]{1,2})?" maxLength={10} required={required}
     defaultValue={cents === undefined ? '' : String(cents / 100)} />;
   return <WorkspaceDialog wide title={task ? t('编辑项目任务', 'Edit project task') : t('新建项目任务', 'New project task')} onClose={onClose}>
@@ -109,7 +109,7 @@ function ProjectTaskEditor({ target, assignees, onClose, onSaved }: {
       });
       onSaved();
     }}>
-      <Field label={t('项目名称', 'Project name')}><input name="title" required maxLength={120} defaultValue={task?.title} /></Field>
+      <Field label={t('项目名称', 'Project name')}><input autoComplete="off" name="title" required maxLength={120} defaultValue={task?.title} /></Field>
       <div className="staff-form-row">
         <Field label={t('员工', 'Employee')}>{task
           ? <input value={formatName(task.assignee)} readOnly />
@@ -126,7 +126,7 @@ function ProjectTaskEditor({ target, assignees, onClose, onSaved }: {
         <Field label={t('验收奖金（元，选填）', 'Acceptance bonus (CNY, optional)')}>{moneyInput('bonus', task?.bonusCents)}</Field>
       </div>
       <Field label={t('验收标准', 'Acceptance criteria')} width="wide">
-        <textarea name="criteria" required maxLength={3000} rows={4} defaultValue={task?.criteria} />
+        <textarea autoComplete="off" name="criteria" required maxLength={3000} rows={4} defaultValue={task?.criteria} />
       </Field>
       <div className="staff-actions staff-form-actions">
         <Button type="submit">{task ? t('保存', 'Save') : t('发给员工确认', 'Send for employee confirmation')}</Button>

@@ -43,7 +43,7 @@ export function ChatMoreTools({ insert }: { insert(value: string): void }) {
       <button type="button" onClick={() => { setMode('music'); void loadMusicLibrary(); }}><span><Music /></span>{t('音乐', 'Music')}</button>
     </div> : <div className="friend-chat-music-picker">
       <div className="friend-chat-tools"><button type="button" className="friend-chat-action" onClick={() => setMode('grid')}><ArrowLeft size={16} />{t('更多功能', 'More actions')}</button><AppLink href="/music" prefetch={false}>{t('打开曲库', 'Open music library')}</AppLink></div>
-      <div className="friend-chat-search"><Search size={16} /><input aria-label={t('搜索音乐', 'Search music')} value={query} onChange={e => setQuery(e.target.value)} />{query && <ClearButton onClick={() => setQuery('')} />}</div>
+      <div className="friend-chat-search"><Search size={16} /><input autoComplete="off" aria-label={t('搜索音乐', 'Search music')} value={query} onChange={e => setQuery(e.target.value)} />{query && <ClearButton onClick={() => setQuery('')} />}</div>
       {player.status === 'loading' && <p role="status"><LoadingIndicator>{t('加载中…', 'Loading…')}</LoadingIndicator></p>}
       {(player.status === 'error' || player.error) && <p role="alert">{t('音乐加载或播放失败', 'Could not load or play music')}<button type="button" className="friend-chat-action" onClick={() => void loadMusicLibrary(true)}>{t('重试', 'Retry')}</button></p>}
       {player.status === 'ready' && !player.tracks.filter(track => `${track.title} ${track.artist}`.toLocaleLowerCase().includes(query.toLocaleLowerCase())).length && <p>{t('没有匹配的音乐', 'No matching music')}</p>}

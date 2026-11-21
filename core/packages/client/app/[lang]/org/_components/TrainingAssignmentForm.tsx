@@ -133,8 +133,8 @@ export default function TrainingAssignmentForm({
             {versions.map((version) => <option key={version.id} value={version.id}>v{version.versionNumber} {version.title}</option>)}
           </select>
         </label>
-        <label>{t('任务标题', 'Assignment title')}<input className="org-form-control" name="title" required maxLength={160} defaultValue={initial?.assignment.title ?? ''} /></label>
-        <label className="org-field-wide">{t('任务说明', 'Instructions')}<textarea className="org-form-control org-form-textarea" name="instructions" required maxLength={8_000} defaultValue={initial?.assignment.instructions ?? ''} /></label>
+        <label>{t('任务标题', 'Assignment title')}<input autoComplete="off" className="org-form-control" name="title" required maxLength={160} defaultValue={initial?.assignment.title ?? ''} /></label>
+        <label className="org-field-wide">{t('任务说明', 'Instructions')}<textarea autoComplete="off" className="org-form-control org-form-textarea" name="instructions" required maxLength={8_000} defaultValue={initial?.assignment.instructions ?? ''} /></label>
         <label>{t('频率', 'Schedule')}
           <select className="org-form-control" name="scheduleKind" defaultValue={initial?.assignment.scheduleKind ?? 'daily'}>
             <option value="once">{t('一次性', 'Once')}</option>

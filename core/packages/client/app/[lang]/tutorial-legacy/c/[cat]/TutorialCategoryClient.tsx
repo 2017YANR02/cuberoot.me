@@ -87,6 +87,7 @@ function TutorialCategoryPageInner() {
         <div className="tutorial-search-box">
           <SearchIcon size={16} color="var(--tutorial-text-faint)" />
           <input
+            autoComplete="off"
             className="tutorial-search-input"
             type="search"
             placeholder={tr({ zh: '搜索…', en: 'Search…'

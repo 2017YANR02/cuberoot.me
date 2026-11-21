@@ -87,7 +87,7 @@ export function CollaborativeSharePanel({ id, kind, details, reload, close }: {
       </div> : <>
         {details.canManage && <>
           <div className="collab-invite-row">
-            <label className="collab-search-wrap"><span className="sr-only"><T zh="添加人员" en="Add people" /></span><input className="collab-search-input" value={person?.name ?? query} readOnly={!!person} disabled={busy} onChange={event => setQuery(event.target.value)} placeholder={tr({ zh: '添加人员：姓名或 WCA ID', en: 'Add people by name or WCA ID' })} />{(query || person) && <ClearButton onClick={() => { setQuery(''); setPerson(null); }} preserveFocus />}</label>
+            <label className="collab-search-wrap"><span className="sr-only"><T zh="添加人员" en="Add people" /></span><input autoComplete="off" className="collab-search-input" value={person?.name ?? query} readOnly={!!person} disabled={busy} onChange={event => setQuery(event.target.value)} placeholder={tr({ zh: '添加人员：姓名或 WCA ID', en: 'Add people by name or WCA ID' })} />{(query || person) && <ClearButton onClick={() => { setQuery(''); setPerson(null); }} preserveFocus />}</label>
             {person && <select className="collab-role-select" value={role} disabled={busy} onChange={event => setRole(event.target.value as MemberRole)} aria-label={tr({ zh: '邀请权限', en: 'Invite role' })}><RoleOptions /></select>}
           </div>
           {person ? <div className="collab-invite-actions"><button className="collab-button collab-primary" type="button" disabled={busy} onClick={() => void mutate(async () => { await addDocumentMember(id, person.key, role); setPerson(null); setQuery(''); })}><T zh="添加" en="Add" /></button></div>

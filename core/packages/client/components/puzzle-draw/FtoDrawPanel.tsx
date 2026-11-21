@@ -202,6 +202,7 @@ export function FtoDrawPanel({
           <label className="fto-image-hex">
             <span>{COLOR_LABELS[selected]}</span>
             <input
+              autoComplete="off"
               value={hexText}
               onChange={(event) => setHexText(event.target.value)}
               onBlur={commitHex}

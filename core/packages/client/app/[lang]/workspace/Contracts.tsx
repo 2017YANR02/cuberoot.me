@@ -49,7 +49,7 @@ function Upload({contract, members, onSaved}: {contract?: Contract; members: Mem
   }}>
     <Field label={t('员工', 'Employee')}><select name="userId" required defaultValue={contract?.userId ?? ''} disabled={busy || !!contract}>{!contract && <option value="">{t('选择员工', 'Choose employee')}</option>}{members.map(member => <option key={member.userId} value={member.userId}>{member.name}</option>)}</select></Field>
     {contract && <input type="hidden" name="userId" value={contract.userId} />}
-    <Field label={t('合同名称', 'Contract title')}><input name="title" required maxLength={120} defaultValue={contract?.title} readOnly={!!contract} disabled={busy} /></Field>
+    <Field label={t('合同名称', 'Contract title')}><input autoComplete="off" name="title" required maxLength={120} defaultValue={contract?.title} readOnly={!!contract} disabled={busy} /></Field>
     <Field label={t('合同文件（PDF / DOCX，最多 5 MB）', 'Contract file (PDF / DOCX, up to 5 MB)')}><input name="file" type="file" accept=".pdf,.docx" required disabled={busy} /></Field>
     <ErrorNotice error={error ?? undefined} />
     <div className="staff-actions"><Button type="submit" action="save" iconOnly={false} disabled={busy}>{busy ? t('正在上传…', 'Uploading…') : t('保存', 'Save')}</Button></div>

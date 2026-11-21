@@ -113,6 +113,7 @@ export default function ReconReuseModal({ wcaId, isZh, onClose, onPick }: Props)
         <div className="rr-search">
           <Search size={16} />
           <input
+            autoComplete="off"
             className="rr-search-input"
             value={q}
             onChange={e => setQ(e.target.value)}

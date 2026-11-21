@@ -939,7 +939,7 @@ function DrivePageContent() {
 
       {newFolderOpen && view === 'files' && (
         <form className="drive-inline-form" onSubmit={(event) => { event.preventDefault(); void createFolder(); }}>
-          <input className="drive-text-control drive-inline-control" autoFocus value={newFolderName} maxLength={255} onChange={(event) => setNewFolderName(event.target.value)} placeholder={t('文件夹名称', 'Folder name')} aria-label={t('文件夹名称', 'Folder name')} />
+          <input autoComplete="off" className="drive-text-control drive-inline-control" autoFocus value={newFolderName} maxLength={255} onChange={(event) => setNewFolderName(event.target.value)} placeholder={t('文件夹名称', 'Folder name')} aria-label={t('文件夹名称', 'Folder name')} />
           <button type="submit" className="drive-control drive-primary" disabled={!newFolderName.trim()}>{t('创建', 'Create')}</button>
           <ClearButton variant="standalone" ariaLabel={t('取消新建文件夹', 'Cancel new folder')} onClick={() => { setNewFolderOpen(false); setNewFolderName(''); }} />
         </form>

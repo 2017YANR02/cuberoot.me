@@ -184,6 +184,7 @@ export default function SimMaskAdmin({
           {pickedSids ? (
             <>
               <input
+                autoComplete="off"
                 className="sim-mask-admin-input"
                 value={newZh}
                 disabled={busy}
@@ -191,6 +192,7 @@ export default function SimMaskAdmin({
                 aria-label={t('中文名', 'Chinese name')}
               />
               <input
+                autoComplete="off"
                 className="sim-mask-admin-input"
                 value={newEn}
                 disabled={busy}
@@ -243,6 +245,7 @@ export default function SimMaskAdmin({
                     <label className="sim-mask-admin-field">
                     <span>{t('中文名', 'Chinese name')}</span>
                     <input
+                      autoComplete="off"
                       className="sim-mask-admin-input"
                       value={d.zh}
                       disabled={busy}
@@ -254,6 +257,7 @@ export default function SimMaskAdmin({
                     <label className="sim-mask-admin-field">
                     <span>{t('英文名', 'English name')}</span>
                     <input
+                      autoComplete="off"
                       className="sim-mask-admin-input"
                       value={d.en}
                       disabled={busy}

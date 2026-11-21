@@ -870,7 +870,7 @@ function OrbifoldCalculator() {
         </div>
       ) : (
         <div className="gt-panel-input-row" style={{ flexWrap: 'wrap', gap: 8 }}>
-          <input className="gt-input" value={custom} onChange={e => setCustom(e.target.value)}
+          <input autoComplete="off" className="gt-input" value={custom} onChange={e => setCustom(e.target.value)}
             placeholder="e.g. 532, 2222, *442" style={{ maxWidth: 200 }} />
           {extras.map(ex => (
             <span key={ex.sig} className="gt-chip" onClick={() => setCustom(ex.sig)}>

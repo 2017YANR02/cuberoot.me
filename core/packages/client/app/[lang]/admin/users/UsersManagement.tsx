@@ -170,6 +170,7 @@ function UserImpersonationDialog({
         <p>{t('将在新标签页中打开 30 分钟只读会话。原管理员标签页保持不变，任何写入都会被服务端拦截并记录。', 'A 30-minute read-only session will open in a new tab. This administrator tab stays unchanged, and the server blocks and records every write attempt.')}</p>
         <label htmlFor="admin-users-impersonation-reason">{t('查看理由', 'Reason for viewing')}</label>
         <textarea
+          autoComplete="off"
           id="admin-users-impersonation-reason"
           className="admin-users-impersonation-reason"
           value={reason}

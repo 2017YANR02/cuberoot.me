@@ -351,13 +351,13 @@ export default function PageNoticeBar() {
           </div>
           <label className="page-notice-field">
             <span><T en="Applies to path (use /* for whole site)" zh="作用路径(填 /* 覆盖全站)" /></span>
-            <input className="page-notice-input" value={form.path} disabled={form.placement === 'home_featured'}
+            <input autoComplete="off" className="page-notice-input" value={form.path} disabled={form.placement === 'home_featured'}
               onChange={(e) => setForm({ ...form, path: e.target.value })} placeholder="/scramble/stats" />
           </label>
 
           <label className="page-notice-field">
             <span><T en="Target link (required for homepage feature)" zh="目标链接(首页焦点必填)" /></span>
-            <input className="page-notice-input" value={form.href}
+            <input autoComplete="off" className="page-notice-input" value={form.href}
               onChange={(e) => setForm({ ...form, href: e.target.value })}
               placeholder="/regulation/post#4-pad-2027" />
           </label>
@@ -485,12 +485,12 @@ export default function PageNoticeBar() {
           {linkedPost && <p className="page-notice-hint"><T en="Title follows the article." zh="标题随文章同步。" /></p>}
           <label className="page-notice-field">
             <span><T en="Chinese text" zh="中文" /></span>
-            <textarea className="page-notice-input" readOnly={!!linkedPost} value={linkedPost?.title.zh ?? form.bodyZh} onChange={(e) => setForm({ ...form, bodyZh: e.target.value })}
+            <textarea autoComplete="off" className="page-notice-input" readOnly={!!linkedPost} value={linkedPost?.title.zh ?? form.bodyZh} onChange={(e) => setForm({ ...form, bodyZh: e.target.value })}
               placeholder={tr({ en: 'e.g. This page is under maintenance', zh: '例:本页正在维护,稍后恢复' })} />
           </label>
           <label className="page-notice-field">
             <span><T en="English text" zh="英文" /></span>
-            <textarea className="page-notice-input" readOnly={!!linkedPost} value={linkedPost?.title.en ?? form.bodyEn} onChange={(e) => setForm({ ...form, bodyEn: e.target.value })}
+            <textarea autoComplete="off" className="page-notice-input" readOnly={!!linkedPost} value={linkedPost?.title.en ?? form.bodyEn} onChange={(e) => setForm({ ...form, bodyEn: e.target.value })}
               placeholder="e.g. This page is under maintenance" />
           </label>
 

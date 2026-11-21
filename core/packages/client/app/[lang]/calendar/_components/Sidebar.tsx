@@ -137,6 +137,7 @@ export default function Sidebar(props: Props) {
                 {editing === c.id ? (
                   <>
                     <input
+                      autoComplete="off"
                       className="cal-inline-input"
                       value={draftName}
                       autoFocus

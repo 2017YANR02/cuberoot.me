@@ -109,6 +109,7 @@ export function PromptComposer({
           <label>
             <span>{t('可编辑提示词', 'Editable prompt')}</span>
             <textarea
+              autoComplete="off"
               className={styles.promptTextarea}
               value={value}
               maxLength={4000}

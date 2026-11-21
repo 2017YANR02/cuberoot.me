@@ -877,6 +877,7 @@ export default function KatexIntroPage() {
                       ))}
                     </div>
                     <textarea
+                      autoComplete="off"
                       className="kx-playground-textarea"
                       value={playgroundSrc}
                       onChange={(e) => setPlaygroundSrc(e.target.value)}

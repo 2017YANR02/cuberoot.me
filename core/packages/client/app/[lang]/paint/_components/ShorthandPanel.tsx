@@ -98,6 +98,7 @@ export default function ShorthandPanel({ open, onClose, viewport }: Props) {
         </p>
 
         <textarea
+          autoComplete="off"
           className="paint-sh-input"
           value={alg}
           onChange={(e) => setAlg(e.target.value)}

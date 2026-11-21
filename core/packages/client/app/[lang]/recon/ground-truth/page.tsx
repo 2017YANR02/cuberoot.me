@@ -354,6 +354,7 @@ function ManualGroundTruthPage({ title }: { title: ReactNode }) {
                 <label htmlFor="gt-replay-url">
                   <span>{tr({ zh: '回放链接', en: 'Replay URL' })} <InfoTooltip content={tr({ zh: '纳入测试需提供同一次还原的计时器 share 或 replay 链接。没有原始记录时请选择待讨论。', en: 'Inclusion requires a timer share or replay URL for this solve. Choose Discuss if the original recording is unavailable.' })} /></span>
                   <textarea
+                    autoComplete="off"
                     id="gt-replay-url"
                     className="gt-editor-textarea"
                     value={replay}
@@ -367,11 +368,11 @@ function ManualGroundTruthPage({ title }: { title: ReactNode }) {
                   <span>{decisionStatus === 'confirmed'
                     ? tr({ zh: '备注（可选）', en: 'Note (optional)' })
                     : tr({ zh: '原因', en: 'Reason' })}</span>
-                  <textarea className="gt-editor-textarea" value={note} onChange={(e) => setNote(e.target.value)} rows={2} />
+                  <textarea autoComplete="off" className="gt-editor-textarea" value={note} onChange={(e) => setNote(e.target.value)} rows={2} />
                 </label>
                 <details>
                   <MoreToggle as="summary">{tr({ zh: '错误输出（可选）', en: 'Incorrect output (optional)' })}</MoreToggle>
-                  <textarea className="gt-editor-textarea" value={currentWrong} onChange={(e) => setCurrentWrong(e.target.value)} rows={6} spellCheck={false} />
+                  <textarea autoComplete="off" className="gt-editor-textarea" value={currentWrong} onChange={(e) => setCurrentWrong(e.target.value)} rows={6} spellCheck={false} />
                 </details>
                 {decisionStatus === 'confirmed' && detail.assessment.warnings.length > 0 ? (
                   <BoolToggle

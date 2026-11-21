@@ -125,6 +125,7 @@ export default function AverageMode({ event }: Props) {
             </div>
           </div>
           <textarea
+            autoComplete="off"
             ref={taRef}
             className="avg-input"
             value={raw}

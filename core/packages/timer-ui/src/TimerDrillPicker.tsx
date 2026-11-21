@@ -191,6 +191,7 @@ export function TimerDrillPicker({
 
         <div className="timer-drill-picker__search-wrap">
           <input
+            autoComplete="off"
             aria-label={copy.searchLabel[language]}
             className="timer-drill-picker__search"
             onChange={(event) => setQuery(event.target.value)}

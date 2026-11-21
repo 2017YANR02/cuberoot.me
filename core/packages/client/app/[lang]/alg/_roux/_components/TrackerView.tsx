@@ -266,6 +266,7 @@ function TrackerView(props: { state: AppState; dispatch: React.Dispatch<Action> 
           <label className="roux-tracker-field">
             <span className="roux-field-label">MoveGroup</span>
             <input
+              autoComplete="off"
               className="roux-tracker-input"
               value={moveSetText}
               onChange={onMoveSetEdit}

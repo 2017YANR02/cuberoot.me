@@ -285,6 +285,7 @@ export default function LsllCaseClient() {
         <h2>{tr({ zh: '公式自测', en: 'Try your alg' })}</h2>
         <span className="lsll-locate-field" style={{ maxWidth: 420 }}>
           <input
+            autoComplete="off"
             className="lsll-verify-input"
             value={tryAlg}
             onChange={(e) => setTryAlg(e.target.value)}

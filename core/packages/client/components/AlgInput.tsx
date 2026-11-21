@@ -238,6 +238,7 @@ const AlgInput = forwardRef<AlgInputHandle, AlgInputProps>(function AlgInput(pro
   if (!markable) {
     return (
       <textarea
+        autoComplete="off"
         id={id}
       aria-invalid={ariaInvalid}
       aria-describedby={ariaDescribedBy}

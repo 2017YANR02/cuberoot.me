@@ -99,6 +99,7 @@ export function ScrambleInputView(props: {
         }
       >
         <textarea
+          autoComplete="off"
           ref={textField}
           className="roux-scrin-textarea"
           rows={3}

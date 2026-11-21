@@ -16,7 +16,7 @@ export function TimerSyncSeedSettings({ value, language, disabled = false, onRes
     <div className="settings-row" data-setting-id="settings.advanced.sync-seed">
       <span className="settings-row-label">{tr(timerSettingFieldContract('settings.advanced.sync-seed').copy)}</span>
       <span className="settings-row-control timer-sync-seed-controls">
-        <input className="settings-row-control-input" aria-label={tr(timerSettingFieldContract('settings.advanced.sync-seed').copy)} disabled={disabled} value={draft} placeholder={tr(TIMER_SYNC_SEED_COPY.placeholder)} onChange={e => setDraft(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); apply(); } }} />
+        <input autoComplete="off" className="settings-row-control-input" aria-label={tr(timerSettingFieldContract('settings.advanced.sync-seed').copy)} disabled={disabled} value={draft} placeholder={tr(TIMER_SYNC_SEED_COPY.placeholder)} onChange={e => setDraft(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); apply(); } }} />
         {draft && !disabled && <ClearButton variant="standalone" ariaLabel={tr(TIMER_SYNC_SEED_COPY.clearInput)} onClick={() => setDraft('')} />}
         <button type="button" className="hint-btn" disabled={!canApply} onClick={apply}>{tr(TIMER_SYNC_SEED_COPY.apply)}</button>
         <button type="button" className="hint-btn" disabled={disabled || !value.syncSeed} onClick={() => onReset(null)}>{tr(TIMER_SYNC_SEED_COPY.disable)}</button>

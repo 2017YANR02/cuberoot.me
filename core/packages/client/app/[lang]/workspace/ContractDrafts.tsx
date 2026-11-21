@@ -56,7 +56,7 @@ export default function ContractDrafts({members, onUpload}: {members: Member[]; 
           <option value="">{t('选择员工', 'Choose employee')}</option>
           {members.map(member => <option key={member.userId} value={member.userId}>{member.name}</option>)}
         </select></Field>
-        <Field label={t('合同名称', 'Contract title')}><input name="title" required maxLength={120} value={customTitle ?? suggestedTitle} onChange={event => setCustomTitle(event.target.value)} /></Field>
+        <Field label={t('合同名称', 'Contract title')}><input autoComplete="off" name="title" required maxLength={120} value={customTitle ?? suggestedTitle} onChange={event => setCustomTitle(event.target.value)} /></Field>
         <div className="staff-actions"><Button type="submit">{t('创建草稿', 'Create draft')}</Button></div>
       </Form> : <p>{t('请将自己拥有的受限文档命名为「合同模板」或「协议模板」，例如「网站开发实习协议模板」。', 'Name a restricted document you own as a contract or agreement template, such as “Web Development Internship Agreement Template”.')}</p>}
     </WorkspaceDialog>}

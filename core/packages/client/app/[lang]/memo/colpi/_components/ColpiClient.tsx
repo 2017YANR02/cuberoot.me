@@ -825,6 +825,7 @@ function FormFields({
   return (
     <>
       <input
+        autoComplete="off"
         className="colpi-submit-input"
         type="text"
         value={word}
@@ -839,6 +840,7 @@ function FormFields({
         autoFocus
       />
       <input
+        autoComplete="off"
         type="text"
         value={note}
         onChange={(e) => setNote(e.target.value)}

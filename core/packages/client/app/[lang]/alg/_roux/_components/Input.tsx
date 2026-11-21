@@ -30,7 +30,7 @@ export function ColorSetter(props: { state: AppState; dispatch: React.Dispatch<A
       <div className="roux-color-setter">
         <label className="roux-color-field">
           <span className="roux-color-field-label">{t('Color')}</span>
-          <input className="roux-color-input" onChange={handleChange} value={text} />
+          <input autoComplete="off" className="roux-color-input" onChange={handleChange} value={text} />
           <span className="roux-color-help">G,B,R,O,Y,W,Gray</span>
         </label>
       </div>

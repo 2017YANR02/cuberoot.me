@@ -40,7 +40,7 @@ export function CollaborativeComments({ ydoc, canComment, quote = '', createAnch
     setBody('');
   };
   return <div className="collab-comments">
-    {canComment && <div className="collab-comment-composer">{quote && <blockquote>{quote.slice(0, 160)}</blockquote>}<textarea className="collab-comment-input" aria-label={tr({ zh: '添加批注', en: 'Add a comment' })} value={body} onChange={event => setBody(event.target.value)} placeholder={tr({ zh: '添加批注', en: 'Add a comment' })} /><button className="collab-button" type="button" disabled={!body.trim()} onClick={add}><T zh="批注" en="Comment" /></button></div>}
+    {canComment && <div className="collab-comment-composer">{quote && <blockquote>{quote.slice(0, 160)}</blockquote>}<textarea autoComplete="off" className="collab-comment-input" aria-label={tr({ zh: '添加批注', en: 'Add a comment' })} value={body} onChange={event => setBody(event.target.value)} placeholder={tr({ zh: '添加批注', en: 'Add a comment' })} /><button className="collab-button" type="button" disabled={!body.trim()} onClick={add}><T zh="批注" en="Comment" /></button></div>}
     {!comments.length && <p className="collab-member-role"><T zh="没有未解决的批注" en="No unresolved comments" /></p>}
     {comments.map(comment => <article className="collab-comment" key={comment.id}>
       <UserContactLink userId={comment.authorUserId}><strong>{comment.authorName}</strong></UserContactLink><time>{stamp(comment.createdAt)}</time>
@@ -48,7 +48,7 @@ export function CollaborativeComments({ ydoc, canComment, quote = '', createAnch
       <p>{comment.body}</p>
       {comment.replies.map(reply => <div className="collab-comment-reply" key={reply.id}><UserContactLink userId={reply.authorUserId}><strong>{reply.authorName}</strong></UserContactLink><time>{stamp(reply.createdAt)}</time><p>{reply.body}</p></div>)}
       {canComment && <div className="collab-comment-actions"><button className="collab-comment-action" type="button" onClick={() => setReplyTo(comment.id)}><T zh="回复" en="Reply" /></button><button className="collab-comment-action" type="button" onClick={() => { map.set(comment.id, { ...comment, resolvedAt: Date.now() }); activity('resolve', tr({ zh: '解决了批注', en: 'Resolved a comment' })); }}><T zh="解决" en="Resolve" /></button></div>}
-      {canComment && replyTo === comment.id && <div className="collab-comment-composer"><textarea className="collab-comment-input" aria-label={tr({ zh: '回复批注', en: 'Reply to comment' })} value={replyBody} onChange={event => setReplyBody(event.target.value)} /><button className="collab-button" type="button" disabled={!replyBody.trim()} onClick={() => {
+      {canComment && replyTo === comment.id && <div className="collab-comment-composer"><textarea autoComplete="off" className="collab-comment-input" aria-label={tr({ zh: '回复批注', en: 'Reply to comment' })} value={replyBody} onChange={event => setReplyBody(event.target.value)} /><button className="collab-button" type="button" disabled={!replyBody.trim()} onClick={() => {
         const current = map.get(comment.id); if (!current || !replyBody.trim()) return;
         ydoc.transact(() => {
           map.set(comment.id, { ...current, replies: [...current.replies, { id: nextDocumentRecordId('reply'), body: replyBody.trim(), authorKey, authorName, authorUserId: user?.uid, createdAt: Date.now() }] });

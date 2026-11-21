@@ -32,16 +32,17 @@ export interface SearchInputProps {
   onKeyDown?: KeyboardEventHandler<HTMLInputElement>;
   maxLength?: number;
   name?: string;
-  // 代码 / 记号类输入(打乱、alg)常要关掉拼写检查 / 自动补全 / 首字母大写。
-  spellCheck?: boolean;
+  // 搜索建议由站内提供，默认关闭浏览器自动填充。
   autoComplete?: string;
+  // 代码 / 记号类输入(打乱、alg)常要关掉拼写检查 / 首字母大写。
+  spellCheck?: boolean;
   autoCapitalize?: string;
 }
 
 export function SearchInput({
   value, onChange, clearLabel, disabled, placeholder, ariaLabel, className, inputClassName,
   clearable = true, type = 'text', autoFocus, name,
-  onFocus, onKeyDown, maxLength, spellCheck, autoComplete, autoCapitalize, debounceMs = 0,
+  onFocus, onKeyDown, maxLength, spellCheck, autoComplete = 'off', autoCapitalize, debounceMs = 0,
 }: SearchInputProps) {
   // 本地显示态:合成途中外部 value 的回灌不覆盖它(否则打断 IME)。
   const [text, setText] = useState(value);

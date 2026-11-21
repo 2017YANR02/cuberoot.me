@@ -599,6 +599,7 @@ export function TimerHistoryWorkspace({
       <div className="history-search">
         <div className="history-search-input-wrap">
           <input
+            autoComplete="off"
             className="history-search-input"
             type="text"
             value={query}
@@ -704,6 +705,7 @@ export function TimerHistoryWorkspace({
               <div>
                 <label style={labelStyle}>{tr({ zh: '最短 (秒)', en: 'Min (s)' })}</label>
                 <input
+                  autoComplete="off"
                   type="text"
                   inputMode="decimal"
                   value={timeMin}
@@ -716,6 +718,7 @@ export function TimerHistoryWorkspace({
                 <label style={labelStyle}>{tr({ zh: '最长 (秒)', en: 'Max (s)'
                 })}</label>
                 <input
+                  autoComplete="off"
                   type="text"
                   inputMode="decimal"
                   value={timeMax}
@@ -750,6 +753,7 @@ export function TimerHistoryWorkspace({
               <div>
                 <label style={labelStyle}>{tr({ zh: 'OLL 公式', en: 'OLL case' })}</label>
                 <input
+                  autoComplete="off"
                   type="text"
                   value={ollFilter}
                   onChange={(e) => setOllFilter(e.target.value)}
@@ -760,6 +764,7 @@ export function TimerHistoryWorkspace({
               <div>
                 <label style={labelStyle}>{tr({ zh: 'PLL 公式', en: 'PLL case' })}</label>
                 <input
+                  autoComplete="off"
                   type="text"
                   value={pllFilter}
                   onChange={(e) => setPllFilter(e.target.value)}

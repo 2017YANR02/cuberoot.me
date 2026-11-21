@@ -89,7 +89,7 @@ export default function ReleaseManager({ onPublished }: { onPublished: () => voi
         </select>
       </label>
       <label>{tr({ zh: '更新说明', en: 'Release notes' })}
-        <textarea className="download-release-notes" value={notes} maxLength={4000} rows={4} disabled={busy || uncertain || Boolean(active)} onChange={e => setNotes(e.target.value)} />
+        <textarea autoComplete="off" className="download-release-notes" value={notes} maxLength={4000} rows={4} disabled={busy || uncertain || Boolean(active)} onChange={e => setNotes(e.target.value)} />
       </label>
       <button type="button" className="download-button" disabled={busy || Boolean(active) || !notes.trim() || !data.commit} onClick={() => void publish()}>
         {busy ? tr({ zh: '正在提交…', en: 'Submitting…' }) : tr({ zh: '发布新版本', en: 'Publish release' })}

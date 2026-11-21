@@ -197,6 +197,7 @@ export default function DevFakeCubePanel(props: DevFakeCubePanelProps): JSX.Elem
 
       <div className="devcube-row">
         <input
+          autoComplete="off"
           className="devcube-alg"
           value={alg}
           onChange={(e) => setAlg(e.target.value)}

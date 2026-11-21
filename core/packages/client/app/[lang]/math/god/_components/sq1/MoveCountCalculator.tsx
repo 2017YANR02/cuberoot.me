@@ -59,6 +59,7 @@ export default function MoveCountCalculator({ isZh }: Props) {
       </div>
 
       <input
+        autoComplete="off"
         className={`sq1-input ${valid ? '' : 'is-error'}`}
         value={alg}
         spellCheck={false}

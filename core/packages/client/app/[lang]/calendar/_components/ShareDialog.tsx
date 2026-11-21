@@ -106,6 +106,7 @@ export default function ShareDialog({ share, calendars, lang, onSave, onRotate, 
           <div className="cal-share-field">
             <label className="cal-field-label" htmlFor={`${fieldId}-title`}>{tr({ zh: '页面标题', en: 'Page title' })}</label>
             <input
+              autoComplete="off"
               id={`${fieldId}-title`}
               className="cal-text-input"
               type="text"

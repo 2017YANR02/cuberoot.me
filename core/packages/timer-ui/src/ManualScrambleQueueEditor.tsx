@@ -31,6 +31,7 @@ export function ManualScrambleQueueEditor({
   return (
     <Wrapper className={inline ? "scramble-manual-inline" : "settings-row scramble-src-manual"} data-no-timer>
       <textarea
+        autoComplete="off"
         aria-label={ariaLabel}
         disabled={disabled}
         autoCapitalize="none"

@@ -211,6 +211,7 @@ export default function QuizManagePage() {
                     {q.status === 'published' ? (
                       <>
                         <input
+                          autoComplete="off"
                           className="quiz-input quiz-manage-note"
                           value={note}
                           onChange={(e) => setNote(e.target.value)}

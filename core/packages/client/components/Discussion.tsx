@@ -98,6 +98,7 @@ export function DiscussionComposer({
       )}
       <div className="yt-composer-body">
         <textarea
+          autoComplete="off"
           className={`yt-composer-input${mono ? ' alt-composer-input' : ''}`}
           value={value}
           ref={autoResize}
@@ -145,6 +146,7 @@ export function DiscussionEditBox({
   return (
     <div className="yt-comment-edit">
       <textarea
+        autoComplete="off"
         className={`yt-composer-input${mono ? ' alt-composer-input' : ''}`}
         value={value}
         ref={autoResize}

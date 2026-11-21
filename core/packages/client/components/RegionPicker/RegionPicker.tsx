@@ -233,6 +233,7 @@ export function RegionPicker(props: RegionPickerProps) {
             <Search size={14} />
             {/* allow-manual-search: Options filter while typing; Enter selects a matching region. */}
             <input
+              autoComplete="off"
               autoFocus
               className="region-picker-search-input"
               value={q}

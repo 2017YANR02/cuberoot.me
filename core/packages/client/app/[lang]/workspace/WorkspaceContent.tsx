@@ -90,7 +90,7 @@ function Members({onSaved}:{onSaved:()=>void}) {
     <div className="staff-actions staff-form-actions"><Button action="save" type="submit">{member?t('保存','Save'):t('开通','Enable')}</Button></div>
   </Form>;
   const members = resource.data?.members.filter(member => `${member.name} ${member.userId}`.toLowerCase().includes(search.trim().toLowerCase()));
-  return <><MemberAccessApprovals onReviewed={reload} /><div className="workspace-toolbar staff-actions"><div className="staff-field staff-field-medium"><input className="staff-input" aria-label={t('搜索成员','Find a member')} value={search} onChange={event => setSearch(event.target.value)} placeholder={t('姓名或 CubeRoot ID','Name or CubeRoot ID')} /></div><div className="staff-toolbar-actions"><Button action="add" onClick={() => setEditing('new')}>{t('开通员工权限','Enable employee access')}</Button></div></div>
+  return <><MemberAccessApprovals onReviewed={reload} /><div className="workspace-toolbar staff-actions"><div className="staff-field staff-field-medium"><input autoComplete="off" className="staff-input" aria-label={t('搜索成员','Find a member')} value={search} onChange={event => setSearch(event.target.value)} placeholder={t('姓名或 CubeRoot ID','Name or CubeRoot ID')} /></div><div className="staff-toolbar-actions"><Button action="add" onClick={() => setEditing('new')}>{t('开通员工权限','Enable employee access')}</Button></div></div>
     <ErrorNotice error={resource.error} retry={resource.reload} />
     {resource.loading && <p role="status">{t('正在加载…','Loading…')}</p>}
     {members?.length === 0 && <p className="staff-empty">{t('暂无匹配成员','No matching members')}</p>}

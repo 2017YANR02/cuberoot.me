@@ -1935,6 +1935,7 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
                     <label className="submit-field submit-field-narrow">
                       <span className="submit-label">{t('recon.exec')}</span>
                       <input
+                        autoComplete="off"
                         className="submit-field-input"
                         type="text"
                         value={execInput}
@@ -2055,6 +2056,7 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
                           ))}
                           {selectedRoundStyle === 'number' && <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
                           <input
+                            autoComplete="off"
                             className="submit-field-input"
                             style={{ minWidth: 0 }}
                             size={12}
@@ -2088,6 +2090,7 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
                   {form.official === 'non_wca' ? (
                     <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
                       <input
+                        autoComplete="off"
                         className="submit-field-input"
                         style={{ minWidth: 0 }}
                         type="text"
@@ -2169,6 +2172,7 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
                 <label className="submit-field submit-field-shrink submit-field-precise-time">
                   <span className="submit-label">{tr(isFmc ? { zh: '原始成绩', en: 'Original moves' } : { zh: '原始成绩(千分位)', en: 'Original time (0.001s)' })}</span>
                   <input
+                    autoComplete="off"
                     className="submit-field-input"
                     type="text"
                     inputMode={isFmc ? 'numeric' : undefined}
@@ -2193,6 +2197,7 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
                 <label className="submit-field submit-field-time">
                   <span className="submit-label">{t('recon.single')}</span>
                   <input
+                    autoComplete="off"
                     type="text"
                     inputMode={isFmc ? 'numeric' : undefined}
                     value={isFmc ? toFmcInt(form.value ?? '') : (form.value ?? '')}
@@ -2234,6 +2239,7 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
                 <label className="submit-field submit-field-time">
                   <span className="submit-label">{t('recon.average')}</span>
                   <input
+                    autoComplete="off"
                     type="text"
                     value={avgInput}
                     onFocus={() => {
@@ -2293,6 +2299,7 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
                 </select>
               </span>
               <textarea
+                autoComplete="off"
                 key={scrambleField}
                 rows={1}
                 ref={scrambleInputRef}
@@ -2456,6 +2463,7 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
                   })}
                 </span>
                 <textarea
+                  autoComplete="off"
                   ref={unsolvedReasonRef}
                   className="submit-field-textarea"
                   value={form.unsolvedReason || ''}
@@ -2514,6 +2522,7 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
                         onClick={() => setField('videoUrl', groups.filter((_, i) => i !== index).join('\n\n'))} />}
                     </div>
                       <textarea
+                        autoComplete="off"
                         id={index === 0 ? 'recon-video-urls' : 'recon-video-urls-' + index}
                         className="submit-field-textarea"
                         value={group}
@@ -2559,6 +2568,7 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
                 <label className={`submit-field${reusedCls('method')}`}>
                   <span className="submit-label">{t('recon.method')}</span>
                   <input
+                    autoComplete="off"
                     className="submit-field-input"
                     type="text"
                     list="recon-method-options"
@@ -2574,6 +2584,7 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
                 <label className={`submit-field${reusedCls('cube')}`}>
                   <span className="submit-label">{t('recon.cube')}</span>
                   <input
+                    autoComplete="off"
                     className="submit-field-input"
                     type="text"
                     list="recon-cube-options"
@@ -2588,6 +2599,7 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
                 <label className={`submit-field submit-field-wide${reusedCls('note')}`}>
                   <span className="submit-label">{t('recon.note')}</span>
                   <textarea
+                    autoComplete="off"
                     className="submit-field-textarea"
                     value={form.note || ''}
                     onChange={e => setField('note', e.target.value)}

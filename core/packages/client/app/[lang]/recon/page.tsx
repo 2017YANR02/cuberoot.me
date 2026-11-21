@@ -157,6 +157,7 @@ function RangeFilter({ min, max, onChange }: RangeFilterProps) {
   return (
     <div className="recon-range-filter">
       <input
+        autoComplete="off"
         ref={inputRef}
         className="recon-range-input"
         type="text"

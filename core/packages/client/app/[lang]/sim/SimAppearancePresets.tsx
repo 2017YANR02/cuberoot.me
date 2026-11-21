@@ -81,7 +81,7 @@ export default function SimAppearancePresets({ settings, onChange }: {
     </div>
     <div className="sim-preset-row sim-player-tools">
     <div className="sim-preset-name">
-      <input aria-label={t('新预设名称', 'New preset name')} id={`${id}-name`} placeholder={t('新预设名称', 'New preset name')} maxLength={40} value={name} onChange={event => setName(event.target.value)} />
+      <input autoComplete="off" aria-label={t('新预设名称', 'New preset name')} id={`${id}-name`} placeholder={t('新预设名称', 'New preset name')} maxLength={40} value={name} onChange={event => setName(event.target.value)} />
       {name && <ClearButton onClick={() => setName('')} ariaLabel={t('清除预设名称', 'Clear preset name')} preserveFocus />}
     </div>
       <button type="button" disabled={!trimmed || presets.length >= MAX_APPEARANCE_PRESETS} onClick={() => {

@@ -74,6 +74,7 @@ function ColorRow({
           onChange={(e) => onChange(e.target.value)}
         />
         <input
+          autoComplete="off"
           type="text" className="vc-color-text" value={value}
           placeholder={allowEmpty ? '(none)' : ''}
           onChange={(e) => onChange(e.target.value)}
@@ -698,11 +699,13 @@ export default function PuzzleImageStudio({
             <label className="vc-label vc-label-secondary">{t('强制显隐', 'Force')}</label>
             <div className="vc-row-controls">
               <input
+                autoComplete="off"
                 className="vc-text" value={s.planForceShow} placeholder="side=&up=1,3,7,9"
                 aria-label={t('强制显示', 'Force show')}
                 onChange={(e) => set('planForceShow', e.target.value)}
               />
               <input
+                autoComplete="off"
                 className="vc-text" value={s.planForceHide} placeholder="side=&up="
                 aria-label={t('强制隐藏', 'Force hide')}
                 onChange={(e) => set('planForceHide', e.target.value)}
@@ -768,6 +771,7 @@ export default function PuzzleImageStudio({
               </div>
               <div className="vc-row-controls">
                 <input
+                  autoComplete="off"
                   type="text" className="vc-text" value={s.arrows} placeholder="U0U2-red,U6U8"
                   onChange={(e) => set('arrows', e.target.value)}
                 />
@@ -826,6 +830,7 @@ export default function PuzzleImageStudio({
             <div className="vc-row-controls vc-col">
               <div className="vc-row-controls">
                 <input
+                  autoComplete="off"
                   type="text" className="vc-text" value={s.stickerMask}
                   placeholder="U:0,2;F:3-5"
                   onChange={(e) => set('stickerMask', e.target.value)}

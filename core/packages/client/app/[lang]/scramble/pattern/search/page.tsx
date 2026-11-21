@@ -376,6 +376,7 @@ export default function PatternSearchPage() {
           {form && (
             <div className="psc-ex-form">
               <input
+                autoComplete="off"
                 className="psc-input"
                 value={form.nameZh}
                 onChange={(e) => setForm({ ...form, nameZh: e.target.value })}
@@ -383,6 +384,7 @@ export default function PatternSearchPage() {
                 maxLength={60}
               />
               <input
+                autoComplete="off"
                 className="psc-input"
                 value={form.nameEn}
                 onChange={(e) => setForm({ ...form, nameEn: e.target.value })}

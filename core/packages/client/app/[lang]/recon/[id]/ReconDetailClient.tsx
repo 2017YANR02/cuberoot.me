@@ -1041,6 +1041,7 @@ function SameRoundNav({ solve }: { solve: ReconSolve }) {
         <div className="same-round-paste-wrap">
           <div className="same-round-paste-box">
             <textarea
+              autoComplete="off"
               className="same-round-paste-textarea"
               autoFocus
               value={pasteRaw}

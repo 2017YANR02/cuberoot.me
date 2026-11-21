@@ -15,6 +15,7 @@ function ParityCalculator() {
   return (
     <div className="gt-parity">
       <input
+        autoComplete="off"
         className="gt-parity-input"
         value={alg}
         onChange={e => setAlg(e.target.value)}

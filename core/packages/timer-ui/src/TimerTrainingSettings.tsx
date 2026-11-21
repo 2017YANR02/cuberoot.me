@@ -82,6 +82,7 @@ export function TimerGoalSettings({ value: s, onChange: updateSettings, localize
           </TimerSettingRow>}
           <TimerSettingRow field={timerSettingFieldContract('settings.training.target-time')} label={tr(timerSettingFieldContract('settings.training.target-time').copy)}>
             <input
+              autoComplete="off"
               className="settings-row-control-input"
               type="text"
               aria-label={tr(timerSettingFieldContract('settings.training.target-time').copy)}
@@ -163,6 +164,7 @@ export function TimerRoundSettings({ value: s, onChange, localize: tr }: Omit<Pr
           </TimerSettingRow>
           <TimerSettingRow field={timerSettingFieldContract('settings.training.round-cutoff')} label={tr(timerSettingFieldContract('settings.training.round-cutoff').copy)}>
             <input
+              autoComplete="off"
               className="settings-row-control-input"
               type="text"
               aria-label={tr(timerSettingFieldContract('settings.training.round-cutoff').copy)}
@@ -175,6 +177,7 @@ export function TimerRoundSettings({ value: s, onChange, localize: tr }: Omit<Pr
           </TimerSettingRow>
           <TimerSettingRow field={timerSettingFieldContract('settings.training.round-time-limit')} label={tr(timerSettingFieldContract('settings.training.round-time-limit').copy)}>
             <input
+              autoComplete="off"
               className="settings-row-control-input"
               type="text"
               aria-label={tr(timerSettingFieldContract('settings.training.round-time-limit').copy)}

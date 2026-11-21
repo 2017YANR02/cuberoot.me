@@ -155,7 +155,7 @@ function DraftEditor({draft, employee}: {draft: Draft; employee?: Member}) {
         <PageBackLink fallback={CONTRACT_LIST_HREF} className="doc-back" onClick={event => {
           if (working.current || (dirty && !window.confirm(t('放弃未保存的更改？', 'Discard unsaved changes?')))) event.preventDefault();
         }} />
-        <input className="doc-title-input" value={title} maxLength={120} required disabled={busy}
+        <input autoComplete="off" className="doc-title-input" value={title} maxLength={120} required disabled={busy}
           aria-label={t('合同名称', 'Contract title')} onChange={event => { setTitle(event.target.value); setDirty(true); setSaved(false); }} />
         {employee && <span className="contract-draft-employee">{employee.name}</span>}
         <div className="contract-draft-actions">

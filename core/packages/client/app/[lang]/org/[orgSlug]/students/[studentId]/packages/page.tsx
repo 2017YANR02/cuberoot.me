@@ -178,9 +178,9 @@ function StudentPackagesContent({ orgSlug, studentId, page, role }: { orgSlug: s
                 </select>
               </label>
               <label>{t('生效时间（可选）', 'Valid from (optional)')}<input className="org-form-control" name="validFrom" type="datetime-local" /></label>
-              <label>{t('来源系统（可选）', 'Source system (optional)')}<input className="org-form-control" name="sourceSystem" maxLength={80} /></label>
-              <label>{t('来源单号（与来源系统成对）', 'Source reference (with source system)')}<input className="org-form-control" name="sourceRef" maxLength={160} /></label>
-              <label className="org-field-wide">{t('来源行号（可选）', 'Source line reference (optional)')}<input className="org-form-control" name="sourceLineRef" maxLength={160} /></label>
+              <label>{t('来源系统（可选）', 'Source system (optional)')}<input autoComplete="off" className="org-form-control" name="sourceSystem" maxLength={80} /></label>
+              <label>{t('来源单号（与来源系统成对）', 'Source reference (with source system)')}<input autoComplete="off" className="org-form-control" name="sourceRef" maxLength={160} /></label>
+              <label className="org-field-wide">{t('来源行号（可选）', 'Source line reference (optional)')}<input autoComplete="off" className="org-form-control" name="sourceLineRef" maxLength={160} /></label>
               {productTotal > products.length && <p className="org-help org-field-wide">{t('这里只显示前 100 个产品。', 'Only the first 100 products are shown.')}</p>}
               <div className="org-form-actions"><button className="org-form-button" type="submit" disabled={!products.some((product) => product.status === 'active')}>{submitting ? t('发放中…', 'Issuing…') : t('发放课包', 'Issue package')}</button></div>
             </fieldset>
@@ -324,10 +324,10 @@ function StudentPackageRow({
             <fieldset disabled={refundSubmitting}>
               <p className="org-help org-field-wide">{t('这里只减少课时或额度；实际退款款项在线下或外部系统处理。', 'This only reduces lesson credits; the actual refund payment is handled offline or in an external system.')}</p>
               <label>{t('退回课时', 'Refund credits')}<input className="org-form-control" name="credits" type="number" min={1} max={refundCreditLimit} step={1} required /></label>
-              <label className="org-field-wide">{t('退款原因', 'Refund reason')}<input className="org-form-control" name="reason" maxLength={500} required /></label>
-              <label>{t('来源系统', 'Source system')}<input className="org-form-control" name="sourceSystem" maxLength={64} required /></label>
-              <label>{t('来源单号', 'Source reference')}<input className="org-form-control" name="sourceRef" maxLength={160} required /></label>
-              <label className="org-field-wide">{t('来源行号（可选）', 'Source line reference (optional)')}<input className="org-form-control" name="sourceLineRef" maxLength={160} /></label>
+              <label className="org-field-wide">{t('退款原因', 'Refund reason')}<input autoComplete="off" className="org-form-control" name="reason" maxLength={500} required /></label>
+              <label>{t('来源系统', 'Source system')}<input autoComplete="off" className="org-form-control" name="sourceSystem" maxLength={64} required /></label>
+              <label>{t('来源单号', 'Source reference')}<input autoComplete="off" className="org-form-control" name="sourceRef" maxLength={160} required /></label>
+              <label className="org-field-wide">{t('来源行号（可选）', 'Source line reference (optional)')}<input autoComplete="off" className="org-form-control" name="sourceLineRef" maxLength={160} /></label>
               <div className="org-form-actions"><button className="org-form-button" type="submit">{refundSubmitting ? t('入账中…', 'Recording…') : t('确认登记', 'Confirm entry')}</button></div>
             </fieldset>
           </form>
@@ -363,7 +363,7 @@ function StudentPackageRow({
             {canManageFinance && reverseTargetId && (
               <form className="org-form" onSubmit={submitReversal} onChange={() => { reverseOperationKey.reset(); setMessage(''); }}>
                 <fieldset disabled={reversing}>
-                  <label className="org-field-wide">{t('冲正原因', 'Reversal reason')}<input className="org-form-control" name="reason" maxLength={500} required /></label>
+                  <label className="org-field-wide">{t('冲正原因', 'Reversal reason')}<input autoComplete="off" className="org-form-control" name="reason" maxLength={500} required /></label>
                   <div className="org-form-actions">
                     <button className="org-form-button" type="submit">{reversing ? t('入账中…', 'Recording…') : t('确认冲正', 'Confirm reversal')}</button>
                     <button type="button" className="org-text-button" onClick={() => { setReverseTargetId(null); reverseOperationKey.reset(); }}>{t('取消', 'Cancel')}</button>

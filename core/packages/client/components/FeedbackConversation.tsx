@@ -129,6 +129,7 @@ export default function FeedbackConversation({ feedbackId, onActivity }: {
       {user ? (
         <div className="fbc-reply">
           <textarea
+            autoComplete="off"
             className="fbc-input"
             value={reply}
             maxLength={REPLY_MAX}

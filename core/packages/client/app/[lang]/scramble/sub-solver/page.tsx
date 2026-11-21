@@ -200,6 +200,7 @@ export default function SubSolverPage() {
             )}
           </div>
           <input
+            autoComplete="off"
             id="ssv-scramble"
             className="ssv-input"
             value={scramble}

@@ -75,6 +75,7 @@ export function CodeInputModal({
         </div>
 
         <textarea
+          autoComplete="off"
           ref={textareaRef}
           className="bld-modal-textarea"
           value={value}

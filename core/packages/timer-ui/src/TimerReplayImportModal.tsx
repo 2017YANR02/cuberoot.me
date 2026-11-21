@@ -38,7 +38,7 @@ export function TimerReplayImportModal({ language, load, onOpen, onClose }: Time
       <label className="settings-row">
         <span className="settings-row-label">{tr(TIMER_REPLAY_INPUT_COPY.input)}</span>
         <span className="settings-row-control">
-          <input autoFocus className="settings-row-control-input" value={input} disabled={busy} onChange={event => { setInput(event.target.value); setError(false); }} />
+          <input autoComplete="off" autoFocus className="settings-row-control-input" value={input} disabled={busy} onChange={event => { setInput(event.target.value); setError(false); }} />
           {input && !busy && <ClearButton ariaLabel={tr(TIMER_REPLAY_INPUT_COPY.clear)} variant="standalone" onClick={() => { setInput(''); setError(false); }} />}
         </span>
       </label>

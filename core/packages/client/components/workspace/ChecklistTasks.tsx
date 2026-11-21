@@ -33,7 +33,7 @@ function InlineName({ initial = '', label, maxLength = 80, save, cancel, continu
     try { await save(text.trim()); if (continuous) { setText(''); onDraft?.(''); requestAnimationFrame(() => ref.current?.focus()); } }
     finally { setBusy(false); }
   }}><div className="workspace-add-item">
-    <input ref={ref} className="workspace-add-input" name="text" autoFocus aria-label={label} placeholder={label} value={text} required maxLength={maxLength} readOnly={busy}
+    <input autoComplete="off" ref={ref} className="workspace-add-input" name="text" autoFocus aria-label={label} placeholder={label} value={text} required maxLength={maxLength} readOnly={busy}
       onChange={event => { setText(event.target.value); onDraft?.(event.target.value); }} onKeyDown={event => {
         if (event.nativeEvent.isComposing || event.nativeEvent.keyCode === 229) { if (event.key === 'Enter') event.preventDefault(); return; }
         if (event.key === 'Escape' && !busy) { event.preventDefault(); event.stopPropagation(); cancel(); }

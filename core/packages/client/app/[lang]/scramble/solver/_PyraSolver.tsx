@@ -149,6 +149,7 @@ export default function PyraSolver() {
               {view === 'recon' && (
                 <div className="pyra-paint-recon">
                   <textarea
+                    autoComplete="off"
                     className="pyra-paint-recon-input"
                     value={reconInput}
                     onChange={(e) => setReconInput(e.target.value)}

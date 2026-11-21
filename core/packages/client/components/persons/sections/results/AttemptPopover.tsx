@@ -470,6 +470,7 @@ function AttemptPopoverBody({
                 <div style={videoAddRowStyle}>
                   <span style={{ ...reasonLabelStyle, whiteSpace: 'nowrap', alignSelf: 'center' }}>{tr({ zh: '视频', en: 'Video' })}</span>
                   <input
+                    autoComplete="off"
                     style={{ ...inputStyle, minWidth: 0 }}
                     placeholder={tr({ zh: '粘贴视频链接(B 站 / 抖音 / YouTube)', en: 'Paste video link' })}
                     value={vidInput}
@@ -507,14 +508,14 @@ function AttemptPopoverBody({
               {mode === 'orig' && (
                 <label style={{ ...rowStyle, flex: 1, minWidth: 0 }}>
                   <span style={rowLabelStyle}>{tr({ zh: '原始值', en: 'Original value' })}</span>
-                  <input style={inputStyle} value={orig} onChange={(e) => setOrig(e.target.value)}
+                  <input autoComplete="off" style={inputStyle} value={orig} onChange={(e) => setOrig(e.target.value)}
                     onKeyDown={(e) => { if (e.key === 'Enter') save(); else if (e.key === 'Escape') onClose(); }} />
                 </label>
               )}
               {mode === 'next' && (
                 <label style={{ ...rowStyle, flex: 1, minWidth: 0 }}>
                   <span style={rowLabelStyle}>{tr({ zh: '改判为(更正后)', en: 'Corrected to' })}</span>
-                  <input style={inputStyle} value={next} onChange={(e) => setNext(e.target.value)}
+                  <input autoComplete="off" style={inputStyle} value={next} onChange={(e) => setNext(e.target.value)}
                     onKeyDown={(e) => { if (e.key === 'Enter') save(); else if (e.key === 'Escape') onClose(); }} />
                 </label>
               )}
@@ -531,7 +532,7 @@ function AttemptPopoverBody({
               </div>
               <label style={rowStyle}>
                 <span style={rowLabelStyle}>{tr({ zh: '原因', en: 'Reason' })}</span>
-                <input style={inputStyle} value={note} onChange={(e) => setNote(e.target.value)}
+                <input autoComplete="off" style={inputStyle} value={note} onChange={(e) => setNote(e.target.value)}
                   onKeyDown={(e) => { if (e.key === 'Enter') save(); else if (e.key === 'Escape') onClose(); }} />
               </label>
               {pendingForMode && (

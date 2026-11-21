@@ -141,6 +141,7 @@ export default function CreatorGallery() {
                   <label>
                     <span>{tr({ zh: '中文说明', en: 'Chinese caption' })}</span>
                     <textarea
+                      autoComplete="off"
                       className="ruimin-gallery-caption-input"
                       value={draftCaption?.captionZh ?? ''}
                       maxLength={800}
@@ -151,6 +152,7 @@ export default function CreatorGallery() {
                   <label>
                     <span>{tr({ zh: '英文说明', en: 'English caption' })}</span>
                     <textarea
+                      autoComplete="off"
                       className="ruimin-gallery-caption-input"
                       value={draftCaption?.captionEn ?? ''}
                       maxLength={800}

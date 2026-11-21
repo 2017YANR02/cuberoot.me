@@ -304,6 +304,7 @@ function PyramCaseTable({ isZh, rows }: { isZh: boolean; rows: PyramCaseRow[] })
       <div className="ess-cases-controls">
         <div className="ess-search">
           <input
+            autoComplete="off"
             className="ess-search-input"
             type="text"
             value={query}

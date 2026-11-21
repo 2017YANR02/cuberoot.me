@@ -491,6 +491,7 @@ function SylowConstraintExplorer({ lang }: { lang: Lang }) {
 
       <div className="gt-panel-input-row" style={{ marginTop: 8 }}>
         <input
+          autoComplete="off"
           className="gt-input"
           style={{ flex: 1, fontFamily: 'var(--mono)', fontSize: 14 }}
           value={raw}

@@ -535,11 +535,11 @@ export default function AdminCaseEditor({ puzzle, setSlug, state, initialInvalid
 
   const nameField = (<label>
             <span>{tr({ zh: 'Case 名', en: 'Case Name' })} *</span>
-            <input className="alg-admin-modal-input alg-case-name-input" value={caseName} onChange={e => { setCaseName(e.target.value); markEdited(); }} maxLength={128} autoFocus={!children} />
+            <input autoComplete="off" className="alg-admin-modal-input alg-case-name-input" value={caseName} onChange={e => { setCaseName(e.target.value); markEdited(); }} maxLength={128} autoFocus={!children} />
           </label>);
   const subgroupField = (<label>
             <span>{tr({ zh: '子分组', en: 'Subgroup' })}</span>
-            <input className="alg-admin-modal-input" value={subgroup} onChange={e => { setSubgroup(e.target.value); markEdited(); }} maxLength={64}
+            <input autoComplete="off" className="alg-admin-modal-input" value={subgroup} onChange={e => { setSubgroup(e.target.value); markEdited(); }} maxLength={64}
               placeholder={tr({ zh: '例如 Geng / U / Adj Swap', en: 'e.g. Geng / U / Adj Swap' })} />
           </label>);
   const setupField = (<label className="alg-admin-setup-label">
@@ -639,25 +639,25 @@ export default function AdminCaseEditor({ puzzle, setSlug, state, initialInvalid
               <div className="alg-admin-advanced-body">
                 <label>
                   <span>{tr({ zh: 'Standard 公式 (可选,展示给 trainer)', en: 'Standard alg (optional)' })}</span>
-                  <input className="alg-admin-modal-input" value={standard} onChange={e => { setStandard(e.target.value); markEdited(); }} />
+                  <input autoComplete="off" className="alg-admin-modal-input" value={standard} onChange={e => { setStandard(e.target.value); markEdited(); }} />
                 </label>
                 <label>
                   <span>{tr({ zh: 'Algs 2D JSON (覆盖上方编辑器,空则忽略)', en: 'Algs 2D JSON (overrides editor when filled)' })}</span>
-                  <textarea className="alg-admin-modal-textarea" value={algsJson} onChange={e => { setAlgsJson(e.target.value); markEdited(); }} rows={6} spellCheck={false}
+                  <textarea autoComplete="off" className="alg-admin-modal-textarea" value={algsJson} onChange={e => { setAlgsJson(e.target.value); markEdited(); }} rows={6} spellCheck={false}
                     placeholder={JSON.stringify(initial.algs, null, 2)} />
                 </label>
                 <label>
                   <span>{tr({ zh: 'Sticker JSON (魔方图渲染数据)', en: 'Sticker JSON (cube preview data)' })}</span>
-                  <textarea className="alg-admin-modal-textarea" value={stickerJson} onChange={e => { setStickerJson(e.target.value); markEdited(); }} rows={4} spellCheck={false} />
+                  <textarea autoComplete="off" className="alg-admin-modal-textarea" value={stickerJson} onChange={e => { setStickerJson(e.target.value); markEdited(); }} rows={4} spellCheck={false} />
                 </label>
                 <label>
                   <span>{tr({ zh: 'oriNames (F2L 4 个朝向名,JSON 数组)', en: 'oriNames (F2L 4-orientation labels, JSON)' })}</span>
-                  <textarea className="alg-admin-modal-textarea" value={oriNamesJson} onChange={e => { setOriNamesJson(e.target.value); markEdited(); }} rows={2} spellCheck={false}
+                  <textarea autoComplete="off" className="alg-admin-modal-textarea" value={oriNamesJson} onChange={e => { setOriNamesJson(e.target.value); markEdited(); }} rows={2} spellCheck={false}
                     placeholder='["Front Right","Front Left","Back Left","Back Right"]' />
                 </label>
                 <label>
                   <span>{tr({ zh: 'trainerKey (ZBLS 才用)', en: 'trainerKey (ZBLS only)' })}</span>
-                  <input className="alg-admin-modal-input" value={trainerKey} onChange={e => { setTrainerKey(e.target.value); markEdited(); }} maxLength={32} />
+                  <input autoComplete="off" className="alg-admin-modal-input" value={trainerKey} onChange={e => { setTrainerKey(e.target.value); markEdited(); }} maxLength={32} />
                 </label>
               </div>
             )}

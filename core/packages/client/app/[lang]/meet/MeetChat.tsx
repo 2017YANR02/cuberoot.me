@@ -88,6 +88,7 @@ export default function MeetChat({ open, onClose, onUnread }: MeetChatProps) {
         }}
       >
         <input
+          autoComplete="off"
           ref={inputRef}
           type="text"
           className="lk-form-control lk-chat-form-input"

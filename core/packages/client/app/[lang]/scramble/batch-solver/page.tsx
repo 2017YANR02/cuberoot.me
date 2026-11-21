@@ -449,6 +449,7 @@ export default function BatchSolverPage() {
         </div>
         {showDef && (
           <textarea
+            autoComplete="off"
             className="bsv-textarea bsv-def"
             value={puzzleDef}
             onChange={(e) => setPuzzleDef(e.target.value)}
@@ -461,6 +462,7 @@ export default function BatchSolverPage() {
         <div className="bsv-field">
           <label className="bsv-label" htmlFor="bsv-uoe">{t('唯一朝向与等价(什么算解好)', 'Unique orientations & equivalences (what counts as solved)')}</label>
           <textarea
+            autoComplete="off"
             id="bsv-uoe"
             className="bsv-textarea"
             value={uoe}
@@ -474,6 +476,7 @@ export default function BatchSolverPage() {
         <div className="bsv-field">
           <label className="bsv-label" htmlFor="bsv-scramble">{t('打乱(要解哪些状态)', 'Scramble (which states to solve)')}</label>
           <textarea
+            autoComplete="off"
             id="bsv-scramble"
             className="bsv-textarea"
             value={scramble}
@@ -486,9 +489,9 @@ export default function BatchSolverPage() {
 
         <div className="bsv-field-row">
           <label className="bsv-label" htmlFor="bsv-pre">{t('整层预转', 'Pre-adjust')}</label>
-          <input id="bsv-pre" className="bsv-input bsv-input-short" value={preAdjust} onChange={(e) => setPreAdjust(e.target.value)} spellCheck={false} />
+          <input autoComplete="off" id="bsv-pre" className="bsv-input bsv-input-short" value={preAdjust} onChange={(e) => setPreAdjust(e.target.value)} spellCheck={false} />
           <label className="bsv-label" htmlFor="bsv-post">{t('整层后转', 'Post-adjust')}</label>
-          <input id="bsv-post" className="bsv-input bsv-input-short" value={postAdjust} onChange={(e) => setPostAdjust(e.target.value)} spellCheck={false} />
+          <input autoComplete="off" id="bsv-post" className="bsv-input bsv-input-short" value={postAdjust} onChange={(e) => setPostAdjust(e.target.value)} spellCheck={false} />
         </div>
 
         <div className="bsv-field">
@@ -496,6 +499,7 @@ export default function BatchSolverPage() {
           {subgroups.map((row, i) => (
             <div key={i} className="bsv-subgroup-row">
               <input
+                autoComplete="off"
                 className="bsv-input bsv-input-num"
                 value={row.prune}
                 onChange={(e) => setSubgroups((rs) => rs.map((r, j) => (j === i ? { ...r, prune: e.target.value } : r)))}
@@ -503,6 +507,7 @@ export default function BatchSolverPage() {
                 spellCheck={false}
               />
               <input
+                autoComplete="off"
                 className="bsv-input bsv-input-num"
                 value={row.search}
                 onChange={(e) => setSubgroups((rs) => rs.map((r, j) => (j === i ? { ...r, search: e.target.value } : r)))}
@@ -510,6 +515,7 @@ export default function BatchSolverPage() {
                 spellCheck={false}
               />
               <input
+                autoComplete="off"
                 className="bsv-input bsv-input-grow"
                 value={row.subgroup}
                 onChange={(e) => setSubgroups((rs) => rs.map((r, j) => (j === i ? { ...r, subgroup: e.target.value } : r)))}
@@ -542,6 +548,7 @@ export default function BatchSolverPage() {
                 clearable={false}
               />
               <input
+                autoComplete="off"
                 className="bsv-input bsv-input-grow"
                 value={row.pieces}
                 onChange={(e) => setSorting((rs) => rs.map((r, j) => (j === i ? { ...r, pieces: e.target.value } : r)))}
@@ -621,7 +628,7 @@ export default function BatchSolverPage() {
           <div className="bsv-esq">
             <div className="bsv-field">
               <label className="bsv-label" htmlFor="bsv-rankesq">{t('Rank ESQ(排序与统计用的每步权重)', 'Rank ESQ (per-move weights for ranking & stats)')}</label>
-              <textarea id="bsv-rankesq" className="bsv-textarea" value={rankEsq} onChange={(e) => setRankEsq(e.target.value)} rows={4} spellCheck={false} />
+              <textarea autoComplete="off" id="bsv-rankesq" className="bsv-textarea" value={rankEsq} onChange={(e) => setRankEsq(e.target.value)} rows={4} spellCheck={false} />
             </div>
             <div className="bsv-field">
               <div className="bsv-field-row">
@@ -629,7 +636,7 @@ export default function BatchSolverPage() {
                 <ListSelect items={genEsqItems} value={genEsqMode} onChange={(v) => setGenEsqMode(v as 'default' | 'match' | 'custom')} allLabel="" clearable={false} />
               </div>
               {genEsqMode === 'custom' && (
-                <textarea className="bsv-textarea" value={genEsq} onChange={(e) => setGenEsq(e.target.value)} rows={4} spellCheck={false} placeholder="_2: 2" />
+                <textarea autoComplete="off" className="bsv-textarea" value={genEsq} onChange={(e) => setGenEsq(e.target.value)} rows={4} spellCheck={false} placeholder="_2: 2" />
               )}
             </div>
           </div>

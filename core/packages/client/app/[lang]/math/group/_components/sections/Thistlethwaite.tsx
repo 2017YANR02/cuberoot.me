@@ -32,7 +32,7 @@ function SubgroupClimber() {
       </p>
       <div className="gt-panel-input-row">
         <label>alg</label>
-        <input className="gt-input" value={alg} onChange={e => setAlg(e.target.value)} />
+        <input autoComplete="off" className="gt-input" value={alg} onChange={e => setAlg(e.target.value)} />
       </div>
       <div className="gt-panel-input-row" style={{ marginTop: 4 }}>
         {[

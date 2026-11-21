@@ -45,7 +45,7 @@ export default function TimerGeneralSolverModal({ language, onClose, transport }
   };
   return <TimerRoomDialog title={tr({ zh: '通用求解器', en: 'Solver' })} className="timer-tool-dialog solver-modal" language={language} onClose={onClose}>
     <label className="timer-tool-field">{tr({ zh: '输入打乱', en: 'Enter a scramble' })}
-      <textarea value={input} rows={3} onChange={e => changeInput(e.target.value)} placeholder="R U R' U' F2 L D" />
+      <textarea autoComplete="off" value={input} rows={3} onChange={e => changeInput(e.target.value)} placeholder="R U R' U' F2 L D" />
       {input && <ClearButton ariaLabel={tr({ zh: '清除', en: 'Clear' })} variant="standalone" onClick={() => changeInput('')} />}
     </label>
     {error && <p role="alert">{tr({ zh: '求解失败，请检查打乱后重试。', en: 'Solve failed. Check the scramble and try again.' })}</p>}

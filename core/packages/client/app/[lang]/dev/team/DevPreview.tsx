@@ -58,8 +58,8 @@ export default function DevPreview({onTicketIssued}:{onTicketIssued:(ticket:stri
       } as Record<string,string>)[actionError]??t('操作失败，请稍后重试。错误：','Operation failed. Try again later. Error: ')+actionError}</p>}
       {data&&!data.enabled&&<p>{t('自动开通服务正在准备。','Automatic enrollment is being prepared.')}</p>}
       {data?.enabled&&<form className="staff-start-preview-form" onSubmit={e=>{e.preventDefault();void send('requests',{owner,device,os});}}>
-        <label>{t('姓名标识','Name identifier')} <input className="staff-start-preview-control" required pattern="[a-z0-9]+(-[a-z0-9]+)*" maxLength={25} value={owner} onChange={e=>setOwner(e.target.value)}/>{owner&&<ClearButton variant="standalone" onClick={()=>setOwner('')}/>}</label>{' '}
-        <label>{t('电脑标识','Computer identifier')} <input className="staff-start-preview-control" required pattern="[a-z0-9]+(-[a-z0-9]+)*" maxLength={25} value={device} onChange={e=>setDevice(e.target.value)}/>{device&&<ClearButton variant="standalone" onClick={()=>setDevice('')}/>}</label>{' '}
+        <label>{t('姓名标识','Name identifier')} <input autoComplete="off" className="staff-start-preview-control" required pattern="[a-z0-9]+(-[a-z0-9]+)*" maxLength={25} value={owner} onChange={e=>setOwner(e.target.value)}/>{owner&&<ClearButton variant="standalone" onClick={()=>setOwner('')}/>}</label>{' '}
+        <label>{t('电脑标识','Computer identifier')} <input autoComplete="off" className="staff-start-preview-control" required pattern="[a-z0-9]+(-[a-z0-9]+)*" maxLength={25} value={device} onChange={e=>setDevice(e.target.value)}/>{device&&<ClearButton variant="standalone" onClick={()=>setDevice('')}/>}</label>{' '}
         <label>{t('系统','System')} <select className="staff-start-preview-control" value={os} onChange={e=>setOs(e.target.value)}><option value="windows">Windows</option><option value="mac">macOS</option></select></label>
         <p>{t('小写字母、数字或连字符。','Lowercase letters, numbers or hyphens.')}</p>
         <button type="submit" className="staff-start-action" disabled={busy}>{t('提交申请','Submit request')}</button>

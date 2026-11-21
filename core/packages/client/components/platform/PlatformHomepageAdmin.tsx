@@ -90,7 +90,7 @@ export function PlatformHomepageAdmin() {
             </div>
           </header>
           <div className="platform-form-grid">
-            <label className="platform-form-wide">{t('自定义封面（可选）', 'Custom cover (optional)')}<input className="platform-field-control" value={item.coverUrl ?? ''} maxLength={2048} onChange={event => patchItem(index, { coverUrl: event.target.value || null })} placeholder={source?.coverUrl ?? t('站内路径或图片网址', 'Site path or image URL')} /></label>
+            <label className="platform-form-wide">{t('自定义封面（可选）', 'Custom cover (optional)')}<input autoComplete="off" className="platform-field-control" value={item.coverUrl ?? ''} maxLength={2048} onChange={event => patchItem(index, { coverUrl: event.target.value || null })} placeholder={source?.coverUrl ?? t('站内路径或图片网址', 'Site path or image URL')} /></label>
             <label>{t('开始时间（本地时间，可选）', 'Start (local time, optional)')}<input type="datetime-local" className="platform-field-control" value={platformLocalDateTime(item.startsAt)} onChange={event => patchItem(index, { startsAt: event.target.value ? new Date(event.target.value).toISOString() : null })} /></label>
             <label>{t('结束时间（本地时间，可选）', 'End (local time, optional)')}<input type="datetime-local" className="platform-field-control" value={platformLocalDateTime(item.endsAt)} onChange={event => patchItem(index, { endsAt: event.target.value ? new Date(event.target.value).toISOString() : null })} /></label>
           </div>

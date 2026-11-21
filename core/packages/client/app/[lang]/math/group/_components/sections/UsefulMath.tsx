@@ -26,7 +26,7 @@ function PermutationVisualiser() {
       <div className="gt-permvis">
         <div className="gt-permvis-input-row">
           <label>{tr({ zh: '排列 σ', en: 'permutation σ' })}</label>
-          <input type="text" className="gt-input" value={input} onChange={e => setInput(e.target.value)} />
+          <input autoComplete="off" type="text" className="gt-input" value={input} onChange={e => setInput(e.target.value)} />
         </div>
         <div className="gt-permvis-error">{parsed.error}</div>
       </div>
@@ -76,6 +76,7 @@ function PermutationVisualiser() {
       <div className="gt-permvis-input-row">
         <label>{tr({ zh: '排列 σ', en: 'permutation σ' })}</label>
         <input
+          autoComplete="off"
           type="text"
           className="gt-input"
           value={input}
@@ -280,7 +281,7 @@ function TwoLineNotationDemo() {
         <div className="gt-panel-input-row">
           <label>{tr({ zh: '排列 (输入下行)', en: 'permutation (bottom row)'
         })}</label>
-          <input className="gt-input" value={input} onChange={e => setInput(e.target.value)} spellCheck={false} />
+          <input autoComplete="off" className="gt-input" value={input} onChange={e => setInput(e.target.value)} spellCheck={false} />
         </div>
         <div className="gt-permvis-error">{parsed.error}</div>
       </div>
@@ -293,7 +294,7 @@ function TwoLineNotationDemo() {
     <div className="gt-useful-twoline">
       <div className="gt-panel-input-row">
         <label>{tr({ zh: '下行 σ(1)..σ(n)', en: 'bottom row σ(1)..σ(n)' })}</label>
-        <input className="gt-input" value={input} onChange={e => setInput(e.target.value)} spellCheck={false} />
+        <input autoComplete="off" className="gt-input" value={input} onChange={e => setInput(e.target.value)} spellCheck={false} />
         <button type="button" className="gt-chip" onClick={() => setShowCycle(s => !s)}>
           {showCycle ? tr({ zh: '看两行', en: 'show two-line'
                           }) : tr({ zh: '看循环', en: 'show cycles'
@@ -342,7 +343,7 @@ function CycleDecomposer() {
     <div className="gt-useful-decompose">
       <div className="gt-panel-input-row">
         <label>{tr({ zh: '排列', en: 'permutation' })}</label>
-        <input className="gt-input" value={input} onChange={e => { setInput(e.target.value); setStep(0); }} spellCheck={false} />
+        <input autoComplete="off" className="gt-input" value={input} onChange={e => { setInput(e.target.value); setStep(0); }} spellCheck={false} />
       </div>
       {parsed.error && <div className="gt-permvis-error">{parsed.error}</div>}
       {!parsed.error && (
@@ -377,8 +378,8 @@ function ComposeConventions() {
   if (aP.error || bP.error) {
     return (
       <div className="gt-useful-compose">
-        <div className="gt-panel-input-row"><label>σ</label><input className="gt-input" value={aInput} onChange={e => setAInput(e.target.value)} /></div>
-        <div className="gt-panel-input-row"><label>τ</label><input className="gt-input" value={bInput} onChange={e => setBInput(e.target.value)} /></div>
+        <div className="gt-panel-input-row"><label>σ</label><input autoComplete="off" className="gt-input" value={aInput} onChange={e => setAInput(e.target.value)} /></div>
+        <div className="gt-panel-input-row"><label>τ</label><input autoComplete="off" className="gt-input" value={bInput} onChange={e => setBInput(e.target.value)} /></div>
         <div className="gt-permvis-error">{aP.error ?? bP.error}</div>
       </div>
     );
@@ -391,8 +392,8 @@ function ComposeConventions() {
   const cubeAfterB = composePerm(b, a);      // "alg A B": first A then B  -> b∘a
   return (
     <div className="gt-useful-compose">
-      <div className="gt-panel-input-row"><label>σ</label><input className="gt-input" value={aInput} onChange={e => setAInput(e.target.value)} spellCheck={false} /></div>
-      <div className="gt-panel-input-row"><label>τ</label><input className="gt-input" value={bInput} onChange={e => setBInput(e.target.value)} spellCheck={false} /></div>
+      <div className="gt-panel-input-row"><label>σ</label><input autoComplete="off" className="gt-input" value={aInput} onChange={e => setAInput(e.target.value)} spellCheck={false} /></div>
+      <div className="gt-panel-input-row"><label>τ</label><input autoComplete="off" className="gt-input" value={bInput} onChange={e => setBInput(e.target.value)} spellCheck={false} /></div>
       <div className="gt-useful-compose-grid">
         <div className="gt-useful-compose-cell">
           <div className="gt-useful-compose-head">{tr({ zh: '数学约定 σ∘τ', en: 'math σ∘τ'
@@ -432,7 +433,7 @@ function ParityFromTranspositions() {
     return (
       <div className="gt-useful-parity">
         <div className="gt-panel-input-row"><label>{tr({ zh: '对换序列', en: 'transpositions'
-        })}</label><input className="gt-input" value={input} onChange={e => setInput(e.target.value)} spellCheck={false} /></div>
+        })}</label><input autoComplete="off" className="gt-input" value={input} onChange={e => setInput(e.target.value)} spellCheck={false} /></div>
         <div className="gt-permvis-error">{parsed.error}</div>
       </div>
     );
@@ -452,7 +453,7 @@ function ParityFromTranspositions() {
       <div className="gt-panel-input-row">
         <label>{tr({ zh: '对换序列', en: 'transpositions'
         })}</label>
-        <input className="gt-input" value={input} onChange={e => setInput(e.target.value)} spellCheck={false} />
+        <input autoComplete="off" className="gt-input" value={input} onChange={e => setInput(e.target.value)} spellCheck={false} />
       </div>
       <div className="gt-useful-parity-results">
         <div><b>{tr({ zh: '个数 k', en: 'count k'
@@ -476,7 +477,7 @@ function OrderCalculator() {
   if (parsed.error) {
     return (
       <div className="gt-useful-order">
-        <div className="gt-panel-input-row"><label>{tr({ zh: '排列', en: 'permutation' })}</label><input className="gt-input" value={input} onChange={e => setInput(e.target.value)} spellCheck={false} /></div>
+        <div className="gt-panel-input-row"><label>{tr({ zh: '排列', en: 'permutation' })}</label><input autoComplete="off" className="gt-input" value={input} onChange={e => setInput(e.target.value)} spellCheck={false} /></div>
         <div className="gt-permvis-error">{parsed.error}</div>
       </div>
     );
@@ -488,7 +489,7 @@ function OrderCalculator() {
     <div className="gt-useful-order">
       <div className="gt-panel-input-row">
         <label>{tr({ zh: '排列', en: 'permutation' })}</label>
-        <input className="gt-input" value={input} onChange={e => setInput(e.target.value)} spellCheck={false} />
+        <input autoComplete="off" className="gt-input" value={input} onChange={e => setInput(e.target.value)} spellCheck={false} />
       </div>
       <div className="gt-useful-order-formula">
         ord(σ) = lcm({lens.length === 0 ? '1' : lens.join(', ')}) = <b>{ord}</b>
@@ -558,8 +559,8 @@ function ConjugationVisualiser() {
   if (sP.error || tP.error) {
     return (
       <div className="gt-conj-vis">
-        <div className="gt-panel-input-row"><label>σ</label><input className="gt-input" value={sigmaInput} onChange={e => setSigmaInput(e.target.value)} spellCheck={false} /></div>
-        <div className="gt-panel-input-row"><label>τ</label><input className="gt-input" value={tauInput} onChange={e => setTauInput(e.target.value)} spellCheck={false} /></div>
+        <div className="gt-panel-input-row"><label>σ</label><input autoComplete="off" className="gt-input" value={sigmaInput} onChange={e => setSigmaInput(e.target.value)} spellCheck={false} /></div>
+        <div className="gt-panel-input-row"><label>τ</label><input autoComplete="off" className="gt-input" value={tauInput} onChange={e => setTauInput(e.target.value)} spellCheck={false} /></div>
         <div className="gt-permvis-error">{sP.error ?? tP.error}</div>
       </div>
     );
@@ -575,8 +576,8 @@ function ConjugationVisualiser() {
   const relabelled = tauCycles.map(c => c.map(v => sigma[v - 1]));
   return (
     <div className="gt-conj-vis">
-      <div className="gt-panel-input-row"><label>σ</label><input className="gt-input" value={sigmaInput} onChange={e => setSigmaInput(e.target.value)} spellCheck={false} /></div>
-      <div className="gt-panel-input-row"><label>τ</label><input className="gt-input" value={tauInput} onChange={e => setTauInput(e.target.value)} spellCheck={false} /></div>
+      <div className="gt-panel-input-row"><label>σ</label><input autoComplete="off" className="gt-input" value={sigmaInput} onChange={e => setSigmaInput(e.target.value)} spellCheck={false} /></div>
+      <div className="gt-panel-input-row"><label>τ</label><input autoComplete="off" className="gt-input" value={tauInput} onChange={e => setTauInput(e.target.value)} spellCheck={false} /></div>
       <div className="gt-conj-vis-row">
         <span className="gt-conj-vis-label">σ τ σ⁻¹ =</span>
         <span className="gt-conj-vis-result">{fmtCycles(decomposeCycles(conj))}</span>
@@ -607,8 +608,8 @@ function CommutatorComputer() {
   if (aP.error || bP.error) {
     return (
       <div className="gt-comm-comp">
-        <div className="gt-panel-input-row"><label>A</label><input className="gt-input" value={aInput} onChange={e => setAInput(e.target.value)} spellCheck={false} /></div>
-        <div className="gt-panel-input-row"><label>B</label><input className="gt-input" value={bInput} onChange={e => setBInput(e.target.value)} spellCheck={false} /></div>
+        <div className="gt-panel-input-row"><label>A</label><input autoComplete="off" className="gt-input" value={aInput} onChange={e => setAInput(e.target.value)} spellCheck={false} /></div>
+        <div className="gt-panel-input-row"><label>B</label><input autoComplete="off" className="gt-input" value={bInput} onChange={e => setBInput(e.target.value)} spellCheck={false} /></div>
         <div className="gt-permvis-error">{aP.error ?? bP.error}</div>
       </div>
     );
@@ -625,8 +626,8 @@ function CommutatorComputer() {
   const is3Cycle = commCycles.length === 1 && commCycles[0].length === 3;
   return (
     <div className="gt-comm-comp">
-      <div className="gt-panel-input-row"><label>A</label><input className="gt-input" value={aInput} onChange={e => setAInput(e.target.value)} spellCheck={false} /></div>
-      <div className="gt-panel-input-row"><label>B</label><input className="gt-input" value={bInput} onChange={e => setBInput(e.target.value)} spellCheck={false} /></div>
+      <div className="gt-panel-input-row"><label>A</label><input autoComplete="off" className="gt-input" value={aInput} onChange={e => setAInput(e.target.value)} spellCheck={false} /></div>
+      <div className="gt-panel-input-row"><label>B</label><input autoComplete="off" className="gt-input" value={bInput} onChange={e => setBInput(e.target.value)} spellCheck={false} /></div>
       <div className={`gt-comm-comp-result ${is3Cycle ? 'gt-comm-comp-3cycle' : ''}`}>
         <span className="gt-comm-comp-label">[A, B] = A B A⁻¹ B⁻¹ =</span>
         <span className="gt-comm-comp-value">{fmtCycles(decomposeCycles(comm))}</span>
@@ -653,7 +654,7 @@ function PowerSlider() {
   if (parsed.error) {
     return (
       <div className="gt-useful-power">
-        <div className="gt-panel-input-row"><label>{tr({ zh: '排列', en: 'permutation' })}</label><input className="gt-input" value={input} onChange={e => setInput(e.target.value)} spellCheck={false} /></div>
+        <div className="gt-panel-input-row"><label>{tr({ zh: '排列', en: 'permutation' })}</label><input autoComplete="off" className="gt-input" value={input} onChange={e => setInput(e.target.value)} spellCheck={false} /></div>
         <div className="gt-permvis-error">{parsed.error}</div>
       </div>
     );
@@ -665,7 +666,7 @@ function PowerSlider() {
     <div className="gt-useful-power">
       <div className="gt-panel-input-row">
         <label>{tr({ zh: '排列 σ', en: 'permutation σ' })}</label>
-        <input className="gt-input" value={input} onChange={e => { setInput(e.target.value); setK(1); }} spellCheck={false} />
+        <input autoComplete="off" className="gt-input" value={input} onChange={e => { setInput(e.target.value); setK(1); }} spellCheck={false} />
       </div>
       <div className="gt-useful-power-slider-row">
         <label>k = <b>{k}</b></label>
@@ -721,8 +722,8 @@ function SubgroupGenerator() {
   }, [g1.perm, g2.perm, g1.n, g2.n, g1.error, g2.error]);
   return (
     <div className="gt-useful-subgrp">
-      <div className="gt-panel-input-row"><label>g₁</label><input className="gt-input" value={gen1} onChange={e => setGen1(e.target.value)} spellCheck={false} /></div>
-      <div className="gt-panel-input-row"><label>g₂</label><input className="gt-input" value={gen2} onChange={e => setGen2(e.target.value)} spellCheck={false} /></div>
+      <div className="gt-panel-input-row"><label>g₁</label><input autoComplete="off" className="gt-input" value={gen1} onChange={e => setGen1(e.target.value)} spellCheck={false} /></div>
+      <div className="gt-panel-input-row"><label>g₂</label><input autoComplete="off" className="gt-input" value={gen2} onChange={e => setGen2(e.target.value)} spellCheck={false} /></div>
       {g1.error && <div className="gt-permvis-error">g₁: {g1.error}</div>}
       {g2.error && <div className="gt-permvis-error">g₂: {g2.error}</div>}
       {result && 'error' in result && <div className="gt-permvis-error">{result.error}</div>}

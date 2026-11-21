@@ -50,7 +50,7 @@ export default function Checklists() {
         await api('checklist', { id: newId.current, version: 0, name: value(data, 'name'), active: true, items: [], categories: [] });
         setEditing(false); resource.reload();
       }}>
-        <Field label={t('名称', 'Name')}><input name="name" required maxLength={80} /></Field>
+        <Field label={t('名称', 'Name')}><input autoComplete="off" name="name" required maxLength={80} /></Field>
         <div className="staff-actions staff-form-actions"><Button action="save" type="submit">{t('保存', 'Save')}</Button></div>
       </Form>
     </EditorDialog>}
