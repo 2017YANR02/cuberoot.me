@@ -34,6 +34,9 @@
       ],
       "ignoreDependencies": ["playwright"]
     },
+    "apps/desktop": {
+      "entry": ["src-tauri/src/tools-input.js"]
+    },
     "apps/harmony": {
       "entry": ["hvigorfile.ts", "entry/hvigorfile.ts"],
       "ignoreDependencies": ["@ohos/hvigor-ohos-plugin"]
