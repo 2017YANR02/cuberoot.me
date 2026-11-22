@@ -345,8 +345,6 @@
   text-align: right;
 }
 
-.shell-stat-empty { font-family: var(--font-sans); font-size: var(--solo-stat-value-font-size, 13px); line-height: 1.4; }
-
 @media (max-width: 800px) {
   .shell-topbar {
     grid-template-columns: minmax(0, 1fr) auto;

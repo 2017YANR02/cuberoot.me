@@ -80,7 +80,7 @@ export function normalizeSoloLayout(value: unknown): SoloLayout {
 export const TIMER_SOLO_STAT_RAIL_KEYS = ['count', 'best', 'ao5', 'ao12'] as const;
 
 export function timerSoloStatRailRows(summary: { count: number; solved: number; best: string; ao5: string; ao12: string }) {
-  return summary.count > 0 ? TIMER_SOLO_STAT_RAIL_KEYS.map(key => key === 'count'
+  return TIMER_SOLO_STAT_RAIL_KEYS.map(key => key === 'count'
     ? { label: '', value: `${summary.solved}/${summary.count}` }
-    : { label: key, value: summary[key] }) : [];
+    : { label: key, value: summary.count === 0 || summary[key] === '—' ? '-' : summary[key] });
 }

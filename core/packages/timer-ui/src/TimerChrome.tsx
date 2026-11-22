@@ -154,8 +154,8 @@ export interface TimerStatRailProps {
 }
 
 const STAT_RAIL_COPY = {
-  en: { empty: 'Times', count: 'Count', title: 'Open times and statistics' },
-  zh: { empty: '成绩', count: '次数', title: '打开成绩与统计' },
+  en: { count: 'Count', title: 'Open times and statistics' },
+  zh: { count: '次数', title: '打开成绩与统计' },
 } as const;
 
 export function TimerStatRail({
@@ -189,14 +189,12 @@ export function TimerStatRail({
             {TIMER_SOLO_STAT_RAIL_KEYS.map(key =>
               <span className="shell-stat-val" key={key}>{trainingSummaries[index]?.[key]}</span>)}
           </span>)}
-      </span> : items.length > 0 ? items.map(({ label, value }, index) => (
+      </span> : items.map(({ label, value }, index) => (
         <span className="shell-stat" key={`${label ?? 'value'}-${index}`}>
           <span className="shell-stat-lbl">{label}</span>
           <span className="shell-stat-val">{value}</span>
         </span>
-      )) : (
-        <span className="shell-stat-empty">{copy.empty}</span>
-      )}
+      ))}
     </button>
   );
 }

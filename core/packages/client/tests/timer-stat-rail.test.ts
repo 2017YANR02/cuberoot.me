@@ -13,20 +13,24 @@ describe('shared timer statistics entry copy', () => {
       row.querySelector('.shell-stat-lbl')?.textContent ?? '',
       row.querySelector('.shell-stat-val')?.textContent,
     ])).toEqual([
-      ['', '5/6'], ['best', '9.87'], ['ao5', '12.00'], ['ao12', '—'],
+      ['', '5/6'], ['best', '9.87'], ['ao5', '12.00'], ['ao12', '-'],
     ]);
     expect(host.querySelector('button')?.title).toBe(
       { en: 'Open times and statistics', zh: '打开成绩与统计' }[language],
     );
   });
 
-  it.each(['en', 'zh'] as const)('shows only the shared empty entry in %s', (language) => {
+  it.each(['en', 'zh'] as const)('keeps all four rows in an empty session in %s', (language) => {
     const host = document.createElement('div');
     host.innerHTML = renderToStaticMarkup(createElement(TimerStatRail, {
       language, summary: { ...summary, count: 0, solved: 0 },
     }));
-    expect(host.textContent).toBe({ en: 'Times', zh: '成绩' }[language]);
-    expect(host.querySelectorAll('.shell-stat-empty')).toHaveLength(1);
+    expect([...host.querySelectorAll('.shell-stat')].map(row => [
+      row.querySelector('.shell-stat-lbl')?.textContent ?? '',
+      row.querySelector('.shell-stat-val')?.textContent,
+    ])).toEqual([
+      ['', '0/0'], ['best', '-'], ['ao5', '-'], ['ao12', '-'],
+    ]);
   });
 
   it('retains the statistics entry when every solve is DNF', () => {
