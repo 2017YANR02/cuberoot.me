@@ -196,3 +196,28 @@ select {
   color: var(--faint-foreground);
   cursor: not-allowed;
 }
+
+.cube-orientation-grid .compact-select-options {
+  --orientation-cell-size: 34px;
+  display: grid;
+  grid-template-columns: repeat(6, var(--orientation-cell-size));
+  grid-template-rows: repeat(6, var(--orientation-cell-size));
+  gap: 3px;
+}
+
+.cube-orientation-grid .compact-select-option {
+  display: grid;
+  place-items: center;
+  padding: 0;
+}
+
+.cube-orientation-grid .ccc-chip.cube-orientation-chip {
+  width: 17px;
+  height: 21px;
+}
+
+@media (pointer: coarse) {
+  .cube-orientation-grid .compact-select-options {
+    --orientation-cell-size: min(44px, calc((100vw - 42px) / 6));
+  }
+}

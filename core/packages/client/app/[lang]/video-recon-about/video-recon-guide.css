@@ -1,0 +1,123 @@
+.video-recon-guide-flow {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 28px;
+  margin: 18px 0 24px;
+  padding: 0;
+  list-style: none;
+}
+
+.report-page .video-recon-guide-flow > li {
+  position: relative;
+  min-width: 0;
+  margin: 0;
+}
+
+.video-recon-guide-flow-icon {
+  display: block;
+  margin-block-end: 6px;
+  color: var(--accent);
+}
+
+.video-recon-guide-flow-arrow {
+  position: absolute;
+  inset-block-start: 2px;
+  inset-inline-end: -23px;
+  color: var(--muted-foreground);
+}
+
+.video-recon-guide-flow strong {
+  display: block;
+  font-weight: 600;
+  line-height: 1.35;
+}
+
+.video-recon-guide-method {
+  display: block;
+  margin-block-start: 3px;
+  color: var(--muted-foreground);
+  font-size: 1rem;
+}
+
+.report-page .video-recon-guide-flow p {
+  margin: 6px 0 0;
+  font-size: 1rem;
+  line-height: 1.5;
+}
+
+.video-recon-guide-example {
+  margin: 12px 0 24px;
+  padding: 14px 0;
+  border-block: 1px solid var(--border-default);
+}
+
+.video-recon-guide-views {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 36px minmax(0, 1fr);
+  align-items: center;
+  gap: 6px;
+  max-width: 440px;
+  margin: 0 auto;
+  text-align: center;
+}
+
+.video-recon-guide-view,
+.video-recon-guide-rotate {
+  display: grid;
+  justify-items: center;
+  font-size: 1rem;
+}
+
+.video-recon-guide-cube {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.video-recon-guide-cube code {
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+.video-recon-guide-rotate {
+  color: var(--accent);
+}
+
+.video-recon-guide-example figcaption {
+  margin-block-start: 8px;
+  text-align: center;
+}
+
+@media (max-width: 600px) {
+  .video-recon-guide-flow {
+    grid-template-columns: 1fr;
+    gap: 18px;
+  }
+
+  .report-page .video-recon-guide-flow > li {
+    display: grid;
+    grid-template-columns: 22px minmax(0, 1fr);
+    gap: 12px;
+  }
+
+  .video-recon-guide-flow-icon {
+    margin-block-end: 0;
+  }
+
+  .video-recon-guide-flow strong {
+    display: inline-block;
+    margin-inline-end: 8px;
+  }
+
+  .video-recon-guide-method {
+    display: inline-block;
+    margin-block-start: 0;
+  }
+
+  .video-recon-guide-flow-arrow {
+    inset-block-start: auto;
+    inset-block-end: -17px;
+    inset-inline: 2px auto;
+    transform: rotate(90deg);
+  }
+}

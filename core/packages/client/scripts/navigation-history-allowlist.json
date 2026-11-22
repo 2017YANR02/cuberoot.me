@@ -70,6 +70,11 @@
     "reason": "进入历史游戏或打开指定日期的内容"
   },
   {
+    "path": "app/[lang]/frame-count/VideoToolsPage.tsx",
+    "call": "useQueryState('mode') history='push'",
+    "reason": "逐帧计时、自动复盘与摄像头计时之间的工具导航"
+  },
+  {
     "path": "app/[lang]/drive/page.tsx",
     "call": "useQueryState('view') history='push'",
     "reason": "文件、共享与回收站导航及文件预览"

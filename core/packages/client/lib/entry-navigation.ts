@@ -12,6 +12,7 @@ const RECENT_SCRAMBLE_KEYS = new Set(['method', 'stage', 'colors', 'moves', 'mat
 const ALG_LIBRARY_KEYS = new Set(['tag', 'hand', 'notation', 'black', 'sq1-notation', 'setup', 'other-algs', 'all', 'simplified', 'diagram', 'angle', 'orientation', 'metric', 'op', 'moves', 'parity', 'collapse-groups', 'open-group']);
 const LEGACY_KEYS = ['accountBack', 'accountEntry', 'shopBack', 'shopEntry'];
 const EXCLUDED = /^\/(?:api|v1|auth|_next|stats|tools|icons|images|fonts|contact\/[^/]+\.[^/]+)(?:\/|$)/;
+const VIDEO_TOOL_DOCUMENT = /^\/(?:en\/|zh\/)?(?:frame-count|video-recon)\/?$/;
 const bare = (path: string) => path.replace(/^\/(en|zh)(?=\/|$)/, '') || '/';
 function parse(raw: string): URL | null {
   const path = safeNext(raw);
@@ -37,7 +38,8 @@ function snapshot(url: URL): string | null {
     const recentFilter = pathname === '/scramble/recent' && RECENT_SCRAMBLE_KEYS.has(key);
     const algFilter = pathname.startsWith('/alg/') && ALG_LIBRARY_KEYS.has(key);
     const coursePageSize = key === 'pageSize' && pathname.replace(/\/$/, '') === '/platform/courses';
-    if ((STATE_KEYS.has(key) || recentFilter || algFilter || coursePageSize) && value.length <= 200) clean.searchParams.append(key, value);
+    const videoMode = key === 'mode' && VIDEO_TOOL_DOCUMENT.test(pathname) && (value === 'detector' || value === 'timer');
+    if ((STATE_KEYS.has(key) || recentFilter || algFilter || coursePageSize || videoMode) && value.length <= 200) clean.searchParams.append(key, value);
   }
   if (/^#[a-zA-Z0-9_%:/.-]{1,160}$/.test(url.hash)) clean.hash = url.hash;
   return pathOf(clean);
@@ -181,6 +183,19 @@ export function currentEntryHref(href: string, mode: EntryNavigationMode = 'push
 export function subscribeEntryNavigation(onChange: () => void): () => void {
   window.addEventListener(CHANGE_EVENT, onChange);
   return () => window.removeEventListener(CHANGE_EVENT, onChange);
+}
+
+/** COOP/COEP are document headers. Query-only mode changes keep the current document. */
+export function navigateVideoToolDocument(href: string, replace = false): boolean {
+  const current = window.location;
+  let target: URL;
+  try { target = new URL(href, current.href); } catch { return false; }
+  if (target.origin !== current.origin
+    || current.pathname.replace(/\/$/, '') === target.pathname.replace(/\/$/, '')
+    || !(VIDEO_TOOL_DOCUMENT.test(current.pathname) || VIDEO_TOOL_DOCUMENT.test(target.pathname))) return false;
+  if (replace) current.replace(target.href);
+  else current.assign(target.href);
+  return true;
 }
 export function readEntryNavigationBack(): string | null { return entryNavigationBack(currentPath()); }
 

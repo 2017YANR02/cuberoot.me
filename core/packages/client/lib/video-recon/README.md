@@ -31,7 +31,9 @@ the pinned ONNX Runtime distribution into `public/vendor/video-recon/runtime/`.
 The model weights use the upstream manifest. The pose manifest selects the current CPU pipeline build.
 The original CubeRoot opening-grip fix now lives in `engine/cube-orientation.ts`.
 
-The React workspace is at `/video-recon`, or `/video-recon?mode=timer` for the camera timer.
+Open `/frame-count?mode=detector` for automatic reconstruction or
+`/frame-count?mode=timer` for the camera timer. The existing `/video-recon`
+route remains available during migration.
 Next serves COOP/COEP on the page and COEP/CORP on the worker assets. The existing
 nginx proxy passes those Next headers through on the self-hosted line.
 The production video tool installs a route-scoped offline service worker. It

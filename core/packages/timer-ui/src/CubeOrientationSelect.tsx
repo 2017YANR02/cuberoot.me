@@ -8,19 +8,29 @@ import type { TimerSettingCopy } from '@cuberoot/shared/timer';
 import { CUBE_COLOR_LETTER_FOR_FACE } from '@cuberoot/puzzle-render-core/support/cube-colors';
 import { CUBE_ORIENTATIONS, orientedFaceColors } from '@cuberoot/shared/timer';
 
-function orientationItems(tr: (copy: TimerSettingCopy) => string) { return CUBE_ORIENTATIONS.map((option) => {
-  const shown = orientedFaceColors(option.value);
-  const triggerLabel = <CubeColorChip localize={tr} className="cube-orientation-chip" colors={`${CUBE_COLOR_LETTER_FOR_FACE[shown.U]}${CUBE_COLOR_LETTER_FOR_FACE[shown.F]}`} />;
-  return {
-    ...option,
-    textValue: option.label,
-    triggerLabel,
-    label: <>{triggerLabel} {' '}{option.label}</>,
-  };
-}); }
+const FACE_ORDER = ['U', 'D', 'R', 'L', 'B', 'F'] as const;
+
+function orientationItems(tr: (copy: TimerSettingCopy) => string, grid: boolean) {
+  const items = CUBE_ORIENTATIONS.map(option => {
+    const shown = orientedFaceColors(option.value);
+    const row = FACE_ORDER.indexOf(shown.U) + 1;
+    const column = FACE_ORDER.indexOf(shown.F) + 1;
+    const triggerLabel = <CubeColorChip localize={tr} className="cube-orientation-chip" colors={`${CUBE_COLOR_LETTER_FOR_FACE[shown.U]}${CUBE_COLOR_LETTER_FOR_FACE[shown.F]}`} />;
+    return {
+      ...option,
+      textValue: option.label,
+      triggerLabel,
+      label: grid ? triggerLabel : <>{triggerLabel} {' '}{option.label}</>,
+      tooltip: grid ? option.label : undefined,
+      gridPosition: grid ? { row, column } : undefined,
+      cellIndex: (row - 1) * FACE_ORDER.length + column,
+    };
+  });
+  return grid ? items.sort((a, b) => a.cellIndex - b.cellIndex) : items;
+}
 
 export default function CubeOrientationSelect({
-  value, onChange, className, title, ariaLabel, localize: tr,
+  value, onChange, className, title, ariaLabel, layout = 'list', localize: tr,
 }: {
   /** 整体转前缀,'' = 不转(UF)。 */
   value: string;
@@ -29,13 +39,16 @@ export default function CubeOrientationSelect({
   className?: string;
   title?: string;
   ariaLabel?: string;
+  layout?: 'list' | 'grid';
 }) {
-  const ORIENTATION_ITEMS = orientationItems(tr);
+  const grid = layout === 'grid';
+  const ORIENTATION_ITEMS = orientationItems(tr, grid);
   const current = ORIENTATION_ITEMS.find((option) => option.value === value);
-  const items = current ? ORIENTATION_ITEMS : [...ORIENTATION_ITEMS, { value, label: value }];
+  const items = current || grid ? ORIENTATION_ITEMS : [...ORIENTATION_ITEMS, { value, label: value }];
   return (
     <CompactSelect
       className="cube-orientation-select"
+      popupClassName={grid ? 'cube-orientation-grid' : undefined}
       items={items}
       value={value}
       onChange={onChange}

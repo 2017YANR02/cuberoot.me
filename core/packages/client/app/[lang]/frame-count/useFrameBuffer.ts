@@ -114,6 +114,7 @@ export interface FrameBufferHook {
   samples: SampleInfo[];
   /** VideoDecoder 配置（供导出使用） */
   decoderConfig: VideoDecoderConfig | null;
+  getFrameTimestamp(userFrame: number): number | undefined;
   /**
    * 基于 sample 时间戳的起表帧定位 — 用于魔方裁判场景下校准 WCA 公式。
    * 给定 end user-frame 和向前回溯秒数, 返回距离 target timestamp 最近的 sample 对应的 user-frame。
@@ -190,6 +191,7 @@ export function useFrameBuffer(
   const samplesRef = useRef<SampleInfo[]>([]);
   const decodeToPresentationRef = useRef<Int32Array>(new Int32Array(0));
   const presentationToDecodeRef = useRef<Int32Array>(new Int32Array(0));
+  const presentationClockRef = useRef<{ timescale: number; offset: number }>(undefined);
   const configRef = useRef<VideoDecoderConfig | null>(null);
   // HTMLVideoElement 会自动应用 tkhd 旋转矩阵,WebCodecs 只收到裸编码数据。
   // 所有解码帧在生成 bitmap 时统一烘焙这个旋转,避免 video/canvas 切换时画面转 90°。
@@ -257,6 +259,10 @@ export function useFrameBuffer(
     cache.clear();
     samplesRef.current = [];
     configRef.current = null;
+    presentationClockRef.current = undefined;
+    presentationToDecodeRef.current = new Int32Array(0);
+    decodeToPresentationRef.current = new Int32Array(0);
+    realDurationRef.current = 0;
     trackRotationRef.current = 0;
     setIsReady(false);
     setDecoderDead(false);
@@ -300,6 +306,21 @@ export function useFrameBuffer(
       videoTrackId = vTrack.id;
       const codecStr = vTrack.codec;
       trackRotationRef.current = trackMatrixToRotation(vTrack.matrix);
+      // Match the media timeline used by Mediabunny while keeping decoder CTS unchanged.
+      let leadingDuration = 0;
+      let offset = 0;
+      for (const edit of vTrack.edits ?? []) {
+        if (edit.media_time === -1) {
+          leadingDuration += edit.segment_duration;
+          continue;
+        }
+        if (edit.media_rate_integer === 1 && edit.media_rate_fraction === 0 && vTrack.timescale > 0 && info.timescale > 0) {
+          const leadingTicks = Math.round(leadingDuration * vTrack.timescale / info.timescale);
+          offset = edit.media_time - leadingTicks;
+        }
+        break;
+      }
+      if (vTrack.timescale > 0) presentationClockRef.current = { timescale: vTrack.timescale, offset };
 
       // 提取 description（SPS/PPS extradata）从 trakBox
       const trak = mp4File.getTrackById(videoTrackId);
@@ -888,6 +909,15 @@ export function useFrameBuffer(
     return Math.max(0, Math.min(samples.length - 1, pIdx));
   }, []);
 
+  const getFrameTimestamp = useCallback((userFrame: number) => {
+    const decodeIndex = presentationToDecodeRef.current[userToPIdx(userFrame)];
+    const sample = samplesRef.current[decodeIndex];
+    if (!sample) return undefined;
+    const seconds = sample.timestamp / 1_000_000;
+    const clock = presentationClockRef.current;
+    return Math.max(0, clock ? (Math.round(seconds * clock.timescale) - clock.offset) / clock.timescale : seconds);
+  }, [userToPIdx]);
+
   const pIdxToUser = useCallback((pIdx: number): number => {
     const samples = samplesRef.current;
     if (samples.length === 0) return 0;
@@ -1046,6 +1076,6 @@ export function useFrameBuffer(
     getFrame, prefetch, getKeyFrameThumb, keyFrameThumbs, isReady, decoderDead, loadProgress, parseFailed, audioInfo, vfrInfo, dispose,
     samples: samplesRef.current,
     decoderConfig: configRef.current,
-    findStartFrameByTimestamp,
+    findStartFrameByTimestamp, getFrameTimestamp,
   };
 }

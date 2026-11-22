@@ -7,7 +7,7 @@ import { useContext, useRef, useSyncExternalStore, type ComponentProps } from 'r
 import { PlatformNavigationContext } from '@/lib/platform-navigation-context';
 import { platformNavigationHref, platformPathname } from '@/lib/platform-navigation';
 import { useTrainingHref } from '@/lib/training-host';
-import { currentEntryHref, entryNavigationHref, type EntryNavigationMode } from '@/lib/entry-navigation';
+import { currentEntryHref, entryNavigationHref, navigateVideoToolDocument, type EntryNavigationMode } from '@/lib/entry-navigation';
 import { LinkPendingIndicator } from '@/components/StartupStatus';
 import { isInstalledCommunityHref, isInstalledWebsiteSurface, useInstalledCommunityDisabled } from '@/lib/installed-content';
 
@@ -21,14 +21,6 @@ const NO_PREFIX = /^\/(v1|api|auth|callback\.html|stats|tools|cubing-chunks|cube
 // Keep the canonical server/first hydration render identical, then read it.
 const subscribeInstalledSurface = () => () => undefined;
 const serverInstalledSurface = () => false;
-const VIDEO_RECON_DOCUMENT = /^\/(?:en\/|zh\/)?video-recon\/?$/;
-
-function crossesVideoReconBoundary(href: string) {
-  const current = window.location;
-  const target = new URL(href, current.href);
-  return target.origin === current.origin
-    && VIDEO_RECON_DOCUMENT.test(current.pathname) !== VIDEO_RECON_DOCUMENT.test(target.pathname);
-}
 function isInstalledProductHref(href: string): boolean {
   if (!href.startsWith('/') || href.startsWith('//') || href.startsWith('/\\')) return false;
   const pathname = href.split(/[?#]/, 1)[0].replace(/^\/(en|zh)(?=\/|$)/, '') || '/';
@@ -87,12 +79,7 @@ export default function AppLink({ href, navigation = 'push', prefetch = false, l
       props.onNavigate?.({ preventDefault: () => { cancelled = true; event.preventDefault(); } });
       if (cancelled) return;
       const target = currentEntryHref(clickedHref.current, props.replace && navigation === 'push' ? 'replace' : navigation);
-      // COOP/COEP apply to documents, so crossing this boundary cannot be an RSC navigation.
-      if (crossesVideoReconBoundary(target)) {
-        event.preventDefault();
-        if (props.replace) window.location.replace(target);
-        else window.location.assign(target);
-      }
+      if (navigateVideoToolDocument(target, props.replace)) event.preventDefault();
     }}>
     {props.children}
     {/* allow-nested-link: LinkPendingIndicator only subscribes to pending state and returns null, never an anchor. */}

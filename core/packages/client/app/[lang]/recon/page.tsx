@@ -987,7 +987,7 @@ export default function ReconListPage() {
             >
               <HelpCircle size={18} strokeWidth={1.75} />
             </Link>
-            <Link href="/video-recon">{tr({ zh: '视频复盘', en: 'Video reconstruction' })}</Link>
+            <Link href="/frame-count?mode=detector">{tr({ zh: '视频复盘', en: 'Video reconstruction' })}</Link>
           </PageHeading>
         </div>
         <div className="recon-view-toggle">

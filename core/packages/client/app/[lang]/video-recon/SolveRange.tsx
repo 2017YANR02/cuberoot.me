@@ -5,7 +5,11 @@ import { useT } from '@/hooks/useT';
 import { timecode } from '@/lib/video-recon/engine/solve-range';
 import type { VideoWorkspace } from '@/lib/video-recon/workspace';
 
-export function SolveRange({ view, workspace }: { view: ReturnType<VideoWorkspace['getSnapshot']>; workspace: VideoWorkspace }) {
+export function SolveRange({ view, workspace, onBegin }: {
+  view: ReturnType<VideoWorkspace['getSnapshot']>;
+  workspace: VideoWorkspace;
+  onBegin: () => void;
+}) {
   const t = useT();
   const { solveStart, solveEnd, duration, thumbnails, position, sourceFps } = view;
   const start = t('开始', 'Start');
@@ -51,13 +55,13 @@ export function SolveRange({ view, workspace }: { view: ReturnType<VideoWorkspac
           onKeyDown={event => { if (event.key === 'Enter') event.currentTarget.blur(); }} />
       </label>
     </div>
-    <label className="video-recon-field">{t('初始打乱', 'Initial scramble')}
+    <label className="video-recon-field">{t('打乱', 'Scramble')}
       <input type="text" value={view.initialScramble} onChange={event => workspace.setScramble(event.currentTarget.value)}
-        placeholder="R U R′ U′ …" autoComplete="off" autoCapitalize="none" spellCheck={false} />
+        autoComplete="off" autoCapitalize="none" spellCheck={false} />
     </label>
     <div className="video-recon-section-heading">
       <p className="video-recon-muted">{t('区间开头需包含第一步之前的清晰魔方画面。', 'Include a clear view of the cube before the first move.')}</p>
-      <button type="button" className="btn-primary" onClick={() => void workspace.beginReconstruction()}
+      <button type="button" className="btn-primary" onClick={onBegin}
         disabled={view.status !== 'ready' || view.cropLoading || !!view.cropPreview || !view.initialScramble.trim()}>
         {t('开始复盘', 'Reconstruct')}
       </button>

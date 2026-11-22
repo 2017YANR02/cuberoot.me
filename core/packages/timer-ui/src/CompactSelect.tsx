@@ -20,6 +20,8 @@ export interface CompactSelectItem<T extends string | number> {
   label: ReactNode;
   /** Hover/focus name for icon-only options. */
   tooltip?: string;
+  /** One-based cell coordinates for options in a grid popup. */
+  gridPosition?: { row: number; column: number };
   disabled?: boolean;
 }
 
@@ -250,6 +252,7 @@ export function CompactSelect<T extends string | number>({
                   aria-selected={active}
                   key={item.value}
                   className={`compact-select-option${active ? ' active' : ''}`}
+                  style={item.gridPosition ? { gridArea: `${item.gridPosition.row} / ${item.gridPosition.column}` } : undefined}
                   disabled={item.disabled}
                   onPointerDown={keepEditorFocus}
                   onMouseDown={keepEditorFocus}

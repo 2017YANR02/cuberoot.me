@@ -1,9 +1,7 @@
-'use client';
+import { PAGE_META } from '@/lib/page-meta';
+import VideoToolsPage from './VideoToolsPage';
 
-// Full port of packages/client-vite/src/pages/frame-count/FrameCountPage.tsx.
-// The previous POC verifying mp4box.js + WebCodecs has been superseded by the
-// full feature port. See ffmpeg-poc/ for the FFmpeg WASM smoke test.
-
-import FrameCountPage from './FrameCountPage';
-
-export default FrameCountPage;
+export default async function Page({ params }: { params: Promise<{ lang: string }> }) {
+  const { lang } = await params;
+  return <VideoToolsPage title={PAGE_META['frame-count'].title[lang === 'zh' ? 'zh' : 'en']} />;
+}

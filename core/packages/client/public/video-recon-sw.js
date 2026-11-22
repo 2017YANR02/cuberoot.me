@@ -2,6 +2,7 @@
 const scope = new URL(self.registration.scope);
 const path = scope.pathname.replace(/\/$/, '');
 const locale = path.startsWith('/zh/') ? 'zh' : 'en';
+const route = path.replace(/^\/(?:en|zh)(?=\/)/, '');
 const cacheName = 'cuberoot-video-recon-v1';
 const assetPath = /^\/(?:_next\/static\/|_origin\/_next\/static\/|fonts\/|cubing-chunks\/|vendor\/video-recon\/(?:models|pose|runtime|workers)\/)/;
 
@@ -62,9 +63,9 @@ self.addEventListener('message', event => {
   event.waitUntil((async () => {
     const cache = await caches.open(cacheName);
     // Fetch the public locale shell with no cookies and without locale redirects.
-    const shell = new URL(`/${locale}/video-recon`, scope);
+    const shell = new URL(`/${locale}${route}`, scope);
     const html = await fetchAndCache(new Request(shell, { credentials: 'omit' }), cacheKey(shell, true), cache, true);
-    const files = new Set(event.data.assets.filter(asset => typeof asset === 'string').slice(0, 180));
+    const files = new Set(event.data.assets.filter(asset => typeof asset === 'string'));
     if (html.ok && html.headers.get('content-type')?.includes('text/html')) {
       const content = await html.text();
       for (const match of content.matchAll(/(?:src|href)=["']([^"']+)["']/g)) files.add(match[1]);
@@ -72,7 +73,7 @@ self.addEventListener('message', event => {
     // Limit concurrent warmup so model initialization and rendering stay responsive.
     const assets = [...files].map(file => {
       try { return new URL(file, scope); } catch { return undefined; }
-    }).filter(url => url && isAsset(url));
+    }).filter(url => url && isAsset(url)).slice(0, 180);
     for (let index = 0; index < assets.length; index += 4) {
       await Promise.allSettled(assets.slice(index, index + 4).map(async url => {
         const key = cacheKey(url);

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState, type PointerEvent, type ReactNode } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type PointerEvent } from 'react';
 import dynamic from 'next/dynamic';
 import { parseAsStringEnum, useQueryState } from 'nuqs';
 import { Copy, RotateCcw } from '@app-foundation/icons/lucide';
@@ -32,12 +32,11 @@ interface Props {
   playbackSpeed: number;
   live?: boolean;
   analysis?: Omit<VideoSolveAnalysisProps, 'onOpeningView'>;
-  controls?: ReactNode;
 }
 
 type Drag = { id: number; kind: CubeDragKind; start: DragPoint; view: Quaternion; x: number; y: number; radius: number };
 
-export function ProjectedCube({ pose, sourceTimestamp, solved, steps, timeline, sourceFrame, sourceFps, playbackSpeed, live, analysis, controls }: Props) {
+export function ProjectedCube({ pose, sourceTimestamp, solved, steps, timeline, sourceFrame, sourceFps, playbackSpeed, live, analysis }: Props) {
   const t = useT();
   const resetLabel = t('重置视角', 'Reset view');
   const engineHost = useRef<HTMLDivElement>(null);
@@ -207,7 +206,6 @@ export function ProjectedCube({ pose, sourceTimestamp, solved, steps, timeline, 
         </button>
       }</Tooltip>}
     </div>
-    {controls}
     {live ? <div className="video-recon-section-heading">
       <span className="video-recon-muted">{t('实时预览', 'Live preview')}</span>
       {liveMove && <code aria-label={t('最近识别的动作', 'Latest detected moves')}>{liveMove.state_moves.join(' ')}</code>}

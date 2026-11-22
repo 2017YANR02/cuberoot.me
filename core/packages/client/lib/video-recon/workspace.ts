@@ -177,7 +177,7 @@ export function createVideoWorkspace(stage: HTMLCanvasElement, initialTab: Works
   function selectTab(tab: WorkspaceTab) {
     if (state.timerBusy || tab === state.activeTab) return;
     if (tab === 'timer') {
-      if (state.sourceKind !== 'none' && state.sourceKind !== 'camera') stopSource();
+      if (state.uploadedFile) stopSource();
       moveSearch?.dispose(); moveSearch = undefined; state.searchResult = undefined; state.searchError = '';
       activeRunId = undefined;
       if (state.sourceKind === 'camera') state.timerCamera = true;
@@ -430,21 +430,26 @@ export function createVideoWorkspace(stage: HTMLCanvasElement, initialTab: Works
     return cropPixels(state.sourceCrop, source instanceof HTMLImageElement ? source.naturalWidth : source.width,
       source instanceof HTMLImageElement ? source.naturalHeight : source.height);
   }
+  let cropRequest = 0;
   function closeCrop() {
+    cropRequest++;
     if (state.cropPreview) URL.revokeObjectURL(state.cropPreview.url);
     state.cropPreview = undefined;
+    state.cropLoading = false;
   }
   async function editCrop() {
-    if (!state.uploadedFile || state.cropLocked || state.cropLoading || (state.sourceKind === 'video' && !state.trimming)) return;
+    if (!state.uploadedFile || state.cropLocked || state.cropLoading || state.cropPreview || (state.sourceKind === 'video' && !state.trimming)) return;
     const token = generation;
+    const request = ++cropRequest;
     state.running = false; seekResume = false; cancelScheduled(); state.cropLoading = true;
     let frame: SourceFrame | null | undefined;
     try {
       await waitForPipelineIdle();
-      if (token !== generation || disposed) return;
+      if (token !== generation || request !== cropRequest || disposed) return;
       const kind = state.sourceKind;
       if (kind !== 'image' && kind !== 'video') return;
       const source = kind === 'image' ? still : (frame = await fileSource?.preview(state.position))?.bitmap;
+      if (token !== generation || request !== cropRequest || disposed) return;
       if (!source) throw new Error('A source frame could not be loaded for cropping.');
       const width = source instanceof HTMLImageElement ? source.naturalWidth : source.width;
       const height = source instanceof HTMLImageElement ? source.naturalHeight : source.height;
@@ -452,16 +457,16 @@ export function createVideoWorkspace(stage: HTMLCanvasElement, initialTab: Works
       const canvas = new OffscreenCanvas(Math.max(1, Math.round(width * scale)), Math.max(1, Math.round(height * scale)));
       canvas.getContext('2d')!.drawImage(source, 0, 0, canvas.width, canvas.height);
       const blob = await canvas.convertToBlob({type: 'image/png'});
-      if (token !== generation || disposed) return;
-      closeCrop(); state.cropPreview = {url: URL.createObjectURL(blob), width, height, kind};
+      if (token !== generation || request !== cropRequest || disposed) return;
+      state.cropPreview = {url: URL.createObjectURL(blob), width, height, kind};
     } catch (cause) {
-      if (token === generation) state.mediaError = cause instanceof Error ? cause.message : String(cause);
-    } finally {frame?.bitmap.close(); if (token === generation) state.cropLoading = false;}
+      if (token === generation && request === cropRequest) state.mediaError = cause instanceof Error ? cause.message : String(cause);
+    } finally {frame?.bitmap.close(); if (request === cropRequest) state.cropLoading = false;}
   }
   async function applyCrop(crop: SourceCrop | undefined) {
     if (!state.uploadedFile || state.cropLocked) return;
     const file = state.uploadedFile;
-    const range = state.sourceKind === 'video' ? {start: state.solveStart, end: state.solveEnd} : undefined;
+    const range = state.sourceKind === 'video' ? {start: state.solveStart, end: state.solveEnd, position: state.position} : undefined;
     closeCrop();
     // Reopen as a new input generation: discard tracking, fitting and cached
     // results from the old crop before any new cropped frame can be admitted.
@@ -959,7 +964,7 @@ export function createVideoWorkspace(stage: HTMLCanvasElement, initialTab: Works
     }
   }
 
-  async function openFile(file?: File, crop?: SourceCrop, range?: {start: number; end: number}) {
+  async function openFile(file?: File, crop?: SourceCrop, range?: {start: number; end: number; position?: number}) {
     if (!file || disposed) return;
     stopSource();
     state.uploadedFile = file; state.sourceCrop = crop;
@@ -983,7 +988,7 @@ export function createVideoWorkspace(stage: HTMLCanvasElement, initialTab: Works
         presenter.presentFrame(stage, presenter.captureFrame(image, inputCrop(image)));
         startMoveSearch();
         await inferFrame();
-      } else if (file.type.startsWith("video/")) {
+      } else if (range || file.type.startsWith("video/") || !file.type) {
         const decoded = await openVideoFile(file);
         if (token !== generation || disposed) {
           decoded.close();
@@ -996,7 +1001,7 @@ export function createVideoWorkspace(stage: HTMLCanvasElement, initialTab: Works
         state.sourceName = file.name;
         state.solveStart = Math.max(0, Math.min(range?.start ?? 0, state.duration));
         state.solveEnd = Math.max(state.solveStart, Math.min(range?.end ?? state.duration, state.duration)); state.trimming = true;
-        await previewTrim(state.solveStart); void makeThumbnails(token);
+        await previewTrim(range?.position ?? state.solveStart); void makeThumbnails(token);
       } else throw new Error("Choose an image or a video file.");
     } catch (cause) {
       if (token === generation)

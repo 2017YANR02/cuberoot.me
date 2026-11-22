@@ -318,7 +318,7 @@ export const CATALOG: UtilEntry[] = [
   },
   {
     name: 'useVideoViewport',
-    sig: 'useVideoViewport(element: RefObject<HTMLDivElement | null>, enabled: boolean, cropping = false)',
+    sig: "useVideoViewport(element: RefObject<HTMLDivElement | null>, enabled: boolean, cropping = false, wheelZoom: 'always' | 'modified' = 'always')",
     imp: "import { useVideoViewport } from '@/hooks/useVideoViewport';",
     category: 'hook',
     zh: '数帧与视频复盘共用的滚轮缩放、双指缩放和平移交互。',

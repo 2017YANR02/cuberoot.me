@@ -10,12 +10,10 @@ import {
   Play as IconPlay, Pause as IconPause, Rewind as IconSkipBack,
   FastForward as IconSkipForward, ChevronLeft as IconFrameBack,
   ChevronRight as IconFrameForward, Download as IconExport,
-  CirclePlus, X, HelpCircle, MonitorDown,
+  ArrowRight, CirclePlus, X,
 } from '@app-foundation/icons/lucide';
-import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
-import Link from '@/components/AppLink';
-import BackHome from '@/components/BackHome';
-import HeaderToggles from '@/components/HeaderToggles';
+import { useState, useRef, useEffect, useLayoutEffect, useCallback, useMemo } from 'react';
+import { VideoCropSelection } from '@/components/VideoCropSelection';
 import { INITIAL_VIDEO_TRANSFORM, VideoImageTools, videoImageTransformCss } from '@/components/VideoImageTools';
 import { VideoTrimTimeline } from '@/components/VideoTrimTimeline';
 import { useVideoViewport } from '@/hooks/useVideoViewport';
@@ -36,7 +34,6 @@ async function loadMediaInfo() {
   mediaInfoFactory = mod.default;
   return mediaInfoFactory;
 }
-import { videoCropBounds } from '@/lib/video-tools/crop';
 import { exportVideoClip, exportVideoFrame } from '@/lib/video-tools/export';
 import { useFrameBuffer, IS_MOBILE } from './useFrameBuffer';
 import { VideoInfoButton, DecodeErrorCard, LoadingProgressOverlay } from './VideoInfoPanels';
@@ -46,6 +43,7 @@ import { isVideoFileName, matchesVideoFile, parseSplits, serializeSplits, type S
 
 import './frame-count.css';
 import { tr } from '@/i18n/tr';
+import type { VideoReconHandoff } from '../video-recon/VideoReconClient';
 
 // ── 类型定义 ──────────────────────────────────────────────────────────────
 
@@ -262,7 +260,10 @@ function ShortcutsDialog({ onClose }: { onClose: () => void }) {
   );
 }
 
-export default function FrameCountPage() {
+export default function FrameCountPage({ active, onReconstruct }: {
+  active: boolean;
+  onReconstruct: (handoff: VideoReconHandoff) => void;
+}) {
   const { t } = useTranslation();
 
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -281,6 +282,7 @@ export default function FrameCountPage() {
   const [videoFile, setVideoFile] = useState<File | null>(null);
 
   const [videoName, setVideoName] = useState('');
+  const [videoAspect, setVideoAspect] = useState<number>();
   const [isPlaying, setIsPlaying] = useState(false);
   const [dragging, setDragging] = useState(false);
   const [totalFrames, setTotalFrames] = useState(0);
@@ -341,9 +343,7 @@ export default function FrameCountPage() {
   const [imageTransform, setImageTransform] = useState(INITIAL_VIDEO_TRANSFORM);
   const [cropMode, setCropMode] = useState(false);
   const [cropRect, setCropRect] = useState<{ top: number; left: number; bottom: number; right: number } | null>(null);
-  const cropStartRef = useRef<{ x: number; y: number } | null>(null);
-
-  const viewport = useVideoViewport(wrapperRef, !!videoSrc, cropMode);
+  const viewport = useVideoViewport(wrapperRef, !!videoSrc && active, cropMode);
 
   // Timeline trimmer
   const [thumbnails, setThumbnails] = useState<string[]>([]);
@@ -351,6 +351,7 @@ export default function FrameCountPage() {
   const [trimEnd, setTrimEnd] = useState(0);
   const trimTrackRef = useRef<HTMLDivElement>(null);
   const trimDragRef = useRef<{ side: 'left' | 'right' | 'seek'; startX: number; startVal: number } | null>(null);
+  const pendingDragPlayback = useRef<AbortController>(undefined);
   // 拖动 playhead 时绕过 React, 直接操作 DOM 避免 setCurrentFrame 触发整个组件重渲染
   const playheadRef = useRef<HTMLDivElement>(null);
   const playheadTooltipRef = useRef<HTMLSpanElement>(null);
@@ -362,6 +363,7 @@ export default function FrameCountPage() {
 
   // iOS Safari 全局禁缩放: 拦截 gesture* 事件 (双指 pinch 和双击 zoom)
   useEffect(() => {
+    if (!active) return;
     const prevent = (e: Event) => e.preventDefault();
     document.addEventListener('gesturestart', prevent);
     document.addEventListener('gesturechange', prevent);
@@ -371,7 +373,7 @@ export default function FrameCountPage() {
       document.removeEventListener('gesturechange', prevent);
       document.removeEventListener('gestureend', prevent);
     };
-  }, []);
+  }, [active]);
   // solveTime 派生自当前 active solve 的 time 字段 (每个 solve 自己的 time)
   const solveTime = solves[activeSolveIdx]?.time ?? '';
   const setSolveTime = useCallback((v: string) => {
@@ -384,7 +386,7 @@ export default function FrameCountPage() {
   // 把 file 交给 WebCodecs, 避免抢读. videoFirstFrameReady 在下面声明, 但 React hooks 顺序无所谓
   // (useState 一次性返回, 不在乎彼此声明位置).
   const [videoFirstFrameReady, setVideoFirstFrameReady] = useState(false);
-  const { getFrame, prefetch, getKeyFrameThumb, keyFrameThumbs, isReady: frameBufferReady, decoderDead, loadProgress, parseFailed, audioInfo, vfrInfo, samples: fbSamples, decoderConfig: fbDecoderConfig, findStartFrameByTimestamp } = useFrameBuffer(videoFirstFrameReady ? videoFile : null, videoFps);
+  const { getFrame, prefetch, getKeyFrameThumb, keyFrameThumbs, isReady: frameBufferReady, decoderDead, loadProgress, parseFailed, audioInfo, vfrInfo, samples: fbSamples, decoderConfig: fbDecoderConfig, findStartFrameByTimestamp, getFrameTimestamp } = useFrameBuffer(videoFirstFrameReady ? videoFile : null, videoFps);
 
   // ── 从 mp4box samples 反推 fps —— iOS Safari 上 MediaInfo WASM 加载失败时的兜底 ──
   // FrameBuffer READY 后 samples 里每一帧都有精确 timestamp, 比 MediaInfo 读容器元数据更可靠。
@@ -489,9 +491,12 @@ export default function FrameCountPage() {
 
   // 图像 transform CSS（应用到 video 元素）
   const getVideoStyle = useCallback((): React.CSSProperties => {
+    if (cropMode) return {};
     const transforms: string[] = [];
+    const orientation = videoImageTransformCss(imageTransform);
+    if (orientation) transforms.push(orientation);
     // 裁切放大
-    if (cropRect && !cropMode) {
+    if (cropRect) {
       const visibleW = 100 - cropRect.left - cropRect.right;
       const visibleH = 100 - cropRect.top - cropRect.bottom;
       if (visibleW > 0 && visibleH > 0) {
@@ -501,11 +506,9 @@ export default function FrameCountPage() {
         transforms.push(`scale(${scale}) translate(${50 - centerX}%, ${50 - centerY}%)`);
       }
     }
-    const orientation = videoImageTransformCss(imageTransform);
-    if (orientation) transforms.push(orientation);
     return {
       transform: transforms.length > 0 ? transforms.join(' ') : 'none',
-      clipPath: (cropRect && !cropMode)
+      clipPath: cropRect
         ? `inset(${cropRect.top}% ${cropRect.right}% ${cropRect.bottom}% ${cropRect.left}%)`
         : undefined,
     };
@@ -814,6 +817,19 @@ export default function FrameCountPage() {
     if (longPressIntervalRef.current !== null) { clearInterval(longPressIntervalRef.current); longPressIntervalRef.current = null; }
   }, []);
   useEffect(() => longPressClear, [longPressClear]);
+  useLayoutEffect(() => {
+    if (active) return;
+    holdPlayingRef.current = false;
+    trimDragRef.current = null;
+    isDraggingRef.current = false;
+    dragPrefetchCenterRef.current = null;
+    pendingDragPlayback.current?.abort();
+    longPressClear();
+    videoRef.current?.pause();
+    setCropMode(false);
+    setShowShortcuts(false);
+    setShowExportMenu(false);
+  }, [active, longPressClear]);
   const longPressProps = useCallback((fn: () => void, intervalMs = 100) => ({
     onPointerDown: (e: React.PointerEvent) => {
       e.preventDefault();
@@ -1009,21 +1025,30 @@ export default function FrameCountPage() {
 
   const loadFile = useCallback(async (file: File, initialSolves?: Solve[], initialFps?: number,
     method: StartFrameMethod = 'fps', hasTimes = false) => {
+    const current = currentProjectRef.current;
+    const sameVideo = current.file === file && current.readyFile === file;
+    if (sameVideo && !initialSolves?.length) return;
     const sequence = ++loadSequenceRef.current;
-    setReadyFile(null);
     setStartFrameMethod(method);
-    if (videoSrc) URL.revokeObjectURL(videoSrc);
-    const url = URL.createObjectURL(file);
-    // 同步重置: 在 setVideoFile 同一批次里把 firstFrameReady 设为 false,
-    // 否则 useFrameBuffer 会用 stale=true 抢在 <video> 元素之前去读 blob → iOS Safari 黑屏.
-    setVideoFirstFrameReady(false);
-    setVideoSrc(url);
-    setVideoFile(file);
-
-    setVideoName(file.name);
-    setCurrentFrame(0);
-    setIsPlaying(false);
-    setUseCanvasDisplay(false);
+    if (!sameVideo) {
+      pendingDragPlayback.current?.abort();
+      setReadyFile(null);
+      if (videoSrc) URL.revokeObjectURL(videoSrc);
+      // Let the video element decode its first frame before WebCodecs reads the new blob.
+      setVideoFirstFrameReady(false);
+      setVideoSrc(URL.createObjectURL(file));
+      setVideoFile(file);
+      setVideoName(file.name);
+      setVideoAspect(undefined);
+      setCurrentFrame(0);
+      setTotalFrames(0);
+      setTrimStart(0);
+      setTrimEnd(0);
+      setCropMode(false);
+      setCropRect(null);
+      setIsPlaying(false);
+      setUseCanvasDisplay(false);
+    }
 
     // 从文件名提取还原时间作为 Solve 1 的默认 time (仅 Solve 1, 其余 solve 留空)
     let defaultTime = '';
@@ -1047,7 +1072,7 @@ export default function FrameCountPage() {
     setSelectedMarkIdx(null);
     if (initialFps && initialFps > 0) {
       setVideoFps(initialFps);
-    } else {
+    } else if (!sameVideo) {
       const detected = await detectFpsFromFile(file);
       if (sequence !== loadSequenceRef.current) return;
       setVideoFps(detected && detected > 0 ? detected : 60);
@@ -1223,6 +1248,7 @@ export default function FrameCountPage() {
   // ── 快捷键 ──
 
   useEffect(() => {
+    if (!active) return;
     const onKeyDown = (e: KeyboardEvent) => {
       const tag = (e.target as HTMLElement)?.tagName?.toLowerCase();
       if (tag === 'input' || tag === 'textarea' || tag === 'select') return;
@@ -1393,10 +1419,11 @@ export default function FrameCountPage() {
       window.removeEventListener('keydown', onKeyDown);
       window.removeEventListener('keyup', onKeyUp);
     };
-  }, [togglePlay, stepFrames, stepSeconds, currentFrame, addMark, addSolve, copyToClipboard, videoFps, totalFrames, frameBufferReady, getFrame, prefetch, useCanvasDisplay, navigateMarkGlobal, solves.length, t]);
+  }, [active, togglePlay, stepFrames, stepSeconds, currentFrame, addMark, addSolve, copyToClipboard, videoFps, totalFrames, frameBufferReady, getFrame, prefetch, useCanvasDisplay, navigateMarkGlobal, solves.length, t]);
 
   // Shift+滚轮逐帧
   useEffect(() => {
+    if (!active) return;
     const onWheel = (e: WheelEvent) => {
       if (!e.shiftKey || !videoSrc) return;
       e.preventDefault();
@@ -1404,7 +1431,7 @@ export default function FrameCountPage() {
     };
     window.addEventListener('wheel', onWheel, { passive: false });
     return () => window.removeEventListener('wheel', onWheel);
-  }, [stepFrames, videoSrc]);
+  }, [active, stepFrames, videoSrc]);
 
   // ── 生成缩略图 (WebCodecs 不可用 或 mp4box 解析 0 samples 时 fallback 到 <video>+seek) ──
   useEffect(() => {
@@ -1451,6 +1478,7 @@ export default function FrameCountPage() {
 
   // ── Timeline trim 拖拽 ──
   useEffect(() => {
+    if (!active) return;
     // rAF 合并:mousemove 只记录最新位置,每个动画帧最多 seek 一次,避免 prefetch 频繁 supersede
     let pendingFrame: number | null = null;
     let pendingSide: 'left' | 'right' | 'seek' | null = null;
@@ -1559,7 +1587,10 @@ export default function FrameCountPage() {
               setUseCanvasDisplay(false);
             };
             if (v.seeking) {
-              v.addEventListener('seeked', startPlayback, { once: true });
+              pendingDragPlayback.current?.abort();
+              const playback = new AbortController();
+              pendingDragPlayback.current = playback;
+              v.addEventListener('seeked', startPlayback, { once: true, signal: playback.signal });
             } else {
               startPlayback();
             }
@@ -1580,7 +1611,7 @@ export default function FrameCountPage() {
       window.removeEventListener('pointercancel', onUp);
       if (rafId) cancelAnimationFrame(rafId);
     };
-  }, [totalFrames, trimStart, trimEnd, videoFps, seekToFrame, seekToFrameRough, beginDragOverlay]);
+  }, [active, totalFrames, trimStart, trimEnd, videoFps, seekToFrame, seekToFrameRough, beginDragOverlay]);
 
   // ── Export logic ──
   const handleExport = useCallback(async () => {
@@ -1771,12 +1802,16 @@ export default function FrameCountPage() {
     if (!video) return;
     const onPlay = () => setIsPlaying(true);
     const onPause = () => setIsPlaying(false);
+    const syncVideoAspect = () => {
+      if (video.videoWidth && video.videoHeight) setVideoAspect(video.videoWidth / video.videoHeight);
+    };
     // 强制 iOS 解出并渲染首帧 (修主画面纯黑 + useFrameBuffer 永远被闸住):
     // iOS Safari 把 preload=auto 当 metadata-only — 加载完元数据后 networkState 转 IDLE,
     // readyState 卡在 1, 既不解码首帧也不触发 loadeddata (→ videoFirstFrameReady 永远 false)。
     // seek 到 0.001 在 IDLE 下不会让它重新取数据; 必须用 muted+playsInline 的 play()→pause()
     // 逼它 load+decode+render 第 0 帧。桌面 readyState 早已 >=2, 直接放行不会真 play。
     const forceFirstFrame = () => {
+      syncVideoAspect();
       if (videoFps > 0 && isFinite(video.duration)) setTotalFrames(Math.round(video.duration * videoFps));
       if (video.readyState >= 2) { setVideoFirstFrameReady(true); return; }
       const p = video.play();
@@ -1791,6 +1826,7 @@ export default function FrameCountPage() {
     video.addEventListener('pause', onPause);
     video.addEventListener('loadedmetadata', forceFirstFrame);
     video.addEventListener('loadeddata', onFirstFrame);
+    video.addEventListener('resize', syncVideoAspect);
     // effect 可能在 video 事件之后才挂 (Next hydration 晚于 <video> 加载, 错过 loadedmetadata):
     // 已有 metadata 就立即补触发强制解码, 已有首帧数据就直接放行。
     if (video.readyState >= 1) forceFirstFrame();
@@ -1799,13 +1835,14 @@ export default function FrameCountPage() {
       video.removeEventListener('pause', onPause);
       video.removeEventListener('loadedmetadata', forceFirstFrame);
       video.removeEventListener('loadeddata', onFirstFrame);
+      video.removeEventListener('resize', syncVideoAspect);
     };
   }, [videoSrc, videoFps, frameBufferReady, prefetch]);
 
   // 后台热身预取:暂停状态下,debounce 500ms 后解码当前帧后方的帧,
   // 这样按 A 倒退时第一帧立即命中缓存,避免首次延迟
   useEffect(() => {
-    if (!frameBufferReady || isPlaying || holdPlayingRef.current || isDraggingRef.current) return;
+    if (!active || !frameBufferReady || isPlaying || holdPlayingRef.current || isDraggingRef.current) return;
     if (currentFrame <= 0) return;
     const warmupRange = Math.min(120, Math.max(60, Math.round(videoFps)));
     const t = setTimeout(() => {
@@ -1813,7 +1850,7 @@ export default function FrameCountPage() {
       prefetch(currentFrame, warmupRange, 'backward');
     }, 500);
     return () => clearTimeout(t);
-  }, [currentFrame, frameBufferReady, isPlaying, videoFps, prefetch]);
+  }, [active, currentFrame, frameBufferReady, isPlaying, videoFps, prefetch]);
 
   // ── Marks 计算 ──
 
@@ -1829,47 +1866,35 @@ export default function FrameCountPage() {
     : 0;
   const totalMarkTime = videoFps > 0 ? totalMarkFrames / videoFps : 0;
 
-  // ── Render ──
+  const endFrame = trimEnd || totalFrames;
+  const canReconstruct = videoFile && readyFile === videoFile && videoFps > 0 && endFrame > trimStart;
+  function reconstruct() {
+    if (!canReconstruct || !videoFile) return;
+    const duration = videoRef.current?.duration;
+    const estimatedEnd = endFrame / videoFps;
+    const start = trimStart === 0 ? 0 : getFrameTimestamp(trimStart) ?? trimStart / videoFps;
+    const end = endFrame === totalFrames && duration && Number.isFinite(duration)
+      ? duration : getFrameTimestamp(endFrame) ?? estimatedEnd;
+    onReconstruct({
+      file: videoFile,
+      range: end > start ? { start, end } : { start: trimStart / videoFps, end: estimatedEnd },
+      crop: cropRect ? {
+        x: cropRect.left / 100, y: cropRect.top / 100,
+        width: (100 - cropRect.left - cropRect.right) / 100,
+        height: (100 - cropRect.top - cropRect.bottom) / 100,
+      } : undefined,
+      transform: imageTransform,
+    });
+  }
 
   return (
     <div
-      className="frame-count-page"
+      className="fc-workspace"
+      hidden={!active}
       onDragOver={handleDragOver}
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
     >
-      {/* Header */}
-      <header className="fc-header">
-        <BackHome />
-        <h1 className="fc-title">
-          {t('frameCount.title')}
-          <Link
-            href="/frame-count-about"
-            className="fc-title-help"
-            title={tr({ zh: '这页是干啥的?', en: 'What is this page?'
-            })}
-            aria-label={tr({ zh: '查看说明', en: 'About this page'
-            })}
-          >
-            <HelpCircle size={18} strokeWidth={1.75} />
-          </Link>
-        </h1>
-        <a
-          href="https://github.com/RuiminYan/lossless-cut-framecount"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="fc-offline-link"
-          title={tr({
-            zh: '下载桌面版,在本地离线数帧(基于 LosslessCut)',
-            en: 'Download the desktop app to count frames offline (based on LosslessCut)',
-          })}
-        >
-          <MonitorDown size={15} strokeWidth={1.75} />
-          <span>{tr({ zh: '离线桌面版', en: 'Offline desktop app' })}</span>
-        </a>
-        <HeaderToggles />
-      </header>
-
       {videoFile && (saveTarget?.file !== videoFile || saveStatus === 'error') && (
         <div role="status">
           {saveTarget?.file === videoFile
@@ -1914,9 +1939,15 @@ export default function FrameCountPage() {
               <div className="fc-toolbar-row2">
                 <VideoImageTools transform={imageTransform} onTransform={setImageTransform} disabled={!videoSrc}
                   cropping={cropMode} onCrop={() => {
+                    if (!cropMode) {
+                      videoRef.current?.pause();
+                      viewport.reset();
+                    }
                     setCropMode(!cropMode);
-                    if (!cropMode) setCropRect(null);
-                  }} />
+                  }} onResetCrop={cropMode && cropRect ? () => {
+                    setCropRect(null);
+                    setCropMode(false);
+                  } : undefined} />
 
                 <button className="fc-change-video fc-new-btn" onClick={() => fileInputRef.current?.click()} title={t('frameCount.toolbar.newVideo')}>
                   <CirclePlus size={18} />
@@ -1963,74 +1994,47 @@ export default function FrameCountPage() {
                   style={viewport.style}
                   {...viewport.interaction}
                 >
-                  <video
-                    ref={videoRef}
-                    src={videoSrc}
-                    preload="auto"
-                    playsInline
-                    muted
-                    disableRemotePlayback
-                    style={{
-                      ...getVideoStyle(),
-                      ...(useCanvasDisplay ? { visibility: 'hidden' as const } : {}),
-                    }}
-                  />
-
-                  {/* WebCodecs 帧缓冲 canvas — 后退时覆盖 video */}
-                  <canvas
-                    ref={canvasRef}
-                    className={`fc-canvas-overlay${useCanvasDisplay ? ' active' : ''}`}
-                    style={getVideoStyle()}
-                  />
-
-                  {/* 大视频文件读取进度 — 画面已出则隐藏, 避免遮挡 */}
-                  {loadProgress && !decoderDead && !videoFirstFrameReady && (
-                    <LoadingProgressOverlay bytes={loadProgress.bytes} total={loadProgress.total} />
-                  )}
-
-                  {/* Decoder 彻底失败时的友好提示 (HEVC 4:2:2 等浏览器不支持的 profile) */}
-                  {decoderDead && videoFile && (
-                    <DecodeErrorCard
-                      videoFile={videoFile}
-                      codec={fbDecoderConfig?.codec ?? null}
-                      onCopy={copyToClipboard}
+                  <div className="fc-video-media"
+                    style={videoAspect ? { '--fc-video-aspect': videoAspect } as React.CSSProperties : undefined}>
+                    <video
+                      ref={videoRef}
+                      src={videoSrc}
+                      preload="auto"
+                      playsInline
+                      muted
+                      disableRemotePlayback
+                      style={{
+                        ...getVideoStyle(),
+                        ...(useCanvasDisplay ? { visibility: 'hidden' as const } : {}),
+                      }}
                     />
-                  )}
 
-                  {/* Crop overlay — 现在相对于视频而非容器 */}
-                  {cropMode && (
-                    <div
-                      className="fc-crop-overlay"
-                      onMouseDown={(e) => {
-                        const rect = e.currentTarget.getBoundingClientRect();
-                        const x = (e.clientX - rect.left) / rect.width;
-                        const y = (e.clientY - rect.top) / rect.height;
-                        cropStartRef.current = { x, y };
-                        setCropRect(null);
-                      }}
-                      onMouseMove={(e) => {
-                        if (!cropStartRef.current) return;
-                        const rect = e.currentTarget.getBoundingClientRect();
-                        const x = (e.clientX - rect.left) / rect.width;
-                        const y = (e.clientY - rect.top) / rect.height;
-                        const { top, left, bottom, right } = videoCropBounds(cropStartRef.current, { x, y });
-                        setCropRect({ top: top * 100, left: left * 100, bottom: (1 - bottom) * 100, right: (1 - right) * 100 });
-                      }}
-                      onMouseUp={() => {
-                        cropStartRef.current = null;
-                        // 鼠标松开立即生效，自动退出 cropMode
-                        setCropMode(false);
-                      }}
-                    >
-                      {cropRect && (
-                        <div className="fc-crop-selection" style={{
-                          top: `${cropRect.top}%`, left: `${cropRect.left}%`,
-                          right: `${cropRect.right}%`, bottom: `${cropRect.bottom}%`,
-                        }} />
-                      )}
-                      <span className="fc-crop-hint">{t('frameCount.video.cropHint')}</span>
-                    </div>
-                  )}
+                    {/* WebCodecs 帧缓冲 canvas — 后退时覆盖 video */}
+                    <canvas
+                      ref={canvasRef}
+                      className={`fc-canvas-overlay${useCanvasDisplay ? ' active' : ''}`}
+                      style={getVideoStyle()}
+                    />
+
+                    {/* 大视频文件读取进度 — 画面已出则隐藏, 避免遮挡 */}
+                    {loadProgress && !decoderDead && !videoFirstFrameReady && (
+                      <LoadingProgressOverlay bytes={loadProgress.bytes} total={loadProgress.total} />
+                    )}
+
+                    {/* Decoder 彻底失败时的友好提示 (HEVC 4:2:2 等浏览器不支持的 profile) */}
+                    {decoderDead && videoFile && (
+                      <DecodeErrorCard
+                        videoFile={videoFile}
+                        codec={fbDecoderConfig?.codec ?? null}
+                        onCopy={copyToClipboard}
+                      />
+                    )}
+
+                    {cropMode && <VideoCropSelection onCancel={() => setCropMode(false)} onSelect={({ top, left, bottom, right }) => {
+                      setCropRect({ top: top * 100, left: left * 100, bottom: (1 - bottom) * 100, right: (1 - right) * 100 });
+                      setCropMode(false);
+                    }} />}
+                  </div>
                 </div>
               </>
             ) : (
@@ -2140,6 +2144,9 @@ export default function FrameCountPage() {
                 </button>
                 <button className="fc-ctrl-btn" title={t('frameCount.controls.forward1')} disabled={!videoSrc} {...longPressProps(() => stepFrames(1), 80)}><IconFrameForward /></button>
                 <button className="fc-ctrl-btn" title={t('frameCount.controls.forward10')} disabled={!videoSrc} {...longPressProps(() => stepFrames(10), 150)}><IconSkipForward /></button>
+                {canReconstruct && <button type="button" className="btn-secondary fc-reconstruct-btn" onClick={reconstruct}>
+                  {tr({ zh: '复盘此区间', en: 'Reconstruct this range' })}<ArrowRight size={16} aria-hidden />
+                </button>}
               </div>
             </div>
         </div>

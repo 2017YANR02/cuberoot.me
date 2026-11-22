@@ -225,9 +225,9 @@ const nextConfig: NextConfig = {
           { key: "Cross-Origin-Opener-Policy", value: "same-origin" },
         ],
       },
-      // Video reconstruction uses its own document and module workers.
+      // Both video tool documents use the reconstruction module workers.
       {
-        source: "/:lang(zh|en)?/video-recon",
+        source: "/:lang(zh|en)?/:videoTool(frame-count|video-recon)",
         headers: [...workerAsset, { key: "Cross-Origin-Opener-Policy", value: "same-origin" }],
       },
       { source: "/vendor/video-recon/:path*", headers: workerAsset },

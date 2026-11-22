@@ -8,7 +8,7 @@ export function prepareOfflineVideoRecon() {
     return Promise.resolve();
   }
   const scope = location.pathname.replace(/\/$/, '');
-  if (!/^\/(?:en\/|zh\/)?video-recon$/.test(scope)) return Promise.resolve();
+  if (!/^\/(?:en\/|zh\/)?(?:frame-count|video-recon)$/.test(scope)) return Promise.resolve();
   const existing = preparedScopes.get(scope);
   if (existing) return existing;
   const pending = prepare(scope).catch(() => { preparedScopes.delete(scope); });
@@ -35,11 +35,11 @@ async function prepare(scope: string) {
   }
 
   const collect = async () => {
-    const resources = performance.getEntriesByType('resource').map(entry => entry.name);
-    const manifest = await fetch(`${VIDEO_RECON_ASSETS}workers/assets.json`);
-    if (manifest.ok) {
+    const resources = performance.getEntriesByType('resource').map(entry => entry.name).reverse();
+    const manifest = await fetch(`${VIDEO_RECON_ASSETS}workers/assets.json`).catch(() => undefined);
+    if (manifest?.ok) {
       const files: string[] = await manifest.json();
-      resources.push(...files.map(file => `${VIDEO_RECON_ASSETS}${file}`));
+      resources.unshift(...files.map(file => `${VIDEO_RECON_ASSETS}${file}`));
     }
     const worker = registration.active;
     if (worker) worker.postMessage({ type: 'PREPARE_VIDEO_RECON', assets: resources });

@@ -1,21 +1,27 @@
 'use client';
 
-import { useEffect, useRef, useState, type CSSProperties, type DOMAttributes, type RefObject } from 'react';
+import { useCallback, useEffect, useRef, useState, type CSSProperties, type DOMAttributes, type RefObject } from 'react';
 
 type Point = { x: number; y: number };
 type View = { zoom: number; pan: Point };
 const DEFAULT_VIEW: View = { zoom: 1, pan: { x: 0, y: 0 } };
 
-export function useVideoViewport(element: RefObject<HTMLDivElement | null>, enabled: boolean, cropping = false) {
+export function useVideoViewport(
+  element: RefObject<HTMLDivElement | null>,
+  enabled: boolean,
+  cropping = false,
+  wheelZoom: 'always' | 'modified' = 'always',
+) {
   const [view, setView] = useState(DEFAULT_VIEW);
   const latest = useRef(view);
   const drag = useRef<Point | null>(null);
   const pinch = useRef<{ distance: number; anchor: Point; view: View } | null>(null);
 
-  function update(next: View) {
+  const update = useCallback((next: View) => {
     latest.current = next;
     setView(next);
-  }
+  }, []);
+  const reset = useCallback(() => update(DEFAULT_VIEW), [update]);
 
   function scaleFrom(base: View, scale: number, anchor: Point) {
     const zoom = Math.max(1, Math.min(8, scale));
@@ -41,6 +47,7 @@ export function useVideoViewport(element: RefObject<HTMLDivElement | null>, enab
     if (!target || !enabled) return;
     function onWheel(event: WheelEvent) {
       if (event.shiftKey || cropping || !target) return;
+      if (wheelZoom === 'modified' && !event.ctrlKey && !event.metaKey) return;
       event.preventDefault();
       event.stopPropagation();
       const delta = event.deltaY * (event.deltaMode === 1 ? 16 : event.deltaMode === 2 ? target.clientHeight : 1);
@@ -50,7 +57,7 @@ export function useVideoViewport(element: RefObject<HTMLDivElement | null>, enab
     }
     target.addEventListener('wheel', onWheel, { passive: false });
     return () => target.removeEventListener('wheel', onWheel);
-  }, [element, enabled, cropping]);
+  }, [element, enabled, cropping, wheelZoom]);
 
   function panTo(point: Point) {
     const previous = drag.current;
@@ -102,5 +109,5 @@ export function useVideoViewport(element: RefObject<HTMLDivElement | null>, enab
   const style: CSSProperties | undefined = enabled && view.zoom > 1 ? {
     transform: `translate(${view.pan.x}px, ${view.pan.y}px) scale(${view.zoom})`,
   } : undefined;
-  return { interaction, style, zoomed: !!style, reset: () => update(DEFAULT_VIEW) };
+  return { interaction, style, zoomed: !!style, reset };
 }

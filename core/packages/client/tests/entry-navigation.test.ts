@@ -53,6 +53,16 @@ describe('local entry navigation', () => {
     expect(back()).toBe('/zh/shop');
   });
   it.each([
+    ['/zh/frame-count?mode=detector', '/zh/frame-count?mode=detector'],
+    ['/video-recon?mode=timer', '/video-recon?mode=timer'],
+    ['/frame-count?mode=unknown', '/frame-count'],
+    ['/shop?mode=timer', '/shop'],
+  ])('retains only supported video modes when returning from help (%s)', (source, target) => {
+    visit(source);
+    go('/video-recon-about');
+    expect(back()).toBe(target);
+  });
+  it.each([
     ['/platform/orders', '/shop'],
     ['/zh/platform/account/shipping', '/zh/shop?q=mat'],
     ['/wca/persons/2017TEST01', '/wca/results?tab=records'],

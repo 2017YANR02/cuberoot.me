@@ -2,22 +2,25 @@
 
 import { useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import { parseAsStringEnum, useQueryState } from 'nuqs';
-import { Camera, Film, HelpCircle, Unplug, Upload } from '@app-foundation/icons/lucide';
+import { Camera, Film, HelpCircle, Maximize, Unplug, Upload } from '@app-foundation/icons/lucide';
 import Link from '@/components/AppLink';
 import PageHeading from '@/components/PageHeading';
 import HeaderToggles from '@/components/HeaderToggles';
-import { INITIAL_VIDEO_TRANSFORM, VideoImageTools, videoImageTransformCss } from '@/components/VideoImageTools';
+import { VideoCropSelection } from '@/components/VideoCropSelection';
+import { INITIAL_VIDEO_TRANSFORM, VideoImageTools, videoImageTransformCss, type VideoImageTransform } from '@/components/VideoImageTools';
 import { useVideoViewport } from '@/hooks/useVideoViewport';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
+import { Tooltip } from '@/components/Tooltip';
 import { useT } from '@/hooks/useT';
 import { createVideoWorkspace, type VideoWorkspace, type WorkspaceTab } from '@/lib/video-recon/workspace';
 import { prepareOfflineVideoRecon } from '@/lib/video-recon/offline';
 import type { MoveStep } from '@/lib/video-recon/engine/move-search-types';
+import type { SolveRange as TimeRange } from '@/lib/video-recon/engine/solve-range';
+import type { SourceCrop } from '@/lib/video-recon/engine/source-crop';
 import { CameraTimer } from './CameraTimer';
 import { ProjectedCube } from './ProjectedCube';
 import { ReviewControls } from './ReviewControls';
 import { SolveRange } from './SolveRange';
-import { SourceCropDialog } from './SourceCropDialog';
 import { TpsGraph } from './TpsGraph';
 import './video-recon.css';
 
@@ -25,6 +28,15 @@ const NO_MOVES: readonly MoveStep[] = [];
 const VIDEO_MODES: WorkspaceTab[] = ['detector', 'timer'];
 const noWorkspace = () => null;
 const noSubscription = () => () => {};
+const clientSnapshot = () => true;
+const serverSnapshot = () => false;
+
+export interface VideoReconHandoff {
+  file: File;
+  range: TimeRange;
+  crop?: SourceCrop;
+  transform: VideoImageTransform;
+}
 
 function VideoReconProgress({ label, value, detail }: { label: string; value?: number; detail?: string }) {
   if (value === undefined) return <LoadingIndicator>{label}</LoadingIndicator>;
@@ -38,6 +50,17 @@ function VideoReconProgress({ label, value, detail }: { label: string; value?: n
 }
 
 export default function VideoReconClient() {
+  const [requestedMode, setMode] = useQueryState('mode', parseAsStringEnum(VIDEO_MODES).withDefault('detector'));
+  const mode = useSyncExternalStore(noSubscription, clientSnapshot, serverSnapshot) ? requestedMode : 'detector';
+  return <VideoReconWorkspace mode={mode} onModeChange={next => void setMode(next)} />;
+}
+
+export function VideoReconWorkspace({ mode, handoff, onModeChange, onTimerBusyChange }: {
+  mode: WorkspaceTab | null;
+  handoff?: VideoReconHandoff;
+  onModeChange?: (mode: WorkspaceTab) => void;
+  onTimerBusyChange?: (busy: boolean) => void;
+}) {
   const t = useT();
   const stage = useRef<HTMLCanvasElement>(null);
   const viewportRef = useRef<HTMLDivElement>(null);
@@ -45,13 +68,15 @@ export default function VideoReconClient() {
   const cameraPreview = useRef<HTMLVideoElement>(null);
   const [workspace, setWorkspace] = useState<VideoWorkspace>();
   const [dragOver, setDragOver] = useState(false);
-  const [mode, setMode] = useQueryState('mode', parseAsStringEnum(VIDEO_MODES).withDefault('detector'));
   const view = useSyncExternalStore(workspace?.subscribe ?? noSubscription, workspace?.getSnapshot ?? noWorkspace, noWorkspace);
   const detector = (view?.activeTab ?? mode) === 'detector';
+  const timerBusy = !!view?.timerBusy;
   const [imageTransform, setImageTransform] = useState(INITIAL_VIDEO_TRANSFORM);
   const fileSelected = detector && (view?.sourceKind === 'image' || view?.sourceKind === 'video');
-  const viewport = useVideoViewport(viewportRef, fileSelected, !!view?.cropPreview);
-  const initialMode = useRef(mode);
+  const viewport = useVideoViewport(viewportRef, !!mode && fileSelected, !!view?.cropPreview, 'modified');
+  const resetViewport = viewport.reset;
+  const initialMode = useRef(mode ?? 'detector');
+  const appliedHandoff = useRef<VideoReconHandoff>(undefined);
 
   useEffect(() => {
     const canvas = stage.current;
@@ -60,18 +85,44 @@ export default function VideoReconClient() {
     setWorkspace(session);
     let mounted = true;
     void prepareOfflineVideoRecon().then(() => { if (mounted) void session.loadModel(); });
-    window.addEventListener('keydown', session.reviewKeydown);
     const pagehide = (event: PageTransitionEvent) => { if (!event.persisted) session.cleanup(); };
     window.addEventListener('pagehide', pagehide);
     return () => {
       mounted = false;
-      window.removeEventListener('keydown', session.reviewKeydown);
       window.removeEventListener('pagehide', pagehide);
       session.cleanup();
     };
   }, []);
 
-  useEffect(() => { workspace?.selectTab(mode); }, [mode, workspace]);
+  useEffect(() => {
+    if (!workspace) return;
+    const current = workspace.getSnapshot();
+    if (!mode || mode === 'detector' && current.activeTab === 'timer' && current.timerBusy) {
+      if (current.activeTab === 'timer') workspace.stopSource();
+      else if (current.running && current.reconstructionComplete) void workspace.togglePlayback();
+      workspace.closeCrop();
+    }
+  }, [mode, workspace]);
+
+  useEffect(() => {
+    if (mode && !timerBusy) workspace?.selectTab(mode);
+  }, [mode, timerBusy, workspace]);
+
+  useEffect(() => {
+    if (mode !== 'detector' || !workspace) return;
+    window.addEventListener('keydown', workspace.reviewKeydown);
+    return () => window.removeEventListener('keydown', workspace.reviewKeydown);
+  }, [mode, workspace]);
+
+  useEffect(() => { onTimerBusyChange?.(!!mode && timerBusy); }, [mode, timerBusy, onTimerBusyChange]);
+
+  useEffect(() => {
+    if (mode !== 'detector' || !detector || !handoff || !workspace || appliedHandoff.current === handoff) return;
+    appliedHandoff.current = handoff;
+    resetViewport();
+    setImageTransform(handoff.transform);
+    void workspace.openFile(handoff.file, handoff.crop, handoff.range);
+  }, [mode, detector, handoff, workspace, resetViewport]);
 
   const stream = view?.stream;
   const showCamera = view?.showCameraPreview;
@@ -85,6 +136,7 @@ export default function VideoReconClient() {
 
   const title = t('视频复盘', 'Video Reconstruction');
   const detectorLabel = t('视频检测', 'Video detector');
+  const fitFrameLabel = t('适应画面', 'Fit frame');
   const timerLabel = t('摄像头计时', 'Camera timer');
   const reviewing = detector && view?.sourceKind === 'video' && view.reconstructionComplete && !view.trimming;
   const reconstructing = detector && view?.sourceKind === 'video' && !view.trimming && !view.reconstructionComplete;
@@ -107,20 +159,15 @@ export default function VideoReconClient() {
     : undefined;
   const cameraConnected = !detector && view?.sourceKind === 'camera';
   const mediaError = view?.mediaError || view?.poseError;
-  const renderReviewControls = (label: string) => workspace && view && reviewing && (
-    <ReviewControls label={label} playing={view.running} speed={view.playbackSpeed}
-      end={view.solveEnd} position={view.presentedTimestamp} index={view.currentReviewIndex} length={view.reviewLength}
-      onPlay={() => void workspace.togglePlayback()} onSpeed={workspace.changePlaybackSpeed}
-      onSeekIndex={workspace.seekReviewIndex} onStep={workspace.stepReview} />
-  );
   function openMedia(file?: File) {
     if (!file) return;
     viewport.reset();
     setImageTransform(INITIAL_VIDEO_TRANSFORM);
     void workspace?.openFile(file);
   }
-  return <main className="video-recon-page">
-    <header className="video-recon-heading">
+  const Container = onModeChange ? 'main' : 'section';
+  return <Container className="video-recon-page" hidden={!mode}>
+    {onModeChange && <header className="video-recon-heading">
       <div className="video-recon-title">
         <PageHeading backHref="/recon">{title}</PageHeading>
         {detector && <Link href="/video-recon-about" className="video-recon-title-help"
@@ -130,21 +177,22 @@ export default function VideoReconClient() {
       </div>
       <div className="video-recon-modes" role="group" aria-label={t('复盘工具', 'Reconstruction tools')}>
         <button type="button" className="btn-secondary" aria-pressed={detector} disabled={view?.timerBusy}
-          onClick={() => void setMode('detector')}><Film size={17} aria-hidden />{detectorLabel}</button>
+          onClick={() => onModeChange('detector')}><Film size={17} aria-hidden />{detectorLabel}</button>
         <button type="button" className="btn-secondary" aria-pressed={!detector} disabled={view?.timerBusy}
-          onClick={() => void setMode('timer')}><Camera size={17} aria-hidden />{timerLabel}</button>
+          onClick={() => onModeChange('timer')}><Camera size={17} aria-hidden />{timerLabel}</button>
       </div>
       <HeaderToggles />
-    </header>
+    </header>}
     <div className={showResults ? 'video-recon-columns video-recon-results' : !detector ? 'video-recon-columns video-recon-camera-layout' : undefined}>
-      <section className="video-recon-panel video-recon-source-panel" data-site-surface="panel" aria-label={detector ? detectorLabel : timerLabel}>
-        <div className="video-recon-section-heading">
-          <h2>{detector ? t('源画面', 'Source') : t('摄像头画面', 'Camera preview')}</h2>
-          {detector && view?.sourceName && <span className="video-recon-file-name" dir="auto">{view.sourceName}</span>}
+      <section className={detector ? 'video-recon-source-panel' : 'video-recon-source-panel video-recon-panel'}
+        data-site-surface={detector ? undefined : 'panel'} aria-label={detector ? detectorLabel : timerLabel}>
+        {detector && view?.sourceName && <span className="video-recon-file-name" dir="auto">{view.sourceName}</span>}
+        {!detector && <div className="video-recon-section-heading">
+          <h2>{t('摄像头画面', 'Camera preview')}</h2>
           {cameraConnected && workspace && <button type="button" className="btn-secondary" disabled={view.timerBusy} onClick={workspace.stopSource}>
             <Unplug size={16} aria-hidden />{t('断开摄像头', 'Disconnect camera')}
           </button>}
-        </div>
+        </div>}
         <div className="video-recon-stage" data-dragging={dragOver} onDragOver={event => {
           if (!detector) return;
           event.preventDefault();
@@ -158,9 +206,16 @@ export default function VideoReconClient() {
           <div ref={viewportRef} className="video-recon-source-viewport"
             hidden={!view || view.sourceKind === 'none' || showCamera} data-zoomed={viewport.zoomed}
             style={viewport.style} {...viewport.interaction}>
-            <canvas ref={stage} style={fileSelected ? { transform: videoImageTransformCss(imageTransform) } : undefined}
+            <canvas ref={stage} hidden={!!view?.cropPreview} style={fileSelected ? { transform: videoImageTransformCss(imageTransform) } : undefined}
               aria-label={t('检测后的源画面', 'Processed source frame')} />
           </div>
+          {workspace && view?.cropPreview && <div className="video-recon-crop-frame">
+            {/* eslint-disable-next-line @next/next/no-img-element -- Browser-generated frame. */}
+            <img src={view.cropPreview.url} alt={t('待裁剪的画面', 'Frame to crop')} draggable={false} />
+            <VideoCropSelection onCancel={workspace.closeCrop} onSelect={({ top, left, bottom, right }) => void workspace.applyCrop({
+              x: left, y: top, width: right - left, height: bottom - top,
+            })} />
+          </div>}
           <video ref={cameraPreview} hidden={!showCamera} muted autoPlay playsInline aria-label={t('摄像头预览', 'Camera preview')} />
           {(!view || view.sourceKind === 'none') && <div className="video-recon-empty">
             {detector ? <Film size={34} strokeWidth={1.5} aria-hidden /> : <Camera size={34} strokeWidth={1.5} aria-hidden />}
@@ -178,14 +233,31 @@ export default function VideoReconClient() {
           <button type="button" className="btn-secondary" onClick={() => fileInput.current?.click()}>
             <Upload size={16} aria-hidden />{t('更换', 'Replace')}
           </button>
-          {fileSelected && <VideoImageTools transform={imageTransform} onTransform={setImageTransform}
-            cropDisabled={view.cropLocked || view.cropLoading || !fileCanCrop} onCrop={() => void workspace.editCrop()} />}
+          {fileSelected && <VideoImageTools transform={imageTransform} onTransform={setImageTransform} cropping={!!view.cropPreview}
+            cropDisabled={view.cropLocked || view.cropLoading || !fileCanCrop} onCrop={() => {
+              if (view.cropPreview) workspace.closeCrop();
+              else {
+                viewport.reset();
+                void workspace.editCrop();
+              }
+            }} onResetCrop={view.cropPreview && view.sourceCrop ? () => void workspace.applyCrop(undefined) : undefined} />}
+          {viewport.zoomed && <Tooltip content={fitFrameLabel}>{tip =>
+            <button {...tip} type="button" className="video-image-tool" aria-label={fitFrameLabel} onClick={resetViewport}>
+              <Maximize size={16} aria-hidden />
+            </button>}</Tooltip>}
           {reviewing && <button type="button" className="btn-secondary" onClick={() => void workspace.editSolveRange()}>
             {t('调整还原区间', 'Adjust solve range')}
           </button>}
         </div>}
-        {renderReviewControls(t('视频播放控件', 'Video playback controls'))}
-        {workspace && view?.trimming && <SolveRange view={view} workspace={workspace} />}
+        {workspace && view && reviewing && <ReviewControls label={t('视频播放控件', 'Video playback controls')}
+          playing={view.running} speed={view.playbackSpeed}
+          end={view.solveEnd} position={view.presentedTimestamp} index={view.currentReviewIndex} length={view.reviewLength}
+          onPlay={() => void workspace.togglePlayback()} onSpeed={workspace.changePlaybackSpeed}
+          onSeekIndex={workspace.seekReviewIndex} onStep={workspace.stepReview} />}
+        {workspace && view?.trimming && <SolveRange view={view} workspace={workspace} onBegin={() => {
+          resetViewport();
+          void workspace.beginReconstruction();
+        }} />}
         {view?.status === 'loading' && <VideoReconProgress
           label={downloading ? t('正在下载识别模型', 'Downloading detector models')
             : downloadProgress === 100 ? t('正在初始化识别模型', 'Initializing detector models')
@@ -217,7 +289,6 @@ export default function VideoReconClient() {
         timeline={view.projectedTimeline}
         sourceFrame={liveResult?.cube?.frame ?? (reviewing ? view.result?.fittedPose?.sourceFrame : undefined) ?? Math.round(resultTime * view.sourceFps)}
         sourceFps={view.sourceFps} playbackSpeed={view.running ? view.playbackSpeed : 1}
-        controls={renderReviewControls(t('实况魔方播放控件', 'Tracked cube playback controls'))}
         analysis={reviewing && workspace && view.reconstructedScramble && measured && searchSteps.some(step => step.state_moves.length)
           ? { scramble:view.reconstructedScramble, steps:searchSteps, measured,
             fps:view.sourceFps, start:view.solveStart, end:view.solveEnd, position:view.presentedTimestamp,
@@ -227,14 +298,12 @@ export default function VideoReconClient() {
         live={pendingResult} steps={shownSteps}
         fps={view.sourceFps} start={view.solveStart} end={view.solveEnd} cursor={resultTime} complete={reviewing && view.cubeSolved}
         onSeek={reviewing ? timestamp => void workspace.requestReview(timestamp) : undefined} />}
-      {workspace && view && <CameraTimer active={!detector} workspace={workspace} view={view} />}
+      {workspace && view && <CameraTimer active={!!mode && !detector} workspace={workspace} view={view} />}
     </div>
-    {workspace && view?.cropPreview && <SourceCropDialog key={view.cropPreview.url} {...view.cropPreview} initial={view.sourceCrop}
-      onApply={crop => void workspace.applyCrop(crop)} onCancel={workspace.closeCrop} />}
     <input ref={fileInput} type="file" accept="image/*,video/*" aria-label={t('视频或图片', 'Video or image')} hidden
       onChange={event => {
         openMedia(event.currentTarget.files?.[0]);
         event.currentTarget.value = '';
       }} />
-  </main>;
+  </Container>;
 }

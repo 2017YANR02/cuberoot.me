@@ -23,6 +23,36 @@
 .video-image-tool:hover { color: var(--foreground); }
 .video-image-tool[aria-pressed='true'] { color: var(--accent); }
 
+.video-crop-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 10;
+  cursor: crosshair;
+  touch-action: none;
+  user-select: none;
+  overflow: hidden;
+}
+
+.video-crop-selection {
+  position: absolute;
+  border: 2px dashed var(--accent);
+  box-shadow: 0 0 0 120vmax color-mix(in srgb, black 50%, transparent);
+  pointer-events: none;
+}
+
+.video-crop-hint {
+  position: absolute;
+  inset: 50% auto auto 50%;
+  transform: translate(-50%, -50%);
+  padding: 4px 8px;
+  background: color-mix(in srgb, black 70%, transparent);
+  color: white;
+  font-size: 0.85rem;
+  line-height: 1.35;
+  text-align: center;
+  pointer-events: none;
+}
+
 /* ── iOS-style Timeline Trimmer ── */
 .video-timeline-trimmer {
   position: relative;

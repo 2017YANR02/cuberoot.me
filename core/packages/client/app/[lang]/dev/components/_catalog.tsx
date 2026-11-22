@@ -1515,6 +1515,13 @@ export const CATALOG: ComponentEntry[] = [
     en: 'Shared frame-count and video reconstruction toolbar for mirroring, rotating, and cropping video.',
   },
   {
+    name: 'VideoCropSelection',
+    import: "import { VideoCropSelection } from '@/components/VideoCropSelection';",
+    category: 'input',
+    zh: '在画面上拖选裁切区域，松开后返回归一化边界。',
+    en: 'Drag a region in the video frame and return its normalized bounds on release.',
+  },
+  {
     name: 'VideoTrimTimeline',
     import: "import { VideoTrimTimeline } from '@/components/VideoTrimTimeline';",
     category: 'input',

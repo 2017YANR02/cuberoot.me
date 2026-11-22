@@ -1,8 +1,9 @@
 'use client';
 
-import { Crop, MoveHorizontal, MoveVertical, RotateCcw } from '@app-foundation/icons/lucide';
+import { Crop, Maximize, MoveHorizontal, MoveVertical, RotateCcw } from '@app-foundation/icons/lucide';
 import { useTranslation } from 'react-i18next';
 import { Tooltip } from '@/components/Tooltip';
+import { useT } from '@/hooks/useT';
 import type { VideoRotation } from '@/lib/video-tools/orientation';
 import './video-tools.css';
 
@@ -20,21 +21,24 @@ export function videoImageTransformCss({ rotation, flipH, flipV }: VideoImageTra
 
 const NEXT_ROTATION: Record<VideoRotation, VideoRotation> = { 0: 90, 90: 180, 180: 270, 270: 0 };
 
-export function VideoImageTools({ transform, onTransform, onCrop, cropping, cropDisabled, disabled }: {
+export function VideoImageTools({ transform, onTransform, onCrop, onResetCrop, cropping, cropDisabled, disabled }: {
   transform: VideoImageTransform;
   onTransform: (next: VideoImageTransform) => void;
   onCrop: () => void;
+  onResetCrop?: () => void;
   cropping?: boolean;
   cropDisabled?: boolean;
   disabled?: boolean;
 }) {
   const { t } = useTranslation();
+  const translate = useT();
   const { rotation, flipH, flipV } = transform;
   const actions = [
     { Icon: MoveVertical, label: t('frameCount.toolbar.flipV'), pressed: flipV, activate: () => onTransform({ ...transform, flipV: !flipV }) },
     { Icon: MoveHorizontal, label: t('frameCount.toolbar.flipH'), pressed: flipH, activate: () => onTransform({ ...transform, flipH: !flipH }) },
     { Icon: RotateCcw, label: t('frameCount.toolbar.rotate', { angle: rotation }), activate: () => onTransform({ ...transform, rotation: NEXT_ROTATION[rotation] }) },
     { Icon: Crop, label: t(cropping ? 'frameCount.toolbar.cropExit' : 'frameCount.toolbar.crop'), pressed: cropping, activate: onCrop, disabled: cropDisabled },
+    ...(onResetCrop ? [{ Icon: Maximize, label: translate('重置裁切', 'Reset crop'), pressed: undefined, activate: onResetCrop, disabled: cropDisabled }] : []),
   ];
   return <div className="video-image-tools">
     {actions.map(({ Icon, label, pressed, activate, disabled: unavailable }) => (

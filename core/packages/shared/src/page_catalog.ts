@@ -517,10 +517,10 @@ export const PAGE_META: Record<string, PageMetaEntry> = {
     },
   },
   'frame-count': {
-    title: { zh: '数帧', en: 'Frame Count' },
+    title: { zh: '视频工具', en: 'Video Tools' },
     description: {
-      zh: '逐帧计时:从视频精确数帧,得出比裁判计时更细的用时。',
-      en: 'Frame counting — measure solve times from video frame by frame, finer than a stackmat reading.',
+      zh: '从视频数帧计时、标记还原分段、用三阶视频和打乱自动复盘，或使用摄像头计时并回放。',
+      en: 'Count frames and mark splits, reconstruct a 3×3 solve from video and a scramble, or time and replay a camera solve.',
     },
   },
   'frame-count-about': { title: { zh: '数帧工具说明', en: 'Frame Count Guide' } },

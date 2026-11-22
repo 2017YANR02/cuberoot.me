@@ -31,6 +31,13 @@
   -webkit-touch-callout: default;
 }
 
+.fc-workspace:not([hidden]) {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+}
+
 /* ── 顶部导航栏 ── */
 .fc-header {
   display: flex;
@@ -38,6 +45,48 @@
   gap: 0.75rem;
   margin-bottom: 0.75rem;
   padding: 0 0.25rem;
+}
+
+.video-tools-page:not(.frame-count-page) > .fc-header {
+  width: min(100%, 1200px);
+  margin: 0 auto;
+  padding: 16px clamp(12px, 3vw, 30px) 0;
+}
+
+.video-tools-modes {
+  display: flex;
+  flex: 1;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 6px;
+}
+
+.video-tools-modes button,
+.fc-reconstruct-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 6px 10px;
+  min-height: 36px;
+  font-size: 0.85rem;
+}
+
+.video-tools-modes button[aria-pressed='true'] {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+@media (max-width: 760px) {
+  .video-tools-page > .fc-header {
+    flex-wrap: wrap;
+  }
+  .video-tools-modes {
+    flex: 0 0 100%;
+    order: 1;
+    justify-content: flex-start;
+  }
+  .video-tools-modes button { min-height: 44px; }
 }
 
 .fc-title {
@@ -151,6 +200,7 @@
 /* 视频包装器 — 填满 video-zone 剩余高度, 视频按 contain 居中, 只可能单轴有黑边 */
 .fc-video-wrapper {
   position: relative;
+  container-type: size;
   width: 100%;
   flex: 1;
   min-height: 0;
@@ -158,6 +208,14 @@
   overflow: hidden;
   touch-action: none; /* 允许自定义触摸事件（pan/zoom） */
   user-select: none;
+}
+
+.fc-video-media {
+  position: absolute;
+  inset: 0;
+  margin: auto;
+  width: min(100%, calc(100cqh * var(--fc-video-aspect, 100)));
+  height: min(100%, calc(100cqw / var(--fc-video-aspect, 0.01)));
 }
 
 .fc-video-wrapper.fc-pannable { cursor: grab; }
@@ -334,30 +392,6 @@
   pointer-events: none;
   font-variant-numeric: tabular-nums;
   letter-spacing: 0.02em;
-}
-
-/* 裁切相关 */
-.fc-crop-overlay {
-  position: absolute;
-  inset: 0;
-  z-index: 10;
-  cursor: crosshair;
-}
-
-.fc-crop-selection {
-  position: absolute;
-  border: 2px dashed rgba(255,255,255,0.7);
-  background: rgba(255,255,255,0.08);
-}
-
-.fc-crop-hint {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  color: rgba(255,255,255,0.6);
-  font-size: 0.85rem;
-  pointer-events: none;
 }
 
 /* 拖放提示 — 仅中间按钮可点, 外围区域只接受 drop, 不接 click */

@@ -40,8 +40,8 @@ export function VideoSolveAnalysis({ scramble, steps, measured, fps, clockFps, s
   const language = useLang();
   const observation = useMemo(() => observeVideoSolve(scramble, steps, measured, fps, start, end, clockFps),
     [scramble, steps, measured, fps, start, end, clockFps]);
-  const [confirmed, setConfirmed] = useState<{ observation: VideoSolveObservation; rotation: string }>();
-  const selection = confirmed?.observation === observation ? confirmed.rotation : undefined;
+  const [openingSelection, setOpeningSelection] = useState<{ observation: VideoSolveObservation; rotation: string }>();
+  const selection = openingSelection?.observation === observation ? openingSelection.rotation : undefined;
   const grip = selection ?? observation.estimatedGrip?.rotation;
   const [analysis, setAnalysis] = useState<{
     observation: VideoSolveObservation; grip?: string; language: typeof language; value?: Analysis;
@@ -73,18 +73,15 @@ export function VideoSolveAnalysis({ scramble, steps, measured, fps, clockFps, s
   const editorHref = result && displayMethod && solved
     ? `/recon/submit?${buildReconSubmitQuery('3x3', result.scramble, result.text, { method: displayMethod })}`
     : undefined;
-  function showOpeningView(rotation: string) {
+  function applyOpeningGrip(rotation: string) {
     if (observation.opening) onOpeningView(openingGripView(observation.opening.pose.rotation, rotation));
+    setOpeningSelection({ observation, rotation });
   }
   return <div className="video-recon-notation">
     {observation.opening && observation.estimatedGrip ? (
       <OpeningGrip key={`${scramble}/${start}/${end}/${observation.opening.frame}`}
-        initial={observation.estimatedGrip} accepted={selection} centers={observation.centers}
-        onSelect={showOpeningView}
-        onConfirm={rotation => {
-          showOpeningView(rotation);
-          setConfirmed({ observation, rotation });
-        }} />
+        initial={observation.estimatedGrip} rotation={selection} centers={observation.centers}
+        onSelect={applyOpeningGrip} />
     ) : <span className="video-recon-muted">{t('起手姿态未拍清，按固定朝向分段。', 'The opening grip is unavailable. Stages use a fixed orientation.')}</span>}
     {!current && <ContentSkeleton variant="text" label={t('正在识别解法和分段…', 'Identifying the method and stages…')} />}
     {current && !result && <span role="status" className="video-recon-muted">{t('无法生成局面一致的分段复盘。', 'Could not generate a reconstruction consistent with the recognized states.')}</span>}
@@ -124,36 +121,29 @@ export function VideoSolveAnalysis({ scramble, steps, measured, fps, clockFps, s
   </div>;
 }
 
-function OpeningGrip({ initial, accepted, centers, onSelect, onConfirm }: {
+function OpeningGrip({ initial, rotation, centers, onSelect }: {
   initial: NonNullable<VideoSolveObservation['estimatedGrip']>;
-  accepted?: string;
+  rotation?: string;
   centers: VideoSolveObservation['centers'];
   onSelect: (rotation: string) => void;
-  onConfirm: (rotation: string) => void;
 }) {
   const t = useT();
   const options = useMemo(() => videoGripOptions(centers), [centers]);
-  const [selected, setSelected] = useState(initial);
-  const value = options.find(option => option.grip.rotation === selected.rotation)?.value ?? '';
+  const choice = options.find(option => option.grip.rotation === (rotation ?? initial.rotation));
+  const selected = choice?.grip ?? initial;
+  const label = t('起手朝向', 'Opening orientation');
   return <div className="video-recon-actions">
     <div className="video-recon-inline-label">
-      <span>{t('朝向', 'Orientation')}</span>
-      <CubeOrientationSelect value={value} ariaLabel={t('起手朝向', 'Opening orientation')}
+      <span>{label}</span>
+      <CubeOrientationSelect value={choice?.value ?? ''} ariaLabel={label} layout="grid"
         onChange={next => {
           const grip = options.find(option => option.value === next)?.grip;
-          if (grip) {
-            setSelected(grip);
-            onSelect(grip.rotation);
-          }
+          if (grip) onSelect(grip.rotation);
         }} />
     </div>
-    <button type="button" className="btn-secondary" disabled={accepted === selected.rotation}
-      onClick={() => onConfirm(selected.rotation)}>{t('确认朝向', 'Confirm orientation')}</button>
-    <button type="button" className="btn-secondary" onClick={() => {
+    <button type="button" className="btn-secondary" aria-label={t('前后转 180°（y2）', 'Turn 180° (y2)')} onClick={() => {
       const opposite = playerGrip(selected.top, CUBE_OPPOSITE_FACE[selected.front]);
-      if (!opposite) return;
-      setSelected(opposite);
-      onConfirm(opposite.rotation);
-    }}>{t('前后转 180°（y2）', 'Turn 180° (y2)')}</button>
+      if (opposite) onSelect(opposite.rotation);
+    }}>y2</button>
   </div>;
 }
