@@ -165,6 +165,23 @@ fn variable_frame_rate_uses_presentation_time_for_motion_and_preserves_source_in
 }
 
 #[test]
+fn blind_search_bounds_hidden_motion_across_a_dropped_frame() {
+    for (infer_scramble, gap_budget) in [(true, 180.), (false, 315.9)] {
+        let mut engine = Engine::new(Config {
+            infer_scramble, scramble: if infer_scramble { "".into() } else { "R U".into() },
+            fps: 50., max_tps: 54., ..Config::default()
+        }).unwrap();
+        for (sequence, timestamp_ms) in [100, 120, 185].into_iter().enumerate() {
+            let mut frame = opening_gap_pose(sequence, sequence);
+            frame.timestamp_ms = Some(timestamp_ms);
+            engine.push(frame).unwrap();
+        }
+        assert!((engine.frames[1].limit - 97.2).abs() < 1e-9);
+        assert!((engine.frames[2].limit - gap_budget).abs() < 1e-9);
+    }
+}
+
+#[test]
 fn missing_poses_after_search_starts_preserve_the_full_motion_gap() {
     let mut engine = Engine::new(Config {
         scramble: "R U".into(), fps: 50., resolve_orientation_ambiguity: true,

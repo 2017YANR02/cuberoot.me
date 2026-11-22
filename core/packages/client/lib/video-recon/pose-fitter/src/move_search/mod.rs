@@ -200,12 +200,7 @@ impl Engine {
                     .and_then(|i| p.timestamp_ms?.checked_sub(self.frames[i].timestamp_ms?))
                     .filter(|&ms| ms > 0)
                     .map_or(nominal, |ms| ms as f64 / 1000.);
-                p.limit = 90. * self.config.max_tps * elapsed;
-                p.slice_limit = p.limit * self.config.max_slice_tps.unwrap_or(self.config.max_tps) / self.config.max_tps;
-                p.rotation_limit = self
-                    .config
-                    .max_rotation_tps
-                    .map(|rate| p.limit * rate / self.config.max_tps);
+                p.set_motion_budget(&self.config, elapsed);
                 self.last_active = Some(self.frames.len());
             }
             // The fitted tail is still recorded after a solution is committed,
@@ -244,6 +239,9 @@ impl Engine {
                 // The reverse-only path has no second engine to join.
                 search.take_events();
             }
+            if let Some(evaluated) = self.bidirectional.as_ref().and_then(|search| search.exhausted_blind_states()) {
+                self.retry_at_observed_cadence(evaluated);
+            }
             self.finish_solution();
             return;
         }
@@ -261,6 +259,41 @@ impl Engine {
             budget.min(100_000),
         );
         self.finish_solution();
+    }
+    /// If a wide beam lost the opening, repeat with at most a quarter-turn
+    /// per typical camera sample. Reuse all fitted geometry and enforce the
+    /// same total node limit and visual checks. A successful first pass skips this.
+    fn retry_at_observed_cadence(&mut self, evaluated: usize) {
+        if evaluated >= self.config.state_limit { return; }
+        let mut samples: Vec<_> = self.frames.windows(2).filter_map(|pair| {
+            let elapsed = match (pair[0].timestamp_ms, pair[1].timestamp_ms) {
+                (Some(a), Some(b)) => b.checked_sub(a)? as f64 / 1000.,
+                _ => (pair[1].frame - pair[0].frame) as f64 / self.config.fps,
+            };
+            (elapsed > 0.).then_some(elapsed)
+        }).collect();
+        if samples.is_empty() { return; }
+        let middle = samples.len() / 2;
+        let (_, typical, _) = samples.select_nth_unstable_by(middle, f64::total_cmp);
+        let rate = typical.recip();
+        if rate >= self.config.max_tps || self.config.max_rotation_tps.is_some_and(|rotation| rate <= rotation) {
+            return;
+        }
+        self.bidirectional = None;
+        self.config.max_tps = rate;
+        self.config.max_slice_tps = self.config.max_slice_tps.map(|slice| slice.min(rate));
+        for frame in self.frames.iter_mut().filter(|frame| !frame.held) {
+            frame.set_motion_budget(&self.config, frame.elapsed);
+            frame.orientation_cache.get_mut().clear();
+            frame.mechanical_cache.get_mut().clear();
+            if !frame.resolve_orientation {
+                frame.scoring_rows.clear();
+                frame.ready = false;
+            }
+        }
+        prepared::release(&self.tables, &mut self.frames);
+        self.bidirectional = bidirectional::Bidirectional::new(&self.tables, &self.config, &self.frames);
+        if let Some(search) = &mut self.bidirectional { search.carry_blind_states(evaluated); }
     }
     pub fn snapshot(&self) -> serde_json::Value {
         let mut result=self.raw_snapshot();

@@ -275,16 +275,55 @@ fn flat_witness<'a>(
         .map(|(g, _)| g)
 }
 
-/// While the camera and overlapping stickers still describe the opening pose, a
-/// reverse branch must not invent an unseen turn in this observed static prefix.
-fn static_opening_end(frames: &[Prepared]) -> Option<usize> {
+fn flat_agreement(t: &Tables, frame: &Prepared, geometry: &prepared::Geometry, state: &[u8], colors: &[usize]) -> Option<bool> {
+    let flat = flat_witness(frame, geometry)?;
+    let agrees = |view| frontier::color(t, view, state, colors).0 <= 0.15;
+    Some(agrees(geometry) && (geometry.index == flat.index || agrees(flat)))
+}
+
+/// A moving layer can make two fits disagree on camera angle while both
+/// independently assign the same physical stickers to the same detections.
+/// This cross-check can bridge a gap between established opening and end
+/// views. It cannot establish either boundary or override a color conflict.
+fn corroborated_stickers(t: &Tables, frame: &Prepared, selected: &prepared::Geometry, state: &[u8], colors: &[usize]) -> bool {
+    let expected = |face: usize| colors[state[t.geometry_positions[face]] as usize];
+    let exact_colors = |g: &prepared::Geometry| g.observations.iter().all(|(face, costs)| {
+        costs[expected(*face)] == 0. && costs.iter().filter(|&&value| value == 0.).count() == 1
+    });
+    if selected.shape.axis.is_none() || selected.observations.len() < 12 || !exact_colors(selected) {
+        return false;
+    }
+    // Choose the independent view using only the detector-to-sticker mapping.
+    let flat = frame.geometries.iter().filter(|g| g.shape.axis.is_none() && g.observations.len() >= 12)
+        .filter_map(|g| {
+            let mut shared = 0_u64;
+            let mut different = 0;
+            for (&a, &b) in selected.signature.iter().zip(&g.signature) {
+                if a != b {
+                    if a == 255 || b == 255 { return None; }
+                    different += 1;
+                } else if a != 255 {
+                    shared |= 1_u64 << a;
+                }
+            }
+            let count = shared.count_ones();
+            let angle = super::orientations::similarity(selected.rotation, g.rotation);
+            (count >= 12).then_some((count, different, angle, g))
+        })
+        .max_by(|a, b| a.0.cmp(&b.0).then(b.1.cmp(&a.1)).then_with(|| a.2.total_cmp(&b.2)));
+    let Some((_, _, _, flat)) = flat else { return false; };
+    exact_colors(flat) && selected.signature.iter().zip(&flat.signature)
+        .all(|(&a, &b)| a == b || expected(a) == expected(b))
+}
+
+/// Walk from either end while overlapping sticker identities and the camera
+/// pose corroborate the same static view. Missing evidence ends the run.
+fn static_pose_boundary<'a>(mut frames: impl Iterator<Item = &'a Prepared>) -> Option<usize> {
     let flat = |g: &&prepared::Geometry| g.index < 6 && g.shape.axis.is_none() && g.observations.len() >= 12;
-    let (start, first) = frames.iter().enumerate().find(|(_, p)| {
-        !p.held && !p.geometry_flagged && p.geometries.iter().any(|g| flat(&g))
-    })?;
+    let first = frames.find(|p| !p.held && !p.geometry_flagged && p.geometries.iter().any(|g| flat(&g)))?;
     let mut end = first.frame;
     let minimum_similarity = 1. + 2. * 8_f64.to_radians().cos();
-    for p in &frames[start + 1..] {
+    for p in frames {
         let unchanged = !p.held && !p.geometry_flagged && first.geometries.iter().filter(flat).any(|a| {
             p.geometries.iter().filter(flat).any(|b| {
                 if super::orientations::similarity(a.rotation, b.rotation) < minimum_similarity {
@@ -309,6 +348,12 @@ fn static_opening_end(frames: &[Prepared]) -> Option<usize> {
 }
 
 impl Bidirectional {
+    pub(super) fn exhausted_blind_states(&self) -> Option<usize> {
+        (self.infer_scramble && self.backward_status == "exhausted").then_some(self.stats.evaluated_states)
+    }
+    pub(super) fn carry_blind_states(&mut self, evaluated: usize) {
+        self.stats.evaluated_states += evaluated;
+    }
     pub(super) fn has_winner(&self) -> bool {
         self.winner.is_some() || self.inferred_opening.is_some()
     }
@@ -368,7 +413,16 @@ impl Bidirectional {
         if c.infer_scramble && last_clear? - frames[cluster[0]].frame > max_gap {
             return None;
         }
-        let length = cluster.last().copied()? + 1;
+        let anchor = if c.infer_scramble {
+            // A partially visible cube may look solved before its last turn.
+            // Skip only the stationary part of the corroborated final cluster.
+            let latest = cluster[0];
+            let stationary = static_pose_boundary(frames[..=latest].iter().rev())?;
+            cluster.iter().take_while(|&&i| frames[i].frame >= stationary).last().copied()?
+        } else {
+            *cluster.last()?
+        };
+        let length = anchor + 1;
         let blind_opening_floor = if c.infer_scramble {
             frames[..length]
                 .iter()
@@ -376,7 +430,7 @@ impl Bidirectional {
                     .any(|g| g.shape.axis.is_none() && g.observations.len() >= 12))
                 .nth(1)
                 .map(|p| p.frame)
-                .map(|floor| floor.max(static_opening_end(&frames[..length]).unwrap_or(floor)))
+                .map(|floor| floor.max(static_pose_boundary(frames[..length].iter()).unwrap_or(floor)))
         } else {
             None
         };
@@ -538,12 +592,23 @@ impl Bidirectional {
                 rank: [0.; 5],
             }];
         }
+        // The terminal row must have the same independently corroborated colors
+        // as the solved seed. A cheaper articulated fit can otherwise displace
+        // the witnessing geometry before the search ever reaches the opening.
+        let terminal_fits: Option<[bool; 6]> = (self.infer_scramble && index + 1 == self.length).then(|| {
+            std::array::from_fn(|bank| p.geometry(bank).is_some_and(|g| {
+                flat_agreement(t, p, g, &node.context.state, &self.color_ids) == Some(true)
+            }))
+        });
         let rows = self.rows(t, frames, index, node.context.cue);
         let mut candidates = vec![];
         for row in rows
             .iter()
             .flat_map(|batch| batch.scoring_indices.iter().map(move |&i| &batch.rows[i]))
         {
+            if terminal_fits.as_ref().is_some_and(|fits| fits.get(row.after) != Some(&true)) {
+                continue;
+            }
             let Some(step) =
                 frontier::reverse_step(t, p, row, &node.context.state, &self.color_ids)
             else {
@@ -800,7 +865,7 @@ impl Bidirectional {
         let mut opening = 0;
         let mut matches = 0;
         let mut conflicts = 0;
-        let mut last_support = None;
+        let mut last_support: Option<&Prepared> = None;
         let anchor = self.anchor_frame(frames);
         let max_gap = (0.5 * fps).ceil() as usize;
         while let Some(parent) = node.parent.map(|id| &nodes[id]) {
@@ -813,26 +878,27 @@ impl Bidirectional {
             moves.extend(step.moves());
             if !frame.held && !frame.geometry_flagged {
                 if let Some(geometry) = step.geometry().and_then(|index| frame.geometry(index)) {
-                    if let Some(flat) = flat_witness(frame, geometry) {
-                        let agrees = |view| {
-                            frontier::color(t, view, &parent.context.state, &self.color_ids).0 <= 0.15
-                        };
-                        if agrees(geometry) && (geometry.index == flat.index || agrees(flat)) {
-                            if last_support.is_some_and(|previous| frame.frame - previous > max_gap) {
-                                return None;
-                            }
-                            last_support = Some(frame.frame);
+                    let agrees = flat_agreement(t, frame, geometry, &parent.context.state, &self.color_ids);
+                    let bridge = agrees.is_none() && first_turn && frame.frame != anchor &&
+                        corroborated_stickers(t, frame, geometry, &parent.context.state, &self.color_ids);
+                    if agrees == Some(true) || bridge {
+                        if last_support.is_some_and(|previous| match (frame.timestamp_ms, previous.timestamp_ms) {
+                            (Some(now), Some(then)) => now.checked_sub(then).is_none_or(|gap| gap > 500),
+                            _ => frame.frame - previous.frame > max_gap,
+                        }) { return None; }
+                        last_support = Some(frame);
+                        if !bridge {
                             matches += 1;
                             opening += usize::from(!first_turn);
-                        } else {
-                            conflicts += 1;
                         }
+                    } else if agrees == Some(false) {
+                        conflicts += 1;
                     }
                 }
             }
             node = parent;
         }
-        if !first_turn || matches < 2 * conflicts || last_support != Some(anchor) {
+        if !first_turn || matches < 2 * conflicts || last_support.map(|p| p.frame) != Some(anchor) {
             return None;
         }
         let colors: Vec<String> = self.color_ids.iter().map(|&id| COLORS[id].into()).collect();
@@ -1127,6 +1193,34 @@ mod tests {
     }
 
     #[test]
+    fn intermediate_sticker_witness_rejects_wrong_colors_and_duplicate_evidence() {
+        let (config, frames) = inputs("");
+        let t = Tables::load();
+        let mut frame = prepared::compile(&t, &config, frames[0].clone()).unwrap();
+        let colors: Vec<_> = t.colors("").unwrap().iter()
+            .map(|name| COLORS.iter().position(|color| color == name).unwrap()).collect();
+        let color = |face: usize| colors[t.identity[t.geometry_positions[face]] as usize];
+        let same = (1..54).find(|&i| color(i) == color(0)).unwrap();
+        let other = (1..54).find(|&i| color(i) != color(0)).unwrap();
+        let mut chosen = frame.geometries[0].clone();
+        chosen.shape = super::super::routes::Shape::new(0, [25., 0., 0.]);
+        chosen.rotation = crate::math::rodrigues([0., 0., 25_f64.to_radians()]).0;
+        chosen.signature.swap(0, same);
+        assert!(flat_witness(&frame, &chosen).is_none());
+        assert!(corroborated_stickers(&t, &frame, &chosen, &t.identity, &colors));
+        chosen.signature.swap(0, other);
+        assert!(!corroborated_stickers(&t, &frame, &chosen, &t.identity, &colors));
+        chosen.signature.swap(0, other);
+        let saved = frame.geometries[0].observations[0];
+        frame.geometries[0].observations[0].1 = [0.; 6];
+        assert!(!corroborated_stickers(&t, &frame, &chosen, &t.identity, &colors));
+        frame.geometries[0].observations[0] = saved;
+        chosen.signature.fill(0);
+        frame.geometries[0].signature.fill(0);
+        assert!(!corroborated_stickers(&t, &frame, &chosen, &t.identity, &colors));
+    }
+
+    #[test]
     fn blind_boundaries_use_the_observed_opening_and_separate_a_nearby_earlier_solved_episode() {
         let (_, frames) = inputs("R");
         let mut engine = Engine::new(Config { fps: 60., infer_scramble: true, ..Config::default() }).unwrap();
@@ -1142,6 +1236,25 @@ mod tests {
         let search = engine.bidirectional.as_ref().unwrap();
         assert_eq!(search.blind_opening_floor, Some(2));
         assert_eq!(search.anchor_frame(&engine.frames), 7);
+    }
+
+    #[test]
+    fn reverse_anchor_keeps_visible_changes_inside_a_solved_looking_cluster() {
+        let (_, frames) = inputs("R");
+        let mut engine = Engine::new(Config { fps: 60., infer_scramble: true, ..Config::default() }).unwrap();
+        for (sequence, view) in [0, 0, 1, 1, 1, 1].into_iter().enumerate() {
+            let mut frame = frames[view].clone();
+            frame.sequence = sequence;
+            frame.frame = sequence;
+            if sequence == 2 || sequence == 3 {
+                // A single conflicting sticker still passes the aggregate solved
+                // threshold, but the final static frames visibly differ from it.
+                frame.colors[0] = if frame.colors[0] == "white" { "blue" } else { "white" }.into();
+            }
+            engine.push(frame).unwrap();
+        }
+        engine.end().unwrap();
+        assert_eq!(engine.bidirectional.as_ref().unwrap().anchor_frame(&engine.frames), 4);
     }
 
     #[test]

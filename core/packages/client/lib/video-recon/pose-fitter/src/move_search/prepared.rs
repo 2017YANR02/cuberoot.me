@@ -62,6 +62,7 @@ pub struct Prepared {
     pub geometry_lookup: Vec<usize>,
     pub shapes: BTreeMap<usize, Shape>,
     pub previous: Option<usize>,
+    pub elapsed: f64,
     pub limit: f64,
     pub slice_limit: f64,
     pub rows: Vec<Row>,
@@ -79,6 +80,17 @@ pub struct Prepared {
     pub mechanical_cache: RefCell<HashMap<(ShapeKey, ShapeKey), Arc<Vec<MechanicalRoute>>>>,
 }
 impl Prepared {
+    pub fn set_motion_budget(&mut self, config: &Config, elapsed: f64) {
+        self.elapsed = elapsed;
+        self.limit = 90. * config.max_tps * elapsed;
+        if config.infer_scramble {
+            // Several turns may be mechanically possible across a dropout,
+            // but the video supplies no intermediate evidence to choose them.
+            self.limit = self.limit.min(180.);
+        }
+        self.slice_limit = self.limit * config.max_slice_tps.unwrap_or(config.max_tps) / config.max_tps;
+        self.rotation_limit = config.max_rotation_tps.map(|rate| self.limit * rate / config.max_tps);
+    }
     pub fn geometry(&self, index: usize) -> Option<&Geometry> {
         self.geometry_lookup
             .get(index)
@@ -221,6 +233,7 @@ pub fn compile(t: &Tables, c: &Config, input: Frame) -> Result<Prepared, String>
         geometry_lookup: vec![],
         shapes,
         previous: None,
+        elapsed: 0.,
         limit: 0.,
         slice_limit: 0.,
         rows: vec![],

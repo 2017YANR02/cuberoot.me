@@ -17,7 +17,7 @@ identify the assets used by this integration. The CPU pipeline includes CubeRoot
 | --- | --- |
 | Cube bounding-box ONNX | `eb8735b0c9b90b6eb2c8612681ad005bbdcc003b0f8c2a2f35d632e7eef17382` |
 | Cube pose ONNX | `1a86b6967d44313662a8d4dc784fd638634f0949c724dc9fdc4830cff06d91aa` |
-| CPU pipeline WASM | `f8ffe9bf6dc5b8ed41317707861f1356bf3c5ddf8c86372daa140012cc593754` |
+| CPU pipeline WASM | `2c23cacfb78912fa1a311cd551a61b019dfd02acd93da06648d7b4081e41e8aa` |
 | OpenCV PnP WASM | `83e9da3fbae4564ded4fb316d4853892e407979ac18881bb09f1c4edc9f8d96b` |
 
 Confirm permission for the source and ONNX exports with the author before
