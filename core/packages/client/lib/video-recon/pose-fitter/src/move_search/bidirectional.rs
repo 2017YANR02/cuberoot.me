@@ -275,6 +275,39 @@ fn flat_witness<'a>(
         .map(|(g, _)| g)
 }
 
+/// While the camera and overlapping stickers still describe the opening pose, a
+/// reverse branch must not invent an unseen turn in this observed static prefix.
+fn static_opening_end(frames: &[Prepared]) -> Option<usize> {
+    let flat = |g: &&prepared::Geometry| g.index < 6 && g.shape.axis.is_none() && g.observations.len() >= 12;
+    let (start, first) = frames.iter().enumerate().find(|(_, p)| {
+        !p.held && !p.geometry_flagged && p.geometries.iter().any(|g| flat(&g))
+    })?;
+    let mut end = first.frame;
+    let minimum_similarity = 1. + 2. * 8_f64.to_radians().cos();
+    for p in &frames[start + 1..] {
+        let unchanged = !p.held && !p.geometry_flagged && first.geometries.iter().filter(flat).any(|a| {
+            p.geometries.iter().filter(flat).any(|b| {
+                if super::orientations::similarity(a.rotation, b.rotation) < minimum_similarity {
+                    return false;
+                }
+                let mut matches = 0;
+                for (face, colors) in &a.observations {
+                    if let Ok(i) = b.observations.binary_search_by_key(face, |row| row.0) {
+                        if !colors.iter().zip(&b.observations[i].1).any(|(&x, &y)| x == 0. && y == 0.) {
+                            return false;
+                        }
+                        matches += 1;
+                    }
+                }
+                matches >= 12
+            })
+        });
+        if !unchanged { break; }
+        end = p.frame;
+    }
+    Some(end)
+}
+
 impl Bidirectional {
     pub(super) fn has_winner(&self) -> bool {
         self.winner.is_some() || self.inferred_opening.is_some()
@@ -289,6 +322,7 @@ impl Bidirectional {
             .collect();
         let goals = t.solved_seeds(&c.scramble).ok()?;
         let mut cluster: Vec<usize> = vec![];
+        let mut contradictory_views = 0;
         let mut last_clear = None;
         let max_gap = (0.15 * c.fps).round().max(2.) as usize;
         for index in (0..frames.len()).rev() {
@@ -311,11 +345,19 @@ impl Bidirectional {
             if flat_views.peek().is_some() {
                 last_clear.get_or_insert(p.frame);
             }
-            let solved_view = flat_views.any(|g| {
-                goals.iter().any(|state| frontier::color(t, g, state, &color_ids).0 <= 0.1)
-            });
-            if solved_view {
+            let closest = flat_views.flat_map(|g| goals.iter().map(|state| {
+                frontier::color(t, g, state, &color_ids).0
+            })).min_by(f64::total_cmp);
+            if closest.is_some_and(|score| score <= 0.1) {
                 cluster.push(index);
+                contradictory_views = 0;
+            } else if c.infer_scramble && closest.is_some_and(|score| score > 0.15) {
+                // A near-solved face can look solved before the last turn. Two
+                // clearly different views separate that episode from the finish.
+                contradictory_views += 1;
+                if contradictory_views >= 2 && !cluster.is_empty() { break; }
+            } else if closest.is_some() {
+                contradictory_views = 0;
             }
         }
         if cluster.len() < 2 {
@@ -334,6 +376,7 @@ impl Bidirectional {
                     .any(|g| g.shape.axis.is_none() && g.observations.len() >= 12))
                 .nth(1)
                 .map(|p| p.frame)
+                .map(|floor| floor.max(static_opening_end(&frames[..length]).unwrap_or(floor)))
         } else {
             None
         };
@@ -1016,6 +1059,7 @@ mod tests {
                     .map(|&position| colors[state[position] as usize].clone())
                     .collect();
                 Frame {
+                    timestamp_ms: None,
                     sequence,
                     frame: sequence * 2,
                     bank: vec![crate::Fit {
@@ -1080,6 +1124,24 @@ mod tests {
         frame.geometries[0].rotation = chosen.rotation;
         frame.geometries[0].observations.truncate(11);
         assert!(flat_witness(&frame, &chosen).is_none());
+    }
+
+    #[test]
+    fn blind_boundaries_use_the_observed_opening_and_separate_a_nearby_earlier_solved_episode() {
+        let (_, frames) = inputs("R");
+        let mut engine = Engine::new(Config { fps: 60., infer_scramble: true, ..Config::default() }).unwrap();
+        // Three unchanged opening frames, two solved-looking views, two clearly
+        // scrambled views, then two actual solved views, all within 150 ms.
+        for (sequence, view) in [0, 0, 0, 1, 1, 0, 0, 1, 1].into_iter().enumerate() {
+            let mut frame = frames[view].clone();
+            frame.sequence = sequence;
+            frame.frame = sequence;
+            engine.push(frame).unwrap();
+        }
+        engine.end().unwrap();
+        let search = engine.bidirectional.as_ref().unwrap();
+        assert_eq!(search.blind_opening_floor, Some(2));
+        assert_eq!(search.anchor_frame(&engine.frames), 7);
     }
 
     #[test]

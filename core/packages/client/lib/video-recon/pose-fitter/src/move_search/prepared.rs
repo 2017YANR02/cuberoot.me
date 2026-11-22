@@ -56,6 +56,7 @@ fn scoring_indices(rows: &[Row]) -> Vec<usize> {
 }
 pub struct Prepared {
     pub frame: usize,
+    pub timestamp_ms: Option<u64>,
     pub held: bool,
     pub geometries: Vec<Geometry>,
     pub geometry_lookup: Vec<usize>,
@@ -214,6 +215,7 @@ pub fn compile(t: &Tables, c: &Config, input: Frame) -> Result<Prepared, String>
         .collect();
     let mut result = Prepared {
         frame: input.frame,
+        timestamp_ms: input.timestamp_ms,
         held,
         geometries,
         geometry_lookup: vec![],

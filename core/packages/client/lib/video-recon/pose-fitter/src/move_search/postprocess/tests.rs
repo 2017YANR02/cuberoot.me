@@ -54,6 +54,7 @@ fn recording(
         };
         engine
             .push(Frame {
+                timestamp_ms: None,
                 sequence: index,
                 frame: index + 1,
                 bank: vec![fit],

@@ -86,6 +86,8 @@ impl Default for Config {
 pub struct Frame {
     pub sequence: usize,
     pub frame: usize,
+    /// Optional presentation time for VFR files. Frame indices are retained for playback.
+    pub timestamp_ms: Option<u64>,
     pub bank: Vec<Fit>,
     pub colors: Vec<String>,
     #[serde(default)]
@@ -193,8 +195,12 @@ impl Engine {
                     .last_active
                     .map(|i| self.frames[i].frame as i64)
                     .unwrap_or(self.baseline.unwrap());
-                p.limit = 90. * self.config.max_tps * (p.frame as f64 - previous as f64)
-                    / self.config.fps;
+                let nominal = (p.frame as f64 - previous as f64) / self.config.fps;
+                let elapsed = self.last_active
+                    .and_then(|i| p.timestamp_ms?.checked_sub(self.frames[i].timestamp_ms?))
+                    .filter(|&ms| ms > 0)
+                    .map_or(nominal, |ms| ms as f64 / 1000.);
+                p.limit = 90. * self.config.max_tps * elapsed;
                 p.slice_limit = p.limit * self.config.max_slice_tps.unwrap_or(self.config.max_tps) / self.config.max_tps;
                 p.rotation_limit = self
                     .config

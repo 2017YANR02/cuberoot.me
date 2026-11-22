@@ -1248,7 +1248,7 @@ mod flagged_tests {
         };
         let colors = vec!["white".to_string(); 8];
         let inputs: Vec<_> = [vec![dense.clone()], middle_bank, vec![dense]].into_iter().enumerate()
-            .map(|(sequence, bank)| Frame {sequence, frame:sequence, bank, colors:colors.clone(),
+            .map(|(sequence, bank)| Frame {sequence, frame:sequence, timestamp_ms:None, bank, colors:colors.clone(),
                 landmark_count:Some(20), flagged:Some(false), geometry_flagged:Some(false)}).collect();
         for feature in [true, false] {
         let mut engine = Engine::new(Config {expand_flagged_frames:feature,..config.clone()}).unwrap();
@@ -1307,7 +1307,7 @@ mod flagged_tests {
             expand_flagged_frames:true, unrestricted_sticker_count:Some(3),
             pause_at_live_frontier:false,..Config::default()
         }).unwrap();
-        engine.push(Frame {sequence:0,frame:0,bank:vec![dense],colors:vec!["white".into();8],
+        engine.push(Frame {sequence:0,frame:0,timestamp_ms:None,bank:vec![dense],colors:vec!["white".into();8],
             landmark_count:Some(20),flagged:Some(false),geometry_flagged:Some(false)}).unwrap();
         engine.end().unwrap();
         assert!(engine.frames[0].held && !engine.frames[0].flagged);
@@ -1346,7 +1346,7 @@ mod flagged_tests {
                 (0,first,previous_flag,previous_geometry),
                 (1,next,current_flag,current_geometry),
             ] {
-                engine.push(Frame {sequence,frame:sequence,bank:vec![fit],
+                engine.push(Frame {sequence,frame:sequence,timestamp_ms:None,bank:vec![fit],
                     colors:vec!["white".into();8],landmark_count:Some(20),
                     flagged:Some(flagged),geometry_flagged}).unwrap();
             }
@@ -1375,7 +1375,7 @@ mod flagged_tests {
                 ..Config::default()
             }).unwrap();
             for (sequence,bank) in [vec![dense.clone()],bank].into_iter().enumerate() {
-                engine.push(Frame {sequence,frame:sequence,bank,colors:vec!["white".into();8],
+                engine.push(Frame {sequence,frame:sequence,timestamp_ms:None,bank,colors:vec!["white".into();8],
                     landmark_count:Some(20),flagged:Some(false),geometry_flagged:Some(false)}).unwrap();
             }
             engine.end().unwrap();

@@ -72,6 +72,7 @@ export class MoveSearch {
       let landmarkCount=0;const colors:string[]=[];
       for(const point of frame.detections){if(point.classId<3)landmarkCount++;else colors.push(COLORS[point.classId]);}
       this.worker.postMessage({type:"frame",frame:{sequence,frame:sourceFrame,bank:pose.bank,
+        ...(denseVideo?{timestamp_ms:Math.round(timestamp*1000)}:{}),
         landmark_count:landmarkCount,colors,
         flagged:pose.pose_flag_reason===undefined?undefined:pose.pose_flag_reason!==null,
         geometry_flagged:pose.pose_geometry_flag_reason===undefined?undefined:pose.pose_geometry_flag_reason!==null}});

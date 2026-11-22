@@ -25,7 +25,7 @@ it('closes blind video search when the decoded frames skip clock buckets', async
     const result = { detections } as FrameResult;
     search.submit(4, result, first.promise);
     search.submit(4.01, result, Promise.resolve(fit));
-    search.submit(4.1, result, Promise.resolve(fit));
+    search.submit(4.1037, result, Promise.resolve(fit));
     const ended = search.end();
     await Promise.resolve();
     expect(postMessage.mock.calls.map(([request]) => request.type)).toEqual(['init', 'frame']);
@@ -34,10 +34,10 @@ it('closes blind video search when the decoded frames skip clock buckets', async
 
     const [, second, initial, end] = postMessage.mock.calls.map(([request]) => request);
     expect(second.frame).toEqual({
-      sequence: 1, frame: 246, bank: [], landmark_count: 1,
+      sequence: 1, frame: 246, timestamp_ms: 4104, bank: [], landmark_count: 1,
       colors: ['white', 'green'], flagged: false, geometry_flagged: true,
     });
-    expect(initial.frame).toMatchObject({ sequence: 0, frame: 240 });
+    expect(initial.frame).toMatchObject({ sequence: 0, frame: 240, timestamp_ms: 4000 });
     expect(end).toEqual({ type: 'end' });
     expect(error).not.toHaveBeenCalled();
   } finally {

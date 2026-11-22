@@ -152,6 +152,19 @@ fn missing_opening_poses_do_not_accumulate_hidden_turns_even_out_of_order() {
     assert_eq!(engine.baseline, Some(16));
 }
 #[test]
+fn variable_frame_rate_uses_presentation_time_for_motion_and_preserves_source_indices() {
+    let mut engine = Engine::new(Config { fps: 59.244, max_tps: 54., ..Config::default() }).unwrap();
+    let mut first = opening_gap_pose(0, 12);
+    first.timestamp_ms = Some(211);
+    let mut next = opening_gap_pose(1, 13);
+    next.timestamp_ms = Some(242);
+    engine.push(next).unwrap();
+    engine.push(first).unwrap();
+    assert_eq!(engine.frames[1].frame, 13);
+    assert!((engine.frames[1].limit - 90. * 54. * 0.031).abs() < 1e-9);
+}
+
+#[test]
 fn missing_poses_after_search_starts_preserve_the_full_motion_gap() {
     let mut engine = Engine::new(Config {
         scramble: "R U".into(), fps: 50., resolve_orientation_ambiguity: true,
