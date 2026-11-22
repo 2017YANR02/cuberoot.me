@@ -17,8 +17,6 @@
 .sim-player-row--top {
   align-items: flex-start;
 }
-.sim-random-label-short { display: none; }
-
 .sim-player-input {
   flex: 1;
   min-width: 220px;
@@ -1504,7 +1502,6 @@
   color: var(--accent);
   background: var(--accent-soft);
 }
-.sim-stage-controls .playback-bar-controls { display: grid; grid-template-columns: minmax(0, 1fr) repeat(5, 38px) minmax(0, 1fr); gap: 4px; }
 .sim-playback-speed { width: min(140px, 100%); min-width: 0; justify-self: start; }
 .sim-playback-speed > .sim-slider { width: 100%; min-width: 0; }
 .sim-playback-settings { justify-self: end; }
@@ -1543,8 +1540,6 @@
   .sim-player-row--top > .sim-player-hlwrap { min-width: 0; }
   .sim-player-row--top > button { order: 2; flex-shrink: 0; padding-inline: 8px; }
   .sim-player-row--top > .sim-setup-preview { order: 1; }
-  .sim-random-label-full { display: none; }
-  .sim-random-label-short { display: inline; }
   .sim-keyboard-switcher .sim-keymap-open-btn,
   .sim-keyboard-switcher .reset-defaults-btn,
   .sim-alg-tools .sim-player-tools > button,
@@ -1732,6 +1727,7 @@
        (pointer: coarse) and (orientation: landscape) and (min-width: 560px) and (max-height: 600px) {
   .sim-playback-under { padding: 4px 8px; }
   .sim-stage-controls .playback-bar-controls {
+    display: grid;
     grid-template-columns: repeat(5, minmax(44px, 1fr)) 44px;
     gap: 2px;
   }
@@ -1747,8 +1743,6 @@
   .sim-side .sim-player-row--top { flex-wrap: nowrap; }
   .sim-side .sim-player-row--top > .sim-player-hlwrap { min-width: 0; }
   .sim-side .sim-player-row--top > button { flex-shrink: 0; padding-inline: 6px; }
-  .sim-side .sim-random-label-full { display: none; }
-  .sim-side .sim-random-label-short { display: inline; }
   .sim-player input:not([type="range"]),
   .sim-player textarea { font-size: 16px; }
   .sim-player button:not(.pill-toggle):not(.bool-toggle-label),

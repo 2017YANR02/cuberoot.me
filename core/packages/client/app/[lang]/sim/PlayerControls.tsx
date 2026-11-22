@@ -931,6 +931,7 @@ interface Props {
   /** DOM node below the cube canvas to portal the playback control row into
    *  (twizzle-style bar under the puzzle). Falls back to inline when absent. */
   playbackSlot?: HTMLElement | null;
+  onResetView?: () => void;
   canvasTools?: ReactNode;
   /** Current-state stage control shares the canvas footer with animation tools. */
   captureStickeringSlot?: HTMLElement | null;
@@ -990,7 +991,7 @@ export default function PlayerControls({
   onCopyLink,
   renderer = 'cubing', onRendererChange,
   appearanceOpen, onAppearanceToggle,
-  playbackSlot, canvasTools, captureStickeringSlot, bgSlot, fullscreenButton, backViewButton,
+  playbackSlot, onResetView, canvasTools, captureStickeringSlot, bgSlot, fullscreenButton, backViewButton,
   stickering = 'full', onStickeringChange,
   stickeringRot = '', onStickeringRotChange,
   stickeringMask = '', onStickeringMaskClear,
@@ -2976,13 +2977,13 @@ export default function PlayerControls({
       const viewTools = (
       <div className="sim-view-tools" role="toolbar" aria-label={t('画布工具', 'Canvas tools')}>
         {backViewButton}{fullscreenButton}
-        {!resolveCaps(puzzleKind, renderer).flat && <button type="button" className="playback-bar-btn"
-          onClick={() => {
-            const next = { ...settings, scale: DEFAULT_SETTINGS.scale, viewAngle: DEFAULT_SETTINGS.viewAngle, viewGradient: DEFAULT_SETTINGS.viewGradient };
-            onSettingsChange(next);
-            getNativePgSoftwareView(twistyPlayerRef?.current)?.resetView?.();
-            if (world) resetWorldView(world, next);
-          }}>{t('重置视角', 'Reset view')}</button>}
+        {!resolveCaps(puzzleKind, renderer).flat && <button type="button" className="playback-bar-btn" onClick={onResetView ?? (() => {
+          const { scale, viewAngle, viewGradient } = DEFAULT_SETTINGS;
+          const next = { ...settings, scale, viewAngle, viewGradient };
+          onSettingsChange(next);
+          getNativePgSoftwareView(twistyPlayerRef?.current)?.resetView?.();
+          if (world) resetWorldView(world, next);
+        })}>{t('重置视角', 'Reset view')}</button>}
         {canvasTools}
       </div>
       );
@@ -2993,7 +2994,7 @@ export default function PlayerControls({
       const playbackBar = (
       <div className="sim-stage-controls">
       {!compactPlayback && viewTools}
-      <PlaybackBar layout="wide"
+      <PlaybackBar layout={compactPlayback ? 'wide' : 'balanced'}
         disabled={!isTwistyMode && (!engineReady || replayPending)}
         step={isTwistyMode ? (totalSteps > 0 ? twistyPlayback.step : 0) : step}
         total={totalSteps}
@@ -3166,6 +3167,7 @@ export default function PlayerControls({
       />
       <KeymapModal
         pocket={pocket}
+        doubleClickReset={!!onResetView && !resolveCaps(puzzleKind, renderer).flat && settings.viewMode !== 'net'}
         open={keymapOpen}
         onClose={() => setKeymapOpen(false)}
         keymap={keymap}

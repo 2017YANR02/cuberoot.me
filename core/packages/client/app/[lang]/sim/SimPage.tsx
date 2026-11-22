@@ -15,7 +15,7 @@ import MoreToggle from '@/components/MoreToggle';
 import { ResizeDivider } from '@app-foundation/navigation-ui/resize-divider';
 import '@app-foundation/navigation-ui/resize-divider.css';
 import {
-  useCallback, useEffect, useMemo, useRef, useState, type RefObject,
+  useCallback, useEffect, useMemo, useRef, useState, type MouseEvent as ReactMouseEvent, type RefObject,
 } from 'react';
 import dynamic from 'next/dynamic';
 import { useQueryStates, parseAsString, parseAsStringEnum, type inferParserType } from 'nuqs';
@@ -25,6 +25,7 @@ import NxNOrderInput from '@/components/NxNOrderInput';
 import { useTranslation } from 'react-i18next';
 import { PuzzleTypeSelect } from './PuzzleTypeSelect';
 import { persistItem } from '@/lib/safe-storage';
+import { isTrackpadSwipe, trackpadPinchFactor } from '@/lib/cube-trackpad';
 import { orientedCubeFaceColors } from '@/lib/cube-orientation';
 import { NXN_ORDER_DEFAULT, NXN_ORDER_MAX, NXN_ORDER_MIN } from '@/lib/nxn-order';
 // THREE is type-only at module scope — runtime instance is dynamically imported
@@ -89,13 +90,13 @@ import CutEditor from './CutEditor';
 import {
   loadSettings, saveSettings, applySettings,
   TRANS_CORE, withCustomLogoAccess, withTransCore,
-  mapOrbitK, mapTurnDragFactor, type SimSettings,
+  DEFAULT_SETTINGS, mapOrbitK, mapTurnDragFactor, resetWorldView, type SimSettings,
 } from './SettingDrawer';
 import { PlaybackBackViewButton } from '@/components/PlaybackBar';
 import PlayerControls, { stripHandMarks, type SimPuzzle } from './PlayerControls';
 import AppLink from '@/components/AppLink';
 import { reconEventForSim, buildReconSubmitQuery } from '@/lib/sim-recon-link';
-import { PG_DEF_BY_ID, isPgPuzzleId } from './pgCatalog';
+import { DEFAULT_CUSTOM_CUTS, PG_DEF_BY_ID, isPgPuzzleId } from './pgCatalog';
 import { isPgInteractionPuzzleId } from '@cuberoot/puzzle-solvers/native-puzzles';
 import { isTwistyPuzzle } from './twistyPuzzles';
 import AlgsPanel from './AlgsPanel';
@@ -164,10 +165,6 @@ function defaultViewFor(kind: SimPuzzle, twisty: boolean): { viewAngle: number; 
   const yawFactor = twisty ? 3.6 : 1.8;
   return { viewAngle: 50 - yawDeg / yawFactor, viewGradient: 50 - pitchDeg / 1.8 };
 }
-
-// Default description for the Puzzle Cuts editor (puzzle=custom) — matches the
-// alpha.twizzle.net/explore landing example `c f 0.255`.
-const DEFAULT_CUSTOM_CUTS = 'c f 0.255';
 
 /** Per-puzzle calibration (degrees) that makes the exotic image-panel preview show the SAME
  *  orientation as the left 3D: sr rotation = yawSign·yaw + yaw offset (about world-y; sr remaps
@@ -531,6 +528,8 @@ function SimEditor({ scope = '', active, seed, snapshotRef, onModeChange, onNew,
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const twistyPlayerRef = useRef<any>(null);
   const [twistyPlaybackPlayer, setTwistyPlaybackPlayer] = useState<TwistyPlaybackPlayer | null>(null);
+  const [viewResetVersion, setViewResetVersion] = useState(0);
+  const firstBlankPress = useRef<Promise<boolean> | null>(null);
 
   const [orderState, setOrder] = useState<number>(3);
   // Pin the UI's logical order during the render that changes the URL too, before
@@ -879,11 +878,16 @@ function SimEditor({ scope = '', active, seed, snapshotRef, onModeChange, onNew,
       }, 250);
     };
     /** 所有 orbit 手势的唯一出口 —— 新增手势别再直接调 orbitScene,读数会漏同步。 */
-    const orbitView = (dx: number, dy: number) => {
+    const orbitView = (dx: number, dy: number, fromTrackpad = false) => {
       const k = mapOrbitK(settingsRef.current.sensitivity);
       if (settingsRef.current.dragEmpty === 'view' || settingsRef.current.pointerTurns === false) {
         orbitSceneFree(world, dx, dy, k);
       } else {
+        // In auto-rotate mode, leave no excess yaw for the next pointer drag to commit.
+        if (fromTrackpad && settingsRef.current.dragEmpty === 'orbit' && asNxN(world)) {
+          const yaw = world.scene.rotation.y;
+          dx = (Math.max(-Q, Math.min(Q, yaw + dx * k)) - yaw) / k;
+        }
         orbitScene(world, dx, dy, k);
       }
       syncViewToSettings();
@@ -1022,7 +1026,27 @@ function SimEditor({ scope = '', active, seed, snapshotRef, onModeChange, onNew,
       }, 250);
     };
     const onWheel = (e: WheelEvent) => {
-      if (settingsRef.current.lockView) return;
+      const pinchFactor = trackpadPinchFactor(e);
+      if (pinchFactor !== null) {
+        e.preventDefault();
+        // Scale in place, including while wheel zoom and panning are locked.
+        const oldScale = world.scale;
+        const min = Math.min(0.5, oldScale);
+        const max = Math.max(1.5, oldScale);
+        const nextScale = Math.max(min, Math.min(max, oldScale * pinchFactor));
+        if (nextScale !== oldScale) {
+          world.scale = nextScale;
+          world.resize();
+          syncScaleToSettings();
+        }
+        return;
+      }
+      if (isTrackpadSwipe(e)) {
+        e.preventDefault();
+        orbitView(-e.deltaX, -e.deltaY, true);
+        return;
+      }
+      if (settingsRef.current.lockView || e.deltaY === 0) return;
       e.preventDefault();
       const w = worldRef.current;
       if (!w) return;
@@ -1863,6 +1887,81 @@ function SimEditor({ scope = '', active, seed, snapshotRef, onModeChange, onNew,
   const netMode = !roomsActive && settings.viewMode === 'net' && typeof puzzleParam === 'number';
   const clockMode = puzzleParam === 'clock';
   const flatMode = netMode || clockMode;
+  const resetView = () => {
+    const next = { ...settingsRef.current, ...defaultViewFor(puzzleParam, twisty), scale: DEFAULT_SETTINGS.scale };
+    if (swapTweenRef.current) {
+      tweener.cancel(swapTweenRef.current);
+      swapTweenRef.current = null;
+    }
+    if (worldRef.current) resetWorldView(worldRef.current, next);
+    setSettings(next);
+    if (twisty) setViewResetVersion((version) => version + 1);
+  };
+
+  const isBlankCanvasPress = async (event: ReactMouseEvent<HTMLDivElement>): Promise<boolean> => {
+    if (!active || !animationMode || flatMode || event.button !== 0
+      || event.altKey || event.ctrlKey || event.metaKey || event.shiftKey) return false;
+    const { clientX, clientY, target } = event;
+    const player = twistyPlayerRef.current as (HTMLElement & TwistyPlayerLike & {
+      experimentalCurrentThreeJSPuzzleObject?: () => Promise<THREE.Object3D>;
+    }) | null;
+    const softwareSvg = getNativePgSoftwareView(player)?.getSvg();
+    if (softwareSvg && target === softwareSvg) return true;
+    const coordinates = (surface: Element) => {
+      const rect = surface.getBoundingClientRect();
+      if (!rect.width || !rect.height) return null;
+      const x = (clientX - rect.left) / rect.width;
+      const y = (clientY - rect.top) / rect.height;
+      return x >= 0 && x <= 1 && y >= 0 && y <= 1 ? { x, y } : null;
+    };
+
+    try {
+      const world = worldRef.current;
+      const canvas = rendererRef.current?.domElement;
+      if (world && canvas && target === canvas) {
+        const point = coordinates(canvas);
+        if (!point) return false;
+        const { x, y } = point;
+        if (asNxN(world)) {
+          return world.controller.hitTest(world.controller.move.clone().set(x * world.width, y * world.height)) === null;
+        }
+        const { Raycaster, Vector2 } = await import('three');
+        if (worldRef.current !== world || !canvas.isConnected) return false;
+        const ray = new Raycaster();
+        ray.setFromCamera(new Vector2(x * 2 - 1, 1 - y * 2), world.camera);
+        return ray.intersectObject(world.cube, true).length === 0;
+      }
+      // The WebGL canvas lives inside cubing.js's closed shadow tree, so this
+      // event reaches the simulator with the player itself as its target.
+      if (!player || target !== player || !player.experimentalCurrentVantages
+        || !player.experimentalCurrentThreeJSPuzzleObject) return false;
+      const [vantages, puzzle, { Raycaster, Vector2 }] = await Promise.all([
+        player.experimentalCurrentVantages(), player.experimentalCurrentThreeJSPuzzleObject(), import('three'),
+      ]);
+      // Prefer the back-view inset if both view rectangles contain the point.
+      for (const view of [...vantages].reverse()) {
+        const point = coordinates(view.contentWrapper ?? player);
+        if (!point) continue;
+        const camera = await view.camera();
+        if (twistyPlayerRef.current !== player || !player.isConnected) return false;
+        const ray = new Raycaster();
+        ray.setFromCamera(new Vector2(point.x * 2 - 1, 1 - point.y * 2), camera);
+        return ray.intersectObject(puzzle, true).length === 0;
+      }
+      return false;
+    } catch {
+      return false;
+    }
+  };
+
+  const resetOnBlankDoubleClick = async (event: ReactMouseEvent<HTMLDivElement>) => {
+    const first = firstBlankPress.current;
+    firstBlankPress.current = null;
+    if (!first) return;
+    const [firstBlank, secondBlank] = await Promise.all([first, isBlankCanvasPress(event)]);
+    if (firstBlank && secondBlank && activeRef.current) resetView();
+  };
+
   const getFlatSvg = useCallback(() => containerRef.current?.querySelector<SVGSVGElement>(
     '.sim-clock .iclock-svg, .sim-net > .sim-net-svg',
   ) ?? null, []);
@@ -2467,6 +2566,10 @@ function SimEditor({ scope = '', active, seed, snapshotRef, onModeChange, onNew,
           // 或 SimCubeNet 上 —— 它把两者都包住,一层 filter 就够,不会叠加两次。
           className={`sim-canvas-wrap puzzle-art${flatMode ? ' sim-canvas-wrap--net' : ''}${imgSwapActive ? ' sim-canvas-wrap--imgswap' : ''}`}
           ref={containerRef}
+          onMouseDownCapture={(event) => {
+            if (event.detail === 1) firstBlankPress.current = isBlankCanvasPress(event);
+          }}
+          onDoubleClick={resetOnBlankDoubleClick}
         >
           {netMode && (
             <SimCubeNet
@@ -2504,6 +2607,8 @@ function SimEditor({ scope = '', active, seed, snapshotRef, onModeChange, onNew,
               playerRef={twistyPlayerRef}
               onPlayerChange={setTwistyPlaybackPlayer}
               externalControls
+              trackpadZoom
+              viewResetVersion={viewResetVersion}
               // 按阶段展示色块:cubing.js 原生支持的拼图直接透传阶段名(其余拼图
               // 不传 — undefined = TwistySection 不接管该属性)。
               experimentalStickering={(puzzleParam === 'megaminx' || puzzleParam === 'fto') ? query.stickering : undefined}
@@ -2615,6 +2720,7 @@ function SimEditor({ scope = '', active, seed, snapshotRef, onModeChange, onNew,
             puzzleKind={puzzleKind}
             settings={settings}
             onSettingsChange={handleSettingsChange}
+            onResetView={resetView}
             canUseCustomLogo={isMember}
             transCore={transCore ? TRANS_CORE : null}
             keymap={keymap}

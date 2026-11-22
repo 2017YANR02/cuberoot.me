@@ -6,6 +6,7 @@ import { applyFreeOrbitDelta, ORBIT_K } from '@cuberoot/puzzle-render-core/engin
 import type { TwistySettings } from '../TwistySection';
 import type { NativeDragDepth } from '../NativePuzzleControls';
 import type { NativePgSoftwareView } from '../../lib/native-pg-software-view';
+import { trackpadPinchFactor } from '../../lib/cube-trackpad';
 import { createNativePgScene, type NativePgScenePosition } from './nativePgScene';
 import { attachNativePgPointer } from './gestures/nativePgPointer';
 
@@ -15,6 +16,7 @@ export interface NativePgSvgView extends NativePgSoftwareView {
 
 interface Options {
   settings: () => TwistySettings | undefined;
+  trackpadZoom?: boolean;
   depth: () => NativeDragDepth;
   enabled: () => boolean;
   current: () => boolean;
@@ -193,8 +195,8 @@ export async function attachNativePgSvgView(
     resize();
     schedule();
   };
-  const zoom = (nextDistance: number): void => {
-    if (!current() || options.settings()?.lockView || !Number.isFinite(nextDistance)) return;
+  const zoom = (nextDistance: number, allowWhenLocked = false): void => {
+    if (!current() || (!allowWhenLocked && options.settings()?.lockView) || !Number.isFinite(nextDistance)) return;
     distance = clampDistance(nextDistance);
     resize();
     schedule();
@@ -384,7 +386,14 @@ export async function attachNativePgSvgView(
     if (captures.has(event.pointerId)) release(event.pointerId);
   };
   const onWheel = (event: WheelEvent): void => {
-    if (!current() || !viewAt(event) || options.settings()?.lockView) return;
+    if (!current() || !viewAt(event)) return;
+    const pinchFactor = options.trackpadZoom ? trackpadPinchFactor(event) : null;
+    if (pinchFactor !== null) {
+      event.preventDefault();
+      if (pinchFactor !== 1) zoom(distance / pinchFactor, true);
+      return;
+    }
+    if (options.settings()?.lockView) return;
     event.preventDefault();
     const pixels = event.deltaY * (event.deltaMode === 1 ? 16 : event.deltaMode === 2 ? main.height : 1);
     zoom(distance * Math.exp(pixels * 0.001));

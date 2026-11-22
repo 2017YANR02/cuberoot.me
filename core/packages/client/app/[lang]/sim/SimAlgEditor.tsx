@@ -105,8 +105,7 @@ export default function SimAlgEditor({
           aria-label={t('随机打乱', 'Random scramble')}
         >
           <Shuffle size={14} />
-          <span className="sim-random-label-full">{t('随机打乱', 'Random scramble')}</span>
-          <span className="sim-random-label-short">{t('随机', 'Random')}</span>
+          <span>{t('随机', 'Random')}</span>
         </button>
         {scramble.onDerive && (
           <button

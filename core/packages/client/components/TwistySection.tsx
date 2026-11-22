@@ -18,6 +18,7 @@ import {
 } from '@/lib/native-pg-software-view';
 import { tr } from '@/i18n/tr';
 import { applyFreeOrbitDelta, ORBIT_K } from '@/app/[lang]/sim/engine/viewControls';
+import { trackpadPinchFactor } from '@/lib/cube-trackpad';
 import { useT } from '@/hooks/useT';
 import './TwistySection.css';
 
@@ -128,7 +129,7 @@ export interface TwistySettings {
 
 /** Twisty 播放器区域——动态导入 cubing 库，用构造函数 API 创建（对齐 legacy） */
 export default function TwistySection({
-  puzzle, puzzleDescription, nativePuzzleId, scramble, alg, playerRef, onPlayerChange, fillPane = false, twistOnClick = false, onUserMove, onScaleChange, settings, backView, playbackMode, hideControls = false, externalControls = false, experimentalStickering, fallbackMoves,
+  puzzle, puzzleDescription, nativePuzzleId, scramble, alg, playerRef, onPlayerChange, fillPane = false, twistOnClick = false, onUserMove, onScaleChange, settings, backView, playbackMode, hideControls = false, externalControls = false, trackpadZoom = false, viewResetVersion = 0, experimentalStickering, fallbackMoves,
 }: {
   puzzle: string;
   /** cubing.js PuzzleGeometry description string (e.g. "c e 0"). When set, the
@@ -153,6 +154,10 @@ export default function TwistySection({
   /** /sim supplies the shared PlaybackBar and paints the canvas background.
    *  Unlike hideControls, this mode does not add a preview play overlay. */
   externalControls?: boolean;
+  /** /sim offers deliberate trackpad pinch zoom alongside the scale slider. */
+  trackpadZoom?: boolean;
+  /** Forces the camera home even when the view sliders are already at their defaults. */
+  viewResetVersion?: number;
   /** Publish replacements as well as initial readiness to external controls. */
   onPlayerChange?: (player: TwistyPlaybackPlayer | null) => void;
   /** 启用 tap-to-twist:cubing.js 默认 movePressInput="auto" 实际关闭点击转面;
@@ -448,6 +453,7 @@ export default function TwistySection({
       if (!current || playerInstRef.current !== player) return undefined;
       return attachNativePgSvgView(host, player, nativePuzzleId, {
         settings: () => softwareSettingsRef.current,
+        trackpadZoom,
         depth: () => nativeDragDepthRef.current,
         enabled: () => pointerTurnsRef.current && nativeInputValidRef.current,
         current: () => current && playerInstRef.current === player,
@@ -473,7 +479,7 @@ export default function TwistySection({
       if (softwareViewRef.current === view) softwareViewRef.current = null;
       view?.dispose();
     };
-  }, [software3D, nativePuzzleId, playerNonce, t]);
+  }, [software3D, nativePuzzleId, playerNonce, t, trackpadZoom]);
 
   useEffect(() => {
     softwareSettingsRef.current = settings && backView !== undefined ? { ...settings, backView } : settings;
@@ -616,27 +622,32 @@ export default function TwistySection({
   const prevYawRef = useRef<number | null>(null);
   const prevPitchRef = useRef<number | null>(null);
   const prevNonceRef = useRef<number>(-1);
+  const prevViewResetVersion = useRef(viewResetVersion);
   useEffect(() => {
     const player = playerInstRef.current;
     if (!player || !settings) return;
     try { player.tempoScale = simSpeedToTps(settings.speed); } catch { /* */ }
     // Setup and playback stay on the shared model in both visualizations.
     try { player.experimentalSetupAnchor = settings.playbackMode === 'algorithm' ? 'end' : 'start'; } catch { /* */ }
-    if (use2D !== false) return;
+    const resetRequested = prevViewResetVersion.current !== viewResetVersion;
+    prevViewResetVersion.current = viewResetVersion;
+    if (use2D !== false) {
+      if (resetRequested) softwareViewRef.current?.resetView?.();
+      return;
+    }
     const yawDeg = ((settings.viewAngle - 50) / 50) * 180;
     const pitchDeg = ((50 - settings.viewGradient) / 50) * 90;
     const dist = scaleToDist(settings.scale);
     const isNewPlayer = prevNonceRef.current !== playerNonce;
-    if (!isNewPlayer && (
-      prevYawRef.current !== settings.viewAngle
-      || prevPitchRef.current !== settings.viewGradient
-    )) {
+    const yawChanged = prevYawRef.current !== settings.viewAngle;
+    const pitchChanged = prevPitchRef.current !== settings.viewGradient;
+    if (resetRequested || (!isNewPlayer && (yawChanged || pitchChanged))) {
       resetFreeViewRoot();
     }
-    if (isNewPlayer || prevYawRef.current !== settings.viewAngle) {
+    if (resetRequested || isNewPlayer || yawChanged) {
       try { player.cameraLongitude = yawDeg; } catch { /* */ }
     }
-    if (isNewPlayer || prevPitchRef.current !== settings.viewGradient) {
+    if (resetRequested || isNewPlayer || pitchChanged) {
       try { player.cameraLatitude = pitchDeg; } catch { /* */ }
     }
     try { player.cameraDistance = dist; liveDistRef.current = dist; } catch { /* */ }
@@ -645,7 +656,7 @@ export default function TwistySection({
     prevYawRef.current = settings.viewAngle;
     prevPitchRef.current = settings.viewGradient;
     prevNonceRef.current = playerNonce;
-  }, [settings?.viewAngle, settings?.viewGradient, settings?.scale, settings?.speed, settings?.hint, settings?.backView, settings?.playbackMode, settings, playerNonce, use2D]);
+  }, [settings?.viewAngle, settings?.viewGradient, settings?.scale, settings?.speed, settings?.hint, settings?.backView, settings?.playbackMode, settings, playerNonce, use2D, viewResetVersion]);
 
   // Recon and other lightweight callers do not pass a full settings object. An
   // explicit prop still needs to drive cubing.js's setup anchor in that path.
@@ -1310,17 +1321,26 @@ export default function TwistySection({
       try { player.cameraDistance = next; } catch { /* */ }
     };
     let scaleSyncTimer: number | null = null;
-    const syncScale = (d: number): void => {
+    const syncScale = (): void => {
       if (scaleSyncTimer) window.clearTimeout(scaleSyncTimer);
-      scaleSyncTimer = window.setTimeout(() => { onScaleChangeRef.current?.(distToScale(d)); }, 200);
+      scaleSyncTimer = window.setTimeout(() => { onScaleChangeRef.current?.(distToScale(liveDistRef.current)); }, 200);
     };
 
     const onWheel = (e: WheelEvent): void => {
+      const pinchFactor = trackpadZoom ? trackpadPinchFactor(e) : null;
+      if (pinchFactor !== null) {
+        e.preventDefault();
+        if (pinchFactor !== 1) {
+          setDist(liveDistRef.current / pinchFactor);
+          syncScale();
+        }
+        return;
+      }
       // 锁定:不缩放,也不拦默认(让页面照常滚动,对齐 NxN/engine 路径的 lockView 提前 return)。
       if (lockViewRef.current) return;
       e.preventDefault();
       setDist(liveDistRef.current * (e.deltaY > 0 ? 1.08 : 0.92));
-      syncScale(liveDistRef.current);
+      syncScale();
     };
     host.addEventListener('wheel', onWheel, { passive: false });
 
@@ -1358,7 +1378,7 @@ export default function TwistySection({
       const endingPinch = pinchingRef.current && pts.size === 2; // this lift drops 2 → 1
       if (endingPinch) e.stopPropagation();
       pts.delete(e.pointerId);
-      if (endingPinch) syncScale(liveDistRef.current);
+      if (endingPinch) syncScale();
       // keep pinchingRef true (skewb stays suspended) until ALL fingers lift, so a
       // lingering single finger can't resume a pixel-drag from a stale baseline.
       if (pts.size === 0) pinchingRef.current = false;
@@ -1376,7 +1396,7 @@ export default function TwistySection({
       host.removeEventListener('pointercancel', onUp, true);
       pinchingRef.current = false;
     };
-  }, [playerNonce, puzzle, use2D]);
+  }, [playerNonce, puzzle, use2D, trackpadZoom]);
 
   // Install after the pinch listener so a second finger cancels a layer gesture
   // before the native pointer adapter can commit it. The 2D path never asks for

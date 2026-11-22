@@ -24,6 +24,8 @@ import { ROOM_THEMES, normalizeRoomTheme, roomCubeActive } from './room-themes';
 import type { SimPuzzle } from './puzzleOptions';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
 
+const CUBEROOT_RENDERER_NAME = 'cuberoot.js';
+
 // 五魔方 12 面色 —— 复用 vendored puzzle-geometry 的十二面体配色(单一源,不另造)。
 const MEGAMINX_COLORS = Object.values(defaultPlatonicColorSchemes()[12]) as string[];
 /** 按小写去重,保序;让各调色板拼接预设 + 12 色时不出现重复格。 */
@@ -292,7 +294,7 @@ export default function SimAppearancePanel({
   const naHint = roomsActive
     ? t('立体房间使用独立布景，切回普通色块后可调整', '3D rooms use their own artwork. Switch to classic colors to adjust this.')
     : switchEnables
-    ? t('该拼图暂不支持此功能(切到「本站引擎」渲染可启用)', 'Not available for this puzzle (switch the renderer to "CubeRoot engine" to enable)')
+    ? t(`切换渲染引擎到 ${CUBEROOT_RENDERER_NAME} 即可启用此功能`, `Switch the rendering engine to ${CUBEROOT_RENDERER_NAME} to enable this feature`)
     : t('该拼图暂不支持此功能', 'Not available for this puzzle');
   const hint = (ok: boolean) => (ok ? undefined : naHint);
   // trans(X 光)是接管内核外观的预设,不是单纯换张伴图:选中时内核色 / 内核不透明度
@@ -487,7 +489,7 @@ export default function SimAppearancePanel({
                   onChange={(e) => onRendererChange(e.target.value as 'cubing' | 'engine' | 'group')}
                   aria-label={t('渲染引擎', 'Rendering engine')}
                 >
-                  <option value="group">{t('本站引擎', 'CubeRoot engine')}</option>
+                  <option value="group">{CUBEROOT_RENDERER_NAME}</option>
                   <option value="cubing">cubing.js</option>
                 </select>
               </div>
@@ -600,8 +602,14 @@ export default function SimAppearancePanel({
               {logoBusy && <span className="sim-logo-member-prompt" role="status">{t('正在处理图片…', 'Processing image…')}</span>}
               {logoError && <span className="sim-logo-member-prompt" role="alert">{logoError}</span>}
             </div>)}
-            {/* 锁定大小位置 锁的是引擎滚轮/捏合缩放,cubing.js 拼图自管缩放 → 引擎未驱动时灰掉。 */}
-            {caps.supports.lockView && (<Toggle label={t('锁定大小位置', 'Lock size & position')} value={settings.lockView} onChange={(v) => set('lockView', v)} disabled={!caps.supports.lockView} title={hint(caps.supports.lockView)} />)}
+            {caps.supports.lockView && (
+              <Toggle
+                label={t('锁定滚轮缩放和平移', 'Lock wheel zoom and pan')}
+                value={settings.lockView}
+                onChange={(v) => set('lockView', v)}
+                title={t('关闭滚轮和触屏缩放以及拖动平移。触控板捏合仍可缩放。', 'Locks wheel zoom, touchscreen pinch zoom, and panning. Trackpad pinch still zooms.')}
+              />
+            )}
             {/* 小窗(背面视图)的开关不在这里:小窗自己右上角有 ×,关掉后播放条最右出现
                 找回按钮 —— 同一个 settings.backView 已经有两个入口,再放一个是第三份。 */}
             {/* 立体贴片 / 镂空 是本站引擎特性,cubing.js 渲染的拼图上无此能力 → 引擎未驱动时灰掉

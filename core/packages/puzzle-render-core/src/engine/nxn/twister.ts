@@ -10,9 +10,13 @@ import { ensureWorkerInit, workerApply } from "./setup_worker_client";
 // Stack kernel (WASM):内层 rotate apply loop。模块初始化时 fire-and-forget,
 // init 完前 setup() 退回纯 JS 路径。N=200 用户场景 ~6s,kernel 目标降到 1s 量级。
 let STACK_KERNEL_READY = false;
-if (typeof WebAssembly !== 'undefined' && typeof fetch !== 'undefined') initStackKernel().then(() => { STACK_KERNEL_READY = true; }).catch((e) => {
-  console.warn('[stack-kernel] init failed, falling back to JS path:', e);
-});
+let stackKernelInit: Promise<void> | undefined;
+function preloadStackKernel(): void {
+  if (typeof WebAssembly === 'undefined' || typeof fetch === 'undefined') return;
+  stackKernelInit ??= initStackKernel().then(() => { STACK_KERNEL_READY = true; }).catch((e) => {
+    console.warn('[stack-kernel] init failed, falling back to JS path:', e);
+  });
+}
 
 // Per-cube group indices registry,setup() 每次复用。flat = 拍平的 cube.table.groups[axis][layer].indices,
 // offsets[groupId+1]-offsets[groupId] = 该 group 的 indices 长度。groupId = axisIdx*N + layer。
@@ -371,9 +375,10 @@ export default class Twister {
   private catchingUpRealtime = false;
   // 在 undo / redo 内部 twist 时为 true,避免误清空 redo 栈
   public suppressRedoClear = false;
-  constructor(cube: Cube) {
+  constructor(cube: Cube, private readonly useStackKernel = true) {
     this.cube = cube;
     this.cube.callbacks.push(this.update);
+    if (useStackKernel) preloadStackKernel();
   }
 
   scrambler(): string {
@@ -470,13 +475,24 @@ export default class Twister {
   public lastSetupParts: { finish: number; reset: number; parse: number; loop: number; rebuild: number } = { finish: 0, reset: 0, parse: 0, loop: 0, rebuild: 0 };
 
   setup(exp: string, reverse = false, times = 1): void {
+    this.rebuildForSetup(exp, reverse, times, false);
+  }
+
+  /** Rebuild a settled cube without interrupting animations on other cubes. */
+  setupFromRest(exp: string): void {
+    if (this.cube.busy || this.queue.length) throw new Error('Release active turns before applying the setup');
+    this.rebuildForSetup(exp, false, 1, true);
+  }
+
+  private rebuildForSetup(exp: string, reverse: boolean, times: number, fromRest: boolean): void {
     const TBENCH0 = performance.now();
     // 放弃待播放队列:setup 紧接着 reset 再整体重应用,逐步 replay 这些 move 纯属浪费 —— 而且
     // 高阶宽转 replay 会逐层 hold()(每层建/刷扇形),450 步打乱能卡死整页。清空后 finish 只收尾活动补间。
     this.queue.length = 0;
-    this.finish();
+    if (!fromRest) this.finish();
     const T1 = performance.now();
-    this.cube.reset(true);
+    if (fromRest) this.cube.resetPieces(true);
+    else this.cube.reset(true);
     const T2 = performance.now();
     const node = new TwistNode(exp, reverse, times);
     const list = node.parse();
@@ -527,7 +543,7 @@ export default class Twister {
     const wasmEnabled = (typeof window !== 'undefined'
       ? (window as unknown as { __STACK_KERNEL_WASM?: boolean }).__STACK_KERNEL_WASM
       : undefined) ?? true;
-    if (STACK_KERNEL_READY && wasmEnabled && !hasSpecial) {
+    if (this.useStackKernel && STACK_KERNEL_READY && wasmEnabled && !hasSpecial) {
       // 批量收集所有 rotate 的 (dispatch, groupId),一次 WASM 调用。
       const N = order;
       const reg = getGroupRegistry(cube);
@@ -681,7 +697,7 @@ export default class Twister {
     const wasmEnabled = (typeof window !== 'undefined'
       ? (window as unknown as { __STACK_KERNEL_WASM?: boolean }).__STACK_KERNEL_WASM
       : undefined) ?? true;
-    if (typeof Worker === 'undefined' || !STACK_KERNEL_READY || !wasmEnabled || hasSpecial) {
+    if (!this.useStackKernel || typeof Worker === 'undefined' || !STACK_KERNEL_READY || !wasmEnabled || hasSpecial) {
       this.setup(exp, reverse, times);
       return;
     }

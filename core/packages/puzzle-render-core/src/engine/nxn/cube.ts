@@ -16,6 +16,10 @@ import type { PictureFace } from './pictureCube';
 const ONE = new THREE.Vector3(1, 1, 1);
 const HALF = 32; // Cubelet.SIZE / 2
 
+interface CubeOptions {
+  useStackKernel?: boolean;
+}
+
 export default class Cube extends THREE.Group {
   public dirty = true;
   public locks: Map<string, Set<number>>;
@@ -32,7 +36,7 @@ export default class Cube extends THREE.Group {
   public readonly isSphere: boolean;
   public callbacks: (() => void)[] = [];
   public history: History;
-  public twister: Twister = new Twister(this);
+  public twister: Twister;
   public instancedRenderer: InstancedRenderer;
   /** 顶面 U 中心 logo mesh(仅奇数阶;偶数阶 / 无 logo 时 visible=false 或不建)。 */
   private logoMesh: THREE.Mesh | null = null;
@@ -48,8 +52,9 @@ export default class Cube extends THREE.Group {
   private _logoScl = new THREE.Vector3();
   private _logoRT = new THREE.Matrix4();
 
-  constructor(order: number, shape: boolean | 'sphere' = false) {
+  constructor(order: number, shape: boolean | 'sphere' = false, options: CubeOptions = {}) {
     super();
+    this.twister = new Twister(this, options.useStackKernel);
     const t0 = performance.now();
     this.order = order;
     this.isMirror = shape === true;
@@ -315,6 +320,11 @@ export default class Cube extends THREE.Group {
 
   reset(skipRebuild = false): void {
     tweener.finish();
+    this.resetPieces(skipRebuild);
+  }
+
+  /** Restore the solved pose after the caller releases this cube's active slices. */
+  resetPieces(skipRebuild = false): void {
     // 每个 cubelet 复位:旋转归零、index 设回 initial、矩阵刷新。
     // 然后重建 cubelets map(key 应为 cubelet.index, 复位后等于 initial)。
     this.cubelets.clear();

@@ -75,7 +75,7 @@ export interface SimSettings {
   faceLabels: boolean;
   /** 画布背景。见 SimBoardBg。 */
   boardBg: SimBoardBg;
-  /** 锁定大小+位置:禁滚轮/捏合缩放 + 中右键/双指平移;旋转视角和转动仍可用 */
+  /** 禁滚轮和触屏缩放、中右键和双指平移。触控板捏合与滑杆仍可调整大小。 */
   lockView: boolean;
   /** 背面视图小窗:右上角第二个相机从背后看魔方。NxN/SQ1 走自有第二渲染器,
    *  twisty (金字塔/斜转/五魔) 走 cubing.js 原生 backView。 */
@@ -851,6 +851,7 @@ export function Toggle({ label, value, onChange, disabled, title }: { label: str
 
 interface KeymapModalProps {
   pocket?: boolean;
+  doubleClickReset?: boolean;
   open: boolean;
   onClose: () => void;
   keymap: Record<string, KeyMove>;
@@ -858,7 +859,7 @@ interface KeymapModalProps {
   onResetKeymap: () => void;
 }
 
-export function KeymapModal({ pocket = false, open, onClose, keymap, onKeymapChange, onResetKeymap }: KeymapModalProps) {
+export function KeymapModal({ pocket = false, doubleClickReset = false, open, onClose, keymap, onKeymapChange, onResetKeymap }: KeymapModalProps) {
   const t = useT();
   const [editingCode, setEditingCode] = useState<string | null>(null);
   const { motionRef, close } = useDialogMotion(onClose, { enabled: open });
@@ -877,12 +878,13 @@ export function KeymapModal({ pocket = false, open, onClose, keymap, onKeymapCha
   }, [open, close, editingCode]);
 
   if (!open) return null;
+  const title = t('快捷键', 'Shortcuts');
 
   return createPortal(
     <div ref={motionRef} className="sim-keymap-modal-backdrop" {...backdropProps}>
-      <div className="sim-keymap-modal" role="dialog" aria-modal="true" aria-label={t('键盘快捷键', 'Keyboard shortcuts')}>
+      <div className="sim-keymap-modal" role="dialog" aria-modal="true" aria-label={title}>
         <header className="sim-keymap-modal-head">
-          <h2>{t('键盘 / 鼠标快捷键', 'Keyboard / mouse shortcuts')}</h2>
+          <h2>{title}</h2>
           <ClearButton variant="standalone" ariaLabel={t('关闭', 'Close')} onClick={close} />
         </header>
         <div className="sim-keymap-modal-body">
@@ -962,7 +964,7 @@ export function KeymapModal({ pocket = false, open, onClose, keymap, onKeymapCha
             <span>{t('重做', 'Redo')} <kbd>Ctrl</kbd>+<kbd>Y</kbd></span>
           </div>
 
-          <div className="sim-keymap-title" style={{ marginTop: 12 }}>{t('鼠标', 'Mouse')}</div>
+          <div className="sim-keymap-title" style={{ marginTop: 12 }}>{t('鼠标 / 触控板', 'Mouse / trackpad')}</div>
           <div className="sim-mouse-help">
             <div>
               <span className="sim-mouse-op">{t('单击 sticker', 'Click a sticker')}</span>
@@ -992,6 +994,10 @@ export function KeymapModal({ pocket = false, open, onClose, keymap, onKeymapCha
               <span className="sim-mouse-op">{t('拖动空白', 'Drag empty area')}</span>
               <span className="sim-mouse-act">{t('整体旋转视角', 'Rotate whole cube')}</span>
             </div>
+            {doubleClickReset && <div>
+              <span className="sim-mouse-op">{t('双击魔方旁的空白处', 'Double-click the empty area beside the puzzle')}</span>
+              <span className="sim-mouse-act">{t('重置视角', 'Reset view')}</span>
+            </div>}
             <div>
               <span className="sim-mouse-op">{t('滚轮', 'Wheel')}</span>
               <span className="sim-mouse-act">{t('缩放', 'Zoom')}</span>
