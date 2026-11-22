@@ -138,7 +138,7 @@ export function VideoReconWorkspace({ mode, handoff, submission, onModeChange, o
   }, [mode, detector, handoff, workspace, resetViewport]);
 
   useEffect(() => {
-    if (!workspace || !submissionFile || !submissionScramble) return;
+    if (!workspace || !submissionFile || submissionScramble === undefined) return;
     let active = true;
     workspace.setScramble(submissionScramble);
     void workspace.openFile(submissionFile).then(() => {
@@ -341,7 +341,7 @@ export function VideoReconWorkspace({ mode, handoff, submission, onModeChange, o
         timeline={view.projectedTimeline}
         sourceFrame={liveResult?.cube?.frame ?? (reviewing ? view.result?.fittedPose?.sourceFrame : undefined) ?? Math.round(resultTime * view.sourceFps)}
         sourceFps={view.sourceFps} playbackSpeed={view.running ? view.playbackSpeed : 1}
-        analysis={reviewing && workspace && view.reconstructedScramble && measured && hasMoves
+        analysis={reviewing && workspace && view.reconstructedScramble && measured && hasMoves && (!submission || view.cubeSolved)
           ? { scramble:view.reconstructedScramble, steps:searchSteps, measured,
             fps:view.sourceFps, start:view.solveStart, end:view.solveEnd, position:view.presentedTimestamp,
             onSeek:timestamp => void workspace.requestReview(timestamp), draftTarget: submission,

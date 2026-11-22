@@ -96,6 +96,7 @@ import '../recon.css';
 import './recon_submit.css';
 import { tr } from '@/i18n/tr';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
+import type { VerifiedVideoDraft } from '../../video-recon/VideoSolveAnalysis';
 
 const VideoReconWorkspace = dynamic(
   () => import('../../video-recon/VideoReconClient').then(module => module.VideoReconWorkspace),
@@ -104,6 +105,15 @@ const VideoReconWorkspace = dynamic(
 
 type SubmitVideo = { file: File; owner: string };
 type VideoReview = { video: SubmitVideo; draft: string; scramble: string; autoStart: boolean };
+
+function videoDraftKey(owner: string, form: Partial<ReconSolve>) {
+  return JSON.stringify([owner, form.event, form.official, form.personId || form.person, form.compWcaId || form.comp,
+    form.round, form.groupId, form.solveNum]);
+}
+
+function hasDraftSolution(form: Partial<ReconSolve>) {
+  return !!(form.solution?.trim() || (form.solutionHtml && algHtmlText(form.solutionHtml).trim()) || form.recon?.trim());
+}
 
 // ── Constants ──
 
@@ -213,7 +223,9 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
   const [videoUploadError, setVideoUploadError] = useState('');
   const [submitVideo, setSubmitVideo] = useState<SubmitVideo>();
   const [videoReview, setVideoReview] = useState<VideoReview>();
-  const [appliedVideo, setAppliedVideo] = useState<{ video: SubmitVideo; scramble: string; solution: string }>();
+  const [appliedVideo, setAppliedVideo] = useState<{ review: VideoReview; scramble: string; solution: string }>();
+  const [inferredOpening, setInferredOpening] = useState<{ draft: string; scramble: string }>();
+  const syncedVideo = useRef<typeof appliedVideo>(undefined);
   const closingVideoReview = useRef<VideoReview>(undefined);
   const videoUploadInputRef = useRef<HTMLInputElement>(null);
   const [loadingEdit, setLoadingEdit] = useState(isEditing || !!fromId);
@@ -372,25 +384,25 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
 
   const completionScramble = getReconScramble(form);
   const draftOwner = JSON.stringify([authUser?.uid, editId, fromId]);
-  const draftIdentity = JSON.stringify([
-    draftOwner, form.event, form.official, form.personId || form.person, form.compWcaId || form.comp,
-    form.round, form.solveNum,
-  ]);
+  const draftIdentity = videoDraftKey(draftOwner, form);
   const videoScramble = normalizeReconScrambleSpacing('3x3', completionScramble);
   const currentVideo = !readOnly && form.event === '3x3' && submitVideo?.owner === draftOwner ? submitVideo : undefined;
+  const videoApplied = !!appliedVideo && appliedVideo.review.video === currentVideo && appliedVideo.review.draft === draftIdentity
+    && appliedVideo.scramble === videoScramble && appliedVideo.solution.trim() === form.solution?.trim();
+  // A blind review starts with an empty scramble and may itself fill the generic field.
+  const ownInferredScramble = !!appliedVideo && appliedVideo.review === videoReview && !videoReview?.scramble
+    && !form.wcaScramble?.trim() && !form.optimalScramble?.trim() && appliedVideo.scramble === videoScramble;
   const activeVideoReview = currentVideo && videoReview?.video === currentVideo
-    && videoReview.draft === draftIdentity && videoReview.scramble === videoScramble
+    && videoReview.draft === draftIdentity && (videoReview.scramble === videoScramble || ownInferredScramble)
     ? videoReview : undefined;
   useEffect(() => {
     if (videoReview && !activeVideoReview) setVideoReview(undefined);
   }, [videoReview, activeVideoReview]);
-  const videoApplied = appliedVideo?.video === currentVideo && appliedVideo?.scramble === videoScramble
-    && appliedVideo.solution.trim() === form.solution?.trim();
   const videoContext = useRef({ draftOwner, readOnly, activeVideoReview, hasSolution: false });
   useLayoutEffect(() => {
     videoContext.current = {
       draftOwner, readOnly, activeVideoReview,
-      hasSolution: !!(form.solution?.trim() || (form.solutionHtml && algHtmlText(form.solutionHtml).trim()) || form.recon?.trim()),
+      hasSolution: hasDraftSolution(form),
     };
     return () => {
       videoContext.current = { draftOwner: '', readOnly: true, activeVideoReview: undefined, hasSolution: false };
@@ -440,7 +452,7 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
     if (form.event === '3x3') {
       const video = { file, owner: draftOwner };
       setSubmitVideo(video);
-      if (videoScramble) setVideoReview({ video, draft: draftIdentity, scramble: videoScramble, autoStart: true });
+      setVideoReview({ video, draft: draftIdentity, scramble: videoScramble, autoStart: true });
     }
     try {
       const uploaded = await uploadReconVideo(file);
@@ -1564,22 +1576,38 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
 
   // ── Normalized cross toggle ──
   const [normalized, setNormalized] = useState(false);
-  const applyVideoSolution = useCallback((review: VideoReview, solution: string, replace: boolean) => {
+  const applyVideoSolution = useCallback((review: VideoReview, result: VerifiedVideoDraft, replace: boolean) => {
     const current = videoContext.current;
     if (current.activeVideoReview !== review || closingVideoReview.current === review ||
       current.readOnly || (!replace && current.hasSolution)) return false;
+    const { solution } = result;
+    const inferred = normalizeReconScrambleSpacing('3x3', result.inferredScramble ?? '');
+    if (review.scramble ? inferred : !inferred) return false;
+    const scramble = review.scramble || inferred;
     current.hasSolution = true;
-    setNormalized(false);
-    if (solutionFieldRef.current) solutionFieldRef.current.setText(solution);
-    else {
-      setField('solution', solution);
-      setField('solutionHtml', escapeAlgText(solution));
-    }
-    setAppliedVideo({ video: review.video, scramble: review.scramble, solution });
+    setForm(prev => {
+      // A pending official lookup or manual edit may already be queued with React.
+      if (videoDraftKey(draftOwner, prev) !== review.draft || (!replace && hasDraftSolution(prev)) ||
+          normalizeReconScrambleSpacing('3x3', getReconScramble(prev)) !== videoScramble ||
+          (inferred && (prev.wcaScramble?.trim() || prev.optimalScramble?.trim()))) return prev;
+      return { ...prev, ...(inferred ? { scramble: inferred } : {}), solution, solutionHtml: escapeAlgText(solution) };
+    });
+    setAppliedVideo({ review, scramble, solution });
     return true;
-  }, [setField]);
-  const autoApplyVideoSolution = useCallback((solution: string) => {
-    if (activeVideoReview) applyVideoSolution(activeVideoReview, solution, false);
+  }, [draftOwner, videoScramble]);
+  useLayoutEffect(() => {
+    if (!videoApplied || !appliedVideo || syncedVideo.current === appliedVideo) return;
+    syncedVideo.current = appliedVideo;
+    setNormalized(false);
+    solutionFieldRef.current?.setText(appliedVideo.solution);
+    if (!appliedVideo.review.scramble) {
+      setScrambleField('generic');
+      setInferredOpening({ draft: appliedVideo.review.draft, scramble: appliedVideo.scramble });
+      setSubmitError(error => error?.field === 'scramble' ? null : error);
+    }
+  }, [videoApplied, appliedVideo]);
+  const autoApplyVideoSolution = useCallback((result: VerifiedVideoDraft) => {
+    if (activeVideoReview) applyVideoSolution(activeVideoReview, result, false);
   }, [activeVideoReview, applyVideoSolution]);
   const canNormalize = useMemo(
     () => hasNormalizableCrossMove(form.solution || ''),
@@ -2421,6 +2449,8 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
                     ? <span className="submit-hint">{optimalAutoSource}</span>
                     : null}
               {renderSubmitError('scramble')}
+              {scrambleField === 'generic' && inferredOpening?.draft === draftIdentity && inferredOpening.scramble === form.scramble &&
+                <span className="submit-hint">{tr({ zh: '由视频推定的等价打乱', en: 'Equivalent scramble inferred from the video' })}</span>}
             </div>
 
             {/* 同选手 + 同打乱:不硬拒,要求二选一说明原因(值入 dupReason)。占位打乱 '?' 已豁免不会触发。 */}
@@ -2581,14 +2611,11 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
                       <span className="submit-hint">
                         {tr({ zh: '会员专享，最大 200MB', en: 'Members only, up to 200MB' })}
                       </span>
-                      {currentVideo && videoScramble && <button type="button" className="submit-reuse-btn"
+                      {currentVideo && <button type="button" className="submit-reuse-btn"
                         onClick={() => setVideoReview({ video: currentVideo, draft: draftIdentity, scramble: videoScramble, autoStart: false })}>
                         {tr({ zh: '自动复盘', en: 'Automatic reconstruction' })}
                       </button>}
                     </div>
-                  {currentVideo && !videoScramble && <span className="submit-hint" role="status">
-                    {tr({ zh: '填好打乱后，可用已选视频开始自动复盘。', en: 'Enter the scramble to reconstruct from the selected video.' })}
-                  </span>}
                   <span className="submit-hint">
                     {tr({ zh: '同一视频的不同平台链接放在一起，每行一个；不同视频请点击“添加视频”。', en: 'Keep links to the same video together, one per line. Use “Add video” for a different video.' })}
                   </span>
