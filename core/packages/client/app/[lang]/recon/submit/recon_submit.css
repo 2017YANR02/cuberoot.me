@@ -1100,3 +1100,11 @@
   margin-left: 0;
   margin-right: auto;
 }
+.settings-dialog:has(.submit-video-review) {
+  width: min(100%, 1200px);
+}
+
+.submit-video-review .video-recon-page {
+  padding: 0;
+  min-width: 0;
+}

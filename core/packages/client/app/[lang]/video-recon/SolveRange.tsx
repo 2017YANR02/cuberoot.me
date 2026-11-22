@@ -5,10 +5,11 @@ import { useT } from '@/hooks/useT';
 import { timecode } from '@/lib/video-recon/engine/solve-range';
 import type { VideoWorkspace } from '@/lib/video-recon/workspace';
 
-export function SolveRange({ view, workspace, onBegin }: {
+export function SolveRange({ view, workspace, onBegin, fixedScramble }: {
   view: ReturnType<VideoWorkspace['getSnapshot']>;
   workspace: VideoWorkspace;
   onBegin: () => void;
+  fixedScramble?: boolean;
 }) {
   const t = useT();
   const { solveStart, solveEnd, duration, thumbnails, position, sourceFps } = view;
@@ -57,7 +58,7 @@ export function SolveRange({ view, workspace, onBegin }: {
     </div>
     <label className="video-recon-field">{t('打乱', 'Scramble')}
       <input type="text" value={view.initialScramble} onChange={event => workspace.setScramble(event.currentTarget.value)}
-        autoComplete="off" autoCapitalize="none" spellCheck={false} />
+        readOnly={fixedScramble} autoComplete="off" autoCapitalize="none" spellCheck={false} />
     </label>
     <div className="video-recon-section-heading">
       <p className="video-recon-muted">{t('区间开头需包含第一步之前的清晰魔方画面。', 'Include a clear view of the cube before the first move.')}</p>

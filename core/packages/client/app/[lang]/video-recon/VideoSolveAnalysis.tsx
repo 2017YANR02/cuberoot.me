@@ -11,6 +11,7 @@ import { useLang } from '@/i18n/tr';
 import { CUBE_OPPOSITE_FACE } from '@/lib/cube-colors';
 import { buildCaptionHeader } from '@/lib/recon-stats';
 import { buildReconSubmitQuery } from '@/lib/sim-recon-link';
+import { checkReconCompletion } from '@cuberoot/shared/recon-completion';
 import type { Quaternion } from '@/lib/video-recon/engine/cube-motion';
 import { openingGripView } from '@/lib/video-recon/engine/cube-orientation';
 import type { MoveStep } from '@/lib/video-recon/engine/move-search-types';
@@ -31,11 +32,16 @@ export interface VideoSolveAnalysisProps {
   position: number;
   onSeek: (timestamp: number) => void;
   onOpeningView: (view: Quaternion) => void;
+  draftTarget?: {
+    scramble: string;
+    onReady: (solution: string) => void;
+    onApply: (solution: string) => void;
+  };
 }
 
 type Analysis = Awaited<ReturnType<typeof analyzeVideoSolve>>;
 
-export function VideoSolveAnalysis({ scramble, steps, measured, fps, clockFps, start, end, position, onSeek, onOpeningView }: VideoSolveAnalysisProps) {
+export function VideoSolveAnalysis({ scramble, steps, measured, fps, clockFps, start, end, position, onSeek, onOpeningView, draftTarget }: VideoSolveAnalysisProps) {
   const t = useT();
   const language = useLang();
   const observation = useMemo(() => observeVideoSolve(scramble, steps, measured, fps, start, end, clockFps),
@@ -45,20 +51,36 @@ export function VideoSolveAnalysis({ scramble, steps, measured, fps, clockFps, s
   const grip = selection ?? observation.estimatedGrip?.rotation;
   const [analysis, setAnalysis] = useState<{
     observation: VideoSolveObservation; grip?: string; language: typeof language; value?: Analysis;
+    draftScramble?: string; draftSolution?: string;
   }>();
   const { copiedKey, copy } = useCopy();
+  const draftScramble = draftTarget?.scramble;
   const current = analysis?.observation === observation && analysis.grip === grip && analysis.language === language
+    && analysis.draftScramble === draftScramble
     ? analysis : undefined;
 
   useEffect(() => {
     let active = true;
-    void analyzeVideoSolve(observation, grip, language).then(value => {
-      if (active) setAnalysis({ observation, grip, language, value });
+    void analyzeVideoSolve(observation, grip, language).then(async value => {
+      let draftSolution: string | undefined;
+      if (active && draftScramble && value?.solved && value.result.text.trim()) {
+        const completion = await checkReconCompletion({
+          event: '3x3', scramble: draftScramble, solution: value.result.text,
+        });
+        if (completion.status === 'solved') draftSolution = value.result.text;
+      }
+      if (active) setAnalysis({ observation, grip, language, value, draftScramble, draftSolution });
     }, () => {
-      if (active) setAnalysis({ observation, grip, language });
+      if (active) setAnalysis({ observation, grip, language, draftScramble });
     });
     return () => { active = false; };
-  }, [observation, grip, language]);
+  }, [observation, grip, language, draftScramble]);
+
+  const draftSolution = current?.draftSolution;
+  const onDraftReady = draftTarget?.onReady;
+  useEffect(() => {
+    if (draftSolution) onDraftReady?.(draftSolution);
+  }, [draftSolution, onDraftReady]);
 
   const { result, method, solved, fallback } = current?.value ?? {};
   const relativeMs = Math.round((position - start) * 1000);
@@ -70,7 +92,7 @@ export function VideoSolveAnalysis({ scramble, steps, measured, fps, clockFps, s
   const clipboard = result ? [captionHeader, result.scramble, result.text].filter(Boolean).join('\n') : '';
   const copied = copiedKey === clipboard;
   const copyLabel = t('复制分段复盘', 'Copy stage breakdown');
-  const editorHref = result && displayMethod && solved
+  const editorHref = !draftTarget && result && displayMethod && solved
     ? `/recon/submit?${buildReconSubmitQuery('3x3', result.scramble, result.text, { method: displayMethod })}`
     : undefined;
   function applyOpeningGrip(rotation: string) {
@@ -85,6 +107,9 @@ export function VideoSolveAnalysis({ scramble, steps, measured, fps, clockFps, s
     ) : <span className="video-recon-muted">{t('起手姿态未拍清，按固定朝向分段。', 'The opening grip is unavailable. Stages use a fixed orientation.')}</span>}
     {!current && <ContentSkeleton variant="text" label={t('正在识别解法和分段…', 'Identifying the method and stages…')} />}
     {current && !result && <span role="status" className="video-recon-muted">{t('无法生成局面一致的分段复盘。', 'Could not generate a reconstruction consistent with the recognized states.')}</span>}
+    {draftTarget && solved && !draftSolution && <span role="status" className="video-recon-muted">
+      {t('这份解法无法通过表单打乱的还原校验。', 'This solution could not be verified against the form’s scramble.')}
+    </span>}
     {result && <>
       {fallback && <span className="video-recon-muted">{t('转体换算未通过局面核对，以下使用固定朝向。',
         'The reoriented moves failed state verification. The steps below use a fixed orientation.')}</span>}
@@ -115,6 +140,9 @@ export function VideoSolveAnalysis({ scramble, steps, measured, fps, clockFps, s
         {editorHref && <AppLink className="btn-secondary" href={editorHref}>
           <ExternalLink size={15} aria-hidden />{t('在复盘中编辑', 'Edit in Reconstruction')}
         </AppLink>}
+        {draftTarget && draftSolution && <button type="button" className="btn-primary" onClick={() => draftTarget.onApply(draftSolution)}>
+          {t('使用这份解法', 'Use this solution')}
+        </button>}
         <span className="sr-only" role="status">{copied && t('已复制', 'Copied')}</span>
       </div>
     </>}

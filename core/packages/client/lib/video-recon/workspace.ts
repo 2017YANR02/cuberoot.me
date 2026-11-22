@@ -552,14 +552,19 @@ export function createVideoWorkspace(stage: HTMLCanvasElement, initialTab: Works
         void finishMoveSearch(); return;
       }
       admitFrame(frame);
-    } catch (cause) { if (token === generation) { markIdle(); state.mediaError = cause instanceof Error ? cause.message : String(cause); } }
+    } catch (cause) {
+      if (token !== generation) return;
+      markIdle();
+      if (state.trimming) state.cropLocked = false;
+      state.mediaError = cause instanceof Error ? cause.message : String(cause);
+    }
   }
   async function editSolveRange() {
     if (!derived.reconstructionComplete) return;
     state.running = false; cancelScheduled(); await waitForPipelineIdle();
     moveSearch?.dispose(); moveSearch = undefined; state.searchResult = undefined; state.searchError = "";
     state.previewSearch = undefined;
-    state.trimming = true; state.videoInputComplete = false; await previewTrim(state.solveStart);
+    state.trimming = true; state.cropLocked = false; state.videoInputComplete = false; await previewTrim(state.solveStart);
   }
   function send(message: WorkerRequest, transfer: Transferable[] = []) {
     worker?.postMessage(message, transfer);
@@ -988,7 +993,7 @@ export function createVideoWorkspace(stage: HTMLCanvasElement, initialTab: Works
         presenter.presentFrame(stage, presenter.captureFrame(image, inputCrop(image)));
         startMoveSearch();
         await inferFrame();
-      } else if (range || file.type.startsWith("video/") || !file.type) {
+      } else if (range || file.type.startsWith("video/") || !file.type || /\.(mp4|webm|mov)$/i.test(file.name)) {
         const decoded = await openVideoFile(file);
         if (token !== generation || disposed) {
           decoded.close();

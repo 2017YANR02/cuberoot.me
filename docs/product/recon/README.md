@@ -9,6 +9,7 @@
 ## 文档与登记
 
 - [Recon 复盘系统](recon-api.md)
+- [上传视频生成复盘草稿](video-recon-submit-tracker.md)
 - [Reconstruction cache invalidation](recon-cache.md)
 - [智能魔方视频采集与 AI 读取](recon-capture-workflow.md)
 - [智能魔方复盘收录与 AI 处理（第一版）](recon-intake-workflow.md)
