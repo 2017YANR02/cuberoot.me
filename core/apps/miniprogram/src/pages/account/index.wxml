@@ -49,7 +49,7 @@
   >
     {{loginBusy ? copy.signingInLabel : loginButtonLabel}}
   </button>
-  <view wx:elif="{{accountLinkRequired && !loginStorageUnavailable}}" class="account-link-actions">
+  <view wx:elif="{{accountLinkRequired && !loginStorageUnavailable}}" class="account-link-actions{{!accountLinkCodeMode && !phoneAccountFound && accountCanCreate && !existingOnly ? ' account-choice-actions' : ''}}">
     <block wx:if="{{phoneAccountFound && !accountLinkCodeMode}}">
       <text class="account-user-meta">{{accountLinkTargetName}} · CubeRoot ID {{accountLinkTargetId}}</text>
       <button class="primary-button account-primary-button" disabled="{{loginBusy}}" aria-busy="{{loginBusy}}" hover-class="press-feedback" bindtap="confirmPhoneAccount">{{loginBusy ? copy.signingInLabel : copy.confirmLinkCodeLabel}}</button>
