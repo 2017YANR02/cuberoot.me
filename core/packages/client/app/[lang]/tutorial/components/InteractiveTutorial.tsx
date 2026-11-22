@@ -117,10 +117,18 @@ type TutorialAlg = Pick<CourseTurnExploration['insertion'], 'progressLabel' | 'd
 };
 export type GuidedCourseLesson = {
   view: View;
-  recognition: GuidedStage & { choices: readonly Text[]; answer: number; explanation: Text; Help?: ComponentType };
-  alignment?: GuidedStage & { axis: 'U' | 'y'; showLeftThumb?: boolean; matches: (history: readonly string[]) => boolean };
+  Help?: ComponentType;
+  hideHelpDuringAlgorithm?: boolean;
+  recognition?: GuidedStage & { choices: readonly Text[]; answer: number; explanation: Text };
+  alignment?: GuidedStage & {
+    axes: readonly ('U' | 'y')[];
+    showLeftThumb?: boolean;
+    allowTurnsAfterMatch?: boolean;
+    matches: (history: readonly string[]) => boolean;
+  };
   algorithm: GuidedStage & TutorialAlg & {
     alternatives?: readonly Pick<TutorialAlg, 'steps' | 'demoTitle'>[];
+    finishingTurn?: (history: readonly string[]) => TutorialAlg['steps'][number] | undefined;
   };
   completion: Text;
 };
@@ -570,7 +578,7 @@ function TurnExploration({ section, task, puzzle, orientation, exploration }: In
         </>}
       </>}
       {!inserting && (!aligning || aligned) && <div className="course-question-actions">
-        <button type="button" className="btn-primary course-question-action"
+        <button type="button" className="btn-primary course-question-action course-question-continue"
           disabled={!ready || settledMoveCount !== moves.length || !currentComplete || (aligning && !canContinueAlignment)}
           onClick={event => {
             if (player.current?.isUserMovePending?.(false)) return;
@@ -754,7 +762,7 @@ function InteractiveQuestions({ section, task, puzzle, orientation }: Interactio
         : null}
       prompt={tr(prompt)}
       action={selectionConfirmed
-        ? <button type="button" className="btn-primary course-question-action" onClick={continueQuestion}>
+        ? <button type="button" className="btn-primary course-question-action course-question-continue" onClick={continueQuestion}>
           {tr({ zh: '继续', en: 'Continue' })}
         </button>
         : (needsReorientation || reorienting) ? <button type="button" className="btn-primary course-question-action"
@@ -783,43 +791,76 @@ function GuidedLesson({ section, task, puzzle, orientation }: {
   puzzle: AlgPlayerPuzzle;
   orientation?: string;
 }) {
-  const [stage, setStage] = useState<'recognize' | 'align' | 'alg'>('recognize');
+  const { recognition, alignment, Help } = task;
+  const [algorithm, setAlgorithm] = useState(task.algorithm);
+  const [stage, setStage] = useState<'recognize' | 'align' | 'alg'>(recognition ? 'recognize' : alignment ? 'align' : 'alg');
   const [choice, setChoice] = useState<number | null>(null);
   const [ready, setReady] = useState(false);
   const [history, setHistory] = useState<string[]>([]);
   const [cursor, setCursor] = useState<GuidedTurn>({ index: 0 });
-  const [settled, setSettled] = useState(false);
-  const [feedback, setFeedback] = useState(false);
+  const [settledHistory, setSettledHistory] = useState<readonly string[] | null>(null);
+  const [feedback, setFeedback] = useState<{ point?: Pick<CubeletTap, 'clientX' | 'clientY'> } | null>(null);
   const [demo, setDemo] = useState<TutorialAlg | null>(null);
   const player = useRef<AlgPlayerHandle>(null);
   const board = useRef<HTMLDivElement>(null);
+  const feedbackTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
   const accepted = useRef({ history, cursor });
-  const { recognition, alignment, algorithm } = task;
-  const RecognitionHelp = recognition.Help;
+  const recognizing = stage === 'recognize' ? recognition : undefined;
   const preparing = stage === 'align' ? alignment : undefined;
+  const revisableAlignment = preparing?.allowTurnsAfterMatch === true;
   const applying = stage === 'alg';
-  const recognized = choice === recognition.answer;
+  const recognized = choice === recognizing?.answer;
+  const settled = settledHistory === history;
   const matches = preparing?.matches(history) || (applying && cursor.index === algorithm.steps.length && section.exercise.isComplete(history));
   const current = algorithm.steps[cursor.index];
   const nextMove = cursor.half ?? current?.notation;
-  const rotation = preparing?.axis === 'y' || (applying && !!nextMove && /^[xyz]/.test(nextMove));
-  const steps = alignment ? [recognition, alignment, algorithm] : [recognition, algorithm];
-  const question = preparing ?? (applying ? algorithm : recognition);
+  const canTurnTop = preparing?.axes.includes('U') === true;
+  const canRotateSideways = preparing?.axes.includes('y') === true;
+  const rotation = canRotateSideways || (applying && !!nextMove && /^[xyz]/.test(nextMove));
+  const canRotate = rotation && (!settled || revisableAlignment);
+  const steps = [recognition, alignment, algorithm].filter(step => step !== undefined);
+  const question = recognizing ?? preparing ?? algorithm;
   const activeIndex = steps.indexOf(question);
+  const feedbackMessage = feedback ? tr(canTurnTop && canRotateSideways
+    ? { zh: '这一步只转 U 面，或做 y 方向转体', en: 'Turn only the U face or rotate the cube around the y-axis' }
+    : canTurnTop
+      ? { zh: '这一步只转 U 面', en: 'Turn only the U face' }
+      : canRotateSideways
+        ? { zh: '这一步只做左右转体', en: 'Only rotate the whole cube left or right' }
+        : { zh: `这一步做 ${nextMove}`, en: `Do ${nextMove} for this move` }) : undefined;
 
+  useEffect(() => () => clearTimeout(feedbackTimer.current), []);
   useEffect(() => {
     const handle = player.current;
     if (!ready || !matches || !handle) return;
-    const update = () => { if (!handle.isUserMovePending?.(!!preparing?.showLeftThumb)) setSettled(true); };
+    const update = () => {
+      if (accepted.current.history === history && !handle.isUserMovePending?.(!!preparing?.showLeftThumb)) {
+        setSettledHistory(history);
+      }
+    };
     update();
     return handle.subscribeRenderedView?.(update);
-  }, [ready, matches, preparing?.showLeftThumb]);
+  }, [ready, matches, history, preparing?.showLeftThumb]);
 
   const allowTurn = (move: string) => {
     const state = accepted.current;
-    if (demo || settled) return false;
-    if (preparing) return move[0] === preparing.axis && !preparing.matches(state.history);
+    if (demo || (settled && !revisableAlignment)) return false;
+    if (preparing) {
+      const allowed = (canTurnTop && /^U\d*'?$/.test(move)) || (canRotateSideways && /^y\d*'?$/.test(move));
+      return allowed && (revisableAlignment || !preparing.matches(state.history));
+    }
     return applying && !!advanceGuidedTurn(state.cursor, algorithm.steps[state.cursor.index]?.notation, move);
+  };
+  const clearFeedback = () => {
+    clearTimeout(feedbackTimer.current);
+    setFeedback(null);
+  };
+  const showBlockedTurn: BlockedLayerTurnHandler = (_move, point) => {
+    setFeedback({ point });
+    if (revisableAlignment) {
+      clearTimeout(feedbackTimer.current);
+      feedbackTimer.current = setTimeout(() => setFeedback(null), ERROR_FEEDBACK_MS);
+    }
   };
   const record = (move: string) => {
     if (!move || !allowTurn(move)) return;
@@ -829,7 +870,7 @@ function GuidedLesson({ section, task, puzzle, orientation }: {
     accepted.current = { history, cursor: next };
     setHistory(history);
     setCursor(next);
-    setFeedback(false);
+    clearFeedback();
   };
   const keyInput = (event: KeyboardEvent<HTMLDivElement>) => {
     const key = event.key.toLowerCase();
@@ -838,49 +879,61 @@ function GuidedLesson({ section, task, puzzle, orientation }: {
     if (player.current?.applyUserMove?.(event.shiftKey ? `${move}'` : move)) event.preventDefault();
   };
   const nextQuestion = () => {
+    if (revisableAlignment && (settledHistory !== accepted.current.history || player.current?.isUserMovePending?.())) return;
+    if (preparing && algorithm.finishingTurn) {
+      const history = accepted.current.history;
+      const turn = algorithm.finishingTurn(history);
+      if (turn) setAlgorithm({ ...algorithm, steps: [...algorithm.steps, turn],
+        demoSetup: [section.exercise.setup, ...history].join(' ') });
+    }
     setStage(stage === 'recognize' && alignment ? 'align' : 'alg');
-    setSettled(false);
-    setFeedback(false);
+    setSettledHistory(null);
+    clearFeedback();
     board.current?.focus({ preventScroll: true });
   };
-  const done = stage === 'recognize' ? recognized : settled;
+  const done = recognizing ? recognized : settled;
   const completion = settled && applying;
   return <LessonPane layout="F" cube={
     <div ref={board} className="course-cube" role="group" tabIndex={0} aria-label={tr(section.title)} onKeyDown={keyInput}
       data-course-cube data-ready={ready} data-drag-enabled={ready} data-move-count={history.length} data-last-move={history.at(-1)}>
       <AlgPlayer ref={player} puzzle={puzzle} set="" orientation={orientation} engine="sim" controlMode="none"
-        setup={section.exercise.setup} alg="" sceneRot={task.view} interactionMode={stage === 'recognize' || settled ? 'view' : 'turn'}
+        setup={section.exercise.setup} alg="" sceneRot={task.view} interactionMode={recognizing || (settled && !revisableAlignment) ? 'view' : 'turn'}
         showHands={alignment?.showLeftThumb ? 'left-thumb' : undefined} handsVisible={!!preparing?.showLeftThumb}
         holdReferenceThumb={!!preparing?.showLeftThumb && matches}
-        orbitSnapDegrees={30} orbitSnapLocked={!rotation || settled} wholeCubeDrag={rotation && !settled ? 'rotate-only' : undefined}
+        orbitSnapDegrees={30} orbitSnapLocked={!canRotate}
+        wholeCubeDrag={canRotate ? (canTurnTop ? 'rotate' : 'rotate-only') : undefined}
         hintFacelets moveHint={applying && !settled ? nextMove : undefined} maxFramingEdge={CUBE_FRAMING_EDGE}
-        allowUserLayerTurn={allowTurn} onBlockedUserLayerTurn={() => setFeedback(true)} onUserMove={record}
+        allowUserLayerTurn={allowTurn} onBlockedUserLayerTurn={showBlockedTurn} onUserMove={record}
         onReady={() => setReady(true)} hideResetView fillPane />
+      {revisableAlignment && <div className="course-answer-feedback" data-turn-feedback role="status" aria-atomic="true">
+        {feedbackMessage && (feedback?.point
+          ? <CornerAnswerBubble {...feedback.point} message={feedbackMessage} />
+          : <ChatBubble tail="bottom" className="course-answer-bubble course-turn-hint-bubble" data-course-turn-hint>
+            {feedbackMessage}
+          </ChatBubble>)}
+      </div>}
     </div>
   }>
     <InteractiveQuestionCopy sectionId={section.id} questions={steps} activeIndex={activeIndex} answer={done ? 'correct' : 'pending'}
-      heading={tr(completion ? labels.completed : settled && preparing
+      heading={tr(completion ? labels.completed : settled && preparing && !canRotateSideways
         ? { zh: '摆到位了', en: 'Aligned' } : question.heading)}
-      headingAction={RecognitionHelp && <RecognitionHelp />}
-      prompt={tr(completion ? task.completion : recognized && stage === 'recognize' ? recognition.explanation : question.prompt)}
-      status={feedback && !done ? tr(preparing
-        ? { zh: `这一步只转 ${preparing.axis}`, en: `Use ${preparing.axis} for this step` }
-        : { zh: `这一步做 ${nextMove}`, en: `Do ${nextMove} for this move` }) : undefined}
+      headingAction={Help && !(applying && task.hideHelpDuringAlgorithm) && <Help />}
+      prompt={tr(completion ? task.completion : recognized && recognizing ? recognizing.explanation : question.prompt)}
+      status={!revisableAlignment && !done ? feedbackMessage : undefined}
       action={<>
-        {stage === 'recognize' && !recognized && <div className="course-question-actions">
-          {recognition.choices.map((label, index) => <button type="button" key={label.en} className="btn-secondary course-question-action"
+        {recognizing && !recognized && <div className="course-question-actions">
+          {recognizing.choices.map((label, index) => <button type="button" key={label.en} className="btn-secondary course-question-action"
             aria-pressed={choice === index} disabled={!ready} onClick={() => setChoice(index)}>{tr(label)}</button>)}
           {choice !== null && <p className="course-question-status" role="status">{tr({ zh: '再观察一下魔方。', en: 'Take another look at the cube.' })}</p>}
         </div>}
-        {done && !applying && <button type="button" className="btn-primary course-question-action" onClick={nextQuestion}>
+        {(done || revisableAlignment) && !applying && <button type="button" className="btn-primary course-question-action course-question-continue"
+          onClick={nextQuestion} disabled={!done}>
           {tr({ zh: '继续', en: 'Continue' })}
         </button>}
-        {!done && rotation && <div className="course-question-actions">
-          {(preparing ? ['y', "y'"] : [nextMove!]).map(move => <button type="button" key={move} className="btn-secondary course-question-action"
-            onClick={() => {
-              if (player.current?.applyUserMove?.(move)) board.current?.focus({ preventScroll: true });
-            }}>{tr({ zh: `转体 ${move}`, en: `Rotate ${move}` })}</button>)}
-        </div>}
+        {applying && canRotate && nextMove && <button type="button" className="btn-secondary course-question-action"
+          onClick={() => {
+            if (player.current?.applyUserMove?.(nextMove)) board.current?.focus({ preventScroll: true });
+          }}>{tr({ zh: `转体 ${nextMove}`, en: `Rotate ${nextMove}` })}</button>}
         {applying && !completion && <>
           <code className="course-alg">{algorithm.steps.map(({ notation }, index) => <span key={index}
             aria-current={index === cursor.index ? 'step' : undefined}>{notation}</span>)}</code>

@@ -112,7 +112,7 @@ function makeCase(group: FlGroup, twist: Twist, algs: readonly string[], index: 
   const targetPosition = group === 'top' ? text('顶层左前', 'top front-left') : text('底层右前', 'bottom front-right');
   const word = directions[twistIndex];
   const demoTitle = text('第一层公式', 'First-layer algorithm');
-  const guided: GuidedCourseLesson = {
+  const guided = {
     view: FL_VIEWS[group],
     recognition: {
       progressLabel: text('识别', 'Recognize'),
@@ -134,7 +134,7 @@ function makeCase(group: FlGroup, twist: Twist, algs: readonly string[], index: 
       alternatives: algs.slice(1).map(alg => ({ steps: flDemoSteps(alg), demoTitle: text('备选公式', 'Alternative algorithm') })),
     },
     completion,
-  };
+  } satisfies GuidedCourseLesson;
   return { id, title, group, twist, position, color, algs, exercise, guided };
 }
 

@@ -48,6 +48,13 @@
 .course-question-copy[data-course-answer='correct'] h2 { color: var(--signal-success); }
 .course-question-action { min-block-size: 44px; max-inline-size: 100%; margin-block-start: 10px; }
 .course-question-action:disabled { cursor: default; opacity: .65; }
+.course-question-action.course-question-continue:disabled {
+  background: var(--muted);
+  color: var(--muted-foreground);
+  box-shadow: inset 0 0 0 1px var(--border-default);
+  cursor: not-allowed;
+  opacity: 1;
+}
 .course-question-actions { display: flex; flex-wrap: wrap; column-gap: 8px; }
 .course-demo-dialog {
   position: fixed;
@@ -166,6 +173,10 @@
   inline-size: max-content;
   margin-inline: auto;
 }
+.course-turn-hint-bubble.chat-bubble {
+  inset-block-start: 6px;
+  inset-inline-end: 8px;
+}
 @container course-stage (orientation: landscape) and (min-width: 440px) and (min-height: 120px) {
   .course-caption:has(> .course-question-copy) {
     justify-content: flex-start;
@@ -185,6 +196,10 @@
     right: auto;
     width: min(100cqw, 18rem);
     translate: -50% 0;
+  }
+  .course-turn-hint-bubble.chat-bubble {
+    inset-inline-start: calc(50% + 44px);
+    inset-inline-end: 4px;
   }
   .course-copy.course-question-copy { padding-block: 0; }
   .course-question-heading > .course-question-heading-action { padding-inline: 10px; }
