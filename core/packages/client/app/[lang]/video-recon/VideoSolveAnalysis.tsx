@@ -10,6 +10,7 @@ import { useT } from '@/hooks/useT';
 import { useLang } from '@/i18n/tr';
 import { CUBE_OPPOSITE_FACE } from '@/lib/cube-colors';
 import { buildCaptionHeader } from '@/lib/recon-stats';
+import { deriveScrambleFromSolution } from '@/lib/scramble-from-solution';
 import { buildReconSubmitQuery } from '@/lib/sim-recon-link';
 import { checkReconCompletion } from '@cuberoot/shared/recon-completion';
 import type { Quaternion } from '@/lib/video-recon/engine/cube-motion';
@@ -32,6 +33,7 @@ export interface VideoSolveAnalysisProps {
   position: number;
   onSeek: (timestamp: number) => void;
   onOpeningView: (view: Quaternion) => void;
+  inferredScramble?: boolean;
   draftTarget?: {
     scramble: string;
     onReady: (solution: string) => void;
@@ -41,7 +43,7 @@ export interface VideoSolveAnalysisProps {
 
 type Analysis = Awaited<ReturnType<typeof analyzeVideoSolve>>;
 
-export function VideoSolveAnalysis({ scramble, steps, measured, fps, clockFps, start, end, position, onSeek, onOpeningView, draftTarget }: VideoSolveAnalysisProps) {
+export function VideoSolveAnalysis({ scramble, steps, measured, fps, clockFps, start, end, position, onSeek, onOpeningView, draftTarget, inferredScramble }: VideoSolveAnalysisProps) {
   const t = useT();
   const language = useLang();
   const observation = useMemo(() => observeVideoSolve(scramble, steps, measured, fps, start, end, clockFps),
@@ -51,30 +53,42 @@ export function VideoSolveAnalysis({ scramble, steps, measured, fps, clockFps, s
   const grip = selection ?? observation.estimatedGrip?.rotation;
   const [analysis, setAnalysis] = useState<{
     observation: VideoSolveObservation; grip?: string; language: typeof language; value?: Analysis;
-    draftScramble?: string; draftSolution?: string;
+    draftScramble?: string; draftSolution?: string; inferred?: boolean; cleanScramble?: string;
   }>();
   const { copiedKey, copy } = useCopy();
   const draftScramble = draftTarget?.scramble;
   const current = analysis?.observation === observation && analysis.grip === grip && analysis.language === language
-    && analysis.draftScramble === draftScramble
+    && analysis.draftScramble === draftScramble && analysis.inferred === inferredScramble
     ? analysis : undefined;
 
   useEffect(() => {
     let active = true;
     void analyzeVideoSolve(observation, grip, language).then(async value => {
       let draftSolution: string | undefined;
-      if (active && draftScramble && value?.solved && value.result.text.trim()) {
-        const completion = await checkReconCompletion({
-          event: '3x3', scramble: draftScramble, solution: value.result.text,
-        });
-        if (completion.status === 'solved') draftSolution = value.result.text;
+      let cleanScramble: string | undefined;
+      try {
+        if (active && draftScramble && value?.solved && value.result.text.trim()) {
+          const completion = await checkReconCompletion({
+            event: '3x3', scramble: draftScramble, solution: value.result.text,
+          });
+          if (completion.status === 'solved') draftSolution = value.result.text;
+        }
+        if (active && inferredScramble && value?.solved) {
+          const candidate = await deriveScrambleFromSolution(value.result.text);
+          const completion = candidate && await checkReconCompletion({
+            event: '3x3', scramble: candidate, solution: value.result.text,
+          });
+          if (completion && completion.status === 'solved') cleanScramble = candidate;
+        }
+      } catch {
+        // The verified original notation is still available if the optional solver fails.
       }
-      if (active) setAnalysis({ observation, grip, language, value, draftScramble, draftSolution });
-    }, () => {
-      if (active) setAnalysis({ observation, grip, language, draftScramble });
+      if (active) setAnalysis({ observation, grip, language, value, draftScramble, draftSolution, inferred: inferredScramble, cleanScramble });
+    }).catch(() => {
+      if (active) setAnalysis({ observation, grip, language, draftScramble, inferred: inferredScramble });
     });
     return () => { active = false; };
-  }, [observation, grip, language, draftScramble]);
+  }, [observation, grip, language, draftScramble, inferredScramble]);
 
   const draftSolution = current?.draftSolution;
   const onDraftReady = draftTarget?.onReady;
@@ -88,12 +102,13 @@ export function VideoSolveAnalysis({ scramble, steps, measured, fps, clockFps, s
   const timeline = useMemo(() => result ? videoNotationTimeline(result, openingMs) : [], [result, openingMs]);
   const activeOffset = timeline.findLast(move => move.timestampMs <= relativeMs)?.offset ?? null;
   const displayMethod = method === 'roux' ? 'Roux' : method?.toUpperCase();
+  const displayScramble = current?.cleanScramble ?? result?.scramble ?? '';
   const captionHeader = useMemo(() => result ? buildCaptionHeader(result.text, result.seconds, '3x3') : '', [result]);
-  const clipboard = result ? [captionHeader, result.scramble, result.text].filter(Boolean).join('\n') : '';
+  const clipboard = result ? [captionHeader, displayScramble, result.text].filter(Boolean).join('\n') : '';
   const copied = copiedKey === clipboard;
   const copyLabel = t('复制分段复盘', 'Copy stage breakdown');
-  const editorHref = !draftTarget && result && displayMethod && solved
-    ? `/recon/submit?${buildReconSubmitQuery('3x3', result.scramble, result.text, { method: displayMethod })}`
+  const editorHref = !draftTarget && result && displayScramble && displayMethod && solved
+    ? `/recon/submit?${buildReconSubmitQuery('3x3', displayScramble, result.text, { method: displayMethod })}`
     : undefined;
   function applyOpeningGrip(rotation: string) {
     if (observation.opening) onOpeningView(openingGripView(observation.opening.pose.rotation, rotation));
@@ -123,9 +138,10 @@ export function VideoSolveAnalysis({ scramble, steps, measured, fps, clockFps, s
           ))}
         </div>
       </details>}
+      {inferredScramble && <span className="video-recon-muted">{t('推定打乱', 'Inferred scramble')}</span>}
       <div className="detail-scramble-solution">
-        <ReconNotationBlock captionHeader={captionHeader} scramble={result.scramble} scrambleCubeOrder={3}
-          displayScramble={result.scramble} solutionText={result.text} displayText={result.text} rawDisplayText={result.text}
+        <ReconNotationBlock captionHeader={captionHeader} scramble={displayScramble} scrambleCubeOrder={3}
+          displayScramble={displayScramble} solutionText={result.text} displayText={result.text} rawDisplayText={result.text}
           solve={{ event: '3x3' }} playback={{ offset: activeOffset, onSeek: offset => {
             const move = timeline.findLast(item => item.offset <= offset);
             onSeek(start + (move?.timestampMs ?? openingMs) / 1000);

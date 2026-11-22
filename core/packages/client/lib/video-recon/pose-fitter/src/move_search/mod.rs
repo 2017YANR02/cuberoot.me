@@ -48,6 +48,8 @@ pub struct Config {
     /// Wait for input closure, then search from both the scramble and a solved
     /// end-frame anchor. Legacy callers retain streaming forward exploration.
     pub bidirectional: bool,
+    /// Infer an opening state using only a corroborated solved video endpoint.
+    pub infer_scramble: bool,
     pub postprocess_identity_loops: bool,
     pub postprocess_color_tolerance: f64,
     pub postprocess_pose_cleanup: bool,
@@ -73,6 +75,7 @@ impl Default for Config {
             preserve_hold: false,
             diagnostics: true,
             bidirectional: false,
+            infer_scramble: false,
             postprocess_identity_loops: false,
             postprocess_color_tolerance: 0.02,
             postprocess_pose_cleanup: false,
@@ -109,6 +112,9 @@ pub struct Engine {
 }
 impl Engine {
     pub fn new(config: Config) -> Result<Self, String> {
+        if config.infer_scramble && (!config.scramble.trim().is_empty() || config.bidirectional || config.turning_start_frame.is_some()) {
+            return Err("Video-only reconstruction requires an unknown opening state and no supplied anchor".into());
+        }
         if !config.fps.is_finite()
             || config.fps <= 0.
             || !config.max_tps.is_finite()
@@ -215,15 +221,25 @@ impl Engine {
         if self.ended { return Ok(()); }
         self.ended = true;
         self.frontier.unblock(&self.tables, &self.frames, true);
-        if self.config.bidirectional && self.frontier.winner.is_none() {
+        if (self.config.bidirectional || self.config.infer_scramble) && self.frontier.winner.is_none() {
             self.bidirectional = bidirectional::Bidirectional::new(&self.tables, &self.config, &self.frames);
             self.bidirectional_fallback = self.bidirectional.is_none();
-            self.frontier.observe_meeting_events();
+            if self.config.bidirectional {
+                self.frontier.observe_meeting_events();
+            }
         }
         Ok(())
     }
     pub fn advance(&mut self, budget: usize) {
         if self.external_result.is_some() { return; }
+        if self.config.infer_scramble {
+            if let Some(search) = &mut self.bidirectional {
+                search.run_backward(&self.tables, &self.config, &self.frames, budget.min(128));
+                // The reverse-only path has no second engine to join.
+                search.take_events();
+            }
+            return;
+        }
         if self.config.bidirectional && !self.ended { return; }
         if let Some(search) = &mut self.bidirectional {
             search.run(&mut self.frontier, &self.tables, &self.config, &self.frames, budget.min(128));
@@ -253,6 +269,18 @@ impl Engine {
     }
     fn raw_snapshot(&self) -> serde_json::Value {
         if let Some(result)=&self.external_result {return result.clone();}
+        if self.config.infer_scramble {
+            if let Some(search) = &self.bidirectional {
+                return search.inferred_snapshot(&self.frames);
+            }
+            let mut result = self.frontier.snapshot(&self.frames, self.pending.len(), self.ended);
+            result["status"] = if self.ended { "exhausted" } else { "waiting_for_frames" }.into();
+            result["search_direction"] = "reverse".into();
+            if self.ended {
+                result["inference_failure"] = "no_solved_end".into();
+            }
+            return result;
+        }
         if let Some(search) = &self.bidirectional {
             let mut result=search.snapshot(&self.frontier,&self.frames);
             if self.external_side_used {result["parallel"]=true.into();}

@@ -2,7 +2,7 @@
 //! rows. End-frame solved colors constrain the reverse frontier, never a known
 //! solution sequence. Reverse ties use predecessor-frame color evidence.
 use super::{
-    cube::Tables,
+    cube::{inverse_move, Tables},
     frontier::{self, Choice, SavedStep, Stats, Step},
     motion_history::{required_tps_ratio, MotionHistory},
     prepared::{self, Prepared, RowBatch, COLORS},
@@ -13,6 +13,8 @@ use std::{
     collections::{BinaryHeap, HashMap, HashSet},
     sync::Arc,
 };
+
+const BLIND_BEAM_WIDTH: usize = 16;
 
 #[derive(Clone, Hash, PartialEq, Eq)]
 struct Context {
@@ -200,6 +202,11 @@ pub(super) struct Bidirectional {
     backward_meetings: HashMap<Context, usize>,
     events: Vec<usize>,
     backward_status: &'static str,
+    infer_scramble: bool,
+    inferred_opening: Option<(usize, String)>,
+    blind_layer: Vec<Entry>,
+    blind_frame: Option<usize>,
+    blind_opening_floor: Option<usize>,
 }
 
 fn root(state: Vec<u8>, depth: usize) -> Node {
@@ -240,6 +247,9 @@ fn held_step(frames: &[Prepared], index: usize, cue: Option<usize>) -> Step {
     }
     step
 }
+fn has_layer_turn(moves: &[String]) -> bool {
+    moves.iter().any(|name| !name.starts_with(['x', 'y', 'z']))
+}
 impl Bidirectional {
     pub(super) fn has_winner(&self)->bool {self.winner.is_some()}
     /// Start of the last corroborated cluster of flat solved views. This is the
@@ -252,6 +262,7 @@ impl Bidirectional {
             .collect();
         let goals = t.solved_seeds(&c.scramble).ok()?;
         let mut cluster: Vec<usize> = vec![];
+        let mut last_clear = None;
         let max_gap = (0.15 * c.fps).round().max(2.) as usize;
         for index in (0..frames.len()).rev() {
             let p = &frames[index];
@@ -267,15 +278,15 @@ impl Bidirectional {
             if p.held || p.geometry_flagged {
                 continue;
             }
-            let solved_view = p
-                .geometries
-                .iter()
+            let mut flat_views = p.geometries.iter()
                 .filter(|g| g.index < 6 && g.shape.axis.is_none() && g.observations.len() >= 12)
-                .any(|g| {
-                    goals
-                        .iter()
-                        .any(|state| frontier::color(t, g, state, &color_ids).0 <= 0.1)
-                });
+                .peekable();
+            if flat_views.peek().is_some() {
+                last_clear.get_or_insert(p.frame);
+            }
+            let solved_view = flat_views.any(|g| {
+                goals.iter().any(|state| frontier::color(t, g, state, &color_ids).0 <= 0.1)
+            });
             if solved_view {
                 cluster.push(index);
             }
@@ -283,7 +294,22 @@ impl Bidirectional {
         if cluster.len() < 2 {
             return None;
         }
+        // A solved-looking episode before a clearly different tail is not a
+        // valid endpoint for a video-only reconstruction.
+        if c.infer_scramble && last_clear? - frames[cluster[0]].frame > max_gap {
+            return None;
+        }
         let length = cluster.last().copied()? + 1;
+        let blind_opening_floor = if c.infer_scramble {
+            frames[..length]
+                .iter()
+                .filter(|p| !p.held && !p.geometry_flagged && p.geometries.iter()
+                    .any(|g| g.shape.axis.is_none() && g.observations.len() >= 12))
+                .nth(1)
+                .map(|p| p.frame)
+        } else {
+            None
+        };
         let mut search = Self {
             sides: [Side::default(), Side::default()],
             stats: Stats::default(),
@@ -296,8 +322,19 @@ impl Bidirectional {
             backward_meetings: HashMap::new(),
             events: vec![],
             backward_status: "running",
+            infer_scramble: c.infer_scramble,
+            inferred_opening: None,
+            blind_layer: vec![],
+            blind_frame: None,
+            blind_opening_floor,
         };
         for goal in goals {
+            if c.infer_scramble && !frames[length - 1].geometries.iter().any(|g| {
+                g.index < 6 && g.shape.axis.is_none() && g.observations.len() >= 12
+                    && frontier::color(t, g, &goal, &search.color_ids).0 <= 0.15
+            }) {
+                continue;
+            }
             if let Some(id) =
                 search.sides[1].offer(root(goal, length), 1, length, &mut search.stats)
             {
@@ -321,8 +358,11 @@ impl Bidirectional {
         let p = &frames[index];
         let mut result = vec![];
         if p.resolve_orientation {
+            let required_bank = after.and_then(|index| p.geometry(index)).map(|g| g.bank_index);
             for (&before, (_, prior, _)) in &p.orientation_parents {
-                for base in p.geometries.iter().filter(|g| g.index < 6) {
+                for base in p.geometries.iter().filter(|g| {
+                    g.index < 6 && (!self.infer_scramble || required_bank.is_none_or(|bank| bank == g.bank_index))
+                }) {
                     let mut endpoints = vec![base.index];
                     if prior.is_none_or(|r| super::orientations::angle(r, base.rotation) > 45.) {
                         let variants: Vec<_> = p
@@ -336,6 +376,12 @@ impl Bidirectional {
                                     .total_cmp(&super::orientations::similarity(*prior, a.rotation))
                             }) {
                                 endpoints.push(closest.index);
+                            }
+                        } else if self.infer_scramble {
+                            if let Some(endpoint) = after.filter(|endpoint| {
+                                variants.iter().any(|g| g.index == *endpoint)
+                            }) {
+                                endpoints.push(endpoint);
                             }
                         } else if p.rotation_limit.is_some() {
                             if let Some(best) = variants.iter().min_by(|a, b| {
@@ -437,7 +483,7 @@ impl Bidirectional {
             for (target, &source) in row.sources.iter().enumerate() {
                 state[source] = node.context.state[target];
             }
-            if row.before.is_none() && state != t.identity {
+            if row.before.is_none() && !self.infer_scramble && state != t.identity {
                 continue;
             }
             let prior = p.previous.and_then(|i| {
@@ -488,20 +534,31 @@ impl Bidirectional {
         }
         let direction = 1;
         for _ in 0..budget {
-            self.sides[1].widen(c, 1, self.length, &mut self.stats, &mut self.events);
-            self.sides[1].clean();
-            if self.sides[1].pending.is_empty() {
-                self.backward_status = "exhausted";
-                break;
-            }
             if self.stats.evaluated_states >= c.state_limit {
                 self.backward_status = "state_limit";
                 break;
             }
-            let id = self.sides[1].pending.pop().unwrap().id;
+            let entry = if self.infer_scramble {
+                self.next_blind_entry(frames)
+            } else {
+                self.sides[1].widen(c, 1, self.length, &mut self.stats, &mut self.events);
+                self.sides[1].clean();
+                self.sides[1].pending.pop()
+            };
+            let Some(Entry { id, .. }) = entry else {
+                self.backward_status = "exhausted";
+                break;
+            };
             let node = self.sides[1].nodes[id].clone();
             self.sides[1].nodes[id].expanded = true;
             if node.context.depth == 0 {
+                if self.infer_scramble {
+                    if let Some(scramble) = self.infer_opening(t, frames, id, c.fps) {
+                        self.inferred_opening = Some((id, scramble));
+                        self.backward_status = "solved";
+                        return;
+                    }
+                }
                 continue;
             }
             self.stats.evaluated_states += 1;
@@ -533,6 +590,9 @@ impl Bidirectional {
                 self.stats.attempted_transitions += 1;
                 let Candidate { choice, rank } = candidate;
                 let mut step = choice.step;
+                if self.blind_opening_floor.is_some_and(|floor| p.frame <= floor) && has_layer_turn(&step.state_moves) {
+                    continue;
+                }
                 let context = Context {
                     depth: if direction == 0 {
                         node.context.depth + 1
@@ -570,7 +630,12 @@ impl Bidirectional {
                 } else {
                     0.
                 };
-                let color_priority = if flagged {
+                let color_priority = if self.infer_scramble {
+                    let weight = step.color_match_count.min(12) as f64 / 12.;
+                    let evidence_cost = if p.held { 0. } else if flagged { 0.18 }
+                        else { weight * step.color_error + (1. - weight) * 0.18 };
+                    node.color_priority + evidence_cost + 0.005 * step.state_moves.len() as f64
+                } else if flagged {
                     node.color_priority
                 } else {
                     0.5 * step.color_error + penalty
@@ -583,7 +648,7 @@ impl Bidirectional {
                     MotionHistory::default()
                 };
                 let motion_penalty = motion.penalty(c.motion_cost_weight);
-                let priority = color_priority + motion_penalty;
+                let priority = color_priority + motion_penalty + if self.infer_scramble { 0.18 * rank[1] } else { 0. };
                 step.sibling_rank = sibling;
                 step.pose_flagged = flagged;
                 step.branch_cutoff_bypassed = unrestricted;
@@ -605,7 +670,7 @@ impl Bidirectional {
                     expanded: false,
                 };
                 let side = &mut self.sides[direction];
-                if !unrestricted && !preserve && admission > c.branch_widths[side.stage] {
+                if !self.infer_scramble && !unrestricted && !preserve && admission > c.branch_widths[side.stage] {
                     let key = (admission, context);
                     if side
                         .deferred
@@ -631,6 +696,80 @@ impl Bidirectional {
         if self.stats.evaluated_states >= c.state_limit {
             self.backward_status = "state_limit";
         }
+    }
+
+    /// With no target opening, prioritize a bounded set at every frame. A
+    /// locally ambiguous suffix should not absorb the entire search budget.
+    fn next_blind_entry(&mut self, frames: &[Prepared]) -> Option<Entry> {
+        if self.blind_layer.is_empty() {
+            if let Some(index) = self.blind_frame.take() {
+                self.reverse_rows.clear();
+                frames[index].orientation_cache.borrow_mut().clear();
+                frames[index].mechanical_cache.borrow_mut().clear();
+            }
+            let side = &mut self.sides[1];
+            for _ in 0..BLIND_BEAM_WIDTH {
+                side.clean();
+                let Some(entry) = side.pending.pop() else { break };
+                self.blind_layer.push(entry);
+            }
+            side.pending.clear();
+            side.seen.clear();
+            self.blind_frame = self.blind_layer.first()
+                .and_then(|entry| side.nodes[entry.id].context.depth.checked_sub(1));
+            self.blind_layer.reverse();
+        }
+        self.blind_layer.pop()
+    }
+
+    fn infer_opening(&self, t: &Tables, frames: &[Prepared], id: usize, fps: f64) -> Option<String> {
+        let nodes = &self.sides[1].nodes;
+        let mut node = &nodes[id];
+        let mut moves = Vec::new();
+        let mut first_turn = false;
+        let mut opening = 0;
+        let mut matches = 0;
+        let mut conflicts = 0;
+        let mut last_support = None;
+        let anchor = self.anchor_frame(frames);
+        let max_gap = (0.5 * fps).ceil() as usize;
+        while let Some(parent) = node.parent.map(|id| &nodes[id]) {
+            let step = node.step.as_ref()?;
+            let frame = &frames[node.context.depth];
+            first_turn |= has_layer_turn(step.moves());
+            if first_turn && opening < 2 {
+                return None;
+            }
+            moves.extend(step.moves());
+            if !frame.held && !frame.geometry_flagged {
+                if let Some(geometry) = step.geometry().and_then(|index| frame.geometry(index)) {
+                    if geometry.shape.axis.is_none() && geometry.observations.len() >= 12 {
+                        let error = frontier::color(t, geometry, &parent.context.state, &self.color_ids).0;
+                        if error <= 0.15 {
+                            if last_support.is_some_and(|previous| frame.frame - previous > max_gap) {
+                                return None;
+                            }
+                            last_support = Some(frame.frame);
+                            matches += 1;
+                            opening += usize::from(!first_turn);
+                        } else {
+                            conflicts += 1;
+                        }
+                    }
+                }
+            }
+            node = parent;
+        }
+        if !first_turn || matches < 2 * conflicts || last_support != Some(anchor) {
+            return None;
+        }
+        let colors: Vec<String> = self.color_ids.iter().map(|&id| COLORS[id].into()).collect();
+        if t.solved(&nodes[id].context.state, &colors) {
+            return None;
+        }
+        let mut scramble = t.solved_orientation(&node.context.state)?;
+        scramble.extend(moves.into_iter().rev().map(|name| inverse_move(name)));
+        Some(scramble.join(" "))
     }
     pub(super) fn run(
         &mut self,
@@ -740,6 +879,20 @@ impl Bidirectional {
             "frames_received":frames.len(),"frames_prepared":frames.len(),"frames_searchable":frames.len(),
             "pending":self.sides[1].pending.len(),"deferred":self.sides[1].deferred.len(),"blocked":0,"ended":true,
             "steps":[],"solved_frame_index":null,"solved_anchor_frame":frames[self.length-1].frame})
+    }
+    pub(super) fn inferred_snapshot(&self, frames: &[Prepared]) -> serde_json::Value {
+        let mut result = self.backward_snapshot(frames);
+        result["search_direction"] = "reverse".into();
+        result["stats"]["furthest_frames"] = (self.length - self.sides[1].nodes[self.sides[1].best].context.depth).into();
+        if let Some((id, scramble)) = &self.inferred_opening {
+            let path = self.sides[1].path(*id, true);
+            result["solved_frame_index"] = path.iter().rev().find(|step| !step.moves().is_empty()).map(SavedStep::frame_index).into();
+            result["steps"] = serde_json::to_value(path).unwrap();
+            result["inferred_scramble"] = scramble.clone().into();
+        } else if self.backward_status != "running" {
+            result["inference_failure"] = "no_supported_opening".into();
+        }
+        result
     }
     pub(super) fn snapshot(
         &self,
@@ -882,6 +1035,59 @@ mod tests {
             }
         }
         panic!("search did not terminate");
+    }
+
+    #[test]
+    fn video_only_search_infers_the_opening_from_the_solved_end() {
+        let (_, mut frames) = inputs("R");
+        frames.insert(1, frames[0].clone());
+        for resolve_orientation_ambiguity in [false, true] {
+            let mut engine = Engine::new(Config {
+                fps: 60., infer_scramble: true, state_limit: 1000, diagnostics: false, branch_widths: vec![1, 3],
+                resolve_orientation_ambiguity, max_rotation_tps: Some(20.), ..Config::default()
+            }).unwrap();
+            for (sequence, mut frame) in frames.iter().cloned().enumerate() {
+                frame.sequence = sequence;
+                frame.frame = sequence * 2;
+                engine.push(frame).unwrap();
+                engine.advance(128);
+                assert_eq!(engine.snapshot()["status"], "waiting_for_frames");
+            }
+            engine.end().unwrap();
+            let result = finish(&mut engine, 16);
+            assert_eq!(result["status"], "solved", "{result}");
+            assert_eq!(result["inferred_scramble"], "R");
+            assert_eq!(result["solved_frame_index"], 4);
+            assert_eq!(result["deferred"], 0);
+            assert_eq!(result["steps"][2]["state_moves"], serde_json::json!(["R'"]));
+        }
+    }
+
+    #[test]
+    fn video_only_search_refuses_unseen_ends_and_openings() {
+        let (_, frames) = inputs("R");
+        let mut old_solved_episode = frames.clone();
+        old_solved_episode.extend(vec![frames[0].clone(); 6]);
+        for (input, failure) in [
+            (vec![frames[0].clone(); 4], "no_solved_end"),
+            (old_solved_episode, "no_solved_end"),
+            (vec![frames[1].clone(); 4], "no_supported_opening"),
+            (frames, "no_supported_opening"),
+        ] {
+            let mut engine = Engine::new(Config {
+                fps: 60., infer_scramble: true, state_limit: 1000, ..Config::default()
+            }).unwrap();
+            for (sequence, mut frame) in input.into_iter().enumerate() {
+                frame.sequence = sequence;
+                frame.frame = sequence * 2;
+                engine.push(frame).unwrap();
+            }
+            engine.end().unwrap();
+            let result = finish(&mut engine, 16);
+            assert_eq!(result["inference_failure"], failure, "{result}");
+            assert!(result["inferred_scramble"].is_null());
+            assert_eq!(result["steps"], serde_json::json!([]));
+        }
     }
     #[test]
     fn solved_seeds_invert_scrambles_in_all_rigid_orientations() {

@@ -99,13 +99,7 @@ impl Tables {
         let normalized = scramble.replace('’', "'");
         let mut state = self.identity.clone();
         for token in normalized.split_whitespace().rev() {
-            let inverse = if token.ends_with('2') || token.ends_with("2'") {
-                token.trim_end_matches('\'').to_string()
-            } else if token.ends_with('\'') {
-                token.trim_end_matches('\'').to_string()
-            } else {
-                format!("{token}'")
-            };
+            let inverse = inverse_move(token);
             let sources = self.moves.get(&inverse).ok_or_else(|| format!("Unknown scramble move: {token}"))?;
             state = sources.iter().map(|&i| state[i]).collect();
         }
@@ -120,6 +114,33 @@ impl Tables {
             index += 1;
         }
         Ok(states)
+    }
+
+    pub(super) fn solved_orientation(&self, state: &[u8]) -> Option<Vec<String>> {
+        let mut pending = std::collections::VecDeque::from([(self.identity.clone(), Vec::new())]);
+        let mut seen = std::collections::HashSet::from([self.identity.clone()]);
+        while let Some((current, path)) = pending.pop_front() {
+            if current == state {
+                return Some(path);
+            }
+            for name in ["x", "x2", "x'", "y", "y2", "y'", "z", "z2", "z'"] {
+                let next: Vec<_> = self.moves[name].iter().map(|&i| current[i]).collect();
+                if seen.insert(next.clone()) {
+                    let mut path = path.clone();
+                    path.push(name.to_string());
+                    pending.push_back((next, path));
+                }
+            }
+        }
+        None
+    }
+}
+
+pub(super) fn inverse_move(token: &str) -> String {
+    if token.ends_with('2') || token.ends_with('\'') {
+        token.trim_end_matches('\'').to_string()
+    } else {
+        format!("{token}'")
     }
 }
 pub fn normalize(groups: &[Group]) -> Vec<Group> {

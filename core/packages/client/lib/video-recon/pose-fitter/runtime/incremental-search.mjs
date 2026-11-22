@@ -8,7 +8,7 @@ export class IncrementalSearch {
     this.paused=false;this.delayMs=0;
   }
   request(request) {
-    if(request.type==='init'){this.diagnostics=request.config?.diagnostics!==false;this.bidirectional=!!request.config?.bidirectional;}
+    if(request.type==='init'){this.diagnostics=request.config?.diagnostics!==false;this.waitForEnd=!!(request.config?.bidirectional||request.config?.infer_scramble);}
     const start=this.diagnostics?this.now():0;
     const result=this.call(request);
     if(request.type==='init'){this.prepareMs=0;this.searchMs=0;this.ended=false;this.actions=[];}
@@ -18,7 +18,7 @@ export class IncrementalSearch {
     if(this.diagnostics&&request.type==='complete_join')this.actions.push({...request});
     if(request.type==='end'){this.ended=true;if(this.diagnostics)this.actions.push({type:'end'});}
     this.publish(result,request.type!=='advance');
-    const canSearch=!this.bidirectional||this.ended;
+    const canSearch=!this.waitForEnd||this.ended;
     if(this.live&&canSearch&&request.type!=='init'&&result.status==='running')this.wake();
     // A newly pushed frame can wake an otherwise waiting live frontier.
     else if(this.live&&canSearch&&(request.type==='frame'||request.type==='end'))this.wake();

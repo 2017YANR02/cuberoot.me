@@ -96,6 +96,19 @@ impl SavedStep {
             Self::Essential(step) => step.frame_index,
         }
     }
+    pub(super) fn moves(&self) -> &[String] {
+        match self {
+            Self::Detailed(step) => &step.state_moves,
+            Self::Essential(step) => &step.state_moves,
+        }
+    }
+    pub(super) fn geometry(&self) -> Option<usize> {
+        let (bank, symmetry) = match self {
+            Self::Detailed(step) => (step.geometry_option_index, step.orientation_symmetry_index),
+            Self::Essential(step) => (step.geometry_option_index, step.orientation_symmetry_index),
+        };
+        bank.map(|bank| symmetry.map_or(bank, |sym| 6 + 24 * bank + sym as usize))
+    }
     pub(super) fn new(step: Step, diagnostics: bool) -> Self {
         if diagnostics {
             Self::Detailed(Arc::new(step))
@@ -600,7 +613,7 @@ impl Frontier {
             meeting_events: None,
         };
         s.offer(root, t, &[], false);
-        if t.solved(&t.identity, &s.colors) {
+        if !c.infer_scramble && t.solved(&t.identity, &s.colors) {
             s.winner = Some(0);
             s.status = "already_solved".into();
         }

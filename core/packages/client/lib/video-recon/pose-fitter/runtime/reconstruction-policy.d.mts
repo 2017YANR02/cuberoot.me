@@ -12,6 +12,7 @@ export interface SearchConfig {
   motion_cost_weight?:number;
   diagnostics?:boolean;
   bidirectional?:boolean;
+  infer_scramble?:boolean;
   postprocess_identity_loops?:boolean;
   postprocess_color_tolerance?:number;
   postprocess_pose_cleanup?:boolean;
@@ -21,6 +22,6 @@ export interface SearchConfig {
   source_fps?:number;frame_clock?:'camera_milliseconds';
 }
 export function createSearchConfig(options:{scramble:string;fps?:number;camera?:boolean;openingHoldSeconds?:number;
-  originSeconds?:number;startSeconds?:number;endSeconds?:number;motionCostWeight?:number;diagnostics?:boolean;bidirectional?:boolean;
+  originSeconds?:number;startSeconds?:number;endSeconds?:number;motionCostWeight?:number;diagnostics?:boolean;bidirectional?:boolean;inferScramble?:boolean;
   postprocessIdentityLoops?:boolean;postprocessColorTolerance?:number}):SearchConfig;
 export function videoFrameIdentity(timestamp:number,config:Pick<SearchConfig,'fps'|'source_origin_seconds'>):{sourceFrame:number;sequence:number};

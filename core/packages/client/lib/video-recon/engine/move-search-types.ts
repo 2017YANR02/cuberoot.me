@@ -14,8 +14,10 @@ export interface MoveSearchResult {
   status:"running"|"waiting_for_frames"|"solved"|"already_solved"|"exhausted"|"state_limit";
   frames_received:number;frames_prepared:number;frames_searchable:number;blocked:number;pending:number;
   furthest_admitted_frames?:number;
-  search_direction?:"forward"|"bidirectional";
+  search_direction?:"forward"|"bidirectional"|"reverse";
   bidirectional_fallback?:string;
+  inferred_scramble?:string;
+  inference_failure?:"no_solved_end"|"no_supported_opening";
   solved_anchor_frame?:number;join_frame_index?:number|null;
   flagged_frames?:{frame:number;reason:string}[];
   stats:{evaluated_states:number;furthest_frames:number;branch_stage:number;forward_expanded?:number;backward_expanded?:number};

@@ -12,6 +12,8 @@ const COLORS=["corner","corner-edge","corner-edge-center","white","yellow","oran
 export class MoveSearch {
   readonly actions:SearchAction[]=[];
   private worker:Worker|ParallelMoveSearch;private sequence=0;private seen=new Set<number>();private lastSequence=-1;
+  private lastVideoBucket=-1;
+  private lastVideoFrame=-1;
   private pending=new Set<Promise<void>>();private closed=false;private ended=false;private endRequested=false;
   private solutionFound=false;
   private deadline:ReturnType<typeof setTimeout>|undefined;
@@ -52,7 +54,15 @@ export class MoveSearch {
   submit(timestamp:number,frame:FrameResult,fitting:Promise<FittedPose>){
     if(this.closed||this.ended||this.solutionFound)return;
     const identity=videoFrameIdentity(timestamp,this.config),sourceFrame=identity.sourceFrame;
-    const sequence=this.video?identity.sequence:this.sequence++;
+    const denseVideo=this.video&&this.config.infer_scramble;
+    if(denseVideo){
+      // A VFR source can skip buckets. Keep motion timing in sourceFrame and
+      // give each accepted observation a queue ordinal with no gaps.
+      if(identity.sequence<=this.lastVideoBucket||sourceFrame<=this.lastVideoFrame)return;
+      this.lastVideoBucket=identity.sequence;
+      this.lastVideoFrame=sourceFrame;
+    }
+    const sequence=this.video&&!denseVideo?identity.sequence:this.sequence++;
     if(sequence<0)return;
     if(this.seen.has(sequence))return;
     this.seen.add(sequence);this.lastSequence=Math.max(this.lastSequence,sequence);

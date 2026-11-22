@@ -51,6 +51,9 @@ export function validateRun(recording:any,run:any,options:{diagnostic?:boolean;e
     if(config.frame_clock==='camera_milliseconds') {
       if(index&&identity.sourceFrame<=videoFrameIdentity(rows[index-1].timestampSeconds,config).sourceFrame)
         throw Error(`Camera source timestamps do not increase at ordinal ${index}`);
+    } else if(config.infer_scramble) {
+      if(index&&row.timestampSeconds<=rows[index-1].timestampSeconds)
+        throw Error(`Video source timestamps do not increase at ordinal ${index}`);
     } else if(identity.sequence!==index)throw Error(`Missing/duplicated source frame at ordinal ${index}: got ${identity.sequence}`);
     const fit=row.result.fittedPose;
     if(fit?.fittingConfig&&(fit.fittingConfig.fps!==config.fps||fit.fittingConfig.turningStartFrame!==config.turning_start_frame))
