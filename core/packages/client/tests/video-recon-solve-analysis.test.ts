@@ -1,12 +1,14 @@
 import { describe, expect, it } from 'vitest';
+import { checkReconCompletion } from '@cuberoot/shared/recon-completion';
 import { facePermFor } from '@cuberoot/shared/timer/reconstruct/gyro-orient';
 import { decodeUrlAlg } from '@/lib/cubedb-url';
 import { buildReconSubmitQuery } from '@/lib/sim-recon-link';
 import { axisAngle, multiply, type CubePose, type Quaternion, type V3 } from '@/lib/video-recon/engine/cube-motion';
+import { buildColorTimeline } from '@/lib/video-recon/engine/cube-colors';
 import { CAMERA_ORIENTATION, CUBE_GRIP_ROTATIONS, initialGripMoves, openingGripView, relativeCubeGrip } from '@/lib/video-recon/engine/cube-orientation';
 import type { MoveStep } from '@/lib/video-recon/engine/move-search-types';
 import type { MeasuredCubeFrame } from '@/lib/video-recon/engine/projected-cube';
-import { analyzeVideoSolve, observeVideoSolve, playerGrip, videoGripOptions, videoNotationTimeline } from '@/lib/video-recon/solve-analysis';
+import { analyzeVideoSolve, matchVideoOpeningScramble, observeVideoSolve, playerGrip, videoGripOptions, videoNotationTimeline } from '@/lib/video-recon/solve-analysis';
 
 const fps = 30;
 const identity: Quaternion = [0, 0, 0, 1];
@@ -61,6 +63,32 @@ describe('video solve reconstruction', () => {
     const solver = playerGrip('F', 'U')!;
     expect(facePermFor(solver.rotation)).toEqual(facePermFor(`${camera.rotation} y2`));
     expect(facePermFor(solver.rotation)).toEqual(facePermFor("x' z2"));
+  });
+
+  it('keeps the 6.98 physical opening when compacting its inferred scramble for the written solve', async () => {
+    const recognized = "y Uw' D' D' B' D D B D B' D B B D' B' D Fw L L B' L E' E B' L B L L U L E B L B' E' Dw' L B L' B U B U' B F' F' L' L' U R' D D'";
+    const compact = "U' R2 U' L2 F2 D' F2 D2 U' F2 L2 U B F D L B2 F R' B' U'";
+    const solution = [
+      'x2 z // insp',
+      "D L' U2 x D2 // W cross (0.800)",
+      "U' L U' L' d' R U' R' // GR (1.200)",
+      "f B F' L U' L' S' U' B' // GO (1.100)",
+      "U2' L' U' L // RB (0.800)",
+      "U' L U2' L' U' L U L' // OB/ZBLS (0.766)",
+      "L' U' L U' L' U2' L (U U U) // COLL-S-/PLL Skip (1.734)",
+    ].join('\n');
+    const colors = buildColorTimeline(recognized, []).initial;
+    expect(await checkReconCompletion({ event: '3x3', scramble: compact, solution })).toEqual({ status: 'solved' });
+    expect(buildColorTimeline(compact, []).initial).not.toEqual(colors);
+
+    const scramble = await matchVideoOpeningScramble(recognized, compact);
+    expect(scramble.endsWith(compact)).toBe(true);
+    expect(buildColorTimeline(scramble, []).initial).toEqual(colors);
+    expect(await checkReconCompletion({ event: '3x3', scramble, solution })).toEqual({ status: 'solved' });
+  });
+
+  it('retains the recognized scramble when rotations cannot match the compact candidate', async () => {
+    expect(await matchVideoOpeningScramble("x' R U", 'R F')).toBe("x' R U");
   });
 
   it('uses the camera millisecond clock while keeping the actual frame interval for analysis', () => {

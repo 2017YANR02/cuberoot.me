@@ -20,7 +20,7 @@ import type { MoveStep } from '@/lib/video-recon/engine/move-search-types';
 import type { MeasuredCubeFrame } from '@/lib/video-recon/engine/projected-cube';
 import { timecode } from '@/lib/video-recon/engine/solve-range';
 import {
-  analyzeVideoSolve, observeVideoSolve, playerGrip, videoGripOptions, videoNotationTimeline, type VideoSolveObservation,
+  analyzeVideoSolve, matchVideoOpeningScramble, observeVideoSolve, playerGrip, videoGripOptions, videoNotationTimeline, type VideoSolveObservation,
 } from '@/lib/video-recon/solve-analysis';
 
 export interface VerifiedVideoDraft {
@@ -83,9 +83,7 @@ export function VideoSolveAnalysis({ scramble, steps, measured, fps, clockFps, s
             verifiedInferredScramble = original;
             try {
               const candidate = await deriveScrambleFromSolution(solution);
-              if (candidate && active && (await checkReconCompletion({ event: '3x3', scramble: candidate, solution })).status === 'solved') {
-                verifiedInferredScramble = candidate;
-              }
+              if (active) verifiedInferredScramble = await matchVideoOpeningScramble(original, candidate);
             } catch { /* The recognized opening already passed verification. */ }
             if (draftScramble === '') draft = { solution, inferredScramble: verifiedInferredScramble };
           } else if (draftScramble) {

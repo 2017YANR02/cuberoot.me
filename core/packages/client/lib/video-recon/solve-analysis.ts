@@ -126,6 +126,19 @@ export function observeVideoSolve(scramble: string, steps: readonly MoveStep[], 
 
 export type VideoSolveObservation = ReturnType<typeof observeVideoSolve>;
 
+/** A compact scramble can solve the written turns while rotating all of the
+ * opening stickers. Require the recognized state in the standard frame. */
+export async function matchVideoOpeningScramble(recognized: string, compact: string) {
+  if (!compact) return recognized;
+  const solved = (await getCube3()).defaultPattern();
+  const opening = solved.applyAlg(recognized);
+  for (const rotation of CUBE_GRIP_ROTATIONS) {
+    const candidate = rotation ? `${rotation} ${compact}` : compact;
+    if (solved.applyAlg(candidate).isIdentical(opening)) return candidate;
+  }
+  return recognized;
+}
+
 /** Keep the renderer's text offsets paired with recorded frames. A compact
  * gesture can contain multiple notation tokens that share one video frame. */
 export function videoNotationTimeline(result: ReconTextResult, openingMs: number) {
