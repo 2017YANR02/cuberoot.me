@@ -1,25 +1,29 @@
 'use client';
 
 import { sessionFetch } from '@/lib/session-fetch';
-import { useEffect, useMemo, useRef, useState, type ComponentPropsWithoutRef, type FormEvent } from 'react';
-import { Check, Copy, Download, KeyRound, Loader2, Lock, Plus, RotateCcw, Save, Trash2, X } from '@app-foundation/icons/lucide';
+import { useCallback, useEffect, useId, useMemo, useRef, useState, type ComponentPropsWithoutRef, type FormEvent, type ReactNode } from 'react';
+import { Check, Copy, Download, Ellipsis, KeyRound, Loader2, Pencil, Plus, RotateCcw, Save, Trash2, X } from '@app-foundation/icons/lucide';
+import { DndContext, KeyboardSensor, PointerSensor, closestCenter, useSensor, useSensors } from '@dnd-kit/core';
+import { SortableContext, arrayMove, sortableKeyboardCoordinates, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import BackHome from '@/components/BackHome';
 import AppLink from '@/components/AppLink';
-import BoolToggle from '@/components/BoolToggle';
-import MoreToggle, { MoreTogglePanel } from '@/components/MoreToggle';
 import { PasswordInput } from '@/components/PasswordInput';
 import { SearchInput } from '@/components/SearchInput';
+import SortableCard from '@/components/SortableCard';
 import { CompactSelect } from '@/components/CompactSelect';
 import { ListSelect } from '@/components/ListSelect';
 import { Tooltip } from '@/components/Tooltip';
 import { useCopy } from '@/hooks/useCopy';
+import { usePopoverDismiss } from '@/hooks/usePopoverDismiss';
 import { useRequireMembership } from '@/hooks/useRequireMembership';
 import { tr } from '@/i18n/tr';
 import { apiUrl } from '@/lib/api-base';
 import { fetchFriends } from '@/lib/friends-api';
 import { authHeaders, handleApi } from '@/lib/admin-api';
 import { useAuthUser, authActions } from '@/lib/auth-store';
+import type { VaultBackupSource } from '@/lib/vault-backup';
 import { mergeVaultEntries } from '@/lib/vault-merge';
+import { hasVaultPrimaryAccount, readVaultAccount, setVaultAccountOrder, updateVaultAccount, vaultAccountGroups, vaultAccountSlots, vaultAccountStatusLabels } from '@/lib/vault-account';
 import {
   createVaultKeyProfile,
   decryptVaultEntry,
@@ -28,10 +32,15 @@ import {
   readVaultImages,
   recoverVaultPrivateKey,
   unlockVaultPrivateKey,
+  MAX_VAULT_ADDITIONAL_ACCOUNTS,
   type EncryptedPrivateKey,
+  type VaultAccount,
+  type VaultAccountStatus,
   type VaultEntry,
+  type VaultField,
 } from '@/lib/vault-crypto';
 import './vault.css';
+import VaultBackup from './VaultBackup';
 
 interface VaultShare { userId: number; name: string; publicKey: JsonWebKey; }
 interface VaultItemPayload {
@@ -41,6 +50,7 @@ interface VaultItemPayload {
 interface VaultPayload {
   userId: number;
   canManage: boolean;
+  backupRevision?: string;
   keyProfile: { publicKey: JsonWebKey; encryptedPrivateKey: EncryptedPrivateKey } | null;
   items: VaultItemPayload[];
   trash?: VaultItemPayload[];
@@ -51,6 +61,77 @@ interface OpenItem {
 }
 interface UserResult { userId: number; name: string; wcaId: string | null; publicKey: JsonWebKey | null; }
 type ShareFriend = Omit<UserResult, 'publicKey'> & { publicKey?: JsonWebKey | null };
+
+const accountStatusIcons = { verified: Check, problem: X, untested: null };
+const accountGroupId = (group: VaultAccount | 'primary') => group === 'primary' ? 'primary' : `account:${group.id}`;
+
+function splitVaultTitle(title: string) {
+  const separator = title.search(/[|｜│]/);
+  if (separator < 0) return null;
+  const tag = title.slice(0, separator).trimStart().replace(/ $/, '');
+  if (!tag.trim()) return null;
+  const name = title.slice(separator + 1).trimStart();
+  return { tag, name, prefix: title.slice(0, title.length - name.length), suffix: ` ${title.slice(separator)}` };
+}
+
+function VaultListTitle({ title }: { title: string }) {
+  const parts = splitVaultTitle(title);
+  if (!parts?.name.trim()) return <strong>{title}</strong>;
+  return <strong className="vault-list-title">
+    <span className="vault-title-tag">{parts.tag.trim()}</span>{' '}
+    <span className="vault-list-title-name">{parts.name.trim()}</span>
+  </strong>;
+}
+
+function VaultAccountStatusMark({ status }: { status: VaultAccountStatus }) {
+  const Icon = accountStatusIcons[status];
+  return <span className="vault-account-status-mark" data-status={status} aria-hidden="true">{Icon ? <Icon /> : '?'}</span>;
+}
+
+function VaultAccountStatusPicker({ status, disabled, onChange, removeAction }: {
+  status: VaultAccountStatus;
+  disabled: boolean;
+  onChange: (status: VaultAccountStatus) => void;
+  removeAction: ReactNode;
+}) {
+  const [open, setOpen] = useState(false);
+  const optionsId = useId();
+  const trigger = useRef<HTMLButtonElement>(null);
+  const options = useRef<HTMLDivElement>(null);
+  const expanded = open && !disabled;
+  const label = tr(vaultAccountStatusLabels[status]);
+  usePopoverDismiss(expanded, () => setOpen(false), options, trigger);
+  useEffect(() => { if (disabled) setOpen(false); }, [disabled]);
+
+  return <div className="vault-account-status"
+    onPointerLeave={(event) => {
+      if (event.pointerType === 'mouse' && !options.current?.contains(document.activeElement)) setOpen(false);
+    }}
+    onBlur={(event) => {
+      if (!event.currentTarget.contains(event.relatedTarget)) setOpen(false);
+    }}>
+    <button ref={trigger} type="button" className="vault-icon-button" disabled={disabled}
+      aria-expanded={expanded} aria-controls={optionsId} aria-label={label} title={label}
+      aria-description={disabled ? undefined : tr({ zh: '更改账号状态', en: 'Change account status' })}
+      onPointerEnter={(event) => {
+        if (!disabled && event.pointerType === 'mouse') setOpen(true);
+      }}
+      onClick={() => setOpen((current) => !current)}><VaultAccountStatusMark status={status} /></button>
+    <div ref={options} id={optionsId} className="vault-account-status-options" hidden={!expanded}
+      role="group" aria-label={tr({ zh: '账号操作', en: 'Account actions' })}>
+      {expanded && (Object.keys(accountStatusIcons) as VaultAccountStatus[]).filter((value) => value !== status).map((value) => {
+        const optionLabel = tr(vaultAccountStatusLabels[value]);
+        return <button key={value} type="button" className="vault-icon-button" aria-label={optionLabel} title={optionLabel}
+          onClick={() => {
+            onChange(value);
+            setOpen(false);
+            trigger.current?.focus({ preventScroll: true });
+          }}><VaultAccountStatusMark status={value} /></button>;
+      })}
+      {expanded && removeAction}
+    </div>
+  </div>;
+}
 
 async function fetchVaultUsers(userId?: number, signal?: AbortSignal) {
   const query = userId === undefined ? '' : `?q=${userId}`;
@@ -73,20 +154,31 @@ const categoryLabels = {
 };
 const passwordFieldAliases = ['密码', 'Password'];
 const emailFieldLabels = new Set(['邮箱', '电子邮箱', '邮箱地址', '电子邮件', '电子邮件地址', 'email', 'e-mail', 'email address', 'e-mail address']);
-const isEmailField = (field: VaultEntry['fields'][number]) => emailFieldLabels.has(field.label.trim().toLowerCase());
+const isEmailField = (field: VaultField) => emailFieldLabels.has(field.label.trim().toLowerCase());
+const credentialFields = (loginLabel: string): VaultField[] => [
+  { id: crypto.randomUUID(), label: loginLabel, value: '', secret: false },
+  { id: crypto.randomUUID(), label: tr({ zh: '密码', en: 'Password' }), value: '', secret: true },
+];
+
+function orderVaultFields(fields: VaultField[]) {
+  const passwordIndex = fields.findIndex(({ label }) =>
+    passwordFieldAliases.some((alias) => alias.toLowerCase() === label.trim().toLowerCase()));
+  if (passwordIndex < 0) return fields;
+  const fieldsFromPassword = fields.slice(passwordIndex);
+  return [...fields.slice(0, passwordIndex), ...fieldsFromPassword.filter(isEmailField),
+    ...fieldsFromPassword.filter((field) => !isEmailField(field))];
+}
+
 const emptyEntry = (category: VaultCategory): VaultEntry => ({
   id: crypto.randomUUID(), title: '', category, notes: '',
-  fields: (category === 'accounts' ? [
-    { label: tr({ zh: '账号', en: 'Username' }), secret: false },
-    { label: tr({ zh: '密码', en: 'Password' }), secret: true },
-  ] : []).map((field) => ({ ...field, id: crypto.randomUUID(), value: '' })),
+  fields: category === 'accounts' ? credentialFields(tr({ zh: '账号', en: 'Username' })) : [],
 });
 
-function VaultTextArea({ className, value, ...props }: ComponentPropsWithoutRef<'textarea'> & { value: string }) {
+function VaultTextArea({ className, value, readOnly, ...props }: ComponentPropsWithoutRef<'textarea'> & { value: string }) {
   return (
-    <div className="vault-grow-textarea">
+    <div className="vault-grow-textarea" data-readonly={readOnly || undefined}>
       <div className={className} data-vault-text-measure aria-hidden="true">{value}{'\u200b'}</div>
-      <textarea {...props} className={className} value={value} />
+      <textarea {...props} className={className} value={value} readOnly={readOnly} rows={readOnly ? 1 : props.rows} />
     </div>
   );
 }
@@ -95,13 +187,20 @@ export default function VaultPage() {
   const user = useAuthUser();
   const login = authActions.login;
   const { copiedKey, copy } = useCopy();
+  const accountSensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
+  );
   const [mounted, setMounted] = useState(false);
   const [payload, setPayload] = useState<VaultPayload | null>(null);
   const requireMembership = useRequireMembership(payload?.canManage === true);
-  const [privateKey, setPrivateKey] = useState<CryptoKey | null>(null);
+  const [unlockedVault, setUnlockedVault] = useState<{ userId: number; key: CryptoKey } | null>(null);
+  const privateKey = unlockedVault && unlockedVault.userId === payload?.userId
+    && (user?.uid === undefined || user.uid === payload.userId) ? unlockedVault.key : null;
   const [items, setItems] = useState<OpenItem[]>([]);
   const [draft, setDraft] = useState<OpenItem | null>(null);
   const [dirty, setDirty] = useState(false);
+  const [editMode, setEditMode] = useState(false);
   const [passphrase, setPassphrase] = useState('');
   const [confirmation, setConfirmation] = useState('');
   const [showPassphrases, setShowPassphrases] = useState(false);
@@ -115,15 +214,50 @@ export default function VaultPage() {
   const [failedTrashCount, setFailedTrashCount] = useState(0);
   const [failedOwnedActiveCount, setFailedOwnedActiveCount] = useState(0);
   const [showTrash, setShowTrash] = useState(false);
-  const [showExport, setShowExport] = useState(false);
-  const [exportScope, setExportScope] = useState<'current' | 'all'>('all');
-  const [includeSensitive, setIncludeSensitive] = useState(false);
-  const [busy, setBusy] = useState(false);
+  const [busyOperation, setBusy] = useState<boolean | 'save'>(false);
+  const busy = Boolean(busyOperation);
+  const saving = busyOperation === 'save';
   const [error, setError] = useState<string | null>(null);
   const imageInput = useRef<HTMLInputElement>(null);
   const [expandedImage, setExpandedImage] = useState<string | null>(null);
   const [categoryFilter, setCategoryFilter] = useState('');
   const [mergeTargetId, setMergeTargetId] = useState('');
+  const canEditVault = editMode && payload?.canManage === true;
+  const manageable = Boolean(draft && payload?.canManage && draft.ownerUserId === payload.userId);
+  const editable = canEditVault && manageable && !showTrash && !draft?.entry.mergedInto;
+  const vaultOwnerId = payload?.userId;
+  const checkBackupRevision = useCallback(async (signal: AbortSignal): Promise<string | null> => {
+    const response = await sessionFetch(apiUrl('/v1/vault/backup-revision'), {
+      headers: authHeaders(false), cache: 'no-store', signal,
+    });
+    if (response.status === 404) return null; // Older deployments still support full snapshots.
+    const data = await handleApi<{ userId: number; revision: string }>(response);
+    if (data.userId !== vaultOwnerId) throw new Error('Vault owner has changed');
+    return data.revision;
+  }, [vaultOwnerId]);
+  const loadBackupSource = useCallback(async (signal: AbortSignal): Promise<VaultBackupSource> => {
+    if (!privateKey || vaultOwnerId === undefined) throw new Error('Vault is locked');
+    const snapshot = await handleApi<VaultPayload>(await sessionFetch(apiUrl('/v1/vault'), {
+      headers: authHeaders(false), cache: 'no-store', signal,
+    }));
+    if (snapshot.userId !== vaultOwnerId || !snapshot.keyProfile) throw new Error('Vault owner has changed');
+    const owned = [...snapshot.items, ...(snapshot.trash ?? [])].filter((item) => item.ownerUserId === vaultOwnerId);
+    return {
+      revision: snapshot.backupRevision ?? JSON.stringify(
+        owned.map(({ id, version, updatedAt, trashedAt }) => [id, version, updatedAt, trashedAt]),
+      ),
+      // A partial or unreadable snapshot must leave the previous local file intact.
+      readItems: () => Promise.all(owned.map(async ({ ciphertext, iv, wrappedKey, trashedAt }) => ({
+        entry: await decryptVaultEntry(ciphertext, iv, wrappedKey, privateKey),
+        trashedAt,
+      }))),
+    };
+  }, [privateKey, vaultOwnerId]);
+  const backupRevision = useMemo(() => JSON.stringify([
+    failedOwnedActiveCount, failedTrashCount,
+    items.filter(({ ownerUserId, serverId }) => ownerUserId === vaultOwnerId && serverId)
+      .map(({ serverId, version, updatedAt, trashedAt }) => [serverId, version, updatedAt, trashedAt]),
+  ]), [failedOwnedActiveCount, failedTrashCount, items, vaultOwnerId]);
 
   useEffect(() => { setMounted(true); }, []);
   useEffect(() => {
@@ -145,10 +279,13 @@ export default function VaultPage() {
   const visibleItems = useMemo(() => {
     const q = filter.trim().toLocaleLowerCase();
     const matches = (value: string) => value.toLocaleLowerCase().includes(q);
+    const fieldsMatch = (fields: VaultField[]) => fields.some(({ label, value }) => matches(label) || matches(value));
     return items.filter(({ entry, trashedAt }) => Boolean(trashedAt) === showTrash
       && (!categoryFilter || (entry.category ?? 'other') === categoryFilter)
       && (!q || matches(entry.title) || matches(entry.notes)
-        || entry.fields.some(({ label, value }) => matches(label) || matches(value))));
+        || matches(entry.accountName ?? '') || matches(entry.privateNotes ?? '') || fieldsMatch(entry.fields)
+        || entry.accounts?.some(({ name, fields, notes, privateNotes }) =>
+          matches(name) || fieldsMatch(fields) || matches(notes ?? '') || matches(privateNotes ?? ''))));
   }, [filter, categoryFilter, items, showTrash]);
 
   const openVault = async (key: CryptoKey, data: VaultPayload) => {
@@ -156,7 +293,7 @@ export default function VaultPage() {
     const results = await Promise.allSettled([...data.items, ...trash].map((item) => decryptOpenItem(item, key)));
     const opened = results.flatMap((result) => result.status === 'fulfilled' ? [result.value] : []);
     const active = opened.filter((item) => !item.trashedAt);
-    setPrivateKey(key);
+    setUnlockedVault({ userId: data.userId, key });
     setItems(opened);
     const first = active.find((item) => !item.entry.mergedInto) ?? active[0];
     setDraft(first ? cloneItem(first) : null);
@@ -165,6 +302,7 @@ export default function VaultPage() {
     setFailedOwnedActiveCount(data.items.filter((item) => item.ownerUserId === data.userId).length
       - active.filter((item) => item.ownerUserId === data.userId).length);
     setShowTrash(false);
+    setEditMode(false);
     setDirty(false);
     setPassphrase('');
   };
@@ -258,6 +396,18 @@ export default function VaultPage() {
     setExpandedImage(null);
     setMergeTargetId('');
   };
+  const toggleEditMode = () => {
+    if (!payload?.canManage || busy) return;
+    if (editMode) {
+      if (!confirmDiscard()) return;
+      if (dirty) {
+        discardUnsavedNew();
+        showItem(draft?.serverId ? items.find((item) => item.localId === draft.localId) ?? null : null);
+      }
+      setError(null);
+    }
+    setEditMode(!editMode);
+  };
   const selectItem = (item: OpenItem) => {
     if (!confirmDiscard()) return;
     discardUnsavedNew();
@@ -273,7 +423,7 @@ export default function VaultPage() {
     setShowTrash((current) => !current);
   };
   const addItem = () => {
-    if (!payload?.canManage || !confirmDiscard()) return;
+    if (!canEditVault || !payload || busy || showTrash || !confirmDiscard()) return;
     discardUnsavedNew();
     const item: OpenItem = {
       localId: `new:${crypto.randomUUID()}`, serverId: null, ownerUserId: payload.userId,
@@ -288,6 +438,7 @@ export default function VaultPage() {
     setMergeTargetId('');
   };
   const updateDraft = (update: (item: OpenItem) => void) => {
+    if (!editable || busy) return;
     setDraft((current) => {
       if (!current) return current;
       const next = cloneItem(current);
@@ -298,7 +449,7 @@ export default function VaultPage() {
   };
 
   const persistItem = async (item: OpenItem): Promise<OpenItem> => {
-    if (!payload?.keyProfile || !privateKey || !payload.canManage || item.ownerUserId !== payload.userId) throw new Error('forbidden');
+    if (!canEditVault || !payload?.keyProfile || !privateKey || item.ownerUserId !== payload.userId) throw new Error('forbidden');
     const encrypted = await encryptVaultEntry(item.entry, [
       { userId: payload.userId, publicKey: payload.keyProfile.publicKey },
       ...item.shares.map(({ userId, publicKey }) => ({ userId, publicKey })),
@@ -311,7 +462,7 @@ export default function VaultPage() {
   };
 
   const save = async () => {
-    if (!draft || !payload?.keyProfile || !privateKey || draft.ownerUserId !== payload.userId || !payload.canManage) return;
+    if (busy || !editable || !draft) return;
     if (!draft.entry.title.trim()) {
       setError(tr({ zh: '请填写标题。', en: 'Enter a title.' }));
       return;
@@ -320,13 +471,14 @@ export default function VaultPage() {
       setError(tr({ zh: '请填写图片名称。', en: 'Enter a name for each image.' }));
       return;
     }
-    setBusy(true);
+    setBusy('save');
     setError(null);
     try {
       const saved = await persistItem(draft);
       setItems((current) => current.map((item) => item.localId === draft.localId ? saved : item));
       setDraft(saved);
       setDirty(false);
+      setEditMode(false);
     } catch (saveError) {
       setError((saveError as Error).message === 'item changed in another tab'
         ? tr({ zh: '这条内容已在其他页面修改，请刷新后重试。', en: 'This item changed in another tab. Refresh and try again.' })
@@ -338,7 +490,7 @@ export default function VaultPage() {
 
   const merge = async () => {
     const target = items.find((item) => item.localId === mergeTargetId);
-    if (busy || dirty || !draft?.serverId || !target?.serverId || target.localId === draft.localId || !payload?.canManage
+    if (!editable || busy || dirty || !draft?.serverId || !target?.serverId || target.localId === draft.localId || !payload
       || draft.ownerUserId !== payload.userId || target.ownerUserId !== payload.userId
       || draft.trashedAt || target.trashedAt || draft.shares.length || target.shares.length || draft.entry.mergedInto || target.entry.mergedInto) return;
     if (!window.confirm(tr({ zh: `将「${draft.entry.title}」合并到「${target.entry.title}」？原条目会标为已合并，仍可恢复。`, en: `Merge “${draft.entry.title}” into “${target.entry.title}”? The original will be marked as merged and can still be restored.` }))) return;
@@ -367,7 +519,7 @@ export default function VaultPage() {
   };
 
   const restoreMerged = async () => {
-    if (busy || !draft?.entry.mergedInto) return;
+    if (!canEditVault || !manageable || busy || showTrash || !draft?.entry.mergedInto) return;
     setBusy(true);
     setError(null);
     try {
@@ -382,7 +534,7 @@ export default function VaultPage() {
   };
 
   const addImages = async (files: File[]) => {
-    if (!draft || busy || !files.length) return;
+    if (!editable || !draft || busy || !files.length) return;
     const localId = draft.localId;
     setBusy(true);
     setError(null);
@@ -398,7 +550,7 @@ export default function VaultPage() {
   };
 
   const changeTrash = async (trashed: boolean) => {
-    if (busy || !draft || !payload?.canManage || draft.ownerUserId !== payload.userId || !confirmDiscard()) return;
+    if (!canEditVault || !manageable || busy || !draft || !confirmDiscard()) return;
     if (!draft.serverId) {
       discardUnsavedNew();
       showItem(null);
@@ -431,7 +583,7 @@ export default function VaultPage() {
   };
 
   const emptyTrash = async () => {
-    if (busy || !showTrash || !payload?.canManage || !window.confirm(tr({
+    if (!canEditVault || busy || !showTrash || !window.confirm(tr({
       zh: '永久删除回收站里的所有资料？清空后无法恢复。',
       en: 'Permanently delete all items in Trash? This cannot be undone.',
     }))) return;
@@ -447,7 +599,7 @@ export default function VaultPage() {
     } finally { setBusy(false); }
   };
 
-  const canListFriends = Boolean(user && privateKey && draft && !draft.trashedAt && !draft.entry.mergedInto && payload?.canManage && draft.ownerUserId === payload.userId);
+  const canListFriends = Boolean(user && privateKey && editable && draft && !draft.trashedAt);
   useEffect(() => {
     setShareFriends(null);
     setShareLoadError(false);
@@ -507,7 +659,9 @@ export default function VaultPage() {
       <button type="button" className="vault-button is-primary" onClick={login}>{tr({ zh: '登录', en: 'Sign in' })}</button>
     </main>
   );
-  if (!payload) return <main className="vault-page vault-loading"><Loader2 className="vault-spin" />{error ?? tr({ zh: '正在加载…', en: 'Loading…' })}</main>;
+  if (!payload || (user.uid !== undefined && user.uid !== payload.userId)) {
+    return <main className="vault-page vault-loading"><Loader2 className="vault-spin" />{error ?? tr({ zh: '正在加载…', en: 'Loading…' })}</main>;
+  }
   if (privateKey && mustSaveRecoveryCode) return (
     <main className="vault-page vault-gate">
       <div className="vault-topbar"><BackHome /></div>
@@ -556,101 +710,147 @@ export default function VaultPage() {
     );
   }
 
-  const manageable = Boolean(draft && payload.canManage && draft.ownerUserId === payload.userId);
-  const editable = manageable && !showTrash && !draft?.entry.mergedInto;
   const mergeTargets = items.filter((item) => item.serverId && !item.trashedAt && item.localId !== draft?.localId && item.ownerUserId === payload.userId && !item.shares.length && !item.entry.mergedInto);
   const hasTrash = failedTrashCount > 0 || items.some((item) => item.trashedAt);
   const visibleFailedCount = showTrash ? failedTrashCount : failedCount;
-  const accountFields = [
-    { label: tr({ zh: '账号', en: 'Username' }), aliases: ['账号', 'Username', 'Account'], secret: false },
-    { label: tr({ zh: '密码', en: 'Password' }), aliases: passwordFieldAliases, secret: true },
-  ];
-  const displayFields = draft ? (draft.entry.category === 'accounts'
-    ? [
-      ...accountFields.flatMap((definition) => {
-        const existing = draft.entry.fields.find((field) => definition.aliases.some((alias) => alias.toLowerCase() === field.label.trim().toLowerCase()));
-        return existing ? [{ ...existing, label: definition.label, secret: definition.secret || existing.secret }] : [];
-      }),
-      ...draft.entry.fields.filter((field) => !accountFields.some((definition) => draft.entry.fields.find((candidate) => definition.aliases.some((alias) => alias.toLowerCase() === candidate.label.trim().toLowerCase()))?.id === field.id)),
-    ]
-    : draft.entry.fields) : [];
-  const passwordIndex = displayFields.findIndex(({ label }) =>
-    passwordFieldAliases.some((alias) => alias.toLowerCase() === label.trim().toLowerCase()));
-  const fieldsFromPassword = passwordIndex < 0 ? [] : displayFields.slice(passwordIndex);
-  const editorFields = passwordIndex < 0 ? displayFields : [
-    ...displayFields.slice(0, passwordIndex),
-    ...fieldsFromPassword.filter(isEmailField),
-    ...fieldsFromPassword.filter((field) => !isEmailField(field)),
-  ];
-  const categoryOptions = Object.entries(categoryLabels).map(([value, label]) => ({ value, label: tr(label) }));
-  const ownedItems = items.flatMap((item) => item.serverId && item.ownerUserId === payload.userId
-    ? [{ ...item, serverId: item.serverId }] : []);
-  const currentExportItem = ownedItems.find((item) => item.localId === draft?.localId);
-  const exportItems = exportScope === 'all' ? ownedItems : currentExportItem ? [currentExportItem] : [];
-  const failedOwnedCount = failedOwnedActiveCount + failedTrashCount;
-  const exportVault = async (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    if (busy || !showExport || !exportItems.length) return;
-    setBusy(true);
-    setError(null);
-    try {
-      const [{ buildVaultExport }, { saveBlob }] = await Promise.all([import('@/lib/vault-export'), import('@/lib/document-export')]);
-      const exportedAt = new Date().toISOString();
-      const archive = await buildVaultExport(exportItems, {
-        exportedAt,
-        includeSensitive,
-        categoryLabel: (category) => tr(categoryLabels[category]),
-      });
-      saveBlob(archive, `cuberoot-vault-${exportedAt.slice(0, 10)}.zip`);
-      setShowExport(false);
-      setIncludeSensitive(false);
-    } catch {
-      setError(tr({ zh: '无法打包资料，请重试。', en: 'Could not package the vault. Try again.' }));
-    } finally { setBusy(false); }
+  const accounts = draft?.entry.accounts ?? [];
+  const accountGroups = draft ? vaultAccountGroups(draft.entry) : [];
+  const accountGroupIds = accountGroups.map(accountGroupId);
+  const canReorderAccounts = editable && accountGroups.length > 1;
+  const hasPrimaryAccount = draft ? hasVaultPrimaryAccount(draft.entry) : false;
+  const titleParts = draft ? splitVaultTitle(draft.entry.title) : null;
+  const isAccountEntry = draft?.entry.category === 'accounts' || hasPrimaryAccount;
+  const moveToTrashLabel = tr({ zh: '移入回收站', en: 'Move to Trash' });
+  const shareWithFriendsLabel = tr({ zh: '分享给好友', en: 'Share with friends' });
+  const renderCopyButton = (value: string, key: string, label: string) => !canEditVault && (
+    <button type="button" className="vault-icon-button" aria-label={label} onClick={() => copy(value, key)}>
+      {copiedKey === key ? <Check aria-hidden="true" /> : <Copy aria-hidden="true" />}
+    </button>
+  );
+  const renderFields = (fields: VaultField[]) => {
+    return <div className="vault-fields">{orderVaultFields(fields).map((field) => {
+      const id = `vault-field-${field.id}`;
+      return <div className="vault-field" key={field.id}>
+        <label className="vault-field-label" htmlFor={id}>{field.label}</label>
+        <div className="vault-value-line">
+          <VaultTextArea id={id} className="vault-value-input" value={field.value} readOnly={!editable} maxLength={100_000} rows={1} placeholder={field.secret ? field.label : tr({ zh: '内容', en: 'Value' })} onChange={(event) => {
+            const value = event.target.value;
+            updateDraft((item) => {
+              const existing = item.entry.fields.find((candidate) => candidate.id === field.id);
+              if (existing) { existing.value = value; existing.secret = field.secret; }
+            });
+          }} />
+          {renderCopyButton(field.value, id, tr({ zh: '复制', en: 'Copy' }))}
+          {editable && <Tooltip content={tr({ zh: '删除字段', en: 'Remove field' })}>{(tip) => <button {...tip} type="button" className="vault-icon-button is-danger" aria-label={tr({ zh: `删除字段：${field.label}`, en: `Remove field: ${field.label}` })} onClick={() => updateDraft((item) => {
+            item.entry.fields = item.entry.fields.filter((candidate) => candidate.id !== field.id);
+          })}><Trash2 /></button>}</Tooltip>}
+        </div>
+      </div>;
+    })}</div>;
   };
+  const renderAccount = (content: VaultEntry | VaultAccount, number: number, extra?: VaultAccount) => {
+    const nickname = extra?.name || ('accountName' in content ? content.accountName : '');
+    const values = readVaultAccount(content);
+    const accountLabel = tr({ zh: `账号 ${number}`, en: `Account ${number}` });
+    const accountKey = accountGroupId(extra ?? 'primary');
+    const [loginSlot, ...detailSlots] = vaultAccountSlots;
+    const visibleDetails = detailSlots.filter(({ key }) => key !== 'notes' || editable || values.notes.trim() !== '');
+    const renderValue = ({ key, label }: typeof vaultAccountSlots[number]) => {
+      const id = `vault-account-${number}-${key}`;
+      const copyKey = `${draft?.localId}:${accountKey}:${key}`;
+      const text = tr(label);
+      return <div className="vault-value-line">
+        <VaultTextArea id={id} className="vault-value-input"
+          aria-label={key === 'login' ? text : undefined}
+          placeholder={key === 'login' ? (nickname || (editable ? tr({ zh: '输入账号', en: 'Enter account login' }) : undefined)) : undefined}
+          title={key === 'login' && nickname ? nickname : undefined}
+          value={values[key]} readOnly={!editable} maxLength={key === 'notes' ? 500_000 : 100_000} rows={1}
+          onChange={(event) => {
+            const value = event.target.value;
+            const fieldId = crypto.randomUUID();
+            updateDraft((item) => {
+              const account = extra ? item.entry.accounts?.find(({ id }) => id === extra.id) : item.entry;
+              if (account) updateVaultAccount(account, key, text, value, fieldId);
+            });
+          }} />
+        {renderCopyButton(values[key], copyKey, tr({ zh: `复制${label.zh}`, en: `Copy ${label.en.toLowerCase()}` }))}
+      </div>;
+    };
+    return <SortableCard key={accountKey} id={accountKey} className="vault-account-sortable" stretch={false}
+      draggable={canReorderAccounts} disabled={busy} dragIcon={<Ellipsis size={16} aria-hidden="true" />}
+      dragLabel={tr({ zh: `拖动调整账号 ${number} 顺序`, en: `Drag to reorder account ${number}` })}>
+      {(dragHandle) => <section id={`vault-account-${number}`} className="vault-account" aria-label={nickname ? `${accountLabel} · ${nickname}` : accountLabel}>
+        <div className="vault-account-heading">
+          <VaultAccountStatusPicker key={draft?.localId} status={content.accountStatus ?? 'untested'} disabled={!editable || busy}
+            onChange={(status) => updateDraft((item) => {
+              const account = extra ? item.entry.accounts?.find(({ id }) => id === extra.id) : item.entry;
+              if (account) account.accountStatus = status;
+            })}
+            removeAction={editable && <button type="button" className="vault-icon-button is-danger"
+              title={tr({ zh: '移除账号', en: 'Remove account' })}
+              aria-label={tr({ zh: `移除账号 ${number}`, en: `Remove account ${number}` })}
+              onClick={() => {
+                if ((nickname || content.accountStatus || Object.values(values).some(Boolean)) && !window.confirm(tr({ zh: '移除这组账号信息？', en: 'Remove this account’s details?' }))) return;
+                updateDraft(({ entry }) => {
+                  if (extra) {
+                    setVaultAccountOrder(entry, vaultAccountGroups(entry).filter((group) => group === 'primary' || group.id !== extra.id));
+                    return;
+                  }
+                  entry.fields = [];
+                  entry.notes = '';
+                  delete entry.accountName;
+                  delete entry.privateNotes;
+                  delete entry.accountStatus;
+                  delete entry.primaryAccountIndex;
+                });
+              }}><Trash2 aria-hidden="true" /></button>} />
+          {renderValue(loginSlot)}
+          {dragHandle}
+        </div>
+        <div className="vault-account-fields">{visibleDetails.map((slot) => (
+          <div key={slot.key} className={slot.key === 'notes' ? 'vault-field-row vault-field-row--notes' : 'vault-field-row'}>
+            <label className="vault-field-label" htmlFor={`vault-account-${number}-${slot.key}`}>
+              {slot.key === 'password' ? <>
+                <KeyRound size={16} className="w-[2em]" aria-hidden="true" />
+                <span className="sr-only">{tr(slot.label)}</span>
+              </> : tr(slot.label)}
+            </label>
+            {renderValue(slot)}
+          </div>
+        ))}</div>
+      </section>}
+    </SortableCard>;
+  };
+  const categoryOptions = Object.entries(categoryLabels).map(([value, label]) => ({ value, label: tr(label) }));
   return (
     <main className="vault-page">
-      <div className="vault-topbar"><BackHome /><button type="button" className="vault-button" disabled={busy} onClick={() => {
-        if (confirmDiscard()) window.location.reload();
-      }}><Lock />{tr({ zh: '锁定', en: 'Lock' })}</button></div>
+      <div className="vault-topbar"><BackHome /></div>
       <header className="vault-header">
-        <div><h1>{tr(showTrash ? { zh: '回收站', en: 'Trash' } : { zh: '私密资料库', en: 'Private vault' })}</h1></div>
+        <div className="vault-header-title">
+          <h1>{tr(showTrash ? { zh: '回收站', en: 'Trash' } : { zh: '私密资料库', en: 'Private vault' })}</h1>
+          <div className="vault-actions">
+            <VaultBackup key={payload.userId} userId={payload.userId} load={loadBackupSource}
+              revision={backupRevision} checkRevision={checkBackupRevision} />
+            {(payload.canManage || hasTrash || showTrash) && <button type="button" className="vault-button" disabled={busy} onClick={toggleTrash}>
+              {showTrash ? tr({ zh: '返回', en: 'Back' }) : <><Trash2 aria-hidden="true" />{tr({ zh: '回收站', en: 'Trash' })}</>}
+            </button>}
+            {payload.canManage && (
+              <button type="button" className="vault-icon-button vault-icon-button--plain vault-edit-toggle" disabled={busy}
+                aria-label={tr({ zh: '编辑模式', en: 'Edit mode' })} aria-pressed={editMode} onClick={toggleEditMode}>
+                <Pencil aria-hidden="true" />
+              </button>
+            )}
+          </div>
+        </div>
       </header>
-      <div className="vault-toolbar">
-        <div className="vault-actions">
-          {payload.canManage && !showTrash && <button type="button" className="vault-button is-primary" disabled={busy} onClick={addItem}><Plus />{tr({ zh: '新建', en: 'New item' })}</button>}
-          {(payload.canManage || hasTrash || showTrash) && <button type="button" className="vault-button" disabled={busy} onClick={toggleTrash}>
-            {showTrash ? tr({ zh: '返回', en: 'Back' }) : <><Trash2 aria-hidden="true" />{tr({ zh: '回收站', en: 'Trash' })}</>}
-          </button>}
-          {ownedItems.length > 0 && <MoreToggle className="vault-button" expanded={showExport} aria-controls="vault-export" disabled={busy} onToggle={() => {
-            setExportScope('all');
-            setIncludeSensitive(false);
-            setShowExport((current) => !current);
-          }}><Download aria-hidden="true" />{tr({ zh: '导出资料', en: 'Export vault' })}</MoreToggle>}
-          {showTrash && payload.canManage && <button type="button" className="vault-button is-danger" disabled={busy || !hasTrash} onClick={() => void emptyTrash()}>
+      {canEditVault && (
+        <div className="vault-actions vault-toolbar">
+          {!showTrash && <button type="button" className="vault-button is-primary" disabled={busy} onClick={addItem}><Plus />{tr({ zh: '新建', en: 'New item' })}</button>}
+          {showTrash && <button type="button" className="vault-button is-danger" disabled={busy || !hasTrash} onClick={() => void emptyTrash()}>
             <Trash2 aria-hidden="true" />{tr({ zh: '清空回收站', en: 'Empty Trash' })}
           </button>}
         </div>
-      </div>
-      <MoreTogglePanel id="vault-export" expanded={showExport && ownedItems.length > 0}>
-        <form className="vault-export" onSubmit={(event) => void exportVault(event)}>
-          <label htmlFor="vault-export-scope">{tr({ zh: '导出范围', en: 'Export scope' })}</label>
-          <select id="vault-export-scope" className="vault-input" disabled={busy}
-            value={exportScope}
-            onChange={(event) => setExportScope(event.target.value === 'current' ? 'current' : 'all')}>
-            <option value="all">{tr({ zh: '全部自有资料（含回收站）', en: 'All your items, including Trash' })}</option>
-            <option value="current" disabled={!currentExportItem}>{tr({ zh: '当前条目', en: 'Current item' })}</option>
-          </select>
-          <BoolToggle value={includeSensitive} onChange={setIncludeSensitive} disabled={busy} label={tr({ zh: '包含密码等敏感字段', en: 'Include passwords and other sensitive fields' })} />
-          <p className="vault-muted">{tr({ zh: 'ZIP 为明文，包含所选已保存资料的文字和原图。', en: 'The ZIP is unencrypted and contains the saved text and original images for the selected items.' })}</p>
-          {exportScope === 'all' && failedOwnedCount > 0 && <p className="vault-muted">
-            {tr({ zh: `${failedOwnedCount} 条自有资料无法解密，导出时会跳过。`, en: `${failedOwnedCount} owned item(s) could not be decrypted and will be skipped.` })}
-          </p>}
-          <button type="submit" className="vault-button is-primary" disabled={busy || !exportItems.length}>
-            <Download aria-hidden="true" />{tr({ zh: '下载 ZIP', en: 'Download ZIP' })}
-          </button>
-        </form>
-      </MoreTogglePanel>
+      )}
       {!payload.canManage && <p className="vault-muted">{tr({ zh: '你可以查看现有内容；成为会员后才能新建、编辑、删除或分享。', en: 'You can view existing items. Membership is required to create, edit, delete, or share.' })}</p>}
       {!payload.canManage && <button type="button" className="vault-button is-primary" onClick={() => { if (confirmDiscard()) requireMembership(); }}>{tr({ zh: '新建与管理资料', en: 'Create & manage items' })}</button>}
       {visibleFailedCount > 0 && <p className="vault-error" role="alert">{tr({ zh: `${visibleFailedCount} 条内容无法解密。`, en: `${visibleFailedCount} item(s) could not be decrypted.` })}</p>}
@@ -662,7 +862,7 @@ export default function VaultPage() {
           <CompactSelect items={[{ value: '', label: tr({ zh: '全部分类', en: 'All categories' }) }, ...categoryOptions]} value={categoryFilter} onChange={setCategoryFilter} label={categoryFilter ? tr(categoryLabels[categoryFilter as VaultCategory]) : tr({ zh: '全部分类', en: 'All categories' })} ariaLabel={tr({ zh: '筛选分类', en: 'Filter category' })} className="vault-category-filter" showArrow />
           <div className="vault-list">{visibleItems.map((item) => (
             <button key={item.localId} type="button" disabled={busy} className={`vault-list-item${draft?.localId === item.localId ? ' is-active' : ''}`} onClick={() => selectItem(item)}>
-              <strong>{item.entry.title || tr({ zh: '未命名', en: 'Untitled' })}</strong>
+              <VaultListTitle title={item.entry.title || tr({ zh: '未命名', en: 'Untitled' })} />
               <span>
                 {item.ownerUserId === payload.userId ? tr({ zh: '我的内容', en: 'Mine' }) : item.ownerName}
                 {item.entry.mergedInto && <> · {tr({ zh: '已合并', en: 'Merged' })}</>}
@@ -675,18 +875,32 @@ export default function VaultPage() {
 
         <section className="vault-editor">{draft && <fieldset className="vault-editor-fields" disabled={busy}>
           <div className="vault-editor-head">
-            <input className="vault-title-input" value={draft.entry.title} readOnly={!editable} maxLength={200} placeholder={tr({ zh: '标题', en: 'Title' })} onChange={(event) => updateDraft((item) => { item.entry.title = event.target.value; })} />
-            {manageable && <div className="vault-actions">
-              {editable && <button type="button" className="vault-button is-primary" disabled={!dirty} onClick={() => void save()}><Save aria-hidden="true" />{tr({ zh: '保存', en: 'Save' })}</button>}
-              {showTrash
-                ? <button type="button" className="vault-button" onClick={() => void changeTrash(false)}><RotateCcw aria-hidden="true" />{tr({ zh: '恢复', en: 'Restore' })}</button>
-                : <button type="button" className="vault-button is-danger" onClick={() => void changeTrash(true)}><Trash2 aria-hidden="true" />{tr(draft.serverId ? { zh: '移入回收站', en: 'Move to Trash' } : { zh: '丢弃', en: 'Discard' })}</button>}
+            <div className="vault-editor-title">
+              {titleParts && (editable ? <input className="vault-title-tag vault-title-tag-input"
+                aria-label={tr({ zh: '标题标签', en: 'Title tag' })} value={titleParts.tag}
+                size={Math.max(1, titleParts.tag.length)} maxLength={Math.max(0, 200 - titleParts.suffix.length)}
+                onChange={(event) => updateDraft((item) => {
+                  const tag = event.target.value.replace(/[|｜│]/g, '');
+                  item.entry.title = tag.trim() ? `${tag}${titleParts.suffix}` : titleParts.name;
+                })} /> : <span className="vault-title-tag">{titleParts.tag.trim()}</span>)}
+              <input className="vault-title-input" value={titleParts?.name ?? draft.entry.title} readOnly={!editable}
+                maxLength={200 - (titleParts?.prefix.length ?? 0)} placeholder={tr({ zh: '标题', en: 'Title' })}
+                onChange={(event) => updateDraft((item) => { item.entry.title = `${titleParts?.prefix ?? ''}${event.target.value}`; })} />
+            </div>
+            {canEditVault && manageable && <div className="vault-actions">
+              {editable && <button type="button" className="vault-button is-primary" disabled={busy || !dirty} aria-busy={saving} onClick={() => void save()}>
+                {saving ? <Loader2 className="vault-spin" aria-hidden="true" /> : <Save aria-hidden="true" />}
+                {tr({ zh: '保存', en: 'Save' })}
+              </button>}
+              {showTrash && <button type="button" className="vault-button" onClick={() => void changeTrash(false)}><RotateCcw aria-hidden="true" />{tr({ zh: '恢复', en: 'Restore' })}</button>}
+              {!showTrash && (draft.serverId
+                ? <button type="button" className="vault-icon-button vault-icon-button--plain is-danger" aria-label={moveToTrashLabel} onClick={() => void changeTrash(true)}><Trash2 aria-hidden="true" /></button>
+                : <button type="button" className="vault-button is-danger" onClick={() => void changeTrash(true)}><Trash2 aria-hidden="true" />{tr({ zh: '丢弃', en: 'Discard' })}</button>)}
             </div>}
           </div>
-          {editable && <CompactSelect items={categoryOptions} value={draft.entry.category ?? 'other'} onChange={(value) => updateDraft((item) => { item.entry.category = value as VaultCategory; })} label={tr(categoryLabels[draft.entry.category ?? 'other'])} ariaLabel={tr({ zh: '资料分类', en: 'Item category' })} disabled={busy} className="vault-entry-category" showArrow />}
           {manageable && draft.entry.mergedInto && <div className="vault-actions">
             <span className="vault-muted">{tr({ zh: `已合并到「${draft.entry.mergedInto.title}」`, en: `Merged into “${draft.entry.mergedInto.title}”` })}</span>
-            {!showTrash && <button type="button" className="vault-button" onClick={() => void restoreMerged()}>{tr({ zh: '恢复原条目', en: 'Restore original' })}</button>}
+            {canEditVault && !showTrash && <button type="button" className="vault-button" onClick={() => void restoreMerged()}>{tr({ zh: '恢复原条目', en: 'Restore original' })}</button>}
           </div>}
           {editable && draft.serverId && !draft.shares.length && <details key={draft.localId}>
             <summary>{tr({ zh: '合并到…', en: 'Merge into…' })}</summary>
@@ -697,36 +911,49 @@ export default function VaultPage() {
             <p className="vault-muted">{tr(dirty ? { zh: '请先保存修改，再合并。', en: 'Save your changes before merging.' } : { zh: '合并字段、备注和图片。合并后可打开原条目恢复。仅支持未分享的条目。', en: 'Combine fields, notes and images. After merging, open the original item to restore it. Only unshared items are supported.' })}</p>
           </details>}
 
-          <div className="vault-fields">{editorFields.map((field) => {
-            const changeValue = (value: string) => updateDraft((item) => {
-              const existing = item.entry.fields.find((candidate) => candidate.id === field.id);
-              if (existing) { existing.value = value; existing.secret = field.secret; }
-            });
-            return <div className="vault-field" key={field.id}>
-              <label className="vault-field-label" htmlFor={`vault-field-${field.id}`}>{field.label}</label>
+          {!isAccountEntry && <>
+            {renderFields(draft.entry.fields)}
+            {(editable || draft.entry.notes.trim() !== '') && <div className="vault-field-row vault-field-row--notes vault-entry-notes">
+              <label className="vault-field-label" htmlFor="vault-notes">{tr({ zh: '备注', en: 'Notes' })}</label>
               <div className="vault-value-line">
-                <VaultTextArea id={`vault-field-${field.id}`} className="vault-value-input" value={field.value} readOnly={!editable} maxLength={100_000} rows={1} placeholder={field.secret ? field.label : tr({ zh: '内容', en: 'Value' })} onChange={(event) => changeValue(event.target.value)} />
-                <button type="button" className="vault-icon-button" aria-label={tr({ zh: '复制', en: 'Copy' })} onClick={() => copy(field.value, field.id)}>{copiedKey === field.id ? <Check /> : <Copy />}</button>
-                {editable && <Tooltip content={tr({ zh: '删除字段', en: 'Remove field' })}>{(tip) => <button {...tip} type="button" className="vault-icon-button is-danger" aria-label={tr({ zh: `删除字段：${field.label}`, en: `Remove field: ${field.label}` })} onClick={() => updateDraft((item) => { item.entry.fields = item.entry.fields.filter((candidate) => candidate.id !== field.id); })}><Trash2 /></button>}</Tooltip>}
+                <VaultTextArea id="vault-notes" className="vault-notes" value={draft.entry.notes} readOnly={!editable} maxLength={500_000} rows={4}
+                  onChange={(event) => {
+                    const notes = event.target.value;
+                    updateDraft((item) => { item.entry.notes = notes; });
+                  }} />
+                {renderCopyButton(draft.entry.notes, `${draft.localId}:notes`, tr({ zh: '复制备注', en: 'Copy notes' }))}
               </div>
-            </div>;
-          })}</div>
+            </div>}
+          </>}
+          <DndContext key={`account-order:${draft.localId}`} sensors={accountSensors} collisionDetection={closestCenter} onDragEnd={({ active, over }) => {
+            if (!canReorderAccounts || busy || !over || active.id === over.id) return;
+            const from = accountGroupIds.findIndex((id) => id === active.id);
+            const to = accountGroupIds.findIndex((id) => id === over.id);
+            if (from < 0 || to < 0) return;
+            updateDraft(({ entry }) => setVaultAccountOrder(entry, arrayMove(vaultAccountGroups(entry), from, to)));
+          }}>
+            <SortableContext items={accountGroupIds} strategy={verticalListSortingStrategy}>
+              {accountGroups.map((account, index) => account === 'primary'
+                ? renderAccount(draft.entry, index + 1)
+                : renderAccount(account, index + 1, account))}
+            </SortableContext>
+          </DndContext>
+          {editable && (isAccountEntry || accounts.length > 0) && <button type="button" className="vault-button vault-add-account"
+            disabled={accounts.length >= MAX_VAULT_ADDITIONAL_ACCOUNTS}
+            onClick={() => {
+              const account = { id: crypto.randomUUID(), name: '', fields: [] };
+              updateDraft((item) => { (item.entry.accounts ??= []).push(account); });
+            }}><Plus aria-hidden="true" />{tr({ zh: '添加账号', en: 'Add account' })}</button>}
 
-          <label className="vault-notes-label" htmlFor="vault-notes">{tr({ zh: '备注', en: 'Notes' })}</label>
-          <VaultTextArea id="vault-notes" className="vault-notes" value={draft.entry.notes} readOnly={!editable} maxLength={500_000} rows={4} onChange={(event) => updateDraft((item) => { item.entry.notes = event.target.value; })} />
-
-          {(editable || Boolean(draft.entry.images?.length)) && <section className="vault-images">
-            <div className="vault-image-heading">
-              <h2>{tr({ zh: '图片附件', en: 'Image attachments' })}</h2>
-              {editable && <>
-                <input ref={imageInput} type="file" hidden multiple accept="image/jpeg,image/png,image/webp" aria-label={tr({ zh: '选择图片', en: 'Choose images' })} onChange={(event) => {
-                  const files = Array.from(event.target.files ?? []);
-                  event.target.value = '';
-                  void addImages(files);
-                }} />
-                <button type="button" className="vault-button" onClick={() => imageInput.current?.click()}><Plus />{tr({ zh: '添加图片', en: 'Add images' })}</button>
-              </>}
-            </div>
+          {(editable || Boolean(draft.entry.images?.length)) && <section className="vault-images" aria-label={tr({ zh: '图片附件', en: 'Image attachments' })}>
+            {editable && <div className="vault-image-actions">
+              <input ref={imageInput} type="file" hidden multiple accept="image/jpeg,image/png,image/webp" aria-label={tr({ zh: '选择图片', en: 'Choose images' })} onChange={(event) => {
+                const files = Array.from(event.target.files ?? []);
+                event.target.value = '';
+                void addImages(files);
+              }} />
+              <button type="button" className="vault-button" onClick={() => imageInput.current?.click()}><Plus aria-hidden="true" />{tr({ zh: '添加图片', en: 'Add images' })}</button>
+            </div>}
             <div className="vault-image-grid">{draft.entry.images?.map((image, index) => <div key={image.id} className={`vault-image${expandedImage === image.id ? ' is-expanded' : ''}`}>
               <button type="button" className="vault-image-preview" aria-expanded={expandedImage === image.id} aria-label={tr({ zh: `查看图片：${image.name}`, en: `View image: ${image.name}` })} onClick={() => setExpandedImage((current) => current === image.id ? null : image.id)}>
                 {/* Original image is decrypted locally; never send it through an image optimizer. */}
@@ -734,20 +961,20 @@ export default function VaultPage() {
                 <img src={image.dataUrl} alt={image.name} />
               </button>
               <input className="vault-input" aria-label={tr({ zh: `图片名称 ${index + 1}`, en: `Image name ${index + 1}` })} value={image.name} readOnly={!editable} maxLength={200} onChange={(event) => updateDraft((item) => { item.entry.images![index].name = event.target.value; })} />
-              <div className="vault-actions">
+              {canEditVault && <div className="vault-actions">
                 <Tooltip content={tr({ zh: '下载原图', en: 'Download original' })}>{(tip) => (
                   <a {...tip} className="vault-button" href={image.dataUrl} download={image.name} aria-label={tr({ zh: `下载原图：${image.name}`, en: `Download original: ${image.name}` })}><Download aria-hidden="true" /></a>
                 )}</Tooltip>
                 {editable && <Tooltip content={tr({ zh: '移除图片', en: 'Remove image' })}>{(tip) => (
                   <button {...tip} type="button" className="vault-button is-danger" aria-label={tr({ zh: `移除图片：${image.name}`, en: `Remove image: ${image.name}` })} onClick={() => updateDraft((item) => { item.entry.images!.splice(index, 1); })}><X aria-hidden="true" /></button>
                 )}</Tooltip>}
-              </div>
+              </div>}
             </div>)}</div>
           </section>}
 
-          {!showTrash && <section className="vault-sharing">
-            <h2>{tr({ zh: '分享给好友', en: 'Share with friends' })}</h2>
-            <div className="vault-share-list">{draft.shares.map((share) => <span className="vault-share" key={share.userId}>{share.name}<small>#{share.userId}</small>{editable && <button type="button" className="vault-share-remove" aria-label={tr({ zh: `移除 ${share.name}`, en: `Remove ${share.name}` })} onClick={() => updateDraft((item) => { item.shares = item.shares.filter((candidate) => candidate.userId !== share.userId); })}><X /></button>}</span>)}</div>
+          {!showTrash && (editable || draft.shares.length > 0) && <section className="vault-sharing" aria-label={shareWithFriendsLabel}>
+            {!editable && <h2>{shareWithFriendsLabel}</h2>}
+            {draft.shares.length > 0 && <div className="vault-share-list">{draft.shares.map((share) => <span className="vault-share" key={share.userId}>{share.name}<small>#{share.userId}</small>{editable && <button type="button" className="vault-share-remove" aria-label={tr({ zh: `移除 ${share.name}`, en: `Remove ${share.name}` })} onClick={() => updateDraft((item) => { item.shares = item.shares.filter((candidate) => candidate.userId !== share.userId); })}><X /></button>}</span>)}</div>}
             {editable && shareLoadError && <p role="alert">{tr({ zh: '无法加载好友，请刷新后重试。', en: 'Could not load friends. Refresh and try again.' })}</p>}
             {editable && !shareLoadError && shareFriends === null && <p role="status">{tr({ zh: '正在加载好友…', en: 'Loading friends…' })}</p>}
             {editable && !shareLoadError && shareFriends?.length === 0 && <p>
@@ -761,7 +988,7 @@ export default function VaultPage() {
               searchable
               className="vault-friend-select"
               searchPlaceholder={tr({ zh: '搜索好友', en: 'Search friends' })}
-              allLabel={tr({ zh: '选择好友', en: 'Choose a friend' })}
+              allLabel={shareWithFriendsLabel}
               value=""
               disabled={busy}
               items={shareFriends.map((friend) => {

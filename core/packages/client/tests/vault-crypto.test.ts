@@ -27,6 +27,14 @@ describe('private vault crypto', () => {
       id: crypto.randomUUID(),
       title: '证件与账号',
       fields: [{ id: crypto.randomUUID(), label: '密码', value: '仅作测试🔐', secret: true }],
+      accountName: '主账号',
+      accountStatus: 'verified',
+      primaryAccountIndex: 1,
+      accounts: [{
+        id: crypto.randomUUID(), name: '备用号',
+        accountStatus: 'problem',
+        fields: [{ id: crypto.randomUUID(), label: '密码', value: '备用测试值', secret: true }],
+      }],
       notes: '中文备注',
     };
     const encrypted = await encryptVaultEntry(entry, [{ userId: 1, publicKey: owner.publicKey }]);

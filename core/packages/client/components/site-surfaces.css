@@ -274,7 +274,8 @@ body[data-site-scenery] .mem-reminder {
 /* Native controls: explicit text/date types exclude checkboxes, radio, ranges,
    color swatches, uploads, images, hidden fields and semantic submit buttons.
    Background-color preserves existing select arrows and date-input artwork.
-   Important is limited to the neutral fill because legacy pages set it inline. */
+   Important is limited to the neutral fill because legacy pages set it inline.
+   The vault title and read-only values need no field surface. */
 body[data-site-scenery] :is(
   select,
   textarea:not(.site-assistant-draft, :where(
@@ -297,7 +298,7 @@ body[data-site-scenery] :is(
   input[type='month'],
   input[type='week'],
   input[type='time']
-) {
+):where(:not(.vault-title-input, .vault-title-tag-input, .vault-grow-textarea[data-readonly] > textarea)) {
   background-color: var(--glass-surface-bg) !important;
   -webkit-backdrop-filter: var(--glass-filter);
   backdrop-filter: var(--glass-filter);

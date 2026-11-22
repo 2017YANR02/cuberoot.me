@@ -1,3 +1,4 @@
+import { createHash } from 'node:crypto';
 import { Hono } from 'hono';
 import { bodyLimit } from 'hono/body-limit';
 import type postgres from 'postgres';
@@ -24,7 +25,7 @@ const vaultBodyLimit = bodyLimit({
 interface KeyRow {
   user_id: number | string;
   public_key: JsonWebKey;
-  encrypted_private_key: Record<string, unknown>;
+  encrypted_private_key: PrivateEnvelopeInput;
 }
 
 interface ItemRow {
@@ -62,6 +63,14 @@ interface PrivateEnvelopeInput {
     iv: string;
     ciphertext: string;
   };
+}
+
+type BackupRevisionRow = Pick<ItemRow, 'id' | 'version' | 'updated_at' | 'trashed_at'>;
+
+function backupRevision(recoveryIv: string | null, items: BackupRevisionRow[]): string {
+  return createHash('sha256').update(JSON.stringify([
+    recoveryIv, items.map(({ id, version, updated_at, trashed_at }) => [id, Number(version), updated_at, trashed_at]),
+  ])).digest('hex');
 }
 
 interface VaultPublicKeyInput {
@@ -233,6 +242,8 @@ privateVaultRoutes.get('/vault', async (c) => {
   return c.json({
     userId,
     canManage,
+    backupRevision: backupRevision(keyRows[0]?.encrypted_private_key.recovery?.iv ?? null,
+      itemRows.filter((item) => Number(item.owner_user_id) === userId)),
     keyProfile: keyRows[0] ? {
       publicKey: keyRows[0].public_key,
       encryptedPrivateKey: keyRows[0].encrypted_private_key,
@@ -240,6 +251,25 @@ privateVaultRoutes.get('/vault', async (c) => {
     items: items.filter((item) => !item.trashedAt),
     trash: items.filter((item) => item.trashedAt),
   });
+});
+
+privateVaultRoutes.get('/vault/backup-revision', async (c) => {
+  noStore(c);
+  checkRateLimit(getIp(c), { bucket: 'private-vault-backup-check', max: 120 });
+  const userId = await requireAppUserId(c);
+  const [keyRows, items] = await Promise.all([
+    sql<{ iv: string | null }[]>`
+      SELECT encrypted_private_key #>> '{recovery,iv}' AS iv
+        FROM vault_user_keys
+       WHERE user_id = ${userId}`,
+    sql<BackupRevisionRow[]>`
+      SELECT item.id, item.version, item.updated_at, item.trashed_at
+        FROM vault_items item
+        JOIN vault_item_access access ON access.item_id = item.id
+       WHERE item.owner_user_id = ${userId} AND access.recipient_user_id = ${userId}
+       ORDER BY item.updated_at DESC, item.id`,
+  ]);
+  return c.json({ userId, revision: backupRevision(keyRows[0]?.iv ?? null, items) });
 });
 
 privateVaultRoutes.put('/vault/key', vaultBodyLimit, async (c) => {

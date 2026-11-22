@@ -30,3 +30,21 @@ it('rejects overflowing merges and validates recoverable archive metadata', () =
   expect(isVaultEntry({ ...entry('source'), mergedInto: { id: 'target', title: 'target' } })).toBe(true);
   expect(isVaultEntry({ ...entry('source'), mergedInto: { id: '', title: 'target' } })).toBe(false);
 });
+
+it('keeps account pairs separate and does not duplicate them on a retry', () => {
+  const password = (value: string) => ({ id: 'password', label: 'Password', value, secret: true });
+  const target: VaultEntry = { ...entry('target'), category: 'accounts', fields: [password('first')] };
+  const source: VaultEntry = {
+    ...entry('source'), category: 'accounts', accountName: 'Work', accountStatus: 'verified',
+    primaryAccountIndex: 1,
+    fields: [password('second')], notes: 'work notes',
+    accounts: [{ id: 'backup', name: 'Backup', accountStatus: 'problem', fields: [password('third')] }],
+  };
+  const merged = mergeVaultEntries(target, source);
+  expect(merged.fields).toEqual(target.fields);
+  expect(merged.notes).toBe('');
+  expect(merged.accounts?.[1].notes).toBe('work notes');
+  expect(merged.accounts?.map(({ accountStatus }) => accountStatus)).toEqual(['problem', 'verified']);
+  expect(merged.accounts?.map(({ name, fields }) => [name, fields[0].value])).toEqual([['Backup', 'third'], ['Work', 'second']]);
+  expect(mergeVaultEntries(merged, source)).toEqual(merged);
+});

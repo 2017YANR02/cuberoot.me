@@ -1,12 +1,14 @@
 const KDF_ITERATIONS = 600_000;
 const PRIVATE_KEY_AAD = new TextEncoder().encode('CubeRoot vault private key v1');
-const RECOVERY_KEY_AAD = new TextEncoder().encode('CubeRoot vault recovery key v1');
+export const VAULT_RECOVERY_KEY_CONTEXT = 'CubeRoot vault recovery key v1';
+const RECOVERY_KEY_AAD = new TextEncoder().encode(VAULT_RECOVERY_KEY_CONTEXT);
 const ENTRY_AAD = new TextEncoder().encode('CubeRoot vault entry v1');
-const RECOVERY_CODE_PREFIX = 'CRV1-';
+export const VAULT_RECOVERY_CODE_PREFIX = 'CRV1-';
 // Keep the complete encrypted envelope within the API/DB 4 MiB limit.
 const MAX_CIPHERTEXT_BYTES = 4 * 1024 * 1024;
 export const MAX_VAULT_IMAGE_BYTES = 2 * 1024 * 1024;
 export const MAX_VAULT_IMAGES = 10;
+export const MAX_VAULT_ADDITIONAL_ACCOUNTS = 50;
 
 export interface VaultImage {
   id: string;
@@ -23,14 +25,31 @@ export interface VaultField {
   secret: boolean;
 }
 
+export type VaultAccountStatus = 'verified' | 'problem' | 'untested';
+
+export interface VaultAccount {
+  id: string;
+  name: string;
+  fields: VaultField[];
+  notes?: string;
+  privateNotes?: string;
+  accountStatus?: VaultAccountStatus;
+}
+
 export interface VaultEntry {
   id: string;
   title: string;
   fields: VaultField[];
   notes: string;
+  privateNotes?: string;
   images?: VaultImage[];
   category?: 'personal' | 'accounts' | 'business' | 'other';
   mergedInto?: { id: string; title: string };
+  accountName?: string;
+  accountStatus?: VaultAccountStatus;
+  accounts?: VaultAccount[];
+  /** Position of the account stored directly on the entry among all account groups. */
+  primaryAccountIndex?: number;
 }
 
 export interface EncryptedPrivateKey {
@@ -57,7 +76,7 @@ export interface EncryptedVaultEntry {
   accesses: { userId: number; wrappedKey: string }[];
 }
 
-function bytesToBase64(bytes: Uint8Array): string {
+export function bytesToBase64(bytes: Uint8Array): string {
   let binary = '';
   for (let i = 0; i < bytes.length; i += 0x8000) {
     binary += String.fromCharCode(...bytes.subarray(i, i + 0x8000));
@@ -129,8 +148,8 @@ function bytesToBase64Url(bytes: Uint8Array): string {
 
 function recoveryKeyBytes(code: string): Uint8Array<ArrayBuffer> {
   const value = code.trim();
-  if (!value.startsWith(RECOVERY_CODE_PREFIX)) throw new Error('invalid recovery code');
-  const encoded = value.slice(RECOVERY_CODE_PREFIX.length);
+  if (!value.startsWith(VAULT_RECOVERY_CODE_PREFIX)) throw new Error('invalid recovery code');
+  const encoded = value.slice(VAULT_RECOVERY_CODE_PREFIX.length);
   if (!/^[A-Za-z0-9_-]{43}$/.test(encoded)) throw new Error('invalid recovery code');
   return base64ToBytes(encoded.replace(/-/g, '+').replace(/_/g, '/') + '=');
 }
@@ -216,7 +235,7 @@ export async function createVaultKeyProfile(passphrase: string): Promise<{
         ciphertext: bytesToBase64(new Uint8Array(recoveryCiphertext)),
       },
     },
-    recoveryCode: `${RECOVERY_CODE_PREFIX}${bytesToBase64Url(recoveryBytes)}`,
+    recoveryCode: `${VAULT_RECOVERY_CODE_PREFIX}${bytesToBase64Url(recoveryBytes)}`,
   };
 }
 
@@ -260,6 +279,37 @@ export async function recoverVaultPrivateKey(
   };
 }
 
+function isVaultFields(value: unknown): value is VaultField[] {
+  return Array.isArray(value) && value.length <= 50 && value.every((field) => {
+    if (!field || typeof field !== 'object') return false;
+    const item = field as Record<string, unknown>;
+    return typeof item.id === 'string' && item.id.length <= 100
+      && typeof item.label === 'string' && item.label.length <= 100
+      && typeof item.value === 'string' && item.value.length <= 100_000
+      && typeof item.secret === 'boolean';
+  });
+}
+
+function isOptionalVaultAccountStatus(value: unknown): boolean {
+  return value === undefined || value === 'verified' || value === 'problem' || value === 'untested';
+}
+
+function isVaultAccounts(value: unknown): value is VaultAccount[] {
+  if (!Array.isArray(value) || value.length > MAX_VAULT_ADDITIONAL_ACCOUNTS) return false;
+  const ids = new Set<string>();
+  return value.every((account) => {
+    if (!account || typeof account !== 'object') return false;
+    const { id, name, fields, notes, privateNotes, accountStatus } = account as Record<string, unknown>;
+    if (typeof id !== 'string' || !id || id.length > 100 || ids.has(id)
+      || typeof name !== 'string' || name.length > 200 || !isVaultFields(fields)
+      || !isOptionalVaultAccountStatus(accountStatus)
+      || (notes !== undefined && (typeof notes !== 'string' || notes.length > 500_000))
+      || (privateNotes !== undefined && (typeof privateNotes !== 'string' || privateNotes.length > 500_000))) return false;
+    ids.add(id);
+    return true;
+  });
+}
+
 export function isVaultEntry(value: unknown): value is VaultEntry {
   if (!value || typeof value !== 'object') return false;
   const entry = value as Record<string, unknown>;
@@ -271,17 +321,16 @@ export function isVaultEntry(value: unknown): value is VaultEntry {
   if (typeof entry.id !== 'string' || entry.id.length > 100
     || typeof entry.title !== 'string' || entry.title.length > 200
     || typeof entry.notes !== 'string' || entry.notes.length > 500_000
+    || (entry.privateNotes !== undefined && (typeof entry.privateNotes !== 'string' || entry.privateNotes.length > 500_000))
     || (entry.images !== undefined && !validateVaultImages(entry.images))
     || (entry.category !== undefined && !['personal', 'accounts', 'business', 'other'].includes(entry.category as string))
-    || !Array.isArray(entry.fields) || entry.fields.length > 50) return false;
-  return entry.fields.every((field) => {
-    if (!field || typeof field !== 'object') return false;
-    const item = field as Record<string, unknown>;
-    return typeof item.id === 'string' && item.id.length <= 100
-      && typeof item.label === 'string' && item.label.length <= 100
-      && typeof item.value === 'string' && item.value.length <= 100_000
-      && typeof item.secret === 'boolean';
-  });
+    || (entry.accountName !== undefined && (typeof entry.accountName !== 'string' || entry.accountName.length > 200))
+    || !isOptionalVaultAccountStatus(entry.accountStatus)
+    || (entry.accounts !== undefined && !isVaultAccounts(entry.accounts))) return false;
+  const index = entry.primaryAccountIndex;
+  if (index !== undefined && (typeof index !== 'number' || !Number.isInteger(index)
+    || index < 0 || index > (Array.isArray(entry.accounts) ? entry.accounts.length : 0))) return false;
+  return isVaultFields(entry.fields);
 }
 
 export async function encryptVaultEntry(

@@ -11,15 +11,15 @@ export default function SortableCard({ as: Tag = 'div', id, draggable, disabled 
   id: UniqueIdentifier;
   draggable: boolean;
   disabled?: boolean;
-  children: React.ReactNode;
+  children: React.ReactNode | ((handle: React.ReactNode) => React.ReactNode);
   className?: string;
   dragLabel?: string;
   dragIcon?: React.ReactNode;
   stretch?: boolean;
 }) {
-  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id, disabled: !draggable || disabled });
+  const { attributes, listeners, setNodeRef, setActivatorNodeRef, transform, transition, isDragging } = useSortable({ id, disabled: !draggable || disabled });
   const handle = draggable ? (
-        <button type="button" disabled={disabled} className="sortable-card-drag-handle" {...attributes} {...listeners} aria-label={dragLabel ?? tr({ zh: '拖动调整卡片顺序', en: 'Drag to reorder cards' })}>
+        <button ref={setActivatorNodeRef} type="button" disabled={disabled} className="sortable-card-drag-handle" {...attributes} {...listeners} aria-label={dragLabel ?? tr({ zh: '拖动调整卡片顺序', en: 'Drag to reorder cards' })}>
           {dragIcon ?? <GripVertical size={14} />}
         </button>
   ) : null;
@@ -35,8 +35,10 @@ export default function SortableCard({ as: Tag = 'div', id, draggable, disabled 
         height: stretch ? '100%' : undefined,
       }}
     >
-      {Tag === 'tr' ? <td>{handle}</td> : handle}
-      {children}
+      {typeof children === 'function' ? children(handle) : <>
+        {Tag === 'tr' ? <td>{handle}</td> : handle}
+        {children}
+      </>}
     </Tag>
   );
 }
