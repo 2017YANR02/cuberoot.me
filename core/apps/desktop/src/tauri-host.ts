@@ -68,6 +68,42 @@ const requestDesktopScreenWakeLock = createNativeScreenWakeLock(
   (enabled) => invoke<void>('set_keep_awake', { enabled }),
 );
 
+type PrimaryNavigation = NonNullable<InstalledAppHost['primaryNavigation']>;
+
+const readNavigationAccent = () => getComputedStyle(document.documentElement).getPropertyValue('--accent').trim();
+let lastNavigationRender = Promise.resolve(false);
+let lastNavigationState: Parameters<PrimaryNavigation['render']>[0] = null;
+let lastNavigationAccent = '';
+const macPrimaryNavigation: PrimaryNavigation = {
+  render(state) {
+    lastNavigationState = state;
+    lastNavigationAccent = state ? readNavigationAccent() : '';
+    const layout = state && { ...state, viewportHeight: window.innerHeight, accent: lastNavigationAccent };
+    const render = lastNavigationRender.then(() => invoke<boolean>('render_primary_navigation', { state: layout }));
+    lastNavigationRender = render.catch(() => false);
+    return render;
+  },
+  async addSelectListener(listener) {
+    const select = (event: Event) => {
+      const id: unknown = (event as CustomEvent).detail;
+      if (id === 'timer' || id === 'tools' || id === 'account' || id === 'search') listener(id);
+    };
+    window.addEventListener('cuberoot:mac-primary-navigation', select);
+    const appearance = new MutationObserver(() => {
+      if (lastNavigationState && readNavigationAccent() !== lastNavigationAccent) {
+        void macPrimaryNavigation.render(lastNavigationState).catch(() => {});
+      }
+    });
+    appearance.observe(document.documentElement, {
+      attributeFilter: ['data-theme', 'data-palette', 'data-palette-scheme', 'data-accent', 'style'],
+    });
+    return { remove: async () => {
+      appearance.disconnect();
+      window.removeEventListener('cuberoot:mac-primary-navigation', select);
+    } };
+  },
+};
+
 export const desktopHost: InstalledAppHost = {
   floatingNavigation: 'labeled',
   async listenDesktopNavigation(language, listener) {
@@ -112,6 +148,11 @@ export const desktopHost: InstalledAppHost = {
 
 export async function loadDesktopHost(): Promise<InstalledAppHost> {
   if (!isTauri()) return desktopHost;
-  const [channel, version] = await Promise.all([invoke<string>('desktop_distribution'), getVersion()]);
-  return withDesktopDistribution(desktopHost, channel, version);
+  const [channel, version, nativeNavigation] = await Promise.all([
+    invoke<string>('desktop_distribution'),
+    getVersion(),
+    macPrimaryNavigation.render(null).catch(() => false),
+  ]);
+  const host = nativeNavigation ? { ...desktopHost, primaryNavigation: macPrimaryNavigation } : desktopHost;
+  return withDesktopDistribution(host, channel, version);
 }

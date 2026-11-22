@@ -7,6 +7,7 @@ mod ble_notifications;
 mod ble_address;
 mod file_export;
 mod native_print;
+mod primary_navigation;
 
 const SERVICE: &str = "me.cuberoot.app";
 
@@ -110,7 +111,7 @@ pub fn run() {
                 let _ = screen_awake::apply(false);
             }
         })
-        .invoke_handler(tauri::generate_handler![copy_text, navigation_menu::configure_navigation_menu, desktop_distribution, prepare_auth_callback, screen_awake::set_keep_awake, native_print::print_document, file_export::export_file, secure_get, secure_set, secure_remove, ble_notifications::ble_subscribe, ble_address::ble_device_mac])
+        .invoke_handler(tauri::generate_handler![copy_text, navigation_menu::configure_navigation_menu, primary_navigation::render_primary_navigation, desktop_distribution, prepare_auth_callback, screen_awake::set_keep_awake, native_print::print_document, file_export::export_file, secure_get, secure_set, secure_remove, ble_notifications::ble_subscribe, ble_address::ble_device_mac])
         .run(tauri::generate_context!())
         .expect("error while running CubeRoot");
 }

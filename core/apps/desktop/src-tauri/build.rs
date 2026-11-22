@@ -3,6 +3,7 @@ fn main() {
         cc::Build::new()
             .file("src/ble_address.m")
             .file("src/native_print.m")
+            .file("src/primary_navigation.m")
             .file("src/tools_search.m")
             .file("src/screen_awake.m")
             .flag("-fobjc-arc")
@@ -14,6 +15,7 @@ fn main() {
         println!("cargo:rustc-link-lib=framework=IOKit");
         println!("cargo:rerun-if-changed=src/screen_awake.m");
         println!("cargo:rerun-if-changed=src/native_print.m");
+        println!("cargo:rerun-if-changed=src/primary_navigation.m");
         println!("cargo:rerun-if-changed=src/tools_search.m");
         println!("cargo:rerun-if-changed=src/ble_address.m");
     }
