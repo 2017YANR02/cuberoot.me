@@ -144,7 +144,7 @@ it('phone uses fullscreen, Back closes nested content first, focus and body scro
 });
 
 it('Escape consumes inner dismiss before outer close, and Tab stays in the full sheet', async () => {
-  width = 768; await act(async () => root.render(createElement(Harness))); await click('.solver-panel-head');
+  width = 768; height = 1024; await act(async () => root.render(createElement(Harness))); await click('.solver-panel-head');
   const sheet = document.querySelector<HTMLElement>('.solver-sheet')!;
   expect(document.querySelector('[data-solver-body]')?.getAttribute('data-solver-body')).toBe('wide');
   const buttons = sheet.querySelectorAll<HTMLButtonElement>('button'); buttons[buttons.length - 1].focus();
@@ -197,9 +197,10 @@ it('restores an open phone sheet to the left dock when unfolded, without changin
   expect(document.querySelector('.solver-panel-body')).toBeNull();
   await click('.solver-light-trigger');
   expect(document.querySelector('.solver-sheet [data-view="steps"]')).not.toBeNull();
-  // An ordinary short phone landscape still uses the sheet.
+  // A short landscape phone docks the same solver without remounting it.
   await act(async () => { width = 852; height = 393; viewportListeners.forEach(notify => notify()); });
-  expect(document.querySelector('.solver-sheet')).not.toBeNull();
+  expect(document.querySelector('.solver-sheet')).toBeNull();
+  expect(document.querySelector('.solver-panel-body [data-view="steps"]')).not.toBeNull();
   expect(fixture.mounts).toBe(1);
 });
 
@@ -233,7 +234,7 @@ it('keeps exactly one live recap and one solver while native content folds below
   });
   await content(1200, 600);
   await act(async () => root.render(createElement(NativeHarness)));
-  for (const [contentWidth, contentHeight, wide] of [[1200, 600, true], [1200, 500, false], [740, 600, false], [951, 600, true]] as const) {
+  for (const [contentWidth, contentHeight, wide] of [[1200, 600, true], [1200, 500, true], [740, 600, true], [380, 600, false], [951, 600, true]] as const) {
     await content(contentWidth, contentHeight);
     expect(document.querySelectorAll('[data-live-recap]')).toHaveLength(1);
     expect(Boolean(document.querySelector('.shell-recap-rail [data-live-recap]'))).toBe(wide);

@@ -9,6 +9,7 @@ import { setInstalledShellNavigation } from '@/lib/installed-shell-navigation';
 
 const mocks = vi.hoisted(() => ({ mounted: vi.fn(), unmounted: vi.fn(), url: vi.fn() }));
 vi.mock('@/hooks/useT', () => ({ useT: () => (zh: string) => zh }));
+vi.mock('@/components/HomeLink', () => ({ default: ({ children }: { children: React.ReactNode }) => createElement('a', { href: '/zh' }, children) }));
 vi.mock('@/components/BackHome', () => ({ default: () => null }));
 vi.mock('@/components/StartupStatus', () => ({ ClientLoadStatus: () => null }));
 vi.mock('@/components/AppearanceToggle', () => ({ default: ({ section }: { section: string }) => createElement('div', { 'data-general': true, 'data-section': section }, '外观') }));
