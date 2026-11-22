@@ -6,6 +6,7 @@ export interface HostViewportLayout {
   bounds: ViewportRect;
   content: ViewportRect;
   bar?: ViewportRect;
+  hinge?: ViewportRect;
   topBar?: ViewportRect;
 }
 
@@ -29,6 +30,7 @@ export function setHostViewportLayout(value: HostViewportLayout | null) {
   layout = value;
   const root = document.documentElement;
   root.toggleAttribute('data-host-viewport', Boolean(value));
+  root.toggleAttribute('data-host-hinge', Boolean(value?.hinge));
   const bar = value?.topBar;
   root.toggleAttribute('data-host-top-bar', Boolean(bar));
   for (const [edge, pixels] of Object.entries({
@@ -57,16 +59,31 @@ export function useHostViewportLayout() {
 }
 
 /** Intersect native usable content with zoom/keyboard geometry, in client coordinates. */
-export function getUsableViewport() {
+export function getUsableViewport(anchor?: { x: number; y: number; width?: number; height?: number }) {
   const visual = window.visualViewport;
   const offsetLeft = visual?.offsetLeft ?? 0;
   const offsetTop = visual?.offsetTop ?? 0;
   const width = visual && visual.width > 0 ? visual.width : (document.documentElement.clientWidth || window.innerWidth);
   const height = visual && visual.height > 0 ? visual.height : (document.documentElement.clientHeight || window.innerHeight);
   const content = layout?.content;
-  const left = Math.max(offsetLeft, content?.x ?? 0);
-  const top = Math.max(offsetTop, content?.y ?? 0);
-  const right = Math.min(offsetLeft + width, content ? content.x + content.width : Infinity);
-  const bottom = Math.min(offsetTop + height, content ? content.y + content.height : Infinity);
+  let left = Math.max(offsetLeft, content?.x ?? 0);
+  let top = Math.max(offsetTop, content?.y ?? 0);
+  let right = Math.min(offsetLeft + width, content ? content.x + content.width : Infinity);
+  let bottom = Math.min(offsetTop + height, content ? content.y + content.height : Infinity);
+  const hinge = layout?.hinge;
+  if (hinge && hinge.x < right && hinge.y < bottom && hinge.x + hinge.width > left && hinge.y + hinge.height > top) {
+    const horizontal = hinge.width > hinge.height;
+    const start = horizontal ? top : left;
+    const end = horizontal ? bottom : right;
+    const near = horizontal ? hinge.y : hinge.x;
+    const far = near + (horizontal ? hinge.height : hinge.width);
+    const center = anchor && (horizontal ? anchor.y + (anchor.height ?? 0) / 2 : anchor.x + (anchor.width ?? 0) / 2);
+    const first = far >= end || (near > start && (center === undefined ? near - start >= end - far : center < (near + far) / 2));
+    if (horizontal) {
+      if (first) bottom = Math.min(bottom, near);
+      else top = Math.max(top, far);
+    } else if (first) right = Math.min(right, near);
+    else left = Math.max(left, far);
+  }
   return { offsetLeft: left, offsetTop: top, width: Math.max(0, right - left), height: Math.max(0, bottom - top) };
 }

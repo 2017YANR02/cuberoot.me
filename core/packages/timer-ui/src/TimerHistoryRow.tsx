@@ -207,7 +207,7 @@ function TimerHistoryQuickMenu({
   }, [onClose]);
 
   useLayoutEffect(() => {
-    const viewport = getUsableViewport();
+    const viewport = getUsableViewport(request);
     const viewportLeft = viewport?.offsetLeft ?? 0;
     const viewportTop = viewport?.offsetTop ?? 0;
     const viewportWidth = viewport?.width ?? document.documentElement.clientWidth;

@@ -7,7 +7,7 @@ import type { StackmatMicSource } from '@cuberoot/shared/timer/external/stackmat
 import { activeTimerSolves, createTimerStoreData, type TimerPhase, type TimerStoreData } from '@cuberoot/shared/timer';
 import { cubeMove, SOLVED_3X3 } from '@cuberoot/puzzle-solvers/timer-333-cube';
 import { decodeGyroTrack } from '@cuberoot/shared/smart-cube/gyro-track';
-import { TIMER_WIDE_QUERY } from '@cuberoot/timer-ui';
+import { setHostViewportLayout, TIMER_WIDE_QUERY } from '@cuberoot/timer-ui';
 import { act, useState } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -404,6 +404,44 @@ describe('installed App GAN lifecycle integration', () => {
     expect(solves).toHaveLength(1);
     expect(solves[0]).toMatchObject({ event, timeMs: 250, penalty: 'ok',
       scramble: 'D L2', moves: [{ m: 'L', ts: 0 }, { m: 'L', ts: 250 }] });
+  });
+
+  it('switches the folded upper pane between the original solver and results or reconstruction', async () => {
+    const bounds = { x: 0, y: 0, width: 669, height: 951 };
+    const folded = { bounds, content: bounds, hinge: { x: 0, y: 456, width: 669, height: 40 } };
+    const click = async (selector: string) => act(async () => container.querySelector<HTMLButtonElement>(selector)!.click());
+    const bulb = '.solver-light-trigger';
+    const solver = '.timer-solver-rail .solver-panel-body';
+    try {
+      await act(async () => setHostViewportLayout(folded));
+      await vi.waitFor(() => expect(container.querySelector(solver)).not.toBeNull());
+      await click(bulb);
+      expect(container.querySelector('.history-view')).not.toBeNull();
+      expect(container.querySelector(solver)).toBeNull();
+      await click('.history-view .shell-panel-tab:nth-child(2)');
+      expect(container.querySelector('.history-view .shell-panel-tab.active')?.textContent).toContain('Stats');
+      await click('.history-view .shell-panel-close');
+      expect(container.querySelector(solver)).not.toBeNull();
+      await act(async () => move('R', 1_000));
+      expect(container.querySelector(solver)).not.toBeNull();
+      await click(bulb);
+      await act(async () => move('U', 2_000));
+      await act(async () => move("U'", 2_250));
+      await vi.waitFor(async () => { await settle(); expect(container.querySelector('.shell-recap-rail .timer-live-solution')).not.toBeNull(); });
+      await act(async () => move("R'", 2_500));
+      await act(async () => options.onSolved?.(2_500));
+      await vi.waitFor(async () => { await settle(); expect(container.querySelector('.shell-recap-x')).not.toBeNull(); });
+      await click('.shell-recap-x');
+      expect(container.querySelector('.history-view')).not.toBeNull();
+      await click(bulb);
+      expect(container.querySelector(solver)).not.toBeNull();
+      expect(container.querySelector('.shell-recap-rail, .history-view')).toBeNull();
+      await act(async () => setHostViewportLayout(null));
+      await act(async () => setHostViewportLayout(folded));
+      expect(container.querySelector(solver)).not.toBeNull();
+    } finally {
+      await act(async () => setHostViewportLayout(null));
+    }
   });
 
   it('keeps the timer mounted beside wide history and switches to a full page on narrow screens', async () => {

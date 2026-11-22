@@ -132,7 +132,7 @@ export function TimerSmartCubeDeviceModal({
       const anchor = anchorRef?.current;
       if (!panel || !anchor) return;
       const rect = anchor.getBoundingClientRect();
-      const viewport = getUsableViewport();
+      const viewport = getUsableViewport(rect);
       const bottom = viewport ? viewport.offsetTop + viewport.height : window.innerHeight;
       panel.style.maxWidth = `${Math.max(0, viewport.width - 16)}px`;
       panel.style.left = `${Math.max(viewport.offsetLeft + 8, Math.min(rect.left, viewport.offsetLeft + viewport.width - panel.offsetWidth - 8))}px`;

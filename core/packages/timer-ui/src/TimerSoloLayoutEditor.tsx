@@ -22,7 +22,7 @@ interface LayoutHost { getSettings(): TimerSoloLayoutSettings; updateSettings(pa
 
 /** Use the visible viewport, including zoom/keyboard offsets on touch devices. */
 function viewportOverflow(elements: Element[], stage?: DOMRect) {
-  const viewport = getUsableViewport();
+  const viewport = getUsableViewport(stage);
   const left = viewport?.offsetLeft ?? 0;
   const viewportTop = viewport?.offsetTop ?? 0;
   const top = Math.max(viewportTop, stage?.top ?? viewportTop);

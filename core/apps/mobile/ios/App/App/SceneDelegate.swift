@@ -214,7 +214,9 @@ final class ViewportLayoutPlugin: CAPPlugin, CAPBridgedPlugin {
         if #available(iOS 27.1, *) {
             let regions = view.reservedRegions(kind: .occlusion).filter(\.isActive)
             let edge = view.traitCollection.verticalBarEdge
-            guard edge != .unspecified || !regions.isEmpty else { return [:] }
+            let folds = view.reservedRegions(kind: .division, options: .includeInactive)
+            let hinge = folds.first(where: \.isActive)?.frame
+            guard edge != .unspecified || !regions.isEmpty || hinge != nil else { return [:] }
             let bounds = view.bounds
             var content = view.layoutGuide(for: .safeArea(cornerAdaptation: .vertical)).layoutFrame.intersection(bounds)
             var bar: CGRect?
@@ -237,9 +239,9 @@ final class ViewportLayoutPlugin: CAPPlugin, CAPBridgedPlugin {
                 ["x": value.minX, "y": value.minY, "width": value.width, "height": value.height]
             }
             var result: [String: Any] = ["bounds": rect(bounds), "content": rect(content)]
+            if let hinge, content.intersects(hinge) { result["hinge"] = rect(hinge.intersection(content)) }
             if let bar { result["bar"] = rect(bar) }
             // A flat inner display still reports its inactive hinge region.
-            let folds = view.reservedRegions(kind: .division, options: .includeInactive)
             if edge == .unspecified, bounds.height > bounds.width, !folds.isEmpty, !folds.contains(where: \.isActive) {
                 let topBar = view.layoutGuide(for: .bar(onEdge: NSDirectionalRectEdge.top, extent: 44)).layoutFrame
                 if bounds.contains(topBar), topBar.width > 0, topBar.height >= 44, topBar.maxY <= content.minY,

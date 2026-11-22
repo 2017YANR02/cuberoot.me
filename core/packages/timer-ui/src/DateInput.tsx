@@ -130,7 +130,7 @@ export function DateInput({
 
     const positionPanel = () => {
       const anchor = trigger.getBoundingClientRect();
-      const viewport = getUsableViewport();
+      const viewport = getUsableViewport(anchor);
       panel.style.maxWidth = `${Math.max(0, viewport.width - 16)}px`;
       panel.style.maxHeight = `${Math.max(0, viewport.height - 16)}px`;
       const viewportLeft = viewport?.offsetLeft ?? 0;

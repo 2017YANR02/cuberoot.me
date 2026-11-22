@@ -57,7 +57,7 @@ export function Tooltip({ content, children, disabled = false, onlyWhenOverflow 
     if (!anchor || !tip) return;
     const position = () => {
       const rect = anchor.getBoundingClientRect();
-      const viewport = getUsableViewport();
+      const viewport = getUsableViewport(rect);
       tip.style.maxWidth = `${Math.max(0, viewport.width - 16)}px`;
       tip.style.maxHeight = `${Math.max(0, viewport.height - 16)}px`;
       const width = viewport.offsetLeft + viewport.width;

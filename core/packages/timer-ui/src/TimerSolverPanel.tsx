@@ -50,6 +50,7 @@ export interface TimerSolverPanelProps {
   onSheetOpenChange(open: boolean, replace?: boolean): void;
   onBlockingChange?(blocked: boolean): void;
   onDismissChange?(dismiss: (() => boolean) | null): void;
+  foldSelection?: { open: boolean; select(open: boolean): void };
   resultsPanelOpen?: boolean;
   autoCollapseOnReady?: boolean;
   autoOpenOnSolve?: number;
@@ -197,6 +198,7 @@ export default function TimerSolverPanel({
   onSheetOpenChange,
   onDismissChange,
   onBlockingChange,
+  foldSelection,
   resultsPanelOpen = false,
   autoCollapseOnReady = false,
   autoOpenOnSolve = 0,
@@ -291,19 +293,21 @@ export default function TimerSolverPanel({
     previousSheetOpen.current = sheetOpen;
   }, [sheetOpen, isDesktopRail]);
   useEffect(() => {
-    if (!isDesktopRail || autoFullRef.current) return;
+    if (foldSelection || !isDesktopRail || autoFullRef.current) return;
     if (fullPref && railOpen && !sheetOpen) {
       autoFullRef.current = true;
       onSheetOpenChange(true, true);
     }
-  }, [isDesktopRail, fullPref, railOpen, sheetOpen, onSheetOpenChange]);
+  }, [foldSelection, isDesktopRail, fullPref, railOpen, sheetOpen, onSheetOpenChange]);
 
-  const open = !resultsPanelOpen && (isDesktopRail ? railOpen : sheetOpen);
+  const dockOpen = foldSelection?.open ?? railOpen;
+  const open = !resultsPanelOpen && (isDesktopRail ? dockOpen : sheetOpen);
   // 左栏正被全屏浮层顶替:内容卸载(同一条打乱不解两遍),但 data-open 保持,
   // 关掉浮层就回到原样的宽栏。
-  const railBodyOpen = !resultsPanelOpen && isDesktopRail && railOpen && !sheetOpen;
+  const railBodyOpen = isDesktopRail && open && !sheetOpen;
 
   const toggle = () => {
+    if (foldSelection) { foldSelection.select(!dockOpen); return; }
     if (!isDesktopRail) {
       if (sheetOpen) { closeSheet(); return; }
       openSheet();
@@ -349,7 +353,7 @@ export default function TimerSolverPanel({
           </div>
           {railBodyOpen && <span className="solver-toolbar-navigation" ref={setNavigationSlot} />}
           <div className="solver-toolbar-end">
-          {isDesktopRail && railOpen && (
+          {isDesktopRail && dockOpen && (
             <button
               type="button"
               className="solver-layout-action"
@@ -361,7 +365,7 @@ export default function TimerSolverPanel({
               <Maximize2 size={16} aria-hidden="true" />
             </button>
           )}
-          {isDesktopRail && railOpen && (
+          {isDesktopRail && dockOpen && (
             <MoreToggle
               type="button"
               className="solver-layout-action"

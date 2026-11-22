@@ -6,7 +6,7 @@ import './timer-results-tabs.css';
 export function TimerResultsTabs({ value, onChange, onClose, language }: {
   value: 'times' | 'stats';
   onChange(value: 'times' | 'stats'): void;
-  onClose(): void;
+  onClose?(): void;
   language: 'en' | 'zh';
 }) {
   return <div className="shell-panel-tabs">
@@ -15,7 +15,7 @@ export function TimerResultsTabs({ value, onChange, onClose, language }: {
       onClick={() => onChange(tab)}>
       {TIMER_RESULTS_TABS_COPY[tab][language]}
     </button>)}
-    <button type="button" className="shell-panel-close" onClick={onClose}
-      aria-label={TIMER_RESULTS_TABS_COPY.close[language]}><X size={16} /></button>
+    {onClose && <button type="button" className="shell-panel-close" onClick={onClose}
+      aria-label={TIMER_RESULTS_TABS_COPY.close[language]}><X size={16} /></button>}
   </div>;
 }

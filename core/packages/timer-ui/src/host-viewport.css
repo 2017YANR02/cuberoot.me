@@ -69,3 +69,21 @@
   max-width: calc(100% - var(--host-safe-left) - var(--host-safe-right) - 24px);
 }
 :root[data-host-viewport] .toast { right: calc(var(--host-safe-right) + 16px); }
+
+/* Full-page timer dialogs get one continuous pane on a bent display. */
+:root[data-host-hinge] :is(.timer-settings-overlay.timer-settings-overlay, .timer-solve-detail-overlay.timer-solve-detail-overlay--full, .solver-sheet) {
+  inset: var(--host-safe-top) var(--host-safe-right) var(--host-safe-bottom) var(--host-safe-left);
+  width: auto;
+  height: auto;
+  padding: 0;
+}
+:root[data-host-hinge] :is(.timer-settings-overlay, .timer-solve-detail-overlay--full) > [role='dialog'] {
+  height: 100%;
+  max-height: 100%;
+}
+:root[data-host-hinge] :is(.settings-modal-head, .timer-solve-detail-full-head, .solver-sheet-head) {
+  padding: 12px 16px;
+}
+:root[data-host-hinge] :is(.timer-solve-detail-full-body, .solver-sheet .solver-sheet-body) {
+  padding: 0 16px 16px;
+}

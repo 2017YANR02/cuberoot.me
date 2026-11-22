@@ -238,7 +238,7 @@ export function TimerSessionSwitcher({
       const panel = panelRef.current;
       if (!trigger || !panel) return;
 
-      const viewport = getUsableViewport();
+      const viewport = getUsableViewport(trigger.getBoundingClientRect());
       const viewportLeft = viewport?.offsetLeft ?? 0;
       const viewportTop = viewport?.offsetTop ?? 0;
       const viewportWidth = viewport?.width ?? document.documentElement.clientWidth;

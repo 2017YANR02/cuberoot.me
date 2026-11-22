@@ -109,3 +109,84 @@
   flex: 0 0 auto;
   height: auto;
 }
+
+/* With just the timer and reconstruction, both use the same available width. */
+.timer-workspace.timer-workspace[data-recap-open]:not(:has(.solver-panel[data-layout='rail'][data-open='true'])) {
+  --timer-right-dock-limit: 100%;
+  grid-template-columns: minmax(0, 1fr) minmax(0, var(--timer-right-dock-width, 50%));
+}
+@media (max-width: 1023px) {
+  .timer-workspace.timer-workspace[data-recap-open]:not(:has(.solver-panel[data-layout='rail'][data-open='true'])) {
+    --timer-right-dock-width: 50%;
+  }
+}
+.timer-workspace[data-recap-open]:not(:has(.solver-panel[data-layout='rail'][data-open='true'])) > .timer-workspace-divider--right {
+  right: calc(var(--timer-right-dock-width, 50%) - 12px);
+}
+
+/* Keep the entire reserved strip empty. Folded layouts ignore saved dock widths. */
+.timer-workspace[data-fold-axis='horizontal'] {
+  --timer-fold-columns: minmax(0, 1fr);
+  --timer-fold-rows: var(--timer-first-pane) var(--timer-hinge-gap) auto minmax(0, 1fr);
+  --timer-fold-areas: 'panel' '.' 'topbar' 'main';
+}
+.timer-workspace[data-fold-axis='horizontal'][data-fold-solver],
+.timer-workspace[data-fold-axis='horizontal']:has(> .timer-solver-rail [data-open='true']) {
+  --timer-fold-areas: 'solver' '.' 'topbar' 'main';
+}
+.timer-workspace[data-fold-axis='horizontal'][data-panel-open]:has(> .timer-solver-rail [data-open='true']) {
+  --timer-fold-columns: repeat(2, minmax(0, 1fr));
+  --timer-fold-areas: 'solver panel' '. .' 'topbar topbar' 'main main';
+}
+.timer-workspace[data-fold-axis='vertical'] {
+  --timer-fold-columns: var(--timer-first-pane) var(--timer-hinge-gap) minmax(0, 1fr);
+  --timer-fold-rows: auto minmax(0, 1fr);
+  --timer-fold-areas: 'topbar . panel' 'main . panel';
+}
+.timer-workspace[data-fold-axis='vertical']:has(> .timer-solver-rail [data-open='true']) {
+  --timer-fold-areas: 'solver . topbar' 'solver . main';
+}
+.timer-workspace[data-fold-axis='vertical'][data-panel-open]:has(> .timer-solver-rail [data-open='true']) {
+  --timer-fold-rows: auto minmax(0, 1fr) minmax(0, 1fr);
+  --timer-fold-areas: 'topbar . solver' 'main . solver' 'main . panel';
+}
+.timer-workspace[data-fold-axis] > .timer-solver-rail { display: none; }
+.timer-workspace[data-fold-axis][data-fold-solver] > .timer-solver-rail,
+.timer-workspace[data-fold-axis] > .timer-solver-rail:has([data-open='true']) {
+  grid-area: solver;
+  position: static;
+  display: flex;
+  width: 100%;
+  min-height: 0;
+  border: 0;
+  overflow: auto;
+}
+
+.timer-workspace[data-fold-axis='horizontal'] > .timer-solver-rail {
+  --timer-solver-player-limit: min(100%, max(120px, calc(var(--timer-first-pane) - 196px)));
+}
+.timer-workspace[data-fold-axis] > :is(.timer-workspace-panel, .timer-solo-main, .timer-solver-rail) {
+  min-width: 0;
+  min-height: 0;
+  overflow: auto;
+}
+.timer-workspace[data-fold-axis] > .timer-solo-topbar { min-width: 0; overflow-x: auto; }
+
+/* The shallow upper pane has room beside the solution for its cube player. */
+.timer-workspace[data-fold-axis='horizontal'] > .timer-solver-rail .stsv-result {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  align-items: start;
+}
+.timer-workspace[data-fold-axis='horizontal'] > .timer-solver-rail .stsv-sols { grid-area: 1 / 2; }
+.timer-workspace[data-fold-axis='horizontal'] > .timer-solver-rail .solver-panel-body .stsv-player {
+  grid-area: 1 / 1;
+  justify-self: center;
+}
+
+/* When the timer hides its chrome, retain the selected upper pane during the attempt. */
+.timer-workspace[data-fold-axis='horizontal'] > .timer-workspace-panel {
+  visibility: visible;
+  opacity: 1;
+  pointer-events: auto;
+}

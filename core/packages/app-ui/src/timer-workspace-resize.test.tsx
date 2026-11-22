@@ -2,7 +2,8 @@
 import { act, createRef } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
-import { TimerWorkspace } from '@cuberoot/timer-ui';
+import { setHostViewportLayout, TimerWorkspace } from '@cuberoot/timer-ui';
+import { DEFAULT_SOLO_LAYOUT } from '@cuberoot/shared/timer';
 import { TimerSoloPage } from '@cuberoot/timer-ui/TimerSoloPage';
 
 let root: Root;
@@ -38,8 +39,38 @@ beforeEach(() => {
 });
 afterEach(async () => {
   await act(async () => root.unmount());
+  setHostViewportLayout(null);
   expect(observers.size).toBe(0);
   host.remove(); vi.restoreAllMocks(); vi.unstubAllGlobals();
+});
+
+it('keeps the solver and results in the workspace when folding and restores the dock after unfolding', async () => {
+  const bounds = { x: 0, y: 0, width: 1000, height: 800 };
+  const content = { x: 40, y: 30, width: 920, height: 700 };
+  await act(async () => root.render(
+    <TimerWorkspace soloLayout={DEFAULT_SOLO_LAYOUT} recap={<section>Recap</section>}>
+      <TimerSoloPage topbar={{ controls: null }} stage={{}}
+        timing={{ phase: 'idle', digits: '0.00', colorClass: '', surfaceRef: createRef() }}
+        solver={<div className="solver-panel" data-open="true" data-layout="rail" />} />
+    </TimerWorkspace>,
+  ));
+  const workspace = host.querySelector<HTMLElement>('.timer-workspace')!;
+  for (const [axis, hinge, first, gap] of [
+    ['horizontal', { x: 40, y: 300, width: 920, height: 34 }, 270, 34],
+    ['vertical', { x: 410, y: 30, width: 26, height: 700 }, 370, 26],
+  ] as const) {
+    await act(async () => setHostViewportLayout({ bounds, content, hinge }));
+    expect(workspace.dataset.foldAxis).toBe(axis);
+    expect(workspace.style.getPropertyValue('--timer-first-pane')).toBe(`${first}px`);
+    expect(workspace.style.getPropertyValue('--timer-hinge-gap')).toBe(`${gap}px`);
+    expect(workspace.querySelector(':scope > .timer-solver-rail')).not.toBeNull();
+    expect(workspace.querySelector(':scope > .shell-recap-rail')).not.toBeNull();
+    expect(workspace.querySelector('.timer-workspace-divider')).toBeNull();
+  }
+  await act(async () => setHostViewportLayout({ bounds, content }));
+  expect(workspace.hasAttribute('data-fold-axis')).toBe(false);
+  expect(workspace.querySelector('.timer-solo-main .timer-solver-rail')).not.toBeNull();
+  expect(workspace.querySelectorAll('.timer-workspace-divider')).toHaveLength(2);
 });
 
 async function drag(side: 'left' | 'right', delta: number) {

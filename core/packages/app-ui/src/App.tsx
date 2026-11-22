@@ -494,12 +494,24 @@ export function App({ host, loadingMark }: { host: InstalledAppHost; loadingMark
   }, [communityAvailability, timerMode]);
   const wideLayout = useTimerWideLayout({ useHostContent: true });
   const hostViewport = useHostViewportLayout();
+  const hinge = hostViewport?.hinge;
+  const horizontalFold = Boolean(hinge && hinge.width > hinge.height);
+  const [foldSolverPreferred, setFoldSolverPreferred] = useState(() => {
+    try { return (localStorage.getItem('timer.fold.solverOpen') ?? localStorage.getItem('timer.solverHints.panelOpen')) !== '0'; }
+    catch { return true; }
+  });
+  const selectFoldSolver = (open: boolean, nextView: 'timer' | 'history' = 'timer') => {
+    setFoldSolverPreferred(open);
+    try { localStorage.setItem('timer.fold.solverOpen', open ? '1' : '0'); } catch { /* Keep the choice for this visit. */ }
+    setView(nextView);
+  };
   const wideLayoutRef = useRef(wideLayout);
   const bluetoothButtonRef = useRef<HTMLButtonElement>(null);
   wideLayoutRef.current = wideLayout;
   const compactSoloLayout = useTimerSoloCompactLayout();
   const dockHistory = wideLayout && view === 'history' && timerMode === 1;
   const timerVisible = view === 'timer' || view === 'settings' || dockHistory;
+  const upperPaneVisible = horizontalFold && timerMode === 1 && timerVisible;
   const timerVisibleRef = useRef(timerVisible);
   timerVisibleRef.current = timerVisible;
   const [battleModeActive, setBattleModeActive] = useState(false);
@@ -660,6 +672,7 @@ export function App({ host, loadingMark }: { host: InstalledAppHost; loadingMark
       setOpenOverlay(null);
     }
   }, []);
+  useEffect(() => { if (upperPaneVisible) changeSolverSheet(false); }, [upperPaneVisible, changeSolverSheet]);
   const toolDismissRef = useRef<(() => boolean) | null>(null);
   const registerToolDismiss = useCallback((dismiss: (() => boolean) | null) => { toolDismissRef.current = dismiss; }, []);
   const solverDismissRef = useRef<(() => boolean) | null>(null);
@@ -3630,7 +3643,15 @@ export function App({ host, loadingMark }: { host: InstalledAppHost; loadingMark
     recordGyro: store?.settings.recordGyro ?? true,
     onEnableGyro: () => updateSettings({ recordGyro: true }),
   };
-  const recapSolve = solves.find((solve) => solve.id === recapSolveId) ?? null;
+  const foldSolverOpen = activeEvent === '333' && foldSolverPreferred && view !== 'history';
+  const recapSolve = useMemo(() => {
+    // Solves in a session are chronological. Manual times have no moves to replay.
+    if (upperPaneVisible) {
+      for (let i = solves.length - 1; i >= 0; i--) if (solves[i].moves?.length) return solves[i];
+      return null;
+    }
+    return solves.find(solve => solve.id === recapSolveId) ?? null;
+  }, [solves, recapSolveId, upperPaneVisible]);
   const liveSolutionPanel = timer.machine.phase === 'running' && liveSolve ? (
     <TimerLiveSolutionPanel language={language}>
       <Suspense fallback={null}><ReconstructReport key={liveSolve.id} solve={liveSolve}
@@ -3645,7 +3666,7 @@ export function App({ host, loadingMark }: { host: InstalledAppHost; loadingMark
         history={solves}
         host={reconstructionHost}
         isZh={language === 'zh'}
-        onDismiss={() => setRecapSolveId(null)}
+        onDismiss={() => { setRecapSolveId(null); if (upperPaneVisible) setView('history'); }}
         onFull={() => { setView('history'); openHistorySolveDetail(recapSolve); }}
         onReconFeedback={(reconOk) => updateSolve(recapSolve, { reconOk })}
         onUseScramble={useReconstructionScramble}
@@ -3654,6 +3675,9 @@ export function App({ host, loadingMark }: { host: InstalledAppHost; loadingMark
     </Suspense>
   );
 
+  const visibleRecap = upperPaneVisible && (foldSolverOpen || view === 'history') ? null : liveSolutionPanel ?? solveRecap;
+  const showFoldResults = upperPaneVisible && !foldSolverOpen && !visibleRecap;
+  const showHistoryPanel = upperPaneVisible ? showFoldResults : view === 'history' && !liveSolutionPanel;
   const moveSolveToSession = useCallback(async (solve: Solve, targetSessionId: string): Promise<boolean> => {
     try {
       await commitSessionMutation(() => repository.moveSolveToSession(solve.id, targetSessionId));
@@ -4398,8 +4422,8 @@ export function App({ host, loadingMark }: { host: InstalledAppHost; loadingMark
   const shellBottom = searchKeyboardVisible ? dockedKeyboardTop : viewportHeight;
   const shellHeight = contentRect ? Math.max(1, Math.min(contentRect.y + contentRect.height, shellBottom) - shellTop) : Math.max(1, shellBottom);
   const shellViewport = mobileShellViewportLayout(shellHeight);
-  const solverHintPanel = activeEvent === '333' ? <Suspense fallback={null}>
-    <StageSolverDialog scramble={scramble} language={language}
+  const solverHintPanel = activeEvent === '333' ? <Suspense fallback={<Spinner label={{ en: 'Loading', zh: '加载中' }[language]} />}>
+    <StageSolverDialog foldSelection={upperPaneVisible ? { open: foldSolverOpen, select: selectFoldSolver } : undefined} scramble={scramble} language={language}
       sheetOpen={openOverlay === TIMER_OVERLAY_IDS.stageSolver} onSheetOpenChange={changeSolverSheet}
       onDismissChange={registerSolverDismiss} onBlockingChange={setSolverBlocking} autoOpenOnSolve={solverOpenRequest}
       onScrambleChange={sourceControlsEnabled && timerCanSwitchScramble(timer.machine.phase) ? value => updateManualScrambles(value, true) : undefined}
@@ -4477,8 +4501,9 @@ export function App({ host, loadingMark }: { host: InstalledAppHost; loadingMark
 
 
       <TimerWorkspace className="view-container" soloLayout={store?.settings.soloLayout} active={timerMode === 1 && timerVisible}
+        data-fold-solver={upperPaneVisible && foldSolverOpen ? '' : undefined}
         data-live-reconstruction={liveSolutionPanel ? '' : undefined}
-        panelOpen={dockHistory && !liveSolutionPanel} recap={liveSolutionPanel ?? solveRecap}>
+        panelOpen={upperPaneVisible ? showFoldResults : dockHistory && !liveSolutionPanel} recap={visibleRecap}>
         {view === 'appearance' && appearance && <AppAppearanceSettings value={appearance}
           effectiveTheme={resolveAppearanceScheme(appearance, systemDark)} backgroundAssetRoot={`${SITE_ORIGIN}/assets/home-backgrounds/v1`}
           onChange={updateAppAppearance} onClose={closeAppAppearance} />}
@@ -4733,7 +4758,7 @@ export function App({ host, loadingMark }: { host: InstalledAppHost; loadingMark
                   language={language}
                   summary={stats}
                   trainingSummaries={trainingStatistics}
-                  onClick={() => setView('history')}
+                  onClick={() => { if (upperPaneVisible) selectFoldSolver(false, 'history'); else setView('history'); }}
                 />}}
         solver={solverHintPanel}
         narrowRecap={!wideLayout ? liveSolutionPanel : undefined}
@@ -5135,11 +5160,15 @@ children: <>
           );
         })}
 
-        {view === 'history' && !liveSolutionPanel && (
+        {showHistoryPanel && (
           <section className="history-view timer-workspace-panel" aria-label={copy.history} data-no-timer>
             <TimerResultsTabs value={historyTab === 'history' ? 'times' : 'stats'} language={language}
               onChange={tab => { historyWorkspaceRef.current?.dismiss(); setHistoryTab(tab === 'times' ? 'history' : 'stats'); }}
-              onClose={() => { historyWorkspaceRef.current?.dismiss(); setView('timer'); }} />
+              onClose={upperPaneVisible && activeEvent !== '333' && !solveRecap ? undefined : () => {
+                historyWorkspaceRef.current?.dismiss();
+                if (upperPaneVisible) selectFoldSolver(activeEvent === '333');
+                else setView('timer');
+              }} />
             <div className="timer-workspace-panel-body timer-results-panel-body">
             {historyTab === 'history' && <TimerResultsSessionBar
               language={language} query={historyQuery} onQueryChange={setHistoryQuery}

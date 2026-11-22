@@ -202,10 +202,10 @@
 /* Desktop: solutions dock on the left of .timer-solver-stage. The right grid column
    belongs to the latest reconstruction or the Times/Chart/Stats panel.
    Matching left padding keeps the timer and its bottom controls clear of the rail. */
-@media (min-width: 1024px), (min-width: 800px) and (min-height: 500px) and (orientation: landscape) {
+.timer-workspace[data-wide-layout] {
   /* Share the left dock's width with the topbar so its controls center over
      the timing canvas. The workspace grid already excludes the right dock. */
-  .timer-workspace:has(.timer-solver-stage:not([data-stage-fullscreen='true']) .solver-panel[data-open='true']) .shell-topbar.timer-solo-topbar {
+  &:has(.timer-solver-stage:not([data-stage-fullscreen='true']) .solver-panel[data-open='true']) .shell-topbar.timer-solo-topbar {
     grid-template-columns: min(var(--timer-left-dock-width, var(--solver-rail-w)), var(--solver-rail-limit, 100vw)) minmax(0, 1fr) auto;
     column-gap: 0;
   }
@@ -219,7 +219,7 @@
   }
   .timer-solver-stage > .shell-device-actions { left: calc(50% + var(--shell-left-inset) / 2); }
   /* 两侧都展开时，为中央计时区保留可用宽度。 */
-  .timer-workspace[data-panel-open] { --solver-rail-w: clamp(280px, 25vw, 380px); }
+  &[data-panel-open] { --solver-rail-w: clamp(280px, 25vw, 380px); }
 
   .timer-solver-rail {
     display: flex;
@@ -238,7 +238,7 @@
   .timer-solver-stage:not([data-stage-fullscreen='true']):has(.timer-solver-rail .solver-panel[data-open='true']) {
     --shell-left-inset: min(var(--timer-left-dock-width, var(--solver-rail-w)), var(--solver-rail-limit, 100vw));
   }
-  .timer-workspace:has(.timer-solver-rail .solver-panel[data-open='true']) .timer-solver-rail {
+  &:has(.timer-solver-rail .solver-panel[data-open='true']) .timer-solver-stage > .timer-solver-rail {
     top: 0;
     left: 0;
     bottom: 0;
@@ -261,13 +261,13 @@
   }
   /* Rail expanded: panels span its width; the open one grows to fill, any
      still-collapsed sibling becomes a full-width accordion header bar. */
-  .timer-workspace:has(.timer-solver-rail .solver-panel[data-open='true']) .timer-solver-rail .solver-panel { width: 100%; }
+  &:has(.timer-solver-rail .solver-panel[data-open='true']) .timer-solver-rail .solver-panel { width: 100%; }
   .timer-solver-rail .solver-panel[data-open='true'] { flex: 1 1 auto; min-height: 0; }
   .timer-solver-rail .solver-panel[data-open='false'] { flex: 0 0 auto; }
 
   /* Header, rail expanded: full-width bar + bottom divider. 分隔线挂在 headrow 上,
      好让标题按钮与形态开关共用同一条底边。 */
-  .timer-workspace:has(.timer-solver-rail .solver-panel[data-open='true']) .timer-solver-rail .solver-panel-headrow {
+  &:has(.timer-solver-rail .solver-panel[data-open='true']) .timer-solver-rail .solver-panel-headrow {
     display: grid;
     grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
     align-items: center;
@@ -275,7 +275,7 @@
     padding: 6px 12px;
     border-bottom: 1px solid var(--shell-divider, var(--border-default));
   }
-  .timer-workspace:has(.timer-solver-rail .solver-panel[data-open='true']) .timer-solver-rail .solver-panel-head {
+  &:has(.timer-solver-rail .solver-panel[data-open='true']) .timer-solver-rail .solver-panel-head {
     flex: 1;
     justify-content: space-between;
     padding: 12px 14px;
@@ -283,7 +283,7 @@
     border-radius: 0;
     background: transparent;
   }
-  .timer-workspace:has(.timer-solver-rail .solver-panel[data-open='true']) .timer-solver-rail .solver-panel-headrow:has(.solver-settings-slot) .solver-panel-head {
+  &:has(.timer-solver-rail .solver-panel[data-open='true']) .timer-solver-rail .solver-panel-headrow:has(.solver-settings-slot) .solver-panel-head {
     flex: 0 0 auto;
   }
   /* Collapsed desktop entry: text and chevron, matching the toolbar controls. */
@@ -312,14 +312,14 @@
     position: static;
     flex-basis: auto;
     width: 100%;
-    max-width: 300px;
+    max-width: var(--timer-solver-player-limit, 300px);
     margin: 0 auto;
   }
 }
 
 /* Unfolded phones reserve the middle for timing when both docks are open. */
 @media (min-width: 800px) and (max-width: 1023px) and (min-height: 500px) and (orientation: landscape) {
-  .timer-workspace { --solver-rail-w: 42vw; --solver-rail-limit: 42vw; }
+  .timer-workspace { --solver-rail-w: 42vw; }
   .timer-workspace[data-panel-open] { --solver-rail-w: 30vw; --solver-rail-limit: 30vw; }
 }
 

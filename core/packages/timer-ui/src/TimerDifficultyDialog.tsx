@@ -25,7 +25,7 @@ export function TimerDifficultyDialog({ anchorRef, language, disabled, canApply 
       const anchor = anchorRef.current;
       if (!panel || !anchor) return;
       const rect = anchor.getBoundingClientRect();
-      const viewport = getUsableViewport();
+      const viewport = getUsableViewport(rect);
       panel.style.maxWidth = `${Math.max(0, viewport.width - 16)}px`;
       panel.style.maxHeight = `${Math.max(0, viewport.height - 16)}px`;
       const width = panel.offsetWidth;

@@ -24,6 +24,7 @@ export interface DateRangeInputProps {
   className?: string;
   size?: 'default' | 'compact';
   clearable?: boolean;
+  showSeparator?: boolean;
   disabled?: boolean;
 }
 
@@ -40,6 +41,7 @@ export function DateRangeInput({
   className,
   size = 'default',
   clearable = true,
+  showSeparator = true,
   disabled,
 }: DateRangeInputProps) {
   const fromAriaLabel = fromLabel ?? labels.startDate;
@@ -83,7 +85,7 @@ export function DateRangeInput({
           {fromInput}
         </label>
       ) : fromInput}
-      <span className="date-range-input__separator" aria-hidden="true">~</span>
+      {showSeparator && <span className="date-range-input__separator" aria-hidden="true">~</span>}
       {toLabel ? (
         <label className="date-range-input__field">
           <span className="date-range-input__label">{toLabel}</span>

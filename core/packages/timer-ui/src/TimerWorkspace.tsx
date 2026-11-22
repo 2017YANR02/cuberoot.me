@@ -8,7 +8,7 @@ import { observeSoloSpacing } from './solo-spacing-fit';
 
 // Unfolded landscape can use compact docks on either side of the timer.
 // Keep this in sync with timer-solver-panel.css and timing-surface.css.
-export const TIMER_WIDE_QUERY = '(min-width: 1024px), (min-width: 800px) and (min-height: 500px) and (orientation: landscape)';
+export const TIMER_WIDE_QUERY = '(min-width: 1024px), (min-width: 560px) and (orientation: landscape), (pointer: coarse) and (orientation: landscape)';
 function subscribe(notify: () => void) {
   if (typeof window.matchMedia !== 'function') return () => {};
   const query = window.matchMedia(TIMER_WIDE_QUERY);
@@ -19,9 +19,9 @@ function subscribe(notify: () => void) {
 export function useTimerWideLayout({ useHostContent = true }: { useHostContent?: boolean } = {}) {
   const host = useHostViewportLayout();
   const desktop = useSyncExternalStore(subscribe, () => typeof window.matchMedia === 'function' && window.matchMedia(TIMER_WIDE_QUERY).matches, () => false);
-  // A native reserved area reduces the actual workspace width. Require enough
-  // room for a 480px timer and 300px results; short landscape stays single-pane.
-  return useHostContent && host ? host.content.width >= 800 && host.content.height >= 560 : desktop;
+  if (!useHostContent || !host) return desktop;
+  return Boolean(host.hinge) || host.content.width >= 1024 ||
+    (host.bounds.width > host.bounds.height && host.content.width >= 400);
 }
 
 export function TimerWorkspace({ active = true, panelOpen = false, recap, soloLayout, resizeLabel = 'Resize panel', children, className = '', style, ...props }: HTMLAttributes<HTMLDivElement> & {
@@ -32,6 +32,9 @@ export function TimerWorkspace({ active = true, panelOpen = false, recap, soloLa
   const expandedSpacing = soloLayout && (['scrambleGap', 'sourceGap', 'timerGap', 'cubeGap'] as const)
     .some(key => soloLayout[key] > DEFAULT_SOLO_LAYOUT[key]);
   const wide = useTimerWideLayout({ useHostContent: true });
+  const host = useHostViewportLayout();
+  const hinge = active && soloLayout ? host?.hinge : undefined;
+  const stacked = host && hinge && hinge.width > hinge.height;
   const recapOpen = active && wide && !panelOpen && Boolean(recap);
   const workspaceRef = useRef<HTMLDivElement>(null);
   useLayoutEffect(() => {
@@ -43,7 +46,7 @@ export function TimerWorkspace({ active = true, panelOpen = false, recap, soloLa
   }, [active, soloLayout]);
   useLayoutEffect(() => {
     const workspace = workspaceRef.current;
-    if (!workspace || !active || !wide || typeof ResizeObserver === 'undefined') return;
+    if (!workspace || !active || !wide || hinge || typeof ResizeObserver === 'undefined') return;
     // Watch the rail as well as the host: expanding a previously collapsed dock
     // must share the same width budget as resizing the native window.
     const constrain = () => constrainDockWidths(workspace);
@@ -52,9 +55,15 @@ export function TimerWorkspace({ active = true, panelOpen = false, recap, soloLa
     for (const panel of workspace.querySelectorAll('.timer-solver-rail, .timer-workspace-panel')) observer.observe(panel);
     constrain();
     return () => observer.disconnect();
-  }, [active, wide, panelOpen, recapOpen]);
+  }, [active, wide, panelOpen, recapOpen, hinge]);
   return <div {...props} ref={workspaceRef} className={`${className}${active ? ' timer-workspace timer-no-selection' : ''}`}
-    style={{ ...style, ...(soloLayout && {
+    style={{ ...style, ...(hinge && host && {
+      '--timer-first-pane': `${stacked ? hinge.y - host.content.y : hinge.x - host.content.x}px`,
+      '--timer-hinge-gap': `${stacked ? hinge.height : hinge.width}px`,
+      gridTemplateColumns: 'var(--timer-fold-columns)',
+      gridTemplateRows: 'var(--timer-fold-rows)',
+      gridTemplateAreas: 'var(--timer-fold-areas)',
+    }), ...(soloLayout && {
       '--solo-scramble-gap': `${soloLayout.scrambleGap}px`,
       '--solo-source-gap': `${soloLayout.sourceGap}px`,
       '--solo-timer-gap': `${soloLayout.timerGap}px`,
@@ -66,11 +75,12 @@ export function TimerWorkspace({ active = true, panelOpen = false, recap, soloLa
       '--solo-source-scale': soloLayout.sourceScale,
       '--solo-cube-scale': soloLayout.cubeScale,
     }) } as CSSProperties}
+    data-fold-axis={hinge ? (stacked ? 'horizontal' : 'vertical') : undefined}
     data-fit-viewport={soloLayout ? '' : undefined} data-spacing-flow={expandedSpacing ? '' : undefined}
     data-wide-layout={wide ? '' : undefined}
     data-panel-open={active && (panelOpen || recapOpen) ? '' : undefined} data-recap-open={recapOpen ? '' : undefined}>
     {children}
-    {active && wide && (panelOpen || recapOpen) && <TimerWorkspaceDivider side="right" label={resizeLabel} />}
+    {active && wide && !hinge && (panelOpen || recapOpen) && <TimerWorkspaceDivider side="right" label={resizeLabel} />}
     {recapOpen && (
       <aside className="timer-workspace-panel shell-panel--rail shell-recap-rail" data-site-surface="panel" data-no-timer>
         {recap}
@@ -89,7 +99,7 @@ function openDock(workspace: HTMLElement, side: 'left' | 'right') {
 
 /** Pixel preferences survive resizing, but cannot consume the timing canvas. */
 function constrainDockWidths(workspace: HTMLElement) {
-  const available = Math.max(0, workspace.clientWidth - MIN_TIMER_WIDTH);
+  const available = Math.max(0, workspace.clientWidth - Math.min(MIN_TIMER_WIDTH, workspace.clientWidth / 2));
   if (!workspace.clientWidth) return;
   const docks = (['left', 'right'] as const).map(side => ({ side, width: openDock(workspace, side)?.getBoundingClientRect().width ?? 0 }))
     .filter(dock => dock.width > 0);
@@ -113,7 +123,7 @@ export function TimerWorkspaceDivider({ side, label }: { side: 'left' | 'right';
     if (!workspace) return;
     const other = openDock(workspace, side === 'left' ? 'right' : 'left');
     const otherWidth = other?.getBoundingClientRect().width ?? 0;
-    const maximum = Math.max(0, workspace.clientWidth - otherWidth - MIN_TIMER_WIDTH);
+    const maximum = Math.max(0, workspace.clientWidth - otherWidth - Math.min(MIN_TIMER_WIDTH, workspace.clientWidth / 2));
     const next = Math.round(Math.max(Math.min(240, maximum), Math.min(requested, maximum)));
     workspace.style.setProperty(side === 'left' ? '--timer-left-dock-width' : '--timer-right-dock-width', `${next}px`);
     return next;

@@ -133,8 +133,8 @@ interface VisibleRect {
   top: number;
 }
 
-function viewportRect(): VisibleRect {
-  const visualViewport = getUsableViewport();
+function viewportRect(anchor: HTMLElement): VisibleRect {
+  const visualViewport = getUsableViewport(anchor.getBoundingClientRect());
   const fallbackWidth = document.documentElement.clientWidth || window.innerWidth;
   const fallbackHeight = document.documentElement.clientHeight || window.innerHeight;
   const width = visualViewport && visualViewport.width > 0
@@ -159,7 +159,7 @@ function clipsAxis(value: string): boolean {
  * cannot cover chrome that the anchor itself is clipped below.
  */
 function visibleRectForAnchor(anchor: HTMLElement): VisibleRect {
-  const visible = viewportRect();
+  const visible = viewportRect(anchor);
   for (let element = anchor.parentElement; element; element = element.parentElement) {
     if (element === document.body || element === document.documentElement) continue;
     const style = window.getComputedStyle(element);

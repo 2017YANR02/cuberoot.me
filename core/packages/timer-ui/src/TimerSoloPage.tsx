@@ -8,6 +8,7 @@ import { TimerWorkspaceDivider, useTimerWideLayout } from './TimerWorkspace';
 import './timer-solo-page.css';
 import { TimerTools, type TimerToolsProps } from './TimerTools';
 import TimingSurface from './TimingSurface';
+import { useHostViewportLayout } from './host-viewport';
 import { Tooltip } from './Tooltip';
 
 export interface TimerSoloControlsProps {
@@ -54,12 +55,16 @@ export interface TimerSoloPageProps {
 /** Canonical Solo view. Routing, stores and device transports stay with hosts;
  * this component owns responsive placement and renders exactly one solver. */
 export function TimerSoloPage({ title, resizeLabel = 'Resize panel', topbar, stage, timing, solver, afterTiming, narrowRecap, hints, history, tools }: TimerSoloPageProps) {
+  const hinge = useHostViewportLayout()?.hinge;
+  const separateSolver = Boolean(hinge && (!stage.fullscreen || hinge.width > hinge.height));
+  const rail = <div className="shell-rail timer-solver-rail" data-no-timer>{solver}</div>;
   const wide = useTimerWideLayout();
   const [solverTriggerSlot, setSolverTriggerSlot] = useState<HTMLSpanElement | null>(null);
   const [previewHost, setPreviewHost] = useState<HTMLDivElement | null>(null);
   const canvasRef = useRef<HTMLDivElement>(null);
   const { surfaceRef, onContextMenu, onMouseDown, onMouseUp, onPointerDown, onPointerUp, onPointerCancel, ...canvas } = timing;
   return <SolverTriggerContext.Provider value={solverTriggerSlot}>
+    {separateSolver && rail}
     <TimerTopbar brand={topbar.brand} availableTopBar={topbar.availableTopBar}
       actions={topbar.liveStatus && <span role="status" className="timer-live-watch-status">{topbar.liveStatus}</span>}
       className={`timer-solo-topbar${stage.fullscreen ? ' timer-solo-topbar--fullscreen' : ''}${topbar.className ? ` ${topbar.className}` : ''}`}
@@ -74,8 +79,8 @@ export function TimerSoloPage({ title, resizeLabel = 'Resize panel', topbar, sta
         {afterTiming}
         {hints}
       </div>
-      {wide && <TimerWorkspaceDivider side="left" label={resizeLabel} />}
-      <div className="shell-rail timer-solver-rail" data-no-timer>{solver}</div>
+      {wide && !separateSolver && <TimerWorkspaceDivider side="left" label={resizeLabel} />}
+      {!separateSolver && rail}
     </TimerStageLayout>
     {history}
     {tools && <TimerTools {...tools} />}

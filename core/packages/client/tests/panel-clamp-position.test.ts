@@ -72,3 +72,44 @@ it('moves right-anchored panels and flips tall menus above their trigger without
     viewport.mockRestore(); height.mockRestore(); width.mockRestore(); panelHeight.mockRestore(); rect.mockRestore();
   }
 });
+
+it('fits an oversized menu in its folded pane and restores its size after unfolding', async () => {
+  const { setHostViewportLayout } = await import('@cuberoot/timer-ui');
+  const host = document.createElement('div');
+  document.body.append(host);
+  const root = createRoot(host);
+  const bounds = { x: 0, y: 0, width: 800, height: 600 };
+  const hinge = { x: 358, y: 0, width: 40, height: 600 };
+  setHostViewportLayout({ bounds, content: bounds, hinge });
+  const width = vi.spyOn(document.documentElement, 'clientWidth', 'get').mockReturnValue(800);
+  const panelWidth = vi.spyOn(HTMLElement.prototype, 'offsetWidth', 'get').mockImplementation(function (this: HTMLElement) {
+    return parseFloat(this.style.maxWidth) || 530;
+  });
+  const height = vi.spyOn(HTMLElement.prototype, 'offsetHeight', 'get').mockImplementation(function (this: HTMLElement) {
+    return parseFloat(this.style.maxHeight) || 700;
+  });
+  const rect = vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockImplementation(function (this: HTMLElement) {
+    if (this === document.documentElement) return { left: 0, right: 800 } as DOMRect;
+    return { x: 410, width: 48, left: 410, top: 25, y: 25, height: 30 } as DOMRect;
+  });
+  function Panel() {
+    const ref = useRef<HTMLDivElement>(null);
+    usePanelClamp(true, ref);
+    return createElement('div', { ref });
+  }
+  try {
+    await act(async () => root.render(createElement(Panel)));
+    const panel = host.firstElementChild as HTMLElement;
+    expect(panel.style.maxWidth).toBe('386px');
+    expect(panel.style.maxHeight).toBe('584px');
+    expect(panel.style.marginTop).toBe('-17px');
+    setHostViewportLayout({ bounds, content: bounds });
+    expect(panel.style.maxWidth).toBe('');
+    expect(panel.style.maxHeight).toBe('');
+    expect(panel.style.marginTop).toBe('');
+  } finally {
+    await act(async () => root.unmount()); host.remove();
+    setHostViewportLayout(null);
+    width.mockRestore(); panelWidth.mockRestore(); height.mockRestore(); rect.mockRestore();
+  }
+});

@@ -31,3 +31,25 @@ describe('host usable viewport', () => {
     window.removeEventListener('resize', onResize);
   });
 });
+
+describe('folded viewport', () => {
+  const bounds = { x: 0, y: 0, width: 900, height: 760 };
+  const content = { x: 30, y: 50, width: 800, height: 650 };
+
+  it.each([
+    [{ x: 30, y: 310, width: 800, height: 40 }, { x: 100, y: 300 }, [30, 50, 800, 260]],
+    [{ x: 30, y: 310, width: 800, height: 40 }, { x: 100, y: 352 }, [30, 350, 800, 350]],
+    [{ x: 410, y: 50, width: 40, height: 650 }, { x: 395, y: 400 }, [30, 50, 380, 650]],
+    [{ x: 410, y: 50, width: 40, height: 650 }, { x: 451, y: 400 }, [450, 50, 380, 650]],
+  ] as const)('keeps an anchored popup entirely on its side of the fold', (hinge, anchor, expected) => {
+    setHostViewportLayout({ bounds, content, hinge });
+    const { offsetLeft, offsetTop, width, height } = getUsableViewport(anchor);
+    expect([offsetLeft, offsetTop, width, height]).toEqual(expected);
+  });
+
+  it('uses the remaining visible pane when the keyboard hides the other one', () => {
+    vi.stubGlobal('visualViewport', Object.assign(new EventTarget(), { offsetLeft: 0, offsetTop: 0, width: 900, height: 330 }));
+    setHostViewportLayout({ bounds, content, hinge: { x: 30, y: 310, width: 800, height: 40 } });
+    expect(getUsableViewport({ x: 40, y: 500 })).toEqual({ offsetLeft: 30, offsetTop: 50, width: 800, height: 260 });
+  });
+});

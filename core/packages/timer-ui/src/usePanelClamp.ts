@@ -22,13 +22,22 @@ export function usePanelClamp(
     const original = {
       marginLeft: el.style.marginLeft, marginRight: el.style.marginRight,
       marginTop: el.style.marginTop, maxHeight: el.style.maxHeight,
-      overflowY: el.style.overflowY,
+      overflowY: el.style.overflowY, maxWidth: el.style.maxWidth, minWidth: el.style.minWidth,
+      minHeight: el.style.minHeight, boxSizing: el.style.boxSizing,
     };
     const restore = () => Object.assign(el.style, original);
     const apply = () => {
       restore();
       const root = document.documentElement;
-      const viewport = getUsableViewport();
+      const anchorElement = triggerRef?.current ?? (el.parentElement === document.body ? el : el.parentElement);
+      const viewport = getUsableViewport(anchorElement?.getBoundingClientRect());
+      const folded = root.hasAttribute('data-host-hinge');
+      const paneWidth = Math.max(0, viewport.width - 2 * MARGIN);
+      if (folded && el.offsetWidth > paneWidth) {
+        el.style.boxSizing = 'border-box';
+        el.style.minWidth = '0';
+        el.style.maxWidth = `${paneWidth}px`;
+      }
       const vw = Math.min(root.clientWidth, root.getBoundingClientRect().right, viewport.offsetLeft + viewport.width);
       const left = el.getBoundingClientRect().left;
       const overRight = left + el.offsetWidth - (vw - MARGIN);
@@ -40,10 +49,22 @@ export function usePanelClamp(
         el.style.marginRight = `${(parseFloat(style.marginRight) || 0) - shift}px`;
       }
       const trigger = triggerRef?.current;
-      if (!trigger) return;
-      const anchor = trigger.getBoundingClientRect();
       const top = viewport.offsetTop + MARGIN;
       const bottom = viewport.offsetTop + viewport.height - MARGIN;
+      if (!trigger) {
+        if (!folded) return;
+        if (el.offsetHeight > bottom - top) {
+          el.style.boxSizing = 'border-box';
+          el.style.minHeight = '0';
+          el.style.maxHeight = `${Math.max(0, bottom - top)}px`;
+          el.style.overflowY = 'auto';
+        }
+        const y = el.getBoundingClientRect().top;
+        const shiftY = Math.max(top, Math.min(y, bottom - el.offsetHeight)) - y;
+        if (shiftY) el.style.marginTop = `${(parseFloat(getComputedStyle(el).marginTop) || 0) + shiftY}px`;
+        return;
+      }
+      const anchor = trigger.getBoundingClientRect();
       const below = Math.max(0, bottom - Math.max(top, anchor.bottom + GAP));
       const above = Math.max(0, Math.min(bottom, anchor.top - GAP) - top);
       const up = el.offsetHeight > below && above > below;
