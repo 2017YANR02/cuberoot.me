@@ -62,6 +62,9 @@ const nextConfig: NextConfig = {
   // to rewrite imports per-symbol so unused branches drop.
   experimental: {
     optimizePackageImports: ["three", "maplibre-gl", "katex"],
+    // Vercel's 8 GB builder shares memory between Turbopack and Next's workers.
+    // A one-shot build can discard the persistent dependency graph after compilation.
+    ...(isProd && isVercel && { turbopackFileSystemCacheForBuild: false, cpus: 2 }),
     // Cached trainer documents must hydrate without a live dev-server WebSocket.
     // Next's split React debug channel otherwise leaves offline Flight decoding pending.
     reactDebugChannel: false,

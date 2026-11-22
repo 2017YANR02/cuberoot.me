@@ -2,6 +2,7 @@
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "ignoreCommand": "node ../../scripts/vercel-ignore-build.ts",
   "installCommand": "cd ../.. && corepack pnpm --version && corepack pnpm install --frozen-lockfile",
+  "buildCommand": "RAYON_NUM_THREADS=2 MALLOC_ARENA_MAX=2 pnpm run build",
   "functions": {
     "app/api/page-access/route.ts": {
       "regions": [
