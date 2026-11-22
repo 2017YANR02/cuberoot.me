@@ -57,6 +57,27 @@ export interface ResultChangeField {
   new: unknown;
 }
 
+interface PlacementChangeEvidence {
+  changeId: number;
+  wcaId: string;
+  personName: string | null;
+  oldPlace: number;
+  newPlace: number | null;
+}
+
+type PlacementChangeReason = {
+  kind: 'inferred' | 'unknown';
+  causes: (PlacementChangeEvidence & {
+    changeType: 'modified' | 'removed';
+    field: 'average' | 'best';
+    oldValue: number;
+    newValue: number | null;
+  })[];
+} | {
+  kind: 'head_to_head_single_order';
+  causes: (PlacementChangeEvidence & { best: number; newPlace: number })[];
+};
+
 export interface ResultChange {
   id: number;
   wcaId: string;
@@ -81,20 +102,7 @@ export interface ResultChange {
   editedAt: string | null;
   // approved=已生效(自动/管理员/本人+2);pending=待审核(任何登录用户的提议);rejected=已驳回(端点已过滤)。
   status: 'approved' | 'pending' | 'rejected';
-  placementReason?: {
-    kind: 'inferred' | 'unknown';
-    causes: {
-      changeId: number;
-      wcaId: string;
-      personName: string | null;
-      changeType: 'modified' | 'removed';
-      field: 'average' | 'best';
-      oldValue: number;
-      newValue: number | null;
-      oldPlace: number;
-      newPlace: number | null;
-    }[];
-  } | null;
+  placementReason?: PlacementChangeReason | null;
 }
 
 /** 一条变更是否已生效(进有效值)。缺省/approved 视为已生效;pending/rejected 不算。 */

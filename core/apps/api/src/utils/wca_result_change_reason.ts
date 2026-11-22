@@ -48,31 +48,70 @@ function ahead(a: Fingerprint, b: Fingerprint): boolean {
   return score(a.b) < score(b.b);
 }
 
-export function isPlacementOnlyChange(change: ReasonChange): boolean {
+function placementOnlyPair(change: ReasonChange) {
   const before = fingerprint(change.before_json);
   const after = fingerprint(change.after_json);
-  return change.change_type === 'modified' && !!before && !!after
+  return change.change_type === 'modified' && before && after
     && before.p > 0 && after.p > 0 && before.p !== after.p
-    && sameRound(before, after) && sameScores(before, after);
+    && sameRound(before, after) && sameScores(before, after) ? { before, after } : null;
+}
+
+export function isPlacementOnlyChange(change: ReasonChange): boolean {
+  return placementOnlyPair(change) !== null;
+}
+
+function isCorrelated(change: ReasonChange, candidate: ReasonChange): boolean {
+  if (candidate.wca_id === change.wca_id || candidate.source !== 'auto' || candidate.status !== 'approved'
+    || candidate.competition_id !== change.competition_id || candidate.event_id !== change.event_id
+    || candidate.round_type_id !== change.round_type_id) return false;
+  const elapsed = Math.abs(Date.parse(candidate.detected_at) - Date.parse(change.detected_at));
+  return elapsed <= RESULT_CHANGE_CORRELATION_MS;
+}
+
+/** Only infer a single-time ordering in the results feed. Match outcomes are separate evidence. */
+function inferHeadToHeadSingleOrder(change: ReasonChange, before: Fingerprint, after: Fingerprint, candidates: readonly ReasonChange[]) {
+  // A single swap can match single-time order by coincidence.
+  if (candidates.length < 2) return null;
+  const batch = [{ change, before, after }];
+  for (const candidate of candidates) {
+    const pair = placementOnlyPair(candidate);
+    if (!pair || !sameRound(before, pair.before)) return null;
+    batch.push({ change: candidate, ...pair });
+  }
+  if (new Set(batch.map(row => row.change.wca_id)).size !== batch.length
+    || new Set(batch.map(row => row.before.p)).size !== batch.length) return null;
+
+  batch.sort((a, b) => a.after.p - b.after.p);
+  if (batch.some((row, i) => row.after.b <= 0 || (i > 0
+    && (batch[i - 1].after.p === row.after.p || batch[i - 1].after.b >= row.after.b)))) return null;
+
+  let delta = 0;
+  const causes = [];
+  for (const row of batch) {
+    const contribution = Number(row.after.p < after.p) - Number(row.before.p < before.p);
+    if (!contribution) continue;
+    delta += contribution;
+    causes.push({
+      changeId: Number(row.change.id), wcaId: row.change.wca_id, personName: row.change.person_name,
+      best: row.after.b, oldPlace: row.before.p, newPlace: row.after.p,
+    });
+  }
+  return delta === after.p - before.p ? { kind: 'head_to_head_single_order' as const, causes } : null;
 }
 
 export function inferPlacementChangeReason(change: ReasonChange, candidates: readonly ReasonChange[]) {
-  if (!isPlacementOnlyChange(change)) return null;
+  const pair = placementOnlyPair(change);
+  if (!pair) return null;
   const unknown = { kind: 'unknown' as const, causes: [] };
-  const before = fingerprint(change.before_json)!;
-  const after = fingerprint(change.after_json)!;
-  // Manual annotations and head-to-head brackets need explicit evidence.
-  if (change.source !== 'auto' || change.status !== 'approved'
-    || !['a', 'm', '1', '2', '3', '5'].includes(before.f)) return unknown;
+  const { before, after } = pair;
+  if (change.source !== 'auto' || change.status !== 'approved') return unknown;
+  const related = candidates.filter(candidate => isCorrelated(change, candidate));
+  if (before.f === 'h') return inferHeadToHeadSingleOrder(change, before, after, related) ?? unknown;
+  if (!['a', 'm', '1', '2', '3', '5'].includes(before.f)) return unknown;
   const causes = [];
   const seen = new Set<string>();
   let delta = 0;
-  for (const candidate of candidates) {
-    if (candidate.wca_id === change.wca_id || candidate.source !== 'auto' || candidate.status !== 'approved'
-      || candidate.competition_id !== change.competition_id || candidate.event_id !== change.event_id
-      || candidate.round_type_id !== change.round_type_id) continue;
-    const elapsed = Math.abs(Date.parse(candidate.detected_at) - Date.parse(change.detected_at));
-    if (!Number.isFinite(elapsed) || elapsed > RESULT_CHANGE_CORRELATION_MS) continue;
+  for (const candidate of related) {
     const old = fingerprint(candidate.before_json);
     const next = fingerprint(candidate.after_json);
     if (!old || !sameRound(before, old)) continue;

@@ -149,8 +149,13 @@ html[data-theme=dark] .wp-page {
 .wp-rc-chart-track { height: 4px; border-radius: 2px; background: color-mix(in srgb, var(--foreground) 6%, transparent); }
 .wp-rc-chart-bar { display: block; height: 100%; border-radius: inherit; background: color-mix(in srgb, var(--foreground) 60%, transparent); }
 .wp-rc-chart-count { text-align: right; color: var(--foreground); }
-.wp-rc-groups { column-count: 4; column-gap: 16px; }
-.wp-rc-group { display: inline-block; width: 100%; box-sizing: border-box; break-inside: avoid; margin-bottom: 16px; min-width: 0; padding: 16px; border: 1px solid var(--border-default); border-radius: 12px; }
+.wp-rc-groups {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 272px), 1fr));
+    align-items: start;
+    gap: 16px;
+}
+.wp-rc-group { min-width: 0; padding: 16px; border: 1px solid var(--border-default); border-radius: 12px; }
 .wp-rc-comp { display: flex; align-items: baseline; gap: 10px; margin: 0 0 14px; font-size: 0.9rem; font-weight: 500; color: var(--foreground); white-space: nowrap; overflow-x: auto; }
 .wp-rc-comp > a { flex: none; }
 .wp-rc-comp-date { flex: none; font-size: 0.74rem; font-weight: 400; color: var(--muted-foreground); font-variant-numeric: tabular-nums; }
@@ -199,12 +204,6 @@ html[data-theme=dark] .wp-page {
     margin: 0; overflow-wrap: anywhere;
     color: var(--muted-foreground); font-size: 0.78rem; line-height: 1.45;
 }
-@media (max-width: 1100px) {
-    .wp-rc-groups { column-count: 2; }
-}
-@media (max-width: 600px) {
-    .wp-rc-groups { column-count: 1; }
-}
 
 /* ── Hero ──────────────────────────────────────────────────────────── */
 /* 统计保持单行;窄屏由统计容器横向滚动。 */
@@ -220,7 +219,13 @@ html[data-theme=dark] .wp-page {
 
 .wp-hero-avatar-wrap {
     display: flex; flex-direction: row; align-items: center;
-    gap: 14px;
+    gap: 14px; min-width: 0;
+}
+.back-home.wp-hero-back {
+    justify-content: center;
+    flex: 0 0 32px;
+    width: 32px;
+    min-height: 36px;
 }
 .wp-hero-avatar {
     width: 64px; height: 64px; border-radius: 50%;
@@ -253,18 +258,21 @@ html[data-theme=dark] .wp-page {
 }
 .wp-hero-name {
     margin: 0;
-    /* 选手名是动态任意汉字,静态子集楷体盖不全会半楷半宋,故走全覆盖系统衬线(不用 --font-serif) */
-    font-family: 'Fraunces', 'Times New Roman', serif;
-    font-size: 1.6rem; font-weight: 500;
-    color: var(--wp-text); letter-spacing: -0.01em;
+    font-family: var(--font-sans);
+    font-size: 24px; font-weight: 600; line-height: 1.3;
+    color: var(--foreground); letter-spacing: -0.02em;
+    overflow-wrap: anywhere;
 }
 .wp-hero-name-link { color: inherit; text-decoration: none; }
 .wp-hero-name-link:hover { text-decoration: underline; }
+@media (max-width: 600px) {
+    .wp-hero-name { font-size: 22px; }
+    .back-home.wp-hero-back { min-height: 40px; }
+}
 /* identity: 国旗在名字左侧, WCA ID 在名字下方(左缘与名字对齐) */
-.wp-hero-name-row { display: inline-grid; grid-template-columns: auto auto; align-items: center; justify-content: center; column-gap: 12px; row-gap: 2px; }
+.wp-hero-name-row { display: inline-grid; grid-template-columns: auto minmax(0, 1fr); align-items: center; column-gap: 12px; row-gap: 2px; min-width: 0; }
 .wp-hero-name-flag { display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; }
 .wp-hero-name-flag .wp-flag { width: 30px; height: 22px; }
-.wp-hero-name-line { display: inline-flex; align-items: center; gap: 8px; }
 /* 历史身份(曾经是 X - 国家):放第 2 列、名字正下方,左缘对齐名字首字母(非国旗) */
 .wp-hero-former {
     grid-column: 2; justify-self: start;
@@ -340,7 +348,7 @@ html[data-theme=dark] .wp-page {
     justify-self: center;
 }
 .wp-hero-id {
-    display: inline-flex; align-items: center; gap: 6px;
+    display: inline-flex; align-items: center; flex-wrap: wrap; gap: 6px;
     font-size: 0.8rem; letter-spacing: 0.01em;
     color: var(--wp-text-sub);
     font-variant-numeric: tabular-nums;

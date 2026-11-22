@@ -256,19 +256,26 @@ function ChangeRow({ c, fields, isZh }: { c: ResultChange; fields: DisplayField[
         </div>;
       })}
       {c.note && <span className="wp-rc-note">{c.note}</span>}
-      {c.placementReason?.kind === 'inferred' && <div className="wp-rc-note">
-        <span>{tr({ zh: '变化原因', en: 'Reason for change' })}</span>
+      {c.placementReason && c.placementReason.kind !== 'unknown' && <div className="wp-rc-note">
+        <span>{tr(c.placementReason.kind === 'head_to_head_single_order' ? {
+          zh: 'WCA 成绩接口疑似按最快单次重排了一对一名次。',
+          en: 'The WCA results API appears to have reordered Head to Head placements by best single.',
+        } : { zh: '变化原因', en: 'Reason for change' })}</span>
         {c.placementReason.causes.map(cause => <div key={cause.changeId}>
           <Link className="wp-rc-cause-link" prefetch={false}
             href={`/wca/persons/${cause.wcaId}?tab=results&sub=event&event=${encodeURIComponent(eventId)}${resultRowHash(c.competitionId!, eventId, c.roundTypeId!)}`}>
             {displayCuberName(cause.personName || cause.wcaId, isZh)}
           </Link>{' '}
-          {cause.changeType === 'removed'
+          {'best' in cause ? <>{tr({ zh: '单次', en: 'Single' })}{' '}
+            {formatChangeFieldValue('best', cause.best, eventId)}</> : cause.changeType === 'removed'
             ? tr({ zh: '该轮成绩被移除', en: 'Result removed from this round' })
             : <>{tr(cause.field === 'average' ? { zh: '平均', en: 'Average' } : { zh: '单次', en: 'Single' })}{' '}
               {formatChangeFieldValue(cause.field, cause.oldValue, eventId)} → {formatChangeFieldValue(cause.field, cause.newValue, eventId)}</>}
           {cause.newPlace != null && <>{' · '}{tr({ zh: '名次', en: 'Place' })} {cause.oldPlace} → {cause.newPlace}</>}
         </div>)}
+        {c.placementReason.kind === 'head_to_head_single_order' && c.competitionId && <a className="wp-rc-cause-link"
+          href={`https://www.worldcubeassociation.org/competitions/${encodeURIComponent(c.competitionId)}/results/podiums`}
+          target="_blank" rel="noopener noreferrer">{tr({ zh: 'WCA 官方领奖台', en: 'Official WCA podiums' })}</a>}
       </div>}
       {c.placementReason?.kind === 'unknown' && !c.note && <span className="wp-rc-note">
         {tr({ zh: '本人成绩未变，名次调整的具体原因暂未确认。', en: 'Result unchanged; the reason for the placement adjustment is not yet confirmed.' })}

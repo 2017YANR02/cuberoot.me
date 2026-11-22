@@ -22,6 +22,17 @@ const wang: ReasonChange = { ...subject, id: 88, wca_id: '2019WANY36', person_na
   after_json: { ...fp, a: 741, b: 515, p: 15, at: [846, 515, 549, 1081, 827] },
 };
 
+// The monitored Xuzhou final positions changed in one sweep on June 29.
+function xuzhouFinalChange(id: number, wcaId: string, name: string, best: number, oldPlace: number, newPlace: number) {
+  const before = { ...fp, c: 'XuzhouZenith2026', f: 'h', a: 0, b: best, at: [best], p: oldPlace };
+  return { ...subject, id, wca_id: wcaId, person_name: name, competition_id: before.c,
+    detected_at: '2026-06-29T09:26:00.000Z', before_json: before, after_json: { ...before, p: newPlace } };
+}
+const lian = xuzhouFinalChange(20, '2025LIAN01', 'Yunzhi Lian', 432, 2, 3);
+const cao = xuzhouFinalChange(14, '2023CAOQ01', 'Qixian Cao', 421, 4, 2);
+const shen = xuzhouFinalChange(17, '2026SHEN01', 'Yi Shen', 465, 5, 4);
+const ye = xuzhouFinalChange(10, '2021YEZI01', 'Ziyu Ye', 497, 3, 5);
+
 it('explains the full rank displacement using the actual Guangzhou correction', () => {
   expect(inferPlacementChangeReason(subject, [wang])).toEqual({ kind: 'inferred', causes: [{
     changeId: 88, wcaId: '2019WANY36', personName: wang.person_name, changeType: 'modified',
@@ -60,10 +71,24 @@ it('accounts for ties, DNF, removals and more than one opponent', () => {
   expect(inferPlacementChangeReason({ ...subject, after_json: { ...fp, p: 8 } }, [wang, second])?.causes.length).toBe(2);
 });
 
-it('does not guess head-to-head bracket rankings', () => {
-  expect(inferPlacementChangeReason({ ...subject,
-    before_json: { ...fp, f: 'h', a: 0 }, after_json: { ...fp, f: 'h', a: 0, p: 9 },
-  }, [wang])).toEqual({ kind: 'unknown', causes: [] });
+it('detects the Xuzhou Head to Head single-time order and names the crossing competitor', async () => {
+  query.mockReset();
+  query.mockResolvedValueOnce([lian]).mockResolvedValueOnce([shen, ye, cao]);
+  const response = await wcaResultWatchRoutes.request('/wca/result-watch/changes?wcaId=2025LIAN01&limit=1&v=3');
+  expect(response.status).toBe(200);
+  const body = await response.json();
+  expect(body.changes[0].placementReason).toEqual({ kind: 'head_to_head_single_order', causes: [{
+    changeId: 14, wcaId: '2023CAOQ01', personName: cao.person_name, best: 421, oldPlace: 4, newPlace: 2,
+  }] });
+});
+
+it('requires corroborating Head to Head ranks with unchanged scores and a fully explained displacement', () => {
+  for (const batch of [[cao], [cao, { ...shen, detected_at: '2026-10-21T17:51:17.697Z' }],
+    [cao, { ...shen, after_json: { ...shen.after_json, at: [465, 600] } }], [cao, shen, { ...ye, id: 111 }, ye],
+    [cao, shen, { ...ye, before_json: { ...ye.before_json, b: 415 }, after_json: { ...ye.after_json, b: 415 } }],
+    [shen, ye]]) {
+    expect(inferPlacementChangeReason(lian, batch)).toEqual({ kind: 'unknown', causes: [] });
+  }
 });
 
 it('explains a worsening position and uses best for an average tie breaker', () => {
