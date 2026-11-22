@@ -73,6 +73,8 @@ const PUBLIC_SUBPATHS = [
   'magic',
   'native-puzzles',
   'native-puzzle-model',
+  'nxn-order',
+  'sim-puzzles',
   'sia123',
   'sia222',
   'ssq1',
