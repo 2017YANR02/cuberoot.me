@@ -1199,8 +1199,8 @@ const ENDPOINTS: Ep[] = [
   { d: 'calendar', m: 'DELETE', p: '/v1/calendar/calendars/:id', g: 'login', zh: '删日历(主日历不可删)', en: 'Delete a calendar (not the default one)' },
   { d: 'calendar', m: 'GET', p: '/v1/calendar/events', g: 'login', c: 'no-store', zh: '窗口内事件(含受邀的);重复事件整取,由前端展开', en: 'Events in a window (invitations included); recurring masters are returned whole and expanded client-side' },
   { d: 'calendar', m: 'POST', p: '/v1/calendar/competitions', g: 'login', zh: '将比赛去重加入个人日程，保留已有内容', en: 'Add competitions to personal events without duplicates or overwriting existing content' },
-  { d: 'calendar', m: 'POST', p: '/v1/calendar/events', g: 'login', zh: '新建日程', en: 'Create an event' },
-  { d: 'calendar', m: 'PATCH', p: '/v1/calendar/events/:id', g: 'login', zh: '改日程,?scope=this|following|all 决定动这一次 / 此后 / 整条序列', en: 'Edit an event; ?scope=this|following|all picks this occurrence, the tail, or the whole series' },
+  { d: 'calendar', m: 'POST', p: '/v1/calendar/events', g: 'login', zh: '新建日程，可选已确认或待定，默认已确认', en: 'Create an event with confirmed or tentative status, defaulting to confirmed' },
+  { d: 'calendar', m: 'PATCH', p: '/v1/calendar/events/:id', g: 'login', zh: '修改日程或状态，scope 决定只改这一次、此后或整条序列', en: 'Edit an event or its status. The scope selects this occurrence, the tail, or the whole series' },
   { d: 'calendar', m: 'DELETE', p: '/v1/calendar/events/:id', g: 'login', zh: '删日程(同样分 scope)', en: 'Delete an event (same scopes)' },
   { d: 'calendar', m: 'POST', p: '/v1/calendar/events/bulk', g: 'login', zh: 'ICS 导入(一次最多 500 条;带 importId 归入某个批次)', en: 'ICS import (up to 500 at a time; importId files them under a batch)' },
   { d: 'calendar', m: 'POST', p: '/v1/calendar/imports', g: 'login', c: 'no-store', zh: '开一个导入批次 —— 一次导入跨很多请求,后面的建日历 / 塞事件都挂它的 id', en: 'Open an import batch — one import spans many requests, and every calendar created or event inserted afterwards carries its id' },
@@ -1211,7 +1211,7 @@ const ENDPOINTS: Ep[] = [
   { d: 'calendar', m: 'GET', p: '/v1/calendar/export', g: 'login', c: 'no-store', zh: '导出自己的全部日程为 .ics', en: 'Export all my events as .ics' },
   { d: 'calendar', m: 'PUT', p: '/v1/calendar/share', g: 'login', zh: '对外展示设置(开关 / 完整或仅忙碌 / 参与展示的日历)', en: 'Share settings (on-off, full or busy-only, which calendars)' },
   { d: 'calendar', m: 'POST', p: '/v1/calendar/share/rotate', g: 'login', zh: '换一条分享链接,旧的立刻失效', en: 'Reset the share link, invalidating the old one' },
-  { d: 'calendar', m: 'GET', p: '/v1/calendar/public/:token', g: 'public', c: 'no-store', zh: '公开读;busy 档在服务端就抹掉标题 / 说明 / 地点 / 参与者', en: 'Public read; at the busy level titles, notes, location and guests are stripped server-side' },
+  { d: 'calendar', m: 'GET', p: '/v1/calendar/public/:token', g: 'public', c: 'no-store', zh: '公开读取日程与状态。仅显示时段时，服务端清除标题、说明、地点和参与者', en: 'Read public events and their status. Time-only mode strips titles, notes, locations, and guests on the server' },
   { d: 'calendar', m: 'GET', p: '/v1/calendar/public/:token/ics', g: 'public', c: 'short', zh: '公开订阅源,Google / Apple 日历可直接订阅', en: 'Public subscription feed for Google / Apple Calendar' },
 
   // ---- system ----

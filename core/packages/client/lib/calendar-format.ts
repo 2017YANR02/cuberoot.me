@@ -2,7 +2,12 @@
 // 纯函数,不碰 store,方便页面与分享页共用。
 
 import { wallPartsIn, wallToUtc } from '@cuberoot/shared/tz';
-import type { CalEvent, EventOccurrence } from '@cuberoot/shared/calendar';
+import type { CalEvent, CalendarEventStatus, EventOccurrence } from '@cuberoot/shared/calendar';
+
+export const EVENT_STATUS_LABELS = {
+  confirmed: { zh: '已确认', en: 'Confirmed' },
+  tentative: { zh: '待定', en: 'Tentative' },
+} as const;
 
 export const VIEW_KEYS = ['timeGridDay', 'threeDay', 'fourDay', 'timeGridWeek', 'dayGridMonth', 'multiMonthYear', 'listMonth'] as const;
 export type ViewKey = (typeof VIEW_KEYS)[number];
@@ -104,7 +109,8 @@ export interface FcEvent {
     location: string;
     invited: boolean;
     rsvp: string;
-    busy: boolean;
+    status: CalendarEventStatus;
+    timeOnly: boolean;
     competitionId?: string;
   };
 }
@@ -120,8 +126,8 @@ export interface ToFcOptions {
   meKey: string;
   /** 只读模式(分享页) */
   readOnly?: boolean;
-  /** busy 档:标题被服务端抹掉了,这里给一个占位文案 */
-  busyLabel?: string;
+  /** 仅显示时段时，用状态对应的名称替代标题。 */
+  slotLabels?: Record<CalendarEventStatus, string>;
   eventTitle?: (event: CalEvent) => string;
 }
 
@@ -132,10 +138,10 @@ export function toFcEvents(opts: ToFcOptions): FcEvent[] {
     const hex = e.color ? opts.colorHex(e.color) : opts.calendarColor(e.calendarId);
     const mine = e.guests.find((g) => g.key === opts.meKey);
     const invited = !!e.ownerKey && !!opts.meKey && e.ownerKey !== opts.meKey;
-    const busy = !e.title && !!opts.busyLabel;
+    const status = e.status ?? 'confirmed';
     return {
       id: o.key,
-      title: (opts.eventTitle?.(e) ?? e.title) || opts.busyLabel || '',
+      title: opts.slotLabels?.[status] ?? opts.eventTitle?.(e) ?? e.title,
       // 全天块要交日期串:交时刻的话 FullCalendar 会按显示时区再折一次,东八区的
       // 「8 月 5 日全天」在 UTC 视图下会滑到 4 号。
       start: e.allDay ? dayKeyIn(e.tz, o.start) : new Date(o.start).toISOString(),
@@ -153,7 +159,8 @@ export function toFcEvents(opts: ToFcOptions): FcEvent[] {
         location: e.location,
         invited,
         rsvp: mine?.status ?? '',
-        busy,
+        status,
+        timeOnly: !!opts.slotLabels,
       },
     };
   });

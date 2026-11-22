@@ -9,7 +9,7 @@ import { expandOccurrences, parseRRule, formatRRule } from '@cuberoot/shared/rec
 import {
   eventsToIcs, isCalendarColor, parseNumList, redactBusy, ICS_IMPORT_BATCH, competitionCalendarRange, competitionCalendarColor,
   competitionCalendarDescription, competitionCalendarUrl,
-  type CalEvent, type CalendarImport, type CalendarMeta, type EventGuest, type ShareDetail,
+  type CalEvent, type CalendarEventStatus, type CalendarImport, type CalendarMeta, type EventGuest, type ShareDetail,
 } from '@cuberoot/shared/calendar';
 
 /**
@@ -82,6 +82,7 @@ interface EventRow {
   calendar_id: string | number;
   owner_key: string;
   title: string;
+  status: CalendarEventStatus;
   description: string;
   location: string;
   all_day: boolean;
@@ -116,6 +117,7 @@ function toEvent(r: EventRow, guests: EventGuest[] = []): CalEvent {
     id: Number(r.id),
     calendarId: Number(r.calendar_id),
     title: r.title,
+    status: r.status,
     description: competitionCalendarDescription(r.description),
     location: r.location,
     allDay: !!r.all_day,
@@ -134,7 +136,7 @@ function toEvent(r: EventRow, guests: EventGuest[] = []): CalEvent {
   };
 }
 
-const EVENT_COLS = `id, calendar_id, owner_key, title, description, location, all_day,
+const EVENT_COLS = `id, calendar_id, owner_key, title, status, description, location, all_day,
   start_ms, end_ms, tz, rrule, exdates, series_id, occurrence_ms, color, reminders, updated_at`;
 
 // ── 输入校验 ────────────────────────────────────────────────────────────────
@@ -335,6 +337,7 @@ calendarRoutes.get('/calendar/bootstrap', async (c) => {
     share: shareJson(share),
     me: { key: me.wcaId, name: me.name, avatar: profile?.avatar || '' },
     colorFormatVersion: 2,
+    supportsEventStatus: true,
   });
 });
 
@@ -432,6 +435,7 @@ calendarRoutes.get('/calendar/events', async (c) => {
 interface EventInput {
   calendarId: number;
   title: string;
+  status?: CalendarEventStatus;
   description: string;
   location: string;
   allDay: boolean;
@@ -458,9 +462,12 @@ async function readEventInput(
   if (start == null || end == null || end <= start) throw new Error('Validation: bad time range');
   // 单个事件最长一年:更长的是「一直有效」的状态,不该占日历格子,也防手滑拖出巨块。
   if (end - start > 366 * 86_400_000) throw new Error('Validation: event too long');
+  const status = body.status;
+  if (status !== undefined && status !== 'confirmed' && status !== 'tentative') throw new Error('Validation: invalid event status');
   return {
     calendarId,
     title: str(body.title ?? fallback?.title, 300),
+    status,
     description: competitionCalendarDescription(str(body.description ?? fallback?.description, 5000)),
     location: str(body.location ?? fallback?.location, 300),
     allDay: body.allDay == null ? !!fallback?.all_day : !!body.allDay,
@@ -485,11 +492,11 @@ async function insertEvent(
   const now = Date.now();
   const rows = await run<EventRow>(
     `INSERT INTO calendar_events
-       (calendar_id, owner_key, title, description, location, all_day, start_ms, end_ms, tz,
+       (calendar_id, owner_key, title, status, description, location, all_day, start_ms, end_ms, tz,
         rrule, exdates, series_id, occurrence_ms, color, reminders, import_id, created_at, updated_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
      RETURNING ${EVENT_COLS}`,
-    [input.calendarId, ownerKey, input.title, input.description, input.location, input.allDay,
+    [input.calendarId, ownerKey, input.title, input.status ?? 'confirmed', input.description, input.location, input.allDay,
       input.start, input.end, input.tz, input.rrule, input.exdates,
       series?.seriesId ?? null, series?.occurrenceMs ?? null, input.color, input.reminders,
       importId ?? null, now, now],
@@ -588,7 +595,7 @@ calendarRoutes.post('/calendar/competitions', async (c) => {
     return { id: v.id, input: {
       calendarId: cal.id, title: str(v.title, 300), description: competitionCalendarUrl(v.id),
       location: str(v.location, 300), allDay: true, ...range, tz: cal.tz,
-      rrule: '', exdates: '', color: 'banana', reminders: '',
+      rrule: '', exdates: '', color: 'banana', reminders: '', status: 'confirmed',
     } satisfies EventInput };
   });
   await withTransaction(async (run) => {
@@ -762,7 +769,7 @@ calendarRoutes.patch('/calendar/events/:id', async (c) => {
     if (occurrence == null) return c.json({ error: 'occurrence required' }, 400);
     const input = await readEventInput(body, me.wcaId, row);
     // 覆盖行自己不带重复规则,它只是「那一天的那一场」。
-    const override = await insertEvent(me.wcaId, { ...input, rrule: '', exdates: '' },
+    const override = await insertEvent(me.wcaId, { ...input, status: input.status ?? row.status, rrule: '', exdates: '' },
       { seriesId: id, occurrenceMs: occurrence });
     const ex = [...numList(row.exdates), occurrence];
     await query('UPDATE calendar_events SET exdates = ?, updated_at = ? WHERE id = ? AND owner_key = ?',
@@ -785,6 +792,7 @@ calendarRoutes.patch('/calendar/events/:id', async (c) => {
       [before.rrule, Date.now(), id, me.wcaId]);
     const tail = await insertEvent(me.wcaId, {
       ...input,
+      status: input.status ?? row.status,
       rrule: before.tailRrule,
       // 截断点之后的 EXDATE 跟着新序列走,之前的留给老序列。
       exdates: normalizeExdates(numList(row.exdates).filter((x) => x >= occurrence)),
@@ -810,11 +818,11 @@ calendarRoutes.patch('/calendar/events/:id', async (c) => {
 async function updateEventRow(id: number, ownerKey: string, input: EventInput): Promise<EventRow> {
   const rows = await query<EventRow>(
     `UPDATE calendar_events SET
-       calendar_id = ?, title = ?, description = ?, location = ?, all_day = ?,
+       calendar_id = ?, title = ?, status = COALESCE(?, status), description = ?, location = ?, all_day = ?,
        start_ms = ?, end_ms = ?, tz = ?, rrule = ?, exdates = ?, color = ?, reminders = ?, updated_at = ?
      WHERE id = ? AND owner_key = ?
      RETURNING ${EVENT_COLS}`,
-    [input.calendarId, input.title, input.description, input.location, input.allDay,
+    [input.calendarId, input.title, input.status ?? null, input.description, input.location, input.allDay,
       input.start, input.end, input.tz, input.rrule, input.exdates, input.color, input.reminders,
       Date.now(), id, ownerKey],
   );
@@ -1049,8 +1057,8 @@ calendarRoutes.get('/calendar/public/:token/ics', async (c) => {
   const text = eventsToIcs({
     name: data.title || (data.ownerName ? `${data.ownerName}` : 'CubeRoot Calendar'),
     tz: data.tz,
-    events: prepareForIcs(data.events),
-    busyLabel: busy ? 'Busy' : undefined,
+    events: data.events,
+    slotLabels: busy ? { confirmed: 'Busy', tentative: 'Tentative time' } : undefined,
     refreshMinutes: 60,
   });
   c.header('Content-Type', 'text/calendar; charset=utf-8');
@@ -1071,7 +1079,7 @@ calendarRoutes.get('/calendar/export', async (c) => {
   const text = eventsToIcs({
     name: 'CubeRoot',
     tz: cals[0]?.tz || 'UTC',
-    events: prepareForIcs(rows.map((r) => toEvent(r))),
+    events: rows.map((r) => toEvent(r)),
     calendarName: (e) => names.get(e.calendarId) || undefined,
   });
   c.header('Content-Type', 'text/calendar; charset=utf-8');
@@ -1079,26 +1087,6 @@ calendarRoutes.get('/calendar/export', async (c) => {
   c.header('Content-Disposition', 'attachment; filename="cuberoot-calendar.ics"');
   return c.body(text);
 });
-
-/**
- * 导出前的一步修正:被「只改这一次」替换掉的那些 occurrence,我们内部同时写了 EXDATE 和
- * 一条覆盖行。ICS 的规矩是覆盖行用 RECURRENCE-ID 认领那一次,若同时又被 EXDATE 排除,
- * 严格的订阅端会把它整场丢掉。所以导出时把「有覆盖行认领」的 EXDATE 摘掉。
- */
-function prepareForIcs(events: CalEvent[]): CalEvent[] {
-  const claimed = new Map<number, Set<number>>();
-  for (const e of events) {
-    if (e.seriesId != null && e.occurrenceMs != null) {
-      const set = claimed.get(e.seriesId) ?? new Set<number>();
-      set.add(e.occurrenceMs);
-      claimed.set(e.seriesId, set);
-    }
-  }
-  return events.map((e) => {
-    const set = claimed.get(e.id);
-    return set ? { ...e, exdates: e.exdates.filter((x) => !set.has(x)) } : e;
-  });
-}
 
 // ── 提醒扫描 ────────────────────────────────────────────────────────────────
 

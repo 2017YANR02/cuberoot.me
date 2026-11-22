@@ -21,7 +21,7 @@ import { expandRange } from '@/lib/calendar-store';
 import { fetchPublicCalendar, icsFeedUrl, type PublicCalendar } from '@/lib/calendar-api';
 import CalendarGrid, { type GridHandle, type GridRange } from '@/components/calendar/CalendarGrid';
 import {
-  rangeTitle, toFcEvents, VIEW_KEYS, VIEW_LABELS, isViewKey, type ViewKey,
+  EVENT_STATUS_LABELS, rangeTitle, toFcEvents, VIEW_KEYS, VIEW_LABELS, isViewKey, type ViewKey,
 } from '@/lib/calendar-format';
 import '../../calendar.css';
 
@@ -85,6 +85,7 @@ export default function SharedCalendarClient() {
   }, [data, eventColor]);
 
   const busyLabel = tr({ zh: '忙碌', en: 'Busy' });
+  const tentativeSlotLabel = tr({ zh: '待定时段', en: 'Tentative time' });
 
   const fcEvents = useMemo(() => {
     if (!data) return [];
@@ -98,9 +99,9 @@ export default function SharedCalendarClient() {
       readableInk,
       meKey: '',
       readOnly: true,
-      busyLabel: data.detail === 'busy' ? busyLabel : undefined,
+      slotLabels: data.detail === 'busy' ? { confirmed: busyLabel, tentative: tentativeSlotLabel } : undefined,
     });
-  }, [data, range.start, range.end, calColor, eventColor, busyLabel]);
+  }, [data, range.start, range.end, calColor, eventColor, busyLabel, tentativeSlotLabel]);
 
   if (mounted && !token) {
     return (
@@ -124,7 +125,7 @@ export default function SharedCalendarClient() {
           <UserContactLink userId={data?.ownerUserId}>{pageTitle || tr({ zh: '共享日历', en: 'Shared calendar' })}</UserContactLink>
         </h1>
         {data?.detail === 'busy' && (
-          <span className="cal-badge">{tr({ zh: '仅显示忙碌时段', en: 'Busy times only' })}</span>
+          <span className="cal-badge">{tr({ zh: '仅显示时段', en: 'Time slots only' })}</span>
         )}
 
         <button type="button" className="cal-btn" onClick={() => gridRef.current?.today()}>
@@ -150,6 +151,12 @@ export default function SharedCalendarClient() {
         />
       </div>
 
+      {data?.detail === 'full' && fcEvents.some(event => event.extendedProps.status === 'tentative') && (
+        <div className="cal-share-status-legend">
+          <span>{tr(EVENT_STATUS_LABELS.confirmed)}</span>
+          <span className="is-tentative">{tr(EVENT_STATUS_LABELS.tentative)}</span>
+        </div>
+      )}
       <div className="cal-body">
         <main className="cal-main">
           {error && <div className="cal-empty">{tr({ zh: '这个分享链接无效或已关闭。', en: 'This share link is invalid or has been turned off.' })}</div>}

@@ -491,6 +491,7 @@ const TABLES: Table[] = [
   ] },
   { name: 'calendars', domain: 'studio', origin: '0099', purpose: { zh: '/calendar 的日历容器(名字 / 颜色 / 缺省时区);每人一个不可删的主日历', en: '/calendar containers (name, colour, default zone); one undeletable default per person' } },
   { name: 'calendar_events', domain: 'studio', origin: '0099', purpose: { zh: '日程。存的是「主事件 + 重复规则」而不是展开后的每一次 —— 无限重复本来就存不下,改一次规则也不该回改上万行;时刻用绝对毫秒 + 事件自己的 IANA 时区,因为重复必须按墙上钟点推进(每周三 9:00 换季后还是 9:00)', en: 'Events. Stored as “master + recurrence rule”, never as expanded occurrences — an unbounded series does not fit, and editing the rule must not rewrite thousands of rows. Times are absolute ms plus the event’s own IANA zone, because recurrence advances by wall-clock (a Wednesday 9:00 meeting stays 9:00 across a DST change)' }, cols: [
+    { name: 'status', note: { zh: '已确认或待定，默认已确认', en: 'Confirmed or tentative, defaulting to confirmed' } },
     { name: 'rrule, exdates', note: { zh: 'RFC 5545 规则 + 被删掉 / 被覆盖的那几次', en: 'RFC 5545 rule plus the occurrences deleted or overridden' } },
     { name: 'series_id, occurrence_ms', note: { zh: '「只改这一次」生成的覆盖行:指回主事件 + 替换的是哪一次', en: 'Override row from “this event only”: points back at the master and which occurrence it replaces' } },
     { name: 'reminders', note: { zh: '提前分钟数列表,提醒扫描器每分钟按它算该不该发', en: 'Minutes-before list; the sweep reads it every minute to decide what fires' } },
@@ -612,6 +613,7 @@ const TABLES: Table[] = [
 ];
 
 const MIGRATIONS: { n: number; slug: string; desc: Bi }[] = [
+  { n: 351, slug: 'calendar_event_status', desc: { zh: '为日程保存已确认或待定状态，已有日程默认已确认。', en: 'Store confirmed or tentative status for calendar events. Existing events default to confirmed.' } },
   { n: 349, slug: 'platform_content_reviews', desc: { zh: '课程及课时发布审核，线上版本在审核期间保持不变。', en: 'Course and lesson publication review, preserving live revisions while pending.' } },
   { n: 350, slug: 'platform_learning_stage_preferences', desc: { zh: '按账号保存学习推荐阶段，本机旧记录仅在账号尚无选择时导入，注销时级联删除。', en: 'Persist account-owned learning recommendations, import a legacy device choice only when absent, and delete preferences with the account.' } },
   { n: 348, slug: 'platform_unified_instructor_profiles', desc: { zh: '统一讲师身份与公开资料，保留隐藏设置并对明确归属的历史资料建立关联。', en: 'Unify instructor identity and public profiles, preserving visibility and linking unambiguous legacy ownership.' } },

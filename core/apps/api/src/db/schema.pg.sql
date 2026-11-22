@@ -9728,6 +9728,8 @@ CREATE TABLE IF NOT EXISTS calendar_events (
   calendar_id   BIGINT       NOT NULL REFERENCES calendars(id) ON DELETE CASCADE,
   owner_key     VARCHAR(20)  NOT NULL,
   title         VARCHAR(300) NOT NULL DEFAULT '',
+  status        TEXT         NOT NULL DEFAULT 'confirmed'
+    CONSTRAINT calendar_events_status_check CHECK (status IN ('confirmed', 'tentative')),
   description   TEXT         NOT NULL DEFAULT '',
   location      VARCHAR(300) NOT NULL DEFAULT '',
   all_day       BOOLEAN      NOT NULL DEFAULT FALSE,

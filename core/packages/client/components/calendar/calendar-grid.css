@@ -156,6 +156,18 @@
 
 .cal-grid .fc-event:has(.cal-chip.is-pending) .cal-chip { color: var(--foreground); }
 
+.cal-grid .fc-event.cal-event-tentative:not(.fc-list-event) {
+  background: transparent !important;
+  border: 2px dashed var(--muted-foreground);
+}
+.cal-grid .fc-event.fc-daygrid-dot-event.cal-event-tentative {
+  border: 0;
+  outline: 2px dashed var(--muted-foreground);
+  outline-offset: -2px;
+}
+.cal-grid .fc-event.cal-event-tentative:not(.fc-list-event) .cal-chip { color: var(--foreground); padding-inline: 3px; }
+.cal-chip-status { flex-shrink: 0; color: var(--muted-foreground); }
+
 /* 当前时刻:Google 画的是「一条实线 + 线头一个实心圆点」,圆点在列内。
    FullCalendar 默认在时间轴那侧摆一个三角箭头,形状和位置都不是这个意思。 */
 .cal-grid .fc .fc-timegrid-now-indicator-arrow { display: none; }

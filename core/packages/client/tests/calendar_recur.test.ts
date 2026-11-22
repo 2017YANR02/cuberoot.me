@@ -13,6 +13,7 @@ import {
   eventsToIcs, parseIcs, parseNumList, redactBusy, vtimezoneFor, type CalEvent,
 } from '@cuberoot/shared/calendar';
 import { wallToUtc, wallPartsIn } from '@cuberoot/shared/tz';
+import { toFcEvents } from '@/lib/calendar-format';
 
 const NY = 'America/New_York';
 const SH = 'Asia/Shanghai';
@@ -280,13 +281,14 @@ describe('ICS 输出', () => {
 
 describe('ICS 输入', () => {
   it('往返:导出再解析回来,时刻与规则不变', () => {
-    const src = ev({ title: '周会', rrule: 'FREQ=WEEKLY;BYDAY=WE;COUNT=5', reminders: [10], location: '线上' });
+    const src = ev({ title: '周会', status: 'tentative', rrule: 'FREQ=WEEKLY;BYDAY=WE;COUNT=5', reminders: [10], location: '线上' });
     const back = parseIcs(eventsToIcs({ name: 'x', tz: SH, events: [src] }), SH);
     expect(back).toHaveLength(1);
     expect(back[0].start).toBe(src.start);
     expect(back[0].end).toBe(src.end);
     expect(back[0].tz).toBe(SH);
     expect(back[0].rrule).toBe('FREQ=WEEKLY;BYDAY=WE;COUNT=5');
+    expect(back[0].status).toBe('tentative');
     expect(back[0].reminders).toEqual([10]);
     expect(back[0].location).toBe('线上');
     expect(back[0].allDay).toBe(false);
@@ -340,6 +342,16 @@ describe('分享脱敏', () => {
     // 时间段照留 —— 这才是 busy 档要展示的东西。
     expect(out.start).toBe(src.start);
     expect(out.end).toBe(src.end);
+  });
+
+  it('renders confirmed and tentative slots with distinct public labels, defaulting older events to confirmed', () => {
+    const items = [ev(), ev({ id: 2, status: 'tentative' })];
+    const events = toFcEvents({
+      occurrences: items.map(event => ({ key: String(event.id), event: redactBusy(event), start: event.start, end: event.end, recurring: false })),
+      calendarColor: () => '', colorHex: () => '', readableInk: () => '', meKey: '', readOnly: true,
+      slotLabels: { confirmed: '忙碌', tentative: '待定时段' },
+    });
+    expect(events.map(event => [event.title, event.extendedProps.status])).toEqual([['忙碌', 'confirmed'], ['待定时段', 'tentative']]);
   });
 });
 

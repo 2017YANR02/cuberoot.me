@@ -264,6 +264,7 @@ export default function CalendarClient() {
     setDialog({
       id: 0,
       calendarId: defaultCalendarId,
+      status: 'confirmed',
       title: '', description: '', location: '',
       allDay, start, end,
       tz: displayTz,
@@ -281,6 +282,7 @@ export default function CalendarClient() {
     setDialog({
       id: e.id,
       calendarId: e.calendarId,
+      status: e.status ?? 'confirmed',
       title: e.title,
       description: e.description,
       location: e.location,
@@ -306,6 +308,7 @@ export default function CalendarClient() {
   // ── 落库 ────────────────────────────────────────────────────────────────
   const draftToPayload = (d: DialogDraft) => ({
     calendarId: d.calendarId,
+    status: d.status,
     title: d.title,
     description: d.description,
     location: d.location,
@@ -444,7 +447,9 @@ export default function CalendarClient() {
       }));
     } catch (e) {
       const message = (e as Error).message;
-      setToast(message === 'calendar_color_upgrade_required' || message === 'calendar_color_not_supported'
+      setToast(message === 'calendar_event_status_upgrade_required'
+        ? tr({ zh: '服务器尚不支持待定状态，未开始导入。', en: 'Import did not start because the server does not yet support tentative events.' })
+        : message === 'calendar_color_upgrade_required' || message === 'calendar_color_not_supported'
         ? tr({ zh: '服务器尚未更新到支持完整颜色的版本，已停止导入以免丢色。请更新后重试。', en: 'The server needs the full-color update. Import stopped to avoid losing colors. Please retry after it is updated.' })
         : message.startsWith('google_')
           ? tr({ zh: '备份不完整、格式不兼容或包含无法恢复的数据，请重新导出；尚未开始导入。', en: 'The backup is incomplete, incompatible or cannot be restored. Export it again; import has not started.' })
@@ -935,6 +940,7 @@ export default function CalendarClient() {
       {dialog && (
         <EventDialog
           draft={dialog}
+          supportsEventStatus={store.supportsEventStatus}
           hour24={prefs.hour24}
           calendars={calendars}
           meKey={me?.key ?? ''}

@@ -242,6 +242,7 @@ export function reviewGoogleBackup(backup: GoogleCalendarBackup): GoogleImportRe
         lines.push(original);
       }
       if (e.status === 'cancelled') lines.push('STATUS:CANCELLED');
+      if (e.status === 'tentative') lines.push('STATUS:TENTATIVE');
       lines.push(`SUMMARY:${esc(e.summary || '')}`, `DESCRIPTION:${esc(e.description || '')}`, `LOCATION:${esc(e.location || '')}`, `X-CUBEROOT-COLOR:${eventColor}`);
       for (const r of e.recurrence ?? []) {
         if (/[\r\n]/.test(r)) fail('google_invalid_recurrence');

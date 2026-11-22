@@ -111,6 +111,7 @@ async function sendBatch(
     title: p.title, description: p.description, location: p.location,
     allDay: p.allDay, start: p.start, end: p.end, tz: p.tz,
     rrule: p.rrule, exdates: p.exdates, reminders: p.reminders,
+    ...(p.status ? { status: p.status } : {}),
     ...(p.color ? { color: p.color } : {}),
   }));
   for (let attempt = 0; ; attempt++) {
@@ -139,8 +140,12 @@ export async function importCalendarFile(opts: {
   const total = sources.reduce((n, s) => n + s.events.length, 0);
   if (total === 0) return { added: 0, failed: 0, calendars: [], importId: null };
   const extendedColor = (color: string | undefined) => color && !(CALENDAR_COLORS as readonly string[]).includes(color);
-  if (sources.some(s => extendedColor(s.color) || s.events.some(e => extendedColor(e.color)))) {
-    if ((await fetchBootstrap(opts.tz)).colorFormatVersion !== 2) throw new Error('calendar_color_upgrade_required');
+  const needsExtendedColor = sources.some(s => extendedColor(s.color) || s.events.some(e => extendedColor(e.color)));
+  const needsEventStatus = sources.some(s => s.events.some(e => e.status === 'tentative'));
+  if (needsExtendedColor || needsEventStatus) {
+    const bootstrap = await fetchBootstrap(opts.tz);
+    if (needsExtendedColor && bootstrap.colorFormatVersion !== 2) throw new Error('calendar_color_upgrade_required');
+    if (needsEventStatus && !bootstrap.supportsEventStatus) throw new Error('calendar_event_status_upgrade_required');
   }
 
   // 批次先开:后面建的日历、塞的事件都挂在它下面,一次「撤销」就能全收回。

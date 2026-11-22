@@ -87,14 +87,14 @@ export default function ShareDialog({ share, calendars, lang, onSave, onRotate, 
               aria-describedby={`${fieldId}-detail-hint`}
               className="native-select"
             >
-              <option value="true">{tr({ zh: '时段', en: 'Busy only' })}</option>
+              <option value="true">{tr({ zh: '仅显示时段', en: 'Time slots only' })}</option>
               <option value="false">{tr({ zh: '内容', en: 'Full details' })}</option>
             </select>
             <p className="cal-hint" id={`${fieldId}-detail-hint`}>
               {share.detail === 'busy'
                 ? tr({
-                  zh: '别人只看到你哪些时段被占用,标题、说明、地点、参与者都不会离开服务器。',
-                  en: 'Visitors see only which slots are taken — titles, notes, location and guests never leave the server.',
+                  zh: '访客只看到忙碌和待定时段，标题、说明、地点和参与者均隐藏。',
+                  en: 'Visitors see busy and tentative time slots. Event titles, notes, locations, and guests stay hidden.',
                 })
                 : tr({
                   zh: '别人能看到日程的标题、时间、地点与说明。',

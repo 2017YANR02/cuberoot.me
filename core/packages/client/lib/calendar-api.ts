@@ -9,12 +9,13 @@ import { apiUrl, publicApiUrl } from './api-base';
 import { authHeaders, handleApi } from './admin-api';
 import { competitionCalendarColor, competitionCalendarDescription } from '@cuberoot/shared/calendar';
 import type {
-  CalEvent, CalendarImport, CalendarMeta, EditScope, ShareDetail, ShareSettings, CompetitionCalendarInput,
+  CalEvent, CalendarEventStatus, CalendarImport, CalendarMeta, EditScope, ShareDetail, ShareSettings, CompetitionCalendarInput,
 } from '@cuberoot/shared/calendar';
 
 export interface BootstrapPayload {
   /** v2 supports precise hex and Google label colors. Older servers omit this. */
   colorFormatVersion?: number;
+  supportsEventStatus?: boolean;
   calendars: CalendarMeta[];
   share: ShareSettings;
   me: { key: string; name: string; avatar: string };
@@ -30,6 +31,7 @@ export interface EventsPayload {
 export interface EventDraft {
   calendarId: number;
   title?: string;
+  status?: CalendarEventStatus;
   description?: string;
   location?: string;
   allDay?: boolean;

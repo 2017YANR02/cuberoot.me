@@ -24,7 +24,8 @@ import { useEffectiveTheme } from '@/lib/theme';
 import { colorHex } from '@/lib/calendar-colors';
 import { tr, useLang } from '@/i18n/tr';
 import { wallPartsIn, wallToUtc, localZone } from '@cuberoot/shared/tz';
-import { calendarCompetitionId, competitionCalendarUrl, REMINDER_CHOICES, type CalendarMeta, type EventGuest } from '@cuberoot/shared/calendar';
+import { calendarCompetitionId, competitionCalendarUrl, REMINDER_CHOICES, type CalendarEventStatus, type CalendarMeta, type EventGuest } from '@cuberoot/shared/calendar';
+import { EVENT_STATUS_LABELS } from '@/lib/calendar-format';
 import { zoneLabel, zoneSelectItems } from '@/lib/tz-zones';
 import RepeatEditor from './RepeatEditor';
 import GuestPicker from './GuestPicker';
@@ -33,6 +34,7 @@ export interface DialogDraft {
   /** 已存在的事件 id;新建为 0 */
   id: number;
   calendarId: number;
+  status: CalendarEventStatus;
   title: string;
   description: string;
   location: string;
@@ -54,6 +56,7 @@ export interface DialogDraft {
 
 interface Props {
   draft: DialogDraft;
+  supportsEventStatus: boolean;
   calendars: CalendarMeta[];
   meKey: string;
   saving: boolean;
@@ -413,6 +416,16 @@ export default function EventDialog(props: Props) {
               </div>
             </div>
           )}
+
+          {props.supportsEventStatus && <div className="cal-event-status">
+            <span>{tr({ zh: '状态', en: 'Status' })}</span>
+            {readOnly ? <span>{tr(EVENT_STATUS_LABELS[d.status])}</span> : <select className="native-select" value={d.status}
+              aria-label={tr({ zh: '状态', en: 'Status' })}
+              onChange={(event) => patch({ status: event.currentTarget.value === 'tentative' ? 'tentative' : 'confirmed' })}>
+              <option value="confirmed">{tr(EVENT_STATUS_LABELS.confirmed)}</option>
+              <option value="tentative">{tr(EVENT_STATUS_LABELS.tentative)}</option>
+            </select>}
+          </div>}
 
           <div className="cal-field cal-event-calendars">
             <Palette size={16} className="cal-field-icon" aria-hidden />

@@ -1082,6 +1082,12 @@ button.cal-event-time:is(:hover, [aria-expanded=true]) { color: var(--accent); }
 
 /* ── 分享页 ───────────────────────────────────────────────────────────── */
 
+.cal-event-status { display: flex; align-items: center; gap: 12px; padding-inline-start: 24px; }
+.cal-share-status-legend { display: flex; gap: 14px; flex-wrap: wrap; padding: 6px 14px; color: var(--muted-foreground); font-size: 13px; }
+.cal-share-status-legend > span { display: inline-flex; align-items: center; gap: 6px; }
+.cal-share-status-legend > span::before { content: ''; width: 16px; border-top: 2px solid currentColor; }
+.cal-share-status-legend > .is-tentative::before { border-top-style: dashed; }
+
 .cal-badge {
   padding: 2px 8px;
   border-radius: 999px;
@@ -1438,6 +1444,7 @@ button.cal-event-time:is(:hover, [aria-expanded=true]) { color: var(--accent); }
   .cal-event-dialog .cal-event-zone { min-height: 48px; margin-left: -38px; gap: 18px; color: var(--foreground); font-size: 15px; text-align: left; }
   .cal-event-zone svg { flex: 0 0 20px; width: 20px; height: 20px; color: var(--muted-foreground); }
   .cal-event-dialog .cal-event-repeat { order: 2; min-height: 48px; padding-top: 0; }
+  .cal-event-dialog .cal-event-status { order: 3; padding: 10px 20px 10px 58px; }
   .cal-event-dialog .cal-event-calendars { order: 3; padding-left: 58px; align-items: center; }
   .cal-event-calendars > .cal-field-icon { display: none; }
   .cal-event-calendar-chips { display: flex; flex-wrap: wrap; gap: 8px; }

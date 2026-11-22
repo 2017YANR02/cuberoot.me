@@ -23,7 +23,8 @@ import zhCn from '@fullcalendar/core/locales/zh-cn';
 import type { ViewKey } from '@/lib/calendar-format';
 import { useCalendarSwipe } from '@/hooks/useCalendarSwipe';
 import { DateTime } from 'luxon';
-import { formatClock } from '@/lib/calendar-format';
+import { EVENT_STATUS_LABELS, formatClock } from '@/lib/calendar-format';
+import { tr } from '@/i18n/tr';
 
 export interface GridRange {
   start: number;
@@ -212,6 +213,7 @@ const CalendarGrid = forwardRef<GridHandle, Props>(function CalendarGrid(props, 
           // 月 / 年格子里只要数字。中文 locale 会给「27日」,一格 42 个「日」是噪音,Google 也只写数字。
           dayCellContent={(arg) => arg.dayNumberText.replace(/\D+/g, '')}
           events={props.events}
+          eventClassNames={({ event }) => event.extendedProps.status === 'tentative' ? ['cal-event-tentative'] : []}
           select={(arg: DateSelectArg) => {
             if (performance.now() >= ignoreTapUntil.current) props.onSelect?.(arg.start.getTime(), arg.end.getTime(), arg.allDay);
             api.current?.getApi().unselect();
@@ -247,15 +249,17 @@ const CalendarGrid = forwardRef<GridHandle, Props>(function CalendarGrid(props, 
           }}
           eventContent={(arg) => {
             // 受邀未回应的块画成描边款,和自己的实心块区分开(Google 同样处理)。
-            const p = arg.event.extendedProps as { invited?: boolean; rsvp?: string; location?: string };
+            const p = arg.event.extendedProps as { invited?: boolean; rsvp?: string; location?: string; status?: string; timeOnly?: boolean };
             const cls = `cal-chip${p.invited ? ' is-invited' : ''}${p.rsvp === 'pending' ? ' is-pending' : ''}`;
+            const inList = arg.view.type.startsWith('list');
+            const statusLabel = p.status === 'tentative' && !p.timeOnly ? tr(EVENT_STATUS_LABELS.tentative) : '';
             // 月 / 年 / 日程视图里,定时事件是「一个色点 + 一行字」(FullCalendar 的 dot-event),
             // 块本身不上色 —— 自定义 eventContent 会把它自带的点吃掉,得自己补,否则整月一片
             // 黑字,看不出事件属于哪个日历。全天事件仍是实心色条,不需要点。
             const dotted = !arg.event.allDay
-              && (arg.view.type === 'dayGridMonth' || arg.view.type === 'multiMonthYear' || arg.view.type.startsWith('list'));
+              && (arg.view.type === 'dayGridMonth' || arg.view.type === 'multiMonthYear' || inList);
             return (
-              <div className={cls} title={`${arg.timeText} ${arg.event.title}`}>
+              <div className={cls} title={[arg.timeText, arg.event.title, statusLabel].filter(Boolean).join(' · ')}>
                 {dotted && (
                   <span
                     className="cal-chip-dot"
@@ -267,6 +271,7 @@ const CalendarGrid = forwardRef<GridHandle, Props>(function CalendarGrid(props, 
                     本身已经说了几点。月 / 年 / 日程视图是一行「● 时间 标题」,那里时间在前,
                     靠 CSS order 换,不为此再分一套 DOM。 */}
                 <span className="cal-chip-title">{arg.event.title}</span>
+                {statusLabel && <span className={inList ? 'cal-chip-status' : 'sr-only'}>{statusLabel}</span>}
                 {arg.timeText && <span className="cal-chip-time">{arg.timeText}</span>}
                 {p.location && <span className="cal-chip-loc">{p.location}</span>}
               </div>

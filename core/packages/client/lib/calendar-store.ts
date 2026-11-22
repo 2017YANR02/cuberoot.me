@@ -82,6 +82,7 @@ function readHidden(): number[] {
 
 interface State {
   ready: boolean;
+  supportsEventStatus: boolean;
   loading: boolean;
   error: string;
   me: { key: string; name: string; avatar: string } | null;
@@ -117,6 +118,7 @@ interface Actions {
 
 export const useCalendarStore = create<State & Actions>()((set, get) => ({
   ready: false,
+  supportsEventStatus: false,
   loading: false,
   error: '',
   me: null,
@@ -133,7 +135,7 @@ export const useCalendarStore = create<State & Actions>()((set, get) => ({
     set({ loading: true, error: '', hidden: readHidden(), prefs: readPrefs() });
     try {
       const boot = await fetchBootstrap(tz);
-      set({ calendars: boot.calendars, share: boot.share, me: boot.me, ready: true });
+      set({ calendars: boot.calendars, share: boot.share, me: boot.me, ready: true, supportsEventStatus: boot.supportsEventStatus === true });
     } catch (e) {
       set({ error: (e as Error).message });
     } finally {

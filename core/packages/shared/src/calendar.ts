@@ -50,10 +50,14 @@ export interface EventGuest {
   status: 'pending' | 'accepted' | 'declined';
 }
 
+export type CalendarEventStatus = 'confirmed' | 'tentative';
+
 export interface CalEvent {
   id: number;
   calendarId: number;
   title: string;
+  /** Older clients and responses without a status are confirmed. */
+  status?: CalendarEventStatus;
   description: string;
   location: string;
   allDay: boolean;
@@ -167,7 +171,7 @@ export function parseNumList(s: string | null | undefined): number[] {
 
 // ── 分享脱敏 ────────────────────────────────────────────────────────────────
 
-/** busy 档:只保留时间段与所属日历,标题换成占位、正文/地点/嘉宾全清。在**服务端**调用。 */
+/** 仅显示时段时保留时间、日历和确认状态，由服务端清除私人详情。 */
 export function redactBusy(e: CalEvent): CalEvent {
   return {
     ...e,
@@ -318,8 +322,8 @@ export interface IcsExportOptions {
   events: CalEvent[];
   /** 事件所在日历名,用来写 CATEGORIES;缺了就不写 */
   calendarName?: (e: CalEvent) => string | undefined;
-  /** busy 档:标题写「忙碌」,内容全清(调用方应已 redactBusy 过) */
-  busyLabel?: string;
+  /** 仅显示时段时使用的标题，事件详情已经由调用方脱敏。 */
+  slotLabels?: Record<CalendarEventStatus, string>;
   /** 订阅刷新间隔提示 */
   refreshMinutes?: number;
 }
@@ -328,6 +332,16 @@ export interface IcsExportOptions {
 export function eventsToIcs(opts: IcsExportOptions): string {
   const now = Date.now();
   const zones = new Set<string>();
+  const seriesById = new Map<number, CalEvent>();
+  const overridesBySeries = new Map<number, Set<number>>();
+  for (const event of opts.events) {
+    if (event.rrule) seriesById.set(event.id, event);
+    if (event.seriesId != null && event.occurrenceMs != null) {
+      const overrides = overridesBySeries.get(event.seriesId) ?? new Set<number>();
+      overrides.add(event.occurrenceMs);
+      overridesBySeries.set(event.seriesId, overrides);
+    }
+  }
   for (const e of opts.events) if (!e.allDay && isValidZone(e.tz)) zones.add(e.tz);
   if (isValidZone(opts.tz)) zones.add(opts.tz);
 
@@ -346,11 +360,14 @@ export function eventsToIcs(opts: IcsExportOptions): string {
   for (const tz of zones) out.push(...vtimezoneFor(tz));
 
   for (const e of opts.events) {
+    const status = e.status ?? 'confirmed';
+    const title = opts.slotLabels?.[status] ?? e.title;
     const tz = isValidZone(e.tz) ? e.tz : opts.tz;
     const s = wallPartsIn(tz, new Date(e.start));
     const en = wallPartsIn(tz, new Date(e.end));
+    const series = e.seriesId != null && e.occurrenceMs != null ? seriesById.get(e.seriesId) : undefined;
     out.push('BEGIN:VEVENT');
-    out.push(`UID:cal-${e.id}@cuberoot.me`);
+    out.push(`UID:cal-${series?.id ?? e.id}@cuberoot.me`);
     out.push(`DTSTAMP:${icsUtc(e.updatedAt || now)}`);
     if (e.allDay) {
       out.push(`DTSTART;VALUE=DATE:${icsDate(s)}`);
@@ -359,28 +376,32 @@ export function eventsToIcs(opts: IcsExportOptions): string {
       out.push(`DTSTART;TZID=${tz}:${icsLocal(s)}`);
       out.push(`DTEND;TZID=${tz}:${icsLocal(en)}`);
     }
-    out.push(`SUMMARY:${esc(e.title || opts.busyLabel || '')}`);
+    out.push(`SUMMARY:${esc(title)}`);
+    out.push(status === 'tentative' ? 'STATUS:TENTATIVE' : 'STATUS:CONFIRMED');
     if (e.description) out.push(`DESCRIPTION:${esc(e.description)}`);
     if (e.location) out.push(`LOCATION:${esc(e.location)}`);
     if (isCalendarColor(e.color)) out.push(`X-CUBEROOT-COLOR:${e.color}`);
-    if (opts.busyLabel && !e.title) out.push('X-MICROSOFT-CDO-BUSYSTATUS:BUSY', 'CLASS:PRIVATE');
+    if (opts.slotLabels) out.push(status === 'tentative' ? 'X-MICROSOFT-CDO-BUSYSTATUS:TENTATIVE' : 'X-MICROSOFT-CDO-BUSYSTATUS:BUSY', 'CLASS:PRIVATE');
     const cat = opts.calendarName?.(e);
     if (cat) out.push(`CATEGORIES:${esc(cat)}`);
     if (e.rrule) out.push(`RRULE:${e.rrule}`);
-    if (e.exdates.length) {
-      const list = e.exdates.map((ms) => (e.allDay
+    // An exported override takes the place of its occurrence by UID and RECURRENCE-ID.
+    const exdates = e.exdates.filter(ms => !overridesBySeries.get(e.id)?.has(ms));
+    if (exdates.length) {
+      const list = exdates.map((ms) => (e.allDay
         ? icsDate(wallPartsIn(tz, new Date(ms)))
         : icsLocal(wallPartsIn(tz, new Date(ms)))));
       out.push(e.allDay ? `EXDATE;VALUE=DATE:${list.join(',')}` : `EXDATE;TZID=${tz}:${list.join(',')}`);
     }
-    if (e.seriesId && e.occurrenceMs != null) {
-      const r = wallPartsIn(tz, new Date(e.occurrenceMs));
-      out.push(e.allDay
+    if (series && e.occurrenceMs != null) {
+      const seriesTz = isValidZone(series.tz) ? series.tz : opts.tz;
+      const r = wallPartsIn(seriesTz, new Date(e.occurrenceMs));
+      out.push(series.allDay
         ? `RECURRENCE-ID;VALUE=DATE:${icsDate(r)}`
-        : `RECURRENCE-ID;TZID=${tz}:${icsLocal(r)}`);
+        : `RECURRENCE-ID;TZID=${seriesTz}:${icsLocal(r)}`);
     }
     for (const m of e.reminders) {
-      out.push('BEGIN:VALARM', 'ACTION:DISPLAY', `DESCRIPTION:${esc(e.title || opts.busyLabel || '')}`,
+      out.push('BEGIN:VALARM', 'ACTION:DISPLAY', `DESCRIPTION:${esc(title)}`,
         `TRIGGER:-PT${m}M`, 'END:VALARM');
     }
     out.push('END:VEVENT');
@@ -392,6 +413,7 @@ export function eventsToIcs(opts: IcsExportOptions): string {
 // ── ICS 输入 ────────────────────────────────────────────────────────────────
 
 export interface ParsedIcsEvent {
+  status?: CalendarEventStatus;
   /** 缺省表示继承日历颜色；文件没提供时不能推断原配色。 */
   color?: string;
   /** 原文件指定被覆盖的那次发生，用于与来源 API 的重复实例精确关联。 */
@@ -538,6 +560,7 @@ export function parseIcs(text: string, fallbackTz: string): ParsedIcsEvent[] {
             exdates: cur.exdates,
             reminders: [...new Set(cur.reminders)].sort((a, b) => a - b).slice(0, 5),
             uid: cur.uid || '',
+            ...(cur.status ? { status: cur.status } : {}),
             ...(cur.color ? { color: cur.color } : {}),
             ...(cur.recurrenceId != null ? { recurrenceId: cur.recurrenceId } : {}),
           };
@@ -568,7 +591,12 @@ export function parseIcs(text: string, fallbackTz: string): ParsedIcsEvent[] {
         break;
       }
       case 'UID': cur.uid = prop.value.trim(); break;
-      case 'STATUS': cur.cancelled = prop.value.trim().toUpperCase() === 'CANCELLED'; break;
+      case 'STATUS': {
+        const status = prop.value.trim().toUpperCase();
+        cur.cancelled = status === 'CANCELLED';
+        if (status === 'TENTATIVE' || status === 'CONFIRMED') cur.status = status === 'TENTATIVE' ? 'tentative' : 'confirmed';
+        break;
+      }
       // RANGE=THISANDFUTURE(「这一次及以后」)按单次覆盖处理:那一次改对了,后面几次保持原样。
       // Google 改「以后所有」时是拆成新 UID 另起一条序列,不走这个参数,所以对导入 Google
       // 的场景没影响;Apple / Outlook 的文件会在这里少改几次。
