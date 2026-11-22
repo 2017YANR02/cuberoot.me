@@ -59,7 +59,7 @@ const yellowOverview: CourseFlowSection = {
   flowchart: select => <YellowFaceOverview onSelect={select} />,
 };
 const yellowSections = yellow.sections.map(section => section.id === 'right-fish' || section.id === 'left-fish'
-  ? { ...section, guided: { ...section.guided, recognition: { ...section.guided.recognition, Help: FishRecognitionHelp } } }
+  ? { ...section, guided: { ...section.guided, Help: FishRecognitionHelp } }
   : section);
 const cornerOverview: CourseFlowSection = {
   id: 'corner-overview',
@@ -67,7 +67,7 @@ const cornerOverview: CourseFlowSection = {
   flowchart: select => <CornerPositionOverview onSelect={select} />,
 };
 const cornerSections = corners.sections.map(section => ({
-  ...section, guided: { ...section.guided, recognition: { ...section.guided.recognition, Help: HeadlightsHelp } },
+  ...section, guided: { ...section.guided, Help: HeadlightsHelp, hideHelpDuringAlgorithm: true },
 }));
 const chapters = [introduction, { ...bottom, sections: [bottomOverview, ...bottom.sections] },
   { ...yellow, sections: [yellowOverview, ...yellowSections] },

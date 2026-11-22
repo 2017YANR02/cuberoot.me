@@ -532,14 +532,14 @@ async function checkLastLayerChapters() {
   const left = "L' U' L U' L' U2 L";
   const corners = "x' R2 D2 R' U' R D2 R' U R' x";
   const cases = [
-    ['right-fish', 3, '朝右', "U'", right],
-    ['left-fish', 3, '朝左', 'U', left],
-    ['two-touch', 3, '2 格', "U'", right],
-    ['four-no-touch', 3, '4 格', 'U', right],
-    ['headlights', 4, '背面', 'y', corners],
-    ['no-headlights', 4, '没有眼', '', corners],
+    ['right-fish', 3, "U'", right],
+    ['left-fish', 3, 'U', left],
+    ['two-touch', 3, "U'", right],
+    ['four-no-touch', 3, 'U', right],
+    ['headlights', 4, 'y', corners],
+    ['no-headlights', 4, '', corners],
   ];
-  for (const [section, chapter, answer, align, alg] of cases) {
+  for (const [section, chapter, align, alg] of cases) {
     await setViewport({ width: 1440, height: 900 });
     await page.goto(`${origin}${route}?step=lesson-${chapter}&section=${section}`);
     await currentSection(section);
@@ -557,6 +557,11 @@ async function checkLastLayerChapters() {
       assert.equal(await cube().getAttribute('data-move-count'), '0', 'Watching the fish video moved the quiz cube');
     }
     if (chapter === 4) {
+      const heading = section === 'headlights' ? '把眼放在右面' : '做公式造眼';
+      await question.getByRole('heading', { name: heading, exact: true }).waitFor();
+      assert.equal(await question.getAttribute('data-course-question'), '1');
+    }
+    if (section === 'headlights') {
       await question.getByRole('button', { name: '什么是眼？', exact: true }).click();
       const video = page.getByRole('dialog', { name: '什么是眼？', exact: true });
       const playhead = video.getByRole('slider', { name: '演示进度' });
@@ -577,30 +582,92 @@ async function checkLastLayerChapters() {
       assert.equal(await cube().getAttribute('data-move-count'), '0', 'Watching the concept video moved the quiz cube');
       await setViewport({ width: 1440, height: 900 });
     }
-    if (section === 'two-touch') {
-      await question.getByRole('button', { name: '3 格', exact: true }).click();
-      assert.equal(await advance.count(), 0, 'Incorrect recognition was accepted');
-      await assertLayout('Yellow-face recognition', { width: 390, height: 844 });
+    if (section === 'right-fish' || section === 'left-fish') {
+      const heading = section === 'right-fish' ? '把右鱼的鱼头放左前' : '把左鱼的鱼头放右前';
+      await question.getByRole('heading', { name: heading, exact: true }).waitFor();
+      assert.equal(await question.getAttribute('data-course-question'), '1');
+      await assertLayout('Yellow-face alignment ' + section, { width: 390, height: 844 });
     }
-    await question.getByRole('button', { name: answer, exact: true }).click();
-    await advance.click();
+    const steps = question.getByRole('list', { name: '本节进度' }).locator('li');
+    assert.deepEqual(await steps.allTextContents(), align ? ['摆到位', '做公式'] : ['做公式']);
+    assert.equal(await steps.first().getAttribute('aria-current'), 'step');
     if (align) {
-      await keyboardMoves(align.startsWith('U') ? 'R' : 'x');
+      const usesUFace = align.startsWith('U');
+      const hintText = '这一步只转 U 面';
+      const turnHint = cube().getByText(hintText, { exact: true });
+      await keyboardMoves(usesUFace ? 'R' : 'x');
       assert.equal(await cube().getAttribute('data-move-count'), '0', 'Alignment accepted the wrong axis');
-      await keyboardMoves(align);
+      if (usesUFace) {
+        await turnHint.waitFor();
+        assert.equal(await question.getByText(hintText, { exact: true }).count(), 0, 'The turn hint was repeated in the caption');
+      }
+      if (section === 'headlights') {
+        const lockBadge = cube().getByText('转体已锁定', { exact: true });
+        const dualTurnHint = cube().getByText('这一步只转 U 面，或做 y 方向转体', { exact: true });
+        const correct = question.and(page.locator('[data-course-answer="correct"]'));
+        await dualTurnHint.waitFor();
+        assert.equal(await question.getByRole('button', { name: /^转体 y/ }).count(), 0, 'Alignment showed separate rotation buttons');
+        assert.equal(await lockBadge.count(), 0, 'The y axis was available but the lock badge was shown');
+        await keyboardMoves('R z');
+        assert.equal(await cube().getAttribute('data-move-count'), '0', 'Headlights accepted an unrelated turn');
+
+        await dragCube(.48, .07, -90, 0);
+        await page.locator('[data-course-cube][data-last-move="y"]').waitFor();
+        await correct.waitFor();
+        assert.equal(await lockBadge.count(), 0, 'Aligning the headlights showed the lock badge');
+        assert(await advance.isEnabled(), 'A y rotation did not enable Continue');
+        const continueBox = await advance.boundingBox();
+        await keyboardMoves('y');
+        assert(await advance.isDisabled(), 'A y rotation from the goal did not disable Continue');
+        await keyboardMoves("y'");
+        await correct.waitFor();
+        await dragCube(.49, .48, 78, 0);
+        await page.locator('[data-course-cube][data-last-move="U\u0027"][data-move-count="4"]').waitFor();
+        assert(await advance.isDisabled(), 'Continue stayed enabled after a U turn moved the headlights away');
+        assert.deepEqual(await advance.boundingBox(), continueBox, 'The Continue button moved when the headlights left the goal');
+        await keyboardMoves('y');
+        await correct.waitFor();
+        assert.equal(await cube().getAttribute('data-move-count'), '5', 'The last y rotation was not committed');
+      } else await keyboardMoves(align);
+      if (usesUFace) {
+        await question.and(page.locator('[data-course-answer="correct"]')).waitFor();
+        assert.equal(await advance.isEnabled(), true, 'Continue was disabled after aligning');
+        await turnHint.waitFor({ state: 'hidden' });
+        await setViewport({ width: 1440, height: 900 });
+        const canvasBox = await canvas().boundingBox();
+        await dragCube(.48, .52, 0, 70);
+        await turnHint.waitFor();
+        const hintBox = await turnHint.boundingBox();
+        const releaseX = canvasBox.x + canvasBox.width * .48;
+        const releaseY = canvasBox.y + canvasBox.height * .52 + 70;
+        assert(Math.abs(hintBox.x + hintBox.width / 2 - releaseX) < 8
+          && Math.abs(hintBox.y + hintBox.height - releaseY) < 16, 'The turn hint was not anchored near the mouse release');
+        assert.equal(await cube().getAttribute('data-move-count'), '1', 'A non-U turn changed the cube after aligning');
+        assert.equal(await advance.isEnabled(), true, 'A blocked turn disabled Continue');
+        await keyboardMoves(inverseTurn(align));
+        await question.and(page.locator('[data-course-answer="pending"]')).waitFor();
+        assert.equal(await cube().getAttribute('data-move-count'), '2', 'U was blocked after aligning');
+        assert.equal(await advance.isEnabled(), false, 'Continue stayed enabled after moving out of alignment');
+        await keyboardMoves(align);
+      }
       await advance.click();
     }
     const openingCount = await cube().getAttribute('data-move-count');
     await keyboardMoves('F');
     assert.equal(await cube().getAttribute('data-move-count'), openingCount, 'The quiz accepted a turn outside the algorithm');
-    if (section === 'two-touch' || section === 'no-headlights') {
+    if (chapter === 4) {
+      assert.equal(await question.getByRole('button', { name: '什么是眼？', exact: true }).count(), 0,
+        'The concept video button was still present in the algorithm quiz');
+    }
+    if (section === 'two-touch' || chapter === 4) {
       await assertLayout('Guided ' + section, { width: 768, height: 1024 });
       await assertLayout('Guided ' + section, { width: 844, height: 390 });
       await assertLayout('Guided ' + section, { width: 320, height: 320 });
+      const quizMoveCount = await question.locator('.course-alg > span').count();
       await question.getByRole('button', { name: '看公式演示', exact: true }).click();
       const demo = page.getByRole('dialog');
       await demo.getByRole('button', { name: '下一步', exact: true }).click();
-      assert.equal(await demo.getByRole('listitem').count(), alg.split(' ').length, 'A demonstration move is missing');
+      assert.equal(await demo.getByRole('listitem').count(), quizMoveCount, 'The demonstration and quiz have different move counts');
       for (const viewport of [{ width: 320, height: 320 }, { width: 844, height: 390 }]) {
         await setViewport(viewport);
         const box = await demo.boundingBox();
@@ -624,6 +691,10 @@ async function checkLastLayerChapters() {
       await page.locator('[data-course-cube][data-last-move="x\u0027"]').waitFor();
       await keyboardMoves(alg.slice(3));
     } else await keyboardMoves(alg);
+    if (section === 'headlights') {
+      await question.locator('.course-alg [aria-current="step"]').filter({ hasText: /^U$/ }).waitFor();
+      await keyboardMoves('U');
+    }
     await question.getByRole('heading', { name: '已完成', exact: true }).waitFor();
     await showPractice();
     await ready();
@@ -633,9 +704,9 @@ async function checkLastLayerChapters() {
   }
   await page.goto(origin + '/tutorial/2x2-lbl?lang=en&step=lesson-4');
   await page.locator('[data-course-section="corner-overview"] [data-eye-case="headlights"]').click();
-  await page.getByRole('heading', { name: 'Where are the headlights?', exact: true }).waitFor();
+  await page.getByRole('heading', { name: 'Put the headlights on the right', exact: true }).waitFor();
   await ready();
-  await assertLayout('English corner recognition', { width: 390, height: 844 });
+  await assertLayout('English corner alignment', { width: 390, height: 844 });
   assert.deepEqual(errors, [], 'Unexpected page errors');
   console.log('Passed all six yellow-face and corner-placement quizzes and exercises.');
 }

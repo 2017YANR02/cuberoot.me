@@ -47,6 +47,22 @@ describe('the 2×2 LBL tutorial', () => {
     expect(eyeFaces(noHeadlights.exercise.setup)).toEqual([]);
   });
 
+  it('finishes a headlights solve after placing the pair with U and y in any combination', () => {
+    const [headlights] = corners.sections;
+    const { alignment, algorithm } = headlights.guided;
+    if (!alignment || !algorithm.finishingTurn) throw new Error('Missing the headlights guide');
+    expect(alignment.matches([])).toBe(false);
+    expect(alignment.matches(['U', 'y'])).toBe(false);
+    const alg = algorithm.steps.map(step => step.notation);
+    for (const [history, adjustment] of [
+      [['y'], undefined], [['U'], "U'"], [["y'", 'U2'], 'U2'], [['y2', "U'"], 'U'],
+    ] as const) {
+      expect(alignment.matches(history)).toBe(true);
+      expect(algorithm.finishingTurn(history)?.notation).toBe(adjustment);
+      expect(headlights.exercise.isComplete([...history, ...alg, ...(adjustment ? [adjustment] : [])])).toBe(true);
+    }
+  });
+
   it('uses the same puzzle states in the overview and the exercises', () => {
     const [first, ...remainingCorners] = bottom.sections;
     expect(first.interaction?.questions?.map(question => 'targetIndex' in question
