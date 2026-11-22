@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState, type CSSProperties, type PointerEvent } from 'react';
+import { useEffect, useEffectEvent, useRef, useState, type CSSProperties, type PointerEvent } from 'react';
 import { ArrowUpRight, Code2, Cpu, Globe, Network, Palette, Settings2, type LucideIcon } from 'lucide-react';
 import Link from '@/components/AppLink';
 import BackHome from '@/components/BackHome';
@@ -8,6 +8,7 @@ import MoreToggle from '@/components/MoreToggle';
 import { Tooltip } from '@/components/Tooltip';
 import { useT } from '@/hooks/useT';
 import { tr, type Msg } from '@/i18n/tr';
+import { isTrackpadSwipe } from '@/lib/cube-trackpad';
 import { CUBE_POSES, cubeRotationTransform, dragCubeRotation, nearestCubeFace, rotationFromMatrix, rotationFromPose, type CubeFace, type CubeRotation } from './_cube-orbit';
 import './code_index.css';
 
@@ -120,11 +121,23 @@ export default function DevIndexPage() {
   const rotorRef = useRef<HTMLDivElement>(null);
   const sceneRef = useRef<HTMLElement>(null);
   const pointer = useRef<CubeDrag | null>(null);
+  const swipe = useRef<{ rotation: CubeRotation; idleTimer: number } | null>(null);
   const frame = useRef(0);
   const suppressClick = useRef(false);
   const active = FACES[selected];
 
-  useEffect(() => () => cancelAnimationFrame(frame.current), []);
+  const displayedRotation = () => rotationFromMatrix(
+    new DOMMatrixReadOnly(getComputedStyle(rotorRef.current!).transform),
+  );
+
+  const drawRotation = () => {
+    if (frame.current) return;
+    frame.current = requestAnimationFrame(() => {
+      frame.current = 0;
+      const next = pointer.current?.current ?? swipe.current?.rotation;
+      if (next) setRotation(next);
+    });
+  };
 
   const stopPointer = () => {
     cancelAnimationFrame(frame.current);
@@ -135,14 +148,48 @@ export default function DevIndexPage() {
     if (drag && sceneRef.current?.hasPointerCapture(drag.id)) {
       sceneRef.current.releasePointerCapture(drag.id);
     }
-    return drag;
   };
 
   const selectFace = (face: CubeFace) => {
+    if (swipe.current) window.clearTimeout(swipe.current.idleTimer);
+    swipe.current = null;
     stopPointer();
     setSelected(FACES.findIndex(item => item.id === face));
     setRotation(rotationFromPose(CUBE_POSES[face]));
   };
+
+  const finishSwipe = () => {
+    if (swipe.current) selectFace(nearestCubeFace(swipe.current.rotation, active.id));
+  };
+
+  const onWheel = useEffectEvent((event: WheelEvent) => {
+    if (expanded || pointer.current || !isTrackpadSwipe(event)) return;
+    if (!(event.target instanceof Element) || !event.target.closest('.dev-cube-rotor, .dev-cube-open')) return;
+    event.preventDefault();
+
+    const previous = swipe.current;
+    if (previous) window.clearTimeout(previous.idleTimer);
+    else setDragging(true);
+    swipe.current = {
+      rotation: dragCubeRotation(previous?.rotation ?? displayedRotation(), -event.deltaX, -event.deltaY),
+      // Wheel events have no gesture-end event. Snap after the swipe and its momentum settle.
+      idleTimer: window.setTimeout(finishSwipe, 150),
+    };
+    drawRotation();
+  });
+
+  useEffect(() => {
+    const scene = sceneRef.current;
+    const handleWheel = (event: WheelEvent) => onWheel(event);
+    scene?.addEventListener('wheel', handleWheel, { passive: false });
+    return () => {
+      scene?.removeEventListener('wheel', handleWheel);
+      if (swipe.current) window.clearTimeout(swipe.current.idleTimer);
+      swipe.current = null;
+      cancelAnimationFrame(frame.current);
+      frame.current = 0;
+    };
+  }, []);
 
   const finishDrag = (event: PointerEvent<HTMLElement>) => {
     const drag = pointer.current;
@@ -157,8 +204,8 @@ export default function DevIndexPage() {
     if (!(event.target instanceof Element) || !event.target.closest('.dev-cube-rotor, .dev-cube-open')) return;
     // Catch an in-flight snap at its displayed pose rather than jumping to its
     // target when the user grabs the cube again before the transition finishes.
-    const matrix = new DOMMatrixReadOnly(getComputedStyle(rotorRef.current!).transform);
-    const start = rotationFromMatrix(matrix);
+    const start = displayedRotation();
+    finishSwipe();
     suppressClick.current = false;
     pointer.current = { id: event.pointerId, startX: event.clientX, startY: event.clientY, start, current: start, moved: false };
 
@@ -176,16 +223,14 @@ export default function DevIndexPage() {
     }
     if (!drag.moved) return;
     drag.current = dragCubeRotation(drag.start, dx, dy);
-    if (!frame.current) frame.current = requestAnimationFrame(() => {
-      frame.current = 0;
-      if (pointer.current) setRotation(pointer.current.current);
-    });
+    drawRotation();
   };
 
   // Faces remain mounted in both views. CSS interpolates their actual geometry,
   // including an interrupted/reversed transition, without snapshots or timers.
   const toggle = () => {
     if (pointer.current) selectFace(nearestCubeFace(pointer.current.current, active.id));
+    finishSwipe();
     toggleRef.current?.focus({ preventScroll: true });
     setExpanded(value => !value);
   };
