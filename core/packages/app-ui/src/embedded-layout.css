@@ -4,6 +4,67 @@
   display: none;
 }
 
+@media (max-width: 900px) {
+  :root {
+    --compact-header-control-size: 44px;
+    --compact-header-icon-size: 20px;
+    --compact-header-gap: 8px;
+  }
+
+  .landing-page > .home-navigation,
+  .landing-page > .home-navigation .landing-auth {
+    gap: var(--compact-header-gap);
+  }
+
+  :root .landing-page > .home-navigation > .landing-auth {
+    inset: auto;
+  }
+
+  .landing-page > .home-navigation :is(.landing-auth-icon, .landing-auth-btn, .landing-calendar-link .landing-card, .home-navigation-toggle) {
+    width: var(--compact-header-control-size);
+    height: var(--compact-header-control-size);
+    padding: 0;
+    border-radius: 8px;
+  }
+
+  .landing-page > .home-navigation .landing-auth-btn.is-login {
+    border-color: transparent;
+    background: transparent;
+    color: var(--foreground);
+  }
+
+  .landing-page > .home-navigation .landing-auth-btn.is-login:is(:hover, :focus-visible) {
+    background: var(--muted);
+  }
+
+  .landing-page > .home-navigation .landing-auth-btn.is-login > span {
+    display: none;
+  }
+
+  .landing-page--navigation > .home-navigation .landing-auth :is(.landing-auth-icon, .landing-auth-btn) > svg,
+  .landing-page--navigation > .home-navigation .landing-calendar-link .landing-card-icon > svg {
+    width: var(--compact-header-icon-size);
+    height: var(--compact-header-icon-size);
+  }
+
+  .landing-page > .home-navigation .landing-auth .landing-auth-btn.is-avatar > svg {
+    width: var(--compact-header-icon-size);
+    height: var(--compact-header-icon-size);
+    padding: 0;
+    border: 0;
+    background: transparent;
+  }
+
+  .landing-page > .home-navigation .home-navigation-toggle::before,
+  .landing-page > .home-navigation .home-navigation-toggle::after {
+    width: var(--compact-header-icon-size);
+  }
+}
+
+@media (max-width: 420px) {
+  :root { --compact-header-gap: 4px; }
+}
+
 /* Web and the installed Account page share the compact header. */
 @media (max-width: 767px) {
   .settings-panel-page {
@@ -18,10 +79,15 @@
   }
 
   .settings-panel-page > .settings-panel-nav {
-    grid-template-columns: repeat(3, 44px);
+    grid-template-columns: repeat(3, var(--compact-header-control-size));
     justify-content: end;
-    gap: 8px;
+    gap: var(--compact-header-gap);
     padding: max(4px, var(--account-header-top-inset)) max(16px, var(--account-header-right-inset)) 4px 0;
+  }
+
+  .settings-panel-page > .settings-panel-nav .settings-panel-nav-item svg {
+    width: var(--compact-header-icon-size);
+    height: var(--compact-header-icon-size);
   }
 
   :root:is([data-installed-account-frame], [data-native-account-frame]) .settings-panel-page {
@@ -38,7 +104,7 @@
   :root:is([data-installed-account-frame], [data-native-account-frame])
     .settings-panel-page:not(:has(> .settings-panel-header)) > .settings-panel-nav {
     grid-column: 1 / -1;
-    grid-template-columns: repeat(2, 44px);
+    grid-template-columns: repeat(2, var(--compact-header-control-size));
     justify-content: center;
     padding-inline: 16px;
   }
