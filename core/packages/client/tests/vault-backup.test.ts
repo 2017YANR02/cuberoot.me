@@ -45,12 +45,21 @@ afterEach(() => vi.unstubAllGlobals());
 
 it('opens as searchable plaintext offline and renders saved values as text', async () => {
   const info: VaultBackupItem = {
-    entry: { id: 'info', category: 'personal', title: 'Personal info', fields: [], notes: 'A separate note' },
+    entry: {
+      id: 'info', category: 'personal', title: 'Personal info', notes: 'A separate note',
+      fields: [{ id: 'number', label: 'Imported identifier label', value: 'test-identifier\nsecond line', secret: true }],
+      informationGroups: [{
+        id: 'second', name: 'Second document', notes: 'Second document note',
+        fields: [{ id: 'number', label: '', value: 'second-identifier', secret: false }],
+        images: [{ id: 'second-image', name: 'second.png', dataUrl: image }],
+      }],
+    },
   };
   const backup = await buildVaultBackup('fixture', [item, info], savedAt, locale);
   const html = await backup.text();
   expect(html.startsWith(vaultBackupMarker('fixture'))).toBe(true);
   expect(html).toContain('secret-password-fixture');
+  expect(html).not.toContain('Imported identifier label');
   const dom = new JSDOM(html, { url: 'file:///vault-test.html', runScripts: 'outside-only' });
   const { window } = dom;
   const { document } = window;
@@ -73,7 +82,15 @@ it('opens as searchable plaintext offline and renders saved values as text', asy
     expect(accounts[1].textContent).toContain('Second account note');
     expect(document.querySelector('[data-entry-id="info"] .backup-account')).toBe(null);
     expect(document.querySelector('[data-entry-id="info"]')?.textContent).toContain('A separate note');
-    expect(document.querySelectorAll('img')).toHaveLength(1);
+    expect(document.querySelector('[data-entry-id="info"] .backup-field-value')?.textContent)
+      .toBe('test-identifier\nsecond line');
+    const informationGroups = document.querySelectorAll('[data-entry-id="info"] .backup-information');
+    expect(informationGroups).toHaveLength(2);
+    expect(informationGroups[0].querySelector('img')).toBeNull();
+    expect(informationGroups[1].textContent).toContain('Second document note');
+    expect(informationGroups[1].textContent).toContain('second-identifier');
+    expect(informationGroups[1].querySelector('img')?.getAttribute('alt')).toBe('second.png');
+    expect(document.querySelectorAll('img')).toHaveLength(2);
     expect(document.querySelector('img')?.getAttribute('src')).toBe(image);
     expect(document.querySelector('summary')?.textContent).toContain('Trash');
     window.eval(script);

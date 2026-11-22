@@ -48,3 +48,37 @@ it('keeps account pairs separate and does not duplicate them on a retry', () => 
   expect(merged.accounts?.map(({ name, fields }) => [name, fields[0].value])).toEqual([['Backup', 'third'], ['Work', 'second']]);
   expect(mergeVaultEntries(merged, source)).toEqual(merged);
 });
+
+it('merges ordinary content and added accounts without treating the ordinary content as an account', () => {
+  const target: VaultEntry = { ...entry('target'), category: 'business' };
+  const source: VaultEntry = {
+    ...entry('source'), category: 'business', notes: 'Business note',
+    fields: [{ id: 'detail', label: '', value: 'Business detail', secret: false }],
+    accounts: [{ id: 'account', name: 'Portal', fields: [{ id: 'login', label: 'Account', value: 'portal', secret: false }] }],
+  };
+  const merged = mergeVaultEntries(target, source);
+  expect(merged.fields).toEqual(source.fields);
+  expect(merged.notes).toBe('source\nBusiness note');
+  expect(merged.accounts).toEqual(source.accounts);
+  expect(mergeVaultEntries(merged, source)).toEqual(merged);
+});
+
+it('keeps grouped notes and images together when merging and retrying', () => {
+  const target: VaultEntry = { ...entry('target'), category: 'business', images: [image] };
+  const source: VaultEntry = {
+    ...entry('source'), category: 'business', informationName: 'First license', notes: 'First note',
+    images: [{ ...image, name: 'first.jpg' }],
+    informationGroups: [{
+      id: 'second', name: 'Second license', notes: 'Second note', fields: [],
+      images: [{ ...image, id: 'second-photo', name: 'second.jpg' }],
+    }],
+  };
+  const merged = mergeVaultEntries(target, source);
+  expect(merged.images).toEqual(target.images);
+  expect(merged.informationGroups).toMatchObject([
+    { name: 'First license', notes: 'First note', images: [{ name: 'first.jpg' }] },
+    { name: 'Second license', notes: 'Second note', images: [{ name: 'second.jpg' }] },
+  ]);
+  expect(isVaultEntry(merged)).toBe(true);
+  expect(mergeVaultEntries(merged, source)).toEqual(merged);
+});

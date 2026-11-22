@@ -1,9 +1,10 @@
 import { hasVaultPrimaryAccount, orderVaultAccounts, vaultAccountStatusLabels } from './vault-account';
-import { bytesToBase64, type VaultAccount, type VaultEntry } from './vault-crypto';
+import { bytesToBase64, type VaultAccount, type VaultEntry, type VaultImage, type VaultInformation } from './vault-crypto';
 import { vaultBackupReaderScript, vaultBackupReaderStyle } from './vault-backup-reader';
+import { isVaultLicense, splitVaultLicenses } from './vault-license';
 
 export const VAULT_BACKUP_FORMAT = 3;
-export const VAULT_BACKUP_LAYOUT_REVISION = 1;
+export const VAULT_BACKUP_LAYOUT_REVISION = 4;
 export const VAULT_BACKUP_FILENAME = 'cuberoot-vault-local.html';
 
 export interface VaultBackupItem {
@@ -23,6 +24,7 @@ export const vaultBackupLabels = {
   untitled: { zh: '未命名', en: 'Untitled' },
   trash: { zh: '回收站', en: 'Trash' },
   account: { zh: '账号', en: 'Account' },
+  group: { zh: '组', en: 'Group' },
   notes: { zh: '备注', en: 'Notes' },
   mergedInto: { zh: '已合并到', en: 'Merged into' },
   empty: { zh: '没有符合条件的资料。', en: 'No matching items.' },
@@ -42,7 +44,7 @@ export const vaultBackupMarker = (id: string) => `<!doctype html><!-- CubeRoot V
 
 const html = (value: string) => value.replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;').replaceAll('"', '&quot;');
 
-function renderFields({ fields, notes, privateNotes }: VaultAccount, labels: Labels): string {
+function renderFields({ fields, notes, privateNotes }: Pick<VaultAccount, 'fields' | 'notes' | 'privateNotes'>, labels: Labels): string {
   const rows = fields.map(({ label, value }) => [label, value]);
   for (const note of [notes, privateNotes]) {
     if (note) rows.push([labels.notes, note]);
@@ -50,12 +52,38 @@ function renderFields({ fields, notes, privateNotes }: VaultAccount, labels: Lab
   return rows.length ? `<dl>${rows.map(([label, value]) => `<dt>${html(label)}</dt><dd>${html(value)}</dd>`).join('\n')}</dl>` : '';
 }
 
-function renderItem({ entry, trashedAt }: VaultBackupItem, labels: Labels): string {
+function renderImages(images: readonly VaultImage[] = []): string {
+  return images.flatMap(({ name, dataUrl }) =>
+    /^data:image\/(?:jpeg|png|webp);base64,[A-Za-z0-9+/]+={0,2}$/.test(dataUrl)
+      ? [`<figure><img src="${dataUrl}" alt="${html(name)}" loading="lazy"><figcaption>${html(name)}</figcaption></figure>`]
+      : []).join('\n');
+}
+
+function renderInformation(information: VaultInformation, name: string, labels: Labels, groupedLicense: boolean): string {
+  const notes = renderFields({ fields: [], notes: information.notes }, labels);
+  return `<section class="backup-information">
+${name ? `<h3>${html(name)}</h3>` : ''}
+${information.fields.map(({ value }) => `<p class="backup-field-value">${html(value)}</p>`).join('\n')}
+${groupedLicense ? '' : notes}
+${renderImages(information.images)}
+${groupedLicense && information.notes ? `<details><summary>${html(labels.notes)}</summary><p class="backup-field-value">${html(information.notes)}</p></details>` : ''}
+</section>`;
+}
+
+function renderItem({ entry: original, trashedAt }: VaultBackupItem, labels: Labels): string {
+  const entry = trashedAt ? original : splitVaultLicenses(original);
   const primary: VaultAccount = {
     id: entry.id, name: entry.accountName ?? '', fields: entry.fields, notes: entry.notes,
     privateNotes: entry.privateNotes, accountStatus: entry.accountStatus,
   };
   const hasPrimary = hasVaultPrimaryAccount(entry);
+  const isAccountEntry = entry.category === 'accounts' || hasPrimary;
+  const groups = entry.informationGroups ?? [];
+  const groupedLicense = isVaultLicense(entry) && groups.length > 0;
+  const information = [
+    ...(!isAccountEntry ? [renderInformation(entry, entry.informationName || (groups.length ? `${labels.group} 1` : ''), labels, groupedLicense)] : []),
+    ...groups.map((group, index) => renderInformation(group, group.name || `${labels.group} ${index + (isAccountEntry ? 1 : 2)}`, labels, groupedLicense)),
+  ].join('\n');
   const accounts = orderVaultAccounts(entry.accounts ?? [], hasPrimary ? primary : null, entry.primaryAccountIndex);
   const accountSections = accounts.map((account, index) => {
     const { name, accountStatus } = account;
@@ -66,18 +94,14 @@ ${accountStatus ? `<p>${html(labels[accountStatus])}</p>` : ''}
 ${renderFields(account, labels)}
 </section>`;
   });
-  const images = (entry.images ?? []).flatMap(({ name, dataUrl }) =>
-    /^data:image\/(?:jpeg|png|webp);base64,[A-Za-z0-9+/]+={0,2}$/.test(dataUrl)
-      ? [`<figure><img src="${dataUrl}" alt="${html(name)}" loading="lazy"><figcaption>${html(name)}</figcaption></figure>`]
-      : []);
   const title = entry.title || labels.untitled;
   return `<details data-entry-id="${html(entry.id)}" data-category="${html(entry.category ?? 'other')}"${trashedAt ? ` data-trashed-at="${html(trashedAt)}"` : ''}>
 <summary>${html(title)}${trashedAt ? ` · ${html(labels.trash)}` : ''}</summary>
 <div>
 ${entry.mergedInto ? `<p>${html(labels.mergedInto)} ${html(entry.mergedInto.title)}</p>` : ''}
-${hasPrimary ? '' : renderFields(primary, labels)}
+${information}
 ${accountSections.join('\n')}
-${images.join('\n')}
+${isAccountEntry ? renderImages(entry.images) : ''}
 </div>
 </details>`;
 }

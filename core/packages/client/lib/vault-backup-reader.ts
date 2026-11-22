@@ -25,16 +25,17 @@ label { display: block; }
 details { margin: 1rem 0; }
 summary { cursor: pointer; font-weight: 600; }
 details > div { padding-inline-start: 1rem; }
-.backup-account {
+.backup-account, .backup-information {
   margin-block: .75rem;
   padding: .75rem;
   border: 1px solid color-mix(in srgb, CanvasText 22%, Canvas);
   border-radius: .75rem;
 }
-.backup-account h3 { margin: 0 0 .5rem; }
+.backup-account h3, .backup-information h3 { margin: 0 0 .5rem; }
 .backup-account dl { margin: 0; }
 .backup-account dd:last-child { margin-bottom: 0; }
 dt { font-weight: 600; }
 dd { margin: 0 0 .65rem; white-space: pre-wrap; }
+.backup-field-value { white-space: pre-wrap; }
 img { display: block; max-width: 100%; max-height: 28rem; object-fit: contain; margin-block: .35rem 1rem; }
 `;

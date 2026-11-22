@@ -85,17 +85,23 @@
 .vault-input { width: 100%; padding: 9px 34px 9px 10px; }
 .vault-sidebar { position: sticky; top: 20px; align-self: start; }
 .vault-list { margin-top: 12px; max-height: min(60vh, 600px); overflow-y: auto; }
+.vault-list-row {
+  display: flex;
+  align-items: center;
+  border-bottom: 1px solid var(--border-default);
+}
 .vault-list-item {
   display: flex;
+  flex: 1;
   flex-direction: column;
   gap: 4px;
-  width: 100%;
+  min-width: 0;
   padding: 11px 8px;
-  border-bottom: 1px solid var(--border-default);
   text-align: left;
 }
-.vault-list-item:hover,
-.vault-list-item.is-active { background: color-mix(in srgb, var(--foreground) 5%, transparent); }
+.vault-list-row > .vault-icon-button { flex: none; }
+.vault-list-row:hover,
+.vault-list-row.is-active { background: color-mix(in srgb, var(--foreground) 5%, transparent); }
 .vault-list-item strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .vault-list-title { display: flex; align-items: center; gap: 8px; }
 .vault-title-tag,
@@ -124,11 +130,18 @@
 .vault-fields { display: flex; flex-direction: column; align-items: flex-start; gap: 22px; }
 .vault-account-sortable { margin-top: 28px; }
 .vault-account-sortable + .vault-account-sortable { margin-top: 14px; }
-.vault-account {
+.vault-account,
+.vault-information-group {
   padding: clamp(10px, 2vw, 16px);
   border: 1px solid var(--border-default);
   border-radius: 12px;
 }
+.vault-information-groups { display: grid; gap: 14px; margin-top: 20px; }
+.vault-information-heading { display: flex; align-items: center; gap: 8px; margin-bottom: 14px; }
+.vault-information-heading > .vault-input { min-width: 0; }
+.vault-information-group .vault-notes { min-height: 0; }
+.vault-license-notes { margin-top: 14px; }
+.vault-license-notes .vault-entry-notes { grid-template-columns: minmax(0, 1fr); margin-top: 8px; }
 .vault-account-heading { display: flex; align-items: center; gap: 8px; margin-bottom: 14px; }
 .vault-account-heading > .vault-value-line { flex: 1; min-inline-size: 0; align-items: center; }
 .vault-account-heading > .sortable-card-drag-handle { position: static; padding: 7px; flex: none; }
@@ -157,9 +170,9 @@
 .vault-account-fields > div { min-width: 0; }
 .vault-field-row { display: grid; grid-template-columns: max-content minmax(0, 1fr); align-items: center; gap: 12px; }
 .vault-field-row > .vault-field-label { margin: 0; }
-.vault-field-row--notes { align-items: start; }
-.vault-field-row--notes > .vault-field-label { margin-top: 9px; }
-.vault-add-account { margin-top: 16px; }
+.vault-field-row--notes { align-items: first baseline; }
+.vault-add-account,
+.vault-add-content { margin-top: 16px; }
 .vault-field { width: 100%; }
 .vault-field-label { display: block; margin-bottom: 7px; font-size: 14px; font-weight: 600; }
 .vault-label-input { width: min(240px, 100%); margin-bottom: 7px; padding: 6px 8px; font-size: 13px; }
@@ -326,7 +339,7 @@
   .vault-workspace { grid-template-columns: 1fr; gap: 28px; }
   .vault-sidebar { position: static; }
   .vault-list { display: flex; max-height: none; overflow-x: auto; }
-  .vault-list-item { flex: 0 0 160px; border-right: 1px solid var(--border-default); }
+  .vault-list-row { flex: 0 0 160px; border-right: 1px solid var(--border-default); }
 }
 
 @media (max-width: 480px) {

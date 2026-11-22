@@ -49,6 +49,10 @@ describe('private vault crypto', () => {
     const png = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+jG6kAAAAASUVORK5CYII=';
     const original = Uint8Array.from(atob(png), (char) => char.charCodeAt(0));
     entry.images = await readVaultImages([new File([original], '原图.png', { type: 'image/png' })]);
+    entry.informationGroups = [{
+      id: 'document', name: '证件原件', fields: [], notes: '第二组备注',
+      images: await readVaultImages([new File([original], '第二组原图.png', { type: 'image/png' })]),
+    }];
     entry.mergedInto = { id: 'target', title: '合并后的条目' };
     expect(entry.images[0].dataUrl).toBe(`data:image/png;base64,${png}`);
     const withImages = await encryptVaultEntry(entry, [{ userId: 1, publicKey: owner.publicKey }]);

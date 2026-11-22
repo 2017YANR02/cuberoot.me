@@ -8,7 +8,9 @@ export const VAULT_RECOVERY_CODE_PREFIX = 'CRV1-';
 const MAX_CIPHERTEXT_BYTES = 4 * 1024 * 1024;
 export const MAX_VAULT_IMAGE_BYTES = 2 * 1024 * 1024;
 export const MAX_VAULT_IMAGES = 10;
+export const MAX_VAULT_FIELDS = 50;
 export const MAX_VAULT_ADDITIONAL_ACCOUNTS = 50;
+export const MAX_VAULT_INFORMATION_GROUPS = 50;
 
 export interface VaultImage {
   id: string;
@@ -36,13 +38,23 @@ export interface VaultAccount {
   accountStatus?: VaultAccountStatus;
 }
 
-export interface VaultEntry {
-  id: string;
-  title: string;
+export interface VaultInformation {
   fields: VaultField[];
   notes: string;
-  privateNotes?: string;
   images?: VaultImage[];
+}
+
+export interface VaultInformationGroup extends VaultInformation {
+  id: string;
+  name: string;
+}
+
+export interface VaultEntry extends VaultInformation {
+  id: string;
+  title: string;
+  privateNotes?: string;
+  informationName?: string;
+  informationGroups?: VaultInformationGroup[];
   category?: 'personal' | 'accounts' | 'business' | 'other';
   mergedInto?: { id: string; title: string };
   accountName?: string;
@@ -50,6 +62,10 @@ export interface VaultEntry {
   accounts?: VaultAccount[];
   /** Position of the account stored directly on the entry among all account groups. */
   primaryAccountIndex?: number;
+}
+
+export function vaultEntryImages(entry: Pick<VaultEntry, 'images' | 'informationGroups'>): VaultImage[] {
+  return [...(entry.images ?? []), ...(entry.informationGroups ?? []).flatMap((group) => group.images ?? [])];
 }
 
 export interface EncryptedPrivateKey {
@@ -280,7 +296,7 @@ export async function recoverVaultPrivateKey(
 }
 
 function isVaultFields(value: unknown): value is VaultField[] {
-  return Array.isArray(value) && value.length <= 50 && value.every((field) => {
+  return Array.isArray(value) && value.length <= MAX_VAULT_FIELDS && value.every((field) => {
     if (!field || typeof field !== 'object') return false;
     const item = field as Record<string, unknown>;
     return typeof item.id === 'string' && item.id.length <= 100
@@ -310,6 +326,21 @@ function isVaultAccounts(value: unknown): value is VaultAccount[] {
   });
 }
 
+function isVaultInformationGroups(value: unknown): value is VaultInformationGroup[] {
+  if (!Array.isArray(value) || value.length > MAX_VAULT_INFORMATION_GROUPS) return false;
+  const ids = new Set<string>();
+  return value.every((group) => {
+    if (!group || typeof group !== 'object') return false;
+    const { id, name, fields, notes, images } = group as Record<string, unknown>;
+    if (typeof id !== 'string' || !id || id.length > 100 || ids.has(id)
+      || typeof name !== 'string' || name.length > 200
+      || !isVaultFields(fields) || typeof notes !== 'string' || notes.length > 500_000
+      || (images !== undefined && !Array.isArray(images))) return false;
+    ids.add(id);
+    return true;
+  });
+}
+
 export function isVaultEntry(value: unknown): value is VaultEntry {
   if (!value || typeof value !== 'object') return false;
   const entry = value as Record<string, unknown>;
@@ -322,7 +353,9 @@ export function isVaultEntry(value: unknown): value is VaultEntry {
     || typeof entry.title !== 'string' || entry.title.length > 200
     || typeof entry.notes !== 'string' || entry.notes.length > 500_000
     || (entry.privateNotes !== undefined && (typeof entry.privateNotes !== 'string' || entry.privateNotes.length > 500_000))
-    || (entry.images !== undefined && !validateVaultImages(entry.images))
+    || (entry.images !== undefined && !Array.isArray(entry.images))
+    || (entry.informationName !== undefined && (typeof entry.informationName !== 'string' || entry.informationName.length > 200))
+    || (entry.informationGroups !== undefined && !isVaultInformationGroups(entry.informationGroups))
     || (entry.category !== undefined && !['personal', 'accounts', 'business', 'other'].includes(entry.category as string))
     || (entry.accountName !== undefined && (typeof entry.accountName !== 'string' || entry.accountName.length > 200))
     || !isOptionalVaultAccountStatus(entry.accountStatus)
@@ -330,7 +363,10 @@ export function isVaultEntry(value: unknown): value is VaultEntry {
   const index = entry.primaryAccountIndex;
   if (index !== undefined && (typeof index !== 'number' || !Number.isInteger(index)
     || index < 0 || index > (Array.isArray(entry.accounts) ? entry.accounts.length : 0))) return false;
-  return isVaultFields(entry.fields);
+  return isVaultFields(entry.fields) && validateVaultImages(vaultEntryImages({
+    images: entry.images as VaultImage[] | undefined,
+    informationGroups: entry.informationGroups as VaultInformationGroup[] | undefined,
+  }));
 }
 
 export async function encryptVaultEntry(
