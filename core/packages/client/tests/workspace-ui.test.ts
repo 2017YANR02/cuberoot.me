@@ -116,7 +116,8 @@ it('uses project amounts for remote contracts and pays both calculation modes mo
   expect(defaultInternshipSettlement(initial, '实习协议（远程）')).toBe('project');
   expect(internshipDailyRateCents(initial.allowance)).toBe(30000);
   const onApply = vi.fn();
-  await mount(h(InternshipFieldForm, {initial, title:'实习协议（远程）', onApply, onCancel:vi.fn()}));
+  const onSave = vi.fn<(fields: Parameters<typeof fillInternshipTemplate>[1]) => Promise<void>>().mockResolvedValue(undefined);
+  await mount(h(InternshipFieldForm, {initial, title:'实习协议（远程）', canSave:true, onApply, onSave, onCancel:vi.fn()}));
   expect(container.querySelector<HTMLSelectElement>('select[name="settlement"]')?.value).toBe('project');
   expect(container.querySelector('[name="dailyRate"]')).toBeNull();
   await click('Fill contract body');
@@ -135,6 +136,20 @@ it('uses project amounts for remote contracts and pays both calculation modes mo
   expect(JSON.stringify(daily)).toContain('工作半天按一半日津贴计');
   expect(JSON.stringify(daily)).not.toContain('延期不自动扣减报酬');
   expect(readInternshipTemplate(daily)?.values).toMatchObject({settlement:'daily', allowance:'300元/日', paymentTime:MONTHLY_PAYMENT_TIME});
+
+  await setInput(container.querySelector<HTMLSelectElement>('select[name="settlement"]')!, 'daily');
+  await setInput(container.querySelector<HTMLInputElement>('input[name="dailyRate"]')!, '');
+  await setInput(container.querySelector<HTMLInputElement>('input[aria-label="Internship start date"]')!, '');
+  container.querySelector<HTMLTextAreaElement>('textarea[name="duties"]')!.value = '';
+  const saveButton = container.querySelector<HTMLButtonElement>('button[value="save"]')!;
+  expect(saveButton.formNoValidate).toBe(true);
+  // jsdom does not honor formNoValidate on the submitter.
+  await act(async () => saveButton.form!.dispatchEvent(new SubmitEvent('submit', { bubbles:true, cancelable:true, submitter:saveButton })));
+  expect(onApply).toHaveBeenCalledTimes(1);
+  expect(onSave).toHaveBeenCalledWith(expect.objectContaining({duties:'', start:'', end:initial.end, allowance:''}));
+  const partial = readInternshipTemplate(fillInternshipTemplate(template, onSave.mock.calls[0][0]))?.values;
+  expect(partial).toMatchObject({duties:'', start:'', end:initial.end, settlement:'daily', allowance:''});
+  expect(completeInternshipFields(partial!)).toBe(false);
 });
 function ExternalNavigation() {
   const [, setSelected] = useQueryState('schedule', parseAsString.withDefault(''));

@@ -7,9 +7,48 @@
 .contract-draft-feedback { margin: 6px 12px 0; padding: 0 8px; font-size: .875rem; }
 .contract-draft-page .doc-editor .tiptap { overflow-wrap: anywhere; }
 
+.contract-payday-text {
+  display: flex;
+  align-items: center;
+  min-block-size: var(--workspace-control-height);
+  margin: 0;
+  line-height: 1.25;
+}
+
+.staff-actions.contract-field-actions {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  align-items: stretch;
+  gap: 8px;
+  inline-size: fit-content;
+  max-inline-size: 100%;
+}
+.contract-field-actions > .workspace-action.btn {
+  min-inline-size: 0;
+  padding: 0.5rem 1rem;
+  font-family: inherit;
+  font-size: 1rem;
+  font-weight: 600;
+  line-height: 1.25;
+  text-align: center;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+.contract-field-actions > .workspace-action.btn-primary {
+  border: 1px solid transparent;
+}
+
 @media (max-width: 780px) {
   .contract-draft-chrome .doc-topbar { flex-wrap: wrap; }
   .contract-draft-actions { flex: 0 0 100%; }
+}
+
+@media (max-width: 420px) {
+  .staff-actions.contract-field-actions {
+    grid-template-columns: minmax(0, 1fr);
+    grid-auto-rows: 1fr;
+    inline-size: 100%;
+  }
 }
 
 @media print {

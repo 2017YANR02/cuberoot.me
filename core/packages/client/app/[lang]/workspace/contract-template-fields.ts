@@ -143,7 +143,9 @@ function replaceInline(block: JSONContent, from: number, to: number, text: strin
   const inserted = text ? [{ type: 'text', text, marks: spans.find(span => span.end > from)?.run.marks }] : [];
   return {...block, content: [...before, ...inserted, ...after]};
 }
-const listItem = (text: string): JSONContent => ({type:'listItem', content:[{type:'paragraph', content:[{type:'text', text}]}]});
+const listItem = (text: string): JSONContent => ({
+  type:'listItem', content:[{type:'paragraph', content: text ? [{type:'text', text}] : []}],
+});
 
 export function fillInternshipTemplate(document: JSONContent, values: InternshipFields): JSONContent {
   const template = readInternshipTemplate(document);
@@ -167,7 +169,8 @@ export function fillInternshipTemplate(document: JSONContent, values: Internship
   }
   const {dutiesIndex, scheduleIndex} = template;
   if (values.duties !== template.values.duties) {
-    children[dutiesIndex] = {...children[dutiesIndex], content: values.duties.split(/\r?\n/).map(line => line.trim()).filter(Boolean).map(listItem)};
+    const duties = values.duties.split(/\r?\n/).map(line => line.trim()).filter(Boolean);
+    children[dutiesIndex] = {...children[dutiesIndex], content: (duties.length ? duties : ['']).map(listItem)};
   }
   if (values.schedule !== template.values.schedule || values.location !== template.values.location) {
     const items = children[scheduleIndex].content!;

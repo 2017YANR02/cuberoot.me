@@ -95,7 +95,7 @@ function DraftEditor({draft, employee}: {draft: Draft; employee?: Member}) {
     return () => window.removeEventListener('beforeunload', warn);
   }, [dirty]);
 
-  async function commit(action: DraftAction) {
+  async function commit(action: DraftAction, draftContent?: JSONContent) {
     if (working.current || (action !== 'save' && action !== confirming)) return;
     if (action !== 'delete' && (!editor || invalid || !title.trim())) return;
     working.current = true;
@@ -109,10 +109,14 @@ function DraftEditor({draft, employee}: {draft: Draft; employee?: Member}) {
         return;
       }
       if (!editor) return;
-      const content = editor.getJSON();
+      const content = draftContent ?? editor.getJSON();
       if (action === 'save') {
         const next = await api<{version: number}>('contract-draft-save', {id: draft.id, version, title: name, content});
         if (mounted.current) {
+          if (draftContent) {
+            editor.commands.setContent(content, {emitUpdate: false});
+            setFields(null);
+          }
           setVersion(next.version);
           setTitle(name);
           setDirty(false);
@@ -141,7 +145,9 @@ function DraftEditor({draft, employee}: {draft: Draft; employee?: Member}) {
       await api('contract-draft-publish', {id: draft.id, version, title: name, filename: documentExportFilename(name, 'docx'), base64, payroll});
       if (mounted.current) navigate(CONTRACT_LIST_HREF);
     } catch (failure) {
-      if (mounted.current) setError(failure instanceof Error ? failure : new Error(t('操作失败，请重试', 'Request failed. Try again.')));
+      const requestError = failure instanceof Error ? failure : new Error(t('操作失败，请重试', 'Request failed. Try again.'));
+      if (draftContent) throw requestError;
+      if (mounted.current) setError(requestError);
     } finally {
       working.current = false;
       if (mounted.current) setBusy(false);
@@ -188,11 +194,11 @@ function DraftEditor({draft, employee}: {draft: Draft; employee?: Member}) {
       </div>}
     </div>
     {editor && <DocumentCanvas editor={editor} zoom={zoom} />}
-    {fields && <WorkspaceDialog wide title={t('填写合同信息', 'Fill contract fields')} onClose={() => setFields(null)}>
-      <InternshipFieldForm initial={fields} title={title} onCancel={() => setFields(null)} onApply={values => {
-        editor?.commands.setContent(fillInternshipTemplate(editor.getJSON(), values));
+    {fields && editor && <WorkspaceDialog wide title={t('填写合同信息', 'Fill contract fields')} onClose={() => setFields(null)}>
+      <InternshipFieldForm initial={fields} title={title} canSave={canSave} onCancel={() => setFields(null)} onApply={values => {
+        editor.commands.setContent(fillInternshipTemplate(editor.getJSON(), values));
         setFields(null);
-      }} />
+      }} onSave={values => commit('save', fillInternshipTemplate(editor.getJSON(), values))} />
     </WorkspaceDialog>}
   </>;
 }
