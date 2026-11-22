@@ -24,8 +24,8 @@ export default function VideoReconGuide({ upstream }: { upstream?: { name: strin
   return <main className="report-page">
     <header className="report-header">
       <PageHeading backHref="/frame-count?mode=detector">{t('视频复盘说明', 'Video Reconstruction Guide')}</PageHeading>
-      <p>{t('导入三阶视频，或用「边拍边复盘」直接录制。区间要包含第一步前的清晰画面。打乱留空时，结尾也需要拍清已还原的魔方。',
-        'Import a 3×3 video or record one in Live reconstruction. Include a clear view before the first move. If you leave the scramble blank, also show the solved cube at the end.')}</p>
+      <p>{t('导入三阶视频，或在「视频复盘」中选择「摄像头录像」。区间要包含第一步前的清晰画面。打乱留空时，结尾也需要拍清已还原的魔方。',
+        'Import a 3×3 video or choose Camera recording in Video reconstruction. Include a clear view before the first move. If you leave the scramble blank, also show the solved cube at the end.')}</p>
     </header>
 
     <h2 id="video-recon-flow-heading">{t('从画面到复盘', 'From footage to notation')}</h2>

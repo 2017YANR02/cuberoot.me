@@ -45,6 +45,7 @@ export function TpsGraph({ steps = NO_STEPS, turns, moves, fps, start, end, solv
   const line = points.curve.map((point, index) => `${index ? 'L' : 'M'}${x(point.timestamp)},${y(point.tps)}`).join(' ');
   const time = Math.max(start, Math.min(end, (live ? cursor : hover ?? cursor) ?? start));
   const rate = gaussianTpsAt(points.events, time);
+  const showPlaceholder = pending || (live && points.events.length === 0);
   const seek = (next: number) => onSeek?.(Math.max(start, Math.min(end, next)));
   function timeAtPointer({ currentTarget, clientX, clientY }: MouseEvent<SVGSVGElement>) {
     const matrix = currentTarget.getScreenCTM();
@@ -54,13 +55,13 @@ export function TpsGraph({ steps = NO_STEPS, turns, moves, fps, start, end, solv
     return start + ratio * duration;
   }
   return <section className={`video-recon-panel video-recon-tps${compact ? ' video-recon-tps--compact' : ''}`}
-    data-site-surface="panel" aria-busy={pending || undefined}>
+    data-site-surface="panel" aria-busy={showPlaceholder || undefined}>
     <div className="video-recon-section-heading">
       <h2>{t('转速曲线', 'Turns per second')}</h2>
       {(complete || live) && points.events.length > 0 && <span>{rate.toFixed(1)} TPS</span>}
     </div>
-    {pending ? <SkeletonBlock className="video-recon-tps-shimmer" style={{ aspectRatio: `${width} / ${HEIGHT}` }} /> : complete || live ? <>
-      {live || points.events.length > 0 ? <svg viewBox={`0 0 ${width} ${HEIGHT}`} role={onSeek ? 'slider' : 'img'} tabIndex={onSeek ? 0 : undefined}
+    {showPlaceholder ? <SkeletonBlock className="video-recon-tps-shimmer" style={{ aspectRatio: `${width} / ${HEIGHT}` }} /> : complete || live ? <>
+      {points.events.length > 0 ? <svg viewBox={`0 0 ${width} ${HEIGHT}`} role={onSeek ? 'slider' : 'img'} tabIndex={onSeek ? 0 : undefined}
         aria-label={onSeek ? t('按转速曲线跳转', 'Seek on TPS graph') : t('实时转速曲线', 'Live TPS graph')}
         aria-valuemin={onSeek ? 0 : undefined} aria-valuemax={onSeek ? duration : undefined} aria-valuenow={onSeek ? time - start : undefined}
         onPointerLeave={() => setHover(undefined)}

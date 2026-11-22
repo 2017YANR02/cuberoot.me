@@ -196,7 +196,7 @@ export function ProjectedCube({ pose, sourceTimestamp, solved, steps, timeline, 
       </div>
       <select className="video-recon-orbit-engine" aria-label={t('渲染引擎', 'Rendering engine')}
         value={engine} onChange={event => void setEngine(event.currentTarget.value as typeof engine)}>
-        <option value="three">{t('本站引擎（Three.js）', 'CubeRoot engine (Three.js)')}</option>
+        <option value="three">cuberoot.js</option>
         <option value="cubing">cubing.js</option>
       </select>
       {pose && ready && <Tooltip content={resetLabel}>{tip =>

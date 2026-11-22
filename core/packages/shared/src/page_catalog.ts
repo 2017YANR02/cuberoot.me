@@ -505,13 +505,6 @@ export const PAGE_META: Record<string, PageMetaEntry> = {
   'forum/review': { title: { zh: '论坛审核', en: 'Forum moderation' } },
   'forum/search': { title: { zh: '论坛搜索', en: 'Forum search' } },
   'lucky-draw': { title: {zh:'抽奖',en:'Lucky Draw'}, description: {zh:'自定义名单、比赛报名选手抽奖与盲拧联想词训练。',en:'Draw from custom lists or competition registrations and practice blindfolded letter-pair associations.'} },
-  'video-recon': {
-    title: { zh: '视频复盘', en: 'Video Reconstruction' },
-    description: {
-      zh: '用视频和打乱复盘三阶还原，或使用摄像头计时并回放动作。',
-      en: 'Reconstruct a 3×3 solve from video and a scramble, or time and replay a camera solve.',
-    },
-  },
   'video-recon-about': {
     title: { zh: '视频复盘说明', en: 'Video Reconstruction Guide' },
     description: {

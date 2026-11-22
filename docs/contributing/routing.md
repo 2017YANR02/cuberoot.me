@@ -9,7 +9,7 @@
 - API 缓存头:可变数据浏览器 `max-age≤3600`,长缓存只给 nginx `s-maxage`;空/暂态 `no-store`;改响应 shape 必 bump `v=`。CI `tests/server-cache-headers.test.ts`。
 - Pattern B:英文裸 URL,中文 `/zh`;内部链接用 `components/AppLink`;非 Link 导航手动 `${lang==='zh'?'/zh':''}`,禁硬编码 `/${lang}`;新路由免登记。
 - dev/prod API base 用 `import.meta.env.DEV`,禁 `hostname==='localhost'` 判断(LAN/隧道域名会错走 prod 被 CORS 拦)。
-- 只对需要跨源隔离的求解文档和视频工具文档发 COOP/COEP。求解页的 Next `headers()` 与 nginx map 需同步维护。视频工具使用 `/frame-count`，迁移期间 `/video-recon` 同样提供隔离响应头。视频工具的响应头由 Next `headers()` 声明，nginx 反代透传。跨文档导航按新地址重新加载响应头，同页模式切换保留当前文档。
+- 只对需要跨源隔离的求解文档和视频工具文档发 COOP/COEP。求解页的 Next `headers()` 与 nginx map 需同步维护。视频工具使用 `/frame-count`，旧入口 `/video-recon` 返回 HTTP 404。视频工具的响应头由 Next `headers()` 声明，nginx 反代透传。跨文档导航按新地址重新加载响应头，同页模式切换保留当前文档。
 - client 页面默认 SSG:根 layout 禁动态 API(cookies/headers),全局组件禁 render 调 `useSearchParams`;语言归属在 `[lang]/layout`。
 - 首页入口与排序以服务端验证后的公开快照预渲染，复用 ISR 和既有认证刷新 webhook；附加数据不得阻塞整页。独立构建的双线路仅对缺失 `/_next/static/*` 做同源补取，standalone-only 别名不得再向 Vercel 兜底。实现边界、缓存取舍与发布验收见[首页加载修复记录](../operations/history/homepage-loading-2026-11-08.md)。
 - 省 Vercel 配额:①高基数/响应式 href/离开本页的 `<Link>` 必 `prefetch={false}`;②无 SEO 的动态 `[param]` 页走静态哨兵壳(`dynamicParams=false` + `generateStaticParams` 返 `['_']` + beforeFiles rewrite + client 读 `window.location`);③`public/` 大资产必设 `Cache-Control`;④取证看 `/www/wwwlogs/www.cuberoot.me.log`(全 IP+UA)。

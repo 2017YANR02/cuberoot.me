@@ -12,7 +12,7 @@ const RECENT_SCRAMBLE_KEYS = new Set(['method', 'stage', 'colors', 'moves', 'mat
 const ALG_LIBRARY_KEYS = new Set(['tag', 'hand', 'notation', 'black', 'sq1-notation', 'setup', 'other-algs', 'all', 'simplified', 'diagram', 'angle', 'orientation', 'metric', 'op', 'moves', 'parity', 'collapse-groups', 'open-group']);
 const LEGACY_KEYS = ['accountBack', 'accountEntry', 'shopBack', 'shopEntry'];
 const EXCLUDED = /^\/(?:api|v1|auth|_next|stats|tools|icons|images|fonts|contact\/[^/]+\.[^/]+)(?:\/|$)/;
-const VIDEO_TOOL_DOCUMENT = /^\/(?:en\/|zh\/)?(?:frame-count|video-recon)\/?$/;
+const VIDEO_TOOL_DOCUMENT = /^\/(?:en\/|zh\/)?frame-count\/?$/;
 const bare = (path: string) => path.replace(/^\/(en|zh)(?=\/|$)/, '') || '/';
 function parse(raw: string): URL | null {
   const path = safeNext(raw);
@@ -31,6 +31,9 @@ function samePage(a: URL, b: URL) {
 /** Store only navigation state. Auth, payments, private document/share tokens and nested continuations never enter the trail. */
 function snapshot(url: URL): string | null {
   const pathname = bare(url.pathname);
+  if (pathname.replace(/\/$/, '') === '/video-recon') {
+    return url.pathname.startsWith('/zh/') ? '/zh/frame-count?mode=detector' : '/frame-count?mode=detector';
+  }
   if (/^\/(?:calendar\/s|docs\/s|sheets\/s|share|q)(?:\/|$)/.test(pathname)) return null;
   const clean = new URL(url.pathname, BASE);
   if (pathname === '/chat' && url.searchParams.has('settings')) clean.pathname = url.pathname.startsWith('/zh/') ? '/zh/account' : '/account';
@@ -39,7 +42,7 @@ function snapshot(url: URL): string | null {
     const algFilter = pathname.startsWith('/alg/') && ALG_LIBRARY_KEYS.has(key);
     const coursePageSize = key === 'pageSize' && pathname.replace(/\/$/, '') === '/platform/courses';
     const videoMode = key === 'mode' && VIDEO_TOOL_DOCUMENT.test(pathname)
-      && (value === 'detector' || value === 'timer' || (value === 'record' && pathname.replace(/\/$/, '') === '/frame-count'));
+      && (value === 'detector' || value === 'timer' || value === 'record');
     if ((STATE_KEYS.has(key) || recentFilter || algFilter || coursePageSize || videoMode) && value.length <= 200) clean.searchParams.append(key, value);
   }
   if (/^#[a-zA-Z0-9_%:/.-]{1,160}$/.test(url.hash)) clean.hash = url.hash;

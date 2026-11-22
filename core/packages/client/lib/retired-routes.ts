@@ -2,6 +2,7 @@ import { WCA_STAT_NON_PAGE_IDS } from '@cuberoot/shared/wca-stat-catalog';
 
 /** Retired public URLs bypass dynamic shells and resolve to the root 404. */
 export const RETIRED_ROUTES = [
+  { path: '/video-recon' },
   { path: '/platform/shop', descendants: true },
   { path: '/dev/code-history' },
   { path: '/dev/architecture/decisions' },

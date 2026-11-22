@@ -190,7 +190,7 @@ function OpeningGrip({ initial, rotation, centers, onSelect }: {
   return <div className="video-recon-actions">
     <div className="video-recon-inline-label">
       <span>{label}</span>
-      <CubeOrientationSelect value={choice?.value ?? ''} ariaLabel={label} layout="grid"
+      <CubeOrientationSelect value={choice?.value ?? ''} ariaLabel={label} layout="grid" className="video-recon-grip-trigger"
         onChange={next => {
           const grip = options.find(option => option.value === next)?.grip;
           if (grip) onSelect(grip.rotation);

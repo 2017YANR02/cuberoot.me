@@ -7,7 +7,15 @@ const cacheName = 'cuberoot-video-recon-v1';
 const assetPath = /^\/(?:_next\/static\/|_origin\/_next\/static\/|fonts\/|cubing-chunks\/|vendor\/video-recon\/(?:models|pose|runtime|workers)\/)/;
 
 self.addEventListener('install', () => self.skipWaiting());
-self.addEventListener('activate', event => event.waitUntil(self.clients.claim()));
+self.addEventListener('activate', event => event.waitUntil((async () => {
+  if (route === '/video-recon') {
+    const cache = await caches.open(cacheName);
+    await cache.delete(scope.origin + path);
+    await self.registration.unregister();
+  } else {
+    await self.clients.claim();
+  }
+})()));
 
 function isAsset(url) {
   return url.origin === scope.origin && assetPath.test(url.pathname);
@@ -27,6 +35,7 @@ async function fetchAndCache(request, key, cache, shell = false) {
 }
 
 self.addEventListener('fetch', event => {
+  if (route !== '/frame-count') return;
   const request = event.request;
   const url = new URL(request.url);
   if (request.method !== 'GET' || url.origin !== scope.origin || request.headers.has('Range')) return;
@@ -57,6 +66,7 @@ self.addEventListener('fetch', event => {
 });
 
 self.addEventListener('message', event => {
+  if (route !== '/frame-count') return;
   if (event.data?.type !== 'PREPARE_VIDEO_RECON' || !event.source?.url || !Array.isArray(event.data.assets)) return;
   const sender = new URL(event.source.url);
   if (sender.origin !== scope.origin || sender.pathname.replace(/\/$/, '') !== path) return;

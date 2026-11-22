@@ -197,6 +197,12 @@ export function createVideoWorkspace(stage: HTMLCanvasElement, initialTab: Works
     });
   function selectTab(tab: WorkspaceTab) {
     if (state.timerBusy || tab === state.activeTab) return;
+    // Both camera modes share the same capture pipeline, including pending solve tails.
+    if (state.activeTab !== 'detector' && tab !== 'detector' &&
+      (state.sourceKind === 'camera' || state.cameraConnecting)) {
+      state.activeTab = tab;
+      return;
+    }
     if (state.activeTab === 'record' || tab === 'record') stopSource();
     if (tab !== 'detector') {
       if (state.uploadedFile) stopSource();

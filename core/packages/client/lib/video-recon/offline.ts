@@ -8,7 +8,7 @@ export function prepareOfflineVideoRecon() {
     return Promise.resolve();
   }
   const scope = location.pathname.replace(/\/$/, '');
-  if (!/^\/(?:en\/|zh\/)?(?:frame-count|video-recon)$/.test(scope)) return Promise.resolve();
+  if (!/^\/(?:en\/|zh\/)?frame-count$/.test(scope)) return Promise.resolve();
   const existing = preparedScopes.get(scope);
   if (existing) return existing;
   const pending = prepare(scope).catch(() => { preparedScopes.delete(scope); });

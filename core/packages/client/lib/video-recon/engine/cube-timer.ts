@@ -1,7 +1,6 @@
 import {turnEvents,type TurnEvent} from './tps';
 import { RECONSTRUCTION_TIMEOUT_MS, type MoveSearchResult } from './move-search-types';
 
-export const TIMER_HOLD_MS = 300;
 export const TIMER_TAIL_SECONDS = 0.3;
 export const TIMER_SEARCH_LIMIT_MS = RECONSTRUCTION_TIMEOUT_MS;
 export type Penalty = 'none' | '+2' | 'DNF';
@@ -40,34 +39,6 @@ export function compactTimerReconstruction(value: TimerReconstructionResult | un
     moves:['solved','failed'].includes(value.status)?value.moves:undefined,
     turnEvents:['solved','failed'].includes(value.status)
       ?value.turnEvents??(value.result&&value.config?turnEvents(value.result.steps,value.config.fps):undefined):undefined };
-}
-
-/** The same monotonic clock drives keyboard and pointer input. */
-export class CubeTimerClock {
-  phase: 'idle' | 'holding' | 'running' = 'idle';
-  heldAt = 0;
-  startedAt = 0;
-  elapsedMs = 0;
-  press(code: string, now: number, editable = false, repeat = false): 'stop' | undefined {
-    if (repeat) return;
-    // Every new key stops a solve, even if a form control has focus.
-    if (this.phase === 'running') {
-      this.elapsedMs = Math.max(0, now - this.startedAt);
-      this.phase = 'idle';
-      return 'stop';
-    }
-    if (code === 'Space' && !editable && this.phase === 'idle') {
-      this.phase = 'holding'; this.heldAt = now;
-    }
-  }
-  release(code: string, now: number): boolean {
-    if (code !== 'Space' || this.phase !== 'holding') return false;
-    this.phase = 'idle';
-    if (now - this.heldAt < TIMER_HOLD_MS) return false;
-    this.startedAt = now; this.elapsedMs = 0; this.phase = 'running';
-    return true;
-  }
-  cancelHold() { if (this.phase === 'holding') this.phase = 'idle'; }
 }
 
 export function solveTime(solve: Pick<TimerSolve, 'elapsedMs' | 'penalty'>): number {

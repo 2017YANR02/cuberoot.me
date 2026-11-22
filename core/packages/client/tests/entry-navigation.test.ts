@@ -55,7 +55,9 @@ describe('local entry navigation', () => {
   it.each([
     ['/zh/frame-count?mode=detector', '/zh/frame-count?mode=detector'],
     ['/zh/frame-count?mode=record', '/zh/frame-count?mode=record'],
-    ['/video-recon?mode=timer', '/video-recon?mode=timer'],
+    ['/frame-count?mode=timer', '/frame-count?mode=timer'],
+    ['/zh/video-recon', '/zh/frame-count?mode=detector'],
+    ['/video-recon?mode=timer', '/frame-count?mode=detector'],
     ['/frame-count?mode=unknown', '/frame-count'],
     ['/shop?mode=timer', '/shop'],
   ])('retains only supported video modes when returning from help (%s)', (source, target) => {

@@ -1,11 +1,17 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Download, History, Play, RefreshCw, Trash2 } from '@app-foundation/icons/lucide';
 import SettingsDialog from '@/components/SettingsDialog';
-import { VisualCube } from '@/components/VisualCube';
+import { formatTimerTimingDisplay } from '@cuberoot/shared/timer';
+import { TimerScramblePreview, TimerScrambleStrip, TimingSurface } from '@cuberoot/timer-ui';
+import '@cuberoot/timer-ui/timing-surface.css';
+import '@cuberoot/timer-ui/scramble-strip.css';
+import TimerReadout from '../timer/_components/TimerReadout';
+import { useSettings } from '../timer/_lib/settings';
+import { useTimer } from '../timer/_shared/useTimer';
 import { useT } from '@/hooks/useT';
 import { persistItem } from '@/lib/safe-storage';
 import {
-  CubeTimerClock, TIMER_HOLD_MS, compactTimerReconstruction, formatTimer, readTimerSolves, solveTime,
+  compactTimerReconstruction, formatTimer, readTimerSolves, solveTime,
   timerAverage, timerReconstructionStatus, timerSessionRows, type Penalty, type TimerReconstructionResult, type TimerSolve,
 } from '@/lib/video-recon/engine/cube-timer';
 import type { VideoWorkspace } from '@/lib/video-recon/workspace';
@@ -17,10 +23,8 @@ const STORAGE_KEY = 'live-recognition.timer.v1';
 
 export function CameraTimer({ active, view, workspace }: { active: boolean; view: View; workspace: VideoWorkspace }) {
   const t = useT();
-  const [clock] = useState(() => new CubeTimerClock());
-  const [phase, setPhase] = useState<CubeTimerClock['phase']>('idle');
-  const [now, setNow] = useState(0);
-  const [elapsed, setElapsed] = useState(0);
+  const settings = useSettings();
+  const surfaceRef = useRef<HTMLDivElement>(null);
   const [scramble, setScramble] = useState('');
   const [loading, setLoading] = useState(false);
   const scramblePending = useRef(false);
@@ -35,9 +39,7 @@ export function CameraTimer({ active, view, workspace }: { active: boolean; view
   const lastSaved = useRef('');
   const rows = useMemo(() => timerSessionRows(history ?? []), [history]);
   const best = useMemo(() => history?.length ? Math.min(...history.map(solveTime)) : undefined, [history]);
-  const activeAttempt = useRef<Pick<TimerSolve, 'id' | 'scramble' | 'startedAt'>>(undefined);
-  const locked = phase !== 'idle';
-  const ready = phase === 'holding' && now - clock.heldAt >= TIMER_HOLD_MS;
+  const activeAttempt = useRef<{ id: string; scramble: string; startedAt: string; startClockMs: number }>(undefined);
   const dialogOpen = historyOpen || !!selectedId || confirmClear;
   const canStart = active && view.timerReady && !!scramble && !loading && !dialogOpen;
   const selected = rows.find(row => row.solve.id === selectedId);
@@ -49,7 +51,7 @@ export function CameraTimer({ active, view, workspace }: { active: boolean; view
   const selectedPlayback = selectedResult?.result ? selectedResult : selectedReplay?.reconstruction ?? selectedResult;
 
   const nextScramble = useCallback(async () => {
-    if (scramblePending.current || clock.phase !== 'idle') return;
+    if (scramblePending.current) return;
     scramblePending.current = true;
     setLoading(true);
     setScrambleError(false);
@@ -58,7 +60,7 @@ export function CameraTimer({ active, view, workspace }: { active: boolean; view
       setScramble((await randomScrambleForEvent('333')).toString());
     } catch { setScrambleError(true); }
     finally { setLoading(false); scramblePending.current = false; }
-  }, [clock]);
+  }, []);
 
   useEffect(() => {
     try {
@@ -94,90 +96,62 @@ export function CameraTimer({ active, view, workspace }: { active: boolean; view
     return () => workspace.selectTimerReplay();
   }, [active, selectedId, workspace]);
 
-  const finish = useCallback((penalty: Penalty = 'none') => {
-    const started = activeAttempt.current;
-    if (!started) return;
+  const timer = useTimer(({ timeMs, autoPenalty }) => {
+    const attempt = activeAttempt.current;
+    if (!attempt) return;
     activeAttempt.current = undefined;
-    workspace.stopTimerSolve(started.id, performance.timeOrigin + clock.startedAt + clock.elapsedMs);
-    workspace.setTimerBusy(false);
-    setHistory(solves => [...(solves ?? []), { ...started, elapsedMs: clock.elapsedMs, penalty }]);
-    setElapsed(clock.elapsedMs);
+    const { startClockMs, ...solve } = attempt;
+    workspace.stopTimerSolve(solve.id, startClockMs + timeMs);
+    setHistory(solves => [...(solves ?? []), { ...solve, elapsedMs: timeMs, penalty: autoPenalty === 'ok' ? 'none' : autoPenalty }]);
     void nextScramble();
-  }, [clock, nextScramble, workspace]);
-
-  const cancelHold = useCallback(() => {
-    if (clock.phase !== 'holding') return;
-    clock.cancelHold();
-    workspace.setTimerBusy(false);
-    setPhase('idle');
-  }, [clock, workspace]);
-
-  useEffect(() => {
-    if (canStart) return;
-    cancelHold();
-    if (!view.timerReady && clock.phase === 'running') {
-      clock.press('CameraInterrupted', performance.now());
-      setPhase(clock.phase);
-      finish('DNF');
-    }
-  }, [canStart, cancelHold, clock, finish, view.timerReady]);
+  }, startedAtMs => {
+    const id = crypto.randomUUID();
+    const startClockMs = performance.timeOrigin + startedAtMs;
+    activeAttempt.current = { id, scramble, startedAt: new Date(startClockMs).toISOString(), startClockMs };
+    workspace.startTimerSolve(id, scramble, startClockMs);
+  });
+  const { phase, cancelArm, abortRun, onPressDown, onPressUp, cancelPress } = timer;
+  const locked = phase !== 'idle' && phase !== 'stopped';
 
   useEffect(() => {
-    if (phase === 'idle') return;
-    let animation = requestAnimationFrame(function tick(time) {
-      setNow(time);
-      if (clock.phase === 'running') setElapsed(Math.max(0, time - clock.startedAt));
-      animation = requestAnimationFrame(tick);
-    });
-    return () => cancelAnimationFrame(animation);
-  }, [phase, clock]);
+    if (!locked || canStart) return;
+    if (phase === 'running') abortRun();
+    else cancelArm();
+  }, [locked, canStart, phase, abortRun, cancelArm]);
 
-  const press = useCallback((code: string, editable = false, repeat = false) => {
-    if (!canStart && clock.phase !== 'running') return;
-    const time = performance.now();
-    const stopped = clock.press(code, time, editable, repeat);
-    setNow(time);
-    setPhase(clock.phase);
-    workspace.setTimerBusy(clock.phase !== 'idle');
-    if (stopped) finish();
-  }, [canStart, clock, finish, workspace]);
-
-  const release = useCallback(() => {
-    if (!canStart) { cancelHold(); return; }
-    const time = performance.now();
-    if (clock.release('Space', time)) {
-      const started = { id: crypto.randomUUID(), scramble, startedAt: new Date().toISOString() };
-      activeAttempt.current = started;
-      setElapsed(0);
-      workspace.startTimerSolve(started.id, started.scramble, performance.timeOrigin + time);
-    }
-    setPhase(clock.phase);
-    setNow(time);
-    workspace.setTimerBusy(clock.phase !== 'idle');
-  }, [canStart, cancelHold, clock, scramble, workspace]);
+  useEffect(() => {
+    if (active) workspace.setTimerBusy(locked);
+    return () => { if (active && locked) workspace.setTimerBusy(false); };
+  }, [active, locked, workspace]);
 
   useEffect(() => {
     if (!active) return;
     const down = (event: KeyboardEvent) => {
-      if (dialogOpen || event.defaultPrevented || event.altKey || event.metaKey || event.ctrlKey) return;
-      const editable = event.target instanceof Element && !!event.target.closest(
-        'input, textarea, select, button, a, [contenteditable="true"], [role="application"], [role="slider"], .video-recon-replay',
-      );
-      if (clock.phase === 'running' || event.code === 'Space' && !editable && canStart) event.preventDefault();
-      press(event.code, editable, event.repeat);
+      if (dialogOpen || event.defaultPrevented || event.repeat || event.altKey || event.metaKey || event.ctrlKey) return;
+      const target = event.target instanceof Element ? event.target : null;
+      const onSurface = target === surfaceRef.current;
+      const editable = target?.closest('input, textarea, select, button, a, [contenteditable="true"], [role="application"], [role="slider"], .video-recon-replay');
+      if (phase !== 'running' && (!canStart || editable || !(event.code === 'Space' || onSurface && event.code === 'Enter'))) return;
+      event.preventDefault();
+      onPressDown();
     };
     const up = (event: KeyboardEvent) => {
-      if (event.code === 'Space' && clock.phase === 'holding' && !event.defaultPrevented) release();
+      if ((event.code === 'Space' || event.code === 'Enter' && event.target === surfaceRef.current) &&
+        (phase === 'holding' || phase === 'ready') && !event.defaultPrevented) {
+        event.preventDefault();
+        onPressUp();
+      }
     };
+    const blur = () => { if (locked && phase !== 'running') cancelArm(); };
     window.addEventListener('keydown', down);
     window.addEventListener('keyup', up);
-    window.addEventListener('blur', cancelHold);
+    window.addEventListener('blur', blur);
     return () => {
       window.removeEventListener('keydown', down);
       window.removeEventListener('keyup', up);
-      window.removeEventListener('blur', cancelHold);
+      window.removeEventListener('blur', blur);
     };
-  }, [active, canStart, cancelHold, clock, dialogOpen, press, release]);
+  }, [active, canStart, locked, phase, dialogOpen, onPressDown, onPressUp, cancelArm]);
 
   function select(id?: string) {
     setReplayPosition(undefined);
@@ -206,8 +180,17 @@ export function CameraTimer({ active, view, workspace }: { active: boolean; view
     failed: t('复盘未完成', 'Reconstruction incomplete'),
     'time-limit': t('复盘超时', 'Reconstruction timed out'),
   })[timerReconstructionStatus(value).kind];
-  const timerHint = phase === 'running' ? t('按任意键停止', 'Press any key to stop')
-    : phase === 'idle' && canStart ? t('按住空格，松手开始', 'Hold Space, then release to start') : undefined;
+  const timerHint = phase === 'running' ? t('点按数字或按任意键停表', 'Tap the digits or press any key to stop')
+    : phase === 'ready' ? t('松手开始', 'Release to start')
+    : phase === 'holding' ? t('继续按住', 'Keep holding')
+    : canStart && settings.inspectionSec > 0 && phase !== 'inspecting'
+      ? t('点按数字或空格开始观察', 'Tap the digits or press Space to start inspection')
+      : canStart ? t('按住数字或空格，松手开始', 'Hold the digits or Space, then release to start') : undefined;
+  const digits = formatTimerTimingDisplay({
+    phase, displayMs: timer.displayMs, inspectionDisplayMs: timer.inspectionDisplayMs,
+    inspectionLimitSec: settings.inspectionSec, lastPenalty: last?.penalty === 'none' ? 'ok' : last?.penalty ?? null,
+    precision: settings.precision, runningPrecision: settings.runningPrecision, hideTime: settings.hideTime, timingEnabled: true,
+  });
   const historyLabel = t('本次记录', 'Session history');
   const selectedStart = selectedPlayback?.config?.requested_start_seconds ?? selectedReplay?.start ?? 0;
 
@@ -220,33 +203,25 @@ export function CameraTimer({ active, view, workspace }: { active: boolean; view
         </button>
       </div>
       <div className="video-recon-scramble">
-        <p>{scramble || (loading ? t('正在生成打乱…', 'Generating scramble…') : '—')}</p>
-        {scramble && <VisualCube setup={scramble} view="trans" size={76} local alt={t('打乱状态', 'Scrambled state')} />}
+        <TimerScrambleStrip scramble={scramble} font={settings.scrambleFont} fontScale={settings.scrambleFontScale}
+          fallback={loading ? t('正在生成打乱…', 'Generating scramble…') : '—'} timingEnabled={false}
+          copiedLabel={t('已复制', 'Copied')} verificationLabels={{ copiedCorrection: t('已复制修正步骤', 'Correction copied') }} />
+        {scramble && <TimerScramblePreview event="333" scramble={scramble} height={78} ariaLabel={t('打乱展开图', 'Scramble net')} />}
       </div>
       {scrambleError && <p role="alert">{t('打乱生成失败，请重试。', 'Could not generate a scramble. Try again.')}</p>}
-      <div className="video-recon-clock" data-ready={ready}>
-        <output aria-label={t('还原用时', 'Solve time')}>{formatTimer(elapsed)}</output>
-        <button type="button" className="btn-primary" disabled={!canStart && phase !== 'running'}
-          onPointerDown={event => {
-            if (event.button !== 0) return;
-            event.preventDefault();
-            event.currentTarget.setPointerCapture(event.pointerId);
-            press('Space');
-          }}
-          onPointerUp={event => { event.preventDefault(); release(); }} onPointerCancel={cancelHold}
-          onKeyDown={event => {
-            if (event.code !== 'Space' && event.code !== 'Enter') return;
-            event.preventDefault();
-            press('Space', false, event.repeat);
-          }}
-          onKeyUp={event => {
-            if (event.code !== 'Space' && event.code !== 'Enter') return;
-            event.preventDefault();
-            release();
-          }}>{phase === 'running' ? t('停止', 'Stop') : ready ? t('松手开始', 'Release to start')
-            : phase === 'holding' ? t('继续按住', 'Keep holding') : t('按住开始', 'Hold to start')}</button>
-        <p className="video-recon-clock-hint video-recon-muted">{timerHint}</p>
-      </div>
+      <TimingSurface phase={phase} colorClass={`${phase} tf-${settings.timerFont}`} surfaceRef={surfaceRef}
+        digits={<TimerReadout text={digits} />} fontScale={settings.timerFontScale} interactive={canStart || phase === 'running'}
+        ariaLabel={timerHint ?? t('还原用时', 'Solve time')}
+        onPointerDown={event => {
+          if (!event.isPrimary || event.button !== 0 || !canStart && phase !== 'running') return;
+          event.preventDefault();
+          event.currentTarget.setPointerCapture(event.pointerId);
+          onPressDown();
+        }}
+        onPointerUp={event => { if (event.isPrimary && event.button === 0 && canStart) onPressUp(); }}
+        onPointerCancel={cancelPress}>
+        {timerHint && <span className="video-recon-muted">{timerHint}</span>}
+      </TimingSurface>
       <div className="video-recon-timer-session">
         <dl className="video-recon-stats">
           <div><dt>{t('最佳', 'Best')}</dt><dd>{formatTimer(best)}</dd></div>
@@ -302,7 +277,7 @@ export function CameraTimer({ active, view, workspace }: { active: boolean; view
       <button type="button" className="btn-primary" onClick={() => {
         workspace.clearTimerSession((history ?? []).map(solve => solve.id));
         setHistory([]);
-        setElapsed(0);
+        timer.reset();
         setConfirmClear(false);
       }}>{t('清空记录', 'Clear session')}</button>
     </SettingsDialog>}
@@ -314,7 +289,7 @@ export function CameraTimer({ active, view, workspace }: { active: boolean; view
           <h3>{formatTimer(solveTime(selected.solve))} · {statusLabel(selectedResult)}</h3>
           <p>ao5 {formatTimer(selected.ao5)} · ao12 {formatTimer(selected.ao12)}</p>
           <p>{selected.solve.scramble}</p>
-        </div><VisualCube setup={selected.solve.scramble} view="trans" size={76} local alt={t('打乱状态', 'Scrambled state')} /></div>
+        </div><TimerScramblePreview event="333" scramble={selected.solve.scramble} height={78} ariaLabel={t('打乱展开图', 'Scramble net')} /></div>
         {selectedResult?.moves?.length && !selectedReplay ? <p className="video-recon-moves">{selectedResult.moves.join(' ')}</p> : null}
         {selectedReplay && selectedPlayback
           ? <TimerReplay key={selectedReplay.id} clip={selectedReplay} reconstruction={selectedPlayback} disabled={view.timerBusy}

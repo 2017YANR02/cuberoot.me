@@ -230,7 +230,7 @@ const nextConfig: NextConfig = {
       },
       // Both video tool documents use the reconstruction module workers.
       {
-        source: "/:lang(zh|en)?/:videoTool(frame-count|video-recon)",
+        source: "/:lang(zh|en)?/frame-count",
         headers: [...workerAsset, { key: "Cross-Origin-Opener-Policy", value: "same-origin" }],
       },
       { source: "/vendor/video-recon/:path*", headers: workerAsset },

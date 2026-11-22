@@ -1,4 +1,4 @@
-import { Camera, Download, Square, Unplug, Video } from '@app-foundation/icons/lucide';
+import { Download, Square, Video } from '@app-foundation/icons/lucide';
 import { useT } from '@/hooks/useT';
 import { downloadBlob } from '@/lib/scramble-dist/download';
 
@@ -6,13 +6,10 @@ type CameraRecordingPhase = 'idle' | 'recording' | 'finalizing' | 'complete' | '
 
 interface CameraRecordingControlsProps {
   cameraConnected: boolean;
-  cameraConnecting?: boolean;
   ready: boolean;
   phase: CameraRecordingPhase;
   scramble: string;
   onScrambleChange: (value: string) => void;
-  onConnect: () => void;
-  onDisconnect: () => void;
   onStart: () => void;
   onStop: () => void;
   recordedFile?: File;
@@ -26,8 +23,8 @@ interface CameraRecordingControlsProps {
 }
 
 export function CameraRecordingControls({
-  cameraConnected, cameraConnecting, ready, phase, scramble, onScrambleChange,
-  onConnect, onDisconnect, onStart, onStop, recordedFile, searchError, inferenceFailure, recognizedMoves, trackedFrames, review, onReview, onCancelReview,
+  cameraConnected, ready, phase, scramble, onScrambleChange,
+  onStart, onStop, recordedFile, searchError, inferenceFailure, recognizedMoves, trackedFrames, review, onReview, onCancelReview,
 }: CameraRecordingControlsProps) {
   const t = useT();
   const recording = phase === 'recording';
@@ -43,14 +40,7 @@ export function CameraRecordingControls({
 
   return <section className="video-recon-panel video-recon-timer-panel" data-site-surface="panel">
     <div className="video-recon-section-heading">
-      <h2>{t('边拍边复盘', 'Live reconstruction')}</h2>
-      {cameraConnected
-        ? <button type="button" className="btn-secondary" disabled={busy} onClick={onDisconnect}>
-            <Unplug size={16} aria-hidden />{t('断开摄像头', 'Disconnect camera')}
-          </button>
-        : <button type="button" className="btn-secondary" disabled={cameraConnecting || busy} onClick={onConnect}>
-            <Camera size={16} aria-hidden />{cameraConnecting ? t('正在连接', 'Connecting') : t('连接摄像头', 'Connect camera')}
-          </button>}
+      <h2>{t('录制', 'Recording')}</h2>
     </div>
     <label className="video-recon-inline-label">
       {t('打乱（选填）', 'Scramble (optional)')}

@@ -41,14 +41,14 @@ export function SolveRange({ view, workspace, onBegin, fixedScramble }: {
           </button>
         }</Tooltip>;
       })}
-      <label className="video-recon-inline-label">{t('开始时间（秒）', 'Start time (s)')}
+      <label className="video-recon-inline-label">{t('开始（秒）', 'Start (s)')}
         <input key={`start-${solveStart}`} type="number" min={0} max={solveEnd} step="0.01" defaultValue={solveStart.toFixed(2)}
           onBlur={event => {
             if (event.currentTarget.value) workspace.changeTrim('start', event.currentTarget.valueAsNumber);
           }}
           onKeyDown={event => { if (event.key === 'Enter') event.currentTarget.blur(); }} />
       </label>
-      <label className="video-recon-inline-label">{t('结束时间（秒）', 'End time (s)')}
+      <label className="video-recon-inline-label">{t('结束（秒）', 'End (s)')}
         <input key={`end-${solveEnd}`} type="number" min={solveStart} max={duration} step="0.01" defaultValue={solveEnd.toFixed(2)}
           onBlur={event => {
             if (event.currentTarget.value) workspace.changeTrim('end', event.currentTarget.valueAsNumber);
@@ -61,9 +61,9 @@ export function SolveRange({ view, workspace, onBegin, fixedScramble }: {
         readOnly={fixedScramble} autoComplete="off" autoCapitalize="none" spellCheck={false} />
     </label>
     <div className="video-recon-section-heading">
-      <p className="video-recon-muted">{!view.initialScramble.trim()
-        ? t('打乱留空时，请保留开头清晰的打乱局面和结尾清晰的还原局面。', 'With no scramble, include a clear view of the shuffled cube at the start and the solved cube at the end.')
-        : t('区间开头需包含第一步之前的清晰魔方画面。', 'Include a clear view of the cube before the first move.')}</p>
+      {view.initialScramble.trim() && <p className="video-recon-muted">
+        {t('区间开头需包含第一步之前的清晰魔方画面。', 'Include a clear view of the cube before the first move.')}
+      </p>}
       <button type="button" className="btn-primary" onClick={onBegin}
         disabled={view.status !== 'ready' || view.cropLoading || !!view.cropPreview}>
         {t('开始复盘', 'Reconstruct')}

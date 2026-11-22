@@ -456,6 +456,11 @@
   color: var(--accent-foreground);
 }
 
+.video-recon-page .compact-select-trigger.video-recon-grip-trigger {
+  border-color: transparent;
+  background: transparent;
+}
+
 .video-recon-tps svg {
   display: block;
   width: 100%;
@@ -528,32 +533,12 @@
   min-height: 76px;
 }
 
-.video-recon-clock {
-  display: grid;
-  justify-items: center;
-  gap: 8px;
-  text-align: center;
+.video-recon-scramble .scramble-strip {
+  --timer-scramble-fs: clamp(1rem, 2vw, 1.4rem);
 }
 
-.video-recon-clock output {
-  font-size: clamp(2.8rem, 9vw, 5rem);
-  font-weight: 650;
-  line-height: 1;
-  font-variant-numeric: tabular-nums;
-}
-
-.video-recon-clock[data-ready='true'] output {
-  color: var(--timer-ready);
-}
-
-.video-recon-clock .btn-primary {
-  min-width: 8rem;
-  touch-action: none;
-  user-select: none;
-}
-
-.video-recon-clock-hint {
-  min-height: 1.5em;
+.video-recon-timer-panel .timing-surface:not([data-timer-pad]) {
+  cursor: default;
 }
 
 .video-recon-timer-session {
