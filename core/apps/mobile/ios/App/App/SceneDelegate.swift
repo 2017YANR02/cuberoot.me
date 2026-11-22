@@ -110,6 +110,21 @@ private final class EmbeddedSearchKeyboard: NSObject, WKScriptMessageHandler {
 final class CubeRootBridgeViewController: CAPBridgeViewController {
     private let viewportPlugin = ViewportLayoutPlugin()
 
+    #if DEBUG && !targetEnvironment(simulator)
+    override func instanceDescriptor() -> InstanceDescriptor {
+        let descriptor = super.instanceDescriptor()
+        // The launcher passes this URL only for a paired-device debugging session.
+        if let value = ProcessInfo.processInfo.environment["CUBEROOT_IOS_LIVE_URL"],
+           let parts = URLComponents(string: value), parts.scheme == "http", parts.port == 1420,
+           parts.host?.hasPrefix("[fd") == true, parts.path.isEmpty,
+           parts.user == nil, parts.password == nil, parts.query == nil, parts.fragment == nil {
+            descriptor.serverURL = value
+            descriptor.pluginConfigurations["CapacitorHttp"] = ["enabled": true]
+        }
+        return descriptor
+    }
+    #endif
+
     override func capacitorDidLoad() {
         bridge?.registerPluginInstance(viewportPlugin)
         if let controller = bridge?.webView?.configuration.userContentController,

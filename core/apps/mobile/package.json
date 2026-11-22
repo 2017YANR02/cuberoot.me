@@ -28,6 +28,7 @@
     "ios:doctor": "node ../../scripts/mobile-ios-toolchain.mjs doctor",
     "ios:release": "node ../../scripts/ios-release.mts",
     "ios:build": "pnpm cap:sync:ios && node ../../scripts/mobile-ios-toolchain.mjs build",
+    "ios:live": "node ../../scripts/mobile-ios-live.mjs",
     "ios:open": "cap open ios",
     "ios:run": "pnpm ios:doctor && pnpm cap:sync:ios && cap run ios",
     "watch:build": "node ../../scripts/mobile-ios-toolchain.mjs watch-build"
