@@ -277,7 +277,14 @@ pub(super) fn clean(
                 .collect::<Result<Vec<_>, _>>()?,
         );
     }
-    let color_names = t.colors(&c.scramble)?;
+    let scramble = if c.infer_scramble {
+        result["inferred_scramble"]
+            .as_str()
+            .ok_or("Video-only cleanup requires the inferred opening")?
+    } else {
+        &c.scramble
+    };
+    let color_names = t.colors(scramble)?;
     let colors: Vec<_> = color_names
         .iter()
         .map(|name| COLORS.iter().position(|v| v == name).unwrap())

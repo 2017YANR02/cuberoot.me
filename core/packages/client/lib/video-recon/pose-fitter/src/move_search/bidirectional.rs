@@ -250,8 +250,35 @@ fn held_step(frames: &[Prepared], index: usize, cue: Option<usize>) -> Step {
 fn has_layer_turn(moves: &[String]) -> bool {
     moves.iter().any(|name| !name.starts_with(['x', 'y', 'z']))
 }
+/// Corroborate the chosen view with a flat fit in the same camera orientation.
+/// A real resting layer often fits a few degrees off zero. Pick the closest
+/// flat view by rotation alone, before checking its sticker colors.
+fn flat_witness<'a>(
+    frame: &'a Prepared,
+    selected: &'a prepared::Geometry,
+) -> Option<&'a prepared::Geometry> {
+    if selected.observations.len() < 12 {
+        return None;
+    }
+    if selected.shape.axis.is_none() {
+        return Some(selected);
+    }
+    // The pose fitter also treats cameras within eight degrees as one view.
+    let minimum_similarity = 1. + 2. * 8_f64.to_radians().cos();
+    frame.geometries.iter()
+        .filter(|g| g.shape.axis.is_none() && g.observations.len() >= 12)
+        .filter_map(|g| {
+            let similarity = super::orientations::similarity(selected.rotation, g.rotation);
+            (similarity >= minimum_similarity).then_some((g, similarity))
+        })
+        .max_by(|(_, a), (_, b)| a.total_cmp(b))
+        .map(|(g, _)| g)
+}
+
 impl Bidirectional {
-    pub(super) fn has_winner(&self)->bool {self.winner.is_some()}
+    pub(super) fn has_winner(&self) -> bool {
+        self.winner.is_some() || self.inferred_opening.is_some()
+    }
     /// Start of the last corroborated cluster of flat solved views. This is the
     /// same boundary evidence used by the standalone Python search; no inference.
     pub(super) fn new(t: &Tables, c: &Config, frames: &[Prepared]) -> Option<Self> {
@@ -743,9 +770,11 @@ impl Bidirectional {
             moves.extend(step.moves());
             if !frame.held && !frame.geometry_flagged {
                 if let Some(geometry) = step.geometry().and_then(|index| frame.geometry(index)) {
-                    if geometry.shape.axis.is_none() && geometry.observations.len() >= 12 {
-                        let error = frontier::color(t, geometry, &parent.context.state, &self.color_ids).0;
-                        if error <= 0.15 {
+                    if let Some(flat) = flat_witness(frame, geometry) {
+                        let agrees = |view| {
+                            frontier::color(t, view, &parent.context.state, &self.color_ids).0 <= 0.15
+                        };
+                        if agrees(geometry) && (geometry.index == flat.index || agrees(flat)) {
                             if last_support.is_some_and(|previous| frame.frame - previous > max_gap) {
                                 return None;
                             }
@@ -1038,13 +1067,30 @@ mod tests {
     }
 
     #[test]
+    fn articulated_view_requires_a_nearby_flat_witness_with_enough_stickers() {
+        let (config, frames) = inputs("R");
+        let mut frame = prepared::compile(&Tables::load(), &config, frames[0].clone()).unwrap();
+        let mut chosen = frame.geometries[0].clone();
+        chosen.index = 1;
+        chosen.shape = super::super::routes::Shape::new(0, [2., 0., 0.]);
+        assert!(flat_witness(&frame, &chosen).is_some());
+
+        frame.geometries[0].rotation = crate::math::rodrigues([0., 0., 45_f64.to_radians()]).0;
+        assert!(flat_witness(&frame, &chosen).is_none());
+        frame.geometries[0].rotation = chosen.rotation;
+        frame.geometries[0].observations.truncate(11);
+        assert!(flat_witness(&frame, &chosen).is_none());
+    }
+
+    #[test]
     fn video_only_search_infers_the_opening_from_the_solved_end() {
         let (_, mut frames) = inputs("R");
         frames.insert(1, frames[0].clone());
         for resolve_orientation_ambiguity in [false, true] {
             let mut engine = Engine::new(Config {
                 fps: 60., infer_scramble: true, state_limit: 1000, diagnostics: false, branch_widths: vec![1, 3],
-                resolve_orientation_ambiguity, max_rotation_tps: Some(20.), ..Config::default()
+                resolve_orientation_ambiguity, max_rotation_tps: Some(20.), postprocess_identity_loops: true,
+                ..Config::default()
             }).unwrap();
             for (sequence, mut frame) in frames.iter().cloned().enumerate() {
                 frame.sequence = sequence;
@@ -1057,6 +1103,8 @@ mod tests {
             let result = finish(&mut engine, 16);
             assert_eq!(result["status"], "solved", "{result}");
             assert_eq!(result["inferred_scramble"], "R");
+            assert_eq!(result["postprocess"]["enabled"], true);
+            assert!(result["postprocess"]["error"].is_null());
             assert_eq!(result["solved_frame_index"], 4);
             assert_eq!(result["deferred"], 0);
             assert_eq!(result["steps"][2]["state_moves"], serde_json::json!(["R'"]));

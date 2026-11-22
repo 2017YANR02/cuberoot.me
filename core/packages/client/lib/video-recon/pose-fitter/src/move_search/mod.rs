@@ -238,6 +238,7 @@ impl Engine {
                 // The reverse-only path has no second engine to join.
                 search.take_events();
             }
+            self.finish_solution();
             return;
         }
         if self.config.bidirectional && !self.ended { return; }
