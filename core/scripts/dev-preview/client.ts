@@ -8,6 +8,7 @@ import { createConnection } from 'node:net';
 import { publicKey, slug } from './model.ts';
 import { launchAgentXml, taskXml } from './autostart.ts';
 import { retryable, TunnelRetryPolicy } from './retry.ts';
+import { stopOrphanedPreviewTunnel } from './restart.ts';
 
 interface Profile { version: number; id: string; host: string; sshPort: number; sshUser: string; localPort: number; remotePort: number; url: string; hostKey: string; publicKey: string; repo: string }
 const { values: v, positionals } = parseArgs({ allowPositionals: true, options: {
@@ -99,7 +100,10 @@ async function run() {
   for (const signal of ['SIGTERM', 'SIGINT', 'SIGHUP'] as const) process.once(signal, () => { cleanup(); process.exit(0); });
   try {
     release = await registerSession(join(p.repo, 'core'), () => { cleanup(); process.exit(0); });
-    if (v.restart) await clearPreviousDev(join(p.repo, 'core'), join(p.repo, 'core/packages/client'));
+    if (v.restart) {
+      await clearPreviousDev(join(p.repo, 'core'), join(p.repo, 'core/packages/client'));
+      await stopOrphanedPreviewTunnel(sshArgs(p));
+    }
     if (!(await listening(p.localPort))) {
       const command = prepareLocalDev(join(p.repo, 'core'), v.open ? 'inherit' : 'pipe');
       if (await listening(p.localPort)) throw Error('Port 3000 became occupied during startup. Inspect the existing service before retrying.');

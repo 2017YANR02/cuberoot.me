@@ -42,11 +42,16 @@ export async function registerSession(workspace: string, stop: () => void) {
   process.once('exit', release); server.unref();
   return release;
 }
-type Process = { pid: number; parent: number; command: string };
+type Process = { pid: number; parent: number; uid: number; started: string; command: string };
 function processes(): Process[] {
   if (process.platform === 'win32') throw Error('This older service has no restart session. Stop its original terminal once, then run cuberoot again.');
-  return execFileSync('ps', ['-axo', 'pid=,ppid=,command='], { encoding: 'utf8' }).trim().split('\n').flatMap(line => {
-    const m = line.trim().match(/^(\d+)\s+(\d+)\s+(.+)$/); return m ? [{ pid: Number(m[1]), parent: Number(m[2]), command: m[3] }] : [];
+  // macOS localizes lstart, including the number of fields in the date.
+  const output = execFileSync('ps', ['-axww', '-o', 'uid=,pid=,ppid=,lstart=,command='], {
+    encoding: 'utf8', env: { ...process.env, LC_ALL: 'C' },
+  });
+  return output.trim().split('\n').flatMap(line => {
+    const m = line.trim().match(/^(\d+)\s+(\d+)\s+(\d+)\s+(\S+\s+\S+\s+\d+\s+\S+\s+\d+)\s+(.+)$/);
+    return m ? [{ uid: Number(m[1]), pid: Number(m[2]), parent: Number(m[3]), started: m[4], command: m[5] }] : [];
   });
 }
 function cwd(pid: number) {
@@ -59,12 +64,13 @@ async function stopTree(root: Process, rows: Process[]) {
   const selected = new Set([root.pid]);
   for (let changed = true; changed;) { changed = false; for (const row of rows) if (selected.has(row.parent) && !selected.has(row.pid)) { selected.add(row.pid); changed = true; } }
   if (selected.has(process.pid)) throw Error('Refusing to stop the current launcher.');
-  const owned = rows.filter(row => selected.has(row.pid));
+  const owned = rows.filter(row => selected.has(row.pid) && row.uid === process.getuid?.());
   console.log(`Stopping previous CubeRoot service (${root.pid})`);
   // Only signal processes whose identity still matches the observed tree.
+  const sameProcess = (a: Process, b: Process) => a.pid === b.pid && a.uid === b.uid && a.started === b.started && a.command === b.command;
   const signal = (kind: NodeJS.Signals) => {
     const current = processes();
-    for (const row of owned) if (current.some(p => p.pid === row.pid && p.command === row.command)) {
+    for (const row of owned) if (current.some(p => sameProcess(p, row))) {
       try { process.kill(row.pid, kind); } catch (error) { if ((error as NodeJS.ErrnoException).code !== 'ESRCH') throw error; }
     }
   };
@@ -75,43 +81,89 @@ async function stopTree(root: Process, rows: Process[]) {
 }
 export async function stopLegacyRunner(pid: number, scripts: string[], id: string) {
   const rows = processes(), row = rows.find(p => p.pid === pid);
-  if (!row || !/(^|\/)node\s/.test(row.command) || !scripts.some(script => row.command.includes(`${script} run `)) || !new RegExp(`--id ${id}(?:\\s|$)`).test(row.command)) throw Error(`Runner PID ${pid} does not match this preview. No process was stopped.`);
+  if (!row || row.uid !== process.getuid?.() || !/(^|\/)node\s/.test(row.command) || !scripts.some(script => row.command.includes(`${script} run `)) || !new RegExp(`--id ${id}(?:\\s|$)`).test(row.command)) throw Error(`Runner PID ${pid} does not match this preview. No process was stopped.`);
   await stopTree(row, rows);
 }
-export async function clearPreviousDev(workspace: string, client: string) {
-  // Managed sessions are already stopped. Detect only older listeners belonging to this checkout.
-  let pids: number[];
+
+export async function stopOrphanedPreviewTunnel(args: string[]) {
+  if (process.platform === 'win32') return;
+  const rows = processes();
+  const command = ['ssh', ...args].join(' ');
+  for (const row of rows) {
+    if (row.parent === 1 && row.uid === process.getuid?.() && row.command === command) await stopTree(row, rows);
+  }
+}
+
+function listeningPids(): number[] {
   if (process.platform === 'win32') {
     const lines = execFileSync('netstat.exe', ['-ano', '-p', 'tcp'], { encoding: 'utf8' }).split('\n');
-    pids = lines.flatMap(line => { const fields = line.trim().split(/\s+/); return fields[0] === 'TCP' && fields[1]?.endsWith(':3000') && fields[3] === 'LISTENING' ? [Number(fields[4])] : []; });
-  } else {
-    try { pids = execFileSync('lsof', ['-t', '-iTCP:3000', '-sTCP:LISTEN'], { encoding: 'utf8' }).trim().split('\n').map(Number).filter(Boolean); }
-    catch (error) { if ((error as { status?: number }).status !== 1) throw error; pids = []; }
+    return lines.flatMap(line => { const fields = line.trim().split(/\s+/); return fields[0] === 'TCP' && fields[1]?.endsWith(':3000') && fields[3] === 'LISTENING' ? [Number(fields[4])] : []; });
   }
-  if (pids.length) {
-    const rows = processes(), roots = new Map<number, Process>();
-    for (const pid of pids) {
-      const listener = rows.find(p => p.pid === pid);
-      if (!listener || cwd(pid) !== realpathSync(client) || !/next-server|next.*\bdev\b/.test(listener.command)) throw Error(`Port 3000 belongs to an unrecognized service (${pid}); no cache was cleared.`);
-      let root = listener, cursor: Process | undefined = listener, development = false;
-      while (cursor && cursor.pid > 1) {
-        if (/next.*\bdev\b|turbo.*watch.*dev:serve|scripts\/local-dev\.(?:mts|ts)/.test(cursor.command)) {
-          const directory = cwd(cursor.pid);
-          if (directory === realpathSync(client) || directory === realpathSync(workspace)) { root = cursor; development = true; }
-        }
-        cursor = rows.find(p => p.pid === cursor!.parent);
-      }
-      if (!development) throw Error(`Cannot confirm that PID ${pid} is this checkout's development server.`);
-      roots.set(root.pid, root);
+  try { return execFileSync('lsof', ['-nP', '-t', '-iTCP:3000', '-sTCP:LISTEN'], { encoding: 'utf8' }).trim().split('\n').map(Number).filter(Boolean); }
+  catch (error) { if ((error as { status?: number }).status !== 1) throw error; return []; }
+}
+
+const clientWatch = /^(?:(?:\S*\/)?node\s+)?(?:\S*\/)?turbo watch dev:serve\s+.*--filter(?:=|\s+)@cuberoot\/client(?:\s|$)/;
+const defaultNextWatch = /^(?:\S*\/)?node\s+(?:\S*\/)?next-dev\.mts$/;
+
+async function stopPreviousDev(workspace: string, client: string) {
+  const pids = listeningPids();
+  if (process.platform === 'win32' && !pids.length) return;
+  const rows = processes();
+  const byPid = new Map(rows.map(row => [row.pid, row]));
+  const roots = new Map<number, Process>();
+  const user = process.getuid?.();
+  const directories = new Map<number, string | undefined>();
+  const directory = (pid: number) => {
+    if (!directories.has(pid)) directories.set(pid, cwd(pid));
+    return directories.get(pid);
+  };
+  const checkoutWatch = (row: Process) => row.uid === user && (
+    (clientWatch.test(row.command) && [workspace, client].includes(directory(row.pid) ?? '')) ||
+    (defaultNextWatch.test(row.command) && directory(row.pid) === client)
+  );
+  const findRoot = (row: Process) => {
+    let root: Process | undefined;
+    for (let cursor: Process | undefined = row; cursor && cursor.pid > 1 && cursor.uid === user; cursor = byPid.get(cursor.parent)) {
+      if (checkoutWatch(cursor) || (/next.*\bdev\b|scripts\/local-dev\.(?:mts|ts)/.test(cursor.command)
+        && [workspace, client].includes(directory(cursor.pid) ?? ''))) root = cursor;
     }
-    for (const root of roots.values()) await stopTree(root, rows);
+    return root;
+  };
+  for (const pid of pids) {
+    const listener = byPid.get(pid);
+    if (!listener && !alive(pid)) continue;
+    const isNext = listener && listener.uid === user && /next-server|next.*\bdev\b/.test(listener.command);
+    const listenerDir = isNext ? directory(pid) : undefined;
+    if (isNext && !listenerDir && !alive(pid)) continue;
+    if (!listener || listenerDir !== client) {
+      throw Error(`Port 3000 belongs to an unrecognized service (${pid}); no cache was cleared.`);
+    }
+    const root = findRoot(listener);
+    if (!root) throw Error(`Cannot confirm that PID ${pid} is this checkout's development server.`);
+    roots.set(root.pid, root);
   }
+  // A watcher can be rebuilding while its Next child isn't listening yet.
+  for (const row of rows) {
+    if (!checkoutWatch(row)) continue;
+    const root = findRoot(row) ?? row;
+    roots.set(root.pid, root);
+  }
+  for (const root of roots.values()) await stopTree(root, rows);
+}
+
+export async function clearPreviousDev(workspace: string, client: string) {
+  const workspaceDir = realpathSync(workspace), clientDir = realpathSync(client);
+  await stopPreviousDev(workspaceDir, clientDir);
   const occupied = () => new Promise<boolean>(done => {
     const socket = createConnection({ host: '127.0.0.1', port: 3000 });
     const finish = (value: boolean) => { socket.destroy(); done(value); };
     socket.once('connect', () => finish(true)); socket.once('error', () => finish(false)); socket.setTimeout(1000, () => finish(true));
   });
-  for (let i = 0; i < 50 && await occupied(); i++) await pause(100);
+  for (let i = 0; i < 10 && await occupied(); i++) {
+    await stopPreviousDev(workspaceDir, clientDir);
+    await pause(500);
+  }
   if (await occupied()) throw Error('Port 3000 is still occupied. Cache was not cleared.');
   // Honor the same custom directory as next.config; never delete outside the client workspace.
   const cache = resolve(client, process.env.NEXT_DEV_DIST_DIR || '.next');
