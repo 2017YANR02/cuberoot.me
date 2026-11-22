@@ -1,3 +1,5 @@
+export const AUTO_RECON_MAX_SECONDS = 30;
+
 export interface SolveRange { start: number; end: number }
 export function trimRange(range: SolveRange, edge: "start" | "end", value: number, duration: number, fps: number): SolveRange {
   if (!Number.isFinite(value)) return range;

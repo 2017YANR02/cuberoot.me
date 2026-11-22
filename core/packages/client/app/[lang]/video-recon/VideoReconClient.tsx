@@ -15,7 +15,7 @@ import { useT } from '@/hooks/useT';
 import { createVideoWorkspace, type VideoWorkspace, type WorkspaceTab } from '@/lib/video-recon/workspace';
 import { prepareOfflineVideoRecon } from '@/lib/video-recon/offline';
 import type { MoveStep } from '@/lib/video-recon/engine/move-search-types';
-import type { SolveRange as TimeRange } from '@/lib/video-recon/engine/solve-range';
+import { AUTO_RECON_MAX_SECONDS, type SolveRange as TimeRange } from '@/lib/video-recon/engine/solve-range';
 import type { SourceCrop } from '@/lib/video-recon/engine/source-crop';
 import { CameraTimer } from './CameraTimer';
 import { CameraRecordingControls } from './CameraRecordingControls';
@@ -34,7 +34,6 @@ const noWorkspace = () => null;
 const noSubscription = () => () => {};
 const clientSnapshot = () => true;
 const serverSnapshot = () => false;
-const AUTO_RECON_MAX_SECONDS = 30;
 
 export interface VideoReconHandoff {
   file: File;
@@ -165,6 +164,11 @@ export function VideoReconWorkspace({ mode, handoff, submission, onModeChange, o
     beginReconstruction();
   }, [submission?.autoStart, workspace, openedSubmission, view, beginReconstruction]);
 
+  useEffect(() => {
+    if (mode === 'record' && view?.activeTab === 'record' && view.cameraRecordingPhase === 'error' &&
+      view.cameraRecordingFile && !view.cameraRecordingRetried) workspace?.reviewCameraRecording();
+  }, [mode, view?.activeTab, view?.cameraRecordingPhase, view?.cameraRecordingFile, view?.cameraRecordingRetried, workspace]);
+
   const stream = view?.stream;
   const showCamera = view?.showCameraPreview;
   useEffect(() => {
@@ -197,7 +201,7 @@ export function VideoReconWorkspace({ mode, handoff, submission, onModeChange, o
   const downloadSize = modelDownload
     ? `${(modelDownload.receivedBytes / 1_000_000).toFixed(1)} / ${(modelDownload.totalBytes / 1_000_000).toFixed(1)} MB` : undefined;
   const downloading = downloadProgress !== undefined && downloadProgress < 100;
-  const frameProgress = reconstructing && !view.videoInputComplete && view.solveEnd > view.solveStart
+  const frameProgress = (reconstructing || view?.recordingReview === 'running') && !view.videoInputComplete && view.solveEnd > view.solveStart
     ? Math.max(0, Math.min(99, Math.floor(100 * (view.position - view.solveStart) / (view.solveEnd - view.solveStart))))
     : undefined;
   const cameraConnected = !detector && view?.sourceKind === 'camera';
@@ -302,7 +306,7 @@ export function VideoReconWorkspace({ mode, handoff, submission, onModeChange, o
           end={view.solveEnd} position={view.presentedTimestamp} index={view.currentReviewIndex} length={view.reviewLength}
           onPlay={() => void workspace.togglePlayback()} onSpeed={workspace.changePlaybackSpeed}
           onSeekIndex={workspace.seekReviewIndex} onStep={workspace.stepReview} />}
-        {workspace && view?.trimming && <SolveRange view={view} workspace={workspace}
+        {workspace && view?.trimming && (!filming || view.recordingReview === 'range') && <SolveRange view={view} workspace={workspace}
           fixedScramble={!!submission} onBegin={beginReconstruction} />}
         {submission?.autoStart && view?.trimming && view.duration > AUTO_RECON_MAX_SECONDS
           && <p className="video-recon-muted">{t('请选择一把还原的区间，再开始复盘。', 'Select the range of a single solve, then start reconstruction.')}</p>}
@@ -311,7 +315,7 @@ export function VideoReconWorkspace({ mode, handoff, submission, onModeChange, o
             : downloadProgress === 100 ? t('正在初始化识别模型', 'Initializing detector models')
               : t('正在准备识别模型', 'Preparing detector models')}
           value={downloading ? downloadProgress : undefined} detail={downloadSize} />}
-        {view?.status !== 'loading' && (reconstructing || view?.timerBuffering) && <VideoReconProgress
+        {view?.status !== 'loading' && (reconstructing || view?.timerBuffering || view?.recordingReview === 'running') && <VideoReconProgress
           label={frameProgress === undefined ? t('正在复盘 · 重建动作', 'Reconstructing · Recovering moves')
             : t('正在复盘 · 分析视频帧', 'Reconstructing · Analyzing video frames')}
           value={frameProgress} />}
@@ -356,15 +360,17 @@ export function VideoReconWorkspace({ mode, handoff, submission, onModeChange, o
         ready={view.timerReady} phase={view.cameraRecordingPhase} scramble={view.initialScramble}
         onScrambleChange={workspace.setScramble} onConnect={() => void workspace.camera()} onDisconnect={workspace.stopSource}
         onStart={workspace.recordCamera} onStop={workspace.finishCameraRecording}
+        review={view.recordingReview} onReview={workspace.reviewCameraRecording} onCancelReview={workspace.cancelRecordingReview}
         recordedFile={view.cameraRecordingFile} searchError={view.cameraRecordingError}
         inferenceFailure={view.cameraRecordingResult?.result?.inference_failure}
         recognizedMoves={view.cameraRecordingResult?.moves?.length} />}
       {!submission && !filming && workspace && view && <CameraTimer active={!!mode && !detector} workspace={workspace} view={view} />}
     </div>
-    {filming && view?.cameraRecordingReplay?.complete && view.cameraRecordingResult
+    {filming && !view?.recordingReview && view?.cameraRecordingReplay?.complete && view.cameraRecordingResult
       && (view.cameraRecordingPhase === 'complete' || view.cameraRecordingPhase === 'error')
       && <TimerReplay key={view.cameraRecordingReplay.id} clip={view.cameraRecordingReplay}
-        reconstruction={view.cameraRecordingResult} onPosition={ignoreReplayPosition} tailSeconds={0} />}
+        reconstruction={view.cameraRecordingResult} onPosition={ignoreReplayPosition} tailSeconds={0}
+        sourceFile={view.cameraRecordingRecovered ? view.cameraRecordingFile : undefined} />}
     {!submission && <input ref={fileInput} type="file" accept="image/*,video/*" aria-label={t('视频或图片', 'Video or image')} hidden
       onChange={event => {
         openMedia(event.currentTarget.files?.[0]);

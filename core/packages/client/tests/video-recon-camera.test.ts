@@ -5,10 +5,23 @@ import type { FittedPose } from '@/lib/video-recon/engine/pose-types';
 import type { MoveSearchResult } from '@/lib/video-recon/engine/move-search-types';
 import { TimerReconstruction, type TimerSearchFactory } from '@/lib/video-recon/engine/timer-reconstruction';
 import { CameraPreRoll, TimerCaptureGate } from '@/lib/video-recon/engine/timer-capture';
-import { TimerReplayStore } from '@/lib/video-recon/engine/timer-replay';
+import { recordedFileReplay, timerReplayFrameId, TimerReplayStore } from '@/lib/video-recon/engine/timer-replay';
 import { ParallelSearch } from '@/lib/video-recon/pose-fitter/runtime/parallel-search.mjs';
 
 describe('camera reconstruction search', () => {
+  it('replays recovered file moves on its decoded timestamps with only playback data retained', () => {
+    const step = { frame_index: 15, geometry_option_index: 0, state_moves: ["R'"] };
+    const result = { status: 'solved', steps: [step], unprocessed_steps: [step] } as MoveSearchResult;
+    const clip = recordedFileReplay('take', [{ timestamp: 0.5, result: {}, image: new Blob(['live preview']) }], result,
+      { fps: 30, scramble: 'R', requested_start_seconds: 0.4, source_origin_seconds: 0.4, source_end_seconds: 1 });
+    expect(timerReplayFrameId(clip.frames[0], clip.clockFps)).toBe(15);
+    expect([clip.start, clip.end]).toEqual([0.4, 1]);
+    expect(clip.frames[0].image).toBeUndefined();
+    expect(clip.reconstruction.moves).toEqual(["R'"]);
+    expect(clip.reconstruction.result?.unprocessed_steps).toBeUndefined();
+    expect(clip.reconstruction.config?.scramble).toBe('R');
+  });
+
   it('counts only the time spent searching after frame preparation', () => {
     vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout', 'performance'] });
     try {

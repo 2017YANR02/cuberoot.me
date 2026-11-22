@@ -13,16 +13,18 @@ import { ReviewControls } from './ReviewControls';
 
 export type ReplaySeek = { timestamp: number; revision: number };
 
-export function TimerReplay({ clip, reconstruction, disabled, seekRequest, onPosition, tailSeconds = TIMER_TAIL_SECONDS }: {
+export function TimerReplay({ clip, reconstruction, disabled, seekRequest, onPosition, sourceFile, tailSeconds = TIMER_TAIL_SECONDS }: {
   clip: ReplayClip;
   reconstruction: TimerReconstructionResult;
   disabled?: boolean;
   seekRequest?: ReplaySeek;
   onPosition: (position: number) => void;
   tailSeconds?: number;
+  sourceFile?: File;
 }) {
   const t = useT();
   const canvas = useRef<HTMLCanvasElement>(null);
+  const video = useRef<HTMLVideoElement>(null);
   const start = clip.frames[0]?.timestamp ?? clip.start;
   const end = clip.frames.at(-1)?.timestamp ?? start;
   const [position, setPosition] = useState(start);
@@ -62,7 +64,19 @@ export function TimerReplay({ clip, reconstruction, disabled, seekRequest, onPos
   const showAnalysis = clip.complete && scramble && steps.some(move => move.state_moves.length)
     && (reconstruction.status === 'solved' || reconstruction.status === 'failed');
 
-  useEffect(() => { setPlaying(false); setPosition(start); }, [start]);
+  useEffect(() => { setPlaying(false); setPosition(start); }, [clip.id, sourceFile, start]);
+  useEffect(() => {
+    const element = video.current;
+    if (!sourceFile || !element) return;
+    const url = URL.createObjectURL(sourceFile);
+    element.src = url;
+    return () => { element.pause(); element.removeAttribute('src'); element.load(); URL.revokeObjectURL(url); };
+  }, [sourceFile]);
+  useEffect(() => {
+    const element = video.current;
+    if (!sourceFile || !element || playing || Math.abs(element.currentTime - position) < 0.001) return;
+    element.currentTime = position;
+  }, [sourceFile, playing, position]);
   useEffect(() => { if (disabled) setPlaying(false); }, [disabled]);
   useEffect(() => {
     if (!seekRequest) return;
@@ -78,14 +92,21 @@ export function TimerReplay({ clip, reconstruction, disabled, seekRequest, onPos
     if (!playing || disabled) return;
     const origin = currentPosition.current;
     const wall = performance.now();
+    const element = sourceFile ? video.current : null;
+    let cancelled = false;
+    if (element) {
+      element.currentTime = origin;
+      element.playbackRate = speed;
+      void element.play().catch(() => { if (!cancelled) setPlaying(false); });
+    }
     let animation = requestAnimationFrame(function tick(now) {
-      const next = Math.min(end, origin + (now - wall) * speed / 1000);
+      const next = Math.min(end, element ? element.currentTime : origin + (now - wall) * speed / 1000);
       setPosition(next);
-      if (next < end) animation = requestAnimationFrame(tick);
+      if (next < end && !element?.ended) animation = requestAnimationFrame(tick);
       else setPlaying(false);
     });
-    return () => cancelAnimationFrame(animation);
-  }, [playing, disabled, end, speed]);
+    return () => { cancelled = true; cancelAnimationFrame(animation); element?.pause(); };
+  }, [playing, disabled, end, speed, sourceFile]);
 
   useEffect(() => {
     const element = canvas.current;
@@ -151,8 +172,11 @@ export function TimerReplay({ clip, reconstruction, disabled, seekRequest, onPos
         `Partial reconstruction · Recognized through frame ${coverage.ordinal} (${timecode(coverage.timestamp - start)})`)}
       {pose && index >= coverage.ordinal && t('。当前显示最后一个有效局面。', '. Showing the last available cube state.')}
     </p>}
-    <div className={hasRecording ? 'video-recon-columns' : undefined}>
-      {hasRecording && <div className="video-recon-stage">
+    <div className={sourceFile || hasRecording ? 'video-recon-columns' : undefined}>
+      {sourceFile && <div className="video-recon-stage">
+        <video ref={video} muted playsInline preload="auto" aria-label={t('回放原录像', 'Original recording')} />
+      </div>}
+      {!sourceFile && hasRecording && <div className="video-recon-stage">
         <canvas ref={canvas} aria-label={t('回放相机画面', 'Replay camera frame')} />
         {drawError && <p role="status">{t('无法显示此帧的相机画面。', 'The camera image is unavailable for this frame.')}</p>}
       </div>}

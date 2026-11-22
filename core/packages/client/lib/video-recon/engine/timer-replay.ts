@@ -1,6 +1,7 @@
 import type {FrameResult} from './detector';
 import {TIMER_TAIL_SECONDS,type TimerReconstructionResult} from './cube-timer';
 import type {FittedPose} from './pose-types';
+import type {MoveSearchResult} from './move-search-types';
 
 export interface TimerReplayFrame {timestamp:number;result:Pick<FrameResult,'fittedPose'>;image?:Blob}
 export interface TimerReplay {id:string;start:number;end:number;clockFps:number;frames:readonly TimerReplayFrame[];missingImages:number;complete:boolean;reconstruction?:TimerReconstructionResult}
@@ -85,4 +86,17 @@ export function replayReconstruction(value:TimerReconstructionResult):TimerRecon
     frame_index:step.frame_index,geometry_option_index:step.geometry_option_index,state_moves:step.state_moves,
     orientation_symmetry_index:step.orientation_symmetry_index,pose_flagged:step.pose_flagged,
   }))}};
+}
+
+/** MediaRecorder files are decoded on their own timeline. Never reuse frame IDs
+ * or the millisecond clock from the earlier, sparsely sampled live attempt. */
+export function recordedFileReplay(id: string, rows: readonly TimerReplayFrame[], result: MoveSearchResult,
+  config: NonNullable<TimerReconstructionResult['config']>): TimerReplay & { reconstruction: TimerReconstructionResult } {
+  const frames = rows.map(row => ({ timestamp: row.timestamp, result: replayResult(row.result) }));
+  return {
+    id, start: config.requested_start_seconds, end: config.source_end_seconds, clockFps: config.fps,
+    frames, missingImages: 0, complete: true,
+    reconstruction: replayReconstruction({ status: 'solved', result, frames: frames.length,
+      config, moves: result.steps.flatMap(step => step.state_moves) }),
+  };
 }
