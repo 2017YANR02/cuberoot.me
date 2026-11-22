@@ -122,6 +122,8 @@ export function createNativeCubeScene(solverBackdrop?: string) {
       }
       previousMove = move;
       authoritative = facelets;
+      // The on-demand canvas stops drawing at rest. Start a fresh tween at the move's arrival.
+      if (cube.twister.backlog === 0) lastFrame = Math.max(lastFrame, now);
       cube.twister.push(move, false, 1, ticks, 'linear');
     },
     gyro(q: Quat) {

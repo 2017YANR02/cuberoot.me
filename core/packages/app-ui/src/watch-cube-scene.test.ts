@@ -16,7 +16,6 @@ it('reuses real iOS geometry and turns from an arbitrary connected state, includ
     let now = 1000;
     for (const move of ['U','R',"F'",'D','L',"B'"] as const) {
       now += 5000; // first move after idle must animate, not immediately snap.
-      scene.advance(now);
       facelets = cubeMove(facelets, move);
       scene.move(move, facelets, now, now);
       expect(scene.frame(now).active).toBe(true);
