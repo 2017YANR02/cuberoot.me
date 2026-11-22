@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { absorb, collectEvents, managedRule, SOURCES } from './relay.ts';
+import { absorb, collectEvents, LIGHTPANDA_DENY_RULE_ID, managedRule, OPEN_MODE_BYPASS_RULE_ID, SOURCES } from './relay.ts';
 const now = Date.parse('2026-09-26T07:00:00Z');
 const event = { startTime: '2026-09-26 06:55:00.000', public_ip: '198.51.100.1', ruleId: [...SOURCES][0], action: 'deny' };
 test('30-day expiry, repeated events do not extend, expiry is removed', () => {
@@ -37,7 +37,13 @@ test('relay publishes chunked rules, verifies order, avoids redundant writes and
  process.env.CUBEROOT_BAN_CONFIG=config;process.env.CUBEROOT_BAN_STATE_DIR=dir;
  const current=Date.now(),source=[...SOURCES][0];
  const events=Array.from({length:1900},(_,i)=>({startTime:new Date(current-60000).toISOString(),public_ip:`10.1.${Math.floor(i/250)}.${i%250+1}`,ruleId:source,action:'deny'}));
- let rules=[{id:'rule_china_mainland_traffic_exemption_aOC64j',name:'CN',valid:true,active:true,action:{mitigate:{action:'bypass'}},conditionGroup:[{conditions:[{type:'geo_country',op:'eq',value:'CN'}]}]}];let writes=0,fail=false;
+ const incidentRules = [
+  {id: LIGHTPANDA_DENY_RULE_ID, name: 'Lightpanda', valid: true, active: true},
+  {id: 'rule_china_mainland_traffic_exemption_aOC64j', name: 'CN', valid: true, active: true, action: {mitigate: {action: 'bypass'}}, conditionGroup: [{conditions: [{type: 'geo_country', op: 'eq', value: 'CN'}]}]},
+  {id: OPEN_MODE_BYPASS_RULE_ID, name: 'Open mode', valid: true, active: false},
+ ];
+ let rules = [...incidentRules];
+ let writes = 0, fail = false;
  global.fetch=async(url,init)=>{
   const u=new URL(url);let result={};
   if(u.pathname.endsWith('/events')) result={actions:events.filter((_,i)=>i%20===Math.floor(Number(u.searchParams.get('startTimestamp'))/60000)%20)};
@@ -53,7 +59,13 @@ test('relay publishes chunked rules, verifies order, avoids redundant writes and
  };
  try {
   writeFileSync(join(dir,'state.json'),JSON.stringify({cursor:current-22*60000,bans:{}}));
-  await run();const first=JSON.parse(readFileSync(join(dir,'state.json')));assert.equal(Object.keys(first.bans).length,1900);assert.equal(rules.length,3);assert.equal(rules[1].name,MANAGED_NAME_FOR_TEST());assert.deepEqual(rules[0].conditionGroup[1].conditions[0].value,['154.44.14.212']);
+  await run();
+  const first = JSON.parse(readFileSync(join(dir, 'state.json')));
+  assert.equal(Object.keys(first.bans).length, 1900);
+  assert.equal(rules.length, 5);
+  assert.deepEqual(rules.slice(0, 3).map(rule => rule.id), incidentRules.map(rule => rule.id));
+  assert.equal(rules[3].name, MANAGED_NAME_FOR_TEST());
+  assert.deepEqual(rules[1].conditionGroup[1].conditions[0].value, ['154.44.14.212']);
   const written=writes;await run();assert.equal(writes,written);assert.deepEqual(JSON.parse(readFileSync(join(dir,'state.json'))).bans,first.bans);
   events.push({...events[0],public_ip:'203.0.113.199'});fail=true;
   // Force inclusion in one of the upcoming overlap windows.

@@ -3,12 +3,29 @@
 import { readFileSync, writeFileSync, renameSync, mkdirSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
 import { pathToFileURL } from 'node:url';
+import { incidentRuleLayout, LIGHTPANDA_DENY_RULE_ID, OPEN_MODE_BYPASS_RULE_ID } from './relay.ts';
 
 const MODE = '/etc/nginx/cuberoot-comp-verification-state.conf';
 const MAINTENANCE = '/etc/nginx/cuberoot-maintenance-state.conf';
 const ROOT = '/var/lib/cuberoot-traffic-defense';
 const timers = ['cuberoot-traffic-guard.timer', 'cuberoot-vercel-bans.timer'];
 const services = ['cuberoot-traffic-guard.service', 'cuberoot-vercel-bans.service'];
+
+type FirewallRule = {
+  id: string;
+  name: string;
+  description?: string;
+  active: boolean;
+  valid: boolean;
+  conditionGroup: unknown;
+  action: unknown;
+};
+
+function ruleValue(rule: FirewallRule, active: boolean) {
+  const { name, description, conditionGroup, action } = rule;
+  return { name, description, active, conditionGroup, action };
+}
+
 function command(name: string, args: string[]) {
   return execFileSync(name, args, { encoding: 'utf8', timeout: 60000 });
 }
@@ -48,9 +65,32 @@ export async function run(mode: string, apply: boolean) {
   const previousMaintenance = readFileSync(MAINTENANCE, 'utf8');
   if (!['default 0;', 'default 1;'].includes(previous.trim())) throw new Error('Unrecognized local mode');
   const enabled = mode === 'protect';
+  const hasLightpandaRule = (before.rules as FirewallRule[]).some(rule => rule.id === LIGHTPANDA_DENY_RULE_ID);
+  const openModeIndex = hasLightpandaRule ? incidentRuleLayout(before.rules).openModeIndex : -1;
+  const openRule: FirewallRule | undefined = before.rules[openModeIndex];
+  if (hasLightpandaRule && (!before.rules[0].valid || !before.rules[0].active || !openRule?.valid)) {
+    throw new Error('Vercel Lightpanda or open-mode rule is inactive or invalid');
+  }
+  const vercelEnabled = hasLightpandaRule || enabled;
+  const openRuleActive = openRule ? !enabled : undefined;
+  async function applyVercel(state: typeof before, firewallOn: boolean, bypassActive?: boolean) {
+    if (!firewallOn && state.firewallEnabled) await api('config', { action: 'firewallEnabled', value: false });
+    if (bypassActive !== undefined) {
+      const index = incidentRuleLayout(state.rules).openModeIndex;
+      const rule: FirewallRule = state.rules[index];
+      if (rule.active !== bypassActive) {
+        await api('config', { action: 'rules.update', id: rule.id, value: ruleValue(rule, bypassActive) });
+      }
+    }
+    if (firewallOn && !state.firewallEnabled) await api('config', { action: 'firewallEnabled', value: true });
+  }
+  const comparableRules = (rules: FirewallRule[]) => rules.map(rule => openRule && rule.id === OPEN_MODE_BYPASS_RULE_ID
+    ? { id: rule.id, valid: rule.valid, ...ruleValue(rule, false) }
+    : rule);
   const summary = () => ({ local: readFileSync(MODE, 'utf8').trim() === 'default 1;' ? 'protect' : 'open' });
   if (mode === 'status' || !apply) {
     console.log(JSON.stringify({ ...summary(), vercelEnabled: before.firewallEnabled, vercelVersion: before.version,
+      vercelIncidentProtection: before.firewallEnabled && !openRule?.active,
       maintenance: readFileSync(MAINTENANCE, 'utf8').trim() === 'default 1;',
       ...(mode !== 'status' ? { requested: mode, applied: false } : {}) }));
     return;
@@ -63,11 +103,13 @@ export async function run(mode: string, apply: boolean) {
   command('systemctl', ['stop', ...timers, ...services]);
   let localChanged = false;
   try {
-    // Incremental toggle preserves rules, managed settings, IP lists and drafts.
-    if (before.firewallEnabled !== enabled) await api('config', { action: 'firewallEnabled', value: enabled });
+    // Keep the sitewide Lightpanda rule active in either incident mode.
+    await applyVercel(before, vercelEnabled, openRuleActive);
     const after = await api('config/active');
-    if (after.firewallEnabled !== enabled) throw new Error('Vercel mode readback mismatch');
-    if (JSON.stringify(after.rules) !== JSON.stringify(before.rules)
+    if (after.firewallEnabled !== vercelEnabled || after.rules[openModeIndex]?.active !== openRuleActive) {
+      throw new Error('Vercel mode readback mismatch');
+    }
+    if (JSON.stringify(comparableRules(after.rules)) !== JSON.stringify(comparableRules(before.rules))
       || JSON.stringify(after.managedRules) !== JSON.stringify(before.managedRules)
       || JSON.stringify(after.ips) !== JSON.stringify(before.ips)) throw new Error('Unexpected WAF rule change');
     // Never revive an old maintenance outage when protection is re-enabled.
@@ -100,6 +142,7 @@ export async function run(mode: string, apply: boolean) {
     // it cannot ingest events or write bans while MODE is zero.
     command('systemctl', ['start', ...(enabled ? timers : ['cuberoot-vercel-bans.timer'])]);
     console.log(JSON.stringify({ ...summary(), vercelEnabled: after.firewallEnabled,
+      vercelIncidentProtection: enabled,
       vercelVersion: after.version, applied: true, propagationSeconds: 5 }));
   } catch (error) {
     if (localChanged) {
@@ -107,8 +150,8 @@ export async function run(mode: string, apply: boolean) {
       atomic(MAINTENANCE, previousMaintenance);
       await reload().catch(() => console.error('Local rollback reload failed; inspect nginx before retrying'));
     }
-    if (before.firewallEnabled !== enabled) {
-      await api('config', { action: 'firewallEnabled', value: before.firewallEnabled })
+    if (before.firewallEnabled !== vercelEnabled || openRule?.active !== openRuleActive) {
+      await api('config/active').then(current => applyVercel(current, before.firewallEnabled, openRule?.active))
         .catch(() => console.error('Vercel rollback failed; inspect provider status before retrying'));
     }
     // No false success and no destructive rollback of provider rules. Retain the

@@ -7,6 +7,21 @@ const DAY = 86400000;
 export const TRUSTED_IPS = new Set(['154.44.14.212']);
 export const MANAGED_NAME = 'Rolling 30-day incident IP bans';
 export const SOURCES = new Set(['rule_auto_ban_sensitive_file_scanners_for_1h_u5zqIL', 'rule_incident_rotating_browser_scraper_ban_30_days_S2oBpk']);
+export const LIGHTPANDA_DENY_RULE_ID = 'rule_temp_2026_11_22_deny_lightpanda_on_competition_routes_UrytKh';
+export const OPEN_MODE_BYPASS_RULE_ID = 'rule_temp_2026_11_22_keep_other_traffic_in_open_mode_hD4mIW';
+const CHINA_EXEMPTION_RULE_ID = 'rule_china_mainland_traffic_exemption_aOC64j';
+
+export function incidentRuleLayout(rules: readonly { id: string }[]) {
+  const lightpandaIndex = rules.findIndex(rule => rule.id === LIGHTPANDA_DENY_RULE_ID);
+  const chinaIndex = lightpandaIndex === -1 ? 0 : 1;
+  const openModeIndex = lightpandaIndex === -1 ? -1 : chinaIndex + 1;
+  if (lightpandaIndex > 0 || rules[chinaIndex]?.id !== CHINA_EXEMPTION_RULE_ID
+    || (openModeIndex !== -1 && rules[openModeIndex]?.id !== OPEN_MODE_BYPASS_RULE_ID)) {
+    throw new Error('Vercel traffic rule order changed; operator review required');
+  }
+  return { chinaIndex, openModeIndex, firstManagedIndex: Math.max(chinaIndex, openModeIndex) + 1 };
+}
+
 export type Ledger = { cursor: number; bans: Record<string, number>; ruleId?: string; lastSyncedAt?: number };
 type BanEvent = { startTime: string; public_ip: string; ruleId: string; action: string };
 export function absorb(state: Ledger, events: BanEvent[], now: number) {
@@ -107,9 +122,8 @@ export async function run() {
   renameSync(`${root}/state.tmp`, `${root}/state.json`);
   let active = await api('config/active');
   const own = (r: {name: string}) => r.name === MANAGED_NAME || /^Rolling 30-day incident IP bans \d+$/.test(r.name);
-  if (active.rules?.[0]?.id !== 'rule_china_mainland_traffic_exemption_aOC64j') throw new Error('China exemption order changed; operator review required');
-  // Extend the existing first bypass rule, preserving its ID and relay ordering.
-  const exemption = active.rules[0];
+  const { chinaIndex, firstManagedIndex } = incidentRuleLayout(active.rules ?? []);
+  const exemption = active.rules[chinaIndex];
   const ownerGroup = { conditions: [{ type: 'ip_address', op: 'inc', value: [...TRUSTED_IPS] }] };
   const isOwnerGroup = (g: { conditions: { type: string; op: string; value: unknown }[] }) => g.conditions.length === 1 && g.conditions[0].type === 'ip_address' && g.conditions[0].op === 'inc' && JSON.stringify(g.conditions[0].value) === JSON.stringify([...TRUSTED_IPS]);
   let ownerExemptionError: string | undefined;
@@ -121,8 +135,9 @@ export async function run() {
       conditionGroup: [...exemption.conditionGroup, ownerGroup], action: { mitigate: { action: 'bypass' } },
     } });
     active = await api('config/active');
-    if (active.rules[0]?.id !== exemption.id || !active.rules[0]?.valid || !active.rules[0]?.active
-      || !active.rules[0].conditionGroup.some(isOwnerGroup)) {
+    const updatedExemption = active.rules[chinaIndex];
+    if (updatedExemption?.id !== exemption.id || !updatedExemption.valid || !updatedExemption.active
+      || !updatedExemption.conditionGroup.some(isOwnerGroup)) {
       throw new Error('Owner IP exemption readback mismatch');
     }
   }
@@ -150,14 +165,15 @@ export async function run() {
         await api('config', 'PATCH', { action: 'rules.update', id: existing.id, value });
       }
     }
-    if (active.rules[i + 1]?.id !== existing.id) {
+    const index = firstManagedIndex + i;
+    if (active.rules[index]?.id !== existing.id) {
       changed = true;
-      await api('config', 'PATCH', { action: 'rules.priority', id: existing.id, value: i + 1 });
+      await api('config', 'PATCH', { action: 'rules.priority', id: existing.id, value: index });
     }
     if (changed) active = await api('config/active');
-    const live = active.rules[i + 1];
+    const live = active.rules[index];
     const liveIps = live?.conditionGroup?.flatMap((g: any) => g.conditions.find((c: any) => c.type === 'ip_address')?.value || []);
-    if (active.rules[0]?.id !== 'rule_china_mainland_traffic_exemption_aOC64j' || live?.id !== existing.id || !live?.valid || live.active !== value.active || JSON.stringify(liveIps) !== JSON.stringify(part.length ? part : ['192.0.2.1'])) throw new Error('Managed IP rule readback mismatch');
+    if (incidentRuleLayout(active.rules).firstManagedIndex !== firstManagedIndex || live?.id !== existing.id || !live.valid || live.active !== value.active || JSON.stringify(liveIps) !== JSON.stringify(part.length ? part : ['192.0.2.1'])) throw new Error('Managed IP rule readback mismatch');
     if (i === 0) state.ruleId = existing.id;
   }
   state.lastSyncedAt = now;
