@@ -44,6 +44,31 @@
   position: relative;
 }
 
+.landing-search-controls:has(> .landing-search-chat) {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.landing-search-controls:has(> .landing-search-chat) > .landing-search-input {
+  flex: 1;
+  min-width: 0;
+}
+
+.landing-search-chat {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  overflow: hidden;
+}
+
+.landing-search-chat:focus-visible {
+  outline-offset: 2px;
+}
+
 .landing-search-input {
   --landing-search-action-size: 36px;
   position: relative;

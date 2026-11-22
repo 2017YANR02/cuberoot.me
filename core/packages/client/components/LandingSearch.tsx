@@ -1,6 +1,7 @@
 'use client';
 import { assistantAuthContinuation, assistantReturnPath, canUseAssistant } from '@/lib/assistant-auth-continuation';
 import { installedGenerativeAiDisabled, useInstalledGenerativeAiDisabled } from '@/lib/installed-content';
+import { THEMES } from '@/lib/deskpet-themes';
 import { saveAssistantImages } from '@/lib/site-assistant-images';
 import { getAuthUser } from '@/lib/auth-store';
 import { assistantQueueRequest, AssistantQueueError } from '@/lib/assistant-queue';
@@ -203,6 +204,7 @@ interface Props {
   /** Reuse the same request/composer implementation inside the chat workspace. */
   conversation?: { initial: AssistantConversationSnapshot; active: boolean; onChange: (snapshot: Partial<AssistantConversationSnapshot>) => void; owner: string; id: string; pending?: AssistantConversation['pending'] };
   workspaceEntry?: boolean;
+  showChatLink?: boolean;
 
   cards: LandingSearchCard[];
   lang: 'zh' | 'en';
@@ -223,10 +225,12 @@ export default function LandingSearch({
   autoFocus = false,
   conversation,
   workspaceEntry: usesAssistantWorkspace = false,
+  showChatLink = false,
 }: Props) {
   const isZh = lang === 'zh';
   const searchOnly = useInstalledGenerativeAiDisabled();
   const workspaceEntry = usesAssistantWorkspace && !searchOnly;
+  const chatLinkLabel = tr({ zh: '聊天助手', en: 'Chat assistant' });
   const assistantUser = useAuthUser();
   const owner = assistantOwner(assistantUser);
   const workspace = useAssistantWorkspace(owner);
@@ -1304,6 +1308,12 @@ export default function LandingSearch({
               {assistantAllowed ? <ArrowUp size={20} strokeWidth={1.75} /> : authSendLabel}
             </button>}
         </form>)}
+        {workspaceEntry && showChatLink && (
+          <Link href="/chat" className="landing-search-chat" aria-label={chatLinkLabel} title={chatLinkLabel}>
+            <img src={THEMES.rootbeast.thumb} alt="" width={32} height={32}
+              style={{ scale: THEMES.rootbeast.thumbScale }} />
+          </Link>
+        )}
         {plusMenuOpen && (
           <div ref={plusMenuRef} className="landing-search-plus-menu" data-site-surface="popover" role="menu">
             {!searchOnly && <button type="button" className="landing-search-plus-menu-btn" role="menuitem" aria-label={tr({zh:'图片提问',en:'Ask with images'})} onClick={() => {

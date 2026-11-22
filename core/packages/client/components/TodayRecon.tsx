@@ -8,7 +8,7 @@ import { useContentRefreshKey } from '@/hooks/useContentRefreshKey';
 // 但不显示打乱公式:showScrambleFallback={false},只有视频封面才出媒体区);
 // 从第三行起使用右侧滚动条(.scroll-panel,与「比赛中心」同一套)。点卡进 /recon/[id] 看完整回放。
 // 数据:lib/recon-api getTodayRecons()(主用 /v1/recon/today,回退 /latest 单条)。
-import { useEffect, useLayoutEffect, useRef } from 'react';
+import { useEffect, useLayoutEffect, useMemo, useRef } from 'react';
 import Link from '@/components/AppLink';
 import { ArrowRight } from 'lucide-react';
 import type { ReconSolve } from '@cuberoot/shared';
@@ -58,7 +58,11 @@ export default function TodayRecon({ lang, pinnedRecons, pinnedOnly = false, isA
     };
   }, [pinnedOnly, refreshKey, setRecons]);
 
-  const visibleRecons = pinnedOnly ? pinnedRecons : recons;
+  const pinnedIds = useMemo(() => new Set(pinnedRecons?.map(solve => solve.id)), [pinnedRecons]);
+  const visibleRecons = useMemo(
+    () => pinnedOnly ? pinnedRecons : recons?.filter(solve => !pinnedIds.has(solve.id)) ?? null,
+    [pinnedOnly, pinnedRecons, recons, pinnedIds],
+  );
   useLayoutEffect(() => {
     const panel = cardsRef.current;
     if (!panel) return;
@@ -91,10 +95,10 @@ export default function TodayRecon({ lang, pinnedRecons, pinnedOnly = false, isA
 
   if (pinnedOnly && !visibleRecons?.length) return null;
   if (visibleRecons === null) return <div className="today-recon today-recon--loading" data-tour="today-replay" aria-hidden="true" />;
-  if (visibleRecons.length === 0) return <p className="landing-slot-message">{tr({ zh: '暂无复盘', en: 'No recons available' })}</p>;
+  if (recons?.length === 0 && !pinnedOnly) return <p className="landing-slot-message">{tr({ zh: '暂无复盘', en: 'No recons available' })}</p>;
 
   const renderCard = (s: ReconSolve) => {
-    const pinned = pinnedRecons?.some(item => item.id === s.id) ?? false;
+    const pinned = pinnedIds.has(s.id);
     return (
       <CuratedReconCard key={s.id} solve={s} isZh={isZh} href={`/recon/${reconPathSeg(s)}`} showScrambleFallback={false}
         pin={isAdmin ? { active: pinned, disabled: pinnedRecons === null || savingPins.has(s.id), onToggle: () => void onPin(s, !pinned) } : undefined} />
@@ -110,10 +114,12 @@ export default function TodayRecon({ lang, pinnedRecons, pinnedOnly = false, isA
       </div>
 
       {isAdmin && pinError && <p role="alert">{pinError}</p>}
-      <div ref={cardsRef} className="tr-cards scroll-panel scroll-panel--hover-lift"
-        role="region" aria-label={tr({ zh: '复盘', en: 'Reconstructions' })}>
-        {visibleRecons.map(renderCard)}
-      </div>
+      {visibleRecons.length > 0 && (
+        <div ref={cardsRef} className="tr-cards scroll-panel scroll-panel--hover-lift"
+          role="region" aria-label={tr({ zh: '复盘', en: 'Reconstructions' })}>
+          {visibleRecons.map(renderCard)}
+        </div>
+      )}
     </div>
   );
 }

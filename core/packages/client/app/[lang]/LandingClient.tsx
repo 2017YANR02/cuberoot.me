@@ -603,7 +603,7 @@ export default function LandingPage({ initialLayout = null }: { initialLayout?: 
           </Link>
         )}
       </div>} />
-      <LandingSearch cards={searchCards} lang={lang} workspaceEntry />
+      <LandingSearch cards={searchCards} lang={lang} workspaceEntry showChatLink />
       <div className="landing-home-content" hidden={activeSection !== 'home'}>
       <div className="landing-personal-row">
       {user && compFollows.loaded && <div className="landing-personal-comps">
