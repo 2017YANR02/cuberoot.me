@@ -81,26 +81,47 @@ async function run(width, reducedMotion) {
     const stages = grid.locator('.path-stage');
     const first = grid.getByRole('link').first();
     await expect(stages).toHaveCount(6);
+    await expect(stages.first()).toBeVisible();
     await checkContrast(grid);
     const capture = reducedMotion === 'no-preference' && (width === 375 || width === 1440);
     if (capture) await section.screenshot({path: join(output, width+'-before.png')});
     for (const index of [0, 2, 5]) {
       const stage = stages.nth(index);
+      await grid.evaluate(el => {
+        window.learningPathMotionObserved = false;
+        const observer = new MutationObserver(() => {
+          if (el.dataset.motion === 'running') {
+            window.learningPathMotionObserved = true;
+            observer.disconnect();
+          }
+        });
+        observer.observe(el, {attributes:true, attributeFilter:['data-motion']});
+      });
+      // Begin observing before keyboard dispatch so slow browser round trips
+      // cannot miss the short capture window. Freeze every path animation at
+      // the same instant, then resume them after taking the screenshot.
+      const midFrame = capture && index === 2 ? page.waitForFunction(() => {
+        const grid = document.querySelector('.path-measure[data-layout="expanded"]');
+        const card = grid?.querySelector('li[data-selected]');
+        const reveal = card?.getAnimations().find(a => a.effect.getKeyframes().some(frame => frame.clipPath));
+        if (!reveal) return false;
+        const timing = reveal.effect.getTiming();
+        const time = timing.delay + Number(timing.duration) * .7;
+        for (const animation of grid.parentElement.getAnimations({subtree: true})) {
+          animation.pause();
+          animation.currentTime = time;
+        }
+        return true;
+      }, undefined, {timeout: 5000}) : null;
       await stage.focus();
       await page.keyboard.press(index === 2 ? 'Space' : 'Enter');
       if (reducedMotion === 'no-preference') {
-        await expect(grid).toHaveAttribute('data-motion', 'running');
-        await page.keyboard.press('Enter');
+        await expect.poll(() => page.evaluate(() => window.learningPathMotionObserved)).toBe(true);
+        if (await grid.getAttribute('data-motion') === 'running') await page.keyboard.press('Enter');
         if (capture && index === 2) {
-          // Capture while the active card is widening, before the first link appears.
-          await page.waitForFunction(() => {
-            const grid = document.querySelector('.path-measure[data-layout="expanded"]');
-            const card = grid?.querySelector('li[data-selected]');
-            const animation = card?.getAnimations().find(a => a.effect.getKeyframes().some(frame => frame.clipPath));
-            const progress = animation?.effect.getComputedTiming().progress;
-            return progress != null && progress > .54 && progress < .93;
-          }, undefined, {timeout: 3500});
+          await midFrame;
           await page.screenshot({path: join(output, width+'-expanding.png'), animations:'allow'});
+          await grid.evaluate(el => el.parentElement.getAnimations({subtree:true}).forEach(animation => animation.play()));
         }
       }
       await expect(first).toBeFocused();

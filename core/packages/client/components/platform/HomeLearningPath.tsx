@@ -19,7 +19,7 @@ export function HomeLearningPath({ owner }: { owner: string }) {
   const [selected, setSelected] = useState<number | null>(null);
   const [expanded, setExpanded] = useState(false);
   const [sync, setSync] = useState<'idle' | 'saving' | 'load-error' | 'save-error'>('idle');
-  const [restoring, setRestoring] = useState(owner !== 'guest');
+  const [restoring, setRestoring] = useState(true);
   const [reload, setReload] = useState(0);
   const request = useRef<AbortController | null>(null);
   useEffect(() => {
