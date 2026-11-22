@@ -2,7 +2,8 @@
 
 import { useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode, type Ref } from 'react';
 import { usePathname } from 'next/navigation';
-import { Bell, BookOpen, LayoutDashboard, Search, Sparkles, UserRound, UsersRound, Wallet, X } from '@app-foundation/icons/lucide';
+import { Bell, BookOpen, LayoutDashboard, Search, Sparkles, UserRound, UsersRound, Wallet } from '@app-foundation/icons/lucide';
+import { ClearButton } from '@/components/ClearButton';
 import { NavigationShell } from '@app-foundation/navigation-ui';
 import '@app-foundation/navigation-ui/navigation.css';
 import PageBackLink from '@/components/PageBackLink';
@@ -59,7 +60,7 @@ function HomeAssistant({ close, lang, cards }: { close: () => void; lang: 'zh' |
   const conversation = state.conversations.find(item => item.id === state.activeId);
   return <dialog ref={dialog} className="platform-home-assistant" aria-labelledby="platform-home-assistant-title" onCancel={event => { event.preventDefault(); close(); }} {...dismiss}>
     <div className="platform-home-assistant-panel">
-      <header><h2 id="platform-home-assistant-title">{t('魔方根 AI 助手', 'CubeRoot AI assistant')}</h2><button type="button" className="platform-home-icon" onClick={close} aria-label={t('关闭助手', 'Close assistant')}><X aria-hidden /></button></header>
+      <header><h2 id="platform-home-assistant-title">{t('魔方根 AI 助手', 'CubeRoot AI assistant')}</h2><ClearButton variant="standalone" className="platform-home-icon" onClick={close} ariaLabel={t('关闭助手', 'Close assistant')} /></header>
       {allowed ? <>
         <AppLink className="platform-home-secondary" href="/chat" onClick={close} prefetch={false}>{t('打开完整聊天', 'Open full chat')}</AppLink>
         {conversation && <AssistantConversationView owner={owner} conversation={conversation} active lang={lang} cards={cards} />}

@@ -3,6 +3,7 @@ import { act, createElement, useLayoutEffect, useState, type ReactNode } from 'r
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 import type { TeachingLearningContext } from '@cuberoot/shared/teaching';
+import { NuqsTestingAdapter } from 'nuqs/adapters/testing';
 
 const mocks = vi.hoisted(() => ({ user: null as null | { uid: number }, contexts: vi.fn(), orgContexts: vi.fn(), organization: vi.fn(), organizations: vi.fn(), createOrganization: vi.fn(), t: (zh: string) => zh, pathname: '/org/fixture' }));
 vi.mock('@/hooks/useT', () => ({ useT: () => mocks.t }));
@@ -77,9 +78,9 @@ it('does not let an old institution request overwrite a later account', async ()
   let finish!: (value: unknown[]) => void;
   mocks.organizations.mockImplementationOnce(() => new Promise(resolve => { finish = resolve; }))
     .mockResolvedValueOnce([{ id: 'new', slug: 'new', name: '新机构', role: 'owner', status: 'active' }]);
-  await act(async () => root.render(createElement(OrganizationsPage)));
+  await act(async () => root.render(createElement(NuqsTestingAdapter, { children: createElement(OrganizationsPage) })));
   mocks.user = { uid: 2 };
-  await act(async () => root.render(createElement(OrganizationsPage)));
+  await act(async () => root.render(createElement(NuqsTestingAdapter, { children: createElement(OrganizationsPage) })));
   expect(host.textContent).toContain('新机构');
   await act(async () => finish([{ id: 'old', slug: 'old', name: '旧账号私有机构', role: 'owner', status: 'active' }]));
   expect(host.textContent).not.toContain('旧账号私有机构');
@@ -91,7 +92,7 @@ it('does not request private learner or institution resources for guests', async
   await act(async () => root.render(createElement(LearningCenterPage)));
   expect(mocks.contexts).not.toHaveBeenCalled();
   expect(host.textContent).toContain('登录');
-  await act(async () => root.render(createElement(OrganizationsPage)));
+  await act(async () => root.render(createElement(NuqsTestingAdapter, { children: createElement(OrganizationsPage) })));
   expect(mocks.organizations).not.toHaveBeenCalled();
 });
 
