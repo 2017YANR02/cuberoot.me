@@ -1,5 +1,4 @@
 import { createDeviceStateReset } from '@cuberoot/shared/smart-cube/device-reset';
-import { miniProgramApi } from '../platform';
 import {
   createQiyiAckCommand,
   createQiyiResetCommand,
@@ -17,6 +16,7 @@ import {
   qiyiDefaultMac,
 } from '@cuberoot/shared/smart-cube/qiyi';
 import type { BleAbortSignal, DiscoveredDevice, MiniProgramBleApi } from './ble-api';
+import type { DiscoveredCubeAdapter } from './discover-driver';
 import {
   connectEncryptedBle,
   extractBleMacFromAdvertisement,
@@ -30,6 +30,7 @@ export interface QiyiMoveMetadata {
 }
 export interface ConnectQiyiOptions {
   api?: MiniProgramBleApi;
+  adapter?: DiscoveredCubeAdapter;
   device?: DiscoveredDevice;
   signal?: BleAbortSignal;
   onBattery?(level: number): void;
@@ -40,7 +41,6 @@ export interface ConnectQiyiOptions {
 }
 
 export async function connectQiyi(options: ConnectQiyiOptions = {}): Promise<QiyiBleConnection> {
-  const api = options.api ?? (miniProgramApi() as unknown as MiniProgramBleApi);
   let timestamp = 0;
   let resetting = false;
   let disposed = false;
@@ -54,7 +54,8 @@ export async function connectQiyi(options: ConnectQiyiOptions = {}): Promise<Qiy
     for (const move of notification.futureMoves) options.onMove?.(move.mv, move.ts, { futureHistory: true });
   };
   const connection = await connectEncryptedBle({
-    api,
+    api: options.api,
+    adapter: options.adapter,
     diagnosticLabel: 'qiyi',
     device: options.device,
     signal: options.signal,

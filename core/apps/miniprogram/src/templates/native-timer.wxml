@@ -36,6 +36,7 @@
             <view wx:if="{{device.batteryPercent !== null}}" class="nt-cube-battery-fill" style="width: {{device.batteryPercent}}%"></view>
             <view wx:else class="nt-cube-battery-unknown"></view>
           </view>
+          <text aria-hidden="true">{{device.battery || '—'}}</text>
         </button>
       </view>
       <block wx:if="{{device.active}}">
@@ -194,7 +195,6 @@
       <image class="nt-icon nt-icon-dark" src="/assets/tabbar/settings-dark.png" aria-hidden="true" />
     </button>
   </view>
-  <view wx:if="{{deviceName}}" class="nt-device {{hideChrome ? 'nt-solo-chrome-hidden' : ''}}" aria-hidden="{{hideChrome}}">{{deviceName}} <text wx:if="{{battery !== null}}"> · {{battery}}%</text></view>
   <view wx:if="{{externalName}}" class="nt-device {{hideChrome ? 'nt-solo-chrome-hidden' : ''}}" aria-hidden="{{hideChrome}}">{{externalName}}</view>
   <text wx:if="{{liveShare.badge}}" class="nt-live-share-status {{hideChrome ? 'nt-solo-chrome-hidden' : ''}}" aria-hidden="{{hideChrome}}" aria-role="status">{{liveShare.badge}}</text>
   <text wx:if="{{error}}" class="nt-error" aria-role="alert">{{error}}</text>

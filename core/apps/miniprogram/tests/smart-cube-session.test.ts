@@ -484,16 +484,19 @@ describe('SmartCubeSession', () => {
     expect(driverMocks.connectGanV4).not.toHaveBeenCalled();
   });
 
-  it.each(['gocube', 'gan-v4'] as const)('waits for incremental scan cleanup before connecting %s', async (driver) => {
+  it.each([
+    { driver: 'gocube', name: 'GoCube Edge', reuseAdapter: false, connectDriver: driverMocks.connectGoCube },
+    { driver: 'gan-v4', name: 'GAN16ui', reuseAdapter: true, connectDriver: driverMocks.connectGanV4 },
+    { driver: 'qiyi', name: 'QY-QYSC-S-0BE5', reuseAdapter: true, connectDriver: driverMocks.connectQiyi },
+  ] as const)('waits for incremental scan cleanup before connecting $driver', async ({ driver, name, reuseAdapter, connectDriver }) => {
     const session = new SmartCubeSession();
     await startSession(session, 'v'.repeat(32));
     const found = {
-      device: { deviceId: 'cube-1', name: 'GoCube Edge', RSSI: -48 },
+      device: { deviceId: 'cube-1', name, RSSI: -48 },
       driver,
     };
     const closeAdapter = vi.fn(async () => {});
     const adapter = { api: {}, lease: {}, close: closeAdapter };
-    const connectDriver = driver === 'gan-v4' ? driverMocks.connectGanV4 : driverMocks.connectGoCube;
     let finishScanCleanup!: () => void;
     driverMocks.discoverSmartCubeDriver.mockImplementation((options: {
       onUpdate?(devices: typeof found[]): void;
@@ -513,7 +516,7 @@ describe('SmartCubeSession', () => {
       });
     });
     connectDriver.mockResolvedValue({
-      deviceName: 'GoCube Edge',
+      deviceName: name,
       disconnect: async () => {},
       requestBattery: async () => 65,
     });
@@ -538,7 +541,7 @@ describe('SmartCubeSession', () => {
     expect(connectDriver).toHaveBeenCalledWith(expect.objectContaining({
       device: found.device,
     }));
-    if (driver === 'gan-v4') {
+    if (reuseAdapter) {
       expect(connectDriver).toHaveBeenCalledWith(expect.objectContaining({ adapter }));
       expect(closeAdapter).not.toHaveBeenCalled();
     } else {

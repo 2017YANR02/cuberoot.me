@@ -449,8 +449,11 @@ export class SmartCubeSession {
     });
 
     const generation = ++this.connectionGeneration;
-    await this.disconnectHardware(kind === 'gan-v4' && Boolean(selectedDevice));
+    const reuseScanAdapter = Boolean(selectedDevice) && (kind === 'gan-v4' || kind === 'qiyi');
+    await this.disconnectHardware(reuseScanAdapter);
     if (generation !== this.connectionGeneration) return;
+    const adapter = reuseScanAdapter ? this.discoveryAdapter ?? undefined : undefined;
+    if (reuseScanAdapter) this.discoveryAdapter = null;
     const cancellation = createBleCancellation();
     this.pendingConnection = cancellation;
 
@@ -463,8 +466,6 @@ export class SmartCubeSession {
           requestBattery: async () => 100,
         };
       } else if (kind === 'gan-v4') {
-        const adapter = this.discoveryAdapter ?? undefined;
-        this.discoveryAdapter = null;
         const operation = connectGanV4({
           adapter,
           device: selectedDevice,
@@ -525,6 +526,7 @@ export class SmartCubeSession {
         connection = await operation;
       } else {
         const operation = connectQiyi({
+          adapter,
           device: selectedDevice,
           signal: cancellation.signal,
           onDisconnect: (message) => this.handleHardwareDisconnect(generation, kind, message),

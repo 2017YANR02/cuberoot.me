@@ -18,6 +18,7 @@ import type {
   CharacteristicValueChange,
   MiniProgramBleApi,
 } from '../src/lib/smart-cube/ble-api';
+import { BleOperationAbortedError, claimBleResourceLease } from '../src/lib/smart-cube/ble-api';
 import { connectMoyu32 } from '../src/lib/smart-cube/moyu32-ble';
 import { connectQiyi } from '../src/lib/smart-cube/qiyi-ble';
 
@@ -190,7 +191,7 @@ describe('encrypted smart-cube mini program transport', () => {
     await cube.disconnect(); await lost;
   });
 
-  it('calibrates QiYi on SYNC confirmation, ignores gyro buffer pressure and retains newer moves', async () => {
+  it('calibrates QiYi on a retained adapter and retains newer moves after SYNC', async () => {
     const cipher = createQiyiCipher(); let resets = 0; const moves: string[] = []; const states: string[] = [];
     const rig = createApi({ serviceUuid: QIYI_SERVICE_UUID,
       notifyCharacteristicUuid: QIYI_CHARACTERISTIC_UUID,
@@ -202,9 +203,15 @@ describe('encrypted smart-cube mini program transport', () => {
         if (request[2] === 4) resets++;
       },
     });
-    const cube = await connectQiyi({ api: rig.api, device: { deviceId: 'ios-device-uuid', name: 'QY-QYSC-2-A1B2' },
+    const open = vi.spyOn(rig.api, 'openBluetoothAdapter');
+    const close = vi.spyOn(rig.api, 'closeBluetoothAdapter');
+    const adapter = { api: rig.api, lease: claimBleResourceLease(rig.api), close: vi.fn(async () => {}) };
+    const cube = await connectQiyi({ adapter, device: { deviceId: 'ios-device-uuid', name: 'QY-QYSC-2-A1B2' },
       onState: s => states.push(s), onMove: m => moves.push(m),
     });
+    expect(open).not.toHaveBeenCalled();
+    expect(close).not.toHaveBeenCalled();
+    expect(adapter.lease.isCurrent()).toBe(true);
     states.length = 0;
     let done = false; const reset = cube.resetDeviceState().then(() => { done = true; });
     await vi.waitFor(() => expect(resets).toBe(1)); expect(done).toBe(false);
@@ -220,6 +227,30 @@ describe('encrypted smart-cube mini program transport', () => {
     expect(moves).toEqual(["R"]);
     const lost = expect(cube.resetDeviceState()).rejects.toThrow('disconnected');
     await cube.disconnect(); await lost;
+    expect(close).toHaveBeenCalledOnce();
+  });
+
+  it.each(['failure', 'cancelled'] as const)('closes a retained QiYi adapter after %s', async (outcome) => {
+    const { api } = createApi({
+      serviceUuid: QIYI_SERVICE_UUID,
+      notifyCharacteristicUuid: QIYI_CHARACTERISTIC_UUID,
+      writeCharacteristicUuid: QIYI_WRITE_CHARACTERISTIC_UUID,
+    });
+    const open = vi.spyOn(api, 'openBluetoothAdapter');
+    const close = vi.spyOn(api, 'closeBluetoothAdapter');
+    const connect = vi.spyOn(api, 'createBLEConnection').mockImplementation(callbacks => {
+      callbacks.fail?.({ errMsg: 'createBLEConnection:fail no device' });
+    });
+    const adapter = { api, lease: claimBleResourceLease(api), close: vi.fn(async () => {}) };
+    const operation = connectQiyi({
+      adapter, signal: { aborted: outcome === 'cancelled', onAbort: () => () => {} },
+      device: { deviceId: 'ios-device-uuid', name: 'QY-QYSC-S-0BE5' },
+    });
+    if (outcome === 'failure') await expect(operation).rejects.toThrow('no device');
+    else await expect(operation).rejects.toBeInstanceOf(BleOperationAbortedError);
+    expect(open).not.toHaveBeenCalled();
+    expect(connect).toHaveBeenCalledTimes(outcome === 'failure' ? 1 : 0);
+    expect(close).toHaveBeenCalledOnce();
   });
 
   it('uses the advertised MoYu32 MAC so state seeds the move counter', async () => {

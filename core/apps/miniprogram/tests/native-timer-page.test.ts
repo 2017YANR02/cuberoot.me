@@ -55,6 +55,7 @@ function fixture(useWca = false, now?: () => number) {
     onShow(): void;
     markAttemptSplit(event: WechatMiniprogram.TouchEvent): void;
     openSheet(event: WechatMiniprogram.TouchEvent): void;
+    openDeviceCenter(): void;
     clearWca(event: WechatMiniprogram.TouchEvent): void;
     closeSheet(): void;
     chooseSource(event: WechatMiniprogram.TouchEvent): void;
@@ -339,6 +340,31 @@ describe('native timer source sheet lifecycle', () => {
     timer.receiveCube({ type: 'status', phase: 'disconnected' });
     page.timerUp();
     expect(page.data.livePreview).toBe('');
+    timer.dispose();
+  });
+
+  it('keeps the live canvas mounted across the smart cube device panel', () => {
+    const { page, timer } = fixture();
+    const facelets = smartCubeTargetFacelets('R U')!;
+    timer.settings.liveCubeView = '3d';
+    timer.receiveCube({ type: 'status', phase: 'connected', brand: 'qiyi' });
+    timer.receiveCube({ type: 'state', facelets });
+    const liveCubeView = { dispose: vi.fn(), reset: vi.fn() };
+    Object.assign(page, {
+      liveCubeView, liveCubeWanted: true, liveCubeFacelets: facelets, createSelectorQuery: vi.fn(),
+      cubeDeviceSnapshot: { phase: 'connected', deviceName: 'QiYi', battery: 5 },
+    });
+    page.setData({ liveCanvas: true, liveCanvasReady: true });
+
+    page.openDeviceCenter();
+    expect(page.data.sheet).toBe('device-management');
+    expect(page.data.deviceManagement).toMatchObject({ kind: 'smart-cube', deviceName: 'QiYi', battery: '5%' });
+    expect(page.data.preview).toBe('');
+    expect(page.data.liveCanvasReady).toBe(true);
+
+    page.closeSheet();
+    expect(liveCubeView.dispose).not.toHaveBeenCalled();
+    expect(liveCubeView.reset).not.toHaveBeenCalled();
     timer.dispose();
   });
 

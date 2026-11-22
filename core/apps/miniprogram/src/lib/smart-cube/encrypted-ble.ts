@@ -32,6 +32,7 @@ import {
   type DiscoveredDevice,
   type MiniProgramBleApi,
 } from './ble-api';
+import type { DiscoveredCubeAdapter } from './discover-driver';
 
 export interface EncryptedBleConnection {
   readonly deviceId: string;
@@ -48,6 +49,7 @@ export interface ResolvedBleMac {
 
 export interface EncryptedBleOptions {
   api?: MiniProgramBleApi;
+  adapter?: DiscoveredCubeAdapter;
   device?: DiscoveredDevice;
   signal?: BleAbortSignal;
   scanTimeoutMs?: number;
@@ -130,12 +132,12 @@ async function findDevice(
 }
 
 export async function connectEncryptedBle(options: EncryptedBleOptions): Promise<EncryptedBleConnection> {
-  const api = options.api ?? (miniProgramApi() as unknown as MiniProgramBleApi);
+  const api = options.adapter?.api ?? options.api ?? (miniProgramApi() as unknown as MiniProgramBleApi);
   const timeoutMs = options.scanTimeoutMs ?? 10_000;
-  const lease = claimBleResourceLease(api);
+  const lease = options.adapter?.lease ?? claimBleResourceLease(api);
   const diagnostic = createBleDiagnostic(options.diagnosticLabel);
-  diagnostic.info('connect-start', { runtime: bleRuntimeInfo() });
-  let adapterOpen = false;
+  diagnostic.info('connect-start', { runtime: bleRuntimeInfo(), reusedScanAdapter: Boolean(options.adapter) });
+  let adapterOpen = Boolean(options.adapter);
   let active = false;
   let closing = false;
   let connectedDeviceId: string | null = null;
@@ -191,13 +193,14 @@ export async function connectEncryptedBle(options: EncryptedBleOptions): Promise
 
   try {
     const closeAdapter = (): Promise<unknown> => invokeBleCleanupForLease(lease, (callbacks) => api.closeBluetoothAdapter(callbacks));
-    await raceBleAbortWithLateCleanup(
+    if (!adapterOpen) await raceBleAbortWithLateCleanup(
       invokeBleWithLateCleanupForLease(lease, (callbacks) => api.openBluetoothAdapter(callbacks), closeAdapter),
       options.signal,
       closeAdapter,
     );
     adapterOpen = true;
     const device = await findDevice(api, lease, timeoutMs, options.signal, options);
+    if (options.signal?.aborted) throw new BleOperationAbortedError();
     diagnostic.info('device-selected', describeBleDevice(device));
     const resolvedMac = options.resolveMac?.(device);
     diagnostic.info('mac-resolution', resolvedMac

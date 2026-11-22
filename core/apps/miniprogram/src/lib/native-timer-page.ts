@@ -997,8 +997,9 @@ function nativeLiveAnalysisActive(p: NativePage, timer: NativeTimer) {
 function refreshLiveCube(p: NativePage, timer: NativeTimer) {
   const facelets = timer.facelets;
   const viewMode = nativeTimerLiveView(timer.settings.liveCubeView);
+  const deviceOverlay = p.sheet === 'devices' || (p.sheet === 'device-management' && p.deviceManagementKind === 'smart-cube');
   const wanted = Boolean(p.createSelectorQuery && facelets && timer.cubeConnected && viewMode === '3d'
-    && !p.sheet && !p.layoutEditing && !p.liveCubeFailed);
+    && (!p.sheet || deviceOverlay) && !p.layoutEditing && !p.liveCubeFailed);
   if (!wanted || !facelets) {
     if (p.liveCubeWanted) stopLiveCube(p);
     if (!timer.cubeConnected || viewMode !== '3d') p.liveCubeFailed = false;
@@ -1339,7 +1340,7 @@ function refresh(page: NativePage, history = false) {
   const project = (page.events ?? nativeTimerEvents(language)).find(e => e.id === t.event);
   const previewScramble = applyOrientationPrefix(t.scramble, preScrambleFor(t.event, t.settings.preScr, t.settings.preScrT));
   const liveFacelets = t.cubeConnected ? t.facelets : null;
-  const showPreview = !liveFacelets && t.settings.showCubePreview && !t.settings.soloLayout.hideCubePreview;
+  const showPreview = !t.cubeConnected && t.settings.showCubePreview && !t.settings.soloLayout.hideCubePreview;
   const previewKey = `${showPreview}|${t.event}|${previewScramble}`;
   const liveMode = nativeTimerLiveView(t.settings.liveCubeView);
   const images: Record<string, unknown> = {};
@@ -1582,9 +1583,7 @@ export function createNativeTimerPageOptions(): WechatMiniprogram.Page.Options<R
       let subscribing = true;
       p.unsubscribe = getSmartCubeSession().subscribe(s => {
         p.cubeDeviceSnapshot = s;
-        if (!p.active) return;
-        this.setData({ deviceName: s.phase === 'connected' ? s.deviceName : '', battery: s.battery });
-        if (!subscribing) refresh(p);
+        if (p.active && !subscribing) refresh(p);
       });
       subscribing = false;
       refresh(p, true);

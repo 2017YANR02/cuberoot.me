@@ -816,6 +816,7 @@
 .nt-cube-panel .timer-smart-cube-device__heading > .nt-settings-icon { width: 20px; height: 20px; }
 .nt-cube-panel .timer-smart-cube-device__heading-title { font-weight: 650; }
 .nt-cube-panel .timer-smart-cube-device__device-action { display: flex; align-items: center; gap: 4px; }
+.nt-cube-panel .timer-smart-cube-device__battery { gap: 4px; font-size: 12px; font-variant-numeric: tabular-nums; }
 .nt-cube-panel .nt-cube-battery--low { color: var(--cr-danger); }
 .nt-cube-battery {
   position: relative;
