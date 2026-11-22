@@ -363,7 +363,7 @@ export function VideoReconWorkspace({ mode, handoff, submission, onModeChange, o
         review={view.recordingReview} onReview={workspace.reviewCameraRecording} onCancelReview={workspace.cancelRecordingReview}
         recordedFile={view.cameraRecordingFile} searchError={view.cameraRecordingError}
         inferenceFailure={view.cameraRecordingResult?.result?.inference_failure}
-        recognizedMoves={view.cameraRecordingResult?.moves?.length} />}
+        recognizedMoves={view.cameraRecordingResult?.moves?.length} trackedFrames={view.cameraRecordingResult?.frames} />}
       {!submission && !filming && workspace && view && <CameraTimer active={!!mode && !detector} workspace={workspace} view={view} />}
     </div>
     {filming && !view?.recordingReview && view?.cameraRecordingReplay?.complete && view.cameraRecordingResult

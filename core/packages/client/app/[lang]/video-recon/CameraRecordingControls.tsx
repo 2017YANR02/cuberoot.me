@@ -19,6 +19,7 @@ interface CameraRecordingControlsProps {
   searchError?: string;
   inferenceFailure?: 'no_solved_end' | 'no_supported_opening';
   recognizedMoves?: number;
+  trackedFrames?: number;
   review?: 'opening' | 'ready' | 'range' | 'running';
   onReview: () => void;
   onCancelReview: () => void;
@@ -26,7 +27,7 @@ interface CameraRecordingControlsProps {
 
 export function CameraRecordingControls({
   cameraConnected, cameraConnecting, ready, phase, scramble, onScrambleChange,
-  onConnect, onDisconnect, onStart, onStop, recordedFile, searchError, inferenceFailure, recognizedMoves, review, onReview, onCancelReview,
+  onConnect, onDisconnect, onStart, onStop, recordedFile, searchError, inferenceFailure, recognizedMoves, trackedFrames, review, onReview, onCancelReview,
 }: CameraRecordingControlsProps) {
   const t = useT();
   const recording = phase === 'recording';
@@ -81,7 +82,9 @@ export function CameraRecordingControls({
       ? t('请选择这次还原的区间，再逐帧复盘。', 'Select the solve range to reconstruct it frame by frame.')
       : t('实时识别未完成，正在逐帧补读原录像。', 'Live tracking was incomplete. Reading the recording frame by frame.')}</p>}
     {!review && latestStatus && <p role="status" className="video-recon-muted">{latestStatus}</p>}
-    {recording && recognizedMoves !== undefined && <p>{t(`已识别 ${recognizedMoves} 步`, `${recognizedMoves} moves recognized`)}</p>}
+    {recording && (scramble.trim()
+      ? recognizedMoves !== undefined && <p>{t(`已识别 ${recognizedMoves} 步`, `${recognizedMoves} moves recognized`)}</p>
+      : trackedFrames !== undefined && <p>{t(`已跟踪 ${trackedFrames} 帧`, `Frames tracked: ${trackedFrames}`)}</p>)}
     {!review && (searchError || phase === 'error') && <div className="video-recon-muted" role="alert">
       <p>{inferenceFailure === 'no_solved_end'
         ? t('录制结尾需要清晰的还原画面。', 'The recording needs a clear view of the solved cube at the end.')
