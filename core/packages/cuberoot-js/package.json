@@ -1,0 +1,60 @@
+{
+  "name": "cuberoot.js",
+  "version": "0.2.1",
+  "private": true,
+  "description": "Embeddable twisty puzzle replay players from CubeRoot.",
+  "license": "GPL-3.0-only",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/2017YANR02/cuberoot.me.git",
+    "directory": "core/packages/cuberoot-js"
+  },
+  "type": "module",
+  "cuberoot": {
+    "kind": "library",
+    "runtime": {
+      ".": "browser",
+      "./element": "react-dom"
+    },
+    "externalRuntime": {
+      "cubing": "runtime-neutral",
+      "lucide-react": "react-dom",
+      "react": "react-dom",
+      "react-dom": "react-dom"
+    }
+  },
+  "sideEffects": ["./dist/element.js"],
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./element": {
+      "types": "./dist/element.d.ts",
+      "default": "./dist/element.js"
+    }
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "build": "tsc -p tsconfig.json && node scripts/build.mjs",
+    "build:pack": "node scripts/pack.mjs",
+    "pack:local": "pnpm run build && pnpm run build:pack"
+  },
+  "dependencies": {
+    "@cuberoot/puzzle-render-core": "workspace:*",
+    "@cuberoot/puzzle-solvers": "workspace:*",
+    "@cuberoot/shared": "workspace:*",
+    "@cuberoot/timer-ui": "workspace:*",
+    "cubing": "^0.63.3",
+    "lucide-react": "1.8.0",
+    "react": "19.2.4",
+    "react-dom": "19.2.4"
+  },
+  "devDependencies": {
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "esbuild": "^0.28.1",
+    "typescript": "^5"
+  }
+}

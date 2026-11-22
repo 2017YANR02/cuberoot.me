@@ -1045,6 +1045,46 @@ importers:
         specifier: ^4.1.12
         version: 4.1.12(@types/node@20.19.41)(happy-dom@21.0.4)(jsdom@30.0.1)(vite@8.1.6(@types/node@20.19.41)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.15)(yaml@2.9.0))
 
+  packages/cuberoot-js:
+    dependencies:
+      '@cuberoot/puzzle-render-core':
+        specifier: workspace:*
+        version: link:../puzzle-render-core
+      '@cuberoot/puzzle-solvers':
+        specifier: workspace:*
+        version: link:../puzzle-solvers
+      '@cuberoot/shared':
+        specifier: workspace:*
+        version: link:../shared
+      '@cuberoot/timer-ui':
+        specifier: workspace:*
+        version: link:../timer-ui
+      cubing:
+        specifier: ^0.63.3
+        version: 0.63.3(patch_hash=026724bd89e53a602c720d772bbd4c11ebe3c4040d840ba0c7df469b5244c9f6)
+      lucide-react:
+        specifier: 1.8.0
+        version: 1.8.0(react@19.2.4)
+      react:
+        specifier: 19.2.4
+        version: 19.2.4
+      react-dom:
+        specifier: 19.2.4
+        version: 19.2.4(react@19.2.4)
+    devDependencies:
+      '@types/react':
+        specifier: ^19
+        version: 19.2.14
+      '@types/react-dom':
+        specifier: ^19
+        version: 19.2.3(@types/react@19.2.14)
+      esbuild:
+        specifier: ^0.28.1
+        version: 0.28.2
+      typescript:
+        specifier: ^5
+        version: 5.9.3
+
   packages/event-icon:
     dependencies:
       react:

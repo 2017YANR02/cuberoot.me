@@ -85,6 +85,11 @@ export function parsePuzzleGeometryAlg(description: string, input: string): Alg 
   return parseModelAlg(input, () => puzzleGeometryKPuzzle(description));
 }
 
+/** Validate against the exact model already loaded by a renderer. */
+export function parseKpuzzleAlg(puzzle: KPuzzle, input: string): Alg {
+  return parseModelAlg(input, () => puzzle);
+}
+
 export function parseNativePuzzleAlg(id: PgInteractionPuzzleId, input: string): Alg {
   return parseModelAlg(input, () => nativePuzzleKPuzzle(id));
 }

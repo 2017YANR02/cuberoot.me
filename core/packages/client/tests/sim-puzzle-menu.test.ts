@@ -1,7 +1,25 @@
 import { describe, expect, it } from 'vitest';
+import { NXN_ORDER_MAX, NXN_ORDER_MIN, SIM_PUZZLE_IDS, simPuzzleBackend } from '@cuberoot/puzzle-solvers/sim-puzzles';
 import { ALL_PUZZLE_TYPE_OPTIONS, groupSimPuzzleOptions } from '@/app/[lang]/sim/puzzleOptions';
 
 describe('simulator puzzle families', () => {
+  it('shares every menu ID with the standalone playback catalog', () => {
+    expect(ALL_PUZZLE_TYPE_OPTIONS.map(option => option.value)).toEqual(SIM_PUZZLE_IDS);
+    expect(new Set(SIM_PUZZLE_IDS).size).toBe(SIM_PUZZLE_IDS.length);
+    for (const id of SIM_PUZZLE_IDS) expect(simPuzzleBackend(id), id).toBeDefined();
+    expect(['nxn', 'mirror', 'mirror2', 'sphere'].map(simPuzzleBackend)).toEqual(Array(4).fill('nxn'));
+    expect(['kilominx', 'baby_fto'].map(simPuzzleBackend)).toEqual(['named', 'named']);
+    expect(simPuzzleBackend('custom')).toBe('custom');
+    expect(simPuzzleBackend('radioweb')).toBe('pg');
+    expect(simPuzzleBackend('clock')).toBe('native');
+    for (let order = NXN_ORDER_MIN; order <= NXN_ORDER_MAX; order++) {
+      expect(simPuzzleBackend(order)).toBe('nxn');
+    }
+    for (const invalid of ['not-a-puzzle', '__proto__', NXN_ORDER_MIN - 1, NXN_ORDER_MAX + 1, 3.5]) {
+      expect(simPuzzleBackend(invalid)).toBeUndefined();
+    }
+  });
+
   it('keeps every catalog option reachable exactly once with its original identity', () => {
     const groups = groupSimPuzzleOptions();
     const options = groups.flatMap(group => group.options);

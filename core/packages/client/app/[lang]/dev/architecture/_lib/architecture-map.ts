@@ -190,7 +190,8 @@ export const ARCHITECTURE_NODES: ArchitectureNode[] = [
   {
     id: 'shared', lane: 'foundation', x: 86, y: 62, eyebrow: 'SHARED',
     sourcePaths: [
-      'core/packages/event-icon', 'core/packages/puzzle-render-core', 'core/packages/puzzle-solvers',
+      'core/packages/cuberoot-js', 'core/packages/event-icon', 'core/packages/puzzle-render-core',
+      'core/packages/puzzle-solvers',
       'core/packages/shared', 'core/packages/stack-kernel', 'core/packages/timer-ui',
       'core/packages/vendor-sr-puzzlegen', 'core/packages/visualcube', 'solver',
     ],

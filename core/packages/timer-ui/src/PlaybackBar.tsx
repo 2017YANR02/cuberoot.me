@@ -59,7 +59,7 @@ export function PlaybackBackViewButton({ visible, toggle = true, onClick, showLa
 export default function PlaybackBar({
   step, total, playing, disabled = false,
   onScrub, onSkipStart, onStepBack, onTogglePlay, onStepForward, onSkipEnd,
-  leading, trailing, labels, stepMarkers, layout = 'compact', segmentEnds, segmentCounts,
+  leading, trailing, labels, stepMarkers, layout = 'compact', segmentEnds, segmentCounts, scrubValueText,
 }: {
   step: number;
   total: number;
@@ -74,10 +74,11 @@ export default function PlaybackBar({
   onTogglePlay: () => void;
   onStepForward: () => void;
   onSkipEnd: () => void;
-  layout?: 'compact' | 'wide';
+  layout?: 'compact' | 'wide' | 'balanced';
   leading?: ReactNode;
   trailing?: ReactNode;
   labels?: Partial<PlaybackBarLabels>;
+  scrubValueText?: string;
   /** Move counts at the boundaries of teaching stages. */
   stepMarkers?: readonly number[];
 }) {
@@ -86,8 +87,10 @@ export default function PlaybackBar({
   const atEnd = disabled || step >= total;
   const empty = disabled || total === 0;
   const hasSegmentCounts = !!segmentCounts?.length && !empty;
+  const layoutClass = layout === 'compact' ? '' : ' playback-bar--wide';
+  const balancedClass = layout === 'balanced' ? ' playback-bar--balanced' : '';
   return (
-    <div className={`playback-bar${layout === 'wide' ? ' playback-bar--wide' : ''}`}>
+    <div className={`playback-bar${layoutClass}${balancedClass}`}>
       <div className={`playback-bar-scrub${hasSegmentCounts ? ' playback-bar-scrub--counts' : ''}`}>
         {!empty && segmentEnds?.map((end, index) => {
           const start = segmentEnds[index - 1] ?? 0;
@@ -98,7 +101,8 @@ export default function PlaybackBar({
             {count}
           </span>;
         })}
-        <PlaybackScrubber step={step} total={total} segmentEnds={segmentEnds} onScrub={onScrub} disabled={empty} ariaLabel={L.scrub} />
+        <PlaybackScrubber step={step} total={total} segmentEnds={segmentEnds} onScrub={onScrub}
+          disabled={empty} ariaLabel={L.scrub} ariaValueText={scrubValueText} part="seek" />
         {stepMarkers && !empty && <div className="playback-bar-markers" aria-hidden="true">
           {stepMarkers.map(position => <span
             key={position}
@@ -110,13 +114,13 @@ export default function PlaybackBar({
           />)}
         </div>}
       </div>
-      <div className="playback-bar-controls">
+      <div className="playback-bar-controls" part="controls">
         {leading}
-        <button type="button" className="playback-bar-btn" onClick={onSkipStart} disabled={atStart} title={L.skipStart} aria-label={L.skipStart}><SkipBack size={14} /></button>
-        <button type="button" className="playback-bar-btn" onClick={onStepBack} disabled={atStart} title={L.stepBack} aria-label={L.stepBack}><ChevronLeft size={14} /></button>
-        <button type="button" className="playback-bar-btn" onClick={onTogglePlay} disabled={empty} title={playing ? L.pause : L.play} aria-label={playing ? L.pause : L.play}>{playing ? <Pause size={14} /> : <Play size={14} />}</button>
-        <button type="button" className="playback-bar-btn" onClick={onStepForward} disabled={atEnd} title={L.stepForward} aria-label={L.stepForward}><ChevronRight size={14} /></button>
-        <button type="button" className="playback-bar-btn" onClick={onSkipEnd} disabled={atEnd} title={L.skipEnd} aria-label={L.skipEnd}><SkipForward size={14} /></button>
+        <button type="button" className="playback-bar-btn" part="start" onClick={onSkipStart} disabled={atStart} title={L.skipStart} aria-label={L.skipStart}><SkipBack size={14} /></button>
+        <button type="button" className="playback-bar-btn" part="previous" onClick={onStepBack} disabled={atStart} title={L.stepBack} aria-label={L.stepBack}><ChevronLeft size={14} /></button>
+        <button type="button" className="playback-bar-btn" part="play" onClick={onTogglePlay} disabled={empty} title={playing ? L.pause : L.play} aria-label={playing ? L.pause : L.play}>{playing ? <Pause size={14} /> : <Play size={14} />}</button>
+        <button type="button" className="playback-bar-btn" part="next" onClick={onStepForward} disabled={atEnd} title={L.stepForward} aria-label={L.stepForward}><ChevronRight size={14} /></button>
+        <button type="button" className="playback-bar-btn" part="end" onClick={onSkipEnd} disabled={atEnd} title={L.skipEnd} aria-label={L.skipEnd}><SkipForward size={14} /></button>
         {trailing}
       </div>
     </div>

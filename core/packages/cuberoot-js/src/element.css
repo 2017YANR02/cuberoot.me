@@ -1,0 +1,110 @@
+@import '@cuberoot/shared/timer/classic-appearance.css';
+@import '@cuberoot/timer-ui/PlaybackBar.css';
+@import '@cuberoot/timer-ui/PlaybackScrubber.css';
+
+:host {
+  display: block;
+  min-inline-size: 0;
+  --replay-foreground: var(--foreground, light-dark(var(--classic-light-foreground), var(--classic-dark-foreground)));
+  --replay-background: var(--background, light-dark(var(--classic-light-background), var(--classic-dark-background)));
+  --replay-card: var(--card, light-dark(Canvas, var(--classic-dark-card)));
+  --replay-accent: var(--accent, light-dark(var(--classic-light-accent), var(--classic-dark-accent)));
+  --replay-ring: var(--ring, var(--replay-accent));
+  --replay-popover: var(--popover, var(--replay-card));
+}
+
+:host([hidden]) { display: none; }
+
+.viewport {
+  inline-size: 100%;
+  aspect-ratio: 4 / 3;
+  overflow: hidden;
+}
+
+.replay-transport {
+  container: replay-transport / inline-size;
+  --background: var(--replay-background);
+  --foreground: var(--replay-foreground);
+  --card: var(--replay-card);
+  --accent: var(--replay-accent);
+  --ring: var(--replay-ring);
+  --border-default: color-mix(in srgb, var(--foreground) 15%, transparent);
+  color: var(--foreground);
+}
+
+.replay-transport button:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: -2px;
+}
+
+.replay-speed {
+  display: grid;
+  grid-template-columns: auto auto;
+  align-items: center;
+  gap: 3px 9px;
+  width: 100%;
+  min-width: 0;
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+}
+
+.replay-speed-inline {
+  width: min(140px, 100%);
+  justify-self: start;
+}
+
+.replay-speed-value { justify-self: end; }
+
+.replay-speed input {
+  grid-column: 1 / -1;
+  width: 100%;
+  min-width: 0;
+}
+
+.replay-settings { justify-self: end; }
+
+.replay-settings .playback-bar-btn[aria-expanded='true'] { color: var(--accent); }
+
+.replay-settings-panel {
+  position: fixed;
+  inset: auto;
+  visibility: hidden;
+  margin: 0;
+  padding: 8px;
+  overflow: auto;
+  border: 1px solid var(--border-default);
+  border-radius: 8px;
+  background: var(--replay-popover);
+  color: var(--foreground);
+  box-sizing: border-box;
+}
+
+.replay-settings-speed { display: none; }
+
+.replay-speed-presets {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+}
+
+.replay-speed-presets button { white-space: nowrap; }
+
+.error { color: var(--destructive, CanvasText); }
+
+@container replay-transport (max-width: 400px) {
+  .replay-speed-inline { display: none; }
+  .replay-settings-speed { display: grid; padding-block-end: 6px; }
+  .playback-bar--balanced .playback-bar-controls {
+    grid-template-columns: repeat(5, minmax(0, 1fr)) minmax(0, 44px);
+    gap: 2px;
+  }
+  .replay-transport .playback-bar-controls .playback-bar-btn {
+    min-width: 0;
+    width: 100%;
+    padding-inline: 0;
+  }
+}
+
+@media (pointer: coarse) {
+  .replay-transport .playback-bar-btn { height: 44px; }
+  .replay-speed input { height: 24px; }
+}

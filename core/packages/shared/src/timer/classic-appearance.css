@@ -1,5 +1,5 @@
 /* Default appearance colors before a user palette is applied. */
-:root, .native-timer {
+:root, .native-timer, :host {
   --classic-signal-info: #4a9eff;
   --classic-signal-success: #5aac7e;
   --classic-signal-warning: #d4a259;

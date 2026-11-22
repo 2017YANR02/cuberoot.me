@@ -76,6 +76,8 @@
       "./magic": "runtime-neutral",
       "./native-puzzles": "runtime-neutral",
       "./native-puzzle-model": "runtime-neutral",
+      "./nxn-order": "runtime-neutral",
+      "./sim-puzzles": "runtime-neutral",
       "./pyraminx-duo-geometry-reference": "runtime-neutral"
     }
   },
@@ -411,6 +413,16 @@
       "node": "./dist/native-puzzle-model.js",
       "default": "./src/native-puzzle-model.ts"
     },
+    "./nxn-order": {
+      "types": "./src/nxn-order.ts",
+      "node": "./dist/nxn-order.js",
+      "default": "./src/nxn-order.ts"
+    },
+    "./sim-puzzles": {
+      "types": "./src/sim-puzzles.ts",
+      "node": "./dist/sim-puzzles.js",
+      "default": "./src/sim-puzzles.ts"
+    },
     "./pyraminx-duo-geometry-reference": {
       "types": "./src/pyraminx-duo-geometry-reference.ts",
       "node": "./dist/pyraminx-duo-geometry-reference.js",
@@ -419,7 +431,7 @@
   },
   "scripts": {
     "dev:build": "pnpm run build",
-    "build": "tsc -b && esbuild src/magic.ts --bundle --packages=external --platform=node --target=node20 --format=esm --outfile=dist/magic.js && esbuild src/native-puzzle-model.ts --bundle --packages=external --platform=node --target=node20 --format=esm --outfile=dist/native-puzzle-model.js",
+    "build": "tsc -b && esbuild src/magic.ts src/native-puzzle-model.ts src/sim-puzzles.ts --bundle --packages=external --platform=node --target=node20 --format=esm --outdir=dist",
     "typecheck": "tsc --noEmit",
     "test": "pnpm run build && vitest run",
     "build:ci": "pnpm run build"

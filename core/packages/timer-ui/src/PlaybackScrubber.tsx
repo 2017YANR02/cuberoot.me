@@ -7,7 +7,7 @@ import './PlaybackScrubber.css';
  *  ReconPlayerBase, /sim's engine-mode playback bar) renders the same control
  *  instead of each hand-rolling its own. */
 export default function PlaybackScrubber({
-  step, total, onScrub, disabled, className, ariaLabel, segmentEnds,
+  step, total, onScrub, disabled, className, ariaLabel, ariaValueText, part, segmentEnds,
 }: {
   step: number;
   total: number;
@@ -16,6 +16,8 @@ export default function PlaybackScrubber({
   disabled?: boolean;
   className?: string;
   ariaLabel?: string;
+  ariaValueText?: string;
+  part?: string;
 }) {
   const max = Math.max(total, 1);
   const pct = `${Math.max(0, Math.min(100, (step / max) * 100))}%`;
@@ -29,6 +31,7 @@ export default function PlaybackScrubber({
   return (
     <input
       type="range"
+      part={part}
       className={className ? `playback-scrubber ${className}` : 'playback-scrubber'}
       style={{ ['--pct' as string]: pct, ['--segment-gaps' as string]: stops.length ? `linear-gradient(to right, transparent, ${stops.join(', ')}, transparent)` : 'linear-gradient(transparent, transparent)' }}
       min={0}
@@ -37,6 +40,7 @@ export default function PlaybackScrubber({
       disabled={disabled ?? total === 0}
       onChange={(e) => onScrub(Number(e.target.value))}
       aria-label={ariaLabel ?? 'Scrub'}
+      aria-valuetext={ariaValueText}
     />
   );
 }

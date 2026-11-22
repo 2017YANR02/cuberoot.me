@@ -252,8 +252,8 @@ function exportEntries(exportsField) {
 export function validatePackageMetadata(packages = activePackages(), { enforceWorkspaceInventory = false } = {}) {
   const errors = [];
   const workspaceByName = new Map(packages.map((pkg) => [pkg.name, pkg]));
-  if (enforceWorkspaceInventory && packages.length !== 19) {
-    errors.push(`expected 19 active workspaces, found ${packages.length}`);
+  if (enforceWorkspaceInventory && packages.length !== 20) {
+    errors.push(`expected 20 active workspaces, found ${packages.length}`);
   }
   const kindCounts = new Map([...PACKAGE_KINDS].map((kind) => [kind, 0]));
   for (const pkg of packages) {
@@ -338,7 +338,7 @@ export function validatePackageMetadata(packages = activePackages(), { enforceWo
     }
   }
   if (enforceWorkspaceInventory) {
-    for (const [kind, expected] of [['app', 6], ['job', 4], ['library', 9]]) {
+    for (const [kind, expected] of [['app', 6], ['job', 4], ['library', 10]]) {
       const actual = kindCounts.get(kind);
       if (actual !== expected) errors.push(`expected ${expected} ${kind} workspaces, found ${actual}`);
     }

@@ -11,6 +11,7 @@ description: "用户说造魔方模拟器、给 /sim 加魔方、新魔方类型
 ## 路径与接入范围
 
 - 先读文件内容与 package `exports` 确认真实实现：共享状态/纯打乱在 `core/packages/puzzle-solvers/src/`，共享几何/SVG/引擎在 `core/packages/puzzle-render-core/src/`；`core/packages/client/app/[lang]/sim/engine/world.ts` 已是宿主薄层，禁止把共享实现复制回来。
+- 在 `@cuberoot/puzzle-solvers/sim-puzzles` 的共享目录维护 `/sim` 和独立播放器使用的项目 ID、渲染分派与 PG 定义，并用现有菜单测试核对覆盖。
 - 本文与旧范本的 `engine/` 是功能简称，不保证仍在 Web 目录；用 `rg --files` 定位并沿 re-export 找源文件。页面与浏览器手势留在 client；已迁手势见 `core/packages/client/components/puzzle-models/gestures/`，尚未迁出的适配仍按源码定位。
 - 新增独立可选魔方时，必读 [跨页面接入与验收](references/integration-and-verification.md)，以 `/sim`、`/timer`、`/scramble/gen` 三处全部可用为默认完成条件；单独修改既有外观或交互时只核对受影响入口。
 - 开工先列目标魔方的三入口接入矩阵，沿选择器、生成器、外层分发、实际预览及导出逐层核实；缺项同任务补齐，收尾逐入口写明已验、未验与限制。

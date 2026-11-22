@@ -32,6 +32,7 @@ node --input-type=module -e 'import { activePackages } from "./scripts/check-arc
 | Web | `core/packages/client` 是唯一 Web 前端，包名 `@cuberoot/client`；尚未迁往 `apps/web` |
 | API | `core/apps/api`，包名仍为 `@cuberoot/server`；API→Web 源码依赖、Web public 运行时读取与宽泛部署触发已按 BND-02/03/06 关闭，见下方提交证据。不得把这些历史问题重新写成现存债务 |
 | 已安装客户端 | `core/packages/app-ui` 是 Android、iOS、HarmonyOS NEXT、Windows、macOS 的共享 React 产品层；Mobile、Desktop、Harmony 薄宿主通过 capability adapter 提供平台能力；各端构建、设备与发布状态见[路线图](../product/apps/mobile-app-roadmap.md) |
+| 独立拼图复盘播放器 | `core/packages/cuberoot-js` 与 `/sim` 共用 `puzzle-solvers/sim-puzzles` 目录，按项目加载 `puzzle-render-core` 的 NxN、原生异形或 PuzzleGeometry 播放器，提供 JavaScript 接口、HTML 自定义元素和独立 npm 包。打包方式见[包说明](../../core/packages/cuberoot-js/README.md) |
 | 小程序 | `core/apps/miniprogram` 是独立运行时，不引入 React DOM/Next |
 | FMC | `core/apps/fmc-solver` 独立构建部署，线上入口保持 `/v1/fmc/*` |
 | Platform | 正式能力属于主站，不新建独立产品 app；`core/packages/platform` 是 workspace 外归档。产品缺口与验收以[当前模块化与产品验收](../product/platform/platform-modernization-2026-11.md)为准；旧站临时对照与资产处置见各自专题，不沿用历史“始终 410”描述 |
