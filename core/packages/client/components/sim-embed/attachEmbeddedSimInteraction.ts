@@ -15,7 +15,7 @@ import {
 } from '@/app/[lang]/sim/engine/sq1/sq1Drag';
 import { moveToString as sq1MoveToString } from '@/app/[lang]/sim/engine/sq1/sq1State';
 import tweener from '@/app/[lang]/sim/engine/tweener';
-import { ORBIT_K, orbitSceneFree } from '@/app/[lang]/sim/engine/viewControls';
+import { applyFreeOrbitDelta, ORBIT_K, orbitSceneFree } from '@/app/[lang]/sim/engine/viewControls';
 
 export type EmbeddedSimInteractionMode = 'view' | 'turn' | 'none';
 export type EmbeddedWholeCubeDrag = 'rotate' | 'rotate-only';
@@ -37,6 +37,9 @@ interface EmbeddedSimInteractionOptions {
 }
 
 const SQ1_DRAG_THRESHOLD_PX = 4;
+const ORBIT_SNAP_REFERENCE_EDGE_PX = 380;
+const ORBIT_SNAP_MIN_EDGE_PX = 320;
+const ORBIT_SNAP_EXTRA_DRAG_PX = 16;
 const ORBIT_SNAP_DURATION_MS = 360;
 const SNAP_AXES = { x: new Vector3(1, 0, 0), y: new Vector3(0, 1, 0) };
 
@@ -70,55 +73,77 @@ export function attachEmbeddedSimInteraction({
     const rotateOnly = mode === 'turn' && wholeCubeDrag === 'rotate-only';
     const pick = mode === 'view' && onCubeletTap;
     const fixedLayerView = world.puzzleKind === 2 && mode === 'turn' && !wholeCubeDrag && isOrbitSnapLocked?.() === true;
-    const snapAngle = (mode === 'view' || rotateOnly || isOrbitSnapLocked?.()) && orbitSnapDegrees > 0 && orbitSnapDegrees < 90
+    const rotatingByDrag = mode === 'turn' && !!wholeCubeDrag;
+    const snapAngle = (mode === 'view' || rotatingByDrag || isOrbitSnapLocked?.()) && orbitSnapDegrees > 0 && orbitSnapDegrees < 90
       ? orbitSnapDegrees * Math.PI / 180 : 0;
-    const dragToSnap = rotateOnly && snapAngle > 0;
+    const dragToSnap = rotatingByDrag && snapAngle > 0;
     const clampAngle = (angle: number) => Math.max(-snapAngle, Math.min(snapAngle, angle));
-    const crossingAt = (from: number, to: number) => Math.abs(to) <= snapAngle ? Infinity
-      : Math.max(0, Math.min(1, (Math.sign(to) * snapAngle - from) / (to - from)));
+    const triggerAngle = snapAngle + ORBIT_SNAP_EXTRA_DRAG_PX * ORBIT_K;
+    const crossingAt = (from: number, to: number) => Math.abs(to) <= triggerAngle ? Infinity
+      : Math.max(0, Math.min(1, (Math.sign(to) * triggerAngle - from) / (to - from)));
+    let extraPitch = 0;
+    let extraYaw = 0;
     let snappedThisDrag = false;
     let snapFrame: number | null = null;
-    let releasePoint: { x: number; y: number } | null = null;
+    let pointerAction: Parameters<typeof controller.touch>[0] | null = null;
     const toClientPoint = ({ x, y }: { x: number; y: number }) => {
       const bounds = dom.getBoundingClientRect();
       return { clientX: bounds.left + x, clientY: bounds.top + y };
     };
+    const reportBlockedTurn = (move: string) => {
+      onBlockedUserLayerTurn?.(move, pointerAction ? toClientPoint(pointerAction) : undefined);
+    };
     const tap: (typeof controller.taps)[number] = (index, face, { button }) => {
-      if (!pick || !releasePoint || snappedThisDrag || face === null || button !== 0 || index < 0) return;
+      if (!pick || snappedThisDrag || face === null || button !== 0 || index < 0) return;
+      if (pointerAction?.type !== 'mouseup' && pointerAction?.type !== 'touchend') return;
       const piece = (world.cube as Cube).cubelets.get(index);
       if (!piece) return;
-      pick({ homeIndex: piece.initial, positionIndex: index, ...toClientPoint(releasePoint) });
+      pick({ homeIndex: piece.initial, positionIndex: index, ...toClientPoint(pointerAction) });
     };
     const orbitWithSnap = (dx: number, dy: number) => {
       if (snappedThisDrag || snapFrame !== null || lockView) return;
       const rotation = world.scene.rotation;
-      const beforeX = rotation.x;
-      const beforeY = rotation.y;
-      orbit(dx, dy);
-      if (isOrbitSnapLocked?.()) {
-        rotation.x = clampAngle(rotation.x);
-        rotation.y = clampAngle(rotation.y);
+      const next = { x: rotation.x, y: rotation.y };
+      // Scale to the framed cube, with a floor to keep tiny canvases manageable.
+      const framedEdge = Math.min(world.width, world.height) * world.scale;
+      const dragEdge = Math.max(ORBIT_SNAP_MIN_EDGE_PX, framedEdge);
+      const orbitK = ORBIT_K * ORBIT_SNAP_REFERENCE_EDGE_PX / dragEdge;
+      applyFreeOrbitDelta(next, dx, dy, orbitK);
+      const locked = isOrbitSnapLocked?.() === true;
+      // An incidental sideways drift must not trigger a turn along that axis.
+      const canSnapPitch = !locked && Math.abs(dy) >= Math.abs(dx);
+      const canSnapYaw = !locked && Math.abs(dx) >= Math.abs(dy);
+      if (!canSnapPitch || extraPitch * dy < 0) extraPitch = 0;
+      if (!canSnapYaw || extraYaw * dx < 0) extraYaw = 0;
+      const beforeX = rotation.x + extraPitch;
+      const beforeY = rotation.y + extraYaw;
+      next.x += extraPitch;
+      next.y += extraYaw;
+      const xCrossing = canSnapPitch ? crossingAt(beforeX, next.x) : Infinity;
+      const yCrossing = canSnapYaw ? crossingAt(beforeY, next.y) : Infinity;
+      const crossing = Math.min(xCrossing, yCrossing);
+      world.dirty = true;
+      if (!Number.isFinite(crossing)) {
+        rotation.x = clampAngle(next.x);
+        rotation.y = clampAngle(next.y);
+        extraPitch = canSnapPitch ? next.x - rotation.x : 0;
+        extraYaw = canSnapYaw ? next.y - rotation.y : 0;
         world.scene.updateMatrix();
         return;
       }
-      // An oblique drag can cross both edges in one event. Keep the pose at the first edge reached.
-      const xCrossing = crossingAt(beforeX, rotation.x);
-      const yCrossing = crossingAt(beforeY, rotation.y);
-      const crossing = Math.min(xCrossing, yCrossing);
-      if (!Number.isFinite(crossing)) return;
       const pitchFirst = xCrossing < yCrossing || (xCrossing === yCrossing && Math.abs(dy) > Math.abs(dx));
       const axis = pitchFirst ? 'x' : 'y';
-      const direction = Math.sign(rotation[axis]);
+      const direction = Math.sign(next[axis]);
 
       const cube = world.cube as Cube;
       const action = new TwistAction(axis, direction > 0, 1);
-      const fromX = pitchFirst ? direction * snapAngle : clampAngle(beforeX + (rotation.x - beforeX) * crossing);
-      const fromY = pitchFirst ? clampAngle(beforeY + (rotation.y - beforeY) * crossing) : direction * snapAngle;
+      const fromX = pitchFirst ? direction * snapAngle : clampAngle(beforeX + (next.x - beforeX) * crossing);
+      const fromY = pitchFirst ? clampAngle(beforeY + (next.y - beforeY) * crossing) : direction * snapAngle;
       if (mode === 'turn' && allowUserLayerTurn?.(action.value) === false) {
         snappedThisDrag = true;
         rotation.set(fromX, fromY, 0);
         world.scene.updateMatrix();
-        onBlockedUserLayerTurn?.(action.value);
+        reportBlockedTurn(action.value);
         return;
       }
       const quarterTurn = direction * Math.PI / 2;
@@ -152,17 +177,23 @@ export function attachEmbeddedSimInteraction({
     world.controller.dragEmpty = mode === 'turn' && wholeCubeDrag && !dragToSnap ? 'rotate' : 'view';
     world.controller.wholeCubeOnly = rotateOnly;
     controller.allowLayerTurn = mode === 'turn' ? allowUserLayerTurn ?? null : null;
-    controller.onBlockedLayerTurn = mode === 'turn' && onBlockedUserLayerTurn
-      ? move => onBlockedUserLayerTurn(move, releasePoint ? toClientPoint(releasePoint) : undefined) : null;
+    controller.onBlockedLayerTurn = mode === 'turn' && onBlockedUserLayerTurn ? reportBlockedTurn : null;
     world.controller.onOrbit = snapAngle ? orbitWithSnap : orbit;
     world.controller.userTwist.push(emit);
     if (pick) controller.taps.push(tap);
     toucher.init(dom, pick || snapAngle || fixedLayerView || onBlockedUserLayerTurn ? action => {
-      if (action.type === 'mousedown' || action.type === 'touchstart') snappedThisDrag = snapFrame !== null;
-      releasePoint = action.type === 'mouseup' || action.type === 'touchend' ? action : null;
+      if (action.type === 'mousedown' || action.type === 'touchstart') {
+        snappedThisDrag = snapFrame !== null;
+        extraPitch = 0;
+        extraYaw = 0;
+      }
       if (fixedLayerView) action.alt = false;
-      controller.touch(action);
-      releasePoint = null;
+      pointerAction = action;
+      try {
+        controller.touch(action);
+      } finally {
+        pointerAction = null;
+      }
     } : controller.touch);
     return () => {
       if (snapFrame !== null) {

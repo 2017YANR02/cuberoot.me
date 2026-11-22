@@ -9,6 +9,28 @@
   padding: 8px 0 4px;
 }
 
+.alg-sim-rotation-lock {
+  position: absolute;
+  inset-block-start: 6px;
+  inset-inline-start: 6px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  max-inline-size: calc(100% - 12px);
+  padding: 3px 6px;
+  border: 1px solid var(--border-default);
+  border-radius: 6px;
+  background: var(--card);
+  color: var(--muted-foreground);
+  font-size: 12px;
+  line-height: 1.25;
+  overflow-wrap: anywhere;
+  pointer-events: none;
+}
+.alg-sim-rotation-lock > svg {
+  flex: none;
+}
+
 /* Fixed previews use the same size for the cube and transport. Keep the
    controls usable at small sizes by reducing spacing instead of scaling icons. */
 .alg-sim-player:not(.is-fill) > .playback-bar {

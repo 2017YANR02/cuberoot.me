@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
+import { Object3D } from 'three';
 import { parseSimEmbedParams } from '@/lib/sim-embed';
 import { attachEmbeddedSimInteraction } from '@/components/sim-embed/attachEmbeddedSimInteraction';
 import type World from '@/app/[lang]/sim/engine/world';
@@ -30,6 +31,9 @@ describe('external simulator parameters', () => {
 describe('embedded pointer policy', () => {
   const makeWorld = () => ({
     puzzleKind: 3,
+    width: 380,
+    height: 380,
+    scale: 1,
     controller: { userTwist: [], touch: vi.fn(), onOrbit: null },
   }) as unknown as World;
 
@@ -72,5 +76,74 @@ describe('embedded pointer policy', () => {
     detach();
     expect(world.controller.userTwist).toEqual([]);
     expect(world.controller.onOrbit).toBeNull();
+  });
+
+  it('keeps the view at the edge while accumulating extra drag within one gesture', () => {
+    const scene = new Object3D();
+    const world = Object.assign(makeWorld(), { scene });
+    const allowUserLayerTurn = vi.fn(() => false);
+    const detach = attachEmbeddedSimInteraction({
+      world, dom: {} as HTMLElement, mode: 'turn', wholeCubeDrag: 'rotate-only',
+      orbitSnapDegrees: 30, allowUserLayerTurn,
+    });
+    const touch = toucher.init.mock.lastCall![1];
+
+    world.controller.onOrbit?.(61, 0);
+    expect(scene.rotation.y).toBeCloseTo(Math.PI / 6);
+    expect(allowUserLayerTurn).not.toHaveBeenCalled();
+
+    touch({ type: 'mouseup' });
+    touch({ type: 'mousedown' });
+    world.controller.onOrbit?.(8, 0);
+    expect(allowUserLayerTurn).not.toHaveBeenCalled();
+    world.controller.onOrbit?.(9, 0);
+    expect(allowUserLayerTurn).toHaveBeenCalledExactlyOnceWith("y'");
+    expect(scene.rotation.y).toBeCloseTo(Math.PI / 6);
+    detach();
+  });
+
+  it('follows a downward drag with leftward drift while at the left edge', () => {
+    const scene = new Object3D();
+    scene.rotation.y = -Math.PI / 6;
+    const world = Object.assign(makeWorld(), { scene });
+    const allowUserLayerTurn = vi.fn(() => false);
+    const detach = attachEmbeddedSimInteraction({
+      world, dom: {} as HTMLElement, mode: 'turn', wholeCubeDrag: 'rotate-only',
+      orbitSnapDegrees: 30, allowUserLayerTurn,
+    });
+
+    world.controller.onOrbit?.(-8, 0);
+    world.controller.onOrbit?.(-15, 20);
+    expect(scene.rotation.y).toBeCloseTo(-Math.PI / 6);
+    expect(allowUserLayerTurn).not.toHaveBeenCalled();
+
+    world.controller.onOrbit?.(-8, 51);
+    expect(allowUserLayerTurn).toHaveBeenCalledExactlyOnceWith("x'");
+    expect(scene.rotation.x).toBeCloseTo(Math.PI / 6);
+    expect(scene.rotation.y).toBeCloseTo(-Math.PI / 6);
+    detach();
+  });
+
+  it.each([
+    { width: 340, height: 600, scale: 1, dragEdge: 340 },
+    { width: 700, height: 500, scale: 0.76, dragEdge: 380 },
+    { width: 230, height: 460, scale: 1, dragEdge: 320 },
+  ])('scales a snap drag for a $width × $height canvas', ({ dragEdge, ...dimensions }) => {
+    const scene = new Object3D();
+    const world = Object.assign(makeWorld(), { scene }, dimensions);
+    const allowUserLayerTurn = vi.fn(() => false);
+    const detach = attachEmbeddedSimInteraction({
+      world, dom: {} as HTMLElement, mode: 'turn', wholeCubeDrag: 'rotate-only',
+      orbitSnapDegrees: 30, allowUserLayerTurn,
+    });
+
+    world.controller.onOrbit?.(dragEdge * 0.10, 0);
+    expect(scene.rotation.y).toBeCloseTo(0.38);
+    world.controller.onOrbit?.(dragEdge * 0.075, 0);
+    expect(scene.rotation.y).toBeCloseTo(Math.PI / 6);
+    expect(allowUserLayerTurn).not.toHaveBeenCalled();
+    world.controller.onOrbit?.(dragEdge * 0.01, 0);
+    expect(allowUserLayerTurn).toHaveBeenCalledExactlyOnceWith("y'");
+    detach();
   });
 });

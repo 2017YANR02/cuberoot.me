@@ -20,6 +20,7 @@
  */
 
 import { forwardRef, useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState, type CSSProperties, type ReactNode } from 'react';
+import { Lock } from '@app-foundation/icons/lucide';
 import { invertMoveString } from '@cuberoot/shared/alg-notation';
 import SimStage, { afterFirstPaint } from '@/components/sim-embed/SimStage';
 import { useT } from '@/hooks/useT';
@@ -894,6 +895,12 @@ const AlgSimPlayer = forwardRef<AlgPlayerHandle, {
           />
         )}
         {stageOverlay}
+        {orbitSnapLocked && interactionMode !== 'none' && typeof puzzleKind === 'number' && (
+          <span className="alg-sim-rotation-lock">
+            <Lock size={12} aria-hidden="true" />
+            <span>{t('转体已锁定', 'Cube rotation locked')}</span>
+          </span>
+        )}
       </SimStage>
       {controlMode === 'replay' ? (
         <AlgPlaybackControls
