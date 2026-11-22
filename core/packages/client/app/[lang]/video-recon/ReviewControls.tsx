@@ -31,7 +31,7 @@ export function ReviewControls({
       onStepBack={() => onStep(-1)} onStepForward={() => onStep(1)} onTogglePlay={onPlay}
       leading={<span className="video-recon-muted video-recon-transport-time">{timecode(position - origin)} / {timecode(end - origin)}</span>}
       trailing={<label className="video-recon-inline-label video-recon-transport-speed">
-        <select aria-label={t('速度', 'Speed')} value={speed} disabled={disabled || !length}
+        <select className="video-recon-speed-select" aria-label={t('速度', 'Speed')} value={speed} disabled={disabled || !length}
           onChange={event => onSpeed(Number(event.currentTarget.value) as PlaybackSpeed)}>
           {PLAYBACK_SPEEDS.map(value => <option value={value} key={value}>{value}×</option>)}
         </select>

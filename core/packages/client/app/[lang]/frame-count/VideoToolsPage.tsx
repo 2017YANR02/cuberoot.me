@@ -65,7 +65,7 @@ export default function VideoToolsPage({ title }: { title: string }) {
         </Link>}</Tooltip>
       </h1>
       <div className="video-tools-modes" role="group" aria-label={title}>
-        {tabs.map(({ value, label, Icon }) => <button key={value} type="button" className="btn-secondary"
+        {tabs.map(({ value, label, Icon }) => <button key={value} type="button" className="btn-secondary video-tools-mode"
           aria-pressed={mode === value} disabled={timerBusy} onClick={() => void setMode(value)}>
           <Icon size={16} aria-hidden />{label}
         </button>)}

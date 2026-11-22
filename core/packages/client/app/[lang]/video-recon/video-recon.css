@@ -286,7 +286,7 @@
     padding-inline: 6px;
   }
   .video-recon-transport-time { font-size: 0.8125rem; }
-  .video-recon-transport .video-recon-transport-speed select {
+  .video-recon-transport .video-recon-speed-select {
     width: 3.75rem;
     padding-inline: 5px;
     font-size: 0.8125rem;

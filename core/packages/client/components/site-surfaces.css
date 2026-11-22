@@ -279,7 +279,7 @@ body[data-site-scenery] .mem-reminder {
 body[data-site-scenery] :is(
   select,
   textarea:not(.site-assistant-draft, :where(
-    .scramble-manual-inline textarea,
+    .scramble-manual-inline .scramble-src-manual-input,
     .submit-field-textarea.submit-input-locked
   )),
   input:not([type]),
