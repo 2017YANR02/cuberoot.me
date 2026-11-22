@@ -38,7 +38,8 @@ function snapshot(url: URL): string | null {
     const recentFilter = pathname === '/scramble/recent' && RECENT_SCRAMBLE_KEYS.has(key);
     const algFilter = pathname.startsWith('/alg/') && ALG_LIBRARY_KEYS.has(key);
     const coursePageSize = key === 'pageSize' && pathname.replace(/\/$/, '') === '/platform/courses';
-    const videoMode = key === 'mode' && VIDEO_TOOL_DOCUMENT.test(pathname) && (value === 'detector' || value === 'timer');
+    const videoMode = key === 'mode' && VIDEO_TOOL_DOCUMENT.test(pathname)
+      && (value === 'detector' || value === 'timer' || (value === 'record' && pathname.replace(/\/$/, '') === '/frame-count'));
     if ((STATE_KEYS.has(key) || recentFilter || algFilter || coursePageSize || videoMode) && value.length <= 200) clean.searchParams.append(key, value);
   }
   if (/^#[a-zA-Z0-9_%:/.-]{1,160}$/.test(url.hash)) clean.hash = url.hash;

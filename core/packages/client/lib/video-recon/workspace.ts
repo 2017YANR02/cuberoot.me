@@ -13,6 +13,7 @@ import { FrameQueue, openVideoFile } from "./engine/frame-stream";
 import type { SourceFrame, VideoFileSource } from "./engine/frame-stream";
 import { startCameraCapture } from "./engine/camera-source";
 import type { CameraCapture } from "./engine/camera-source";
+import { startCameraRecording } from "./engine/camera-recording";
 import { PoseFitter, type PoseFittingOptions } from "./engine/pose-fitter";
 import type { FittedPose } from "./engine/pose-types";
 import { OrderedStage } from "./engine/ordered-stage";
@@ -41,7 +42,8 @@ import type {SourceCrop, PixelCrop} from './engine/source-crop';
 import { createVideoWorker, VIDEO_RECON_ASSETS } from './engine/worker-assets';
 import type { RunMetadata } from './engine/run-provenance';
 
-export type WorkspaceTab = 'detector' | 'timer';
+export type WorkspaceTab = 'detector' | 'timer' | 'record';
+const RECORDING_LIMIT_MS = 5 * 60 * 1000;
 
 let pendingFingerprints: Promise<NonNullable<RunMetadata['fingerprints']>> | undefined;
 function fingerprints(base: string) {
@@ -76,6 +78,12 @@ export function createVideoWorkspace(stage: HTMLCanvasElement, initialTab: Works
     timerBusy: false,
     timerCamera: false,
     cameraClockOriginMs: undefined as number | undefined,
+    cameraConnecting: false,
+    cameraRecording: undefined as {
+      id: string; phase: 'recording' | 'finalizing' | 'error'; file?: File; error?: string;
+    } | undefined,
+    cameraRecordingError: '',
+    cameraRecordingReplay: undefined as TimerReplay | undefined,
     timerReconstructions: {} as Record<string, TimerReconstructionResult>,
     timerReplays: {} as Record<string,TimerReplay>,
     replayLoading: false,
@@ -146,7 +154,10 @@ export function createVideoWorkspace(stage: HTMLCanvasElement, initialTab: Works
   const timerReplayCache=new TimerReplayCache(new LocalReplayStorage(),(clip,loading=false,error='')=>{
     state.timerReplays=clip?{[clip.id]:clip}:{};state.replayLoading=loading;state.replayStorageError=error;
   });
-  const timerReplayStore=new TimerReplayStore(clip=>timerReplayCache.publish(clip));
+  const timerReplayStore=new TimerReplayStore(clip=>{
+    if (clip.id === state.cameraRecording?.id) state.cameraRecordingReplay = clip;
+    else timerReplayCache.publish(clip);
+  });
   const timerCaptureGate=new TimerCaptureGate();
   const timerPoseOptions = new Map<string, PoseFittingOptions>();
   const archivedDiagnostics = new Map<string, Promise<Blob>>();
@@ -159,9 +170,18 @@ export function createVideoWorkspace(stage: HTMLCanvasElement, initialTab: Works
       }, onError);
       return search;
     },
-    (id, value) => { state.timerReconstructions = { ...state.timerReconstructions, [id]: timerDiagnostics.update(id, value) }; },
+    (id, value) => {
+      state.timerReconstructions = {
+        ...state.timerReconstructions, [id]: id === state.cameraRecording?.id ? value : timerDiagnostics.update(id, value),
+      };
+    },
     id=>{
       const playback=replayReconstruction(state.timerReconstructions[id]);
+      if (id === state.cameraRecording?.id) {
+        clearTimeout(recordingDrainDeadline);
+        state.timerReconstructions = { ...state.timerReconstructions, [id]: playback };
+        return;
+      }
       timerReplayCache.finish(id, playback);
       state.timerReconstructions = { ...state.timerReconstructions, [id]: playback };
       if (disposed) return;
@@ -176,7 +196,8 @@ export function createVideoWorkspace(stage: HTMLCanvasElement, initialTab: Works
     });
   function selectTab(tab: WorkspaceTab) {
     if (state.timerBusy || tab === state.activeTab) return;
-    if (tab === 'timer') {
+    if (state.activeTab === 'record' || tab === 'record') stopSource();
+    if (tab !== 'detector') {
       if (state.uploadedFile) stopSource();
       moveSearch?.dispose(); moveSearch = undefined; state.searchResult = undefined; state.searchError = '';
       activeRunId = undefined;
@@ -185,15 +206,32 @@ export function createVideoWorkspace(stage: HTMLCanvasElement, initialTab: Works
     if (tab === 'detector' && (state.timerCamera || state.sourceKind === 'camera')) stopSource();
     state.activeTab = tab;
   }
+  const cameraReady = () => state.sourceKind === 'camera' && state.running && !state.captureStopped &&
+    state.status === 'ready' && state.cameraClockOriginMs !== undefined;
+  function recordingPhase(): 'idle' | 'recording' | 'finalizing' | 'complete' | 'error' {
+    const attempt = state.cameraRecording;
+    if (!attempt) return state.cameraRecordingError ? 'error' : 'idle';
+    if (attempt.phase !== 'finalizing') return attempt.phase;
+    if (!attempt.file && !attempt.error) return 'finalizing';
+    const reconstruction = state.timerReconstructions[attempt.id];
+    if (reconstruction?.status === 'failed') return 'error';
+    if (reconstruction?.status !== 'solved' || !state.cameraRecordingReplay?.complete) return 'finalizing';
+    return attempt.error || !reconstruction.moves?.length ? 'error' : 'complete';
+  }
+  const recordingBusy = () => ['recording', 'finalizing'].includes(recordingPhase());
   function startTimerSolve(id: string, scramble: string, clockMs: number) {
     if (state.cameraClockOriginMs === undefined) return;
     const start = (clockMs - state.cameraClockOriginMs) / 1000;
-    const captureStart = timerCaptureGate.start(id, start);
-    const config = timerReconstruction.start(id, scramble, start, state.sourceFps || 30, state.searchDiagnostics, captureStart);
+    const filming = id === state.cameraRecording?.id;
+    const captureStart = timerCaptureGate.start(id, start, filming ? 0 : undefined);
+    const config = timerReconstruction.start(
+      id, scramble, start, state.sourceFps || 30, !filming && state.searchDiagnostics, captureStart, filming,
+    );
     timerPoseOptions.set(id, { scramble, turningStartFrame: config.turning_start_frame, camera: true });
-    timerReplayCache.begin(id);
+    if (!filming) timerReplayCache.begin(id);
     timerReplayStore.start(id,start,config.fps,captureStart);
     state.timerCapturePhase='capturing';capture?.resume(captureStart);
+    if (filming) return;
     const runId = timerDiagnostics.start(id, generation, config, {
       policyVersion: POLICY_VERSION, appOrigin: location.origin, poseWorkers: poseWorkerCount(navigator.hardwareConcurrency),
       admissionCapacity: ADMISSION_CAPACITY,
@@ -205,13 +243,94 @@ export function createVideoWorkspace(stage: HTMLCanvasElement, initialTab: Works
   }
   function stopTimerSolve(id: string, clockMs: number) {
     if (state.cameraClockOriginMs !== undefined) {
-      const timestamp=(clockMs-state.cameraClockOriginMs)/1000;
-      timerReconstruction.stop(id,timestamp);timerReplayStore.stop(id,timestamp);
-      timerCaptureGate.stop(id,timestamp);
+      const timestamp = (clockMs - state.cameraClockOriginMs) / 1000;
+      const tail = id === state.cameraRecording?.id ? 0 : undefined;
+      timerReconstruction.stop(id, timestamp, tail);
+      timerReplayStore.stop(id, timestamp, tail);
+      timerCaptureGate.stop(id, timestamp, tail);
+    }
+  }
+  let cameraRecorder: ReturnType<typeof startCameraRecording> | undefined;
+  let recordingDeadline: ReturnType<typeof setTimeout> | undefined;
+  let recordingDrainDeadline: ReturnType<typeof setTimeout> | undefined;
+  let recordingFinishDeadline: ReturnType<typeof setTimeout> | undefined;
+
+  function clearCameraRecording() {
+    clearTimeout(recordingDeadline);
+    clearTimeout(recordingDrainDeadline);
+    clearTimeout(recordingFinishDeadline);
+    cameraRecorder?.cancel();
+    cameraRecorder = undefined;
+    const id = state.cameraRecording?.id;
+    if (id) {
+      timerReconstruction.cancelSolve(id);
+      timerReplayStore.remove(id);
+      const remaining = { ...state.timerReconstructions };
+      delete remaining[id];
+      state.timerReconstructions = remaining;
+    }
+    state.cameraRecording = undefined;
+    state.cameraRecordingReplay = undefined;
+    state.cameraRecordingError = '';
+  }
+
+  function finishCameraRecording() {
+    const attempt = state.cameraRecording;
+    const recorder = cameraRecorder;
+    if (!attempt || attempt.phase !== 'recording' || !recorder) return;
+    clearTimeout(recordingDeadline);
+    state.cameraRecording = { id: attempt.id, phase: 'finalizing' };
+    stopTimerSolve(attempt.id, performance.timeOrigin + performance.now());
+    recordingDrainDeadline = setTimeout(() => {
+      if (attempt.id !== state.cameraRecording?.id || state.timerCapturePhase !== 'capturing') return;
+      closeTimerInput('The camera stopped delivering frames.');
+      capture?.idle();
+      state.timerCapturePhase = 'idle';
+    }, 2500);
+    recordingFinishDeadline = setTimeout(() => {
+      const current = state.cameraRecording;
+      if (current?.id !== attempt.id || !recordingBusy()) return;
+      timerReconstruction.cancelSolve(current.id, 'Live reconstruction timed out.');
+      timerReplayStore.closeInput();
+      state.cameraRecording = { ...current, phase: 'error', error: current.error || 'Live reconstruction timed out.' };
+      recorder.cancel();
+      stopSource();
+    }, 45_000);
+    void recorder.stop().then(file => {
+      if (attempt.id === state.cameraRecording?.id && state.cameraRecording.phase === 'finalizing' && !disposed)
+        state.cameraRecording = { ...state.cameraRecording, file };
+    }, cause => {
+      if (attempt.id === state.cameraRecording?.id && state.cameraRecording.phase === 'finalizing' && !disposed)
+        state.cameraRecording = { ...state.cameraRecording, error: cause instanceof Error ? cause.message : String(cause) };
+    }).finally(() => { if (cameraRecorder === recorder) cameraRecorder = undefined; });
+  }
+
+  function recordCamera() {
+    if (state.activeTab !== 'record' || !state.stream || !cameraReady() || recordingBusy()) return;
+    let recorder: ReturnType<typeof startCameraRecording>;
+    try {
+      recorder = startCameraRecording(state.stream);
+    } catch (cause) {
+      state.cameraRecordingError = cause instanceof Error ? cause.message : String(cause);
+      return;
+    }
+    clearCameraRecording();
+    cameraRecorder = recorder;
+    try {
+      const id = crypto.randomUUID();
+      state.cameraRecording = { id, phase: 'recording' };
+      startTimerSolve(id, state.initialScramble.trim(), performance.timeOrigin + performance.now());
+      const ended = () => { if (cameraRecorder === recorder) finishCameraRecording(); };
+      void recorder.result.then(ended, ended);
+      recordingDeadline = setTimeout(finishCameraRecording, RECORDING_LIMIT_MS);
+    } catch (cause) {
+      clearCameraRecording();
+      state.cameraRecordingError = cause instanceof Error ? cause.message : String(cause);
     }
   }
   function closeTimerInput(message?: string) {
     if (!state.timerCamera) return;
+    finishCameraRecording();
     timerCaptureGate.clear();
     timerPoseOptions.clear();
     timerReplayStore.closeInput();
@@ -361,15 +480,16 @@ export function createVideoWorkspace(stage: HTMLCanvasElement, initialTab: Works
   function startMoveSearch() {
     moveSearch?.dispose(); moveSearch = undefined; state.searchResult = undefined; state.searchError = "";
     state.previewSearch = undefined;
-    if (state.timerCamera || state.activeTab === 'timer' || !state.searchEnabled || state.sourceKind === "none") return;
-    if (!state.initialScramble.trim()) { state.searchError = "Enter the initial scramble to start move search."; return; }
+    if (state.timerCamera || state.activeTab !== 'detector' || !state.searchEnabled || state.sourceKind === "none") return;
+    const inferScramble = state.sourceKind === "video" && !state.initialScramble.trim();
+    if (!inferScramble && !state.initialScramble.trim()) return;
     if(state.searchCleanup&&(!Number.isFinite(state.searchCleanupTolerance)||state.searchCleanupTolerance<0||state.searchCleanupTolerance>1)){
       state.searchError="Cleanup color tolerance must be between 0 and 1.";return;
     }
     const token = generation;
     const config = createSearchConfig({scramble:state.initialScramble,fps:state.sourceFps||30,camera:state.sourceKind==='camera',
       openingHoldSeconds: state.openingHoldSeconds,diagnostics:state.searchDiagnostics,bidirectional:state.searchBidirectional&&state.sourceKind==="video",originSeconds:state.sourceKind==="video"?searchOriginTimestamp:0,
-      postprocessIdentityLoops:state.searchCleanup,postprocessColorTolerance:state.searchCleanup?state.searchCleanupTolerance:0.08,
+      postprocessIdentityLoops:state.searchCleanup,postprocessColorTolerance:state.searchCleanup?state.searchCleanupTolerance:0.08,inferScramble,
       startSeconds:state.sourceKind==="video"?state.solveStart:undefined,endSeconds:state.sourceKind==="video"?state.solveEnd:undefined});
     const runId=recording.startRun(token,config,{policyVersion:POLICY_VERSION,appOrigin:location.origin,
       poseWorkers:poseWorkerCount(navigator.hardwareConcurrency),admissionCapacity:ADMISSION_CAPACITY,
@@ -530,7 +650,6 @@ export function createVideoWorkspace(stage: HTMLCanvasElement, initialTab: Works
   }
   async function beginReconstruction() {
     if (!fileSource || !state.trimming || state.status !== "ready" || state.cropPreview || state.cropLoading) return;
-    if (state.searchEnabled && !state.initialScramble.trim()) { state.searchError = "Enter the initial scramble."; return; }
     state.cropLocked = true;
     const token = generation; state.mediaError = ""; previewVersion++; busy = true;
     try {
@@ -647,7 +766,8 @@ export function createVideoWorkspace(stage: HTMLCanvasElement, initialTab: Works
     state.presentedTimestamp=completed.timestamp;
     if (completed.recording.sourceKind === "video" && (!completed.fitPose || packet.result.fittedPose))
       videoResults.put(completed.cacheKey, completed.timestamp, packet.result);
-    const retainDetection = completed.recording.sourceKind !== 'camera' || !state.timerCamera || timerReconstruction.includes(completed.timestamp);
+    const retainDetection = state.activeTab !== 'record' &&
+      (completed.recording.sourceKind !== 'camera' || !state.timerCamera || timerReconstruction.includes(completed.timestamp));
     if (retainDetection && (completed.counted || completed.recording.sourceKind === "image" || completed.recording.sourceKind === "video")) {
       const sequence = recording.append(packet.result, completed.recording);
       if (completed.camera && state.timerCamera) {
@@ -830,6 +950,8 @@ export function createVideoWorkspace(stage: HTMLCanvasElement, initialTab: Works
   }
 
   function stopSource() {
+    if (recordingBusy()) clearCameraRecording();
+    state.cameraConnecting = false;
     closeCrop(); state.uploadedFile = undefined; state.sourceCrop = undefined; state.cropLocked = false; state.cropLoading = false;
     closeTimerInput('Camera disconnected before the complete solve window was processed');
     state.timerCapturePhase='idle';
@@ -891,7 +1013,8 @@ export function createVideoWorkspace(stage: HTMLCanvasElement, initialTab: Works
 
   async function camera() {
     stopSource();
-    state.timerCamera = state.activeTab === 'timer';
+    state.timerCamera = state.activeTab !== 'detector';
+    state.cameraConnecting = true;
     state.mediaError = "";
     const token = generation;
     try {
@@ -943,7 +1066,9 @@ export function createVideoWorkspace(stage: HTMLCanvasElement, initialTab: Works
         (message) => {
           if (token !== generation || disposed) return;
           state.captureStopped = true;
+          finishCameraRecording();
           state.stream?.getTracks().forEach((track) => track.stop());
+          state.stream = undefined;
           if (message) state.mediaError = message;
           scheduleNext();
         },
@@ -966,6 +1091,8 @@ export function createVideoWorkspace(stage: HTMLCanvasElement, initialTab: Works
       state.stream = undefined;
       state.mediaError =
         cause instanceof Error ? cause.message : "Unable to open the camera.";
+    } finally {
+      if (token === generation) state.cameraConnecting = false;
     }
   }
 
@@ -1409,6 +1536,7 @@ export function createVideoWorkspace(stage: HTMLCanvasElement, initialTab: Works
   function cleanup() {
     if (disposed) return;
     disposed = true;
+    clearCameraRecording();
     closeCrop();
     timerReconstruction.cancel('Page closed before reconstruction finished');
     timerReplayStore.clear();timerReplayCache.clear();
@@ -1464,6 +1592,7 @@ export function createVideoWorkspace(stage: HTMLCanvasElement, initialTab: Works
     timestamp: number, result: FrameResult, colors: NonNullable<ReturnType<typeof previewMetadata>['colors']>,
     fps: number, turningStartFrame: number | null, step: MoveSearchResult['steps'][number] | undefined,
   ) => measuredCubeFrame({ timestamp, result }, colors, { fps, solved: true, turningStartFrame }, step));
+  const reconstructedScramble = () => state.searchResult?.inferred_scramble ?? moveSearch?.config.scramble ?? '';
 
   function liveReconstruction() {
     if (state.sourceKind !== 'video' || state.trimming || derived.reconstructionComplete || !moveSearch) return;
@@ -1484,8 +1613,8 @@ export function createVideoWorkspace(stage: HTMLCanvasElement, initialTab: Works
   }
 
   const derived = {
-    get reconstructionChoices() { return searchMetadata(state.searchResult, moveSearch?.config.scramble ?? '').choices; },
-    get reconstructionFlags() { return searchMetadata(state.searchResult, moveSearch?.config.scramble ?? '').flags; },
+    get reconstructionChoices() { return searchMetadata(state.searchResult, reconstructedScramble()).choices; },
+    get reconstructionFlags() { return searchMetadata(state.searchResult, reconstructedScramble()).flags; },
     get reconstructionComplete() {
       return state.videoInputComplete && (!state.searchEnabled || !!state.searchError ||
         !!state.searchResult && ["solved", "already_solved", "exhausted", "state_limit"].includes(state.searchResult.status));
@@ -1508,7 +1637,7 @@ export function createVideoWorkspace(stage: HTMLCanvasElement, initialTab: Works
     get currentReviewIndex() { return reviewIndex(derived.reviewRows, state.presentedTimestamp); },
     get cubeReplayTimelines() {
       if (!derived.reconstructionComplete || state.trimming || state.sourceKind !== 'video') return undefined;
-      return projection(derived.reviewRows, searchMetadata(state.searchResult, moveSearch?.config.scramble ?? '').colors,
+      return projection(derived.reviewRows, searchMetadata(state.searchResult, reconstructedScramble()).colors,
         state.sourceFps, derived.cubeSolved, state.searchResult, moveSearch?.config.turning_start_frame);
     },
     get projectedTimeline() { return derived.cubeReplayTimelines?.projected ?? []; },
@@ -1520,9 +1649,11 @@ export function createVideoWorkspace(stage: HTMLCanvasElement, initialTab: Works
   };
   function getView() {
     const reviewing = derived.reconstructionComplete && !state.trimming;
+    const recording = state.cameraRecording;
+    const recordingResult = recording && state.timerReconstructions[recording.id];
     return {
       activeTab: state.activeTab,
-      timerBusy: state.timerBusy,
+      timerBusy: state.timerBusy || recordingBusy(),
       timerBuffering: derived.timerBuffering,
       timerReconstructions: state.timerReconstructions,
       timerReplays: state.timerReplays,
@@ -1533,7 +1664,13 @@ export function createVideoWorkspace(stage: HTMLCanvasElement, initialTab: Works
       error: state.error,
       mediaError: state.mediaError,
       sourceName: state.sourceName,
-      timerReady: state.sourceKind === "camera" && state.running && !state.captureStopped && state.status === "ready" && state.cameraClockOriginMs !== undefined,
+      timerReady: cameraReady(),
+      cameraConnecting: state.cameraConnecting,
+      cameraRecordingPhase: recordingPhase(),
+      cameraRecordingFile: recording?.file,
+      cameraRecordingError: recording?.error || state.cameraRecordingError || (recordingResult?.status === 'failed' ? recordingResult.message : undefined),
+      cameraRecordingResult: recordingResult,
+      cameraRecordingReplay: state.cameraRecordingReplay,
       sourceKind: state.sourceKind,
       running: state.running,
       playbackSpeed: state.playbackSpeed,
@@ -1549,7 +1686,7 @@ export function createVideoWorkspace(stage: HTMLCanvasElement, initialTab: Works
       solveStart: state.solveStart,
       solveEnd: state.solveEnd,
       initialScramble: state.initialScramble,
-      reconstructedScramble: moveSearch?.config.scramble ?? '',
+      reconstructedScramble: reconstructedScramble(),
       cropLocked: state.cropLocked,
       cropLoading: state.cropLoading,
       cropPreview: state.cropPreview,
@@ -1599,6 +1736,7 @@ export function createVideoWorkspace(stage: HTMLCanvasElement, initialTab: Works
       listeners.add(listener);
       return () => { listeners.delete(listener); };
     },
+    recordCamera, finishCameraRecording: () => finishCameraRecording(),
     setScramble: (value: string) => { state.initialScramble = value; },
     setTimerBusy: (value: boolean) => { state.timerBusy = value; },
     selectTimerReplay: (id?: string) => { timerReplayCache.select(id); },

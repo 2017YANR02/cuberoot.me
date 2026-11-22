@@ -56,14 +56,16 @@ export function SolveRange({ view, workspace, onBegin, fixedScramble }: {
           onKeyDown={event => { if (event.key === 'Enter') event.currentTarget.blur(); }} />
       </label>
     </div>
-    <label className="video-recon-field">{t('打乱', 'Scramble')}
+    <label className="video-recon-field">{fixedScramble ? t('打乱', 'Scramble') : t('打乱（选填）', 'Scramble (optional)')}
       <input type="text" value={view.initialScramble} onChange={event => workspace.setScramble(event.currentTarget.value)}
         readOnly={fixedScramble} autoComplete="off" autoCapitalize="none" spellCheck={false} />
     </label>
     <div className="video-recon-section-heading">
-      <p className="video-recon-muted">{t('区间开头需包含第一步之前的清晰魔方画面。', 'Include a clear view of the cube before the first move.')}</p>
+      <p className="video-recon-muted">{!fixedScramble && !view.initialScramble.trim()
+        ? t('打乱留空时，请保留开头清晰的打乱局面和结尾清晰的还原局面。', 'With no scramble, include a clear view of the shuffled cube at the start and the solved cube at the end.')
+        : t('区间开头需包含第一步之前的清晰魔方画面。', 'Include a clear view of the cube before the first move.')}</p>
       <button type="button" className="btn-primary" onClick={onBegin}
-        disabled={view.status !== 'ready' || view.cropLoading || !!view.cropPreview || !view.initialScramble.trim()}>
+        disabled={view.status !== 'ready' || view.cropLoading || !!view.cropPreview || (fixedScramble && !view.initialScramble.trim())}>
         {t('开始复盘', 'Reconstruct')}
       </button>
     </div>

@@ -98,6 +98,86 @@ describe('camera solve capture windows', () => {
     expect(gate.admit(10.5).frame).toEqual({ id: 'second', reset: false });
   });
 
+  it.each(['R', ''])('uses the exact filming window with scramble %j', async scramble => {
+    const id = 'recording';
+    const gate = new TimerCaptureGate();
+    const update = vi.fn();
+    const search = { submit: vi.fn(), end: vi.fn(async () => {}), dispose: vi.fn() };
+    const reconstruction = new TimerReconstruction(() => search, update);
+    const publish = vi.fn();
+    const replay = new TimerReplayStore(publish);
+    const start = gate.start(id, 2, 0);
+    expect(start).toBe(2);
+    const config = reconstruction.start(id, scramble, 2, 30, false, start, !scramble);
+    expect(config.turning_start_frame).toBeNull();
+    expect(!!config.infer_scramble).toBe(!scramble);
+    replay.start(id, 2, config.fps, start);
+
+    const frame = {} as FrameResult;
+    const pose = Promise.resolve({} as FittedPose);
+    for (const time of [1.99, 2, 2.5]) {
+      reconstruction.submit(time, frame, pose);
+      replay.capture(time, frame, async () => new Blob());
+    }
+    expect(gate.admit(1.99)).toEqual({ ends: [] });
+    expect(gate.admit(2).frame).toEqual({ id, reset: true });
+
+    gate.stop(id, 3, 0);
+    reconstruction.stop(id, 3, 0);
+    replay.stop(id, 3, 0);
+    expect(gate.admit(3)).toEqual({ ends: [{ id, timestamp: 3, latest: true }] });
+    reconstruction.submit(3, frame, pose);
+    replay.capture(3, frame, async () => new Blob());
+    reconstruction.finishThrough(3);
+    replay.finishThrough(3);
+
+    expect(search.submit.mock.calls.map(([time]) => time)).toEqual([2, 2.5]);
+    expect(search.end).toHaveBeenCalledOnce();
+    expect(update.mock.lastCall?.[1].config).toMatchObject({ requested_start_seconds: 2, source_end_seconds: 3 });
+    await vi.waitFor(() => expect(publish.mock.lastCall?.[0]).toMatchObject({ complete: true, start: 2, end: 3 }));
+    expect(publish.mock.lastCall?.[0].frames.map((row: { timestamp: number }) => row.timestamp)).toEqual([2, 2.5]);
+    reconstruction.cancel();
+  });
+
+  it('finishes publishing a retained camera frame when the search times out', async () => {
+    vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout', 'performance'] });
+    try {
+      const update = vi.fn();
+      const search = { submit: vi.fn(), end: vi.fn(async () => {}), dispose: vi.fn() };
+      let report!: Parameters<TimerSearchFactory>[1];
+      const reconstruction = new TimerReconstruction((_config, result) => {
+        report = result;
+        return search;
+      }, update);
+      const publish = vi.fn();
+      const replay = new TimerReplayStore(publish);
+      const frame = {} as FrameResult;
+      const id = 'recording';
+      const image = new Blob(['camera frame']);
+      let encode!: (blob: Blob) => void;
+      const encoding = new Promise<Blob>(resolve => { encode = resolve; });
+
+      reconstruction.start(id, 'R', 2, 30);
+      replay.start(id, 2, 1000);
+      reconstruction.submit(2.5, frame, Promise.resolve({} as FittedPose));
+      replay.capture(2.5, frame, () => encoding);
+      reconstruction.stop(id, 3, 0);
+      replay.stop(id, 3, 0);
+      reconstruction.finishThrough(3);
+      replay.finishThrough(3);
+      report({ status: 'running', steps: [] } as unknown as MoveSearchResult, true);
+      vi.advanceTimersByTime(TIMER_SEARCH_LIMIT_MS);
+      expect(update.mock.lastCall?.[1]).toMatchObject({ status: 'failed', message: expect.stringContaining('timed out') });
+      expect(publish).not.toHaveBeenCalled();
+
+      encode(image);
+      await vi.advanceTimersByTimeAsync(0);
+      expect(publish.mock.lastCall?.[0]).toMatchObject({
+        complete: true, end: 3, frames: [{ timestamp: 2.5, image }],
+      });
+    } finally { vi.useRealTimers(); }
+  });
+
   it('includes pre-roll in search and replay while keeping the stopwatch origin', async () => {
     const update = vi.fn();
     const search = { submit: vi.fn(), end: vi.fn(async () => {}), dispose: vi.fn() };

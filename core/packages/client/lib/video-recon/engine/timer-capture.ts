@@ -41,17 +41,17 @@ export class TimerCaptureGate {
   private latestId?: string;
   private previousEnd = 0;
 
-  start(id: string, solveStart: number) {
-    const start = Math.max(this.previousEnd, solveStart - TIMER_PRE_ROLL_SECONDS, 0);
+  start(id: string, solveStart: number, preRollSeconds = TIMER_PRE_ROLL_SECONDS) {
+    const start = Math.max(this.previousEnd, solveStart - preRollSeconds, 0);
     this.latestId = id;
     this.windows.set(id, { id, start, closed: false, first: true });
     return start;
   }
 
-  stop(id: string, stop: number) {
+  stop(id: string, stop: number, tailSeconds = TIMER_TAIL_SECONDS) {
     const window = this.windows.get(id);
     if (window) {
-      window.end = stop + TIMER_TAIL_SECONDS;
+      window.end = stop + tailSeconds;
       this.previousEnd = window.end;
     }
   }

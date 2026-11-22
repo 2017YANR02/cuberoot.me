@@ -18,15 +18,18 @@ import type { MoveStep } from '@/lib/video-recon/engine/move-search-types';
 import type { SolveRange as TimeRange } from '@/lib/video-recon/engine/solve-range';
 import type { SourceCrop } from '@/lib/video-recon/engine/source-crop';
 import { CameraTimer } from './CameraTimer';
+import { CameraRecordingControls } from './CameraRecordingControls';
 import { ProjectedCube } from './ProjectedCube';
 import { ReviewControls } from './ReviewControls';
 import { SolveRange } from './SolveRange';
 import { TpsGraph } from './TpsGraph';
+import { TimerReplay } from './TimerReplay';
 import type { VideoSolveAnalysisProps } from './VideoSolveAnalysis';
 import './video-recon.css';
 
 const NO_MOVES: readonly MoveStep[] = [];
 const VIDEO_MODES: WorkspaceTab[] = ['detector', 'timer'];
+const ignoreReplayPosition = () => {};
 const noWorkspace = () => null;
 const noSubscription = () => () => {};
 const clientSnapshot = () => true;
@@ -73,6 +76,7 @@ export function VideoReconWorkspace({ mode, handoff, submission, onModeChange, o
   const [dragOver, setDragOver] = useState(false);
   const view = useSyncExternalStore(workspace?.subscribe ?? noSubscription, workspace?.getSnapshot ?? noWorkspace, noWorkspace);
   const detector = (view?.activeTab ?? mode) === 'detector';
+  const filming = (view?.activeTab ?? mode) === 'record';
   const timerBusy = !!view?.timerBusy;
   const [imageTransform, setImageTransform] = useState(INITIAL_VIDEO_TRANSFORM);
   const fileSelected = detector && (view?.sourceKind === 'image' || view?.sourceKind === 'video');
@@ -105,8 +109,9 @@ export function VideoReconWorkspace({ mode, handoff, submission, onModeChange, o
   useEffect(() => {
     if (!workspace) return;
     const current = workspace.getSnapshot();
-    if (!mode || mode === 'detector' && current.activeTab === 'timer' && current.timerBusy) {
-      if (current.activeTab === 'timer') workspace.stopSource();
+    if (!mode || current.activeTab === 'record' && mode !== 'record' ||
+      mode === 'detector' && current.activeTab === 'timer' && current.timerBusy) {
+      if (current.activeTab !== 'detector') workspace.stopSource();
       else if (current.running && current.reconstructionComplete) void workspace.togglePlayback();
       workspace.closeCrop();
     }
@@ -174,6 +179,7 @@ export function VideoReconWorkspace({ mode, handoff, submission, onModeChange, o
   const detectorLabel = t('视频检测', 'Video detector');
   const fitFrameLabel = t('适应画面', 'Fit frame');
   const timerLabel = t('摄像头计时', 'Camera timer');
+  const filmingLabel = t('边拍边复盘', 'Live reconstruction');
   const reviewing = detector && view?.sourceKind === 'video' && view.reconstructionComplete && !view.trimming;
   const reconstructing = detector && view?.sourceKind === 'video' && !view.trimming && !view.reconstructionComplete;
   const pendingResult = reconstructing && !view.mediaError && view.status !== 'error';
@@ -223,11 +229,11 @@ export function VideoReconWorkspace({ mode, handoff, submission, onModeChange, o
     </header>}
     <div className={showResults ? 'video-recon-columns video-recon-results' : !detector ? 'video-recon-columns video-recon-camera-layout' : undefined}>
       <section className={detector ? 'video-recon-source-panel' : 'video-recon-source-panel video-recon-panel'}
-        data-site-surface={detector ? undefined : 'panel'} aria-label={detector ? detectorLabel : timerLabel}>
+        data-site-surface={detector ? undefined : 'panel'} aria-label={detector ? detectorLabel : filming ? filmingLabel : timerLabel}>
         {detector && view?.sourceName && <span className="video-recon-file-name" dir="auto">{view.sourceName}</span>}
         {!detector && <div className="video-recon-section-heading">
           <h2>{t('摄像头画面', 'Camera preview')}</h2>
-          {cameraConnected && workspace && <button type="button" className="btn-secondary" disabled={view.timerBusy} onClick={workspace.stopSource}>
+          {!filming && cameraConnected && workspace && <button type="button" className="btn-secondary" disabled={view.timerBusy} onClick={workspace.stopSource}>
             <Unplug size={16} aria-hidden />{t('断开摄像头', 'Disconnect camera')}
           </button>}
         </div>}
@@ -266,7 +272,7 @@ export function VideoReconWorkspace({ mode, handoff, submission, onModeChange, o
               ? <button type="button" className="btn-primary" disabled={!workspace} onClick={() => fileInput.current?.click()}>
                 <Upload size={17} aria-hidden />{t('选择文件', 'Choose file')}
               </button>
-              : <button type="button" className="btn-primary" disabled={!workspace || view?.status !== 'ready'} onClick={() => void workspace?.camera()}>
+              : !filming && <button type="button" className="btn-primary" disabled={!workspace || view?.status !== 'ready'} onClick={() => void workspace?.camera()}>
                 <Camera size={17} aria-hidden />{t('连接摄像头', 'Connect camera')}
               </button>}
           </div>}
@@ -311,7 +317,11 @@ export function VideoReconWorkspace({ mode, handoff, submission, onModeChange, o
           value={frameProgress} />}
         {reviewing && (!view.cubeSolved || submission && !hasMoves) && <div className="video-recon-muted" role="status">
           <strong>{t('未能完成复盘', 'Reconstruction incomplete')}</strong>
-          <span> · {hasMoves ? t('已保留识别出的动作。', 'Recovered moves are available.') : t('未识别到可用动作。', 'No moves were recovered.')}</span>
+          <span> · {view.searchResult?.inference_failure === 'no_solved_end'
+            ? t('请在区间末尾保留清晰的还原局面。', 'Include a clear view of the solved cube at the end.')
+            : view.searchResult?.inference_failure === 'no_supported_opening'
+              ? t('无法从画面确认起始局面和完整动作。', 'The opening state and full move sequence could not be verified from the video.')
+              : hasMoves ? t('已保留识别出的动作。', 'Recovered moves are available.') : t('未识别到可用动作。', 'No moves were recovered.')}</span>
           {view.searchError && <details><summary>{t('技术详情', 'Technical details')}</summary>{view.searchError}</details>}
         </div>}
         {mediaError && <div className="video-recon-error" role="alert">
@@ -334,14 +344,27 @@ export function VideoReconWorkspace({ mode, handoff, submission, onModeChange, o
         analysis={reviewing && workspace && view.reconstructedScramble && measured && hasMoves
           ? { scramble:view.reconstructedScramble, steps:searchSteps, measured,
             fps:view.sourceFps, start:view.solveStart, end:view.solveEnd, position:view.presentedTimestamp,
-            onSeek:timestamp => void workspace.requestReview(timestamp), draftTarget: submission }
+            onSeek:timestamp => void workspace.requestReview(timestamp), draftTarget: submission,
+            inferredScramble: !!view.searchResult?.inferred_scramble }
           : undefined} />}
       {workspace && view && showResults && <TpsGraph compact pending={pendingResult && resultTime <= view.solveStart}
         live={pendingResult} steps={shownSteps}
         fps={view.sourceFps} start={view.solveStart} end={view.solveEnd} cursor={resultTime} complete={reviewing && view.cubeSolved}
         onSeek={reviewing ? timestamp => void workspace.requestReview(timestamp) : undefined} />}
-      {!submission && workspace && view && <CameraTimer active={!!mode && !detector} workspace={workspace} view={view} />}
+      {filming && workspace && view && <CameraRecordingControls
+        cameraConnected={cameraConnected && !!view.stream} cameraConnecting={view.cameraConnecting}
+        ready={view.timerReady} phase={view.cameraRecordingPhase} scramble={view.initialScramble}
+        onScrambleChange={workspace.setScramble} onConnect={() => void workspace.camera()} onDisconnect={workspace.stopSource}
+        onStart={workspace.recordCamera} onStop={workspace.finishCameraRecording}
+        recordedFile={view.cameraRecordingFile} searchError={view.cameraRecordingError}
+        inferenceFailure={view.cameraRecordingResult?.result?.inference_failure}
+        recognizedMoves={view.cameraRecordingResult?.moves?.length} />}
+      {!submission && !filming && workspace && view && <CameraTimer active={!!mode && !detector} workspace={workspace} view={view} />}
     </div>
+    {filming && view?.cameraRecordingReplay?.complete && view.cameraRecordingResult
+      && (view.cameraRecordingPhase === 'complete' || view.cameraRecordingPhase === 'error')
+      && <TimerReplay key={view.cameraRecordingReplay.id} clip={view.cameraRecordingReplay}
+        reconstruction={view.cameraRecordingResult} onPosition={ignoreReplayPosition} tailSeconds={0} />}
     {!submission && <input ref={fileInput} type="file" accept="image/*,video/*" aria-label={t('视频或图片', 'Video or image')} hidden
       onChange={event => {
         openMedia(event.currentTarget.files?.[0]);

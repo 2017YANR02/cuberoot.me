@@ -13,12 +13,13 @@ import { ReviewControls } from './ReviewControls';
 
 export type ReplaySeek = { timestamp: number; revision: number };
 
-export function TimerReplay({ clip, reconstruction, disabled, seekRequest, onPosition }: {
+export function TimerReplay({ clip, reconstruction, disabled, seekRequest, onPosition, tailSeconds = TIMER_TAIL_SECONDS }: {
   clip: ReplayClip;
   reconstruction: TimerReconstructionResult;
   disabled?: boolean;
   seekRequest?: ReplaySeek;
   onPosition: (position: number) => void;
+  tailSeconds?: number;
 }) {
   const t = useT();
   const canvas = useRef<HTMLCanvasElement>(null);
@@ -56,7 +57,7 @@ export function TimerReplay({ clip, reconstruction, disabled, seekRequest, onPos
   const pose = projectedCubeAtFrame(timeline, frame);
   const sourceFps = reconstruction.config?.source_fps ?? (clip.clockFps === 1000 ? 30 : clip.clockFps);
   const solveStart = reconstruction.config?.requested_start_seconds ?? clip.start;
-  const stop = Math.max(solveStart, (reconstruction.config?.source_end_seconds ?? clip.end) - TIMER_TAIL_SECONDS);
+  const stop = Math.max(solveStart, (reconstruction.config?.source_end_seconds ?? clip.end) - tailSeconds);
   const scramble = reconstruction.config?.scramble;
   const showAnalysis = clip.complete && scramble && steps.some(move => move.state_moves.length)
     && (reconstruction.status === 'solved' || reconstruction.status === 'failed');
@@ -158,7 +159,7 @@ export function TimerReplay({ clip, reconstruction, disabled, seekRequest, onPos
       <ProjectedCube pose={pose} sourceTimestamp={current?.timestamp ?? position}
         solved={solved} steps={steps} timeline={timeline} sourceFrame={frame} sourceFps={sourceFps} playbackSpeed={playing ? speed : 1}
         analysis={showAnalysis ? { scramble, steps, measured, fps:sourceFps, clockFps:clip.clockFps,
-          start:solveStart, end:stop, position, onSeek:seek } : undefined} />
+          start:solveStart, end:stop, position, onSeek:seek, inferredScramble: !!reconstruction.result?.inferred_scramble } : undefined} />
     </div>
   </section>;
 }

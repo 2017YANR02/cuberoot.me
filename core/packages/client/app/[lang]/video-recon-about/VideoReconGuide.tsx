@@ -16,16 +16,16 @@ export default function VideoReconGuide({ upstream }: { upstream?: { name: strin
       output: t('定位角点、接缝交点和色块中心，识别可见颜色。', 'Find corners, seam junctions, sticker centers, and visible colors.') },
     { Icon: Box, title: t('三维姿态拟合', '3D pose fitting'), method: 'PnP',
       output: t('用像素关键点拟合魔方相对镜头的姿态和各层转角。', 'Fit the cube’s pose and layer angles from 2D keypoints.') },
-    { Icon: GitBranch, title: t('动作搜索', 'Move search'), method: t('双向搜索', 'Bidirectional search'),
-      output: t('用贴纸颜色和帧间转角筛选已知打乱下的候选步序。', 'Rank move sequences from the scramble by sticker colors and motion.') },
+    { Icon: GitBranch, title: t('动作搜索', 'Move search'), method: t('正向与逆向搜索', 'Forward and reverse search'),
+      output: t('用贴纸颜色和帧间转角筛选步序。打乱留空时，从清晰的还原末态找回动作。', 'Use sticker colors and motion to rank moves. With no scramble, trace the moves backward from a clear solved state.') },
     { Icon: ListChecks, title: t('转体换算与分段', 'Notation and stages'), method: 'x / y / z',
       output: t('按选手朝向改写记号，标出十字、F2L 等阶段与末层案例。', 'Remap moves to the solver’s grip and identify stages and last-layer cases.') },
   ];
   return <main className="report-page">
     <header className="report-header">
       <PageHeading backHref="/frame-count?mode=detector">{t('视频复盘说明', 'Video Reconstruction Guide')}</PageHeading>
-      <p>{t('用固定机位的三阶视频和原始打乱重建带时间戳的步序。区间从第一步前的清晰画面开始。',
-        'Recover timestamped moves from a fixed-camera 3×3 video and the exact scramble. Include a clear frame before the first turn.')}</p>
+      <p>{t('导入三阶视频，或用「边拍边复盘」直接录制。区间要包含第一步前的清晰画面。打乱留空时，结尾也需要拍清已还原的魔方。',
+        'Import a 3×3 video or record one in Live reconstruction. Include a clear view before the first move. If you leave the scramble blank, also show the solved cube at the end.')}</p>
     </header>
 
     <h2 id="video-recon-flow-heading">{t('从画面到复盘', 'From footage to notation')}</h2>

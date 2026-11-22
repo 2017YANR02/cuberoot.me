@@ -28,7 +28,7 @@ export class TimerReplayStore {
     }
     this.clips.set(id,{id,start,captureStart,clockFps,closed:false,frames:[],ready:[],published:0});
   }
-  stop(id:string,stop:number){const clip=this.clips.get(id);if(clip&&!clip.closed){clip.end=stop+TIMER_TAIL_SECONDS;this.emit(clip);}}
+  stop(id:string,stop:number,tailSeconds=TIMER_TAIL_SECONDS){const clip=this.clips.get(id);if(clip&&!clip.closed){clip.end=stop+tailSeconds;this.emit(clip);}}
   capture(timestamp:number,result:FrameResult,encode:()=>Promise<Blob>){
     let image:Promise<Blob|undefined>|undefined;
     for(const clip of this.clips.values()){

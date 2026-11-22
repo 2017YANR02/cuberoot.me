@@ -1,6 +1,6 @@
 'use client';
 
-import { Camera, Film, HelpCircle, MonitorDown, Timer } from '@app-foundation/icons/lucide';
+import { Camera, Film, HelpCircle, MonitorDown, Timer, Video } from '@app-foundation/icons/lucide';
 import dynamic from 'next/dynamic';
 import { parseAsStringEnum, useQueryState } from 'nuqs';
 import { useEffect, useState, useSyncExternalStore } from 'react';
@@ -17,7 +17,7 @@ const VideoReconWorkspace = dynamic(
   () => import('../video-recon/VideoReconClient').then(module => module.VideoReconWorkspace),
   { loading: VideoToolsLoading },
 );
-const MODES = ['frames', 'detector', 'timer'] as const;
+const MODES = ['frames', 'detector', 'record', 'timer'] as const;
 type Mode = (typeof MODES)[number];
 const subscribe = () => () => undefined;
 const clientSnapshot = () => true;
@@ -50,6 +50,7 @@ export default function VideoToolsPage({ title }: { title: string }) {
   const tabs = [
     { value: 'frames' as const, label: t('逐帧计时', 'Frame-by-frame timing'), Icon: Timer },
     { value: 'detector' as const, label: t('自动复盘', 'Automatic reconstruction'), Icon: Film },
+    { value: 'record' as const, label: t('边拍边复盘', 'Live reconstruction'), Icon: Video },
     { value: 'timer' as const, label: t('摄像头计时', 'Camera timer'), Icon: Camera },
   ];
 
