@@ -121,7 +121,7 @@ function RowActions({ entry, text, oi, context }: { entry: AlgEntry; text: strin
   return <>
     {entry.note && !(puzzle === 'sq1' && set === 'pbl') && <span className="alg-alg-note">{tr(entry.note)}</span>}
     {notation && <code className="alg-editor-notation">{shownText}</code>}
-    <button type="button" className="alg-editor-del" aria-pressed={pinned} title={pinned ? tr({ zh: '取消置顶', en: 'Unpin algorithm' }) : tr({ zh: '置顶公式', en: 'Pin algorithm' })}
+    <button type="button" className="alg-editor-del" aria-pressed={pinned} title={pinned ? tr({ zh: '取消置顶', en: 'Unpin algorithm' }) : tr({ zh: '置顶公式', en: 'Pin algorithm' })} aria-label={pinned ? tr({ zh: '取消置顶', en: 'Unpin algorithm' }) : tr({ zh: '置顶公式', en: 'Pin algorithm' })}
       onClick={() => setPreferred(puzzle, set, slot, pinned ? null : preferredAlgRef(entry))}><Pin size="1em" fill={pinned ? 'currentColor' : 'none'} /></button>
   </>;
 }
@@ -351,7 +351,7 @@ const AlgEditor = forwardRef<AlgEditorHandle, Props>(({ initialValue, puzzle = '
                     className="alg-editor-del alg-editor-remove"
                     disabled={mirrorPending || !!mirrorError}
                     onClick={() => requestRemove(oi, row.uid)}
-                    title={tr({ zh: '删此条', en: 'Remove' })}
+                    title={tr({ zh: '删此条', en: 'Remove' })} aria-label={tr({ zh: '删此条', en: 'Remove' })}
                     tabIndex={-1}
                   >
                     <Trash2 size="1em" />
@@ -431,7 +431,7 @@ const AlgEditor = forwardRef<AlgEditorHandle, Props>(({ initialValue, puzzle = '
             );
           }))}
           {renderBeforeAdd?.(oi)}
-          <button type="button" className="alg-editor-add" onClick={() => addAlg(oi)} tabIndex={-1} title={tr({ zh: '加一条', en: 'Add' })}>
+          <button type="button" className="alg-editor-add" onClick={() => addAlg(oi)} tabIndex={-1} title={tr({ zh: '加一条', en: 'Add' })} aria-label={tr({ zh: '加一条', en: 'Add' })}>
             <Plus size={12} />
           </button>
           </SortableContext></DndContext>, oi, firstEntry, ori.map(readEntry))}

@@ -183,7 +183,7 @@ export default function Prediction333View({ sectionId }: { sectionId?: string })
     <div className="pred-page pred-page-multi pred-333">
       <header className="pred-header">
 
-        <button className="pred-toc-btn" onClick={() => setTocOpen(!tocOpen)}>
+        <button className="pred-toc-btn" onClick={() => setTocOpen(!tocOpen)} aria-label={tocOpen ? tr({ zh: '关闭目录', en: 'Close table of contents' }) : tr({ zh: '打开目录', en: 'Open table of contents' })} aria-expanded={tocOpen}>
           {tocOpen ? <XIcon size={16} /> : <Menu size={16} />}
         </button>
         <button className="pred-lang" onClick={toggleLang}>{(i18n.language.startsWith('zh') ? 'EN' : '中文')}</button>

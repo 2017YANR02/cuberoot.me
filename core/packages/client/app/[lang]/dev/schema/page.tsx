@@ -396,6 +396,9 @@ const TABLES: Table[] = [
   ] },
 
   // ── main-site Platform ─────────────────────────────────
+  { name: 'platform_learning_stage_preferences', domain: 'platform', origin: '0350', purpose: { zh: '按账号保存学习推荐阶段，注销账号时级联删除；不影响课程访问权限', en: 'Account-owned learning recommendation stage, deleted with the account; does not grant course access' }, cols: [
+    { name: 'user_id BIGINT (PK, FK app_users), stage TEXT' },
+  ] },
   { name: 'platform_content_reviews', domain: 'platform', origin: '0349', purpose: { zh: '课程及课时的版本化发布审核，保留提交、撤回与审核记录', en: 'Versioned publication reviews for courses and lessons, retaining submissions, withdrawals and decisions' }, cols: [
     { name: 'id UUID (PK), course_id, lesson_id' }, { name: 'base_revision, candidate_revision, target_status, metadata' }, { name: 'status, submitted_by_user_id, decided_by_user_id, decision_note, submitted_at, decided_at' },
   ] },
@@ -413,7 +416,7 @@ const TABLES: Table[] = [
     'platform_fulfillment_ledger', 'platform_event_registrations', 'platform_course_entitlements',
     'platform_entitlement_ledger', 'platform_memberships', 'platform_membership_ledger',
     'platform_lesson_progress', 'platform_lesson_notes', 'platform_favorites', 'platform_quiz_attempts',
-    'platform_course_reviews', 'platform_certificates', 'platform_checkins', 'platform_point_ledger',
+    'platform_learning_stage_preferences', 'platform_course_reviews', 'platform_certificates', 'platform_checkins', 'platform_point_ledger',
     'platform_achievements', 'platform_user_achievements', 'platform_instructor_revenue_ledger',
     'platform_instructor_payouts', 'platform_instructor_payout_items', 'platform_invite_codes',
     'platform_qr_scan_daily',
@@ -610,6 +613,7 @@ const TABLES: Table[] = [
 
 const MIGRATIONS: { n: number; slug: string; desc: Bi }[] = [
   { n: 349, slug: 'platform_content_reviews', desc: { zh: '课程及课时发布审核，线上版本在审核期间保持不变。', en: 'Course and lesson publication review, preserving live revisions while pending.' } },
+  { n: 350, slug: 'platform_learning_stage_preferences', desc: { zh: '按账号保存学习推荐阶段，本机旧记录仅在账号尚无选择时导入，注销时级联删除。', en: 'Persist account-owned learning recommendations, import a legacy device choice only when absent, and delete preferences with the account.' } },
   { n: 348, slug: 'platform_unified_instructor_profiles', desc: { zh: '统一讲师身份与公开资料，保留隐藏设置并对明确归属的历史资料建立关联。', en: 'Unify instructor identity and public profiles, preserving visibility and linking unambiguous legacy ownership.' } },
   { n: 347, slug: 'vault_trash', desc: { zh: '添加资料库回收站时间戳，支持恢复和清空。', en: 'Add a vault Trash timestamp for restore and purge operations.' } },
   { n: 346, slug: 'remove_legacy_gan_team', desc: { zh: '删除无成员的旧 GAN 占位战队，保留三支子队的归属。', en: 'Remove the empty legacy GAN entry and preserve memberships in its three rosters.' } },

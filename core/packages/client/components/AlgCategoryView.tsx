@@ -1641,7 +1641,7 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
               type="button"
               className="alg-admin-add-btn"
               onClick={() => setEditorState({ mode: 'add' })}
-              title={tr({ zh: '新增 case (admin)', en: 'Add case (admin)' })}
+              title={tr({ zh: '新增 case (admin)', en: 'Add case (admin)' })} aria-label={tr({ zh: '新增 case (admin)', en: 'Add case (admin)' })}
             >
               <Plus size={14} />
             </button>

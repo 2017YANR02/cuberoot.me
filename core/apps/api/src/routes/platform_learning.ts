@@ -3,6 +3,7 @@ import { registerIntegrationRoutes } from '../platform/learning/integration-rout
 import { registerQuizRoutes } from '../platform/learning/quiz-routes.js';
 import { registerPrivacyRoutes } from '../platform/learning/privacy-routes.js';
 import { registerEnrollmentRoutes } from '../platform/learning/enrollment-routes.js';
+import { registerStageRoutes } from '../platform/learning/stage-routes.js';
 import { registerProgressRoutes } from '../platform/learning/progress-routes.js';
 import { registerNoteRoutes } from '../platform/learning/note-routes.js';
 import { registerFavoriteRoutes } from '../platform/learning/favorite-routes.js';
@@ -21,6 +22,7 @@ registerQuizRoutes(platformLearningRoutes);
 registerPrivacyRoutes(platformLearningRoutes);
 registerEnrollmentRoutes(platformLearningRoutes);
 registerProgressRoutes(platformLearningRoutes);
+registerStageRoutes(platformLearningRoutes);
 registerNoteRoutes(platformLearningRoutes);
 registerFavoriteRoutes(platformLearningRoutes);
 registerAchievementRoutes(platformLearningRoutes);

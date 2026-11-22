@@ -106,7 +106,7 @@ export default function EnterpriseVerification({ orgSlug, name }: { orgSlug: str
       <p>{t('现在不用打款。开放后，提交企业资料即可获取本次申请的打款金额、收款账户和附言。', 'No transfer is needed now. Once verification opens, submit your details to get the amount, recipient account and reference for your application.')}</p>
       {hasAdminAccess(user) ? <>
         <p>{t('你同时是平台管理员。下一步请检查平台收款设置，页面会列出尚未完成的准备工作。', 'You are also a platform administrator. Next, check platform receiving settings for the remaining setup steps.')}</p>
-        <AppLink className="org-primary-link" href="/org#enterprise-admin" prefetch={false}>{t('下一步：检查并配置平台收款', 'Next: check and configure platform receiving account')}<ArrowRight size={18} aria-hidden="true" /></AppLink>
+        <AppLink className="org-primary-link" href="/org?view=admin#enterprise-admin" prefetch={false}>{t('下一步：检查并配置平台收款', 'Next: check and configure platform receiving account')}<ArrowRight size={18} aria-hidden="true" /></AppLink>
       </> : <p>{t('下一步由平台管理员处理，你可以先使用下方的教学管理功能。', 'The platform administrator handles the next step. You can use the teaching tools below while waiting.')}</p>}
     </div>}
     {application && <div>

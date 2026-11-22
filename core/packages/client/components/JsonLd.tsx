@@ -14,20 +14,23 @@
 // and Google penalises it — every field below is derived from real page data.
 
 export interface JsonLdProps {
-  /** A schema.org object, or several. Serialised as-is. */
+  /** A schema.org object, or several independent nodes with their own context. */
   data: Record<string, unknown> | Record<string, unknown>[];
 }
 
 export default function JsonLd({ data }: JsonLdProps) {
-  return (
+  const nodes = Array.isArray(data) ? data : [data];
+  // Safari/WebKit's structured-data reader can throw when a JSON-LD script
+  // contains a top-level array (WebKit bug 255764). Emit one object per script
+  // instead, retaining the original entities and their contexts.
+  return <>{nodes.map((node, index) => (
     <script
+      key={index}
       type="application/ld+json"
-      // JSON.stringify cannot emit `<`, so the classic </script> break-out is
-      // impossible here; the replace guards the one case it can produce
-      // (a literal "</" inside a string value, e.g. in a description).
-      dangerouslySetInnerHTML={{ __html: JSON.stringify(data).replace(/</g, '\\u003c') }}
+      // Escape literal < characters so text values cannot terminate the tag.
+      dangerouslySetInnerHTML={{ __html: JSON.stringify(node).replace(/</g, '\\u003c') }}
     />
-  );
+  ))}</>;
 }
 
 export const SITE_URL = 'https://cuberoot.me';

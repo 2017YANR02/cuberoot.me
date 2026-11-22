@@ -1,4 +1,4 @@
-# 学习空间首页推荐与栏目搜索
+# 学习空间首页推荐与统一导航
 
 状态：`REFERENCE`。2026-11-19 本地实现与审查；CI、生产部署和真实账号操作按对应提交另行核验。
 
@@ -12,8 +12,9 @@
 
 ## 搜索与导航合同
 
-- 页头按当前栏目复用课程、路径、活动、资讯或论坛搜索；页面继续管理 URL 查询和分页，页头只承载输入和筛选。
-- 筛选弹层先编辑草稿，应用后更新 URL；关闭、Escape 或点击外部取消草稿。桌面复用共享视口钳制，手机使用底部面板。
+- 2026-11-21 起，学习产品共用首页的品牌页头（学习、课程、讲师、社区），全局搜索、AI 助手抽屉、消息与账号菜单；页脚包含活动、资讯、机构、关于和成为讲师。最大内容宽度 1200px，公共主操作、进度和表面样式复用现有首页 token。
+- 每个列表继续管理自己的 URL 查询、筛选、排序及分页；不再在页头承载栏目搜索。学习路径统一由首页进入，社区公开入口默认动态，版块作为二级入口。旧 scoped search 组件仅供需要的独立场景使用。
+- 账号菜单按现有当前账号及管理员/讲师权限展示工作台与管理入口；机构认证管理与普通创建流程分开，讲师工作台仍保留其内部侧栏。
 - 原主站论坛、机构和讲师页面仍是唯一实现；Platform 通过导航上下文复用，不维护第二份业务页面。
 
 ## 维护入口
@@ -21,6 +22,7 @@
 - [API 与校验](../../../core/apps/api/src/platform/catalog/homepage-routes.ts)：公开 `GET /v1/platform/homepage`、管理员 `GET/PUT /v1/platform/admin/homepage`。
 - [共享类型](../../../core/packages/shared/src/platform.ts)、[客户端调用](../../../core/packages/client/lib/platform-homepage.ts)、[轮播](../../../core/packages/client/components/platform/PlatformHomepageCarousel.tsx)、[配置界面](../../../core/packages/client/components/platform/PlatformHomepageAdmin.tsx)。
 - [搜索绑定](../../../core/packages/client/lib/platform-navigation-context.ts)、[栏目搜索](../../../core/packages/client/components/platform/PlatformScopedSearch.tsx)、[筛选面板](../../../core/packages/client/components/platform/PlatformSearchFilter.tsx)。
+- [共用外壳](../../../core/packages/client/components/platform/PlatformShell.tsx)、[canonical 页面复用](../../../core/packages/client/components/platform/PlatformSharedSurface.tsx)、[设计 token 与布局](../../../core/packages/client/components/platform/platform.css)、[路由盘点与验收记录](history/platform-shared-ui-2026-11-21.md)。
 - [0343 迁移](../../../core/apps/api/migrations/0343_platform_homepage_recommendations.sql)维护全局 `platform_homepage_settings` 和课程有效学员统计索引；该配置不包含学员身份或私密资料。
 - API、数据表、迁移、组件和 hook 同步登记在 `/dev/api`、`/dev/schema`、`/dev/components`、`/dev/utils`；迁移仅由获准发布后的部署流水线应用。
 

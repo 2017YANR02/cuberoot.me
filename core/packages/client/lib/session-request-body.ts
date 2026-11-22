@@ -5,11 +5,14 @@ export class SessionRequestBodyError extends Error {
   }
 }
 
-export async function readSessionJson(request: Request, maxBytes: number): Promise<unknown> {
+export async function readSessionJson(request: Request, maxBytes: number, { allowEmpty = false } = {}): Promise<unknown> {
   const declared = Number(request.headers.get('content-length'));
   if (Number.isFinite(declared) && declared > maxBytes) throw new SessionRequestBodyError(413);
   const reader = request.body?.getReader();
-  if (!reader) throw new SessionRequestBodyError(400);
+  if (!reader) {
+    if (allowEmpty) return undefined;
+    throw new SessionRequestBodyError(400);
+  }
   let bytes = 0;
   let text = '';
   const decoder = new TextDecoder();
@@ -26,6 +29,7 @@ export async function readSessionJson(request: Request, maxBytes: number): Promi
     }
     text += decoder.decode();
   } finally { reader.releaseLock(); }
+  if (allowEmpty && bytes === 0) return undefined;
   try { return JSON.parse(text); }
   catch { throw new SessionRequestBodyError(400); }
 }

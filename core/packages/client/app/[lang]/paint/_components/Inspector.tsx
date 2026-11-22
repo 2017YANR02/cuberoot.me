@@ -336,7 +336,7 @@ function GeometrySection({
           <button
             type="button"
             className={`paint-lock-btn${lockAspect ? ' is-on' : ''}`}
-            title={t('锁定宽高比', 'Lock aspect ratio')}
+            title={t('锁定宽高比', 'Lock aspect ratio')} aria-label={t('锁定宽高比', 'Lock aspect ratio')}
             onClick={() => setLockAspect((v) => !v)}
           >
             {lockAspect ? <Link2 size={14} /> : <Link2Off size={14} />}
@@ -530,6 +530,12 @@ function TextSection({
               type="button"
               className={`paint-seg-btn${text.textAlign === a ? ' is-on' : ''}`}
               title={
+                a === 'left'
+                  ? t('左对齐', 'Left')
+                  : a === 'center'
+                    ? t('居中', 'Center')
+                    : t('右对齐', 'Right')
+              } aria-label={
                 a === 'left'
                   ? t('左对齐', 'Left')
                   : a === 'center'

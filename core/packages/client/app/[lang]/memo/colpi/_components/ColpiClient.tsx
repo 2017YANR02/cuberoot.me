@@ -472,6 +472,7 @@ export default function ColpiClient() {
           />
           {/* allow-manual-search: Valid pairs search automatically; the button also explains invalid input. */}
           <button className="colpi-search-btn" onClick={onSearch} title={tr({ zh: '搜索', en: 'Search'
+        })} aria-label={tr({ zh: '搜索', en: 'Search'
         })}><Search size={14} /></button>
         </div>
 
@@ -661,22 +662,25 @@ export default function ColpiClient() {
                     <button
                       className={`colpi-vote-btn ${w.myVote === 1 ? 'is-voted-up' : ''}`}
                       onClick={() => handleVote(w, 1)}
-                      title={tr({ zh: '有用', en: 'Useful' })}
+                      title={tr({ zh: '有用', en: 'Useful' })} aria-label={tr({ zh: '有用', en: 'Useful' })}
                     ><ThumbsUp size={12} /></button>
                     <button
                       className={`colpi-vote-btn ${w.myVote === -1 ? 'is-voted-down' : ''}`}
                       onClick={() => handleVote(w, -1)}
                       title={tr({ zh: '不合适', en: 'Misused'
+                    })} aria-label={tr({ zh: '不合适', en: 'Misused'
                     })}
                     ><ThumbsDown size={12} /></button>
                   </span>
                   {canEdit(w) && (
                     <span className="colpi-owner-actions">
                       <button className="colpi-owner-btn" onClick={() => handleEditClick(w)} title={tr({ zh: '编辑', en: 'Edit'
+                    })} aria-label={tr({ zh: '编辑', en: 'Edit'
                     })}>
                         <Pencil size={12} />
                       </button>
                       <button className="colpi-owner-btn" onClick={() => handleDelete(w)} title={tr({ zh: '删除', en: 'Delete'
+                    })} aria-label={tr({ zh: '删除', en: 'Delete'
                     })}>
                         <Trash2 size={12} />
                       </button>
@@ -752,6 +756,7 @@ export default function ColpiClient() {
                       <button
                         className="colpi-flag-btn"
                         title={tr({ zh: '已被标记为不雅', en: 'Flagged offensive'
+                        })} aria-label={tr({ zh: '已被标记为不雅', en: 'Flagged offensive'
                         })}
                       >
                         <FlagIcon size={11} />
@@ -762,7 +767,7 @@ export default function ColpiClient() {
                     <button
                       className={`colpi-recent-vote-btn ${w.myVote === 1 ? 'is-voted-up' : ''}`}
                       onClick={() => handleVote(w, 1)}
-                      title={tr({ zh: '有用', en: 'Useful' })}
+                      title={tr({ zh: '有用', en: 'Useful' })} aria-label={tr({ zh: '有用', en: 'Useful' })}
                     >
                       <ThumbsUp size={12} />
                     </button>
@@ -770,6 +775,7 @@ export default function ColpiClient() {
                       className={`colpi-recent-vote-btn ${w.myVote === -1 ? 'is-voted-down' : ''}`}
                       onClick={() => handleVote(w, -1)}
                       title={tr({ zh: '不合适', en: 'Misused'
+                    })} aria-label={tr({ zh: '不合适', en: 'Misused'
                     })}
                     >
                       <ThumbsDown size={12} />

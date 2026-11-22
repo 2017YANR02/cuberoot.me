@@ -141,10 +141,12 @@ function OpCard({ op, lang, isAdmin, onEdit, onDelete }: { op: OpCommand; lang: 
             {isAdmin && (
               <>
                 <button type="button" className="ops-admin-btn" onClick={onEdit} title={tr({ zh: '编辑', en: 'Edit'
+              })} aria-label={tr({ zh: '编辑', en: 'Edit'
               })}>
                   <Pencil size={13} />
                 </button>
                 <button type="button" className="ops-admin-btn ops-admin-btn-danger" onClick={onDelete} title={tr({ zh: '删除', en: 'Delete'
+              })} aria-label={tr({ zh: '删除', en: 'Delete'
               })}>
                   <Trash2 size={13} />
                 </button>

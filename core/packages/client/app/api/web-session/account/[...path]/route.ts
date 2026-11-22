@@ -35,7 +35,7 @@ async function account(request: Request, context: { params: Promise<{ path: stri
     let body: string | undefined;
     if (request.method !== 'GET' && request.method !== 'DELETE' && request.body !== null) {
       if (!request.headers.get('content-type')?.startsWith('application/json')) return result({ error: 'invalid body' }, 415);
-      body = JSON.stringify(await readSessionJson(request, 256 * 1024));
+      body = JSON.stringify(await readSessionJson(request, 256 * 1024, { allowEmpty: request.method === 'PUT' && path === 'onboarding' }));
     }
     const upstream = await fetch(apiUrl(`/v1/auth/${path}${new URL(request.url).search}`), {
       method: request.method, headers: { Authorization: `Bearer ${stored.token}`, ...(body ? { 'Content-Type': 'application/json' } : {}) },

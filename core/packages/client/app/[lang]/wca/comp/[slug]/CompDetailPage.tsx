@@ -1841,7 +1841,7 @@ export default function CompDetailPage() {
                       中国比赛走 cubing.com 直播,没有 WCA Live 页面,故 CN 不显示此图标;
                       比赛还没开始时 WCA Live 页面也不存在,同样不显示。 */}
                   {iso2 !== 'cn' && !notStartedYet && (
-                    <a href={wcaLiveUrl} target="_blank" rel="noopener noreferrer" className="comp-title-icon comp-title-icon-lucide" title="WCA Live">
+                    <a href={wcaLiveUrl} target="_blank" rel="noopener noreferrer" className="comp-title-icon comp-title-icon-lucide" title="WCA Live" aria-label="WCA Live">
                       <Radio size={18} />
                     </a>
                   )}
@@ -1901,6 +1901,7 @@ export default function CompDetailPage() {
             {isAdmin && !isWca && <LiveIndicator status={wsStatus} isZh={isZh} source={isWcaLive ? 'wca_live' : 'cubing'} />}
             {!isWca && wsStatus !== 'open' && (
               <button type="button" className="comp-refresh-btn" onClick={refresh} disabled={refreshing} title={tr({ zh: '刷新', en: 'Refresh'
+            })} aria-label={tr({ zh: '刷新', en: 'Refresh'
             })}>
                 <RefreshCw size={14} className={refreshing ? 'is-spinning' : ''} />
               </button>
@@ -3830,7 +3831,7 @@ function CuberModal({ number, data, isZh, pbMap, changeMap, personal = false, lo
               className="comp-modal-copy-btn"
               onClick={handleDownload}
               disabled={downloadState === 'busy' || loading || !u}
-              title={tr({ zh: '下载为图片', en: 'Download as image' })}
+              title={tr({ zh: '下载为图片', en: 'Download as image' })} aria-label={tr({ zh: '下载为图片', en: 'Download as image' })}
             >
               <Download size={14} />
             </button>
@@ -4327,6 +4328,7 @@ function RoundResultModal({ number, eventId, roundId, data, compName, compStartD
               onClick={handleCopy}
               disabled={copyState === 'copying'}
               title={tr({ zh: '复制为推送文案', en: 'Copy as push text'
+            })} aria-label={tr({ zh: '复制为推送文案', en: 'Copy as push text'
             })}
             >
               {copyState === 'done' ? <Check size={14} /> : <Copy size={14} />}
@@ -4338,7 +4340,7 @@ function RoundResultModal({ number, eventId, roundId, data, compName, compStartD
             className="comp-modal-copy-btn comp-round-modal-download-btn"
             onClick={handleDownload}
             disabled={downloadState === 'busy'}
-            title={tr({ zh: '下载为图片', en: 'Download as image' })}
+            title={tr({ zh: '下载为图片', en: 'Download as image' })} aria-label={tr({ zh: '下载为图片', en: 'Download as image' })}
           >
             <Download size={14} />
           </button>

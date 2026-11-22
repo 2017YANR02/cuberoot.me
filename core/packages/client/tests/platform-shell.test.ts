@@ -8,7 +8,16 @@ import { describe, expect, it, vi } from 'vitest';
 vi.mock('next/navigation', () => ({ usePathname: vi.fn(() => '/zh/platform/teachers') }));
 vi.mock('@/hooks/useT', () => ({ useT: () => (zh: string) => zh }));
 vi.mock('@/i18n/tr', () => ({ useLang: () => 'zh', tr: ({ zh }: { zh: string }) => zh, T: ({ zh }: { zh: string }) => zh }));
-const auth = vi.hoisted(() => ({ admin: false, user: null as null | { uid: number }, loadInstructor: vi.fn() }));
+const auth = vi.hoisted(() => ({ admin: false, user: null as null | { uid: number; name?: string; avatar?: string }, loadInstructor: vi.fn() }));
+const access = vi.hoisted(() => ({ organization: false, learner: false, organizer: false, supervisor: false }));
+vi.mock('@/lib/teaching-saas-api', () => ({
+  listTeachingOrganizations: async () => access.organization ? [{ status: 'active' }] : [],
+  listTeachingLearningContexts: async () => access.learner ? [{}] : [],
+}));
+vi.mock('@/lib/online-competition-api', () => ({
+  listOrganizerApplications: async () => ({ eligibleOrganizationIds: access.organizer ? ['org'] : [] }),
+  listSupervisedCompetitions: async () => ({ competitions: access.supervisor ? [{}] : [] }),
+}));
 const navigate = vi.hoisted(() => vi.fn());
 vi.mock('@/lib/auth-store', () => ({ useAuthUser: () => auth.user, useIsAdmin: () => auth.admin }));
 vi.mock('@/lib/platform-gateway', async original => ({ ...await original<object>(), loadPlatformResource: auth.loadInstructor }));
@@ -16,8 +25,9 @@ vi.mock('@/hooks/useEntryRouter', () => ({ useEntryRouter: () => ({ push: naviga
 vi.mock('@/lib/landing-sections', () => ({ SEARCH_CARDS: [], isLandingSearchCardVisible: () => true }));
 vi.mock('@/components/LandingSearch', () => ({ default: () => createElement('input', { 'aria-label': '搜索' }) }));
 vi.mock('@/components/PageBackLink', () => ({ default: ({ fallback = '/platform', label }: { fallback?: string; label?: string }) => createElement('a', { href: fallback, className: 'back-home', 'aria-label': label }) }));
-vi.mock('@/components/CubeRootLogo', () => ({ default: ({className}:{className?:string}) => createElement('a', {className, href:'/zh', 'aria-label':'主页'}, createElement('img',{alt:'',src:'/icons/CubeRoot.png'})) }));
-vi.mock('@/components/CompactSelect', () => ({ CompactSelect: () => null }));
+vi.mock('@/components/CubeRootLogo', () => ({ default: ({className, children}:{className?:string; children?:React.ReactNode}) => createElement('a', {className, href:'/zh', 'aria-label':'主页'}, createElement('img',{alt:'',src:'/icons/CubeRoot.png'}), children) }));
+vi.mock('@/components/CompactSelect', () => ({ CompactSelect: ({ open, onOpenChange, panelContent, ariaLabel, label }: { open?: boolean; onOpenChange?: (open: boolean) => void; panelContent?: React.ReactNode; ariaLabel: string; label: React.ReactNode }) => createElement('div', null, createElement('button', { 'aria-label': ariaLabel, onClick: () => onOpenChange?.(!open) }, label), open ? panelContent : null) }));
+vi.mock('@/components/LangToggle', () => ({ default: () => null }));
 vi.mock('@/components/WcaAuth', () => ({ default: () => null }));
 vi.mock('@/components/AppLink', () => ({
   default: ({ prefetch: _prefetch, scroll, ...props }: React.ComponentProps<'a'> & { prefetch?: boolean; scroll?: boolean }) => createElement('a', { ...props, 'data-scroll': scroll === false ? 'false' : undefined }),
@@ -27,11 +37,104 @@ import { PlatformShell } from '@/components/platform/PlatformShell';
 import { PlatformSharedSurface } from '@/components/platform/PlatformSharedSurface';
 import { ForumHeader } from '@/app/[lang]/forum/_components/ForumHeader';
 import { PlatformNavigationContext, PlatformInstructorAccessRefreshContext } from '@/lib/platform-navigation-context';
+import { PLATFORM_ROUTES } from '@/lib/platform-routes';
 
 Object.assign(globalThis, { IS_REACT_ACT_ENVIRONMENT: true });
 
 describe('Platform shell ownership during shared-page navigation', () => {
-  it('uses two instructor tabs and scopes search to the public instructor catalog', async () => {
+  it('uses exactly one public header and footer on every registered route pattern, including protected routes', () => {
+    const pathname = vi.mocked(usePathname);
+    try {
+      auth.user = null; auth.admin = false;
+      for (const route of PLATFORM_ROUTES) {
+        pathname.mockReturnValue(`/zh/platform${route.pattern ? '/' + route.pattern.replace(/:[a-zA-Z]+\*?/g, 'sample') : ''}`);
+        const host = document.createElement('div');
+        host.innerHTML = renderToString(createElement(PlatformShell, { children: createElement('article', null, route.id) }));
+        expect(host.querySelectorAll('.platform-home-header'), route.id).toHaveLength(1);
+        expect(host.querySelectorAll('.platform-shared-footer'), route.id).toHaveLength(1);
+        expect(host.querySelector('.platform-site-search'), route.id).toBeNull();
+        expect(host.querySelector('.platform-admin-group-nav'), route.id).toBeNull();
+        expect(host.querySelector('.platform-home-header a[aria-label="搜索"]')?.getAttribute('href'), route.id).toBe('/search');
+      }
+    } finally { pathname.mockReturnValue('/zh/platform/teachers'); }
+  });
+  it('uses four homepage links and hides the management entry from guests and ordinary users', async () => {
+    const host = document.createElement('div'), root = createRoot(host);
+    const pathname = vi.mocked(usePathname);
+    pathname.mockReturnValue('/zh/platform');
+    auth.loadInstructor.mockResolvedValue({ items: [] });
+    try {
+      for (const user of [null, { uid: 6, name: '根根', avatar: '/broken-avatar.webp' }]) {
+        auth.user = user; auth.admin = false;
+        await act(async () => root.render(createElement(PlatformShell, { children: null })));
+        expect([...host.querySelectorAll('.platform-home-nav a')].map(link => link.textContent)).toEqual(['学习', '课程', '讲师', '社区']);
+        expect(host.querySelector('.platform-site-search')).toBeNull();
+        expect(host.querySelector('.platform-home-logo')?.textContent).toBe('魔方根 CubeRoot');
+        expect(host.querySelector('a[href="/platform/admin"]')).toBeNull();
+        if (user) {
+          expect(host.querySelector('.platform-home-avatar')?.textContent).toBe('根');
+          const img = host.querySelector<HTMLImageElement>('.platform-home-avatar img')!;
+          const initial = host.querySelector<HTMLElement>('.platform-home-avatar > span')!;
+          expect(initial.hidden).toBe(false);
+          expect(img.hidden).toBe(true);
+          Object.defineProperty(img, 'naturalWidth', { configurable: true, value: 36 });
+          await act(async () => img.dispatchEvent(new Event('load')));
+          expect(img.hidden).toBe(false);
+          expect(initial.hidden).toBe(true);
+          await act(async () => img.dispatchEvent(new Event('error')));
+          expect(img.hidden).toBe(true);
+          expect(initial.hidden).toBe(false);
+        }
+        await act(async () => host.querySelector<HTMLButtonElement>(`button[aria-label="${user ? '我的账号' : '登录与账号'}"]`)!.click());
+        expect(host.querySelector('a[href="/platform/admin"]')).toBeNull();
+        expect(host.querySelector('a[href="/platform/account/invites"]')).not.toBeNull();
+        expect(host.querySelector('a[href="/platform/account/invites"]')?.textContent).toBe('兑换码');
+        expect(host.querySelector('a[href="/platform/org"]')).not.toBeNull();
+        if (user) {
+          expect(host.querySelector('a[href="/platform/account/courses"]')?.textContent).toBe('我的学习');
+          expect(host.querySelector('a[href="/account"]')?.textContent).toBe('账号设置');
+        }
+        await act(async () => host.querySelector<HTMLButtonElement>(`button[aria-label="${user ? '我的账号' : '登录与账号'}"]`)!.click());
+      }
+    } finally { auth.user = null; auth.admin = false; auth.loadInstructor.mockReset(); pathname.mockReturnValue('/zh/platform/teachers'); await act(async () => root.unmount()); }
+  });
+  it('shows only the workspaces of the current account and all entries for administrators', async () => {
+    const host = document.createElement('div'), root = createRoot(host);
+    const paths = { organization: '/platform/org', learner: '/learn', organizer: '/platform/events/online?view=manage', supervisor: '/platform/events/online?view=supervise' };
+    const roles = Object.keys(paths) as (keyof typeof paths)[];
+    auth.loadInstructor.mockResolvedValue({ items: [] });
+    try {
+      let uid = 20;
+      for (const role of [...roles, 'ordinary', 'admin'] as const) {
+        auth.user = { uid: uid++ }; auth.admin = role === 'admin';
+        for (const key of roles) access[key] = key === role;
+        await act(async () => root.render(createElement(PlatformShell, { children: null })));
+        const menu = host.querySelector<HTMLButtonElement>('button[aria-label="我的账号"]')!;
+        await act(async () => menu.click());
+        await act(async () => { await vi.dynamicImportSettled(); });
+        for (const key of roles) {
+          expect(!!host.querySelector(`.platform-home-header a[href="${paths[key]}"]`), role + '/' + key).toBe(auth.admin || key === role);
+        }
+        const panel = host.querySelector('.platform-account-content')!;
+        expect(panel.querySelector('details[open]')).toBeNull();
+        expect(panel.querySelector('a')?.textContent).toBe(auth.admin ? '平台管理' : '我的学习');
+        expect(panel.querySelector('a[href="/platform/orders"]')?.closest('details')?.querySelector('summary')?.textContent).toBe('个人空间');
+        const orgLink = panel.querySelector('a[href="/platform/org"]');
+        if (role === 'organization') expect(orgLink?.closest('details')).toBeNull();
+        if (auth.admin) {
+          expect(orgLink?.closest('details')?.querySelector('summary')?.textContent).toBe('我的工作台');
+          expect(panel.querySelector('a[href="/platform/community/review"]')?.closest('details')?.querySelector('summary')?.textContent).toBe('平台运营');
+        }
+        expect(!!host.querySelector('.platform-home-admin-link')).toBe(auth.admin);
+        await act(async () => menu.click());
+      }
+    } finally {
+      for (const key of roles) access[key] = false;
+      auth.user = null; auth.admin = false; auth.loadInstructor.mockReset();
+      await act(async () => root.unmount());
+    }
+  });
+  it('keeps only the instructor directory tab and the global header', async () => {
     const host = document.createElement('div'), root = createRoot(host);
     const pathname = vi.mocked(usePathname);
     try {
@@ -39,9 +142,10 @@ describe('Platform shell ownership during shared-page navigation', () => {
         pathname.mockReturnValue(path);
         await act(async () => root.render(createElement(PlatformShell, { children: null })));
         const tabs = [...host.querySelectorAll('.platform-context-nav a')];
-        expect(tabs.map(tab => tab.textContent)).toEqual(['全部讲师', '讲师入驻']);
-        expect(tabs.find(tab => tab.getAttribute('aria-current') === 'page')?.getAttribute('href')).toBe(path.slice(3));
-        expect(Boolean(host.querySelector('[data-search-scope="teachers"]'))).toBe(!path.endsWith('/apply'));
+        expect(tabs.map(tab => tab.textContent)).toEqual(['全部讲师']);
+        expect(tabs.find(tab => tab.getAttribute('aria-current') === 'page')?.getAttribute('href')).toBe(path.endsWith('/apply') ? undefined : path.slice(3));
+        expect(host.querySelector('[data-search-scope="teachers"]')).toBeNull();
+        expect(host.querySelector('.platform-home-header a[aria-label="搜索"]')).not.toBeNull();
       }
       pathname.mockReturnValue('/zh/platform/teachers/apply/start');
       await act(async()=>root.render(createElement(PlatformShell,{children:null})));
@@ -64,7 +168,7 @@ describe('Platform shell ownership during shared-page navigation', () => {
       }
       pathname.mockReturnValue('/zh/platform/account/courses');
       await act(async()=>root.render(createElement(PlatformShell,{children:null})));
-      expect(host.querySelector('.platform-masthead-brand .platform-home-logo')).toBeNull();
+      expect(host.querySelector('.platform-masthead-brand .platform-home-logo')).not.toBeNull();
     } finally { pathname.mockReturnValue('/zh/platform/teachers');await act(async()=>root.unmount()); }
   });
   it('shows one persistent publishing entry for active instructors, including admins who teach', async () => {
@@ -85,14 +189,19 @@ describe('Platform shell ownership during shared-page navigation', () => {
         auth.loadInstructor.mockResolvedValue({ items: [{ data: { instructorStatus: role } }] });
         await render();
         await vi.waitFor(() => expect(auth.loadInstructor).toHaveBeenCalledWith('instructor-application', expect.objectContaining({ params: {} })));
-        expect(host.querySelector('.platform-nav-actions .platform-instructor-entry')?.getAttribute('href') ?? null).toBe(role === 'active' ? '/platform/instructor' : null);
+        await act(async () => host.querySelector<HTMLButtonElement>('button[aria-label="我的账号"]')!.click());
+        expect(host.querySelector('a[href="/platform/instructor"]')?.getAttribute('href') ?? null).toBe(admin || role === 'active' ? '/platform/instructor' : null);
+        await act(async () => host.querySelector<HTMLButtonElement>('button[aria-label="我的账号"]')!.click());
         expect(host.querySelector('.platform-masthead .platform-instructor-entry')).toBeNull();
       }
       const lookupCount = auth.loadInstructor.mock.calls.length;
       for (const path of ['/zh/platform', '/zh/platform/courses', '/zh/platform/community', '/zh/platform/teachers/apply']) {
         pathname.mockReturnValue(path); await render();
-        expect(host.querySelectorAll('.platform-instructor-entry')).toHaveLength(1);
-        expect(host.querySelector('.platform-instructor-entry')?.textContent).toBe('讲师工作台');
+        expect(host.querySelector('.platform-instructor-entry')).toBeNull();
+        await act(async () => host.querySelector<HTMLButtonElement>('button[aria-label="我的账号"]')!.click());
+        expect(host.querySelectorAll('a[href="/platform/instructor"]')).toHaveLength(1);
+        expect(host.querySelector('a[href="/platform/admin"]')).not.toBeNull();
+        await act(async () => host.querySelector<HTMLButtonElement>('button[aria-label="我的账号"]')!.click());
       }
       expect(auth.loadInstructor).toHaveBeenCalledTimes(lookupCount);
       pathname.mockReturnValue('/zh/platform/instructor'); await render();
@@ -112,11 +221,12 @@ describe('Platform shell ownership during shared-page navigation', () => {
       auth.loadInstructor.mockResolvedValue({ items: [{ data: { instructorStatus: 'active' } }] });
       await act(async () => root.render(createElement(PlatformShell, { children: createElement(RefreshAction) })));
       await act(async () => { await vi.dynamicImportSettled(); });
-      expect(host.querySelector('.platform-nav-actions .platform-instructor-entry')).not.toBeNull();
+      await act(async () => host.querySelector<HTMLButtonElement>('button[aria-label="我的账号"]')!.click());
+      expect(host.querySelector('a[href="/platform/instructor"]')).not.toBeNull();
       auth.loadInstructor.mockResolvedValue({ items: [{ data: { instructorStatus: 'archived' } }] });
       await act(async () => host.querySelector<HTMLButtonElement>('#refresh-access')!.click());
       await act(async () => { await vi.dynamicImportSettled(); });
-      expect(host.querySelector('.platform-instructor-entry')).toBeNull();
+      expect(host.querySelector('a[href="/platform/instructor"]')).toBeNull();
     } finally { auth.user = null; auth.loadInstructor.mockReset(); pathname.mockReturnValue('/zh/platform/teachers'); await act(async () => root.unmount()); }
   });
   it.each([false, true])('shows an isolated instructor studio sidebar and focused editors (admin=%s)', async admin => {
@@ -160,74 +270,19 @@ describe('Platform shell ownership during shared-page navigation', () => {
       }
     } finally { auth.user = null; auth.admin = false; auth.loadInstructor.mockReset(); pathname.mockReturnValue('/zh/platform/teachers'); await act(async () => root.unmount()); }
   });
-  it('switches between forum, course, path, discovery and general search without reusing the previous scope draft', async () => {
+  it('uses one global search entry across every public route, without a scoped masthead', async () => {
     const host = document.createElement('div'), root = createRoot(host);
     const pathname = vi.mocked(usePathname);
-    const render = (path: string) => {
-      pathname.mockReturnValue(path);
-      return act(async () => root.render(createElement(PlatformShell, { children: null })));
-    };
     try {
-      await render('/zh/platform');
-      expect(host.querySelector('.platform-site-search input[aria-label="搜索"]')).not.toBeNull();
-      await render('/zh/platform/community/feed');
-      const input = host.querySelector<HTMLInputElement>('.platform-site-search input')!;
-      expect(input.placeholder).toBe('搜索标题和帖子内容');
-      act(() => {
-        Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')!.set!.call(input, '三阶 复原');
-        input.dispatchEvent(new Event('input', { bubbles: true }));
-      });
-      act(() => host.querySelector('form[role="search"]')!.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true })));
-      expect(navigate).toHaveBeenLastCalledWith('/zh/platform/community/search?q=%E4%B8%89%E9%98%B6+%E5%A4%8D%E5%8E%9F', { scroll: false });
-      await render('/zh/platform/courses');
-      const courseInput = host.querySelector<HTMLInputElement>('.platform-site-search input')!;
-      expect(courseInput.placeholder).toBe('搜索课程、讲师或学习内容');
-      expect(courseInput.value).toBe('');
-      act(() => {
-        Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')!.set!.call(courseInput, '三');
-        courseInput.dispatchEvent(new Event('input', { bubbles: true }));
-      });
-      act(() => host.querySelector('form[role="search"]')!.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true })));
-      expect(navigate).toHaveBeenLastCalledWith('/zh/platform/courses?q=%E4%B8%89', { scroll: false });
-      await render('/zh/platform/paths');
-      const pathInput = host.querySelector<HTMLInputElement>('.platform-site-search input')!;
-      expect(pathInput.placeholder).toBe('搜索学习路径');
-      expect(pathInput.value).toBe('');
-      expect(host.querySelector('[data-search-scope="paths"]')).not.toBeNull();
-      await render('/zh/platform/paths/path-1');
-      expect(pathInput.placeholder).toBe('搜索学习路径');
-      act(() => {
-        Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')!.set!.call(pathInput, '入门');
-        pathInput.dispatchEvent(new Event('input', { bubbles: true }));
-      });
-      act(() => host.querySelector('form[role="search"]')!.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true })));
-      expect(navigate).toHaveBeenLastCalledWith('/zh/platform/paths?q=%E5%85%A5%E9%97%A8', { scroll: false });
-      await render('/zh/platform/courses');
-      expect(host.querySelector<HTMLInputElement>('.platform-site-search input')!.value).toBe('');
-      expect(host.querySelector<HTMLInputElement>('.platform-site-search input')!.placeholder).toBe('搜索课程、讲师或学习内容');
-      await render('/zh/platform/events/event-1');
-      const eventInput = host.querySelector<HTMLInputElement>('.platform-site-search input')!;
-      expect(eventInput.placeholder).toBe('搜索活动');
-      expect(eventInput.value).toBe('');
-      act(() => {
-        Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')!.set!.call(eventInput, '比赛');
-        eventInput.dispatchEvent(new Event('input', { bubbles: true }));
-      });
-      act(() => host.querySelector('form[role="search"]')!.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true })));
-      expect(navigate).toHaveBeenLastCalledWith('/zh/platform/events?q=%E6%AF%94%E8%B5%9B', { scroll: false });
-      await render('/zh/platform/news/news-1');
-      const newsInput = host.querySelector<HTMLInputElement>('.platform-site-search input')!;
-      expect(newsInput.placeholder).toBe('搜索资讯');
-      expect(newsInput.value).toBe('');
-      act(() => {
-        Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')!.set!.call(newsInput, '魔方');
-        newsInput.dispatchEvent(new Event('input', { bubbles: true }));
-      });
-      act(() => host.querySelector('form[role="search"]')!.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true })));
-      expect(navigate).toHaveBeenLastCalledWith('/zh/platform/news?q=%E9%AD%94%E6%96%B9', { scroll: false });
-      await render('/zh/platform');
-      expect(host.querySelector('.platform-scoped-search')).toBeNull();
-      expect(host.querySelector('.platform-site-search input[aria-label="搜索"]')).not.toBeNull();
+      for (const path of ['/zh/platform', '/zh/platform/community/feed', '/zh/platform/courses', '/zh/platform/paths', '/zh/platform/events/event-1', '/zh/platform/news/news-1', '/zh/platform/teachers']) {
+        pathname.mockReturnValue(path);
+        await act(async () => root.render(createElement(PlatformShell, { children: null })));
+        expect(host.querySelectorAll('a[aria-label="搜索"]')).toHaveLength(1);
+        expect(host.querySelector('a[aria-label="搜索"]')?.getAttribute('href')).toBe('/search');
+        expect(host.querySelector('.platform-site-search')).toBeNull();
+        expect(host.querySelector('.platform-scoped-search')).toBeNull();
+        expect(host.querySelectorAll('.platform-shared-footer')).toHaveLength(1);
+      }
     } finally { pathname.mockReturnValue('/zh/platform/teachers'); await act(async () => root.unmount()); }
   });
   it('renders the native admin layout on the server without preloading the lazy shared shell', () => {
@@ -251,30 +306,30 @@ describe('Platform shell ownership during shared-page navigation', () => {
       pathname.mockReturnValue(path);
       const content = createElement('article', null, path);
       await act(async () => root.render(createElement(Suspense, { fallback: null }, createElement(PlatformSharedSurface, { children: native ? createElement(PlatformShell, { children: content }) : content }))));
-      await vi.waitFor(() => expect(host.querySelector('.platform-admin-nav')).not.toBeNull());
+      await vi.waitFor(() => expect(host.querySelector('.platform-admin-group-nav')).not.toBeNull());
     };
     try {
       await render('/zh/platform/admin/courses', true);
-      const masthead = host.querySelector('.platform-masthead');
-      expect(host.querySelectorAll('.platform-admin-nav a')).toHaveLength(6);
-      expect(host.querySelector('.platform-admin-nav [aria-current]')?.textContent).toBe('课程');
+      const masthead = host.querySelector('.platform-home-header');
+      expect(host.querySelectorAll('.platform-admin-group-nav a')).toHaveLength(6);
+      expect(host.querySelector('.platform-admin-group-nav [aria-current]')?.textContent).toBe('课程');
       expect(host.querySelector('.platform-admin-context-nav [aria-current]')?.getAttribute('href')).toBe('/platform/admin/courses');
       expect(host.querySelector('.platform-workspace-nav')).toBeNull();
       expect([...host.querySelectorAll('.platform-nav a, .platform-context-nav a')].every(link => link.getAttribute('data-scroll') === 'false')).toBe(true);
       await render('/zh/platform/admin/courses/new', true);
-      expect(host.querySelector('.platform-masthead')).toBe(masthead);
+      expect(host.querySelector('.platform-home-header')).toBe(masthead);
       expect(host.querySelector('.platform-admin-context-nav [aria-current]')?.getAttribute('href')).toBe('/platform/admin/courses');
       await render('/zh/platform/admin/community', false);
-      expect(host.querySelector('.platform-masthead')).toBe(masthead);
+      expect(host.querySelector('.platform-home-header')).toBe(masthead);
       expect(host.querySelector('.platform-admin-context-nav [aria-current]')?.getAttribute('href')).toBe('/platform/admin/community');
       await render('/zh/platform/admin/qr/cards', true);
-      expect(host.querySelector('.platform-masthead')).toBe(masthead);
+      expect(host.querySelector('.platform-home-header')).toBe(masthead);
       expect(host.querySelectorAll('.platform-shell')).toHaveLength(1);
       expect(host.querySelector('.platform-admin-context-nav [aria-current]')?.getAttribute('href')).toBe('/platform/admin/qr/cards');
       auth.admin = false;
       pathname.mockReturnValue('/zh/platform/admin/community');
       await act(async () => root.render(createElement(Suspense, { fallback: null }, createElement(PlatformSharedSurface, { children: createElement('article', null, 'private admin content') }))));
-      expect(host.querySelector('.platform-admin-nav')).toBeNull();
+      expect(host.querySelector('.platform-admin-group-nav')).toBeNull();
       expect(host.querySelector('article')).toBeNull();
       expect(host.querySelector('.platform-state-permission')).not.toBeNull();
     } finally { auth.admin = false; auth.user = null; pathname.mockReturnValue('/zh/platform/teachers'); await act(async () => root.unmount()); }
@@ -288,9 +343,9 @@ describe('Platform shell ownership during shared-page navigation', () => {
         children: createElement(PlatformShell, { children: createElement('article', null, '讲师内容') }),
       })));
       expect(host.querySelectorAll('.platform-shell')).toHaveLength(1);
-      expect(host.querySelectorAll('.platform-masthead')).toHaveLength(1);
-      expect(host.querySelectorAll('.platform-site-search')).toHaveLength(1);
-      expect(host.querySelectorAll('.platform-nav')).toHaveLength(1);
+      expect(host.querySelectorAll('.platform-home-header')).toHaveLength(1);
+      expect(host.querySelectorAll('.platform-site-search')).toHaveLength(0);
+      expect(host.querySelectorAll('.platform-home-nav')).toHaveLength(1);
       expect(host.querySelector('article')?.textContent).toBe('讲师内容');
     } finally {
       await act(async () => root.unmount());
@@ -318,7 +373,7 @@ describe('Platform shell ownership during shared-page navigation', () => {
     }
   });
 
-  it('omits shared navigation on course details and classroom pages, then restores it on the catalog', async () => {
+  it('keeps the shared header on course details and classroom pages', async () => {
     const host = document.createElement('div');
     const root = createRoot(host);
     const pathname = vi.mocked(usePathname);
@@ -328,24 +383,24 @@ describe('Platform shell ownership during shared-page navigation', () => {
         children: createElement('h1', null, heading),
       })));
     };
-    const chrome = '.platform-masthead, .platform-site-search, .platform-nav, .platform-context-nav';
+    const chrome = '.platform-home-header';
 
     try {
       await render('/zh/platform/courses', '全部课程');
-      expect(host.querySelectorAll(chrome)).toHaveLength(4);
+      expect(host.querySelectorAll(chrome)).toHaveLength(1);
 
       await render('/zh/platform/courses/example', '课程名称');
-      expect(host.querySelector(chrome)).toBeNull();
+      expect(host.querySelector(chrome)).not.toBeNull();
       expect(host.querySelector('main h1')?.textContent).toBe('课程名称');
 
       for (const path of ['sections/introduction', 'sections/trial', 'sections/core', 'learn/lesson-1']) {
         await render(`/zh/platform/courses/example/${path}`, '课程内容');
-        expect(host.querySelector(chrome)).toBeNull();
+        expect(host.querySelector(chrome)).not.toBeNull();
         expect(host.querySelector('main h1')?.textContent).toBe('课程内容');
       }
 
       await render('/zh/platform/courses', '全部课程');
-      expect(host.querySelectorAll(chrome)).toHaveLength(4);
+      expect(host.querySelectorAll(chrome)).toHaveLength(1);
     } finally {
       pathname.mockReset();
       await act(async () => root.unmount());

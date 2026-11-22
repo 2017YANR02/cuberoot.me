@@ -41,7 +41,7 @@
 .lesson-video-progress:hover .lesson-video-range::-webkit-slider-thumb, .lesson-video-progress .lesson-video-range:focus-visible::-webkit-slider-thumb { opacity: 1; }
 .lesson-video-volume .lesson-video-range[type=range] { width: 0; height: 24px; opacity: 0; transition: width .15s, opacity .15s; background: linear-gradient(to right, var(--player-ink) var(--volume), var(--player-track) var(--volume)) center / 100% 3px no-repeat; }
 .lesson-video-volume:hover .lesson-video-range, .lesson-video-volume:focus-within .lesson-video-range { width: 60px; margin-right: 10px; opacity: 1; }
-.lesson-video-capture { border: 0; background: transparent; font-size: 10px !important; padding: 10px 3px; }
+.lesson-video-capture { border: 0; background: transparent; font-size: 13px !important; padding: 10px 3px; }
 .lesson-video-autoplay { position: relative; display: flex; padding: 10px 6px; }
 .lesson-video-player .bool-toggle { gap: 0; position: relative; }
 .lesson-video-player .pill-toggle--switch { width: 34px; height: 20px; border: 0; }

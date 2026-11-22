@@ -456,12 +456,12 @@ const SiteEntry = memo(function SiteEntry({ site, lang, admin, reorderable, canM
         <div className={entryClass('-admin')}>
           {reorderable && (
             <>
-              <button type="button" className="site-admin-btn" disabled={!canMoveUp} title={lang === 'zh' ? '上移' : 'Move up'} onClick={() => onMove(site, -1)}><ArrowUp size={14} /></button>
-              <button type="button" className="site-admin-btn" disabled={!canMoveDown} title={lang === 'zh' ? '下移' : 'Move down'} onClick={() => onMove(site, 1)}><ArrowDown size={14} /></button>
+              <button type="button" className="site-admin-btn" disabled={!canMoveUp} title={lang === 'zh' ? '上移' : 'Move up'} aria-label={lang === 'zh' ? '上移' : 'Move up'} onClick={() => onMove(site, -1)}><ArrowUp size={14} /></button>
+              <button type="button" className="site-admin-btn" disabled={!canMoveDown} title={lang === 'zh' ? '下移' : 'Move down'} aria-label={lang === 'zh' ? '下移' : 'Move down'} onClick={() => onMove(site, 1)}><ArrowDown size={14} /></button>
             </>
           )}
-          <button type="button" className="site-admin-btn" title={lang === 'zh' ? '编辑' : 'Edit'} onClick={() => onEdit(site)}><Pencil size={14} /></button>
-          <button type="button" className="site-admin-btn site-admin-del" title={lang === 'zh' ? '删除' : 'Delete'} onClick={() => onDelete(site)}><Trash2 size={14} /></button>
+          <button type="button" className="site-admin-btn" title={lang === 'zh' ? '编辑' : 'Edit'} aria-label={lang === 'zh' ? '编辑' : 'Edit'} onClick={() => onEdit(site)}><Pencil size={14} /></button>
+          <button type="button" className="site-admin-btn site-admin-del" title={lang === 'zh' ? '删除' : 'Delete'} aria-label={lang === 'zh' ? '删除' : 'Delete'} onClick={() => onDelete(site)}><Trash2 size={14} /></button>
         </div>
       )}
 

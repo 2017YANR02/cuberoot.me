@@ -1,5 +1,5 @@
 .platform-shell {
-  --platform-measure: 1120px;
+  --platform-measure: 1200px;
   font-family: var(--font-sans);
   --platform-glass-edge: var(--glass-border, var(--border-default));
   font-size: 0.875rem;
@@ -1015,22 +1015,26 @@ body[data-site-scenery] :is(
 
 .platform-course-grid {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  max-width: var(--platform-measure);
   grid-auto-rows: 1fr;
   gap: 18px;
 }
 
 .platform-course-card {
   min-width: 0;
+  display: flex;
+  flex-direction: column;
   border: 1px solid var(--border-strong);
   border-radius: 14px;
   background: var(--card);
 }
 
 .platform-course-card-link {
+  min-width: 0;
   display: flex;
   flex-direction: column;
-  height: 100%;
+  flex: 1;
   border-radius: inherit;
   color: var(--foreground);
   text-decoration: none;
@@ -1066,45 +1070,43 @@ body[data-site-scenery] :is(
 }
 
 .platform-course-card-title {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 12px;
+  min-width: 0;
 }
 
-.platform-course-card-title h2 {
+.platform-course-card-title :is(h2, h3) {
   margin: 0;
-  font-size: 1.05rem;
-  line-height: 1.4;
+  font-size: 1rem;
+  line-height: 1.35;
+  font-weight: 600;
   overflow-wrap: anywhere;
 }
 
-.platform-course-grid .platform-course-card-title h2,
-.platform-course-card-byline > span:first-child {
+.platform-course-grid .platform-course-card-title h3 {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  height: 2.7em;
+  overflow: hidden;
+}
+
+.platform-course-card-byline {
   min-width: 0;
+  min-height: 1.4em;
   overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;
 }
 
-.platform-course-card-byline {
-  display: flex;
-  align-items: baseline;
-  gap: 6px 12px;
-  min-height: 1.4em;
-}
-
-.platform-course-card-byline > span + span { flex-shrink: 0; }
-
 .platform-course-card-tag-slot {
-  min-height: 1.5rem;
-  max-height: 1.5rem;
+  height: 1.5rem;
+  flex: none;
   overflow: hidden;
 }
 
-.platform-course-card-tag-slot .platform-course-card-labels { margin-block: 0; }
+.platform-course-card-tag-slot .platform-course-card-labels { flex-wrap: nowrap; margin-block: 0; overflow: hidden; }
+.platform-course-card-tag-slot .platform-course-card-label { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
-.platform-course-card-title svg { flex: none; align-self: center; }
 .platform-course-card-link:is(:hover, :focus-visible) .platform-course-card-title { color: var(--accent); }
 
 .platform-course-card-body p {
@@ -1311,21 +1313,8 @@ a.platform-course-lesson-row:hover { color: var(--accent); }
 
 .platform-course-card-meta:not(:empty) { padding-top: 7px; }
 
-@media (max-width: 960px) {
-  .platform-course-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-}
-
 @media (max-width: 600px) {
   .platform-course-toolbar .platform-search { flex-basis: 100%; max-width: none; }
-  .platform-course-grid {
-    grid-template-columns: minmax(0, 1fr);
-    gap: 10px;
-  }
-
-  .platform-course-card-link {
-    display: grid;
-    grid-template-columns: clamp(80px, 26vw, 112px) minmax(0, 1fr);
-  }
 
   .platform-course-card-cover {
     aspect-ratio: auto;
@@ -1342,18 +1331,8 @@ a.platform-course-lesson-row:hover { color: var(--accent); }
     padding: 10px 10px 10px 12px;
   }
 
-  .platform-course-card-title { gap: 6px; }
-  .platform-course-card-title h2 { font-size: 0.9375rem; }
-  .platform-course-card-title svg { width: 14px; height: 14px; }
   .platform-course-card-body p { font-size: 0.8125rem; line-height: 1.4; }
   .platform-course-card-meta:not(:empty) { padding-top: 3px; }
-}
-
-@media (max-width: 760px), (pointer: coarse) {
-  .platform-course-card {
-    border-width: 2px;
-    border-color: color-mix(in srgb, var(--foreground) 35%, var(--border-strong));
-  }
 }
 
 .platform-search-input,
@@ -2157,7 +2136,6 @@ a.platform-course-lesson-row:hover { color: var(--accent); }
 }
 
 /* The section is the classroom: selecting a lesson never leaves the player page. */
-.platform-shell:has(.platform-course-classroom) { --platform-measure: 1480px; }
 .platform-course-classroom { max-width: none; }
 .platform-course-classroom .platform-route-header { margin-bottom: 12px; }
 :is(.platform-course-classroom, .platform-instructor-course-editor-page) .platform-route-header > .back-home { min-height: 36px; }
@@ -2790,13 +2768,241 @@ a.platform-instructor-card:hover :is(h2, h3) { text-decoration: underline; text-
   scrollbar-width: thin;
 }
 .platform-admin-context-nav a { flex: 0 0 auto; white-space: nowrap; }
-.platform-account-menu { min-width: 200px; }
-.platform-account-menu a { display: block; padding: 8px 12px; border-radius: 8px; color: var(--foreground); text-decoration: none; }
-.platform-account-menu a:hover { background: var(--accent-soft); }
+.platform-account-menu { width: min(280px, calc(100vw - 16px)); overscroll-behavior: contain; }
+.platform-account-content { padding: 4px; }
+.platform-account-content a, .platform-account-content summary {
+  display: flex; align-items: center; min-height: 44px; padding: 6px 12px; box-sizing: border-box;
+  border-radius: 8px; color: var(--foreground); text-decoration: none; cursor: pointer;
+}
+.platform-account-content summary { justify-content: space-between; }
+.platform-account-content details > a { padding-inline-start: 26px; }
+.platform-account-content :is(a, summary):hover { background: var(--accent-soft); }
+.platform-account-content :focus-visible { outline: 2px solid var(--ring); outline-offset: -2px; }
+.platform-account-sections, .platform-account-preferences { border-block-start: 1px solid var(--border-default); margin-block-start: 4px; padding-block-start: 4px; }
+.platform-account-preferences { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; }
+
 .platform-shell--shared .platform-main > main { width: 100%; max-width: none; margin: 0; padding: 0; min-height: 0; }
 .platform-shell--shared :is(.teachers-back-row, .org-back-row) { display: none; }
 .platform-shell--shared .teachers-hero { padding-block: 0 24px; }
 .platform-shell--shared .teachers-intro { margin-top: 0; }
+
+/* Shared learning surface uses the homepage's existing design tokens. */
+.platform-shell {
+  --platform-home-space: clamp(16px, 3vw, 32px);
+  --platform-home-radius: 16px;
+  --platform-home-text-size: .9375rem;
+  --platform-home-small-size: .8125rem;
+  --platform-home-touch-size: 44px;
+  --platform-home-secondary-text: color-mix(in srgb, var(--foreground) 78%, var(--background));
+  --platform-home-emphasis: var(--primary);
+  --platform-home-emphasis-foreground: var(--primary-foreground);
+  --platform-home-progress-track: color-mix(in srgb, var(--foreground) 12%, var(--background));
+  font-size: 1rem;
+}
+.platform-home-header {
+  width: min(calc(100% - 32px), var(--platform-measure));
+  margin-inline: auto;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  grid-template-areas: 'brand nav actions';
+  align-items: center;
+  gap: 12px;
+  padding-block: 16px;
+}
+.platform-home-header .platform-masthead-brand { min-width: 0; }
+.platform-home-header .platform-home-logo { display: inline-flex; align-items: center; gap: 7px; max-width: 100%; }
+.platform-home-header .platform-home-logo img { width: 38px; height: 38px; flex: 0 0 38px; }
+.platform-home-brand-text { font-size: var(--platform-home-text-size); line-height: 1.2; font-weight: 650; color: var(--foreground); overflow-wrap: normal; }
+.platform-home-nav { grid-area: nav; display: flex; gap: clamp(8px, 2vw, 24px); align-items: center; justify-content: center; }
+.platform-home-nav a { display: inline-flex; align-items: center; min-height: 44px; padding: 0 8px; color: var(--platform-home-secondary-text); font-size: .9375rem; text-decoration: none; white-space: nowrap; }
+.platform-home-nav a[aria-current], .platform-home-nav a:hover { color: var(--foreground); font-weight: 600; text-decoration: underline; text-underline-offset: 6px; }
+.platform-home-header-actions { grid-area: actions; justify-self: end; display: flex; align-items: center; gap: 4px; }
+.platform-home-icon { display: inline-grid; place-items: center; width: var(--platform-home-touch-size); height: var(--platform-home-touch-size); color: var(--foreground); background: transparent; border: 0; border-radius: 10px; cursor: pointer; text-decoration: none; padding: 0; }
+.platform-home-icon.platform-home-ai { display: inline-flex; justify-content: center; align-items: center; gap: 6px; width: auto; min-width: var(--platform-home-touch-size); padding-inline: 8px; font-size: var(--platform-home-small-size); white-space: nowrap; }
+.platform-home-admin-link { display: inline-flex; align-items: center; min-height: 44px; padding-inline: 8px; white-space: nowrap; color: var(--foreground); }
+@media (max-width: 900px) { .platform-home-admin-link { display: none; } }
+.platform-home-icon:hover { background: var(--muted); }
+.platform-home-icon svg { width: 21px; height: 21px; }
+.platform-home-avatar { position: relative; display: grid; place-items: center; width: 36px; height: 36px; overflow: hidden; border-radius: 50%; background: var(--muted); color: var(--foreground); font-size: 1rem; font-weight: 600; }
+.platform-home-avatar img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.platform-home-avatar > [hidden] { display: none; }
+.platform-home-account-name { display: block; padding: 8px 12px; overflow-wrap: anywhere; }
+.platform-home-shell .platform-main { padding-top: 28px; }
+.platform-home-shell .platform-landing { gap: clamp(28px, 5vw, 56px); min-width: 0; }
+.platform-home-shell .platform-home-hero { padding: var(--platform-home-space) 0; }
+.platform-home-shell .platform-home-hero h1 { max-width: 760px; font-size: clamp(1.75rem, 4vw, 2.75rem); color: var(--foreground); line-height: 1.25; }
+.platform-home-shell .platform-home-hero > p { font-size: 1rem; color: var(--platform-home-secondary-text); }
+.platform-home-shell .platform-home-actions .platform-button { min-height: 46px; min-width: 184px; justify-content: center; font-size: var(--platform-home-text-size); }
+.platform-home-shell .platform-home-status { min-height: 150px; display: grid; align-content: center; }
+.platform-home-shell .platform-home-redeem { color: var(--platform-home-secondary-text); font-size: .875rem; font-weight: 500; }
+.platform-home-shell .platform-home-learning h1 { font-size: 1.5rem; margin: 0; }
+.platform-home-shell .platform-home-learning .platform-home-resume {
+  border: 1px solid var(--border-default); border-radius: var(--platform-home-radius); background: var(--card); padding: var(--platform-home-space); gap: 20px; align-items: center;
+}
+.platform-home-resume-skeleton .platform-home-learning-cover { min-height: 88px; height: auto; background: var(--muted); }
+.platform-home-resume-skeleton .platform-home-learning-copy .skeleton-block:first-child { width: 65%; height: 22px; }
+.platform-home-resume-skeleton .platform-home-learning-copy .skeleton-block:nth-child(2) { width: 80%; height: 14px; }
+.platform-home-resume-skeleton .platform-home-learning-copy .skeleton-block:nth-child(3) { width: 100%; height: 8px; }
+.platform-home-resume-skeleton .platform-home-skeleton-action { width: 150px; flex: 0 0 150px; height: 44px; }
+.platform-home-shell .platform-home-learning-copy { gap: 8px; }
+.platform-home-shell .platform-home-learning-copy small { color: var(--platform-home-secondary-text); font-size: .875rem; }
+.platform-shell :is(.platform-button-primary, .org-primary-link, .org-primary-button, .org-form-button, .directory-primary-button, .forum-btn-primary, .teaching-primary-link, .teaching-primary-button, .teaching-form-button) { background: var(--platform-home-emphasis); color: var(--platform-home-emphasis-foreground); border-color: var(--platform-home-emphasis); }
+.platform-home-shell .platform-home-progress { display: grid; gap: 5px; font-size: .875rem; color: var(--platform-home-emphasis); }
+.platform-home-shell .platform-home-progress progress { appearance: none; height: 8px; width: min(100%, 300px); border: 0; border-radius: 999px; overflow: hidden; background: var(--platform-home-progress-track); accent-color: var(--platform-home-emphasis); }
+.platform-home-progress progress::-webkit-progress-bar { background: var(--platform-home-progress-track); border-radius: 999px; }
+.platform-home-progress progress::-webkit-progress-value { background: var(--platform-home-emphasis); border-radius: 999px; }
+.platform-home-progress progress::-moz-progress-bar { background: var(--platform-home-emphasis); border-radius: 999px; }
+.platform-home-lesson-time { display: flex; gap: 4px 14px; flex-wrap: wrap; }
+.platform-home-learning-play { position: relative; display: grid; place-items: center; place-self: end; margin: 6px; width: 28px; height: 28px; border-radius: 50%; background: var(--platform-home-emphasis); color: var(--platform-home-emphasis-foreground); }
+.platform-home-learning-play svg { margin-inline-start: 2px; }
+.platform-home-learning-cover img[hidden] { display: none; }
+.platform-home-shell .platform-home-learning-action { min-height: 44px; font-size: .9375rem; }
+.platform-home-trial-note { margin: 0; padding-inline: 2px; color: var(--platform-home-secondary-text); font-size: .875rem; }
+.platform-home-trial-note a { color: inherit; text-underline-offset: 3px; }
+.platform-home-path .platform-home-section-heading { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px; }
+.platform-home-path { min-width: 0; }
+.platform-home-milestone-heading { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.platform-home-milestone-number { display: grid; place-items: center; width: 28px; height: 28px; flex: 0 0 28px; border-radius: 50%; background: var(--muted); color: var(--platform-home-secondary-text); font-size: var(--platform-home-small-size); font-variant-numeric: tabular-nums; }
+.platform-home-shell .platform-carousel-slide { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: stretch; min-height: 320px; border: 1px solid var(--border-default); overflow: hidden; border-radius: var(--platform-home-radius); }
+.platform-carousel-media { position: relative; isolation: isolate; min-width: 0; min-height: 220px; background: var(--muted); }
+.platform-carousel-media::after { content: ''; position: absolute; inset: 0; pointer-events: none; background: linear-gradient(90deg, transparent 65%, color-mix(in srgb, var(--foreground) 18%, transparent)); }
+.platform-carousel-media .platform-feature-photo { border-radius: 0; }
+.platform-home-shell .platform-carousel-slide .platform-feature-copy { width: auto; margin: 0; padding: var(--platform-home-space); border-radius: 0; background: var(--card); display: grid; align-content: center; justify-items: start; gap: 8px; min-width: 0; }
+.platform-home-shell .platform-feature-caption { position: static; border-radius: 0; padding: 0; color: var(--platform-home-secondary-text); font-size: .8125rem; }
+.platform-home-shell .platform-carousel-slide .platform-feature-copy h2 { font-size: clamp(1.25rem, 2.5vw, 1.75rem); margin: 0; }
+.platform-home-shell .platform-feature-copy p { font-size: .9375rem; color: var(--platform-home-secondary-text); margin: 0; overflow-wrap: anywhere; }
+.platform-home-shell .platform-carousel-instructors { color: var(--platform-home-secondary-text); font-size: .875rem; margin: 0; }
+.platform-home-shell .platform-course-card-label { font-size: var(--platform-home-small-size); }
+.platform-home-shell .platform-carousel-arrows { right: auto; left: 12px; }
+.platform-home-shell .platform-carousel-dot[aria-current='true'] span { background: var(--platform-home-emphasis); }
+.platform-home-shell .platform-instructor-info :is(p, .platform-instructor-focus, .platform-instructor-availability) { color: var(--platform-home-secondary-text); font-size: var(--platform-home-small-size); }
+.platform-shared-footer { width: min(calc(100% - 32px), var(--platform-measure)); margin: 32px auto 0; padding-block: 20px 28px; border-top: 1px solid var(--border-default); }
+.platform-shared-footer a { font-size: .875rem; color: var(--platform-home-secondary-text); }
+.platform-shell :is(.platform-context-nav, .platform-workspace-nav) { font-size: .875rem; border-bottom: 1px solid var(--border-default); padding-bottom: 6px; }
+.platform-shell :is(.platform-context-nav, .platform-workspace-nav) a { color: var(--platform-home-secondary-text); min-height: 40px; padding-inline: 12px; }
+.platform-shell :is(.platform-context-nav, .platform-workspace-nav) a[aria-current] { color: var(--foreground); background: var(--accent-soft); box-shadow: inset 0 -2px var(--accent); font-weight: 650; }
+.platform-shell :is(a, button, input, select, textarea):focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+.platform-shell .platform-main { min-width: 0; }
+.platform-shell .platform-catalog-progress { display: flex; align-items: center; width: 100%; gap: 8px; font-size: .75rem; font-weight: 600; color: var(--platform-home-emphasis); white-space: nowrap; }
+.platform-shell .platform-catalog-progress progress { appearance: none; flex: 1; min-width: 0; width: 100%; height: 4px; border: 0; border-radius: 999px; overflow: hidden; background: var(--platform-home-progress-track); accent-color: var(--platform-home-emphasis); }
+.platform-catalog-status { font-size: .8125rem; font-weight: 700; color: var(--platform-home-emphasis); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.platform-catalog-price { font-size: .9375rem; }
+.platform-catalog-sections { display: grid; gap: 28px; }
+.platform-catalog-section { min-width: 0; }
+.platform-catalog-section-title { font-size: 1.0625rem; font-weight: 650; margin: 0 0 14px; }
+.platform-catalog-count { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin-bottom: 24px; font-size: .875rem; color: var(--platform-home-secondary-text); }
+.platform-shell .platform-course-card-label { font-size: var(--platform-home-small-size); }
+.platform-shell .platform-course-card-body :is(p, .platform-course-card-meta) { color: var(--platform-home-secondary-text); font-size: .875rem; }
+.platform-course-grid .platform-course-card-cover { aspect-ratio: 16 / 9; flex: none; border-radius: 13px 13px 0 0; }
+.platform-course-grid .platform-course-card-cover img { object-fit: cover; object-position: center 30%; }
+.platform-course-cover-count {
+  position: absolute;
+  right: 5px;
+  bottom: 5px;
+  padding: 2px 5px;
+  border-radius: 4px;
+  /* Fixed photo overlay: independent of light/dark appearance. */
+  background: rgba(20, 20, 19, 0.72);
+  color: white;
+  font-size: 11px;
+  line-height: 1.25;
+  font-variant-numeric: tabular-nums;
+}
+.platform-course-grid .platform-course-card-body { min-width: 0; padding: 14px; gap: 6px; }
+.platform-shell .platform-course-grid .platform-course-card-byline { font-size: .75rem; line-height: 1.4; }
+.platform-course-grid .platform-course-card-meta { height: 24px; flex: none; flex-wrap: nowrap; padding-top: 0; margin-top: auto; }
+@media (min-width: 1024px) {
+  .platform-course-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+@media (min-width: 1280px) {
+  .platform-course-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+}
+@media (width < 640px) {
+  .platform-course-grid {
+    grid-template-columns: minmax(0, 1fr);
+    grid-auto-rows: 132px;
+    gap: 0;
+    margin-inline: -16px;
+  }
+  .platform-course-grid .platform-course-card,
+  body[data-site-scenery] .platform-course-grid .platform-course-card {
+    box-sizing: border-box;
+    height: 132px;
+    border: 0;
+    border-bottom: 1px solid var(--border-default);
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+  .platform-course-grid .platform-course-card:last-child { border-bottom-color: transparent; }
+  .platform-course-grid .platform-course-card-link {
+    box-sizing: border-box;
+    flex-direction: row;
+    align-items: stretch;
+    gap: 12px;
+    padding: 12px 16px;
+    min-height: 0;
+  }
+  .platform-course-grid .platform-course-card-link:focus-visible { outline-offset: -2px; }
+  .platform-course-grid .platform-course-card-cover {
+    width: clamp(148px, 42%, 188px);
+    align-self: flex-start;
+    border-radius: 8px;
+  }
+  .platform-course-grid .platform-course-card-body { padding: 0; gap: 4px; }
+  .platform-course-grid .platform-course-card-title h3 { font-size: 15px; min-height: 40px; }
+  .platform-course-grid .platform-course-card-tag-slot { height: 18px; }
+  .platform-shell .platform-course-grid .platform-course-card-label {
+    padding: 1px 5px;
+    border-radius: 4px;
+    font-size: 12px;
+    line-height: 16px;
+  }
+  .platform-shell .platform-course-grid .platform-course-card-byline { min-height: 16px; height: 16px; flex: none; line-height: 16px; }
+  .platform-course-grid .platform-course-card-meta { height: 20px; }
+}
+.platform-teacher-empty { display: grid; justify-items: start; gap: 8px; padding: var(--platform-home-space); border: 1px solid var(--border-default); border-radius: var(--platform-home-radius); background: var(--card); }
+.platform-teacher-empty h2 { font-size: 1.125rem; color: var(--foreground); margin: 0; }
+.platform-teacher-empty p { margin: 0; color: var(--platform-home-secondary-text); }
+.platform-shell--shared .platform-main .forum-page { max-width: none; width: 100%; padding-inline: 0; }
+.platform-catalog-action { justify-content: center; }
+.platform-catalog-note { color: var(--platform-home-secondary-text); margin: 20px 0; font-size: .9375rem; }
+.platform-shell .platform-admission-hero { grid-template-columns: minmax(0, 1fr); background: var(--card); border: 1px solid var(--border-default); border-radius: var(--platform-home-radius); }
+.platform-admission-start { justify-self: start; min-height: var(--platform-home-touch-size); }
+.platform-shell #create-enterprise .org-form label { align-content: start; }
+.platform-shell #create-enterprise .org-form-control { box-sizing: border-box; height: 44px; min-width: 0; }
+.org-create-steps { display: flex; flex-wrap: wrap; gap: 8px 24px; padding-inline-start: 22px; color: var(--platform-home-secondary-text, var(--muted-foreground)); font-size: .875rem; }
+.org-create-steps [aria-current] { color: var(--foreground); font-weight: 650; }
+.forum-board-meta { display: block; margin-top: 4px; font-size: .8125rem; color: var(--platform-home-secondary-text, var(--muted-foreground)); }
+.forum-learning-entry { display: flex; flex-wrap: wrap; gap: 8px; margin-block: 0 16px; }
+.platform-instructor-studio .platform-instructor-studio-main { max-width: var(--platform-measure); }
+.platform-home-assistant { position: fixed; inset: 0 0 0 auto; margin: 0; width: min(100%, 500px); max-width: 100%; height: 100dvh; max-height: 100dvh; padding: 0; border: 0; color: var(--foreground); background: var(--background); }
+.platform-home-assistant::backdrop { background: color-mix(in srgb, var(--foreground) 40%, transparent); }
+.platform-home-assistant-panel { height: 100%; min-height: 0; display: flex; flex-direction: column; padding: 16px; }
+.platform-home-assistant-panel > header { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.platform-home-assistant-panel h2 { font-size: 1.125rem; margin: 0; }
+.platform-home-assistant-panel .deskpet-conversation { flex: 1; min-height: 0; }
+.platform-home-assistant-intro { padding-block: 20px; display: grid; gap: 16px; justify-items: start; }
+.platform-home-assistant-intro p { margin: 0; line-height: 1.7; }
+/* The homepage already has dedicated AI and message entries. Avoid duplicate
+   draggable global overlays covering its course/path controls, without changing user preferences. */
+body:has(.platform-shell) :is(.clawd-deskpet, .deskpet-compact) { display: none; }
+@media (max-width: 900px) {
+  .platform-home-header { grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: 'brand actions' 'nav nav'; gap: 4px; }
+}
+@media (max-width: 600px) {
+  .platform-home-header { grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: 'brand actions' 'nav nav'; gap: 4px; padding-block: 8px; }
+  .platform-home-brand-text { max-width: 78px; font-size: var(--platform-home-small-size); }
+  .platform-home-nav { justify-content: space-between; gap: 0; }
+  .platform-home-nav a { flex: 1; justify-content: center; padding: 0 4px; }
+  .platform-home-shell .platform-main { padding-top: 16px; }
+  .platform-home-shell .platform-carousel-slide { grid-template-columns: minmax(0, 1fr); }
+  .platform-carousel-media { min-height: 0; aspect-ratio: 16 / 9; }
+  .platform-home-shell .platform-home-learning-action { margin-inline-start: 0; }
+  .platform-home-ai > span { display: none; }
+}
 .platform-entity-meta { display: flex; flex-wrap: wrap; gap: 8px 16px; color: var(--muted-foreground); }
 .platform-entity-cover { width: 100%; max-height: 200px; object-fit: cover; border-radius: 10px; }
 .platform-pagination { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; justify-content: center; margin-block: 24px; }

@@ -512,7 +512,7 @@ export default function AlgCaseView({ puzzle, set, caseObj: caseProp, data, embe
               }} />}
           </span>}
           {showSub && <span className="alg-meta-head-sub">{sub}</span>}
-          <Link href={backHref} className="alg-meta-head-open" prefetch={false} title={tr({ zh: '在列表中打开', en: 'Open in the list' })}>
+          <Link href={backHref} className="alg-meta-head-open" prefetch={false} title={tr({ zh: '在列表中打开', en: 'Open in the list' })} aria-label={tr({ zh: '在列表中打开', en: 'Open in the list' })}>
             <ExternalLink size={14} />
           </Link>
         </PageHeading>

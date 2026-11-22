@@ -134,9 +134,12 @@ describe('Platform capabilities stay in canonical main-site entrypoints', () => 
     expect(styles).not.toMatch(/\.platform-(track|directory|landing-links)\b/);
     expect(styles).toMatch(/\.platform-nav\s*\{[^}]*grid-template-columns:\s*repeat\(5,/s);
     expect(styles).toMatch(/\.platform-account-link\s*\{[^}]*min-height:\s*44px/s);
-    expect(routeView).toContain('<PlatformLanding');
+    expect(read('app/[lang]/platform/page.tsx')).toContain('<PlatformLanding');
+    expect(routeView).not.toContain("import('./PlatformLanding')");
     expect(home).toContain('useAuthUser()');
-    expect(home).toContain('useIsAdmin()');
+    // Administration lives in the permission-gated account menu, not the homepage body.
+    expect(shell).toContain('useIsAdmin()');
+    expect(home).not.toContain('href="/platform/admin"');
     expect(home).toMatch(/loadPlatformResource\(\s*'account-courses'/);
     expect(home).toMatch(/loadPlatformResource\(\s*'account-progress'/);
     expect(shell).toMatch(/loadPlatformResource\(\s*'instructor-application'/);
@@ -153,7 +156,8 @@ describe('Platform capabilities stay in canonical main-site entrypoints', () => 
     const view = read('components/platform/PlatformResourceRouteView.tsx');
     const styles = read('components/platform/platform.css');
 
-    expect(shell).toMatch(/className=\{\x60platform-nav platform-glass/);
+    expect(shell).toContain('className="platform-home-header"');
+    expect(shell).not.toContain('className="platform-site-search"');
     expect(view).not.toContain('className="platform-course-portrait"');
     expect(view).not.toContain('className="platform-portrait-link platform-glass"');
     expect(view).toContain('const showDescription = !courseClassroom && !courseDetail && !inviteManager && !orderPage && Boolean(pageDescription);');

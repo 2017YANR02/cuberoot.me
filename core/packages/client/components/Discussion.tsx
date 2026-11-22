@@ -16,6 +16,7 @@ import { wcaPersonUrl } from '@/lib/recon-utils';
 import { personFlagIso2 } from '@/lib/country-flags';
 import { formatRelativeTime } from '@/lib/forum-format';
 import { useLang } from '@/i18n/tr';
+import { useT } from '@/hooks/useT';
 import { isWcaIdFormat } from '@cuberoot/shared/account';
 
 /** textarea 高度跟随内容——空时 1 行,粘贴长解法时自动撑开 */
@@ -241,6 +242,7 @@ export function UserHeadline({
  */
 export function ItemMenu({ items }: { items: Array<{ icon: ReactNode; label: string; onClick: () => void }> }) {
   const [open, setOpen] = useState(false);
+  const t = useT();
 
   // NOTE: 点空白关菜单
   useEffect(() => {
@@ -257,6 +259,8 @@ export function ItemMenu({ items }: { items: Array<{ icon: ReactNode; label: str
       <button
         type="button"
         className="yt-comment-menu-btn"
+        aria-label={t('更多操作', 'More actions')}
+        aria-expanded={open}
         onClick={() => setOpen(o => !o)}
       >
         <MoreVertical size={18} />

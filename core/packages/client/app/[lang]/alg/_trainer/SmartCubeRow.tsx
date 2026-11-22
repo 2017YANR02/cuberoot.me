@@ -152,10 +152,11 @@ export default function SmartCubeRow({ enabled, onEnabledChange, state, supporte
             className="trainer-opts-btn"
             onClick={() => { submitMac(mac); setMac(''); }}
             disabled={!mac.trim()}
+            aria-label={tr({ zh: '确认 MAC 地址', en: 'Confirm MAC address' })}
           >
             <Check size={13} />
           </button>
-          <button type="button" className="trainer-opts-btn is-ghost" onClick={cancelMac}>
+          <button type="button" className="trainer-opts-btn is-ghost" onClick={cancelMac} aria-label={tr({ zh: '取消 MAC 地址输入', en: 'Cancel MAC address entry' })}>
             <X size={13} />
           </button>
         </div>

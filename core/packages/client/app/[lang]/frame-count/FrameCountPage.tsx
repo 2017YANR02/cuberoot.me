@@ -1949,7 +1949,7 @@ export default function FrameCountPage({ active, onReconstruct }: {
                     setCropMode(false);
                   } : undefined} />
 
-                <button className="fc-change-video fc-new-btn" onClick={() => fileInputRef.current?.click()} title={t('frameCount.toolbar.newVideo')}>
+                <button className="fc-change-video fc-new-btn" onClick={() => fileInputRef.current?.click()} title={t('frameCount.toolbar.newVideo')} aria-label={t('frameCount.toolbar.newVideo')}>
                   <CirclePlus size={18} />
                 </button>
                 <div className="fc-export-wrap" ref={exportMenuRef}>
@@ -1980,7 +1980,7 @@ export default function FrameCountPage({ active, onReconstruct }: {
                   </div>
                 )}
               </div>
-                <button className="fc-shortcuts-btn" onClick={() => setShowShortcuts(true)} title={t('frameCount.toolbar.shortcuts')}>
+                <button className="fc-shortcuts-btn" onClick={() => setShowShortcuts(true)} title={t('frameCount.toolbar.shortcuts')} aria-label={t('frameCount.toolbar.shortcuts')}>
                   <IconKeyboard />
                 </button>
               </div>
@@ -2137,13 +2137,13 @@ export default function FrameCountPage({ active, onReconstruct }: {
 
                 <div className="fc-ctrl-sep" />
 
-                <button className="fc-ctrl-btn" title={t('frameCount.controls.back10')} disabled={!videoSrc} {...longPressProps(() => stepFrames(-10), 150)}><IconSkipBack /></button>
-                <button className="fc-ctrl-btn" title={t('frameCount.controls.back1')} disabled={!videoSrc} {...longPressProps(() => stepFrames(-1), 80)}><IconFrameBack /></button>
-                <button className="fc-ctrl-btn play-btn" title={t('frameCount.controls.play')} disabled={!videoSrc} onClick={togglePlay}>
+                <button className="fc-ctrl-btn" title={t('frameCount.controls.back10')} aria-label={t('frameCount.controls.back10')} disabled={!videoSrc} {...longPressProps(() => stepFrames(-10), 150)}><IconSkipBack /></button>
+                <button className="fc-ctrl-btn" title={t('frameCount.controls.back1')} aria-label={t('frameCount.controls.back1')} disabled={!videoSrc} {...longPressProps(() => stepFrames(-1), 80)}><IconFrameBack /></button>
+                <button className="fc-ctrl-btn play-btn" title={t('frameCount.controls.play')} aria-label={t('frameCount.controls.play')} disabled={!videoSrc} onClick={togglePlay}>
                   {isPlaying ? <IconPause /> : <IconPlay />}
                 </button>
-                <button className="fc-ctrl-btn" title={t('frameCount.controls.forward1')} disabled={!videoSrc} {...longPressProps(() => stepFrames(1), 80)}><IconFrameForward /></button>
-                <button className="fc-ctrl-btn" title={t('frameCount.controls.forward10')} disabled={!videoSrc} {...longPressProps(() => stepFrames(10), 150)}><IconSkipForward /></button>
+                <button className="fc-ctrl-btn" title={t('frameCount.controls.forward1')} aria-label={t('frameCount.controls.forward1')} disabled={!videoSrc} {...longPressProps(() => stepFrames(1), 80)}><IconFrameForward /></button>
+                <button className="fc-ctrl-btn" title={t('frameCount.controls.forward10')} aria-label={t('frameCount.controls.forward10')} disabled={!videoSrc} {...longPressProps(() => stepFrames(10), 150)}><IconSkipForward /></button>
                 {canReconstruct && <button type="button" className="btn-secondary fc-reconstruct-btn" onClick={reconstruct}>
                   {tr({ zh: '复盘此区间', en: 'Reconstruct this range' })}<ArrowRight size={16} aria-hidden />
                 </button>}

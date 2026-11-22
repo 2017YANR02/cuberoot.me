@@ -111,7 +111,7 @@ export default function FeedbackConversation({ feedbackId, onActivity }: {
                       </button>
                     </span>
                   ) : (
-                    <button type="button" className="fbc-msg-del" title={t('删除', 'Delete')}
+                    <button type="button" className="fbc-msg-del" title={t('删除', 'Delete')} aria-label={t('删除', 'Delete')}
                       onClick={() => setConfirmId(m.id)}>
                       <Trash2 size={13} />
                     </button>

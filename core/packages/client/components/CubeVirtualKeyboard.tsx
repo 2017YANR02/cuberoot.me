@@ -966,7 +966,7 @@ export default function CubeVirtualKeyboard({ pocket = false, target, onInput, e
             <button type="button" data-key="tab" className="vkb-fn vkb-tab vkb-key-btn">Tab</button>
             <button type="button" data-key=" " className="vkb-space vkb-key-btn">space</button>
             <button type="button" data-key="enter" className="vkb-return vkb-key-btn">return</button>
-            <button type="button" data-key="backspace" className="vkb-fn vkb-fn-del vkb-key-btn">
+            <button type="button" data-key="backspace" className="vkb-fn vkb-fn-del vkb-key-btn" aria-label={tr({ zh: '退格', en: 'Backspace' })}>
               <svg width="24" height="16" viewBox="0 0 33 22">
                 <path d="M12.5 1h17A2.5 2.5 0 0 1 32 3.5v15a2.5 2.5 0 0 1-2.5 2.5h-17a2.5 2.5 0 0 1-1.77-.73l-9.5-9.5a1 1 0 0 1 0-1.41l9.5-9.5A2.5 2.5 0 0 1 12.5 1Z" fill="none" stroke="currentColor" strokeWidth="1.5"/>
                 <path d="M17 7l8 8M25 7l-8 8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
@@ -1016,7 +1016,7 @@ export default function CubeVirtualKeyboard({ pocket = false, target, onInput, e
             {['z','x','c','v','b','n','m'].map(k => (
               <button key={k} type="button" className="vkb-key-btn" data-key={qwertyKey(k)}>{qwertyKey(k)}</button>
             ))}
-            <button type="button" data-key="backspace" className="vkb-fn vkb-fn-del vkb-key-btn">
+            <button type="button" data-key="backspace" className="vkb-fn vkb-fn-del vkb-key-btn" aria-label={tr({ zh: '退格', en: 'Backspace' })}>
               <svg width="24" height="16" viewBox="0 0 33 22">
                 <path d="M12.5 1h17A2.5 2.5 0 0 1 32 3.5v15a2.5 2.5 0 0 1-2.5 2.5h-17a2.5 2.5 0 0 1-1.77-.73l-9.5-9.5a1 1 0 0 1 0-1.41l9.5-9.5A2.5 2.5 0 0 1 12.5 1Z" fill="none" stroke="currentColor" strokeWidth="1.5"/>
                 <path d="M17 7l8 8M25 7l-8 8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>

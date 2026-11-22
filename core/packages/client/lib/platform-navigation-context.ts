@@ -5,6 +5,8 @@ import { createContext, useContext, useEffect, useRef, type Dispatch, type SetSt
 /** Only descendants of the Platform shell adapt shared main-site links. */
 export const PlatformNavigationContext = createContext(false);
 
+export const PlatformCompetitionAccessContext = createContext({ organizer: false, supervisor: false, ready: false });
+
 /** Identity mutations invalidate the shell's instructor workspace entry. */
 export const PlatformInstructorAccessRefreshContext = createContext<() => void>(() => {});
 

@@ -1,14 +1,15 @@
 'use client';
 
 import Image, { getImageProps } from 'next/image';
-import { ArrowRight, BookOpen } from '@app-foundation/icons/lucide';
+import { BookOpen } from '@app-foundation/icons/lucide';
 import AppLink from '@/components/AppLink';
 import { CompactSelect } from '@/components/CompactSelect';
 import PuzzlePicker from '@/components/PuzzlePicker/PuzzlePicker';
 import SearchInput from '@/components/SearchInput';
 import { useT } from '@/hooks/useT';
 import { useLang } from '@/i18n/tr';
-import { COURSE_TOPICS, type CourseTopic, type courseCatalogDetails } from '@/lib/platform-course-catalog';
+import { COURSE_TOPICS, hasCourseTrial, type CourseTopic, type courseCatalogDetails } from '@/lib/platform-course-catalog';
+import { platformTrialLessonIds } from '@cuberoot/shared/platform';
 import { commerceMoney } from '@/lib/platform-commerce-format';
 import type { PlatformEntity, PlatformRouteDefinition } from '@/lib/platform-types';
 import { eventDisplayName } from '@/lib/wca-events';
@@ -34,7 +35,7 @@ export function PlatformCourseToolbar({ query, puzzle, topic, sort, puzzles, top
 }) {
   const t = useT();
   const isZh = useLang() === 'zh';
-  const searchLabel = t('搜索课程、讲师或学习内容', 'Search courses, instructors or topics');
+  const searchLabel = t('筛选课程', 'Filter courses');
   const allTopics = t('全部学习方向', 'All learning topics');
   const topicItems = [{ value: '', label: allTopics }, ...topics.map(id => ({
     value: id, label: t(COURSE_TOPICS[id].zh, COURSE_TOPICS[id].en),
@@ -85,64 +86,90 @@ export function PlatformCourseToolbar({ query, puzzle, topic, sort, puzzles, top
 
 type CourseDetails = ReturnType<typeof courseCatalogDetails>;
 
-export function PlatformCourseCover({ coverUrl, mobileCoverUrl, eager = false }: Pick<CourseDetails, 'coverUrl' | 'mobileCoverUrl'> & { eager?: boolean }) {
-  const mobile = mobileCoverUrl
+export function PlatformCourseCover({ coverUrl, mobileCoverUrl, eager = false, catalog = false, lessonCountLabel }: Pick<CourseDetails, 'coverUrl' | 'mobileCoverUrl'> & { eager?: boolean; catalog?: boolean; lessonCountLabel?: string }) {
+  const mobile = !catalog && mobileCoverUrl
     ? getImageProps({ src: mobileCoverUrl, alt: '', fill: true, sizes: mobileCoverSizes, unoptimized: !mobileCoverUrl.startsWith('/') }).props
     : null;
-  return <div className="platform-course-card-cover" aria-hidden="true">
-    <BookOpen size={32} />
+  return <div className="platform-course-card-cover" aria-hidden={lessonCountLabel ? undefined : true}>
+    <BookOpen size={32} aria-hidden="true" />
     {coverUrl && <picture>
       {mobile && <source media="(max-width: 600px)" srcSet={mobile.srcSet ?? mobile.src} sizes={mobile.sizes} />}
-      <Image src={coverUrl} alt="" fill sizes={courseCoverSizes} loading={eager ? 'eager' : 'lazy'}
+      <Image src={coverUrl} alt="" fill sizes={catalog ? '(max-width: 639px) clamp(148px, 42vw, 188px), (max-width: 1023px) 50vw, (max-width: 1279px) 33vw, 300px' : courseCoverSizes} loading={eager ? 'eager' : 'lazy'}
         unoptimized={!coverUrl.startsWith('/')} onError={event => { event.currentTarget.hidden = true; }} />
     </picture>}
+    {lessonCountLabel && <span className="platform-course-cover-count">{lessonCountLabel}</span>}
   </div>;
 }
 
-export function PlatformCourseLabels({ details }: { details: CourseDetails }) {
+export function PlatformCourseLabels({ details, limit }: { details: CourseDetails; limit?: number }) {
   const t = useT();
   const isZh = useLang() === 'zh';
   const puzzles = new Set(details.puzzles.map(id => eventDisplayName(id, isZh)));
   const topics = new Set(details.topics.map(topic => t(COURSE_TOPICS[topic].zh, COURSE_TOPICS[topic].en)));
   if (details.level) topics.add(details.level);
-  if (!puzzles.size && !topics.size) return null;
+  const labels = [...[...puzzles].map(label => ({ label, puzzle: true })), ...[...topics].filter(label => !puzzles.has(label)).map(label => ({ label, puzzle: false }))].slice(0, limit);
+  if (!labels.length) return null;
   return <div className="platform-course-card-labels">
-    {[...puzzles].map(puzzle => <span className="platform-course-card-label platform-course-card-label-puzzle" key={puzzle}>{puzzle}</span>)}
-    {[...topics].map(topic => <span className="platform-course-card-label" key={topic}>{topic}</span>)}
+    {labels.map(({ label, puzzle }) => <span className={`platform-course-card-label${puzzle ? ' platform-course-card-label-puzzle' : ''}`} key={label}>{label}</span>)}
   </div>;
 }
 
-export function PlatformCourseCards({ courses, definition, redeemedCourseIds }: {
+export function PlatformCourseCards({ courses, definition, ownedCourses }: {
   courses: { course: PlatformEntity; details: ReturnType<typeof courseCatalogDetails> }[];
   definition: PlatformRouteDefinition;
-  redeemedCourseIds: ReadonlySet<string>;
+  ownedCourses: ReadonlyMap<string, PlatformEntity>;
 }) {
   const t = useT();
-  return <div className="platform-course-grid">
-    {courses.map(({ course, details }, index) => {
+  const groups = [
+    { id: 'owned', title: t('我的课程', 'My courses'), courses: courses.filter(({ course }) => ownedCourses.has(course.id)) },
+    { id: 'all', title: t('全部课程', 'All courses'), courses: courses.filter(({ course }) => !ownedCourses.has(course.id)) },
+  ].filter(group => group.courses.length > 0);
+  return <div className="platform-catalog-sections">{groups.map(group => <section className="platform-catalog-section" key={group.id} aria-label={group.title}>
+    <h2 className="platform-catalog-section-title">{group.title}</h2>
+    <div className="platform-course-grid">
+    {group.courses.map(({ course, details }) => {
       const data = course.data ?? {};
       const href = course.href?.startsWith('/') ? course.href : localDetailHref(definition, course);
       if (!href) return null;
       const price = data.baseAmountMinor ?? data.fromAmountMinor ?? data.amountMinor;
-      const memberPrice = data.memberAmountMinor ?? data.fromMemberAmountMinor;
+      const hasPrice = price != null && Number.isFinite(Number(price)) && Number(price) >= 0;
       const currency = typeof data.currency === 'string' && /^[A-Z]{3}$/.test(data.currency) ? data.currency : 'CNY';
       const instructors = t(details.instructors.join('、'), details.instructorsEn.join(', '));
+      const owned = ownedCourses.get(course.id);
+      const bps = owned?.data?.progressBps;
+      const progress = typeof bps === 'number' && Number.isFinite(bps) ? Math.min(100, Math.max(0, bps / 100)) : null;
+      const lessonId = owned?.data?.continueLessonId;
+      const continueHref = typeof lessonId === 'string' && lessonId
+        ? `/platform/courses/${encodeURIComponent(course.id)}/learn/${encodeURIComponent(lessonId)}` : href;
+      const hasProgress = progress !== null && progress > 0;
+      const free = data.enrollmentMode === 'free' || (data.enrollmentMode !== 'invite' && data.enrollmentMode !== 'admin_grant' && hasPrice && Number(price) === 0);
+      const trial = !owned && !free && hasCourseTrial(course);
+      const trialId = trial ? platformTrialLessonIds(data.presentation)?.[0] : undefined;
+      const actionHref = owned ? continueHref : trialId
+        ? `/platform/courses/${encodeURIComponent(course.id)}/sections/core?lesson=${encodeURIComponent(trialId)}` : href;
+      const status = owned ? (progress === null ? t('进入课程', 'Open course') : t('开始学习', 'Start learning'))
+        : free ? t('免费', 'Free')
+          : trial ? t('免费试听', 'Free preview')
+            : data.enrollmentMode === 'invite' ? t('兑换课程', 'Redeem course')
+              : hasPrice ? commerceMoney(price, currency) : t('查看课程', 'View course');
+      const priceStatus = !owned && !free && !trial && data.enrollmentMode !== 'invite' && hasPrice;
       return <article className="platform-course-card" data-site-surface="panel" key={course.id}>
-        <AppLink className="platform-course-card-link" href={href} prefetch={false}>
-          <PlatformCourseCover {...details} eager={index === 0} />
+        <AppLink className="platform-course-card-link" href={actionHref} prefetch={false}>
+          <PlatformCourseCover {...details} catalog lessonCountLabel={details.lessonCount === undefined ? undefined : t(`${details.lessonCount} 课时`, `${details.lessonCount} lessons`)} />
           <div className="platform-course-card-body">
-            <div className="platform-course-card-title"><h2>{course.title}</h2><ArrowRight size={16} aria-hidden /></div>
-            <p className="platform-course-card-byline"><span>{instructors}</span>{details.lessonCount !== undefined && <span>{t(`${details.lessonCount} 课时`, `${details.lessonCount} lessons`)}</span>}</p>
-            <div className="platform-course-card-tag-slot"><PlatformCourseLabels details={details} /></div>
-            <p className="platform-course-card-summary">{course.summary}</p>
+            <div className="platform-course-card-title"><h3>{course.title}</h3></div>
+            <div className="platform-course-card-tag-slot"><PlatformCourseLabels details={details} limit={2} /></div>
+            <p className="platform-course-card-byline">{instructors}</p>
             <div className="platform-course-card-meta">
-              {redeemedCourseIds.has(course.id) && <span className="platform-course-redeemed">{t('已兑换', 'Redeemed')}</span>}
-              {price != null && Number.isFinite(Number(price)) && <span>{t('价格', 'Price')} {commerceMoney(price, currency)}</span>}
-              {memberPrice != null && Number.isFinite(Number(memberPrice)) && <span>{t('会员价', 'Member price')} {commerceMoney(memberPrice, currency)}</span>}
+              {hasProgress ? <div className="platform-home-progress platform-catalog-progress">
+                <progress max={100} value={progress} aria-label={t('课程进度', 'Course progress')} />
+                <span>{t(`已学 ${progress < 1 ? '<1' : Math.round(progress)}%`, `Learned ${progress < 1 ? '<1' : Math.round(progress)}%`)}</span>
+              </div> : <span className={`platform-catalog-status${priceStatus ? ' platform-catalog-price' : ''}`}>{status}</span>}
             </div>
           </div>
         </AppLink>
       </article>;
     })}
-  </div>;
+    </div>
+  </section>)}</div>;
 }

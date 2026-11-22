@@ -38,6 +38,16 @@ platformCompetitionRoutes.get('/platform/competitions/manage', async (c) => {
     WHERE m.organization_id=o.id AND m.user_id=$1 AND m.status='active' AND m.role IN ('owner','admin')) ORDER BY e.created_at DESC LIMIT 100`, [actor.userId,actor.isAdmin]);
   return c.json({ competitions });
 });
+platformCompetitionRoutes.get('/platform/competitions/me/supervised', async (c) => {
+  const actor = await requirePlatformActor(c);
+  privateNoStore(c);
+  const competitions = await platformQuery(platformDb(), `${LIST}
+    WHERE e.status IN ('published','completed') AND o.status='active'
+      AND EXISTS (SELECT 1 FROM platform_competition_sessions s
+        WHERE s.event_id=e.id AND s.supervisor_user_id=$1)
+    ORDER BY e.starts_at DESC LIMIT 100`, [actor.userId]);
+  return c.json({ competitions });
+});
 platformCompetitionRoutes.get('/platform/competitions/:id', async (c) => {
   const key = c.req.param('id');
   const actor = await optionalActor(c);

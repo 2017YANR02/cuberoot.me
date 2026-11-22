@@ -2507,7 +2507,7 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
                     type="button"
                     className={`recon-cross-toggle${normalized ? ' active' : ''}`}
                     onClick={(e) => { e.preventDefault(); setNormalized(v => !v); }}
-                    title={normalized ? t('recon.showOriginal') : t('recon.normalizeCross')}
+                    title={normalized ? t('recon.showOriginal') : t('recon.normalizeCross')} aria-label={normalized ? t('recon.showOriginal') : t('recon.normalizeCross')}
                     tabIndex={-1}
                   >
                     <ArrowRightLeft size={12} />

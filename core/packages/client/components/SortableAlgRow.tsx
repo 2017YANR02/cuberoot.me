@@ -33,6 +33,7 @@ export default function SortableAlgRow({ id, draggable, children }: { id: string
           {...listeners}
           onClick={(e) => e.stopPropagation()}
           title={tr({ zh: '拖动调整公式顺序', en: 'Drag to reorder algs' })}
+          aria-label={tr({ zh: '拖动调整公式顺序', en: 'Drag to reorder algs' })}
         >
           <GripVertical size={inline ? '1em' : 12} />
         </button>

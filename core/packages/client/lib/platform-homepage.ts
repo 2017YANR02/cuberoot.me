@@ -4,6 +4,7 @@ import { authHeaders, handleApi } from './admin-api';
 import { sessionFetch } from './session-fetch';
 import { loadPlatformResource } from './platform-gateway';
 import { courseCatalogDetails } from './platform-course-catalog';
+import type { PlatformEntity } from './platform-types';
 
 export const homeContentLabels: Record<PlatformHomeContentType, { zh: string; en: string }> = {
   course: { zh: '课程', en: 'Course' }, teacher: { zh: '讲师', en: 'Instructor' },
@@ -26,21 +27,20 @@ export function safeHomepageCover(value: string | null | undefined): string | nu
   return value && isPlatformHomepageCover(value) ? value : null;
 }
 
+export function homepageCatalogSlide(item: PlatformEntity): PlatformHomeSlide {
+  const details = courseCatalogDetails(item);
+  return { type: 'course', section: 'catalog', id: item.id,
+    titleZh: String(item.data?.titleZh || item.title), titleEn: String(item.data?.titleEn || item.title),
+    summaryZh: String(item.data?.summaryZh || item.summary || ''), summaryEn: String(item.data?.summaryEn || item.summary || ''),
+    coverUrl: details.coverUrl ?? null, instructorNames: details.instructors.join(' · ') || null };
+}
+
 export async function loadHomepageSlides(signal: AbortSignal): Promise<PlatformHomeSlide[]> {
   const response = await sessionFetch(apiUrl('/v1/platform/homepage'), { signal, cache: 'no-store' });
   // During a staged web/API deployment, show a real catalog entry, not an invented ranking.
   if (response.status === 404) {
     const { items } = await loadPlatformResource('courses', { params: {}, page: 1, pageSize: 1, sort: 'updated', signal });
-    return items.filter(item => item.status === 'published').map(item => {
-      const details = courseCatalogDetails(item);
-      return {
-      type: 'course', section: 'catalog', id: item.id,
-      titleZh: String(item.data?.titleZh || item.title), titleEn: String(item.data?.titleEn || item.title),
-      summaryZh: String(item.data?.summaryZh || item.summary || ''), summaryEn: String(item.data?.summaryEn || item.summary || ''),
-      coverUrl: details.coverUrl ?? null,
-      instructorNames: details.instructors.join(' · ') || null,
-      };
-    });
+    return items.filter(item => item.status === 'published').map(homepageCatalogSlide);
   }
   return (await handleApi<{ items: PlatformHomeSlide[] }>(response)).items;
 }

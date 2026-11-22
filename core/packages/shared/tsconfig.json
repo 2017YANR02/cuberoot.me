@@ -4,6 +4,7 @@
     "composite": true,
     "outDir": "./dist",
     "rootDir": "./src",
+    "rewriteRelativeImportExtensions": true,
     "jsx": "react-jsx"
   },
   "include": ["src/**/*.ts", "src/**/*.tsx", "src/**/*.json"]

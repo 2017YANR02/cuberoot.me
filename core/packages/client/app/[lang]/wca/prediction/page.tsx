@@ -196,6 +196,7 @@ export default function PredictionPage() {
           className="pred-toc-btn"
           onClick={() => setTocOpen(!tocOpen)}
           title={tr({ zh: '目录', en: 'Table of contents'
+        })} aria-label={tr({ zh: '目录', en: 'Table of contents'
         })}
         >
           {tocOpen ? <XIcon size={16} /> : <Menu size={16} />}

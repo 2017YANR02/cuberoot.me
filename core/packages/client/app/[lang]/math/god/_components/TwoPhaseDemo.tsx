@@ -196,25 +196,25 @@ export default function TwoPhaseDemo({ isZh }: Props) {
           </div>
 
           <div className="god-tp-controls">
-            <button className="god-btn-secondary god-tp-iconbtn" onClick={toScramble} title={t('回到 scramble', 'reset to scramble')}>
+            <button className="god-btn-secondary god-tp-iconbtn" onClick={toScramble} title={t('回到 scramble', 'reset to scramble')} aria-label={t('回到 scramble', 'reset to scramble')}>
               <ChevronsLeft size={16} />
             </button>
-            <button className="god-btn-secondary god-tp-iconbtn" onClick={prev} title={t('上一步', 'prev')} disabled={step === 0}>
+            <button className="god-btn-secondary god-tp-iconbtn" onClick={prev} title={t('上一步', 'prev')} aria-label={t('上一步', 'prev')} disabled={step === 0}>
               <SkipBack size={16} />
             </button>
-            <button className="god-btn-primary god-tp-iconbtn" onClick={() => setPlaying((p) => !p)} title={playing ? t('暂停', 'pause') : t('播放', 'play')} disabled={solved}>
+            <button className="god-btn-primary god-tp-iconbtn" onClick={() => setPlaying((p) => !p)} title={playing ? t('暂停', 'pause') : t('播放', 'play')} aria-label={playing ? t('暂停', 'pause') : t('播放', 'play')} disabled={solved}>
               {playing ? <Pause size={16} /> : <Play size={16} />}
             </button>
-            <button className="god-btn-secondary god-tp-iconbtn" onClick={next} title={t('下一步', 'next')} disabled={solved}>
+            <button className="god-btn-secondary god-tp-iconbtn" onClick={next} title={t('下一步', 'next')} aria-label={t('下一步', 'next')} disabled={solved}>
               <SkipForward size={16} />
             </button>
             <button className="god-btn-secondary god-tp-iconbtn" onClick={toPhase1End} title={t('跳到 Phase 1 末', 'jump to end of Phase 1')}>
               <span style={{ fontSize: 11 }}>P1↗</span>
             </button>
-            <button className="god-btn-secondary god-tp-iconbtn" onClick={toEnd} title={t('跳到最后', 'to end')}>
+            <button className="god-btn-secondary god-tp-iconbtn" onClick={toEnd} title={t('跳到最后', 'to end')} aria-label={t('跳到最后', 'to end')}>
               <ChevronsRight size={16} />
             </button>
-            <button className="god-btn-secondary god-tp-iconbtn" onClick={reset} title={t('重置', 'reset')}>
+            <button className="god-btn-secondary god-tp-iconbtn" onClick={reset} title={t('重置', 'reset')} aria-label={t('重置', 'reset')}>
               <RotateCcw size={16} />
             </button>
           </div>

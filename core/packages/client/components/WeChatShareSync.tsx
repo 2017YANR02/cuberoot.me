@@ -58,7 +58,8 @@ export default function WeChatShareSync() {
     const apply = () => {
       void syncMiniProgramPageShare();
       const pageTitle = (document.title || 'CubeRoot').trim();
-      const title = pageTitle === 'CubeRoot' ? pageTitle : `CubeRoot — ${pageTitle}`;
+      const alreadyBranded = pageTitle === 'CubeRoot' || pageTitle.startsWith('CubeRoot — ') || pageTitle.startsWith('魔方根 CubeRoot — ');
+      const title = alreadyBranded ? pageTitle : `CubeRoot — ${pageTitle}`;
       if (title === last) return; // 去重:同标题不重复签名/配置
       last = title;
       if (isInWeChat()) void configureWeChatShare({ title });

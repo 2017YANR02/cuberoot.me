@@ -1,253 +1,231 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import Image from 'next/image';
-import { ArrowRight, Bell, BookOpen, ChartNoAxesColumnIncreasing, IdCard, Layers, MessagesSquare, Timer } from '@app-foundation/icons/lucide';
+import { ArrowRight, Play } from '@app-foundation/icons/lucide';
 import AppLink from '@/components/AppLink';
-import { SHOP_ROOT } from '@/lib/shop';
+import { HomeLearningPath } from './HomeLearningPath';
 import { fetchTeacherDirectory, type TeacherDirectoryEntry } from '@/lib/teacher-directory-api';
 import { useT } from '@/hooks/useT';
-import { getSessionToken, useAuthUser, useIsAdmin } from '@/lib/auth-store';
-import { loadPlatformResource } from '@/lib/platform-gateway';
+import { getSessionToken, nextQuery, useAuthUser } from '@/lib/auth-store';
+import { useLang } from '@/i18n/tr';
+import { loadPlatformLessonMedia, loadPlatformResource, platformMediaBrowserUrl } from '@/lib/platform-gateway';
 import { listTeachingLearningContexts, listTeachingOrganizations } from '@/lib/teaching-saas-api';
 import type { TeachingLearningContext } from '@cuberoot/shared/teaching';
 import type { TeachingOrganizationAccess } from '@/lib/teaching-saas-api';
 import type { PlatformEntity } from '@/lib/platform-types';
-import { LoadingIndicator } from '@/components/LoadingIndicator';
-import { courseCatalogDetails, loadCourseCatalog } from '@/lib/platform-course-catalog';
+import { SkeletonBlock } from '@/components/ContentSkeleton';
+import { courseCatalogDetails, courseLessonAccess, loadCourseCatalog } from '@/lib/platform-course-catalog';
+import { commerceRecord } from '@/lib/platform-commerce-format';
+import { learningTime } from '@/lib/platform-learning';
+import { platformCourseLessonSection } from '@/lib/platform-routes';
+import { platformTrialLessonIds } from '@cuberoot/shared/platform';
 import { PlatformHomepageCarousel } from './PlatformHomepageCarousel';
 import { PlatformInstructorCard } from './PlatformInstructorCard';
 
+function HomeResume({ course, progress, detail, trialOnly }: { course: PlatformEntity; progress?: PlatformEntity; detail?: PlatformEntity; trialOnly: boolean }) {
+  const t = useT();
+  const bps = course.data?.progressBps;
+  const percent = typeof bps === 'number' && Number.isFinite(bps) ? Math.min(10000, Math.max(0, bps)) : null;
+  const lessonId = progress?.data?.lessonId ?? (progress ? progress.id : course.data?.continueLessonId);
+  const [poster, setPoster] = useState<{ lessonId: string; url: string } | null>(null);
+  useEffect(() => {
+    if (typeof lessonId !== 'string') return;
+    const controller = new AbortController();
+    void loadPlatformLessonMedia(lessonId, controller.signal).then(media => { if (!controller.signal.aborted && media.posterUrl) setPoster({ lessonId, url: platformMediaBrowserUrl(media.posterUrl) }); }).catch(() => {});
+    return () => controller.abort();
+  }, [lessonId]);
+  const cover = poster?.lessonId === lessonId ? poster?.url : undefined;
+  const lessonRows = detail?.data?.lessons ?? course.data?.lessons;
+  const lesson = Array.isArray(lessonRows) ? lessonRows.map(commerceRecord).find(row => row.id === lessonId) : undefined;
+  const lessonTitle = progress?.title || t(String(lesson?.titleZh || lesson?.titleEn || ''), String(lesson?.titleEn || lesson?.titleZh || ''));
+  const position = progress?.data?.positionSeconds;
+  const duration = lesson?.durationSeconds;
+  const hasPosition = typeof position === 'number' && Number.isFinite(position) && position >= 0;
+  const remaining = hasPosition && typeof duration === 'number' && Number.isFinite(duration) && duration > 0 ? Math.max(0, Math.floor(duration) - Math.floor(position)) : null;
+  const completedPreview = progress?.data?.status === 'completed';
+  const href = `/platform/courses/${encodeURIComponent(course.id)}${typeof lessonId === 'string' && !completedPreview ? `/learn/${encodeURIComponent(lessonId)}` : ''}`;
+  const resumes = Boolean(progress && progress.data?.status !== 'completed');
+  return <section className="platform-home-learning" aria-labelledby="platform-home-learning-title">
+    <h1 id="platform-home-learning-title">{resumes ? t('继续学习', 'Continue learning') : t('我的学习', 'My learning')}</h1>
+    <AppLink href={href} className="platform-home-resume platform-entry-link" data-has-cover="true" prefetch={false}>
+      <span className="platform-home-learning-main">
+        <span className="platform-home-learning-cover">
+          {cover && <Image key={cover} src={cover} alt="" fill sizes="(max-width: 479px) 112px, 224px" unoptimized onError={event => { event.currentTarget.hidden = true; }} />}
+          <span className="platform-home-learning-play"><Play aria-hidden size={15} /></span>
+        </span>
+        <span className="platform-home-learning-copy">
+          <strong>{course.title}</strong>
+          {lessonTitle && <small>{t('当前课时', 'Current lesson')}：{lessonTitle}</small>}
+          {percent !== null && <span className="platform-home-progress"><span>{t('课程进度', 'Course progress')} {Math.round(percent / 100)}%</span><progress max={10000} value={percent} aria-label={t('课程进度', 'Course progress')} /></span>}
+          {hasPosition && <small className="platform-home-lesson-time"><span>{t('本课上次观看至', 'Last watched in this lesson')} {learningTime(position)}</span>{remaining !== null && <span>{t('本课剩余', 'Lesson remaining')} {learningTime(remaining)}</span>}</small>}
+        </span>
+      </span>
+      <span className="platform-button platform-button-primary platform-home-learning-action">{resumes ? t('从上次位置继续', 'Resume where you left off') : completedPreview ? t('查看课程', 'View course') : t('开始学习', 'Start learning')}<ArrowRight aria-hidden /></span>
+    </AppLink>
+    {trialOnly && <p className="platform-home-trial-note"><AppLink href="/platform/account/invites" prefetch={false}>{t('试听结束后，可兑换码解锁完整课程', 'After your preview, redeem a code to unlock the full course')}</AppLink></p>}
+  </section>;
+}
+
 export function PlatformLanding() {
   const t = useT();
-  const [teachers, setTeachers] = useState<TeacherDirectoryEntry[]>([]);
-  const [teachersLoading, setTeachersLoading] = useState(true);
-  const [teachersError, setTeachersError] = useState(false);
-  useEffect(() => {
-    let active = true;
-    void fetchTeacherDirectory()
-      .then(items => { if (active) setTeachers(items.filter(item => item.kind === 'teacher').slice(0, 3)); })
-      .catch(() => { if (active) setTeachersError(true); })
-      .finally(() => { if (active) setTeachersLoading(false); });
-    return () => { active = false; };
-  }, []);
+  const lang = useLang();
   const user = useAuthUser();
-  const isAdmin = useIsAdmin();
-  const [mounted, setMounted] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [publicCourses, setPublicCourses] = useState<PlatformEntity[]>([]);
-  const [progress, setProgress] = useState<PlatformEntity[]>([]);
+  const [teachers, setTeachers] = useState<TeacherDirectoryEntry[]>([]);
+  const [trial, setTrial] = useState<{ id: string; lessonId: string } | null>(null);
+  const [trialChecked, setTrialChecked] = useState(false);
+  const [personal, setPersonal] = useState<{ owner: typeof user; courses: PlatformEntity[]; accountCourseIds: Set<string>; progress: PlatformEntity[]; failed: boolean } | null>(null);
   const [learningContexts, setLearningContexts] = useState<TeachingLearningContext[]>([]);
   const [organizations, setOrganizations] = useState<TeachingOrganizationAccess[]>([]);
-  const [partialFailure, setPartialFailure] = useState(false);
+  const [currentDetail, setCurrentDetail] = useState<PlatformEntity>();
 
-  useEffect(() => { setMounted(true); }, []);
   useEffect(() => {
-    if (!mounted || !user) {
-      setPublicCourses([]);
-      setProgress([]);
-      setLearningContexts([]);
-      setOrganizations([]);
-      setPartialFailure(false);
-      setLoading(false);
-      return;
-    }
-    let active = true;
     const controller = new AbortController();
-    setLoading(true);
-    setPublicCourses([]);
-    setProgress([]);
-    setLearningContexts([]);
-    setOrganizations([]);
-    setPartialFailure(false);
-    const platformOptions = { params: {}, signal: controller.signal };
-    const hasTeachingSession = Boolean(getSessionToken());
+    void fetchTeacherDirectory().then(items => {
+      if (!controller.signal.aborted) setTeachers(items.filter(item => item.kind === 'teacher').slice(0, 3));
+    }).catch(() => {});
+    void loadPlatformResource('courses', { params: {}, page: 1, pageSize: 12, signal: controller.signal }).then(async result => {
+      if (controller.signal.aborted) return;
+      const courses = result.items.filter(item => item.status === 'published');
+      const candidates = courses.filter(item => platformTrialLessonIds(item.data?.presentation)?.length !== 0).toSorted((a, b) => Number(Boolean(platformTrialLessonIds(b.data?.presentation)?.length)) - Number(Boolean(platformTrialLessonIds(a.data?.presentation)?.length)) || Number(courseCatalogDetails(b).topics.includes('beginner')) - Number(courseCatalogDetails(a).topics.includes('beginner')));
+      let incomplete = result.total != null ? result.total > result.items.length : result.items.length >= 12;
+      for (const candidate of candidates) {
+        if (controller.signal.aborted) return;
+        try {
+          const detail = (await loadPlatformResource('courses', { params: { id: candidate.id }, signal: controller.signal })).items[0];
+          const lessons = Array.isArray(detail?.data?.lessons) ? detail.data.lessons.map(commerceRecord) : [];
+          const ids = platformTrialLessonIds(detail?.data?.presentation);
+          const first = lessons.find(lesson => typeof lesson.id === 'string' && lesson.accessScope === 'public' && platformCourseLessonSection(lesson, ids) === 'trial');
+          if (first && !controller.signal.aborted) { setTrial({ id: candidate.id, lessonId: String(first.id) }); return; }
+          if (!detail) incomplete = true;
+        } catch { incomplete = true; /* Try the next published course if this detail is unavailable. */ }
+      }
+      if (!controller.signal.aborted && !incomplete) setTrialChecked(true);
+    }).catch(() => {});
+    return () => controller.abort();
+  }, []);
+
+  useEffect(() => {
+    setPersonal(null); setLearningContexts([]); setOrganizations([]);
+    if (!user) return;
+    const controller = new AbortController();
+    const options = { params: {}, signal: controller.signal };
     void Promise.allSettled([
-      loadPlatformResource('account-courses', platformOptions).then(async result => {
-        // Enrollment history includes non-public courses. Older backends omit courseStatus.
+      loadPlatformResource('account-courses', options).then(async result => {
         const publicIds = result.items.some(item => item.data?.courseStatus == null)
-          ? new Set((await loadCourseCatalog(controller.signal)).map(item => item.id))
-          : null;
-        return result.items.filter(item => item.data?.courseStatus === 'published'
-          || (item.data?.courseStatus == null && publicIds?.has(item.id)));
+          ? new Set((await loadCourseCatalog(controller.signal)).map(item => item.id)) : null;
+        return { courses: result.items.filter(item => (item.status == null || item.status === 'active') && (item.data?.courseStatus === 'published'
+          || (item.data?.courseStatus == null && publicIds?.has(item.id)))), accountCourseIds: new Set(result.items.map(item => item.id)) };
       }),
-      loadPlatformResource('account-progress', platformOptions),
-      hasTeachingSession ? listTeachingOrganizations() : Promise.resolve([]),
-      hasTeachingSession ? listTeachingLearningContexts() : Promise.resolve([]),
-    ]).then(([courseResult, progressResult, organizationResult, contextResult]) => {
-      if (!active) return;
-      setPublicCourses(courseResult.status === 'fulfilled' ? courseResult.value : []);
-      setProgress(progressResult.status === 'fulfilled' ? progressResult.value.items : []);
-      setOrganizations(organizationResult.status === 'fulfilled' ? organizationResult.value : []);
-      setLearningContexts(contextResult.status === 'fulfilled' ? contextResult.value : []);
-      setPartialFailure(
-        courseResult.status === 'rejected'
-        || progressResult.status === 'rejected'
-        || organizationResult.status === 'rejected'
-        || contextResult.status === 'rejected',
-      );
-    }).finally(() => {
-      if (active) setLoading(false);
+      loadPlatformResource('account-progress', options),
+    ]).then(async ([courses, progress]) => {
+      const owned = courses.status === 'fulfilled' ? courses.value.courses : [];
+      const accountCourseIds = courses.status === 'fulfilled' ? courses.value.accountCourseIds : new Set<string>();
+      const records = progress.status === 'fulfilled' ? progress.value.items : [];
+      // A learner can have saved progress from a free trial before enrollment.
+      // Only include it if the existing public course API confirms both the
+      // course's publication and the lesson's public access scope.
+      const recent = records.find(item => item.data?.status === 'in_progress' && typeof item.data?.courseId === 'string')
+        ?? (owned.length === 0 ? records.find(item => item.data?.status === 'completed' && typeof item.data?.courseId === 'string') : undefined);
+      const recentCourseId = recent?.data?.courseId;
+      if (typeof recentCourseId === 'string' && !owned.some(item => item.id === recentCourseId) && !controller.signal.aborted) {
+        try {
+          const candidate = (await loadPlatformResource('courses', { params: { id: recentCourseId }, signal: controller.signal })).items[0];
+          const lessons = Array.isArray(candidate?.data?.lessons) ? candidate.data.lessons.map(commerceRecord) : [];
+          const lessonId = recent?.data?.lessonId ?? recent?.id;
+          const watched = lessons.find(lesson => lesson.id === lessonId && lesson.accessScope === 'public');
+          const completedPreview = recent?.data?.status === 'completed';
+          if (candidate?.id === recentCourseId && candidate.status === 'published' && watched && (!completedPreview || (platformCourseLessonSection(watched, platformTrialLessonIds(candidate.data?.presentation)) === 'trial' && lessons.some(lesson => lesson.accessScope === 'entitled')))) {
+            const recordByLesson = new Map<unknown, unknown>(records.filter(item => item.data?.courseId === candidate.id).map(item => [item.data?.lessonId ?? item.id, item.data?.progressBps]));
+            const totalBps = lessons.reduce((sum, lesson) => { const value = recordByLesson.get(lesson.id); return sum + (typeof value === 'number' && Number.isFinite(value) ? Math.min(10000, Math.max(0, value)) : 0); }, 0);
+            owned.push({ ...candidate, data: { ...candidate.data, progressBps: Math.round(totalBps / lessons.length) } });
+          }
+        } catch { /* A missing or private course is never recommended. */ }
+      }
+      if (!controller.signal.aborted) setPersonal({ owner: user, courses: owned, accountCourseIds, progress: records, failed: courses.status === 'rejected' || progress.status === 'rejected' });
     });
-    return () => {
-      active = false;
-      controller.abort();
-    };
-  }, [mounted, user]);
+    if (getSessionToken()) {
+      void listTeachingOrganizations().then(items => { if (!controller.signal.aborted) setOrganizations(items); }).catch(() => {});
+      void listTeachingLearningContexts().then(items => { if (!controller.signal.aborted) setLearningContexts(items); }).catch(() => {});
+    }
+    return () => controller.abort();
+  }, [user]);
 
-  const signedIn = mounted && Boolean(user);
-  const publicCourseIds = new Set(publicCourses.map(item => item.id));
-  const publicProgress = progress.filter(item => typeof item.data?.courseId === 'string' && publicCourseIds.has(item.data.courseId));
-  const nextProgress = publicProgress.find((item) => item.data?.status !== 'completed') ?? publicProgress[0];
-  const currentCourse = publicCourses.find((item) => item.id === nextProgress?.data?.courseId) ?? publicCourses[0];
-  const progressBps = typeof currentCourse?.data?.progressBps === 'number' && Number.isFinite(currentCourse.data.progressBps)
-    ? Math.min(10_000, Math.max(0, currentCourse.data.progressBps))
-    : null;
-  const continueHref = nextProgress && typeof nextProgress.data?.courseId === 'string'
-    ? `/platform/courses/${encodeURIComponent(nextProgress.data.courseId)}/learn/${encodeURIComponent(String(nextProgress.data.lessonId ?? nextProgress.id))}`
-    : currentCourse
-      ? `/platform/courses/${encodeURIComponent(currentCourse.id)}`
-      : '/platform/courses';
-  const primaryLabel = signedIn && currentCourse
-    ? t('继续学习', 'Continue learning')
-    : t('浏览课程', 'Browse courses');
-  const firstLearningContext = learningContexts[0];
-  const firstOrganization = organizations[0];
-  const hasWorkspaces = Boolean(firstOrganization) || (mounted && isAdmin);
-  const learningTitle = currentCourse?.title ?? firstLearningContext?.student.displayName
-    ?? (partialFailure ? t('浏览课程', 'Browse courses') : t('开始你的第一门课', 'Start your first course'));
-  const learningDescription = currentCourse
-    ? nextProgress?.title
-    : firstLearningContext?.organization.name ?? t('选择适合自己的课程', 'Choose a course for your level');
-  const learningHref = currentCourse ? continueHref : firstLearningContext ? '/learn' : '/platform/courses';
-  const learningAction = currentCourse ? t('继续学习', 'Continue learning')
-    : firstLearningContext ? t('查看学习档案', 'View learning record') : t('查看全部课程', 'View all courses');
-  const learningCover = currentCourse && courseCatalogDetails(currentCourse).coverUrl;
+  const current = personal?.owner === user ? personal : null;
+  const excludedCourseIds = useMemo(() => new Set([...(current?.courses.map(item => item.id) ?? []), ...(current?.progress.filter(item => item.data?.status === 'in_progress' || item.data?.status === 'completed').flatMap(item => typeof item.data?.courseId === 'string' ? [item.data.courseId] : []) ?? [])]), [current]);
+  const accessible = current?.courses ?? [];
+  const progress = current?.progress.filter(item => typeof item.data?.courseId === 'string' && accessible.some(course => course.id === item.data?.courseId)) ?? [];
+  const next = progress.find(item => item.data?.status === 'in_progress');
+  const course = accessible.find(item => item.id === next?.data?.courseId) ?? accessible.find(item => item.data?.progressBps !== 10000);
+  const courseId = course?.id;
+  const resumeProgress = next ?? (courseId && current && !current.accountCourseIds.has(courseId) ? progress.find(item => item.data?.courseId === courseId && item.data?.status === 'completed') : undefined);
+  const [trialHint, setTrialHint] = useState<{ personal: NonNullable<typeof personal>; courseId: string } | null>(null);
+  useEffect(() => {
+    setTrialHint(null);
+    if (!current || current.failed || !courseId || !resumeProgress || current.accountCourseIds.has(courseId)) return;
+    const studied = current.progress.filter(item => item.data?.status === 'in_progress' || item.data?.status === 'completed' || Number(item.data?.progressBps) > 0 || Number(item.data?.positionSeconds) > 0);
+    if (!studied.length || studied.some(item => typeof item.data?.courseId !== 'string' || current.accountCourseIds.has(item.data.courseId))) return;
+    const controller = new AbortController();
+    // Confirm every studied course, including courses not visible on the home
+    // page. Public lessons alone do not prove the user lacks full access.
+    void (async () => {
+      for (const id of new Set(studied.map(item => String(item.data?.courseId)))) {
+        if (controller.signal.aborted) return;
+        const detail = (await loadPlatformResource('courses', { params: { id }, includeCourseAccess: true, signal: controller.signal })).items[0];
+        const data = detail?.data;
+        if (detail?.id !== id || !Array.isArray(data?.lessons) || !Array.isArray(data.lessonAccess)) return;
+        const lessons = data.lessons.map(commerceRecord);
+        const { canWatch } = courseLessonAccess(data);
+        const restricted = lessons.filter(lesson => lesson.accessScope === 'entitled');
+        const trialIds = platformTrialLessonIds(data.presentation);
+        if (!restricted.length || restricted.some(lesson => typeof lesson.id !== 'string' || canWatch(lesson.id, lesson.accessScope))) return;
+        if (!studied.filter(record => record.data?.courseId === id).every(record => {
+          const lesson = lessons.find(row => row.id === (record.data?.lessonId ?? record.id));
+          return lesson?.accessScope === 'public' && platformCourseLessonSection(lesson, trialIds) === 'trial';
+        })) return;
+      }
+      if (!controller.signal.aborted) setTrialHint({ personal: current, courseId });
+    })().catch(() => { /* Unknown entitlement or incomplete history: no redemption prompt. */ });
+    return () => controller.abort();
+  }, [current, courseId, resumeProgress]);
+  const hasLessonRows = Array.isArray(course?.data?.lessons);
+  useEffect(() => {
+    setCurrentDetail(undefined);
+    if (!courseId || hasLessonRows) return;
+    const controller = new AbortController();
+    void loadPlatformResource('courses', { params: { id: courseId }, signal: controller.signal }).then(result => {
+      if (!controller.signal.aborted) setCurrentDetail(result.items[0]);
+    }).catch(() => {});
+    return () => controller.abort();
+  }, [courseId, hasLessonRows]);
 
-  const discovery = [
-    { href: '/platform/courses', title: t('系统课程', 'Structured courses'), description: t('按主题与学习阶段选课', 'Courses by topic and skill level'), icon: BookOpen },
-    { href: '/platform/teachers', title: t('全部讲师', 'All instructors'), description: t('认识讲师与他们的教学方向', 'Meet teachers and explore their specialties'), icon: IdCard },
-    { href: '/platform/community', title: t('学习社区', 'Learning community'), description: t('分享练习、心得与学习成果', 'Share practice, insights, and progress'), icon: MessagesSquare },
-    { href: '/platform/events', title: t('活动与实践', 'Events and practice'), description: t('参加活动与专项练习', 'Join events and practice your skills'), icon: Timer },
-  ];
-
-  return (
-    <div className="platform-landing">
-      <header className="platform-home-hero">
-
-        <h1>{t('每一次转动，', 'Every turn.')}<br /><span>{t('都有新收获。', 'A new discovery.')}</span></h1>
-        <p>{t('从第一次复原，到下一次突破。跟随讲师的镜头，把热爱练成自己的本领。', 'From your first solve to your next breakthrough. Learn alongside your instructor, one move at a time.')}</p>
+  const trialHref = trial ? `/platform/courses/${encodeURIComponent(trial.id)}/sections/core?lesson=${encodeURIComponent(trial.lessonId)}` : trialChecked ? '/platform/courses' : '/platform/courses?trial=1';
+  const trialLabel = trial || !trialChecked ? t('免费试听第一课', 'Try your first lesson for free') : t('浏览课程', 'Browse courses');
+  return <div className="platform-landing">
+    {user && !current ? <section className="platform-home-learning" aria-label={t('正在读取学习进度', 'Loading learning progress')} aria-busy="true"><h1>{t('我的学习', 'My learning')}</h1><div className="platform-home-resume platform-home-resume-skeleton" data-has-cover="true"><span className="platform-home-learning-main"><SkeletonBlock className="platform-home-learning-cover" /><span className="platform-home-learning-copy"><SkeletonBlock /><SkeletonBlock /><SkeletonBlock /></span></span><SkeletonBlock className="platform-home-skeleton-action" /></div></section>
+      : course ? <HomeResume course={course} progress={resumeProgress} detail={currentDetail?.id === course.id ? currentDetail : undefined} trialOnly={trialHint?.personal === current && trialHint.courseId === course.id} />
+      : learningContexts[0] ? <section className="platform-home-hero"><h1>{t('我的学习档案', 'My learning record')}</h1><p>{learningContexts[0].student.displayName} · {learningContexts[0].organization.name}</p><div className="platform-home-actions"><AppLink className="platform-button platform-button-primary" href="/learn" prefetch={false}>{t('查看学习档案', 'View learning record')}<ArrowRight aria-hidden /></AppLink></div></section>
+      : current?.failed ? <section className="platform-home-hero"><h1>{t('我的学习', 'My learning')}</h1><p role="status">{t('学习进度暂时无法读取。', 'Your learning progress is temporarily unavailable.')}</p><div className="platform-home-actions"><AppLink className="platform-button platform-button-primary" href="/platform/account/courses" prefetch={false}>{t('查看我的课程', 'View my courses')}<ArrowRight aria-hidden /></AppLink></div></section>
+      : <header className="platform-home-hero">
+        <h1>{t('从第一次复原，到下一次突破。', 'From your first solve to your next breakthrough.')}</h1>
+        <p>{t('跟随讲师系统学习，找到适合自己的训练节奏。', 'Learn with instructors and find your training rhythm.')}</p>
         <div className="platform-home-actions">
-          <AppLink className="platform-button platform-button-primary" href={signedIn ? continueHref : '/platform/courses'} prefetch={false}>
-            {primaryLabel}<ArrowRight aria-hidden />
-          </AppLink>
-          <AppLink className="platform-button" href="/platform/account/invites" prefetch={false}>{t('已有兑换码？解锁课程', 'Have a code? Unlock your course')}<ArrowRight aria-hidden /></AppLink>
+          <AppLink className="platform-button platform-button-primary" href={trialHref} prefetch={false}><Play aria-hidden />{trialLabel}<ArrowRight aria-hidden /></AppLink>
+          {!user && <AppLink className="platform-home-secondary" href={`/account${nextQuery(lang === 'zh' ? '/zh/platform' : '/platform')}`} prefetch={false}>{t('登录 / 注册', 'Sign in / sign up')}</AppLink>}
+          <AppLink className="platform-home-secondary" href="/timer" prefetch={false}>{t('测一测我的水平', 'Test my level')}</AppLink>
+          <AppLink className="platform-home-secondary platform-home-redeem" href="/platform/account/invites" prefetch={false}>{t('兑换课程', 'Redeem course')}</AppLink>
         </div>
-      </header>
+      </header>}
 
-      <PlatformHomepageCarousel />
+    <HomeLearningPath key={user ? String(user.uid ?? user.wcaId) : 'guest'} owner={user ? String(user.uid ?? user.wcaId) : 'guest'} />
+    {(!user || (current && !current.failed)) && <PlatformHomepageCarousel excludedCourseIds={excludedCourseIds} />}
 
-      <section className="platform-instructors" aria-labelledby="platform-instructors-title">
-        <div className="platform-instructors-header">
-          <div className="platform-instructors-heading">
-            <h2 id="platform-instructors-title">{t('找到合拍的老师。', 'Find your kind of teacher.')}</h2>
-            <p>{t('一个项目，不止一位老师。一位老师，也不止一种可能。', 'More than one teacher for every puzzle. More than one path with every teacher.')}</p>
-          </div>
-          <AppLink className="platform-home-secondary" href="/teachers" prefetch={false}>{t('查看全部讲师', 'View all teachers')}<ArrowRight aria-hidden /></AppLink>
-        </div>
-        {teachers.length > 0 ? (
-          <div className="platform-instructor-grid">
-            {teachers.map(teacher => <PlatformInstructorCard key={teacher.id} teacher={teacher} />)}
-          </div>
-        ) : (
-          <div className="platform-instructors-empty" role="status">
-            {teachersLoading ? <LoadingIndicator>{t('正在读取讲师资料…', 'Loading teachers…')}</LoadingIndicator>
-              : teachersError ? t('讲师资料暂时无法加载。', 'Teacher profiles are temporarily unavailable.')
-                : t('暂无公开讲师资料。', 'No public teacher profiles yet.')}
-          </div>
-        )}
-      </section>
-
-      {signedIn ? (
-        <section className="platform-home-learning" aria-labelledby="platform-home-learning-title">
-          <div className="platform-home-section-heading">
-            <h2 id="platform-home-learning-title">{t('你的下一步', 'Your next step')}</h2>
-          </div>
-          {loading ? (
-            <p className="platform-home-status" role="status" aria-busy="true" aria-live="polite"><LoadingIndicator>{t('正在读取学习进度与工作区…', 'Loading your learning and workspaces…')}</LoadingIndicator></p>
-          ) : (
-            <AppLink className="platform-home-resume platform-entry-link" data-has-cover={Boolean(learningCover)} data-site-surface="panel" href={learningHref} prefetch={false}>
-              <span className="platform-home-learning-main">
-                {learningCover && <span className="platform-home-learning-cover">
-                  <Image src={learningCover} alt="" fill sizes="(max-width: 479px) 112px, 224px" unoptimized={!learningCover.startsWith('/')} onError={event => { event.currentTarget.hidden = true; }} />
-                </span>}
-                <span className="platform-home-learning-copy">
-                  <strong>{learningTitle}</strong>
-                  {learningDescription && <small>{learningDescription}</small>}
-                  {currentCourse && progressBps !== null && <span className="platform-home-progress">
-                    <progress max={10_000} value={progressBps} aria-label={t('课程进度', 'Course progress')} />
-                    <span>{Math.round(progressBps / 100)}%</span>
-                  </span>}
-                </span>
-              </span>
-              <span className="platform-button platform-button-primary platform-home-learning-action">{learningAction}<ArrowRight aria-hidden /></span>
-            </AppLink>
-          )}
-          <div className="platform-home-quick-links">
-            <AppLink className="platform-home-quick-link" href="/platform/progress" prefetch={false}><ChartNoAxesColumnIncreasing aria-hidden />{t('学习进度', 'Learning progress')}</AppLink>
-            <AppLink className="platform-home-quick-link" href="/platform/notifications" prefetch={false}><Bell aria-hidden />{t('消息', 'Messages')}</AppLink>
-            <AppLink className="platform-home-quick-link" href="/platform/account/courses" prefetch={false}><Layers aria-hidden />{t('我的课程', 'My courses')}</AppLink>
-          </div>
-          {partialFailure ? <p className="platform-home-note">{t('部分个人入口暂时未能加载，公开内容仍可正常使用。', 'Some personal entries could not load; public content is still available.')}</p> : null}
-        </section>
-      ) : null}
-
-      <section className="platform-home-discovery" aria-labelledby="platform-home-discovery-title">
-        <div className="platform-home-section-heading">
-          <h2 id="platform-home-discovery-title">{t('现在想做什么？', 'What do you want to do now?')}</h2>
-        </div>
-        <div className="platform-home-action-list">
-          {discovery.map((item) => (
-            <AppLink key={item.href} className="platform-home-tile" data-site-surface="panel" href={item.href} prefetch={false}>
-              <item.icon className="platform-home-tile-icon" aria-hidden strokeWidth={1.7} />
-              <span className="platform-home-tile-copy">
-                <strong>{item.title}</strong><ArrowRight aria-hidden />
-                <small>{item.description}</small>
-              </span>
-            </AppLink>
-          ))}
-        </div>
-      </section>
-
-      {signedIn && hasWorkspaces ? (
-        <section className="platform-home-workspaces" aria-labelledby="platform-home-workspaces-title">
-          <div className="platform-home-section-heading">
-            <h2 id="platform-home-workspaces-title">{t('你的工作区', 'Your workspaces')}</h2>
-          </div>
-          <div className="platform-home-workspace-list">
-            {firstOrganization ? (
-              <AppLink className="platform-entry-link" data-site-surface="panel" href={`/platform/org/${encodeURIComponent(firstOrganization.slug)}`} prefetch={false}>
-                <span><strong>{firstOrganization.name}</strong><small>{organizations.length > 1 ? t(`另有 ${organizations.length - 1} 个机构`, `${organizations.length - 1} more organizations`) : t('机构工作台', 'Organization workspace')}</small></span>
-                <ArrowRight aria-hidden />
-              </AppLink>
-            ) : null}
-            {mounted && isAdmin ? (
-              <AppLink className="platform-entry-link" data-site-surface="panel" href="/platform/admin" prefetch={false}>
-                <span><strong>{t('Platform 管理', 'Platform administration')}</strong><small>{t('进入统一管理工作区', 'Open the unified administration workspace')}</small></span>
-                <ArrowRight aria-hidden />
-              </AppLink>
-            ) : null}
-          </div>
-        </section>
-      ) : null}
-
-      <footer className="platform-home-more">
-        <span>{t('继续探索', 'Keep exploring')}</span>
-        <AppLink href="/platform/paths" prefetch={false}>{t('学习路径', 'Learning paths')}</AppLink>
-        <AppLink href="/platform/news" prefetch={false}>{t('资讯', 'News')}</AppLink>
-        {isAdmin && <AppLink href={SHOP_ROOT} prefetch={false}>{t('商店', 'Shop')}</AppLink>}
-        <AppLink href="/platform/about" prefetch={false}>{t('关于 Platform', 'About Platform')}</AppLink>
-      </footer>
-    </div>
-  );
+    {teachers.length > 0 && <section className="platform-instructors" aria-labelledby="platform-instructors-title">
+      <div className="platform-instructors-header"><div className="platform-instructors-heading"><h2 id="platform-instructors-title">{t('找到合拍的讲师', 'Find your kind of instructor')}</h2></div>
+        <AppLink className="platform-home-secondary" href="/platform/teachers" prefetch={false}>{t('查看全部讲师', 'View all teachers')}<ArrowRight aria-hidden /></AppLink></div>
+      <div className="platform-instructor-grid">{teachers.map(teacher => <PlatformInstructorCard key={teacher.id} teacher={teacher} />)}</div>
+    </section>}
+    {user && current && organizations.length > 0 && <section className="platform-home-workspaces"><h2>{t('你的机构', 'Your organizations')}</h2>
+      <div className="platform-home-workspace-list">{organizations.map(org => <AppLink key={org.slug} className="platform-entry-link" data-site-surface="panel" href={`/platform/org/${encodeURIComponent(org.slug)}`} prefetch={false}><strong>{org.name}</strong><ArrowRight aria-hidden /></AppLink>)}</div></section>}
+  </div>;
 }

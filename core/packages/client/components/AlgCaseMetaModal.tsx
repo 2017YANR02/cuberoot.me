@@ -53,7 +53,7 @@ export default function AlgCaseMetaModal({ caseObj, puzzle, set, byNo, onClose: 
             {m.ollcp ?? caseObj.name}
             {m.ollcp != null && <span className="alg-meta-head-sub">{caseObj.name}</span>}
             {/* 标题旁直达 case 所在列表页(真 <a>,中键可新开) */}
-            <Link href={listHref} className="alg-meta-head-open" prefetch={false} title={tr({ zh: '跳转到 case 所在页面', en: 'Open the case in its list page' })}>
+            <Link href={listHref} className="alg-meta-head-open" prefetch={false} title={tr({ zh: '跳转到 case 所在页面', en: 'Open the case in its list page' })} aria-label={tr({ zh: '跳转到 case 所在页面', en: 'Open the case in its list page' })}>
               <ExternalLink size={14} />
             </Link>
           </h2>

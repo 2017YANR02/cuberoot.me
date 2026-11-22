@@ -6,6 +6,7 @@
 import HomeLink from '@/components/HomeLink';
 import { useEffectiveTheme } from '@/lib/theme';
 import { tr } from '@/i18n/tr';
+import type { ReactNode } from 'react';
 
 type LogoProps = {
   className?: string;
@@ -25,11 +26,12 @@ export function CubeRootLogoImage({
   return <img className={className} src={src} alt="" height={height} width={variant === 'lockup' ? height : undefined} />;
 }
 
-export default function CubeRootLogo({ className, height, variant }: LogoProps) {
+export default function CubeRootLogo({ className, height, variant, children }: LogoProps & { children?: ReactNode }) {
   return (
     <HomeLink className={className} aria-label={tr({ zh: '主页', en: 'Home'
     })}>
       <CubeRootLogoImage height={height} variant={variant} />
+      {children}
     </HomeLink>
   );
 }

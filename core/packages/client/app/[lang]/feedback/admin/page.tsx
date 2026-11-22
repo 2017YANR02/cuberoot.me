@@ -188,7 +188,7 @@ export default function FeedbackAdminPage() {
 
                 </MoreToggle>
                 <button type="button" className="fba-del" disabled={busy === it.id} onClick={() => remove(it.id)}
-                  title={t('删除', 'Delete')}><Trash2 size={14} /></button>
+                  title={t('删除', 'Delete')} aria-label={t('删除', 'Delete')}><Trash2 size={14} /></button>
               </div>
 
               {expanded && <FeedbackConversation feedbackId={it.id} onActivity={load} />}

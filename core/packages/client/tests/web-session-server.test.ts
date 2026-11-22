@@ -39,6 +39,18 @@ describe('same-origin account bridge', () => {
     expect((await PUT(request('/account/profile', 'PUT'), context('profile'))).status).toBe(404);
     expect(fetcher).not.toHaveBeenCalled();
   });
+  it('forwards an empty streamed onboarding PUT without a JSON payload', async () => {
+    const base = request('/account/onboarding', 'PUT');
+    const streamed = new Request(base, { body: new Uint8Array(0) });
+    expect(streamed.body).not.toBeNull();
+    fetcher.mockResolvedValue(json({ seen: true }));
+    expect((await PUT(streamed, context('onboarding'))).status).toBe(200);
+    expect(fetcher.mock.lastCall?.[1]?.body).toBeUndefined();
+    fetcher.mockClear();
+    expect((await PUT(new Request(base, { body: ' ' }), context('onboarding'))).status).toBe(400);
+    expect((await POST(new Request(request('/account/profile'), { body: '' }), context('profile'))).status).toBe(400);
+    expect(fetcher).not.toHaveBeenCalled();
+  });
   it('uses the cookie credential and only returns short credentials after profile changes', async () => {
     const response = await POST(request('/account/profile', 'POST', { name: 'Updated' }), context('profile'));
     expect(response.status).toBe(200);

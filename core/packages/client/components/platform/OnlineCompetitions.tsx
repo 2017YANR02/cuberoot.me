@@ -1,7 +1,7 @@
 'use client';
 
 import MoreToggle from '@/components/MoreToggle';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useContext, useEffect, useState } from 'react';
 import { parseAsString, parseAsStringEnum, useQueryState } from 'nuqs';
 import { Check, ChevronRight, Plus, RefreshCw } from '@app-foundation/icons/lucide';
 import AppLink from '@/components/AppLink';
@@ -17,7 +17,7 @@ import { computeWcaBestAverage } from '@/lib/wca-compute';
 import { listTeachingMembers, listTeachingOrganizations, type TeachingMember, type TeachingOrganizationAccess } from '@/lib/teaching-saas-api';
 import {
   addCompetitionSession, checkInCompetition, configureOnlineCompetition, createCompetitionOrder,
-  createOnlineCompetition, getOnlineCompetition, listCompetitionRegistrations, listOnlineCompetitions,
+  createOnlineCompetition, getOnlineCompetition, listCompetitionRegistrations, listOnlineCompetitions, listSupervisedCompetitions,
   publishOnlineCompetition, updateCompetitionSession, getCompetitionAttempts, nextCompetitionAttempt, recordCompetitionAttempt, finalizeCompetitionRegistration, listCompetitionResults, raiseCompetitionDispute, type CompetitionAttempt, type CompetitionResult, type CompetitionProject, type CompetitionRegistration, type OnlineCompetition,
   listCompetitionDisputes, resolveCompetitionDispute, finalizeCompetition, closeCompetitionSessions, getCompetitionSettlement, recordCompetitionSettlement, type CompetitionDispute, type CompetitionSettlement,
   listCompetitionEvidence, uploadCompetitionEvidence, downloadCompetitionEvidence, type CompetitionEvidence,
@@ -25,6 +25,7 @@ import {
   type OnlineCompetitionSummary,
 } from '@/lib/online-competition-api';
 import dynamic from 'next/dynamic';
+import { PlatformCompetitionAccessContext } from '@/lib/platform-navigation-context';
 import { PlatformState } from './PlatformState';
 
 const CompetitionVideoRoom = dynamic(() => import('./CompetitionVideoRoom').then(module => module.CompetitionVideoRoom),
@@ -61,7 +62,12 @@ export function OnlineCompetitions({ id }: { id?: string }) {
 function CompetitionList() {
   const t = useT();
   const user = useAuthUser();
-  const [view, setView] = useQueryState('view', parseAsStringEnum(['browse', 'manage']).withDefault('browse').withOptions({ history: 'push' }));
+  const access = useContext(PlatformCompetitionAccessContext);
+  const admin = hasAdminAccess(user);
+  const [requested, setView] = useQueryState('view', parseAsStringEnum(['browse', 'manage', 'apply', 'review', 'supervise']).withDefault('browse').withOptions({ history: 'push' }));
+  const view = (requested === 'manage' && !access.organizer) || (requested === 'supervise' && !access.supervisor) || (requested === 'review' && !admin) ? 'browse' : requested;
+  const checking = !access.ready && (requested === 'supervise' || requested === 'manage');
+  const application = view === 'apply' || view === 'review';
   const [items, setItems] = useState<OnlineCompetitionSummary[]>([]);
   const [now, setNow] = useState(0);
   useEffect(() => { setNow(Date.now()); const timer = setInterval(() => setNow(Date.now()), 15000); return () => clearInterval(timer); }, []);
@@ -71,25 +77,29 @@ function CompetitionList() {
   useEffect(() => {
     let active = true;
     setLoading(true); setError(''); setItems([]);
-    if (view === 'manage' && !user) { setLoading(false); return; }
-    void listOnlineCompetitions(view === 'manage').then(result => { if (active) setItems(result.competitions); })
+    if (checking || application || (view !== 'browse' && !user)) { setLoading(false); return; }
+    void (view === 'supervise' ? listSupervisedCompetitions() : listOnlineCompetitions(view === 'manage')).then(result => { if (active) setItems(result.competitions); })
       .catch(error => { if (active) setError(message(error, t('赛事加载失败，请重试。', 'Could not load competitions. Try again.'))); })
       .finally(() => { if (active) setLoading(false); });
     return () => { active = false; };
-  }, [view, user, revision, t]);
+  }, [view, application, checking, user, revision, t]);
+  if (checking) return <PlatformState kind="loading" />;
   return <div className="competitions">
     <header className="competition-heading"><h1>{t('线上比赛', 'Online competitions')}</h1><p>{t('选一个场次，在线监督参赛。', 'Choose a session and compete with live supervision.')}</p></header>
     <nav className="competition-tabs" aria-label={t('赛事视图', 'Competition view')}>
       <button type="button" className="competition-tab" aria-current={view === 'browse' ? 'page' : undefined} onClick={() => { void setView('browse'); }}>{t('全部比赛', 'Competitions')}</button>
-      <button type="button" className="competition-tab" aria-current={view === 'manage' ? 'page' : undefined} onClick={() => { void setView('manage'); }}>{t('我要办赛', 'Host a competition')}</button>
+      {access.organizer && <button type="button" className="competition-tab" aria-current={view === 'manage' ? 'page' : undefined} onClick={() => void setView('manage')}>{t('我管理的赛事', 'Competitions I manage')}</button>}
+      {access.supervisor && <button type="button" className="competition-tab" aria-current={view === 'supervise' ? 'page' : undefined} onClick={() => void setView('supervise')}>{t('我的执场', 'My supervision assignments')}</button>}
+      <button type="button" className="competition-tab" aria-current={view === 'apply' ? 'page' : undefined} onClick={() => void setView('apply')}>{t('主办方申请', 'Organizer application')}</button>
+      {admin && <button type="button" className="competition-tab" aria-current={view === 'review' ? 'page' : undefined} onClick={() => void setView('review')}>{t('审核主办申请', 'Review organizer applications')}</button>}
     </nav>
-    {view === 'manage' && !user ? <p><AppLink href="/platform/login">{t('登录后管理赛事', 'Sign in to manage competitions')}</AppLink></p> : null}
+    {application && !user && <AppLink href="/platform/login">{t('登录后申请', 'Sign in to apply')}</AppLink>}
     {error ? <div role="alert" className="competition-error"><p>{error}</p><button className="competition-secondary" type="button" onClick={() => setRevision(value => value + 1)}><RefreshCw size={15} />{t('重试', 'Retry')}</button></div> : null}
-    {loading ? <p role="status" className="competition-muted"><LoadingIndicator>{t('正在加载比赛…', 'Loading competitions…')}</LoadingIndicator></p> : !error && !items.length && (view === 'browse' || user) ? <p className="competition-empty">{view === 'manage' ? t('还没有你管理的比赛。创建草稿后，可继续添加项目和监督场次。', 'You have no managed competitions yet. Create a draft, then add events and supervised sessions.') : t('暂时没有已发布的线上比赛。', 'No online competitions have been published yet.')}</p> : null}
+    {loading ? <p role="status" className="competition-muted"><LoadingIndicator>{t('正在加载比赛…', 'Loading competitions…')}</LoadingIndicator></p> : !application && !error && !items.length && (view === 'browse' || user) ? <p className="competition-empty">{view === 'manage' ? t('还没有你管理的比赛。创建草稿后，可继续添加项目和监督场次。', 'You have no managed competitions yet. Create a draft, then add events and supervised sessions.') : view === 'supervise' ? t('当前没有分配给你的执场赛事。', 'You have no assigned competitions.') : t('暂时没有已发布的线上比赛。', 'No online competitions have been published yet.')}</p> : null}
     <div className="competition-list">{items.map(item => <AppLink prefetch={false} className="competition-list-row" key={item.id} href={`${href(item.id)}${view === 'manage' ? '?view=manage' : ''}`}>
       <div><span className="competition-state">{item.status === 'published' && now ? (now < Date.parse(item.registrationOpensAt) ? t('报名未开始', 'Registration opens soon') : now < Date.parse(item.registrationClosesAt) ? t('报名中', 'Registration open') : t('报名截止', 'Registration closed')) : statusLabel(item.status, t)}</span><h2>{t(item.titleZh, item.titleEn || item.titleZh)}</h2><p>{dateText(item.startsAt)} <span>{t('北京时间', 'UTC+8')}</span></p><p>{item.projects.map(project => eventDisplayName(project.project, t('zh', 'en') === 'zh')).filter((name, index, names) => names.indexOf(name) === index).join(' / ')}{item.projects.length ? <> — {item.projects.every(project => project.amountMinor === 0) ? t('免费参赛', 'Free entry') : <>{money(Math.min(...item.projects.map(project => project.amountMinor)))} {t('起', 'and up')}</>}</> : null}</p><p>{item.organizationName}</p></div><ChevronRight size={20} />
     </AppLink>)}</div>
-    {view === 'manage' && user ? <CompetitionEditor onSaved={() => setRevision(value => value + 1)} /> : null}
+    {(application || view === 'manage') && user ? <CompetitionEditor key={user.uid} mode={view} onSaved={() => setRevision(value => value + 1)} /> : null}
   </div>;
 }
 
@@ -188,7 +198,7 @@ function CompetitionDetail({ id }: { id: string }) {
   </div>;
 }
 
-function CompetitionEditor({ competition, onSaved }: { competition?: OnlineCompetition; onSaved: () => void }) {
+function CompetitionEditor({ competition, mode, onSaved }: { competition?: OnlineCompetition; mode?: string; onSaved: () => void }) {
   const t = useT();
   const [organizations, setOrganizations] = useState<TeachingOrganizationAccess[]>([]);
   const [eligibleOrganizationIds, setEligibleOrganizationIds] = useState<string[]>([]);
@@ -213,12 +223,12 @@ function CompetitionEditor({ competition, onSaved }: { competition?: OnlineCompe
   const [savedSignature, setSavedSignature] = useState(settingsSignature);
   const dirty = settingsSignature !== savedSignature;
   useEffect(() => {
-    if (competition) return;
+    if (competition || mode === 'review') return;
     let active = true;
     void listTeachingOrganizations().then(items => { if (active) setOrganizations(items.filter(item => ['owner', 'admin'].includes(item.role))); })
       .catch(error => { if (active) setError(message(error, t('主办组织加载失败。', 'Could not load organizations.'))); });
     return () => { active = false; };
-  }, [competition, t, organizationRevision]);
+  }, [competition, mode, t, organizationRevision]);
   const eligibleOrganizations = organizations.filter(item => eligibleOrganizationIds.includes(item.id));
   const validDates = Object.values(dates).every(value => value && Number.isFinite(Date.parse(`${value}:00+08:00`)))
     && dates.registrationOpensAt < dates.registrationClosesAt && dates.registrationClosesAt <= dates.endsAt && dates.startsAt < dates.endsAt;
@@ -246,6 +256,9 @@ function CompetitionEditor({ competition, onSaved }: { competition?: OnlineCompe
     finally { setBusy(false); }
   }
   const anchors = [{ value: '', label: t('未配置', 'Not configured') }, { value: 'finalized', label: t('成绩定稿后', 'After results are finalized') }, { value: 'ended', label: t('比赛结束后', 'After competition ends') }];
+  if (mode === 'apply' || mode === 'review') return <section className="competition-editor">
+    <OrganizerOnboarding organizations={organizations} onLoaded={refreshOrganizations} reviewOnly={mode === 'review'} />
+  </section>;
   return <section className="competition-editor"><h2>{competition ? t('赛事设置', 'Competition settings') : t('创建比赛', 'Create a competition')}</h2>
     {!competition ? <OrganizerOnboarding organizations={organizations} onLoaded={refreshOrganizations} /> : null}
     {createdId ? <p role="status"><AppLink className="competition-primary" prefetch={false} href={`${href(createdId)}?view=manage`}>{t('继续设置项目与场次', 'Continue to events and sessions')}</AppLink></p> : !competition && !eligibleOrganizations.length ? <p className="competition-muted">{t('主办申请通过后，即可创建比赛。', 'Create a competition once your organizer application is approved.')}</p> : <>
@@ -269,7 +282,7 @@ function CompetitionEditor({ competition, onSaved }: { competition?: OnlineCompe
   </section>;
 }
 
-function OrganizerOnboarding({ organizations, onLoaded }: { organizations: TeachingOrganizationAccess[]; onLoaded: (ids: string[]) => void }) {
+function OrganizerOnboarding({ organizations, onLoaded, reviewOnly = false }: { reviewOnly?: boolean; organizations: TeachingOrganizationAccess[]; onLoaded: (ids: string[]) => void }) {
   const t = useT();
   const user = useAuthUser();
   const admin = hasAdminAccess(user);
@@ -289,12 +302,12 @@ function OrganizerOnboarding({ organizations, onLoaded }: { organizations: Teach
   useEffect(() => {
     let active = true;
     setLoading(true);
-    void Promise.all([listOrganizerApplications(), admin ? listOrganizerReviewQueue() : Promise.resolve({ applications: [] })])
+    void Promise.all([reviewOnly ? Promise.resolve({ applications: [], eligibleOrganizationIds: [] }) : listOrganizerApplications(), admin && reviewOnly ? listOrganizerReviewQueue() : Promise.resolve({ applications: [] })])
       .then(([mine, review]) => { if (!active) return; setApplications(mine.applications); setQueue(review.applications); setEligibleIds(mine.eligibleOrganizationIds); onLoaded(mine.eligibleOrganizationIds); })
       .catch(error => { if (active) setError(message(error, t('主办申请加载失败。', 'Could not load organizer applications.'))); })
       .finally(() => { if (active) setLoading(false); });
     return () => { active = false; };
-  }, [admin, onLoaded, revision, t, user?.uid]);
+  }, [admin, reviewOnly, onLoaded, revision, t, user?.uid]);
   const pending = applications.some(item => item.status === 'pending');
   const available = organizations.filter(item => !eligibleIds.includes(item.id));
   const valid = !!contact.trim() && !!description.trim() && (selectedOrganization ? available.some(item => item.id === selectedOrganization) : !!name.trim() && /^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(slug));
@@ -305,6 +318,11 @@ function OrganizerOnboarding({ organizations, onLoaded }: { organizations: Teach
     catch (error) { setError(message(error, t('操作未完成，请重试。', 'Could not complete the action. Try again.'))); }
     finally { setBusy(false); }
   }
+  if (reviewOnly && admin) return <div className="competition-onboarding">
+    <section><h2>{t('审核主办申请', 'Review organizer applications')}</h2>{queue.map(item => <div className="competition-policy-fields" key={item.id}><h3>{item.name}</h3><p>{item.contact}</p><p>{item.description}</p><label>{t('审核意见', 'Review note')}<textarea autoComplete="off" className="platform-field-control" rows={2} value={notes[item.id] ?? ''} maxLength={4000} onChange={event => setNotes(current => ({ ...current, [item.id]: event.target.value }))} /></label><div className="competition-toolbar"><button type="button" className="competition-secondary" disabled={busy} onClick={() => { void act(() => reviewOrganizerApplication(item.id, 'approve', notes[item.id]?.trim() ?? '')); }}>{t('通过主办申请', 'Approve organizer')}</button><button type="button" className="competition-secondary" disabled={busy || !notes[item.id]?.trim()} onClick={() => { void act(() => reviewOrganizerApplication(item.id, 'reject', notes[item.id].trim())); }}>{t('拒绝并说明原因', 'Decline with reason')}</button></div></div>)}</section>
+    {error ? <p role="alert">{error}</p> : loading ? <LoadingIndicator /> : !queue.length && <p>{t('暂无待审核申请。', 'No pending applications.')}</p>}
+    <button type="button" className="competition-secondary" disabled={loading || busy} onClick={() => { setError(''); setRevision(value => value + 1); }}>{t('刷新', 'Refresh')}</button>
+  </div>;
   return <div className="competition-onboarding">
     {loading ? <p role="status" className="competition-muted"><LoadingIndicator>{t('正在加载主办资格…', 'Loading organizer access…')}</LoadingIndicator></p> : null}
     {applications.map(item => <div key={item.id} className="competition-registration"><div><strong>{item.name}</strong><p>{item.status === 'pending' ? t('主办申请待审核', 'Organizer application pending') : item.status === 'approved' ? t('主办申请已通过', 'Organizer approved') : t('主办申请未通过', 'Application declined')}</p>{item.reviewNote ? <p>{item.reviewNote}</p> : null}{item.status === 'approved' && item.organizationSlug ? <AppLink prefetch={false} href={`/platform/org/${encodeURIComponent(item.organizationSlug)}`}>{t('管理主办组织', 'Manage organization')}</AppLink> : null}</div></div>)}
@@ -312,7 +330,7 @@ function OrganizerOnboarding({ organizations, onLoaded }: { organizations: Teach
       {available.length ? <div className="competition-field"><span>{t('使用组织', 'Organization')}</span><CompactSelect value={selectedOrganization} label={available.find(item => item.id === selectedOrganization)?.name ?? t('新建主办组织', 'New organizer')} items={[{ value: '', label: t('新建主办组织', 'New organizer') }, ...available.map(item => ({ value: item.id, label: item.name }))]} onChange={setSelectedOrganization} ariaLabel={t('申请组织', 'Applicant organization')} /></div> : null}
       {!selectedOrganization ? <><label>{t('主办方名称', 'Organizer name')}<input autoComplete="off" className="platform-field-control" value={name} maxLength={160} onChange={event => setName(event.target.value)} /></label><label>{t('组织网址名称', 'Organization URL name')}<input autoComplete="off" className="platform-field-control" value={slug} maxLength={64} onChange={event => setSlug(event.target.value)} /><small>{t('小写字母、数字和连字符', 'Lowercase letters, numbers and hyphens')}</small></label></> : null}
       <label>{t('联系方式', 'Contact details')}<input className="platform-field-control" value={contact} maxLength={500} onChange={event => setContact(event.target.value)} /><small>{t('仅本人和平台审核人员可见', 'Visible only to you and platform reviewers')}</small></label><label>{t('办赛计划与经验', 'Competition plans and experience')}<textarea autoComplete="off" className="platform-field-control" rows={3} value={description} maxLength={4000} onChange={event => setDescription(event.target.value)} /></label></div><button className="competition-secondary" type="button" disabled={loading || busy || !valid} onClick={() => { void act(() => submitOrganizerApplication({ name: name.trim(), slug, contact: contact.trim(), description: description.trim(), ...(selectedOrganization ? { organizationId: selectedOrganization } : {}) })); }}>{t('提交主办申请', 'Submit application')}</button></details> : <p className="competition-muted">{t('审核期间无需重复申请。', 'Your application is under review.')}</p>}
-    {admin && queue.length ? <details className="competition-rules"><MoreToggle as="summary">{t('审核主办申请', 'Review organizer applications')}</MoreToggle>{queue.map(item => <div className="competition-policy-fields" key={item.id}><h3>{item.name}</h3><p>{item.contact}</p><p>{item.description}</p><label>{t('审核意见', 'Review note')}<textarea autoComplete="off" className="platform-field-control" rows={2} value={notes[item.id] ?? ''} maxLength={4000} onChange={event => setNotes(current => ({ ...current, [item.id]: event.target.value }))} /></label><div className="competition-toolbar"><button type="button" className="competition-secondary" disabled={busy} onClick={() => { void act(() => reviewOrganizerApplication(item.id, 'approve', notes[item.id]?.trim() ?? '')); }}>{t('通过主办申请', 'Approve organizer')}</button><button type="button" className="competition-secondary" disabled={busy || !notes[item.id]?.trim()} onClick={() => { void act(() => reviewOrganizerApplication(item.id, 'reject', notes[item.id].trim())); }}>{t('拒绝并说明原因', 'Decline with reason')}</button></div></div>)}</details> : null}
+
     {error ? <p role="alert" className="competition-error">{error}</p> : null}<button type="button" className="competition-secondary" disabled={loading || busy} onClick={() => { setError(''); setRevision(value => value + 1); }}>{t('刷新主办资格', 'Refresh organizer access')}</button>
   </div>;
 }

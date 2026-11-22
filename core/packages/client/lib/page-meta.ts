@@ -42,7 +42,7 @@ export function metadataFromEntry(entry: PageMetaEntry, lang: string): Metadata 
   const l = pick(lang);
   const page = entry.title[l].trim();
   const title = page || BRAND;
-  const shareTitle = page && page !== BRAND ? `${BRAND}${SEP}${page}` : BRAND;
+  const shareTitle = entry.fullTitle ? title : page && page !== BRAND ? `${BRAND}${SEP}${page}` : BRAND;
   const description = entry.description?.[l];
   return {
     title,

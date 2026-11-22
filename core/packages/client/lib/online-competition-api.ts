@@ -98,6 +98,7 @@ function publicGet<T>(url: string): Promise<T> {
 export const listOnlineCompetitions = (managed = false) => managed
   ? request<{ competitions: OnlineCompetitionSummary[] }>(`${base}/manage`)
   : publicGet<{ competitions: OnlineCompetitionSummary[] }>(base);
+export const listSupervisedCompetitions = () => request<{ competitions: OnlineCompetitionSummary[] }>(`${base}/me/supervised`);
 export const getOnlineCompetition = (id: string) => optionalSessionGet(apiUrl(path(id)), {
   headers: authHeaders(false), cache: 'no-store',
 }).then(handleApi<{ competition: OnlineCompetition }>);

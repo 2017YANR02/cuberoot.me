@@ -365,6 +365,7 @@ export default function WikiPage() {
                               className="wiki-action-btn"
                               onClick={() => setEditingTermId(e.id)}
                               title={tr({ zh: '编辑', en: 'Edit'
+                            })} aria-label={tr({ zh: '编辑', en: 'Edit'
                             })}
                             >
                               <Pencil size={13} />
@@ -376,6 +377,7 @@ export default function WikiPage() {
                               className="wiki-action-btn wiki-action-btn-danger"
                               onClick={() => void onDeleteTerm(e.id)}
                               title={tr({ zh: '删除 (admin)', en: 'Delete (admin)'
+                            })} aria-label={tr({ zh: '删除 (admin)', en: 'Delete (admin)'
                             })}
                             >
                               <Trash2 size={13} />
@@ -414,6 +416,7 @@ export default function WikiPage() {
                                         className="wiki-action-btn wiki-action-btn-inline"
                                         onClick={() => setEditingAdditionId(a.id)}
                                         title={tr({ zh: '编辑', en: 'Edit'
+                                        })} aria-label={tr({ zh: '编辑', en: 'Edit'
                                         })}
                                       >
                                         <Pencil size={11} />
@@ -423,6 +426,7 @@ export default function WikiPage() {
                                         className="wiki-action-btn wiki-action-btn-inline wiki-action-btn-danger"
                                         onClick={() => void onDeleteAddition(a.id)}
                                         title={tr({ zh: '删除', en: 'Delete'
+                                        })} aria-label={tr({ zh: '删除', en: 'Delete'
                                         })}
                                       >
                                         <Trash2 size={11} />

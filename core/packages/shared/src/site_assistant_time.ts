@@ -1,4 +1,4 @@
-import { formatDateRangeIso } from './iso-date';
+import { formatDateRangeIso } from './iso-date.ts';
 
 export interface AssistantTimePeriod {
   phrase: string;

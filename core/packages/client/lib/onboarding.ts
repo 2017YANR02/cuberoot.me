@@ -19,11 +19,19 @@ function write(key: string, value: string): void {
   persistItem(key, value);
 }
 
-async function save(key: string, headers: Record<string, string>): Promise<void> {
-  await handleApi(await sessionFetch(apiUrl(PATH), {
+const pendingSaves = new Map<string, Promise<void>>();
+
+function save(key: string, headers: Record<string, string>): Promise<void> {
+  const pending = pendingSaves.get(key);
+  if (pending) return pending;
+
+  const saving = sessionFetch(apiUrl(PATH), {
     method: 'PUT', headers, signal: AbortSignal.timeout(12_000),
-  }));
-  write(key, 'true');
+  }).then(response => handleApi(response))
+    .then(() => write(key, 'true'))
+    .finally(() => pendingSaves.delete(key));
+  pendingSaves.set(key, saving);
+  return saving;
 }
 
 export async function isOnboardingGuided(user: WcaUser | null): Promise<boolean> {

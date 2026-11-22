@@ -39,3 +39,12 @@ it('retries failed saves only for the matching account', async () => {
   expect(request.mock.calls[2][1].method).toBe('PUT');
   expect(localStorage.getItem('cuberoot_guided:account:uid:1')).toBe('true');
 });
+
+it('shares an in-flight save with a pending-marker retry for the same account', async () => {
+  request.mockResolvedValue(Response.json({ seen: true }));
+  const saving = markOnboardingGuided(account(1));
+  const retrying = isOnboardingGuided(account(1));
+  await Promise.all([saving, retrying]);
+  expect(request).toHaveBeenCalledTimes(1);
+  expect(localStorage.getItem('cuberoot_guided:account:uid:1')).toBe('true');
+});

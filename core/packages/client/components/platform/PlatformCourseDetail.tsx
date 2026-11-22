@@ -52,6 +52,14 @@ export function PlatformCourseDetail({ course, lessons }: { course: PlatformEnti
     { id: 'introduction', title: t('引言', 'Introduction'), lessons: directory.filter(lesson => lesson.introduction) },
     { id: 'core', title: t('正式课', 'Core lessons'), lessons: directory.filter(lesson => !lesson.introduction) },
   ].filter(group => group.lessons.length > 0);
+  const introductionCount = directory.filter(lesson => lesson.introduction).length;
+  const previewCount = directory.filter(lesson => lesson.preview).length;
+  const coreCount = directory.length - introductionCount - previewCount;
+  const composition = [
+    introductionCount > 0 && t(`${introductionCount} 节引言`, `${introductionCount} introductions`),
+    previewCount > 0 && t(`${previewCount} 节免费试听`, `${previewCount} free previews`),
+    coreCount > 0 && t(`${coreCount} 节正式课`, `${coreCount} core lessons`),
+  ].filter(Boolean).join(' · ');
   const locked = directory.some(lesson => lesson.locked);
   const originalLessons = new Map(directory.map(lesson => [lesson.id, lesson]));
   const ongoing = entries.find(lesson => lesson.status === 'in_progress' && typeof lesson.id === 'string' && originalLessons.get(lesson.id)?.locked === false);
@@ -108,6 +116,7 @@ export function PlatformCourseDetail({ course, lessons }: { course: PlatformEnti
       <PlatformCourseCover {...details} eager />
       <div className="platform-course-overview-copy">
         {summary && <p>{summary}</p>}
+        {composition && <p className="platform-course-access-note">{composition}</p>}
         <div className="platform-home-actions">
           {nextLesson && <AppLink className="platform-button platform-button-primary" href={lessonHref(nextLesson)} prefetch={false}>
             <Play aria-hidden />{firstAction}

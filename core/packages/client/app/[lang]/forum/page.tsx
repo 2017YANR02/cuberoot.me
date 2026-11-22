@@ -31,7 +31,7 @@ export default function ForumIndexPage() {
 
       {data && (
         <div className="forum-directory">
-          {data.categories.map(cat => {
+          {data.categories.toSorted((a, b) => Number(b.forums.some(f => f.nameZh.includes('新手'))) - Number(a.forums.some(f => f.nameZh.includes('新手')))).map(cat => {
             // adminOnly restricts posting, not reading.
             if (cat.forums.length === 0) return null;
             return (
@@ -40,7 +40,7 @@ export default function ForumIndexPage() {
                   {t(cat.nameZh, cat.nameEn)}
                 </h2>
                 <div className="forum-cat-forums">
-                  {cat.forums.map(f => {
+                  {cat.forums.toSorted((a, b) => Number(b.nameZh.includes('新手')) - Number(a.nameZh.includes('新手'))).map(f => {
                     const Icon = forumIcon(f.icon);
                     const description = t(f.descZh, f.descEn);
                     return (
@@ -49,6 +49,7 @@ export default function ForumIndexPage() {
                         <span className="forum-forum-main">
                           <span className="forum-forum-name">{t(f.nameZh, f.nameEn)}</span>
                           {description && <span className="forum-forum-desc">{description}</span>}
+                          <span className="forum-board-meta">{t(`${f.threadCount} 帖`, `${f.threadCount} threads`)} · {f.lastThread?.lastPostAt ? t('最近活动：', 'Last active: ') + new Date(f.lastThread.lastPostAt).toLocaleDateString(t('zh-CN', 'en-US')) : t('暂无活动', 'No activity yet')}</span>
                         </span>
                       </Link>
                     );

@@ -62,19 +62,19 @@ export default function AlgStepper({ from, solution, size = 180, isZh, doneLabel
       </div>
 
       <div className="god-tp-controls">
-        <button className="god-btn-secondary god-tp-iconbtn" onClick={reset} title={t('重置', 'reset')} disabled={step === 0}>
+        <button className="god-btn-secondary god-tp-iconbtn" onClick={reset} title={t('重置', 'reset')} aria-label={t('重置', 'reset')} disabled={step === 0}>
           <RotateCcw size={16} />
         </button>
-        <button className="god-btn-secondary god-tp-iconbtn" onClick={prev} title={t('上一步', 'prev')} disabled={step === 0}>
+        <button className="god-btn-secondary god-tp-iconbtn" onClick={prev} title={t('上一步', 'prev')} aria-label={t('上一步', 'prev')} disabled={step === 0}>
           <SkipBack size={16} />
         </button>
-        <button className="god-btn-primary god-tp-iconbtn" onClick={() => setPlaying((p) => !p)} title={playing ? t('暂停', 'pause') : t('播放', 'play')} disabled={solved}>
+        <button className="god-btn-primary god-tp-iconbtn" onClick={() => setPlaying((p) => !p)} title={playing ? t('暂停', 'pause') : t('播放', 'play')} aria-label={playing ? t('暂停', 'pause') : t('播放', 'play')} disabled={solved}>
           {playing ? <Pause size={16} /> : <Play size={16} />}
         </button>
-        <button className="god-btn-secondary god-tp-iconbtn" onClick={next} title={t('下一步', 'next')} disabled={solved}>
+        <button className="god-btn-secondary god-tp-iconbtn" onClick={next} title={t('下一步', 'next')} aria-label={t('下一步', 'next')} disabled={solved}>
           <SkipForward size={16} />
         </button>
-        <button className="god-btn-secondary god-tp-iconbtn" onClick={toEnd} title={t('跳到最后', 'to end')} disabled={solved}>
+        <button className="god-btn-secondary god-tp-iconbtn" onClick={toEnd} title={t('跳到最后', 'to end')} aria-label={t('跳到最后', 'to end')} disabled={solved}>
           <ChevronsRight size={16} />
         </button>
       </div>

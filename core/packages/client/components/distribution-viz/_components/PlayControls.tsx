@@ -66,6 +66,7 @@ export default function PlayControls() {
     <div className="controls">
       {/* 播放/暂停按钮 */}
       <button className="ctrl-btn" id="playBtn" title={tr({ zh: '播放/暂停 (Space)', en: 'Play/Pause (Space)'
+    })} aria-label={tr({ zh: '播放/暂停 (Space)', en: 'Play/Pause (Space)'
     })} onClick={togglePlay}>
         {isPlaying ? (
           <svg className="icon-pause" viewBox="0 0 24 24">

@@ -55,6 +55,7 @@ import { PlatformLearningPath } from '@/components/platform/PlatformLearningWork
 import { PLATFORM_ROUTES } from '@/lib/platform-routes';
 import { PlatformNavigationContext, PlatformInstructorAccessRefreshContext, PlatformSearchContext, type PlatformSearchBinding } from '@/lib/platform-navigation-context';
 import { PlatformScopedSearch } from '@/components/platform/PlatformScopedSearch';
+import { commerceMoney } from '@/lib/platform-commerce-format';
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 let host: HTMLDivElement, root: Root;
@@ -74,6 +75,66 @@ const renderInShell = async (id: string, routeParams = params) => act(async () =
 beforeEach(() => { vi.clearAllMocks(); state.user = { uid: 1 }; state.admin = false; state.action = null; state.load.mockResolvedValue({ items: [] }); for (const uid of [1, 2]) localStorage.removeItem(`cuberoot:platform:course-create:v1:${uid}`); host = document.createElement('div'); root = createRoot(host); });
 afterEach(async () => { await act(async () => root.unmount()); });
 
+it('shows server course progress and hides price for redeemed courses only', async () => {
+  const course = { id: 'course-1', title: '入门课程', data: { baseAmountMinor: 9900, currency: 'CNY' } };
+  state.load.mockImplementation(async (resource: string) => ({ items: resource === 'account-courses'
+    ? [{ id: course.id, title: course.title, status: 'active', data: { progressBps: 345, continueLessonId: 'lesson-2' } }]
+    : [course] }));
+  await render('courses');
+  expect(host.textContent).toContain('已学 3%');
+  expect(host.textContent).toContain('我的课程');
+  expect(host.textContent).toContain('共 1 门课程，更多课程陆续上线');
+  expect(host.querySelector('.platform-course-toolbar')).toBeNull();
+  expect(host.textContent).not.toContain('已兑换');
+  expect(host.textContent).not.toContain(commerceMoney(9900, 'CNY'));
+  expect(host.querySelector('.platform-course-card a')?.getAttribute('href')).toBe('/platform/courses/course-1/learn/lesson-2');
+  state.user = null;
+  await render('courses');
+  expect(host.textContent).toContain(commerceMoney(9900, 'CNY'));
+  expect(host.textContent).not.toContain('已兑换');
+});
+
+it('groups owned courses before the public catalog and gives each course one state-appropriate action', async () => {
+  const entries = Array.from({ length: 6 }, (_, index) => ({
+    id: `course-${index}`, title: `课程 ${index}`, summary: '不可显示在列表的说明',
+    data: { baseAmountMinor: index === 1 ? 0 : 9900, enrollmentMode: index === 1 ? 'free' : index === 2 ? 'invite' : 'purchase', presentation: { tags: ['puzzle:333', 'topic:beginner', 'topic:speed'], trialLessonIds: index === 0 ? ['preview-1'] : [] } },
+  }));
+  state.load.mockImplementation(async (resource: string) => ({ items: resource === 'account-courses'
+    ? [{ id: 'course-4', title: entries[4]!.title, status: 'active', data: { progressBps: 0 } },
+      { id: 'course-5', title: entries[5]!.title, status: 'active', data: { progressBps: 1000 } }]
+    : entries }));
+  await render('courses');
+  const sections = [...host.querySelectorAll('.platform-catalog-section')];
+  expect(sections.map(section => section.querySelector('h2')?.textContent)).toEqual(['我的课程', '全部课程']);
+  expect(sections[0]?.querySelectorAll('.platform-course-card')).toHaveLength(2);
+  expect(sections[1]?.querySelectorAll('.platform-course-card')).toHaveLength(4);
+  expect(host.querySelector('.platform-course-toolbar')).not.toBeNull();
+  expect(host.textContent).not.toContain('不可显示在列表的说明');
+  const cards = [...host.querySelectorAll('.platform-course-card')];
+  expect(cards.every(card => card.querySelectorAll('a').length === 1)).toBe(true);
+  expect(cards.map(card => card.querySelector('.platform-course-card-meta')?.textContent)).toEqual(['开始学习', '已学 10%', '免费试听', '免费', '兑换课程', commerceMoney(9900, 'CNY')]);
+  expect(cards.every(card => card.querySelectorAll('.platform-course-card-label').length === 2)).toBe(true);
+  expect(cards[0]?.querySelector('progress')).toBeNull();
+  expect(cards[1]?.querySelector('progress')?.value).toBe(10);
+  state.user = null;
+  await render('courses');
+  expect([...host.querySelectorAll('.platform-catalog-section-title')].map(node => node.textContent)).toEqual(['全部课程']);
+});
+
+it('resolves an advertised free preview from a legacy public course detail', async () => {
+  state.user = null;
+  const course = { id: 'legacy-course', title: '入门课程', data: { enrollmentMode: 'invite' } };
+  state.load.mockImplementation(async (_resource: string, options: { params?: { id?: string } }) => ({
+    items: options.params?.id ? [{ ...course, data: { ...course.data, lessons: [
+      { id: 'preview-1', slug: 'trial-one', accessScope: 'public' },
+      { id: 'locked-1', slug: 'trial-two', accessScope: 'entitled' },
+    ] } }] : [course],
+  }));
+  await render('courses');
+  expect(host.querySelector('.platform-course-card a')?.getAttribute('href'))
+    .toBe('/platform/courses/legacy-course/sections/core?lesson=preview-1');
+});
+
 const fillCourseField = async (name: string, value: string) => act(async () => {
   const label = [...host.querySelectorAll('label')].find(item => item.querySelector('span')?.textContent === name && item.querySelector('input, textarea'));
   const input = label?.querySelector<HTMLInputElement | HTMLTextAreaElement>('input, textarea');
@@ -88,8 +149,9 @@ const currentCourseStep = () => host.querySelector('.platform-wizard-progress [a
 it('combines real catalog facets with the masthead and applies or resets them together', async () => {
   state.user = null;
   state.load.mockResolvedValue({ items: [
-    { id: 'course-1', title: '三阶入门课程', data: { presentation: { tags: ['puzzle:333', 'topic:beginner'] }, instructors: [{ displayName: 'legacy', displayNameZh: '示例讲师', displayNameEn: 'Example teacher' }], lessonCount: 3 } },
-    { id: 'course-2', title: '二阶进阶课程', data: { presentation: { tags: ['puzzle:222', 'topic:speed'] } } },
+    { id: 'course-1', title: '三阶入门课程', data: { presentation: { tags: ['puzzle:333', 'topic:beginner'], trialLessonIds: [] }, instructors: [{ displayName: 'legacy', displayNameZh: '示例讲师', displayNameEn: 'Example teacher' }], lessonCount: 3 } },
+    { id: 'course-2', title: '二阶进阶课程', data: { presentation: { tags: ['puzzle:222', 'topic:speed'], trialLessonIds: [] } } },
+    ...Array.from({ length: 4 }, (_, index) => ({ id: `course-${index + 3}`, title: `其他课程 ${index + 1}`, data: { presentation: { tags: ['puzzle:222', 'topic:speed'], trialLessonIds: [] } } })),
   ] });
   function Embedded() {
     const [binding, setBinding] = useState<PlatformSearchBinding | null>(null);
@@ -100,9 +162,9 @@ it('combines real catalog facets with the masthead and applies or resets them to
   await act(async () => root.render(createElement(Embedded)));
   expect(host.querySelector('.platform-course-toolbar')).toBeNull();
   expect(host.querySelector('.platform-filter-panel')).toBeNull();
-  expect(host.querySelectorAll('.platform-course-card')).toHaveLength(2);
+  expect(host.querySelectorAll('.platform-course-card')).toHaveLength(6);
   expect(host.querySelector('.platform-course-card-byline')?.textContent).toContain('示例讲师');
-  expect(host.querySelector('.platform-course-card-byline')?.textContent).toContain('3 课时');
+  expect(host.querySelector('.platform-course-cover-count')?.textContent).toContain('3 课时');
   expect(host.querySelector('.platform-course-card-byline')?.textContent).not.toContain('legacy');
   await openFilters();
   expect(host.querySelector('.platform-filter-panel')?.textContent).toContain('全部项目');
@@ -117,7 +179,7 @@ it('combines real catalog facets with the masthead and applies or resets them to
   await clickFilterButton('三阶');
   expect(host.querySelector('.platform-filter-panel')?.textContent).not.toContain('速度提升');
   await clickFilterButton('入门复原');
-  expect(host.querySelectorAll('.platform-course-card')).toHaveLength(2);
+  expect(host.querySelectorAll('.platform-course-card')).toHaveLength(6);
   await clickFilterButton('应用筛选');
   expect(host.querySelector('.platform-filter-panel')).toBeNull();
   expect(host.querySelector('.platform-filter-count')?.textContent).toBe('2');
@@ -126,7 +188,7 @@ it('combines real catalog facets with the masthead and applies or resets them to
   await clickFilterButton('重置');
   await clickFilterButton('应用筛选');
   expect(host.querySelector('.platform-filter-count')).toBeNull();
-  expect(host.querySelectorAll('.platform-course-card')).toHaveLength(2);
+  expect(host.querySelectorAll('.platform-course-card')).toHaveLength(6);
   const input = host.querySelector<HTMLInputElement>('.platform-scoped-search input')!;
   await act(async () => {
     Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')!.set!.call(input, '三阶');
@@ -571,13 +633,13 @@ it('introduces instructor benefits before the independent application flow, incl
   state.user=null;
   await renderInShell('teacher-apply');
   expect(host.querySelector('.platform-admission-benefit-grid')?.children).toHaveLength(4);
-  expect(host.querySelector('.platform-admission-cta a')?.getAttribute('href')).toBe('/account');
+  expect(host.querySelector('.platform-admission-hero-copy a')?.getAttribute('href')).toBe('/account');
   expect(host.querySelector('form')).toBeNull();
   expect(state.load).not.toHaveBeenCalled();
   state.user={uid:1};
   await renderInShell('teacher-apply');
   await act(async()=>{await vi.dynamicImportSettled();});
-  expect(host.querySelector('.platform-admission-cta a')?.getAttribute('href')).toBe('/platform/teachers/apply/start');
+  expect(host.querySelector('.platform-admission-hero-copy a')?.getAttribute('href')).toBe('/platform/teachers/apply/start');
   expect(host.querySelector('form')).toBeNull();
 });
 

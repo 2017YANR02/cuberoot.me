@@ -134,7 +134,7 @@ export function VideoInfoButton({ info }: { info: VideoInfo }) {
         ref={btnRef}
         className="fc-info-btn"
         onClick={() => setOpen(v => !v)}
-        title={t('frameCount.info.title')}
+        title={t('frameCount.info.title')} aria-label={t('frameCount.info.title')}
         type="button"
       >
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">

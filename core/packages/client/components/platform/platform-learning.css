@@ -121,4 +121,4 @@
 .platform-learning-path { display:grid; gap:16px; padding-inline-start:24px; }
 .platform-learning-certificate { width:100%; max-width:960px; }
 .platform-learning-workspace progress,.platform-learning-panel progress { width:100%; accent-color:var(--accent); }
-@media(max-width:760px){.platform-learning-classroom{grid-template-columns:1fr}.platform-learning-directory{max-height:240px;overflow:auto}}
+@media(max-width:900px){.platform-learning-classroom{grid-template-columns:minmax(0,1fr)}.platform-learning-directory{max-height:240px;overflow:auto}}

@@ -1,7 +1,8 @@
 'use client';
 import '@cuberoot/timer-ui/compact-select.css';
 
-import { useEffect, useState } from 'react';
+import { useContext, useEffect, useState } from 'react';
+import AppLink from '@/components/AppLink';
 import { parseAsInteger, parseAsString, parseAsStringEnum, useQueryStates } from 'nuqs';
 import Paginator from '@/components/wca-stats/Paginator';
 import { ForumFeedList } from '@/components/forum/ForumFeedList';
@@ -10,13 +11,14 @@ import { fetchForumFeed, fetchForumIndex, type ForumFeedData, type ForumFeedSort
 import { ForumHeader } from '../_components/ForumHeader';
 import '../forum.css';
 import { ContentSkeleton } from '@/components/ContentSkeleton';
-import { usePlatformSearchBinding } from '@/lib/platform-navigation-context';
+import { PlatformNavigationContext, usePlatformSearchBinding } from '@/lib/platform-navigation-context';
 
 const SORTS: ForumFeedSort[] = ['active', 'latest'];
 const PAGE_SIZES = [10, 20, 40];
 
 export default function ForumFeedPage() {
   const lang = useLang();
+  const inPlatform = useContext(PlatformNavigationContext);
   const [{ sort, page, size, forum }, setFilters] = useQueryStates({
     sort: parseAsStringEnum<ForumFeedSort>(SORTS).withDefault('active'),
     page: parseAsInteger.withDefault(1),
@@ -114,6 +116,10 @@ export default function ForumFeedPage() {
           <option value="latest">{tr({ zh: '最新发布', en: 'Newest posts' })}</option>
         </select>
       </>}</ForumHeader>
+      {inPlatform && <div className="forum-learning-entry">
+        {!forum && index?.categories.some(category => category.forums.some(board => board.slug === 'help')) && <AppLink className="platform-button" href="/platform/community/circles/help" prefetch={false}><T zh="新手求助" en="Beginner questions" /></AppLink>}
+        <AppLink className="platform-button" href="/platform/community/search" prefetch={false}><T zh="按关键词筛选" en="Filter by keyword" /></AppLink>
+      </div>}
 
       {error && <div className="forum-error">{error}</div>}
       {!data && !error && <ContentSkeleton variant="feed" />}

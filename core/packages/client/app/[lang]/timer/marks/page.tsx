@@ -195,6 +195,8 @@ function MarksFeed() {
                       onClick={() => void onDelete(m)}
                       title={m.wcaId === myKey
                         ? tr({ zh: '删除', en: 'Delete' })
+                        : tr({ zh: '管理员删除', en: 'Delete (admin)' })} aria-label={m.wcaId === myKey
+                        ? tr({ zh: '删除', en: 'Delete' })
                         : tr({ zh: '管理员删除', en: 'Delete (admin)' })}
                     >
                       <Trash2 size={13} />

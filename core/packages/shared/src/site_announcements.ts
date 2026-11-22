@@ -1,4 +1,4 @@
-import { resolveAssistantYears } from './site_assistant_time';
+import { resolveAssistantYears } from './site_assistant_time.ts';
 /** Public summaries shared by page rendering, search and AI evidence. */
 export const WC_2027_ANNOUNCEMENT = {
   id: 'announcement:wc-2027',

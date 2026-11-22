@@ -4,6 +4,7 @@ import type {
   PlatformRouteMatch,
 } from './platform-types';
 import { isPlatformIntroductionLesson } from '@cuberoot/shared/platform';
+import { PAGE_META } from '@cuberoot/shared/page-catalog';
 
 const text = (zh: string, en: string) => ({ zh, en } as const);
 export const PLATFORM_COURSE_SECTIONS = [
@@ -87,8 +88,8 @@ const canonical = (
  * 旧独立前端的每一个页面都必须在这里有明确归属：Platform 原生资源或主站 canonical 深链。
  */
 export const PLATFORM_ROUTES: readonly PlatformRouteDefinition[] = [
-  route({ id: 'home', pattern: '', area: 'discover', access: 'public', kind: 'landing', title: text('Platform', 'Platform'), description: text('课程、学习、讲师服务和交易在主站中的统一入口。', 'The unified main-site entry for courses, learning, instructor services, and commerce.') }),
-  route({ id: 'about', pattern: 'about', area: 'discover', access: 'public', kind: 'landing', title: text('关于 Platform', 'About Platform'), description: text('了解迁移后的产品边界、账号体系和服务入口。', 'Understand the migrated product boundary, account system, and service entry points.') }),
+  route({ id: 'home', pattern: '', area: 'discover', access: 'public', kind: 'landing', title: PAGE_META.platform!.title, description: PAGE_META.platform!.description }),
+  route({ id: 'about', pattern: 'about', area: 'discover', access: 'public', kind: 'landing', title: text('关于魔方根', 'About CubeRoot'), description: text('了解魔方根的课程、学习与服务。', 'Explore CubeRoot courses, learning and services.') }),
   route({ id: 'offline', pattern: 'offline', area: 'discover', access: 'public', kind: 'landing', title: text('离线说明', 'Offline access'), description: text('网络中断时仍可确认已缓存内容和重新连接方式。', 'Review cached-content and reconnection guidance while offline.') }),
   canonical('login', 'login', 'account', 'public', text('登录', 'Sign in'), '/account'),
   canonical('account', 'account', 'account', 'account', text('账号', 'Account'), '/account'),
@@ -119,8 +120,8 @@ export const PLATFORM_ROUTES: readonly PlatformRouteDefinition[] = [
   canonical('community-post-new', 'community/posts/new', 'community', 'account', text('发布帖子', 'Create post'), '/forum/new'),
   route({ id: 'community-post', pattern: 'community/posts/:id', area: 'community', access: 'public', kind: 'canonical', title: text('帖子', 'Post'), resource: 'community-post', canonicalHref: '/forum/t/:id', canonicalLabel: text('参与完整讨论', 'Join the full discussion') }),
 
-  route({ id: 'search', pattern: 'search', area: 'discover', access: 'public', kind: 'collection', title: text('Platform 搜索', 'Platform search'), resource: 'search' }),
-  route({ id: 'leaderboard', pattern: 'leaderboard', area: 'community', access: 'public', kind: 'collection', title: text('排行榜', 'Leaderboard'), resource: 'leaderboard' }),
+  route({ id: 'search', pattern: 'search', area: 'discover', access: 'public', kind: 'collection', title: text('搜索', 'Search'), resource: 'search' }),
+  route({ id: 'leaderboard', pattern: 'leaderboard', area: 'community', access: 'public', kind: 'collection', title: text('学习榜', 'Learning leaderboard'), resource: 'leaderboard' }),
   route({ id: 'paths', pattern: 'paths', area: 'learning', access: 'public', kind: 'collection', title: text('学习路径', 'Learning paths'), resource: 'paths' }),
   route({ id: 'path-detail', pattern: 'paths/:id', area: 'learning', access: 'public', kind: 'detail', title: text('学习路径详情', 'Learning path details'), resource: 'paths' }),
   route({ id: 'events', pattern: 'events', area: 'discover', access: 'public', kind: 'collection', title: text('活动', 'Events'), resource: 'events' }),
@@ -173,7 +174,7 @@ export const PLATFORM_ROUTES: readonly PlatformRouteDefinition[] = [
   canonical('org-student-responsibilities', 'org/:orgSlug/students/:studentId/responsibilities', 'organization', 'account', text('学员责任关系', 'Student responsibilities'), '/org/:orgSlug/students/:studentId'),
   canonical('org-shared-page', 'org/:orgSlug/:rest*', 'organization', 'account', text('机构工作台', 'Organization workspace'), '/org/:orgSlug/:rest*'),
 
-  route({ id: 'admin', pattern: 'admin', area: 'admin', access: 'admin', kind: 'dashboard', title: text('Platform 管理', 'Platform administration'), resource: 'admin-analytics' }),
+  route({ id: 'admin', pattern: 'admin', area: 'admin', access: 'admin', kind: 'dashboard', title: text('平台管理', 'Platform admin'), resource: 'admin-analytics' }),
   route({ id: 'admin-homepage', pattern: 'admin/homepage', area: 'admin', access: 'admin', kind: 'dashboard', title: text('首页推荐', 'Homepage recommendations') }),
   canonical('admin-algorithms', 'admin/algorithms', 'admin', 'admin', text('公式内容管理', 'Algorithm content'), '/alg/3x3'),
   canonical('admin-algorithm-new', 'admin/algorithms/new', 'admin', 'admin', text('新建公式内容', 'Create algorithm content'), '/alg/3x3'),
@@ -286,9 +287,9 @@ export const PLATFORM_PUBLIC_NAV: ReadonlyArray<{
   label: PlatformRouteDefinition['title'];
   href: string;
 }> = [
-  { id: 'discover', label: text('学习空间', 'Learning'), href: '/platform' },
+  { id: 'discover', label: text('学习', 'Learning'), href: '/platform' },
   { id: 'courses', label: text('课程', 'Courses'), href: '/platform/courses' },
-  { id: 'community', label: text('社区', 'Community'), href: '/platform/community' },
+  { id: 'community', label: text('社区', 'Community'), href: '/platform/community/feed' },
   { id: 'teachers', label: text('讲师', 'Teachers'), href: '/platform/teachers' },
   { id: 'organizations', label: text('机构', 'Schools'), href: '/platform/org' },
 ];

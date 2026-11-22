@@ -76,7 +76,7 @@ export function FollowStar({ compId, followed, onToggle, variant = 'corner', log
       type="button"
       className={`follow-star follow-star--${variant}${followed ? ' is-on' : ''}`}
       aria-pressed={loggedIn ? followed : undefined}
-      title={title}
+      title={title} aria-label={title}
       onClick={(e) => {
         e.preventDefault();
         e.stopPropagation();

@@ -176,7 +176,7 @@ function RecordRow({ r, lang }: { r: WbRecord; lang: 'zh' | 'en' }) {
       <span className="wb-date">{r.date ?? ''}</span>
       <span className="wb-extra">
         {r.video && (
-          <a href={r.video} target="_blank" rel="noopener noreferrer" className="wb-video" title={r.video}>
+          <a href={r.video} target="_blank" rel="noopener noreferrer" className="wb-video" title={r.video} aria-label={r.video}>
             <Play size={12} />
           </a>
         )}

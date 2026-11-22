@@ -33,7 +33,7 @@ const DESTINATIONS: AdminDestination[] = [
   { href: '/admin/disk', Icon: HardDrive, title: ['磁盘空间', 'Disk space'] },
   { href: '/admin/users', Icon: Users, title: ['用户、增长与权限', 'Users, growth, and access'] },
   { href: '/admin/releases', Icon: Wrench, title: ['应用版本管理', 'App releases'] },
-  { href: '/platform/admin', Icon: ShoppingBag, title: ['课程与商城后台', 'Courses and commerce'] },
+  { href: '/platform/admin', Icon: ShoppingBag, title: ['平台管理', 'Platform admin'] },
   { href: '/org#enterprise-admin', Icon: BadgeCheck, title: ['企业认证与收款设置', 'Enterprise verification and payments'] },
   { href: '/support', Icon: HeartHandshake, title: ['赞助管理', 'Sponsorships'] },
   { href: '/alg', Icon: Library, title: ['公式库管理', 'Algorithm library'] },

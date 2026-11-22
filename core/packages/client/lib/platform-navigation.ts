@@ -6,10 +6,10 @@ type NavItem = { id: string; href: string; label: PlatformLocaleText };
 const item = (id: string, href: string, zh: string, en: string): NavItem => ({ id, href, label: { zh, en } });
 
 export const PLATFORM_SECTION_NAV: Record<PlatformPrimary, readonly NavItem[]> = {
-  discover: [item('home', '/platform', '推荐', 'Recommended'), item('events', '/platform/events', '活动', 'Events'), item('news', '/platform/news', '资讯', 'News')],
-  courses: [item('courses', '/platform/courses', '全部课程', 'All courses'), item('paths', '/platform/paths', '学习路径', 'Learning paths'), item('membership', '/platform/membership', '课程会员', 'Course membership')],
+  discover: [item('home', '/platform', '推荐', 'Recommended'), item('events', '/platform/events', '活动', 'Events'), item('online-competitions', '/platform/events/online', '线上比赛', 'Online competitions'), item('news', '/platform/news', '资讯', 'News')],
+  courses: [item('courses', '/platform/courses', '全部课程', 'All courses'), item('membership', '/platform/membership', '课程会员', 'Course membership')],
   community: [item('community-feed', '/platform/community/feed', '动态', 'Feed'), item('community', '/platform/community', '版块', 'Boards'), item('leaderboard', '/platform/leaderboard', '学习榜', 'Learning leaderboard')],
-  teachers: [item('teachers', '/platform/teachers', '全部讲师', 'All instructors'), item('teacher-apply', '/platform/teachers/apply', '讲师入驻', 'Teach with us')],
+  teachers: [item('teachers', '/platform/teachers', '全部讲师', 'All instructors')],
   organizations: [item('org', '/platform/org', '机构工作台', 'Organization workspace')],
 };
 
@@ -80,7 +80,7 @@ export function platformNavigationState(pathname: string): {
   } else if (['courses', 'paths', 'membership'].includes(segments[0])) {
     primary = 'courses'; secondary = segments[0];
   } else if (definition?.area === 'discover') {
-    primary = 'discover'; secondary = segments[0] === 'events' ? 'events' : segments[0] === 'news' ? 'news' : 'home';
+    primary = 'discover'; secondary = segments[0] === 'events' && segments[1] === 'online' ? 'online-competitions' : segments[0] === 'events' ? 'events' : segments[0] === 'news' ? 'news' : 'home';
   }
   return { primary, secondary, definition };
 }

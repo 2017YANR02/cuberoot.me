@@ -17,6 +17,7 @@ import {
 import { MutationMessage, teachingErrorMessage, teachingRoleLabel, useOperationKey } from './_components/OrgUi';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
 import { PlatformNavigationContext } from '@/lib/platform-navigation-context';
+import { useQueryState, parseAsString } from 'nuqs';
 
 export default function OrganizationsPage() {
   const user = useAuthUser();
@@ -26,6 +27,7 @@ export default function OrganizationsPage() {
 function OrganizationsAccountPage({ user }: { user: ReturnType<typeof useAuthUser> }) {
   const t = useT();
   const inPlatformShell = useContext(PlatformNavigationContext);
+  const [view, setView] = useQueryState('view', parseAsString.withDefault(''));
   const operationKey = useOperationKey();
   const [mounted, setMounted] = useState(false);
   const [organizations, setOrganizations] = useState<TeachingOrganizationAccess[]>([]);
@@ -45,6 +47,10 @@ function OrganizationsAccountPage({ user }: { user: ReturnType<typeof useAuthUse
   }, [t]);
 
   useEffect(() => { setMounted(true); }, []);
+  useEffect(() => {
+    // Preserve the former management deep link while keeping the creation flow separate.
+    if (mounted && inPlatformShell && hasAdminAccess(user) && !view && window.location.hash === '#enterprise-admin') void setView('admin');
+  }, [mounted, inPlatformShell, user, view, setView]);
   useEffect(() => {
     if (mounted && user && getSessionToken()) void load();
     else if (mounted) setLoading(false);
@@ -79,17 +85,22 @@ function OrganizationsAccountPage({ user }: { user: ReturnType<typeof useAuthUse
   if (!user || !getSessionToken()) {
     return (
       <main className="org-page org-centered">
-        <PageHeading>{t('企业信息', 'Enterprise')}</PageHeading>
+        <PageHeading>{t('机构工作台', 'Organization workspace')}</PageHeading>
         <p className="org-lead">{t('登录后即可创建企业信息，并继续管理机构、学员和教学工作。', 'Sign in to create an enterprise profile and manage its organization, students, and teaching.')}</p>
         <AppLink className="org-primary-link" href={`/account${nextQuery(window.location.pathname)}`} prefetch={false}>{t('登录', 'Sign in')}</AppLink>
       </main>
     );
   }
+  if (view === 'admin') return <main className="org-page">
+    <h1>{t('机构认证管理', 'Organization verification management')}</h1>
+    <AppLink href="/org" className="org-secondary-button" prefetch={false}>{t('返回机构', 'Back to organizations')}</AppLink>
+    {hasAdminAccess(user) ? <EnterpriseVerificationAdmin /> : <p role="status">{t('无权访问此管理区。', 'You do not have access to this administration area.')}</p>}
+  </main>;
 
   return (
     <main className="org-page org-directory">
-      <header className="org-directory-header">{!inPlatformShell && <BackHome />}<span className="org-feature-icon"><Building2 size={28} aria-hidden="true" /></span><div>{!inPlatformShell && <p className="org-eyebrow">{t('企业工作台', 'Enterprise workspace')}</p>}<h1>{t('我的企业', 'My enterprises')}</h1></div></header>
-      <p className="org-lead">{t('选择已有企业，继续认证或管理。只有添加另一家企业时，才需要新增企业。', 'Select an existing enterprise to continue verification or management. Add an enterprise only for a different business.')}</p>
+      <header className="org-directory-header">{!inPlatformShell && <BackHome />}<span className="org-feature-icon"><Building2 size={28} aria-hidden="true" /></span><div><h1>{t('我的机构', 'My organizations')}</h1></div></header>
+      <p className="org-lead">{t('企业是机构用于认证和收款的主体信息。选择已有企业继续认证或开展教学。', 'An enterprise is the registered entity for organization verification and receiving payments. Select an existing enterprise to continue verification or teaching.')}</p>
 
       <section className="org-section">
         <h2>{t('选择企业', 'Select an enterprise')}</h2>
@@ -112,12 +123,15 @@ function OrganizationsAccountPage({ user }: { user: ReturnType<typeof useAuthUse
         {organizations.length > 0 && <MoreToggle type="button" className="org-secondary-button" expanded={creating} aria-controls="create-enterprise" disabled={submitting} onClick={() => { setCreating(!creating); setError(''); }}>{!creating && <Plus size={18} aria-hidden="true" />}{creating ? t('取消新增企业', 'Cancel adding an enterprise') : t('新增另一家企业', 'Add another enterprise')}</MoreToggle>}
         {(organizations.length === 0 || creating) && <div id="create-enterprise" className="org-subsection">
         <h2>{organizations.length === 0 ? t('第 1 步：创建你的企业', 'Step 1: Create your enterprise') : t('新增另一家企业', 'Add another enterprise')}</h2>
-        <p className="org-lead">{t('创建后进入企业页面，再按指引申请认证。创建企业不会发起打款，也不代表认证通过。', 'After creation, open the enterprise and follow the verification steps. Creating a profile does not transfer money or verify the enterprise.')}</p>
+        <ol className="org-create-steps"><li aria-current="step">{t('创建', 'Create')}</li><li>{t('申请认证', 'Verify')}</li><li>{t('开始使用', 'Get started')}</li></ol>
+        <p className="org-lead">{t('创建不会发起打款，也不代表认证通过。', 'Creating a profile does not transfer money or verify the enterprise.')}</p>
         <form className="org-form" onSubmit={submit} onChange={() => { operationKey.reset(); setMessage(''); }}>
           <fieldset disabled={submitting}>
             <label>{t('企业名称', 'Enterprise name')}<input className="org-form-control" name="name" required maxLength={160} autoComplete="organization" /></label>
             <label>{t('企业页面地址', 'Enterprise page address')}<input autoComplete="off" className="org-form-control" name="slug" required maxLength={64} pattern="[a-z0-9](?:[a-z0-9-]{0,62}[a-z0-9])?" placeholder="cuberoot-academy" autoCapitalize="none" /><span className="org-help">{t('填写小写字母、数字或短横线，用于生成企业链接。', 'Use lowercase letters, numbers or hyphens for your enterprise link.')}</span></label>
-            <label className="org-field-wide">{t('时区', 'Time zone')}<input autoComplete="off" className="org-form-control" name="timezone" required maxLength={64} defaultValue="Asia/Shanghai" autoCapitalize="none" /></label>
+            <label className="org-field-wide">{t('时区', 'Time zone')}<select className="org-form-control" name="timezone" required defaultValue="Asia/Shanghai">
+              {[...new Set(['Asia/Shanghai', 'UTC', ...(typeof Intl.supportedValuesOf === 'function' ? Intl.supportedValuesOf('timeZone') : ['Asia/Hong_Kong', 'Asia/Tokyo', 'America/Los_Angeles', 'America/New_York', 'Europe/London'])])].map(zone => <option key={zone} value={zone}>{zone === 'Asia/Shanghai' ? t('中国标准时间（上海）', 'China Standard Time (Shanghai)') : zone}</option>)}
+            </select></label>
             <div className="org-form-actions"><button className="org-form-button" type="submit">{submitting ? t('创建中…', 'Creating…') : t('创建企业', 'Create enterprise')}</button></div>
           </fieldset>
           <MutationMessage message={error || message} error={!!error} />
@@ -125,7 +139,7 @@ function OrganizationsAccountPage({ user }: { user: ReturnType<typeof useAuthUse
         </div>}
       </section>}
 
-      {hasAdminAccess(user) && <EnterpriseVerificationAdmin />}
+      {!inPlatformShell && hasAdminAccess(user) && <EnterpriseVerificationAdmin />}
     </main>
   );
 }

@@ -79,7 +79,7 @@ function CompactCommunityAlgRow({ text, issue, preferred, onPreferredToggle }: {
         type="button"
         className="alg-alg-copy-btn"
         onClick={onPreferredToggle}
-        title={preferred ? tr({ zh: '取消置顶', en: 'Unpin algorithm' }) : tr({ zh: '置顶公式', en: 'Pin algorithm' })}
+        title={preferred ? tr({ zh: '取消置顶', en: 'Unpin algorithm' }) : tr({ zh: '置顶公式', en: 'Pin algorithm' })} aria-label={preferred ? tr({ zh: '取消置顶', en: 'Unpin algorithm' }) : tr({ zh: '置顶公式', en: 'Pin algorithm' })}
         aria-pressed={preferred}
       >
         <Pin size={14} fill={preferred ? 'currentColor' : 'none'} className="alg-alg-copy-icon" aria-hidden="true" />
@@ -89,7 +89,7 @@ function CompactCommunityAlgRow({ text, issue, preferred, onPreferredToggle }: {
         className="alg-alg-copy-btn"
         onClick={() => copy(text)}
         disabled={!!issue}
-        title={tr({ zh: '复制', en: 'Copy' })}
+        title={tr({ zh: '复制', en: 'Copy' })} aria-label={tr({ zh: '复制', en: 'Copy' })}
       >
         {copied ? <Check size={14} /> : <Copy size={14} className="alg-alg-copy-icon" />}
       </button>
@@ -401,10 +401,10 @@ export default function CommunityAlgs({
                   placeholder={tr({ zh: '注释 (可选)', en: 'Notes (optional)' })}
                 />
                 <CommunityTagSelect tags={editTags} onChange={setEditTags} />
-                <button type="button" className="alg-community-edit-btn" disabled={busy} onClick={() => handleSaveEdit(s.id)} title={tr({ zh: '保存', en: 'Save' })}>
+                <button type="button" className="alg-community-edit-btn" disabled={busy} onClick={() => handleSaveEdit(s.id)} title={tr({ zh: '保存', en: 'Save' })} aria-label={tr({ zh: '保存', en: 'Save' })}>
                   <Check size={14} />
                 </button>
-                <button type="button" className="alg-community-edit-btn" disabled={busy} onClick={() => setEditingId(null)} title={tr({ zh: '取消', en: 'Cancel' })}>
+                <button type="button" className="alg-community-edit-btn" disabled={busy} onClick={() => setEditingId(null)} title={tr({ zh: '取消', en: 'Cancel' })} aria-label={tr({ zh: '取消', en: 'Cancel' })}>
                   <X size={14} />
                 </button>
               </div>
@@ -435,10 +435,10 @@ export default function CommunityAlgs({
                   </PersonLink>
                   {canEdit && (
                     <span className="alg-community-actions">
-                      <button type="button" className="alg-community-action-btn" onClick={() => startEdit(s)} title={tr({ zh: '编辑', en: 'Edit' })}>
+                      <button type="button" className="alg-community-action-btn" onClick={() => startEdit(s)} title={tr({ zh: '编辑', en: 'Edit' })} aria-label={tr({ zh: '编辑', en: 'Edit' })}>
                         <Pencil size={12} />
                       </button>
-                      <button type="button" className="alg-community-action-btn" onClick={() => handleDelete(s.id)} title={tr({ zh: '删除', en: 'Delete' })}>
+                      <button type="button" className="alg-community-action-btn" onClick={() => handleDelete(s.id)} title={tr({ zh: '删除', en: 'Delete' })} aria-label={tr({ zh: '删除', en: 'Delete' })}>
                         <Trash2 size={12} />
                       </button>
                     </span>
@@ -469,10 +469,10 @@ export default function CommunityAlgs({
             placeholder={tr({ zh: '注释 (可选)', en: 'Notes (optional)' })}
           />
           <CommunityTagSelect tags={draftTags} onChange={setDraftTags} />
-          <button type="button" className="alg-community-add-icon-btn" disabled={busy || !draftAlg.trim()} onClick={handleSubmit} title={tr({ zh: '提交', en: 'Submit' })}>
+          <button type="button" className="alg-community-add-icon-btn" disabled={busy || !draftAlg.trim()} onClick={handleSubmit} title={tr({ zh: '提交', en: 'Submit' })} aria-label={tr({ zh: '提交', en: 'Submit' })}>
             <Check size={14} />
           </button>
-          <button type="button" className="alg-community-add-icon-btn" disabled={busy} onClick={() => { setAdding(false); setDraftAlg(''); setDraftNotes(''); setDraftTags([]); }} title={tr({ zh: '取消', en: 'Cancel' })}>
+          <button type="button" className="alg-community-add-icon-btn" disabled={busy} onClick={() => { setAdding(false); setDraftAlg(''); setDraftNotes(''); setDraftTags([]); }} title={tr({ zh: '取消', en: 'Cancel' })} aria-label={tr({ zh: '取消', en: 'Cancel' })}>
             <X size={14} />
           </button>
         </div>

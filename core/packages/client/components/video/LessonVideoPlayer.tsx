@@ -445,7 +445,7 @@ export function LessonVideoPlayer({ src, poster, onError, onLoadedMetadata, auto
           <span className="lesson-video-time">{timeLabel(current)} / {timeLabel(duration)}</span>
         </div>
         <div className="lesson-video-right">
-          <Tooltip content={t('截图', 'Screenshot')}>{(tip) => <button {...tip} type="button" className="lesson-video-button lesson-video-capture" onClick={screenshot} disabled={!resolution} >Screenshot</button>}</Tooltip>
+          <Tooltip content={t('截图', 'Screenshot')}>{(tip) => <button {...tip} type="button" className="lesson-video-button lesson-video-capture" aria-label={t('截图', 'Screenshot')} onClick={screenshot} disabled={!resolution}>{t('截图', 'Screenshot')}</button>}</Tooltip>
           {onAutoContinueChange && <Tooltip content={autoContinue ? t('自动播放模式已开启', 'Autoplay is on') : t('自动播放模式已关闭', 'Autoplay is off')}>{(tip) => <span {...tip} className="lesson-video-autoplay" >
             <BoolToggle value={autoContinue} onChange={onAutoContinueChange} ariaLabel={t('自动播放下一课', 'Autoplay next lesson')} label={autoContinue ? <Play size={10} fill="currentColor" /> : <Pause size={10} fill="currentColor" />} />
           </span>}</Tooltip>}

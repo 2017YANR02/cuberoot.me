@@ -1,9 +1,7 @@
-import { notFound } from 'next/navigation';
-import { PlatformRouteView } from '@/components/platform/PlatformRouteView';
-import { matchPlatformRoute } from '@/lib/platform-routes';
+import { PlatformLanding } from '@/components/platform/PlatformLanding';
 
 export default function PlatformPage() {
-  const match = matchPlatformRoute([]);
-  if (!match) notFound();
-  return <PlatformRouteView definition={match.definition} params={match.params} />;
+  // The public hero and path are present in the server HTML. Account data
+  // and verified trial links are progressively loaded by the client.
+  return <PlatformLanding />;
 }

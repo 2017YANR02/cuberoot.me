@@ -1,9 +1,11 @@
 // Runtime-neutral page catalog. Metadata, search and analytics use the same routes.
-import { WC_2027_ANNOUNCEMENT } from './site_announcements';
+import { WC_2027_ANNOUNCEMENT } from './site_announcements.ts';
 
 export interface Msg { zh: string; en: string; }
 export interface PageMetaEntry {
   title: Msg;
+  /** The supplied title already includes its brand; share previews reuse it verbatim. */
+  fullTitle?: boolean;
   /** Omit to inherit the site-wide description from app/layout.tsx. */
   description?: Msg;
 }
@@ -147,7 +149,8 @@ export const PAGE_META: Record<string, PageMetaEntry> = {
     },
   },
   'platform': {
-    title: { zh: '课程与学习 Platform', en: 'Courses and learning Platform' },
+    title: { zh: '魔方根 CubeRoot — 课程与学习', en: 'CubeRoot — Courses & Learning' },
+    fullTitle: true,
     description: {
       zh: 'CubeRoot 主站内的课程、学习记录、讲师服务、活动、交易和教学机构统一入口。',
       en: 'The CubeRoot main-site hub for courses, learning records, instructors, events, commerce, and teaching organizations.',

@@ -21,12 +21,12 @@ export function PlatformAboutView() {
   return (
     <div className="platform-static-view">
       <section>
-        <h2>{t('现在的 Platform', 'Platform today')}</h2>
-        <p>{t('Platform 已迁入 CubeRoot 主站：课程、学习记录、订单、讲师和运营工作区使用同一个账号与数据权限，不再维护第二套独立前端。', 'Platform now lives in the CubeRoot main site. Courses, learning records, orders, instructors, and operations use the same account and authorization model, without a second standalone frontend.')}</p>
+        <h2>{t('在魔方根学习', 'Learn with CubeRoot')}</h2>
+        <p>{t('从入门复原到进阶竞速，课程、学习记录和订单都与魔方根账号同步。', 'From your first solve to advanced speedcubing, courses, learning records and orders stay connected to your CubeRoot account.')}</p>
       </section>
       <section>
-        <h2>{t('复用原则', 'Reuse policy')}</h2>
-        <p>{t('论坛、计时器、公式库、讲师名录和教学机构已有成熟主站实现；Platform 页面保留业务上下文，并把最终操作交给这些唯一实现。', 'The forum, timer, algorithm library, teacher directory, and organizations already have canonical main-site implementations. Platform keeps the product context and hands final interaction to those single implementations.')}</p>
+        <h2>{t('练习、交流与教学', 'Practice, community and teaching')}</h2>
+        <p>{t('使用计时器和公式库练习，在社区交流经验，或通过讲师与机构工作台开展教学。', 'Practise with the timer and algorithm library, share experience in the community, or teach through instructor and organization workspaces.')}</p>
       </section>
       <div className="platform-write-actions">
         <AppLink className="platform-button platform-button-primary" href="/platform/courses">{t('浏览课程', 'Browse courses')}</AppLink>
@@ -67,7 +67,7 @@ export function PlatformAccountView({ loginOnly }: { loginOnly: boolean }) {
   if (!user || loginOnly) {
     return (
       <div className="platform-auth-view">
-        <p>{t('Platform 与主站共用同一个账号，不需要再次注册。', 'Platform shares the main-site account; no second registration is needed.')}</p>
+        <p>{t('使用现有魔方根账号即可学习，无需重复注册。', 'Use your existing CubeRoot account to start learning.')}</p>
         <LoginForm onDone={() => window.location.reload()} />
       </div>
     );

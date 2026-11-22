@@ -184,7 +184,7 @@ function AlgLine({
         type="button"
         className="alg-alg-copy-btn"
         onClick={() => copy(alg)}
-        title={tr({ zh: '复制公式', en: 'Copy alg' })}
+        title={tr({ zh: '复制公式', en: 'Copy alg' })} aria-label={tr({ zh: '复制公式', en: 'Copy alg' })}
       >
         {copied ? <Check size={14} /> : <Copy size={14} className="alg-alg-copy-icon" />}
       </button>
@@ -193,7 +193,7 @@ function AlgLine({
           type="button"
           className="bld-db-alg-video"
           onClick={() => onPlay(alg, raw)}
-          title={tr({ zh: '讲解视频', en: 'Video' })}
+          title={tr({ zh: '讲解视频', en: 'Video' })} aria-label={tr({ zh: '讲解视频', en: 'Video' })}
         >
           <Video size={14} />
         </button>

@@ -203,7 +203,7 @@ describe('Platform route conservation', () => {
       'organization',
     ]);
     expect(PLATFORM_PUBLIC_NAV.map((entry) => entry.label.zh)).toEqual([
-      '学习空间',
+      '学习',
       '课程',
       '社区',
       '讲师',
@@ -212,7 +212,7 @@ describe('Platform route conservation', () => {
     expect(PLATFORM_PUBLIC_NAV.map((entry) => entry.href)).toEqual([
       '/platform',
       '/platform/courses',
-      '/platform/community',
+      '/platform/community/feed',
       '/platform/teachers',
       '/platform/org',
     ]);

@@ -25,7 +25,7 @@ import { PlatformState } from './PlatformState';
 import dynamic from 'next/dynamic';
 import { instructorApplicationStatus, titleFor } from './PlatformRouteHelpers';
 import { PlatformAboutView, PlatformOfflineView, PlatformAccountView, PlatformCanonicalView } from './PlatformInfoViews';
-import { COURSE_TOPIC_IDS, courseCatalogDetails, loadCourseCatalog, loadLegacyCourseLessonAccess, matchesCourseCatalog } from '@/lib/platform-course-catalog';
+import { COURSE_FILTER_THRESHOLD, COURSE_TOPIC_IDS, courseCatalogDetails, loadCourseCatalog, loadLegacyCatalogPreviews, loadLegacyCourseLessonAccess, matchesCourseCatalog } from '@/lib/platform-course-catalog';
 import { PlatformCourseCards, PlatformCourseToolbar } from './PlatformCourseCatalog';
 import { PlatformEntityList } from './PlatformEntityList';
 import { PlatformScopedSearch } from './PlatformScopedSearch';
@@ -47,8 +47,6 @@ const PlatformLearningWorkspace = dynamic(() => import('./PlatformLearningWorksp
   { ssr: false, loading: () => <PlatformState kind="loading" /> });
 const PlatformInstructorProfile = dynamic(() => import('./PlatformInstructorProfile').then(module => module.PlatformInstructorProfile),
   { ssr: false, loading: () => <PlatformState kind="loading" /> });
-const PlatformLanding = dynamic(() => import('./PlatformLanding').then(module => module.PlatformLanding),
-  { loading: () => <PlatformState kind="loading" /> });
 
 const PlatformQrCardStudio = dynamic(
   () => import('./PlatformQrCardStudio').then(module => module.PlatformQrCardStudio),
@@ -82,6 +80,7 @@ export function PlatformResourceRouteView({
   const [rawPageSize, setPageSize] = useQueryState('pageSize', parseAsInteger.withDefault(defaultPageSize));
   const [category, setCategory] = useQueryState('category', parseAsString.withDefault(definition.id === 'admin-applications' ? 'pending' : ''));
   const [puzzle, setPuzzle] = useQueryState('puzzle', parseAsString.withDefault(''));
+  const [trialOnly, setTrialOnly] = useQueryState('trial', parseAsStringEnum(['0', '1'] as const).withDefault('0'));
   const page = Math.max(1, rawPage);
   const pageSize = pageSizeOptions.includes(rawPageSize) ? rawPageSize : defaultPageSize;
   const [selectedLessonId, setSelectedLessonId] = useQueryState('lesson', parseAsString.withOptions({ history: 'push', scroll: false }));
@@ -125,7 +124,10 @@ export function PlatformResourceRouteView({
   const [actionMessage, setActionMessage] = useState<string | null>(null);
   const instructorApplicationFlow = instructorApplication || definition.id === 'admin-application';
   const [reviewMessage, setReviewMessage] = useState<{ text: string; error?: boolean } | null>(null);
-  const [redeemedCourseIds, setRedeemedCourseIds] = useState<ReadonlySet<string>>(() => new Set());
+  const courseOwner = user ? String(user.uid ?? user.wcaId) : '';
+  const [ownedCourseResult, setOwnedCourseResult] = useState<{ owner: string; courses: ReadonlyMap<string, PlatformEntity> } | null>(null);
+  const ownedCourses = useMemo<ReadonlyMap<string, PlatformEntity>>(() => courseOwner && ownedCourseResult?.owner === courseOwner ? ownedCourseResult.courses : new Map(), [courseOwner, ownedCourseResult]);
+  const redeemedCourseIds = useMemo(() => new Set(ownedCourses.keys()), [ownedCourses]);
   const qrAdminMode = ({ 'admin-qr': 'manage', 'admin-qr-stats': 'stats', 'admin-qr-prompts': 'prompts' } as const)[definition.id as 'admin-qr' | 'admin-qr-stats' | 'admin-qr-prompts'];
   const searchable = ['courses', 'paths', 'events', 'news', 'shop', 'search', 'admin-courses', 'admin-paths', 'admin-events', 'admin-news', 'admin-products', 'instructor-courses', 'orders', 'admin-orders', 'admin-coupons', 'admin-payouts', 'admin-reconcile', 'admin-applications'].includes(definition.id);
   const sortable = ['courses', 'paths', 'events', 'news', 'shop', 'admin-courses', 'admin-paths', 'admin-events', 'admin-news', 'admin-products', 'instructor-courses'].includes(definition.id);
@@ -192,6 +194,9 @@ export function PlatformResourceRouteView({
       const maxPage = value.total === undefined ? requestPage : Math.max(1, Math.ceil(value.total / (value.pageSize ?? requestSize)));
       if (requestPage > maxPage) { void setPage(maxPage); return; }
       setResult(value);
+      if (courseCatalog) void loadLegacyCatalogPreviews(value.items, controller.signal).then(items => {
+        if (!controller.signal.aborted && items !== value.items) setResult(current => current === value ? { ...value, items } : current);
+      });
     }).catch((reason: unknown) => {
       if (!controller.signal.aborted) setError(reason instanceof Error ? reason : new Error(String(reason)));
     });
@@ -201,7 +206,7 @@ export function PlatformResourceRouteView({
   useEffect(() => {
     const needsCourseOwnership = definition.id === 'courses';
     if (!mounted || !user || !needsCourseOwnership) {
-      setRedeemedCourseIds(new Set());
+      setOwnedCourseResult(null);
       return;
     }
     const controller = new AbortController();
@@ -217,14 +222,14 @@ export function PlatformResourceRouteView({
       return { items };
     })().then(({ items }) => {
         if (!controller.signal.aborted) {
-          setRedeemedCourseIds(new Set(items.filter((item) => item.status === 'active').map((item) => item.id)));
+          setOwnedCourseResult({ owner: courseOwner, courses: new Map(items.filter((item) => item.status === 'active').map((item) => [item.id, item])) });
         }
       })
       .catch(() => {
-        if (!controller.signal.aborted) setRedeemedCourseIds(new Set());
+        if (!controller.signal.aborted) setOwnedCourseResult(null);
       });
     return () => controller.abort();
-  }, [definition.id, mounted, user, retry]);
+  }, [definition.id, mounted, user, courseOwner, retry]);
 
   const sortedItems = useMemo(() => {
     if (!result) return [];
@@ -242,6 +247,8 @@ export function PlatformResourceRouteView({
   const courseEntries = useMemo(() => courseCatalog
     ? sortedItems.map(course => ({ course, details: courseCatalogDetails(course) }))
     : [], [courseCatalog, sortedItems]);
+  const showCourseFilters = courseEntries.length >= COURSE_FILTER_THRESHOLD;
+  const hasCourseFilters = Boolean(query || puzzle || category || trialOnly === '1');
   const coursePuzzles = useMemo(() => new Set(courseEntries.flatMap(entry => entry.details.puzzles)), [courseEntries]);
   const courseTopics = COURSE_TOPIC_IDS.filter(topic => courseEntries.some(entry =>
     (!puzzle || entry.details.puzzles.includes(puzzle)) && entry.details.topics.includes(topic)));
@@ -250,9 +257,10 @@ export function PlatformResourceRouteView({
     return matches.length ? [[topic, [...new Set(matches.flatMap(entry => entry.details.puzzles))]] as const] : [];
   })), [courseEntries]);
   const filteredCourses = useMemo(() => {
-    const matches = courseEntries.filter(({ course, details }) => matchesCourseCatalog(course, details, { q: query, puzzle, category }));
-    return sort === 'title' ? matches.toSorted((a, b) => a.course.title.localeCompare(b.course.title, lang)) : matches;
-  }, [courseEntries, query, puzzle, category, sort, lang]);
+    const matches = courseEntries.filter(({ course, details }) => matchesCourseCatalog(course, details, { q: query, puzzle, category, trialOnly: trialOnly === '1' }));
+    return matches.toSorted((a, b) => Number(ownedCourses.has(b.course.id)) - Number(ownedCourses.has(a.course.id))
+      || (sort === 'title' ? a.course.title.localeCompare(b.course.title, lang) : 0));
+  }, [courseEntries, query, puzzle, category, trialOnly, sort, lang, ownedCourses]);
   const coursePages = Math.max(1, Math.ceil(filteredCourses.length / pageSize));
   const coursePage = Math.min(page, coursePages);
 
@@ -371,7 +379,6 @@ export function PlatformResourceRouteView({
     return undefined;
   };
 
-  if (definition.id === 'home') return <PlatformLanding />;
   if (definition.id === 'account-invites') {
     return <div className="platform-route platform-redemption">
       {!mounted ? <PlatformState kind="loading" /> : !user ? (
@@ -470,7 +477,7 @@ export function PlatformResourceRouteView({
         <PlatformQrAdmin mode={qrAdminMode} />
       ) : definition.resource ? (
         <>
-          {courseCatalog ? <PlatformCourseToolbar
+          {courseCatalog ? showCourseFilters ? <PlatformCourseToolbar
             query={query} puzzle={puzzle} topic={category} sort={sort} puzzles={coursePuzzles} topics={courseTopics} topicPuzzles={courseTopicPuzzles}
             onQuery={value => { void setPage(null); void setQuery(value || null); }}
             onPuzzle={value => { void setPage(null); void setPuzzle(value || null); void setCategory(null); }}
@@ -479,7 +486,12 @@ export function PlatformResourceRouteView({
             onApplyFilters={(nextPuzzle, nextTopic, nextSort) => {
               void setPage(null); void setPuzzle(nextPuzzle || null); void setCategory(nextTopic || null); void setSort(nextSort);
             }}
-          /> : (definition.kind === 'collection' || definition.kind === 'dashboard')
+          /> : result ? <div className="platform-catalog-count">
+            <span>{t(`共 ${courseEntries.length} 门课程，更多课程陆续上线`, `${courseEntries.length} courses · More courses coming soon`)}</span>
+            {hasCourseFilters && <button type="button" className="platform-button" onClick={() => {
+              void setPage(null); void setQuery(null); void setPuzzle(null); void setCategory(null); void setTrialOnly(null);
+            }}>{t('清除筛选', 'Clear filters')}</button>}
+          </div> : null : (definition.kind === 'collection' || definition.kind === 'dashboard')
             && definition.id !== 'membership'
             && definition.id !== 'me-membership'
             && !isQrCardStudio
@@ -514,6 +526,8 @@ export function PlatformResourceRouteView({
             </div>
           ) : null}
 
+          {courseCatalog && showCourseFilters && trialOnly === '1' && <button type="button" className="platform-button" onClick={() => { void setPage(null); void setTrialOnly(null); }}>{t('仅试听课程 · 清除筛选', 'Trial courses only · Clear filter')}</button>}
+
           {definition.id === 'order-detail' && !permissionDenied && !orderUnavailable && sortedItems[0] ? <PlatformOrderPayment key={sortedItems[0].id}
             entity={sortedItems[0]} busy={actionBusy} runAction={runAction} message={actionMessage} /> : null}
 
@@ -539,11 +553,9 @@ export function PlatformResourceRouteView({
             />
           ) : courseCatalog ? (
             filteredCourses.length > 0 ? (
-              <PlatformCourseCards definition={definition} redeemedCourseIds={visibleRedeemedCourseIds}
+              <PlatformCourseCards definition={definition} ownedCourses={ownedCourses}
                 courses={filteredCourses.slice((coursePage - 1) * pageSize, coursePage * pageSize)} />
-            ) : <PlatformState kind="empty" message={query || puzzle || category
-              ? t('没有符合条件的课程。试试清除筛选或更换关键词。', 'No courses match. Clear a filter or try another search.')
-              : undefined} />
+            ) : hasCourseFilters ? <PlatformState kind="empty" message={t('没有符合条件的课程。试试清除筛选或更换关键词。', 'No courses match. Clear a filter or try another search.')} /> : null
           ) : inviteManager || instructorApplication ? null : sortedItems.length === 0 && definition.id !== 'membership' && definition.id !== 'me-membership' ? (
             <PlatformState
               kind="empty"

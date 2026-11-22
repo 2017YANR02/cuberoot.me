@@ -80,7 +80,7 @@ function ColorRow({
           onChange={(e) => onChange(e.target.value)}
         />
         {onReset && (
-          <button type="button" className="vc-btn-icon" onClick={onReset} title="Reset">
+          <button type="button" className="vc-btn-icon" onClick={onReset} title="Reset" aria-label="Reset">
             <RotateCcw size={14} />
           </button>
         )}
@@ -775,7 +775,7 @@ export default function PuzzleImageStudio({
                   type="text" className="vc-text" value={s.arrows} placeholder="U0U2-red,U6U8"
                   onChange={(e) => set('arrows', e.target.value)}
                 />
-                <button type="button" className="vc-btn-icon" onClick={() => set('arrows', '')} title="Clear">
+                <button type="button" className="vc-btn-icon" onClick={() => set('arrows', '')} title="Clear" aria-label="Clear">
                   <Trash2 size={14} />
                 </button>
                 <button
@@ -843,7 +843,7 @@ export default function PuzzleImageStudio({
                   }}
                 />
                 <button
-                  type="button" className="vc-btn-icon" title="Clear"
+                  type="button" className="vc-btn-icon" title="Clear" aria-label="Clear"
                   onClick={() => set('stickerMask', '')}
                 >
                   <Trash2 size={14} />

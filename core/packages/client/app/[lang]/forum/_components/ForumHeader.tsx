@@ -30,11 +30,11 @@ export function ForumHeader({ activeView, children }: { activeView: 'feed' | 'bo
             <Plus size={15} aria-hidden="true" />
             <T zh="发帖" en="Post thread" />
           </Link>
-          <WcaAuth />
+          {!inPlatformShell && <WcaAuth />}
         </div>
       </div>
-      {(!inPlatformShell || isAdmin || children) && <div className="forum-view-toolbar">
-        {(!inPlatformShell || isAdmin) && <div className="forum-view-primary">
+      {(!inPlatformShell || children) && <div className="forum-view-toolbar">
+        {!inPlatformShell && <div className="forum-view-primary">
           {!inPlatformShell && <nav className="forum-view-nav" aria-label={tr({ zh: '论坛视图', en: 'Forum views' })}>
             <Link href="/forum/feed" prefetch={false} aria-current={activeView === 'feed' ? 'page' : undefined}>
               <T zh="动态" en="Feed" />

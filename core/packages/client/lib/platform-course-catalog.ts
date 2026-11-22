@@ -4,6 +4,8 @@ import { commerceRecord } from './platform-commerce-format';
 import { loadPlatformResource } from './platform-gateway';
 import type { PlatformEntity, PlatformResourceResult } from './platform-types';
 import { eventDisplayName } from './wca-events';
+import { platformTrialLessonIds } from '@cuberoot/shared/platform';
+import { platformCourseLessonSection } from './platform-routes';
 
 export const COURSE_TOPICS = {
   beginner: { zh: '入门复原', en: 'Beginner solving' },
@@ -14,6 +16,7 @@ export const COURSE_TOPICS = {
 
 export type CourseTopic = keyof typeof COURSE_TOPICS;
 export const COURSE_TOPIC_IDS = Object.keys(COURSE_TOPICS) as CourseTopic[];
+export const COURSE_FILTER_THRESHOLD = 6;
 const PUZZLE_IDS = new Set([...ALL_EVENT_IDS, ...CSTIMER_SOLVABLE_IDS]);
 
 export function isCourseCatalogTag(tag: string): boolean {
@@ -64,10 +67,11 @@ export function courseCatalogDetails(course: PlatformEntity) {
 export function matchesCourseCatalog(
   course: PlatformEntity,
   details: ReturnType<typeof courseCatalogDetails>,
-  filters: { q: string; puzzle: string; category: string },
+  filters: { q: string; puzzle: string; category: string; trialOnly?: boolean },
 ): boolean {
   if (filters.puzzle && !details.puzzles.includes(filters.puzzle)) return false;
   if (filters.category && !details.topics.some(topic => topic === filters.category)) return false;
+  if (filters.trialOnly && !hasCourseTrial(course)) return false;
   const terms = filters.q.toLowerCase().trim().split(/\s+/).filter(Boolean);
   if (!terms.length) return true;
   const data = course.data ?? {};
@@ -78,6 +82,15 @@ export function matchesCourseCatalog(
     ...details.puzzles.flatMap(id => [eventDisplayName(id, true), eventDisplayName(id, false)]),
   ].join(' ').toLowerCase();
   return terms.every(term => searchable.includes(term));
+}
+
+/** Catalog metadata advertises previews; detail data confirms their public scope. */
+export function hasCourseTrial(course: PlatformEntity): boolean {
+  const ids = platformTrialLessonIds(course.data?.presentation);
+  const lessons = course.data?.lessons;
+  return Array.isArray(lessons)
+    ? lessons.map(commerceRecord).some(lesson => lesson.accessScope === 'public' && platformCourseLessonSection(lesson, ids) === 'trial')
+    : Boolean(ids?.length);
 }
 
 /** The public endpoint paginates at 60 courses. Filters and facets need the entire snapshot. */
@@ -92,6 +105,29 @@ export async function loadCourseCatalog(signal: AbortSignal): Promise<PlatformEn
     if (!batch.items.length || (batch.total === undefined ? batch.items.length < (batch.pageSize ?? 60) : count >= batch.total)) break;
   }
   return [...items.values()];
+}
+
+/** Legacy public catalog rows may omit trial IDs. Resolve only missing
+ * metadata from the existing public detail endpoint, without blocking the list. */
+export async function loadLegacyCatalogPreviews(items: PlatformEntity[], signal: AbortSignal): Promise<PlatformEntity[]> {
+  const missing = items.filter(item => platformTrialLessonIds(item.data?.presentation) === undefined && !Array.isArray(item.data?.lessons));
+  if (!missing.length) return items;
+  const resolved = new Map<string, string[]>();
+  for (let offset = 0; offset < missing.length && !signal.aborted; offset += 6) {
+    await Promise.allSettled(missing.slice(offset, offset + 6).map(async item => {
+      const result = await loadPlatformResource('courses', { params: { id: item.id }, signal });
+      const detail = result.items.find(course => course.id === item.id)?.data;
+      if (!Array.isArray(detail?.lessons)) return;
+      const trialIds = platformTrialLessonIds(detail.presentation);
+      resolved.set(item.id, detail.lessons.map(commerceRecord)
+        .flatMap(lesson => typeof lesson.id === 'string' && lesson.accessScope === 'public' && platformCourseLessonSection(lesson, trialIds) === 'trial' ? [lesson.id] : []));
+    }));
+  }
+  if (signal.aborted || !resolved.size) return items;
+  return items.map(item => {
+    const ids = resolved.get(item.id);
+    return ids ? { ...item, data: { ...item.data, presentation: { ...commerceRecord(item.data?.presentation), trialLessonIds: ids } } } : item;
+  });
 }
 
 export function courseLessonAccess(data: Record<string, unknown>) {

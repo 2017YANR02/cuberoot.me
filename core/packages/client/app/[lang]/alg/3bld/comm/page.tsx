@@ -69,7 +69,7 @@ function CommAlgRow({ entry, invalid }: { entry: AlgEntry; invalid?: string }): 
         type="button"
         className="alg-alg-copy-btn"
         onClick={() => copy(entry.alg)}
-        title={tr({ zh: '复制公式', en: 'Copy alg' })}
+        title={tr({ zh: '复制公式', en: 'Copy alg' })} aria-label={tr({ zh: '复制公式', en: 'Copy alg' })}
       >
         {copied ? <Check size={14} /> : <Copy size={14} className="alg-alg-copy-icon" />}
       </button>
@@ -352,7 +352,7 @@ export default function CommLibraryPage(): JSX.Element {
                   type="button"
                   className="alg-admin-edit-btn"
                   onClick={() => setEditorState({ mode: 'edit', existing: selectedCase })}
-                  title={tr({ zh: '编辑 case (admin)', en: 'Edit case (admin)' })}
+                  title={tr({ zh: '编辑 case (admin)', en: 'Edit case (admin)' })} aria-label={tr({ zh: '编辑 case (admin)', en: 'Edit case (admin)' })}
                 >
                   <Pencil size={12} />
                 </button>
@@ -443,7 +443,7 @@ export default function CommLibraryPage(): JSX.Element {
                     type="button"
                     className="alg-admin-edit-btn alg-admin-edit-btn-corner"
                     onClick={() => setEditorState({ mode: 'edit', existing: c })}
-                    title={tr({ zh: '编辑 case (admin)', en: 'Edit case (admin)' })}
+                    title={tr({ zh: '编辑 case (admin)', en: 'Edit case (admin)' })} aria-label={tr({ zh: '编辑 case (admin)', en: 'Edit case (admin)' })}
                   >
                     <Pencil size={12} />
                   </button>
