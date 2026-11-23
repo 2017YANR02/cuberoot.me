@@ -55,7 +55,14 @@ it('opens as searchable plaintext offline and renders saved values as text', asy
       }],
     },
   };
-  const backup = await buildVaultBackup('fixture', [item, info], savedAt, locale);
+  const contract: VaultBackupItem = { entry: { id: 'contract', title: '存证记录｜测试协议', notes: '', fields: [], category: 'other' } };
+  const licenses: VaultBackupItem = {
+    entry: {
+      id: 'licenses', title: '营业执照', category: 'business', fields: [], notes: 'First license note',
+      informationGroups: [{ id: 'second-license', name: 'Second company', fields: [], notes: 'Second license note' }],
+    },
+  };
+  const backup = await buildVaultBackup('fixture', [item, info, contract, licenses], savedAt, locale);
   const html = await backup.text();
   expect(html.startsWith(vaultBackupMarker('fixture'))).toBe(true);
   expect(html).toContain('secret-password-fixture');
@@ -81,6 +88,10 @@ it('opens as searchable plaintext offline and renders saved values as text', asy
     expect(accounts[1].textContent).toContain('secret-password-fixture');
     expect(accounts[1].textContent).toContain('Second account note');
     expect(document.querySelector('[data-entry-id="info"] .backup-account')).toBe(null);
+    expect(document.querySelector('[data-category="contract"] > summary')?.textContent).toBe('合同｜测试协议');
+    const licenseGroups = [...document.querySelectorAll('[data-entry-id="licenses"] .backup-information')];
+    expect(licenseGroups.map((group) => group.querySelector('dd')?.textContent)).toEqual(['First license note', 'Second license note']);
+    expect(licenseGroups.every((group) => group.querySelector('details') === null)).toBe(true);
     expect(document.querySelector('[data-entry-id="info"]')?.textContent).toContain('A separate note');
     expect(document.querySelector('[data-entry-id="info"] .backup-field-value')?.textContent)
       .toBe('test-identifier\nsecond line');

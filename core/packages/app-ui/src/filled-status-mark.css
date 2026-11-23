@@ -1,0 +1,21 @@
+.filled-status-mark {
+  display: inline-grid;
+  place-items: center;
+  inline-size: 20px;
+  block-size: 20px;
+  border-radius: 50%;
+  color: var(--classic-dark-background);
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.filled-status-mark[data-variant="success"] { background: #34c759; }
+.filled-status-mark[data-variant="error"] { background: #ff3b30; }
+.filled-status-mark[data-variant="unknown"] { background: #ffcc00; }
+
+.filled-status-mark[data-variant] > svg {
+  width: 13px;
+  height: 13px;
+  stroke-width: 2.6;
+}

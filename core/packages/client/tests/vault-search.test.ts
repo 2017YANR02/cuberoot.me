@@ -3,6 +3,7 @@ import { act, createElement, type ReactNode } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 import VaultPage from '@/app/[lang]/vault/page';
+import { copyClipboardText } from '@/lib/clipboard';
 import type { VaultEntry } from '@/lib/vault-crypto';
 import { splitVaultLicenses } from '@/lib/vault-license';
 
@@ -19,7 +20,7 @@ vi.mock('next/navigation', () => ({ useRouter: () => ({ push: vi.fn() }) }));
 vi.mock('@/lib/auth-store', () => ({ useAuthUser: () => user, authActions: { login: vi.fn() },
   useAuthStore: () => vi.fn() }));
 vi.mock('@/components/BackHome', () => ({ default: () => null }));
-vi.mock('@/hooks/useCopy', () => ({ useCopy: () => ({ copy: vi.fn(), copiedKey: null }) }));
+vi.mock('@/lib/clipboard', () => ({ copyClipboardText: vi.fn() }));
 vi.mock('@/hooks/usePinnedCountries', () => ({ usePinnedCountries: () => [[], vi.fn()] }));
 vi.mock('@/i18n/tr', () => ({ tr: ({ zh }: { zh: string }) => zh }));
 vi.mock('@/lib/api-base', () => ({ apiUrl: (path: string) => path, directApiUrl: (path: string) => path }));
@@ -64,6 +65,7 @@ const unlockAndEdit = async () => {
 beforeEach(async () => {
   (globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
   vi.useFakeTimers(); writes.length = 0; updates.length = 0;
+  vi.mocked(copyClipboardText).mockReset().mockResolvedValue(true);
   vi.stubGlobal('fetch', vi.fn((path: string, options?: RequestInit) => {
     if (path === '/v1/vault') return Promise.resolve(response({
       userId: 1, canManage: true, keyProfile: { publicKey: {}, encryptedPrivateKey: {} },
@@ -241,7 +243,6 @@ it('keeps the generic field editor without showing stored field names', async ()
   root = createRoot(host);
   await act(async () => root.render(createElement(VaultPage)));
   await unlockAndEdit();
-  await choose('筛选分类', '其他');
   const search = host.querySelector<HTMLInputElement>('[placeholder="搜索资料"]')!;
   await fill(search, '身份证号码');
   expect(host.querySelector('.vault-list')?.textContent).not.toContain('Single field');
@@ -257,20 +258,20 @@ it('keeps the generic field editor without showing stored field names', async ()
   const notesRow = host.querySelector('.vault-entry-notes')!;
   expect(notesRow.firstElementChild?.textContent).toBe('备注');
   expect(notesRow.querySelector('textarea')?.value).toBe(notes);
-  const remainingFieldId = host.querySelector<HTMLTextAreaElement>('textarea.vault-value-input')!.id;
+  const remainingFieldId = host.querySelector<HTMLTextAreaElement>('.vault-fields textarea.vault-value-input')!.id;
   await act(async () => host.querySelector<HTMLButtonElement>('[aria-label="删除第 2 项内容"]')!.click());
   expect(updates).toHaveLength(0);
-  expect(host.querySelectorAll('textarea.vault-value-input')).toHaveLength(1);
-  expect(host.querySelector<HTMLTextAreaElement>('textarea.vault-value-input')!.id).toBe(remainingFieldId);
+  expect(host.querySelectorAll('.vault-fields textarea.vault-value-input')).toHaveLength(1);
+  expect(host.querySelector<HTMLTextAreaElement>('.vault-fields textarea.vault-value-input')!.id).toBe(remainingFieldId);
   await clickText('保存');
   expect(JSON.parse(updates[0].ciphertext)).toMatchObject({ category: 'other', fields: [account], notes });
   await clickText('Test entry');
   await clickText('Single field');
-  expect(host.querySelectorAll('textarea.vault-value-input')).toHaveLength(1);
+  expect(host.querySelectorAll('.vault-fields button.vault-copy-value')).toHaveLength(1);
   expect(host.querySelector('[aria-label="删除第 2 项内容"]')).toBeNull();
 
   await toggleEditing();
-  await choose('筛选分类', '企业资料');
+  await choose('筛选分类', '企业');
   await clickText('新建');
   await fill(host.querySelector<HTMLInputElement>('.vault-title-input')!, 'New information item');
   await clickText('添加内容');
@@ -312,6 +313,58 @@ const clickText = async (label: string) => {
   await act(async () => button.click());
 };
 
+it('uses displayed tags as categories while keeping unclassified and untagged entries accessible', async () => {
+  writes.push(...[
+    { title: '存证记录｜测试协议', category: 'other' },
+    { title: '个人证件｜测试证件', category: 'personal' },
+    { title: '证件｜第二份证件', category: 'other' },
+    { title: '测试个人资料', category: 'personal' },
+    { title: '出行｜测试记录', category: 'other' },
+    { title: '未分类条目', category: 'other' },
+  ].map((entry) => ({
+    accesses: [{ userId: 1 }], ciphertext: JSON.stringify({ id: entry.title, ...entry, fields: [], notes: '' }),
+  })));
+  await act(async () => root.unmount());
+  root = createRoot(host);
+  await act(async () => root.render(createElement(VaultPage)));
+  await unlockAndEdit();
+  const list = host.querySelector('.vault-list')!;
+  expect(list.textContent).toContain('未分类条目');
+  expect(list.textContent).toContain('合同 测试协议');
+  await clickText('证件 测试证件');
+  expect(host.querySelector<HTMLInputElement>('[aria-label="标题标签"]')?.value).toBe('证件');
+  await act(async () => host.querySelector<HTMLButtonElement>('[aria-label="筛选分类"]')!.click());
+  const options = [...document.querySelectorAll<HTMLElement>('[role="option"]')];
+  expect(options.map((option) => option.textContent)).toEqual(['全部', '个人', '账号', '企业', '证件', '合同', '出行']);
+  await act(async () => options[4].click());
+  expect(list.textContent).toContain('证件 测试证件');
+  expect(list.textContent).toContain('证件 第二份证件');
+  expect(list.textContent).not.toContain('测试个人资料');
+  await choose('筛选分类', '个人');
+  expect(list.textContent).toContain('测试个人资料');
+  expect(list.textContent).not.toContain('证件 测试证件');
+  const search = host.querySelector<HTMLInputElement>('[placeholder="搜索资料"]')!;
+  await fill(search, '没有匹配的标题');
+  await choose('筛选分类', '出行');
+  await fill(search, '');
+  expect(list.textContent).toContain('出行 测试记录');
+  expect(list.textContent).not.toContain('证件 测试证件');
+  await choose('筛选分类', '合同');
+  expect(list.textContent).not.toContain('未分类条目');
+  await clickText('合同 测试协议');
+  await clickText('保存');
+  expect(JSON.parse(updates[0].ciphertext).title).toBe('合同｜测试协议');
+
+  await toggleEditing();
+  await clickText('新建');
+  expect(host.querySelector<HTMLInputElement>('[aria-label="标题标签"]')?.value).toBe('合同');
+  await clickText('保存');
+  expect(host.querySelector('[role="alert"]')?.textContent).toBe('请填写标题。');
+  await fill(host.querySelector<HTMLInputElement>('.vault-title-input')!, '新增协议');
+  await clickText('保存');
+  expect(list.textContent).toContain('合同 新增协议');
+});
+
 it('pairs legacy business licenses by the evidence in their notes and image names before saving', async () => {
   const firstCode = '1'.repeat(18);
   const secondCode = '2'.repeat(18);
@@ -333,11 +386,17 @@ it('pairs legacy business licenses by the evidence in their notes and image name
   root = createRoot(host);
   await act(async () => root.render(createElement(VaultPage)));
   await unlockAndEdit();
-  await clickText('企业资料 测试营业执照');
+  await clickText('企业 测试营业执照');
+  expect(host.querySelector<HTMLInputElement>('[aria-label="标题标签"]')?.value).toBe('企业');
   const groups = host.querySelectorAll<HTMLElement>('.vault-information-group');
   expect(groups).toHaveLength(2);
   expect([...groups].map((group) => group.querySelector('img')?.alt)).toEqual([firstImage.name, secondImage.name]);
-  expect([...groups].map((group) => group.querySelector<HTMLDetailsElement>('.vault-license-notes')?.open)).toEqual([false, false]);
+  for (const [index, notes] of [firstNotes, secondNotes].entries()) {
+    const row = groups[index].querySelector('.vault-field-row--notes')!;
+    expect(row.closest('details')).toBeNull();
+    expect(row.querySelector('label')?.textContent).toBe('备注');
+    expect(row.querySelector('textarea')?.value).toBe(notes);
+  }
   expect(updates).toHaveLength(0);
   await clickText('保存');
   expect(JSON.parse(updates[0].ciphertext)).toMatchObject({
@@ -345,6 +404,8 @@ it('pairs legacy business licenses by the evidence in their notes and image name
     informationGroups: [{ name: secondName, fields: [{ value: secondCode }], notes: secondNotes, images: [secondImage] }],
   });
   expect(editButton().getAttribute('aria-pressed')).toBe('false');
+  const readOnlyNotes = [...host.querySelectorAll('.vault-information-group button.vault-notes [id$="-copy-text"]')];
+  expect(readOnlyNotes.map((note) => note.textContent)).toEqual([firstNotes, secondNotes]);
 });
 
 it('adds and removes accounts without changing the other accounts or the platform item', async () => {
@@ -371,6 +432,7 @@ it('adds and removes accounts without changing the other accounts or the platfor
   await clickText('Old account');
   const accountGroup = (account: number) => host.querySelector<HTMLElement>(`#vault-account-${account}`)!;
   const statusPicker = (account: number) => accountGroup(account).querySelector<HTMLElement>('.vault-account-status')!;
+  const removeButton = (account: number) => accountGroup(account).querySelector<HTMLButtonElement>(`[aria-label="移除账号 ${account}"]`)!;
   expect(accountGroup(1).querySelector('.vault-account-heading')?.firstElementChild).toBe(statusPicker(1));
   expect(accountGroup(1).querySelector('.vault-account-heading textarea')?.id).toBe('vault-account-1-login');
   const statusTrigger = (account: number) => statusPicker(account).querySelector<HTMLButtonElement>('button[aria-expanded]')!;
@@ -382,7 +444,8 @@ it('adds and removes accounts without changing the other accounts or the platfor
     await act(async () => option.click());
   };
   expect(visibleStatuses(1)).toEqual(['untested']);
-  expect(statusPicker(1).querySelectorAll('button')).toHaveLength(1);
+  expect(statusPicker(1).querySelectorAll('button')).toHaveLength(2);
+  expect(removeButton(1).closest('[hidden]')).toBeNull();
   const pointer = (type: string, relatedTarget?: EventTarget) => Object.assign(
     new MouseEvent(type, { bubbles: true, relatedTarget }), { pointerType: 'mouse' },
   );
@@ -391,6 +454,8 @@ it('adds and removes accounts without changing the other accounts or the platfor
   const expandedActions = statusPicker(1).querySelectorAll('button');
   expect(expandedActions).toHaveLength(4);
   expect(expandedActions[3].getAttribute('aria-label')).toBe('移除账号 1');
+  await act(async () => removeButton(1).dispatchEvent(pointer('pointerdown')));
+  expect(statusTrigger(1).getAttribute('aria-expanded')).toBe('true');
   await act(async () => statusTrigger(1).dispatchEvent(pointer('pointerout', document.body)));
   expect(visibleStatuses(1)).toEqual(['untested']);
   expect(host.querySelector<HTMLTextAreaElement>('#vault-account-1-login')?.value).toBe('邮箱: example@example.com\n手机号: 5550100');
@@ -425,8 +490,8 @@ it('adds and removes accounts without changing the other accounts or the platfor
   await clickText('Old account');
   expect(visibleStatuses(1)).toEqual(['verified']);
   expect(visibleStatuses(2)).toEqual(['problem']);
-  expect(host.querySelector<HTMLTextAreaElement>('#vault-account-2-notes')?.value).toBe('Work account');
-  expect(host.querySelector<HTMLTextAreaElement>('#vault-account-1-password')?.value).toBe('fixture');
+  expect(host.querySelector('#vault-account-2-notes-copy-text')?.textContent).toBe('Work account');
+  expect(host.querySelector('#vault-account-1-password-copy-text')?.textContent).toBe('fixture');
   await toggleEditing();
   await chooseStatus(2, 'untested');
   await clickText('保存');
@@ -435,14 +500,20 @@ it('adds and removes accounts without changing the other accounts or the platfor
 
   const confirm = vi.spyOn(window, 'confirm').mockReturnValueOnce(false).mockReturnValue(true);
   const removeAccount = async (account: number) => {
-    if (statusTrigger(account).getAttribute('aria-expanded') === 'false') await act(async () => statusTrigger(account).click());
-    const button = statusPicker(account).querySelector<HTMLButtonElement>(`[aria-label="移除账号 ${account}"]`)!;
-    await act(async () => button.click());
+    await act(async () => removeButton(account).click());
   };
   await toggleEditing();
-  await removeAccount(1);
+  expect(statusTrigger(2).getAttribute('aria-expanded')).toBe('false');
+  expect(removeButton(2).closest('[hidden]')).toBeNull();
+  await removeAccount(2);
   expect(confirm).toHaveBeenCalled();
   expect(host.querySelectorAll('.vault-account')).toHaveLength(2);
+  await removeAccount(2);
+  expect(host.querySelectorAll('.vault-account')).toHaveLength(1);
+  expect(host.querySelector<HTMLTextAreaElement>('#vault-account-1-password')?.value).toBe('fixture');
+  expect(updates).toHaveLength(2);
+  await toggleEditing();
+  await toggleEditing();
   await removeAccount(1);
   expect(host.querySelectorAll('.vault-account')).toHaveLength(1);
   expect(host.querySelector<HTMLTextAreaElement>('#vault-account-1-login')?.value).toBe('work@example.com');
@@ -498,18 +569,32 @@ it('drags whole account groups and retains their order after saving', async () =
   await openPlatform();
   await toggleEditing();
   expect(host.querySelector('.sortable-card-drag-handle')).toBeNull();
-  expect(host.querySelector('[aria-label="复制账号"]')).not.toBeNull();
-  expect(host.querySelector('[aria-label="复制备注"]')).not.toBeNull();
   expect(host.querySelector<HTMLInputElement>('.vault-title-input')?.value).toBe('Platform');
   expect(host.querySelector('.vault-editor-title span.vault-title-tag')?.textContent).toBe('账号');
-  expect(host.querySelector('#vault-account-1-login')?.closest('[data-readonly]')).not.toBeNull();
-  expect(host.querySelector('#vault-account-1-password')?.closest('[data-readonly]')).not.toBeNull();
-  expect(host.querySelector('#vault-account-1-notes')?.closest('[data-readonly]')).not.toBeNull();
+  const firstAccount = host.querySelector('#vault-account-1')!;
+  const firstAccountValues = [...firstAccount.querySelectorAll<HTMLButtonElement>('.vault-copy-value')];
+  expect(firstAccountValues.map(({ id }) => id)).toEqual(['vault-account-1-login', 'vault-account-1-password', 'vault-account-1-notes']);
+  expect(firstAccount.querySelector('.vault-value-line .vault-icon-button')).toBeNull();
+  const check = (button: HTMLButtonElement) => button.querySelector('.vault-copy-feedback .filled-status-mark[data-variant="success"]');
+  expect(firstAccountValues.every((button) => !check(button))).toBe(true);
+  await act(async () => firstAccountValues[0].click());
+  expect(copyClipboardText).toHaveBeenLastCalledWith('first');
+  expect(check(firstAccountValues[0])).not.toBeNull();
+  expect(check(firstAccountValues[0])?.parentElement?.previousElementSibling?.textContent).toBe('first');
+  vi.mocked(copyClipboardText).mockResolvedValueOnce(false);
+  await act(async () => firstAccountValues[1].click());
+  expect(copyClipboardText).toHaveBeenLastCalledWith('fixture-first');
+  expect(check(firstAccountValues[1])).toBeNull();
+  await act(async () => firstAccountValues[2].click());
+  expect(copyClipboardText).toHaveBeenLastCalledWith('First notes');
+  expect(check(firstAccountValues[0])).toBeNull();
+  expect(check(firstAccountValues[2])).not.toBeNull();
+  await advance(1_200);
+  expect(check(firstAccountValues[2])).toBeNull();
   expect(host.querySelector('#vault-account-3 .vault-field-row--notes')).toBeNull();
   expect(host.querySelector<HTMLButtonElement>('.vault-account-status button')?.disabled).toBe(true);
   await toggleEditing();
-  expect(host.querySelector('[aria-label="复制账号"]')).toBeNull();
-  expect(host.querySelector('[aria-label="复制备注"]')).toBeNull();
+  expect(host.querySelector('.vault-copy-value')).toBeNull();
   expect(host.querySelector('#vault-account-3 .vault-field-row--notes')).not.toBeNull();
   expect(host.querySelector('.vault-account-heading [aria-label="拖动调整账号 3 顺序"]')).not.toBeNull();
   await act(async () => drag.end!({ active: { id: 'account:third' }, over: null }));

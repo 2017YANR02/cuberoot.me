@@ -2,9 +2,10 @@ import { hasVaultPrimaryAccount, orderVaultAccounts, vaultAccountStatusLabels } 
 import { bytesToBase64, type VaultAccount, type VaultEntry, type VaultImage, type VaultInformation } from './vault-crypto';
 import { vaultBackupReaderScript, vaultBackupReaderStyle } from './vault-backup-reader';
 import { isVaultLicense, splitVaultLicenses } from './vault-license';
+import { renameLegacyVaultContract, vaultEntryCategory } from './vault-category';
 
 export const VAULT_BACKUP_FORMAT = 3;
-export const VAULT_BACKUP_LAYOUT_REVISION = 4;
+export const VAULT_BACKUP_LAYOUT_REVISION = 7;
 export const VAULT_BACKUP_FILENAME = 'cuberoot-vault-local.html';
 
 export interface VaultBackupItem {
@@ -61,17 +62,17 @@ function renderImages(images: readonly VaultImage[] = []): string {
 
 function renderInformation(information: VaultInformation, name: string, labels: Labels, groupedLicense: boolean): string {
   const notes = renderFields({ fields: [], notes: information.notes }, labels);
+  const images = renderImages(information.images);
   return `<section class="backup-information">
 ${name ? `<h3>${html(name)}</h3>` : ''}
 ${information.fields.map(({ value }) => `<p class="backup-field-value">${html(value)}</p>`).join('\n')}
-${groupedLicense ? '' : notes}
-${renderImages(information.images)}
-${groupedLicense && information.notes ? `<details><summary>${html(labels.notes)}</summary><p class="backup-field-value">${html(information.notes)}</p></details>` : ''}
+${(groupedLicense ? [images, notes] : [notes, images]).join('\n')}
 </section>`;
 }
 
 function renderItem({ entry: original, trashedAt }: VaultBackupItem, labels: Labels): string {
-  const entry = trashedAt ? original : splitVaultLicenses(original);
+  const categorized = renameLegacyVaultContract(original);
+  const entry = trashedAt ? categorized : splitVaultLicenses(categorized);
   const primary: VaultAccount = {
     id: entry.id, name: entry.accountName ?? '', fields: entry.fields, notes: entry.notes,
     privateNotes: entry.privateNotes, accountStatus: entry.accountStatus,
@@ -95,7 +96,7 @@ ${renderFields(account, labels)}
 </section>`;
   });
   const title = entry.title || labels.untitled;
-  return `<details data-entry-id="${html(entry.id)}" data-category="${html(entry.category ?? 'other')}"${trashedAt ? ` data-trashed-at="${html(trashedAt)}"` : ''}>
+  return `<details data-entry-id="${html(entry.id)}" data-category="${html(vaultEntryCategory(entry))}"${trashedAt ? ` data-trashed-at="${html(trashedAt)}"` : ''}>
 <summary>${html(title)}${trashedAt ? ` · ${html(labels.trash)}` : ''}</summary>
 <div>
 ${entry.mergedInto ? `<p>${html(labels.mergedInto)} ${html(entry.mergedInto.title)}</p>` : ''}

@@ -30,6 +30,7 @@
 .vault-button,
 .vault-icon-button,
 .vault-list-item,
+.vault-copy-value,
 .vault-share-remove {
   appearance: none;
   border: 0;
@@ -67,7 +68,6 @@
 .vault-title-input,
 .vault-label-input,
 .vault-value-input,
-.vault-notes,
 .vault-unlock-input {
   border: 1px solid var(--border-default);
   border-radius: 8px;
@@ -80,7 +80,6 @@
 .vault-title-input:focus,
 .vault-label-input:focus,
 .vault-value-input:focus,
-.vault-notes:focus,
 .vault-unlock-input:focus { border-color: var(--accent); }
 .vault-input { width: 100%; padding: 9px 34px 9px 10px; }
 .vault-sidebar { position: sticky; top: 20px; align-self: start; }
@@ -139,9 +138,6 @@
 .vault-information-groups { display: grid; gap: 14px; margin-top: 20px; }
 .vault-information-heading { display: flex; align-items: center; gap: 8px; margin-bottom: 14px; }
 .vault-information-heading > .vault-input { min-width: 0; }
-.vault-information-group .vault-notes { min-height: 0; }
-.vault-license-notes { margin-top: 14px; }
-.vault-license-notes .vault-entry-notes { grid-template-columns: minmax(0, 1fr); margin-top: 8px; }
 .vault-account-heading { display: flex; align-items: center; gap: 8px; margin-bottom: 14px; }
 .vault-account-heading > .vault-value-line { flex: 1; min-inline-size: 0; align-items: center; }
 .vault-account-heading > .sortable-card-drag-handle { position: static; padding: 7px; flex: none; }
@@ -149,22 +145,6 @@
 .vault-account-status-options:not([hidden]) { display: inline-flex; gap: 2px; }
 .vault-account-status .vault-icon-button { padding: 6px; border-radius: 50%; }
 .vault-account-status .vault-icon-button:hover { background: transparent; }
-.vault-account-status-mark {
-  display: grid;
-  place-items: center;
-  width: 20px;
-  height: 20px;
-  border-radius: 50%;
-  background: var(--status-color);
-  color: var(--classic-dark-background);
-  font-size: 13px;
-  font-weight: 700;
-  line-height: 1;
-}
-.vault-account-status-mark svg { width: 13px; height: 13px; stroke-width: 2.6; }
-.vault-account-status [data-status="verified"] { --status-color: #34c759; }
-.vault-account-status [data-status="problem"] { --status-color: #ff3b30; }
-.vault-account-status [data-status="untested"] { --status-color: #ffcc00; }
 .vault-account-status .vault-icon-button:disabled { cursor: default; }
 .vault-account-fields { display: grid; gap: 14px; }
 .vault-account-fields > div { min-width: 0; }
@@ -179,7 +159,20 @@
 .vault-value-line { width: 100%; align-items: flex-start; }
 .vault-value-line > .vault-grow-textarea { flex: 1; }
 .vault-value-input { padding: 9px 10px; font-family: var(--font-mono); }
-.vault-account .vault-value-input { font-family: inherit; }
+.vault-copy-value {
+  flex: 1;
+  min-inline-size: 0;
+  border: 0;
+  background: transparent;
+  padding-inline: 0;
+  text-align: start;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.vault-copy-value:focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }
+.vault-copy-feedback { display: inline-block; margin-inline-start: .375em; vertical-align: middle; }
+.vault-account .vault-value-input,
+.vault-notes { font-family: inherit; }
 .vault-icon-button { display: inline-flex; padding: 7px; border-radius: 7px; color: var(--muted-foreground); }
 .vault-icon-button:hover:where(:not(.vault-icon-button--plain)) { background: color-mix(in srgb, var(--foreground) 7%, transparent); color: var(--foreground); }
 .vault-edit-toggle[aria-pressed="true"] { color: var(--accent); }
@@ -196,7 +189,6 @@
 }
 .vault-grow-textarea > [data-vault-text-measure] { visibility: hidden; }
 .vault-grow-textarea[data-readonly] > * { border: 0; background: transparent; padding-inline: 0; min-height: 0; }
-.vault-notes { min-height: 100px; padding: 12px; line-height: 1.55; }
 
 .vault-editor-fields { min-width: 0; margin: 0; padding: 0; border: 0; }
 .vault-toolbar { margin-bottom: 24px; }
