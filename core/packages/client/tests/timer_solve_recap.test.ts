@@ -137,7 +137,7 @@ describe('复原后自动复盘', () => {
     const detail = read(SOLVE_MODAL);
     const sharedDetail = read(DETAIL_MODAL);
     expect(src).toContain('isInputBlocked: () => autoRecapInputBlockedRef.current');
-    expect(src).toMatch(/onDisplayed=\{modalSolve\.autoRecap \? markAutoRecapDisplayed : undefined\}/);
+    expect(src).toMatch(/onDisplayed=\{modalSolve\.autoRecap && !modalSolve\.simulated \? markAutoRecapDisplayed : undefined\}/);
     expect(detail).toMatch(/onEntered=\{onDisplayed\}/);
     expect(detail).not.toContain('requestAnimationFrame');
     expect(sharedDetail.match(/window\.requestAnimationFrame\(/g)).toHaveLength(2);
@@ -148,7 +148,7 @@ describe('复原后自动复盘', () => {
     expect(onFull).toContain('autoRecapDismissGestureRef.current.reset()');
     expect(onFull).toContain('autoRecapInputBlockedRef.current = true');
     expect(onFull).toContain('autoRecap: true');
-    expect(src).toContain('const fullscreenRecapId = modalSolve?.autoRecap ? modalSolve.s.id : null');
+    expect(src).toContain('const fullscreenRecapId = modalSolve?.autoRecap && !modalSolve.simulated ? modalSolve.s.id : null');
     expect(src).toContain('}, [fullscreenRecapId, smartCubeSoloController])');
     expect(src).not.toContain('if (isDesktop || !recapId)');
   });

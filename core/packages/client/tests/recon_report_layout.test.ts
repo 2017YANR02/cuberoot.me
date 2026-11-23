@@ -312,7 +312,8 @@ describe('智能魔方那把不摆打乱图', () => {
   it('测试切到的确实是整屏那个分支', () => {
     expect(start).toBeGreaterThan(0);
     expect(end).toBeGreaterThan(start);
-    expect(src).toMatch(/report=\{hasMoves \? \([\s\S]{0,120}<ReconstructReport\b/);
+    expect(src).toContain('report={reportStatus || hasMoves || sourceVideo ? <>');
+    expect(src).toMatch(/\{hasMoves && \(\s*<ReconstructReport\b/);
     expect(fullPage).toMatch(/\{report\}/);
   });
 

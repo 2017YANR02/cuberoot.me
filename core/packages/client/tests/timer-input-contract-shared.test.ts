@@ -503,6 +503,7 @@ describe('Web migration consumes the shared contract', () => {
           competitionRef: { current: { enabled: blocked === 'competition' } },
           multiEnabledRef: { current: false },
           layoutEditingRef: { current: blocked === 'layout' },
+          simulationFile: undefined,
           trainingTimingModeRef: { current: () => mode },
           getSettings: () => ({ timingEnabled: blocked !== 'timing-disabled' }),
           attemptCanStartRef: { current: blocked !== 'unready' },
