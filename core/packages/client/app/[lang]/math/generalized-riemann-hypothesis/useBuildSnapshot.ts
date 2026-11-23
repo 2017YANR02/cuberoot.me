@@ -7,12 +7,15 @@ export const phases = ['main-build', 'rh-axioms', 'kernel-replay'] as const;
 export type Phase = typeof phases[number];
 const stages = [...phases, 'preparing', 'completed', 'failed'] as const;
 type Stage = typeof stages[number];
+const replayPhases = ['loading', 'checking', 'constructors', 'recursors', 'finished'] as const;
+type ReplayPhase = typeof replayPhases[number];
 
 interface Snapshot {
   stage: Stage;
   failedStage: Phase | null;
   completed: number;
   total: number;
+  replayProgress: { phase: ReplayPhase; done: number; total: number } | null;
   ratePerMin: number | null;
   etaSeconds: number | null;
   updatedAt: string;
@@ -25,6 +28,16 @@ interface Snapshot {
 
 function number(value: unknown) {
   return typeof value === 'number' && Number.isFinite(value) && value >= 0 ? value : null;
+}
+
+function parseReplay(value: unknown): Snapshot['replayProgress'] {
+  if (!value || typeof value !== 'object') return null;
+  const row = value as Record<string, unknown>;
+  const phase = replayPhases.find(item => item === row.phase);
+  const done = number(row.done), total = number(row.total);
+  if (!phase || done == null || total == null || !Number.isSafeInteger(done) || !Number.isSafeInteger(total)
+      || done > total || (phase === 'loading' ? total !== 0 : total === 0)) return null;
+  return { phase, done, total };
 }
 
 function parseSnapshot(value: unknown): Snapshot | null {
@@ -46,7 +59,8 @@ function parseSnapshot(value: unknown): Snapshot | null {
   if (!recent.length && typeof s.latestModule === 'string') recent.push({ name: s.latestModule, duration: null });
   return {
     stage: s.stage as Stage, failedStage: phases.find(key => key === s.failedStage) ?? null,
-    completed: done, total, updatedAt: s.updatedAt, recent, ratePerMin: number(s.ratePerMin),
+    completed: done, total, replayProgress: parseReplay(s.replayProgress),
+    updatedAt: s.updatedAt, recent, ratePerMin: number(s.ratePerMin),
     etaSeconds: number(s.etaSeconds), elapsedSeconds: number(s.elapsedSeconds),
     processFootprintGiB: number(s.processFootprintGiB), peakFootprintGiB: number(s.peakFootprintGiB),
     workerCount: number(s.workerCount),

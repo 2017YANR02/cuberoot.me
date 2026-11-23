@@ -29,7 +29,11 @@ export default function GrhPage() {
   const format = (n: number | null | undefined, digits = 0) => n == null
     ? '—' : n.toLocaleString(locale, { maximumFractionDigits: digits });
   const memory = (n: number | null | undefined) => n == null ? '—' : format(n, 1) + ' GiB';
-  const percent = data ? data.completed / data.total : null;
+  const replaying = data?.stage === 'kernel-replay' || data?.stage === 'completed' || data?.failedStage === 'kernel-replay';
+  const replay = data?.replayProgress;
+  const total = replaying ? replay?.total : data?.total;
+  const done = replaying ? replay?.done : data?.completed;
+  const percent = total && done != null ? Math.floor(done * 10000 / total) / 10000 : null;
   const updated = data && new Intl.DateTimeFormat(locale, {
     year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit', timeZoneName: 'short',
   }).format(new Date(data.updatedAt));
@@ -73,19 +77,23 @@ export default function GrhPage() {
 
       <section id="live" className={styles.progressPanel} data-site-surface="panel" aria-labelledby="grh-progress-title">
         <div className={styles.sectionHead}>
-          <h2 id="grh-progress-title">{t('编译进度', 'Compilation progress')}</h2>
+          <h2 id="grh-progress-title">{replaying ? t('内核重检进度', 'Kernel replay progress') : t('编译进度', 'Compilation progress')}</h2>
           <div className={styles.status} data-tone={tone} role="status">{status}</div>
         </div>
-        <div className={styles.counter}>
-          <strong>{format(data?.completed)}</strong>
-          <span>{t('个模块，共', 'of')} {format(data?.total)} {t('个', 'modules')}</span>
+        {replaying && !total ? <p>{replay?.phase === 'loading'
+          ? t('正在载入声明并统计总数。', 'Loading declarations and counting the total.')
+          : t('此轮尚无声明计数。', 'No declaration count has been reported for this run.')}</p> : <div className={styles.counter}>
+          <strong>{format(done)}</strong>
+          <span>{replaying ? t('条声明已核对，共', 'of') : t('个模块，共', 'of')} {format(total)} {replaying ? t('条', 'declarations checked') : t('个', 'modules')}</span>
           <b>{percentage}</b>
-        </div>
-        <progress className={styles.progress} max={data?.total ?? 1} value={data?.completed} aria-labelledby="grh-progress-title" />
+        </div>}
+        <progress className={styles.progress} max={total || 1} value={total ? done : undefined} aria-labelledby="grh-progress-title" />
         <dl className={styles.metrics}>
-          <div><dt>{t('近期编译速度', 'Recent compile rate')}</dt><dd>{showRate && data.ratePerMin != null ? format(data.ratePerMin, 1) + t(' 个/分', ' modules/min') : '—'}</dd></div>
-          <div><dt>{t('预计剩余编译时间', 'Est. compilation remaining')}</dt><dd>{showRate ? duration(data.etaSeconds, locale) : '—'}</dd></div>
-          <div><dt>{t('已运行时间', 'Run elapsed')}</dt><dd>{duration(data?.elapsedSeconds, locale)}</dd></div>
+          {!replaying && <>
+            <div><dt>{t('近期编译速度', 'Recent compile rate')}</dt><dd>{showRate && data.ratePerMin != null ? format(data.ratePerMin, 1) + t(' 个/分', ' modules/min') : '—'}</dd></div>
+            <div><dt>{t('预计剩余编译时间', 'Est. compilation remaining')}</dt><dd>{showRate ? duration(data.etaSeconds, locale) : '—'}</dd></div>
+          </>}
+          <div><dt>{t('验证总用时', 'Total run time')}</dt><dd>{duration(data?.elapsedSeconds, locale)}</dd></div>
         </dl>
         <p className={styles.updated}>{updated && data
           ? <>{t('最近更新', 'Last update')} <time dateTime={data.updatedAt}>{updated}</time></>
@@ -108,7 +116,7 @@ export default function GrhPage() {
                 <div><h3>{phaseLabels[phase]}</h3><p>{[
                   t('从源文件构建 Main 及其依赖。', 'Build Main and its imports from the source files.'),
                   t('匹配 mathlib 的 RiemannHypothesis，核对证明使用的公理。', 'Match mathlib’s RiemannHypothesis and check which axioms the proof uses.'),
-                  t('用 Lean 的 leanchecker 重新检查编译好的声明。', 'Recheck the compiled declarations with Lean’s leanchecker.'),
+                  t('在新的环境中，用 Lean 内核重新核对 Main 及其依赖的声明。', 'Replay declarations from Main and its imports in a fresh Lean kernel environment.'),
                 ][i]}</p></div>
                 <span className={styles.stageState}>{badge}</span>
               </li>;
