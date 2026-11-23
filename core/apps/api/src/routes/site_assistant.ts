@@ -10,6 +10,7 @@ import { getIp } from '../utils/analytics_helpers.js';
 import { resolveIpCountry } from '../utils/ip_geolocation.js';
 import { assistantOpenAICountrySupported } from '@cuberoot/shared/site-assistant-openai';
 import { answerSiteQuestion, assistantConfig } from '../utils/site_assistant.js';
+import { standaloneChampionWindow } from '../utils/site_assistant_champions.js';
 import { reserveAssistantQuestion } from '../utils/site_assistant_quota.js';
 import { assistantTimeoutMs, boundAssistantHistory, SITE_ASSISTANT_ARTIFACT_FORMAT, SITE_ASSISTANT_QUESTION_MAX_LENGTH, SITE_ASSISTANT_HISTORY_MESSAGE_MAX_LENGTH, SITE_ASSISTANT_MAX_IMAGES, SITE_ASSISTANT_IMAGE_BYTES, SITE_ASSISTANT_BODY_BYTES, type AssistantAnswer, type AssistantStreamEvent } from '@cuberoot/shared/site-assistant';
 import { AssistantFailure, assistantDeadline, assistantFailureCode, assistantStage } from '../utils/site_assistant_diagnostics.js';
@@ -115,9 +116,10 @@ export function createSiteAssistantRoutes(deps: { answer: typeof answerSiteQuest
           const input=body.data.input;
           if(input.images?.some(image=>!('attachmentId' in image)) || input.history.some(message=>message.images?.some(image=>!('attachmentId' in image))))return c.json({error:'invalid_image'},400);
           const config=deps.config(!!input.images?.length || input.history.some(message=>!!message.images?.length),input.provider);
-          if(!config)return c.json({error:'provider_unavailable'},503);
-          const country=input.provider==='openai'?await (deps.country ?? resolveIpCountry)(getIp(c)).catch(()=>null):undefined;
-          if(input.provider==='openai' && !assistantOpenAICountrySupported(country))return c.json({error:'provider_region_unavailable'},403);
+          if(!config && !standaloneChampionWindow({...input,timeZone:input.timeZone ?? 'UTC'}))return c.json({error:'provider_unavailable'},503);
+          const needsProviderRegion=config && input.provider==='openai';
+          const country=needsProviderRegion?await (deps.country ?? resolveIpCountry)(getIp(c)).catch(()=>null):undefined;
+          if(needsProviderRegion && !assistantOpenAICountrySupported(country))return c.json({error:'provider_region_unavailable'},403);
           // Verify attachment ownership before accepting a durable message.
           await resolveAssistantImages(user.uid,[...(input.images ?? []),...input.history.flatMap(message=>message.images ?? [])],deps.readAttachment ?? readAssistantAttachment);
           const {question,lang,thinking,provider,timeZone='UTC',images,references}=input;
@@ -129,6 +131,32 @@ export function createSiteAssistantRoutes(deps: { answer: typeof answerSiteQuest
         await inbox.control(user.uid,conversation.data,action);
         void worker.kick();
       } else if(action!==conversation.data)return c.notFound();
+      if(c.req.method==='GET' && c.req.header('Accept')?.includes('text/event-stream')) {
+        if(!await inbox.owns(user.uid,conversation.data))return c.json({error:'not_found'},404);
+        c.header('X-Accel-Buffering','no');
+        const uid=user.uid,id=conversation.data;
+        // The durable owner-scoped snapshot is authoritative across replicas.
+        return streamSSE(c,async stream=>{
+          let dirty=true,closed=false,wake: (()=>void)|undefined;
+          const notify=()=>{dirty=true;wake?.();};
+          const unsubscribe=inbox.subscribe(uid,id,notify);
+          stream.onAbort(()=>{closed=true;wake?.();});
+          const expires=Date.now()+90_000;
+          try {
+            while(!closed && Date.now()<expires) {
+              if(dirty) {dirty=false;await stream.writeSSE({data:'changed'});}
+              if(!dirty && !closed) {
+                await new Promise<void>(resolve=>{
+                  const timer=setTimeout(resolve,10_000);
+                  wake=()=>{clearTimeout(timer);resolve();};
+                });
+                wake=undefined;
+                if(!dirty && !closed)await stream.write(': keepalive\n\n');
+              }
+            }
+          } finally { unsubscribe(); }
+        });
+      }
       const after=c.req.query('after');
       if(c.req.method==='GET' && after && /^\d+$/.test(after) && await inbox.revision(user.uid,conversation.data)===Number(after))return c.body(null,304);
       const snapshot=await inbox.snapshot(user.uid,conversation.data);

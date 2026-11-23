@@ -1,15 +1,31 @@
+import { EventEmitter } from 'node:events';
 import { randomUUID } from 'node:crypto';
 import type { AssistantAnswer, AssistantDeliveryMode, AssistantDurableInput, AssistantProgress, AssistantQueueSnapshot, AssistantQueuedMessage } from '@cuberoot/shared/site-assistant';
-import { query, withTransaction, type QueryRunner } from '../db/connection.js';
+import { sql, query, withTransaction, type QueryRunner } from '../db/connection.js';
 import type { ToolResult } from './site_assistant_tools.js';
 
 export type Checkpoint = { at: number; result: ToolResult };
 type Conversation = {lease_active:boolean|null;revision:string;id:string;user_id:number;paused:boolean;lease:string|null;lease_until:Date|null;active_id:string|null};
 type Message = {id:string;conversation_id:string;sequence:string;target_id:string|null;mode:AssistantDeliveryMode;state:AssistantQueuedMessage['state'];payload:AssistantDurableInput;country:string|null;answer:AssistantAnswer|null;progress:AssistantProgress[];checkpoints:Record<string,Checkpoint>;error:AssistantQueuedMessage['error']|null;request_id:string|null;attempts:number;created_at:Date;updated_at:Date};
-export type AssistantClaim = { conversationId:string; uid:number; lease:string; message:Message };
+export type AssistantClaim = { conversationId:string; uid:number; lease:string; poolStartMs?:number; message:Message };
 export type QueueTransaction = typeof withTransaction;
 export class AssistantQueueConflict extends Error {}
-export function assistantQueueStore(run:QueryRunner=query, transaction:QueueTransaction=withTransaction) {
+const queueChannel='cuberoot_assistant_queue_revision';
+const notifyRevision=" RETURNING pg_notify('"+queueChannel+"',user_id::text||'/'||id::text)";
+
+type ListenForRevisions=(notify:(key:string)=>void,ready:()=>void)=>Promise<unknown>;
+export function assistantQueueStore(run:QueryRunner=query, transaction:QueueTransaction=withTransaction,
+  listen:ListenForRevisions|undefined=run===query ? (notify,ready)=>sql.listen(queueChannel,notify,ready) : undefined) {
+  // One LISTEN connection per server. NOTIFY is delivered only after COMMIT;
+  // ownership stays with the authenticated snapshot, never the notification.
+  let listening:Promise<unknown>|undefined;
+  const changes=new EventEmitter();
+  function changed(uid:number,id:string) { changes.emit(uid+'/'+id); }
+  const mutate=async<T>(uid:number,id:string,write:()=>Promise<T>)=>{
+    const result=await write();
+    changed(uid,id);
+    return result;
+  };
   const locked=async(tx:QueryRunner,uid:number,id:string)=>{
     const row=(await tx<Conversation>('SELECT *,lease_until>NOW() AS lease_active FROM site_assistant_conversations WHERE id=? AND user_id=? FOR UPDATE',[id,uid]))[0];
     if(!row)throw new AssistantQueueConflict('not_found');
@@ -21,9 +37,20 @@ export function assistantQueueStore(run:QueryRunner=query, transaction:QueueTran
     return row;
   };
   return {
+    subscribe(uid:number,id:string,listener:()=>void) {
+      const key=uid+'/'+id;
+      changes.on(key,listener);
+      if(listen && !listening) {
+        listening=listen(key=>{if(/^\d+\/[0-9a-f-]{36}$/i.test(key))changes.emit(key);},()=>{
+          // Catch commits between the initial snapshot and LISTEN, or during reconnect.
+          for(const key of changes.eventNames())changes.emit(key);
+        }).catch(()=>{listening=undefined;});
+      }
+      return ()=>{changes.off(key,listener);};
+    },
     async enqueue(uid:number,conversationId:string,id:string,mode:AssistantDeliveryMode,payload:AssistantDurableInput,country?:string) {
       payload=JSON.parse(JSON.stringify(payload));
-      return transaction(async tx=>{
+      return mutate(uid,conversationId,()=>transaction(async tx=>{
         await tx('INSERT INTO site_assistant_conversations(id,user_id) VALUES (?,?) ON CONFLICT DO NOTHING',[conversationId,uid]);
         const conversation=await locked(tx,uid,conversationId);
         const existing=(await tx<Message>('SELECT * FROM site_assistant_messages WHERE id=?',[id]))[0];
@@ -42,9 +69,13 @@ export function assistantQueueStore(run:QueryRunner=query, transaction:QueueTran
           if(updates[0]?.payload.provider!==payload.provider)throw new AssistantQueueConflict('provider_conflict');
         }
         await tx(`INSERT INTO site_assistant_messages(id,conversation_id,target_id,mode,state,payload,country) VALUES (?,?,?,?,?,?::text::jsonb,?)`,[id,conversationId,target ?? null,mode,'queued',JSON.stringify(payload),country ?? null]);
-        await tx('UPDATE site_assistant_conversations SET revision=revision+1,updated_at=NOW() WHERE id=?',[conversationId]);
+        await tx('UPDATE site_assistant_conversations SET revision=revision+1,updated_at=NOW() WHERE id=?'+notifyRevision,[conversationId]);
         return id;
-      });
+      }));
+    },
+    async owns(uid:number,id:string) {
+      const rows=await run('SELECT 1 FROM site_assistant_conversations WHERE id=? AND user_id=?',[id,uid]);
+      return rows.length>0;
     },
     async revision(uid:number,id:string) {
       const rows=await run<{revision:string}>('SELECT CASE WHEN active_id IS NOT NULL AND (lease_until IS NULL OR lease_until<=NOW()) THEN NULL ELSE revision END AS revision FROM site_assistant_conversations WHERE id=? AND user_id=?',[id,uid]);
@@ -57,7 +88,7 @@ export function assistantQueueStore(run:QueryRunner=query, transaction:QueueTran
         const c=rows[0];if(!c)return;
         if(c.paused && c.active_id && !c.lease_active) {
           await tx("UPDATE site_assistant_messages SET state='stopped',updated_at=NOW() WHERE id=? AND state='running'",[c.active_id]);
-          await tx('UPDATE site_assistant_conversations SET revision=revision+1,lease=NULL,lease_until=NULL,active_id=NULL WHERE id=?',[id]);
+          await tx('UPDATE site_assistant_conversations SET revision=revision+1,lease=NULL,lease_until=NULL,active_id=NULL WHERE id=?'+notifyRevision,[id]);
           c.active_id=null;c.lease=null;c.lease_until=null;c.revision=String(Number(c.revision)+1);
         }
         const messages=await tx<Message>("SELECT id,sequence,target_id,mode,state,payload-'history' AS payload,answer,progress,error,request_id,attempts,created_at,updated_at FROM site_assistant_messages WHERE conversation_id=? ORDER BY sequence",[id]);
@@ -65,34 +96,51 @@ export function assistantQueueStore(run:QueryRunner=query, transaction:QueueTran
       });
     },
     async control(uid:number,id:string,action:'stop'|'resume') {
-      await transaction(async tx=>{
+      await mutate(uid,id,()=>transaction(async tx=>{
         const c=await locked(tx,uid,id);
         if(action==='resume' && c.active_id && c.lease_active)throw new AssistantQueueConflict('still_stopping');
-        await tx('UPDATE site_assistant_conversations SET revision=revision+1,paused=?,updated_at=NOW() WHERE id=?',[action==='stop',id]);
+        await tx('UPDATE site_assistant_conversations SET revision=revision+1,paused=?,updated_at=NOW() WHERE id=?'+notifyRevision,[action==='stop',id]);
         if(action==='resume') {
           // Resume only the most recent unfinished task; never replay completed answers.
           await tx(`UPDATE site_assistant_messages SET state='queued',error=NULL,attempts=0,updated_at=NOW() WHERE id=(SELECT id FROM site_assistant_messages WHERE conversation_id=? AND target_id IS NULL AND state IN ('stopped','error') ORDER BY sequence DESC LIMIT 1)`,[id]);
-          await tx('UPDATE site_assistant_conversations SET revision=revision+1,lease=NULL,lease_until=NULL,active_id=NULL WHERE id=?',[id]);
+          await tx('UPDATE site_assistant_conversations SET revision=revision+1,lease=NULL,lease_until=NULL,active_id=NULL WHERE id=?'+notifyRevision,[id]);
         } else if(!c.lease_active) {
           await tx("UPDATE site_assistant_messages SET state='stopped',updated_at=NOW() WHERE id=? AND state='running'",[c.active_id]);
-          await tx('UPDATE site_assistant_conversations SET revision=revision+1,lease=NULL,lease_until=NULL,active_id=NULL WHERE id=?',[id]);
+          await tx('UPDATE site_assistant_conversations SET revision=revision+1,lease=NULL,lease_until=NULL,active_id=NULL WHERE id=?'+notifyRevision,[id]);
         }
-      });
+      }));
     },
     async claim():Promise<AssistantClaim|undefined> {
-      return transaction(async tx=>{
-        const c=(await tx<Conversation>(`SELECT * FROM site_assistant_conversations c WHERE NOT paused AND (lease_until IS NULL OR lease_until<=NOW()) AND EXISTS(SELECT 1 FROM site_assistant_messages m WHERE m.conversation_id=c.id AND m.target_id IS NULL AND m.state IN ('queued','running')) ORDER BY updated_at FOR UPDATE SKIP LOCKED LIMIT 1`))[0];
-        if(!c)return;
-        const m=(await tx<Message>(`SELECT * FROM site_assistant_messages WHERE conversation_id=? AND target_id IS NULL AND state IN ('queued','running') ORDER BY sequence LIMIT 1 FOR UPDATE`,[c.id]))[0];
-        if(m.attempts>=3) {
-          await tx("UPDATE site_assistant_messages SET state='error',error='unavailable',updated_at=NOW() WHERE id=?",[m.id]);
-          await tx('UPDATE site_assistant_conversations SET revision=revision+1,paused=TRUE,lease=NULL,lease_until=NULL,active_id=NULL WHERE id=?',[c.id]);return;
+      for(;;){
+        const requested=performance.now();
+        const claim=await transaction(async tx=>{
+          const poolStartMs=Math.round(performance.now()-requested);
+          const c=(await tx<Conversation>(`SELECT * FROM site_assistant_conversations c WHERE NOT paused AND (lease_until IS NULL OR lease_until<=NOW()) AND EXISTS(SELECT 1 FROM site_assistant_messages m WHERE m.conversation_id=c.id AND m.target_id IS NULL AND m.state IN ('queued','running')) ORDER BY updated_at FOR UPDATE SKIP LOCKED LIMIT 1`))[0];
+          if(!c)return;
+          const m=(await tx<Message>(`SELECT * FROM site_assistant_messages WHERE conversation_id=? AND target_id IS NULL AND state IN ('queued','running') ORDER BY sequence LIMIT 1 FOR UPDATE`,[c.id]))[0];
+          if(m.attempts>=3) {
+            await tx("UPDATE site_assistant_messages SET state='error',error='unavailable',updated_at=NOW() WHERE id=?",[m.id]);
+            await tx('UPDATE site_assistant_conversations SET revision=revision+1,paused=TRUE,lease=NULL,lease_until=NULL,active_id=NULL WHERE id=?'+notifyRevision,[c.id]);
+            return {exhausted:c} as const;
+          }
+          const lease=randomUUID();
+          await tx("UPDATE site_assistant_conversations SET revision=revision+1,lease=?,lease_until=NOW()+INTERVAL '45 seconds',active_id=?,updated_at=NOW() WHERE id=?"+notifyRevision,[lease,m.id,c.id]);
+          const [claimed]=await tx<{updated_at:Date}>("UPDATE site_assistant_messages SET state='running',attempts=attempts+1,error=NULL,answer=NULL,updated_at=NOW() WHERE id=? RETURNING updated_at",[m.id]);
+          return {conversationId:c.id,uid:Number(c.user_id),lease,poolStartMs,message:{...m,updated_at:claimed.updated_at,state:'running' as const,attempts:m.attempts+1}};
+        });
+        if(!claim)return;
+        if('exhausted' in claim && claim.exhausted){
+          changed(claim.exhausted.user_id,claim.exhausted.id);
+          continue;
         }
-        const lease=randomUUID();
-        await tx("UPDATE site_assistant_conversations SET revision=revision+1,lease=?,lease_until=NOW()+INTERVAL '45 seconds',active_id=?,updated_at=NOW() WHERE id=?",[lease,m.id,c.id]);
-        await tx("UPDATE site_assistant_messages SET state='running',attempts=attempts+1,error=NULL,answer=NULL,updated_at=NOW() WHERE id=?",[m.id]);
-        return {conversationId:c.id,uid:Number(c.user_id),lease,message:{...m,state:'running',attempts:m.attempts+1}};
-      });
+        changed(claim.uid,claim.conversationId);
+        return claim;
+      }
+    },
+    async heartbeat(claim:AssistantClaim) {
+      const rows=await run<{paused:boolean}>("UPDATE site_assistant_conversations SET lease_until=NOW()+INTERVAL '45 seconds' WHERE id=? AND user_id=? AND active_id=? AND lease=? AND lease_until>NOW() RETURNING paused",[claim.conversationId,claim.uid,claim.message.id,claim.lease]);
+      if (!rows.length) throw new AssistantQueueConflict('lease_lost');
+      return rows[0].paused;
     },
     async inspect(claim:AssistantClaim) {
       return transaction(async tx=>{
@@ -103,31 +151,35 @@ export function assistantQueueStore(run:QueryRunner=query, transaction:QueueTran
       });
     },
     async abandon(claim:AssistantClaim) {
-      await transaction(async tx=>{await owned(tx,claim);await tx('UPDATE site_assistant_conversations SET revision=revision+1,lease_until=NOW() WHERE id=?',[claim.conversationId]);});
+      await transaction(async tx=>{await owned(tx,claim);await tx('UPDATE site_assistant_conversations SET revision=revision+1,lease_until=NOW() WHERE id=?'+notifyRevision,[claim.conversationId]);});
     },
     async acknowledge(claim:AssistantClaim,revision:number) {
-      await transaction(async tx=>{await owned(tx,claim);await tx("UPDATE site_assistant_messages SET state='applied',updated_at=NOW() WHERE target_id=? AND sequence<=? AND state='queued'",[claim.message.id,revision]);await tx('UPDATE site_assistant_conversations SET revision=revision+1 WHERE id=?',[claim.conversationId]);});
+      await mutate(claim.uid,claim.conversationId,()=>transaction(async tx=>{await owned(tx,claim);await tx("UPDATE site_assistant_messages SET state='applied',updated_at=NOW() WHERE target_id=? AND sequence<=? AND state='queued'",[claim.message.id,revision]);await tx('UPDATE site_assistant_conversations SET revision=revision+1 WHERE id=?',[claim.conversationId]);}));
     },
     async update(claim:AssistantClaim,patch:{answer?:AssistantAnswer;progress?:AssistantProgress[];checkpoints?:Record<string,Checkpoint>;requestId?:string}) {
-      await transaction(async tx=>{
+      await mutate(claim.uid,claim.conversationId,()=>transaction(async tx=>{
         await owned(tx,claim);
         const fields:string[]=[],values:unknown[]=[];
         for(const key of ['answer','progress','checkpoints'] as const)if(patch[key]!==undefined){fields.push(`${key}=?::text::jsonb`);values.push(JSON.stringify(patch[key]));}
         if(patch.requestId){fields.push('request_id=?');values.push(patch.requestId);}
         if(fields.length)await tx(`UPDATE site_assistant_messages SET ${fields.join(',')},updated_at=NOW() WHERE id=?`,[...values,claim.message.id]);
         if(fields.length)await tx('UPDATE site_assistant_conversations SET revision=revision+1 WHERE id=?',[claim.conversationId]);
-      });
+      }));
     },
     async finish(claim:AssistantClaim,revision:number,result?:AssistantAnswer,error?:AssistantQueuedMessage['error']) {
-      return transaction(async tx=>{
+      return mutate(claim.uid,claim.conversationId,()=>transaction(async tx=>{
         const c=await owned(tx,claim);
         const latest=(await tx<{sequence:string}>('SELECT sequence FROM site_assistant_messages WHERE id=? OR target_id=? ORDER BY sequence DESC LIMIT 1',[claim.message.id,claim.message.id]))[0];
         if(!c.paused && Number(latest.sequence)!==revision)return 'steered' as const;
         const state=c.paused?'stopped':result?'completed':'error';
         await tx('UPDATE site_assistant_messages SET state=?,answer=COALESCE(?::text::jsonb,answer),error=?,updated_at=NOW() WHERE id=?',[state,c.paused?null:result?JSON.stringify(result):null,state==='stopped'?null:error ?? null,claim.message.id]);
-        await tx('UPDATE site_assistant_conversations SET revision=revision+1,paused=?,lease=NULL,lease_until=NULL,active_id=NULL,updated_at=NOW() WHERE id=?',[c.paused || state==='error',c.id]);
+        // A failed reply is terminal for that message; eligible follow-ups
+        // may still run. Pause the conversation for an explicit stop or
+        // when the account can no longer use the assistant.
+        const pause=c.paused || state==='error' && (error==='account_forbidden' || error==='wca_link_required' || error==='login_required');
+        await tx('UPDATE site_assistant_conversations SET revision=revision+1,paused=?,lease=NULL,lease_until=NULL,active_id=NULL,updated_at=NOW() WHERE id=?'+notifyRevision,[pause,c.id]);
         return state;
-      });
+      }));
     },
     async history(claim:AssistantClaim) {
       return run<Message & {updates:AssistantDurableInput[]}>("SELECT m.*,COALESCE((SELECT jsonb_agg(u.payload ORDER BY u.sequence) FROM site_assistant_messages u WHERE u.target_id=m.id),'[]'::jsonb) AS updates FROM site_assistant_messages m WHERE m.conversation_id=? AND m.sequence<? AND m.target_id IS NULL AND m.state='completed' ORDER BY m.sequence DESC LIMIT 5",[claim.conversationId,claim.message.sequence]);

@@ -1,12 +1,12 @@
 import { randomUUID } from 'node:crypto';
-import { readFile } from 'node:fs/promises';
+import { readFile, writeFile } from 'node:fs/promises';
 import postgres from 'postgres';
 import { beforeAll, afterAll, describe, it, expect, vi } from 'vitest';
 import { assistantQueueStore, type QueueTransaction } from '../src/utils/site_assistant_queue.js';
 import { transactionQuery, type QueryRunner } from '../src/db/connection.js';
 import { createAssistantQueueWorker } from '../src/utils/site_assistant_worker.js';
 import { checkpointAssistantTool, assistantExecutionBoundary } from '../src/utils/site_assistant_execution.js';
-import { assistantStage } from '../src/utils/site_assistant_diagnostics.js';
+import { assistantStage, AssistantFailure } from '../src/utils/site_assistant_diagnostics.js';
 import { createSiteAssistantRoutes } from '../src/routes/site_assistant.js';
 import type { AssistantDurableInput } from '@cuberoot/shared/site-assistant';
 const enabled=process.env.ASSISTANT_ANALYSIS_PG_TEST==='1' && process.env.DB_HOST==='127.0.0.1' && process.env.DB_NAME==='assistant_monitor_test';
@@ -65,6 +65,27 @@ describe.skipIf(!enabled)('durable assistant inbox and checkpoints',()=>{
     await store.control(7,conversation,'resume');
     const resumed=(await store.claim())!;expect(resumed.message.id).toBe(id);expect(resumed.message.checkpoints.key.result).toEqual(result);
     await store.control(7,conversation,'stop');await store.finish(resumed,(await store.inspect(resumed)).revision);
+  });
+  it('finishes a failed model reply without pausing the next message',async()=>{
+    const conversation=randomUUID(),first=randomUUID(),next=randomUUID();
+    await store.enqueue(7,conversation,first,'queue',input('failed reply'));
+    await store.enqueue(7,conversation,next,'queue',input('next question'));
+    const answer=vi.fn(async(question:string)=>{
+      if(question==='failed reply')throw new AssistantFailure('timeout');
+      return {answer:'next answer',sources:[]};
+    });
+    const worker=createAssistantQueueWorker({store,config,reserve,answer,authorize:async()=> '2099TEST01'});
+    await worker.kick();
+    await vi.waitFor(async()=>{
+      const snapshot=await store.snapshot(7,conversation);
+      expect(snapshot?.paused).toBe(false);
+      expect(snapshot?.messages).toMatchObject([
+        {id:first,state:'error',error:'timeout',attempts:1},
+        {id:next,state:'completed',answer:{answer:'next answer'},attempts:1},
+      ]);
+    });
+    await worker.idle();
+    expect(answer.mock.calls.map(([question])=>question)).toEqual(['failed reply','next question']);
   });
   it('recovers an expired worker with a new lease and rejects its late checkpoint and answer',async()=>{
     const conversation=randomUUID(),id=randomUUID();await store.enqueue(7,conversation,id,'queue',input());
@@ -139,9 +160,14 @@ describe.skipIf(!enabled)('durable assistant inbox and checkpoints',()=>{
   it('pauses after repeated crashes and rechecks access before a restored model call',async()=>{
     const conversation=randomUUID(),id=randomUUID();await store.enqueue(7,conversation,id,'queue',input());
     for(let attempt=0;attempt<3;attempt++){const claim=(await store.claim())!;await store.abandon(claim);}
-    expect(await store.claim()).toBeUndefined();expect((await store.snapshot(7,conversation))?.paused).toBe(true);
+    const independent=randomUUID(),independentId=randomUUID();
+    await store.enqueue(8,independent,independentId,'queue',input('independent task'));
+    const claimed=(await store.claim())!;
+    expect(claimed.message.id).toBe(independentId);
+    await store.finish(claimed,Number(claimed.message.sequence),{answer:'done',sources:[]});
+    expect((await store.snapshot(7,conversation))?.paused).toBe(true);
     await store.control(7,conversation,'resume');
-    const answer=vi.fn(),worker=createAssistantQueueWorker({store,config,reserve,answer,authorize:async()=>{throw new Error('revoked');}});
+    const answer=vi.fn(),worker=createAssistantQueueWorker({store,config,reserve,answer,authorize:async()=>{throw new AssistantFailure('wca_link_required');}});
     await worker.kick();await vi.waitFor(async()=>expect((await store.snapshot(7,conversation))?.messages[0].state).toBe('error'));
     expect(answer).not.toHaveBeenCalled();expect((await store.snapshot(7,conversation))?.paused).toBe(true);await worker.idle();
   });
@@ -186,6 +212,102 @@ describe.skipIf(!enabled)('durable assistant inbox and checkpoints',()=>{
     const changed=await (await app.request(`/site-assistant/conversations/${conversation}?after=${snapshot.revision}`)).json();
     expect(changed.revision).toBeGreaterThan(snapshot.revision);expect(changed.paused).toBe(true);
   });
+  it('streams owner-scoped committed changes and recovers a disconnected session by revision',async()=>{
+    const cid=randomUUID();
+    let uid=7;
+    const app=createSiteAssistantRoutes({answer:vi.fn(),config,now:Date.now,reserve,authenticate:async()=>({uid,wcaId:'2099TEST01'}),queue:{store,worker:{kick:vi.fn()}}});
+    await store.enqueue(uid,cid,randomUUID(),'queue',input());
+    const url='/site-assistant/conversations/'+cid;
+    const revision=(await store.snapshot(uid,cid))!.revision;
+    uid=8;
+    expect((await app.request(url,{headers:{Accept:'text/event-stream'}})).status).toBe(404);
+    uid=7;
+    const controller=new AbortController();
+    const response=await app.request(url,{headers:{Accept:'text/event-stream'},signal:controller.signal});
+    expect(response.headers.get('content-type')).toContain('text/event-stream');
+    const reader=response.body!.getReader();
+    try {
+      expect(new TextDecoder().decode((await reader.read()).value)).toContain('data: changed');
+      await store.control(uid,cid,'stop');
+      expect(new TextDecoder().decode((await reader.read()).value)).toContain('data: changed');
+    } finally {controller.abort();await reader.cancel();}
+    const after=await (await app.request(url+'?after='+revision)).json();
+    expect(after.paused).toBe(true);expect(after.revision).toBeGreaterThan(revision);
+  });
+  it('wakes an SSE subscriber when an independent worker commits in PostgreSQL',async()=>{
+    const cid=randomUUID(),ready=gate(),committed=gate();
+    const observer=assistantQueueStore(run,tx,(notify,onReady)=>db.listen('cuberoot_assistant_queue_revision',notify,()=>{onReady();ready.resolve();}));
+    let armed=false;
+    const unsubscribe=observer.subscribe(7,cid,()=>{if(armed)committed.resolve();});
+    try {
+      await ready.promise;armed=true;
+      await store.enqueue(7,cid,randomUUID(),'queue',input());
+      await committed.promise;
+      expect((await observer.snapshot(7,cid))!.messages).toHaveLength(1);
+    } finally {unsubscribe();await store.control(7,cid,'stop');}
+  });
+  it.skipIf(!process.env.ASSISTANT_FOURTHS_FIXTURE)('measures independent conversations with the published fourth-place snapshot',async()=>{
+    const {answerSiteQuestion}=await import('../src/utils/site_assistant.js');
+    const {fourthsUrl}=await import('../src/utils/site_assistant_public_queries.js');
+    const published=JSON.parse(await readFile(process.env.ASSISTANT_FOURTHS_FIXTURE!,'utf8'));
+    const names=(published.rows as [number,string][]).slice(0,3).map(([count,name])=>[String(count),name.match(/\[([^\]]+)\]/)![1]]);
+    let reads=0,unexpectedRequests=0;
+    const liveFetch=globalThis.fetch;
+    vi.stubGlobal('fetch',async(url:RequestInfo|URL,init?:RequestInit)=>{
+      if(String(url)!==fourthsUrl){unexpectedRequests++;throw Error('unexpected remote call');}
+      reads++;
+      return process.env.ASSISTANT_PUBLIC_CDN_LIVE==='1' ? liveFetch(url,init) : Response.json(published);
+    });
+    const report=[];
+    try {
+      await run('INSERT INTO app_users SELECT generate_series(100,149)');
+      for(const size of [10,25,50]){
+        const wait:number[]=[],elapsed:number[]=[],acquire:number[]=[],first:number[]=[];
+        const started=new Map<string,number>(),seen=new Set<string>(),results=new Map<string,boolean>();
+        const txMeasured:QueueTransaction=async fn=>{
+          const start=performance.now();
+          return tx(q=>{acquire.push(performance.now()-start);return fn(q);});
+        };
+        const inbox=assistantQueueStore(run,txMeasured);
+        let completed=0;
+        const worker=createAssistantQueueWorker({store:{...inbox,
+          async update(claim,patch){await inbox.update(claim,patch);if(patch.progress?.length&&!seen.has(claim.message.id)){
+            seen.add(claim.message.id);first.push(performance.now()-started.get(claim.message.id)!);
+          }},
+          async finish(claim,revision,answer,error){
+            const state=await inbox.finish(claim,revision,answer,error);
+            wait.push(+new Date(claim.message.updated_at)-+new Date(claim.message.created_at));
+            elapsed.push(performance.now()-started.get(claim.message.id)!);
+            if(state==='completed')completed++;
+            results.set(claim.message.id,state==='completed'&&names.every(pair=>pair.every(v=>answer?.answer.includes(v)))&&!!answer?.answer.includes('有效成绩')&&answer.sources[0]?.id==='stat:most_4th_places');
+            return state;
+          }},answer:answerSiteQuestion,config,reserve,authorize:async()=> '2099TEST01'});
+        const app=createSiteAssistantRoutes({answer:answerSiteQuestion,config,now:Date.now,reserve,
+          authenticate:async(req)=>({uid:Number(req.req.header('x-test-user')),wcaId:'2099TEST01'}),queue:{store:inbox,worker}});
+        const stop=worker.start();
+        const beforeReads=reads,beforeOther=unexpectedRequests;
+        try {
+          const codes=await Promise.all(Array.from({length:size},async(_,i)=>{
+            const id=randomUUID(),cid=randomUUID();started.set(id,performance.now());
+            const body=JSON.stringify({id,mode:'queue',input:{...input('职业生涯在比赛中取第四名次数最多的前三名'),lang:'zh'}});
+            const response=await app.request('/site-assistant/conversations/'+cid+'/messages',{method:'POST',headers:{'x-test-user':String(100+i)},body});
+            return response.status;
+          }));
+          const expires=performance.now()+20_000;
+          while(results.size<size && performance.now()<expires)await new Promise(resolve=>setTimeout(resolve,15));
+          // Missing or errored replies stay in the denominator and tail latency.
+          for(const [id,start] of started)if(!results.has(id))elapsed.push(performance.now()-start);
+          const p95=(values:number[])=>Math.ceil([...values].sort((a,b)=>a-b)[Math.ceil(values.length*.95)-1]);
+          report.push({sessions:size,accepted:codes.filter(code=>code===202).length,http429:codes.filter(code=>code===429).length,completed,timedOut:size-results.size,correct:[...results.values()].filter(Boolean).length,claimP95Ms:p95(wait),firstProgressP95Ms:p95(first),completeP95Ms:p95(elapsed),poolTransactionStartP95Ms:p95(acquire),sourceReads:reads-beforeReads,otherRequests:unexpectedRequests-beforeOther});
+          if(process.env.ASSISTANT_BENCH_REPORT)await writeFile(process.env.ASSISTANT_BENCH_REPORT,JSON.stringify(report,null,2));
+          expect(new Set(codes)).toEqual(new Set([202]));
+          expect(completed).toBe(size);
+          expect([...results.values()].every(Boolean)).toBe(true);
+        } finally {await stop();}
+      }
+      expect(reads).toBe(1);expect(unexpectedRequests).toBe(0);
+    } finally {vi.unstubAllGlobals();}
+  },70_000);
   it('cascades private content on account deletion and reaps abandoned stops',async()=>{
     const conversation=randomUUID(),id=randomUUID();await store.enqueue(9,conversation,id,'queue',input('private'));
     const claim=(await store.claim())!;await store.control(9,conversation,'stop');

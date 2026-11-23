@@ -4,6 +4,7 @@ import { query } from '../db/connection.js';
 import { assistantAnswerHistory, assistantTimeoutMs, boundAssistantHistory, type AssistantAnswer, type AssistantProgress, type AssistantStreamEvent } from '@cuberoot/shared/site-assistant';
 import { BANNED_WCA_IDS } from '@cuberoot/shared/admin';
 import { answerSiteQuestion, assistantConfig } from './site_assistant.js';
+import { runRecentChampionQuery, standaloneChampionWindow } from './site_assistant_champions.js';
 import { assistantQueueStore, type AssistantClaim, type Checkpoint } from './site_assistant_queue.js';
 import { AssistantSteered, markAssistantToolReused, withAssistantExecution } from './site_assistant_execution.js';
 import { withAssistantProgress } from './site_assistant_progress.js';
@@ -26,13 +27,14 @@ export function createAssistantQueueWorker(deps:{
     const lifetime=new AbortController();controllers.add(lifetime);
     let poll:ReturnType<typeof setTimeout>|undefined,done=false;
     const watch=async()=>{
-      try { if((await deps.store.inspect(claim)).paused)lifetime.abort('user_cancel'); }
+      try { if(await deps.store.heartbeat(claim))lifetime.abort('user_cancel'); }
       catch { lifetime.abort('lease_lost'); }
       if(!done && !lifetime.signal.aborted)poll=setTimeout(()=>void watch(),750);
     };
     poll=setTimeout(()=>void watch(),750);
     let revision=Number(claim.message.sequence);
     let progress:AssistantProgress[]=claim.message.progress.map(p=>p.state==='running'?{...p,state:'error'}:p);
+    let progressWrite=Promise.resolve();
     const checkpoints:Record<string,Checkpoint>={...claim.message.checkpoints};
     try {
       for(let pass=0;pass<10;pass++) {
@@ -60,8 +62,9 @@ export function createAssistantQueueWorker(deps:{
         const parentId=historyRows.at(-1)?.request_id;
         const priorContext=parentId?await restoreAssistantContext(query,claim.uid,claim.conversationId,parentId).catch(()=>undefined):undefined;
         const config=deps.config(!!savedImages.length || history.some(m=>!!m.images?.length),input.provider);
-        if(!config)throw new AssistantFailure('provider_unavailable');
-        if(input.provider==='openai') {
+        const championWindow=!config && inputs.length===1 ? standaloneChampionWindow({...input,history}) : undefined;
+        if(!config && !championWindow)throw new AssistantFailure('provider_unavailable');
+        if(config && input.provider==='openai') {
           if(!assistantOpenAICountrySupported(claim.message.country))throw new AssistantFailure('provider_region_unavailable');
           config.visitorCountry=claim.message.country!;
         }
@@ -72,21 +75,25 @@ export function createAssistantQueueWorker(deps:{
         signal.throwIfAborted();
         if(!(await deps.reserve()).allowed)throw new AssistantFailure('daily_limit');
         const started=performance.now();
-        const monitor=await deps.monitor?.({uid:claim.uid,startedAt:started,question,lang:input.lang,model:config.model,streaming:true,imageCount:images.length,historyCount:history.length,conversationId:claim.conversationId,parentId:parentId ?? undefined,thinking:input.thinking});
+        const monitor=await deps.monitor?.({uid:claim.uid,startedAt:started,poolStartMs:claim.poolStartMs,receivedAt:new Date(claim.message.created_at).getTime(),claimedAt:new Date(claim.message.updated_at).getTime(),question,lang:input.lang,model:config?.model ?? 'wca-results',streaming:true,imageCount:images.length,historyCount:history.length,conversationId:claim.conversationId,parentId:parentId ?? undefined,thinking:input.thinking});
         if(monitor)await deps.store.update(claim,{requestId:monitor.id});
         let lastDraftWrite=0;
         const emit=async(event:AssistantStreamEvent)=>{
           signal.throwIfAborted();
           if(event.type==='progress') {
             monitor?.progress?.();
-            progress=[...progress.filter(p=>p.id!==event.progress.id),event.progress].slice(-128);
-            await deps.store.update(claim,{progress});
+            const snapshot=[...progress.filter(p=>p.id!==event.progress.id),event.progress].sort((a,b)=>a.id-b.id).slice(-128);
+            progress=snapshot;
+            // Parallel tools can finish in any order. Commit each snapshot in event order.
+            const write=progressWrite.then(()=>deps.store.update(claim,{progress:snapshot}));
+            progressWrite=write.catch(()=>{});
+            await write;
           } else if(event.type==='answer') {
             monitor?.text?.(event.answer);
-            if(performance.now()-lastDraftWrite<250 && event.answer)return;
+            if(performance.now()-lastDraftWrite<250 && event.answer && !event.artifacts?.length)return;
             lastDraftWrite=performance.now();
             // Keep the latest draft, but commit a final answer only under the inbox fence.
-            await deps.store.update(claim,{answer:{answer:event.answer,sources:event.sources}});
+            await deps.store.update(claim,{answer:{answer:event.answer,sources:event.sources,...(event.artifacts ? {artifacts:event.artifacts} : {})}});
           }
         };
         const boundary=async()=>{
@@ -117,7 +124,11 @@ export function createAssistantQueueWorker(deps:{
               }
             }
             return result;
-          }},()=>withAssistantProgress(emit,signal,started,()=>deps.answer(question,input.lang,config,signal,undefined,resolvedHistory,wcaId,emit,input.timeZone,images,input.thinking,{},priorContext,references),Math.max(0,...progress.map(p=>p.id))));
+          }},()=>withAssistantProgress(emit,signal,started,()=>{
+            if(championWindow)return runRecentChampionQuery(championWindow,input.lang,signal,emit);
+            if(!config)throw new AssistantFailure('provider_unavailable');
+            return deps.answer(question,input.lang,config,signal,undefined,resolvedHistory,wcaId,emit,input.timeZone,images,input.thinking,{},priorContext,references);
+          },Math.max(0,...progress.map(p=>p.id))));
           monitor?.ready?.();
           const answer:AssistantAnswer=await (monitor?monitor.run(run):run());
           signal.throwIfAborted();
@@ -138,7 +149,13 @@ export function createAssistantQueueWorker(deps:{
       if(lifetime.signal.reason==='shutdown')await deps.store.abandon(claim).catch(()=>{});
       else {
         const latest=await deps.store.inspect(claim).catch(()=>undefined);
-        if(latest)await deps.store.finish(claim,latest.revision,undefined,assistantFailureCode(error)).catch(()=>{});
+        if(latest){
+          if(error instanceof AssistantFailure && error.code==='model_rate_limited' && error.retryAfterMs && !latest.paused) {
+            progress.push({id:1+Math.max(0,...progress.map(p=>p.id)),phase:'model',state:'error',elapsedMs:Date.now()-new Date(claim.message.created_at).getTime(),retryAt:Date.now()+error.retryAfterMs});
+            await deps.store.update(claim,{progress:progress.slice(-128)}).catch(()=>{});
+          }
+          await deps.store.finish(claim,latest.revision,undefined,assistantFailureCode(error)).catch(()=>{});
+        }
       }
     } finally {done=true;clearTimeout(poll);controllers.delete(lifetime);}
   }
