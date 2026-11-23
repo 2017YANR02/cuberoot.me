@@ -6,6 +6,7 @@ import { beforeEach, expect, it, vi } from 'vitest';
 import type { PlatformResource } from '@/lib/platform-types';
 import { readFileSync } from 'node:fs';
 import { chromium } from '@playwright/test';
+import { NuqsTestingAdapter } from 'nuqs/adapters/testing';
 
 const mocks = vi.hoisted(() => ({
   stage: vi.fn(),
@@ -36,6 +37,10 @@ import { PlatformHomepageAdmin } from '@/components/platform/PlatformHomepageAdm
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 
+function landingWithQueryState(searchParams?: string) {
+  return createElement(NuqsTestingAdapter, { hasMemory: true, searchParams, children: createElement(PlatformLanding) });
+}
+
 beforeEach(() => {
   mocks.user = { uid: 1, name: '学员' };
   mocks.stage.mockReset().mockImplementation(async (_signal, stage) => stage ?? null);
@@ -50,7 +55,7 @@ beforeEach(() => {
 it('prerenders the actual guest homepage without waiting for JavaScript or network data', () => {
   mocks.user = null;
   const host = document.createElement('div');
-  host.innerHTML = renderToString(createElement(PlatformPage));
+  host.innerHTML = renderToString(createElement(NuqsTestingAdapter, { children: createElement(PlatformPage) }));
   expect(host.querySelector('.platform-home-hero h1')?.textContent).toContain('从第一次复原');
   const action = host.querySelector('.platform-home-hero .platform-button-primary');
   expect(action?.textContent).toContain('免费试听第一课');
@@ -65,7 +70,7 @@ it('prerenders the actual guest homepage without waiting for JavaScript or netwo
 
 it('uses the resume-shaped skeleton and leaves the learning path rendered while personal data is pending', () => {
   const host = document.createElement('div');
-  host.innerHTML = renderToString(createElement(PlatformLanding));
+  host.innerHTML = renderToString(landingWithQueryState());
   expect(host.querySelector('.platform-home-resume-skeleton')).not.toBeNull();
   expect(host.querySelectorAll('.path-grid li')).toHaveLength(6);
   expect(host.querySelector('.platform-home-hero')).toBeNull();
@@ -86,7 +91,7 @@ it.each([false, true])('offers a direct first free lesson to a new user (signed 
   mocks.load.mockImplementation(async (resource: PlatformResource) => ({ items: resource === 'courses' ? [course] : [] }));
   const host = document.createElement('div'), root = createRoot(host);
   try {
-    await act(async () => root.render(createElement(PlatformLanding)));
+    await act(async () => root.render(landingWithQueryState()));
     const action = host.querySelector('.platform-home-hero .platform-button-primary');
     expect(action?.textContent).toContain('免费试听第一课');
     expect(action?.getAttribute('href')).toBe('/platform/courses/trial-course/sections/core?lesson=trial-lesson');
@@ -99,7 +104,7 @@ it('shows the self-assessed path states for the matching account, without derivi
   const host = document.createElement('div'), root = createRoot(host);
   document.body.append(host);
   try {
-    await act(async () => root.render(createElement(PlatformLanding)));
+    await act(async () => root.render(landingWithQueryState()));
     expect(host.querySelector('.path-grid [aria-current="step"]')?.textContent).toContain('稳定 30 秒');
     expect(host.querySelector('.path-grid')?.getAttribute('data-layout')).toBe('expanded');
     expect(mocks.stage).toHaveBeenCalledWith(expect.anything(), 'sub30', true);
@@ -121,7 +126,7 @@ it('shows the self-assessed path states for the matching account, without derivi
     await act(async () => host.querySelector<HTMLButtonElement>('.path-change')!.click());
     expect(document.activeElement).toBe(buttons[0]);
     mocks.user = { uid: 2, name: '另一学员' };
-    await act(async () => root.render(createElement(PlatformLanding)));
+    await act(async () => root.render(landingWithQueryState()));
     expect(host.querySelector('.path-grid [aria-current="step"]')).toBeNull();
   } finally { await act(async () => root.unmount()); host.remove(); localStorage.removeItem(key); }
 });
@@ -136,7 +141,7 @@ it.each(['trial', 'two-trials', 'finished', 'enrolled', 'unlocked', 'mixed', 'un
   });
   const host = document.createElement('div'), root = createRoot(host);
   try {
-    await act(async () => root.render(createElement(PlatformLanding)));
+    await act(async () => root.render(landingWithQueryState()));
     expect(host.querySelector('.platform-home-resume')).not.toBeNull();
     const hint = host.querySelector('.platform-home-trial-note a');
     if (scenario === 'trial' || scenario === 'two-trials' || scenario === 'finished') {
@@ -160,7 +165,7 @@ it.each([false, true])('replaces the current course in recommendations only if a
   });
   const host = document.createElement('div'), root = createRoot(host);
   try {
-    await act(async () => root.render(createElement(PlatformLanding)));
+    await act(async () => root.render(landingWithQueryState()));
     const carousel = host.querySelector('.platform-home-carousel');
     if (hasOtherCourse) {
       expect(carousel?.textContent).toContain('其他课程');
@@ -176,7 +181,7 @@ it.each(['public', 'entitled'])('only resumes a non-enrolled trial lesson with p
   mocks.load.mockImplementation(async (resource: PlatformResource) => ({ items: resource === 'courses' ? [course] : resource === 'account-progress' ? [{ id: 'trial-lesson', title: '试听课时', data: { courseId: 'trial-course', lessonId: 'trial-lesson', positionSeconds: 60, progressBps: 2500, status: 'in_progress' } }] : [] }));
   const host = document.createElement('div'), root = createRoot(host);
   try {
-    await act(async () => root.render(createElement(PlatformLanding)));
+    await act(async () => root.render(landingWithQueryState()));
     const resume = host.querySelector('.platform-home-resume');
     if (accessScope === 'public') {
       expect(resume?.getAttribute('href')).toBe('/platform/courses/trial-course/learn/trial-lesson');
@@ -200,7 +205,7 @@ it.runIf(process.env.PLATFORM_BROWSER_LAYOUT === '1')('fits guest, learner and e
       mocks.slides.mockResolvedValue(state === 'empty' ? [] : [{ id: 'course1', type: 'course', section: 'featured', titleZh: '三阶入门课程', titleEn: 'Course', summaryZh: '学习独立复原的步骤', coverUrl: null }]);
       const host = document.createElement('div'), root = createRoot(host);
       try {
-        await act(async () => root.render(createElement(PlatformLanding)));
+        await act(async () => root.render(landingWithQueryState()));
         expect(Boolean(host.querySelector('.platform-home-resume'))).toBe(state === 'learner');
         const page = await browser.newPage();
         try {
@@ -247,7 +252,7 @@ it('uses a single primary catalog link and hides empty teacher and recommendatio
   const host = document.createElement('div');
   const root = createRoot(host);
   try {
-    await act(async () => root.render(createElement(PlatformLanding)));
+    await act(async () => root.render(landingWithQueryState()));
     expect(host.querySelector('.platform-instructors')).toBeNull();
     expect(host.querySelector('.platform-instructor-card')).toBeNull();
     expect(host.querySelector('.platform-home-resume')).toBeNull();
@@ -269,7 +274,7 @@ it('shows independent course progress, current lesson position and the authorize
   const host = document.createElement('div');
   const root = createRoot(host);
   try {
-    await act(async () => root.render(createElement(PlatformLanding)));
+    await act(async () => root.render(landingWithQueryState()));
     const learning = host.querySelector('.platform-home-resume');
     expect(learning?.getAttribute('href')).toBe('/platform/courses/course-1/learn/lesson-1');
     expect(learning?.textContent).toContain('测试课程');
@@ -299,7 +304,7 @@ it.each(['unlisted', 'archived', 'draft', undefined])('never recommends a course
     const host = document.createElement('div');
     const root = createRoot(host);
     try {
-      await act(async () => root.render(createElement(PlatformLanding)));
+      await act(async () => root.render(landingWithQueryState()));
       const learning = host.querySelector('.platform-home-resume') ?? host.querySelector('.platform-home-hero .platform-button-primary');
       const href = includePublic ? '/platform/courses/public' : '/platform/courses';
       expect(learning?.getAttribute('href')).toBe(href);
@@ -320,7 +325,7 @@ it('verifies course visibility against the public catalog when the enrollment re
   const host = document.createElement('div');
   const root = createRoot(host);
   try {
-    await act(async () => root.render(createElement(PlatformLanding)));
+    await act(async () => root.render(landingWithQueryState()));
     const learning = host.querySelector('.platform-home-resume');
     expect(learning?.getAttribute('href')).toBe('/platform/courses/public');
     expect(learning?.textContent).toContain('公开课');
@@ -337,7 +342,7 @@ it('displays the real teacher name, specialty and photo from the directory respo
   const host = document.createElement('div');
   const root = createRoot(host);
   try {
-    await act(async () => root.render(createElement(PlatformLanding)));
+    await act(async () => root.render(landingWithQueryState()));
     const card = host.querySelector('.platform-instructor-card');
     expect(card?.getAttribute('href')).toBe('/platform/teachers/42');
     expect(card?.textContent).toContain('测试讲师');
@@ -353,7 +358,7 @@ it('rotates real mixed-content recommendations and removes navigation when only 
   mocks.slides.mockResolvedValue([course, school]);
   const host = document.createElement('div'), root = createRoot(host);
   try {
-    await act(async () => root.render(createElement(PlatformLanding)));
+    await act(async () => root.render(landingWithQueryState()));
     const carousel = host.querySelector('.platform-home-carousel')!;
     expect(carousel.querySelector('h2')?.textContent).toBe(course.titleZh);
     expect(carousel.querySelector('a')?.getAttribute('href')).toBe('/platform/courses/course1');
@@ -365,7 +370,7 @@ it('rotates real mixed-content recommendations and removes navigation when only 
   mocks.slides.mockResolvedValue([course]);
   const singleHost = document.createElement('div'), singleRoot = createRoot(singleHost);
   try {
-    await act(async () => singleRoot.render(createElement(PlatformLanding)));
+    await act(async () => singleRoot.render(landingWithQueryState()));
     expect(singleHost.querySelector('.platform-home-carousel h2')?.textContent).toBe(course.titleZh);
     expect(singleHost.querySelector('.platform-carousel-controls')).toBeNull();
     expect(singleHost.querySelector('.platform-carousel-arrows')).toBeNull();
@@ -399,7 +404,7 @@ it('restores the account stage on a fresh device and keeps a failed change retry
   mocks.stage.mockResolvedValueOnce('sub10').mockRejectedValueOnce(new Error('offline')).mockResolvedValueOnce('sub20');
   const host = document.createElement('div'), root = createRoot(host);
   try {
-    await act(async () => root.render(createElement(PlatformLanding)));
+    await act(async () => root.render(landingWithQueryState()));
     expect(host.querySelector('.path-grid')?.getAttribute('data-layout')).toBe('expanded');
     expect(host.querySelector('.path-stage:disabled')?.textContent).toContain('稳定 10 秒');
     await act(async () => host.querySelector<HTMLButtonElement>('.path-change')!.click());
@@ -413,7 +418,6 @@ it('restores the account stage on a fresh device and keeps a failed change retry
 });
 
 it.each([360, 375, 390, 430].flatMap(width => [0, 2, 5].map(index => ({ width, index }))))('restores the mobile grid and handles rapid selections without animation at $width px (stage $index)', async ({ width, index }) => {
-  const { NuqsTestingAdapter } = await import('nuqs/adapters/testing');
   const media = new EventTarget();
   vi.stubGlobal('matchMedia', (query: string) => Object.assign(media, { matches: query.includes('reduced-motion') || (query.includes('700px') && width < 700) }));
   const animate = vi.fn();
@@ -423,7 +427,7 @@ it.each([360, 375, 390, 430].flatMap(width => [0, 2, 5].map(index => ({ width, i
   const host = document.createElement('div'), root = createRoot(host);
   document.body.append(host);
   try {
-    const renderAt = (searchParams: string) => act(async () => root.render(createElement(NuqsTestingAdapter, { hasMemory: true, searchParams, children: createElement(PlatformLanding) })));
+    const renderAt = (searchParams: string) => act(async () => root.render(landingWithQueryState(searchParams)));
     await renderAt('?view=home');
     const grid = host.querySelector<HTMLElement>('.path-grid')!;
     expect(grid.dataset.layout).toBe('compact');
@@ -464,7 +468,7 @@ it('shows the local timer suggestion and saves it only after a click', async () 
   localStorage.setItem('cuberoot-timer.v2', JSON.stringify({version: 2, byEvent: {'333': solves}}));
   const host = document.createElement('div'), root = createRoot(host);
   try {
-    await act(async () => root.render(createElement(PlatformLanding)));
+    await act(async () => root.render(landingWithQueryState()));
     const recommended = host.querySelector<HTMLButtonElement>('[data-recommended] .path-stage');
     expect(recommended?.textContent).toContain('稳定 30 秒');
     expect(recommended?.textContent).toContain('计时推荐');

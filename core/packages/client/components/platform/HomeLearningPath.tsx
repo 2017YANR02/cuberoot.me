@@ -147,7 +147,7 @@ export function HomeLearningPath({ owner }: { owner: string }) {
 
   async function change(index: number, opening: boolean, persist = true) {
     const grid = gridRef.current;
-    const onMobile = window.matchMedia('(width < 700px)').matches;
+    const onMobile = window.matchMedia?.('(width < 700px)').matches ?? false;
     if (!grid || transition.current || (!onMobile && !mobileSelection && sync === 'saving') || opening === expanded) return;
     const controller = new AbortController();
     transition.current = controller;
