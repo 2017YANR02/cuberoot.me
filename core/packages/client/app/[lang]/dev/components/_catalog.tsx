@@ -1515,6 +1515,10 @@ export const CATALOG: ComponentEntry[] = [
     category: 'input',
     zh: '模拟器与复盘共用的背面小窗按钮，支持显示入口或常驻开关。',
     en: 'Shared simulator and reconstruction back-view button, supporting an open action or a persistent toggle.',
+    note: {
+      zh: '通过同模块的 useBackViewMotion 让小窗在按钮位置与展开位置之间过渡。',
+      en: 'Use useBackViewMotion from the same module to animate the preview to and from the button.',
+    },
   },
   {
     name: 'VideoImageTools',
@@ -2517,8 +2521,8 @@ export const CATALOG: ComponentEntry[] = [
     name: 'Tooltip',
     import: "import { Tooltip } from '@/components/Tooltip';",
     category: 'display',
-    zh: '按钮或链接的短提示：悬停和焦点显示，Escape 关闭；Portal 避免玻璃嵌套失效，自动钳制视口，复用全站材质。',
-    en: 'Short button/link labels with hover, focus, Escape, viewport clamping and portaled site glass material.',
+    zh: '按钮或链接的短提示。悬停半秒或聚焦时显示，按 Esc 关闭。',
+    en: 'Short labels for buttons and links. Hover for half a second or focus to show. Press Esc to dismiss.',
     Demo: () => <Tooltip content={tr({ zh: '听写', en: 'Dictate' })}>{(tip) => <button type="button" {...tip}>{tr({ zh: '悬停或聚焦', en: 'Hover or focus' })}</button>}</Tooltip>,
   },
   {
