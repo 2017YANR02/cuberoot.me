@@ -2,8 +2,7 @@
 
 /**
  * 全局会员到期提醒:登录会员「即将到期 / 已过期」时,在站内任意页弹一条提醒条,
- * 一键跳 /membership 续费(?renew=1 自动打开续费弹窗)。可关闭 —— 按当前到期日记忆,
- * 续费后到期日变化自然复位(且续费后不再「即将到期」也就不再弹)。
+ * 点击关闭后在当前浏览器按会员账号隐藏。点击续费只隐藏当前到期日的提醒。
  * /membership 页自身不显示(那里有更完整的状态块)。
  */
 import { useEffect, useState } from 'react';
@@ -16,30 +15,47 @@ import { membershipExpiry } from '@/lib/membership-api';
 import { persistItem } from '@/lib/safe-storage';
 import './membership-reminder.css';
 
-const DISMISS_KEY = 'cuberoot_mem_reminder_dismissed';
+const DISMISSED_FOR_EXPIRY_KEY = 'cuberoot_mem_reminder_dismissed';
+const DISMISSED_BY_MEMBER_PREFIX = 'cuberoot_mem_reminder_dismissed:';
 
 export default function MembershipReminder() {
   const { membership } = useMembership();
   const pathname = usePathname();
-  // localStorage 在 effect 里读,避免 SSR / 首帧 hydration 不一致(首帧统一渲染 null)。
-  const [dismissedFor, setDismissedFor] = useState<string | null>(null);
-  const [ready, setReady] = useState(false);
+  const memberId = membership?.wcaId;
+  const dismissKey = memberId ? DISMISSED_BY_MEMBER_PREFIX + memberId : null;
+  const [dismissal, setDismissal] = useState<{
+    key: string;
+    dismissed: boolean;
+    dismissedForExpiry: string | null;
+  } | null>(null);
 
   useEffect(() => {
-    try { setDismissedFor(localStorage.getItem(DISMISS_KEY)); } catch { /* ignore */ }
-    setReady(true);
-  }, []);
+    if (!dismissKey) return;
+    let dismissed = false;
+    let dismissedForExpiry: string | null = null;
+    try {
+      dismissed = localStorage.getItem(dismissKey) === '1';
+      dismissedForExpiry = localStorage.getItem(DISMISSED_FOR_EXPIRY_KEY);
+    } catch { /* ignore */ }
+    setDismissal({ key: dismissKey, dismissed, dismissedForExpiry });
+  }, [dismissKey]);
 
-  if (!ready || !membership || pathname?.includes('/membership')) return null;
+  if (!membership || !dismissal || dismissal.key !== dismissKey || dismissal.dismissed) return null;
+  if (pathname?.includes('/membership')) return null;
   const exp = membershipExpiry(membership);
   if (!exp || (!exp.expiringSoon && !exp.expired)) return null;
 
-  const dismissKey = membership.expiresAt ?? '';
-  if (dismissedFor === dismissKey) return null;
+  const expiresAt = membership.expiresAt ?? '';
+  if (dismissal.dismissedForExpiry === expiresAt) return null;
 
   const dismiss = () => {
-    persistItem(DISMISS_KEY, dismissKey);
-    setDismissedFor(dismissKey);
+    persistItem(dismissal.key, '1');
+    setDismissal({ ...dismissal, dismissed: true });
+  };
+
+  const dismissForRenewal = () => {
+    persistItem(DISMISSED_FOR_EXPIRY_KEY, expiresAt);
+    setDismissal({ ...dismissal, dismissedForExpiry: expiresAt });
   };
 
   return (
@@ -52,7 +68,7 @@ export default function MembershipReminder() {
           : tr({ zh: 'CubeRoot 会员还有 {n} 天到期', en: 'Your CubeRoot membership expires in {n} day(s)'
         }).replace('{n}', String(Math.max(0, exp.daysLeft ?? 0)))}
       </span>
-      <AppLink href="/membership?renew=1" className="mem-reminder-cta" onClick={dismiss}>
+      <AppLink href="/membership?renew=1" className="mem-reminder-cta" onClick={dismissForRenewal}>
         {tr({ zh: '续费', en: 'Renew'
       })}
       </AppLink>

@@ -28,6 +28,7 @@
 - 优先编辑已有文件；typecheck 范围遵循全局验证规则。
 - 改动先定位根因,禁止在症状点打补丁;根因定位后落地用最小实现,不臆造抽象层/翻译层。
 - 展示格式化、隐藏步骤和本地化后的值只用于渲染或复制;播放器、计算、校验、保存、API 和派生状态必须使用无损原值,登录/管理员态只能增加操作能力,不得改变公开内容语义。
+- **日期展示**：全站日期统一用 `yyyy-mm-dd`（如 `2026-11-22`），中英文使用同一格式，包含时间的提示也沿用此日期格式。已有日期字符串按原日历日期展示；把 `Date` 或时间戳转为本地日期时复用 `@cuberoot/shared/iso-date` 的 `toLocalIsoDate`，禁止用 `toLocaleDateString()` 或截取 UTC 时间戳来替代。WCA 比赛日期区间按 [comp-date-range](../../.agents/skills/comp-date-range/SKILL.md) 的紧凑格式展示。
 - SSR 首次 render / useState 初始化禁读随机数、当前时间或浏览器存储;固定首屏后再用 effect 更新,外部存储走 useSyncExternalStore 的 server snapshot。
 - **登录态渲染**：组件和 React hooks 从 `@/lib/auth-store` 使用 `useAuthUser()` / `useIsAdmin()` / `useOwnerKey()`；它们通过 React `useSyncExternalStore` 的服务端快照保证首屏一致，后续挂载直接读取当前会话。`authActions` 提供登录、退出、刷新等命令；`getAuthUser()` 仅用于事件、effect 或异步返回后的实时账号核对，`subscribeAuthUser()` 用于会话桥接和外部缓存订阅，不能用这些命令接口派生首屏 UI。底层 `useAuthStore` / `isAdmin()` 保留给认证实现和非 React 命令代码。`eslint.auth.config.mjs` 用标准 `no-restricted-imports` 限制 `app/`、`components/`、`hooks/` 的 TS/TSX 及 `lib/` 的 TSX 导入底层接口（含别名、命名空间和转导出）；`pnpm --filter @cuberoot/client lint:auth` 已接入 CI。`auth-hydration.test.ts` 覆盖游客/普通用户/管理员首屏、后续挂载及账号/角色变化。安全 hook 是渲染契约，服务端 API 仍独立验证权限。
 - 浏览器标题统一使用 metadata 或 `useDocumentTitle`；弹窗/嵌入内容不得抢外层页面标题，复用 `AlgCaseView` 时传 `embedded`。动态标题 hook 由单一监听器协调多个使用者，禁止恢复为每实例各建标题 MutationObserver；关闭时恢复仍挂载的标题拥有者。回归见 `tests/recon-case-dialog-title.test.ts`。
