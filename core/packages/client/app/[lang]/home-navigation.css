@@ -11,7 +11,8 @@ body .landing-page.landing-page--navigation {
   min-height: calc(100dvh - var(--page-notice-h, 0px));
 }
 .home-navigation {
-  position: relative;
+  position: sticky;
+  top: var(--sat, 0px);
   z-index: 100;
   width: min(100%, var(--landing-content-max));
   display: flex;
@@ -19,6 +20,27 @@ body .landing-page.landing-page--navigation {
   min-height: 48px;
   gap: 16px;
   margin-bottom: 20px;
+  transition: top 220ms ease, width 220ms ease, padding-inline 220ms ease;
+}
+.home-navigation[data-floating] {
+  top: max(10px, var(--sat, 0px));
+  width: min(calc(100% - 16px), calc(var(--landing-content-max) - 40px));
+  padding-inline: 16px;
+}
+.home-navigation-surface {
+  position: absolute;
+  inset: 0;
+  border: 1px solid var(--border-default);
+  border-radius: 999px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 220ms ease;
+}
+.home-navigation[data-floating] .home-navigation-surface {
+  opacity: 1;
+}
+@media (prefers-reduced-motion: reduce) {
+  .home-navigation, .home-navigation-surface { transition: none; }
 }
 .home-navigation .home-navigation-brand {
   flex: 0 0 auto;
@@ -215,7 +237,7 @@ body[data-site-scenery] .landing-edit-options[data-site-surface='popover'] {
 .home-navigation .home-navigation-card .landing-card-name {
   margin: 0; font-family: var(--font-sans); font-size: 16px; font-weight: 300; line-height: 1.4; text-align: center;
 }
-.home-navigation[data-flyout-open]::before { opacity: 1; }
+.home-navigation[data-flyout-open]:not([data-floating])::before { opacity: 1; }
 .home-navigation[data-flyout-open] .home-navigation-curtain {
   opacity: 1; visibility: visible; pointer-events: auto;
   transition: opacity 320ms var(--home-nav-ease) 80ms, visibility 0ms;
@@ -394,6 +416,7 @@ body[data-site-scenery] .landing-edit-options[data-site-surface='popover'] {
    while narrower viewports retain the drawer. Match HomeNavigation's flyouts. */
 @media (max-width: 900px) {
   .home-navigation { gap: 8px; }
+  .home-navigation[data-floating] { width: 100%; padding-inline: 8px; }
   .home-navigation-toggle { display: grid; width: 48px; height: 48px; }
   .home-navigation-desktop { display: none; }
   .home-navigation::before, .home-navigation-curtain, .home-navigation-flyout { display: none; }

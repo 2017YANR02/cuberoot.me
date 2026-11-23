@@ -37,6 +37,7 @@ export default function HomeNavigation({ selected, onSelect, isAdmin, sections, 
   // Keep the last content mounted while the panel and curtain finish closing.
   const [flyout, setFlyout] = useState<string | null>(null);
   const [expanded, setExpanded] = useState(false);
+  const [floating, setFloating] = useState(false);
   const [geometry, setGeometry] = useState({ top: 0, height: 0 });
   const headerRef = useRef<HTMLElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
@@ -64,6 +65,10 @@ export default function HomeNavigation({ selected, onSelect, isAdmin, sections, 
   };
   useEffect(() => {
     const desktop = window.matchMedia(DESKTOP_NAV_QUERY);
+    const syncFloating = () => {
+      const landing = headerRef.current?.parentElement;
+      setFloating(window.scrollY > 12 && !!landing && landing.getBoundingClientRect().top <= 0);
+    };
     const onDesktopChange = (event: MediaQueryListEvent) => {
       if (event.matches) drawerDialogRef.current?.close();
     };
@@ -73,12 +78,17 @@ export default function HomeNavigation({ selected, onSelect, isAdmin, sections, 
     desktop.addEventListener('change', onDesktopChange);
     window.addEventListener('resize', closeFlyout);
     window.addEventListener('scroll', onScroll, true);
+    window.addEventListener('scroll', syncFloating, { passive: true });
+    window.addEventListener('resize', syncFloating);
+    syncFloating();
     return () => {
       cancelLeave();
       if (focusFrame.current !== null) cancelAnimationFrame(focusFrame.current);
       desktop.removeEventListener('change', onDesktopChange);
       window.removeEventListener('resize', closeFlyout);
       window.removeEventListener('scroll', onScroll, true);
+      window.removeEventListener('scroll', syncFloating);
+      window.removeEventListener('resize', syncFloating);
     };
   }, [cancelLeave, closeFlyout]);
   useLayoutEffect(() => {
@@ -95,7 +105,7 @@ export default function HomeNavigation({ selected, onSelect, isAdmin, sections, 
     const observer = new ResizeObserver(measure);
     observer.observe(content);
     return () => observer.disconnect();
-  }, [shown, allowedFlyout]);
+  }, [shown, allowedFlyout, floating]);
   const label = tr({ zh: '网站导航', en: 'Site navigation' });
   const items = [
     ...sections.map(section => ({ id: section.id, label: tr(section.title) })),
@@ -143,7 +153,7 @@ export default function HomeNavigation({ selected, onSelect, isAdmin, sections, 
 
   return <header ref={headerRef} className="home-navigation" data-admin={isAdmin || undefined}
     data-drawer-open={open || undefined} data-drawer-closing={open && drawerClosing || undefined} inert={open}
-    data-flyout-open={shown || undefined}
+    data-flyout-open={shown || undefined} data-floating={floating || undefined}
     style={{ '--home-nav-bottom': `${geometry.top}px`, '--home-flyout-height': `${geometry.height}px` } as CSSProperties}
     onPointerEnter={cancelLeave} onPointerLeave={scheduleClose}
     onBlurCapture={event => { if (!event.currentTarget.contains(event.relatedTarget)) closeFlyout(); }}
@@ -153,6 +163,7 @@ export default function HomeNavigation({ selected, onSelect, isAdmin, sections, 
       headerRef.current?.querySelector<HTMLButtonElement>(`#home-nav-${allowedFlyout}`)?.focus();
       closeFlyout();
     }}>
+    <span className="home-navigation-surface" data-site-surface="heading" aria-hidden="true" />
     <button type="button" className="home-navigation-brand" aria-label={tr({ zh: '首页', en: 'Home' })}
       onPointerEnter={closeFlyout} onClick={() => { closeFlyout(); onSelect('home'); }}>{brand}</button>
     <div className="home-navigation-desktop">{menu()}</div>
