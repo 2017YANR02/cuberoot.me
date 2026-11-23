@@ -13,10 +13,10 @@ import { accountLearningStage } from '@/lib/platform-stage-preference';
 import { persistItem } from '@/lib/safe-storage';
 import './learning-path.css';
 
-type StageNavigation = { open: (index: number) => void; close: () => boolean };
+type StageNavigation = { open: (index: number) => Promise<URLSearchParams>; close: () => boolean };
 
-function MobileStageNavigation({ navigation, selected, busy, ready, change }: {
-  navigation: RefObject<StageNavigation | null>; selected: number | null; busy: boolean; ready: boolean;
+function MobileStageNavigation({ navigation, selected, busy, ready, active, change }: {
+  navigation: RefObject<StageNavigation | null>; selected: number | null; busy: boolean; ready: boolean; active: boolean;
   change: (index: number, opening: boolean, persist: boolean) => Promise<void>;
 }) {
   const [stage, setStage] = useQueryState('stage', parseAsStringEnum(stages.map(item => item.id)).withOptions({ history: 'push' }));
@@ -25,7 +25,7 @@ function MobileStageNavigation({ navigation, selected, busy, ready, change }: {
   const closing = useRef(false);
   useLayoutEffect(() => {
     navigation.current = {
-      open: index => { tracking.current = true; pushed.current = true; void setStage(stages[index]!.id); },
+      open: index => { pushed.current = true; return setStage(stages[index]!.id); },
       close: () => {
         if (!stage) return false;
         if (!closing.current) {
@@ -39,6 +39,7 @@ function MobileStageNavigation({ navigation, selected, busy, ready, change }: {
     return () => { navigation.current = null; };
   }, [navigation, setStage, stage]);
   useEffect(() => {
+    if (!active) return;
     if (stage) tracking.current = true;
     else closing.current = false;
     if (!ready || busy || !tracking.current) return;
@@ -52,7 +53,7 @@ function MobileStageNavigation({ navigation, selected, busy, ready, change }: {
       else if (selected === null && index >= 0) void change(index, true, false);
     });
     return () => { live = false; };
-  }, [ready, busy, selected, stage, change]);
+  }, [active, ready, busy, selected, stage, change]);
   return null;
 }
 
@@ -146,24 +147,28 @@ export function HomeLearningPath({ owner }: { owner: string }) {
 
   async function change(index: number, opening: boolean, persist = true) {
     const grid = gridRef.current;
-    if (!grid || transition.current || (!mobile && sync === 'saving') || opening === expanded) return;
+    const onMobile = window.matchMedia('(width < 700px)').matches;
+    if (!grid || transition.current || (!onMobile && !mobileSelection && sync === 'saving') || opening === expanded) return;
     const controller = new AbortController();
     transition.current = controller;
     const stage = stages[index]!;
     const name = t(stage.name.zh, stage.name.en);
     const before = measureLearningPath(grid);
+    const urlUpdate = opening && persist && onMobile ? navigation.current?.open(index) : undefined;
     if (opening && persist) {
-      if (mobile) navigation.current?.open(index);
       setSuggested(null);
       void save(index);
-    } else if (!opening && !mobile) request.current?.abort();
+    } else if (!opening && !onMobile && !mobileSelection) request.current?.abort();
     flushSync(() => {
       setBusy(true);
-      if (opening && mobile) setMobileSelection(true);
+      if (opening && onMobile) setMobileSelection(true);
       setSelected(index);
       if (opening) announce(t(`已选择「${name}」阶段。`, `Selected stage: ${name}.`));
     });
-    const animated = await animateLearningPath(grid, index, opening, controller.signal, before);
+    const [animated] = await Promise.all([
+      animateLearningPath(grid, index, opening, controller.signal, before),
+      urlUpdate,
+    ]);
     if (controller.signal.aborted) return;
     flushSync(() => {
       setExpanded(opening);
@@ -199,12 +204,12 @@ export function HomeLearningPath({ owner }: { owner: string }) {
   });
 
   function closeStage(index: number) {
-    if (!navigation.current?.close()) void change(index, false);
+    if (!(mobile || mobileSelection) || !navigation.current?.close()) void change(index, false);
   }
 
   return <section className="platform-home-path" aria-labelledby="platform-home-path-title">
-    {(mobile || mobileSelection) && <Suspense fallback={null}><MobileStageNavigation navigation={navigation} selected={expanded ? selected : null}
-      busy={busy} ready={!restoring} change={change} /></Suspense>}
+    <Suspense fallback={null}><MobileStageNavigation navigation={navigation} selected={expanded ? selected : null}
+      busy={busy} ready={!restoring} active={mobile || mobileSelection} change={change} /></Suspense>
     <div className="platform-home-section-heading">
       <h2 id="platform-home-path-title">{t('学习路径', 'Learning path')}</h2>
       <AppLink className="platform-home-secondary" href="/platform/paths" prefetch={false}>{t('全部路径', 'All paths')}<ArrowRight aria-hidden /></AppLink>
@@ -229,7 +234,7 @@ export function HomeLearningPath({ owner }: { owner: string }) {
             <small>{t(`建议每次 ${stage.minutes} 分钟`, `${stage.minutes} min / session`)}</small>
             <span className="path-hint">{t('查看重点', 'View focus')} <ArrowRight size={14} aria-hidden /></span>
           </button>
-          {chosen && <button type="button" className="platform-home-secondary path-change" disabled={busy || (!mobile && sync === 'saving')} onClick={() => closeStage(i)}>{t('换一个阶段', 'Change stage')}</button>}
+          {chosen && <button type="button" className="platform-home-secondary path-change" disabled={busy || (!mobile && !mobileSelection && sync === 'saving')} onClick={() => closeStage(i)}>{t('换一个阶段', 'Change stage')}</button>}
           {chosen && <div className="path-details">
             <div className="path-columns">
               {(['courses', 'practice'] as const).map(group => <div key={group}>

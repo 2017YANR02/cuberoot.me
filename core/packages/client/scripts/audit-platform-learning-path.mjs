@@ -127,6 +127,7 @@ async function run(width, reducedMotion) {
         }
       }
       await expect(first).toBeFocused();
+      if (width < 700) await expect(page).toHaveURL(/[?&]stage=[^&]+/);
       await expect(section.getByRole('status')).toContainText('已定位到');
       await checkExpanded(grid);
       await checkContrast(grid);
@@ -137,6 +138,7 @@ async function run(width, reducedMotion) {
       else await page.keyboard.press('Escape');
       await expect(stage).toBeFocused();
       await expect(grid).toHaveAttribute('data-layout','compact');
+      if (width < 700) await expect(page).not.toHaveURL(/[?&]stage=/);
       await checkClean(grid);
       await page.setViewportSize({width, height: 960});
     }
