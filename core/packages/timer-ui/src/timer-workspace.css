@@ -68,7 +68,8 @@
 }
 .timer-workspace[data-wide-layout] .timer-solver-stage:has(.timer-workspace-divider.is-dragging) { transition: none; }
 .timer-workspace[data-wide-layout] .timer-workspace-divider--left { left: calc(var(--shell-left-inset) - 12px); }
-.timer-workspace[data-wide-layout] .timer-solver-stage:not([data-stage-fullscreen='true']):has(.solver-panel[data-open='true']) > .timer-workspace-divider--left { display: flex; }
+.timer-workspace[data-wide-layout] .timer-solver-stage:not([data-stage-fullscreen='true']):has(.solver-panel[data-open='true']) > .timer-workspace-divider--left,
+.timer-workspace[data-wide-layout]:has(> .timer-solver-rail[data-full-height-dock] > .solver-panel[data-open='true']) > .timer-workspace-divider--left { display: flex; }
 :is(.hide-ui, [data-timer-hide-ui]) .timer-workspace-divider { visibility: hidden; }
 
 
@@ -162,8 +163,52 @@
   overflow: auto;
 }
 
-.timer-workspace[data-fold-axis='horizontal'] > .timer-solver-rail {
-  --timer-solver-player-limit: min(100%, max(120px, calc(var(--timer-first-pane) - 196px)));
+/* The player spans the full upper pane below the header. Only the list scrolls
+ * when there is room for the stage controls and playback bar. */
+.timer-workspace[data-fold-axis='horizontal'] > .timer-solver-rail .solver-panel-body:has(> [data-no-timer] > .stsv[data-player-beside-list]) {
+  display: flex;
+  flex-direction: column;
+  padding-block: 0;
+
+  > [data-no-timer] {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    min-block-size: 0;
+  }
+
+  .stsv[data-player-beside-list] {
+    display: grid;
+    flex: 1 0 0;
+    min-block-size: 160px;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-rows: auto auto minmax(44px, 1fr);
+    column-gap: 12px;
+  }
+
+  .stsv-controls {
+    grid-area: 1 / 2;
+    justify-content: flex-start;
+    margin: 12px 8px 6px;
+  }
+
+  .stsv-hint { grid-area: 2 / 2; }
+  .stsv-result { display: contents; }
+  .stsv-sols, .stsv > :is(.stsv-loading, .stsv-status) {
+    grid-area: 3 / 2;
+    overflow-y: auto;
+    overscroll-behavior-y: contain;
+  }
+
+  .stsv-player {
+    grid-area: 1 / 1 / -1 / 2;
+    min-block-size: 0;
+    max-width: 100%;
+  }
+
+  .stsv-player .recon-player { height: 100%; }
+  .stsv-player .recon-player-canvas { flex: 1; aspect-ratio: auto; }
+  .stsv-player .recon-player-controls { flex: none; padding-block: 0 4px; }
 }
 .timer-workspace[data-fold-axis] > :is(.timer-workspace-panel, .timer-solo-main, .timer-solver-rail) {
   min-width: 0;
@@ -171,18 +216,6 @@
   overflow: auto;
 }
 .timer-workspace[data-fold-axis] > .timer-solo-topbar { min-width: 0; overflow-x: auto; }
-
-/* The shallow upper pane has room beside the solution for its cube player. */
-.timer-workspace[data-fold-axis='horizontal'] > .timer-solver-rail .stsv-result {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-  align-items: start;
-}
-.timer-workspace[data-fold-axis='horizontal'] > .timer-solver-rail .stsv-sols { grid-area: 1 / 2; }
-.timer-workspace[data-fold-axis='horizontal'] > .timer-solver-rail .solver-panel-body .stsv-player {
-  grid-area: 1 / 1;
-  justify-self: center;
-}
 
 /* When the timer hides its chrome, retain the selected upper pane during the attempt. */
 .timer-workspace[data-fold-axis='horizontal'] > .timer-workspace-panel {

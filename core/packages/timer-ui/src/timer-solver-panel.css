@@ -203,14 +203,20 @@
    belongs to the latest reconstruction or the Times/Chart/Stats panel.
    Matching left padding keeps the timer and its bottom controls clear of the rail. */
 .timer-workspace[data-wide-layout] {
-  /* Share the left dock's width with the topbar so its controls center over
-     the timing canvas. The workspace grid already excludes the right dock. */
-  &:has(.timer-solver-stage:not([data-stage-fullscreen='true']) .solver-panel[data-open='true']) .shell-topbar.timer-solo-topbar {
-    grid-template-columns: min(var(--timer-left-dock-width, var(--solver-rail-w)), var(--solver-rail-limit, 100vw)) minmax(0, 1fr) auto;
-    column-gap: 0;
+  --shell-left-inset: 0px;
+  /* The toolbar and timing canvas start after the same open dock. */
+  &:has(
+    > .timer-solver-rail[data-full-height-dock] > .solver-panel[data-open='true'],
+    > .timer-solver-stage:not([data-stage-fullscreen='true']) > .timer-solver-rail > .solver-panel[data-open='true']
+  ) {
+    --shell-left-inset: min(var(--timer-left-dock-width, var(--solver-rail-w)), var(--solver-rail-limit, 100vw));
+
+    .shell-topbar.timer-solo-topbar:not([data-use-top-bar]) {
+      grid-template-columns: var(--shell-left-inset) minmax(0, 1fr) auto;
+      column-gap: 0;
+    }
   }
   .timer-solver-stage {
-    --shell-left-inset: 0px;
     padding-left: var(--shell-left-inset);
     transition: padding-left 160ms ease;
   }
@@ -233,18 +239,13 @@
     max-height: 100%;
     z-index: 42; /* above the deskpet (40), like the docked rail */
   }
-  /* :not(.fullscreen) so fullscreen (rail hidden via display:none) doesn't keep a
-     phantom left pad — :has() still matches display:none panels otherwise. */
-  .timer-solver-stage:not([data-stage-fullscreen='true']):has(.timer-solver-rail .solver-panel[data-open='true']) {
-    --shell-left-inset: min(var(--timer-left-dock-width, var(--solver-rail-w)), var(--solver-rail-limit, 100vw));
-  }
-  &:has(.timer-solver-rail .solver-panel[data-open='true']) .timer-solver-stage > .timer-solver-rail {
+  :is(.timer-solver-stage > .timer-solver-rail, .timer-solver-rail[data-full-height-dock]):has(> .solver-panel[data-open='true']) {
     top: 0;
     left: 0;
     bottom: 0;
     align-items: stretch;
     gap: 0;
-    width: min(var(--timer-left-dock-width, var(--solver-rail-w)), var(--solver-rail-limit, 100vw));
+    width: var(--shell-left-inset);
     border-right: 1px solid var(--shell-divider, var(--border-default));
     background: var(--background);
     overflow-y: auto;
@@ -307,12 +308,12 @@
   .timer-solver-rail .solver-panel[data-open='false'] .solver-panel-head > .more-toggle-chevron { transform: rotate(-90deg); }
   .timer-solver-rail .solver-panel[data-open='true'] .solver-layout-action > .more-toggle-chevron { transform: rotate(90deg); }
 
-  /* Keep StageSolver's solution-menu-first order in the narrow desktop rail. */
+  /* Fit the inline player to the narrow desktop rail. */
   .timer-solver-rail .solver-panel-body .stsv-player {
     position: static;
     flex-basis: auto;
     width: 100%;
-    max-width: var(--timer-solver-player-limit, 300px);
+    max-width: 300px;
     margin: 0 auto;
   }
 }
@@ -355,7 +356,8 @@
 
 
 .timer-solver-stage.timer-solver-stage { position: relative; }
-.timer-solver-stage[data-stage-fullscreen='true'] .timer-solver-rail { display: none; }
+.timer-solver-stage[data-stage-fullscreen='true'] .timer-solver-rail,
+.timer-workspace[data-wide-layout]:not([data-fold-axis]) > .timer-solver-rail:not([data-full-height-dock]) { display: none; }
 @media (max-width: 560px) {
   .shell-topbar-left .solver-panel-head { height: 30px; padding: 0 3px; font-size: 12px; gap: 4px; }
 }

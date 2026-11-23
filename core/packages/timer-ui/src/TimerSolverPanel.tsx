@@ -115,9 +115,9 @@ function useScrambleSwipe({ onPrevScramble, onNextScramble }: ScrambleNav) {
   return { onPointerDown, onPointerMove, onPointerUp: onPointerEnd, onPointerCancel: onPointerEnd, onClickCapture };
 }
 
-function SolverBody({ view, scramble, onScrambleChange, language, compact, settingsSlot, navigationSlot, onPrevScramble, onNextScramble, onDismissChange, onBlockingChange }: Pick<TimerSolverPanelProps, 'scramble' | 'onScrambleChange' | 'language' | 'onDismissChange' | 'onBlockingChange'> & ScrambleNav & { view: SolverView; compact: boolean; settingsSlot?: HTMLElement | null; navigationSlot?: HTMLElement | null }) {
+function SolverBody({ view, scramble, onScrambleChange, language, compact, playerBesideList, settingsSlot, navigationSlot, onPrevScramble, onNextScramble, onDismissChange, onBlockingChange }: Pick<TimerSolverPanelProps, 'scramble' | 'onScrambleChange' | 'language' | 'onDismissChange' | 'onBlockingChange'> & ScrambleNav & { view: SolverView; compact: boolean; playerBesideList?: boolean; settingsSlot?: HTMLElement | null; navigationSlot?: HTMLElement | null }) {
   return <Suspense fallback={<div className="solver-panel-loading"><Spinner size={16} label={{ zh: '加载中', en: 'Loading' }[language]} /></div>}>
-    <TimerSolverBody view={view} scramble={scramble} onScrambleChange={onScrambleChange} language={language} compact={compact}
+    <TimerSolverBody view={view} scramble={scramble} onScrambleChange={onScrambleChange} language={language} compact={compact} playerBesideList={playerBesideList}
       settingsSlot={settingsSlot} navigationSlot={navigationSlot} onPrevScramble={onPrevScramble} onNextScramble={onNextScramble} onDismissChange={onDismissChange} onBlockingChange={onBlockingChange} />
   </Suspense>;
 }
@@ -346,8 +346,6 @@ export default function TimerSolverPanel({
             {isDesktopRail
               ? <span className="solver-panel-title">{view === 'steps' ? tr(STEP_TITLE) : title}</span>
               : <Lightbulb size={18} aria-hidden="true" />}
-            {/* 收起时箭头留在入口内；展开时移到全屏按钮右侧。 */}
-
           </MoreToggle>}
           {railBodyOpen && <span className="solver-settings-slot" ref={setSettingsSlot} />}
           </div>
@@ -365,7 +363,7 @@ export default function TimerSolverPanel({
               <Maximize2 size={16} aria-hidden="true" />
             </button>
           )}
-          {isDesktopRail && dockOpen && (
+          {isDesktopRail && dockOpen && !triggerSlot && (
             <MoreToggle
               type="button"
               className="solver-layout-action"
@@ -373,15 +371,13 @@ export default function TimerSolverPanel({
               expanded={open}
               aria-label={tr({ zh: '收起解法面板', en: 'Collapse solutions panel' })}
               title={tr({ zh: '收起解法面板', en: 'Collapse solutions panel' })}
-            >
-
-            </MoreToggle>
+            />
           )}
           </div>
         </div>
         {railBodyOpen && (
           <div className="solver-panel-body">
-            <SolverBody view={view} onDismissChange={onDismissChange} onBlockingChange={onBlockingChange} scramble={scramble} onScrambleChange={onScrambleChange} language={language} compact settingsSlot={settingsSlot} navigationSlot={navigationSlot} onPrevScramble={onPrevScramble} onNextScramble={onNextScramble} />
+            <SolverBody view={view} onDismissChange={onDismissChange} onBlockingChange={onBlockingChange} scramble={scramble} onScrambleChange={onScrambleChange} language={language} compact playerBesideList={Boolean(foldSelection)} settingsSlot={settingsSlot} navigationSlot={navigationSlot} onPrevScramble={onPrevScramble} onNextScramble={onNextScramble} />
           </div>
         )}
       </aside>}

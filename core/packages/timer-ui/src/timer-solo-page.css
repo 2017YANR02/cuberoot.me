@@ -51,8 +51,12 @@
   background: transparent;
   border: 0;
 }
-.solver-light-trigger svg { position: relative; }
-.solver-light-trigger[data-lit='true']::before {
+.solver-light-trigger svg {
+  position: relative;
+  opacity: 0.75;
+  transition: opacity 300ms ease-out;
+}
+.solver-light-trigger::before {
   content: '';
   position: absolute;
   top: calc(50% - 9px);
@@ -62,7 +66,17 @@
   border-radius: 50%;
   background: color-mix(in srgb, var(--signal-warning) 75%, transparent);
   box-shadow: 0 0 8px 3px color-mix(in srgb, var(--signal-warning) 45%, transparent);
+  opacity: 0;
+  transform: scale(0.8);
+  transition: opacity 300ms ease-out, transform 300ms ease-out;
   pointer-events: none;
+}
+.solver-light-trigger[data-lit='true'] svg,
+.solver-light-trigger[data-lit='true']::before { opacity: 1; }
+.solver-light-trigger[data-lit='true']::before { transform: scale(1); }
+@media (prefers-reduced-motion: reduce) {
+  .solver-light-trigger svg,
+  .solver-light-trigger::before { transition: none; }
 }
 
 /* Narrow layouts need the full remaining width, without a mirrored home gutter. */

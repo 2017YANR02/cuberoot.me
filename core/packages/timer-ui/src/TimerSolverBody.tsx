@@ -7,8 +7,9 @@ import './TimerStepSolve.css';
 import './manual-scramble-queue.css';
 const TimerStepSolve = lazy(() => import('./TimerStepSolve'));
 
-export default function TimerSolverBody({ view = 'solutions', scramble, onScrambleChange, language, compact, settingsSlot, navigationSlot, onPrevScramble, onNextScramble, onDismissChange, onBlockingChange }: {
+export default function TimerSolverBody({ view = 'solutions', scramble, onScrambleChange, language, compact, playerBesideList, settingsSlot, navigationSlot, onPrevScramble, onNextScramble, onDismissChange, onBlockingChange }: {
   view?: 'solutions' | 'steps';
+  playerBesideList?: boolean;
   scramble: string; language: 'en' | 'zh'; compact: boolean; settingsSlot?: HTMLElement | null; navigationSlot?: HTMLElement | null;
   onScrambleChange?(scramble: string): void;
   onPrevScramble?(): void; onNextScramble?(): void;
@@ -65,7 +66,7 @@ export default function TimerSolverBody({ view = 'solutions', scramble, onScramb
       </form> : (scramble.trim() || onScrambleChange) && <div className="solver-panel-scramble solver-scramble-row">
         <span>{scramble}</span>
       </div>}
-      <StageSolver allowProgressiveReveal scramble={scramble} lang={language} compact={compact} expandedSolutions={!compact} settingsSlot={settingsSlot} navigationSlot={navigationSlot}
+      <StageSolver allowProgressiveReveal inlineSolutions playerBesideList={playerBesideList} scramble={scramble} lang={language} compact={compact} settingsSlot={settingsSlot} navigationSlot={navigationSlot}
         scrambleEditAction={onScrambleChange && <button type="button" className="stsv-settings-toggle" data-no-swipe
           disabled={editing} aria-expanded={editing} aria-label={tr(TIMER_SOLVER_SCRAMBLE_EDITOR_COPY.edit)}
           onClick={() => { setDraft(scramble); setEditing(true); }}><Pencil size={18} /></button>}

@@ -33,6 +33,7 @@ export function TimerWorkspace({ active = true, panelOpen = false, recap, soloLa
     .some(key => soloLayout[key] > DEFAULT_SOLO_LAYOUT[key]);
   const wide = useTimerWideLayout({ useHostContent: true });
   const host = useHostViewportLayout();
+  const hostLandscape = Boolean(host && host.bounds.width > host.bounds.height);
   const hinge = active && soloLayout ? host?.hinge : undefined;
   const stacked = host && hinge && hinge.width > hinge.height;
   const recapOpen = active && wide && !panelOpen && Boolean(recap);
@@ -55,7 +56,7 @@ export function TimerWorkspace({ active = true, panelOpen = false, recap, soloLa
     for (const panel of workspace.querySelectorAll('.timer-solver-rail, .timer-workspace-panel')) observer.observe(panel);
     constrain();
     return () => observer.disconnect();
-  }, [active, wide, panelOpen, recapOpen, hinge]);
+  }, [active, wide, panelOpen, recapOpen, hinge, hostLandscape]);
   return <div {...props} ref={workspaceRef} className={`${className}${active ? ' timer-workspace timer-no-selection' : ''}`}
     style={{ ...style, ...(hinge && host && {
       '--timer-first-pane': `${stacked ? hinge.y - host.content.y : hinge.x - host.content.x}px`,
@@ -93,7 +94,9 @@ const MIN_TIMER_WIDTH = 320;
 function openDock(workspace: HTMLElement, side: 'left' | 'right') {
   if (side === 'right') return workspace.hasAttribute('data-panel-open')
     ? workspace.querySelector<HTMLElement>('.timer-workspace-panel') : null;
-  const rail = workspace.querySelector<HTMLElement>('.timer-solver-stage:not([data-stage-fullscreen="true"]) .timer-solver-rail');
+  const rail = workspace.querySelector<HTMLElement>(
+    ':scope > .timer-solver-rail[data-full-height-dock], .timer-solver-stage:not([data-stage-fullscreen="true"]) > .timer-solver-rail',
+  );
   return rail?.querySelector('.solver-panel[data-layout="rail"][data-open="true"]') ? rail : null;
 }
 

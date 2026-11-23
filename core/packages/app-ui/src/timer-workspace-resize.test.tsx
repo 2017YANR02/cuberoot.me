@@ -69,6 +69,15 @@ it('keeps the solver and results in the workspace when folding and restores the 
   }
   await act(async () => setHostViewportLayout({ bounds, content }));
   expect(workspace.hasAttribute('data-fold-axis')).toBe(false);
+  const landscapeRail = workspace.querySelector(':scope > .timer-solver-rail[data-full-height-dock]')!;
+  expect(landscapeRail).not.toBeNull();
+  expect([...observers].some(observer => observer.targets.has(landscapeRail))).toBe(true);
+  expect(workspace.querySelector(':scope > .timer-workspace-divider--left')).not.toBeNull();
+
+  await act(async () => setHostViewportLayout({
+    bounds: { x: 0, y: 0, width: 1100, height: 1200 },
+    content: { x: 0, y: 0, width: 1100, height: 1160 },
+  }));
   expect(workspace.querySelector('.timer-solo-main .timer-solver-rail')).not.toBeNull();
   expect(workspace.querySelectorAll('.timer-workspace-divider')).toHaveLength(2);
 });

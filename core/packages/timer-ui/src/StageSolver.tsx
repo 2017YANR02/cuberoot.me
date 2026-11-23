@@ -20,7 +20,7 @@
 
 import MoreToggle from './MoreToggle';
 import BoolToggle from './BoolToggle';
-import { useCallback, useEffect, useId, useMemo, useRef, useState, type CSSProperties, type ReactNode } from 'react';
+import { useCallback, useEffect, useId, useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import { Info, X, SlidersHorizontal, ArrowLeft, ArrowRight, ChevronDown } from 'lucide-react';
 import { CompactSelect } from './CompactSelect';
@@ -30,6 +30,7 @@ import CuberReconPlayer from './CuberReconPlayer';
 import type { ReconPlayerHandle } from './recon/ReconPlayerBase';
 import { SubsetColorPicker, useSubsetSelection, COLOR_NAME, type ColorLetter } from './TimerColorSubsetPicker';
 import { CUBE_FILL, CUBE_ON_FILL, CUBE_COLOR_LETTER_FOR_FACE, type CubeFace } from '@cuberoot/puzzle-render-core/support/cube-colors';
+import { invertAlg, simplifyAlg } from '@cuberoot/shared/recon/cube3';
 import { orientedFaceColors } from '@cuberoot/shared/timer';
 import CubeColorChip from './CubeColorChip';
 import { useModalBackdrop } from './useModalDismiss';
@@ -61,6 +62,23 @@ import {
 } from '@cuberoot/shared/timer/scramble-variants';
 import './StageSolver.css';
 import './timer-room.css';
+
+const FULL_CUBE_PREFERENCE = 'timer.solverHints.showFullCube';
+const SOLUTION_ROW_MOVE_MS = 240;
+
+function measureSolutionRows(row: HTMLElement, playerHeight: number) {
+  const listTop = row.parentElement?.getBoundingClientRect().top ?? 0;
+  const tops = new Map([[row, row.getBoundingClientRect().top - listTop]]);
+  // Include rows that can move into view when the player's space changes sides.
+  for (const direction of ['previousElementSibling', 'nextElementSibling'] as const) {
+    for (let sibling = row[direction]; sibling instanceof HTMLElement; sibling = sibling[direction]) {
+      const { top, bottom } = sibling.getBoundingClientRect();
+      if (direction === 'previousElementSibling' ? bottom < -playerHeight : top > window.innerHeight + playerHeight) break;
+      if (sibling.classList.contains('stsv-solution-row')) tops.set(sibling, top - listTop);
+    }
+  }
+  return tops;
+}
 
 // 求解已用时。深阶段能跑到几分钟,纯秒数(「214s」)读起来要心算 → 过分钟改 m:ss。
 function fmtElapsed(sec: number): string {
@@ -268,9 +286,12 @@ function SlotChipSelect({
   );
 }
 
-// 把解法前导的整体旋转(视角前缀 + y 预转体,如 "z2 y")与实际转动分离。
-// 播放器把 lead 折进 setup(打乱之后),只动画 body → 开头的整体转体不参与动画
-// (用户要从「转体做完」的朝向起步)。无前导旋转时 lead='',行为不变。
+/** Separate the terminal y pre-rotation from the fixed view rotations. */
+function splitYPreRotation(lead: string) {
+  const match = lead.match(/(?:^| )(y[2']?)$/);
+  return { viewRotation: match ? lead.slice(0, match.index) : lead, yRotation: match?.[1] };
+}
+
 // 受限 xcross「限制过宽未在节点预算内判定」哨兵(worker 把 Rust -2 映射成此值):该视角多半可解,但
 // 含较多 wide/slice/rotation 搬中心 move → no-center 启发式偏松、分支爆炸撞预算,价值低 → 显 '⋯' +
 // 提示缩小,而非卡死或误标无解。纯面 / 面+少量 slice 等常用限制恒在预算内秒出精确解。
@@ -301,7 +322,10 @@ interface Props {
   onBaseChange?: (base: string) => void;
   /** gen 行内:更紧凑的间距 + 略小播放器。 */
   compact?: boolean;
-  expandedSolutions?: boolean;
+  /** Keep all solution rows visible with the player directly after the selected row. */
+  inlineSolutions?: boolean;
+  /** Place the player beside the inline list when the timer is in the upper fold pane. */
+  playerBesideList?: boolean;
   /** Timer stage practice: reveal solution moves only on request. */
   allowProgressiveReveal?: boolean;
   /** Opt-in experimental ranking; ordinary callers retain length order. */
@@ -312,20 +336,29 @@ interface Props {
   onNextScramble?: () => void;
 }
 
-export default function StageSolver({ scramble, lang, initialMethod = 'std', initialStage = 0, initialFace, onSelectionChange, initialSlot = '', onSlotChange, initialBase = '', onBaseChange, compact = false, expandedSolutions = false, allowProgressiveReveal = false, practicalSolutions = false, settingsSlot, navigationSlot, scrambleEditAction, onPrevScramble, onNextScramble, onDismissChange, onBlockingChange }: Props) {
+export default function StageSolver({ scramble, lang, initialMethod = 'std', initialStage = 0, initialFace, onSelectionChange, initialSlot = '', onSlotChange, initialBase = '', onBaseChange, compact = false, inlineSolutions = false, playerBesideList = false, allowProgressiveReveal = false, practicalSolutions = false, settingsSlot, navigationSlot, scrambleEditAction, onPrevScramble, onNextScramble, onDismissChange, onBlockingChange }: Props) {
+  const playerInList = inlineSolutions && !playerBesideList;
   const t = (zh: string, en: string) => (lang === 'zh' ? zh : en);
   const [revealEnabled, setRevealEnabled] = useState(false);
   const [revealPreferenceReady, setRevealPreferenceReady] = useState(false);
+  const [showFullCube, setShowFullCube] = useState(false);
   useEffect(() => {
-    try { setRevealEnabled(localStorage.getItem('timer.solverHints.progressiveReveal') === '1'); }
+    try {
+      setRevealEnabled(localStorage.getItem('timer.solverHints.progressiveReveal') === '1');
+      if (inlineSolutions) setShowFullCube(localStorage.getItem(FULL_CUBE_PREFERENCE) === '1');
+    }
     catch { /* Storage is optional. */ }
     setRevealPreferenceReady(true);
-  }, []);
+  }, [inlineSolutions]);
   const progressiveReveal = allowProgressiveReveal && revealEnabled;
-  const showExpandedSolutions = expandedSolutions && !progressiveReveal;
   const changeRevealEnabled = (enabled: boolean) => {
     setRevealEnabled(enabled);
     try { localStorage.setItem('timer.solverHints.progressiveReveal', enabled ? '1' : '0'); }
+    catch { /* Keep the preference for this mounted panel. */ }
+  };
+  const changeShowFullCube = (enabled: boolean) => {
+    setShowFullCube(enabled);
+    try { localStorage.setItem(FULL_CUBE_PREFERENCE, enabled ? '1' : '0'); }
     catch { /* Keep the preference for this mounted panel. */ }
   };
 
@@ -442,6 +475,9 @@ export default function StageSolver({ scramble, lang, initialMethod = 'std', ini
   const poolRef = useRef<RustCrossPool | null>(null);
   // 共享 3D 播放器句柄(CuberReconPlayer 回填),供解法行 ▷ 跳到开头并播放。
   const playerRef = useRef<ReconPlayerHandle | null>(null);
+  const playerContainerRef = useRef<HTMLDivElement>(null);
+  const previousPlayerRow = useRef<number | null>(null);
+  const pendingInlineSelection = useRef<{ index: number; tops: Map<HTMLElement, number> | null } | null>(null);
   const normScramble = useMemo(() => normalizeScramble(scramble) ?? scramble, [scramble]);
   const scrambleRef = useRef(normScramble);
   scrambleRef.current = normScramble;
@@ -464,6 +500,7 @@ export default function StageSolver({ scramble, lang, initialMethod = 'std', ini
   useEffect(() => { onSelRef.current?.(method, stage); }, [method, stage]);
 
   const stages = VARIANT_STAGES[method];
+  const crossPreview = inlineSolutions && stages[stage] === 'cross';
   const need = needOf(method);
   // 设备并行度只在客户端可知;Node 21+ SSR 也有全局 navigator(hardwareConcurrency=构建机核数)
   // 会渲染出 4,移动端客户端是 2 → hydration mismatch。挂载后再取,水合期两端都渲染占位值。
@@ -999,19 +1036,35 @@ export default function StageSolver({ scramble, lang, initialMethod = 'std', ini
   };
 
   const selectedSolIndex = moves?.sols.length ? Math.min(selSol, moves.sols.length - 1) : 0;
+  const prepareInlineSelection = (index: number, button: HTMLButtonElement) => {
+    const row = button.parentElement;
+    if (!playerInList || index === selectedSolIndex || !row) return;
+    const canAnimate = typeof row.animate === 'function' && !window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    pendingInlineSelection.current = {
+      index,
+      tops: canAnimate ? measureSolutionRows(row, playerContainerRef.current?.offsetHeight ?? 0) : null,
+    };
+  };
   const selSolAlg = moves && moves.sols.length > 0
     ? rotateSolutionY(moves.sols[selectedSolIndex].m, rowRot[selectedSolIndex] ?? 0)
     : null;
-  const renderOrientation = (alg: string) => {
-    const shown = orientedFaceColors(splitLeadRot(alg).lead);
-    return <CubeColorChip localize={(copy) => t(copy.zh, copy.en)} className="cube-orientation-chip"
+  const renderOrientation = (lead: string, title?: string) => {
+    const shown = orientedFaceColors(lead);
+    return <CubeColorChip localize={(copy) => t(copy.zh, copy.en)} className="cube-orientation-chip" title={title}
       colors={`${CUBE_COLOR_LETTER_FOR_FACE[shown.U]}${CUBE_COLOR_LETTER_FOR_FACE[shown.F]}`} />;
   };
-  const orientationButton = (i: number, alg: string) => (
-    <button type="button" className="stsv-sol-orientation"
-      aria-label={t('切换 y 预转体', 'Toggle y pre-rotation')}
-      onClick={() => cycleRot(i)}>{renderOrientation(alg)}</button>
-  );
+  const orientationButton = (i: number, lead: string) => {
+    const label = t('切换 y 预转体', 'Toggle y pre-rotation');
+    const title = inlineSolutions && lead ? lead : undefined;
+    return (
+      <button type="button" className="stsv-sol-orientation stsv-sol-orientation-icon" title={title}
+        aria-label={title ? `${label} · ${title}` : label}
+        onClick={(event) => {
+          if (!progressiveReveal) prepareInlineSelection(i, event.currentTarget);
+          cycleRot(i);
+        }}>{renderOrientation(lead, title)}</button>
+    );
+  };
   const revealContext = JSON.stringify([normScramble, method, stage, selFace]);
   const revealedCount = (i: number) => revealed?.source === moves && revealed.context === revealContext
     ? revealed.counts[i] ?? 0 : 0;
@@ -1026,39 +1079,94 @@ export default function StageSolver({ scramble, lang, initialMethod = 'std', ini
     } }));
   };
   const revealControls = (i: number, alg: string) => progressiveReveal && !solutionVisible(i, alg) && <>
-    <button type="button" className="stsv-sol-orientation stsv-reveal-next" disabled={movesLoading}
+    {!inlineSolutions && <button type="button" className="stsv-sol-orientation" disabled={movesLoading}
       aria-label={t('显示下一步', 'Reveal next move')}
-      onClick={() => revealSolution(i, revealedCount(i) + 1)}>+1</button>
+      onClick={() => revealSolution(i, revealedCount(i) + 1)}>+1</button>}
     <button type="button" className="stsv-sol-orientation stsv-reveal-all" disabled={movesLoading}
       aria-label={t('显示完整解法', 'Reveal full solution')}
       onClick={() => revealSolution(i, solutionTokens(alg).length)}>{t('显示全部', 'Show all')}</button>
   </>;
-  const solutionItems = moves?.sols.map((sol, i) => {
+  const solutionItems = moves?.sols.map((sol, i, solutions) => {
     const alg = rotateSolutionY(sol.m, rowRot[i] ?? 0);
+    // Group by the same move count used to rank the solver results.
+    const moveCount = moveLen(inlineSolutions ? sol.m : alg);
+    const startsGroup = inlineSolutions && (i === 0 || moveLen(solutions[i - 1].m) !== moveCount);
+    const showMoveCount = !inlineSolutions || (startsGroup && (selFace === null || counts[selFace] !== moveCount));
+    const { lead, body } = splitLeadRot(alg);
+    const visible = solutionVisible(i, alg);
+    const displayedMoves = visible ? body : solutionTokens(alg).slice(0, revealedCount(i)).join(' ');
+    const showMoves = !progressiveReveal || (inlineSolutions && (visible || displayedMoves.length > 0));
     return {
       value: i,
+      alg,
+      lead,
+      startsGroup,
+      visible,
       label: <span className="stsv-sol-option">
-        {!showExpandedSolutions && renderOrientation(alg)}
+        {!inlineSolutions && renderOrientation(lead)}
         <span className="stsv-sol-slot-column">{sol.c && slotCombos.length >= 2 && renderSolSlots(sol.c)}</span>
         <code>
-          {progressiveReveal ? t(`解法 ${i + 1}`, `Solution ${i + 1}`) : <>
-            {splitLeadRot(alg).lead && <span className="stsv-sol-rotation">{splitLeadRot(alg).lead} </span>}
-            {solutionText(i, alg)}
+          {showMoves ? <>
+            {!inlineSolutions && lead && <span className="stsv-sol-rotation">{lead} </span>}
+            {displayedMoves}
+          </> : !inlineSolutions && t(`解法 ${i + 1}`, `Solution ${i + 1}`)}
+          {inlineSolutions && !visible && <>
+            {displayedMoves && ' '}
+            <span aria-hidden="true">+1</span>
+            <span className="sr-only">{t(`显示解法 ${i + 1} 的下一步`, `Reveal next move in solution ${i + 1}`)}</span>
           </>}
         </code>
-        <span className="stsv-sol-len">{moveLen(alg)}{progressiveReveal && t('步', ' moves')}</span>
+        <span className={showMoveCount ? 'stsv-sol-len' : 'sr-only'}>{moveCount}</span>
       </span>,
     };
   }) ?? [];
   // 动画:把前导整体转体(z2 y…)折进 setup(打乱之后),只播实际转动 → 开头转体不动画化。
   const selSolParts = selSolAlg != null ? splitLeadRot(selSolAlg) : null;
-  // Keep the displayed, merged y rotation clickable; other view rotations stay fixed.
-  const selectedLeadTokens = selSolParts?.lead.split(/\s+/).filter(Boolean) ?? [];
-  const selectedYRotation = /^y[2']?$/.test(selectedLeadTokens.at(-1) ?? '')
-    ? selectedLeadTokens.pop()! : '';
-  const selectedViewRotation = selectedLeadTokens.join(' ');
+  const { viewRotation: selectedViewRotation, yRotation: selectedYRotation } = splitYPreRotation(selSolParts?.lead ?? '');
   const playerSetup = selSolParts && selSolParts.lead ? `${normScramble} ${selSolParts.lead}` : normScramble;
-  const playerAlg = selSolParts ? (selSolParts.body || (selSolAlg ?? '')) : null;
+  const playerAlg = selSolParts && selSolAlg && solutionVisible(selectedSolIndex, selSolAlg)
+    ? selSolParts.body || selSolAlg : null;
+  // The mask takes the inverse of the solver's view rotation in canonical notation (z2, not z2').
+  const crossMaskOrientation = crossPreview && !showFullCube && selFace !== null
+    ? simplifyAlg(invertAlg(FACES[selFace].rot)) : undefined;
+  const playerRow = playerInList && playerAlg != null ? selectedSolIndex : null;
+  useLayoutEffect(() => {
+    const previousRow = previousPlayerRow.current;
+    previousPlayerRow.current = playerRow;
+    const selection = pendingInlineSelection.current;
+    pendingInlineSelection.current = null;
+    const container = playerContainerRef.current;
+    if (!container || playerRow == null) return;
+    const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const from = selection?.index === playerRow ? selection : null;
+    if (previousRow == null || previousRow === playerRow || !container.animate || reduceMotion) {
+      if (from) container.scrollIntoView({ block: 'nearest', behavior: 'instant' });
+      return;
+    }
+    const listTop = container.parentElement?.getBoundingClientRect().top ?? 0;
+    const shifts = [...(from?.tops ?? [])].flatMap(([row, top]) => {
+      if (!row.isConnected) return [];
+      const offset = top - (row.getBoundingClientRect().top - listTop);
+      return Math.abs(offset) >= 1 ? [{ row, offset }] : [];
+    });
+    if (from) container.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+    const animations = shifts.map(({ row, offset }) => row.animate(
+      [{ transform: `translateY(${offset}px)` }, { transform: 'translateY(0)' }],
+      { duration: SOLUTION_ROW_MOVE_MS, easing: 'cubic-bezier(.25,.7,.25,1)', fill: 'backwards' },
+    ));
+    animations.push(container.animate(
+      [{ opacity: 0, transform: 'translateY(-6px)' }, { opacity: 1, transform: 'translateY(0)' }],
+      { duration: 180, delay: shifts.length ? SOLUTION_ROW_MOVE_MS : 0, easing: 'ease-out', fill: 'backwards' },
+    ));
+    return () => animations.forEach(animation => animation.cancel());
+  }, [playerRow]);
+  // Keep a stable key among the rows so moving the player preserves its canvas.
+  const solutionPlayer = playerAlg != null ? (
+    <div className="stsv-player" key="player" ref={playerContainerRef}>
+      <CuberReconPlayer order={3} scramble={playerSetup} alg={playerAlg} playerRef={playerRef} backView={false}
+        stickering={crossMaskOrientation === undefined ? undefined : 'Cross'} stickeringOrientation={crossMaskOrientation} />
+    </div>
+  ) : null;
 
   const settingsButton = (
     <>
@@ -1094,7 +1202,7 @@ export default function StageSolver({ scramble, lang, initialMethod = 'std', ini
 
   return (
     <SolverLanguage.Provider value={lang}>
-    <section className={`stsv${compact ? ' stsv-compact' : ''}`}>
+    <section className={`stsv${compact ? ' stsv-compact' : ''}`} data-player-beside-list={playerBesideList ? '' : undefined}>
       {/* 控件常驻:求解器加载期间也能切方法/阶段/条数(切方法即换池),UI 不被 loading 替换。 */}
       <div className="stsv-controls">
         {/* 底色子集(色中性 cross 选择):只显示选中底色对应的视角格;复用 /scramble/stats 的同款 picker。 */}
@@ -1102,9 +1210,10 @@ export default function StageSolver({ scramble, lang, initialMethod = 'std', ini
         <div className="stsv-control stsv-control-subset">
           <SubsetColorPicker sel={subsetSel} language={lang} />
         </div>
-        <div className="stsv-control" data-no-swipe>
+        <div className={`stsv-control${inlineSolutions ? ' stsv-stage-control' : ''}`} data-no-swipe>
           <MethodStagePicker
             isZh={lang === 'zh'} method={method} stage={stages[stage] ?? stages[0]}
+            openOnHover={!inlineSolutions}
             methods={METHOD_KEYS} stagesOf={key => VARIANT_STAGES[key as Method]}
             onSelect={(nextMethod, nextStage) => {
               setMethod(nextMethod as Method);
@@ -1201,6 +1310,8 @@ export default function StageSolver({ scramble, lang, initialMethod = 'std', ini
         <div id={settingsId} className="stsv-settings">
           {allowProgressiveReveal && <BoolToggle value={revealEnabled} onChange={changeRevealEnabled}
             label={t('逐步揭示', 'Progressive reveal')} />}
+          {crossPreview && <BoolToggle value={showFullCube} onChange={changeShowFullCube}
+            label={t('显示完整魔方', 'Show full cube')} />}
           <div className="stsv-settings-limits">
             {/* 最大步数 = 比该面最优多几步(相对最优,跨面一致;cross 阶段也不会因绝对大值爆炸)。 */}
             <label className="stsv-control">
@@ -1436,7 +1547,8 @@ export default function StageSolver({ scramble, lang, initialMethod = 'std', ini
           )}
 
           {selFace !== null && (!allowProgressiveReveal || revealPreferenceReady) && (
-            <div className={`stsv-result${showExpandedSolutions ? ' stsv-result-expanded' : ''}`}>
+            <div className="stsv-result">
+              {playerBesideList && solutionPlayer}
               <div className="stsv-sols">
                 {movesLoading && (!moves || moves.sols.length === 0) && (
                   <div className="stsv-status"><Spinner size={14} />{t('搜索最优解…', 'Searching…')}</div>
@@ -1463,23 +1575,32 @@ export default function StageSolver({ scramble, lang, initialMethod = 'std', ini
                         <Spinner size={12} className="stsv-sols-spin" label={t('搜索中…', 'Searching…')} />
                       </div>
                     )}
-                    {showExpandedSolutions ? (
-                      <div className="stsv-solution-list" aria-label={t('解法', 'Solutions')}>
-                        {solutionItems.map((item, i) => (
-                          <div className={`stsv-solution-row${i === selectedSolIndex ? ' is-selected' : ''}`} key={item.value}>
-                            <button type="button" className="stsv-solution-choice" aria-pressed={i === selectedSolIndex}
-                              onClick={() => {
-                                const alg = rotateSolutionY(moves.sols[i].m, rowRot[i] ?? 0);
-                                selectSol(i, solutionVisible(i, alg));
-                                if (solutionVisible(i, alg)) copySol(alg);
-                              }}>{item.label}</button>
-                            {revealControls(i, rotateSolutionY(moves.sols[i].m, rowRot[i] ?? 0))}
-                            {orientationButton(i, rotateSolutionY(moves.sols[i].m, rowRot[i] ?? 0))}
-                          </div>
-                        ))}
+                    {inlineSolutions ? (
+                      <div className="stsv-solution-list" role="group" aria-label={t('解法', 'Solutions')}>
+                        {solutionItems.flatMap(({ value, alg, lead, startsGroup, visible, label }) => {
+                          const selected = value === selectedSolIndex;
+                          const row = (
+                            <div className={`stsv-solution-row${selected ? ' is-selected' : ''}${startsGroup && value > 0 ? ' stsv-solution-group-start' : ''}`} key={value}>
+                              {orientationButton(value, lead)}
+                              <button type="button" className="stsv-solution-choice" aria-pressed={visible ? selected : undefined}
+                                disabled={!visible && movesLoading}
+                                onClick={(event) => {
+                                  if (!visible) {
+                                    revealSolution(value, revealedCount(value) + 1);
+                                    return;
+                                  }
+                                  prepareInlineSelection(value, event.currentTarget);
+                                  selectSol(value, true);
+                                  copySol(alg);
+                                }}>{label}</button>
+                              {selected && revealControls(value, alg)}
+                            </div>
+                          );
+                          return selected && playerInList ? [row, solutionPlayer] : [row];
+                        })}
                       </div>
                     ) : <div ref={solutionControlsRef} className="stsv-solution-controls">
-                      {orientationButton(selectedSolIndex, selSolAlg ?? '')}
+                      {orientationButton(selectedSolIndex, selSolParts?.lead ?? '')}
                       {selectedViewRotation && (
                         <code className="stsv-sol-prefix">{selectedViewRotation}</code>
                       )}
@@ -1510,20 +1631,7 @@ export default function StageSolver({ scramble, lang, initialMethod = 'std', ini
                 )}
               </div>
 
-              {/* 单个共享 3D 播放器:跟随上方菜单选中的解法。就是 /recon 详情页那一个
-                  (CuberReconPlayer,跑站内 /sim 引擎)—— 「打乱 + 一串解法」正是它
-                  本来的输入形状:scramble 收前导整体转体,alg 只留要动画的面转。 */}
-              {selSolAlg && playerAlg != null && solutionVisible(selectedSolIndex, selSolAlg) && (
-                <div className="stsv-player">
-                  <CuberReconPlayer
-                    order={3}
-                    scramble={playerSetup}
-                    alg={playerAlg}
-                    playerRef={playerRef}
-                    backView={false}
-                  />
-                </div>
-              )}
+              {!inlineSolutions && !playerBesideList && solutionPlayer}
             </div>
           )}
         </>

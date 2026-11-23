@@ -153,6 +153,12 @@ html[data-theme='dark'] .stsv {
   margin: 4px 0 12px;
 }
 .stsv-method-controls { display: flex; align-items: center; gap: 2px; }
+.stsv-stage-control .pp-trigger { color: var(--foreground); }
+.stsv-stage-control .pp-item:is(:hover, .pp-item--active) {
+  background: transparent;
+  color: var(--foreground);
+  font-weight: 700;
+}
 .stsv-control { display: flex; flex-direction: column; gap: 4px; }
 .stsv-control > span { font-size: 12px; color: var(--sv-text-sub); }
 /* 直接子 select 才套工具栏外观;嵌套的「底色」picker(孙级 .subset-picker-mode)保留自带样式。 */
@@ -474,7 +480,7 @@ body[data-site-scenery='transparent'] .timer-room-dialog.stsv-settings-dialog {
   letter-spacing: 0.02em;
 }
 
-/* ── result: 解法菜单位于共享播放器上方 ── */
+/* ── result: 解法与共享播放器 ── */
 .stsv-result {
   display: flex;
   flex-direction: column;
@@ -649,19 +655,16 @@ body[data-site-scenery='transparent'] .timer-room-dialog.stsv-settings-dialog {
 .stsv-settings .stsv-moverestrict { margin: 0; }
 .stsv-settings .stsv-mr-grid { flex-wrap: wrap; }
 
-/* Expanded timer: one shared player on the left, persistent solutions on the right. */
-.stsv-result.stsv-result-expanded {
-  display: grid;
-  grid-template-columns: minmax(240px, 1fr) minmax(0, 1fr);
-  align-items: start;
-  gap: 24px;
-}
-.stsv-result-expanded > .stsv-player { grid-column: 1; grid-row: 1; width: 100%; }
-.stsv-result-expanded > .stsv-sols { grid-column: 2; grid-row: 1; }
 .stsv-solution-list {
   display: grid;
-  grid-template-columns: max-content minmax(0, 1fr) max-content max-content max-content max-content;
+  position: relative;
+  overflow-anchor: none;
+  grid-template-columns: max-content max-content minmax(0, 1fr) max-content max-content;
   gap: 4px 8px;
+}
+.stsv-solution-list > .stsv-player {
+  grid-column: 1 / -1;
+  scroll-margin-block-start: 48px;
 }
 .stsv-solution-list .stsv-solution-row {
   display: grid;
@@ -671,29 +674,30 @@ body[data-site-scenery='transparent'] .timer-room-dialog.stsv-settings-dialog {
 .stsv-solution-list .stsv-solution-choice,
 .stsv-solution-list .stsv-sol-option {
   display: grid;
-  grid-column: 1 / 4;
   grid-template-columns: subgrid;
   align-items: center;
 }
+.stsv-solution-list .stsv-solution-choice { grid-column: 2 / 5; }
+.stsv-solution-list .stsv-sol-option { grid-column: 1 / -1; }
 .stsv-solution-list .stsv-sol-slot-column { grid-column: 1; }
+.stsv-solution-list .stsv-sol-slot-column:empty { display: none; }
 .stsv-solution-list .stsv-sol-option code { grid-column: 2; }
+.stsv-solution-list:not(:has(.stsv-sol-slot-column:not(:empty))) .stsv-sol-option code {
+  grid-column: 1 / 3;
+}
 .stsv-solution-list .stsv-sol-len { grid-column: 3; }
-.stsv-solution-list .stsv-sol-orientation { grid-column: 6; grid-row: 1; }
-.stsv-solution-list .stsv-reveal-next { grid-column: 4; }
-.stsv-solution-list .stsv-reveal-all { grid-column: 5; }
-.stsv-solution-row { display: flex; align-items: center; gap: 8px; padding: 6px 8px; border-radius: 8px; }
-.stsv-solution-row.is-selected { background: var(--accent-soft); }
+.stsv-solution-row > .stsv-sol-orientation { grid-column: 1; }
+.stsv-solution-row > .stsv-reveal-all { grid-column: 5; }
+.stsv-solution-row { display: flex; align-items: center; gap: 8px; padding: 6px 8px; }
+.stsv-solution-group-start { border-block-start: 1px solid var(--border-default); }
 .stsv-solution-choice {
   appearance: none; border: 0; background: transparent; color: inherit; font: inherit;
   padding: 6px 0; flex: 1; min-width: 0; text-align: left; cursor: pointer;
 }
 .stsv-solution-choice:focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }
+.stsv-solution-row.is-selected .stsv-solution-choice { font-weight: 700; }
 .stsv-solution-choice .stsv-sol-option code { white-space: normal; overflow-wrap: anywhere; }
 .stsv-solution-choice .stsv-sol-len { margin-left: auto; }
-@media (max-width: 720px) {
-  .stsv-result.stsv-result-expanded { grid-template-columns: minmax(0, 1fr); }
-  .stsv-result-expanded > .stsv-sols { grid-column: 1; grid-row: 2; }
-}
 .stsv-sol-orientation {
   display: inline-flex;
   align-items: center;
@@ -707,4 +711,5 @@ body[data-site-scenery='transparent'] .timer-room-dialog.stsv-settings-dialog {
   cursor: pointer;
 }
 .stsv-sol-orientation:hover { background: var(--accent-soft); }
+.stsv-solution-list .stsv-sol-orientation-icon:hover { background: transparent; }
 .stsv-sol-orientation:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }

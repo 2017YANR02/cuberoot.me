@@ -56,16 +56,19 @@ export interface TimerSoloPageProps {
 /** Canonical Solo view. Routing, stores and device transports stay with hosts;
  * this component owns responsive placement and renders exactly one solver. */
 export function TimerSoloPage({ title, resizeLabel = 'Resize panel', topbar, stage, timing, solver, capturePreview, afterTiming, narrowRecap, hints, history, tools }: TimerSoloPageProps) {
-  const hinge = useHostViewportLayout()?.hinge;
-  const separateSolver = Boolean(hinge && (!stage.fullscreen || hinge.width > hinge.height));
-  const rail = <div className="shell-rail timer-solver-rail" data-no-timer>{solver}</div>;
+  const host = useHostViewportLayout();
+  const hinge = host?.hinge;
   const wide = useTimerWideLayout();
+  const fullHeightDock = Boolean(wide && host && !hinge && host.bounds.width > host.bounds.height);
+  const separateSolver = fullHeightDock || Boolean(hinge && (!stage.fullscreen || hinge.width > hinge.height));
+  const rail = <div className="shell-rail timer-solver-rail" data-full-height-dock={fullHeightDock && !stage.fullscreen ? '' : undefined} data-no-timer>{solver}</div>;
   const [solverTriggerSlot, setSolverTriggerSlot] = useState<HTMLSpanElement | null>(null);
   const [previewHost, setPreviewHost] = useState<HTMLDivElement | null>(null);
   const canvasRef = useRef<HTMLDivElement>(null);
   const { surfaceRef, onContextMenu, onMouseDown, onMouseUp, onPointerDown, onPointerUp, onPointerCancel, ...canvas } = timing;
   return <SolverTriggerContext.Provider value={solverTriggerSlot}>
     {separateSolver && rail}
+    {fullHeightDock && <TimerWorkspaceDivider side="left" label={resizeLabel} />}
     <TimerTopbar brand={topbar.brand} availableTopBar={topbar.availableTopBar}
       actions={topbar.liveStatus && <span role="status" className="timer-live-watch-status">{topbar.liveStatus}</span>}
       className={`timer-solo-topbar${stage.fullscreen ? ' timer-solo-topbar--fullscreen' : ''}${topbar.className ? ` ${topbar.className}` : ''}`}
