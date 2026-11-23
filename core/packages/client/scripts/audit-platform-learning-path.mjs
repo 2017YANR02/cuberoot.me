@@ -101,13 +101,15 @@ async function run(width, reducedMotion) {
       // cannot miss the short capture window. Freeze every path animation at
       // the same instant, then resume them after taking the screenshot.
       const midFrame = capture && index === 2 ? page.waitForFunction(() => {
-        const grid = document.querySelector('.path-measure[data-layout="expanded"]');
+        const grid = document.querySelector('.path-measure[data-layout="expanded"], .path-grid[data-motion][data-layout="expanded"]');
         const card = grid?.querySelector('li[data-selected]');
-        const reveal = card?.getAnimations().find(a => a.effect.getKeyframes().some(frame => frame.clipPath));
+        const surface = grid?.parentElement.querySelector('[data-layout="compact"] li[data-selected]');
+        const reveal = card?.getAnimations().find(a => a.effect.getKeyframes().some(frame => frame.clipPath))
+          ?? surface?.getAnimations().find(a => a.effect.getKeyframes().some(frame => frame.transform?.includes('scale(')));
         if (!reveal) return false;
         const timing = reveal.effect.getTiming();
         const time = timing.delay + Number(timing.duration) * .7;
-        for (const animation of grid.parentElement.getAnimations({subtree: true})) {
+        for (const animation of grid.parentElement.getAnimations({subtree: true}).filter(a => a.playState === 'running')) {
           animation.pause();
           animation.currentTime = time;
         }
@@ -121,7 +123,7 @@ async function run(width, reducedMotion) {
         if (capture && index === 2) {
           await midFrame;
           await page.screenshot({path: join(output, width+'-expanding.png'), animations:'allow'});
-          await grid.evaluate(el => el.parentElement.getAnimations({subtree:true}).forEach(animation => animation.play()));
+          await grid.evaluate(el => el.parentElement.getAnimations({subtree:true}).filter(a => a.playState === 'paused').forEach(animation => animation.play()));
         }
       }
       await expect(first).toBeFocused();
@@ -129,7 +131,7 @@ async function run(width, reducedMotion) {
       await checkExpanded(grid);
       await checkContrast(grid);
       if (capture && index === 2) await section.screenshot({path: join(output, width+'-expanded.png')});
-      await page.setViewportSize({width: width === 375 ? 768 : 375, height: 960});
+      await page.setViewportSize({width: width < 700 ? 768 : 375, height: 960});
       await checkExpanded(grid);
       if (index === 2) await section.getByRole('button', {name:'换一个阶段'}).click();
       else await page.keyboard.press('Escape');
@@ -139,7 +141,7 @@ async function run(width, reducedMotion) {
       await page.setViewportSize({width, height: 960});
     }
     await page.reload({waitUntil:'domcontentloaded'});
-    await expect(grid).toHaveAttribute('data-layout','expanded');
+    await expect(grid).toHaveAttribute('data-layout', width < 700 ? 'compact' : 'expanded');
     await expect(stages.nth(5)).toHaveAttribute('aria-current','step');
     console.log('PASS', width, reducedMotion);
   } finally {
@@ -149,7 +151,7 @@ async function run(width, reducedMotion) {
 
 try {
   await mkdir(output, {recursive:true});
-  for (const width of [1440, 1280, 768, 375]) {
+  for (const width of [1440, 1280, 768, 360, 375, 390, 430]) {
     for (const motion of ['no-preference','reduce']) await run(width, motion);
   }
 } finally {

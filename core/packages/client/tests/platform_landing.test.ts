@@ -28,6 +28,7 @@ vi.mock('@/lib/platform-homepage', async importOriginal => ({ ...await importOri
 vi.mock('@/components/AppLink', () => ({ default: ({ prefetch: _prefetch, children, ...props }: React.ComponentProps<'a'> & { prefetch?: boolean; children: ReactNode }) => createElement('a', props, children) }));
 vi.mock('next/image', () => ({ default: ({ src, alt, className }: { src: string; alt: string; className?: string }) => createElement('img', { src, alt, className }) }));
 
+import { learningStages } from '@/lib/platform-learning-path';
 import { PlatformLanding } from '@/components/platform/PlatformLanding';
 import PlatformPage from '@/app/[lang]/platform/page';
 import { courseCatalogDetails, matchesCourseCatalog } from '@/lib/platform-course-catalog';
@@ -229,7 +230,7 @@ it.runIf(process.env.PLATFORM_BROWSER_LAYOUT === '1')('fits guest, learner and e
                 const row = cards.every(rect => Math.abs(rect.top - cards[0]!.top) < 1);
                 return { overflow: document.documentElement.scrollWidth > innerWidth, offset: Math.abs(main.left - (innerWidth - main.right)), minFont: Math.min(...links.map(link => parseFloat(getComputedStyle(link).fontSize))), contrast: Math.min(...ratios), contained: links.every(link => { const rect = link.getBoundingClientRect(); return rect.left >= 0 && rect.right <= innerWidth + 1; }), row, minCardHeight: Math.min(...cards.map(rect => rect.height)), floatsHidden: [...document.querySelectorAll('.clawd-deskpet,.deskpet-compact')].every(element => getComputedStyle(element).display === 'none') };
               });
-              expect(result, `${state}/${width}/${theme}`).toMatchObject({ overflow: false, contained: true, floatsHidden: true, row: width >= 700 });
+              expect(result, `${state}/${width}/${theme}`).toMatchObject({ overflow: false, contained: true, floatsHidden: true, row: true });
               expect(result.offset).toBeLessThanOrEqual(1);
               expect(result.minFont).toBeGreaterThanOrEqual(13);
               expect(result.minCardHeight).toBeGreaterThanOrEqual(44);
@@ -409,4 +410,73 @@ it('restores the account stage on a fresh device and keeps a failed change retry
     expect(localStorage.getItem(key)).toBe('3');
     expect(host.querySelector('.path-sync-feedback')).toBeNull();
   } finally { await act(async () => root.unmount()); localStorage.removeItem(key); }
+});
+
+it.each([360, 375, 390, 430].flatMap(width => [0, 2, 5].map(index => ({ width, index }))))('restores the mobile grid and handles rapid selections without animation at $width px (stage $index)', async ({ width, index }) => {
+  const { NuqsTestingAdapter } = await import('nuqs/adapters/testing');
+  const media = new EventTarget();
+  vi.stubGlobal('matchMedia', (query: string) => Object.assign(media, { matches: query.includes('reduced-motion') || (query.includes('700px') && width < 700) }));
+  const animate = vi.fn();
+  const descriptor = Object.getOwnPropertyDescriptor(Element.prototype, 'animate');
+  Object.defineProperty(Element.prototype, 'animate', { configurable: true, value: animate });
+  mocks.stage.mockResolvedValueOnce('sub30').mockResolvedValue('sub10');
+  const host = document.createElement('div'), root = createRoot(host);
+  document.body.append(host);
+  try {
+    const renderAt = (searchParams: string) => act(async () => root.render(createElement(NuqsTestingAdapter, { hasMemory: true, searchParams, children: createElement(PlatformLanding) })));
+    await renderAt('?view=home');
+    const grid = host.querySelector<HTMLElement>('.path-grid')!;
+    expect(grid.dataset.layout).toBe('compact');
+    expect(grid.querySelector('[aria-current="step"]')?.textContent).toContain('稳定 30 秒');
+    const buttons = grid.querySelectorAll<HTMLButtonElement>('.path-stage');
+    await act(async () => { buttons[index]!.click(); buttons[(index + 1) % 6]!.click(); });
+    expect(grid.dataset.layout).toBe('expanded');
+    expect(buttons[index]!.disabled).toBe(true);
+    const stage = learningStages[index]!;
+    expect(Array.from(grid.querySelectorAll('a'), link => link.getAttribute('href'))).toEqual(
+      [...stage.courses, ...stage.practice].map(entry => entry.href),
+    );
+    expect(document.activeElement).toBe(grid.querySelector('a'));
+    const back = vi.spyOn(window.history, 'back').mockImplementation(() => {});
+    try {
+      await act(async () => grid.querySelector<HTMLButtonElement>('.path-change')!.click());
+      expect(back).toHaveBeenCalledOnce();
+      await renderAt('');
+      expect(grid.dataset.layout).toBe('compact');
+      expect(document.activeElement).toBe(buttons[index]);
+      expect(animate).not.toHaveBeenCalled();
+    } finally { back.mockRestore(); }
+  } finally {
+    await act(async () => root.unmount());
+    host.remove(); vi.unstubAllGlobals();
+    if (descriptor) Object.defineProperty(Element.prototype, 'animate', descriptor);
+    else Reflect.deleteProperty(Element.prototype, 'animate');
+  }
+});
+
+it('shows the local timer suggestion and saves it only after a click', async () => {
+  await import('@/lib/platform-timer-stage');
+  const preference = 'cuberoot-platform-home-milestone:1';
+  localStorage.removeItem(preference);
+  const solves = Array.from({length: 5}, (_, i) => ({
+    id: 'r' + i, event: '333', ts: i + 1, timeMs: 24500, penalty: 'ok', scramble: 'R U',
+  }));
+  localStorage.setItem('cuberoot-timer.v2', JSON.stringify({version: 2, byEvent: {'333': solves}}));
+  const host = document.createElement('div'), root = createRoot(host);
+  try {
+    await act(async () => root.render(createElement(PlatformLanding)));
+    const recommended = host.querySelector<HTMLButtonElement>('[data-recommended] .path-stage');
+    expect(recommended?.textContent).toContain('稳定 30 秒');
+    expect(recommended?.textContent).toContain('计时推荐');
+    expect(localStorage.getItem(preference)).toBeNull();
+    expect(mocks.stage).toHaveBeenCalledTimes(1);
+    await act(async () => recommended!.click());
+    expect(mocks.stage).toHaveBeenLastCalledWith(expect.anything(), 'sub30');
+    expect(host.querySelector('[data-recommended]')).toBeNull();
+    expect(localStorage.getItem(preference)).toBe('2');
+  } finally {
+    await act(async () => root.unmount());
+    localStorage.removeItem(preference);
+    localStorage.removeItem('cuberoot-timer.v2');
+  }
 });

@@ -5,7 +5,7 @@
 .path-title { font-size: var(--platform-home-text-size); color: var(--foreground); }
 .path-hint { display: flex; align-items: center; gap: 3px; margin-top: auto; padding-top: 6px; color: var(--foreground); }
 .path-status { font-size: var(--platform-home-small-size); color: var(--foreground); }
-.path-grid > li:has([aria-current="step"]) { border-color: var(--platform-home-emphasis); }
+.path-grid > li[data-recommended], .path-grid > li:has([aria-current="step"]) { border-color: var(--platform-home-emphasis); }
 @media (hover: hover) {
   .path-grid[data-layout="compact"]:not([data-motion],.path-measure) > li:hover { transform: translateY(-2px); border-color: var(--platform-home-emphasis); }
 }
@@ -106,3 +106,31 @@
 .path-grid[data-layout="expanded"] .path-columns a { padding-inline-end: 22px; }
 .path-columns a > svg { position: absolute; inset-inline-end: 2px; top: calc(50% - 7.5px); color: var(--platform-home-secondary-text); }
 .path-sync-feedback { width: min(100%, 840px); margin: 4px auto 0; }
+
+@media (width < 700px) {
+  .platform-home-path { min-inline-size: 0; }
+  .path-viewport { min-inline-size: 0; }
+  .path-grid[data-layout="compact"] {
+    display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 8px; padding: 0 16px;
+  }
+  .path-grid[data-layout="compact"] > li { min-height: 68px; }
+  .path-grid[data-layout="compact"] .path-stage { gap: 3px; padding: 6px 12px; justify-content: center; }
+  .path-grid[data-layout="compact"]:not([data-motion],.path-measure) > li:hover { transform: none; }
+  .path-grid[data-layout="compact"] .platform-home-milestone-number {
+    width: 24px; height: 24px; flex-basis: 24px; font-size: 12px;
+  }
+  .path-grid[data-layout="compact"] .path-title { font-size: 15px; font-weight: 600; line-height: 1.25; }
+  .path-grid[data-layout="compact"] :is(.path-hint,.path-description,.path-stage > small) { display: none; }
+  .path-grid .path-status { font-size: 12px; }
+  .path-grid .path-stage:focus-visible { outline-offset: -3px; }
+  .path-prompt.sr-only {
+    position: static; width: auto; height: auto; margin: 0 16px; padding: 0 0 6px;
+    clip-path: none; clip: auto; overflow: visible; white-space: normal;
+    font-size: 13px; line-height: 18px; color: var(--platform-home-secondary-text);
+  }
+  .path-grid[data-layout="expanded"] > li[data-selected] .path-stage { align-content: center; }
+  .path-grid[data-layout="expanded"] .path-columns { grid-template-columns: minmax(0,1fr); }
+  .path-columns a { min-height: 56px; padding-block: 3px; line-height: 18px; }
+  .path-columns a > span { line-height: 1.35; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+  .path-viewport:has(> [data-motion]) > .path-prompt { visibility: hidden; }
+}

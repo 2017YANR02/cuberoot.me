@@ -505,8 +505,8 @@ it('shows instructor display names and only links an actual teacher directory en
     const instructors = host.querySelector('.platform-course-instructors')!;
     expect(instructors.querySelectorAll('a')).toHaveLength(1);
     expect(instructors.querySelector('a')?.getAttribute('href')).toBe('/platform/teachers/public-teacher');
-    expect(host.querySelector('.platform-course-overview > .back-home')?.getAttribute('href')).toBe('/platform');
-    expect(host.querySelector('.platform-course-overview > .back-home span.sr-only')?.textContent).toBe('返回学习中心');
+    expect(host.querySelector('.platform-course-overview > .back-home')?.getAttribute('href')).toBe('/platform/courses');
+    expect(host.querySelector('.platform-course-overview > .back-home span.sr-only')?.textContent).toBe('返回课程列表或上一层');
     expect(host.querySelector('.platform-course-overview > .back-home span:not(.sr-only)')).toBeNull();
   } finally { await act(async () => root.unmount()); }
 });

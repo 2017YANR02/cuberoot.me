@@ -54,11 +54,11 @@ export function PlatformCourseDetail({ course, lessons }: { course: PlatformEnti
   ].filter(group => group.lessons.length > 0);
   const introductionCount = directory.filter(lesson => lesson.introduction).length;
   const previewCount = directory.filter(lesson => lesson.preview).length;
-  const coreCount = directory.length - introductionCount - previewCount;
+  const coreCount = directory.length - introductionCount;
   const composition = [
     introductionCount > 0 && t(`${introductionCount} 节引言`, `${introductionCount} introductions`),
-    previewCount > 0 && t(`${previewCount} 节免费试听`, `${previewCount} free previews`),
     coreCount > 0 && t(`${coreCount} 节正式课`, `${coreCount} core lessons`),
+    previewCount > 0 && t(`含 ${previewCount} 节免费试听`, `includes ${previewCount} free previews`),
   ].filter(Boolean).join(' · ');
   const locked = directory.some(lesson => lesson.locked);
   const originalLessons = new Map(directory.map(lesson => [lesson.id, lesson]));
@@ -94,7 +94,7 @@ export function PlatformCourseDetail({ course, lessons }: { course: PlatformEnti
 
   return <div className="platform-course-detail-content">
     <header className="platform-course-overview">
-      <PageBackLink fallback="/platform" label={t('返回学习中心', 'Back to Learning Center')} acceptEntry={isLearningSpaceEntry} />
+      <PageBackLink fallback="/platform/courses" label={t('返回课程列表或上一层', 'Back to courses or previous page')} acceptEntry={isLearningSpaceEntry} />
       <div className="platform-course-overview-title">
         <h1>{course.title}</h1>
         {instructors.length > 0 ? <div className="platform-course-instructors">

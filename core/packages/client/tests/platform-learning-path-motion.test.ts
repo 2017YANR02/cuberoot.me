@@ -10,7 +10,7 @@ afterEach(() => {
 
 // jsdom has no layout engine. Supply compact and expanded reference rectangles
 // so this test checks the actual keyframes, timing and cleanup independently.
-it.each([1440, 1280, 768, 375])('sequences both directions against measured rectangles at %i px', async width => {
+it.each([1440, 1280, 768])('sequences both directions against measured rectangles at %i px', async width => {
   const mobile = width < 700;
   const media = new EventTarget();
   vi.stubGlobal('matchMedia', (query: string) => Object.assign(media, { matches: query.includes('width') && mobile }));

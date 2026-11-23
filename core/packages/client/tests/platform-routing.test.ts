@@ -205,16 +205,14 @@ describe('Platform route conservation', () => {
     expect(PLATFORM_PUBLIC_NAV.map((entry) => entry.label.zh)).toEqual([
       '学习',
       '课程',
-      '社区',
       '讲师',
-      '机构',
+      '活动',
     ]);
     expect(PLATFORM_PUBLIC_NAV.map((entry) => entry.href)).toEqual([
       '/platform',
       '/platform/courses',
-      '/platform/community/feed',
       '/platform/teachers',
-      '/platform/org',
+      '/platform/events',
     ]);
     expect(routeById('algorithms').canonicalHref).toBe('/alg/3x3');
     expect(routeById('algorithm-detail')).toMatchObject({ canonicalHref: '/alg/3x3', kind: 'canonical' });

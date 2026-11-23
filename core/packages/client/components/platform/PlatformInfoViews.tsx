@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { ExternalLink } from '@app-foundation/icons/lucide';
+import { BookOpen, Building2, CalendarDays, ExternalLink, UsersRound } from '@app-foundation/icons/lucide';
 import AppLink from '@/components/AppLink';
 import dynamic from 'next/dynamic';
 import { useT } from '@/hooks/useT';
@@ -25,8 +25,8 @@ export function PlatformAboutView() {
         <p>{t('从入门复原到进阶竞速，课程、学习记录和订单都与魔方根账号同步。', 'From your first solve to advanced speedcubing, courses, learning records and orders stay connected to your CubeRoot account.')}</p>
       </section>
       <section>
-        <h2>{t('练习、交流与教学', 'Practice, community and teaching')}</h2>
-        <p>{t('使用计时器和公式库练习，在社区交流经验，或通过讲师与机构工作台开展教学。', 'Practise with the timer and algorithm library, share experience in the community, or teach through instructor and organization workspaces.')}</p>
+        <h2>{t('练习与活动', 'Practice and events')}</h2>
+        <p>{t('使用计时器和公式库练习，参加平台发布的比赛和活动。', 'Practise with the timer and algorithm library, and take part in competitions and events.')}</p>
       </section>
       <div className="platform-write-actions">
         <AppLink className="platform-button platform-button-primary" href="/platform/courses">{t('浏览课程', 'Browse courses')}</AppLink>
@@ -34,6 +34,25 @@ export function PlatformAboutView() {
       </div>
     </div>
   );
+}
+
+export function PlatformOrganizationAdmission() {
+  const t = useT();
+  const benefits = [
+    { icon: Building2, title: t('机构与校区', 'Schools and campuses'), text: t('统一管理机构、校区和成员权限。', 'Manage your organization, campuses and member permissions.') },
+    { icon: UsersRound, title: t('学员与班级', 'Learners and classes'), text: t('管理学员、班级和家长责任关系。', 'Manage learners, classes and guardian relationships.') },
+    { icon: CalendarDays, title: t('课包与排课', 'Packages and scheduling'), text: t('安排课次、管理课时权益和请假。', 'Schedule lessons, manage lesson credits and leave.') },
+    { icon: BookOpen, title: t('训练与教学反馈', 'Training and feedback'), text: t('发布训练任务、教学周报及课后反馈。', 'Publish training assignments, weekly reports and lesson feedback.') },
+  ];
+  return <div className="platform-admission-intro">
+    <section className="platform-admission-hero" data-site-surface="panel">
+      <div className="platform-admission-hero-copy"><h2>{t('让魔方教学更有条理', 'Make cubing education easier to manage')}</h2><p>{t('为教学机构提供统一的学员、课包、排课和训练管理工具。', 'Manage learners, lesson packages, schedules and training in one teaching workspace.')}</p>
+        <AppLink className="platform-button platform-button-primary platform-admission-start" href="/platform/org" prefetch={false}>{t('开始机构入驻', 'Get started')}</AppLink>
+        <AppLink className="platform-home-secondary" href="/contact" prefetch={false}>{t('咨询机构合作', 'Contact us about partnerships')}</AppLink></div>
+    </section>
+    <section className="platform-admission-benefits"><h2>{t('机构教学能力', 'Teaching capabilities')}</h2><div className="platform-admission-benefit-grid">{benefits.map(({ icon: Icon, title, text }) => <article key={title} data-site-surface="panel"><span className="platform-admission-benefit-icon"><Icon size={24} aria-hidden /></span><h3>{title}</h3><p>{text}</p></article>)}</div></section>
+    <section className="platform-admission-process"><h2>{t('入驻流程', 'Onboarding')}</h2><ol>{[[t('创建企业', 'Create an enterprise'), t('填写企业名称与基本资料。', 'Enter your organization details.')], [t('申请认证', 'Apply for verification'), t('提交企业认证资料并等待审核。', 'Submit verification details and await review.')], [t('开始使用', 'Start teaching'), t('认证后管理机构与教学业务。', 'Manage teaching after verification.')]].map(([title, detail], index) => <li key={title}><span className="platform-admission-step-number">{index + 1}</span><div><h3>{title}</h3><p>{detail}</p></div></li>)}</ol></section>
+  </div>;
 }
 
 export function PlatformOfflineView() {

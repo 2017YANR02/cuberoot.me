@@ -4,7 +4,11 @@ import { createRoot } from 'react-dom/client';
 import { beforeEach, expect, it, vi } from 'vitest';
 import type { PlatformRouteDefinition } from '@/lib/platform-types';
 const mocks = vi.hoisted(() => ({ user: { current: { uid: 1, wcaId: '' } as null | { uid: number; wcaId: string } }, write: vi.fn(), fetch: vi.fn() }));
-vi.mock('@/lib/auth-store', () => ({ useAuthUser: () => mocks.user.current }));
+vi.mock('@/lib/auth-store', async importOriginal => ({
+  ...(await importOriginal<typeof import('@/lib/auth-store')>()),
+  useAuthUser: () => mocks.user.current,
+}));
+vi.mock('@/i18n/tr', () => ({ useLang: () => 'zh' }));
 vi.mock('@/hooks/useT', () => { const t = (zh: string) => zh; return { useT: () => t }; });
 vi.mock('@/components/AppLink', () => ({ default: ({ href, children }: { href: string; children: ReactNode }) => createElement('a', { href }, children) }));
 vi.mock('@/lib/api-base', () => ({ apiUrl: (path: string) => path }));
@@ -52,7 +56,9 @@ it('offers login without reading private favorites for a guest', async () => {
   const host = document.createElement('div'), root = createRoot(host);
   try {
     await act(async () => root.render(createElement(PlatformFavoriteButton, { definition: {} as PlatformRouteDefinition, entityId, targetType: 'news' })));
-    expect(host.querySelector('a')?.getAttribute('href')).toBe('/platform/login');
+    const login = new URL(host.querySelector('a')!.href, 'https://cuberoot.me');
+    expect(login.pathname).toBe('/account');
+    expect(login.searchParams.get('next')).toBe('/zh/platform/news/' + entityId);
     expect(mocks.fetch).not.toHaveBeenCalled();
   } finally { await act(async () => root.unmount()); }
 });

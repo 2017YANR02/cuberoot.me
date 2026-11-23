@@ -46,14 +46,15 @@ it('keeps the Platform instructor catalog public and read-only even for a signed
     expect(firstPaint).toContain('teachers-page--platform');
     expect(firstPaint).not.toContain('teachers-hero');
     expect(firstPaint).not.toContain('魔方老师与机构');
-    expect(firstPaint).toContain('directory-toolbar');
+    expect(firstPaint).toContain('platform-toolbar');
     await act(async () => root.render(tree));
-    expect([...host.querySelectorAll('.platform-instructor-card h2')].map(node => node.textContent)).toEqual(['公开讲师']);
-    expect(host.querySelector('.platform-instructor-card')?.getAttribute('href')).toBe('/platform/teachers/1');
+    expect(host.querySelector('.platform-route-header h1:not(.sr-only)')?.textContent).toBe('全部讲师');
+    expect([...host.querySelectorAll('.platform-course-grid .platform-course-card h2')].map(node => node.textContent)).toEqual(['公开讲师']);
+    expect(host.querySelector('.platform-course-card-link')?.getAttribute('href')).toBe('/platform/teachers/1');
     expect(host.querySelector('.directory-entry')).toBeNull();
     expect(mocks.ownedEntries).not.toHaveBeenCalled();
     expect(host.querySelector('.teachers-hero-actions')).toBeNull();
-    expect(host.querySelector('.directory-toolbar')).not.toBeNull();
+    expect(host.querySelector('.platform-catalog-count')?.textContent).toBe('共 1 位讲师');
     expect(host.querySelector('.directory-owner-actions')).toBeNull();
   } finally { await act(async () => root.unmount()); }
 });

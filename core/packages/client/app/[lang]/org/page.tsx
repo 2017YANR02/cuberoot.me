@@ -18,6 +18,8 @@ import { MutationMessage, teachingErrorMessage, teachingRoleLabel, useOperationK
 import { LoadingIndicator } from '@/components/LoadingIndicator';
 import { PlatformNavigationContext } from '@/lib/platform-navigation-context';
 import { useQueryState, parseAsString } from 'nuqs';
+import { usePathname } from 'next/navigation';
+import { platformPathname } from '@/lib/platform-navigation';
 
 export default function OrganizationsPage() {
   const user = useAuthUser();
@@ -27,6 +29,8 @@ export default function OrganizationsPage() {
 function OrganizationsAccountPage({ user }: { user: ReturnType<typeof useAuthUser> }) {
   const t = useT();
   const inPlatformShell = useContext(PlatformNavigationContext);
+  const pathname = usePathname();
+  const adminRoute = platformPathname(pathname) === '/platform/admin/organization-verification';
   const [view, setView] = useQueryState('view', parseAsString.withDefault(''));
   const operationKey = useOperationKey();
   const [mounted, setMounted] = useState(false);
@@ -91,9 +95,9 @@ function OrganizationsAccountPage({ user }: { user: ReturnType<typeof useAuthUse
       </main>
     );
   }
-  if (view === 'admin') return <main className="org-page">
+  if (view === 'admin' || adminRoute) return <main className="org-page">
     <h1>{t('机构认证管理', 'Organization verification management')}</h1>
-    <AppLink href="/org" className="org-secondary-button" prefetch={false}>{t('返回机构', 'Back to organizations')}</AppLink>
+    {!adminRoute && <AppLink href="/org" className="org-secondary-button" prefetch={false}>{t('返回机构', 'Back to organizations')}</AppLink>}
     {hasAdminAccess(user) ? <EnterpriseVerificationAdmin /> : <p role="status">{t('无权访问此管理区。', 'You do not have access to this administration area.')}</p>}
   </main>;
 

@@ -1,5 +1,10 @@
 [
   {
+    "path": "components/platform/HomeLearningPath.tsx",
+    "call": "useQueryState('stage') history='push'",
+    "reason": "进入手机端阶段推荐详情后，系统返回手势回到阶段选择"
+  },
+  {
     "path": "app/[lang]/tutorial/2x2-lbl/page.tsx",
     "call": "setLocation({step,section}) history=chapterChanged ? 'push' : 'replace'",
     "reason": "二阶 LBL 大章导航进入历史记录；同章小节、播放跟随和练习切换替换当前地址"
@@ -273,16 +278,6 @@
     "path": "components/platform/OnlineCompetitionPreview.tsx",
     "call": "useQueryState('tab') history='push'",
     "reason": "线上比赛角色及主要内容标签导航"
-  },
-  {
-    "path": "components/platform/OnlineCompetitions.tsx",
-    "call": "useQueryState('view') history='push'",
-    "reason": "线上比赛管理功能或具体报名详情"
-  },
-  {
-    "path": "components/platform/OnlineCompetitions.tsx",
-    "call": "useQueryState('view') history='push'",
-    "reason": "线上比赛管理功能或具体报名详情"
   },
   {
     "path": "components/platform/OnlineCompetitions.tsx",

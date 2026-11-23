@@ -112,11 +112,14 @@ export function PlatformInstructorApplication(props: CommonProps) {
   if (role === 'suspended') return <div className="platform-application-flow"><ApplicationOverview state="unavailable" title={t('讲师权限已暂停', 'Instructor access is suspended')} description={t('请联系管理员恢复权限。', 'Contact an administrator to restore access.')} /></div>;
   if (role === 'active') return <div className="platform-domain-stack platform-application-flow">
     <ApplicationOverview state="approved" title={t('已成为讲师', 'You are an instructor')} description={t('你可以管理课程、学员及收益。', 'Manage your courses, learners and earnings.')}>
+      <AppLink className="platform-button platform-button-primary" href="/platform/instructor" prefetch={false}>{t('进入讲师工作台', 'Open instructor workspace')}<ArrowRight aria-hidden /></AppLink>
+    </ApplicationOverview>
+    <section className="platform-application-profile-section"><h2>{t('讲师身份管理', 'Instructor account')}</h2><AppLink className="platform-button" href="/platform/instructor/profile" prefetch={false}>{t('编辑公开资料', 'Edit public profile')}</AppLink>
       <button type="button" className="platform-button" disabled={Boolean(busy)} onClick={() => {
         if (!window.confirm(t('确定注销讲师身份吗？注销后将关闭讲师工作台权限、隐藏公开讲师资料并停用课程归属权限，历史记录不会删除。请先处理未结算收益；再次入驻需要重新审核。', 'Deactivate your instructor account? Workspace access and course ownership permissions will be revoked, and your public profile will be hidden. History is preserved. Settle outstanding earnings first; rejoining requires approval.'))) return;
         void runAction('archive-instructor');
       }}>{busy === 'archive-instructor' ? t('处理中…', 'Working…') : t('注销讲师身份', 'Deactivate instructor account')}</button>
-    </ApplicationOverview>
+    </section>
     {data.instructorProfileKnown !== false && <section className="platform-application-profile-section">
       <h2>{t('公开讲师资料', 'Public teaching profile')}</h2>
       {linked != null ? <div className="platform-application-profile"><p>{data.profileVisible === true ? t('已在讲师名录公开展示', 'Visible in the teacher directory') : t('当前资料已隐藏', 'Profile is hidden')}</p></div> : <>

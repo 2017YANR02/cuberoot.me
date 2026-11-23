@@ -4,14 +4,18 @@ import { PLATFORM_ADMIN_NAV, platformAdminNavigationState, platformNavigationSta
 import { matchPlatformRoute, resolvePlatformCanonicalPath, PLATFORM_CANONICAL_REWRITES, PLATFORM_ROUTES } from '@/lib/platform-routes';
 
 describe('Platform navigation context', () => {
-  it('keeps learning paths and memberships under courses with distinct secondary selections', () => {
-    expect(platformNavigationState('/zh/platform/paths')).toMatchObject({ primary: 'courses', secondary: 'paths' });
-    expect(platformNavigationState('/platform/paths/beginner')).toMatchObject({ primary: 'courses', secondary: 'paths' });
-    expect(platformNavigationState('/platform/membership')).toMatchObject({ primary: 'courses', secondary: 'membership' });
-    expect(platformNavigationState('/platform/courses/beginner/sections/core')).toMatchObject({ primary: 'courses', secondary: 'courses' });
-    expect(platformNavigationState('/platform/teachers/apply')).toMatchObject({ primary: 'teachers', secondary: 'teacher-apply' });
+  it('keeps course pages under the primary course link without secondary tabs', () => {
+    expect(platformNavigationState('/zh/platform/paths')).toMatchObject({ primary: 'discover', secondary: null });
+    expect(platformNavigationState('/platform/paths/beginner')).toMatchObject({ primary: 'discover', secondary: null });
+    expect(platformNavigationState('/platform/membership')).toMatchObject({ primary: 'courses', secondary: null });
+    expect(platformNavigationState('/platform/courses/beginner/sections/core')).toMatchObject({ primary: 'courses', secondary: null });
+    expect(platformNavigationState('/platform/teachers/apply')).toMatchObject({ primary: 'teachers', secondary: null });
     expect(platformNavigationState('/platform/orders')).toMatchObject({ primary: null, secondary: null });
     expect(platformNavigationState('/platform/progress')).toMatchObject({ primary: null, secondary: null });
+    expect(platformNavigationState('/platform/events')).toMatchObject({ primary: 'events', secondary: 'events' });
+    expect(platformNavigationState('/platform/events/online/example')).toMatchObject({ primary: 'events', secondary: 'online-competitions' });
+    expect(platformNavigationState('/platform/competitions/manage/example')).toMatchObject({ primary: null, secondary: null });
+    expect(platformNavigationState('/platform/news')).toMatchObject({ primary: null, secondary: null });
   });
 
   it('groups every admin entry exactly once and keeps detail pages selected under their parent', () => {

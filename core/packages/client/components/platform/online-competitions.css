@@ -15,6 +15,7 @@ body:has(.platform-shell--competitions) .clawd-deskpet { display: none; }
 :is(.competition-primary, .competition-secondary, .competition-icon-button, .competition-project, .competition-session, .competition-tab) { cursor: pointer; font: inherit; }
 :is(.competition-primary, .competition-secondary, .competition-icon-button, .competition-project, .competition-session, .competition-tab):disabled { cursor: not-allowed; opacity: .45; }
 :is(.competition-primary, .competition-secondary, .competition-icon-button, .competition-project, .competition-session, .competition-tab):focus-visible, .competitions a:focus-visible, .competitions summary:focus-visible { outline: 2px solid var(--ring); outline-offset: 4px; }
+.competition-view-picker { display: none; }
 .competition-tabs { display: flex; flex-wrap: wrap; gap: 12px 24px; margin-bottom: 28px; }
 .competition-tab { border: 0; background: none; color: var(--muted-foreground); padding: 0 0 10px; white-space: nowrap; font-size: .88rem; }
 .competition-tab[aria-current] { color: var(--foreground); box-shadow: 0 2px var(--foreground); }
@@ -102,4 +103,13 @@ body:has(.platform-shell--competitions) .clawd-deskpet { display: none; }
   .competition-session { flex-wrap: wrap; gap: 8px 16px; }
   .competition-heading p { font-size: .8rem; overflow-wrap: anywhere; }
   .competition-project { padding: 10px 12px; }
+}
+
+@media (width < 700px) {
+  .competition-tabs { display: block; margin-bottom: 20px; }
+  .competition-tabs > .competition-tab { display: none; }
+  .competition-view-picker { display: block; }
+  .competition-view-picker .compact-select,
+  .competition-view-picker .compact-select-trigger { width: 100%; }
+  .competition-view-picker .compact-select-trigger { justify-content: space-between; min-height: 44px; }
 }

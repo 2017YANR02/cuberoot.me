@@ -128,6 +128,14 @@ export const PLATFORM_ROUTES: readonly PlatformRouteDefinition[] = [
   route({ id: 'online-competitions', pattern: 'events/online', area: 'discover', access: 'public', kind: 'landing', title: text('线上比赛', 'Online competitions'), description: text('选择比赛和监督场次，报名参加 CubeRoot 线上魔方比赛。', 'Choose a competition and supervised session to enter a CubeRoot online cubing competition.') }),
   route({ id: 'online-competition', pattern: 'events/online/:id', area: 'discover', access: 'public', kind: 'landing', title: text('线上比赛详情', 'Online competition details'), description: text('查看比赛项目、监督场次、报名状态和成绩。', 'View events, supervised sessions, registration status and results.') }),
   route({ id: 'online-competition-preview', pattern: 'events/preview', area: 'discover', access: 'public', kind: 'landing', title: text('线上赛事预览', 'Online competition preview'), description: text('体验项目选择、监督场次、报名确认与候场流程。样例数据不会创建真实报名或扣款。', 'Explore event selection, supervised sessions, registration and check-in with sample data. No real registration or payment is created.') }),
+  route({ id: 'competition-manage', pattern: 'competitions/manage', area: 'account', access: 'account', kind: 'collection', title: text('赛事管理', 'Competition management') }),
+  route({ id: 'competition-manage-detail', pattern: 'competitions/manage/:id', area: 'account', access: 'account', kind: 'detail', title: text('管理赛事', 'Manage competition') }),
+  route({ id: 'competition-supervise', pattern: 'competitions/supervise', area: 'account', access: 'account', kind: 'collection', title: text('我的执场', 'My supervision assignments') }),
+  route({ id: 'competition-supervise-detail', pattern: 'competitions/supervise/:id', area: 'account', access: 'account', kind: 'detail', title: text('执场赛事', 'Supervise competition') }),
+  route({ id: 'competition-apply', pattern: 'competitions/apply', area: 'account', access: 'account', kind: 'form', title: text('主办方申请', 'Organizer application') }),
+  route({ id: 'admin-competition-applications', pattern: 'admin/competition-applications', area: 'admin', access: 'admin', kind: 'collection', title: text('主办方审核', 'Organizer applications') }),
+  canonical('admin-organization-verification', 'admin/organization-verification', 'admin', 'admin', text('机构认证审核', 'Organization verification'), '/org?view=admin'),
+  route({ id: 'organization-admission', pattern: 'organizations/join', area: 'discover', access: 'public', kind: 'landing', title: text('机构入驻', 'Register an organization') }),
   route({ id: 'event-detail', pattern: 'events/:id', area: 'discover', access: 'public', kind: 'detail', title: text('活动详情', 'Event details'), resource: 'events', actions: ['create-order', 'favorite'] }),
   route({ id: 'news', pattern: 'news', area: 'discover', access: 'public', kind: 'collection', title: text('资讯', 'News'), resource: 'news' }),
   route({ id: 'news-detail', pattern: 'news/:id', area: 'discover', access: 'public', kind: 'detail', title: text('资讯详情', 'News details'), resource: 'news' }),
@@ -283,13 +291,12 @@ export const PLATFORM_CANONICAL_REWRITES = PLATFORM_ROUTES
   }));
 
 export const PLATFORM_PUBLIC_NAV: ReadonlyArray<{
-  id: 'discover' | 'courses' | 'community' | 'teachers' | 'organizations';
+  id: 'discover' | 'courses' | 'teachers' | 'events';
   label: PlatformRouteDefinition['title'];
   href: string;
 }> = [
   { id: 'discover', label: text('学习', 'Learning'), href: '/platform' },
   { id: 'courses', label: text('课程', 'Courses'), href: '/platform/courses' },
-  { id: 'community', label: text('社区', 'Community'), href: '/platform/community/feed' },
   { id: 'teachers', label: text('讲师', 'Teachers'), href: '/platform/teachers' },
-  { id: 'organizations', label: text('机构', 'Schools'), href: '/platform/org' },
+  { id: 'events', label: text('活动', 'Events'), href: '/platform/events' },
 ];

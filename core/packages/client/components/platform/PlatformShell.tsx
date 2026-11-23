@@ -15,10 +15,11 @@ import { useT } from '@/hooks/useT';
 import { useLang } from '@/i18n/tr';
 import { useAuthUser, useIsAdmin } from '@/lib/auth-store';
 import { SEARCH_CARDS, isLandingSearchCardVisible } from '@/lib/landing-sections';
-import { isPlatformInstructorApplication, isPlatformInstructorCourseEditor, PLATFORM_PUBLIC_NAV } from '@/lib/platform-routes';
+import { isPlatformCourseClassroom, isPlatformInstructorApplication, isPlatformInstructorCourseEditor, PLATFORM_PUBLIC_NAV } from '@/lib/platform-routes';
 import { PLATFORM_ADMIN_NAV, PLATFORM_SECTION_NAV, platformAdminNavigationState, platformNavigationState, platformPathname, platformWorkspaceRoutes } from '@/lib/platform-navigation';
 import { PlatformCompetitionAccessContext, PlatformNavigationContext, PlatformInstructorAccessRefreshContext } from '@/lib/platform-navigation-context';
 import { PlatformAccountMenu } from './PlatformAccountMenu';
+import { PlatformState } from './PlatformState';
 import { canUseAssistant } from '@/lib/assistant-auth-continuation';
 import { useInstalledGenerativeAiDisabled } from '@/lib/installed-content';
 import { assistantOwner, assistantConversations } from '@/lib/assistant-conversations';
@@ -72,8 +73,6 @@ function HomeAssistant({ close, lang, cards }: { close: () => void; lang: 'zh' |
   </dialog>;
 }
 
-const HEADER_ORDER = ['discover', 'courses', 'teachers', 'community'] as const;
-
 function PlatformSecondaryNav({ items, active, label, className = '', navRef }: {
   items: ReadonlyArray<{ id: string; href: string; label: { zh: string; en: string } }>;
   active?: string | null; label: string; className?: string; navRef?: Ref<HTMLElement>;
@@ -87,7 +86,7 @@ function PlatformSecondaryNav({ items, active, label, className = '', navRef }: 
 
 function isLearningSpaceOutsideWorkspace(href: string): boolean {
   const path = platformPathname(href);
-  return (path === '/platform' || path.startsWith('/platform/')) && !/^\/platform\/(instructor|admin)(\/|$)/.test(path);
+  return (path === '/platform' || path.startsWith('/platform/')) && !/^\/platform\/(instructor|admin|org|competitions)(\/|$)/.test(path);
 }
 
 export function PlatformShell({ children, shared = false }: { children: ReactNode; shared?: boolean }) {
@@ -121,6 +120,10 @@ function PlatformShellContent({ children, shared }: { children: ReactNode; share
   const instructorHome = definition?.id === 'instructor';
   const instructorCourseEditor = isPlatformInstructorCourseEditor(definition?.id);
   const instructorStudio = instructorWorkspace && !instructorCourseEditor;
+  const competitionWorkspace = definition?.id.startsWith('competition-') ?? false;
+  const organizationWorkspace = definition?.area === 'organization';
+  const focusMode = isPlatformCourseClassroom(definition?.id) || instructorCourseEditor || definition?.id === 'teacher-apply-start';
+  const privateWorkspace = definition?.area === 'admin' || competitionWorkspace || organizationWorkspace;
   const checkInstructor = Boolean(owner);
   useEffect(() => {
     if (!checkInstructor) return;
@@ -133,9 +136,9 @@ function PlatformShellContent({ children, shared }: { children: ReactNode; share
   }, [owner, checkInstructor, instructorRevision]);
   const isInstructor = checkInstructor && instructorAccess?.owner === owner && instructorAccess.active;
   const [roles, setRoles] = useState<{ owner: string; organization: boolean; learner: boolean; organizer: boolean; supervisor: boolean } | null>(null);
-  const checkRoles = accountOpen || definition?.id === 'online-competitions' || primary === 'organizations';
+  const checkRoles = accountOpen || competitionWorkspace || organizationWorkspace;
   useEffect(() => {
-    if (!owner || isAdmin) { setRoles(null); return; }
+    if (!owner) { setRoles(null); return; }
     if (!checkRoles) return;
     let current = true;
     const teaching = import('@/lib/teaching-saas-api');
@@ -151,17 +154,14 @@ function PlatformShellContent({ children, shared }: { children: ReactNode; share
       setRoles({ owner, organization, learner, organizer, supervisor });
     });
     return () => { current = false; };
-  }, [owner, isAdmin, checkRoles]);
+  }, [owner, checkRoles]);
   const mine = roles?.owner === owner ? roles : null;
-  const organizer = isAdmin || Boolean(mine?.organizer);
-  const supervisor = isAdmin || Boolean(mine?.supervisor);
-  const organization = isAdmin || Boolean(mine?.organization);
+  const organizer = Boolean(mine?.organizer);
+  const supervisor = Boolean(mine?.supervisor);
+  const organization = Boolean(mine?.organization);
   const applicationLabel = isInstructor ? t('讲师身份设置', 'Instructor account settings') : instructorAccess?.owner === owner && instructorAccess.pending
     ? t('查看讲师申请进度', 'Instructor application status') : t('成为讲师', 'Become an instructor');
-  const sections = admin?.group.id === 'operations' ? [...admin.group.items,
-    { id: 'organizer-review', href: '/platform/events/online?view=review', label: { zh: '主办方申请', en: 'Organizer applications' } },
-    { id: 'organization-review', href: '/platform/org?view=admin', label: { zh: '机构认证审核', en: 'Organization verification' } },
-  ] : admin?.group.items ?? (primary === 'organizations' && !organization ? [] : primary ? PLATFORM_SECTION_NAV[primary] : []);
+  const sections = admin?.group.items ?? (primary === 'organizations' ? [] : primary ? PLATFORM_SECTION_NAV[primary] : []);
   const activeSecondary = admin?.secondary ?? secondary;
   const adminContextNav = useRef<HTMLElement>(null);
   useEffect(() => {
@@ -174,7 +174,7 @@ function PlatformShellContent({ children, shared }: { children: ReactNode; share
     else if (item.right > bounds.right) nav.scrollLeft += item.right - bounds.right;
   }, [activeSecondary]);
   const workspaceRoutes = platformWorkspaceRoutes(definition, Boolean(user), isAdmin);
-  const activeWorkspace = definition?.id;
+  const activeWorkspace = definition?.id === 'order-detail' ? 'orders' : definition?.id;
   const workspaceNav = workspaceRoutes.length > 0 && <nav className="platform-workspace-nav" aria-label={t('工作台功能', 'Workspace sections')} data-site-surface="panel">
     {workspaceRoutes.map(item => <AppLink key={item.id} href={`/platform/${item.pattern}`} scroll={false} prefetch={false}
       aria-current={activeWorkspace === item.id ? 'page' : undefined}>{t(item.title.zh, item.title.en)}</AppLink>)}
@@ -183,14 +183,16 @@ function PlatformShellContent({ children, shared }: { children: ReactNode; share
   const cards = useMemo(() => SEARCH_CARDS.filter(card => isLandingSearchCardVisible(card, isAdmin)), [isAdmin]);
   const Content = shared ? 'div' : 'main';
 
-  const pageContent = <PlatformInstructorAccessRefreshContext value={refreshInstructorAccess}><PlatformCompetitionAccessContext value={{ organizer, supervisor, ready: isAdmin || !owner || Boolean(mine) }}>{children}</PlatformCompetitionAccessContext></PlatformInstructorAccessRefreshContext>;
+  const instructorDenied = instructorWorkspace && Boolean(owner) && instructorAccess?.owner === owner && !isInstructor;
+  const instructorChecking = instructorWorkspace && Boolean(owner) && instructorAccess?.owner !== owner;
+  const guardedContent = instructorChecking ? <PlatformState kind="loading" /> : instructorDenied ? <PlatformState kind="permission" message={t('当前账号没有有效讲师身份。', 'This account does not have an active instructor role.')} permissionHref="/platform/teachers/apply" permissionLabel={t('查看讲师身份', 'View instructor status')} /> : children;
+  const pageContent = <PlatformInstructorAccessRefreshContext value={refreshInstructorAccess}><PlatformCompetitionAccessContext value={{ organizer, supervisor, ready: !owner || Boolean(mine) }}>{guardedContent}</PlatformCompetitionAccessContext></PlatformInstructorAccessRefreshContext>;
   const header = <header className="platform-home-header">
     <div className="platform-masthead-brand"><CubeRootLogo className="back-home platform-home-logo" height={38}><span className="platform-home-brand-text">{t('魔方根 CubeRoot', 'CubeRoot')}</span></CubeRootLogo></div>
     <nav className="platform-home-nav" aria-label={t('学习导航', 'Learning navigation')}>
-      {HEADER_ORDER.map(id => PLATFORM_PUBLIC_NAV.find(item => item.id === id)!).map(item => <AppLink key={item.id} href={item.href} aria-current={item.id === primary ? 'location' : undefined} prefetch={false}>{t(item.label.zh, item.label.en)}</AppLink>)}
+      {PLATFORM_PUBLIC_NAV.map(item => <AppLink key={item.id} href={item.href} aria-current={item.id === primary ? 'location' : undefined} prefetch={false}>{t(item.label.zh, item.label.en)}</AppLink>)}
     </nav>
     <div className="platform-home-header-actions">
-      {isAdmin && <AppLink className="platform-home-admin-link" href="/platform/admin" prefetch={false}>{t('平台管理', 'Platform admin')}</AppLink>}
       <AppLink className="platform-home-icon" href="/search" aria-label={t('搜索', 'Search')} prefetch={false}><Search aria-hidden /></AppLink>
       {!aiDisabled && <button type="button" className="platform-home-icon platform-home-ai" aria-label={t('AI 助手', 'AI assistant')} aria-haspopup="dialog" onClick={() => setAssistantOpen(true)}><Sparkles aria-hidden /><span>{t('AI 助手', 'AI assistant')}</span></button>}
       {user && <AppLink className="platform-home-icon" href="/platform/notifications" aria-label={t('消息', 'Messages')} prefetch={false}><Bell aria-hidden /></AppLink>}
@@ -198,17 +200,16 @@ function PlatformShellContent({ children, shared }: { children: ReactNode; share
         ariaLabel={user ? t('我的账号', 'My account') : t('登录与账号', 'Sign in and account')} label={user ? <HomeAvatar key={user.avatar} name={user.name} avatar={user.avatar} /> : <UserRound aria-hidden />}
         items={[]} onChange={() => {}} panelContent={<PlatformAccountMenu key={owner} name={user?.name} signedIn={Boolean(user)}
           admin={isAdmin} instructor={Boolean(isInstructor)} organization={organization} organizer={organizer}
-          supervisor={supervisor} learner={isAdmin || Boolean(mine?.learner)} applicationLabel={applicationLabel}
+          supervisor={supervisor} learner={Boolean(mine?.learner)} applicationLabel={applicationLabel}
           close={() => setAccountOpen(false)} />} />
     </div>
     {assistantOpen && <HomeAssistant close={() => setAssistantOpen(false)} lang={lang} cards={cards} />}
   </header>;
   const footer = <footer className="platform-home-more platform-shared-footer">
-    <AppLink href="/platform/events" prefetch={false}>{t('活动', 'Events')}</AppLink>
-    <AppLink href="/platform/news" prefetch={false}>{t('资讯', 'News')}</AppLink>
-    <AppLink href="/platform/org" prefetch={false}>{t('机构入驻', 'Register an organization')}</AppLink>
-    <AppLink href="/platform/about" prefetch={false}>{t('关于魔方根', 'About CubeRoot')}</AppLink>
     {(!isInstructor || isAdmin) && <AppLink href="/platform/teachers/apply" prefetch={false}>{applicationLabel}</AppLink>}
+    <AppLink href="/platform/organizations/join" prefetch={false}>{t('机构入驻', 'Register an organization')}</AppLink>
+    <AppLink href="/contact" prefetch={false}>{t('帮助与咨询', 'Help and contact')}</AppLink>
+    <AppLink href="/platform/about" prefetch={false}>{t('关于魔方根', 'About CubeRoot')}</AppLink>
   </footer>;
   if (instructorStudio) {
     const studioItems = [
@@ -220,32 +221,30 @@ function PlatformShellContent({ children, shared }: { children: ReactNode; share
     ];
     const accessKnown = instructorAccess?.owner === owner;
     return <PlatformNavigationContext value={true}><div className="platform-shell platform-instructor-studio-shell">
-      {header}
       <NavigationShell className="platform-instructor-studio" mainClassName="platform-main platform-instructor-studio-main" contentAs={Content}
-        showNavigation={Boolean(owner) && (!accessKnown || isInstructor || isAdmin)} items={isInstructor || isAdmin ? studioItems.map(item=>({...item,active:item.id===definition?.id})) : []}
+        showNavigation={Boolean(owner) && accessKnown && Boolean(isInstructor)} items={isInstructor ? studioItems.map(item=>({...item,active:item.id===definition?.id})) : []}
         labels={{ navigation:t('讲师工作台导航','Instructor studio navigation'), show:t('展开侧栏','Expand sidebar'), hide:t('收起侧栏','Collapse sidebar'), openMobile:t('打开导航','Open navigation'), closeMobile:t('关闭导航','Close navigation') }}
         renderLink={props=><AppLink {...props} prefetch={false} scroll={false}/>}
         togglePlacement="sidebar"
-        header={()=><header className="platform-instructor-navigation platform-instructor-studio-header" data-site-surface="heading">
-          <div className="platform-instructor-masthead"><div className="platform-instructor-studio-brand"><PageBackLink fallback={instructorHome?'/platform':'/platform/instructor'}
+        header={mobileToggle=><header className="platform-instructor-navigation platform-instructor-studio-header" data-site-surface="heading">
+          <div className="platform-instructor-masthead"><div className="platform-instructor-studio-brand">{mobileToggle}<PageBackLink fallback={instructorHome?'/platform':'/platform/instructor'}
             label={instructorHome?t('返回学习空间','Back to Learning Space'):t('返回讲师工作台','Back to instructor workspace')}
             acceptEntry={instructorHome?isLearningSpaceOutsideWorkspace:href=>platformPathname(href)==='/platform/instructor'}/><span>{t('讲师工作台','Instructor studio')}</span></div></div>
         </header>}
       >{pageContent}</NavigationShell>
-      {footer}
     </div></PlatformNavigationContext>;
   }
 
   return <PlatformNavigationContext value={true}>
     <div className={`platform-shell${shared ? ' platform-shell--shared' : ''}${home ? ' platform-home-shell' : ''}`}>
-      {header}
+      {focusMode ? null : privateWorkspace ? <header className="platform-private-header" data-site-surface="heading"><PageBackLink fallback="/platform" label={t('返回学习空间', 'Back to learning space')} acceptEntry={isLearningSpaceOutsideWorkspace} /><strong>{definition?.area === 'admin' ? t('平台管理', 'Platform administration') : organizationWorkspace ? t('机构工作台', 'Organization workspace') : t('赛事工作台', 'Competition workspace')}</strong></header> : header}
       {!home && admin && <PlatformSecondaryNav items={PLATFORM_ADMIN_NAV.map(group => ({ ...group, href: group.items[0].href }))} active={admin.group.id} label={t('管理功能区', 'Administration sections')} className="platform-admin-group-nav" />}
-      {!home && contextNav}
-      {!admin && workspaceNav}
+      {!home && !focusMode && contextNav}
+      {!admin && !focusMode && workspaceNav}
       <Content className="platform-main" role={shared && definition?.kind !== 'canonical' ? 'main' : undefined}>
         {pageContent}
       </Content>
-      {footer}
+      {!focusMode && !privateWorkspace && footer}
     </div>
   </PlatformNavigationContext>;
 }

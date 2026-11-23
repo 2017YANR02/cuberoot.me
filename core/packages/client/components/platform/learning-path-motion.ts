@@ -1,3 +1,5 @@
+import { animateMobilePath } from './mobile-learning-path-motion';
+
 export function measureLearningPath(list: HTMLElement) {
   const box = list.getBoundingClientRect();
   return {
@@ -17,6 +19,11 @@ export async function animateLearningPath(grid: HTMLOListElement, index: number,
   const reduced = window.matchMedia('(prefers-reduced-motion: reduce)');
   if (reduced.matches) return false;
 
+  if (window.matchMedia('(width < 700px)').matches) {
+    await animateMobilePath(grid, index, opening, signal);
+    return true;
+  }
+
   const destination = grid.cloneNode(true) as HTMLOListElement;
   destination.inert = true;
   destination.setAttribute('aria-hidden', 'true');
@@ -32,7 +39,6 @@ export async function animateLearningPath(grid: HTMLOListElement, index: number,
   const end = (opening ? after : before).cards[index]!;
   const dx = end.left + (end.width - start.width) / 2 - start.left;
   const dy = end.top - start.top;
-  const mobile = window.matchMedia('(width < 700px)').matches;
   const animations: Animation[] = [];
   const play = (node: Element, frames: Keyframe[], duration: number, delay = 0) => {
     animations.push(node.animate(frames, {duration, delay, easing: 'cubic-bezier(.2,.8,.2,1)', fill: 'both'}));
@@ -49,7 +55,7 @@ export async function animateLearningPath(grid: HTMLOListElement, index: number,
 
     for (const [i, peer] of Array.from(compact.children).entries()) {
       if (i === index) continue;
-      const offset = mobile ? 0 : Math.sign(i-index) * 18;
+      const offset = Math.sign(i-index) * 18;
       const frames = [{opacity: 1, transform: 'none'}, {opacity: 0, transform: `translateX(${offset}px) scale(.97)`}];
       play(peer, opening ? frames : frames.reverse(), 190, (opening ? 0 : 265) + (Math.abs(i-index)-1)*22);
     }

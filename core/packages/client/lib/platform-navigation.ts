@@ -1,21 +1,22 @@
 import { fillPlatformParams, matchPlatformRoute, resolvePlatformCanonicalPath, PLATFORM_ROUTES } from './platform-routes';
 import type { PlatformLocaleText, PlatformRouteDefinition } from './platform-types';
 
-export type PlatformPrimary = 'discover' | 'courses' | 'community' | 'teachers' | 'organizations';
+export type PlatformPrimary = 'discover' | 'courses' | 'teachers' | 'events' | 'organizations' | 'community';
 type NavItem = { id: string; href: string; label: PlatformLocaleText };
 const item = (id: string, href: string, zh: string, en: string): NavItem => ({ id, href, label: { zh, en } });
 
 export const PLATFORM_SECTION_NAV: Record<PlatformPrimary, readonly NavItem[]> = {
-  discover: [item('home', '/platform', '推荐', 'Recommended'), item('events', '/platform/events', '活动', 'Events'), item('online-competitions', '/platform/events/online', '线上比赛', 'Online competitions'), item('news', '/platform/news', '资讯', 'News')],
-  courses: [item('courses', '/platform/courses', '全部课程', 'All courses'), item('membership', '/platform/membership', '课程会员', 'Course membership')],
+  discover: [],
+  events: [item('events', '/platform/events', '全部活动', 'All events'), item('online-competitions', '/platform/events/online', '线上比赛', 'Online competitions')],
+  courses: [],
   community: [item('community-feed', '/platform/community/feed', '动态', 'Feed'), item('community', '/platform/community', '版块', 'Boards'), item('leaderboard', '/platform/leaderboard', '学习榜', 'Learning leaderboard')],
-  teachers: [item('teachers', '/platform/teachers', '全部讲师', 'All instructors')],
+  teachers: [],
   organizations: [item('org', '/platform/org', '机构工作台', 'Organization workspace')],
 };
 
 export const PLATFORM_PERSONAL_ROUTES = PLATFORM_ROUTES.filter(item => [
   'account-courses', 'progress', 'orders', 'account-invites', 'account-favorites', 'account-notes',
-  'account-badges', 'me-membership', 'account-shipping', 'community-mine',
+  'account-badges', 'me-membership', 'account-shipping',
 ].includes(item.id));
 
 /** Admin workspaces use the same two-tier navigation as the public Platform. */
@@ -23,7 +24,7 @@ const ADMIN_GROUPS = [
   { id: 'overview', label: { zh: '概览', en: 'Overview' }, routes: ['admin', 'admin-homepage', 'admin-event-analytics', 'admin-logs'] },
   { id: 'learning', label: { zh: '课程', en: 'Courses' }, routes: ['admin-courses', 'admin-paths', 'admin-invites', 'admin-algorithms'] },
   { id: 'teaching', label: { zh: '讲师', en: 'Instructors' }, routes: ['admin-teachers', 'admin-applications', 'admin-payouts'] },
-  { id: 'operations', label: { zh: '运营', en: 'Operations' }, routes: ['admin-events', 'admin-news', 'admin-community'] },
+  { id: 'operations', label: { zh: '运营', en: 'Operations' }, routes: ['admin-events', 'admin-competition-applications', 'admin-organization-verification', 'admin-news', 'admin-community'] },
   { id: 'commerce', label: { zh: '交易', en: 'Commerce' }, routes: ['admin-orders', 'admin-products', 'admin-coupons', 'admin-reconcile'] },
   { id: 'qr', label: { zh: '二维码', en: 'QR codes' }, routes: ['admin-qr', 'admin-qr-cards', 'admin-qr-prompts', 'admin-qr-stats'] },
 ] as const;
@@ -50,9 +51,9 @@ export function platformAdminNavigationState(definition?: PlatformRouteDefinitio
 export function platformWorkspaceRoutes(definition: PlatformRouteDefinition | undefined, signedIn: boolean, isAdmin: boolean) {
   if (definition?.area === 'admin') return isAdmin
     ? platformAdminNavigationState(definition)?.group.items.map(entry => entry.route) ?? [] : [];
-  const personalPage = definition?.area === 'account' || definition?.id === 'progress' || definition?.id === 'orders' || definition?.id === 'order-detail';
-  return PLATFORM_ROUTES.filter(item => !item.pattern.includes(':') && item.kind !== 'form'
-    && personalPage && signedIn && PLATFORM_PERSONAL_ROUTES.includes(item));
+  const personalPage = PLATFORM_PERSONAL_ROUTES.some(item => item.id === definition?.id) || definition?.id === 'order-detail';
+  const ids = ['account-courses', 'progress', 'account-notes', 'account-favorites', 'account-badges', 'account-invites', 'me-membership', 'orders', 'account-shipping'];
+  return personalPage && signedIn ? ids.flatMap(id => PLATFORM_PERSONAL_ROUTES.filter(item => item.id === id)) : [];
 }
 
 export function platformPathname(pathname: string): string {
@@ -71,16 +72,18 @@ export function platformNavigationState(pathname: string): {
   const definition = path === '/platform' || path.startsWith('/platform/') ? matchPlatformRoute(segments)?.definition : undefined;
   let primary: PlatformPrimary | null = null;
   let secondary: string | null = null;
-  if (segments[0] === 'teachers') { primary = 'teachers'; secondary = segments[1] === 'apply' ? 'teacher-apply' : 'teachers'; }
+  if (segments[0] === 'teachers') { primary = 'teachers'; }
   else if (definition?.area === 'organization') { primary = 'organizations'; secondary = 'org'; }
   else if (definition?.area === 'community') {
     primary = 'community';
     secondary = definition.id === 'leaderboard' ? 'leaderboard' : definition.id === 'community-feed' ? 'community-feed'
       : ['community-mine', 'community-search', 'community-review'].includes(definition.id) ? null : 'community';
-  } else if (['courses', 'paths', 'membership'].includes(segments[0])) {
-    primary = 'courses'; secondary = segments[0];
-  } else if (definition?.area === 'discover') {
-    primary = 'discover'; secondary = segments[0] === 'events' && segments[1] === 'online' ? 'online-competitions' : segments[0] === 'events' ? 'events' : segments[0] === 'news' ? 'news' : 'home';
+  } else if (['courses', 'membership'].includes(segments[0])) {
+    primary = 'courses';
+  } else if (segments[0] === 'events') {
+    primary = 'events'; secondary = segments[1] === 'online' || segments[1] === 'preview' ? 'online-competitions' : 'events';
+  } else if (definition?.id === 'home' || segments[0] === 'paths') {
+    primary = 'discover';
   }
   return { primary, secondary, definition };
 }

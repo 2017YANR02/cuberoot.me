@@ -19,6 +19,13 @@ import { localDetailHref } from './PlatformRouteHelpers';
 const mobileCoverSizes = '(max-width: 307px) 80px, (max-width: 430px) 26vw, 112px';
 const courseCoverSizes = '(max-width: 307px) 80px, (max-width: 430px) 26vw, (max-width: 600px) 112px, (max-width: 960px) 50vw, 370px';
 
+export function CourseCatalogSearch({ query, onQuery }: { query: string; onQuery: (value: string) => void }) {
+  const t = useT();
+  const label = t('搜索课程名称、讲师或关键词', 'Search by course, instructor or keyword');
+  return <SearchInput value={query} onChange={onQuery} placeholder={label} ariaLabel={label}
+    className="platform-search" inputClassName="platform-search-input" />;
+}
+
 export function PlatformCourseToolbar({ query, puzzle, topic, sort, puzzles, topics, topicPuzzles, onQuery, onPuzzle, onTopic, onSort, onApplyFilters }: {
   query: string;
   puzzle: string;
@@ -35,7 +42,6 @@ export function PlatformCourseToolbar({ query, puzzle, topic, sort, puzzles, top
 }) {
   const t = useT();
   const isZh = useLang() === 'zh';
-  const searchLabel = t('筛选课程', 'Filter courses');
   const allTopics = t('全部学习方向', 'All learning topics');
   const topicItems = [{ value: '', label: allTopics }, ...topics.map(id => ({
     value: id, label: t(COURSE_TOPICS[id].zh, COURSE_TOPICS[id].en),
@@ -63,10 +69,9 @@ export function PlatformCourseToolbar({ query, puzzle, topic, sort, puzzles, top
     routeId: 'courses', filters: { title: t('筛选课程', 'Filter courses'), groups,
       apply: values => onApplyFilters(values.puzzle ?? '', values.topic ?? '', values.sort === 'title' ? 'title' : 'updated') },
   });
-  if (searchInMasthead) return null;
+  if (searchInMasthead) return <div className="platform-toolbar"><CourseCatalogSearch query={query} onQuery={onQuery} /></div>;
   return <div className="platform-toolbar platform-course-toolbar">
-    <SearchInput value={query} onChange={onQuery} placeholder={searchLabel} ariaLabel={searchLabel}
-      className="platform-search" inputClassName="platform-search-input" />
+    <CourseCatalogSearch query={query} onQuery={onQuery} />
     {(puzzles.size > 0 || puzzle) && <PuzzlePicker
       isZh={isZh} selectedEvent={puzzle} wcaEvents={puzzles} availableEvents={puzzles}
       leadingGroups={[{ id: 'all', label: '', items: [{ id: '', label: t('全部项目', 'All puzzles') }] }]}
@@ -120,14 +125,8 @@ export function PlatformCourseCards({ courses, definition, ownedCourses }: {
   ownedCourses: ReadonlyMap<string, PlatformEntity>;
 }) {
   const t = useT();
-  const groups = [
-    { id: 'owned', title: t('我的课程', 'My courses'), courses: courses.filter(({ course }) => ownedCourses.has(course.id)) },
-    { id: 'all', title: t('全部课程', 'All courses'), courses: courses.filter(({ course }) => !ownedCourses.has(course.id)) },
-  ].filter(group => group.courses.length > 0);
-  return <div className="platform-catalog-sections">{groups.map(group => <section className="platform-catalog-section" key={group.id} aria-label={group.title}>
-    <h2 className="platform-catalog-section-title">{group.title}</h2>
-    <div className="platform-course-grid">
-    {group.courses.map(({ course, details }) => {
+  return <div className="platform-course-grid platform-course-catalog-grid" aria-label={t('全部课程', 'All courses')}>
+    {courses.map(({ course, details }) => {
       const data = course.data ?? {};
       const href = course.href?.startsWith('/') ? course.href : localDetailHref(definition, course);
       if (!href) return null;
@@ -145,16 +144,15 @@ export function PlatformCourseCards({ courses, definition, ownedCourses }: {
       const free = data.enrollmentMode === 'free' || (data.enrollmentMode !== 'invite' && data.enrollmentMode !== 'admin_grant' && hasPrice && Number(price) === 0);
       const trial = !owned && !free && hasCourseTrial(course);
       const trialId = trial ? platformTrialLessonIds(data.presentation)?.[0] : undefined;
-      const actionHref = owned ? continueHref : trialId
-        ? `/platform/courses/${encodeURIComponent(course.id)}/sections/core?lesson=${encodeURIComponent(trialId)}` : href;
-      const status = owned ? (progress === null ? t('进入课程', 'Open course') : t('开始学习', 'Start learning'))
+      const actionHref = owned ? continueHref : trialId ? `/platform/courses/${encodeURIComponent(course.id)}/sections/core?lesson=${encodeURIComponent(trialId)}` : null;
+      const status = owned ? t('已解锁', 'Unlocked')
         : free ? t('免费', 'Free')
           : trial ? t('免费试听', 'Free preview')
             : data.enrollmentMode === 'invite' ? t('兑换课程', 'Redeem course')
               : hasPrice ? commerceMoney(price, currency) : t('查看课程', 'View course');
       const priceStatus = !owned && !free && !trial && data.enrollmentMode !== 'invite' && hasPrice;
       return <article className="platform-course-card" data-site-surface="panel" key={course.id}>
-        <AppLink className="platform-course-card-link" href={actionHref} prefetch={false}>
+        <AppLink className="platform-course-card-link" href={href} prefetch={false}>
           <PlatformCourseCover {...details} catalog lessonCountLabel={details.lessonCount === undefined ? undefined : t(`${details.lessonCount} 课时`, `${details.lessonCount} lessons`)} />
           <div className="platform-course-card-body">
             <div className="platform-course-card-title"><h3>{course.title}</h3></div>
@@ -168,8 +166,8 @@ export function PlatformCourseCards({ courses, definition, ownedCourses }: {
             </div>
           </div>
         </AppLink>
+        {actionHref && <div className="platform-catalog-card-actions"><AppLink className="platform-button" href={actionHref} prefetch={false} aria-label={owned ? t(`学习${course.title}`, `Learn ${course.title}`) : t(`试听${course.title}`, `Preview ${course.title}`)}>{owned ? hasProgress ? t('继续学习', 'Continue learning') : t('开始学习', 'Start learning') : t('免费试听', 'Free preview')}</AppLink></div>}
       </article>;
     })}
-    </div>
-  </section>)}</div>;
+  </div>;
 }

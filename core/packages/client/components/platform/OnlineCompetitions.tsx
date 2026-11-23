@@ -2,7 +2,7 @@
 
 import MoreToggle from '@/components/MoreToggle';
 import { useCallback, useContext, useEffect, useState } from 'react';
-import { parseAsString, parseAsStringEnum, useQueryState } from 'nuqs';
+import { parseAsString, useQueryState } from 'nuqs';
 import { Check, ChevronRight, Plus, RefreshCw } from '@app-foundation/icons/lucide';
 import AppLink from '@/components/AppLink';
 import BoolToggle from '@/components/BoolToggle';
@@ -10,7 +10,8 @@ import { CompactSelect } from '@/components/CompactSelect';
 import { EventIcon } from '@/components/EventIcon/EventIcon';
 import PuzzlePicker from '@/components/PuzzlePicker/PuzzlePicker';
 import { useT } from '@/hooks/useT';
-import { hasAdminAccess, useAuthUser } from '@/lib/auth-store';
+import { hasAdminAccess, nextQuery, useAuthUser } from '@/lib/auth-store';
+import { useLang } from '@/i18n/tr';
 import { eventDisplayName } from '@/lib/wca-events';
 import { formatWcaResult } from '@/lib/wca-format-result';
 import { computeWcaBestAverage } from '@/lib/wca-compute';
@@ -55,18 +56,27 @@ function statusLabel(status: string, t: ReturnType<typeof useT>) {
   return labels[status] ?? status;
 }
 
-export function OnlineCompetitions({ id }: { id?: string }) {
-  return id ? <CompetitionDetail key={id} id={id} /> : <CompetitionList />;
+type CompetitionMode = 'browse' | 'manage' | 'supervise' | 'review' | 'apply';
+const workspaceRoot = (mode: 'manage' | 'supervise') => `/platform/competitions/${mode}`;
+
+export function OnlineCompetitions({ id, mode = 'browse' }: { id?: string; mode?: CompetitionMode }) {
+  const t = useT();
+  const user = useAuthUser();
+  const access = useContext(PlatformCompetitionAccessContext);
+  const roleWorkspace = mode === 'manage' || mode === 'supervise';
+  if (roleWorkspace && user && !access.ready) return <PlatformState kind="loading" />;
+  if (roleWorkspace && user && !(mode === 'manage' ? access.organizer : access.supervisor)) return <PlatformState kind="permission" message={t('当前账号没有此赛事工作台的权限。', 'This account does not have access to this competition workspace.')} permissionHref={ROOT} permissionLabel={t('查看公开比赛', 'View public competitions')} />;
+  if (roleWorkspace && !user) return <PlatformState kind="permission" />;
+  return id ? <CompetitionDetail key={`${mode}:${id}`} id={id} view={mode === 'manage' || mode === 'supervise' ? mode : 'entry'} /> : <CompetitionList mode={mode} />;
 }
 
-function CompetitionList() {
+function CompetitionList({ mode: view }: { mode: CompetitionMode }) {
   const t = useT();
   const user = useAuthUser();
   const access = useContext(PlatformCompetitionAccessContext);
   const admin = hasAdminAccess(user);
-  const [requested, setView] = useQueryState('view', parseAsStringEnum(['browse', 'manage', 'apply', 'review', 'supervise']).withDefault('browse').withOptions({ history: 'push' }));
-  const view = (requested === 'manage' && !access.organizer) || (requested === 'supervise' && !access.supervisor) || (requested === 'review' && !admin) ? 'browse' : requested;
-  const checking = !access.ready && (requested === 'supervise' || requested === 'manage');
+  const checking = Boolean(user) && !access.ready && (view === 'supervise' || view === 'manage');
+  const denied = view !== 'browse' && (!user || (view === 'manage' && !access.organizer) || (view === 'supervise' && !access.supervisor) || (view === 'review' && !admin));
   const application = view === 'apply' || view === 'review';
   const [items, setItems] = useState<OnlineCompetitionSummary[]>([]);
   const [now, setNow] = useState(0);
@@ -77,40 +87,34 @@ function CompetitionList() {
   useEffect(() => {
     let active = true;
     setLoading(true); setError(''); setItems([]);
-    if (checking || application || (view !== 'browse' && !user)) { setLoading(false); return; }
+    if (checking || denied || application) { setLoading(false); return; }
     void (view === 'supervise' ? listSupervisedCompetitions() : listOnlineCompetitions(view === 'manage')).then(result => { if (active) setItems(result.competitions); })
       .catch(error => { if (active) setError(message(error, t('赛事加载失败，请重试。', 'Could not load competitions. Try again.'))); })
       .finally(() => { if (active) setLoading(false); });
     return () => { active = false; };
-  }, [view, application, checking, user, revision, t]);
+  }, [view, application, checking, denied, user, revision, t]);
   if (checking) return <PlatformState kind="loading" />;
+  if (denied) return <PlatformState kind="permission" message={t('当前账号没有此赛事工作台的权限。', 'This account does not have access to this competition workspace.')} />;
   return <div className="competitions">
-    <header className="competition-heading"><h1>{t('线上比赛', 'Online competitions')}</h1><p>{t('选一个场次，在线监督参赛。', 'Choose a session and compete with live supervision.')}</p></header>
-    <nav className="competition-tabs" aria-label={t('赛事视图', 'Competition view')}>
-      <button type="button" className="competition-tab" aria-current={view === 'browse' ? 'page' : undefined} onClick={() => { void setView('browse'); }}>{t('全部比赛', 'Competitions')}</button>
-      {access.organizer && <button type="button" className="competition-tab" aria-current={view === 'manage' ? 'page' : undefined} onClick={() => void setView('manage')}>{t('我管理的赛事', 'Competitions I manage')}</button>}
-      {access.supervisor && <button type="button" className="competition-tab" aria-current={view === 'supervise' ? 'page' : undefined} onClick={() => void setView('supervise')}>{t('我的执场', 'My supervision assignments')}</button>}
-      <button type="button" className="competition-tab" aria-current={view === 'apply' ? 'page' : undefined} onClick={() => void setView('apply')}>{t('主办方申请', 'Organizer application')}</button>
-      {admin && <button type="button" className="competition-tab" aria-current={view === 'review' ? 'page' : undefined} onClick={() => void setView('review')}>{t('审核主办申请', 'Review organizer applications')}</button>}
-    </nav>
-    {application && !user && <AppLink href="/platform/login">{t('登录后申请', 'Sign in to apply')}</AppLink>}
+    <header className="competition-heading"><h1>{view === 'manage' ? t('赛事管理', 'Competition management') : view === 'supervise' ? t('我的执场', 'My supervision assignments') : view === 'review' ? t('主办方审核', 'Organizer applications') : view === 'apply' ? t('主办方申请', 'Organizer application') : t('线上比赛', 'Online competitions')}</h1>{view === 'browse' && <p>{t('选择比赛和场次，在线参赛。', 'Choose a competition and session to compete online.')}</p>}</header>
     {error ? <div role="alert" className="competition-error"><p>{error}</p><button className="competition-secondary" type="button" onClick={() => setRevision(value => value + 1)}><RefreshCw size={15} />{t('重试', 'Retry')}</button></div> : null}
     {loading ? <p role="status" className="competition-muted"><LoadingIndicator>{t('正在加载比赛…', 'Loading competitions…')}</LoadingIndicator></p> : !application && !error && !items.length && (view === 'browse' || user) ? <p className="competition-empty">{view === 'manage' ? t('还没有你管理的比赛。创建草稿后，可继续添加项目和监督场次。', 'You have no managed competitions yet. Create a draft, then add events and supervised sessions.') : view === 'supervise' ? t('当前没有分配给你的执场赛事。', 'You have no assigned competitions.') : t('暂时没有已发布的线上比赛。', 'No online competitions have been published yet.')}</p> : null}
-    <div className="competition-list">{items.map(item => <AppLink prefetch={false} className="competition-list-row" key={item.id} href={`${href(item.id)}${view === 'manage' ? '?view=manage' : ''}`}>
+    <div className="competition-list">{items.map(item => <AppLink prefetch={false} className="competition-list-row" key={item.id} href={view === 'manage' || view === 'supervise' ? `${workspaceRoot(view)}/${encodeURIComponent(item.id)}` : href(item.id)}>
       <div><span className="competition-state">{item.status === 'published' && now ? (now < Date.parse(item.registrationOpensAt) ? t('报名未开始', 'Registration opens soon') : now < Date.parse(item.registrationClosesAt) ? t('报名中', 'Registration open') : t('报名截止', 'Registration closed')) : statusLabel(item.status, t)}</span><h2>{t(item.titleZh, item.titleEn || item.titleZh)}</h2><p>{dateText(item.startsAt)} <span>{t('北京时间', 'UTC+8')}</span></p><p>{item.projects.map(project => eventDisplayName(project.project, t('zh', 'en') === 'zh')).filter((name, index, names) => names.indexOf(name) === index).join(' / ')}{item.projects.length ? <> — {item.projects.every(project => project.amountMinor === 0) ? t('免费参赛', 'Free entry') : <>{money(Math.min(...item.projects.map(project => project.amountMinor)))} {t('起', 'and up')}</>}</> : null}</p><p>{item.organizationName}</p></div><ChevronRight size={20} />
     </AppLink>)}</div>
     {(application || view === 'manage') && user ? <CompetitionEditor key={user.uid} mode={view} onSaved={() => setRevision(value => value + 1)} /> : null}
   </div>;
 }
 
-function CompetitionDetail({ id }: { id: string }) {
+function CompetitionDetail({ id, view }: { id: string; view: 'entry' | 'manage' | 'supervise' }) {
   const t = useT();
+  const lang = useLang();
   const user = useAuthUser();
-  const [view, setView] = useQueryState('view', parseAsStringEnum(['entry', 'manage']).withDefault('entry').withOptions({ history: 'push' }));
   const [ticketId, setTicketId] = useQueryState('project', parseAsString.withDefault(''));
   const [sessionId, setSessionId] = useQueryState('session', parseAsString.withDefault(''));
   const [competition, setCompetition] = useState<OnlineCompetition | null>(null);
-  const [registrations, setRegistrations] = useState<CompetitionRegistration[]>([]);
+  const [loadedRegistrations, setRegistrations] = useState<CompetitionRegistration[]>([]);
+  const registrations = view === 'entry' ? loadedRegistrations.filter(item => item.userId === user?.uid).map(item => ({ ...item, canRecordResult: false })) : loadedRegistrations;
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [registrationError, setRegistrationError] = useState('');
@@ -140,7 +144,7 @@ function CompetitionDetail({ id }: { id: string }) {
       .catch(error => { if (active) setError(message(error, t('赛事加载失败。', 'Could not load competition.'))); })
       .finally(() => { if (active) setLoading(false); });
     return () => { active = false; };
-  }, [id, user, revision, t]);
+  }, [id, user, revision, t, view]);
   async function register(project: CompetitionProject) {
     if (busy || !accepted || !sessionId) return;
     setBusy(true); setRegistrationError('');
@@ -160,6 +164,7 @@ function CompetitionDetail({ id }: { id: string }) {
   }
   if (loading && !competition) return <div className="competitions"><p role="status"><LoadingIndicator>{t('正在加载比赛…', 'Loading competition…')}</LoadingIndicator></p></div>;
   if (!competition) return <div className="competitions"><p role="alert">{error || t('没有找到这场比赛。', 'Competition not found.')}</p><button className="competition-secondary" type="button" onClick={refresh}>{t('重试', 'Retry')}</button></div>;
+  if ((view === 'manage' && !competition.canManage) || (view === 'supervise' && !competition.canSupervise)) return <PlatformState kind="permission" message={t('当前账号没有此赛事的管理权限。', 'This account does not have access to manage this competition.')} permissionHref={ROOT} permissionLabel={t('查看公开比赛', 'View public competitions')} />;
   const project = competition.projects.find(item => item.id === ticketId) ?? (competition.projects.length === 1 ? competition.projects[0] : undefined);
   const session = competition.sessions.find(item => item.id === sessionId);
   const existingRegistration = project ? registrations.find(item => item.userId === user?.uid && item.project === project.project && item.device === project.device && ['reserved', 'pending_payment', 'confirmed', 'attended'].includes(item.status)) : undefined;
@@ -169,8 +174,8 @@ function CompetitionDetail({ id }: { id: string }) {
   return <div className="competitions">
     {error ? <p role="alert" className="competition-error">{error}</p> : null}
     <header className="competition-heading"><span className="competition-state">{competition.status === 'published' && now ? (registrationOpen ? t('报名中', 'Registration open') : now < Date.parse(competition.registrationOpensAt) ? t('报名未开始', 'Registration opens soon') : t('报名截止', 'Registration closed')) : statusLabel(competition.status, t)}</span><h1>{t(competition.titleZh, competition.titleEn || competition.titleZh)}</h1><p>{dateText(competition.startsAt)} — {dateText(competition.endsAt)} {t('北京时间', 'UTC+8')}</p><p>{competition.organizationName}</p></header>
-    <div className="competition-toolbar"><AppLink href={ROOT} prefetch={false}>{t('全部比赛', 'All competitions')}</AppLink>{competition.canManage ? <button type="button" className="competition-secondary" onClick={() => { void setView(view === 'manage' ? 'entry' : 'manage'); }}>{view === 'manage' ? t('查看报名页', 'View registration') : t('管理赛事', 'Manage competition')}</button> : null}<button type="button" className="competition-icon-button" aria-label={t('刷新赛事', 'Refresh competition')} onClick={refresh}><RefreshCw size={17} /></button></div>
-    {view === 'manage' && competition.canManage ? <><CompetitionEditor key={`${id}:${competition.status}`} competition={competition} onSaved={refresh} /><SessionEditor competition={competition} onSaved={refresh} /></> : <div className="competition-detail-grid">
+    <div className="competition-toolbar"><AppLink href={view === 'entry' ? ROOT : workspaceRoot(view)} prefetch={false}>{view === 'entry' ? t('全部比赛', 'All competitions') : view === 'manage' ? t('赛事管理', 'Competition management') : t('我的执场', 'My supervision assignments')}</AppLink>{view === 'manage' && <AppLink className="competition-secondary" href={href(id)} prefetch={false}>{t('查看报名页', 'View registration')}</AppLink>}<button type="button" className="competition-icon-button" aria-label={t('刷新赛事', 'Refresh competition')} onClick={refresh}><RefreshCw size={17} /></button></div>
+    {view === 'manage' && competition.canManage ? <><CompetitionEditor key={`${id}:${competition.status}`} competition={competition} onSaved={refresh} /><SessionEditor competition={competition} onSaved={refresh} /></> : view === 'entry' ? <div className="competition-detail-grid">
       <section>
         <h2>{t('选择参赛项目', 'Choose an event')}</h2>
         {competition.projects.length ? <div className="competition-projects">{competition.projects.map(item => <button type="button" key={item.id} className="competition-project" aria-pressed={project?.id === item.id} onClick={() => { void setTicketId(item.id); }}><EventIcon event={item.project} /><span>{eventDisplayName(item.project, t('zh', 'en') === 'zh')}<small>{item.device === 'smart' ? t('智能魔方', 'Smart cube') : t('普通魔方', 'Standard cube')}</small></span><strong>{money(item.amountMinor, item.currency)}</strong></button>)}</div> : <p className="competition-muted">{t('项目尚未公布。', 'Events have not been announced.')}</p>}
@@ -181,17 +186,17 @@ function CompetitionDetail({ id }: { id: string }) {
       <aside className="competition-entry"><h2>{t('确认报名', 'Registration')}</h2>
         {project ? <p className="competition-fee">{money(project.amountMinor, project.currency)}<small>{project.amountMinor === 0 ? t('免费参赛', 'Free entry') : t('CubeRoot 统一收款', 'Collected by CubeRoot')}</small></p> : <p>{t('请先选择项目和场次。', 'Choose an event and session first.')}</p>}
 
-        {!user ? <AppLink className="competition-primary" href="/platform/login">{t('登录报名', 'Sign in to register')}</AppLink> : (orderId || existingRegistration?.orderId) ? <AppLink className="competition-primary" prefetch={false} href={`/platform/orders/${encodeURIComponent(orderId || existingRegistration!.orderId)}`}>{existingRegistration && !['reserved', 'pending_payment'].includes(existingRegistration.status) ? t('已报名，查看订单', 'Registered, view order') : t('查看订单与付款', 'View order and pay')}</AppLink> : <><BoolToggle value={accepted} onChange={setAccepted} label={t('同意参赛与退款规则', 'I agree to the participation and refund policies')} /><button type="button" className="competition-primary" disabled={!canRegister} onClick={() => { if (project) void register(project); }}>{busy ? t('正在提交…', 'Submitting…') : t('确认报名', 'Register')}</button></>}
+        {!user ? <AppLink className="competition-primary" href={`/account${nextQuery(`${lang === 'zh' ? '/zh' : ''}${href(id)}${ticketId || sessionId ? `?${new URLSearchParams({ ...(ticketId ? { project: ticketId } : {}), ...(sessionId ? { session: sessionId } : {}) })}` : ''}`)}`}>{t('登录报名', 'Sign in to register')}</AppLink> : (orderId || existingRegistration?.orderId) ? <AppLink className="competition-primary" prefetch={false} href={`/platform/orders/${encodeURIComponent(orderId || existingRegistration!.orderId)}`}>{existingRegistration && !['reserved', 'pending_payment'].includes(existingRegistration.status) ? t('已报名，查看订单', 'Registered, view order') : t('查看订单与付款', 'View order and pay')}</AppLink> : <><BoolToggle value={accepted} onChange={setAccepted} label={t('同意参赛与退款规则', 'I agree to the participation and refund policies')} /><button type="button" className="competition-primary" disabled={!canRegister} onClick={() => { if (project) void register(project); }}>{busy ? t('正在提交…', 'Submitting…') : t('确认报名', 'Register')}</button></>}
         {competition.status === 'published' && !registrationOpen ? <p className="competition-muted">{now < Date.parse(competition.registrationOpensAt) ? t('报名尚未开始。', 'Registration has not started.') : t('报名已截止。', 'Registration has closed.')}</p> : null}
         {competition.status !== 'published' ? <p className="competition-muted">{t('这场比赛尚未开放报名。', 'Registration is not open for this competition.')}</p> : null}
         <p className="competition-muted competition-deadline">{t('报名截止', 'Registration closes')} {dateText(competition.registrationClosesAt)}</p>
       </aside>
-    </div>}
-    {!(view === 'manage' && competition.canManage) && (
+    </div> : null}
+    {view === 'entry' && (
 <details className="competition-rules"><MoreToggle as="summary">{t('参赛与退款规则', 'Participation and refund policies')}</MoreToggle><p>{t('普通魔方与智能魔方分别排名。参赛时实时监督，录像仅用于争议复核。', 'Standard and smart cubes have separate rankings. Participation is supervised live; recordings are for dispute review.')}</p><h3>{t('退款政策', 'Refund policy')}</h3><p>{competition.refundPolicy || t('尚未公布', 'Not yet published')}</p><h3>{t('录像与争议处理', 'Recording and disputes')}</h3><p>{competition.recordingPolicy || t('尚未公布', 'Not yet published')}</p></details>
     )}
     {registrationError || registrationLoadError ? <p className="competition-error" role="alert">{registrationError || registrationLoadError}</p> : null}
-    {user ? <section className="competition-registrations"><h2>{competition.canManage || competition.canSupervise ? t('参赛名单', 'Competitors') : t('参赛安排', 'Your entries')}</h2>{!registrations.length ? <p className="competition-muted">{t('还没有报名记录。', 'No registrations yet.')}</p> : registrations.map(item => <div className="competition-registration" key={item.id}><div><strong>{item.displayName}</strong><p>{eventDisplayName(item.project, t('zh', 'en') === 'zh')} {item.device === 'smart' ? t('智能魔方', 'Smart cube') : t('普通魔方', 'Standard cube')}</p><p>{dateText(competition.sessions.find(session => session.id === item.sessionId)?.startsAt ?? '')}</p></div><span>{statusLabel(item.status, t)}</span><div className="competition-toolbar">{item.orderId && item.userId === user.uid ? <AppLink href={`/platform/orders/${encodeURIComponent(item.orderId)}`} prefetch={false}>{t('订单', 'Order')}</AppLink> : null}{item.canCheckIn && !item.checkedInAt ? <button type="button" className="competition-secondary" disabled={busy} onClick={() => { void checkIn(item.id); }}>{t('检录', 'Check in')}</button> : null}{item.checkedInAt && (item.userId === user.uid || item.canRecordResult) ? <button type="button" className="competition-secondary" onClick={() => { void setActiveRegistration(item.id); }}>{item.resultRecordedAt ? t('查看成绩', 'View result') : t('进入赛场', 'Enter session')}</button> : null}</div></div>)}</section> : null}
+    {user ? <section className="competition-registrations"><h2>{view === 'entry' ? t('参赛安排', 'Your entries') : t('参赛名单', 'Competitors')}</h2>{!registrations.length ? <p className="competition-muted">{t('还没有报名记录。', 'No registrations yet.')}</p> : registrations.map(item => <div className="competition-registration" key={item.id}><div><strong>{item.displayName}</strong><p>{eventDisplayName(item.project, t('zh', 'en') === 'zh')} {item.device === 'smart' ? t('智能魔方', 'Smart cube') : t('普通魔方', 'Standard cube')}</p><p>{dateText(competition.sessions.find(session => session.id === item.sessionId)?.startsAt ?? '')}</p></div><span>{statusLabel(item.status, t)}</span><div className="competition-toolbar">{item.orderId && item.userId === user.uid ? <AppLink href={`/platform/orders/${encodeURIComponent(item.orderId)}`} prefetch={false}>{t('订单', 'Order')}</AppLink> : null}{item.canCheckIn && !item.checkedInAt ? <button type="button" className="competition-secondary" disabled={busy} onClick={() => { void checkIn(item.id); }}>{t('检录', 'Check in')}</button> : null}{item.checkedInAt && (item.userId === user.uid || item.canRecordResult) ? <button type="button" className="competition-secondary" onClick={() => { void setActiveRegistration(item.id); }}>{item.resultRecordedAt ? t('查看成绩', 'View result') : t('进入赛场', 'Enter session')}</button> : null}</div></div>)}</section> : null}
     {selectedRegistration ? <CompetitionParticipation key={selectedRegistration.id} competitionId={competition.id} registration={selectedRegistration} finalized={!!competition.finalizedAt} onSaved={refresh} /> : null}
     {['published', 'completed'].includes(competition.status) ? <CompetitionResults id={competition.id} revision={revision} /> : null}
     {view === 'manage' && competition.canManage ? <CompetitionManagement competition={competition} registrations={registrations} revision={revision} onSaved={refresh} /> : null}
@@ -261,7 +266,7 @@ function CompetitionEditor({ competition, mode, onSaved }: { competition?: Onlin
   </section>;
   return <section className="competition-editor"><h2>{competition ? t('赛事设置', 'Competition settings') : t('创建比赛', 'Create a competition')}</h2>
     {!competition ? <OrganizerOnboarding organizations={organizations} onLoaded={refreshOrganizations} /> : null}
-    {createdId ? <p role="status"><AppLink className="competition-primary" prefetch={false} href={`${href(createdId)}?view=manage`}>{t('继续设置项目与场次', 'Continue to events and sessions')}</AppLink></p> : !competition && !eligibleOrganizations.length ? <p className="competition-muted">{t('主办申请通过后，即可创建比赛。', 'Create a competition once your organizer application is approved.')}</p> : <>
+    {createdId ? <p role="status"><AppLink className="competition-primary" prefetch={false} href={`${workspaceRoot('manage')}/${encodeURIComponent(createdId)}`}>{t('继续设置项目与场次', 'Continue to events and sessions')}</AppLink></p> : !competition && !eligibleOrganizations.length ? <p className="competition-muted">{t('主办申请通过后，即可创建比赛。', 'Create a competition once your organizer application is approved.')}</p> : <>
       <fieldset className="competition-form-fields" disabled={!!competition && !['draft', 'pending_approval'].includes(competition.status)}><div className="competition-form-grid">
         {!competition ? <div className="competition-field"><span>{t('主办组织', 'Organizer')}</span><CompactSelect value={organizationId} label={eligibleOrganizations.find(item => item.id === organizationId)?.name ?? t('选择主办组织', 'Choose an organization')} items={eligibleOrganizations.map(item => ({ value: item.id, label: item.name }))} onChange={setOrganizationId} ariaLabel={t('主办组织', 'Organizer')} /></div> : null}
         <label>{t('赛事中文名', 'Chinese title')}<input autoComplete="off" className="platform-field-control" value={titleZh} maxLength={120} onChange={event => setTitleZh(event.target.value)} /></label>

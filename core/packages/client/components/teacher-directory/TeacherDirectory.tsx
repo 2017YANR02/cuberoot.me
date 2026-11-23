@@ -126,27 +126,43 @@ function TeachersDirectoryClient({ platform: inPlatformShell = false, teacherId 
     });
   }, [entries, inPlatformShell, kind, query, teacher]);
 
+  const isCatalog = inPlatformShell && !teacher;
+  const catalogTitle = tr({ zh: '全部讲师', en: 'All instructors' });
+  const searchLabel = tr({ zh: '搜索讲师姓名或擅长方向', en: 'Search by instructor or specialty' });
   const Container = inPlatformShell ? 'div' : 'main';
   return (
     <Container className={`teachers-page${inPlatformShell ? ' teachers-page--platform' : ''}`}>
       {!inPlatformShell && <div className="teachers-back-row"><BackHome /></div>}
-      {inPlatformShell ? <h1 className="sr-only">{tr({ zh: '全部讲师', en: 'All instructors' })}</h1> : <header className="teachers-hero">
+      {inPlatformShell ? (isCatalog
+        ? <header className="platform-route-header"><div className="platform-route-heading"><h1>{catalogTitle}</h1></div></header>
+        : <h1 className="sr-only">{catalogTitle}</h1>) : <header className="teachers-hero">
 
         <h1>{tr({ zh: '魔方老师与机构', en: 'Cube Teachers & Schools' })}</h1>
         <p className="teachers-intro">{tr({ zh: '寻找认证讲师、线上课程或本地培训机构。讲师入驻审核通过后即可完善并公开资料。', en: 'Find verified instructors, online courses or local schools. Approved instructors can complete and publish their profiles.' })}</p>
         <div className="teachers-hero-actions"><AppLink href="/platform/teachers/apply" prefetch={false} className="directory-primary-button teachers-add-button"><Plus size={17} />{tr({ zh: '讲师入驻', en: 'Teach with us' })}</AppLink><AppLink href="/teachers/edit?kind=organization" prefetch={false} className="directory-edit-button">{tr({ zh: '添加培训机构', en: 'Add a school' })}</AppLink><AppLink href="/teachers/scripts" className="directory-edit-button teachers-script-library"><Mic2 size={15} />{tr({ zh: '浏览直播话术', en: 'Browse scripts' })}</AppLink></div>
       </header>}
       {teacher && (inPlatformShell ? <AppLink href="/platform/teachers" prefetch={false} className="directory-edit-button">{tr({ zh: '查看全部讲师', en: 'View all instructors' })}</AppLink> : <button type="button" className="directory-edit-button" onClick={() => { void setTeacher(null); }}>{tr({ zh: '查看全部老师与机构', en: 'Show all teachers and schools' })}</button>)}
-      {inPlatformShell && !teacher && <div className="directory-toolbar"><SearchInput value={query} onChange={value => { void setQuery(value || null); }} className="directory-search" inputClassName="directory-search-input" placeholder={tr({ zh: '筛选讲师姓名或擅长方向', en: 'Filter instructors' })} /></div>}
+      {isCatalog && <>
+        <div className="platform-toolbar">
+          <SearchInput value={query} onChange={value => { void setQuery(value || null); }}
+            className="platform-search" inputClassName="platform-search-input" placeholder={searchLabel} ariaLabel={searchLabel} />
+        </div>
+        {!directoryLoading && !loadError && <div className="platform-catalog-count">
+          <span role="status">{query.trim()
+            ? tr({ zh: `找到 ${filtered.length} 位讲师`, en: `Matching instructors: ${filtered.length}` })
+            : tr({ zh: `共 ${filtered.length} 位讲师`, en: `Instructors: ${filtered.length}` })}</span>
+          {query.trim() && <button type="button" className="platform-button" onClick={() => { void setQuery(null); }}>{tr({ zh: '清除筛选', en: 'Clear filters' })}</button>}
+        </div>}
+      </>}
       {!inPlatformShell && <div className="directory-toolbar"><SearchInput value={query} onChange={(value) => { void setQuery(value || null); }} className="directory-search" inputClassName="directory-search-input" placeholder={tr({ zh: '搜索姓名、地点或擅长方向', en: 'Search names, places, or specialties' })} /><label className="directory-kind-filter"><span>{tr({ zh: '类型', en: 'Type' })}</span><select className="directory-kind-control" value={kind} onChange={(event) => { void setKind(event.target.value as typeof kind); }}><option value="all">{tr({ zh: '全部', en: 'All' })}</option><option value="teacher">{tr({ zh: '魔方老师', en: 'Teachers' })}</option><option value="organization">{tr({ zh: '培训机构', en: 'Schools' })}</option></select></label></div>}
-      <section className="directory-list" aria-label={inPlatformShell ? tr({ zh: '全部讲师', en: 'All instructors' }) : tr({ zh: '老师与机构名录', en: 'Teacher and school directory' })}>
+      <section className="directory-list" aria-label={inPlatformShell ? catalogTitle : tr({ zh: '老师与机构名录', en: 'Teacher and school directory' })}>
         {directoryLoading && <p className="directory-state"><LoadingIndicator>{tr({ zh: '正在加载名录…', en: 'Loading the directory…' })}</LoadingIndicator></p>}
         {!directoryLoading && loadError && <p className="directory-state directory-load-error">{loadError}</p>}
         {!inPlatformShell && !directoryLoading && !loadError && myLoadError && <p className="directory-state directory-load-error">{myLoadError}</p>}
-        {!directoryLoading && !loadError && filtered.length === 0 && <div className="directory-state">
-          {inPlatformShell && !query && !teacher ? <div className="platform-teacher-empty"><h2>{tr({ zh: '讲师陆续入驻中', en: 'More instructors are joining' })}</h2><p>{tr({ zh: '欢迎关注魔方根的站点公告。', en: 'Check CubeRoot announcements for updates.' })}</p><AppLink className="platform-button" href="/platform/community/circles/site-announcements" prefetch={false}>{tr({ zh: '查看上新公告', en: 'View announcements' })}</AppLink></div> : <p>{tr({ zh: '没有找到符合条件的资料。', en: 'No matching entries.' })}</p>}
+        {!directoryLoading && !loadError && filtered.length === 0 && <div className={isCatalog ? undefined : "directory-state"}>
+          {isCatalog && !query.trim() ? <div className="platform-teacher-empty"><h2>{tr({ zh: '讲师陆续入驻中', en: 'More instructors are joining' })}</h2><div className="platform-write-actions"><AppLink className="platform-button platform-button-primary" href="/platform/courses" prefetch={false}>{tr({ zh: '浏览课程', en: 'Browse courses' })}</AppLink><AppLink className="platform-button" href="/platform/teachers/apply" prefetch={false}>{tr({ zh: '讲师入驻', en: 'Teach with us' })}</AppLink></div></div> : <p>{tr({ zh: '没有找到符合条件的资料。', en: 'No matching entries.' })}</p>}
         </div>}
-        {!showDetails && filtered.length > 0 ? <div className="platform-instructor-grid">{filtered.map(entry => <PlatformInstructorCard key={entry.id} teacher={entry} heading="h2" />)}</div>
+        {!showDetails && filtered.length > 0 ? <div className="platform-course-grid">{filtered.map(entry => <PlatformInstructorCard key={entry.id} teacher={entry} heading="h2" catalog />)}</div>
           : filtered.map((entry) => <DirectoryEntry key={entry.id} entry={entry} isAdmin={isAdmin} canEdit={!inPlatformShell && (isAdmin || myIds.has(entry.id))} scripts={scriptsByEntry.get(entry.id) ?? []} />)}
       </section>
     </Container>

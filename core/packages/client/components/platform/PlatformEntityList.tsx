@@ -1,6 +1,7 @@
 'use client';
 
-import { ArrowRight, Plus } from '@app-foundation/icons/lucide';
+import { ArrowRight, CalendarDays, MapPin, Plus, Trophy } from '@app-foundation/icons/lucide';
+import { useEffect, useState } from 'react';
 import AppLink from '@/components/AppLink';
 import { entityStatusLabel } from '@/components/teaching/TeachingUi';
 import { useT } from '@/hooks/useT';
@@ -10,6 +11,48 @@ import type { PlatformActionId, PlatformEntity, PlatformRouteDefinition } from '
 import { instructorApplicationStatus, localDetailHref } from './PlatformRouteHelpers';
 import { PlatformCourseCover, PlatformCourseLabels } from './PlatformCourseCatalog';
 import { ContentReviewBadge } from './PlatformContentReview';
+import { commerceMoney, commerceRecord } from '@/lib/platform-commerce-format';
+
+function EventCards({ items }: { items: PlatformEntity[] }) {
+  const t = useT();
+  const [onlineIds, setOnlineIds] = useState<ReadonlySet<string> | null>(null);
+  const [now, setNow] = useState(0);
+  useEffect(() => {
+    let active = true;
+    setNow(Date.now());
+    void import('@/lib/online-competition-api').then(api => api.listOnlineCompetitions()).then(result => {
+      if (active) setOnlineIds(new Set(result.competitions.map(competition => competition.id)));
+    }).catch(() => { if (active) setOnlineIds(new Set()); });
+    return () => { active = false; };
+  }, []);
+  return <div className="platform-event-grid">{items.map(item => {
+    const data = item.data ?? {};
+    const venue = commerceRecord(data.venue);
+    const competition = onlineIds?.has(item.id) === true;
+    const online = venue.online === true || competition;
+    const location = [venue.city, venue.name, venue.address].filter(Boolean).map(String).join(' · ');
+    const starts = typeof data.startsAt === 'string' ? Date.parse(data.startsAt) : NaN;
+    const ends = typeof data.endsAt === 'string' ? Date.parse(data.endsAt) : NaN;
+    let date = '';
+    if (Number.isFinite(starts)) {
+      const options = { dateStyle: 'medium', timeStyle: 'short' } as const;
+      try { date = new Intl.DateTimeFormat(t('zh-CN', 'en-US'), { ...options, timeZone: typeof data.timezone === 'string' ? data.timezone : 'UTC' }).format(starts); }
+      catch { date = new Intl.DateTimeFormat(t('zh-CN', 'en-US'), { ...options, timeZone: 'UTC' }).format(starts); }
+    }
+    const state = now && Number.isFinite(ends) && now >= ends ? t('已结束', 'Ended') : now && Number.isFinite(starts) && now >= starts ? t('进行中', 'In progress') : t('即将开始', 'Upcoming');
+    const price = typeof data.fromAmountMinor === 'number' || typeof data.fromAmountMinor === 'string' ? Number(data.fromAmountMinor) : NaN;
+    const href = competition ? `/platform/events/online/${encodeURIComponent(item.id)}` : `/platform/events/${encodeURIComponent(item.id)}`;
+    const content = <>
+      <div className="platform-event-card-banner"><span className="platform-event-card-icon">{competition ? <Trophy aria-hidden /> : <CalendarDays aria-hidden />}</span><span className="platform-status">{state}</span></div>
+      <div className="platform-event-card-content"><div className="platform-event-card-tags"><span>{online ? t('线上', 'Online') : t('线下', 'In person')}</span>{typeof data.category === 'string' && data.category && <span>{data.category}</span>}</div><h2>{item.title}</h2>
+        {date && <p><CalendarDays size={16} aria-hidden />{date}</p>}{(online || location) && <p><MapPin size={16} aria-hidden />{online ? t('线上活动', 'Online event') : location}</p>}
+        {item.summary && <p className="platform-event-summary">{item.summary}</p>}
+        <div className="platform-event-card-footer"><strong>{Number.isFinite(price) ? price === 0 ? t('免费', 'Free') : `${commerceMoney(price, String(data.currency ?? 'CNY'))} ${t('起', 'and up')}` : t('查看详情', 'View details')}</strong><ArrowRight size={18} aria-hidden /></div></div></>;
+    return <article className="platform-event-card" data-site-surface="panel" key={item.id}>
+      {online && onlineIds === null ? <div className="platform-event-card-link" aria-busy>{content}</div> : <AppLink href={href} className="platform-event-card-link" prefetch={false}>{content}</AppLink>}
+    </article>;
+  })}</div>;
+}
 
 function favoriteType(definition: PlatformRouteDefinition, item: PlatformEntity): 'course' | 'product' | 'event' | 'news' {
   const explicit = item.data?.targetType;
@@ -75,6 +118,7 @@ export function PlatformEntityList({
   actionBusy: string | null;
 }) {
   const t = useT();
+  if (definition.id === 'events') return <EventCards items={items} />;
   const baseActions = definition.kind === 'collection' || definition.kind === 'dashboard'
     ? (definition.actions ?? []).filter((action) => ['favorite', 'wishlist', 'enroll', 'cancel-order', 'delete-course', 'delete-note'].includes(action))
     : [];

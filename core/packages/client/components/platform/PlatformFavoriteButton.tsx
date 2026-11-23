@@ -4,7 +4,8 @@ import { sessionFetch } from '@/lib/session-fetch';
 import { useEffect, useRef, useState } from 'react';
 import AppLink from '@/components/AppLink';
 import { useT } from '@/hooks/useT';
-import { useAuthUser } from '@/lib/auth-store';
+import { useLang } from '@/i18n/tr';
+import { nextQuery, useAuthUser } from '@/lib/auth-store';
 import { apiUrl } from '@/lib/api-base';
 import { authHeaders, handleApi } from '@/lib/admin-api';
 import { executePlatformAction, PlatformPermissionError } from '@/lib/platform-gateway';
@@ -13,17 +14,24 @@ import { LoadingIndicator } from '@/components/LoadingIndicator';
 
 type Props = { definition: PlatformRouteDefinition; targetType: 'course' | 'product' | 'event' | 'news'; entityId?: string };
 
+function favoriteLoginHref(lang: string, targetType: Props['targetType'], entityId?: string) {
+  const root = { course: '/platform/courses', product: '/shop', event: '/platform/events', news: '/platform/news' }[targetType];
+  return `/account${nextQuery(`${lang === 'zh' ? '/zh' : ''}${root}${entityId ? `/${encodeURIComponent(entityId)}` : ''}`)}`;
+}
+
 /** Uses the resolved entity UUID, never the route's potentially slug-valued parameter. */
 export function PlatformFavoriteButton(props: Props) {
   const user = useAuthUser();
   const t = useT();
-  if (!user) return <AppLink className="platform-button" href="/platform/login">{t('登录后收藏', 'Sign in to save')}</AppLink>;
+  const lang = useLang();
+  if (!user) return <AppLink className="platform-button" href={favoriteLoginHref(lang, props.targetType, props.entityId)}>{t('登录后收藏', 'Sign in to save')}</AppLink>;
   if (!props.entityId) return null;
   return <AuthenticatedFavorite key={`${user.uid ?? user.wcaId}:${props.targetType}:${props.entityId}`} {...props} entityId={props.entityId} />;
 }
 
 function AuthenticatedFavorite({ definition, targetType, entityId }: Props & { entityId: string }) {
   const t = useT();
+  const lang = useLang();
   const [active, setActive] = useState<boolean | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -71,7 +79,7 @@ function AuthenticatedFavorite({ definition, targetType, entityId }: Props & { e
   }
 
   return <div className="platform-domain-stack">
-    {signIn ? <AppLink className="platform-button" href="/platform/login">{t('请重新登录后收藏', 'Sign in again to save')}</AppLink> : <button type="button" className="platform-button" aria-pressed={active === true} disabled={loading || saving || active === null} onClick={() => { void toggle(); }}>
+    {signIn ? <AppLink className="platform-button" href={favoriteLoginHref(lang, targetType, entityId)}>{t('请重新登录后收藏', 'Sign in again to save')}</AppLink> : <button type="button" className="platform-button" aria-pressed={active === true} disabled={loading || saving || active === null} onClick={() => { void toggle(); }}>
       {loading ? <LoadingIndicator>{t('正在读取收藏…', 'Loading saved status…')}</LoadingIndicator> : saving ? t('正在保存…', 'Saving…') : active ? wishlist ? t('移出心愿单', 'Remove from wishlist') : t('取消收藏', 'Remove from saved') : wishlist ? t('加入心愿单', 'Add to wishlist') : t('收藏', 'Save')}
     </button>}
     {error ? <p role="alert">{error}</p> : null}
