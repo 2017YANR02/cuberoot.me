@@ -73,12 +73,18 @@ describe('formula tag editor with the shared menu and fixed tags', () => {
     expect(options[1].querySelector('.sr-only')?.textContent).toBe('Beginner pick');
     expect(options.slice(0, 2).map(option => option.textContent)).toEqual(['Mainstream', 'Beginner pick']);
     expect(options[0].querySelector('[title]')).toBeNull();
-    await act(async () => {
-      const hover = new MouseEvent('pointerover', { bubbles: true });
-      Object.defineProperty(hover, 'pointerType', { value: 'mouse' });
-      options[0].dispatchEvent(hover);
-    });
-    expect(document.querySelector('[role="tooltip"]')?.textContent).toBe('Mainstream');
+    vi.useFakeTimers();
+    try {
+      await act(async () => {
+        const hover = new MouseEvent('pointerover', { bubbles: true });
+        Object.defineProperty(hover, 'pointerType', { value: 'mouse' });
+        options[0].dispatchEvent(hover);
+      });
+      await act(async () => vi.advanceTimersByTime(500));
+      expect(document.querySelector('[role="tooltip"]')?.textContent).toBe('Mainstream');
+    } finally {
+      vi.useRealTimers();
+    }
     expect(options.some(option => option.textContent?.includes('S style'))).toBe(false);
     expect(document.querySelector('[role="option"][aria-selected="true"]')?.textContent).toContain('Left OH');
     expect(document.querySelector('[role="option"][aria-selected="true"] .lucide-check')).toBeNull();
