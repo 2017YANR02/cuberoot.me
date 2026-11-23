@@ -122,7 +122,6 @@
     "i18next": "^24.2.3",
     "jspdf": "^4.2.1",
     "katex": "^0.18.2",
-    "liquid-glass-react": "^1.1.1",
     "livekit-client": "^2.21.0",
     "lucide-react": "^1.8.0",
     "luxon": "^3.7.2",

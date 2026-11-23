@@ -22,6 +22,8 @@ export const unframedSurfaces = [
   { selector: '.wca-stats-index-toolbar', kind: 'container', route: '/zh/wca' },
   { selector: '.sor-race-bar', kind: 'container', route: '/zh/wca/results?events=333,222' },
   { selector: '.viz-page .toolbar', kind: 'container', route: '/zh/wca/persons/2017YANR02?tab=results' },
+  { selector: '.video-recon-cube', kind: 'container', route: '/zh/recon/submit' },
+  { selector: '.video-recon-tps', kind: 'container', route: '/zh/recon/submit' },
   { selector: '.sim-header', kind: 'container', route: '/zh/sim' },
   { selector: '.directory-toolbar', kind: 'container', route: '/zh/teachers' },
   { selector: '.cmt-tabs', kind: 'container', route: '/zh/alg/commutator' },

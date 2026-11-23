@@ -1,8 +1,6 @@
-import { useEffect, useLayoutEffect, useState, type RefObject } from 'react';
+'use client';
 
-const filterId = 'cuberoot-primary-nav-refraction';
-// Frost before displacement so the lens does not magnify sharp text.
-const backdrop = `blur(4px) url("#${filterId}") blur(1.5px) saturate(1.55)`;
+import { useEffect, useId, useRef, type RefObject } from 'react';
 
 function createLensMap(): string | undefined {
   const size = 48;
@@ -25,27 +23,40 @@ function createLensMap(): string | undefined {
   return canvas.toDataURL();
 }
 
-export function PrimaryNavigationOptics({ navigation }: { navigation: RefObject<HTMLElement | null> }) {
-  const [map, setMap] = useState<string>();
+type OpticsTarget =
+  | { navigation: RefObject<HTMLElement | null>; siteWide?: never }
+  | { siteWide: true; navigation?: never };
+
+export function PrimaryNavigationOptics({ navigation, displacementScale = 42 }: OpticsTarget & { displacementScale?: number }) {
+  const filterId = `cuberoot-nav-refraction-${useId().replace(/[^a-zA-Z0-9_-]/g, '')}`;
+  const texture = useRef<SVGFEImageElement>(null);
+
   useEffect(() => {
-    if (CSS.supports('backdrop-filter', backdrop) && CSS.supports('color', 'color-mix(in srgb, black, white)')) {
-      setMap(createLensMap());
-    }
-  }, []);
+    const target = navigation ? navigation.current : document.body;
+    const property = navigation ? '--app-nav-lens-optics' : '--site-glass-refraction';
+    const image = texture.current;
+    if (!target || !image || !/Chrome|Chromium|Edg/.test(navigator.userAgent) ||
+      /iPhone|iPad|iPod/.test(navigator.userAgent)) return;
 
-  useLayoutEffect(() => {
-    const nav = navigation.current;
-    if (!nav || !map) return;
-    nav.style.setProperty('--app-nav-lens-optics', backdrop);
-    return () => { nav.style.removeProperty('--app-nav-lens-optics'); };
-  }, [map, navigation]);
+    // Frost before displacement so the lens does not magnify sharp text.
+    const backdrop = `blur(4px) url("#${filterId}") blur(1.5px) saturate(1.55)`;
+    if (!CSS.supports('backdrop-filter', backdrop)) return;
+    const map = createLensMap();
+    if (!map) return;
 
-  if (!map) return null;
+    image.setAttribute('href', map);
+    target.style.setProperty(property, backdrop);
+    return () => {
+      target.style.removeProperty(property);
+      image.removeAttribute('href');
+    };
+  }, [filterId, navigation]);
+
   return (
-    <svg className="primary-nav-optics" width="0" height="0" aria-hidden="true">
+    <svg width="0" height="0" aria-hidden="true" focusable="false" style={{ position: 'absolute', pointerEvents: 'none' }}>
       <filter id={filterId} x="0%" y="0%" width="100%" height="100%" colorInterpolationFilters="sRGB">
-        <feImage href={map} x="0" y="0" width="100%" height="100%" preserveAspectRatio="none" result="lensMap" />
-        <feDisplacementMap in="SourceGraphic" in2="lensMap" scale="42" xChannelSelector="R" yChannelSelector="G" />
+        <feImage ref={texture} x="0" y="0" width="100%" height="100%" preserveAspectRatio="none" result="lensMap" />
+        <feDisplacementMap in="SourceGraphic" in2="lensMap" scale={displacementScale} xChannelSelector="R" yChannelSelector="G" />
       </filter>
     </svg>
   );

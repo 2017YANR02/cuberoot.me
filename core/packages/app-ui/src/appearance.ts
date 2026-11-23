@@ -9,6 +9,7 @@ export { setAccentRoot } from './appearance-accent';
 export { AppearanceBackground } from './AppearanceBackground';
 export { AppearanceSettings, AppearanceThemeControl, AppearanceAccentControl, AppearanceBackgroundControl, AppearanceBackdropControls } from './AppearanceSettings';
 export { AppAppearanceSettings } from './AppAppearanceSettings';
+export { PrimaryNavigationOptics } from './PrimaryNavigationOptics';
 
 export { APPEARANCE_CHANGE_EVENT, readAppearancePreferences, persistAppearancePreferences, readRememberedAppearanceBackground } from './appearance-storage';
 

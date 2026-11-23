@@ -1,4 +1,5 @@
 import { SiteCorners } from "@2017yanr02/continuous-corners/react";
+import { PrimaryNavigationOptics } from '@cuberoot/app-ui/appearance';
 import EntryNavigationBridge from '@/components/EntryNavigationBridge';
 import { DOUYIN_CONTENT_BOOTSTRAP } from '@/lib/douyin-content-bootstrap';
 import InstalledContentBoundary from "@/components/InstalledContentBoundary";
@@ -11,7 +12,6 @@ import DeskPet from "@/components/DeskPet";
 import AuthRouteBridge from "@/components/AuthRouteBridge";
 import SiteBackground from '@/components/SiteBackground';
 import SiteChrome from '@/components/SiteChrome';
-import SiteGlass from '@/components/SiteGlass';
 import '@/components/glass-material.css';
 import '@/components/site-surfaces.css';
 import ThemeColorSync from "@/components/ThemeColorSync";
@@ -121,8 +121,8 @@ export default function RootLayout({
       <body suppressHydrationWarning>
         <AppNuqsAdapter>
           <SiteChrome><SiteBackground /></SiteChrome>
-          <SiteGlass />
-          <SiteCorners exclude=".site-glass-engine, .maplibregl-map" containers=".cg-card, .rc-card, .recon-card, .sortable-card, .timer-workspace-panel" />
+          <PrimaryNavigationOptics siteWide displacementScale={28} />
+          <SiteCorners exclude=".maplibregl-map" containers=".cg-card, .rc-card, .recon-card, .sortable-card, .timer-workspace-panel" />
           <InstalledContentBoundary>{children}</InstalledContentBoundary>
           <SiteChrome>
             <MembershipReminder />

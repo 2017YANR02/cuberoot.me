@@ -39,6 +39,19 @@ body .landing-page.landing-page--navigation {
 .home-navigation[data-floating] .home-navigation-surface {
   opacity: 1;
 }
+.home-navigation[data-floating] .home-navigation-surface[data-site-surface='heading'] {
+  background-color: var(--glass-popover-bg);
+  background-image: var(--glass-capsule-glint, none);
+  border-color: var(--glass-edge);
+  box-shadow: var(--glass-capsule-shadow, inset 0 0 0 1px var(--glass-edge));
+  -webkit-backdrop-filter: var(--glass-capsule-filter, var(--glass-filter));
+  backdrop-filter: var(--app-nav-lens-optics, var(--glass-capsule-filter, var(--glass-filter)));
+}
+@media (prefers-reduced-transparency: reduce) {
+  .home-navigation[data-floating] .home-navigation-surface[data-site-surface='heading'] {
+    backdrop-filter: none;
+  }
+}
 @media (prefers-reduced-motion: reduce) {
   .home-navigation, .home-navigation-surface { transition: none; }
 }

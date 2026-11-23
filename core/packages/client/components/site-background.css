@@ -76,5 +76,4 @@
 
 }
 
-.site-glass-engine { position: fixed; width: 1px; height: 1px; overflow: hidden; pointer-events: none; clip-path: inset(100%); }
-@media print { .site-scenery, .site-glass-engine { display: none; } }
+@media print { .site-scenery { display: none; } }

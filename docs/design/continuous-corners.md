@@ -20,7 +20,7 @@ Web 根布局与 `core/packages/app-ui/src/App.tsx` 挂载 `SiteCorners`，同�
 
 首次 CubeRoot Safari 检查暴露装饰节点干扰延迟 hydration，0.3.0 已移除该策略并加入回归；不掩盖为单纯网络错误。独立 WKWebView 探针本轮出现超时，不能将旧报告记作新版本通过，实际 Safari 结果单独记录。
 
-CubeRoot 排除 `.site-glass-engine` 和 `.maplibregl-map`；共享 app-ui 安装入口面向各薄宿主，运行时依赖已登记为 react-dom。组件目录登记 `ContinuousCorners`，不改第三方 iframe/画布的内部内容。
+CubeRoot 排除地图容器 `.maplibregl-map`。共享 app-ui 安装入口面向各薄宿主，运行时依赖已登记为 react-dom。组件目录登记 `ContinuousCorners`，第三方 iframe 和画布的内部内容保持原有绘制方式。
 
 ## 后续
 

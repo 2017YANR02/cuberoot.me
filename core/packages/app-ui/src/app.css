@@ -990,7 +990,6 @@ button {
   transition: transform 210ms cubic-bezier(.2, .75, .25, 1), background-color 150ms ease;
 }
 .primary-nav[data-drag-lens] > button { z-index: 2; }
-.primary-nav-optics { position: absolute; pointer-events: none; }
 .primary-nav[data-lens-pressed]::after {
   /* Keep the base shadow out of the moving lens's backdrop. */
   box-shadow: none;

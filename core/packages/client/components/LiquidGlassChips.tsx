@@ -8,17 +8,6 @@
 import { useEffect, useLayoutEffect, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react';
 import './LiquidGlassChips.css';
 
-/** Safari (desktop + iOS,任何 iOS 浏览器都是 WebKit) 不能正确合成 SVG
- *  `feDisplacementMap` 跟 `backdrop-filter` 这一对,liquid-glass-react 只特判
- *  了 Firefox,Safari 上 thumb 会渲染成不透明黑块。检测到 → 退一档 CSS
- *  frosted thumb,iOS 26 native 那一档放弃但至少不丑。 */
-export const needsCssGlassFallback = (): boolean => {
-  if (typeof navigator === 'undefined') return false;
-  const ua = navigator.userAgent;
-  if (/iPhone|iPad|iPod/.test(ua)) return true;
-  return /Safari/.test(ua) && !/Chrome|Chromium|Edg/.test(ua);
-};
-
 interface Props<T extends string | number> {
   items: readonly T[];
   value: T;

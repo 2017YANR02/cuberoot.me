@@ -2,6 +2,7 @@
 
 import { Children, useCallback, useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react';
 import { NavigationMenu } from '@app-foundation/navigation-ui';
+import { PrimaryNavigationOptics } from '@cuberoot/app-ui/appearance';
 import { CubeRootLogoImage } from '@/components/CubeRootLogo';
 import MoreToggle, { MoreTogglePanel } from '@/components/MoreToggle';
 import SettingsDialog from '@/components/SettingsDialog';
@@ -163,6 +164,7 @@ export default function HomeNavigation({ selected, onSelect, isAdmin, sections, 
       headerRef.current?.querySelector<HTMLButtonElement>(`#home-nav-${allowedFlyout}`)?.focus();
       closeFlyout();
     }}>
+    <PrimaryNavigationOptics navigation={headerRef} displacementScale={64} />
     <span className="home-navigation-surface" data-site-surface="heading" aria-hidden="true" />
     <button type="button" className="home-navigation-brand" aria-label={tr({ zh: '首页', en: 'Home' })}
       onPointerEnter={closeFlyout} onClick={() => { closeFlyout(); onSelect('home'); }}>{brand}</button>
