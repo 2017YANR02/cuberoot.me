@@ -141,6 +141,14 @@ async function run(width, reducedMotion) {
       if (width < 700) await expect(page).not.toHaveURL(/[?&]stage=/);
       await checkClean(grid);
       await page.setViewportSize({width, height: 960});
+      if (width < 700 && index === 0) {
+        await page.goForward();
+        await expect(page).toHaveURL(/[?&]stage=first-solve/);
+        await expect(grid).toHaveAttribute('data-layout', 'expanded');
+        await page.goBack();
+        await expect(grid).toHaveAttribute('data-layout', 'compact');
+        await expect(page).not.toHaveURL(/[?&]stage=/);
+      }
     }
     await page.reload({waitUntil:'domcontentloaded'});
     await expect(grid).toHaveAttribute('data-layout', width < 700 ? 'compact' : 'expanded');

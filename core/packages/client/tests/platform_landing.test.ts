@@ -37,8 +37,8 @@ import { PlatformHomepageAdmin } from '@/components/platform/PlatformHomepageAdm
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 
-function landingWithQueryState(searchParams?: string) {
-  return createElement(NuqsTestingAdapter, { hasMemory: true, searchParams, children: createElement(PlatformLanding) });
+function landingWithQueryState(searchParams?: string, onUrlUpdate?: () => void) {
+  return createElement(NuqsTestingAdapter, { hasMemory: true, searchParams, onUrlUpdate, children: createElement(PlatformLanding) });
 }
 
 beforeEach(() => {
@@ -427,13 +427,18 @@ it.each([360, 375, 390, 430].flatMap(width => [0, 2, 5].map(index => ({ width, i
   const host = document.createElement('div'), root = createRoot(host);
   document.body.append(host);
   try {
-    const renderAt = (searchParams: string) => act(async () => root.render(landingWithQueryState(searchParams)));
+    const urlUpdate = Promise.withResolvers<void>();
+    const renderAt = (searchParams: string) => act(async () => root.render(landingWithQueryState(searchParams, () => urlUpdate.resolve())));
     await renderAt('?view=home');
     const grid = host.querySelector<HTMLElement>('.path-grid')!;
     expect(grid.dataset.layout).toBe('compact');
     expect(grid.querySelector('[aria-current="step"]')?.textContent).toContain('稳定 30 秒');
     const buttons = grid.querySelectorAll<HTMLButtonElement>('.path-stage');
-    await act(async () => { buttons[index]!.click(); buttons[(index + 1) % 6]!.click(); });
+    await act(async () => {
+      buttons[index]!.click();
+      buttons[(index + 1) % 6]!.click();
+      await urlUpdate.promise;
+    });
     expect(grid.dataset.layout).toBe('expanded');
     expect(buttons[index]!.disabled).toBe(true);
     const stage = learningStages[index]!;

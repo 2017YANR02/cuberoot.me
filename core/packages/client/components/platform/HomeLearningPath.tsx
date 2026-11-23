@@ -25,7 +25,11 @@ function MobileStageNavigation({ navigation, selected, busy, ready, active, chan
   const closing = useRef(false);
   useLayoutEffect(() => {
     navigation.current = {
-      open: index => { pushed.current = true; return setStage(stages[index]!.id); },
+      open: async index => {
+        const params = await setStage(stages[index]!.id);
+        pushed.current = params.get('stage') === stages[index]!.id;
+        return params;
+      },
       close: () => {
         if (!stage) return false;
         if (!closing.current) {
@@ -43,7 +47,7 @@ function MobileStageNavigation({ navigation, selected, busy, ready, active, chan
     if (stage) tracking.current = true;
     else closing.current = false;
     if (!ready || busy || !tracking.current) return;
-    if (stage === null && selected === null) { tracking.current = false; pushed.current = false; return; }
+    if (stage === null && selected === null) { tracking.current = false; return; }
     const index = stages.findIndex(item => item.id === stage);
     let live = true;
     // Start after React commits so the animation may synchronously measure its two layouts.
