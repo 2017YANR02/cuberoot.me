@@ -38,10 +38,9 @@
 .site-assistant-status { display:flex; align-items:center; gap:8px; min-height:28px; margin:12px 0; }
 .site-assistant-status-text { color:var(--muted-foreground); font-size:14px; }
 .site-assistant-progress { width:fit-content; max-width:100%; margin:12px 0; color:var(--muted-foreground); font-size:12px; }
-.site-assistant-progress-heading { display:flex; align-items:center; flex-wrap:wrap; gap:8px; min-height:28px; }
-.site-assistant-progress[data-active="true"] .site-assistant-progress-heading { flex-wrap:nowrap; }
+.site-assistant-progress-heading { display:flex; align-items:center; flex-wrap:nowrap; gap:8px; min-height:28px; }
 .site-assistant-progress-heading > .site-assistant-progress-active-text { min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-.site-assistant-progress-heading .more-toggle { font-size:12px; }
+.site-assistant-progress-heading .more-toggle { flex:none; white-space:nowrap; font-size:12px; }
 .site-assistant-progress-time { flex:none; font-variant-numeric:tabular-nums; }
 .site-assistant-progress-steps { display:flex; flex-direction:column; gap:6px; max-height:180px; overflow:auto; list-style:none; margin:6px 0; padding:0; }
 .site-assistant-progress-steps li { display:flex; align-items:baseline; gap:6px; overflow-wrap:anywhere; }

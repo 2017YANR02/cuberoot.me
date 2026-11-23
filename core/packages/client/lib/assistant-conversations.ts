@@ -1,4 +1,4 @@
-import type { AssistantImage } from '@cuberoot/shared/site-assistant';
+import type { AssistantImage, AssistantReference } from '@cuberoot/shared/site-assistant';
 import type { AssistantTurn } from '@/components/SiteAssistantDialog';
 import { persistItem } from '@/lib/safe-storage';
 
@@ -16,10 +16,16 @@ export interface AssistantConversation {
   pinned?: boolean;
   unreadReply?: boolean;
   responding?: 'thinking' | 'writing';
-  pending?: { question: string; images: AssistantImage[]; messageId?: string };
+  pending?: { question: string; images: AssistantImage[]; messageId?: string; references?:AssistantReference[] };
 }
 interface Workspace { activeId: string; conversations: AssistantConversation[]; open: boolean; opened: boolean }
 const empty: Workspace = { activeId: '', conversations: [], open: false, opened: false };
+export const ASSISTANT_PAGE_DRAFT_EVENT = 'cuberoot:assistant-page-draft';
+export interface AssistantPageDraft {
+  owner: string;
+  draft: string;
+  trigger: HTMLButtonElement;
+}
 export const assistantOwner = (user: { uid?: number; wcaId?: string | null } | null) => user ? JSON.stringify([user.uid, user.wcaId]) : 'guest';
 
 /** Page-session state, separate from server request logs. Closing the workspace
@@ -74,10 +80,10 @@ export function createAssistantConversations() {
       if (!found || !nextTitle || found.title === nextTitle) return;
       write(owner, { ...current, conversations: current.conversations.map(item => item.id === id ? { ...item, title: nextTitle } : item) });
     },
-    create(owner: string, id: string) {
+    create(owner: string, id: string, draft = '') {
       const current = read(owner);
       if (current.conversations.some(item => item.id === id)) return;
-      const conversation: AssistantConversation = { id, snapshot: { draft: '', images: [], turns: [], conversationId: null } };
+      const conversation: AssistantConversation = { id, snapshot: { draft, images: [], turns: [], conversationId: null } };
       write(owner, { ...current, activeId: id, conversations: [...current.conversations, conversation] });
     },
     branch(owner: string, id: string, turns: AssistantTurn[]) {
@@ -96,12 +102,12 @@ export function createAssistantConversations() {
       const found = read(owner).conversations.find(item => item.id === id);
       if (found) this.update(owner, id, { ...found.snapshot, ...patch });
     },
-    submit(owner: string, id: string, question: string, images: AssistantImage[], messageId?: string) {
+    submit(owner: string, id: string, question: string, images: AssistantImage[], messageId?: string, references?:AssistantReference[]) {
       const current = read(owner);
       const found = current.conversations.find(item => item.id === id);
       if (!found || found.pending) return false;
       write(owner, { ...current, open: true, opened: true, conversations: current.conversations.map(item => item.id === id
-        ? { ...item, pending: { question, images, ...(messageId ? { messageId } : {}) }, snapshot: { ...item.snapshot, draft: '', images: [] } } : item) });
+        ? { ...item, pending: { question, images, ...(references?.length ? {references} : {}), ...(messageId ? { messageId } : {}) }, snapshot: { ...item.snapshot, draft: '', images: [] } } : item) });
       return true;
     },
     takeSubmission(owner: string, id: string) {

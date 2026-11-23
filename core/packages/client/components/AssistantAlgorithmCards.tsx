@@ -1,7 +1,8 @@
 'use client';
 import { useEffect, useRef, useState } from 'react';
 import type { AssistantAlgorithmCard, AssistantAlgorithms } from '@cuberoot/shared/site-assistant';
-import { loadNextAssistantAlgorithm } from '@/lib/assistant-algorithms';
+import AppLink from './AppLink';
+import { assistantCardPlayback, loadNextAssistantAlgorithm } from '@/lib/assistant-algorithms';
 import { AlgorithmReplyCard } from './AlgorithmReplyCard';
 import { tr } from '@/i18n/tr';
 import './cube-photo/cube-photo.css';
@@ -27,14 +28,17 @@ export default function AssistantAlgorithmCards({result, onAsk, onChange}: {resu
   return <section className="assistant-algorithms" aria-label={result.title}>
     <h4>{result.title}</h4>
     {!result.cards.length && <p>{tr({zh:'未找到符合条件的公式。',en:'No matching algorithm was found.'})}</p>}
-    <div className="cube-photo-formulas">{result.cards.map((card,i)=><article key={`${card.caseId ?? card.name}:${i}`} className="cube-photo-formula" data-site-surface="panel" aria-busy={status[i]==='loading'}>
+    <div className="cube-photo-formulas">{result.cards.map((card,i)=>{
+      const playback=result.display!=='image' ? assistantCardPlayback(card) : undefined;
+      return <article key={`${card.caseId ?? card.name}:${i}`} className="cube-photo-formula" data-site-surface="panel" aria-busy={status[i]==='loading'}>
       <AlgorithmReplyCard card={card} display={result.display}/>
-      {card.alternativeCount>1 && result.display!=='image' && <div className="assistant-algorithm-controls">
-        <span>{tr({zh:`公式 ${card.alternative+1}/${card.alternativeCount}`,en:`Algorithm ${card.alternative+1}/${card.alternativeCount}`})}</span>
-        {onChange && card.caseId!==undefined && <button className="cube-photo-expand" type="button" disabled={status[i]==='loading'} aria-label={tr({zh:`更换 ${card.name} 公式`,en:`Change ${card.name} algorithm`})} onClick={()=>void another(i)}>{tr(status[i]==='loading' ? {zh:'加载中…',en:'Loading…'} : status[i]==='error' ? {zh:'重试',en:'Retry'} : {zh:'换一条公式',en:'Another algorithm'})}</button>}
+      {(playback || (card.alternativeCount>1 && result.display!=='image')) && <div className="assistant-algorithm-controls">
+        {playback && <AppLink href={playback} prefetch={false} target="_blank" rel="noopener noreferrer">{tr({zh:'播放这条公式',en:'Play this algorithm'})}</AppLink>}
+        {card.alternativeCount>1 && <span>{tr({zh:`公式 ${card.alternative+1}/${card.alternativeCount}`,en:`Algorithm ${card.alternative+1}/${card.alternativeCount}`})}</span>}
+        {card.alternativeCount>1 && onChange && card.caseId!==undefined && <button className="cube-photo-expand" type="button" disabled={status[i]==='loading'} aria-label={tr({zh:`更换 ${card.name} 公式`,en:`Change ${card.name} algorithm`})} onClick={()=>void another(i)}>{tr(status[i]==='loading' ? {zh:'加载中…',en:'Loading…'} : status[i]==='error' ? {zh:'重试',en:'Retry'} : {zh:'换一条公式',en:'Another algorithm'})}</button>}
       </div>}
       {status[i]==='error' && <p className="assistant-algorithm-error" role="status">{tr({zh:'公式加载失败，请重试。',en:'Could not load algorithms. Please retry.'})}</p>}
-    </article>)}</div>
+    </article>;})}</div>
     {result.nextOffset!==undefined && <div className="assistant-algorithms-more"><span>{tr({zh:`已展示 ${result.offset+1}–${result.nextOffset} / ${result.total} 个 case`,en:`Cases ${result.offset+1}–${result.nextOffset} of ${result.total}`})}</span>{onAsk && <button type="button" onClick={more}>{tr({zh:'加载更多',en:'Load more'})}</button>}</div>}
   </section>;
 }

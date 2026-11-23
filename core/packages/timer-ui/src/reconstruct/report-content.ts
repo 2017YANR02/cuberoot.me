@@ -185,6 +185,7 @@ export interface ReportCompositionInput {
   state:ReportUIState; tr:ReconstructLocalize; hideActions?:boolean; hasTable:boolean; hasMeta:boolean;
   autoMemoMs:number|null; hasBldMemo:boolean;
   trainingSummary?: boolean;
+  hasAssistantAction?: boolean;
 }
 /** Composition is shared too. Slots refer to shared content builders or platform drawing. */
 export function reportComposition(input:ReportCompositionInput):ReportNode {
@@ -192,7 +193,7 @@ export function reportComposition(input:ReportCompositionInput):ReportNode {
   const slot=(id:string):ReportNode=>({id,kind:'slot'});
   const disclosure=(id:string,title:string,children:(ReportNode|null|false)[]):ReportNode=>({...groupNode(id,children,'reconstruct-section reconstruct-section-collapsible'),kind:'disclosure',text:title,selected:!!state.expanded[id],action:{type:'disclosure',key:id}});
   const report = groupNode('report',[
-    slot('summary'),!input.hideActions&&slot('actions'),
+    slot('summary'),!input.hideActions&&slot('actions'),input.hasAssistantAction&&slot('assistant-action'),
     Boolean(solve.scramble?.trim())&&!recon?.lines.length&&groupNode('scramble',[textNode('label',tr({zh:'打乱',en:'Scramble'}),'rc-scramble-label'),textNode('text',solve.scramble,'rc-scramble-text')],'rc-scramble'),
     input.autoMemoMs!=null&&slot('auto-memo'),input.hasBldMemo&&slot('bld-memo'),solve.bld?.memoMs!=null&&slot('memo-bar'),
     Boolean(solve.moves?.length)&&timerEventNxnSize(solve.event)!=null&&slot('playback'),

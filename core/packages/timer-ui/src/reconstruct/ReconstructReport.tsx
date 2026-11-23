@@ -55,6 +55,7 @@ import { rememberMethodStages, useMethodHistory } from './method-history';
 import StepMoveList from './StepMoveList';
 import { simplifyF2lRotations } from '@cuberoot/shared/timer/reconstruct/recon-text';
 import { reconstructionSummary, trainingCaseHistory, trainingCaseStatistics } from './report-presentation';
+import { buildCfopColumns, buildWalkColumns } from './report-columns';
 import { snapshotReconNotation } from './review-snapshot';
 import ReconstructActions from './ReconstructActions';
 
@@ -62,7 +63,7 @@ import { memoize3bld } from '@cuberoot/shared/timer/reconstruct/bld-helper';
 import PlaybackPanel from './PlaybackPanel';
 import './reconstruct.css';
 import { ReconstructHostContext, useReconstructHost, type ReconstructHost } from './ReconstructHost';
-export type { ReconstructHost } from './ReconstructHost';
+export type { ReconstructAssistantSummary, ReconstructHost } from './ReconstructHost';
 
 export interface ReconstructReportProps {
   /** Review observes completed default CFOP notation; never writes back to the solve. */
@@ -339,9 +340,26 @@ function ReconstructReportBody({
     </>
   );
 
+  // Keep the handoff on the replay being inspected. Only pass the displayed
+  // measurements, never the local solve ID, move log, scramble, or history.
+  const assistantStages = host.renderAssistantAction && solve.event === '333' && moves.length > 0 && Number.isFinite(solve.timeMs) && solve.timeMs > 0
+    ? solve.penalty === 'DNF' || solve.penalty === 'DNS' ? []
+      : method === 'cfop' && stageSegs ? buildCfopColumns(stageSegs, stepMx, slots, null, null, null)
+      : walk ? buildWalkColumns(walk, isZh) : []
+    : null;
+  const assistantAction = assistantStages && host.renderAssistantAction?.({
+    timeMs: solve.timeMs,
+    penalty: solve.penalty,
+    method: assistantStages.length ? method.toUpperCase() : null,
+    stm: stmCount,
+    tps: stmTps,
+    stages: assistantStages.filter(stage=>!stage.skipped).slice(0, 12).map(({label,stepMs,recognitionMs,executionMs,turns,cumulativeMs}) =>
+      ({label,stepMs,recognitionMs,executionMs,turns,cumulativeMs})),
+  });
+
   const extras=reportNotationExtras(solve,playbackRecon,initialReportUI(solve.reconOk),tr,{recordGyro:host.recordGyro,canEnableGyro:Boolean(host.onEnableGyro),canFeedback:Boolean(onReconFeedback)});
   const composition=reportComposition({solve,recon:reconText,analysis:analysis??null,hasAnalysis:Boolean(analysisInput),scoreable,state:reportUI,tr,
-    hideActions,hasTable:Boolean(stageSegs||walk),hasMeta:false,autoMemoMs,hasBldMemo:Boolean(bldMemo)});
+    hideActions,hasTable:Boolean(stageSegs||walk),hasMeta:false,autoMemoMs,hasBldMemo:Boolean(bldMemo),hasAssistantAction:Boolean(assistantAction)});
   const document=resolveReportSlots(composition,{
     summary:reportSummary(solve,{stm:stmCount,tps:stmTps,fluency},tr,hideDate?undefined:{short:dt.toLocaleDateString(),full:dt.toLocaleString()}),
     'raw-list':reportRawMoves(solve,wastedIdx,tr),
@@ -353,6 +371,7 @@ function ReconstructReportBody({
     if(action.type==='memo')onMemoApply?.(Number(action.value));
   }} slots={{
     actions:<ReconstructActions host={host} solve={solve} onUseScramble={onUseScramble} placement="report" snapshot={reviewSnapshot}/>,
+    'assistant-action':assistantAction,
     analysis:analysisBlock,
     playback:<PlaybackPanel
           method={method}

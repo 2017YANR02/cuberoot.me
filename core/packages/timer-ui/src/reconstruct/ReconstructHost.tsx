@@ -8,12 +8,29 @@ import BoolToggle, { type BoolToggleProps } from '../BoolToggle';
 import type { ReconstructLocalize } from './report-content';
 export type { ReconstructLocalize } from './report-content';
 
+export interface ReconstructAssistantSummary {
+  timeMs: number;
+  penalty: Solve['penalty'];
+  method: string | null;
+  stm: number;
+  tps: number;
+  stages: Array<{
+    label: string;
+    stepMs: number | null;
+    recognitionMs: number | null;
+    executionMs: number | null;
+    turns: number | null;
+    cumulativeMs: number | null;
+  }>;
+}
+
 /** Only host capabilities; analysis, report structure and playback stay shared. */
 export interface ReconstructHost {
   localize: ReconstructLocalize;
   writeClipboardText: (text: string) => Promise<void>;
   replayUrl?: (solve: Solve) => string | null | Promise<string | null>;
   renderIntakeAction?: (solve: Solve, snapshot: ReconSnapshot | null) => ReactNode;
+  renderAssistantAction?: (summary: ReconstructAssistantSummary) => ReactNode;
   renderAnnotationAction?: (line: ReconTextLine, seek: () => void) => ReactNode;
   renderCaseLink?: (href: string, label: ReactNode, className: string) => ReactNode;
   renderScrambleDiagram?: (scramble: string) => ReactNode;

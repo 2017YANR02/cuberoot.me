@@ -2,6 +2,7 @@ import {describe,expect,it,vi} from 'vitest';
 import {assistantAlgorithmSelection,createAssistantAlgorithmLoader,nextAssistantAlgorithm,replaceAssistantAlgorithm} from '@cuberoot/shared/site-assistant-algorithms';
 import {assistantAnswerHistory,type AssistantAlgorithmCard,type AssistantAnswer} from '@cuberoot/shared/site-assistant';
 import type {AlgFile} from '@cuberoot/shared/alg-types';
+import {assistantCardPlayback} from '@/lib/assistant-algorithms';
 import {assistantPdfDocument} from '@/lib/assistant-pdf';
 import {documentExportText} from '@/lib/document-export';
 
@@ -21,6 +22,14 @@ describe('in-place algorithm selections',()=>{
     expect(assistantAlgorithmSelection(file.cases[0],'3x3','f2l',1)?.setup).toBe('case preset');
     expect(()=>nextAssistantAlgorithm(file,{...card,caseId:99})).toThrow();
     expect(()=>nextAssistantAlgorithm({...file,set:'coll'},card)).toThrow();
+  });
+  it('plays the selected diagram setup and follows the new algorithm after switching',()=>{
+    const first=new URL(assistantCardPlayback({...card,alg:"(R U R')"})!,'https://cuberoot.me');
+    expect(first.pathname).toBe('/sim');
+    expect(Object.fromEntries(first.searchParams)).toEqual({puzzle:'3',alg:"R U R'",setup:"R U' R'",anchor:'start'});
+    const next=new URL(assistantCardPlayback(nextAssistantAlgorithm(file,card))!,'https://cuberoot.me');
+    expect(Object.fromEntries(next.searchParams)).toEqual({puzzle:'3',alg:"R U2 R'",anchor:'end'});
+    expect(assistantCardPlayback({...card,puzzle:'sq1'})).toBeUndefined();
   });
   it('keeps the current formula identity through library reordering',()=>{
     const reordered={...file,cases:[{...file.cases[0],algs:[[...file.cases[0].algs[0]].reverse()]}]};

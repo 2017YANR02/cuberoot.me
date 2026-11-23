@@ -38,8 +38,12 @@ import './site_assistant.css';
 import AssistantAnswerActions from './AssistantAnswerActions';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
 import { assistantAnswerLinks, remarkAssistantLinks } from '@/lib/assistant-answer-links';
+import { assistantProgressView } from '@/lib/assistant-progress';
+import { assistantProgressScope } from '@cuberoot/shared/site-assistant';
+import { eventDisplayName } from '@/lib/wca-events';
+import { formatDateRangeIso } from '@/lib/wca-date';
 
-export interface AssistantTurn { serverAnswerUpdatedAt?:number; deliveryState?:'queued'|'running'|'applied'|'completed'|'stopped'|'error'; targetId?:string; messageId?:string; answerVersion?:number; references?:AssistantReference[]; createdAt?: number; finishedAt?: number; endState?: 'complete'|'stopped'|'error'; progress?: AssistantProgress[]; requestId?: string; feedback?: AssistantFeedback|null; question:string; images?:AssistantImage[]; imagesExpired?:boolean; result?:AssistantAnswer; partial?:boolean }
+export interface AssistantTurn { serverAnswerUpdatedAt?:number; deliveryState?:'queued'|'running'|'applied'|'completed'|'stopped'|'error'; deliveryError?:AssistantErrorCode; targetId?:string; messageId?:string; answerVersion?:number; references?:AssistantReference[]; createdAt?: number; finishedAt?: number; endState?: 'complete'|'stopped'|'error'; progress?: AssistantProgress[]; requestId?: string; feedback?: AssistantFeedback|null; question:string; images?:AssistantImage[]; imagesExpired?:boolean; result?:AssistantAnswer; partial?:boolean }
 interface Props {
   onAlgorithmChange?:(turn:number, artifact:number, card:number, expected:AssistantAlgorithmCard, next:AssistantAlgorithmCard)=>void;
   onAnswerRevealed?:(id:string,text:string)=>void;
@@ -52,17 +56,23 @@ interface Props {
   provider?:AssistantProvider; onProviderChange?:(provider:AssistantProvider)=>void; openaiAvailable?:boolean;
   thinking:AssistantThinkingMode; onThinkingChange:(mode:AssistantThinkingMode)=>void;
   onFeedback:(id:string,value:AssistantFeedback|null)=>void;
-  onAsk:(question:string,replaceLast?:boolean,images?:AssistantImage[],references?:AssistantReference[],mode?:'steer'|'queue')=>Promise<boolean>|void; onStop:()=>void; onClose:()=>void; onNew:()=>void;
+  onAsk:(question:string,replaceLast?:boolean,images?:AssistantImage[],references?:AssistantReference[],mode?:'steer'|'queue'|'parallel')=>Promise<boolean>|void; onStop:()=>void; onClose:()=>void; onNew:()=>void;
 }
 const QUERY_LABELS: Record<string, {zh:string;en:string}> = {
+  annual_attendance:{zh:'正在统计单年参赛场数',en:'Counting competitions by calendar year'},
+  recent_3x3_champions:{zh:'正在统计 WCA 三阶决赛夺冠次数',en:'Counting WCA 3×3 final wins'},
+  competition_round:{zh:'正在查询比赛轮次成绩',en:'Reading round results'},
   web_search:{zh:'正在搜索网络资料',en:'Searching the web'},
   news:{zh:'正在查询 WCA 官方新闻',en:'Reading WCA news'},
   lookup_cube_photo:{zh:'正在识别魔方并验证公式',en:'Identifying the cube and verifying algorithms'},
+  verify_cube_moves:{zh:'正在用三阶状态验证转法',en:'Checking moves against the 3×3 cube state'},
   navigation:{zh:'正在查找功能入口',en:'Finding site tools'},
   pages:{zh:'正在查询站内页面',en:'Searching site pages'},
   records:{zh:'正在查询纪录',en:'Looking up records'},
   find_person:{zh:'正在查找选手',en:'Finding a competitor'},
   person:{zh:'正在读取选手成绩',en:'Reading competitor results'},
+  person_competitions:{zh:'正在统计选手参加过的比赛',en:'Counting competitions the competitor entered'},
+  person_countries:{zh:'正在按举办地统计参赛记录',en:'Grouping competition entries by host country or region'},
   rankings:{zh:'正在查询排名',en:'Looking up rankings'},
   competitions:{zh:'正在查找比赛',en:'Finding competitions'},
   scrambles:{zh:'正在读取比赛打乱',en:'Reading competition scrambles'},
@@ -72,8 +82,9 @@ const QUERY_LABELS: Record<string, {zh:string;en:string}> = {
   forum:{zh:'正在查询论坛内容',en:'Searching forum posts'},
   algorithms:{zh:'正在查询公式库',en:'Searching algorithms'},
   statistics:{zh:'正在查询统计数据',en:'Looking up statistics'},
-  analysis_schema:{zh:'正在读取数据结构',en:'Reading data definitions'},
-  analysis_query:{zh:'正在计算统计结果',en:'Calculating statistics'},
+  statistics_metadata:{zh:'正在核对统计口径与可用筛选条件',en:'Checking the statistic’s methodology and filters'},
+  analysis_schema:{zh:'正在确认可查询的资料和字段',en:'Checking available datasets and fields'},
+  analysis_query:{zh:'正在按问题条件筛选并汇总数据',en:'Filtering and aggregating data for the request'},
   deliberate:{zh:'正在切换深入分析',en:'Starting deeper analysis'},
 };
 const QUESTION_EXAMPLES = [
@@ -146,21 +157,31 @@ function openSolverDocument(event:MouseEvent<HTMLAnchorElement>) {
     window.location.assign(event.currentTarget.href);
   }
 }
-function AssistantExecutionProgress({turn,busy,status,stopping}:{turn:AssistantTurn;busy:boolean;status:AssistantStatus;stopping?:boolean}) {
+function AssistantExecutionProgress({turn,busy,status,stopping,lang}:{turn:AssistantTurn;busy:boolean;status:AssistantStatus;stopping?:boolean;lang:'zh'|'en'}) {
   const [expanded,setExpanded]=useState(false);
   const [now,setNow]=useState(Date.now);
   const panelId=useId();
   useEffect(()=>{ if(!busy){setExpanded(false);return;} const timer=window.setInterval(()=>setNow(Date.now()),1000);return()=>window.clearInterval(timer); },[busy]);
-  const steps=turn.progress ?? [];
-  const current=steps.findLast(step=>step.state==='running');
-  const phaseLabel=(step:AssistantProgress)=>step.reused ? tr({zh:'已复用查询结果',en:'Reused saved result'}) : step.phase==='tool' ? tr(QUERY_LABELS[step.tool ?? ''] ?? {zh:'正在查询资料',en:'Looking up sources'})
-    : tr(step.phase==='review' ? {zh:'正在核对证据与回答',en:'Checking evidence and answer'} : {zh:'正在分析与组织回答',en:'Analyzing and composing'});
-  const summary=stopping ? tr({zh:'正在停止',en:'Stopping'}) : busy ? current ? phaseLabel(current) : statusLabel(status)
+  const {steps,current}=assistantProgressView(turn.progress ?? []);
+  const stepTitle=(step:AssistantProgress,live:boolean)=>{
+    const label=step.phase==='tool'
+      ? tr(QUERY_LABELS[step.tool ?? ''] ?? {zh:'正在查询资料',en:'Looking up sources'})
+      : tr(step.phase==='review' ? {zh:'正在对照证据核对回答',en:'Checking the answer against the evidence'} : step.activity==='write' || busy && step===current && turn.partial
+        ? {zh:'正在组织内容并生成回答',en:'Organizing and writing the answer'} : {zh:'正在梳理问题并规划回答',en:'Breaking down the request and planning the answer'});
+    const scope=assistantProgressScope(step.scope);
+    const event=scope?.event ? eventDisplayName(scope.event,lang==='zh') : undefined;
+    const dates=scope?.from && scope.to ? formatDateRangeIso(scope.from,scope.to) : undefined;
+    return [tr({zh:`第 ${step.id} 步`,en:`Step ${step.id}`}),live?label:label.replace(/^正在/,''),event,dates,
+      step.reused && tr({zh:'已复用查询结果',en:'Reused saved result'})].filter(Boolean).join(' · ');
+  };
+  const interrupted=turn.endState==='error' && current && (current.state==='running' || current.state==='error');
+  const summary=stopping ? tr({zh:'正在停止',en:'Stopping'}) : busy ? current ? stepTitle(current,true) : statusLabel(status)
+    : interrupted ? stepTitle(current,false)+' · '+tr(turn.deliveryError==='timeout'?{zh:'超时',en:'Timed out'}:{zh:'未完成',en:'Could not complete'})
     : tr(turn.endState==='complete' || (turn.result && !turn.partial) ? {zh:'处理完成',en:'Completed'} : turn.endState==='stopped' ? {zh:'已停止',en:'Stopped'} : {zh:'处理未完成',en:'Could not complete'});
   const elapsed=Math.max(0,((busy ? now : turn.finishedAt ?? turn.createdAt ?? now)-(turn.createdAt ?? now))/1000);
   return <div className="site-assistant-progress" data-active={busy && !stopping}>
     <div className="site-assistant-progress-heading">
-      <span className="site-assistant-progress-active-text" role="status" aria-live="polite">{busy && !stopping && status.phase==='writing' && current?.phase==='model' ? statusLabel(status) : summary}</span>
+      <span className="site-assistant-progress-active-text" role="status" aria-live="polite" title={summary}>{summary}</span>
       <span className="site-assistant-progress-time" aria-hidden="true">{elapsed.toFixed(0)} s</span>
       {!busy && !!steps.length && <MoreToggle expanded={expanded} onToggle={()=>setExpanded(!expanded)} aria-controls={panelId}><span className="site-assistant-progress-active-text">{tr({zh:'处理过程',en:'Activity'})}</span></MoreToggle>}
     </div>
@@ -170,7 +191,7 @@ function AssistantExecutionProgress({turn,busy,status,stopping}:{turn:AssistantT
         const label=tr(state==='complete' ? {zh:'完成',en:'Finished'} : state==='partial' ? {zh:'信息不完整',en:'Partial information'} : state==='error' ? {zh:'未成功',en:'Failed'} : state==='stopped' ? {zh:'已中断',en:'Interrupted'} : {zh:'进行中',en:'In progress'});
         return <li key={step.id} data-state={state}>
           {state==='complete' ? <Check size={13} aria-hidden="true"/> : state==='error' || state==='stopped' ? <X size={13} aria-hidden="true"/> : <span className="site-assistant-progress-dot" aria-hidden="true"/>}
-          <span className={state==='running' ? 'site-assistant-progress-active-text' : undefined}>{phaseLabel(step).replace(/^正在/,'')} · {label}{!!step.sourceCount && <span> · {tr({zh:`已读取 ${step.sourceCount} 条来源`,en:`${step.sourceCount} sources read`})}</span>}</span>
+          <span>{stepTitle(step,false)} · {label}{!!step.sourceCount && <span> · {tr({zh:`已读取 ${step.sourceCount} 条来源`,en:`${step.sourceCount} sources read`})}</span>}</span>
           {step.durationMs!==undefined && <span className="site-assistant-progress-time">{(step.durationMs/1000).toFixed(0)} s</span>}
         </li>;
       })}</ol>
@@ -225,7 +246,8 @@ function AssistantModal({ children, onClose, motionRef }: { children: ReactNode;
 }
 
 export default function SiteAssistantDialog({onAuthSend,authSendLabel,authPlaceholder,authNotice,onAlgorithmChange,onAnswerRevealed,turns,draft,images,onImagesChange:setImages,onDraftChange:setDraft,provider='bailian',onProviderChange,openaiAvailable=false,thinking,onThinkingChange,status={phase:'planning'},busy,paused=false,recovering=false,activeMessageId,onResume,stopping=false,stopUnconfirmed=false,error,lang,onAsk,onStop,onClose:onClosed,onNew,onFeedback,embedded=false,active=true,searchResults,onBranch}:Props) {
-  const [deliveryMode,setDeliveryMode]=useState<'steer'|'queue'>('steer');
+  const retryAt=error==='model_rate_limited' ? turns.at(-1)?.progress?.at(-1)?.retryAt : undefined;
+  const [deliveryMode,setDeliveryMode]=useState<'steer'|'queue'|'parallel'>('steer');
   const isRunning=(turn:AssistantTurn,index:number)=>busy && (activeMessageId?turn.messageId===activeMessageId:index===turns.length-1);
   const { motionRef, close: onClose } = useDialogMotion(onClosed, { enabled: !embedded });
   const [initialAnswers] = useState(() => new Set(turns.filter(turn => turn.result && !turn.partial).map(turn => turn.requestId)));
@@ -349,6 +371,7 @@ export default function SiteAssistantDialog({onAuthSend,authSendLabel,authPlaceh
   const isEditing=editing!==null;
   useEffect(()=>{if(!active)return;if(isEditing)editInput.current?.focus();else if(!window.matchMedia?.('(pointer: coarse)').matches)input.current?.focus();},[isEditing,active]);
   const scrollLatest=()=>{follow.current=true;setShowLatest(false);const node=messages.current;if(node)node.scrollTop=node.scrollHeight;};
+  const modeLabel=deliveryMode==='parallel'?tr({zh:'在新对话并行处理',en:'Send in a new chat'}):deliveryMode==='steer'?tr({zh:'调整当前任务',en:'Adjust current task'}):tr({zh:'加入队列',en:'Add to queue'});
   const submit=async()=>{
     if(submitLock.current || stopping || processing.current || editing!==null || (!draft.trim() && !images.length) || draft.trim().length>SITE_ASSISTANT_QUESTION_MAX_LENGTH)return;
     submitLock.current=true;setSubmitting(true);stop();
@@ -385,6 +408,7 @@ export default function SiteAssistantDialog({onAuthSend,authSendLabel,authPlaceh
         {turns.map((turn,i)=>{
           const animate = !!turn.requestId && !initialAnswers.has(turn.requestId);
           const revealDone = !turn.partial;
+          const hasPartialContent = !!turn.result?.answer.trim() || !!turn.result?.artifacts?.length;
           const tableLinks=new Set(turn.result?.artifacts?.flatMap(a=>a.kind==='table' ? [...a.links ?? [],...a.cellLinks?.flat() ?? []] : []) ?? []);
           const presentation=turn.result ? answerPresentation(turn.result,turn.partial) : null;
           const citedLinks=new Set(presentation?.sources.filter(source=>presentation.withFallback.includes(`[[${source.id}]]`)).map(source=>source.href));
@@ -396,12 +420,18 @@ export default function SiteAssistantDialog({onAuthSend,authSendLabel,authPlaceh
           return <section className="site-assistant-turn" id={titleId+'-turn-'+i} key={turn.messageId ?? i}>{editing!==null && i===turns.length-1 ? <form className="site-assistant-edit" onSubmit={event=>{event.preventDefault();if((editing.trim()||turn.images?.length)&&editing.trim().length<=SITE_ASSISTANT_QUESTION_MAX_LENGTH&&!busy){turn.references?.length ? onAsk(editing.trim(),true,turn.images,turn.references) : onAsk(editing.trim(),true,turn.images);setEditing(null);}}}>
           {!!turn.images?.length && renderImages(turn.images)}<textarea autoComplete="off" ref={editInput} className="site-assistant-draft" aria-label={tr({zh:'编辑问题',en:'Edit question'})} value={editing} maxLength={SITE_ASSISTANT_QUESTION_MAX_LENGTH} rows={3} onChange={event=>setEditing(event.target.value)}/>
           <div className="site-assistant-edit-actions">{editing && <ClearButton variant="standalone" onClick={()=>setEditing('')}/>}<button type="button" className="site-assistant-action" onClick={()=>setEditing(null)}>{tr({zh:'取消',en:'Cancel'})}</button><button type="submit" className="site-assistant-action site-assistant-send" disabled={busy||editing.trim().length>SITE_ASSISTANT_QUESTION_MAX_LENGTH||(!editing.trim()&&!turn.images?.length)}>{tr({zh:'发送',en:'Send'})}</button></div>
-        </form> : <div className="site-assistant-question">{turn.imagesExpired && <p className="site-assistant-note">{tr({zh:'较早的图片已释放，需要时请重新添加。',en:'Earlier images have been released. Attach them again if needed.'})}</p>}{!!turn.images?.length && renderImages(turn.images)}{turn.references?.map((item,j)=><div key={j}>{quoteCard(item)}</div>)}{turn.question && <h3 data-assistant-message="user" data-turn={i}>{turn.question}</h3>}<div className="site-assistant-question-actions">{turn.question && <Tooltip content={tr({zh:'引用问题',en:'Quote question'})}>{tip=><button {...tip} className="site-assistant-action" type="button" aria-label={tr({zh:'引用问题',en:'Quote question'})} onClick={()=>useQuote(quote(turn,i,'user'))}><Quote size={15}/></button>}</Tooltip>}<button className="site-assistant-action" type="button" onClick={()=>{if(navigator.clipboard)copy(turn.question,`question-${i}`);}} title={tr(copiedKey===`question-${i}`?{zh:'已复制',en:'Copied'}:{zh:'复制问题',en:'Copy question'})} aria-label={tr(copiedKey===`question-${i}`?{zh:'已复制',en:'Copied'}:{zh:'复制问题',en:'Copy question'})}>{copiedKey===`question-${i}`?<Check size={15}/>:<Copy size={15}/>}</button>{i===turns.length-1 && <button className="site-assistant-action" type="button" disabled={busy} onClick={()=>{stop();setEditing(turn.question);}} title={tr({zh:'编辑问题',en:'Edit question'})} aria-label={tr({zh:'编辑问题',en:'Edit question'})}><Pencil size={15}/></button>}</div></div>}
-          {(turn.deliveryState==='queued' || turn.deliveryState==='applied') && <p className="site-assistant-note" role="status">{turn.deliveryState==='applied'?tr({zh:'已用于调整当前任务',en:'Applied to the current task'}):turn.targetId?tr({zh:'已收到，等待当前步骤结束',en:'Received; waiting for the current step'}):tr({zh:'已排队',en:'Queued'})}</p>}
-          {((isRunning(turn,i)) || !!turn.progress?.length || !!turn.endState) && <AssistantExecutionProgress key={turn.createdAt ?? turn.requestId ?? i} turn={turn} busy={isRunning(turn,i)} stopping={stopping && isRunning(turn,i)} status={status}/>}
-          {turn.result && <div className="site-assistant-response" data-assistant-message="assistant" data-turn={i}><SiteAssistantAnswerText result={turn.result} partial={turn.partial} requestId={turn.requestId} animate={animate} onRevealComplete={onRevealComplete}/>
+        </form> : <div className="site-assistant-question">{turn.imagesExpired && <p className="site-assistant-note">{tr({zh:'较早的图片已释放，需要时请重新添加。',en:'Earlier images have been released. Attach them again if needed.'})}</p>}{!!turn.images?.length && renderImages(turn.images)}{turn.references?.map((item,j)=><div key={j}>{quoteCard(item)}</div>)}{turn.question && <h3 data-assistant-message="user" data-turn={i}>{turn.question}</h3>}<div className="site-assistant-question-actions">{turn.question && <Tooltip content={tr({zh:'引用问题',en:'Quote question'})}>{tip=><button {...tip} className="site-assistant-action" type="button" aria-label={tr({zh:'引用问题',en:'Quote question'})} onClick={()=>useQuote(quote(turn,i,'user'))}><Quote size={15}/></button>}</Tooltip>}<button className="site-assistant-action" type="button" onClick={()=>{if(navigator.clipboard)copy(turn.question,`question-${i}`);}} title={tr(copiedKey===`question-${i}`?{zh:'已复制',en:'Copied'}:{zh:'复制问题',en:'Copy question'})}>{copiedKey===`question-${i}`?<Check size={15}/>:<Copy size={15}/>}</button>{i===turns.length-1 && <button className="site-assistant-action" type="button" disabled={busy} onClick={()=>{stop();setEditing(turn.question);}} title={tr({zh:'编辑问题',en:'Edit question'})}><Pencil size={15}/></button>}</div></div>}
+          {turn.deliveryState==='applied' && <p className="site-assistant-note" role="status">{tr({zh:'已用于调整当前任务',en:'Applied to the current task'})}</p>}
+          {turn.deliveryState==='queued' && !paused && <p className="site-assistant-note" role="status">{tr(turn.targetId
+            ? {zh:'等待当前步骤结束',en:'Waiting for the current step'}
+            : activeMessageId || turns.slice(0,i).some(previous=>previous.deliveryState==='queued' && !previous.targetId)
+              ? {zh:'等待本对话的上一条回复',en:'Waiting for the previous reply in this chat'}
+              : {zh:'正在开始',en:'Starting'})}</p>}
+          {turn.deliveryState==='error' && turn.deliveryError && (i!==turns.length-1 || error!==turn.deliveryError) && <p className="site-assistant-note" role="alert">{tr(ASSISTANT_ERROR_TEXT[turn.deliveryError])}</p>}
+          {((isRunning(turn,i)) || !!turn.progress?.length || !!turn.endState) && <AssistantExecutionProgress key={turn.createdAt ?? turn.requestId ?? i} turn={turn} busy={isRunning(turn,i)} stopping={stopping && isRunning(turn,i)} status={status} lang={lang}/>}
+          {turn.result && (revealDone || hasPartialContent) && <div className="site-assistant-response" data-assistant-message="assistant" data-turn={i}><SiteAssistantAnswerText result={turn.result} partial={turn.partial} requestId={turn.requestId} animate={animate} onRevealComplete={onRevealComplete}/>
           {revealDone && !turn.partial && !!actions.length && <div className="site-assistant-response-actions site-assistant-navigation">{actions.map(action=><Link key={action.id} className="site-assistant-action" href={action.href} {...sourceLinkProps(action.href)} onClick={event=>{if(turn.requestId)void sendAssistantEvent(turn.requestId,{type:'click',kind:'action',id:action.id}).catch(()=>{});openSolverDocument(event);}} prefetch={false}>{tr({zh:`打开 ${action.title}`,en:`Open ${action.title}`})}</Link>)}</div>}
-          {revealDone && turn.result.artifacts?.map((a,j)=>a.kind==='algorithms'?<AssistantAlgorithmCards key={j} result={a} onAsk={busy ? undefined : question=>onAsk(question)} onChange={onAlgorithmChange && !turn.partial ? (card,expected,next)=>changeAlgorithm(i,j,card,expected,next) : undefined}/>:a.kind==='cube-photo'?<PhotoChatResult key={j} result={a}/>:a.kind==='progress'?<Progress key={j} chart={a}/>:<section key={j}><h4>{a.title}</h4><div className="site-assistant-table"><table><thead><tr>{a.columns.map((c,k)=><th key={k}>{c}</th>)}</tr></thead><tbody>{a.rows.map((row,k)=><tr key={k}>{row.map((cell,c)=>{
+          {turn.result.artifacts?.map((a,j)=>!revealDone && a.kind!=='algorithms' ? null : a.kind==='algorithms'?<AssistantAlgorithmCards key={j} result={a} onAsk={busy ? undefined : question=>onAsk(question)} onChange={onAlgorithmChange && !turn.partial ? (card,expected,next)=>changeAlgorithm(i,j,card,expected,next) : undefined}/>:a.kind==='cube-photo'?<PhotoChatResult key={j} result={a}/>:a.kind==='progress'?<Progress key={j} chart={a}/>:<section key={j}><h4>{a.title}</h4><div className="site-assistant-table"><table><thead><tr>{a.columns.map((c,k)=><th key={k}>{c}</th>)}</tr></thead><tbody>{a.rows.map((row,k)=><tr key={k}>{row.map((cell,c)=>{
             const kind=a.columnKinds?.[c];
             const href=a.cellLinks?.[k]?.[c] ?? (c===0 ? a.links?.[k] : undefined);
             const compId=href && /^\/wca\/comp\/([A-Za-z0-9_-]+)$/.exec(href)?.[1];
@@ -411,7 +441,7 @@ export default function SiteAssistantDialog({onAuthSend,authSendLabel,authPlaceh
           })}</tr>)}</tbody></table></div></section>)}
         </div>}
           {turn.result && revealDone && !(isRunning(turn,i)) && <AssistantAnswerActions key={turn.requestId ?? i} turn={turn} lang={lang} active={active} onFeedback={onFeedback} onQuote={()=>useQuote(quote(turn,i,'assistant'))} onRetry={i===turns.length-1 && !error && !busy && editing===null ? ()=>turn.references?.length ? onAsk(turn.question,true,turn.images,turn.references) : onAsk(turn.question,true,turn.images) : undefined} onBranch={onBranch && !turn.partial && !busy ? ()=>onBranch(i) : undefined} preview={<><SiteAssistantAnswerText result={turn.result}/>{turn.result.artifacts?.filter(a=>a.kind==='algorithms').map((a,j)=><AssistantAlgorithmCards key={j} result={a}/>)}</>}/>}
-          {turn.partial && !(isRunning(turn,i)) && <p className="site-assistant-incomplete">{tr({zh:'回答未完成',en:'Answer incomplete'})}</p>}
+          {turn.partial && hasPartialContent && !(isRunning(turn,i)) && <p className="site-assistant-incomplete">{tr({zh:'回答未完成',en:'Answer incomplete'})}</p>}
         </section>;})}
         {error && (error==='login_required'||error==='wca_link_required' ?
           <div className="site-assistant-auth" role="alert">
@@ -420,7 +450,7 @@ export default function SiteAssistantDialog({onAuthSend,authSendLabel,authPlaceh
               <ArrowRight size={16} aria-hidden="true"/>
             </button>
           </div> :
-          <div role="alert"><p>{tr(ASSISTANT_ERROR_TEXT[error])}</p>{error==='verification_required' ? <Link href={`/competition-verify?returnTo=${encodeURIComponent(lang==='zh'?'/zh':'/')}`} prefetch={false}>{tr({zh:'完成访问验证',en:'Verify access'})}</Link> : error!=='daily_limit' && error!=='account_forbidden' && turns.length>0 && <button className="site-assistant-action" type="button" disabled={busy||editing!==null} onClick={()=>onAsk(turns[turns.length-1].question,true,turns[turns.length-1].images,turns[turns.length-1].references)}>{tr({zh:'重试',en:'Retry'})}</button>}</div>)}
+          <div role="alert"><p>{tr(ASSISTANT_ERROR_TEXT[error])}{retryAt && retryAt>Date.now() && tr({zh:' 可重试时间 ' ,en:' Retry at '})+new Date(retryAt).toLocaleTimeString(lang)}</p>{error==='verification_required' ? <Link href={`/competition-verify?returnTo=${encodeURIComponent(lang==='zh'?'/zh':'/')}`} prefetch={false}>{tr({zh:'完成访问验证',en:'Verify access'})}</Link> : error!=='daily_limit' && error!=='account_forbidden' && turns.length>0 && <button className="site-assistant-action" type="button" disabled={busy||editing!==null} onClick={()=>onAsk(turns[turns.length-1].question,true,turns[turns.length-1].images,turns[turns.length-1].references)}>{tr({zh:'重试',en:'Retry'})}</button>}</div>)}
       </div>
       {showLatest && turns.length>0 && <button className="site-assistant-action site-assistant-latest" type="button" onClick={scrollLatest} title={tr({zh:'回到最新消息',en:'Jump to latest'})} aria-label={tr({zh:'回到最新消息',en:'Jump to latest'})}><ArrowDown size={18}/></button>}</div>
       {selection && <button type="button" className="site-assistant-action site-assistant-quote-selection" onPointerDown={event=>event.preventDefault()} onClick={()=>useQuote(selection)}><Quote size={16}/>{tr({zh:'引用所选内容',en:'Quote selected text'})}</button>}
@@ -442,9 +472,9 @@ export default function SiteAssistantDialog({onAuthSend,authSendLabel,authPlaceh
             ariaLabel={tr({zh:'AI 服务',en:'AI provider'})} variant="plain" preserveFocus/> : <span className="site-assistant-thinking site-assistant-provider site-assistant-provider-label">{providerLabel}</span>)}
           {!busy && <CompactSelect className="site-assistant-thinking" popupClassName="site-assistant-menu" items={thinkingItems} value={thinking} onChange={onThinkingChange} label={thinkingItems.find(item=>item.value===thinking)!.label} ariaLabel={tr({zh:'思考模式',en:'Thinking mode'})} variant="plain" preserveFocus/>}
           <button className="site-assistant-action site-assistant-mic" type="button" disabled={editing!==null} onClick={()=>listening?stop():void start()} title={tr({zh:'语音输入',en:'Voice input'})} aria-label={tr({zh:'语音输入',en:'Voice input'})} aria-pressed={listening}><Mic size={19}/></button>
-          {busy && <CompactSelect className="site-assistant-thinking" popupClassName="site-assistant-menu" items={[{value:'steer' as const,label:tr({zh:'调整当前任务',en:'Adjust current task'})},{value:'queue' as const,label:tr({zh:'加入队列',en:'Add to queue'})}]} value={deliveryMode} onChange={setDeliveryMode} label={deliveryMode==='steer'?tr({zh:'调整当前任务',en:'Adjust current task'}):tr({zh:'加入队列',en:'Add to queue'})} ariaLabel={tr({zh:'发送方式',en:'Delivery mode'})} variant="plain" preserveFocus/>}
+          {busy && <CompactSelect className="site-assistant-thinking" popupClassName="site-assistant-menu" items={[{value:'steer' as const,label:tr({zh:'调整当前任务',en:'Adjust current task'})},{value:'queue' as const,label:tr({zh:'加入队列',en:'Add to queue'})},{value:'parallel' as const,label:tr({zh:'在新对话并行处理',en:'Send in a new chat'})}]} value={deliveryMode} onChange={setDeliveryMode} label={modeLabel} ariaLabel={tr({zh:'发送方式',en:'Delivery mode'})} variant="plain" preserveFocus/>}
           {busy && <Tooltip content={tr(stopping?{zh:'正在停止',en:'Stopping'}:{zh:'停止',en:'Stop'})}>{tip=><button {...tip} className="site-assistant-action site-assistant-send" type="button" disabled={stopping} onClick={onStop} aria-label={tr({zh:'停止',en:'Stop'})}><Square size={16} fill="currentColor"/></button>}</Tooltip>}
-          {(!busy || draft.trim() || images.length>0) && <Tooltip content={authSendLabel ?? tr(busy?(deliveryMode==='steer'?{zh:'调整当前任务',en:'Adjust current task'}:{zh:'加入队列',en:'Add to queue'}):{zh:'发送',en:'Send'})}>{tip=><button {...tip} className={`site-assistant-action site-assistant-send${authSendLabel ? ' site-assistant-auth-send' : ''}`} type="submit" disabled={stopping||submitting||(!draft.trim()&&!images.length)||draft.trim().length>SITE_ASSISTANT_QUESTION_MAX_LENGTH||editing!==null||processingImages} aria-label={authSendLabel ?? tr(busy?(deliveryMode==='steer'?{zh:'调整当前任务',en:'Adjust current task'}:{zh:'加入队列',en:'Add to queue'}):{zh:'发送',en:'Send'})}>{authSendLabel ?? <ArrowUp size={20}/>}</button>}</Tooltip>}
+          {(!busy || draft.trim() || images.length>0) && <Tooltip content={authSendLabel ?? (busy?modeLabel:tr({zh:'发送',en:'Send'}))}>{tip=><button {...tip} className={`site-assistant-action site-assistant-send${authSendLabel ? ' site-assistant-auth-send' : ''}`} type="submit" disabled={stopping||submitting||(!draft.trim()&&!images.length)||draft.trim().length>SITE_ASSISTANT_QUESTION_MAX_LENGTH||editing!==null||processingImages} aria-label={authSendLabel ?? (busy?modeLabel:tr({zh:'发送',en:'Send'}))}>{authSendLabel ?? <ArrowUp size={20}/>}</button>}</Tooltip>}
         </div>
       </div>{processingImages && <p role="status">{tr({zh:'正在处理图片…',en:'Preparing images…'})}</p>}
       {quoteError && <p role="alert">{tr({zh:'引用内容较长，请选中需要引用的片段。',en:'This quote is too long. Select a shorter passage.'})}</p>}

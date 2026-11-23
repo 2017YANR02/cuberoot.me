@@ -1,3 +1,4 @@
+import { readAssistantEvents } from '@cuberoot/shared/site-assistant';
 import { assistantStreamApiUrl } from './api-base';
 import { authHeaders } from './admin-api';
 import { sessionFetch } from './session-fetch';
@@ -16,4 +17,18 @@ export async function assistantQueueRequest(conversationId:string,action:''|'mes
     if(!data || data.conversationId!==conversationId || !Array.isArray(data.messages))throw new AssistantQueueError('network');
   } else if(data?.id!==body?.id)throw new AssistantQueueError('network');
   return data;
+}
+
+/** A notification only wakes the authenticated snapshot reader. */
+export async function watchAssistantQueue(id:string,signal:AbortSignal,onChange:()=>void) {
+  const response=await sessionFetch(assistantStreamApiUrl()+'/conversations/'+id,{
+    headers:{...authHeaders(false),Accept:'text/event-stream'},signal,cache:'no-store',
+  });
+  if(!response.ok || !response.body || !response.headers.get('Content-Type')?.includes('text/event-stream')) {
+    await response.body?.cancel();
+    return;
+  }
+  for await(const message of readAssistantEvents(response.body)) {
+    if(message==='changed')onChange();
+  }
 }

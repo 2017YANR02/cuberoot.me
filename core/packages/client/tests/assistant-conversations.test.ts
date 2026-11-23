@@ -1,7 +1,44 @@
 import { describe, expect, it, vi } from 'vitest';
 import { createAssistantConversations } from '@/lib/assistant-conversations';
+import { formatReplayAssistantDraft } from '@/lib/assistant-replay-draft';
+import { defaultReplayAnswer } from '@cuberoot/shared/site-assistant-replay';
 
 describe('assistant workspace conversations', () => {
+  it('answers the default timer prompt from its own measurements and preserves custom requests', () => {
+    const draft=formatReplayAssistantDraft({
+      timeMs:7718,penalty:'ok',method:'CFOP',stm:62,tps:8.03,stages:[
+        {label:'Cross',stepMs:1475,recognitionMs:0,executionMs:1475,turns:11,cumulativeMs:1475},
+        {label:'F2',stepMs:992,recognitionMs:698,executionMs:294,turns:8,cumulativeMs:2467},
+        {label:'F3',stepMs:1678,recognitionMs:537,executionMs:1141,turns:7,cumulativeMs:4145},
+        {label:'PLL',stepMs:1613,recognitionMs:377,executionMs:1236,turns:17,cumulativeMs:7718},
+      ],
+    },text=>text.zh);
+    for(const question of [draft,draft.normalize('NFKC').replaceAll('\n','\r\n')]){
+      const answer=defaultReplayAnswer(question,'zh');
+      expect(answer?.answer).toContain('F3 的阶段用时为 1.678 秒');
+      expect(answer?.answer).toContain('回放截至 4.145 秒');
+      expect(answer?.actions).toMatchObject([{href:'/alg/3x3/f2l/select'}]);
+    }
+    expect(defaultReplayAnswer(draft+' 请按识别耗时判断。','zh')).toBeUndefined();
+  });
+
+  it('stages only the selected replay measurements in a new unsent, account-scoped draft', () => {
+    const store = createAssistantConversations();
+    store.create('alice', 'existing', 'My existing draft');
+    const replay = {
+      timeMs: 11050, penalty: 'ok' as const, method: 'CFOP', stm: 48, tps: 5.31,
+      stages: [{ label: 'F2L', stepMs: 5100, recognitionMs: null, executionMs: 4900, turns: 24, cumulativeMs: 7610 }],
+      id: 'local-solve-id', scramble: 'unsent-raw-scramble', moves: ['unsent-raw-turns'],
+    };
+    const draft = formatReplayAssistantDraft(replay, text => text.en);
+    store.create('alice', 'replay', draft);
+    expect(draft).toContain('F2L 5.100 s, execution 4.900 s, 24 turns (HTM), playback through 7.610 s');
+    expect(draft).not.toMatch(/local-solve-id|unsent-raw|recognition 0/);
+    expect(store.takeSubmission('alice', 'replay')).toBeNull();
+    expect(store.read('alice').conversations[0].snapshot.draft).toBe('My existing draft');
+    expect(store.read('bob').conversations).toEqual([]);
+    expect(formatReplayAssistantDraft({ ...replay, stages: [] }, text => text.zh)).toContain('没有可靠的分阶段用时');
+  });
   it('tracks completed replies independently across chats and accounts without treating snapshots as completion', () => {
     const store = createAssistantConversations();
     store.create('alice', 'a');
@@ -143,4 +180,18 @@ describe('assistant workspace conversations', () => {
     expect(store.read('bob').open).toBe(false);
     expect(store.read('bob').conversations).toEqual([]);
   });
+});
+
+it('submits an independent chat while the original chat keeps its running task',()=>{
+  const store=createAssistantConversations();
+  store.create('owner','original');
+  store.setResponding('owner','original','thinking');
+  const reference={messageId:'source',messageVersion:1,role:'user' as const,selectedText:'Only the final',sourceStatus:'complete' as const};
+  store.create('owner','parallel');
+  expect(store.submit('owner','parallel','New question',[],'new-message',[reference])).toBe(true);
+  expect(store.read('owner').activeId).toBe('parallel');
+  expect(store.read('owner').conversations[0].responding).toBe('thinking');
+  expect(store.read('owner').conversations[1].snapshot.turns).toEqual([]);
+  expect(store.takeSubmission('owner','parallel')).toMatchObject({messageId:'new-message',references:[reference]});
+  expect(store.read('another-owner').conversations).toHaveLength(0);
 });

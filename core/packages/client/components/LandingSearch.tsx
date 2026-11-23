@@ -4,7 +4,8 @@ import { installedGenerativeAiDisabled, useInstalledGenerativeAiDisabled } from 
 import { THEMES } from '@/lib/deskpet-themes';
 import { saveAssistantImages } from '@/lib/site-assistant-images';
 import { getAuthUser } from '@/lib/auth-store';
-import { assistantQueueRequest, AssistantQueueError } from '@/lib/assistant-queue';
+import { watchAssistantQueue, assistantQueueRequest, AssistantQueueError } from '@/lib/assistant-queue';
+import { defaultReplayAnswer } from '@cuberoot/shared/site-assistant-replay';
 import type { AssistantDeliveryMode, AssistantQueueSnapshot, AssistantDurableInput } from '@cuberoot/shared/site-assistant';
 
 /**
@@ -395,13 +396,15 @@ export default function LandingSearch({
     onConversationChange?.({ turns: assistantTurns, conversationId: assistantConversation.current });
   }, [assistantTurns, onConversationChange]);
 
+  const queueActivity=useRef(false);
   const applyQueue=useCallback((snapshot:AssistantQueueSnapshot)=>{
     if(latestSnapshot.current.id===snapshot.conversationId && latestSnapshot.current.revision>snapshot.revision)return;
     latestSnapshot.current={id:snapshot.conversationId,revision:snapshot.revision};
     setQueueSnapshot(snapshot);
     setAssistantStopping(snapshot.paused && !!snapshot.activeId);
     const pending=snapshot.messages.some(message=>message.state==='queued' || message.state==='running');
-    setAssistantBusy(!!snapshot.activeId || (!snapshot.paused && pending));
+    queueActivity.current=!!snapshot.activeId || (!snapshot.paused && pending);
+    setAssistantBusy(queueActivity.current);
     const active=snapshot.messages.find(message=>message.id===snapshot.activeId);
     const step=active?.progress.at(-1);
     setAssistantStatus(step?.phase==='tool'?{phase:'querying',tool:step.tool}:step?.phase==='model'?{phase:'writing'}:{phase:'planning'});
@@ -413,7 +416,7 @@ export default function LandingSearch({
         const result=message.state==='completed' && old?.endState==='complete' && old.serverAnswerUpdatedAt===message.updatedAt?old.result:message.answer;
         return {...old,messageId:message.id,question:message.input.question,images:message.input.images,references:message.input.references,
           createdAt:message.createdAt,requestId:message.requestId,result,progress:message.progress,
-          serverAnswerUpdatedAt:message.updatedAt,deliveryState:message.state,targetId:message.targetId,
+          serverAnswerUpdatedAt:message.updatedAt,deliveryState:message.state,deliveryError:message.error,targetId:message.targetId,
           answerVersion:result && JSON.stringify(result)!==JSON.stringify(old?.result)?(old?.answerVersion ?? 0)+1:old?.answerVersion,
           partial:!!result && message.state!=='completed',
           endState:message.state==='completed'?'complete' as const:message.state==='stopped'?'stopped' as const:message.state==='error'?'error' as const:undefined,
@@ -437,22 +440,57 @@ export default function LandingSearch({
   useEffect(()=>{
     if(!durableId || !assistantUser?.uid)return;
     const controller=new AbortController();let timer:ReturnType<typeof setTimeout>|undefined;
-    const uid=assistantUser.uid;let fingerprint='',pollDelay=1000;
+    const uid=assistantUser.uid;
+    let reading=false,again=false,connected=false,active=false,first=true;
+    let stream:AbortController|undefined,reconnectAfter=0;
+    let wakeScheduled=false;
+    const schedule=(ms:number)=>{
+      clearTimeout(timer);
+      wakeScheduled=ms===35;
+      timer=setTimeout(()=>{wakeScheduled=false;void poll();},ms);
+    };
+    const wake=()=>{
+      if(controller.signal.aborted)return;
+      if(reading)again=true;
+      else if(!wakeScheduled)schedule(35);
+    };
+    const listen=()=>{
+      if(stream || !active || conversation?.active===false || Date.now()<reconnectAfter)return;
+      const child=new AbortController();
+      stream=child;
+      void watchAssistantQueue(durableId,AbortSignal.any([controller.signal,child.signal]),()=>{
+        connected=true;wake();
+      }).catch(()=>{}).finally(()=>{
+        if(stream!==child)return;
+        stream=undefined;connected=false;reconnectAfter=Date.now()+5000;wake();
+      });
+    };
     const poll=async()=>{
+      if(reading || controller.signal.aborted)return;
+      reading=true;
       try {
-        const data=await assistantQueueRequest(durableId,'',undefined,AbortSignal.any([controller.signal,AbortSignal.timeout(15_000)]),undefined,latestSnapshot.current.id===durableId?latestSnapshot.current.revision:undefined);
+        const data=await assistantQueueRequest(durableId,'',undefined,AbortSignal.any([controller.signal,AbortSignal.timeout(15_000)]),undefined,!first && latestSnapshot.current.id===durableId?latestSnapshot.current.revision:undefined);
+        first=false;
         if(controller.signal.aborted || getAuthUser()?.uid!==uid)return;
         if(data && 'messages' in data) {
-          const next=JSON.stringify(data);
-          if(next!==fingerprint){fingerprint=next;applyQueue(data);}
-          pollDelay=data.activeId || (!data.paused && data.messages.some(message=>message.state==='queued'))?1000:10000;
+          active=!!data.activeId || (!data.paused && data.messages.some(message=>message.state==='queued'));
+          applyQueue(data);
+          if(!active){stream?.abort();stream=undefined;connected=false;}
         }
-      } catch { /* Keep saved progress and retry; a dropped connection does not stop execution. */ }
-      if(!controller.signal.aborted)timer=setTimeout(()=>void poll(),pollDelay);
+        listen();
+      } catch { /* The durable snapshot remains available on reconnect. */ }
+      finally {
+        reading=false;
+        if(!controller.signal.aborted)schedule(again?35:!active || connected?10000:conversation?.active===false?5000:1000);
+        again=false;
+      }
     };
+    // Always read the initial full state, including when a prior effect consumed
+    // its revision before this subscription attached.
+    active=!!queueActivity.current;
     void poll();
-    return()=>{controller.abort();clearTimeout(timer);};
-  },[durableId,assistantUser?.uid,applyQueue,queueRefresh]);
+    return()=>{controller.abort();stream?.abort();clearTimeout(timer);};
+  },[durableId,assistantUser?.uid,applyQueue,queueRefresh,conversation?.active]);
   const stopAssistant=useCallback(async()=>{
     const id=assistantConversation.current,uid=getAuthUser()?.uid;if(!id)return true;
     setAssistantStopping(true);setStopUnconfirmed(false);
@@ -492,7 +530,7 @@ export default function LandingSearch({
     return false;
   };
   const submitting=useRef(false);
-  const askAssistant=async(question=query.trim() || suggestedQuestion,_replaceLast=false,images:AssistantImage[]=[],references:AssistantReference[]=[],mode:AssistantDeliveryMode='steer',messageId?:string)=>{
+  const askAssistant=async(question=query.trim() || suggestedQuestion,_replaceLast=false,images:AssistantImage[]=[],references:AssistantReference[]=[],mode:AssistantDeliveryMode|'parallel'='steer',messageId?:string)=>{
     if(submitting.current || installedGenerativeAiDisabled())return false;
     question=question.trim();
     if (!assistantAllowed) {
@@ -500,6 +538,14 @@ export default function LandingSearch({
       // action arms an automatic submission after authentication.
       rememberDraft(question); setAssistantDraft(question); setAssistantDialog(true);
       return false;
+    }
+    if(mode==='parallel' || queueSnapshot?.paused) {
+      if((!question && !images.length) || question.length>SITE_ASSISTANT_QUESTION_MAX_LENGTH)return false;
+      const id=crypto.randomUUID();
+      assistantConversations.create(owner,id);
+      const accepted=assistantConversations.submit(owner,id,question,images,crypto.randomUUID(),references);
+      if(accepted)router.push(langPrefix+'/chat');
+      return accepted;
     }
     if(workspaceEntry) {
       const chat=ensureAssistantConversation(owner),attachments=images.length?images:chat.snapshot.images;
@@ -510,6 +556,17 @@ export default function LandingSearch({
     if((!question&&!images.length)||question.length>SITE_ASSISTANT_QUESTION_MAX_LENGTH)return false;
     if(!assistantUser || !/^\d{4}[A-Z]{4}\d{2}$/.test(assistantUser.wcaId)) {
       setAssistantError(assistantUser?'wca_link_required':'login_required');return false;
+    }
+    if(!assistantConversation.current && !pendingDelivery.current && !turnsRef.current.length && !images.length && !references.length) {
+      const result=defaultReplayAnswer(question,lang);
+      if(result) {
+        const completedAt=Date.now();
+        setAssistantTurns([{question,result,endState:'complete',createdAt:completedAt,finishedAt:completedAt}]);
+        setAssistantAnswer(result);
+        setAssistantError(null);
+        setAssistantDialog(true);
+        return true;
+      }
     }
     submitting.current=true;const epoch=submissionEpoch.current,ownerAtSubmit=owner,submitStarted=performance.now();
     const controller=new AbortController();assistantRequest.current=controller;
@@ -553,7 +610,7 @@ export default function LandingSearch({
     queueMicrotask(() => {
       if (!active || assistantRequest.current) return;
       const pending = assistantConversations.takeSubmission(conversation.owner, conversation.id);
-      if (pending) void askAssistant(pending.question, false, pending.images, [], pending.messageId ? 'queue' : 'steer', pending.messageId).then(accepted => {
+      if (pending) void askAssistant(pending.question, false, pending.images, pending.references ?? [], pending.messageId ? 'queue' : 'steer', pending.messageId).then(accepted => {
         if (!accepted && !assistantConversations.read(conversation.owner).conversations.find(chat => chat.id === conversation.id)?.snapshot.draft) {
           assistantConversations.patch(conversation.owner, conversation.id, { draft: pending.question, images: pending.images });
         }

@@ -107,7 +107,7 @@ describe('assistant general conversation controls',()=>{
     const onAsk=vi.fn().mockResolvedValue(true);
     const props=await render({answer:'',sources:[]},{busy:true,activeMessageId:'root',draft:'next task',onAsk,turns:[{messageId:'root',question:'running',deliveryState:'running',progress:[{id:1,phase:'tool',tool:'statistics',state:'running',elapsedMs:10}]},{messageId:'next',question:'queued',deliveryState:'queued'}]});
     expect(document.querySelectorAll('.site-assistant-turn')[0].textContent).toContain('正在查询统计数据');
-    expect(document.querySelectorAll('.site-assistant-turn')[1].textContent).toContain('已排队');
+    expect(document.querySelectorAll('.site-assistant-turn')[1].textContent).toContain('等待本对话的上一条回复');
     await act(async()=>document.querySelector<HTMLButtonElement>('[aria-label="发送方式"]')!.click());
     await act(async()=>Array.from(document.querySelectorAll<HTMLElement>('[role="option"]')).find(option=>option.textContent?.includes('加入队列'))!.click());
     await act(async()=>document.querySelector<HTMLButtonElement>('.site-assistant-compose button[type="submit"]')!.click());
@@ -135,27 +135,47 @@ describe('assistant general conversation controls',()=>{
   });
   it('shows actual execution states and collapses them after completion while revealing a complete answer and table immediately',async()=>{
     const createdAt=Date.now()-2000;
-    const turns=[{question:'对比成绩',createdAt,requestId:'fixture-request',progress:[
-      {id:1,phase:'tool' as const,state:'complete' as const,tool:'person',elapsedMs:10,durationMs:30,sourceCount:2},
-      {id:2,phase:'review' as const,state:'running' as const,elapsedMs:40},
-    ]}];
+    const steps=[
+      {id:1,phase:'model' as const,activity:'plan' as const,state:'running' as const,elapsedMs:0},
+      {id:2,phase:'tool' as const,state:'running' as const,tool:'person',scope:{event:'333' as const},elapsedMs:10,durationMs:30,sourceCount:2},
+      {id:3,phase:'review' as const,state:'running' as const,elapsedMs:40},
+      {id:4,phase:'model' as const,activity:'write' as const,state:'running' as const,elapsedMs:80},
+    ];
+    const turns=[{question:'对比成绩',createdAt,requestId:'fixture-request',progress:[steps[0]]}];
     const props=await render({answer:'',sources:[]},{turns,busy:true});
-    expect(document.querySelector('.site-assistant-progress-heading')?.textContent).toContain('正在核对证据与回答');
-    expect(document.querySelector('.site-assistant-progress-steps')).toBeNull();
-    expect(document.querySelector('.site-assistant-progress .more-toggle')).toBeNull();
-    await act(async()=>roots.at(-1)!.render(createElement(SiteAssistantDialog,{...props,status:{phase:'writing'},turns:[{...turns[0],progress:turns[0].progress.map(p=>({...p,state:'complete' as const}))}]})));
-    expect(document.querySelector('.site-assistant-progress-heading')?.textContent).toContain('正在生成回答');
-    expect(document.querySelector('.site-assistant-progress-steps')).toBeNull();
+    expect(document.querySelector('.site-assistant-progress-heading')?.textContent).toContain('第 1 步 · 正在梳理问题并规划回答');
+    for(const [index,label] of ['正在读取选手成绩 · 三阶','正在对照证据核对回答','正在组织内容并生成回答'].entries()){
+      const step=index+1;
+      const progress=steps.slice(0,step+1).map((item,i)=>i===step?item:{...item,state:'complete' as const});
+      await act(async()=>roots.at(-1)!.render(createElement(SiteAssistantDialog,{...props,turns:[{...turns[0],progress}]})));
+      expect(document.querySelectorAll('.site-assistant-progress-heading')).toHaveLength(1);
+      expect(document.querySelector('.site-assistant-progress-heading')?.textContent).toContain(`第 ${step+1} 步 · ${label}`);
+      expect(document.querySelector('.site-assistant-progress-steps')).toBeNull();
+      expect(document.querySelector('.site-assistant-progress .more-toggle')).toBeNull();
+    }
     const longAnswer='完整回答，不需要等待逐字播放。'.repeat(150);
-    await act(async()=>roots.at(-1)!.render(createElement(SiteAssistantDialog,{...props,busy:false,turns:[{...turns[0],result:{answer:longAnswer,sources:[],artifacts:[{kind:'table',title:'结果',columns:['成绩'],rows:[['12.34']]}]},partial:false,endState:'complete',finishedAt:Date.now(),progress:turns[0].progress.map(p=>({...p,state:'complete' as const,durationMs:100}))}]})));
+    await act(async()=>roots.at(-1)!.render(createElement(SiteAssistantDialog,{...props,busy:false,turns:[{...turns[0],result:{answer:longAnswer,sources:[],artifacts:[{kind:'table',title:'结果',columns:['成绩'],rows:[['12.34']]}]},partial:false,endState:'complete',finishedAt:Date.now(),progress:steps.map(p=>({...p,state:'complete' as const,durationMs:100}))}]})));
     expect(document.querySelector('.site-assistant-prose')?.textContent).toContain(longAnswer);
     expect(document.querySelector('.site-assistant-table')?.textContent).toContain('12.34');
     expect(document.querySelector('.site-assistant-progress .more-toggle')?.getAttribute('aria-expanded')).toBe('false');
     expect(document.querySelectorAll('.site-assistant-letter')).toHaveLength(0);
     await act(async()=>document.querySelector<HTMLButtonElement>('.site-assistant-progress .more-toggle')!.click());
     expect(document.querySelector('.site-assistant-progress .more-toggle')?.getAttribute('aria-expanded')).toBe('true');
-    expect(document.querySelectorAll('.site-assistant-progress-steps li')).toHaveLength(2);
+    expect(document.querySelectorAll('.site-assistant-progress-steps li')).toHaveLength(4);
     expect(document.querySelector('.site-assistant-progress-steps')?.textContent).toContain('已读取 2 条来源');
+  });
+  it('identifies the timed-out action in one line and suppresses an empty unfinished draft',async()=>{
+    await render({answer:'',sources:[]},{busy:false,error:'timeout',turns:[{
+      question:'近三个月谁夺冠最多',endState:'error',deliveryError:'timeout',partial:true,result:{answer:'',sources:[]},createdAt:0,finishedAt:58000,
+      progress:[{id:2,phase:'tool',tool:'recent_3x3_champions',state:'running',elapsedMs:10,scope:{from:'2026-08-23',to:'2026-11-23'}}],
+    }]});
+    expect(document.querySelectorAll('.site-assistant-progress-heading')).toHaveLength(1);
+    expect(document.querySelector('.site-assistant-progress-heading')?.textContent).toContain('第 2 步 · 统计 WCA 三阶决赛夺冠次数 · 2026-08-23~11-23 · 超时58 s');
+    expect(document.body.textContent).toContain('这次查询超时了');
+    expect(document.querySelector('.site-assistant-incomplete')).toBeNull();
+    expect(document.querySelector('.site-assistant-response')).toBeNull();
+    await act(async()=>document.querySelector<HTMLButtonElement>('.site-assistant-progress .more-toggle')!.click());
+    expect(document.querySelector('.site-assistant-progress-steps')?.textContent).toContain('统计 WCA 三阶决赛夺冠次数');
   });
   it('marks a cancelled running step as interrupted, never completed',async()=>{
     await render({answer:'',sources:[]},{busy:false,turns:[{question:'查询',createdAt:Date.now()-1000,finishedAt:Date.now(),endState:'stopped',progress:[{id:1,phase:'tool',tool:'pages',state:'running',elapsedMs:20}]}]});
