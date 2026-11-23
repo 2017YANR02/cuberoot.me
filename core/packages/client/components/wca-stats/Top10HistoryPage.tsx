@@ -498,6 +498,9 @@ export default function Top10HistoryPage({
   const eventNameZh = EVENT_ZH[eventId] || eventId;
   const eventNameEn = EVENT_EN[eventId] || eventId;
   const fmtKind: ResultKind = metric === 'single' ? 'single' : 'average';
+  const speedUnit = playMode === 'time'
+    ? tr({ zh: ' 天/秒', en: ' d/s' })
+    : tr({ zh: ' PB/秒', en: ' PB/s' });
 
   return (
     <div className={`t10h-page${embedded ? ' t10h-embedded' : ''}`}>
@@ -668,12 +671,10 @@ export default function Top10HistoryPage({
           >{tr({ zh: '按 PB', en: 'PB' })}</button>
         </div>
         <CompactSelect
-          label={playMode === 'time' ? `${speed}d/s` : `${speed}/s`}
-          items={(playMode === 'time' ? SPEEDS : [1]).map(s => ({
-            value: s,
-            label: playMode === 'time'
-              ? tr({ zh: `${s} 天/秒`, en: `${s} days/sec` })
-              : tr({ zh: `${s} PB/秒`, en: `${s} PB/sec` }),
+          label={`${speed}${speedUnit}`}
+          items={(playMode === 'time' ? SPEEDS : [1]).map(value => ({
+            value,
+            label: `${value}${speedUnit}`,
           }))}
           value={speed}
           onChange={setSpeed}
@@ -686,7 +687,10 @@ export default function Top10HistoryPage({
           disabled={exporting || events.length === 0}
           aria-label={tr({ zh: '导出视频', en: 'Export video'
         })}
-          title={(isZh ? `导出 mp4(1080p / ${playMode === 'time' ? speed + '天/秒' : '1 PB/秒'})` : `Export mp4 (1080p / ${playMode === 'time' ? speed + 'd/s' : '1 PB/s'})`)}
+          title={tr({
+            zh: `导出 MP4（1080p / ${speed}${speedUnit}）`,
+            en: `Export MP4 (1080p / ${speed}${speedUnit})`,
+          })}
         >
           <Download size={16} />
         </button>

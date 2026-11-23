@@ -4,7 +4,7 @@
 //   2. 趋势 (成绩趋势折线 + 排名历史曲线,两图叠放)
 //   3. 分布 动态分布可视化 (DistributionViz)
 
-import { memo, useState, useEffect, useMemo, useCallback } from 'react';
+import { memo, useState, useEffect, useMemo, useCallback, useId } from 'react';
 import { useResultMetricTransition } from './useResultMetricTransition';
 import Link from '@/components/AppLink';
 import { usePathname, useSearchParams } from 'next/navigation';
@@ -51,6 +51,7 @@ import { roundChronologicalOrder } from '@cuberoot/shared/wca-round';
 import { useAuthUser } from '@/lib/auth-store';
 import { SortArrow } from '@/components/SortArrow';
 import { CompactSelect } from '@/components/CompactSelect';
+import MoreToggle from '@/components/MoreToggle';
 import { tr } from '@/i18n/tr';
 import { summarizeNumericValues } from '@cuberoot/shared/timer';
 import {
@@ -78,6 +79,7 @@ interface Props {
 
 type SubSub = 'all' | 'trend' | 'distviz';
 type ReconFilter = 'all' | 'recon' | 'timing';
+const PREVIEW_COMPETITION_LIMIT = 10;
 
 export default function ByEventView({ profile, results, comps, reconLookup, eventId, isZh, showAttemptRanks = true, onToggleAttemptRanks, femaleRecordLookup }: Props) {
   const t = (zh: string, en: string) => (isZh ? zh : en);
@@ -228,6 +230,9 @@ const EventRoundsList = memo(function EventRoundsList({
   // 多盲非官方平均的区域纪录(WR/大洲/NR)查表;仅本项目是多盲时拉取。
   const mbldAvgRecords = useMbldAvgRecords(isMbldEvent(eventId));
   const [editTarget, setEditTarget] = useState<ResultChangeTarget | null>(null);
+  const [expandedEventId, setExpandedEventId] = useState<string | null>(null);
+  const expanded = expandedEventId === eventId;
+  const resultsBodyId = useId();
   const { bodyRef, changeMetric } = useResultMetricTransition();
   const [singleMetricMode, setSingleMetricMode] = useState<WcaResultMetricMode>('singles');
   const [averageMetricMode, setAverageMetricMode] = useState<WcaResultMetricMode>('avg');
@@ -237,8 +242,11 @@ const EventRoundsList = memo(function EventRoundsList({
   const toggleSort = useCallback((key: string) => {
     setSort(prev => prev.key !== key ? { key, dir: 'asc' } : prev.dir === 'asc' ? { key, dir: 'desc' } : { key: null, dir: 'asc' });
   }, []);
-  // 切项目时重置排序(不同项目把数 / 量纲不同)。
-  useEffect(() => { setSort({ key: null, dir: 'asc' }); }, [eventId]);
+  // 切项目时重置排序和展开状态。
+  useEffect(() => {
+    setSort({ key: null, dir: 'asc' });
+    setExpandedEventId(null);
+  }, [eventId]);
   // 排序把序号只给前 5 把(head-to-head 等可能有 1~23 把,但只关心前 5)。
   // 用 trimEmptyAttempts 砍掉尾部 0 占位后再量:3 把项目(多盲 / 三四五盲 / 最少步 / 六七阶)
   // 只出 1-3,不再出 4 5 空列。
@@ -333,9 +341,6 @@ const EventRoundsList = memo(function EventRoundsList({
   // 名次数字优先用本地 prRankLive,cubing pS/pA 仅作兜底(本地无效时)。
   const livePrRanks = useLivePrRanks(rows, wcaId);
 
-  // 行级 hash 锚点(#r-{comp}-{event}-{round})的定位/高亮走共享 useHashHighlight,放到
-  // displayRows / 渐进计数之后(需 count / ensureIndex),见下方。
-
   // 按比赛日期倒序,组内按 round_type 顺序(决赛在上).
   const baseSorted = useMemo(() => {
     return rows.slice().sort((a, b) => {
@@ -386,22 +391,42 @@ const EventRoundsList = memo(function EventRoundsList({
     });
   }, [baseSorted, sort, eventId, mbld, metricValues, aoxrMap, reconFilter, reconLookup]);
 
-  // 渐进渲染:先挂前 N 行,其余趁 idle 补齐(顶级选手单项目可 500+ 行,一次性挂 = 单个长任务卡顿)。
-  // 切项目 / 改排序 → displayRows 重排 → 重置重新渐进。
-  const { count, ensureIndex } = useProgressiveCount(displayRows.length, `${eventId}|${sort.key ?? ''}|${sort.dir}|${singleMetricMode}|${averageMetricMode}`, 20, 30);
+  const previewRows = useMemo(() => {
+    const competitionIds = new Set<string>();
+    return displayRows.filter(({ competition_id }) => {
+      if (competitionIds.has(competition_id)) return true;
+      if (competitionIds.size >= PREVIEW_COMPETITION_LIMIT) return false;
+      competitionIds.add(competition_id);
+      return true;
+    });
+  }, [displayRows]);
+  const visibleRows = expanded ? displayRows : previewRows;
+  // 展开后再渐进补齐，避免一次性挂载数百轮成绩。
+  const { count, ensureIndex } = useProgressiveCount(
+    visibleRows.length,
+    `${eventId}|${sort.key ?? ''}|${sort.dir}|${singleMetricMode}|${averageMetricMode}`,
+    previewRows.length,
+    30,
+  );
 
-  // 行级 hash 锚点(#r-{comp}-{event}-{round}):点整行 → URL 片段更新,该行黄色高亮持续到
-  // 换行。reveal 处理渐进渲染——目标行还没挂到 DOM 时先 ensureIndex 纳入并返回 false,count
-  // 涨到覆盖它后(在 deps 里)hook 重跑再滚动高亮。
+  // 深链指向预览之外的轮次时先展开，再把目标轮次纳入渐进渲染范围。
   const { setHash } = useHashHighlight({
     resolve: resolveResultRow,
     highlightClass: 'wp-row-target',
     block: 'center',
     reveal: (h) => {
-      const idx = resultRowIndex(h, displayRows);
-      if (idx >= 0 && idx >= count) { ensureIndex(idx); return false; }
+      if (h.split('-').at(-2) !== eventId) return;
+      const idx = resultRowIndex(h, visibleRows);
+      if (idx >= count) {
+        ensureIndex(idx);
+        return false;
+      }
+      if (!expanded && idx < 0 && resultRowIndex(h, displayRows) >= 0) {
+        setExpandedEventId(eventId);
+        return false;
+      }
     },
-    deps: [displayRows, count],
+    deps: [visibleRows, displayRows, count, eventId, expanded],
   });
 
   // 比赛信息与 AoXR 列跨同场比赛的全部轮次，避免名称和日期单独撑高首轮。
@@ -409,18 +434,18 @@ const EventRoundsList = memo(function EventRoundsList({
   // 两个约束:① 排序视图(sort.key 非空)行已被拉平打散,同场行不再相邻 → 每行各自出格;
   // ② 渐进渲染只挂前 count 行,合并格不能跨到尚未挂出的行 → 组大小按已挂出的部分截断。
   const aoxrSpans = useMemo(() => {
-    const n = Math.min(count, displayRows.length);
+    const n = Math.min(count, visibleRows.length);
     const spans = new Array<number>(n).fill(1);
     if (sort.key) return spans;
     spans.fill(0);
     for (let i = 0; i < n;) {
       let j = i;
-      while (j < n && displayRows[j].competition_id === displayRows[i].competition_id) j++;
+      while (j < n && visibleRows[j].competition_id === visibleRows[i].competition_id) j++;
       spans[i] = j - i;
       i = j;
     }
     return spans;
-  }, [displayRows, count, sort.key]);
+  }, [visibleRows, count, sort.key]);
 
   const buildAnchorHref = useCallback((compId: string, roundType: string) =>
     `${pathname}${search}${resultRowHash(compId, eventId, roundType)}`, [pathname, search, eventId]);
@@ -835,12 +860,12 @@ const EventRoundsList = memo(function EventRoundsList({
             </th>
           </tr>
         </thead>
-        <tbody ref={bodyRef}>
-          {displayRows.slice(0, count).map((row, index) => (
+        <tbody ref={bodyRef} id={resultsBodyId}>
+          {visibleRows.slice(0, count).map((row, index) => (
             <EventResultRow
               key={wcaResultRowKey(row)}
               row={row}
-              showComp={!grouped || index === 0 || row.competition_id !== displayRows[index - 1].competition_id}
+              showComp={!grouped || index === 0 || row.competition_id !== visibleRows[index - 1].competition_id}
               aoxrSpan={aoxrSpans[index]}
               render={renderRow}
             />
@@ -856,6 +881,13 @@ const EventRoundsList = memo(function EventRoundsList({
         />
       )}
       </div>
+      {!expanded && previewRows.length < displayRows.length && (
+        <div className="wp-results-expand">
+          <MoreToggle className="btn-primary" expanded={false} aria-controls={resultsBodyId} onToggle={() => setExpandedEventId(eventId)}>
+            {tr({ zh: '展开', en: 'Show all' })}
+          </MoreToggle>
+        </div>
+      )}
     </>
   );
 });

@@ -928,6 +928,12 @@ html[data-theme=dark] .wp-page {
 }
 /* 合并单表 width:auto → 表宽随内容(列间不留大空隙),左对齐;容器(.wp-main)只作上限。仅选手页,不碰 recon。 */
 .wp-main .wp-bycomp-table { width: auto; }
+.wp-results-expand {
+    display: flex;
+    justify-content: center;
+    padding-block: 16px;
+}
+.wp-results-expand .more-toggle { min-block-size: 44px; }
 /* 赛事 / 项目统计 / 点亮城市 表同理:列随内容,不撑满(否则末列被推到最右、中间留大空隙) */
 .wp-main .wp-comps-table,
 .wp-main .wp-event-stats-table,
