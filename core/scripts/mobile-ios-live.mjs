@@ -1,7 +1,7 @@
 import { spawn, spawnSync } from 'node:child_process';
 import { closeSync, mkdirSync, mkdtempSync, openSync, readFileSync, realpathSync, rmSync, writeFileSync } from 'node:fs';
 import { BlockList, createConnection, createServer, isIPv6 } from 'node:net';
-import { networkInterfaces } from 'node:os';
+import { homedir, networkInterfaces } from 'node:os';
 import { join } from 'node:path';
 import { setTimeout as delay } from 'node:timers/promises';
 import { fileURLToPath } from 'node:url';
@@ -10,6 +10,7 @@ import { launchAndroid, listAndroidTargets } from './mobile-android-live.mjs';
 const mobile = realpathSync(fileURLToPath(new URL('../apps/mobile/', import.meta.url)));
 const cache = fileURLToPath(new URL('../../.tmp/cache/ios-live/', import.meta.url));
 const bundleId = 'me.cuberoot.app';
+const pairedPreviewBuild = 7;
 // The API already permits this loopback origin for installed-client development.
 const port = '1420';
 const url = `http://127.0.0.1:${port}`;
@@ -112,12 +113,16 @@ function installLiveApp(udid) {
   }
 }
 
-function connectedPhones() {
+function pairedPhones() {
   const { result } = JSON.parse(device('list', 'devices', '--quiet', '--json-output', '-'));
   return result.devices.filter(({ hardwareProperties, connectionProperties }) =>
     hardwareProperties.reality === 'physical' && hardwareProperties.productType.startsWith('iPhone')
-    && connectionProperties.pairingState === 'paired' && connectionProperties.tunnelState === 'connected')
-    .map(({ hardwareProperties, deviceProperties }) => ({ id: hardwareProperties.udid, name: deviceProperties.name }));
+    && connectionProperties.pairingState === 'paired')
+    .map(({ hardwareProperties, deviceProperties, connectionProperties }) => ({
+      id: hardwareProperties.udid,
+      name: deviceProperties.name,
+      connected: connectionProperties.tunnelState === 'connected',
+    }));
 }
 
 function pairedTunnel(udid) {
@@ -171,26 +176,29 @@ async function startPairedProxy({ host, peer }) {
 }
 
 function installOnPhoneIfNeeded(udid) {
-  // Build 5 is the first development build that accepts the per-launch preview URL.
+  // Build 7 keeps the preview on the iPhone's stable loopback origin.
   const { result } = JSON.parse(device('device', 'info', 'apps', '--device', udid, '--timeout', '15',
     '--filter', `bundleIdentifier == '${bundleId}'`, '--quiet', '--json-output', '-'));
   const installed = result.apps[0];
-  if (installed?.builtByDeveloper && Number(installed.bundleVersion) >= 5) return;
+  if (installed?.builtByDeveloper && Number(installed.bundleVersion) >= pairedPreviewBuild) return;
 
-  const derivedData = join(cache, 'iphoneos');
+  const derivedData = join(homedir(), 'Library/Developer/Xcode/DerivedData/CubeRoot-Device-Preview');
   run('pnpm', ['cap:sync:ios'], { cwd: mobile, stdio: 'inherit' });
   run('xcrun', ['xcodebuild', '-project', 'ios/App/App.xcodeproj', '-scheme', 'App', '-configuration', 'Debug',
-    '-destination', `platform=iOS,id=${udid}`, '-derivedDataPath', derivedData, 'CURRENT_PROJECT_VERSION=5', 'build'],
+    '-destination', `platform=iOS,id=${udid}`, '-derivedDataPath', derivedData, `CURRENT_PROJECT_VERSION=${pairedPreviewBuild}`, 'build'],
     { cwd: mobile, stdio: 'inherit' });
   const app = join(derivedData, 'Build/Products/Debug-iphoneos/App.app');
   console.log(device('device', 'install', 'app', '--device', udid, '--timeout', '90', app));
 }
 
 async function launchPairedPhone(selected) {
-  const phones = connectedPhones();
-  const phone = selected ? phones.find(({ id }) => id === selected) : phones.length === 1 ? phones[0] : undefined;
-  if (!phone) throw new Error('请选择一台已连接的 iPhone。首次连接请先在 Device Hub 中配对。');
+  const phones = pairedPhones();
+  const connected = phones.filter(phone => phone.connected);
+  const defaultPhone = phones.length === 1 ? phones[0] : connected.length === 1 ? connected[0] : undefined;
+  const phone = selected ? phones.find(({ id }) => id === selected) : defaultPhone;
+  if (!phone) throw new Error('请选择一台已配对的 iPhone。首次连接请先在 Device Hub 中配对。');
   const udid = phone.id;
+  // A device details request opens the tunnel when a paired phone is reachable.
   const tunnel = pairedTunnel(udid);
   await startServer();
   await startPairedProxy(tunnel);
@@ -215,7 +223,7 @@ try {
   if (mode === '--paired-proxy') {
     forwardPairedDevice(host, peer);
   } else if (mode === '--list-phones') {
-    console.log(JSON.stringify(connectedPhones()));
+    console.log(JSON.stringify(pairedPhones().map(({ id, name }) => ({ id, name }))));
   } else if (mode === '--list-android') {
     console.log(JSON.stringify(listAndroidTargets(run)));
   } else {

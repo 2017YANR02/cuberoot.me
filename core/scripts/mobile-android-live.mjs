@@ -87,7 +87,7 @@ export async function launchAndroid(target, context) {
   } else if (id && target.startsWith('phone:')) {
     serial = connectedAndroids(tools.adb, run).find(device => !device.emulator && device.serial === id)?.serial;
   }
-  if (!serial) throw new Error('请连接并解锁安卓手机，并在手机上允许 USB 调试。');
+  if (!serial) throw new Error('请解锁安卓手机，并通过无线调试配对或用数据线连接后允许 USB 调试。');
   const adb = (...args) => run(tools.adb, ['-s', serial, ...args]);
   await startServer();
   const endpoint = `tcp:${port}`;

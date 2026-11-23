@@ -22,6 +22,7 @@
 		50B271D11FEDC1A000F3C39B /* public in Resources */ = {isa = PBXBuildFile; fileRef = 50B271D01FEDC1A000F3C39B /* public */; };
 		D68EDC699E1571B186E73BF1 /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = D68EDC699E1571B186E73BF2 /* InfoPlist.strings */; };
 		9582B6832FE993A70072D4E8 /* SceneDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9582B6822FE993A50072D4E8 /* SceneDelegate.swift */; };
+		C8EB6190265E48FEB8931501 /* PairedPreviewProxy.swift in Sources */ = {isa = PBXBuildFile; fileRef = C8EB6190265E48FEB8931502 /* PairedPreviewProxy.swift */; };
 		A99100000000000000000001 /* AppleMembershipPlugin.swift in Sources */ = {isa = PBXBuildFile; fileRef = A99100000000000000000002 /* AppleMembershipPlugin.swift */; };
 		A77C0000000000000000000B /* WatchTimerWire.swift */ = {isa = PBXBuildFile; fileRef = A77C00000000000000000001; };
 		A77C0000000000000000000C /* WatchTimerPlugin.swift */ = {isa = PBXBuildFile; fileRef = A77C00000000000000000002; };
@@ -69,6 +70,7 @@ A77C00000000000000000080 = {isa = PBXBuildFile; fileRef = A77C000000000000000000
 		D68EDC699E1571B186E73BF4 /* zh-Hans */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "zh-Hans"; path = "zh-Hans.lproj/InfoPlist.strings"; sourceTree = "<group>"; };
 		50B271D01FEDC1A000F3C39B /* public */ = {isa = PBXFileReference; lastKnownFileType = folder; path = public; sourceTree = "<group>"; };
 		9582B6822FE993A50072D4E8 /* SceneDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SceneDelegate.swift; sourceTree = "<group>"; };
+		C8EB6190265E48FEB8931502 /* PairedPreviewProxy.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PairedPreviewProxy.swift; sourceTree = "<group>"; };
 		958DCC722DB07C7200EA8C5F /* debug.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; name = debug.xcconfig; path = ../debug.xcconfig; sourceTree = SOURCE_ROOT; };
 		A99100000000000000000002 /* AppleMembershipPlugin.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppleMembershipPlugin.swift; sourceTree = "<group>"; };
 		A77C00000000000000000001 /* WatchTimerWire.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = WatchTimerWire.swift; path = WatchShared/WatchTimerWire.swift; sourceTree = SOURCE_ROOT; };
@@ -125,6 +127,7 @@ A77C00000000000000000081 = {isa = PBXFileReference; lastKnownFileType = folder; 
 				A99100000000000000000002 /* AppleMembershipPlugin.swift */,
                 A99200000000000000000002 /* SmartCubePickerPlugin.swift */,
 				9582B6822FE993A50072D4E8 /* SceneDelegate.swift */,
+				C8EB6190265E48FEB8931502 /* PairedPreviewProxy.swift */,
 				9582B6852FE993A70072D4E8 /* PrimaryNavigationPlugin.swift */,
 				71B2B6872FE993A70072D4E8 /* TimerManualEntryPlugin.swift */,
                 A24900000000000000000002 /* RecordPushPlugin.swift */,
@@ -241,6 +244,7 @@ A77C00000000000000000081 = {isa = PBXFileReference; lastKnownFileType = folder; 
 				A99100000000000000000001 /* AppleMembershipPlugin.swift in Sources */,
                 A99200000000000000000001 /* SmartCubePickerPlugin.swift in Sources */,
 				9582B6832FE993A70072D4E8 /* SceneDelegate.swift in Sources */,
+				C8EB6190265E48FEB8931501 /* PairedPreviewProxy.swift in Sources */,
 				9582B6842FE993A70072D4E8 /* PrimaryNavigationPlugin.swift in Sources */,
 				71B2B6862FE993A70072D4E8 /* TimerManualEntryPlugin.swift in Sources */,
                 A24900000000000000000001 /* RecordPushPlugin.swift in Sources */,

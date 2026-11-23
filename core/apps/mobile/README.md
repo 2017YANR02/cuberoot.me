@@ -69,6 +69,13 @@ pnpm --filter @cuberoot/mobile ios:run
 
 `cap:sync` remains the Android-compatible entry point. The platform-specific sync commands build the same web app and copy it into the selected native project. Run the matching command after changing React or shared code and before making a native build.
 
+### Live reload on physical phones
+
+Open **CubeRoot Dev** on the Mac and select the phone. Use the same launcher for iPhone and Android. Each phone connects to the same Mobile Vite server on the Mac, and React and CSS changes are picked up on save. Native changes still require rebuilding the development app. To resume live reload after quitting the phone app, open it again through **CubeRoot Dev**.
+
+- **iPhone:** Pair once in [Xcode Device Hub](https://developer.apple.com/documentation/xcode/managing-your-simulated-and-physical-devices-in-device-hub) and enable Developer Mode. iOS 27 or later supports pairing over the same Wi‑Fi network. An already-paired phone can be selected even when its debug tunnel is idle. The development app keeps the WebView on `http://127.0.0.1:1420` and forwards to the paired Mac. That address stays stable across reconnects and is recognized by the website bridge. Earlier tunnel-address previews have their own WebView storage.
+- **Android:** Enable [Wireless debugging](https://developer.android.com/tools/adb#connect-to-a-device-over-wi-fi) and pair in Android Studio over the same Wi‑Fi network, or connect over USB and allow debugging. The launcher lists Android phones once ADB connects.
+
 ### Android payment distributions
 
 One source tree and one Web bundle serve both channels. Gradle `-PmobileDistribution=play` (the default) enables Google Play Billing; `-PmobileDistribution=direct` exposes the existing website Alipay/WeChat H5 checkout through the native Browser adapter. The native `Distribution` plugin reads `BuildConfig.DISTRIBUTION`; URL parameters, user agents and Vite environment variables cannot switch channels. Missing/unknown native configuration fails closed to Play. iOS keeps its Apple adapter.
