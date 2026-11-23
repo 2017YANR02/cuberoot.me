@@ -2,10 +2,10 @@
 
 import { useEffect, useId, useRef, useState, type ReactNode, type RefObject } from 'react';
 import { createPortal } from 'react-dom';
-import { Play } from '@app-foundation/icons/lucide';
 import { ClearButton } from '@/components/ClearButton';
 import { useModalDismiss } from '@/hooks/useModalDismiss';
 import { tr } from '@/i18n/tr';
+import { InteractiveQuestionHelpButton } from '../components/InteractiveQuestionCopy';
 import VideoProgress from '../components/VideoProgress';
 import './concept-video.css';
 
@@ -96,10 +96,9 @@ export function ConceptVideoScene({ compare, caption, artRef, children }: {
 export default function ConceptVideoHelp({ label, ...video }: Video & { label: Text }) {
   const [open, setOpen] = useState(false);
   return <>
-    <button type="button" className="btn-secondary course-question-heading-action concept-video-open"
-      aria-haspopup="dialog" onClick={() => setOpen(true)}>
-      <Play size={15} aria-hidden="true" />{tr(label)}
-    </button>
+    <InteractiveQuestionHelpButton video onClick={() => setOpen(true)}>
+      {tr(label)}
+    </InteractiveQuestionHelpButton>
     {open && createPortal(<ConceptVideo {...video} onClose={() => setOpen(false)} />, document.body)}
   </>;
 }

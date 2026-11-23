@@ -1,12 +1,3 @@
-.concept-video-open {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: .35rem;
-  padding-inline: .65rem;
-  font-size: .875rem;
-}
-.concept-video-open svg { flex-shrink: 0; }
 .course-demo-dialog.concept-video-dialog { inline-size: min(42rem, calc(100% - 1.5rem)); }
 .concept-video-panel > header h2 { margin: 0; font-size: clamp(1.05rem, 3.2vw, 1.4rem); }
 .concept-video-scene {

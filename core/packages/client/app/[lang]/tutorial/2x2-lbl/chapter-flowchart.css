@@ -1,0 +1,90 @@
+.two-lbl-flow {
+  box-sizing: border-box;
+  width: min(100%, 41rem);
+  margin-inline: auto;
+  padding: 8px 10px 12px;
+}
+
+.yellow-flow-graph {
+  position: relative;
+  display: grid;
+  grid-template-columns: 11% 37% 4% 37% 11%;
+  /* Match the connector coordinates in YellowFaceFlowchart at 16px/rem. */
+  grid-template-rows: 3.5rem 2rem 9rem 2rem 3.5rem 2rem 7.5rem 2rem 4.25rem;
+  grid-template-areas:
+    '. start start start .'
+    '. . . . .'
+    '. two . zero .'
+    '. . . . .'
+    '. fish fish fish .'
+    '. . . . .'
+    '. left . right .'
+    '. . . . .'
+    '. done done done .';
+}
+.yellow-flow-lines {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  color: var(--muted-foreground);
+  pointer-events: none;
+}
+.yellow-flow-lines g > path { vector-effect: non-scaling-stroke; }
+.two-lbl-flow-node {
+  z-index: 0;
+  box-sizing: border-box;
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 6px;
+  border: 1px solid var(--border-default);
+  border-radius: 10px;
+  background: var(--card);
+  color: var(--foreground);
+  font: inherit;
+  text-align: center;
+  line-height: 1.25;
+  overflow-wrap: anywhere;
+}
+.two-lbl-flow-node strong, .two-lbl-flow-detail { display: block; }
+.two-lbl-flow-detail { color: var(--muted-foreground); font-size: .875rem; white-space: pre-line; }
+.two-lbl-flow-detail svg { display: inline-block; vertical-align: middle; }
+.yellow-flow-start { grid-area: start; background: var(--muted); }
+.yellow-flow-fish { grid-area: fish; flex-direction: column; background: var(--muted); }
+.two-lbl-flow-finish { grid-area: done; justify-content: start; text-align: start; background: var(--accent-soft); padding-inline: 10px; }
+.two-lbl-flow-case { flex-direction: column; gap: 2px; padding: 4px; }
+.two-lbl-flow-node .puzzle-art { flex: none; }
+button.two-lbl-flow-node { cursor: pointer; }
+button.two-lbl-flow-node:hover { border-color: var(--accent); }
+button.two-lbl-flow-node:focus-visible { outline: 2px solid var(--ring); outline-offset: -2px; }
+
+.bottom-flow { width: min(100%, 30rem); margin-block: 0; list-style: none; }
+.bottom-flow li { display: grid; }
+.bottom-flow li > svg {
+  justify-self: center;
+  margin-block: 3px;
+  color: var(--muted-foreground);
+}
+.bottom-flow .two-lbl-flow-node {
+  width: 100%;
+  justify-content: start;
+  gap: clamp(8px, 3cqw, 18px);
+  padding: 6px 10px;
+  text-align: start;
+}
+
+@container course-reading (max-width: 340px) {
+  .yellow-flow-graph .two-lbl-flow-node { padding: 3px 6px; }
+  .yellow-flow-graph .two-lbl-flow-case .puzzle-art {
+    width: 3.25rem !important;
+    height: auto !important;
+  }
+  .yellow-flow-graph .two-lbl-flow-case .puzzle-art svg {
+    display: block;
+    width: 100%;
+    height: auto;
+  }
+}

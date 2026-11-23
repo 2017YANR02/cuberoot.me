@@ -2,21 +2,25 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { parseAsString, useQueryStates } from 'nuqs';
+import { ArrowRight } from '@app-foundation/icons/lucide';
 import { FM_DIM, FM_FIXED_COLOR, FM_IGNORED, FM_REGULAR, stickeringMaskFn } from '@cuberoot/puzzle-render-core/engine/nxn/stickering';
 import { Axis } from '@cuberoot/visualcube';
 import { VisualCube } from '@/components/VisualCube';
 import { useT } from '@/hooks/useT';
-import { T } from '@/i18n/tr';
+import { T, tr } from '@/i18n/tr';
 import { orientedCubeFaceColors } from '@/lib/cube-orientation';
 import { stageStickerColors } from '@/lib/sim-stage-thumbnail';
 import InteractiveTutorial, { type CourseFlowSection, type CoursePosition } from '../components/InteractiveTutorial';
-import { BOTTOM_OVERVIEW, TWO_BY_TWO_ORIENTATION, TWO_BY_TWO_OVERVIEW, TWO_BY_TWO_SAMPLE } from './lesson-data';
-import YellowFaceOverview from './YellowFaceOverview';
+import { TWO_BY_TWO_ORIENTATION, TWO_BY_TWO_OVERVIEW, TWO_BY_TWO_SAMPLE } from './lesson-data';
+import BottomFlowchart, { BottomLayerDiagram } from './BottomFlowchart';
+import YellowFaceFlowchart from './YellowFaceFlowchart';
 import FishRecognitionHelp from './FishRecognitionHelp';
-import CornerPositionOverview from './CornerPositionOverview';
+import CornerPositionFlowchart from './CornerPositionFlowchart';
 import HeadlightsHelp from './HeadlightsHelp';
+import './chapter-overview.css';
 
 const overviewTitle = { zh: '概览', en: 'Overview' };
+const flowchartTitle = { zh: '流程图', en: 'Flowchart' };
 const overviewPitch = -30;
 const undersidePitch = 18;
 const tiltDurationMs = 420;
@@ -38,10 +42,6 @@ const overviewSteps = TWO_BY_TWO_OVERVIEW.map(step => {
   }), faceColors);
   return { ...step, stickerColors };
 });
-const bottomSteps = BOTTOM_OVERVIEW.map(({ corners, ...step }) => ({
-  ...step,
-  stickerColors: stageStickerColors(2, piece => corners.some(corner => corner === piece) ? FM_REGULAR : FM_IGNORED, faceColors),
-}));
 const introduction = {
   id: 'intro', title: { zh: '引言', en: 'Introduction' },
   sections: [{ id: 'overview', title: overviewTitle, content: <Overview steps={overviewSteps} intro={{
@@ -49,29 +49,50 @@ const introduction = {
   }} /> }],
 };
 const [bottom, yellow, corners] = TWO_BY_TWO_SAMPLE;
-const bottomOverview = { id: 'bottom-overview', title: overviewTitle, content: <Overview steps={bottomSteps} intro={{
-  zh: '按下面的顺序归位四个白角。完成后底面全白，每个侧面的底排也要同色。',
-  en: 'Solve the four white corners in order. The bottom should be all white, with matching stickers in the bottom row of each side.',
-}} /> };
-const yellowOverview: CourseFlowSection = {
+const [bottomGoal, yellowGoal, cornerGoal] = overviewSteps;
+const unsolved = {
+  setup: bottom.sections[0].exercise.setup,
+  stickerColors: stageStickerColors(2, null, faceColors),
+};
+const bottomOverview = {
+  id: 'bottom-overview',
+  title: overviewTitle,
+  content: <ChapterOverview before={unsolved} after={bottomGoal} showBottom />,
+};
+const bottomFlowchart: CourseFlowSection = {
+  id: 'bottom-flowchart',
+  title: flowchartTitle,
+  flowchart: select => <BottomFlowchart onSelect={sectionId => select(bottom.id, sectionId)} />,
+};
+const yellowOverview = {
   id: 'yellow-overview',
   title: overviewTitle,
-  flowchart: select => <YellowFaceOverview onSelect={select} />,
+  content: <ChapterOverview before={bottomGoal} after={yellowGoal} />,
+};
+const yellowFlowchart: CourseFlowSection = {
+  id: 'yellow-flowchart',
+  title: flowchartTitle,
+  flowchart: select => <YellowFaceFlowchart onSelect={select} />,
 };
 const yellowSections = yellow.sections.map(section => section.id === 'right-fish' || section.id === 'left-fish'
   ? { ...section, guided: { ...section.guided, Help: FishRecognitionHelp } }
   : section);
-const cornerOverview: CourseFlowSection = {
+const cornerOverview = {
   id: 'corner-overview',
   title: overviewTitle,
-  flowchart: select => <CornerPositionOverview onSelect={select} />,
+  content: <ChapterOverview before={yellowGoal} after={cornerGoal} />,
+};
+const cornerFlowchart: CourseFlowSection = {
+  id: 'corner-flowchart',
+  title: flowchartTitle,
+  flowchart: select => <CornerPositionFlowchart onSelect={select} />,
 };
 const cornerSections = corners.sections.map(section => ({
   ...section, guided: { ...section.guided, Help: HeadlightsHelp, hideHelpDuringAlgorithm: true },
 }));
-const chapters = [introduction, { ...bottom, sections: [bottomOverview, ...bottom.sections] },
-  { ...yellow, sections: [yellowOverview, ...yellowSections] },
-  { ...corners, sections: [cornerOverview, ...cornerSections] }];
+const chapters = [introduction, { ...bottom, sections: [bottomOverview, ...bottom.sections, bottomFlowchart] },
+  { ...yellow, sections: [yellowOverview, ...yellowSections, yellowFlowchart] },
+  { ...corners, sections: [cornerOverview, ...cornerSections, cornerFlowchart] }];
 
 function positionFor(step: string | null, section: string | null): CoursePosition {
   const chapterIndex = chapters.findIndex((chapter, index) => step === `lesson-${index + 1}` || step === chapter.id);
@@ -83,6 +104,25 @@ function positionFor(step: string | null, section: string | null): CoursePositio
   return sectionChapter >= 0 && step
     ? { chapterIndex: sectionChapter, sectionId: step }
     : { chapterIndex: 0, sectionId: introduction.sections[0].id };
+}
+
+function ChapterOverview({ before, after, showBottom = false }: {
+  before: Pick<OverviewStep, 'setup' | 'stickerColors'>;
+  after: OverviewStep;
+  showBottom?: boolean;
+}) {
+  const diagram = (state: typeof before, alt: string, translucent: boolean) => showBottom
+    ? <BottomLayerDiagram {...state} size={252} alt={alt} translucent={translucent} />
+    : <VisualCube local puzzleSize={2} view="iso" size={252} viewportRotations={[[Axis.Y, 30], [Axis.X, overviewPitch]]}
+      setup={state.setup} stickerColors={state.stickerColors} alt={alt} />;
+  return <figure className="two-lbl-chapter-overview">
+    <div className="two-lbl-chapter-comparison">
+      {diagram(before, tr({ zh: '本章起始状态', en: 'Starting state' }), false)}
+      <ArrowRight aria-hidden="true" />
+      {diagram(after, tr({ zh: '本章目标状态', en: 'Target state' }), true)}
+    </div>
+    <figcaption><T {...after.goal} /></figcaption>
+  </figure>;
 }
 
 function OverviewDiagram({ step, tilted, pressed, onHover, onToggle }: {
@@ -162,5 +202,6 @@ export default function Page() {
 
   return <InteractiveTutorial title={{ zh: '二阶魔方层先法', en: '2×2 Layer by Layer' }} puzzle="2x2"
     orientation={TWO_BY_TWO_ORIENTATION} chapters={chapters} basicsHref="/tutorial/lbl"
+    catalogHref="/tutorial?puzzle=2x2"
     location={positionFor(step, section)} onNavigate={navigate} />;
 }

@@ -68,7 +68,6 @@ describe('the 2×2 LBL tutorial', () => {
     expect(first.interaction?.questions?.map(question => 'targetIndex' in question
       ? { kind: question.kind, targetIndex: question.targetIndex } : { kind: question.kind })).toEqual([
       { kind: 'piece', targetIndex: 0 },
-      { kind: 'position', targetIndex: 0 },
       { kind: 'placement' },
     ]);
     const firstResult = sampleCubeState(`${positioning.setup} ${positioning.solution}`);
@@ -110,6 +109,66 @@ describe('the 2×2 LBL tutorial', () => {
       expect(placements[0]).not.toBe(6);
       expect(placements[1]).toBe(6);
       expect(placements).toContain(4);
+    } finally {
+      cube.dispose();
+    }
+  });
+
+  it('moves an already aligned corner away from the target without disturbing solved corners', () => {
+    const cube = new Cube(2);
+    try {
+      for (const section of [bottom.sections[1], bottom.sections[2], bottom.sections[3]]) {
+        const { alignment, insertion } = section.interaction!.turnExploration!;
+        const solved = `${section.exercise.setup} ${section.exercise.solution}`;
+        const trigger = insertion.steps.map(step => step.notation).join(' ');
+        const protectedStickers = insertion.solvedStickers.filter(sticker => sticker.homeIndex !== alignment.homeIndex);
+        for (const setup of [solved, `${solved} (${trigger})'`]) {
+          cube.twister.setup(setup);
+          const initial = cube.getStickerPlacement(alignment.homeIndex, FACE.D)!;
+          const casesByPosition: Readonly<Partial<Record<number, readonly string[]>>> = alignment.casesWhenAligned;
+          const cases = casesByPosition[initial.positionIndex];
+          if (!cases) continue;
+          for (const moves of cases) {
+            cube.twister.setup(`${setup} ${moves}`);
+            const current = cube.getStickerPlacement(alignment.homeIndex, FACE.D)!;
+            expect(alignment.goalPositions.some(position => position === current.positionIndex), section.id).toBe(false);
+            for (const { homeIndex, homeFace, placement } of protectedStickers) {
+              expect(cube.getStickerPlacement(homeIndex, FACE[homeFace]), section.id)
+                .toEqual({ positionIndex: placement.positionIndex, face: FACE[placement.face] });
+            }
+          }
+        }
+      }
+    } finally {
+      cube.dispose();
+    }
+  });
+
+  it('covers all five trigger practice cases and solves each in the expected number of rounds', () => {
+    const cube = new Cube(2);
+    try {
+      for (const section of [bottom.sections[1], bottom.sections[2], bottom.sections[3]]) {
+        const { alignment, insertion } = section.interaction!.turnExploration!;
+        const solved = `${section.exercise.setup} ${section.exercise.solution}`;
+        const trigger = insertion.steps.map(step => step.notation).join(' ');
+        const placements: string[] = [];
+        expect(insertion.practiceCases).toHaveLength(5);
+        insertion.practiceCases!.forEach((setupMoves, index) => {
+          cube.twister.setup(`${solved} ${setupMoves}`);
+          const target = cube.getStickerPlacement(alignment.homeIndex, FACE.D)!;
+          placements.push(`${target.positionIndex}:${FACE[target.face]}`);
+          for (const { homeIndex, homeFace, placement } of insertion.solvedStickers) {
+            if (homeIndex === alignment.homeIndex) continue;
+            expect(cube.getStickerPlacement(homeIndex, FACE[homeFace]), section.id)
+              .toEqual({ positionIndex: placement.positionIndex, face: FACE[placement.face] });
+          }
+          expect(section.exercise.isComplete([section.exercise.solution, setupMoves]), section.id).toBe(false);
+          expect(section.exercise.isComplete([section.exercise.solution, setupMoves, ...Array(index + 1).fill(trigger)]), section.id).toBe(true);
+        });
+        expect(placements.sort()).toEqual(section.id === 'white-blue-red'
+          ? ['4:F', '4:L', '6:F', '6:L', '6:U']
+          : ['5:F', '5:R', '7:F', '7:R', '7:U']);
+      }
     } finally {
       cube.dispose();
     }

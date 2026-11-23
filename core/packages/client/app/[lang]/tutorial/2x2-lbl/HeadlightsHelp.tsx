@@ -15,6 +15,7 @@ const [headlights, noHeadlights] = TWO_BY_TWO_SAMPLE[2].sections;
 const title = { zh: '什么是眼？', en: 'What are headlights?' };
 const eyeFocusAt = 3000;
 const noEyesAt = 7200;
+const eyePulsePeriod = (noEyesAt - eyeFocusAt) / 4;
 const compareAt = 13900;
 const duration = 18900;
 const openingView = { x: Math.PI / 6, y: -Math.PI / 9, z: 0 };
@@ -55,9 +56,12 @@ function HeadlightsCube({ hasEyes, time, compare, reducedMotion }: {
     ? openingView.y + 2 * Math.PI * (reducedMotion ? Math.floor(Math.min(.99, Math.max(0, orbit)) * 4) / 4 : ease(orbit))
     : openingView.y * (1 - .55 * focus);
   const pitch = hasEyes ? openingView.x - .17 * focus : openingView.x;
-  const overrides = useMemo(() => hasEyes && focus > 0 ? Object.fromEntries(frontEyes.map(sticker => [
-    sticker, '#' + new Color(colors[sticker[0] as CubeFace]).lerp(purple, focus).getHexString(),
-  ])) : undefined, [hasEyes, focus]);
+  const highlighting = hasEyes && !compare && time >= eyeFocusAt && time < noEyesAt;
+  const phase = 2 * Math.PI * (time - eyeFocusAt) / eyePulsePeriod;
+  const tint = !highlighting ? 0 : reducedMotion ? 1 : Math.round(8 - 8 * Math.cos(phase)) / 16;
+  const overrides = useMemo(() => tint > 0 ? Object.fromEntries(frontEyes.map(sticker => [
+    sticker, '#' + new Color(colors[sticker[0] as CubeFace]).lerp(purple, tint).getHexString(),
+  ])) : undefined, [tint]);
 
   useEffect(() => {
     if (ready && active) player.current?.setSceneRotation?.({ x: pitch, y: yaw, z: 0 });

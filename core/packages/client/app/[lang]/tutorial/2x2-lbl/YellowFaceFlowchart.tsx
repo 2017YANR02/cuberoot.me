@@ -3,7 +3,7 @@ import { ArrowRight } from '@app-foundation/icons/lucide';
 import { VisualCube } from '@/components/VisualCube';
 import { T } from '@/i18n/tr';
 import { TWO_BY_TWO_SAMPLE } from './lesson-data';
-import './yellow-face-overview.css';
+import './chapter-flowchart.css';
 
 const [, { sections: [rightFish, leftFish, twoTouch, fourNoTouch] }] = TWO_BY_TWO_SAMPLE;
 type YellowCase = typeof rightFish;
@@ -15,25 +15,24 @@ function CaseNode({ section, area, cue, yellowCount, onSelect }: {
   yellowCount?: { zh: string; en: string };
   onSelect: (sectionId: string) => void;
 }) {
-  return <button type="button" className="yellow-flow-node yellow-flow-case" style={{ gridArea: area }}
+  return <button type="button" className="two-lbl-flow-node two-lbl-flow-case" style={{ gridArea: area }}
     onClick={() => onSelect(section.id)}>
     <VisualCube local view="oll" hideGreySides puzzleSize={2} size={64} setup={section.guided.algorithm.demoSetup} alt="" />
     <span>
-      {yellowCount && <span className="yellow-flow-detail"><T {...yellowCount} /></span>}
+      {yellowCount && <span className="two-lbl-flow-detail"><T {...yellowCount} /></span>}
       <strong><T {...section.title} /></strong>
-      <span className="yellow-flow-detail"><T {...cue} /></span>
+      <span className="two-lbl-flow-detail"><T {...cue} /></span>
     </span>
   </button>;
 }
 
-export default function YellowFaceOverview({ onSelect }: {
+export default function YellowFaceFlowchart({ onSelect }: {
   onSelect: (chapterId: string, sectionId?: string) => void;
 }) {
   const arrowId = useId().replace(/:/g, '');
   const arrow = `url(#${arrowId})`;
   const selectCase = (sectionId: string) => onSelect('yellow', sectionId);
-  return <div className="yellow-flow">
-    <p className="yellow-flow-intro"><T zh="保持底层复原，把四个黄格翻到顶面" en="Keep the first layer solved and turn all four yellow stickers up" /></p>
+  return <div className="two-lbl-flow">
     <div className="yellow-flow-graph">
       <svg viewBox="0 0 600 572" preserveAspectRatio="none" aria-hidden="true" className="yellow-flow-lines">
         <defs>
@@ -57,24 +56,24 @@ export default function YellowFaceOverview({ onSelect }: {
         </g>
       </svg>
 
-      <div className="yellow-flow-node yellow-flow-start">
+      <div className="two-lbl-flow-node yellow-flow-start">
         <strong><T zh="顶面有几个黄格？" en="How many yellow stickers face up?" /></strong>
       </div>
       <CaseNode section={twoTouch} area="two" onSelect={selectCase}
-        yellowCount={{ zh: '2 个黄格', en: '2 up' }} cue={{ zh: '左拇指碰黄\n→ 右鱼公式', en: 'Touch yellow\n→ Right Sune' }} />
+        yellowCount={{ zh: '2 个黄格', en: '2 up' }} cue={{ zh: '左拇指碰黄\n→ 右鱼公式', en: '→ Right Sune' }} />
       <CaseNode section={fourNoTouch} area="zero" onSelect={selectCase}
-        yellowCount={{ zh: '0 个黄格', en: '0 up' }} cue={{ zh: '左拇指避黄\n→ 右鱼公式', en: 'Avoid yellow\n→ Right Sune' }} />
-      <div className="yellow-flow-node yellow-flow-fish">
+        yellowCount={{ zh: '0 个黄格', en: '0 up' }} cue={{ zh: '左拇指避黄\n→ 右鱼公式', en: '→ Right Sune' }} />
+      <div className="two-lbl-flow-node yellow-flow-fish">
         <strong><T zh="1 个黄格 · 小鱼" en="1 up · Fish" /></strong>
-        <span className="yellow-flow-detail"><T zh="看侧面的黄鱼鳍朝哪边" en="Which way do the fins point?" /></span>
+        <span className="two-lbl-flow-detail"><T zh="看侧面的黄鱼鳍朝哪边" en="Check the fin direction" /></span>
       </div>
       <CaseNode section={leftFish} area="left" onSelect={selectCase} cue={{ zh: '用左鱼公式', en: 'Use left Sune' }} />
       <CaseNode section={rightFish} area="right" onSelect={selectCase} cue={{ zh: '用右鱼公式', en: 'Use right Sune' }} />
-      <button type="button" className="yellow-flow-node yellow-flow-finish" onClick={() => onSelect('corner-position')}>
+      <button type="button" className="two-lbl-flow-node two-lbl-flow-finish" onClick={() => onSelect('corner-position')}>
         <VisualCube local view="oll" hideGreySides puzzleSize={2} size={48} alt="" />
         <span>
           <strong><T zh="4 个黄格 · 顶面全黄" en="4 up · All yellow" /></strong>
-          <span className="yellow-flow-detail"><T zh="进入角位置" en="Go to corner placement" /> <ArrowRight size={14} aria-hidden="true" /></span>
+          <span className="two-lbl-flow-detail"><T zh="进入角位置" en="Corner placement" /> <ArrowRight size={14} aria-hidden="true" /></span>
         </span>
       </button>
     </div>

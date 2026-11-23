@@ -1,0 +1,44 @@
+.two-lbl-chapter-overview {
+  --overview-diagram-height: 66cqh;
+  box-sizing: border-box;
+  display: grid;
+  gap: clamp(8px, 3cqh, 22px);
+  width: min(100%, 40rem);
+  margin: 0 auto;
+  padding: 12px min(4cqw, 24px);
+  text-align: center;
+}
+.two-lbl-chapter-comparison {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: center;
+  justify-items: center;
+  column-gap: clamp(4px, 2cqw, 18px);
+}
+.two-lbl-chapter-comparison .puzzle-art {
+  width: min(100%, 15.75rem, max(4rem, var(--overview-diagram-height))) !important;
+  height: auto !important;
+  aspect-ratio: 1;
+}
+.two-lbl-chapter-comparison .puzzle-art svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+.two-lbl-chapter-overview figcaption {
+  max-inline-size: 42ch;
+  margin-inline: auto;
+  line-height: 1.45;
+  font-size: clamp(1rem, 2.8cqw, 1.2rem);
+  text-wrap: balance;
+}
+@container course-reading (max-width: 760px) {
+  .two-lbl-chapter-overview { padding-block-start: clamp(12px, 6cqh, 36px); }
+}
+@container course-reading (max-height: 250px) {
+  .two-lbl-chapter-overview {
+    --overview-diagram-height: 50cqh;
+    gap: 8px;
+    padding-block: 3px;
+  }
+}

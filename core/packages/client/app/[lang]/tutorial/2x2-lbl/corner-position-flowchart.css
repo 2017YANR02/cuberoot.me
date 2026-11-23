@@ -42,7 +42,7 @@
 .corner-flow-graph [data-eye-case='no-headlights'] { grid-column: 3; }
 .corner-flow-make { grid-area: 3 / 2; align-self: center; }
 .corner-flow-finish-arrow { grid-area: 4 / 1; }
-.yellow-flow-finish.corner-flow-finish {
+.two-lbl-flow-finish.corner-flow-finish {
   grid-area: 5 / 1;
   justify-content: center;
   text-align: center;
