@@ -901,7 +901,7 @@ export const PAGE_META: Record<string, PageMetaEntry> = {
   },
   'tutorial/2x2-fl': {
     title: { zh: '二阶魔方 FL（第一层）', en: '2×2 First Layer (FL)' },
-    description: { zh: '先拼左侧白角对，再学习二阶第一层的 44 种盘面。每种盘面都有识别图、分步公式演示和交互练习。', en: 'Build the left pair and learn all 44 first-layer cases with recognition diagrams, step-by-step algorithms and interactive practice.' },
+    description: { zh: '进阶二阶第一层公式。按剩余两角的层位与 0、+、− 分组查阅 44 种盘面，配有图解和分步演示。', en: 'Advanced 2×2 first-layer algorithms. Browse 44 cases by corner position and 0, + or − orientation, with diagrams and step-by-step playback.' },
   },
   'tutorial/f2l': {
     title: { zh: '三阶魔方 F2L 教程', en: '3×3 F2L Tutorial' },

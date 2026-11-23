@@ -221,3 +221,5 @@ select {
     --orientation-cell-size: min(44px, calc((100vw - 42px) / 6));
   }
 }
+.cube-orientation-fields { display: grid; gap: 12px; }
+.cube-orientation-fields > div { display: flex; align-items: center; justify-content: space-between; gap: 16px; }

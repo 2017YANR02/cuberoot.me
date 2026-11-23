@@ -1,51 +1,90 @@
 import { Alg } from 'cubing/alg';
 import { Face } from '@cuberoot/visualcube';
-import { CUBE_ORIENTATIONS } from '@/lib/cube-orientation';
-import type { CourseExercise, GuidedCourseLesson } from '../components/InteractiveTutorial';
-import { isWhiteFirstLayer, twoByTwoState } from '../lib/2x2-state';
+import { FACE } from '@cuberoot/puzzle-render-core/engine/define';
+import { engineHomeSid } from '@cuberoot/puzzle-render-core/engine/nxn/netIndex';
+import { FM_IGNORED, FM_REGULAR } from '@cuberoot/puzzle-render-core/engine/nxn/stickering';
+import { CUBE_COLOR_LETTER_FOR_FACE, CUBE_COLOR_NAMES, type CubeFace } from '@/lib/cube-colors';
+import { orientedFaceColors } from '@/lib/cube-orientation';
+import { twoByTwoState } from '../lib/2x2-state';
+import { TUTORIAL_STICKER_PURPLE } from '../components/tutorial-colors';
 import { FL_CASE_ALGS } from './case-algs';
 
 export type FlGroup = keyof typeof FL_CASE_ALGS;
-type Twist = keyof (typeof FL_CASE_ALGS)[FlGroup];
 type State = ReturnType<typeof twoByTwoState>;
 const text = (zh: string, en: string) => ({ zh, en });
 const inverse = (alg: string) => new Alg(alg).invert().toString();
 const setupBefore = (end: string, moves: string) => [end, inverse(moves)].filter(Boolean).join(' ');
 
+export function flPalette(orientation: string) {
+  const faces = orientedFaceColors(orientation);
+  const color = (side: CubeFace) => CUBE_COLOR_NAMES[faces[side]];
+  const corner = (...sides: CubeFace[]) => ({
+    ...text(sides.map(side => color(side).zh).join('') + '角', sides.map(side => color(side).en).join('–') + ' corner'),
+    code: sides.map(side => CUBE_COLOR_LETTER_FOR_FACE[faces[side]]).join(''),
+  });
+  return { color, reference: corner('D', 'F', 'R'), last: corner('D', 'R', 'B'), backLeft: corner('D', 'B', 'L'), frontLeft: corner('D', 'L', 'F') };
+}
+export type FlPalette = ReturnType<typeof flPalette>;
+
 export const FL_GROUPS = {
-  top: {
-    title: text('两角在顶层', 'Both corners on top'),
-    alignment: text('用 U 把白红绿角摆在顶层左前。白绿橙角要在顶层的左后、右后或右前。如果它在底层，用 R 把它提上去。',
-      'Use U to place the white–red–green corner at top front-left. The white–green–orange corner should be at top back-left, back-right or front-right. If it is on the bottom, lift it with R.'),
-  },
-  mixed: {
-    title: text('一上一下', 'One on each layer'),
-    alignment: text('先用 R 把白红绿角摆到底层右前。如果白绿橙角还在顶层，就用 U 把它摆到白红绿角正上方。',
-      'First use R to place the white–red–green corner at bottom front-right. If the white–green–orange corner is on top, use U to put it directly above the white–red–green corner.'),
-  },
-  bottom: {
-    title: text('两角在底层', 'Both corners on the bottom'),
-    alignment: text('先用 R 把白红绿角摆到底层右前。如果白绿橙角也在底层，它就在底层右后。稍微抬起魔方看底面。',
-      'First use R to place the white–red–green corner at bottom front-right. If the white–green–orange corner is also on the bottom, it is at bottom back-right. Tilt the cube up to inspect the underside.'),
-  },
+  top: { code: 'UU', title: text('两角在顶层', 'Both corners on top') },
+  mixed: { code: 'UD', title: text('另一角在顶层', 'Other corner on top') },
+  bottom: { code: 'DD', title: text('另一角在底层', 'Other corner on the bottom') },
 };
 
-export const FL_TWISTS = ['0', '+', '-'] as const;
-const colors = [text('白', 'White'), text('橙', 'Orange'), text('绿', 'Green')];
+export const FL_CHAPTERS = {
+  top: { groups: ['top'] },
+  bottom: { groups: ['mixed', 'bottom'] },
+} as const satisfies Record<string, { groups: readonly FlGroup[] }>;
+export type FlChapter = keyof typeof FL_CHAPTERS;
+
+export function flChapterTitle(chapter: FlChapter, { reference }: FlPalette) {
+  return chapter === 'top' ? text(`${reference.zh}在顶层`, `${reference.code} on top`)
+    : text(`${reference.zh}在底层`, `${reference.code} on the bottom`);
+}
+
+export function flChapterAlignment(chapter: FlChapter, { reference, last }: FlPalette) {
+  return chapter === 'top' ? text(`用 U 把${reference.zh}摆到顶层左前。${last.zh}如果在底层，用 R 把它提到顶层。`,
+    `Use U to move the ${reference.en} to top front-left. If the ${last.en} is on the bottom, lift it to the top with R.`)
+    : text(`先用 R 把${reference.zh}摆到底层右前，再看${last.zh}在哪一层。`,
+      `Use R to move the ${reference.en} to bottom front-right, then check which layer the ${last.en} is on.`);
+}
+
+export const FL_BOTTOM_ALIGNMENT = {
+  mixed: text('用 U 把两角上下对齐', 'Use U to line up the two corners vertically'),
+  bottom: text('另一角留在底层右后，从下方看底面', 'Keep the other corner at bottom back-right and look at the cube from below'),
+};
+
+export const FL_TWISTS = [
+  { key: '0', id: 'zero', symbol: '0' },
+  { key: '+', id: 'plus', symbol: '+' },
+  { key: '-', id: 'minus', symbol: '−' },
+] as const;
+export type FlTwist = (typeof FL_TWISTS)[number];
+const lastFaces = ['D', 'B', 'R'] as const;
 const topPositions = [
   text('顶层左后', 'Top back-left'),
   text('顶层右后', 'Top back-right'),
   text('顶层右前', 'Top front-right'),
 ];
 const bottomPosition = text('底层右后', 'Bottom back-right');
-const whiteDirections = {
-  top: [text('朝上', 'Up'), text('朝前', 'Front'), text('朝左', 'Left')],
-  right: [text('朝下', 'Down'), text('朝前', 'Front'), text('朝右', 'Right')],
+const bottomColorDirections = {
+  top: { '0': text('朝上', 'up'), '+': text('朝前', 'forward'), '-': text('朝左', 'left') },
+  right: { '0': text('朝下', 'down'), '+': text('朝前', 'forward'), '-': text('朝右', 'right') },
 };
-const goal = text('复原白色第一层。检查底面四格全白，四个侧面的底排各自同色。',
-  'Solve the white first layer. Check for four white stickers on the bottom and matching bottom rows on all four sides.');
-const completion = text('白色第一层已复原。四个侧面的底排都已对齐，可以接 CLL。',
-  'The white first layer is solved and all four side rows match. You are ready for CLL.');
+
+export function flSectionId(group: FlGroup, twist: FlTwist) {
+  return `${group}-${twist.id}`;
+}
+
+export function flSectionHeading(group: FlGroup, twist: FlTwist, palette: FlPalette, includeCorner = false) {
+  const direction = bottomColorDirections[group === 'top' ? 'top' : 'right'][twist.key];
+  const bottom = palette.color('D');
+  return text(`${twist.symbol} · ${includeCorner ? palette.reference.zh + '的' : ''}${bottom.zh}格${direction.zh}`,
+    `${twist.symbol} · ${capitalize(bottom.en)} faces ${direction.en}${includeCorner ? ' on the ' + palette.reference.en : ''}`);
+}
+
+const capitalize = (word: string) => word[0].toUpperCase() + word.slice(1);
 
 export const FL_VIEWS = {
   top: { x: Math.PI / 6, y: Math.PI / 6, z: 0 },
@@ -59,12 +98,6 @@ export function hasLeftPair(state: State) {
     && state[Face.F][2] === 'R' && state[Face.B][3] === 'O';
 }
 
-function completesLayer(state: State, moves: string) {
-  if (isWhiteFirstLayer(state)) return true;
-  if (!Object.values(state).some(face => face.every(color => color === 'W'))) return false;
-  return CUBE_ORIENTATIONS.some(({ value }) => value && isWhiteFirstLayer(twoByTwoState(`${moves} ${value}`)));
-}
-
 function canonicalSetup(alg: string) {
   const undo = inverse(alg);
   for (const end of ['', 'y', 'y2', "y'"]) {
@@ -75,79 +108,88 @@ function canonicalSetup(alg: string) {
   throw new Error(`Cannot align the left pair for ${alg}`);
 }
 
-const moveNames: Record<string, ReturnType<typeof text>> = {
-  U: text('顶层', 'Top'), R: text('右层', 'Right'), F: text('前层', 'Front'),
-  L: text('左层', 'Left'), B: text('后层', 'Back'), x: text('绕右轴转体', 'Rotate on R axis'), y: text('绕顶轴转体', 'Rotate on U axis'),
-};
-function flDemoSteps(alg: string) {
-  return alg.split(' ').map(notation => {
-    const cue = moveNames[notation[0]];
-    const turn = notation.includes('2')
-      ? text('转半圈', 'turn halfway') : notation.endsWith("'")
-        ? text('逆时针转四分之一圈', 'turn a quarter counterclockwise') : text('顺时针转四分之一圈', 'turn a quarter clockwise');
-    return { notation, cue, detail: text(`${cue.zh}${turn.zh}。`, `${cue.en}, ${turn.en}.`) };
-  });
-}
-
-function makeCase(group: FlGroup, twist: Twist, algs: readonly string[], index: number) {
-  const twistIndex = FL_TWISTS.indexOf(twist);
-  const ordinal = index + 1;
-  const id = `${group}-${['zero', 'plus', 'minus'][twistIndex]}-${ordinal}`;
+function makeCase(group: FlGroup, twist: FlTwist, algs: readonly string[], index: number) {
+  const sectionId = flSectionId(group, twist);
+  const id = `${sectionId}-${index + 1}`;
   const position = group === 'top' ? topPositions[Math.floor(index / 3)] : group === 'mixed' ? topPositions[2] : bottomPosition;
   // In DD 0 the fully solved case is omitted. The remaining DD diagrams read white, orange, green.
-  const color = colors[group === 'bottom' && twist === '0' ? index + 1 : index % 3];
-  const title = text(`${twist} · ${position.zh}朝${group === 'bottom' ? '下' : '上'}的${color.zh}格`,
-    `${twist} · ${position.en}, ${color.en.toLowerCase()} ${group === 'bottom' ? 'down' : 'up'}`);
-  const setup = canonicalSetup(algs[0]);
-  const movesWithHistory = (history: readonly string[]) => [setup, ...history].join(' ');
-  const exercise: CourseExercise = {
-    setup, solution: algs[0], goal,
-    stateKey: history => JSON.stringify(twoByTwoState(movesWithHistory(history))),
-    isComplete: history => {
-      const moves = movesWithHistory(history);
-      return completesLayer(twoByTwoState(moves), moves);
-    },
-  };
-  const directions = group === 'top' ? whiteDirections.top : whiteDirections.right;
-  const targetPosition = group === 'top' ? text('顶层左前', 'top front-left') : text('底层右前', 'bottom front-right');
-  const word = directions[twistIndex];
-  const demoTitle = text('第一层公式', 'First-layer algorithm');
-  const guided = {
-    view: FL_VIEWS[group],
-    recognition: {
-      progressLabel: text('识别', 'Recognize'),
-      heading: text('白红绿角的白格朝哪里？', 'Which way does white face on the white–red–green corner?'),
-      prompt: text(`找到${targetPosition.zh}的白红绿角，再看白格的朝向。`,
-        `Find the white–red–green corner at ${targetPosition.en}, then check which way its white sticker faces.`),
-      choices: directions, answer: twistIndex,
-      explanation: text(`白格${word.zh}，属于 ${twist} 组。白绿橙角在${position.zh}，${color.zh}格朝${group === 'bottom' ? '下' : '上'}。`,
-        `White faces ${word.en.toLowerCase()}, so use group ${twist}. The white–green–orange corner is at ${position.en.toLowerCase()} with ${color.en.toLowerCase()} facing ${group === 'bottom' ? 'down' : 'up'}.`),
-    },
-    algorithm: {
-      progressLabel: text('归位', 'Insert'),
-      heading: text('一起归位两个白角', 'Solve both white corners'),
-      prompt: text('跟着箭头转动。半转可以拆成两次同方向的四分之一转。',
-        'Follow the arrows. A half turn can be made as two quarter turns in the same direction.'),
-      steps: flDemoSteps(algs[0]),
-      demoSetup: setup, demoTitle,
-      helpLabel: text('看公式演示', 'Watch the algorithm'),
-      alternatives: algs.slice(1).map(alg => ({ steps: flDemoSteps(alg), demoTitle: text('备选公式', 'Alternative algorithm') })),
-    },
-    completion,
-  } satisfies GuidedCourseLesson;
-  return { id, title, group, twist, position, color, algs, exercise, guided };
+  const face = lastFaces[group === 'bottom' && twist.key === '0' ? index + 1 : index % 3];
+  return { id, sectionId, group, position, face, algs, setup: canonicalSetup(algs[0]) };
 }
 
 export const FL_CASES = Object.fromEntries((Object.keys(FL_GROUPS) as FlGroup[]).map(group => [
-  group, FL_TWISTS.flatMap(twist => FL_CASE_ALGS[group][twist].map((algs, index) => makeCase(group, twist, algs, index))),
+  group, FL_TWISTS.flatMap(twist => FL_CASE_ALGS[group][twist.key].map((algs, index) => makeCase(group, twist, algs, index))),
 ])) as Record<FlGroup, ReturnType<typeof makeCase>[]>;
 export type FlCase = ReturnType<typeof makeCase>;
+
+const layerQuizCases = [FL_CASES.top, [...FL_CASES.mixed, ...FL_CASES.bottom]];
+const quizTopTurns = ['', 'U', 'U2', "U'"];
+const quizRightTurns = [['', 'R', 'R2', "R'"], ['', "R'"]];
+
+export function randomFlLayerQuizSetup(randomBelow = (limit: number) => Math.floor(Math.random() * limit)) {
+  // Draw the reference layer first so top and bottom are equally likely.
+  const layer = randomBelow(layerQuizCases.length);
+  const cases = layerQuizCases[layer];
+  const rightTurns = quizRightTurns[layer];
+  // R does not move the top case's UFL reference. For bottom cases, R'
+  // moves it from DFR to DBR. U can then vary the upper corners' slots.
+  return [
+    cases[randomBelow(cases.length)].setup,
+    rightTurns[randomBelow(rightTurns.length)],
+    quizTopTurns[randomBelow(quizTopTurns.length)],
+  ].filter(Boolean).join(' ');
+}
+
+export function flCaseGroups(chapter: FlChapter, twist: FlTwist) {
+  return FL_CHAPTERS[chapter].groups.map(group => ({
+    group,
+    cases: FL_CASES[group].filter(item => item.sectionId === flSectionId(group, twist)),
+  }));
+}
+
+export function flCaseLabel({ position, face, group }: FlCase, palette: FlPalette) {
+  const color = palette.color(face);
+  return text(`${position.zh} · ${color.zh}格朝${group === 'bottom' ? '下' : '上'}`,
+    `${position.en} · ${capitalize(color.en)} ${group === 'bottom' ? 'down' : 'up'}`);
+}
+
+export const FL_WRG_HOME = 5;
+export const FL_WGO_HOME = 1;
+export const FL_REFERENCE_STICKERS = [FACE.D, FACE.F, FACE.R].map(face => engineHomeSid(FL_WRG_HOME, face, 2));
+export const FL_LAST_STICKERS = [FACE.D, FACE.B, FACE.R].map(face => engineHomeSid(FL_WGO_HOME, face, 2));
+export const FL_PURPLE_LAST = Object.fromEntries(FL_LAST_STICKERS.map(sticker => [sticker, TUTORIAL_STICKER_PURPLE]));
+export const flFirstLayerMask = () => (piece: number) => flCornerLayer(piece) === 'D' ? FM_REGULAR : FM_IGNORED;
+
+export function flCornerLayer(position: number) {
+  return (position & 2) === 0 ? 'D' : 'U';
+}
+
+export function flRecognitionGroup(wrg: number, wgo: number): FlGroup | undefined {
+  if (wrg === 6 && flCornerLayer(wgo) === 'U') return 'top'; // UFL
+  if (wrg === 5) return flCornerLayer(wgo) === 'U' ? 'mixed' : 'bottom'; // DFR
+}
+
+export function flAlignedTwist(group: FlGroup, reference: { positionIndex: number; face: CubeFace }, last: number) {
+  if (flRecognitionGroup(reference.positionIndex, last) !== group) return;
+  if (group === 'mixed' && last !== 7) return; // UFR, directly above the reference corner.
+  if (group === 'bottom' && last !== 1) return; // DBR.
+  const faces: readonly CubeFace[] = group === 'top' ? ['U', 'F', 'L'] : ['D', 'F', 'R'];
+  return FL_TWISTS[faces.indexOf(reference.face)];
+}
+
+// Build examples backward from real formula cases. Both D examples use the same
+// R turn, but it sends the other corner to opposite layers.
+export const FL_RECOGNITION_EXAMPLES = ([
+  { group: 'top', moves: ['U', 'R'], end: FL_CASES.top[6] },
+  { group: 'mixed', moves: ['R', 'U'], end: FL_CASES.mixed[3] },
+  { group: 'bottom', moves: ['R'], end: FL_CASES.bottom[5] },
+] as const).map(example => ({ ...example, setup: setupBefore(example.end.setup, example.moves.join(' ')) }));
 
 const exampleCase = FL_CASES.top[3];
 const alignment = 'U';
 const leftPairMoves = 'B F';
-const alignedStart = setupBefore(exampleCase.exercise.setup, alignment);
-const exampleMoves = `${leftPairMoves} ${alignment} ${exampleCase.exercise.solution}`;
+const alignedStart = setupBefore(exampleCase.setup, alignment);
+const exampleMoves = `${leftPairMoves} ${alignment} ${exampleCase.algs[0]}`;
 export const FL_EXAMPLE = {
   setup: setupBefore(alignedStart, leftPairMoves),
   leftPairSetup: alignedStart,
@@ -156,38 +198,3 @@ export const FL_EXAMPLE = {
   leftPairMoves,
   alignment,
 };
-
-const pairTitle = text('练习左侧白角对', 'Practice the left pair');
-const pairGoal = text('归位底层左侧的两个白角。白朝下，蓝排在左，白蓝红角的红格朝前。',
-  'Solve the two white corners at the bottom left. Keep white down, the blue row on the left and the red sticker of the white–blue–red corner in front.');
-const pairExercise: CourseExercise = {
-  setup: FL_EXAMPLE.setup,
-  solution: leftPairMoves,
-  goal: pairGoal,
-  stateKey: history => JSON.stringify(twoByTwoState([FL_EXAMPLE.setup, ...history].join(' '))),
-  isComplete: history => hasLeftPair(twoByTwoState([FL_EXAMPLE.setup, ...history].join(' '))),
-};
-const pairLesson: GuidedCourseLesson = {
-  view: FL_VIEWS.top,
-  recognition: {
-    progressLabel: text('认块', 'Recognize'),
-    heading: text('哪个颜色能把左侧的两个白角连起来？', 'Which color joins the two white corners on the left?'),
-    prompt: text('看白橙蓝角和白蓝红角的侧面贴纸。', 'Look at the side stickers on the white–orange–blue and white–blue–red corners.'),
-    choices: [text('橙色', 'Orange'), text('蓝色', 'Blue'), text('红色', 'Red')],
-    answer: 1,
-    explanation: text('两个白角都带蓝色。归位后，左面两个蓝格相邻。', 'Both corners have blue stickers. Once solved, those stickers form a row on the left.'),
-  },
-  algorithm: {
-    progressLabel: text('拼角对', 'Build the pair'),
-    heading: text('先归位左后角，再归位左前角', 'Solve the back-left corner, then the front-left corner'),
-    prompt: text('跟着箭头转 B、F，把两个白角送到底层左侧。', 'Follow the arrows for B and F to place both corners at the bottom left.'),
-    steps: flDemoSteps(leftPairMoves),
-    demoSetup: FL_EXAMPLE.setup,
-    demoTitle: pairTitle,
-    helpLabel: text('看拼角对演示', 'Watch the left pair'),
-  },
-  completion: text('两个白格朝下，两个蓝格在左面并排。现在可以摆位剩下两个白角。',
-    'Two white stickers face down, and the blue stickers form a row on the left. You can now align the other two white corners.'),
-};
-
-export const FL_LEFT_PAIR = { id: 'left-pair-practice', title: pairTitle, exercise: pairExercise, guided: pairLesson };

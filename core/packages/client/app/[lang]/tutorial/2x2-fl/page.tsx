@@ -1,56 +1,80 @@
 'use client';
 
-import { useCallback } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { parseAsString, useQueryStates } from 'nuqs';
+import CubeOrientationSelect from '@/components/CubeOrientationSelect';
+import { SettingsPopover } from '@/components/TrainingSettings';
+import { tr } from '@/i18n/tr';
 import InteractiveTutorial, { type CourseChapter, type CoursePosition } from '../components/InteractiveTutorial';
 import { TWO_BY_TWO_ORIENTATION } from '../lib/2x2-state';
-import { FL_CASES, FL_GROUPS, FL_LEFT_PAIR, type FlGroup } from './lesson-data';
-import { CaseIndex, FirstLayerDemo, Introduction, LeftPair } from './course-content';
+import { FL_CASES, FL_CHAPTERS, FL_TWISTS, flChapterTitle, flPalette, flSectionId, type FlChapter } from './lesson-data';
+import { CaseIndex, ChapterOverview, FirstLayerDemo, Introduction, walkthroughHeading } from './course-content';
+import RecognitionLesson from './RecognitionLesson';
 import './first-layer.css';
 
 const title = { zh: '二阶魔方 FL（第一层）', en: '2×2 First Layer (FL)' };
-const groups = Object.keys(FL_GROUPS) as FlGroup[];
-const chapters: CourseChapter[] = [
+const overviewTitle = { zh: '概览', en: 'Overview' };
+const recognitionTitle = { zh: '识别流程', en: 'Recognition flow' };
+const walkthroughId = 'walkthrough';
+const formulaChapters = Object.keys(FL_CHAPTERS) as FlChapter[];
+const chaptersFor = (orientation: string): CourseChapter[] => [
   {
-    id: 'intro', title: { zh: '起手与摆位', en: 'Setup and alignment' },
+    id: 'intro',
+    title: { zh: '引言', en: 'Introduction' },
     sections: [
-      { id: 'overview', title: { zh: '概览', en: 'Overview' }, index: select => <Introduction onSelect={select} /> },
-      { id: 'left-pair', title: { zh: '左侧白角对', en: 'Left pair' }, index: () => <LeftPair /> },
-      FL_LEFT_PAIR,
+      { id: 'overview', title: overviewTitle, content: <Introduction orientation={orientation} /> },
+      { id: 'recognition', title: recognitionTitle, stage: () => <RecognitionLesson orientation={orientation} /> },
     ],
   },
-  ...groups.map((group): CourseChapter => ({
-    id: group,
-    title: FL_GROUPS[group].title,
+  ...formulaChapters.map((chapter): CourseChapter => ({
+    id: chapter,
+    title: flChapterTitle(chapter, flPalette(orientation)),
     sections: [
-      { id: `${group}-cases`, title: { zh: '识别图表', en: 'Case diagrams' }, index: select => <CaseIndex group={group} onSelect={select} /> },
-      ...FL_CASES[group],
+      { id: `${chapter}-overview`, title: overviewTitle, index: select =>
+        <ChapterOverview chapter={chapter} orientation={orientation} onSelect={twist => select(chapter, flSectionId(chapter, twist))} /> },
+      ...FL_TWISTS.map(twist => ({
+        id: flSectionId(chapter, twist),
+        title: { zh: twist.symbol, en: twist.symbol },
+        index: () => <CaseIndex chapter={chapter} twist={twist} orientation={orientation} />,
+      })),
     ],
   })),
   {
-    id: 'walkthrough', title: { zh: '完整示范', en: 'Full walkthrough' },
-    sections: [{ id: 'walkthrough', title: { zh: '从打乱到第一层', en: 'From scramble to first layer' }, demonstration: <FirstLayerDemo /> }],
+    id: walkthroughId,
+    title: { zh: '完整示范', en: 'Full walkthrough' },
+    sections: [{ id: walkthroughId, title: walkthroughHeading, stage: () => <FirstLayerDemo orientation={orientation} /> }],
   },
 ];
+const cases = Object.values(FL_CASES).flat();
 
-function positionFor(step: string | null, section: string | null): CoursePosition {
-  const index = chapters.findIndex((chapter, order) => step === chapter.id || step === `lesson-${order + 1}`);
-  if (index >= 0) {
-    const choices = chapters[index].sections;
-    return { chapterIndex: index, sectionId: choices.find(item => item.id === section)?.id ?? choices[0].id };
-  }
-  const sectionChapter = chapters.findIndex(chapter => chapter.sections.some(item => item.id === step));
-  return sectionChapter >= 0 && step ? { chapterIndex: sectionChapter, sectionId: step } : { chapterIndex: 0, sectionId: 'overview' };
+function positionFor(step: string | null, section: string | null, chapters: readonly CourseChapter[]): CoursePosition {
+  // The former UD and DD chapter URLs both open the merged bottom chapter.
+  const requestedChapter = step === 'mixed' || step === 'lesson-4' ? 'bottom' : step;
+  const index = chapters.findIndex((chapter, order) => requestedChapter === chapter.id || requestedChapter === `lesson-${order + 1}`);
+  const request = section ?? (index < 0 ? step : null);
+  const sectionId = (cases.find(item => item.id === request)?.sectionId ?? request)?.replace(/^mixed-/, 'bottom-');
+  const sectionChapter = chapters.findIndex(chapter => chapter.sections.some(item => item.id === sectionId));
+  const chapterIndex = index >= 0 ? index : Math.max(0, sectionChapter);
+  const choices = chapters[chapterIndex].sections;
+  return { chapterIndex, sectionId: choices.find(item => item.id === sectionId)?.id ?? choices[0].id };
 }
 
 export default function Page() {
+  const [orientation, setOrientation] = useState(TWO_BY_TWO_ORIENTATION);
+  const chapters = useMemo(() => chaptersFor(orientation), [orientation]);
   const [{ step, section }, setLocation] = useQueryStates({ step: parseAsString, section: parseAsString });
   const navigate = useCallback(({ chapterIndex, sectionId }: CoursePosition, chapterChanged: boolean) => {
-    const step = `lesson-${chapterIndex + 1}`;
-    const section = chapters[chapterIndex].sections[0].id === sectionId ? null : sectionId;
+    const chapter = chapters[chapterIndex];
+    const step = chapter.id === walkthroughId ? chapter.id : `lesson-${chapterIndex + 1}`;
+    const section = chapter.sections[0].id === sectionId ? null : sectionId;
     void setLocation({ step, section }, { history: chapterChanged ? 'push' : 'replace' });
-  }, [setLocation]);
+  }, [chapters, setLocation]);
 
-  return <InteractiveTutorial title={title} puzzle="2x2" orientation={TWO_BY_TWO_ORIENTATION} chapters={chapters}
-    basicsHref="/tutorial/lbl" location={positionFor(step, section)} onNavigate={navigate} />;
+  return <InteractiveTutorial title={title} puzzle="2x2" orientation={orientation} chapters={chapters}
+    catalogHref="/tutorial?puzzle=2x2"
+    location={positionFor(step, section, chapters)} onNavigate={navigate}
+    headerAction={<SettingsPopover className="fl-orientation-settings" iconSize={20}
+      label={tr({ zh: '教程设置', en: 'Tutorial settings' })}>
+      <CubeOrientationSelect layout="bottom-front" value={orientation} onChange={setOrientation} />
+    </SettingsPopover>} />;
 }
