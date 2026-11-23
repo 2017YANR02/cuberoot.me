@@ -951,11 +951,12 @@ export const CATALOG: ComponentEntry[] = [
     note: { zh: '圆形、复杂背景和原生阴影等限制见 docs/design/continuous-corners.md。', en: 'See docs/design/continuous-corners.md for circles, complex backgrounds and native-shadow limitations.' },
   },
   {
-    name: 'SiteGlass',
-    import: "import SiteGlass from '@/components/SiteGlass';",
+    name: 'PrimaryNavigationOptics',
+    import: "import { PrimaryNavigationOptics } from '@cuberoot/app-ui/appearance';",
     category: 'more',
-    zh: '全站表面共用的光学入口；已有元素用 data-site-surface="panel|popover|heading" 接入统一材质，保留主题和无障碍回退。',
-    en: 'Shared optical engine; existing elements declare data-site-surface="panel|popover|heading" to reuse theme-aware materials and accessibility fallbacks.',
+    zh: '网站与安装端共用的玻璃折射。网站在根布局统一启用，安装端可将效果关联到导航元素。',
+    en: 'Shared glass refraction for web and installed apps. The web root layout enables it site-wide; installed apps can attach it to a navigation element.',
+    usage: '<PrimaryNavigationOptics siteWide displacementScale={28} />',
   },
   {
     name: 'CompetitionVideoRoom',
