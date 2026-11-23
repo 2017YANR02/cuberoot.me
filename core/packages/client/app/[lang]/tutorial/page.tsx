@@ -270,13 +270,15 @@ export default function TutorialPage() {
       {puzzle === 'ivy' ? <IvyTutorial /> : null}
       {puzzle === '2x2' && <div className="tutorial-methods">
         <AlgCard href="/tutorial/2x2-lbl" prefetch={false}
-          thumb={<VisualCube algorithm="" view="iso" puzzleSize={2} size={112} local />}
+          thumb={<VisualCube setup="z2 y'" view="iso" puzzleSize={2} size={112} local
+            alt={tr({ zh: '六面复原的二阶魔方', en: 'Solved 2×2 cube' })} />}
           title={<T zh="层先法" en="Layer by Layer" />}
-          sub={<T zh="底层与黄面样板" en="First-layer and yellow-face preview" />} />
+          sub={<T zh="从底层到顶层，分步学会六面复原" en="Learn to solve the cube, one layer at a time" />} />
         <AlgCard href="/tutorial/2x2-fl" prefetch={false}
-          thumb={<VisualCube setup="U2 R2" view="iso" puzzleSize={2} size={112} local />}
+          thumb={<VisualCube view="f2l" puzzleSize={2} size={112} local
+            alt={tr({ zh: '第一层复原、顶层淡化的二阶魔方', en: '2×2 cube with the first layer solved and the top layer muted' })} />}
           title={<T zh="FL（第一层）" en="First Layer (FL)" />}
-          sub={<T zh="先做左侧白角对，再处理 44 种盘面" en="Start with the left pair, then learn 44 cases" />} />
+          sub={<T zh="先拼角对，再掌握 44 种盘面" en="Build a corner pair, then learn 44 first-layer cases" />} />
         <AlgCard href="/tutorial/2x2-eg" prefetch={false}
           thumb={<VisualCube algorithm="R U R' U R U2 R'" view="pll" puzzleSize={2} size={112} local scheme="ygrwbo"
             alt={tr({ zh: '右鱼盘面', en: 'Sune case' })} />}
