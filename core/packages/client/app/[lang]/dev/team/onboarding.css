@@ -44,7 +44,6 @@
   .onboarding-more .more-toggle { font-size: 16px; }
 }
 
-body:has(.onboarding-compact) .site-tooltip { font-size: 16px; line-height: 1.6; }
 @media (max-width: 600px) {
   .onboarding-steps { gap: 12px; }
   .onboarding-step { padding: 12px; gap: 6px 10px; }

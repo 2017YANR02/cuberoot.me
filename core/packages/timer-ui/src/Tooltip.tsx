@@ -1,9 +1,11 @@
 'use client';
 
 import { getUsableViewport } from './host-viewport';
-import { useEffect, useId, useLayoutEffect, useRef, useState, type HTMLAttributes, type ReactNode } from 'react';
+import { useCallback, useEffect, useId, useLayoutEffect, useRef, useState, type HTMLAttributes, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import './tooltip.css';
+
+const HOVER_DELAY_MS = 500; // Chromium Aura's default tooltip delay.
 
 /** Short, non-interactive hover/focus labels. Spread trigger props onto the actual button/link. */
 export function Tooltip({ content, children, disabled = false, onlyWhenOverflow = false, openOnClick = false }: {
@@ -21,26 +23,55 @@ export function Tooltip({ content, children, disabled = false, onlyWhenOverflow 
   const focused = useRef(false);
   const hovered = useRef(false);
   const pinned = useRef(false);
-  const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const clearLeave = () => { if (timer.current !== null) clearTimeout(timer.current); };
+  const cancelPendingHover = useRef<(() => void) | null>(null);
+  const leaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const clearHover = useCallback(() => {
+    cancelPendingHover.current?.();
+    cancelPendingHover.current = null;
+  }, []);
+  const clearLeave = useCallback(() => {
+    if (leaveTimer.current !== null) clearTimeout(leaveTimer.current);
+    leaveTimer.current = null;
+  }, []);
+  const close = useCallback(() => {
+    clearHover();
+    clearLeave();
+    pinned.current = false;
+    setAnchor(null);
+  }, [clearHover, clearLeave]);
   const leave = () => {
     clearLeave();
-    timer.current = setTimeout(() => {
+    leaveTimer.current = setTimeout(() => {
+      leaveTimer.current = null;
       if (!focused.current && !hovered.current && !pinned.current) setAnchor(null);
     }, 120);
   };
-  useEffect(() => clearLeave, []);
+  useEffect(() => () => {
+    clearHover();
+    clearLeave();
+  }, [clearHover, clearLeave]);
   const canOpen = (element: HTMLElement) => !disabled && !!content && (!onlyWhenOverflow || element.scrollWidth > element.clientWidth);
+  const scheduleHover = (element: HTMLElement) => {
+    clearHover();
+    const dismiss = (event: KeyboardEvent) => { if (event.key === 'Escape') clearHover(); };
+    const timeout = setTimeout(() => {
+      clearHover();
+      if (element.isConnected && canOpen(element)) setAnchor(element);
+    }, HOVER_DELAY_MS);
+    document.addEventListener('keydown', dismiss);
+    cancelPendingHover.current = () => {
+      clearTimeout(timeout);
+      document.removeEventListener('keydown', dismiss);
+    };
+  };
   // Fullscreen content lives above body portals; close on transitions and reopen in that root.
   useEffect(() => {
-    const close = () => { pinned.current = false; setAnchor(null); };
     document.addEventListener('fullscreenchange', close);
     return () => document.removeEventListener('fullscreenchange', close);
-  }, []);
-  useEffect(() => { if (disabled || !content) { pinned.current = false; setAnchor(null); } }, [disabled, content]);
+  }, [close]);
+  useEffect(() => { if (disabled || !content) close(); }, [close, disabled, content]);
   useEffect(() => {
     if (!anchor) return;
-    const close = () => { pinned.current = false; setAnchor(null); };
     const dismiss = (event: KeyboardEvent) => { if (event.key === 'Escape') close(); };
     const outside = (event: PointerEvent) => {
       if (!anchor.contains(event.target as Node) && !panel.current?.contains(event.target as Node)) close();
@@ -51,7 +82,7 @@ export function Tooltip({ content, children, disabled = false, onlyWhenOverflow 
       document.removeEventListener('keydown', dismiss);
       document.removeEventListener('pointerdown', outside);
     };
-  }, [anchor, openOnClick]);
+  }, [anchor, close, openOnClick]);
   useLayoutEffect(() => {
     const tip = panel.current;
     if (!anchor || !tip) return;
@@ -85,6 +116,7 @@ export function Tooltip({ content, children, disabled = false, onlyWhenOverflow 
         'aria-expanded': !!anchor,
         onClick: (event: React.MouseEvent<HTMLElement>) => {
           if (!canOpen(event.currentTarget)) return;
+          clearHover();
           clearLeave();
           pinned.current = !pinned.current;
           setAnchor(pinned.current ? event.currentTarget : null);
@@ -94,14 +126,24 @@ export function Tooltip({ content, children, disabled = false, onlyWhenOverflow 
         if (event.pointerType === 'touch' || !canOpen(event.currentTarget)) return;
         hovered.current = true;
         clearLeave();
+        if (!anchor) scheduleHover(event.currentTarget);
+      },
+      onPointerLeave: () => {
+        hovered.current = false;
+        clearHover();
+        if (anchor) leave();
+      },
+      onFocus: (event) => {
+        if (!canOpen(event.currentTarget)) return;
+        focused.current = true;
+        clearHover();
+        clearLeave();
         setAnchor(event.currentTarget);
       },
-      onPointerLeave: () => { hovered.current = false; leave(); },
-      onFocus: (event) => { if (!canOpen(event.currentTarget)) return; focused.current = true; clearLeave(); setAnchor(event.currentTarget); },
       onBlur: () => { focused.current = false; leave(); },
     })}
     {anchor && createPortal(<div
-      ref={panel} id={id} role="tooltip" className="site-tooltip" data-site-surface="popover"
+      ref={panel} id={id} role="tooltip" className="site-tooltip"
       onPointerEnter={() => { hovered.current = true; clearLeave(); }}
       onPointerLeave={() => { hovered.current = false; leave(); }}
     >{content}</div>, anchor.closest('dialog[open]') ?? (document.fullscreenElement?.contains(anchor) ? document.fullscreenElement : document.body))}

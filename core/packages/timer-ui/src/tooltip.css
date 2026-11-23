@@ -4,14 +4,12 @@
   z-index: 10000;
   max-width: calc(100vw - 16px);
   box-sizing: border-box;
-  padding: 7px 12px;
+  padding: 3px 7px;
   border: 1px solid var(--border-default);
-  border-radius: 12px;
+  border-radius: 4px;
   background: var(--popover);
   color: var(--popover-foreground, var(--foreground));
-  font-size: 14px;
-  font-weight: 500;
-  line-height: 1.5;
+  font: 400 12px/1.35 system-ui, sans-serif;
   white-space: pre-line;
   overflow-wrap: anywhere;
   pointer-events: auto;

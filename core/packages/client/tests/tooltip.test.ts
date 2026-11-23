@@ -4,7 +4,8 @@ import { createRoot } from 'react-dom/client';
 import { expect, it, vi } from 'vitest';
 import { Tooltip } from '@/components/Tooltip';
 
-it('opens help on hover or touch click, toggles closed and dismisses outside', async () => {
+it('waits for a sustained hover, cancels a pending tooltip and opens help immediately on touch click', async () => {
+  vi.useFakeTimers();
   const host = document.createElement('div');
   document.body.append(host);
   const root = createRoot(host);
@@ -21,8 +22,25 @@ it('opens help on hover or touch click, toggles closed and dismisses outside', a
       return event;
     };
     await act(async () => button.dispatchEvent(pointer('pointerover', 'mouse')));
+    await act(async () => vi.advanceTimersByTime(499));
+    expect(document.querySelector('[role="tooltip"]')).toBeNull();
+    await act(async () => button.dispatchEvent(pointer('pointerout', 'mouse')));
+    await act(async () => vi.advanceTimersByTime(500));
+    expect(document.querySelector('[role="tooltip"]')).toBeNull();
+
+    await act(async () => button.dispatchEvent(pointer('pointerover', 'mouse')));
+    await act(async () => document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' })));
+    await act(async () => vi.advanceTimersByTime(500));
+    expect(document.querySelector('[role="tooltip"]')).toBeNull();
+    await act(async () => button.dispatchEvent(pointer('pointerout', 'mouse')));
+
+    await act(async () => button.dispatchEvent(pointer('pointerover', 'mouse')));
+    await act(async () => vi.advanceTimersByTime(499));
+    expect(document.querySelector('[role="tooltip"]')).toBeNull();
+    await act(async () => vi.advanceTimersByTime(1));
     expect(document.querySelector('[role="tooltip"]')?.textContent).toBe('Coverage explanation');
     await act(async () => document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' })));
+    await act(async () => button.dispatchEvent(pointer('pointerout', 'mouse')));
     await act(async () => button.dispatchEvent(pointer('pointerover', 'touch')));
     expect(document.querySelector('[role="tooltip"]')).toBeNull();
     // Mobile browsers may focus before click; the first tap must stay open.
@@ -37,6 +55,7 @@ it('opens help on hover or touch click, toggles closed and dismisses outside', a
   } finally {
     await act(async () => root.unmount());
     host.remove();
+    vi.useRealTimers();
   }
 });
 
@@ -58,7 +77,6 @@ it('portals outside a clipped glass parent, describes the focused trigger, clamp
     await act(async () => button.focus());
     const tooltip = document.querySelector('[role="tooltip"]')!;
     expect(tooltip.parentElement).toBe(document.body);
-    expect(tooltip.getAttribute('data-site-surface')).toBe('popover');
     expect(button.getAttribute('aria-describedby')).toBe(tooltip.id);
     expect((tooltip as HTMLElement).style.left).toBe('382px');
     expect((tooltip as HTMLElement).style.top).toBe('42px');
