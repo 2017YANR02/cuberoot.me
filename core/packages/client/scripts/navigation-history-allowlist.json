@@ -5,6 +5,11 @@
     "reason": "二阶 LBL 大章导航进入历史记录；同章小节、播放跟随和练习切换替换当前地址"
   },
   {
+    "path": "app/[lang]/tutorial/2x2-eg/page.tsx",
+    "call": "setLocation({step,section,group}) history=chapterChanged ? 'push' : 'replace'",
+    "reason": "二阶 EG 章导航进入历史记录；同章小节、公式分组和练习切换替换当前地址"
+  },
+  {
     "path": "app/[lang]/tutorial/2x2-fl/page.tsx",
     "call": "setLocation({step,section}) history=chapterChanged ? 'push' : 'replace'",
     "reason": "二阶 FL 章导航进入历史记录；同章案例切换使用 replace"

@@ -277,6 +277,11 @@ export default function TutorialPage() {
           thumb={<VisualCube setup="U2 R2" view="iso" puzzleSize={2} size={112} local />}
           title={<T zh="FL（第一层）" en="First Layer (FL)" />}
           sub={<T zh="先做左侧白角对，再处理 44 种盘面" en="Start with the left pair, then learn 44 cases" />} />
+        <AlgCard href="/tutorial/2x2-eg" prefetch={false}
+          thumb={<VisualCube algorithm="R U R' U R U2 R'" view="pll" puzzleSize={2} size={112} local scheme="ygrwbo"
+            alt={tr({ zh: '右鱼盘面', en: 'Sune case' })} />}
+          title={<T zh="EG 法" en="EG Method" />}
+          sub={<T zh="先拼一面，再识别 CLL、EG-1 或 EG-2" en="Build one face, then recognize CLL, EG-1 or EG-2" />} />
       </div>}
       {puzzle === '3x3' && <div className="tutorial-methods">
         <AlgCard href="/tutorial/lbl" prefetch={false}

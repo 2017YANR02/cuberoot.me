@@ -903,6 +903,11 @@ export const PAGE_META: Record<string, PageMetaEntry> = {
     title: { zh: '二阶魔方 FL（第一层）', en: '2×2 First Layer (FL)' },
     description: { zh: '进阶二阶第一层公式。按剩余两角的层位与 0、+、− 分组查阅 44 种盘面，配有图解和分步演示。', en: 'Advanced 2×2 first-layer algorithms. Browse 44 cases by corner position and 0, + or − orientation, with diagrams and step-by-step playback.' },
   },
+  'tutorial/2x2-eg': {
+    title: { zh: '二阶魔方 EG 法教程', en: '2×2 EG Method Tutorial' },
+    description: { zh: '从层先法进阶到 EG。练习底层分组、顶层识别与起手摆位，跟看完整还原，并按组查阅 128 条 CLL、EG-1 和 EG-2 公式。',
+      en: 'Move from layer by layer to EG. Practice bottom and top recognition, follow a full solve, and browse 128 CLL, EG-1 and EG-2 algorithms.' },
+  },
   'tutorial/f2l': {
     title: { zh: '三阶魔方 F2L 教程', en: '3×3 F2L Tutorial' },
     description: { zh: '从层先法走向 F2L：认识四种三步基态，理解顶面调整，逐步学习右前槽角棱对的还原。', en: 'Move from LBL to F2L: recognize four three-move cases, understand top-layer alignment and learn front-right pair insertions step by step.' },

@@ -1,0 +1,90 @@
+.eg-reading { width: min(100%, 860px); margin: auto; padding: clamp(12px, 3cqw, 28px); box-sizing: border-box; }
+.eg-reading :is(h2, h3, p) { margin: 0; }
+.eg-reading h2 { font-size: clamp(1.35rem, 4cqw, 2.1rem); line-height: 1.2; }
+.eg-reading h2 + p, .eg-reading p + p { margin-block-start: .6rem; }
+.eg-reading p, .eg-reading li { line-height: 1.5; }
+.eg-reading a { color: var(--accent); text-underline-offset: 3px; }
+.eg-reading .eg-note { margin-block-start: 1rem; color: var(--muted-foreground); }
+.eg-reading :is(ol, ul) { margin-block-start: 1rem; }
+.eg-actions { display: flex; flex-wrap: wrap; gap: .5rem; margin-block: .75rem; }
+.eg-actions > *, .eg-copy > .eg-control, .eg-reading > .eg-control, .eg-observation .eg-control { min-height: 44px; }
+.eg-actions .eg-control:not(:disabled)[aria-pressed="true"] { background: var(--accent-soft); border-color: var(--accent); }
+.eg-actions .eg-control:disabled, .eg-copy > .eg-control:disabled { opacity: .55; cursor: default; }
+.eg-overview .eg-actions { justify-content: center; margin-block: 1.15rem; }
+.eg-overview { text-align: center; }
+.eg-overview > p, .eg-same-shape > p { max-width: 64ch; margin-inline: auto; }
+.eg-links { display: flex; flex-wrap: wrap; gap: .6rem 1.25rem; justify-content: center; margin-block-start: .4rem; }
+.eg-bottom-examples h3, .eg-shape-comparison h3 { margin-block-end: .25rem; font-size: 1.125rem; }
+.eg-bottom-examples p, .eg-shape-comparison p { font-size: .95rem; }
+.eg-bottom-examples li { text-align: start; }
+.eg-bottom-examples .course-overview-diagram > span { width: 100%; }
+
+.eg-observation { display: grid; width: 100%; justify-items: center; align-content: center; }
+.eg-observation > span:first-child { max-width: min(100%, 260px, 43cqh); }
+.eg-observation .puzzle-art { max-width: 100%; height: auto !important; }
+.eg-observation span[aria-live] { color: var(--muted-foreground); font-size: .875rem; }
+.eg-observation-actions { display: flex; flex-wrap: wrap; justify-content: center; gap: .4rem; }
+.eg-copy { padding-block: .25rem; }
+.eg-copy .eg-question-number { font-size: .875rem; color: var(--muted-foreground); margin-block-end: .3rem; }
+.eg-practice-filter { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem; margin-block-end: .4rem; font-size: .9rem; }
+.eg-practice-filter .eg-shape-filter { min-height: 44px; max-width: 100%; padding: .25rem; color: var(--foreground); background: var(--background); border-color: var(--border-default); border-radius: 6px; }
+.eg-reading .eg-practice-link { display: inline-flex; align-items: center; min-height: 44px; text-decoration: none; }
+.eg-copy .eg-guide-result, .eg-feedback { min-height: 4.25em; }
+.eg-feedback p { font-size: 1rem; }
+.eg-answers .eg-control { min-width: 52px; }
+.eg-turn { min-width: 44px; }
+.eg-target { display: grid; grid-template-columns: min(32%, 96px) 1fr; align-items: center; gap: .65rem; }
+.eg-target .puzzle-art { max-width: 100%; height: auto !important; }
+.eg-target p { font-size: 1rem; }
+.eg-details { margin-block: .65rem; line-height: 1.45; }
+.eg-details > summary { color: var(--accent); min-height: 44px; }
+.eg-details > code { display: block; margin-block-start: .35rem; overflow-wrap: anywhere; }
+
+.eg-shape-groups { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .8rem; margin-block-start: 1rem; }
+.eg-shape-groups h3 { font-size: .9rem; color: var(--muted-foreground); }
+.eg-shape-grid, .eg-case-groups, .eg-case-grid { display: grid; gap: .6rem; padding: 0; list-style: none; }
+.eg-shape-groups .eg-shape-grid { margin-block: .35rem 0; }
+.eg-shape-card { display: grid; grid-template-columns: auto 1fr; align-items: center; gap: .45rem; text-align: start;
+  min-height: 76px; width: 100%; padding: 4px; border: 1px solid var(--border-default); border-radius: 8px;
+  color: inherit; background: transparent; font: inherit; cursor: pointer; }
+.eg-shape-card:hover, .eg-shape-card:focus-visible { border-color: var(--accent); }
+.eg-shape-card strong, .eg-shape-card > span > span { display: block; }
+.eg-shape-card > span > span { color: var(--muted-foreground); font-size: .875rem; line-height: 1.35; }
+.eg-case-groups { grid-template-columns: repeat(auto-fit, minmax(min(100%, 180px), 1fr)); }
+.eg-case-grid { grid-template-columns: repeat(auto-fit, minmax(min(100%, 210px), 1fr)); }
+.eg-case-grid > li { min-width: 0; padding: .7rem; border-radius: 8px; }
+.eg-case-grid figure { margin: 0 0 .5rem; text-align: center; }
+.eg-case-grid figcaption { font-size: .95rem; font-weight: 600; }
+.eg-case-grid code { overflow-wrap: anywhere; }
+.eg-case-grid .alg-formula-row { align-items: center; min-width: 0; }
+.eg-play { display: grid; place-items: center; width: 100%; height: 44px; padding: 0;
+  background: transparent; color: var(--accent); border: 0; cursor: pointer; font-size: var(--alg-ui-size); }
+.eg-play:hover, .eg-play:focus-visible { background: var(--accent-soft); border-radius: 6px; }
+.eg-same-shape { text-align: center; }
+.eg-compare-result[data-revealed="false"] { visibility: hidden; }
+.eg-compare-result { min-height: 3em; }
+.eg-dialog-cube { width: 100%; height: min(43dvh, 320px); min-height: 120px; }
+.eg-dialog-copy p { margin-block: .3rem; color: var(--muted-foreground); }
+
+.eg-demo-stages { list-style: none; padding: 0; margin-block: .65rem 0; display: grid; gap: .25rem; }
+.eg-demo-stages > li { padding: .45rem .55rem; border-inline-start: 2px solid var(--border-default); }
+.eg-demo-stages > li[aria-current="step"] { border-inline-color: var(--accent); background: var(--accent-soft); }
+.eg-demo-stages h3 { margin: 0; font-size: clamp(1.125rem, 3cqw, 1.5rem); }
+.eg-demo-stages code { font-size: clamp(1.125rem, 3cqw, 1.5rem); overflow-wrap: anywhere; }
+.eg-demo-stages p { font-size: clamp(1rem, 2.5cqw, 1.25rem); }
+.eg-beyond li + li { margin-block-start: .5rem; }
+
+@container course-reading (min-width: 520px) {
+  .eg-bottom-examples li { text-align: center; }
+}
+@container course-reading (max-width: 510px) {
+  .eg-shape-groups { grid-template-columns: minmax(0, 1fr); }
+  .eg-overview .eg-actions { justify-content: start; }
+  .eg-overview { text-align: start; }
+}
+@container course-stage (orientation: landscape) and (min-width: 440px) and (min-height: 120px) {
+  .eg-observation > span:first-child { max-width: min(100%, 260px, max(65px, calc(89cqh - 64px))); }
+}
+@container course-stage (max-height: 260px) {
+  .eg-copy .eg-guide-result, .eg-feedback { min-height: 3.5em; }
+}
