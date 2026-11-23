@@ -408,7 +408,7 @@ A77C00000000000000000081 = {isa = PBXFileReference; lastKnownFileType = folder; 
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.0.0;
+				MARKETING_VERSION = 1.0.2;
 				OTHER_SWIFT_FLAGS = "$(inherited) \"-D\" \"COCOAPODS\" \"-DDEBUG\"";
 				PRODUCT_BUNDLE_IDENTIFIER = me.cuberoot.app;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -433,7 +433,7 @@ A77C00000000000000000081 = {isa = PBXFileReference; lastKnownFileType = folder; 
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.0.0;
+				MARKETING_VERSION = 1.0.2;
 				PRODUCT_BUNDLE_IDENTIFIER = me.cuberoot.app;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "";
@@ -454,7 +454,7 @@ INFOPLIST_FILE = CubeRootWatch/Info.plist;
 INFOPLIST_KEY_WKCompanionAppBundleIdentifier = me.cuberoot.app;
 INFOPLIST_KEY_WKRunsIndependentlyOfCompanionApp = YES;
 INFOPLIST_KEY_NSBluetoothAlwaysUsageDescription = "Connect your smart cube for automatic timing.";
-MARKETING_VERSION = 1.0.0;
+MARKETING_VERSION = 1.0.2;
 PRODUCT_BUNDLE_IDENTIFIER = me.cuberoot.app.watchkitapp;
 PRODUCT_NAME = "$(TARGET_NAME)";
 SDKROOT = watchos;
@@ -477,7 +477,7 @@ INFOPLIST_FILE = CubeRootWatch/Info.plist;
 INFOPLIST_KEY_WKCompanionAppBundleIdentifier = me.cuberoot.app;
 INFOPLIST_KEY_WKRunsIndependentlyOfCompanionApp = YES;
 INFOPLIST_KEY_NSBluetoothAlwaysUsageDescription = "Connect your smart cube for automatic timing.";
-MARKETING_VERSION = 1.0.0;
+MARKETING_VERSION = 1.0.2;
 PRODUCT_BUNDLE_IDENTIFIER = me.cuberoot.app.watchkitapp;
 PRODUCT_NAME = "$(TARGET_NAME)";
 SDKROOT = watchos;
