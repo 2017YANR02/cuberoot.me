@@ -159,6 +159,7 @@
       "./site-assistant": "runtime-neutral",
       "./site-assistant-openai": "runtime-neutral",
       "./site-assistant-algorithms": "runtime-neutral",
+      "./site-assistant-replay": "runtime-neutral",
       "./site-announcements": "runtime-neutral",
       "./cube-agents": "runtime-neutral",
       "./wca-format-result": "runtime-neutral",
@@ -819,6 +820,7 @@
     "./site-assistant": "./src/site_assistant.ts",
     "./site-assistant-openai": "./src/site_assistant_openai.ts",
     "./site-assistant-algorithms": "./src/site_assistant_algorithms.ts",
+    "./site-assistant-replay": "./src/site_assistant_replay.ts",
     "./site-announcements": "./src/site_announcements.ts",
     "./cube-agents": "./src/cube_agents.ts",
     "./wca-format-result": {

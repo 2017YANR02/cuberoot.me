@@ -1,12 +1,26 @@
 import { readFile } from 'node:fs/promises';
 import postgres from 'postgres';
-import { beforeAll,afterAll,describe,it,expect } from 'vitest';
+import { beforeAll,afterAll,describe,it,expect,vi } from 'vitest';
 import { ANALYSIS_DATASETS,compileAnalysis } from '../src/utils/site_assistant_analysis.js';
 import { executeAnalysis } from '../src/utils/site_assistant_analysis_db.js';
+import { answerSiteQuestion } from '../src/utils/site_assistant.js';
+import { recentChampionWindow } from '../src/utils/site_assistant_champions.js';
+import { withAssistantProgress } from '../src/utils/site_assistant_progress.js';
+import type { AssistantStreamEvent } from '@cuberoot/shared/site-assistant';
 const enabled=process.env.ASSISTANT_ANALYSIS_PG_TEST==='1' && process.env.DB_HOST==='127.0.0.1' && process.env.DB_NAME==='assistant_analysis_test';
 const db=postgres({host:'127.0.0.1',port:Number(process.env.DB_PORT ?? 5433),username:process.env.DB_USER ?? 'postgres',password:process.env.DB_PASS ?? 'dev',database:'assistant_analysis_test',max:1});
 const signal=()=>AbortSignal.timeout(10000);
 const col=(col:string)=>({col});const value=(value:string|number)=>({value});const output=(as:string,expr:unknown)=>({as,label:as,expr});
+const recentWinsQuestion='最近 WCA 官方比赛中,三阶速拧近 3 个月夺冠最多的人是谁?';
+
+it('resolves rolling months with a month-end clamp and preserves narrower or compound questions',()=>{
+  const window={from:'2026-02-28',to:'2026-05-31'};
+  expect(recentChampionWindow(recentWinsQuestion,window.to)).toEqual(window);
+  expect(recentChampionWindow('Who won the most 3×3 titles in official WCA competitions over the past three months?',window.to)).toEqual(window);
+  for(const question of [recentWinsQuestion+'再列出前五名。',recentWinsQuestion.replace('WCA','中国 WCA'),
+    recentWinsQuestion.replace('三阶速拧','三阶单手'),recentWinsQuestion.replace('3 个月','90 天'),
+    recentWinsQuestion.replace('最多的','第二多的')])expect(recentChampionWindow(question,window.to)).toBeUndefined();
+});
 describe.skipIf(!enabled)('assistant analysis PostgreSQL isolation and calculations',()=>{
   beforeAll(async()=>{
     // Dedicated empty DB only. Never delete or reuse existing application data.
@@ -69,5 +83,60 @@ describe.skipIf(!enabled)('assistant analysis PostgreSQL isolation and calculati
     ]});
     const result=await executeAnalysis(query,signal());
     expect(result.rows).toEqual([{seconds:'6.57',precise:'0.33333333333333333333',numeric_text:'006.570000',missing:null}]);
+  });
+  it('answers the screenshot question from imported finals without contacting a model',async()=>{
+    await db.unsafe(`INSERT INTO wca_persons VALUES ('2017YANR02','First Person','US'),('2020TEST01','Second Person','CN'),('2020TEST02','Third Person','CN');
+      INSERT INTO wca_competitions VALUES
+        ('WindowStart','Window Start','China','CN','Shanghai','2026-08-22','2026-08-23'),
+        ('WindowEnd','Window End','Japan','JP','Tokyo','2026-11-23','2026-11-23'),
+        ('BeforeWindow','Before Window','Japan','JP','Tokyo','2026-08-22','2026-08-22'),
+        ('AfterWindow','After Window','Japan','JP','Tokyo','2026-11-23','2026-11-24');
+      INSERT INTO wca_person_results(wca_id,comp_id,event_id,round_type_id,pos,best) VALUES
+        ('2017YANR02','WindowStart','333','c',1,700),
+        ('2017YANR02','WindowStart','333','f',1,700),
+        ('2017YANR02','WindowEnd','333','f',1,700),
+        ('2017YANR02','BeforeWindow','333','f',1,700),
+        ('2017YANR02','AfterWindow','333','f',1,700),
+        ('2020TEST01','WindowStart','333','c',1,700),
+        ('2020TEST01','WindowEnd','333','f',1,700),
+        ('2020TEST02','WindowStart','333','1',1,700),
+        ('2020TEST02','WindowStart','333','f',2,700),
+        ('2020TEST02','WindowEnd','333','f',1,-1),
+        ('2020TEST02','WindowEnd','222','f',1,700);`);
+    vi.useFakeTimers({toFake:['Date']});
+    vi.setSystemTime(new Date('2026-11-24T07:50:00Z'));
+    try {
+      const events:AssistantStreamEvent[]=[];
+      const emit=async(event:AssistantStreamEvent)=>{events.push(event);};
+      const fetcher=vi.fn<typeof fetch>().mockRejectedValue(new Error('Unexpected network call'));
+      const deadline=AbortSignal.timeout(6000);
+      const answer=await withAssistantProgress(emit,deadline,performance.now(),()=>answerSiteQuestion(
+        recentWinsQuestion,'zh',{key:'fixture',baseUrl:'https://model.invalid',model:'fixture'},deadline,fetcher,[],undefined,emit,'America/Los_Angeles'));
+      expect(fetcher).not.toHaveBeenCalled();
+      expect(answer.answer).toContain('First Person、Second Person并列第一，均夺冠 2 次');
+      expect(answer.answer).toContain('2026-08-23 至 2026-11-23');
+      expect(answer.answer).toContain('2026-10-01');
+      expect(answer.artifacts?.[0]).toMatchObject({rows:[['First Person','2'],['Second Person','2']]});
+      expect(events.filter(event=>event.type==='progress').map(event=>event.progress)).toMatchObject([
+        {id:1,phase:'tool',tool:'recent_3x3_champions',state:'running',scope:{from:'2026-08-23',to:'2026-11-23'}},
+        {id:1,phase:'tool',tool:'recent_3x3_champions',state:'complete',scope:{from:'2026-08-23',to:'2026-11-23'}},
+      ]);
+    } finally { vi.useRealTimers(); }
+  });
+  it('reports a blocked results source without asking the model to retry the calculation',async()=>{
+    const locked=Promise.withResolvers<void>(),release=Promise.withResolvers<void>();
+    const lock=db.begin(async tx=>{
+      await tx.unsafe('LOCK TABLE wca_person_results IN ACCESS EXCLUSIVE MODE');
+      locked.resolve();
+      await release.promise;
+    });
+    try {
+      await Promise.race([locked.promise,lock]);
+      const fetcher=vi.fn<typeof fetch>().mockRejectedValue(new Error('Unexpected network call'));
+      await expect(answerSiteQuestion(recentWinsQuestion.replace('3 个月','2 个月'),'zh',
+        {key:'fixture',baseUrl:'https://model.invalid',model:'fixture'},AbortSignal.timeout(3000),fetcher))
+        .rejects.toMatchObject({code:'source_unavailable'});
+      expect(fetcher).not.toHaveBeenCalled();
+    } finally {release.resolve();await lock;}
   });
 });

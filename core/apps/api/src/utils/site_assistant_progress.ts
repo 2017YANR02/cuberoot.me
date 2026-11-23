@@ -1,6 +1,6 @@
 import { assistantToolWasReused } from './site_assistant_execution.js';
 import { AsyncLocalStorage } from 'node:async_hooks';
-import type { AssistantProgress, AssistantStreamEvent } from '@cuberoot/shared/site-assistant';
+import { assistantProgressScope, type AssistantProgress, type AssistantStreamEvent } from '@cuberoot/shared/site-assistant';
 
 type ProgressScope = { emit: (event: AssistantStreamEvent) => Promise<void>; signal: AbortSignal; started: number; nextId: number; closed: boolean };
 const scope = new AsyncLocalStorage<ProgressScope>();
@@ -13,12 +13,14 @@ export async function withAssistantProgress<T>(emit: ProgressScope['emit'] | und
   finally { state.closed = true; }
 }
 
-export async function startAssistantProgress(phase: string, tool?: string) {
+export async function startAssistantProgress(phase: string, tool?: string, activity?: AssistantProgress['activity'], toolArgs?:unknown) {
   const state = scope.getStore();
   if (!state || state.closed || state.signal.aborted || !['tool', 'model', 'review'].includes(phase) || state.nextId >= 512) return;
   const started = performance.now();
+  const queryScope=phase==='tool' ? assistantProgressScope(toolArgs) : undefined;
   const event: AssistantProgress = { id: ++state.nextId, phase: phase as AssistantProgress['phase'], state: 'running',
-    elapsedMs: Math.max(0, Math.round(started - state.started)), ...(phase === 'tool' && tool ? { tool } : {}) };
+    elapsedMs: Math.max(0, Math.round(started - state.started)), ...(phase === 'tool' && tool ? { tool } : {}),
+    ...(phase === 'model' && activity ? {activity} : {}),...(queryScope?{scope:queryScope}:{}) };
   await state.emit({ type: 'progress', progress: event });
   return async (failed: boolean, result?: unknown) => {
     if (state.closed || state.signal.aborted) return;

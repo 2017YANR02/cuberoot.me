@@ -1,0 +1,230 @@
+[
+  {
+    "repeat": 1,
+    "case": {
+      "id": "AA01",
+      "category": "slow",
+      "lang": "zh",
+      "question": "可以慢慢转魔方了，改成两项慢拧，各标时长。若摆不成那个熟悉局面，在每项给一个不同的备用练法。",
+      "expected": "Two activities with total ≤180s inherited. For each give a distinct executable already-known turn alternative when setup fails, with no insertion or slot check in either fallback. Insertion is guarded by visual verification.",
+      "history": [
+        {
+          "role": "user",
+          "content": "我只有三分钟。先不要转动魔方，我想看看能不能摆出一个学过的插入局面。"
+        },
+        {
+          "role": "assistant",
+          "content": "先从你当前看得见的部分开始观察。"
+        }
+      ]
+    },
+    "models": [
+      {
+        "answerKind": "general",
+        "answer": "",
+        "sourceIds": [],
+        "plan": {
+          "inputs": [
+            {
+              "id": "slow_turns_request",
+              "quote": "可以慢慢转魔方了，改成两项慢拧，各标时长。若摆不成那个熟悉局面，在每项给一个不同的备用练法。"
+            }
+          ],
+          "activities": [
+            {
+              "title": "熟悉插入局面慢拧",
+              "seconds": 90,
+              "steps": [
+                {
+                  "action": "选一个你已会的插入，用它的逆操作在当前魔方上摆出该插入的熟悉局面，并目视确认局面和目标槽位；确认后做一次该插入，再用同一逆操作复位同一局面并重复慢拧；若无法摆出熟悉局面，则改为每次只做一个已知转动，停一下观察哪些块可见地移动，全程慢拧，不声称完成F2L。",
+                  "reason": "先确认熟悉局面再慢拧，能保证练习的是已会的插入；摆不成时用观察已知转动保持有效练习。",
+                  "seconds": 90,
+                  "requires": [],
+                  "produces": []
+                }
+              ]
+            },
+            {
+              "title": "预测变化慢拧",
+              "seconds": 90,
+              "steps": [
+                {
+                  "action": "选一个你已会的插入，用它的逆操作在当前魔方上摆出该插入的熟悉局面，并目视确认局面和目标槽位；确认后做一次该插入，再用同一逆操作复位同一局面并重复慢拧；若无法摆出熟悉局面，则改为在做一个已知转动前先预测哪一块会可见地移动，做完后对照实际移动，全程慢拧，不声称完成F2L。",
+                  "reason": "预测再对照能加深对已知转动的理解；熟悉局面可摆出时则重复已会插入以稳定动作。",
+                  "seconds": 90,
+                  "requires": [],
+                  "produces": []
+                }
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "answerKind": "general",
+        "answer": "",
+        "sourceIds": [],
+        "plan": {
+          "inputs": [
+            {
+              "id": "slow_turns_request",
+              "quote": "可以慢慢转魔方了，改成两项慢拧，各标时长。若摆不成那个熟悉局面，在每项给一个不同的备用练法。"
+            }
+          ],
+          "activities": [
+            {
+              "title": "熟悉插入局面慢拧",
+              "seconds": 90,
+              "steps": [
+                {
+                  "action": "选一个你已会的插入，用它的逆操作在当前魔方上摆出该插入的熟悉局面，并目视确认局面和目标槽位；仅当熟悉局面已确认时，做一次该插入，再用同一逆操作复位同一局面并重复慢拧；否则全程只做已知转动，每次只做一个已知转动，停一下观察哪些块可见地移动，不声称完成F2L，到此结束。",
+                  "reason": "先确认熟悉局面再慢拧，能保证练习的是已会的插入；摆不成时用观察已知转动保持有效练习。",
+                  "seconds": 90,
+                  "requires": [],
+                  "produces": []
+                }
+              ]
+            },
+            {
+              "title": "预测变化慢拧",
+              "seconds": 90,
+              "steps": [
+                {
+                  "action": "选一个你已会的插入，用它的逆操作在当前魔方上摆出该插入的熟悉局面，并目视确认局面和目标槽位；仅当熟悉局面已确认时，做一次该插入，再用同一逆操作复位同一局面并重复慢拧；否则全程只做已知转动，在做一个已知转动前先预测哪一块会可见地移动，做完后对照实际移动，不声称完成F2L，到此结束。",
+                  "reason": "预测再对照能加深对已知转动的理解；熟悉局面可摆出时则重复已会插入以稳定动作。",
+                  "seconds": 90,
+                  "requires": [],
+                  "produces": []
+                }
+              ]
+            }
+          ]
+        }
+      }
+    ]
+  },
+  {
+    "repeat": 2,
+    "case": {
+      "id": "AA01",
+      "category": "slow",
+      "lang": "zh",
+      "question": "可以慢慢转魔方了，改成两项慢拧，各标时长。若摆不成那个熟悉局面，在每项给一个不同的备用练法。",
+      "expected": "Two activities with total ≤180s inherited. For each give a distinct executable already-known turn alternative when setup fails, with no insertion or slot check in either fallback. Insertion is guarded by visual verification.",
+      "history": [
+        {
+          "role": "user",
+          "content": "我只有三分钟。先不要转动魔方，我想看看能不能摆出一个学过的插入局面。"
+        },
+        {
+          "role": "assistant",
+          "content": "先从你当前看得见的部分开始观察。"
+        }
+      ]
+    },
+    "models": [
+      {
+        "answerKind": "general",
+        "answer": "",
+        "sourceIds": [],
+        "plan": {
+          "inputs": [
+            {
+              "id": "known_insertion",
+              "quote": "我想看看能不能摆出一个学过的插入局面"
+            },
+            {
+              "id": "slow_turns",
+              "quote": "可以慢慢转魔方了，改成两项慢拧，各标时长"
+            }
+          ],
+          "activities": [
+            {
+              "title": "熟悉插入局面慢练",
+              "seconds": 90,
+              "steps": [
+                {
+                  "action": "选一个你已会的插入，用它的逆操作在当前魔方上慢慢摆出该插入的熟悉局面，并目视确认局面和目标槽位；确认后做一次插入，再用同一逆操作把同一局面复位并重复；若无法摆出该局面，则只做已知慢拧：每转一步后停一下，观察哪一块可见位置发生变化，不声称完成F2L。",
+                  "reason": "先确认熟悉局面再慢速插入，避免在未验证时误判完成；备用练法用观察变化保持慢拧节奏。",
+                  "seconds": 90,
+                  "requires": [
+                    "known_insertion",
+                    "slow_turns"
+                  ],
+                  "produces": []
+                }
+              ]
+            },
+            {
+              "title": "预测变化慢拧",
+              "seconds": 90,
+              "steps": [
+                {
+                  "action": "选一个你已会的插入，用它的逆操作慢慢摆出该插入的熟悉局面，并目视确认局面和目标槽位；确认后做一次插入，再用同一逆操作把同一局面复位并重复；若无法摆出该局面，则只做已知慢拧：在转一步已知操作前先预测哪一块可见位置会变，转完后对照实际变化，不声称完成F2L。",
+                  "reason": "用预测与实际对照强化慢拧中的观察；仅在熟悉局面验证后重复同一插入。",
+                  "seconds": 90,
+                  "requires": [
+                    "known_insertion",
+                    "slow_turns"
+                  ],
+                  "produces": []
+                }
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "answerKind": "general",
+        "answer": "",
+        "sourceIds": [],
+        "plan": {
+          "inputs": [
+            {
+              "id": "known_insertion",
+              "quote": "我想看看能不能摆出一个学过的插入局面"
+            },
+            {
+              "id": "slow_turns",
+              "quote": "可以慢慢转魔方了，改成两项慢拧，各标时长"
+            }
+          ],
+          "activities": [
+            {
+              "title": "熟悉插入局面慢练",
+              "seconds": 90,
+              "steps": [
+                {
+                  "action": "选一个你已会的插入，用它的逆操作在当前魔方上慢慢摆出该插入的熟悉局面，并目视确认局面和目标槽位；仅当熟悉局面已确认时，做一次插入，再用同一逆操作把同一局面复位并重复；否则整项只做已知慢拧：每转一步后停一下，观察哪一块可见位置发生变化，到此结束，不做插入、逆操作复位或槽位检查，不声称完成F2L。",
+                  "reason": "先确认熟悉局面再慢速插入，避免未验证时误判完成；备用练法用逐步观察保持慢拧节奏。",
+                  "seconds": 90,
+                  "requires": [
+                    "known_insertion",
+                    "slow_turns"
+                  ],
+                  "produces": []
+                }
+              ]
+            },
+            {
+              "title": "预测变化慢拧",
+              "seconds": 90,
+              "steps": [
+                {
+                  "action": "选一个你已会的插入，用它的逆操作慢慢摆出该插入的熟悉局面，并目视确认局面和目标槽位；仅当熟悉局面已确认时，做一次插入，再用同一逆操作把同一局面复位并重复；否则整项只做已知慢拧：在转一步已知操作前先预测哪一块可见位置会变，转完后对照实际变化，到此结束，不做插入、逆操作复位或槽位检查，不声称完成F2L。",
+                  "reason": "用预测与实际对照强化慢拧中的观察；仅在熟悉局面验证后重复同一插入。",
+                  "seconds": 90,
+                  "requires": [
+                    "known_insertion",
+                    "slow_turns"
+                  ],
+                  "produces": []
+                }
+              ]
+            }
+          ]
+        }
+      }
+    ]
+  }
+]

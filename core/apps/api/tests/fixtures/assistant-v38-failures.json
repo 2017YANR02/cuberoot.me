@@ -1,0 +1,102 @@
+[
+  {
+    "key": "X02-1",
+    "case": {
+      "id": "X02",
+      "category": "card-make",
+      "lang": "en",
+      "question": "Turn lily = 百合 and violet = 紫罗兰 into two-sided cards from my blank slips. Give two flashcard activities, two timed substeps per activity, within 160 seconds total. Use the first activity to make and immediately test them.",
+      "expected": "2×2 ≤160s; exact supplied pairs on opposite faces; actual recall before flip inside first activity; explicit reset before repeating.",
+      "history": []
+    },
+    "models": [
+      {
+        "answerKind": "general",
+        "answer": "1. Make and immediately test the two cards (90 seconds)\n- 0–45 s: On slip 1 write \"lily\" on one face and \"百合\" on the other; on slip 2 write \"violet\" on one face and \"紫罗兰\" on the other, then lay both cards word-side up, because the cards must exist before any recall can happen.\n- 45–90 s: Pick up card 1, say the Chinese meaning aloud without looking, flip it once to check, then return it word-side up; do the same with card 2, because testing right after making them fixes the pairings while they are fresh.\n\n2. Full-deck recall pass (70 seconds)\n- 0–35 s: With both cards word-side up, take card 1, say its meaning aloud, flip once to check, and reset it word-side up; then do the same for card 2, because a clean pass over the whole set confirms both pairs.\n- 35–70 s: Turn both cards meaning-side up, take card 1, say the English word aloud, flip once to check, and reset it meaning-side up; then do the same for card 2, because reversing the prompt face tests recall in the other direction.",
+        "sourceIds": []
+      },
+      {
+        "answerKind": "general",
+        "answer": "1. Make and immediately test the two cards (90 seconds)\n- 0–45 s: On slip 1 write \"lily\" on the front and \"百合\" on the back; on slip 2 write \"violet\" on the front and \"紫罗兰\" on the back, then lay both cards word-side up, because the cards must exist before any recall can happen.\n- 45–90 s: Pick up card 1, say the Chinese meaning aloud without looking, flip it once to check the back, then return it word-side up; do the same with card 2, because testing right after making them fixes the pairings while they are fresh.\n\n2. Full-deck recall pass (70 seconds)\n- 0–35 s: With both cards word-side up, take card 1, say its meaning aloud, flip once to check the back, and reset it word-side up; then do the same for card 2, because a clean pass over the whole set confirms both pairs.\n- 35–70 s: Turn both cards meaning-side up, take card 1, say the English word aloud, flip once to check the front, and reset it meaning-side up; then do the same for card 2, because reversing the prompt face tests recall in the other direction.",
+        "sourceIds": []
+      }
+    ]
+  },
+  {
+    "key": "X10-1",
+    "case": {
+      "id": "X10",
+      "category": "slow",
+      "lang": "zh",
+      "question": "现在可以缓慢转了，还是两项。摆不出那个熟悉情形时，每项都说我能改练什么。",
+      "expected": "Two timed slow-turn activities ≤150s inherited. When precondition cannot be satisfied, executable known-turn alternative in each activity, without unverified insertion or slot checking.",
+      "history": [
+        {
+          "role": "user",
+          "content": "我有两分半钟。先别转，我想观察一个曾练过但不一定能摆出来的插入情形。"
+        },
+        {
+          "role": "assistant",
+          "content": "先观察当前状态，未见的信息保持未知。"
+        }
+      ]
+    },
+    "models": [
+      {
+        "answerKind": "general",
+        "answer": "我这边没有收到任何图片或具体状态信息，所以无法判断你指的是哪两项、以及那个“熟悉情形”是什么。请把当前魔方状态（照片或贴纸/块的位置描述）和那两项的具体内容发给我；拿到后我会逐项说明：能否摆出该情形，以及摆不出时可以改练什么。",
+        "sourceIds": []
+      }
+    ]
+  },
+  {
+    "key": "X02-2",
+    "case": {
+      "id": "X02",
+      "category": "card-make",
+      "lang": "en",
+      "question": "Turn lily = 百合 and violet = 紫罗兰 into two-sided cards from my blank slips. Give two flashcard activities, two timed substeps per activity, within 160 seconds total. Use the first activity to make and immediately test them.",
+      "expected": "2×2 ≤160s; exact supplied pairs on opposite faces; actual recall before flip inside first activity; explicit reset before repeating.",
+      "history": []
+    },
+    "models": [
+      {
+        "answerKind": "general",
+        "answer": "1. Make and immediately test the two cards (90 seconds)\n- 0–40 s: On slip 1 write \"lily\" on one face and \"百合\" on the other; on slip 2 write \"violet\" on one face and \"紫罗兰\" on the other, because each card needs a prompt face and an answer face before any recall can happen.\n- 40–90 s: Place card 1 word-side up, say the meaning aloud, flip once to check, then return it word-side up; repeat with card 2 meaning-side up, saying the word aloud, flipping to check, and resetting it, because testing both directions right after writing confirms each pairing while it is fresh.\n\n2. Full-deck recall pass (70 seconds)\n- 0–35 s: Shuffle the two cards, then for each one place it prompt-side up, attempt the opposite face aloud without looking, flip once to check, and immediately return that card to the same prompt face, because a shuffled pass tests recognition without the order cue.\n- 35–70 s: Repeat the same attempt–flip–check–reset cycle through the full two-card set once more, because a second clean pass over both cards strengthens the pairings within the remaining time.",
+        "sourceIds": []
+      },
+      {
+        "answerKind": "general",
+        "answer": "1. Make and immediately test the two cards (90 seconds)\n- 0–40 s: On slip 1 write \"lily\" on one face and \"百合\" on the other; on slip 2 write \"violet\" on one face and \"紫罗兰\" on the other, because each card needs a prompt face and an answer face before any recall can happen.\n- 40–90 s: Place card 1 word-side up, say the meaning aloud, flip once to check, then return it word-side up; repeat with card 2 word-side up, saying the meaning aloud, flipping to check, and returning it word-side up, because testing both cards right after writing confirms each pairing while it is fresh.\n\n2. Full-deck recall pass (70 seconds)\n- 0–35 s: Shuffle the two cards, then for each one place it prompt-side up, attempt the opposite face aloud without looking, flip once to check, and immediately return that card to the same prompt face, because a shuffled pass tests recognition without the order cue.\n- 35–70 s: Reset both cards to their prompt faces, then repeat the same attempt–flip–check–reset cycle through the full two-card set once more, because a second clean pass over both cards strengthens the pairings within the remaining time.",
+        "sourceIds": []
+      }
+    ]
+  },
+  {
+    "key": "X10-2",
+    "case": {
+      "id": "X10",
+      "category": "slow",
+      "lang": "zh",
+      "question": "现在可以缓慢转了，还是两项。摆不出那个熟悉情形时，每项都说我能改练什么。",
+      "expected": "Two timed slow-turn activities ≤150s inherited. When precondition cannot be satisfied, executable known-turn alternative in each activity, without unverified insertion or slot checking.",
+      "history": [
+        {
+          "role": "user",
+          "content": "我有两分半钟。先别转，我想观察一个曾练过但不一定能摆出来的插入情形。"
+        },
+        {
+          "role": "assistant",
+          "content": "先观察当前状态，未见的信息保持未知。"
+        }
+      ]
+    },
+    "models": [
+      {
+        "answerKind": "general",
+        "answer": "我这边没有收到任何图片或具体状态信息，所以无法判断你指的是哪两项、哪个“熟悉情形”。请把当前魔方状态发给我（照片或贴纸描述），并说明这两项分别是什么（例如某个 F2L 槽、某个 OLL/PLL 情形），我才能逐项判断能否摆出，并在摆不出时给出可改练的替代内容。",
+        "sourceIds": []
+      }
+    ]
+  }
+]

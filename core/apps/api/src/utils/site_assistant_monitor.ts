@@ -15,6 +15,7 @@ import { assistantPrice } from './site_assistant_pricing.js';
 import { checkAssistantAlerts, archiveAssistantDays } from './site_assistant_monitor_jobs.js';
 import { currentDiagnosticRequestId, diagnosticLog } from '../observability/request.js';
 import type { AssistantModelDiagnostic } from './site_assistant_diagnostics.js';
+import { ASSISTANT_POLICY_VERSION } from './site_assistant_policy.js';
 
 // Separate, small pool: monitoring must not consume the application's query slots.
 const db = postgres({ ...databaseSettings(), max: 2, connect_timeout: 2, idle_timeout: 20,
@@ -25,20 +26,26 @@ const write: QueryRunner = async <T>(statement: string, params: unknown[] = []) 
 };
 export interface AssistantMetrics {
   answerRejections?: Array<{ reason: string }>;
+  planChecks?: Array<{ phase:'draft'|'repair'; reason?:string; words:number; minimum?:number; maximum?:number }>;
   contexts?: Array<{ relevance: 'strong' | 'weak'; recentTurns: number; estimatedTokens: number; inputBudget: number; compressed: string[]; layers: Record<string, number> }>;
   stages: Record<string, { calls: number; ms: number; errors: number }>;
-  models: Array<{ model: string; thinking: boolean; input: number | null; output: number | null; cached: number | null; reasoning: number | null; durationMs?: number; firstActivityMs?: number; firstTextMs?: number; grossCny?: number | null; cacheAdjustedCny?: {min:number;max:number}|null; tariff?: unknown; round?: number; attempt?: number; failure?: AssistantModelDiagnostic & { upstreamStatus?: number } }>;
-  timing?: { version: 1; requestReadyMs?: number; firstProgressMs?: number; responseReadyMs?: number };
+  models: Array<{ model: string; thinking: boolean; input: number | null; output: number | null; cached: number | null; reasoning: number | null; durationMs?: number; firstActivityMs?: number; firstTextMs?: number; grossCny?: number | null; cacheAdjustedCny?: {min:number;max:number}|null; tariff?: unknown; round?: number; attempt?: number; promptFingerprint?: string; configurationFingerprint?: string; failure?: AssistantModelDiagnostic & { upstreamStatus?: number } }>;
+  timing?: { version: 1; receivedAt?:number; claimedAt?:number; poolStartMs?:number; queueWaitMs?:number; requestReadyMs?: number; firstProgressMs?: number; responseReadyMs?: number };
   toolTimings?: Record<string, { calls: number; ms: number; errors: number }>;
   embeddings: Array<{ model: string; tokens: number | null; grossCny?: number | null; tariff?: unknown }>;
   searches: Array<{ provider: string; requests: number | null; grossCny: number | null; tariff: unknown }>;
   reranks: Array<{ model: string; candidates: number; tokens: number | null; ms: number; status: string; grossCny: number | null; tariff?: unknown }>;
-  policy: { version: string; thinking: AssistantThinkingMode };
+  policy: { version: string; thinking: AssistantThinkingMode; release?: string };
   tools: Record<string, number>;
   retrievals: Array<{ mode: string; reason?: string; generation?: string; expectedGeneration?:string;releaseId?:string;expectedReleaseId?:string;indexReady?:boolean;coverage?:{pages:number;bodyPages:number;navigationOnly:number;structuredPages:number;datedPages:number};degradedMs?:number;alert?:boolean;hits: Array<{ id: string; href: string; score?: number }> }>;
   cost?: { grossCny: number; unpricedCalls: number };
 }
 const scope = new AsyncLocalStorage<AssistantMetrics>();
+/** Counts and static codes only; no rejected answer text in production logs. */
+export function recordAssistantPlanCheck(value:NonNullable<AssistantMetrics['planChecks']>[number]) {
+  const metrics=scope.getStore();
+  if(metrics && (metrics.planChecks?.length ?? 0)<8)(metrics.planChecks ??= []).push(value);
+}
 /** Static reason codes only; no question, draft, identifiers or source text. */
 export function recordAssistantAnswerRejection(reason: string) {
   const metrics = scope.getStore();
@@ -61,7 +68,7 @@ export function recordAssistantStage(name: string, ms: number, failed: boolean, 
   }
 }
 const token = (value?: number) => Number.isSafeInteger(value) && value! >= 0 ? value! : null;
-export function recordAssistantModel(model: string, thinking: boolean, origin = '', step: { round?: number; attempt?: number } = {}) {
+export function recordAssistantModel(model: string, thinking: boolean, origin = '', step: { round?: number; attempt?: number; promptFingerprint?: string; configurationFingerprint?: string } = {}) {
   const started = performance.now();
   const entry: AssistantMetrics['models'][number] = { model, thinking, ...step, input: null, output: null, cached: null, reasoning: null };
   scope.getStore()?.models.push(entry);
@@ -163,11 +170,12 @@ function failed() {
   }
   diagnosticLog('assistant_monitor_write_failed', { failedWrites: health.failedWrites }, true);
 }
-export interface AssistantMonitorInput { uid: number | null; question: string; lang: string; model: string; streaming: boolean; imageCount: number; historyCount: number; startedAt?: number; conversationId?: string; parentId?: string; retryOf?: string; scope?: 'chat' | 'index'; thinking?: AssistantThinkingMode }
+export interface AssistantMonitorInput { uid: number | null; question: string; lang: string; model: string; streaming: boolean; imageCount: number; historyCount: number; startedAt?: number; receivedAt?:number; claimedAt?:number; poolStartMs?:number; conversationId?: string; parentId?: string; retryOf?: string; scope?: 'chat' | 'index'; thinking?: AssistantThinkingMode }
 export async function startAssistantMonitor(input: AssistantMonitorInput, run: QueryRunner = write) {
   const id = randomUUID(), started = input.startedAt ?? performance.now();
   const startedAt = new Date(Date.now() - (performance.now() - started)).toISOString();
-  const metrics: AssistantMetrics = { stages: {}, models: [], embeddings: [], searches: [], reranks: [], tools: {}, retrievals: [], policy: { version: '2026-10-26', thinking: input.thinking ?? 'auto' } };
+  const metrics: AssistantMetrics = { stages: {}, models: [], embeddings: [], searches: [], reranks: [], tools: {}, retrievals: [], policy: { version: ASSISTANT_POLICY_VERSION, thinking: input.thinking ?? 'auto', ...(/^[a-f0-9]{7,40}$/.test(process.env.SITE_ASSISTANT_RELEASE_SHA ?? '')?{release:process.env.SITE_ASSISTANT_RELEASE_SHA}:{}) } };
+  if(input.receivedAt!==undefined && input.claimedAt!==undefined)metrics.timing={version:1,receivedAt:input.receivedAt,claimedAt:input.claimedAt,poolStartMs:input.poolStartMs,queueWaitMs:Math.max(0,input.claimedAt-input.receivedAt)};
   let firstAnswer: number | null = null, partial = '', finished = false;
   // Admission is durable before consuming quota or calling a paid model.
   try {

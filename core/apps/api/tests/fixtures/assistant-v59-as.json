@@ -1,0 +1,1251 @@
+{
+  "AS01": {
+    "question": "I want to see whether my middle fingertip leaves the sticker before a slow R turn ends. Give two practical ways to tell, one live and one on replay, taking at most 71 seconds together. Each heading should be written as a name followed by a colon and its seconds. At the end, in a separate paragraph, ask Noor in one sentence to film both on Tuesday.",
+    "lang": "en",
+    "history": [],
+    "drafts": [
+      {
+        "call": 2,
+        "value": {
+          "answerKind": "general",
+          "answer": "Live check — Slow-Motion Mirror: 40 seconds: turn R slowly while watching your middle fingertip in a mirror or phone front camera, and note whether the fingertip visibly separates from the sticker before the turn finishes. Replay check — Frame-by-Frame Clip: 31 seconds: film the slow R from the side at high frame rate, then scrub the clip frame by frame to see whether the fingertip leaves the sticker before the last frame of the turn.\n\nNoor, please film both of these on Tuesday.",
+          "sourceIds": []
+        }
+      },
+      {
+        "call": 46,
+        "value": {
+          "answerKind": "general",
+          "answer": "Live check — Slow-motion mirror: 40 seconds: set your phone's slow-motion camera (or a mirror) beside your hand and do one deliberately slow R turn while watching the fingertip-to-sticker contact point, noting whether the fingertip visibly separates before the turn finishes. Replay check — Frame-by-frame scrub: 31 seconds: film the same slow R turn at high frame rate, then scrub the clip frame by frame and mark the exact frame where the fingertip lifts off versus the frame where the R turn completes, so you can compare their order.\n\nNoor, could you film both the live slow-motion mirror check and the high-frame-rate replay on Tuesday?",
+          "sourceIds": []
+        }
+      },
+      {
+        "call": 47,
+        "value": {
+          "answerKind": "general",
+          "answer": "Live check: 30 seconds — set a mirror or front-facing camera at sticker level and watch whether a visible gap opens between your middle fingertip and the sticker before your slow R finishes; Replay check: 41 seconds — film that slow R and scrub the clip frame by frame to find the first frame of fingertip–sticker separation and compare it with the frame where the R ends\n\nand Noor, please film both on Tuesday.",
+          "sourceIds": []
+        }
+      }
+    ]
+  },
+  "AS03": {
+    "question": "可以慢转了，沿用前面那次插入。给两项各自计时的练习，总时间不要超过八十六秒。每项都先试着摆位，再用肉眼核对边块、角块和目的槽。三者都无误才做熟悉的插入，摆不成或有一处不吻合就改做此前列过的一个慢转，两项分别用不同的备用招，做完即停。",
+    "lang": "zh",
+    "history": [
+      {
+        "role": "user",
+        "content": "那个插入我已经会了，不过可能摆不回去。我另外只练过 R2 和 B′，这一轮先别转。"
+      },
+      {
+        "role": "assistant",
+        "content": "那就先观察现在的棱块、角块和目标槽。"
+      }
+    ],
+    "drafts": [
+      {
+        "call": 8,
+        "value": {
+          "answerKind": "general",
+          "answer": "",
+          "sourceIds": [],
+          "plan": {
+            "inputs": [
+              {
+                "id": "familiar_insertion",
+                "quote": "那个插入我已经会了，不过可能摆不回去。"
+              },
+              {
+                "id": "known_turns",
+                "quote": "我另外只练过 R2 和 B′"
+              }
+            ],
+            "activities": [
+              {
+                "title": "摆位核对后插入",
+                "seconds": 43,
+                "steps": [
+                  {
+                    "action": "先按你自己的方法尝试摆出这次插入需要的位形，再肉眼核对边块、角块和目的槽三处是否都吻合；三处全对才慢慢做那个熟悉的插入，做完即停。若摆不成或有一处不吻合，就不插入、不复原，改做一次 R2，转完停一下观察可见的变化，随即结束。",
+                    "reason": "先摆位再逐处核对，能把插入前的状态确认清楚；不吻合时用已练过的 R2 收尾，避免硬转。",
+                    "seconds": 43,
+                    "requires": [
+                      "familiar_insertion",
+                      "known_turns"
+                    ],
+                    "produces": []
+                  }
+                ]
+              },
+              {
+                "title": "预测后核对再插入",
+                "seconds": 43,
+                "steps": [
+                  {
+                    "action": "重新按你自己的方法尝试摆位，再肉眼核对边块、角块和目的槽三处是否一致；三处无误才慢做熟悉的插入并停下。若摆不成或有一处不吻合，就放弃插入且不做反向还原，改做一次 B′：转之前先说出预期会变的那一块或那一处，转完后与预测对照，立即结束。",
+                    "reason": "把预测和实际结果对照，能检验自己对 B′ 效果的把握；插入只在三处核对通过时进行。",
+                    "seconds": 43,
+                    "requires": [
+                      "familiar_insertion",
+                      "known_turns"
+                    ],
+                    "produces": []
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      },
+      {
+        "call": 9,
+        "value": {
+          "answerKind": "general",
+          "answer": "",
+          "sourceIds": [],
+          "reviewedSourceIds": [],
+          "plan": {
+            "inputs": [
+              {
+                "id": "prior_turn_set",
+                "quote": "那个插入我已经会了，不过可能摆不回去。我另外只练过 R2 和 B′，这一轮先别转。"
+              },
+              {
+                "id": "session_rules",
+                "quote": "可以慢转了，沿用前面那次插入。给两项各自计时的练习，总时间不要超过八十六秒。每项都先试着摆位，再用肉眼核对边块、角块和目的槽。三者都无误才做熟悉的插入，摆不成或有一处不吻合就改做此前列过的一个慢转，两项分别用不同的备用招，做完即停。"
+              }
+            ],
+            "activities": [
+              {
+                "title": "摆位插入",
+                "seconds": 42,
+                "steps": [
+                  {
+                    "action": "用你会的方法先尝试摆出熟悉的待插入局面；随后肉眼核对边块、角块和目的槽；若三者都无误，做熟悉的插入后停；若摆不成或任一处不吻合，仅慢转 R2 一次，停一下观察可见变化后结束，不做插入、逆摆位或目的槽复核。",
+                    "reason": "先验证局面再决定插入或 R2，避免在未确认时勉强操作。",
+                    "seconds": 42,
+                    "requires": [
+                      "prior_turn_set",
+                      "session_rules"
+                    ],
+                    "produces": [
+                      "first_practice_done"
+                    ]
+                  }
+                ]
+              },
+              {
+                "title": "复位复练",
+                "seconds": 43,
+                "steps": [
+                  {
+                    "action": "用你会的方法先尝试摆出熟悉的待插入局面；肉眼核对边块、角块和目的槽；若三者都无误，先做熟悉的插入，再复位到同一局面，重新核对边块、角块和目的槽并重复插入后停；若摆不成或任一处不吻合，仅慢转 B′ 一次，转前先预测会看到的变化，再与实际观察对照后结束，不做插入、逆摆位或目的槽复核。",
+                    "reason": "用 B′ 作不同备用，并以先预测后观察收束无效摆位。",
+                    "seconds": 43,
+                    "requires": [
+                      "prior_turn_set",
+                      "session_rules",
+                      "first_practice_done"
+                    ],
+                    "produces": []
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      },
+      {
+        "call": 51,
+        "value": {
+          "answerKind": "general",
+          "answer": "",
+          "sourceIds": [],
+          "plan": {
+            "inputs": [
+              {
+                "id": "familiar_insertion",
+                "quote": "那个插入我已经会了，不过可能摆不回去。"
+              },
+              {
+                "id": "known_turns",
+                "quote": "我另外只练过 R2 和 B′，这一轮先别转。"
+              }
+            ],
+            "activities": [
+              {
+                "title": "摆位核对与观察慢转",
+                "seconds": 43,
+                "steps": [
+                  {
+                    "action": "先按自己的方法把熟悉的插入位摆出来（摆不成可用已知插入的逆动作倒推），停手用肉眼核对边块、角块和目的槽；三者全对就做一次熟悉的插入后结束。摆不成或有一处不吻合，改做 R2 慢转：每转一次停一下，看清哪一块位置变了再转下一次，不插入。",
+                    "reason": "用熟悉的插入检验摆位，失败时靠看得见的 R2 变化继续慢转。",
+                    "seconds": 43,
+                    "requires": [
+                      "familiar_insertion",
+                      "known_turns"
+                    ],
+                    "produces": [
+                      "setup_check"
+                    ]
+                  }
+                ]
+              },
+              {
+                "title": "摆位核对与预测慢转",
+                "seconds": 43,
+                "steps": [
+                  {
+                    "action": "同样先摆出熟悉的插入位并肉眼核对边块、角块和目的槽；三者全对就做一次熟悉的插入后停止。摆不成或有一处不吻合，改做 B′ 慢转：转之前先说出会变哪一块，再转过去对照实际，不插入。",
+                    "reason": "换 B′ 当备用招，用先预测后核对的方式练慢转。",
+                    "seconds": 43,
+                    "requires": [
+                      "familiar_insertion",
+                      "known_turns"
+                    ],
+                    "produces": [
+                      "setup_check"
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      },
+      {
+        "call": 52,
+        "value": {
+          "answerKind": "general",
+          "answer": "",
+          "sourceIds": [],
+          "plan": {
+            "inputs": [
+              {
+                "id": "familiar_insertion",
+                "quote": "那个插入我已经会了，不过可能摆不回去。"
+              },
+              {
+                "id": "known_slow_turns",
+                "quote": "我另外只练过 R2 和 B′，这一轮先别转。"
+              },
+              {
+                "id": "time_and_visual_check",
+                "quote": "总时间不要超过八十六秒。每项都先试着摆位，再用肉眼核对边块、角块和目的槽。"
+              }
+            ],
+            "activities": [
+              {
+                "title": "摆位与插入",
+                "seconds": 42,
+                "steps": [
+                  {
+                    "action": "先按熟悉方法试着摆出那次插入的起始状态，逐一肉眼核对边块、角块和目的槽；若三者都吻合，就做一次熟悉的插入并停；若摆不成或有一处不吻合，改做 R2，慢转半圈后暂停观察棱块与角块的变化，随即结束，不再插入、不反向摆回、不查目的槽。",
+                    "reason": "先核对再决定是否插入，失败时用练过的 R2 慢转观察并立即停止。",
+                    "seconds": 42,
+                    "requires": [
+                      "familiar_insertion",
+                      "known_slow_turns",
+                      "time_and_visual_check"
+                    ],
+                    "produces": []
+                  }
+                ]
+              },
+              {
+                "title": "复核与重复插入",
+                "seconds": 42,
+                "steps": [
+                  {
+                    "action": "先按熟悉方法试着摆出那次插入的起始状态，逐一肉眼核对边块、角块和目的槽；若三者都吻合，做一次熟悉的插入，暂停，再把起始状态摆回并复核三者后重复一次插入并停；若摆不成或有一处不吻合，改做 B′，转前先预测棱块和角块会怎样变，慢转后对照观察，随即结束，不再插入、不反向摆回、不查目的槽。",
+                    "reason": "复核后再重复，失败时用练过的 B′ 先预测后观察并立即停止。",
+                    "seconds": 42,
+                    "requires": [
+                      "familiar_insertion",
+                      "known_slow_turns",
+                      "time_and_visual_check"
+                    ],
+                    "produces": []
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      }
+    ]
+  },
+  "AS04": {
+    "question": "I am allowed to turn the cube slowly now. Write two timed exercises for that familiar insertion case. Each starts by trying to set it up and looking at the edge, corner, and target slot; do the insertion once only when the setup visibly matches. When that check fails or the setup cannot be made, give each exercise its own different backup using my two listed turns. Stop each backup branch right after the turn.",
+    "lang": "en",
+    "history": [
+      {
+        "role": "user",
+        "content": "There are 96 seconds available. I know one insertion, but might not get its case into place. The other moves I know are U2 and D′. Until I say so, keep the cube still."
+      },
+      {
+        "role": "assistant",
+        "content": "Start with observation on the unmoved cube."
+      }
+    ],
+    "drafts": [
+      {
+        "call": 10,
+        "value": {
+          "answerKind": "general",
+          "answer": "",
+          "sourceIds": [],
+          "plan": {
+            "inputs": [
+              {
+                "id": "known_insertion",
+                "quote": "I know one insertion, but might not get its case into place."
+              },
+              {
+                "id": "known_turns",
+                "quote": "The other moves I know are U2 and D′."
+              },
+              {
+                "id": "slow_turning",
+                "quote": "I am allowed to turn the cube slowly now."
+              }
+            ],
+            "activities": [
+              {
+                "title": "Set up and insert the familiar case",
+                "seconds": 48,
+                "steps": [
+                  {
+                    "action": "Slowly use the inverse of your chosen known insertion to try to set its familiar case, then look at the edge, corner and target slot; ONLY IF they visibly match, perform that insertion once and check the slot; OTHERWISE stop after one slow U2 or one slow D′ turn, whichever you prefer, and do not insert.",
+                    "reason": "Confirms the case visually before a single insertion, with a distinct turn-only backup when setup fails.",
+                    "seconds": 48,
+                    "requires": [
+                      "known_insertion",
+                      "known_turns",
+                      "slow_turning"
+                    ],
+                    "produces": []
+                  }
+                ]
+              },
+              {
+                "title": "Observe the actual resulting state",
+                "seconds": 48,
+                "steps": [
+                  {
+                    "action": "Look at the edge, corner and target slot and recall what state your first exercise actually left; ONLY IF the familiar case was verified and inserted, reset that same case with the same inverse and insert once more; OTHERWISE make one slow D′ turn, or one slow U2 if you prefer, and stop without inserting or checking a solved slot.",
+                    "reason": "Uses the real outcome rather than assuming success, with a different turn-only backup.",
+                    "seconds": 48,
+                    "requires": [
+                      "known_insertion",
+                      "known_turns",
+                      "slow_turning"
+                    ],
+                    "produces": []
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      },
+      {
+        "call": 11,
+        "value": {
+          "answerKind": "general",
+          "answer": "",
+          "sourceIds": [],
+          "plan": {
+            "inputs": [
+              {
+                "id": "known_insertion",
+                "quote": "I know one insertion, but might not get its case into place."
+              },
+              {
+                "id": "known_turns",
+                "quote": "The other moves I know are U2 and D′."
+              },
+              {
+                "id": "slow_turning",
+                "quote": "I am allowed to turn the cube slowly now."
+              }
+            ],
+            "activities": [
+              {
+                "title": "Set up and insert the familiar case",
+                "seconds": 48,
+                "steps": [
+                  {
+                    "action": "Slowly use the inverse of your chosen known insertion to try to set its familiar case, then look at the edge, corner and target slot; ONLY IF they visibly match, perform that insertion once and check the slot; OTHERWISE stop right after one slow U2 turn and do not insert.",
+                    "reason": "Confirms the case visually before a single insertion, with a U2-only backup when setup fails.",
+                    "seconds": 48,
+                    "requires": [
+                      "known_insertion",
+                      "known_turns",
+                      "slow_turning"
+                    ],
+                    "produces": []
+                  }
+                ]
+              },
+              {
+                "title": "Observe the actual resulting state",
+                "seconds": 48,
+                "steps": [
+                  {
+                    "action": "Look at the edge, corner and target slot and recall what state your first exercise actually left; ONLY IF the familiar case was verified and inserted, reset that same case with the same inverse and insert once more; OTHERWISE stop right after one slow D′ turn without inserting or checking a solved slot.",
+                    "reason": "Uses the real outcome rather than assuming success, with a D′-only backup.",
+                    "seconds": 48,
+                    "requires": [
+                      "known_insertion",
+                      "known_turns",
+                      "slow_turning"
+                    ],
+                    "produces": []
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      },
+      {
+        "call": 56,
+        "value": {
+          "answerKind": "general",
+          "answer": "",
+          "sourceIds": [],
+          "plan": {
+            "inputs": [
+              {
+                "id": "known_insertion",
+                "quote": "I know one insertion, but might not get its case into place."
+              },
+              {
+                "id": "known_turns",
+                "quote": "The other moves I know are U2 and D′."
+              },
+              {
+                "id": "slow_turning",
+                "quote": "I am allowed to turn the cube slowly now."
+              }
+            ],
+            "activities": [
+              {
+                "title": "Set up and perform the familiar insertion",
+                "seconds": 48,
+                "steps": [
+                  {
+                    "action": "Choose the one insertion you already know and note its inverse; slowly apply that inverse to try to set up its familiar case, then look at the edge, the corner and the target slot. ONLY IF the edge, corner and target slot visibly match that familiar case, perform the insertion once slowly and check the slot. OTHERWISE, or if the setup cannot be made, stop the setup attempt and slowly turn U2 once, then stop.",
+                    "reason": "Verifying the case before turning avoids blind insertion, and the U2 backup keeps the fallback to a known turn that ends immediately.",
+                    "seconds": 48,
+                    "requires": [
+                      "known_insertion",
+                      "known_turns",
+                      "slow_turning"
+                    ],
+                    "produces": []
+                  }
+                ]
+              },
+              {
+                "title": "Observe the actual resulting state",
+                "seconds": 48,
+                "steps": [
+                  {
+                    "action": "Without turning, look at the edge, corner and target slot and say aloud what state actually resulted from the first exercise. ONLY IF the familiar case had been verified and inserted, slowly apply the same inverse to reset that same case and stop. OTHERWISE, slowly turn D′ once and stop, without any insertion, inverse setup or solved-slot check afterward.",
+                    "reason": "Recalling the real outcome prevents assuming a successful insertion, and the D′ backup stays within the two known turns and ends right after the turn.",
+                    "seconds": 48,
+                    "requires": [
+                      "known_insertion",
+                      "known_turns",
+                      "slow_turning"
+                    ],
+                    "produces": []
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      },
+      {
+        "call": 57,
+        "value": {
+          "imageTask": "other",
+          "answerKind": "general",
+          "answer": "",
+          "plan": {
+            "inputs": [
+              {
+                "id": "known_insertion",
+                "quote": "I know one insertion, but might not get its case into place."
+              },
+              {
+                "id": "known_turns",
+                "quote": "The other moves I know are U2 and D′."
+              },
+              {
+                "id": "slow_turning",
+                "quote": "I am allowed to turn the cube slowly now."
+              }
+            ],
+            "activities": [
+              {
+                "title": "Set up and perform the familiar insertion",
+                "seconds": 48,
+                "steps": [
+                  {
+                    "action": "Choose the one insertion you already know and note its inverse; slowly apply that inverse to try to set up its familiar case, then look at the edge, the corner and the target slot. ONLY IF the edge, corner and target slot visibly match that familiar case, perform the insertion once slowly and check the slot. OTHERWISE, or if the setup cannot be made, stop the setup attempt and slowly turn U2 once, then stop.",
+                    "reason": "Verifying the case before turning avoids blind insertion, and the U2 backup keeps the fallback to a known turn that ends immediately.",
+                    "seconds": 48,
+                    "requires": [
+                      "known_insertion",
+                      "known_turns",
+                      "slow_turning"
+                    ],
+                    "produces": []
+                  }
+                ]
+              },
+              {
+                "title": "Observe the actual resulting state",
+                "seconds": 48,
+                "steps": [
+                  {
+                    "action": "Without turning, look at the edge, corner and target slot and say aloud what state actually resulted from the first exercise. ONLY IF the familiar case had been verified and inserted, slowly apply the same inverse to reset that same case and stop. OTHERWISE, slowly turn D′ once and stop, without any insertion, inverse setup or solved-slot check afterward.",
+                    "reason": "Recalling the real outcome prevents assuming a successful insertion, and the D′ backup stays within the two known turns and ends right after the turn.",
+                    "seconds": 48,
+                    "requires": [
+                      "known_insertion",
+                      "known_turns",
+                      "slow_turning"
+                    ],
+                    "produces": []
+                  }
+                ]
+              }
+            ]
+          },
+          "sourceIds": []
+        }
+      }
+    ]
+  },
+  "AS06": {
+    "question": "I already have a Polish word-and-meaning list. Write a 148–169-word plan with two activities. Each activity needs two separately timed substeps with a reason for each. The whole plan must fit 108 seconds. In the first activity say meanings aloud from visible Polish words; in the second write Polish from visible meanings. Keep the answer hidden until the attempt, then uncover and compare.",
+    "lang": "en",
+    "history": [],
+    "drafts": [
+      {
+        "call": 16,
+        "value": {
+          "answerKind": "general",
+          "answer": "",
+          "sourceIds": [],
+          "plan": {
+            "inputs": [
+              {
+                "id": "word_meaning_list",
+                "quote": "I already have a Polish word-and-meaning list."
+              }
+            ],
+            "activities": [
+              {
+                "title": "Speak meanings from Polish words",
+                "seconds": 54,
+                "steps": [
+                  {
+                    "action": "Place the existing Polish word-and-meaning list on the table with the Polish WORD column visible and cover the MEANING column; say aloud the meaning of each visible Polish word, then uncover the MEANING column and compare. If no words remain, finish.",
+                    "reason": "Saying each meaning before uncovering forces retrieval from memory, and comparing immediately shows which Polish words need more practice.",
+                    "seconds": 27,
+                    "requires": [
+                      "word_meaning_list"
+                    ],
+                    "produces": [
+                      "spoken_attempts"
+                    ]
+                  },
+                  {
+                    "action": "Keep the list on the same face, cover the MEANING column again, and repeat the visible Polish words, saying each meaning aloud before uncovering to check; prioritise words missed earlier.",
+                    "reason": "A second hidden-answer pass strengthens recall and gives weak Polish words extra retrieval practice within the fixed time.",
+                    "seconds": 27,
+                    "requires": [
+                      "word_meaning_list",
+                      "spoken_attempts"
+                    ],
+                    "produces": [
+                      "spoken_attempts"
+                    ]
+                  }
+                ]
+              },
+              {
+                "title": "Write Polish from meanings",
+                "seconds": 54,
+                "steps": [
+                  {
+                    "action": "Keep the list on the same face, cover the Polish WORD column, and write the Polish word for each visible meaning on paper; then uncover the WORD column and compare. If no meanings remain, finish.",
+                    "reason": "Writing Polish from visible meanings tests productive recall, and uncovering only after writing keeps the correct spelling hidden during the attempt.",
+                    "seconds": 27,
+                    "requires": [
+                      "word_meaning_list"
+                    ],
+                    "produces": [
+                      "written_attempts"
+                    ]
+                  },
+                  {
+                    "action": "Cover the Polish WORD column again and rewrite the Polish words for the visible meanings, checking each against the uncovered WORD column only after writing; repeat missed items if any, otherwise finish.",
+                    "reason": "A second written pass with the answer hidden consolidates spelling and gives missed Polish words another productive attempt.",
+                    "seconds": 27,
+                    "requires": [
+                      "word_meaning_list",
+                      "written_attempts"
+                    ],
+                    "produces": [
+                      "written_attempts"
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      },
+      {
+        "call": 17,
+        "value": {
+          "answerKind": "general",
+          "answer": "",
+          "sourceIds": [],
+          "plan": {
+            "inputs": [
+              {
+                "id": "word_meaning_list",
+                "quote": "I already have a Polish word-and-meaning list."
+              }
+            ],
+            "activities": [
+              {
+                "title": "Speak meanings from Polish words",
+                "seconds": 54,
+                "steps": [
+                  {
+                    "action": "Place the existing Polish word-and-meaning list on the table with the Polish WORD column visible and cover the MEANING column; say aloud the meaning of each visible Polish word, then uncover the MEANING column and compare. If no words remain, finish.",
+                    "reason": "Saying each meaning before uncovering forces retrieval from memory, and comparing immediately shows which Polish words need more practice.",
+                    "seconds": 27,
+                    "requires": [
+                      "word_meaning_list"
+                    ],
+                    "produces": [
+                      "spoken_attempts"
+                    ]
+                  },
+                  {
+                    "action": "Keep the list on the same face, cover the MEANING column again, and repeat the visible Polish words, saying each meaning aloud before uncovering to check; prioritise words missed earlier.",
+                    "reason": "A second hidden-answer pass strengthens recall and gives weak Polish words extra retrieval practice within the fixed time.",
+                    "seconds": 27,
+                    "requires": [
+                      "word_meaning_list",
+                      "spoken_attempts"
+                    ],
+                    "produces": [
+                      "spoken_attempts"
+                    ]
+                  }
+                ]
+              },
+              {
+                "title": "Write Polish from meanings",
+                "seconds": 54,
+                "steps": [
+                  {
+                    "action": "Keep the list on the same face, cover the Polish WORD column, and write the Polish word for each visible meaning on paper; then uncover the WORD column and compare. If no meanings remain, finish.",
+                    "reason": "Writing Polish from visible meanings tests productive recall, and uncovering only after writing keeps the correct spelling hidden during the attempt.",
+                    "seconds": 27,
+                    "requires": [
+                      "word_meaning_list"
+                    ],
+                    "produces": [
+                      "written_attempts"
+                    ]
+                  },
+                  {
+                    "action": "Cover the Polish WORD column again and rewrite the Polish words for the visible meanings, checking each against the uncovered WORD column only after writing; repeat missed items if any, otherwise finish.",
+                    "reason": "A second written pass with the answer hidden consolidates spelling and gives missed Polish words another productive attempt.",
+                    "seconds": 27,
+                    "requires": [
+                      "word_meaning_list",
+                      "written_attempts"
+                    ],
+                    "produces": [
+                      "written_attempts"
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      },
+      {
+        "call": 61,
+        "value": {
+          "answerKind": "general",
+          "answer": "",
+          "sourceIds": [],
+          "plan": {
+            "inputs": [
+              {
+                "id": "word_meaning_list",
+                "quote": "I already have a Polish word-and-meaning list."
+              }
+            ],
+            "activities": [
+              {
+                "title": "Speak meanings from Polish words",
+                "seconds": 54,
+                "steps": [
+                  {
+                    "action": "Keep the Polish WORD column visible and cover the MEANING column; say each meaning aloud from the whole list, then uncover and compare.",
+                    "reason": "Speaking before uncovering forces recall, and comparing afterward gives an immediate accuracy check.",
+                    "seconds": 27,
+                    "requires": [
+                      "word_meaning_list"
+                    ],
+                    "produces": []
+                  },
+                  {
+                    "action": "Cover the MEANING column again; repeat the list, prioritising weak items, saying each meaning before uncovering to check.",
+                    "reason": "A second hidden attempt strengthens weak items while keeping every answer concealed until spoken.",
+                    "seconds": 27,
+                    "requires": [
+                      "word_meaning_list"
+                    ],
+                    "produces": []
+                  }
+                ]
+              },
+              {
+                "title": "Write Polish from meanings",
+                "seconds": 54,
+                "steps": [
+                  {
+                    "action": "Keep the MEANING column visible and cover the Polish WORD column; write each Polish word on paper, then uncover and compare.",
+                    "reason": "Writing before uncovering tests production, and comparing reveals spelling gaps immediately.",
+                    "seconds": 27,
+                    "requires": [
+                      "word_meaning_list"
+                    ],
+                    "produces": []
+                  },
+                  {
+                    "action": "Cover the WORD column again; rewrite the list, prioritising weak items, writing each Polish word before uncovering to check.",
+                    "reason": "A second hidden production attempt consolidates weak spellings while preserving the conceal-then-check cycle.",
+                    "seconds": 27,
+                    "requires": [
+                      "word_meaning_list"
+                    ],
+                    "produces": []
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      },
+      {
+        "call": 62,
+        "value": {
+          "answerKind": "general",
+          "answer": "",
+          "sourceIds": [],
+          "plan": {
+            "inputs": [
+              {
+                "id": "word_meaning_list",
+                "quote": "I already have a Polish word-and-meaning list."
+              }
+            ],
+            "activities": [
+              {
+                "title": "Speak meanings from Polish words",
+                "seconds": 54,
+                "steps": [
+                  {
+                    "action": "Keep the Polish WORD column visible and cover the MEANING column; say each meaning aloud from the whole list, then uncover and compare.",
+                    "reason": "Speaking before uncovering forces recall, and comparing afterward gives an immediate accuracy check that shows which meanings need another pass.",
+                    "seconds": 27,
+                    "requires": [
+                      "word_meaning_list"
+                    ],
+                    "produces": []
+                  },
+                  {
+                    "action": "Cover the MEANING column again; repeat the list, prioritising weak items, saying each meaning before uncovering to check.",
+                    "reason": "A second hidden attempt strengthens weak items while keeping every answer concealed until spoken, so each check reflects unaided recall.",
+                    "seconds": 27,
+                    "requires": [
+                      "word_meaning_list"
+                    ],
+                    "produces": []
+                  }
+                ]
+              },
+              {
+                "title": "Write Polish from meanings",
+                "seconds": 54,
+                "steps": [
+                  {
+                    "action": "Keep the MEANING column visible and cover the Polish WORD column; write each Polish word on paper, then uncover and compare.",
+                    "reason": "Writing before uncovering tests production, and comparing reveals spelling gaps immediately while the correct form is still fresh in view.",
+                    "seconds": 27,
+                    "requires": [
+                      "word_meaning_list"
+                    ],
+                    "produces": []
+                  },
+                  {
+                    "action": "Cover the WORD column again; rewrite the list, prioritising weak items, writing each Polish word before uncovering to check.",
+                    "reason": "A second hidden production attempt consolidates weak spellings while preserving the conceal-then-check cycle, so errors are caught before they harden.",
+                    "seconds": 27,
+                    "requires": [
+                      "word_meaning_list"
+                    ],
+                    "produces": []
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      }
+    ]
+  },
+  "AS13": {
+    "question": "把原来的两项改成三个计时活动，各有两个分别计时的子步骤，给每个子步骤写理由。仍用原来的西班牙语词表，合计不超过一百零六秒，每项都要回忆完成才揭开核对。",
+    "lang": "zh",
+    "history": [
+      {
+        "role": "user",
+        "content": "我手上有西班牙语词和对应中文释义的双列词表，原来是两项、每项两个子步骤。"
+      },
+      {
+        "role": "assistant",
+        "content": "先用这张表做回忆练习。"
+      }
+    ],
+    "drafts": [
+      {
+        "call": 34,
+        "value": {
+          "answerKind": "general",
+          "answer": "",
+          "sourceIds": [],
+          "plan": {
+            "inputs": [
+              {
+                "id": "word_list",
+                "quote": "我手上有西班牙语词和对应中文释义的双列词表，原来是两项、每项两个子步骤。"
+              }
+            ],
+            "activities": [
+              {
+                "title": "西班牙语词回忆中文释义",
+                "seconds": 36,
+                "steps": [
+                  {
+                    "action": "把词表放在桌上，西班牙语词列朝上可见，用纸片盖住中文释义列，只露出西班牙语词。",
+                    "reason": "先建立只显示西班牙语词的提示状态，确保回忆前看不到答案。",
+                    "seconds": 18,
+                    "requires": [
+                      "word_list"
+                    ],
+                    "produces": [
+                      "meaning_covered"
+                    ]
+                  },
+                  {
+                    "action": "逐个看西班牙语词，先说出中文释义并写在纸上，再移开纸片核对中文释义列，然后重新盖住中文释义列，进入下一个词。",
+                    "reason": "每个词都先完成回忆再揭开核对，核对后立即恢复遮盖，避免提前看到答案。",
+                    "seconds": 18,
+                    "requires": [
+                      "meaning_covered"
+                    ],
+                    "produces": [
+                      "meaning_checked"
+                    ]
+                  }
+                ]
+              },
+              {
+                "title": "中文释义回忆西班牙语词",
+                "seconds": 36,
+                "steps": [
+                  {
+                    "action": "把词表翻回同一面，用纸片盖住西班牙语词列，只露出中文释义列。",
+                    "reason": "反向练习前先遮住新的答案列，只显示中文释义作为提示。",
+                    "seconds": 18,
+                    "requires": [
+                      "meaning_checked"
+                    ],
+                    "produces": [
+                      "word_covered"
+                    ]
+                  },
+                  {
+                    "action": "逐个看中文释义，先在纸上写出对应的西班牙语词，再移开纸片核对西班牙语词列，然后重新盖住西班牙语词列，进入下一个词。",
+                    "reason": "先写后核对保证回忆完成才揭开答案，核对后恢复遮盖以保持下一词的独立回忆。",
+                    "seconds": 18,
+                    "requires": [
+                      "word_covered"
+                    ],
+                    "produces": [
+                      "word_checked"
+                    ]
+                  }
+                ]
+              },
+              {
+                "title": "混合方向快速回忆",
+                "seconds": 34,
+                "steps": [
+                  {
+                    "action": "把词表放在桌上，随机选一个词，若先看西班牙语词就盖住中文释义列，若先看中文释义就盖住西班牙语词列，只露出一个提示列。",
+                    "reason": "混合练习每次只暴露一个提示列，避免同时看到两列而失去回忆效果。",
+                    "seconds": 17,
+                    "requires": [
+                      "word_checked"
+                    ],
+                    "produces": [
+                      "mixed_prompt"
+                    ]
+                  },
+                  {
+                    "action": "根据露出的提示列先说出或写出答案，再移开纸片核对被盖住的答案列，然后重新盖住该答案列，换下一个词继续。",
+                    "reason": "每个词都完成回忆后再核对，核对后恢复遮盖，保证混合方向练习的独立性。",
+                    "seconds": 17,
+                    "requires": [
+                      "mixed_prompt"
+                    ],
+                    "produces": [
+                      "mixed_checked"
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      },
+      {
+        "call": 35,
+        "value": {
+          "answerKind": "general",
+          "answer": "",
+          "sourceIds": [],
+          "plan": {
+            "inputs": [
+              {
+                "id": "word_list",
+                "quote": "我手上有西班牙语词和对应中文释义的双列词表，原来是两项、每项两个子步骤。"
+              }
+            ],
+            "activities": [
+              {
+                "title": "西班牙语词回忆中文释义",
+                "seconds": 36,
+                "steps": [
+                  {
+                    "action": "把词表放在桌上，西班牙语词列朝上可见，用纸片盖住中文释义列，只露出西班牙语词。",
+                    "reason": "先建立只显示西班牙语词的提示状态，确保回忆前看不到答案。",
+                    "seconds": 18,
+                    "requires": [
+                      "word_list"
+                    ],
+                    "produces": [
+                      "meaning_covered"
+                    ]
+                  },
+                  {
+                    "action": "逐个看西班牙语词，先说出中文释义并写在纸上，再移开纸片核对中文释义列，然后重新盖住中文释义列，进入下一个词。",
+                    "reason": "每个词都先完成回忆再揭开核对，核对后立即恢复遮盖，避免提前看到答案。",
+                    "seconds": 18,
+                    "requires": [
+                      "meaning_covered"
+                    ],
+                    "produces": [
+                      "meaning_checked"
+                    ]
+                  }
+                ]
+              },
+              {
+                "title": "中文释义回忆西班牙语词",
+                "seconds": 36,
+                "steps": [
+                  {
+                    "action": "保持词表同一面朝上，用纸片盖住西班牙语词列，只露出中文释义列。",
+                    "reason": "反向练习前先遮住新的答案列，只显示中文释义作为提示。",
+                    "seconds": 18,
+                    "requires": [
+                      "meaning_checked"
+                    ],
+                    "produces": [
+                      "word_covered"
+                    ]
+                  },
+                  {
+                    "action": "逐个看中文释义，先在纸上写出对应的西班牙语词，再移开纸片核对西班牙语词列，然后重新盖住西班牙语词列，进入下一个词。",
+                    "reason": "先写后核对保证回忆完成才揭开答案，核对后恢复遮盖以保持下一词的独立回忆。",
+                    "seconds": 18,
+                    "requires": [
+                      "word_covered"
+                    ],
+                    "produces": [
+                      "word_checked"
+                    ]
+                  }
+                ]
+              },
+              {
+                "title": "混合方向快速回忆",
+                "seconds": 34,
+                "steps": [
+                  {
+                    "action": "把词表放在桌上，随机选一个词，若先看西班牙语词就盖住中文释义列，若先看中文释义就盖住西班牙语词列，只露出一个提示列。",
+                    "reason": "混合练习每次只暴露一个提示列，避免同时看到两列而失去回忆效果。",
+                    "seconds": 17,
+                    "requires": [
+                      "word_checked"
+                    ],
+                    "produces": [
+                      "mixed_prompt"
+                    ]
+                  },
+                  {
+                    "action": "根据露出的提示列先说出或写出答案，再移开纸片核对被盖住的答案列，然后重新盖住该答案列，换下一个词继续。",
+                    "reason": "每个词都完成回忆后再核对，核对后恢复遮盖，保证混合方向练习的独立性。",
+                    "seconds": 17,
+                    "requires": [
+                      "mixed_prompt"
+                    ],
+                    "produces": [
+                      "mixed_checked"
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      },
+      {
+        "call": 78,
+        "value": {
+          "answerKind": "general",
+          "answer": "",
+          "sourceIds": [],
+          "plan": {
+            "inputs": [
+              {
+                "id": "word_list",
+                "quote": "我手上有西班牙语词和对应中文释义的双列词表，原来是两项、每项两个子步骤。"
+              }
+            ],
+            "activities": [
+              {
+                "title": "西班牙语词回忆中文释义",
+                "seconds": 36,
+                "steps": [
+                  {
+                    "action": "把词表放在桌上，只露出西班牙语词列，用纸片盖住中文释义列；若词表为空则停止，不自行编造词条。",
+                    "reason": "先固定同一张词表的西语提示列并遮住答案列，为逐词回忆做好准备。",
+                    "seconds": 18,
+                    "requires": [
+                      "word_list"
+                    ],
+                    "produces": [
+                      "covered_meaning"
+                    ]
+                  },
+                  {
+                    "action": "逐个看露出的西班牙语词，先说出中文释义，再移开纸片核对中文释义列，然后重新盖住中文释义列，再进入下一个词。",
+                    "reason": "每次回忆完成才揭开核对，核对后立即恢复遮盖，保证下一词仍是独立回忆。",
+                    "seconds": 18,
+                    "requires": [
+                      "covered_meaning"
+                    ],
+                    "produces": [
+                      "meaning_checked"
+                    ]
+                  }
+                ]
+              },
+              {
+                "title": "中文释义回忆西班牙语词",
+                "seconds": 36,
+                "steps": [
+                  {
+                    "action": "保持同一张词表同一面，改为只露出中文释义列，用纸片盖住西班牙语词列。",
+                    "reason": "反向练习前先遮住新的答案列，只暴露中文提示列。",
+                    "seconds": 18,
+                    "requires": [
+                      "meaning_checked"
+                    ],
+                    "produces": [
+                      "covered_word"
+                    ]
+                  },
+                  {
+                    "action": "逐个看露出的中文释义，先在纸上写出西班牙语词，再移开纸片核对西班牙语词列，然后重新盖住西班牙语词列，再进入下一个词。",
+                    "reason": "先写后核对确保回忆完成才揭晓答案，核对后恢复遮盖以保持逐词独立练习。",
+                    "seconds": 18,
+                    "requires": [
+                      "covered_word"
+                    ],
+                    "produces": [
+                      "word_checked"
+                    ]
+                  }
+                ]
+              },
+              {
+                "title": "混合方向快速回忆",
+                "seconds": 34,
+                "steps": [
+                  {
+                    "action": "在同一张词表上每次只选一个方向：选西语到中文时只露出西班牙语词列并盖住中文释义列；选中文到西语时只露出中文释义列并盖住西班牙语词列。",
+                    "reason": "混合练习每次只暴露一个提示列，避免同时看两列而失去回忆效果。",
+                    "seconds": 17,
+                    "requires": [
+                      "word_checked"
+                    ],
+                    "produces": [
+                      "mixed_prompt"
+                    ]
+                  },
+                  {
+                    "action": "按选定的提示列先说出或写出答案，再移开纸片核对被盖住的答案列，核对后重新盖住该答案列，再选下一个词；若没有错词就继续用整张词表，若有错词就优先重复错词。",
+                    "reason": "每个词都先完成回忆再核对，并根据错词情况优先复习薄弱项，同时不强制要求出现错误。",
+                    "seconds": 17,
+                    "requires": [
+                      "mixed_prompt"
+                    ],
+                    "produces": [
+                      "mixed_checked"
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      },
+      {
+        "call": 79,
+        "value": {
+          "answerKind": "general",
+          "answer": "",
+          "sourceIds": [],
+          "plan": {
+            "inputs": [
+              {
+                "id": "word_list",
+                "quote": "我手上有西班牙语词和对应中文释义的双列词表，原来是两项、每项两个子步骤。"
+              }
+            ],
+            "activities": [
+              {
+                "title": "西班牙语词回忆中文释义",
+                "seconds": 36,
+                "steps": [
+                  {
+                    "action": "把词表放在桌上，只露出西班牙语词列，用纸片盖住中文释义列；若词表为空则停止，不自行编造词条。",
+                    "reason": "先固定同一张词表的西语提示列并遮住答案列，为逐词回忆做好准备。",
+                    "seconds": 18,
+                    "requires": [
+                      "word_list"
+                    ],
+                    "produces": [
+                      "covered_meaning"
+                    ]
+                  },
+                  {
+                    "action": "逐个看露出的西班牙语词，先说出中文释义，再移开纸片核对中文释义列，然后重新盖住中文释义列，再进入下一个词。",
+                    "reason": "每次回忆完成才揭开核对，核对后立即恢复遮盖，保证下一词仍是独立回忆。",
+                    "seconds": 18,
+                    "requires": [
+                      "covered_meaning"
+                    ],
+                    "produces": [
+                      "meaning_checked"
+                    ]
+                  }
+                ]
+              },
+              {
+                "title": "中文释义回忆西班牙语词",
+                "seconds": 36,
+                "steps": [
+                  {
+                    "action": "保持同一张词表同一面，改为只露出中文释义列，用纸片盖住西班牙语词列。",
+                    "reason": "反向练习前先遮住新的答案列，只暴露中文提示列。",
+                    "seconds": 18,
+                    "requires": [
+                      "meaning_checked"
+                    ],
+                    "produces": [
+                      "covered_word"
+                    ]
+                  },
+                  {
+                    "action": "逐个看露出的中文释义，先在纸上写出西班牙语词，再移开纸片核对西班牙语词列，然后重新盖住西班牙语词列，再进入下一个词。",
+                    "reason": "先写后核对确保回忆完成才揭晓答案，核对后恢复遮盖以保持逐词独立练习。",
+                    "seconds": 18,
+                    "requires": [
+                      "covered_word"
+                    ],
+                    "produces": [
+                      "word_checked"
+                    ]
+                  }
+                ]
+              },
+              {
+                "title": "混合方向快速回忆",
+                "seconds": 34,
+                "steps": [
+                  {
+                    "action": "在同一张词表上每次只选一个方向：选西语到中文时只露出西班牙语词列并盖住中文释义列；选中文到西语时只露出中文释义列并盖住西班牙语词列。",
+                    "reason": "混合练习每次只暴露一个提示列，避免同时看两列而失去回忆效果。",
+                    "seconds": 17,
+                    "requires": [
+                      "word_checked"
+                    ],
+                    "produces": [
+                      "mixed_prompt"
+                    ]
+                  },
+                  {
+                    "action": "按选定的提示列先说出或写出答案，再移开纸片核对被盖住的答案列，核对后重新盖住该答案列，再选下一个词；若没有错词就继续用整张词表，若有错词就优先重复错词。",
+                    "reason": "每个词都先完成回忆再核对，并根据错词情况优先复习薄弱项，同时不强制要求出现错误。",
+                    "seconds": 17,
+                    "requires": [
+                      "mixed_prompt"
+                    ],
+                    "produces": [
+                      "mixed_checked"
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      }
+    ]
+  }
+}

@@ -1,0 +1,590 @@
+[
+  {
+    "key": "Y07-1",
+    "case": {
+      "id": "Y07",
+      "category": "slow",
+      "lang": "zh",
+      "question": "现在允许慢慢转，仍然两项，各给时长。若摆不出那个熟悉局面，两项都给一个能改练的动作。",
+      "expected": "2 timed activities, combined ≤165s inherited. Each has an executable known-turn alternative in the current state. Avoid invented algorithms and any insertion/setup/slot-check in the fallback.",
+      "history": [
+        {
+          "role": "user",
+          "content": "总共只有两分四十五秒，先别转动魔方。我想用我以前学过的一种插入局面做观察，可我不保证能摆出来。"
+        },
+        {
+          "role": "assistant",
+          "content": "从当前看得见的颜色开始，暂时保持原状。"
+        }
+      ]
+    },
+    "models": [
+      {
+        "answerKind": "general",
+        "answer": "",
+        "sourceIds": [],
+        "plan": {
+          "inputs": [
+            {
+              "id": "known_insert",
+              "quote": "我想用我以前学过的一种插入局面做观察，可我不保证能摆出来。"
+            },
+            {
+              "id": "slow_turns",
+              "quote": "现在允许慢慢转，仍然两项，各给时长。"
+            }
+          ],
+          "activities": [
+            {
+              "title": "熟悉插入局面的准备与验证",
+              "seconds": 25,
+              "steps": [
+                {
+                  "action": "选一个你已会的插入，用它的逆操作在当前魔方上尝试摆出该熟悉局面；摆好后停手，目视确认局面与目标槽位一致。仅当确认成功时，用同一逆操作复位并做一次该插入，再复位同一局面；否则全程只用你已会的慢速转动，每转一步停一下观察可见变化，不宣称完成F2L。",
+                  "reason": "先验证局面再转动，避免在未确认时误判插入成功。",
+                  "seconds": 25,
+                  "requires": [
+                    "known_insert",
+                    "slow_turns"
+                  ],
+                  "produces": []
+                }
+              ]
+            },
+            {
+              "title": "插入重复或预测转动",
+              "seconds": 20,
+              "steps": [
+                {
+                  "action": "仅当上一项已确认熟悉局面时，用同一逆操作复位并再做一次该插入，然后复位同一局面；否则只用已会的慢速转动：在转一步前先预测哪块会移动，转后对照实际变化，不接插入、不复位、不检查槽位。",
+                  "reason": "分支练习保证未摆出局面时仍有具体可练的观察动作。",
+                  "seconds": 20,
+                  "requires": [
+                    "known_insert",
+                    "slow_turns"
+                  ],
+                  "produces": []
+                }
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "answerKind": "general",
+        "answer": "",
+        "sourceIds": [],
+        "plan": {
+          "inputs": [
+            {
+              "id": "known_insert",
+              "quote": "我想用我以前学过的一种插入局面做观察，可我不保证能摆出来。"
+            },
+            {
+              "id": "slow_turns",
+              "quote": "现在允许慢慢转，仍然两项，各给时长。"
+            }
+          ],
+          "activities": [
+            {
+              "title": "熟悉插入局面的准备与验证",
+              "seconds": 25,
+              "steps": [
+                {
+                  "action": "选一个你已会的插入，用它的逆操作在当前魔方上尝试摆出该熟悉局面；摆好后停手，目视确认局面与目标槽位一致。仅当确认成功时，用同一逆操作复位并做一次该插入，再复位同一局面；否则全程只用你已会的慢速转动，每转一步停一下观察可见变化，不宣称完成F2L。",
+                  "reason": "先验证局面再转动，避免在未确认时误判插入成功。",
+                  "seconds": 25,
+                  "requires": [
+                    "known_insert",
+                    "slow_turns"
+                  ],
+                  "produces": []
+                }
+              ]
+            },
+            {
+              "title": "插入重复或预测转动",
+              "seconds": 20,
+              "steps": [
+                {
+                  "action": "仅当上一项已确认熟悉局面时，用同一逆操作复位并再做一次该插入，然后复位同一局面；否则只用已会的慢速转动：在转一步前先预测哪块会移动，转后对照实际变化，不接插入、不复位、不检查槽位。",
+                  "reason": "分支练习保证未摆出局面时仍有具体可练的观察动作。",
+                  "seconds": 20,
+                  "requires": [
+                    "known_insert",
+                    "slow_turns"
+                  ],
+                  "produces": []
+                }
+              ]
+            }
+          ]
+        }
+      }
+    ]
+  },
+  {
+    "key": "Y09-1",
+    "case": {
+      "id": "Y09",
+      "category": "slow",
+      "lang": "zh",
+      "question": "我只会 D 和 R′，没学过插入。三项慢拧练习，总用时不超过一百二十秒，每项不超过四十五秒。每下之后暂停，描述一个能亲眼核对的变化。",
+      "expected": "3 timed activities, each ≤45s and combined ≤120s. Use only D and R′, with a pause and observable change check each time. No setup moves, insertion or assumed state.",
+      "history": []
+    },
+    "models": [
+      {
+        "answerKind": "general",
+        "answer": "",
+        "sourceIds": [],
+        "plan": {
+          "inputs": [
+            {
+              "id": "known_turns",
+              "quote": "我只会 D 和 R′，没学过插入。"
+            },
+            {
+              "id": "slow_practice",
+              "quote": "三项慢拧练习，总用时不超过一百二十秒，每项不超过四十五秒。每下之后暂停，描述一个能亲眼核对的变化。"
+            }
+          ],
+          "activities": [
+            {
+              "title": "慢拧 D 并观察底层",
+              "seconds": 40,
+              "steps": [
+                {
+                  "action": "先看清魔方当前状态，然后缓慢做一次 D，停住，观察并说出底层哪一块移动到了哪里；再缓慢做一次 D，停住，说出底层又发生了什么可核对的变化。",
+                  "reason": "只用已会的 D，每下后暂停，用亲眼可见的底层变化核对动作。",
+                  "seconds": 40,
+                  "requires": [
+                    "known_turns",
+                    "slow_practice"
+                  ],
+                  "produces": []
+                }
+              ]
+            },
+            {
+              "title": "慢拧 R′ 并观察右侧",
+              "seconds": 40,
+              "steps": [
+                {
+                  "action": "先看清魔方当前状态，然后缓慢做一次 R′，停住，观察并说出右侧哪一块移动到了哪里；再缓慢做一次 R′，停住，说出右侧又发生了什么可核对的变化。",
+                  "reason": "只用已会的 R′，每下后暂停，用亲眼可见的右侧变化核对动作。",
+                  "seconds": 40,
+                  "requires": [
+                    "known_turns",
+                    "slow_practice"
+                  ],
+                  "produces": []
+                }
+              ]
+            },
+            {
+              "title": "交替慢拧 D 与 R′",
+              "seconds": 40,
+              "steps": [
+                {
+                  "action": "先看清魔方当前状态，缓慢做一次 D，停住并说出底层一个可见变化；再缓慢做一次 R′，停住并说出右侧一个可见变化；重复这一交替一次，每次之后都暂停观察。",
+                  "reason": "交替使用已会的 D 和 R′，每下后暂停，用可见变化核对两次动作。",
+                  "seconds": 40,
+                  "requires": [
+                    "known_turns",
+                    "slow_practice"
+                  ],
+                  "produces": []
+                }
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "answerKind": "general",
+        "answer": "",
+        "sourceIds": [],
+        "plan": {
+          "inputs": [
+            {
+              "id": "known_turns",
+              "quote": "我只会 D 和 R′，没学过插入。"
+            },
+            {
+              "id": "slow_practice",
+              "quote": "三项慢拧练习，总用时不超过一百二十秒，每项不超过四十五秒。每下之后暂停，描述一个能亲眼核对的变化。"
+            }
+          ],
+          "activities": [
+            {
+              "title": "慢拧 D 并观察底层",
+              "seconds": 6,
+              "steps": [
+                {
+                  "action": "先看清魔方当前状态，缓慢做一次 D，停住，说出底层哪一块移动到了哪里；再缓慢做一次 D，停住，说出底层又发生了什么可核对的变化。",
+                  "reason": "只用已会的 D，每下后暂停，用亲眼可见的底层变化核对动作。",
+                  "seconds": 6,
+                  "requires": [
+                    "known_turns",
+                    "slow_practice"
+                  ],
+                  "produces": []
+                }
+              ]
+            },
+            {
+              "title": "慢拧 R′ 并观察右侧",
+              "seconds": 6,
+              "steps": [
+                {
+                  "action": "先看清魔方当前状态，缓慢做一次 R′，停住，说出右侧哪一块移动到了哪里；再缓慢做一次 R′，停住，说出右侧又发生了什么可核对的变化。",
+                  "reason": "只用已会的 R′，每下后暂停，用亲眼可见的右侧变化核对动作。",
+                  "seconds": 6,
+                  "requires": [
+                    "known_turns",
+                    "slow_practice"
+                  ],
+                  "produces": []
+                }
+              ]
+            },
+            {
+              "title": "交替慢拧 D 与 R′",
+              "seconds": 8,
+              "steps": [
+                {
+                  "action": "先看清魔方当前状态，缓慢做一次 D，停住并说出底层一个可见变化；再缓慢做一次 R′，停住并说出右侧一个可见变化；重复这一交替一次，每次之后都暂停观察。",
+                  "reason": "交替使用已会的 D 和 R′，每下后暂停，用可见变化核对两次动作。",
+                  "seconds": 8,
+                  "requires": [
+                    "known_turns",
+                    "slow_practice"
+                  ],
+                  "produces": []
+                }
+              ]
+            }
+          ]
+        }
+      }
+    ]
+  },
+  {
+    "key": "Y14-1",
+    "case": {
+      "id": "Y14",
+      "category": "mixed",
+      "lang": "en",
+      "question": "Explain two ways to notice recurring mistakes during untimed cube practice. Then write exactly one sentence in its own paragraph inviting Jules to practise on Friday.",
+      "expected": "Two distinct untimed approaches and an independently separated paragraph containing exactly one invitation sentence with Jules and Friday.",
+      "history": []
+    },
+    "models": [
+      {
+        "answerKind": "general",
+        "answer": "Two ways to notice recurring mistakes in untimed practice are to review your solves slowly and deliberately—pausing after each one to identify where you hesitated or lost time—and to keep a simple log of the errors that repeat, such as the same F2L case or the same pause before PLL, so patterns become visible over several sessions.\n\nJules, would you like to practise together on Friday?",
+        "sourceIds": []
+      },
+      {
+        "answerKind": "general",
+        "answer": "To spot recurring mistakes during untimed practice, review your solves for repeated patterns such as pausing at the same F2L slot or leaning on the same slow OLL algorithm, and note where your times consistently stall, such as a habitual hesitation before PLL—and Jules, would you like to practise together on Friday?",
+        "sourceIds": []
+      }
+    ]
+  },
+  {
+    "key": "Y07-2",
+    "case": {
+      "id": "Y07",
+      "category": "slow",
+      "lang": "zh",
+      "question": "现在允许慢慢转，仍然两项，各给时长。若摆不出那个熟悉局面，两项都给一个能改练的动作。",
+      "expected": "2 timed activities, combined ≤165s inherited. Each has an executable known-turn alternative in the current state. Avoid invented algorithms and any insertion/setup/slot-check in the fallback.",
+      "history": [
+        {
+          "role": "user",
+          "content": "总共只有两分四十五秒，先别转动魔方。我想用我以前学过的一种插入局面做观察，可我不保证能摆出来。"
+        },
+        {
+          "role": "assistant",
+          "content": "从当前看得见的颜色开始，暂时保持原状。"
+        }
+      ]
+    },
+    "models": [
+      {
+        "answerKind": "general",
+        "answer": "",
+        "sourceIds": [],
+        "plan": {
+          "inputs": [
+            {
+              "id": "known_insert",
+              "quote": "我想用我以前学过的一种插入局面做观察，可我不保证能摆出来。"
+            },
+            {
+              "id": "slow_turns",
+              "quote": "现在允许慢慢转，仍然两项，各给时长。"
+            }
+          ],
+          "activities": [
+            {
+              "title": "熟悉插入局面的准备与验证",
+              "seconds": 25,
+              "steps": [
+                {
+                  "action": "选一个你已会的插入，用它的逆操作慢慢摆出该插入的熟悉局面；停手，用眼睛确认目标槽和两块位置与记忆一致。仅当确认一致时，用同一插入做一次，再用同一逆操作把同一局面复位；否则不插入，改为每次只转一个已知动作后停一秒，观察哪几块可见位置变了，重复到时间结束。",
+                  "reason": "先验证局面再转，避免把不熟悉的局面当成练习；摆不出时用慢转观察保持可控。",
+                  "seconds": 25,
+                  "requires": [
+                    "known_insert",
+                    "slow_turns"
+                  ],
+                  "produces": []
+                }
+              ]
+            },
+            {
+              "title": "插入复练或预测慢转",
+              "seconds": 20,
+              "steps": [
+                {
+                  "action": "仅当上一项已确认熟悉局面时，用同一逆操作复位后做一次同一插入，再看目标槽是否到位；否则不插入，改为在做一个已知动作前先说出哪一块会可见移动，做完立即对照实际移动，重复到时间结束。",
+                  "reason": "分支练习保证只在验证过的局面上复练，否则用预测对照训练观察。",
+                  "seconds": 20,
+                  "requires": [
+                    "known_insert",
+                    "slow_turns"
+                  ],
+                  "produces": []
+                }
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "answerKind": "general",
+        "answer": "",
+        "sourceIds": [],
+        "plan": {
+          "inputs": [
+            {
+              "id": "known_insert",
+              "quote": "我想用我以前学过的一种插入局面做观察，可我不保证能摆出来。"
+            },
+            {
+              "id": "slow_turns",
+              "quote": "现在允许慢慢转，仍然两项，各给时长。"
+            }
+          ],
+          "activities": [
+            {
+              "title": "熟悉插入局面的准备与验证",
+              "seconds": 25,
+              "steps": [
+                {
+                  "action": "选一个你已会的插入，用它的逆操作慢慢摆出该插入的熟悉局面；停手，用眼睛确认目标槽和两块位置与记忆一致。仅当确认一致时，用同一插入做一次，再用同一逆操作把同一局面复位；否则不插入，改为每次只转一个已知动作后停一秒，观察哪几块可见位置变了，重复到时间结束。",
+                  "reason": "先验证局面再转，避免把不熟悉的局面当成练习；摆不出时用慢转观察保持可控。",
+                  "seconds": 25,
+                  "requires": [
+                    "known_insert",
+                    "slow_turns"
+                  ],
+                  "produces": []
+                }
+              ]
+            },
+            {
+              "title": "插入复练或预测慢转",
+              "seconds": 20,
+              "steps": [
+                {
+                  "action": "仅当上一项已确认熟悉局面时，用同一逆操作复位后做一次同一插入，再看目标槽是否到位；否则不插入，改为在做一个已知动作前先说出哪一块会可见移动，做完立即对照实际移动，重复到时间结束。",
+                  "reason": "分支练习保证只在验证过的局面上复练，否则用预测对照训练观察。",
+                  "seconds": 20,
+                  "requires": [
+                    "known_insert",
+                    "slow_turns"
+                  ],
+                  "produces": []
+                }
+              ]
+            }
+          ]
+        }
+      }
+    ]
+  },
+  {
+    "key": "Y09-2",
+    "case": {
+      "id": "Y09",
+      "category": "slow",
+      "lang": "zh",
+      "question": "我只会 D 和 R′，没学过插入。三项慢拧练习，总用时不超过一百二十秒，每项不超过四十五秒。每下之后暂停，描述一个能亲眼核对的变化。",
+      "expected": "3 timed activities, each ≤45s and combined ≤120s. Use only D and R′, with a pause and observable change check each time. No setup moves, insertion or assumed state.",
+      "history": []
+    },
+    "models": [
+      {
+        "answerKind": "general",
+        "answer": "",
+        "sourceIds": [],
+        "plan": {
+          "inputs": [
+            {
+              "id": "known_turns",
+              "quote": "我只会 D 和 R′，没学过插入。"
+            },
+            {
+              "id": "slow_practice",
+              "quote": "三项慢拧练习，总用时不超过一百二十秒，每项不超过四十五秒。每下之后暂停，描述一个能亲眼核对的变化。"
+            }
+          ],
+          "activities": [
+            {
+              "title": "慢拧 D 观察底层转动",
+              "seconds": 40,
+              "steps": [
+                {
+                  "action": "先看清当前魔方状态，然后缓慢做一次 D，停住，观察并说出底层哪一块移动到了哪里；再缓慢做一次 D，停住，观察底层变化；重复到时间结束，每次只做 D 并暂停观察。",
+                  "reason": "只用已会的 D，每下后暂停核对底层可见变化。",
+                  "seconds": 40,
+                  "requires": [
+                    "known_turns",
+                    "slow_practice"
+                  ],
+                  "produces": []
+                }
+              ]
+            },
+            {
+              "title": "慢拧 R′ 观察右层转动",
+              "seconds": 40,
+              "steps": [
+                {
+                  "action": "先看清当前魔方状态，然后缓慢做一次 R′，停住，观察并说出右层哪一块移动到了哪里；再缓慢做一次 R′，停住，观察右层变化；重复到时间结束，每次只做 R′ 并暂停观察。",
+                  "reason": "只用已会的 R′，每下后暂停核对右层可见变化。",
+                  "seconds": 40,
+                  "requires": [
+                    "known_turns",
+                    "slow_practice"
+                  ],
+                  "produces": []
+                }
+              ]
+            },
+            {
+              "title": "交替慢拧 D 与 R′",
+              "seconds": 40,
+              "steps": [
+                {
+                  "action": "先看清当前魔方状态，缓慢做一次 D，停住观察底层变化；再缓慢做一次 R′，停住观察右层变化；如此交替 D 和 R′，每下之后都暂停并说出一个能亲眼核对的变化，直到时间结束。",
+                  "reason": "交替练习两个已会动作，每下后暂停观察当前状态。",
+                  "seconds": 40,
+                  "requires": [
+                    "known_turns",
+                    "slow_practice"
+                  ],
+                  "produces": []
+                }
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "answerKind": "general",
+        "answer": "",
+        "sourceIds": [],
+        "plan": {
+          "inputs": [
+            {
+              "id": "known_turns",
+              "quote": "我只会 D 和 R′，没学过插入。"
+            },
+            {
+              "id": "slow_practice",
+              "quote": "三项慢拧练习，总用时不超过一百二十秒，每项不超过四十五秒。每下之后暂停，描述一个能亲眼核对的变化。"
+            }
+          ],
+          "activities": [
+            {
+              "title": "慢拧 D 观察底层转动",
+              "seconds": 6,
+              "steps": [
+                {
+                  "action": "先看清当前魔方状态，然后缓慢做一次 D，停住，观察并说出底层哪一块移动到了哪里；再缓慢做一次 D，停住，观察底层变化；重复到时间结束，每次只做 D 并暂停观察。",
+                  "reason": "只用已会的 D，每下后暂停核对底层可见变化。",
+                  "seconds": 6,
+                  "requires": [
+                    "known_turns",
+                    "slow_practice"
+                  ],
+                  "produces": []
+                }
+              ]
+            },
+            {
+              "title": "慢拧 R′ 观察右层转动",
+              "seconds": 6,
+              "steps": [
+                {
+                  "action": "先看清当前魔方状态，然后缓慢做一次 R′，停住，观察并说出右层哪一块移动到了哪里；再缓慢做一次 R′，停住，观察右层变化；重复到时间结束，每次只做 R′ 并暂停观察。",
+                  "reason": "只用已会的 R′，每下后暂停核对右层可见变化。",
+                  "seconds": 6,
+                  "requires": [
+                    "known_turns",
+                    "slow_practice"
+                  ],
+                  "produces": []
+                }
+              ]
+            },
+            {
+              "title": "交替慢拧 D 与 R′",
+              "seconds": 6,
+              "steps": [
+                {
+                  "action": "先看清当前魔方状态，缓慢做一次 D，停住观察底层变化；再缓慢做一次 R′，停住观察右层变化；如此交替 D 和 R′，每下之后都暂停并说出一个能亲眼核对的变化，直到时间结束。",
+                  "reason": "交替练习两个已会动作，每下后暂停观察当前状态。",
+                  "seconds": 6,
+                  "requires": [
+                    "known_turns",
+                    "slow_practice"
+                  ],
+                  "produces": []
+                }
+              ]
+            }
+          ]
+        }
+      }
+    ]
+  },
+  {
+    "key": "Y14-2",
+    "case": {
+      "id": "Y14",
+      "category": "mixed",
+      "lang": "en",
+      "question": "Explain two ways to notice recurring mistakes during untimed cube practice. Then write exactly one sentence in its own paragraph inviting Jules to practise on Friday.",
+      "expected": "Two distinct untimed approaches and an independently separated paragraph containing exactly one invitation sentence with Jules and Friday.",
+      "history": []
+    },
+    "models": [
+      {
+        "answerKind": "general",
+        "answer": "Two ways to notice recurring mistakes in untimed practice are to review your solves slowly and deliberately—pausing after each one to identify where time was lost or a step felt uncertain—and to keep a simple log of the errors you spot, so repeated patterns (such as the same F2L case or a hesitant PLL recognition) become visible across sessions.\n\nJules, would you like to practise together on Friday?",
+        "sourceIds": []
+      },
+      {
+        "answerKind": "general",
+        "answer": "One way to notice recurring mistakes during untimed practice is to replay each solve slowly and mark exactly where you hesitated, regripped or paused to think, and another is to keep a short written log after each session that names the repeated pattern, such as the same awkward F2L case, a slow cross or a fumbled last-layer recognition.\n\nJules, would you like to practise together this Friday?",
+        "sourceIds": []
+      }
+    ]
+  }
+]

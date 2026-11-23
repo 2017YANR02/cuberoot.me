@@ -1,0 +1,83 @@
+{
+  "key": "1/after/H08",
+  "case": {
+    "id": "H08",
+    "category": "plan",
+    "lang": "en",
+    "history": [],
+    "question": "I have a word list but no flashcards. Plan two vocabulary activities using flashcards, each with two timed substeps, maximum four minutes total. Include making the cards and explain why each substep helps.",
+    "expected": "Prepare distinct word/meaning faces before flipping, first activity includes actual practice, each reuse resets prompt face, no unavailable error subset, 2x2 <=240 seconds."
+  },
+  "answer": "1. Make cards and recall meanings (120 seconds)\n  - 60 seconds: Write each word on the front of a blank card and its meaning on the back, using the full word list; if the list is empty, write five words you need from memory instead. Separate two-sided cards let you test recall in one direction without seeing the answer. In any step, if this subset is empty or too small, use available words from the original list; repeat available words as needed within that step’s allotted time.\n  - 60 seconds: Place every card word-side up, say each meaning aloud, then flip to check; if no cards remain, stop early and note that the list was covered. Word-to-meaning recall builds receptive vocabulary and immediate checking corrects errors.\n2. Recall words from meanings (120 seconds)\n  - 60 seconds: Reset every card to meaning-side up, then say the word for each meaning aloud and flip to check; if no cards remain, stop early and note that the list was covered. Meaning-to-word recall trains productive vocabulary, the harder direction.\n  - 60 seconds: Repeat only the cards you missed, resetting each to meaning-side up first; if nothing was missed, run one more pass through the full list instead. Targeted repetition strengthens weak items while the full-list fallback keeps practice going.",
+  "model": {
+    "answerKind": "general",
+    "answer": "",
+    "sourceIds": [],
+    "plan": {
+      "inputs": [
+        {
+          "id": "word_list",
+          "quote": "I have a word list but no flashcards."
+        }
+      ],
+      "activities": [
+        {
+          "title": "Make cards and recall meanings",
+          "seconds": 120,
+          "steps": [
+            {
+              "action": "Write each word on the front of a blank card and its meaning on the back, using the full word list; if the list is empty, write five words you need from memory instead.",
+              "reason": "Separate two-sided cards let you test recall in one direction without seeing the answer.",
+              "seconds": 60,
+              "requires": [
+                "word_list"
+              ],
+              "produces": [
+                "two_sided_cards"
+              ]
+            },
+            {
+              "action": "Place every card word-side up, say each meaning aloud, then flip to check; if no cards remain, stop early and note that the list was covered.",
+              "reason": "Word-to-meaning recall builds receptive vocabulary and immediate checking corrects errors.",
+              "seconds": 60,
+              "requires": [
+                "two_sided_cards"
+              ],
+              "produces": [
+                "meaning_attempts"
+              ]
+            }
+          ]
+        },
+        {
+          "title": "Recall words from meanings",
+          "seconds": 120,
+          "steps": [
+            {
+              "action": "Reset every card to meaning-side up, then say the word for each meaning aloud and flip to check; if no cards remain, stop early and note that the list was covered.",
+              "reason": "Meaning-to-word recall trains productive vocabulary, the harder direction.",
+              "seconds": 60,
+              "requires": [
+                "two_sided_cards"
+              ],
+              "produces": [
+                "word_attempts"
+              ]
+            },
+            {
+              "action": "Repeat only the cards you missed, resetting each to meaning-side up first; if nothing was missed, run one more pass through the full list instead.",
+              "reason": "Targeted repetition strengthens weak items while the full-list fallback keeps practice going.",
+              "seconds": 60,
+              "requires": [
+                "word_attempts"
+              ],
+              "produces": [
+                "reviewed_cards"
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

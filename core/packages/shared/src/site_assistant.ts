@@ -1,3 +1,6 @@
+import { isValidIsoDate } from './iso-date';
+import { WCA_EVENT_ORDER } from './wca_events';
+
 export const SITE_ASSISTANT_DAILY_LIMIT = 1000;
 /** Explicit opt-in keeps older clients on their supported table presentation. */
 export const SITE_ASSISTANT_ARTIFACT_FORMAT = 'algorithms-v1';
@@ -118,13 +121,31 @@ export function boundAssistantHistory(history: AssistantMessage[]): AssistantMes
 }
 
 export type AssistantStatus = { phase: 'planning' | 'querying' | 'writing'; tool?: string };
+export interface AssistantProgressScope {
+  event?: (typeof WCA_EVENT_ORDER)[number];
+  from?: string;
+  to?: string;
+}
+
+/** Only public event IDs and valid calendar bounds are displayed as query scope. */
+export function assistantProgressScope(value:unknown):AssistantProgressScope|undefined {
+  if (!value || typeof value!=='object') return;
+  const {event,from,to}=value as {event?:unknown;from?:unknown;to?:unknown};
+  const publicEvent=WCA_EVENT_ORDER.find(id=>id===event);
+  const range=typeof from==='string' && typeof to==='string' && from<=to && isValidIsoDate(from) && isValidIsoDate(to) ? {from,to} : undefined;
+  if (publicEvent || range) return {...(publicEvent?{event:publicEvent}:{}),...range};
+}
+
 /** Execution metadata only: never provider reasoning, tool arguments or draft answers. */
 export interface AssistantProgress {
+  retryAt?: number;
   reused?: boolean;
   id: number;
   phase: 'model' | 'review' | 'tool';
+  activity?: 'plan' | 'write';
   state: 'running' | 'complete' | 'partial' | 'error';
   tool?: string;
+  scope?: AssistantProgressScope;
   elapsedMs: number;
   durationMs?: number;
   sourceCount?: number;
@@ -143,7 +164,7 @@ export type AssistantStreamEvent =
   | { type: 'cancelled' }
   | { type: 'status'; status: AssistantStatus }
   | { type: 'progress'; progress: AssistantProgress }
-  | { type: 'answer'; answer: string; sources: AssistantSource[] }
+  | { type: 'answer'; answer: string; sources: AssistantSource[]; artifacts?: AssistantArtifact[] }
   | { type: 'done'; result: AssistantAnswer }
   | { type: 'error'; error: AssistantErrorCode };
 

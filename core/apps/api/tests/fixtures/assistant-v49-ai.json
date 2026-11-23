@@ -1,0 +1,262 @@
+{
+  "AI01": {
+    "question": "Give two exercises to check where my thumb releases the cube during a slow regrip, within 63 seconds total. Write each heading as “name: duration”. Then, in a new paragraph, write one sentence inviting Leona to try both on Sunday.",
+    "lang": "en",
+    "history": [],
+    "call": 2,
+    "draft": {
+      "answerKind": "general",
+      "answer": "Leona, try both of these slow-regrip thumb checks on Sunday.",
+      "sourceIds": [],
+      "plan": {
+        "inputs": [
+          {
+            "id": "thumb_release_request",
+            "quote": "Give two exercises to check where my thumb releases the cube during a slow regrip, within 63 seconds total."
+          }
+        ],
+        "activities": [
+          {
+            "title": "Thumb contact pause: 30 seconds",
+            "seconds": 30,
+            "steps": [
+              {
+                "action": "Hold the cube in your normal grip, slowly begin one regrip, and pause at the moment your thumb would move; watch whether the thumb pad stays touching the cube or lifts away, then complete the regrip and repeat slowly for the full time, noting each release point.",
+                "reason": "A deliberate pause makes the exact moment of thumb release visible during the slow regrip.",
+                "seconds": 30,
+                "requires": [
+                  "thumb_release_request"
+                ],
+                "produces": []
+              }
+            ]
+          },
+          {
+            "title": "Thumb slide trace: 33 seconds",
+            "seconds": 33,
+            "steps": [
+              {
+                "action": "With the cube held steady, slowly perform the same regrip while keeping your eyes on the thumb; trace whether the thumb slides along the cube or breaks contact, and repeat slowly for the full time, noting any gap between thumb and cube.",
+                "reason": "Tracing the thumb path shows whether contact is lost by sliding or by lifting during the regrip.",
+                "seconds": 33,
+                "requires": [
+                  "thumb_release_request"
+                ],
+                "produces": []
+              }
+            ]
+          }
+        ]
+      }
+    }
+  },
+  "AI02": {
+    "question": "给我两条不计时的换手检查练习，专门看左食指会不会在另一只手握稳之前抬起。末尾另起一段，用一句话请小予周四试两条。",
+    "lang": "zh",
+    "history": [],
+    "call": 3,
+    "draft": {
+      "answerKind": "general",
+      "answer": "两条都不计时，只盯左食指：握稳之前它不许先抬。\n\n第一条：右手握魔方，左食指轻搭在 U 层后侧，慢慢把右手换成拇指在底、中指在前的握法；换的过程中左食指保持贴住不动，握稳后停一秒再抬指做一次 U。若中途感到左食指先离面，就退回原位重来，只记“抬早了”的次数。\n\n第二条：左手托住魔方，右手从上方换到侧面握法；换手全程让左食指压住同一块贴纸不滑动，握稳后数两拍再松开。若左食指在握稳前出现缝隙或滑动，立即停手，把手指重新贴实后再继续。\n\n小予，周四请把这两条各试一遍。"
+    },
+    "repair": {
+      "answerKind": "general",
+      "answer": "小予，周四请试这两条换手检查练习。",
+      "plan": {
+        "inputs": [
+          {
+            "id": "practice_request",
+            "quote": "给我两条不计时的换手检查练习，专门看左食指会不会在另一只手握稳之前抬起。"
+          }
+        ],
+        "activities": [
+          {
+            "title": "桌面换手目视检查",
+            "steps": [
+              {
+                "action": "把魔方放桌面，左手食指轻贴顶面，右手缓慢包住魔方并握稳；在右手完全握稳的瞬间看左食指与顶面之间是否出现缝隙，若提前抬起就重做一次并保持食指贴住。",
+                "reason": "用可见缝隙判断左食指是否在右手握稳前离面。"
+              }
+            ]
+          },
+          {
+            "title": "口令换手触感检查",
+            "steps": [
+              {
+                "action": "左手食指轻压顶面，右手缓慢合拢并握稳，口中在右手贴稳时才说“稳”；说“稳”前若左食指已经离面，就重来并让食指保持贴面到说“稳”之后。",
+                "reason": "用口令标记右手握稳时刻，靠触感核对左食指是否提前离面。"
+              }
+            ]
+          }
+        ]
+      },
+      "sourceIds": []
+    }
+  },
+  "AI03": {
+    "question": "做两项练习检查慢拨一层时中指何时松开，标题写成“练习名：秒数”，两项合计最多六十四秒。结尾单独一段邀请小海周三试这两项，只写一句。",
+    "lang": "zh",
+    "history": [],
+    "call": 9,
+    "draft": {
+      "answerKind": "general",
+      "answer": "",
+      "sourceIds": [],
+      "plan": {
+        "inputs": [],
+        "activities": [
+          {
+            "title": "慢拨一层观察中指松开：30秒",
+            "seconds": 30,
+            "steps": [
+              {
+                "action": "用右手慢速做一次 U，全程盯住右手中指：在食指拨动前先确认中指仍轻贴魔方，拨动过程中看它何时离开接触面，拨完停住并说出松开发生在起手、中段还是收尾。",
+                "reason": "把注意力放在中指与魔方的接触上，先建立松开时机的基准观察。",
+                "seconds": 30,
+                "requires": [],
+                "produces": []
+              }
+            ]
+          },
+          {
+            "title": "慢拨一层对比中指松开：34秒",
+            "seconds": 34,
+            "steps": [
+              {
+                "action": "换用左手慢速做一次 U'，同样盯住右手中指，看它在这次反向拨动中松开得比上一次更早还是更晚，拨完停住并说出两次松开的差别。",
+                "reason": "用反向拨动做对照，检验中指松开时机是否随拨动方向变化。",
+                "seconds": 34,
+                "requires": [],
+                "produces": []
+              }
+            ]
+          }
+        ]
+      }
+    }
+  },
+  "AI04": {
+    "question": "现在可以慢慢转。把那个熟悉情形安排成两项有秒数的练习，都要摆好后目视核对涉及的两块及目标槽，确认一致才插入。若复现不了，两项各改练不同的已会转动，只做各自的备用动作。",
+    "lang": "zh",
+    "history": [
+      {
+        "role": "user",
+        "content": "我这次有两分五秒，想练以前会的插入，不过可能不能摆出那个局面，现在先不转动魔方。"
+      },
+      {
+        "role": "assistant",
+        "content": "从保持静止开始。"
+      }
+    ],
+    "call": 11,
+    "draft": {
+      "answerKind": "general",
+      "answer": "",
+      "sourceIds": [],
+      "plan": {
+        "inputs": [
+          {
+            "id": "known_insertion",
+            "quote": "想练以前会的插入"
+          },
+          {
+            "id": "time_budget",
+            "quote": "我这次有两分五秒"
+          }
+        ],
+        "activities": [
+          {
+            "title": "熟悉情形复现与插入",
+            "seconds": 65,
+            "steps": [
+              {
+                "action": "选一个你以前会的插入，用它的逆操作在当前魔方上慢慢摆出该插入对应的熟悉情形；摆好后目视核对涉及的两块与目标槽是否一致。ONLY IF 核对一致，则用该插入完成一次，再用同一逆操作把同一情形复位并重复一次；OTHERWISE 不插入，改为每次只做一个已会转动，转完停一下观察哪几块可见位置变了，做满剩余时间。",
+                "reason": "先确认情形再插入，复现不了就用慢速已会转动保持可控。",
+                "seconds": 65,
+                "requires": [],
+                "produces": []
+              }
+            ]
+          },
+          {
+            "title": "预测与核对转动",
+            "seconds": 60,
+            "steps": [
+              {
+                "action": "再次选同一个已会插入，用其逆操作尝试摆出熟悉情形并目视核对两块与目标槽。ONLY IF 核对一致，则插入一次后用同一逆操作复位同一情形再插入一次；OTHERWISE 不插入，改为在做一个已会转动前先预测哪一块会可见移动，转完对照实际变化，做满剩余时间。",
+                "reason": "用预测对比检验对已会转动的理解，同时保留熟悉情形的复现机会。",
+                "seconds": 60,
+                "requires": [],
+                "produces": []
+              }
+            ]
+          }
+        ]
+      }
+    }
+  },
+  "AI05": {
+    "question": "这次能缓慢转了。给这个熟悉案例两项限时练习；每项复现后亲眼检查局面和目标槽，准确才做会的插入。如果摆不成，分别给两个不同的、做得出来的已学转动备用练法，跳过插入。",
+    "lang": "zh",
+    "history": [
+      {
+        "role": "user",
+        "content": "这轮只有两分十九秒。我想把已经会的插入练一遍，起始情形未必能摆出，先别动魔方。"
+      },
+      {
+        "role": "assistant",
+        "content": "先只看。"
+      }
+    ],
+    "call": 17,
+    "draft": {
+      "answerKind": "general",
+      "answer": "",
+      "sourceIds": [],
+      "plan": {
+        "inputs": [
+          {
+            "id": "known_insertion",
+            "quote": "我想把已经会的插入练一遍"
+          },
+          {
+            "id": "slow_turns",
+            "quote": "这次能缓慢转了"
+          },
+          {
+            "id": "no_photo",
+            "quote": "起始情形未必能摆出，先别动魔方"
+          }
+        ],
+        "activities": [
+          {
+            "title": "复现并检查后插入",
+            "seconds": 70,
+            "steps": [
+              {
+                "action": "选一个你已经会的插入，用它的逆操作把那个熟悉情形摆出来；摆好后先不动，亲眼确认角块和棱块的位置、朝向以及目标槽是否与记忆一致。确认准确就缓慢做一次这个插入，做完再看目标槽是否填好；若摆不成或检查不符，就改为缓慢做你已会的转动，每转一步停一下观察可见变化，本项不再做插入。",
+                "reason": "先验证情形再动手，避免在错误局面上练成错误手感；摆不成时用慢转保持练习量。",
+                "seconds": 70,
+                "requires": [],
+                "produces": []
+              }
+            ]
+          },
+          {
+            "title": "重置同一情形再插入",
+            "seconds": 69,
+            "steps": [
+              {
+                "action": "只有上一项确认过熟悉情形并完成插入，才用同一个逆操作把同一情形重置，再亲眼核对角块、棱块和目标槽，准确后缓慢插入一次。若上一项没能摆成，就改为先预测某一步已知转动会带来什么可见变化，再缓慢转出这一步并对照实际结果，本项到此结束，不做插入、不重置、不检查已填槽。",
+                "reason": "重置同一情形才能重复同一手感；备用分支用预测对照练观察，且不假装完成 F2L。",
+                "seconds": 69,
+                "requires": [],
+                "produces": []
+              }
+            ]
+          }
+        ]
+      }
+    }
+  }
+}

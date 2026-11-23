@@ -1,0 +1,937 @@
+[
+  {
+    "id": "AC01",
+    "question": "现在可以慢转。我想把上面那个熟悉局面用学过的逆动作准备出来，看清目标槽及配对两块的位置才插入。请安排两项练习，各标秒数。若局面摆不成，两项备用练习分别做不同的事。",
+    "history": [
+      {
+        "role": "user",
+        "content": "本轮只有两分十二秒。我想找回已经练过的一种插入局面，未必能复现出来，暂不转动魔方。"
+      },
+      {
+        "role": "assistant",
+        "content": "先不转动，看看当前能看见哪些贴纸。"
+      }
+    ],
+    "lang": "zh",
+    "calls": [
+      2,
+      49
+    ],
+    "drafts": [
+      {
+        "answerKind": "general",
+        "answer": "",
+        "sourceIds": [],
+        "plan": {
+          "inputs": [
+            {
+              "id": "user_request",
+              "quote": "现在可以慢转。我想把上面那个熟悉局面用学过的逆动作准备出来，看清目标槽及配对两块的位置才插入。请安排两项练习，各标秒数。若局面摆不成，两项备用练习分别做不同的事。"
+            }
+          ],
+          "activities": [
+            {
+              "title": "逆动作准备并观察插入",
+              "seconds": 72,
+              "steps": [
+                {
+                  "action": "慢速执行学过的逆动作尝试摆出熟悉局面；若摆不成，改为观察当前朝上的一个角块，只记录实际可见的贴纸颜色及其所在面，未见面记为未知；摆成则看清目标槽与配对两块的位置后慢速插入，并检查插入后两块是否到位。",
+                  "reason": "先准备局面再观察插入，摆不成时用同一时间做可见信息记录。",
+                  "seconds": 72,
+                  "requires": [],
+                  "produces": []
+                }
+              ]
+            },
+            {
+              "title": "备用观察与回忆",
+              "seconds": 60,
+              "steps": [
+                {
+                  "action": "若上一项未摆成，重新观察当前朝上的同一个角块，回忆并核对刚才记录的可见颜色与所在面，未见面保持未知；若已摆成，则再慢速做一次逆动作准备、观察目标槽与配对两块位置并插入，检查是否到位。",
+                  "reason": "摆不成时用不同任务巩固观察回忆，摆成时重复插入练习。",
+                  "seconds": 60,
+                  "requires": [],
+                  "produces": []
+                }
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "answerKind": "general",
+        "answer": "",
+        "sourceIds": [],
+        "plan": {
+          "inputs": [
+            {
+              "id": "user_request",
+              "quote": "现在可以慢转。我想把上面那个熟悉局面用学过的逆动作准备出来，看清目标槽及配对两块的位置才插入。请安排两项练习，各标秒数。若局面摆不成，两项备用练习分别做不同的事。"
+            }
+          ],
+          "activities": [
+            {
+              "title": "逆动作准备并观察插入",
+              "seconds": 72,
+              "steps": [
+                {
+                  "action": "先选一个当前能看见的角块，只记录它实际可见的贴纸颜色和现在所在的面与位置，看不见的颜色记为未知；然后慢速用学过的逆动作尝试把上面那个熟悉局面准备出来，若摆不成就在同一练习内改为观察这个角块可见贴纸并复述一次，不转动魔方",
+                  "reason": "先固定可观察信息，再尝试逆动作准备，摆不成时也有可执行的备用观察",
+                  "seconds": 72,
+                  "requires": [],
+                  "produces": [
+                    "corner_observation"
+                  ]
+                }
+              ]
+            },
+            {
+              "title": "回忆并复核目标槽",
+              "seconds": 60,
+              "steps": [
+                {
+                  "action": "不转动魔方，先回忆刚才记录的那个角块可见贴纸颜色和当前位置，再对照实物复核；若第一项已摆出熟悉局面，则改为看清目标槽及配对两块的位置并口述一次，若未摆成则只复核该角块可见信息",
+                  "reason": "用同一角块的回忆与复核巩固观察，摆成时再检查插入所需位置",
+                  "seconds": 60,
+                  "requires": [
+                    "corner_observation"
+                  ],
+                  "produces": []
+                }
+              ]
+            }
+          ]
+        }
+      }
+    ]
+  },
+  {
+    "id": "AC02",
+    "question": "允许慢拧了。沿用刚才那个熟悉情形，安排两项有秒数的练习。每项都是目视核对目标槽和两块所在位置，核对通过才插入。复现不了时每项写一个不同的备用练法。",
+    "history": [
+      {
+        "role": "user",
+        "content": "这一回有两分三十四秒，先别转动魔方。我正在复习一种以前学会的插入情形，可能没法摆出来。"
+      },
+      {
+        "role": "assistant",
+        "content": "先保留目前的位置。"
+      }
+    ],
+    "lang": "zh",
+    "calls": [
+      3,
+      4,
+      53,
+      54
+    ],
+    "drafts": [
+      {
+        "answerKind": "general",
+        "answer": "",
+        "sourceIds": [],
+        "plan": {
+          "inputs": [
+            {
+              "id": "familiar_case",
+              "quote": "我正在复习一种以前学会的插入情形，可能没法摆出来。"
+            },
+            {
+              "id": "slow_turns",
+              "quote": "允许慢拧了。"
+            }
+          ],
+          "activities": [
+            {
+              "title": "核对熟悉情形后慢速插入",
+              "seconds": 77,
+              "steps": [
+                {
+                  "action": "选定一个自己已会的插入法，用它的逆操作在当前魔方上尝试摆出该熟悉情形；目视核对目标槽位置和两块所在位置是否与记忆一致。仅当核对通过时，用同一逆操作复位同一情形后做一次插入，再复位并重复一次；否则整段改用自己已会的慢速转动，每转一步停一下观察可见变化，不插入、不复位、不检查槽是否完成。",
+                  "reason": "先确认情形真实可复现，再重复同一插入，避免把未核对的状态当成成功。",
+                  "seconds": 77,
+                  "requires": [
+                    "familiar_case",
+                    "slow_turns"
+                  ],
+                  "produces": []
+                }
+              ]
+            },
+            {
+              "title": "预测变化后慢速插入",
+              "seconds": 77,
+              "steps": [
+                {
+                  "action": "再次选定同一熟悉插入法，用其逆操作尝试摆出该情形，目视核对目标槽和两块位置。仅当核对通过时，用同一逆操作复位后做一次插入并复位一次；否则整段只做已会慢速转动，每转一步前先预测一处可见变化，转完对照实际移动，不插入、不复位、不检查槽是否完成。",
+                  "reason": "用预测与实际对照检验对已知转动的理解，同时保持插入只在核对通过后发生。",
+                  "seconds": 77,
+                  "requires": [
+                    "familiar_case",
+                    "slow_turns"
+                  ],
+                  "produces": []
+                }
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "answerKind": "general",
+        "answer": "",
+        "sourceIds": [],
+        "plan": {
+          "inputs": [
+            {
+              "id": "familiar_case",
+              "quote": "我正在复习一种以前学会的插入情形，可能没法摆出来。"
+            },
+            {
+              "id": "slow_turns",
+              "quote": "允许慢拧了。"
+            }
+          ],
+          "activities": [
+            {
+              "title": "核对熟悉情形后慢速插入",
+              "seconds": 77,
+              "steps": [
+                {
+                  "action": "选定一个自己已会的插入法，用它的逆操作在当前魔方上尝试摆出该熟悉情形，目视核对目标槽位置和两块所在位置是否与记忆一致；仅当核对通过时，用同一逆操作复位同一情形后做一次插入，再复位并重复一次；否则整段只做自己已会的慢速转动，每转一步停一下观察可见变化，不插入、不复位、不检查槽是否完成。",
+                  "reason": "先确认情形真实可复现，再重复同一插入，避免把未核对的状态当成成功。",
+                  "seconds": 77,
+                  "requires": [
+                    "familiar_case",
+                    "slow_turns"
+                  ],
+                  "produces": []
+                }
+              ]
+            },
+            {
+              "title": "预测变化后慢速插入",
+              "seconds": 77,
+              "steps": [
+                {
+                  "action": "再次选定同一熟悉插入法，用其逆操作尝试摆出该情形，目视核对目标槽和两块位置；仅当核对通过时，用同一逆操作复位后做一次插入并复位一次；否则整段只做自己已会的慢速转动，每转一步前先预测一处可见变化，转完对照实际移动，不插入、不复位、不检查槽是否完成。",
+                  "reason": "用预测与实际对照检验对已知转动的理解，同时保持插入只在核对通过后发生。",
+                  "seconds": 77,
+                  "requires": [
+                    "familiar_case",
+                    "slow_turns"
+                  ],
+                  "produces": []
+                }
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "answerKind": "general",
+        "answer": "",
+        "sourceIds": [],
+        "plan": {
+          "inputs": [
+            {
+              "id": "familiar_case",
+              "quote": "我正在复习一种以前学会的插入情形，可能没法摆出来。"
+            },
+            {
+              "id": "slow_turns",
+              "quote": "允许慢拧了。"
+            }
+          ],
+          "activities": [
+            {
+              "title": "熟悉情形插入与观察备用",
+              "seconds": 77,
+              "steps": [
+                {
+                  "action": "选定一个自己已会的插入法，用它的逆操作把当前魔方摆成该插入的熟悉情形；目视核对目标槽和两块所在位置，确认与熟悉情形一致后插入一次，再用同一逆操作复位同一情形并重复一次；若无法摆出熟悉情形，则改用自己已会的慢速转动，每转一步停一下，观察哪一块移动、哪一块不动，全程不插入、不复位、不检查槽位。",
+                  "reason": "先目视确认熟悉情形和目标槽再插入，避免凭猜测转动；备用练法用已知慢转观察变化，不假设能完成插入。",
+                  "seconds": 77,
+                  "requires": [
+                    "familiar_case",
+                    "slow_turns"
+                  ],
+                  "produces": []
+                }
+              ]
+            },
+            {
+              "title": "熟悉情形插入与预测备用",
+              "seconds": 77,
+              "steps": [
+                {
+                  "action": "沿用同一熟悉插入法，用其逆操作摆出熟悉情形，目视核对目标槽和两块位置无误后插入一次，再用同一逆操作复位并重复一次；若无法摆出熟悉情形，则改用自己已会的慢速转动，在转一步之前先预测哪一块会移动，转完后对照实际移动，全程不插入、不复位、不检查槽位。",
+                  "reason": "核对通过才插入可减少错误；备用练法用预测与实际对照训练观察，不声称完成F2L。",
+                  "seconds": 77,
+                  "requires": [
+                    "familiar_case",
+                    "slow_turns"
+                  ],
+                  "produces": []
+                }
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "answerKind": "general",
+        "answer": "",
+        "sourceIds": [],
+        "plan": {
+          "inputs": [
+            {
+              "id": "familiar_case",
+              "quote": "我正在复习一种以前学会的插入情形，可能没法摆出来。"
+            },
+            {
+              "id": "slow_turns",
+              "quote": "允许慢拧了。"
+            }
+          ],
+          "activities": [
+            {
+              "title": "熟悉情形插入与观察备用",
+              "seconds": 77,
+              "steps": [
+                {
+                  "action": "选定一个自己已会的插入法，用它的逆操作把当前魔方摆成该插入的熟悉情形；目视核对目标槽和两块所在位置，确认与熟悉情形一致后插入一次，再用同一逆操作复位同一情形并重复一次；若无法摆出熟悉情形，则改用自己已会的慢速转动，每转一步停一下，观察哪一块移动、哪一块不动，全程不插入、不复位、不检查槽位。",
+                  "reason": "先目视确认熟悉情形和目标槽再插入，避免凭猜测转动；备用练法用已知慢转观察变化，不假设能完成插入。",
+                  "seconds": 77,
+                  "requires": [
+                    "familiar_case",
+                    "slow_turns"
+                  ],
+                  "produces": []
+                }
+              ]
+            },
+            {
+              "title": "熟悉情形插入与预测备用",
+              "seconds": 77,
+              "steps": [
+                {
+                  "action": "沿用同一熟悉插入法，用其逆操作摆出熟悉情形，目视核对目标槽和两块位置无误后插入一次，再用同一逆操作复位并重复一次；若无法摆出熟悉情形，则改用自己已会的慢速转动，在转一步之前先预测哪一块会移动，转完后对照实际移动，全程不插入、不复位、不检查槽位。",
+                  "reason": "核对通过才插入可减少错误；备用练法用预测与实际对照训练观察，不声称完成F2L。",
+                  "seconds": 77,
+                  "requires": [
+                    "familiar_case",
+                    "slow_turns"
+                  ],
+                  "produces": []
+                }
+              ]
+            }
+          ]
+        }
+      }
+    ]
+  },
+  {
+    "id": "AC03",
+    "question": "I can turn slowly now. Make two timed activities for that familiar case. Visually check the case before attempting the learned insertion. If it cannot be recreated, put a different exercise with moves I already know in each activity.",
+    "history": [
+      {
+        "role": "user",
+        "content": "I only have one minute and 47 seconds. I know one insertion I want to review, but might not get its case back. No cube turns for now."
+      },
+      {
+        "role": "assistant",
+        "content": "Keep the cube still for now."
+      }
+    ],
+    "lang": "en",
+    "calls": [
+      8,
+      55
+    ],
+    "drafts": [
+      {
+        "answerKind": "general",
+        "answer": "1. **Record the corner — 50 seconds.** Pick one corner currently in view, say its current face/location and write down only the sticker colours you can actually see (any hidden sticker stays UNKNOWN), because this gives you a fixed reference to recall later.\n\n2. **Recall and recheck — 57 seconds.** Without looking at your note, say the same corner's face/location and visible colours, then look back at the cube and your note to check them, because the visual recheck confirms what you remembered before the time runs out.",
+        "sourceIds": []
+      },
+      {
+        "answerKind": "general",
+        "answer": "1. **Record the corner (about 50 seconds).** Pick one corner currently in view, note its current face/location and write down only the sticker colours you can actually see, marking any hidden sticker as UNKNOWN, so you have a fixed record to test against later.\n\n2. **Recall and recheck (about 57 seconds).** Without turning the cube, say your recorded colours and location from memory, then look at that same corner and confirm or correct each entry, so the recall is checked against the real visible stickers rather than assumed.",
+        "sourceIds": []
+      }
+    ]
+  },
+  {
+    "id": "AC11",
+    "question": "Create a 136–164-word review plan from my supplied Ukrainian word-and-meaning list, with two activities and two timed substeps each. I have 183 seconds in total. Give an action and a reason for each substep.",
+    "history": [],
+    "lang": "en",
+    "calls": [
+      30,
+      31,
+      73,
+      74
+    ],
+    "drafts": [
+      {
+        "answerKind": "general",
+        "answer": "",
+        "sourceIds": [],
+        "plan": {
+          "inputs": [
+            {
+              "id": "ukrainian_list",
+              "quote": "my supplied Ukrainian word-and-meaning list"
+            }
+          ],
+          "activities": [
+            {
+              "title": "Ukrainian recall pass",
+              "seconds": 95,
+              "steps": [
+                {
+                  "action": "Keep the prompt column visible, cover only the meaning column, then recall each word's meaning in order.",
+                  "reason": "Covering only the answer column forces genuine recall instead of rereading the meanings.",
+                  "seconds": 50,
+                  "requires": [
+                    "ukrainian_list"
+                  ],
+                  "produces": [
+                    "recalled_meanings"
+                  ]
+                },
+                {
+                  "action": "Uncover the meaning column, check each recalled meaning, and hide it again before the next word.",
+                  "reason": "Immediate checking corrects errors while the attempt is still fresh in memory.",
+                  "seconds": 45,
+                  "requires": [
+                    "ukrainian_list",
+                    "recalled_meanings"
+                  ],
+                  "produces": [
+                    "checked_meanings"
+                  ]
+                }
+              ]
+            },
+            {
+              "title": "Meaning-to-word pass",
+              "seconds": 88,
+              "steps": [
+                {
+                  "action": "Cover the word column, uncover meanings as prompts, and recall each Ukrainian word, writing your attempt first.",
+                  "reason": "Writing before revealing creates an honest productive attempt to compare later.",
+                  "seconds": 48,
+                  "requires": [
+                    "ukrainian_list",
+                    "checked_meanings"
+                  ],
+                  "produces": [
+                    "written_attempts"
+                  ]
+                },
+                {
+                  "action": "Uncover the word column, compare each written attempt, mark mismatches, and cover it again.",
+                  "reason": "Comparing written forms catches spelling errors that spoken checking would miss.",
+                  "seconds": 40,
+                  "requires": [
+                    "ukrainian_list",
+                    "written_attempts"
+                  ],
+                  "produces": [
+                    "marked_errors"
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "answerKind": "general",
+        "answer": "",
+        "sourceIds": [],
+        "plan": {
+          "inputs": [
+            {
+              "id": "ukrainian_list",
+              "quote": "my supplied Ukrainian word-and-meaning list"
+            }
+          ],
+          "activities": [
+            {
+              "title": "Ukrainian recall pass",
+              "seconds": 95,
+              "steps": [
+                {
+                  "action": "Keep the prompt column visible, cover only the meaning column, then recall each word's meaning in order.",
+                  "reason": "Covering only the answer column forces genuine recall instead of rereading the meanings, so each attempt tests memory rather than recognition.",
+                  "seconds": 50,
+                  "requires": [
+                    "ukrainian_list"
+                  ],
+                  "produces": [
+                    "recalled_meanings"
+                  ]
+                },
+                {
+                  "action": "Uncover the meaning column, check each recalled meaning, and hide it again before the next word.",
+                  "reason": "Immediate checking corrects errors while the attempt is still fresh in memory, so the right meaning is linked to the word before it fades.",
+                  "seconds": 45,
+                  "requires": [
+                    "ukrainian_list",
+                    "recalled_meanings"
+                  ],
+                  "produces": [
+                    "checked_meanings"
+                  ]
+                }
+              ]
+            },
+            {
+              "title": "Meaning-to-word pass",
+              "seconds": 88,
+              "steps": [
+                {
+                  "action": "Cover the word column, uncover meanings as prompts, and recall each Ukrainian word, writing your attempt first.",
+                  "reason": "Writing before revealing creates an honest productive attempt to compare later, so you cannot copy the answer and mistake it for recall.",
+                  "seconds": 48,
+                  "requires": [
+                    "ukrainian_list",
+                    "checked_meanings"
+                  ],
+                  "produces": [
+                    "written_attempts"
+                  ]
+                },
+                {
+                  "action": "Uncover the word column, compare each written attempt, mark mismatches, and cover it again.",
+                  "reason": "Comparing written forms catches spelling errors that spoken checking would miss, and marking mismatches shows which words need another pass.",
+                  "seconds": 40,
+                  "requires": [
+                    "ukrainian_list",
+                    "written_attempts"
+                  ],
+                  "produces": [
+                    "marked_errors"
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "answerKind": "general",
+        "answer": "",
+        "sourceIds": [],
+        "plan": {
+          "inputs": [
+            {
+              "id": "ukrainian_list",
+              "quote": "my supplied Ukrainian word-and-meaning list"
+            }
+          ],
+          "activities": [
+            {
+              "title": "Meaning recall pass",
+              "seconds": 92,
+              "steps": [
+                {
+                  "action": "Keep the Ukrainian prompt column visible, cover the meaning column, and recall each meaning in turn.",
+                  "reason": "Hiding answers forces genuine retrieval instead of recognition.",
+                  "seconds": 46,
+                  "requires": [
+                    "ukrainian_list"
+                  ],
+                  "produces": []
+                },
+                {
+                  "action": "Uncover the meaning column to check each recall, then cover it again before the next word.",
+                  "reason": "Immediate checking corrects errors while the attempt is fresh.",
+                  "seconds": 46,
+                  "requires": [
+                    "ukrainian_list"
+                  ],
+                  "produces": []
+                }
+              ]
+            },
+            {
+              "title": "Weak word retry",
+              "seconds": 91,
+              "steps": [
+                {
+                  "action": "Mark words missed in the first pass, or use the full list if none were missed, then recall their meanings with the answer column covered.",
+                  "reason": "Retrying only weak items targets the gaps the first pass exposed.",
+                  "seconds": 46,
+                  "requires": [
+                    "ukrainian_list"
+                  ],
+                  "produces": []
+                },
+                {
+                  "action": "Uncover each answer to verify the retry, then cover it again before moving on.",
+                  "reason": "A second check confirms whether the weak items now stick.",
+                  "seconds": 45,
+                  "requires": [
+                    "ukrainian_list"
+                  ],
+                  "produces": []
+                }
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "answerKind": "general",
+        "answer": "",
+        "sourceIds": [],
+        "plan": {
+          "inputs": [
+            {
+              "id": "ukrainian_list",
+              "quote": "my supplied Ukrainian word-and-meaning list"
+            }
+          ],
+          "activities": [
+            {
+              "title": "Meaning recall pass",
+              "seconds": 92,
+              "steps": [
+                {
+                  "action": "Keep the Ukrainian prompt column visible, cover the meaning column, and recall each meaning in turn.",
+                  "reason": "Hiding answers forces genuine retrieval instead of recognition, so your memory must reconstruct each meaning rather than merely confirm it.",
+                  "seconds": 46,
+                  "requires": [
+                    "ukrainian_list"
+                  ],
+                  "produces": []
+                },
+                {
+                  "action": "Uncover the meaning column to check each recall, then cover it again before the next word.",
+                  "reason": "Immediate checking corrects errors while the attempt is fresh, so mistaken meanings are fixed before they become entrenched habits.",
+                  "seconds": 46,
+                  "requires": [
+                    "ukrainian_list"
+                  ],
+                  "produces": []
+                }
+              ]
+            },
+            {
+              "title": "Weak word retry",
+              "seconds": 91,
+              "steps": [
+                {
+                  "action": "Mark words missed in the first pass, or use the full list if none were missed, then recall their meanings with the answer column covered.",
+                  "reason": "Retrying only weak items targets the gaps the first pass exposed, concentrating your limited time where recall actually failed.",
+                  "seconds": 46,
+                  "requires": [
+                    "ukrainian_list"
+                  ],
+                  "produces": []
+                },
+                {
+                  "action": "Uncover each answer to verify the retry, then cover it again before moving on.",
+                  "reason": "A second check confirms whether the weak items now stick, showing which words still need another review later.",
+                  "seconds": 45,
+                  "requires": [
+                    "ukrainian_list"
+                  ],
+                  "produces": []
+                }
+              ]
+            }
+          ]
+        }
+      }
+    ]
+  },
+  {
+    "id": "AC12",
+    "question": "Make a 146–176-word practice plan with two timed activities, two timed substeps in each, and a reason for every substep. No more than 201 seconds total. Use my Czech vocabulary list and reuse the complete list if there are zero errors.",
+    "history": [],
+    "lang": "en",
+    "calls": [
+      32,
+      33,
+      78,
+      79
+    ],
+    "drafts": [
+      {
+        "answerKind": "general",
+        "answer": "",
+        "sourceIds": [],
+        "plan": {
+          "inputs": [
+            {
+              "id": "czech_list",
+              "quote": "Use my Czech vocabulary list and reuse the complete list if there are zero errors."
+            }
+          ],
+          "activities": [
+            {
+              "title": "Czech word-to-meaning recall",
+              "seconds": 100,
+              "steps": [
+                {
+                  "action": "Write the Czech words from your list in the WORD column and their known meanings in the MEANING column of one two-column table; if no list is available, stop rather than invent words.",
+                  "reason": "A complete same-face reference gives every later attempt a checkable answer without switching materials.",
+                  "seconds": 40,
+                  "requires": [],
+                  "produces": [
+                    "word_meaning_table"
+                  ]
+                },
+                {
+                  "action": "Cover the MEANING column, read each WORD, say its meaning, uncover to check, then cover MEANING again before the next word; if zero errors, reuse the complete list.",
+                  "reason": "Hiding the answer until after each attempt makes recall genuine and the check immediate.",
+                  "seconds": 60,
+                  "requires": [
+                    "word_meaning_table"
+                  ],
+                  "produces": []
+                }
+              ]
+            },
+            {
+              "title": "Czech meaning-to-word recall",
+              "seconds": 100,
+              "steps": [
+                {
+                  "action": "Cover the WORD column, read each MEANING, write the Czech word on paper, uncover to check, then cover WORD again before the next meaning.",
+                  "reason": "Producing the word in writing tests spelling and strengthens retrieval in the opposite direction.",
+                  "seconds": 60,
+                  "requires": [
+                    "word_meaning_table"
+                  ],
+                  "produces": [
+                    "written_attempts"
+                  ]
+                },
+                {
+                  "action": "Compare your written attempts with the WORD column, mark mismatches, and if zero errors reuse the complete list for another pass.",
+                  "reason": "Checking written forms exposes spelling gaps and decides whether the full list needs repeating.",
+                  "seconds": 40,
+                  "requires": [
+                    "written_attempts",
+                    "word_meaning_table"
+                  ],
+                  "produces": []
+                }
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "answerKind": "general",
+        "answer": "",
+        "sourceIds": [],
+        "plan": {
+          "inputs": [
+            {
+              "id": "czech_list",
+              "quote": "Use my Czech vocabulary list and reuse the complete list if there are zero errors."
+            }
+          ],
+          "activities": [
+            {
+              "title": "Czech word-to-meaning recall",
+              "seconds": 100,
+              "steps": [
+                {
+                  "action": "Write the Czech words from your list in the WORD column and their known meanings in the MEANING column of one two-column table; if no list is available, stop rather than invent words.",
+                  "reason": "A same-face reference keeps every check answerable.",
+                  "seconds": 40,
+                  "requires": [],
+                  "produces": [
+                    "word_meaning_table"
+                  ]
+                },
+                {
+                  "action": "Cover the MEANING column, read each WORD, say its meaning, uncover to check, then cover MEANING again before the next word; if zero errors, reuse the complete list.",
+                  "reason": "Hiding the answer until after each attempt makes recall genuine and checking immediate.",
+                  "seconds": 60,
+                  "requires": [
+                    "word_meaning_table"
+                  ],
+                  "produces": []
+                }
+              ]
+            },
+            {
+              "title": "Czech meaning-to-word recall",
+              "seconds": 100,
+              "steps": [
+                {
+                  "action": "Cover the WORD column, read each MEANING, write the Czech word on paper, uncover to check, then cover WORD again before the next meaning.",
+                  "reason": "Producing the word in writing tests spelling and strengthens retrieval in the opposite direction.",
+                  "seconds": 60,
+                  "requires": [
+                    "word_meaning_table"
+                  ],
+                  "produces": [
+                    "written_attempts"
+                  ]
+                },
+                {
+                  "action": "Compare your written attempts with the WORD column, mark mismatches, and if zero errors reuse the complete list for another pass.",
+                  "reason": "Checking written forms exposes spelling gaps and decides whether the full list needs repeating.",
+                  "seconds": 40,
+                  "requires": [
+                    "written_attempts",
+                    "word_meaning_table"
+                  ],
+                  "produces": []
+                }
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "answerKind": "general",
+        "answer": "",
+        "sourceIds": [],
+        "plan": {
+          "inputs": [
+            {
+              "id": "czech_list",
+              "quote": "Use my Czech vocabulary list and reuse the complete list if there are zero errors."
+            }
+          ],
+          "activities": [
+            {
+              "title": "Meaning recall from Czech words",
+              "seconds": 100,
+              "steps": [
+                {
+                  "action": "Write the available Czech words in the WORD column and their known meanings in the MEANING column of a two-column list; if no words are available, stop rather than invent any.",
+                  "reason": "A complete written reference lets every later attempt be checked without guessing.",
+                  "seconds": 40,
+                  "requires": [],
+                  "produces": [
+                    "word_meaning_list"
+                  ]
+                },
+                {
+                  "action": "Cover the MEANING column, read each WORD, say its meaning, uncover to check, then cover MEANING again before the next word; note misses.",
+                  "reason": "Hiding answers forces genuine recall, and re-covering keeps each check honest.",
+                  "seconds": 60,
+                  "requires": [
+                    "word_meaning_list"
+                  ],
+                  "produces": [
+                    "error_notes"
+                  ]
+                }
+              ]
+            },
+            {
+              "title": "Czech production from meanings",
+              "seconds": 100,
+              "steps": [
+                {
+                  "action": "Cover the WORD column, read each MEANING, write the Czech word on paper, uncover to check, then cover WORD again before the next item.",
+                  "reason": "Producing written Czech from meaning strengthens retrieval and exposes spelling gaps.",
+                  "seconds": 60,
+                  "requires": [
+                    "word_meaning_list"
+                  ],
+                  "produces": [
+                    "written_attempts"
+                  ]
+                },
+                {
+                  "action": "Review the written attempts against the list, mark errors, and if zero errors reuse the complete list for another round; otherwise repeat only the missed items.",
+                  "reason": "Targeting recorded errors or repeating the full list when flawless keeps practice efficient.",
+                  "seconds": 40,
+                  "requires": [
+                    "written_attempts",
+                    "error_notes"
+                  ],
+                  "produces": []
+                }
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "answerKind": "general",
+        "answer": "",
+        "sourceIds": [],
+        "plan": {
+          "inputs": [
+            {
+              "id": "czech_list",
+              "quote": "Use my Czech vocabulary list and reuse the complete list if there are zero errors."
+            }
+          ],
+          "activities": [
+            {
+              "title": "Meaning recall from Czech words",
+              "seconds": 100,
+              "steps": [
+                {
+                  "action": "Write the available Czech words in the WORD column and their known meanings in the MEANING column of a two-column list; if no words are available, stop rather than invent any.",
+                  "reason": "A complete written reference lets every later attempt be checked without guessing.",
+                  "seconds": 40,
+                  "requires": [],
+                  "produces": [
+                    "word_meaning_list"
+                  ]
+                },
+                {
+                  "action": "Cover the MEANING column, read each WORD, say its meaning, uncover to check, then cover MEANING again before the next word; note misses.",
+                  "reason": "Hiding answers forces genuine recall.",
+                  "seconds": 60,
+                  "requires": [
+                    "word_meaning_list"
+                  ],
+                  "produces": [
+                    "error_notes"
+                  ]
+                }
+              ]
+            },
+            {
+              "title": "Czech production from meanings",
+              "seconds": 100,
+              "steps": [
+                {
+                  "action": "Cover the WORD column, read each MEANING, write the Czech word on paper, uncover to check, then cover WORD again before the next item.",
+                  "reason": "Producing written Czech from meaning strengthens retrieval and exposes spelling gaps.",
+                  "seconds": 60,
+                  "requires": [
+                    "word_meaning_list"
+                  ],
+                  "produces": [
+                    "written_attempts"
+                  ]
+                },
+                {
+                  "action": "Review the written attempts against the list, mark errors, and if zero errors reuse the complete list for another round; otherwise repeat only the missed items.",
+                  "reason": "Targeting recorded errors or repeating the full list when flawless keeps practice efficient.",
+                  "seconds": 40,
+                  "requires": [
+                    "written_attempts",
+                    "error_notes"
+                  ],
+                  "produces": []
+                }
+              ]
+            }
+          ]
+        }
+      }
+    ]
+  }
+]

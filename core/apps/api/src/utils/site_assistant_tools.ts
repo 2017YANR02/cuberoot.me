@@ -1,4 +1,6 @@
+import { roundAnswer, type RoundRow } from './site_assistant_round.js';
 import { checkpointAssistantTool } from './site_assistant_execution.js';
+import { annualAnswer, fourthsId } from './site_assistant_public_queries.js';
 import { z } from 'zod';
 import { formatWcaResult } from '@cuberoot/shared/wca-format-result';
 import { selectCurrentRecords, personalRecordFlags, type WcaRecordRow } from '@cuberoot/shared/wca-records';
@@ -16,6 +18,7 @@ import { readAssistantNews } from './site_assistant_news.js';
 import { readStatisticsMetadata } from './site_assistant_statistics_metadata.js';
 import { readStatisticsRuntime } from './site_assistant_statistics_runtime.js';
 import { algorithmCards } from './site_assistant_algorithms.js';
+import { verifyCubeMovesCall } from './site_assistant_moves.js';
 
 const id = z.string().regex(/^[A-Za-z0-9_-]{1,100}$/);
 const competitionId = id.refine(value=>!/^\d{4}[A-Z]{4}\d{2}$/.test(value),'This is a person WCA ID; use wcaId, not compId.');
@@ -25,6 +28,7 @@ const date=z.string().refine(isValidIsoDate,'Expected an ISO calendar date');
 export const toolCallSchema = z.discriminatedUnion('tool', [
   analysisSchemaCall,
   analysisQueryCall,
+  verifyCubeMovesCall,
   z.object({ tool: z.literal('deliberate') }).strict(),
   z.object({ tool: z.literal('web_search'), query: z.string().trim().min(2).max(300), recency: z.enum(['any','day','week','month','year']).default('any'), from: date.optional(), to: date.optional(), dateBasis: z.enum(['publication','event']).optional() }).strict().refine(value=>!value.from || !value.to || value.from<=value.to,{message:'Date range is reversed'}),
   z.object({ tool: z.literal('news'), from: date.optional(), to: date.optional(), limit: z.number().int().min(1).max(10).default(5) }).strict().refine(value=>!value.from || !value.to || value.from<=value.to,{message:'Date range is reversed'}),
@@ -35,6 +39,8 @@ export const toolCallSchema = z.discriminatedUnion('tool', [
   z.object({ tool: z.literal('person'), wcaId: z.string().regex(/^\d{4}[A-Z]{4}\d{2}$/), event: z.enum([...WCA_EVENT_ORDER, 'all']).default('333'), metric: z.enum(['single','average']).optional(), rankings: z.boolean().optional(), progress: z.boolean().default(false), view: z.enum(['records','profile']).optional() }).strict().refine(value=>value.event!=='all' || !value.progress,{path:['event'],message:'Progress charts require one event; use all only for current personal bests.'}).refine(value=>value.view!=='profile' || (!value.metric && !value.progress && value.rankings===undefined),{path:['view'],message:'Use records view for metric, rankings or progress requests.'}),
   z.object({ tool: z.literal('rankings'), event, type: z.enum(['single','average']).default('single'), country: z.string().regex(/^([A-Z]{2}|_Asia|_Europe|_Africa|_North America|_South America|_Oceania)?$/).default(''), year: z.number().int().min(2003).max(2100).optional(), limit: z.number().int().min(1).max(20).default(10) }).strict(),
   z.object({ tool: z.literal('competitions'), query: z.string().max(100).default(''), country: z.string().regex(/^([A-Z]{2})?$/).default(''), upcoming: z.boolean().default(true), from:date.optional(),to:date.optional(), limit: z.number().int().min(1).max(20).default(10) }).strict().refine(value=>!value.from || !value.to || value.from<=value.to,{message:'Date range is reversed'}),
+  z.object({ tool: z.literal('annual_attendance'), limit:z.number().int().min(1).max(20).default(3) }).strict(),
+  z.object({ tool: z.literal('competition_round'), compId:competitionId,event,details:z.boolean().optional(),people:z.array(z.string().regex(/^\d{4}[A-Z]{4}\d{2}$/)).min(1).max(20).optional(),round:z.enum(['semifinal','final','first','second','third','f','c','1','2','3','d','e','g','b','h','0']).default('final'),limit:z.number().int().min(1).max(20).default(10) }).strict(),
   z.object({ tool: z.literal('scrambles'), compId: competitionId, event, round: z.string().regex(/^[a-z0-9]{1,2}$/).default('f') }).strict(),
   z.object({ tool: z.literal('recons'), wcaId: z.string().regex(/^\d{4}[A-Z]{4}\d{2}$/).optional(), compId: competitionId.optional(), value: z.number().positive().max(360000).optional(), event: z.string().regex(/^[A-Za-z0-9]+$/).optional(), limit: z.number().int().min(1).max(20).default(10) }).strict(),
   z.object({ tool: z.literal('recon'), id: z.number().int().positive() }).strict(),
@@ -55,6 +61,7 @@ export const toolCallSchema = z.discriminatedUnion('tool', [
 ]);
 export type AssistantToolCall = z.infer<typeof toolCallSchema>;
 export interface ToolResult {
+  roundRows?: RoundRow[];
   evidence: unknown; sources: AssistantSource[]; artifacts: AssistantArtifact[];
   outcome?: { state: 'success' | 'empty' | 'partial' | 'temporary_failure' | 'blocked'; reason?: string };
   /** Exact published choices, for visitors explicitly asking to choose conditions first. */
@@ -183,6 +190,67 @@ export function glossaryFieldAnswer(question:string,query:string,result:ToolResu
   return {answer:perTerm?clauses.map(clause=>clause+period).join('\n'):clauses.join(english?'; ':'；')+period,sources:[...used].map(id=>sources.get(id)!),artifacts:[]};
 }
 
+/** A single named glossary heading is the whole permitted source. */
+export function assistantGlossaryHeadingTerm(question:string) {
+  const match=question.match(/^(?:只|仅)凭(?:本站|站内)?百科(?:的)?\s*([A-Z][A-Z0-9]{1,8})\s*词条标题[，,：:]?\s*(?:能否|能|是否)[^。？?\n]{1,100}[？?](?:\s*请(?:说明理由|给出依据)(?:并指明依据)?。?)?$/)
+    ??question.match(/^Based only on (?:the )?(?:site )?(?:glossary|dictionary) heading for ([A-Z][A-Z0-9]{1,8}),?\s*(?:does|can|is)\b[^.?!\n]{1,100}\?$/i);
+  return match?.[1].toUpperCase();
+}
+
+/** A heading-only lookup has a closed claim scope. Render the actual fields,
+ * including corrections of old assistant claims, instead of rephrasing them
+ * into new procedural facts. Mixed tasks and richer documents keep normal review. */
+export function glossaryNameOnlyAnswer(question:string, observations:Array<{call:{tool:string;query?:unknown};result:ToolResult}>,lang:'zh'|'en'):AssistantAnswer|undefined {
+  // A single explicitly evidence-only property question cannot be answered
+  // from headings. Compose the evidence gap without allowing a model to append
+  // outside knowledge after a disclaimer. Mixed/format requests stay general.
+  const property=question.match(/^(?:只|仅)根据(?:本站|站内)?百科(?:词条)?[，,\s]*([A-Z][A-Z0-9]{1,8})\s*(?:是否|能否)[^。？?\n]{1,60}[？?]?$/)
+    ??question.match(/^Based only on (?:the )?(?:site )?glossary,?\s*(?:does|can)\s+([A-Z][A-Z0-9]{1,8})\b[^.?!\n]{1,80}\?$/i);
+  const headingTerm=assistantGlossaryHeadingTerm(question);
+  if((property || headingTerm) && !/另外|顺便|再写|再给|表格|段落|JSON|\balso\b/i.test(question) && observations.length===1 && observations[0].call.tool==='glossary') {
+    const {call,result}=observations[0],term=headingTerm??property![1].toUpperCase();
+    const data=result.evidence as {entries?:Array<{sourceId:string;headEn?:string;claimScope?:string}>;truncated?:boolean;contextIncomplete?:boolean;unmatchedTerms?:string[]};
+    const entry=data?.entries?.find(e=>e.headEn?.split('(',1)[0].trim()===term),source=result.sources.find(s=>s.id===entry?.sourceId&&s.read);
+    if(call.query===term && entry && source && data.entries?.every(e=>e.claimScope==='name_and_translation_only') && !data.truncated && !data.contextIncomplete && !data.unmatchedTerms?.length) {
+      return {answer:lang==='zh'?`该百科词条只提供 ${term} 的名称与译名，没有说明所问的性质，因此仅凭该词条无法判断。[[${source.id}]]`:`The retrieved glossary entry only provides the name and translation of ${term}; it does not establish the requested property, so the entry alone cannot answer this question. [[${source.id}]]`,sources:[source],artifacts:[]};
+    }
+  }
+  const expansionOnly=/^(?:[^.?!。？！\n]*\b(?:just|only)\s+(?:the\s+)?(?:full name|expansion|expanded form)\b|[^.?!。？！\n]*(?:只|仅)(?:给|写|答)[^。？！\n]{0,25}全称)/i.test(question)
+    && !/译名|翻译|\b(?:translation|translate)\b/i.test(question);
+  if(!/含义|意思|全称|定义|\b(?:mean|means|meaning|definition|name|stand for|expansion|expanded form)\b/i.test(question)
+    || /另外|顺便|同时|再写|再给|额外|比较|区别|对比|前提|条件|保持|保留|是否|能否|怎么|如何|为什么|举例|公式|表格|段落|字数|不要.{0,12}(?:来源|引用)|\b(?:also|compare|difference|prerequisite|condition|preserv\w*|whether|how|why|example|algorithm|table|paragraph|JSON|words?|without)\b/i.test(question)
+    || !observations.length || observations.some(o=>o.call.tool!=='glossary'))return;
+  const clauses:string[]=[], sources=new Map<string,AssistantSource>();
+  const english=/用英文|用英语|\b(?:answer|respond|write) in English\b/i.test(question) || lang==='en' && !/用中文|answer in Chinese/i.test(question);
+  for(const {call,result} of observations) {
+    const data=result.evidence as {entries?:Array<{sourceId:string;headEn?:string;headZh?:string;expandedEnglish?:string;expansionSourceIds?:string[];claimScope?:string}>;truncated?:boolean;contextIncomplete?:boolean;unmatchedTerms?:string[]};
+    if(!data?.entries?.length || data.truncated || data.contextIncomplete || data.unmatchedTerms?.length)return;
+    const terms=typeof call.query==='string'?call.query.split(/[\s,，、/;&+]+/).filter(Boolean):[];
+    if(!terms.length || terms.length>4 || terms.some(t=>! /^[A-Z][A-Z0-9]{1,8}$/.test(t)))return;
+    // Unknown extra instructions must stay on the general path. A matching
+    // keyword alone never authorizes discarding the rest of a mixed request.
+    let rest=question.normalize('NFKC');
+    for(const term of terms)rest=rest.replace(new RegExp(`\\b${term}\\b`,'g'),'');
+    const words=new Set('what does mean means meaning definition define name stand stands for look up in the site glossary give its fully expanded english full complete expand every all abbreviation abbreviations and chinese one sentence with source sources citations each respectively please answer respond write correct correction earlier previous mistaken statement my your only actually is was not it that'.split(' '));
+    if(expansionOnly)for(const word of ['just','expansion','form','of','cuberoot','citation','entry','entries','needed','to','support','supports','supporting','provide','include','a','cite','this'])words.add(word);
+    rest=rest.replace(/英文|中文|完整|全称|名称|含义|意思|释义|定义|是什么|什么意思|站内|本站|百科|词条|根据|依据|查询|核对|分别|一句话|一句|每句|给出|并给|附上|来源|引用|展开|所有|缩写|只写|只要|仅|请|查|和|及|的|用|都|并|附|纠正|更正|之前|刚才|前面|说法|错误|误说|我|你|说|成|不是|而是|是/g,'')
+      .replace(/\b[a-z]+\b/gi,word=>words.has(word.toLowerCase())?'':word).replace(/[^\p{L}\p{N}]/gu,'');
+    if(rest)return;
+    for(const term of terms) {
+      const entries=data.entries.filter(e=>e.headEn?.split('(',1)[0].trim()===term);
+      if(entries.length!==1 || entries[0].claimScope!=='name_and_translation_only')return;
+      const entry=entries[0],name=entry.expandedEnglish || entry.headEn?.match(/\(([^()]+)\)/)?.[1];
+      if(!name || !entry.headZh?.trim() || expansionOnly && /\b[A-Z][A-Z0-9]{1,8}\b/.test(name))return;
+      const ids=entry.expandedEnglish?entry.expansionSourceIds:[entry.sourceId];
+      if(!ids?.length || ids.some(id=>!result.sources.some(s=>s.id===id && s.read)))return;
+      for(const id of ids)sources.set(id,result.sources.find(s=>s.id===id)!);
+      const citation=ids.map(id=>`[[${id}]]`).join('');
+      clauses.push(expansionOnly?`${name} ${citation}`:english?`${term} means ${name} (${entry.headZh.trim()})${citation}`:`${term}：${name}，即“${entry.headZh.trim()}”${citation}`);
+    }
+  }
+  return clauses.length?{answer:[...new Set(clauses)].join(english?'; ':'；')+(english?'.':'。'),sources:[...sources.values()],artifacts:[]}:undefined;
+}
+
 /** Close only explicitly used derived names over their already-read sources. */
 export function completeGlossaryExpansionCitations(answer:string,observations:Array<{call:{tool:string};result:ToolResult}>):{answer:string;sourceIds:string[]} {
   const used=new Set<string>();
@@ -205,10 +273,10 @@ export function completeGlossaryExpansionCitations(answer:string,observations:Ar
 
 /** A narrow scope check, not sentence-level entailment. In an empty-body
  * definition lookup, an extra acronym cannot be explained without a source.
- * Mixed requests and body-backed explanations remain on the normal path. */
+ * Check the factual portion of mixed requests too; independent writing is not
+ * glossary evidence. Body-backed explanations remain on the normal path. */
 export function glossaryDefinitionScopeViolation(question:string,answer:string,observations:Array<{call:{tool:string};result:ToolResult}>):string|undefined {
   if(!/含义|意思|全称|定义|\b(?:meaning|definition|name|stand for)\b/i.test(question)
-    || /另外|顺便|同时|再写|再根据|\b(?:also|in addition|additionally)\b/i.test(question)
     || !observations.length || observations.some(o=>o.call.tool!=='glossary'))return;
   const texts:string[]=[question];
   for(const {result} of observations) {
@@ -218,8 +286,18 @@ export function glossaryDefinitionScopeViolation(question:string,answer:string,o
   }
   const acronyms=(text:string)=>text.match(/\b[A-Z][A-Z0-9]{1,8}\b/g)??[];
   const allowed=new Set([...texts.flatMap(acronyms),...'A AN THE IS ARE NOT NO AND OR IN OF TO FOR IT YES NOTE ONLY'.split(' ')]);
+  const mixed=/另外|顺便|同时|再写|再根据|\b(?:also|in addition|additionally)\b/i.test(question);
+  const terms=new Set(texts.slice(1).flatMap(acronyms));
+  const clauses=answer.replace(/\[\[[^\]]+\]\]/g,'').split(/[。！？.!?;；\n]|但是|不过|但|\b(?:but|however)\b/i);
+  // These observable cubing properties are not entailed by names/translations.
+  // A limitation about the source is valid; "does not rotate corners" is still
+  // a property claim. This is a bounded guard, not a general entailment model.
+  const property=/保持[^。；\n]{0,24}(?:朝向|定向|F2L)|(?:块|角|棱)[^。；\n]{0,24}(?:归位|调整|移动)|(?:顶面|顶层)[^。；\n]{0,12}(?:已同色|已完成定向)|\b(?:preserv\w*|keep\w*|maintain\w*)\b[^.!?;\n]{0,40}\b(?:orientation|F2L)\b|\b(?:move\w*|permut\w*|reposition\w*|rotate\w*|twist\w*)\b[^.!?;\n]{0,35}\b(?:pieces?|corners?|edges?)\b|\b(?:pieces?|corners?|edges?)\b[^.!?;\n]{0,35}\b(?:positions?|orientations?)\b/i;
+  const gap=/无法|不能(?:确认|判断|证明|推断)|没有(?:说明|记载|提供|涉及)|未(?:说明|记载|提供|涉及)|不(?:额外补充|足以)|\b(?:cannot|can't|unable to|does not establish|does not state|doesn't establish|doesn't state|not documented|no evidence)\b/i;
+  if(clauses.some(clause=>property.test(clause)&&!gap.test(clause)))return 'glossary_heading_scope';
   // Citation syntax is validated separately, and is not generated terminology.
-  const extra=acronyms(answer.replace(/\[\[[^\]]+\]\]/g,'')).find(term=>!allowed.has(term));
+  const factual=mixed?clauses.filter(clause=>acronyms(clause).some(term=>terms.has(term))).join(' '):answer.replace(/\[\[[^\]]+\]\]/g,'');
+  const extra=acronyms(factual).find(term=>!allowed.has(term));
   return extra?`glossary_unread_term:${extra}`:undefined;
 }
 
@@ -243,6 +321,8 @@ function selectAttendance(data: {results: Array<{competition_id: string; event_i
 
 /** Only fixed public origins/endpoints. Never forwards cookies or credentials. */
 async function executeDataTool(call: Exclude<AssistantToolCall, {tool:'pages'|'navigation'|'analysis_schema'|'analysis_query'|'web_search'|'deliberate'|'lookup_cube_photo'}>, lang: 'zh'|'en', read: JsonReader, findPeople = findAssistantPeople,today=new Date().toISOString().slice(0,10),timeZone='UTC'): Promise<ToolResult> {
+  if (call.tool === 'annual_attendance') return annualAnswer(lang,call.limit);
+  if (call.tool === 'competition_round') return roundAnswer(call,lang,read);
   if (call.tool === 'statistics_metadata') return call.view === 'runtime' ? readStatisticsRuntime(call, lang, read, Date.now, timeZone) : readStatisticsMetadata(call, lang);
   if (call.tool === 'news') return readAssistantNews(call, lang, read, timeZone);
   const label = (zh: string, en: string) => ({ zh, en })[lang];
@@ -253,8 +333,7 @@ async function executeDataTool(call: Exclude<AssistantToolCall, {tool:'pages'|'n
   const table = (title: string, columns: string[], rows: string[][], links?: string[], columnKinds?: AssistantTable['columnKinds'], cellLinks?: AssistantTable['cellLinks']) => out.artifacts.push({ kind:'table', title, columns, rows, links, ...(columnKinds ? {columnKinds} : {}), ...(cellLinks ? {cellLinks} : {}) });
   const freshness = async () => (await read(`${api}/wca/historical-ranks/meta`)).lastImportedAt;
   if (call.tool === 'statistics') {
-    const index=await read(stat+'/index.json');
-    const entries=index.categories.flatMap((c:any)=>c.stats);
+    const entries=call.id===fourthsId ? [{id:fourthsId,titleEn:'Most 4th places',titleZh:'最多第四名'}] : (await read(stat+'/index.json')).categories.flatMap((c:any)=>c.stats);
     const entry=entries.find((e:any)=>e.id===call.id);
     if (!entry) {
       out.evidence={catalog:entries.map((e:any)=>({id:e.id,titleEn:e.titleEn,titleZh:e.titleZh})),instruction:'Choose a catalog id, then inspect available tables. Never invent a stat id.'};

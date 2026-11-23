@@ -7,6 +7,23 @@ import type {Solve} from '@cuberoot/shared/timer/types';
 export function suppliedAverageAnswer(question:string,lang:'zh'|'en'):string|undefined {
   const token=String.raw`(?:\d+(?:\.\d{1,3})?\s*(?:秒|seconds?|s)?|DNF|DNS)`;
   const list=String.raw`(${token}(?:\s*(?:[,，、]|和|及|and)\s*${token}){2,4})`;
+  // An explicit change to one named attempt is two independent Ao5 calculations.
+  const change=new RegExp(String.raw`^(?:三阶|3x3)\s*(?:一轮)?(?:五|5)(?:把|次)(?:成绩)?(?:依次)?(?:是|为|[:：])\s*${list}[。；;，,]\s*(?:WCA\s*)?(?:平均|ao5)(?:成绩)?是多少[？?。]\s*如果把\s*(\d+(?:\.\d{1,3})?)\s*(?:秒)?\s*(?:也)?改成\s*(DNF|DNS)\s*[，,]?\s*(?:平均|ao5)(?:又)?是多少[？?。](?:请说明怎么算[。.]?)?$`,'i').exec(question.trim());
+  if(change) {
+    const times=change[1].split(/\s*(?:[,，、]|和|及|and)\s*/i);
+    const indices=times.flatMap((value,i)=>parseFloat(value)===Number(change[2])?[i]:[]);
+    if(times.length!==5 || indices.length!==1 || !/秒/.test(change[1]))return;
+    const calculate=(values:string[])=>suppliedAverageAnswer('what is the ao5 of '+values.map(v=>/^DN[FS]$/i.test(v)?v:parseFloat(v)+' seconds').join(', '),lang);
+    const before=calculate(times);
+    const kept=times.map(t=>/^DN[FS]$/i.test(t)?Infinity:parseFloat(t)).sort((a,b)=>a-b).slice(1,-1);
+    const arithmetic=kept.every(Number.isFinite)
+      ? (lang==='zh'?' 本轮计算式为 ':' This round uses ')+'('+kept.map(v=>Number.isInteger(v*100)?v.toFixed(2):String(v)).join(' + ')+') ÷ 3.'
+      : '';
+    times[indices[0]]=change[3];
+    const after=calculate(times);
+    if(before && after)return before+arithmetic+'\n'+(lang==='zh'?'把 '+change[2]+' 秒改为 '+change[3]+' 后，':'After replacing '+change[2]+' s with '+change[3]+', ')+after.split(lang==='zh'?'。':'. ')[0];
+    return;
+  }
   const zh=new RegExp(String.raw`^(?:([五三53])次)?成绩\s*(?:是|为|[:：])\s*${list}\s*[,，;；]?\s*(?:请)?(?:计算|算一下|求)?\s*(ao5|mo3|五次平均|三次平均)\s*(?:是|为|等于)?\s*(?:多少)?[?？。]*$`,'i').exec(question.trim());
   const en=new RegExp(String.raw`^what(?:'s| is)\s+(?:the\s+)?(ao5|mo3)\s+(?:of|for)\s+${list}\s*\??$`,'i').exec(question.trim());
   if(!zh&&!en)return;

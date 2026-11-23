@@ -37,9 +37,31 @@ describe('natural-language formula requests',()=>{
     expect(await resolveAssistantAlgorithmRequest(question,[],'zh',read)).toBeUndefined();
     expect(read).not.toHaveBeenCalled();
   });
+  it('answers concrete recognition questions without loading formulas and honors an explicit diagram',async()=>{
+    const read=vi.fn(load);
+    const question='我刚学三阶 F2L，常把棱找错。用白红绿角做例子：该找哪条棱、它应该对准哪两个中心、如何一眼排除红蓝棱？不要给公式。';
+    expect(await resolveAssistantAlgorithmRequest(question,history(),'zh',read)).toBeUndefined();
+    expect(read).not.toHaveBeenCalled();
+    const fetcher=vi.fn<typeof fetch>();
+    const result=await answerSiteQuestion(question,'zh',config,AbortSignal.timeout(2000),fetcher);
+    expect(result.answer).toMatch(/红绿棱.*红色中心.*绿色中心.*红蓝棱含蓝色/);
+    expect(fetcher).not.toHaveBeenCalled();
+    expect(await resolveAssistantAlgorithmRequest('给我一张 T perm 公式卡，讲解只讲辨认',[],'zh',load)).toMatchObject({selection:{display:'both',caseId:902}});
+    expect(await resolveAssistantAlgorithmRequest('T perm 给我状态图，不要给公式',[],'zh',load)).toMatchObject({selection:{display:'image',caseId:902}});
+  });
   it('keeps diagram-only/text-only choices without requiring a command phrase',async()=>{
     expect(await resolveAssistantAlgorithmRequest('T perm 只要图片',[],'zh',load)).toMatchObject({selection:{display:'image',caseId:902}});
     expect(await resolveAssistantAlgorithmRequest('T perm 不要图',[],'zh',load)).toMatchObject({selection:{display:'text',caseId:902}});
+  });
+  it('resolves Aa to the public A+ case in both the request and the tool',async()=>{
+    const current={...pll,cases:[makeCase(4305,'A+'),makeCase(4306,'A-'),...pll.cases]};
+    const request=await resolveAssistantAlgorithmRequest('从本站三阶 PLL 公式集中只给一张 Aa case 卡。要有准确状态图、公式和公式集来源。',[],'zh',async()=>current);
+    expect(request).toMatchObject({selection:{puzzle:'3x3',set:'pll',caseId:4305,display:'both'}});
+    const selection={puzzle:'3x3',set:'pll',query:'Aa perm'};
+    expect(algorithmCards(current,selection,'en')).toMatchObject({total:1,cards:[{caseId:4305,name:'A+'}]});
+    const legacy={...current,cases:[...current.cases,makeCase(4001,'Aa')]};
+    expect(await resolveAssistantAlgorithmRequest('PLL Aa',[],'en',async()=>legacy)).toMatchObject({selection:{caseId:4001}});
+    expect(algorithmCards({...current,set:'coll'},{...selection,set:'coll'},'en').cards).toEqual([]);
   });
   it('does not confuse COLL with OLL or a prefixed library with its suffix',async()=>{
     const read=vi.fn(load);

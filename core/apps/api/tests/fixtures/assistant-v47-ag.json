@@ -1,0 +1,681 @@
+{
+  "AG04": {
+    "question": "现在能慢慢转。两项限时练习都用刚才那个熟悉情形，摆好后先目视对照两块及目标槽，确认都对上才插入。摆不出来的话，分别改练不同的熟悉转动，每个备用练法说清怎么做，不再插入。",
+    "lang": "zh",
+    "history": [
+      {
+        "role": "user",
+        "content": "只有两分十三秒。我这次想用已会的插入，但它的局面可能摆不出来，现在别动魔方。"
+      },
+      {
+        "role": "assistant",
+        "content": "先保持静止。"
+      }
+    ],
+    "drafts": [
+      {
+        "call": 11,
+        "output": {
+          "answerKind": "general",
+          "answer": "",
+          "sourceIds": [],
+          "plan": {
+            "inputs": [
+              {
+                "id": "familiar_case",
+                "quote": "两项限时练习都用刚才那个熟悉情形，摆好后先目视对照两块及目标槽，确认都对上才插入。"
+              },
+              {
+                "id": "fallback_turns",
+                "quote": "摆不出来的话，分别改练不同的熟悉转动，每个备用练法说清怎么做，不再插入。"
+              }
+            ],
+            "activities": [
+              {
+                "title": "熟悉情形插入练习",
+                "seconds": 66,
+                "steps": [
+                  {
+                    "action": "选一个自己已会的插入，用它的逆操作在当前魔方上尝试摆出该插入对应的熟悉情形；摆好后目视对照涉及的两块与目标槽，确认位置和朝向都对上才做一次插入，插入后立即用同一逆操作把同一情形复位，再重复一次并检查是否回到确认过的情形；若摆不出熟悉情形，则改为慢速做自己已会的转动，每转一步停一下，观察哪一块或哪一面发生了可见变化，整个活动只做这种慢转观察，不再插入、不做逆操作复位、也不检查槽位。",
+                    "reason": "在限时内用已会插入练习，并为摆不出情形准备不涉及插入的慢转观察备用练法。",
+                    "seconds": 66,
+                    "requires": [],
+                    "produces": []
+                  }
+                ]
+              },
+              {
+                "title": "熟悉情形复位与预测练习",
+                "seconds": 67,
+                "steps": [
+                  {
+                    "action": "仅当上一活动中熟悉情形已目视确认过，才用同一逆操作复位该情形并再做一次插入，随后用同一逆操作复位并检查是否回到确认过的情形；否则整个活动改为慢速做自己已会的转动，在转一步之前先预测哪一块或哪一面会可见变化，转完后对照实际移动，活动结束时不做插入、不做逆操作复位、也不检查槽位。",
+                    "reason": "延续已确认情形的复位插入，或在无法摆出时用预测与对照的慢转练法收尾。",
+                    "seconds": 67,
+                    "requires": [],
+                    "produces": []
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      },
+      {
+        "call": 59,
+        "output": {
+          "answerKind": "general",
+          "answer": "",
+          "sourceIds": [],
+          "plan": {
+            "inputs": [
+              {
+                "id": "familiar_case",
+                "quote": "两项限时练习都用刚才那个熟悉情形，摆好后先目视对照两块及目标槽，确认都对上才插入。"
+              },
+              {
+                "id": "fallback_turns",
+                "quote": "摆不出来的话，分别改练不同的熟悉转动，每个备用练法说清怎么做，不再插入。"
+              }
+            ],
+            "activities": [
+              {
+                "title": "熟悉情形插入练习",
+                "seconds": 66,
+                "steps": [
+                  {
+                    "action": "选一个自己已会的插入，用它的逆操作在当前魔方上尝试摆出该插入对应的熟悉情形；摆好后目视对照参与的两块与目标槽，确认位置和朝向都对上，再执行该插入；插入后若确认成功，用同一逆操作把同一情形复位，再重复一次并做简短目视检查。若摆不出熟悉情形，则改为慢速做自己已会的转动：每转一步后停一下，观察哪一块或哪一面发生了可见变化，整个活动只做这种慢转观察，不再插入、不做逆操作复位、不检查槽位。",
+                    "reason": "在限时内用已会插入练熟悉情形，摆不出时以慢转观察保持可控练习。",
+                    "seconds": 66,
+                    "requires": [],
+                    "produces": []
+                  }
+                ]
+              },
+              {
+                "title": "熟悉情形复位与预测练习",
+                "seconds": 67,
+                "steps": [
+                  {
+                    "action": "仅当上一活动中熟悉情形已目视确认并成功插入过，才用同一逆操作复位同一情形，再目视核对两块与目标槽后插入一次，最后做简短检查。否则改为慢速做自己已会的转动：先预测下一步会看到哪一块或哪一面发生可见变化，再转一步并对照实际移动，整个活动只做这种预测对照，不再插入、不做逆操作复位、不检查槽位。",
+                    "reason": "延续同一熟悉情形的复位插入，或在摆不出时用预测对照练熟悉转动。",
+                    "seconds": 67,
+                    "requires": [],
+                    "produces": []
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      }
+    ]
+  },
+  "AG05": {
+    "question": "允许慢拧了。把这个熟悉案例做成两项有秒数的活动。每项摆好后亲眼确认位置都准确再插入；若摆不成，各改一种不同的已会转动练习并跳过插入。",
+    "lang": "zh",
+    "history": [
+      {
+        "role": "user",
+        "content": "这一轮只有两分二十一秒。我想温习会的插入，不过不一定能复原这个局面，先不转动魔方。"
+      },
+      {
+        "role": "assistant",
+        "content": "这时先观察。"
+      }
+    ],
+    "drafts": [
+      {
+        "call": 15,
+        "output": {
+          "answerKind": "general",
+          "answer": "",
+          "sourceIds": [],
+          "plan": {
+            "inputs": [
+              {
+                "id": "user_request",
+                "quote": "允许慢拧了。把这个熟悉案例做成两项有秒数的活动。每项摆好后亲眼确认位置都准确再插入；若摆不成，各改一种不同的已会转动练习并跳过插入。"
+              }
+            ],
+            "activities": [
+              {
+                "title": "准备并慢速完成熟悉插入",
+                "seconds": 75,
+                "steps": [
+                  {
+                    "action": "选一个自己已会的插入，用它的逆操作摆出该插入对应的熟悉案例；摆好后亲眼确认案例形态和目标槽位都准确，再慢速插入一次；若无法摆成，则改用自己已会的转动慢速练习，不插入、不做逆操作、不检查槽位",
+                    "reason": "先确认案例与槽位再转动，摆不成时以已会慢速转动替代，避免猜测或新算法",
+                    "seconds": 75,
+                    "requires": [],
+                    "produces": []
+                  }
+                ]
+              },
+              {
+                "title": "观察并回忆实际结果",
+                "seconds": 66,
+                "steps": [
+                  {
+                    "action": "只看不动，观察并说出当前实际状态；仅当上一项已确认案例并完成插入时，用同一逆操作重置同一案例后再插入一次；否则继续用自己已会的转动慢速练习，不插入、不做逆操作、不检查槽位",
+                    "reason": "按实际结果回忆状态，分支处理避免假定首次插入成功",
+                    "seconds": 66,
+                    "requires": [],
+                    "produces": []
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      }
+    ]
+  },
+  "AG06": {
+    "question": "Slow turns are now allowed. Plan two timed drills for that case, each confirming what I actually see after setting up and before doing the insertion I know. If I cannot recreate the setup, give two different concrete fallback drills, one for each activity, using familiar turns without inserting.",
+    "lang": "en",
+    "history": [
+      {
+        "role": "user",
+        "content": "My timer is set to 117 seconds. I want to review an insertion I already know, but may not recover the case. For now, do not turn the cube."
+      },
+      {
+        "role": "assistant",
+        "content": "Start with the cube still."
+      }
+    ],
+    "drafts": [
+      {
+        "call": 16,
+        "output": {
+          "answerKind": "general",
+          "answer": "",
+          "sourceIds": [],
+          "plan": {
+            "inputs": [
+              {
+                "id": "known_insertion",
+                "quote": "review an insertion I already know"
+              },
+              {
+                "id": "slow_turns",
+                "quote": "Slow turns are now allowed."
+              }
+            ],
+            "activities": [
+              {
+                "title": "Setup check and known insertion",
+                "seconds": 58,
+                "steps": [
+                  {
+                    "action": "Choose one insertion you already know and note its inverse; apply that inverse slowly to set up the familiar case, then stop and visually confirm the pair shape and target slot match that case. ONLY IF the familiar case was verified, insert with the known insertion, then reset the same case with the same inverse and insert again. OTHERWISE, with the cube in its current state, do your known turns slowly and pause after each turn to name one visible change before continuing; end there without inserting, applying an inverse setup, or checking a solved slot.",
+                    "reason": "Confirms the case visually before turning and gives a concrete no-insert fallback using familiar turns.",
+                    "seconds": 58,
+                    "requires": [
+                      "known_insertion",
+                      "slow_turns"
+                    ],
+                    "produces": []
+                  }
+                ]
+              },
+              {
+                "title": "Prediction check and known insertion",
+                "seconds": 59,
+                "steps": [
+                  {
+                    "action": "Choose the same known insertion and its inverse; apply the inverse slowly to recreate the familiar case, then pause and check that the pair and target slot visibly match before any insertion turn. ONLY IF the familiar case was verified, insert with the known insertion, reset the same case with the same inverse, and insert once more. OTHERWISE, with the cube as it is, pick one known turn, say aloud what will visibly move before turning, make that slow turn, and compare what actually moved; end there without inserting, applying an inverse setup, or checking a solved slot.",
+                    "reason": "Adds a prediction check before turning and a distinct fallback drill that stays within familiar turns.",
+                    "seconds": 59,
+                    "requires": [
+                      "known_insertion",
+                      "slow_turns"
+                    ],
+                    "produces": []
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      },
+      {
+        "call": 65,
+        "output": {
+          "answerKind": "general",
+          "answer": "",
+          "sourceIds": [],
+          "plan": {
+            "inputs": [
+              {
+                "id": "known_insertion",
+                "quote": "review an insertion I already know"
+              },
+              {
+                "id": "slow_turns",
+                "quote": "Slow turns are now allowed."
+              }
+            ],
+            "activities": [
+              {
+                "title": "Setup check and known insertion",
+                "seconds": 58,
+                "steps": [
+                  {
+                    "action": "Choose one insertion you already know and note its inverse; apply that inverse slowly to set up the familiar case, then stop and visually confirm the pair shape and target slot match that case before any insertion turn. ONLY IF the familiar case was verified, do the insertion slowly, then reset the same case with the same inverse and repeat once, checking the pair and slot again before the second insertion. OTHERWISE, for the whole activity do only your own known turns slowly, pausing after each turn to observe which visible pieces changed, and end there without inserting, inverse setup or solved-slot checks.",
+                    "reason": "Confirms the case visually before turning and gives a concrete known-turn fallback if the setup cannot be recreated.",
+                    "seconds": 58,
+                    "requires": [
+                      "known_insertion",
+                      "slow_turns"
+                    ],
+                    "produces": []
+                  }
+                ]
+              },
+              {
+                "title": "Predict and compare known turns",
+                "seconds": 59,
+                "steps": [
+                  {
+                    "action": "Choose the same insertion and its inverse; apply the inverse slowly to set up the familiar case, then stop and visually confirm the pair shape and target slot before turning. ONLY IF the familiar case was verified, do the insertion slowly, reset the same case with the same inverse, and repeat once with the same visual check before the second insertion. OTHERWISE, for the whole activity pick one known turn, predict aloud which visible pieces will move, perform that turn slowly, and compare the prediction with what actually moved; repeat with other known turns and end there without inserting, inverse setup or solved-slot checks.",
+                    "reason": "Adds a prediction check before each known turn so the fallback stays concrete and distinct from the first drill.",
+                    "seconds": 59,
+                    "requires": [
+                      "known_insertion",
+                      "slow_turns"
+                    ],
+                    "produces": []
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      }
+    ]
+  },
+  "AG08": {
+    "question": "Make a 144–169-word practice plan for my existing Gaelic word list. Give two activities with two timed substeps apiece, limit the whole plan to 179 seconds, and give a reason for each step. At retry, practise only errors if there were any, otherwise use the whole list.",
+    "lang": "en",
+    "history": [],
+    "drafts": [
+      {
+        "call": 21,
+        "output": {
+          "answerKind": "general",
+          "answer": "",
+          "sourceIds": [],
+          "plan": {
+            "inputs": [
+              {
+                "id": "gaelic_list",
+                "quote": "Make a 144–169-word practice plan for my existing Gaelic word list."
+              }
+            ],
+            "activities": [
+              {
+                "title": "Covered recall from Gaelic",
+                "seconds": 90,
+                "steps": [
+                  {
+                    "action": "With the Gaelic word list open, cover the meaning column, say each meaning aloud, then uncover to check and recover it before the next word.",
+                    "reason": "Covering the answer forces genuine recall, and immediate checking corrects errors before they harden.",
+                    "seconds": 60,
+                    "requires": [
+                      "gaelic_list"
+                    ],
+                    "produces": [
+                      "error_items"
+                    ]
+                  },
+                  {
+                    "action": "Cover the meaning column again and repeat every missed word; if none were missed, repeat the whole list once.",
+                    "reason": "Repeating only errors targets weak items, while the whole-list fallback keeps a clean run productive.",
+                    "seconds": 30,
+                    "requires": [
+                      "gaelic_list",
+                      "error_items"
+                    ],
+                    "produces": []
+                  }
+                ]
+              },
+              {
+                "title": "Covered recall into Gaelic",
+                "seconds": 89,
+                "steps": [
+                  {
+                    "action": "Cover the Gaelic column, read each meaning, write the Gaelic word on paper, then uncover to check and cover it again.",
+                    "reason": "Writing before checking tests production and gives a visible record of which Gaelic forms are uncertain.",
+                    "seconds": 59,
+                    "requires": [
+                      "gaelic_list"
+                    ],
+                    "produces": [
+                      "written_attempts"
+                    ]
+                  },
+                  {
+                    "action": "Cover the Gaelic column and rewrite only the words you got wrong; if there were none, rewrite the full list once.",
+                    "reason": "A focused error repeat strengthens exactly the forms that failed, with the full list as the no-error alternative.",
+                    "seconds": 30,
+                    "requires": [
+                      "gaelic_list",
+                      "written_attempts"
+                    ],
+                    "produces": []
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      },
+      {
+        "call": 69,
+        "output": {
+          "answerKind": "general",
+          "answer": "",
+          "sourceIds": [],
+          "plan": {
+            "inputs": [
+              {
+                "id": "gaelic_list",
+                "quote": "Make a 144–169-word practice plan for my existing Gaelic word list."
+              }
+            ],
+            "activities": [
+              {
+                "title": "Covered Meaning Recall",
+                "seconds": 90,
+                "steps": [
+                  {
+                    "action": "Keep the WORD column visible, cover MEANING, say each meaning, then uncover to check and recover MEANING before the next word; if no list exists, stop.",
+                    "reason": "Covering the answer forces genuine recall, and immediate checking corrects errors before they harden.",
+                    "seconds": 45,
+                    "requires": [
+                      "gaelic_list"
+                    ],
+                    "produces": [
+                      "error_items"
+                    ]
+                  },
+                  {
+                    "action": "Cover MEANING again, attempt every word once more, and mark misses; if there were errors, repeat only those, otherwise use the whole list.",
+                    "reason": "A second covered pass strengthens weak items and confirms which words still need attention.",
+                    "seconds": 45,
+                    "requires": [
+                      "gaelic_list",
+                      "error_items"
+                    ],
+                    "produces": [
+                      "error_items"
+                    ]
+                  }
+                ]
+              },
+              {
+                "title": "Covered Word Recall",
+                "seconds": 89,
+                "steps": [
+                  {
+                    "action": "Keep MEANING visible, cover WORD, write each Gaelic word on paper, then uncover to check and recover WORD before the next attempt.",
+                    "reason": "Producing the word from its meaning tests spelling and retrieval, while covering prevents copying.",
+                    "seconds": 45,
+                    "requires": [
+                      "gaelic_list"
+                    ],
+                    "produces": [
+                      "written_words"
+                    ]
+                  },
+                  {
+                    "action": "Cover WORD again, rewrite every item, and mark misses; if there were errors, repeat only those, otherwise use the whole list.",
+                    "reason": "Rewriting from memory with the answer hidden consolidates accurate spelling and exposes remaining gaps.",
+                    "seconds": 44,
+                    "requires": [
+                      "gaelic_list",
+                      "written_words"
+                    ],
+                    "produces": [
+                      "error_items"
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      }
+    ]
+  },
+  "AG13": {
+    "question": "已经做好的双面卡，正面是瑞典语拼法，一翻过来是中文释义。给两项回忆练习并各标明秒数，总计不超过九十六秒。两项都从中文提示默写，翻面查看拼法以后把同一张卡放回中文朝上。",
+    "lang": "zh",
+    "history": [],
+    "drafts": [
+      {
+        "call": 34,
+        "output": {
+          "answerKind": "general",
+          "answer": "",
+          "sourceIds": [],
+          "plan": {
+            "inputs": [
+              {
+                "id": "swedish_cards",
+                "quote": "已经做好的双面卡，正面是瑞典语拼法，一翻过来是中文释义。"
+              }
+            ],
+            "activities": [
+              {
+                "title": "中文提示默写瑞典语",
+                "seconds": 48,
+                "steps": [
+                  {
+                    "action": "把全部卡片中文面朝上摊开，逐张看中文释义，在纸上默写对应的瑞典语拼法；写完一张就翻面核对拼法，然后立刻把这张卡放回中文朝上，再处理下一张。若卡片不足两张或为零，就用现有卡片按同样方式完成，没有卡片则本项直接结束。",
+                    "reason": "从中文提示回忆拼法属于产出型词汇练习，先写后翻能检验真实回忆，翻完放回中文朝上保证下一张仍从中文提示开始。",
+                    "seconds": 48,
+                    "requires": [
+                      "swedish_cards"
+                    ],
+                    "produces": []
+                  }
+                ]
+              },
+              {
+                "title": "错词重写核对",
+                "seconds": 48,
+                "steps": [
+                  {
+                    "action": "把上一项中拼写有误的卡片挑出，中文面朝上，重新默写瑞典语拼法，翻面核对后放回中文朝上；若上一项没有错误，则从全部卡片中任选若干张，按同样方式再默写一遍。",
+                    "reason": "针对错误再写一遍能强化薄弱词形，无错误时用全部卡片复练可巩固记忆，两种情形都保持中文提示、翻面核对、放回中文朝上的流程。",
+                    "seconds": 48,
+                    "requires": [
+                      "swedish_cards"
+                    ],
+                    "produces": []
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      },
+      {
+        "call": 78,
+        "output": {
+          "answerKind": "general",
+          "answer": "",
+          "sourceIds": [],
+          "plan": {
+            "inputs": [
+              {
+                "id": "swedish_cards",
+                "quote": "已经做好的双面卡，正面是瑞典语拼法，一翻过来是中文释义。"
+              }
+            ],
+            "activities": [
+              {
+                "title": "中文提示默写拼法",
+                "seconds": 48,
+                "steps": [
+                  {
+                    "action": "把全部卡片中文释义朝上摊开，逐张看中文，在纸上默写对应的瑞典语拼法；写完一张就翻面核对拼法，再把这张卡放回中文朝上，继续下一张。若卡片不足两张，就用现有卡片按同样方式做完一轮。",
+                    "reason": "从中文提示回忆拼法属于产出型词汇练习，先写后翻能检验真实记忆，翻完复位保证下一轮仍从中文提示开始。",
+                    "seconds": 48,
+                    "requires": [
+                      "swedish_cards"
+                    ],
+                    "produces": [
+                      "written_attempts"
+                    ]
+                  }
+                ]
+              },
+              {
+                "title": "错词重写并复位",
+                "seconds": 48,
+                "steps": [
+                  {
+                    "action": "对照上一轮写下的拼法，把写错或没写出的卡片挑出，中文朝上逐张重写拼法，翻面核对后放回中文朝上；若上一轮没有错误，就把全部卡片中文朝上再默写一轮，同样翻面核对后复位。",
+                    "reason": "针对错误再练能强化薄弱词，无错误时用整轮复习保持记忆，两种分支都以中文朝上收尾。",
+                    "seconds": 48,
+                    "requires": [
+                      "swedish_cards",
+                      "written_attempts"
+                    ],
+                    "produces": [
+                      "reviewed_cards"
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      }
+    ]
+  },
+  "AG12": {
+    "question": "手头有两张空白卡和两组词 cedar=雪松、fir=冷杉。给两项各有两小步的练习，合计不超过一百三十二秒，每步最多四十一秒。第一项写两面并回忆，第二项先看中文写英文，再翻面核对。",
+    "lang": "zh",
+    "history": [],
+    "drafts": [
+      {
+        "call": 77,
+        "output": {
+          "answerKind": "general",
+          "answer": "",
+          "sourceIds": [],
+          "plan": {
+            "inputs": [
+              {
+                "id": "word_pairs",
+                "quote": "两组词 cedar=雪松、fir=冷杉"
+              },
+              {
+                "id": "blank_cards",
+                "quote": "手头有两张空白卡"
+              }
+            ],
+            "activities": [
+              {
+                "title": "写两面并回忆",
+                "seconds": 66,
+                "steps": [
+                  {
+                    "action": "在两张空白卡上分别写 cedar 与 fir：正面写英文单词，背面写对应中文“雪松”“冷杉”，写完翻回正面",
+                    "reason": "先建立正反两面的完整词卡，后面才有可回忆的内容",
+                    "seconds": 33,
+                    "requires": [
+                      "word_pairs",
+                      "blank_cards"
+                    ],
+                    "produces": [
+                      "written_cards"
+                    ]
+                  },
+                  {
+                    "action": "看两张卡的英文正面，先说出中文，再翻面核对；若两张都答对就只再默背一遍，若只答对一张就重点重背错的那张",
+                    "reason": "用回忆检验英文到中文的方向，并按实际答对数量调整复习量",
+                    "seconds": 33,
+                    "requires": [
+                      "written_cards"
+                    ],
+                    "produces": [
+                      "recalled_pairs"
+                    ]
+                  }
+                ]
+              },
+              {
+                "title": "看中文写英文再核对",
+                "seconds": 66,
+                "steps": [
+                  {
+                    "action": "把两张卡翻到中文背面，只看“雪松”“冷杉”，在纸上分别写出 cedar 和 fir",
+                    "reason": "练习中文到英文的主动提取，比单纯认读更能暴露拼写问题",
+                    "seconds": 33,
+                    "requires": [
+                      "written_cards"
+                    ],
+                    "produces": [
+                      "written_answers"
+                    ]
+                  },
+                  {
+                    "action": "翻到英文正面核对刚写的两个词，逐字比对拼写；全对就收卡结束，有错就把错词在纸上重写一遍再收卡",
+                    "reason": "用卡片正面作为标准答案核对，并按错误数量决定是否补写",
+                    "seconds": 33,
+                    "requires": [
+                      "written_cards",
+                      "written_answers"
+                    ],
+                    "produces": [
+                      "checked_answers"
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      }
+    ]
+  },
+  "AG17": {
+    "question": "In the CubeRoot glossary, give only the full name of OLL and cite the entries needed to support that expansion.",
+    "lang": "en",
+    "history": [],
+    "glossary": {
+      "sections": [
+        {
+          "entries": [
+            {
+              "id": 1,
+              "headEn": "OLL (Orientation of LL)",
+              "headZh": "顶层定向"
+            },
+            {
+              "id": 2,
+              "headEn": "PLL (Permutation of Last Layer)",
+              "headZh": "顶层排列"
+            },
+            {
+              "id": 3,
+              "headEn": "LL (Last Layer)",
+              "headZh": "顶层"
+            },
+            {
+              "id": 4,
+              "headEn": "F2L (First Two Layers)",
+              "headZh": "前两层, 前两层的四个槽"
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

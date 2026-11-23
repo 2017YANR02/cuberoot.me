@@ -1,0 +1,556 @@
+[
+  {
+    "key": "1/after/H06",
+    "case": {
+      "id": "H06",
+      "category": "plan",
+      "lang": "zh",
+      "history": [],
+      "question": "我的词表是 apple=苹果、river=河流。安排三项词汇练习，每项两步，每步给动作、理由和时长，全部最多6分钟。",
+      "expected": "Three genuine practice activities with two children each, total <=360 seconds, existing two pairs, materials/hidden answers and zero errors coherent."
+    },
+    "answer": "1. 看词说义 (120 秒): 在纸上写两列：左列 WORD 写 apple、river，右列 MEANING 写苹果、河流；用纸盖住 MEANING 列，逐个看 WORD 说出中文意思，每说完一个就掀开核对，再重新盖住 MEANING 列，然后进行下一个。 先建立两列词表并立即做一次遮盖核对，把准备和首次练习合在一起，同时确认哪些词还不熟。 重新盖住 MEANING 列，按顺序再看 apple、river 说意思，每说一个掀开核对后立刻盖回，全部过完后把说错的词在 WORD 列旁做小标记。 第二遍遮盖练习强化词到义的回忆，标记帮助后续优先练不熟的词。 本计划任一步骤若没有可用错词或数量不足，就用原词表中的可用词继续；词数不够可重复，均在该步骤原定时长内完成。\n2. 看义写词 (120 秒): 盖住 WORD 列，只看 MEANING 列的苹果、河流，在另一张纸上写出对应英文；每写完一个掀开 WORD 列核对，再盖回 WORD 列，然后写下一个。 从中文意思回忆英文拼写，检验反向提取，核对后立即恢复遮盖保持测试条件。 重新盖住 WORD 列，优先按做小标记的顺序看苹果、河流写英文，每写完一个掀开核对并盖回；若没有标记就按原顺序练，全部写对即可结束。 优先练不熟的词，同时保证零错误时也有明确的完成条件。\n3. 双向快测 (120 秒): 盖住 MEANING 列，快速看 apple、river 说中文，每说一个掀开核对后盖回；然后盖住 WORD 列，看苹果、河流写英文，每写完一个掀开核对后盖回。 在同一时段内交替练词到义和义到词，巩固两个方向。 针对最后核对中仍出错的词，单独盖住对应列再练一遍：看词说义或看义写词，每次核对后立即盖回；若全部正确，就把原词表完整遮盖再各过一遍后结束。 用最后核对结果决定收尾重点，零错误时也有明确的替代做法。",
+    "model": {
+      "answerKind": "general",
+      "answer": "",
+      "sourceIds": [],
+      "plan": {
+        "inputs": [
+          {
+            "id": "word_list",
+            "quote": "我的词表是 apple=苹果、river=河流。"
+          }
+        ],
+        "activities": [
+          {
+            "title": "看词说义",
+            "seconds": 120,
+            "steps": [
+              {
+                "action": "在纸上写两列：左列 WORD 写 apple、river，右列 MEANING 写苹果、河流；用纸盖住 MEANING 列，逐个看 WORD 说出中文意思，每说完一个就掀开核对，再重新盖住 MEANING 列，然后进行下一个。",
+                "reason": "先建立两列词表并立即做一次遮盖核对，把准备和首次练习合在一起，同时确认哪些词还不熟。",
+                "seconds": 60,
+                "requires": [
+                  "word_list"
+                ],
+                "produces": [
+                  "word_meaning_list"
+                ]
+              },
+              {
+                "action": "重新盖住 MEANING 列，按顺序再看 apple、river 说意思，每说一个掀开核对后立刻盖回，全部过完后把说错的词在 WORD 列旁做小标记。",
+                "reason": "第二遍遮盖练习强化词到义的回忆，标记帮助后续优先练不熟的词。",
+                "seconds": 60,
+                "requires": [
+                  "word_meaning_list"
+                ],
+                "produces": [
+                  "weak_marks"
+                ]
+              }
+            ]
+          },
+          {
+            "title": "看义写词",
+            "seconds": 120,
+            "steps": [
+              {
+                "action": "盖住 WORD 列，只看 MEANING 列的苹果、河流，在另一张纸上写出对应英文；每写完一个掀开 WORD 列核对，再盖回 WORD 列，然后写下一个。",
+                "reason": "从中文意思回忆英文拼写，检验反向提取，核对后立即恢复遮盖保持测试条件。",
+                "seconds": 60,
+                "requires": [
+                  "word_meaning_list",
+                  "weak_marks"
+                ],
+                "produces": [
+                  "written_attempts"
+                ]
+              },
+              {
+                "action": "重新盖住 WORD 列，优先按做小标记的顺序看苹果、河流写英文，每写完一个掀开核对并盖回；若没有标记就按原顺序练，全部写对即可结束。",
+                "reason": "优先练不熟的词，同时保证零错误时也有明确的完成条件。",
+                "seconds": 60,
+                "requires": [
+                  "word_meaning_list",
+                  "weak_marks",
+                  "written_attempts"
+                ],
+                "produces": [
+                  "written_attempts"
+                ]
+              }
+            ]
+          },
+          {
+            "title": "双向快测",
+            "seconds": 120,
+            "steps": [
+              {
+                "action": "盖住 MEANING 列，快速看 apple、river 说中文，每说一个掀开核对后盖回；然后盖住 WORD 列，看苹果、河流写英文，每写完一个掀开核对后盖回。",
+                "reason": "在同一时段内交替练词到义和义到词，巩固两个方向。",
+                "seconds": 60,
+                "requires": [
+                  "word_meaning_list",
+                  "written_attempts"
+                ],
+                "produces": [
+                  "final_check"
+                ]
+              },
+              {
+                "action": "针对最后核对中仍出错的词，单独盖住对应列再练一遍：看词说义或看义写词，每次核对后立即盖回；若全部正确，就把原词表完整遮盖再各过一遍后结束。",
+                "reason": "用最后核对结果决定收尾重点，零错误时也有明确的替代做法。",
+                "seconds": 60,
+                "requires": [
+                  "word_meaning_list",
+                  "final_check"
+                ],
+                "produces": []
+              }
+            ]
+          }
+        ]
+      }
+    },
+    "originalError": null
+  },
+  {
+    "key": "1/after/H14",
+    "case": {
+      "id": "H14",
+      "category": "plan",
+      "lang": "zh",
+      "history": [],
+      "question": "我不会任何 F2L 插入，只会几个基本转动。安排两项慢拧活动，总计最多4分钟，不要让我先学公式。",
+      "expected": "Uses only known basic slow turns; no assumed familiar F2L insertion, inverse setup, solved-slot check or learning new formula; <=240 seconds."
+    },
+    "answer": null,
+    "model": {
+      "answerKind": "general",
+      "answer": "",
+      "sourceIds": [],
+      "plan": {
+        "inputs": [
+          {
+            "id": "user_skill",
+            "quote": "我不会任何 F2L 插入，只会几个基本转动。"
+          },
+          {
+            "id": "user_limit",
+            "quote": "安排两项慢拧活动，总计最多4分钟，不要让我先学公式。"
+          }
+        ],
+        "activities": [
+          {
+            "title": "慢拧熟悉基本转动",
+            "seconds": 120,
+            "steps": [
+              {
+                "action": "不用计时器，从当前魔方状态开始，只用你已会的几个基本转动，每次只转一步并停一下看清块的位置；若你已会的某个插入能摆出熟悉情形，就先用它的逆操作准备并目视确认该情形和目标槽，确认后做一次插入再用同一逆操作复位并重复；否则整段只用已知慢转，不做插入、逆准备或已解槽检查。",
+                "reason": "先在不学新公式的前提下建立稳定、可观察的慢转节奏。",
+                "seconds": 120,
+                "requires": [
+                  "user_skill",
+                  "user_limit"
+                ],
+                "produces": []
+              }
+            ]
+          },
+          {
+            "title": "慢拧重复已知转动",
+            "seconds": 120,
+            "steps": [
+              {
+                "action": "不用计时器，仅当上一活动已目视确认熟悉情形时，先用同一逆操作复位该情形，再做同一插入并重复；否则整段只用你已会的慢转逐步转动，不做插入、逆准备或已解槽检查，结束时也不追加插入。",
+                "reason": "在已知动作范围内重复练习，避免引入新公式或计时压力。",
+                "seconds": 120,
+                "requires": [
+                  "user_skill",
+                  "user_limit"
+                ],
+                "produces": []
+              }
+            ]
+          }
+        ]
+      }
+    },
+    "originalError": "model_output_invalid"
+  },
+  {
+    "key": "2/after/H06",
+    "case": {
+      "id": "H06",
+      "category": "plan",
+      "lang": "zh",
+      "history": [],
+      "question": "我的词表是 apple=苹果、river=河流。安排三项词汇练习，每项两步，每步给动作、理由和时长，全部最多6分钟。",
+      "expected": "Three genuine practice activities with two children each, total <=360 seconds, existing two pairs, materials/hidden answers and zero errors coherent."
+    },
+    "answer": "1. 看词说义 (120 秒): 在纸上写两列：左列 WORD 写 apple、river，右列 MEANING 写苹果、河流；然后盖住 MEANING 列，逐个看 WORD 说出意思，说完立刻掀开核对，再盖回 MEANING 列。 先建立两列词表并立即做一次遮住释义的回忆尝试，核对后重新遮住，保证每次回忆前参考都不可见。 继续盖住 MEANING 列，按 apple、river 顺序再看 WORD 说意思，每说一个就掀开核对并马上盖回；说错的词标记后优先重练，直到时间用完。 用同一份词表反复做看词说义，优先重练薄弱词，巩固词到义的联结。 本计划任一步骤若没有可用错词或数量不足，就用原词表中的可用词继续；词数不够可重复，均在该步骤原定时长内完成。\n2. 看义写词 (120 秒): 盖住 WORD 列，只看 MEANING 列的苹果、河流，在纸上写出对应英文单词，写完后掀开 WORD 列核对，再盖回 WORD 列。 从意义出发主动提取拼写，核对后重新遮住单词，确保下一次尝试仍是独立回忆。 继续盖住 WORD 列，逐个看 MEANING 写英文，写完掀开核对并立即盖回；拼错的词标记后优先重写，直到时间用完。 用同一词表练习义到词的反向提取，优先处理拼写错误，强化产出能力。\n3. 混合自测 (120 秒): 盖住 MEANING 列，看 WORD 说意思并掀开核对后盖回；再盖住 WORD 列，看 MEANING 写单词并掀开核对后盖回，交替进行。 在词到义和义到词之间切换，检验两个方向是否都能独立回忆，核对后立即恢复遮盖。 继续交替遮盖两列做双向自测，每次核对后马上盖回；把出错的词优先放入下一轮，若没有错误就按原顺序继续，直到时间用完。 用同一词表做双向混合练习，优先重练错误项，零错误时继续原列表，避免额外准备。",
+    "model": {
+      "imageTask": "other",
+      "answerKind": "general",
+      "answer": "",
+      "sourceIds": [],
+      "plan": {
+        "inputs": [
+          {
+            "id": "word_list",
+            "quote": "我的词表是 apple=苹果、river=河流。"
+          }
+        ],
+        "activities": [
+          {
+            "title": "看词说义",
+            "seconds": 120,
+            "steps": [
+              {
+                "action": "在纸上写两列：左列 WORD 写 apple、river，右列 MEANING 写苹果、河流；然后盖住 MEANING 列，逐个看 WORD 说出意思，说完立刻掀开核对，再盖回 MEANING 列。",
+                "reason": "先建立两列词表并立即做一次遮住释义的回忆尝试，核对后重新遮住，保证每次回忆前参考都不可见。",
+                "seconds": 60,
+                "requires": [
+                  "word_list"
+                ],
+                "produces": [
+                  "word_meaning_list"
+                ]
+              },
+              {
+                "action": "继续盖住 MEANING 列，按 apple、river 顺序再看 WORD 说意思，每说一个就掀开核对并马上盖回；说错的词标记后优先重练，直到时间用完。",
+                "reason": "用同一份词表反复做看词说义，优先重练薄弱词，巩固词到义的联结。",
+                "seconds": 60,
+                "requires": [
+                  "word_meaning_list"
+                ],
+                "produces": []
+              }
+            ]
+          },
+          {
+            "title": "看义写词",
+            "seconds": 120,
+            "steps": [
+              {
+                "action": "盖住 WORD 列，只看 MEANING 列的苹果、河流，在纸上写出对应英文单词，写完后掀开 WORD 列核对，再盖回 WORD 列。",
+                "reason": "从意义出发主动提取拼写，核对后重新遮住单词，确保下一次尝试仍是独立回忆。",
+                "seconds": 60,
+                "requires": [
+                  "word_meaning_list"
+                ],
+                "produces": [
+                  "written_attempts"
+                ]
+              },
+              {
+                "action": "继续盖住 WORD 列，逐个看 MEANING 写英文，写完掀开核对并立即盖回；拼错的词标记后优先重写，直到时间用完。",
+                "reason": "用同一词表练习义到词的反向提取，优先处理拼写错误，强化产出能力。",
+                "seconds": 60,
+                "requires": [
+                  "written_attempts"
+                ],
+                "produces": []
+              }
+            ]
+          },
+          {
+            "title": "混合自测",
+            "seconds": 120,
+            "steps": [
+              {
+                "action": "盖住 MEANING 列，看 WORD 说意思并掀开核对后盖回；再盖住 WORD 列，看 MEANING 写单词并掀开核对后盖回，交替进行。",
+                "reason": "在词到义和义到词之间切换，检验两个方向是否都能独立回忆，核对后立即恢复遮盖。",
+                "seconds": 60,
+                "requires": [
+                  "word_meaning_list"
+                ],
+                "produces": [
+                  "mixed_attempts"
+                ]
+              },
+              {
+                "action": "继续交替遮盖两列做双向自测，每次核对后马上盖回；把出错的词优先放入下一轮，若没有错误就按原顺序继续，直到时间用完。",
+                "reason": "用同一词表做双向混合练习，优先重练错误项，零错误时继续原列表，避免额外准备。",
+                "seconds": 60,
+                "requires": [
+                  "mixed_attempts"
+                ],
+                "produces": []
+              }
+            ]
+          }
+        ]
+      }
+    },
+    "originalError": null
+  },
+  {
+    "key": "2/after/H09",
+    "case": {
+      "id": "H09",
+      "category": "plan",
+      "lang": "en",
+      "history": [],
+      "question": "I already have double-sided word cards: meanings on the front and the corresponding English words on the back. Plan two vocabulary revision activities, maximum four minutes in total. Include what to do if I make no errors.",
+      "expected": "Use supplied reverse layout coherently; attempt then check; reset before repetition; explicit usable zero-error branch, <=240 seconds."
+    },
+    "answer": "1. Meaning-to-word recall (120 seconds): Shuffle the cards, keep every card meaning-side up, and set aside any card you already know cold so the round uses the full existing set with weak items first; if no cards remain, skip to the second activity. A shuffled meaning-up stack makes recall productive rather than recognition, and prioritising weak cards targets the gaps. For each card, say the English word aloud, then flip it to check the back; if correct, place it in a done pile, and if wrong, say the correct word once and place it in a review pile. Saying the word before flipping tests productive recall and the flip gives immediate feedback. If the review pile is empty, reshuffle the done pile and run one faster pass; otherwise reset every review card meaning-side up and repeat only those cards once. A no-error round still needs a next challenge, while errors get a focused second attempt. In any step, if this subset is empty or too small, use available words from the original list; repeat available words as needed within that step’s allotted time.\n2. Word-to-meaning check (120 seconds): Take the checked stack, turn every card word-side up, and shuffle it. Reversing the prompt side tests receptive knowledge and prevents memorising one direction only. For each card, say the meaning aloud, then flip to the front to check; keep correct cards in a done pile and put wrong ones in a review pile. Recalling the meaning before flipping verifies comprehension rather than guessing from the word. If no errors occurred, shuffle the done pile and do a quick mixed pass flipping each card once; if there were errors, reset the review cards word-side up and repeat just those. The no-error branch keeps the session productive, while the error branch consolidates the missed items.",
+    "model": {
+      "answerKind": "general",
+      "answer": "",
+      "sourceIds": [],
+      "plan": {
+        "inputs": [
+          {
+            "id": "word_cards",
+            "quote": "I already have double-sided word cards: meanings on the front and the corresponding English words on the back."
+          }
+        ],
+        "activities": [
+          {
+            "title": "Meaning-to-word recall",
+            "seconds": 120,
+            "steps": [
+              {
+                "action": "Shuffle the cards, keep every card meaning-side up, and set aside any card you already know cold so the round uses the full existing set with weak items first; if no cards remain, skip to the second activity.",
+                "reason": "A shuffled meaning-up stack makes recall productive rather than recognition, and prioritising weak cards targets the gaps.",
+                "seconds": 20,
+                "requires": [
+                  "word_cards"
+                ],
+                "produces": [
+                  "meaning_up_stack"
+                ]
+              },
+              {
+                "action": "For each card, say the English word aloud, then flip it to check the back; if correct, place it in a done pile, and if wrong, say the correct word once and place it in a review pile.",
+                "reason": "Saying the word before flipping tests productive recall and the flip gives immediate feedback.",
+                "seconds": 80,
+                "requires": [
+                  "meaning_up_stack"
+                ],
+                "produces": [
+                  "done_pile",
+                  "review_pile"
+                ]
+              },
+              {
+                "action": "If the review pile is empty, reshuffle the done pile and run one faster pass; otherwise reset every review card meaning-side up and repeat only those cards once.",
+                "reason": "A no-error round still needs a next challenge, while errors get a focused second attempt.",
+                "seconds": 20,
+                "requires": [
+                  "done_pile",
+                  "review_pile"
+                ],
+                "produces": [
+                  "checked_stack"
+                ]
+              }
+            ]
+          },
+          {
+            "title": "Word-to-meaning check",
+            "seconds": 120,
+            "steps": [
+              {
+                "action": "Take the checked stack, turn every card word-side up, and shuffle it.",
+                "reason": "Reversing the prompt side tests receptive knowledge and prevents memorising one direction only.",
+                "seconds": 20,
+                "requires": [
+                  "checked_stack"
+                ],
+                "produces": [
+                  "word_up_stack"
+                ]
+              },
+              {
+                "action": "For each card, say the meaning aloud, then flip to the front to check; keep correct cards in a done pile and put wrong ones in a review pile.",
+                "reason": "Recalling the meaning before flipping verifies comprehension rather than guessing from the word.",
+                "seconds": 80,
+                "requires": [
+                  "word_up_stack"
+                ],
+                "produces": [
+                  "done_pile_2",
+                  "review_pile_2"
+                ]
+              },
+              {
+                "action": "If no errors occurred, shuffle the done pile and do a quick mixed pass flipping each card once; if there were errors, reset the review cards word-side up and repeat just those.",
+                "reason": "The no-error branch keeps the session productive, while the error branch consolidates the missed items.",
+                "seconds": 20,
+                "requires": [
+                  "done_pile_2",
+                  "review_pile_2"
+                ],
+                "produces": [
+                  "final_stack"
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    },
+    "originalError": null
+  },
+  {
+    "key": "2/after/H10",
+    "case": {
+      "id": "H10",
+      "category": "followup",
+      "lang": "en",
+      "history": [
+        {
+          "role": "user",
+          "content": "Plan two vocabulary activities with two timed substeps each, at most four minutes total. Use my word list."
+        },
+        {
+          "role": "assistant",
+          "content": "1. Recall meanings for two minutes. 2. Recall words for two minutes."
+        }
+      ],
+      "question": "Make it one paragraph instead, keeping the same total time.",
+      "expected": "One paragraph, no numbered headings; inherited 4-minute limit and material/practice constraints remain."
+    },
+    "answer": "Recall Meanings (2 minutes): first, in a single timed step, write a simple two-column WORD / MEANING list using the words from your own list with their known meanings, then cover the MEANING column, attempt the meaning of each word aloud or on paper, uncover to check each attempt, and immediately cover the MEANING column again before the next word; use the whole list, starting with your weakest items, and if any word is unknown, leave it out rather than inventing a meaning. Recall Words (2 minutes): keep the same WORD / MEANING list, cover the WORD column, attempt each word on paper from its meaning, uncover to check, and cover the WORD column again before each new attempt, again prioritising weak items and using the whole list.",
+    "model": {
+      "answer": "Recall Meanings (2 minutes): first, in a single timed step, write a simple two-column WORD / MEANING list using the words from your own list with their known meanings, then cover the MEANING column, attempt the meaning of each word aloud or on paper, uncover to check each attempt, and immediately cover the MEANING column again before the next word; use the whole list, starting with your weakest items, and if any word is unknown, leave it out rather than inventing a meaning. Recall Words (2 minutes): keep the same WORD / MEANING list, cover the WORD column, attempt each word on paper from its meaning, uncover to check, and cover the WORD column again before each new attempt, again prioritising weak items and using the whole list.",
+      "answerKind": "general",
+      "sourceIds": []
+    },
+    "originalError": null
+  },
+  {
+    "key": "2/after/H14",
+    "case": {
+      "id": "H14",
+      "category": "plan",
+      "lang": "zh",
+      "history": [],
+      "question": "我不会任何 F2L 插入，只会几个基本转动。安排两项慢拧活动，总计最多4分钟，不要让我先学公式。",
+      "expected": "Uses only known basic slow turns; no assumed familiar F2L insertion, inverse setup, solved-slot check or learning new formula; <=240 seconds."
+    },
+    "answer": "1. 慢拧熟悉转动 (120 秒): 从你已会的几个基本转动中选一个，用很慢的速度连续做，每次转动后停一下确认手指位置；若你选定的熟悉情形无法摆出，就只用已会的基本转动慢拧到时间结束，不做插入、不做逆序复位、不检查槽位。 用已会动作建立稳定手感，不引入新公式。\n2. 慢拧重复练习 (120 秒): 仅当上一活动已确认熟悉情形摆出时，用该插入的逆序复位同一情形，再慢速插入并重复；否则整段时间只用已会的基本转动慢拧，结束时不做插入、逆序复位或槽位检查。 在已会动作范围内重复，避免依赖未学公式。",
+    "model": {
+      "answerKind": "general",
+      "answer": "",
+      "sourceIds": [],
+      "plan": {
+        "inputs": [
+          {
+            "id": "user_known_turns",
+            "quote": "我不会任何 F2L 插入，只会几个基本转动。"
+          },
+          {
+            "id": "user_no_formula",
+            "quote": "不要让我先学公式。"
+          }
+        ],
+        "activities": [
+          {
+            "title": "慢拧熟悉转动",
+            "seconds": 120,
+            "steps": [
+              {
+                "action": "从你已会的几个基本转动中选一个，用很慢的速度连续做，每次转动后停一下确认手指位置；若你选定的熟悉情形无法摆出，就只用已会的基本转动慢拧到时间结束，不做插入、不做逆序复位、不检查槽位。",
+                "reason": "用已会动作建立稳定手感，不引入新公式。",
+                "seconds": 120,
+                "requires": [
+                  "user_known_turns",
+                  "user_no_formula"
+                ],
+                "produces": []
+              }
+            ]
+          },
+          {
+            "title": "慢拧重复练习",
+            "seconds": 120,
+            "steps": [
+              {
+                "action": "仅当上一活动已确认熟悉情形摆出时，用该插入的逆序复位同一情形，再慢速插入并重复；否则整段时间只用已会的基本转动慢拧，结束时不做插入、逆序复位或槽位检查。",
+                "reason": "在已会动作范围内重复，避免依赖未学公式。",
+                "seconds": 120,
+                "requires": [
+                  "user_known_turns",
+                  "user_no_formula"
+                ],
+                "produces": []
+              }
+            ]
+          }
+        ]
+      }
+    },
+    "originalError": null
+  },
+  {
+    "key": "2/after/H15",
+    "case": {
+      "id": "H15",
+      "category": "followup",
+      "lang": "zh",
+      "history": [
+        {
+          "role": "user",
+          "content": "安排两项静态F2L观察练习，总共最多3分钟，不转魔方。"
+        },
+        {
+          "role": "assistant",
+          "content": "只观察可见信息，未知状态保持未知。"
+        }
+      ],
+      "question": "现在允许转动，请把计划改成两项慢拧练习。",
+      "expected": "Latest permission overrides no-turn; retains inherited 3-minute limit; each activity has an executable alternative if no familiar case is available."
+    },
+    "answer": "1. 记录可见角块信息 (90 秒): 任选视野中一个角块，只记录当前可见贴纸的颜色及其所在面，例如“顶面红色、前面蓝色”；看不到的贴纸写UNKNOWN，不猜测完整身份或归位位置。 先固定同一角块的真实可见信息，作为后续慢拧回忆的基准。\n2. 慢拧回忆并复核 (90 秒): 用已知慢拧手法缓慢转动魔方，同时回忆上一步记录的同一角块可见颜色与所在面；若无法确认某个熟悉情形，就只用已知慢拧继续缓慢转动，结束时不做插入、不做逆向设置、不检查归位槽；最后停下，用眼睛复核该角块当前可见贴纸，未见的仍记UNKNOWN。 在允许转动下练习慢速操作与观察回忆，并用可见信息做简短复核。",
+    "model": {
+      "answerKind": "general",
+      "answer": "",
+      "sourceIds": [],
+      "plan": {
+        "inputs": [
+          {
+            "id": "slow_turn_request",
+            "quote": "现在允许转动，请把计划改成两项慢拧练习。"
+          }
+        ],
+        "activities": [
+          {
+            "title": "记录可见角块信息",
+            "seconds": 90,
+            "steps": [
+              {
+                "action": "任选视野中一个角块，只记录当前可见贴纸的颜色及其所在面，例如“顶面红色、前面蓝色”；看不到的贴纸写UNKNOWN，不猜测完整身份或归位位置。",
+                "reason": "先固定同一角块的真实可见信息，作为后续慢拧回忆的基准。",
+                "seconds": 90,
+                "requires": [],
+                "produces": [
+                  "corner_visible_record"
+                ]
+              }
+            ]
+          },
+          {
+            "title": "慢拧回忆并复核",
+            "seconds": 90,
+            "steps": [
+              {
+                "action": "用已知慢拧手法缓慢转动魔方，同时回忆上一步记录的同一角块可见颜色与所在面；若无法确认某个熟悉情形，就只用已知慢拧继续缓慢转动，结束时不做插入、不做逆向设置、不检查归位槽；最后停下，用眼睛复核该角块当前可见贴纸，未见的仍记UNKNOWN。",
+                "reason": "在允许转动下练习慢速操作与观察回忆，并用可见信息做简短复核。",
+                "seconds": 90,
+                "requires": [
+                  "corner_visible_record"
+                ],
+                "produces": []
+              }
+            ]
+          }
+        ]
+      }
+    },
+    "originalError": null
+  }
+]

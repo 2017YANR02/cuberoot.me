@@ -1,0 +1,130 @@
+{
+  "questions": {
+    "AF01": "Give two timed drills for seeing exactly when your index finger leaves the cube during a slow regrip. Use at most 69 seconds altogether. In a fresh paragraph, give exactly one sentence inviting Mira to try both on Friday.",
+    "AF02": "给我两条不用计时的练习，看看右拇指是不是在换握尚未完成时就离开。做完另起一段，用一句话邀请小宁周三试试两条。",
+    "AF03": "分两项练习观察缓慢推层时食指什么时候离开贴纸，合计不超过七十四秒，分别写明秒数。最后单独成段邀请小牧周日一起试，只用一句话。"
+  },
+  "drafts": {
+    "3": {
+      "answerKind": "general",
+      "answer": "",
+      "sourceIds": [],
+      "plan": {
+        "inputs": [
+          {
+            "id": "drill_goal",
+            "quote": "Give two timed drills for seeing exactly when your index finger leaves the cube during a slow regrip."
+          },
+          {
+            "id": "time_cap",
+            "quote": "Use at most 69 seconds altogether."
+          },
+          {
+            "id": "mira_invite",
+            "quote": "give exactly one sentence inviting Mira to try both on Friday"
+          }
+        ],
+        "activities": [
+          {
+            "title": "Slow Regrip Finger-Lift Watch",
+            "seconds": 35,
+            "steps": [
+              {
+                "action": "Hold the cube still, then perform one deliberately slow regrip while watching your index finger; note the exact moment it loses contact with the cube, then repeat once and confirm the same lift point.",
+                "reason": "Slowing the regrip makes the finger's release moment easy to see and compare across two passes.",
+                "seconds": 35,
+                "requires": [],
+                "produces": []
+              }
+            ]
+          },
+          {
+            "title": "Pause-and-Check Release Point",
+            "seconds": 34,
+            "steps": [
+              {
+                "action": "Start another slow regrip, freeze mid-motion at the instant your index finger leaves the cube, check that the fingertip is visibly clear of the surface, then finish the regrip and repeat once.",
+                "reason": "Freezing at the release instant verifies the exact moment rather than guessing it after the fact.",
+                "seconds": 34,
+                "requires": [],
+                "produces": []
+              }
+            ]
+          }
+        ]
+      }
+    },
+    "4": {
+      "answerKind": "general",
+      "answer": "Mira, please try both drills on Friday.",
+      "sourceIds": [],
+      "plan": {
+        "activities": [
+          {
+            "title": "Index release watch",
+            "seconds": 34,
+            "steps": [
+              {
+                "action": "Set a comfortable grip, perform one very slow regrip while watching the index finger, and freeze at the first visible loss of contact; reset and repeat twice, noting the exact instant each time.",
+                "reason": "Slow motion plus a freeze makes the release moment easy to see.",
+                "seconds": 34,
+                "requires": [],
+                "produces": []
+              }
+            ]
+          },
+          {
+            "title": "Contact freeze check",
+            "seconds": 35,
+            "steps": [
+              {
+                "action": "Regrip slowly again, pause at the suspected release point to confirm whether the fingertip still touches, then adjust the pause earlier or later until the break is pinpointed.",
+                "reason": "Pausing at the suspected break confirms the exact contact loss instead of guessing.",
+                "seconds": 35,
+                "requires": [],
+                "produces": []
+              }
+            ]
+          }
+        ]
+      }
+    },
+    "6": {
+      "answerKind": "general",
+      "answer": "小宁，周三要不要试试这两条不用计时的换握观察练习？",
+      "sourceIds": [],
+      "plan": {
+        "inputs": [
+          {
+            "id": "two_untimed_drills",
+            "quote": "两条不用计时的练习"
+          },
+          {
+            "id": "right_thumb_timing",
+            "quote": "看看右拇指是不是在换握尚未完成时就离开"
+          }
+        ],
+        "activities": [
+          {
+            "title": "慢速换握观察",
+            "steps": [
+              {
+                "action": "用慢速完成一次换握，眼睛盯住右拇指，在换握到位前停半秒，观察它是否提前离开。",
+                "reason": "放慢动作并短暂停顿，更容易看清右拇指离开的时机。"
+              }
+            ]
+          },
+          {
+            "title": "分段定格检查",
+            "steps": [
+              {
+                "action": "把换握分成两段：先让右手到位并停住，再让右拇指离开，重复几次并与自然换握对比。",
+                "reason": "分段定格能确认右拇指是否在换握完成前就离开。"
+              }
+            ]
+          }
+        ]
+      }
+    }
+  }
+}

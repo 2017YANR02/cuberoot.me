@@ -1,0 +1,911 @@
+{
+  "AR05": {
+    "question": "只会 B2 和 D′，还没学过插入。做两种慢转练习，每项至多三十四秒，两项合计不超过六十一秒。每项选定转动那一层上的一张可见贴纸并一直跟住它，慢做已会动作后停下来，自己报告贴纸原先和现在所在的位置。",
+    "lang": "zh",
+    "history": [],
+    "drafts": [
+      {
+        "call": 10,
+        "value": {
+          "answerKind": "general",
+          "answer": "",
+          "sourceIds": [],
+          "plan": {
+            "inputs": [
+              {
+                "id": "known_turns",
+                "quote": "只会 B2 和 D′，还没学过插入。"
+              },
+              {
+                "id": "tracking_rule",
+                "quote": "每项选定转动那一层上的一张可见贴纸并一直跟住它，慢做已会动作后停下来，自己报告贴纸原先和现在所在的位置。"
+              }
+            ],
+            "activities": [
+              {
+                "title": "慢做B2并跟踪贴纸",
+                "seconds": 30,
+                "steps": [
+                  {
+                    "action": "在B层选一张可见贴纸，记住它当前的位置；用约二十秒极慢地做一次B2，转动中始终盯住这张贴纸，停下后报告它原先和现在所在的位置，再核对是否跟对。",
+                    "reason": "只练已会的B2，并通过停顿观察确认贴纸的移动。",
+                    "seconds": 30,
+                    "requires": [
+                      "known_turns",
+                      "tracking_rule"
+                    ],
+                    "produces": []
+                  }
+                ]
+              },
+              {
+                "title": "慢做D′并跟踪贴纸",
+                "seconds": 31,
+                "steps": [
+                  {
+                    "action": "在D层选一张可见贴纸，记住它当前的位置；用约二十秒极慢地做一次D′，转动中始终盯住这张贴纸，停下后报告它原先和现在所在的位置，再核对是否跟对。",
+                    "reason": "只练已会的D′，并通过停顿观察确认贴纸的移动。",
+                    "seconds": 31,
+                    "requires": [
+                      "known_turns",
+                      "tracking_rule"
+                    ],
+                    "produces": []
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      },
+      {
+        "call": 11,
+        "value": {
+          "answerKind": "general",
+          "answer": "",
+          "sourceIds": [],
+          "plan": {
+            "inputs": [
+              {
+                "id": "known_turns",
+                "quote": "只会 B2 和 D′，还没学过插入。"
+              },
+              {
+                "id": "tracking_rule",
+                "quote": "每项选定转动那一层上的一张可见贴纸并一直跟住它，慢做已会动作后停下来，自己报告贴纸原先和现在所在的位置。"
+              }
+            ],
+            "activities": [
+              {
+                "title": "慢做B2并跟踪贴纸",
+                "seconds": 30,
+                "steps": [
+                  {
+                    "action": "在B层选一张可见贴纸并记住它当前的位置，用约二十秒极慢地做一次B2，转动中始终盯住这张贴纸，停下后报告它原先和现在所在的位置并核对是否跟对。",
+                    "reason": "只练已会的B2，并通过停顿观察确认贴纸的移动。",
+                    "seconds": 30,
+                    "requires": [
+                      "known_turns",
+                      "tracking_rule"
+                    ],
+                    "produces": []
+                  }
+                ]
+              },
+              {
+                "title": "慢做D′并跟踪贴纸",
+                "seconds": 31,
+                "steps": [
+                  {
+                    "action": "在D层选一张可见贴纸并记住它当前的位置，用约二十秒极慢地做一次D′，转动中始终盯住这张贴纸，停下后报告它原先和现在所在的位置并核对是否跟对。",
+                    "reason": "只练已会的D′，并通过停顿观察确认贴纸的移动。",
+                    "seconds": 31,
+                    "requires": [
+                      "known_turns",
+                      "tracking_rule"
+                    ],
+                    "produces": []
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      },
+      {
+        "call": 53,
+        "value": {
+          "answerKind": "general",
+          "answer": "",
+          "sourceIds": [],
+          "plan": {
+            "inputs": [
+              {
+                "id": "known_turns",
+                "quote": "只会 B2 和 D′，还没学过插入。"
+              },
+              {
+                "id": "tracking_rule",
+                "quote": "每项选定转动那一层上的一张可见贴纸并一直跟住它，慢做已会动作后停下来，自己报告贴纸原先和现在所在的位置。"
+              }
+            ],
+            "activities": [
+              {
+                "title": "慢转 B2 跟踪贴纸",
+                "seconds": 30,
+                "steps": [
+                  {
+                    "action": "在 B 层选一张可见贴纸，记住它当前的位置；慢慢做一次 B2，全程盯住这张贴纸，停下后报告它原先和现在所在的位置。",
+                    "reason": "用已会的 B2 慢转并持续跟踪同一张贴纸，观察转动后的位置变化。",
+                    "seconds": 30,
+                    "requires": [
+                      "known_turns",
+                      "tracking_rule"
+                    ],
+                    "produces": []
+                  }
+                ]
+              },
+              {
+                "title": "慢转 D′ 跟踪贴纸",
+                "seconds": 31,
+                "steps": [
+                  {
+                    "action": "在 D 层选一张可见贴纸，记住它当前的位置；慢慢做一次 D′，全程盯住这张贴纸，停下后报告它原先和现在所在的位置。",
+                    "reason": "用已会的 D′ 慢转并持续跟踪同一张贴纸，观察转动后的位置变化。",
+                    "seconds": 31,
+                    "requires": [
+                      "known_turns",
+                      "tracking_rule"
+                    ],
+                    "produces": []
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      },
+      {
+        "call": 54,
+        "value": {
+          "answerKind": "general",
+          "answer": "",
+          "sourceIds": [],
+          "plan": {
+            "inputs": [
+              {
+                "id": "known_turns",
+                "quote": "只会 B2 和 D′，还没学过插入。"
+              },
+              {
+                "id": "tracking_rule",
+                "quote": "每项选定转动那一层上的一张可见贴纸并一直跟住它，慢做已会动作后停下来，自己报告贴纸原先和现在所在的位置。"
+              }
+            ],
+            "activities": [
+              {
+                "title": "慢转 B2 跟踪贴纸",
+                "seconds": 30,
+                "steps": [
+                  {
+                    "action": "在 B 层选一张可见贴纸并记住它当前的位置，慢慢做一次 B2，全程盯住这张贴纸，停下后报告它原先和现在所在的位置。",
+                    "reason": "用已会的 B2 慢转并持续跟踪同一张贴纸，观察转动后的位置变化。",
+                    "seconds": 30,
+                    "requires": [
+                      "known_turns",
+                      "tracking_rule"
+                    ],
+                    "produces": []
+                  }
+                ]
+              },
+              {
+                "title": "慢转 D′ 跟踪贴纸",
+                "seconds": 31,
+                "steps": [
+                  {
+                    "action": "在 D 层选一张可见贴纸并记住它当前的位置，慢慢做一次 D′，全程盯住这张贴纸，停下后报告它原先和现在所在的位置。",
+                    "reason": "用已会的 D′ 慢转并持续跟踪同一张贴纸，观察转动后的位置变化。",
+                    "seconds": 31,
+                    "requires": [
+                      "known_turns",
+                      "tracking_rule"
+                    ],
+                    "produces": []
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      }
+    ]
+  },
+  "AR06": {
+    "question": "Make a two-activity practice plan of 145–168 words using my existing Estonian word-and-meaning sheet. Give each activity two timed substeps and a reason per substep, with 114 seconds available overall. First say meanings from visible Estonian, then write Estonian from visible meanings. Keep the answer covered until the attempt in each direction.",
+    "lang": "en",
+    "history": [],
+    "drafts": [
+      {
+        "call": 12,
+        "value": {
+          "answerKind": "general",
+          "answer": "",
+          "sourceIds": [],
+          "plan": {
+            "inputs": [
+              {
+                "id": "estonian_sheet",
+                "quote": "using my existing Estonian word-and-meaning sheet"
+              }
+            ],
+            "activities": [
+              {
+                "title": "Say meanings from Estonian",
+                "seconds": 57,
+                "steps": [
+                  {
+                    "action": "Keep the sheet on its face with the Estonian WORD column visible and cover the MEANING column; say the meaning of each word aloud, then uncover to check and re-cover before the next word.",
+                    "reason": "Covering the meaning forces recall from the visible Estonian prompt, and uncovering only after speaking gives an honest check.",
+                    "seconds": 29,
+                    "requires": [
+                      "estonian_sheet"
+                    ],
+                    "produces": [
+                      "spoken_meanings"
+                    ]
+                  },
+                  {
+                    "action": "Repeat the same cover-say-uncover cycle across the whole list, prioritising words you missed; if none were missed, simply run the full list once more.",
+                    "reason": "A second pass strengthens weak items and consolidates the rest without requiring any errors.",
+                    "seconds": 28,
+                    "requires": [
+                      "estonian_sheet",
+                      "spoken_meanings"
+                    ],
+                    "produces": []
+                  }
+                ]
+              },
+              {
+                "title": "Write Estonian from meanings",
+                "seconds": 57,
+                "steps": [
+                  {
+                    "action": "Keep the sheet on the same face with the MEANING column visible and cover the WORD column; write the Estonian word on paper for each meaning, then uncover to check and re-cover before the next.",
+                    "reason": "Writing from a visible meaning tests production, and covering the word prevents copying while the attempt is recorded.",
+                    "seconds": 29,
+                    "requires": [
+                      "estonian_sheet"
+                    ],
+                    "produces": [
+                      "written_words"
+                    ]
+                  },
+                  {
+                    "action": "Repeat the cover-write-uncover cycle over the whole list, prioritising words written incorrectly; if none were wrong, run the complete list once more.",
+                    "reason": "Repeating missed items targets gaps, while the no-error branch still gives useful reinforcement.",
+                    "seconds": 28,
+                    "requires": [
+                      "estonian_sheet",
+                      "written_words"
+                    ],
+                    "produces": []
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      },
+      {
+        "call": 13,
+        "value": {
+          "answerKind": "general",
+          "answer": "",
+          "sourceIds": [],
+          "plan": {
+            "inputs": [
+              {
+                "id": "estonian_sheet",
+                "quote": "using my existing Estonian word-and-meaning sheet"
+              }
+            ],
+            "activities": [
+              {
+                "title": "Say meanings from Estonian",
+                "seconds": 57,
+                "steps": [
+                  {
+                    "action": "Keep the sheet on its face with the Estonian WORD column visible and cover the MEANING column; say the meaning of each word aloud, then uncover to check and re-cover before the next word.",
+                    "reason": "Covering the meaning forces recall from the visible Estonian prompt.",
+                    "seconds": 29,
+                    "requires": [
+                      "estonian_sheet"
+                    ],
+                    "produces": [
+                      "spoken_meanings"
+                    ]
+                  },
+                  {
+                    "action": "Repeat the same cover-say-uncover cycle across the whole list, prioritising words you missed; if none were missed, simply run the full list once more.",
+                    "reason": "A second pass strengthens weak items.",
+                    "seconds": 28,
+                    "requires": [
+                      "estonian_sheet",
+                      "spoken_meanings"
+                    ],
+                    "produces": []
+                  }
+                ]
+              },
+              {
+                "title": "Write Estonian from meanings",
+                "seconds": 57,
+                "steps": [
+                  {
+                    "action": "Keep the sheet on the same face with the MEANING column visible and cover the WORD column; write the Estonian word on paper for each meaning, then uncover to check and re-cover before the next.",
+                    "reason": "Writing from a visible meaning tests production.",
+                    "seconds": 29,
+                    "requires": [
+                      "estonian_sheet"
+                    ],
+                    "produces": [
+                      "written_words"
+                    ]
+                  },
+                  {
+                    "action": "Repeat the cover-write-uncover cycle over the whole list, prioritising words written incorrectly; if none were wrong, run the complete list once more.",
+                    "reason": "Repeating missed items targets gaps, while the no-error branch still gives useful reinforcement.",
+                    "seconds": 28,
+                    "requires": [
+                      "estonian_sheet",
+                      "written_words"
+                    ],
+                    "produces": []
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      },
+      {
+        "call": 58,
+        "value": {
+          "answerKind": "general",
+          "answer": "",
+          "sourceIds": [],
+          "plan": {
+            "inputs": [
+              {
+                "id": "estonian_sheet",
+                "quote": "Make a two-activity practice plan of 145–168 words using my existing Estonian word-and-meaning sheet."
+              }
+            ],
+            "activities": [
+              {
+                "title": "Say meanings from Estonian",
+                "seconds": 57,
+                "steps": [
+                  {
+                    "action": "Keep the sheet on its face with the Estonian WORD column visible and cover the MEANING column; say the meaning of each word, then uncover to check and recover MEANING before the next word.",
+                    "reason": "Covering the answer forces recall before checking, and recovering it keeps every attempt honest.",
+                    "seconds": 29,
+                    "requires": [
+                      "estonian_sheet"
+                    ],
+                    "produces": [
+                      "spoken_meanings"
+                    ]
+                  },
+                  {
+                    "action": "Repeat the same cover-say-uncover cycle across the whole list, prioritising words you missed; if none were missed, simply run the complete list once more.",
+                    "reason": "A second pass strengthens weak items without requiring any errors to exist.",
+                    "seconds": 28,
+                    "requires": [
+                      "estonian_sheet",
+                      "spoken_meanings"
+                    ],
+                    "produces": []
+                  }
+                ]
+              },
+              {
+                "title": "Write Estonian from meanings",
+                "seconds": 57,
+                "steps": [
+                  {
+                    "action": "Keep the sheet on the same face with the MEANING column visible and cover the WORD column; write the Estonian for each meaning on paper, then uncover to check and recover WORD before the next item.",
+                    "reason": "Writing from the visible meaning tests production while the cover prevents copying.",
+                    "seconds": 29,
+                    "requires": [
+                      "estonian_sheet"
+                    ],
+                    "produces": [
+                      "written_words"
+                    ]
+                  },
+                  {
+                    "action": "Repeat the cover-write-uncover cycle over the full list, prioritising written errors; if there were none, rewrite the complete list once.",
+                    "reason": "Repeating missed items or the whole list consolidates spelling and recall.",
+                    "seconds": 28,
+                    "requires": [
+                      "estonian_sheet",
+                      "written_words"
+                    ],
+                    "produces": []
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      },
+      {
+        "call": 59,
+        "value": {
+          "answerKind": "general",
+          "answer": "",
+          "sourceIds": [],
+          "plan": {
+            "inputs": [
+              {
+                "id": "estonian_sheet",
+                "quote": "Make a two-activity practice plan of 145–168 words using my existing Estonian word-and-meaning sheet."
+              }
+            ],
+            "activities": [
+              {
+                "title": "Say meanings from Estonian",
+                "seconds": 57,
+                "steps": [
+                  {
+                    "action": "Keep the sheet on its face with the Estonian WORD column visible and cover the MEANING column; say the meaning of each word, then uncover to check and recover MEANING before the next word.",
+                    "reason": "Covering forces recall before checking.",
+                    "seconds": 29,
+                    "requires": [
+                      "estonian_sheet"
+                    ],
+                    "produces": [
+                      "spoken_meanings"
+                    ]
+                  },
+                  {
+                    "action": "Repeat the same cover-say-uncover cycle across the whole list, prioritising words you missed; if none were missed, simply run the complete list once more.",
+                    "reason": "A second pass strengthens weak items.",
+                    "seconds": 28,
+                    "requires": [
+                      "estonian_sheet",
+                      "spoken_meanings"
+                    ],
+                    "produces": []
+                  }
+                ]
+              },
+              {
+                "title": "Write Estonian from meanings",
+                "seconds": 57,
+                "steps": [
+                  {
+                    "action": "Keep the sheet on the same face with the MEANING column visible and cover the WORD column; write the Estonian for each meaning on paper, then uncover to check and recover WORD before the next item.",
+                    "reason": "Writing tests production; the cover prevents copying.",
+                    "seconds": 29,
+                    "requires": [
+                      "estonian_sheet"
+                    ],
+                    "produces": [
+                      "written_words"
+                    ]
+                  },
+                  {
+                    "action": "Repeat the cover-write-uncover cycle over the full list, prioritising written errors; if there were none, rewrite the complete list once.",
+                    "reason": "Repeating missed items or the whole list consolidates spelling and recall.",
+                    "seconds": 28,
+                    "requires": [
+                      "estonian_sheet",
+                      "written_words"
+                    ],
+                    "produces": []
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      }
+    ]
+  },
+  "AR10": {
+    "question": "用三张空白卡和词对 ash＝白蜡树、beech＝山毛榉、larch＝落叶松做练习。给两项活动，每项两个定时子步骤，共计不能超过一百零二秒。第一项把每个词和它的释义写在相对两面，再看英文口头回忆中文、翻查。第二项看中文手写英文，逐卡翻查后把刚检查的卡翻回中文面。",
+    "lang": "zh",
+    "history": [],
+    "drafts": [
+      {
+        "call": 23,
+        "value": {
+          "answer": "",
+          "answerKind": "general",
+          "sourceIds": [],
+          "plan": {
+            "inputs": [
+              {
+                "id": "word_pairs",
+                "quote": "用三张空白卡和词对 ash＝白蜡树、beech＝山毛榉、larch＝落叶松做练习。"
+              },
+              {
+                "id": "two_activities",
+                "quote": "给两项活动，每项两个定时子步骤，共计不能超过一百零二秒。"
+              },
+              {
+                "id": "write_faces",
+                "quote": "第一项把每个词和它的释义写在相对两面，再看英文口头回忆中文、翻查。"
+              },
+              {
+                "id": "meaning_prompt",
+                "quote": "第二项看中文手写英文，逐卡翻查后把刚检查的卡翻回中文面。"
+              }
+            ],
+            "activities": [
+              {
+                "title": "制作卡片并口头回忆中文",
+                "seconds": 50,
+                "steps": [
+                  {
+                    "action": "取三张空白卡，在每张正面写英文词 ash、beech、larch，在相对背面写对应中文 白蜡树、山毛榉、落叶松，写完逐张核对两面配对。",
+                    "reason": "先建立词与释义的两面参考，供随后翻查。",
+                    "seconds": 26,
+                    "requires": [
+                      "word_pairs"
+                    ],
+                    "produces": [
+                      "word_cards"
+                    ]
+                  },
+                  {
+                    "action": "把三张卡英文面朝上排开，逐张看英文口头说出中文，然后翻到背面核对；若说错或说不出，记下该词，核对后把卡翻回英文面，再处理下一张。",
+                    "reason": "用英文提示口头回忆中文，并逐张翻查确认。",
+                    "seconds": 24,
+                    "requires": [
+                      "word_cards"
+                    ],
+                    "produces": [
+                      "spoken_recall_done"
+                    ]
+                  }
+                ]
+              },
+              {
+                "title": "看中文手写英文并逐卡翻查",
+                "seconds": 52,
+                "steps": [
+                  {
+                    "action": "把三张卡中文面朝上排开，逐张看中文在纸上写出英文，写完后翻到背面核对拼写；若写错或写不出，记下该词，核对后把这张卡翻回中文面，再处理下一张。",
+                    "reason": "用中文提示手写英文，逐卡翻查后恢复中文提示面。",
+                    "seconds": 30,
+                    "requires": [
+                      "word_cards"
+                    ],
+                    "produces": [
+                      "written_attempts"
+                    ]
+                  },
+                  {
+                    "action": "把三张卡中文面朝上排开，逐张看中文口头说出英文，然后翻到背面核对；若说错或说不出，记下该词，核对后把卡翻回中文面，再处理下一张。",
+                    "reason": "再练一轮中文到英文的回忆，并保持每张卡以中文面作为下一轮提示。",
+                    "seconds": 22,
+                    "requires": [
+                      "written_attempts"
+                    ],
+                    "produces": [
+                      "meaning_recall_done"
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      },
+      {
+        "call": 24,
+        "value": {
+          "answerKind": "general",
+          "answer": "",
+          "sourceIds": [],
+          "plan": {
+            "inputs": [
+              {
+                "id": "word_pairs",
+                "quote": "用三张空白卡和词对 ash＝白蜡树、beech＝山毛榉、larch＝落叶松做练习。"
+              },
+              {
+                "id": "two_activities",
+                "quote": "给两项活动，每项两个定时子步骤，共计不能超过一百零二秒。"
+              },
+              {
+                "id": "write_faces",
+                "quote": "第一项把每个词和它的释义写在相对两面，再看英文口头回忆中文、翻查。"
+              },
+              {
+                "id": "meaning_prompt",
+                "quote": "第二项看中文手写英文，逐卡翻查后把刚检查的卡翻回中文面。"
+              }
+            ],
+            "activities": [
+              {
+                "title": "写卡并口头回忆中文",
+                "seconds": 50,
+                "steps": [
+                  {
+                    "action": "取三张空白卡，在每张正面写英文词 ash、beech、larch，在相对背面写对应中文 白蜡树、山毛榉、落叶松，写完逐张核对两面配对。",
+                    "reason": "先建立词与释义的两面参考，供随后翻查。",
+                    "seconds": 26,
+                    "requires": [
+                      "word_pairs"
+                    ],
+                    "produces": [
+                      "word_cards"
+                    ]
+                  },
+                  {
+                    "action": "把三张卡英文面朝上排开，逐张看英文口头说出中文，然后翻到背面核对；若说错或说不出，记下该词，核对后把卡翻回英文面，再处理下一张。",
+                    "reason": "用英文提示口头回忆中文，并逐张翻查确认。",
+                    "seconds": 24,
+                    "requires": [
+                      "word_cards"
+                    ],
+                    "produces": [
+                      "spoken_recall_done"
+                    ]
+                  }
+                ]
+              },
+              {
+                "title": "看中文手写英文并逐卡翻查",
+                "seconds": 52,
+                "steps": [
+                  {
+                    "action": "把三张卡中文面朝上排开，逐张看中文在纸上写出英文，写完后翻到背面核对拼写；若写错或写不出，记下该词，核对后把这张卡翻回中文面，再处理下一张。",
+                    "reason": "用中文提示手写英文，逐卡翻查后恢复中文提示面。",
+                    "seconds": 30,
+                    "requires": [
+                      "word_cards"
+                    ],
+                    "produces": [
+                      "written_attempts"
+                    ]
+                  },
+                  {
+                    "action": "把三张卡中文面朝上排开，逐张看中文口头说出英文，然后翻到背面核对；若说错或说不出，记下该词，核对后把卡翻回中文面，再处理下一张。",
+                    "reason": "再练一轮中文到英文的回忆，并保持每张卡以中文面作为下一轮提示。",
+                    "seconds": 22,
+                    "requires": [
+                      "written_attempts"
+                    ],
+                    "produces": [
+                      "meaning_recall_done"
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      },
+      {
+        "call": 69,
+        "value": {
+          "answer": "",
+          "answerKind": "general",
+          "sourceIds": [],
+          "plan": {
+            "inputs": [
+              {
+                "id": "word_pairs",
+                "quote": "用三张空白卡和词对 ash＝白蜡树、beech＝山毛榉、larch＝落叶松做练习。"
+              },
+              {
+                "id": "two_activities",
+                "quote": "给两项活动，每项两个定时子步骤，共计不能超过一百零二秒。"
+              },
+              {
+                "id": "activity_one",
+                "quote": "第一项把每个词和它的释义写在相对两面，再看英文口头回忆中文、翻查。"
+              },
+              {
+                "id": "activity_two",
+                "quote": "第二项看中文手写英文，逐卡翻查后把刚检查的卡翻回中文面。"
+              }
+            ],
+            "activities": [
+              {
+                "title": "制作卡片并口头回忆中文",
+                "seconds": 50,
+                "steps": [
+                  {
+                    "action": "取三张空白卡，在每张正面写英文词 ash、beech、larch，在背面写对应中文 白蜡树、山毛榉、落叶松，写好后把三张卡都英文面朝上放好。",
+                    "reason": "先做出两面分别写词和释义的卡片，并统一从英文面开始。",
+                    "seconds": 30,
+                    "requires": [
+                      "word_pairs"
+                    ],
+                    "produces": [
+                      "cards_ready"
+                    ]
+                  },
+                  {
+                    "action": "逐张看英文面，口头说出中文意思，然后翻到背面核对；核对后把该卡翻回英文面，再处理下一张。",
+                    "reason": "从英文回忆中文并即时核对，翻回英文面保证下一张仍从同一方向开始。",
+                    "seconds": 20,
+                    "requires": [
+                      "cards_ready"
+                    ],
+                    "produces": [
+                      "oral_recall_done"
+                    ]
+                  }
+                ]
+              },
+              {
+                "title": "看中文手写英文并逐卡核对",
+                "seconds": 52,
+                "steps": [
+                  {
+                    "action": "把三张卡都翻到中文面朝上，逐张看中文，先在纸上写出英文，再翻到背面核对拼写；若没有写错就继续下一张，若有写错就在该卡旁标出并继续。",
+                    "reason": "先写下答案再核对，能检查拼写而不是只靠口头回忆。",
+                    "seconds": 32,
+                    "requires": [
+                      "cards_ready"
+                    ],
+                    "produces": [
+                      "written_attempts"
+                    ]
+                  },
+                  {
+                    "action": "逐张把刚核对过的卡翻回中文面朝上，全部翻完后若纸上有标错的词，就再对每个标错词看中文写英文并翻查一次；若没有标错词，就直接结束本轮。",
+                    "reason": "恢复中文提示面，并按有无错误选择是否重练，避免无错误时多练。",
+                    "seconds": 20,
+                    "requires": [
+                      "written_attempts"
+                    ],
+                    "produces": [
+                      "cards_reset"
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      },
+      {
+        "call": 70,
+        "value": {
+          "answerKind": "general",
+          "answer": "",
+          "sourceIds": [],
+          "plan": {
+            "inputs": [
+              {
+                "id": "word_pairs",
+                "quote": "用三张空白卡和词对 ash＝白蜡树、beech＝山毛榉、larch＝落叶松做练习。"
+              },
+              {
+                "id": "two_activities",
+                "quote": "给两项活动，每项两个定时子步骤，共计不能超过一百零二秒。"
+              },
+              {
+                "id": "activity_one",
+                "quote": "第一项把每个词和它的释义写在相对两面，再看英文口头回忆中文、翻查。"
+              },
+              {
+                "id": "activity_two",
+                "quote": "第二项看中文手写英文，逐卡翻查后把刚检查的卡翻回中文面。"
+              }
+            ],
+            "activities": [
+              {
+                "title": "制作卡片并口头回忆中文",
+                "seconds": 50,
+                "steps": [
+                  {
+                    "action": "取三张空白卡，在每张正面写英文词 ash、beech、larch，在背面写对应中文 白蜡树、山毛榉、落叶松，写好后把三张卡都英文面朝上放好。",
+                    "reason": "先做出两面分别写词和释义的卡片，并统一从英文面开始。",
+                    "seconds": 30,
+                    "requires": [
+                      "word_pairs"
+                    ],
+                    "produces": [
+                      "cards_ready"
+                    ]
+                  },
+                  {
+                    "action": "逐张看英文面，口头说出中文意思，然后翻到背面核对；核对后把该卡翻回英文面，再处理下一张。",
+                    "reason": "从英文回忆中文并即时核对，翻回英文面保证下一张仍从同一方向开始。",
+                    "seconds": 20,
+                    "requires": [
+                      "cards_ready"
+                    ],
+                    "produces": [
+                      "oral_recall_done"
+                    ]
+                  }
+                ]
+              },
+              {
+                "title": "看中文手写英文并逐卡核对",
+                "seconds": 52,
+                "steps": [
+                  {
+                    "action": "把三张卡都翻到中文面朝上，逐张看中文，先在纸上写出英文，再翻到背面核对拼写；若没有写错就继续下一张，若有写错就在该卡旁标出并继续。",
+                    "reason": "先写下答案再核对，能检查拼写而不是只靠口头回忆。",
+                    "seconds": 32,
+                    "requires": [
+                      "cards_ready"
+                    ],
+                    "produces": [
+                      "written_attempts"
+                    ]
+                  },
+                  {
+                    "action": "逐张把刚核对过的卡翻回中文面朝上，全部翻完后若纸上有标错的词，就再对每个标错词看中文写英文并翻查一次；若没有标错词，就直接结束本轮。",
+                    "reason": "恢复中文提示面，并按有无错误选择是否重练，避免无错误时多练。",
+                    "seconds": 20,
+                    "requires": [
+                      "written_attempts"
+                    ],
+                    "produces": [
+                      "cards_reset"
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      }
+    ]
+  },
+  "AR12": {
+    "question": "Keep using the same sheet, and merge the two recall directions into one paragraph at most 77 seconds long. Say which column is covered each time; recall from the other column before uncovering and checking.",
+    "lang": "en",
+    "history": [
+      {
+        "role": "user",
+        "content": "I have a two-column Serbian word-and-meaning list and originally planned for 102 seconds of practice."
+      },
+      {
+        "role": "assistant",
+        "content": "Practise both directions on that list."
+      }
+    ],
+    "drafts": [
+      {
+        "call": 29,
+        "value": {
+          "answer": "Mixed-direction recall on the same Serbian WORD / MEANING sheet, 77 seconds total. First 15 seconds: with the sheet on its single face, cover the MEANING column, read each Serbian WORD aloud and say its meaning before uncovering the MEANING column to check, then cover the MEANING column again before the next word; use this pass to refresh the list and note any weak items. Next 31 seconds: still on the same face, cover the WORD column, read each MEANING and write the Serbian word on paper before uncovering the WORD column to check, then cover the WORD column again before each new attempt; prioritise the weak items noted in the first pass while covering the whole list. Final 31 seconds: alternate directions item by item on the same sheet — for a word-to-meaning attempt keep the WORD visible and the MEANING covered, say the meaning, uncover MEANING to check, then cover MEANING again; for a meaning-to-word attempt keep the MEANING visible and the WORD covered, write the word, uncover WORD to check, then cover WORD again — and if any items were missed, spend the remaining time repeating just those missed items in the same alternating way, otherwise finish with the complete list once more.",
+          "answerKind": "general",
+          "sourceIds": []
+        }
+      },
+      {
+        "call": 30,
+        "value": {
+          "answerKind": "general",
+          "answer": "Mixed-direction recall on the same Serbian WORD / MEANING sheet, 77 seconds total. First 15 seconds: with the sheet on its single face, cover the MEANING column, read each Serbian WORD aloud and say its meaning before uncovering the MEANING column to check, then cover the MEANING column again before the next word; use this pass to refresh the list and note any weak items. Next 31 seconds: still on the same face, cover the WORD column, read each MEANING and write the Serbian word on paper before uncovering the WORD column to check, then cover the WORD column again before each new attempt; prioritise the weak items noted in the first pass while covering the whole list. Final 31 seconds: alternate directions item by item on the same sheet — for a word-to-meaning attempt keep the WORD visible and the MEANING covered, say the meaning, uncover MEANING to check, then cover MEANING again; for a meaning-to-word attempt keep the MEANING visible and the WORD covered, write the word, uncover WORD to check, then cover WORD again — and if any items were missed, spend the remaining time repeating just those missed items in the same alternating way, otherwise finish with the complete list once more.",
+          "sourceIds": []
+        }
+      },
+      {
+        "call": 74,
+        "value": {
+          "answer": "Keep the same two-column Serbian WORD / MEANING sheet on one face throughout, and work in both directions within 77 seconds. First, spend about 10 seconds writing or confirming a short WORD / MEANING list of the Serbian words you are studying with their known meanings, then immediately begin: cover the MEANING column, keep only the WORD column visible, say the meaning for the first word, uncover the MEANING column to check, and cover the MEANING column again before the next word; continue through the list this way for about 30 seconds, prioritising weak items. Then reverse direction: cover the WORD column, keep only the MEANING column visible, write the Serbian word on paper for the first meaning, uncover the WORD column to check, and cover the WORD column again before each new attempt; continue through the list for about 30 seconds, prioritising weak items. Finish with about 7 seconds: if any items were missed in either direction, repeat just those missed items once in the direction where they failed, covering the answer column each time and uncovering only to check; if there were no misses, stop or run once more through the complete list.",
+          "answerKind": "general",
+          "sourceIds": []
+        }
+      }
+    ]
+  }
+}

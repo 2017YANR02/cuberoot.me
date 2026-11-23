@@ -1,0 +1,637 @@
+[
+  {
+    "key": "1/after/H07",
+    "case": {
+      "id": "H07",
+      "category": "plan",
+      "lang": "en",
+      "history": [],
+      "question": "Plan two vocabulary activities with two timed substeps each in 140–180 English words. Total time must be no more than four minutes, including preparation. Give an action and a reason for every substep.",
+      "expected": "Rendered 140–180 whitespace-delimited words, exactly 2x2, total <=240 seconds, executable materials and recall order."
+    },
+    "result": {
+      "repeat": 1,
+      "variant": "after",
+      "id": "H07",
+      "category": "plan",
+      "at": "2026-11-18T02:50:53.915Z",
+      "error": "model_output_invalid",
+      "metrics": {
+        "stages": {
+          "model": {
+            "calls": 1,
+            "ms": 2733,
+            "errors": 0
+          },
+          "review": {
+            "calls": 1,
+            "ms": 2122,
+            "errors": 0
+          }
+        },
+        "models": [
+          {
+            "model": "deepseek-flash",
+            "thinking": false,
+            "round": 0,
+            "attempt": 0,
+            "promptFingerprint": "7cc2a8ec409944770be2ff69c4f3d3c3274da6ee97e94dd77d9cb6a7e073bdaa",
+            "configurationFingerprint": "523797966567c671a4089b4dc8390623f0f51de85102f4054fcc93c3ef9ad0c3",
+            "input": 1868,
+            "output": 373,
+            "cached": 1664,
+            "reasoning": 0,
+            "firstActivityMs": 653,
+            "firstTextMs": 653,
+            "durationMs": 2731,
+            "grossCny": 0.00672,
+            "cacheAdjustedCny": {
+              "min": 0.00172928,
+              "max": 0.00345856
+            },
+            "tariff": {
+              "version": "deepseek-cny-peak-2026-10-15",
+              "inputPerMillion": 2,
+              "outputPerMillion": 8,
+              "cachedInputPerMillion": 0.04,
+              "cacheVersion": "cache-adjusted-range-2026-10-26",
+              "source": "https://api-docs.deepseek.com/zh-cn/quick_start/pricing/"
+            }
+          },
+          {
+            "model": "deepseek-flash",
+            "thinking": false,
+            "round": 0,
+            "attempt": 0,
+            "promptFingerprint": "ce5cfb60528c35cd8549d58175ba5e6f45af4a14e89fab5fe44f0714d1c4e163",
+            "configurationFingerprint": "523797966567c671a4089b4dc8390623f0f51de85102f4054fcc93c3ef9ad0c3",
+            "input": 2865,
+            "output": 369,
+            "cached": 1280,
+            "reasoning": 0,
+            "firstActivityMs": 878,
+            "firstTextMs": 878,
+            "durationMs": 2120,
+            "grossCny": 0.008682,
+            "cacheAdjustedCny": {
+              "min": 0.0030866,
+              "max": 0.0061732
+            },
+            "tariff": {
+              "version": "deepseek-cny-peak-2026-10-15",
+              "inputPerMillion": 2,
+              "outputPerMillion": 8,
+              "cachedInputPerMillion": 0.04,
+              "cacheVersion": "cache-adjusted-range-2026-10-26",
+              "source": "https://api-docs.deepseek.com/zh-cn/quick_start/pricing/"
+            }
+          }
+        ],
+        "embeddings": [],
+        "searches": [],
+        "reranks": [],
+        "tools": {},
+        "retrievals": [],
+        "policy": {
+          "version": "2026-11-17-reliability-30",
+          "thinking": "auto"
+        },
+        "contexts": [
+          {
+            "relevance": "weak",
+            "recentTurns": 0,
+            "estimatedTokens": 2779,
+            "inputBudget": 57856,
+            "compressed": [],
+            "layers": {
+              "slidingSummary": 0,
+              "activeExtracts": 0,
+              "protectedConstraints": 0,
+              "longTermMemory": 0,
+              "historicalTopics": 0
+            }
+          },
+          {
+            "relevance": "weak",
+            "recentTurns": 0,
+            "estimatedTokens": 4291,
+            "inputBudget": 57856,
+            "compressed": [],
+            "layers": {
+              "slidingSummary": 0,
+              "activeExtracts": 0,
+              "protectedConstraints": 0,
+              "longTermMemory": 0,
+              "historicalTopics": 0
+            }
+          }
+        ],
+        "planChecks": [
+          {
+            "phase": "draft",
+            "reason": "plan_column_reset_missing",
+            "words": 147,
+            "minimum": 140,
+            "maximum": 180
+          },
+          {
+            "phase": "repair",
+            "reason": "plan_column_reset_missing",
+            "words": 147,
+            "minimum": 140,
+            "maximum": 180
+          }
+        ],
+        "answerRejections": [
+          {
+            "reason": "plan_column_reset_missing"
+          }
+        ],
+        "cost": {
+          "grossCny": 0.015402,
+          "unpricedCalls": 0
+        }
+      },
+      "durationMs": 4867.342417,
+      "firstAnswerMs": null,
+      "providerCalls": [
+        {
+          "repeat": 1,
+          "variant": "after",
+          "id": "H07",
+          "call": 19,
+          "model": "deepseek-flash",
+          "startedAt": "2026-11-18T02:50:49.058Z",
+          "requestSha256": "ea3321f0010d657e6dfcc875eeced4d581b386dab4ee0080f5ba0e2a911144e3",
+          "status": 200,
+          "headersMs": 149.52762500000244,
+          "responseFile": "provider-responses/19.txt",
+          "input": 1868,
+          "output": 373,
+          "cached": 1664,
+          "reasoning": null,
+          "durationMs": 2727.9583340000027
+        },
+        {
+          "repeat": 1,
+          "variant": "after",
+          "id": "H07",
+          "call": 20,
+          "model": "deepseek-flash",
+          "startedAt": "2026-11-18T02:50:51.794Z",
+          "requestSha256": "c3a7af4a8b11f24b4e6f108e48a8438e513168d8e2766d7fce7a2c80875895c9",
+          "status": 200,
+          "headersMs": 131.52120899999863,
+          "responseFile": "provider-responses/20.txt",
+          "input": 2865,
+          "output": 369,
+          "cached": 1280,
+          "reasoning": null,
+          "durationMs": 2116.2318749999977
+        }
+      ],
+      "reads": [],
+      "fixtureMisses": [],
+      "rssMb": 242
+    },
+    "models": [
+      {
+        "answerKind": "general",
+        "answer": "",
+        "sourceIds": [],
+        "plan": {
+          "inputs": [
+            {
+              "id": "user_request",
+              "quote": "Plan two vocabulary activities with two timed substeps each in 140–180 English words. Total time must be no more than four minutes, including preparation. Give an action and a reason for every substep."
+            }
+          ],
+          "activities": [
+            {
+              "title": "Meaning Recall Practice",
+              "seconds": 120,
+              "steps": [
+                {
+                  "action": "Write a two-column WORD and MEANING list of available study words with known meanings; if none are available, stop.",
+                  "reason": "A small accurate list supplies the practice material without inventing words.",
+                  "seconds": 40,
+                  "requires": [],
+                  "produces": [
+                    "word_meaning_list"
+                  ]
+                },
+                {
+                  "action": "Cover the MEANING column, read each WORD, say its meaning, uncover to check, then cover MEANING again before the next word.",
+                  "reason": "Hiding the answer forces genuine recall and immediate checking corrects errors.",
+                  "seconds": 80,
+                  "requires": [
+                    "word_meaning_list"
+                  ],
+                  "produces": [
+                    "meaning_recall_results"
+                  ]
+                }
+              ]
+            },
+            {
+              "title": "Word Production Practice",
+              "seconds": 120,
+              "steps": [
+                {
+                  "action": "Cover the WORD column, read each MEANING, write the word on paper, uncover to check, then cover WORD again before the next item.",
+                  "reason": "Producing written words from meanings strengthens retrieval and reveals spelling gaps.",
+                  "seconds": 80,
+                  "requires": [
+                    "word_meaning_list"
+                  ],
+                  "produces": [
+                    "written_sentences"
+                  ]
+                },
+                {
+                  "action": "Review the written words against the list, mark any errors, and repeat weak items; if zero errors, finish.",
+                  "reason": "Targeted repetition of mistakes consolidates the weakest items efficiently.",
+                  "seconds": 40,
+                  "requires": [
+                    "written_sentences",
+                    "meaning_recall_results"
+                  ],
+                  "produces": []
+                }
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "answerKind": "general",
+        "answer": "",
+        "sourceIds": [],
+        "plan": {
+          "inputs": [
+            {
+              "id": "user_request",
+              "quote": "Plan two vocabulary activities with two timed substeps each in 140–180 English words. Total time must be no more than four minutes, including preparation. Give an action and a reason for every substep."
+            }
+          ],
+          "activities": [
+            {
+              "title": "Meaning Recall Practice",
+              "seconds": 120,
+              "steps": [
+                {
+                  "action": "Write a two-column WORD and MEANING list of available study words with known meanings; if none are available, stop.",
+                  "reason": "A small accurate list supplies the practice material without inventing words.",
+                  "seconds": 40,
+                  "requires": [],
+                  "produces": [
+                    "word_meaning_list"
+                  ]
+                },
+                {
+                  "action": "Cover the MEANING column, read each WORD, say its meaning, uncover to check, then cover MEANING again before the next word.",
+                  "reason": "Hiding the answer forces genuine recall and immediate checking corrects errors.",
+                  "seconds": 80,
+                  "requires": [
+                    "word_meaning_list"
+                  ],
+                  "produces": [
+                    "meaning_recall_results"
+                  ]
+                }
+              ]
+            },
+            {
+              "title": "Word Production Practice",
+              "seconds": 120,
+              "steps": [
+                {
+                  "action": "Cover the WORD column, read each MEANING, write the word on paper, uncover to check, then cover WORD again before the next item.",
+                  "reason": "Producing written words from meanings strengthens retrieval and reveals spelling gaps.",
+                  "seconds": 80,
+                  "requires": [
+                    "word_meaning_list"
+                  ],
+                  "produces": [
+                    "written_words"
+                  ]
+                },
+                {
+                  "action": "Review the written words against the list, mark any errors, and repeat weak items; if zero errors, finish.",
+                  "reason": "Targeted repetition of mistakes consolidates the weakest items efficiently.",
+                  "seconds": 40,
+                  "requires": [
+                    "written_words",
+                    "meaning_recall_results"
+                  ],
+                  "produces": []
+                }
+              ]
+            }
+          ]
+        }
+      }
+    ]
+  },
+  {
+    "key": "2/after/H15",
+    "case": {
+      "id": "H15",
+      "category": "followup",
+      "lang": "zh",
+      "history": [
+        {
+          "role": "user",
+          "content": "安排两项静态F2L观察练习，总共最多3分钟，不转魔方。"
+        },
+        {
+          "role": "assistant",
+          "content": "只观察可见信息，未知状态保持未知。"
+        }
+      ],
+      "question": "现在允许转动，请把计划改成两项慢拧练习。",
+      "expected": "Latest permission overrides no-turn; retains inherited 3-minute limit; each activity has an executable alternative if no familiar case is available."
+    },
+    "result": {
+      "repeat": 2,
+      "variant": "after",
+      "id": "H15",
+      "category": "followup",
+      "at": "2026-11-18T02:53:12.256Z",
+      "error": "model_output_invalid",
+      "metrics": {
+        "stages": {
+          "model": {
+            "calls": 1,
+            "ms": 2764,
+            "errors": 0
+          },
+          "review": {
+            "calls": 1,
+            "ms": 1902,
+            "errors": 0
+          }
+        },
+        "models": [
+          {
+            "model": "deepseek-flash",
+            "thinking": false,
+            "round": 0,
+            "attempt": 0,
+            "promptFingerprint": "eac39c8859367d46d23de74ab418abac54ffd2a8ad07a50e7fd66d4dc77250e2",
+            "configurationFingerprint": "523797966567c671a4089b4dc8390623f0f51de85102f4054fcc93c3ef9ad0c3",
+            "input": 1927,
+            "output": 279,
+            "cached": 1792,
+            "reasoning": 0,
+            "firstActivityMs": 610,
+            "firstTextMs": 610,
+            "durationMs": 2763,
+            "grossCny": 0.006086,
+            "cacheAdjustedCny": {
+              "min": 0.0012868399999999998,
+              "max": 0.0025736799999999996
+            },
+            "tariff": {
+              "version": "deepseek-cny-peak-2026-10-15",
+              "inputPerMillion": 2,
+              "outputPerMillion": 8,
+              "cachedInputPerMillion": 0.04,
+              "cacheVersion": "cache-adjusted-range-2026-10-26",
+              "source": "https://api-docs.deepseek.com/zh-cn/quick_start/pricing/"
+            }
+          },
+          {
+            "model": "deepseek-flash",
+            "thinking": false,
+            "round": 0,
+            "attempt": 0,
+            "promptFingerprint": "e6a7a0fb2d7ed4c63d1a99fe695697c09cd6216eb9e3644b51042a1edf4f2102",
+            "configurationFingerprint": "523797966567c671a4089b4dc8390623f0f51de85102f4054fcc93c3ef9ad0c3",
+            "input": 2523,
+            "output": 275,
+            "cached": 1536,
+            "reasoning": 0,
+            "firstActivityMs": 913,
+            "firstTextMs": 913,
+            "durationMs": 1901,
+            "grossCny": 0.007246,
+            "cacheAdjustedCny": {
+              "min": 0.0021177200000000005,
+              "max": 0.004235440000000001
+            },
+            "tariff": {
+              "version": "deepseek-cny-peak-2026-10-15",
+              "inputPerMillion": 2,
+              "outputPerMillion": 8,
+              "cachedInputPerMillion": 0.04,
+              "cacheVersion": "cache-adjusted-range-2026-10-26",
+              "source": "https://api-docs.deepseek.com/zh-cn/quick_start/pricing/"
+            }
+          }
+        ],
+        "embeddings": [],
+        "searches": [],
+        "reranks": [],
+        "tools": {},
+        "retrievals": [],
+        "policy": {
+          "version": "2026-11-17-reliability-30",
+          "thinking": "auto"
+        },
+        "contexts": [
+          {
+            "relevance": "strong",
+            "recentTurns": 1,
+            "estimatedTokens": 2888,
+            "inputBudget": 57856,
+            "compressed": [],
+            "layers": {
+              "slidingSummary": 0,
+              "activeExtracts": 0,
+              "protectedConstraints": 1,
+              "longTermMemory": 0,
+              "historicalTopics": 0
+            }
+          },
+          {
+            "relevance": "strong",
+            "recentTurns": 1,
+            "estimatedTokens": 4015,
+            "inputBudget": 57856,
+            "compressed": [],
+            "layers": {
+              "slidingSummary": 0,
+              "activeExtracts": 0,
+              "protectedConstraints": 1,
+              "longTermMemory": 0,
+              "historicalTopics": 0
+            }
+          }
+        ],
+        "planChecks": [
+          {
+            "phase": "draft",
+            "reason": "plan_unverified_input",
+            "words": 0
+          },
+          {
+            "phase": "repair",
+            "reason": "plan_unverified_input",
+            "words": 0
+          }
+        ],
+        "answerRejections": [
+          {
+            "reason": "plan_unverified_input"
+          }
+        ],
+        "cost": {
+          "grossCny": 0.013332,
+          "unpricedCalls": 0
+        }
+      },
+      "durationMs": 4674.185375000001,
+      "firstAnswerMs": null,
+      "providerCalls": [
+        {
+          "repeat": 2,
+          "variant": "after",
+          "id": "H15",
+          "call": 80,
+          "model": "deepseek-flash",
+          "startedAt": "2026-11-18T02:53:07.588Z",
+          "requestSha256": "7abe58c87648a40577b54560e957f2ae1d0bffdd4e51ac261ef70f139bad5f9a",
+          "status": 200,
+          "headersMs": 157.08579199999804,
+          "responseFile": "provider-responses/80.txt",
+          "input": 1927,
+          "output": 279,
+          "cached": 1792,
+          "reasoning": null,
+          "durationMs": 2760.8007919999945
+        },
+        {
+          "repeat": 2,
+          "variant": "after",
+          "id": "H15",
+          "call": 81,
+          "model": "deepseek-flash",
+          "startedAt": "2026-11-18T02:53:10.357Z",
+          "requestSha256": "49d9bfc05fb2ac469e33b5b9986d58a941167058cd4255dcd74683d38000b51a",
+          "status": 200,
+          "headersMs": 209.03633299999638,
+          "responseFile": "provider-responses/81.txt",
+          "input": 2523,
+          "output": 275,
+          "cached": 1536,
+          "reasoning": null,
+          "durationMs": 1897.9459579999966
+        }
+      ],
+      "reads": [],
+      "fixtureMisses": [],
+      "rssMb": 316
+    },
+    "models": [
+      {
+        "answerKind": "general",
+        "answer": "",
+        "sourceIds": [],
+        "plan": {
+          "inputs": [
+            {
+              "id": "allow_turns",
+              "quote": "现在允许转动，请把计划改成两项慢拧练习。"
+            },
+            {
+              "id": "time_limit",
+              "quote": "总共最多3分钟"
+            }
+          ],
+          "activities": [
+            {
+              "title": "慢拧熟悉插入",
+              "seconds": 90,
+              "steps": [
+                {
+                  "action": "选一个你已会的插入，用它的逆操作把该熟悉情形摆出，并目视确认情形与目标槽位；确认后慢拧插入，再用同一逆操作复位同一情形并重复；若无法确认，则全程只用自己已会的慢速转动，不做插入、不复位、不检查槽位。",
+                  "reason": "在允许转动下用已知动作慢速练习，并以目视确认代替猜测。",
+                  "seconds": 90,
+                  "requires": [
+                    "allow_turns"
+                  ],
+                  "produces": []
+                }
+              ]
+            },
+            {
+              "title": "慢拧重复巩固",
+              "seconds": 90,
+              "steps": [
+                {
+                  "action": "仅当上一项已确认熟悉情形时，先复位该情形再慢拧插入并重复；否则全程只用自己已会的慢速转动，不做插入、不复位、不检查槽位。",
+                  "reason": "延续同一已知情形慢速重复，无法确认时保持安全的基本转动。",
+                  "seconds": 90,
+                  "requires": [
+                    "allow_turns"
+                  ],
+                  "produces": []
+                }
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "answerKind": "general",
+        "answer": "",
+        "sourceIds": [],
+        "plan": {
+          "inputs": [
+            {
+              "id": "allow_turns",
+              "quote": "现在允许转动，请把计划改成两项慢拧练习。"
+            },
+            {
+              "id": "time_limit",
+              "quote": "总共最多3分钟"
+            }
+          ],
+          "activities": [
+            {
+              "title": "慢拧熟悉插入",
+              "seconds": 90,
+              "steps": [
+                {
+                  "action": "选一个你已会的插入，用它的逆操作摆出该熟悉情形，目视确认情形与目标槽位后慢拧插入，再用同一逆操作复位同一情形并重复；若无法确认，则全程只用自己已会的慢速转动，不做插入、不复位、不检查槽位。",
+                  "reason": "在允许转动下用已知动作慢速练习，并以目视确认代替猜测。",
+                  "seconds": 90,
+                  "requires": [
+                    "allow_turns"
+                  ],
+                  "produces": []
+                }
+              ]
+            },
+            {
+              "title": "慢拧重复巩固",
+              "seconds": 90,
+              "steps": [
+                {
+                  "action": "仅当上一项已确认熟悉情形时，先复位该情形再慢拧插入并重复；否则全程只用自己已会的慢速转动，不做插入、不复位、不检查槽位。",
+                  "reason": "延续同一已知情形慢速重复，无法确认时保持安全的基本转动。",
+                  "seconds": 90,
+                  "requires": [
+                    "allow_turns"
+                  ],
+                  "produces": []
+                }
+              ]
+            }
+          ]
+        }
+      }
+    ]
+  }
+]

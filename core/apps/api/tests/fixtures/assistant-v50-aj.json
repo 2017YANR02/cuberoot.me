@@ -1,0 +1,659 @@
+{
+  "AJ03": {
+    "question": "Give two drills to detect whether my right index finger leaves the cube before a slow U flick finishes. Give the drills 56 seconds altogether at most. Format their headings as “title: seconds”. Then, in its own paragraph, write one sentence asking Mona to mark each early release on the recording.",
+    "lang": "en",
+    "history": [],
+    "drafts": [
+      {
+        "call": 9,
+        "value": {
+          "answerKind": "general",
+          "answer": "Slow U flick release check: 28\nFilm a slow U flick from the side at close range, then replay it frame by frame and note the exact frame where the right index finger separates from the cube versus the frame the U layer stops moving; repeat once to confirm the gap is consistent.\n\nPause-and-hold release test: 28\nDo a slow U flick but freeze your hand the instant you feel the flick end, hold for two seconds, and check whether the fingertip is still touching the cube or has already lifted; alternate five slow flicks with five normal-speed flicks to see if early release only appears when you slow down.\n\nMona, please mark each early release on the recording.",
+          "sourceIds": [],
+          "plan": {
+            "activities": [
+              {
+                "title": "Slow U flick release check",
+                "seconds": 28,
+                "steps": [
+                  {
+                    "action": "Film a slow U flick from the side at close range, then replay it frame by frame and note the exact frame where the right index finger separates from the cube versus the frame the U layer stops moving; repeat once to confirm the gap is consistent.",
+                    "reason": "Frame-by-frame comparison shows whether the finger leaves before the layer finishes turning.",
+                    "seconds": 28,
+                    "requires": [],
+                    "produces": []
+                  }
+                ]
+              },
+              {
+                "title": "Pause-and-hold release test",
+                "seconds": 28,
+                "steps": [
+                  {
+                    "action": "Do a slow U flick but freeze your hand the instant you feel the flick end, hold for two seconds, and check whether the fingertip is still touching the cube or has already lifted; alternate five slow flicks with five normal-speed flicks to see if early release only appears when you slow down.",
+                    "reason": "Freezing at the end exposes contact loss that speed can hide.",
+                    "seconds": 28,
+                    "requires": [],
+                    "produces": []
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      },
+      {
+        "call": 54,
+        "value": {
+          "answerKind": "general",
+          "answer": "Right index early release: 30 seconds\nSlow U flick with a hover check: 26 seconds\n\nMona, please mark each early release on the recording.",
+          "sourceIds": [],
+          "plan": {
+            "activities": [
+              {
+                "title": "Right index early release",
+                "seconds": 30,
+                "steps": [
+                  {
+                    "action": "Do five slow U flicks with your right index, pausing at the end of each turn to watch whether the fingertip is still touching the cube or has already lifted off before the turn stops.",
+                    "reason": "A pause at the end of the turn makes any early lift-off visible instead of hidden by the next move.",
+                    "seconds": 30,
+                    "requires": [],
+                    "produces": []
+                  }
+                ]
+              },
+              {
+                "title": "Slow U flick with a hover check",
+                "seconds": 26,
+                "steps": [
+                  {
+                    "action": "Do five more slow U flicks, and after each one hold your right index just above the cube and note whether it left the surface before the U layer finished turning; if you cannot tell, repeat that flick once more slowly.",
+                    "reason": "Holding the finger above the cube after the turn separates a deliberate hover from an accidental early release.",
+                    "seconds": 26,
+                    "requires": [],
+                    "produces": []
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      }
+    ]
+  },
+  "AJ04": {
+    "question": "现在允许慢拧。把这个熟悉的局面做成两项限时活动，分别设秒数。两项都从复现开始，目视检查相应的边块、角块和目标槽，核对相符才用我学过的插入。若不能摆出，各换一种不同的 U 或 R 慢转检查，备用做到这里就停。",
+    "lang": "zh",
+    "history": [
+      {
+        "role": "user",
+        "content": "我这轮只有一分三十六秒，已经会这条插入，也会 U 和 R，不过起手局面不一定摆得出，先别转层。"
+      },
+      {
+        "role": "assistant",
+        "content": "先观察手边的魔方。"
+      }
+    ],
+    "drafts": [
+      {
+        "call": 11,
+        "value": {
+          "answerKind": "general",
+          "answer": "",
+          "sourceIds": [],
+          "plan": {
+            "inputs": [
+              {
+                "id": "known_insertion",
+                "quote": "已经会这条插入"
+              },
+              {
+                "id": "known_turns",
+                "quote": "也会 U 和 R"
+              },
+              {
+                "id": "time_budget",
+                "quote": "我这轮只有一分三十六秒"
+              }
+            ],
+            "activities": [
+              {
+                "title": "复现并核对后慢拧插入",
+                "seconds": 48,
+                "steps": [
+                  {
+                    "action": "用你已会的那条插入的逆操作，把魔方摆回你熟悉的那个局面；摆好后目视核对相应的边块、角块和目标槽是否与记忆相符。相符才慢拧做一次这条插入，做完停手。若摆不出，就改用 U 或 R 中与另一项不同的一种，慢转一步后停住，观察哪些块变了，再慢转下一步，整项只做这种慢转检查，不再插入。",
+                    "reason": "先确认局面和槽位对得上再动手，避免在错误局面上练；摆不出时用已知慢转保持手感。",
+                    "seconds": 48,
+                    "requires": [
+                      "known_insertion",
+                      "known_turns"
+                    ],
+                    "produces": []
+                  }
+                ]
+              },
+              {
+                "title": "重置同一局面再插入",
+                "seconds": 48,
+                "steps": [
+                  {
+                    "action": "仅当上一项已核对并完成插入时：用同一条插入的逆操作把同一局面重置回来，再次目视核对边块、角块和目标槽，相符后慢拧再做一次这条插入。否则整项改用另一种 U 或 R 慢转：先说出下一步慢转预计会看到哪一块移动，再转一步并对照实际变化，重复到时间结束，不做插入、不做逆操作重置、不检查槽位是否已解。",
+                    "reason": "在已确认的同一局面上重复一次巩固；若局面没摆出，就用预测与对照的慢转练习收尾。",
+                    "seconds": 48,
+                    "requires": [
+                      "known_insertion",
+                      "known_turns"
+                    ],
+                    "produces": []
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      },
+      {
+        "call": 58,
+        "value": {
+          "answerKind": "general",
+          "answer": "",
+          "sourceIds": [],
+          "plan": {
+            "inputs": [
+              {
+                "id": "known_insert",
+                "quote": "已经会这条插入"
+              },
+              {
+                "id": "known_turns",
+                "quote": "也会 U 和 R"
+              },
+              {
+                "id": "time_budget",
+                "quote": "我这轮只有一分三十六秒"
+              }
+            ],
+            "activities": [
+              {
+                "title": "复现并核对后慢速插入",
+                "seconds": 48,
+                "steps": [
+                  {
+                    "action": "用你已会的那条插入的逆过程，把魔方慢慢摆回你熟悉的那个局面；摆好后停手，目视核对相应的边块、角块和目标槽是否与记忆中的位置、朝向一致。若核对相符，就用这条插入慢拧一次，拧完再看一眼目标槽的变化；若摆不出或核对不符，则改用 U 或 R 中的一种，每转一下停住观察可见变化，做到时间用完即停，不再插入。",
+                    "reason": "先确认局面真的对得上再动手，避免在错误局面上重复插入；摆不出时用已知慢转保持手感而不假装完成。",
+                    "seconds": 48,
+                    "requires": [
+                      "known_insert",
+                      "known_turns"
+                    ],
+                    "produces": []
+                  }
+                ]
+              },
+              {
+                "title": "重置同一局面再插入或预测慢转",
+                "seconds": 48,
+                "steps": [
+                  {
+                    "action": "仅当上一项已核对相符并完成插入时：用同一条插入的逆过程把同一局面重置回来，再目视确认边块、角块和目标槽，然后慢拧一次同样的插入。否则整项都改用另一种 U 或 R：先预测这一下会带动哪一块可见变化，再慢转一下并对照实际结果，剩余时间继续这种预测—慢转—对照，到点即停，不再插入也不再重置。",
+                    "reason": "在已确认的同一局面上重复才能巩固这条插入；局面摆不出时用预测对照的慢转练习替代，并明确在此收尾。",
+                    "seconds": 48,
+                    "requires": [
+                      "known_insert",
+                      "known_turns"
+                    ],
+                    "produces": []
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      }
+    ]
+  },
+  "AJ05": {
+    "question": "I can now turn the cube slowly. Give two timed exercises for that case. In each one, first set it up and check visually that the two pieces and the destination slot match before trying my familiar insertion. If it cannot be recreated, use a different actionable exercise for each, using U2 or F only and ending without an insertion.",
+    "lang": "en",
+    "history": [
+      {
+        "role": "user",
+        "content": "I have 108 seconds to practise an insertion I know, but may not be able to set it up. The only basic turns I want for substitutions are U2 and F. Keep it stationary for now."
+      },
+      {
+        "role": "assistant",
+        "content": "Start by looking at it without turning."
+      }
+    ],
+    "drafts": [
+      {
+        "call": 60,
+        "value": {
+          "answerKind": "general",
+          "answer": "",
+          "sourceIds": [],
+          "plan": {
+            "inputs": [
+              {
+                "id": "known_insertion",
+                "quote": "practise an insertion I know"
+              },
+              {
+                "id": "allowed_turns",
+                "quote": "The only basic turns I want for substitutions are U2 and F."
+              }
+            ],
+            "activities": [
+              {
+                "title": "Insertion setup and repeat",
+                "seconds": 54,
+                "steps": [
+                  {
+                    "action": "Choose one insertion you already know and note its inverse; apply that inverse slowly to set up the familiar case, then look at the two pieces and the destination slot to confirm they match before turning. ONLY IF the familiar case was verified, insert, then reset the same case with the same inverse and insert again. OTHERWISE, with the cube as it is, do slow U2 and F turns one at a time, pausing after each to observe what visibly changed, and stop without inserting.",
+                    "reason": "Lets you rehearse a known insertion from a checked setup, with a U2/F-only fallback when the case cannot be recreated.",
+                    "seconds": 54,
+                    "requires": [
+                      "known_insertion",
+                      "allowed_turns"
+                    ],
+                    "produces": []
+                  }
+                ]
+              },
+              {
+                "title": "Insertion with prediction check",
+                "seconds": 54,
+                "steps": [
+                  {
+                    "action": "Choose the same known insertion and its inverse; apply the inverse slowly to set up the familiar case, then visually check the two pieces and the destination slot match before turning. ONLY IF the familiar case was verified, insert, reset with the same inverse, and insert once more. OTHERWISE, with the cube as it is, predict one visible change before a single slow F or U2 turn, make that turn, and compare what actually moved; stop without inserting.",
+                    "reason": "Adds a prediction check to the same insertion drill, with a distinct U2/F-only fallback that ends without an insertion.",
+                    "seconds": 54,
+                    "requires": [
+                      "known_insertion",
+                      "allowed_turns"
+                    ],
+                    "produces": []
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      },
+      {
+        "call": 16,
+        "value": {
+          "answerKind": "general",
+          "answer": "",
+          "sourceIds": [],
+          "plan": {
+            "inputs": [
+              {
+                "id": "known_insertion",
+                "quote": "practise an insertion I know"
+              },
+              {
+                "id": "allowed_turns",
+                "quote": "The only basic turns I want for substitutions are U2 and F."
+              },
+              {
+                "id": "slow_turning",
+                "quote": "I can now turn the cube slowly."
+              }
+            ],
+            "activities": [
+              {
+                "title": "Setup check and familiar insertion",
+                "seconds": 54,
+                "steps": [
+                  {
+                    "action": "Choose one insertion you already know and note its inverse; apply that inverse slowly to set up the familiar case, then look at the two pieces and the destination slot to confirm they match. ONLY IF the case was verified, reset it with the same inverse and perform the insertion, then reset again with that same inverse before repeating. OTHERWISE, for the whole activity, do slow U2 and F turns one at a time, pausing after each turn to observe which visible pieces changed, and end there without an insertion.",
+                    "reason": "Verifying the case before turning prevents guessing, and the fallback keeps practice useful with only U2 and F.",
+                    "seconds": 54,
+                    "requires": [
+                      "known_insertion",
+                      "allowed_turns",
+                      "slow_turning"
+                    ],
+                    "produces": []
+                  }
+                ]
+              },
+              {
+                "title": "Prediction check with known turns",
+                "seconds": 54,
+                "steps": [
+                  {
+                    "action": "Choose the same insertion and its inverse; apply the inverse slowly to set up the familiar case and visually check the two pieces and destination slot. ONLY IF the case was verified, reset it with the same inverse and insert, then reset with that inverse before repeating. OTHERWISE, for the whole activity, before one slow U2 or F turn predict which visible pieces will move, make the turn, and compare what actually moved; repeat with slow turns only, and end there without an insertion.",
+                    "reason": "Predicting before a turn builds observation, and the branch avoids assuming the setup succeeded.",
+                    "seconds": 54,
+                    "requires": [
+                      "known_insertion",
+                      "allowed_turns",
+                      "slow_turning"
+                    ],
+                    "produces": []
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      }
+    ],
+    "malformedDraft": "{\"answerKind\":\"general\",\"answer\":\"\",\"sourceIds\":[],\"plan\":{\"inputs\":[{\"id\":\"known_insertion\",\"quote\":\"practise an insertion I know\"},{\"id\":\"allowed_turns\",\"quote\":\"The only basic turns I want for substitutions are U2 and F.\"},{\"id\":\"slow_turning\",\"quote\":\"I can now turn the cube slowly.\"}],\"activities\":[{\"title\":\"Setup check and familiar insertion\",\"seconds\":54,\"steps\":[{\"action\":\"Choose one insertion you already know and note its inverse; apply that inverse slowly to set up the familiar case, then look at the two pieces and the destination slot to confirm they match. ONLY IF the case was verified, reset it with the same inverse and perform the insertion, then reset again with that same inverse before repeating. OTHERWISE, for the whole activity, do slow U2 and F turns one at a time, pausing after each turn to observe which visible pieces changed.\",\"reason\":\"Verifying the case before turning prevents guessing, and the fallback keeps practice useful with only U2 and F.\",\"seconds\":54,\"requires\":[\"known_insertion\",\"allowed_turns\",\"slow_turning\"],\"produces\":[]}]},{\"title\":\"Prediction check with known turns\",\"seconds\":54,\"steps\":[{\"action\":\"Choose the same insertion and its inverse; apply the inverse slowly to set up the familiar case and visually check the two pieces and destination slot. ONLY IF the case was verified, reset it with the same inverse and insert, then reset with that inverse before repeating. OTHERWISE, for the whole activity, before one slow U2 or F turn predict which visible pieces will move, make the turn, and compare what actually moved; repeat with slow turns only.\",\"reason\":\"Predicting before a turn builds observation, and the branch avoids assuming the setup succeeded.\",\"seconds\":54,\"requires\":[\"known_insertion\",\"allowed_turns\",\"slow_turning\"],\"produces\":[]}]}]}"
+  },
+  "AJ07": {
+    "question": "我的芬兰语词表每行有原词和中文意思，直接拿来设计两项各有两小步的练习。各小步标理由和各自时长，最多二十八秒，两项总共不超过一百零四秒。第一项由原词回忆词义，第二项由词义先在纸上写原词再核对。",
+    "lang": "zh",
+    "history": [],
+    "drafts": [
+      {
+        "call": 65,
+        "value": {
+          "answerKind": "general",
+          "answer": "",
+          "sourceIds": [],
+          "plan": {
+            "inputs": [
+              {
+                "id": "word_list",
+                "quote": "我的芬兰语词表每行有原词和中文意思，直接拿来设计两项各有两小步的练习。"
+              }
+            ],
+            "activities": [
+              {
+                "title": "由原词回忆词义",
+                "seconds": 52,
+                "steps": [
+                  {
+                    "action": "把词表整理成两列：左列原词、右列中文意思，两列都在同一面；遮住右列，只露出左列原词。",
+                    "reason": "先准备好同一面的词表并只露出原词，才能开始由原词回忆词义。",
+                    "seconds": 12,
+                    "requires": [
+                      "word_list"
+                    ],
+                    "produces": [
+                      "word_meaning_list"
+                    ]
+                  },
+                  {
+                    "action": "逐个看露出的原词，先说出中文意思，再揭开右列核对，然后重新遮住右列，再进入下一个原词。",
+                    "reason": "每次先回忆再核对并重新遮住答案，能检验真实记忆而不是照读。",
+                    "seconds": 40,
+                    "requires": [
+                      "word_meaning_list"
+                    ],
+                    "produces": []
+                  }
+                ]
+              },
+              {
+                "title": "由词义写原词再核对",
+                "seconds": 52,
+                "steps": [
+                  {
+                    "action": "遮住左列原词，只露出右列中文意思，准备好纸和笔。",
+                    "reason": "只露出词义并备好纸笔，才能按要求先写原词再核对。",
+                    "seconds": 12,
+                    "requires": [
+                      "word_meaning_list"
+                    ],
+                    "produces": [
+                      "meaning_prompt"
+                    ]
+                  },
+                  {
+                    "action": "逐个看露出的中文意思，先在纸上写出对应的芬兰语原词，再揭开左列核对，然后重新遮住左列，再进入下一个词义。",
+                    "reason": "先写后核对并重新遮住原词，能练习由词义产出原词并检查拼写。",
+                    "seconds": 40,
+                    "requires": [
+                      "meaning_prompt"
+                    ],
+                    "produces": []
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      }
+    ]
+  },
+  "AJ10": {
+    "question": "我手上是已经制好的蒙古语双面卡，一面是原词，一面是中文解释。用原卡做两项回忆练习，合计不超过九十七秒。每项从中文面出发，先写蒙古语，再翻面比对；换下一张以前把刚翻过的同一张翻回中文面朝上。",
+    "lang": "zh",
+    "history": [],
+    "drafts": [
+      {
+        "call": 26,
+        "value": {
+          "answer": "",
+          "answerKind": "general",
+          "sourceIds": [],
+          "plan": {
+            "inputs": [
+              {
+                "id": "card_material",
+                "quote": "我手上是已经制好的蒙古语双面卡，一面是原词，一面是中文解释。"
+              },
+              {
+                "id": "recall_protocol",
+                "quote": "每项从中文面出发，先写蒙古语，再翻面比对；换下一张以前把刚翻过的同一张翻回中文面朝上。"
+              }
+            ],
+            "activities": [
+              {
+                "title": "中文面提示写蒙古语",
+                "seconds": 49,
+                "steps": [
+                  {
+                    "action": "把全部卡片中文解释面朝上摆好，逐张看中文，在纸上写出对应蒙古语原词，写完翻到原词面比对，再立即翻回中文面朝上，放下一张；若某张写不出，写一个猜测或留空后翻面比对，同样翻回中文面朝上。",
+                    "reason": "从中文面出发先写蒙古语，训练由义到词的主动回忆，翻面比对能即时核对，翻回中文面保证下一张仍从中文提示开始。",
+                    "seconds": 49,
+                    "requires": [
+                      "card_material",
+                      "recall_protocol"
+                    ],
+                    "produces": [
+                      "written_attempts"
+                    ]
+                  }
+                ]
+              },
+              {
+                "title": "中文面提示再写蒙古语",
+                "seconds": 48,
+                "steps": [
+                  {
+                    "action": "再次把全部卡片中文解释面朝上摆好，逐张看中文写出蒙古语原词，写完翻到原词面比对，再翻回中文面朝上；若上一轮有写错的词，本轮优先练这些词，若没有写错的词，就按原顺序把全部卡片再练一遍。",
+                    "reason": "用同一批卡片重复由义到词的回忆，巩固上一轮薄弱词，并在无错误时完整再过一遍，翻回中文面保持每张都从中文提示开始。",
+                    "seconds": 48,
+                    "requires": [
+                      "card_material",
+                      "recall_protocol",
+                      "written_attempts"
+                    ],
+                    "produces": []
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      },
+      {
+        "call": 27,
+        "value": {
+          "answerKind": "general",
+          "answer": "",
+          "sourceIds": [],
+          "plan": {
+            "inputs": [
+              {
+                "id": "card_material",
+                "quote": "我手上是已经制好的蒙古语双面卡，一面是原词，一面是中文解释。"
+              },
+              {
+                "id": "recall_protocol",
+                "quote": "每项从中文面出发，先写蒙古语，再翻面比对；换下一张以前把刚翻过的同一张翻回中文面朝上。"
+              }
+            ],
+            "activities": [
+              {
+                "title": "中文面提示写蒙古语",
+                "seconds": 49,
+                "steps": [
+                  {
+                    "action": "确认每张卡一面写蒙古语原词、另一面写中文解释，然后把全部卡片中文解释面朝上摆好；逐张看中文，在纸上写出对应蒙古语原词，写完翻到原词面比对，再立即翻回中文面朝上，放下一张；若某张写不出，写一个猜测或留空后翻面比对，同样翻回中文面朝上。",
+                    "reason": "从中文面出发先写蒙古语，训练由义到词的主动回忆，翻面比对能即时核对，翻回中文面保证下一张仍从中文提示开始。",
+                    "seconds": 49,
+                    "requires": [
+                      "card_material",
+                      "recall_protocol"
+                    ],
+                    "produces": [
+                      "written_attempts"
+                    ]
+                  }
+                ]
+              },
+              {
+                "title": "中文面提示再写蒙古语",
+                "seconds": 48,
+                "steps": [
+                  {
+                    "action": "再次把全部卡片中文解释面朝上摆好，逐张看中文写出蒙古语原词，写完翻到原词面比对，再翻回中文面朝上；若上一轮有写错的词，本轮优先练这些词，若没有写错的词，就按原顺序把全部卡片再练一遍。",
+                    "reason": "用同一批卡片重复由义到词的回忆，巩固上一轮薄弱词，并在无错误时完整再过一遍，翻回中文面保持每张都从中文提示开始。",
+                    "seconds": 48,
+                    "requires": [
+                      "card_material",
+                      "recall_protocol",
+                      "written_attempts"
+                    ],
+                    "produces": []
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      }
+    ]
+  },
+  "AJ12": {
+    "question": "The existing Irish flashcards have a word on the front and an English translation on the back. Give two timed drills for a total of at most 114 seconds. Each drill must prompt with the translation, record the Irish spelling before the check, and start any repeat with the same prompt facing up. If there are no wrong spellings, repeat the whole deck.",
+    "lang": "en",
+    "history": [],
+    "drafts": [
+      {
+        "call": 31,
+        "value": {
+          "answer": "",
+          "sourceIds": [],
+          "plan": {
+            "inputs": [
+              {
+                "id": "card_layout",
+                "quote": "The existing Irish flashcards have a word on the front and an English translation on the back."
+              },
+              {
+                "id": "drill_rules",
+                "quote": "Each drill must prompt with the translation, record the Irish spelling before the check, and start any repeat with the same prompt facing up. If there are no wrong spellings, repeat the whole deck."
+              }
+            ],
+            "activities": [
+              {
+                "title": "Translation-to-Irish spelling drill",
+                "seconds": 57,
+                "steps": [
+                  {
+                    "action": "Place each card with its English translation face up, write the Irish spelling on paper without looking, then flip once to check the Irish word face and immediately return that card to the translation face up; if there are no wrong spellings, reset the full deck to the translation face up and repeat the whole pass once.",
+                    "reason": "Prompts with the translation, records the Irish spelling before checking, and starts any repeat with the same prompt face up.",
+                    "seconds": 57,
+                    "requires": [
+                      "card_layout",
+                      "drill_rules"
+                    ],
+                    "produces": []
+                  }
+                ]
+              },
+              {
+                "title": "Second translation-to-Irish spelling drill",
+                "seconds": 57,
+                "steps": [
+                  {
+                    "action": "Place each card with its English translation face up, write the Irish spelling on paper without looking, then flip once to check the Irish word face and immediately return that card to the translation face up; if there are no wrong spellings, reset the full deck to the translation face up and repeat the whole pass once.",
+                    "reason": "Repeats the translation-prompt spelling cycle and restores the prompt face before any repeat.",
+                    "seconds": 57,
+                    "requires": [
+                      "card_layout",
+                      "drill_rules"
+                    ],
+                    "produces": []
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      },
+      {
+        "call": 79,
+        "value": {
+          "answer": "",
+          "sourceIds": [],
+          "plan": {
+            "inputs": [
+              {
+                "id": "card_layout",
+                "quote": "The existing Irish flashcards have a word on the front and an English translation on the back."
+              },
+              {
+                "id": "drill_rules",
+                "quote": "Each drill must prompt with the translation, record the Irish spelling before the check, and start any repeat with the same prompt facing up. If there are no wrong spellings, repeat the whole deck."
+              }
+            ],
+            "activities": [
+              {
+                "title": "Translation-to-Irish spelling drill",
+                "seconds": 57,
+                "steps": [
+                  {
+                    "action": "Place each card with its English translation face up, write the Irish spelling on paper without looking, then flip once to check the word face and immediately return that card to the translation face up; if there are no wrong spellings, reset the full deck to the translation face and repeat the whole pass once.",
+                    "reason": "Prompts with the translation, records the Irish spelling before checking, and starts any repeat with the same prompt face up.",
+                    "seconds": 57,
+                    "requires": [
+                      "card_layout",
+                      "drill_rules"
+                    ],
+                    "produces": []
+                  }
+                ]
+              },
+              {
+                "title": "Second translation-to-Irish spelling drill",
+                "seconds": 57,
+                "steps": [
+                  {
+                    "action": "Place each card with its English translation face up, write the Irish spelling on paper without looking, then flip once to check the word face and immediately return that card to the translation face up; if there are no wrong spellings, reset the full deck to the translation face and repeat the whole pass once.",
+                    "reason": "Repeats the translation-prompt spelling cycle and restores the prompt face before any repeat.",
+                    "seconds": 57,
+                    "requires": [
+                      "card_layout",
+                      "drill_rules"
+                    ],
+                    "produces": []
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      }
+    ]
+  }
+}

@@ -1,3 +1,4 @@
+import { roundRowSchema } from './site_assistant_round.js';
 import { z } from 'zod';
 import { isAssistantSourceHref, type AssistantAnswer, type AssistantMessage, type AssistantSource, type AssistantTable } from '@cuberoot/shared/site-assistant';
 import type { QueryRunner } from '../db/connection.js';
@@ -17,7 +18,7 @@ const factSchema = z.record(z.string().max(80), z.union([z.string().max(500), z.
   .refine(value => Object.keys(value).length<=24 && Object.keys(value).every(key => factKeys.has(key)));
 // Monitoring can import context before the tool schemas finish initializing.
 const observationSchema = z.object({ call: z.lazy(()=>toolCallSchema), sourceIds: z.array(z.string().max(200)).min(1).max(12),
-  dataVersion: z.string().max(120).nullable(), facts: factSchema, tables: z.array(tableSchema).max(3),
+  dataVersion: z.string().max(120).nullable(), facts: factSchema, roundRows:z.array(roundRowSchema).max(20).optional(), tables: z.array(tableSchema).max(3),
 }).strict();
 const contextSchema = z.object({ version: z.literal(ASSISTANT_CONTEXT_VERSION), createdAt: z.string().datetime(), expiresAt: z.string().datetime(),
   sources: z.array(sourceSchema).max(12), observations: z.array(observationSchema).max(6), memory: assistantMemorySchema.optional(),
@@ -96,6 +97,7 @@ export function rememberAssistantContext(answer: AssistantAnswer, observations: 
     const sourceIds = result.sources.filter(source => selected.has(source.id) && safeIds.has(source.id)).map(source => source.id).slice(0, 12);
     if (!sourceIds.length) continue;
     const item = observationSchema.safeParse({ call, sourceIds, dataVersion: dataVersion(result), facts: resultFacts(result),
+      ...(call.tool === 'competition_round' && result.roundRows ? {roundRows:result.roundRows} : {}),
       tables: result.artifacts.filter((artifact): artifact is AssistantTable => artifact.kind === 'table').slice(0, 3).flatMap(table => tableSnapshot(table) ?? []) });
     if (item.success) kept.unshift(item.data);
     if (kept.length === 6) break;
@@ -236,7 +238,7 @@ export function assistantContextFollowUpCall(question: string, history: Assistan
 
 export function assistantContextSources(context?: AssistantContext): AssistantSource[] {
   if (!context) return [];
-  const ids = new Set(context.observations.filter(item => item.tables.length || Object.keys(item.facts).length).flatMap(item => item.sourceIds));
+  const ids = new Set(context.observations.filter(item => item.roundRows?.length || item.tables.length || Object.keys(item.facts).length).flatMap(item => item.sourceIds));
   return context.sources.filter(source => ids.has(source.id));
 }
 

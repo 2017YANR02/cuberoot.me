@@ -1,0 +1,694 @@
+{
+  "AN03": {
+    "question": "现在可以慢拧。为那个熟悉的插入情形写两项定时练习。每项先试着摆出来，亲眼核对边块、角块和目标槽，三者吻合才插入。摆不出时两项分别用一种不同的备用慢转，只可用 B2 和 D′；做完备用就停。",
+    "lang": "zh",
+    "history": [
+      {
+        "role": "user",
+        "content": "我这轮只有八十九秒，会一个插入但不一定能摆出，已会 B2 和 D′。暂时不转动魔方。"
+      },
+      {
+        "role": "assistant",
+        "content": "此时先观察。"
+      }
+    ],
+    "drafts": [
+      {
+        "call": 7,
+        "value": {
+          "answerKind": "general",
+          "answer": "",
+          "sourceIds": [],
+          "plan": {
+            "inputs": [
+              {
+                "id": "known_insert",
+                "quote": "会一个插入但不一定能摆出"
+              },
+              {
+                "id": "known_turns",
+                "quote": "已会 B2 和 D′"
+              },
+              {
+                "id": "time_budget",
+                "quote": "我这轮只有八十九秒"
+              }
+            ],
+            "activities": [
+              {
+                "title": "熟悉插入练习",
+                "seconds": 45,
+                "steps": [
+                  {
+                    "action": "用你已知的方法尝试摆出熟悉的插入情形，亲眼核对边块、角块和目标槽三者是否吻合；若吻合就做那个已知插入并检查结果，若不吻合或摆不出就做一次 B2，做完停手并观察可见变化",
+                    "reason": "先确认情形再插入，摆不出时用已会的 B2 慢转收尾",
+                    "seconds": 45,
+                    "requires": [
+                      "known_insert",
+                      "known_turns"
+                    ],
+                    "produces": []
+                  }
+                ]
+              },
+              {
+                "title": "备用慢转练习",
+                "seconds": 44,
+                "steps": [
+                  {
+                    "action": "再次尝试摆出熟悉的插入情形并亲眼核对边块、角块和目标槽；若吻合就做已知插入并检查，若不吻合或摆不出就先预测 D′ 会带来什么变化，再做一次 D′ 并对照观察，做完停手",
+                    "reason": "用不同的备用慢转 D′ 练习预测与观察，吻合时才插入",
+                    "seconds": 44,
+                    "requires": [
+                      "known_insert",
+                      "known_turns"
+                    ],
+                    "produces": []
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      },
+      {
+        "call": 46,
+        "value": {
+          "answerKind": "general",
+          "answer": "",
+          "sourceIds": [],
+          "plan": {
+            "inputs": [
+              {
+                "id": "known_insert",
+                "quote": "会一个插入但不一定能摆出"
+              },
+              {
+                "id": "known_turns",
+                "quote": "已会 B2 和 D′"
+              },
+              {
+                "id": "time_budget",
+                "quote": "我这轮只有八十九秒"
+              }
+            ],
+            "activities": [
+              {
+                "title": "熟悉插入练习",
+                "seconds": 45,
+                "steps": [
+                  {
+                    "action": "用你已会的方法尝试摆出熟悉的插入情形，亲眼核对边块、角块和目标槽三者是否吻合；若吻合就做那个已知插入并检查结果，若摆不出或核对不吻合就做一次 B2，做完后停，并观察这一步带来的可见变化。",
+                    "reason": "先确认情形再插入，摆不出时用已会的 B2 慢转收尾。",
+                    "seconds": 45,
+                    "requires": [
+                      "known_insert",
+                      "known_turns"
+                    ],
+                    "produces": []
+                  }
+                ]
+              },
+              {
+                "title": "备用慢转练习",
+                "seconds": 44,
+                "steps": [
+                  {
+                    "action": "再次尝试摆出熟悉的插入情形，亲眼核对边块、角块和目标槽三者是否吻合；若吻合就做那个已知插入并检查结果，若摆不出或核对不吻合就先预测 D′ 会改变什么，再做一次 D′，做完后停，并比较预测与实际观察。",
+                    "reason": "用不同的备用慢转 D′ 练习预测与观察，吻合时才插入。",
+                    "seconds": 44,
+                    "requires": [
+                      "known_insert",
+                      "known_turns"
+                    ],
+                    "produces": []
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      }
+    ]
+  },
+  "AN04": {
+    "question": "Slow turning is now allowed. Give two timed exercises for that familiar case. Try to recreate it at the start of each. Look at both pieces and the goal slot; use my known insertion only if they visibly line up. If the setup does not match, give each exercise a different runnable fallback using my allowed turns. Stop on that branch after the fallback.",
+    "lang": "en",
+    "history": [
+      {
+        "role": "user",
+        "content": "I have 95 seconds, know one insertion, and may not recreate the case. The only allowed basic moves are F2 and R′. Do not turn the cube yet."
+      },
+      {
+        "role": "assistant",
+        "content": "Wait before turning."
+      }
+    ],
+    "drafts": [
+      {
+        "call": 9,
+        "value": {
+          "answerKind": "general",
+          "answer": "",
+          "sourceIds": [],
+          "plan": {
+            "inputs": [
+              {
+                "id": "allowed_turns",
+                "quote": "The only allowed basic moves are F2 and R′."
+              },
+              {
+                "id": "known_insertion",
+                "quote": "know one insertion, and may not recreate the case"
+              }
+            ],
+            "activities": [
+              {
+                "title": "Recreate and insert with observation pause",
+                "seconds": 50,
+                "steps": [
+                  {
+                    "action": "Using your known method, slowly set up the familiar pair and goal slot; look at both pieces and the slot, and if they visibly match do your known insertion, pausing after each turn to observe the visible change; if setup fails or does not match, do F2 slowly, pause to observe the change, and stop.",
+                    "reason": "Recreates the familiar case and gives a runnable observation-pause fallback when it cannot be established.",
+                    "seconds": 50,
+                    "requires": [
+                      "allowed_turns",
+                      "known_insertion"
+                    ],
+                    "produces": []
+                  }
+                ]
+              },
+              {
+                "title": "Recreate and insert with prediction check",
+                "seconds": 45,
+                "steps": [
+                  {
+                    "action": "Using your known method, slowly set up the familiar pair and goal slot; look at both pieces and the slot, and if they visibly match do your known insertion, predicting the change before each turn and comparing it with what you observe; if setup fails or does not match, predict the change, do R' slowly, compare the prediction with what you observe, and stop.",
+                    "reason": "Recreates the familiar case and gives a distinct runnable prediction-check fallback when it cannot be established.",
+                    "seconds": 45,
+                    "requires": [
+                      "allowed_turns",
+                      "known_insertion"
+                    ],
+                    "produces": []
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      },
+      {
+        "call": 50,
+        "value": {
+          "answerKind": "general",
+          "answer": "",
+          "sourceIds": [],
+          "plan": {
+            "inputs": [
+              {
+                "id": "allowed_turns",
+                "quote": "The only allowed basic moves are F2 and R′."
+              },
+              {
+                "id": "known_insertion",
+                "quote": "I have 95 seconds, know one insertion, and may not recreate the case."
+              }
+            ],
+            "activities": [
+              {
+                "title": "Recreate and insert with observation pause",
+                "seconds": 50,
+                "steps": [
+                  {
+                    "action": "Using your known method, set up the familiar case slowly; look at both pieces and the goal slot. If they visibly line up, perform your known insertion, then pause after each turn to observe the visible change. If setup fails or does not match, do one slow F2, pause to observe the change, and stop.",
+                    "reason": "Recreates the familiar case and gives a runnable observation fallback with the allowed turn.",
+                    "seconds": 50,
+                    "requires": [
+                      "allowed_turns",
+                      "known_insertion"
+                    ],
+                    "produces": []
+                  }
+                ]
+              },
+              {
+                "title": "Recreate and insert with prediction check",
+                "seconds": 45,
+                "steps": [
+                  {
+                    "action": "Using your known method, set up the familiar case slowly; look at both pieces and the goal slot. If they visibly line up, perform your known insertion, predicting the change before each turn and comparing it with what you observe. If setup fails or does not match, predict the change, do one slow R′, compare it with what you observe, and stop.",
+                    "reason": "Recreates the familiar case and gives a distinct prediction fallback with the allowed turn.",
+                    "seconds": 45,
+                    "requires": [
+                      "allowed_turns",
+                      "known_insertion"
+                    ],
+                    "produces": []
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      }
+    ]
+  },
+  "AN10": {
+    "question": "有两张空白卡和词对 thyme＝百里香、sage＝鼠尾草。做两项练习，每项两个小步，四个小步都单独标秒数，合计不超过一百零八秒。第一项完成双面制卡并猜完释义再翻查。第二项看中文手写英文，翻查后把刚翻的卡恢复中文面朝上。",
+    "lang": "zh",
+    "history": [],
+    "drafts": [
+      {
+        "call": 23,
+        "value": {
+          "answerKind": "general",
+          "answer": "",
+          "sourceIds": [],
+          "plan": {
+            "inputs": [
+              {
+                "id": "word_pairs",
+                "quote": "词对 thyme＝百里香、sage＝鼠尾草"
+              },
+              {
+                "id": "blank_cards",
+                "quote": "有两张空白卡"
+              }
+            ],
+            "activities": [
+              {
+                "title": "双面制卡与释义猜测",
+                "seconds": 60,
+                "steps": [
+                  {
+                    "action": "在两张空白卡上分别写 thyme 和 sage 作为正面，翻到背面写 百里香 和 鼠尾草，写好后把两张卡都正面朝上摆好",
+                    "reason": "先做出双面卡并统一正面朝上，才能按词面猜释义",
+                    "seconds": 30,
+                    "requires": [
+                      "word_pairs",
+                      "blank_cards"
+                    ],
+                    "produces": [
+                      "cards_word_up"
+                    ]
+                  },
+                  {
+                    "action": "依次看 thyme、sage 两张卡的正面，先口头猜出各自释义，猜完再逐张翻到背面核对 百里香 和 鼠尾草，核对后把两张卡都翻回正面朝上",
+                    "reason": "先猜后翻查能检验词到义的记忆，翻回正面为下一项做好准备",
+                    "seconds": 30,
+                    "requires": [
+                      "cards_word_up"
+                    ],
+                    "produces": [
+                      "cards_word_up"
+                    ]
+                  }
+                ]
+              },
+              {
+                "title": "看中文写英文并复位",
+                "seconds": 48,
+                "steps": [
+                  {
+                    "action": "把两张卡翻到中文面朝上，依次看 百里香、鼠尾草，在纸上分别手写 thyme 和 sage",
+                    "reason": "从中文回忆英文是产出性练习，手写能检查拼写",
+                    "seconds": 28,
+                    "requires": [
+                      "cards_word_up"
+                    ],
+                    "produces": [
+                      "written_attempts"
+                    ]
+                  },
+                  {
+                    "action": "逐张翻到英文面核对刚写的 thyme 和 sage，标出拼写错误，核对完把两张卡都翻回中文面朝上",
+                    "reason": "翻查确认拼写，并把刚翻的卡恢复中文面朝上，便于下次从中文起练",
+                    "seconds": 20,
+                    "requires": [
+                      "written_attempts"
+                    ],
+                    "produces": [
+                      "cards_meaning_up"
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      },
+      {
+        "call": 24,
+        "value": {
+          "answerKind": "general",
+          "answer": "",
+          "sourceIds": [],
+          "plan": {
+            "inputs": [
+              {
+                "id": "word_pairs",
+                "quote": "词对 thyme＝百里香、sage＝鼠尾草"
+              },
+              {
+                "id": "blank_cards",
+                "quote": "有两张空白卡"
+              }
+            ],
+            "activities": [
+              {
+                "title": "双面制卡与释义猜测",
+                "seconds": 60,
+                "steps": [
+                  {
+                    "action": "在两张空白卡上分别写 thyme 和 sage 作为正面，翻到背面写 百里香 和 鼠尾草，写好后把两张卡都正面朝上摆好",
+                    "reason": "先做出双面卡并统一正面朝上，才能按词面猜释义",
+                    "seconds": 30,
+                    "requires": [
+                      "word_pairs",
+                      "blank_cards"
+                    ],
+                    "produces": [
+                      "cards_word_up"
+                    ]
+                  },
+                  {
+                    "action": "依次看 thyme、sage 两张卡的正面，先口头猜出各自释义，猜完再逐张翻到背面核对 百里香 和 鼠尾草，核对后把两张卡都翻回正面朝上",
+                    "reason": "先猜后翻查能检验词到义的记忆，翻回正面为下一项做好准备",
+                    "seconds": 30,
+                    "requires": [
+                      "cards_word_up"
+                    ],
+                    "produces": [
+                      "cards_word_up"
+                    ]
+                  }
+                ]
+              },
+              {
+                "title": "看中文写英文并复位",
+                "seconds": 48,
+                "steps": [
+                  {
+                    "action": "把两张卡翻到中文面朝上，依次看 百里香、鼠尾草，先在纸上分别手写自己想到的英文 thyme 和 sage，写完后逐张翻到英文面核对并标出拼写错误",
+                    "reason": "先写下尝试再翻查，才能对照检查拼写，从中文回忆英文是产出性练习",
+                    "seconds": 28,
+                    "requires": [
+                      "cards_word_up"
+                    ],
+                    "produces": [
+                      "written_attempts"
+                    ]
+                  },
+                  {
+                    "action": "核对完把两张卡都翻回中文面朝上，再依次看 百里香、鼠尾草，在纸上重写正确的 thyme 和 sage",
+                    "reason": "把刚翻的卡恢复中文面朝上，并用正确拼写再写一遍巩固",
+                    "seconds": 20,
+                    "requires": [
+                      "written_attempts"
+                    ],
+                    "produces": [
+                      "cards_meaning_up"
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      }
+    ]
+  },
+  "AN11": {
+    "question": "Put the two directions into one paragraph using the original sheet, with a total of no more than 76 seconds. For each direction say which column is covered and which stays visible, answer from the visible cue, then uncover the reference and check.",
+    "lang": "en",
+    "history": [
+      {
+        "role": "user",
+        "content": "I have a Finnish word-and-meaning sheet in two columns, and I set aside 89 seconds for both directions."
+      },
+      {
+        "role": "assistant",
+        "content": "Practise one direction at a time."
+      }
+    ],
+    "drafts": [
+      {
+        "call": 27,
+        "value": {
+          "answerKind": "general",
+          "answer": "",
+          "sourceIds": [],
+          "plan": {
+            "inputs": [
+              {
+                "id": "finnish_sheet",
+                "quote": "I have a Finnish word-and-meaning sheet in two columns, and I set aside 89 seconds for both directions."
+              }
+            ],
+            "activities": [
+              {
+                "title": "Finnish to English",
+                "seconds": 38,
+                "steps": [
+                  {
+                    "action": "Cover the meaning column with a sheet of paper, leaving the Finnish word column visible; read each Finnish word and say its English meaning aloud from that cue, then slide the paper down to uncover the meaning column and check each answer, marking any miss.",
+                    "reason": "Answering from the visible Finnish cue and then uncovering the reference tests recall in the Finnish-to-English direction and gives immediate feedback.",
+                    "seconds": 38,
+                    "requires": [
+                      "finnish_sheet"
+                    ],
+                    "produces": []
+                  }
+                ]
+              },
+              {
+                "title": "English to Finnish",
+                "seconds": 38,
+                "steps": [
+                  {
+                    "action": "Cover the Finnish word column instead, leaving the meaning column visible; read each English meaning and say the Finnish word aloud from that cue, then uncover the Finnish column and check each answer, marking any miss.",
+                    "reason": "Reversing which column is covered keeps the original sheet and tests production in the English-to-Finnish direction with the same uncover-and-check loop.",
+                    "seconds": 38,
+                    "requires": [
+                      "finnish_sheet"
+                    ],
+                    "produces": []
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      },
+      {
+        "call": 65,
+        "value": {
+          "answerKind": "general",
+          "answer": "",
+          "sourceIds": [],
+          "plan": {
+            "inputs": [
+              {
+                "id": "finnish_sheet",
+                "quote": "I have a Finnish word-and-meaning sheet in two columns, and I set aside 89 seconds for both directions."
+              }
+            ],
+            "activities": [
+              {
+                "title": "Finnish to English",
+                "seconds": 38,
+                "steps": [
+                  {
+                    "action": "Cover the meaning column with a sheet of paper so only the Finnish words stay visible, then read each Finnish word in turn and say its English meaning aloud from that cue; if any word stalls, mark it and move on rather than peeking.",
+                    "reason": "Hiding the answer column forces recall from the visible Finnish cue instead of recognition of the printed meaning.",
+                    "seconds": 38,
+                    "requires": [
+                      "finnish_sheet"
+                    ],
+                    "produces": [
+                      "finnish_to_english_attempts"
+                    ]
+                  }
+                ]
+              },
+              {
+                "title": "English to Finnish",
+                "seconds": 38,
+                "steps": [
+                  {
+                    "action": "Move the paper to cover the Finnish column so only the English meanings stay visible, then read each meaning and say the Finnish word aloud from that cue, marking any word that stalls.",
+                    "reason": "Reversing which column is hidden tests production of the Finnish form from the meaning, the opposite retrieval direction.",
+                    "seconds": 38,
+                    "requires": [
+                      "finnish_sheet"
+                    ],
+                    "produces": [
+                      "english_to_finnish_attempts"
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      }
+    ]
+  },
+  "AN12": {
+    "question": "改成三项活动，每项两个子步骤，四舍五入到整秒，每个子步骤给独立理由，总用时最多一百零五秒。继续用原词表，在每项里先回忆答案，再揭开核对。",
+    "lang": "zh",
+    "history": [
+      {
+        "role": "user",
+        "content": "我有一张爱沙尼亚语单词和中文解释的双列词表，用它做两项定时练习，每项两个子步骤。"
+      },
+      {
+        "role": "assistant",
+        "content": "先盖住答案列再练习。"
+      }
+    ],
+    "drafts": [
+      {
+        "call": 28,
+        "value": {
+          "answerKind": "general",
+          "answer": "",
+          "sourceIds": [],
+          "plan": {
+            "inputs": [
+              {
+                "id": "word_list",
+                "quote": "我有一张爱沙尼亚语单词和中文解释的双列词表，用它做两项定时练习，每项两个子步骤。"
+              }
+            ],
+            "activities": [
+              {
+                "title": "词到义回忆",
+                "seconds": 35,
+                "steps": [
+                  {
+                    "action": "把词表放在桌上，只露出爱沙尼亚语单词列，用纸盖住中文解释列；若词表为空则停止，不自行编造单词或解释。",
+                    "reason": "先建立只显示单词、隐藏解释的练习状态，并确认有可用材料。",
+                    "seconds": 5,
+                    "requires": [
+                      "word_list"
+                    ],
+                    "produces": [
+                      "covered_meaning"
+                    ]
+                  },
+                  {
+                    "action": "逐个看露出的单词，先说出中文意思，再揭开中文解释列核对，然后重新盖住解释列，进入下一个单词。",
+                    "reason": "先回忆再核对能检验真实记忆，每次核对后重新遮盖可避免下一词偷看答案。",
+                    "seconds": 30,
+                    "requires": [
+                      "covered_meaning"
+                    ],
+                    "produces": [
+                      "meaning_checked"
+                    ]
+                  }
+                ]
+              },
+              {
+                "title": "义到词回忆",
+                "seconds": 35,
+                "steps": [
+                  {
+                    "action": "把词表翻到同一面，只露出中文解释列，用纸盖住爱沙尼亚语单词列。",
+                    "reason": "反向练习前先隐藏单词列，确保中文解释是唯一提示。",
+                    "seconds": 5,
+                    "requires": [
+                      "word_list"
+                    ],
+                    "produces": [
+                      "covered_word"
+                    ]
+                  },
+                  {
+                    "action": "逐个看露出的中文解释，先在纸上写出爱沙尼亚语单词，再揭开单词列核对，然后重新盖住单词列，进入下一个解释。",
+                    "reason": "先写后核对能检验拼写提取，重新遮盖可保持每次尝试独立。",
+                    "seconds": 30,
+                    "requires": [
+                      "covered_word"
+                    ],
+                    "produces": [
+                      "word_checked"
+                    ]
+                  }
+                ]
+              },
+              {
+                "title": "错词再测",
+                "seconds": 35,
+                "steps": [
+                  {
+                    "action": "从已核对的两轮中挑出回忆错误或拼写错误的词，只露出这些词的单词列并盖住中文解释列；若没有错词，则改用完整词表并同样只露单词列。",
+                    "reason": "优先重练薄弱词，同时在没有错词时仍有可执行的替代练习。",
+                    "seconds": 5,
+                    "requires": [
+                      "meaning_checked",
+                      "word_checked"
+                    ],
+                    "produces": [
+                      "error_prompt"
+                    ]
+                  },
+                  {
+                    "action": "逐个看露出的单词，先说出中文意思，再揭开解释列核对，然后重新盖住解释列，进入下一个词。",
+                    "reason": "对错词再做一次先回忆后核对，巩固尚未掌握的项目。",
+                    "seconds": 30,
+                    "requires": [
+                      "error_prompt"
+                    ],
+                    "produces": [
+                      "error_checked"
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      }
+    ]
+  },
+  "AN18": {
+    "question": "Give two short trials to see whether my right ring finger stays in contact with the same sticker until a slow B turn stops. Use title: seconds headings and fit both into 60 seconds. Then in its own paragraph write one sentence asking Mel to film the trials tomorrow.",
+    "lang": "en",
+    "history": [],
+    "drafts": [
+      {
+        "call": 39,
+        "value": {
+          "answerKind": "general",
+          "answer": "**Trial 1 — 20 seconds**\nHold the cube with your right ring finger resting on a single sticker on the R face. Make one slow B turn, watching only that fingertip. Stop the turn and freeze for 3 seconds. Note whether the finger is still on the same sticker or has slid onto a different one.\n\n**Trial 2 — 20 seconds**\nReset the cube and repeat with a slower B turn, keeping the finger relaxed rather than pressing. Again freeze at the stop and check the sticker under the fingertip. Compare with Trial 1.\n\n**Debrief — 20 seconds**\nWrite down for each trial: same sticker (yes/no), and whether the finger drifted during the turn or only at the stop. Two clean yes/no answers are enough to see the pattern.\n\nMel, could you film the trials tomorrow?"
+        }
+      },
+      {
+        "call": 40,
+        "value": {
+          "answerKind": "general",
+          "answer": "Trial 1 — Sticker Lock Check: 25 seconds\nHold the cube steady with your right ring finger resting on one last-layer sticker, then execute one slow B turn, watching whether that fingertip stays on the same sticker from start to stop; note the moment contact breaks, if at all.\n\nTrial 2 — Stop-Point Check: 25 seconds\nRepeat the same slow B turn with your eyes on your ring finger instead of the cube, pausing the instant the turn stops to record whether the sticker under your fingertip is still the original one.\n\nMel, could you film the trials tomorrow?"
+        }
+      },
+      {
+        "call": 78,
+        "value": {
+          "answerKind": "general",
+          "answer": "**Trial 1 — 20 seconds**\nRest your right hand on the cube in your normal grip and pick one specific sticker under the right ring fingertip. Make one slow B turn, watching only that fingertip, and note the moment it lifts off or slides to a different sticker. Stop at 20 seconds and say out loud whether contact with the same sticker held until the turn stopped.\n\n**Trial 2 — 20 seconds**\nRepeat the same slow B turn with the same sticker as your reference, but this time keep the ring finger deliberately light and let the cube rotate under it. Again watch for the first point of separation or sticker change, and stop at 20 seconds with a one-word verdict: same sticker or changed.\n\nBoth trials take 40 seconds, leaving 20 seconds to compare the two verdicts and decide whether the contact is consistent.\n\nMel, could you film the trials tomorrow?"
+        }
+      },
+      {
+        "call": 79,
+        "value": {
+          "answerKind": "general",
+          "answer": "0–30 seconds\nTrial 1: Rest your right ring finger on one sticker, make a slow B turn, and watch only that fingertip. When the B turn stops, note whether it stayed on the same sticker the whole time.\n\n30–60 seconds\nTrial 2: Reset, place your right ring finger on a different sticker, and repeat the slow B turn at the same pace. Stop when the turn ends and record whether contact with that same sticker was maintained.\n\nMel, please film the trials tomorrow.",
+          "sourceIds": []
+        }
+      }
+    ]
+  }
+}

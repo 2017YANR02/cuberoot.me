@@ -7,8 +7,8 @@ afterEach(()=>vi.unstubAllEnvs());
 it('selects compatible observation modes without inferring hidden or solved states',()=>{
   expect(assistantCubePlanGuidance('我只能看见一个角块的红色贴纸，其余两色被挡住，安排F2L练习。')).toContain('Do NOT search for a partner');
   expect(assistantCubePlanGuidance('Plan F2L observation; do not guess hidden colours.')).toContain('starting arrangement is unspecified');
-  expect(assistantCubePlanGuidance('沿用F2L限制。','只做慢拧和观察，最多12分钟。')).toContain('SAME resulting solved pair');
-  expect(assistantCubePlanGuidance('今天允许慢拧，请安排两项慢拧练习。','F2L只观察，不转动魔方。')).toContain('Each activity must actually turn');
+  expect(assistantCubePlanGuidance('沿用F2L限制。','只做慢拧和观察，最多12分钟。')).toContain('ACTUAL resulting state');
+  expect(assistantCubePlanGuidance('今天允许慢拧，请安排两项慢拧练习。','F2L只观察，不转动魔方。')).toContain('Both activities must actually turn');
   expect(assistantCubePlanGuidance('沿用F2L限制。','只观察，不转动魔方，最多6分钟。')).toContain('cube stays untouched');
   expect(assistantCubePlanGuidance('For F2L, with blue as the cross colour, a blue-red-white corner and red-white edge are visible.')).toContain('current positions are UNKNOWN');
   expect(assistantCubePlanGuidance('Inspect F2L-solved diagrams.')).toContain('REGARDLESS of edges');
@@ -28,11 +28,11 @@ it('recognizes vocabulary revision activities and a reason between child count a
 it('gives quantified word repair instead of repeating the same vague instruction',()=>{
   const shape=assistantPlanShape('Plan two activities with two timed substeps each in 180–230 words.');
   const instruction=assistantPlanWordInstruction(shape,Array(176).fill('word').join(' '));
-  expect(instruction).toContain('ADD about 49 words');
+  expect(instruction).toContain('ADD about 29 words');
   expect(instruction).toContain('INCLUDING headings');
   expect(assistantPlanWordInstruction(assistantPlanShape('Plan two activities.'))).toBe('');
 });
-it('rewrites a length failure without copying earlier assistant prose or the rejected draft',async()=>{
+it('edits a length failure using measured feedback without copying earlier assistant prose',async()=>{
   const q='Plan two vocabulary activities in English, 40–60 words, at most 4 minutes total.';
   const bad='1. Recall (2 minutes): Read.\n2. Review (2 minutes): Check.';
   const good='1. Recall (2 minutes): Read the complete word list once, then cover it and say each meaning aloud; retrieving meanings makes the review active.\n2. Review (2 minutes): Uncover the same list and compare your recalled meanings with the written definitions, then say every corrected meaning aloud to consolidate accurate recall.';
@@ -40,7 +40,7 @@ it('rewrites a length failure without copying earlier assistant prose or the rej
   const result=await answerSiteQuestion(q,'en',{key:'fixture',baseUrl:'https://api.deepseek.com/v1',model:'deepseek-flash'},AbortSignal.timeout(5000),fetcher,[{role:'user',content:'Use my word list.'},{role:'assistant',content:'OLD_ASSISTANT_ANCHOR'}]);
   expect(result.answer).toBe(good);expect(fetcher).toHaveBeenCalledTimes(2);
   const request=JSON.parse(String(fetcher.mock.calls[1][1]?.body));
-  expect(JSON.stringify(request)).toContain('ADD about');expect(JSON.stringify(request)).toContain('rejectedWordCount');expect(JSON.stringify(request)).not.toContain(bad);
+  expect(JSON.stringify(request)).toContain('ADD about');expect(JSON.stringify(request)).toContain('rejectedWordCount');expect(JSON.stringify(request)).toContain('Edit the supplied rejectedPlan');
   expect(JSON.stringify(request)).not.toContain('OLD_ASSISTANT_ANCHOR');expect(request.thinking).toEqual({type:'disabled'});
 });
 it('retains schema rejection and uses a fast JSON repair for a bounded plan',async()=>{
@@ -229,7 +229,7 @@ it('detects unread glossary comparisons while retaining requested, body-backed a
   const backed=await runDataTool({tool:'glossary',query:'OLL'},'zh',async()=>({sections:[{entries:[{id:439,headEn:'OLL (Orientation of Last Layer)',headZh:'顶层定向',bodyEn:'OLL precedes PLL.'}]}]}));
   expect(glossaryDefinitionScopeViolation(lookup,'OLL ... PLL',[{call:{tool:'glossary'},result:backed}])).toBeUndefined();
 });
-it.each([false,true])('repairs an unsupported glossary term once and checks the repaired scope (%s)',async repeat=>{
+it.each([false,true])('closes a heading-only correction over actual fields even when model drafts overclaim (%s)',async repeat=>{
   const bad='OLL 是 Orientation of Last Layer，中文为还原顶层色向；PLL 是顶层排列。[[wiki:439]][[wiki:348]]';
   const good='OLL 是 Orientation of Last Layer，中文为还原顶层色向。[[wiki:439]][[wiki:348]]';
   const requests:Array<Record<string,any>>=[];
@@ -238,11 +238,11 @@ it.each([false,true])('repairs an unsupported glossary term once and checks the 
     requests.push(JSON.parse(String(init?.body)));
     return modelResponse({answerKind:'grounded',answer:requests.length===1||repeat?bad:good,sourceIds:['wiki:439','wiki:348']});
   });
-  const result=await answerSiteQuestion(lookup+'纠正之前的说法。','zh',{key:'fixture',baseUrl:'https://api.deepseek.com/v1',model:'deepseek-flash'},AbortSignal.timeout(5000),fetcher,[{role:'user',content:'请核对我之前的定义。'}]);
-  expect(requests).toHaveLength(2);expect(requests[1].thinking).toEqual({type:'disabled'});
-  expect(JSON.stringify(requests[1])).toContain('unsupported term PLL');
-  if(repeat){expect(result.sources).toEqual([]);expect(result.answer).not.toContain('PLL');}
-  else {expect(result.answer).toBe(good);expect(result.sources.map(s=>s.id)).toEqual(['wiki:439','wiki:348']);}
+  const result=await answerSiteQuestion(lookup+'纠正之前的说法。','zh',{key:'fixture',baseUrl:'https://api.deepseek.com/v1',model:'deepseek-flash'},AbortSignal.timeout(5000),fetcher);
+  expect(requests).toHaveLength(1);
+  expect(result.answer).toBe('OLL：Orientation of Last Layer，即“还原顶层色向”[[wiki:439]][[wiki:348]]。');
+  expect(result.answer).not.toContain('PLL');
+  expect(result.sources.map(s=>s.id)).toEqual(['wiki:439','wiki:348']);
 });
 it('renders only retrieved fields with both supporting entries, without a model call',async()=>{
   const fetcher=vi.fn<typeof fetch>(async input=>{expect(String(input)).toContain('/wiki/terms');return Response.json(data);});

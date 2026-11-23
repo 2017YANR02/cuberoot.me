@@ -1,0 +1,111 @@
+{
+  "case": {
+    "id": "H15",
+    "category": "followup",
+    "lang": "zh",
+    "history": [
+      {
+        "role": "user",
+        "content": "安排两项静态F2L观察练习，总共最多3分钟，不转魔方。"
+      },
+      {
+        "role": "assistant",
+        "content": "只观察可见信息，未知状态保持未知。"
+      }
+    ],
+    "question": "现在允许转动，请把计划改成两项慢拧练习。",
+    "expected": "Latest permission overrides no-turn; retains inherited 3-minute limit; each activity has an executable alternative if no familiar case is available."
+  },
+  "models": [
+    {
+      "answerKind": "general",
+      "answer": "",
+      "sourceIds": [],
+      "plan": {
+        "inputs": [
+          {
+            "id": "allow_turns",
+            "quote": "现在允许转动，请把计划改成两项慢拧练习。"
+          }
+        ],
+        "activities": [
+          {
+            "title": "慢拧熟悉插入",
+            "seconds": 90,
+            "steps": [
+              {
+                "action": "选一个你已会的插入动作，用它的逆动作摆出你熟悉的那个情形，先看清情形和目标槽位；只有确认摆对了，才慢速插入，再用同一逆动作复位同一情形并重复；若摆不出熟悉情形，就全程只用自己会的动作慢拧，不做插入、不复位、不检查槽位。",
+                "reason": "先确认熟悉情形再慢拧，避免在未验证状态下误以为完成F2L。",
+                "seconds": 90,
+                "requires": [
+                  "allow_turns"
+                ],
+                "produces": []
+              }
+            ]
+          },
+          {
+            "title": "慢拧巩固节奏",
+            "seconds": 90,
+            "steps": [
+              {
+                "action": "沿用上一项选定的同一插入动作：只有上一项确认过熟悉情形，才复位同一情形后慢速插入并重复；否则全程只用自己会的动作慢拧，不做插入、不复位、不检查槽位。",
+                "reason": "在允许转动下用慢速重复巩固已会动作，不引入新算法。",
+                "seconds": 90,
+                "requires": [
+                  "allow_turns"
+                ],
+                "produces": []
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "answerKind": "general",
+      "answer": "",
+      "sourceIds": [],
+      "plan": {
+        "inputs": [
+          {
+            "id": "allow_turns",
+            "quote": "现在允许转动，请把计划改成两项慢拧练习。"
+          }
+        ],
+        "activities": [
+          {
+            "title": "慢拧熟悉插入",
+            "seconds": 90,
+            "steps": [
+              {
+                "action": "选一个你已会的插入动作，用它的逆动作摆出你熟悉的那个情形，先看清情形和目标槽位；只有确认摆对了，才慢速插入，再用同一逆动作复位同一情形并重复；若摆不出熟悉情形，就全程只用自己会的动作慢拧，不做插入、不复位、不检查槽位。",
+                "reason": "先确认熟悉情形再慢拧，避免在未验证状态下误以为完成F2L。",
+                "seconds": 90,
+                "requires": [
+                  "allow_turns"
+                ],
+                "produces": []
+              }
+            ]
+          },
+          {
+            "title": "慢拧巩固节奏",
+            "seconds": 90,
+            "steps": [
+              {
+                "action": "沿用上一项选定的同一插入动作：只有上一项确认过熟悉情形，才复位同一情形后慢速插入并重复；否则全程只用自己会的动作慢拧，不做插入、不复位、不检查槽位。",
+                "reason": "在允许转动下用慢速重复巩固已会动作，不引入新算法。",
+                "seconds": 90,
+                "requires": [
+                  "allow_turns"
+                ],
+                "produces": []
+              }
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}

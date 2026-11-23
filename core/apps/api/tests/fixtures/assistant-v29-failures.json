@@ -1,0 +1,503 @@
+[
+  {
+    "key": "1/after/H08",
+    "case": {
+      "id": "H08",
+      "category": "plan",
+      "lang": "en",
+      "history": [],
+      "question": "I have a word list but no flashcards. Plan two vocabulary activities using flashcards, each with two timed substeps, maximum four minutes total. Include making the cards and explain why each substep helps.",
+      "expected": "Prepare distinct word/meaning faces before flipping, first activity includes actual practice, each reuse resets prompt face, no unavailable error subset, 2x2 <=240 seconds."
+    },
+    "result": {
+      "repeat": 1,
+      "variant": "after",
+      "id": "H08",
+      "category": "plan",
+      "at": "2026-11-18T02:44:11.624Z",
+      "error": "model_output_invalid",
+      "metrics": {
+        "stages": {
+          "model": {
+            "calls": 1,
+            "ms": 3535,
+            "errors": 0
+          },
+          "review": {
+            "calls": 1,
+            "ms": 2797,
+            "errors": 0
+          }
+        },
+        "models": [
+          {
+            "model": "deepseek-flash",
+            "thinking": false,
+            "round": 0,
+            "attempt": 0,
+            "promptFingerprint": "f5f8c954b9682cab5e381aa7f48d7ee1a4512f7456147c6d475afbbbc6e72929",
+            "configurationFingerprint": "12874913022f352efbf4fb93ae15c606981b634755e77b4cf4a0e3a6a90db16d",
+            "input": 14183,
+            "output": 460,
+            "cached": 12928,
+            "reasoning": 0,
+            "firstActivityMs": 707,
+            "firstTextMs": 707,
+            "durationMs": 3533,
+            "grossCny": 0.032046,
+            "cacheAdjustedCny": {
+              "min": 0.00335356,
+              "max": 0.00670712
+            },
+            "tariff": {
+              "version": "deepseek-cny-peak-2026-10-15",
+              "inputPerMillion": 2,
+              "outputPerMillion": 8,
+              "cachedInputPerMillion": 0.04,
+              "cacheVersion": "cache-adjusted-range-2026-10-26",
+              "source": "https://api-docs.deepseek.com/zh-cn/quick_start/pricing/"
+            }
+          },
+          {
+            "model": "deepseek-flash",
+            "thinking": false,
+            "round": 0,
+            "attempt": 0,
+            "promptFingerprint": "506a87eb200c6cce1eb0a0b3fb66777462ce2c31924924e93c7df107ab9399df",
+            "configurationFingerprint": "523797966567c671a4089b4dc8390623f0f51de85102f4054fcc93c3ef9ad0c3",
+            "input": 7769,
+            "output": 467,
+            "cached": 5376,
+            "reasoning": 0,
+            "firstActivityMs": 744,
+            "firstTextMs": 744,
+            "durationMs": 2795,
+            "grossCny": 0.019274,
+            "cacheAdjustedCny": {
+              "min": 0.004368520000000001,
+              "max": 0.008737040000000001
+            },
+            "tariff": {
+              "version": "deepseek-cny-peak-2026-10-15",
+              "inputPerMillion": 2,
+              "outputPerMillion": 8,
+              "cachedInputPerMillion": 0.04,
+              "cacheVersion": "cache-adjusted-range-2026-10-26",
+              "source": "https://api-docs.deepseek.com/zh-cn/quick_start/pricing/"
+            }
+          }
+        ],
+        "embeddings": [],
+        "searches": [],
+        "reranks": [],
+        "tools": {},
+        "retrievals": [],
+        "policy": {
+          "version": "2026-11-17-reliability-29",
+          "thinking": "auto"
+        },
+        "contexts": [
+          {
+            "relevance": "weak",
+            "recentTurns": 0,
+            "estimatedTokens": 20482,
+            "inputBudget": 57856,
+            "compressed": [],
+            "layers": {
+              "slidingSummary": 0,
+              "activeExtracts": 0,
+              "protectedConstraints": 0,
+              "longTermMemory": 0,
+              "historicalTopics": 0
+            }
+          },
+          {
+            "relevance": "weak",
+            "recentTurns": 0,
+            "estimatedTokens": 12810,
+            "inputBudget": 57856,
+            "compressed": [],
+            "layers": {
+              "slidingSummary": 0,
+              "activeExtracts": 0,
+              "protectedConstraints": 0,
+              "longTermMemory": 0,
+              "historicalTopics": 0
+            }
+          }
+        ],
+        "planChecks": [
+          {
+            "phase": "draft",
+            "reason": "plan_preparation_only_activity",
+            "words": 257
+          },
+          {
+            "phase": "repair",
+            "reason": "plan_card_reset_missing",
+            "words": 262
+          }
+        ],
+        "answerRejections": [
+          {
+            "reason": "plan_card_reset_missing"
+          }
+        ],
+        "cost": {
+          "grossCny": 0.05132,
+          "unpricedCalls": 0
+        }
+      },
+      "durationMs": 6352.026624999999,
+      "firstAnswerMs": null,
+      "providerCalls": [
+        {
+          "repeat": 1,
+          "variant": "after",
+          "id": "H08",
+          "call": 21,
+          "model": "deepseek-flash",
+          "startedAt": "2026-11-18T02:44:05.286Z",
+          "requestSha256": "1d2c23274c5e68f59e660fb4ae0b01b1d9645783d2863031511c527471199c4a",
+          "status": 200,
+          "headersMs": 134.5347910000055,
+          "responseFile": "provider-responses/21.txt",
+          "input": 14183,
+          "output": 460,
+          "cached": 12928,
+          "reasoning": null,
+          "durationMs": 3526.9235000000044
+        },
+        {
+          "repeat": 1,
+          "variant": "after",
+          "id": "H08",
+          "call": 22,
+          "model": "deepseek-flash",
+          "startedAt": "2026-11-18T02:44:08.823Z",
+          "requestSha256": "c27ff929519349ca2f03df0888d1beccf5dc893a41c8a75770c775a23e625cae",
+          "status": 200,
+          "headersMs": 255.4922910000023,
+          "responseFile": "provider-responses/22.txt",
+          "input": 7769,
+          "output": 467,
+          "cached": 5376,
+          "reasoning": null,
+          "durationMs": 2792.1272080000053
+        }
+      ],
+      "reads": [],
+      "fixtureMisses": [],
+      "rssMb": 231
+    },
+    "models": [
+      {
+        "answerKind": "general",
+        "answer": "",
+        "sourceIds": [],
+        "plan": {
+          "inputs": [
+            {
+              "id": "word_list",
+              "quote": "I have a word list but no flashcards."
+            }
+          ],
+          "activities": [
+            {
+              "title": "Make and check the cards",
+              "seconds": 120,
+              "steps": [
+                {
+                  "action": "Write each word on one face of a blank card and its meaning on the other, then place all cards word-side up in one pile.",
+                  "reason": "Writing both faces creates the two-sided cards the later recall needs, and a consistent word-side-up pile keeps the first pass uniform.",
+                  "seconds": 90,
+                  "requires": [
+                    "word_list"
+                  ],
+                  "produces": [
+                    "word_cards"
+                  ]
+                },
+                {
+                  "action": "Shuffle the finished deck and fan it out word-side up to confirm every card has a readable word and meaning; if the list has fewer words than expected, use the full set you have and continue.",
+                  "reason": "A quick check catches missing or illegible faces before practice, and shuffling stops the order from hinting at answers.",
+                  "seconds": 30,
+                  "requires": [
+                    "word_cards"
+                  ],
+                  "produces": [
+                    "shuffled_deck"
+                  ]
+                }
+              ]
+            },
+            {
+              "title": "Recall both directions",
+              "seconds": 120,
+              "steps": [
+                {
+                  "action": "Word to meaning: take the top card word-side up, say the meaning without looking, flip once to check, then return that card word-side up to the bottom; repeat through the deck, and if there are no errors finish this pass.",
+                  "reason": "Producing the meaning from the word strengthens recognition, and the immediate flip gives honest feedback while the reset keeps the next pass fair.",
+                  "seconds": 60,
+                  "requires": [
+                    "shuffled_deck"
+                  ],
+                  "produces": [
+                    "checked_deck"
+                  ]
+                },
+                {
+                  "action": "Meaning to word: reset the whole deck meaning-side up, then take the top card, say the word without looking, flip once to check, and return that card meaning-side up to the bottom; repeat through the deck, and if there are no errors finish here.",
+                  "reason": "Recalling the word from its meaning is harder production practice, and resetting the full deck first prevents the previous direction from cueing answers.",
+                  "seconds": 60,
+                  "requires": [
+                    "checked_deck"
+                  ],
+                  "produces": [
+                    "practised_deck"
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "answerKind": "general",
+        "answer": "",
+        "sourceIds": [],
+        "plan": {
+          "inputs": [
+            {
+              "id": "word_list",
+              "quote": "I have a word list but no flashcards."
+            }
+          ],
+          "activities": [
+            {
+              "title": "Make cards and recall meanings",
+              "seconds": 120,
+              "steps": [
+                {
+                  "action": "Write each word on one face of a blank card and its meaning on the other, then place all cards word-side up in one pile; if the list has fewer words than expected, use the full set you have.",
+                  "reason": "Writing both faces creates the two-sided cards the recall needs, and a consistent word-side-up pile keeps the first pass uniform.",
+                  "seconds": 60,
+                  "requires": [
+                    "word_list"
+                  ],
+                  "produces": [
+                    "word_cards"
+                  ]
+                },
+                {
+                  "action": "Shuffle the deck, then take the top card word-side up, say the meaning without looking, flip once to check, and return that card word-side up to the bottom; repeat through the deck, and if there are no errors finish this pass.",
+                  "reason": "Shuffling stops order from hinting at answers, and producing the meaning from the word with an immediate flip gives honest recall practice.",
+                  "seconds": 60,
+                  "requires": [
+                    "word_cards"
+                  ],
+                  "produces": [
+                    "checked_deck"
+                  ]
+                }
+              ]
+            },
+            {
+              "title": "Recall words from meanings",
+              "seconds": 120,
+              "steps": [
+                {
+                  "action": "Reset the whole deck meaning-side up, then take the top card, say the word without looking, flip once to check, and return that card meaning-side up to the bottom; repeat through the deck, and if there are no errors finish here.",
+                  "reason": "Recalling the word from its meaning is harder production practice, and resetting the full deck first prevents the previous direction from cueing answers.",
+                  "seconds": 90,
+                  "requires": [
+                    "checked_deck"
+                  ],
+                  "produces": [
+                    "practised_deck"
+                  ]
+                },
+                {
+                  "action": "Shuffle the practised deck and repeat one meaning-to-word pass, saying each word before flipping to check and returning each card meaning-side up; if the deck is empty, finish the activity.",
+                  "reason": "A second shuffled pass tests recall without order cues and confirms the words are retained after the first attempt.",
+                  "seconds": 30,
+                  "requires": [
+                    "practised_deck"
+                  ],
+                  "produces": [
+                    "retained_deck"
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      }
+    ]
+  },
+  {
+    "key": "2/after/H04",
+    "case": {
+      "id": "H04",
+      "category": "source",
+      "lang": "zh",
+      "history": [],
+      "question": "查百科，告诉我 PLL 的英文全称和中文译名，再写一句祝朋友生日快乐的话。",
+      "expected": "Keep supported name and translation with citation and one independent birthday greeting; no procedural claims attributed to headings."
+    },
+    "result": {
+      "repeat": 2,
+      "variant": "after",
+      "id": "H04",
+      "category": "source",
+      "at": "2026-11-18T02:45:16.043Z",
+      "result": {
+        "answer": "PLL（Permutation of Last Layer，顶层排列）是魔方还原中“让顶层各块归位”的步骤 [[wiki:2]]，也借此把这句话送给你朋友：“愿你在新的一岁里，每一步都归位、每一天都顺心，生日快乐！”",
+        "sources": [
+          {
+            "id": "wiki:2",
+            "title": "顶层排列",
+            "href": "/wiki",
+            "read": true
+          }
+        ],
+        "actions": [
+          {
+            "id": "wiki:2",
+            "title": "顶层排列",
+            "href": "/wiki"
+          }
+        ],
+        "artifacts": []
+      },
+      "metrics": {
+        "stages": {
+          "data": {
+            "calls": 1,
+            "ms": 0,
+            "errors": 0
+          },
+          "tool": {
+            "calls": 1,
+            "ms": 1,
+            "errors": 0
+          },
+          "review": {
+            "calls": 1,
+            "ms": 1433,
+            "errors": 0
+          }
+        },
+        "models": [
+          {
+            "model": "deepseek-flash",
+            "thinking": true,
+            "round": 1,
+            "attempt": 0,
+            "promptFingerprint": "3fb0a1743e8d751f4cb4d3fdddae4d94544166d03260d3324ecf9e6a29b93071",
+            "configurationFingerprint": "c2990c972a3973dc625c41cd02ca66e297f3de8e25b51375814fc0682a3c0412",
+            "input": 14392,
+            "output": 103,
+            "cached": 14208,
+            "reasoning": 23,
+            "firstActivityMs": 646,
+            "firstTextMs": 900,
+            "durationMs": 1432,
+            "grossCny": 0.029608,
+            "cacheAdjustedCny": {
+              "min": 0.0008801600000000001,
+              "max": 0.0017603200000000001
+            },
+            "tariff": {
+              "version": "deepseek-cny-peak-2026-10-15",
+              "inputPerMillion": 2,
+              "outputPerMillion": 8,
+              "cachedInputPerMillion": 0.04,
+              "cacheVersion": "cache-adjusted-range-2026-10-26",
+              "source": "https://api-docs.deepseek.com/zh-cn/quick_start/pricing/"
+            }
+          }
+        ],
+        "embeddings": [],
+        "searches": [],
+        "reranks": [],
+        "tools": {
+          "glossary": 1
+        },
+        "retrievals": [],
+        "policy": {
+          "version": "2026-11-17-reliability-29",
+          "thinking": "auto"
+        },
+        "toolTimings": {
+          "glossary": {
+            "calls": 1,
+            "ms": 1,
+            "errors": 0
+          }
+        },
+        "contexts": [
+          {
+            "relevance": "weak",
+            "recentTurns": 0,
+            "estimatedTokens": 21688,
+            "inputBudget": 45568,
+            "compressed": [],
+            "layers": {
+              "slidingSummary": 0,
+              "activeExtracts": 0,
+              "protectedConstraints": 0,
+              "longTermMemory": 0,
+              "historicalTopics": 0
+            }
+          }
+        ],
+        "timing": {
+          "version": 1,
+          "responseReadyMs": 1438
+        },
+        "cost": {
+          "grossCny": 0.029608,
+          "unpricedCalls": 0
+        }
+      },
+      "durationMs": 1437.9229579999956,
+      "firstAnswerMs": null,
+      "firstVisibleMs": 1437.9229579999956,
+      "streamed": false,
+      "providerCalls": [
+        {
+          "repeat": 2,
+          "variant": "after",
+          "id": "H04",
+          "call": 56,
+          "model": "deepseek-flash",
+          "startedAt": "2026-11-18T02:45:14.612Z",
+          "requestSha256": "d4f525a869b8adc1394bb468bdb0b08a6f1eb68eb323b539a6729c741d9c8412",
+          "status": 200,
+          "headersMs": 174.02212500000314,
+          "responseFile": "provider-responses/56.txt",
+          "input": 14392,
+          "output": 103,
+          "cached": 14208,
+          "reasoning": 23,
+          "durationMs": 1427.5760830000072
+        }
+      ],
+      "reads": [
+        "https://api.cuberoot.me/v1/wiki/terms"
+      ],
+      "fixtureMisses": [],
+      "rssMb": 309
+    },
+    "models": [
+      {
+        "answerKind": "grounded",
+        "answer": "PLL（Permutation of Last Layer，顶层排列）是魔方还原中“让顶层各块归位”的步骤 [[wiki:2]]，也借此把这句话送给你朋友：“愿你在新的一岁里，每一步都归位、每一天都顺心，生日快乐！”",
+        "sourceIds": [
+          "wiki:2"
+        ]
+      }
+    ]
+  }
+]

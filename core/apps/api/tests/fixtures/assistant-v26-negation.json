@@ -1,0 +1,62 @@
+{
+  "key": "1/after/H14",
+  "case": {
+    "id": "H14",
+    "category": "plan",
+    "lang": "zh",
+    "history": [],
+    "question": "我不会任何 F2L 插入，只会几个基本转动。安排两项慢拧活动，总计最多4分钟，不要让我先学公式。",
+    "expected": "Uses only known basic slow turns; no assumed familiar F2L insertion, inverse setup, solved-slot check or learning new formula; <=240 seconds."
+  },
+  "model": {
+    "answerKind": "general",
+    "answer": "",
+    "sourceIds": [],
+    "plan": {
+      "inputs": [
+        {
+          "id": "user_basic_turns",
+          "quote": "我不会任何 F2L 插入，只会几个基本转动。"
+        },
+        {
+          "id": "user_no_formula",
+          "quote": "不要让我先学公式。"
+        }
+      ],
+      "activities": [
+        {
+          "title": "慢速基本转动观察",
+          "seconds": 120,
+          "steps": [
+            {
+              "action": "任选一个已会的基本转动，用很慢的速度做一次，停两秒观察魔方当前状态，再继续下一个基本转动，重复至时间结束；最后检查自己是否全程只用了已会的基本转动且没有尝试插入。",
+              "reason": "只用已会的基本转动慢拧并停顿观察，能在不学公式的前提下熟悉当前状态。",
+              "seconds": 120,
+              "requires": [
+                "user_basic_turns",
+                "user_no_formula"
+              ],
+              "produces": []
+            }
+          ]
+        },
+        {
+          "title": "基本转动节奏练习",
+          "seconds": 120,
+          "steps": [
+            {
+              "action": "从当前状态开始，逐个缓慢执行已会的基本转动，每次转动后停顿观察颜色位置变化，保持均匀节奏直到时间结束；结束时检查没有使用任何公式或插入动作。",
+              "reason": "在慢节奏中反复执行基本转动并观察变化，巩固对当前状态的感知而不引入新公式。",
+              "seconds": 120,
+              "requires": [
+                "user_basic_turns",
+                "user_no_formula"
+              ],
+              "produces": []
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

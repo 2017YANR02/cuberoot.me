@@ -1,6 +1,8 @@
+import { AllFaces, CubeData, Face, parseAlgorithm, parseCase } from '@cuberoot/visualcube';
 import { ALG_CATALOG, getAlgSetMeta, type AlgFile, type AlgPuzzle } from '@cuberoot/shared/alg';
 import { assistantAlgorithmSelection } from '@cuberoot/shared/site-assistant-algorithms';
 import { algCaseHref } from '@cuberoot/shared/recon/alg-case-link';
+import { PLL_RENAME } from '@cuberoot/shared/recon/alg-case-display';
 import type { AssistantAlgorithms } from '@cuberoot/shared/site-assistant';
 
 export interface AlgorithmSelection {
@@ -8,6 +10,14 @@ export interface AlgorithmSelection {
   offset?: number; limit?: number; alternative?: number; display?: 'both' | 'image' | 'text';
 }
 const normalized = (value: string) => value.normalize('NFKC').toLowerCase().replace(/(?:\s*-\s*)?\bperm(?:utation)?\b/g, '').replace(/[\s_()（）]/g, '');
+
+/** Only supplement names missing from the current public PLL catalog. */
+export function algorithmCaseAliases(data: AlgFile, name: string): string[] {
+  if(data.puzzle!=='3x3' || data.set!=='pll')return [];
+  return Object.entries(PLL_RENAME)
+    .filter(([alias,current])=>current.toLowerCase()===normalized(name) && !data.cases.some(c=>normalized(c.name)===normalized(alias)))
+    .map(([alias])=>alias);
+}
 
 /** Only a complete, unambiguous display request can skip planning. Explanations,
  * navigation, named cases and mixed requests still use the ordinary tools. */
@@ -37,8 +47,11 @@ export function matchingAlgorithmCases(data: AlgFile, selection: AlgorithmSelect
   const query = selection.query?.trim();
   const term = query ? normalized(query) : '';
   const exact = term ? data.cases.filter(c => normalized(c.name) === term || normalized(c.name).replace(new RegExp(`^${set.replace(/[^a-z0-9-]/gi, '')}`), '') === term) : [];
-  return selection.caseId !== undefined ? data.cases.filter(c => c.id === selection.caseId)
-    : term ? exact.length ? exact : data.cases.filter(c => normalized(c.name).includes(term) || normalized(c.subgroup).includes(term)) : data.cases;
+  if(selection.caseId!==undefined)return data.cases.filter(c=>c.id===selection.caseId);
+  if(!term)return data.cases;
+  if(exact.length)return exact;
+  const aliases=data.cases.filter(c=>algorithmCaseAliases(data,c.name).some(alias=>normalized(alias)===term));
+  return aliases.length ? aliases : data.cases.filter(c=>normalized(c.name).includes(term) || normalized(c.subgroup).includes(term));
 }
 
 /** The tool, never the model, supplies case IDs, move strings and drawing inputs. */
@@ -57,4 +70,48 @@ export function algorithmCards(data: AlgFile, selection: AlgorithmSelection, lan
   return {kind:'algorithms', version:1, title:`${puzzle} ${meta[lang]}`, display:selection.display ?? 'both',
     puzzle, set, query, caseId:selection.caseId, offset, total:matches.length,
     ...(offset + limit < matches.length ? {nextOffset:offset + limit} : {}), cards};
+}
+
+/** Describe the diagram's actual holding angle, including asymmetric U perms. */
+export function pllRecognition(result: AssistantAlgorithms, lang: 'zh'|'en'): string | undefined {
+  if (result.puzzle !== '3x3' || result.set !== 'pll' || !result.cards.length) return;
+  if (result.cards.length>1) {
+    const cues=result.cards.map(card=>pllRecognition({...result,cards:[card]},lang));
+    return cues.every(Boolean)?cues.join('\n\n'):undefined;
+  }
+  const [card] = result.cards;
+  // CaseThumb renders the selected setup, or the inverse of this alternative.
+  // Legacy sticker rows can use a different AUF, so use the renderer's simulator.
+  const turns = card.setup ? parseAlgorithm(card.setup) : parseCase(card.alg);
+  if (!turns.length || turns.length>256) return;
+  const cube = new CubeData(3,Object.fromEntries(AllFaces.map(face=>[face,Array(9).fill(face)])));
+  for (const turn of turns) cube.turn(turn);
+  const rows:number[][] = [Face.F,Face.R,Face.B,Face.L].map(face=>cube.faces[face]);
+  if (![Face.U,Face.D].every(face=>cube.faces[face].every(colour=>colour===cube.faces[face][4])) ||
+      !rows.every(row=>row.slice(3).every(colour=>colour===row[4]))) return;
+  const centres = rows.map(row=>row[4]);
+  const faces = {zh:['前','右','后','左'],en:['front','right','back','left']}[lang];
+  const edges = rows.map(row => centres.indexOf(row[1]));
+  // Each side is seen face-on. Its right corner meets the next side's left corner.
+  const corners = rows.map((row,i) => centres.findIndex((colour,j) =>
+    row[2] === colour && rows[(i+1)%4][0] === centres[(j+1)%4]));
+  if ([edges,corners].some(p => p.includes(-1) || new Set(p).size !== 4)) return;
+  const describe = (home: number[], names: string[]) => {
+    const seen = new Set<number>(), cycles: string[] = [];
+    for (let i=0;i<4;i++) {
+      if (seen.has(i) || home[i] === i) continue;
+      const cycle: string[] = [];
+      for (let j=i;!seen.has(j);j=home[j]) { seen.add(j); cycle.push(names[j]); }
+      cycles.push(cycle.length === 2 ? cycle.join(' ↔ ') : [...cycle,cycle[0]].join(' → '));
+    }
+    return cycles.join(' / ') || {zh:'已归位',en:'already solved'}[lang];
+  };
+  const cornerNames = {zh:['右前','右后','左后','左前'],en:['front-right','back-right','back-left','front-left']}[lang];
+  const bars = faces.filter((_,i) => rows[i][0] === rows[i][2]);
+  if ([edges,corners].every(p=>p.every((home,i)=>home===i))) return;
+  const solid = faces.filter((_,i)=>rows[i][0]===rows[i][1] && rows[i][1]===rows[i][2]);
+  const block = solid.length ? {zh:'同色三连块在'+solid.join('、')+'面。',en:'Solid three-sticker bar: '+solid.join(', ')+'. '}[lang] : {zh:'四个侧面都没有同色三连块。',en:'No side has a solid three-sticker bar. '}[lang];
+  const cues = bars.length ? {zh:'同侧两角颜色相同的面：'+bars.join('、')+'。',en:'Matching corner stickers (“headlights”): '+bars.join(', ')+'.'}[lang] : '';
+  return {zh:'按第 '+(card.alternative+1)+' 条公式的卡图持方，顶面朝上，对照侧面中心识别 '+card.name+'。'+block+cues+'顶层棱的位置变化：'+describe(edges,faces)+'；顶层角的位置变化：'+describe(corners,cornerNames)+'。箭头从当前位置指向归位位置。',
+    en:'Hold the cube as pictured for algorithm '+(card.alternative+1)+', last layer up, and compare each side with its centre to recognize '+card.name+'. '+block+cues+' Top edges: '+describe(edges,faces)+'. Top corners: '+describe(corners,cornerNames)+'. Arrows go from the current position to its home.'}[lang];
 }

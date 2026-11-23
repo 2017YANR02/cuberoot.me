@@ -1,0 +1,545 @@
+{
+  "AK02": {
+    "question": "Give two tests to detect whether my left index finger lets go before a slow L turn is complete. Let the tests take at most 61 seconds in total, with headings in the form “name: seconds”. Then, in a separate paragraph, give one sentence asking Sam to flag the early releases in my video.",
+    "lang": "en",
+    "history": [],
+    "drafts": [
+      {
+        "call": 52,
+        "value": {
+          "answerKind": "general",
+          "answer": "Here are two quick tests for whether your left index finger releases the L face before a slow L turn finishes. Total time: 61 seconds.\n\n**Mirror check: 30 seconds**\nDo slow L turns in front of a mirror (or phone front camera) for 30 seconds, watching the fingertip against the L-face stickers. If the finger lifts off while the face is still rotating, you have an early release.\n\n**Sticker-contact count: 31 seconds**\nFor 31 seconds, do slow L turns and count aloud each turn where the fingertip stays in contact until the face stops. Compare that count with the total turns; any turn where contact ends early is a release before completion.\n\nSam, please flag the early releases in my video.",
+          "sourceIds": []
+        }
+      },
+      {
+        "call": 4,
+        "value": {
+          "answerKind": "general",
+          "answer": "Here are two quick tests for whether your left index finger releases the L face before a slow L turn finishes.\n\nVideo frame check: 30 seconds\nRecord one slow L turn at a high frame rate, then step through the frames and note the frame where the L face stops moving and the frame where your left index finger first lifts off; if the lift comes earlier, the finger released early.\n\nMirror-and-pause drill: 31 seconds\nDo a slow L turn in front of a mirror (or phone camera) and freeze at the moment the turn feels finished; if your left index finger is already off the cube at that freeze point, it let go before the turn was complete.\n\nSam, please flag the early releases in my video.",
+          "sourceIds": []
+        }
+      }
+    ]
+  },
+  "AK03": {
+    "question": "I am checking if my right thumb slips across a sticker while the other hand takes over. Write two untimed grip-transfer drills with a visible stop point in each. Also, in a new paragraph, write one sentence inviting Noor to compare the clips on Thursday.",
+    "lang": "en",
+    "history": [],
+    "drafts": [
+      {
+        "call": 54,
+        "value": {
+          "answerKind": "general",
+          "answer": "Here are two untimed grip-transfer drills, each with a clear visible stop point so you can check whether your right thumb slides across a sticker during the handover.\n\nDrill 1 — Slow R-to-L handover on a single face turn\n- Hold the cube with your right thumb on the front-right sticker and your left hand on the left face.\n- Turn the right face slowly with your right hand only, watching the thumb contact point.\n- Stop point: pause the moment your left hand grips the cube to take over, with the cube held still and your right thumb still touching the same sticker.\n- Check: look at whether the thumb has shifted relative to that sticker; if it has, the slip happened during the transfer, not the turn.\n\nDrill 2 — Alternating two-hand regrip\n- Start with both hands in a neutral grip, then alternate small turns, passing control back and forth between hands.\n- Stop point: after each handover, freeze completely for a count of two with both hands still on the cube, then inspect the right thumb's position against its sticker before continuing.\n- Check: repeat until you can complete several handovers with the thumb staying on the same sticker each time.\n\nNoor, could you compare the clips on Thursday?"
+        }
+      },
+      {
+        "call": 11,
+        "value": {
+          "answerKind": "general",
+          "answer": "Here are two untimed grip-transfer drills, each with a clear visible stop point so you can check whether your right thumb slides across a sticker during the handover.\n\nDrill 1 — Slow-motion transfer with a pause\n- Hold the cube in your normal solving grip and turn the right face slowly with your right hand until the thumb is about to release.\n- Transfer the grip to your left hand and stop completely the moment the left hand has taken the cube.\n- Visible stop point: freeze with the cube held only by the left hand, right hand lifted clear and open, for a full two seconds.\n- Look at where your right thumb was resting: if it has drifted onto a different sticker than where it started, the slip happened during the transfer.\n- Repeat ten times, resetting the thumb to the same starting sticker each time.\n\nDrill 2 — Sticker-marked checkpoint\n- Put a small removable marker (a dot of tape or a sticker) on the exact sticker your right thumb normally contacts.\n- Perform a slow sequence that requires one handover, and pause at the handover.\n- Visible stop point: stop with the marked sticker facing you and the cube supported only by the taking hand, then check whether the mark is still under where your thumb was.\n- If the mark has moved relative to your thumb's contact point, your thumb slid; if it stayed put, the transfer was clean.\n- Do five repetitions, then remove the marker.\n\nIn both drills the pause is the point: it makes the slip visible instead of letting it hide inside continuous turning.\n\nNoor, could you compare the clips on Thursday?"
+        }
+      },
+      {
+        "call": 55,
+        "value": {
+          "answerKind": "general",
+          "answer": "To check whether the slip comes from sideways thumb drag during the handoff, keep both drills untimed and treat each stop point as a still checkpoint you can see.\n\n- **Drill 1 — Straight-lift freeze:** Rest the pad of your right thumb on a front sticker while the left hand cradles the cube. Slowly reduce right-thumb pressure as the left hand takes the load, then lift the right thumb straight up and freeze it about a centimetre above the same sticker. Visible stop: the thumb hovers over that sticker without sideways travel and the cube has not rotated; hold the still shape, then set the thumb back down and repeat.\n- **Drill 2 — Planted-thumb handoff:** Start with the right thumb planted on a front sticker and the left hand loose at the side. Bring the left hand in to take support, and stop as soon as the left fingers are set while the right thumb is still on its original sticker. Visible stop: both hands are in contact, the right thumb pad is centred on the same sticker, and there is a clear gap between the thumb tip and the next sticker edge; pause there, then withdraw the right thumb straight up.\n\nNoor, please compare the clips on Thursday.",
+          "sourceIds": []
+        }
+      }
+    ]
+  },
+  "AK04": {
+    "question": "现在可以慢拧了。给这个熟悉局面两项限时练习，各标秒数。两项都先摆，目视核对边块、角块和目标槽，确认无误才做熟悉的插入。要是不能摆出来，两项各换一种不同的备用练法，备用只用 F2 或 U′，做到此为止。",
+    "lang": "zh",
+    "history": [
+      {
+        "role": "user",
+        "content": "我只有一分二十七秒，想练自己已会的插入，但起始局面有时复现不了。我会 F2 和 U′，先不动魔方。"
+      },
+      {
+        "role": "assistant",
+        "content": "先看手边的状态。"
+      }
+    ],
+    "drafts": [
+      {
+        "call": 13,
+        "value": {
+          "answerKind": "general",
+          "answer": "",
+          "sourceIds": [],
+          "plan": {
+            "inputs": [
+              {
+                "id": "familiar_insert",
+                "quote": "想练自己已会的插入"
+              },
+              {
+                "id": "known_turns",
+                "quote": "我会 F2 和 U′"
+              },
+              {
+                "id": "setup_check",
+                "quote": "两项都先摆，目视核对边块、角块和目标槽，确认无误才做熟悉的插入"
+              },
+              {
+                "id": "fallback_rule",
+                "quote": "要是不能摆出来，两项各换一种不同的备用练法，备用只用 F2 或 U′，做到此为止"
+              }
+            ],
+            "activities": [
+              {
+                "title": "熟悉插入限时练习",
+                "seconds": 44,
+                "steps": [
+                  {
+                    "action": "用你已会的方法摆出熟悉的插入局面；目视核对边块、角块和目标槽，三者都吻合才做一次熟悉的插入，做完即停；若摆不出，改做 F2 后停住观察可见变化，到此为止",
+                    "reason": "先确认局面再插入，摆不出时用已知转动收尾",
+                    "seconds": 44,
+                    "requires": [
+                      "familiar_insert",
+                      "known_turns",
+                      "setup_check",
+                      "fallback_rule"
+                    ],
+                    "produces": []
+                  }
+                ]
+              },
+              {
+                "title": "熟悉插入复核练习",
+                "seconds": 43,
+                "steps": [
+                  {
+                    "action": "重新摆出同一熟悉局面；目视核对边块、角块和目标槽，确认无误才再做一次熟悉的插入，做完即停；若摆不出，改做 U′，转前先预测变化、转后对照观察，到此为止",
+                    "reason": "重置后再核对可避免误插，备用时用预测对照保持专注",
+                    "seconds": 43,
+                    "requires": [
+                      "familiar_insert",
+                      "known_turns",
+                      "setup_check",
+                      "fallback_rule"
+                    ],
+                    "produces": []
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      },
+      {
+        "call": 60,
+        "value": {
+          "answerKind": "general",
+          "answer": "",
+          "sourceIds": [],
+          "plan": {
+            "inputs": [
+              {
+                "id": "familiar_insert",
+                "quote": "想练自己已会的插入，但起始局面有时复现不了"
+              },
+              {
+                "id": "known_turns",
+                "quote": "我会 F2 和 U′"
+              },
+              {
+                "id": "slow_turn",
+                "quote": "现在可以慢拧了"
+              }
+            ],
+            "activities": [
+              {
+                "title": "熟悉插入复现练习",
+                "seconds": 44,
+                "steps": [
+                  {
+                    "action": "用自己已会的方法或已知插入的逆序摆出熟悉局面；目视核对边块、角块和目标槽，三者都吻合才做一次熟悉的插入；若摆不出，改做 F2 后停住观察可见变化，做到此为止",
+                    "reason": "先确认局面再插入，摆不出时用已知慢转观察变化",
+                    "seconds": 44,
+                    "requires": [
+                      "familiar_insert",
+                      "known_turns",
+                      "slow_turn"
+                    ],
+                    "produces": []
+                  }
+                ]
+              },
+              {
+                "title": "熟悉插入核对练习",
+                "seconds": 43,
+                "steps": [
+                  {
+                    "action": "重新摆出熟悉局面并目视核对边块、角块和目标槽，吻合才再做一次熟悉的插入；若摆不出，改做 U′ 前先预测变化，转后与观察结果对比，做到此为止",
+                    "reason": "重复前再核对，备用时用预测与观察对比",
+                    "seconds": 43,
+                    "requires": [
+                      "familiar_insert",
+                      "known_turns",
+                      "slow_turn"
+                    ],
+                    "produces": []
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      }
+    ]
+  },
+  "AK05": {
+    "question": "Slow turns are now allowed. Give me two timed drills for that familiar case. In each drill, visually confirm both pieces and the target slot after setup before doing the insertion I know. If I cannot recreate the case, give each a different specific exercise using only the permitted fallback moves, then stop without inserting.",
+    "lang": "en",
+    "history": [
+      {
+        "role": "user",
+        "content": "I have one minute and 52 seconds for an insertion I already know, but I might not be able to set up the case. The only allowed basic turns for a fallback are L2 and D. Let the cube stay still for now."
+      },
+      {
+        "role": "assistant",
+        "content": "Start by inspecting the cube without turning."
+      }
+    ],
+    "drafts": [
+      {
+        "call": 17,
+        "value": {
+          "answerKind": "general",
+          "answer": "",
+          "sourceIds": [],
+          "plan": {
+            "inputs": [
+              {
+                "id": "familiar_case",
+                "quote": "I have one minute and 52 seconds for an insertion I already know, but I might not be able to set up the case."
+              },
+              {
+                "id": "fallback_moves",
+                "quote": "The only allowed basic turns for a fallback are L2 and D."
+              },
+              {
+                "id": "slow_turns",
+                "quote": "Slow turns are now allowed."
+              }
+            ],
+            "activities": [
+              {
+                "title": "Familiar insertion with visual check",
+                "seconds": 56,
+                "steps": [
+                  {
+                    "action": "Using your known setup method, bring the familiar pair and target slot into position, then visually confirm both pieces and the target slot match the case; if they match, perform your known insertion slowly and check the result, but if setup fails, do L2 slowly, pause to observe the visible change, then do D slowly and stop without inserting.",
+                    "reason": "Confirms the case before inserting and gives a permitted-move fallback that ends cleanly.",
+                    "seconds": 56,
+                    "requires": [
+                      "familiar_case",
+                      "fallback_moves",
+                      "slow_turns"
+                    ],
+                    "produces": []
+                  }
+                ]
+              },
+              {
+                "title": "Familiar insertion with prediction check",
+                "seconds": 56,
+                "steps": [
+                  {
+                    "action": "Using your known setup method, bring the familiar pair and target slot into position, then visually confirm both pieces and the target slot match the case; if they match, perform your known insertion slowly and check the result, but if setup fails, predict the visible change from D, do D slowly, compare with what you observe, then do L2 slowly and stop without inserting.",
+                    "reason": "Adds a prediction check before the fallback turn and keeps the fallback to permitted moves.",
+                    "seconds": 56,
+                    "requires": [
+                      "familiar_case",
+                      "fallback_moves",
+                      "slow_turns"
+                    ],
+                    "produces": []
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      },
+      {
+        "call": 62,
+        "value": {
+          "answerKind": "general",
+          "answer": "",
+          "sourceIds": [],
+          "plan": {
+            "inputs": [
+              {
+                "id": "familiar_case",
+                "quote": "Slow turns are now allowed. Give me two timed drills for that familiar case."
+              },
+              {
+                "id": "fallback_moves",
+                "quote": "Use only these named turns in the fallbacks: L2, D."
+              }
+            ],
+            "activities": [
+              {
+                "title": "Familiar insertion with visual check",
+                "seconds": 56,
+                "steps": [
+                  {
+                    "action": "Using slow turns, set up the familiar case with your known method or the inverse of a known insertion; visually confirm both pieces and the target slot match, then perform the insertion you know and briefly check the result. If the case cannot be established, instead do D, pausing after the turn to observe the visible change, then L2, pausing again to observe, and stop without inserting.",
+                    "reason": "Confirms the case before inserting, and gives a distinct known-turn fallback that ends without an insertion.",
+                    "seconds": 56,
+                    "requires": [
+                      "familiar_case",
+                      "fallback_moves"
+                    ],
+                    "produces": []
+                  }
+                ]
+              },
+              {
+                "title": "Familiar insertion with prediction check",
+                "seconds": 56,
+                "steps": [
+                  {
+                    "action": "Using slow turns, set up the familiar case with your known method or the inverse of a known insertion; visually confirm both pieces and the target slot match, then perform the insertion you know and briefly check the result. If the case cannot be established, instead predict the visible change before doing L2, compare it with what you observe, then predict before D, compare again, and stop without inserting.",
+                    "reason": "Adds a prediction check to the familiar insertion, and the fallback uses only permitted turns with a different observation focus.",
+                    "seconds": 56,
+                    "requires": [
+                      "familiar_case",
+                      "fallback_moves"
+                    ],
+                    "produces": []
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      }
+    ]
+  },
+  "AK09": {
+    "question": "The prepared Korean flashcards show a Hangul word on the front and its Chinese explanation on the back. Give two recall drills using those cards, with 105 seconds as the total limit. In each drill, start from the Chinese explanation, write the Korean word before flipping to check, and turn that card back to the prompt before you reach for the next card.",
+    "lang": "en",
+    "history": [],
+    "drafts": [
+      {
+        "call": 28,
+        "value": {
+          "answerKind": "general",
+          "answer": "",
+          "sourceIds": [],
+          "plan": {
+            "inputs": [
+              {
+                "id": "card_layout",
+                "quote": "The prepared Korean flashcards show a Hangul word on the front and its Chinese explanation on the back."
+              },
+              {
+                "id": "recall_rule",
+                "quote": "In each drill, start from the Chinese explanation, write the Korean word before flipping to check, and turn that card back to the prompt before you reach for the next card."
+              }
+            ],
+            "activities": [
+              {
+                "title": "Chinese-to-Korean written recall pass",
+                "seconds": 55,
+                "steps": [
+                  {
+                    "action": "Take the prepared deck and place each card with its Chinese explanation face up; for each card, write the Korean word from memory, flip once to check against the Hangul front, then return that card to the Chinese explanation face before picking up the next card; if a card is correct, continue through the full deck without extra rounds.",
+                    "reason": "Practises written recall from the meaning prompt and resets each card before the next attempt.",
+                    "seconds": 55,
+                    "requires": [
+                      "card_layout",
+                      "recall_rule"
+                    ],
+                    "produces": []
+                  }
+                ]
+              },
+              {
+                "title": "Second Chinese-to-Korean written recall pass",
+                "seconds": 50,
+                "steps": [
+                  {
+                    "action": "Reset the whole deck so every card again shows its Chinese explanation face up, then repeat the same cycle for each card: write the Korean word, flip once to check the Hangul front, and immediately turn that card back to the Chinese explanation face before moving to the next card; if no errors occur, finish the pass without adding rounds.",
+                    "reason": "Gives a second written recall drill from the meaning prompt with the full deck reset first.",
+                    "seconds": 50,
+                    "requires": [
+                      "card_layout",
+                      "recall_rule"
+                    ],
+                    "produces": []
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      },
+      {
+        "call": 73,
+        "value": {
+          "answer": "",
+          "answerKind": "general",
+          "sourceIds": [],
+          "plan": {
+            "inputs": [
+              {
+                "id": "card_layout",
+                "quote": "The prepared Korean flashcards show a Hangul word on the front and its Chinese explanation on the back."
+              },
+              {
+                "id": "drill_rule",
+                "quote": "In each drill, start from the Chinese explanation, write the Korean word before flipping to check, and turn that card back to the prompt before you reach for the next card."
+              },
+              {
+                "id": "time_limit",
+                "quote": "with 105 seconds as the total limit"
+              }
+            ],
+            "activities": [
+              {
+                "title": "Chinese-to-Korean written recall pass",
+                "seconds": 55,
+                "steps": [
+                  {
+                    "action": "Take the prepared deck and place each card Chinese-explanation side up; for each card, write the Korean word from memory, flip once to check against the Hangul front, then immediately return that card to the Chinese-explanation side before picking up the next card; if a card is correct, continue through the deck, and if all cards are correct finish the pass without extra rounds.",
+                    "reason": "Practises written recall from the Chinese prompt and resets every card before the next attempt.",
+                    "seconds": 55,
+                    "requires": [
+                      "card_layout",
+                      "drill_rule"
+                    ],
+                    "produces": []
+                  }
+                ]
+              },
+              {
+                "title": "Second Chinese-to-Korean written recall pass",
+                "seconds": 50,
+                "steps": [
+                  {
+                    "action": "Reset the whole deck to Chinese-explanation side up, then repeat the same cycle for each card: write the Korean word, flip once to check the Hangul front, and immediately turn that card back to the Chinese-explanation side before moving to the next card; if there are no errors, finish the pass after the full deck.",
+                    "reason": "Gives a second written recall pass with the same prompt face and full reset between cards.",
+                    "seconds": 50,
+                    "requires": [
+                      "card_layout",
+                      "drill_rule"
+                    ],
+                    "produces": []
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      }
+    ]
+  },
+  "AK13": {
+    "question": "Could you put both directions into one paragraph instead, with a 74-second limit for the pair of drills? Keep using the same sheet. Say which column is covered in each direction, give an answer from the visible prompt, and only then reveal and check.",
+    "lang": "en",
+    "history": [
+      {
+        "role": "user",
+        "content": "I have an Indonesian word-and-meaning sheet in two columns. I can spend 106 seconds practising in both directions."
+      },
+      {
+        "role": "assistant",
+        "content": "Use paper to block one column of the sheet."
+      }
+    ],
+    "drafts": [
+      {
+        "call": 38,
+        "value": {
+          "answerKind": "general",
+          "answer": "",
+          "sourceIds": [],
+          "plan": {
+            "inputs": [
+              {
+                "id": "word_sheet",
+                "quote": "I have an Indonesian word-and-meaning sheet in two columns."
+              }
+            ],
+            "activities": [
+              {
+                "title": "Indonesian two-way drill",
+                "seconds": 74,
+                "steps": [
+                  {
+                    "action": "Cover the meaning column with paper, then for each Indonesian word in the visible word column say its meaning aloud, and only after answering slide the paper down to reveal and check that row; if any rows remain, repeat the same cover-and-check pass on them.",
+                    "reason": "Produces Indonesian-to-meaning recall from the visible prompt before revealing the answer, using the same sheet.",
+                    "seconds": 37,
+                    "requires": [
+                      "word_sheet"
+                    ],
+                    "produces": []
+                  },
+                  {
+                    "action": "Cover the Indonesian word column with paper, then for each meaning in the visible meaning column say the Indonesian word aloud, and only after answering slide the paper across to reveal and check that row; if any rows remain, repeat the same cover-and-check pass on them.",
+                    "reason": "Reverses the direction so the meaning is the prompt and the Indonesian word is recalled before checking.",
+                    "seconds": 37,
+                    "requires": [
+                      "word_sheet"
+                    ],
+                    "produces": []
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      },
+      {
+        "call": 83,
+        "value": {
+          "answerKind": "general",
+          "answer": "",
+          "sourceIds": [],
+          "plan": {
+            "inputs": [
+              {
+                "id": "word_sheet",
+                "quote": "I have an Indonesian word-and-meaning sheet in two columns."
+              }
+            ],
+            "activities": [
+              {
+                "title": "Indonesian sheet two-way drill",
+                "seconds": 74,
+                "steps": [
+                  {
+                    "action": "Cover the meaning column with paper, leaving only the Indonesian words visible; for each word say its meaning aloud, then slide the paper down to reveal and check that meaning before moving on.",
+                    "reason": "Indonesian-to-meaning recall with immediate reveal-and-check on the same sheet.",
+                    "seconds": 37,
+                    "requires": [
+                      "word_sheet"
+                    ],
+                    "produces": []
+                  },
+                  {
+                    "action": "Cover the Indonesian column with paper, leaving only the meanings visible; for each meaning say the Indonesian word aloud, then slide the paper down to reveal and check that word before moving on.",
+                    "reason": "Meaning-to-Indonesian recall in the reverse direction, again revealing only after answering.",
+                    "seconds": 37,
+                    "requires": [
+                      "word_sheet"
+                    ],
+                    "produces": []
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      }
+    ]
+  }
+}

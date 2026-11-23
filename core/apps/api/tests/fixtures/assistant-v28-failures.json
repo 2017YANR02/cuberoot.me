@@ -1,0 +1,1408 @@
+[
+  {
+    "key": "1/after/H05",
+    "case": {
+      "id": "H05",
+      "category": "plan",
+      "lang": "en",
+      "history": [],
+      "question": "My vocabulary list is apple = 苹果, river = 河流. Give two practice activities, each with two timed substeps and a reason for each substep. Maximum four minutes altogether.",
+      "expected": "Exactly two parents/two children each; total <=240 seconds; supplied pairs preserved, preparation within time, attempt before reveal and reset when cycling."
+    },
+    "result": {
+      "repeat": 1,
+      "variant": "after",
+      "id": "H05",
+      "category": "plan",
+      "at": "2026-11-18T02:36:26.516Z",
+      "result": {
+        "answer": "1. Word-to-meaning recall (120 seconds)\n  - 30 seconds: Write a two-column WORD / MEANING list on one face: apple = 苹果 and river = 河流; keep both columns visible for this setup. Establishes the reference list on a single face so later attempts can cover only the meaning column. 本计划任一步骤若没有可用错词或数量不足，就用原词表中的可用词继续；词数不够可重复，均在该步骤原定时长内完成。\n  - 90 seconds: Cover the MEANING column, read apple and say its meaning, uncover to check, then cover the MEANING column again; repeat for river, and if either is wrong note it for extra repetition. Forces retrieval before checking and hides the answer again before the next word.\n2. Meaning-to-word recall (120 seconds)\n  - 30 seconds: Uncover the WORD column and cover the MEANING column so only meanings show; start with any weak items from the previous activity, then the rest. Switches the prompt to meanings while keeping the answer column hidden.\n  - 90 seconds: For each visible meaning, write the English word on paper, uncover the WORD column to check, then cover the WORD column again before the next meaning; if there are no weak items, use the full list. Practises production with written evidence and re-hides the answer after each check.",
+        "sources": [],
+        "actions": [],
+        "artifacts": []
+      },
+      "metrics": {
+        "stages": {
+          "model": {
+            "calls": 1,
+            "ms": 3208,
+            "errors": 0
+          }
+        },
+        "models": [
+          {
+            "model": "deepseek-flash",
+            "thinking": false,
+            "round": 0,
+            "attempt": 0,
+            "promptFingerprint": "43cd23156d3f723e59def9d07ed456261d278ff131c023acc56ae5bdc2657982",
+            "configurationFingerprint": "523797966567c671a4089b4dc8390623f0f51de85102f4054fcc93c3ef9ad0c3",
+            "input": 1629,
+            "output": 401,
+            "cached": 896,
+            "reasoning": 0,
+            "firstActivityMs": 1010,
+            "firstTextMs": 1010,
+            "durationMs": 3206,
+            "grossCny": 0.006466,
+            "cacheAdjustedCny": {
+              "min": 0.00235492,
+              "max": 0.00470984
+            },
+            "tariff": {
+              "version": "deepseek-cny-peak-2026-10-15",
+              "inputPerMillion": 2,
+              "outputPerMillion": 8,
+              "cachedInputPerMillion": 0.04,
+              "cacheVersion": "cache-adjusted-range-2026-10-26",
+              "source": "https://api-docs.deepseek.com/zh-cn/quick_start/pricing/"
+            }
+          }
+        ],
+        "embeddings": [],
+        "searches": [],
+        "reranks": [],
+        "tools": {},
+        "retrievals": [],
+        "policy": {
+          "version": "2026-11-17-reliability-28",
+          "thinking": "auto"
+        },
+        "contexts": [
+          {
+            "relevance": "weak",
+            "recentTurns": 0,
+            "estimatedTokens": 2385,
+            "inputBudget": 57856,
+            "compressed": [],
+            "layers": {
+              "slidingSummary": 0,
+              "activeExtracts": 0,
+              "protectedConstraints": 0,
+              "longTermMemory": 0,
+              "historicalTopics": 0
+            }
+          }
+        ],
+        "planChecks": [
+          {
+            "phase": "draft",
+            "words": 193
+          }
+        ],
+        "timing": {
+          "version": 1,
+          "responseReadyMs": 3217
+        },
+        "cost": {
+          "grossCny": 0.006466,
+          "unpricedCalls": 0
+        }
+      },
+      "durationMs": 3217.5517499999987,
+      "firstAnswerMs": null,
+      "firstVisibleMs": 3217.5517499999987,
+      "streamed": false,
+      "providerCalls": [
+        {
+          "repeat": 1,
+          "variant": "after",
+          "id": "H05",
+          "call": 14,
+          "model": "deepseek-flash",
+          "startedAt": "2026-11-18T02:36:23.303Z",
+          "requestSha256": "0d77c8dd913363fadd56ca0420ab51a9f99ff7528ebdeaf291e0c181ebe6396c",
+          "status": 200,
+          "headersMs": 223.3070829999997,
+          "responseFile": "provider-responses/14.txt",
+          "input": 1629,
+          "output": 401,
+          "cached": 896,
+          "reasoning": null,
+          "durationMs": 3204.0072910000017
+        }
+      ],
+      "reads": [],
+      "fixtureMisses": [],
+      "rssMb": 236
+    },
+    "models": [
+      {
+        "answer": "",
+        "sourceIds": [],
+        "plan": {
+          "inputs": [
+            {
+              "id": "vocab_list",
+              "quote": "My vocabulary list is apple = 苹果, river = 河流."
+            }
+          ],
+          "activities": [
+            {
+              "title": "Word-to-meaning recall",
+              "seconds": 120,
+              "steps": [
+                {
+                  "action": "Write a two-column WORD / MEANING list on one face: apple = 苹果 and river = 河流; keep both columns visible for this setup.",
+                  "reason": "Establishes the reference list on a single face so later attempts can cover only the meaning column.",
+                  "seconds": 30,
+                  "requires": [
+                    "vocab_list"
+                  ],
+                  "produces": [
+                    "word_meaning_list"
+                  ]
+                },
+                {
+                  "action": "Cover the MEANING column, read apple and say its meaning, uncover to check, then cover the MEANING column again; repeat for river, and if either is wrong note it for extra repetition.",
+                  "reason": "Forces retrieval before checking and hides the answer again before the next word.",
+                  "seconds": 90,
+                  "requires": [
+                    "word_meaning_list"
+                  ],
+                  "produces": [
+                    "weak_items"
+                  ]
+                }
+              ]
+            },
+            {
+              "title": "Meaning-to-word recall",
+              "seconds": 120,
+              "steps": [
+                {
+                  "action": "Uncover the WORD column and cover the MEANING column so only meanings show; start with any weak items from the previous activity, then the rest.",
+                  "reason": "Switches the prompt to meanings while keeping the answer column hidden.",
+                  "seconds": 30,
+                  "requires": [
+                    "word_meaning_list",
+                    "weak_items"
+                  ],
+                  "produces": [
+                    "meaning_prompt_ready"
+                  ]
+                },
+                {
+                  "action": "For each visible meaning, write the English word on paper, uncover the WORD column to check, then cover the WORD column again before the next meaning; if there are no weak items, use the full list.",
+                  "reason": "Practises production with written evidence and re-hides the answer after each check.",
+                  "seconds": 90,
+                  "requires": [
+                    "meaning_prompt_ready"
+                  ],
+                  "produces": [
+                    "written_recall"
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      }
+    ]
+  },
+  {
+    "key": "1/after/H08",
+    "case": {
+      "id": "H08",
+      "category": "plan",
+      "lang": "en",
+      "history": [],
+      "question": "I have a word list but no flashcards. Plan two vocabulary activities using flashcards, each with two timed substeps, maximum four minutes total. Include making the cards and explain why each substep helps.",
+      "expected": "Prepare distinct word/meaning faces before flipping, first activity includes actual practice, each reuse resets prompt face, no unavailable error subset, 2x2 <=240 seconds."
+    },
+    "result": {
+      "repeat": 1,
+      "variant": "after",
+      "id": "H08",
+      "category": "plan",
+      "at": "2026-11-18T02:36:51.288Z",
+      "error": "model_output_invalid",
+      "metrics": {
+        "stages": {
+          "model": {
+            "calls": 1,
+            "ms": 2716,
+            "errors": 0
+          },
+          "review": {
+            "calls": 1,
+            "ms": 2365,
+            "errors": 0
+          }
+        },
+        "models": [
+          {
+            "model": "deepseek-flash",
+            "thinking": false,
+            "round": 0,
+            "attempt": 0,
+            "promptFingerprint": "d86652b9dd8a02dd09f2056e4b96de2ec152611efb00afd974ec3cea278d7844",
+            "configurationFingerprint": "12874913022f352efbf4fb93ae15c606981b634755e77b4cf4a0e3a6a90db16d",
+            "input": 14459,
+            "output": 370,
+            "cached": 13056,
+            "reasoning": 0,
+            "firstActivityMs": 496,
+            "firstTextMs": 496,
+            "durationMs": 2715,
+            "grossCny": 0.031878,
+            "cacheAdjustedCny": {
+              "min": 0.00314412,
+              "max": 0.00628824
+            },
+            "tariff": {
+              "version": "deepseek-cny-peak-2026-10-15",
+              "inputPerMillion": 2,
+              "outputPerMillion": 8,
+              "cachedInputPerMillion": 0.04,
+              "cacheVersion": "cache-adjusted-range-2026-10-26",
+              "source": "https://api-docs.deepseek.com/zh-cn/quick_start/pricing/"
+            }
+          },
+          {
+            "model": "deepseek-flash",
+            "thinking": false,
+            "round": 0,
+            "attempt": 0,
+            "promptFingerprint": "9dd8112afa6f7b5ba8e1fd098e43ca2c2ba856693ef9b3831f942e0fb246c142",
+            "configurationFingerprint": "523797966567c671a4089b4dc8390623f0f51de85102f4054fcc93c3ef9ad0c3",
+            "input": 7946,
+            "output": 392,
+            "cached": 5504,
+            "reasoning": 0,
+            "firstActivityMs": 858,
+            "firstTextMs": 858,
+            "durationMs": 2363,
+            "grossCny": 0.019028,
+            "cacheAdjustedCny": {
+              "min": 0.00412008,
+              "max": 0.00824016
+            },
+            "tariff": {
+              "version": "deepseek-cny-peak-2026-10-15",
+              "inputPerMillion": 2,
+              "outputPerMillion": 8,
+              "cachedInputPerMillion": 0.04,
+              "cacheVersion": "cache-adjusted-range-2026-10-26",
+              "source": "https://api-docs.deepseek.com/zh-cn/quick_start/pricing/"
+            }
+          }
+        ],
+        "embeddings": [],
+        "searches": [],
+        "reranks": [],
+        "tools": {},
+        "retrievals": [],
+        "policy": {
+          "version": "2026-11-17-reliability-28",
+          "thinking": "auto"
+        },
+        "contexts": [
+          {
+            "relevance": "weak",
+            "recentTurns": 0,
+            "estimatedTokens": 20963,
+            "inputBudget": 57856,
+            "compressed": [],
+            "layers": {
+              "slidingSummary": 0,
+              "activeExtracts": 0,
+              "protectedConstraints": 0,
+              "longTermMemory": 0,
+              "historicalTopics": 0
+            }
+          },
+          {
+            "relevance": "weak",
+            "recentTurns": 0,
+            "estimatedTokens": 13153,
+            "inputBudget": 57856,
+            "compressed": [],
+            "layers": {
+              "slidingSummary": 0,
+              "activeExtracts": 0,
+              "protectedConstraints": 0,
+              "longTermMemory": 0,
+              "historicalTopics": 0
+            }
+          }
+        ],
+        "planChecks": [
+          {
+            "phase": "draft",
+            "reason": "plan_card_reset_missing",
+            "words": 222
+          },
+          {
+            "phase": "repair",
+            "reason": "plan_card_reset_missing",
+            "words": 240
+          }
+        ],
+        "answerRejections": [
+          {
+            "reason": "plan_card_reset_missing"
+          }
+        ],
+        "cost": {
+          "grossCny": 0.05090599999999999,
+          "unpricedCalls": 0
+        }
+      },
+      "durationMs": 5096.209542000004,
+      "firstAnswerMs": null,
+      "providerCalls": [
+        {
+          "repeat": 1,
+          "variant": "after",
+          "id": "H08",
+          "call": 20,
+          "model": "deepseek-flash",
+          "startedAt": "2026-11-18T02:36:46.203Z",
+          "requestSha256": "4e4fa1103fd6c44366d780c2497909bcd1cc5abbf3b9b1f517e4b14d7a6db324",
+          "status": 200,
+          "headersMs": 209.1108749999985,
+          "responseFile": "provider-responses/20.txt",
+          "input": 14459,
+          "output": 370,
+          "cached": 13056,
+          "reasoning": null,
+          "durationMs": 2709.6384590000016
+        },
+        {
+          "repeat": 1,
+          "variant": "after",
+          "id": "H08",
+          "call": 21,
+          "model": "deepseek-flash",
+          "startedAt": "2026-11-18T02:36:48.926Z",
+          "requestSha256": "09efa868a88055515667acb3b7135bfeb8b06a0f047ee07da267f2bd96d23d86",
+          "status": 200,
+          "headersMs": 192.80941700000403,
+          "responseFile": "provider-responses/21.txt",
+          "input": 7946,
+          "output": 392,
+          "cached": 5504,
+          "reasoning": null,
+          "durationMs": 2360.287375
+        }
+      ],
+      "reads": [],
+      "fixtureMisses": [],
+      "rssMb": 233
+    },
+    "models": [
+      {
+        "answerKind": "general",
+        "answer": "",
+        "sourceIds": [],
+        "plan": {
+          "inputs": [
+            {
+              "id": "word_list",
+              "quote": "I have a word list but no flashcards."
+            }
+          ],
+          "activities": [
+            {
+              "title": "Make and check cards",
+              "seconds": 120,
+              "steps": [
+                {
+                  "action": "Write each word on the front of a blank card and its meaning on the back, using the full list and starting with the weakest words; if the list is empty, write five words you need from memory instead.",
+                  "reason": "Writing both faces first gives every card a correct reference answer before any recall attempt.",
+                  "seconds": 90,
+                  "requires": [
+                    "word_list"
+                  ],
+                  "produces": [
+                    "flashcards"
+                  ]
+                },
+                {
+                  "action": "Lay all cards word-side up and check that each back matches its front, fixing any missing or wrong meaning.",
+                  "reason": "A quick accuracy check prevents practising a wrong answer later.",
+                  "seconds": 30,
+                  "requires": [
+                    "flashcards"
+                  ],
+                  "produces": [
+                    "checked_cards"
+                  ]
+                }
+              ]
+            },
+            {
+              "title": "Word to meaning recall",
+              "seconds": 120,
+              "steps": [
+                {
+                  "action": "Go through the checked cards word-side up, say each meaning aloud, then flip to check; write your spoken answer on paper before flipping if you want to check spelling.",
+                  "reason": "Recalling before flipping builds receptive vocabulary and shows which words are weak.",
+                  "seconds": 90,
+                  "requires": [
+                    "checked_cards"
+                  ],
+                  "produces": [
+                    "marked_cards"
+                  ]
+                },
+                {
+                  "action": "Reset every card to word-side up, then repeat only the missed cards the same way; if nothing was missed, do one clean pass of the full set instead.",
+                  "reason": "A second attempt on weak items strengthens them, while the no-error branch keeps the pass useful.",
+                  "seconds": 30,
+                  "requires": [
+                    "marked_cards"
+                  ],
+                  "produces": [
+                    "reviewed_cards"
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "answerKind": "general",
+        "answer": "",
+        "sourceIds": [],
+        "plan": {
+          "inputs": [
+            {
+              "id": "word_list",
+              "quote": "I have a word list but no flashcards."
+            }
+          ],
+          "activities": [
+            {
+              "title": "Make and check cards",
+              "seconds": 120,
+              "steps": [
+                {
+                  "action": "Write each word on the front of a blank card and its meaning on the back, using the full list and starting with the weakest words; if the list is empty, write five words you need from memory instead.",
+                  "reason": "Writing both faces first gives every card a correct reference answer before any recall attempt.",
+                  "seconds": 90,
+                  "requires": [
+                    "word_list"
+                  ],
+                  "produces": [
+                    "flashcards"
+                  ]
+                },
+                {
+                  "action": "Lay all cards word-side up and check that each back matches its front, fixing any missing or wrong meaning.",
+                  "reason": "A quick accuracy check prevents practising a wrong answer later.",
+                  "seconds": 30,
+                  "requires": [
+                    "flashcards"
+                  ],
+                  "produces": [
+                    "checked_cards"
+                  ]
+                }
+              ]
+            },
+            {
+              "title": "Word to meaning recall",
+              "seconds": 120,
+              "steps": [
+                {
+                  "action": "Go through the checked cards word-side up, say each meaning aloud, then flip to check; write your spoken answer on paper before flipping if you want to check spelling.",
+                  "reason": "Recalling before flipping builds receptive vocabulary and shows which words are weak.",
+                  "seconds": 90,
+                  "requires": [
+                    "checked_cards"
+                  ],
+                  "produces": [
+                    "marked_cards"
+                  ]
+                },
+                {
+                  "action": "Reset every card to word-side up, then repeat only the missed cards the same way, flipping to check and resetting each to word-side up after; if nothing was missed, reset the full deck to word-side up and do one clean pass of the full set instead.",
+                  "reason": "A second attempt on weak items strengthens them, while the no-error branch keeps the pass useful.",
+                  "seconds": 30,
+                  "requires": [
+                    "marked_cards"
+                  ],
+                  "produces": [
+                    "reviewed_cards"
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      }
+    ]
+  },
+  {
+    "key": "2/before/H08",
+    "case": {
+      "id": "H08",
+      "category": "plan",
+      "lang": "en",
+      "history": [],
+      "question": "I have a word list but no flashcards. Plan two vocabulary activities using flashcards, each with two timed substeps, maximum four minutes total. Include making the cards and explain why each substep helps.",
+      "expected": "Prepare distinct word/meaning faces before flipping, first activity includes actual practice, each reuse resets prompt face, no unavailable error subset, 2x2 <=240 seconds."
+    },
+    "result": {
+      "repeat": 2,
+      "variant": "before",
+      "id": "H08",
+      "category": "plan",
+      "at": "2026-11-18T02:38:20.798Z",
+      "error": "model_output_invalid",
+      "metrics": {
+        "stages": {
+          "model": {
+            "calls": 1,
+            "ms": 3171,
+            "errors": 0
+          },
+          "review": {
+            "calls": 1,
+            "ms": 2069,
+            "errors": 0
+          }
+        },
+        "models": [
+          {
+            "model": "deepseek-flash",
+            "thinking": false,
+            "round": 0,
+            "attempt": 0,
+            "promptFingerprint": "4937592e67412622995d1879ca5a94b8f9eec384336680c1abeff5b2fcfdcbfb",
+            "configurationFingerprint": "12874913022f352efbf4fb93ae15c606981b634755e77b4cf4a0e3a6a90db16d",
+            "input": 14387,
+            "output": 406,
+            "cached": 14208,
+            "reasoning": 0,
+            "firstActivityMs": 841,
+            "firstTextMs": 841,
+            "durationMs": 3170,
+            "grossCny": 0.032022,
+            "cacheAdjustedCny": {
+              "min": 0.00208716,
+              "max": 0.00417432
+            },
+            "tariff": {
+              "version": "deepseek-cny-peak-2026-10-15",
+              "inputPerMillion": 2,
+              "outputPerMillion": 8,
+              "cachedInputPerMillion": 0.04,
+              "cacheVersion": "cache-adjusted-range-2026-10-26",
+              "source": "https://api-docs.deepseek.com/zh-cn/quick_start/pricing/"
+            }
+          },
+          {
+            "model": "deepseek-flash",
+            "thinking": false,
+            "round": 0,
+            "attempt": 0,
+            "promptFingerprint": "cc688404d128d722072ceed6e96d792b8baae344452fdba7cad1a88f73d65f3e",
+            "configurationFingerprint": "523797966567c671a4089b4dc8390623f0f51de85102f4054fcc93c3ef9ad0c3",
+            "input": 7946,
+            "output": 407,
+            "cached": 5760,
+            "reasoning": 0,
+            "firstActivityMs": 736,
+            "firstTextMs": 736,
+            "durationMs": 2067,
+            "grossCny": 0.019148,
+            "cacheAdjustedCny": {
+              "min": 0.0039292,
+              "max": 0.0078584
+            },
+            "tariff": {
+              "version": "deepseek-cny-peak-2026-10-15",
+              "inputPerMillion": 2,
+              "outputPerMillion": 8,
+              "cachedInputPerMillion": 0.04,
+              "cacheVersion": "cache-adjusted-range-2026-10-26",
+              "source": "https://api-docs.deepseek.com/zh-cn/quick_start/pricing/"
+            }
+          }
+        ],
+        "embeddings": [],
+        "searches": [],
+        "reranks": [],
+        "tools": {},
+        "retrievals": [],
+        "policy": {
+          "version": "2026-11-17-reliability-27",
+          "thinking": "auto"
+        },
+        "contexts": [
+          {
+            "relevance": "weak",
+            "recentTurns": 0,
+            "estimatedTokens": 20836,
+            "inputBudget": 57856,
+            "compressed": [],
+            "layers": {
+              "slidingSummary": 0,
+              "activeExtracts": 0,
+              "protectedConstraints": 0,
+              "longTermMemory": 0,
+              "historicalTopics": 0
+            }
+          },
+          {
+            "relevance": "weak",
+            "recentTurns": 0,
+            "estimatedTokens": 13143,
+            "inputBudget": 57856,
+            "compressed": [],
+            "layers": {
+              "slidingSummary": 0,
+              "activeExtracts": 0,
+              "protectedConstraints": 0,
+              "longTermMemory": 0,
+              "historicalTopics": 0
+            }
+          }
+        ],
+        "planChecks": [
+          {
+            "phase": "draft",
+            "reason": "plan_card_reset_missing",
+            "words": 247
+          },
+          {
+            "phase": "repair",
+            "reason": "plan_card_reset_missing",
+            "words": 246
+          }
+        ],
+        "answerRejections": [
+          {
+            "reason": "plan_card_reset_missing"
+          }
+        ],
+        "cost": {
+          "grossCny": 0.05117,
+          "unpricedCalls": 0
+        }
+      },
+      "durationMs": 5248.252458999981,
+      "firstAnswerMs": null,
+      "providerCalls": [
+        {
+          "repeat": 2,
+          "variant": "before",
+          "id": "H08",
+          "call": 61,
+          "model": "deepseek-flash",
+          "startedAt": "2026-11-18T02:38:15.556Z",
+          "requestSha256": "5a64f0100a4da7fd7ea0b31caff740ed50bc6ddd8da2c16b87dddb94dd8f23e9",
+          "status": 200,
+          "headersMs": 202.70454099999915,
+          "responseFile": "provider-responses/61.txt",
+          "input": 14387,
+          "output": 406,
+          "cached": 14208,
+          "reasoning": null,
+          "durationMs": 3166.345708000008
+        },
+        {
+          "repeat": 2,
+          "variant": "before",
+          "id": "H08",
+          "call": 62,
+          "model": "deepseek-flash",
+          "startedAt": "2026-11-18T02:38:18.730Z",
+          "requestSha256": "6f0af243bfc52210837fa4501d69bcbcf49eb233f825ac0b2ee09db77b73cb33",
+          "status": 200,
+          "headersMs": 164.54337500000838,
+          "responseFile": "provider-responses/62.txt",
+          "input": 7946,
+          "output": 407,
+          "cached": 5760,
+          "reasoning": null,
+          "durationMs": 2065.660958000022
+        }
+      ],
+      "reads": [],
+      "fixtureMisses": [],
+      "rssMb": 324
+    },
+    "models": [
+      {
+        "answerKind": "general",
+        "answer": "",
+        "sourceIds": [],
+        "plan": {
+          "inputs": [
+            {
+              "id": "word_list",
+              "quote": "I have a word list but no flashcards."
+            }
+          ],
+          "activities": [
+            {
+              "title": "Make cards and recall meanings",
+              "seconds": 120,
+              "steps": [
+                {
+                  "action": "Write each word on one side of a blank card and its meaning on the other, using the full word list; if the list is empty, write five words you need from memory first.",
+                  "reason": "Writing both faces creates the two-sided cards the later flip needs, and copying the meaning fixes the reference answer before any test.",
+                  "seconds": 60,
+                  "requires": [
+                    "word_list"
+                  ],
+                  "produces": [
+                    "word_cards"
+                  ]
+                },
+                {
+                  "action": "Lay all cards word-side up, say each meaning aloud, then flip to check; after checking, turn every card back to word-side up.",
+                  "reason": "Recalling before flipping tests receptive knowledge, and resetting all cards to the prompt side keeps the next pass fair.",
+                  "seconds": 60,
+                  "requires": [
+                    "word_cards"
+                  ],
+                  "produces": [
+                    "checked_meanings"
+                  ]
+                }
+              ]
+            },
+            {
+              "title": "Recall words from meanings",
+              "seconds": 120,
+              "steps": [
+                {
+                  "action": "Turn every card meaning-side up, say the word aloud for each, then flip to check the spelling; if no cards remain, use the same full set again.",
+                  "reason": "Producing the word from its meaning trains productive recall, and flipping checks spelling against the written reference.",
+                  "seconds": 60,
+                  "requires": [
+                    "word_cards"
+                  ],
+                  "produces": [
+                    "checked_words"
+                  ]
+                },
+                {
+                  "action": "Reset all cards to meaning-side up and repeat one pass, writing each attempted word on paper before flipping to compare; if nothing was missed, do one clean pass instead.",
+                  "reason": "Writing the attempt before revealing the answer gives an honest spelling check, and a clean pass consolidates the set without extra rounds.",
+                  "seconds": 60,
+                  "requires": [
+                    "checked_words"
+                  ],
+                  "produces": [
+                    "written_attempts"
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "answerKind": "general",
+        "answer": "",
+        "sourceIds": [],
+        "plan": {
+          "inputs": [
+            {
+              "id": "word_list",
+              "quote": "I have a word list but no flashcards."
+            }
+          ],
+          "activities": [
+            {
+              "title": "Make cards and recall meanings",
+              "seconds": 120,
+              "steps": [
+                {
+                  "action": "Write each word on one side of a blank card and its meaning on the other, using the full word list; if the list is empty, write five words you need from memory first.",
+                  "reason": "Writing both faces creates the two-sided cards the later flip needs, and copying the meaning fixes the reference answer before any test.",
+                  "seconds": 60,
+                  "requires": [
+                    "word_list"
+                  ],
+                  "produces": [
+                    "word_cards"
+                  ]
+                },
+                {
+                  "action": "Lay all cards word-side up, say each meaning aloud, then flip to check; after checking, turn every card back to word-side up.",
+                  "reason": "Recalling before flipping tests receptive knowledge, and resetting all cards to the prompt side keeps the next pass fair.",
+                  "seconds": 60,
+                  "requires": [
+                    "word_cards"
+                  ],
+                  "produces": [
+                    "checked_meanings"
+                  ]
+                }
+              ]
+            },
+            {
+              "title": "Recall words from meanings",
+              "seconds": 120,
+              "steps": [
+                {
+                  "action": "Turn every card meaning-side up, say the word aloud for each, then flip to check the spelling; after checking, turn every card back to meaning-side up.",
+                  "reason": "Producing the word from its meaning trains productive recall, and flipping checks spelling against the written reference.",
+                  "seconds": 60,
+                  "requires": [
+                    "word_cards"
+                  ],
+                  "produces": [
+                    "checked_words"
+                  ]
+                },
+                {
+                  "action": "Reset all cards to meaning-side up, then repeat one pass, writing each attempted word on paper before flipping to compare; if nothing was missed, do one clean pass instead.",
+                  "reason": "Writing the attempt before revealing the answer gives an honest spelling check, and a clean pass consolidates the set without extra rounds.",
+                  "seconds": 60,
+                  "requires": [
+                    "checked_words"
+                  ],
+                  "produces": [
+                    "written_attempts"
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      }
+    ]
+  },
+  {
+    "key": "2/after/H08",
+    "case": {
+      "id": "H08",
+      "category": "plan",
+      "lang": "en",
+      "history": [],
+      "question": "I have a word list but no flashcards. Plan two vocabulary activities using flashcards, each with two timed substeps, maximum four minutes total. Include making the cards and explain why each substep helps.",
+      "expected": "Prepare distinct word/meaning faces before flipping, first activity includes actual practice, each reuse resets prompt face, no unavailable error subset, 2x2 <=240 seconds."
+    },
+    "result": {
+      "repeat": 2,
+      "variant": "after",
+      "id": "H08",
+      "category": "plan",
+      "at": "2026-11-18T02:38:27.021Z",
+      "error": "model_output_invalid",
+      "metrics": {
+        "stages": {
+          "model": {
+            "calls": 1,
+            "ms": 4008,
+            "errors": 0
+          },
+          "review": {
+            "calls": 1,
+            "ms": 2203,
+            "errors": 0
+          }
+        },
+        "models": [
+          {
+            "model": "deepseek-flash",
+            "thinking": false,
+            "round": 0,
+            "attempt": 0,
+            "promptFingerprint": "d86652b9dd8a02dd09f2056e4b96de2ec152611efb00afd974ec3cea278d7844",
+            "configurationFingerprint": "12874913022f352efbf4fb93ae15c606981b634755e77b4cf4a0e3a6a90db16d",
+            "input": 14459,
+            "output": 449,
+            "cached": 14208,
+            "reasoning": 0,
+            "firstActivityMs": 1291,
+            "firstTextMs": 1291,
+            "durationMs": 4007,
+            "grossCny": 0.03251,
+            "cacheAdjustedCny": {
+              "min": 0.0023311599999999997,
+              "max": 0.004662319999999999
+            },
+            "tariff": {
+              "version": "deepseek-cny-peak-2026-10-15",
+              "inputPerMillion": 2,
+              "outputPerMillion": 8,
+              "cachedInputPerMillion": 0.04,
+              "cacheVersion": "cache-adjusted-range-2026-10-26",
+              "source": "https://api-docs.deepseek.com/zh-cn/quick_start/pricing/"
+            }
+          },
+          {
+            "model": "deepseek-flash",
+            "thinking": false,
+            "round": 0,
+            "attempt": 0,
+            "promptFingerprint": "9dd8112afa6f7b5ba8e1fd098e43ca2c2ba856693ef9b3831f942e0fb246c142",
+            "configurationFingerprint": "523797966567c671a4089b4dc8390623f0f51de85102f4054fcc93c3ef9ad0c3",
+            "input": 8069,
+            "output": 452,
+            "cached": 6400,
+            "reasoning": 0,
+            "firstActivityMs": 541,
+            "firstTextMs": 541,
+            "durationMs": 2201,
+            "grossCny": 0.019754,
+            "cacheAdjustedCny": {
+              "min": 0.003605,
+              "max": 0.00721
+            },
+            "tariff": {
+              "version": "deepseek-cny-peak-2026-10-15",
+              "inputPerMillion": 2,
+              "outputPerMillion": 8,
+              "cachedInputPerMillion": 0.04,
+              "cacheVersion": "cache-adjusted-range-2026-10-26",
+              "source": "https://api-docs.deepseek.com/zh-cn/quick_start/pricing/"
+            }
+          }
+        ],
+        "embeddings": [],
+        "searches": [],
+        "reranks": [],
+        "tools": {},
+        "retrievals": [],
+        "policy": {
+          "version": "2026-11-17-reliability-28",
+          "thinking": "auto"
+        },
+        "contexts": [
+          {
+            "relevance": "weak",
+            "recentTurns": 0,
+            "estimatedTokens": 20963,
+            "inputBudget": 57856,
+            "compressed": [],
+            "layers": {
+              "slidingSummary": 0,
+              "activeExtracts": 0,
+              "protectedConstraints": 0,
+              "longTermMemory": 0,
+              "historicalTopics": 0
+            }
+          },
+          {
+            "relevance": "weak",
+            "recentTurns": 0,
+            "estimatedTokens": 13360,
+            "inputBudget": 57856,
+            "compressed": [],
+            "layers": {
+              "slidingSummary": 0,
+              "activeExtracts": 0,
+              "protectedConstraints": 0,
+              "longTermMemory": 0,
+              "historicalTopics": 0
+            }
+          }
+        ],
+        "planChecks": [
+          {
+            "phase": "draft",
+            "reason": "plan_card_reference_missing",
+            "words": 275
+          },
+          {
+            "phase": "repair",
+            "reason": "plan_card_reference_missing",
+            "words": 278
+          }
+        ],
+        "answerRejections": [
+          {
+            "reason": "plan_card_reference_missing"
+          }
+        ],
+        "cost": {
+          "grossCny": 0.052264,
+          "unpricedCalls": 0
+        }
+      },
+      "durationMs": 6222.683875000017,
+      "firstAnswerMs": null,
+      "providerCalls": [
+        {
+          "repeat": 2,
+          "variant": "after",
+          "id": "H08",
+          "call": 63,
+          "model": "deepseek-flash",
+          "startedAt": "2026-11-18T02:38:20.805Z",
+          "requestSha256": "4e4fa1103fd6c44366d780c2497909bcd1cc5abbf3b9b1f517e4b14d7a6db324",
+          "status": 200,
+          "headersMs": 809.7891249999811,
+          "responseFile": "provider-responses/63.txt",
+          "input": 14459,
+          "output": 449,
+          "cached": 14208,
+          "reasoning": null,
+          "durationMs": 4002.4371249999967
+        },
+        {
+          "repeat": 2,
+          "variant": "after",
+          "id": "H08",
+          "call": 64,
+          "model": "deepseek-flash",
+          "startedAt": "2026-11-18T02:38:24.821Z",
+          "requestSha256": "181ab3a7bb46c6cc039523b6685299f719f50b85cd82eba41c88bca7c72f2429",
+          "status": 200,
+          "headersMs": 174.57058299999335,
+          "responseFile": "provider-responses/64.txt",
+          "input": 8069,
+          "output": 452,
+          "cached": 6400,
+          "reasoning": null,
+          "durationMs": 2198.1364999999932
+        }
+      ],
+      "reads": [],
+      "fixtureMisses": [],
+      "rssMb": 322
+    },
+    "models": [
+      {
+        "answerKind": "general",
+        "answer": "",
+        "sourceIds": [],
+        "plan": {
+          "inputs": [
+            {
+              "id": "word_list",
+              "quote": "I have a word list but no flashcards."
+            }
+          ],
+          "activities": [
+            {
+              "title": "Make cards and recall meanings",
+              "seconds": 120,
+              "steps": [
+                {
+                  "action": "Write each word on one side of a blank card and its meaning on the other, using the full word list and starting with the weakest words; if the list has fewer words than expected, make cards for all of them, and if it has none, write five new words with meanings instead.",
+                  "reason": "Writing both faces creates the two-sided cards the later flip practice needs, and front-loading weak words targets the biggest gaps first.",
+                  "seconds": 60,
+                  "requires": [
+                    "word_list"
+                  ],
+                  "produces": [
+                    "word_cards"
+                  ]
+                },
+                {
+                  "action": "Lay every card word-side up, recall the meaning, flip to check, then reset each card word-side up before the next item.",
+                  "reason": "Word-to-meaning recall builds receptive vocabulary, and flipping to check gives immediate feedback while resetting keeps the prompt consistent.",
+                  "seconds": 60,
+                  "requires": [
+                    "word_cards"
+                  ],
+                  "produces": [
+                    "receptive_checked"
+                  ]
+                }
+              ]
+            },
+            {
+              "title": "Recall words from meanings",
+              "seconds": 120,
+              "steps": [
+                {
+                  "action": "Turn every card so the meaning side is up and the word side is covered, then recall the word for each card, flip to check, and reset each card meaning-side up.",
+                  "reason": "Meaning-to-word recall builds productive vocabulary, and checking after each attempt confirms accuracy before moving on.",
+                  "seconds": 60,
+                  "requires": [
+                    "word_cards"
+                  ],
+                  "produces": [
+                    "productive_checked"
+                  ]
+                },
+                {
+                  "action": "Repeat one pass over the cards that were missed, starting each missed card meaning-side up, recalling the word, flipping to check, and resetting it meaning-side up; if nothing was missed, do one clean pass over the full set the same way.",
+                  "reason": "Repeating only missed cards targets weak items, while the no-errors branch keeps the full set active and reinforces correct recall.",
+                  "seconds": 60,
+                  "requires": [
+                    "productive_checked"
+                  ],
+                  "produces": [
+                    "productive_reinforced"
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "answerKind": "general",
+        "answer": "",
+        "sourceIds": [],
+        "plan": {
+          "inputs": [
+            {
+              "id": "word_list",
+              "quote": "I have a word list but no flashcards."
+            }
+          ],
+          "activities": [
+            {
+              "title": "Make cards and recall meanings",
+              "seconds": 120,
+              "steps": [
+                {
+                  "action": "Write each word on one side of a blank card and its meaning on the other, using the full word list and starting with the weakest words; if the list has fewer words than expected, make cards for all of them, and if it has none, write five new words with meanings on both sides instead.",
+                  "reason": "Writing both faces creates the two-sided cards the later flip practice needs, and front-loading weak words targets the biggest gaps first.",
+                  "seconds": 60,
+                  "requires": [
+                    "word_list"
+                  ],
+                  "produces": [
+                    "word_cards"
+                  ]
+                },
+                {
+                  "action": "Lay every card word-side up, recall the meaning, flip to check, then reset each card word-side up before the next item.",
+                  "reason": "Word-to-meaning recall builds receptive vocabulary, and flipping to check gives immediate feedback while resetting keeps the prompt consistent.",
+                  "seconds": 60,
+                  "requires": [
+                    "word_cards"
+                  ],
+                  "produces": [
+                    "receptive_checked"
+                  ]
+                }
+              ]
+            },
+            {
+              "title": "Recall words from meanings",
+              "seconds": 120,
+              "steps": [
+                {
+                  "action": "Turn every card so the meaning side is up and the word side is covered, then recall the word for each card, flip to check, and reset each card meaning-side up.",
+                  "reason": "Meaning-to-word recall builds productive vocabulary, and checking after each attempt confirms accuracy before moving on.",
+                  "seconds": 60,
+                  "requires": [
+                    "word_cards"
+                  ],
+                  "produces": [
+                    "productive_checked"
+                  ]
+                },
+                {
+                  "action": "Repeat one pass over the cards that were missed, starting each missed card meaning-side up, recalling the word, flipping to check, and resetting it meaning-side up; if nothing was missed, do one clean pass over the full set the same way.",
+                  "reason": "Repeating only missed cards targets weak items, while the no-errors branch keeps the full set active and reinforces correct recall.",
+                  "seconds": 60,
+                  "requires": [
+                    "productive_checked"
+                  ],
+                  "produces": [
+                    "productive_reinforced"
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      }
+    ]
+  },
+  {
+    "key": "2/after/H10",
+    "case": {
+      "id": "H10",
+      "category": "followup",
+      "lang": "en",
+      "history": [
+        {
+          "role": "user",
+          "content": "Plan two vocabulary activities with two timed substeps each, at most four minutes total. Use my word list."
+        },
+        {
+          "role": "assistant",
+          "content": "1. Recall meanings for two minutes. 2. Recall words for two minutes."
+        }
+      ],
+      "question": "Make it one paragraph instead, keeping the same total time.",
+      "expected": "One paragraph, no numbered headings; inherited 4-minute limit and material/practice constraints remain."
+    },
+    "result": {
+      "repeat": 2,
+      "variant": "after",
+      "id": "H10",
+      "category": "followup",
+      "at": "2026-11-18T02:38:39.770Z",
+      "result": {
+        "answer": "Meaning recall (120 seconds): Step 1 (30 seconds): Write a two-column WORD / MEANING list from the learner's available word list with known meanings; if no words are available, stop rather than inventing any. Provides the reference list used for both activities without inventing vocabulary. Step 2 (90 seconds): Cover the MEANING column, read each WORD, say its meaning, uncover to check, then cover the MEANING column again before the next word; use the whole list, prioritising weak items. Practises word-to-meaning recall with the answer hidden until each attempt is recorded. Word recall (120 seconds): Step 1 (20 seconds): Uncover the WORD column and cover the MEANING column so only meanings are visible. Switches the prompt column for meaning-to-word practice. Step 2 (100 seconds): Read each MEANING, write the word on paper, uncover to check, then cover the WORD column again before the next meaning; use the whole list, prioritising weak items. Practises meaning-to-word recall with the reference hidden until each attempt is recorded.",
+        "sources": [],
+        "actions": [],
+        "artifacts": []
+      },
+      "metrics": {
+        "stages": {
+          "model": {
+            "calls": 1,
+            "ms": 2464,
+            "errors": 0
+          }
+        },
+        "models": [
+          {
+            "model": "deepseek-flash",
+            "thinking": false,
+            "round": 0,
+            "attempt": 0,
+            "promptFingerprint": "43cd23156d3f723e59def9d07ed456261d278ff131c023acc56ae5bdc2657982",
+            "configurationFingerprint": "523797966567c671a4089b4dc8390623f0f51de85102f4054fcc93c3ef9ad0c3",
+            "input": 1743,
+            "output": 334,
+            "cached": 1536,
+            "reasoning": 0,
+            "firstActivityMs": 1207,
+            "firstTextMs": 1207,
+            "durationMs": 2463,
+            "grossCny": 0.006158,
+            "cacheAdjustedCny": {
+              "min": 0.00157372,
+              "max": 0.00314744
+            },
+            "tariff": {
+              "version": "deepseek-cny-peak-2026-10-15",
+              "inputPerMillion": 2,
+              "outputPerMillion": 8,
+              "cachedInputPerMillion": 0.04,
+              "cacheVersion": "cache-adjusted-range-2026-10-26",
+              "source": "https://api-docs.deepseek.com/zh-cn/quick_start/pricing/"
+            }
+          }
+        ],
+        "embeddings": [],
+        "searches": [],
+        "reranks": [],
+        "tools": {},
+        "retrievals": [],
+        "policy": {
+          "version": "2026-11-17-reliability-28",
+          "thinking": "auto"
+        },
+        "contexts": [
+          {
+            "relevance": "strong",
+            "recentTurns": 1,
+            "estimatedTokens": 2452,
+            "inputBudget": 57856,
+            "compressed": [],
+            "layers": {
+              "slidingSummary": 0,
+              "activeExtracts": 0,
+              "protectedConstraints": 1,
+              "longTermMemory": 0,
+              "historicalTopics": 0
+            }
+          }
+        ],
+        "planChecks": [
+          {
+            "phase": "draft",
+            "words": 164
+          }
+        ],
+        "timing": {
+          "version": 1,
+          "responseReadyMs": 2467
+        },
+        "cost": {
+          "grossCny": 0.006158,
+          "unpricedCalls": 0
+        }
+      },
+      "durationMs": 2467.263249999989,
+      "firstAnswerMs": null,
+      "firstVisibleMs": 2467.263249999989,
+      "streamed": false,
+      "providerCalls": [
+        {
+          "repeat": 2,
+          "variant": "after",
+          "id": "H10",
+          "call": 69,
+          "model": "deepseek-flash",
+          "startedAt": "2026-11-18T02:38:37.306Z",
+          "requestSha256": "e21a6f073c0602e621e6c05fd30181b4fe20401fd4b0a68d97a2b2a17205529c",
+          "status": 200,
+          "headersMs": 298.4129590000084,
+          "responseFile": "provider-responses/69.txt",
+          "input": 1743,
+          "output": 334,
+          "cached": 1536,
+          "reasoning": null,
+          "durationMs": 2461.6372090000077
+        }
+      ],
+      "reads": [],
+      "fixtureMisses": [],
+      "rssMb": 324
+    },
+    "models": [
+      {
+        "answer": "",
+        "sourceIds": [],
+        "answerKind": "general",
+        "plan": {
+          "inputs": [],
+          "activities": [
+            {
+              "title": "Meaning recall",
+              "seconds": 120,
+              "steps": [
+                {
+                  "action": "Write a two-column WORD / MEANING list from the learner's available word list with known meanings; if no words are available, stop rather than inventing any.",
+                  "reason": "Provides the reference list used for both activities without inventing vocabulary.",
+                  "seconds": 30,
+                  "requires": [],
+                  "produces": [
+                    "word_meaning_list"
+                  ]
+                },
+                {
+                  "action": "Cover the MEANING column, read each WORD, say its meaning, uncover to check, then cover the MEANING column again before the next word; use the whole list, prioritising weak items.",
+                  "reason": "Practises word-to-meaning recall with the answer hidden until each attempt is recorded.",
+                  "seconds": 90,
+                  "requires": [
+                    "word_meaning_list"
+                  ],
+                  "produces": []
+                }
+              ]
+            },
+            {
+              "title": "Word recall",
+              "seconds": 120,
+              "steps": [
+                {
+                  "action": "Uncover the WORD column and cover the MEANING column so only meanings are visible.",
+                  "reason": "Switches the prompt column for meaning-to-word practice.",
+                  "seconds": 20,
+                  "requires": [
+                    "word_meaning_list"
+                  ],
+                  "produces": []
+                },
+                {
+                  "action": "Read each MEANING, write the word on paper, uncover to check, then cover the WORD column again before the next meaning; use the whole list, prioritising weak items.",
+                  "reason": "Practises meaning-to-word recall with the reference hidden until each attempt is recorded.",
+                  "seconds": 100,
+                  "requires": [
+                    "word_meaning_list"
+                  ],
+                  "produces": []
+                }
+              ]
+            }
+          ]
+        }
+      }
+    ]
+  }
+]

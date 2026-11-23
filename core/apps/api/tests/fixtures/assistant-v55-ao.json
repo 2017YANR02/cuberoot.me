@@ -1,0 +1,568 @@
+{
+  "AO03": {
+    "question": "现在可以慢拧。为那个熟悉的插入局面设计两项定时练习。每项先试着摆出，肉眼看边块、角块和目标槽，若三处对齐再做已会的插入。不吻合或摆不出时各做一种不同的备用慢转，只能用 U2 和 F′，备用做完就停。",
+    "lang": "zh",
+    "history": [
+      {
+        "role": "user",
+        "content": "我这一轮只有八十七秒，会一个插入，已会 U2 和 F′，但不知道能不能摆回那个局面。先不转动。"
+      },
+      {
+        "role": "assistant",
+        "content": "先看当前局面。"
+      }
+    ],
+    "drafts": [
+      {
+        "call": 8,
+        "value": {
+          "answerKind": "general",
+          "answer": "",
+          "sourceIds": [],
+          "plan": {
+            "inputs": [
+              {
+                "id": "known_moves",
+                "quote": "会一个插入，已会 U2 和 F′，但不知道能不能摆回那个局面。"
+              },
+              {
+                "id": "time_limit",
+                "quote": "我这一轮只有八十七秒"
+              }
+            ],
+            "activities": [
+              {
+                "title": "摆出熟悉插入局面并检查",
+                "seconds": 44,
+                "steps": [
+                  {
+                    "action": "用已会的方法慢速尝试摆出熟悉的插入局面；停手后肉眼依次看边块、角块和目标槽，三处都对齐才做已会的插入并停；若摆不出或三处不吻合，改做一次慢速 U2，做完停，不再插入或检查槽位。",
+                    "reason": "先确认三处对齐再插入，避免在未对齐时误做；备用只做一次已知慢转并立即结束。",
+                    "seconds": 44,
+                    "requires": [
+                      "known_moves"
+                    ],
+                    "produces": []
+                  }
+                ]
+              },
+              {
+                "title": "再次摆出并预测备用变化",
+                "seconds": 43,
+                "steps": [
+                  {
+                    "action": "用已会的方法慢速再试摆出熟悉的插入局面；停手后肉眼核对边块、角块和目标槽，三处对齐才做已会的插入并停；若摆不出或不吻合，先预测一次慢速 F′ 会带来什么可见变化，再做 F′，对照观察后停，不再插入或检查槽位。",
+                    "reason": "用预测与观察检验备用慢转的效果，同时保持三处对齐才插入的检查。",
+                    "seconds": 43,
+                    "requires": [
+                      "known_moves"
+                    ],
+                    "produces": []
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      },
+      {
+        "call": 9,
+        "value": {
+          "answerKind": "general",
+          "answer": "",
+          "sourceIds": [],
+          "plan": {
+            "inputs": [
+              {
+                "id": "known_moves",
+                "quote": "会一个插入，已会 U2 和 F′，但不知道能不能摆回那个局面。"
+              },
+              {
+                "id": "time_limit",
+                "quote": "我这一轮只有八十七秒"
+              }
+            ],
+            "activities": [
+              {
+                "title": "摆出熟悉插入局面并检查",
+                "seconds": 44,
+                "steps": [
+                  {
+                    "action": "用已会的方法慢速尝试摆出熟悉的插入局面；停手后肉眼依次看边块、角块和目标槽：若三处对齐，做已会的插入并停；若摆不出或三处不吻合，做一次慢速 U2，做完停，不再插入或检查槽位。",
+                    "reason": "先确认三处对齐再插入，避免未对齐时误做；备用只做一次已知慢转并立即结束。",
+                    "seconds": 44,
+                    "requires": [
+                      "known_moves"
+                    ],
+                    "produces": []
+                  }
+                ]
+              },
+              {
+                "title": "再次摆出并预测备用变化",
+                "seconds": 43,
+                "steps": [
+                  {
+                    "action": "用已会的方法慢速再试摆出熟悉的插入局面；停手后肉眼核对边块、角块和目标槽：若三处对齐，做已会的插入并停；若摆不出或不吻合，先预测一次慢速 F′ 会带来什么可见变化，再做 F′，对照观察后停，不再插入或检查槽位。",
+                    "reason": "用预测与观察检验备用慢转的效果，同时保持三处对齐才插入的检查。",
+                    "seconds": 43,
+                    "requires": [
+                      "known_moves"
+                    ],
+                    "produces": []
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      },
+      {
+        "call": 49,
+        "value": {
+          "answerKind": "general",
+          "answer": "",
+          "sourceIds": [],
+          "plan": {
+            "inputs": [
+              {
+                "id": "known_insert",
+                "quote": "会一个插入，已会 U2 和 F′，但不知道能不能摆回那个局面。"
+              }
+            ],
+            "activities": [
+              {
+                "title": "摆出熟悉插入局面并慢拧",
+                "seconds": 44,
+                "steps": [
+                  {
+                    "action": "用已会的方法或已知插入的逆过程慢速尝试摆出熟悉局面；停手肉眼核对边块、角块与目标槽三处是否对齐：若对齐，做已会的插入；若摆不出或不吻合，改做一次 U2，做完即停，不插入、不做逆摆、不查已解槽。",
+                    "reason": "先确认三处对齐再插入，避免在错误局面上硬做；备用 U2 用已知慢转并明确停止。",
+                    "seconds": 44,
+                    "requires": [
+                      "known_insert"
+                    ],
+                    "produces": []
+                  }
+                ]
+              },
+              {
+                "title": "再次摆出并预测备用变化",
+                "seconds": 43,
+                "steps": [
+                  {
+                    "action": "再次用已会的方法或已知插入的逆过程慢速尝试摆出熟悉局面；停手肉眼核对边块、角块与目标槽三处是否对齐：若对齐，做已会的插入；若摆不出或不吻合，先预测一次 F′ 会带来的可见变化，再做一次 F′，做完对照观察并停，不插入、不做逆摆、不查已解槽。",
+                    "reason": "第二次独立核对三处对齐；备用改为先预测后做 F′，与上一项形成不同的观察练习。",
+                    "seconds": 43,
+                    "requires": [
+                      "known_insert"
+                    ],
+                    "produces": []
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      },
+      {
+        "call": 50,
+        "value": {
+          "answerKind": "general",
+          "answer": "",
+          "sourceIds": [],
+          "plan": {
+            "inputs": [
+              {
+                "id": "known_insert",
+                "quote": "会一个插入，已会 U2 和 F′，但不知道能不能摆回那个局面。"
+              }
+            ],
+            "activities": [
+              {
+                "title": "摆出熟悉插入局面并慢拧",
+                "seconds": 44,
+                "steps": [
+                  {
+                    "action": "用已会的方法或已知插入的逆过程慢速尝试摆出熟悉局面；停手肉眼核对边块、角块与目标槽三处是否对齐：若三处对齐，做已会的插入；若摆不出或不吻合，改做一次 U2，做完即停，不插入、不做逆摆、不查已解槽。",
+                    "reason": "先确认三处对齐再插入，避免在错误局面上硬做；备用 U2 用已知慢转并明确停止。",
+                    "seconds": 44,
+                    "requires": [
+                      "known_insert"
+                    ],
+                    "produces": []
+                  }
+                ]
+              },
+              {
+                "title": "再次摆出并预测备用变化",
+                "seconds": 43,
+                "steps": [
+                  {
+                    "action": "再次用已会的方法或已知插入的逆过程慢速尝试摆出熟悉局面；停手肉眼核对边块、角块与目标槽三处是否对齐：若三处对齐，做已会的插入；若摆不出或不吻合，先预测一次 F′ 会带来的可见变化，再做一次 F′，做完对照观察并停，不插入、不做逆摆、不查已解槽。",
+                    "reason": "第二次独立核对三处对齐；备用改为先预测后做 F′，与上一项形成不同的观察练习。",
+                    "seconds": 43,
+                    "requires": [
+                      "known_insert"
+                    ],
+                    "produces": []
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      }
+    ]
+  },
+  "AO08": {
+    "question": "I own pre-made French study cards with a bird picture on one side and its French name on the other. Give two sketch-to-word spelling drills, no more than 102 seconds overall. For each card, write from the drawing first, flip to check, then restore that same card to picture-side up before the next.",
+    "lang": "en",
+    "history": [],
+    "drafts": [
+      {
+        "call": 63,
+        "value": {
+          "answerKind": "general",
+          "answer": "1. Picture-to-name spelling pass (51 s)\n- Shuffle the bird cards and place the stack picture-side up; take the top card, write its French bird name from the drawing without peeking, flip once to check the spelling, then return that same card picture-side up to a discard pile before drawing the next, repeating until 51 s are up (writing from the sketch first builds recall, and the single flip plus reset keeps every card ready for the next pass).\n\n2. Weak-bird repeat pass (51 s)\n- Reshuffle the full deck picture-side up, and for each card write the French name from the drawing, flip once to check, and restore that same card picture-side up before the next, spending the 51 s on the cards you misspelled in drill 1 first and then the rest of the deck (re-attempting the weak items while still cycling the whole set reinforces the spellings you got wrong).",
+          "sourceIds": []
+        }
+      },
+      {
+        "call": 64,
+        "value": {
+          "answerKind": "general",
+          "answer": "1. Picture-to-name spelling pass (51 s)\n- Shuffle the bird cards and place the stack picture-side up; take the top card, write its French bird name from the drawing without peeking, flip once to check the spelling, then return that same card picture-side up to a discard pile before drawing the next, repeating until 51 s are up (writing from the sketch first builds recall, and the single flip plus reset keeps every card ready for the next pass).\n\n2. Full-deck repeat pass (51 s)\n- Reshuffle the full deck picture-side up, and for each card write the French name from the drawing, flip once to check, and restore that same card picture-side up before the next; if you made any errors in drill 1, work through the whole deck starting with those misspelled cards, and if you made none, simply repeat the full deck in the same way, all within the 51 s (cycling the entire set after resetting every card reinforces the spellings whether or not errors occurred).",
+          "sourceIds": []
+        }
+      }
+    ]
+  },
+  "AO09": {
+    "question": "现成的印尼语双面卡一面是印尼语、另一面是中文释义。给两项共至多九十四秒的练习。每项从中文提示手写印尼语，然后翻查同一张卡并翻回中文面；首轮如果全写对，第二项就从中文面重做整套。",
+    "lang": "zh",
+    "history": [],
+    "drafts": [
+      {
+        "call": 23,
+        "value": {
+          "answerKind": "general",
+          "answer": "",
+          "sourceIds": [],
+          "plan": {
+            "inputs": [
+              {
+                "id": "indonesian_cards",
+                "quote": "现成的印尼语双面卡一面是印尼语、另一面是中文释义"
+              }
+            ],
+            "activities": [
+              {
+                "title": "中文提示手写印尼语",
+                "seconds": 47,
+                "steps": [
+                  {
+                    "action": "把整套现成双面卡全部中文面朝上摊开，印尼语面朝下；逐张看中文提示，在纸上写出对应印尼语，写完一张再翻同一张卡核对印尼语面，然后翻回中文面朝上放回，全部写完后若没有写错，就进入第二项从中文面重做整套；若有写错，只把写错的卡再按同样方式写一遍并翻查、翻回中文面",
+                    "reason": "从中文提示手写印尼语是产出性回忆，翻同一张卡核对能立即得到反馈，翻回中文面保证下一项起点一致",
+                    "seconds": 47,
+                    "requires": [
+                      "indonesian_cards"
+                    ],
+                    "produces": [
+                      "indonesian_cards"
+                    ]
+                  }
+                ]
+              },
+              {
+                "title": "中文面重做整套",
+                "seconds": 47,
+                "steps": [
+                  {
+                    "action": "确认整套卡都已是中文面朝上，再逐张看中文提示在纸上写出印尼语，写完翻同一张卡核对印尼语面，然后翻回中文面朝上放回；若首轮有写错，本轮只重做写错的卡，同样写、翻查、翻回中文面",
+                    "reason": "第二项从中文面重做整套，用同一方向再练一遍产出性回忆，并让每张卡回到中文面以便下次使用",
+                    "seconds": 47,
+                    "requires": [
+                      "indonesian_cards"
+                    ],
+                    "produces": [
+                      "indonesian_cards"
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      },
+      {
+        "call": 24,
+        "value": {
+          "answerKind": "general",
+          "answer": "",
+          "sourceIds": [],
+          "plan": {
+            "inputs": [
+              {
+                "id": "indonesian_cards",
+                "quote": "现成的印尼语双面卡一面是印尼语、另一面是中文释义"
+              }
+            ],
+            "activities": [
+              {
+                "title": "中文提示手写印尼语",
+                "seconds": 47,
+                "steps": [
+                  {
+                    "action": "把整套现成双面卡全部中文面朝上摊开，印尼语面朝下；逐张看中文提示，在纸上写出对应印尼语，写完一张再翻同一张卡核对印尼语面，然后翻回中文面朝上放回；全部写完后若没有写错，就进入第二项从中文面重做整套；若有写错，只把写错的卡再按同样方式写一遍并翻查、翻回中文面",
+                    "reason": "从中文提示手写印尼语是产出性回忆，翻同一张卡核对能立即得到反馈，翻回中文面保证下一项起点一致",
+                    "seconds": 47,
+                    "requires": [
+                      "indonesian_cards"
+                    ],
+                    "produces": [
+                      "indonesian_cards"
+                    ]
+                  }
+                ]
+              },
+              {
+                "title": "中文面重做整套",
+                "seconds": 47,
+                "steps": [
+                  {
+                    "action": "确认整套卡都已是中文面朝上，再逐张看中文提示在纸上写出印尼语，写完翻同一张卡核对印尼语面，然后翻回中文面朝上放回；若首轮有写错，本轮只重做写错的卡，同样写、翻查、翻回中文面",
+                    "reason": "第二项从中文面重做整套，用同一方向再练一遍产出性回忆，并让每张卡回到中文面以便下次使用",
+                    "seconds": 47,
+                    "requires": [
+                      "indonesian_cards"
+                    ],
+                    "produces": [
+                      "indonesian_cards"
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      }
+    ]
+  },
+  "AO12": {
+    "question": "Put both directions into one paragraph and use my original sheet, keeping the whole pass within 75 seconds. In both directions say what you hide, answer from the other column first, then uncover and check.",
+    "lang": "en",
+    "history": [
+      {
+        "role": "user",
+        "content": "I have a Catalan word sheet with German meanings in the other column and 89 seconds for both directions."
+      },
+      {
+        "role": "assistant",
+        "content": "Use either column to recall the other."
+      }
+    ],
+    "drafts": [
+      {
+        "call": 30,
+        "value": {
+          "answerKind": "general",
+          "answer": "",
+          "sourceIds": [],
+          "plan": {
+            "inputs": [
+              {
+                "id": "original_sheet",
+                "quote": "I have a Catalan word sheet with German meanings in the other column"
+              }
+            ],
+            "activities": [
+              {
+                "title": "Catalan to German pass",
+                "seconds": 37,
+                "steps": [
+                  {
+                    "action": "Cover the German column with a sheet of paper, leaving only the Catalan words visible; for each Catalan word say the German meaning aloud from memory before uncovering, then uncover and check the German column, marking any word you missed.",
+                    "reason": "Answering from the hidden column first forces active recall, and uncovering afterwards gives an immediate correctness check on your own sheet.",
+                    "seconds": 37,
+                    "requires": [
+                      "original_sheet"
+                    ],
+                    "produces": []
+                  }
+                ]
+              },
+              {
+                "title": "German to Catalan pass",
+                "seconds": 38,
+                "steps": [
+                  {
+                    "action": "Now cover the Catalan column instead, leaving only the German meanings visible; for each German meaning say the Catalan word aloud from memory before uncovering, then uncover and check the Catalan column, marking any word you missed.",
+                    "reason": "Reversing which column is hidden tests the opposite retrieval direction on the same sheet, and uncovering after each answer keeps the check honest.",
+                    "seconds": 38,
+                    "requires": [
+                      "original_sheet"
+                    ],
+                    "produces": []
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      },
+      {
+        "call": 31,
+        "value": {
+          "answerKind": "general",
+          "answer": "",
+          "sourceIds": [],
+          "plan": {
+            "inputs": [
+              {
+                "id": "original_sheet",
+                "quote": "I have a Catalan word sheet with German meanings in the other column"
+              }
+            ],
+            "activities": [
+              {
+                "title": "Catalan to German pass",
+                "seconds": 37,
+                "steps": [
+                  {
+                    "action": "Cover the German column with a sheet of paper, leaving only the Catalan words visible; for each Catalan word say the German meaning aloud from memory before uncovering, then uncover and check the German column, marking any word you missed.",
+                    "reason": "Answering from the hidden column first forces active recall, and uncovering afterwards gives an immediate correctness check on your own sheet.",
+                    "seconds": 37,
+                    "requires": [
+                      "original_sheet"
+                    ],
+                    "produces": []
+                  }
+                ]
+              },
+              {
+                "title": "German to Catalan pass",
+                "seconds": 38,
+                "steps": [
+                  {
+                    "action": "Now cover the Catalan column instead, leaving only the German meanings visible; for each German meaning say the Catalan word aloud from memory before uncovering, then uncover and check the Catalan column, marking any word you missed.",
+                    "reason": "Reversing which column is hidden tests the opposite retrieval direction on the same sheet, and uncovering after each answer keeps the check honest.",
+                    "seconds": 38,
+                    "requires": [
+                      "original_sheet"
+                    ],
+                    "produces": []
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      },
+      {
+        "call": 74,
+        "value": {
+          "answerKind": "general",
+          "answer": "",
+          "sourceIds": [],
+          "plan": {
+            "inputs": [
+              {
+                "id": "word_sheet",
+                "quote": "I have a Catalan word sheet with German meanings in the other column"
+              },
+              {
+                "id": "time_budget",
+                "quote": "keeping the whole pass within 75 seconds"
+              }
+            ],
+            "activities": [
+              {
+                "title": "Catalan to German pass",
+                "seconds": 37,
+                "steps": [
+                  {
+                    "action": "Cover the German column on your original sheet, leaving only the Catalan words visible; then read each Catalan word and say its German meaning aloud from memory before uncovering the German column to check each answer, marking any misses for a quick reread.",
+                    "reason": "Hiding the German column forces recall from the Catalan side, and uncovering only after answering gives an immediate check against your own sheet.",
+                    "seconds": 37,
+                    "requires": [
+                      "word_sheet"
+                    ],
+                    "produces": []
+                  }
+                ]
+              },
+              {
+                "title": "German to Catalan pass",
+                "seconds": 38,
+                "steps": [
+                  {
+                    "action": "Cover the Catalan column on the same sheet, leaving only the German meanings visible; then read each German meaning and say the Catalan word aloud from memory before uncovering the Catalan column to check each answer, rereading any misses once.",
+                    "reason": "Reversing which column is hidden tests production in the opposite direction, and checking after each answer keeps the pass honest within the time limit.",
+                    "seconds": 38,
+                    "requires": [
+                      "word_sheet"
+                    ],
+                    "produces": []
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      },
+      {
+        "call": 75,
+        "value": {
+          "answerKind": "general",
+          "answer": "",
+          "sourceIds": [],
+          "plan": {
+            "inputs": [
+              {
+                "id": "word_sheet",
+                "quote": "I have a Catalan word sheet with German meanings in the other column"
+              },
+              {
+                "id": "time_budget",
+                "quote": "keeping the whole pass within 75 seconds"
+              }
+            ],
+            "activities": [
+              {
+                "title": "Catalan to German pass",
+                "seconds": 37,
+                "steps": [
+                  {
+                    "action": "Cover the German column on your original sheet, leaving only the Catalan words visible; then read each Catalan word and say its German meaning aloud from memory before uncovering the German column to check each answer, marking any misses for a quick reread.",
+                    "reason": "Hiding the German column forces recall from the Catalan side, and uncovering only after answering gives an immediate check against your own sheet.",
+                    "seconds": 37,
+                    "requires": [
+                      "word_sheet"
+                    ],
+                    "produces": []
+                  }
+                ]
+              },
+              {
+                "title": "German to Catalan pass",
+                "seconds": 38,
+                "steps": [
+                  {
+                    "action": "Cover the Catalan column on the same sheet, leaving only the German meanings visible; then read each German meaning and say the Catalan word aloud from memory before uncovering the Catalan column to check each answer, rereading any misses once.",
+                    "reason": "Reversing which column is hidden tests production in the opposite direction, and checking after each answer keeps the pass honest within the time limit.",
+                    "seconds": 38,
+                    "requires": [
+                      "word_sheet"
+                    ],
+                    "produces": []
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      }
+    ]
+  }
+}

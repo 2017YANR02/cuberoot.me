@@ -1,11 +1,11 @@
 import { ALG_CATALOG, getAlgSetMeta, type AlgFile, type AlgPuzzle } from '@cuberoot/shared/alg';
 import { assistantAlgorithmSelection } from '@cuberoot/shared/site-assistant-algorithms';
 import type { AssistantMessage, AssistantAlgorithms } from '@cuberoot/shared/site-assistant';
-import { algorithmCards, matchingAlgorithmCases, type AlgorithmSelection } from './site_assistant_algorithms.js';
+import { algorithmCards, algorithmCaseAliases, matchingAlgorithmCases, type AlgorithmSelection } from './site_assistant_algorithms.js';
 
 type CardReference = {id:number; name:string; alg:string; alternative:number};
 type DisplayReference = {puzzle:AlgPuzzle; set:string; display:AssistantAlgorithms['display']; offset:number; total:number; nextOffset?:number; query?:string; cards:CardReference[]};
-type Resolution = {selection:AlgorithmSelection; explain:boolean; cards?:AssistantAlgorithms['cards']} | {message:string};
+type Resolution = {selection:AlgorithmSelection; explain:boolean; cards?:AssistantAlgorithms['cards']; namedGroup?:boolean} | {message:string};
 const escape = (text:string) => text.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
 const clean = (text:string) => text.normalize('NFKC').toLowerCase().replace(/\bperm(?:utation)?\b/g,'').replace(/[\s_()（）]/g,'');
 function mentioned(text:string,name:string) {
@@ -57,6 +57,21 @@ function displayed(history:AssistantMessage[]) {
   }
 }
 
+export function excludesFormulaCards(question:string) {
+  // Declining a link or an explanation still permits the formula itself.
+  question=question.replace(/(?:不要|不用|别|无需)(?:给我|给|附上)?公式(?:库)?(?:链接|入口|网址|讲解|解释)/g,'');
+  const negative=/(?:不要|不用|不必|不需要|无需|别)(?:再|任何|给我|给|提供|列出|附上|显示|展示|写|发|用|加)*(?:任何)?(?:公式|算法卡|卡片)|\b(?:no|without) (?:any )?(?:algorithms?|formulas?|algorithm cards?)\b|\b(?:do not|don't) (?:give|show|include|use) (?:me )?(?:any )?(?:algorithms?|formulas?)\b/i;
+  if (negative.test(question)) return true;
+  const recognitionOnly=/(?:只|仅)(?:讲|说|解释)(?:如何)?(?:辨认|辨别|识别)/.test(question);
+  const wantsCards=/(?:给我|给|展示|显示|附上|带上|列出|提供)[^。！？，；]{0,18}(?:公式|手顺|算法卡|卡片)/.test(question);
+  return recognitionOnly && !wantsCards;
+}
+
+export function requestsDiagramInstead(question:string) {
+  return excludesFormulaCards(question) && /(?:给我|给|要|看|画|显示|展示|附|加)[^，。！？；]{0,16}?(?:状态图|图片|图像|图(?=[，。！？；\s]|$))|\b(?:show|give|draw|only)\b[^.!?]{0,24}\b(?:diagrams?|images?)\b/i.test(question)
+    && !/(?:不要|不用|无需|别)(?:给我|给|显示|展示)?(?:状态图|图片|图像)/.test(question);
+}
+
 /** Resolve concrete formula requests centrally for every client. Case names
  * come from the selected library, so sentence wording is not a fixed command.
  * Concept/navigation questions remain with the ordinary planner. */
@@ -65,7 +80,8 @@ export async function resolveAssistantAlgorithmRequest(question:string,history:A
   if(!text || text.length>1000)return;
   const say=(zh:string,en:string)=>({message:lang==='zh'?zh:en});
   // Explicit negation, counts, navigation and drills do not ask for formula content.
-  if(/(?:不要|不用|别)(?:给我|提供|显示|展示)?(?:公式|卡片)|只(?:要|给|发).*(?:链接|入口|网址)|(?:打开|进入|跳转|在哪|哪里).*(?:页面|公式库)|(?:入口|链接|网址)|(?:多少|几个|数量|总数)|\b(?:how many|count|link|url|open|navigate)\b/i.test(text))return;
+  const diagramInstead=requestsDiagramInstead(text);
+  if((excludesFormulaCards(text) && !diagramInstead) || /只(?:要|给|发).*(?:链接|入口|网址)|(?:打开|进入|跳转|在哪|哪里).*(?:页面|公式库|指南)|(?:入口|链接|网址)|(?:多少|几个|数量|总数)|\b(?:how many|count|link|url|open|navigate)\b/i.test(text))return;
   if(/训练|练习|学习顺序|\b(?:training|practice)\b/i.test(text)
     && !/(?:给|发|列出|展示|附上|带上|show|give|list).*(?:公式|卡片|状态图|algorithms?|cards?|diagrams?)/i.test(text))return;
 
@@ -101,10 +117,10 @@ export async function resolveAssistantAlgorithmRequest(question:string,history:A
   const nextCase=/(?:下一个|换一个|另一个)\s*(?:case|情况|状态)|^(?:那|看)?下(?:一)?个(?:呢|吧)?[?？。!！\s]*$|\bnext\s+case\b/i.test(text);
   const another=!nextCase && /换(?:一(?:条|个|种|下)|条|个|种|公式)|再来|另一|(?:其他|其它|别的).*(?:公式|手顺|算法)|还有别|还有其他|还有其它|\b(?:another|alternative|different)\b/i.test(text);
   const more=/^(?:请|再)?(?:继续|接着|剩下的|还有呢|后面的)[。！?？\s]*$|(?:继续|加载|剩下|后面).*(?:公式|case)|\b(?:continue|remaining|load more|next page)\b/i.test(text);
-  const onlyImage=/(?:只|仅|换成|改成).*(?:图|图片)|\b(?:images?|diagrams?)\s+only\b|\bonly\s+(?:images?|diagrams?)\b/i.test(text);
+  const onlyImage=/(?:只|仅)(?:要|给|看|显示|展示|提供)?\s*(?:状态图|图片|图)(?!文)|(?:换成|改成)\s*(?:状态图|图片|图)(?!文)|\b(?:images?|diagrams?)\s+only\b|\bonly\s+(?:images?|diagrams?)\b/i.test(text);
   const onlyText=/(?:只|仅|换成|改成).*(?:文字|文本)|(?:不要|不用|不需要)(?:状态)?图|\b(?:text only|only text|no (?:images?|diagrams?))\b/i.test(text);
   const both=/(?:带|加|附|配|要|看|看看).*(?:图|图片)|(?:图文|状态图和公式)|\b(?:with|add|both).*(?:images?|diagrams?)\b/i.test(text);
-  const format=onlyText?'text':onlyImage?'image':both?'both':undefined;
+  const format=diagramInstead?'image':onlyText?'text':onlyImage?'image':both?'both':undefined;
   const refer=/[这那](?:个|条|张)|刚才|刚刚|上(?:一)?[个条]|第\s*[一二两三四五六七八九十\d]+\s*个|\b(?:this|that|previous|first|second|third)\b/i.test(text);
   const formula=/公式|手顺|算法|case|卡片|状态图|\b(?:algorithms?|moves?|perms?)\b/i.test(text);
   const want=/(?:给|发|来|要|看|有哪些|列出|展示|显示|附上|提供|怎么做|怎么拧|怎么转|如何做|如何拧)|\b(?:show|give|list|want|need|see|how.*(?:do|solve|execute))\b/i.test(text);
@@ -122,18 +138,26 @@ export async function resolveAssistantAlgorithmRequest(question:string,history:A
   // Mentioning a set in a page, glossary or reconstruction question is not a
   // request to fetch its formulas. Keep concise case names such as "PLL T".
   const execution=/(?:怎么|如何)(?:拧|转|做)|\bhow\b.*\b(?:do|solve|execute)\b/i.test(text);
-  if(!formula && !execution && !contextual && !perm && !namedCase && !implicitCase)return;
+  const comparingCases=target.set==='pll' && /区分|认混|对比|比较|区别|compare|distinguish|tell.+apart|difference/i.test(text) && /和|与|、|\b(?:and|vs|versus|from)\b/i.test(text);
+  if(!formula && !execution && !contextual && !perm && !namedCase && !implicitCase && !comparingCases)return;
   // A display verb alone does not carry the last formula subject into a new request.
   if(inheritedTarget && !formula && !execution && !contextual && !implicitCase)return;
   if(!explicit && !perm && previous && !previous.immediate && !formula && !refer)return;
 
   const data=await load(target.puzzle,target.set);
   if(data.puzzle!==target.puzzle || data.set!==target.set || !Array.isArray(data.cases))throw new Error('Mismatched algorithm library');
-  const names=data.cases.filter(c=>mentioned(text,c.name) || mentioned(text,c.name.replace(/\s+perm(?:utation)?$/i,'')) || (perm && clean(c.name)===clean(perm[1]))
-    || (c.name.toLowerCase().startsWith(target.set.toLowerCase()) && mentioned(text,c.name.slice(target.set.length).trim())));
-  const named=names;
+  // Strip the suffix on every explicit PLL name, including hyphenated aliases.
+  const permPattern=/(?<![a-z0-9])([a-z](?:[abcd+]|-(?=[\s-]))?)\s*[- ]?perm(?:utation)?\b/gi;
+  const permNames=target.set==='pll'?[...text.matchAll(permPattern)].map(m=>m[1]):[];
+  const caseText=permNames.length?text.replace(permPattern,'$1 '):text;
+  const unknown=permNames.find(name=>!data.cases.some(c=>[c.name,...algorithmCaseAliases(data,c.name)].some(alias=>clean(alias)===clean(name))));
+  if (unknown && permNames.length>1) return say('在该公式集中未找到 '+unknown+'，请核对这个名称。','Could not find '+unknown+' in this set. Please check the name.');
+  const named=data.cases.filter(c=>mentioned(caseText,c.name) || mentioned(caseText,c.name.replace(/\s+perm(?:utation)?$/i,'')) || (perm && clean(c.name)===clean(perm[1]))
+    || (c.name.toLowerCase().startsWith(target.set.toLowerCase()) && mentioned(caseText,c.name.slice(target.set.length).trim()))
+    || algorithmCaseAliases(data,c.name).some(alias=>mentioned(caseText,alias) || (perm && clean(alias)===clean(perm[1]))));
+
   const display=format ?? (!explicit && prior ? prior.display : 'both');
-  const explain=/解释|讲解|原理|识别|记忆|怎么记|如何记|为什么|区别|\b(?:explain|recognize|recognise|why|memorize|difference)\b/i.test(text);
+  const explain=/解释|讲解|原理|识别|记忆|怎么记|如何记|为什么|区别|区分|认混|对比|比较|\b(?:explain|recognize|recognise|why|memorize|differences?|distinguish|compare|tell.+apart)\b/i.test(text);
   const start=text.match(/从第\s*(\d+)\s*个\s*(?:case)?\s*开始|starting at case\s*(\d+)/i);
   if(start && more) {
     const offset=Number(start[1] ?? start[2])-1;
@@ -142,6 +166,17 @@ export async function resolveAssistantAlgorithmRequest(question:string,history:A
   }
   const row=ordinal(text);
   let selected=named.length===1 ? named[0] : undefined;
+  if (named.length>1 && named.length<=24 &&
+      /分别|各[自给用有]|对比|比较|区别|区分|与|和|、|\b(?:and|both|each|compare|difference|versus|vs)\b/i.test(text) &&
+      !/二选一|选一个|还是|\b(?:either|or|choose one)\b/i.test(text)) {
+    const order=(name:string)=>Math.min(...[name,...algorithmCaseAliases(data,name)].map(alias=>{
+      const index=caseText.search(new RegExp('(?<![a-z0-9+])'+escape(alias)+'(?![a-z0-9+\\-])','i'));
+      return index<0?Infinity:index;
+    }));
+    const selection={puzzle:target.puzzle,set:target.set,display,limit:1};
+    const cards=named.sort((a,b)=>order(a.name)-order(b.name)).flatMap(c=>algorithmCards(data,{...selection,caseId:c.id},lang).cards);
+    if (cards.length===named.length) return {selection,explain,cards,namedGroup:true};
+  }
   if(named.length>1)return say('你想看哪个 case？请补充完整名称。','Which case do you mean? Please give its full name.');
   if(!selected && row && !/第\s*[一二两三四五六七八九十\d]+\s*条/.test(text)) {
     const ref=!explicit && prior ? prior.cards[row-1] : undefined;
@@ -175,7 +210,7 @@ export async function resolveAssistantAlgorithmRequest(question:string,history:A
     if(prior.nextOffset===undefined)return say('这一组 case 已全部展示。','All cases in this selection have been shown.');
     return {selection:{puzzle:target.puzzle,set:target.set,query:prior.query,offset:prior.nextOffset,display,limit:24},explain};
   }
-  if(format && prior && !explicit)return {selection:{puzzle:target.puzzle,set:target.set,query:prior.query,offset:prior.offset,limit:prior.cards.length,display},explain,
+  if(format && prior && !explicit)return {selection:{puzzle:target.puzzle,set:target.set,query:prior.query,offset:prior.offset,limit:prior.cards.length,display},explain,namedGroup:prior.offset===0 && !prior.nextOffset && prior.total===prior.cards.length && prior.total<data.cases.length && !prior.query,
     cards:prior.cards.flatMap(ref=>{
       const c=data.cases.find(c=>c.id===ref.id);if(!c)return [];
       const alternative=Math.max(0,(c.algs[0]?.filter(entry=>entry.alg.trim()) ?? []).findIndex(entry=>entry.alg===ref.alg));

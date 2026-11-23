@@ -1,11 +1,11 @@
 import { assistantExecutionBoundary } from './site_assistant_execution.js';
-import type { AssistantErrorCode } from '@cuberoot/shared/site-assistant';
+import type { AssistantErrorCode, AssistantProgress } from '@cuberoot/shared/site-assistant';
 import { currentDiagnosticRequestId, diagnosticLog } from '../observability/request.js';
 import { recordAssistantStage } from './site_assistant_monitor.js';
 import { startAssistantProgress } from './site_assistant_progress.js';
 
 export interface AssistantModelDiagnostic {
-  reason: 'empty_output' | 'invalid_json' | 'invalid_schema' | 'output_truncated' | 'unexpected_tool_call' | 'http_error' | 'network_error' | 'provider_error' | 'empty_body' | 'response_too_large' | 'aborted';
+  reason: 'empty_output' | 'invalid_json' | 'invalid_schema' | 'output_truncated' | 'unexpected_tool_call' | 'http_error' | 'network_error' | 'provider_error' | 'empty_body' | 'provider_cooldown' | 'response_too_large' | 'aborted';
   finishReason?: string;
   issues?: Array<{ path: string; code: string }>;
 }
@@ -31,14 +31,14 @@ export function assistantDeadline<T>(run: () => Promise<T>, signal: AbortSignal)
 }
 
 /** Never log questions, identities, URLs, evidence, provider bodies or credentials. */
-export async function assistantStage<T>(stage: 'auth' | 'quota' | 'model' | 'review' | 'data' | 'page' | 'tool' | 'total', run: () => Promise<T>, round?: number, tool?: string): Promise<T> {
+export async function assistantStage<T>(stage: 'auth' | 'quota' | 'model' | 'review' | 'data' | 'page' | 'tool' | 'total', run: () => Promise<T>, round?: number, tool?: string, activity?: AssistantProgress['activity'], toolArgs?:unknown): Promise<T> {
   if(['tool','model','review'].includes(stage))await assistantExecutionBoundary();
   const started = performance.now();
   const requestId = currentDiagnosticRequestId();
   diagnosticLog('site_assistant_stage', { requestId, stage, phase: 'start', round });
   let code: AssistantErrorCode | undefined;
   let upstreamStatus: number | undefined;
-  const progress = await startAssistantProgress(stage, tool);
+  const progress = await startAssistantProgress(stage, tool, activity, toolArgs);
   let result: T | undefined;
   try { result = await run(); return result; }
   catch (error) { code = assistantFailureCode(error); upstreamStatus=error instanceof AssistantFailure?error.upstreamStatus:undefined; throw error; }

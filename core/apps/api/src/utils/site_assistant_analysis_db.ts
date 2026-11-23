@@ -14,7 +14,7 @@ export type CompiledAnalysis = ReturnType<typeof compileAnalysis>;
 export interface AnalysisRows { rows:Record<string,unknown>[]; importedAt:string|null }
 
 /** Fresh, independent connection; never queues behind or changes the business pool. */
-export async function executeAnalysis(query:CompiledAnalysis,signal:AbortSignal):Promise<AnalysisRows> {
+export async function executeAnalysis<Query extends Pick<CompiledAnalysis,'sql'|'params'|'datasets'>>(query:Query,signal:AbortSignal):Promise<AnalysisRows> {
   signal.throwIfAborted();
   if(active>=2)throw new AnalysisInputError('Analysis is busy. Do not retry in this answer; ask the visitor to try later.');
   active++;

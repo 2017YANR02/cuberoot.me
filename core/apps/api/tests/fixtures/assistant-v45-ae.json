@@ -1,0 +1,132 @@
+[
+  {
+    "id": "AE01",
+    "question": "Give two timed drills for observing thumb lifts during slow turns, no more than 76 seconds combined. Then, in a separate paragraph, write one sentence asking Rowan to try both on Tuesday.",
+    "lang": "en",
+    "history": [],
+    "drafts": [
+      {
+        "call": 2,
+        "wire": "{\"answerKind\":\"general\",\"answer\":\"In a separate paragraph, ask Rowan to try both drills on Tuesday.\",\"sourceIds\":[],\"plan\":{\"inputs\":[{\"id\":\"drill_request\",\"quote\":\"Give two timed drills for observing thumb lifts during slow turns, no more than 76 seconds combined.\"}],\"activities\":[{\"title\":\"Slow insertion with thumb-lift check\",\"seconds\":40,\"steps\":[{\"action\":\"Choose one insertion you already know, set up its familiar case using that insertion's inverse, and visually verify the case and target slot; if verified, perform the insertion slowly while watching for thumb lifts, then reset the same case with the same inverse; otherwise use only your known slow turns and stop without inserting, resetting or checking a solved slot.\",\"reason\":\"This prepares a familiar case and gives a slow, observable insertion with a safe fallback.\",\"seconds\":40,\"requires\":[],\"produces\":[]}]},{\"title\":\"Recall the resulting state\",\"seconds\":36,\"steps\":[{\"action\":\"ONLY IF the familiar case was verified in the first drill, reset it and insert slowly while noting when each thumb lift occurs; OTHERWISE use known slow turns for the whole drill and end without insertion, inverse setup or solved-slot check; finish by recalling the actual resulting state and thumb-lift moments.\",\"reason\":\"This repeats the observable insertion only when verified and otherwise stays within known slow turns.\",\"seconds\":36,\"requires\":[],\"produces\":[]}]}]}}"
+      }
+    ]
+  },
+  {
+    "id": "AE02",
+    "question": "安排两项检查手指是否过早离开魔方的练习，给出各自秒数，总计不超过六十八秒。最后另写一句邀请阿晴周四来参加的话，另起一段。",
+    "lang": "zh",
+    "history": [],
+    "drafts": [
+      {
+        "call": 3,
+        "wire": "{\"answerKind\":\"general\",\"answer\":\"\",\"sourceIds\":[],\"plan\":{\"activities\":[{\"title\":\"记录当前可见角块信息\",\"seconds\":34,\"steps\":[{\"action\":\"选定视野中一个角块，记下它当前所在的面与位置，并逐一写下此刻实际可见的贴纸颜色；看不到的贴纸标为 UNKNOWN，全程不转动魔方。\",\"reason\":\"先固定一个观察对象和真实可见信息，作为后续两次检查的共同基准。\",\"seconds\":34,\"requires\":[],\"produces\":[\"corner_record\"]}]},{\"title\":\"回忆并复核同一角块\",\"seconds\":34,\"steps\":[{\"action\":\"不看记录先回忆刚才那个角块的位置与可见颜色，再对照记录逐项核对，标出记错或漏记的项；若没有记录可对照，就重新观察同一角块并当场写下所见信息。\",\"reason\":\"通过回忆与复核检验观察是否准确，并暴露手指过早离开时容易漏看的信息。\",\"seconds\":34,\"requires\":[\"corner_record\"],\"produces\":[]}]}]}}\n\n阿晴，周四来一起参加吧。"
+      },
+      {
+        "call": 54,
+        "wire": "{\"answerKind\":\"general\",\"answer\":\"\",\"sourceIds\":[],\"plan\":{\"activities\":[{\"title\":\"手指离魔方检查\",\"seconds\":34,\"steps\":[{\"action\":\"握好魔方准备起表，起表后立即开始转动，全程留意手指是否在计时开始前就离开魔方；完成一次还原后回看起表瞬间，判断手指是否过早离开。\",\"reason\":\"用一次完整还原检验起表时手指是否提前离开魔方。\",\"seconds\":34,\"requires\":[],\"produces\":[]}]},{\"title\":\"起表瞬间复核\",\"seconds\":34,\"steps\":[{\"action\":\"再做一次还原，起表前把手指稳稳放在计时器上，起表后立刻转动，结束后对比两次起表动作，确认手指是否在计时开始前离开魔方。\",\"reason\":\"通过第二次还原复核并纠正手指过早离开的问题。\",\"seconds\":34,\"requires\":[],\"produces\":[]}]}]}}\n\n阿晴，周四来一起参加吧！"
+      }
+    ]
+  },
+  {
+    "id": "AE03",
+    "question": "Give two ways to see whether a thumb movement interrupts a grip change, without a timer. Then, in its own paragraph, write exactly one sentence inviting Cleo to test the ideas on Saturday.",
+    "lang": "en",
+    "history": [],
+    "drafts": [
+      {
+        "call": 9,
+        "wire": "{\"answerKind\":\"general\",\"answer\":\"Two timer-free ways to check whether a thumb movement is interrupting a grip change:\\n\\n- Film the solve from a fixed side angle at a high frame rate, then step through the frames around the regrip and note whether the thumb leaves contact with the cube before the hand has finished repositioning; a break in contact during the transition is the interruption.\\n- Do slow-motion repetitions of the same transition and watch or feel for a distinct pause or re-plant of the thumb between the old and new grip; if the thumb must settle again before the next turn, the movement is interrupting the grip change rather than flowing through it.\\n\\nCleo, would you like to test these ideas with me on Saturday?\"}"
+      },
+      {
+        "call": 10,
+        "wire": "{\"answerKind\":\"general\",\"answer\":\"Two timer-free ways to check whether a thumb movement is interrupting a grip change:\\n\\n- Film the solve from a fixed side angle at a high frame rate, then step through the frames around the regrip and note whether the thumb leaves contact with the cube before the hand has finished repositioning; a break in contact during the transition is the interruption.\\n- Do slow-motion repetitions of the same transition and watch or feel for a distinct pause or re-plant of the thumb between the old and new grip; if the thumb must settle again before the next turn, the movement is interrupting the grip change rather than flowing through it.\\n\\nCleo, would you like to test these ideas with me on Saturday?\",\"sourceIds\":[]}"
+      },
+      {
+        "call": 11,
+        "wire": "{\"answerKind\":\"general\",\"answer\":\"You can detect a thumb interruption without any timing device by watching contact directly rather than measuring speed.\\n\\n1. Record the grip change with a phone in slow-motion mode, then scrub frame by frame and watch the thumb pad: if contact breaks or the thumb slides to a new spot before the grip settles, the movement interrupted the change.\\n2. Run a contact-trace test by placing a thin paper slip or a small ink or powder mark between the thumb and the cube, then performing the grip change; a slip that slides free or a mark that shifts shows the thumb moved against the surface rather than holding it.\\n\\nCleo, come test these ideas with me on Saturday.\",\"sourceIds\":[]}"
+      },
+      {
+        "call": 57,
+        "wire": "{\"answerKind\":\"general\",\"answer\":\"Two timer-free ways to check whether a thumb movement interrupts a grip change:\\n\\n- Film the hand at high frame rate (or slow motion) and watch the moment of regrip frame by frame: if the thumb lifts, slides or re-plants before the new grip is set, the movement is interrupting the change rather than happening after it.\\n- Do it blind to the clock and feel for continuity: repeat the regrip slowly and note whether the thumb stays in contact and the grip settles in one motion, or whether there is a distinct pause, re-placement or loss of contact that marks an interruption; a mirror or a second person watching the hand can confirm what you feel.\\n\\nCleo, would you like to test these ideas with me on Saturday?\"}"
+      },
+      {
+        "call": 58,
+        "wire": "{\"answerKind\":\"general\",\"answer\":\"Two timer-free ways to check whether a thumb movement interrupts a grip change:\\n\\n- Film the hand in slow motion or at a high frame rate and step through the regrip frame by frame: if the thumb lifts, slides or re-plants before the new grip is set, the movement is interrupting the change rather than following it.\\n- Repeat the regrip slowly without watching a clock and feel for continuity: note whether the thumb stays in contact and the grip settles in one motion, or whether there is a distinct pause, re-placement or loss of contact that marks an interruption; a mirror or a second person watching the hand can confirm what you feel.\\n\\nCleo, would you like to test these ideas with me on Saturday?\"}"
+      }
+    ]
+  },
+  {
+    "id": "AE04",
+    "question": "现在可以慢拧，用那个熟悉局面做两项练习，都写秒数。只在眼睛核对目标槽和两块各自的位置、确认无误后再插入。若摆不成，每项分别给一个不同的备用练法，只用会的转动。",
+    "lang": "zh",
+    "history": [
+      {
+        "role": "user",
+        "content": "这轮只有两分二十三秒。我想再练以前会的插入情形，但先别转动魔方，这个局面不一定能摆出来。"
+      },
+      {
+        "role": "assistant",
+        "content": "先静止观察，不强求摆出。"
+      }
+    ],
+    "drafts": [
+      {
+        "call": 12,
+        "wire": "{\"answerKind\":\"general\",\"answer\":\"\",\"sourceIds\":[],\"plan\":{\"inputs\":[{\"id\":\"familiar_insert\",\"quote\":\"我想再练以前会的插入情形\"},{\"id\":\"eye_check\",\"quote\":\"只在眼睛核对目标槽和两块各自的位置、确认无误后再插入\"},{\"id\":\"fallback_known\",\"quote\":\"若摆不成，每项分别给一个不同的备用练法，只用会的转动\"}],\"activities\":[{\"title\":\"熟悉插入情形慢练\",\"seconds\":70,\"steps\":[{\"action\":\"选一个自己会的插入法，用它的逆操作把当前局面摆成该插入的熟悉情形；只用眼睛核对目标槽和两块各自的位置，确认无误后慢速插入一次，再用同一逆操作把同一情形复位，重复一次；若摆不成熟悉情形，就只用会的转动慢拧，每转一步停一下，观察哪一块移动、哪一块没动，全程不做插入、不复位、不检查槽位\",\"reason\":\"先核对再插入，避免凭感觉转动；摆不成时用慢拧观察保持练习\",\"seconds\":70,\"requires\":[],\"produces\":[]}]},{\"title\":\"插入前预测核对\",\"seconds\":73,\"steps\":[{\"action\":\"选同一个会的插入法，用其逆操作摆出熟悉情形，用眼睛核对目标槽和两块位置无误后慢速插入一次，再用同一逆操作复位同一情形；若摆不成熟悉情形，就只用会的转动，在转一步之前先预测哪一块会移动，转完对照实际移动，全程不做插入、不复位、不检查槽位\",\"reason\":\"预测与实际对照能加深对已知转动的理解；摆不成时仍有明确的慢拧练习\",\"seconds\":73,\"requires\":[],\"produces\":[]}]}]}}"
+      },
+      {
+        "call": 13,
+        "wire": "{\"answerKind\":\"general\",\"answer\":\"\",\"sourceIds\":[],\"plan\":{\"inputs\":[{\"id\":\"familiar_insert\",\"quote\":\"我想再练以前会的插入情形\"},{\"id\":\"eye_check\",\"quote\":\"只在眼睛核对目标槽和两块各自的位置、确认无误后再插入\"},{\"id\":\"fallback_known\",\"quote\":\"若摆不成，每项分别给一个不同的备用练法，只用会的转动\"}],\"activities\":[{\"title\":\"熟悉插入情形慢练\",\"seconds\":70,\"steps\":[{\"action\":\"选一个自己会的插入法，用它的逆操作把当前局面摆成该插入的熟悉情形；只用眼睛核对目标槽和两块各自的位置，确认无误后慢速插入一次，再用同一逆操作把同一情形复位，重复一次；若摆不成熟悉情形，就只用会的转动慢拧，每转一步停一下，观察哪一块移动、哪一块没动，全程不做插入、不复位、不检查槽位\",\"reason\":\"先核对再插入，避免凭感觉转动；摆不成时用慢拧观察保持练习\",\"seconds\":70,\"requires\":[],\"produces\":[]}]},{\"title\":\"插入前预测核对\",\"seconds\":73,\"steps\":[{\"action\":\"选同一个会的插入法，用其逆操作摆出熟悉情形，用眼睛核对目标槽和两块位置无误后慢速插入一次，再用同一逆操作复位同一情形；若摆不成熟悉情形，就只用会的转动，在转一步之前先预测哪一块会移动，转完对照实际移动，全程不做插入、不复位、不检查槽位\",\"reason\":\"预测与实际对照能加深对已知转动的理解；摆不成时仍有明确的慢拧练习\",\"seconds\":73,\"requires\":[],\"produces\":[]}]}]}}"
+      }
+    ]
+  },
+  {
+    "id": "AE05",
+    "question": "允许缓慢转了。把那个熟悉情形做成两项有时长的练习。每项在摆出后目视核对局面，只有准确才插入。如果无法摆出，两项各写一个不同的备用练法，各用已会转动，不再试插入。",
+    "lang": "zh",
+    "history": [
+      {
+        "role": "user",
+        "content": "我只有两分七秒。我想复习学过的插入，也可能摆不出原来的局面，先不转动魔方。"
+      },
+      {
+        "role": "assistant",
+        "content": "先只看。"
+      }
+    ],
+    "drafts": [
+      {
+        "call": 18,
+        "wire": "{\"answerKind\":\"general\",\"answer\":\"\",\"sourceIds\":[],\"plan\":{\"inputs\":[{\"id\":\"familiar_case\",\"quote\":\"我想复习学过的插入，也可能摆不出原来的局面\"},{\"id\":\"slow_turns\",\"quote\":\"允许缓慢转了\"}],\"activities\":[{\"title\":\"熟悉情形插入复习\",\"seconds\":64,\"steps\":[{\"action\":\"选一个已会的插入，用它的逆操作把魔方摆成该插入对应的熟悉情形，缓慢转动；摆好后目视核对棱角位置和朝向以及目标槽位，只有完全准确才做该插入；插入后立即用同一逆操作把同一情形复位，再核对并重复；若无法摆出熟悉情形，则改为每次只做一个已会转动，转完停一下观察哪些块移动、哪些块朝向改变，不试插入\",\"reason\":\"先目视确认熟悉情形再插入，避免在错误局面上练错；摆不出时用慢转观察保持有效练习\",\"seconds\":64,\"requires\":[\"familiar_case\",\"slow_turns\"],\"produces\":[]}]},{\"title\":\"熟悉情形复位与预测\",\"seconds\":63,\"steps\":[{\"action\":\"选同一个已会插入，用它的逆操作摆出熟悉情形并缓慢转动，目视核对棱角位置、朝向和目标槽位，只有准确才插入，随后用同一逆操作复位同一情形再重复；若无法摆出熟悉情形，则改为在做一个已会转动前先预测哪一块会移动或哪一面会改变，转完缓慢对比实际结果，不试插入\",\"reason\":\"用复位重复巩固已会插入；摆不出时用预测对比训练对已会转动的理解\",\"seconds\":63,\"requires\":[\"familiar_case\",\"slow_turns\"],\"produces\":[]}]}]}}"
+      },
+      {
+        "call": 19,
+        "wire": "{\"answerKind\":\"general\",\"answer\":\"\",\"sourceIds\":[],\"plan\":{\"inputs\":[{\"id\":\"familiar_case\",\"quote\":\"我想复习学过的插入，也可能摆不出原来的局面\"},{\"id\":\"slow_turns\",\"quote\":\"允许缓慢转了\"}],\"activities\":[{\"title\":\"熟悉情形插入复习\",\"seconds\":64,\"steps\":[{\"action\":\"选一个已会的插入，用它的逆操作缓慢摆出该插入对应的熟悉情形，目视核对棱角位置、朝向和目标槽位；只有完全准确才做该插入，随后用同一逆操作复位同一情形再核对重复；若无法摆出熟悉情形，则改为每次只做一个已会转动，转完停一下观察哪些块移动、哪些块朝向改变，不试插入\",\"reason\":\"先目视确认熟悉情形再插入，避免在错误局面上练错；摆不出时用慢转观察保持有效练习\",\"seconds\":64,\"requires\":[\"familiar_case\",\"slow_turns\"],\"produces\":[]}]},{\"title\":\"熟悉情形复位与预测\",\"seconds\":63,\"steps\":[{\"action\":\"选同一个已会插入，用它的逆操作缓慢摆出熟悉情形，目视核对棱角位置、朝向和目标槽位；只有完全准确才做该插入，随后用同一逆操作复位同一情形再重复；若无法摆出熟悉情形，则改为在做一个已会转动前先预测哪一块会移动或哪一面会改变，转完缓慢对比实际结果，不试插入\",\"reason\":\"用复位重复巩固已会插入；摆不出时用预测对比训练对已会转动的理解\",\"seconds\":63,\"requires\":[\"familiar_case\",\"slow_turns\"],\"produces\":[]}]}]}}"
+      },
+      {
+        "call": 65,
+        "wire": "{\"answerKind\":\"general\",\"answer\":\"\",\"sourceIds\":[],\"plan\":{\"inputs\":[{\"id\":\"user_request\",\"quote\":\"允许缓慢转了。把那个熟悉情形做成两项有时长的练习。每项在摆出后目视核对局面，只有准确才插入。如果无法摆出，两项各写一个不同的备用练法，各用已会转动，不再试插入。\"}],\"activities\":[{\"title\":\"熟悉插入复习与逐转观察\",\"seconds\":63,\"steps\":[{\"action\":\"选一个自己已会的插入，用它的逆操作在当前魔方上摆出该插入对应的熟悉情形，缓慢转动；摆好后目视核对棱块与角块的位置和朝向以及目标槽，只有核对准确才做该插入；插入后若核对准确，用同一逆操作把同一情形复位再重复；若无法摆出熟悉情形，则改用自己已会的转动，每转一步后停一下，观察哪些块可见地移动或朝向改变，整个活动只做这种慢转观察，不再尝试插入、逆操作复位或检查槽位。\",\"reason\":\"先目视确认熟悉情形再插入，避免在错误局面上练错；摆不出时用逐转观察保持有效练习。\",\"seconds\":63,\"requires\":[\"user_request\"],\"produces\":[]}]},{\"title\":\"熟悉插入复习与转动预测\",\"seconds\":64,\"steps\":[{\"action\":\"再次选同一个已会的插入，用它的逆操作缓慢摆出该熟悉情形，摆好后目视核对棱块、角块与目标槽，只有核对准确才做该插入；插入后若核对准确，用同一逆操作复位同一情形再重复；若无法摆出熟悉情形，则改用自己已会的转动，在做一个已知转动前先预测哪一块会可见地移动或朝向改变，做完后与实际比较，整个活动只做这种预测与比较，不再尝试插入、逆操作复位或检查槽位。\",\"reason\":\"目视核对保证插入练习的局面正确；摆不出时用预测与比较维持专注的慢速练习。\",\"seconds\":64,\"requires\":[\"user_request\"],\"produces\":[]}]}]}}"
+      },
+      {
+        "call": 66,
+        "wire": "{\"answerKind\":\"general\",\"answer\":\"\",\"sourceIds\":[],\"plan\":{\"inputs\":[{\"id\":\"user_request\",\"quote\":\"允许缓慢转了。把那个熟悉情形做成两项有时长的练习。每项在摆出后目视核对局面，只有准确才插入。如果无法摆出，两项各写一个不同的备用练法，各用已会转动，不再试插入。\"}],\"activities\":[{\"title\":\"熟悉插入复习与逐转观察\",\"seconds\":63,\"steps\":[{\"action\":\"选一个自己已会的插入，用它的逆操作在当前魔方上缓慢摆出该插入对应的熟悉情形，摆好后目视核对棱块与角块的位置和朝向以及目标槽；只有核对准确才做该插入，插入后用同一逆操作把同一情形复位再重复；如果无法摆出熟悉情形，就改用自己已会的转动，每转一步后停一下，观察哪些块可见地移动或朝向改变，整个活动只做这种慢转观察，不再尝试插入、逆操作复位或检查槽位。\",\"reason\":\"先目视确认熟悉情形再插入，避免在错误局面上练错；摆不出时用逐转观察保持有效练习。\",\"seconds\":63,\"requires\":[\"user_request\"],\"produces\":[]}]},{\"title\":\"熟悉插入复习与转动预测\",\"seconds\":64,\"steps\":[{\"action\":\"再次选同一个已会的插入，用它的逆操作缓慢摆出该熟悉情形，摆好后目视核对棱块、角块与目标槽；只有核对准确才做该插入，插入后用同一逆操作复位同一情形再重复；如果无法摆出熟悉情形，就改用自己已会的转动，在做一个已知转动前先预测哪一块会可见地移动或朝向改变，做完后与实际比较，整个活动只做这种预测与比较，不再尝试插入、逆操作复位或检查槽位。\",\"reason\":\"目视核对保证插入练习的局面正确；摆不出时用预测与比较维持专注的慢速练习。\",\"seconds\":64,\"requires\":[\"user_request\"],\"produces\":[]}]}]}}"
+      }
+    ]
+  },
+  {
+    "id": "AE13",
+    "lang": "zh",
+    "question": "我有做好的双面卡，正面是匈牙利语单词，背面是中文释义。做两项定时练习，最多九十九秒。都从中文想拼法，先写，翻面查看后把同一张翻回中文面。",
+    "history": [],
+    "drafts": [
+      {
+        "call": 38,
+        "wire": "{\"answerKind\":\"general\",\"answer\":\"\",\"sourceIds\":[],\"plan\":{\"inputs\":[{\"id\":\"hungarian_cards\",\"quote\":\"我有做好的双面卡，正面是匈牙利语单词，背面是中文释义。\"}],\"activities\":[{\"title\":\"中文提示写拼法\",\"seconds\":50,\"steps\":[{\"action\":\"把全部卡片中文面朝上摊开，逐张读中文释义，先在纸上写下自己想到的匈牙利语拼法，再翻面核对单词，然后把同一张翻回中文面朝上，继续下一张；若卡片不足或没有卡片，就只做已摊开的这些，不补造新卡。\",\"reason\":\"从中文想拼法属于产出型回忆，先写再核对能暴露拼写错误，翻回中文面保证下一张仍从中文提示出发。\",\"seconds\":50,\"requires\":[\"hungarian_cards\"],\"produces\":[]}]},{\"title\":\"错词重写核对\",\"seconds\":49,\"steps\":[{\"action\":\"把刚才写错或没写出的卡片挑出，中文面朝上，重新在纸上写一遍拼法，翻面核对后把同一张翻回中文面朝上；若第一轮没有错误，就用全部卡片按同样方式再走一遍。\",\"reason\":\"针对薄弱词再写一次能巩固拼写，翻回中文面保持从中文提示出发的同一练习方向。\",\"seconds\":49,\"requires\":[\"hungarian_cards\"],\"produces\":[]}]}]}}"
+      },
+      {
+        "call": 85,
+        "wire": "{\"answerKind\":\"general\",\"answer\":\"\",\"sourceIds\":[],\"plan\":{\"inputs\":[{\"id\":\"hungarian_cards\",\"quote\":\"我有做好的双面卡，正面是匈牙利语单词，背面是中文释义。\"}],\"activities\":[{\"title\":\"中文面回忆拼写\",\"seconds\":50,\"steps\":[{\"action\":\"把全部卡片中文面朝上摊开，逐张从中文释义回忆匈牙利语拼法，先在纸上写出拼写，再翻面核对单词，然后把同一张翻回中文面朝上，继续下一张；若卡片不足或为零，就只练现有的几张，没有卡片时改为在纸上默写已学单词并自查。\",\"reason\":\"从中文想拼法属于产出型回忆，先写再翻面能暴露真实拼写错误，翻回中文面保证下一轮仍从同一方向开始。\",\"seconds\":50,\"requires\":[\"hungarian_cards\"],\"produces\":[]}]},{\"title\":\"限时快查巩固\",\"seconds\":49,\"steps\":[{\"action\":\"重新把卡片中文面朝上，用更快节奏逐张写出匈牙利语拼写，翻面核对后立即翻回中文面，把写错或卡住的卡片单独放一边，最后用剩余时间对这几张再走一遍同样的写、翻、翻回流程；若没有错卡，就把全部卡片按同样方式再快速过一遍。\",\"reason\":\"第二轮限时加压能强化提取速度，单独标记错卡便于在剩余时间内针对性重复，同时保持中文面起始的一致方向。\",\"seconds\":49,\"requires\":[\"hungarian_cards\"],\"produces\":[]}]}]}}"
+      }
+    ]
+  }
+]

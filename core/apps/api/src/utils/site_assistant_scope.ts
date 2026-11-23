@@ -33,6 +33,14 @@ const scopedEvent = (scope: AttendanceScope) => {
   return WCA_EVENT_ORDER.find(event=>event===id);
 };
 
+export function singleRoundEvent(text:string) {
+  const matches=[...text.matchAll(eventPattern)];
+  if (matches.length!==1) return;
+  const label=matches[0][0];
+  const event=scopedEvent({event:{text:label}});
+  return event ? {label,event} : undefined;
+}
+
 /** A narrow guard for personal attendance follow-ups, based only on user wording. */
 export function assistantAttendanceScope(question: string, history: AssistantMessage[], now: Date, timeZone: string, viewerWcaId?: string): AttendanceScope | undefined {
   let scope: AttendanceScope = {};
