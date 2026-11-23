@@ -174,7 +174,7 @@ describe('LandingSearch placeholder hydration', () => {
     });
     vi.stubGlobal('fetch',fetcher);
     return {fetcher,posts,get snapshot(){return snapshot;},set disconnected(value:boolean){disconnected=value;},reject(error:string,status:number){rejection={error,status};},
-      async update(change:(snapshot:AssistantQueueSnapshot)=>void){change(snapshot);snapshot.revision++;await act(async()=>{await vi.advanceTimersByTimeAsync(1000);});}};
+      async update(change:(snapshot:AssistantQueueSnapshot)=>void, elapsedMs=1000){change(snapshot);snapshot.revision++;await act(async()=>{await vi.advanceTimersByTimeAsync(elapsedMs);});}};
   }
   // Drain the async receipt/snapshot microtasks without advancing UI timers.
   async function settle() { await act(async()=>{await new Promise<void>(resolve=>setImmediate(resolve));}); }
@@ -221,7 +221,8 @@ describe('LandingSearch placeholder hydration', () => {
       expect(server.posts).toHaveLength(1);expect(server.posts[0].body.input).toMatchObject({question:'解释 WIC',images:[{attachmentId:'11111111-1111-4111-8111-111111111111'}]});
       await type('textarea[aria-label="继续提问"]','下一问');
       await act(async()=>{assistantConversations.setOpen(owner,false);assistantConversations.create(owner,'other-chat');assistantConversations.setOpen(owner,true);});
-      await server.update(snapshot=>{snapshot.activeId=undefined;Object.assign(snapshot.messages[0],{state:'completed',answer:{answer:'廉政委员会',sources:[]}});});
+      // Inactive chats use the five-second polling interval without an SSE subscription.
+      await server.update(snapshot=>{snapshot.activeId=undefined;Object.assign(snapshot.messages[0],{state:'completed',answer:{answer:'廉政委员会',sources:[]}});},5000);
       await act(async()=>{await import('react-markdown');});
       const original=()=>assistantConversations.read(owner).conversations.find(chat=>chat.id===chatId)!;
       for(let i=0;i<40&&!original().unreadReply;i++)await act(async()=>{await vi.advanceTimersByTimeAsync(25);});

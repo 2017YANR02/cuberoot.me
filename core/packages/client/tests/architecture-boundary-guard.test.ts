@@ -62,13 +62,15 @@ describe('architecture boundary guard', () => {
     // reviewed contracts added in 76f68f239.
     // The music publisher and admin deletion coordinate through the registered flock subprocess.
     // One registered offline adapter rebuilds the OpenCV pose bindings.
-    expect(CURRENT).toHaveLength(MANIFEST.legacyFindings.length + 48);
+    // Three assistant evaluation subprocess identities are covered by the two
+    // registered resource-supervision contracts.
+    expect(CURRENT).toHaveLength(MANIFEST.legacyFindings.length + 51);
     expect(MANIFEST.legacyFindings.filter((finding: { rule: string }) => finding.rule === 'shared-root-import')).toHaveLength(139);
     expect(MANIFEST.legacyFindings.filter((finding: { rule: string }) => finding.rule === 'cross-package-alias-import')).toHaveLength(0);
   });
 
   it('keeps every semantic edge contract tied to live repository evidence', () => {
-    expect(MANIFEST.manualContracts).toHaveLength(43);
+    expect(MANIFEST.manualContracts).toHaveLength(45);
     expect(validateManifestSchema(MANIFEST)).toEqual([]);
     expect(validateManualContracts(MANIFEST.manualContracts)).toEqual([]);
     expect(new Set(MANIFEST.manualContracts.map((item: { phase: string }) => item.phase))).toEqual(new Set([
