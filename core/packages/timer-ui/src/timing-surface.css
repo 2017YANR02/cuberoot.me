@@ -337,7 +337,9 @@
   position: relative;
   top: calc(var(--solo-region-offset-y, 0px) * var(--solo-apply-offsets, 1));
 }
-.timing-surface--solo .scramble-text { --solo-region-offset-y: var(--solo-scramble-offset-y, 0px); }
+.timing-surface--solo .scramble-text {
+  --solo-region-offset-y: max(var(--solo-scramble-min-offset-y, var(--solo-scramble-offset-y, 0px)), var(--solo-scramble-offset-y, 0px));
+}
 .timing-surface--solo .scramble-src-row { --solo-region-offset-y: var(--solo-source-offset-y, 0px); }
 .timing-surface--solo .timer-display-wrap { --solo-region-offset-y: var(--solo-timer-offset-y, 0px); }
 .timing-surface--solo .timing-surface-cube-frame { --solo-region-offset-y: var(--solo-cube-offset-y, 0px); }

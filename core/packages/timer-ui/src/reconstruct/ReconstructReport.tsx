@@ -34,6 +34,7 @@
 
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
+import { toLocalIsoDate } from '@cuberoot/shared/iso-date';
 import type { Solve, EventId } from '@cuberoot/shared/timer';
 import type { ReconSnapshot } from '@cuberoot/shared/recon-ground-truth';
 import { sliceReconstruction, detectMemoPause } from '@cuberoot/shared/timer/reconstruct/slice';
@@ -92,6 +93,8 @@ export interface ReconstructReportProps {
   /** Drop the 日期 cell from the summary row. For containers that already show
    *  the timestamp in their own header — the solve detail page does. */
   hideDate?: boolean;
+  /** Place the standard summary in the containing dialog header. */
+  summaryTarget?: HTMLElement | null;
   /** The inline recap renders these actions beside its full-screen control. */
   hideActions?: boolean;
   /** Keep the recap stable until final notation is ready; references may finish later. */
@@ -113,11 +116,12 @@ const BLD_MEMO_EVENTS = new Set<EventId>(['333bld', '333ni']);
 
 
 function ReconstructReportBody({
-  solve, isZh, history, onMemoApply, onUseScramble, onReconFeedback, hideDate, hideActions, pendingFallback, live = false, liveStageTarget, liveGyroSamples, onReviewSnapshot,
+  solve, isZh, history, onMemoApply, onUseScramble, onReconFeedback, hideDate, summaryTarget, hideActions, pendingFallback, live = false, liveStageTarget, liveGyroSamples, onReviewSnapshot,
 }: ReconstructReportProps) {
   const host = useReconstructHost();
   const { localize: tr } = host;
   const moves = solve.moves ?? [];
+  const frameTimed = solve.videoReconstruction === 'solved';
   const methodMoves = moves.map(move => move.m).join(' ');
   // Classification uses move order, never elapsed time. Timer ticks must not
   // repeat the orientation search or invalidate the report's method.
@@ -145,7 +149,7 @@ function ReconstructReportBody({
     return set;
   }, [waste]);
 
-  const scoreable = !live && stepMx !== null && stepMx.putDownMs !== null && solve.penalty !== 'DNF';
+  const scoreable = !frameTimed && !live && stepMx !== null && stepMx.putDownMs !== null && solve.penalty !== 'DNF';
   // Reader preference only; changing methods never rewrites the stored solve.
   const analysisInput = useMemo<AnalysisInput | null>(() => prepared.text ? {
     scoreable: scoreable && method === 'cfop', text: prepared.text,
@@ -227,6 +231,7 @@ function ReconstructReportBody({
   const [reportUI, setReportUI] = useState(initialReportUI);
 
   const dt = new Date(solve.ts);
+  const solveDate = toLocalIsoDate(dt);
   const memoMs = solve.bld?.memoMs;
 
   // 摘要里的步数按 STM 记:还原步骤上一个中层是一个记号(`S`,不是 `F' B`),读者对着
@@ -234,13 +239,14 @@ function ReconstructReportBody({
   // 那几对。效率比对和分步分析表仍然按 HTM 数(那边和参考解法比,口径必须一致,
   // 见 `humanize.ts` 头注),所以那张表的步数会比这里多几个。
   const executionMs = useMemo(() => {
+    if (frameTimed) return null;
     if (method === 'cfop') {
       if (!stepMx) return null;
       return stepMx.steps.reduce((sum, step) => sum + (step.executionMs ?? 0), 0);
     }
     if (!walk) return null;
     return walk.stages.reduce((sum, stage) => sum + (stage.executionMs ?? 0), 0);
-  }, [method, stepMx, walk]);
+  }, [frameTimed, method, stepMx, walk]);
   const { stm: stmCount, tps: stmTps, fluency } = reconstructionSummary(moves, solve.timeMs, reconText, executionMs, memoMs);
 
   // Auto-detect memo pause for BLD-class solves that haven't had a memoMs
@@ -315,6 +321,7 @@ function ReconstructReportBody({
           method={method}
           segs={stageSegs}
           stepMetrics={stepMx}
+          frameTimed={frameTimed}
           slots={slots}
           reference={analysis?.reference ?? null}
           slotReference={analysis?.slotReference ?? null}
@@ -331,7 +338,7 @@ function ReconstructReportBody({
           isZh={isZh}
         />
       )}
-      {stageSegs && memoMs === undefined && method === 'cfop' && (
+      {!frameTimed && stageSegs && memoMs === undefined && method === 'cfop' && (
         <StageMetaLine
           stepMetrics={stepMx}
           inspectionMs={solve.inspectionMs ?? null}
@@ -360,8 +367,9 @@ function ReconstructReportBody({
   const extras=reportNotationExtras(solve,playbackRecon,initialReportUI(solve.reconOk),tr,{recordGyro:host.recordGyro,canEnableGyro:Boolean(host.onEnableGyro),canFeedback:Boolean(onReconFeedback)});
   const composition=reportComposition({solve,recon:reconText,analysis:analysis??null,hasAnalysis:Boolean(analysisInput),scoreable,state:reportUI,tr,
     hideActions,hasTable:Boolean(stageSegs||walk),hasMeta:false,autoMemoMs,hasBldMemo:Boolean(bldMemo),hasAssistantAction:Boolean(assistantAction)});
+  const summary = reportSummary(solve, { stm: stmCount, tps: stmTps, fluency }, tr,
+    hideDate ? undefined : { short: solveDate, full: `${solveDate} ${dt.toLocaleTimeString()}` });
   const document=resolveReportSlots(composition,{
-    summary:reportSummary(solve,{stm:stmCount,tps:stmTps,fluency},tr,hideDate?undefined:{short:dt.toLocaleDateString(),full:dt.toLocaleString()}),
     'raw-list':reportRawMoves(solve,wastedIdx,tr),
     'reference-list':analysis?.reference?reportReferences(analysis.reference,tr):null,
     ...reportBld(solve,autoMemoMs,bldMemo,slices.executionMs,Boolean(onMemoApply),tr),
@@ -370,6 +378,9 @@ function ReconstructReportBody({
     setReportUI(state=>reduceReportUI(state,action));
     if(action.type==='memo')onMemoApply?.(Number(action.value));
   }} slots={{
+    summary: summaryTarget
+      ? createPortal(<ReportContent node={summary} dispatch={() => {}} />, summaryTarget)
+      : <ReportContent node={summary} dispatch={() => {}} />,
     actions:<ReconstructActions host={host} solve={solve} onUseScramble={onUseScramble} placement="report" snapshot={reviewSnapshot}/>,
     'assistant-action':assistantAction,
     analysis:analysisBlock,

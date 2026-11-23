@@ -1733,10 +1733,11 @@
   }
   .sim-stage-controls .playback-bar-btn,
   .sim-playback-settings > button { min-width: 44px; min-height: 44px; padding-inline: 6px; }
-  .sim-playback-settings .sim-playback-speed { width: 100%; }
-  .sim-playback-settings .sim-view-tools { flex-wrap: wrap; margin: 0; gap: 4px; }
-  .sim-playback-settings .sim-color-select-trigger,
-  .sim-playback-settings .compact-select-trigger { min-width: 44px; min-height: 44px; }
+  .sim-playback-settings-panel .sim-playback-speed { width: 100%; }
+  .sim-playback-settings-panel .sim-view-tools { flex-wrap: wrap; margin: 0; gap: 4px; }
+  .sim-playback-settings-panel .sim-view-tools .playback-bar-btn,
+  .sim-playback-settings-panel .sim-color-select-trigger,
+  .sim-playback-settings-panel .compact-select-trigger { min-width: 44px; min-height: 44px; }
 }
 
 @media (pointer: coarse) and (orientation: landscape) and (min-width: 560px) and (max-height: 600px) {
@@ -1748,8 +1749,8 @@
   .sim-player button:not(.pill-toggle):not(.bool-toggle-label),
   .sim-player input:not([type="range"]),
   .sim-player select,
-  .sim-playback-settings .sim-color-select-trigger,
-  .sim-playback-settings .compact-select-trigger,
+  .sim-playback-settings-panel .sim-color-select-trigger,
+  .sim-playback-settings-panel .compact-select-trigger,
   .sim-float-close,
   .sim-backview-swap,
   .sim-image-swap { min-width: 44px; min-height: 44px; }
@@ -1775,18 +1776,4 @@
 .sim-stage-controls .playback-bar-controls:has(> .sim-playback-speed) { column-gap: 6px; }
 @media (max-width: 767px) {
   .sim-stage-controls .playback-bar-controls:has(> .sim-playback-speed) { column-gap: 2px; }
-}
-
-/* Escape the short portrait stage scroll clip while keeping all settings reachable. */
-@media (pointer: coarse) and (orientation: portrait) and (max-width: 767px) and (max-height: 600px) {
-  .sim-playback-settings .settings-popover-panel {
-    /* anchored-panel: clamped (SettingsPopover uses usePanelClamp). */
-    position: fixed;
-    top: calc(var(--page-notice-h, 0px) + 8px);
-    right: 8px;
-    left: auto;
-    bottom: auto;
-    max-height: calc(var(--sim-visible-height, 100dvh) - var(--page-notice-h, 0px) - 16px);
-    overflow-y: auto;
-  }
 }

@@ -32,7 +32,7 @@ export class CameraPreRoll<T extends { timestamp: number; close(): void }> {
 }
 
 type CaptureWindow = {
-  id: string; start: number; end?: number; closed: boolean; first: boolean;
+  id: string; start: number; stop?: number; end?: number; closed: boolean; first: boolean;
 };
 
 /** Keep the preceding window until its end marker reaches the ordered queue. */
@@ -50,10 +50,25 @@ export class TimerCaptureGate {
 
   stop(id: string, stop: number, tailSeconds = TIMER_TAIL_SECONDS) {
     const window = this.windows.get(id);
-    if (window) {
+    if (window && !window.closed) {
+      window.stop = stop;
       window.end = stop + tailSeconds;
       this.previousEnd = window.end;
     }
+  }
+
+  capturingTail(id: string) {
+    const window = this.windows.get(id);
+    return window !== undefined && !window.closed && window.stop !== undefined;
+  }
+
+  /** An immediate next attempt owns its start even if the previous tail is still open. */
+  shortenTailBefore(nextStart: number) {
+    const window = this.latestId ? this.windows.get(this.latestId) : undefined;
+    if (!window || window.closed || window.stop === undefined || window.end === undefined || nextStart >= window.end) return;
+    const tail = Math.max(0, nextStart - window.stop);
+    this.stop(window.id, window.stop, tail);
+    return { id: window.id, stop: window.stop, tail };
   }
 
   admit(timestamp: number) {

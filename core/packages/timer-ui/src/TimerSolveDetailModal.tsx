@@ -97,6 +97,7 @@ export interface TimerSolveDetailModalProps {
   /** Actions shown only in the full-detail header, after the penalty control. */
   fullHeaderActions?: ReactNode;
   index: number;
+  title?: string;
   localize: (copy: TimerHistoryLocalizedText) => string;
   moveTargets?: readonly { id: string; name: string }[];
   onChangeComment?: (comment: string) => void;
@@ -154,6 +155,7 @@ export function TimerSolveDetailModal({
   formatDate = (timestamp) => new Date(timestamp).toLocaleString(),
   fullHeaderActions,
   index,
+  title,
   localize,
   moveTargets = [],
   onChangeComment,
@@ -478,7 +480,7 @@ export function TimerSolveDetailModal({
           <>
             <header className="timer-solve-detail-full-head">
               <div className="timer-solve-detail-inner">
-                <h2 id={titleId}>#{index + 1}</h2>
+                <h2 id={titleId}>{title ?? `#${index + 1}`}</h2>
                 <time dateTime={new Date(solve.ts).toISOString()}>{formatDate(solve.ts)}</time>
                 {penalty}
                 {fullHeaderActions && (
@@ -508,7 +510,7 @@ export function TimerSolveDetailModal({
         ) : (
           <>
             <h2 id={titleId}>
-              #{index + 1} · {formatSolveResult(solve)}
+              {title ?? `#${index + 1}`} · {formatSolveResult(solve)}
               {solve.penalty === '+2' && ' (+2)'}
             </h2>
             <section className="timer-solve-detail-section">

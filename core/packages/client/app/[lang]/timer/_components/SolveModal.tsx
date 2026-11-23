@@ -4,7 +4,7 @@ import { TimerSolveDetailModal } from '@cuberoot/timer-ui';
 import ReconstructActions from '@cuberoot/timer-ui/reconstruct-actions';
 import { SolveRecapBodyPlaceholder } from '@cuberoot/timer-ui/solve-recap-placeholder';
 import dynamic from 'next/dynamic';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useState, type ReactNode } from 'react';
 import type { ReconSnapshot } from '@cuberoot/shared/recon-ground-truth';
 
 import { tr } from '@/i18n/tr';
@@ -26,15 +26,18 @@ interface Props {
   index: number;
   isZh: boolean;
   moveTargets?: { id: string; name: string }[];
-  onChangeComment: (text: string) => void;
-  onChangePenalty: (penalty: Penalty) => void;
+  onChangeComment?: (text: string) => void;
+  onChangePenalty?: (penalty: Penalty) => void;
   onClose: () => void;
-  onDelete: () => void;
+  onDelete?: () => void;
   onDisplayed?: () => void;
   onMoveToSession?: (targetSessionId: string) => void;
   onReconFeedback?: (ok: boolean | undefined) => void;
   onUseScramble?: (scramble: string) => void;
   solve: Solve;
+  title?: string;
+  reportStatus?: ReactNode;
+  sourceVideo?: ReactNode;
 }
 
 /** Web adapter: native preview/report slots around the one shared detail UI. */
@@ -53,8 +56,11 @@ export default function SolveModal({
   onReconFeedback,
   onUseScramble,
   solve,
+  title,
+  reportStatus,
+  sourceVideo,
 }: Props) {
-  const hasMoves = solve.event !== 'pll-chain' && (solve.moves?.length ?? 0) > 0;
+  const hasMoves = !reportStatus && solve.event !== 'pll-chain' && (solve.moves?.length ?? 0) > 0;
   const reconstructHost = useWebReconstructHost();
   const [review, setReview] = useState<{ id: string; snapshot: ReconSnapshot | null } | null>(null);
   const receiveReview = useCallback((snapshot: ReconSnapshot | null) => setReview({ id: solve.id, snapshot }), [solve.id]);
@@ -77,7 +83,7 @@ export default function SolveModal({
   return (
     <TimerSolveDetailModal
       closeRequested={closeRequested || localCloseRequested}
-      fullHeaderActions={hasMoves ? (
+      fullHeaderActions={hasMoves && !title ? (
         <ReconstructActions
           host={reconstructHost}
           onUseScramble={handleUseScramble}
@@ -87,6 +93,7 @@ export default function SolveModal({
         />
       ) : undefined}
       index={index}
+      title={title}
       localize={tr}
       moveTargets={moveTargets}
       onChangeComment={onChangeComment}
@@ -97,7 +104,10 @@ export default function SolveModal({
       onMoveToSession={onMoveToSession}
       onUseScramble={handleUseScramble}
       preview={solve.event !== 'pll-chain' ? <CubePreview event={solve.event} scramble={solve.scramble} size={14} /> : undefined}
-      report={hasMoves ? (
+      report={reportStatus || hasMoves || sourceVideo ? <>
+        {!title && solve.videoReconstruction && (reportStatus || solve.videoReconstruction === 'solved') && <strong>{tr({ zh: '视频复盘', en: 'Video reconstruction' })}</strong>}
+        {reportStatus}
+        {hasMoves && (
         <ReconstructReport
           history={history}
           hideActions
@@ -108,8 +118,9 @@ export default function SolveModal({
           onReviewSnapshot={receiveReview}
           onUseScramble={handleUseScramble}
           solve={solve}
-        />
-      ) : undefined}
+        />)}
+        {sourceVideo}
+      </> : undefined}
       solve={solve}
     />
   );

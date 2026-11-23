@@ -30,6 +30,7 @@ export interface TimerDeviceCenterProps {
   items: readonly TimerDeviceCenterItem[];
   menuLabel: string;
   triggerLabel: string;
+  hideTooltip?: boolean;
 }
 
 /**
@@ -49,6 +50,7 @@ export function TimerDeviceCenter({
   directSingleItem = false,
   items,
   menuLabel,
+  hideTooltip = false,
 }: TimerDeviceCenterProps) {
   const [open, setOpen] = useState(false);
   const ownTriggerRef = useRef<HTMLButtonElement>(null);
@@ -81,7 +83,7 @@ export function TimerDeviceCenter({
           }
         }}
         ref={triggerRef}
-        title={directItem?.label ?? ariaLabel}
+        title={hideTooltip ? undefined : directItem?.label ?? ariaLabel}
         type="button"
       >
         <Bluetooth aria-hidden="true" size={16} />

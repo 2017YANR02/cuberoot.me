@@ -36,12 +36,13 @@
 
 import { reportSeconds } from './report-presentation';
 import ReportContent from './ReportContent';
-import { reportPlayback, reportPlayerAction, playbackMoveDurationTicks, type ReportPlayerState } from './report-player';
+import { REPLAY_SPEEDS, reportPlayback, reportPlayerAction, playbackMoveDurationTicks, type ReportPlayerState } from './report-player';
 import type { ReportAction } from './report-content';
 import { lazy, Suspense, useEffect, useMemo, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
 
 import { useReconstructHost } from './ReconstructHost';
+import { PlaybackSpeedSelect } from '../PlaybackBar';
 
 import type { EventId } from '@cuberoot/shared/timer';
 import { TimerCubePreview as CubePreview } from '../TimerCubePreview';
@@ -107,6 +108,7 @@ export default function PlaybackPanel({
   const timelineRef = useRef<SolveTimelineHandle | null>(null);
   const counterRef = useRef<HTMLSpanElement | null>(null);
   const playbackQuatRef = useRef<Quat | null>(null);
+  const viewOrbitRef = useRef<{ x: number; y: number; z: number } | null>(null);
 
   // 解一次就够,别每帧解。空录像 → 没开关。
   const gyroTrack = useMemo(() => decodeGyroTrack(gyro), [gyro]);
@@ -251,13 +253,15 @@ export default function PlaybackPanel({
   const simPose = !useRebuilt && !posed && viewRotation ? viewRotation : '';
 
 
-  return <ReportContent node={reportPlayback(playerRef.current,total,totalMs,hasGyro,Boolean(side),tr)} dispatch={dispatchPlayer} slots={{
+  return <ReportContent node={reportPlayback(playerRef.current,total,totalMs,hasGyro,Boolean(side),tr,'menu')} dispatch={dispatchPlayer} slots={{
+    speeds: <PlaybackSpeedSelect label={tr({ zh: '播放倍速', en: 'Playback speed' })} value={speedMult}
+      options={REPLAY_SPEEDS} onChange={value => dispatchPlayer({ type: 'speed', value })} />,
     cube:<div ref={cubeBoxRef} className={`reconstruct-playback-cube${gyroOn ? ' is-gyro' : ''}`}>
           {isNxn3 ? (cubeNear ? (
             <Suspense fallback={<div className="timer-live-cube-3d" aria-hidden />}><SimCubeView
               language={tr({ en: 'en' as const, zh: 'zh' as const })}
               allowViewDrag
-              resetViewOnRelease
+              viewOrbitRef={viewOrbitRef}
               moves={simMoves}
               pose={simPose}
               key={useRebuilt ? `rebuilt:${rebuiltInspection}` : 'recorded'}

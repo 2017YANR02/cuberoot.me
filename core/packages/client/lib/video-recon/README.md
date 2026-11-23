@@ -31,9 +31,10 @@ the pinned ONNX Runtime distribution into `public/vendor/video-recon/runtime/`.
 The model weights use the upstream manifest. The pose manifest selects the current CPU pipeline build.
 The original CubeRoot opening-grip fix now lives in `engine/cube-orientation.ts`.
 
-Open `/frame-count?mode=detector` for automatic reconstruction or
-`/frame-count?mode=timer` for the camera timer. The retired `/video-recon` route returns HTTP 404.
-Next serves COOP/COEP on the page and COEP/CORP on the worker assets. The existing
+Open `/frame-count?mode=detector` for file reconstruction or `/frame-count?mode=record`
+to record from a camera. Use the camera icon in `/timer` to capture a timed solve.
+The retired `/video-recon` route returns HTTP 404.
+Next serves COOP/COEP on `/frame-count` and COEP/CORP on the worker assets. The existing
 nginx proxy passes those Next headers through on the self-hosted line.
 The production video tool installs a route-scoped offline service worker. It
 warms the anonymous page shell and runtime, then caches each model on first use.

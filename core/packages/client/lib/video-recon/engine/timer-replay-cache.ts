@@ -37,18 +37,18 @@ export class LocalReplayStorage implements ReplayStorage {
 /** Persist geometry-only replays. Keep camera frames for the latest solve in
  * memory only, releasing them as soon as another solve starts. */
 export class TimerReplayCache {
-  private pending=new Map<string,{clip?:TimerReplay;finished:boolean;saving?:Promise<void>;reconstruction?:TimerReconstructionResult}>();
+  private pending=new Map<string,{clip?:TimerReplay;finished:boolean;persist:boolean;saving?:Promise<void>;reconstruction?:TimerReconstructionResult}>();
   private selected?:string;
   private latestId?:string;
   private latest?:TimerReplay;
   private version=0;
   private removed=new Set<string>();
   constructor(private storage:ReplayStorage,private display:(clip?:TimerReplay,loading?:boolean,error?:string)=>void){}
-  begin(id:string){
+  begin(id:string,persist=true){
     if(this.latest&&this.selected===this.latest.id)this.display(replayWithoutImages(this.latest));
     for(const entry of this.pending.values())if(entry.clip)entry.clip=replayWithoutImages(entry.clip);
     this.latestId=id;this.latest=undefined;
-    this.removed.delete(id);this.pending.set(id,{finished:false});
+    this.removed.delete(id);this.pending.set(id,{finished:false,persist});
   }
   publish(clip:TimerReplay){
     const entry=this.pending.get(clip.id);if(!entry)return;
@@ -63,6 +63,7 @@ export class TimerReplayCache {
     const clip={...entry.clip,reconstruction:entry.reconstruction};
     if(id===this.latestId)this.latest=clip;
     if(this.selected===id)this.display(clip);
+    if(!entry.persist){this.pending.delete(id);return;}
     entry.saving=this.storage.save(replayWithoutImages(clip));
     try{
       await entry.saving;

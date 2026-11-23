@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { TIMER_SEARCH_LIMIT_MS } from '@/lib/video-recon/engine/cube-timer';
+import { TIMER_CAMERA_END_VIEW_SECONDS, TIMER_SEARCH_LIMIT_MS } from '@/lib/video-recon/engine/cube-timer';
 import type { FrameResult } from '@/lib/video-recon/engine/detector';
 import type { FittedPose } from '@/lib/video-recon/engine/pose-types';
 import type { MoveSearchResult } from '@/lib/video-recon/engine/move-search-types';
@@ -9,6 +9,67 @@ import { recordedFileReplay, timerReplayFrameId, TimerReplayStore } from '@/lib/
 import { ParallelSearch } from '@/lib/video-recon/pose-fitter/runtime/parallel-search.mjs';
 
 describe('camera reconstruction search', () => {
+  it.each([
+    { scramble: 'R', frame: 1400, retry: false },
+    { scramble: 'U', frame: 1400, retry: true },
+    { scramble: 'R', frame: 2500, retry: true },
+  ])('verifies the full opening and the timed endpoint before accepting a live reverse result ($scramble at $frame)',
+    async ({ scramble, frame, retry }) => {
+      const update = vi.fn();
+      const createSearch = vi.fn((_config: Parameters<TimerSearchFactory>[0], _publish: Parameters<TimerSearchFactory>[1]) => ({
+        submit: vi.fn(), end: vi.fn(async () => {}), dispose: vi.fn(),
+      }));
+      const reconstruction = new TimerReconstruction(createSearch, update);
+      const pose = {} as FittedPose;
+      const captured = { fittedPose: pose } as FrameResult;
+      const fitting = Promise.resolve(pose);
+      reconstruction.start('solve', scramble, 1, 30, false, 0.5, false, true, true);
+      reconstruction.submit(0.8, captured, fitting);
+      reconstruction.stop('solve', 2, 1);
+      reconstruction.finishThrough(3);
+      const [config, publish] = createSearch.mock.calls[0];
+      expect(config).toMatchObject({ scramble: '', infer_scramble: true, turning_start_frame: null });
+      publish({ status: 'solved', inferred_scramble: 'R y', steps: [
+        { frame_index: 800, geometry_option_index: 1, state_moves: [] },
+        { frame_index: frame, geometry_option_index: 0, state_moves: ["y'", "R'"] },
+      ] } as MoveSearchResult, true);
+      if (retry) {
+        await vi.waitFor(() => expect(createSearch).toHaveBeenCalledTimes(2));
+        expect(update.mock.calls.some(([, value]) => value.status === 'solved')).toBe(false);
+        expect(createSearch.mock.calls[1][0]).toMatchObject({ scramble, bidirectional: true });
+        expect(createSearch.mock.results[1].value.submit).toHaveBeenCalledWith(0.8, captured, expect.any(Promise));
+        expect(createSearch.mock.results[1].value.end).toHaveBeenCalledOnce();
+      } else {
+        await vi.waitFor(() => expect(update.mock.lastCall?.[1]).toMatchObject({
+          status: 'solved', config: { scramble }, moves: ['y', "y'", "R'"],
+          result: { inferred_scramble: undefined, steps: [{ frame_index: 800, geometry_option_index: 1, state_moves: ['y'] }, expect.anything()] },
+        }));
+        expect(createSearch).toHaveBeenCalledOnce();
+      }
+    });
+
+  it('reports progress from completed frames for the stopped solve', () => {
+    const search = { submit: vi.fn(), end: vi.fn(async () => {}), dispose: vi.fn() };
+    const reconstruction = new TimerReconstruction(() => search, vi.fn());
+    const pose = {} as FittedPose;
+    const frame = { fittedPose: pose } as FrameResult;
+    reconstruction.start('first', 'R', 2, 30, true, 1.5);
+    reconstruction.accept(2, frame);
+    expect(reconstruction.frameProgress('first')).toBeUndefined();
+    reconstruction.stop('first', 5, 0.5);
+    expect(reconstruction.frameProgress('first')).toBe(12);
+
+    reconstruction.submit(3.5, frame, Promise.resolve(pose));
+    expect(reconstruction.frameProgress('first')).toBe(12);
+    reconstruction.accept(3.5, frame);
+    expect(reconstruction.frameProgress('first')).toBe(50);
+    reconstruction.start('second', 'U', 6, 30);
+    expect(reconstruction.frameProgress('second')).toBeUndefined();
+    expect(reconstruction.frameProgress('first')).toBe(50);
+    reconstruction.finishThrough(5.5);
+    expect(reconstruction.frameProgress('first')).toBeUndefined();
+  });
+
   it('replays recovered file moves on its decoded timestamps with only playback data retained', () => {
     const step = { frame_index: 15, geometry_option_index: 0, state_moves: ["R'"] };
     const result = { status: 'solved', steps: [step], unprocessed_steps: [step] } as MoveSearchResult;
@@ -109,6 +170,22 @@ describe('camera solve capture windows', () => {
     });
     expect(gate.finish('first')).toBe(false);
     expect(gate.admit(10.5).frame).toEqual({ id: 'second', reset: false });
+  });
+
+  it('gives the player time to show the solved cube without swallowing the next solve', () => {
+    const gate = new TimerCaptureGate();
+    gate.start('first', 2);
+    gate.stop('first', 10, TIMER_CAMERA_END_VIEW_SECONDS);
+    expect(gate.capturingTail('first')).toBe(true);
+    expect(gate.admit(10.6).frame?.id).toBe('first');
+    const shortened = gate.shortenTailBefore(11);
+    expect(shortened).toEqual({ id: 'first', stop: 10, tail: 1 });
+    expect(gate.start('second', 11)).toBe(11);
+    expect(gate.admit(11)).toEqual({
+      ends: [{ id: 'first', timestamp: 11, latest: false }],
+      frame: { id: 'second', reset: true },
+    });
+    expect(gate.capturingTail('first')).toBe(false);
   });
 
   it.each(['R', ''])('uses the exact filming window with scramble %j', async scramble => {

@@ -8,12 +8,12 @@ import { Tooltip } from '@/components/Tooltip';
 import { useCopy } from '@/hooks/useCopy';
 import { useT } from '@/hooks/useT';
 import { useLang } from '@/i18n/tr';
-import { CUBE_OPPOSITE_FACE } from '@/lib/cube-colors';
 import { buildCaptionHeader } from '@/lib/recon-stats';
 import { encodeUrlAlg } from '@/lib/cubedb-url';
 import { deriveScrambleFromSolution } from '@/lib/scramble-from-solution';
 import { buildReconSubmitQuery } from '@/lib/sim-recon-link';
 import { checkReconCompletion } from '@cuberoot/shared/recon-completion';
+import { orientedFaceColors } from '@cuberoot/shared/timer';
 import type { Quaternion } from '@/lib/video-recon/engine/cube-motion';
 import { openingGripView } from '@/lib/video-recon/engine/cube-orientation';
 import type { MoveStep } from '@/lib/video-recon/engine/move-search-types';
@@ -42,8 +42,8 @@ export interface VideoSolveAnalysisProps {
   inferredScramble?: boolean;
   draftTarget?: {
     scramble: string;
-    onReady: (draft: VerifiedVideoDraft) => void;
-    onApply: (draft: VerifiedVideoDraft) => void;
+    onReady?: (draft: VerifiedVideoDraft) => void;
+    onApply?: (draft: VerifiedVideoDraft) => void;
   };
 }
 
@@ -100,6 +100,7 @@ export function VideoSolveAnalysis({ scramble, steps, measured, fps, clockFps, s
 
   const verifiedDraft = current?.draft;
   const onDraftReady = draftTarget?.onReady;
+  const onDraftApply = draftTarget?.onApply;
   useEffect(() => {
     if (verifiedDraft) onDraftReady?.(verifiedDraft);
   }, [verifiedDraft, onDraftReady]);
@@ -149,7 +150,6 @@ export function VideoSolveAnalysis({ scramble, steps, measured, fps, clockFps, s
           ))}
         </div>
       </details>}
-      {inferredScramble && <span className="video-recon-muted">{t('推定打乱', 'Inferred scramble')}</span>}
       <div className="detail-scramble-solution">
         <ReconNotationBlock captionHeader={captionHeader} scramble={displayScramble} scrambleCubeOrder={3}
           displayScramble={displayScramble} solutionText={result.text} displayText={result.text} rawDisplayText={result.text}
@@ -164,10 +164,10 @@ export function VideoSolveAnalysis({ scramble, steps, measured, fps, clockFps, s
             {copied ? <Check size={15} aria-hidden /> : <Copy size={15} aria-hidden />}
           </button>
         }</Tooltip>
-        {editorHref && <AppLink className="btn-secondary" href={editorHref}>
+        {editorHref && <AppLink className="btn-secondary" href={editorHref} target="_blank" rel="noopener noreferrer">
           <ExternalLink size={15} aria-hidden />{t('在复盘中编辑', 'Edit in Reconstruction')}
         </AppLink>}
-        {draftTarget && verifiedDraft && <button type="button" className="btn-primary" onClick={() => draftTarget.onApply(verifiedDraft)}>
+        {onDraftApply && verifiedDraft && <button type="button" className="btn-primary" onClick={() => onDraftApply(verifiedDraft)}>
           {t('使用这份解法', 'Use this solution')}
         </button>}
         <span className="sr-only" role="status">{copied && t('已复制', 'Copied')}</span>
@@ -196,9 +196,10 @@ function OpeningGrip({ initial, rotation, centers, onSelect }: {
           if (grip) onSelect(grip.rotation);
         }} />
     </div>
-    <button type="button" className="btn-secondary" aria-label={t('前后转 180°（y2）', 'Turn 180° (y2)')} onClick={() => {
-      const opposite = playerGrip(selected.top, CUBE_OPPOSITE_FACE[selected.front]);
-      if (opposite) onSelect(opposite.rotation);
-    }}>y2</button>
+    <button type="button" className="btn-secondary" aria-label={t('转体 90°（y）', 'Rotate 90° (y)')} onClick={() => {
+      const { U, F } = orientedFaceColors(`${selected.rotation} y`);
+      const next = playerGrip(U, F);
+      if (next) onSelect(next.rotation);
+    }}>y</button>
   </div>;
 }

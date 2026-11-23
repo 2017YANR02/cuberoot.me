@@ -1,9 +1,11 @@
+import { toMoveStringStrict } from '@cuberoot/shared/alg-notation';
 import { getCube3 } from '@cuberoot/shared/recon/cube3';
+import { SLICE_PAIRS } from '@cuberoot/shared/recon-slice';
 import { CUBE_ORIENTATIONS, orientedFaceColors } from '@cuberoot/shared/timer';
 import type { CoreTrack } from '@cuberoot/shared/timer/reconstruct/core-track';
-import { facePermFor, type CubeFace } from '@cuberoot/shared/timer/reconstruct/gyro-orient';
+import { conjugateSequence, facePermFor, type CubeFace } from '@cuberoot/shared/timer/reconstruct/gyro-orient';
 import { detectSolveMethod } from '@cuberoot/shared/timer/reconstruct/method-walk';
-import { buildReconText, formattedReconMoves, formatReconLine, prepareReconstruction, type ReconTextResult } from '@cuberoot/shared/timer/reconstruct/recon-text';
+import { buildReconText, formattedReconMoves, formatReconLine, prepareReconstruction, type ReconTextLine, type ReconTextResult } from '@cuberoot/shared/timer/reconstruct/recon-text';
 import type { RotationEvent } from '@cuberoot/shared/timer/reconstruct/rotation-detect';
 import { findTokenPositions } from '@/lib/recon-alg-utils';
 import { CUBE_COLOR_NAMES } from '@/lib/cube-colors';
@@ -161,6 +163,83 @@ export function videoNotationTimeline(result: ReconTextResult, openingMs: number
   return timeline;
 }
 
+const COMPOUND_SLICE_WINDOW_MS = 120;
+const rotationKey = (timestampMs: number, token: string) => `${timestampMs}:${token}`;
+
+/** The outer quarter from a face + slice gesture can be merged into the
+ * neighboring face turn before the slice is recognized. Recover it from
+ * the same-axis half turn and keep the combined gesture's video range. */
+function compactVideoSlices(line: ReconTextLine, rotationChanges: Map<string, string | null>): ReconTextLine {
+  const { moveRanges, wasteGroups } = line;
+  if (!moveRanges) return line;
+  const ranges: typeof moveRanges = [];
+  const groups: NonNullable<typeof wasteGroups> = [];
+  for (let i = 0; i < moveRanges.length; i++) {
+    const window = moveRanges.slice(i, i + 3);
+    const rotation = window.find(move => move.rotationMs !== undefined && /^z'?$/.test(move.token));
+    const face = window.find(move => /^[UDFBLR]'?$/.test(move.token));
+    const half = window.find(move => /^[UDFBLR]2'?$/.test(move.token));
+    const ts = Math.min(...window.map(move => move.ts));
+    const endTs = Math.max(...window.map(move => move.endTs));
+    if (rotation?.rotationMs !== undefined && face && half && endTs - ts <= COMPOUND_SLICE_WINDOW_MS
+      && !wasteGroups?.slice(i, i + 3).some(group => group != null)) {
+      const inverse = rotation.token.endsWith("'") ? rotation.token[0] : `${rotation.token}'`;
+      const pair = SLICE_PAIRS.find(({ rotation, a, b }) => rotation === inverse
+        && ((a === face.token && b[0] === half.token[0]) || (b === face.token && a[0] === half.token[0])));
+      if (pair) {
+        const outer = pair.a === face.token ? pair.b : pair.a;
+        ranges.push({ token: outer + pair.slice, ts, endTs,
+          startIdx: Math.min(face.startIdx, half.startIdx), endIdx: Math.max(face.endIdx, half.endIdx) });
+        rotationChanges.set(rotationKey(rotation.rotationMs, rotation.token), null);
+        groups.push(null);
+        i += 2;
+        continue;
+      }
+    }
+    ranges.push(moveRanges[i]);
+    groups.push(wasteGroups?.[i] ?? null);
+  }
+  return ranges.length === moveRanges.length ? line
+    : { ...line, moves: ranges.map(move => move.token), moveRanges: ranges, wasteGroups: groups };
+}
+
+const Z_FRAMES = ['', 'z', 'z2', "z'"].map(facePermFor);
+
+/** Absorb z into local gestures first. Carry any remaining z through the
+ * rest of the solve as a change of frame for face, slice and rotation names. */
+function rewriteVideoNotation(result: ReconTextResult) {
+  const rotationChanges = new Map<string, string | null>();
+  let inverseZ = 0;
+  const lines = result.lines.map(source => {
+    const line = compactVideoSlices(source, rotationChanges);
+    if (!inverseZ && !line.moves.some(token => token.startsWith('z'))) return line;
+    const entries = line.moves.flatMap((token, index) => {
+      const range = line.moveRanges?.[index];
+      if (/^z(?:2'?|')?$/.test(token)) {
+        inverseZ = (inverseZ + (token.includes('2') ? 2 : token.endsWith("'") ? 1 : 3)) % 4;
+        if (range?.rotationMs !== undefined) rotationChanges.set(rotationKey(range.rotationMs, token), null);
+        return [];
+      }
+      if (!inverseZ) return [{ token, index }];
+      const spaced = toMoveStringStrict(token).replace(/\b([rludfb])/g, face => `${face.toUpperCase()}w`);
+      const mapped = conjugateSequence(spaced, Z_FRAMES[inverseZ]);
+      if (mapped === null) throw new Error(`Cannot reorient video reconstruction move: ${token}`);
+      const move = mapped.replaceAll(' ', '');
+      if (range?.rotationMs !== undefined) rotationChanges.set(rotationKey(range.rotationMs, token), move);
+      return [{ token: move, index }];
+    });
+    return { ...line, moves: entries.map(entry => entry.token),
+      moveRanges: line.moveRanges && entries.map(({ token, index }) => ({ ...line.moveRanges![index], token })),
+      wasteGroups: line.wasteGroups && entries.map(({ index }) => line.wasteGroups![index]),
+    };
+  });
+  const rotations = result.rotations.flatMap(rotation => {
+    const token = rotationChanges.get(rotationKey(rotation.tMs, rotation.token));
+    return token === null ? [] : [{ ...rotation, token: token ?? rotation.token }];
+  });
+  return { ...result, lines, rotations };
+}
+
 export async function analyzeVideoSolve(observation: VideoSolveObservation, grip: string | undefined, language: 'zh' | 'en') {
   const { scramble, moves, timeMs, frameMs, core } = observation;
   const puzzle = await getCube3();
@@ -178,7 +257,7 @@ export async function analyzeVideoSolve(observation: VideoSolveObservation, grip
     let written = puzzle.defaultPattern().applyAlg(scramble).applyAlg(result.inspection);
     for (const line of result.lines) {
       try {
-        written = written.applyAlg(formatReconLine(line));
+        written = written.applyAlg(toMoveStringStrict(formatReconLine(line)));
       } catch {
         return false;
       }
@@ -189,7 +268,7 @@ export async function analyzeVideoSolve(observation: VideoSolveObservation, grip
   };
 
   const report = async (input: typeof text) => {
-    const result = await buildReconText(input);
+    const result = rewriteVideoNotation(await buildReconText(input));
     const lines = result.lines.map(line => ({
       ...line,
       // A commit frame does not locate the onset of the gesture or split

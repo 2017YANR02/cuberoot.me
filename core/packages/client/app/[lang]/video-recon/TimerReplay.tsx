@@ -13,7 +13,7 @@ import { ReviewControls } from './ReviewControls';
 
 export type ReplaySeek = { timestamp: number; revision: number };
 
-export function TimerReplay({ clip, reconstruction, disabled, seekRequest, onPosition, sourceFile, tailSeconds = TIMER_TAIL_SECONDS }: {
+export function TimerReplay({ clip, reconstruction, disabled, seekRequest, onPosition, sourceFile, sourceOnly, tailSeconds = TIMER_TAIL_SECONDS }: {
   clip: ReplayClip;
   reconstruction: TimerReconstructionResult;
   disabled?: boolean;
@@ -21,6 +21,7 @@ export function TimerReplay({ clip, reconstruction, disabled, seekRequest, onPos
   onPosition: (position: number) => void;
   tailSeconds?: number;
   sourceFile?: File;
+  sourceOnly?: boolean;
 }) {
   const t = useT();
   const canvas = useRef<HTMLCanvasElement>(null);
@@ -41,14 +42,14 @@ export function TimerReplay({ clip, reconstruction, disabled, seekRequest, onPos
       : -1;
     const coverage = coverageIndex >= 0 ? { ordinal: coverageIndex + 1, timestamp: clip.frames[coverageIndex].timestamp } : undefined;
     let timelines: ReturnType<typeof buildCubeReplayTimelines> = { measured: [], projected: [] };
-    try {
+    if (!sourceOnly) try {
       const colors = buildColorTimeline(reconstruction.config?.scramble ?? '', steps);
       timelines = buildCubeReplayTimelines(clip.frames, colors, {
         fps: clip.clockFps, solved, steps, turningStartFrame: reconstruction.config?.turning_start_frame,
       });
     } catch { /* The saved clip can be reviewed without a valid cube state. */ }
     return { steps, solved, measured: timelines.measured, timeline: timelines.projected, coverage };
-  }, [clip.frames, clip.clockFps, reconstruction]);
+  }, [clip.frames, clip.clockFps, reconstruction, sourceOnly]);
   const hasRecording = useMemo(() => clip.frames.some(frame => !!frame.image), [clip.frames]);
   const index = reviewIndex(clip.frames, position);
   const current = clip.frames[index];
@@ -59,7 +60,7 @@ export function TimerReplay({ clip, reconstruction, disabled, seekRequest, onPos
   const pose = projectedCubeAtFrame(timeline, frame);
   const sourceFps = reconstruction.config?.source_fps ?? (clip.clockFps === 1000 ? 30 : clip.clockFps);
   const solveStart = reconstruction.config?.requested_start_seconds ?? clip.start;
-  const stop = Math.max(solveStart, (reconstruction.config?.source_end_seconds ?? clip.end) - tailSeconds);
+  const stop = Math.max(solveStart, reconstruction.config?.requested_stop_seconds ?? (reconstruction.config?.source_end_seconds ?? clip.end) - tailSeconds);
   const scramble = reconstruction.config?.scramble;
   const showAnalysis = clip.complete && scramble && steps.some(move => move.state_moves.length)
     && (reconstruction.status === 'solved' || reconstruction.status === 'failed');
@@ -172,7 +173,7 @@ export function TimerReplay({ clip, reconstruction, disabled, seekRequest, onPos
         `Partial reconstruction · Recognized through frame ${coverage.ordinal} (${timecode(coverage.timestamp - start)})`)}
       {pose && index >= coverage.ordinal && t('。当前显示最后一个有效局面。', '. Showing the last available cube state.')}
     </p>}
-    <div className={sourceFile || hasRecording ? 'video-recon-columns' : undefined}>
+    <div className={!sourceOnly && (sourceFile || hasRecording) ? 'video-recon-columns' : undefined}>
       {sourceFile && <div className="video-recon-stage">
         <video ref={video} muted playsInline preload="auto" aria-label={t('回放原录像', 'Original recording')} />
       </div>}
@@ -180,10 +181,10 @@ export function TimerReplay({ clip, reconstruction, disabled, seekRequest, onPos
         <canvas ref={canvas} aria-label={t('回放相机画面', 'Replay camera frame')} />
         {drawError && <p role="status">{t('无法显示此帧的相机画面。', 'The camera image is unavailable for this frame.')}</p>}
       </div>}
-      <ProjectedCube pose={pose} sourceTimestamp={current?.timestamp ?? position}
+      {!sourceOnly && <ProjectedCube pose={pose} sourceTimestamp={current?.timestamp ?? position}
         solved={solved} steps={steps} timeline={timeline} sourceFrame={frame} sourceFps={sourceFps} playbackSpeed={playing ? speed : 1}
         analysis={showAnalysis ? { scramble, steps, measured, fps:sourceFps, clockFps:clip.clockFps,
-          start:solveStart, end:stop, position, onSeek:seek, inferredScramble: !!reconstruction.result?.inferred_scramble } : undefined} />
+          start:solveStart, end:stop, position, onSeek:seek, inferredScramble: !!reconstruction.result?.inferred_scramble } : undefined} />}
     </div>
   </section>;
 }

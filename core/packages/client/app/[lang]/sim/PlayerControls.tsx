@@ -3006,7 +3006,13 @@ export default function PlayerControls({
         onStepForward={waitForHandStep ? () => setPendingHandStep('forward') : stepForward}
         onSkipEnd={() => { setCaretChar(null); jumpToStep(totalSteps); }}
         leading={compactPlayback ? undefined : speedControl}
-        trailing={<SettingsPopover label={t('播放设置', 'Playback settings')} className="sim-playback-settings" iconSize={14}>
+        trailing={<SettingsPopover
+          label={t('播放设置', 'Playback settings')}
+          className="sim-playback-settings"
+          panelClassName="sim-playback-settings-panel"
+          iconSize={14}
+          modal={compactPlayback}
+        >
           {compactPlayback && <>{speedControl}{viewTools}</>}
           <div className="sim-playback-options">
             {anchorSelect}

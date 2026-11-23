@@ -26,7 +26,6 @@ describe('video solve reconstruction', () => {
   it.each([
     { token: 'x', vector: [-Math.PI / 2, 0, 0], scramble: 'U R', first: "R'", last: "U'", renamed: "B'" },
     { token: 'y', vector: [0, 0, -Math.PI / 2], scramble: 'R U', first: "U'", last: "R'", renamed: "F'" },
-    { token: 'z', vector: [0, Math.PI / 2, 0], scramble: 'U R', first: "R'", last: "U'", renamed: "R'" },
   ])('preserves the physical $token and writes the following turn in the solver’s frame', async ({
     token, vector, scramble, first, last, renamed,
   }) => {
@@ -40,6 +39,31 @@ describe('video solve reconstruction', () => {
     const query = new URLSearchParams(buildReconSubmitQuery('3x3', result.scramble, result.text, { method: 'CFOP' }));
     expect(decodeUrlAlg(query.get('alg')!)).toBe(result.text);
     expect(decodeUrlAlg(query.get('scramble')!)).toBe(scramble);
+  });
+
+  it.each([
+    { description: 'absorbs a fast z rotation into a face and slice', lastHalfFrame: 13,
+      expected: ["FS'", 'U', 'L'] },
+    { description: 'carries an isolated z rotation through later stages', lastHalfFrame: 21,
+      expected: ["B'", 'F2', 'R', 'U'] },
+  ])('$description', async ({ lastHalfFrame, expected }) => {
+    const steps = [commit(11, "B'"), commit(12, 'F'), commit(lastHalfFrame, 'F'), commit(24, 'R'), commit(28, 'U')];
+    const observation = observeVideoSolve("U' R' F2 B", steps, frames(axisAngle([0, -Math.PI / 2, 0])), fps, 0, 1.15);
+    expect(observation.core.events).toMatchObject([{ token: "z'", tMs: 367 }]);
+    const analysis = await analyzeVideoSolve(observation, playerGrip('U', 'F')!.rotation, 'en');
+    expect(analysis).toMatchObject({ solved: true, fallback: false });
+    const result = analysis!.result;
+    expect(result.lines.flatMap(line => line.moves)).toEqual(expected);
+    expect(result.rotations).toEqual([]);
+    expect(await checkReconCompletion({ event: '3x3', scramble: result.scramble, solution: result.text }))
+      .toEqual({ status: 'solved' });
+    if (lastHalfFrame === 13) {
+      expect(result.lines[0].moveRanges?.[0]).toEqual({ token: "FS'", ts: 367, endTs: 433, startIdx: 0, endIdx: 2 });
+      expect(videoNotationTimeline(result, 0).slice(0, 2)).toEqual([
+        { offset: 1, timestampMs: 433 },
+        { offset: 3, timestampMs: 433 },
+      ]);
+    }
   });
 
   it('preserves the timing of a same-frame move batch and marks a pose gap', async () => {

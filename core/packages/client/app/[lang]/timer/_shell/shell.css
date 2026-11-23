@@ -81,7 +81,7 @@
   transition: opacity 150ms ease;
 }
 .shell-topbar-left :is(.shell-players-select, .pp-trigger, .compact-select-trigger,
-  .settings-popover-trigger, .shell-device-center-trigger, .timer-difficulty-trigger):not(:disabled):is(:hover, :focus-visible, [aria-expanded='true']) {
+  .settings-popover-trigger, .timer-difficulty-trigger):not(:disabled):is(:hover, :focus-visible, [aria-expanded='true']) {
   opacity: 1;
 }
 
@@ -426,8 +426,59 @@
   cursor: pointer;
   transition: background 120ms, color 120ms;
 }
-.shell-topbar .tb-btn:hover { background: var(--shell-hover); color: var(--foreground); }
+.shell-topbar .tb-btn:hover:not(.timer-camera-toggle) { background: var(--shell-hover); color: var(--foreground); }
+.shell-topbar .shell-topbar-device-center .shell-device-center-trigger:hover { background: transparent; }
 .shell-topbar .tb-btn.connected { color: var(--signal-success); }
+.shell-topbar .tb-btn.timer-camera-toggle[aria-pressed='true'] { color: var(--accent); }
+.timer-camera-preview {
+  --timer-camera-preview-height: min(250px, 30dvh);
+  width: min(100%, 30rem);
+  margin-inline: auto;
+}
+.timer-camera-preview .video-recon-page { padding: 0; }
+.timer-camera-preview .video-recon-camera-layout .video-recon-stage { max-height: var(--timer-camera-preview-height); }
+.timer-camera-preview .video-recon-source-panel[data-timer-camera-connected] {
+  width: fit-content;
+  max-width: 100%;
+  margin-inline: auto;
+}
+.timer-camera-preview [data-timer-camera-connected] .video-recon-stage {
+  width: auto;
+  aspect-ratio: auto;
+  max-height: none;
+}
+.timer-camera-preview [data-timer-camera-connected] .video-recon-stage > :is(video, .video-recon-source-viewport) {
+  position: static;
+}
+.timer-camera-preview [data-timer-camera-connected] .video-recon-stage :is(canvas, video) {
+  width: auto;
+  height: auto;
+  max-height: var(--timer-camera-preview-height);
+}
+
+/* Keep the readout and analyzed camera frame together during capture. */
+.timer-shell[data-camera-capture] :is(.timing-surface-scramble-top, .timing-surface-cube,
+  .timer-stage-source, .timer-stage-footer, .timer-solo-after-timing, .timer-camera-preview .video-recon-actions) {
+  display: none;
+}
+.timer-shell.timer-workspace[data-camera-capture] .timing-surface--solo {
+  flex: 0 0 auto;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: auto;
+  margin-block-start: auto;
+  padding-block: 12px;
+  row-gap: 0;
+}
+.timer-shell.timer-workspace[data-camera-capture] .timing-surface-core {
+  grid-area: 1 / 1;
+  height: auto;
+}
+.timer-shell[data-camera-capture] .timer-solo-capture-preview { margin-block-end: auto; }
+.timer-shell[data-camera-capture] .timer-camera-preview {
+  --timer-camera-preview-height: min(480px, 55dvh);
+  width: min(100%, 44rem);
+}
+
 /* Keyboard focus ring — the shell had none, so tab-focus fell back to the
    near-invisible UA outline on the dark surface. Token-only, both themes. */
 .shell-topbar .tb-btn:focus-visible,

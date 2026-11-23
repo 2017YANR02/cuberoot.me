@@ -1,6 +1,13 @@
 import { createVideoWorker } from "./worker-assets";
 import type { SourceFrame } from "./frame-stream";
 import type {CameraCaptureMetrics} from './camera-metrics';
+import type { SimulatedVideoCamera } from './simulated-camera';
+
+export type VideoCameraInput = MediaStream | SimulatedVideoCamera;
+export function closeVideoCamera(input: VideoCameraInput) {
+  if ('stream' in input) input.close();
+  else input.getTracks().forEach(track => track.stop());
+}
 
 interface Processor {
   readable: ReadableStream<VideoFrame>;
@@ -11,6 +18,20 @@ type ProcessorConstructor = new (options: {
   maxBufferSize: number;
 }) => Processor;
 export type CameraStopReason='ended'|'error';
+
+/** Request permission from the caller's click, before loading the detector. */
+export async function requestVideoCamera(): Promise<MediaStream> {
+  if (!navigator.mediaDevices?.getUserMedia) throw new Error("Camera access requires HTTPS or localhost.");
+  return navigator.mediaDevices.getUserMedia({
+    video: {
+      facingMode: "environment",
+      width: { ideal: 640 },
+      height: { ideal: 480 },
+      frameRate: { ideal: 30, max: 30 },
+    },
+    audio: false,
+  });
+}
 
 export async function startCameraCapture(
   original: MediaStreamTrack,

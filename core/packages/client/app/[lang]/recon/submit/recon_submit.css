@@ -338,6 +338,16 @@
   display: none;
 }
 
+.submit-video-save {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.submit-video-filename {
+  overflow-wrap: anywhere;
+}
+
 /* —— 复用以前的填写:选择器弹窗(YouTube「重用以前视频的详细信息」式)—— */
 .rr-overlay {
   position: fixed;

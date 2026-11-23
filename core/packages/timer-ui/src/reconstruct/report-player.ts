@@ -4,7 +4,8 @@ import { playbackSeek, rawPlaybackTarget, playbackIndexAt, type PlaybackMove } f
 import { groupNode, textNode, buttonNode, type ReportNode, type ReportAction } from './report-content';
 import { reportSeconds } from './report-presentation';
 export { playbackMoveDurationTicks } from '@cuberoot/shared/timer/reconstruct/recap';
-export const REPLAY_SPEEDS=[0.5,1,2] as const;
+const BUTTON_REPLAY_SPEEDS = [0.5, 1, 2] as const;
+export const REPLAY_SPEEDS = [...BUTTON_REPLAY_SPEEDS, 10] as const;
 export interface ReportPlayerState {index:number;timeMs:number;playing:boolean;speed:number;posed:boolean;run:number}
 export function reportPlayerAction(state:ReportPlayerState,action:ReportAction,track:PlaybackMove[],raw:SolveMove[],lastTs:number,hasGyro:boolean) {
   const next={...state};let seek=false,jump=false;
@@ -18,18 +19,24 @@ export function reportPlayerAction(state:ReportPlayerState,action:ReportAction,t
     case 'time':at(playbackIndexAt(track,Number(action.value)),Number(action.value));break;
     case 'play-from':{const target=rawPlaybackTarget(track,raw,Number(action.value),action.timeMs,true);at(target.index,target.timeMs);next.playing=track.length>0&&target.index<track.length;next.run++;break;}
     case 'play':if(!track.length)break;if(state.index>=track.length){at(0);next.playing=true;}else next.playing=!state.playing;next.run++;break;
-    case 'speed':if(REPLAY_SPEEDS.includes(Number(action.value) as 1))next.speed=Number(action.value);break;
+    case 'speed': {
+      const speed = Number(action.value);
+      if (REPLAY_SPEEDS.some(rate => rate === speed)) next.speed = speed;
+      break;
+    }
     case 'gyro':next.posed=Boolean(action.value)&&hasGyro;break;
   }
   return {state:next,seek,jump};
 }
-export function reportPlayback(state:ReportPlayerState,total:number,totalMs:number,hasGyro:boolean,hasSide:boolean,tr:ReconstructLocalize):ReportNode {
+export function reportPlayback(state:ReportPlayerState,total:number,totalMs:number,hasGyro:boolean,hasSide:boolean,tr:ReconstructLocalize,speedControl:'buttons'|'menu'='buttons'):ReportNode {
   const control=(id:string,label:string,action:ReportAction,disabled:boolean,icon:string)=>buttonNode(id,label,action,`reconstruct-pb-btn${id==='play'?' is-play':''}`,{disabled,icon});
   return groupNode('playback',[
     groupNode('main',[
       groupNode('top',[groupNode('controls',[
         hasGyro?{id:'gyro',kind:'toggle',text:tr({zh:'陀螺仪',en:'Gyro'}),value:state.posed,action:{type:'gyro'}}:null,
-        groupNode('speeds',REPLAY_SPEEDS.map(value=>buttonNode(String(value),value+'x',{type:'speed',value},`reconstruct-playback-speed-btn ${state.speed===value?'active':''}`,{selected:state.speed===value})),'reconstruct-playback-speed','row'),
+        speedControl === 'menu'
+          ? { id: 'speeds', kind: 'slot' }
+          : groupNode('speeds', BUTTON_REPLAY_SPEEDS.map(value => buttonNode(String(value), value + 'x', { type: 'speed', value }, undefined, { selected: state.speed === value })), undefined, 'row'),
       ],'reconstruct-playback-controls','row')],'reconstruct-playback-top','row'),
       {id:'cube',kind:'slot'},
       groupNode('counter',[{id:'elapsed',kind:'slot'},textNode('total',' / '+reportSeconds(totalMs))],'reconstruct-playback-counter','row'),

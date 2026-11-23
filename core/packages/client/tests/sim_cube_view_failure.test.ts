@@ -193,6 +193,44 @@ describe('the single live/replay 3D failure surface', () => {
     ]);
   });
 
+  it('keeps the replay orbit after pointer release and a change of playback track', async () => {
+    const viewOrbitRef = { current: null as { x: number; y: number; z: number } | null };
+    const draw = (key: string) => act(async () => root.render(createElement(SimCubeView, {
+      key, allowViewDrag: true, viewOrbitRef, moves: ['R'],
+    })));
+    await draw('recorded');
+    const view = host.querySelector<HTMLElement>('.timer-live-cube-3d')!;
+    const world = state.mount.mock.results[0].value.world;
+    const initialYaw = world.scene.rotation.y;
+    const swipe = new WheelEvent('wheel', { deltaX: 24, deltaY: -12, bubbles: true, cancelable: true });
+    view.querySelector('canvas')!.dispatchEvent(swipe);
+    expect(swipe.defaultPrevented).toBe(true);
+    expect(world.scene.rotation.y).toBeCloseTo(initialYaw - 0.24);
+
+    const wheel = new WheelEvent('wheel', { deltaY: 120, bubbles: true, cancelable: true });
+    Object.defineProperty(wheel, 'wheelDeltaY', { value: -120 });
+    view.dispatchEvent(wheel);
+    expect(wheel.defaultPrevented).toBe(false);
+    expect(world.scene.rotation.y).toBeCloseTo(initialYaw - 0.24);
+
+    const pointer = (type: string) => {
+      const event = new MouseEvent(type, { bubbles: true, cancelable: true });
+      Object.defineProperties(event, { pointerId: { value: 1 }, pointerType: { value: 'mouse' } });
+      view.dispatchEvent(event);
+    };
+    pointer('pointerdown');
+    world.controller.onOrbit(40, 20);
+    const selectedView = { ...viewOrbitRef.current! };
+    pointer('pointerup');
+    expect(world.scene.rotation).toMatchObject(selectedView);
+    expect(world.scene.rotation.y).toBeCloseTo(initialYaw + 0.16);
+
+    await draw('reconstructed');
+    expect(state.mount.mock.calls[1][0].sceneRot).toEqual(selectedView);
+    expect(state.mount.mock.results[1].value.world.scene.rotation).toMatchObject(selectedView);
+    expect(state.setup.mock.calls).toEqual([['R'], ['R']]);
+  });
+
   it('retains its 3D instance while an authoritative state is being re-anchored', async () => {
     const draw = (algAnchored: boolean, moves: string[]) => act(async () => root.render(createElement(LiveCubeState, {
       mode: '3d', algAnchored, moves, facelets: 'UUUUUUUUURRRRRRRRRFFFFFFFFFDDDDDDDDDLLLLLLLLLBBBBBBBBB',

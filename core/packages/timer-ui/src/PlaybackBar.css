@@ -120,3 +120,29 @@
   padding: 2px 4px;
   max-width: 100%;
 }
+
+select.playback-speed-select {
+  appearance: none;
+  -webkit-appearance: none;
+  min-height: 36px;
+  padding: 4px 9px;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: var(--foreground);
+  font: inherit;
+  font-size: 1rem;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
+}
+
+select.playback-speed-select:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: -2px;
+}
+
+select.playback-speed-select:disabled {
+  color: var(--muted-foreground);
+  cursor: default;
+}

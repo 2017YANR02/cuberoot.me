@@ -143,10 +143,14 @@ it.each([false, true])('keeps observation and final pauses out of turn duration 
   await click('Step forward');
   expect(Number(shown()?.getAttribute('data-duration'))).toBe(30); // Normal 500 ms, not 3 seconds.
   expect(container.querySelector('.reconstruct-playback-counter')?.textContent).toBe('0.15 / 8.00');
-  await act(async () => [...container.querySelectorAll('button')].find(button => button.textContent === '2x')!.click());
-  expect(Number(shown()?.getAttribute('data-duration'))).toBe(15);
+  const speed = container.querySelector<HTMLSelectElement>('select[aria-label="Playback speed"]')!;
+  await act(async () => {
+    speed.value = '10';
+    speed.dispatchEvent(new Event('change', { bubbles: true }));
+  });
+  expect(Number(shown()?.getAttribute('data-duration'))).toBe(3);
   await click('Step forward');
-  expect(Number(shown()?.getAttribute('data-duration'))).toBe(15); // Final put-down pause is capped too.
+  expect(Number(shown()?.getAttribute('data-duration'))).toBe(3); // Final put-down pause is capped too.
   expect(container.querySelector('.reconstruct-playback-counter')?.textContent).toBe('3.15 / 8.00');
 });
 

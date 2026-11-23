@@ -47,6 +47,25 @@ export function PlaybackAnchorSelect({ atEnd, onChange, disabled, label, startLa
   </select>;
 }
 
+export function PlaybackSpeedSelect<T extends number>({
+  value, options, onChange, label, disabled, className,
+}: {
+  value: T;
+  options: readonly T[];
+  onChange: (speed: T) => void;
+  label: string;
+  disabled?: boolean;
+  className?: string;
+}) {
+  return <select className={className ? `playback-speed-select ${className}` : 'playback-speed-select'}
+    aria-label={label} value={value} disabled={disabled} onChange={event => {
+      const speed = options[event.currentTarget.selectedIndex];
+      if (speed !== undefined) onChange(speed);
+    }}>
+    {options.map(speed => <option key={speed} value={speed}>{speed}×</option>)}
+  </select>;
+}
+
 export function PlaybackBackViewButton({ visible, toggle = true, onClick, showLabel, hideLabel }: {
   visible: boolean; toggle?: boolean; onClick(): void; showLabel: string; hideLabel: string;
 }) {

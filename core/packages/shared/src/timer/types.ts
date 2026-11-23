@@ -120,6 +120,8 @@ export interface Solve {
    * IS the start signal, so there is no window in which an inspection
    * turn could exist without starting the clock. */
   moves?: SolveMove[];
+  /** Video reconstruction linked to this timer attempt by solve ID. */
+  videoReconstruction?: 'pending' | 'solved' | 'failed';
   /** Inspection time actually used before the start, ms. Recorded only when
    *  inspection ran (settings.inspection > 0 and the countdown was entered);
    *  absent on old solves and on attempts started without inspection. */

@@ -70,7 +70,7 @@ import type World from '@cuberoot/puzzle-render-core/engine/world';
 import type NxnCube from '@cuberoot/puzzle-render-core/engine/nxn/cube';
 import type Controller from '@cuberoot/puzzle-render-core/engine/nxn/controller';
 import type { SimMount } from '@cuberoot/puzzle-render-core/sim/mountSimWorld';
-import { liveCubeSceneRotation as sceneRotation, ORBIT_K, orbitScene } from '@cuberoot/puzzle-render-core/engine/viewControls';
+import { isTrackpadSwipe, liveCubeSceneRotation as sceneRotation, ORBIT_K, orbitScene } from '@cuberoot/puzzle-render-core/engine/viewControls';
 import {
   appendedSlicePair,
   planLiveSimUpdate,
@@ -188,6 +188,8 @@ export interface SimCubeViewProps {
   allowViewDrag?: boolean;
   /** Temporarily orbit while held, restoring the viewer angle on release. */
   resetViewOnRelease?: boolean;
+  /** Enable two-finger trackpad orbit and preserve the chosen view across replay remounts. */
+  viewOrbitRef?: { current: { x: number; y: number; z: number } | null };
   /** Moves since the cube was last known SOLVED — see the note above. */
   moves: readonly string[];
   liveSource?: LiveSmartCubeDisplaySource;
@@ -286,6 +288,7 @@ export default function SimCubeView(props: SimCubeViewProps): JSX.Element {
     language = 'en',
     allowViewDrag = false,
     resetViewOnRelease = false,
+    viewOrbitRef,
     moves,
     liveSource,
     pose = '',
@@ -307,6 +310,7 @@ export default function SimCubeView(props: SimCubeViewProps): JSX.Element {
     ariaLabel,
     className = 'timer-live-cube-3d',
   } = props;
+  const retainedOrbit = allowViewDrag && !resetViewOnRelease ? viewOrbitRef : undefined;
 
   const hostRef = useRef<HTMLDivElement>(null);
   const mountRef = useRef<SimMount | null>(null);
@@ -406,14 +410,14 @@ export default function SimCubeView(props: SimCubeViewProps): JSX.Element {
         faceHints: false,
         pixelRatioCap: 2,
         preserveDrawingBuffer: !realtime,
-        sceneRot: sceneRotation(viewRef.current, gyroViewActiveRef.current),
+        sceneRot: retainedOrbit?.current ?? sceneRotation(viewRef.current, gyroViewActiveRef.current),
         onFrame: (world: World, dtMs: number): boolean => {
           const raw = externalQuatRef.current?.current ?? rawRef.current;
           if (!hasValidOrientation(raw)) return false;
           let cameraChanged = false;
           if (!gyroViewActiveRef.current) {
             gyroViewActiveRef.current = true;
-            if (viewRef.current === 'smart') {
+            if (viewRef.current === 'smart' && !retainedOrbit?.current) {
               const rot = sceneRotation('smart', true);
               world.scene.rotation.set(rot.x, rot.y, rot.z);
               world.scene.updateMatrix();
@@ -468,10 +472,24 @@ export default function SimCubeView(props: SimCubeViewProps): JSX.Element {
         },
       });
       if (allowViewDrag) {
-        const controller = nextMount.world.controller;
+        const { world } = nextMount;
+        const { controller } = world;
         controller.turnsLocked = true;
         controller.dragEmpty = 'view';
-        controller.onOrbit = (dx, dy) => orbitScene(nextMount.world, dx, dy, ORBIT_K);
+        const orbitView = (dx: number, dy: number) => {
+          orbitScene(world, dx, dy, ORBIT_K);
+          if (retainedOrbit) {
+            const { x, y, z } = world.scene.rotation;
+            retainedOrbit.current = { x, y, z };
+          }
+        };
+        controller.onOrbit = orbitView;
+        const onWheel = (event: WheelEvent) => {
+          if (!isTrackpadSwipe(event)) return;
+          event.preventDefault();
+          orbitView(-event.deltaX, -event.deltaY);
+        };
+        if (retainedOrbit) host.addEventListener('wheel', onWheel, { passive: false });
         let savedView: { x: number; y: number; z: number } | null = null;
         const detachPointerController = attachPointerController(host, controller, resetViewOnRelease ? {
           start() {
@@ -488,6 +506,7 @@ export default function SimCubeView(props: SimCubeViewProps): JSX.Element {
         } : undefined);
         const originalDispose = nextMount.dispose;
         nextMount.dispose = () => {
+          host.removeEventListener('wheel', onWheel);
           detachPointerController();
           originalDispose();
         };
@@ -515,18 +534,18 @@ export default function SimCubeView(props: SimCubeViewProps): JSX.Element {
       mount?.dispose();
       mountRef.current = null;
     };
-  }, [allowViewDrag, resetViewOnRelease, attempt, realtime]);
+  }, [allowViewDrag, resetViewOnRelease, retainedOrbit, attempt, realtime]);
 
   // Update the viewing angle without remounting the cube or altering its moves.
   useEffect(() => {
     viewRef.current = view;
     const world = mountRef.current?.world;
     if (!ready || !world) return;
-    const rot = sceneRotation(view, gyroViewActiveRef.current);
+    const rot = retainedOrbit?.current ?? sceneRotation(view, gyroViewActiveRef.current);
     world.scene.rotation.set(rot.x, rot.y, rot.z);
     world.scene.updateMatrix();
     mountRef.current?.invalidate();
-  }, [ready, view]);
+  }, [ready, retainedOrbit, view]);
 
   // ── /sim stage mask. ──
   // Keep the visualcube bridge out of the ordinary live-cube bundle: most

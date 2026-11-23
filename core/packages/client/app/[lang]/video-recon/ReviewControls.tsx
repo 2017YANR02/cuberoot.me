@@ -1,4 +1,4 @@
-import PlaybackBar from '@cuberoot/timer-ui/PlaybackBar';
+import PlaybackBar, { PlaybackSpeedSelect } from '@cuberoot/timer-ui/PlaybackBar';
 import { useT } from '@/hooks/useT';
 import { PLAYBACK_SPEEDS, type PlaybackSpeed } from '@/lib/video-recon/engine/playback-timing';
 import { timecode } from '@/lib/video-recon/engine/solve-range';
@@ -30,12 +30,8 @@ export function ReviewControls({
       onScrub={onSeekIndex} onSkipStart={() => onSeekIndex(0)} onSkipEnd={() => onSeekIndex(last)}
       onStepBack={() => onStep(-1)} onStepForward={() => onStep(1)} onTogglePlay={onPlay}
       leading={<span className="video-recon-muted video-recon-transport-time">{timecode(position - origin)} / {timecode(end - origin)}</span>}
-      trailing={<label className="video-recon-inline-label video-recon-transport-speed">
-        <select className="video-recon-speed-select" aria-label={t('速度', 'Speed')} value={speed} disabled={disabled || !length}
-          onChange={event => onSpeed(Number(event.currentTarget.value) as PlaybackSpeed)}>
-          {PLAYBACK_SPEEDS.map(value => <option value={value} key={value}>{value}×</option>)}
-        </select>
-      </label>}
+      trailing={<PlaybackSpeedSelect className="video-recon-transport-speed" label={t('播放倍速', 'Playback speed')}
+        value={speed} options={PLAYBACK_SPEEDS} disabled={disabled || !length} onChange={onSpeed} />}
       labels={{
         skipStart: t('回到起点', 'Skip to start'), stepBack: t('上一帧', 'Previous frame'),
         play: t('播放', 'Play'), pause: t('暂停', 'Pause'), stepForward: t('下一帧', 'Next frame'),

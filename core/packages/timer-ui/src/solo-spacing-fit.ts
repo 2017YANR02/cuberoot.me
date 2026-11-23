@@ -4,6 +4,7 @@ const gapProperties = {
   scrambleGap: '--solo-scramble-gap', sourceGap: '--solo-source-gap',
   timerGap: '--solo-timer-gap', cubeGap: '--solo-cube-gap',
 } as const;
+const scrambleOffsetLimit = '--solo-scramble-min-offset-y';
 
 /** Also used by the editor's synchronous, reversible candidate measurement. */
 export function fitSoloSpacing(stage: HTMLElement, layout: SoloLayout) {
@@ -44,12 +45,12 @@ export function fitSoloSpacing(stage: HTMLElement, layout: SoloLayout) {
 /** Fit saved whitespace to the live stage, including source/footer content and
  * host navigation. Only rendered CSS changes; stored preferences stay intact. */
 export function observeSoloSpacing(stage: HTMLElement, layout: SoloLayout) {
-  const entries = Object.entries(gapProperties) as [keyof typeof gapProperties, string][];
-  const originals = entries.map(([, property]) => ({
-    value: stage.style.getPropertyValue(property), priority: stage.style.getPropertyPriority(property),
+  const properties = [...Object.values(gapProperties), scrambleOffsetLimit];
+  const originals = properties.map(property => ({
+    property, value: stage.style.getPropertyValue(property), priority: stage.style.getPropertyPriority(property),
   }));
   const regions = [stage, ...stage.querySelectorAll<HTMLElement>(
-    '.timing-surface, .timing-surface-scramble-top, .timing-surface-core, .timing-surface-sub, .timer-stage-source, .timer-stage-footer',
+    '.timing-surface, .timing-surface-scramble-top, .timing-surface-core, .timing-surface-sub, .timer-stage-source, .timer-solo-capture-preview, .timer-solo-after-timing, .timer-stage-footer',
   )];
   let frame: number | null = null;
   let lastMeasurement = '';
@@ -61,6 +62,14 @@ export function observeSoloSpacing(stage: HTMLElement, layout: SoloLayout) {
     frame = null;
     if (!stage.clientHeight || measurement() === lastMeasurement) return;
     fitSoloSpacing(stage, layout);
+    const scramble = stage.querySelector<HTMLElement>('.scramble-text');
+    if (scramble?.getClientRects().length) {
+      // Recover the unshifted position inside the scroller after fitting gaps.
+      // Keep a saved upward offset from placing any moves above its top edge.
+      const offset = Number.parseFloat(getComputedStyle(scramble).top) || 0;
+      const clearance = scramble.getBoundingClientRect().top - offset - stage.getBoundingClientRect().top + stage.scrollTop - stage.clientTop;
+      stage.style.setProperty(scrambleOffsetLimit, `${-Math.max(0, Math.floor(clearance))}px`);
+    }
     // Ignore observer notifications caused by this fit's own final geometry.
     lastMeasurement = measurement();
   };
@@ -71,9 +80,8 @@ export function observeSoloSpacing(stage: HTMLElement, layout: SoloLayout) {
   return () => {
     observer.disconnect();
     if (frame !== null) cancelAnimationFrame(frame);
-    entries.forEach(([, property], index) => {
-      const original = originals[index];
-      if (original.value) stage.style.setProperty(property, original.value, original.priority);
+    originals.forEach(({ property, value, priority }) => {
+      if (value) stage.style.setProperty(property, value, priority);
       else stage.style.removeProperty(property);
     });
   };

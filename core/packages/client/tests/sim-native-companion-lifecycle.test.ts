@@ -295,6 +295,25 @@ it('keeps canvas and playback tools together and opens settings in a dismissible
   expect(controls.querySelector('[role="dialog"]')).toBeNull();
 });
 
+it('opens compact playback settings above the scroll area without a native popover', async () => {
+  vi.stubGlobal('matchMedia', (media: string) => ({
+    matches: media.startsWith('(pointer: coarse) and (max-width: 767px)'),
+    media, addEventListener() {}, removeEventListener() {},
+  }));
+  await act(async () => root.render(createElement(NuqsTestingAdapter, {
+    searchParams: '?puzzle=skewb&renderer=cubing', ...memoryAdapter,
+    children: createElement(SimPage),
+  })));
+  const trigger = host.querySelector<HTMLButtonElement>('[aria-label="Playback settings"]')!;
+  expect(host.querySelector('.sim-view-tools')).toBeNull();
+  await act(async () => trigger.click());
+  const dialog = document.querySelector('[role="dialog"][aria-label="Playback settings"]')!;
+  expect(dialog.getAttribute('aria-modal')).toBe('true');
+  expect(dialog.closest('[popover]')).toBeNull();
+  expect(dialog.querySelector('.sim-view-tools')?.textContent).toContain('Reset view');
+  expect(dialog.querySelector('.sim-playback-speed')).not.toBeNull();
+});
+
 it('snapshots a legacy FTO image algorithm before animation changes its formula', async () => {
   await act(async () => {
     root.render(createElement(NuqsTestingAdapter, {

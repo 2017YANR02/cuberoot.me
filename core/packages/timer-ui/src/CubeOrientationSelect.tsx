@@ -22,7 +22,7 @@ function orientationItems(tr: (copy: TimerSettingCopy) => string, grid: boolean)
       textValue: option.label,
       triggerLabel,
       label: grid ? triggerLabel : <>{triggerLabel} {' '}{option.label}</>,
-      tooltip: grid ? option.label : undefined,
+      title: grid ? option.label : undefined,
       gridPosition: grid ? { row, column } : undefined,
       cellIndex: (row - 1) * FACE_ORDER.length + column,
     };

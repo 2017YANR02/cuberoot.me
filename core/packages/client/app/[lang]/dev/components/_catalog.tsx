@@ -1502,6 +1502,14 @@ export const CATALOG: ComponentEntry[] = [
     en: 'Shared simulator and reconstruction selector for start or end anchoring.',
   },
   {
+    name: 'PlaybackSpeedSelect',
+    import: "import { PlaybackSpeedSelect } from '@cuberoot/timer-ui/PlaybackBar';",
+    category: 'input',
+    zh: '视频工具和复盘共用的无边框倍速菜单，页面传入可选倍速。',
+    en: 'Borderless playback speed menu shared by video tools and replay. Each page supplies its available rates.',
+    usage: '<PlaybackSpeedSelect label="Playback speed" options={[0.5, 1, 2]} value={speed} onChange={setSpeed} />',
+  },
+  {
     name: 'PlaybackBackViewButton',
     import: "import { PlaybackBackViewButton } from '@cuberoot/timer-ui/PlaybackBar';",
     category: 'input',
@@ -2297,7 +2305,7 @@ export const CATALOG: ComponentEntry[] = [
     category: 'toggle',
     zh: `iOS 分段控件风的胶囊切换器,active thumb 用 liquid-glass 渲染并跟手滑动,横滑过界即切,泛型单选。`,
     en: `iOS segmented-control-style chip switcher with a liquid-glass thumb that follows the finger and switches on drag-over; generic single-select.`,
-    note: { zh: `Safari / iOS 自动退回 CSS frosted thumb;依赖 liquid-glass-react。`, en: `Falls back to a CSS frosted thumb on Safari/iOS; depends on liquid-glass-react.` },
+    note: { zh: `折射来自站点共用的 PrimaryNavigationOptics。不支持 SVG 背景滤镜时沿用 CSS 玻璃样式。`, en: `Refraction comes from the shared PrimaryNavigationOptics. CSS glass styles cover browsers without SVG backdrop filters.` },
   },
   {
     name: 'Scramble222ModePicker',

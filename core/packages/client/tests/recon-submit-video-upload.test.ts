@@ -12,11 +12,10 @@ const videoEnd = form.indexOf('<div className="submit-row">', videoStart);
 const videoRegion = form.slice(videoStart, videoEnd);
 
 describe('recon submit video upload', () => {
-  it('shows the upload picker only to active members while keeping external URLs for everyone', () => {
+  it('keeps the save checkbox member-only and retains the existing URL fields', () => {
     expect(form).toContain('const { isMember } = useMembership()');
-    expect(videoRegion).toMatch(/\{isMember && \([\s\S]*?type="file"[\s\S]*?\)\}/);
+    expect(videoRegion).toMatch(/\{isMember && <div[\s\S]*?type="checkbox"[\s\S]*?保存视频到本站/);
     expect(videoRegion.indexOf('<textarea')).toBeGreaterThan(videoRegion.indexOf('splitReconVideoGroups'));
-    expect(videoRegion).toContain('accept="video/mp4,video/webm,video/quicktime,.mov"');
     expect(videoRegion).toContain("'recon-video-urls'");
   });
 
@@ -26,14 +25,15 @@ describe('recon submit video upload', () => {
   });
 
   it('uploads through the authenticated API then appends the public URL to the existing field', () => {
-    expect(form).toContain('await uploadReconVideo(file)');
-    expect(form).toContain("appendReconVideo(prev.videoUrl || '', uploaded.url)");
+    expect(form).toContain('await uploadReconVideo(videoForSubmit.file)');
+    expect(form).toContain("appendReconVideo(data.videoUrl || '', url)");
     expect(api).toContain("new Headers(authHeaders(false))");
     expect(api).toContain("sessionFetch(`${API_BASE}/video`");
     expect(api).toContain("publicApiUrl(`/v1/recon/video/${result.id}`)");
   });
 
-  it('prevents submission while a video is still uploading', () => {
-    expect(form).toContain('disabled={saving || videoUploading || groupMatchPending}');
+  it('keeps the form locked while submitting the reconstruction and its video', () => {
+    expect(form).toContain('className="submit-form" disabled={readOnly || saving}');
+    expect(form).toContain('disabled={saving || groupMatchPending}');
   });
 });

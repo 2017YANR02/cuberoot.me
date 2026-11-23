@@ -17,7 +17,7 @@ const VideoReconWorkspace = dynamic(
   () => import('../video-recon/VideoReconClient').then(module => module.VideoReconWorkspace),
   { loading: VideoToolsLoading },
 );
-const MODES = ['frames', 'detector', 'record', 'timer'] as const;
+const MODES = ['frames', 'detector', 'record'] as const;
 type Mode = (typeof MODES)[number];
 const subscribe = () => () => undefined;
 const clientSnapshot = () => true;

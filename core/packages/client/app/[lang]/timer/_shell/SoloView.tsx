@@ -33,7 +33,10 @@ import { readTimerReplay } from '@cuberoot/shared/timer/replay-client';
 import { apiUrl as replayApiUrl } from '@/lib/api-base';
 
 import { timerStatsPanelLabels } from '@cuberoot/timer-ui';
-import { loadAllSessionData, deleteSessionSolves } from '../_lib/storage/db';
+import { loadAllSessionData, deleteSessionSolves, updateInactiveTimerSolve } from '../_lib/storage/db';
+import { useCameraTimerCapture } from '../_shared/useCameraTimerCapture';
+import { VideoReconAnalysisProgress, videoFileFrameProgress } from '../../video-recon/VideoReconProgress';
+import type { VideoWorkspace } from '@/lib/video-recon/workspace';
 import { TIMER_DEVICE_CENTER_LABELS } from '@cuberoot/timer-ui';
 import { timerHidesRunningUi, upsertNetRecordedSolve, timerSupportsTrainingTiming, type SolveResult } from '@cuberoot/shared/timer';
 import { useTimerRound, TimerTargetTime, useTimerTargetFeedback } from '@cuberoot/timer-ui';
@@ -55,12 +58,12 @@ import { TimerWorkspace, useTimerWideLayout } from '@cuberoot/timer-ui';
  * The engine itself (_shared/useTimer + _lib/scramble + _lib/storage) is untouched.
  */
 
-import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type MouseEvent as ReactMouseEvent } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, useSyncExternalStore, type MouseEvent as ReactMouseEvent } from 'react';
 import dynamic from 'next/dynamic';
 import { isMiniProgramWebView } from '@/lib/miniprogram-bridge';
 import { useTranslation } from 'react-i18next';
 import { useQueryState, parseAsBoolean, parseAsString, parseAsStringEnum } from 'nuqs';
-import { AlertTriangle, ListOrdered, Box } from '@app-foundation/icons/lucide';
+import { AlertTriangle, ListOrdered, Box, Video } from '@app-foundation/icons/lucide';
 import { petReact } from '@/lib/deskpet';
 import {
   parseTrainingAssignmentDestination,
@@ -336,6 +339,30 @@ const SolveRecap = dynamic(() => import('../_components/SolveRecap'), {
   ssr: false,
   loading: SolveRecapPlaceholder,
 });
+const subscribeNoCamera = () => () => {};
+const noCameraReplay = () => undefined;
+function CameraReconstructionProgress({ workspace, solveId, simulated }: { workspace?: VideoWorkspace; solveId: string; simulated?: boolean }) {
+  const value = useSyncExternalStore(workspace?.subscribe ?? subscribeNoCamera,
+    () => workspace?.getTimerFrameProgress(solveId), noCameraReplay);
+  const capturingTail = useSyncExternalStore(workspace?.subscribe ?? subscribeNoCamera,
+    () => workspace?.isCapturingTimerTail(solveId) ?? false, () => false);
+  return <>
+    <VideoReconAnalysisProgress value={value} />
+    {capturingTail && !simulated && <p role="status">{tr({ zh: '请将还原后的魔方斜对镜头，露出相邻两面。', en: 'Angle the solved cube toward the camera so two adjacent faces are visible.' })}</p>}
+  </>;
+}
+function SimulationFileProgress({ workspace }: { workspace: VideoWorkspace }) {
+  const progress = useSyncExternalStore(workspace.subscribe, () => {
+    const view = workspace.getSnapshot();
+    return view.recordingReview === 'running' ? videoFileFrameProgress(view) : undefined;
+  }, noCameraReplay);
+  return <>
+    <p>{tr({ zh: '实时复盘未完成，补读原视频…', en: 'Live reconstruction incomplete. Reading the original video…' })}</p>
+    <VideoReconAnalysisProgress value={progress} />
+  </>;
+}
+const CameraSourceReplay = dynamic(() => import('../_components/CameraSourceReplay'), { ssr: false });
+const CameraTimerWorkspace = dynamic(() => import('../../video-recon/VideoReconClient').then(module => module.VideoReconWorkspace), { ssr: false });
 const LiveReconstructReport = dynamic(() => import('../_components/ReconstructReport'), { ssr: false });
 /** Administrator-only fake-cube panel, loaded on demand. */
 const DevFakeCubePanel = dynamic(() => import('../_components/DevFakeCubePanel'), { ssr: false });
@@ -1450,6 +1477,39 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
   const liveCompletionRef = useRef<TimerLiveCompletion | null>(null);
   const timerDisplayMsRef = useRef(0);
 
+  const [cameraOpen, setCameraOpen] = useState(false);
+  const [cameraMounted, setCameraMounted] = useState(false);
+  const cameraSupportedEvent = event === '333' || event === '333oh';
+  const simulationAllowed = isAdmin && !douyin && !competition.enabled && !multiEnabled && cameraSupportedEvent;
+  const [simulationFile, setSimulationFile] = useState<File>();
+  const simulationFileInput = useRef<HTMLInputElement>(null);
+  const simulationAttempt = useRef(false);
+  const [simulationResult, setSimulationResult] = useState<{ solve: Solve; fileRecovery?: boolean; liveMessage?: string }>();
+  const { attach: attachCamera, connect: connectCamera, simulate: simulateCamera, cancelConnect: cancelCameraConnect, start: startCameraCapture, stop: stopCameraCapture, cancel: cancelCameraCapture, waiting: cameraWaiting, workspace: cameraWorkspace, recovery: cameraRecovery, capturing: cameraCapturing, isPending: isCameraPending } =
+    useCameraTimerCapture(({ id, event, moves, inferredScramble, simulated, fileRecovery, liveMessage }) => {
+      const patch: Partial<Solve> = moves
+        ? { moves, videoReconstruction: 'solved', gyro: undefined, device: undefined, stageSegments: undefined,
+          ...(inferredScramble && { scramble: inferredScramble }) }
+        : { videoReconstruction: 'failed' };
+      if (simulated) {
+        setSimulationResult(current => current?.solve.id === id
+          ? { solve: { ...current.solve, ...patch }, fileRecovery, liveMessage } : current);
+        return;
+      }
+      updateInactiveTimerSolve(event, id, patch);
+      setByEvent(current => {
+        const solves = current[event];
+        return solves?.some(item => item.id === id)
+          ? { ...current, [event]: solves.map(item => item.id === id ? { ...item, ...patch } : item) }
+          : current;
+      });
+    });
+  const closeCamera = useCallback(() => {
+    cancelCameraConnect();
+    setCameraOpen(false);
+    setSimulationFile(undefined);
+  }, [cancelCameraConnect]);
+
   const recordSolve = useCallback((res: SolveResult) => {
     if (competitionRef.current.enabled) {
       const faces = bluetoothCubeRef.current?.getFaces();
@@ -1477,6 +1537,19 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
     if (caseIdAtStartRef.current) solve.caseId = caseIdAtStartRef.current;
     if (res.trainingStartMode) solve.trainingStartMode = res.trainingStartMode;
     Object.assign(solve, smartCubeAttemptProducerRef.current.finishSolveFields(solve));
+    const cameraId = stopCameraCapture(ev, res.timeMs);
+    if (cameraId) {
+      solve.id = cameraId;
+      solve.videoReconstruction = 'pending';
+    }
+    if (simulationAttempt.current) {
+      solve.videoReconstruction ??= 'failed';
+      setSimulationResult({ solve });
+      setRecapId(solve.id);
+      setPanelTab(null);
+      if (!isDesktop) setModalSolve({ s: solve, idx: 0, autoRecap: true, simulated: true });
+      return;
+    }
     if (ev === 'pll-chain') pllChainRef.current.finish(solve);
     reconstructionAnalyzer.handoff(`live-${attemptStartedAtRef.current}`, solve.id);
     // Inspection actually used (0 when inspection was off / never entered).
@@ -1513,7 +1586,8 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
     submitTimerTrainingEvidence(trainingDestinationRef.current, solve);
     // 桌面在右栏展开复盘；窄屏直接进入整屏详情。两者共用 shouldAutoRecap，
     // 没有动作流或关闭开关时都不主动打断下一把流程。
-    const showRecap = ev !== 'pll-chain' && !multiEnabledRef.current && !abortingSmartCubeRef.current && shouldAutoRecap(solve, { autoRecap: settings.autoRecap });
+    const showRecap = ev !== 'pll-chain' && !multiEnabledRef.current && !abortingSmartCubeRef.current &&
+      (shouldAutoRecap(solve, { autoRecap: settings.autoRecap }) || !!cameraId && settings.autoRecap);
     autoRecapDismissGestureRef.current.reset();
     autoRecapInputBlockedRef.current = false;
     setRecapId(showRecap ? solve.id : null);
@@ -1521,12 +1595,12 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
       autoRecapInputBlockedRef.current = true;
       setModalSolve({ s: solve, idx: solveIndex, autoRecap: true });
     }
-    const showSolution = ev !== 'pll-chain' && !multiEnabledRef.current && !abortingSmartCubeRef.current && settings.autoOpenSolution && Boolean(solve.device && solve.moves?.length);
+    const showSolution = !cameraId && ev !== 'pll-chain' && !multiEnabledRef.current && !abortingSmartCubeRef.current && settings.autoOpenSolution && Boolean(solve.device && solve.moves?.length);
     if (showRecap || showSolution) setPanelTab(null);
     if (showSolution) setSolverOpenRequest((value) => value + 1);
     if (res.autoPenalty === 'DNF') petReact('error');
     if (!multiEnabledRef.current) nextScramble();
-  }, [attemptSplitRecorder, isDesktop, nextScramble, settings.autoOpenSolution, settings.precision, settings.autoRecap]);
+  }, [attemptSplitRecorder, isDesktop, nextScramble, settings.autoOpenSolution, settings.precision, settings.autoRecap, stopCameraCapture]);
 
   const trainingTimingMode = () => !competitionRef.current.enabled && (isPllChain || timerSupportsTrainingTiming(event))
     && bluetoothCubeRef.current?.status.connected ? isPllChain ? 'first-turn' as const : getSettings().trainingStartMode : undefined;
@@ -1546,6 +1620,11 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
         ?? (!multiEnabledRef.current && timerTracksTrainerCase(event) ? getLastPickedCase(event as TrainerKind) : null);
     }
     eventAtStartRef.current = event;
+    simulationAttempt.current = !!simulationFile;
+    if (cameraOpen && !competitionRef.current.enabled && !multiEnabledRef.current && (event === '333' || event === '333oh')) {
+      if (simulationFile && getSettings().scrambleSource !== 'manual') scrambleAtStartRef.current = '';
+      startCameraCapture(scrambleAtStartRef.current, startedAtMs, simulationFile);
+    }
     attemptStartedAtRef.current = startedAtMs;
     liveCompletionRef.current = null;
     attemptSplitRecorder.begin({
@@ -1564,6 +1643,15 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
       : undefined, cubeStart);
     clearLiveSolve();
   }, () => ({ trainingStartMode: trainingTimingModeRef.current() }));
+  useEffect(() => {
+    if (timer.phase === 'idle') cancelCameraCapture();
+  }, [timer.phase, cancelCameraCapture]);
+  useEffect(() => {
+    if (simulationFile && !simulationAllowed) {
+      if (timer.snapshot().phase === 'running') timer.reset();
+      closeCamera();
+    }
+  }, [simulationFile, simulationAllowed, closeCamera, timer.reset, timer.snapshot]);
   cancelArmForScrambleChangeRef.current = competition.enabled ? () => {} : timer.cancelArm;
   useLayoutEffect(() => { timer.reset(); smartCubeAttemptProducerRef.current.reset(); }, [competition.enabled, competition.attemptKey, timer.reset]);
   timerDisplayMsRef.current = timer.displayMs;
@@ -1600,6 +1688,8 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
   ), [supportsSmartCube]);
   const onPressDown = useCallback((withWarmup = false): boolean => {
     if (competitionRef.current.enabled || layoutEditingRef.current) return false;
+    if (simulationFile && phaseSnapshotRef.current !== 'running' &&
+      (!simulationAllowed || cameraWaiting || !cameraWorkspace?.getSnapshot().timerReady)) return false;
     if (isPllChain && bluetoothCubeRef.current?.status.connected) {
       if (!attemptCanStartRef.current || !getSettings().timingEnabled
         || !['idle', 'stopped'].includes(phaseSnapshotRef.current)) return false;
@@ -1625,7 +1715,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
     if (withWarmup) warmupSound();
     timer.onPressDown();
     return true;
-  }, [isPllChain, smartCubeInputBlocked, timer.onPressDown, timer.armFromCube]);
+  }, [isPllChain, smartCubeInputBlocked, timer.onPressDown, timer.armFromCube, simulationFile, simulationAllowed, cameraWaiting, cameraWorkspace]);
   const onPressUp = useCallback((): boolean => {
     if (competitionRef.current.enabled || layoutEditingRef.current || smartCubeInputBlocked()) return false;
     if (!multiEnabledRef.current && !attemptCanStartRef.current && phaseSnapshotRef.current !== 'running') {
@@ -2513,22 +2603,33 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
     idx: number;
     autoRecap?: boolean;
     closeRequested?: boolean;
+    simulated?: boolean;
   } | null>(null);
-  const [reconstructSolve, setReconstructSolve] = useState<Solve | null>(null);
+  const [reconstruction, setReconstruction] = useState<{ solve: Solve; shareId?: string } | null>(null);
 
   // ── 停表后自动复盘 ──────────────────────────────────────────────
   // 存 id 不存 solve:桌面右栏始终读最新成绩；本次复盘的整屏详情另带 autoRecap 标记，
   // 这样蓝牙转动只会关闭本次复盘，不会误关用户从历史记录手动打开的详情。
   const [recapId, setRecapId] = useState<string | null>(null);
   const recapSolve = useMemo(
-    () => (recapId ? solves.find(s => s.id === recapId) ?? null : null),
-    [recapId, solves],
+    () => (recapId ? simulationResult?.solve.id === recapId ? simulationResult.solve : solves.find(s => s.id === recapId) ?? null : null),
+    [recapId, solves, simulationResult],
   );
   // 开下一把就收起。停表时保留桌面右栏；换项目/换会话由上面 find 不到自然落空。
   useEffect(() => {
     if (timer.phase !== 'stopped') setRecapId(null);
   }, [timer.phase]);
-  const fullscreenRecapId = modalSolve?.autoRecap ? modalSolve.s.id : null;
+  const cameraReplayId = modalSolve?.s.videoReconstruction ? modalSolve.s.id
+    : recapSolve?.videoReconstruction ? recapSolve.id : undefined;
+  useEffect(() => {
+    cameraWorkspace?.selectTimerReplay(cameraReplayId);
+    return () => cameraWorkspace?.selectTimerReplay();
+  }, [cameraWorkspace, cameraReplayId]);
+  const cameraReplay = useSyncExternalStore(cameraWorkspace?.subscribe ?? subscribeNoCamera, () =>
+    cameraReplayId ? cameraWorkspace?.getSnapshot().timerReplays[cameraReplayId] : undefined,
+    noCameraReplay);
+  const cameraSourceVideo = cameraReplay?.complete && <CameraSourceReplay key={cameraReplay.id} clip={cameraReplay} />;
+  const fullscreenRecapId = modalSolve?.autoRecap && !modalSolve.simulated ? modalSolve.s.id : null;
   useEffect(() => {
     if (!fullscreenRecapId) {
       const wasBlocked = autoRecapInputBlockedRef.current;
@@ -2594,24 +2695,23 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
       console.warn('[timer] invalid ?replay= payload');
     } else {
       const ephemeral = solveFromReplay(decoded, byEvent[decoded.event] ?? []);
-      setReconstructSolve(ephemeral);
+      setReconstruction({ solve: ephemeral });
     }
     void setReplay(null);
   }, [replay, setReplay, byEvent]);
 
-  // Server-backed share links contain only `?share=<random id>`. Fetch once,
-  // turn the stored solve into the same read-only reconstruction, then remove
-  // the transient locator from the address bar.
-  const [shareId, setShareId] = useQueryState('share', parseAsString.withOptions({ history: 'replace' }));
+  // Keep the share URL copyable and reloadable, even after dismissing the dialog.
+  const [shareId] = useQueryState('share', parseAsString);
+  const reconstructSolve = reconstruction?.shareId && reconstruction.shareId !== shareId
+    ? null : reconstruction?.solve;
   useEffect(() => {
     if (!shareId) return;
     let cancelled = false;
     void fetchServerReplayShare(shareId).then((solve) => {
-      if (!cancelled && solve) setReconstructSolve(solve);
-      if (!cancelled) void setShareId(null);
+      if (!cancelled && solve) setReconstruction({ solve, shareId });
     });
     return () => { cancelled = true; };
-  }, [shareId, setShareId]);
+  }, [shareId]);
 
   const [replayImportOpen, setReplayImportOpen] = useState(false);
   const handlePasteReplay = useCallback(() => setReplayImportOpen(true), []);
@@ -3082,8 +3182,8 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
 
   // 短按进入 holding 时屏幕仍显示上一把成绩,排名徽章也应保持不动；长按到 ready
   // 后读数已清零,再隐藏徽章。inspectionDisplayMs 用来排除观察阶段里的 holding。
-  const rankBadgePhase = timer.phase === 'stopped'
-    || (timer.phase === 'holding' && timer.lastMs !== null && timer.inspectionDisplayMs === 0);
+  const rankBadgePhase = !simulationAttempt.current && (timer.phase === 'stopped'
+    || (timer.phase === 'holding' && timer.lastMs !== null && timer.inspectionDisplayMs === 0));
   // Rank badge centis from the last effective time (DNF -> null). 练习模式(计时关)下
   // timer.lastMs 可能还残留关闭前最后一次真实成绩 —— 没有新成绩产生,徽章不该显示。
   const rankCentis = useMemo<number | null>(() => {
@@ -3125,6 +3225,13 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
   // hidden, not animated; the reduced-motion block below drops the transition.
   const hideAllUi = !showTrainingCubes && timerHidesRunningUi(timer.phase, settings);
   const sourceControlsEnabled = timer.phase !== 'running';
+  const cameraLabel = tr({ zh: '摄像头计时', en: 'Camera timer' });
+  const cameraToggleDisabled = !timerCanSwitchScramble(timer.phase) || cameraWaiting;
+  const simulationLabel = tr({ zh: '模拟', en: 'Simulate' });
+  const simulationReportTitle = tr({ zh: '模拟复盘', en: 'Simulated reconstruction' });
+  const chooseSimulationFile = () => {
+    if (simulationAllowed && !cameraToggleDisabled) simulationFileInput.current?.click();
+  };
 
   // ── Side-panel body ─────────────────────────────────────────────
   const renderPanelBody = () => {
@@ -3193,28 +3300,54 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
 
   // Live and completed reconstruction share the desktop dock. Both expand
   // naturally with the document; narrow screens show live moves below the timer.
-  const liveSolutionPanel = !showTrainingCubes && timer.phase === 'running' && liveSolve ? (
+  const liveSolutionPanel = !cameraCapturing && !showTrainingCubes && timer.phase === 'running' && liveSolve ? (
     <TimerLiveSolutionPanel language={isZh ? 'zh' : 'en'}>
       <LiveReconstructReport key={liveSolve.id} solve={liveSolve} liveGyroSamples={liveSolve.liveGyroSamples} isZh={isZh} live liveStageTarget={liveStageTarget} />
     </TimerLiveSolutionPanel>
   ) : null;
 
   // 桌面复盘占右栏；窄屏在 recordSolve 中直接进入整屏成绩详情。
+  const cameraReportStatus = (solve: Solve) => {
+    if (!solve.videoReconstruction || solve.videoReconstruction === 'solved' || solve.moves?.length) return;
+    if (cameraRecovery?.id === solve.id) return <SimulationFileProgress workspace={cameraRecovery.workspace} />;
+    if (isCameraPending(solve.id)) return <CameraReconstructionProgress workspace={cameraWorkspace} solveId={solve.id}
+      simulated={simulationResult?.solve.id === solve.id} />;
+    const reconstruction = cameraWorkspace?.getSnapshot().timerReconstructions[solve.id]
+      ?? (cameraReplay?.id === solve.id ? cameraReplay.reconstruction : undefined);
+    const missingSolvedEnd = reconstruction?.result?.bidirectional_fallback === 'No corroborated flat solved end frame';
+    return <p role="status">{missingSolvedEnd
+      ? tr({ zh: '结尾画面无法确认魔方已还原。', en: 'The closing frames did not show enough of the cube to verify the solve.' })
+      : tr({ zh: '视频复盘未完成', en: 'Video reconstruction incomplete' })}</p>;
+  };
+  const simulationRecapNote = (id: string) => {
+    if (simulationResult?.solve.id !== id || !simulationResult.fileRecovery) return null;
+    const message = simulationResult.liveMessage;
+    return <p>{message?.includes('timed out')
+      ? tr({ zh: '实时搜索超时，已用原视频补读。', en: 'Live search timed out. Recovered from the original video.' })
+      : message === 'Search state limit'
+        ? tr({ zh: '实时搜索达到上限，已用原视频补读。', en: 'Live search reached its limit. Recovered from the original video.' })
+        : tr({ zh: '已用原视频补读。', en: 'Recovered from the original video.' })}</p>;
+  };
+  const isSimulationRecap = recapSolve !== null && simulationResult?.solve.id === recapSolve.id;
   const solveRecap = recapSolve ? (
     <SolveRecap
       key={recapSolve.id}
       solve={recapSolve}
+      previewOnly={isSimulationRecap}
+      title={isSimulationRecap ? simulationReportTitle : undefined}
+      reportStatus={cameraReportStatus(recapSolve)}
+      sourceVideo={<>{simulationRecapNote(recapSolve.id)}{!modalSolve && cameraReplayId === recapSolve.id ? cameraSourceVideo : undefined}</>}
       isZh={isZh}
       history={byEvent[recapSolve.event] ?? []}
       onFull={() => {
         const idx = solves.findIndex(s => s.id === recapSolve.id);
         autoRecapDismissGestureRef.current.reset();
         autoRecapInputBlockedRef.current = true;
-        setModalSolve({ s: recapSolve, idx: idx >= 0 ? idx : solves.length - 1, autoRecap: true });
+        setModalSolve({ s: recapSolve, idx: idx >= 0 ? idx : solves.length - 1, autoRecap: true, simulated: isSimulationRecap });
       }}
       onDismiss={() => setRecapId(null)}
-      onUseScramble={useScramble}
-      onReconFeedback={(ok) => updateSolve(recapSolve.id, { reconOk: ok })}
+      onUseScramble={isSimulationRecap ? undefined : useScramble}
+      onReconFeedback={isSimulationRecap ? undefined : (ok) => updateSolve(recapSolve.id, { reconOk: ok })}
     />
   ) : null;
 
@@ -3367,6 +3500,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
       className={`timer-shell${fullscreen ? ' fullscreen' : ''}${distractionFree ? ' is-solving' : ''}${hideAllUi ? ' hide-ui' : ''}${isDesktop && (panelTab || recapSolve || liveSolutionPanel) ? ' panel-open' : ''}${isDesktop && (liveSolutionPanel || (recapSolve && !panelTab)) ? ' recap-open' : ''}`}
       data-layout-editing={layoutEditing ? '' : undefined}
       data-solving={timer.phase === 'running' ? 'true' : undefined}
+      data-camera-capture={cameraCapturing && timer.phase === 'running' ? '' : undefined}
       data-mini-program-fullscreen={fullscreen && miniProgramFullscreen ? '' : undefined}
       data-live-reconstruction={liveSolutionPanel ? '' : undefined}
       data-pll-chain={isPllChain ? '' : undefined}
@@ -3411,9 +3545,43 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
           {showReconTestEntry(isAdmin, cubeConnected, event, competition.enabled) && <ReconTestPicker
             canSelect={cubeConnected && (timer.phase === 'idle' || timer.phase === 'stopped')}
             onSelect={useReconTestScramble} />}
+          {!douyin && !competition.enabled && !multiEnabled &&
+            <button type="button" className="tb-btn timer-camera-toggle" data-no-timer
+              aria-label={cameraLabel} aria-pressed={cameraOpen} disabled={cameraToggleDisabled}
+              onClick={() => {
+                if (cameraOpen) {
+                  closeCamera();
+                  return;
+                }
+                if (cameraSupportedEvent) connectCamera();
+                if (!cameraMounted) {
+                  setCameraMounted(true);
+                  void import('../_lib/storage/legacy-camera').then(module => module.importLegacyCameraSession()).catch(() => {});
+                }
+                setCameraOpen(true);
+              }}>
+              <Video size={16} aria-hidden />
+            </button>}
+          {simulationAllowed && <>
+            <button type="button" className="shell-players-select" data-no-timer disabled={cameraToggleDisabled}
+              aria-pressed={!!simulationFile} onClick={chooseSimulationFile}>{simulationLabel}</button>
+            <input ref={simulationFileInput} hidden type="file" accept="video/*,.mp4,.mov,.webm" onChange={event => {
+              const file = event.currentTarget.files?.[0];
+              event.currentTarget.value = '';
+              if (!file || !simulationAllowed || cameraToggleDisabled) return;
+              simulateCamera(file, () => {
+                const clock = timerHandleRef.current;
+                if (simulationAttempt.current && clock.snapshot().phase === 'running') clock.onPressDown();
+              });
+              setSimulationFile(file);
+              setCameraMounted(true);
+              setCameraOpen(true);
+            }} />
+          </>}
           <TimerDeviceCenter
             triggerRef={bluetoothButtonRef}
             className="shell-topbar-device-center"
+            hideTooltip
             ariaLabel={tr(TIMER_DEVICE_CENTER_LABELS['title'])}
             items={[...WEB_TIMER_DEVICE_REGISTRY.list()
               .filter(device => device.kind !== 'smart-cube' || supportsSmartCube)
@@ -3726,10 +3894,19 @@ children: <>
         </>
 }}
         narrowRecap={liveSolutionPanel}
+        capturePreview={<>
+          {cameraMounted && <div className="timer-camera-preview" hidden={!cameraOpen || !cameraSupportedEvent}>
+            {simulationFile && simulationAllowed && <p>{simulationLabel} · <bdi>{simulationFile.name}</bdi></p>}
+            <CameraTimerWorkspace
+              mode={cameraOpen && (cameraSupportedEvent || cameraWaiting) && !competition.enabled && !multiEnabled && (!simulationFile || simulationAllowed) ? 'timer' : null}
+              simulatedCamera={simulationFile && simulationAllowed ? { pick: chooseSimulationFile, disconnect: closeCamera } : undefined}
+              onWorkspace={attachCamera} />
+          </div>}
+        </>}
         afterTiming={<>
-
-
-
+        {cameraOpen && !cameraSupportedEvent && <p role="status">
+          {tr({ zh: '摄像头复盘适用于三阶和三阶单手。', en: 'Camera reconstruction supports 3×3 and 3×3 one-handed.' })}
+        </p>}
         {/* Goal pill + trainer subset + solver hints (chrome, fade while solving) */}
         <div className="shell-undersurface surface-chrome">
           <GoalProgress solves={allSolves} goal={settings.dailySolveGoal ?? null} isZh={isZh} />
@@ -3784,6 +3961,9 @@ children: <>
         const liveIdx = solves.findIndex(x => x.id === modalSolve.s.id);
         const displayIdx = liveIdx >= 0 ? liveIdx : modalSolve.idx;
         const isLatest = liveIdx >= 0 && liveIdx === solves.length - 1;
+        const displaySolve = modalSolve.simulated && simulationResult?.solve.id === modalSolve.s.id ? simulationResult.solve
+          : modalSolve.s.videoReconstruction ? solves[liveIdx] ?? modalSolve.s : modalSolve.s;
+        const detailSource = cameraReplayId === displaySolve.id ? cameraSourceVideo : undefined;
         return (
           <SolveModal
             /* Keyed to remount when switching solves — but NAMESPACED, because
@@ -3792,31 +3972,34 @@ children: <>
                siblings the same key (React then reuses one for the other). */
             key={`detail-${modalSolve.s.id}`}
             closeRequested={modalSolve.closeRequested}
-            solve={modalSolve.s}
+            solve={displaySolve}
+            title={modalSolve.simulated ? simulationReportTitle : undefined}
+            reportStatus={cameraReportStatus(displaySolve)}
+            sourceVideo={modalSolve.simulated ? <>{simulationRecapNote(displaySolve.id)}{detailSource}</> : detailSource}
             index={displayIdx}
             isZh={isZh}
-            onDisplayed={modalSolve.autoRecap ? markAutoRecapDisplayed : undefined}
+            onDisplayed={modalSolve.autoRecap && !modalSolve.simulated ? markAutoRecapDisplayed : undefined}
             onClose={() => {
               setModalSolve(null);
               if (modalSolve.autoRecap) setRecapId(null);
             }}
-            onChangePenalty={(p) => {
+            onChangePenalty={modalSolve.simulated ? undefined : (p) => {
               updateSolve(modalSolve.s.id, { penalty: p });
               setModalSolve({ ...modalSolve, s: { ...modalSolve.s, penalty: p } });
               if (isLatest) setLastPenalty(p);
             }}
-            onChangeComment={(text) => {
+            onChangeComment={modalSolve.simulated ? undefined : (text) => {
               updateSolve(modalSolve.s.id, { comment: text });
               setModalSolve({ ...modalSolve, s: { ...modalSolve.s, comment: text } });
             }}
-            onDelete={() => {
+            onDelete={modalSolve.simulated ? undefined : () => {
               deleteSolve(modalSolve.s.id);
               setModalSolve(null);
               if (modalSolve.autoRecap) setRecapId(null);
               if (isLatest) setLastPenalty(null);
             }}
-            history={byEvent[modalSolve.s.event] ?? []}
-            onUseScramble={modalSolve.s.event === event
+            history={modalSolve.simulated ? [] : byEvent[modalSolve.s.event] ?? []}
+            onUseScramble={!modalSolve.simulated && modalSolve.s.event === event
               && !competition.enabled && !multiEnabled && timerCanSwitchScramble(timer.phase)
               ? (text) => {
                 useScramble(text);
@@ -3826,12 +4009,12 @@ children: <>
             // Two writes because the page reads a *snapshot*: the store keeps
             // the answer, and the copy being rendered has to agree with it or
             // the button won't look pressed.
-            onReconFeedback={(ok) => {
+            onReconFeedback={modalSolve.simulated ? undefined : (ok) => {
               updateSolve(modalSolve.s.id, { reconOk: ok });
               setModalSolve(m => (m ? { ...m, s: { ...m.s, reconOk: ok } } : m));
             }}
-            moveTargets={timerHistoryMoveTargets(listSessions(), getActiveSessionId())}
-            onMoveToSession={(toId) => {
+            moveTargets={modalSolve.simulated ? undefined : timerHistoryMoveTargets(listSessions(), getActiveSessionId())}
+            onMoveToSession={modalSolve.simulated ? undefined : (toId) => {
               if (moveSolveToSession(modalSolve.s.id, toId)) {
                 setByEvent(loadAll());
                 setModalSolve(null);
@@ -3845,13 +4028,13 @@ children: <>
 
       {replayImportOpen && <TimerReplayImportModal language={isZh ? 'zh' : 'en'} onClose={() => setReplayImportOpen(false)}
         load={(input, signal) => readTimerReplay(input, Object.values(byEvent).flat(), { apiUrl: replayApiUrl, fetcher: fetch }, signal)}
-        onOpen={setReconstructSolve} />}
+        onOpen={(solve) => setReconstruction({ solve })} />}
       {reconstructSolve && (
         <ReconstructModal
           key={`recon-${reconstructSolve.id}`}
           solve={reconstructSolve}
           isZh={isZh}
-          onClose={() => setReconstructSolve(null)}
+          onClose={() => setReconstruction(null)}
           history={byEvent[reconstructSolve.event] ?? []}
           onUseScramble={useScramble}
           // Two writes because the modal reads a *snapshot*: the store keeps the
@@ -3859,7 +4042,8 @@ children: <>
           // the button won't look pressed.
           onReconFeedback={(ok) => {
             updateSolve(reconstructSolve.id, { reconOk: ok });
-            setReconstructSolve(s => (s ? { ...s, reconOk: ok } : s));
+            setReconstruction(current => current?.solve.id === reconstructSolve.id && current.shareId === reconstruction?.shareId
+              ? { ...current, solve: { ...current.solve, reconOk: ok } } : current);
           }}
         />
       )}

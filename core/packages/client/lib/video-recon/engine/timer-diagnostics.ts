@@ -47,6 +47,7 @@ export class TimerDiagnostics {
   }
   search(solveId: string, config: MoveSearchConfig, result: MoveSearchResult, actions: SearchAction[], _ended: boolean) {
     const run = this.runs.get(solveId); if (!run||run.released) return;
+    run.config = config;
     this.recording.updateRunConfig(run.id, config);
     this.recording.saveSearch(run.sourceId, config, result, run.id, actions);
     // `ended` means input closed, and stays true on EVERY later progress report.

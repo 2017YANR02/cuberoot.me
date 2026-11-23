@@ -20,6 +20,8 @@ export interface CompactSelectItem<T extends string | number> {
   label: ReactNode;
   /** Hover/focus name for icon-only options. */
   tooltip?: string;
+  /** Browser-native hover text for options. */
+  title?: string;
   /** One-based cell coordinates for options in a grid popup. */
   gridPosition?: { row: number; column: number };
   disabled?: boolean;
@@ -248,8 +250,9 @@ export function CompactSelect<T extends string | number>({
                   {...tip}
                   type="button"
                   role="option"
-                  aria-label={item.tooltip}
+                  aria-label={item.tooltip ?? item.title}
                   aria-selected={active}
+                  title={item.title}
                   key={item.value}
                   className={`compact-select-option${active ? ' active' : ''}`}
                   style={item.gridPosition ? { gridArea: `${item.gridPosition.row} / ${item.gridPosition.column}` } : undefined}

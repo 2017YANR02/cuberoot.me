@@ -568,6 +568,20 @@ export function updateSolves(eventId: EventId, updates: Solve[]): void {
   saveRaw(db);
 }
 
+/** A camera result may arrive after its solve was moved to another session. */
+export function updateInactiveTimerSolve(eventId: EventId, id: string, patch: Partial<Solve>): void {
+  const db = loadRaw();
+  for (const [sessionId, byEvent] of Object.entries(db.dataBySession)) {
+    if (sessionId === db.activeSessionId) continue;
+    const solves = byEvent[eventId];
+    const index = solves?.findIndex(solve => solve.id === id) ?? -1;
+    if (index < 0 || !solves) continue;
+    solves[index] = { ...solves[index]!, ...patch };
+    saveRaw(db);
+    return;
+  }
+}
+
 /** Convenience: build a Solve. */
 export function makeSolve(args: {
   timeMs: number;

@@ -149,11 +149,10 @@ export function ProjectedCube({ pose, sourceTimestamp, solved, steps, timeline, 
   }
 
   const sourceNotation = (pose || steps.length > 0) && <div className="video-recon-notation">
-    <strong>{solved ? t('完整复盘', 'Full reconstruction') : t('部分复盘', 'Partial reconstruction')}</strong>
-    {timeline.length > 0 && <>
-      <span className="video-recon-muted">{t('记号轴向', 'Notation axes')} U ↑ · F ↙ · R ↘</span>
-      <span>{t('打乱后的起手转体', 'Initial grip after scramble')} <code>{setup.join(' ') || t('无需转体', 'No rotation')}</code></span>
-    </>}
+    {!analysis && <strong>{solved ? t('完整复盘', 'Full reconstruction') : t('部分复盘', 'Partial reconstruction')}</strong>}
+    {timeline.length > 0 && <span>
+      {t('打乱后的起手转体', 'Initial grip after scramble')} <code>{setup.join(' ') || t('无需转体', 'No rotation')}</code>
+    </span>}
     <div className="video-recon-moves" aria-label={t('动作序列', 'Move sequence')}>
       {tokens.map((token, index) => <code key={index} data-future={token.frame > sourceFrame}
         aria-current={token.frame === activeFrame ? 'step' : undefined}>{token.move}</code>)}
@@ -166,7 +165,7 @@ export function ProjectedCube({ pose, sourceTimestamp, solved, steps, timeline, 
     </div>}
   </div>;
 
-  return <section className="video-recon-panel video-recon-cube" data-site-surface="panel" aria-label={t('复盘结果', 'Reconstruction')}>
+  return <div className="video-recon-cube">
     <div className="video-recon-orbit">
       <div className="video-recon-orbit-interaction" tabIndex={pose && ready ? 0 : -1} role="application"
         aria-label={t('调整魔方视角', 'Adjust cube view')}
@@ -206,15 +205,19 @@ export function ProjectedCube({ pose, sourceTimestamp, solved, steps, timeline, 
         </button>
       }</Tooltip>}
     </div>
-    {live ? <div className="video-recon-section-heading">
-      <span className="video-recon-muted">{t('实时预览', 'Live preview')}</span>
-      {liveMove && <code aria-label={t('最近识别的动作', 'Latest detected moves')}>{liveMove.state_moves.join(' ')}</code>}
-    </div> : analysis ? <>
-      <VideoSolveAnalysis {...analysis} onOpeningView={applyOpeningView} />
-      {sourceNotation && <details>
-        <MoreToggle as="summary">{t('查看相机视角动作', 'View camera-relative moves')}</MoreToggle>
-        {sourceNotation}
-      </details>}
-    </> : sourceNotation}
-  </section>;
+    {(live || analysis || sourceNotation) && <section className="video-recon-result-notation" aria-label={t('复盘结果', 'Reconstruction')}>
+      {live ? <div className="video-recon-section-heading">
+        <span className="video-recon-muted">{t('实时预览', 'Live preview')}</span>
+        {liveMove && <code className="video-recon-live-move" aria-label={t('最近识别的动作', 'Latest detected moves')}>
+          {liveMove.state_moves.join(' ')}
+        </code>}
+      </div> : analysis ? <>
+        <VideoSolveAnalysis {...analysis} onOpeningView={applyOpeningView} />
+        {sourceNotation && <details>
+          <MoreToggle as="summary">{t('查看相机视角动作', 'View camera-relative moves')}</MoreToggle>
+          {sourceNotation}
+        </details>}
+      </> : sourceNotation}
+    </section>}
+  </div>;
 }

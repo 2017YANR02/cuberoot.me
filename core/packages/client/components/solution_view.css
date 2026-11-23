@@ -41,20 +41,19 @@
 .recon-line-free-pair::after { content: attr(data-label); }
 
 .recon-line-move-count {
-  display: inline-block;
-  margin-inline-start: 0.65em;
+  /* Keep the hover count at the end of the text without affecting line wrapping. */
+  position: absolute;
   color: var(--muted-foreground);
   font-size: 0.8em;
   white-space: nowrap;
-  opacity: 0;
   pointer-events: none;
   user-select: none;
   -webkit-user-select: none;
 }
-.recon-line-move-count::after { content: attr(data-count); }
-.recon-counted-line:hover .recon-line-move-count,
-.recon-counted-line:focus-within .recon-line-move-count {
-  opacity: 1;
+.recon-counted-line:hover .recon-line-move-count::after,
+.recon-counted-line:focus-within .recon-line-move-count::after {
+  margin-inline-start: 0.65em;
+  content: attr(data-count);
 }
 
 .recon-step-label {

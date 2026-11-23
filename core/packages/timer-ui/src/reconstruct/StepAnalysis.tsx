@@ -53,6 +53,8 @@ export interface StepAnalysisProps {
   segs: StageSegments | null;
   /** CFOP-only: the four-step recognition/execution split. */
   stepMetrics: StepMetricsResult | null;
+  /** Turn completion times alone cannot distinguish recognition from execution. */
+  frameTimed?: boolean;
   /** CFOP-only: F2L opened into pairs. */
   slots: F2lSlotsResult | null;
   /** CFOP-only: per-stage reference turn counts; null until the search lands. */
@@ -95,12 +97,11 @@ export default function StepAnalysis(props: StepAnalysisProps) {
   const [ui, setUI] = useState(initialReportUI);
 
   const cols = useMemo<Col[]>(() => {
-    if (method === 'cfop' && segs) {
-      return buildCfopColumns(segs, stepMetrics, slots, reference, slotReference, ao12);
-    }
-    if (walk) return buildWalkColumns(walk, isZh, props.methodAverages);
-    return [];
-  }, [method, segs, stepMetrics, slots, reference, slotReference, ao12, walk, isZh, tr, props.methodAverages]);
+    const columns = method === 'cfop' && segs
+      ? buildCfopColumns(segs, stepMetrics, slots, reference, slotReference, ao12)
+      : walk ? buildWalkColumns(walk, isZh, props.methodAverages) : [];
+    return props.frameTimed ? columns.map(col => ({ ...col, recognitionMs: null, executionMs: null })) : columns;
+  }, [method, segs, stepMetrics, slots, reference, slotReference, ao12, walk, isZh, props.frameTimed, props.methodAverages]);
 
   /**
    * 每列几次转体。转体**没有动作下标** —— 它压根不在动作流里,只有时刻,所以列界

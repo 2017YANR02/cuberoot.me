@@ -236,5 +236,5 @@ export function reportBld(solve:Solve,autoMemoMs:number|null,memo: {parity:boole
 }
 
 export function reportNotationExtras(solve:Solve,recon:ReconTextResult|null,state:ReportUIState,tr:ReconstructLocalize,capabilities:{recordGyro:boolean;canEnableGyro:boolean;canFeedback:boolean}) {
- return {notice:!solve.gyro&&(recon?.blindPairs??0)>0?reportNoGyro(capabilities.recordGyro,capabilities.canEnableGyro,tr):null,feedback:recon&&capabilities.canFeedback?reportFeedback(state,tr):null};
+ return {notice:solve.videoReconstruction!=='solved'&&!solve.gyro&&(recon?.blindPairs??0)>0?reportNoGyro(capabilities.recordGyro,capabilities.canEnableGyro,tr):null,feedback:recon&&capabilities.canFeedback?reportFeedback(state,tr):null};
 }

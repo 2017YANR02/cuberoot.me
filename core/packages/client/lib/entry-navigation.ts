@@ -42,7 +42,7 @@ function snapshot(url: URL): string | null {
     const algFilter = pathname.startsWith('/alg/') && ALG_LIBRARY_KEYS.has(key);
     const coursePageSize = key === 'pageSize' && pathname.replace(/\/$/, '') === '/platform/courses';
     const videoMode = key === 'mode' && VIDEO_TOOL_DOCUMENT.test(pathname)
-      && (value === 'detector' || value === 'timer' || value === 'record');
+      && (value === 'detector' || value === 'record');
     if ((STATE_KEYS.has(key) || recentFilter || algFilter || coursePageSize || videoMode) && value.length <= 200) clean.searchParams.append(key, value);
   }
   if (/^#[a-zA-Z0-9_%:/.-]{1,160}$/.test(url.hash)) clean.hash = url.hash;

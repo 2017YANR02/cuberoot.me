@@ -1,17 +1,57 @@
-import { Download, Square, Video } from '@app-foundation/icons/lucide';
+import { Camera, CircleX, Download, Square, Video } from '@app-foundation/icons/lucide';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 import { useT } from '@/hooks/useT';
 import { downloadBlob } from '@/lib/scramble-dist/download';
+import type { VideoWorkspace } from '@/lib/video-recon/workspace';
+
+export function CameraDisconnectButton({ disabled, onDisconnect }: {
+  disabled: boolean;
+  onDisconnect: () => void;
+}) {
+  const t = useT();
+  const label = t('断开摄像头', 'Disconnect camera');
+  return <button type="button" className="playback-bar-btn video-recon-camera-disconnect" aria-label={label} disabled={disabled} onClick={onDisconnect}>
+    <CircleX size={18} aria-hidden />
+  </button>;
+}
+
+export function CameraRecordingAction({ connected, view, workspace }: {
+  connected: boolean;
+  view: ReturnType<VideoWorkspace['getSnapshot']> | null;
+  workspace?: VideoWorkspace;
+}) {
+  const t = useT();
+  const phase = view?.cameraRecordingPhase;
+  const working = !!view?.timerBusy || !!view?.recordingReview;
+  return <div className="video-recon-actions">
+    {view?.recordingReview
+      ? <button type="button" className="btn-secondary" onClick={workspace?.cancelRecordingReview}>
+          {t('取消补读', 'Cancel reread')}
+        </button>
+      : phase === 'recording'
+      ? <button type="button" className="btn-primary" onClick={workspace?.finishCameraRecording}>
+          <Square size={16} aria-hidden />{t('停止录制', 'Stop recording')}
+        </button>
+      : phase === 'finalizing'
+      ? <LoadingIndicator>{t('生成复盘...', 'Generating reconstruction...')}</LoadingIndicator>
+      : connected
+      ? <button type="button" className="btn-primary" disabled={!view?.timerReady || working} onClick={workspace?.recordCamera}>
+          <Video size={16} aria-hidden />{t('开始录制', 'Start recording')}
+        </button>
+      : <button type="button" className="btn-primary" disabled={!workspace || view?.cameraConnecting || working}
+          onClick={() => void workspace?.camera()}>
+          <Camera size={16} aria-hidden />{view?.cameraConnecting ? t('正在连接…', 'Connecting…') : t('连接摄像头', 'Connect camera')}
+        </button>}
+    {connected && workspace && <CameraDisconnectButton disabled={working} onDisconnect={workspace.stopSource} />}
+  </div>;
+}
 
 type CameraRecordingPhase = 'idle' | 'recording' | 'finalizing' | 'complete' | 'error';
 
 interface CameraRecordingControlsProps {
-  cameraConnected: boolean;
-  ready: boolean;
   phase: CameraRecordingPhase;
   scramble: string;
   onScrambleChange: (value: string) => void;
-  onStart: () => void;
-  onStop: () => void;
   recordedFile?: File;
   searchError?: string;
   inferenceFailure?: 'no_solved_end' | 'no_supported_opening';
@@ -19,12 +59,11 @@ interface CameraRecordingControlsProps {
   trackedFrames?: number;
   review?: 'opening' | 'ready' | 'range' | 'running';
   onReview: () => void;
-  onCancelReview: () => void;
 }
 
 export function CameraRecordingControls({
-  cameraConnected, ready, phase, scramble, onScrambleChange,
-  onStart, onStop, recordedFile, searchError, inferenceFailure, recognizedMoves, trackedFrames, review, onReview, onCancelReview,
+  phase, scramble, onScrambleChange, recordedFile, searchError, inferenceFailure,
+  recognizedMoves, trackedFrames, review, onReview,
 }: CameraRecordingControlsProps) {
   const t = useT();
   const recording = phase === 'recording';
@@ -33,15 +72,10 @@ export function CameraRecordingControls({
   const latestStatus = recording ? scramble.trim()
     ? t('正在录制并识别动作', 'Recording and recognizing moves')
     : t('正在录制并跟踪魔方', 'Recording and tracking the cube')
-    : finalizing ? t('正在整理复盘', 'Finalizing reconstruction')
     : phase === 'complete' ? t('复盘已完成', 'Reconstruction complete')
-    : cameraConnected && !ready ? t('正在准备识别模型', 'Preparing recognition models')
     : undefined;
 
   return <section className="video-recon-panel video-recon-timer-panel" data-site-surface="panel">
-    <div className="video-recon-section-heading">
-      <h2>{t('录制', 'Recording')}</h2>
-    </div>
     <label className="video-recon-inline-label">
       {t('打乱（选填）', 'Scramble (optional)')}
       <input type="text" autoComplete="off" autoCapitalize="off" spellCheck={false} disabled={busy}
@@ -50,24 +84,14 @@ export function CameraRecordingControls({
     {!busy && <p className="video-recon-muted">
       {t('开录后先拍清打乱局面，停录前保留清晰的还原画面。', 'Show the scrambled cube after starting, and the solved cube before stopping.')}
     </p>}
-    <div className="video-recon-actions">
-      {review
-        ? <button type="button" className="btn-secondary" onClick={onCancelReview}>{t('取消补读', 'Cancel reread')}</button>
-        : recording
-        ? <button type="button" className="btn-primary" onClick={onStop}>
-            <Square size={16} aria-hidden />{t('停止录制', 'Stop recording')}
-          </button>
-        : <button type="button" className="btn-primary" disabled={!cameraConnected || !ready || finalizing} onClick={onStart}>
-            <Video size={16} aria-hidden />{t('开始录制', 'Start recording')}
-          </button>}
-      {recordedFile && !busy && phase === 'error' && <button type="button" className="btn-secondary" onClick={onReview}>
+    {recordedFile && <div className="video-recon-actions">
+      {!busy && phase === 'error' && <button type="button" className="btn-secondary" onClick={onReview}>
         {t('从录像重新复盘', 'Retry from recording')}
       </button>}
-      {recordedFile && <button type="button" className="btn-secondary"
-        onClick={() => downloadBlob(recordedFile.name, recordedFile)}>
+      <button type="button" className="btn-secondary" onClick={() => downloadBlob(recordedFile.name, recordedFile)}>
         <Download size={16} aria-hidden />{t('下载录像', 'Download recording')}
-      </button>}
-    </div>
+      </button>
+    </div>}
     {review && <p role="status" className="video-recon-muted">{review === 'range'
       ? t('请选择这次还原的区间，再逐帧复盘。', 'Select the solve range to reconstruct it frame by frame.')
       : t('实时识别未完成，正在逐帧补读原录像。', 'Live tracking was incomplete. Reading the recording frame by frame.')}</p>}

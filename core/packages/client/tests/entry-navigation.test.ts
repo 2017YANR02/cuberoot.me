@@ -55,7 +55,7 @@ describe('local entry navigation', () => {
   it.each([
     ['/zh/frame-count?mode=detector', '/zh/frame-count?mode=detector'],
     ['/zh/frame-count?mode=record', '/zh/frame-count?mode=record'],
-    ['/frame-count?mode=timer', '/frame-count?mode=timer'],
+    ['/frame-count?mode=timer', '/frame-count'],
     ['/zh/video-recon', '/zh/frame-count?mode=detector'],
     ['/video-recon?mode=timer', '/frame-count?mode=detector'],
     ['/frame-count?mode=unknown', '/frame-count'],

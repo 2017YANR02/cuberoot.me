@@ -21,7 +21,7 @@
  * 一下它已经在注册表里了。
  */
 
-import { lazy, Suspense, useCallback, useState } from 'react';
+import { lazy, Suspense, useCallback, useState, type ReactNode } from 'react';
 import type { ReconSnapshot } from '@cuberoot/shared/recon-ground-truth';
 import type { ReconstructHost } from './ReconstructHost';
 import { SolveRecapBodyPlaceholder } from './SolveRecapPlaceholder';
@@ -45,18 +45,25 @@ export interface SolveRecapProps {
   onDismiss: () => void;
   onUseScramble?: (scramble: string) => void;
   onReconFeedback?: (ok: boolean | undefined) => void;
+  reportStatus?: ReactNode;
+  sourceVideo?: ReactNode;
+  title?: string;
+  previewOnly?: boolean;
 }
 
 export default function SolveRecap({
-  solve, isZh, history, onFull, onDismiss, onUseScramble, onReconFeedback, host,
+  solve, isZh, history, onFull, onDismiss, onUseScramble, onReconFeedback, host, reportStatus, sourceVideo, title, previewOnly,
 }: SolveRecapProps) {
   const tr = host.localize;
   const [review, setReview] = useState<{ id: string; snapshot: ReconSnapshot | null } | null>(null);
   const receiveReview = useCallback((snapshot: ReconSnapshot | null) => {
     setReview({ id: solve.id, snapshot });
   }, [solve.id]);
+  const video = solve.videoReconstruction === 'solved' || solve.videoReconstruction === 'pending' || Boolean(reportStatus);
+  const label = title ?? (video ? tr({ zh: '视频复盘', en: 'Video reconstruction' })
+    : tr({ zh: '计时复盘', en: 'Solve reconstruction' }));
   return (
-    <section className="shell-recap" aria-label={tr({ zh: '计时复盘', en: 'Solve reconstruction' })}>
+    <section className="shell-recap" aria-label={label}>
       <div className="shell-recap-head">
         <button
           type="button"
@@ -67,13 +74,13 @@ export default function SolveRecap({
         >
           <Maximize2 size={13} />
         </button>
-        <ReconstructActions
+        {!previewOnly && <ReconstructActions
           host={host}
           solve={solve}
           onUseScramble={onUseScramble}
           placement="recap"
           snapshot={review?.id === solve.id ? review.snapshot : null}
-        />
+        />}
         {/* 工具栏形态:整屏、分享、重用打乱，右侧关闭。 */}
         <button
           type="button"
@@ -86,7 +93,9 @@ export default function SolveRecap({
       </div>
       <div className="shell-recap-body">
         {/* hideDate:这把是刚拧完的,日期是唯一不用告诉他的东西。 */}
-        <Suspense fallback={<SolveRecapBodyPlaceholder />}><ReconstructReport
+        {video && <strong>{label}</strong>}
+        {reportStatus ? reportStatus
+          : <Suspense fallback={<SolveRecapBodyPlaceholder />}><ReconstructReport
           host={host}
           solve={solve}
           isZh={isZh}
@@ -96,7 +105,8 @@ export default function SolveRecap({
           pendingFallback={<SolveRecapBodyPlaceholder />}
           onReconFeedback={onReconFeedback}
           onReviewSnapshot={receiveReview}
-        /></Suspense>
+        /></Suspense>}
+        {sourceVideo}
       </div>
     </section>
   );

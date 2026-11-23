@@ -7,6 +7,7 @@ import { useModalBackdrop } from './useModalDismiss';
 
 export interface TimerRoomDialogProps {
   title: string;
+  headerTitle?: ReactNode;
   className?: string;
   overlayClassName?: string;
   headerControls?: ReactNode;
@@ -18,7 +19,7 @@ export interface TimerRoomDialogProps {
   children: ReactNode;
 }
 
-export function TimerRoomDialog({ title, className, overlayClassName, headerControls, hideHeader = false, topLayer = false, language, onClose: onClosed, children }: TimerRoomDialogProps) {
+export function TimerRoomDialog({ title, headerTitle, className, overlayClassName, headerControls, hideHeader = false, topLayer = false, language, onClose: onClosed, children }: TimerRoomDialogProps) {
   const { motionRef, close: onClose } = useDialogMotion(onClosed);
   const ref = useRef<HTMLDivElement>(null);
   const closeRef = useRef(onClose);
@@ -49,7 +50,8 @@ export function TimerRoomDialog({ title, className, overlayClassName, headerCont
   if (typeof document === 'undefined') return null;
   const close = { en: 'Close', zh: '关闭' }[language];
   return createPortal(<div ref={motionRef} popover={topLayer ? 'manual' : undefined} className={['timer-room-overlay timer-no-selection', overlayClassName].filter(Boolean).join(' ')} data-no-timer {...backdrop}>
-    <div className={`timer-room-dialog${className ? ` ${className}` : ''}`} data-site-surface="panel" role="dialog" aria-modal="true" aria-labelledby={titleId}
+    <div className={`timer-room-dialog${className ? ` ${className}` : ''}`} data-site-surface="panel" role="dialog" aria-modal="true"
+      aria-labelledby={headerTitle == null ? titleId : undefined} aria-label={headerTitle == null ? undefined : title}
       ref={ref} tabIndex={-1} onKeyUp={(event) => event.stopPropagation()} onKeyDown={(event) => {
         event.stopPropagation();
         if (event.key === 'Escape') { event.preventDefault(); closeRef.current(); }
@@ -60,7 +62,11 @@ export function TimerRoomDialog({ title, className, overlayClassName, headerCont
         else if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last.focus(); }
         else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
       }}>
-      <header className="timer-room-dialog-head" hidden={hideHeader} style={hideHeader ? { display: 'none' } : undefined}><h2 id={titleId}>{title}</h2>{headerControls}<button type="button" hidden={hideHeader} aria-label={close} onClick={onClose}><X size={18} /></button></header>
+      <header className="timer-room-dialog-head" hidden={hideHeader} style={hideHeader ? { display: 'none' } : undefined}>
+        {headerTitle ?? <h2 id={titleId}>{title}</h2>}
+        {headerControls}
+        <button type="button" hidden={hideHeader} aria-label={close} onClick={onClose}><X size={18} /></button>
+      </header>
       {children}
     </div>
   </div>, document.body);

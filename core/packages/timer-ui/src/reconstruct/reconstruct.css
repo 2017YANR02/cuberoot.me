@@ -382,9 +382,7 @@
   justify-content: flex-end;
   gap: 10px;
 }
-.reconstruct-playback-speed-cap { color: var(--muted-foreground); margin-right: 2px; }
-.reconstruct-playback-controls .bool-toggle-label,
-.reconstruct-playback-speed-cap { font-size: 13px; }
+.reconstruct-playback-controls .bool-toggle-label { font-size: 13px; }
 
 .reconstruct-playback-cube {
   display: flex;
@@ -461,32 +459,6 @@
   font-variant-numeric: tabular-nums;
 }
 
-.reconstruct-playback-speed {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-}
-
-.reconstruct-playback-speed-btn {
-  background: var(--secondary);
-  border: 1px solid var(--border-default);
-  color: var(--muted-foreground);
-  font-size: 11px;
-  padding: 3px 8px;
-  border-radius: 3px;
-  cursor: pointer;
-  font-family: inherit;
-}
-.reconstruct-playback-speed-btn:hover {
-  background: var(--muted);  background: color-mix(in srgb, var(--foreground) 10%, transparent);
-  color: var(--foreground);
-}
-.reconstruct-playback-speed-btn.active {
-  background: var(--muted);  background: color-mix(in srgb, var(--signal-info) 18%, transparent);
-  border-color: var(--signal-info);
-  color: var(--signal-info);
-}
-
 @media (max-width: 760px) {
   /* 两栏挤到一起谁都读不了 —— 落成上下两段。 */
   .reconstruct-playback.has-side { grid-template-columns: 1fr; }
@@ -513,9 +485,6 @@
   .reconstruct-playback-meta {
     flex-direction: column;
     align-items: stretch;
-  }
-  .reconstruct-playback-speed {
-    justify-content: center;
   }
 }
 
@@ -724,6 +693,9 @@
   /* Size against the report container, including narrow desktop sidebars. */
   flex: 1 1 100px; min-width: 0; padding: 12px;
 }
+.rc-modal-summary { flex: 1; min-width: 0; }
+.rc-modal-summary .rc-summary { margin: 0; }
+.rc-modal-summary .rc-summary-cell { min-width: max-content; padding: 0; }
 .rc-summary dt {
   font-size: 12px; color: var(--muted-foreground); margin: 0 0 6px;
   letter-spacing: 0.02em;
@@ -903,7 +875,7 @@ button.stl-track:focus-visible { outline: 2px solid var(--ring); outline-offset:
 .sml-scramble .sml-diagram { top: calc((1.7em - 21px) / 2); }
 .sml-line + .sml-line { margin-top: 6px; }
 .sml-line[data-state='future'] { opacity: 0.42; }
-.sml-line[data-state='now'] .sml-moves { color: var(--accent); }
+.sml-line[data-state='now'] .sml-moves { font-weight: 700; }
 /* 「第 n 对」和动作同一行(见 StepMoveList.tsx),所以它自己带小字号和弱化色,
    不再靠一个包住整行的 .sml-sub 容器。 */
 .sml-sub-name { font-size: 11px; color: var(--muted-foreground); }
@@ -920,7 +892,6 @@ button.stl-track:focus-visible { outline: 2px solid var(--ring); outline-offset:
   appearance: none; background: transparent; border: 0; padding: 0;
   cursor: pointer;
 }
-.sml-moves.is-seek:hover { color: var(--accent); }
 .sml-moves.is-seek:focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }
 .sml-label {
   font-family: var(--font-mono); font-size: 12px;

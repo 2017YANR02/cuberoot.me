@@ -46,6 +46,7 @@ export interface TimerSoloPageProps {
   stage: Omit<TimerStageLayoutProps, 'children'>;
   timing: Omit<ComponentProps<typeof TimingSurface>, 'layout'>;
   solver?: ReactNode;
+  capturePreview?: ReactNode;
   afterTiming?: ReactNode;
   narrowRecap?: ReactNode;
   hints?: ReactNode;
@@ -54,7 +55,7 @@ export interface TimerSoloPageProps {
 }
 /** Canonical Solo view. Routing, stores and device transports stay with hosts;
  * this component owns responsive placement and renders exactly one solver. */
-export function TimerSoloPage({ title, resizeLabel = 'Resize panel', topbar, stage, timing, solver, afterTiming, narrowRecap, hints, history, tools }: TimerSoloPageProps) {
+export function TimerSoloPage({ title, resizeLabel = 'Resize panel', topbar, stage, timing, solver, capturePreview, afterTiming, narrowRecap, hints, history, tools }: TimerSoloPageProps) {
   const hinge = useHostViewportLayout()?.hinge;
   const separateSolver = Boolean(hinge && (!stage.fullscreen || hinge.width > hinge.height));
   const rail = <div className="shell-rail timer-solver-rail" data-no-timer>{solver}</div>;
@@ -74,6 +75,7 @@ export function TimerSoloPage({ title, resizeLabel = 'Resize panel', topbar, sta
       className={`timer-solo-main timer-workspace-main timer-solver-stage${stage.className ? ` ${stage.className}` : ''}`}>
       {title && <h1 className="sr-only">{title}</h1>}
       <TimingSurface {...canvas} surfaceRef={canvasRef} layout="solo" previewHost={previewHost} />
+      {capturePreview && <div className="timer-solo-capture-preview" data-no-timer>{capturePreview}</div>}
       {!wide && narrowRecap && <div data-no-timer style={{ display: 'contents' }}>{narrowRecap}</div>}
       <div className="timer-solo-after-timing surface-chrome" data-no-timer hidden={stage.fullscreen}>
         {afterTiming}

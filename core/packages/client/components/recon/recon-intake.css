@@ -3,6 +3,10 @@
   appearance: none; font: inherit; color: inherit; background: transparent; border: 1px solid var(--border-default);
   border-radius: .5rem; padding: .4rem .7rem; cursor: pointer;
 }
+.rc-actions > .ri-action { margin-block: 0; }
+.rc-actions > .ri-action > .ri-button {
+  padding: 5px 12px; font-size: 13px; font-weight: 500; white-space: nowrap;
+}
 .ri-button:hover:not(:disabled) { border-color: var(--accent); }
 .ri-button:focus-visible, .ri-field:focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }
 .ri-button.ri-primary { background: var(--accent); border-color: var(--accent); color: var(--accent-foreground); font-weight: 600; }

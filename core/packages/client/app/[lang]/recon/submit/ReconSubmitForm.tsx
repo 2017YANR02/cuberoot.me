@@ -90,7 +90,7 @@ import {
 } from '@cuberoot/shared/recon-completion';
 import { loadComps, type Comp } from '@/lib/comp-search';
 import type { WcaPersonLite } from '@/lib/wca-api';
-import { ArrowRightLeft, History, Home, LogIn, UserPlus, AlertTriangle, Rows3, Upload } from '@app-foundation/icons/lucide';
+import { ArrowRightLeft, Film, History, Home, LogIn, UserPlus, AlertTriangle, Rows3 } from '@app-foundation/icons/lucide';
 import { Spinner } from '@/components/Spinner/Spinner';
 import '../recon.css';
 import './recon_submit.css';
@@ -210,6 +210,7 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
   const requireMembership = useRequireMembership(isMember);
 
   const [saving, setSaving] = useState(false);
+  const submitting = useRef(false);
   const [submitError, setSubmitError] = useState<{ field: string; message: string } | null>(null);
   useEffect(() => {
     if (submitError) document.getElementById('recon-submit-error')?.scrollIntoView({ block: 'center' });
@@ -219,15 +220,16 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
       {submitError.message}
     </span>
   );
-  const [videoUploading, setVideoUploading] = useState(false);
   const [videoUploadError, setVideoUploadError] = useState('');
   const [submitVideo, setSubmitVideo] = useState<SubmitVideo>();
+  const [saveVideo, setSaveVideo] = useState<{ video: SubmitVideo; draft: string }>();
+  const hostedVideo = useRef<{ video: SubmitVideo; url: string }>(undefined);
   const [videoReview, setVideoReview] = useState<VideoReview>();
   const [appliedVideo, setAppliedVideo] = useState<{ review: VideoReview; scramble: string; solution: string }>();
   const [inferredOpening, setInferredOpening] = useState<{ draft: string; scramble: string }>();
   const syncedVideo = useRef<typeof appliedVideo>(undefined);
   const closingVideoReview = useRef<VideoReview>(undefined);
-  const videoUploadInputRef = useRef<HTMLInputElement>(null);
+  const localVideoInputRef = useRef<HTMLInputElement>(null);
   const [loadingEdit, setLoadingEdit] = useState(isEditing || !!fromId);
   const [flagVer, setFlagVer] = useState(flagDataVersion());
 
@@ -364,29 +366,18 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
     });
   }, []);
 
-  const requestVideoUpload = () => {
-    if (readOnly) return;
-    if (!isMember) {
-      try {
-        sessionStorage.setItem('recon.membership-draft', JSON.stringify({
-          path: window.location.pathname + window.location.search,
-          uid: authUser?.uid, at: Date.now(), form, timeInput, avgInput,
-        }));
-      } catch {
-        setVideoUploadError(tr({ zh: '无法暂存表单，请保存内容后再开通会员。', en: 'Could not save this draft. Save your work before joining.' }));
-        return;
-      }
-    }
-    if (requireMembership()) videoUploadInputRef.current?.click();
-  };
-
   const timingOnly = !(form.solution || '').trim() && (form.pickupTime != null || form.putdownTime != null);
 
   const completionScramble = getReconScramble(form);
   const draftOwner = JSON.stringify([authUser?.uid, editId, fromId]);
   const draftIdentity = videoDraftKey(draftOwner, form);
   const videoScramble = normalizeReconScrambleSpacing('3x3', completionScramble);
-  const currentVideo = !readOnly && form.event === '3x3' && submitVideo?.owner === draftOwner ? submitVideo : undefined;
+  const canReviewVideo = !readOnly && form.event === '3x3';
+  const canSelectVideo = canReviewVideo || (!readOnly && !!authUser && isMember);
+  const selectedVideo = canSelectVideo && submitVideo?.owner === draftOwner ? submitVideo : undefined;
+  const currentVideo = canReviewVideo ? selectedVideo : undefined;
+  const videoForSubmit = isMember && selectedVideo && saveVideo?.video === selectedVideo && saveVideo.draft === draftIdentity
+    ? selectedVideo : undefined;
   const videoApplied = !!appliedVideo && appliedVideo.review.video === currentVideo && appliedVideo.review.draft === draftIdentity
     && appliedVideo.scramble === videoScramble && appliedVideo.solution.trim() === form.solution?.trim();
   // A blind review starts with an empty scramble and may itself fill the generic field.
@@ -398,16 +389,16 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
   useEffect(() => {
     if (videoReview && !activeVideoReview) setVideoReview(undefined);
   }, [videoReview, activeVideoReview]);
-  const videoContext = useRef({ draftOwner, readOnly, activeVideoReview, hasSolution: false });
+  const videoContext = useRef({ draftOwner, draftIdentity, readOnly, activeVideoReview, hasSolution: false });
   useLayoutEffect(() => {
     videoContext.current = {
-      draftOwner, readOnly, activeVideoReview,
+      draftOwner, draftIdentity, readOnly, activeVideoReview,
       hasSolution: hasDraftSolution(form),
     };
     return () => {
-      videoContext.current = { draftOwner: '', readOnly: true, activeVideoReview: undefined, hasSolution: false };
+      videoContext.current = { draftOwner: '', draftIdentity: '', readOnly: true, activeVideoReview: undefined, hasSolution: false };
     };
-  }, [draftOwner, readOnly, activeVideoReview, form.solution, form.solutionHtml, form.recon]);
+  }, [draftOwner, draftIdentity, readOnly, activeVideoReview, form.solution, form.solutionHtml, form.recon]);
   useEffect(() => {
     let active = true;
     setNeedsUnsolvedReason(false);
@@ -433,39 +424,35 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
     pruneReused(key as string);
   }, [pruneReused]);
 
-  const handleVideoUpload = useCallback(async (file: File | undefined) => {
-    if (readOnly || !isMember || saving || videoUploading || !file) return;
+  const selectLocalVideo = (file: File | undefined) => {
+    if (!canSelectVideo || saving || !file) return;
     setVideoUploadError('');
-    const supported = ['video/mp4', 'video/webm', 'video/quicktime'].includes(file.type)
-      || /\.(mp4|webm|mov)$/i.test(file.name);
-    if (!supported) {
-      setVideoUploadError(tr({ zh: '仅支持 MP4、WebM 或 MOV 视频。', en: 'Only MP4, WebM, or MOV videos are supported.' }));
+    setSubmitError(error => error?.field === 'videoUrl' ? null : error);
+    if (!file.size || !(file.type.startsWith('video/') || /\.(mp4|webm|mov)$/i.test(file.name))) {
+      setVideoUploadError(tr({ zh: '请选择有效的视频文件。', en: 'Choose a valid video file.' }));
       return;
     }
-    if (file.size <= 0 || file.size > RECON_VIDEO_MAX_BYTES) {
-      setVideoUploadError(tr({ zh: '视频大小不能超过 200MB。', en: 'The video must not exceed 200MB.' }));
-      return;
-    }
-
-    setVideoUploading(true);
+    const video = { file, owner: draftOwner };
+    hostedVideo.current = undefined;
+    setSaveVideo(undefined);
     setAppliedVideo(undefined);
-    if (form.event === '3x3') {
-      const video = { file, owner: draftOwner };
-      setSubmitVideo(video);
-      setVideoReview({ video, draft: draftIdentity, scramble: videoScramble, autoStart: true });
-    }
+    setSubmitVideo(video);
+    if (canReviewVideo) setVideoReview({ video, draft: draftIdentity, scramble: videoScramble, autoStart: true });
+  };
+
+  const requestVideoMembership = () => {
+    if (!authUser || readOnly || saving || isMember) return;
     try {
-      const uploaded = await uploadReconVideo(file);
-      if (videoContext.current.readOnly || videoContext.current.draftOwner !== draftOwner) return;
-      setForm(prev => ({ ...prev, videoUrl: appendReconVideo(prev.videoUrl || '', uploaded.url) }));
-      pruneReused('videoUrl');
-    } catch (error) {
-      if (videoContext.current.draftOwner === draftOwner) setVideoUploadError((error as Error).message);
-    } finally {
-      setVideoUploading(false);
-      if (videoUploadInputRef.current) videoUploadInputRef.current.value = '';
+      sessionStorage.setItem('recon.membership-draft', JSON.stringify({
+        path: window.location.pathname + window.location.search,
+        uid: authUser.uid, at: Date.now(), form, timeInput, avgInput,
+      }));
+    } catch {
+      setVideoUploadError(tr({ zh: '无法暂存表单，请保存内容后再开通会员。', en: 'Could not save this draft. Save your work before joining.' }));
+      return;
     }
-  }, [pruneReused, readOnly, isMember, saving, videoUploading, form.event, draftIdentity, draftOwner, videoScramble]);
+    requireMembership();
+  };
 
   const realScrambleLabel = {
     wca: { zh: 'WCA 真实打乱', en: 'WCA real scramble' },
@@ -1667,7 +1654,8 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
   };
 
   const handleSubmit = async () => {
-    if (readOnly || (installedCommunityDisabled() && isEditing && loadedSolve?.visibility !== 'private')) return;
+    if (!authUser || readOnly || submitting.current ||
+        (installedCommunityDisabled() && isEditing && loadedSolve?.visibility !== 'private')) return;
     if (groupMatchPending || (matchedGroup && form.groupId !== matchedGroup)) return;
     setSubmitError(null);
     const person = form.person?.trim() ?? '';
@@ -1704,6 +1692,19 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
       }) });
       return;
     }
+    if (videoForSubmit) {
+      const { file } = videoForSubmit;
+      if (!['video/mp4', 'video/webm', 'video/quicktime'].includes(file.type) && !/\.(mp4|webm|mov)$/i.test(file.name)) {
+        setSubmitError({ field: 'videoUrl', message: tr({ zh: '仅支持保存 MP4、WebM 或 MOV 视频。', en: 'Only MP4, WebM, and MOV videos can be saved.' }) });
+        return;
+      }
+      if (file.size > RECON_VIDEO_MAX_BYTES) {
+        setSubmitError({ field: 'videoUrl', message: tr({ zh: '保存到本站的视频不能超过 200 MB。', en: 'Videos saved to CubeRoot must not exceed 200 MB.' }) });
+        return;
+      }
+    }
+    const isCurrentSubmission = () => !videoContext.current.readOnly && videoContext.current.draftIdentity === draftIdentity;
+    submitting.current = true;
     setSaving(true);
     try {
       const wcaScramble = normalizeReconScrambleSpacing(form.event || '', form.wcaScramble || '');
@@ -1777,6 +1778,24 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
         data.sMove = submissionStats.sMove;
         data.crossColor = submissionStats.crossColor;
       }
+      if (!isCurrentSubmission()) return;
+      if (videoForSubmit) {
+        try {
+          // Reuse the URL if the upload succeeded and saving the reconstruction failed.
+          const url = hostedVideo.current?.video === videoForSubmit
+            ? hostedVideo.current.url
+            : (await uploadReconVideo(videoForSubmit.file)).url;
+          if (!isCurrentSubmission()) return;
+          hostedVideo.current = { video: videoForSubmit, url };
+          data.videoUrl = appendReconVideo(data.videoUrl || '', url);
+        } catch (error) {
+          if (isCurrentSubmission()) setSubmitError({ field: 'videoUrl', message: tr({
+            zh: `无法保存视频（${(error as Error).message}）。可重试，或取消勾选后提交。`,
+            en: `Could not save the video (${(error as Error).message}). Retry or clear the checkbox to submit.`,
+          }) });
+          return;
+        }
+      }
       if (isEditing && editId) {
         if (installedCommunityDisabled() && loadedSolve?.visibility !== 'private') return;
         await updateRecon(Number(editId), data);
@@ -1792,6 +1811,7 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
     } catch (err) {
       setSubmitError({ field: 'submit', message: tr({ zh: `提交失败：${(err as Error).message}`, en: `Submission failed: ${(err as Error).message}` }) });
     } finally {
+      submitting.current = false;
       setSaving(false);
     }
   };
@@ -1826,6 +1846,52 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
     return <div className="recon-page"><div className="recon-loading"><LoadingIndicator>{t('common.loading')}</LoadingIndicator></div></div>;
   }
 
+  const videoPickerLabel = canReviewVideo
+    ? selectedVideo ? tr({ zh: '更换复盘视频', en: 'Replace reconstruction video' })
+      : tr({ zh: '选择视频复盘', en: 'Choose a video to reconstruct' })
+    : selectedVideo ? tr({ zh: '更换视频', en: 'Replace video' }) : tr({ zh: '选择视频', en: 'Choose video' });
+  const localVideoControls = canSelectVideo && <>
+    <input
+      ref={localVideoInputRef}
+      id="recon-video-local"
+      className="submit-video-file"
+      type="file"
+      accept={canReviewVideo ? 'video/*,.mp4,.webm,.mov' : 'video/mp4,video/webm,video/quicktime,.mov'}
+      aria-label={videoPickerLabel}
+      onChange={event => {
+        const file = event.currentTarget.files?.[0];
+        event.currentTarget.value = '';
+        selectLocalVideo(file);
+      }}
+      disabled={saving}
+    />
+    <button type="button" className="submit-reuse-btn" onClick={() => localVideoInputRef.current?.click()} disabled={saving}>
+      <Film size={14} />
+      {videoPickerLabel}
+    </button>
+    {currentVideo && <button type="button" className="submit-reuse-btn"
+      onClick={() => setVideoReview({ video: currentVideo, draft: draftIdentity, scramble: videoScramble, autoStart: false })}>
+      {tr({ zh: '查看视频复盘', en: 'Review video reconstruction' })}
+    </button>}
+  </>;
+  const videoError = videoUploadError && <span className="submit-hint submit-hint-warn" role="alert">{videoUploadError}</span>;
+  const videoReviewDialog = activeVideoReview && <SettingsDialog label={tr({ zh: '自动复盘', en: 'Automatic reconstruction' })} heading
+    panelClassName="submit-video-review" onCloseStart={() => { closingVideoReview.current = activeVideoReview; }}
+    onClose={() => setVideoReview(prev => prev === activeVideoReview ? undefined : prev)}>
+    {close => <>
+      {videoApplied && <p className="submit-hint" role="status">
+        {tr({ zh: '已将解法填入表单。调整结果后，点击“使用这份解法”更新表单。', en: 'The solution is in the form. After adjusting the result, choose “Use this solution” to update the form.' })}
+      </p>}
+      <VideoReconWorkspace mode="detector" submission={{
+        file: activeVideoReview.video.file,
+        scramble: activeVideoReview.scramble,
+        autoStart: activeVideoReview.autoStart,
+        onReady: authUser ? autoApplyVideoSolution : undefined,
+        onApply: authUser ? solution => { if (applyVideoSolution(activeVideoReview, solution, true)) close(); } : undefined,
+      }} />
+    </>}
+  </SettingsDialog>;
+
   // ── Login gate ──
   if (!authUser && !isEditing) {
     return (
@@ -1850,14 +1916,19 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
         </div>
         <div style={{ padding: 24, textAlign: 'center' }}>
           <p style={{ marginBottom: 16 }}>
-            {tr({ zh: '提交复盘需要先登录。', en: 'Submitting reconstructions requires signing in.'
-            })}
+            {canReviewVideo
+              ? tr({ zh: '可以直接选视频复盘。提交复盘时需要登录。', en: 'Choose a video to reconstruct. Sign in when you want to submit.' })
+              : tr({ zh: '提交复盘需要先登录。', en: 'Submitting reconstructions requires signing in.' })}
           </p>
-          <button type="button" className="recon-btn" onClick={() => login()}>
-            <LogIn size={14} /> {tr({ zh: '登录', en: 'Sign in'
-            })}
-          </button>
+          <div className="submit-video-upload" style={{ justifyContent: 'center' }}>
+            {localVideoControls}
+            <button type="button" className="recon-btn" onClick={() => login()}>
+              <LogIn size={14} /> {tr({ zh: '登录', en: 'Sign in' })}
+            </button>
+          </div>
+          {videoError}
         </div>
+        {videoReviewDialog}
       </div>
     );
   }
@@ -1933,7 +2004,7 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
 
         <div className="submit-form-pane">
           {readOnly && <p className="submit-readonly-notice">{tr({ zh: '仅查看 · 只有添加者和管理员可以修改', en: 'Read only · Only the submitter and administrators can edit' })}</p>}
-          <fieldset className="submit-form" disabled={readOnly} aria-label={tr({ zh: '复盘内容', en: 'Reconstruction content' })}>
+          <fieldset className="submit-form" disabled={readOnly || saving} aria-label={tr({ zh: '复盘内容', en: 'Reconstruction content' })}>
             {!isEditing && !fromId && authUser && (
               <button type="button" className="submit-reuse-btn" onClick={() => setReuseOpen(true)}>
                 <History size={14} />
@@ -2586,36 +2657,32 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
                     {tr({ zh: '视频', en: 'Videos' })}
                   </label>
                     <div className="submit-video-upload">
-                      {isMember && (
-                      <input
-                        ref={videoUploadInputRef}
-                        id="recon-video-upload"
-                        className="submit-video-file"
-                        type="file"
-                        accept="video/mp4,video/webm,video/quicktime,.mov"
-                        onChange={event => void handleVideoUpload(event.target.files?.[0])}
-                        disabled={saving || videoUploading}
-                      />
-                      )}
-                      <button
-                        type="button"
-                        className="submit-reuse-btn"
-                        onClick={requestVideoUpload}
-                        disabled={saving || videoUploading}
-                      >
-                        {videoUploading ? <Spinner size={14} /> : <Upload size={14} />}
-                        {videoUploading
-                          ? tr({ zh: '正在上传', en: 'Uploading' })
-                          : tr({ zh: '上传视频', en: 'Upload video' })}
-                      </button>
-                      <span className="submit-hint">
-                        {tr({ zh: '会员专享，最大 200MB', en: 'Members only, up to 200MB' })}
-                      </span>
-                      {currentVideo && <button type="button" className="submit-reuse-btn"
-                        onClick={() => setVideoReview({ video: currentVideo, draft: draftIdentity, scramble: videoScramble, autoStart: false })}>
-                        {tr({ zh: '自动复盘', en: 'Automatic reconstruction' })}
+                      {localVideoControls}
+                      {selectedVideo && <bdi className="submit-hint submit-video-filename">{selectedVideo.file.name}</bdi>}
+                      {!isMember && <button type="button" className="submit-reuse-btn" onClick={requestVideoMembership}>
+                        {tr({ zh: '开通会员保存视频', en: 'Join to save videos' })}
                       </button>}
                     </div>
+                  {isMember && <div className="submit-video-upload">
+                    <label className="submit-video-save">
+                      {/* allow-checkbox: explicit consent to upload the selected file on form submission. */}
+                      <input
+                        type="checkbox"
+                        checked={!!videoForSubmit}
+                        disabled={!selectedVideo}
+                        aria-describedby="recon-video-save-hint"
+                        onChange={event => {
+                          setSaveVideo(event.currentTarget.checked && selectedVideo ? { video: selectedVideo, draft: draftIdentity } : undefined);
+                          setSubmitError(error => error?.field === 'videoUrl' ? null : error);
+                        }}
+                      />
+                      {tr({ zh: '保存视频到本站', en: 'Save video to CubeRoot' })}
+                    </label>
+                    <span id="recon-video-save-hint" className="submit-hint">
+                      {selectedVideo ? tr({ zh: '随复盘一起提交，最大 200 MB', en: 'Saved when you submit, up to 200 MB' })
+                        : tr({ zh: '请先选择视频', en: 'Choose a video first' })}
+                    </span>
+                  </div>}
                   <span className="submit-hint">
                     {tr({ zh: '同一视频的不同平台链接放在一起，每行一个；不同视频请点击“添加视频”。', en: 'Keep links to the same video together, one per line. Use “Add video” for a different video.' })}
                   </span>
@@ -2669,7 +2736,8 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
                     onClick={() => setField('videoUrl', (form.videoUrl || '') + '\n\n')}>
                     {tr({ zh: '添加视频', en: 'Add video' })}
                   </button>
-                  {videoUploadError && <span className="submit-hint submit-hint-warn">{videoUploadError}</span>}
+                  {videoError}
+                  {renderSubmitError('videoUrl')}
                 </div>
               </div>
 
@@ -2764,7 +2832,7 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
             {/* Submit buttons */}
             {renderSubmitError('submit')}
             <div className="submit-actions">
-              <button className="submit-btn submit-btn-primary" onClick={handleSubmit} disabled={saving || videoUploading || groupMatchPending}>
+              <button className="submit-btn submit-btn-primary" onClick={handleSubmit} disabled={saving || groupMatchPending}>
                 {saving
                   ? t('recon.submitting')
                   : isEditing
@@ -2803,22 +2871,7 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
           </fieldset>
         </div>
       </div>
-      {activeVideoReview && <SettingsDialog label={tr({ zh: '自动复盘', en: 'Automatic reconstruction' })} heading
-        panelClassName="submit-video-review" onCloseStart={() => { closingVideoReview.current = activeVideoReview; }}
-        onClose={() => setVideoReview(prev => prev === activeVideoReview ? undefined : prev)}>
-        {close => <>
-          {videoApplied && <p className="submit-hint" role="status">
-            {tr({ zh: '已将解法填入表单。调整结果后，点击“使用这份解法”更新表单。', en: 'The solution is in the form. After adjusting the result, choose “Use this solution” to update the form.' })}
-          </p>}
-          <VideoReconWorkspace mode="detector" submission={{
-            file: activeVideoReview.video.file,
-            scramble: activeVideoReview.scramble,
-            autoStart: activeVideoReview.autoStart,
-            onReady: autoApplyVideoSolution,
-            onApply: solution => { if (applyVideoSolution(activeVideoReview, solution, true)) close(); },
-          }} />
-        </>}
-      </SettingsDialog>}
+      {videoReviewDialog}
     </div>
   );
 }

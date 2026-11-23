@@ -244,6 +244,12 @@ body[data-site-scenery] .vc-export-formats {
   backdrop-filter: var(--glass-menu-filter);
 }
 
+body[data-site-scenery] .cal-repeat > .list-select > .list-select-popup {
+  background: var(--popover);
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+
 /* Dialog shells provide the reading layer; inner sections need no opaque mat. */
 body[data-site-scenery] :is(
   .otd-header,
@@ -275,9 +281,9 @@ body[data-site-scenery] .mem-reminder {
    color swatches, uploads, images, hidden fields and semantic submit buttons.
    Background-color preserves existing select arrows and date-input artwork.
    Important is limited to the neutral fill because legacy pages set it inline.
-   The vault title and read-only values need no field surface. */
+   The vault title, read-only values and inline playback speed need no field surface. */
 body[data-site-scenery] :is(
-  select,
+  select:not(:where(.playback-speed-select)),
   textarea:not(.site-assistant-draft, :where(
     .scramble-manual-inline .scramble-src-manual-input,
     .submit-field-textarea.submit-input-locked
@@ -489,6 +495,40 @@ body[data-site-scenery] :is(
   .timer-room-dialog
 ) {
   background: var(--glass-dialog-bg);
+}
+
+body[data-site-scenery] .timer-room-dialog.reconstruct-modal {
+  background: var(--card);
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+
+body .timer-room-overlay:has(> .reconstruct-modal) {
+  padding: 0;
+}
+
+body .timer-room-overlay > .reconstruct-modal {
+  box-sizing: border-box;
+  width: 100%;
+  height: 100%;
+  max-height: none;
+  padding-block: 0 max(24px, env(safe-area-inset-bottom));
+  padding-inline: max(16px, env(safe-area-inset-left), calc((100% - 1120px) / 2))
+    max(16px, env(safe-area-inset-right), calc((100% - 1120px) / 2));
+  border: 0;
+  border-radius: 0;
+}
+
+.reconstruct-modal > .timer-room-dialog-head {
+  position: sticky;
+  top: 0;
+  z-index: 3;
+  background: var(--card);
+  padding-block-start: max(8px, env(safe-area-inset-top));
+}
+
+.reconstruct-modal .rc-summary-cell {
+  min-inline-size: min-content;
 }
 
 /* Replay text behind collection controls must not compete with review content. */
