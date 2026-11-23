@@ -33,8 +33,7 @@ describe('Web solve detail shared integration', () => {
     expect(source).toContain("import ReconstructActions from '@cuberoot/timer-ui/reconstruct-actions'");
     expect(source).toContain("dynamic(() => import('./ReconstructReport')");
     expect(source).toContain('<CubePreview');
-    expect(source).toContain('fullHeaderActions={hasMoves ? (');
-    expect(source).toContain('placement="detail"');
+    expect(source).toMatch(/fullHeaderActions=\{hasMoves && !title \? \(\s*<ReconstructActions\b[^>]*placement="detail"/);
     expect(source).toMatch(/<ReconstructReport[\s\S]{0,120}hideActions/);
     expect(timerUiPackage.exports['./reconstruct-actions'])
       .toBe('./src/reconstruct/ReconstructActions.tsx');
