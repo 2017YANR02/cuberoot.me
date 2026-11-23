@@ -1,7 +1,7 @@
 import { spawn, spawnSync } from 'node:child_process';
 import { closeSync, mkdirSync, mkdtempSync, openSync, readFileSync, realpathSync, rmSync, writeFileSync } from 'node:fs';
 import { BlockList, createConnection, createServer, isIPv6 } from 'node:net';
-import { homedir, networkInterfaces } from 'node:os';
+import { homedir, networkInterfaces, tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { setTimeout as delay } from 'node:timers/promises';
 import { fileURLToPath } from 'node:url';
@@ -95,8 +95,8 @@ function installedLiveApp(udid) {
 }
 
 function installLiveApp(udid) {
-  run('pnpm', ['ios:build'], { cwd: mobile, env: { ...process.env, TMPDIR: cache }, stdio: 'inherit' });
-  const builtApp = join(cache, 'cuberoot-mobile-ios-derived-data/Build/Products/Debug-iphonesimulator/App.app');
+  run('pnpm', ['ios:build'], { cwd: mobile, stdio: 'inherit' });
+  const builtApp = join(tmpdir(), 'cuberoot-mobile-ios-derived-data/Build/Products/Debug-iphonesimulator/App.app');
   const stage = mkdtempSync(join(cache, 'install-'));
   try {
     const app = join(stage, 'App.app');
