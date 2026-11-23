@@ -155,7 +155,31 @@ routing. To restore the default chat backend, remove `site-assistant` from
 `LOCAL_DOMAINS`, remove `NEXT_PUBLIC_SITE_ASSISTANT_API_ORIGIN`, and reload the Next
 config. Remove `LOCAL_API_PORT` only if no other local domains need it.
 
+Check `/v1/site-assistant/providers` through the frontend you are testing before
+sending a message. The `X-Assistant-Backend: local` header confirms it reaches
+this checkout. A standalone recent 3×3 championship-count question can run
+through the authenticated chat queue with no model configured. It still
+requires imported WCA results, public analysis views and their import timestamp.
+
 ## Frozen before/after assistant evaluation
+
+For the 2026-11-16 reliability candidate, reuse `benchmark-assistant-context.mjs`.
+`--prepare --out=.local-data/<run>` freezes both executed bundles, dependency hashes,
+cases, source mappings and runner identity. `baseline.json.candidateFiles` limits
+treatment changes; other baseline files are shared by both variants. Never edit
+an existing frozen directory; use a new directory for a changed candidate.
+`--replay` runs the frozen synthetic provider replies with no network fallback and
+stores `replay-results.json`; these are regression results, never model accuracy,
+token or latency measurements. `--run --env-file=/absolute/private/path` uses real
+provider credentials (or existing environment variables) and the bounded paid
+ledger. Credentials are not embedded in either bundle. Resource rules below still
+apply to paid runs. See the [current reliability record](../../../../docs/product/assistant/benchmarks/assistant-reliability-2026-11-16.md).
+
+Real runs also retain each provider response, including rejected drafts, in
+owner-only `provider-responses/<call>.txt`; `provider-calls.jsonl` links those
+files to the request and usage. This is local synthetic evaluation evidence,
+not production logging. Request headers and credentials are never copied.
+Production plan diagnostics record only validation phase, reason and word counts.
 
 `prepare-assistant-paired.mjs`, `run-assistant-paired.mjs`, and
 `analyze-assistant-paired.mjs` use persistent evidence under `.local-data/`.
@@ -181,3 +205,71 @@ Before a paid run, follow `docs/contributing/compute.md` and the latest evaluati
 report: explicit authorization, the preserved resource baseline and the external
 resource guard are required. The runner's own 2 GiB check does not replace them.
 A protection stop must not be automatically resumed.
+
+For an explicitly approved macOS monitored exception, `run-assistant-local.mts`
+supervises the frozen runner without changing either evaluated bundle. Its default
+mode only checks resources, hashes and whether the private credential is present.
+`--run` requires an unused `local-authorization.json` bound to the runner, manifest,
+supervisor, boot and Swapouts. The file records the user's actual one-run approval;
+do not create or renew it without that approval. The evaluation credential belongs
+in ignored `.local-data/assistant-evaluation-config/deepseek.env` with mode `0600`.
+The supervisor samples the process tree, preserves results on stop, and enforces
+the approved 1 GiB tree RSS, 2 GiB free-memory floor and 30-minute deadline. Changed
+Swapouts, boot, memory pressure or failed observation stop the run; the consumed
+receipt and stop record prevent automatic restart. This is monitoring, not an
+operating-system guarantee against swap. No system settings are changed.
+
+After an explicit user request to continue a stopped evaluation without repeating
+completed requests, use a **new** evidence directory and `resume.json`. The
+`assistant-evaluation-resume.mts` verifier binds the prior directory's hashes,
+completed `(repeat, variant, id)` keys and the interrupted request’s usage records,
+and unchanged model bundles, cases, fixtures and configuration. The new manifest
+records `resumesBuildSha256` and the new harness hashes; never rewrite the old
+manifest, ledger, authorization, consumed receipt or stop record. The supervisor
+still needs a new one-run authorization bound to the continuation fingerprint.
+
+The continuation writes only new results, skips every completed key, preserves
+global provider call numbers and measured token totals, and deducts prior active
+runtime from the original deadline. After a memory stop with a saved provider
+response and an unsaved answer, measured usage counts against the original
+budget and the unfinished request may run again. Historical unknown usage remains explicit;
+reserve 1,000,000 input and 16,384 output tokens against the original budget rather
+than reporting it as zero. Any new unknown usage stops the run. The first
+continuation is supported after a memory-headroom stop with fully measured
+usage or one interrupted call with unknown usage. With fully measured usage,
+the worker's final memory check is also accepted when the frozen supervisor
+sample, lease, exit record and worker log corroborate the stop. It also supports one unknown
+call from a verified legacy wall-clock reversal. For a clock reversal the frozen records
+must show continuous resource samples and leases before a stop timestamp that
+precedes the latest accepted lease. A second, separately authorized continuation
+can follow a recorded failed answer with unknown usage if an offline replay
+matches the second request hash and verifies the approved 64,000-token input
+reserve. It retains the first call's full reserve and both original result sets.
+After a first continuation with fully measured usage, a second memory stop
+may leave one provider call without usage and its answer unwritten. A separately
+approved continuation verifies both stopped segments and reserves 1,000,000
+input and 16,384 output tokens for that call. All measured usage and completed
+answers from both segments carry forward.
+Other histories fail closed. The helper does
+not authorize resumption, reset boot or Swapouts, or restart automatically.
+Reports retain both result segments and the interruption and unknown usage.
+
+
+The local paid runner also requires the supervisor's live IPC connection. After
+successful resource observations, the supervisor sends monotonically numbered
+samples; `assistant-monitor-lease.mts` checks them every 250 ms and at paid-call
+boundaries. Disconnect, a missing/replayed lease, a sample older than 8 seconds,
+or the fixed run deadline makes the worker record the stop and terminate its own
+process group, including while awaiting an HTTP response. Both processes use the
+host monotonic clock for lease age and the deadline. Wall-clock timestamps remain
+in the audit records. No lease can revive an expired run. The 8-second lease is
+a fail-closed detection bound, not a replacement for the 2-second resource
+sampling interval or an OS no-swap claim.
+
+`worker-monitor-leases.jsonl` records accepted samples, and
+`provider-starts.jsonl` records each call before transmission. On worker-triggered
+termination, `worker-monitor-stop.json` retains in-flight call IDs whose usage may
+be unknown. A missing response never means zero cost. The manifest binds the lease
+helper hash; normal completion requires `local-exit.json` and continuous matching
+resource/lease records. Interrupted evidence stays immutable in its original
+folder; a new run needs a new expressly authorized, frozen directory.

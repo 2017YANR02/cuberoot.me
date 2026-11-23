@@ -14,6 +14,7 @@
 
 - [回答朗读与百炼语音配置](assistant-speech.md)
 
+- [可靠性冻结基线与本地验证（2026-11-16）](benchmarks/assistant-reliability-2026-11-16.md)：本地候选，固定回放已完成，真实模型对照待运行。
 - [聊天助手的回答与工具设计](assistant-design.md)
 - [聊天助手质量改进跟踪](assistant-quality-tracker.md)
 - [AI 二阶魔方实验](cube-agents.md)
