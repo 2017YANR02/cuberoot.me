@@ -13,13 +13,37 @@
 .course-header {
   min-width: 0;
   display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 4px 16px;
+  align-items: center;
+  gap: 8px;
 }
 .course-header h1 { margin: 0; font-size: clamp(1.2rem, 3vw, 1.85rem); line-height: 1.25; }
+.course-header .course-back-link {
+  position: relative;
+  isolation: isolate;
+  flex: none;
+  display: grid;
+  place-items: center;
+  inline-size: 44px;
+  block-size: 44px;
+  border-radius: 50%;
+}
+.course-header .course-back-link::before {
+  content: '';
+  position: absolute;
+  inset: 4px;
+  z-index: -1;
+  border-radius: inherit;
+  background: var(--muted);
+}
+.course-header .course-back-link:is(:hover, :focus-visible) { color: var(--accent); }
+.course-header .course-back-link:is(:hover, :focus-visible)::before { background: var(--accent-soft); }
+.course-header .course-back-link:focus-visible { outline: 2px solid var(--ring); outline-offset: -2px; }
 .course-navigation { --f2l-sidebar-width: 178px; --f2l-layout-gap: 14px; }
+.course-demo-dialog.course-skip-dialog { inline-size: min(25rem, calc(100% - 1.5rem)); }
+.course-skip-dialog h2 { margin: 0; font-size: 1.125rem; line-height: 1.35; }
+.course-skip-dialog p { margin: 8px 0 0; line-height: 1.5; color: var(--muted-foreground); }
+.course-skip-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 8px; margin-block-start: 16px; }
+.course-skip-actions > .course-skip-action { min-block-size: 44px; }
 .course-content {
   display: grid;
   grid-template-rows: minmax(0, 1fr) auto;
@@ -54,7 +78,7 @@
 }
 @container course-reading (min-width: 520px) {
   .course-overview-steps { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: clamp(12px, 4cqw, 32px); }
-  .course-overview-steps[data-step-count='4'] { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .course-overview-steps:is([data-step-count='2'], [data-step-count='4']) { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .course-overview-steps li { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto 1fr; align-items: start; text-align: center; }
   .course-overview-diagram { margin-inline: auto; width: min(100%, 176px, max(70px, 43cqh)); }
 }
@@ -174,6 +198,10 @@
   .course-cube { width: min(100%, max(84px, 47cqh)); }
 }
 @media (max-width: 760px), (orientation: landscape) and (max-height: 500px) {
+  /* Give the docked site pet room above the tutorial footer. */
+  body:has(.tutorial-course) :is(.clawd-deskpet, .deskpet-compact) {
+    bottom: calc(3.5rem + env(safe-area-inset-bottom));
+  }
   .course-section-picker { display: block; }
   .course-section-picker .tutorial-section-menu { display: block; position: static; }
   .tutorial-course { gap: 4px; }

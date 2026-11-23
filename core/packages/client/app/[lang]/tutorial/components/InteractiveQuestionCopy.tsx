@@ -1,5 +1,5 @@
-import type { ReactNode } from 'react';
-import { Check } from '@app-foundation/icons/lucide';
+import type { ComponentPropsWithoutRef, ReactNode } from 'react';
+import { Check, Play } from '@app-foundation/icons/lucide';
 import { tr } from '@/i18n/tr';
 import './interactive-question-copy.css';
 
@@ -20,28 +20,46 @@ export function InteractiveQuestionProgress({ steps, activeIndex, currentComplet
   </ol>;
 }
 
-export default function InteractiveQuestionCopy({ sectionId, questions, activeIndex, answer, heading, headingAction, prompt, action, hint, status }: {
+export function InteractiveQuestionHeading({ children, action }: { children: ReactNode; action?: ReactNode }) {
+  if (!action) return <h2>{children}</h2>;
+  return <div className="course-question-heading">
+    <h2>{children}</h2>
+    <div className="course-question-heading-actions">{action}</div>
+  </div>;
+}
+
+export function InteractiveQuestionHelpButton({ children, video = false, ...props }:
+  Pick<ComponentPropsWithoutRef<'button'>, 'children' | 'onClick' | 'disabled' | 'aria-label'> & { video?: boolean }) {
+  return <button {...props} type="button" className="btn-secondary course-question-heading-action"
+    aria-haspopup={video ? 'dialog' : undefined}>
+    {video && <Play size={15} aria-hidden="true" />}
+    <span>{children}</span>
+  </button>;
+}
+
+export default function InteractiveQuestionCopy({ sectionId, questions, activeIndex, answer, heading, headingAction, prompt, action, hint, status, reserveStatus }: {
   sectionId: string;
   questions: ProgressSteps;
   activeIndex: number;
   answer: 'correct' | 'wrong' | 'pending';
   heading: string;
   headingAction?: ReactNode;
-  prompt: string;
+  prompt?: string;
   action?: ReactNode;
   hint?: string;
   status?: string | null;
+  reserveStatus?: boolean;
 }) {
   const step = Math.min(activeIndex + 1, questions.length);
   return <div className="course-copy course-question-copy" data-course-section={sectionId}
     data-course-question={step} data-course-answer={answer}>
     <InteractiveQuestionProgress steps={questions} activeIndex={activeIndex} currentComplete={answer === 'correct'} />
     <div aria-live="polite" aria-atomic="true">
-      {headingAction ? <div className="course-question-heading"><h2>{heading}</h2>{headingAction}</div> : <h2>{heading}</h2>}
-      <p>{prompt}</p>
+      <InteractiveQuestionHeading action={headingAction}>{heading}</InteractiveQuestionHeading>
+      {prompt && <p>{prompt}</p>}
     </div>
     {action}
     {hint && <p className="course-question-hint">{hint}</p>}
-    <div className="course-question-status" role="status" aria-atomic="true">{status}</div>
+    <div className="course-question-status" role="status" aria-atomic="true" data-reserved={reserveStatus || undefined}>{status}</div>
   </div>;
 }

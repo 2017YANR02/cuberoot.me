@@ -1,25 +1,30 @@
 'use client';
 
-import { useCallback, useEffect, useId, useMemo, useRef, useState, type ComponentType, type KeyboardEvent, type ReactNode } from 'react';
+import { Fragment, useCallback, useEffect, useId, useMemo, useRef, useState, type ComponentProps, type ComponentType, type KeyboardEvent, type ReactNode } from 'react';
 import { ArrowLeft, ArrowRight, Check, Lightbulb, RotateCcw } from '@app-foundation/icons/lucide';
 import { Color } from 'three';
 import { FM_FIXED_COLOR, FM_IGNORED } from '@cuberoot/puzzle-render-core/engine/nxn/stickering';
 import AlgPlayer, { type AlgPlayerHandle, type AlgStickerPlacement } from '@/components/AlgPlayer/AlgPlayer';
 import { resolveSimPreviewMoves, type AlgPlayerPuzzle } from '@/components/AlgPlayer/player-setup';
-import { createStickerHintFade } from '@/components/AlgPlayer/sticker-hint-fade';
+import { animateStickerHint, dimStickerColors } from '@/components/AlgPlayer/sticker-hint-fade';
 import AppLink from '@/components/AppLink';
 import ChatBubble from '@/components/ChatBubble';
 import { ClearButton } from '@/components/ClearButton';
+import PageBackLink from '@/components/PageBackLink';
+import { Tooltip } from '@/components/Tooltip';
 import TrainingFeedbackOverlay from '@/components/TrainingFeedbackOverlay';
 import type { BlockedLayerTurnHandler, CubeletTap } from '@/components/sim-embed/attachEmbeddedSimInteraction';
 import { orientedCubeFaceColors } from '@/lib/cube-orientation';
 import type { CubeFace } from '@/lib/cube-colors';
 import { useModalBackdrop } from '@/hooks/useModalDismiss';
+import { useT } from '@/hooks/useT';
 import { invertMoveString } from '@cuberoot/shared/alg-notation';
 import { tr } from '@/i18n/tr';
 import ChapterNavigation from './ChapterNavigation';
 import CornerAnswerBubble from './CornerAnswerBubble';
-import InteractiveQuestionCopy, { InteractiveQuestionProgress } from './InteractiveQuestionCopy';
+import InteractiveQuestionCopy, {
+  InteractiveQuestionHeading, InteractiveQuestionHelpButton, InteractiveQuestionProgress,
+} from './InteractiveQuestionCopy';
 import ReadingFit from './ReadingFit';
 import SectionMenu from './SectionMenu';
 import TutorialNavigationShell from './TutorialNavigationShell';
@@ -42,7 +47,9 @@ type PlacementQuestion = {
   homeIndex: number;
   homeFace: CubeFace;
   goal: AlgStickerPlacement;
+  casesWhenPlaced?: readonly string[];
   describe?: (placement: AlgStickerPlacement) => Text;
+  showAnswerHint?: boolean;
 };
 type CourseQuestion = {
   progressLabel: Text;
@@ -57,7 +64,7 @@ type CourseQuestion = {
 } | PlacementQuestion);
 type QuestionFeedback = { kind: 'correct' } | { kind: 'wrong'; choice: Text; clientX: number; clientY: number };
 type PlacementProgress = { stage: 'offer' } | { stage: 'practice'; startCount: number }
-  | { stage: 'turning'; startCount: number };
+  | { stage: 'turning'; startCount: number } | { stage: 'changing' };
 type AlignmentAttempt = {
   stage: 'entry' | 'move-away' | 'return' | 'place' | 'complete';
   position: AlgStickerPlacement | null;
@@ -68,8 +75,7 @@ type CourseTurnExploration = {
     progressLabel: Text;
     heading: Text;
     prompt: Text;
-    done: Text;
-  } & ({ kind: 'faces'; inProgress: Text } | { kind: 'rotation'; solvedStickers: readonly StickerGoal[] });
+  } & ({ kind: 'faces' } | { kind: 'rotation'; done: Text; solvedStickers: readonly StickerGoal[] });
   protectedCorners: Text;
   freeFaces: readonly { face: CubeFace; label: Text }[];
   mutedStickers: readonly string[];
@@ -80,6 +86,7 @@ type CourseTurnExploration = {
     homeFace: CubeFace;
     stickers: readonly string[];
     goalPositions: readonly number[];
+    casesWhenAligned?: Readonly<Partial<Record<number, readonly string[]>>>;
     heading: Text;
     prompt: Text;
     describe: (placement: AlgStickerPlacement) => Text;
@@ -92,17 +99,19 @@ type CourseTurnExploration = {
     demoSetup: string;
     helpLabel: Text;
     solvedStickers: readonly StickerGoal[];
+    practiceCases?: readonly string[];
   };
 };
 type CourseInteraction = {
-  completion: Text;
   view: View;
   fixedOrientation?: boolean;
   orbitSnapDegrees?: number;
 } & ({
+  completion: Text;
   turnExploration: CourseTurnExploration;
   questions?: never;
 } | {
+  completion?: Text;
   turnExploration?: never;
   questions: readonly [CourseQuestion, ...CourseQuestion[]];
   hintFacelets?: boolean;
@@ -110,15 +119,19 @@ type CourseInteraction = {
 });
 type CourseObservation = { view: View; steps: readonly Text[]; stickers?: readonly string[] };
 type GuidedStage = { progressLabel: Text; heading: Text; prompt: Text };
+type TutorialAlgStep = { notation: string; cue?: Text; detail?: Text };
 type TutorialAlg = Pick<CourseTurnExploration['insertion'], 'progressLabel' | 'demoSetup' | 'helpLabel'> & {
-  steps: readonly { notation: string; cue: Text; detail?: Text }[];
+  steps: readonly (TutorialAlgStep & { cue: Text })[];
   demoTitle?: Text;
-  showHands?: 'left';
+  showHands?: boolean | 'left';
+  hideDemoDetail?: boolean;
 };
 export type GuidedCourseLesson = {
   view: View;
+  mutedStickers?: readonly string[];
   Help?: ComponentType;
   hideHelpDuringAlgorithm?: boolean;
+  rotationHintStyle?: 'orbit';
   recognition?: GuidedStage & { choices: readonly Text[]; answer: number; explanation: Text };
   alignment?: GuidedStage & {
     axes: readonly ('U' | 'y')[];
@@ -142,7 +155,7 @@ type CourseSection = {
 type ReadingSection = { id: string; title: Text; content: ReactNode };
 type SelectCourseSection = (chapterId: string, sectionId?: string) => void;
 type CourseIndexSection = { id: string; title: Text; index: (select: SelectCourseSection) => ReactNode };
-type CourseDemoSection = { id: string; title: Text; demonstration: ReactNode };
+type CourseStageSection = { id: string; title: Text; stage: (select: SelectCourseSection) => ReactNode };
 export type CourseFlowSection = {
   id: string;
   title: Text;
@@ -151,20 +164,22 @@ export type CourseFlowSection = {
 export type CourseChapter = {
   id: string;
   title: Text;
-  sections: readonly (CourseSection | ReadingSection | CourseIndexSection | CourseDemoSection | CourseFlowSection)[];
+  sections: readonly (CourseSection | ReadingSection | CourseIndexSection | CourseStageSection | CourseFlowSection)[];
 };
 export type CoursePosition = { chapterIndex: number; sectionId: string };
 export type InteractiveTutorialProps = {
   title: Text;
+  headerAction?: ReactNode;
   puzzle: AlgPlayerPuzzle;
   orientation?: string;
   chapters: readonly CourseChapter[];
   basicsHref?: string;
+  catalogHref?: string;
   location: CoursePosition;
   onNavigate: (position: CoursePosition, chapterChanged: boolean) => void;
 };
 
-const CUBE_FRAMING_EDGE = 380;
+export const CUBE_FRAMING_EDGE = 380;
 const STICKER_FADE_MS = 720;
 const ERROR_FEEDBACK_MS = 2400;
 const practiceQuarterTurn = 'y';
@@ -175,15 +190,22 @@ const labels = {
   review: { zh: '回看本节教程', en: 'Review this section' },
   completed: { zh: '已完成', en: 'Complete' },
   chapters: { zh: '章节', en: 'Chapters' },
+  catalog: { zh: '返回教程选择', en: 'Back to tutorial selection' },
   basics: { zh: '魔方基础与转动记号', en: 'Cube basics and notation' },
   restart: { zh: '重来', en: 'Restart' },
 };
 
-export function LessonPane({ layout, cube, children }: { layout: 'B' | 'F'; cube: ReactNode; children: ReactNode }) {
+export function LessonPane({ layout, cube, children, captionProps }: {
+  layout: 'B' | 'F';
+  cube: ReactNode;
+  children: ReactNode;
+  captionProps?: ComponentProps<'div'>;
+}) {
   return <section className="course-stage" data-course-stage data-tutorial-layout={layout}>
     <div className="course-grid" data-course-grid>
       <div className="course-cube-column">{cube}</div>
-      <div className="course-caption" data-course-caption>{children}</div>
+      <div {...captionProps} className={captionProps?.className ? `course-caption ${captionProps.className}` : 'course-caption'}
+        data-course-caption>{children}</div>
     </div>
   </section>;
 }
@@ -197,7 +219,13 @@ function matchesStickers(player: AlgPlayerHandle, goals: readonly StickerGoal[])
     matchesPlacement(player.getStickerPlacement?.(homeIndex, homeFace) ?? null, placement));
 }
 
-function useStickerFade(active: boolean) {
+function randomCase(cases: readonly string[], previous?: string) {
+  const alternatives = cases.filter(item => item !== previous);
+  const choices = alternatives.length ? alternatives : cases;
+  return choices[Math.floor(Math.random() * choices.length)];
+}
+
+export function useStickerFade(active: boolean) {
   const [value, setValue] = useState(0);
   useEffect(() => {
     if (!active) return;
@@ -221,11 +249,12 @@ type InteractionProps = {
   task: CourseInteraction;
   puzzle: AlgPlayerPuzzle;
   orientation?: string;
+  onQuizComplete: () => void;
 };
 
 function SectionInteraction(props: InteractionProps) {
   if (props.task.turnExploration) {
-    return <TurnExploration {...props} exploration={props.task.turnExploration} />;
+    return <TurnExploration {...props} task={props.task} />;
   }
   return <InteractiveQuestions {...props} task={props.task} />;
 }
@@ -238,13 +267,14 @@ const triggerMoveCopy: Record<string, Text> = {
   "R'": { zh: '把右层转下来。', en: 'Turn the right layer down.' },
 };
 
-function TutorialAlgDemo({ insertion, puzzle, orientation, view, onClose }: {
-  insertion: TutorialAlg;
+export function TutorialAlgDemo({ insertion, puzzle, orientation, view, mutedStickers, stickeringAtStep, stickerColorOverrides, onClose }: {
+  insertion: Omit<TutorialAlg, 'helpLabel' | 'steps'> & { steps: readonly TutorialAlgStep[] };
   puzzle: AlgPlayerPuzzle;
   orientation?: string;
   view: View;
+  mutedStickers?: readonly string[];
   onClose: () => void;
-}) {
+} & Pick<ComponentProps<typeof AlgPlayer>, 'stickeringAtStep' | 'stickerColorOverrides'>) {
   const dialog = useRef<HTMLDialogElement>(null);
   const player = useRef<AlgPlayerHandle>(null);
   const interacted = useRef(false);
@@ -254,9 +284,11 @@ function TutorialAlgDemo({ insertion, puzzle, orientation, view, onClose }: {
   const [playRequest, setPlayRequest] = useState(0);
   const [step, setStep] = useState(0);
   const left = insertion.steps[0]?.notation === "L'";
-  const title = insertion.demoTitle ?? (left ? { zh: '左手上钩下回', en: 'Left-hand trigger' } : insertion.progressLabel);
-  const describeMove = (notation: string, index: number): Text => insertion.demoTitle ? insertion.steps[index].detail ?? insertion.steps[index].cue
-    : triggerMoveCopy[notation] ?? (index === 1 ? { zh: '勾动顶层。', en: 'Hook the top layer.' } : { zh: '把顶层转回去。', en: 'Turn the top layer back.' });
+  const title = insertion.demoTitle ?? (left ? { zh: '左手上勾下回', en: 'Left-hand trigger' } : insertion.progressLabel);
+  const describeMove = ({ notation, detail, cue }: TutorialAlgStep, index: number): Text =>
+    (insertion.demoTitle ? detail ?? cue : undefined)
+    ?? triggerMoveCopy[notation]
+    ?? (index === 1 ? { zh: '勾动顶层。', en: 'Hook the top layer.' } : { zh: '把顶层转回去。', en: 'Turn the top layer back.' });
   const current = insertion.steps[step - 1];
   const close = () => {
     dialog.current?.close();
@@ -298,6 +330,7 @@ function TutorialAlgDemo({ insertion, puzzle, orientation, view, onClose }: {
             onKeyDownCapture={() => { interacted.current = true; }}>
             <AlgPlayer ref={player} puzzle={puzzle} set="" orientation={orientation} engine="sim"
               setup={insertion.demoSetup} alg={insertion.steps.map(({ notation }) => notation).join(' ')} sceneRot={view}
+              hiddenStickers={mutedStickers} stickeringAtStep={stickeringAtStep} stickerColorOverrides={stickerColorOverrides}
               showHands={insertion.showHands ?? !insertion.demoTitle} moveDurationMs={720}
               pauseAfterSteps={insertion.demoTitle ? undefined : triggerPauses} sectionPauseMs={300}
               onStepChange={setStep} playRequest={playRequest} onReady={() => setCubeReady(true)} fillPane />
@@ -308,38 +341,43 @@ function TutorialAlgDemo({ insertion, puzzle, orientation, view, onClose }: {
         </div>
         <div className="course-demo-guide">
           <ol className="course-demo-cues" role="list">
-            {insertion.steps.map(({ notation, cue }, index) => <li key={index} aria-current={step === index + 1 ? 'step' : undefined}>
+            {insertion.steps.map((move, index) => <li key={index} aria-current={step === index + 1 ? 'step' : undefined}>
               <button type="button" className="course-demo-cue" disabled={!ready} onClick={() => {
                 interacted.current = true;
                 player.current?.playMove?.(index);
-              }} aria-label={`${tr(cue)} ${notation}. ${tr(describeMove(notation, index))}`}>
-                <span>{tr(cue)}</span><code>{notation}</code>
+              }} aria-label={move.cue ? `${tr(move.cue)} ${move.notation}. ${tr(describeMove(move, index))}` : undefined}>
+                {move.cue && <span>{tr(move.cue)}</span>}<code>{move.notation}</code>
               </button>
             </li>)}
           </ol>
-          <p className="course-demo-detail" aria-live="polite" aria-atomic="true">
-            {tr(current ? describeMove(current.notation, step - 1)
+          {!insertion.hideDemoDetail && <p className="course-demo-detail" aria-live="polite" aria-atomic="true">
+            {tr(current ? describeMove(current, step - 1)
               : { zh: '选择一个动作可以单独播放。', en: 'Select a move to play it on its own.' })}
-          </p>
+          </p>}
         </div>
       </div>
     </div>
   </dialog>;
 }
 
-function TurnExploration({ section, task, puzzle, orientation, exploration }: InteractionProps & {
-  exploration: CourseTurnExploration;
+function TurnExploration({ section, task, puzzle, orientation, onQuizComplete }: InteractionProps & {
+  task: Extract<CourseInteraction, { turnExploration: CourseTurnExploration }>;
 }) {
   const [ready, setReady] = useState(false);
+  const exploration = task.turnExploration;
   const { opening, alignment, insertion, protectedCorners } = exploration;
   const [quiz, setQuiz] = useState<0 | 1 | 2>(opening ? 0 : 1);
   const [orientationSettled, setOrientationSettled] = useState(false);
   const [inserted, setInserted] = useState(false);
+  useEffect(() => { if (inserted) onQuizComplete(); }, [inserted, onQuizComplete]);
   const [attempt, setAttempt] = useState<AlignmentAttempt>({ stage: 'entry', position: null });
   const [hintRequest, setHintRequest] = useState(0);
   const [moves, setMoves] = useState<string[]>([]);
   const [settledMoveCount, setSettledMoveCount] = useState(0);
   const [insertionStart, setInsertionStart] = useState(0);
+  const [changingCase, setChangingCase] = useState(false);
+  const [practiceCase, setPracticeCase] = useState<{ alg: string; history: readonly string[]; start: number }>();
+  const caseTransition = useRef<AbortController | null>(null);
   const [demoOpen, setDemoOpen] = useState(false);
   const closeDemo = useCallback(() => setDemoOpen(false), []);
   const movesRef = useRef<string[]>([]);
@@ -348,7 +386,10 @@ function TurnExploration({ section, task, puzzle, orientation, exploration }: In
   const reportedRounds = useRef(0);
   const board = useRef<HTMLDivElement>(null);
   const feedbackTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
-  useEffect(() => () => clearTimeout(feedbackTimer.current), []);
+  useEffect(() => () => {
+    clearTimeout(feedbackTimer.current);
+    caseTransition.current?.abort();
+  }, []);
   useEffect(() => {
     if (!roundFeedback) return;
     const timer = setTimeout(() => setRoundFeedback(null), 2400);
@@ -360,19 +401,21 @@ function TurnExploration({ section, task, puzzle, orientation, exploration }: In
   const inserting = quiz === 2;
   const rotating = quiz === 0 && opening?.kind === 'rotation';
   const fade = useStickerFade(quiz > 0 && !!opening);
-  const reveal = opening ? fade : 1;
+  const reveal = opening && !changingCase && !practiceCase ? fade : 1;
   const aligned = reveal === 1 && attempt.stage === 'complete';
   const canContinueAlignment = aligned && attempt.position !== null
     && alignment.goalPositions.includes(attempt.position.positionIndex);
   const openingComplete = rotating ? orientationSettled
     : exploration.freeFaces.every(({ face }) => tried.has(face));
-  const currentComplete = inserting ? inserted : aligning ? aligned : openingComplete;
+  const currentComplete = inserting ? inserted : aligning ? canContinueAlignment : openingComplete;
   const steps = opening ? [opening, alignment, insertion] : [alignment, insertion];
   const progressIndex = quiz - (opening ? 0 : 1);
   const insertionMoves = moves.length - insertionStart;
   const insertionStep = insertionMoves % insertion.steps.length;
   const insertionBoundary = inserting && !inserted && insertionMoves > 0 && insertionStep === 0;
-  const finishingTurn = insertionBoundary && settledMoveCount !== moves.length && section.exercise.isComplete(moves);
+  const puzzleHistory = (history: readonly string[]) => practiceCase
+    ? [...practiceCase.history, ...history.slice(practiceCase.start)] : history;
+  const finishingTurn = insertionBoundary && settledMoveCount !== moves.length && section.exercise.isComplete(puzzleHistory(moves));
   const cornerSlotHint = useMemo(() => aligning && hintRequest
     ? { positions: alignment.goalPositions, request: hintRequest, color: TUTORIAL_STICKER_PURPLE }
     : undefined, [aligning, alignment.goalPositions, hintRequest]);
@@ -387,7 +430,7 @@ function TurnExploration({ section, task, puzzle, orientation, exploration }: In
 
   useEffect(() => {
     const handle = player.current;
-    if (!ready || !aligning || !handle) return;
+    if (!ready || !aligning || changingCase || !handle) return;
     const updatePosition = () => {
       const position = handle.getStickerPlacement?.(alignment.homeIndex, alignment.homeFace);
       if (!position) return;
@@ -408,11 +451,11 @@ function TurnExploration({ section, task, puzzle, orientation, exploration }: In
     };
     updatePosition();
     return handle.subscribeSettledCube?.(updatePosition);
-  }, [alignment, ready, aligning]);
+  }, [alignment, ready, aligning, changingCase]);
 
   useEffect(() => {
     const handle = player.current;
-    if (!ready || !handle) return;
+    if (!ready || changingCase || !handle) return;
     const checkRound = (queuedMoves: number) => {
       const completedMoves = movesRef.current.length - insertionStart - queuedMoves;
       if (completedMoves <= 0 || completedMoves % insertion.steps.length !== 0) return;
@@ -436,7 +479,37 @@ function TurnExploration({ section, task, puzzle, orientation, exploration }: In
       unsubscribeView?.();
       unsubscribeRounds?.();
     };
-  }, [ready, moves.length, inserting, insertionStart, insertion.steps.length, insertion.solvedStickers, rotating, opening]);
+  }, [ready, changingCase, moves.length, inserting, insertionStart, insertion.steps.length, insertion.solvedStickers, rotating, opening]);
+
+  const changeCase = async (cases: readonly string[], nextQuiz: 1 | 2) => {
+    const handle = player.current;
+    if (!handle?.transitionCubeletCase || caseTransition.current || handle.isUserMovePending?.(false)) return;
+    const alg = randomCase(cases, practiceCase?.alg);
+    if (!alg) return;
+    const start = movesRef.current.length;
+    const history = [...puzzleHistory(movesRef.current), alg];
+    const transition = new AbortController();
+    caseTransition.current = transition;
+    setChangingCase(true);
+    setRoundFeedback(null);
+    try {
+      const changed = await handle.transitionCubeletCase(alignment.homeIndex, [section.exercise.setup, ...history].join(' '), transition.signal);
+      if (changed && !transition.signal.aborted) {
+        setPracticeCase({ alg, history, start });
+        setQuiz(nextQuiz);
+        setAttempt({ stage: 'entry', position: null });
+        setInserted(false);
+        reportedRounds.current = 0;
+        setInsertionStart(start);
+      }
+    } finally {
+      if (!transition.signal.aborted) {
+        caseTransition.current = null;
+        setChangingCase(false);
+        board.current?.focus({ preventScroll: true });
+      }
+    }
+  };
 
   const record = (move: string) => {
     if (!move) return;
@@ -447,6 +520,7 @@ function TurnExploration({ section, task, puzzle, orientation, exploration }: In
     setMoves(movesRef.current);
   };
   const allowTurn = (move: string) => {
+    if (caseTransition.current) return false;
     if (rotating) return /^[xyz](?:[1-9]\d*)?'?$/.test(move);
     if (!inserting) return /^[FURBDL](?:[1-9]\d*)?'?$/.test(move)
       && exploration.freeFaces.some(item => item.face === move[0]);
@@ -456,12 +530,12 @@ function TurnExploration({ section, task, puzzle, orientation, exploration }: In
     if (demoOpen || move !== insertion.steps[index].notation) return false;
     if (count === 0 || index !== 0 || !handle) return true;
     return handle.isUserMovePending?.(false)
-      ? !section.exercise.isComplete(movesRef.current)
+      ? !section.exercise.isComplete(puzzleHistory(movesRef.current))
       : !matchesStickers(handle, insertion.solvedStickers);
   };
   const showBlockedTurn: BlockedLayerTurnHandler = (move, point) => {
     const bounds = board.current?.getBoundingClientRect();
-    if (!bounds || !move || finishingTurn) return;
+    if (!bounds || !move || finishingTurn || caseTransition.current) return;
     clearTimeout(feedbackTimer.current);
     const face = move[0].toUpperCase();
     const expected = insertion.steps[(movesRef.current.length - insertionStart) % insertion.steps.length].notation;
@@ -474,7 +548,7 @@ function TurnExploration({ section, task, puzzle, orientation, exploration }: In
   };
   const keyInput = (event: KeyboardEvent<HTMLDivElement>) => {
     const key = event.key.toLowerCase();
-    if (!ready || inserted || demoOpen || event.ctrlKey || event.altKey || event.metaKey || event.repeat) return;
+    if (!ready || inserted || demoOpen || caseTransition.current || event.ctrlKey || event.altKey || event.metaKey || event.repeat) return;
     if (!(rotating ? /^[xyz]$/ : /^[furbdl]$/).test(key)) return;
     const move = rotating ? key : key.toUpperCase();
     if (player.current?.applyUserMove?.(event.shiftKey ? move + "'" : move)) event.preventDefault();
@@ -485,12 +559,8 @@ function TurnExploration({ section, task, puzzle, orientation, exploration }: In
   const cornerName = section.title.en.toLowerCase();
   let alignmentPrompt = alignment.prompt;
   if (canContinueAlignment) alignmentPrompt = {
-    zh: `下一问用${hand.zh}「上钩下回」让${section.title.zh}归位。`,
+    zh: `下一问用${hand.zh}「上勾下回」让${section.title.zh}归位。`,
     en: `Use the ${hand.en} trigger to solve the ${cornerName} in the next quiz.`,
-  };
-  else if (aligned) alignmentPrompt = {
-    zh: `继续前，先把${section.title.zh}转回${slot.zh}。`,
-    en: `Bring the corner back to the ${slot.en} before continuing.`,
   };
   else if (reveal === 1 && attempt.stage === 'move-away') alignmentPrompt = {
     zh: `${section.title.zh}已经在${slot.zh}。先把它转离${slot.zh}，再转回来。`,
@@ -510,12 +580,12 @@ function TurnExploration({ section, task, puzzle, orientation, exploration }: In
       : aligning
       ? { zh: `用 ${faceList.join('、')} 转层，Shift 反向。`, en: `Use ${faceList.join(', ')} for layer turns. Shift reverses.` }
       : { zh: '试转魔方。用 F、U、R、B、D、L 转层，Shift 反向。', en: 'Try turning the cube. Use F, U, R, B, D, and L for layer turns. Shift reverses.' })} onKeyDown={keyInput}
-      data-course-cube data-ready={ready} data-drag-enabled={ready} data-move-count={moves.length} data-last-move={moves.at(-1)}>
+      data-course-cube data-ready={ready} data-drag-enabled={ready && !changingCase} data-move-count={moves.length} data-last-move={moves.at(-1)}>
       <AlgPlayer ref={player} puzzle={puzzle} set="" orientation={orientation} engine="sim" controlMode="none"
-        setup={section.exercise.setup} alg="" sceneRot={task.view} interactionMode={inserted ? 'view' : 'turn'}
-        orbitSnapDegrees={task.orbitSnapDegrees} orbitSnapLocked={!rotating}
+        setup={section.exercise.setup} alg="" sceneRot={task.view} interactionMode={inserted || changingCase ? 'view' : 'turn'}
+        lockView={changingCase} orbitSnapDegrees={task.orbitSnapDegrees} orbitSnapLocked={!rotating}
         wholeCubeDrag={rotating ? 'rotate-only' : undefined} hintFacelets hiddenStickers={exploration.mutedStickers}
-        moveHint={inserting && !inserted && !finishingTurn ? insertion.steps[insertionStep].notation : undefined}
+        moveHint={inserting && !inserted && !finishingTurn && !changingCase ? insertion.steps[insertionStep].notation : undefined}
         maxFramingEdge={CUBE_FRAMING_EDGE}
         stickerColorOverrides={stickerColorOverrides} cornerSlotHint={cornerSlotHint}
         allowUserLayerTurn={allowTurn} onBlockedUserLayerTurn={showBlockedTurn}
@@ -541,54 +611,63 @@ function TurnExploration({ section, task, puzzle, orientation, exploration }: In
         currentComplete={currentComplete} />
       {inserting ? <>
         <div aria-live="polite" aria-atomic="true">
-          <h2>{tr(inserted ? { zh: `${section.title.zh}归位了！`, en: `${section.title.en} solved!` } : insertion.heading)}</h2>
+          <InteractiveQuestionHeading action={!inserted && !changingCase && (
+            <InteractiveQuestionHelpButton video onClick={() => setDemoOpen(true)}>
+              {tr(insertion.helpLabel)}
+            </InteractiveQuestionHelpButton>
+          )}>{tr(inserted ? { zh: `${section.title.zh}归位了！`, en: `${section.title.en} solved!` } : insertion.heading)}</InteractiveQuestionHeading>
           <p>{tr(inserted ? task.completion : insertion.prompt)}</p>
         </div>
-        {!inserted && <>
+        {inserted && insertion.practiceCases && <button type="button" className="btn-secondary course-question-action"
+          disabled={changingCase} onClick={() => void changeCase(insertion.practiceCases!, 2)}>{tr({ zh: '再练一次', en: 'Practice again' })}</button>}
+        {!inserted && !changingCase && <>
           <code className="course-alg">{insertion.steps.map(({ notation }, index) => <span key={index}
             aria-current={!finishingTurn && insertionStep === index ? 'step' : undefined}>{notation}{index < insertion.steps.length - 1 ? ' ' : ''}</span>)}</code>
-          <button type="button" className="btn-secondary course-question-action" aria-haspopup="dialog" onClick={() => setDemoOpen(true)}>
-            {tr(insertion.helpLabel)}
-          </button>
           {demoOpen && <TutorialAlgDemo insertion={insertion} puzzle={puzzle} orientation={orientation} view={task.view} onClose={closeDemo} />}
         </>}
       </> : aligning ? <>
         <div aria-live="polite" aria-atomic="true">
-          <h2>{canContinueAlignment ? tr({ zh: '完成，可以继续', en: 'Complete. You can continue.' })
-            : aligned ? tr({ zh: '摆位已完成', en: 'Placement complete' }) : tr(alignment.heading)}</h2>
+          <InteractiveQuestionHeading action={!canContinueAlignment && !changingCase && (
+            <InteractiveQuestionHelpButton onClick={() => setHintRequest(request => request + 1)}>
+              {tr({ zh: `哪里是${slot.zh}？`, en: `Where is the ${slot.en}?` })}
+            </InteractiveQuestionHelpButton>
+          )}>{tr(canContinueAlignment ? { zh: '完成，可以继续', en: 'Complete. You can continue.' } : alignment.heading)}</InteractiveQuestionHeading>
           <p>{tr(alignmentPrompt)}</p>
         </div>
-        {!canContinueAlignment && <button type="button" className="btn-secondary course-question-action"
-          onClick={() => setHintRequest(request => request + 1)}>
-          {tr({ zh: `哪里是${slot.zh}？`, en: `Where is the ${slot.en}?` })}
-        </button>}
         <div className="course-question-status" role="status" aria-atomic="true">
           {attempt.position && reveal === 1 && tr(alignment.describe(attempt.position))}
         </div>
       </> : opening && <>
         <h2>{tr(opening.heading)}</h2>
         <p>{tr(opening.prompt)}</p>
-        {opening.kind === 'faces' && <>
-          <p className="course-question-hint">{tr({ zh: '拖贴纸转层，拖外围空白查看魔方。', en: 'Drag a sticker to turn a layer. Drag the empty area to adjust the view.' })}</p>
-          <ul className="course-turn-faces" role="list" aria-label={tr({ zh: '自由转动的面', en: 'Faces that turn freely' })}>
-            {exploration.freeFaces.map(({ face, label }) => <li key={face} data-face={face} data-tried={tried.has(face)}>
-              <Check size={15} aria-hidden={!tried.has(face)} aria-label={tr({ zh: '已尝试', en: 'Tried' })} /><code>{face}</code> {tr(label)}
-            </li>)}
-          </ul>
-        </>}
+        {opening.kind === 'faces' && <ul className="course-turn-faces" role="list" aria-label={tr({ zh: '自由转动的面', en: 'Faces that turn freely' })}>
+          {exploration.freeFaces.map(({ face, label }) => <li key={face} data-face={face} data-tried={tried.has(face)}>
+            <Check size={15} aria-hidden={!tried.has(face)} aria-label={tr({ zh: '已尝试', en: 'Tried' })} /><code>{face}</code> {tr(label)}
+          </li>)}
+        </ul>}
       </>}
       {!inserting && (!aligning || aligned) && <div className="course-question-actions">
         <button type="button" className="btn-primary course-question-action course-question-continue"
-          disabled={!ready || settledMoveCount !== moves.length || !currentComplete || (aligning && !canContinueAlignment)}
+          disabled={!ready || changingCase || settledMoveCount !== moves.length || !currentComplete}
           onClick={event => {
             if (player.current?.isUserMovePending?.(false)) return;
             clearTimeout(feedbackTimer.current);
             setBlockedTurn(null);
             const caption = event.currentTarget.closest('[data-course-caption]');
             if (caption) caption.scrollTop = 0;
+            const handle = player.current;
+            if ((aligning || rotating) && insertion.practiceCases && handle && matchesStickers(handle, insertion.solvedStickers)) {
+              void changeCase(insertion.practiceCases, 2);
+              return;
+            }
             if (aligning) setInsertionStart(movesRef.current.length);
             else {
-              const position = player.current?.getStickerPlacement?.(alignment.homeIndex, alignment.homeFace) ?? null;
+              const position = handle?.getStickerPlacement?.(alignment.homeIndex, alignment.homeFace) ?? null;
+              const cases = position && alignment.casesWhenAligned?.[position.positionIndex];
+              if (cases?.length) {
+                void changeCase(cases, 1);
+                return;
+              }
               const stage = !position ? 'entry' : alignment.goalPositions.includes(position.positionIndex) ? 'move-away' : 'place';
               setAttempt({ stage, position });
             }
@@ -598,15 +677,14 @@ function TurnExploration({ section, task, puzzle, orientation, exploration }: In
           {tr({ zh: '继续', en: 'Continue' })}
         </button>
       </div>}
-      {quiz === 0 && opening && <div className="course-question-status course-question-opening-status" role="status" aria-atomic="true">
+      {rotating && <div className="course-question-status course-question-opening-status" role="status" aria-atomic="true">
         <span aria-hidden={!openingComplete}>{tr(opening.done)}</span>
-        {opening.kind === 'faces' && <span aria-hidden={openingComplete || moves.length === 0}>{tr(opening.inProgress)}</span>}
       </div>}
     </div>
   </LessonPane>;
 }
 
-function InteractiveQuestions({ section, task, puzzle, orientation }: InteractionProps & { task: Extract<CourseInteraction, { questions: readonly CourseQuestion[] }> }) {
+function InteractiveQuestions({ section, task, puzzle, orientation, onQuizComplete }: InteractionProps & { task: Extract<CourseInteraction, { questions: readonly CourseQuestion[] }> }) {
   const [ready, setReady] = useState(false);
   const [questionIndex, setQuestionIndex] = useState(0);
   const [selectionConfirmed, setSelectionConfirmed] = useState(false);
@@ -619,8 +697,12 @@ function InteractiveQuestions({ section, task, puzzle, orientation }: Interactio
     task.questions[0].kind === 'placement' && section.exercise.isComplete([])
       ? { stage: 'offer' } : { stage: 'practice', startCount: 0 });
   const player = useRef<AlgPlayerHandle>(null);
+  const placementTransition = useRef<AbortController | null>(null);
   const feedbackTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
-  useEffect(() => () => clearTimeout(feedbackTimer.current), []);
+  useEffect(() => () => {
+    clearTimeout(feedbackTimer.current);
+    placementTransition.current?.abort();
+  }, []);
   const flashFeedback = useCallback((value: QuestionFeedback) => {
     clearTimeout(feedbackTimer.current);
     setFeedback(value);
@@ -643,16 +725,7 @@ function InteractiveQuestions({ section, task, puzzle, orientation }: Interactio
   }, [placementProgress]);
 
   useEffect(() => {
-    if (!hintRequests.piece) return;
-    const started = performance.now();
-    const fade = createStickerHintFade(started, window.matchMedia('(prefers-reduced-motion: reduce)').matches);
-    setPieceHintOpacity(fade(started).opacity);
-    let frame = requestAnimationFrame(function update(now) {
-      const { opacity, complete } = fade(now);
-      setPieceHintOpacity(opacity);
-      if (!complete) frame = requestAnimationFrame(update);
-    });
-    return () => cancelAnimationFrame(frame);
+    if (hintRequests.piece) return animateStickerHint(setPieceHintOpacity);
   }, [hintRequests.piece]);
 
   const dimStickers = task.dimStickersAfterFirstQuestion;
@@ -660,18 +733,17 @@ function InteractiveQuestions({ section, task, puzzle, orientation }: Interactio
   const stickerFade = Math.max(permanentFade, pieceHintOpacity);
   const stickerColorOverrides = useMemo(() => {
     if (!dimStickers || !stickerFade) return undefined;
-    const colors = orientedCubeFaceColors(orientation ?? '');
-    const gray = new Color(FM_FIXED_COLOR[FM_IGNORED]!);
-    const displayColor = new Color();
-    return Object.fromEntries(dimStickers.map(sticker => [sticker,
-      displayColor.set(colors[sticker[0] as CubeFace]).lerp(gray, stickerFade).getStyle()]));
+    return dimStickerColors(dimStickers, orientation ?? '', stickerFade);
   }, [dimStickers, orientation, stickerFade]);
 
   const question = task.questions.at(questionIndex);
-  const cornerSlotHint = useMemo(() => question?.kind === 'position' && question.showAnswerHint && hintRequests.position
-    ? { positions: [question.targetIndex], request: hintRequests.position, color: TUTORIAL_STICKER_PURPLE, includeBackFacelets: true }
-    : undefined, [question, hintRequests.position]);
-  const placement = question && 'goal' in question ? question : null;
+  const placement = question?.kind === 'placement' ? question : null;
+  const slotHintIndex = question?.showAnswerHint && question.kind !== 'piece'
+    ? question.kind === 'placement' ? question.goal.positionIndex : question.targetIndex
+    : undefined;
+  const cornerSlotHint = useMemo(() => slotHintIndex !== undefined && hintRequests.position
+    ? { positions: [slotHintIndex], request: hintRequests.position, color: TUTORIAL_STICKER_PURPLE, includeBackFacelets: true }
+    : undefined, [slotHintIndex, hintRequests.position]);
   useEffect(() => {
     const handle = player.current;
     if (!ready || !placement || !handle) return;
@@ -682,7 +754,7 @@ function InteractiveQuestions({ section, task, puzzle, orientation }: Interactio
     updatePlacement();
     return handle.subscribeRenderedView?.(updatePlacement);
   }, [ready, placement]);
-  const reorienting = placementProgress.stage === 'turning';
+  const reorienting = placementProgress.stage === 'turning' || placementProgress.stage === 'changing';
   const needsReorientation = placement && placementProgress.stage === 'offer';
   const placed = placement && placementProgress.stage === 'practice'
     && moves.length > placementProgress.startCount && matchesPlacement(currentPlacement, placement.goal);
@@ -690,6 +762,8 @@ function InteractiveQuestions({ section, task, puzzle, orientation }: Interactio
     if (placed) flashFeedback({ kind: 'correct' });
   }, [placed, flashFeedback]);
   const completed = !question || placed;
+  useEffect(() => { if (completed) onQuizComplete(); }, [completed, onQuizComplete]);
+  const hintKind = question?.kind === 'piece' ? 'piece' : 'position';
   const placementStatus = currentPlacement ? placement?.describe?.(currentPlacement) : undefined;
   const wrong = feedback?.kind === 'wrong' ? feedback : null;
   const answer = completed || selectionConfirmed ? 'correct' : wrong ? 'wrong' : 'pending';
@@ -714,11 +788,25 @@ function InteractiveQuestions({ section, task, puzzle, orientation }: Interactio
     if (!selectionConfirmed) return;
     const nextIndex = questionIndex + 1;
     const nextQuestion = task.questions[nextIndex];
-    if (nextQuestion && 'goal' in nextQuestion) {
-      const pose = player.current?.getStickerPlacement?.(nextQuestion.homeIndex, nextQuestion.homeFace) ?? null;
+    if (nextQuestion?.kind === 'placement') {
+      const handle = player.current;
+      const pose = handle?.getStickerPlacement?.(nextQuestion.homeIndex, nextQuestion.homeFace) ?? null;
       setCurrentPlacement(pose);
-      setPlacementProgress(matchesPlacement(pose, nextQuestion.goal)
-        ? { stage: 'offer' } : { stage: 'practice', startCount: moves.length });
+      const atGoal = matchesPlacement(pose, nextQuestion.goal);
+      const alg = atGoal && nextQuestion.casesWhenPlaced && randomCase(nextQuestion.casesWhenPlaced);
+      if (alg && handle?.transitionCubeletCase && !handle.isUserMovePending?.(false)) {
+        const transition = new AbortController();
+        placementTransition.current = transition;
+        setPlacementProgress({ stage: 'changing' });
+        void handle.transitionCubeletCase(nextQuestion.homeIndex, [section.exercise.setup, ...moves, alg].join(' '), transition.signal)
+          .then(changed => {
+            if (transition.signal.aborted) return;
+            placementTransition.current = null;
+            setPlacementProgress(changed ? { stage: 'practice', startCount: moves.length } : { stage: 'offer' });
+          });
+      } else {
+        setPlacementProgress(atGoal ? { stage: 'offer' } : { stage: 'practice', startCount: moves.length });
+      }
     }
     clearTimeout(feedbackTimer.current);
     setFeedback(null);
@@ -739,33 +827,39 @@ function InteractiveQuestions({ section, task, puzzle, orientation }: Interactio
       data-move-count={moves.length} data-last-move={moves.at(-1)}>
       <AlgPlayer ref={player} puzzle={puzzle} set="" orientation={orientation} engine="sim" controlMode="none"
         setup={section.exercise.setup} alg="" sceneRot={task.view} interactionMode="view" orbitSnapDegrees={task.orbitSnapDegrees}
-        lockView={reorienting} orbitSnapLocked={task.fixedOrientation || selectionConfirmed || placed || needsReorientation || reorienting}
+        lockView={reorienting} orbitSnapLocked={task.fixedOrientation || needsReorientation || reorienting}
         hintFacelets={task.hintFacelets} maxFramingEdge={CUBE_FRAMING_EDGE}
         stickerColorOverrides={stickerColorOverrides} cornerSlotHint={cornerSlotHint}
-        onCubeletTap={pick} onUserMove={move => setMoves(previous => [...previous, move])}
+        onCubeletTap={pick} onUserMove={move => {
+          setMoves(previous => [...previous, move]);
+          // A rotation started during identification can finish after Continue.
+          if (placement && placementProgress.stage === 'offer') {
+            setPlacementProgress({ stage: 'practice', startCount: moves.length + 1 });
+          }
+        }}
         onReady={() => setReady(true)} hideResetView fillPane />
       <div className="course-answer-feedback" role="status" aria-atomic="true">
         {wrong && <CornerAnswerBubble clientX={wrong.clientX} clientY={wrong.clientY}
           message={tr({ zh: `你选的是「${wrong.choice.zh}」。再试一次。`, en: `You chose ${wrong.choice.en}. Try again.` })} />}
       </div>
-      <TrainingFeedbackOverlay kind={feedback?.kind === 'correct' ? 'correct' : null}
-        correctLabel={placed ? completedTitle : tr({ zh: '选对了！', en: 'Correct!' })} wrongLabel="" />
+      <TrainingFeedbackOverlay kind={feedback?.kind === 'correct' && (!placement || placed) ? 'correct' : null}
+        correctLabel={placement ? completedTitle : tr({ zh: '选对了！', en: 'Correct!' })} wrongLabel="" />
     </div>
   }>
     <InteractiveQuestionCopy sectionId={section.id} questions={task.questions} activeIndex={questionIndex} answer={answer}
       heading={completed ? completedTitle : tr(question.heading)}
-      headingAction={!selectionConfirmed && question && 'showAnswerHint' in question && question.showAnswerHint
-        ? <button type="button" className="btn-secondary course-question-heading-action" disabled={!ready}
-          onClick={() => setHintRequests(previous => ({ ...previous, [question.kind]: previous[question.kind] + 1 }))}>
+      headingAction={!completed && !selectionConfirmed && !needsReorientation && !reorienting && question?.showAnswerHint
+        ? <InteractiveQuestionHelpButton disabled={!ready}
+          onClick={() => setHintRequests(previous => ({ ...previous, [hintKind]: previous[hintKind] + 1 }))}>
           {tr({ zh: '提示', en: 'Hint' })}
-        </button>
+        </InteractiveQuestionHelpButton>
         : null}
-      prompt={tr(prompt)}
+      prompt={prompt && tr(prompt)}
       action={selectionConfirmed
         ? <button type="button" className="btn-primary course-question-action course-question-continue" onClick={continueQuestion}>
           {tr({ zh: '继续', en: 'Continue' })}
         </button>
-        : (needsReorientation || reorienting) ? <button type="button" className="btn-primary course-question-action"
+        : (needsReorientation || placementProgress.stage === 'turning') ? <button type="button" className="btn-primary course-question-action"
           onClick={reorient} disabled={reorienting}>{tr({ zh: '换个朝向练一次', en: 'Try from a new angle' })}</button>
         : null}
       hint={hint && tr(hint)}
@@ -785,11 +879,12 @@ function advanceGuidedTurn(cursor: GuidedTurn, expected: string | undefined, mov
   return move === face || move === `${face}'` ? { ...cursor, half: move } : null;
 }
 
-function GuidedLesson({ section, task, puzzle, orientation }: {
+function GuidedLesson({ section, task, puzzle, orientation, onQuizComplete }: {
   section: CourseSection;
   task: GuidedCourseLesson;
   puzzle: AlgPlayerPuzzle;
   orientation?: string;
+  onQuizComplete: () => void;
 }) {
   const { recognition, alignment, Help } = task;
   const [algorithm, setAlgorithm] = useState(task.algorithm);
@@ -816,8 +911,8 @@ function GuidedLesson({ section, task, puzzle, orientation }: {
   const nextMove = cursor.half ?? current?.notation;
   const canTurnTop = preparing?.axes.includes('U') === true;
   const canRotateSideways = preparing?.axes.includes('y') === true;
-  const rotation = canRotateSideways || (applying && !!nextMove && /^[xyz]/.test(nextMove));
-  const canRotate = rotation && (!settled || revisableAlignment);
+  const formulaRotation = applying && !!nextMove && /^[xyz]/.test(nextMove);
+  const canRotate = (canRotateSideways || formulaRotation) && (!settled || revisableAlignment);
   const steps = [recognition, alignment, algorithm].filter(step => step !== undefined);
   const question = recognizing ?? preparing ?? algorithm;
   const activeIndex = steps.indexOf(question);
@@ -893,16 +988,21 @@ function GuidedLesson({ section, task, puzzle, orientation }: {
   };
   const done = recognizing ? recognized : settled;
   const completion = settled && applying;
+  useEffect(() => { if (completion) onQuizComplete(); }, [completion, onQuizComplete]);
+  const hasConceptHelp = Help && !(applying && task.hideHelpDuringAlgorithm);
+  const hasAlgorithmHelp = applying && !completion;
   return <LessonPane layout="F" cube={
     <div ref={board} className="course-cube" role="group" tabIndex={0} aria-label={tr(section.title)} onKeyDown={keyInput}
       data-course-cube data-ready={ready} data-drag-enabled={ready} data-move-count={history.length} data-last-move={history.at(-1)}>
       <AlgPlayer ref={player} puzzle={puzzle} set="" orientation={orientation} engine="sim" controlMode="none"
         setup={section.exercise.setup} alg="" sceneRot={task.view} interactionMode={recognizing || (settled && !revisableAlignment) ? 'view' : 'turn'}
+        hiddenStickers={task.mutedStickers}
         showHands={alignment?.showLeftThumb ? 'left-thumb' : undefined} handsVisible={!!preparing?.showLeftThumb}
         holdReferenceThumb={!!preparing?.showLeftThumb && matches}
         orbitSnapDegrees={30} orbitSnapLocked={!canRotate}
         wholeCubeDrag={canRotate ? (canTurnTop ? 'rotate' : 'rotate-only') : undefined}
         hintFacelets moveHint={applying && !settled ? nextMove : undefined} maxFramingEdge={CUBE_FRAMING_EDGE}
+        moveHintStyle={formulaRotation ? task.rotationHintStyle : undefined}
         allowUserLayerTurn={allowTurn} onBlockedUserLayerTurn={showBlockedTurn} onUserMove={record}
         onReady={() => setReady(true)} hideResetView fillPane />
       {revisableAlignment && <div className="course-answer-feedback" data-turn-feedback role="status" aria-atomic="true">
@@ -917,7 +1017,18 @@ function GuidedLesson({ section, task, puzzle, orientation }: {
     <InteractiveQuestionCopy sectionId={section.id} questions={steps} activeIndex={activeIndex} answer={done ? 'correct' : 'pending'}
       heading={tr(completion ? labels.completed : settled && preparing && !canRotateSideways
         ? { zh: '摆到位了', en: 'Aligned' } : question.heading)}
-      headingAction={Help && !(applying && task.hideHelpDuringAlgorithm) && <Help />}
+      headingAction={(hasConceptHelp || hasAlgorithmHelp) && <>
+        {hasAlgorithmHelp && <InteractiveQuestionHelpButton video onClick={() => setDemo(algorithm)}>
+          {tr(algorithm.helpLabel)}
+        </InteractiveQuestionHelpButton>}
+        {hasConceptHelp && <Help />}
+        {hasAlgorithmHelp && algorithm.alternatives?.map(alternative => {
+          const notation = alternative.steps.map(move => move.notation).join(' ');
+          return <InteractiveQuestionHelpButton key={notation} video
+            aria-label={`${tr({ zh: '演示备选公式', en: 'Watch alternative' })} ${notation}`}
+            onClick={() => setDemo({ ...algorithm, ...alternative })}><code>{notation}</code></InteractiveQuestionHelpButton>;
+        })}
+      </>}
       prompt={tr(completion ? task.completion : recognized && recognizing ? recognizing.explanation : question.prompt)}
       status={!revisableAlignment && !done ? feedbackMessage : undefined}
       action={<>
@@ -930,27 +1041,15 @@ function GuidedLesson({ section, task, puzzle, orientation }: {
           onClick={nextQuestion} disabled={!done}>
           {tr({ zh: '继续', en: 'Continue' })}
         </button>}
-        {applying && canRotate && nextMove && <button type="button" className="btn-secondary course-question-action"
+        {applying && canRotate && nextMove && nextMove[0] !== 'x' && <button type="button" className="btn-secondary course-question-action"
           onClick={() => {
             if (player.current?.applyUserMove?.(nextMove)) board.current?.focus({ preventScroll: true });
           }}>{tr({ zh: `转体 ${nextMove}`, en: `Rotate ${nextMove}` })}</button>}
         {applying && !completion && <>
           <code className="course-alg">{algorithm.steps.map(({ notation }, index) => <span key={index}
             aria-current={index === cursor.index ? 'step' : undefined}>{notation}</span>)}</code>
-          <button type="button" className="btn-secondary course-question-action" aria-haspopup="dialog"
-            onClick={() => setDemo(algorithm)}>{tr(algorithm.helpLabel)}</button>
-          {!!algorithm.alternatives?.length && <fieldset className="course-alternatives">
-            <legend>{tr({ zh: '备选公式', en: 'Alternative algorithms' })}</legend>
-            <div className="course-question-actions">
-              {algorithm.alternatives.map(alternative => {
-                const notation = alternative.steps.map(move => move.notation).join(' ');
-                return <button key={notation} type="button" className="btn-secondary course-question-action" aria-haspopup="dialog"
-                  aria-label={`${tr({ zh: '演示备选公式', en: 'Watch alternative' })} ${notation}`}
-                  onClick={() => setDemo({ ...algorithm, ...alternative })}><code>{notation}</code></button>;
-              })}
-            </div>
-          </fieldset>}
-          {demo && <TutorialAlgDemo insertion={demo} puzzle={puzzle} orientation={orientation} view={task.view} onClose={() => setDemo(null)} />}
+          {demo && <TutorialAlgDemo insertion={demo} puzzle={puzzle} orientation={orientation} view={task.view}
+            mutedStickers={task.mutedStickers} onClose={() => setDemo(null)} />}
         </>}
       </>} />
   </LessonPane>;
@@ -1030,6 +1129,8 @@ function Practice({ section, puzzle, orientation }: { section: CourseSection; pu
         data-last-move={history.at(-1)} data-complete={finished}>
         <AlgPlayer key={revision} ref={player} puzzle={puzzle} set="" orientation={orientation}
           engine="sim" controlMode="none" setup={exercise.setup} alg="" moveHint={hint}
+          moveHintStyle={hint && /^[xyz]/.test(hint) ? section.guided?.rotationHintStyle : undefined}
+          hiddenStickers={section.guided?.mutedStickers}
           maxFramingEdge={CUBE_FRAMING_EDGE}
           interactionMode={finished ? 'view' : 'turn'} wholeCubeDrag={fixedView ? undefined : exercise.rotationOnly ? 'rotate-only' : 'rotate'}
           sceneRot={fixedView?.view} orbitSnapDegrees={fixedView?.orbitSnapDegrees} orbitSnapLocked={!!fixedView}
@@ -1061,11 +1162,47 @@ function Practice({ section, puzzle, orientation }: { section: CourseSection; pu
   </>;
 }
 
-export default function InteractiveTutorial({ title, puzzle, orientation, chapters, basicsHref, location, onNavigate }: InteractiveTutorialProps) {
+function UnfinishedQuizDialog({ onDismiss, onSkip }: { onDismiss: () => void; onSkip: () => void }) {
+  const t = useT();
+  const dialog = useRef<HTMLDialogElement>(null);
+  const titleId = useId();
+  const descriptionId = useId();
+  const dismiss = () => {
+    dialog.current?.close();
+    onDismiss();
+  };
+  const backdrop = useModalBackdrop(dismiss);
+  useEffect(() => {
+    const element = dialog.current;
+    element?.showModal();
+    return () => element?.close();
+  }, []);
+  return <dialog ref={dialog} className="course-demo-dialog course-skip-dialog" aria-labelledby={titleId} aria-describedby={descriptionId}
+    onCancel={event => { event.preventDefault(); dismiss(); }} {...backdrop}>
+    <div className="course-demo-panel" data-site-surface="popover">
+      <h2 id={titleId}>{t('本节还没学完', 'This section is unfinished')}</h2>
+      <p id={descriptionId}>{t('本节还有题目没完成。要跳到下一节吗？', 'There are still questions to finish here. Skip to the next section?')}</p>
+      <div className="course-skip-actions">
+        <button type="button" className="btn-primary course-skip-action" onClick={dismiss}>{t('继续学习', 'Keep learning')}</button>
+        <button type="button" className="btn-secondary course-skip-action" onClick={() => { dismiss(); onSkip(); }}>
+          {t('跳到下一节', 'Skip to next section')}
+        </button>
+      </div>
+    </div>
+  </dialog>;
+}
+
+export default function InteractiveTutorial({ title, headerAction, puzzle, orientation, chapters, basicsHref, catalogHref, location, onNavigate }: InteractiveTutorialProps) {
+  const t = useT();
   const { chapterIndex: linkedChapter, sectionId: linkedSection } = location;
   const [chapterIndex, setChapter] = useState(linkedChapter);
   const chapter = chapters[chapterIndex];
   const [selection, setSelection] = useState({ id: linkedSection, request: 0 });
+  const [skipRequest, setSkipRequest] = useState<number | null>(null);
+  const completedRequest = useRef(-1);
+  const onQuizComplete = useCallback(() => {
+    completedRequest.current = Math.max(completedRequest.current, selection.request);
+  }, [selection.request]);
   const currentPosition = useRef(location);
   const [practice, setPractice] = useState(false);
   const availableSections = (index: number) => chapters[index].sections.filter(section => !practice || 'exercise' in section);
@@ -1075,6 +1212,7 @@ export default function InteractiveTutorial({ title, puzzle, orientation, chapte
   const exerciseSection = 'exercise' in section ? section : null;
   const readingSection = 'content' in section ? section : null;
   const indexSection = 'index' in section ? section : null;
+  const stageSection = 'stage' in section ? section : null;
   const flowSection = 'flowchart' in section ? section : null;
   const interaction = practice ? undefined : exerciseSection?.interaction;
   const guided = practice ? undefined : exerciseSection?.guided;
@@ -1113,6 +1251,13 @@ export default function InteractiveTutorial({ title, puzzle, orientation, chapte
     if (index < 0) return;
     select(index, availableSections(index).at(direction > 0 ? 0 : -1)?.id);
   };
+  const requestNext = () => {
+    if ((interaction || guided) && completedRequest.current !== selection.request) {
+      setSkipRequest(selection.request);
+      return;
+    }
+    turnPage(1);
+  };
   const toggleExercise = () => {
     select(chapterIndex, section.id);
     setPractice(value => !value);
@@ -1127,7 +1272,8 @@ export default function InteractiveTutorial({ title, puzzle, orientation, chapte
     if (index >= 0) select(index, sectionId);
   };
 
-  const learning = <div className="course-content" data-reading={!!(readingSection || indexSection)} data-questions={!!(interaction || guided)}>
+  const learning = <div className="course-content" data-reading={!!(readingSection || indexSection)}
+    data-questions={!!(interaction || guided || stageSection)}>
     {readingSection && <section className="course-reading" data-course-reading data-course-section={readingSection.id}
       data-tutorial-layout="E" aria-label={tr(readingSection.title)}>
       <ReadingFit>{readingSection.content}</ReadingFit>
@@ -1141,12 +1287,12 @@ export default function InteractiveTutorial({ title, puzzle, orientation, chapte
         {flowSection.flowchart(selectFromFlow)}
       </TutorialFlowCanvas>
     </section>}
-    {'demonstration' in section && <div key={section.id} className="course-demonstration">{section.demonstration}</div>}
+    {stageSection && <Fragment key={stageSection.id}>{stageSection.stage(selectFromFlow)}</Fragment>}
     {practice && exerciseSection && <Practice key={section.id} section={exerciseSection} puzzle={puzzle} orientation={orientation} />}
     {exerciseSection && interaction && <SectionInteraction key={`${section.id}:${selection.request}`} section={exerciseSection}
-      task={interaction} puzzle={puzzle} orientation={orientation} />}
+      task={interaction} puzzle={puzzle} orientation={orientation} onQuizComplete={onQuizComplete} />}
     {exerciseSection && guided && <GuidedLesson key={`${section.id}:${selection.request}`} section={exerciseSection}
-      task={guided} puzzle={puzzle} orientation={orientation} />}
+      task={guided} puzzle={puzzle} orientation={orientation} onQuizComplete={onQuizComplete} />}
     {!practice && exerciseSection?.observation &&
       <Observe key={`${chapter.id}:${section.id}:${selection.request}`} section={exerciseSection} task={exerciseSection.observation}
         puzzle={puzzle} orientation={orientation} />}
@@ -1161,15 +1307,22 @@ export default function InteractiveTutorial({ title, puzzle, orientation, chapte
         </SectionMenu>
       </div>}
       {exerciseSection && <button type="button" className="course-control course-action" onClick={toggleExercise}>{tr(practice ? labels.review : labels.practice)}</button>}
-      <button type="button" className="course-control" disabled={!next} aria-label={tr(labels.next)} onClick={() => turnPage(1)}>
+      <button type="button" className="course-control" disabled={!next} aria-label={tr(labels.next)} onClick={requestNext}>
         <ArrowRight size={18} aria-hidden="true" />
       </button>
     </footer>
+    {skipRequest === selection.request && <UnfinishedQuizDialog onDismiss={() => setSkipRequest(null)} onSkip={() => turnPage(1)} />}
   </div>;
 
+  const catalogLabel = t(labels.catalog.zh, labels.catalog.en);
   return <main className="tutorial-course" data-practice={practice}>
     <header className="course-header" data-course-header>
+      {catalogHref && <Tooltip content={catalogLabel}>{trigger =>
+        <PageBackLink {...trigger} className="course-back-link" fallback={catalogHref} label={catalogLabel}
+          acceptEntry={entry => entry.replace(/^\/(?:en|zh)(?=\/)/, '') === catalogHref} />
+      }</Tooltip>}
       <h1>{tr(title)}</h1>
+      {headerAction}
     </header>
     {!practice && <ChapterNavigation items={chapters.map(item => ({ id: item.id, title: tr(item.title) }))}
       selected={chapterIndex} label={tr(labels.chapters)} onSelect={index => select(index)} />}
