@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { toMoveStringStrict } from '@cuberoot/shared/alg-notation';
 import { checkReconCompletion } from '@cuberoot/shared/recon-completion';
 import { facePermFor } from '@cuberoot/shared/timer/reconstruct/gyro-orient';
 import { decodeUrlAlg } from '@/lib/cubedb-url';
@@ -23,6 +24,30 @@ const commit = (frame_index: number, ...state_moves: string[]): MoveStep => ({
 });
 
 describe('video solve reconstruction', () => {
+  it('chooses the yaw with fewer last-layer front and back turns and preserves manual orientation', async () => {
+    const scramble = "R2 U' B2 L F2 D F2 D F' D2 B L2 D2 B' U2 B U2 R";
+    const solve = [
+      'x y',
+      "F U' B' F' L F' U F R Fw' D",
+      "B U' B'",
+      "B' U' B",
+      "U R U2' R' U y L' B' U' B L",
+      "U F' U' F L F' U F U' F' L' B L F L' B' U",
+    ].join(' ');
+    const steps = toMoveStringStrict(solve).split(' ').map((move, i) => commit(3 + 3 * i, move));
+    const grip = playerGrip('U', 'F')!;
+    const observation = { ...observeVideoSolve(scramble, steps, [], fps, 0, 4.7), estimatedGrip: grip };
+    const manual = (await analyzeVideoSolve(observation, grip.rotation, 'en'))!.result;
+    const automatic = (await analyzeVideoSolve(observation, undefined, 'en'))!.result;
+    const frontBack = (result: typeof manual) => result.lines.findLast(line => line.kind === 'oll' || line.kind === 'pll')!
+      .moves.filter(move => /^[fb]/i.test(move)).length;
+
+    expect(frontBack(automatic)).toBeLessThan(frontBack(manual));
+    expect(manual.inspection).toBe(grip.rotation);
+    expect(facePermFor(automatic.inspection).U).toBe('U');
+    expect(await checkReconCompletion({ event: '3x3', scramble, solution: automatic.text })).toEqual({ status: 'solved' });
+  });
+
   it.each([
     { token: 'x', vector: [-Math.PI / 2, 0, 0], scramble: 'U R', first: "R'", last: "U'", renamed: "B'" },
     { token: 'y', vector: [0, 0, -Math.PI / 2], scramble: 'R U', first: "U'", last: "R'", renamed: "F'" },

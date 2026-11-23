@@ -56,20 +56,19 @@ export function VideoSolveAnalysis({ scramble, steps, measured, fps, clockFps, s
     [scramble, steps, measured, fps, start, end, clockFps]);
   const [openingSelection, setOpeningSelection] = useState<{ observation: VideoSolveObservation; rotation: string }>();
   const selection = openingSelection?.observation === observation ? openingSelection.rotation : undefined;
-  const grip = selection ?? observation.estimatedGrip?.rotation;
   const [analysis, setAnalysis] = useState<{
     observation: VideoSolveObservation; grip?: string; language: typeof language; value?: Analysis;
     draftScramble?: string; draft?: VerifiedVideoDraft; inferred?: boolean; verifiedInferredScramble?: string;
   }>();
   const { copiedKey, copy } = useCopy();
   const draftScramble = draftTarget?.scramble;
-  const current = analysis?.observation === observation && analysis.grip === grip && analysis.language === language
+  const current = analysis?.observation === observation && analysis.grip === selection && analysis.language === language
     && analysis.draftScramble === draftScramble && analysis.inferred === inferredScramble
     ? analysis : undefined;
 
   useEffect(() => {
     let active = true;
-    void analyzeVideoSolve(observation, grip, language).then(async value => {
+    void analyzeVideoSolve(observation, selection, language).then(async value => {
       let draft: VerifiedVideoDraft | undefined;
       let verifiedInferredScramble: string | undefined;
       const solution = value?.result.text;
@@ -91,12 +90,12 @@ export function VideoSolveAnalysis({ scramble, steps, measured, fps, clockFps, s
           }
         }
       }
-      if (active) setAnalysis({ observation, grip, language, value, draftScramble, draft, inferred: inferredScramble, verifiedInferredScramble });
+      if (active) setAnalysis({ observation, grip: selection, language, value, draftScramble, draft, inferred: inferredScramble, verifiedInferredScramble });
     }).catch(() => {
-      if (active) setAnalysis({ observation, grip, language, draftScramble, inferred: inferredScramble });
+      if (active) setAnalysis({ observation, grip: selection, language, draftScramble, inferred: inferredScramble });
     });
     return () => { active = false; };
-  }, [observation, grip, language, draftScramble, inferredScramble]);
+  }, [observation, selection, language, draftScramble, inferredScramble]);
 
   const verifiedDraft = current?.draft;
   const onDraftReady = draftTarget?.onReady;
@@ -106,6 +105,11 @@ export function VideoSolveAnalysis({ scramble, steps, measured, fps, clockFps, s
   }, [verifiedDraft, onDraftReady]);
 
   const { result, method, solved, fallback } = current?.value ?? {};
+  const openingRotation = selection ?? result?.inspection;
+  const openingPose = observation.opening?.pose.rotation;
+  useEffect(() => {
+    if (openingPose && openingRotation !== undefined) onOpeningView(openingGripView(openingPose, openingRotation));
+  }, [openingPose, openingRotation, onOpeningView]);
   const relativeMs = Math.round((position - start) * 1000);
   const openingMs = Math.round(((observation.opening?.timestamp ?? start) - start) * 1000);
   const timeline = useMemo(() => result ? videoNotationTimeline(result, openingMs) : [], [result, openingMs]);
@@ -123,13 +127,12 @@ export function VideoSolveAnalysis({ scramble, steps, measured, fps, clockFps, s
     editorHref = `/recon/submit?${params}`;
   }
   function applyOpeningGrip(rotation: string) {
-    if (observation.opening) onOpeningView(openingGripView(observation.opening.pose.rotation, rotation));
     setOpeningSelection({ observation, rotation });
   }
   return <div className="video-recon-notation">
     {observation.opening && observation.estimatedGrip ? (
       <OpeningGrip key={`${scramble}/${start}/${end}/${observation.opening.frame}`}
-        initial={observation.estimatedGrip} rotation={selection} centers={observation.centers}
+        initial={observation.estimatedGrip} rotation={openingRotation} centers={observation.centers}
         onSelect={applyOpeningGrip} />
     ) : <span className="video-recon-muted">{t('起手姿态未拍清，按固定朝向分段。', 'The opening grip is unavailable. Stages use a fixed orientation.')}</span>}
     {!current && <ContentSkeleton variant="text" label={t('正在识别解法和分段…', 'Identifying the method and stages…')} />}

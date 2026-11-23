@@ -240,6 +240,18 @@ function rewriteVideoNotation(result: ReconTextResult) {
   return { ...result, lines, rotations };
 }
 
+function scoreOpeningGrip(result: ReconTextResult) {
+  const movesFor = (line: ReconTextLine) => toMoveStringStrict(line.moves.join(' ')).split(' ').filter(Boolean);
+  const frontBack = (moves: readonly string[]) => moves.filter(move => /^[fb]/i.test(move)).length;
+  const lastLayer = result.lines
+    .filter(line => line.key !== 'tail' && (line.kind === 'oll' || line.kind === 'pll'))
+    .map(movesFor);
+  const lastFormula = lastLayer.findLast(moves => moves.some(move => !/^[Uxyz](?:2'?|')?$/.test(move)));
+  if (!lastFormula) return;
+  return [frontBack(lastFormula), frontBack(lastLayer.flat()),
+    frontBack(result.lines.filter(line => line.kind === 'f2l').flatMap(movesFor))];
+}
+
 export async function analyzeVideoSolve(observation: VideoSolveObservation, grip: string | undefined, language: 'zh' | 'en') {
   const { scramble, moves, timeMs, frameMs, core } = observation;
   const puzzle = await getCube3();
@@ -247,7 +259,10 @@ export async function analyzeVideoSolve(observation: VideoSolveObservation, grip
   const checkpoints = moves.map(({ m }) => (raw = raw.applyMove(m)));
   const solved = raw.experimentalIsSolved({ ignorePuzzleOrientation: true, ignoreCenterOrientation: true });
   const method = detectSolveMethod(scramble, moves, timeMs, undefined, { allowPartial: !solved });
-  const { text } = prepareReconstruction(observation, method, language, undefined, { grip, core });
+  const prepare = (rotation: string | undefined) => prepareReconstruction(
+    observation, method, language, undefined, { grip: rotation, core },
+  ).text;
+  const text = prepare(grip ?? observation.estimatedGrip?.rotation);
   if (!text || !checkpoints.length) return undefined;
 
   // Match whole cubie states modulo orientation at every published cut, not
@@ -283,7 +298,31 @@ export async function analyzeVideoSolve(observation: VideoSolveObservation, grip
     ].join('\n') };
   };
   const result = await report(text);
-  if (agrees(result)) return { result, method, solved, fallback: false };
+  let best = agrees(result) ? result : undefined;
+  if (grip === undefined && solved) {
+    let score = best && scoreOpeningGrip(best);
+    // The starting up face stays fixed. Keep the camera estimate on a tie.
+    if (!best || (score && score.some(Boolean))) {
+      const faces = facePermFor(result.inspection);
+      const alternates = grips.filter(candidate => faces[candidate.top] === 'U' && faces[candidate.front] !== 'F');
+      for (const candidate of alternates) {
+        const input = prepare(candidate.rotation);
+        if (!input) continue;
+        const alternate = await report(input).catch(() => undefined);
+        if (!alternate || !agrees(alternate)) continue;
+        const next = scoreOpeningGrip(alternate);
+        if (!next) continue;
+        const previous = score;
+        const difference = previous ? next.findIndex((count, i) => count !== previous[i]) : -1;
+        if (!previous || (difference >= 0 && next[difference] < previous[difference])) {
+          best = alternate;
+          score = next;
+          if (score.every(count => count === 0)) break;
+        }
+      }
+    }
+  }
+  if (best) return { result: best, method, solved, fallback: false };
   const fixed = await report({ ...text, core: { ...core, events: [] } });
   if (agrees(fixed)) return { result: fixed, method, solved, fallback: true };
   throw new Error('Reconstruction notation does not reproduce the recognized states');
