@@ -1099,13 +1099,19 @@ button.cal-event-time:is(:hover, [aria-expanded=true]) { color: var(--accent); }
 
 .cal-share-foot {
   display: flex;
-  align-items: center;
-  gap: 12px;
-  flex-wrap: wrap;
-  padding: 8px 14px;
-  border-top: 1px solid var(--border-default);
+  justify-content: flex-end;
+  flex-shrink: 0;
+  padding: 6px 14px max(6px, env(safe-area-inset-bottom));
+}
+.cal-share-zone { position: relative; max-width: 100%; }
+.cal-share-zone > .native-select { min-height: 36px; padding-inline: 10px 30px; font-size: 13px; }
+.cal-share-zone > svg {
+  position: absolute;
+  inset-inline-end: 10px;
+  top: 50%;
+  transform: translateY(-50%);
   color: var(--muted-foreground);
-  font-size: 14px;
+  pointer-events: none;
 }
 
 /* 视图切换器贴合内容宽,不钉 min-width */

@@ -59,7 +59,7 @@ export const DEFAULT_PREFS: CalendarPrefs = {
   defaultDuration: 60, weekNumbers: false, keyboardShortcuts: true, sidebarCollapsed: false,
 };
 
-function readPrefs(): CalendarPrefs {
+export function readCalendarPrefs(): CalendarPrefs {
   if (typeof window === 'undefined') return DEFAULT_PREFS;
   try {
     const raw = localStorage.getItem(PREF_KEY);
@@ -132,7 +132,7 @@ export const useCalendarStore = create<State & Actions>()((set, get) => ({
   loadedTo: 0,
 
   init: async (tz) => {
-    set({ loading: true, error: '', hidden: readHidden(), prefs: readPrefs() });
+    set({ loading: true, error: '', hidden: readHidden(), prefs: readCalendarPrefs() });
     try {
       const boot = await fetchBootstrap(tz);
       set({ calendars: boot.calendars, share: boot.share, me: boot.me, ready: true, supportsEventStatus: boot.supportsEventStatus === true });

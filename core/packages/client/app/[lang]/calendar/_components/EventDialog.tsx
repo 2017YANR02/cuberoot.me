@@ -26,7 +26,7 @@ import { tr, useLang } from '@/i18n/tr';
 import { wallPartsIn, wallToUtc, localZone } from '@cuberoot/shared/tz';
 import { calendarCompetitionId, competitionCalendarUrl, REMINDER_CHOICES, type CalendarEventStatus, type CalendarMeta, type EventGuest } from '@cuberoot/shared/calendar';
 import { EVENT_STATUS_LABELS } from '@/lib/calendar-format';
-import { zoneLabel, zoneSelectItems } from '@/lib/tz-zones';
+import { calendarClockZone, calendarZoneLabel, calendarZoneSelectItems } from '@/lib/tz-zones';
 import RepeatEditor from './RepeatEditor';
 import GuestPicker from './GuestPicker';
 
@@ -224,8 +224,11 @@ export default function EventDialog(props: Props) {
   }, [props.draft.id]);
 
   const readOnly = !!d.readOnly;
-  const startIn = toInputs(d.start, d.tz);
-  const endIn = toInputs(d.allDay ? d.end - 1 : d.end, d.tz);   // 全天的 end 是次日 0 点,显示要减一天
+  // Keep the series' stored time zone until the user picks a time zone explicitly.
+  const clockZone = calendarClockZone(d.tz, new Date(props.draft.start));
+  const zoneName = calendarZoneLabel(clockZone, isZh, new Date(d.start));
+  const startIn = toInputs(d.start, clockZone);
+  const endIn = toInputs(d.allDay ? d.end - 1 : d.end, clockZone);   // 全天的 end 是次日 0 点,显示要减一天
   const locale = tr({ zh: 'zh-CN', en: 'en-US' });
   const hourFormat = useMemo(() => props.hour24 ? null : new Intl.DateTimeFormat(locale, {
     timeZone: 'UTC', hour: 'numeric', hourCycle: 'h12',
@@ -237,7 +240,7 @@ export default function EventDialog(props: Props) {
     return `${label} ${weekday}`;
   };
   const formatTime = (ms: number, time: string): string => new Intl.DateTimeFormat(locale, {
-    timeZone: d.tz,
+    timeZone: clockZone,
     hour: props.hour24 ? '2-digit' : 'numeric',
     minute: props.hour24 || !time.endsWith(':00') ? '2-digit' : undefined,
     hourCycle: props.hour24 ? 'h23' : 'h12',
@@ -256,7 +259,7 @@ export default function EventDialog(props: Props) {
     patch({ end: Math.max(ms, d.start + 60_000) });
   };
 
-  const zoneItems = useMemo(() => zoneSelectItems(isZh, new Date(d.start)), [d.start, isZh]);
+  const zoneItems = useMemo(() => calendarZoneSelectItems(isZh, new Date(d.start)), [d.start, isZh]);
 
   const calItems = calendars.map((c) => ({
     value: String(c.id),
@@ -316,12 +319,12 @@ export default function EventDialog(props: Props) {
                   onChange={(v) => {
                     if (v) {
                       // 转全天:起点归到当天 0 点,终点是次日 0 点(半开区间)。
-                      const w = wallPartsIn(d.tz, new Date(d.start));
-                      const s = wallToUtc(d.tz, { ...w, h: 0, mi: 0, s: 0 }).getTime();
+                      const w = wallPartsIn(clockZone, new Date(d.start));
+                      const s = wallToUtc(clockZone, { ...w, h: 0, mi: 0, s: 0 }).getTime();
                       patch({ allDay: true, start: s, end: s + 86_400_000 });
                     } else {
-                      const w = wallPartsIn(d.tz, new Date(d.start));
-                      const s = wallToUtc(d.tz, { ...w, h: 9, mi: 0, s: 0 }).getTime();
+                      const w = wallPartsIn(clockZone, new Date(d.start));
+                      const s = wallToUtc(clockZone, { ...w, h: 9, mi: 0, s: 0 }).getTime();
                       patch({ allDay: false, start: s, end: s + 3_600_000 });
                     }
                   }}
@@ -335,7 +338,7 @@ export default function EventDialog(props: Props) {
                   clearable={false}
                   aria-label={tr({ zh: '开始日期', en: 'Start date' })}
                   readOnly={readOnly}
-                  onChange={(value) => setStart(fromInputs(value, d.allDay ? '00:00' : startIn.time, d.tz, d.start))}
+                  onChange={(value) => setStart(fromInputs(value, d.allDay ? '00:00' : startIn.time, clockZone, d.start))}
                 />
                 {!d.allDay && (
                   <EventTimePicker
@@ -344,7 +347,7 @@ export default function EventDialog(props: Props) {
                     value={startIn.time}
                     hourFormat={hourFormat}
                     readOnly={readOnly}
-                    onChange={(time) => setStart(fromInputs(startIn.date, time, d.tz, d.start))}
+                    onChange={(time) => setStart(fromInputs(startIn.date, time, clockZone, d.start))}
                   />
                 )}
               </div>
@@ -357,7 +360,7 @@ export default function EventDialog(props: Props) {
                   aria-label={tr({ zh: '结束日期', en: 'End date' })}
                   readOnly={readOnly}
                   onChange={(value) => {
-                    const base = fromInputs(value, d.allDay ? '00:00' : endIn.time, d.tz, d.end);
+                    const base = fromInputs(value, d.allDay ? '00:00' : endIn.time, clockZone, d.end);
                     setEnd(d.allDay ? base + 86_400_000 : base);
                   }}
                 />
@@ -368,29 +371,29 @@ export default function EventDialog(props: Props) {
                     value={endIn.time}
                     hourFormat={hourFormat}
                     readOnly={readOnly}
-                    onChange={(time) => setEnd(fromInputs(endIn.date, time, d.tz, d.end))}
+                    onChange={(time) => setEnd(fromInputs(endIn.date, time, clockZone, d.end))}
                   />
                 )}
               </div>
               <div className="cal-time-opts cal-event-time-options">
                 <button type="button" className="cal-link-btn cal-event-zone" disabled={readOnly} onClick={() => setShowTz((v) => !v)}>
                   <Globe size={13} aria-hidden />
-                  {zoneLabel(d.tz, isZh)}
+                  {zoneName}
                 </button>
               </div>
               {showTz && (
                 <div className="cal-field-row">
                   <ListSelect
                     items={zoneItems}
-                    value={d.tz}
-                    allLabel={tr({ zh: '时区', en: 'Time zone' })}
+                    value={clockZone}
+                    allLabel={zoneName}
                     clearable={false}
                     searchable
                     searchPlaceholder={tr({ zh: '搜城市 / 时区', en: 'Search city or zone' })}
                     onChange={(tzNext) => {
                       // 换时区保持**墙上时间**:21:00 的会改成东京时区,就是东京 21:00。
-                      const sw = wallPartsIn(d.tz, new Date(d.start));
-                      const ew = wallPartsIn(d.tz, new Date(d.end));
+                      const sw = wallPartsIn(clockZone, new Date(d.start));
+                      const ew = wallPartsIn(clockZone, new Date(d.end));
                       patch({
                         tz: tzNext,
                         start: wallToUtc(tzNext, sw).getTime(),
@@ -398,7 +401,7 @@ export default function EventDialog(props: Props) {
                       });
                     }}
                   />
-                  {d.tz !== localZone() && (
+                  {clockZone !== localZone() && (
                     <span className="cal-hint">
                       {tr({ zh: '本机时区不同,格子里按显示时区摆放', en: 'Differs from your device zone; the grid places it in the display zone' })}
                     </span>

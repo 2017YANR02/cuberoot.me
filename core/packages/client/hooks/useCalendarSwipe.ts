@@ -1,15 +1,20 @@
 'use client';
 
-import { useCallback, useEffect, useRef, type RefObject, type MouseEvent } from 'react';
+import { useCallback, useEffect, useRef, type RefObject, type MouseEvent as ReactMouseEvent } from 'react';
+import { trackpadPinchFactor } from '@/lib/cube-trackpad';
+
+type TrackpadPinch = (factor: number, event: MouseEvent) => boolean;
+type SafariPinchEvent = MouseEvent & { scale: number };
 
 /** 时间网格和月历共用手势；保留旧页直到新页提交，两个画面同时移动。 */
-export function useCalendarSwipe(container: RefObject<HTMLElement | null>, previous: () => void, next: () => void) {
-  const navigation = useRef({ previous, next });
+export function useCalendarSwipe(container: RefObject<HTMLElement | null>, previous: () => void, next: () => void, pinch?: TrackpadPinch) {
+  const navigation = useRef({ previous, next, pinch });
   const ignoreTapUntil = useRef(0);
   const cancelRef = useRef<() => void>(() => {});
   const readyRef = useRef<() => void>(() => {});
   const onPageReady = useCallback(() => readyRef.current(), []);
-  useEffect(() => { navigation.current = { previous, next }; }, [previous, next]);
+  const trackpadZoomEnabled = pinch !== undefined;
+  useEffect(() => { navigation.current = { previous, next, pinch }; }, [previous, next, pinch]);
 
   useEffect(() => {
     const root = container.current;
@@ -22,6 +27,7 @@ export function useCalendarSwipe(container: RefObject<HTMLElement | null>, previ
     let frame = 0;
     let settling = false;
     let disposed = false;
+    let safariScale: number | null = null;
     const content = () => root.querySelector<HTMLElement>('.cal-swipe-content:not([data-swipe-snapshot])');
     const reduced = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
 
@@ -166,26 +172,60 @@ export function useCalendarSwipe(container: RefObject<HTMLElement | null>, previ
         } catch (error) { reset(); throw error; }
       });
     };
+    const wheel = (event: WheelEvent) => {
+      if (!event.ctrlKey || !event.cancelable || event.defaultPrevented || event.buttons || event.altKey || event.metaKey || event.shiftKey || gesture || settling) return;
+      if (event.target instanceof Element && event.target.closest('.fc-popover, input, textarea, select, [contenteditable]')) return;
+      const factor = trackpadPinchFactor(event);
+      if (factor !== null && (safariScale !== null || navigation.current.pinch?.(factor, event))) event.preventDefault();
+    };
+    const safariStart = (event: Event) => {
+      if (gesture || settling || !event.cancelable || !matchMedia('(any-hover: hover)').matches) return;
+      if (navigation.current.pinch?.(1, event as SafariPinchEvent)) {
+        safariScale = 1;
+        event.preventDefault();
+      }
+    };
+    const safariChange = (event: Event) => {
+      if (safariScale === null) return;
+      const pinchEvent = event as SafariPinchEvent;
+      if (event.cancelable) event.preventDefault();
+      if (!Number.isFinite(pinchEvent.scale) || pinchEvent.scale <= 0) return;
+      navigation.current.pinch?.(pinchEvent.scale / safariScale, pinchEvent);
+      safariScale = pinchEvent.scale;
+    };
+    const safariEnd = () => { safariScale = null; };
     root.addEventListener('touchstart', start, { capture: true, passive: true });
     root.addEventListener('touchmove', move, { capture: true, passive: false });
     root.addEventListener('touchend', end, { capture: true });
     root.addEventListener('touchcancel', cancel, { capture: true });
+    if (trackpadZoomEnabled) {
+      root.addEventListener('wheel', wheel, { passive: false });
+      root.addEventListener('gesturestart', safariStart, { passive: false });
+      root.addEventListener('gesturechange', safariChange, { passive: false });
+      root.addEventListener('gestureend', safariEnd);
+    }
     return () => {
       disposed = true;
       root.removeEventListener('touchstart', start, true);
       root.removeEventListener('touchmove', move, true);
       root.removeEventListener('touchend', end, true);
       root.removeEventListener('touchcancel', cancel, true);
+      if (trackpadZoomEnabled) {
+        root.removeEventListener('wheel', wheel);
+        root.removeEventListener('gesturestart', safariStart);
+        root.removeEventListener('gesturechange', safariChange);
+        root.removeEventListener('gestureend', safariEnd);
+      }
       reset();
       cancelRef.current = () => {};
     };
-  }, [container]);
+  }, [container, trackpadZoomEnabled]);
 
   return {
     ignoreTapUntil,
     onPageReady,
     cancelSwipe: () => cancelRef.current(),
-    onClickCapture: (event: MouseEvent) => {
+    onClickCapture: (event: ReactMouseEvent) => {
       if (event.detail !== 0 && performance.now() < ignoreTapUntil.current) {
         event.preventDefault();
         event.stopPropagation();

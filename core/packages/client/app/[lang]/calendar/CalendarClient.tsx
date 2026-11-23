@@ -31,7 +31,7 @@ import { localZone, isValidZone, formatOffset, zoneOffsetMinutes } from '@cubero
 import { calendarCompetitionId, eventsToIcs, type CalEvent, type CalendarImport, type EditScope } from '@cuberoot/shared/calendar';
 import { colorHex, readableInk } from '@/lib/calendar-colors';
 import { useEffectiveTheme } from '@/lib/theme';
-import { zoneLabel, zoneSelectItems } from '@/lib/tz-zones';
+import { calendarClockZone, calendarZoneLabel, calendarZoneSelectItems } from '@/lib/tz-zones';
 import { expandRange, parseOccurrenceKey, useCalendarStore } from '@/lib/calendar-store';
 import { exportIcs, fetchEvents, listImports, undoImport } from '@/lib/calendar-api';
 import { importCalendarFile, type ImportProgress } from './_lib/import';
@@ -534,42 +534,15 @@ export default function CalendarClient() {
     openCreate(ms, defaultEventEnd(ms, allDay, prefs.defaultDuration, displayTz), allDay);
   }, [view, setViewParam, gotoDate, openCreate, prefs.defaultDuration, displayTz]);
 
-  // 键盘快捷键,和 Google 一致:T 今天、J/K 或 ←/→ 翻页、D/X/W/M/Y/A 切视图、C 新建。
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent): void => {
-      const el = e.target as HTMLElement | null;
-      if (e.defaultPrevented) return;
-      if (e.key === 'Escape' && (mobileSearch || desktopSearch)) { closeSearch(); return; }
-      if (e.defaultPrevented || e.isComposing || el?.isContentEditable || (el && /^(INPUT|TEXTAREA|SELECT)$/.test(el.tagName))) return;
-      if (e.metaKey || e.ctrlKey || e.altKey) return;
-      if (dialog || shareOpen || scopeAsk || settingsOpen) return;
-      if (el?.closest('[role=dialog], .list-select')) return;
-      // 窄屏的侧栏是覆盖式抽屉,开着时汉堡钮被它盖住 —— Esc 得能退出来(遮罩也能点关)。
-      if (e.key === 'Escape' && sidebarOpen) { setSidebarOpen(false); return; }
-      if (e.key === 'Escape' && monthExpanded) { setPickerMonth(null); return; }
-      if (sidebarOpen || mobileSearch) return;
-      if (!prefs.keyboardShortcuts) return;
-      if (e.key === '?') { e.preventDefault(); void setSettingsSection('shortcuts'); return; }
-      if (e.key === '/') { e.preventDefault(); if (isMobile) setMobileSearch(true); else setDesktopSearch(true); return; }
-      const map: Record<string, ViewKey> = {
-        d: 'timeGridDay', x: 'fourDay', w: 'timeGridWeek',
-        m: 'dayGridMonth', y: 'multiMonthYear', a: 'listMonth',
-      };
-      const k = e.key.toLowerCase();
-      if (map[k]) { e.preventDefault(); void setViewParam(map[k]); return; }
-      if (k === 't') { gridRef.current?.today(); return; }
-      if (k === 'j' || e.key === 'ArrowLeft') { e.preventDefault(); gridRef.current?.prev(); return; }
-      if (k === 'k' || e.key === 'ArrowRight') { e.preventDefault(); gridRef.current?.next(); return; }
-      if (k === 'c') {
-        e.preventDefault();
-        openCreateNow();
-      }
-    };
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
-  }, [dialog, shareOpen, scopeAsk, sidebarOpen, settingsOpen, prefs.keyboardShortcuts, setSettingsSection, setViewParam, openCreateNow, mobileSearch, desktopSearch, closeSearch, monthExpanded, isMobile]);
+  const calendarOverlayOpen = Boolean(dialog || shareOpen || scopeAsk || settingsOpen);
+  const closeCalendarOverlay = () => {
+    if (mobileSearch || desktopSearch) { closeSearch(); return; }
+    if (calendarOverlayOpen) return;
+    if (sidebarOpen) setSidebarOpen(false);
+    else if (monthExpanded) setPickerMonth(null);
+  };
 
-  const zoneItems = useMemo(() => zoneSelectItems(isZh, new Date()), [isZh]);
+  const zoneItems = useMemo(() => calendarZoneSelectItems(isZh, new Date()), [isZh]);
   const timeZones = useMemo(() => {
     if (!prefs.showOtherZones || !prefs.secondaryTz) return undefined;
     const candidates = [
@@ -579,8 +552,11 @@ export default function CalendarClient() {
     const seen = new Set<string>();
     return [...candidates, { tz: displayTz, label: prefs.tzLabel }]
       .filter(zone => { if (seen.has(zone.tz)) return false; seen.add(zone.tz); return true; })
-      .map(zone => ({ tz: zone.tz, label: zone.label.trim() || zoneLabel(zone.tz, isZh) }));
-  }, [prefs.showOtherZones, prefs.secondaryTz, prefs.secondaryTzLabel, prefs.thirdTz, prefs.thirdTzLabel, prefs.tzLabel, displayTz, isZh]);
+      .map(zone => {
+        const at = new Date(range.anchor);
+        return { tz: zone.tz, label: zone.label.trim() || calendarZoneLabel(calendarClockZone(zone.tz, at), isZh, at) };
+      });
+  }, [prefs.showOtherZones, prefs.secondaryTz, prefs.secondaryTzLabel, prefs.thirdTz, prefs.thirdTzLabel, prefs.tzLabel, displayTz, isZh, range.anchor]);
 
   // ── 未登录 ──────────────────────────────────────────────────────────────
   const loginHref = `/account${nextQuery(`${lang === 'zh' ? '/zh' : ''}/calendar`)}`;
@@ -876,6 +852,15 @@ export default function CalendarClient() {
               weekNumbers={isMobile || prefs.weekNumbers}
               mobile={isMobile}
               headerExpanded={monthExpanded}
+              trackpadZoom={!calendarOverlayOpen && !searchActive && !mobileSidebarOpen}
+              keyboardShortcuts={{
+                enabled: () => prefs.keyboardShortcuts && !calendarOverlayOpen && !sidebarOpen && !mobileSearch,
+                onViewChange: (view) => { void setViewParam(view); },
+                onCreate: openCreateNow,
+                onSearch: () => { if (isMobile) setMobileSearch(true); else setDesktopSearch(true); },
+                onHelp: () => { void setSettingsSection('shortcuts'); },
+                onEscape: closeCalendarOverlay,
+              }}
               editable
               onSelect={openCreate}
               onDayLink={onDayLink}

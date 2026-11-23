@@ -6,7 +6,7 @@
 //
 // 只做「画 + 把交互回调翻译成业务事件」,不碰数据 —— 展开、落库都在上层。
 
-import { forwardRef, useEffect, useImperativeHandle, useMemo, useRef } from 'react';
+import { forwardRef, useCallback, useEffect, useEffectEvent, useImperativeHandle, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import FullCalendar from '@fullcalendar/react';
 import './calendar-grid.css';
 import type { CalendarOptions, EventInput, DateSelectArg, EventClickArg, EventDropArg, DatesSetArg, FormatterInput } from '@fullcalendar/core';
@@ -20,10 +20,9 @@ import luxonPlugin from '@fullcalendar/luxon3';
 // 光写 locale="zh-cn" 不够 —— 语言包得真的加载进来,否则 allDayText / moreLinkText /
 // noEventsText 静默退回英文(「all-day」「+2 more」混在中文表头里)。
 import zhCn from '@fullcalendar/core/locales/zh-cn';
-import type { ViewKey } from '@/lib/calendar-format';
 import { useCalendarSwipe } from '@/hooks/useCalendarSwipe';
 import { DateTime } from 'luxon';
-import { EVENT_STATUS_LABELS, formatClock } from '@/lib/calendar-format';
+import { EVENT_STATUS_LABELS, VIEW_KEYS, VIEW_LABELS, formatClock, type ViewKey } from '@/lib/calendar-format';
 import { tr } from '@/i18n/tr';
 
 export interface GridRange {
@@ -38,6 +37,15 @@ export interface GridHandle {
   prev: () => void;
   next: () => void;
   gotoDate: (ms: number) => void;
+}
+
+interface KeyboardShortcuts {
+  enabled: () => boolean;
+  onViewChange: (view: ViewKey) => void;
+  onCreate?: () => void;
+  onSearch?: () => void;
+  onHelp?: () => void;
+  onEscape?: () => void;
 }
 
 interface Props {
@@ -58,6 +66,8 @@ interface Props {
   weekNumbers?: boolean;
   mobile?: boolean;
   headerExpanded?: boolean;
+  trackpadZoom?: boolean;
+  keyboardShortcuts?: KeyboardShortcuts;
   editable: boolean;
   slotMinutes?: number;
   snapMinutes?: number;
@@ -78,8 +88,71 @@ interface Props {
 const CalendarGrid = forwardRef<GridHandle, Props>(function CalendarGrid(props, ref) {
   const api = useRef<FullCalendar | null>(null);
   const gridRef = useRef<HTMLDivElement>(null);
+  const hasKeyboardShortcuts = props.keyboardShortcuts !== undefined;
+  const onCalendarKey = useEffectEvent((event: KeyboardEvent) => {
+    const shortcuts = props.keyboardShortcuts;
+    if (!shortcuts || event.defaultPrevented || event.isComposing || event.metaKey || event.ctrlKey || event.altKey) return;
+    if (event.key === 'Escape') { shortcuts.onEscape?.(); return; }
+    const target = event.target;
+    if (target instanceof HTMLElement && (target.isContentEditable || target.closest(
+      'input, textarea, select, [role="textbox"], [role="dialog"], [role="menu"], [role="listbox"], .list-select-popup, .list-select-trigger[aria-expanded="true"]',
+    ))) return;
+    if (!shortcuts.enabled()) return;
+
+    const key = event.key.toLowerCase();
+    const view = VIEW_KEYS.find((view) => VIEW_LABELS[view].hint && VIEW_LABELS[view].hint.toLowerCase() === key);
+    if (view) { event.preventDefault(); shortcuts.onViewChange(view); return; }
+
+    switch (key) {
+      case 'arrowleft': case 'j': event.preventDefault(); api.current?.getApi().prev(); break;
+      case 'arrowright': case 'k': event.preventDefault(); api.current?.getApi().next(); break;
+      case 't': event.preventDefault(); api.current?.getApi().today(); break;
+      case 'c': if (shortcuts.onCreate) { event.preventDefault(); shortcuts.onCreate(); } break;
+      case '/': if (shortcuts.onSearch) { event.preventDefault(); shortcuts.onSearch(); } break;
+      case '?': if (shortcuts.onHelp) { event.preventDefault(); shortcuts.onHelp(); } break;
+    }
+  });
+  useEffect(() => {
+    if (!hasKeyboardShortcuts) return;
+    const handleKey = (event: KeyboardEvent) => onCalendarKey(event);
+    window.addEventListener('keydown', handleKey);
+    return () => window.removeEventListener('keydown', handleKey);
+  }, [hasKeyboardShortcuts]);
+
+  const baseSlotMinutes = props.slotMinutes ?? 30;
+  const [slotDensity, setSlotDensity] = useState(0);
+  const pinchFactor = useRef(1);
+  const pinchAnchor = useRef<{ ratio: number; clientY: number } | null>(null);
+  const slotMinutes = slotDensity > 0 ? baseSlotMinutes / 2 : slotDensity < 0 ? baseSlotMinutes * 2 : baseSlotMinutes;
+  const onTrackpadPinch = useCallback((factor: number, event: MouseEvent) => {
+    const scroller = event.target instanceof Element ? event.target.closest<HTMLElement>('.fc-scroller') : null;
+    const slots = scroller?.querySelector<HTMLElement>('.fc-timegrid-slots');
+    if (!slots || !gridRef.current?.contains(scroller)) return false;
+    if (factor === 1) return true;
+    pinchFactor.current *= factor;
+    if (pinchFactor.current > 1 / 1.25 && pinchFactor.current < 1.25) return true;
+    const direction = pinchFactor.current > 1 ? 1 : -1;
+    pinchFactor.current = 1;
+    const next = Math.max(-1, Math.min(1, slotDensity + direction));
+    if (next === slotDensity) return true;
+    const bounds = slots.getBoundingClientRect();
+    if (bounds.height > 0) pinchAnchor.current = { ratio: (event.clientY - bounds.top) / bounds.height, clientY: event.clientY };
+    setSlotDensity(next);
+    return true;
+  }, [slotDensity]);
+  useLayoutEffect(() => {
+    const anchor = pinchAnchor.current;
+    pinchAnchor.current = null;
+    if (!anchor) return;
+    const slots = gridRef.current?.querySelector<HTMLElement>('.fc-timegrid-slots');
+    const scroller = slots?.closest<HTMLElement>('.fc-scroller');
+    if (!slots || !scroller) return;
+    const bounds = slots.getBoundingClientRect();
+    scroller.scrollTop += bounds.top + anchor.ratio * bounds.height - anchor.clientY;
+  }, [slotDensity]);
   const { ignoreTapUntil, cancelSwipe, onClickCapture, onPageReady } = useCalendarSwipe(
     gridRef, () => api.current?.getApi().prev(), () => api.current?.getApi().next(),
+    props.trackpadZoom ? onTrackpadPinch : undefined,
   );
 
   useImperativeHandle(ref, () => ({
@@ -170,7 +243,7 @@ const CalendarGrid = forwardRef<GridHandle, Props>(function CalendarGrid(props, 
           // 拖出一格就能新建;不加这个的话月视图里的单击会被当成 0 长度选区吞掉。
           selectMinDistance={1}
           scrollTime="07:00:00"
-          slotDuration={{ minutes: props.slotMinutes ?? 30 }}
+          slotDuration={{ minutes: slotMinutes }}
           snapDuration={{ minutes: props.snapMinutes ?? 15 }}
           allDaySlot={props.allDaySlot ?? true}
           slotEventOverlap={props.slotEventOverlap ?? true}
@@ -258,8 +331,12 @@ const CalendarGrid = forwardRef<GridHandle, Props>(function CalendarGrid(props, 
             // 黑字,看不出事件属于哪个日历。全天事件仍是实心色条,不需要点。
             const dotted = !arg.event.allDay
               && (arg.view.type === 'dayGridMonth' || arg.view.type === 'multiMonthYear' || inList);
+            // FullCalendar clips timeText at midnight when a timed card spans multiple columns.
+            const timeText = arg.timeText && !dotted && (!arg.isStart || !arg.isEnd)
+              ? arg.event.formatRange(timeFormat)
+              : arg.timeText;
             return (
-              <div className={cls} title={[arg.timeText, arg.event.title, statusLabel].filter(Boolean).join(' · ')}>
+              <div className={cls} title={[timeText, arg.event.title, statusLabel].filter(Boolean).join(' · ')}>
                 {dotted && (
                   <span
                     className="cal-chip-dot"
@@ -272,7 +349,7 @@ const CalendarGrid = forwardRef<GridHandle, Props>(function CalendarGrid(props, 
                     靠 CSS order 换,不为此再分一套 DOM。 */}
                 <span className="cal-chip-title">{arg.event.title}</span>
                 {statusLabel && <span className={inList ? 'cal-chip-status' : 'sr-only'}>{statusLabel}</span>}
-                {arg.timeText && <span className="cal-chip-time">{arg.timeText}</span>}
+                {timeText && <span className="cal-chip-time">{timeText}</span>}
                 {p.location && <span className="cal-chip-loc">{p.location}</span>}
               </div>
           );

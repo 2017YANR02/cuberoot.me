@@ -226,12 +226,12 @@ export function zoneSearchTerms(z: ZoneEntry): string {
   return `${z.tz} ${z.tz.replace(/[_/]/g, ' ')} ${z.zh} ${z.en} ${z.alias ?? ''}`;
 }
 
-/** Shared calendar and registration menu options. */
-export function zoneSelectItems(isZh: boolean, at: Date) {
+/** Shared time zone menu options. */
+export function zoneSelectItems(isZh: boolean, at: Date, zones = zoneOptions()) {
   const locale = isZh ? 'zh-CN' : 'en';
   const regions = new Intl.DisplayNames([locale], { type: 'region' });
-  return zoneOptions().map(z => {
-    const city = zoneLabel(z.tz, isZh);
+  return zones.map(z => {
+    const city = isZh ? z.zh : z.en;
     const country = z.iso2 ? regions.of(z.iso2) : undefined;
     const offset = formatOffset(zoneOffsetMinutes(z.tz, at));
     const name = new Intl.DateTimeFormat(locale, { timeZone: z.tz, timeZoneName: 'long' })
@@ -244,4 +244,26 @@ export function zoneSelectItems(isZh: boolean, at: Date) {
       searchTerms: `${zoneSearchTerms(z)} ${country ?? ''}`,
     };
   });
+}
+
+const BEIJING = { tz: 'Asia/Shanghai', zh: '北京', en: 'Beijing' };
+const isAntarcticZone = (tz: string) => tz.startsWith('Antarctica/');
+
+/** Use the Beijing clock for legacy Antarctic UTC+8 events at the occurrence being edited. */
+export function calendarClockZone(tz: string, at: Date): string {
+  return isAntarcticZone(tz) && zoneOffsetMinutes(tz, at) === 480 && zoneOffsetMinutes(BEIJING.tz, at) === 480
+    ? BEIJING.tz : tz;
+}
+
+export function calendarZoneLabel(tz: string, isZh: boolean, at: Date): string {
+  if (tz === BEIJING.tz) return `${isZh ? BEIJING.zh : BEIJING.en} (${formatOffset(zoneOffsetMinutes(tz, at))})`;
+  if (isAntarcticZone(tz)) return formatOffset(zoneOffsetMinutes(tz, at));
+  return zoneLabel(tz, isZh);
+}
+
+export function calendarZoneSelectItems(isZh: boolean, at: Date) {
+  const zones = zoneOptions().filter(zone => !isAntarcticZone(zone.tz)).map(zone => (
+    zone.tz === BEIJING.tz ? { ...zone, ...BEIJING, alias: `${zone.alias} 上海 Shanghai UTC+8` } : zone
+  ));
+  return zoneSelectItems(isZh, at, zones);
 }

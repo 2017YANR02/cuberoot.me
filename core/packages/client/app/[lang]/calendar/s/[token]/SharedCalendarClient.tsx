@@ -8,7 +8,7 @@
 // token 从 window.location 读(哨兵壳,服务端拿不到路由参数)。
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { CalendarDays, ChevronLeft, ChevronRight, Link2 } from '@app-foundation/icons/lucide';
+import { CalendarDays, ChevronDown, ChevronLeft, ChevronRight } from '@app-foundation/icons/lucide';
 import PageBackLink from '@/components/PageBackLink';
 import { ListSelect } from '@/components/ListSelect';
 import { UserContactLink } from '@/components/UserIdLabel';
@@ -17,8 +17,8 @@ import { tr, useLang } from '@/i18n/tr';
 import { localZone, isValidZone, formatOffset, zoneOffsetMinutes } from '@cuberoot/shared/tz';
 import { colorHex, readableInk } from '@/lib/calendar-colors';
 import { useEffectiveTheme } from '@/lib/theme';
-import { expandRange } from '@/lib/calendar-store';
-import { fetchPublicCalendar, icsFeedUrl, type PublicCalendar } from '@/lib/calendar-api';
+import { expandRange, readCalendarPrefs } from '@/lib/calendar-store';
+import { fetchPublicCalendar, type PublicCalendar } from '@/lib/calendar-api';
 import CalendarGrid, { type GridHandle, type GridRange } from '@/components/calendar/CalendarGrid';
 import {
   EVENT_STATUS_LABELS, rangeTitle, toFcEvents, VIEW_KEYS, VIEW_LABELS, isViewKey, type ViewKey,
@@ -45,7 +45,8 @@ export default function SharedCalendarClient() {
   const [token, setToken] = useState('');
   const [data, setData] = useState<PublicCalendar | null>(null);
   const [error, setError] = useState('');
-  const [view, setView] = useState<ViewKey>('dayGridMonth');
+  const [view, setView] = useState<ViewKey>('timeGridWeek');
+  const [timeZoneChoice, setTimeZoneChoice] = useState<'mine' | 'source'>('mine');
   // allow-hydration-volatile-state: every range-dependent calendar subtree is gated by mounted.
   const [range, setRange] = useState<GridRange>(() => ({
     start: Date.now() - 30 * DAY, end: Date.now() + 30 * DAY, anchor: Date.now(),
@@ -64,12 +65,16 @@ export default function SharedCalendarClient() {
       .catch((e: Error) => setError(e.message));
   }, [token]);
 
-  const displayTz = useMemo(() => {
+  const viewerTz = useMemo(() => {
     if (!mounted) return 'UTC';
     return localZone();
   }, [mounted]);
 
-  const eventTz = data && isValidZone(data.tz) ? data.tz : displayTz;
+  const sourceTz = data && isValidZone(data.tz) ? data.tz : viewerTz;
+  const displayTz = timeZoneChoice === 'source' ? sourceTz : viewerTz;
+  const offsetAt = new Date(range.anchor);
+  const viewerOffset = formatOffset(zoneOffsetMinutes(viewerTz, offsetAt));
+  const sourceOffset = sourceTz === viewerTz ? viewerOffset : formatOffset(zoneOffsetMinutes(sourceTz, offsetAt));
 
   // 分享页的标题只有客户端知道(服务端拿不到 token),所以这里保留 useDocumentTitle。
   const pageTitle = data?.title
@@ -90,7 +95,8 @@ export default function SharedCalendarClient() {
   const fcEvents = useMemo(() => {
     if (!data) return [];
     const occurrences = expandRange({
-      events: data.events, hidden: [], from: range.start, to: range.end,
+      // All-day events use their source calendar date, even at opposite UTC offsets.
+      events: data.events, hidden: [], from: range.start - 2 * DAY, to: range.end + 2 * DAY,
     });
     return toFcEvents({
       occurrences,
@@ -165,7 +171,7 @@ export default function SharedCalendarClient() {
               ref={gridRef}
               view={view}
               // 分享页更需要这个:看的人多半不在发布者的时区。
-              tzLabel={formatOffset(zoneOffsetMinutes(displayTz, new Date()))}
+              tzLabel={timeZoneChoice === 'source' ? sourceOffset : viewerOffset}
               initialDate={Date.now()}
               events={fcEvents}
               tz={displayTz}
@@ -173,6 +179,8 @@ export default function SharedCalendarClient() {
               hour24
               weekStart={1}
               weekends
+              trackpadZoom
+              keyboardShortcuts={{ enabled: () => readCalendarPrefs().keyboardShortcuts, onViewChange: setView }}
               editable={false}
               onEventClick={() => { /* 只读:点击不展开详情 */ }}
               onRangeChange={setRange}
@@ -183,14 +191,14 @@ export default function SharedCalendarClient() {
 
       {data && (
         <div className="cal-share-foot">
-          <Link2 size={13} aria-hidden />
-          <span>{tr({ zh: '按你所在时区显示', en: 'Shown in your time zone' })}:{displayTz}</span>
-          <a href={icsFeedUrl(token)} className="cal-link-btn">
-            {tr({ zh: '订阅这个日历(.ics)', en: 'Subscribe (.ics)' })}
-          </a>
-          {eventTz !== displayTz && (
-            <span>{tr({ zh: `原始时区 ${eventTz}`, en: `Source zone ${eventTz}` })}</span>
-          )}
+          <div className="cal-share-zone">
+            <select className="native-select" aria-label={tr({ zh: '显示时区', en: 'Display time zone' })}
+              value={timeZoneChoice} onChange={event => setTimeZoneChoice(event.currentTarget.value === 'source' ? 'source' : 'mine')}>
+              <option value="mine">{tr({ zh: `我的时区 · ${viewerOffset}`, en: `My time zone · ${viewerOffset}` })}</option>
+              <option value="source">{tr({ zh: `原始时区 · ${sourceOffset}`, en: `Original time zone · ${sourceOffset}` })}</option>
+            </select>
+            <ChevronDown size={14} aria-hidden />
+          </div>
         </div>
       )}
     </div>

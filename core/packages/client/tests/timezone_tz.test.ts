@@ -10,7 +10,7 @@ import {
   inWindow, isValidZone, nextTransition, parseDateTime, timeKey, wallPartsIn,
   wallToUtc, zoneOffsetMinutes,
 } from '@cuberoot/shared/tz';
-import { isPopularZone, POPULAR_ZONES, zoneLabel, zoneSearchTerms } from '@/lib/tz-zones';
+import { calendarClockZone, calendarZoneLabel, calendarZoneSelectItems, isPopularZone, POPULAR_ZONES, zoneLabel, zoneSearchTerms } from '@/lib/tz-zones';
 
 const JUL = new Date('2026-07-15T12:00:00Z');
 const JAN = new Date('2026-01-15T12:00:00Z');
@@ -247,5 +247,25 @@ describe('时区目录', () => {
     expect(byTz.get('America/Los_Angeles')).toContain('旧金山');
     expect(byTz.get('Asia/Kolkata')).toContain('新德里');
     expect(byTz.get('Australia/Sydney')).toContain('墨尔本');
+  });
+
+  it('uses the Beijing clock for Casey occurrences at UTC+8 and preserves other historical offsets', () => {
+    const casey = 'Antarctica/Casey';
+    const historical = new Date('2022-02-01T00:00:00Z');
+    const clock = calendarClockZone(casey, JUL);
+    expect(clock).toBe('Asia/Shanghai');
+    expect(wallPartsIn(clock, JUL)).toEqual(wallPartsIn(casey, JUL));
+    expect(calendarZoneLabel(clock, true, JUL)).toBe('北京 (UTC+8)');
+    expect(calendarClockZone(casey, historical)).toBe(casey);
+    expect(calendarZoneLabel(casey, false, historical)).toBe('UTC+11');
+  });
+
+  it('filters Antarctic choices from the calendar and keeps Beijing searchable by its offset', () => {
+    const items = calendarZoneSelectItems(false, JUL);
+    expect(items.some(item => item.value.startsWith('Antarctica/'))).toBe(false);
+    expect(items.find(item => item.value === 'Asia/Shanghai')).toMatchObject({
+      label: 'Beijing (UTC+8)', searchTerms: expect.stringContaining('UTC+8'),
+    });
+    expect(items.find(item => item.value === 'Asia/Hong_Kong')?.menuLabel).toContain('Hong Kong');
   });
 });
