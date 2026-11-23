@@ -1,8 +1,8 @@
 diff --git a/dist/src/site.js b/dist/src/site.js
-index 428f4da0143dd0eb356a10f949ecc03aa92a722f..5283cd3f46bee9b474f328d73e47da8b814efd1c 100644
+index 428f4da01..2a3f93f0b 100644
 --- a/dist/src/site.js
 +++ b/dist/src/site.js
-@@ -66,7 +66,12 @@ export function installSiteCorners(root, options = {}) {
+@@ -66,10 +66,15 @@ export function installSiteCorners(root, options = {}) {
          return result;
      };
      const pending = new Set();
@@ -15,16 +15,19 @@ index 428f4da0143dd0eb356a10f949ecc03aa92a722f..5283cd3f46bee9b474f328d73e47da8b
 +    let frame = 0, paintTask = 0, destroyed = false, paints = 0, passes = 0;
      const sheet = new win.CSSStyleSheet();
      doc.adoptedStyleSheets = [...doc.adoptedStyleSheets, sheet];
-     // Structural selectors leave React-owned attributes and children untouched.
-@@ -83,7 +88,17 @@ export function installSiteCorners(root, options = {}) {
+-    // Structural selectors leave React-owned attributes and children untouched.
++    // Project each element's rule into CSS without changing React-owned markup.
+     const selectorFor = (el) => {
+         const parts = [];
+         let node = el;
+@@ -83,7 +88,16 @@ export function installSiteCorners(root, options = {}) {
          return `:root > ${parts.join(" > ")}`;
      };
      const set = (_el, entry, name, value) => entry.rules.set(name, value);
 -    const remove = (el, _entry) => { entries.delete(el); concentricElements.delete(el); resize.unobserve(el); };
 +    const remove = (el, entry) => {
 +        if (entry.rule) {
-+            // A removed sibling's structural selector can now match a live node.
-+            // Stop applying its paint before measuring any remaining surface.
++            // Stop applying detached paint before removing the rule from the sheet.
 +            entry.rule.style.cssText = "";
 +            removedRules.add(entry.rule);
 +        }
@@ -35,7 +38,7 @@ index 428f4da0143dd0eb356a10f949ecc03aa92a722f..5283cd3f46bee9b474f328d73e47da8b
      const paint = (el) => {
          let entry = entries.get(el);
          entry?.rules.clear();
-@@ -93,6 +108,15 @@ export function installSiteCorners(root, options = {}) {
+@@ -93,6 +107,15 @@ export function installSiteCorners(root, options = {}) {
              return reject();
          if (el.closest(exclude))
              return reject();
@@ -51,7 +54,7 @@ index 428f4da0143dd0eb356a10f949ecc03aa92a722f..5283cd3f46bee9b474f328d73e47da8b
          const style = win.getComputedStyle(el);
          // Clearing our paint sheet restarts native paint transitions. Sampling that
          // intermediate value captures our transparent override instead of the author
-@@ -120,7 +144,9 @@ export function installSiteCorners(root, options = {}) {
+@@ -120,7 +143,9 @@ export function installSiteCorners(root, options = {}) {
          if (["IMG"].includes(el.tagName)) {
              entry ??= { rules: new Map() };
              entries.set(el, entry);
@@ -62,7 +65,7 @@ index 428f4da0143dd0eb356a10f949ecc03aa92a722f..5283cd3f46bee9b474f328d73e47da8b
              const d = continuousCornerRadii({ width, height, radii }).d;
              set(el, entry, "border-radius", "0px");
              set(el, entry, "clip-path", `path("${d}")`);
-@@ -147,7 +173,9 @@ export function installSiteCorners(root, options = {}) {
+@@ -147,7 +172,9 @@ export function installSiteCorners(root, options = {}) {
          const svg = `<svg xmlns="${svgNS}" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}"><defs><clipPath id="c"><path d="${d}"/></clipPath>${gradient}</defs>${shape}${stroke}</svg>`;
          entry ??= { rules: new Map() };
          entries.set(el, entry);
@@ -73,7 +76,7 @@ index 428f4da0143dd0eb356a10f949ecc03aa92a722f..5283cd3f46bee9b474f328d73e47da8b
          set(el, entry, "border-image-source", `url("data:image/svg+xml,${encodeURIComponent(svg)}")`);
          set(el, entry, "border-image-slice", "0 fill");
          set(el, entry, "border-image-width", "0");
-@@ -157,28 +185,76 @@ export function installSiteCorners(root, options = {}) {
+@@ -157,28 +184,64 @@ export function installSiteCorners(root, options = {}) {
          set(el, entry, "background-image", "none");
          paints++;
      };
@@ -103,10 +106,9 @@ index 428f4da0143dd0eb356a10f949ecc03aa92a722f..5283cd3f46bee9b474f328d73e47da8b
 +            subtrees.clear();
              const batch = [...pending];
              pending.clear();
-             for (const [el, entry] of entries)
+-            for (const [el, entry] of entries)
 -                if (!el.isConnected)
-+                if (el !== root && !root.contains(el))
-                     remove(el, entry);
+-                    remove(el, entry);
 +            if (structureChanged) {
 +                for (const el of watched) {
 +                    if (el === root || root.contains(el)) continue;
@@ -114,6 +116,7 @@ index 428f4da0143dd0eb356a10f949ecc03aa92a722f..5283cd3f46bee9b474f328d73e47da8b
 +                    watched.delete(el);
 +                    visible.delete(el);
 +                }
++                structureChanged = false;
 +            }
 +            // Reveal author styles only for dirty surfaces. Disabling the whole
 +            // sheet forces every unrelated surface through style/layout again.
@@ -128,16 +131,6 @@ index 428f4da0143dd0eb356a10f949ecc03aa92a722f..5283cd3f46bee9b474f328d73e47da8b
 +                for (let i = sheet.cssRules.length - 1; i >= 0; i--)
 +                    if (removedRules.has(sheet.cssRules[i])) sheet.deleteRule(i);
 +                removedRules.clear();
-+            }
-+            // Structural selectors need updating after insertion/removal, not on
-+            // each pointer event. Keep unaffected CSSRule identities and declarations.
-+            if (structureChanged) {
-+                for (const [el, entry] of entries) {
-+                    if (!entry.rule) continue;
-+                    const selector = selectorFor(el);
-+                    if (entry.rule.selectorText !== selector) entry.rule.selectorText = selector;
-+                }
-+                structureChanged = false;
 +            }
 +            for (const el of batch) {
 +                const entry = entries.get(el);
@@ -155,7 +148,7 @@ index 428f4da0143dd0eb356a10f949ecc03aa92a722f..5283cd3f46bee9b474f328d73e47da8b
              observe();
          }
      };
-@@ -186,19 +262,66 @@ export function installSiteCorners(root, options = {}) {
+@@ -186,19 +249,67 @@ export function installSiteCorners(root, options = {}) {
          if (destroyed || node.closest("[data-cc-decoration], [data-continuous-corners], svg"))
              return;
          pending.add(node);
@@ -203,6 +196,7 @@ index 428f4da0143dd0eb356a10f949ecc03aa92a722f..5283cd3f46bee9b474f328d73e47da8b
 +            for (const node of record.addedNodes) if (!firstChange.has(node)) firstChange.set(node, "added");
 +        }
 +        const styled = new Set();
++        let changedStructure = false;
          for (const record of records) {
              const target = record.target;
 +            if (target !== root && !root.contains(target)) continue;
@@ -226,11 +220,31 @@ index 428f4da0143dd0eb356a10f949ecc03aa92a722f..5283cd3f46bee9b474f328d73e47da8b
 +            }
 +            if (record.type === "childList" && [...record.addedNodes, ...record.removedNodes]
 +                .every(node => firstChange.get(node) === "added" && !root.contains(node))) continue;
-+            if (record.type === "childList") structureChanged = true;
++            if (record.type === "childList") changedStructure = true;
              // Structural selectors (:first-child, :nth-child, :has) can also change
              // existing descendants' paint. Keep invalidation correct; batch it per frame.
              if (target instanceof win.HTMLElement)
-@@ -237,9 +360,16 @@ export function installSiteCorners(root, options = {}) {
+@@ -207,6 +318,19 @@ export function installSiteCorners(root, options = {}) {
+                 if (node instanceof win.HTMLElement)
+                     schedule(node, true);
+         }
++        if (changedStructure) {
++            structureChanged = true;
++            // Rebind existing paint to its original element in the mutation
++            // microtask. Waiting for the deferred paint would leave an old
++            // positional selector on whichever element moved into its slot.
++            for (const [el, entry] of entries) {
++                if (el !== root && !root.contains(el)) remove(el, entry);
++                else if (entry.rule) {
++                    const selector = selectorFor(el);
++                    if (entry.rule.selectorText !== selector) entry.rule.selectorText = selector;
++                }
++            }
++        }
+     };
+     const observer = new win.MutationObserver(collect);
+     const interaction = (event) => {
+@@ -237,9 +361,16 @@ export function installSiteCorners(root, options = {}) {
              destroyed = true;
              if (frame)
                  win.cancelAnimationFrame(frame);

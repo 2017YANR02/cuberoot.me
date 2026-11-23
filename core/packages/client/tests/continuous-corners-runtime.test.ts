@@ -230,6 +230,31 @@ describe('continuous corners on large dynamic lists', () => {
     expect(controller.stats().surfaces).toBe(1);
   });
 
+  it('keeps a rounded descendant’s rule on its owner before repainting a reordered list', async () => {
+    const list = document.createElement('section');
+    const row = document.createElement('div');
+    const chip = card();
+    row.append(chip);
+    const player = document.createElement('div');
+    const canvasHost = document.createElement('div');
+    player.append(canvasHost);
+    list.append(row, player);
+    document.body.append(list);
+    controller = installSiteCorners(document.body);
+    await flush();
+    const rule = document.adoptedStyleSheets[0].cssRules[0] as CSSStyleRule;
+    expect(document.querySelector(rule.selectorText)).toBe(chip);
+    const before = controller.stats().passes;
+
+    list.prepend(player);
+    await new Promise(resolve => window.setTimeout(resolve, 0));
+
+    // The mutation observer has run, but the mocked animation frame hasn't.
+    expect(controller.stats().passes).toBe(before);
+    expect(document.querySelector(rule.selectorText)).toBe(chip);
+    expect(canvasHost.matches(rule.selectorText)).toBe(false);
+  });
+
   it('invalidates existing nodes moved and removed in the same mutation batch', async () => {
     const first = card();
     const second = card();
