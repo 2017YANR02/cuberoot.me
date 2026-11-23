@@ -1,6 +1,6 @@
 import { Axis } from './../math.js'
 import { Arrow } from './models/arrow.js'
-import { Masking } from './constants.js'
+import { Face, Masking } from './constants.js'
 import { FaceletDefinition } from '../constants.js'
 import type { PlanSimplifyOptions } from './plan-simplify.js'
 
@@ -14,6 +14,8 @@ export interface ICubeOptions {
   strokeWidth?: number
   cubeSize?: number
   cubeOpacity?: number
+  /** In a translucent cube, draw these hidden stickers above the shell and below the near stickers. */
+  highlightHiddenFaces?: readonly Face[]
   stickerOpacity?: number
   colorScheme?: { [face: number]: string }
   maskColor?: string

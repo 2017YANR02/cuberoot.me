@@ -67,10 +67,13 @@ export function renderCubeSVG(geometry: CubeGeometry, options: ResolvedCubeOptio
   parts.push(renderBackground(options))
 
   // Render hidden faces if cube color has transparency
+  const highlightedHiddenStickers: string[] = []
   if (options.cubeOpacity < 100) {
     const outlines: string[] = []
     hiddenFaces.forEach(face => {
-      parts.push(renderFaceStickers(face, geometry[face], options))
+      const stickers = renderFaceStickers(face, geometry[face], options)
+      const layer = options.highlightHiddenFaces?.includes(face) ? highlightedHiddenStickers : parts
+      layer.push(stickers)
       outlines.push(renderCubeOutline(geometry[face], options))
     })
     parts.push(wrapCubeOutlineGroup(outlines.join(''), options))
@@ -89,6 +92,7 @@ export function renderCubeSVG(geometry: CubeGeometry, options: ResolvedCubeOptio
   // resulting Z-order is: all outlines (in one group) below all stickers,
   // because the outline group was created first. Preserve that.
   parts.push(wrapCubeOutlineGroup(visibleOutlines.join(''), options))
+  parts.push(...highlightedHiddenStickers)
   parts.push(visibleStickers.join(''))
 
   if (options.view === 'plan') {
