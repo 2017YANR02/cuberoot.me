@@ -286,7 +286,7 @@ describe('installed App GAN lifecycle integration', () => {
     expect(saved()).toHaveLength(0);
   });
 
-  it('keeps selected content and preserves recall parameters without nesting another timer', async () => {
+  it('opens recall in Tools with the selected content and full training parameters', async () => {
     const openExternal = vi.spyOn(host, 'openExternal');
     const clickText = async (selector: string, text: string) => {
       const button = [...document.querySelectorAll<HTMLButtonElement>(selector)].find(node => node.textContent?.trim() === text)!;
@@ -303,8 +303,10 @@ describe('installed App GAN lifecycle integration', () => {
     expect((memory.data as TimerStoreData).settings.event).toBe('pll');
     await act(async () => container.querySelector<HTMLButtonElement>('[aria-label="Practice method"]')!.click());
     await clickText('[role="option"]', 'Recall');
-    expect(container.querySelector('iframe')).toBeNull();
-    const url = new URL(openExternal.mock.lastCall![0]);
+    const frame = container.querySelector<HTMLIFrameElement>('iframe')!;
+    expect(frame.closest<HTMLElement>('.web-surface')?.hidden).toBe(false);
+    expect(openExternal).not.toHaveBeenCalled();
+    const url = new URL(frame.src);
     expect(url.pathname).toContain('/timer');
     expect(url.searchParams.get('event')).toBe('pll');
     expect(url.searchParams.get('training')).toBe('/alg/3x3/pll/run');

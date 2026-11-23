@@ -1,7 +1,8 @@
 import { readFileSync } from 'node:fs';
 import { beforeEach, expect, it, vi } from 'vitest';
 
-const ports = vi.hoisted(() => ({ open: vi.fn() }));
+const ports = vi.hoisted(() => ({ open: vi.fn(), invoke: vi.fn(), isTauri: vi.fn() }));
+vi.mock('@tauri-apps/api/core', () => ({ invoke: ports.invoke, isTauri: ports.isTauri }));
 vi.mock('@tauri-apps/plugin-opener', () => ({ openUrl: ports.open }));
 import { openDesktopExternal } from './native-external';
 
@@ -15,6 +16,21 @@ it.each(['https://cuberoot.me/account', 'https://www.worldcubeassociation.org/',
 it('normalizes URL casing before applying the native scope', async () => {
   await openDesktopExternal('HTTPS://CUBEROOT.ME/account');
   expect(ports.open).toHaveBeenCalledExactlyOnceWith('https://cuberoot.me/account');
+});
+
+it('keeps HTTP links in the macOS app and uses the system handler for email', async () => {
+  vi.stubGlobal('navigator', { userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X)' });
+  ports.isTauri.mockReturnValue(true);
+  try {
+    const href = 'https://www.worldcubeassociation.org/persons/2020TEST01?event=333#results';
+    await openDesktopExternal(href);
+    expect(ports.invoke).toHaveBeenCalledExactlyOnceWith('open_web_link', { href });
+    expect(ports.open).not.toHaveBeenCalled();
+    await openDesktopExternal('mailto:test@example.org');
+    expect(ports.open).toHaveBeenCalledExactlyOnceWith('mailto:test@example.org');
+  } finally {
+    vi.unstubAllGlobals();
+  }
 });
 
 it.each(['javascript:alert(1)', 'file:///etc/passwd', 'tel:123', 'me.cuberoot.app://auth/callback', 'intent://anything', '/account', 'https://example.org/' + 'x'.repeat(2048)])('rejects unsupported external target %s before native calls', async href => {

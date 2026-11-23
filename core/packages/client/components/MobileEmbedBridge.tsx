@@ -35,6 +35,8 @@ import { setInstalledBleBridge } from '@/lib/installed-ble-bridge';
 import { applyAppearancePreferences, persistAppearancePreferences, readAppearancePreferences, APPEARANCE_CHANGE_EVENT } from '@cuberoot/app-ui/appearance';
 import type { AppearancePreferences } from '@cuberoot/shared/appearance';
 import { setInstalledShellNavigation } from '@/lib/installed-shell-navigation';
+import { decodeTimerPracticeSearch } from '@/lib/timer-practice-url';
+import { resolveTrainingTarget } from '@/lib/timer-training-catalog';
 
 const MOBILE_PARENT_ORIGINS = new Set([
   'capacitor://localhost',
@@ -44,6 +46,11 @@ const MOBILE_PARENT_ORIGINS = new Set([
   'https://tauri.localhost',
   'http://127.0.0.1:1420',
 ]);
+
+function isTimerTraining(search: URLSearchParams): boolean {
+  const training = decodeTimerPracticeSearch(search).get('training') ?? '';
+  return training === 'home' || Boolean(resolveTrainingTarget(training));
+}
 
 /**
  * Bridge for the canonical website surfaces reused inside installed-app hosts. It keeps
@@ -114,6 +121,24 @@ export default function MobileEmbedBridge() {
     const postToParent = (message: object) => {
       if (parentOrigin) window.parent.postMessage(message, parentOrigin);
     };
+
+    const originalOpen = window.open;
+    const openWindow: typeof window.open = (href, target, features) => {
+      if (!parentOrigin || !href || (target && target.toLowerCase() !== '_blank')) {
+        return originalOpen.call(window, href, target, features);
+      }
+      let next: URL;
+      try { next = new URL(href, window.location.href); }
+      catch { return null; }
+      if (next.protocol !== 'https:' && next.protocol !== 'http:') {
+        return originalOpen.call(window, href, target, features);
+      }
+      if (navigator.userActivation?.isActive !== false && isMobileEmbedExternalHref(next.href)) {
+        postToParent(mobileEmbedExternalMessage(surface, next.href));
+      }
+      return null;
+    };
+    window.open = openWindow;
 
     const inlineAccount = () => surface === 'account' && capabilities?.inlineAccountSettings === true;
     const commitAppearance = () => {
@@ -239,7 +264,9 @@ export default function MobileEmbedBridge() {
           if (next.origin === window.location.origin) {
             if (path === '/timer') {
               const onlyTracking = [...next.searchParams.keys()].every(key => /^utm_/.test(key) || ['gclid', 'fbclid', 'msclkid'].includes(key));
-              destination = onlyTracking && !next.hash ? 'timer' : 'timer-external';
+              if (onlyTracking && !next.hash) destination = 'timer';
+              // The installed practice picker also uses the Tools surface for online training.
+              else if (surface !== 'tools' || !isTimerTraining(next.searchParams)) destination = 'timer-external';
             }
             else if (path === '/appearance' || !inlineAccount() && path === '/account'
               && ['appearance', 'general'].includes(next.searchParams.get('settings') ?? next.searchParams.get('view') ?? '')) destination = 'appearance';
@@ -389,6 +416,7 @@ export default function MobileEmbedBridge() {
       invalidateWebSession();
       recordRouteRef.current = null;
       if (pendingManagement) window.clearTimeout(pendingManagement.timeout);
+      if (window.open === openWindow) window.open = originalOpen;
       document.removeEventListener('click', onClick, true);
       document.removeEventListener('keydown', onKeyDown, true);
       window.removeEventListener('message', onMessage);

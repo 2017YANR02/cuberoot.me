@@ -75,7 +75,8 @@ Windows/macOS 共享桌面宿主    → core/apps/desktop（同一 Tauri 工程�
 
 所有者本轮明确要求导航及外观在 App 内统一，以下条款替代安装端此前由网站外观弹层分别保存、以及所有站内链接一律留在 iframe 的入口行为；普通独立网站仍保持原行为。
 
-- 可信宿主 `init.shellNavigation` 开启后，同站普通计时根入口 `/timer`（含 `/en`、`/zh` 前缀，无业务参数与 hash，仅允许 `utm_*`、`gclid`、`fbclid`、`msclkid` 跟踪参数）通过 `select-tab` 切换现有计时栏，不在工具或我的内部再打开一套计时页与导航。含 `content`、`source`、`training`、`event`、`share`、`replay` 等业务参数、未知参数或 hash 的计时根链接暂通过现有外链 bridge 把完整 URL 交系统浏览器，不静默丢失参数，也不把此回退算作原生专项训练路由已完成。计时子页面、静态资源、认证/API 地址及普通外链不套用根入口切栏规则。
+- 可信宿主 `init.shellNavigation` 开启后，同站普通计时根入口 `/timer`（含 `/en`、`/zh` 前缀，无业务参数与 hash，仅允许 `utm_*`、`gclid`、`fbclid`、`msclkid` 跟踪参数）通过 `select-tab` 切换现有计时栏，不在工具或我的内部再打开一套计时页与导航。计时子页面、静态资源、认证/API 地址及普通外链不套用根入口切栏规则。
+- 计时栏的专项练习进入「工具」栏；工具中能解析到现有训练的计时链接沿用当前 iframe 的站内导航和返回栈，保留完整 URL。其余含业务参数、未知参数或 hash 的计时根链接把完整 URL 交给宿主的网页窗口。
 - 工具中的普通 `/account` 根链接切换我的栏；仅带同站普通返回地址 `next` 的登录入口同样切栏。`view`、删除、账号安全、认证交接或其他业务参数仍由原有网站流程处理，外观设置委托优先于账号根入口判断。
 - “我的”根页没有网站首页父级时不显示“返回首页”；账号子页缺少有效来源时返回 `/account`，已有明确来源按来源返回。iframe 历史深度为零时不继续执行浏览器后退。切换底栏保留各自 browsing context。
 - 配色、背景、深浅色、对比度和语言属于同一 App 级偏好。新版 App 的「我的」直接复用网站账号页的「设置 / 我的空间 / 账号与安全」三个标签。切换由同一个 iframe 的账号页处理，已挂载的表单及其草稿保留。「计时」及其他网站界面的外观入口仍可委托 App 外观页。
@@ -144,9 +145,9 @@ Windows/macOS 共享桌面宿主    → core/apps/desktop（同一 Tauri 工程�
 
 ### 3.5 低维护回退
 
-若某个页面或动作在 iframe 中被浏览器安全模型阻止，通过宿主 `openExternal` 在系统浏览器打开同一线上 URL。该回退仍复用网站，但底栏会暂时不可见，所以只能标记为“Web 回退”，不能冒充同 App 内完全一致；生产部署与每个真实 provider 的五端验收仍是完成条件。
+若某个页面或动作需要在 iframe 外打开，通过宿主 `openExternal` 打开同一线上 URL。iOS 和 Android 使用应用内系统浏览窗口，macOS 使用独立的 CubeRoot 网页窗口，关闭窗口后回到 App。Mac 的网页窗口使用独立的非持久 WebKit 数据存储，也不注入原生桥。邮箱链接交给系统邮件处理器。第三方账号授权继续使用各宿主的独立认证流程。生产部署与各平台的实际点击、关闭及返回仍需分别验收。
 
-网站 bridge 必须拦截跨域链接和 `target=_blank`，通过 `@cuberoot/shared/mobile-embed` 请求宿主 `openExternal`；宿主只接受 `http:`、`https:`、`mailto:`，并同时校验生产 origin 与实际 iframe source。下载仍按 WEB-03/WEB-04 单独验收，不能由普通外链通过代替。
+网站 bridge 拦截跨域链接、`target=_blank` 及用户操作触发的 HTTP(S) 脚本弹窗，通过 `@cuberoot/shared/mobile-embed` 请求宿主 `openExternal`。宿主只接受 `http:`、`https:`、`mailto:`，并校验生产 origin、实际 iframe source 和当前可见的栏。下载仍按 WEB-03/WEB-04 单独验收，不能由普通外链通过代替。
 
 自建 Android WebView + iOS WKWebView 双原生容器、完整 Cookie bridge、下载/权限/导航代理属于高成本方案。除非 iframe/Browser 两条低维护路径都无法满足关键工作流且所有者再次授权，不启动该方案。
 

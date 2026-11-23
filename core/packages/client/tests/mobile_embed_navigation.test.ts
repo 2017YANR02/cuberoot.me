@@ -5,7 +5,8 @@ import { renderToString } from 'react-dom/server';
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 import { decodeMobileEmbedInit, decodeMobileEmbedSelectTab, decodeMobileEmbedOpenSettings,
   mobileEmbedInitMessage, mobileEmbedBackMessage, mobileEmbedSelectTabMessage,
-  mobileEmbedOpenSettingsMessage, mobileEmbedAppearanceMessage, decodeMobileEmbedAppearance } from '@cuberoot/shared/mobile-embed';
+  mobileEmbedOpenSettingsMessage, mobileEmbedAppearanceMessage, decodeMobileEmbedAppearance,
+  mobileEmbedExternalMessage, mobileEmbedNavigationMessage } from '@cuberoot/shared/mobile-embed';
 import { DEFAULT_APPEARANCE_PREFERENCES } from '@cuberoot/shared/appearance';
 const state = vi.hoisted(() => ({ path: '/en/account', back: null as string | null, post: vi.fn() }));
 vi.mock('next/navigation', () => ({ usePathname: () => state.path }));
@@ -19,6 +20,7 @@ vi.mock('@/components/HomeLink', () => ({ default: ({ miniProgramTarget: _target
 import MobileEmbedBridge from '@/components/MobileEmbedBridge';
 import PageBackLink from '@/components/PageBackLink';
 import { openInstalledAppearance, useInstalledShellNavigation } from '@/lib/installed-shell-navigation';
+import { retiredAlgTrainerHref } from '@/lib/timer-training-catalog';
 let host: HTMLDivElement; let root: Root;
 const parent = { postMessage: state.post }; const originalParent = window.parent;
 const origin = 'capacitor://localhost';
@@ -93,6 +95,26 @@ it.each(['tools', 'account'] as const)('delegates locale timer links in %s witho
     expect(click(`<a href="${path}">Timer</a>`)).not.toHaveBeenCalled();
     expect(state.post).toHaveBeenLastCalledWith(mobileEmbedSelectTabMessage(surface, 'timer'), origin);
   }
+});
+it.each([
+  '/zh/alg/3x3/zbll/run',
+  '/alg/3x3/lsll/run',
+  '/zh/alg/3x3/lsll/run?scope=zbls-r7',
+  '/zh/alg/3x3/pll/run?mode=memo',
+  '/zh/timer?content=zbll&source=cases&view=select',
+  '/zh/timer?content=lsll&source=cases&view=select&group=ap&flippedEdges=2',
+])('keeps %s in the Tools iframe and records it for Back', async trainerHref => {
+  window.name = 'cuberoot-mobile-tools';
+  await act(async () => root.render(createElement(MobileEmbedBridge)));
+  send(mobileEmbedInitMessage('tools', { shellNavigation: true }));
+  vi.runAllTimers();
+  state.post.mockClear();
+  const href = retiredAlgTrainerHref(trainerHref);
+  expect(click(`<a href="${href}">Training</a>`)).toHaveBeenCalledOnce();
+  vi.runAllTimers();
+  expect(state.post).toHaveBeenCalledExactlyOnceWith(
+    mobileEmbedNavigationMessage('tools', new URL(href, location.href).href, 1), origin,
+  );
 });
 it.each(['old-host', 'untrusted-origin', 'wrong-source', 'standalone'])('preserves normal navigation for %s', async mode => {
   if (mode === 'standalone') Object.defineProperty(window, 'parent', { configurable: true, value: window });
@@ -278,9 +300,32 @@ it('preserves full timer intent URLs through the external bridge instead of drop
   window.name = 'cuberoot-mobile-tools';
   await act(async () => root.render(createElement(MobileEmbedBridge)));
   send(mobileEmbedInitMessage('tools', { shellNavigation: true }));
-  for (const path of ['/timer?content=zbll&source=cases', '/en/timer?event=333', '/timer?training=f2l',
+  for (const path of ['/timer?content=zbll&source=random', '/en/timer?event=333', '/timer?training=f2l',
     '/timer?share=fixture', '/timer?replay=fixture', '/zh/timer/#clock']) {
     expect(click(`<a href="${path}">Specific timer</a>`)).not.toHaveBeenCalled();
-    expect(state.post).toHaveBeenLastCalledWith({ surface: 'tools', type: 'cuberoot:mobile:external', href: new URL(path, window.location.href).href }, origin);
+    expect(state.post).toHaveBeenLastCalledWith(mobileEmbedExternalMessage('tools', new URL(path, location.href).href), origin);
   }
+});
+
+it('delegates scripted web popups to the host after trusted init', async () => {
+  const open = vi.fn().mockReturnValue(null);
+  vi.stubGlobal('open', open);
+  const activation = { isActive: true, hasBeenActive: true };
+  vi.stubGlobal('navigator', { userActivation: activation });
+  window.name = 'cuberoot-mobile-tools';
+  await act(async () => root.render(createElement(MobileEmbedBridge)));
+  expect(window.open).not.toBe(open);
+  window.open('https://example.org/early', '_blank');
+  expect(open).toHaveBeenCalledOnce();
+  send(mobileEmbedInitMessage('tools', { shellNavigation: true })); state.post.mockClear();
+  const href = 'https://example.org/report?event=333#final';
+  expect(window.open(href, '_blank', 'noopener')).toBeNull();
+  expect(state.post).toHaveBeenCalledExactlyOnceWith(mobileEmbedExternalMessage('tools', href), origin);
+  expect(open).toHaveBeenCalledOnce();
+  activation.isActive = false;
+  expect(window.open(href, '_blank')).toBeNull();
+  expect(state.post).toHaveBeenCalledOnce();
+  expect(open).toHaveBeenCalledOnce();
+  window.open('about:blank', '_blank');
+  expect(open).toHaveBeenCalledTimes(2);
 });

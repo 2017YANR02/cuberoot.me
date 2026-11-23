@@ -43,6 +43,31 @@ fn prepare_auth_callback(_app: tauri::AppHandle) -> Result<(), String> {
     Ok(())
 }
 
+#[tauri::command]
+async fn open_web_link(window: tauri::WebviewWindow, href: String) -> Result<(), String> {
+    #[cfg(target_os = "macos")]
+    {
+        let url = tauri::Url::parse(&href).map_err(|_| "Invalid website URL")?;
+        if window.label() != "main"
+            || !matches!(url.scheme(), "http" | "https")
+            || url.host_str().is_none()
+            || href.len() > 8192
+        {
+            return Err("Unsupported website URL".into());
+        }
+        let href = std::ffi::CString::new(url.as_str()).map_err(|_| "Invalid website URL")?;
+        window.run_on_main_thread(move || {
+            unsafe extern "C" { fn cuberoot_open_web_link(href: *const std::ffi::c_char); }
+            unsafe { cuberoot_open_web_link(href.as_ptr()); }
+        }).map_err(|error| error.to_string())
+    }
+    #[cfg(not(target_os = "macos"))]
+    {
+        let _ = (window, href);
+        Err("In-app web window unavailable".into())
+    }
+}
+
 fn entry(key: &str) -> Result<Entry, String> {
     if !matches!(key, "session" | "pending_auth" | "net_battle_session") {
         return Err("unsupported secure-storage key".into());
@@ -111,7 +136,7 @@ pub fn run() {
                 let _ = screen_awake::apply(false);
             }
         })
-        .invoke_handler(tauri::generate_handler![copy_text, navigation_menu::configure_navigation_menu, primary_navigation::render_primary_navigation, desktop_distribution, prepare_auth_callback, screen_awake::set_keep_awake, native_print::print_document, file_export::export_file, secure_get, secure_set, secure_remove, ble_notifications::ble_subscribe, ble_address::ble_device_mac])
+        .invoke_handler(tauri::generate_handler![copy_text, navigation_menu::configure_navigation_menu, primary_navigation::render_primary_navigation, desktop_distribution, prepare_auth_callback, open_web_link, screen_awake::set_keep_awake, native_print::print_document, file_export::export_file, secure_get, secure_set, secure_remove, ble_notifications::ble_subscribe, ble_address::ble_device_mac])
         .run(tauri::generate_context!())
         .expect("error while running CubeRoot");
 }

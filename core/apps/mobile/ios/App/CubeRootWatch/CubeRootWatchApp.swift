@@ -214,9 +214,16 @@ private struct WatchReportNodeView: View {
             .foregroundStyle(node.state == "now" || node.selected == true ? Color.accentColor : Color.primary)
     }
     private var rendered: AnyView {
-        if let href = node.href, let url = URL(string: href.hasPrefix("/") ? "https://cuberoot.me" + (language == "zh" ? "/zh" : "") + href : href) {
+        if let href = node.href,
+           let url = URL(string: href.hasPrefix("/") ? "https://cuberoot.me" + (language == "zh" ? "/zh" : "") + href : href),
+           ["http", "https"].contains(url.scheme?.lowercased() ?? "") {
             var content = node; content.href = nil
-            return AnyView(Link(destination: url) { child(content) })
+            return AnyView(ShareLink(item: url) {
+                HStack(spacing: 3) {
+                    child(content)
+                    Image(systemName: "square.and.arrow.up").accessibilityHidden(true)
+                }
+            }.accessibilityHint(WatchCopy.text("shareLink", language: language)))
         }
         switch node.kind {
         case "text":

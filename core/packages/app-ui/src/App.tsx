@@ -2093,7 +2093,7 @@ export function App({ host, loadingMark }: { host: InstalledAppHost; loadingMark
       || battleModeActiveRef.current
       || timerContextMutationBusyRef.current) {
       announce(copy.finishAttemptFirst);
-      return;
+      return false;
     }
     if (next === 'tools' || next === 'account') {
       setOpenedWebViews((current) => {
@@ -2103,6 +2103,7 @@ export function App({ host, loadingMark }: { host: InstalledAppHost; loadingMark
       });
     }
     setView(next);
+    return true;
   }, [announce, copy.finishAttemptFirst]);
 
   const openAppAppearance = useCallback(() => {
@@ -2130,19 +2131,27 @@ export function App({ host, loadingMark }: { host: InstalledAppHost; loadingMark
 
   const openToolsRoute = useCallback((route: string) => {
     const destination = new URL(route, SITE_ORIGIN);
-    if (installedContentUnavailable(destination.href, host.generativeAiDisabled)
+    if (destination.origin !== SITE_ORIGIN || installedContentUnavailable(destination.href, host.generativeAiDisabled)
       || (!communityAvailableRef.current && isInstalledCommunityHref(destination.href))) {
       announce(copy.actionFailed);
       return;
     }
-    if (destination.pathname.replace(/^\/(en|zh)(?=\/|$)/, '').replace(/\/$/, '') === '/timer') {
-      if (!destination.search && !destination.hash) selectPrimaryView('timer');
-      else void host.openExternal(destination.href).catch(() => announce(copy.actionFailed));
+    if (destination.pathname.replace(/^\/(en|zh)(?=\/|$)/, '').replace(/\/$/, '') === '/timer'
+      && !destination.search && !destination.hash) {
+      selectPrimaryView('timer');
       return;
     }
-    setToolsEntryRoute(route);
-    selectPrimaryView('tools');
-  }, [announce, copy.actionFailed, host, selectPrimaryView]);
+    if (!selectPrimaryView('tools')) return;
+    const path = destination.pathname.replace(/^\/(en|zh)(?=\/|$)/, '') || '/';
+    const entry = path + destination.search + destination.hash;
+    const href = installedWebEntryUrl(siteRouteUrl(language, entry), language);
+    setToolsEntryRoute(entry);
+    if (href === toolsWebUrl && webLastHrefRef.current.tools !== href) {
+      webDepthRef.current.tools = 0;
+      setWebSurfaceReloadUrl(current => ({ ...current, tools: null }));
+      setWebSurfaceRevision(current => ({ ...current, tools: current.tools + 1 }));
+    }
+  }, [announce, copy.actionFailed, host.generativeAiDisabled, language, selectPrimaryView, toolsWebUrl]);
 
   const remoteReturnRef = useRef(0);
   useEffect(() => {
@@ -2298,7 +2307,7 @@ export function App({ host, loadingMark }: { host: InstalledAppHost; loadingMark
       const external = decodeMobileEmbedExternal(event.data);
       if (external) {
         const frame = webFrameRefs.current[external.surface];
-        if (!frame || event.source !== frame.contentWindow) return;
+        if (!frame || event.source !== frame.contentWindow || viewRef.current !== external.surface) return;
         if (installedContentUnavailable(external.href, host.generativeAiDisabled)
           || (!communityAvailableRef.current && isInstalledCommunityHref(external.href))) { announce(copy.actionFailed); return; }
         void host.openExternal(external.href).catch(() => announce(copy.actionFailed));
@@ -3629,7 +3638,7 @@ export function App({ host, loadingMark }: { host: InstalledAppHost; loadingMark
       const href = SITE_ORIGIN + (language === 'zh' ? '/zh' : '') + path;
       return <a href={href} className={className} onClick={event => {
         event.preventDefault();
-        void host.openExternal(href);
+        openToolsRoute(path);
       }}>{label}</a>;
     },
     writeClipboardText: host.writeClipboardText,
@@ -4460,7 +4469,7 @@ export function App({ host, loadingMark }: { host: InstalledAppHost; loadingMark
       {appearance && <AppearanceBackground
         choice={resolveAppearanceScheme(appearance, systemDark) === 'dark' ? appearance.darkBackground : appearance.lightBackground}
         scheme={resolveAppearanceScheme(appearance, systemDark)} assetRoot={`${SITE_ORIGIN}/assets/home-backgrounds/v1`} />}
-      <SiteCorners exclude=".site-glass-engine, .maplibregl-map, [data-floating-navigation] > .primary-nav, .tools-search-toggle" containers=".cg-card, .rc-card, .recon-card, .sortable-card, .timer-workspace-panel" />
+      <SiteCorners exclude=".maplibregl-map, [data-floating-navigation] > .primary-nav, .tools-search-toggle" containers=".cg-card, .rc-card, .recon-card, .sortable-card, .timer-workspace-panel" />
       {view === 'timer' && timerMode === 1 && timer.machine.phase === 'running' && smartCubeAttemptDeviceRef.current && (
         <button type="button" className="smart-cube-abort" data-no-timer aria-label={copy.stopSmartCube}
           onClick={() => {
@@ -5426,11 +5435,13 @@ children: <>
                     <a
                       className="site-link"
                       href={accountUrl(language)}
-                      onClick={openExternal}
+                      onClick={event => {
+                        event.preventDefault();
+                        selectPrimaryView('account');
+                      }}
                       rel="noreferrer"
-                      target="_blank"
                     >
-                      {copy.manageAccount}<span aria-hidden="true">↗</span>
+                      {copy.manageAccount}
                     </a>
                     <a
                       className="site-link"
@@ -5518,14 +5529,20 @@ children: <>
             <div className="settings-section">
               <h2>{copy.fullSite}</h2>
               <p>{copy.fullSiteDetail}</p>
-              <a className="site-link" href={siteUrl(language)} onClick={openExternal} rel="noreferrer" target="_blank">
-                {copy.openFullSite}<span aria-hidden="true">↗</span>
+              <a className="site-link" href={siteUrl(language)} onClick={event => {
+                event.preventDefault();
+                openToolsRoute('/');
+              }}>
+                {copy.openFullSite}
               </a>
             </div>
 
             <div className="settings-section settings-meta">
-              <a className="site-link" href={privacyUrl(language)} onClick={openExternal} rel="noreferrer" target="_blank">
-                {copy.privacy}<span aria-hidden="true">↗</span>
+              <a className="site-link" href={privacyUrl(language)} onClick={event => {
+                event.preventDefault();
+                openToolsRoute('/privacy');
+              }}>
+                {copy.privacy}
               </a>
               <a className="site-link" href="mailto:yrmfxc@gmail.com" onClick={openExternal}>{copy.support}</a>
               {host.icpFilingNumber && (

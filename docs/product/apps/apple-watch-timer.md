@@ -112,7 +112,7 @@ QuickJS 的 Debug 构建也开启 C 优化，Swift 宿主仍保留调试配置�
 复盘/绘图引擎限额 32 MiB；BLE/计时仍使用独立 16 MiB 引擎和原有执行保护。
 
 同步到 iPhone 后由同一个 `Solve` 的 moves/gyro/device 字段进入现有完整复盘页（包括文字还原步骤和更详细分析）；
-报告内容、区块顺序、显隐、还原步骤格式及播放交互统一由 `timer-ui/reconstruct/report-content`、`report-notation`、`report-player` 提供；Web/iOS 使用 React 绘制器，手表只用 SwiftUI 绘制同一节点和适配系统能力。共享规则更新后重新构建并安装手表生效；新增绘制类型或平台能力仍需宿主适配。完整证据及边界见 `apple-watch-replay-parity-audit.md`。
+报告内容、区块顺序、显隐、还原步骤格式及播放交互统一由 `timer-ui/reconstruct/report-content`、`report-notation`、`report-player` 提供；Web/iOS 使用 React 绘制器，手表只用 SwiftUI 绘制同一节点和适配系统能力。watchOS 不提供可嵌入 App 的网页视图，复盘中的 HTTP(S) 公式链接通过系统分享菜单交接。共享规则更新后重新构建并安装手表生效；新增绘制类型或平台能力仍需宿主适配。完整证据及边界见 `apple-watch-replay-parity-audit.md`。
 超过 56 KB 的录像通过 WatchConnectivity 文件传输，手机持久化后仍由既有 IndexedDB 导入并 ACK；
 ACK 不删除手表最近一把。杀进程后的未完成录像未做逐帧持久化，继续按原机制恢复为 DNF。
 手机批次通过 `recordingVersion=1` 确认能无损接收录像；确认前只保留在手表，

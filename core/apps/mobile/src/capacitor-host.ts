@@ -58,7 +58,7 @@ export const capacitorHost: InstalledAppHost = {
     client: mobileNetBattleClient,
     sessions: mobileNetBattleSessionStore,
   },
-  openExternal: (href) => openNativeExternal(href, isIos),
+  openExternal: openNativeExternal,
   print: printTimerDocument,
   exportFile: exportNativeFile,
   writeClipboardText: (text) => Clipboard.write({ string: text }),

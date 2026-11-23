@@ -38,3 +38,9 @@ Google Play 开发者身份资料与商家收款资料分开维护；旧资料�
 上海魔方根科技有限公司已通过新账号向华为开发者联盟提交企业实名认证资料。控制台回执显示「实名认证审核中」，类型为企业用户，预计 1–2 个工作日，审核通过后邮件通知。旧工作室账号的认证记录只适用于旧主体。
 
 收到通过通知后，在新公司后台核对 CubeRoot 鸿蒙应用，缺少时再创建（工程包名 `me.cuberoot.app`）。下一步是申请发布证书，核对正式签名公钥和证书指纹，准备阿里云已有 App 备案的鸿蒙运行平台信息。本轮仅提交企业实名认证；鸿蒙应用尚未提审。
+
+## 2026-11-22 App 中文名称调整
+
+- 目标名称为简体中文 `魔方根`、英文 `CubeRoot`。iOS、Android 和鸿蒙的安装名称已在本地更新，保留现有包名。iOS 模拟器包、Android 编译资源和鸿蒙未签名 HAP 均已核对双语名称。
+- Google Play 已保存 `zh-CN` 商品详情草稿，名称为 `魔方根`，默认英文名称为 `CubeRoot`。
+- 阿里云现有 App 备案名称为 `CubeRoot`。安卓新增平台已进入管局审核，该 App 的「变更」按钮禁用。按维护者要求暂缓受阻平台的商店改名。恢复时先复查现有订单，再对原 App 发起名称变更。Apple 简体中文商店信息与华为在架应用名称均须与备案一致。参见 [Apple App 信息](https://developer.apple.com/help/app-store-connect/reference/app-information/app-information/)和[华为 App 备案指引](https://developer.huawei.com/consumer/cn/doc/App/50130/)。

@@ -21,6 +21,7 @@ enum WatchCopy {
         "macCancel": ["en": "Cancel", "zh": "取消"],
         "cube": ["en": "Smart cube", "zh": "智能魔方"],
         "replay": ["en": "Reconstruction", "zh": "复盘"],
+        "shareLink": ["en": "Opens the share sheet for this link", "zh": "打开此链接的分享菜单"],
         "play": ["en": "Play", "zh": "播放"],
         "pause": ["en": "Pause", "zh": "暂停"],
         "previousMove": ["en": "Previous move", "zh": "上一步"],

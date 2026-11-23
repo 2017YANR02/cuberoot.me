@@ -9,10 +9,6 @@
       "value": "description"
     },
     {
-      "name": "EntryAbility_label",
-      "value": "CubeRoot"
-    },
-    {
       "name": "bluetooth_reason",
       "value": "Used to connect to a GAN smart cube"
     },
