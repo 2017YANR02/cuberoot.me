@@ -50,6 +50,8 @@ export interface AlgPlayerHandle {
   applyUserMove?: (move: string) => boolean;
   /** Animate an NxN quarter turn from its current state without emitting user input. */
   playSingleTurn?: (move: string, durationMs?: number) => boolean;
+  /** Switch a settled NxN case on the same canvas while fading the target cubelet. */
+  transitionCubeletCase?: (homeIndex: number, setup: string, signal: AbortSignal) => Promise<boolean>;
   isUserMovePending?: (includeHands?: boolean) => boolean;
   /** 拿到底层播放器或兼容 seek adapter,给光标 sync 等高级用法用。 */
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -101,9 +103,11 @@ interface Props {
   frontFaceArrow?: { from: number; to: number };
   /** Briefly marks fixed NxN corner slots. Change request to show the hint again. */
   cornerSlotHint?: { positions: readonly number[]; request: number; color: string; includeBackFacelets?: boolean };
-  /** Sim NxN: show surface arrows for the next guided turn. */
+  /** Sim NxN: show arrows for the next guided turn. */
   moveHint?: string;
   moveHintRecovery?: boolean;
+  /** Draw a whole-cube hint as an animated orbit through the cube's middle. */
+  moveHintStyle?: 'orbit';
   /** Display-only colors by home sticker ID, following the pieces. */
   stickerColorOverrides?: Readonly<Record<string, string>>;
   setup?: string;
@@ -246,7 +250,7 @@ const AlgPlayer = forwardRef<AlgPlayerHandle, Props>(function AlgPlayer(props, r
         highlightedStickers={props.highlightedStickers}
         frontFaceArrow={props.frontFaceArrow}
         cornerSlotHint={props.cornerSlotHint}
-        moveHint={props.moveHint} moveHintRecovery={props.moveHintRecovery}
+        moveHint={props.moveHint} moveHintRecovery={props.moveHintRecovery} moveHintStyle={props.moveHintStyle}
         stickerColorOverrides={props.stickerColorOverrides}
         onStepChange={props.onStepChange}
         onReady={props.onReady}

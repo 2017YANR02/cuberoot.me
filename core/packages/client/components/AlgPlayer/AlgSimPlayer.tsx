@@ -53,6 +53,7 @@ import { FM_IGNORED, FM_REGULAR, FM_OUTLINE } from '@cuberoot/puzzle-render-core
 import { FACE, SIZE } from '@cuberoot/puzzle-render-core/engine/define';
 import { DoubleSide, Matrix4, Mesh, MeshBasicMaterial, Shape, ShapeGeometry, Vector3 } from 'three';
 import { createStickerHintFade } from './sticker-hint-fade';
+import { transitionCubeletCase } from './cubelet-case-transition';
 import { attachCornerSlotHint } from './corner-slot-hint';
 
 const LOOP_PAUSE_MS = 900;
@@ -114,6 +115,7 @@ const AlgSimPlayer = forwardRef<AlgPlayerHandle, {
   cornerSlotHint?: { positions: readonly number[]; request: number; color: string; includeBackFacelets?: boolean };
   moveHint?: string;
   moveHintRecovery?: boolean;
+  moveHintStyle?: 'orbit';
   stickerColorOverrides?: Readonly<Record<string, string>>;
   setup?: string;
   orientation?: string;
@@ -154,7 +156,7 @@ const AlgSimPlayer = forwardRef<AlgPlayerHandle, {
   fillPane?: boolean;
 }>(function AlgSimPlayer({
   alg, puzzle, puzzleOrder, set, additionalStickering, hiddenStickers, outlinedStickers, highlightedStickers, frontFaceArrow, moveHint, moveHintRecovery = false, stickerColorOverrides, setup, orientation = '', sceneRot, startSolved = false, autoPlay = false, playRequest = 0, loop = false, resetAfterPlayback = false, controlMode = 'full', stepMarkers, hideResetView = false, interactionMode = 'view', lockView = false, wholeCubeDrag, onUserMove, onCubeletTap, orbitSnapDegrees, orbitSnapLocked, pauseAfterSteps, sectionPauseMs, onStepChange, onReady, stickeringAtStep, highlightDaisyAlignment = false, showHands = false, moveDurationMs, size = 260, fillPane = false,
-  stageOverlay, daisyAlignmentFace, hintFacelets = false, maxFramingEdge, allowUserLayerTurn, onBlockedUserLayerTurn, cornerSlotHint, handsVisible = true, holdReferenceThumb = false,
+  stageOverlay, daisyAlignmentFace, hintFacelets = false, maxFramingEdge, allowUserLayerTurn, onBlockedUserLayerTurn, cornerSlotHint, handsVisible = true, holdReferenceThumb = false, moveHintStyle,
 }, ref) {
   const t = useT();
   const [handsUnavailable, setHandsUnavailable] = useState(false);
@@ -198,6 +200,9 @@ const AlgSimPlayer = forwardRef<AlgPlayerHandle, {
   const [playing, setPlaying] = useState(false);
   const [replayRequest, setReplayRequest] = useState(0);
   const [ready, setReady] = useState(false);
+  const baseStickerColors = useRef(stickerColorOverrides);
+  baseStickerColors.current = stickerColorOverrides;
+  const caseFadeColors = useRef<Readonly<Record<string, string>> | undefined>(undefined);
   const animationPaused = useRef(false);
   const playbackStartStep = useRef(0);
   const onStepChangeRef = useRef(onStepChange);
@@ -365,6 +370,19 @@ const AlgSimPlayer = forwardRef<AlgPlayerHandle, {
       for (const step of steps) reportUserMove(step);
       mount.invalidate();
       return true;
+    },
+    transitionCubeletCase: async (homeIndex, setup, signal) => {
+      const mount = mountRef.current;
+      if (!mount || !ready || controlMode !== 'none' || typeof mount.world.puzzleKind !== 'number') return false;
+      const cube = mount.world.cube as Cube;
+      return transitionCubeletCase(cube, homeIndex, setup, signal, colors => {
+        if (mountRef.current !== mount) return;
+        caseFadeColors.current = colors;
+        cube.instancedRenderer.setStickerColorOverrides(colors
+          ? { ...baseStickerColors.current, ...colors }
+          : baseStickerColors.current ?? null);
+        mount.invalidate();
+      });
     },
     playSingleTurn: (move: string, durationMs?: number) => {
       const mount = mountRef.current;
@@ -611,11 +629,12 @@ const AlgSimPlayer = forwardRef<AlgPlayerHandle, {
     const mount = mountRef.current;
     if (!mount || !ready || typeof puzzleKind !== 'number' || !stickerColorOverrides) return;
     const renderer = (mount.world.cube as Cube).instancedRenderer;
-    renderer.setStickerColorOverrides(stickerColorOverrides);
+    const fadeColors = caseFadeColors.current;
+    renderer.setStickerColorOverrides(fadeColors ? { ...stickerColorOverrides, ...fadeColors } : stickerColorOverrides);
     mount.invalidate();
     return () => {
       if (mountRef.current !== mount) return;
-      renderer.setStickerColorOverrides(null);
+      renderer.setStickerColorOverrides(caseFadeColors.current ?? null);
       mount.invalidate();
     };
   }, [stickerColorOverrides, puzzleKind, ready]);
@@ -714,9 +733,9 @@ const AlgSimPlayer = forwardRef<AlgPlayerHandle, {
     void import('./move-hint-arrows').then(({ attachMoveHintArrows }) => {
       if (disposed || mountRef.current !== mount) return;
       const style = getComputedStyle(mount.renderer.domElement);
-      const accent = style.getPropertyValue(moveHintRecovery ? '--destructive' : '--signal-success').trim();
+      const accent = style.getPropertyValue(moveHintRecovery ? '--destructive' : moveHintStyle === 'orbit' ? '--accent' : '--signal-success').trim();
       const secondary = style.getPropertyValue('--move-hint-secondary').trim();
-      const arrows = attachMoveHintArrows(mount.world.cube as Cube, moveHint, accent, secondary);
+      const arrows = attachMoveHintArrows(mount.world.cube as Cube, moveHint, accent, secondary, moveHintStyle);
       detach = arrows;
       const started = performance.now();
       const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -729,7 +748,7 @@ const AlgSimPlayer = forwardRef<AlgPlayerHandle, {
       detach?.();
       if (mountRef.current === mount) mount.invalidate();
     };
-  }, [moveHint, moveHintRecovery, puzzleKind, ready]);
+  }, [moveHint, moveHintRecovery, moveHintStyle, puzzleKind, ready]);
   /** 菜单切换只重贴当前预览的颜色，不重建 world，也不改变 case 状态。 */
   useEffect(() => {
     const m = mountRef.current;

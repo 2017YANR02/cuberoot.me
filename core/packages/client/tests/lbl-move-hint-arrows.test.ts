@@ -3,6 +3,35 @@ import { Mesh, Vector3 } from 'three';
 import Cube from '@cuberoot/puzzle-render-core/engine/nxn/cube';
 import { attachMoveHintArrows } from '../components/AlgPlayer/move-hint-arrows';
 
+it.each([
+  { move: "x'", vertical: -1, depth: 1 },
+  { move: 'x', vertical: 1, depth: -1 },
+])('loops a $move arrow in the indicated direction without turning the cube', ({ move, vertical, depth }) => {
+  const cube = new Cube(2);
+  const detach = attachMoveHintArrows(cube, move, '#5aac7e', undefined, 'orbit');
+  try {
+    const state = cube.serialize();
+    const arrow = cube.children.at(-1)!.children.at(-1) as Mesh;
+    const position = arrow.geometry.getAttribute('position');
+    const tipAt = (elapsedMs: number) => {
+      detach.update(elapsedMs);
+      cube.updateMatrixWorld(true);
+      return arrow.localToWorld(new Vector3().fromBufferAttribute(position, position.count - 1));
+    };
+    const from = tipAt(0);
+    const to = tipAt(220);
+    expect(from.x).toBeCloseTo(0);
+    expect(to.x).toBeCloseTo(0);
+    expect(Math.sign(to.y - from.y)).toBe(vertical);
+    expect(Math.sign(to.z - from.z)).toBe(depth);
+    expect(tipAt(2200).distanceTo(from)).toBeCloseTo(0);
+    expect(cube.serialize()).toEqual(state);
+  } finally {
+    detach();
+    cube.dispose();
+  }
+});
+
 it('alternates each fixed arrow color without moving it or changing the cube state', () => {
   const cube = new Cube(3);
   const detach = attachMoveHintArrows(cube, 'R', '#5aac7e', '#ffffff');
