@@ -1,6 +1,6 @@
 'use client';
 
-import { type ReactNode } from 'react';
+import { useLayoutEffect, useRef, type ReactNode, type RefObject } from 'react';
 import { Play, Pause, SkipBack, SkipForward, ChevronLeft, ChevronRight, PictureInPicture2 } from 'lucide-react';
 import PlaybackScrubber from './PlaybackScrubber';
 import './PlaybackBar.css';
@@ -66,13 +66,76 @@ export function PlaybackSpeedSelect<T extends number>({
   </select>;
 }
 
-export function PlaybackBackViewButton({ visible, toggle = true, onClick, showLabel, hideLabel }: {
+export function PlaybackBackViewButton({ visible, toggle = true, onClick, showLabel, hideLabel, buttonRef }: {
   visible: boolean; toggle?: boolean; onClick(): void; showLabel: string; hideLabel: string;
+  buttonRef?: RefObject<HTMLButtonElement | null>;
 }) {
-  return <button type="button" className="playback-bar-btn" aria-pressed={toggle ? visible : undefined}
+  return <button ref={buttonRef} type="button" className="playback-bar-btn playback-bar-backview-btn" aria-pressed={toggle ? visible : undefined}
     onClick={onClick} aria-label={visible ? hideLabel : showLabel}>
-    <PictureInPicture2 size={14} />
+    <PictureInPicture2 size={14} aria-hidden="true">
+      {visible && <path d="m2 2 20 20" />}
+    </PictureInPicture2>
   </button>;
+}
+
+export function resolveBackViewOptions<T extends { backView: boolean; hint: boolean }>(
+  options: T, preferred: 'backView' | 'hint' = 'backView',
+): T {
+  if (!options.backView || !options.hint) return options;
+  return preferred === 'backView' ? { ...options, hint: false } : { ...options, backView: false };
+}
+
+/** Keep the frame measurable with visibility:hidden when closed. */
+export function useBackViewMotion(
+  frameRef: RefObject<HTMLElement | null>,
+  anchorRef: RefObject<HTMLElement | null> | undefined,
+  visible: boolean,
+  enabled: boolean,
+  fallbackAnchorRef?: RefObject<HTMLElement | null>,
+) {
+  const animationRef = useRef<Animation | null>(null);
+  const wasVisible = useRef(visible);
+
+  useLayoutEffect(() => {
+    const changed = wasVisible.current !== visible;
+    wasVisible.current = visible;
+    const animation = animationRef.current;
+    if (!enabled) {
+      animation?.cancel();
+      animationRef.current = null;
+      return;
+    }
+    if (!changed) return;
+
+    const frame = frameRef.current;
+    const anchor = anchorRef?.current ?? fallbackAnchorRef?.current;
+    // Start from the current pose when a click interrupts the transition.
+    const current = frame && animation?.playState === 'running' ? getComputedStyle(frame) : null;
+    const interrupted = current ? { transform: current.transform, opacity: current.opacity } : null;
+    animation?.cancel();
+    animationRef.current = null;
+    if (!frame || !anchor || typeof frame.animate !== 'function' ||
+        matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+
+    const from = anchor.getBoundingClientRect();
+    const to = frame.getBoundingClientRect();
+    if (!from.width || !from.height || !to.width || !to.height) return;
+
+    const x = from.left + from.width / 2 - (to.left + to.width / 2);
+    const y = from.top + from.height / 2 - (to.top + to.height / 2);
+    const scale = Math.min(from.width / to.width, from.height / to.height);
+    const collapsed = { transform: `translate(${x}px, ${y}px) scale(${scale})`, opacity: 0 };
+    const expanded = { transform: 'translate(0, 0) scale(1)', opacity: 1 };
+    const start = interrupted ?? (visible ? collapsed : expanded);
+    const end = visible ? expanded : collapsed;
+    animationRef.current = frame.animate([
+      { ...start, visibility: 'visible', transformOrigin: 'center' },
+      { ...end, visibility: 'visible', transformOrigin: 'center' },
+    ], { duration: 260, easing: visible ? 'cubic-bezier(.22, 1, .36, 1)' : 'cubic-bezier(.4, 0, .8, .4)' });
+  }, [frameRef, anchorRef, fallbackAnchorRef, visible, enabled]);
+
+  useLayoutEffect(() => () => animationRef.current?.cancel(), []);
+  return animationRef;
 }
 
 export default function PlaybackBar({

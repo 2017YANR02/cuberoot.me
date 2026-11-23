@@ -153,6 +153,23 @@ html:not([data-discrete-transition])::view-transition-new(root) {
   animation-duration: 180ms;
 }
 
+html[data-discrete-transition="player-fullscreen"] [data-player-fullscreen-surface] {
+  view-transition-name: player-fullscreen;
+}
+
+html[data-discrete-transition="player-fullscreen"]::view-transition-old(root),
+html[data-discrete-transition="player-fullscreen"]::view-transition-new(root),
+::view-transition-group(player-fullscreen) {
+  animation-duration: 300ms;
+  animation-timing-function: cubic-bezier(.22, 1, .36, 1);
+}
+
+::view-transition-old(player-fullscreen),
+::view-transition-new(player-fullscreen) {
+  height: 100%;
+  object-fit: contain;
+}
+
 /* Clicked themes reveal the new page from the bottom-left corner. */
 html[data-discrete-transition="appearance"]::view-transition-group(root) {
   animation: none;

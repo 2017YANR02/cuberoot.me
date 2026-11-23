@@ -942,6 +942,7 @@ interface Props {
   /** 全屏/退出全屏按钮(SimPage 持有 fullscreen 状态),渲染在播放条按钮排最左
    *  (twizzle alpha.twizzle.net/edit 同款,全屏钮居首)。 */
   fullscreenButton?: ReactNode;
+  playbackSettingsButtonRef?: RefObject<HTMLButtonElement | null>;
   /** 画布右上角背面小窗的显隐开关。 */
   backViewButton?: ReactNode;
   /** 按阶段展示色块(twizzle stickering,issue #27)。URL 状态归 SimPage(nuqs),
@@ -991,7 +992,7 @@ export default function PlayerControls({
   onCopyLink,
   renderer = 'cubing', onRendererChange,
   appearanceOpen, onAppearanceToggle,
-  playbackSlot, onResetView, canvasTools, captureStickeringSlot, bgSlot, fullscreenButton, backViewButton,
+  playbackSlot, onResetView, canvasTools, captureStickeringSlot, bgSlot, fullscreenButton, playbackSettingsButtonRef, backViewButton,
   stickering = 'full', onStickeringChange,
   stickeringRot = '', onStickeringRotChange,
   stickeringMask = '', onStickeringMaskClear,
@@ -2976,7 +2977,7 @@ export default function PlayerControls({
       {active && (() => {
       const viewTools = (
       <div className="sim-view-tools" role="toolbar" aria-label={t('画布工具', 'Canvas tools')}>
-        {backViewButton}{fullscreenButton}
+        {backViewButton}
         {!resolveCaps(puzzleKind, renderer).flat && <button type="button" className="playback-bar-btn" onClick={onResetView ?? (() => {
           const { scale, viewAngle, viewGradient } = DEFAULT_SETTINGS;
           const next = { ...settings, scale, viewAngle, viewGradient };
@@ -2993,7 +2994,6 @@ export default function PlayerControls({
       const waitForHandStep = (pocket || puzzleKind === 4) && settings.hands && settings.animatePlayback !== false;
       const playbackBar = (
       <div className="sim-stage-controls">
-      {!compactPlayback && viewTools}
       <PlaybackBar layout={compactPlayback ? 'wide' : 'balanced'}
         disabled={!isTwistyMode && (!engineReady || replayPending)}
         step={isTwistyMode ? (totalSteps > 0 ? twistyPlayback.step : 0) : step}
@@ -3010,10 +3010,13 @@ export default function PlayerControls({
           label={t('播放设置', 'Playback settings')}
           className="sim-playback-settings"
           panelClassName="sim-playback-settings-panel"
+          triggerRef={playbackSettingsButtonRef}
+          triggerSuffix={fullscreenButton}
           iconSize={14}
           modal={compactPlayback}
         >
-          {compactPlayback && <>{speedControl}{viewTools}</>}
+          {compactPlayback && speedControl}
+          {viewTools}
           <div className="sim-playback-options">
             {anchorSelect}
             <Toggle label={t('动画', 'Animation')} value={settings.animatePlayback !== false} onChange={animatePlayback => onSettingsChange({ ...settings, animatePlayback })} />

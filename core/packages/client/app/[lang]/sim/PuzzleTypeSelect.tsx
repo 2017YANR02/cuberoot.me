@@ -55,6 +55,7 @@ export function PuzzleTypeSelect({ value, onChange, isZh, allowedValues, showNam
       isZh={isZh}
       selectedEvent={current?.value}
       groups={groups}
+      openSubmenuOnHover
       onSelect={onChange}
       showTriggerIcon={!showName}
     />

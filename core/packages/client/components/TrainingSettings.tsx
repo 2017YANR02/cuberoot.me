@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore, type ReactNode } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore, type ReactNode, type RefObject } from 'react';
 import { createPortal } from 'react-dom';
 import { Settings } from '@app-foundation/icons/lucide';
 import SettingsDialog from '@/components/SettingsDialog';
@@ -69,6 +69,7 @@ export function SettingsPopover({
   label,
   className,
   triggerClassName,
+  triggerRef: externalTriggerRef,
   panelClassName,
   triggerPrefix,
   triggerSuffix,
@@ -83,6 +84,7 @@ export function SettingsPopover({
   label: string;
   className?: string;
   triggerClassName?: string;
+  triggerRef?: RefObject<HTMLButtonElement | null>;
   panelClassName?: string;
   triggerPrefix?: ReactNode;
   triggerSuffix?: ReactNode;
@@ -104,7 +106,8 @@ export function SettingsPopover({
     onOpenChange?.(next);
   }, [controlledOpen, onOpenChange]);
   const rootRef = useRef<HTMLDivElement>(null);
-  const triggerRef = useRef<HTMLButtonElement>(null);
+  const internalTriggerRef = useRef<HTMLButtonElement>(null);
+  const triggerRef = externalTriggerRef ?? internalTriggerRef;
   const panelRef = useRef<HTMLDivElement>(null);
   const panelStyle = usePopoverPosition({ open: open && !modal, panelRef, triggerRef, contentKey: label });
   usePopoverDismiss(open && !modal, () => setOpen(false), rootRef, triggerRef);

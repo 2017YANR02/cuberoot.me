@@ -268,12 +268,15 @@ it('keeps canvas and playback tools together and opens settings in a dismissible
     searchParams: '?puzzle=skewb&renderer=cubing', ...memoryAdapter,
     children: createElement(SimPage),
   })));
-  expect(host.querySelector('.sim-view-tools .sim-canvas-tools')).not.toBeNull();
+  expect(host.querySelector('.sim-view-tools')).toBeNull();
   const controls = host.querySelector('.playback-bar-controls')!;
   expect(controls.querySelector('.sim-playback-speed')).not.toBeNull();
   const trigger = controls.querySelector<HTMLButtonElement>('[aria-label="Playback settings"]')!;
+  expect(trigger.nextElementSibling?.getAttribute('aria-label')).toBe('Fullscreen cube');
   await act(async () => trigger.click());
-  expect(controls.querySelector('[role="dialog"]')).not.toBeNull();
+  const dialog = controls.querySelector('[role="dialog"]')!;
+  expect(dialog.querySelector('.sim-view-tools .sim-canvas-tools')).not.toBeNull();
+  expect(dialog.querySelector('[aria-label="Fullscreen cube"]')).toBeNull();
   expect(trigger.getAttribute('aria-expanded')).toBe('true');
   const anchor = controls.querySelector<HTMLButtonElement>('button[aria-label="Anchor: keep the scramble start or the solve end fixed"]')!;
   expect(anchor).not.toBeNull();
@@ -305,6 +308,7 @@ it('opens compact playback settings above the scroll area without a native popov
     children: createElement(SimPage),
   })));
   const trigger = host.querySelector<HTMLButtonElement>('[aria-label="Playback settings"]')!;
+  expect(trigger.nextElementSibling?.getAttribute('aria-label')).toBe('Fullscreen cube');
   expect(host.querySelector('.sim-view-tools')).toBeNull();
   await act(async () => trigger.click());
   const dialog = document.querySelector('[role="dialog"][aria-label="Playback settings"]')!;

@@ -33,7 +33,7 @@ function tokenize(alg: string): string[] {
 
 export default function CuberReconPlayer({
   scramble, alg, order, fillPane = false, playerRef, hideControls = false, fullscreenButton,
-  backView = true, anchorAtEnd = false, mirror = false, stickering = '', stickeringOrientation = '',
+  backView = true, backViewAnchorRef, hintFacelets, anchorAtEnd = false, mirror = false, stickering = '', stickeringOrientation = '',
   stickeringMasks, transparent = false, ariaLabel, leadingControls, trailingControls, controlLabels, stickeringOverride, segmentEnds, onPlaybackStart,
 }: {
   scramble: string;
@@ -49,6 +49,9 @@ export default function CuberReconPlayer({
   /** 右上角背面小窗。默认开(复盘流程要它);嵌在窄栏里的小播放器可关掉 —— 小窗按主画布
    *  边长的三成走,300px 见方的画布上它会盖掉小半个魔方。方位字母不受影响,照常画。 */
   backView?: boolean;
+  /** Animate the back view to and from its playback control when provided. */
+  backViewAnchorRef?: RefObject<HTMLElement | null>;
+  hintFacelets?: boolean;
   fillPane?: boolean;
   /** 隐藏底部完整控制条,改用画面内居中播放/暂停浮层(嵌成绩弹窗预览时用)。 */
   hideControls?: boolean;
@@ -76,7 +79,7 @@ export default function CuberReconPlayer({
     deps: [
       order, mirror, anchorAtEnd, stickering, stickeringOrientation,
       stickeringMasks?.map(({ name, orientation }) => `${name}:${orientation ?? ''}`).join('|') ?? '',
-      transparent, stickeringOverride, backView,
+      transparent, hintFacelets, stickeringOverride,
     ],
     parseMoves: tokenize,
     setupPuzzle: (world: World) => {
@@ -93,6 +96,7 @@ export default function CuberReconPlayer({
       cube.instancedRenderer.setStickering(stickeringOverride === undefined ? mask : stickeringOverride);
       cube.instancedRenderer.setFaceColorOverride(mirror ? mirrorFaces() : null);
       applyPuzzleTransparency(cube, transparent);
+      if (hintFacelets !== undefined) cube.instancedRenderer.hint = !transparent && hintFacelets;
       world.dirty = true;
     },
     cleanupPuzzle: (world) => {
@@ -126,6 +130,7 @@ export default function CuberReconPlayer({
       segmentCounts={segmentEnds?.map((end, index) =>
         htm(tokenize(alg).slice(segmentEnds[index - 1] ?? 0, end).join(' ')))}
       adapter={adapter}
+      backViewAnchorRef={backViewAnchorRef}
       fillPane={fillPane}
       hideControls={hideControls}
       playerRef={playerRef}

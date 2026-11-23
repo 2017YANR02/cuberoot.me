@@ -1110,11 +1110,38 @@
   margin-left: 0;
   margin-right: auto;
 }
-.settings-dialog:has(.submit-video-review) {
-  width: min(100%, 1200px);
+.settings-dialog-backdrop:has(.submit-video-review) {
+  padding: 0;
+}
+
+.settings-dialog:has(> .submit-video-review) {
+  width: 100%;
+  height: 100%;
+  background: var(--background);
+}
+
+.settings-dialog .settings-popover-panel.settings-dialog-panel.submit-video-review {
+  --video-review-gutter: clamp(12px, 3vw, 32px);
+  height: 100%;
+  max-height: none;
+  padding: 0 max(var(--video-review-gutter), var(--sar)) max(16px, var(--sab)) max(var(--video-review-gutter), var(--sal));
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.submit-video-review > .settings-dialog-heading {
+  position: sticky;
+  inset-block-start: 0;
+  z-index: 2;
+  flex-shrink: 0;
+  padding-block: max(12px, var(--sat)) 12px;
+  background: var(--background);
 }
 
 .submit-video-review .video-recon-page {
+  width: 100%;
   padding: 0;
   min-width: 0;
 }

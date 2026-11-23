@@ -1,3 +1,5 @@
+import { flushSync } from 'react-dom';
+
 // Shared snapshot transitions; rapid selections cancel the old animation.
 type ViewTransitionHandle = {
   ready?: Promise<unknown>;
@@ -11,7 +13,7 @@ type DocumentWithViewTransition = Document & {
 
 let activeTransition: ViewTransitionHandle | null = null;
 
-export function runViewTransition(commit: () => void, animate: boolean, effect: 'crossfade' | 'appearance' = 'crossfade') {
+export function runViewTransition(commit: () => void, animate: boolean, effect: 'crossfade' | 'appearance' | 'player-fullscreen' = 'crossfade') {
   const doc = document as DocumentWithViewTransition;
   const reducedMotion = typeof matchMedia !== 'undefined' && matchMedia('(prefers-reduced-motion: reduce)').matches;
   if (animate && typeof doc.startViewTransition === 'function' && !reducedMotion) {
@@ -34,4 +36,7 @@ export function runViewTransition(commit: () => void, animate: boolean, effect: 
     delete document.documentElement.dataset.discreteTransition;
     commit();
   }
+}
+export function runPlayerFullscreenTransition(commit: () => void) {
+  runViewTransition(() => flushSync(commit), true, 'player-fullscreen');
 }

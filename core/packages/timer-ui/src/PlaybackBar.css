@@ -87,7 +87,7 @@
 /* Only for buttons that are genuinely a toggle (they carry aria-pressed and stay
    mounted in both states). Buttons that just disappear when their target is open
    never set it, so they never pick this up. */
-.playback-bar-btn[aria-pressed='true'] {
+.playback-bar-btn[aria-pressed='true']:not(.playback-bar-backview-btn) {
   border-color: var(--accent);
   color: var(--accent);
 }

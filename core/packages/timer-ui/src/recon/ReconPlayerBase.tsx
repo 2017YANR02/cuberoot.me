@@ -18,13 +18,13 @@
  */
 
 import {
-  useCallback, useEffect, useRef, useState, type ReactNode, type RefObject,
+  useCallback, useEffect, useLayoutEffect, useRef, useState, type ReactNode, type RefObject,
 } from 'react';
 import type World from '@cuberoot/puzzle-render-core/engine/world';
 import type { BackView } from '@cuberoot/puzzle-render-core/engine/backView';
 import { RECON_NOTATION_PLAY_INTERVAL_MS as PLAY_INTERVAL_MS } from '@cuberoot/shared/timer/reconstruct/recap';
 import ReconPlayOverlay from './ReconPlayOverlay';
-import PlaybackBar, { type PlaybackBarLabels } from '../PlaybackBar';
+import PlaybackBar, { useBackViewMotion, type PlaybackBarLabels } from '../PlaybackBar';
 import './recon-player.css';
 
 /** 播放器的外部控制入口(回填到调用方的 `playerRef`)。
@@ -72,7 +72,7 @@ export interface ReconPlayerAdapter<M> {
 }
 
 export default function ReconPlayerBase<M>({
-  scramble, alg, adapter, fillPane = false, hideControls = false, playerRef, fullscreenButton, ariaLabel, leadingControls, trailingControls, controlLabels, segmentEnds, segmentCounts, onPlaybackStart,
+  scramble, alg, adapter, backViewAnchorRef, fillPane = false, hideControls = false, playerRef, fullscreenButton, ariaLabel, leadingControls, trailingControls, controlLabels, segmentEnds, segmentCounts, onPlaybackStart,
 }: {
   scramble: string;
   alg: string;
@@ -81,6 +81,7 @@ export default function ReconPlayerBase<M>({
   /** User-initiated playback only; hosts own optional product instrumentation. */
   onPlaybackStart?: () => void;
   adapter: ReconPlayerAdapter<M>;
+  backViewAnchorRef?: RefObject<HTMLElement | null>;
   fillPane?: boolean;
   /** 隐藏底部完整控制条,改用画面内居中播放/暂停浮层(嵌成绩弹窗预览时用)。 */
   hideControls?: boolean;
@@ -111,6 +112,10 @@ export default function ReconPlayerBase<M>({
   const stepListeners = useRef(new Set<(step: number) => void>());
 
   const [ready, setReady] = useState(false);
+  const backViewAnimation = useBackViewMotion(backFrameRef, backViewAnchorRef, adapter.backView, ready && !!backViewAnchorRef);
+  useLayoutEffect(() => {
+    if (adapter.backView && worldRef.current) worldRef.current.dirty = true;
+  }, [adapter.backView]);
   const [step, setStepState] = useState(0);
   const [total, setTotal] = useState(movesRef.current.length);
   const [playing, setPlaying] = useState(false);
@@ -186,7 +191,11 @@ export default function ReconPlayerBase<M>({
         // 看图页要满像素比(贴纸边界 / 方位字母都要清楚),不吃默认的 2× 上限。
         pixelRatioCap: Number.POSITIVE_INFINITY,
         // 右下角小窗跟着主视图一起画(只在真渲染了那一帧)。
-        onRendered: (w) => { if (adapterRef.current.backView) backViewRef.current?.render(w); },
+        onRendered: (w) => {
+          if (adapterRef.current.backView || backViewAnimation.current?.playState === 'running') {
+            backViewRef.current?.render(w);
+          }
+        },
       });
       const world = mount.world;
       adapterRef.current.setupPuzzle(world);
@@ -333,7 +342,11 @@ export default function ReconPlayerBase<M>({
   return (
     <div className={`recon-player${fillPane ? ' recon-player--fill' : ''}`}>
       <div ref={hostRef} className="recon-player-canvas" role={ariaLabel ? 'img' : undefined} aria-label={ariaLabel}>
-        {(adapter.faceHints ?? adapter.backView) && <div ref={backFrameRef} className="recon-player-backview" style={{ display: adapter.backView ? undefined : 'none' }} aria-hidden />}
+        {(adapter.faceHints ?? adapter.backView) && <div ref={backFrameRef} className="recon-player-backview"
+          style={backViewAnchorRef
+            ? { visibility: adapter.backView ? undefined : 'hidden' }
+            : { display: adapter.backView ? undefined : 'none' }}
+          aria-hidden />}
         {hideControls && total > 0 && (
           <ReconPlayOverlay
             playing={playing}

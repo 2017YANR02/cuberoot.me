@@ -134,6 +134,30 @@ it('shows the selected leaf and returns from the second level before closing the
   expect(document.activeElement).toBe(trigger);
 });
 
+it('opens only the submenu on mouse hover and preserves keyboard entry', () => {
+  const onSelect = vi.fn();
+  act(() => root.render(createElement(PuzzlePicker, { groups, selectedEvent: 'nxn', onSelect, openSubmenuOnHover: true })));
+  const trigger = host.querySelector<HTMLButtonElement>('.pp-trigger')!;
+  const enter = (element: Element, pointerType: string) => act(() => {
+    const event = new MouseEvent('pointerover', { bubbles: true });
+    Object.defineProperty(event, 'pointerType', { value: pointerType });
+    element.dispatchEvent(event);
+  });
+  enter(trigger, 'mouse');
+  expect(host.querySelector('.pp-popup')).toBeNull();
+  act(() => trigger.click());
+  const family = host.querySelector<HTMLButtonElement>('.pp-item[aria-haspopup="menu"]')!;
+  family.focus();
+  enter(family, 'touch');
+  expect(family.getAttribute('aria-expanded')).toBe('false');
+  enter(family, 'mouse');
+  expect(family.getAttribute('aria-expanded')).toBe('true');
+  expect(document.activeElement).toBe(family);
+  expect(onSelect).not.toHaveBeenCalled();
+  act(() => family.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true })));
+  expect(document.activeElement?.textContent).toBe('Kilominx');
+});
+
 it('preserves a text-only trigger when the caller disables item icons', () => {
   act(() => root.render(createElement(PuzzlePicker, {
     groups, selectedEvent: 'kilominx', onSelect: vi.fn(), showItemIcons: false,

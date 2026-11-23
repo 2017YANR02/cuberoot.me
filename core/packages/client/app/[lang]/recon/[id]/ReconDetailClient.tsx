@@ -10,6 +10,7 @@ import { reconVideoGroups } from '@/lib/recon-video-url';
 import { loadBiliVideo, loadVideoTitle } from '@/lib/recon-video-cover';
 import { WcaPersonTeamBadge } from '@/components/WcaPersonTeamBadge';
 import { useContentRefreshKey } from '@/hooks/useContentRefreshKey';
+import { runPlayerFullscreenTransition } from '@/lib/view-transition';
 
 /**
  * /recon/[id] — full detail page, ported from packages/client-vite/src/pages/recon/ReconDetailPage.tsx.
@@ -155,7 +156,7 @@ export default function ReconDetailClient({ initialSolve, initialSameScramble }:
     <button
       type="button"
       className="playback-bar-btn"
-      onClick={() => setFullscreen(f => !f)}
+      onClick={() => runPlayerFullscreenTransition(() => setFullscreen(value => !value))}
       title={fullscreen ? tr({ zh: '退出全屏', en: 'Exit fullscreen' }) : tr({ zh: '全屏魔方', en: 'Fullscreen cube' })}
       aria-label={fullscreen ? tr({ zh: '退出全屏', en: 'Exit fullscreen' }) : tr({ zh: '全屏魔方', en: 'Fullscreen cube' })}
     >
@@ -441,7 +442,7 @@ function ReconDetailBody({ scramble, solutionText, solve, comments, onUpdate, in
               <ReconImageDownload onDownload={downloadImage} /></>}
             </div>}
     <div className="detail-layout">
-      {solve.recordType !== 'timing' && !solverView && <div className="detail-player-pane">
+      {solve.recordType !== 'timing' && !solverView && <div className="detail-player-pane" data-player-fullscreen-surface>
         {/* 有解法 → 播放复盘;无解法(只录了 WCA 成绩 + 打乱)→ alg 为空,
             player 停在 setup(打乱)后的 3D 状态,至少能看到这个打乱。 */}
         <ReconPlayerCanvas

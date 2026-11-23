@@ -1482,14 +1482,19 @@
 .sim-settings-section .sim-puzzle-body { padding: 8px 0; }
 
 .sim-stage-controls { width: 100%; min-width: 0; }
-.sim-view-tools,
 .sim-preview-notice {
   display: flex;
   align-items: center;
   flex-wrap: wrap;
   gap: 8px;
 }
-.sim-view-tools { margin-bottom: 8px; }
+.sim-playback-settings-panel .sim-view-tools,
+.sim-playback-settings-panel .sim-canvas-tools {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+}
 .sim-view-tools > select {
   font: inherit;
   color: var(--foreground);
@@ -1498,13 +1503,19 @@
   border-radius: 6px;
   padding: 4px;
 }
-.sim-view-tools .playback-bar-btn[aria-pressed="true"] {
+.sim-view-tools .playback-bar-btn[aria-pressed="true"]:not(.playback-bar-backview-btn) {
   color: var(--accent);
   background: var(--accent-soft);
 }
 .sim-playback-speed { width: min(140px, 100%); min-width: 0; justify-self: start; }
 .sim-playback-speed > .sim-slider { width: 100%; min-width: 0; }
-.sim-playback-settings { justify-self: end; }
+.sim-stage-controls .playback-bar-controls > .sim-playback-settings {
+  justify-self: end;
+  gap: 4px;
+}
+.sim-stage-controls .playback-bar--balanced .playback-bar-controls {
+  grid-template-columns: minmax(0, 1fr) repeat(5, 38px) minmax(max-content, 1fr);
+}
 .sim-anchor-setting { justify-content: space-between; gap: 12px; }
 .sim-anchor-setting .sim-anchor-trigger {
   min-width: 76px;
@@ -1535,7 +1546,10 @@
 .sim-input-error { margin: 0; font-size: 13px; color: var(--destructive); overflow-wrap: anywhere; }
 
 @media (max-width: 767px) {
-  .sim-stage-controls .playback-bar-controls { grid-template-columns: minmax(0, 1fr) repeat(5, 44px) minmax(0, 1fr); gap: 2px; }
+  .sim-stage-controls .playback-bar--balanced .playback-bar-controls {
+    grid-template-columns: minmax(0, 1fr) repeat(5, minmax(0, 44px)) max-content;
+    gap: 2px;
+  }
   .sim-player-row--top { flex-wrap: nowrap; }
   .sim-player-row--top > .sim-player-hlwrap { min-width: 0; }
   .sim-player-row--top > button { order: 2; flex-shrink: 0; padding-inline: 8px; }
@@ -1583,8 +1597,6 @@
   /* Native selects share the tool typography; text inputs retain the iOS zoom guard. */
   .sim-alg-tools select.sim-transform-select { font-size: 14px !important; text-align: center; }
   .sim-edit-tools > .sim-transform-scope { grid-column: 1 / -1; margin-top: 8px; }
-  .sim-view-tools { flex-wrap: nowrap; }
-  .sim-view-tools > * { flex-shrink: 0; }
   .sim-stage-controls .playback-bar-btn,
   .sim-player button:not(.pill-toggle):not(.bool-toggle-label),
   .sim-float-close,
@@ -1728,13 +1740,13 @@
   .sim-playback-under { padding: 4px 8px; }
   .sim-stage-controls .playback-bar-controls {
     display: grid;
-    grid-template-columns: repeat(5, minmax(44px, 1fr)) 44px;
+    grid-template-columns: repeat(5, minmax(0, 1fr)) max-content;
     gap: 2px;
   }
   .sim-stage-controls .playback-bar-btn,
   .sim-playback-settings > button { min-width: 44px; min-height: 44px; padding-inline: 6px; }
   .sim-playback-settings-panel .sim-playback-speed { width: 100%; }
-  .sim-playback-settings-panel .sim-view-tools { flex-wrap: wrap; margin: 0; gap: 4px; }
+  .sim-stage-controls .playback-bar-controls > .playback-bar-btn { min-width: 0; }
   .sim-playback-settings-panel .sim-view-tools .playback-bar-btn,
   .sim-playback-settings-panel .sim-color-select-trigger,
   .sim-playback-settings-panel .compact-select-trigger { min-width: 44px; min-height: 44px; }
@@ -1764,8 +1776,13 @@
   .sim-view-settings .sim-orbit-fields { width: 100%; gap: 4px; }
 }
 
-.sim-playback-options { display: flex; align-self: stretch; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
-.sim-playback-options > .sim-toggle { flex-shrink: 0; }
+.sim-playback-options {
+  display: flex;
+  flex-direction: column;
+  align-self: stretch;
+  gap: 8px;
+}
+.sim-playback-options > .sim-toggle { justify-content: space-between; }
 
 /* Align the expanded speed control with the transport row. Keep the numeric
    field within its grid column, including on portrait phones. */

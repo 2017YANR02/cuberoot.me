@@ -1,9 +1,10 @@
 'use client';
 
-import { useMemo, useState, type ComponentProps } from 'react';
+import { useMemo, useRef, useState, type ComponentProps } from 'react';
 import SharedCuberReconPlayer from '@cuberoot/timer-ui/CuberReconPlayer';
 import { trackFeatureUse } from '@/lib/analytics-signal';
-import { PlaybackBackViewButton } from './PlaybackBar';
+import { PlaybackBackViewButton, resolveBackViewOptions } from './PlaybackBar';
+import BoolToggle from './BoolToggle';
 import StickeringSelect from '@/app/[lang]/sim/StickeringSelect';
 import { useSimMasks } from '@/app/[lang]/sim/useSimMasks';
 import { isPresetMask, presetMaskFn } from '@/app/[lang]/sim/engine/nxn/maskConfig';
@@ -32,19 +33,30 @@ function CuberWithOptions({ reconText, showScrambleNet, ...props }: ComponentPro
   const [manualOrientation, setManualOrientation] = useState<{ source: string; value: string } | null>(null);
   const orientation = manualOrientation?.source === source ? manualOrientation.value : automaticOrientation;
   const setOrientation = (value: string) => setManualOrientation({ source, value });
-  const [backView, setBackView] = useState(props.backView ?? false);
+  const [{ backView, hint }, setBackViewOptions] = useState(() => resolveBackViewOptions({
+    backView: props.backView ?? false,
+    hint: props.hintFacelets ?? !props.transparent,
+  }));
+  const backViewAnchorRef = useRef<HTMLButtonElement>(null);
   const { rows } = useSimMasks();
   const mask = useMemo(() => isPresetMask(stage) ? presetMaskFn(props.order, stage, rows) : undefined, [stage, rows, props.order]);
   return <div className="cuber-recon-preview">
     <SharedCuberReconPlayer {...props}
     backView={backView}
+    hintFacelets={hint}
+    backViewAnchorRef={hint ? undefined : backViewAnchorRef}
     stickering={stage} stickeringOrientation={orientation} stickeringOverride={mask}
     leadingControls={!props.mirror && <StickeringSelect puzzleKind={props.order as 2 | 3 | 4 | 5 | 6 | 7}
       value={stage} onChange={setStage} orientation={orientation} onOrientationChange={isPresetMask(stage) ? undefined : setOrientation} editable={false} />}
-    trailingControls={<span className="cuber-recon-backview-control">
-      <PlaybackBackViewButton visible={backView} onClick={() => setBackView(value => !value)}
-        showLabel={tr({ zh: '显示小窗', en: 'Show back view' })} hideLabel={tr({ zh: '关闭小窗', en: 'Hide back view' })} />
-    </span>}
+    trailingControls={<>
+      <span className="cuber-recon-backview-control">
+        <PlaybackBackViewButton buttonRef={backViewAnchorRef} visible={backView}
+          onClick={() => setBackViewOptions(options => resolveBackViewOptions({ ...options, backView: !options.backView }))}
+          showLabel={tr({ zh: '显示小窗', en: 'Show back view' })} hideLabel={tr({ zh: '关闭小窗', en: 'Hide back view' })} />
+      </span>
+      <BoolToggle label={tr({ zh: '提示贴片', en: 'Hint facelets' })} value={hint} disabled={props.transparent}
+        onChange={value => setBackViewOptions(options => resolveBackViewOptions({ ...options, hint: value }, 'hint'))} />
+    </>}
     controlLabels={{
       skipStart: tr({ zh: '回到起点', en: 'Skip to start' }), stepBack: tr({ zh: '上一步', en: 'Step back' }),
       play: tr({ zh: '播放', en: 'Play' }), pause: tr({ zh: '暂停', en: 'Pause' }),

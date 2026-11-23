@@ -67,6 +67,10 @@ export interface TimerPuzzlePickerProps extends TimerOverlayControlProps {
   submenuLabel?: string;
   /** Mouse hover opens both levels at the current selection. Touch remains click-driven. */
   openOnHover?: boolean;
+  /** Open a submenu on mouse hover after the main menu has opened. */
+  openSubmenuOnHover?: boolean;
+  /** Show the selected item's submenu when the trigger is clicked. */
+  openSelectedSubmenu?: boolean;
 }
 
 /**
@@ -95,6 +99,8 @@ export function TimerPuzzlePicker({
   showSubmenuHeading = showMenuHeadings,
   submenuLabel,
   openOnHover = false,
+  openSubmenuOnHover = openOnHover,
+  openSelectedSubmenu = openOnHover,
 }: TimerPuzzlePickerProps) {
   const [query, setQuery] = useState('');
   const shortcutsConfig = discovery?.storageKey ? discovery : undefined;
@@ -200,6 +206,12 @@ export function TimerPuzzlePicker({
   useLayoutEffect(() => {
     if (open && submenuId && focusSubmenu.current) submenuRef.current?.querySelector<HTMLButtonElement>('button')?.focus();
   }, [open, submenuId]);
+
+  const openSubmenuWithFocus = (id: string) => {
+    focusSubmenu.current = true;
+    if (id === submenuId) submenuRef.current?.querySelector<HTMLButtonElement>('button')?.focus();
+    else setSubmenuId(id);
+  };
 
   useEffect(() => {
     if (disabled) close('disabled');
@@ -311,7 +323,7 @@ export function TimerPuzzlePicker({
           cancelHoverClose();
           focusSubmenu.current = true;
           setActiveMenu('puzzle');
-          setSubmenuId(!open && openOnHover && selectedItem?.children?.length ? selectedItem.id : null);
+          setSubmenuId(!open && openSelectedSubmenu && selectedItem?.children?.length ? selectedItem.id : null);
           if (open) close('trigger');
           else changeOpen(true, 'trigger');
         }}
@@ -372,19 +384,18 @@ export function TimerPuzzlePicker({
                       key={item.id}
                       ref={node => { if (node) parentRefs.current.set(item.id, node); else parentRefs.current.delete(item.id); }}
                       onPointerEnter={event => {
-                        if (!openOnHover || item.disabled || event.pointerType !== 'mouse') return;
+                        if (!openSubmenuOnHover || item.disabled || event.pointerType !== 'mouse') return;
                         focusSubmenu.current = false;
                         setSubmenuId(hasChildren ? item.id : null);
                       }}
                       onKeyDown={event => {
                         if (hasChildren && event.key === 'ArrowRight') {
                           event.preventDefault();
-                          focusSubmenu.current = true;
-                          setSubmenuId(item.id);
+                          openSubmenuWithFocus(item.id);
                         }
                       }}
                       onClick={() => {
-                        if (hasChildren) { focusSubmenu.current = true; setSubmenuId(item.id); return; }
+                        if (hasChildren) { openSubmenuWithFocus(item.id); return; }
                         select(item.id);
                         close('select', true);
                       }}
@@ -447,7 +458,7 @@ export function TimerPuzzlePicker({
 }
 
 /** Shared method/stage presentation; callers retain supported options and data identities. */
-export function MethodStagePicker({ method, stage, methods, stagesOf, isZh, onSelect, disabled = false, stagesDisabled = false }: {
+export function MethodStagePicker({ method, stage, methods, stagesOf, isZh, onSelect, disabled = false, stagesDisabled = false, openOnHover = true }: {
   method: string;
   stage: string;
   methods: readonly string[];
@@ -456,6 +467,7 @@ export function MethodStagePicker({ method, stage, methods, stagesOf, isZh, onSe
   isZh: boolean;
   onSelect(method: string, stage: string): void;
   disabled?: boolean;
+  openOnHover?: boolean;
 }) {
   const labels = { zh: '方法与阶段', en: 'Method and stage' };
   const stages = stagesOf(method);
@@ -464,7 +476,7 @@ export function MethodStagePicker({ method, stage, methods, stagesOf, isZh, onSe
   const label = !stageName ? methodName : method === 'std' || methodName === stageName
     ? stageName : [methodName, stageName].join(' ');
   return <TimerPuzzlePicker
-    openOnHover
+    openOnHover={openOnHover} openSelectedSubmenu
     disabled={disabled} showArrow={false} showItemIcons={false}
     showMenuHeadings={false} showSubmenuHeading={false}
     puzzleLabel={labels[isZh ? 'zh' : 'en']} triggerLabel={label}

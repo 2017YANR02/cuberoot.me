@@ -92,7 +92,8 @@ import {
   TRANS_CORE, withCustomLogoAccess, withTransCore,
   DEFAULT_SETTINGS, mapOrbitK, mapTurnDragFactor, resetWorldView, type SimSettings,
 } from './SettingDrawer';
-import { PlaybackBackViewButton } from '@/components/PlaybackBar';
+import { PlaybackBackViewButton, resolveBackViewOptions, useBackViewMotion } from '@/components/PlaybackBar';
+import { runPlayerFullscreenTransition } from '@/lib/view-transition';
 import PlayerControls, { stripHandMarks, type SimPuzzle } from './PlayerControls';
 import AppLink from '@/components/AppLink';
 import { reconEventForSim, buildReconSubmitQuery } from '@/lib/sim-recon-link';
@@ -509,6 +510,8 @@ function SimEditor({ scope = '', active, seed, snapshotRef, onModeChange, onNew,
   const swapButtonRef = useRef<HTMLButtonElement>(null);
   const swapTweenRef = useRef<Tween | null>(null);
   const backFrameRef = useRef<HTMLDivElement>(null);
+  const backViewButtonRef = useRef<HTMLButtonElement>(null);
+  const playbackSettingsButtonRef = useRef<HTMLButtonElement>(null);
   const backViewRef = useRef<BackView | null>(null);
   const backSizeRef = useRef<number>(140);
   const wasCompleteRef = useRef(false);
@@ -578,11 +581,19 @@ function SimEditor({ scope = '', active, seed, snapshotRef, onModeChange, onNew,
   // that parent effect; children must not replay the new puzzle on the old cube.
   const [activeCube, setActiveCube] = useState<World['cube'] | null>(null);
   const [settings, setSettings] = useState<SimSettings>(() => {
-    const saved = seed?.settings ?? { ...loadSettings(), viewMode: 'cube' as const };
+    const saved = resolveBackViewOptions(seed?.settings ?? { ...loadSettings(), viewMode: 'cube' as const });
     if (!query.anchor) return saved;
     return { ...saved, playbackMode: query.anchor === 'end' ? 'algorithm' : 'moves' };
   });
   const roomsActive = !twisty && roomCubeActive(puzzleParam, settings.roomTheme);
+  const netMode = !roomsActive && settings.viewMode === 'net' && typeof puzzleParam === 'number';
+  const clockMode = puzzleParam === 'clock';
+  const flatMode = netMode || clockMode;
+  const showBackViewFrame = animationMode && !twisty && !flatMode;
+  const backViewAnimation = useBackViewMotion(
+    backFrameRef, backViewButtonRef, settings.backView, showBackViewFrame && active && worldTick > 0 && !settings.hint,
+    playbackSettingsButtonRef,
+  );
   const pictureCubeActive = !roomsActive && typeof puzzleParam === 'number'
     && settings.pictureCube
     && countPictureFaces(settings.pictureFaces) > 0;
@@ -596,7 +607,7 @@ function SimEditor({ scope = '', active, seed, snapshotRef, onModeChange, onNew,
     if (next.playbackMode !== settings.playbackMode) {
       void setQuery({ anchor: next.playbackMode === 'algorithm' ? 'end' : 'start' });
     }
-    setSettings(next);
+    setSettings(previous => resolveBackViewOptions(next, next.hint && !previous.hint ? 'hint' : 'backView'));
   }, [setQuery, settings.playbackMode]);
   const [keymap, setKeymap] = useState<Record<string, KeyMove>>(() => loadKeymap());
   const keymapRef = useRef(keymap);
@@ -738,12 +749,14 @@ function SimEditor({ scope = '', active, seed, snapshotRef, onModeChange, onNew,
     const W = container.clientWidth;
     const H = container.clientHeight;
     const size = Math.round(Math.min(184, Math.max(104, Math.min(W, H) * 0.3)));
-    backSizeRef.current = size;
     // 两个浮层(左上图像 / 右上背面小窗)必须同尺寸,所以尺寸只从这里出一次,
     // 落成画布上的 CSS 变量,两个框各自 width/height 取它 —— 图像浮层是按需挂载的,
     // 走变量就不用关心它和这次 layout 的先后。
     container.style.setProperty('--sim-float-size', `${size}px`);
-    backViewRef.current?.setSize(size);
+    if (backSizeRef.current !== size) {
+      backSizeRef.current = size;
+      backViewRef.current?.setSize(size);
+    }
     // Pin the swap button to the back-view window's bottom-right inner corner.
     const swapBtn = swapButtonRef.current;
     if (swapBtn) {
@@ -1388,7 +1401,8 @@ function SimEditor({ scope = '', active, seed, snapshotRef, onModeChange, onNew,
     // lockstep with the main view (only inside the dirty block) so they never
     // drift.
     const renderBackView = (w: World, activeHints: World['faceHints']) => {
-      if (!renderSettingsRef.current.backView) return;
+      if (!renderSettingsRef.current.backView &&
+          backViewAnimation.current?.playState !== 'running') return;
       const host = backFrameRef.current;
       if (!host) return;
       if (!backViewRef.current) {
@@ -1884,9 +1898,6 @@ function SimEditor({ scope = '', active, seed, snapshotRef, onModeChange, onNew,
   const getWorld = useCallback((): World | null => worldRef.current, []);
   const getRenderer = useCallback((): THREE.WebGLRenderer | null => rendererRef.current, []);
 
-  const netMode = !roomsActive && settings.viewMode === 'net' && typeof puzzleParam === 'number';
-  const clockMode = puzzleParam === 'clock';
-  const flatMode = netMode || clockMode;
   const resetView = () => {
     const next = { ...settingsRef.current, ...defaultViewFor(puzzleParam, twisty), scale: DEFAULT_SETTINGS.scale };
     if (swapTweenRef.current) {
@@ -2539,7 +2550,7 @@ function SimEditor({ scope = '', active, seed, snapshotRef, onModeChange, onNew,
       )}
 
       <div className="sim-body" style={{ display: drawMode ? 'none' : undefined }} aria-hidden={drawMode}>
-        <div className="sim-stage">
+        <div className="sim-stage" data-player-fullscreen-surface={active && animationMode ? '' : undefined}>
         <ResizeDivider className="sim-pane-divider" direction={-1} label={t('拖动调整面板宽度', 'Drag to resize panel')}
           getSize={element => element.closest('.sim-body')?.querySelector('.sim-side')?.getBoundingClientRect().width ?? 0}
           onResize={(element, requested) => {
@@ -2658,7 +2669,7 @@ function SimEditor({ scope = '', active, seed, snapshotRef, onModeChange, onNew,
             <div
               ref={backFrameRef}
               className="sim-backview"
-              style={{ display: animationMode && settings.backView && !flatMode ? 'block' : 'none' }}
+              style={{ display: showBackViewFrame ? 'block' : 'none', visibility: settings.backView ? undefined : 'hidden' }}
               aria-hidden
             />
           )}
@@ -2737,6 +2748,7 @@ function SimEditor({ scope = '', active, seed, snapshotRef, onModeChange, onNew,
             renderer={query.renderer}
             onRendererChange={handleRendererChange}
             playbackSlot={playbackSlot}
+            playbackSettingsButtonRef={playbackSettingsButtonRef}
             canvasTools={<div className="sim-canvas-tools">
               <div className="sim-bg-overlay" ref={setBgSlot} />
               <div className="sim-capture-stage-slot" ref={setCaptureStickeringSlot} />
@@ -2749,7 +2761,7 @@ function SimEditor({ scope = '', active, seed, snapshotRef, onModeChange, onNew,
               <button
                 type="button"
                 className="playback-bar-btn"
-                onClick={() => setFullscreen(!fullscreen)}
+                onClick={() => runPlayerFullscreenTransition(() => setFullscreen(value => !value))}
                 title={fullscreen ? t('退出全屏', 'Exit fullscreen') : t('全屏魔方', 'Fullscreen cube')}
                 aria-label={fullscreen ? t('退出全屏', 'Exit fullscreen') : t('全屏魔方', 'Fullscreen cube')}
               >
@@ -2757,8 +2769,8 @@ function SimEditor({ scope = '', active, seed, snapshotRef, onModeChange, onNew,
               </button>
             }
             backViewButton={!flatMode ? (
-              <PlaybackBackViewButton visible={settings.backView} toggle
-                onClick={() => setSettings(prev => ({ ...prev, backView: !prev.backView }))}
+              <PlaybackBackViewButton buttonRef={backViewButtonRef} visible={settings.backView} toggle
+                onClick={() => setSettings(prev => resolveBackViewOptions({ ...prev, backView: !prev.backView }))}
                 showLabel={t('显示小窗', 'Show back view')} hideLabel={t('关闭小窗', 'Hide back view')} />
             ) : null}
             stickering={query.stickering}

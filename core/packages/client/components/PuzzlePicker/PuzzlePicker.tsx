@@ -84,6 +84,7 @@ interface Props {
   showTriggerIcon?: boolean;
   showTriggerLabel?: boolean;
   triggerVariant?: TimerPuzzlePickerProps['triggerVariant'];
+  openSubmenuOnHover?: boolean;
   showArrow?: boolean;
   /** 是否显示每项的图标/文字徽标;纯文本 catalog 可关闭。 */
   showItemIcons?: boolean;
@@ -102,7 +103,7 @@ const menuLabel = (label: string): string => label.replaceAll('魔方', '').repl
 
 export default function PuzzlePicker({
   isZh = false, selectedEvent, selectedEvents, wcaEvents, availableEvents, onSelect, onToggle, linkFor,
-  discovery, groups: suppliedGroups, additionalGroups, leadingGroups, placeholderLabel, showArrow = false, showTriggerIcon = true, showTriggerLabel = false, triggerVariant, showItemIcons = true, popupFooter, itemAction, dataNoTimer,
+  discovery, groups: suppliedGroups, additionalGroups, leadingGroups, placeholderLabel, showArrow = false, showTriggerIcon = true, showTriggerLabel = false, triggerVariant, openSubmenuOnHover, showItemIcons = true, popupFooter, itemAction, dataNoTimer,
 }: Props) {
   const params = useParams();
   const prefix = params?.lang === 'zh' ? '/zh' : '';
@@ -208,6 +209,7 @@ export default function PuzzlePicker({
       }))}
       showArrow={showArrow}
       triggerVariant={triggerVariant}
+      openSubmenuOnHover={openSubmenuOnHover}
       selectedEvent={selectedEvent ?? ''}
       onSelect={onSelect}
       puzzleLabel={menuLabel(placeholderLabel ?? tr({ zh: '项目', en: 'Puzzle' }))}
