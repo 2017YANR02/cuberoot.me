@@ -1,9 +1,22 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { getPathMatch } from 'next/dist/shared/lib/router/utils/path-match';
 import { PLATFORM_ADMIN_NAV, platformAdminNavigationState, platformNavigationState, platformNavigationHref, platformSharedPathname, platformWorkspaceRoutes } from '@/lib/platform-navigation';
 import { matchPlatformRoute, resolvePlatformCanonicalPath, PLATFORM_CANONICAL_REWRITES, PLATFORM_ROUTES } from '@/lib/platform-routes';
 
 describe('Platform navigation context', () => {
+  it('initializes shared links in WebViews without Array.prototype.toSorted', async () => {
+    const descriptor = Object.getOwnPropertyDescriptor(Array.prototype, 'toSorted');
+    vi.resetModules();
+    try {
+      Reflect.deleteProperty(Array.prototype, 'toSorted');
+      const { platformNavigationHref } = await import('@/lib/platform-navigation');
+      expect(platformNavigationHref('/zh/teachers?teacher=12')).toBe('/zh/platform/teachers/12');
+      expect(platformNavigationHref('/zh/scramble/gen')).toBe('/zh/scramble/gen');
+    } finally {
+      if (descriptor) Object.defineProperty(Array.prototype, 'toSorted', descriptor);
+    }
+  });
+
   it('keeps course pages under the primary course link without secondary tabs', () => {
     expect(platformNavigationState('/zh/platform/paths')).toMatchObject({ primary: 'discover', secondary: null });
     expect(platformNavigationState('/platform/paths/beginner')).toMatchObject({ primary: 'discover', secondary: null });

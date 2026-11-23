@@ -103,7 +103,8 @@ export function platformSharedPathname(pathname: string): string {
 
 // Native teacher directory routes still share canonical links with the original directory.
 // More specific destinations precede catch-alls.
-const sharedRoutes = PLATFORM_ROUTES.filter(route => isPlatformSharedRoute(route) || route.id === 'teachers' || route.id === 'teacher-detail').toSorted((a, b) => {
+// filter() already returns a new array. Keep startup compatible with older Android WebViews.
+const sharedRoutes = PLATFORM_ROUTES.filter(route => isPlatformSharedRoute(route) || route.id === 'teachers' || route.id === 'teacher-detail').sort((a, b) => {
   const score = (route: PlatformRouteDefinition) => (route.canonicalHref?.split(/[/?]/).filter(part => part && !part.startsWith(':')).length ?? 0) * 10
     + (route.canonicalHref?.includes('?') ? 2 : 0) - (route.canonicalHref?.includes('*') ? 1 : 0);
   return score(b) - score(a);
