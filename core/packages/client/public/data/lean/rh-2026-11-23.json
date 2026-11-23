@@ -1,0 +1,62 @@
+{
+  "stage": "completed",
+  "startedAt": "2026-11-20T10:37:18-08:00",
+  "updatedAt": "2026-11-23T09:18:43-08:00",
+  "completed": 175187,
+  "total": 175187,
+  "elapsedSeconds": 254478,
+  "replayProgress": {
+    "phase": "finished",
+    "done": 2695292,
+    "total": 2695292
+  },
+  "workerCount": 0,
+  "processFootprintGiB": 0.0,
+  "peakFootprintGiB": 34.02,
+  "recent": [
+    {
+      "name": "Main",
+      "time": "2026-11-22T19:38:27-08:00",
+      "duration": "29s"
+    },
+    {
+      "name": "Supplements.Kernels.MainTheoremsAll",
+      "time": "2026-11-22T19:37:57-08:00",
+      "duration": "54s"
+    },
+    {
+      "name": "Supplements.Kernels.MainTheoremsCritical",
+      "time": "2026-11-22T19:37:03-08:00",
+      "duration": "16s"
+    },
+    {
+      "name": "Supplements.Kernels.MainTheorems",
+      "time": "2026-11-22T19:36:46-08:00",
+      "duration": "22s"
+    },
+    {
+      "name": "Development.AutomorphicArithmetic.CharacterBoxes.MainConclusion",
+      "time": "2026-11-22T19:36:23-08:00",
+      "duration": "19s"
+    }
+  ],
+  "toolchain": "leanprover/lean4:v4.33.1",
+  "mathlibCommit": "0df444a360eaa60ab8c11dca51a86af692955474",
+  "stageResults": {
+    "main-build": {
+      "endedAt": "2026-11-22T19:38:29-08:00",
+      "exitCode": 0
+    },
+    "rh-axioms": {
+      "endedAt": "2026-11-22T19:39:37-08:00",
+      "exitCode": 0
+    },
+    "kernel-replay": {
+      "endedAt": "2026-11-23T09:18:36-08:00",
+      "exitCode": 0
+    }
+  },
+  "checkedTheorem": "_root_.riemannHypothesis : _root_.RiemannHypothesis",
+  "axiomAuditOutput": "'LocalVerification.verifiedRH' depends on axioms: [propext, Classical.choice, Quot.sound]",
+  "kernelReplayLastLine": "replay-progress finished 2695292 2695292"
+}

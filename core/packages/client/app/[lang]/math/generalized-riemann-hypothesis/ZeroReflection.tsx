@@ -40,6 +40,6 @@ export default function ZeroReflection() {
       </div>
       <p aria-live="polite" className={styles.result}><MathProse>{conclusion}</MathProse></p>
     </div>
-    <p className={styles.exerciseFoot}>{t('我们的本机 Lean 检查已通过这个条件推论。整条证明还需要给出右半边无零点的无条件论证。', 'Our local Lean run checked this conditional implication. The full proof must also establish the zero-free region unconditionally.')} <a href="https://github.com/Deicyde/riemann-hypothesis/blob/40e56bab026552e089d7afcfeff08d2defb9c005/src/Formalism/GammaFactorNonvanishing/RhOfRight.lean">{t('查看该引理', 'Read the lemma')}</a></p>
+    <p className={styles.exerciseFoot}>{t('图中展示的是从右半边无零点推出黎曼猜想的这一步。完整证明还给出了右半边无零点的论证。', 'This diagram shows how a zero-free right half implies the Riemann hypothesis. The full proof also establishes that zero-free region.')} <a href="https://github.com/Deicyde/riemann-hypothesis/blob/40e56bab026552e089d7afcfeff08d2defb9c005/src/Formalism/GammaFactorNonvanishing/RhOfRight.lean">{t('查看该引理', 'Read the lemma')}</a></p>
   </section>;
 }

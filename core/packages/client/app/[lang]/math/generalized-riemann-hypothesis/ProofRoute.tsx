@@ -16,7 +16,7 @@ export default function ProofRoute() {
 
   return (
     <section id="proof-route" aria-labelledby="proof-route-title" className={styles.section}>
-      <h2 id="proof-route-title">{t('这份证明怎样排除偏离临界线的零点？', 'How does the proposed proof rule out zeros off the line?')}</h2>
+      <h2 id="proof-route-title">{t('这份证明怎样排除偏离临界线的零点？', 'How does the proof rule out zeros off the line?')}</h2>
       <p className={styles.intro}>{t(
         'Alpöge 选择同时控制一整族与素数分布有关的函数。这个目标比经典黎曼猜想更强。公告讲述他和 Claude 如何找到这条路线，Lean 源码则写出了需要逐项成立的数学命题。',
         'Alpöge aims to control an entire family of functions that encode the distribution of primes. This is a stronger target than classical RH. His announcement recounts how he and Claude arrived at the approach. The Lean files give the mathematical statements on which it depends.',
@@ -89,8 +89,8 @@ export default function ProofRoute() {
         <li>
           <h3 className={styles.stepTitle}>{t('取模 1 的特征，回到经典黎曼猜想', 'Specializing to the Riemann zeta function')}</h3>
           <p><MathProse>{t(
-            String.raw`模 1 的平凡特征给出的 L 函数正是 \(\zeta\) 函数。取这个特例，再用函数方程反射零点，就得到经典黎曼猜想。本次单独运行的 checked_reduction 已在 Lean 中验证了这条蕴含，右半平面无零点是它的显式前提。上方进度单独跟踪无条件定理的编译和复核。`,
-            String.raw`For the trivial character modulo 1 the L-function is \(\zeta\) itself. Taking that case and reflecting zeros with the functional equation yields classical RH. Our separate Lean check of checked_reduction verified this implication with right-half-plane nonvanishing as an explicit premise. The progress display tracks the build and audit of the unconditional theorem.`,
+            String.raw`模 1 的平凡特征给出的 L 函数正是 \(\zeta\) 函数。取这个特例，再用函数方程反射零点，就得到经典黎曼猜想。本次单独运行的 checked_reduction 已在 Lean 中验证了这条蕴含，右半平面无零点是它的显式前提。本次完整核验也检查了给出这一前提的证明。`,
+            String.raw`For the trivial character modulo 1 the L-function is \(\zeta\) itself. Taking that case and reflecting zeros with the functional equation yields classical RH. Our separate Lean check of checked_reduction verified this implication with right-half-plane nonvanishing as an explicit premise. The full kernel replay also checked the proof that supplies that premise.`,
           )}</MathProse></p>
           <div className={styles.sources}><a href={source + '/Formalism/GammaFactorNonvanishing/CritLine.lean#L29-L32'}>rh_of_every</a><a href={source + '/Formalism/GammaFactorNonvanishing/RhOfRight.lean#L5-L62'}>rh_of_right</a><a href={source + '/Main.lean#L4-L12'}>{t('发布的最终声明', 'Released theorem statements')}</a></div>
         </li>

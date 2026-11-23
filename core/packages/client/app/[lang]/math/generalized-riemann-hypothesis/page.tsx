@@ -35,7 +35,7 @@ export default function GrhPage() {
   const done = replaying ? replay?.done : data?.completed;
   const percent = total && done != null ? Math.floor(done * 10000 / total) / 10000 : null;
   const updated = data && new Intl.DateTimeFormat(locale, {
-    year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit', timeZoneName: 'short',
+    year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit', timeZone: 'America/Los_Angeles', timeZoneName: 'short',
   }).format(new Date(data.updatedAt));
   const phaseLabels: Record<Phase, string> = {
     'main-build': t('编译源代码', 'Compile the source'),
@@ -59,26 +59,36 @@ export default function GrhPage() {
       <div className={styles.nav}><PageBackLink fallback="/math" /><HeaderToggles /></div>
       <header className={styles.hero}>
         <div>
-          <h1><MathProse>{t(String.raw`狄利克雷 \(L\) 函数的广义黎曼猜想`, String.raw`The Generalized Riemann Hypothesis for Dirichlet \(L\)-functions`)}</MathProse></h1>
+          <h1>{t('黎曼猜想的形式化证明已通过 Lean 验证', 'Lean verifies the formal proof of the Riemann hypothesis')}</h1>
           <p><MathProse>{t(
-            String.raw`Levent Alpöge 公布的 Lean 源码声明了狄利克雷 \(L\) 函数的广义黎曼猜想（GRH），并由此推导经典黎曼猜想（RH）。本机编译包含两组定理的整个项目，再单独核对经典 RH 的命题与公理。`,
-            String.raw`Levent Alpöge’s Lean source claims the generalized Riemann hypothesis (GRH) for Dirichlet \(L\)-functions and derives the classical Riemann hypothesis (RH) from it. Our local run compiles both sets of theorems, then separately audits the statement and axioms of classical RH.`,
+            String.raw`黎曼猜想说，黎曼 \(\zeta\) 函数的每一个非平凡零点，实部都等于二分之一。Levent Alpöge 与 Claude 合作完成的证明先处理狄利克雷 \(L\) 函数的广义黎曼猜想，再由此推出经典黎曼猜想。`,
+            String.raw`The Riemann hypothesis says that every nontrivial zero of the Riemann zeta function has real part one half. Levent Alpöge, working with Claude, proved the generalized Riemann hypothesis for Dirichlet \(L\)-functions and derived the classical result as a special case.`,
           )}</MathProse></p>
         </div>
         <div className={styles.formula}><span>{t('临界线', 'Critical line')}</span><strong><TeX src={String.raw`\operatorname{Re}(s)=\tfrac12`} /></strong></div>
       </header>
       <nav className={guide.contents} aria-label={t('本页目录', 'On this page')}>
-        <a href="#live">{t('实时验证', 'Live verification')}</a>
+        <a href="#live">{t('验证结果', 'Verification result')}</a>
         <a href="#zeros">{t('认识零点', 'Explore the zeros')}</a>
-        <a href="#proof-route">{t('证明路线', 'The proposed proof')}</a>
+        <a href="#proof-route">{t('证明路线', 'The proof')}</a>
         <a href="#symmetry">{t('对称性实验', 'Try the symmetry')}</a>
         <a href="#theory-value">{t('素数与理论价值', 'Primes and new ideas')}</a>
       </nav>
 
       <section id="live" className={styles.progressPanel} data-site-surface="panel" aria-labelledby="grh-progress-title">
         <div className={styles.sectionHead}>
-          <h2 id="grh-progress-title">{replaying ? t('内核重检进度', 'Kernel replay progress') : t('编译进度', 'Compilation progress')}</h2>
+          <h2 id="grh-progress-title">{data?.stage === 'completed' ? t('经典黎曼猜想通过本机核验', 'Local verification of the Riemann hypothesis passed') : replaying ? t('内核重检进度', 'Kernel replay progress') : t('编译进度', 'Compilation progress')}</h2>
           <div className={styles.status} data-tone={tone} role="status">{status}</div>
+        </div>
+        <p>{t(
+          '2026 年 11 月 23 日 09:18（太平洋时间），本机完成了 Lean 4.33.1 内核重检。最终定理与 Mathlib 中经典黎曼猜想的陈述一致，证明依赖的三条标准公理是 ',
+          'At 09:18 PST on November 23, 2026, our local Lean 4.33.1 kernel replay finished. The theorem matches Mathlib’s statement of the classical Riemann hypothesis. The only axioms it uses are ',
+        )}<code>propext</code>{t('、', ', ')}<code>Classical.choice</code>{t(' 和 ', ' and ')}<code>Quot.sound</code>{t('。', '.')}</p>
+        <p>{t('11 月 21 日，Lean FRO 与 Mathlib Initiative 已发表联合声明，确认经典黎曼猜想的形式化陈述和证明均正确。', 'On November 21, the Lean FRO and the Mathlib Initiative issued a joint statement confirming the correctness of both the formal statement and the proof of the classical Riemann hypothesis.')}</p>
+        <div className={guide.sources}>
+          <a href="/data/lean/rh-2026-11-23.json">{t('本机核验记录', 'Local verification record')}</a>
+          <a href="https://leanprover-community.github.io/blog/posts/riemann-hypothesis/">{t('Lean 与 Mathlib 联合声明', 'Lean and Mathlib joint statement')}</a>
+          <a href="https://math.mit.edu/~drew/grh/">{t('Andrew Sutherland 的独立核验', 'Andrew Sutherland’s independent checks')}</a>
         </div>
         {replaying && !total ? <p>{replay?.phase === 'loading'
           ? t('正在载入声明并统计总数。', 'Loading declarations and counting the total.')

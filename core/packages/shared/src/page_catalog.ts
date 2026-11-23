@@ -555,8 +555,8 @@ export const PAGE_META: Record<string, PageMetaEntry> = {
   'math/generalized-riemann-hypothesis': {
     title: { zh: '狄利克雷 L 函数的广义黎曼猜想', en: 'The Generalized Riemann Hypothesis for Dirichlet L-functions' },
     description: {
-      zh: '从零点和素数认识黎曼猜想，了解 Alpöge 对狄利克雷 L 函数广义黎曼猜想提出的证明，跟踪经典黎曼猜想的 Lean 定理与公理复核。',
-      en: 'Explore zeros and primes in Alpöge’s proposed proof of the generalized Riemann hypothesis for Dirichlet L-functions. Follow the Lean audit of the classical RH theorem and its axioms.',
+      zh: '经典黎曼猜想的形式化证明已通过 Lean 验证。查看本机的定理、公理与内核重检结果，了解 Alpöge 如何从狄利克雷 L 函数的广义结论推出经典黎曼猜想。',
+      en: 'Lean has verified the formal proof of the classical Riemann hypothesis. See the local axiom audit and kernel replay, and how Alpöge derives the result from the case of Dirichlet L-functions.',
     },
   },
   'math/probability': {

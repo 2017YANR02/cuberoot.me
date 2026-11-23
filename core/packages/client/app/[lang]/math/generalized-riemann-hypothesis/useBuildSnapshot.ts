@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { statsUrl } from '@/lib/stats-base';
+import verifiedRun from '@/public/data/lean/rh-2026-11-23.json';
 
 export const phases = ['main-build', 'rh-axioms', 'kernel-replay'] as const;
 export type Phase = typeof phases[number];
@@ -68,7 +69,7 @@ function parseSnapshot(value: unknown): Snapshot | null {
 }
 
 export function useBuildSnapshot() {
-  const [data, setData] = useState<Snapshot | null>(null);
+  const [data, setData] = useState<Snapshot | null>(() => parseSnapshot(verifiedRun));
   const [now, setNow] = useState(0);
   const [error, setError] = useState(false);
   useEffect(() => {

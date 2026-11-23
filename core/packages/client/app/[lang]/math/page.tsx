@@ -95,10 +95,10 @@ export default function MathLandingPage() {
         <h2 id="grh-feature-title">
           <Link href={GRH_PATH}>{t('广义黎曼猜想', 'Generalized Riemann Hypothesis')}</Link>
         </h2>
-        <p>{t('了解狄利克雷 L 函数的零点，看看 Lean 怎样检验这份候选证明。', 'Explore the zeros of Dirichlet L-functions and follow the Lean verification of a proposed proof.')}</p>
+        <p>{t('经典黎曼猜想的形式化证明已通过 Lean 验证。了解它与狄利克雷 L 函数的关系，查看本机核验结果。', 'Lean has verified the formal proof of the classical Riemann hypothesis. Explore its connection to Dirichlet L-functions and see our local verification results.')}</p>
         <div className="hub-feature-links">
           <Link href={GRH_PATH + '#proof-route'}>{t('查看证明路线', 'Explore the proof')}</Link>
-          <Link href={GRH_PATH + '#live'}>{t('查看实时验证进度', 'View live verification')}</Link>
+          <Link href={GRH_PATH + '#live'}>{t('查看核验结果', 'View verification results')}</Link>
         </div>
       </section>
       <div className="hub-grid">
