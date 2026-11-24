@@ -120,6 +120,17 @@
 
 /* ── Main column ────────────────────────────────────────── */
 
+/* Mouse presses on the provenance row's blank space and icons reach the timer. */
+@media (any-pointer: fine) {
+  .timing-surface--solo .scramble-src-row {
+    pointer-events: none;
+  }
+  .timing-surface--solo .scramble-src-row > :is(.scramble-marks, .scramble-pool-run),
+  .timing-surface--solo .scramble-src :is(.scramble-src-name > span, .scramble-src-meta) {
+    pointer-events: auto;
+  }
+}
+
 /* Default surfaces outside the shared solo/net/local layouts. */
 .timing-surface:not(.timing-surface--solo):not(.timing-surface--net):not(.timing-surface--local) {
   --timer-scramble-fs: clamp(26px, 4.4vw, 36px);
@@ -455,6 +466,11 @@
   --timer-camera-preview-height: min(250px, 30dvh);
   width: min(100%, 30rem);
   margin-inline: auto;
+}
+/* A downward diagram offset moves the drawing without reserving space below it. */
+.timer-shell:not([data-camera-capture]) .timing-surface--solo:has(.timing-surface-cube-frame)
+  + .timer-solo-capture-preview:has(> .timer-camera-preview:not([hidden])) {
+  margin-block-start: max(0px, calc(var(--solo-cube-offset-y, 0px) * var(--solo-apply-offsets, 1)));
 }
 .timer-camera-preview .video-recon-page { padding: 0; }
 .timer-camera-preview .video-recon-camera-layout .video-recon-stage { max-height: var(--timer-camera-preview-height); }

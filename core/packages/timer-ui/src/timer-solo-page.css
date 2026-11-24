@@ -15,14 +15,18 @@
 }
 .shell-topbar.timer-solo-topbar--fullscreen { display: none; }
 .solver-trigger-slot { display: inline-flex; align-items: center; }
-.shell-topbar.timer-solo-topbar .shell-topbar-left :is(.pp-trigger, .compact-select-trigger,
-  .timer-scramble-source-trigger, .timer-difficulty-trigger, .solo-layout-toggle,
-  .settings-popover-trigger, .solver-light-trigger):not(:disabled) {
-  color: var(--foreground);
+.shell-topbar.timer-solo-topbar .shell-topbar-left :is(
+  .tb-btn, .shell-players-select, .pp-trigger, .compact-select-trigger,
+  .timer-scramble-source-trigger, .timer-difficulty-trigger, .timer-solo-control, .solver-light-trigger
+):not(:disabled, .shell-device-center-trigger) {
+  /* Match the unlit solver bulb across the toolbar. */
+  color: color-mix(in srgb, var(--foreground) 75%, transparent);
   opacity: 1;
+
+  &:is(:hover, :focus-visible) { color: var(--foreground); }
 }
 .shell-topbar.timer-solo-topbar .pp-trigger--active .pp-trigger-icon {
-  color: var(--foreground);
+  color: inherit;
 }
 .timer-solo-control {
   display: inline-flex;
@@ -53,8 +57,6 @@
 }
 .solver-light-trigger svg {
   position: relative;
-  opacity: 0.75;
-  transition: opacity 300ms ease-out;
 }
 .solver-light-trigger::before {
   content: '';
@@ -71,11 +73,8 @@
   transition: opacity 300ms ease-out, transform 300ms ease-out;
   pointer-events: none;
 }
-.solver-light-trigger[data-lit='true'] svg,
-.solver-light-trigger[data-lit='true']::before { opacity: 1; }
-.solver-light-trigger[data-lit='true']::before { transform: scale(1); }
+.solver-light-trigger[data-lit='true']::before { opacity: 1; transform: scale(1); }
 @media (prefers-reduced-motion: reduce) {
-  .solver-light-trigger svg,
   .solver-light-trigger::before { transition: none; }
 }
 

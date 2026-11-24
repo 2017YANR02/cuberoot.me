@@ -71,7 +71,7 @@ export function TimerWcaScrambleSource({
             />
           </span>
         )}
-        <span className="scramble-src-name">{competitionName}</span>
+        <span className="scramble-src-name"><span>{competitionName}</span></span>
         <span aria-hidden="true" className="scramble-src-event">
           <EventIcon
             className="scramble-src-evt"
