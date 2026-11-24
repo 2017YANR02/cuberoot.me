@@ -6,7 +6,7 @@
 import { areParallelCubeMoves } from '@cuberoot/shared/alg-notation';
 
 export const MOVE_START_RE = /[RLUDFBMESxyzrludfbmes]/;
-export const MOVE_END_RE = /[RLUDFBMESwxyzrludfbmes'2]/;
+export const MOVE_END_RE = /[RLUDFBMESwxyzrludfbmes'p2]/;
 
 const PUNCT_MAP: Record<string, string> = {
   '（': '(', '）': ')',
