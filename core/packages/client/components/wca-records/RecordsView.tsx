@@ -7,6 +7,7 @@ import dynamic from 'next/dynamic';
 import { WcaStatView } from '@/components/wca-stats/WcaStatView';
 import { WR_METRICS, RANK_TYPE_IDS } from '@/lib/wr-metrics';
 import PageHeading from '@/components/PageHeading';
+import BoolToggle from '@/components/BoolToggle';
 import { useQueryStates, parseAsString } from 'nuqs';
 import { useTranslation } from 'react-i18next';
 import { WcaGenderSelect } from '@/components/wca-stats/WcaGenderSelect';
@@ -249,11 +250,10 @@ export default function RecordsView({ embedded = false, leadingControls }: { emb
           {canFilterTeam && <WcaTeamFilterSelect teams={teamDirectory.teams} value={teamFilter} onChange={value => update('team', value)} />}
           {leadingControls}
           {!sorScope && !derived && !canShowHistoryDetails && filteredRows.length > 0 && (
-            <label className="records-column-toggle">
-              <input type="checkbox" checked={fullColumns} onChange={e => setFullColumns(e.target.checked)} />
-              {tr({ zh: '显示全部列', en: 'Show all columns' })}
+            <div className="records-column-toggle">
+              <BoolToggle value={fullColumns} onChange={setFullColumns} label={tr({ zh: '显示全部列', en: 'Show all columns' })} />
               {fullColumns && <span>{tr({ zh: '（可横向滑动）', en: '(scroll horizontally)' })}</span>}
-            </label>
+            </div>
           )}
           {!sorScope && !derived && <div className="wca-stats-tab-bar wca-stats-tab-bar-connected"
             role="group" aria-label={tr({ zh: '纪录范围', en: 'Record scope' })}>
