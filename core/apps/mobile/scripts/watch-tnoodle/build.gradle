@@ -1,0 +1,54 @@
+buildscript { repositories { mavenCentral() }; dependencies { classpath 'org.ow2.asm:asm-tree:9.8' } }
+plugins { id 'java' }
+repositories { mavenCentral() }
+configurations { compiler }
+dependencies {
+  implementation files('build/upstream/TNoodle-WCA-1.2.3.jar')
+  implementation 'org.teavm:teavm-jso-apis:0.14.1'
+  compiler 'org.teavm:teavm-cli:0.14.1'
+}
+tasks.register('compileJS', JavaExec) {
+  dependsOn classes
+  classpath = configurations.compiler + sourceSets.main.runtimeClasspath
+  mainClass = 'org.teavm.cli.TeaVMRunner'
+  args '--targetdir', 'build/js', '--targetfile', 'tnoodle.js', 'WatchTNoodle'
+}
+
+// The watch supplies native entropy to generateWcaScramble(Random). Drop the JVM-only
+// default provider allocation in Puzzle's constructor, unused by that overload.
+tasks.register('watchPlatformAdapter') {
+  dependsOn classes
+  doLast {
+    def entry = 'org/worldcubeassociation/tnoodle/scrambles/Puzzle.class'
+    def original = new java.util.jar.JarFile(file('build/upstream/TNoodle-WCA-1.2.3.jar'))
+    try {
+      def cls = new org.objectweb.asm.tree.ClassNode()
+      new org.objectweb.asm.ClassReader(original.getInputStream(original.getEntry(entry))).accept(cls, 0)
+      def ctor = cls.methods.find { it.name == '<init>' }
+      def call = ctor.instructions.find { it instanceof org.objectweb.asm.tree.MethodInsnNode && it.name == 'getSecureRandom' }
+      assert call != null
+      ctor.instructions.set(call, new org.objectweb.asm.tree.InsnNode(org.objectweb.asm.Opcodes.ACONST_NULL))
+      def writer = new org.objectweb.asm.ClassWriter(0)
+      cls.accept(writer)
+      def dest = file("build/classes/java/main/${entry}")
+      dest.parentFile.mkdirs()
+      dest.bytes = writer.toByteArray()
+    } finally { original.close() }
+  }
+}
+tasks.named('compileJS') { dependsOn 'watchPlatformAdapter' }
+
+tasks.register('fetchTNoodle') {
+  def jar = file('build/upstream/TNoodle-WCA-1.2.3.jar')
+  outputs.file(jar)
+  doLast {
+    jar.parentFile.mkdirs()
+    def bytes = new URI('https://github.com/thewca/tnoodle/releases/download/v1.2.3/TNoodle-WCA-1.2.3.jar').toURL().bytes
+    assert java.security.MessageDigest.getInstance('SHA-256').digest(bytes).encodeHex().toString() == 'e9ff6a164effee8a7ecdcc5c18111d4aa09d1de471b71de224889a1282d98cd5'
+    jar.bytes = bytes
+  }
+}
+compileJava.dependsOn fetchTNoodle
+tasks.named('compileJS') {
+  doLast { copy { from 'build/js/tnoodle.js'; into '../../src/generated'; rename { 'watch-tnoodle.cjs' } } }
+}

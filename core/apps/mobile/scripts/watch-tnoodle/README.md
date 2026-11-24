@@ -1,0 +1,1 @@
+The watch uses the puzzle classes from TNoodle-WCA-1.2.3 with TeaVM 0.14.1. Run `../../android/gradlew -p . compileJS` here to rebuild the bundled JavaScript. Puzzle generation uses fresh watchOS entropy for each call to generateWcaScramble. The adapter omits JVM logging and the unused default JVM entropy provider.

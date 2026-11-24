@@ -7,7 +7,7 @@ import { runInNewContext } from 'node:vm';
 import { buildWatchScramble } from '../scripts/build-watch-scramble';
 import { smartCubeTargetFacelets } from '@cuberoot/shared/smart-cube/cubie';
 
-it('bundles the ordinary 333 provider without browser transport and keeps generating past ten slots', async () => {
+it('bundles the watch 333 provider without browser transport and keeps generating past ten slots', async () => {
   const directory = await mkdtemp(join(tmpdir(), 'watch-scramble-'));
   try {
     const bundle = join(directory, 'WatchScramble.js');

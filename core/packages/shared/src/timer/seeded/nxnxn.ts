@@ -69,12 +69,16 @@ function genBigMoves(len: number, maxWide: number, rng: () => number): string {
   return out.join(' ');
 }
 
+export function scramble444RandomMoves(rng: () => number): string {
+  return genBigMoves(45, 2, rng);
+}
+
 export function scramble444(rng: () => number): string {
   // Prefer true random-state (cstimer port). Fall back to random-move on error.
   try {
     return scramble444RandomState(rng);
   } catch {
-    return genBigMoves(45, 2, rng);
+    return scramble444RandomMoves(rng);
   }
 }
 

@@ -270,6 +270,7 @@
       "./timer/event-catalog": "runtime-neutral",
       "./douyin-content": "runtime-neutral",
       "./smart-cube/gan-v1": "runtime-neutral",
+      "./timer/trainer-scramble": "runtime-neutral",
       "./timer/training-settings": "runtime-neutral",
       "./timer/training-view": "runtime-neutral",
       "./timer/seeded/wca": "runtime-neutral",
@@ -997,6 +998,7 @@
     "./timer/event-catalog": "./src/timer/event-catalog.ts",
     "./douyin-content": "./src/douyin-content.ts",
     "./smart-cube/gan-v1": "./src/smart_cube/gan_v1.ts",
+    "./timer/trainer-scramble": "./src/timer/trainer-scramble.ts",
     "./timer/training-settings": "./src/timer/training-settings.ts",
     "./timer/training-view": "./src/timer/training-view.ts",
     "./timer/seeded/wca": {
