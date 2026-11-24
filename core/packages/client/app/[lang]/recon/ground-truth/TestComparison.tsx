@@ -51,6 +51,6 @@ export default function TestComparison({ regression, item }: { regression: Regre
     {identical ? <><p>{tr({ zh: '预期与输出一致', en: 'Expected and actual match' })}{individual && !item.expected && ' · ' + expectedLabel}</p><pre>{format(expected)}</pre></>
       : <div className="gt-text-compare"><div><h3>{expectedLabel}</h3><pre>{format(expected)}</pre></div>
         <div><h3>{tr({ zh: '实际', en: 'Actual' })}</h3><pre>{actual == null ? tr({ zh: '本次无输出', en: 'No output in this run' }) : format(actual)}</pre></div></div>}
-    {errors.length > 0 && <pre className="gt-run-errors">{errors.join('\n\n')}</pre>}
+    {errors.length > 0 && <p className="gt-run-errors">{tr({ zh: `检查发现 ${errors.length} 项错误`, en: `Errors found: ${errors.length}` })}</p>}
   </details>;
 }

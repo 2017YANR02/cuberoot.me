@@ -220,7 +220,7 @@ export default function RegressionResults({ title: heading }: { title?: ReactNod
       {run && <div className="gt-run-summary">
         <span>{tr({ zh: '程序检查：通过 ' + run.passed + ' · 失败 ' + run.failed + ' · 跳过 ' + (run.skipped ?? 0), en: 'Program checks: ' + run.passed + ' passed · ' + run.failed + ' failed · ' + (run.skipped ?? 0) + ' skipped' })}</span>
         <small>{run.commit.slice(0, 10) || '—'}{run.dirty && tr({ zh: ' + 本地修改', en: ' + local changes' })} · {run.fingerprint.slice(0, 12)}</small>
-        {!!run.errors.length && <pre className="gt-run-errors">{run.errors.join('\n\n')}</pre>}
+        {!!run.errors.length && <p className="gt-run-errors">{tr({ zh: `检查发现 ${run.errors.length} 项错误`, en: `Errors found: ${run.errors.length}` })}</p>}
       </div>}
       {history?.scope === 'local' && <p className="gt-run-note">{tr(syncState === 'done' ? { zh: '本机记录已同步', en: 'Local records synchronized' } : syncState === 'failed' ? { zh: '本机记录已保存，刷新重试同步。', en: 'Saved locally. Refresh to retry sync.' } : { zh: '正在同步本机记录…', en: 'Synchronizing local records…' })}</p>}
       </div>

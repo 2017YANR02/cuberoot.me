@@ -58,7 +58,7 @@ export default function RegressionCaseDetail({ intakeId, replaySource, onChange,
     const request = intakeId
       ? intakeRequest<Detail>('/' + intakeId).then(value => { if (current) setDetail(value); })
       : readTimerReplay(replaySource, [], { apiUrl, fetcher: sessionFetch }).then(value => { if (current) setSolve(value); });
-    void request.catch(e => { if (current) setError(String(e)); }).finally(() => { if (current) setLoading(false); });
+    void request.catch(() => { if (current) setError(tr({zh:'复盘详情加载失败，请重试。',en:'Could not load the reconstruction. Please retry.'})); }).finally(() => { if (current) setLoading(false); });
     return () => { current = false; };
   }, [intakeId, replaySource, reload]);
   const item = detail?.item;
@@ -68,7 +68,7 @@ export default function RegressionCaseDetail({ intakeId, replaySource, onChange,
     try {
       await intakeRequest(`/${item.id}/review`, { revision: item.revision, action: 'approve' });
       refresh();
-    } catch (e) { setError(String(e)); } finally { setBusy(false); }
+    } catch { setError(tr({zh:'确认未保存，请刷新后重试。',en:'Could not save the review. Refresh and try again.'})); } finally { setBusy(false); }
   };
   const copyTask = async () => {
     try {
@@ -77,16 +77,15 @@ export default function RegressionCaseDetail({ intakeId, replaySource, onChange,
         en: `Process the smart cube reconstruction queue${item ? `, starting with ${item.id}` : ''}. Read docs/product/recon/recon-intake-workflow.md. Use pnpm recon:intake in core/ to claim and renew tasks, reproduce from raw recordings, preserve human expectations, fix general rules, run existing regressions and report results. Local changes only; do not commit or push.`,
       }));
       setCopied(true);
-    } catch (e) { setError(String(e)); }
+    } catch { setError(tr({zh:'复制失败，请重试。',en:'Could not copy the instructions. Please retry.'})); }
   };
 
   return <div className="ri-case-detail">
     {renderHeader(item ? <InfoTooltip iconSize={16} ariaLabel={tr({ zh: '收录详情', en: 'Collection details' })} content={[
       tr(statuses[item.status]) + ' · v' + item.revision,
       tr({ zh: '实录用时', en: 'Recorded time' }) + ' ' + (item.input.recording.timeMs / 1000).toFixed(3) + 's',
-      item.id,
-      item.createdBy + ' · ' + item.createdAt,
-      item.claimedBy && tr({ zh: 'AI 领取', en: 'AI claim' }) + '：' + item.claimedBy + ' · ' + item.leaseUntil,
+      new Date(item.createdAt).toLocaleString(),
+      item.claimedBy && tr({ zh: 'AI 已领取', en: 'Claimed by AI' }),
     ].filter(Boolean).join('\n')} /> : null)}
     {error && <p role="alert">{error}</p>}
     {loading && <ContentSkeleton variant="article" media aspectRatio="3 / 1" rows={2} label={tr({ zh: '正在加载复盘详情…', en: 'Loading reconstruction…' })} />}
@@ -113,10 +112,10 @@ export default function RegressionCaseDetail({ intakeId, replaySource, onChange,
       <details><MoreToggle as="summary">{tr({ zh: '测试与修改历史', en: 'Test and revision history' })}</MoreToggle>
       <h3>{tr({ zh: '测试历史', en: 'Test history' })}</h3>
         {detail!.runs.map((run, i) => <details key={run.payload?.id ?? i}><MoreToggle as="summary">v{run.revision} · {run.payload && tr(runStatuses[run.payload.status])} · {run.created_at}</MoreToggle>
-          <pre>{text(run.payload?.actual)}</pre>{!!run.payload?.errors.length && <pre>{run.payload.errors.join('\n')}</pre>}</details>)}
+          <pre>{text(run.payload?.actual)}</pre>{!!run.payload?.errors.length && <p>{tr({zh:`检查发现 ${run.payload.errors.length} 项错误`, en:`Errors found: ${run.payload.errors.length}`})}</p>}</details>)}
       <h3>{tr({ zh: '批注与预期版本', en: 'Annotation and expectation history' })}</h3>
         {detail!.revisions.map(revision => <details key={revision.revision}>
-          <MoreToggle as="summary">v{revision.revision} · {revision.actor} · {revision.created_at}</MoreToggle>
+          <MoreToggle as="summary">v{revision.revision} · {new Date(revision.created_at).toLocaleString()}</MoreToggle>
           {revision.input.annotations.map(note => <div key={note.id}><p>{note.problem}</p><pre>{note.expectedAlgorithm}</pre><p>{note.expectedEffect}</p></div>)}
           <pre>{text(revision.expected ?? revision.input.observed)}</pre>
         </details>)}</details>

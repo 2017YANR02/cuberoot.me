@@ -65,7 +65,7 @@ function statusText(status: GroundTruthStatus): string {
 
 function issueText(code: string): string {
   const text = ISSUE_TEXT[code];
-  return text ? tr({ zh: text.zh, en: text.en }) : code;
+  return text ? tr({ zh: text.zh, en: text.en }) : tr({zh:'需要进一步核对', en:'Further review required'});
 }
 
 function CandidateRow({ item, selected, onSelect }: {
@@ -143,8 +143,8 @@ function ManualGroundTruthPage({ title }: { title: ReactNode }) {
         if (current && next.items.some((item) => item.id === current)) return current;
         return next.items[0]?.id ?? null;
       });
-    } catch (e) {
-      setError(e instanceof Error ? e.message : String(e));
+    } catch {
+      setError(tr({zh:'候选列表加载失败，请重试。', en:'Could not load candidates. Please retry.'}));
     } finally {
       setLoading(false);
     }
@@ -171,8 +171,8 @@ function ManualGroundTruthPage({ title }: { title: ReactNode }) {
       setNote(next.decision?.note ?? '');
       setCurrentWrong(next.decision?.currentWrong ?? '');
       setAcknowledgeWarnings(false);
-    }).catch((e) => {
-      if (active) setSaveError(e instanceof Error ? e.message : String(e));
+    }).catch(() => {
+      if (active) setSaveError(tr({zh:'复盘详情加载失败，请重试。', en:'Could not load reconstruction details. Please retry.'}));
     }).finally(() => {
       if (active) setDetailLoading(false);
     });
