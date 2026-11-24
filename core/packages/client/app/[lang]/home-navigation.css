@@ -58,13 +58,8 @@ body .landing-page.landing-page--navigation {
   background-image: var(--glass-capsule-glint, none);
   border-color: var(--glass-edge);
   box-shadow: var(--glass-capsule-shadow, inset 0 0 0 1px var(--glass-edge));
-  -webkit-backdrop-filter: var(--glass-capsule-filter, var(--glass-filter));
-  backdrop-filter: var(--app-nav-lens-optics, var(--glass-capsule-filter, var(--glass-filter)));
-}
-@media (prefers-reduced-transparency: reduce) {
-  .home-navigation[data-floating] .home-navigation-surface[data-site-surface='heading'] {
-    backdrop-filter: none;
-  }
+  -webkit-backdrop-filter: var(--glass-filter);
+  backdrop-filter: var(--glass-filter);
 }
 @media (prefers-reduced-motion: reduce) {
   .home-navigation, .home-navigation-surface { transition: none; }
@@ -168,8 +163,8 @@ body .landing-page.landing-page--navigation {
   position: fixed;
   inset: var(--home-nav-bottom, 0px) 0 0;
   background: var(--navigation-curtain-bg);
-  -webkit-backdrop-filter: var(--navigation-curtain-filter);
-  backdrop-filter: var(--navigation-curtain-filter);
+  -webkit-backdrop-filter: var(--glass-filter);
+  backdrop-filter: var(--glass-filter);
   opacity: 0;
   visibility: hidden;
   pointer-events: none;

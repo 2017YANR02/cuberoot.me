@@ -51,7 +51,7 @@
     position: sticky;
     top: 0;
     z-index: 10;
-    backdrop-filter: blur(8px);
+    backdrop-filter: var(--glass-filter);
 }
 
 /* flex: 1 0 auto — grow 把 chips 推到右沿,但 shrink:0 保证标题永不被压到内容宽以下

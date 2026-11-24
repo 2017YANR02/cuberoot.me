@@ -118,7 +118,7 @@ export default function RootLayout({
             app down to the old engine; it only renders an actionable fallback. */}
         <script dangerouslySetInnerHTML={{ __html: APP_BOOT_EARLY_SCRIPT }} />
       </head>
-      <body suppressHydrationWarning>
+      <body data-site-glass="solid">
         <AppNuqsAdapter>
           <SiteChrome><SiteBackground /></SiteChrome>
           <PrimaryNavigationOptics siteWide displacementScale={28} />

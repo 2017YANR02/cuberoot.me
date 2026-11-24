@@ -19,7 +19,7 @@ const CSS = `
 .deskpet-gallery-overlay{position:fixed;inset:0;z-index:100040;display:flex;align-items:center;
   justify-content:center;padding:24px 16px;overflow:auto;
   background:color-mix(in srgb, var(--foreground) 45%, transparent);
-  backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);}
+  -webkit-backdrop-filter:var(--glass-filter);backdrop-filter:var(--glass-filter);}
 .deskpet-gallery{position:relative;width:100%;
   background:transparent;padding:0;}
 .deskpet-gallery-title{margin:0 0 4px;font-size:1.05rem;font-weight:600;color:var(--foreground);text-align:center;}

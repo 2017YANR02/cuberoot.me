@@ -2309,7 +2309,7 @@ export const CATALOG: ComponentEntry[] = [
     category: 'toggle',
     zh: `iOS 分段控件风的胶囊切换器,active thumb 用 liquid-glass 渲染并跟手滑动,横滑过界即切,泛型单选。`,
     en: `iOS segmented-control-style chip switcher with a liquid-glass thumb that follows the finger and switches on drag-over; generic single-select.`,
-    note: { zh: `折射来自站点共用的 PrimaryNavigationOptics。不支持 SVG 背景滤镜时沿用 CSS 玻璃样式。`, en: `Refraction comes from the shared PrimaryNavigationOptics. CSS glass styles cover browsers without SVG backdrop filters.` },
+    note: { zh: `使用全站共用的折射滤镜。浏览器不支持折射时显示实色。`, en: `Uses the site-wide refraction filter, with a solid fallback for unsupported browsers.` },
   },
   {
     name: 'Scramble222ModePicker',

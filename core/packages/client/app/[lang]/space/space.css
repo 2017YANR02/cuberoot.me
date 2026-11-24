@@ -53,17 +53,17 @@
 .space-zoom-input { width: 112px; height: 40px; margin: 0; accent-color: var(--accent); cursor: pointer; }
 .space-zoom-input:focus-visible { outline: 2px solid var(--ring); }
 .space-zoom-input:disabled { opacity: .35; cursor: default; }
-.space-view-tools { position: absolute; right: 32px; top: calc(var(--space-canvas-height) - 48px); background: var(--space-surface); backdrop-filter: blur(12px); color: var(--muted-foreground); }
+.space-view-tools { position: absolute; right: 32px; top: calc(var(--space-canvas-height) - 48px); background: var(--space-surface); backdrop-filter: var(--glass-filter); color: var(--muted-foreground); }
 .space-view-tools > [aria-pressed="true"] { color: var(--accent); background: var(--accent-soft); }
 .space-navigation { position: absolute; left: 24px; top: calc(var(--space-canvas-height) - 64px); transform: translateY(-100%); display: flex; flex-direction: column; align-items: flex-start; gap: 8px; max-width: calc(100% - 48px); }
-.space-flight-settings { flex-wrap: wrap; max-width: 100%; gap: 4px 12px; background: var(--space-surface); backdrop-filter: blur(12px); font-size: 12px; }
+.space-flight-settings { flex-wrap: wrap; max-width: 100%; gap: 4px 12px; background: var(--space-surface); backdrop-filter: var(--glass-filter); font-size: 12px; }
 .space-flight-settings .compact-select-trigger { min-height: 44px; padding: 0 8px; font-size: 12px; }
 .space-altitude { display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; margin-left: 8px; }
 .space-flight-speed { display: inline-flex; align-items: center; margin-left: 8px; }
 .space-flight-input { width: 7ch; min-height: 44px; padding: 0; border: 0; background: transparent; color: inherit; font: inherit; font-variant-numeric: tabular-nums; }
 .space-flight-input:focus-visible { outline: 2px solid var(--ring); }
 .space-direction-pad { display: grid; grid-template-columns: repeat(3, 44px) max-content; gap: 4px; touch-action: none; user-select: none; }
-.space-direction { height: 44px; min-width: 44px; background: var(--space-surface); backdrop-filter: blur(12px); }
+.space-direction { height: 44px; min-width: 44px; background: var(--space-surface); backdrop-filter: var(--glass-filter); }
 .space-direction:is(:hover, :active) { color: var(--foreground); background: color-mix(in srgb, var(--accent) 12%, var(--background)); }
 .space-direction:is([data-direction="forward"], [data-direction="look-up"]) { grid-area: 1 / 2; }
 .space-direction:is([data-direction="left"], [data-direction="look-left"]) { grid-area: 2 / 1; }

@@ -507,7 +507,7 @@
   background: color-mix(in srgb, var(--background) 88%, transparent);
   color: var(--accent);
   pointer-events: none;
-  backdrop-filter: blur(4px);
+  backdrop-filter: var(--glass-filter);
 }
 
 .drive-drop-overlay svg {

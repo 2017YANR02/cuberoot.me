@@ -467,8 +467,8 @@
   justify-content: center;
   padding: 20px;
   background: color-mix(in srgb, var(--foreground) 45%, transparent);
-  -webkit-backdrop-filter: blur(2px);
-  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: var(--glass-filter);
+  backdrop-filter: var(--glass-filter);
 }
 .sk-modal {
   width: 100%;

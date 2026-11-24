@@ -1244,7 +1244,7 @@ a.cfop-pillar-link:hover .cfop-pillar-label {
     margin: 0 -16px 8px;
     padding: 8px 16px;
     background: color-mix(in srgb, var(--tutorial-bg) 92%, transparent);
-    backdrop-filter: blur(8px);
+    backdrop-filter: var(--glass-filter);
     border-bottom: 1px solid var(--tutorial-border);
   }
   .cfop-toc-mobilebtn {

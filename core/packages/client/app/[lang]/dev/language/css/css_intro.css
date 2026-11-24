@@ -88,8 +88,8 @@
   display: flex; justify-content: space-between; align-items: center;
   padding: 18px 40px;
   background: rgba(6, 18, 28, 0.78);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: var(--glass-filter);
+  backdrop-filter: var(--glass-filter);
   border-bottom: 1px solid var(--line);
   z-index: 100;
 }

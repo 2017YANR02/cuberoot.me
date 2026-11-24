@@ -742,7 +742,7 @@
   place-items: center;
   padding: 20px;
   background: color-mix(in srgb, var(--foreground) 34%, transparent);
-  backdrop-filter: blur(4px);
+  backdrop-filter: var(--glass-filter);
 }
 .sim-picture-dialog {
   width: min(720px, 100%);
@@ -875,7 +875,7 @@
   font-size: 11px;
   line-height: 1.2;
   white-space: nowrap;
-  backdrop-filter: blur(5px);
+  backdrop-filter: var(--glass-filter);
 }
 .sim-picture-face-main > em {
   position: absolute;
@@ -891,7 +891,7 @@
   font-size: 10px;
   font-style: normal;
   line-height: 1.2;
-  backdrop-filter: blur(5px);
+  backdrop-filter: var(--glass-filter);
 }
 .clear-btn.sim-picture-face-remove {
   position: absolute;
@@ -901,7 +901,7 @@
   height: 24px;
   color: var(--foreground);
   background: color-mix(in srgb, var(--background) 86%, transparent);
-  backdrop-filter: blur(5px);
+  backdrop-filter: var(--glass-filter);
 }
 .sim-picture-face-remove:disabled {
   opacity: 0.5;

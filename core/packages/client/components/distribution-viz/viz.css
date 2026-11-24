@@ -183,7 +183,7 @@ body[data-site-scenery] .viz-page :is(
   background: var(--bg-glass);
   border: 1px solid var(--border-subtle);
   border-radius: 12px;
-  backdrop-filter: blur(12px);
+  backdrop-filter: var(--glass-filter);
 }
 
 .viz-page .stat-item {
@@ -233,7 +233,7 @@ body[data-site-scenery] .viz-page :is(
   background: var(--bg-glass);
   border: 1px solid var(--border-subtle);
   border-radius: 12px;
-  backdrop-filter: blur(12px);
+  backdrop-filter: var(--glass-filter);
   flex-wrap: wrap;
 }
 /* NOTE: 手机端进度条独占一整行 */
@@ -655,7 +655,7 @@ body[data-site-scenery] .viz-page :is(
   font-size: 12px;
   line-height: 1.8;
   color: rgba(var(--ink-rgb),0.8);
-  backdrop-filter: blur(8px);
+  backdrop-filter: var(--glass-filter);
   /* NOTE: 防止溢出 canvas-wrapper 的 overflow:hidden 被裁切 */
   max-height: calc(100% - 48px);
   overflow-y: auto;
@@ -826,7 +826,7 @@ body[data-site-scenery] .viz-page :is(
   border: 1px solid rgba(var(--ink-rgb), 0.12);
   border-radius: 10px;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
-  backdrop-filter: blur(16px);
+  backdrop-filter: var(--glass-filter);
   max-height: 300px;
 }
 /* NOTE: 初始状态没搜索时 results 为空，隐藏避免显示空边框 */

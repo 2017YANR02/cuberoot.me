@@ -45,8 +45,8 @@
     color: #9CA0A8;
     font-size: 0.7rem;
     z-index: 10;
-    backdrop-filter: blur(6px);
-    -webkit-backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: var(--glass-filter);
+    backdrop-filter: var(--glass-filter);
     min-height: 24px;
 }
 .globe-page .globe-statusbar-left {
@@ -192,8 +192,8 @@
     background: var(--surface);
     color: var(--text);
     border-bottom: 1px solid var(--border);
-    backdrop-filter: blur(6px);
-    -webkit-backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: var(--glass-filter);
+    backdrop-filter: var(--glass-filter);
     z-index: 10;
     flex-wrap: wrap;
     position: relative;
@@ -219,8 +219,8 @@
     border: 1px solid #2F3540;
     border-radius: 10px;
     overflow: hidden;
-    backdrop-filter: blur(6px);
-    -webkit-backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: var(--glass-filter);
+    backdrop-filter: var(--glass-filter);
     pointer-events: auto;
 }
 .globe-page .map-ctrl-btn {
@@ -287,8 +287,8 @@
     border: 1px solid #2F3540;
     border-radius: 10px;
     color: #ECEAE3;
-    backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: var(--glass-filter);
+    backdrop-filter: var(--glass-filter);
     box-shadow: 0 6px 20px rgba(0, 0, 0, 0.5);
     overflow: hidden;
 }
@@ -432,8 +432,8 @@
     border: 1px solid #2F3540;
     border-radius: 10px;
     color: #ECEAE3;
-    backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: var(--glass-filter);
+    backdrop-filter: var(--glass-filter);
     box-shadow: 0 6px 20px rgba(0, 0, 0, 0.5);
     overflow: hidden;
 }
@@ -551,8 +551,8 @@
     border-radius: 10px;
     padding: 12px 14px;
     color: #ECEAE3;
-    backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: var(--glass-filter);
+    backdrop-filter: var(--glass-filter);
     box-shadow: 0 6px 20px rgba(0, 0, 0, 0.5);
     pointer-events: auto;
     z-index: 12;
@@ -597,8 +597,8 @@
     color: #ECEAE3;
     cursor: pointer;
     transition: all 0.15s;
-    backdrop-filter: blur(6px);
-    -webkit-backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: var(--glass-filter);
+    backdrop-filter: var(--glass-filter);
 }
 .globe-page .theme-toggle-floating:hover {
     color: #E07752;
@@ -1150,7 +1150,7 @@
     color: var(--text);
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.35);
     pointer-events: auto;
-    backdrop-filter: blur(6px);
+    backdrop-filter: var(--glass-filter);
     cursor: grab;
     touch-action: none; /* 拖动时阻止浏览器手势 */
     user-select: none;

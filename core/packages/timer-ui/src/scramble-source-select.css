@@ -109,6 +109,32 @@
   width: min(360px, 50vw);
 }
 
+/* Keep the WCA submenu's glass behind its controls so the country dropdown
+ * can blur the content it overlaps without a filtered ancestor. */
+body[data-site-scenery] .timer-scramble-source-popup[data-real-menu] {
+  background: transparent;
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+
+body[data-site-scenery] .timer-scramble-source-popup[data-real-menu]::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  border-radius: inherit;
+  background: var(--glass-popover-bg);
+  -webkit-backdrop-filter: var(--glass-filter);
+  backdrop-filter: var(--glass-filter);
+}
+
+body[data-site-scenery] .timer-scramble-source-popup[data-real-menu] .country-input-popup {
+  background: var(--glass-menu-bg);
+  -webkit-backdrop-filter: var(--glass-menu-filter);
+  backdrop-filter: var(--glass-menu-filter);
+}
+
 .timer-scramble-source-details {
   padding: 8px;
 }

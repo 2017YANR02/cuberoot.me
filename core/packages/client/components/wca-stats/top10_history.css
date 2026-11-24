@@ -409,7 +409,7 @@
   justify-content: center;
   background: rgba(0, 0, 0, 0.78);
   border-radius: 8px;
-  backdrop-filter: blur(2px);
+  backdrop-filter: var(--glass-filter);
 }
 .t10h-export-card {
   width: min(720px, calc(100vw - 48px));

@@ -543,7 +543,7 @@
   position: fixed;
   inset: 0;
   background: rgba(5, 5, 14, 0.78);
-  backdrop-filter: blur(4px);
+  backdrop-filter: var(--glass-filter);
   display: flex;
   align-items: flex-start;
   justify-content: center;

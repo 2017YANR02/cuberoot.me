@@ -279,7 +279,7 @@
   background: color-mix(in srgb, var(--surface) 88%, transparent);
   border: 1px solid var(--border);
   box-shadow: 0 2px 8px color-mix(in srgb, var(--foreground) 16%, transparent);
-  backdrop-filter: blur(4px);
+  backdrop-filter: var(--glass-filter);
 }
 .paint-create-badge {
   position: absolute;
@@ -296,7 +296,7 @@
   background: color-mix(in srgb, var(--surface) 92%, transparent);
   border: 1px solid var(--border);
   box-shadow: 0 2px 8px color-mix(in srgb, var(--foreground) 18%, transparent);
-  backdrop-filter: blur(4px);
+  backdrop-filter: var(--glass-filter);
 }
 .paint-create-badge-label {
   font-size: 11px;
@@ -503,7 +503,7 @@
   justify-content: center;
   padding: 16px;
   background: color-mix(in srgb, var(--foreground) 38%, transparent);
-  backdrop-filter: blur(2px);
+  backdrop-filter: var(--glass-filter);
 }
 .paint-modal {
   background: var(--card);

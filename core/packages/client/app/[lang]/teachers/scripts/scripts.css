@@ -137,7 +137,7 @@
   border-top: 1px solid var(--border-default);
   border-bottom: 1px solid var(--border-default);
   background: color-mix(in srgb, var(--background) 92%, transparent);
-  backdrop-filter: blur(14px);
+  backdrop-filter: var(--glass-filter);
 }
 
 .live-script-nav-inner {

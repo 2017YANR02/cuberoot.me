@@ -758,8 +758,8 @@
     position: fixed;
     inset: 0;
     background: rgba(24, 23, 22, 0.35);
-    backdrop-filter: blur(4px);
-    -webkit-backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: var(--glass-filter);
+    backdrop-filter: var(--glass-filter);
     z-index: 100;
     display: flex;
     /* 弹窗在视口内垂直居中(issue #33;原 flex-start + 8vh 顶部偏置贴着顶) */

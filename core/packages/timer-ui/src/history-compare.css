@@ -57,7 +57,7 @@
   padding: max(16px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right))
     max(16px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left));
   background: color-mix(in srgb, var(--background) 55%, transparent);
-  backdrop-filter: blur(2px);
+  backdrop-filter: var(--timer-overlay-filter, var(--glass-filter));
 }
 
 .timer-history-compare-modal {

@@ -18,8 +18,8 @@
   margin-bottom: 56px;
   padding-inline: 32px;
   background: color-mix(in srgb, var(--background) 88%, transparent);
-  backdrop-filter: blur(16px) saturate(1.6);
-  -webkit-backdrop-filter: blur(16px) saturate(1.6);
+  -webkit-backdrop-filter: var(--glass-filter);
+  backdrop-filter: var(--glass-filter);
   border-bottom: 1px solid var(--rule);
 }
 

@@ -1552,7 +1552,7 @@
   justify-content: center;
   padding: 20px;
   background: color-mix(in srgb, var(--background) 55%, transparent);
-  backdrop-filter: blur(2px);
+  backdrop-filter: var(--glass-filter);
 }
 .trainer-round-modal {
   max-width: min(92vw, 360px);

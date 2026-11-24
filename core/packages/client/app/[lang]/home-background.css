@@ -8,7 +8,7 @@
   body[data-site-scenery] .landing-page { background: transparent; }
 }
 
-/* Floating admin tools use the shared popover material. */
+/* Filter behind the card so its border is painted after refraction. */
 :root:has(.landing-page) :is(.landing-card, .card, .rs-scard, .recon-card, .rc-card, .ongoing-comps-chip),
 :root:has(.landing-page) :is(.landing-card, .card, .rs-scard, .recon-card, .rc-card, .ongoing-comps-chip):hover,
 :root .landing-page :is(.landing-card, .card).is-disabled,
@@ -16,27 +16,11 @@
   position: relative;
   isolation: isolate;
   overflow: hidden;
-  background: transparent;
-  border-color: var(--glass-edge);
-  -webkit-backdrop-filter: none;
-  backdrop-filter: none;
-  box-shadow: var(--glass-shadow);
-}
-
-:root:has(.landing-page) :is(.landing-card, .card, .rs-scard, .recon-card, .rc-card, .ongoing-comps-chip)::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  pointer-events: none;
-}
-
-/* Only the scenery bends. Negative stacking keeps every text node and icon crisp. */
-:root:has(.landing-page) :is(.landing-card, .card, .rs-scard, .recon-card, .rc-card, .ongoing-comps-chip)::before {
-  z-index: -1;
   background: var(--glass-background);
-  -webkit-backdrop-filter: var(--site-glass-refraction, var(--glass-filter));
-  backdrop-filter: var(--site-glass-refraction, var(--glass-filter));
+  border-color: var(--glass-edge);
+  -webkit-backdrop-filter: var(--glass-filter);
+  backdrop-filter: var(--glass-filter);
+  box-shadow: var(--glass-shadow);
 }
 
 /* Surface color comes entirely from the backdrop, without a painted highlight. */
@@ -77,21 +61,6 @@
 :root .landing-page :is(.landing-card, .card).is-disabled > :not(.coming-soon-badge) {
   filter: grayscale(1);
   opacity: .5;
-}
-
-@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
-  :root .landing-page {
-    --glass-background: var(--card);
-    --site-glass-refraction: none;
-  }
-}
-
-@media (prefers-reduced-transparency: reduce) {
-  :root .landing-page {
-    --glass-background: var(--card);
-    --glass-filter: none;
-    --site-glass-refraction: none;
-  }
 }
 
 @media (prefers-reduced-motion: reduce) {

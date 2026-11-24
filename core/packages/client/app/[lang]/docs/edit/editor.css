@@ -2,7 +2,7 @@
 .doc-topbar {
   position: sticky; top: 0; z-index: 40; display: flex; align-items: center; gap: 10px; min-height: 58px;
   padding: 7px max(12px, calc((100vw - 1320px) / 2)); border-bottom: 1px solid var(--border-default);
-  background: color-mix(in srgb, var(--background) 96%, transparent); backdrop-filter: blur(12px);
+  background: color-mix(in srgb, var(--background) 96%, transparent); backdrop-filter: var(--glass-filter);
 }
 .doc-back { display: inline-grid; flex: 0 0 auto; place-items: center; color: var(--foreground); }
 .doc-title-stack { display: flex; min-width: 0; align-items: center; gap: 8px; }

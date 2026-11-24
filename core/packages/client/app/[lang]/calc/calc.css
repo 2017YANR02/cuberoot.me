@@ -208,8 +208,8 @@
     cursor: pointer;
     border: 1px solid var(--border-default);
     background: color-mix(in srgb, var(--card) 88%, transparent);
-    backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: var(--glass-filter);
+    backdrop-filter: var(--glass-filter);
     color: var(--muted-foreground);
     font-size: 0.78rem;
     transition: color 0.2s, border-color 0.2s, background 0.2s;
@@ -888,8 +888,8 @@
     position: fixed;
     inset: 0;
     background: color-mix(in srgb, var(--foreground) 35%, transparent);
-    backdrop-filter: blur(4px);
-    -webkit-backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: var(--glass-filter);
+    backdrop-filter: var(--glass-filter);
     z-index: 9999;
     justify-content: center;
     align-items: center;

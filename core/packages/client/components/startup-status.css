@@ -47,7 +47,7 @@
   display: grid;
   place-content: center;
   background: color-mix(in srgb, var(--background) 86%, transparent);
-  backdrop-filter: blur(3px);
+  backdrop-filter: var(--glass-filter);
   pointer-events: none;
   animation: navigation-loading-reveal 180ms ease-out both;
 }

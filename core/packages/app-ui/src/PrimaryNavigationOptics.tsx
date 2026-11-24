@@ -46,8 +46,10 @@ export function PrimaryNavigationOptics({ navigation, displacementScale = 42 }: 
 
     image.setAttribute('href', map);
     target.style.setProperty(property, backdrop);
+    if (!navigation) target.dataset.siteGlass = 'liquid';
     return () => {
       target.style.removeProperty(property);
+      if (!navigation) target.dataset.siteGlass = 'solid';
       image.removeAttribute('href');
     };
   }, [filterId, navigation]);

@@ -52,7 +52,7 @@
 .lesson-video-autoplay:has([aria-checked=true]) .bool-toggle-label { left: auto; right: 2px; }
 .lesson-video-settings.is-open::after { display: none; }
 /* anchored-panel: clamped; also bounded by the player to avoid its clipping parent. */
-.lesson-video-menu { position: absolute; right: 12px; bottom: 76px; width: max-content; max-width: calc(100% - 24px); max-height: calc(100% - 88px); overflow-y: auto; overscroll-behavior: contain; padding: 8px 0; border-radius: 12px; background: color-mix(in srgb, var(--player-base) 72%, transparent); backdrop-filter: blur(20px); z-index: 2; scrollbar-width: thin; }
+.lesson-video-menu { position: absolute; right: 12px; bottom: 76px; width: max-content; max-width: calc(100% - 24px); max-height: calc(100% - 88px); overflow-y: auto; overscroll-behavior: contain; padding: 8px 0; border-radius: 12px; background: color-mix(in srgb, var(--player-base) 72%, transparent); backdrop-filter: var(--glass-filter); z-index: 2; scrollbar-width: thin; }
 .lesson-video-menu-row { display: flex; width: 100%; align-items: center; gap: 18px; padding: 12px 18px; border: 0; background: transparent; font-size: 13px !important; text-align: left; white-space: nowrap; }
 .lesson-video-menu-row > svg { width: 20px; height: 20px; flex-shrink: 0; }
 .lesson-video-menu-row > svg:last-child { width: 12px; margin-left: -12px; }
@@ -68,7 +68,7 @@
 .lesson-video-menu-note { max-width: 230px; margin: 8px 20px; font-size: 12px; opacity: .7; }
 .lesson-video-notice { position: absolute; top: 16px; left: 50%; transform: translateX(-50%); max-width: calc(100% - 32px); padding: 8px 12px; border-radius: 4px; background: color-mix(in srgb, var(--player-base) 80%, transparent); font-size: 13px; z-index: 3; }
 /* anchored-panel: clamped (usePanelClamp plus measured player/viewport bounds). */
-.lesson-video-context { position: absolute; width: max-content; max-width: calc(100% - 16px); overflow: auto; overscroll-behavior: contain; padding: 6px 0; border-radius: 10px; background: color-mix(in srgb, var(--player-base) 90%, transparent); backdrop-filter: blur(16px); z-index: 5; scrollbar-width: thin; }
+.lesson-video-context { position: absolute; width: max-content; max-width: calc(100% - 16px); overflow: auto; overscroll-behavior: contain; padding: 6px 0; border-radius: 10px; background: color-mix(in srgb, var(--player-base) 90%, transparent); backdrop-filter: var(--glass-filter); z-index: 5; scrollbar-width: thin; }
 .lesson-video-context .lesson-video-button { display: flex; align-items: center; gap: 12px; width: 100%; border: 0; padding: 9px 14px; background: transparent; font-size: 12px; font-weight: 600; text-align: left; white-space: nowrap; }
 .lesson-video-context .lesson-video-button:hover, .lesson-video-context .lesson-video-button:focus-visible { background: color-mix(in srgb, var(--player-ink) 15%, transparent); }
 .lesson-video-context svg { width: 20px; height: 20px; flex-shrink: 0; }

@@ -8,8 +8,8 @@
   padding: 24px;
   color: var(--foreground);
   background: var(--background);
-  backdrop-filter: blur(6px);
-  -webkit-backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: var(--glass-filter);
+  backdrop-filter: var(--glass-filter);
 }
 
 .auth-callback-status__result {

@@ -317,7 +317,7 @@ a.solv-mx-nm:hover { color: var(--accent); }
   justify-content: center;
   padding: 20px;
   background: color-mix(in srgb, var(--background) 72%, #000 28%);
-  backdrop-filter: blur(2px);
+  backdrop-filter: var(--glass-filter);
 }
 .solv-modal {
   width: min(560px, 100%);

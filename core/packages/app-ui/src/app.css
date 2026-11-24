@@ -2,6 +2,28 @@
 @import './appearance.css';
 @import './loading-brand.css';
 
+/* Installed clients own their backdrop filters independently of the website. */
+@media screen {
+  @supports (color: color-mix(in srgb, black, white)) and ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+    body, .palette-scope, .contrast-scope {
+      --glass-filter: blur(10px);
+      --glass-menu-filter: blur(18px);
+      --glass-capsule-filter: blur(16px) saturate(1.45);
+      --glass-nav-lens-filter: blur(5px) saturate(1.65);
+      --timer-overlay-filter: blur(2px);
+    }
+  }
+  @media (prefers-reduced-transparency: reduce) {
+    body, .palette-scope, .contrast-scope {
+      --glass-filter: none;
+      --glass-menu-filter: none;
+      --glass-capsule-filter: none;
+      --glass-nav-lens-filter: none;
+      --timer-overlay-filter: none;
+    }
+  }
+}
+
 :root {
   font-family: var(--font-sans);
   font-synthesis: none;
