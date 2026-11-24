@@ -645,6 +645,26 @@ describe('site assistant grounding', () => {
     expect(context.requestedParts).toEqual(['录像只留下最好的一把，我该怎么判断训练效果','下一轮怎么记录','出现什么结果你会改主意']);
     expect(review.tools ?? []).toHaveLength(0);
   });
+  it('retains verified voucher arithmetic after a truncated deliberation without requesting JSON repair',async()=>{
+    const question='社团有 77 张券，券里有 17 张只能换手套，其他券通用。租桌和买垫各需 35 张通用券，不能拆买。你会如何取舍？若商家不换券，怎么向两组说明并提出备选？';
+    const choice='若两组都需要桌子，本轮先租桌，两组轮流使用。需要垫子的一组可等下期，或经两组同意本轮改选垫子。';
+    const fetcher=vi.fn<typeof fetch>()
+      .mockResolvedValueOnce(Response.json({choices:[{message:{content:'未完成'},finish_reason:'length'}]}))
+      .mockResolvedValueOnce(modelResponse({answerKind:'general',answer:choice}));
+    const result=await answerSiteQuestion(question,'zh',{...config,model:'deepseek-flash',baseUrl:'https://api.deepseek.com'},AbortSignal.timeout(5000),fetcher,[],undefined,undefined,'UTC',[],'deep');
+    expect(fetcher).toHaveBeenCalledTimes(2);
+    expect(result.answer).toContain('77 − 17 = 60');
+    expect(result.answer).toContain('差 10 张');
+    expect(result.answer).toContain('余 25 张');
+    expect(result.answer.endsWith(choice)).toBe(true);
+    const retry=JSON.parse(String(fetcher.mock.calls[1][1]?.body));
+    expect(JSON.parse(retry.messages.at(-1).content).verifiedBalance).toContain('租桌和买垫');
+    expect(retry.response_format).toBeUndefined();
+    const {sharedVoucherBalance}=await import('../src/utils/site_assistant_policy.js');
+    for(const other of [question.replace('不能拆买','可以拆买'),question.replace('77','90'),question.replace('不换券','可以换券'),question.replace('各需','分别需')]) {
+      expect(sharedVoucherBalance(other)).toBeUndefined();
+    }
+  });
   it('reviews every exclusive-use branch when completing the opening judgment',async()=>{
     const question='库房仅供存箱。你会怎么安排签到？如果延误，怎样调整？';
     const answer='在活动室分批签到。\n\n延误就推迟第二批到场，库房始终只存箱。';
@@ -746,9 +766,9 @@ describe('site assistant grounding', () => {
     expect(result.answer).toContain('乙队完整改期');
     expect(result.answer).toContain('12 分钟减去实省时间');
     expect(result.answer).toContain('连续安静 35 分钟');
-    const {twoGroupTimeFallback}=await import('../src/utils/site_assistant_schedule.js');
+    const {twoGroupTimePlan}=await import('../src/utils/site_assistant_schedule.js');
     for(const different of [question.replace('讲师只有一位','甲队不能改期，讲师只有一位'),question.replace('如何避免','若下午不开门如何避免'),question.replace('活动室','活动室但乙队必须后到'),question.replace('转给乙队','转给家长')]) {
-      expect(twoGroupTimeFallback(different)).toBeUndefined();
+      expect(twoGroupTimePlan(different)).toBeUndefined();
     }
   });
   it('honors explicit detailed reasoning and distinguishes a recording from a paragraph request',async()=>{
