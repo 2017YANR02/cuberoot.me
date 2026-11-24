@@ -82,7 +82,7 @@ export default function MusicManagePage() {
       : listMyMusicTracks().then((uploads) => uploads.map((track): ManagedTrack => ({ ...track, source: 'upload' })));
     request
       .then((next) => { if (active) { setTracks(next); setError(null); } })
-      .catch((cause) => { if (active) setError(cause instanceof Error ? cause.message : tr({ zh: '载入失败', en: 'Loading failed' })); })
+      .catch(() => { if (active) setError(tr({ zh: '载入失败', en: 'Loading failed' })); })
       .finally(() => { if (active) setLoading(false); });
     return () => { active = false; };
   }, [isAdmin, isMember, membershipLoading]);
@@ -131,8 +131,8 @@ export default function MusicManagePage() {
       }
       setSaved(true);
       void loadMusicLibrary(true);
-    } catch (cause) {
-      setError(cause instanceof Error ? cause.message : tr({ zh: '保存失败', en: 'Save failed' }));
+    } catch {
+      setError(tr({ zh: '保存失败', en: 'Save failed' }));
     } finally { setBusy(false); }
   };
 
@@ -152,8 +152,8 @@ export default function MusicManagePage() {
         : await deleteAdminMusicStaticTrack(selected.staticId);
       setTracks((current) => current.map((track) => track.id === selected.id ? { ...track, hidden: updated.hidden } : track));
       void loadMusicLibrary(true);
-    } catch (cause) {
-      setError(cause instanceof Error ? cause.message : tr({ zh: '操作失败', en: 'Action failed' }));
+    } catch {
+      setError(tr({ zh: '操作失败', en: 'Action failed' }));
     } finally { setBusy(false); }
   };
 
@@ -171,8 +171,8 @@ export default function MusicManagePage() {
       setTracks(next);
       void setSelectedId(next[0]?.id ?? null);
       void loadMusicLibrary(true);
-    } catch (cause) {
-      setError(cause instanceof Error ? cause.message : tr({ zh: '删除失败', en: 'Delete failed' }));
+    } catch {
+      setError(tr({ zh: '删除失败', en: 'Delete failed' }));
     } finally { setBusy(false); }
   };
 

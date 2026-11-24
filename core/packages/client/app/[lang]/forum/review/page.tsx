@@ -42,10 +42,10 @@ export default function ForumReviewPage() {
     setError('');
     fetchReviewQueue()
       .then(d => setItems(d.items))
-      .catch(e => setError((e as Error).message));
+      .catch(() => setError(tr({zh:'审核队列加载失败，请刷新后重试。', en:'Could not load the review queue. Refresh and try again.'})));
     fetchReports(showAllReports)
       .then(d => setReports(d.reports))
-      .catch(e => setError((e as Error).message));
+      .catch(() => setError(tr({zh:'举报列表加载失败，请刷新后重试。', en:'Could not load reports. Refresh and try again.'})));
   }, [showAllReports]);
 
   useEffect(() => { if (mounted && isAdmin) load(); }, [mounted, isAdmin, load]);
@@ -63,8 +63,8 @@ export default function ForumReviewPage() {
     try {
       await moderateReview(item.type, item.id, action, reason);
       setItems(list => (list ?? []).filter(x => !(x.type === item.type && x.id === item.id)));
-    } catch (e) {
-      alert((e as Error).message);
+    } catch {
+      alert(tr({zh:'审核结果未保存，请刷新后重试。', en:'Could not save the review. Refresh and try again.'}));
     }
   };
 
@@ -74,8 +74,8 @@ export default function ForumReviewPage() {
       setReports(list => (list ?? []).map(r => (
         r.id === report.id ? { ...r, resolvedAt: new Date().toISOString() } : r
       )));
-    } catch (e) {
-      alert((e as Error).message);
+    } catch {
+      alert(tr({zh:'举报处理结果未保存，请刷新后重试。', en:'Could not update the report. Refresh and try again.'}));
     }
   };
 

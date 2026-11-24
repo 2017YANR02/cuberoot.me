@@ -8,6 +8,7 @@
  */
 import MoreToggle from '@/components/MoreToggle';
 import { useCallback, useEffect, useState } from 'react';
+import { useT } from '@/hooks/useT';
 import { useTranslation } from 'react-i18next';
 import { Trash2, Lightbulb, Bug, MessageSquare, ExternalLink } from '@app-foundation/icons/lucide';
 import PageBackLink from '@/components/PageBackLink';
@@ -46,7 +47,7 @@ function MediaView({ m, t }: { m: FeedbackMedia; t: (zh: string, en: string) => 
 export default function FeedbackAdminPage() {
   const { i18n } = useTranslation();
   const isZh = i18n.language.startsWith('zh');
-  const t = (zh: string, en: string) => (isZh ? zh : en);
+  const t = useT();
 
   const user = useAuthUser();
   const [mounted, setMounted] = useState(false);
@@ -72,8 +73,8 @@ export default function FeedbackAdminPage() {
           return next;
         });
       })
-      .catch((e) => setErr(e instanceof Error ? e.message : String(e)));
-  }, [filter]);
+      .catch(() => setErr(t('反馈列表加载失败，请刷新重试。', 'Could not load feedback. Refresh to try again.')));
+  }, [filter, t]);
 
   function toggle(id: number) {
     setOpen((prev) => {
@@ -90,7 +91,7 @@ export default function FeedbackAdminPage() {
   async function setStatus(id: number, status: FeedbackStatus) {
     setBusy(id);
     try { await updateFeedbackStatus(id, status); load(); }
-    catch (e) { setErr(e instanceof Error ? e.message : String(e)); }
+    catch { setErr(t('状态更新失败，请刷新后重试。', 'Could not update the status. Refresh and try again.')); }
     finally { setBusy(null); }
   }
 
@@ -98,7 +99,7 @@ export default function FeedbackAdminPage() {
     if (!window.confirm(t('删除这条反馈?', 'Delete this feedback?'))) return;
     setBusy(id);
     try { await deleteFeedback(id); load(); }
-    catch (e) { setErr(e instanceof Error ? e.message : String(e)); }
+    catch { setErr(t('删除失败，请刷新后重试。', 'Could not delete the feedback. Refresh and try again.')); }
     finally { setBusy(null); }
   }
 
@@ -165,14 +166,10 @@ export default function FeedbackAdminPage() {
                 {it.contact && <span className="fba-contact">{it.contact}</span>}
                 {it.pageUrl && (
                   <a className="fba-pageurl" href={it.pageUrl} target="_blank" rel="noreferrer">
-                    {it.pageUrl.replace(/^https?:\/\/[^/]+/, '') || '/'} <ExternalLink size={11} />
+                    {t('查看反馈页面', 'View reported page')} <ExternalLink size={11} />
                   </a>
                 )}
-                {it.viewport && <span className="fba-env">{it.viewport}</span>}
-                {it.theme && <span className="fba-env">{it.theme}</span>}
-                {it.lang && <span className="fba-env">{it.lang}</span>}
               </div>
-              {it.userAgent && <p className="fba-ua" title={it.userAgent}>{it.userAgent}</p>}
 
               <div className="fba-actions">
                 {STATUSES.map((s) => (

@@ -34,8 +34,8 @@ export default function QuizManagePage() {
   const [busy, setBusy] = useState(false);
 
   const load = useCallback(() => {
-    fetchQuizReports().then(setReports).catch((e) => setError((e as Error).message));
-    fetchAllQuestions().then(setQuestions).catch((e) => setError((e as Error).message));
+    fetchQuizReports().then(setReports).catch(() => setError(tr({zh:'举报列表加载失败，请刷新后重试。', en:'Could not load reports. Refresh and try again.'})));
+    fetchAllQuestions().then(setQuestions).catch(() => setError(tr({zh:'题目列表加载失败，请刷新后重试。', en:'Could not load questions. Refresh and try again.'})));
   }, []);
 
   useEffect(() => { if (isAdmin) load(); }, [isAdmin, load]);
@@ -52,8 +52,8 @@ export default function QuizManagePage() {
       applyRow(await updateQuestion(row.id, { ...base, ...patch }));
       setEditing(null);
       setNote('');
-    } catch (e) {
-      setError((e as Error).message);
+    } catch {
+      setError(tr({zh:'题目保存失败，请刷新后重试。', en:'Could not save the question. Refresh and try again.'}));
     } finally {
       setBusy(false);
     }
@@ -65,8 +65,8 @@ export default function QuizManagePage() {
       await deleteQuestion(id);
       setQuestions((qs) => (qs ? qs.filter((q) => q.id !== id) : qs));
       setReports((rs) => (rs ? rs.filter((r) => r.questionId !== id) : rs));
-    } catch (e) {
-      setError((e as Error).message);
+    } catch {
+      setError(tr({zh:'题目删除失败，请刷新后重试。', en:'Could not delete the question. Refresh and try again.'}));
     } finally {
       setBusy(false);
     }
@@ -76,8 +76,8 @@ export default function QuizManagePage() {
     try {
       await resolveQuizReport(id);
       setReports((rs) => (rs ? rs.filter((r) => r.id !== id) : rs));
-    } catch (e) {
-      setError((e as Error).message);
+    } catch {
+      setError(tr({zh:'举报处理结果未保存，请刷新后重试。', en:'Could not update the report. Refresh and try again.'}));
     }
   };
 
