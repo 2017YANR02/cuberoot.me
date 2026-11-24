@@ -40,7 +40,7 @@
 | 中文隐私政策 | `https://cuberoot.me/zh/privacy` | 源码已完成，推送部署后复核 |
 | 登录要求 | 核心计时无需账号；设置中可选登录同一 CubeRoot 网站账号 | 已核对 |
 | 广告 | 无 | 已核对 |
-| 付费/订阅 | 网站已有会员；2026-09-11 所有者明确要求 App 内会员购买。Apple IAP 尚未实现，商品类型/周期/价格待确认，不能继续填“无” | 提交前阻塞 |
+| 付费/订阅 | 网站已有会员。Apple 渠道首批为个人会员自动续费月卡和年卡，价格由 StoreKit 按商店地区提供 | 已通过购买与恢复沙盒验收，随 iOS 1.0.2 等待审核 |
 | 用户生成内容/聊天 | 必须包含 Tools 在线页面的实际可达范围，不能仅按本地计时器回答“无”；论坛、评论、公开资料及多人功能须逐项复核 | 提交前复核 |
 | 核心功能 | 本地优先计时、43 项目录与按项目 provider、真实比赛打乱的有界在线缓存、历史记录、罚时、备注、统计、JSON 备份与恢复、可选原生 BLE 智能魔方；工具与账号复用网站唯一页面，登录不代表上传计时数据 | 已核对 |
 
@@ -344,7 +344,14 @@ Apple `form_post` 回调通过 303 返回网站既有 `/auth/social/callback`。
 
 ### 9.4 会员内购：复用现状与实施边界
 
-**2026-09-29 当前增量（覆盖本节下方的历史盘点）**：首发商品已在 App Store Connect 创建：`me.cuberoot.app.membership.monthly` / `me.cuberoot.app.membership.yearly`，同一组同一等级，CNY 29.90 / 299，自动续费，148 个非欧盟地区；家庭共享、促销与优惠码不启用。当前源码已接 StoreKit 2 商品、购买、恢复、交易更新和管理订阅，经既有安全会话发送交易到 API；API 使用 Apple 官方库验签并查询当前订阅状态，0254 migration 将有效 Apple 权益与原网站会员取较长有效期（不叠加时长）。账号合并保留原 token，注销解除关联；失败交易不提前 finish。iOS 内网站付款弹窗改为 Apple 内购入口。
+**2026-11-23 首批订阅验收与送审记录（PST）**
+
+- 付费协议更新已由维护者接受，App Store Connect 的待处理提示已消失。订阅组 `22424056` 包含 `me.cuberoot.app.membership.monthly` 和 `me.cuberoot.app.membership.yearly` 两项自动续费商品，两项审核截图均已上传。
+- iPhone 15 Pro Max 使用真实 Apple Sandbox 分别完成月卡和年卡的购买、服务端验签、CubeRoot 权益到账与恢复。恢复未重复增加会员时长。月卡观察到自动续费开启，Sandbox V2 测试通知已收到并入库。实际续期扣款、取消至到期、退款、账单重试及月年切换仍待专项验收。
+- 原先仅包含 iOS 版本的提交已撤回。23:41 将 iOS `1.0.2 (8)`、订阅组和两项商品放在同一份审核中重新提交，审核记录 `63c0190e-a8d1-4682-9c35-f979b1c14667`。版本与两项商品回读为 `WAITING_FOR_REVIEW`，版本设为审核通过后自动发布。App Review 专用 CubeRoot 登录已验证，凭据仅保存在受限审核字段和本机 Git 忽略的凭据文件。
+- 正式验单开关已启用，健康检查通过。审核账号调用构建 8 使用的入口及显式 Sandbox 入口均能取得账号绑定令牌与两项商品 ID。正式交易验收待 Apple 批准商品且版本上线后进行。真机与提审回执在维护者本机 `.local-data/ios-iap-review-20261123/`。
+
+**2026-09-29 首次接入记录**：首发商品已在 App Store Connect 创建：`me.cuberoot.app.membership.monthly` / `me.cuberoot.app.membership.yearly`，同一组同一等级，CNY 29.90 / 299，自动续费，148 个非欧盟地区；家庭共享、促销与优惠码不启用。当前源码已接 StoreKit 2 商品、购买、恢复、交易更新和管理订阅，经既有安全会话发送交易到 API；API 使用 Apple 官方库验签并查询当前订阅状态，0254 migration 将有效 Apple 权益与原网站会员取较长有效期（不叠加时长）。账号合并保留原 token，注销解除关联；失败交易不提前 finish。iOS 内网站付款弹窗改为 Apple 内购入口。
 
 本地实现和验证不等于上线或 Sandbox 验收。已完成 shared build、App UI 404 项测试、Mobile 新增 6 项交易边界测试、服务端状态/PG 权益测试、客户端类型及文档守卫；真实购买、恢复、续期、退款、跨账号拒绝与通知回调仍未验收。Paid Apps Agreement 已经所有者确认签署，当前 Pending User Info，银行与税务未齐。内购密钥已经所有者批准创建并安全配置，购买开关在验收前保持关闭。App Privacy 已核对包含关联身份的购买历史；线上隐私页已核对显示 Apple 自动续费、账号关联、交易记录和注销保留说明。订阅审核截图与首批订阅随版本提交仍待完成。
 
@@ -383,6 +390,8 @@ IAP 不只是加一个支付按钮：
 2026-09-29 所有者最终确认首发个人月／年自动续费订阅，覆盖此前手动续购决定；企业版、优惠与家庭共享暂不加入。两种周期应放在同一自动续费订阅组、同一权益等级，复用现有个人会员权益；网站月卡 CNY 29.99、年卡 CNY 299 是价格参考，实际 Apple 价格档及 storefront 展示仍须在商品配置时核对。商品与 StoreKit、服务端接入已完成，具体进展以上方 2026-09-29 增量为准；源码接通不代表真实购买验收完成。Apple 权益使用已验证交易的到期时间，不按每次回调累加月份；恢复购买不得重复延长时长，退款必须按逐笔交易来源撤销，会员归属要覆盖账号合并与注销；服务端验证、原生购买和恢复已有实现，真实沙盒购买、恢复及完整订阅生命周期仍待验收。免费 App 下载价格保持不变。需覆盖自动续费、取消后到期、账单重试／宽限期、月年切换、退款及通知乱序；购买页展示周期、价格、自动续费说明、条款和隐私链接，并提供恢复与管理订阅入口。
 
 ### 9.5 IAP 协议与全球（含中国大陆）材料
+
+**Apple Sandbox 验收配置**。仅测试时保持 `APPLE_IAP_ENABLED=0`，设置 `APPLE_IAP_SANDBOX_ENABLED=1` 并用 `APPLE_IAP_SANDBOX_USER_IDS` 列出允许测试的 CubeRoot UID。沿用现有 Apple IAP 密钥、根证书及 Sandbox V2 通知 URL。iOS 测试包在 Web bundle 构建时设置 `VITE_APPLE_IAP_SANDBOX_ONLY=1`，使用 iOS 16 或更新版本，Xcode Scheme 的 StoreKit Configuration 设为 None，再以 Sandbox Apple Account 测试。商品加载和购买要求设备验证过的 Apple Sandbox AppTransaction，验单只接受 Apple Sandbox 签名交易。测试包专用于验收，正式归档清除该 Vite 配置。真机确认购买到账、恢复、续费、取消到期、退款及通知送达后再记录验收结果。
 
 - Account Holder 在 App Store Connect → Business 接受 Paid Apps Agreement，提供税务和收款资料；Apple 当前说明该协议需处于 Active 才能做 IAP sandbox 测试。Developer Program 的年费/已接受协议不替代这一步，AI 不代签协议或猜税务答案。[IAP 配置流程](https://developer.apple.com/help/app-store-connect/configure-in-app-purchase-settings/overview-for-configuring-in-app-purchases/)
 - App → Monetization → In-App Purchases / Subscriptions 创建经所有者确认的商品、组、价格、地区与审核资料；每种 IAP 类型的首个商品须与新 App 版本一起提审，后续同类型商品是否单独提交以当时控制台条件为准。[IAP 提审](https://developer.apple.com/help/app-store-connect/manage-submissions-to-app-review/submit-an-in-app-purchase/)
