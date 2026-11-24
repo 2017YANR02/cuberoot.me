@@ -95,6 +95,14 @@ export const CATALOG: UtilEntry[] = [
     en: 'Synchronize assistant thinking mode with an automatic server snapshot, safe browser storage and cross-tab updates.',
   },
   {
+    name: 'useAssistantProvider',
+    sig: 'useAssistantProvider(active: boolean)',
+    imp: "import { useAssistantProvider } from '@/hooks/useAssistantProvider';",
+    category: 'hook',
+    zh: '查询助手可用的服务商，并在发送时解析当前选择。',
+    en: 'Discover available assistant providers and resolve the selection when sending.',
+  },
+  {
     name: 'useIvyMode',
     sig: 'useIvyMode(): [IvyScrambleMode, typeof setIvyMode]',
     imp: "import { useIvyMode } from '@/hooks/useIvyMode';\nimport { ivyScrambleForMode } from '@/lib/scramble-ivy-mode';",

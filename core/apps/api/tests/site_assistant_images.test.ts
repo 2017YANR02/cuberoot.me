@@ -2,12 +2,13 @@ import { afterEach, expect, it, vi } from 'vitest';
 import { createSiteAssistantRoutes } from '../src/routes/site_assistant.js';
 import { assistantConfig } from '../src/utils/site_assistant.js';
 import { AssistantFailure } from '../src/utils/site_assistant_diagnostics.js';
-import { SITE_ASSISTANT_BODY_BYTES } from '@cuberoot/shared/site-assistant';
+import { SITE_ASSISTANT_BODY_BYTES, type AssistantProvider } from '@cuberoot/shared/site-assistant';
 
 const image = { mediaType: 'image/png', data: 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+a0u8AAAAASUVORK5CYII=' };
 const setup = () => {
   const answer = vi.fn().mockResolvedValue({ answer: 'A screenshot.', sources: [] });
-  const config = vi.fn().mockReturnValue({ key: 'test', baseUrl: 'https://model.example/v1', model: 'vision' });
+  const config = vi.fn((_vision?: boolean, provider?: AssistantProvider) => provider === 'openai'
+    ? null : { key: 'test', baseUrl: 'https://model.example/v1', model: 'vision' });
   const reserve = vi.fn().mockResolvedValue({ allowed: true });
   const authenticate = vi.fn().mockResolvedValue({ uid: 42, wcaId: '2017YANR02' });
   const route = createSiteAssistantRoutes({ answer, config, reserve, authenticate, now: Date.now });

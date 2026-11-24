@@ -115,7 +115,7 @@ export function createSiteAssistantRoutes(deps: { answer: typeof answerSiteQuest
           if(input.images?.some(image=>!('attachmentId' in image)) || input.history.some(message=>message.images?.some(image=>!('attachmentId' in image))))return c.json({error:'invalid_image'},400);
           const provider = input.provider ?? (deps.config(false, 'openai') ? 'openai' : 'bailian');
           const config=deps.config(!!input.images?.length || input.history.some(message=>!!message.images?.length),provider);
-          if(!config && !canReadPublicResult(input) && !standaloneChampionWindow({...input,timeZone:input.timeZone ?? 'UTC'}))return c.json({error:'provider_unavailable'},503);
+          if(!config && !canReadPublicResult({...input,provider}) && !standaloneChampionWindow({...input,timeZone:input.timeZone ?? 'UTC'}))return c.json({error:'provider_unavailable'},503);
           // Verify attachment ownership before accepting a durable message.
           await resolveAssistantImages(user.uid,[...(input.images ?? []),...input.history.flatMap(message=>message.images ?? [])],deps.readAttachment ?? readAssistantAttachment);
           const {question,lang,thinking,timeZone='UTC',images,references}=input;
@@ -214,7 +214,7 @@ export function createSiteAssistantRoutes(deps: { answer: typeof answerSiteQuest
     const hasImages = !!parsed.data.images?.length || history.some(message => !!message.images?.length);
     const provider = parsed.data.provider ?? (deps.config(false, 'openai') ? 'openai' : 'bailian');
     const config = deps.config(hasImages, provider);
-    if (!config && !canReadPublicResult(parsed.data)) { const error = hasImages ? 'vision_unavailable' : 'unavailable'; await deps.entry?.(error); return c.json({ error }, 503); }
+    if (!config && !canReadPublicResult({ ...parsed.data, provider })) { const error = hasImages ? 'vision_unavailable' : 'unavailable'; await deps.entry?.(error); return c.json({ error }, 503); }
     // Authentication is part of the same total deadline and precedes quota/model work.
     const disconnect = new AbortController();
     const signal = AbortSignal.any([disconnect.signal, c.req.raw.signal, AbortSignal.timeout(assistantTimeoutMs(parsed.data.thinking) - 2000)]);
