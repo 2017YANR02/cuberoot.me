@@ -2,6 +2,7 @@
 
 import { useCallback, useMemo, useState } from 'react';
 import { parseAsString, useQueryStates } from 'nuqs';
+import { PAGE_META } from '@cuberoot/shared/page-catalog';
 import CubeOrientationSelect from '@/components/CubeOrientationSelect';
 import { SettingsPopover } from '@/components/TrainingSettings';
 import { tr } from '@/i18n/tr';
@@ -13,7 +14,6 @@ import RecognitionLesson from './RecognitionLesson';
 import AlignmentExercise from './AlignmentExercise';
 import './first-layer.css';
 
-const title = { zh: '二阶魔方 FL（第一层）', en: '2×2 First Layer (FL)' };
 const overviewTitle = { zh: '概览', en: 'Overview' };
 const recognitionTitle = { zh: '识别流程', en: 'Recognition flow' };
 const alignmentTitle = { zh: '摆位与识别', en: 'Align and recognize' };
@@ -75,7 +75,7 @@ export default function Page() {
     void setLocation({ step, section }, { history: chapterChanged ? 'push' : 'replace' });
   }, [chapters, setLocation]);
 
-  return <InteractiveTutorial title={title} puzzle="2x2" orientation={orientation} chapters={chapters}
+  return <InteractiveTutorial title={PAGE_META['tutorial/2x2-fl'].title} puzzle="2x2" orientation={orientation} chapters={chapters}
     catalogHref="/tutorial?puzzle=2x2"
     location={positionFor(step, section, chapters)} onNavigate={navigate}
     headerAction={<SettingsPopover className="fl-orientation-settings" iconSize={20}
