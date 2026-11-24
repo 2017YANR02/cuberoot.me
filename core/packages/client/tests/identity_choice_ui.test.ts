@@ -30,6 +30,7 @@ let host: HTMLDivElement;
 const done = vi.fn();
 const ticket = 'a'.repeat(43);
 const button = (label: string) => Array.from(host.querySelectorAll('button')).find((node) => node.textContent === label)!;
+const consentSwitch = () => host.querySelector<HTMLButtonElement>('[role="switch"][aria-label="Agree to the User Agreement and Privacy Policy"]')!;
 const render = async () => { await act(async () => root.render(createElement(LoginForm, { onDone: done }))); };
 
 const identityHandle = 'h'.repeat(43);
@@ -140,20 +141,19 @@ describe('one canonical first-identity choice UI', () => {
     HTMLDialogElement.prototype.showModal = function () { this.open = true; };
     HTMLDialogElement.prototype.close = function () { this.open = false; };
     await render();
-    const checkbox = host.querySelector<HTMLInputElement>('input[type=checkbox]')!;
-    expect(checkbox.checked).toBe(false);
+    expect(consentSwitch().getAttribute('aria-checked')).toBe('false');
     await act(async () => button('Create a new account').click());
     expect(host.querySelector('dialog')?.open).toBe(true);
     await act(async () => button('Decline').click());
-    expect(checkbox.checked).toBe(false);
+    expect(consentSwitch().getAttribute('aria-checked')).toBe('false');
     expect(mocks.completeIdentityChoice).not.toHaveBeenCalled();
     await act(async () => button('Create a new account').click());
     await act(async () => button('Agree and register').click());
     expect(mocks.completeIdentityChoice).toHaveBeenCalledExactlyOnceWith(identityHandle, 'create', undefined, expect.any(AbortSignal), true);
   });
-  it('creates immediately after checking the consent box', async () => {
+  it('creates immediately after switching on consent', async () => {
     await render();
-    await act(async () => host.querySelector<HTMLInputElement>('input[type=checkbox]')!.click());
+    await act(async () => consentSwitch().click());
     await act(async () => button('Create a new account').click());
     expect(mocks.completeIdentityChoice).toHaveBeenCalledExactlyOnceWith(identityHandle, 'create', undefined, expect.any(AbortSignal), true);
   });
@@ -202,7 +202,7 @@ describe('one canonical first-identity choice UI', () => {
     let resolve!: (value: unknown) => void;
     mocks.completeIdentityChoice.mockImplementation(() => new Promise((done) => { resolve = done; }));
     await render();
-    await act(async () => host.querySelector<HTMLInputElement>('input[type=checkbox]')!.click());
+    await act(async () => consentSwitch().click());
     await act(async () => button('Create a new account').click());
     const signal = mocks.completeIdentityChoice.mock.calls[0][3] as AbortSignal;
     expect(button('Cancel').disabled).toBe(true);
