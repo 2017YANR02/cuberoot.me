@@ -191,7 +191,7 @@
   color: var(--muted-foreground);
 }
 
-.playback-bar-btn.video-recon-camera-disconnect {
+.playback-bar-btn.video-recon-camera-disconnect:not([data-text-only]) {
   color: var(--destructive);
 }
 

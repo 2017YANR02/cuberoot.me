@@ -4,14 +4,16 @@ import { useT } from '@/hooks/useT';
 import { downloadBlob } from '@/lib/scramble-dist/download';
 import type { VideoWorkspace } from '@/lib/video-recon/workspace';
 
-export function CameraDisconnectButton({ disabled, onDisconnect }: {
+export function CameraDisconnectButton({ disabled, onDisconnect, textOnly = false }: {
   disabled: boolean;
   onDisconnect: () => void;
+  textOnly?: boolean;
 }) {
   const t = useT();
-  const label = t('断开摄像头', 'Disconnect camera');
-  return <button type="button" className="playback-bar-btn video-recon-camera-disconnect" aria-label={label} disabled={disabled} onClick={onDisconnect}>
-    <CircleX size={18} aria-hidden />
+  const label = textOnly ? t('关闭摄像头', 'Close camera') : t('断开摄像头', 'Disconnect camera');
+  return <button type="button" className="playback-bar-btn video-recon-camera-disconnect"
+    data-text-only={textOnly || undefined} aria-label={label} disabled={disabled} onClick={onDisconnect}>
+    {textOnly ? t('关闭', 'Close') : <CircleX size={18} aria-hidden />}
   </button>;
 }
 

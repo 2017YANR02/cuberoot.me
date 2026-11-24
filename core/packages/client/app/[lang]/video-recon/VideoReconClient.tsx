@@ -263,7 +263,8 @@ export function VideoReconWorkspace({ mode, handoff, submission, onModeChange, o
         {!detector && (filming || cameraConnected || onModeChange) && <div className="video-recon-actions">
           {filming ? <CameraRecordingAction connected={cameraConnected} view={view} workspace={workspace} />
             : cameraConnected && workspace && <CameraDisconnectButton
-              disabled={timerBusy || !!view.recordingReview} onDisconnect={simulatedCamera?.disconnect ?? workspace.stopSource} />}
+              textOnly={activeMode === 'timer'} disabled={timerBusy || !!view.recordingReview}
+              onDisconnect={simulatedCamera?.disconnect ?? workspace.stopSource} />}
           {switchSourceActions}
         </div>}
         {detector && workspace && view && view.sourceKind !== 'none' && <div className="video-recon-actions">
