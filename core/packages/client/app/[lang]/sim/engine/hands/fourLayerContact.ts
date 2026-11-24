@@ -1,7 +1,11 @@
 import { Euler, MathUtils, Matrix4, Quaternion, Vector3, type Object3D, type SkinnedMesh } from 'three';
 import { sampleFingerPose } from './markedFingerMotion';
+import { innerSliceBraces } from './innerSliceBraces';
+import { reverseInnerX, reverseInnerXReturn, lowerInnerY, lowerInnerYReturn } from './innerReverseRelay';
+import { innerPadRelay, innerPadRelayReturn } from './innerPadRelay';
+import { innerRingStroke } from './innerRingStroke';
 import { innerQuarterSeats, leftInner, rightInner, middlePair } from './fourLayerSlicePoses';
-import { backWideSeat, upperWideSeat, upperInnerRelaySeat, wideIndexRelease, innerMiddleRelease,
+import { frontIndexSeat, backWideSeat, upperWideSeat, upperInnerRelaySeat, wideIndexRelease, innerMiddleRelease,
   innerQuarterIndexRelease, innerQuarterMiddleRelease } from './fourLayerFlickPoses';
 import { applyPocketFingerPose, seatPocketFinger } from './pocketFingerContact';
 import { SIZE } from '../define';
@@ -23,6 +27,8 @@ const backSupport = {
 
 // Keep the idle middle clear of the index sweep and the rotating corners.
 const backMiddleClearance = [.28053, -.00542, .19942, -.02016, -.06638, .11726, .26452, .00592];
+// The lower relay keeps the opposing middle pad on the upper stationary strip.
+const lowerRelayMiddle = [-0.123938, 0.093735, 0.126049, -0.291164, -0.466993, -0.477195, 0.400174, -0.25767];
 const upperMiddleRetreat = [.03428, -.00156, .02397, -.00257, .00497, .00295, .00579, -.01740];
 const upperMiddleClearance = [.01304, .0016, -.00132, -.00077, -.00217];
 
@@ -144,9 +150,49 @@ class Slabs {
   }
 }
 
+export function isEquatorBand(axis: Axis | null, layers: readonly number[]): boolean {
+  return axis === 'y' && layers.length === 2 && layers.includes(1) && layers.includes(2);
+}
+
+export type InnerBraceProfile = keyof typeof innerSliceBraces.R;
+
+const wristInverse = new Quaternion(), localNormal = new Vector3();
+
+/** Choose the stationary strip in the wrist's neutral frame. After a quarter
+ * wrist turn, a horizontal strip can be a front/back strip for that hand. */
+export function innerBraceProfile(stroke: FourLayerStroke, grip: Quaternion, driver: boolean, padRelay: boolean): InnerBraceProfile {
+  localNormal.set(0, 0, 0)[stroke.axis] = 1;
+  localNormal.applyQuaternion(wristInverse.copy(grip).invert());
+  if (Math.abs(localNormal.x) > .7) {
+    if (!driver || stroke.axis !== 'x') return 'outerX';
+    return padRelay ? 'innerXRelay' : 'innerX';
+  }
+  if (Math.abs(localNormal.y) > .7) {
+    const high = (stroke.layers[0] === 2) === (localNormal.y > 0);
+    return high ? 'lowerY' : 'upperY';
+  }
+  return driver ? 'backZ' : 'frontZ';
+}
+
+// Peak palm excursions during entry and withdrawal, measured in the rig
+// frame. The two MANO hands have different clearance at the index knuckle.
+const innerRingApproach = {
+  lowerRelay: { L: [-29, 0, -10], R: [29, 0, -10] },
+  nailQuarter: { L: [-42, -38, -15], R: [42, -38, -15] },
+  nailRelay: { L: [-53, -54, -8], R: [84, -8, -5] },
+  padRelay: { L: [-34, 0, -4], R: [54, 3, -6] },
+} as const;
+
+export function innerRingApproachOffset(axis: Axis, dir: number, relay: boolean, side: HandSide) {
+  const paths = axis === 'y' ? innerRingApproach.lowerRelay : !relay ? innerRingApproach.nailQuarter
+    : dir < 0 ? innerRingApproach.nailRelay : innerRingApproach.padRelay;
+  return paths[side];
+}
+
 export class FourLayerContact {
   private stroke?: FourLayerStroke;
   private readonly targets = new Map<FingerName, StickerTarget>();
+  private readonly seats = new Map<FingerName, { joints: Object3D[]; home: Quaternion[] }>();
   private digits: Map<FingerName, Segment[]>;
   private slabs = new Slabs();
   private point = new Vector3();
@@ -185,15 +231,91 @@ export class FourLayerContact {
     model.group.updateWorldMatrix(true, false);
     model.group.updateMatrixWorld(true);
     this.digits = new Map(names.map(name => [name, landmarks(model, name, mesh)]));
+    for (const name of names) {
+      const f = model.fingers[name];
+      const joints = f.meta ? [f.meta, f.root, f.mid, f.tip] : [f.root, f.mid, f.tip];
+      this.seats.set(name, { joints, home: joints.map(j => j.quaternion.clone()) });
+    }
+  }
+
+  private brace(profile: InnerBraceProfile, side: HandSide, primary: FingerName | undefined,
+    secondary: FingerName | undefined, weight: number, lowerRelay: boolean) {
+    for (const [name, { joints, home }] of this.seats) {
+      if (name === primary || name === secondary) continue;
+      if (lowerRelay && name === 'middle' && secondary === 'pinky' && joints.length === 4) {
+        this.poseInnerDigit(name, lowerRelayMiddle, side === 'R' ? 1 : -1, weight);
+        continue;
+      }
+      // The middle sweeps past the ring knuckle on an upper-inner relay.
+      // Open the metacarpal during preparation so the ring can stay still.
+      const clearRelay = profile === 'lowerY' && name === 'ring' && secondary === 'middle';
+      const mirror = side === 'R' ? 1 : -1;
+      const [roll, flex, splay, pip, dip] = clearRelay ? [.18 * mirror, 0, 0, -.08, -.13] : innerSliceBraces[side][profile][name];
+      const root = joints.length - 3;
+      if (root) {
+        this.rot.set(0, clearRelay ? .24 : 0, clearRelay ? .24 * mirror : 0, 'XYZ');
+        joints[0].quaternion.slerp(this.q.setFromEuler(this.rot).premultiply(home[0]), weight);
+      }
+      this.rot.set(roll, flex, splay, 'YZX');
+      joints[root].quaternion.slerp(this.q.setFromEuler(this.rot).premultiply(home[root]), weight);
+      this.rot.set(0, pip, 0);
+      joints[root + 1].quaternion.slerp(this.q.setFromEuler(this.rot).premultiply(home[root + 1]), weight);
+      this.rot.set(0, dip, 0);
+      joints[root + 2].quaternion.slerp(this.q.setFromEuler(this.rot).premultiply(home[root + 2]), weight);
+      if (profile === 'lowerY' && name === 'ring' && !clearRelay) {
+        joints[root].rotateZ(.15 * mirror * weight);
+      }
+    }
+  }
+
+  private poseInnerDigit(name: 'middle' | 'ring' | 'pinky', pose: number[], mirror: number, weight: number) {
+    const seat = this.seats.get(name)!;
+    const [mx, my, mz, flex, splay, roll, pip, dip] = pose;
+    this.rot.set(mx * mirror, my, mz * mirror, 'XYZ');
+    seat.joints[0].quaternion.slerp(this.q.setFromEuler(this.rot).premultiply(seat.home[0]), weight);
+    this.rot.set(roll * mirror, flex, splay * mirror, 'YZX');
+    seat.joints[1].quaternion.slerp(this.q.setFromEuler(this.rot).premultiply(seat.home[1]), weight);
+    this.rot.set(0, pip, 0);
+    seat.joints[2].quaternion.slerp(this.q.setFromEuler(this.rot).premultiply(seat.home[2]), weight);
+    this.rot.set(0, dip, 0);
+    seat.joints[3].quaternion.slerp(this.q.setFromEuler(this.rot).premultiply(seat.home[3]), weight);
   }
 
   apply(stroke: FourLayerStroke, driver: HandSide | undefined, primary: FingerName | undefined,
-    secondary: FingerName | undefined, weight: number, side: HandSide, home: boolean, supportHome: boolean) {
+    secondary: FingerName | undefined, weight: number, side: HandSide, home: boolean, supportHome: boolean, profile?: InnerBraceProfile) {
     const { layers, axis, angle } = stroke;
     if (layers.length === 4 || !weight) return;
     const inner = !layers.includes(0) && !layers.includes(3);
-    if (inner && driver === side && home && !secondary) {
+    const singleInner = inner && layers.length === 1;
+    const equatorRelay = side === driver && home && primary === 'index' && secondary === 'middle' && isEquatorBand(axis, layers);
+    if (equatorRelay) profile = 'lowerY';
+    const lowerRelay = singleInner && axis === 'y' && layers[0] === 1 && home;
+    if (profile) this.brace(profile, side, side === driver ? primary : undefined, side === driver ? secondary : undefined, weight, lowerRelay);
+    if (singleInner && side !== driver) return;
+    if ((profile === 'innerXRelay' || lowerRelay) && driver === side && primary === 'ring' && secondary === 'pinky'
+      && this.model.fingers.ring.meta && this.model.fingers.pinky.meta) {
+      const travel = MathUtils.radToDeg(Math.abs(angle)), mirror = side === 'R' ? 1 : -1;
+      const curve = lowerRelay ? lowerInnerY : stroke.dir < 0 ? reverseInnerX : innerPadRelay;
+      const retreat = lowerRelay ? lowerInnerYReturn : stroke.dir < 0 ? reverseInnerXReturn : innerPadRelayReturn;
+      for (const name of ['ring', 'pinky'] as const) {
+        const pose = sampleFingerPose(curve[name], travel);
+        if (stroke.returning) {
+          const clearance = sampleFingerPose(retreat[name], 1 - weight);
+          const relay = MathUtils.smoothstep(travel, 90, 180);
+          for (let i = 0; i < pose.length; i++) pose[i] = pose[i] * weight + clearance[i] * relay;
+        }
+        this.poseInnerDigit(name, pose, mirror, stroke.returning ? 1 : weight);
+      }
+      return;
+    }
+    if (inner && driver === side && !secondary && (home || profile === 'innerX')) {
       const degrees = Math.min(90, MathUtils.radToDeg(Math.abs(angle)));
+      if (singleInner && axis === 'x' && primary === 'ring' && this.model.fingers.ring.meta) {
+        const travel = stroke.dir > 0 ? degrees : 90 - degrees;
+        const pose = sampleFingerPose(innerRingStroke, travel);
+        this.poseInnerDigit('ring', pose, side === 'L' ? 1 : -1, weight);
+        return;
+      }
       let curve, travel = degrees;
       if (axis === 'x' && primary === 'ring') {
         curve = layers.length === 2 ? middlePair : side === 'R' ? rightInner : leftInner;
@@ -205,7 +327,7 @@ export class FourLayerContact {
       if (curve) {
         for (const name of names) {
           const rows = curve[name];
-          if (rows) seatPocketFinger(this.model.fingers[name], rows, travel, weight);
+          if (rows && (!singleInner || name === primary)) seatPocketFinger(this.model.fingers[name], rows, travel, weight);
         }
         return;
       }
@@ -224,7 +346,11 @@ export class FourLayerContact {
     const backFlick = wideFlick && axis === 'z' && !layers.includes(3);
     const upperFlick = wideFlick && axis === 'y' && !layers.includes(0);
     let flickSeats;
-    if (handOnSlab && homeFlick) {
+    if (equatorRelay) {
+      // Both rows move together. Drive the same upper stripe all the way
+      // through the handoff, independent of the other hand's grip.
+      flickSeats = upperInnerRelaySeat;
+    } else if (handOnSlab && homeFlick) {
       if (backFlick) flickSeats = backWideSeat;
       else if (upperFlick) flickSeats = upperWideSeat;
       else if (axis === 'y' && layers.length === 1 && layers[0] === 2 && secondary === 'middle') {
@@ -232,6 +358,12 @@ export class FourLayerContact {
       }
     }
     for (const [name, segments] of this.digits) {
+      if ((singleInner || equatorRelay) && name !== primary && name !== secondary) continue;
+      if (homeFlick && handOnSlab && !secondary && name === 'index'
+        && axis === 'z' && layers.length === 1 && layers[0] === 3) {
+        seatPocketFinger(this.model.fingers.index, frontIndexSeat, MathUtils.radToDeg(Math.abs(angle)), weight, side === 'R' ? 1 : -1);
+        continue;
+      }
       const path = flickSeats?.[name];
       if (path) {
         const finger = this.model.fingers[name], travel = MathUtils.radToDeg(Math.abs(angle));
@@ -247,7 +379,13 @@ export class FourLayerContact {
       }
       let band: Band | undefined;
       const finger = secondary && Math.abs(angle) > Math.PI / 2 ? secondary : primary;
-      if (handOnSlab && name === finger && (inner || layers.length > 1)) {
+      const frontThumb = handOnSlab && name === 'thumb' && primary === 'thumb'
+        && axis === 'z' && layers.length === 1 && layers[0] === 3;
+      if (frontThumb) {
+        const corner = half - tile / 2;
+        band = [corner - 17, corner + 17];
+        this.targets.set(name, { normalAxis: 'v', normal: -half - .75, tangent: side === 'R' ? corner : -corner, axial: corner });
+      } else if (handOnSlab && name === finger && (inner || layers.length > 1)) {
         // On a wide flick a pad can bridge the seam between layers.
         let center = (this.slabs.lo + this.slabs.hi) / 2;
         if (!inner) center = layers.includes(3) ? tile : -tile;
@@ -263,7 +401,7 @@ export class FourLayerContact {
         if (center !== undefined) band = [center - 17, center + 17];
       }
       this.refresh(segments);
-      if (band && (!this.targets.has(name) || angle === 0)) {
+      if (!frontThumb && band && (!this.targets.has(name) || angle === 0)) {
         let nearest = Infinity;
         for (const segment of segments) {
           segment.matrix.multiplyMatrices(this.toRig, segment.joint.matrixWorld);
@@ -315,7 +453,7 @@ export class FourLayerContact {
       const spread = MathUtils.smoothstep(elapsed, .2, .5) * (1 - MathUtils.smoothstep(elapsed, .9, 1));
       const splay = axis === 'z' ? -.4 : -.2;
       this.model.fingers.index.root.rotateZ(splay * mirror * spread * travel);
-    } else if (axis === 'y' && relay && layers.length === 1 && layers[0] === 2) {
+    } else if (axis === 'y' && relay && (layers.length === 1 && layers[0] === 2 || isEquatorBand(axis, layers))) {
       const travel = MathUtils.smoothstep(angle, Math.PI / 2, Math.PI);
       const firstQuarter = MathUtils.smoothstep(angle, 0, Math.PI / 2) * (1 - travel);
       if (firstQuarter > 0) {
