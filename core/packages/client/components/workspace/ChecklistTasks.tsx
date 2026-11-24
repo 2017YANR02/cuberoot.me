@@ -224,7 +224,6 @@ export default function ChecklistTasks({ list, itemStatus, completionStatus = 'a
                 { label: t('删除事项', 'Delete task'), danger: true, run: () => run(() => removeItems([item.id])) },
               ]} />}
             </li>)}</ul>
-            {!items.length && allItems.length > 0 && <p className="staff-muted">{t('没有符合筛选条件的事项', 'No matching tasks')}</p>}
             {editable && itemStatus !== 'archived' && completionStatus !== 'done' && (addingItem === group.id ? <InlineName initial={drafts[group.id] ?? ''} onDraft={text => setDrafts(previous => ({ ...previous, [group.id]: text }))} label={t('新增事项', 'New task')} maxLength={160} continuous cancel={() => setAddingItem(null)} save={async text => {
               if (list.items.length >= 200) throw new Error(t('清单最多包含 200 个事项', 'A checklist can contain up to 200 tasks'));
               await save({ items: [...list.items, { id: crypto.randomUUID(), text, done: false, ...(group.id ? { categoryId: group.id } : {}) }] });

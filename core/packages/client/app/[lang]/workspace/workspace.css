@@ -13,6 +13,7 @@
 .staff-workspace .staff-brand > img { width: 24px; height: 24px; }
 
 .workspace-toolbar { flex-wrap: wrap; align-items: end; gap: 12px; margin: 0 0 32px; }
+.staff-handbook-main > .workspace-toolbar > a { align-self: center; }
 .workspace-toolbar .staff-field { width: auto; flex: 0 1 auto; }
 .workspace-toolbar > .staff-input.workspace-toolbar-select { width: fit-content; flex: 0 0 auto; align-self: flex-start; }
 .workspace-list-heading { display: flex; align-items: center; flex-wrap: wrap; gap: 12px; }
