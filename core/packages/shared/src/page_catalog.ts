@@ -584,8 +584,8 @@ export const PAGE_META: Record<string, PageMetaEntry> = {
       en: 'Group video meeting — start a room, share the link, 1080p with screen sharing and chat.',
     },
   },
-  'membership': { title: { zh: '会员', en: 'Membership' } },
-  'membership/checkout': { title: { zh: '会员支付', en: 'Membership payment' } },
+  'membership': { title: { zh: 'CubeRoot Pro', en: 'CubeRoot Pro' }, fullTitle: true },
+  'membership/checkout': { title: { zh: 'Pro 支付', en: 'Pro payment' } },
   'membership/renewal-terms': {
     title: { zh: '自动续费服务协议', en: 'Auto-renewal Agreement' },
     description: { zh: 'CubeRoot 会员自动续费的服务、扣款、通知、取消与售后说明。', en: 'CubeRoot membership auto-renewal service, billing, notices, cancellation, and support.' },

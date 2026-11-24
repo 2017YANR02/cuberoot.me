@@ -63,9 +63,9 @@ export default function MembershipReminder() {
       <Crown size={15} className="mem-reminder-icon" />
       <span className="mem-reminder-text">
         {exp.expired
-          ? tr({ zh: '你的 CubeRoot 会员已到期', en: 'Your CubeRoot membership has expired'
+          ? tr({ zh: '你的 Pro 会员已到期', en: 'Your Pro membership has expired'
         })
-          : tr({ zh: 'CubeRoot 会员还有 {n} 天到期', en: 'Your CubeRoot membership expires in {n} day(s)'
+          : tr({ zh: 'Pro 会员还有 {n} 天到期', en: 'Your Pro membership expires in {n} day(s)'
         }).replace('{n}', String(Math.max(0, exp.daysLeft ?? 0)))}
       </span>
       <AppLink href="/membership?renew=1" className="mem-reminder-cta" onClick={dismissForRenewal}>

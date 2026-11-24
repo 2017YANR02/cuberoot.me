@@ -6,6 +6,10 @@ import { requestStoreMembership, useStoreMembershipAvailable, type MembershipSto
 import { useAuthUser, authActions, getAuthUser } from '@/lib/auth-store';
 import { tr } from '@/i18n/tr';
 import AppLink from '@/components/AppLink';
+import PageBackLink from '@/components/PageBackLink';
+import { annualStoreSavings } from '@/lib/membership-format';
+import MembershipSkeleton from './MembershipSkeleton';
+import PlanPicker from './PlanPicker';
 import MoreToggle from '@/components/MoreToggle';
 
 export const storeSubscriptionUrls = {
@@ -24,6 +28,7 @@ export default function StoreMembership({ store, refresh, benefits, manageOnly =
   const storeName = store === 'apple' ? 'App Store' : 'Google Play';
   const [catalog, setCatalog] = useState<{ uid: number; attempt: number; products: AppleMembershipProduct[] }>();
   const [action, setAction] = useState<AppleMembershipRequest['action']>();
+  const [selectedId, setSelectedId] = useState<AppleMembershipProductId>();
   const [message, setMessage] = useState('');
   const [attempt, setAttempt] = useState(0);
   const uid = user?.uid;
@@ -69,15 +74,25 @@ export default function StoreMembership({ store, refresh, benefits, manageOnly =
   }
 
   const products = catalog && catalog.uid === uid && catalog.attempt === attempt ? catalog.products : undefined;
+  const selected = products?.find(product => product.id === selectedId)
+    ?? products?.find(product => product.id.endsWith('.monthly'))
+    ?? products?.[0];
+  const annualSavings = annualStoreSavings(
+    products?.find(product => product.id.endsWith('.monthly'))?.displayPrice,
+    products?.find(product => product.id.endsWith('.yearly'))?.displayPrice,
+  );
   return (
     <section className="mem-store">
       <header className="mem-head">
-        <h1 className="mem-title">{manageOnly
-          ? tr({ zh: '管理订阅', en: 'Manage subscriptions' })
-          : tr({ zh: 'CubeRoot 个人会员', en: 'CubeRoot Personal Membership' })}</h1>
+        <div className="page-back-heading">
+          <PageBackLink label={tr({ zh: '返回', en: 'Back' })} fallback={manageOnly ? '/membership' : '/account'} />
+          <h1 className="mem-title">{manageOnly
+            ? tr({ zh: '管理 Pro 订阅', en: 'Manage Pro subscriptions' })
+            : 'CubeRoot Pro'}</h1>
+        </div>
       </header>
       {!manageOnly && uid && available && (products === undefined
-        ? <p role="status">{tr({ zh: '正在加载商品…', en: 'Loading products…' })}</p>
+        ? <MembershipSkeleton store />
         : products.length === 0
           ? <div className="mem-store-catalog-status">
             <p role="status">{tr({ zh: '订阅商品暂不可用。', en: 'Subscriptions are temporarily unavailable.' })}</p>
@@ -86,11 +101,13 @@ export default function StoreMembership({ store, refresh, benefits, manageOnly =
             </button>
           </div>
           : <>
-            <div className="mem-plans">{products.map(product => <article key={product.id} className="mem-plan" data-site-surface="panel">
-              <h2 className="mem-plan-name">{product.displayName}</h2>
-              <p className="mem-plan-price"><span className="mem-plan-amount">{product.displayPrice}</span><span className="mem-plan-unit">/ {tr(product.id.endsWith('.monthly') ? { zh: '月', en: 'month' } : { zh: '年', en: 'year' })}</span></p>
-              <button type="button" className="mem-plan-cta" disabled={!!action} onClick={() => void run('purchase', product.id)}>{tr({ zh: '订阅', en: 'Subscribe' })}</button>
-            </article>)}</div>
+            <PlanPicker options={products.map(product => ({
+              id: product.id, price: product.displayPrice,
+              caption: tr(product.id.endsWith('.monthly') ? { zh: '按月计费', en: 'Billed monthly' } : { zh: '按年计费', en: 'Billed annually' }),
+              savings: product.id.endsWith('.yearly') ? annualSavings : null,
+            }))} selected={selected?.id} onSelect={setSelectedId} busy={!!action}
+              onSubmit={() => selected && void run('purchase', selected.id)}
+              submitLabel={action === 'purchase' ? tr({ zh: '正在处理…', en: 'Processing…' }) : tr({ zh: '订阅 Pro', en: 'Subscribe to Pro' })} />
             <p className="mem-foot-note">{store === 'apple'
               ? tr({ zh: '由 Apple 扣款，自动续费。请至少提前 24 小时取消，取消后权益保留至到期。', en: 'Billed by Apple and auto-renewed. Cancel at least 24 hours before renewal. Access continues through the paid period.' })
               : tr({ zh: '由 Google Play 扣款，自动续费。取消后权益保留至到期。', en: 'Billed by Google Play and auto-renewed. Access continues through the paid period after cancellation.' })}</p>
@@ -105,7 +122,7 @@ export default function StoreMembership({ store, refresh, benefits, manageOnly =
           ? <button type="button" className="mem-store-secondary" disabled={!!action} onClick={() => void run('manage')}>{tr({ zh: '管理订阅', en: 'Manage subscriptions' })}</button>
           : <a className="mem-store-secondary" href={storeSubscriptionUrls[store]} target="_blank" rel="noreferrer">{storeName} · {tr({ zh: '管理订阅', en: 'Manage subscriptions' })}</a>}
       </div>
-      <p className="mem-store-message" role="status">{action ? tr({ zh: '正在处理…', en: 'Processing…' }) : message}</p>
+      <p className="mem-store-message" role="status">{action && action !== 'purchase' ? tr({ zh: '正在处理…', en: 'Processing…' }) : message}</p>
       {benefits && <details className="mem-store-benefits">
         <MoreToggle as="summary">{tr({ zh: '会员权益', en: 'Membership benefits' })}</MoreToggle>
         {benefits}

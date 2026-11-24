@@ -142,47 +142,11 @@
   border-color: var(--signal-success);
   background: color-mix(in srgb, var(--signal-success) 6%, var(--card));
 }
-.mem-plan.is-autorenew .mem-plan-tag,
 .mem-plan.is-autorenew .mem-plan-cta {
   background: var(--signal-success);
 }
 .mem-plan.is-autorenew .mem-plan-cta:hover {
   background: color-mix(in srgb, var(--signal-success) 88%, black);
-}
-.compact-select.mem-plan-tag,
-.compact-select-popup.mem-plan-mode-popup {
-  font-size: 11px;
-  font-weight: 700;
-  line-height: 1.45;
-}
-.compact-select.mem-plan-tag {
-  position: absolute;
-  top: -10px;
-  right: 16px;
-  border-radius: 999px;
-  color: var(--accent-foreground);
-  background: var(--accent);
-}
-.mem-plan-mode-trigger {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  padding: 2px 10px;
-  border-radius: inherit;
-  border: 0;
-  background: transparent;
-  color: inherit;
-  font: inherit;
-  cursor: pointer;
-}
-.mem-plan-mode-trigger .compact-select-arrow {
-  color: inherit;
-}
-.mem-plan-mode-popup .compact-select-option {
-  padding: 4px 14px;
-  font-size: inherit;
-  text-align: center;
-  white-space: nowrap;
 }
 .mem-plan-name {
   font-size: 16px;
@@ -245,6 +209,7 @@
 .mem-plan.is-feature .mem-plan-cta:hover { background: color-mix(in srgb, var(--accent) 88%, black); }
 
 /* Shared App Store / Google Play surface; no store-specific payment styling. */
+.mem-page .page-back-heading > .back-home { min-width: 44px; min-height: 44px; justify-content: center; }
 .mem-store { overflow-wrap: anywhere; }
 .mem-store-benefits { margin-top: 20px; }
 .mem-store-catalog-status {
@@ -255,11 +220,36 @@
 }
 .mem-store-catalog-status p { margin: 0; }
 .mem-plan-name { margin-top: 0; }
-.mem-store .mem-plan-price { margin-top: 0; flex-wrap: wrap; }
-.mem-store .mem-plan-cta { min-height: 44px; margin-top: auto; }
+.mem-store-periods {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  min-width: 0;
+  margin: 0 0 12px;
+  padding: 0;
+  border: 0;
+}
+.mem-store-period {
+  display: grid;
+  gap: 6px;
+  padding: 14px;
+  border: 1px solid var(--border-default);
+  border-radius: 12px;
+  cursor: pointer;
+}
+.mem-store-period[data-selected="true"] { border-color: var(--accent); background: var(--accent-soft); }
+.mem-store-period:only-of-type { grid-column: 1 / -1; }
+.mem-store-period-heading { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; min-height: 24px; }
+.mem-store-period input { margin: 0; accent-color: var(--accent); }
+.mem-store-period input:focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }
+.mem-store-saving { padding: 2px 6px; border-radius: 6px; background: var(--accent-soft); color: var(--foreground); font-size: 0.75rem; font-weight: 600; }
+.mem-store-period strong { font-size: 1.2rem; }
+.mem-store-period span { color: var(--muted-foreground); }
+.mem-picker .mem-plan-cta { min-height: 44px; width: 100%; }
 .mem-store-actions {
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
+  grid-auto-columns: minmax(0, 1fr);
+  grid-auto-flow: column;
   gap: 10px;
   margin-top: 20px;
 }
@@ -277,10 +267,10 @@
   line-height: 1.5;
   cursor: pointer;
 }
-.mem-store-actions .mem-store-secondary { flex: 1 1 200px; }
+.mem-store-actions .mem-store-secondary { min-width: 0; padding-inline: 8px; overflow-wrap: anywhere; }
 .mem-store-actions a.mem-store-secondary { box-sizing: border-box; text-align: center; text-decoration: none; }
 .mem-store-secondary:hover:not(:disabled) { background: var(--muted); }
-.mem-store .mem-plan-cta:disabled,
+.mem-picker .mem-plan-cta:disabled,
 .mem-store .mem-store-secondary:disabled { opacity: 0.55; cursor: not-allowed; }
 .mem-store .mem-plan-cta:focus-visible,
 .mem-store .mem-store-secondary:focus-visible { outline: 2px solid var(--ring); outline-offset: 3px; }
@@ -637,4 +627,134 @@
   .mem-admin-planname { white-space: normal; font-size: 12px; }
   .mem-admin-priceinput, .mem-admin-plansave { padding: 6px; font-size: 12px; }
   .mem-admin-checks { grid-template-columns: 1fr; }
+}
+
+.mem-free-tier, .mem-short-period, .mem-tier-price { display: none; }
+
+@media (min-width: 900px) {
+  .mem-comparison { max-width: 1180px; }
+  .mem-plan-sections {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 16px;
+  }
+  .mem-payment-choice { grid-column: 1 / -1; justify-self: end; }
+  .mem-plan-section {
+    min-width: 0;
+    padding: clamp(18px, 2vw, 30px);
+    border: 1px solid var(--border-default);
+    border-radius: 16px;
+    background: var(--card);
+  }
+  /* All three tiers share tracks for the header, price, action, note and benefits. */
+  .mem-comparison .mem-plan-section {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    grid-template-rows: subgrid;
+    grid-row: span 5;
+    row-gap: 0;
+    align-items: start;
+  }
+  .mem-plan-section > .mem-picker { display: contents; }
+  .mem-plan-section-title { grid-area: 1 / 1 / 2 / -1; align-self: center; }
+  .mem-plan-section:has(.mem-store-period:nth-of-type(2)) .mem-plan-section-title { grid-column: 1; }
+  .mem-tier-picker .mem-store-periods { grid-area: 1 / 2; justify-self: end; align-self: center; }
+  .mem-plan-section .mem-tier-price { grid-area: 2 / 1 / 3 / -1; }
+  .mem-plan-section :is(.mem-plan-cta, .mem-free-link) { grid-area: 3 / 1 / 4 / -1; align-self: stretch; font-size: 14px; }
+  .mem-plan-section > :is(.mem-payment-note, [role="status"]) { grid-area: 4 / 1 / 5 / -1; }
+  .mem-plan-section .mem-store-benefits { grid-area: 5 / 1 / 6 / -1; }
+  .mem-plan-section .mem-plan-perks { gap: 12px; margin: 12px 0 0; }
+  .mem-plan-section .mem-plan-perks li { align-items: baseline; line-height: 1.65; }
+  .mem-plan-section .mem-benefits-inline { flex-direction: row-reverse; }
+
+  .mem-plan-section-title { font-size: 24px; margin: 0; }
+  .mem-tier-picker .mem-store-periods {
+    display: inline-flex;
+    flex-wrap: wrap;
+    align-items: center;
+    padding: 3px;
+    border-radius: 12px;
+    gap: 2px;
+    margin: 0;
+    background: var(--muted);
+  }
+  .mem-tier-picker .mem-store-period {
+    position: relative;
+    display: flex;
+    align-items: center;
+    flex-direction: row-reverse;
+    padding: 4px 9px;
+    border: 0;
+    border-radius: 9px;
+    font-size: 13px;
+  }
+  .mem-tier-picker .mem-store-period[data-selected="true"] { background: var(--card); }
+  .mem-tier-picker .mem-store-period:has(input:focus-visible) { outline: 2px solid var(--ring); }
+  .mem-tier-picker .mem-store-period input { position: absolute; opacity: 0; }
+  .mem-tier-picker .mem-store-period-heading { min-height: 0; }
+  .mem-tier-picker .mem-store-period-heading:not(:has(small)),
+  .mem-tier-picker .mem-store-period strong, .mem-tier-picker .mem-period-caption { display: none; }
+  .mem-tier-picker .mem-store-period-heading:has(input):not(:has(small)) { display: contents; }
+  .mem-tier-picker .mem-short-period { display: inline; color: var(--foreground); }
+  .mem-tier-picker .mem-store-periods:not(:has(label:nth-of-type(2))) { display: none; }
+  .mem-tier-picker .mem-store-periods[data-pair] {
+    --first-period-width: 4.1em;
+    position: relative;
+    isolation: isolate;
+    display: inline-grid;
+    grid-template-columns: var(--first-period-width) auto;
+    font-size: 13px;
+  }
+  .mem-tier-picker [data-pair]::before {
+    content: '';
+    position: absolute;
+    inset: 3px calc(100% - 3px - var(--first-period-width)) 3px 3px;
+    z-index: -1;
+    border-radius: 9px;
+    background: var(--card);
+    transition: left 200ms ease, right 200ms ease;
+  }
+  .mem-tier-picker [data-pair]:has(label:last-of-type input:checked)::before {
+    left: calc(5px + var(--first-period-width));
+    right: 3px;
+  }
+  .mem-tier-picker [data-pair] .mem-store-period { background: transparent; justify-content: center; padding-inline: 5px; }
+  .mem-tier-picker .mem-tier-price { animation: mem-price-in 200ms ease-out; }
+  .mem-tier-price { display: flex; align-items: baseline; flex-wrap: wrap; gap: 8px; margin: 18px 0; }
+  .mem-tier-price strong { font-size: 32px; line-height: 1.2; color: var(--foreground); }
+  .mem-tier-price span { color: var(--muted-foreground); font-size: 14px; }
+  .mem-free-link { display: grid; place-items: center; min-height: 44px; background: var(--muted); color: var(--foreground); border-radius: 10px; font-weight: 600; }
+  .mem-plan-section .mem-store-benefits { border-top: 1px solid var(--border-default); padding-top: 16px; }
+}
+
+@keyframes mem-price-in {
+  from { opacity: 0.35; transform: translateY(3px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .mem-tier-picker [data-pair]::before { transition: none; }
+  .mem-tier-picker .mem-tier-price { animation: none; }
+}
+
+.mem-loading-header { display: grid; gap: 20px; margin-bottom: 36px; }
+.mem-loading-header > :first-child { width: 11rem; height: 30px; }
+.mem-loading-header > :last-child { width: min(70%, 20rem); height: 18px; }
+.mem-loading-plans { display: grid; gap: 28px; }
+.mem-loading-card[data-tier="free"] { display: none; }
+.mem-loading-title { width: 36%; height: 23px; margin-bottom: 18px; }
+.mem-loading-periods { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.mem-loading-periods > * { height: 104px; border-radius: 12px; }
+.mem-loading-periods > :last-child { grid-column: 1 / -1; height: 44px; }
+.mem-loading-perks { display: grid; gap: 12px; margin-top: 24px; }
+.mem-loading-perks > :first-child { width: 58%; }
+.mem-loading-perks > :not(:first-child) { display: none; }
+@media (min-width: 900px) {
+  .mem-loading-plans { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
+  .mem-loading-card, .mem-loading-card[data-tier="free"] {
+    display: block; padding: clamp(18px, 2vw, 30px); border: 1px solid var(--border-default); border-radius: 16px;
+  }
+  .mem-loading-card .mem-loading-periods > :first-child { height: 38px; width: 82%; }
+  .mem-loading-card .mem-loading-periods > :nth-child(2) { display: none; }
+  .mem-loading-perks > :not(:first-child) { display: block; width: 88%; }
+  .mem-loading-perks > :last-child { width: 72%; }
 }

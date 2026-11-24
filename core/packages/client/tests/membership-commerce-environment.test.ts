@@ -59,7 +59,7 @@ describe('membership in the WeChat browser', () => {
     await act(async () => root.render(createElement(MembershipPage)));
     expect(mocks.getEnv).toHaveBeenCalledTimes(1);
     expect(mocks.listPlans).not.toHaveBeenCalled();
-    expect(host.textContent).toContain('加载中');
+    expect(host.querySelector('[role="status"][aria-busy="true"]')?.getAttribute('aria-label')).toBe('正在加载套餐');
     expect(host.textContent).not.toContain('小程序内暂不提供');
     expect(host.querySelector('.mem-plan-cta')).toBeNull();
 
@@ -76,31 +76,45 @@ describe('membership in the WeChat browser', () => {
       await act(async () => (host.querySelector('.mem-plan-cta') as HTMLButtonElement).click());
       expect(mocks.login).toHaveBeenCalledTimes(1);
       expect(host.querySelectorAll('.mem-plan-cta')).toHaveLength(1);
-      const select = host.querySelector<HTMLButtonElement>('button[aria-label="付费方式"]')!;
-      expect(select.textContent).toContain('自动续费');
-      expect(select.querySelector('.compact-select-arrow')).not.toBeNull();
+      const toggle = host.querySelector<HTMLButtonElement>('[role="switch"][aria-label="自动续费"]')!;
+      expect(toggle.getAttribute('aria-checked')).toBe('true');
       expect(host.querySelector('.mem-plan-amount')?.textContent).toBe('¥29.99');
-      await act(async () => select.click());
-      const options = [...document.querySelectorAll<HTMLElement>('[role="option"]')];
-      expect(options.map(item => item.textContent)).toEqual(['单次购买']);
-      const [manual] = options;
-      await act(async () => manual.click());
-      expect(host.querySelector('button[aria-label="付费方式"]')?.textContent).toBe('单次购买');
+      await act(async () => toggle.click());
+      expect(toggle.getAttribute('aria-checked')).toBe('false');
       expect(host.querySelector('.mem-plan-amount')?.textContent).toBe('¥39.99');
-      expect(host.textContent).toContain('灵活购买，无后续扣款');
+      expect(host.textContent).toContain('单次购买，无后续扣款');
       expect(host.querySelector('.mem-plan-cta')?.textContent).toBe('立即开通');
       await act(async () => (host.querySelector('.mem-plan-cta') as HTMLButtonElement).click());
       expect(mocks.login).toHaveBeenCalledTimes(2);
-      await act(async () => host.querySelector<HTMLButtonElement>('button[aria-label="付费方式"]')!.click());
-      expect([...document.querySelectorAll('[role="option"]')].map(item => item.textContent)).toEqual(['自动续费']);
+      await act(async () => toggle.click());
+      expect(toggle.getAttribute('aria-checked')).toBe('true');
+      expect(host.querySelector('.mem-plan-amount')?.textContent).toBe('¥29.99');
     }
+  });
+
+  it('selects between monthly and annual pricing with one checkout and collapsed benefits', async () => {
+    const plan = { currency: 'CNY', perks: [], periodCount: 1 };
+    mocks.listPlans.mockResolvedValueOnce({ plans: [], renewalPlans: [
+      { ...plan, slug: 'monthly_auto_renew', period: 'month', priceCents: 2999 },
+      { ...plan, slug: 'yearly_auto_renew', period: 'year', priceCents: 29900 },
+    ] });
+    await act(async () => root.render(createElement(MembershipPage)));
+    await act(async () => reply({ miniprogram: false }));
+    const section = host.querySelector('#personal-plans-title')!;
+    const [month, year] = section.querySelectorAll<HTMLInputElement>('input[type="radio"]');
+    expect(month.checked).toBe(true);
+    await act(async () => year.click());
+    expect(year.checked).toBe(true);
+    expect(mocks.login).not.toHaveBeenCalled();
+    expect(section.querySelectorAll('.mem-plan-cta')).toHaveLength(1);
+    expect(section.querySelector('details')?.open).toBe(false);
   });
 
   it('offers only single purchases in the direct Android app', async () => {
     mocks.directApp = true;
     await act(async () => root.render(createElement(MembershipPage)));
     await act(async () => reply({ miniprogram: false }));
-    expect(host.querySelector('button[aria-label="付费方式"]')).toBeNull();
+    expect(host.querySelector('[role="switch"][aria-label="自动续费"]')).toBeNull();
     expect(host.querySelector('.mem-plan-amount')?.textContent).toBe('¥39.99');
     expect(host.textContent).not.toContain('自动续费服务协议');
   });

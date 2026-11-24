@@ -552,7 +552,7 @@ export default function LandingPage({ initialLayout = null }: { initialLayout?: 
         </>}
 
         <Link href="/membership" className="landing-auth-icon landing-membership-icon"
-          aria-label={tr({ zh: '会员', en: 'Membership' })} prefetch={false}>
+          aria-label="Pro" prefetch={false}>
           <Heart className="site-support-heart" size={16} aria-hidden="true" />
         </Link>
         {renderCardGrid('calendar', SECTIONS.flatMap((section) => section.cards).filter((card) => card.id === 'calendar'), 'landing-calendar-link')}
@@ -718,7 +718,7 @@ export default function LandingPage({ initialLayout = null }: { initialLayout?: 
         </Link>
         <Link href="/membership" className="footer-membership" prefetch={false}>
           <Crown size={14} aria-hidden="true" />
-          <span>{tr({ zh: '会员', en: 'Membership' })}</span>
+          <span>Pro</span>
         </Link>
         <a
           href={GITHUB_FOOTER_ENTRY.href}

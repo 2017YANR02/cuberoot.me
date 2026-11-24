@@ -8,7 +8,7 @@ interface Context { ticket?: string; pilot?: boolean; pilotPayment?: boolean; ac
 interface Contract { id: string; planSlug: string; state: string; syncStatus: string; cancellationRequested: boolean; billingStatus: string | null }
 const states = new WeakMap<object, { ticket: string; pilotPlan: string; visible: boolean; revision: number }>();
 const labels = () => ({
-  title: tr({ zh: '自动续费', en: 'Auto-renewal' }),
+  title: tr({ zh: 'Pro 自动续费', en: 'Pro auto-renewal' }),
   login: tr({ zh: '登录 CubeRoot', en: 'Sign in to CubeRoot' }),
   agree: tr({ zh: '我已阅读并同意自动续费服务协议', en: 'I have read and agree to the Auto-renewal Agreement' }),
   terms: tr({ zh: '查看自动续费服务协议', en: 'Read the Auto-renewal Agreement' }),

@@ -25,7 +25,7 @@ export default function DonateModal({ lang, onClose: onClosed, embedded = false 
   if (installedMembershipStore()) return (
     <div ref={motionRef} className={embedded ? undefined : "donate-overlay"} {...(!embedded ? backdropProps : {})}>
       <section className="donate-modal settings-typography">
-        <AppLink href="/membership" onClick={onClose}>{t('前往 App 内会员订阅', 'Open in-app membership subscriptions')}</AppLink>
+        <AppLink href="/membership" onClick={onClose}>{t('前往 App 内订阅 Pro', 'View Pro plans in the app')}</AppLink>
         <button onClick={onClose}>{t('关闭', 'Close')}</button>
       </section>
     </div>

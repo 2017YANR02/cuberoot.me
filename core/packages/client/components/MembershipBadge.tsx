@@ -18,15 +18,14 @@ export default function MembershipBadge({ lifetime, size = 13, className }: Prop
   return (
     <span
       className={`membership-badge${lifetime ? ' is-lifetime' : ''}${className ? ' ' + className : ''}`}
-      title={tr({ zh: 'CubeRoot 会员', en: 'CubeRoot member'
+      title={tr({ zh: 'Pro 会员', en: 'Pro member'
     })}
     >
       <Crown size={size} strokeWidth={2} aria-hidden="true" />
       {lifetime
         ? tr({ zh: '永久会员', en: 'Lifetime'
         })
-        : tr({ zh: '会员', en: 'Member'
-        })}
+        : 'Pro'}
     </span>
   );
 }

@@ -613,6 +613,8 @@ const TABLES: Table[] = [
 ];
 
 const MIGRATIONS: { n: number; slug: string; desc: Bi }[] = [
+  { n: 353, slug: 'membership_benefit_copy', desc: { zh: '精简订阅页的权益说明，保留自定义条目和编辑顺序。', en: 'Condense subscription benefits while preserving custom entries and ordering.' } },
+  { n: 352, slug: 'membership_pro_names', desc: { zh: '统一个人及企业订阅的中英文套餐名称为 Pro。', en: 'Use Pro for individual and business subscription names in both languages.' } },
   { n: 351, slug: 'calendar_event_status', desc: { zh: '为日程保存已确认或待定状态，已有日程默认已确认。', en: 'Store confirmed or tentative status for calendar events. Existing events default to confirmed.' } },
   { n: 349, slug: 'platform_content_reviews', desc: { zh: '课程及课时发布审核，线上版本在审核期间保持不变。', en: 'Course and lesson publication review, preserving live revisions while pending.' } },
   { n: 350, slug: 'platform_learning_stage_preferences', desc: { zh: '按账号保存学习推荐阶段，本机旧记录仅在账号尚无选择时导入，注销时级联删除。', en: 'Persist account-owned learning recommendations, import a legacy device choice only when absent, and delete preferences with the account.' } },

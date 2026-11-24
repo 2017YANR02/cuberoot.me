@@ -216,7 +216,7 @@ export default function PayModal({ plan, channels, isZh, onClose, onPaid, renewa
   if (installedMembershipStore()) return (
     <div className="mem-pay-backdrop" {...backdropProps}>
       <section className="mem-pay">
-        <AppLink href="/membership" onClick={onClose}>{tr({ zh: '前往 App 内会员订阅', en: 'Open in-app membership subscriptions' })}</AppLink>
+        <AppLink href="/membership" onClick={onClose}>{tr({ zh: '前往 App 内订阅 Pro', en: 'View Pro plans in the app' })}</AppLink>
         <button onClick={onClose}>{tr({ zh: '关闭', en: 'Close' })}</button>
       </section>
     </div>

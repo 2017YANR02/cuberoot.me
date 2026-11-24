@@ -18,13 +18,14 @@ import { isMiniProgramCommerceRestricted } from '@/lib/miniprogram-bridge';
 import { fmtPrice, fmtDate, fmtVipId } from '@/lib/membership-format';
 import { benefitCopy } from '@cuberoot/shared/membership-benefits';
 import { useMembershipBenefits } from '@/hooks/useMembershipBenefits';
+import BoolToggle from '@/components/BoolToggle';
+import PlanPicker from './PlanPicker';
 import BenefitsEditor from './BenefitsEditor';
 import AppLink from '@/components/AppLink';
 import { MEMBERSHIP_COPY } from '@/lib/membership-copy';
-import { CompactSelect } from '@/components/CompactSelect';
 import CubeRootLogo from '@/components/CubeRootLogo';
 import DonateModal from '@/components/DonateModal';
-import { Spinner } from '@/components/Spinner/Spinner';
+import MembershipSkeleton from './MembershipSkeleton';
 import {
   listPlans, getMyMembership, getOrderStatus, membershipExpiry,
   reconcileVisiblePlan, isAutoRenewPlanSlug, renewalAvailability,
@@ -72,6 +73,16 @@ export default function MembershipPage() {
   const login = authActions.login;
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
+  const [desktopLayout, setDesktopLayout] = useState(false);
+  useEffect(() => {
+    const desktop = window.matchMedia?.('(min-width: 900px)');
+    if (!desktop) return;
+    const syncLayout = () => setDesktopLayout(desktop.matches);
+    syncLayout();
+    desktop.addEventListener('change', syncLayout);
+    return () => desktop.removeEventListener('change', syncLayout);
+  }, []);
+  const BenefitsContainer = desktopLayout ? 'div' : 'details';
   const appleAvailable = useAppleMembershipAvailable();
   const appleSurface = mounted && (appleAvailable || isIosMembershipSurface());
   const googleAvailable = useStoreMembershipAvailable('google');
@@ -93,6 +104,8 @@ export default function MembershipPage() {
   const [renewalPrices, setRenewalPrices] = useState<MembershipPlan[]>([]);
   const [webPaymentMode, setPaymentMode] = useState<'renewal' | 'manual'>('renewal');
   const paymentMode = directApp ? 'manual' : webPaymentMode;
+  const [personalPeriod, setPersonalPeriod] = useState('month');
+  const [enterprisePeriod, setEnterprisePeriod] = useState('month');
   const [payEnabled, setPayEnabled] = useState(false);
   const [channels, setChannels] = useState<PayChannels>();
   const [buyPlan, setBuyPlan] = useState<MembershipPlan | null>(null);
@@ -225,9 +238,12 @@ export default function MembershipPage() {
   const enterprisePlans = oneTimePlans.filter((plan) => plan.slug === 'enterprise_monthly');
   const personalPlans = oneTimePlans.filter((plan) => !plan.slug.startsWith('enterprise_'));
   const universalPerks = benefits.items.filter(item => item.group === 'common').map(item => item.id);
-  const universalPerkSet = new Set(benefits.items.filter(item => item.group === 'common').map(item => item.id));
   const enterpriseSharedPerks = benefits.items.filter(item => item.group === 'enterprise').map(item => item.id);
-  const enterpriseSharedPerkSet = new Set(benefits.items.filter(item => item.group === 'enterprise').map(item => item.id));
+
+  const visiblePersonal = paymentMode === 'renewal' ? autoRenewPlans : personalPlans;
+  const visibleEnterprise = paymentMode === 'renewal' ? enterpriseRenewalPlans : enterprisePlans;
+  const selectedPersonal = visiblePersonal.find(plan => plan.period === personalPeriod) ?? visiblePersonal[0];
+  const selectedEnterprise = visibleEnterprise.find(plan => plan.period === enterprisePeriod) ?? visibleEnterprise[0];
 
   const handlePlanUpdated = useCallback((updatedPlan: MembershipPlan) => {
     setPlans((current) => current ? reconcileVisiblePlan(current, updatedPlan) : current);
@@ -237,16 +253,16 @@ export default function MembershipPage() {
   if (store) return <main className="mem-page"><AppleMembership key={`${store}:${user?.uid ?? ''}`} store={store} refresh={refreshMembership} benefits={renderPerks([...new Set([...universalPerks, ...intersectPerks(personalPlans)])].filter(perk => perk !== 'lifetime'))} /></main>;
 
   if (commerceRestricted === null) return (
-    <div className="mem-page"><div className="mem-empty" role="status"><Spinner size={16} /> {tr({ zh: '加载中…', en: 'Loading…' })}</div></div>
+    <div className="mem-page mem-comparison"><MembershipSkeleton header /></div>
   );
 
   if (commerceRestricted) {
     return (
       <div className="mem-page">
         <header className="mem-head">
-          <div className="page-back-heading"><PageBackLink contextOnly /><h1 className="mem-title">
+          <div className="page-back-heading"><PageBackLink label={tr({ zh: '返回', en: 'Back' })} fallback="/account" /><h1 className="mem-title">
             <CubeRootLogo className="mem-title-logo" height={22} variant="mark" />
-            {tr({ zh: '会员服务', en: 'Membership' })}
+            CubeRoot Pro
           </h1></div>
         </header>
         <p className="mem-empty">
@@ -259,13 +275,14 @@ export default function MembershipPage() {
     );
   }
 
-  function renderPerks(perks: string[], group?: 'common' | 'enterprise') {
+  function renderPerks(ids: string[], group?: 'common' | 'enterprise') {
+    const perks = [...new Set(ids)].filter(id => benefitMap.get(id)?.enabled);
     if (perks.length === 0 && !(admin && group)) return null;
     const list = (
       <ul className="mem-plan-perks">
-        {group === 'enterprise' && <li><Check size={13} /> {tr({ zh: '包含以上个人用户权益，以及以下企业专属权益。', en: 'Includes all individual benefits above, plus these enterprise benefits.' })}</li>}
+        {group === 'enterprise' && <li><Check size={13} /> {tr({ zh: '包含全部 Pro 权益', en: 'Includes all Pro benefits' })}</li>}
         {perks.map((perk) => (
-          <li key={perk}><Check size={13} /> {tr(benefitMap.has(perk) ? benefitCopy(benefitMap.get(perk)!) : { zh: perk, en: perk })}</li>
+          <li key={perk}><Check size={13} /> {tr(benefitCopy(benefitMap.get(perk)!))}</li>
         ))}
       </ul>
     );
@@ -274,57 +291,41 @@ export default function MembershipPage() {
       : list;
   }
 
-  function renderPaymentChoice() {
-    const nextMode = paymentMode === 'renewal' ? 'manual' : 'renewal';
-    return <CompactSelect className="mem-plan-tag" triggerClassName="mem-plan-mode-trigger" unstyledTrigger align="center" showArrow
-      popupClassName="mem-plan-mode-popup"
-      ariaLabel={tr({ zh: '付费方式', en: 'Payment method' })}
-      label={tr(MEMBERSHIP_COPY[paymentMode])}
-      items={[{ value: nextMode, label: tr(MEMBERSHIP_COPY[nextMode]) }]}
-      onChange={setPaymentMode} />;
-  }
-
-  function renderPlan(plan: MembershipPlan, enterprise = false) {
+  function renderPlans(options: MembershipPlan[], selected: MembershipPlan | undefined, enterprise = false) {
     const renewal = paymentMode === 'renewal';
-    const annual = plan.period === 'year';
-    // Keep checkout disabled until the deployed price matches the reviewed offer.
-    const monthly = enterprise ? (renewal ? 29900 : 39900) : (renewal ? 2999 : 3999);
-    const yearly = enterprise ? (renewal ? 299900 : 399900) : (renewal ? 29900 : 39900);
-    const priceCents = annual ? yearly : monthly;
-    const priceReady = priceCents === plan.priceCents;
-    const saving = annual ? monthly * 12 - yearly : (enterprise ? 10000 : 1000);
-    // Account-specific signing availability is checked in AutoRenewModal after login.
-    const enterpriseEligible = !enterprise || (loggedIn && enterpriseBuyer?.owner === user && enterpriseBuyer.eligible);
-    const available = enterpriseEligible && (renewal ? isAutoRenewPlanSlug(plan.slug) && priceReady : payEnabled && priceReady);
-    const extraPerks = plan.perks.filter(perk => !universalPerkSet.has(perk) && (!enterprise || !enterpriseSharedPerkSet.has(perk)));
-    const unavailable = tr({ zh: '暂不可购买', en: 'Currently unavailable' });
-    return (
-      <div key={plan.slug} className={'mem-plan' + (renewal ? ' is-autorenew' : '')}>
-        {!directApp && renderPaymentChoice()}
-        <div className="mem-plan-heading">
-        <div className="mem-plan-name">{tr(annual
-          ? (enterprise ? MEMBERSHIP_COPY.enterpriseAnnual : MEMBERSHIP_COPY.annual)
-          : (enterprise ? MEMBERSHIP_COPY.enterpriseMonthly : MEMBERSHIP_COPY.monthly))}</div>
-        <p className="mem-plan-saving">{annual || renewal
-          ? tr({ zh: '怒省 {amount}', en: 'Save {amount}' }).replace('{amount}', fmtPrice(saving, plan.currency))
-            : tr({ zh: '灵活购买，无后续扣款', en: 'Flexible purchase. No recurring charges.' })}</p>
-        </div>
-        <div className="mem-plan-price">
-          <span className="mem-plan-amount">{fmtPrice(priceCents, plan.currency)}</span>
-          <span className="mem-plan-unit">/ {planUnit(plan, isZh)}</span>
-        </div>
-        <ul className="mem-plan-perks">
-          {extraPerks.map(perk => <li key={perk}><Check size={13} />{tr(benefitMap.has(perk) ? benefitCopy(benefitMap.get(perk)!) : { zh: perk, en: perk })}</li>)}
-        </ul>
-        <button data-corner-shape="native" className="mem-plan-cta" disabled={!available} onClick={() => {
-          if (!loggedIn) { login(); return; }
-          if (renewal) setSelectedAutoRenewPlan(plan);
-          else if (priceReady) setBuyPlan(plan);
-        }}>
-          {!enterpriseEligible ? tr({ zh: '仅限已认证企业', en: 'Verified enterprises only' }) : !available ? unavailable : tr(MEMBERSHIP_COPY.subscribe)}
-        </button>
-      </div>
-    );
+    if (!selected) return <p role="status">{tr({ zh: '暂无可选套餐', en: 'No plans available' })}</p>;
+    const monthly = options.find(plan => plan.period === 'month' && plan.periodCount === 1);
+    const eligible = !enterprise || (loggedIn && enterpriseBuyer?.owner === user && enterpriseBuyer.eligible);
+    const reviewedMonthly = enterprise ? (renewal ? 29900 : 39900) : (renewal ? 2999 : 3999);
+    const reviewedAnnual = enterprise ? (renewal ? 299900 : 399900) : (renewal ? 29900 : 39900);
+    const reviewedPrice = selected.period === 'year' ? reviewedAnnual : reviewedMonthly;
+    const available = eligible && selected.currency === 'CNY' && selected.periodCount === 1
+      && (selected.period === 'month' || selected.period === 'year') && reviewedPrice === selected.priceCents
+      && (renewal ? isAutoRenewPlanSlug(selected.slug) : payEnabled);
+    return <>
+      <PlanPicker desktopPricing selected={selected.slug} options={options.map(plan => {
+        const annual = plan.period === 'year';
+        const savings = annual && plan.periodCount === 1 && monthly && monthly.currency === plan.currency && monthly.priceCents > 0
+          ? Math.round(100 * (1 - plan.priceCents / (12 * monthly.priceCents))) : 0;
+        return { id: plan.slug, price: fmtPrice(plan.priceCents, plan.currency),
+          shortCaption: plan.periodCount === 1 && (annual || plan.period === 'month')
+            ? tr(annual ? { zh: '年付', en: 'Yearly' } : { zh: '月付', en: 'Monthly' }) : planUnit(plan, isZh),
+          caption: plan.periodCount === 1 && (annual || plan.period === 'month')
+            ? renewal ? tr(annual ? { zh: '按年计费', en: 'Billed annually' } : { zh: '按月计费', en: 'Billed monthly' })
+              : tr(annual ? { zh: '一年', en: 'One year' } : { zh: '一个月', en: 'One month' })
+            : planUnit(plan, isZh),
+          savings: savings > 0 && savings < 100 ? savings : null };
+      })} onSelect={slug => {
+        const plan = options.find(option => option.slug === slug);
+        if (plan) (enterprise ? setEnterprisePeriod : setPersonalPeriod)(plan.period);
+      }} disabled={!available} onSubmit={() => {
+        if (!loggedIn) { login(); return; }
+        if (renewal) setSelectedAutoRenewPlan(selected);
+        else setBuyPlan(selected);
+      }} submitLabel={!eligible ? tr({ zh: '仅限已认证企业', en: 'Verified enterprises only' })
+        : !available ? tr({ zh: '暂不可购买', en: 'Currently unavailable' }) : tr(MEMBERSHIP_COPY.subscribe)} />
+      {!renewal && <p className="mem-payment-note">{tr({ zh: '单次购买，无后续扣款。', en: 'One-time purchase. No recurring charges.' })}</p>}
+    </>;
   }
 
   const personalSettings = activeMember && membership && (
@@ -336,12 +337,11 @@ export default function MembershipPage() {
   );
 
   return (
-    <div className="mem-page">
+    <div className="mem-page mem-comparison">
       <header className="mem-head">
-        <div className="page-back-heading"><PageBackLink contextOnly /><h1 className="mem-title">
+        <div className="page-back-heading"><PageBackLink label={tr({ zh: '返回', en: 'Back' })} fallback="/account" /><h1 className="mem-title">
           <CubeRootLogo className="mem-title-logo" height={22} variant="mark" />
-          {tr({ zh: 'CubeRoot 会员', en: 'CubeRoot membership'
-        })}
+          CubeRoot Pro
         </h1></div>
         <button type="button" className="mem-donate" onClick={() => {
           if (!loggedIn) { login(); return; }
@@ -355,12 +355,6 @@ export default function MembershipPage() {
       {directApp && <p className="mem-note">
         {tr({ zh: '单次购买。已有订阅请在原渠道管理。', en: 'One-time purchases. Manage existing subscriptions in their original channel.' })}
       </p>}
-
-      <nav className="mem-service-links mem-service-links--main" aria-label={tr({ zh: '会员服务', en: 'Membership services' })}>
-        <AppLink href="/membership/subscription" prefetch={false}>{tr(MEMBERSHIP_COPY.manage)}</AppLink>
-        {!directApp && <AppLink href="/membership/renewal-terms" prefetch={false}>{tr(MEMBERSHIP_COPY.agreement)}</AppLink>}
-        <AppLink href="/contact" prefetch={false}>{tr({ zh: '会员客服', en: 'Membership support' })}</AppLink>
-      </nav>
 
       {/* 当前会员状态 / 到期提醒 */}
       {membership && (activeMember || expiry?.expired) && (
@@ -406,31 +400,51 @@ export default function MembershipPage() {
         <div className="mem-empty">{tr({ zh: '加载失败', en: 'Failed to load'
         })}: {loadErr}</div>
       ) : !plans ? (
-        <div className="mem-empty"><Spinner size={16} /> {tr({ zh: '加载中…', en: 'Loading…'
-        })}</div>
+        <MembershipSkeleton />
       ) : isLifetime ? (
         <div className="mem-empty">{tr({ zh: '你已经是永久会员,无需再次购买。', en: 'You already have lifetime membership — nothing to buy.'
         })}</div>
       ) : (
         <div className="mem-plan-sections">
+          {!directApp && <div className="mem-payment-choice">
+            <BoolToggle value={paymentMode === 'renewal'} label={tr({ zh: '自动续费', en: 'Auto-renew' })}
+              onChange={enabled => setPaymentMode(enabled ? 'renewal' : 'manual')} />
+          </div>}
+          <section className="mem-plan-section mem-free-tier" aria-labelledby="free-plan-title">
+            <h2 id="free-plan-title" className="mem-plan-section-title">Free</h2>
+            <div className="mem-tier-price"><strong>{fmtPrice(0, 'CNY')}</strong></div>
+            <AppLink href="/" className="mem-free-link">{tr({ zh: '免费使用 CubeRoot', en: 'Use CubeRoot for free' })}</AppLink>
+            <BenefitsContainer className="mem-store-benefits">
+              {!desktopLayout && <MoreToggle as="summary">{tr({ zh: 'Free 权益', en: 'Free benefits' })}</MoreToggle>}
+              <ul className="mem-plan-perks">
+                {[
+                  { zh: '用计时器记录成绩，查看个人平均成绩', en: 'Time solves and track your averages' },
+                  { zh: '为不同项目生成练习打乱', en: 'Generate practice scrambles for different events' },
+                  { zh: '在虚拟魔方上演练转动和公式', en: 'Try moves and algorithms on a virtual cube' },
+                  { zh: '浏览公式库，按解法和情形查找公式', en: 'Browse algorithms by method and case' },
+                  { zh: '跟随分步教程学习还原', en: 'Learn to solve with step-by-step tutorials' },
+                  { zh: '查看公开复盘，逐步回看选手解法', en: 'Follow public solve reconstructions move by move' },
+                  { zh: '在比赛日历中查找 WCA 比赛', en: 'Find WCA competitions in the calendar' },
+                  { zh: '查询 WCA 比赛成绩、排名和纪录', en: 'Look up WCA results, rankings and records' },
+                ].map(perk => <li key={perk.en}><Check size={13} />{tr(perk)}</li>)}
+              </ul>
+            </BenefitsContainer>
+          </section>
           <section id="personal-plans-title" className="mem-plan-section" aria-labelledby="universal-perks-title">
-            <h2 id="universal-perks-title" className="mem-plan-section-title">{tr({ zh: '个人', en: 'Individual' })}</h2>
-            <div className="mem-plans">
-              {(paymentMode === 'renewal' ? autoRenewPlans : personalPlans).map(plan => renderPlan(plan))}
-              {paymentMode === 'renewal' && autoRenewPlans.length === 0 && <p role="status">{tr({ zh: '自动续费暂不可用，请稍后重试。', en: 'Auto-renewal is temporarily unavailable. Please try again later.' })}</p>}
-            </div>
-            <details className="mem-store-benefits" open={admin || undefined}>
-              <MoreToggle as="summary">{tr({ zh: '个人会员权益', en: 'Individual benefits' })}</MoreToggle>
-              {renderPerks(universalPerks, 'common')}
-            </details>
+            <h2 id="universal-perks-title" className="mem-plan-section-title">Pro</h2>
+            {renderPlans(visiblePersonal, selectedPersonal)}
+            <BenefitsContainer className="mem-store-benefits">
+              {!desktopLayout && <MoreToggle as="summary">{tr({ zh: 'Pro 权益', en: 'Pro benefits' })}</MoreToggle>}
+              {renderPerks([...universalPerks, ...(selectedPersonal?.perks ?? [])], 'common')}
+            </BenefitsContainer>
           </section>
           <section id="enterprise-plans-title" className="mem-plan-section" aria-labelledby="enterprise-perks-title">
-            <h2 id="enterprise-perks-title" className="mem-plan-section-title">{tr({ zh: '企业', en: 'Enterprise' })}</h2>
-            <div className="mem-plans">{(paymentMode === 'renewal' && enterpriseRenewalPlans.length === 1 ? enterpriseRenewalPlans : enterprisePlans).map(plan => renderPlan(plan, true))}</div>
-            <details className="mem-store-benefits" open={admin || undefined}>
-              <MoreToggle as="summary">{tr({ zh: '企业会员权益', en: 'Enterprise benefits' })}</MoreToggle>
-              {renderPerks(enterpriseSharedPerks, 'enterprise')}
-            </details>
+            <h2 id="enterprise-perks-title" className="mem-plan-section-title">{tr({ zh: '企业 Pro', en: 'Enterprise Pro' })}</h2>
+            {renderPlans(visibleEnterprise, selectedEnterprise, true)}
+            <BenefitsContainer className="mem-store-benefits">
+              {!desktopLayout && <MoreToggle as="summary">{tr({ zh: '企业 Pro 权益', en: 'Enterprise Pro benefits' })}</MoreToggle>}
+              {renderPerks([...enterpriseSharedPerks, ...(selectedEnterprise?.perks ?? []).filter(id => !universalPerks.includes(id))], 'enterprise')}
+            </BenefitsContainer>
           </section>
         </div>
       )}
@@ -456,6 +470,12 @@ export default function MembershipPage() {
 
       {/* admin 面板 */}
       {admin && <AdminPanel key={user?.wcaId} plans={plans ?? []} isZh={isZh} onPlanUpdated={handlePlanUpdated} onViewRenewal={setSelectedAutoRenewPlan} />}
+
+      <nav className="mem-service-links mem-service-links--main" aria-label={tr({ zh: '会员服务', en: 'Membership services' })}>
+        <AppLink href="/membership/subscription" prefetch={false}>{tr(MEMBERSHIP_COPY.manage)}</AppLink>
+        {!directApp && <AppLink href="/membership/renewal-terms" prefetch={false}>{tr(MEMBERSHIP_COPY.agreement)}</AppLink>}
+        <AppLink href="/contact" prefetch={false}>{tr({ zh: '会员客服', en: 'Membership support' })}</AppLink>
+      </nav>
 
       {loggedIn && donateOpen && <DonateModal lang={lang} onClose={() => setDonateOpen(false)} />}
       {buyPlan && <PayModal plan={buyPlan} channels={channels} isZh={isZh}

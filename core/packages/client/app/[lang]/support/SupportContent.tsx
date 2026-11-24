@@ -302,14 +302,14 @@ export default function SupportContent({ embedded = false }: { embedded?: boolea
           {admin ? (
             <AppLink href="/membership" className="support-member-link">
               <Crown size={14} />
-              {tr({ zh: '成为会员', en: 'Become a member'
+              {tr({ zh: '开通 Pro', en: 'Get Pro'
               })}
             </AppLink>
           ) : (
             <span className="support-member-disabled" aria-disabled="true">
               <span className="support-member-label">
                 <Crown size={14} />
-                {tr({ zh: '成为会员', en: 'Become a member'
+                {tr({ zh: '开通 Pro', en: 'Get Pro'
                 })}
               </span>
               <small>{tr({ zh: '即将上线', en: 'Coming soon' })}</small>

@@ -23,6 +23,7 @@ vi.mock('@/lib/membership-api', () => ({ listMySubscriptions: mocks.list, cancel
 vi.mock('@/components/AppLink', () => ({
   default: ({ prefetch: _prefetch, ...props }: AnchorHTMLAttributes<HTMLAnchorElement> & { prefetch?: boolean }) => createElement('a', props),
 }));
+import StoreMembership from '@/app/[lang]/membership/AppleMembership';
 import SubscriptionPage from '@/app/[lang]/membership/subscription/page';
 import { DeleteAccountPanel } from '@/components/AuthPanel';
 
@@ -54,6 +55,31 @@ describe('membership subscription cancellation', () => {
     host = document.createElement('div'); document.body.append(host); root = createRoot(host);
   });
   afterEach(async () => { await act(async () => root.unmount()); host.remove(); });
+
+  it.each(['google', 'apple'] as const)('selects a period before starting one %s purchase', async store => {
+    mocks.store = store;
+    const monthly = 'me.cuberoot.app.membership.monthly';
+    const yearly = 'me.cuberoot.app.membership.yearly';
+    mocks.requestStore.mockResolvedValueOnce({ status: 'success', products: [
+      { id: yearly, displayPrice: '$39.99' }, { id: monthly, displayPrice: '$3.99' },
+    ] });
+    let cancelPurchase!: () => void;
+    mocks.requestStore.mockImplementationOnce(() => new Promise(resolve => {
+      cancelPurchase = () => resolve({ status: 'cancelled' });
+    }));
+    await act(async () => root.render(createElement(StoreMembership, { store })));
+    expect(host.querySelector('.back-home')?.getAttribute('href')).toBe('/account');
+    const [annual, month] = host.querySelectorAll<HTMLInputElement>('input[type="radio"]');
+    expect(month.checked).toBe(true);
+    await act(async () => annual.click());
+    expect(mocks.requestStore).toHaveBeenCalledTimes(1);
+    await click('订阅 Pro');
+    expect(mocks.requestStore).toHaveBeenLastCalledWith(store, 'purchase', 1, yearly);
+    expect(annual.checked).toBe(true);
+    expect(button('正在处理…').disabled).toBe(true);
+    await act(async () => cancelPurchase());
+    expect(button('订阅 Pro').disabled).toBe(false);
+  });
 
   it('requires login without querying private data and provides a return link', async () => {
     mocks.owner = '';

@@ -153,7 +153,7 @@ export async function createPapayCheckout(contract: PapayContract, input: {
     .format(input.expiresAt).replace(/\D/g, '');
   const result = await paymentRequest('contractorder', {
     contract_mchid: mchId, contract_appid: appid, out_trade_no: input.orderNo,
-    device_info: 'WEB', body: 'CubeRoot 会员', total_fee: String(input.cents), fee_type: 'CNY',
+    device_info: 'WEB', body: 'CubeRoot Pro', total_fee: String(input.cents), fee_type: 'CNY',
     spbill_create_ip: input.ip, trade_type: input.tradeType, product_id: contract.plan_id,
     plan_id: contract.plan_id, contract_code: contract.contract_code, request_serial: input.serial,
     contract_display_account: input.displayAccount, notify_url: PAPAY_PAYMENT_NOTIFY,
@@ -185,7 +185,7 @@ export async function applyPapayDebit(contract: PapayContract, orderNo: string, 
   if (contract.appid !== appid || contract.mch_id !== mchId || !contract.contract_id
     || !Number.isSafeInteger(cents) || cents <= 0 || !/^[a-zA-Z0-9]{1,32}$/.test(orderNo)) throw new PapayUnavailable();
   await paymentRequest('pappayapply', { contract_id: contract.contract_id, out_trade_no: orderNo,
-    total_fee: String(cents), fee_type: 'CNY', trade_type: 'PAP', body: 'CubeRoot 会员自动续费', notify_url: PAPAY_PAYMENT_NOTIFY });
+    total_fee: String(cents), fee_type: 'CNY', trade_type: 'PAP', body: 'CubeRoot Pro自动续费', notify_url: PAPAY_PAYMENT_NOTIFY });
 }
 
 export async function queryPapayDebit(orderNo: string): Promise<Fields> {

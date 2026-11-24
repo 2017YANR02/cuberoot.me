@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { usePathname } from 'next/navigation';
+import PageBackLink from '@/components/PageBackLink';
 import AppLink from '@/components/AppLink';
 import MoreToggle, { MoreTogglePanel } from '@/components/MoreToggle';
 import { MEMBERSHIP_COPY } from '@/lib/membership-copy';
@@ -125,7 +126,7 @@ function SubscriptionManager({ allowCheckoutLinks = true }: { allowCheckoutLinks
       {data?.subscriptions.map((subscription) => {
         const checkout = isPendingCheckout(subscription);
         const checkoutEnded = subscription.billingMethod === 'checkout' && subscription.billingStatus === 'failed' && subscription.state === 'terminated';
-        const label = subscription.period === 'year' ? t('连续包年', 'Annual auto-renewal') : t('连续包月', 'Monthly auto-renewal');
+        const label = subscription.period === 'year' ? t('Pro 连续包年', 'Pro annual auto-renewal') : t('Pro 连续包月', 'Pro monthly auto-renewal');
         const status = checkoutEnded ? t('首笔付款未完成，订单已结束', 'Order ended before the first payment completed')
           : checkout ? (subscription.cancellationRequested
             ? t('正在等待微信确认关单', 'Waiting for WeChat to confirm order closure')
@@ -194,7 +195,7 @@ export default function SubscriptionPage() {
 
   return (
     <main className="mem-page mem-service-document">
-      <h1>{t(MEMBERSHIP_COPY.manage.zh, MEMBERSHIP_COPY.manage.en)}</h1>
+      <div className="page-back-heading"><PageBackLink label={t('返回', 'Back')} fallback="/membership" /><h1>{t(MEMBERSHIP_COPY.manage.zh, MEMBERSHIP_COPY.manage.en)}</h1></div>
       {commerceRestricted === null && <p role="status">{t('加载中…', 'Loading…')}</p>}
       {commerceRestricted === true && <p>{t('小程序内暂不提供订阅管理。', 'Subscription management is unavailable in the Mini Program.')}</p>}
       {commerceRestricted === false && <>

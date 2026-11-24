@@ -27,7 +27,7 @@ export default function AppCheckoutPage() {
 
   return <main className="mem-page">
     <CubeRootLogo />
-    <h1>{tr({ zh: '会员支付', en: 'Membership payment' })}</h1>
+    <h1>{tr({ zh: 'Pro 支付', en: 'Pro payment' })}</h1>
     <p role="status">{invalid
       ? tr({ zh: '支付链接无效，请返回 App 重新打开收银台。', en: 'Invalid payment link. Return to the app and reopen checkout.' })
       : tr({ zh: '完成或取消支付后，请关闭此窗口返回 CubeRoot，App 会查询支付结果。', en: 'After paying or cancelling, close this window to return to CubeRoot. The app will check your payment status.' })}</p>

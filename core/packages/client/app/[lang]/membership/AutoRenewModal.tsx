@@ -85,7 +85,7 @@ export default function AutoRenewModal({ price, period, planSlug, priceCents, on
           onClick={onClose}
         />
 
-        <h2 id="mem-autorenew-title" className="mem-pay-title">{loading && plan ? tr({ zh: plan.nameZh, en: plan.nameEn }) : <>{tr(copy.title)} · {tr(MEMBERSHIP_COPY.renewal)}</>}</h2>
+        <h2 id="mem-autorenew-title" className="mem-pay-title">{tr(copy.title)} · {tr(MEMBERSHIP_COPY.renewal)}</h2>
         <div className="mem-pay-price">{price}<span className="mem-autorenew-price-unit">/{tr(copy.unit)}</span></div>
 
         {/* Never show the legacy form until its signing channel is known. */}

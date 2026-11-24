@@ -995,7 +995,7 @@ export default function AccountSettings({ embedded = false }: { embedded?: boole
                 {view !== 'signin' && !commerceRestricted && (
                   <AppLink href="/membership" className="account-subscribe" prefetch={false}>
                     <Crown size={20} aria-hidden="true" />
-                    <span>{t('订阅会员', 'Subscribe to membership')}</span>
+                    <span>{t('订阅 Pro', 'Subscribe to Pro')}</span>
                   </AppLink>
                 )}
               </div>
