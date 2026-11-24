@@ -4258,7 +4258,7 @@ export function App({ host, loadingMark }: { host: InstalledAppHost; loadingMark
       if (showToolsSearch) setToolsSearchOpen(open => !open);
     } else if (navVisible) selectPrimaryView(id);
   });
-  const draggableNavigation = keepNavigationCentered && !sideNavigation && !nativeNavigation;
+  const draggableNavigation = (keepNavigationCentered || labeledCapsule) && !sideNavigation && !nativeNavigation;
   const navigationDragHandlers = useDraggablePrimaryNavigation(draggableNavigation && navVisible, selectPrimaryView);
 
   const desktopCommand = useRef<(command: string) => void>(() => {});

@@ -986,9 +986,16 @@ button {
 .app-shell[data-floating-navigation] > .primary-nav[data-drag-lens]::before {
   z-index: 1;
   inset-inline-start: 4px;
-  transform: translateX(var(--app-nav-lens-travel, calc(var(--app-nav-highlight-index) * var(--app-nav-width) / 3)))
+  transform: translateX(var(--app-nav-lens-travel, calc(var(--app-nav-highlight-index) * (100% + 8px))))
     scale(var(--app-nav-lens-scale-x, 1), var(--app-nav-lens-scale-y, 1));
   transition: transform 210ms cubic-bezier(.2, .75, .25, 1), background-color 150ms ease;
+}
+.app-shell[data-labeled-capsule] > .primary-nav[data-drag-lens]::before {
+  background-color: var(--glass-nav-lens-tint, var(--shell-hover));
+  background-image: var(--glass-nav-lens-glint, none);
+  box-shadow: var(--glass-nav-lens-shadow, inset 0 0 0 1px var(--glass-edge));
+  transition-timing-function: cubic-bezier(.24, 1.18, .36, 1);
+  transition-duration: 350ms;
 }
 .primary-nav[data-drag-lens] > button { z-index: 2; }
 .primary-nav[data-lens-pressed]::after {
@@ -1007,6 +1014,11 @@ button {
 .app-shell[data-floating-navigation] > .primary-nav[data-drag-lens][data-lens-dragging]::before { transition: none; }
 @media (prefers-reduced-motion: reduce) {
   .app-shell[data-floating-navigation] > .primary-nav[data-drag-lens]::before { transition: none; }
+  /* Windows remote sessions can request reduced motion. Keep tab selection
+     trackable with a short glide, without stretching or overshoot. */
+  .app-shell[data-labeled-capsule] > .primary-nav[data-drag-lens]:not([data-lens-dragging])::before {
+    transition: transform 240ms ease-in-out;
+  }
   .app-shell[data-floating-navigation] > .primary-nav[data-drag-lens][data-lens-pressed]::before {
     --app-nav-lens-scale-x: 1;
     --app-nav-lens-scale-y: 1;
