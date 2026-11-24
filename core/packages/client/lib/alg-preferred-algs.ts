@@ -173,6 +173,12 @@ export const usePreferredAlgs = create<PreferredAlgState>((set, get) => ({
   },
 }));
 
+/** Local read for optional suggestions. Opening a replay never syncs preferences. */
+export function readPreferredAlgItems(puzzle: AlgPuzzle, setSlug: string): Readonly<Record<string, string>> {
+  const snapshot = usePreferredAlgs.getState().snapshots[targetKey(puzzle, setSlug)] ?? null;
+  return newerPreferredAlgs(readLocal(puzzle, setSlug), snapshot)?.items ?? {};
+}
+
 /**
  * 记忆模式的防认打乱候选：当前 case 的其它公式，加上元数据镜像 case 映回来的公式。
  * 只在已经明确选了主公式时启用；无候选时调用方保留原打乱策略。

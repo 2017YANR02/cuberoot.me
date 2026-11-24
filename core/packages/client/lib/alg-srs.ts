@@ -341,6 +341,8 @@ export interface BuildQueueOpts {
   sessionLimit: number;
   /** 到期卡都刷完、新卡也用光时,是否继续按「最该练的」加练。 */
   fillExtra: boolean;
+  /** An explicit one-case exercise can open even outside the daily queue. */
+  reviewSingleCase?: boolean;
   /** 洗牌用的随机源(测试传固定值)。 */
   rand?: () => number;
 }
@@ -386,6 +388,9 @@ export function buildSrsQueue(
       if (out.length >= opts.sessionLimit) break;
       out.push({ key: k, kind: 'extra' });
     }
+  }
+  if (opts.reviewSingleCase && pool.length === 1 && out.length === 0) {
+    return [{ key: pool[0], kind: recs[pool[0]]?.n > 0 ? 'extra' : 'new' }];
   }
   return out;
 }

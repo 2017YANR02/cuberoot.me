@@ -59,6 +59,9 @@ import { reconstructionSummary, trainingCaseHistory, trainingCaseStatistics } fr
 import { buildCfopColumns, buildWalkColumns } from './report-columns';
 import { snapshotReconNotation } from './review-snapshot';
 import ReconstructActions from './ReconstructActions';
+import CfopReplayDiagnosis from './CfopReplayDiagnosis';
+import CfopPersonalBaseline from './CfopPersonalBaseline';
+import { buildCfopDiagnosis, type CfopReplayRange } from './cfop-diagnosis';
 
 import { memoize3bld } from '@cuberoot/shared/timer/reconstruct/bld-helper';
 import PlaybackPanel from './PlaybackPanel';
@@ -120,6 +123,7 @@ function ReconstructReportBody({
 }: ReconstructReportProps) {
   const host = useReconstructHost();
   const { localize: tr } = host;
+  const replayRange = useRef<((range: CfopReplayRange) => void) | null>(null);
   const moves = solve.moves ?? [];
   const frameTimed = solve.videoReconstruction === 'solved';
   const methodMoves = moves.map(move => move.m).join(' ');
@@ -351,18 +355,36 @@ function ReconstructReportBody({
   // measurements, never the local solve ID, move log, scramble, or history.
   const assistantStages = host.renderAssistantAction && solve.event === '333' && moves.length > 0 && Number.isFinite(solve.timeMs) && solve.timeMs > 0
     ? solve.penalty === 'DNF' || solve.penalty === 'DNS' ? []
-      : method === 'cfop' && stageSegs ? buildCfopColumns(stageSegs, stepMx, slots, null, null, null)
+      : method === 'cfop' && stageSegs ? buildCfopColumns(stageSegs, stepMx, slots, analysis?.reference ?? null, analysis?.slotReference ?? null, null)
       : walk ? buildWalkColumns(walk, isZh) : []
     : null;
-  const assistantAction = assistantStages && host.renderAssistantAction?.({
+  const diagnosis = assistantStages && method === 'cfop' && host.renderAssistantTrainingLink
+    && solve.penalty !== 'DNF' && solve.penalty !== 'DNS'
+    ? buildCfopDiagnosis(assistantStages, moves, solve.timeMs, stageSegs?.solvedEndIdx ?? null, stageSegs ?? undefined, solve.reconOk)
+    : null;
+  const summaryStages = diagnosis ? diagnosis.stages.map(stage => stage.column) : assistantStages;
+  const assistantDraft = assistantStages && host.renderAssistantAction?.({
     timeMs: solve.timeMs,
     penalty: solve.penalty,
-    method: assistantStages.length ? method.toUpperCase() : null,
-    stm: stmCount,
-    tps: stmTps,
-    stages: assistantStages.filter(stage=>!stage.skipped).slice(0, 12).map(({label,stepMs,recognitionMs,executionMs,turns,cumulativeMs}) =>
+    method: summaryStages?.length ? method.toUpperCase() : null,
+    stm: diagnosis?.issue ? null : stmCount,
+    tps: diagnosis?.issue || diagnosis?.limited.length ? null : stmTps,
+    stages: (summaryStages ?? []).filter(stage=>!stage.skipped).slice(0, 12).map(({label,stepMs,recognitionMs,executionMs,turns,cumulativeMs}) =>
       ({label,stepMs,recognitionMs,executionMs,turns,cumulativeMs})),
-  });
+  }, diagnosis !== null);
+  const assistantAction = diagnosis && host.renderAssistantTrainingLink ? <CfopReplayDiagnosis
+    key={solve.id}
+    diagnosis={diagnosis}
+    tr={tr}
+    onReplay={range => replayRange.current?.(range)}
+    renderTrainingLink={host.renderAssistantTrainingLink}
+    prepareFormula={host.prepareAssistantFormula}
+    renderFormula={host.renderAssistantFormula}
+    followUp={assistantDraft}
+    personalBaseline={history && <CfopPersonalBaseline history={history} current={solve} tr={tr}
+      renderTrainingLink={host.renderAssistantTrainingLink} prepareFormula={host.prepareAssistantFormula}
+      renderFormula={host.renderAssistantFormula} />}
+  /> : assistantDraft;
 
   const extras=reportNotationExtras(solve,playbackRecon,initialReportUI(solve.reconOk),tr,{recordGyro:host.recordGyro,canEnableGyro:Boolean(host.onEnableGyro),canFeedback:Boolean(onReconFeedback)});
   const composition=reportComposition({solve,recon:reconText,analysis:analysis??null,hasAnalysis:Boolean(analysisInput),scoreable,state:reportUI,tr,
@@ -385,6 +407,8 @@ function ReconstructReportBody({
     'assistant-action':assistantAction,
     analysis:analysisBlock,
     playback:<PlaybackPanel
+          key={solve.id}
+          replayRangeRef={replayRange}
           method={method}
           event={solve.event}
           scramble={solve.scramble}

@@ -70,7 +70,7 @@ interface UndoFrame {
 }
 
 export default function MemoryTrainer({
-  puzzle, set, cases, pool, scrambleKind, onExit, onShowCase, paused,
+  puzzle, set, cases, pool, scrambleKind, onExit, onShowCase, paused, reviewSingleCase,
 }: {
   puzzle: AlgPuzzle;
   set: string;
@@ -84,6 +84,7 @@ export default function MemoryTrainer({
   onShowCase?: (c: AlgCase) => void;
   /** 上头盖着弹层:键盘一律让位(空格别在背后揭示答案,1-4 别在背后记账)。 */
   paused?: boolean;
+  reviewSingleCase?: boolean;
 }) {
   const recs = useAlgSrs(s => s.recs);
   const gradeCase = useAlgSrs(s => s.grade);
@@ -113,7 +114,7 @@ export default function MemoryTrainer({
   const poolSig = pool.join('|');
   const rebuild = useCallback(() => {
     const q = buildSrsQueue(pool, recsRef.current, Date.now(), {
-      newLimit, sessionLimit, fillExtra,
+      newLimit, sessionLimit, fillExtra, reviewSingleCase,
     });
     setQueue(q);
     setPlannedTotal(q.length);
@@ -122,7 +123,7 @@ export default function MemoryTrainer({
     setTally(emptyTally());
     setUndo(null);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [poolSig, newLimit, sessionLimit, fillExtra]);
+  }, [poolSig, newLimit, sessionLimit, fillExtra, reviewSingleCase]);
   useEffect(() => { rebuild(); }, [rebuild]);
 
   const card = queue[pos] ?? null;

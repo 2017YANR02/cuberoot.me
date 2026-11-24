@@ -14,12 +14,13 @@ import { installedGenerativeAiDisabled, installedPetAvailable, useInstalledGener
 
 import { useCallback, useEffect, useLayoutEffect, useRef, useState, useSyncExternalStore } from 'react';
 import { useAssistantWorkspace } from '@/hooks/useAssistantWorkspace';
-import { assistantConversations, assistantOwner } from '@/lib/assistant-conversations';
+import { ASSISTANT_PAGE_DRAFT_EVENT, assistantConversations, assistantOwner, type AssistantPageDraft } from '@/lib/assistant-conversations';
+import { SITE_ASSISTANT_QUESTION_MAX_LENGTH } from '@cuberoot/shared/site-assistant';
 import dynamic from 'next/dynamic';
 import { usePathname } from 'next/navigation';
 import { useEntryRouter as useRouter } from '@/hooks/useEntryRouter';
 import i18n from '@/i18n/i18n-client';
-import { canTestRoles, getRolePreview, hasAdminAccess, useAuthUser } from '@/lib/auth-store';
+import { canTestRoles, getAuthUser, getRolePreview, hasAdminAccess, useAuthUser } from '@/lib/auth-store';
 import { useFeedbackUnread, refreshFeedbackUnread } from '@/lib/feedback-unread';
 import { useAlgSubmissionUnread, refreshAlgSubmissionUnread } from '@/lib/alg-submission-unread';
 import { useNotificationsUnread, refreshNotificationsUnread } from '@/lib/notifications-unread';
@@ -343,12 +344,13 @@ function DeskPetOverlay() {
   const [resting, setResting] = useState(false);
   const user = useAuthUser();
   const owner = assistantOwner(user);
+  const canOpenPageDraft = canUseAssistant(user);
   const workspace = useAssistantWorkspace(owner);
   const pathname = usePathname();
   const router = useRouter();
   const chatRoute = /^\/(?:zh\/|en\/)?chat\/?$/.test(pathname || '');
-  const [authOverlay, setAuthOverlay] = useState<{ pathname: string | null; owner: string } | null>(null);
-  const searchOpen = chatRoute || (authOverlay?.pathname === pathname && authOverlay.owner === owner);
+  const [pageOverlay, setPageOverlay] = useState<{ pathname: string | null; owner: string; trigger?: HTMLButtonElement } | null>(null);
+  const searchOpen = chatRoute || (pageOverlay !== null && pageOverlay.pathname === pathname && pageOverlay.owner === owner);
   const restoredAuthDraft = useRef('');
   const setSearchOpen = useCallback((open: boolean) => {
     const prefix = pathname?.startsWith('/zh') ? '/zh' : '';
@@ -356,16 +358,31 @@ function DeskPetOverlay() {
       assistantConversations.setOpen(owner, true);
       if (!searchOpen) router.push(`${prefix}/chat`);
     } else {
-      setAuthOverlay(null);
+      setPageOverlay(null);
       assistantConversations.setOpen(owner, false);
       if (chatRoute) router.push(prefix || '/');
+      if (pageOverlay?.trigger?.isConnected) requestAnimationFrame(() => pageOverlay.trigger?.focus());
     }
-  }, [owner, pathname, router, searchOpen, chatRoute]);
+  }, [owner, pathname, router, searchOpen, chatRoute, pageOverlay]);
   // Pet gesture listeners live across navigation; always use the current route
   // and account without restarting the animation/gesture lifecycle.
   const searchNavigationRef = useRef(setSearchOpen);
   useLayoutEffect(() => { searchNavigationRef.current = setSearchOpen; }, [setSearchOpen]);
   useEffect(() => { assistantConversations.setOpen(owner, searchOpen); }, [owner, searchOpen]);
+  useEffect(() => {
+    if (douyin || !canOpenPageDraft) return;
+    const openDraft = (event: Event) => {
+      const detail = (event as CustomEvent<AssistantPageDraft>).detail;
+      const current = getAuthUser();
+      if (!detail || detail.owner !== owner || owner !== assistantOwner(current) || !canUseAssistant(current)
+        || !detail.trigger?.isConnected || typeof detail.draft !== 'string' || !detail.draft.trim()
+        || detail.draft.length > SITE_ASSISTANT_QUESTION_MAX_LENGTH || installedGenerativeAiDisabled()) return;
+      assistantConversations.create(owner, crypto.randomUUID(), detail.draft);
+      setPageOverlay({ pathname, owner, trigger: detail.trigger });
+    };
+    window.addEventListener(ASSISTANT_PAGE_DRAFT_EVENT, openDraft);
+    return () => window.removeEventListener(ASSISTANT_PAGE_DRAFT_EVENT, openDraft);
+  }, [canOpenPageDraft, douyin, owner, pathname]);
   useEffect(() => {
     if (!user?.uid) return;
     if (installedGenerativeAiDisabled()) return;
@@ -387,7 +404,7 @@ function DeskPetOverlay() {
     if (draft.send && canUseAssistant(user)) assistantConversations.submit(owner, draft.id, draft.text, [], draft.id);
     // Keep the product URL intact; this is a dismissible return overlay, not a
     // navigation to /chat. The normal chat route remains unchanged.
-    setAuthOverlay({ pathname, owner });
+    setPageOverlay({ pathname, owner });
     assistantConversations.setOpen(owner, true);
     requestAnimationFrame(() => window.scrollTo({ top: draft.scrollY, behavior: 'instant' }));
   }, [owner, pathname, user]);
@@ -2275,6 +2292,7 @@ function DeskPetOverlay() {
           lang={curLang}
           origin={searchOriginRef.current}
           onClose={() => setSearchOpen(false)}
+          returnToReplay={searchOpen && !chatRoute && Boolean(pageOverlay?.trigger?.isConnected)}
           onOpenPetHome={() => { setSearchOpen(false); setTouchActionsVisible(false); window.location.assign(currentEntryHref(`${curLang === 'zh' ? '/zh' : ''}/pets?pet=${character}`)); }}
           character={compact ? 'none' : character}
           characters={petChoices}

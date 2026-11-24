@@ -245,6 +245,7 @@ export default function DeskPetSearch({
   lang,
   origin,
   onClose,
+  returnToReplay,
   character,
   characters,
   catalogAdmin, catalogDisabled, catalogError, onUpdateCatalog,
@@ -264,6 +265,7 @@ export default function DeskPetSearch({
   lang: 'zh' | 'en';
   origin?: { x: number; y: number } | null;
   onClose: () => void;
+  returnToReplay?: boolean;
   character: string;
   characters: (DeskPetEntry & { label: { zh: string; en: string }; thumb: string; thumbScale?: number })[];
   catalogAdmin: boolean;
@@ -389,7 +391,11 @@ export default function DeskPetSearch({
         return;
       }
       if (e.key === 'Escape' && !donateOpen && !feedbackOpen
-        && !document.querySelector('.deskpet-character-menu, .deskpet-gallery-overlay, .deskpet-navigation .appearance-menu, .deskpet-navigation[data-mobile-open="true"]')) onClose();
+        && !document.querySelector('.deskpet-character-menu, .deskpet-gallery-overlay, .deskpet-navigation .appearance-menu, .deskpet-navigation[data-mobile-open="true"]')) {
+        e.preventDefault();
+        e.stopPropagation();
+        onClose();
+      }
     };
     window.addEventListener('keydown', onKey, true);
     return () => window.removeEventListener('keydown', onKey, true);
@@ -605,16 +611,16 @@ export default function DeskPetSearch({
 
   return (
     // This workspace closes explicitly; blank space is not a dismiss target.
-    <div className="deskpet-search-workspace" data-mobile-panel={mobile && !!activePanel} ref={workspaceRef} style={open ? undefined : { display: 'none' }} inert={!open}>
+    <div className="deskpet-search-workspace" data-no-timer data-mobile-panel={mobile && !!activePanel} ref={workspaceRef} style={open ? undefined : { display: 'none' }} inert={!open}>
       <style>{CSS}</style>
       <NavigationShell className="deskpet-navigation" iconOnly mobileLayout="rail" togglePlacement="header" collapseTarget="panel" onPanelOpen={() => setActivePanel('chats')} panelVisible={!!activePanel} mainClassName="deskpet-search-main" contentAs="div"
         items={navigation} renderLink={renderNavigationItem}
         labels={{ navigation: t('桌宠工具栏', 'Pet toolbar'), show: t('展开设置面板', 'Expand settings panel'), hide: t('收起设置面板', 'Collapse settings panel'), openMobile: t('设置', 'Settings'), closeMobile: t('关闭设置', 'Close settings') }}
         header={(_mobileToggle, toggle) => <div className="deskpet-navigation-header">
-          <button className="deskpet-mobile-control" type="button" aria-label={t('返回首页', 'Go to home')} onClick={onClose}><ArrowLeft size={21}/></button>
+          <button className="deskpet-mobile-control" type="button" aria-label={returnToReplay ? t('返回本局复盘', 'Return to this replay') : t('返回首页', 'Go to home')} onClick={onClose}><ArrowLeft size={21}/></button>
           <span className="deskpet-mobile-control" data-navigation-panel-toggle><SidebarToggle collapsed={!activePanel} showLabel={t('打开聊天和设置', 'Open chats and settings')} hideLabel={t('关闭侧栏', 'Close sidebar')} onToggle={() => setActivePanel(current => current ? null : 'chats')} /></span>
           <ClearButton variant="standalone" className="deskpet-workspace-close"
-            ariaLabel={t('关闭窗口', 'Close window')} onClick={onClose} />
+            ariaLabel={returnToReplay ? t('返回本局复盘', 'Return to this replay') : t('关闭窗口', 'Close window')} onClick={onClose} />
           {isValidElement<ComponentProps<typeof SidebarToggle>>(toggle) ? cloneElement(toggle, {
             onToggle: () => {
               if (toggle.props.collapsed) boxRef.current?.querySelector<HTMLInputElement | HTMLTextAreaElement>('input, textarea')?.blur();

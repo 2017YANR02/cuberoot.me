@@ -38,6 +38,9 @@ describe('assistant workspace conversations', () => {
     expect(store.read('alice').conversations[0].snapshot.draft).toBe('My existing draft');
     expect(store.read('bob').conversations).toEqual([]);
     expect(formatReplayAssistantDraft({ ...replay, stages: [] }, text => text.zh)).toContain('没有可靠的分阶段用时');
+    const verifiedStages = formatReplayAssistantDraft({ ...replay, tps: null }, text => text.zh);
+    expect(verifiedStages).not.toContain('TPS');
+    expect(defaultReplayAnswer(verifiedStages, 'zh')?.answer).toContain('在有相应计时的阶段中');
   });
   it('tracks completed replies independently across chats and accounts without treating snapshots as completion', () => {
     const store = createAssistantConversations();

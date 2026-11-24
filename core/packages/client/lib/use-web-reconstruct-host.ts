@@ -1,4 +1,5 @@
 import type { ReconstructHost } from '@cuberoot/timer-ui/reconstruct-report';
+import AppLink from '@/components/AppLink';
 import BoolToggle from '@/components/BoolToggle';
 import ReconCaseLink from '@/components/ReconCaseLink';
 import { ReconLineDiagramProvider } from '@/components/ReconLineDiagrams';
@@ -12,6 +13,7 @@ import { useDouyinToolSurface } from '@/lib/douyin-content';
 import { canUseAssistant } from '@/lib/assistant-auth-continuation';
 import { ASSISTANT_PAGE_DRAFT_EVENT, assistantOwner, type AssistantPageDraft } from '@/lib/assistant-conversations';
 import { formatReplayAssistantDraft } from '@/lib/assistant-replay-draft';
+import { loadLibrarySource } from '@/lib/alg-library-cache';
 import { tr } from '@/i18n/tr';
 import { useSettings, updateSettings } from '@/app/[lang]/timer/_lib/settings';
 import { encodeReplayUrl } from '@/app/[lang]/timer/_lib/share/encode';
@@ -19,6 +21,14 @@ import { createServerReplayShare } from '@/app/[lang]/timer/_lib/share/server';
 
 const ReconIntakeAction = dynamic(() => import('@/components/recon/ReconIntakeAction'), { ssr: false });
 const ReconCaptureAction = dynamic(() => import('@/components/recon/ReconCaptureAction'), { ssr: false });
+const ReplayFormulaTraining = dynamic(() => import('@/components/ReplayFormulaTraining'), { ssr: false });
+
+const prepareAssistantFormula: NonNullable<ReconstructHost['prepareAssistantFormula']> = set => {
+  // The component reads the same public library cache. Start both requests
+  // together so waiting for the card chunk never delays the library request.
+  void loadLibrarySource('3x3', set).catch(() => {});
+  void import('@/components/ReplayFormulaTraining').catch(() => {});
+};
 
 /** Website-only host capabilities for both full details and the inline recap. */
 export function useWebReconstructHost(): ReconstructHost {
@@ -53,7 +63,13 @@ export function useWebReconstructHost(): ReconstructHost {
     BoolToggle,
   };
   if (!aiDisabled && !douyin && canUseAssistant(user)) {
-    host.renderAssistantAction = summary => createElement('div', { className: 'rc-actions', 'data-no-timer': true },
+    host.prepareAssistantFormula = prepareAssistantFormula;
+    host.renderAssistantFormula = (target, focus, fallback) =>
+      createElement(ReplayFormulaTraining, { ...target, focus, fallback, key: `${target.set}/${target.caseName}/${focus}` });
+    host.renderAssistantTrainingLink = (href, label) => createElement(AppLink, {
+      href, prefetch: false, target: '_blank', rel: 'noopener noreferrer', className: 'rc-action',
+    }, label);
+    host.renderAssistantAction = (summary, followUp) => createElement('div', { className: 'rc-actions', 'data-no-timer': true },
       createElement('button', {
         type: 'button',
         className: 'rc-action rc-action--ghost',
@@ -62,7 +78,8 @@ export function useWebReconstructHost(): ReconstructHost {
             detail: { owner: assistantOwner(user), draft: formatReplayAssistantDraft(summary, tr), trigger: event.currentTarget },
           }));
         },
-      }, tr({ zh: '用 Agent 分析这局', en: 'Analyze this solve with Agent' })));
+      }, tr(followUp ? { zh: '在 Agent 里追问', en: 'Ask Agent a follow-up' }
+        : { zh: '用 Agent 分析这局', en: 'Analyze this solve with Agent' })));
   }
   if (admin) {
     host.renderIntakeAction = (solve, snapshot) =>
