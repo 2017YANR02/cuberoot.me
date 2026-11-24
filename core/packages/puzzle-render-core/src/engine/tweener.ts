@@ -1,7 +1,7 @@
 // Ported from huazhechen/cuber (MIT) — src/cuber/tweener.ts
 import { elapsedMsToSimTicks } from '../support/sim-timing';
 
-export type TweenEasing = 'ease-out' | 'linear';
+export type TweenEasing = 'ease-out' | 'linear' | ((progress: number) => number);
 type FrameListener = (frameMs: number, dtMs: number) => void;
 
 export const tweenClock = () => typeof performance !== 'undefined' && typeof performance.now === 'function' ? performance.now() : Date.now();
@@ -27,10 +27,10 @@ export class Tween {
   finish(): void { this.callback(this.end); }
 
   /** Freeze only this animation; resuming must not consume paused wall time. */
-  setPaused(paused: boolean): void {
+  setPaused(paused: boolean, atMs?: number): void {
     if (this.paused === paused) return;
     this.paused = paused;
-    this.lastUpdateMs = tweenClock();
+    this.lastUpdateMs = atMs ?? tweenClock();
   }
 
   /** Wall time belongs to this animation, never to an earlier global frame. */
@@ -56,7 +56,8 @@ export class Tween {
     if (this.paused || !Number.isFinite(deltaTicks) || deltaTicks <= 0) return false;
     this.value += deltaTicks;
     const progress = Math.max(0, Math.min(1, this.value / this.duration));
-    const eased = this.easing === 'linear' ? progress : 1 - (1 - progress) ** 2;
+    const eased = typeof this.easing === 'function' ? this.easing(progress)
+      : this.easing === 'linear' ? progress : 1 - (1 - progress) ** 2;
     this.current = progress === 1 ? this.end : this.begin + (this.end - this.begin) * eased;
     return this.callback(this.current) === true;
   }

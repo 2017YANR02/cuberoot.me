@@ -369,6 +369,8 @@ export default class Twister {
   /** Both arcs have the same half-turn permutation. An attached hand rig may
    * choose the animated direction while history retains the input notation. */
   halfTurnDirection?: (axis: string, layer: number) => 1 | -1 | undefined;
+  /** Optional physical stroke timing, shared by all layers of a timed move. */
+  strokeEasing?: (axis: string, layers: readonly number[], twist: number) => TweenEasing | undefined;
   private cube: Cube;
   private queue: Array<{ action: TwistAction; formulaDurationTicks?: number; easing?: TweenEasing }> = [];
   private pauseTween: Tween | undefined;
@@ -450,11 +452,11 @@ export default class Twister {
 
   private animationPaused = false;
   /** Pause this cube's active and subsequently queued turns, never other views. */
-  setAnimationPaused(paused: boolean): void {
+  setAnimationPaused(paused: boolean, atMs?: number): void {
     this.animationPaused = paused;
-    this.pauseTween?.setPaused(paused);
+    this.pauseTween?.setPaused(paused, atMs);
     for (const groups of Object.values(this.cube.table.groups)) {
-      for (const group of groups) group.setAnimationPaused(paused);
+      for (const group of groups) group.setAnimationPaused(paused, atMs);
     }
   }
 
@@ -907,6 +909,7 @@ export default class Twister {
     force: boolean,
     formulaDurationTicks = timing.frames,
     easing: TweenEasing = 'ease-out',
+    sharedStartMs?: number,
   ): boolean {
     let success = false;
     if (action.sign == "#") {
@@ -933,7 +936,7 @@ export default class Twister {
             return true;
           }
           return false;
-        });
+        }, undefined, sharedStartMs);
         this.pauseTween.setPaused(this.animationPaused);
       }
       return success;
@@ -955,7 +958,10 @@ export default class Twister {
       return true;
     }
     // Slices of one wide turn must start and drop on the same display frame.
-    const startedAtMs = !fast && list.length > 1 ? tweenClock() : undefined;
+    const startedAtMs = sharedStartMs ?? (!fast && list.length > 1 ? tweenClock() : undefined);
+    if (!fast && easing === 'ease-out' && this.strokeEasing) {
+      easing = this.strokeEasing(list[0].group.axis, list.map(r => r.group.layer), list[0].twist) ?? easing;
+    }
     for (const rotate of list) {
       const direction = !fast && list.length === 1 && Math.abs(rotate.twist) === 2
         ? this.halfTurnDirection?.(rotate.group.axis, rotate.group.layer) : undefined;
