@@ -9,7 +9,6 @@ import { Spinner } from '@/components/Spinner/Spinner';
 
 import { cloneElement, isValidElement, useEffect, useLayoutEffect, useRef, useState, useCallback, useSyncExternalStore, type ComponentProps } from 'react';
 import { NavigationShell, SidebarToggle, type NavigationItem, type NavigationLinkProps } from '@app-foundation/navigation-ui';
-import { FaHouse } from 'react-icons/fa6';
 import '@app-foundation/navigation-ui/navigation.css';
 import { Check, Lock, LockOpen, ArrowLeft, ArrowRight, Pencil, Trash2, RotateCcw, Maximize2, Coffee, Sun, Heart, Home, Sparkles, Shuffle, ClipboardList, Music, MessageSquare, SquarePen, Pin, Search, AudioLines, Settings, PawPrint, Bell, Ellipsis, X } from '@app-foundation/icons/lucide';
 import type { DeskPetEntry } from '@cuberoot/shared/deskpet';
@@ -50,7 +49,7 @@ body:has(.deskpet-navigation .appearance-menu) .accent-color-menu{z-index:100030
   --af-nav-selected:var(--accent-soft);height:100%;min-height:0;pointer-events:none;}
 .deskpet-navigation[data-panel-visible='true'][data-panel-collapsed='false']{--af-nav-outline:var(--border-default);}
 .deskpet-navigation .af-nav-body{height:calc(100% - var(--af-nav-header-height));}
-.deskpet-navigation .af-nav-sidebar{pointer-events:auto;}
+.deskpet-navigation .af-nav-sidebar{pointer-events:auto;--af-nav-hover:var(--muted);}
 .deskpet-navigation .af-nav-sidebar .af-nav-row[data-active='true'] .af-nav-link{color:var(--foreground);background:var(--muted);}
 .deskpet-navigation .af-nav-backdrop,.deskpet-navigation .af-nav-mobile-toggle{pointer-events:auto;}
 .deskpet-navigation-header{display:flex;align-items:center;height:var(--af-nav-header-height);
@@ -146,7 +145,6 @@ body:has(.deskpet-navigation .appearance-menu) .accent-color-menu{z-index:100030
 .deskpet-navigation .char-btn .compact-select-arrow{display:none;}
 .deskpet-navigation .af-nav-link > svg,.deskpet-navigation .wca-auth-avatar,
 .deskpet-navigation .wca-auth-fallback,.deskpet-toolbar-thumb{width:18px;height:18px;flex:0 0 18px;object-fit:contain;}
-.deskpet-navigation .heart-icon{fill:var(--destructive);color:var(--destructive);}
 .deskpet-navigation .af-nav-sidebar{position:static;top:auto;height:100%;}
 .deskpet-navigation .af-nav-sidebar > div:last-child{height:100%;}
 .deskpet-navigation .af-nav-sidebar .af-nav-menu{display:flex;flex-direction:column;height:100%;}
@@ -445,11 +443,11 @@ export default function DeskPetSearch({
   };
 
   const navigation: NavigationItem[] = [
-    { id: 'chats', href: '#chats', label: t('聊天', 'Chats'), icon: <span className="deskpet-chat-home"><FaHouse aria-hidden />{unreadReplies.length > 0 && <span className="deskpet-chat-unread" aria-hidden />}</span> },
-    { id: 'pet', href: '#pet', label: t('桌宠', 'Pet'), icon: currentCharacter ? <img src={currentCharacter.thumb} alt="" className="deskpet-toolbar-thumb" style={{ transform: `scale(${currentCharacter.thumbScale ?? 1})` }} /> : <PawPrint aria-hidden /> },
+    { id: 'chats', href: '#chats', label: t('聊天', 'Chats'), icon: <span className="deskpet-chat-home"><Home aria-hidden />{unreadReplies.length > 0 && <span className="deskpet-chat-unread" aria-hidden />}</span> },
     { id: 'music', href: '#music', label: t('音乐', 'Music'), icon: <Music /> },
     ...(!communityDisabled ? [{ id: 'feedback', href: '#feedback', label: t('反馈', 'Feedback'), icon: <ClipboardList />, badge: fbUnread || undefined }] : []),
-    { id: 'donate', href: '#donate', label: t('赞助', 'Donate'), icon: <Heart className="heart-icon" /> },
+    { id: 'donate', href: '#donate', label: t('赞助', 'Donate'), icon: <Heart /> },
+    { id: 'pet', href: '#pet', label: t('桌宠', 'Pet'), icon: currentCharacter ? <img src={currentCharacter.thumb} alt="" className="deskpet-toolbar-thumb" style={{ transform: `scale(${currentCharacter.thumbScale ?? 1})` }} /> : <PawPrint aria-hidden /> },
     { id: 'account', href: '#account', label: t('账号菜单', 'Account menu'), icon: null },
   ].map(item => ({ ...item, active: item.id === activePanel }));
   const renderNavigationItem = ({ href, ...props }: NavigationLinkProps) => {
