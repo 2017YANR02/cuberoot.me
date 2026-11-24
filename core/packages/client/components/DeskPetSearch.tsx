@@ -11,7 +11,7 @@ import { cloneElement, isValidElement, useEffect, useLayoutEffect, useRef, useSt
 import { NavigationShell, SidebarToggle, type NavigationItem, type NavigationLinkProps } from '@app-foundation/navigation-ui';
 import { FaHouse } from 'react-icons/fa6';
 import '@app-foundation/navigation-ui/navigation.css';
-import { Check, Lock, LockOpen, ArrowLeft, ArrowRight, Pencil, Trash2, RotateCcw, Maximize2, Coffee, Sun, Heart, Home, Sparkles, Shuffle, MessageSquarePlus, Music, MessageSquare, SquarePen, Pin, Search, AudioLines, Settings, PawPrint, Bell, Ellipsis, X } from '@app-foundation/icons/lucide';
+import { Check, Lock, LockOpen, ArrowLeft, ArrowRight, Pencil, Trash2, RotateCcw, Maximize2, Coffee, Sun, Heart, Home, Sparkles, Shuffle, ClipboardList, Music, MessageSquare, SquarePen, Pin, Search, AudioLines, Settings, PawPrint, Bell, Ellipsis, X } from '@app-foundation/icons/lucide';
 import type { DeskPetEntry } from '@cuberoot/shared/deskpet';
 import { CompactSelect } from '@/components/CompactSelect';
 import BoolToggle from '@/components/BoolToggle';
@@ -448,7 +448,7 @@ export default function DeskPetSearch({
     { id: 'chats', href: '#chats', label: t('聊天', 'Chats'), icon: <span className="deskpet-chat-home"><FaHouse aria-hidden />{unreadReplies.length > 0 && <span className="deskpet-chat-unread" aria-hidden />}</span> },
     { id: 'pet', href: '#pet', label: t('桌宠', 'Pet'), icon: currentCharacter ? <img src={currentCharacter.thumb} alt="" className="deskpet-toolbar-thumb" style={{ transform: `scale(${currentCharacter.thumbScale ?? 1})` }} /> : <PawPrint aria-hidden /> },
     { id: 'music', href: '#music', label: t('音乐', 'Music'), icon: <Music /> },
-    ...(!communityDisabled ? [{ id: 'feedback', href: '#feedback', label: t('反馈', 'Feedback'), icon: <MessageSquarePlus />, badge: fbUnread || undefined }] : []),
+    ...(!communityDisabled ? [{ id: 'feedback', href: '#feedback', label: t('反馈', 'Feedback'), icon: <ClipboardList />, badge: fbUnread || undefined }] : []),
     { id: 'donate', href: '#donate', label: t('赞助', 'Donate'), icon: <Heart className="heart-icon" /> },
     { id: 'account', href: '#account', label: t('账号菜单', 'Account menu'), icon: null },
   ].map(item => ({ ...item, active: item.id === activePanel }));
