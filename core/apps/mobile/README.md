@@ -122,6 +122,10 @@ On macOS, run `ios:doctor` first, use `ios:build` for a repeatable unsigned Simu
 
 ## iPhone UI automation
 
+### iPad layout checks and App Store screenshots
+
+Run routine iPad layout checks on all four Device Hub models: iPad mini (A20 Pro), iPad (A16), iPad Pro 11-inch (M5), and iPad Pro 13-inch (M5). For App Store artwork, capture the 13-inch Pro in portrait and landscape. Dismiss onboarding before capturing the full Tools page.
+
 ### Xcode 27 / iPhone Duo simulator
 
 Xcode 27 uses **Device Hub** for the simulator UI. Open **Xcode → Open Developer Tool → Device Hub**, select **iPhone Duo**, and use **Closed / Partially Open / Open** below the device to check its different screen sizes. See Apple's [Device Hub guide](https://developer.apple.com/documentation/xcode/managing-your-simulated-and-physical-devices-in-device-hub). Do not assume the older `Simulator.app` path exists.

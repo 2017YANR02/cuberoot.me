@@ -217,6 +217,8 @@ Credential entry for sign-in and user-selected external pages intentionally use 
 
 ## 7. 截图和素材拍摄表
 
+**下次 iOS 提审用图（2026-11-23 维护者选定）**：[商店截图定稿](app-store-screenshots/2026-11-23/)随仓库保存。直接上传对应语言（`zh-Hans`、`en-US`）和设备目录中的 PNG。每种语言含 iPhone 竖屏、13 英寸 iPad Pro 竖屏和横屏，每组按 01–05 排列。计时图放大真实比赛来源行。每种语言的 iPad 横竖屏共用同一截图组，保留旧图时按剩余名额选图。本次仅保存素材，未上传。
+
 至少准备一套英文和一套简体中文手机竖屏素材；最终数量和尺寸以 Play Console 当时显示的要求为准。
 
 | 序号 | 页面 | 要展示的状态 | 注意事项 |
