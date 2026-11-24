@@ -6,7 +6,6 @@ import { FM_IGNORED, FM_REGULAR } from '@cuberoot/puzzle-render-core/engine/nxn/
 import { CUBE_COLOR_LETTER_FOR_FACE, CUBE_COLOR_NAMES, type CubeFace } from '@/lib/cube-colors';
 import { orientedFaceColors } from '@/lib/cube-orientation';
 import { twoByTwoState } from '../lib/2x2-state';
-import { TUTORIAL_STICKER_PURPLE } from '../components/tutorial-colors';
 import { FL_CASE_ALGS } from './case-algs';
 
 export type FlGroup = keyof typeof FL_CASE_ALGS;
@@ -37,23 +36,6 @@ export const FL_CHAPTERS = {
   bottom: { title: text('第三角块在底层', 'Third corner on the bottom layer'), groups: ['mixed', 'bottom'] },
 } as const satisfies Record<string, { title: ReturnType<typeof text>; groups: readonly FlGroup[] }>;
 export type FlChapter = keyof typeof FL_CHAPTERS;
-
-export function flChapterTitle(chapter: FlChapter, { reference }: FlPalette) {
-  return chapter === 'top' ? text(`${reference.zh}在顶层`, `${reference.code} on top`)
-    : text(`${reference.zh}在底层`, `${reference.code} on the bottom`);
-}
-
-export function flChapterAlignment(chapter: FlChapter, { reference, last }: FlPalette) {
-  return chapter === 'top' ? text(`用 U 把${reference.zh}摆到顶层左前。${last.zh}如果在底层，用 R 把它提到顶层。`,
-    `Use U to move the ${reference.en} to top front-left. If the ${last.en} is on the bottom, lift it to the top with R.`)
-    : text(`先用 R 把${reference.zh}摆到底层右前，再看${last.zh}在哪一层。`,
-      `Use R to move the ${reference.en} to bottom front-right, then check which layer the ${last.en} is on.`);
-}
-
-export const FL_BOTTOM_ALIGNMENT = {
-  mixed: text('用 U 把两角上下对齐', 'Use U to line up the two corners vertically'),
-  bottom: text('另一角留在底层右后，从下方看底面', 'Keep the other corner at bottom back-right and look at the cube from below'),
-};
 
 export const FL_TWISTS = [
   { key: '0', id: 'zero', symbol: '0' },
@@ -161,7 +143,6 @@ export const FL_WRG_HOME = 5;
 export const FL_WGO_HOME = 1;
 export const FL_REFERENCE_STICKERS = [FACE.D, FACE.F, FACE.R].map(face => engineHomeSid(FL_WRG_HOME, face, 2));
 export const FL_LAST_STICKERS = [FACE.D, FACE.B, FACE.R].map(face => engineHomeSid(FL_WGO_HOME, face, 2));
-export const FL_PURPLE_LAST = Object.fromEntries(FL_LAST_STICKERS.map(sticker => [sticker, TUTORIAL_STICKER_PURPLE]));
 export const flFirstLayerMask = () => (piece: number) => flCornerLayer(piece) === 'D' ? FM_REGULAR : FM_IGNORED;
 
 export function flCornerLayer(position: number) {
