@@ -207,7 +207,6 @@ export function ProjectedCube({ pose, sourceTimestamp, solved, steps, timeline, 
     </div>
     {(live || analysis || sourceNotation) && <section className="video-recon-result-notation" aria-label={t('复盘结果', 'Reconstruction')}>
       {live ? <div className="video-recon-section-heading">
-        <span className="video-recon-muted">{t('实时预览', 'Live preview')}</span>
         {liveMove && <code className="video-recon-live-move" aria-label={t('最近识别的动作', 'Latest detected moves')}>
           {liveMove.state_moves.join(' ')}
         </code>}

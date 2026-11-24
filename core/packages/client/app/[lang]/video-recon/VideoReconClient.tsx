@@ -311,6 +311,10 @@ export function VideoReconWorkspace({ mode, handoff, submission, onModeChange, o
             : view.searchResult?.inference_failure === 'no_supported_opening'
               ? t('无法从画面确认起始局面和完整动作。', 'The opening state and full move sequence could not be verified from the video.')
               : hasMoves ? t('已保留识别出的动作。', 'Recovered moves are available.') : t('未识别到可用动作。', 'No moves were recovered.')}</span>
+          {submissionScramble?.trim() && !view.cubeSolved && <p>{t(
+            '请核对视频与表单打乱是否对应同一次还原。',
+            'Check that the video and the scramble in the form match the same solve.',
+          )}</p>}
           {view.searchError && <details><summary>{t('技术详情', 'Technical details')}</summary>{view.searchError}</details>}
         </div>}
         {mediaError && <div className="video-recon-error" role="alert">
