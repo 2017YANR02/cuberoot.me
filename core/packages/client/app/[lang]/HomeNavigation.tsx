@@ -66,10 +66,7 @@ export default function HomeNavigation({ selected, onSelect, isAdmin, sections, 
   };
   useEffect(() => {
     const desktop = window.matchMedia(DESKTOP_NAV_QUERY);
-    const syncFloating = () => {
-      const landing = headerRef.current?.parentElement;
-      setFloating(window.scrollY > 12 && !!landing && landing.getBoundingClientRect().top <= 0);
-    };
+    const syncFloating = () => setFloating(window.scrollY > 12);
     const onDesktopChange = (event: MediaQueryListEvent) => {
       if (event.matches) drawerDialogRef.current?.close();
     };
@@ -190,6 +187,10 @@ export default function HomeNavigation({ selected, onSelect, isAdmin, sections, 
     </div>
     {open && <SettingsDialog ref={drawerDialogRef} curtain motionDuration={650} portalContainer={headerRef.current?.parentElement}
       label={label} heading={<CubeRootLogoImage />}
+      renderCloseButton={(close, closing) => <button type="button"
+        className="home-navigation-toggle home-navigation-drawer-toggle menu-toggle-icon"
+        aria-label={tr({ zh: '关闭', en: 'Close' })} aria-expanded={!closing}
+        aria-disabled={closing || undefined} onClick={close} />}
       panelClassName="home-navigation-drawer" onCloseStart={() => setDrawerClosing(true)} onClose={() => setOpen(false)}>
       {close => <div className="home-navigation-drawer-content">
         {menu(close)}
