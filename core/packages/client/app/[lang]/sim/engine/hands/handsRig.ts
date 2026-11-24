@@ -3627,7 +3627,8 @@ export default class HandsRig extends THREE.Group {
         }
         // The neutral thumb pad sits just clear of the front plane, including
         // when both hands start at home and the corner passes the resting pad.
-        const pairedHome = this.cube?.order === 3 ? Math.max(0, Math.cos(this.currentWristAngle(partner))) * Math.max(0, Math.cos(wristAngle)) : 0;
+        const frontNail = partnerStyle === 'frontIndexNail' || partnerStyle === 'frontThumbNail';
+        const pairedHome = frontNail && this.cube?.order === 3 ? Math.max(0, Math.cos(this.currentWristAngle(partner))) * Math.max(0, Math.cos(wristAngle)) : 0;
         c2 -= .001 * Math.max(homeBrace, pairedHome);
         if (nailStroke && Math.abs(h.grip.w) > .99999) c2 -= .0015 * sm(h.reachT) * (h.flickDecay || 1);
       }
