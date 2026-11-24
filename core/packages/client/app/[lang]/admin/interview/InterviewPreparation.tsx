@@ -42,10 +42,11 @@ export default function InterviewPreparation() {
       : !draft ? <ContentSkeleton variant="article" rows={4} />
       : <div lang="zh-Hans">
         <section className="interview-intro">
-          <p>{draft.source}</p>
           <p><strong>{draft.status}</strong></p>
-          <p>{draft.context}</p>
           <p>{draft.schedule}</p>
+          <details className="interview-note"><MoreToggle as="summary">{t('采访背景', 'Interview background')}</MoreToggle>
+            <p>{draft.source}</p><p>{draft.context}</p>
+          </details>
           <h2>{t('开场自我介绍', 'Opening introduction')}</h2>
           <blockquote>{draft.introduction}</blockquote>
         </section>
