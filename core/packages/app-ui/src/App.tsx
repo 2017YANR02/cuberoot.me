@@ -5098,7 +5098,7 @@ children: <>
           const canonicalUrl = surface === 'tools' ? toolsWebUrl : accountWebUrl;
           const frameUrl = webSurfaceReloadUrl[surface] ?? canonicalUrl;
           const showState = connection !== 'online' || status !== 'ready';
-          const showToolsLoadingMark = surface === 'tools' && connection !== 'offline' && status !== 'error';
+          const showLoadingMark = connection !== 'offline' && status !== 'error';
           const stateLabel = connection === 'offline'
             ? copy.offline
             : status === 'error' ? copy.actionFailed : copy.checking;
@@ -5111,10 +5111,10 @@ children: <>
             >
               {showState && view === surface && (
                 <div className="web-surface-state" role={status === 'error' ? 'alert' : 'status'}>
-                  {showToolsLoadingMark ? (
+                  {showLoadingMark ? (
                     <>
                       {loadingMark ?? <LoadingBrandMark />}
-                      <span className="sr-only">{copy.loadingTools}</span>
+                      <span className="sr-only">{surface === 'tools' ? copy.loadingTools : copy.checking}</span>
                     </>
                   ) : <p>{stateLabel}</p>}
                   {status === 'error' && connection === 'online' && (
