@@ -3,6 +3,7 @@ import { act, createElement } from 'react';
 import { createRoot } from 'react-dom/client';
 import { expect, it, vi } from 'vitest';
 
+vi.mock('@/app/[lang]/admin/users/MembershipAdminPanel', () => ({ default: () => null }));
 vi.mock('@/hooks/useT', () => ({ useT: () => (zh: string) => zh }));
 vi.mock('@/i18n/tr', () => ({ useLang: () => 'zh' }));
 vi.mock('@/lib/membership-api', async (original) => ({
@@ -33,7 +34,7 @@ it('shows membership plans and recorded payments', async () => {
     await act(async () => root.render(createElement(MembershipList, { onChanged: vi.fn() })));
     const rows = [...host.querySelectorAll('tbody tr')].map(row => [...row.querySelectorAll('td')].map(cell => cell.textContent));
     expect(rows.map(row => row[1])).toEqual([
-      'yearly', 'monthly', 'enterprise_yearly', 'enterprise_monthly', 'lifetime', 'unknown',
+      'yearly', 'monthly', 'enterprise_yearly', 'enterprise_monthly', '永久会员', '未知套餐',
     ]);
     expect(host.querySelectorAll('tbody button')).toHaveLength(0);
     expect(rows[0].slice(2, 5)).toEqual(['微信支付', '2026-10-02', '¥199 CNY']);

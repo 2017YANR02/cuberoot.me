@@ -97,7 +97,7 @@ export default function MembershipList({ onChanged }: { onChanged: () => void })
                 : <strong>{displayCuberName(member.name, isZh)}</strong>}
               <span className="admin-users-id">{[member.vipId && fmtVipId(member.vipId), WCA_ID_REGEX.test(member.wcaId) && member.wcaId].filter(Boolean).join(' / ')}</span>
             </td>
-            <td>{plan ? t(plan.nameZh, plan.nameEn) : t('未记录', 'Not recorded')}</td>
+            <td>{plan ? t(plan.nameZh, plan.nameEn) : member.lifetime ? t('永久会员', 'Lifetime membership') : t('未知套餐', 'Unknown plan')}</td>
             <td>{manual ? t('手动开通', 'Manual grant') : channel ? methods[channel] || t('其他支付方式', 'Other payment method') : t('未记录', 'Not recorded')}</td>
             <td>{manual ? '—' : payment?.paidAt ? fmtDate(payment.paidAt) : t('未记录', 'Not recorded')}</td>
             <td>{manual ? t('无支付', 'No payment') : payment ? `${fmtPrice(payment.amountCents, payment.currency)} ${payment.currency}` : t('未记录', 'Not recorded')}</td>
