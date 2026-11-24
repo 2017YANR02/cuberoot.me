@@ -146,7 +146,7 @@ export function assistantQueueStore(run:QueryRunner=query, transaction:QueueTran
       return transaction(async tx=>{
         const c=await owned(tx,claim);
         await tx("UPDATE site_assistant_conversations SET lease_until=NOW()+INTERVAL '45 seconds' WHERE id=?",[c.id]);
-        const messages=await tx<Message>('SELECT id,sequence,payload FROM site_assistant_messages WHERE id=? OR target_id=? ORDER BY sequence',[claim.message.id,claim.message.id]);
+        const messages=await tx<Message>('SELECT id,sequence,payload,country FROM site_assistant_messages WHERE id=? OR target_id=? ORDER BY sequence',[claim.message.id,claim.message.id]);
         return {paused:c.paused,messages,revision:Number(messages.at(-1)!.sequence)};
       });
     },

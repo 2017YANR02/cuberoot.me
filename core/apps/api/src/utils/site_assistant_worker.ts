@@ -64,10 +64,9 @@ export function createAssistantQueueWorker(deps:{
         const config=deps.config(!!savedImages.length || history.some(m=>!!m.images?.length),input.provider);
         const championWindow=!config && inputs.length===1 ? standaloneChampionWindow({...input,history}) : undefined;
         if(!config && !championWindow)throw new AssistantFailure('provider_unavailable');
-        if(config && input.provider==='openai') {
-          if(!assistantOpenAICountrySupported(claim.message.country))throw new AssistantFailure('provider_region_unavailable');
-          config.visitorCountry=claim.message.country!;
-        }
+        const country = current.messages.every(message => assistantOpenAICountrySupported(message.country)) ? claim.message.country : null;
+        if (input.provider === 'openai' && !country) throw new AssistantFailure('provider_region_unavailable');
+        if (config) config.visitorCountry = country ?? undefined;
         const step=new AbortController();
         const signal=AbortSignal.any([lifetime.signal,step.signal,AbortSignal.timeout(assistantTimeoutMs(input.thinking)-2000)]);
         const images=await resolveAssistantImages(claim.uid,savedImages,deps.attachment ?? readAssistantAttachment);

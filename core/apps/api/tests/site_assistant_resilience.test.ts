@@ -93,6 +93,21 @@ describe('assistant resilience',()=>{
     await expect(ask()).rejects.toMatchObject({code:'model_unavailable'});
     expect(fetcher).toHaveBeenCalledTimes(2);
   });
+  it('tries the signed OpenAI relay last when both domestic quotas are exhausted in a supported region', async () => {
+    vi.stubEnv('DEEPSEEK_API_KEY','fixture');
+    vi.stubEnv('SITE_ASSISTANT_OPENAI_ENABLED','1');
+    vi.stubEnv('SITE_ASSISTANT_OPENAI_RELAY_ORIGIN','https://fixture.vercel.app');
+    vi.stubEnv('SITE_ASSISTANT_OPENAI_RELAY_SECRET','x'.repeat(32));
+    const fetcher=vi.fn<typeof fetch>().mockImplementation(()=>Response.json({}, {status:402}));
+    const ask=(visitorCountry:string)=>answerSiteQuestion('Explain rain.','en',
+      {...config,baseUrl:'https://fixture.example/v1',visitorCountry},AbortSignal.timeout(5000),withCatalog(fetcher));
+    for (const country of ['CN','US']) {
+      fetcher.mockClear();
+      await expect(ask(country)).rejects.toMatchObject({code:'model_unavailable'});
+      expect(fetcher.mock.calls.map(([url])=>new URL(String(url)).hostname)).toEqual(
+        country==='US' ? ['fixture.example','api.deepseek.com','fixture.vercel.app'] : ['fixture.example','api.deepseek.com']);
+    }
+  });
   it('honors a long Retry-After without retrying early',async()=>{
     const fetcher=vi.fn<typeof fetch>().mockResolvedValue(new Response('',{status:429,headers:{'retry-after':'60'}}));
     await expect(answerSiteQuestion('Explain rain.','en',config,AbortSignal.timeout(5000),withCatalog(fetcher))).rejects.toMatchObject({code:'model_rate_limited',upstreamStatus:429,retryAfterMs:60000});

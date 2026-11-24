@@ -6,7 +6,8 @@ import { saveAssistantImages } from '@/lib/site-assistant-images';
 import { getAuthUser } from '@/lib/auth-store';
 import { watchAssistantQueue, assistantQueueRequest, AssistantQueueError } from '@/lib/assistant-queue';
 import { defaultReplayAnswer } from '@cuberoot/shared/site-assistant-replay';
-import type { ChatProvider, AssistantDeliveryMode, AssistantQueueSnapshot, AssistantDurableInput } from '@cuberoot/shared/site-assistant';
+import { useAssistantProvider } from '@/hooks/useAssistantProvider';
+import type { AssistantDeliveryMode, AssistantQueueSnapshot, AssistantDurableInput } from '@cuberoot/shared/site-assistant';
 
 /**
  * Landing-page site search — full port of packages/client-vite/src/components/LandingSearch.tsx.
@@ -305,7 +306,7 @@ export default function LandingSearch({
   const updateConversation = conversation?.onChange;
   const setAssistantDraft = useCallback((draft: string) => updateConversation ? updateConversation({ draft }) : setLocalDraft(draft), [updateConversation]);
   const setAssistantImages = useCallback((images: AssistantImage[]) => updateConversation ? updateConversation({ images }) : setLocalImages(images), [updateConversation]);
-  const [assistantProvider, setAssistantProvider] = useState<ChatProvider>('bailian');
+  const { provider: assistantProvider, setProvider: setAssistantProvider, providerForSend, openaiAvailable } = useAssistantProvider(assistantDialog || !!conversation?.active);
   const [assistantThinking, setAssistantThinking] = useAssistantThinkingMode();
   const [assistantTurns, setAssistantTurnsState] = useState<AssistantTurn[]>(conversation?.initial.turns ?? []);
   const turnsRef=useRef(assistantTurns);
@@ -575,12 +576,13 @@ export default function LandingSearch({
       // Save the conversation pointer even when the acceptance response is lost.
       onConversationChange?.({conversationId:id});
       const saved=await saveAssistantImages(images,id,controller.signal);
-      const content=JSON.stringify({id,question,images:saved,references,mode,lang,provider:assistantProvider,thinking:assistantThinking});
+      const provider = await providerForSend();
+      const content=JSON.stringify({id,question,images:saved,references,mode,lang,provider,thinking:assistantThinking});
       const key=Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',new TextEncoder().encode(content)))).map(byte=>byte.toString(16).padStart(2,'0')).join('');
       let delivery=pendingDelivery.current;
       if(!delivery || delivery.key!==key) {
         const history=await Promise.all(assistantImageHistory(assistantTurnHistory(turnsRef.current,window.location.origin),saved).map(async message=>message.images?.length?{...message,images:await saveAssistantImages(message.images,id,controller.signal)}:message));
-        delivery={key,id:messageId ?? crypto.randomUUID(),input:{question,images:saved,references,lang,provider:assistantProvider,thinking:assistantThinking,timeZone:Intl.DateTimeFormat().resolvedOptions().timeZone,history}};
+        delivery={key,id:messageId ?? crypto.randomUUID(),input:{question,images:saved,references,lang,provider,thinking:assistantThinking,timeZone:Intl.DateTimeFormat().resolvedOptions().timeZone,history}};
         if(epoch!==submissionEpoch.current || assistantOwner(getAuthUser())!==ownerAtSubmit)return false;
         pendingDelivery.current=delivery;
         onConversationChange?.({delivery,images:saved});
@@ -1242,7 +1244,7 @@ export default function LandingSearch({
     if(i!==index || !turn.result) return turn;
     const result=replaceAssistantAlgorithm(turn.result,artifact,card,expected,next);
     return result===turn.result ? turn : {...turn,result};
-  }))} onAnswerRevealed={onAnswerRevealed} onBranch={index => { assistantConversations.branch(owner, crypto.randomUUID(), assistantTurns.slice(0, index + 1)); router.push(`${langPrefix}/chat`); }} searchResults={conversation?.active && query.trim() && !assistantBusy ? searchResults : undefined} embedded={!!conversation} active={conversation?.active ?? true} key={`${assistantUser?.uid ?? "guest"}:${assistantUser?.wcaId ?? ""}`} images={assistantImages} onImagesChange={setAssistantImages} provider={assistantProvider} onProviderChange={setAssistantProvider} thinking={assistantThinking} onThinkingChange={setAssistantThinking} lang={lang} draft={assistantDraft} onDraftChange={value => { rememberDraft(value); setAssistantDraft(value); }} authSendLabel={assistantAllowed ? undefined : authSendLabel} authPlaceholder={assistantAllowed ? undefined : authPlaceholder} authNotice={authNotice} onAuthSend={beginAssistantAuth} turns={assistantTurns} onFeedback={(id,value)=>setAssistantTurns(turns=>turns.map(turn=>turn.requestId===id?{...turn,feedback:value}:turn))} status={assistantStatus} busy={assistantBusy} stopping={assistantStopping} paused={queueSnapshot?.paused} recovering={queueSnapshot?.recovering} activeMessageId={queueSnapshot?.activeId} onResume={resumeAssistant} stopUnconfirmed={stopUnconfirmed} error={assistantError} onAsk={askAssistant} onStop={()=>{submissionEpoch.current++;void stopAssistant();}} onClose={closeAssistant} onNew={() => { submissionEpoch.current++; assistantConversation.current = null; setDurableId(null);setQueueSnapshot(undefined);pendingDelivery.current=undefined;setAssistantBusy(false);setAssistantStopping(false); setAssistantDraft(''); setAssistantImages([]); setAssistantTurns([]); setAssistantAnswer(null); setAssistantError(null); }} />;
+  }))} onAnswerRevealed={onAnswerRevealed} onBranch={index => { assistantConversations.branch(owner, crypto.randomUUID(), assistantTurns.slice(0, index + 1)); router.push(`${langPrefix}/chat`); }} searchResults={conversation?.active && query.trim() && !assistantBusy ? searchResults : undefined} embedded={!!conversation} active={conversation?.active ?? true} key={`${assistantUser?.uid ?? "guest"}:${assistantUser?.wcaId ?? ""}`} images={assistantImages} onImagesChange={setAssistantImages} provider={assistantProvider} openaiAvailable={openaiAvailable} onProviderChange={setAssistantProvider} thinking={assistantThinking} onThinkingChange={setAssistantThinking} lang={lang} draft={assistantDraft} onDraftChange={value => { rememberDraft(value); setAssistantDraft(value); }} authSendLabel={assistantAllowed ? undefined : authSendLabel} authPlaceholder={assistantAllowed ? undefined : authPlaceholder} authNotice={authNotice} onAuthSend={beginAssistantAuth} turns={assistantTurns} onFeedback={(id,value)=>setAssistantTurns(turns=>turns.map(turn=>turn.requestId===id?{...turn,feedback:value}:turn))} status={assistantStatus} busy={assistantBusy} stopping={assistantStopping} paused={queueSnapshot?.paused} recovering={queueSnapshot?.recovering} activeMessageId={queueSnapshot?.activeId} onResume={resumeAssistant} stopUnconfirmed={stopUnconfirmed} error={assistantError} onAsk={askAssistant} onStop={()=>{submissionEpoch.current++;void stopAssistant();}} onClose={closeAssistant} onNew={() => { submissionEpoch.current++; assistantConversation.current = null; setDurableId(null);setQueueSnapshot(undefined);pendingDelivery.current=undefined;setAssistantBusy(false);setAssistantStopping(false); setAssistantDraft(''); setAssistantImages([]); setAssistantTurns([]); setAssistantAnswer(null); setAssistantError(null); }} />;
   if (conversation) return searchOnly ? null : assistantView;
 
   return (

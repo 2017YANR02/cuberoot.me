@@ -39,7 +39,7 @@ import { ALG_CATALOG, CFOP_SET_SLUGS } from '@cuberoot/shared/alg';
 import { SITE_ANNOUNCEMENTS, findSiteAnnouncements } from '@cuberoot/shared/site-announcements';
 import { createCompetitionProof, COMPETITION_SERVICE_HEADER } from '@cuberoot/shared/competition-access';
 import { AssistantFailure, assistantDeadline, assistantFailureCode, assistantStage, checkAssistantResponse } from './site_assistant_diagnostics.js';
-import { ASSISTANT_OPENAI_MODEL } from '@cuberoot/shared/site-assistant-openai';
+import { ASSISTANT_OPENAI_MODEL, assistantOpenAICountrySupported } from '@cuberoot/shared/site-assistant-openai';
 
 // One public directory shared with the homepage; never import Web source or
 // accept a URL supplied by the visitor/model as a fetch destination.
@@ -825,7 +825,11 @@ export async function answerSiteQuestion(
   let pendingReadFollowUp='';
   const startModel = (selected: AssistantConfig) => createAssistantModel(selected, fetcher, signal, TOOL_GUIDE, history, images, priorContext?.memory);
   let model = startModel(config);
-  let switchedProvider = false;
+  const primaryProvider = config.provider ?? (new URL(config.baseUrl).origin === 'https://api.deepseek.com' ? 'deepseek' : 'bailian');
+  const visitorCountry = config.visitorCountry;
+  const fallbacks = (['bailian', 'deepseek', 'openai'] as const).filter(provider =>
+    provider !== primaryProvider && (provider !== 'openai' || assistantOpenAICountrySupported(visitorCountry)));
+  let providerSwitches = 0;
   const sheetContinuation=/(?:(?:同一张|原来的?|原有的?|之前的?)[\p{L}]{0,14}|原)(?:词表|对照表)|\b(?:both directions|same (?:two[- ]column |word[- ]and[- ]meaning )?(?:sheet|list)|(?:original|existing) (?:sheet|word list))\b/iu.test(question);
   const caseContinuation=/(?:那次|刚才(?:的)?|先前(?:的)?)(?:熟悉的)?插入|(?:那个|这个|该)(?:熟悉(?:的)?)?(?:插入)?(?:情形|局面|案例|场景)|\b(?:that (?:familiar )?(?:insertion )?case|the case we (?:were discussing|discussed|used))\b/i.test(question);
   const sheetTopic=/词表|对照表|word[- ](?:list|sheet)|word[- ]and[- ]meaning (?:list|sheet)|two[- ]column (?:list|sheet)/i;
@@ -953,7 +957,7 @@ export async function answerSiteQuestion(
     let formatRepair = '';
     let outputRepair = false;
     let transportRetries=0,formatRepairs=0;
-    for(let attempt=0;attempt<4 + Number(switchedProvider);attempt++) {
+    for(let attempt=0;attempt<4 + providerSwitches;attempt++) {
     try {
     // A retry is a new model step; apply queued corrections before spending another call.
     await assistantExecutionBoundary();
@@ -1032,12 +1036,15 @@ export async function answerSiteQuestion(
     } catch(error) {
       signal.throwIfAborted();
       if (error instanceof AssistantFailure && error.diagnostic?.reason === 'quota_exhausted') {
-        if (switchedProvider || config.provider) throw error;
-        const alternate = assistantConfig(hasImages, new URL(config.baseUrl).origin === 'https://api.deepseek.com' ? 'bailian' : 'deepseek');
-        if (alternate && alternate.baseUrl !== config.baseUrl) {
-          config = alternate;
+        let alternate: AssistantConfig | null = null;
+        while (fallbacks.length && !alternate) {
+          alternate = assistantConfig(hasImages, fallbacks.shift());
+          if (alternate?.baseUrl === config.baseUrl) alternate = null;
+        }
+        if (alternate) {
+          config = { ...alternate, visitorCountry };
           model = startModel(config);
-          switchedProvider = true;
+          providerSwitches++;
           // The new provider needs prior tool evidence in context instead of the old SDK transcript.
           transcriptEvidence.clear();
           await emit?.({type:'answer',answer:'',sources:[...sources.values()]});

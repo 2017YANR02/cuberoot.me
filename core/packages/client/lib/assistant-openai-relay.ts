@@ -42,7 +42,13 @@ export async function relayAssistantOpenAI(request: Request, protocol: 'chat/com
     if (!response.ok) {
       // Log metadata only: never upstream messages, prompts, headers or credentials.
       console.warn(JSON.stringify({ event: 'assistant_openai_upstream_error', protocol, status: response.status, requestId: response.headers.get('x-request-id') }));
-      await response.body?.cancel();
+      if (response.status === 429) {
+        const body = await response.json().catch(() => null);
+        if (body?.error?.code === 'insufficient_quota' || body?.error?.type === 'insufficient_quota') return fail(402);
+      } else {
+        await response.body?.cancel();
+      }
+      if (response.status === 402) return fail(402);
       return fail(response.status === 429 ? 429 : 502);
     }
     return new Response(response.body, { headers: { ...privateHeaders, 'Content-Type': response.headers.get('content-type') ?? 'application/json' } });

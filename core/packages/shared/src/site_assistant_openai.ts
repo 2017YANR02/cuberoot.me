@@ -1,5 +1,5 @@
 /** Server-to-server contract. No keys or region decisions come from the browser. */
-export const ASSISTANT_OPENAI_MODEL = 'gpt-5.4-mini';
+export const ASSISTANT_OPENAI_MODEL = 'gpt-6-luna';
 export const ASSISTANT_OPENAI_RELAY_PATH = '/api/site-assistant/openai/chat/completions';
 export const ASSISTANT_OPENAI_RESPONSES_PATH = '/api/site-assistant/openai/responses';
 export type AssistantOpenAIRelayPath = typeof ASSISTANT_OPENAI_RELAY_PATH | typeof ASSISTANT_OPENAI_RESPONSES_PATH;

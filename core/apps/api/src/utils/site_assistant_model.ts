@@ -156,7 +156,7 @@ export function createAssistantModel(config: AssistantConfig, fetcher: typeof fe
       }
       throw error;
     }
-    if (!openai && [400, 402, 403, 429].includes(response.status)) {
+    if ([400, 402, 403, 429].includes(response.status)) {
       if (response.status === 402) {
         await response.body?.cancel();
         throw new AssistantFailure('model_unavailable', 402, { reason: 'quota_exhausted' });
