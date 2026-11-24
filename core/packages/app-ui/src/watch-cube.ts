@@ -1,3 +1,7 @@
+import { timerSupportsSmartCubeAutoTiming } from '@cuberoot/shared/timer/event-catalog';
+import { timerSmartCubeTrainingOrientation } from '@cuberoot/shared/timer/pre-scramble';
+import type { CnMode, TrainingStartMode } from '@cuberoot/shared/timer';
+import { timerSupportsTrainingTiming } from '@cuberoot/shared/timer/training-settings';
 import { unfoldedGrid, WCA_COLORS, CUBE_FACE_LETTERS, STROKE_W } from '@cuberoot/shared/cube-unfolded-svg';
 import { GanV4CubeConnection, type GanV4CubeCallbacks } from './smart-cube/gan-v4-cube';
 import { GanCubeConnection, type GanCubeStatus } from './smart-cube/gan-cube';
@@ -25,6 +29,9 @@ export function createWatchCubeBridge() {
   let deviceModel = 'gan-v4';
   const supportsDevice = (name: string) => ['gan-v1', 'gan-v2', 'gan-v3', 'gan-v4', 'moyu32', 'qiyi'].includes(modelForDeviceName(name) ?? '');
   let inspectionSec = 0, enabled = false, connected = false, contextId = '';
+  let event: EventId = '333';
+  const cubeTiming = () => connected && timerSupportsSmartCubeAutoTiming(event);
+  let startMode: TrainingStartMode = 'first-turn';
   let machine = initialTimerMachineState();
   let resetting = false;
   let quaternion: { w: number; x: number; y: number; z: number } | null = null;
@@ -54,12 +61,12 @@ export function createWatchCubeBridge() {
   };
   const action = (value: TimerMachineAction): boolean => {
     const previous = machine;
-    const result = transitionTimer(machine, value, { inspectionSec });
+    const result = transitionTimer(machine, value, { inspectionSec, trainingStartMode: cubeTiming() && timerSupportsTrainingTiming(event) ? startMode : undefined });
     machine = result.state;
     if (result.effects.includes('inspection-started') || machine.phase === 'ready') reference = quaternion ? { ...quaternion } : null;
     if (result.effects.includes('run-started')) {
       startedAt = machine.startedAtMs ?? now;
-      recording.begin(startedAt, connected ? { model: deviceModel, name: deviceName } : undefined,
+      recording.begin(startedAt, cubeTiming() ? { model: deviceModel, name: deviceName } : undefined,
         reference && quaternion ? { reference, initial: quaternion } : undefined, machine.cubeStart);
     }
     const recorded = result.solve ? recording.finish() : undefined;
@@ -69,10 +76,12 @@ export function createWatchCubeBridge() {
   };
   const solo = new SmartCubeSoloTimerController({
     armFromCube: (atMs, clock) => action({ type: 'arm-from-cube', nowMs: now, atMs, clock }),
-    autoReadyOnScramble: () => true, canStartAttempt: () => enabled,
-    getPhase: () => machine.phase, isTimingEnabled: () => enabled && connected,
-    // Corrections require the phone's solver worker; exact scramble matching remains shared.
-    solve: async () => null,
+    autoReadyOnScramble: () => !timerSupportsTrainingTiming(event) || startMode !== 'manual', canStartAttempt: () => enabled,
+    getPhase: () => machine.phase, isTimingEnabled: () => enabled && cubeTiming(),
+    solve: async (from, target) => {
+      const answer = await request('correction', { from, target });
+      return typeof answer === 'string' && answer ? answer : null;
+    },
     recordMove: ({ move, timestamp, clock }) => { recording.recordMove(move, timestamp, clock); },
     startFromCube: (atMs, clock) => action({ type: 'start-from-cube', nowMs: now, atMs, clock }),
     stopFromCube: (atMs, clock) => action({ type: 'stop-from-cube', nowMs: now, atMs, clock }),
@@ -83,6 +92,7 @@ export function createWatchCubeBridge() {
     onChange: state => emit({ kind: 'state', facelets: state.facelets, lastMove: state.lastMove, solved: state.solved }),
     onMove: event => { if (!resetting) {
       emit({ kind: 'move', move: event.move, facelets: event.facelets, timestamp: event.timestamp });
+      if (!cubeTiming()) return;
       // Reuse the solo controller's history guard. A short gap in an already
       // armed attempt is recoverable; old history cannot create a new attempt.
       const historyOnly = event.metadata?.delayed === true && machine.phase !== 'running'
@@ -95,7 +105,7 @@ export function createWatchCubeBridge() {
         if (event.facelets) solo.syncFacelets(event.facelets);
       } else solo.move(event);
     } },
-    onSolved: (timestamp, clock) => { if (!resetting) solo.solved(timestamp, clock); },
+    onSolved: (timestamp, clock) => { if (!resetting && cubeTiming()) solo.solved(timestamp, clock); },
   });
   async function resetCube() {
     if (deviceModel === 'gan-v1' || !connected || !connection || resetting || machine.phase === 'running') return;
@@ -168,7 +178,7 @@ export function createWatchCubeBridge() {
       },
       onGyro: value => { if (current()) {
         quaternion = value; emit({ kind: 'gyro', quaternion });
-        if (machine.phase === 'running') recording.recordGyro(value, now - startedAt);
+        if (cubeTiming() && machine.phase === 'running') recording.recordGyro(value, now - startedAt);
       } },
       onState: facelets => {
         if (current() && lease.adoptFacelets(facelets, now)) {
@@ -209,13 +219,22 @@ export function createWatchCubeBridge() {
         const nextId = String(input.id ?? '');
         if (contextId !== nextId) { solo.setRunning(false); recording.reset(); reference = null; machine = initialTimerMachineState(); contextId = nextId; }
         const scramble = String(input.scramble ?? '');
-        solo.setContext({ id: String(input.id ?? ''), event: input.event as EventId, scramble,
-          targetFacelets: smartCubeTargetFacelets(scramble) });
+        event = input.event as EventId;
+        startMode = input.trainingStartMode === 'manual' || input.trainingStartMode === 'scrambled' ? input.trainingStartMode : 'first-turn';
+        const orientation = timerSmartCubeTrainingOrientation(event, String(input.preScrT ?? ''));
+        solo.setContext(timerSupportsSmartCubeAutoTiming(event) ? { id: String(input.id ?? ''), event: input.event as EventId, scramble,
+          orientation, cnMode: input.cnMode as CnMode, targetFacelets: smartCubeTargetFacelets(scramble, orientation) } : null);
         const facelets = session.getFacelets(); if (facelets && !resetting) solo.syncFacelets(facelets);
       } else if (input.kind === 'cancel') {
         action({ type: 'cancel-arm' });
       } else if (input.kind === 'tap') {
-        if (connected || resetting) return;
+        if (resetting) return;
+        if (cubeTiming()) {
+          if (enabled && timerSupportsTrainingTiming(event) && startMode === 'manual') {
+            action({ type: 'arm-from-cube', nowMs: now });
+          }
+          return;
+        }
         if (machine.phase === 'running') action({ type: 'stop-from-cube', nowMs: now });
         else if (enabled) {
           if ((machine.phase === 'idle' || machine.phase === 'stopped') && inspectionSec > 0) action({ type: 'arm-from-cube', nowMs: now });

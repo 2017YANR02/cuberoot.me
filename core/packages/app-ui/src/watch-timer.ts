@@ -1,12 +1,16 @@
-import type { TimerStoreData } from '@cuberoot/shared/timer';
+import type { CnMode, TimerStoreData } from '@cuberoot/shared/timer';
 import { EVENTS, type EventId, type Solve } from '@cuberoot/shared/timer/types';
 import { stageSegmentsFor } from '@cuberoot/shared/timer/reconstruct/stage-segments';
 
 /** v1 intentionally supports ordinary random, single-puzzle timed attempts. */
-export const WATCH_TIMER_EVENTS: readonly EventId[] = ['222', '333', '444', '555', '666', '777', '333oh', 'clock', 'mega', 'pyra', 'skewb', 'sq1'];
+export const WATCH_TIMER_EVENTS: readonly EventId[] = ['222', '333', '444', '555', '666', '777', '333oh', 'clock', 'mega', 'pyra', 'skewb', 'sq1', 'cross', 'oll', 'pll'];
 export interface WatchTimerSlot {
   id: string; sessionId: string; sessionName: string; event: EventId; eventName: string;
   scramble: string; inspectionSec: number; holdMs: number;
+  caseId?: string;
+  preScrT?: string;
+  cnMode?: CnMode;
+  trainingStartMode?: Solve['trainingStartMode'];
   previewPng?: string;
 }
 export interface WatchTimerBatch {
@@ -18,6 +22,7 @@ export interface WatchTimerBatch {
 export interface WatchTimerRecord {
   version: 1; id: string; slot: WatchTimerSlot; timeMs: number;
   ts: number; penalty: 'ok' | '+2' | 'DNF'; inspectionMs: number;
+  trainingStartMode?: Solve['trainingStartMode'];
   reconOk?: boolean; reconRevision?: number;
   moves?: Solve['moves']; gyro?: string; device?: Solve['device'];
 }
@@ -41,6 +46,8 @@ export function decodeWatchTimerRecord(raw: unknown): WatchTimerRecord | null {
     || !bounded(s.inspectionSec, 60) || !bounded(s.holdMs, 2000)
     || !bounded(r.timeMs, 86_400_000) || !bounded(r.inspectionMs, 86_400_000)
     || !bounded(r.ts, 8_640_000_000_000_000) || !['ok', '+2', 'DNF'].includes(r.penalty)) return null;
+  if (r.trainingStartMode !== undefined && !['first-turn', 'scrambled', 'manual'].includes(r.trainingStartMode)) return null;
+  if (s.caseId !== undefined && (typeof s.caseId !== 'string' || s.caseId.length > 150)) return null;
   if (r.reconRevision !== undefined && (!Number.isSafeInteger(r.reconRevision) || r.reconRevision < 0)) return null;
   if (r.reconOk !== undefined && typeof r.reconOk !== 'boolean') return null;
   if (r.moves !== undefined && (!Array.isArray(r.moves) || r.moves.length > 100_000
@@ -56,6 +63,8 @@ export function watchTimerSolve(record: WatchTimerRecord): Solve {
     timeMs: record.timeMs, penalty: record.penalty, scramble: record.slot.scramble,
     inspectionMs: record.inspectionMs,
     scrambleSource: { kind: 'random', identity: JSON.stringify(['watch', 1, record.slot.event, record.slot.id]) } };
+  if (record.slot.caseId) solve.caseId = record.slot.caseId;
+  if (record.trainingStartMode) solve.trainingStartMode = record.trainingStartMode;
   if (record.reconRevision !== undefined) solve.watchReconRevision = record.reconRevision;
   if (record.reconOk !== undefined) solve.reconOk = record.reconOk;
   if (record.moves?.length) {
@@ -70,12 +79,13 @@ export function watchTimerSolve(record: WatchTimerRecord): Solve {
 export function watchTimerConfiguration(data: TimerStoreData): string {
   const { event, inspectionSec, holdMs, language } = data.settings;
   const session = data.database.sessions.find(s => s.id === data.database.activeSessionId)!;
-  return JSON.stringify([session.id, session.name, event, inspectionSec, holdMs, language, 'preview-v2-retina-recording-v1']);
+  return JSON.stringify([session.id, session.name, event, inspectionSec, holdMs, language, data.settings.preScrT, data.settings.cnMode, data.settings.trainingStartMode, 'preview-v2-retina-recording-v1']);
 }
 export function watchTimerSlot(data: TimerStoreData, scramble: string): WatchTimerSlot {
   const { event, inspectionSec, holdMs, language } = data.settings;
   const session = data.database.sessions.find(s => s.id === data.database.activeSessionId)!;
   const eventInfo = EVENTS.find(e => e.id === event)!;
   return { id: crypto.randomUUID(), sessionId: session.id, sessionName: session.name,
-    event, eventName: ({ en: eventInfo.nameEn, zh: eventInfo.nameZh })[language], scramble, inspectionSec, holdMs };
+    event, eventName: ({ en: eventInfo.nameEn, zh: eventInfo.nameZh })[language], scramble, inspectionSec, holdMs,
+    preScrT: data.settings.preScrT, cnMode: data.settings.cnMode, trainingStartMode: data.settings.trainingStartMode };
 }

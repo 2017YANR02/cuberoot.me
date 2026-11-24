@@ -264,3 +264,35 @@ it('publishes scramble steps for Watch coloring and clears them on disconnect', 
   await feed({ kind: 'disconnect' });
   expect(guidance()).toMatchObject({ matched: null, hint: null });
 });
+
+it('finishes Watch Cross training with the upper layer still turned', async () => {
+  const bridge = createWatchCubeBridge();
+  const events: Record<string, any>[] = [];
+  async function feed(message: Record<string, unknown>) {
+    bridge.dispatch(message);
+    for (let i = 0; i < 40; i++) {
+      await Promise.resolve();
+      for (const event of JSON.parse(bridge.drain())) {
+        if (event.kind === 'native') bridge.dispatch({ kind: 'reply', id: event.id });
+        else events.push(event);
+      }
+    }
+  }
+  const cipher = createGanV4Cipher(Uint8Array.of(0xab, 0xcd, 0xef, 1, 0x23, 0x45));
+  const notify = (bytes: Uint8Array, now: number) => feed({
+    kind: 'notification', bytes: [...cipher.encrypt(bytes)], now,
+  });
+  await feed({ kind: 'context', id: 'cross', event: 'cross', scramble: 'U R', enabled: true });
+  await feed({ kind: 'connect', device: { id: 'AB:CD:EF:01:23:45', name: 'GAN16ui' } });
+  await notify(Uint8Array.from(GAN_V4_FIXTURE.seed), 100000);
+  for (const [i, move] of [2, 32, 96].entries()) { // U R completes the scramble, R' solves the cross.
+    const bytes = Uint8Array.from(GAN_V4_FIXTURE.moves[0]);
+    bytes[6] = 41 + i;
+    bytes[8] = move;
+    new DataView(bytes.buffer).setUint32(2, 1000 + i * 250, true);
+    await notify(bytes, 100000 + i * 250);
+  }
+  const stopped = events.find(event => event.solve);
+  expect(stopped?.solve.trainingStartMode).toBe('first-turn');
+  expect(stopped?.recording.moves.map((move: { m: string }) => move.m)).toEqual(["R'"]);
+});

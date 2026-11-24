@@ -35,6 +35,7 @@ export function startWatchTimerSync(port: WatchTimerPort, repository: TimerRepos
           const result = await random.next({ event: data.settings.event }, controller.signal);
           if (!result.ok || !result.scramble) throw new Error('Watch scramble generation failed');
           const slot = watchTimerSlot(data, result.scramble);
+          if (result.kind === 'generated' && result.metadata?.caseId) slot.caseId = result.metadata.caseId;
           try { slot.previewPng = await watchTimerPreview(slot.event, slot.scramble); } catch { /* Keep text usable if rendering fails. */ }
           slots.push(slot);
         }

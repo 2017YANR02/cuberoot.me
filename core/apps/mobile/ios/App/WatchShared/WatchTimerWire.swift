@@ -11,6 +11,11 @@ struct WatchTimerSlot: Codable, Equatable {
     var inspectionSec: Double
     var holdMs: Double
     var previewPng: String? = nil
+    var preScrT: String? = nil
+    var cnMode: String? = nil
+    var trainingStartMode: String? = nil
+    var generator: String? = nil
+    var caseId: String? = nil
     var localFacelets: String? = nil
 }
 struct WatchTimerBatch: Codable {
@@ -69,6 +74,7 @@ struct WatchTimerRecord: Codable, Identifiable {
     var moves: [Move]? = nil
     var gyro: String? = nil
     var device: Device? = nil
+    var trainingStartMode: String? = nil
     var reconOk: Bool? = nil
     var reconRevision: Int? = nil
     func canTransfer(recordingVersion: Int?) -> Bool { moves?.isEmpty != false || recordingVersion == 1 }
