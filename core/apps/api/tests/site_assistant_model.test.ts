@@ -180,6 +180,15 @@ it('streams answer text without sending reasoning to the UI callback',async()=>{
   const result=await createAssistantModel(config,fetcher,AbortSignal.timeout(2000),'').complete({...options,onText});
   expect(result.answer).toBe('已找到训练说明');expect(onText).toHaveBeenCalledWith(content);expect(JSON.stringify(onText.mock.calls)).not.toContain('private');
 });
+it('streams multiline scenario prose and preserves literal quotation marks without JSON repair',async()=>{
+  const text='先判断“设备”。\n\n换一次人，再比较 "A" 和 "B"。';
+  const chunk=(delta:object,finish_reason:string|null=null)=>'data: '+JSON.stringify({id:'scenario',created:1,model:config.model,choices:[{index:0,delta,finish_reason}]})+'\n\n';
+  const fetcher=vi.fn<typeof fetch>().mockResolvedValue(new Response(chunk({reasoning_content:'private'})+chunk({content:text},'stop')+'data: [DONE]\n\n',{headers:{'content-type':'text/event-stream'}}));
+  const onText=vi.fn(async()=>{});
+  const result=await createAssistantModel(config,fetcher,AbortSignal.timeout(2000),'').complete({...options,scenarioProse:true,onText});
+  expect(result).toMatchObject({answerKind:'general',answer:text,sourceIds:[],calls:[]});
+  expect(onText.mock.calls).toEqual([[text,true]]);
+});
 it('keeps a malformed streamed final for a new repair turn and requests the answer schema',async()=>{
   const delta=(content:string)=>'data: '+JSON.stringify({id:'test',object:'chat.completion.chunk',created:1,model:config.model,choices:[{index:0,delta:{role:'assistant',content},finish_reason:'stop'}]})+'\n\ndata: [DONE]\n\n';
   const fetcher=vi.fn<typeof fetch>()

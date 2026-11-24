@@ -1,3 +1,4 @@
+import { canReadPublicResult } from '../utils/site_assistant.js';
 import { RateLimitError } from '../utils/rate_limit.js';
 import { createAssistantSpeechRoutes } from './site_assistant_speech.js';
 import { durableAssistantStore, durableAssistantWorker } from '../utils/site_assistant_worker.js';
@@ -116,7 +117,7 @@ export function createSiteAssistantRoutes(deps: { answer: typeof answerSiteQuest
           const input=body.data.input;
           if(input.images?.some(image=>!('attachmentId' in image)) || input.history.some(message=>message.images?.some(image=>!('attachmentId' in image))))return c.json({error:'invalid_image'},400);
           const config=deps.config(!!input.images?.length || input.history.some(message=>!!message.images?.length),input.provider);
-          if(!config && !standaloneChampionWindow({...input,timeZone:input.timeZone ?? 'UTC'}))return c.json({error:'provider_unavailable'},503);
+          if(!config && !canReadPublicResult(input) && !standaloneChampionWindow({...input,timeZone:input.timeZone ?? 'UTC'}))return c.json({error:'provider_unavailable'},503);
           const needsProviderRegion=config && input.provider==='openai';
           const country=needsProviderRegion?await (deps.country ?? resolveIpCountry)(getIp(c)).catch(()=>null):undefined;
           if(needsProviderRegion && !assistantOpenAICountrySupported(country))return c.json({error:'provider_region_unavailable'},403);
@@ -135,16 +136,40 @@ export function createSiteAssistantRoutes(deps: { answer: typeof answerSiteQuest
         if(!await inbox.owns(user.uid,conversation.data))return c.json({error:'not_found'},404);
         c.header('X-Accel-Buffering','no');
         const uid=user.uid,id=conversation.data;
+        const pushChanges=c.req.query('updates')==='1';
         // The durable owner-scoped snapshot is authoritative across replicas.
         return streamSSE(c,async stream=>{
           let dirty=true,closed=false,wake: (()=>void)|undefined;
           const notify=()=>{dirty=true;wake?.();};
           const unsubscribe=inbox.subscribe(uid,id,notify);
           stream.onAbort(()=>{closed=true;wake?.();});
+          let previous:Awaited<ReturnType<typeof inbox.snapshot>>;
           const expires=Date.now()+90_000;
           try {
             while(!closed && Date.now()<expires) {
-              if(dirty) {dirty=false;await stream.writeSSE({data:'changed'});}
+              if(dirty) {
+                dirty=false;
+                if (!pushChanges) await stream.writeSSE({data:'changed'});
+                else {
+                  // The previous wake-only protocol reauthenticated each GET.
+                  // An open stream must stop sending content if access is revoked.
+                  try {if ((await deps.authenticate(c)).uid!==uid) return;} catch {return;}
+                  const next=await inbox.snapshot(uid,id,previous);
+                  if (!next) return;
+                  if (!previous || previous.revision!==next.revision || previous.recovering!==next.recovering) {
+                    // Messages are append-only within a conversation. Include whole
+                    // changed rows so citations, drafts, stops and retries stay atomic.
+                    const {messages,...state}=next;
+                    const frame=previous ? {type:'patch',base:previous.revision,...state,
+                      messages:messages.filter((row,index)=>row!==previous!.messages[index] && JSON.stringify(row)!==JSON.stringify(previous!.messages[index]))}
+                      : {type:'snapshot',...next};
+                    const data=JSON.stringify(frame);
+                    if (Buffer.byteLength(data)>512_000) {await stream.writeSSE({data:'changed'});return;}
+                    await stream.writeSSE({data});
+                    previous=next;
+                  }
+                }
+              }
               if(!dirty && !closed) {
                 await new Promise<void>(resolve=>{
                   const timer=setTimeout(resolve,10_000);
@@ -195,7 +220,7 @@ export function createSiteAssistantRoutes(deps: { answer: typeof answerSiteQuest
     let images = parsed.data.images;
     const hasImages = !!parsed.data.images?.length || history.some(message => !!message.images?.length);
     const config = deps.config(hasImages, parsed.data.provider);
-    if (!config) { const error = parsed.data.provider === 'openai' ? 'provider_unavailable' : hasImages ? 'vision_unavailable' : 'unavailable'; await deps.entry?.(error); return c.json({ error }, 503); }
+    if (!config && !canReadPublicResult(parsed.data)) { const error = parsed.data.provider === 'openai' ? 'provider_unavailable' : hasImages ? 'vision_unavailable' : 'unavailable'; await deps.entry?.(error); return c.json({ error }, 503); }
     // Authentication is part of the same total deadline and precedes quota/model work.
     const disconnect = new AbortController();
     const signal = AbortSignal.any([disconnect.signal, c.req.raw.signal, AbortSignal.timeout(assistantTimeoutMs(parsed.data.thinking) - 2000)]);
@@ -224,7 +249,7 @@ export function createSiteAssistantRoutes(deps: { answer: typeof answerSiteQuest
     try { return await assistantStage('total',()=>deadline(async()=>{
       const user = await assistantStage('auth',()=>deps.authenticate(c));
       signal.throwIfAborted();
-      if (parsed.data.provider === 'openai') {
+      if (config && parsed.data.provider === 'openai') {
         const country = await assistantDeadline(() => (deps.country ?? resolveIpCountry)(getIp(c)).catch(() => null), signal);
         if (!assistantOpenAICountrySupported(country)) {
           await deps.entry?.('provider_region_unavailable');
@@ -244,7 +269,7 @@ export function createSiteAssistantRoutes(deps: { answer: typeof answerSiteQuest
         ...(message.images ? { images: await resolveAssistantImages(user.uid, message.images, readAttachment) } : {}),
       })));
       signal.throwIfAborted();
-      try { monitor = await deps.monitor?.({ uid: user.uid, startedAt: requestStarted, question: parsed.data.question, lang: parsed.data.lang, model: config.model, streaming: !!c.req.header('Accept')?.includes('text/event-stream'), imageCount: (parsed.data.images?.length ?? 0) + history.reduce((n, m) => n + (m.images?.length ?? 0), 0), historyCount: history.length, conversationId: parsed.data.conversationId, parentId: parsed.data.parentId, retryOf: parsed.data.retryOf, thinking: parsed.data.thinking }); } catch(error) { recordingFailed=true;throw error; }
+      try { monitor = await deps.monitor?.({ uid: user.uid, startedAt: requestStarted, question: parsed.data.question, lang: parsed.data.lang, model: config?.model ?? 'wca-results', streaming: !!c.req.header('Accept')?.includes('text/event-stream'), imageCount: (parsed.data.images?.length ?? 0) + history.reduce((n, m) => n + (m.images?.length ?? 0), 0), historyCount: history.length, conversationId: parsed.data.conversationId, parentId: parsed.data.parentId, retryOf: parsed.data.retryOf, thinking: parsed.data.thinking }); } catch(error) { recordingFailed=true;throw error; }
       if (monitor?.id) c.header('X-Assistant-Request-Id', monitor.id);
       if(parsed.data.conversationId && parsed.data.parentId) {
         priorContext=await restoreAssistantContext(deps.contextQuery ?? query,user.uid,parsed.data.conversationId,parsed.data.parentId).catch(()=>undefined);
@@ -348,9 +373,10 @@ export function createSiteAssistantRoutes(deps: { answer: typeof answerSiteQuest
   const eventSchema = z.discriminatedUnion('type', [
     z.object({ type: z.literal('timing'), timing: z.object({
       firstProgressMs: z.number().int().min(0).max(600_000).optional(), firstAnswerMs: z.number().int().min(0).max(600_000).optional(),
+      firstVisibleAnswerMs: z.number().int().min(0).max(600_000).optional(),
       responseMs: z.number().int().min(0).max(600_000), visibleMs: z.number().int().min(0).max(600_000), renderDelayMs: z.number().int().min(0).max(600_000),
       wasHidden: z.boolean(), transport: z.enum(['sse','json']),
-    }).strict().refine(t => t.visibleMs >= t.responseMs && t.renderDelayMs === t.visibleMs - t.responseMs
+    }).strict().refine(t => (t.firstVisibleAnswerMs===undefined || t.firstVisibleAnswerMs<=t.visibleMs) && t.visibleMs >= t.responseMs && t.renderDelayMs === t.visibleMs - t.responseMs
       && (t.firstAnswerMs === undefined || t.firstAnswerMs <= t.responseMs) && (t.firstProgressMs === undefined || t.firstProgressMs <= t.responseMs)) }).strict(),
     z.object({ type: z.literal('feedback'), value: z.enum(['helpful','incorrect','irrelevant','bad_source','bad_link','other']).nullable() }).strict(),
     z.object({ type: z.literal('click'), kind: z.enum(['action','source']), id: z.string().min(1).max(200) }).strict(),

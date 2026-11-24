@@ -1,5 +1,5 @@
 /** Increment when answer contracts change; historical metrics keep their value. */
-export const ASSISTANT_POLICY_VERSION = '2026-11-18-reliability-52';
+export const ASSISTANT_POLICY_VERSION = '2026-11-23-final-schedule-review';
 import { SITE_ASSISTANT_ANSWER_MAX_LENGTH, type AssistantThinkingMode } from '@cuberoot/shared/site-assistant';
 
 /** Stable request identity; changing an analysis heading is not a new calculation. */
@@ -21,6 +21,64 @@ export function assistantReasoningPolicy(mode: AssistantThinkingMode, work: {
   const thinking = mode === 'deep' || (mode === 'auto' && (analytical || work.repair || work.review));
   const effort = thinking && mode==='auto' && work.review && !analytical && !work.repair && !work.criticalReview ? 'low' as const : 'high' as const;
   return { thinking, effort, maxTokens: thinking ? 16384 : 4096 };
+}
+
+/** A depth preference changes reasoning, not the requested length or format. */
+export const DEEP_ANALYSIS_GUIDE = `You are CubeRoot's assistant. Decide the leading question from the supplied facts. In one or two useful sentences state the decision and the decisive reason or calculation. Address only the opening judgment; another pass completes the remaining questions. Do not enumerate the schedule, alternatives or test procedure now. If a fact is unknown, keep the decision conditional. Use native tools for outside facts, current rules or site features. Use deliberate if you need specialized data tools or extended reasoning. For a self-contained judgment return just the opening in plain prose.`;
+
+
+/** Copy potential exclusive-use constraints verbatim; the model resolves their scope in the original question. */
+export function exclusiveUseClauses(question:string) {
+  return question.split(/[。！？；，;!?\n]|(?<=\.)\s+/u).map(clause=>clause.trim()).filter(clause=>
+    /只(?:能|可)(?:用[来于作]|做|进行|办理|供)|仅(?:限于?|用[于作]|供)|仅可用于|专供|\b(?:only (?:be used for|used for|for)|reserved (?:solely |exclusively )?for|for .+? only)\b/i.test(clause));
+}
+
+/** Factor out an unconditional, already-assigned ancillary space only when the rest of the question is independent of it. */
+export function fixedScenarioReservation(question:string,limits:string[]) {
+  if(limits.length!==1 || !/安排|怎么排|如何排|怎样排|排程|排班|调度|规划|分配/.test(question) || /[“”「」"'‘’]|如果.{0,12}(?:允许|开放|解禁)|(?:取消|改变|放开|解除)限制/.test(question))return;
+  const clause=limits[0];
+  const match=/^(隔壁|[\p{Script=Han}]{1,8}(?:室|间|厅|库|区|廊|馆))(?:只能做|仅供|只能用于|仅限用于)([\p{Script=Han}]{2,10})$/u.exec(clause);
+  if(!match || /如果|假如|只要|听说|以为|认为|据说|希望|建议|表示|说|不是|原本|原来|曾经|平时/.test(clause))return;
+  const at=question.indexOf(clause);
+  if(at>0 && !/[。；！？;!?\n]\s*$/u.test(question.slice(0,at)))return;
+  const suffix=question.slice(at+clause.length);
+  if(/^[，,]\s*(?:除|但|仅在|仅当|只在|只要|否则|如果|若|前提)/.test(suffix))return;
+  const [,place,use]=match;
+  const remaining=question.replace(clause,'');
+  const activity=use.replace(/^(?:无声|安静|临时|自助)/,'');
+  if(!activity || remaining.includes(place) || remaining.includes(activity) || /那里|那儿|这儿|该处|那间|这间|该房间|该场地|这个地方|里面|它|该限制|这项限制|这个限制/.test(remaining))return;
+  return {clause,place,activity,question:question.replace(clause,'辅助场地已专用，不能纳入其他活动的场地分配')};
+}
+
+/** Preserve the user's wording and keep a conditional premise with its question. */
+export function scenarioRequestedParts(question:string):string[] {
+  const asks=/怎么|怎样|如何|什么|哪(?:个|些|里|种)|为何|为什么|能否|是否|\b(?:how|what|which|when|where|why|should|would|could|can)\b/i;
+  const parts:string[]=[];
+  for(const sentence of question.split(/(?<=[。！？!?；;\n])|(?<=\.)\s+/u)) {
+    const explicitQuestion=/[？?]\s*$/.test(sentence);
+    const text=sentence.trim().replace(/[。！？!?；;]+$/u,'');
+    let current='';
+    for(const clause of text.split(/(?<=[，,])\s*/u)) {
+      if(asks.test(current) && asks.test(clause)) {
+        parts.push(current.replace(/[，,]$/u,'').trim());
+        current='';
+      }
+      current+=clause;
+    }
+    if(current.trim() && (explicitQuestion || asks.test(current)))parts.push(current.trim());
+  }
+  return parts;
+}
+
+export const SCENARIO_COUNT_GUIDE = ' Respect the item count in each subquestion. When asked to choose one, give one specific choice and its reason. Do not bundle independent items in that choice or offer a runner-up.';
+
+export const SCENARIO_REVIEW_GUIDE = `Audit the unverified draft against the original user question. The quoted clauses are extracts, not extra permissions. For each required action and contingency check who does it, where, with which resource and at what time. Read all rows and optional suggestions. An exclusively reserved location or allowance may be used only for the named purpose: even passive waiting, setup, handover or a compatible activity needs permission. Apply a restriction only where the question affirms it. Check that every requested decision, action, rationale and counterfactual has an actual answer. If all pass, return only KEEP. Do not rewrite a valid answer for style. If a part is missing or incorrect, return the complete corrected answer in the user's language, retaining sound parts and deleting unsupported allocations in every branch. Schedule participants only for their own activity when there is no permitted waiting location. If requirements do not fit, state the shortfall and what would need to change. Preserve user formatting and give no audit commentary or JSON.`;
+
+// First-person requests for judgment can often be answered from the supplied
+// situation. Keep explicit requests for extensive reasoning at full effort.
+export function asksForScenarioJudgment(question:string) {
+  if (question.length>1200 || /详尽|详细|全面|严格|严谨|证明|推导|穷举|逐步|逐项|深入|深度|详析|\b(?:detailed|thorough|rigorous|exhaustive|derivation|proof|in.depth|step by step)\b/i.test(question)) return false;
+  return /我(?:该|应当|应该)(?:怎么|如何|选|先)|你(?:会(?:怎么|如何|先|选)|更倾向|更看好|认为哪)|(?:怎么|如何)(?:判断|权衡|取舍)|\b(?:how (?:should I|would you)|which (?:explanation|option) (?:is|would)|what would (?:you|change your mind))\b/i.test(question);
 }
 
 /** The provider must finish a valid message; content is never sliced to fit. */

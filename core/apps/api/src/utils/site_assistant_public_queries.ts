@@ -10,7 +10,7 @@ export const fourthsUrl = 'https://static.cuberoot.me/stats/most_4th_places.json
 // Recognize only a fully consumed global request. Unknown qualifiers, proper names,
 // event names, explicit years and compound questions stay with the planner.
 export function publicLeaderboard(question: string): 'fourths'|'annual'|undefined {
-  const q = question.normalize('NFKC').toLowerCase();
+  const q = question.normalize('NFKC').toLowerCase().replace(/殿军|(?:拿|得|获)第四(?=次数|最多|的次数)/g,'第四名');
   const fourth = /第\s*[四4]\s*名|4th[- ]places?|fourth[- ]places?|finished fourth|most_4th_places/.test(q);
   const annual = /单年|同一(?:个)?(?:自然)?年|单个自然年|一个自然年|一年(?:之内|内)|single (?:calendar )?year|one (?:calendar )?year/.test(q);
   if (fourth === annual || !/最多|榜|most|leader|top|排名/.test(q)) return;

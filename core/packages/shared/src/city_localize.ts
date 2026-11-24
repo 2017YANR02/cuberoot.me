@@ -171,3 +171,18 @@ export function localizeCity(city: string, isZh: boolean, iso2?: string | null):
   }
   return localizePlaceZh(city, iso2);
 }
+
+// Match a standalone city in an informal question without interpreting a country,
+// province, event qualifier or arbitrary sentence as a city with zero results.
+let cityNames: Set<string> | undefined;
+export function isKnownCompetitionCity(value: string): boolean {
+  if (!cityNames) {
+    const names = Object.entries(CITY_ZH).flat();
+    for (const [key, zh] of Object.entries(PLACE_CITY_ZH)) names.push(key.slice(3), zh);
+    for (const [key, zh] of Object.entries(CN_PLACE_ZH)) {
+      if (CN_PLACE_PROVINCE[key]?.zh !== zh) names.push(key, zh);
+    }
+    cityNames = new Set(names.map(name => name.toLowerCase()));
+  }
+  return cityNames.has(value.toLowerCase().replace(/市$/, ''));
+}

@@ -592,6 +592,173 @@ describe('site assistant grounding', () => {
     vi.stubEnv('SITE_ASSISTANT_PROVIDER', 'bailian');
     expect(assistantConfig()).toEqual({key:'bailian-test-key',baseUrl:'https://dashscope.aliyuncs.com/compatible-mode/v1',model:'qwen3.8-flash'});
   });
+  it('keeps native evidence tools and can escalate a scenario to high effort on the next turn',async()=>{
+    const bodies:any[]=[];
+    const fetcher:typeof fetch=async(_url,init)=>{
+      bodies.push(JSON.parse(String(init?.body)));
+      return modelResponse(bodies.length===1 ? {calls:[{tool:'deliberate'}]} : {answerKind:'general',answer:bodies.length===2?'优先解决冲突。':'KEEP',sourceIds:[]});
+    };
+    const result=await answerSiteQuestion('设备只能用于登记，资源发生冲突，我该怎么判断先后？','zh',{...config,model:'deepseek-flash',baseUrl:'https://api.deepseek.com'},AbortSignal.timeout(5000),fetcher,[],undefined,undefined,'UTC',[],'deep');
+    expect(result.answer).toContain('优先');
+    expect(bodies).toHaveLength(3);
+    expect(bodies[0]).toMatchObject({thinking:{type:'enabled'},reasoning_effort:'low',max_tokens:768});
+    expect(bodies[0]).not.toHaveProperty('response_format');
+    expect(bodies[0].messages.map((message:any)=>message.content)).toContainEqual(expect.stringContaining('\"resourceUseLimits\":[\"设备只能用于登记\"]'));
+    expect(bodies[0].tools.map((tool:any)=>tool.function.name)).toContain('pages');
+    expect(JSON.parse(bodies[2].messages.at(-1).content).draft).toBe('优先解决冲突。');
+    expect(bodies[1]).toMatchObject({thinking:{type:'enabled'},reasoning_effort:'high',max_tokens:16384});
+    expect(bodies[0].tools.map((tool:any)=>tool.function.name)).not.toContain('statistics');
+    expect(bodies[1].tools.map((tool:any)=>tool.function.name)).toContain('statistics');
+  });
+  it('regenerates a truncated standalone judgment with its constraints and without the broken transcript', async()=>{
+    const question='材料只能用于登记。你会怎么安排测试？如果延期，怎样调整？';
+    const answer='另选可用材料做测试。\n\n延期则与两组另约时间。';
+    const requests:any[]=[];
+    const fetcher:typeof fetch=async(_url,init)=>{
+      requests.push(JSON.parse(String(init?.body)));
+      if(requests.length===1)return Response.json({choices:[{message:{content:'unfinished-draft',reasoning_content:'discarded-private-thought'},finish_reason:'length'}]});
+      return modelResponse({answerKind:'general',answer:requests.length===2?answer:'KEEP'});
+    };
+    const result=await answerSiteQuestion(question,'zh',{...config,model:'deepseek-flash',baseUrl:'https://api.deepseek.com'},AbortSignal.timeout(5000),fetcher,[],undefined,undefined,'UTC',[],'deep');
+    expect(result.answer).toBe(answer);
+    expect(requests).toHaveLength(3);
+    expect(requests[1]).toMatchObject({thinking:{type:'disabled'},response_format:{type:'json_object'}});
+    expect(requests[1].tools).toBeUndefined();
+    const repair=JSON.stringify(requests[1].messages);
+    expect(repair).toContain('如果延期，怎样调整');
+    expect(repair).not.toMatch(/unfinished-draft|discarded-private-thought/);
+    expect(JSON.parse(requests[2].messages.at(-1).content).draft).toBe(answer);
+  });
+  it('checks a missing follow-up and uses the corrected answer through the normal entry point',async()=>{
+    const question='录像只留下最好的一把，我该怎么判断训练效果，下一轮怎么记录，出现什么结果你会改主意？';
+    const draft='只留下最快的一把会造成选择偏差。';
+    const corrected=draft+'下一轮随机选打乱并保留全部尝试。若在同等条件下全样本成绩持续改善，我才会改变判断。';
+    const fetcher=vi.fn<typeof fetch>()
+      .mockResolvedValueOnce(modelResponse({answerKind:'general',answer:draft}))
+      .mockResolvedValueOnce(modelResponse({answerKind:'general',answer:corrected}));
+    const result=await answerSiteQuestion(question,'zh',{...config,model:'deepseek-flash',baseUrl:'https://api.deepseek.com'},AbortSignal.timeout(5000),fetcher,[],undefined,undefined,'UTC',[],'deep');
+    expect(result.answer).toBe(corrected);
+    const review=JSON.parse(String(fetcher.mock.calls[1][1]?.body));
+    const context=JSON.parse(review.messages.at(-1).content);
+    expect(context.draft).toBe(draft);
+    expect(review).toMatchObject({thinking:{type:'disabled'}});
+    expect(context.requestedParts).toEqual(['录像只留下最好的一把，我该怎么判断训练效果','下一轮怎么记录','出现什么结果你会改主意']);
+    expect(review.tools ?? []).toHaveLength(0);
+  });
+  it('reviews every exclusive-use branch when completing the opening judgment',async()=>{
+    const question='库房仅供存箱。你会怎么安排签到？如果延误，怎样调整？';
+    const answer='在活动室分批签到。\n\n延误就推迟第二批到场，库房始终只存箱。';
+    const fetcher=vi.fn<typeof fetch>()
+      .mockResolvedValueOnce(modelResponse({answerKind:'general',answer}))
+      .mockResolvedValueOnce(modelResponse({answerKind:'general',answer}));
+    const result=await answerSiteQuestion(question,'zh',{...config,model:'deepseek-flash',baseUrl:'https://api.deepseek.com'},AbortSignal.timeout(5000),fetcher,[],undefined,undefined,'UTC',[],'deep');
+    expect(result.answer).toBe(answer);
+    const context=JSON.parse(JSON.parse(String(fetcher.mock.calls[1][1]?.body)).messages.at(-1).content);
+    expect(context.resourceUseLimits).toEqual(['库房仅供存箱']);
+    expect(context.requestedParts).toEqual(['你会怎么安排签到','如果延误，怎样调整']);
+  });
+  it('keeps a fixed ancillary reservation out of the remaining timetable and restores the literal condition',async()=>{
+    const question='只有一间教室。侧厅仅供寄存，主持人只有一位。你会怎么安排两组？如果晚到，怎样调整？';
+    const draft='两组分时进教室，由同一人主持。\n\n晚到则缩短交接，时间仍不足就另约时段。';
+    const fetcher=vi.fn<typeof fetch>()
+      .mockResolvedValueOnce(modelResponse({answerKind:'general',answer:draft}))
+      .mockResolvedValueOnce(modelResponse({answerKind:'general',answer:draft}));
+    const result=await answerSiteQuestion(question,'zh',{...config,model:'deepseek-flash',baseUrl:'https://api.deepseek.com'},AbortSignal.timeout(5000),fetcher,[],undefined,undefined,'UTC',[],'deep');
+    expect(fetcher).toHaveBeenCalledTimes(2);
+    expect(result.answer).toBe(draft+'\n\n侧厅仅供寄存。');
+    const {exclusiveUseClauses,fixedScenarioReservation,scenarioRequestedParts}=await import('../src/utils/site_assistant_policy.js');
+    expect(scenarioRequestedParts('先用 A 还是 B？下一步呢？')).toEqual(['先用 A 还是 B','下一步呢']);
+    for(const text of ['如果周六，侧厅仅供寄存。你会怎么安排？','侧厅仅供寄存，但对第二组例外。你会怎么安排？','侧厅仅供寄存。如果开放侧厅，你会怎么安排？','侧厅仅供寄存。你会怎么安排寄存人员？']) {
+      expect(fixedScenarioReservation(text,exclusiveUseClauses(text))).toBeUndefined();
+    }
+  });
+  it('replans a truncated reserved-room opening once without publishing the draft',async()=>{
+    const question='一间教室可用。侧厅仅供寄存，主持人只有一位。你会怎么安排两组？如果晚到，怎样调整？';
+    const resultText='两组依次进教室。晚到就协商顺延，两场仍由同一人主持。';
+    const fetcher=vi.fn<typeof fetch>()
+      .mockResolvedValueOnce(Response.json({choices:[{message:{content:'被截断的安排'},finish_reason:'length'}]}))
+      .mockResolvedValueOnce(modelResponse({answerKind:'general',answer:resultText}));
+    const result=await answerSiteQuestion(question,'zh',{...config,model:'deepseek-flash',baseUrl:'https://api.deepseek.com'},AbortSignal.timeout(5000),fetcher,[],undefined,undefined,'UTC',[],'deep');
+    expect(result.answer).toBe(resultText+'\n\n侧厅仅供寄存。');
+    expect(fetcher).toHaveBeenCalledTimes(2);
+    const retry=JSON.parse(String(fetcher.mock.calls[1][1]?.body));
+    expect(retry.messages).not.toContainEqual(expect.objectContaining({role:'assistant'}));
+    expect(JSON.parse(retry.messages.at(-1).content)).not.toHaveProperty('draft');
+  });
+  it('replans an illegal waiting assignment without anchoring the replacement on the rejected draft',async()=>{
+    const question='有一间安静教室。隔壁只能做无声签到，只有一位主持人。你会怎么安排两组？如果迟到，怎样调整？';
+    const bad='先给第一组讲解，另一组在隔壁签到后候场。\n\n若迟到就取消签到时间。';
+    const corrected='两组分时到教室，由唯一主持人分别带领。\n\n若迟到就压缩换场，仍不够则协商延时。';
+    const fetcher=vi.fn<typeof fetch>()
+      .mockResolvedValueOnce(modelResponse({answerKind:'general',answer:bad}))
+      .mockResolvedValueOnce(modelResponse({answerKind:'general',answer:corrected}));
+    const result=await answerSiteQuestion(question,'zh',{...config,model:'deepseek-flash',baseUrl:'https://api.deepseek.com'},AbortSignal.timeout(5000),fetcher,[],undefined,undefined,'UTC',[],'deep');
+    expect(result.answer).toBe(corrected+'\n\n隔壁只能做无声签到。');
+    const messages=JSON.parse(String(fetcher.mock.calls[1][1]?.body)).messages;
+    expect(JSON.stringify(messages)).not.toContain('签到后候场');
+    expect(JSON.parse(messages.at(-1).content).requestedParts).toEqual(['你会怎么安排两组','如果迟到，怎样调整']);
+  });
+  it.each([
+    ['一间教室供两组共用。甲组需要连续安静30分钟，乙组需要讲解。我该怎么安排两组？时间少15分钟怎样不让乙组独自承担损失？',
+      '甲组照常使用30分钟，乙组少听15分钟。双方分担。',
+      '先让两组按时错峰使用同一教室，保留甲组连续30分钟和乙组讲解。先核实可削减的共同换场时间；若不足15分钟，双方协商把甲组整段换到确认可用的时段，乙组保留讲解。'],
+    ['只有一张桌子。走廊必须保持畅通，两个小组先后演示。我该怎么安排？若迟到怎么办？',
+      '走廊必须保持畅通。乙组沿走廊一侧排队。',
+      '两组错峰使用同一张桌子，第二组按通知时间到场。迟到就与双方确认顺延。走廊只用于通行。'],
+  ])('checks the replacement as well as the proposed schedule before publishing it',async(question,bad,good)=>{
+    const excerpt=good.includes('共同换场')?'先核实可削减的共同换场时间':'第二组按通知时间到场';
+    const fetcher=vi.fn<typeof fetch>()
+      .mockResolvedValueOnce(modelResponse({answerKind:'general',answer:bad}))
+      .mockResolvedValueOnce(modelResponse({answerKind:'general',answer:bad}))
+      .mockResolvedValueOnce(modelResponse({answerKind:'general',answer:'FAIL\n未给出可执行的排程'}))
+      .mockResolvedValueOnce(modelResponse({answerKind:'general',answer:good}))
+      .mockResolvedValueOnce(modelResponse({answerKind:'general',answer:'PASS\n'+excerpt}));
+    const result=await answerSiteQuestion(question,'zh',{...config,model:'deepseek-flash',baseUrl:'https://api.deepseek.com'},AbortSignal.timeout(10000),fetcher,[],undefined,undefined,'UTC',[],'deep');
+    expect(result.answer).toBe(good);
+    expect(fetcher).toHaveBeenCalledTimes(5);
+    for(const [index,draft] of [[2,bad],[4,good]] as const) {
+      const body=JSON.parse(String(fetcher.mock.calls[index][1]?.body));
+      expect(JSON.parse(body.messages.at(-1).content)).toMatchObject({question,draft});
+    }
+  });
+  it('withholds a disputed timetable in automatic mode and verifies the quoted action',async()=>{
+    const question='门厅必须保持通行，两组共用一张桌子。我该怎么安排？';
+    const draft='让两组错峰到桌边，第二组按通知时间到场。';
+    const responses=[draft,'PASS\n另一组另约场地','PASS\n“第二组按通知时间到场”'];
+    const opening={id:'test',object:'chat.completion.chunk',created:1,model:'deepseek-flash',choices:[{index:0,delta:{role:'assistant',content:'先错峰使用。'},finish_reason:'stop'}]};
+    const fetcher=vi.fn<typeof fetch>(async()=>modelResponse({answerKind:'general',answer:responses.shift()}))
+      .mockResolvedValueOnce(new Response('data: '+JSON.stringify(opening)+'\n\ndata: [DONE]\n\n',{headers:{'content-type':'text/event-stream'}}));
+    const events:any[]=[];
+    const result=await answerSiteQuestion(question,'zh',{...config,model:'deepseek-flash',baseUrl:'https://api.deepseek.com'},AbortSignal.timeout(5000),fetcher,[],undefined,async event=>{events.push(event);},'UTC',[],'auto');
+    expect(result.answer).toBe(draft);
+    expect(fetcher).toHaveBeenCalledTimes(4);
+    expect(events.some(event=>event.type==='answer' && event.answer.includes('先错峰使用'))).toBe(false);
+  });
+  it('preserves both activities when a rejected two-group schedule cannot be certified',async()=>{
+    const question='集训上午只有一间活动室。乙队希望现场答疑，甲队需要连续安静 35 分钟；讲师只有一位。我该怎么安排两组？若上午减少了 12 分钟，如何避免把负担全转给乙队？';
+    const bad='甲队优先，乙队自己承担12分钟。';
+    const fetcher=vi.fn<typeof fetch>(async(_url,init)=>{
+      const body=JSON.parse(String(init?.body));
+      return modelResponse({answerKind:'general',answer:body.messages[0].content.includes('Independently check the FINAL draft')?'FAIL\n只缩短乙队':bad});
+    });
+    const result=await answerSiteQuestion(question,'zh',{...config,model:'deepseek-flash',baseUrl:'https://api.deepseek.com'},AbortSignal.timeout(5000),fetcher,[],undefined,undefined,'UTC',[],'deep');
+    expect(result.answer).toContain('甲队整段改到另一段连续可用时间');
+    expect(result.answer).toContain('乙队完整改期');
+    expect(result.answer).toContain('12 分钟减去实省时间');
+    expect(result.answer).toContain('连续安静 35 分钟');
+    const {twoGroupTimeFallback}=await import('../src/utils/site_assistant_schedule.js');
+    for(const different of [question.replace('讲师只有一位','甲队不能改期，讲师只有一位'),question.replace('如何避免','若下午不开门如何避免'),question.replace('活动室','活动室但乙队必须后到'),question.replace('转给乙队','转给家长')]) {
+      expect(twoGroupTimeFallback(different)).toBeUndefined();
+    }
+  });
+  it('honors explicit detailed reasoning and distinguishes a recording from a paragraph request',async()=>{
+    const {assistantPlanShape}=await import('../src/utils/site_assistant_plan.js');
+    expect(assistantPlanShape('练习时只能拍一段视频，我该怎么判断读数偏差？')).toBeUndefined();
+    expect(assistantPlanShape('把练习安排写成一段话。')).toMatchObject({paragraph:true});
+    const fetcher=vi.fn<typeof fetch>().mockImplementation(async()=>modelResponse({answerKind:'general',answer:'先评估边界条件。',sourceIds:[]}));
+    await answerSiteQuestion('我该怎么判断两种解释？请给出详细推导。','zh',{...config,model:'deepseek-flash',baseUrl:'https://api.deepseek.com'},AbortSignal.timeout(5000),fetcher,[],undefined,undefined,'UTC',[],'deep');
+    expect(JSON.parse(String(fetcher.mock.calls[0][1]?.body))).toMatchObject({thinking:{type:'enabled'},reasoning_effort:'high'});
+  });
   it('keeps the first auto planning pass fast across providers', async () => {
     const fetcher=vi.fn<typeof fetch>().mockImplementation(async()=>modelResponse({answer:'请提供要查询的选手。'}));
     await answerSiteQuestion('查选手','zh',{key:'deepseek-test-key',baseUrl:'https://api.deepseek.com',model:'deepseek-flash'},AbortSignal.timeout(5000),withCatalog(fetcher));

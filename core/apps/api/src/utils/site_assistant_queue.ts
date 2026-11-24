@@ -81,7 +81,7 @@ export function assistantQueueStore(run:QueryRunner=query, transaction:QueueTran
       const rows=await run<{revision:string}>('SELECT CASE WHEN active_id IS NOT NULL AND (lease_until IS NULL OR lease_until<=NOW()) THEN NULL ELSE revision END AS revision FROM site_assistant_conversations WHERE id=? AND user_id=?',[id,uid]);
       return rows[0]?.revision!=null?Number(rows[0].revision):undefined;
     },
-    async snapshot(uid:number,id:string):Promise<AssistantQueueSnapshot|undefined> {
+    async snapshot(uid:number,id:string,previous?:AssistantQueueSnapshot):Promise<AssistantQueueSnapshot|undefined> {
       // A single transaction snapshot under the conversation lock prevents mixed generations.
       return transaction(async tx=>{
         const rows=await tx<Conversation>('SELECT *,lease_until>NOW() AS lease_active FROM site_assistant_conversations WHERE id=? AND user_id=? FOR UPDATE',[id,uid]);
@@ -91,8 +91,18 @@ export function assistantQueueStore(run:QueryRunner=query, transaction:QueueTran
           await tx('UPDATE site_assistant_conversations SET revision=revision+1,lease=NULL,lease_until=NULL,active_id=NULL WHERE id=?'+notifyRevision,[id]);
           c.active_id=null;c.lease=null;c.lease_until=null;c.revision=String(Number(c.revision)+1);
         }
-        const messages=await tx<Message>("SELECT id,sequence,target_id,mode,state,payload-'history' AS payload,answer,progress,error,request_id,attempts,created_at,updated_at FROM site_assistant_messages WHERE conversation_id=? ORDER BY sequence",[id]);
-        return {conversationId:id,revision:Number(c.revision),paused:c.paused,activeId:c.active_id ?? undefined,recovering:!!c.active_id && !c.lease_active,messages:messages.map(m=>({id:m.id,sequence:Number(m.sequence),targetId:m.target_id ?? undefined,mode:m.mode,state:m.state,input:{...m.payload,history:[]},answer:m.answer ?? undefined,progress:m.progress,error:m.error ?? undefined,requestId:m.request_id ?? undefined,attempts:m.attempts,createdAt:new Date(m.created_at).getTime(),updatedAt:new Date(m.updated_at).getTime()}))};
+        // Only a server-held, owner-checked stream snapshot is passed here.
+        // Completed and applied rows are immutable. Queued, stopped and errored
+        // rows may change on claim, resume or recovery, even without a new ID.
+        const prior=previous?.conversationId===id ? previous : undefined;
+        const mutable=prior?.messages.filter(row=>row.state!=='completed' && row.state!=='applied').map(row=>row.id);
+        const filter=prior ? ' AND (sequence>? OR id=ANY(?::uuid[]))' : '';
+        const args=prior ? [id,prior.messages.at(-1)?.sequence ?? 0,mutable] : [id];
+        const messages=await tx<Message>("SELECT id,sequence,target_id,mode,state,payload-'history' AS payload,answer,progress,error,request_id,attempts,created_at,updated_at FROM site_assistant_messages WHERE conversation_id=?"+filter+" ORDER BY sequence",args);
+        const updated=messages.map(m=>({id:m.id,sequence:Number(m.sequence),targetId:m.target_id ?? undefined,mode:m.mode,state:m.state,input:{...m.payload,history:[]},answer:m.answer ?? undefined,progress:m.progress,error:m.error ?? undefined,requestId:m.request_id ?? undefined,attempts:m.attempts,createdAt:new Date(m.created_at).getTime(),updatedAt:new Date(m.updated_at).getTime()}));
+        const merged=new Map(prior?.messages.map(row=>[row.id,row]));
+        for (const row of updated)merged.set(row.id,row);
+        return {conversationId:id,revision:Number(c.revision),paused:c.paused,activeId:c.active_id ?? undefined,recovering:!!c.active_id && !c.lease_active,messages:[...merged.values()]};
       });
     },
     async control(uid:number,id:string,action:'stop'|'resume') {
@@ -154,17 +164,20 @@ export function assistantQueueStore(run:QueryRunner=query, transaction:QueueTran
       await transaction(async tx=>{await owned(tx,claim);await tx('UPDATE site_assistant_conversations SET revision=revision+1,lease_until=NOW() WHERE id=?'+notifyRevision,[claim.conversationId]);});
     },
     async acknowledge(claim:AssistantClaim,revision:number) {
-      await mutate(claim.uid,claim.conversationId,()=>transaction(async tx=>{await owned(tx,claim);await tx("UPDATE site_assistant_messages SET state='applied',updated_at=NOW() WHERE target_id=? AND sequence<=? AND state='queued'",[claim.message.id,revision]);await tx('UPDATE site_assistant_conversations SET revision=revision+1 WHERE id=?',[claim.conversationId]);}));
+      await mutate(claim.uid,claim.conversationId,()=>transaction(async tx=>{await owned(tx,claim);await tx("UPDATE site_assistant_messages SET state='applied',updated_at=NOW() WHERE target_id=? AND sequence<=? AND state='queued'",[claim.message.id,revision]);await tx('UPDATE site_assistant_conversations SET revision=revision+1 WHERE id=?'+notifyRevision,[claim.conversationId]);}));
     },
     async update(claim:AssistantClaim,patch:{answer?:AssistantAnswer;progress?:AssistantProgress[];checkpoints?:Record<string,Checkpoint>;requestId?:string}) {
-      await mutate(claim.uid,claim.conversationId,()=>transaction(async tx=>{
+      const visible=patch.answer!==undefined || patch.progress!==undefined || !!patch.requestId;
+      const write=()=>transaction(async tx=>{
         await owned(tx,claim);
         const fields:string[]=[],values:unknown[]=[];
         for(const key of ['answer','progress','checkpoints'] as const)if(patch[key]!==undefined){fields.push(`${key}=?::text::jsonb`);values.push(JSON.stringify(patch[key]));}
         if(patch.requestId){fields.push('request_id=?');values.push(patch.requestId);}
-        if(fields.length)await tx(`UPDATE site_assistant_messages SET ${fields.join(',')},updated_at=NOW() WHERE id=?`,[...values,claim.message.id]);
-        if(fields.length)await tx('UPDATE site_assistant_conversations SET revision=revision+1 WHERE id=?',[claim.conversationId]);
-      }));
+        if(fields.length)await tx(`UPDATE site_assistant_messages SET ${fields.join(',')}${visible?',updated_at=NOW()':''} WHERE id=?`,[...values,claim.message.id]);
+        if(visible)await tx('UPDATE site_assistant_conversations SET revision=revision+1 WHERE id=?'+notifyRevision,[claim.conversationId]);
+      });
+      if (visible) await mutate(claim.uid,claim.conversationId,write);
+      else await write();
     },
     async finish(claim:AssistantClaim,revision:number,result?:AssistantAnswer,error?:AssistantQueuedMessage['error']) {
       return mutate(claim.uid,claim.conversationId,()=>transaction(async tx=>{

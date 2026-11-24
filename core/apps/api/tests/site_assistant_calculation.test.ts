@@ -1,6 +1,6 @@
 import {expect,it,vi} from 'vitest';
-import {suppliedAverageAnswer} from '../src/utils/site_assistant_calculation.js';
-import {answerSiteQuestion} from '../src/utils/site_assistant.js';
+import {suppliedAverageAnswer,suppliedTrainingComparison} from '../src/utils/site_assistant_calculation.js';
+import {answerSiteQuestion,canReadPublicResult} from '../src/utils/site_assistant.js';
 
 it.each([
  ['五次成绩是12秒、13秒、14秒、15秒和DNF，ao5是多少？','ao5 = 14.00 秒'],
@@ -32,4 +32,34 @@ it('returns computed supplied-data results without model, embedding or database 
  const fetcher=vi.fn<typeof fetch>().mockRejectedValue(new Error('No reads expected'));
  const result=await answerSiteQuestion('五次成绩是12秒、13秒、14秒、15秒和DNF，ao5是多少？','zh',{key:'test',baseUrl:'https://model.example/v1',model:'fixture'},AbortSignal.timeout(2000),fetcher);
  expect(result.answer).toContain('14.00 秒');expect(result.sources).toEqual([]);expect(fetcher).not.toHaveBeenCalled();
+});
+
+const comparison='甲组尝试12次，成功3次；乙组共8次，其中成功6次。两组的成功率分别是多少？相差多少个百分点？说明为什么这些数据不能证明因果关系，并设计一次公平的复测。';
+
+it('answers the complete comparison from supplied counts, including the direction and retest',async()=>{
+  const fetcher=vi.fn<typeof fetch>();
+  expect(canReadPublicResult({question:comparison,history:[]})).toBe(true);
+  const result=await answerSiteQuestion(comparison,'zh',null,AbortSignal.timeout(1000),fetcher,[],undefined,undefined,'UTC',[],'deep');
+  expect(result.answer).toContain('3/12 = 25%');
+  expect(result.answer).toContain('6/8 = 75%');
+  expect(result.answer).toMatch(/甲组比 乙组低 50 个百分点/);
+  expect(result.answer).toMatch(/归因/);
+  expect(result.answer).toMatch(/随机.*顺序/);
+  expect(fetcher).not.toHaveBeenCalled();
+});
+it('reports equal rates with unequal denominators and rounds fractional percentages',()=>{
+  const text=suppliedTrainingComparison('Group C: 1 success in 3 trials; group D: 2 successes in 6 attempts. Calculate both success rates and the percentage-point difference.','en');
+  expect(text).toContain('1/3 ≈ 33.3333%');
+  expect(text).toContain('0 percentage points apart');
+  expect(text).not.toContain('random');
+});
+it.each([
+  comparison.replace('成功3次','成功13次'),
+  comparison.replace('共8次','共0次'),
+  comparison.replace('乙组','甲组'),
+  comparison+'并给出置信区间。',
+  comparison.replace('说明为什么','不要说明为什么'),
+  comparison.replace('两组的成功率','仅用决赛成绩计算两组的成功率'),
+])('preserves invalid counts and additional instructions for the planner: %s',q=>{
+  expect(suppliedTrainingComparison(q,'zh')).toBeUndefined();
 });

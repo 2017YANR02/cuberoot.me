@@ -3,7 +3,7 @@ import { restoreAssistantContext } from './site_assistant_context.js';
 import { query } from '../db/connection.js';
 import { assistantAnswerHistory, assistantTimeoutMs, boundAssistantHistory, type AssistantAnswer, type AssistantProgress, type AssistantStreamEvent } from '@cuberoot/shared/site-assistant';
 import { BANNED_WCA_IDS } from '@cuberoot/shared/admin';
-import { answerSiteQuestion, assistantConfig } from './site_assistant.js';
+import { answerSiteQuestion, assistantConfig, canReadPublicResult } from './site_assistant.js';
 import { runRecentChampionQuery, standaloneChampionWindow } from './site_assistant_champions.js';
 import { assistantQueueStore, type AssistantClaim, type Checkpoint } from './site_assistant_queue.js';
 import { AssistantSteered, markAssistantToolReused, withAssistantExecution } from './site_assistant_execution.js';
@@ -11,7 +11,7 @@ import { withAssistantProgress } from './site_assistant_progress.js';
 import { assistantFailureCode, AssistantFailure } from './site_assistant_diagnostics.js';
 import { resolveAssistantImages, readAssistantAttachment } from './site_assistant_attachments.js';
 import { reserveAssistantQuestion } from './site_assistant_quota.js';
-import { startAssistantMonitor } from './site_assistant_monitor.js';
+import { recordAssistantPersistedAnswer, startAssistantMonitor } from './site_assistant_monitor.js';
 import { assistantToolOutcome } from './site_assistant_evidence.js';
 import { getUserById } from './account.js';
 
@@ -20,7 +20,7 @@ export function createAssistantQueueWorker(deps:{
   authorize:(uid:number)=>Promise<string>; reserve:typeof reserveAssistantQuestion;
   attachment?:typeof readAssistantAttachment; monitor?:typeof startAssistantMonitor;
 }) {
-  let scanning=false,rescan=false,closed=false;
+  let scans=0,rescan=false,closed=false;
   const tasks=new Set<Promise<void>>();
   const controllers=new Set<AbortController>();
   async function execute(claim:AssistantClaim) {
@@ -38,6 +38,7 @@ export function createAssistantQueueWorker(deps:{
     const checkpoints:Record<string,Checkpoint>={...claim.message.checkpoints};
     try {
       for(let pass=0;pass<10;pass++) {
+        const started=performance.now();
         const current=await deps.store.inspect(claim);
         revision=current.revision;
         if(current.paused || lifetime.signal.aborted) {await deps.store.finish(claim,revision);return;}
@@ -63,7 +64,7 @@ export function createAssistantQueueWorker(deps:{
         const priorContext=parentId?await restoreAssistantContext(query,claim.uid,claim.conversationId,parentId).catch(()=>undefined):undefined;
         const config=deps.config(!!savedImages.length || history.some(m=>!!m.images?.length),input.provider);
         const championWindow=!config && inputs.length===1 ? standaloneChampionWindow({...input,history}) : undefined;
-        if(!config && !championWindow)throw new AssistantFailure('provider_unavailable');
+        if(!config && !championWindow && !(inputs.length===1 && canReadPublicResult({...input,history})))throw new AssistantFailure('provider_unavailable');
         if(config && input.provider==='openai') {
           if(!assistantOpenAICountrySupported(claim.message.country))throw new AssistantFailure('provider_region_unavailable');
           config.visitorCountry=claim.message.country!;
@@ -74,10 +75,9 @@ export function createAssistantQueueWorker(deps:{
         const resolvedHistory=await Promise.all(history.map(async message=>({...message,...(message.images?{images:await resolveAssistantImages(claim.uid,message.images,deps.attachment ?? readAssistantAttachment)}:{})})));
         signal.throwIfAborted();
         if(!(await deps.reserve()).allowed)throw new AssistantFailure('daily_limit');
-        const started=performance.now();
         const monitor=await deps.monitor?.({uid:claim.uid,startedAt:started,poolStartMs:claim.poolStartMs,receivedAt:new Date(claim.message.created_at).getTime(),claimedAt:new Date(claim.message.updated_at).getTime(),question,lang:input.lang,model:config?.model ?? 'wca-results',streaming:true,imageCount:images.length,historyCount:history.length,conversationId:claim.conversationId,parentId:parentId ?? undefined,thinking:input.thinking});
         if(monitor)await deps.store.update(claim,{requestId:monitor.id});
-        let lastDraftWrite=0;
+        let lastDraftWrite=-Infinity;
         const emit=async(event:AssistantStreamEvent)=>{
           signal.throwIfAborted();
           if(event.type==='progress') {
@@ -94,6 +94,7 @@ export function createAssistantQueueWorker(deps:{
             lastDraftWrite=performance.now();
             // Keep the latest draft, but commit a final answer only under the inbox fence.
             await deps.store.update(claim,{answer:{answer:event.answer,sources:event.sources,...(event.artifacts ? {artifacts:event.artifacts} : {})}});
+            recordAssistantPersistedAnswer(event.answer);
           }
         };
         const boundary=async()=>{
@@ -105,6 +106,7 @@ export function createAssistantQueueWorker(deps:{
         try {
           await boundary();
           await deps.store.acknowledge(claim,revision);
+          let checkpointWrite=Promise.resolve();
           const run=()=>withAssistantExecution({boundary,messages:inputs.map(value=>value.question),bindings:JSON.stringify({lang:input.lang,timeZone:input.timeZone,day:new Date().toISOString().slice(0,10),wcaId}),scope:JSON.stringify({question,lang:input.lang,history,references,images:savedImages,priorContext}),tool:async(_call,key,read)=>{
             const cached=checkpoints[key];
             if(!refreshRequested && cached && Date.now()-cached.at<300_000 && Date.now()>=cached.at)return markAssistantToolReused(structuredClone(cached.result));
@@ -120,13 +122,14 @@ export function createAssistantQueueWorker(deps:{
                 while(Object.keys(checkpoints).length>=10)delete checkpoints[Object.keys(checkpoints)[0]];
                 checkpoints[key]={at:Date.now(),result:bounded};
                 while(Buffer.byteLength(JSON.stringify(checkpoints))>350_000)delete checkpoints[Object.keys(checkpoints)[0]];
-                await deps.store.update(claim,{checkpoints});
+                const snapshot={...checkpoints};
+                checkpointWrite=checkpointWrite.then(()=>deps.store.update(claim,{checkpoints:snapshot}));
+                await checkpointWrite;
               }
             }
             return result;
           }},()=>withAssistantProgress(emit,signal,started,()=>{
             if(championWindow)return runRecentChampionQuery(championWindow,input.lang,signal,emit);
-            if(!config)throw new AssistantFailure('provider_unavailable');
             return deps.answer(question,input.lang,config,signal,undefined,resolvedHistory,wcaId,emit,input.timeZone,images,input.thinking,{},priorContext,references);
           },Math.max(0,...progress.map(p=>p.id))));
           monitor?.ready?.();
@@ -161,8 +164,10 @@ export function createAssistantQueueWorker(deps:{
   }
   const kick=async()=>{
     if(closed)return;
-    if(scanning){rescan=true;return;}
-    scanning=true;
+    // A second wakeup can claim a different conversation while the first
+    // scanner waits on PostgreSQL. SKIP LOCKED and the lease fence stay authoritative.
+    if(scans>=2){rescan=true;return;}
+    scans++;
     try {
       do {
         rescan=false;
@@ -170,11 +175,12 @@ export function createAssistantQueueWorker(deps:{
         // must not wait for another user's model request to finish.
         while(!closed) {
           const claim=await deps.store.claim();if(!claim)break;
+          if(closed){await deps.store.abandon(claim);break;}
           const task=execute(claim);tasks.add(task);
           void task.finally(()=>{tasks.delete(task);if(!closed)void kick().catch(()=>{});});
         }
       } while(rescan && !closed);
-    } finally {scanning=false;}
+    } finally {scans--;}
   };
   return {
     kick:()=>kick().catch(()=>{}),

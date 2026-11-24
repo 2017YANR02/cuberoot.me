@@ -169,7 +169,7 @@ type StandingsRequest=RoundCall | (Omit<RoundCall,'compId'> & {edition:'latest-w
 // Accept complete standings requests only. An event placing without a named round
 // refers to the final. Additional filters or ranking metrics need the planner.
 export function standingsRequest(question:string,limit:number|undefined):StandingsRequest|undefined {
-  const q=question.normalize('NFKC');
+  const q=question.normalize('NFKC').replace(/金牌[、,和与及\s]+银牌[、,和与及\s]+铜牌|金[、,]银[、,和与及]铜牌/g,'领奖台');
   const podium=/领奖台|冠亚季军|\bpodium\b/i;
   if (!limit) {
     if (podium.test(q)) limit=3;
