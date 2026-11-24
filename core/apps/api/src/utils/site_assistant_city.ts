@@ -41,23 +41,26 @@ export function personalCityRequest(question:string,history:AssistantMessage[]):
   return continueVisit(question,prior);
 }
 
-const competition=z.object({id:z.string().min(1),city:z.string().nullish(),country_iso2:z.string().nullish(),start_date:z.string().nullish()});
+const competition=z.object({id:z.string().min(1),name:z.string().nullish(),city:z.string().nullish(),country_iso2:z.string().nullish(),start_date:z.string().nullish()});
 const profileSchema=z.object({
   wcaId:z.string(), profile:z.object({person:z.object({wca_id:z.string()})}),
-  results:z.array(z.object({competition_id:z.string().min(1)})).nonempty(),
+  results:z.array(z.object({competition_id:z.string().min(1),event_id:z.string().optional()})).nonempty(),
   comps:z.array(competition),
 });
 const cityKey=(value:string)=>value.normalize('NFKC').split(/[,，]/,1)[0].trim().toLowerCase().replace(/市$/,'');
 
-async function publishedAttendance(id:string,read:JsonReader,signal:AbortSignal) {
+export async function publishedAttendance(id:string,read:JsonReader,signal?:AbortSignal,event?:string) {
   try {
     const data=profileSchema.parse(await read('https://api.cuberoot.me/v1/wca/person-page?wcaId='+id));
     if (data.wcaId!==id || data.profile.person.wca_id!==id) throw Error('Profile identity mismatch');
     const comps=new Map(data.comps.map(c=>[c.id,c]));
-    const ids=new Set(data.results.map(r=>r.competition_id));
+    if (event && data.results.some(row=>!row.event_id)) throw Error('Missing result event');
+    const ids=new Set(data.results.filter(row=>!event || row.event_id===event).map(r=>r.competition_id));
     return {rows:[...ids].map(compId=>comps.get(compId)),href:'/wca/persons/'+id,unposted:0};
-  } catch {
-    signal.throwIfAborted();
+  } catch (error) {
+    signal?.throwIfAborted();
+    // The WCA competition list does not identify the events entered by this person.
+    if (event) throw error;
     const url='https://www.worldcubeassociation.org/api/v0/persons/'+id+'/competitions';
     const competitions=z.array(competition.extend({results_posted_at:z.string().nullable(),cancelled_at:z.string().nullable()})).nonempty().parse(await read(url));
     const rows=new Map(competitions.filter(c=>c.results_posted_at && !c.cancelled_at).map(c=>[c.id,c]));

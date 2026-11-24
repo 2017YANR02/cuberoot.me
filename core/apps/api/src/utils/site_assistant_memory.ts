@@ -52,6 +52,16 @@ export function assistantHistoryTurns(history: AssistantMessage[]): AssistantTur
 function continuation(question: string) {
   return question.length <= 160 && /^(?:(?:现在|这次)(?:允许|改为|改成)|now (?:allow|permit)\b|继续|然后呢|那(?:么|个|这|他|她|它)|再(?:说|讲|解释|详细)|(?:把|将)?刚才|上(?:一轮|面|次)|前面|换成|改成|我说的是|他的|她的|它的|这(?:个|些|场)|第\s*[一二两三四五六七八九十\d]+\s*(?:行|名|位)|continue\b|go on\b|what about\b|and (?:what|how)\b|(?:his|her|their|its)\b|(?:the )?(?:first|second|third) (?:row|person)\b|(?:make|change|translate) (?:it|that|to)\b)/i.test(question.trim());
 }
+/** A reply can refer to an option or table value introduced only by the assistant. */
+export function refersToDisplayedAnswer(question:string, previous?:AssistantMessage):boolean {
+  if (previous?.role!=='assistant' || !previous.content.trim() || question.length>200) return false;
+  const q=question.trim();
+  if (/^(?:其中|前者|后者|这两(?:种|项|个)|第[一二三四五六七八九十0-9]+(?:种|项|步|个)(?:方案|方法|建议|选项|原因)?|(?:the )?(?:former|latter)\b|of those\b|which of (?:the two|those)\b)/i.test(q)) return true;
+  // Require the named subject verbatim in the last answer. A standalone new
+  // question that merely asks "which" must not activate an older snapshot.
+  const named=/^(.{2,40}?)(?:的哪些|具体有哪|分别有哪|怎么操作|为什么更适合)/.exec(q)?.[1];
+  return !!named && previous.content.includes(named);
+}
 function sharedEntities(question: string[], previous: string[]) {
   return question.filter(entity => previous.includes(entity)).length;
 }
@@ -241,7 +251,7 @@ export function composeAssistantContext(input: {
   const unpaired = new Set(input.history.filter(message => message.role === 'user' && !paired.has(message)));
   const priorQuestion = turns.at(-1)?.messages[0].content
     ?? input.memory?.episodes.at(-1)?.passages.find(passage => passage.role === 'user')?.text ?? '';
-  const relevance = assistantTopicRelevance(input.question, priorQuestion, input.hasImages);
+  const relevance = refersToDisplayedAnswer(input.question,input.history.at(-1)) ? 'strong' : assistantTopicRelevance(input.question, priorQuestion, input.hasImages);
   let kept = Math.min(turns.length, relevance === 'strong' ? 5 : 1);
   const minimum = Math.min(turns.length, relevance === 'strong' ? 2 : 1);
   // Include client-only history in extractive summaries without persisting it or

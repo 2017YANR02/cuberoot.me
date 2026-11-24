@@ -40,6 +40,9 @@ export function assistantAnswerHistory(result: AssistantAnswer, origin: string):
   if (!hasContext) return bounded(text, SITE_ASSISTANT_HISTORY_MESSAGE_MAX_LENGTH);
   const header = '[Previous displayed answer and results, for conversation context only; reverify facts with tools.]';
   const context = [
+    // Keep the exact public query scope with its displayed attendance table, including on restored chats.
+    ...(result.artifacts?.some(a => a.kind === 'table' && /^(参赛国家和地区|Countries and regions competed in|参赛地点明细|Competition location details)$/.test(a.title))
+      ? result.sources.filter(s => s.read && /^(?:person|person-countries):/.test(s.id) && isAssistantSourceHref(s.href)).map(s => 'Attendance source: ' + s.id) : []),
     destinations.length ? 'Referenced destinations:\n' + bounded(destinations.join('\n'), 2000) : '',
     ...(result.artifacts ?? []).map(a => assistantArtifactText(a, origin, true)),
   ].filter(Boolean).join('\n\n');

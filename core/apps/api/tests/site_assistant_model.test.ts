@@ -12,6 +12,17 @@ it('retains ordinary conversation roles and bounds older context without duplica
   expect(JSON.parse(request.messages.at(-1).content)).toEqual({question:'question'});
   expect(result.answerKind).toBe('general');
 });
+it('takes the named suggestion into isolated review only when the user refers to it',async()=>{
+  const fetcher=vi.fn<typeof fetch>(async()=>response({content:JSON.stringify({answerKind:'general',answer:'Done',sourceIds:[]})}));
+  const history=[{role:'user' as const,content:'给我两种练法'},{role:'assistant' as const,content:'可以先慢拧，也可以录像复盘。'}];
+  for(const question of ['后者怎么操作？','介绍计时器']) {
+    const model=createAssistantModel(config,fetcher,AbortSignal.timeout(2000),'',history);
+    await model.complete({...options,context:{question},thinking:false,isolated:true});
+    const request=JSON.parse(String(fetcher.mock.calls.at(-1)?.[1]?.body));
+    const review=request.messages.filter((m:{role:string})=>m.role==='user').map((m:{content:string})=>JSON.parse(m.content)).find((m:{previousUserMessages?:string[]})=>m.previousUserMessages);
+    expect(review.referencedPreviousReply).toEqual(question.startsWith('后者') ? history[1] : undefined);
+  }
+});
 it('omits unavailable query schemas and all tool schemas for final-only generation',async()=>{
   const fetcher=vi.fn<typeof fetch>().mockImplementation(async()=>response({content:JSON.stringify({answerKind:'general',answer:'Done',sourceIds:[]})}));
   const model=createAssistantModel(config,fetcher,AbortSignal.timeout(2000),'');

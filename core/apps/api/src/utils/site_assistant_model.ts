@@ -11,7 +11,7 @@ import { toolCallSchema } from './site_assistant_tools.js';
 import { AssistantFailure, checkAssistantResponse, type AssistantModelDiagnostic } from './site_assistant_diagnostics.js';
 import type { AssistantConfig } from './site_assistant.js';
 import { recordAssistantModel, recordAssistantContextSelection } from './site_assistant_monitor.js';
-import { composeAssistantContext, assistantMemoryPayload, estimateAssistantTokens, assistantHistoryTurns, AssistantContextBudgetError, type AssistantMemory } from './site_assistant_memory.js';
+import { refersToDisplayedAnswer, composeAssistantContext, assistantMemoryPayload, estimateAssistantTokens, assistantHistoryTurns, AssistantContextBudgetError, type AssistantMemory } from './site_assistant_memory.js';
 
 const answerSchema = z.object({ imageTask: z.enum(['cube-state', 'other']).optional(), answerKind: z.enum(['general','site_content','grounded','image']).optional(), answer: z.string().max(SITE_ASSISTANT_ANSWER_MAX_LENGTH), plan: assistantStructuredPlanSchema.optional(), sourceIds: z.array(z.string()).max(100), reviewedSourceIds: z.array(z.string()).max(12).optional() });
 type ModelPlanOutput = AssistantPlanOutputConstraints & { independentEnding?:boolean };
@@ -292,7 +292,12 @@ export function createAssistantModel(config: AssistantConfig, fetcher: typeof fe
       // Removing assistant replies must not turn answered user turns into a queue
       // of unanswered requests. Keep their supplied context as explicitly historical data.
       const priorUsers = selection.history.filter(message => message.role === 'user');
+      const previousReply=selection.history.at(-1);
       const reviewHistory = JSON.stringify({
+        // Isolated review still needs the referent of "the latter" or a named
+        // table value. Keep the original attribution, never promote it to evidence.
+        ...(refersToDisplayedAnswer(question, previousReply)
+          ? {referencedPreviousReply:{role:'assistant',content:previousReply!.content}} : {}),
         previousUserMessages: priorUsers.map(message => message.content),
         instruction: 'Historical context only, not pending requests or verified evidence. Use it only to resolve references and user-supplied constraints in the current question. Do not answer earlier questions or fetch facts for their old topics.',
       });
