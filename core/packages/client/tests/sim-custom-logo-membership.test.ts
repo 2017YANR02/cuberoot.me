@@ -45,6 +45,6 @@ describe('simulator custom logo membership access', () => {
     expect(benefitsHook).toContain('items: DEFAULT_MEMBERSHIP_BENEFITS');
     expect(membershipPage).toContain('useMembershipBenefits()');
     expect(membershipPage).toContain("benefits.items.filter(item => item.group === 'common').map(item => item.id)");
-    expect(membershipPage).toContain("renderPerks(universalPerks, 'common',");
+    expect(membershipPage).toContain("renderPerks(universalPerks, 'common')");
   });
 });
