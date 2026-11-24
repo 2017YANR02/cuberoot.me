@@ -218,6 +218,10 @@ jobs:
             printf 'default 0;\n' > /etc/nginx/cuberoot-comp-verification-state.conf
             chmod 0600 /etc/nginx/cuberoot-comp-verification-state.conf
           fi
+          if [ ! -f /etc/nginx/cuberoot-comp-only-until.conf ]; then
+            printf 'default 0;\n' > /etc/nginx/cuberoot-comp-only-until.conf
+            chmod 0600 /etc/nginx/cuberoot-comp-only-until.conf
+          fi
           # Snapshot every confs that will be (re)written, so a single failure
           # rolls back the whole batch — atomic apply across all conf files.
           declare -a CHANGED=()

@@ -84,4 +84,25 @@ describe('competition access proof', () => {
     expect(request).toHaveBeenCalledTimes(2);
     expect(window.location.assign).toHaveBeenCalledWith('/zh/competition-verify?returnTo=%2Fzh%2Fwca%2Fcomp%2FA');
   });
+  it.each([403, 429])('serves a published snapshot after a scoped %s without challenging the browser', async (status) => {
+    const snapshot = { slug: 'A', source: 'wca_db' };
+    const request = vi.fn()
+      .mockResolvedValueOnce(Response.json({ code: 'competition_verification_required', scope: 'competition' }, { status }))
+      .mockResolvedValueOnce(Response.json(snapshot));
+    vi.stubGlobal('fetch', request);
+    const { competitionFetch } = await import('@/lib/competition-access');
+    const response = await competitionFetch('/api/comp/A', undefined, '/stats/comp/A.json');
+    expect(await response.json()).toEqual(snapshot);
+    expect(request.mock.calls.map(([url]) => url)).toEqual(['/api/comp/A', '/stats/comp/A.json']);
+  });
+  it('preserves Retry-After when no published snapshot exists', async () => {
+    const request = vi.fn()
+      .mockResolvedValueOnce(new Response(null, { status: 429, headers: { 'retry-after': '5' } }))
+      .mockResolvedValueOnce(new Response(null, { status: 404 }));
+    vi.stubGlobal('fetch', request);
+    const { competitionFetch } = await import('@/lib/competition-access');
+    const response = await competitionFetch('/api/comp/A', undefined, '/stats/comp/A.json');
+    expect(response.status).toBe(429);
+    expect(response.headers.get('retry-after')).toBe('5');
+  });
 });

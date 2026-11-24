@@ -1,6 +1,19 @@
 import { afterEach, expect, it, vi } from 'vitest';
 afterEach(() => { vi.useRealTimers(); vi.unstubAllGlobals(); vi.resetModules(); });
 
+it('expires competition-only protection even inside the status cache window', async () => {
+  vi.useFakeTimers();
+  vi.setSystemTime(1_800_000_000_000);
+  const fetcher = vi.fn().mockResolvedValue(Response.json({ enabled: 0, competitionOnlyUntil: 1_800_000_002 }));
+  vi.stubGlobal('fetch', fetcher);
+  const { trafficDefenseEnabled, competitionOnlyVerificationEnabled } = await import('@/lib/traffic-defense');
+  expect(await competitionOnlyVerificationEnabled()).toBe(true);
+  expect(await trafficDefenseEnabled()).toBe(false);
+  await vi.advanceTimersByTimeAsync(2000);
+  expect(await competitionOnlyVerificationEnabled()).toBe(false);
+  expect(fetcher).toHaveBeenCalledTimes(1);
+});
+
 it('shares reads and switches both ways after five seconds', async () => {
   vi.useFakeTimers();
   const fetcher = vi.fn().mockResolvedValue(Response.json({ enabled: 0 }));

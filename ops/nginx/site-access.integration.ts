@@ -4,11 +4,17 @@ import {readFileSync,writeFileSync,mkdtempSync,mkdirSync} from 'node:fs';
 import {spawn,execFileSync} from 'node:child_process';
 import {createServer,request} from 'node:http';
 import {once} from 'node:events';
-const dir=mkdtempSync('/tmp/cuberoot-site-gate-');mkdirSync(dir+'/logs');
+import {tmpdir} from 'node:os';
+import {join} from 'node:path';
+const dir=mkdtempSync(join(tmpdir(), 'cuberoot-site-gate-'));mkdirSync(dir+'/logs');
 const auth=createServer((req,res)=> { const ok=req.headers.cookie==='verified=1'||req.headers['x-cuberoot-comp-service']==='test-service'; res.writeHead(ok?204:403);res.end(); });
 auth.listen(0,'127.0.0.1');await once(auth,'listening');const authPort=auth.address().port;
 const portReserve=createServer();portReserve.listen(0,'127.0.0.1');await once(portReserve,'listening');const port=portReserve.address().port;await new Promise(r=>portReserve.close(r));
-let maps=readFileSync(process.argv[2] || 'ops/nginx/01-traffic-limits.conf','utf8').split('# Generated monthly')[0].replace('include /etc/nginx/cuberoot-comp-verification-state.conf;', 'default 1;');
+let maps=readFileSync(process.argv[2] || 'ops/nginx/01-traffic-limits.conf','utf8').split('# Generated monthly')[0]
+  .replace('map $host $cuberoot_comp_verification_enabled', 'map $http_x_test_mode $cuberoot_comp_verification_enabled')
+  .replace('include /etc/nginx/cuberoot-comp-verification-state.conf;', 'default 1; scoped 0; expired 0;')
+  .replace('map $host $cuberoot_comp_only_until', 'map $http_x_test_mode $cuberoot_comp_only_until')
+  .replace('include /etc/nginx/cuberoot-comp-only-until.conf;', 'default 0; scoped 4102444800; expired 1;');
 let inc=readFileSync(process.argv[3] || 'ops/nginx/competition-access.inc','utf8').replace('http://127.0.0.1:3001/v1/competition-access/check', `http://127.0.0.1:${authPort}/check`);
 writeFileSync(dir+'/nginx.conf',`daemon off; pid ${dir}/nginx.pid; error_log ${dir}/error.log; events {} http { lua_package_path "/www/server/nginx/lib/lua/?.lua;;"; access_log off; map $http_x_test_cn $cuberoot_cn_exempt { default 0; 1 1; } ${maps} server { listen 127.0.0.1:${port}; server_name cuberoot.me; ${inc} location / { content_by_lua_block { ngx.say('mock page') } } } }`);
 execFileSync('nginx',['-t','-p',dir+'/','-c',dir+'/nginx.conf']);const child=spawn('nginx',['-p',dir+'/','-c',dir+'/nginx.conf']);
@@ -22,5 +28,15 @@ for(const path of ['/tools/cstimer/','/tools/blddb/index.html','/tools/blddb','/
 for(const path of ['/tools/cstimer/js/main.js','/tools/table.bin.gz','/tools/data.json','/tools/icons/a.svg','/competition-verify','/zh/competition-verify','/v1/competition-access/challenge'])assert.equal((await get(path)).status,200,path);
 assert.equal((await get('/api/comp/A')).status,403);assert.equal((await get('/api/comp/A',{cookie:'verified=1'})).status,200);
 const staticDenied=await get('/tools/cstimer/',{host:'static.cuberoot.me'});assert.ok(staticDenied.headers.location.startsWith('https://cuberoot.me/competition-verify?'));
-console.log('PASS: direct HTML, assets, query round-trip, signed-proxy transport, CN, API and static-host return');
+const scoped = { 'x-test-mode': 'scoped' };
+for (const path of ['/zh', '/zh/timer', '/zh/wca/comp/A', '/stats/comp/A.json', '/tools/cstimer/', '/v1/competition-access/challenge']) {
+  assert.equal((await get(path, scoped)).status, 200, path);
+}
+for (const path of ['/api/comp/A', '/v1/cubing-live/A', '/v1/cubing-live-stream/A']) {
+  assert.equal((await get(path, scoped)).status, 403, path);
+  assert.equal((await get(path, { ...scoped, cookie: 'verified=1' })).status, 200, path);
+  assert.equal((await get(path, { ...scoped, 'x-test-cn': '1' })).status, 403, path);
+  assert.equal((await get(path, { 'x-test-mode': 'expired' })).status, 200, path);
+}
+console.log('PASS: site verification and scoped global verification, including expiry, public pages, snapshots and API access');
 } finally { child.kill('SIGQUIT');await once(child,'exit');await new Promise(r=>auth.close(r));}

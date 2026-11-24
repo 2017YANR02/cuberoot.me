@@ -9,6 +9,49 @@ vi.mock('../src/db/connection.js', () => ({ query: vi.fn() }));
 
 afterEach(() => { cubingHttp.clear(); vi.unstubAllGlobals(); });
 
+it('coalesces the same WCA rebuild and limits distinct cold competitions through HTTP and SSE', async () => {
+  vi.stubEnv('COMPETITION_WCA_REBUILD_CONCURRENCY', '1');
+  vi.resetModules();
+  const { query } = await import('../src/db/connection.js');
+  const { cubingLiveRoutes: routes } = await import('../src/routes/cubing_live.js');
+  let start = () => {};
+  let release = () => {};
+  const started = new Promise<void>(resolve => { start = resolve; });
+  const blocked = new Promise<void>(resolve => { release = resolve; });
+  let rebuilds = 0;
+  vi.mocked(query).mockImplementation(async sql => {
+    if (sql.includes('FROM wca_results_flat rt')) {
+      rebuilds++;
+      start();
+      await blocked;
+    }
+    return [];
+  });
+
+  const first = routes.request('/cubing-live/A?source=wca_db');
+  try {
+    await started;
+    const same = routes.request('/cubing-live/A?source=wca_db');
+    const denied = await routes.request('/cubing-live/B?source=wca_db');
+    expect(denied.status).toBe(429);
+    expect(denied.headers.get('retry-after')).toBe('5');
+    expect(denied.headers.get('cache-control')).toBe('private, no-store');
+    const stream = await routes.request('/cubing-live-stream/B?source=wca_db');
+    expect(await stream.text()).toContain('"retryAfter":5');
+    expect(rebuilds).toBe(1);
+    release();
+    expect((await first).status).toBe(502); // Empty mock results
+    expect((await same).status).toBe(502);
+    expect((await routes.request('/cubing-live/B?source=wca_db')).status).toBe(502);
+    expect(rebuilds).toBe(2);
+  } finally {
+    release();
+    await first;
+    vi.mocked(query).mockReset();
+    vi.unstubAllEnvs();
+  }
+});
+
 describe('new cubing.com live API', () => {
   it('passes SSE events and heartbeats through without buffering or caching', async () => {
     const body = ': heartbeat\n\nevent: result.updated\ndata: {"type":"result.updated"}\n\n';

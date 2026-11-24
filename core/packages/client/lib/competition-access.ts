@@ -4,7 +4,9 @@ import { tr } from '@/i18n/tr';
 let pending: Promise<void> | undefined;
 let validUntil = 0;
 
-/** CN visitors are exempt; everyone else must complete the manual image form. */
+export class CompetitionVerificationRequired extends Error {}
+
+/** Ask the API whether this browser needs the manual image form. */
 export function ensureCompetitionAccess(): Promise<void> {
   if (Date.now() < validUntil) return Promise.resolve();
   if (pending) return pending;
@@ -17,16 +19,23 @@ export function ensureCompetitionAccess(): Promise<void> {
       const prefix = window.location.pathname.startsWith('/zh/') ? '/zh' : '';
       window.location.assign(prefix + '/competition-verify?returnTo=' + encodeURIComponent(returnTo));
     }
-    throw new Error(tr({ en: 'Enter the image code to continue.', zh: '请输入图片验证码后继续。' }));
+    throw new CompetitionVerificationRequired(tr({ en: 'Enter the image code to continue.', zh: '请输入图片验证码后继续。' }));
   })().finally(() => { pending = undefined; });
   return pending;
 }
 
-export async function competitionFetch(url: string, init?: RequestInit): Promise<Response> {
+export async function competitionFetch(url: string, init?: RequestInit, snapshotUrl?: string): Promise<Response> {
   const options = { ...init, credentials: 'include' as const };
   const response = await fetch(url, options);
-  if (response.status !== 403) return response;
-  const body = await response.clone().json().catch(() => null);
+  const body = response.status === 403 ? await response.clone().json().catch(() => null) : null;
+  if (snapshotUrl && (body?.scope === 'competition' || response.status === 429)) {
+    const timeout = AbortSignal.timeout(4000);
+    const signal = init?.signal && typeof AbortSignal.any === 'function'
+      ? AbortSignal.any([init.signal, timeout]) : init?.signal ?? timeout;
+    const snapshot = await fetch(snapshotUrl, { cache: 'force-cache', signal }).catch(() => null);
+    if (snapshot?.ok && snapshot.headers.get('content-type')?.includes('application/json')) return snapshot;
+    if (init?.signal?.aborted) throw init.signal.reason;
+  }
   if (body?.code !== 'competition_verification_required') return response;
   validUntil = 0;
   await ensureCompetitionAccess();

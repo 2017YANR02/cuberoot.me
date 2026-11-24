@@ -47,6 +47,7 @@
       "./workspace-planning": "runtime-neutral",
       "./workspace-contracts": "runtime-neutral",
       "./competition-access": "runtime-neutral",
+      "./googlebot": "node",
       "./dev-preview": "runtime-neutral",
       "./remote-access": "runtime-neutral",
       "./timer/reconstruct/recap": "runtime-neutral",
@@ -440,6 +441,10 @@
     "./competition-access": {
       "node": "./dist/competition-access.js",
       "default": "./src/competition-access.ts"
+    },
+    "./googlebot": {
+      "node": "./dist/googlebot.js",
+      "default": "./src/googlebot.ts"
     },
     "./remote-access": {
       "node": "./dist/remote-access.js",
@@ -1135,6 +1140,7 @@
     "react-dom": "^19.0.0"
   },
   "devDependencies": {
+    "@types/node": "^22.19.15",
     "@types/sanitize-html": "^2.16.1",
     "@types/sql.js": "^1.4.11",
     "@types/react": "^19.0.0",

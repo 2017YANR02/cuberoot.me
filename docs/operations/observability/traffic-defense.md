@@ -1,5 +1,20 @@
 # 网络异常流量防护与费用止损
 
+## 比赛成绩临时验证（本地实现）
+
+异常批量回源已持续挤压数据库时，可以单独开启比赛成绩验证。默认关闭，由值班人员在确认异常后启用，一小时后自动失效。Vercel 和阿里云读取同一到期时间，所有地区均适用。首页、计时器、比赛页面和已发布的公开成绩快照可直接访问。浏览器遇到受保护的成绩请求时先尝试已有历史快照，必要时再跳到验证码页。输入正确后回到原比赛，同一浏览器的签名凭证按现有设置通行 7 天。Googlebot 按可信入口提供的连接 IP 与 Google 官方网段验证。
+
+API、nginx 与两条 Next 线路都部署后，在全站开放模式下操作：
+
+```bash
+ssh cuberoot 'node /opt/cuberoot-vercel-bans/traffic-defense.ts competition-on --apply'
+ssh cuberoot 'node /opt/cuberoot-vercel-bans/traffic-defense.ts competition-off --apply'
+```
+
+可先省略 `--apply` 查看计划。公开状态接口 `/v1/traffic-defense` 的 `competitionOnlyUntil` 为 Unix 秒数，超过该时间自动放行。`enabled` 仍代表原有全站防护。启用后的验收覆盖两条线路、不同地区、手机浏览器、已验证的 Googlebot、同一凭证跨比赛访问，以及关闭后的旧验证链接。监测成绩回源、数据库慢查询及正常浏览器的验证比例，使用现有日志。
+
+按正常流量和数据库余量确认容量后，可在 API 设置 `COMPETITION_WCA_REBUILD_CONCURRENCY`，限制单个 API 进程内不同比赛的 WCA 数据重算。相同比赛共用重算，快照直接服务，后台预热有余量才重算。重算满额时，HTTP 通过 `429` 和 `Retry-After` 返回等待时间，SSE 通过事件传递等待时间。前端按等待时间重试一次。该配置缺省时沿用原有重算策略。
+
 ## 2026-11-22 全站 Lightpanda 拒绝
 
 Vercel 和阿里云的 CubeRoot 生产入口按不区分大小写的 User-Agent 匹配拒绝 Lightpanda，返回 403。规则在地域豁免与临时事故防护之前执行。Vercel 开放模式通过专用规则跳过后续事故防护，防护模式停用该跳过规则。两种模式均保留全站 Lightpanda 拒绝。

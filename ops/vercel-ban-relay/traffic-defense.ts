@@ -1,11 +1,12 @@
 // Run on the existing server as root; credentials never leave this host.
-// node traffic-defense.ts status|open|protect [--apply]
+// node traffic-defense.ts status|open|protect|competition-on|competition-off [--apply]
 import { readFileSync, writeFileSync, renameSync, mkdirSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
 import { pathToFileURL } from 'node:url';
 import { incidentRuleLayout, LIGHTPANDA_DENY_RULE_ID, OPEN_MODE_BYPASS_RULE_ID } from './relay.ts';
 
 const MODE = '/etc/nginx/cuberoot-comp-verification-state.conf';
+const COMPETITION_ONLY = '/etc/nginx/cuberoot-comp-only-until.conf';
 const MAINTENANCE = '/etc/nginx/cuberoot-maintenance-state.conf';
 const ROOT = '/var/lib/cuberoot-traffic-defense';
 const timers = ['cuberoot-traffic-guard.timer', 'cuberoot-vercel-bans.timer'];
@@ -47,7 +48,43 @@ function reload() {
   })();
 }
 
+async function competitionOnly(mode: string, apply: boolean) {
+  const previous = readFileSync(COMPETITION_ONLY, 'utf8');
+  if (!/^default \d{1,10};$/.test(previous.trim())) throw new Error('Unrecognized competition mode');
+  const competitionOnlyUntil = mode === 'competition-on' ? Math.floor(Date.now() / 1000) + 3600 : 0;
+  if (apply) {
+    if (competitionOnlyUntil && readFileSync(MODE, 'utf8').trim() !== 'default 0;') {
+      throw new Error('Switch the site-wide protection mode to open before enabling competition-only protection');
+    }
+    try {
+      atomic(COMPETITION_ONLY, `default ${competitionOnlyUntil};\n`);
+      await reload();
+      let confirmed = false;
+      for (let attempt = 0; attempt < 5; attempt++) {
+        try {
+          const response = await fetch('https://api.cuberoot.me/v1/traffic-defense', {
+            cache: 'no-store', headers: { Connection: 'close' }, signal: AbortSignal.timeout(3000),
+          });
+          if (response.ok && (await response.json()).competitionOnlyUntil === competitionOnlyUntil) { confirmed = true; break; }
+        } catch { /* Retry during worker reload. */ }
+        await new Promise(resolve => setTimeout(resolve, 1000));
+      }
+      if (!confirmed) throw new Error('Competition mode readback mismatch');
+      if (competitionOnlyUntil) {
+        const check = await fetch('http://127.0.0.1:3001/v1/competition-access/check', { signal: AbortSignal.timeout(3000) });
+        if (check.status !== 403 || (await check.json()).scope !== 'competition') throw new Error('Competition API verifier is not ready');
+      }
+    } catch (error) {
+      atomic(COMPETITION_ONLY, previous);
+      await reload().catch(() => console.error('Competition mode rollback reload failed'));
+      throw error;
+    }
+  }
+  console.log(JSON.stringify({ competitionOnlyUntil, applied: apply }));
+}
+
 export async function run(mode: string, apply: boolean) {
+  if (mode === 'competition-on' || mode === 'competition-off') return competitionOnly(mode, apply);
   if (!['status', 'open', 'protect'].includes(mode)) throw new Error('Use status, open or protect');
   const config = JSON.parse(readFileSync('/etc/cuberoot-vercel-bans.json', 'utf8'));
   const query = new URLSearchParams({ projectId: config.projectId, teamId: config.teamId });

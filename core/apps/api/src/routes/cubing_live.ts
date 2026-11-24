@@ -12,6 +12,7 @@ import { fetchCubingLiveRound, fetchCubingCompetitors, fetchCubingCompetitions, 
 import type { CubingRegistration } from '@cuberoot/shared/cubing-live';
 import { openCubingStream } from '../utils/cubing_stream.js';
 import { streamSSE } from 'hono/streaming';
+import { RateLimitError } from '../utils/rate_limit.js';
 import { fetchCubingMeta as scrapeMeta, collectCubingResults as collectCompData } from '../utils/cubing_live.js';
 import { WCA_EVENT_ORDER } from '@cuberoot/shared/wca-events';
 import type { CompPersonalRecordSlot } from '@cuberoot/shared';
@@ -191,6 +192,9 @@ const cache = new Map<string, CompData>();
 const inflight = new Map<string, Promise<CompData>>();
 // wca_db 路径需独立去重 map — 因 tryLoadFromWcaDb 可能 resolve null(本地 dump 没此 comp).
 const inflightWcaDb = new Map<string, Promise<CompData | null>>();
+const configuredWcaRebuildLimit = Number(process.env.COMPETITION_WCA_REBUILD_CONCURRENCY);
+const wcaRebuildLimit = Number.isSafeInteger(configuredWcaRebuildLimit) && configuredWcaRebuildLimit > 0
+  ? configuredWcaRebuildLimit : Infinity;
 
 // L1 上界。此前无淘汰:prewarm 每 10min 扫 ~700 场 hot comps,全量 CompData(JSONB 解码后
 // 单场可达 MB 级)常驻 Map → 堆 ~50MB/h 涨到 1GB 上限,OOM 每 12-16h 一崩(2026-06-26 起实测)。
@@ -1498,9 +1502,11 @@ async function enrichUsersWithChineseNames(competitorUsers: Record<string, User>
 /** 从 PG dump 重算一场比赛并回填 L1/L2.去重:大比赛 tryLoadFromWcaDb 的 prior-PR 查询 5+ 分钟,
  *  并发刷新会堆爆 PG 连接池 (max=10) — 同 comp 已在飞就复用同一个 promise,不开新查询.
  *  SWR 的后台刷新和冷启的阻塞加载共用它,所以后台刷新期间来的请求不会再开一路查询. */
-function refreshWcaDb(wcaId: string, cacheKey: string, onProgress?: ProgressFn): Promise<CompData | null> {
+function refreshWcaDb(wcaId: string, cacheKey: string, onProgress?: ProgressFn, background = false): Promise<CompData | null> {
   let pending = inflightWcaDb.get(cacheKey);
   if (!pending) {
+    const limit = background ? Math.max(1, wcaRebuildLimit - 1) : wcaRebuildLimit;
+    if (inflightWcaDb.size >= limit) return Promise.reject(new RateLimitError(5));
     pending = (async () => {
       try {
         const data = await tryLoadFromWcaDb(wcaId, onProgress);
@@ -1523,8 +1529,8 @@ function refreshWcaDb(wcaId: string, cacheKey: string, onProgress?: ProgressFn):
 /** loadComp 对外入口:加载完统一把推断纪录写进 inferredPool(首页「纪录」列表的数据源).
  *  挂在这一层是因为 loadCompInner 有十几条 return 路径(L1 / L2 / inflight / 各源 / 各 fallback),
  *  挂里面必漏;而首页纪录一漏就是"比赛页有、首页没有". */
-async function loadComp(wcaId: string, choice: SourceChoice = 'auto', onProgress?: ProgressFn): Promise<CompData> {
-  const data = await loadCompInner(wcaId, choice, onProgress);
+async function loadComp(wcaId: string, choice: SourceChoice = 'auto', onProgress?: ProgressFn, background = false): Promise<CompData> {
+  const data = await loadCompInner(wcaId, choice, onProgress, background);
   await enrichRecordTags(data);
   try {
     await rememberInferred(data);
@@ -1540,7 +1546,7 @@ export async function resolveRecordResult(compId: string, target: RecordResultTa
   return { href: recordResultHref(data, target), tied: tiedBeforeResult(data, target, tag, iso2) };
 }
 
-async function loadCompInner(wcaId: string, choice: SourceChoice = 'auto', onProgress?: ProgressFn): Promise<CompData> {
+async function loadCompInner(wcaId: string, choice: SourceChoice = 'auto', onProgress?: ProgressFn, background = false): Promise<CompData> {
   // wca_db fast-path: 命中即独占,不发外部 probe.单次 PG 查直接出全部数据.
   if (choice === 'auto' || choice === 'wca_db') {
     const cacheKey = `${wcaId}:wca_db`;
@@ -1557,10 +1563,10 @@ async function loadCompInner(wcaId: string, choice: SourceChoice = 'auto', onPro
     if (l2?.stale) {
       // stale-while-revalidate:旧快照当场返回,重算(大比赛几分钟)扔后台.不写 L1 —
       // 让下一个请求还能走到这里、看到新鲜的那份;后台跑完会自己填 L1/L2.
-      void refreshWcaDb(wcaId, cacheKey);
+      void refreshWcaDb(wcaId, cacheKey, undefined, true).catch(() => {});
       return { ...l2.data, availableSources: ['wca_db'] };
     }
-    const result = await refreshWcaDb(wcaId, cacheKey, onProgress);
+    const result = await refreshWcaDb(wcaId, cacheKey, onProgress, background);
     if (result) return result;
     if (choice === 'wca_db') throw new Error(`No data on wca_db for ${wcaId}`);
   }
@@ -1805,7 +1811,7 @@ export async function prewarmHotComps(): Promise<void> {
     let ok = 0, fail = 0;
     for (const wcaId of ids) {
       try {
-        const data = await loadComp(wcaId, 'auto');
+        const data = await loadComp(wcaId, 'auto', undefined, true);
         await syncPersonLiveResults(data); // 选手页直播成绩写穿:基于返回的 CompData(缓存命中也覆盖)
         await observeCompetitionRecords(data);
         ok++;
@@ -2117,7 +2123,9 @@ cubingLiveRoutes.get('/cubing-live-stream/:slug', async (c) => {
       const data = await loadComp(wcaId, source, onProgress);
       await stream.writeSSE({ event: 'done', data: JSON.stringify(data) });
     } catch (e) {
-      await stream.writeSSE({ event: 'error', data: JSON.stringify({ error: (e as Error).message }) });
+      await stream.writeSSE({ event: 'error', data: JSON.stringify({
+        error: (e as Error).message, ...(e instanceof RateLimitError ? { retryAfter: e.retryAfterSeconds } : {}),
+      }) });
     }
   });
 });
@@ -2210,6 +2218,11 @@ cubingLiveRoutes.get('/cubing-live/:slug', async (c) => {
     }
     return c.json(data);
   } catch (e) {
+    if (e instanceof RateLimitError) {
+      c.header('Retry-After', String(e.retryAfterSeconds));
+      c.header('Cache-Control', 'private, no-store');
+      return c.json({ error: e.message }, 429);
+    }
     const msg = (e as Error).message;
     return c.json({ error: msg }, 502);
   }

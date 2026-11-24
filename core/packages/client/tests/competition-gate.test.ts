@@ -2,12 +2,52 @@ import { afterEach, expect, it, vi } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { NextRequest } from 'next/server';
 import { competitionGate, SITE_VERIFICATION_PATH } from '@/lib/competition-gate';
-import { trafficDefenseEnabled } from '@/lib/traffic-defense';
-vi.mock('@/lib/traffic-defense', () => ({ trafficDefenseEnabled: vi.fn(async () => true) }));
+import { competitionOnlyVerificationEnabled, trafficDefenseEnabled } from '@/lib/traffic-defense';
+vi.mock('@/lib/traffic-defense', () => ({
+  trafficDefenseEnabled: vi.fn(async () => true),
+  competitionOnlyVerificationEnabled: vi.fn(async () => false),
+}));
 import { safeCompetitionReturn } from '@/lib/competition-return';
 import { COMPETITION_ACCESS_COOKIE, COMPETITION_SERVICE_HEADER, createCompetitionProof, verifyCompetitionProof } from '@cuberoot/shared/competition-access';
 const secret = 'test-only-secret-with-more-than-32-characters';
-afterEach(() => { vi.unstubAllEnvs(); vi.mocked(trafficDefenseEnabled).mockResolvedValue(true); });
+afterEach(() => {
+  vi.unstubAllEnvs();
+  vi.unstubAllGlobals();
+  vi.mocked(trafficDefenseEnabled).mockResolvedValue(true);
+  vi.mocked(competitionOnlyVerificationEnabled).mockResolvedValue(false);
+});
+
+it('keeps pages open and verifies competition data globally with one browser proof', async () => {
+  vi.stubEnv('COMPETITION_ACCESS_SECRET', secret);
+  vi.mocked(trafficDefenseEnabled).mockResolvedValue(false);
+  vi.mocked(competitionOnlyVerificationEnabled).mockResolvedValue(true);
+  const fetchRanges = vi.fn().mockResolvedValue(Response.json({ prefixes: [
+    { ipv4Prefix: '192.0.2.0/24' }, { ipv6Prefix: '2001:db8::/32' },
+  ] }));
+  vi.stubGlobal('fetch', fetchRanges);
+  const proof = await createCompetitionProof(secret, 'browser', 'mobile-browser');
+  for (const vercel of ['1', '']) {
+    vi.stubEnv('VERCEL', vercel);
+    const req = (path: string, headers?: Record<string, string>) => new NextRequest('https://cuberoot.me' + path, { headers });
+    for (const path of ['/zh', '/zh/timer', '/zh/wca/comp/A', '/competition-verify', '/api/comp/access', '/stats/comp/A.json']) {
+      expect(await competitionGate(req(path))).toBeNull();
+    }
+    const denied = await competitionGate(req('/api/comp/A', {
+      'x-vercel-ip-country': 'CN', 'x-cuberoot-cn-exempt': '1',
+    }));
+    expect(denied?.status).toBe(403);
+    expect(await denied?.json()).toMatchObject({ scope: 'competition' });
+    for (const path of ['/api/comp/A', '/api/comp/B?v=4']) {
+      expect(await competitionGate(req(path, { 'user-agent': 'mobile-browser', cookie: `${COMPETITION_ACCESS_COOKIE}=${proof}` }))).toBeNull();
+    }
+    const ipHeader = vercel ? 'x-vercel-forwarded-for' : 'x-real-ip';
+    expect(await competitionGate(req('/api/comp/A', { 'user-agent': 'Googlebot', [ipHeader]: '2001:db8::1' }))).toBeNull();
+    expect((await competitionGate(req('/api/comp/A', {
+      'user-agent': 'Googlebot', 'x-forwarded-for': '192.0.2.1', [ipHeader]: '203.0.113.1',
+    })))?.status).toBe(403);
+  }
+  expect(fetchRanges).toHaveBeenCalledTimes(1);
+});
 it('redirects old verification links on the server in open mode with a safe uncached destination', async () => {
   vi.mocked(trafficDefenseEnabled).mockResolvedValue(false);
   for (const prefix of ['', '/zh', '/en']) {

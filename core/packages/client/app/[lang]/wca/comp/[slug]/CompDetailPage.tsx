@@ -7,7 +7,7 @@ import PageHeading from '@/components/PageHeading';
 import MoreToggle from '@/components/MoreToggle';
 import { WcaPersonIdentity } from '@/components/WcaPersonIdentity';
 import PersonLink from '@/components/PersonLink';
-import { competitionFetch, ensureCompetitionAccess } from '@/lib/competition-access';
+import { competitionFetch, CompetitionVerificationRequired, ensureCompetitionAccess } from '@/lib/competition-access';
 
 /**
  * /wca/comp/[slug] — full port of packages/client-vite/src/pages/comp/CompDetailPage.tsx.
@@ -1160,8 +1160,23 @@ export default function CompDetailPage() {
       resolveOnce();
     };
 
+    let retried = false;
+    const retryBusy = (retryAfter: number, retry: () => void) => {
+      if (done) return;
+      if (retried || retryAfter > 30) {
+        failWith(tr({ zh: '成绩服务繁忙，请稍后重试。', en: 'Competition results are busy. Please try again shortly.' }));
+        return;
+      }
+      retried = true;
+      const timer = setTimeout(retry, Math.max(1, retryAfter || 5) * 1000);
+      apiAbort.signal.addEventListener('abort', () => clearTimeout(timer), { once: true });
+    };
+
     const startSse = async () => {
-      try { await ensureCompetitionAccess(); } catch (error) { failWith((error as Error).message); return; }
+      try { await ensureCompetitionAccess(); } catch (error) {
+        if (!(error instanceof CompetitionVerificationRequired)) failWith((error as Error).message);
+        return;
+      }
       if (done || apiAbort.signal.aborted) return;
       const q = sourceParam ? `?v=4&source=${encodeURIComponent(sourceParam)}` : '?v=4';
       const url = apiUrl(`/v1/cubing-live-stream/${encodeURIComponent(slug)}${q}`);
@@ -1172,12 +1187,16 @@ export default function CompDetailPage() {
         competitionFetch(apiUrl(`/v1/cubing-live/${encodeURIComponent(slug)}${q}`), { signal: apiAbort.signal })
           .then(async r => {
             if (!r.ok) {
+              if (r.status === 429) {
+                retryBusy(Number(r.headers.get('retry-after')), fallback);
+                return;
+              }
               const j = await r.json().catch(() => ({ error: `HTTP ${r.status}` }));
               throw new Error(j.error || `HTTP ${r.status}`);
             }
             return r.json();
           })
-          .then(j => finishWith(j))
+          .then(j => { if (j) finishWith(j); })
           .catch(e => { if ((e as Error).name !== 'AbortError') failWith((e as Error).message); });
       };
       es.addEventListener('progress', (ev) => {
@@ -1198,6 +1217,11 @@ export default function CompDetailPage() {
           const dataStr = (ev as MessageEvent).data;
           if (dataStr) {
             const j = JSON.parse(dataStr);
+            if (typeof j.retryAfter === 'number') {
+              es?.close();
+              retryBusy(j.retryAfter, startSse);
+              return;
+            }
             if (j.error) setError(j.error);
           }
         } catch { /* ignore */ }
@@ -1213,16 +1237,24 @@ export default function CompDetailPage() {
       startSse();
     } else {
       const onlyQs = only ? `?v=4&only=${encodeURIComponent(only)}` : '?v=4';
-      competitionFetch(`/api/comp/${encodeURIComponent(slug)}${onlyQs}`, { signal: apiAbort.signal })
-        .then(async r => {
-          if (!r.ok) throw new Error(`HTTP ${r.status}`);
-          return r.json();
-        })
-        .then(j => finishWith(j))
-        .catch((e) => {
-          if ((e as Error).name === 'AbortError' || done) return;
+      const competition = encodeURIComponent(slug);
+      const fetchResults = async () => {
+        try {
+          const response = await competitionFetch(
+            `/api/comp/${competition}${onlyQs}`, { signal: apiAbort.signal }, statsUrl(`/stats/comp/${competition}.json`),
+          );
+          if (response.status === 429) {
+            retryBusy(Number(response.headers.get('retry-after')), fetchResults);
+            return;
+          }
+          if (!response.ok) throw new Error(`HTTP ${response.status}`);
+          finishWith(await response.json());
+        } catch (e) {
+          if (e instanceof CompetitionVerificationRequired || (e as Error).name === 'AbortError' || done) return;
           startSse(); // SSE 只有全量,分片失败即退化成完整加载
-        });
+        }
+      };
+      void fetchResults();
     }
     return { promise, cancel };
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -1248,7 +1280,7 @@ export default function CompDetailPage() {
     if (!slug || !dataReady || fullLoaded || fullReqRef.current) return;
     fullReqRef.current = true;
     const ac = new AbortController();
-    competitionFetch(`/api/comp/${encodeURIComponent(slug)}?v=4`, { signal: ac.signal })
+    fetch(`/api/comp/${encodeURIComponent(slug)}?v=4`, { signal: ac.signal })
       .then(r => (r.ok ? r.json() : Promise.reject(new Error(`HTTP ${r.status}`))))
       .then((j: CompData) => { setData(j); setFullLoaded(true); })
       .catch(() => { fullReqRef.current = false; });

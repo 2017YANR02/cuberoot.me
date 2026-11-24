@@ -1,8 +1,9 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
-import { trafficDefenseEnabled } from './traffic-defense';
+import { competitionOnlyVerificationEnabled, trafficDefenseEnabled } from './traffic-defense';
 import { safeCompetitionReturn } from './competition-return';
 import { competitionCookie, verifyCompetitionProof, COMPETITION_SERVICE_HEADER } from '@cuberoot/shared/competition-access';
+import { isVerifiedGooglebot } from '@cuberoot/shared/googlebot';
 
 // Explicit delivery endpoints and known asset trees stay reachable. A file-like
 // person/competition slug, RSC request, or forged cookie never bypasses the gate.
@@ -25,7 +26,7 @@ export async function competitionGate(req: NextRequest) {
   // Retired challenge links should not need hydration or a browser API request
   // to get back to public content after incident protection is turned off.
   if (/^\/(?:zh\/|en\/)?competition-verify\/?$/.test(path)) {
-    if (await trafficDefenseEnabled()) return null;
+    if (await trafficDefenseEnabled() || await competitionOnlyVerificationEnabled()) return null;
     return NextResponse.redirect(new URL(safeCompetitionReturn(req.nextUrl.searchParams.get('returnTo')), req.nextUrl.origin), {
       status: 307, headers: { 'cache-control': 'private, no-store' },
     });
@@ -36,15 +37,23 @@ export async function competitionGate(req: NextRequest) {
   const cn = process.env.VERCEL === '1'
     ? req.headers.get('x-vercel-ip-country') === 'CN'
     : req.headers.get('x-cuberoot-cn-exempt') === '1';
-  if (cn) return null;
-  if (!await trafficDefenseEnabled()) return null;
+  const competitionDataRequest = /^\/api\/comp\/[A-Za-z0-9_-]+\/?$/.test(path)
+    && (req.method === 'GET' || req.method === 'HEAD');
+  if (cn && !competitionDataRequest) return null;
+  const fullProtection = await trafficDefenseEnabled();
+  if (fullProtection && cn) return null;
+  if (!fullProtection && (!competitionDataRequest || !await competitionOnlyVerificationEnabled())) return null;
   // A server-only proof is valid for one exact path/query and at most 60 seconds.
   // It clears the traffic challenge only; it grants no account/private-data access.
   if (await verifyCompetitionProof(process.env.COMPETITION_ACCESS_SECRET ?? '', req.headers.get(COMPETITION_SERVICE_HEADER) ?? '', 'service', path + req.nextUrl.search)) return null;
   const proof = competitionCookie(req.headers.get('cookie') ?? '');
   if (await verifyCompetitionProof(process.env.COMPETITION_ACCESS_SECRET ?? '', proof, 'browser', req.headers.get('user-agent') ?? '')) return null;
+  if (!fullProtection && await isVerifiedGooglebot(req.headers.get('user-agent'), process.env.VERCEL === '1'
+    ? req.headers.get('x-vercel-forwarded-for') : req.headers.get('x-real-ip'))) return null;
   const headers = { 'cache-control': 'private, no-store', 'x-robots-tag': 'noindex, nofollow', 'x-cuberoot-verification-required': '1' };
-  if (path.startsWith('/api/')) return NextResponse.json({ code: 'competition_verification_required' }, { status: 403, headers });
+  if (path.startsWith('/api/')) return NextResponse.json({
+    code: 'competition_verification_required', scope: fullProtection ? 'site' : 'competition',
+  }, { status: 403, headers });
   const target = new URL(req.nextUrl.origin);
   target.pathname = path.startsWith('/zh/') ? '/zh/competition-verify' : '/competition-verify';
   target.search = '';

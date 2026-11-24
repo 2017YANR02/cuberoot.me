@@ -15,7 +15,7 @@
 // 直连 SSE,不进这里.
 
 import dns from 'node:dns';
-import { trafficDefenseEnabled } from '@/lib/traffic-defense';
+import { competitionOnlyVerificationEnabled, trafficDefenseEnabled } from '@/lib/traffic-defense';
 import { COMPETITION_ACCESS_COOKIE, COMPETITION_SERVICE_HEADER, competitionCookie, createCompetitionProof } from '@cuberoot/shared/competition-access';
 
 // Node fetch 默认 IPv6-first,api.cuberoot.me 的 AAAA 查询会挂起到超时 (next.config
@@ -56,7 +56,7 @@ export async function GET(
   const proof = secret ? await createCompetitionProof(secret, 'service', upstreamPath) : '';
   const headers = new Headers({ accept: 'application/json' });
   if (proof) headers.set(COMPETITION_SERVICE_HEADER, proof);
-  else if (await trafficDefenseEnabled()) {
+  else if (await trafficDefenseEnabled() || await competitionOnlyVerificationEnabled()) {
     // Development has no signing secret. Relay only the visitor's existing
     // browser proof with its bound UA; the API still checks its signature.
     const browserProof = competitionCookie(req.headers.get('cookie') ?? '');

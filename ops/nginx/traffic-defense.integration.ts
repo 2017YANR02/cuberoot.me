@@ -4,7 +4,9 @@ import { mkdtempSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { createServer, request } from 'node:http';
 import { execFileSync, spawn } from 'node:child_process';
 import { once } from 'node:events';
-const dir = mkdtempSync('/tmp/cuberoot-defense-check-');
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+const dir = mkdtempSync(join(tmpdir(), 'cuberoot-defense-check-'));
 mkdirSync(`${dir}/logs`);
 const reservation = createServer(); reservation.listen(0, '127.0.0.1'); await once(reservation, 'listening');
 const address = reservation.address(); assert(address && typeof address === 'object');
@@ -12,6 +14,7 @@ const port = address.port; await new Promise<void>(done => reservation.close(() 
 const limits = readFileSync(process.argv[2] || 'ops/nginx/01-traffic-limits.conf', 'utf8')
   .replace('map $host $cuberoot_comp_verification_enabled', 'map $http_x_test_mode $cuberoot_comp_verification_enabled')
   .replace('include /etc/nginx/cuberoot-comp-verification-state.conf;', 'default 1; open 0;')
+  .replace('include /etc/nginx/cuberoot-comp-only-until.conf;', 'default 0;')
   .replace('include /etc/nginx/cuberoot-cn-ranges.conf;', '198.51.100.2 1;');
 const maintenance = readFileSync(process.argv[3] || 'ops/nginx/00-maintenance.conf', 'utf8').split('# Preserve combined-log')[0]
   .replace('include /etc/nginx/cuberoot-maintenance-state.conf;', 'default 1;');

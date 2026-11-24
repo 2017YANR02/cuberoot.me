@@ -19,6 +19,7 @@ export default function CompetitionVerifyPage() {
   const [error, setError] = useState('');
   const [needsRefresh, setNeedsRefresh] = useState(false);
   const [verificationRequired, setVerificationRequired] = useState(false);
+  const [siteWideProtection, setSiteWideProtection] = useState(false);
   function blockedMessage(response: Response) {
     const seconds = Number(response.headers.get('retry-after'));
     if (Number.isFinite(seconds) && seconds > 0) {
@@ -39,6 +40,8 @@ export default function CompetitionVerifyPage() {
         return;
       }
       if (check.status !== 403) throw new Error(t('暂时无法确认访问状态，请重试。', 'Could not check access. Please retry.'));
+      const reason = await check.json().catch(() => null);
+      setSiteWideProtection(reason?.scope !== 'competition');
       setVerificationRequired(true);
       const response = await fetch(apiUrl('/v1/competition-access/challenge'), { credentials: 'include', cache: 'no-store', signal: AbortSignal.timeout(15_000) });
       if (response.status === 403) throw new Error(blockedMessage(response));
@@ -95,7 +98,9 @@ export default function CompetitionVerifyPage() {
         {error && <button className="competition-verification-action" type="button" onClick={() => void refresh()} disabled={busy}>{t('重试', 'Retry')}</button>}
       </> : <>
       <h1>{t('输入验证码', 'Enter the image code')}</h1>
-      <p>{t('未完成验证时，同一 IP 每分钟请求网站页面或受保护接口超过 10 次，将被封禁 1 小时。', 'Without verification, more than 10 protected page or API requests per minute from one IP will trigger a 1-hour ban.')}</p>
+      <p>{siteWideProtection
+        ? t('未完成验证时，同一 IP 每分钟请求网站页面或受保护接口超过 10 次，将被封禁 1 小时。', 'Without verification, more than 10 protected page or API requests per minute from one IP will trigger a 1-hour ban.')
+        : t('比赛成绩暂时需要验证。输入一次即可继续查看。', 'Competition results temporarily require verification. Enter the code once to continue.')}</p>
       <form onSubmit={submit}>
         <div className="competition-verification-image">{challenge ? <img src={challenge.image} width="240" height="76" alt={t('六位字符验证码', 'Six-character verification image')} /> : <span>{busy ? <LoadingIndicator>{t('正在加载…', 'Loading…')}</LoadingIndicator> : t('图片未加载', 'Image unavailable')}</span>}</div>
         <button className="competition-verification-action" type="button" onClick={() => void refresh()} disabled={busy}>{t('换一张', 'New image')}</button>
@@ -104,7 +109,9 @@ export default function CompetitionVerifyPage() {
         <p id="competition-code-status" role="status">{error}</p>
         <button className="competition-verification-action competition-verification-submit" type="submit" disabled={busy || !challenge || needsRefresh || answer.trim().length !== 6}>{busy ? t('请稍候…', 'Please wait…') : t('验证并继续', 'Verify and continue')}</button>
       </form>
-      <p className="competition-verification-note">{t('验证通过后可访问 7 天。中国大陆 IP 继续豁免。', 'Verification lasts 7 days. Mainland China IP addresses remain exempt.')}</p>
+      <p className="competition-verification-note">{siteWideProtection
+        ? t('验证通过后可访问 7 天。中国大陆 IP 继续豁免。', 'Verification lasts 7 days. Mainland China IP addresses remain exempt.')
+        : t('在此浏览器中，7 天内无需重复验证。', 'You will not need to verify again on this browser for 7 days.')}</p>
       </>}
     </section>
   </main>;

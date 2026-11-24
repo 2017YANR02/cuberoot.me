@@ -2,7 +2,10 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { COMPETITION_ACCESS_COOKIE, COMPETITION_SERVICE_HEADER, verifyCompetitionProof } from '@cuberoot/shared/competition-access';
 import { GET } from '@/app/api/comp/[slug]/route';
 import { trafficDefenseEnabled } from '@/lib/traffic-defense';
-vi.mock('@/lib/traffic-defense', () => ({ trafficDefenseEnabled: vi.fn(async () => true) }));
+vi.mock('@/lib/traffic-defense', () => ({
+  trafficDefenseEnabled: vi.fn(async () => true),
+  competitionOnlyVerificationEnabled: vi.fn(async () => false),
+}));
 
 beforeEach(() => { vi.stubEnv('COMPETITION_ACCESS_SECRET', 's'.repeat(32)); vi.mocked(trafficDefenseEnabled).mockResolvedValue(true); });
 afterEach(() => { vi.unstubAllGlobals(); vi.unstubAllEnvs(); });
