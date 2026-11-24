@@ -191,7 +191,7 @@ describe('canonical timer settings surface manifest', () => {
     expect(DEFAULT_TIMER_TIMING_SETTINGS).toEqual({
       timingEnabled: true,
       inspectionSec: 0,
-      holdMs: 550,
+      holdMs: 300,
       autoSessionForEvent: false,
       autoEventForSession: false,
       hideTime: false,
@@ -202,7 +202,7 @@ describe('canonical timer settings surface manifest', () => {
     expect(normalizeTimerTimingSettings({
       timingEnabled: false,
       inspectionSec: 8,
-      holdMs: 99,
+      holdMs: -1,
       autoSessionForEvent: true,
       autoEventForSession: true,
       hideTime: true,
@@ -211,7 +211,7 @@ describe('canonical timer settings surface manifest', () => {
     })).toEqual({
       timingEnabled: false,
       inspectionSec: 15,
-      holdMs: 100,
+      holdMs: 0,
       autoSessionForEvent: true,
       autoEventForSession: true,
       hideTime: true,

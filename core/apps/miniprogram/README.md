@@ -30,7 +30,7 @@
 | --- | --- |
 | 原生页面 | 微信早期 MVP 有 WXML 计时器；当前微信已改为 WebView。抖音使用同一小程序工程的原生模板，不能直接引用 React DOM。模板和 `setData` 生命周期是必要宿主适配，不作为新业务引擎。 |
 | 计时、罚时和显示 | 继续直接调用 `timer/machine`、`timer/timing-display`、`timer/stats`，不重写算法。保存共享状态机返回的 `inspectionMs`。 |
-| 设置 | 删除原生独立默认值和持久化写入，直接使用 `TimerStoreSettings`、`settings-contract` 及其字段范围/文案；原生预览包旧设置只做一次迁入，成功保存后移除旧键。按住时间回到共享默认 550 ms，打乱触摸不再跳过按住阈值，保留 start/none/next/copy。 |
+| 设置 | 删除原生独立默认值和持久化写入，直接使用 `TimerStoreSettings`、`settings-contract` 及其字段范围/文案；原生预览包旧设置只做一次迁入，成功保存后移除旧键。按住时间采用共享默认值 300 ms，打乱触摸不再跳过按住阈值，保留 start/none/next/copy。 |
 | 打乱 | 将现有 `seeded/generate.ts` 的基础 WCA 分派提取至 `seeded/wca.ts`，原 seeded worker 与小程序共同调用。项目算法及 seeded 随机数顺序保持原实现；不把整套专项训练依赖带入小程序。 |
 | 成绩与分组 | 恢复微信历史 `timer-store`，使用共享数据校验、`activeTimerSolves`、`selectTimerEventSession` 和 CSV 导出，不引入另一套成绩 schema。 |
 | 智能魔方 | 删除原生手写首转/还原判定，直接使用 Web/安装客户端/Watch 已有的 `SmartCubeSessionController`、`SmartCubeSoloTimerController`、`SmartCubeAttemptProducer`；设备时钟、转动记录及阶段字段由共享实现产生。BLE/GATT 继续使用小程序现有驱动。 |

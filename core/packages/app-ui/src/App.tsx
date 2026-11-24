@@ -97,6 +97,7 @@ import { formatScrambleForEvent } from '@cuberoot/shared/sq1-notation';
 import {
   MAX_TIMER_BACKUP_BYTES,
   DEFAULT_TIMER_WCA_SOURCE_SETTINGS,
+  DEFAULT_TIMER_TIMING_SETTINGS,
   DEFAULT_TIMER_BY_STEPS_SETTINGS,
   DEFAULT_TIMER_RANDOM_DIFFICULTY_SETTINGS,
   SCRAMBLE_222_TYPE_CATALOG,
@@ -2742,7 +2743,7 @@ export function App({ host, loadingMark }: { host: InstalledAppHost; loadingMark
       && !manualEntryOpen
       && !timerOverlayBlocking
       && !timerContextMutationBusy,
-    holdMs: store?.settings.holdMs ?? 550,
+    holdMs: store?.settings.holdMs ?? DEFAULT_TIMER_TIMING_SETTINGS.holdMs,
     inspectionSec: store?.settings.inspectionSec ?? 0,
     onComplete: completeSolve,
     onStart: (startedAtMs, cubeStart) => {

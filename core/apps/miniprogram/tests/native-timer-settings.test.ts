@@ -94,7 +94,7 @@ describe('native timer settings adapters', () => {
     expect(nativeTimerSettingPatch(timer, 'timer', 'inspectionSec', true)).toEqual({ inspectionSec: 15 });
     expect(nativeTimerSettingPatch(timer, 'timer', 'inspectionSec', false)).toEqual({ inspectionSec: 0 });
     expect(nativeTimerSettingPatch(timer, 'timer', 'holdMs', '125')).toEqual({ holdMs: normalizeTimerHoldMs(125) });
-    expect(nativeTimerSettingPatch(timer, 'timer', 'holdMs', '4')).toEqual({ holdMs: 100 });
+    expect(nativeTimerSettingPatch(timer, 'timer', 'holdMs', '0')).toEqual({ holdMs: 0 });
     expect(nativeTimerSettingPatch(timer, 'timer', 'holdMs', '')).toBeUndefined();
     expect(nativeTimerSettingPatch(timer, 'timer', 'holdMs', '125', { fixedHoldMs: 550 })).toBeUndefined();
     expect(nativeTimerSettingPatch(timer, 'timer', 'runningPrecision', 3)).toEqual({ runningPrecision: 3 });

@@ -149,7 +149,7 @@ describe('shared Timer Timing settings UI', () => {
       '[data-setting-id="settings.timer.hold-threshold"] input[type="number"]',
     )!;
     expect({ max: hold.max, min: hold.min, step: hold.step, value: hold.value }).toEqual({
-      max: '2000', min: '100', step: '50', value: '550',
+      max: '2000', min: '0', step: '50', value: '300',
     });
     const holdGroup = hold.closest<HTMLElement>('.settings-row-control')!;
     expect(holdGroup.getAttribute('role')).toBe('group');
@@ -203,7 +203,7 @@ describe('shared Timer Timing settings UI', () => {
       hold.dispatchEvent(new Event('input', { bubbles: true }));
     });
     expect(hold.value).toBe('50');
-    expect(onChange).not.toHaveBeenCalledWith({ holdMs: 100 });
+    expect(onChange).not.toHaveBeenCalledWith({ holdMs: 50 });
     await act(async () => hold.dispatchEvent(new FocusEvent('focusout', { bubbles: true })));
 
     const running = host.querySelector<HTMLSelectElement>(
@@ -225,7 +225,7 @@ describe('shared Timer Timing settings UI', () => {
       { autoSessionForEvent: true },
       { autoEventForSession: true },
       { hideTime: true },
-      { holdMs: 100 },
+      { holdMs: 50 },
       { runningPrecision: 0 },
       { precision: 2 },
     ]);

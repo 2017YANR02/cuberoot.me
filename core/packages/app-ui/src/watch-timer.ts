@@ -38,7 +38,7 @@ export function decodeWatchTimerRecord(raw: unknown): WatchTimerRecord | null {
     || typeof s.eventName !== 'string' || s.eventName.length > 100
     || typeof s.scramble !== 'string' || !s.scramble.trim() || s.scramble.length > 8192
     || (s.previewPng !== undefined && (typeof s.previewPng !== 'string' || s.previewPng.length > 900_000))
-    || !bounded(s.inspectionSec, 60) || !bounded(s.holdMs, 2000) || s.holdMs < 100
+    || !bounded(s.inspectionSec, 60) || !bounded(s.holdMs, 2000)
     || !bounded(r.timeMs, 86_400_000) || !bounded(r.inspectionMs, 86_400_000)
     || !bounded(r.ts, 8_640_000_000_000_000) || !['ok', '+2', 'DNF'].includes(r.penalty)) return null;
   if (r.reconRevision !== undefined && (!Number.isSafeInteger(r.reconRevision) || r.reconRevision < 0)) return null;

@@ -319,7 +319,7 @@ export const TIMER_SETTING_FIELD_CONTRACTS = [
   // Timing
   { id: 'settings.timer.enabled', category: 'timer', copy: { en: 'Timing mode', zh: '计时模式' }, storagePath: 'timingEnabled', value: bool, visibility: 'always', disabledWhen: 'never', effect: 'persist-timing-enabled' },
   { id: 'settings.timer.inspection', category: 'timer', copy: { en: 'WCA inspection', zh: 'WCA 观察' }, storagePath: 'inspectionSec', value: { kind: 'enum', values: [0, 15] }, visibility: 'always', disabledWhen: 'never', effect: 'persist-inspection-seconds' },
-  { id: 'settings.timer.hold-threshold', category: 'timer', copy: { en: 'Hold threshold (ms)', zh: '按住阈值（毫秒）' }, storagePath: 'holdMs', value: { kind: 'integer', min: 100, max: 2000, step: 50 }, visibility: 'always', disabledWhen: 'never', effect: 'persist-hold-threshold' },
+  { id: 'settings.timer.hold-threshold', category: 'timer', copy: { en: 'Hold threshold (ms)', zh: '按住阈值（毫秒）' }, storagePath: 'holdMs', value: { kind: 'integer', min: 0, max: 2000, step: 50 }, visibility: 'always', disabledWhen: 'never', effect: 'persist-hold-threshold' },
   { id: 'settings.timer.hide-running-time', category: 'timer', copy: { en: 'Hide time while running', zh: '隐藏运行中的时间' }, storagePath: 'hideTime', value: bool, visibility: 'always', disabledWhen: 'never', effect: 'persist-hide-running-time' },
   { id: 'settings.timer.running-precision', category: 'timer', copy: { en: 'Running precision', zh: '计时中精度' }, storagePath: 'runningPrecision', value: { kind: 'enum', values: [0, 1, 2, 3] }, visibility: 'always', disabledWhen: 'never', effect: 'persist-running-precision' },
   { id: 'settings.timer.result-precision', category: 'timer', copy: { en: 'Result precision', zh: '成绩精度' }, storagePath: 'precision', value: { kind: 'enum', values: [2, 3] }, visibility: 'always', disabledWhen: 'never', effect: 'persist-result-precision' },
@@ -528,7 +528,7 @@ export interface TimerTimingSettings {
 export const DEFAULT_TIMER_TIMING_SETTINGS: TimerTimingSettings = {
   timingEnabled: true,
   inspectionSec: 0,
-  holdMs: 550,
+  holdMs: 300,
   autoSessionForEvent: false,
   autoEventForSession: false,
   hideTime: false,
@@ -544,7 +544,7 @@ export function normalizeTimerHoldMs(value: unknown): number {
   const number = typeof value === 'number' && Number.isFinite(value)
     ? value
     : DEFAULT_TIMER_TIMING_SETTINGS.holdMs;
-  return Math.max(100, Math.min(2000, number || DEFAULT_TIMER_TIMING_SETTINGS.holdMs));
+  return Math.max(0, Math.min(2000, number));
 }
 
 export function normalizeTimerRunningPrecision(value: unknown): 0 | 1 | 2 | 3 {

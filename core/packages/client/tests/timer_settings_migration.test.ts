@@ -328,10 +328,10 @@ describe('计时核心设置改用 Web/Mobile 共享键与归一化', () => {
     });
 
     updateSettings({ holdMs: 0, runningPrecision: 2, precision: 2 });
-    expect(getSettings()).toMatchObject({ holdMs: 550, runningPrecision: 2, precision: 2 });
+    expect(getSettings()).toMatchObject({ holdMs: 0, runningPrecision: 2, precision: 2 });
     expect(JSON.parse(mem.get(KEY) as string)).toMatchObject({
       inspectionSec: 15,
-      holdMs: 550,
+      holdMs: 0,
       runningPrecision: 2,
       precision: 2,
     });
