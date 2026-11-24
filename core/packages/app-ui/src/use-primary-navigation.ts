@@ -50,9 +50,15 @@ export function useDraggablePrimaryNavigation(
     drag.current = null;
     handledPointer.current = true;
     const { nav } = active;
+    const dragging = nav.hasAttribute('data-lens-dragging');
     clearNavigationDrag(active);
     if (event.type !== 'pointerup') return;
-    const button = document.elementFromPoint(event.clientX, event.clientY)?.closest<HTMLButtonElement>('button[data-destination]');
+    const button = dragging
+      ? Array.from(nav.querySelectorAll<HTMLButtonElement>(':scope > button[data-destination]')).find(item => {
+        const { left, right } = item.getBoundingClientRect();
+        return event.clientX >= left && event.clientX < right;
+      })
+      : document.elementFromPoint(event.clientX, event.clientY)?.closest<HTMLButtonElement>('button[data-destination]');
     if (!button || button.parentElement !== nav || button.disabled) return;
     const destination = button.dataset.destination;
     if (destination === 'timer' || destination === 'tools' || destination === 'account') select(destination);
