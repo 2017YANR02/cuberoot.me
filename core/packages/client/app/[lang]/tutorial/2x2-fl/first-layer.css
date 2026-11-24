@@ -12,7 +12,7 @@
 .course-question-action.fl-watch-recognition { display: inline-flex; align-items: center; gap: .35rem; padding-inline: .5rem; }
 .fl-watch-recognition > svg { flex-shrink: 0; }
 @container course-stage (max-width: 439px) {
-  .course-question-copy[data-course-section='recognition'][data-course-question='2'] .course-question-progress {
+  .course-question-copy[data-course-section='recognition']:is([data-course-question='2'], [data-course-question='3']) .course-question-progress {
     margin-block-end: 5px;
   }
 }
@@ -54,6 +54,20 @@
 }
 .fl-recognition-video .course-cube { width: min(100%, 350px, 60cqh); height: auto; aspect-ratio: 1; }
 .fl-video-caption { text-align: center; }
+.course-cube:is([data-corner-guide-open], [data-alignment-video-open]) > .alg-sim-player { visibility: hidden; }
+.chat-bubble.fl-corner-callout { padding-inline: .5em; font-size: .875rem; text-wrap: balance; }
+.chat-bubble.fl-alignment-callout { padding-block: .35em; }
+.fl-alignment-callout > svg[role='img'] { vertical-align: middle; }
+.fl-recognition-video [data-settings-transition] > .alg-sim-player { opacity: calc(1 - var(--fl-settings-opacity)); }
+.fl-settings-illustration {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  opacity: var(--fl-settings-opacity);
+  pointer-events: none;
+}
+.fl-settings-illustration > svg { inline-size: 42%; block-size: auto; }
 @container course-stage (orientation: landscape) and (min-width: 440px) and (min-height: 120px) {
   .fl-recognition-video .course-cube { width: min(100%, 350px, 92cqh); }
 }

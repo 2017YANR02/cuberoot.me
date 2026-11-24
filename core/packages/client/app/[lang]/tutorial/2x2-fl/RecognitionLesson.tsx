@@ -8,34 +8,46 @@ import { FM_FIXED_COLOR, FM_IGNORED } from '@cuberoot/puzzle-render-core/engine/
 import AlgPlayer, { type AlgPlayerHandle } from '@/components/AlgPlayer/AlgPlayer';
 import { animateStickerHint, dimStickerColors } from '@/components/AlgPlayer/sticker-hint-fade';
 import SettingsDialog from '@/components/SettingsDialog';
-import type { BlockedLayerTurnHandler } from '@/components/sim-embed/attachEmbeddedSimInteraction';
+import TrainingFeedbackOverlay, { type TrainingFeedbackKind } from '@/components/TrainingFeedbackOverlay';
+import type { BlockedLayerTurnHandler, CubeletTap } from '@/components/sim-embed/attachEmbeddedSimInteraction';
 import { T, tr } from '@/i18n/tr';
 import CornerAnswerBubble from '../components/CornerAnswerBubble';
 import InteractiveQuestionCopy, { InteractiveQuestionHelpButton } from '../components/InteractiveQuestionCopy';
 import { CUBE_FRAMING_EDGE, LessonPane, TutorialAlgDemo } from '../components/InteractiveTutorial';
-import { FL_LAST_STICKERS, FL_REFERENCE_STICKERS, FL_VIEWS, FL_WRG_HOME, flCornerLayer, flFirstLayerMask, flPalette, randomFlLayerQuizSetup } from './lesson-data';
-import { FL_LEFT_BACK, FL_LEFT_FRONT, FL_LEFT_PAIR_GOAL, flLeftPairState, randomFlLeftPairSetup, solveFlLeftPair } from './left-pair';
-import RecognitionVideo from './RecognitionVideo';
+import { FL_LAST_STICKERS, FL_REFERENCE_STICKERS, FL_VIEWS, FL_WGO_HOME, FL_WRG_HOME, flCornerLayer, flFirstLayerMask, flPalette, isFlPracticeTurn, randomFlLayerQuizSetup } from './lesson-data';
+import { FL_LEFT_BACK, FL_LEFT_FRONT, FL_LEFT_PAIR_GOAL, flCornerPairState, randomFlCornerQuizSetup, randomFlLeftPairSetup, solveFlLeftPair } from './left-pair';
+import RecognitionVideo, { CornerIdentificationVideo } from './RecognitionVideo';
 
 const mutedRightPair = Object.fromEntries([...FL_REFERENCE_STICKERS, ...FL_LAST_STICKERS]
   .map(sticker => [sticker, FM_FIXED_COLOR[FM_IGNORED]!]));
 // Top-layer pieces are already gray in the first-layer mask.
-const recognitionHintStickers = [
+const leftPairHintStickers = [
   ...[FACE.D, FACE.B, FACE.L].map(face => engineHomeSid(FL_LEFT_BACK, face, 2)),
   ...[FACE.D, FACE.F, FACE.L].map(face => engineHomeSid(FL_LEFT_FRONT, face, 2)),
-  ...FL_LAST_STICKERS,
 ];
+const thirdCornerHintStickers = [...leftPairHintStickers, ...FL_LAST_STICKERS];
+const fourthCornerHintStickers = [...leftPairHintStickers, ...FL_REFERENCE_STICKERS];
 const pairHeading = { zh: '复原左侧角对', en: 'Solve the left pair' };
-const videoLabel = { zh: '识别视频', en: 'Recognition video' };
+const videoLabels = {
+  corners: { zh: '第三、第四角块', en: 'The third and fourth corners' },
+  layer: { zh: '识别视频', en: 'Recognition video' },
+};
+type VideoKind = keyof typeof videoLabels;
 const questions = [
   { progressLabel: { zh: '左侧角对', en: 'Left pair' } },
+  { progressLabel: { zh: '辨认角块', en: 'Find the corners' } },
   { progressLabel: { zh: '判断层位', en: 'Identify the layer' } },
+];
+const cornerQuestions = [
+  { homeIndex: FL_WRG_HOME, heading: { zh: '找出第三角块', en: 'Find the third corner' },
+    prompt: { zh: '点选要归位到底层右前的角块', en: 'Select the piece that belongs at bottom front-right' } },
+  { homeIndex: FL_WGO_HOME, heading: { zh: '找出第四角块', en: 'Find the fourth corner' },
+    prompt: { zh: '点选要归位到底层右后的角块', en: 'Select the piece that belongs at bottom back-right' } },
 ];
 const layerChoices = [
   { layer: 'U', label: { zh: '顶层', en: 'Top layer' } },
   { layer: 'D', label: { zh: '底层', en: 'Bottom layer' } },
 ] as const;
-const allowRecognitionTurn = (move: string) => /^[UR]2?'?$/.test(move);
 type Layer = ReturnType<typeof flCornerLayer>;
 type LayerAnswer = { status: 'pending' | 'wrong' | 'retry' } | { status: 'correct'; layer: Layer };
 const layerFeedback = {
@@ -45,11 +57,12 @@ const layerFeedback = {
   retry: { zh: '盘面已转动，请重新作答', en: 'The cube has moved. Answer again.' },
 };
 
-function RecognitionSteps({ setup, orientation, onRandomize, onWatchVideo }: {
+function RecognitionSteps({ setup, orientation, cornerGuideOpen, onRandomize, onWatchVideo }: {
   setup: string;
   orientation: string;
+  cornerGuideOpen: boolean;
   onRandomize: () => void;
-  onWatchVideo: () => void;
+  onWatchVideo: (kind: VideoKind) => void;
 }) {
   const board = useRef<HTMLDivElement>(null);
   const player = useRef<AlgPlayerHandle>(null);
@@ -59,17 +72,26 @@ function RecognitionSteps({ setup, orientation, onRandomize, onWatchVideo }: {
   const [hintDemo, setHintDemo] = useState<ComponentProps<typeof TutorialAlgDemo>['insertion'] | null>(null);
   const [pairState, setPairState] = useState<number | null>(null);
   const [recognitionSetup, setRecognitionSetup] = useState<string | null>(null);
+  const [identifiedCount, setIdentifiedCount] = useState(0);
+  const [cornerFeedback, setCornerFeedback] = useState<{ kind: TrainingFeedbackKind } | null>(null);
+  const [layerQuiz, setLayerQuiz] = useState(false);
   const [pieceHintRequest, setPieceHintRequest] = useState(0);
   const [pieceHintOpacity, setPieceHintOpacity] = useState(0);
   const [layerAnswer, setLayerAnswer] = useState<LayerAnswer>({ status: 'pending' });
   const [blockedTurn, setBlockedTurn] = useState<{ clientX: number; clientY: number } | null>(null);
   const recognizing = recognitionSetup !== null;
+  const identifying = recognizing && !layerQuiz;
+  const cornerQuestion = cornerQuestions[identifiedCount];
+  const cornersIdentified = identifiedCount === cornerQuestions.length;
+  const canFindAgain = identifying && cornersIdentified;
+  const hintStickers = identifying && cornerQuestion?.homeIndex === FL_WGO_HOME
+    ? fourthCornerHintStickers : thirdCornerHintStickers;
   const pairComplete = pairState === FL_LEFT_PAIR_GOAL;
   const { color, backLeft, frontLeft, reference } = flPalette(orientation);
   const bottom = color('D');
-  const front = color('F');
+
   const recognitionHintColors = useMemo(() => pieceHintOpacity
-    ? dimStickerColors(recognitionHintStickers, orientation, pieceHintOpacity) : undefined, [orientation, pieceHintOpacity]);
+    ? dimStickerColors(hintStickers, orientation, pieceHintOpacity) : undefined, [hintStickers, orientation, pieceHintOpacity]);
 
   useEffect(() => {
     if (pieceHintRequest) return animateStickerHint(setPieceHintOpacity);
@@ -83,7 +105,7 @@ function RecognitionSteps({ setup, orientation, onRandomize, onWatchVideo }: {
       if (recognizing) return;
       const back = handle.getStickerPlacement?.(FL_LEFT_BACK, 'D');
       const front = handle.getStickerPlacement?.(FL_LEFT_FRONT, 'D');
-      if (back && front) setPairState(flLeftPairState(back, front));
+      if (back && front) setPairState(flCornerPairState(back, front));
     };
     readPositions(handle.isUserMovePending?.(false) ? 1 : 0);
     return handle.subscribeSettledCube?.(readPositions);
@@ -94,6 +116,12 @@ function RecognitionSteps({ setup, orientation, onRandomize, onWatchVideo }: {
     const timer = setTimeout(() => setBlockedTurn(null), 2400);
     return () => clearTimeout(timer);
   }, [blockedTurn]);
+
+  useEffect(() => {
+    if (!cornerFeedback) return;
+    const timer = setTimeout(() => setCornerFeedback(null), 800);
+    return () => clearTimeout(timer);
+  }, [cornerFeedback]);
 
   const openHint = () => {
     if (pairState === null || pairComplete || player.current?.isUserMovePending?.(false)) return;
@@ -131,6 +159,31 @@ function RecognitionSteps({ setup, orientation, onRandomize, onWatchVideo }: {
     setRecognitionSetup(randomFlLayerQuizSetup());
   };
 
+  const findAgain = () => {
+    const handle = player.current;
+    const third = handle?.getStickerPlacement?.(FL_WRG_HOME, 'D');
+    const fourth = handle?.getStickerPlacement?.(FL_WGO_HOME, 'D');
+    if (!third || !fourth) return;
+    const nextSetup = randomFlCornerQuizSetup(flCornerPairState(third, fourth));
+    setReady(false);
+    setRecognitionSetup(nextSetup);
+    setIdentifiedCount(0);
+    setCornerFeedback(null);
+    setPieceHintRequest(0);
+    setPieceHintOpacity(0);
+  };
+
+  const identifyCorner = (homeIndex: CubeletTap['homeIndex']) => {
+    if (!ready || !identifying || !cornerQuestion) return;
+    const correct = homeIndex === cornerQuestion.homeIndex;
+    setCornerFeedback({ kind: correct ? 'correct' : 'wrong' });
+    if (correct) {
+      setPieceHintRequest(0);
+      setPieceHintOpacity(0);
+      setIdentifiedCount(identifiedCount + 1);
+    }
+  };
+
   const chooseLayer = (layer: Layer) => {
     const handle = player.current;
     if (!handle || handle.isUserMovePending?.(false)) return;
@@ -138,60 +191,74 @@ function RecognitionSteps({ setup, orientation, onRandomize, onWatchVideo }: {
     if (placement) setLayerAnswer(flCornerLayer(placement.positionIndex) === layer
       ? { status: 'correct', layer } : { status: 'wrong' });
   };
-  const feedback = recognizing ? layerFeedback[layerAnswer.status] : pairComplete ? { zh: '两个角都已归位', en: 'Both corners are solved' } : null;
-  const answer = recognizing ? layerAnswer.status === 'retry' ? 'pending' : layerAnswer.status : pairComplete ? 'correct' : 'pending';
+  const feedback = layerQuiz ? layerFeedback[layerAnswer.status]
+    : identifying ? null : pairComplete ? { zh: '两个角都已归位', en: 'Both corners are solved' } : null;
+  const answer = layerQuiz ? layerAnswer.status === 'retry' ? 'pending' : layerAnswer.status
+    : identifying ? cornersIdentified ? 'correct' : cornerFeedback?.kind === 'wrong' ? 'wrong' : 'pending'
+    : pairComplete ? 'correct' : 'pending';
   const correctLayer = layerAnswer.status === 'correct' ? layerAnswer.layer : null;
-  const recognitionHeading = { zh: `${reference.zh}在哪一层？`, en: `Which layer is the ${reference.en} on?` };
+  const heading = layerQuiz ? { zh: '第三角块在哪一层？', en: 'Which layer is the third corner on?' }
+    : identifying ? cornerQuestion?.heading ?? { zh: '第三、第四角块都找到了', en: 'You found both corners' }
+    : pairHeading;
+  const prompt = layerQuiz ? {
+    zh: `第三角块是${reference.zh}。看它当前在顶层还是底层`,
+    en: `The third corner is the ${reference.en}. Check which layer it is on now.`,
+  } : identifying ? cornerQuestion?.prompt : {
+    zh: `把${backLeft.zh}放到底层左后，${frontLeft.zh}放到底层左前，两个${bottom.zh}格都朝下`,
+    en: `Place the ${backLeft.en} at bottom back-left and the ${frontLeft.en} at bottom front-left, with both ${bottom.en} stickers facing down`,
+  };
+  const cubeLabel = layerQuiz
+    ? { zh: '左侧角对已归位的魔方。可转 U、R 面，拖空白可微调视角', en: 'Cube with the left pair solved. Turn U or R, or drag empty space to adjust the view slightly.' }
+    : identifying
+      ? { zh: '点选角块。拖动可微调视角', en: 'Select a corner. Drag to adjust the view slightly.' }
+      : { zh: '识别魔方。拖贴纸转层，拖空白转视角。', en: 'Recognition cube. Drag stickers to turn layers and drag empty space to orbit.' };
 
   return <LessonPane layout="F" cube={
-    <div ref={board} className="course-cube" tabIndex={0} role="group"
-      aria-label={tr(recognizing
-        ? { zh: '左侧角对已归位的魔方。可转 U、R 面，拖空白可微调视角', en: 'Cube with the left pair solved. Turn U or R, or drag empty space to adjust the view slightly.' }
-        : { zh: '识别魔方。拖贴纸转层，拖空白转视角。', en: 'Recognition cube. Drag stickers to turn layers and drag empty space to orbit.' })}
-      data-course-cube data-ready={ready} data-drag-enabled={ready} onKeyDown={turnWithKey}>
-      <AlgPlayer key={recognizing ? 'recognition' : 'left-pair'} ref={player} puzzle="2x2" engine="sim" set=""
+    <div ref={board} className="course-cube" tabIndex={identifying ? undefined : 0} role="group"
+      aria-label={tr(cubeLabel)} data-course-cube data-ready={ready} data-drag-enabled={ready}
+      data-corner-guide-open={cornerGuideOpen || undefined}
+      onKeyDown={identifying ? undefined : turnWithKey}>
+      <AlgPlayer key={recognitionSetup ?? 'left-pair'} ref={player} puzzle="2x2" engine="sim" set=""
         setup={recognitionSetup ?? setup} alg=""
         orientation={orientation} sceneRot={FL_VIEWS.mixed}
-        controlMode="none" interactionMode="turn" fillPane maxFramingEdge={CUBE_FRAMING_EDGE}
+        controlMode="none" interactionMode={identifying ? 'view' : 'turn'} fillPane maxFramingEdge={CUBE_FRAMING_EDGE}
         hideResetView
         stickeringAtStep={flFirstLayerMask} wholeCubeDrag={recognizing ? undefined : 'rotate'}
         orbitSnapDegrees={30} orbitSnapLocked={recognizing}
         stickerColorOverrides={recognizing ? recognitionHintColors : mutedRightPair}
-        allowUserLayerTurn={recognizing ? allowRecognitionTurn : undefined}
-        onBlockedUserLayerTurn={recognizing ? showBlockedTurn : undefined}
+        allowUserLayerTurn={layerQuiz ? isFlPracticeTurn : undefined}
+        onBlockedUserLayerTurn={layerQuiz ? showBlockedTurn : undefined}
+        onCubeletTap={identifying ? ({ homeIndex }) => identifyCorner(homeIndex) : undefined}
         onUserMove={move => {
-          if (recognizing) {
+          if (layerQuiz) {
             setBlockedTurn(null);
             setLayerAnswer(previous => previous.status === 'correct' || previous.status === 'wrong'
               ? { status: 'retry' } : previous);
-          } else userMoves.current.push(move);
+          } else if (!recognizing) userMoves.current.push(move);
           setTurning(player.current?.isUserMovePending?.(false) === true);
         }}
         onReady={() => setReady(true)} />
-      {recognizing && <div className="course-answer-feedback" data-turn-feedback role="status" aria-atomic="true">
+      {identifying && <TrainingFeedbackOverlay kind={cornerFeedback?.kind ?? null}
+        correctLabel={tr({ zh: '找对了', en: 'Correct' })}
+        wrongLabel={tr({ zh: '再看一下这个角块要归位到哪里', en: 'Check where this corner belongs' })} />}
+      {layerQuiz && <div className="course-answer-feedback" data-turn-feedback role="status" aria-atomic="true">
         {blockedTurn && <CornerAnswerBubble {...blockedTurn}
           message={tr({ zh: '为了保护左下方角块，只转 U、R 面', en: 'Turn only U and R to keep the bottom-left corners solved' })} />}
       </div>}
     </div>
   }>
-    <InteractiveQuestionCopy sectionId="recognition" questions={questions} activeIndex={recognizing ? 1 : 0}
-      answer={answer} heading={tr(recognizing ? recognitionHeading : pairHeading)}
+    <InteractiveQuestionCopy sectionId="recognition" questions={questions} activeIndex={layerQuiz ? 2 : identifying ? 1 : 0}
+      answer={answer} heading={tr(heading)}
       headingAction={recognizing && <InteractiveQuestionHelpButton disabled={!ready}
-        onClick={() => setPieceHintRequest(request => request + 1)}>
-        <T zh="提示" en="Hint" />
+        onClick={canFindAgain ? findAgain : () => setPieceHintRequest(request => request + 1)}>
+        {canFindAgain ? <T zh="再找一次" en="Find again" /> : <T zh="提示" en="Hint" />}
       </InteractiveQuestionHelpButton>}
-      prompt={tr(recognizing ? {
-        zh: `在剩下两角中，找同时带有底色（${bottom.zh}）和前色（${front.zh}）的角块。它要归位到底层右前`,
-        en: `Find the remaining corner with both the bottom color (${bottom.en}) and the front color (${front.en}). It belongs at bottom front-right.`,
-      } : {
-        zh: `把${backLeft.zh}放到底层左后，${frontLeft.zh}放到底层左前，两个${bottom.zh}格都朝下`,
-        en: `Place the ${backLeft.en} at bottom back-left and the ${frontLeft.en} at bottom front-left, with both ${bottom.en} stickers facing down`,
-      })}
-      hint={recognizing ? tr({ zh: '可转 U、R 面观察，转动后请重新作答', en: 'You can turn U or R to inspect the cube. Answer again after turning.' }) : undefined}
+      prompt={prompt && tr(prompt)}
+      hint={layerQuiz ? tr({ zh: '可转 U、R 面观察，转动后请重新作答', en: 'You can turn U or R to inspect the cube. Answer again after turning.' }) : undefined}
       reserveStatus status={feedback ? tr(feedback) : null}
       action={<>
         <div className="course-question-actions">
-          {recognizing ? <>
+          {layerQuiz ? <>
             {layerChoices.map(({ layer, label }) => (
               <button type="button" key={layer} className="btn-secondary course-question-action fl-layer-choice"
                 disabled={!ready || turning} onClick={() => chooseLayer(layer)}>
@@ -200,9 +267,22 @@ function RecognitionSteps({ setup, orientation, onRandomize, onWatchVideo }: {
               </button>
             ))}
             <button type="button" className="btn-secondary course-question-action fl-watch-recognition"
-              aria-haspopup="dialog" onClick={onWatchVideo}>
+              aria-haspopup="dialog" onClick={() => onWatchVideo('layer')}>
               <Play size={15} aria-hidden="true" />
               <T zh="观看识别视频" en="Watch the recognition video" />
+            </button>
+          </> : identifying ? <>
+            <button type="button" className="btn-primary course-question-action course-question-continue"
+              disabled={!cornersIdentified} onClick={() => {
+                setCornerFeedback(null);
+                setLayerQuiz(true);
+              }}>
+              <T zh="继续" en="Continue" />
+            </button>
+            <button type="button" className="btn-secondary course-question-action fl-watch-recognition"
+              aria-haspopup="dialog" onClick={() => onWatchVideo('corners')}>
+              <Play size={15} aria-hidden="true" />
+              <T zh="观看角块讲解" en="Watch the corner guide" />
             </button>
           </> : <>
             <button type="button" className="btn-primary course-question-action course-question-continue"
@@ -226,7 +306,7 @@ function RecognitionSteps({ setup, orientation, onRandomize, onWatchVideo }: {
 
 export default function RecognitionLesson({ orientation }: { orientation: string }) {
   const [round, setRound] = useState<{ setup: string; revision: number } | null>(null);
-  const [showVideo, setShowVideo] = useState(false);
+  const [video, setVideo] = useState<VideoKind | null>(null);
   const initialized = useRef(false);
   const randomize = useCallback(() => {
     const setup = randomFlLeftPairSetup();
@@ -240,11 +320,11 @@ export default function RecognitionLesson({ orientation }: { orientation: string
 
   if (!round) return <LessonPane layout="F" cube={null}>{null}</LessonPane>;
   return <>
-    <RecognitionSteps key={round.revision} setup={round.setup} orientation={orientation}
-      onRandomize={randomize} onWatchVideo={() => setShowVideo(true)} />
-    {showVideo && <SettingsDialog label={tr(videoLabel)} heading panelClassName="fl-walkthrough-dialog"
-      onClose={() => setShowVideo(false)}>
-      <RecognitionVideo orientation={orientation} />
+    <RecognitionSteps key={round.revision} setup={round.setup} orientation={orientation} cornerGuideOpen={video === 'corners'}
+      onRandomize={randomize} onWatchVideo={setVideo} />
+    {video && <SettingsDialog label={tr(videoLabels[video])} heading panelClassName="fl-walkthrough-dialog"
+      onClose={() => setVideo(null)}>
+      {video === 'corners' ? <CornerIdentificationVideo orientation={orientation} /> : <RecognitionVideo orientation={orientation} />}
     </SettingsDialog>}
   </>;
 }
