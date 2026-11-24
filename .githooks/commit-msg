@@ -1,0 +1,16 @@
+#!/usr/bin/env sh
+
+if LC_ALL=C awk '
+    NR == 1 {
+        sub(/\r$/, "")
+        if ($0 !~ /^[a-z]+\([A-Za-z0-9][A-Za-z0-9._\/-]*\): [!-~][ -~]*$/) exit 1
+        sub(/^[^:]+: /, "")
+        if ($0 !~ /[A-Za-z]/) exit 1
+    }
+    END { if (NR == 0) exit 1 }
+' "$1"; then
+    exit 0
+fi
+
+echo '提交标题须用英文，格式为 type(scope): description。示例：fix(timer): restore keyboard timing' >&2
+exit 1
