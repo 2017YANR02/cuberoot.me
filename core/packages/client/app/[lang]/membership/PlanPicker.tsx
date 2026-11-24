@@ -27,7 +27,7 @@ export default function PlanPicker<T extends string>({ options, selected, onSele
       <legend className="sr-only">{tr({ zh: '计费周期', en: 'Billing period' })}</legend>
       {options.map(option => <label key={option.id} className="mem-store-period" data-selected={option.id === selected}>
         <span className="mem-store-period-heading">
-          <input type="radio" name={name} checked={option.id === selected} onChange={() => onSelect(option.id)} />
+          <input className="mem-store-period-radio" type="radio" name={name} checked={option.id === selected} onChange={() => onSelect(option.id)} />
           {!!option.savings && <small className="mem-store-saving">{tr({ zh: '怒省 {percent}%', en: 'Save ~{percent}%' }).replace('{percent}', String(option.savings))}</small>}
         </span>
         <strong className="mem-plan-amount">{option.price}</strong>

@@ -244,8 +244,8 @@
 .mem-store-period[data-selected="true"] { border-color: var(--accent); background: var(--accent-soft); }
 .mem-store-period:only-of-type { grid-column: 1 / -1; }
 .mem-store-period-heading { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; min-height: 24px; }
-.mem-store-period input { margin: 0; accent-color: var(--accent); }
-.mem-store-period input:focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }
+.mem-store-period-radio { margin: 0; accent-color: var(--accent); }
+.mem-store-period-radio:focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }
 .mem-store-saving { padding: 2px 6px; border-radius: 6px; background: var(--accent-soft); color: var(--foreground); font-size: 0.75rem; font-weight: 600; }
 .mem-store-period strong { font-size: 1.2rem; }
 .mem-store-period span { color: var(--muted-foreground); }
@@ -697,12 +697,12 @@
     font-size: 13px;
   }
   .mem-tier-picker .mem-store-period[data-selected="true"] { background: var(--card); }
-  .mem-tier-picker .mem-store-period:has(input:focus-visible) { outline: 2px solid var(--ring); }
-  .mem-tier-picker .mem-store-period input { position: absolute; opacity: 0; }
+  .mem-tier-picker .mem-store-period:has(.mem-store-period-radio:focus-visible) { outline: 2px solid var(--ring); }
+  .mem-tier-picker .mem-store-period-radio { position: absolute; opacity: 0; }
   .mem-tier-picker .mem-store-period-heading { min-height: 0; }
   .mem-tier-picker .mem-store-period-heading:not(:has(small)),
   .mem-tier-picker .mem-store-period strong, .mem-tier-picker .mem-period-caption { display: none; }
-  .mem-tier-picker .mem-store-period-heading:has(input):not(:has(small)) { display: contents; }
+  .mem-tier-picker .mem-store-period-heading:has(.mem-store-period-radio):not(:has(small)) { display: contents; }
   .mem-tier-picker .mem-short-period { display: inline; color: var(--foreground); }
   .mem-tier-picker .mem-store-periods:not(:has(label:nth-of-type(2))) { display: none; }
   .mem-tier-picker .mem-store-periods[data-pair] {

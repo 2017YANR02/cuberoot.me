@@ -69,6 +69,6 @@
 .member-profile-error { margin-top: 12px; color: var(--destructive); font-size: 13px; }
 
 @media (max-width: 400px) {
-  .member-profile-actions > button { padding-inline: 8px; }
+  .member-profile-actions > :is(.member-profile-upload, .member-profile-save) { padding-inline: 8px; }
   .member-profile-actions .member-profile-upload { gap: 4px; font-size: 14px; }
 }
