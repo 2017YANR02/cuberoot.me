@@ -183,12 +183,13 @@ export function analyzeCfopHistory(history: readonly Solve[], current: Solve, se
       const baselineMs = median(baseline);
       const spread = median(baseline.map(value => Math.abs(value - baselineMs)));
       const thresholdMs = Math.ceil(Math.max(150, baselineMs * 0.20, spread * 2));
-      const slower = review.filter(value => value - baselineMs >= thresholdMs);
+      const slower = review.flatMap((value, index) => value - baselineMs >= thresholdMs ? [{ value, index }] : []);
       if (slower.length < Math.max(MIN_REVIEW, Math.ceil(review.length / 2))) continue;
-      const excessPerSolveMs = slower.reduce((sum, value) => sum + value - baselineMs, 0) / recentCount;
+      const excessPerSolveMs = slower.reduce((sum, sample) => sum + sample.value - baselineMs, 0) / recentCount;
+      const latestSlowSample = slower[slower.length - 1];
       const candidate = { situation, signal, baselineMs, recentMs: median(review), thresholdMs,
         baselineCount: baseline.length, recentCount: review.length, slowerCount: slower.length, excessPerSolveMs,
-        replay: newerReplays[signal][review.findLastIndex(value => value - baselineMs >= thresholdMs)],
+        replay: newerReplays[signal][latestSlowSample.index],
       };
       if (!best || candidate.excessPerSolveMs > best.excessPerSolveMs) best = candidate;
     }
