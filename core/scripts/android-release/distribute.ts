@@ -57,7 +57,18 @@ if (mode === 'prepare') {
   const installers = readdirSync(join(release, 'bundle/nsis')).filter(n => n.endsWith('.exe'));
   if (installers.length !== 1) throw new Error('Expected one Windows installer');
   for (const path of [join(release, 'cuberoot-desktop.exe'), join(release, 'bundle/nsis', installers[0]!)]) {
-    const version = run('powershell.exe', ['-NoProfile', '-NonInteractive', '-Command', '(Get-Item -LiteralPath $env:CUBEROOT_VERIFY_EXE).VersionInfo.ProductVersion'], { ...process.env, CUBEROOT_VERIFY_EXE: path });
+    const verify = `
+      $ErrorActionPreference = 'Stop'
+      if ($env:WINDOWS_CERTIFICATE_THUMBPRINT) {
+        $signature = Get-AuthenticodeSignature -LiteralPath $env:CUBEROOT_VERIFY_EXE
+        $expected = $env:WINDOWS_CERTIFICATE_THUMBPRINT -replace '\\s', ''
+        if ($signature.Status -ne 'Valid' -or $signature.SignerCertificate.Thumbprint -ne $expected -or !$signature.TimeStamperCertificate) {
+          throw "Windows Authenticode validation failed for $env:CUBEROOT_VERIFY_EXE"
+        }
+      }
+      (Get-Item -LiteralPath $env:CUBEROOT_VERIFY_EXE).VersionInfo.ProductVersion
+    `;
+    const version = run('powershell.exe', ['-NoProfile', '-NonInteractive', '-Command', verify], { ...process.env, CUBEROOT_VERIFY_EXE: path });
     if (version.split('.').slice(0, 3).join('.') !== identity.versionName) throw new Error('Windows binary version mismatch');
   }
   const prefix = `CubeRoot-${identity.versionName}-x64`;

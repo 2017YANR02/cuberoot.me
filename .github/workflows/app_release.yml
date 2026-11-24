@@ -167,10 +167,12 @@ jobs:
         if: matrix.platform == 'windows' && inputs.platform != 'android'
         working-directory: core
         shell: bash
+        env:
+          WINDOWS_CERTIFICATE_THUMBPRINT: ${{ vars.WINDOWS_CERTIFICATE_THUMBPRINT }}
         run: |
           set -euo pipefail
           pnpm --filter @cuberoot/desktop test
-          pnpm --filter @cuberoot/desktop exec tauri build --bundles nsis
+          pnpm --filter @cuberoot/desktop tauri:build --bundles nsis
           node scripts/android-release/distribute.ts windows
       - uses: actions/upload-artifact@v4
         if: matrix.platform == 'windows' && inputs.platform != 'android'
