@@ -117,6 +117,19 @@ pub fn run() {
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_dialog::init())
         .setup(|_app| {
+            #[cfg(target_os = "windows")]
+            if let Some(window) = _app.get_webview_window("main") {
+                use windows_sys::Win32::UI::WindowsAndMessaging::*;
+                let hwnd = window.hwnd()?.0;
+                // Suppress the caption icon and its fallback while keeping the large shell icon.
+                unsafe {
+                    let style = GetWindowLongW(hwnd, GWL_EXSTYLE);
+                    SetWindowLongW(hwnd, GWL_EXSTYLE, style | WS_EX_DLGMODALFRAME as i32);
+                    SendMessageW(hwnd, WM_SETICON, ICON_SMALL as usize, 0);
+                    SetWindowPos(hwnd, std::ptr::null_mut(), 0, 0, 0, 0,
+                        SWP_FRAMECHANGED | SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE);
+                }
+            }
             #[cfg(target_os = "macos")]
             if let Some(window) = _app.get_webview_window("main") {
                 window.with_webview(|view| {

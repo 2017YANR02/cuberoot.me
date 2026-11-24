@@ -3,13 +3,16 @@ use tauri::{
     AppHandle,
 };
 
-// Keep the standard Edit, Window and application menus and their native shortcuts.
+// Keep standard application menus on macOS and use project commands on Windows.
 #[tauri::command]
 pub fn configure_navigation_menu(app: AppHandle, language: String) -> Result<(), String> {
     install(&app, language == "zh").map_err(|error| error.to_string())
 }
 
 fn install(app: &AppHandle, chinese: bool) -> tauri::Result<()> {
+    #[cfg(target_os = "windows")]
+    let menu = Menu::new(app)?;
+    #[cfg(not(target_os = "windows"))]
     let menu = Menu::default(app)?;
     let title = if chinese { "显示" } else { "View" };
     let existing = menu.items()?.into_iter().find_map(|item| {
@@ -24,6 +27,9 @@ fn install(app: &AppHandle, chinese: bool) -> tauri::Result<()> {
         }
         None => {
             let view = Submenu::new(app, title, true)?;
+            #[cfg(target_os = "windows")]
+            menu.append(&view)?;
+            #[cfg(not(target_os = "windows"))]
             menu.insert(&view, 2)?;
             view
         }
@@ -59,5 +65,8 @@ fn install(app: &AppHandle, chinese: bool) -> tauri::Result<()> {
         view.append(&item)?;
     }
     app.set_menu(menu)?;
+    // Windows retains the command accelerators while the menu bar is hidden.
+    #[cfg(target_os = "windows")]
+    app.hide_menu()?;
     Ok(())
 }
