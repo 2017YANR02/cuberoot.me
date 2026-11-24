@@ -1,6 +1,5 @@
 'use client';
 
-import MoreToggle from '@/components/MoreToggle';
 import { useEffect, useState, type ComponentType } from 'react';
 import { useEntryRouter as useRouter } from '@/hooks/useEntryRouter';
 import { parseAsStringEnum, useQueryState } from 'nuqs';
@@ -100,7 +99,6 @@ export default function AdminPage() {
             <Icon size={20} aria-hidden />
             <span className="admin-hub__destination-label">
               <strong>{t(title[0], title[1])}</strong>
-              <small dir="ltr">{href.split(/[?#]/)[0]}</small>
             </span>
           </AppLink>
         ))}
@@ -124,10 +122,7 @@ export default function AdminPage() {
             </span>
           </a>
         </nav>
-        <details className="admin-dashboard__table">
-          <MoreToggle as="summary">{t('报税教程（待补充）', 'Tax filing guide (coming soon)')}</MoreToggle>
-          {/* Add the verified filing steps here once the actual workflow is documented. */}
-        </details>
+
       </section>
       }
     </main>

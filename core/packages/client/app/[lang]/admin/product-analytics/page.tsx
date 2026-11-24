@@ -113,13 +113,17 @@ function AnalyticsTable({ data, view, viewControl }: { data: ProductAnalyticsRep
   const t = useT();
   const [sort, setSort] = useState('volume');
   const [page, setPage] = useState(0);
-  const featureName = (id: string) => { const label = featureNames.get(id); return label ? t(label.zh, label.en) : id; };
+  const featureName = (id: string) => { const label = featureNames.get(id); return label ? t(label.zh, label.en) : t('其他功能', 'Other feature'); };
+  const layoutName = (layout: string) => {
+    const date = /^home-(\d{4}-\d{2}-\d{2})$/.exec(layout)?.[1];
+    return date ? t(`${date} 版首页`, `Homepage · ${date}`) : t('其他布局', 'Other layout');
+  };
   const deviceName = (device: string) => device === 'mobile' ? t('窄屏', 'Narrow screen') : t('宽屏', 'Wide screen');
   const placementNames: Record<string, string> = { main: t('常用', 'Main'), wca: 'WCA', train: t('训练', 'Training'), tool: t('工具', 'Tools'), learn: t('学习', 'Learning'), other: t('其他', 'Other'), header: t('日历', 'Calendar'), search: t('搜索', 'Search') };
   let headers: string[];
   let rows: Array<{ key: string; chartLabel: string; volume: number; rate: number; cells: ReactNode[] }>;
   if (view === 'features') {
-    if (!data.features) return <><div className="admin-dashboard__toolbar">{viewControl}</div><p role="status">{t('统计服务尚未更新，功能总览将在服务端部署后可用。', 'The analytics service has not been updated. Feature overview will be available after the server deployment.')}</p></>;
+    if (!data.features) return <><div className="admin-dashboard__toolbar">{viewControl}</div><p role="status">{t('功能总览暂不可用。', 'Feature overview is currently unavailable.')}</p></>;
     headers = [t('功能', 'Feature'), 'PV', t('访问会话', 'Visiting sessions'), t('交互会话', 'Interaction sessions'), t('交互率', 'Interaction rate'), t('完成操作会话', 'Completed-operation sessions')];
     rows = data.features.map(row => ({ key: row.feature, chartLabel: featureName(row.feature), volume: row.sessions, rate: row.sessions ? row.interactingSessions / row.sessions : 0,
       cells: [featureName(row.feature), row.views, row.sessions, row.interactingSessions, percent(row.interactingSessions, row.sessions), measuredFeatures.has(row.feature) ? row.usingSessions : '—'] }));
@@ -128,14 +132,14 @@ function AnalyticsTable({ data, view, viewControl }: { data: ProductAnalyticsRep
     rows = data.pages.map(row => {
       const title = PAGE_META[row.route.slice(1)]?.title;
       const measured = measuredFeatures.has(row.feature);
-      return { key: `${row.route}:${row.device}:${row.language}`, chartLabel: `${title ? t(title.zh, title.en) : featureName(row.feature)} · ${deviceName(row.device)} · ${row.language}`, volume: row.views, rate: measured && row.sessions ? row.usingSessions / row.sessions : -1,
-        cells: [<span key="page">{title ? t(title.zh, title.en) : featureName(row.feature)}<small>{row.route}</small></span>, deviceName(row.device), row.language === 'zh' ? t('中文', 'Chinese') : 'English', row.views, row.sessions,
+      return { key: `${row.route}:${row.device}:${row.language === 'zh' ? t('中文', 'Chinese') : t('英文', 'English')}`, chartLabel: `${title ? t(title.zh, title.en) : featureName(row.feature)} · ${deviceName(row.device)} · ${row.language === 'zh' ? t('中文', 'Chinese') : t('英文', 'English')}`, volume: row.views, rate: measured && row.sessions ? row.usingSessions / row.sessions : -1,
+        cells: [<span key="page">{title ? t(title.zh, title.en) : featureName(row.feature)}</span>, deviceName(row.device), row.language === 'zh' ? t('中文', 'Chinese') : 'English', row.views, row.sessions,
           percent(row.engagedSessions, row.sessions), row.interactingSessions, measured ? row.usingSessions : '—', measured ? percent(row.usingSessions, row.sessions) : '—'] };
     });
   } else if (view === 'entries') {
     headers = [t('入口', 'Entry'), t('位置', 'Placement'), t('屏幕', 'Screen'), t('曝光', 'Impressions'), t('点击', 'Clicks'), t('点击率', 'CTR'), t('使用转化', 'Uses after click'), t('转化率', 'Conversion')];
-    rows = data.entries.map(row => ({ key: `${row.entry}:${row.placement}:${row.position}:${row.device}:${row.layout}`, chartLabel: `${featureName(row.entry)} · ${placementNames[row.placement] ?? row.placement} ${Number(row.position) + 1} · ${deviceName(row.device)} · ${row.layout}`, volume: row.impressions, rate: row.impressions ? row.clicks / row.impressions : -1,
-      cells: [<span key="entry">{featureName(row.entry)}<small>{row.layout}</small></span>, `${placementNames[row.placement] ?? row.placement} · ${Number(row.position) + 1}`, deviceName(row.device), row.impressions, row.clicks, percent(row.clicks, row.impressions),
+    rows = data.entries.map(row => ({ key: `${row.entry}:${row.placement}:${row.position}:${row.device}:${layoutName(row.layout)}`, chartLabel: `${featureName(row.entry)} · ${placementNames[row.placement] ?? t('其他位置', 'Other placement')} ${Number(row.position) + 1} · ${deviceName(row.device)} · ${layoutName(row.layout)}`, volume: row.impressions, rate: row.impressions ? row.clicks / row.impressions : -1,
+      cells: [<span key="entry">{featureName(row.entry)}<small>{layoutName(row.layout)}</small></span>, `${placementNames[row.placement] ?? t('其他位置', 'Other placement')} · ${Number(row.position) + 1}`, deviceName(row.device), row.impressions, row.clicks, percent(row.clicks, row.impressions),
         measuredFeatures.has(row.entry) ? row.usedAfterClick : '—', measuredFeatures.has(row.entry) ? percent(row.usedAfterClick, row.clicks) : '—'] }));
   } else {
     headers = [t('功能', 'Feature'), t('使用账号', 'Using accounts'), t('人均活跃天数', 'Active days per account'), t('人均使用会话', 'Using sessions per account')];
