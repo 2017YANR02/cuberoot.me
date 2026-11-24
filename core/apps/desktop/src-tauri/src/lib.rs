@@ -9,7 +9,14 @@ mod file_export;
 mod native_print;
 mod primary_navigation;
 
-const SERVICE: &str = "me.cuberoot.app";
+const SERVICE: &str = if cfg!(all(target_os = "macos", debug_assertions)) {
+    "me.cuberoot.desktop.debug"
+} else if cfg!(all(target_os = "macos", not(feature = "mac-app-store"))) {
+    "me.cuberoot.desktop"
+} else {
+    // Preserve existing Mac App Store sessions across updates.
+    "me.cuberoot.app"
+};
 
 #[tauri::command]
 fn copy_text(text: String) -> Result<(), String> {
