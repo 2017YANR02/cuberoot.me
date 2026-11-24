@@ -75,14 +75,10 @@ const renderLanding = (initialLayout?: HomeLayoutSnapshot) => createElement(Nuqs
 });
 
 async function enterCardEditing(host: HTMLElement) {
-  const pencil = host.querySelector<HTMLButtonElement>('button[aria-label="编辑首页"]');
+  const pencil = host.querySelector<HTMLButtonElement>('button[aria-label="编辑首页卡片"]');
   if (!pencil) return;
   expect(host.querySelector('.landing-card-lock')).toBeNull();
   await act(async () => pencil.click());
-  expect(pencil.getAttribute('aria-expanded')).toBe('true');
-  const editCards = host.querySelector<HTMLButtonElement>('.landing-edit-options button:last-child');
-  expect(editCards?.textContent).toBe('编辑首页卡片');
-  await act(async () => editCards!.click());
   expect(pencil.getAttribute('aria-label')).toBe('完成卡片编辑');
 }
 

@@ -101,34 +101,6 @@ body .landing-page.landing-page--navigation {
   --af-nav-selected: var(--accent-soft);
 }
 .landing-page--navigation .home-navigation .landing-auth { flex: 0 0 auto; margin-inline-start: auto; }
-.landing-edit-menu { position: relative; }
-.landing-edit-options {
-  /* The pencil is the first of the right-aligned actions, with room to its right. */
-  position: absolute;
-  inset: calc(100% + 4px) auto auto 0;
-  z-index: 3;
-  display: grid;
-  gap: 2px;
-  width: max-content;
-  padding: 4px;
-  border: 1px solid var(--border-default);
-  border-radius: 10px;
-  background: var(--popover);
-  color: var(--popover-foreground);
-}
-body[data-site-scenery] .landing-edit-options[data-site-surface='popover'] {
-  background: var(--glass-menu-bg, var(--glass-popover-bg));
-}
-.landing-edit-option {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  min-height: 44px;
-  padding: 0 12px;
-  border-radius: 6px;
-  text-align: start;
-}
-.landing-edit-option:is(:hover, :focus-visible) { background: var(--muted); }
 :is(.home-navigation, .home-navigation-drawer) .landing-auth :is(.landing-auth-icon, .landing-calendar-link .landing-card) { color: var(--muted-foreground); }
 :is(.home-navigation, .home-navigation-drawer) .landing-auth :is(.landing-auth-icon, .landing-calendar-link .landing-card):is(:hover, :focus-visible) { color: var(--foreground); }
 :is(.home-navigation, .home-navigation-drawer) .landing-auth .landing-card-icon { color: inherit; }
@@ -436,7 +408,7 @@ body[data-site-scenery] .landing-edit-options[data-site-surface='popover'] {
   gap: 4px;
   justify-content: flex-start;
 }
-.home-navigation-drawer-actions .landing-edit-menu { display: none; }
+.home-navigation-drawer-actions .landing-edit-cards { display: none; }
 .home-navigation-drawer-actions .landing-auth-btn { order: 1; margin: 0; }
 .home-navigation-drawer-actions .landing-auth-btn.is-login { width: 44px; padding: 0; }
 .home-navigation-drawer-actions .landing-auth-btn.is-login > span { display: none; }

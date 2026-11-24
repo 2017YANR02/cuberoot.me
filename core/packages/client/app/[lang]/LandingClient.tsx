@@ -12,11 +12,11 @@ import { applyHomeSectionOrder } from '@/lib/home-section-order';
 import { SkeletonBlock } from '@/components/ContentSkeleton';
 
 /** Site entrypoint — Landing page. */
-import { Suspense, useCallback, useEffect, useId, useMemo, useRef, useState, type CSSProperties } from 'react';
+import { Suspense, useCallback, useEffect, useMemo, useState, type CSSProperties } from 'react';
 import dynamic from 'next/dynamic';
 import { usePathname } from 'next/navigation';
 import { parseAsBoolean, useQueryState } from 'nuqs';
-import { ArrowRight, Check, Crown, Download, Heart, LayoutDashboard, Lock, LockOpen, Megaphone, Pencil, ShoppingBag, User, type LucideIcon } from '@app-foundation/icons/lucide';
+import { ArrowRight, Check, Crown, Download, Heart, LayoutDashboard, Lock, LockOpen, Pencil, ShoppingBag, User, type LucideIcon } from '@app-foundation/icons/lucide';
 import { closestCenter, DndContext, PointerSensor, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core';
 import { arrayMove, rectSortingStrategy, SortableContext } from '@dnd-kit/sortable';
 import Link from '@/components/AppLink';
@@ -33,7 +33,6 @@ import { isOnboardingGuided, markOnboardingGuided } from '@/lib/onboarding';
 import './home-background.css';
 import { useTranslation } from 'react-i18next';
 import { useAuthUser, nextQuery, authActions } from '@/lib/auth-store';
-import { usePopoverDismiss } from '@/hooks/usePopoverDismiss';
 import { fmtVipId } from '@/lib/membership-format';
 import LandingSearch from '@/components/LandingSearch';
 import PersonUpcomingComps from '@/components/persons/sections/PersonUpcomingComps';
@@ -72,7 +71,7 @@ import '../landing.css';
 import './home-navigation.css';
 import { tr } from '@/i18n/tr';
 import { isAdminWcaId } from '@cuberoot/shared/admin';
-import { fetchPageNotices, openPageNoticeEditor, type PageNotice } from '@/lib/page-notices-api';
+import { fetchPageNotices, type PageNotice } from '@/lib/page-notices-api';
 import { colorFor, homepageNoticeTitle, iconFor } from '@/lib/page-notice-visuals';
 import { displayCuberName } from '@/lib/cuber-name-display';
 import { WcaPersonTeamBadge } from '@/components/WcaPersonTeamBadge';
@@ -85,38 +84,6 @@ import { HOME_MEMBER_SECTION_IDS } from '@cuberoot/shared/site-directory';
 const ABOUT_FOOTER_ENTRY = FOOTER_ENTRIES.find((entry) => entry.id === 'about')!;
 const SUPPORT_FOOTER_ENTRY = FOOTER_ENTRIES.find((entry) => entry.id === 'support')!;
 const GITHUB_FOOTER_ENTRY = FOOTER_ENTRIES.find((entry) => entry.id === 'github')!;
-
-function HomeEditMenu({ editingCards, onToggleCards }: { editingCards: boolean; onToggleCards: () => void }) {
-  const [open, setOpen] = useState(false);
-  const menuId = useId();
-  const panel = useRef<HTMLDivElement>(null);
-  const trigger = useRef<HTMLButtonElement>(null);
-  usePopoverDismiss(open, () => setOpen(false), panel, trigger);
-
-  const select = (action: () => void) => {
-    setOpen(false);
-    trigger.current?.focus();
-    action();
-  };
-
-  return <div className="landing-edit-menu">
-    <button ref={trigger} type="button" className="landing-auth-icon landing-edit-cards"
-      aria-label={editingCards ? tr({ zh: '完成卡片编辑', en: 'Finish editing cards' }) : tr({ zh: '编辑首页', en: 'Edit homepage' })}
-      aria-expanded={editingCards ? undefined : open} aria-controls={open ? menuId : undefined}
-      onClick={() => editingCards ? onToggleCards() : setOpen(current => !current)}>
-      {editingCards ? <Check size={16} aria-hidden /> : <Pencil size={16} aria-hidden />}
-    </button>
-    {open && <div id={menuId} ref={panel} className="landing-edit-options" data-site-surface="popover"
-      onBlur={event => { if (!event.currentTarget.contains(event.relatedTarget) && event.relatedTarget !== trigger.current) setOpen(false); }}>
-      <button type="button" className="landing-edit-option" onClick={() => select(() => openPageNoticeEditor('page_top'))}>
-        <Megaphone size={16} aria-hidden />{tr({ zh: '编辑顶部公告', en: 'Edit top announcement' })}
-      </button>
-      <button type="button" className="landing-edit-option" onClick={() => select(onToggleCards)}>
-        <LayoutDashboard size={16} aria-hidden />{tr({ zh: '编辑首页卡片', en: 'Edit homepage cards' })}
-      </button>
-    </div>}
-  </div>;
-}
 
 // Temporary homepage feature; restore the managed notice on 2026-09-17 (UTC+8).
 const HISTORY_HOME_FEATURE: PageNotice = {
@@ -366,7 +333,7 @@ export default function LandingPage({ initialLayout = null }: { initialLayout?: 
   const isCardLocked = (card: CardConfig) => Boolean(card.adminOnly)
     || (cardLocks[card.id] ?? Boolean(card.lockedForNonAdmin || card.comingSoon));
 
-  const renderCard = (card: CardConfig) => {
+  const renderCard = (card: CardConfig, editable: boolean) => {
     const locked = isCardLocked(card);
     const isLocked = locked && !isAdmin;
     const isDevelopment = locked && !card.adminOnly;
@@ -417,9 +384,9 @@ export default function LandingPage({ initialLayout = null }: { initialLayout?: 
       <SortableCard
         key={card.id}
         id={card.id}
-        draggable={canEditCards}
+        draggable={editable}
       >
-        {renderLock(card.id, locked, card.adminOnly)}
+        {editable && renderLock(card.id, locked, card.adminOnly)}
         {cardElement}
       </SortableCard>
     );
@@ -460,7 +427,7 @@ export default function LandingPage({ initialLayout = null }: { initialLayout?: 
       <DndContext key={groupId} sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
         <SortableContext items={visibleCards.map((card) => card.id)} strategy={rectSortingStrategy}>
           <div className={className} data-analytics-placement={groupId === 'calendar' ? 'header' : groupId}
-            data-analytics-disabled={adminArea || canEditCards ? 'true' : undefined}>{visibleCards.map(renderCard)}</div>
+            data-analytics-disabled={adminArea || canEditCards ? 'true' : undefined}>{visibleCards.map(card => renderCard(card, canEditCards && groupId !== 'calendar'))}</div>
         </SortableContext>
       </DndContext>
     );
@@ -569,7 +536,11 @@ export default function LandingPage({ initialLayout = null }: { initialLayout?: 
         <span className="brand-name">{t('brand')}</span>
       </span>} actions={<div className="landing-auth">
         {isAdmin && <>
-        <HomeEditMenu editingCards={editingCards} onToggleCards={() => setEditingCards(current => !current)} />
+        <button type="button" className="landing-auth-icon landing-edit-cards"
+          aria-label={editingCards ? tr({ zh: '完成卡片编辑', en: 'Finish editing cards' }) : tr({ zh: '编辑首页卡片', en: 'Edit homepage cards' })}
+          onClick={() => setEditingCards(current => !current)}>
+          {editingCards ? <Check size={16} aria-hidden /> : <Pencil size={16} aria-hidden />}
+        </button>
         <Link href={SHOP_ROOT} className="landing-auth-icon"
           aria-label={tr({ zh: '商店', en: 'Shop' })} prefetch={false}>
           <ShoppingBag size={16} aria-hidden="true" />

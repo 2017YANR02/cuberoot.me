@@ -72,6 +72,7 @@ body:has(.landing-page) { --landing-content-max: 1100px; }
     text-decoration: none;
     transition: color 0.15s, background 0.15s;
 }
+.landing-auth .landing-edit-cards { cursor: pointer; }
 /* Size only the entry icons, never icons inside the appearance menu. */
 :is(.landing-page, .home-navigation-drawer) .landing-auth .lang-toggle > svg,
 :is(.landing-page, .home-navigation-drawer) .landing-auth .theme-toggle-inline > svg,
