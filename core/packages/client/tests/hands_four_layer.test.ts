@@ -2,8 +2,9 @@ import { existsSync, readFileSync } from 'node:fs';
 import { describe, expect, it, vi } from 'vitest';
 import * as THREE from 'three';
 import Cube from '@cuberoot/puzzle-render-core/engine/nxn/cube';
+import tweener from '@cuberoot/puzzle-render-core/engine/tweener';
 import { TwistAction } from '@cuberoot/puzzle-render-core/engine/nxn/twister';
-import HandsRig, { gestureForLayers, type HandDiagnosticFrame } from '@/app/[lang]/sim/engine/hands/handsRig';
+import HandsRig, { gestureForLayers, gripQuat, type Axis, type HandDiagnosticFrame } from '@/app/[lang]/sim/engine/hands/handsRig';
 import { buildManoHand } from '@/app/[lang]/sim/engine/hands/handModelMano';
 import { FingerObstacle, FingerSurfaceSampler, type SkinTriangle } from '@/app/[lang]/sim/engine/hands/fingerCollision';
 import { layerInvalidSpans } from '@/app/[lang]/sim/pocketMoves';
@@ -29,7 +30,7 @@ vi.mock('@/app/[lang]/sim/engine/hands/handSkeleton', async original => ({
   ...await original<typeof import('@/app/[lang]/sim/engine/hands/handSkeleton')>(), addHandSkeleton: vi.fn(),
 }));
 
-function fingerFaces(skin: FingerSurfaceSampler, model: HandDiagnosticFrame['models']['R'], finger: 'index' | 'middle') {
+function fingerFaces(skin: FingerSurfaceSampler, model: HandDiagnosticFrame['models']['R'], finger: keyof HandDiagnosticFrame['models']['R']['fingers']) {
   const faces: SkinTriangle[] = skin.sample(finger);
   const nail = model.nailMeshes!.find(mesh => mesh.userData.nail.finger === finger)!;
   const points = nailPoints(model, finger, new THREE.Matrix4()), indices = nail.geometry.index!;
@@ -38,6 +39,18 @@ function fingerFaces(skin: FingerSurfaceSampler, model: HandDiagnosticFrame['mod
     faces.push({ triangle: new THREE.Triangle(a, b, c), box: new THREE.Box3().setFromPoints([a, b, c]) });
   }
   return faces;
+}
+
+function checkFlexionLimits(finger: HandDiagnosticFrame['models']['R']['fingers']['ring']) {
+  const hinges = [[finger.mid, finger.restBend![0], 130], [finger.tip, finger.restBend![1], 100]] as const;
+  for (const [joint, rest, limit] of hinges) {
+    // XYZ Euler angles fold a pure Y hinge past 90° into two apparent half twists.
+    const { x, y, z, w } = joint.quaternion;
+    expect(Math.hypot(x, z)).toBeLessThan(1e-6);
+    const bend = -2 * Math.atan2(y * Math.sign(w), Math.abs(w));
+    expect(bend).toBeGreaterThanOrEqual(.03 - 1e-5);
+    expect(bend + rest).toBeLessThanOrEqual(THREE.MathUtils.degToRad(limit));
+  }
 }
 
 // The rendered cubelet has flat faces and bevels on its edges and corners.
@@ -81,6 +94,132 @@ it('preserves the actual depth selected by the engine, including signed halves a
 });
 
 describe.skipIf(!existsSync(asset(1)) || !existsSync(asset(-1)))('four-layer MANO contacts', () => {
+  it.each(['Fw2', "Fw2'", 'D2', "B2'"])('clears the baked corner during the return from %s', async move => {
+    const cube = new Cube(4), rig = new HandsRig();
+    try {
+      const { x, y, z } = cube.table.groups;
+      rig.attachCube({ order: cube.order, table: { groups: { x, y, z } }, twister: cube.twister });
+      rig.setEnabled(true);
+      await vi.waitFor(() => expect(rig.getLoadState().hands).toBe('ready'));
+      let frame!: HandDiagnosticFrame;
+      rig.subscribeDiagnostics(next => { frame = next; });
+      const action = new TwistAction(move), turns = cube.table.convert(action);
+      const { group, twist } = turns[0], layers = turns.map(turn => turn.group.layer);
+      const prepare = () => rig.prepareTwist(group.axis as Axis, layers, twist > 0 ? 1 : -1, 2);
+      for (let i = 0; i < 160 && prepare(); i++) rig.tick(8);
+      expect(prepare()).toBe(false);
+      expect(cube.twister.twist(action, false, false, 60)).toBe(true);
+      const side = move === 'Fw2' || move === "B2'" ? 'R' : 'L';
+      const driver = move.startsWith('Fw') ? 'middle' : 'ring';
+      const model = frame.models[side], skin = new FingerSurfaceSampler(model);
+      for (let i = 0; cube.busy && i < 140; i++) { tweener.update(.48); rig.tick(8); }
+      expect(cube.busy).toBe(false);
+      const toCube = cube.matrix.clone().invert(), toPiece = new THREE.Matrix4(), vertex = new THREE.Vector3();
+      const inversePieces = Array.from(cube.initials.keys(), id => {
+        cube.instancedRenderer.getCubeletRenderMatrix(id, toPiece);
+        return toPiece.clone().invert().multiply(toCube);
+      });
+      let depth = 0;
+      for (let i = 0; i < 40; i++) {
+        const points = [...skin.samplePoints(driver), ...nailPoints(model, driver, new THREE.Matrix4())];
+        for (const matrix of inversePieces) for (const { point } of points) {
+          depth = Math.max(depth, cubeletDepth(vertex.copy(point).applyMatrix4(matrix)) * cube.scale.x);
+        }
+        rig.tick(8);
+      }
+      expect(depth).toBeLessThanOrEqual(.1);
+    } finally { rig.dispose(); cube.dispose(); }
+  });
+
+  it.each([
+    ['2R', 'home'], ['2L', 'home'], ['2U', 'home'], ['2D', 'home'], ['2F', 'home'], ['2B', 'home'],
+    ['2R2', 'home'], ["2L2'", 'home'], ["2R2'", 'home'], ['2L2', 'home'], ['2D2', 'home'], ['2U2', 'home'], ["2U2'", 'home'], ["2D2'", 'home'],
+    ['2R', 'up/down'], ['2U', 'up/down'], ['2F', 'up/down'], ['2R2', 'up/down'],
+    ['2L', 'half'], ['2U', 'half'], ['2R2', 'half'], ['2F', 'drag'],
+  ] as const)('seats both hands on single stationary strips for %s with %s', async (move, start) => {
+    const cube = new Cube(4), rig = new HandsRig();
+    try {
+      const { x, y, z } = cube.table.groups;
+      rig.attachCube({ order: 4, table: { groups: { x, y, z } } });
+      rig.setEnabled(true);
+      await vi.waitFor(() => expect(rig.getLoadState().hands).toBe('ready'));
+      let frame!: HandDiagnosticFrame;
+      rig.subscribeDiagnostics(f => { frame = f; });
+      if (start === 'up/down') rig.setGrips(gripQuat('up'), gripQuat('down'));
+      if (start === 'half') rig.setGrips(gripQuat('half'), gripQuat('halfDown'), { R: Math.PI, L: -Math.PI });
+      const [{ group, twist }] = cube.table.convert(new TwistAction(move));
+      const axis = group.axis as Axis, layer = group.layer, dir = twist < 0 ? -1 : 1;
+      const quarters = Math.abs(twist);
+      if (start !== 'drag') {
+        for (let i = 0; i < 120 && rig.prepareTwist(axis, [layer], dir, quarters); i++) rig.tick(16);
+        expect(rig.prepareTwist(axis, [layer], dir, quarters)).toBe(false);
+      }
+      rig.tick(0);
+      const hands = (['R', 'L'] as const).map(side => {
+        const model = frame.models[side];
+        const fingers = (['thumb', 'index', 'middle', 'ring', 'pinky'] as const).map(name => {
+          const f = model.fingers[name], joints = [f.root, f.mid, f.tip];
+          return { name, joints, seated: joints.map(j => j.quaternion.clone()) };
+        });
+        return { side, fingers, skin: new FingerSurfaceSampler(model) };
+      });
+      const axes = ['x', 'y', 'z'] as const;
+      const restingRows = new Map<string, number>();
+      group.drag();
+      // Sample both sides of the handoff and reverse the drag. The bones
+      // should retain the posture established before the layer started.
+      const sweep = start === 'home' && quarters === 2
+        ? Array.from({ length: 721 }, (_, i) => i / 4 || .01)
+        : [.01, 45, 89, ...(quarters === 2 ? [91, 135, 180] : [90])];
+      for (const degrees of [...sweep, 45, 1]) {
+        group.angle = THREE.MathUtils.degToRad(degrees) * dir;
+        rig.tick(16);
+        const gesture = frame.active?.gesture;
+        if (gesture?.kind !== 'flick') throw Error('Expected an inner-slice flick');
+        for (const { side, fingers, skin } of hands) {
+          const gaps = [Infinity, Infinity, Infinity, Infinity];
+          const lowerRelay = axis === 'y' && layer === 1 && quarters === 2 && start === 'home';
+          for (const { name, joints, seated } of fingers) {
+            if (side === gesture.hand && (name === gesture.finger || name === gesture.finger2)) continue;
+            joints.forEach((joint, i) => {
+              if (start === 'drag' && degrees === .01) seated[i].copy(joint.quaternion);
+              expect(joint.quaternion.angleTo(seated[i])).toBeLessThan(1e-5);
+            });
+            let upperStripGap = Infinity;
+            for (const { point, pad } of skin.samplePoints(name)) {
+              if (!pad) continue;
+              for (let row = 0; row < 4; row++) {
+                for (const normal of axes) {
+                  if (axis === normal && row !== 0 && row !== 3) continue;
+                  const height = axis === normal ? point[normal] * (row === 0 ? -1 : 1) : Math.abs(point[normal]);
+                  let distance = (height - 96) ** 2;
+                  for (const tangent of axes) {
+                    if (tangent === normal) continue;
+                    const column = tangent === axis ? row : THREE.MathUtils.clamp(Math.floor((point[tangent] + 96) / 48), 0, 3);
+                    distance += Math.max(0, Math.abs(point[tangent] - (column - 1.5) * 48) - 21) ** 2;
+                  }
+                  const gap = Math.sqrt(distance);
+                  gaps[row] = Math.min(gaps[row], gap);
+                  if (lowerRelay && row === 2 && normal === 'z' && (name === 'thumb' ? point.z > 0 : point.z < 0))
+                    upperStripGap = Math.min(upperStripGap, gap);
+                }
+              }
+            }
+            if (lowerRelay && (name === 'thumb' || name === 'middle'))
+              expect(upperStripGap, `${side} ${name} bracing row 2 at ${degrees}°`).toBeLessThan(2.5);
+          }
+          const contacts = gaps.flatMap((gap, row) => gap < 2.5 ? [row] : []);
+          expect(contacts, `${side} at ${degrees}°: ${gaps}`).toHaveLength(1);
+          expect(contacts[0]).not.toBe(layer);
+          if (!restingRows.has(side)) restingRows.set(side, contacts[0]);
+          expect(contacts[0]).toBe(restingRows.get(side));
+        }
+      }
+      group.angle = 0;
+      group.drop();
+    } finally { rig.dispose(); cube.dispose(); }
+  });
+
   it.each(['Rw', '3Rw', 'Lw', '3Lw'])('holds the moving columns and the stationary strip through %s', async move => {
     const cube = new Cube(4), rig = new HandsRig();
     try {
@@ -175,15 +314,49 @@ describe.skipIf(!existsSync(asset(1)) || !existsSync(asset(-1)))('four-layer MAN
       expect(engineHomeSid(spec.piece, FACE[spec.face], 4)).toBe(spec.sticker);
       for (const layer of layers) groups[layer].drag();
       let worstGap = 0;
-      for (let degrees = 1; degrees <= 90; degrees++) {
+      const ringJoints = axis === 'x' && layers.length === 1
+        ? [model.fingers.ring.meta!, model.fingers.ring.root, model.fingers.ring.mid, model.fingers.ring.tip] : [];
+      const previous = ringJoints.map(j => j.quaternion.clone());
+      const ring = model.fingers.ring;
+      const ringDepth = (point: THREE.Vector3, low: number, high: number) => {
+        // Coordinates in the stationary or rotating strip's frame. The
+        // closest cubelet in this strip bounds penetration of a skin vertex.
+        const local = p.copy(point);
+        for (const axis of ['x', 'y', 'z'] as const) {
+          const row = THREE.MathUtils.clamp(Math.floor((local[axis] + 96) / 48), axis === 'x' ? low : 0, axis === 'x' ? high : 3);
+          local[axis] -= (row - 1.5) * 48;
+        }
+        return cubeletDepth(local.multiplyScalar(1 / cube.scale.x)) * cube.scale.x;
+      };
+      const step = ringJoints.length ? .25 : 1;
+      for (let degrees = step; degrees <= 90; degrees += step) {
         for (const layer of layers) groups[layer].angle = spec.dir * degrees * Math.PI / 180;
         rig.tick(16);
+        for (const [i, joint] of ringJoints.entries()) {
+          expect(THREE.MathUtils.radToDeg(joint.quaternion.angleTo(previous[i])), `${degrees}° joint ${i}`).toBeLessThan(10 * step);
+          previous[i].copy(joint.quaternion);
+        }
         expect(frame.active?.layers).toEqual(layers);
         expect(frame.active?.gesture).toMatchObject({ kind: 'flick', hand: spec.side, finger });
         cube.instancedRenderer.getCubeletRenderMatrix(spec.piece, toPiece);
         toPiece.invert().multiply(cubeInverse);
         let gap = Infinity;
         const samples = [...skin.samplePoints(finger), ...nailPoints(model, finger, identity)];
+        if (ringJoints.length) {
+          const ringFaces = fingerFaces(skin, model, 'ring');
+          const obstacle = new FingerObstacle(ringFaces);
+          for (const neighbor of ['middle', 'pinky'] as const) {
+            expect(obstacle.intersections(fingerFaces(skin, model, neighbor)), `${degrees}° ring/${neighbor}`).toBe(0);
+          }
+          const layer = layers[0], rotated = new THREE.Vector3(), xAxis = new THREE.Vector3(1, 0, 0);
+          let depth = -Infinity;
+          for (const { point } of samples) {
+            rotated.copy(point).applyAxisAngle(xAxis, groups[layer].angle);
+            depth = Math.max(depth, ringDepth(rotated, layer, layer), ringDepth(point, 0, layer - 1), ringDepth(point, layer + 1, 3));
+          }
+          expect(depth, `${degrees}° ring skin and nail`).toBeLessThan(.1);
+          checkFlexionLimits(ring);
+        }
         for (const sample of samples) {
           if (!sample.pad) continue;
           p.copy(sample.point).applyMatrix4(toPiece);
@@ -212,21 +385,41 @@ describe.skipIf(!existsSync(asset(1)) || !existsSync(asset(-1)))('four-layer MAN
   // Piece numbers are fixed cubelet identities in the solved cube. Sampling
   // their render matrices also exercises the engine's signed layer motion.
   it.each([
-    { move: '3Bw', index: 12, anchors: [51, 63] },
-    { move: "3Bw'", index: 15, anchors: [48, 60] },
-    { move: '3Uw', index: 15, anchors: [48, 0] },
-    { move: "3Uw'", index: 12, anchors: [51, 3] },
-    { move: '2U2', index: 11, middle: 8 },
-    { move: "2U2'", index: 8, middle: 11 },
-  ])('maintains the driving contacts and handoff through $move', async spec => {
+    { move: '3Bw', firstPiece: 12, anchors: [51, 63] },
+    { move: "3Bw'", firstPiece: 15, anchors: [48, 60] },
+    { move: '3Uw', firstPiece: 15, anchors: [48, 0] },
+    { move: "3Uw'", firstPiece: 12, anchors: [51, 3] },
+    { move: '2R2', firstPiece: 2, secondPiece: 14 },
+    { move: "2L2'", firstPiece: 1, secondPiece: 13 },
+    { move: "2R2'", firstPiece: 50, secondPiece: 62 },
+    { move: '2L2', firstPiece: 49, secondPiece: 61 },
+    { move: 'M2', firstPiece: 49, secondPiece: 61 },
+    { move: "M2'", firstPiece: 1, secondPiece: 13 },
+    { move: '2D2', firstPiece: 4, secondPiece: 7 },
+    { move: "2D2'", firstPiece: 7, secondPiece: 4 },
+    { move: '2U2', firstPiece: 11, secondPiece: 8 },
+    { move: 'E2', firstPiece: 8, secondPiece: 11 },
+    { move: "E2'", firstPiece: 11, secondPiece: 8 },
+    { move: "2U2'", firstPiece: 8, secondPiece: 11 },
+    { move: '2U2', firstPiece: 11, secondPiece: 8, mark: { finger: 'middle' as const } },
+    { move: "2U2'", firstPiece: 8, secondPiece: 11, mark: { finger: 'middle' as const } },
+    { move: "2R2'", firstPiece: 50, secondPiece: 62, mark: { contact: 'nail' as const } },
+    { move: '2L2', firstPiece: 49, secondPiece: 61, mark: { contact: 'nail' as const } },
+  ])('maintains the driving contacts and handoff through $move ($mark)', async spec => {
     const cube = new Cube(4), rig = new HandsRig();
     try {
       const turns = cube.table.convert(new TwistAction(spec.move));
-      const axis = turns[0].group.axis;
-      if (axis !== 'y' && axis !== 'z') throw new Error(spec.move);
+      const axis = turns[0].group.axis as Axis;
       const layers = turns.map(t => t.group.layer), dir = turns[0].twist < 0 ? -1 : 1;
+      const lower = axis === 'y' && layers.length === 1 && layers[0] === 1;
+      const ringRelay = axis === 'x' || lower;
+      const first = ringRelay ? 'ring' : 'index', second = ringRelay ? 'pinky' : 'middle';
+      const nailRelay = axis === 'x' && dir < 0;
+      const firstNormal = nailRelay ? 'y' : 'z';
+      const secondNormal = axis === 'x' ? (nailRelay ? 'z' : 'y') : 'x';
       const quarters = Math.abs(turns[0].twist);
-      const side = dir === 1 ? 'R' : 'L', opposite = side === 'R' ? 'L' : 'R';
+      const rightHand = axis === 'x' ? layers[0] === 2 : dir === 1;
+      const side = rightHand ? 'R' : 'L', opposite = rightHand ? 'L' : 'R';
       const { x, y, z } = cube.table.groups;
       rig.attachCube({ order: 4, table: { groups: { x, y, z } } });
       rig.setEnabled(true);
@@ -238,13 +431,14 @@ describe.skipIf(!existsSync(asset(1)) || !existsSync(asset(-1)))('four-layer MAN
       const support = new FingerSurfaceSampler(frame.models[opposite]);
       const toPiece = new THREE.Matrix4(), toCube = cube.matrix.clone().invert();
       const tangents = { x: ['y', 'z'], y: ['x', 'z'], z: ['x', 'y'] } as const;
-      const stickerGap = (sampler: FingerSurfaceSampler, finger: 'index' | 'middle' | 'thumb', piece: number,
+      const stickerGap = (sampler: FingerSurfaceSampler, finger: keyof typeof model.fingers, piece: number,
         normal: 'x' | 'y' | 'z', sign: number) => {
         cube.instancedRenderer.getCubeletRenderMatrix(piece, toPiece);
         toPiece.invert().multiply(toCube);
         const [u, v] = tangents[normal];
         let gap = Infinity;
-        for (const { point, pad } of sampler.samplePoints(finger)) {
+        const samples = nailRelay && sampler === driver ? nailPoints(model, finger, new THREE.Matrix4(), true) : sampler.samplePoints(finger);
+        for (const { point, pad } of samples) {
           if (!pad) continue;
           point.applyMatrix4(toPiece);
           gap = Math.min(gap, Math.hypot(point[normal] - sign * 32,
@@ -252,12 +446,18 @@ describe.skipIf(!existsSync(asset(1)) || !existsSync(asset(-1)))('four-layer MAN
         }
         return gap;
       };
-      const checkClearance = (phase: string) => {
-        const indexFaces = fingerFaces(driver, model, 'index');
-        const fingerPoints = new Set(indexFaces.flatMap(({ triangle: t }) => [t.a, t.b, t.c]));
-        const middleFaces = fingerFaces(driver, model, 'middle');
-        for (const { triangle: t } of middleFaces) { fingerPoints.add(t.a); fingerPoints.add(t.b); fingerPoints.add(t.c); }
-        expect(new FingerObstacle(indexFaces).intersections(middleFaces), `finger crossing at ${phase}`).toBe(0);
+      const checkClearance = (phase: string, checkNeighbor = false) => {
+        const firstFaces = fingerFaces(driver, model, first);
+        const fingerPoints = new Set(firstFaces.flatMap(({ triangle: t }) => [t.a, t.b, t.c]));
+        const secondFaces = fingerFaces(driver, model, second);
+        for (const { triangle: t } of secondFaces) { fingerPoints.add(t.a); fingerPoints.add(t.b); fingerPoints.add(t.c); }
+        expect(new FingerObstacle(firstFaces).intersections(secondFaces), `finger crossing at ${phase}`).toBe(0);
+        if (checkNeighbor) {
+          const neighbors = nailRelay || lower ? ['middle', 'index', 'thumb'] as const : [axis === 'x' ? 'middle' : 'ring'] as const;
+          const moving = new FingerObstacle(nailRelay || lower ? [...firstFaces, ...secondFaces] : axis === 'x' ? firstFaces : secondFaces);
+          for (const neighbor of neighbors)
+            expect(moving.intersections(fingerFaces(driver, model, neighbor)), `${neighbor} crossing at ${phase}`).toBe(0);
+        }
         const point = new THREE.Vector3();
         let depth = 0;
         for (const id of cube.initials.keys()) {
@@ -268,7 +468,7 @@ describe.skipIf(!existsSync(asset(1)) || !existsSync(asset(-1)))('four-layer MAN
         }
         expect(depth, `driving skin or nail inside cubelet at ${phase}`).toBeLessThanOrEqual(.1);
       };
-      if (spec.middle !== undefined) {
+      if (!spec.mark && axis === 'y' && layers.length === 1 && !lower && spec.secondPiece !== undefined) {
         // An actual pointer drag has no target angle or queued half-turn hint.
         // Start from rest, cross the handoff, then drag back across it.
         for (let i = 0; i < 45; i++) rig.tick(16);
@@ -279,8 +479,8 @@ describe.skipIf(!existsSync(asset(1)) || !existsSync(asset(-1)))('four-layer MAN
           rig.tick(16);
           expect(frame.active?.gesture).toMatchObject({ hand: side, finger: 'index', finger2: 'middle' });
           if (deg >= 85) {
-            const gap = deg > 90 ? stickerGap(driver, 'middle', spec.middle, 'x', -dir)
-              : stickerGap(driver, 'index', spec.index, 'z', -1);
+            const gap = deg > 90 ? stickerGap(driver, 'middle', spec.secondPiece, 'x', -dir)
+              : stickerGap(driver, 'index', spec.firstPiece, 'z', -1);
             expect(gap, `pointer drag at ${deg}°`).toBeLessThan(2.5);
           }
         }
@@ -294,22 +494,42 @@ describe.skipIf(!existsSync(asset(1)) || !existsSync(asset(-1)))('four-layer MAN
         cube.reset();
       }
       for (let i = 0; i < 24; i++) rig.tick(16);
-      for (let i = 0; i < 120 && rig.prepareTwist(axis, layers, dir, quarters); i++) rig.tick(16);
-      expect(rig.prepareTwist(axis, layers, dir, quarters)).toBe(false);
+      const prepare = () => rig.prepareTwist(axis, layers, dir, quarters, false, undefined, false, spec.mark);
+      for (let i = 0; i < 120 && prepare(); i++) rig.tick(16);
+      expect(prepare()).toBe(false);
       rig.tick(0);
       for (const { group } of turns) group.drag();
       const degrees = Array.from({ length: 360 * quarters + 1 }, (_, i) => i / 4);
       if (quarters === 2) degrees.push(150, 105, 95, 91, 90, 89, 85, 75, 100, 145, 180);
+      const joints = ([first, second] as const).flatMap(name => {
+        const f = model.fingers[name];
+        return [f.meta!, f.root, f.mid, f.tip];
+      });
+      const previous = joints.map(j => j.quaternion.clone());
+      let last = -1;
       for (const deg of degrees) {
         for (const { group } of turns) group.angle = dir * THREE.MathUtils.degToRad(deg || .02);
         rig.tick(16);
-        expect(frame.active?.gesture).toMatchObject({ kind: 'flick', hand: side, finger: 'index',
-          ...(spec.middle !== undefined && { finger2: 'middle' }) });
+        expect(frame.active?.gesture).toMatchObject({ kind: 'flick', hand: side, finger: first,
+          ...(spec.secondPiece !== undefined && { finger2: second }) });
+        if (ringRelay) {
+          checkFlexionLimits(model.fingers.ring);
+          checkFlexionLimits(model.fingers.pinky);
+        }
+        if (quarters === 2 && deg - last === .25 && (ringRelay || deg >= 80 && deg <= 110)) {
+          const limit = axis === 'x' ? 6 : 10;
+          for (const [i, joint] of joints.entries()) {
+            const speed = THREE.MathUtils.radToDeg(joint.quaternion.angleTo(previous[i])) / .25;
+            expect(speed, `${spec.move} joint ${i} at ${deg}°`).toBeLessThan(limit);
+          }
+        }
+        joints.forEach((joint, i) => previous[i].copy(joint.quaternion));
+        last = deg;
         if (deg <= (axis === 'z' ? 70 : 90))
-          expect(stickerGap(driver, 'index', spec.index, 'z', -1), `index at ${deg}°`).toBeLessThan(2.5);
-        if (spec.middle !== undefined && deg >= 90)
-          expect(stickerGap(driver, 'middle', spec.middle, 'x', -dir), `middle at ${deg}°`).toBeLessThan(2.5);
-        checkClearance(`${deg}°`);
+          expect(stickerGap(driver, first, spec.firstPiece, firstNormal, -1), `${first} at ${deg}°`).toBeLessThan(2.5);
+        if (spec.secondPiece !== undefined && deg >= 90)
+          expect(stickerGap(driver, second, spec.secondPiece, secondNormal, axis === 'x' ? 1 : -dir), `${second} at ${deg}°`).toBeLessThan(2.5);
+        checkClearance(`${deg}°`, spec.secondPiece !== undefined);
         if (spec.anchors) {
           expect(stickerGap(support, 'thumb', spec.anchors[0], 'z', 1), `fixed thumb at ${deg}°`).toBeLessThan(2.5);
           const back = axis === 'z';
@@ -318,9 +538,20 @@ describe.skipIf(!existsSync(asset(1)) || !existsSync(asset(-1)))('four-layer MAN
         }
       }
       for (const { group } of turns) group.drop();
-      for (let ms = 16; ms <= 320; ms += 4) {
-        rig.tick(ms === 16 ? 16 : 4);
-        checkClearance(`release +${ms} ms`);
+      const startMs = ringRelay ? 0 : 16;
+      for (let ms = startMs; ms <= 320; ms += 4) {
+        rig.tick(ms === startMs ? startMs : 4);
+        if (nailRelay || lower) {
+          checkFlexionLimits(model.fingers.ring);
+          checkFlexionLimits(model.fingers.pinky);
+          joints.forEach((joint, i) => {
+            const step = joint.quaternion.angleTo(previous[i]);
+            if (ms === 0) expect(step, 'first release frame').toBeLessThan(1e-5);
+            else expect(THREE.MathUtils.radToDeg(step), `release joint ${i} at ${ms} ms`).toBeLessThan(8);
+            previous[i].copy(joint.quaternion);
+          });
+        }
+        checkClearance(`release +${ms} ms`, ringRelay);
       }
     } finally { rig.dispose(); cube.dispose(); }
   });

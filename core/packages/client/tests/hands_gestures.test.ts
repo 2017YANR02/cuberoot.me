@@ -5,10 +5,50 @@
  */
 import { describe, expect, it } from 'vitest';
 import * as THREE from 'three';
-import { classifyHandGesture, classifyLayers, gripQuat, simulateGrips, type HandGripNames } from '@/app/[lang]/sim/engine/hands/handsRig';
+import Cube from '@cuberoot/puzzle-render-core/engine/nxn/cube';
+import { TwistAction } from '@cuberoot/puzzle-render-core/engine/nxn/twister';
+import { gripNames, moves } from '@/app/[lang]/sim/grips/catalog';
+import { pushRules } from '@/lib/push-notation';
+import { planHomeStroke, gestureForLayers, classifyHandGesture, classifyLayers, gripQuat, simulateGrips, type HandGripNames } from '@/app/[lang]/sim/engine/hands/handsRig';
 
 const BOTH_HOME: HandGripNames = { R: 'home', L: 'home' };
 const R_DOWN: HandGripNames = { R: 'down', L: 'home' };
+
+it('uses the seated index stroke after either hand regrips for a four-layer inner upper turn', () => {
+  for (const dir of [1, -1] as const) {
+    const hand = dir === 1 ? 'R' : 'L';
+    for (const entry of gripNames.filter(name => name !== 'home')) {
+      const stroke = planHomeStroke(4, { ...BOTH_HOME, [hand]: entry }, 'y', [2], dir, 1);
+      expect(stroke?.grip).toBe('home');
+      expect(stroke?.gesture).toMatchObject({ kind: 'flick', hand, finger: 'index', style: 'indexHook' });
+    }
+  }
+});
+
+it('selects the front half-turn relay independently of either entry wrist across the three-order atlas', () => {
+  const cube = new Cube(3);
+  try {
+    expect(gripNames.length ** 2 * moves.length).toBe(1800);
+    for (const move of moves) {
+      const turns = cube.table.convert(new TwistAction(move));
+      const [{ group, twist }] = turns;
+      for (const L of gripNames) for (const R of gripNames) {
+        const stroke = planHomeStroke(3, { L, R }, group.axis as 'x' | 'y' | 'z', turns.map(t => t.group.layer),
+          twist > 0 ? 1 : -1, Math.abs(twist));
+        if (/^Fw?2'?$/.test(move)) {
+          expect(stroke?.bearing?.center.toArray()).toEqual([move.endsWith("'") ? -64 : 64, 96, 64]);
+          expect(stroke).toMatchObject({ grip: 'down', gesture: {
+            kind: 'flick', hand: move.endsWith("'") ? 'L' : 'R', finger: 'index', finger2: 'middle', style: 'downPush',
+          } });
+        } else if (/^[BD]w?2'?$/.test(move)) {
+          expect(stroke?.gesture).toMatchObject({ hand: move.endsWith("'") ? 'R' : 'L', finger: 'pinky', finger2: 'ring' });
+        } else if (/^[RLxyz]/.test(move)) {
+          expect(stroke).toBeUndefined();
+        }
+      }
+    }
+  } finally { cube.dispose(); }
+});
 
 describe('classifyLayers', () => {
   it('二阶单层按外层用指，两层同转用双手抱转', () => {
@@ -211,8 +251,21 @@ describe('classifyHandGesture', () => {
     expect(classifyHandGesture('y', 'high', -1, BOTH_HOME, { push: true }))
       .toEqual({ kind: 'flick', hand: 'R', finger: 'index', style: 'upPush' }); // U'p
     expect(classifyHandGesture('y', 'high', 1, BOTH_HOME, { push: true }))
-      .toEqual({ kind: 'flick', hand: 'R', finger: 'index', style: 'indexHook' });   // Up 未编排 → 回落 U 默认
+      .toEqual({ kind: 'flick', hand: 'L', finger: 'index', style: 'upPush' }); // Up
     expect(classifyHandGesture('z', 'low', 1)).toEqual({ kind: 'flick', hand: 'R', finger: 'middle' }); // B' 非标准握回落中指
+  });
+
+  it.each([2, 4])('maps only marked outer quarter turns from home to the four push gestures on %i layers', order => {
+    const push = { push: true, quarters: 1 };
+    for (const rule of pushRules) {
+      const layer = rule.layer === 'low' ? 0 : order - 1;
+      const gesture = gestureForLayers('y', [layer], rule.dir, BOTH_HOME, push, order);
+      expect(gesture).toEqual({ kind: 'flick', hand: rule.hand, finger: rule.finger,
+        style: rule.layer === 'low' ? 'lowerPush' : 'upPush' });
+      expect(gestureForLayers('y', [layer], rule.dir, BOTH_HOME, { ...push, quarters: 2 }, order)).not.toEqual(gesture);
+      expect(gestureForLayers('y', [layer], rule.dir, { R: 'up', L: 'home' }, push, order)).not.toEqual(gesture);
+      expect(gestureForLayers('y', [0, 1], rule.dir, BOTH_HOME, push, order)).not.toEqual(gesture);
+    }
   });
 
   it('左中右下:F = 右食指下拨,F2 连拨食指→中指(FINGERTRICKS §4.3)', () => {

@@ -122,7 +122,7 @@ export class UContactRecorder {
     return structuredClone({
       version: 4, enabled: this.enabled, ready: this.rig?.getLoadState().hands === 'ready', error: this.error,
       scope: 'all observed hand grip states; 3x3 prepared single right-index U contact checkpoints in every grip, including home/up/down/half combinations; no drag, U2, U-prime, push or pin',
-      gestureMeaning: 'preparedGesture is the selected motion, not a calibration verdict; both-home U uses hook; right-up single U uses the rotated topPush index path, also reached through anticipated R U; other grips use the unstyled sweep',
+      gestureMeaning: 'preparedGesture is the selected motion, not a calibration verdict; home right-index U uses indexHook, including a lower right hand temporarily seated opposite an upper left hand; right-up single U uses the rotated topPush index path',
       gripStateMeaning: 'home/up/down/half or null for unclassified orientation; grips are logical bases/targets, not proof of arrival; inspect hands.phase and actual root transforms. grip-request/grip-set transforms still describe the last applied pose until the next frame',
       units: 'cube-local units (cubie pitch 64)',
       geometry: 'ideal 64-unit cubie boxes and nominal sticker rectangles; excludes sticker thickness, rounded corners and visible-material details',
@@ -198,7 +198,10 @@ export class UContactRecorder {
     }
     this.lastGripState = state;
     if (frame.event === 'grip-request' || frame.event === 'grip-set') {
-      this.contactTrace.reset(); this.interrupt('grip-changed'); return;
+      this.contactTrace.reset();
+      if (frame.gripRequest?.reason !== 'stroke-return' || this.active?.record.status !== 'returning')
+        this.interrupt('grip-changed');
+      return;
     }
     if (['reset', 'disabled', 'dispose'].includes(frame.event)) { this.contactTrace.reset(); this.interrupt(frame.event); return; }
     const cube = this.getCube();

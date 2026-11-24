@@ -48,6 +48,22 @@ export class FingerSurfaceSampler {
       return { vertex: index, point, pad: distal && point.clone().applyMatrix4(toTip).z >= 0 };
     });
   }
+  /** Area-weighted outward normal of the deformed skin at the bearing vertex. */
+  vertexNormal(name: FingerName, vertex: number, toCube: THREE.Matrix4): THREE.Vector3 | null {
+    const positions = this.mesh.geometry.getAttribute('position');
+    const matrix = toCube.clone().multiply(this.mesh.matrixWorld);
+    const surface = (i: number) => this.mesh.applyBoneTransform(i,
+      new THREE.Vector3().fromBufferAttribute(positions, i)).applyMatrix4(matrix);
+    const normal = new THREE.Vector3();
+    for (const face of this.faces.get(name)!) {
+      if (!face.includes(vertex)) continue;
+      const a = surface(face[0]);
+      normal.add(surface(face[1]).sub(a).cross(surface(face[2]).sub(a)));
+    }
+    // Reflection reverses triangle winding, but the palmar surface remains outward.
+    if (matrix.determinant() < 0) normal.negate();
+    return normal.lengthSq() > 0 ? normal.normalize() : null;
+  }
   sample(name: FingerName): SkinTriangle[] {
     this.model.group.updateWorldMatrix(true, false);
     this.model.group.updateMatrixWorld(true);

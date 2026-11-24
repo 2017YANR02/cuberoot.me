@@ -21,6 +21,7 @@ const FACE_AXES = [
 ] as const;
 
 export interface DiagnosticPiece {
+  order?: number;
   initial: number;
   matrix: THREE.Matrix4;
   faces: readonly number[];
@@ -53,20 +54,22 @@ export interface ContactMeasurement {
   padVertices: number;
 }
 
-function homePiece(initial: number): string {
-  const x = initial % 3, y = Math.floor(initial / 3) % 3, z = Math.floor(initial / 9);
-  return `${y === 2 ? 'U' : y === 0 ? 'D' : ''}${z === 2 ? 'F' : z === 0 ? 'B' : ''}${x === 2 ? 'R' : x === 0 ? 'L' : ''}`;
+function homePiece(initial: number, order: number): string {
+  const x = initial % order, y = Math.floor(initial / order) % order, z = Math.floor(initial / (order * order));
+  const last = order - 1;
+  return `${y === last ? 'U' : y === 0 ? 'D' : ''}${z === last ? 'F' : z === 0 ? 'B' : ''}${x === last ? 'R' : x === 0 ? 'L' : ''}`;
 }
 
 /** Maps an aligned physical sticker to its current slot; oblique faces have no six-face slot. */
-function slotOf(matrix: THREE.Matrix4, normal: THREE.Vector3): { currentFace: string | null; currentSlot: string | null } {
+function slotOf(matrix: THREE.Matrix4, normal: THREE.Vector3, order: number): { currentFace: string | null; currentSlot: string | null } {
   const f = FACE_AXES.find(a => normal.getComponent(a.axis) * a.sign > 1 - 1e-7);
   if (!f) return { currentFace: null, currentSlot: null };
   const center = new THREE.Vector3().setFromMatrixPosition(matrix);
-  const xyz = center.toArray().map(v => Math.round(v / SIZE) + 1);
-  if (xyz.some((v, i) => v < 0 || v > 2 || Math.abs(center.getComponent(i) / SIZE - (v - 1)) > 1e-6)
-    || xyz[f.axis] !== (f.sign > 0 ? 2 : 0)) return { currentFace: f.name, currentSlot: null };
-  return { currentFace: f.name, currentSlot: engineHomeSid(xyz[0] + 3 * xyz[1] + 9 * xyz[2], f.face, 3) };
+  const offset = (order - 1) / 2;
+  const xyz = center.toArray().map(v => Math.round(v / SIZE + offset));
+  if (xyz.some((v, i) => v < 0 || v >= order || Math.abs(center.getComponent(i) / SIZE - (v - offset)) > 1e-6)
+    || xyz[f.axis] !== (f.sign > 0 ? order - 1 : 0)) return { currentFace: f.name, currentSlot: null };
+  return { currentFace: f.name, currentSlot: engineHomeSid(xyz[0] + order * (xyz[1] + order * xyz[2]), f.face, order) };
 }
 
 export function readDiagnosticPieces(cube: Cube): DiagnosticPiece[] {
@@ -74,7 +77,7 @@ export function readDiagnosticPieces(cube: Cube): DiagnosticPiece[] {
   for (const c of cube.initials.values()) {
     const matrix = cube.instancedRenderer.getCubeletRenderMatrix(c.initial, new THREE.Matrix4());
     if (!matrix) continue;
-    pieces.push({ initial: c.initial, matrix,
+    pieces.push({ order: cube.order, initial: c.initial, matrix,
       faces: FACE_AXES.filter(f => c.initialColors[f.face] != null).map(f => f.face) });
   }
   return pieces;
@@ -156,13 +159,13 @@ export function measureIndexContact(points: FingerPoint[], pieces: DiagnosticPie
       const b = best.get(f.face);
       if (!b) continue;
       const normal = new THREE.Vector3().setComponent(f.axis, f.sign).transformDirection(piece.matrix);
-      const candidate = (b: NonNullable<ReturnType<typeof best.get>>): ContactCandidate => ({ pieceInitial: piece.initial, homePiece: homePiece(piece.initial), localFace: f.name,
-        stickerId: engineHomeSid(piece.initial, f.face, 3), gapU: b.gap, distanceToRectangleU: b.distance,
+      const candidate = (b: NonNullable<ReturnType<typeof best.get>>): ContactCandidate => ({ pieceInitial: piece.initial, homePiece: homePiece(piece.initial, piece.order ?? 3), localFace: f.name,
+        stickerId: engineHomeSid(piece.initial, f.face, piece.order ?? 3), gapU: b.gap, distanceToRectangleU: b.distance,
         edgeMarginU: b.margin, region: b.margin >= 0 ? 'nominal-sticker' : 'border-or-outside',
         contact: b.margin >= 0 && b.gap >= 0 && b.gap <= NEAR,
         witnessVertex: b.point.vertex, pointCube: b.point.point.toArray(), pointPiece: b.local.toArray(),
         uvU: [b.local.getComponent(f.u), b.local.getComponent(f.v)], normalCube: normal.toArray(),
-        ...slotOf(piece.matrix, normal) });
+        ...slotOf(piece.matrix, normal, piece.order ?? 3) });
       candidates.push(candidate(b));
       const touch = touching.get(f.face);
       if (touch) contacts.push(candidate(touch));
