@@ -12,29 +12,36 @@
 .download-app-icon { width: 72px; height: 72px; flex-shrink: 0; border-radius: 16px; }
 .download-page h1 { margin: 0 0 8px; font-size: clamp(1.7rem, 4vw, 2.25rem); font-weight: 650; letter-spacing: -.035em; line-height: 1.2; }
 .download-app-description { margin: 0; color: var(--muted-foreground); line-height: 1.6; }
-.download-platforms { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; align-items: start; }
-.download-platform-section { min-width: 0; padding: 24px; border: 1px solid var(--border-default); border-radius: 16px; }
+.download-platforms { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; align-items: stretch; }
+.download-device-first > .download-platform-section { max-width: 660px; }
+.download-device-first > .download-platform-section { padding: clamp(20px, 4vw, 36px); }
+.download-device-first > .download-platform-section h2 { font-size: 1.65rem; }
+.download-other { margin-top: 16px; }
+.download-other > summary { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; cursor: pointer; color: var(--muted-foreground); }
+.download-other .download-platforms { margin-top: 8px; }
+@media (min-width: 920px) {
+  .download-other .download-platforms { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+.download-platform-section { display: flex; flex-direction: column; min-width: 0; padding: 24px; border: 1px solid var(--border-default); border-radius: 16px; }
 .download-platform-header { display: flex; align-items: center; gap: 14px; }
 .download-platform-header > div { min-width: 0; }
 .download-platform-icon { display: block; flex-shrink: 0; color: var(--foreground); }
 .download-page h2 { margin: 0 0 4px; font-size: 1.35rem; font-weight: 600; }
-.download-requirement, .download-note, .download-version, .download-details { color: var(--muted-foreground); font-size: .85rem; line-height: 1.65; }
+.download-requirement, .download-version { color: var(--muted-foreground); font-size: .85rem; line-height: 1.65; }
 .download-requirement { margin: 0; }
-.download-primary-action { display: flex; align-items: center; min-height: 80px; margin-top: 20px; }
+.download-primary-action { --download-badge-height: 48px; display: flex; align-items: center; min-height: 72px; margin: 16px 0 8px; }
 /* Preserve the official badge's artwork, clear space and aspect ratio. */
-.download-play-badge { display: inline-flex; flex-shrink: 0; border-radius: 6px; }
-.download-play-badge img { display: block; width: 206px; height: auto; }
-.download-alternative { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 12px; min-height: 44px; margin-top: 8px; }
+.download-apple-badge, .download-play-badge { display: inline-flex; flex-shrink: 0; border-radius: 6px; }
+.download-apple-badge img { display: block; height: var(--download-badge-height); width: auto; }
+/* Both Play PNGs are 646 × 250. The English artwork starts 41px in and is
+   168px tall; the Chinese artwork reaches the left edge and is 192px tall. */
+.download-play-badge { --art-height: 168; margin-inline-start: calc(-41 * var(--download-badge-height) / var(--art-height)); }
+.download-play-badge:lang(zh) { --art-height: 192; margin-inline-start: 0; }
+.download-play-badge img { display: block; width: auto; height: calc(250 * var(--download-badge-height) / var(--art-height)); }
+.download-alternative { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 12px; min-height: 44px; margin-top: auto; }
 .download-text-link { display: inline-flex; align-items: center; gap: 8px; padding: 0; border: 0; background: transparent; color: var(--foreground); font: inherit; font-size: .9rem; line-height: 1.6; text-decoration: underline; text-decoration-color: var(--border-strong); text-underline-offset: 4px; cursor: pointer; }
 .download-text-link:hover { text-decoration-color: currentColor; }
-.download-alternative .download-version { font-size: .75rem; font-variant-numeric: tabular-nums; }
-.download-note { display: flex; align-items: flex-start; gap: 8px; min-height: 45px; margin: 16px 0; }
-.download-note > svg { flex-shrink: 0; margin-top: 3px; color: var(--faint-foreground); }
-.download-details { border-top: 1px solid var(--border-default); padding-top: 12px; }
-.download-details summary { display: flex; align-items: center; justify-content: space-between; gap: 8px; list-style: none; width: 100%; cursor: pointer; color: var(--foreground); padding: 4px 0; }
-.download-details summary::-webkit-details-marker { display: none; }
-.download-details summary::marker { content: ""; }
-.download-details p { margin: 12px 0 0; }
+.download-alternative .download-version { margin-inline-start: auto; font-size: .75rem; font-variant-numeric: tabular-nums; }
 .download-button {
   display: inline-flex;
   align-items: center;
@@ -53,7 +60,8 @@
 }
 .download-button:hover { border-color: var(--foreground); }
 .download-button:active:not(:disabled), .download-play-badge:active { transform: translateY(1px); }
-.download-button-primary { min-height: 56px; padding: 12px 22px; background: var(--primary); color: var(--primary-foreground); border-color: var(--primary); font-weight: 550; }
+.download-button-primary { min-height: 48px; padding: 12px 22px; background: var(--primary); color: var(--primary-foreground); border-color: var(--primary); font-weight: 550; }
+.download-primary-action .download-button-primary { box-sizing: border-box; height: var(--download-badge-height); min-height: var(--download-badge-height); padding: 0 14px; }
 .download-button-primary:hover { opacity: .88; }
 .download-page :is(a, button, summary):focus-visible, .download-button:focus-visible { outline: 2px solid var(--ring); outline-offset: 4px; }
 .download-button:disabled { color: var(--faint-foreground); background: var(--muted); border-color: var(--border-default); cursor: not-allowed; }

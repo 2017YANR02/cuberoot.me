@@ -2,6 +2,9 @@
 import { apiUrl } from './api-base';
 import { GOOGLE_PLAY_APP_URL } from '@cuberoot/shared/android-release';
 
+export const APP_STORE_URL = 'https://apps.apple.com/app/id6816632957';
+export const MAC_APP_STORE_WEB_URL = 'https://apps.apple.com/cn/app/cuberoot/id6816632957?platform=mac';
+export const MAC_APP_STORE_NATIVE_URL = 'macappstore://apps.apple.com/app/id6816632957?mt=12';
 export const GOOGLE_PLAY_URL = GOOGLE_PLAY_APP_URL;
 export const ANDROID_APK_URL: string | null = 'https://static.cuberoot.me/downloads/android/latest.apk';
 

@@ -1,4 +1,8 @@
-# Google Play download badges
+# Store download badges
+
+The App Store and Mac App Store SVGs are unchanged Apple artwork from the [Apple badge service](https://tools.applemediaservices.com/), using `/api/badges/download-on-the-{app-store|mac-app-store}/black/{en-us|zh-cn}`. See [Apple’s badge guidelines](https://developer.apple.com/app-store/marketing/guidelines/).
+
+## Google Play
 
 Official Google-provided artwork, downloaded unchanged on 2026-10-13:
 
