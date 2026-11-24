@@ -498,6 +498,25 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
 
   // ── Side panel (desktop rail / 非桌面整屏) ──────────────────────
   const [panelTab, setPanelTab] = useState<PanelTab | null>(null);
+  const resultsRailRef = useRef<HTMLElement>(null);
+  const [retainedPanelTab, setRetainedPanelTab] = useState<PanelTab | null>(null);
+  const visiblePanelTab = panelTab ?? (isDesktop && !prefersReducedMotion ? retainedPanelTab : null);
+  useEffect(() => {
+    if (panelTab) {
+      setRetainedPanelTab(panelTab);
+      return;
+    }
+    const transitions = resultsRailRef.current?.getAnimations() ?? [];
+    if (!transitions.length) {
+      setRetainedPanelTab(null);
+      return;
+    }
+    let cancelled = false;
+    void Promise.allSettled(transitions.map(animation => animation.finished)).then(() => {
+      if (!cancelled) setRetainedPanelTab(null);
+    });
+    return () => { cancelled = true; };
+  }, [panelTab, isDesktop, prefersReducedMotion]);
   const [solverOpenRequest, setSolverOpenRequest] = useState(0);
   const [solverBlocking, setSolverBlocking] = useState(false);
   const [historyOverlayOpen, setHistoryOverlayOpen] = useState(false);
@@ -3234,8 +3253,8 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
   };
 
   // ── Side-panel body ─────────────────────────────────────────────
-  const renderPanelBody = () => {
-    if (panelTab === 'times') {
+  const renderPanelBody = (tab: PanelTab) => {
+    if (tab === 'times') {
       return (
         <>
           <SessionSwitcher
@@ -3265,8 +3284,8 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
         </>
       );
     }
-    if (panelTab === 'stats') {
-      return <TimerStatisticsWorkspace compact view={panelTab} language={isZh ? 'zh' : 'en'} event={event} solves={solves}
+    if (tab === 'stats') {
+      return <TimerStatisticsWorkspace compact view={tab} language={isZh ? 'zh' : 'en'} event={event} solves={solves}
         labels={timerStatsPanelLabels(isZh ? 'zh' : 'en')} rollingColumns={settings.statsRollingColumns}
         onRollingColumnsChange={statsRollingColumns => updateSettings({statsRollingColumns})}
         sessionData={loadAllSessionData().map(item => item.session.id === getActiveSessionId() ? {...item, byEvent} : item)} activeSessionId={getActiveSessionId()}
@@ -3940,11 +3959,12 @@ children: <>
 
 
       </>}
-        history={panelTab && !liveSolutionPanel && (
-        <aside className={`timer-workspace-panel shell-panel${isDesktop ? ' shell-panel--rail' : ' shell-panel--sheet'}`}>
-          <TimerResultsTabs value={panelTab === 'stats' ? 'stats' : 'times'} onChange={setPanelTab}
+        history={visiblePanelTab && !liveSolutionPanel && (
+        <aside ref={resultsRailRef} inert={!panelTab} data-results-open={Boolean(panelTab)}
+          className={`timer-workspace-panel shell-panel${isDesktop ? ' shell-panel--rail' : ' shell-panel--sheet'}`}>
+          <TimerResultsTabs value={visiblePanelTab} onChange={setPanelTab}
             onClose={() => setPanelTab(null)} language={isZh ? 'zh' : 'en'} />
-          <div className="shell-panel-body timer-workspace-panel-body timer-results-panel-body">{renderPanelBody()}</div>
+          <div className="shell-panel-body timer-workspace-panel-body timer-results-panel-body">{renderPanelBody(visiblePanelTab)}</div>
         </aside>
       )}
       />

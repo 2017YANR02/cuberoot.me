@@ -347,6 +347,27 @@
   color: var(--card-foreground);
 }
 
+/* Anchor the full-width rail to the right edge while the timer gives it room. */
+@media (prefers-reduced-motion: no-preference) {
+  .timer-shell[data-wide-layout]:not([data-fold-axis]):has(> [data-results-open]):not(:has(.timer-workspace-divider.is-dragging)) {
+    transition: grid-template-columns 220ms ease-out;
+  }
+  .timer-shell[data-wide-layout]:not([data-fold-axis]) > .shell-panel--rail[data-results-open] {
+    justify-self: end;
+    width: min(var(--timer-right-dock-width, 360px), var(--timer-right-dock-limit, 100vw));
+    box-sizing: border-box;
+    transition: transform 220ms ease-out;
+  }
+  .timer-shell[data-wide-layout]:not([data-fold-axis]) > .shell-panel--rail[data-results-open='false'] {
+    transform: translateX(100%);
+  }
+  @starting-style {
+    .timer-shell[data-wide-layout]:not([data-fold-axis]) > .shell-panel--rail[data-results-open='true'] {
+      transform: translateX(100%);
+    }
+  }
+}
+
 /* 非桌面宽度下整屏展开,不再是 78dvh 的半截抽屉 —— 成绩表和图表本来就是打开它时
    唯一要看的东西,压在小半屏里一页看不到几行,会话切换器还得先滚。整屏之后遮罩
    全被盖住(点不到也看不见),所以那个元素连同它的 CSS 一起去掉了,关闭走标题栏
