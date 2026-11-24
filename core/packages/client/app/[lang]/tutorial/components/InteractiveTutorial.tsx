@@ -170,12 +170,14 @@ export type CourseChapter = {
 export type CoursePosition = { chapterIndex: number; sectionId: string };
 export type InteractiveTutorialProps = {
   title: Text;
+  centerContent?: boolean;
   headerAction?: ReactNode;
   puzzle: AlgPlayerPuzzle;
   orientation?: string;
   chapters: readonly CourseChapter[];
   basicsHref?: string;
   catalogHref?: string;
+  practiceEnabled?: boolean;
   location: CoursePosition;
   onNavigate: (position: CoursePosition, chapterChanged: boolean) => void;
 };
@@ -998,6 +1000,8 @@ function GuidedLesson({ section, task, puzzle, orientation, onQuizComplete }: {
   useEffect(() => { if (completion) onQuizComplete(); }, [completion, onQuizComplete]);
   const hasConceptHelp = Help && !(applying && task.hideHelpDuringAlgorithm);
   const hasAlgorithmHelp = applying && !completion;
+  const heading = tr(completion ? labels.completed : question.heading);
+  const alignmentHeading = preparing && !canRotateSideways && tr({ zh: '摆到位了', en: 'Aligned' });
   return <LessonPane layout="F" cube={
     <div ref={board} className="course-cube" role="group" tabIndex={0} aria-label={tr(section.title)} onKeyDown={keyInput}
       data-course-cube data-ready={ready} data-drag-enabled={ready} data-move-count={history.length} data-last-move={history.at(-1)}>
@@ -1022,8 +1026,10 @@ function GuidedLesson({ section, task, puzzle, orientation, onQuizComplete }: {
     </div>
   }>
     <InteractiveQuestionCopy sectionId={section.id} questions={steps} activeIndex={activeIndex} answer={done ? 'correct' : 'pending'}
-      heading={tr(completion ? labels.completed : settled && preparing && !canRotateSideways
-        ? { zh: '摆到位了', en: 'Aligned' } : question.heading)}
+      heading={alignmentHeading ? <span className="course-question-stable-heading">
+        <span aria-hidden={settled || undefined}>{heading}</span>
+        <span aria-hidden={!settled || undefined}>{alignmentHeading}</span>
+      </span> : heading}
       headingAction={(hasConceptHelp || hasAlgorithmHelp) && <>
         {hasAlgorithmHelp && <InteractiveQuestionHelpButton video onClick={() => setDemo(algorithm)}>
           {tr(algorithm.helpLabel)}
@@ -1037,6 +1043,7 @@ function GuidedLesson({ section, task, puzzle, orientation, onQuizComplete }: {
         })}
       </>}
       prompt={tr(completion ? task.completion : recognized && recognizing ? recognizing.explanation : question.prompt)}
+      reserveStatus={applying && !done}
       status={!revisableAlignment && !done ? feedbackMessage : undefined}
       action={<>
         {recognizing && !recognized && <div className="course-question-actions">
@@ -1199,7 +1206,7 @@ function UnfinishedQuizDialog({ onDismiss, onSkip }: { onDismiss: () => void; on
   </dialog>;
 }
 
-export default function InteractiveTutorial({ title, headerAction, puzzle, orientation, chapters, basicsHref, catalogHref, location, onNavigate }: InteractiveTutorialProps) {
+export default function InteractiveTutorial({ title, centerContent, headerAction, puzzle, orientation, chapters, basicsHref, catalogHref, practiceEnabled = true, location, onNavigate }: InteractiveTutorialProps) {
   const t = useT();
   const { chapterIndex: linkedChapter, sectionId: linkedSection } = location;
   const [chapterIndex, setChapter] = useState(linkedChapter);
@@ -1211,7 +1218,8 @@ export default function InteractiveTutorial({ title, headerAction, puzzle, orien
     completedRequest.current = Math.max(completedRequest.current, selection.request);
   }, [selection.request]);
   const currentPosition = useRef(location);
-  const [practice, setPractice] = useState(false);
+  const [practiceMode, setPractice] = useState(false);
+  const practice = practiceEnabled && practiceMode;
   const availableSections = (index: number) => chapters[index].sections.filter(section => !practice || 'exercise' in section);
   const sections = availableSections(chapterIndex);
   const sectionIndex = Math.max(0, sections.findIndex(section => section.id === selection.id));
@@ -1313,7 +1321,7 @@ export default function InteractiveTutorial({ title, headerAction, puzzle, orien
           {basicsHref && <AppLink href={basicsHref} prefetch={false} className="course-section-option">{tr(labels.basics)}</AppLink>}
         </SectionMenu>
       </div>}
-      {exerciseSection && <button type="button" className="course-control course-action" onClick={toggleExercise}>{tr(practice ? labels.review : labels.practice)}</button>}
+      {practiceEnabled && exerciseSection && <button type="button" className="course-control course-action" onClick={toggleExercise}>{tr(practice ? labels.review : labels.practice)}</button>}
       <button type="button" className="course-control" disabled={!next} aria-label={tr(labels.next)} onClick={requestNext}>
         <ArrowRight size={18} aria-hidden="true" />
       </button>
@@ -1322,7 +1330,7 @@ export default function InteractiveTutorial({ title, headerAction, puzzle, orien
   </div>;
 
   const catalogLabel = t(labels.catalog.zh, labels.catalog.en);
-  return <main className="tutorial-course" data-practice={practice}>
+  return <main className="tutorial-course" data-practice={practice} data-center-content={centerContent || undefined}>
     <header className="course-header" data-course-header>
       {catalogHref && <Tooltip content={catalogLabel}>{trigger =>
         <PageBackLink {...trigger} className="course-back-link" fallback={catalogHref} label={catalogLabel}

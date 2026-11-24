@@ -193,7 +193,7 @@ function yellowCase(id: string, title: CourseExercise['goal'], setup: string, al
         'Follow the arrows: up, hook, down, flick, up, double flick, down. You can do the double flick as two turns.'),
       steps: getLblAlgGroups('yellow-face', alg).flat().map(step => step.index === 3 ? { ...step, cue: flick } : step),
       demoSetup: `${setup} ${alignMove}`, demoTitle, helpLabel: watchLabel,
-      showHands: toFish ? 'left' : true,
+      showHands: true,
       hideDemoDetail: true,
     },
     completion: toFish ? fishCompletion : text('顶面全黄，白色底层仍然复原。', 'The top is all yellow and the white first layer is still solved.'),
@@ -235,6 +235,7 @@ function cornerCase(withEyes: boolean) {
         cue: cornerCues[index],
       })),
       demoSetup: withEyes ? `${setup} y` : setup, demoTitle: cornerDemoTitle, helpLabel: watchLabel,
+      showHands: true,
       finishingTurn: withEyes ? history => {
         const afterAlg = [setup, ...history, finalCornerAlg].join(' ');
         if (solved(sampleCubeState(afterAlg))) return;

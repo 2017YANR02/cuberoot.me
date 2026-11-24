@@ -10,6 +10,9 @@
 }
 .course-question-heading { display: grid; grid-template-columns: minmax(0, 1fr) fit-content(53%); align-items: center; gap: 8px; }
 .course-copy.course-question-copy .course-question-heading h2 { margin-block: 0; }
+.course-question-stable-heading { display: grid; }
+.course-question-stable-heading > span { grid-area: 1 / 1; }
+.course-question-stable-heading > [aria-hidden='true'] { visibility: hidden; }
 .course-question-heading-actions { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; min-inline-size: 0; }
 .course-question-heading-action {
   display: inline-flex;
@@ -152,6 +155,21 @@
   .course-demo-cues .course-demo-cue { min-block-size: 61px; }
 }
 .course-demo-dialog[data-long-alg] .course-demo-cues { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+@media (max-width: 579px), (orientation: portrait) {
+  .tutorial-course[data-center-content] .course-demo-panel:has(> .course-demo-body) {
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    max-block-size: calc(100dvh - 1.5rem - 2px);
+  }
+  .tutorial-course[data-center-content] .course-demo-body {
+    display: flex;
+    flex-direction: column;
+    min-block-size: 0;
+  }
+  .tutorial-course[data-center-content] .course-demo-stage { min-block-size: 7rem; }
+  .tutorial-course[data-center-content] .course-demo-guide { flex: none; align-self: stretch; }
+}
 @media (max-width: 579px) and (max-height: 420px) {
   .course-demo-panel { padding: 6px 8px 8px; }
   .course-demo-panel > header { margin-block-end: 3px; }
