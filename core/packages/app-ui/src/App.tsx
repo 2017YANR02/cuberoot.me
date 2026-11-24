@@ -2783,6 +2783,11 @@ export function App({ host, loadingMark }: { host: InstalledAppHost; loadingMark
       timerPhaseRef.current = 'running';
     },
   });
+  // A solve started without room for the rail stays focused when the iPad rotates.
+  const idleSolverWide = useRef(wideLayout);
+  useLayoutEffect(() => {
+    if (timer.machine.phase !== 'running') idleSolverWide.current = wideLayout;
+  }, [timer.machine.phase, wideLayout]);
   timingRunningRef.current = timer.machine.phase === 'running';
   const [notificationOpens] = useState(() => new NotificationOpenQueue());
   const [notificationRevision, refreshNotificationOpen] = useState(0);
@@ -4448,7 +4453,7 @@ export function App({ host, loadingMark }: { host: InstalledAppHost; loadingMark
   const shellHeight = contentRect ? Math.max(1, Math.min(contentRect.y + contentRect.height, shellBottom) - shellTop) : Math.max(1, shellBottom);
   const shellViewport = mobileShellViewportLayout(shellHeight);
   const solverHintPanel = activeEvent === '333' ? <Suspense fallback={<Spinner label={{ en: 'Loading', zh: '加载中' }[language]} />}>
-    <StageSolverDialog foldSelection={upperPaneVisible ? { open: foldSolverOpen, select: selectFoldSolver } : undefined} scramble={scramble} language={language}
+    <StageSolverDialog suppressRail={timer.machine.phase === 'running' && !idleSolverWide.current && !upperPaneVisible} foldSelection={upperPaneVisible ? { open: foldSolverOpen, select: selectFoldSolver } : undefined} scramble={scramble} language={language}
       sheetOpen={openOverlay === TIMER_OVERLAY_IDS.stageSolver} onSheetOpenChange={changeSolverSheet}
       onDismissChange={registerSolverDismiss} onBlockingChange={setSolverBlocking} autoOpenOnSolve={solverOpenRequest}
       onScrambleChange={sourceControlsEnabled && timerCanSwitchScramble(timer.machine.phase) ? value => updateManualScrambles(value, true) : undefined}

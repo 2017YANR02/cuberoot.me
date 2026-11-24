@@ -43,6 +43,7 @@ function SolverViewSelect({ view, onViewChange, language }: ViewProps & { langua
 }
 
 export interface TimerSolverPanelProps {
+  suppressRail?: boolean;
   scramble: string;
   onScrambleChange?(scramble: string): void;
   language: 'en' | 'zh';
@@ -200,6 +201,7 @@ export default function TimerSolverPanel({
   onBlockingChange,
   foldSelection,
   resultsPanelOpen = false,
+  suppressRail = false,
   autoCollapseOnReady = false,
   autoOpenOnSolve = 0,
   onOpen,
@@ -212,7 +214,8 @@ export default function TimerSolverPanel({
   const [navigationSlot, setNavigationSlot] = useState<HTMLSpanElement | null>(null);
   const tr = (text: { en: string; zh: string }) => text[language];
   const isPhone = useSyncExternalStore(phoneSubscribe, () => !!window.matchMedia?.('(max-width: 560px)').matches, () => false);
-  const isDesktopRail = useTimerWideLayout();
+  const wideLayout = useTimerWideLayout();
+  const isDesktopRail = wideLayout && !suppressRail;
 
   // 桌面左栏展开态(SSR 初值恒 false 避免 hydration mismatch,挂载后再同步)。默认展开:
   // 仅当用户此前手动收起过('0')才保持收起,其余情况(无记录 / '1')一律展开。
