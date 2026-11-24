@@ -313,8 +313,8 @@ function canonicalSessionResponse(response: SessionResp): SessionResp {
   return { ...session, ...(typeof response.isNew === 'boolean' ? { isNew: response.isNew } : {}) };
 }
 export const loginWca = (accessToken: string, signal?: AbortSignal) => postCanonicalSession('/v1/auth/exchange', { accessToken }, false, signal);
-export const completeIdentityChoice = (ticket: string, action: 'create' | 'link', expectedUid?: number, signal?: AbortSignal) =>
-  postCanonicalSession('/api/identity-choice', { operation: 'complete', ticket, action, ...(expectedUid === undefined ? {} : { expectedUid }) }, action === 'link', signal);
+export const completeIdentityChoice = (ticket: string, action: 'create' | 'link', expectedUid?: number, signal?: AbortSignal, acceptedPolicies?: true) =>
+  postCanonicalSession('/api/identity-choice', { operation: 'complete', ticket, action, acceptedPolicies, ...(expectedUid === undefined ? {} : { expectedUid }) }, action === 'link', signal);
 export const linkGoogle = (assertion: string) => post<{ ok: true; identities: Identity[] }>('/v1/auth/link/google', { assertion }, true);
 
 // 国内三方(微信/QQ/支付宝/抖音):授权码重定向流。浏览器跳授权页 → 回调拿 code → 交后端换身份。

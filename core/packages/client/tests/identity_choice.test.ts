@@ -98,7 +98,8 @@ describe('first identity account choice boundary', () => {
     await completeIdentityChoice(identityHandle, 'link', 42);
     expect(JSON.parse(fetcher.mock.calls[0][1].body)).toEqual({ operation: 'complete', ticket: identityHandle, action: 'link', expectedUid: 42 });
     expect(fetcher.mock.calls[0][1].headers.Authorization).toBe('Bearer existing-canonical-session');
-    await completeIdentityChoice(identityHandle, 'create');
+    await completeIdentityChoice(identityHandle, 'create', undefined, undefined, true);
+    expect(JSON.parse(fetcher.mock.calls[1][1].body).acceptedPolicies).toBe(true);
     expect(fetcher.mock.calls[1][1].headers.Authorization).toBeUndefined();
   });
   it('binds linking-code issuance and destructive merging to the confirmed account', async () => {
@@ -126,7 +127,7 @@ describe('first identity account choice boundary', () => {
   });
   it('rejects completion without a canonical UID instead of installing a legacy-shaped session', async () => {
     stubIdentityRequests(vi.fn().mockResolvedValue(new Response(JSON.stringify({ token: 'c'.repeat(20), user: { wcaId: '', name: 'Missing UID', avatar: '' } }))));
-    await expect(completeIdentityChoice(identityHandle, 'create')).rejects.toThrow('invalid account session');
+    await expect(completeIdentityChoice(identityHandle, 'create', undefined, undefined, true)).rejects.toThrow('invalid account session');
   });
   it('rejects a late existing-account response after the choice is canceled', async () => {
     let resolve!: (response: Response) => void;

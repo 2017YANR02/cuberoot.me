@@ -1,35 +1,27 @@
 .privacy-page {
-  width: min(100%, 760px);
-  margin: 0 auto;
-  padding: 48px 22px 80px;
+  max-width: 72rem;
+  margin-inline: auto;
+  padding: clamp(2rem, 6vw, 5rem) clamp(1.25rem, 4vw, 3rem) 6rem;
   color: var(--foreground);
 }
-
-.privacy-page h1 {
-  margin: 0;
-  font-size: clamp(2rem, 7vw, 3.4rem);
-  letter-spacing: -0.05em;
-}
-
-.privacy-page h2 {
-  margin: 36px 0 10px;
-  font-size: 1.1rem;
-}
-
-.privacy-page p,
-.privacy-page li {
-  line-height: 1.75;
-}
-
-.privacy-page ul {
-  padding-left: 1.25rem;
-}
-
-.privacy-page a {
-  color: var(--accent);
-}
-
-.privacy-updated {
-  color: var(--muted-foreground);
-  font-size: 0.85rem;
+.privacy-page header { margin-block: 1rem 2.5rem; }
+.privacy-page h1 { margin: 0 0 .8rem; font-size: clamp(2rem, 5vw, 3.25rem); line-height: 1.12; letter-spacing: -.04em; }
+.legal-meta { display: flex; flex-wrap: wrap; gap: .5rem 1.5rem; align-items: baseline; font-size: .9rem; color: var(--muted-foreground); }
+.privacy-page a { color: var(--accent); text-underline-offset: .2em; }
+.legal-layout { display: grid; grid-template-columns: minmax(12rem, 1fr) minmax(0, 3fr); gap: clamp(2rem, 5vw, 5rem); align-items: start; }
+.legal-layout nav { position: sticky; top: 5rem; max-height: calc(100dvh - 6rem); overflow: auto; padding-right: .5rem; }
+.legal-layout nav h2 { margin: 0 0 .6rem; font-size: 1rem; }
+.legal-layout ol { margin: 0; padding-inline-start: 1.6rem; font-size: .9rem; color: var(--muted-foreground); }
+.legal-layout nav a { display: block; padding-block: .3rem; color: inherit; text-decoration: none; }
+.legal-layout nav a:hover, .legal-layout nav a:focus-visible { color: var(--accent); text-decoration: underline; }
+.legal-layout article { max-width: 74ch; line-height: 1.8; overflow-wrap: anywhere; }
+.legal-layout article h2 { margin: 2.3rem 0 .65rem; font-size: clamp(1.2rem, 2vw, 1.5rem); line-height: 1.35; scroll-margin-top: 5rem; }
+.legal-layout article > :first-child { margin-top: 0; }
+.legal-layout article p { margin: 0 0 1rem; }
+.legal-layout article ul { padding-inline-start: 1.4rem; }
+.legal-layout article li + li { margin-top: .6rem; }
+@media (max-width: 48rem) {
+  .legal-layout { grid-template-columns: 1fr; gap: 2rem; }
+  .legal-layout nav { position: static; max-height: none; }
+  .legal-layout ol { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 1.7rem; }
 }

@@ -8,23 +8,14 @@ export type PrivacyNode = { zh: string; en: string } | {
   rel?: string;
   children: readonly PrivacyNode[];
 };
-export const PRIVACY_DOCUMENT: readonly PrivacyNode[] = [
+export const TERMS_SECTIONS: readonly PrivacyNode[] = [
   {
-    "tag": "h1",
+    "tag": "h2",
+    "id": "services",
     "children": [
       {
-        "zh": "CubeRoot 用户协议与隐私政策",
-        "en": "CubeRoot User Agreement and Privacy Policy"
-      }
-    ]
-  },
-  {
-    "tag": "p",
-    "className": "privacy-updated",
-    "children": [
-      {
-        "zh": "生效日期:2026-09-29",
-        "en": "Effective date: September 29, 2026"
+        "zh": "服务范围",
+        "en": "Services"
       }
     ]
   },
@@ -32,18 +23,18 @@ export const PRIVACY_DOCUMENT: readonly PrivacyNode[] = [
     "tag": "p",
     "children": [
       {
-        "zh": "本政策适用于 CubeRoot 网站、官方 App（Android、iOS、HarmonyOS、Windows 和 macOS）以及微信与抖音小程序，包括其中打开的 CubeRoot 在线页面。各端可用功能和系统权限可能不同；下文按功能说明数据处理，不表示每个平台都提供全部功能。App 的核心离线计时无需登录；账号、社区、教学、订单等在线功能会按你的操作处理相应数据。",
-        "en": "This policy covers the CubeRoot website, official apps for Android, iOS, HarmonyOS, Windows and macOS, and WeChat and Douyin Mini Programs, including CubeRoot online pages opened within them. Features and system permissions vary by platform; the descriptions below do not mean every platform offers every feature. Core offline timing works without sign-in. Account, community, teaching, order and other online features process the relevant data when you use them."
+        "zh": "上海魔方根科技有限公司通过 CubeRoot 网站、官方 App 和小程序提供计时、训练、比赛资料、社区及教学服务。你可以直接使用公开工具和 App 离线计时器。",
+        "en": "Shanghai CubeRoot Technology Co., Ltd. provides timing and training tools, competition information, community spaces and teaching services through the CubeRoot website, apps and Mini Programs. Public tools and the offline app timer are available without an account."
       }
     ]
   },
   {
     "tag": "h2",
-    "id": "user-agreement",
+    "id": "account",
     "children": [
       {
-        "zh": "用户协议",
-        "en": "User Agreement"
+        "zh": "账号注册与管理",
+        "en": "Your account"
       }
     ]
   },
@@ -51,18 +42,121 @@ export const PRIVACY_DOCUMENT: readonly PrivacyNode[] = [
     "tag": "p",
     "children": [
       {
-        "zh": "使用 CubeRoot 即表示你同意依法、合理地使用服务，不干扰服务运行、不侵害他人权益，也不利用服务发布违法或有害内容。登录不是使用公开工具和离线 App 计时器的前提；需要账号的功能由你主动登录后使用。功能可能因维护、平台规则或安全需要调整。你可以随时停止使用，并通过网站账号管理入口申请注销账号。",
-        "en": "By using CubeRoot, you agree to use the service lawfully and reasonably, without disrupting it, infringing others’ rights, or publishing unlawful or harmful content. Sign-in is not required for public tools or the offline app timer; you choose to sign in only for account features. Features may change for maintenance, platform rules, or security. You may stop using the service at any time and request account deletion through website account management."
+        "zh": "注册时，请阅读并同意本协议及《隐私政策》。请使用你有权使用的登录方式。已有账号的用户可以在验证身份后绑定新的登录方式，以便继续使用原账号的资料及会员权益。",
+        "en": "To register, read and agree to this agreement and the Privacy Policy. Use a sign-in method you control. If you already have an account, you can verify your identity and link a new sign-in method to keep your profile and membership."
       }
     ]
   },
+  {
+    "tag": "h2",
+    "id": "conduct",
+    "children": [
+      {
+        "zh": "社区内容与使用规范",
+        "en": "Community content and conduct"
+      }
+    ]
+  },
+  {
+    "tag": "p",
+    "children": [
+      {
+        "zh": "发布帖子、复盘、图片或教学资料时，请确认你有权分享这些内容，并尊重他人的著作权、肖像权和隐私。请依法使用服务，不得发布违法或有害内容、冒用他人身份或干扰服务运行。",
+        "en": "When posting discussions, reconstructions, images or teaching materials, make sure you have the right to share them. Respect other people’s copyright, likeness and privacy. Use the service lawfully. Do not publish unlawful or harmful content, impersonate others or disrupt the service."
+      }
+    ]
+  },
+  {
+    "tag": "h2",
+    "id": "membership",
+    "children": [
+      {
+        "zh": "会员与订阅",
+        "en": "Membership and subscriptions"
+      }
+    ]
+  },
+  {
+    "tag": "p",
+    "children": [
+      {
+        "zh": "购买前请核对账号、价格、有效期和续费方式。通过 Apple 或 Google Play 订阅的会员，请在相应商店管理或取消续费。卸载 App 或注销 CubeRoot 账号不会取消商店订阅。",
+        "en": "Before purchasing, check the account, price, membership period and renewal terms. Manage or cancel Apple and Google Play subscriptions in the store where you subscribed. Uninstalling the app or deleting your CubeRoot account does not cancel a store subscription."
+      }
+    ]
+  },
+  {
+    "tag": "h2",
+    "id": "deletion",
+    "children": [
+      {
+        "zh": "服务调整与账号注销",
+        "en": "Service changes and account deletion"
+      }
+    ]
+  },
+  {
+    "tag": "p",
+    "children": [
+      {
+        "zh": "我们可能因维护、平台规则或安全需要调整功能。你可以随时停止使用服务，或前往网站的账号管理申请注销。有关注销后公开内容、交易凭证及备份的处理，请查看《隐私政策》。",
+        "en": "Features may change for maintenance, platform requirements or security. You may stop using CubeRoot at any time or request deletion in account settings on the website. The Privacy Policy explains what happens to public content, transaction records and backups after deletion."
+      }
+    ]
+  },
+  {
+    "tag": "h2",
+    "id": "contact",
+    "children": [
+      {
+        "zh": "联系我们",
+        "en": "Contact"
+      }
+    ]
+  },
+  {
+    "tag": "p",
+    "children": [
+      {
+        "zh": "如对本协议有疑问，请发邮件至 ",
+        "en": "For questions about this agreement, email "
+      },
+      {
+        "tag": "a",
+        "href": "mailto:yrmfxc@gmail.com",
+        "children": [
+          {
+            "zh": "yrmfxc@gmail.com",
+            "en": "yrmfxc@gmail.com"
+          }
+        ]
+      },
+      {
+        "zh": "。",
+        "en": "."
+      }
+    ]
+  }
+];
+
+export const PRIVACY_INTRO: PrivacyNode = {
+  "tag": "p",
+  "children": [
+    {
+      "zh": "本政策适用于 CubeRoot 网站、官方 App（Android、iOS、HarmonyOS、Windows 和 macOS）以及微信与抖音小程序，包括其中打开的 CubeRoot 在线页面。各端可用功能和系统权限可能不同；下文按功能说明数据处理，不表示每个平台都提供全部功能。App 的核心离线计时无需登录；账号、社区、教学、订单等在线功能会按你的操作处理相应数据。",
+      "en": "This policy covers the CubeRoot website, official apps for Android, iOS, HarmonyOS, Windows and macOS, and WeChat and Douyin Mini Programs, including CubeRoot online pages opened within them. Features and system permissions vary by platform; the descriptions below do not mean every platform offers every feature. Core offline timing works without sign-in. Account, community, teaching, order and other online features process the relevant data when you use them."
+    }
+  ]
+};
+
+export const PRIVACY_SECTIONS: readonly PrivacyNode[] = [
   {
     "tag": "h2",
     "id": "privacy-policy",
     "children": [
       {
-        "zh": "隐私政策：App 处理的数据",
-        "en": "Privacy Policy: Data handled by the app"
+        "zh": "离线计时与设备权限",
+        "en": "Offline timing and device permissions"
       }
     ]
   },
@@ -82,7 +176,7 @@ export const PRIVACY_DOCUMENT: readonly PrivacyNode[] = [
         "tag": "li",
         "children": [
           {
-            "zh": "App 会读取网络连接状态,用于显示在线或离线状态以及安排比赛打乱刷新。",
+            "zh": "App 会读取网络连接状态，用于显示在线或离线状态以及安排比赛打乱刷新。",
             "en": "The app reads network connection status to show whether the device is online or offline and to schedule competition-scramble refreshes."
           }
         ]
@@ -91,7 +185,7 @@ export const PRIVACY_DOCUMENT: readonly PrivacyNode[] = [
         "tag": "li",
         "children": [
           {
-            "zh": "App 会自动从 CubeRoot API 下载公开的三阶比赛打乱,并在设备上最多缓存 50 条、最长 7 天。请求不会包含你的计时记录、备注或设置;服务器会处理并记录 IP 地址、设备或客户端类型等标准请求信息,用于提供服务、安全防护和故障诊断。",
+            "zh": "App 会自动从 CubeRoot API 下载公开的三阶比赛打乱，并在设备上最多缓存 50 条、最长 7 天。请求不会包含你的计时记录、备注或设置；服务器会处理并记录 IP 地址、设备或客户端类型等标准请求信息，用于提供服务、安全防护和故障诊断。",
             "en": "The app automatically downloads public 3×3 competition scrambles from the CubeRoot API and caches at most 50 on the device for up to seven days. Requests do not include your solve times, comments, or settings. The server processes and logs standard request information such as IP address and device or client type to deliver the service, protect it, and diagnose failures."
           }
         ]
@@ -109,7 +203,7 @@ export const PRIVACY_DOCUMENT: readonly PrivacyNode[] = [
         "tag": "li",
         "children": [
           {
-            "zh": "只有在你点击连接智能魔方后,App 才会请求附近设备或蓝牙权限,扫描并连接你选择的兼容魔方。蓝牙扫描不用于确定或记录位置;拒绝授权不会影响普通计时。",
+            "zh": "只有在你点击连接智能魔方后，App 才会请求附近设备或蓝牙权限，扫描并连接你选择的兼容魔方。蓝牙扫描不用于确定或记录位置；拒绝授权不会影响普通计时。",
             "en": "Only after you tap Connect smart cube does the app request Nearby devices or Bluetooth access to scan for and connect to a compatible cube you select. Bluetooth scanning is not used to determine or record location, and denying access does not affect ordinary timing."
           }
         ]
@@ -118,7 +212,7 @@ export const PRIVACY_DOCUMENT: readonly PrivacyNode[] = [
         "tag": "li",
         "children": [
           {
-            "zh": "连接期间,App 在设备本地读取并处理魔方名称、蓝牙地址、转动和状态,用于协议解密、显示打乱进度和自动计时。扫描列表与连接地址不会自动上传或写入成绩库,断开连接或关闭 App 后从运行内存清除。成绩会在本机保存转动记录、设备型号和名称;开启“记录姿态”时也保存该次还原的姿态轨迹,用于复盘。设备名称可能含设备标识。你可以在设置中关闭姿态记录,也可以删除对应成绩。",
+            "zh": "连接期间，App 在设备本地读取并处理魔方名称、蓝牙地址、转动和状态，用于协议解密、显示打乱进度和自动计时。扫描列表与连接地址不会自动上传或写入成绩库，断开连接或关闭 App 后从运行内存清除。成绩会在本机保存转动记录、设备型号和名称；开启“记录姿态”时也保存该次还原的姿态轨迹，用于复盘。设备名称可能含设备标识。你可以在设置中关闭姿态记录，也可以删除对应成绩。",
             "en": "While connected, the app processes the cube name, Bluetooth address, turns, and state locally for protocol decryption, scramble progress, and automatic timing. Scan results and connection addresses are not automatically uploaded or written to the solve database and are cleared from runtime memory after disconnection or app exit. Solves retain turns, device model and name locally; when Record orientation is enabled, they also retain that solve’s orientation track for replay. Device names may contain device identifiers. You can turn off orientation recording in Settings or delete the corresponding solve."
           }
         ]
@@ -132,7 +226,8 @@ export const PRIVACY_DOCUMENT: readonly PrivacyNode[] = [
         "zh": "纪录订阅与通知",
         "en": "Record subscriptions and notifications"
       }
-    ]
+    ],
+    "id": "notifications"
   },
   {
     "tag": "p",
@@ -218,7 +313,8 @@ export const PRIVACY_DOCUMENT: readonly PrivacyNode[] = [
         "zh": "App、小程序与账号数据",
         "en": "App, Mini Program, and account data"
       }
-    ]
+    ],
+    "id": "accounts"
   },
   {
     "tag": "ul",
@@ -227,7 +323,7 @@ export const PRIVACY_DOCUMENT: readonly PrivacyNode[] = [
         "tag": "li",
         "children": [
           {
-            "zh": "当 Apple 登录已开放且你主动选择登录或绑定时,服务器会验证 Apple 返回的凭据,保存 Apple 账号标识和加密的授权令牌,用于维护绑定和撤销授权。此流程不保存 Apple 返回的姓名或邮箱,也不按邮箱自动合并已有账号。解除 Apple 绑定或注销该账号时,需先完成 Apple 授权撤销;失败时会保留必要记录供你重试。",
+            "zh": "当 Apple 登录已开放且你主动选择登录或绑定时，服务器会验证 Apple 返回的凭据，保存 Apple 账号标识和加密的授权令牌，用于维护绑定和撤销授权。此流程不保存 Apple 返回的姓名或邮箱，也不按邮箱自动合并已有账号。解除 Apple 绑定或注销该账号时，需先完成 Apple 授权撤销；失败时会保留必要记录供你重试。",
             "en": "When Apple sign-in is available and you choose to sign in or link it, the server verifies Apple’s credentials and stores the Apple account identifier and encrypted authorization token to maintain the link and revoke authorization. This flow does not store the name or email returned by Apple or automatically merge accounts by email. Unlinking Apple or deleting that account requires successful Apple authorization revocation first; if it fails, necessary records are retained so you can retry."
           }
         ]
@@ -236,7 +332,7 @@ export const PRIVACY_DOCUMENT: readonly PrivacyNode[] = [
         "tag": "li",
         "children": [
           {
-            "zh": "只有在你主动登录或绑定账号时,App 才会在系统浏览器打开 CubeRoot 网站的统一账号流程,使用当时已启用的邮箱、手机号或第三方登录方式。登录回到 App 时使用短时、单次使用且与本次请求绑定的换票;账号绑定在独立浏览器会话中完成。长期会话凭证不会放入网址。",
+            "zh": "只有在你主动登录或绑定账号时，App 才会在系统浏览器打开 CubeRoot 网站的统一账号流程，使用当时已启用的邮箱、手机号或第三方登录方式。登录回到 App 时使用短时、单次使用且与本次请求绑定的换票；账号绑定在独立浏览器会话中完成。长期会话凭证不会放入网址。",
             "en": "Only when you choose to sign in or link an account does the app open CubeRoot’s shared account flow in the system browser, using the email, phone, or third-party sign-in methods currently enabled. Sign-in returns to the app through a short-lived, single-use handoff ticket bound to that request; account linking takes place in a separate browser session. Long-lived session tokens are never placed in URLs."
           }
         ]
@@ -254,7 +350,7 @@ export const PRIVACY_DOCUMENT: readonly PrivacyNode[] = [
         "tag": "li",
         "children": [
           {
-            "zh": "只有在你点击“微信登录”后,小程序才会调用微信登录能力,并将一次性登录凭证发送到 CubeRoot 服务器。服务器与微信交换账号标识,用同一开放平台下的 UnionID 识别你在网站与小程序中的同一账号。",
+            "zh": "只有在你点击“微信登录”后，小程序才会调用微信登录能力，并将一次性登录凭证发送到 CubeRoot 服务器。服务器与微信交换账号标识，用同一开放平台下的 UnionID 识别你在网站与小程序中的同一账号。",
             "en": "Only after you tap WeChat sign-in does the Mini Program request a one-time login code and send it to the CubeRoot server. The server exchanges it with WeChat and uses the UnionID under the same WeChat Open Platform account to recognize the same CubeRoot account across the website and Mini Program."
           }
         ]
@@ -263,7 +359,7 @@ export const PRIVACY_DOCUMENT: readonly PrivacyNode[] = [
         "tag": "li",
         "children": [
           {
-            "zh": "只有在你点击“抖音登录”后,抖音小程序才会将一次性登录凭证发送到 CubeRoot 服务器,由服务器换取抖音 openid。未绑定身份需由你明确选择创建账号或验证并绑定原账号,不会按昵称或其他资料猜测合并账号。",
+            "zh": "只有在你点击“抖音登录”后，抖音小程序才会将一次性登录凭证发送到 CubeRoot 服务器，由服务器换取抖音 openid。未绑定身份需由你明确选择创建账号或验证并绑定原账号，不会按昵称或其他资料猜测合并账号。",
             "en": "Only after you tap Douyin sign-in does the Douyin Mini Program send a one-time login code to the CubeRoot server, which exchanges it for a Douyin openid. An unlinked identity requires you to explicitly create an account or verify and link an existing one. Accounts are never merged by guessing from names or other profile data."
           }
         ]
@@ -272,7 +368,7 @@ export const PRIVACY_DOCUMENT: readonly PrivacyNode[] = [
         "tag": "li",
         "children": [
           {
-            "zh": "小程序不请求你的微信或抖音昵称和头像。微信首次未绑定时,你可以主动选择手机号实时验证授权。服务器向微信验证一次性凭证及所属小程序、当前微信用户,用取得的手机号查找原账号；你确认后才将手机号和微信绑定至同一账号。手机号未匹配时不会自动注册,也不会自动合并两个账号。拒绝或无法授权时可使用其他方式登录原账号,不影响公开工具和普通计时。抖音不请求手机号。",
+            "zh": "小程序不请求你的微信或抖音昵称和头像。微信首次未绑定时，你可以主动选择手机号实时验证授权。服务器向微信验证一次性凭证及所属小程序、当前微信用户，用取得的手机号查找原账号；你确认后才将手机号和微信绑定至同一账号。手机号未匹配时不会自动注册，也不会自动合并两个账号。拒绝或无法授权时可使用其他方式登录原账号，不影响公开工具和普通计时。抖音不请求手机号。",
             "en": "The Mini Programs do not request your WeChat or Douyin nickname or avatar. For an unlinked WeChat identity, you may choose real-time phone authorization. The server verifies the one-time credential, app and current WeChat user with WeChat, then uses the phone number to find an existing account. Phone and WeChat identities are linked to one account only after confirmation. No match never triggers automatic registration, and two accounts are never merged automatically. If authorization is declined or unavailable, other existing-account sign-in methods remain available; public tools and ordinary timing are unaffected. Douyin does not request a phone number."
           }
         ]
@@ -281,7 +377,7 @@ export const PRIVACY_DOCUMENT: readonly PrivacyNode[] = [
         "tag": "li",
         "children": [
           {
-            "zh": "未完成的微信手机号认证资料仅在服务器的短期认证记录中保留,15 分钟过期并定期清理；成功后只在原账号身份表保存必要的手机号与微信标识,直到换绑、解绑或注销按对应流程删除。小程序不持久化手机号授权码或待确认票据；登录后在本地保存 CubeRoot 会话凭证和账号资料,用于保持登录状态。",
+            "zh": "未完成的微信手机号认证资料仅在服务器的短期认证记录中保留，15 分钟过期并定期清理；成功后只在原账号身份表保存必要的手机号与微信标识，直到换绑、解绑或注销按对应流程删除。小程序不持久化手机号授权码或待确认票据；登录后在本地保存 CubeRoot 会话凭证和账号资料，用于保持登录状态。",
             "en": "Unfinished WeChat phone verification data is held only in short-lived server authentication records, expiring after 15 minutes with periodic cleanup. After completion, necessary phone and WeChat identifiers remain in the existing account identity table until replacement, unlinking or account deletion removes them through the corresponding flow. The Mini Program does not persist phone authorization codes or pending tickets; after sign-in it stores the CubeRoot session token and account profile locally to maintain the session."
           }
         ]
@@ -290,7 +386,7 @@ export const PRIVACY_DOCUMENT: readonly PrivacyNode[] = [
         "tag": "li",
         "children": [
           {
-            "zh": "小程序原生外壳不包含广告或分析 SDK,也不调用定位、摄像头、相册或通讯录权限。主动搜索智能魔方或外接计时器时才使用蓝牙；主动启动 Stackmat 音频计时时才请求麦克风授权,在本机解码且不上传音频,断开后停止采集。拒绝授权不影响普通计时。",
+            "zh": "小程序原生外壳不包含广告或分析 SDK，也不调用定位、摄像头、相册或通讯录权限。主动搜索智能魔方或外接计时器时才使用蓝牙；主动启动 Stackmat 音频计时时才请求麦克风授权，在本机解码且不上传音频，断开后停止采集。拒绝授权不影响普通计时。",
             "en": "The native Mini Program shell contains no advertising or analytics SDK and does not access location, camera, photo library, or contacts. Bluetooth is used only when you search for a smart cube or external timer. Starting Stackmat audio timing requests microphone permission for local decoding without uploading audio; collection stops on disconnect. Declining permission does not affect ordinary timing."
           }
         ]
@@ -299,7 +395,7 @@ export const PRIVACY_DOCUMENT: readonly PrivacyNode[] = [
         "tag": "li",
         "children": [
           {
-            "zh": "连接期间,小程序读取兼容魔方发送的转动、状态、电量和姿态数据,并通过仅保存在服务器内存中的短时中继实时交给网页计时器。扫描列表、蓝牙地址和实时魔方数据不会写入数据库;断开连接或会话结束后,中继状态会被清除。",
+            "zh": "连接期间，小程序读取兼容魔方发送的转动、状态、电量和姿态数据，并通过仅保存在服务器内存中的短时中继实时交给网页计时器。扫描列表、蓝牙地址和实时魔方数据不会写入数据库；断开连接或会话结束后，中继状态会被清除。",
             "en": "While connected, the Mini Program reads moves, cube state, battery level, and orientation sent by the compatible cube, then delivers them to the web timer through a short-lived relay held only in server memory. Scan results, Bluetooth addresses, and live cube data are not written to the database; relay state is cleared after disconnection or session end."
           }
         ]
@@ -313,7 +409,8 @@ export const PRIVACY_DOCUMENT: readonly PrivacyNode[] = [
         "zh": "网页内容与跨端登录",
         "en": "Web content and cross-platform sign-in"
       }
-    ]
+    ],
+    "id": "web-sign-in"
   },
   {
     "tag": "p",
@@ -331,7 +428,8 @@ export const PRIVACY_DOCUMENT: readonly PrivacyNode[] = [
         "zh": "在线功能收集的信息与用途",
         "en": "Information collected by online features and its uses"
       }
-    ]
+    ],
+    "id": "online-features"
   },
   {
     "tag": "ul",
@@ -399,7 +497,8 @@ export const PRIVACY_DOCUMENT: readonly PrivacyNode[] = [
         "zh": "请求日志、诊断与分析",
         "en": "Request logs, diagnostics and analytics"
       }
-    ]
+    ],
+    "id": "diagnostics"
   },
   {
     "tag": "p",
@@ -435,7 +534,8 @@ export const PRIVACY_DOCUMENT: readonly PrivacyNode[] = [
         "zh": "服务提供方与信息共享",
         "en": "Service providers and sharing"
       }
-    ]
+    ],
+    "id": "providers"
   },
   {
     "tag": "p",
@@ -453,7 +553,8 @@ export const PRIVACY_DOCUMENT: readonly PrivacyNode[] = [
         "zh": "AI 问答与质量监控",
         "en": "AI chat and quality monitoring"
       }
-    ]
+    ],
+    "id": "ai"
   },
   {
     "tag": "p",
@@ -480,7 +581,8 @@ export const PRIVACY_DOCUMENT: readonly PrivacyNode[] = [
         "zh": "服务器数据保留与管理",
         "en": "Server retention and controls"
       }
-    ]
+    ],
+    "id": "retention"
   },
   {
     "tag": "p",
@@ -507,7 +609,8 @@ export const PRIVACY_DOCUMENT: readonly PrivacyNode[] = [
         "zh": "会员购买与商店订阅",
         "en": "Membership purchases and store subscriptions"
       }
-    ]
+    ],
+    "id": "purchases"
   },
   {
     "tag": "p",
@@ -552,13 +655,14 @@ export const PRIVACY_DOCUMENT: readonly PrivacyNode[] = [
         "zh": "备份与删除",
         "en": "Backups and deletion"
       }
-    ]
+    ],
+    "id": "backups"
   },
   {
     "tag": "p",
     "children": [
       {
-        "zh": "只有在你主动导出时,App 才会创建 JSON 备份并交给系统分享或下载界面。App 不会自动上传备份。你可以删除活动记录中的单条成绩;可使用应用或系统提供的数据清除操作移除本地计时数据。卸载是否移除全部应用数据取决于平台；导出副本、系统备份和安全存储需分别管理。导出文件由你选择的位置或接收方保管,需要由你自行删除。",
+        "zh": "只有在你主动导出时，App 才会创建 JSON 备份并交给系统分享或下载界面。App 不会自动上传备份。你可以删除活动记录中的单条成绩；可使用应用或系统提供的数据清除操作移除本地计时数据。卸载是否移除全部应用数据取决于平台；导出副本、系统备份和安全存储需分别管理。导出文件由你选择的位置或接收方保管，需要由你自行删除。",
         "en": "The app creates a JSON backup only when you choose Export and hands it to the system share or download interface. Backups are not uploaded automatically. You can delete individual solves from the active history; use available app or system data-clearing controls to remove local timing data. Whether uninstalling removes all app data depends on the platform; exported copies, system backups and secure storage need separate management. You control and must delete any exported copies from their chosen destination or recipient."
       }
     ]
@@ -570,13 +674,14 @@ export const PRIVACY_DOCUMENT: readonly PrivacyNode[] = [
         "zh": "复盘分享",
         "en": "Replay sharing"
       }
-    ]
+    ],
+    "id": "replays"
   },
   {
     "tag": "p",
     "children": [
       {
-        "zh": "主动分享复盘时,生成的链接会包含该条成绩的打乱、时间、动作、设备名称、可用的姿态轨迹以及已确认的复盘还原步骤。链接接收方可以查看并再次转发这些数据;删除本机成绩不会撤回已分享链接或导出副本。App 不会自动分享复盘。",
+        "zh": "主动分享复盘时，生成的链接会包含该条成绩的打乱、时间、动作、设备名称、可用的姿态轨迹以及已确认的复盘还原步骤。链接接收方可以查看并再次转发这些数据；删除本机成绩不会撤回已分享链接或导出副本。App 不会自动分享复盘。",
         "en": "When you choose to share a replay, its link contains that solve’s scramble, time, turns, device name, available orientation track, and confirmed reconstruction lines. Recipients can view and forward these data; deleting the local solve does not revoke shared links or exported copies. The app does not share replays automatically."
       }
     ]
@@ -588,13 +693,14 @@ export const PRIVACY_DOCUMENT: readonly PrivacyNode[] = [
         "zh": "导入与本地恢复",
         "en": "Import and local recovery"
       }
-    ]
+    ],
+    "id": "imports"
   },
   {
     "tag": "p",
     "children": [
       {
-        "zh": "当你主动选择 JSON 文件导入时,App 只在设备上读取并校验该文件,然后把有效数据保存到 App 的本地数据库。替换前的有效数据会在本地保留为一次撤销恢复点,因此之后从活动记录删除的成绩仍可能存在于该恢复点中。使用一次“撤销导入”会删除恢复点;下一次成功导入会替换它;清除保存计时数据的本地数据库会将它一并删除；卸载是否清除该数据库取决于平台。导入文件和恢复点都不会由 App 上传。",
+        "zh": "当你主动选择 JSON 文件导入时，App 只在设备上读取并校验该文件，然后把有效数据保存到 App 的本地数据库。替换前的有效数据会在本地保留为一次撤销恢复点，因此之后从活动记录删除的成绩仍可能存在于该恢复点中。使用一次“撤销导入”会删除恢复点；下一次成功导入会替换它；清除保存计时数据的本地数据库会将它一并删除；卸载是否清除该数据库取决于平台。导入文件和恢复点都不会由 App 上传。",
         "en": "When you choose a JSON file to import, the app reads and validates it only on the device, then stores valid data in the app’s local database. Valid data replaced by the import is retained locally as a one-time undo recovery point, so a solve later deleted from the active history may still remain in that recovery point. Using Undo import deletes the recovery point, the next successful import replaces it, and clearing the local timing database removes it as well; whether uninstalling clears that database depends on the platform. Neither the imported file nor the recovery point is uploaded by the app."
       }
     ]
@@ -606,13 +712,14 @@ export const PRIVACY_DOCUMENT: readonly PrivacyNode[] = [
         "zh": "安全、退出与删除",
         "en": "Security, sign-out, and deletion"
       }
-    ]
+    ],
+    "id": "security"
   },
   {
     "tag": "p",
     "children": [
       {
-        "zh": "App 使用操作系统提供的应用隔离存储,并在导入或保存前校验数据结构和大小。你可以在 App 设置或小程序“我的”页退出并清除对应设备的本地会话;App 还提供网站统一账号管理与注销入口,不复制第二套账号删除流程。CubeRoot 无法控制设备本身、系统备份或你导出文件的安全性;请为设备设置锁屏并谨慎选择备份接收方。",
+        "zh": "App 使用操作系统提供的应用隔离存储，并在导入或保存前校验数据结构和大小。你可以在 App 设置或小程序“我的”页退出并清除对应设备的本地会话；App 还提供网站统一账号管理与注销入口，不复制第二套账号删除流程。CubeRoot 无法控制设备本身、系统备份或你导出文件的安全性；请为设备设置锁屏并谨慎选择备份接收方。",
         "en": "The app uses operating-system app-isolated storage and validates data structure and size before importing or saving it. You can sign out in app Settings or on the Mini Program Account page to clear that device’s local session. The app also links to the website’s single account-management and deletion flows instead of duplicating account deletion. CubeRoot cannot control the security of your device, operating-system backups, or exported files; use a device lock and choose backup recipients carefully."
       }
     ]
@@ -624,7 +731,8 @@ export const PRIVACY_DOCUMENT: readonly PrivacyNode[] = [
         "zh": "网站与第三方链接",
         "en": "Website and third-party links"
       }
-    ]
+    ],
+    "id": "websites"
   },
   {
     "tag": "p",
@@ -642,13 +750,14 @@ export const PRIVACY_DOCUMENT: readonly PrivacyNode[] = [
         "zh": "联系我们",
         "en": "Contact"
       }
-    ]
+    ],
+    "id": "contact"
   },
   {
     "tag": "p",
     "children": [
       {
-        "zh": "本 App 由商店页面列明的 CubeRoot 发布主体运营。如有隐私或支持问题,请发送邮件至 ",
+        "zh": "本 App 由商店页面列明的 CubeRoot 发布主体运营。如有隐私或支持问题，请发送邮件至 ",
         "en": "This app is operated by the CubeRoot publisher identified on its store listing. For privacy or support questions, email "
       },
       {
@@ -667,4 +776,14 @@ export const PRIVACY_DOCUMENT: readonly PrivacyNode[] = [
       }
     ]
   }
+];
+
+// The native Mini Program reader displays both documents offline.
+export const PRIVACY_DOCUMENT: readonly PrivacyNode[] = [
+  { tag: 'h1', children: [{ zh: 'CubeRoot 用户协议与隐私政策', en: 'CubeRoot User Agreement and Privacy Policy' }] },
+  { tag: 'p', children: [{ zh: '更新日期：2026-11-23', en: 'Updated November 23, 2026' }] },
+  ...TERMS_SECTIONS,
+  { tag: 'h2', children: [{ zh: '隐私政策', en: 'Privacy Policy' }] },
+  PRIVACY_INTRO,
+  ...PRIVACY_SECTIONS,
 ];

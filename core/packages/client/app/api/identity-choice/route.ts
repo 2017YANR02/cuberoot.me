@@ -42,6 +42,9 @@ export async function POST(request: Request): Promise<Response> {
     const path = body.operation === 'complete' ? '/v1/auth/identity/complete'
       : body.operation === 'preview' ? '/v1/auth/identity/link-code/preview' : null;
     if (!path) return result({ error: 'invalid operation' }, 400);
+    if (body.operation === 'complete' && body.action === 'create' && body.acceptedPolicies !== true) {
+      return result({ error: 'registration consent required' }, 400);
+    }
     const upstreamHeaders = new Headers({ 'Content-Type': 'application/json' });
     const authorization = request.headers.get('authorization');
     if (authorization?.startsWith('Bearer web-session:')) {

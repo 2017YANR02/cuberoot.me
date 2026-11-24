@@ -201,12 +201,13 @@ export const PAGE_META: Record<string, PageMetaEntry> = {
   'learn/[orgSlug]/students/[studentId]/feedback': { title: { zh: '课后反馈', en: 'Lesson Feedback' } },
   'learn/[orgSlug]/students/[studentId]/messages': { title: { zh: '消息', en: 'Messages' } },
   'learn/[orgSlug]/students/[studentId]/messages/[conversationId]': { title: { zh: '消息详情', en: 'Message Thread' } },
+  'terms': {
+    title: { zh: '用户协议', en: 'User Agreement' },
+    description: { zh: 'CubeRoot 账号、社区内容、会员订阅与服务使用条款。', en: 'Terms for CubeRoot accounts, community content, memberships and services.' },
+  },
   'privacy': {
-    title: { zh: '用户协议与隐私政策', en: 'User Agreement and Privacy Policy' },
-    description: {
-      zh: 'CubeRoot Android、iOS App 与微信小程序的数据处理、账号登录、备份、删除与联系说明。',
-      en: 'How the CubeRoot Android and iOS apps and WeChat Mini Program handle data, account sign-in, backups, deletion, and support requests.',
-    },
+    title: { zh: '隐私政策', en: 'Privacy Policy' },
+    description: { zh: '了解 CubeRoot 网站、App 和小程序如何处理数据，以及如何管理权限、备份和删除记录。', en: 'How CubeRoot handles data on the website, apps and Mini Programs, and how to manage permissions, backups and deletion.' },
   },
   // 'alg' 没有条目:/alg 不再是页面(next.config 直接 redirect 到 /alg/3x3),
   // 每个魔方页的标题由 alg/[puzzle]/layout.tsx 的 generateMetadata 逐个发。

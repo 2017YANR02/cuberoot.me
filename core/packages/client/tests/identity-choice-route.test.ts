@@ -54,7 +54,10 @@ describe('pending identity HttpOnly vault', () => {
   });
   it('keeps failed confirmations available and never sends browser cookies upstream', async () => {
     fetcher.mockResolvedValue(Response.json({ error: 'invalid target' }, { status: 409 }));
-    const response = await POST(request({ operation: 'complete', ticket: handle, action: 'create' }, { Cookie: identityCookie }));
+    const body = { operation: 'complete', ticket: handle, action: 'create' };
+    expect((await POST(request(body, { Cookie: identityCookie }))).status).toBe(400);
+    expect(fetcher).not.toHaveBeenCalled();
+    const response = await POST(request({ ...body, acceptedPolicies: true }, { Cookie: identityCookie }));
     expect(response.status).toBe(409);
     expect(response.headers.get('set-cookie')).toBeNull();
     expect(fetcher.mock.calls[0][1].headers.get('cookie')).toBeNull();

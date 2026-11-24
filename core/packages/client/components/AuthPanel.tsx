@@ -1,4 +1,5 @@
 'use client';
+import RegistrationConsent from '@/components/account/RegistrationConsent';
 import MoreToggle from '@/components/MoreToggle';
 import '@cuberoot/timer-ui/compact-select.css';
 
@@ -803,14 +804,14 @@ export function IdentityChoicePanel({ pending, firstPartyOnly = false, onDone, o
     const uid = getAuthUser()?.uid;
     if (uid) updateIdentityChoice(pending.ticket, { stage: 'confirm', expectedUid: uid, otherIdentityRejected: false });
   };
-  const complete = async (action: 'create' | 'link') => {
+  const complete = async (action: 'create' | 'link', acceptedPolicies?: true) => {
     if (request.current || getIdentityChoice()?.ticket !== pending.ticket) return;
     const expectedUid = action === 'link' ? pending.expectedUid : undefined;
     if (action === 'link' && (!expectedUid || getAuthUser()?.uid !== expectedUid)) return;
     const controller = new AbortController();
     request.current = controller; setBusy(true); setError('');
     try {
-      const result = await completeIdentityChoice(pending.ticket, action, expectedUid, controller.signal);
+      const result = await completeIdentityChoice(pending.ticket, action, expectedUid, controller.signal, acceptedPolicies);
       if (controller.signal.aborted || getIdentityChoice()?.ticket !== pending.ticket) return;
       if (action === 'link' && (getAuthUser()?.uid !== expectedUid || result.user.uid !== expectedUid)) {
         throw new Error(t('当前账号已更改，请重新确认。', 'Your account changed. Confirm the account again.'));
@@ -836,7 +837,7 @@ export function IdentityChoicePanel({ pending, firstPartyOnly = false, onDone, o
       <h2 className="auth-title">{t('你有 CubeRoot 账号吗？', 'Do you have a CubeRoot account?')}</h2>
       <p className="auth-hint">{t('保留原账号的会员和资料。', 'Keep your existing membership and profile.')}</p>
       <button type="button" className="auth-primary" disabled={busy} onClick={() => user?.uid ? authenticated() : updateIdentityChoice(pending.ticket, { stage: 'authenticate' })}>{t('登录已有账号', 'Sign in to an existing account')}</button>
-      <button type="button" className="auth-textbtn" disabled={busy} onClick={() => void complete('create')}>{t('创建新账号', 'Create a new account')}</button>
+      <RegistrationConsent key={pending.ticket} busy={busy} onCreate={accepted => void complete('create', accepted)} />
     </> : pending.stage === 'authenticate' ? <>
       <p className="auth-hint">{t(`请用原来的登录方式验证账号，再绑定${providerName}。不会创建新账号。`, `Sign in with a method already linked to your account, then link ${providerName}. No new account will be created.`)}</p>
       {pending.otherIdentityRejected && <p className="auth-error" role="alert">{t('这个登录方式尚未绑定账号，请使用原来绑定的方式。', 'This sign-in method is not linked to an account. Use one already linked to your account.')}</p>}

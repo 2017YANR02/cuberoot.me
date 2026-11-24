@@ -132,13 +132,30 @@ describe('one canonical first-identity choice UI', () => {
     expect(host.textContent).toContain('Existing · ID 42');
     expect(mocks.completeIdentityChoice).not.toHaveBeenCalled();
     await act(async () => button('Confirm linking').click());
-    expect(mocks.completeIdentityChoice).toHaveBeenCalledExactlyOnceWith(identityHandle, 'link', 42, expect.any(AbortSignal));
+    expect(mocks.completeIdentityChoice).toHaveBeenCalledExactlyOnceWith(identityHandle, 'link', 42, expect.any(AbortSignal), undefined);
     expect(done).toHaveBeenCalledWith({ isNew: false, hasWca: false }, expect.stringContaining('codeChallenge%3Doriginal'));
     expect(getIdentityChoice()).toBeNull();
   });
-  it('creates only after the explicit create button', async () => {
-    await render(); await act(async () => button('Create a new account').click());
-    expect(mocks.completeIdentityChoice).toHaveBeenCalledExactlyOnceWith(identityHandle, 'create', undefined, expect.any(AbortSignal));
+  it('allows declining the prompt and registering directly from a later confirmation', async () => {
+    HTMLDialogElement.prototype.showModal = function () { this.open = true; };
+    HTMLDialogElement.prototype.close = function () { this.open = false; };
+    await render();
+    const checkbox = host.querySelector<HTMLInputElement>('input[type=checkbox]')!;
+    expect(checkbox.checked).toBe(false);
+    await act(async () => button('Create a new account').click());
+    expect(host.querySelector('dialog')?.open).toBe(true);
+    await act(async () => button('Decline').click());
+    expect(checkbox.checked).toBe(false);
+    expect(mocks.completeIdentityChoice).not.toHaveBeenCalled();
+    await act(async () => button('Create a new account').click());
+    await act(async () => button('Agree and register').click());
+    expect(mocks.completeIdentityChoice).toHaveBeenCalledExactlyOnceWith(identityHandle, 'create', undefined, expect.any(AbortSignal), true);
+  });
+  it('creates immediately after checking the consent box', async () => {
+    await render();
+    await act(async () => host.querySelector<HTMLInputElement>('input[type=checkbox]')!.click());
+    await act(async () => button('Create a new account').click());
+    expect(mocks.completeIdentityChoice).toHaveBeenCalledExactlyOnceWith(identityHandle, 'create', undefined, expect.any(AbortSignal), true);
   });
   it('reuses the original provider form and rejects a second unknown identity', async () => {
     mocks.loginGoogle.mockRejectedValue(new AccountChoiceRequired({ ticket: 'b'.repeat(43), provider: 'google', expiresInSeconds: 900 }));
@@ -184,7 +201,9 @@ describe('one canonical first-identity choice UI', () => {
   it('disables cancellation while submitting and ignores a late success after leaving', async () => {
     let resolve!: (value: unknown) => void;
     mocks.completeIdentityChoice.mockImplementation(() => new Promise((done) => { resolve = done; }));
-    await render(); await act(async () => button('Create a new account').click());
+    await render();
+    await act(async () => host.querySelector<HTMLInputElement>('input[type=checkbox]')!.click());
+    await act(async () => button('Create a new account').click());
     const signal = mocks.completeIdentityChoice.mock.calls[0][3] as AbortSignal;
     expect(button('Cancel').disabled).toBe(true);
     await act(async () => root.render(null));

@@ -760,6 +760,9 @@ export default function LandingPage({ initialLayout = null }: { initialLayout?: 
           </svg>
           <span>{t(GITHUB_FOOTER_ENTRY.nameKey)}</span>
         </a>
+        <Link href="/terms" prefetch={false}>
+          {tr({ zh: '用户协议', en: 'User agreement' })}
+        </Link>
         <Link href="/privacy" prefetch={false}>
           {tr({ zh: '隐私政策', en: 'Privacy policy' })}
         </Link>
