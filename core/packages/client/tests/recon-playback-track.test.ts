@@ -1,8 +1,9 @@
 // @vitest-environment jsdom
-import { act, createElement } from 'react';
+import { act, createElement, createRef } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { beforeEach, afterEach, expect, it, vi } from 'vitest';
 import PlaybackPanel from '@cuberoot/timer-ui/reconstruct/PlaybackPanel';
+import type { CfopReplayRange } from '@cuberoot/timer-ui/reconstruct/cfop-diagnosis';
 import type { ReconTextLine } from '@cuberoot/shared/timer/reconstruct/recon-text';
 import { encodeGyroTrack } from '@cuberoot/shared/smart-cube/gyro-track';
 import { notationQuaternion } from '@cuberoot/shared/timer/reconstruct/gyro-orient';
@@ -229,7 +230,7 @@ it('falls back to the original stream until a complete reconstruction map exists
   expect(shown()?.getAttribute('data-moves')).toBe('B R');
 });
 
-it('plays on recorded timestamps and preserves time when toggling gyro while running', async () => {
+function playbackClock() {
   let now = 0;
   let nextId = 0;
   const frames = new Map<number, FrameRequestCallback>();
@@ -243,6 +244,11 @@ it('plays on recorded timestamps and preserves time when toggling gyro while run
       pending.forEach(callback => callback(ms));
     });
   };
+  return advance;
+}
+
+it('plays on recorded timestamps and preserves time when toggling gyro while running', async () => {
+  const advance = playbackClock();
   await mount();
   await click('Play');
   await advance(110);
@@ -258,6 +264,24 @@ it('plays on recorded timestamps and preserves time when toggling gyro while run
   await advance(500);
   expect(shown()?.getAttribute('data-moves')).toBe("B z2 M' y u F");
   expect(container.querySelector('[aria-label="Replay"]')).not.toBeNull();
+});
+
+it('plays the original segment by its timestamps and stops before the next stage', async () => {
+  const advance = playbackClock();
+  const replay = createRef<(range: CfopReplayRange) => void>();
+  await act(async () => root.render(createElement(PlaybackPanel, {
+    event: '333', scramble: 'B', moves: raw, totalMs: 500, isZh: false, replayRangeRef: replay,
+  })));
+  const cube = container.querySelector<HTMLElement>('.reconstruct-playback-cube')!;
+  cube.scrollIntoView = vi.fn();
+  await act(async () => replay.current!({ startMs: 125, endMs: 350, firstMoveIndex: 2, endMoveIndex: 2 }));
+  expect(shown()?.getAttribute('data-moves')).toBe("B R L'");
+  expect(container.querySelector('[aria-label="Pause"]')).not.toBeNull();
+  // Simulate a delayed animation frame landing after the end of the segment.
+  await advance(500);
+  expect(shown()?.getAttribute('data-moves')).toBe("B R L' U");
+  expect(container.querySelector('.reconstruct-playback-counter span')?.textContent).toBe('0.35');
+  expect(container.querySelector('[aria-label="Play"]')).not.toBeNull();
 });
 
 it('maps pure rotations without consuming encoder events and keeps waste tokens', () => {

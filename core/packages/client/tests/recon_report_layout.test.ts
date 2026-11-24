@@ -152,7 +152,8 @@ describe('回放进度条匀速走', () => {
 
   it('该播到第几手是从时间反查的,不是自增', () => {
     // 自增会和墙钟脱钩:掉帧 / 后台标签页回来之后,魔方停在半路而游标已经到底。
-    expect(pb).toMatch(/playbackFrame\(moves, lastTs, t\)/);
+    expect(pb).toMatch(/playbackFrame\(moves, rangeEndMs \?\? lastTs, t\)/);
+    expect(pb).toContain('setIdx(frame.index)');
     expect(read(join(TIMER_UI, 'reconstruct', 'playback-track.ts'))).toContain('playbackIndexAt');
   });
 
