@@ -52,15 +52,17 @@
 }
 
 .donate-qr-row {
-    display: flex;
+    display: grid;
+    /* Both originals are 600px wide. Scale their columns to the same image height. */
+    grid-template-columns: minmax(0, 814fr) minmax(0, 899fr);
     gap: 1rem;
-    justify-content: center;
+    max-width: calc(420px + 1rem);
+    margin-inline: auto;
 }
 
 .donate-qr {
     margin: 0;
-    flex: 1 1 0;
-    max-width: 220px;
+    min-width: 0;
 }
 
 .donate-qr img {
@@ -118,12 +120,8 @@
     .donate-modal {
         padding: 1.25rem 1rem 1rem;
     }
-    /* Keep the two QRs side by side so they don't dominate the viewport; let
-       flex split the width evenly instead of forcing the 220px desktop cap. */
     .donate-qr-row {
         gap: 0.6rem;
     }
-    .donate-qr {
-        max-width: none;
-    }
+
 }

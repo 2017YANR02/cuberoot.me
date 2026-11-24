@@ -13,6 +13,7 @@ import { useContentRefreshKey } from '@/hooks/useContentRefreshKey';
 import { useEffect, useMemo, useState } from 'react';
 import { Heart, Plus, Pencil, Trash2, Crown, List, X } from '@app-foundation/icons/lucide';
 import { tr, useLang } from '@/i18n/tr';
+import PageBackLink from '@/components/PageBackLink';
 import AppLink from '@/components/AppLink';
 import DonateModal from '@/components/DonateModal';
 import { displayCuberName } from '@/lib/cuber-name-display';
@@ -273,8 +274,10 @@ export default function SupportContent({ embedded = false }: { embedded?: boolea
   return (
     <div className={`support-page${embedded ? " support-page--embedded" : ""}`}>
       {!embedded && <header className="support-head">
-        <h1 className="support-title">{tr({ zh: '赞助', en: 'Sponsorship'
-        })}</h1>
+        <div className="support-heading-row">
+          <PageBackLink label={tr({ zh: '返回', en: 'Back' })} />
+          <h1 className="support-title">{tr({ zh: '赞助', en: 'Sponsorship' })}</h1>
+        </div>
         <p className="support-sub">
           {tr({
             zh: '所有赞助将全部用于服务器购买与日常维护。',
