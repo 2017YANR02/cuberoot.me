@@ -4,15 +4,20 @@ import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { MembershipSubscription, MembershipSubscriptions } from '@/lib/membership-api';
 
-const mocks = vi.hoisted(() => ({ owner: 'u1', list: vi.fn(), cancel: vi.fn(), deleteAccount: vi.fn(), logout: vi.fn(), fetchIdentities: vi.fn() }));
+const mocks = vi.hoisted(() => ({ owner: 'u1', list: vi.fn(), cancel: vi.fn(), deleteAccount: vi.fn(), logout: vi.fn(), fetchIdentities: vi.fn(), store: null as 'apple' | 'google' | null, requestStore: vi.fn() }));
 vi.mock('@/hooks/useT', () => ({ useT: () => (zh: string) => zh }));
 vi.mock('next/navigation', () => ({ usePathname: () => '/zh/membership/subscription' }));
 vi.mock('@/lib/auth-store', () => ({
   useOwnerKey: () => mocks.owner, nextQuery: (path: string) => `?next=${encodeURIComponent(path)}`,
-  useAuthUser: () => ({ uid: 1 }), authActions: { logout: mocks.logout },
+  useAuthUser: () => ({ uid: 1 }), getAuthUser: () => ({ uid: 1 }), authActions: { logout: mocks.logout },
   useAuthStore: (selector: (state: unknown) => unknown) => selector({ user: { uid: 1 }, logout: mocks.logout }),
 }));
-vi.mock('@/i18n/tr', () => ({ useLang: () => 'zh' }));
+vi.mock('@/i18n/tr', () => ({ useLang: () => 'zh', tr: ({ zh }: { zh: string }) => zh }));
+vi.mock('@/lib/store-membership-bridge', () => ({
+  installedMembershipStore: () => mocks.store,
+  useStoreMembershipAvailable: (store: string) => mocks.store === store,
+  requestStoreMembership: mocks.requestStore,
+}));
 vi.mock('@/lib/account-api', () => ({ deleteAccount: mocks.deleteAccount, fetchIdentities: mocks.fetchIdentities }));
 vi.mock('@/lib/membership-api', () => ({ listMySubscriptions: mocks.list, cancelMySubscription: mocks.cancel }));
 vi.mock('@/components/AppLink', () => ({
@@ -42,6 +47,8 @@ describe('membership subscription cancellation', () => {
     (globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
     Object.defineProperty(HTMLDialogElement.prototype, 'showModal', { configurable: true, value() { this.open = true; } });
     mocks.owner = 'u1';
+    mocks.store = null;
+    mocks.requestStore.mockReset();
     mocks.list.mockReset().mockResolvedValue(result());
     mocks.cancel.mockReset();
     host = document.createElement('div'); document.body.append(host); root = createRoot(host);
@@ -58,14 +65,14 @@ describe('membership subscription cancellation', () => {
   it('does not confuse empty site records with absence of WeChat authorization', async () => {
     mocks.list.mockResolvedValue(result([]));
     await render();
-    expect(host.textContent).toContain('本站暂无与你当前账号关联的签约记录');
-    expect(host.textContent).toContain('这不代表微信中不存在扣款授权');
+    expect(host.textContent).toContain('当前账号暂无网站订阅记录');
+    expect(host.textContent).toContain('扣款授权可在微信支付核对');
     expect(mocks.cancel).not.toHaveBeenCalled();
   });
   it('opens one confirmation and allows leaving without submitting', async () => {
     await render(); await click('取消自动续费');
     expect(host.querySelector('dialog[open]')).not.toBeNull();
-    expect(host.textContent).toContain('本操作不会自动退款');
+    expect(host.textContent).toContain('退款需另行申请');
     expect(mocks.cancel).not.toHaveBeenCalled();
     await click('暂不取消');
     expect(host.querySelector('dialog')).toBeNull();
@@ -79,7 +86,7 @@ describe('membership subscription cancellation', () => {
     expect(mocks.cancel).toHaveBeenCalledWith(active.id, expect.any(AbortSignal));
     expect(mocks.list).toHaveBeenCalledTimes(2);
     expect(host.textContent).toContain('自动续费已取消');
-    expect(host.textContent).toContain('已购买权益可使用至已付服务期结束');
+    expect(host.textContent).toContain('取消后权益保留至到期');
     expect([...host.querySelectorAll('button')].some((item) => item.textContent === '取消自动续费')).toBe(false);
   });
   it('dismisses a backdrop tap without cancellation and preserves inside-to-outside drags', async () => {
@@ -103,14 +110,14 @@ describe('membership subscription cancellation', () => {
     mocks.cancel.mockResolvedValue({ subscription: pending });
     mocks.list.mockResolvedValueOnce(result()).mockResolvedValue(result([pending]));
     await render(); await click('取消自动续费'); await click('确认取消自动续费');
-    expect(host.textContent).toContain('等待微信确认，尚未确认取消成功');
+    expect(host.textContent).toContain('等待微信确认取消');
     expect(host.textContent).not.toContain('自动续费已取消');
     expect(button('重试取消自动续费').disabled).toBe(false);
   });
   it('refreshes after failed cancellation without falsely claiming success', async () => {
     mocks.cancel.mockRejectedValue(new Error('timeout'));
     await render(); await click('取消自动续费'); await click('确认取消自动续费');
-    expect(host.textContent).toContain('取消请求未得到确认');
+    expect(host.textContent).toContain('取消尚未确认');
     expect(host.textContent).not.toContain('自动续费已取消');
     expect(mocks.list).toHaveBeenCalledTimes(2);
     expect(button('取消自动续费').disabled).toBe(false);
@@ -118,8 +125,8 @@ describe('membership subscription cancellation', () => {
   it('offers refresh for lookup failure without rendering an empty result', async () => {
     mocks.list.mockRejectedValueOnce(new Error('unavailable')).mockResolvedValue(result());
     await render();
-    expect(host.textContent).toContain('暂时无法查询最新状态');
-    expect(host.textContent).not.toContain('本站暂无');
+    expect(host.textContent).toContain('最新状态查询失败');
+    expect(host.textContent).not.toContain('当前账号暂无网站订阅记录');
     await click('刷新状态');
     expect(host.textContent).toContain('自动续费已签约');
   });
@@ -127,7 +134,7 @@ describe('membership subscription cancellation', () => {
     mocks.list.mockResolvedValue(result([active], false));
     await render();
     expect(button('取消自动续费').disabled).toBe(true);
-    expect(host.textContent).toContain('本站微信退订服务暂不可用');
+    expect(host.textContent).toContain('暂无法在此取消');
   });
   it('also permits cancelling a pending authorization', async () => {
     mocks.list.mockResolvedValue(result([{ ...active, state: 'pending' }]));
@@ -168,7 +175,7 @@ describe('membership subscription cancellation', () => {
     expect(oldSignal.aborted).toBe(true);
     await act(async () => resolveOld(result()));
     expect(host.textContent).not.toContain('¥29.99');
-    expect(host.textContent).toContain('本站暂无与你当前账号关联的签约记录');
+    expect(host.textContent).toContain('当前账号暂无网站订阅记录');
   });
   it('ignores cancellation results after logout and aborts the request', async () => {
     let finish!: (value: { subscription: MembershipSubscription }) => void;
@@ -197,5 +204,22 @@ describe('membership subscription cancellation', () => {
     expect(host.textContent).toContain('请先取消自动续费，确认退订成功后再注销账号');
     expect(host.querySelector('a[href="/membership/subscription"]')?.textContent).toBe('管理并取消自动续费');
     expect(mocks.logout).not.toHaveBeenCalled();
+  });
+
+  it.each(['apple', 'google'] as const)('manages %s subscriptions without loading website records or a catalog', async (store) => {
+    mocks.store = store;
+    mocks.requestStore.mockResolvedValue({ status: 'success' });
+    await render();
+    expect(mocks.list).not.toHaveBeenCalled();
+    expect(mocks.requestStore).not.toHaveBeenCalled();
+    await click('管理订阅');
+    expect(mocks.requestStore).toHaveBeenCalledWith(store, 'manage', 1, undefined);
+    expect(host.textContent).not.toContain('购买已确认');
+    await click('恢复购买');
+    expect(mocks.requestStore).toHaveBeenCalledWith(store, 'restore', 1, undefined);
+    expect(host.textContent).toContain('已检查可恢复的购买');
+    await click('管理已有的网站订阅');
+    expect(mocks.list).toHaveBeenCalledOnce();
+    expect(button('取消自动续费').disabled).toBe(false);
   });
 });

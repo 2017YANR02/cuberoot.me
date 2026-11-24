@@ -35,8 +35,19 @@ final class AppleMembershipPlugin: CAPPlugin, CAPBridgedPlugin {
 
     deinit { updates?.cancel() }
 
+    private func allowsStoreKit(_ call: CAPPluginCall) async -> Bool {
+        guard call.getBool("sandboxOnly") == true else { return true }
+        guard #available(iOS 16.0, *),
+              let result = try? await AppTransaction.shared,
+              case .verified(let transaction) = result else { return false }
+        return transaction.environment == .sandbox
+    }
+
     @objc func products(_ call: CAPPluginCall) {
         Task {
+            guard await allowsStoreKit(call) else {
+                call.reject("An Apple sandbox session is required"); return
+            }
             do {
                 let products = try await Product.products(for: productIds)
                 call.resolve(["products": products.filter { $0.type == .autoRenewable }.map {
@@ -52,6 +63,9 @@ final class AppleMembershipPlugin: CAPPlugin, CAPBridgedPlugin {
             call.reject("Invalid purchase request"); return
         }
         Task { @MainActor in
+            guard await allowsStoreKit(call) else {
+                call.reject("An Apple sandbox session is required"); return
+            }
             do {
                 guard let product = try await Product.products(for: [id]).first,
                       product.type == .autoRenewable else {

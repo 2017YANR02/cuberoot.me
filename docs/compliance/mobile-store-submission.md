@@ -382,6 +382,8 @@ IAP 不只是加一个支付按钮：
 
 ### 9.5 IAP 协议与全球（含中国大陆）材料
 
+**Apple Sandbox 验收配置**。仅测试时保持 `APPLE_IAP_ENABLED=0`，设置 `APPLE_IAP_SANDBOX_ENABLED=1` 并用 `APPLE_IAP_SANDBOX_USER_IDS` 列出允许测试的 CubeRoot UID。沿用现有 Apple IAP 密钥、根证书及 Sandbox V2 通知 URL。iOS 测试包在 Web bundle 构建时设置 `VITE_APPLE_IAP_SANDBOX_ONLY=1`，使用 iOS 16 或更新版本，Xcode Scheme 的 StoreKit Configuration 设为 None，再以 Sandbox Apple Account 测试。商品加载和购买要求设备验证过的 Apple Sandbox AppTransaction，验单只接受 Apple Sandbox 签名交易。测试包专用于验收，正式归档清除该 Vite 配置。真机确认购买到账、恢复、续费、取消到期、退款及通知送达后再记录验收结果。
+
 - Account Holder 在 App Store Connect → Business 接受 Paid Apps Agreement，提供税务和收款资料；Apple 当前说明该协议需处于 Active 才能做 IAP sandbox 测试。Developer Program 的年费/已接受协议不替代这一步，AI 不代签协议或猜税务答案。[IAP 配置流程](https://developer.apple.com/help/app-store-connect/configure-in-app-purchase-settings/overview-for-configuring-in-app-purchases/)
 - App → Monetization → In-App Purchases / Subscriptions 创建经所有者确认的商品、组、价格、地区与审核资料；每种 IAP 类型的首个商品须与新 App 版本一起提审，后续同类型商品是否单独提交以当时控制台条件为准。[IAP 提审](https://developer.apple.com/help/app-store-connect/manage-submissions-to-app-review/submit-an-in-app-purchase/)
 - 数字会员在 iOS 内销售采用 IAP；跨平台可复用在网站取得的权益，但应按 3.1.3(b) 提供相应 App 内购买。全球地区规则有差异，不能将某一 storefront 的外部支付例外套用全球，也不能把网站微信/支付宝收银台直接嵌入中国区 App 当内购。[App Review 3.1.1 / 3.1.3(b)](https://developer.apple.com/app-store/review/guidelines/#payments)

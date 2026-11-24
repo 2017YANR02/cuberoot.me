@@ -7,8 +7,8 @@ import { mobileApiUrl } from '@cuberoot/app-ui';
 interface AppleTransaction { transactionId: string; signedTransaction: string }
 interface NativeAppleMembership {
   addListener(event: 'transactionAvailable', listener: () => void): Promise<PluginListenerHandle>;
-  products(): Promise<{ products: AppleMembershipProduct[] }>;
-  purchase(options: { productId: string; appAccountToken: string }): Promise<Partial<AppleTransaction> & { status: 'purchased' | 'pending' | 'cancelled' }>;
+  products(options?: { sandboxOnly: boolean }): Promise<{ products: AppleMembershipProduct[] }>;
+  purchase(options: { productId: string; appAccountToken: string; sandboxOnly?: boolean }): Promise<Partial<AppleTransaction> & { status: 'purchased' | 'pending' | 'cancelled' }>;
   transactions(): Promise<{ transactions: AppleTransaction[] }>;
   restore(): Promise<{ transactions: AppleTransaction[] }>;
   finish(options: { transactionId: string }): Promise<void>;
@@ -16,9 +16,12 @@ interface NativeAppleMembership {
 }
 const native = registerPlugin<NativeAppleMembership>('AppleMembership');
 const apiBase = mobileApiUrl('/v1/membership/apple');
+const sandboxOnly = import.meta.env.VITE_APPLE_IAP_SANDBOX_ONLY === '1';
 let operation: Promise<unknown> = Promise.resolve();
 async function api(session: WebSession, path: string, body?: object) {
-  const response = await fetch(`${apiBase}/${path}`, { method: body ? 'POST' : 'GET',
+  const url = new URL(`${apiBase}/${path}`);
+  if (sandboxOnly) url.searchParams.set('environment', 'sandbox');
+  const response = await fetch(url.href, { method: body ? 'POST' : 'GET',
     headers: { Authorization: `Bearer ${session.token}`, 'Content-Type': 'application/json' },
     body: body ? JSON.stringify(body) : undefined, signal: AbortSignal.timeout(30_000) });
   if (!response.ok) throw new Error('Apple membership unavailable or not verified');
@@ -36,12 +39,12 @@ export async function handleAppleMembership(request: AppleMembershipRequest, ini
     if (request.action === 'manage') { await native.manage(); return { status: 'success' as const }; }
     if (request.action === 'products') {
       await api(session, 'me');
-      const { products } = await native.products();
+      const { products } = await native.products({ sandboxOnly });
       return { status: 'success' as const, products: products.filter(p => APPLE_MEMBERSHIP_PRODUCT_IDS.includes(p.id)) };
     }
     if (request.action === 'purchase') {
       const { appAccountToken } = await api(session, 'me');
-      const result = await native.purchase({ productId: request.productId!, appAccountToken });
+      const result = await native.purchase({ productId: request.productId!, appAccountToken, sandboxOnly });
       if (result.status !== 'purchased') return { status: result.status };
       if (!result.signedTransaction || !result.transactionId) throw new Error('Missing transaction');
       await verify(result as AppleTransaction);

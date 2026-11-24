@@ -3,12 +3,17 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { usePathname } from 'next/navigation';
 import AppLink from '@/components/AppLink';
+import MoreToggle, { MoreTogglePanel } from '@/components/MoreToggle';
 import { MEMBERSHIP_COPY } from '@/lib/membership-copy';
 import { useT } from '@/hooks/useT';
 import { useModalBackdrop } from '@/hooks/useModalDismiss';
-import { nextQuery, useOwnerKey } from '@/lib/auth-store';
+import { nextQuery, useAuthUser, useOwnerKey } from '@/lib/auth-store';
 import { cancelMySubscription, listMySubscriptions, type MembershipSubscription, type MembershipSubscriptions } from '@/lib/membership-api';
 import { fmtDate, fmtPrice } from '@/lib/membership-format';
+import { installedMembershipStore, useStoreMembershipAvailable } from '@/lib/store-membership-bridge';
+import { useWebMembershipAvailable } from '@/lib/web-membership-bridge';
+import { isMiniProgramCommerceRestricted } from '@/lib/miniprogram-bridge';
+import StoreMembership, { storeSubscriptionUrls } from '../AppleMembership';
 import '../membership.css';
 
 function isPendingCheckout(subscription: MembershipSubscription) {
@@ -31,8 +36,8 @@ function CancellationConfirmation({ subscription, onClose, onConfirm }: {
       <h2 id="mem-cancel-title">{checkout ? t('关闭未付款订单？', 'Close this unpaid order?') : t('确认取消自动续费？', 'Cancel auto-renewal?')}</h2>
       <p>{fmtPrice(subscription.priceCents, subscription.currency)} / {subscription.periodCount} {subscription.period === 'year' ? t('年', 'year(s)') : t('个月', 'month(s)')}</p>
       <p id="mem-cancel-description">{checkout
-        ? t('微信确认关单后，你可以重新购买。订单刚创建时，微信需要等几分钟才允许关单。', 'You can start a new purchase once WeChat confirms closure. WeChat requires a short wait before a new order can be closed.')
-        : t('确认后将向微信申请解除此扣款授权。以微信确认结果为准，确认取消后不再发起后续续费扣款。已购买权益保留至已付服务期结束，本操作不会自动退款。', 'We will ask WeChat to revoke this debit authorization. Cancellation takes effect when WeChat confirms it, and no further renewal charges will be initiated. Paid benefits remain until the paid period ends. This does not issue a refund.')}</p>
+        ? t('微信确认关单后可重新购买。新订单可能需等几分钟。', 'You can buy again after WeChat closes the order. New orders may take a few minutes.')
+        : t('微信确认后停止续费。权益保留至到期，退款需另行申请。', 'Renewal stops once WeChat confirms. Access lasts through the paid period. Refunds are handled separately.')}</p>
       <div className="mem-subscription-actions">
         <button type="button" className="mem-contact-save" onClick={onConfirm}>{checkout ? t('确认关闭订单', 'Confirm order closure') : t('确认取消自动续费', 'Confirm cancellation')}</button>
         <button type="button" className="mem-contact-save" onClick={onClose}>{checkout ? t('保留订单', 'Keep order') : t('暂不取消', 'Keep auto-renewal')}</button>
@@ -43,7 +48,7 @@ function CancellationConfirmation({ subscription, onClose, onConfirm }: {
 }
 
 // Remounted per authenticated owner: another account never renders the previous account's records.
-function SubscriptionManager() {
+function SubscriptionManager({ allowCheckoutLinks = true }: { allowCheckoutLinks?: boolean }) {
   const t = useT();
   const [data, setData] = useState<MembershipSubscriptions | null>(null);
   const [loading, setLoading] = useState(true);
@@ -112,11 +117,11 @@ function SubscriptionManager() {
       <div className="mem-subscription-actions">
         <button type="button" className="mem-contact-save" disabled={loading || busyId !== null} onClick={() => void refresh()}>{t('刷新状态', 'Refresh status')}</button>
       </div>
-      {loading && <p role="status">{t('正在查询付款和签约状态…', 'Checking payment and authorization status…')}</p>}
-      {loadFailed && <p role="alert">{t('暂时无法查询最新状态，请重试。当前结果不能用于确认微信授权已取消。', 'The latest status could not be retrieved. Please retry. The current result cannot confirm that WeChat authorization has been cancelled.')}</p>}
-      {cancelFailed && <p role="alert">{t('取消请求未得到确认。请以下方最新状态为准；若仍未取消，可刷新或重试取消。', 'The cancellation request was not confirmed. Check the latest status below; if it is still not cancelled, refresh or retry cancellation.')}</p>}
-      {data && !data.managementAvailable && <p role="status">{t('本站微信退订服务暂不可用，请稍后重试；也可在微信支付的对应扣费服务中解除授权。', 'WeChat cancellation through this site is temporarily unavailable. Retry later, or revoke authorization in the corresponding WeChat Pay debit service.')}</p>}
-      {data?.subscriptions.length === 0 && <p>{t('本站暂无与你当前账号关联的签约记录。这不代表微信中不存在扣款授权；如微信中有相关服务，请在微信核对。', 'There are no subscription records linked to your current account on this site. This does not establish that no debit authorization exists in WeChat. Check any relevant service in WeChat.')}</p>}
+      {loading && <p role="status">{t('正在查询订阅…', 'Checking subscriptions…')}</p>}
+      {loadFailed && <p role="alert">{t('最新状态查询失败，请刷新核实。', 'Could not check the latest status. Refresh to verify.')}</p>}
+      {cancelFailed && <p role="alert">{t('取消尚未确认，请刷新核实。', 'Cancellation is unconfirmed. Refresh to verify.')}</p>}
+      {data && !data.managementAvailable && <p role="status">{t('暂无法在此取消，可在微信支付中解除授权。', 'Cancellation is unavailable here. Manage the authorization in WeChat Pay.')}</p>}
+      {data?.subscriptions.length === 0 && <p>{t('当前账号暂无网站订阅记录。扣款授权可在微信支付核对。', 'No website subscriptions for this account. Check debit authorizations in WeChat Pay.')}</p>}
       {data?.subscriptions.map((subscription) => {
         const checkout = isPendingCheckout(subscription);
         const checkoutEnded = subscription.billingMethod === 'checkout' && subscription.billingStatus === 'failed' && subscription.state === 'terminated';
@@ -126,7 +131,7 @@ function SubscriptionManager() {
             ? t('正在等待微信确认关单', 'Waiting for WeChat to confirm order closure')
             : t('首笔付款待完成', 'First payment pending'))
             : subscription.state === 'terminated' ? t('自动续费已取消', 'Auto-renewal cancelled')
-              : subscription.cancellationRequested ? t('取消申请已提交，等待微信确认，尚未确认取消成功', 'Cancellation requested. Awaiting WeChat confirmation; cancellation is not yet confirmed.')
+              : subscription.cancellationRequested ? t('等待微信确认取消', 'Awaiting cancellation confirmation from WeChat')
                 : subscription.state === 'active' ? t('自动续费已签约', 'Auto-renewal authorized') : t('签约待确认', 'Authorization pending confirmation');
         return <section className="mem-subscription" key={subscription.id} aria-label={label}>
           <h2>{label}</h2>
@@ -136,13 +141,13 @@ function SubscriptionManager() {
           {subscription.verifiedAt && <p>{t('最近核实日期：', 'Last verified: ')}{fmtDate(subscription.verifiedAt)}</p>}
           {checkout && (subscription.cancellationRequested
             ? <p>{t('请等微信确认关单后再重新购买。你可以刷新查看结果。', 'Wait for WeChat to confirm closure before starting a new purchase. Refresh to check the result.')}</p>
-            : <p>{t('如果已退出微信收银台，可以返回会员页选择同一套餐继续付款。', 'If you left WeChat checkout, return to the membership page and select the same plan to continue.')} <AppLink href="/membership" prefetch={false}>{t('返回会员页', 'Return to membership')}</AppLink></p>)}
+            : allowCheckoutLinks && <p>{t('返回会员页选择同一套餐继续付款。', 'Select the same plan on the membership page to continue.')} <AppLink href="/membership" prefetch={false}>{t('返回会员页', 'Return to membership')}</AppLink></p>)}
           {!checkout && subscription.billingStatus === 'submitted' && (subscription.billingMethod !== 'checkout' || !subscription.cancellationRequested) && subscription.state !== 'terminated' && <p>{subscription.billingMethod === 'checkout'
             ? t('首笔付款尚未确认，可刷新查看付款结果。', 'The first payment is not confirmed. Refresh to check the payment status.')
             : t('扣款处理中，可能包含微信通知后的 24 小时等待期。到账前不会延长会员，请勿重复购买。', 'Debit pending, possibly within WeChat’s 24-hour notice period. Membership extends after confirmed payment. Avoid purchasing again while this is pending.')}</p>}
           {subscription.billingStatus === 'paid' && <p>{t('本期付款已到账，会员权益已发放。', 'Payment for this period is confirmed and membership benefits have been granted.')}</p>}
           {subscription.billingMethod === 'checkout' && subscription.billingStatus === 'paid' && subscription.state === 'pending' && <p>{t('自动续费尚未确认。若付款时未开启自动续费，本次仅开通已付会员。', 'Auto-renewal is not confirmed. If you left it off at checkout, only the paid membership period is active.')}</p>}
-          {checkoutEnded && <p><AppLink href="/membership" prefetch={false}>{t('返回会员页重新购买', 'Return to membership to try again')}</AppLink></p>}
+          {checkoutEnded && allowCheckoutLinks && <p><AppLink href="/membership" prefetch={false}>{t('返回会员页重新购买', 'Return to membership to try again')}</AppLink></p>}
           {!checkoutEnded && subscription.billingStatus === 'failed' && <p>{t('本期扣款未成功，未延长会员。请联系客服核对后处理，系统不会重复发起本期扣款。', 'This charge failed and membership was not extended. Contact support to reconcile it; the system will not submit this cycle again automatically.')}</p>}
           {subscription.state !== 'terminated' && <button type="button" className="mem-contact-save" disabled={loading || busyId !== null || !data.managementAvailable} onClick={() => setConfirm(subscription)}>
             {busyId === subscription.id ? t('正在申请取消…', 'Requesting cancellation…')
@@ -159,14 +164,48 @@ function SubscriptionManager() {
 export default function SubscriptionPage() {
   const t = useT();
   const owner = useOwnerKey();
+  const uid = useAuthUser()?.uid;
   const pathname = usePathname();
+  const appleAvailable = useStoreMembershipAvailable('apple');
+  const googleAvailable = useStoreMembershipAvailable('google');
+  const directApp = useWebMembershipAvailable();
+  const [websiteOwner, setWebsiteOwner] = useState<string | null>(null);
+  const showWebsite = !!owner && websiteOwner === owner;
+  const [commerceRestricted, setCommerceRestricted] = useState<boolean | null>(null);
+  useEffect(() => {
+    let current = true;
+    void isMiniProgramCommerceRestricted().then(restricted => {
+      if (current) setCommerceRestricted(restricted);
+    });
+    return () => { current = false; };
+  }, []);
+  const store = googleAvailable ? 'google' : appleAvailable ? 'apple' : commerceRestricted === false ? installedMembershipStore() : null;
+  if (store) return <main className="mem-page">
+    <StoreMembership key={`${store}:${uid ?? ''}`} store={store} manageOnly />
+    {owner && <div className="mem-store-benefits">
+      <MoreToggle expanded={showWebsite} onToggle={() => setWebsiteOwner(showWebsite ? null : owner)} aria-controls="mem-website-subscriptions">
+        {t('管理已有的网站订阅', 'Manage existing website subscriptions')}
+      </MoreToggle>
+      <MoreTogglePanel id="mem-website-subscriptions" expanded={showWebsite}>
+        {showWebsite && <SubscriptionManager key={owner} allowCheckoutLinks={false} />}
+      </MoreTogglePanel>
+    </div>}
+  </main>;
+
   return (
     <main className="mem-page mem-service-document">
       <h1>{t(MEMBERSHIP_COPY.manage.zh, MEMBERSHIP_COPY.manage.en)}</h1>
-      <p>{t('本页列表管理网站的自动续费合约。通过 Apple 或 Google Play 购买的订阅，请到对应商店管理；App 内会员页也提供管理和恢复购买入口。', 'This list manages website renewal contracts. Manage Apple or Google Play subscriptions in their respective stores; the in-app membership page also offers management and restore actions.')}</p>
-      <p><a href="https://play.google.com/store/account/subscriptions?package=me.cuberoot.app" target="_blank" rel="noreferrer">Google Play</a>{' · '}<a href="https://apps.apple.com/account/subscriptions" target="_blank" rel="noreferrer">Apple</a></p>
-      {owner ? <SubscriptionManager key={owner} /> : <p><AppLink href={`/account${nextQuery(pathname)}`} prefetch={false}>{t('登录后管理自动续费', 'Sign in to manage auto-renewal')}</AppLink></p>}
-      <p>{t('取消自动续费与退款分开处理；已购买权益可使用至已付服务期结束。若发现取消后扣款，请保留订单号并联系客服核对。', 'Cancellation and refunds are handled separately. Purchased benefits remain available until the paid service period ends. If a charge appears after cancellation, keep the order number and contact support.')}</p>
+      {commerceRestricted === null && <p role="status">{t('加载中…', 'Loading…')}</p>}
+      {commerceRestricted === true && <p>{t('小程序内暂不提供订阅管理。', 'Subscription management is unavailable in the Mini Program.')}</p>}
+      {commerceRestricted === false && <>
+        <p>{t('商店订阅：', 'Store subscriptions: ')}
+          {!directApp && <><a href={storeSubscriptionUrls.apple} target="_blank" rel="noreferrer">App Store</a>{' · '}</>}
+          <a href={storeSubscriptionUrls.google} target="_blank" rel="noreferrer">Google Play</a>
+        </p>
+        <p>{t('在此管理通过微信支付开通的网站自动续费。', 'Manage website subscriptions billed through WeChat Pay.')}</p>
+        {owner ? <SubscriptionManager key={owner} /> : <p><AppLink href={`/account${nextQuery(pathname)}`} prefetch={false}>{t('登录后管理自动续费', 'Sign in to manage auto-renewal')}</AppLink></p>}
+      </>}
+      {commerceRestricted === false && <p>{t('取消后权益保留至到期。', 'Access continues through the paid period after cancellation.')}</p>}
       <nav className="mem-service-links" aria-label={t('会员服务', 'Membership services')}>
         <AppLink href="/contact" prefetch={false}>{t('联系会员客服', 'Contact membership support')}</AppLink>
         <AppLink href="/membership/renewal-terms" prefetch={false}>{t(MEMBERSHIP_COPY.agreement.zh, MEMBERSHIP_COPY.agreement.en)}</AppLink>

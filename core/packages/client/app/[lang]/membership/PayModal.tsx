@@ -280,7 +280,7 @@ export default function PayModal({ plan, channels, isZh, onClose, onPaid, renewa
             </div>
             {showWechat && needsExternalBrowser && (
               <p className="mem-pay-tip" role="status">
-                {tr({ zh: '请点击微信右上角「···」，选择「在浏览器打开」，再使用微信支付。也可以复制链接到 Safari 或其他浏览器打开；如提示登录，请登录同一个 CubeRoot 账号。', en: 'Tap the top-right WeChat menu and choose Open in Browser, then select WeChat Pay. You can also copy the link into Safari or another browser. If asked, sign in to the same CubeRoot account.' })}
+                {tr({ zh: '从微信右上角菜单在浏览器打开，用同一账号继续支付。', en: 'Choose Open in Browser from the WeChat menu and continue with the same account.' })}
               </p>
             )}
             {err && <div className="mem-pay-err" role="alert">{err}
@@ -337,7 +337,7 @@ export default function PayModal({ plan, channels, isZh, onClose, onPaid, renewa
             })}
             </div>
             {err && <div className="mem-pay-err" role="status">{err}</div>}
-            {err && <button className="mem-pay-go-link" onClick={() => { setErr(null); pollStatus(order.outTradeNo); }}>{tr({ zh: '检查支付结果', en: 'Check payment status' })}</button>}
+            {!directApp && err && <button className="mem-pay-go-link" onClick={() => { setErr(null); pollStatus(order.outTradeNo); }}>{tr({ zh: '检查支付结果', en: 'Check payment status' })}</button>}
             <p className="mem-pay-tip">
               <Check size={12} /> {tr({ zh: '支付完成后本页会自动开通,可稍候片刻', en: 'Membership activates automatically once paid — give it a moment'
             })}
