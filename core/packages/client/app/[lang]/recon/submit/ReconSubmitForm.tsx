@@ -285,7 +285,43 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
   const readOnly = isEditing && (!loadedSolve || !authUser || (!hasAdminAccess(authUser)
     && loadedSolve.addedById !== ownerKey(authUser.uid, authUser.wcaId)));
   // Viewers see the saved record, never values filled in by editing-only effects.
-  const form = readOnly && loadedSolve ? loadedSolve : draftForm;
+  const baseForm = readOnly && loadedSolve ? loadedSolve : draftForm;
+  const { personId, compWcaId, event, round } = baseForm;
+  const groupOptionsKey = JSON.stringify([compWcaId, event, round]);
+  const [publishedGroups, setPublishedGroups] = useState<{ key: string; groups: string[] } | null>(null);
+  const groupOptions = publishedGroups?.key === groupOptionsKey ? publishedGroups.groups : null;
+  const roundGroupKey = !isEditing && baseForm.official === 'wca' && personId && compWcaId && event && round
+    && groupOptions && groupOptions.length > 1
+    ? JSON.stringify([editViewerKey, personId, compWcaId, event, round]) : null;
+  const [resolvedRoundGroup, setResolvedRoundGroup] = useState<{ key: string; group: string | null } | null>(null);
+  const inheritedGroup = roundGroupKey && resolvedRoundGroup?.key === roundGroupKey ? resolvedRoundGroup.group : null;
+  const roundGroupPending = !!roundGroupKey && !baseForm.groupId && resolvedRoundGroup?.key !== roundGroupKey;
+  const form = inheritedGroup && !baseForm.groupId && groupOptions?.includes(inheritedGroup)
+    ? { ...baseForm, groupId: inheritedGroup } : baseForm;
+
+  useEffect(() => {
+    if (!roundGroupKey || !personId || !compWcaId || !event || !round) return;
+    let active = true;
+    const isSameRound = (solve: ReconSolve) => solve.official === 'wca' && solve.personId === personId
+      && solve.compWcaId === compWcaId && solve.event === event && solve.round === round;
+
+    void listRecons(personId).then(async solves => {
+      if (!active) return;
+      // The compact list can omit groupId. Read the matching records for their saved groups.
+      const groups = await Promise.all(solves.filter(isSameRound).map(async solve => {
+        const entry = solve.groupId ? solve : await getRecon(solve.id);
+        if (!active || !isSameRound(entry)) return null;
+        if (entry.groupId) return entry.groupId;
+        return entry.solveNum == null ? null
+          : fetchMatchingScrambleGroup(compWcaId, event, round, entry.solveNum, getReconScramble(entry));
+      }));
+      const knownGroups = [...new Set(groups.filter(group => group !== null))];
+      if (active) setResolvedRoundGroup({ key: roundGroupKey, group: knownGroups.length === 1 ? knownGroups[0] : null });
+    }).catch(() => {
+      if (active) setResolvedRoundGroup({ key: roundGroupKey, group: null });
+    });
+    return () => { active = false; };
+  }, [roundGroupKey, personId, compWcaId, event, round]);
 
   useEffect(() => {
     if (isEditing || fromId) return;
@@ -332,9 +368,6 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
   // 移动端虚拟键盘跟随焦点:三类打乱 / 解法中当前激活的输入框。
   const [activeVkbField, setActiveVkbField] = useState<'wca' | 'optimal' | 'generic' | 'solution' | null>(null);
   const [compRounds, setCompRounds] = useState<Record<string, RoundFormat[]> | null>(null);
-  // WCA scramble groups (A/B/C…) for the current comp/event/round.
-  // null = 未解析(等加载 / 非 WCA 赛);[] = 无打乱数据;否则是分组列表。
-  const [groupOptions, setGroupOptions] = useState<string[] | null>(null);
   const isMobile = useIsMobile();
 
   // FMC(最少步)的 成绩/单次 是步数(正整数),不是时间:自动填充会把 24 步当秒
@@ -926,15 +959,14 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
   }, [form.compWcaId]);
 
   // ── Comp / event / round change → resolve scramble groups ──
-  // 单分组自动填入;多分组可由已有打乱反查,无法唯一匹配时手选。
+  // 单分组自动填入；多分组沿用同轮已有复盘或由当前把的打乱反查。
   useEffect(() => {
-    if (!form.compWcaId || !form.event || !form.round) { setGroupOptions(null); return; }
+    if (!compWcaId || !event || !round) return;
     let cancelled = false;
-    setGroupOptions(null);
-    fetchScrambleGroups(form.compWcaId, form.event, form.round).then(groups => {
+    fetchScrambleGroups(compWcaId, event, round).then(groups => {
       if (cancelled) return;
       const list = groups ?? [];
-      setGroupOptions(list);
+      setPublishedGroups({ key: groupOptionsKey, groups: list });
       setForm(prev => {
         if (list.length === 1 && prev.groupId !== list[0]) return { ...prev, groupId: list[0] };
         if (list.length > 1 && prev.groupId && !list.includes(prev.groupId)) return { ...prev, groupId: '' };
@@ -942,7 +974,7 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
       });
     });
     return () => { cancelled = true; };
-  }, [form.compWcaId, form.event, form.round]);
+  }, [compWcaId, event, round, groupOptionsKey]);
 
   const groupMatchScramble = getReconScramble(form);
   // Automatic scrambles follow the selected group, not the other way around:
@@ -1251,11 +1283,14 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
 
     // Keep loaded / URL-provided scrambles as evidence for group matching.
     // Only discard a previous automatic fill while the new group is unresolved.
-    if (groupOptions === null) return;
+    if (groupOptions === null || roundGroupPending) return;
     if (groupOptions.length > 1 && !form.groupId) {
       if (scrambleAutoFilledRef.current) setForm(prev => prev.wcaScramble ? { ...prev, wcaScramble: '' } : prev);
+      if (optimalAutoFilledRef.current) setForm(prev => prev.optimalScramble ? { ...prev, optimalScramble: '' } : prev);
       setScrambleAutoSource(null);
+      setOptimalAutoSource(null);
       scrambleAutoFilledRef.current = false;
+      optimalAutoFilledRef.current = false;
       loadedScrambleKeySnapshot.current = null;
       return;
     }
@@ -1313,7 +1348,7 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
       }
     }, 300);
     return () => { cancelled = true; clearTimeout(timer); setScrambleLoading(false); };
-  }, [form.compWcaId, form.event, form.round, form.groupId, form.solveNum, groupOptions, groupMatchPending, matchedGroup, scrambleUserTouched, optimalUserTouched, setField, isZh]);
+  }, [form.compWcaId, form.event, form.round, form.groupId, form.solveNum, groupOptions, roundGroupPending, groupMatchPending, matchedGroup, scrambleUserTouched, optimalUserTouched, setField, isZh]);
 
   // ── Record marker auto-fetch (WCA only) ──
   useEffect(() => {
@@ -1656,7 +1691,7 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
   const handleSubmit = async () => {
     if (!authUser || readOnly || submitting.current ||
         (installedCommunityDisabled() && isEditing && loadedSolve?.visibility !== 'private')) return;
-    if (groupMatchPending || (matchedGroup && form.groupId !== matchedGroup)) return;
+    if (roundGroupPending || groupMatchPending || (matchedGroup && form.groupId !== matchedGroup)) return;
     setSubmitError(null);
     const person = form.person?.trim() ?? '';
     if (!person) {
@@ -2300,7 +2335,7 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
                     const base = published ? groupOptions! : ALPHA_GROUPS;
                     // 现有值(编辑/复用带入的非标准分组)不在列表里时也要可选,避免静默丢失。
                     const opts = form.groupId && !base.includes(form.groupId) ? [form.groupId, ...base] : base;
-                    const needPick = published && groupOptions!.length > 1 && !form.groupId;
+                    const needPick = published && groupOptions!.length > 1 && !form.groupId && !roundGroupPending;
                     // 单一公示分组已自动填入、无需占位;其余情形给「请选择」占位。
                     const withPlaceholder = !(published && groupOptions!.length === 1);
                     return (
