@@ -26,6 +26,12 @@
   },
   "bundle": {
     "macOS": { "entitlements": "Entitlements.plist" },
+    "windows": {
+      "nsis": {
+        "template": "installer.nsi",
+        "languages": ["English", "SimpChinese"]
+      }
+    },
     "active": true,
     "targets": "all",
     "createUpdaterArtifacts": false,
