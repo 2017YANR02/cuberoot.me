@@ -139,11 +139,18 @@
 }
 
 :root:is([data-installed-top-bar], [data-native-embed-top]) .page-notice-wrap[data-home] {
+  position: static;
   padding-left: var(--tools-top-left);
   padding-right: var(--tools-top-right);
 }
 
+/* The frame starts at the native bar guide, including when the header floats. */
+:root:is([data-installed-top-bar], [data-native-embed-top]) .landing-page.landing-page--navigation {
+  --home-navigation-top: 0px;
+}
+
 :root:is([data-installed-top-bar], [data-native-embed-top]) .landing-page > .home-navigation {
+  top: 0;
   --tools-header-left-margin: calc(var(--tools-top-left) - max(var(--landing-inline-gutter), var(--sal)));
   --tools-header-right-margin: calc(var(--tools-top-right) - max(var(--landing-inline-gutter), var(--sar)));
   min-height: 44px;

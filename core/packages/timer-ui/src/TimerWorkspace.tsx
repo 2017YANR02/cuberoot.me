@@ -120,6 +120,7 @@ function constrainDockWidths(workspace: HTMLElement) {
 
 /** One pointer/keyboard resizing contract for both desktop dock boundaries. */
 export function TimerWorkspaceDivider({ side, label }: { side: 'left' | 'right'; label: string }) {
+  const host = useHostViewportLayout();
   const panel = (element: HTMLElement) => element.closest('.timer-workspace')?.querySelector<HTMLElement>(side === 'left' ? '.timer-solver-rail' : '.timer-workspace-panel');
   const resize = (element: HTMLElement, requested: number) => {
     const workspace = element.closest<HTMLElement>('.timer-workspace');
@@ -127,7 +128,19 @@ export function TimerWorkspaceDivider({ side, label }: { side: 'left' | 'right';
     const other = openDock(workspace, side === 'left' ? 'right' : 'left');
     const otherWidth = other?.getBoundingClientRect().width ?? 0;
     const maximum = Math.max(0, workspace.clientWidth - otherWidth - Math.min(MIN_TIMER_WIDTH, workspace.clientWidth / 2));
-    const next = Math.round(Math.max(Math.min(240, maximum), Math.min(requested, maximum)));
+    const minimum = Math.min(240, maximum);
+    let next = Math.round(Math.max(minimum, Math.min(requested, maximum)));
+    if (host && element.classList.contains('is-dragging')) {
+      const dock = panel(element)?.getBoundingClientRect();
+      if (dock) {
+        // The side navigation can shift the workspace away from the physical midpoint.
+        const centerX = host.bounds.x + host.bounds.width / 2;
+        const centeredWidth = side === 'left' ? centerX - dock.left : dock.right - centerX;
+        if (centeredWidth >= minimum && centeredWidth <= maximum && Math.abs(requested - centeredWidth) <= 12) {
+          next = centeredWidth;
+        }
+      }
+    }
     workspace.style.setProperty(side === 'left' ? '--timer-left-dock-width' : '--timer-right-dock-width', `${next}px`);
     return next;
   };
