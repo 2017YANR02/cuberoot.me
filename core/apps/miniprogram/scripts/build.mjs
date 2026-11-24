@@ -28,6 +28,7 @@ import {
 import { validateJsonObjectFiles } from './json-object-file.mjs';
 import { publishStagedDirectory } from './staged-output.mjs';
 import { validateWxmlExpressionFiles } from './wxml-expression.mjs';
+import { findUnsupportedPlatformReference } from './douyin-platform-check.mjs';
 import { validateNativePages } from './native-page-check.mjs';
 
 const packageRoot = resolve(import.meta.dirname, '..');
@@ -345,18 +346,9 @@ async function validateDouyinOutput() {
   if (/\"@[^\"]+\"/.test(JSON.stringify(appConfig))) {
     throw new Error('抖音 app.json 残留微信主题变量');
   }
-  const forbidden = [
-    /\bwx\s*\./,
-    /globalThis\.wx/,
-    /\/auth\/wechat\/miniprogram/,
-    /wechat_redirect/,
-    /\bwx:/,
-    /\.nextTick\s*\(/,
-    /\.getDeviceInfo\s*\(/,
-  ];
   for (const file of sourceFiles) {
     const contents = await readFile(file, 'utf8');
-    const match = forbidden.find((pattern) => pattern.test(contents));
+    const match = await findUnsupportedPlatformReference(contents, extname(file));
     if (match) {
       throw new Error(`抖音产物含未适配的平台实现：${normalizedRelativePath(stagingRoot, file)} (${match})`);
     }
