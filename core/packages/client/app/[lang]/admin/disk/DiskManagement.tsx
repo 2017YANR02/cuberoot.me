@@ -131,7 +131,7 @@ export default function DiskManagement() {
       </>}
       {(error || report?.error) && <p className="disk-warning">{t('无法完成读取。请确认目录存在及管理员登录有效，然后重试。', 'Could not finish reading. Check the directory and administrator session, then retry.')}</p>}
       {report?.saveError && <p className="disk-warning">{t('结果已生成，但未能保存到磁盘。服务重启后可能丢失。', 'Results are available, but could not be saved to disk and may be lost on restart.')}</p>}
-      {!running && !error && !report?.error && !scan && <p>{t('此目录还没有扫描结果。点击“扫描目录”后开始；打开页面不会自动扫描。', 'No saved results for this directory. Select “Scan directory” to start; opening this page does not start a scan.')}</p>}
+      {!running && !error && !report?.error && !scan && <p>{t('此目录还没有扫描结果。点击“扫描目录”开始。', 'No saved results for this directory. Select “Scan directory” to start.')}</p>}
       {scan && <p>{t('扫描时间', 'Scanned at')}: <time dateTime={scan.scannedAt}>{new Date(scan.scannedAt).toLocaleString()}</time>
         {' / '}{t('当前目录', 'This directory')}: {gib(scan.bytes)}</p>}
       {scan?.partial && <p className="disk-warning">{t('已达到扫描限制，或部分目录无法读取。当前统计不完整，可以进入具体目录再查看。', 'The scan reached its limit or could not read some directories. Totals are incomplete; open a specific directory to explore further.')}</p>}

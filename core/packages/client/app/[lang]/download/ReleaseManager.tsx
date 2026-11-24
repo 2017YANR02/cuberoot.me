@@ -73,7 +73,7 @@ export default function ReleaseManager({ onPublished }: { onPublished: () => voi
   }
   return <section className="download-release-manager" aria-label={tr({ zh: '版本管理', en: 'Release management' })}>
     <div className="download-release-toolbar">
-      <p>{tr({ zh: '待发布提交', en: 'Source commit' })} <code>{data?.commit?.slice(0, 12) ?? '—'}</code></p>
+      {data?.configured && !data.commit && <p role="status">{tr({ zh: '暂时无法确定待发布版本，请刷新状态。', en: 'The release version is unavailable. Refresh to try again.' })}</p>}
       <button type="button" className="download-button" disabled={busy} onClick={() => void refresh()}>{tr({ zh: '刷新状态', en: 'Refresh status' })}</button>
     </div>
     {error && <p role="alert">{error}</p>}
@@ -94,7 +94,7 @@ export default function ReleaseManager({ onPublished }: { onPublished: () => voi
       <button type="button" className="download-button" disabled={busy || Boolean(active) || !notes.trim() || !data.commit} onClick={() => void publish()}>
         {busy ? tr({ zh: '正在提交…', en: 'Submitting…' }) : tr({ zh: '发布新版本', en: 'Publish release' })}
       </button>
-      {data.pending && <p role="status">{tr({ zh: '请求已保存，等待构建服务确认。', en: 'Request saved; waiting for the build service.' })} <code>{data.pending.requestId}</code></p>}
+      {data.pending && <p role="status">{tr({ zh: '请求已保存，等待构建服务确认。', en: 'Request saved; waiting for the build service.' })}</p>}
       </section>
       <section className="download-release-history" data-site-surface="panel"><h2>{tr({ zh: '发布记录', en: 'Release history' })}</h2>
       {!data.runs.length && <p>{tr({ zh: '暂无发布记录', en: 'No releases yet' })}</p>}
