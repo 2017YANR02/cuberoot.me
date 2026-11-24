@@ -26,7 +26,7 @@ describe('shared timer UI host theme contract', () => {
 
   it.each(['--shell-chip', '--shell-divider', '--shell-hover'])(
     'gives %s a legacy-engine fallback and a supported foreground-derived enhancement', (token) => {
-      const [fallback, enhancement] = css.split('@supports (color: color-mix(in srgb, black, white))');
+      const [fallback, enhancement] = css.split('@supports (color: color-mix(in srgb, black, white)) {');
       expect(fallback).toMatch(new RegExp(`${token}:\\s*var\\(--[\\w-]+\\);`));
       expect(enhancement).toMatch(new RegExp(`${token}:\\s*color-mix\\(in srgb, var\\(--foreground\\)`));
     },
