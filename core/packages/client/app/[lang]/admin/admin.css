@@ -243,3 +243,20 @@
 .admin-section-switch a[aria-current="page"] { color: var(--foreground); border-bottom-color: var(--accent); }
 .admin-section-switch a:hover { color: var(--foreground); }
 .admin-section-toolbar > a { color: var(--muted-foreground); font-size: .875rem; }
+
+.admin-chat-dialog {
+  width: min(48rem, calc(100% - 2rem));
+  max-height: calc(100dvh - 2rem);
+  margin: auto;
+  padding: 0;
+  border: 1px solid var(--border-default);
+  border-radius: 14px;
+  background: var(--popover);
+  color: var(--foreground);
+}
+.admin-chat-dialog::backdrop { background: color-mix(in srgb, var(--background) 70%, transparent); }
+.admin-chat-dialog > div { display: flex; flex-direction: column; max-height: calc(100dvh - 2.25rem); }
+.admin-chat-dialog header { justify-content: space-between; margin: 0; padding: 12px 20px; border-bottom: 1px solid var(--border-default); }
+.admin-chat-dialog__body { padding: 0 20px 20px; overflow: auto; overscroll-behavior: contain; overflow-wrap: anywhere; }
+.admin-chat-dialog__body form { margin-block: 16px; }
+.admin-chat-dialog__body button[type="submit"] { justify-self: start; }
