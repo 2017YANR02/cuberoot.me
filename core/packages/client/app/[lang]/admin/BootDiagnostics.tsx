@@ -38,14 +38,14 @@ export default function BootDiagnostics() {
     }).finally(() => {
       if (!controller.signal.aborted) setLoading(false);
     });
-    const kinds: Record<string, string> = {
+    return () => controller.abort();
+  }, [revision]);
+
+  const kinds: Record<string, string> = {
     network: t('网络连接失败', 'Network connection failed'), chunk: t('页面资源加载失败', 'Page resources failed to load'),
     script: t('页面脚本出错', 'Page script failed'), promise: t('后台任务出错', 'Background task failed'),
     timeout: t('启动超时', 'Startup timed out'), runtime: t('页面运行出错', 'Page failed to run'),
   };
-  return () => controller.abort();
-  }, [revision]);
-
   const browserNames: Record<string, string> = { wechat: t('微信', 'WeChat'), chrome: 'Chrome', edge: 'Edge', safari: 'Safari', firefox: 'Firefox', webview: 'WebView', other: t('其他浏览器', 'Other browser') };
   const osNames: Record<string, string> = { ios: 'iOS', android: 'Android', macos: 'macOS', windows: 'Windows', linux: 'Linux', other: t('其他系统', 'Other OS') };
 
