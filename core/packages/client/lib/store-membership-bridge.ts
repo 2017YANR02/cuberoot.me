@@ -40,7 +40,8 @@ export function requestStoreMembership(store: MembershipStore, action: Request['
   const surface = mobileEmbedSurfaceFromFrameName(window.name);
   const { enabled, send } = bridges[store];
   if (!enabled || !send || !surface) return Promise.reject(new Error('App update required'));
-  const requestId = crypto.randomUUID();
+  const requestId = crypto.randomUUID?.()
+    ?? Array.from(crypto.getRandomValues(new Uint8Array(16)), byte => byte.toString(16).padStart(2, '0')).join('');
   return new Promise((resolve, reject) => {
     const timer = setTimeout(() => { pending.delete(requestId); reject(new Error('Store response timed out')); }, 180_000);
     pending.set(requestId, { store, resolve, reject, timer });

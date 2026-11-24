@@ -25,6 +25,7 @@ import { browserClipboardTransport } from '@cuberoot/timer-ui';
 import packageInfo from '../package.json';
 import { TauriBleTransport } from './tauri-ble-transport';
 import { withDesktopDistribution } from './distribution';
+import { withMacAppleMembership } from './apple-membership';
 
 const desktopSecureStorage = {
   getItem: (key: string) => invoke<string | null>('secure_get', { key }),
@@ -154,5 +155,6 @@ export async function loadDesktopHost(): Promise<InstalledAppHost> {
     macPrimaryNavigation.render(null).catch(() => false),
   ]);
   const host = nativeNavigation ? { ...desktopHost, primaryNavigation: macPrimaryNavigation } : desktopHost;
-  return withDesktopDistribution(host, channel, version);
+  const configured = withDesktopDistribution(host, channel, version);
+  return channel === 'mac-app-store' ? withMacAppleMembership(configured, desktopAuth) : configured;
 }
