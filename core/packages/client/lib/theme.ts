@@ -199,13 +199,13 @@ export function readAccent(): AccentId | null {
   }
 }
 
-export function applyAccent(id: AccentId | null) {
+export function applyAccent(id: AccentId | null, animate = false) {
   const color = findAccentColor(id);
   if (color) persistItem(ACCENT_KEY, color.id);
   else {
     try { localStorage.removeItem(ACCENT_KEY); } catch { /* Storage is optional. */ }
   }
-  setAccentRoot(document.documentElement, color);
+  runTransition(() => setAccentRoot(document.documentElement, color), animate, 'appearance');
   window.dispatchEvent(new Event('theme-change'));
 }
 

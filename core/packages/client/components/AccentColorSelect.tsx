@@ -33,7 +33,7 @@ export default function AccentColorSelect() {
   }, []);
 
   return <AppearanceAccentControl language={language} value={accent}
-    onChange={value => { previewingRef.current = false; applyAccent(value); }}
+    onChange={value => { endPreview(); applyAccent(value, !value?.startsWith('#')); }}
     onPreview={value => {
       if (value === undefined) endPreview();
       else { previewingRef.current = true; previewAccent(value); }

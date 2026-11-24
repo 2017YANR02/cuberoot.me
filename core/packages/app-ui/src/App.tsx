@@ -1,4 +1,4 @@
-import { AppearanceBackground, AppAppearanceSettings, applyAppearancePreferences, persistAppearancePreferences, readAppearancePreferences } from './appearance';
+import { AppearanceBackground, AppAppearanceSettings, runViewTransition, applyAppearancePreferences, persistAppearancePreferences, readAppearancePreferences } from './appearance';
 import { resolveAppearanceScheme, type AppearancePreferences } from '@cuberoot/shared/appearance';
 import { NotificationOpenQueue } from './notification-navigation';
 import { TimerResultsSessionBar } from '@cuberoot/timer-ui';
@@ -3342,11 +3342,15 @@ export function App({ host, loadingMark }: { host: InstalledAppHost; loadingMark
     const next = { ...previous, ...changes };
     try {
       persistAppearancePreferences(next);
-      applyAppearancePreferences(next);
+      appearanceRef.current = next;
+      const animate = previous.theme !== next.theme || previous.palette !== next.palette
+        || (previous.accent !== next.accent && !next.accent?.startsWith('#')) || previous.contrast !== next.contrast;
+      runViewTransition(() => {
+        if (appearanceRef.current === next) applyAppearancePreferences(next);
+      }, animate, 'appearance');
       if (next.locale !== previous.locale) {
         setAccountFrameLocale(current => fromAccount ? current ?? previous.locale : null);
       }
-      appearanceRef.current = next;
       setAppearance(next);
       for (const surface of MOBILE_EMBED_SURFACES) {
         if (webBridgeReadyRef.current[surface] && (surface === 'tools' || accountInlineSettingsRef.current)) {

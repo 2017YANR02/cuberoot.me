@@ -5,6 +5,7 @@ import {
 } from '@cuberoot/shared/appearance';
 import { setAccentRoot } from './appearance-accent';
 
+export { runViewTransition } from './view-transition';
 export { setAccentRoot } from './appearance-accent';
 export { AppearanceBackground } from './AppearanceBackground';
 export { AppearanceSettings, AppearanceThemeControl, AppearanceAccentControl, AppearanceBackgroundControl, AppearanceBackdropControls } from './AppearanceSettings';

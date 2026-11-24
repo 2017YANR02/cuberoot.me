@@ -170,30 +170,6 @@ html[data-discrete-transition="player-fullscreen"]::view-transition-new(root),
   object-fit: contain;
 }
 
-/* Clicked themes reveal the new page from the bottom-left corner. */
-html[data-discrete-transition="appearance"]::view-transition-group(root) {
-  animation: none;
-}
-
-html[data-discrete-transition="appearance"]::view-transition-old(root),
-html[data-discrete-transition="appearance"]::view-transition-new(root) {
-  animation: none;
-  mix-blend-mode: normal;
-}
-
-html[data-discrete-transition="appearance"]::view-transition-new(root) {
-  /* Accelerate, slow through the middle, accelerate out. 142% of the
-     normalized diagonal covers the opposite corner at every aspect ratio. */
-  animation: appearance-circle-reveal 900ms linear both;
-}
-
-@keyframes appearance-circle-reveal {
-  0% { clip-path: circle(0% at 0% 100%); animation-timing-function: cubic-bezier(.42, 0, 1, 1); }
-  38% { clip-path: circle(54% at 0% 100%); animation-timing-function: cubic-bezier(0, 0, .35, 1); }
-  70% { clip-path: circle(83% at 0% 100%); animation-timing-function: cubic-bezier(.42, 0, 1, 1); }
-  100% { clip-path: circle(142% at 0% 100%); }
-}
-
 /* Token interpolation for previews that do not use a snapshot. */
 html[data-appearance-preview],
 html[data-appearance-preview] body {
@@ -214,10 +190,6 @@ html[data-discrete-transition="appearance"] body {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  html[data-discrete-transition="appearance"]::view-transition-new(root) {
-    animation-duration: 0s;
-  }
-
   html[data-appearance-preview],
   html[data-appearance-preview] body {
     transition-duration: 0s;

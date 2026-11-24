@@ -488,3 +488,33 @@ html[data-contrast=soft] .puzzle-art {
 html[data-contrast=soft] .puzzle-art .puzzle-art {
   filter: none;
 }
+
+/* Clicked themes reveal the new page from the bottom-left corner. */
+html:root[data-discrete-transition="appearance"]::view-transition-group(root) {
+  animation: none;
+}
+
+html:root[data-discrete-transition="appearance"]::view-transition-old(root),
+html:root[data-discrete-transition="appearance"]::view-transition-new(root) {
+  animation: none;
+  mix-blend-mode: normal;
+}
+
+html:root[data-discrete-transition="appearance"]::view-transition-new(root) {
+  /* Accelerate, slow through the middle, accelerate out. 142% of the
+     normalized diagonal covers the opposite corner at every aspect ratio. */
+  animation: appearance-circle-reveal 900ms linear both;
+}
+
+@keyframes appearance-circle-reveal {
+  0% { clip-path: circle(0% at 0% 100%); animation-timing-function: cubic-bezier(.42, 0, 1, 1); }
+  38% { clip-path: circle(54% at 0% 100%); animation-timing-function: cubic-bezier(0, 0, .35, 1); }
+  70% { clip-path: circle(83% at 0% 100%); animation-timing-function: cubic-bezier(.42, 0, 1, 1); }
+  100% { clip-path: circle(142% at 0% 100%); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html:root[data-discrete-transition="appearance"]::view-transition-new(root) {
+    animation-duration: 0s;
+  }
+}
