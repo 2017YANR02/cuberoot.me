@@ -26,6 +26,7 @@
       "./loading-brand.css": "asset",
       "./filled-status-mark": "react-dom",
       "./notification-navigation": "runtime-neutral",
+      "./apple-membership": "runtime-neutral",
       "./appearance": "react-dom",
       "./appearance.css": "asset",
       "./settings-typography.css": "asset"
@@ -45,6 +46,7 @@
     "./loading-brand.css": "./src/loading-brand.css",
     "./filled-status-mark": "./src/FilledStatusMark.tsx",
     "./notification-navigation": "./src/notification-navigation.ts",
+    "./apple-membership": "./src/apple-membership.ts",
     "./appearance": "./src/appearance.ts",
     "./appearance.css": "./src/appearance.css",
     "./settings-typography.css": "./src/settings-typography.css"

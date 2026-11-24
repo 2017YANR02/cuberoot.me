@@ -16,6 +16,24 @@ Mac App Store 与 iOS 使用同一 App Store Connect 记录。商店构建走 `p
 2. 签名前确保普通用户可以读取 App 包内文件和进入目录。用 Apple Distribution 身份签署 `.app`，用 Mac Installer Distribution 身份经 `productbuild --component` 生成 `.pkg`。核对签名、沙盒、版本和构建号。[Tauri 打包说明](https://v2.tauri.app/distribute/app-store/)
 3. 用 `asc --profile CubeRoot builds upload --app 6816632957 --pkg <文件> --version <版本> --build-number <构建号> --wait` 上传。关联 `MAC_OS` 版本草稿，按实际加密算法和发售地区填写加密出口信息，核对 Mac 截图及资料，再用 `asc review submit --platform MAC_OS` 预检并送审。[Apple 加密出口说明](https://developer.apple.com/help/app-store-connect/reference/app-information/export-compliance-documentation-for-encryption/)
 
+### macOS 订阅与沙盒构建
+
+Mac App Store 版复用 `me.cuberoot.app` 下的个人会员订阅组 `22424056` 和自动续费月卡、年卡。现有账号权益和服务端验单可跨 iOS 与 macOS 使用。两项商品首次随 iOS 1.0.2 送审，待商品批准后供正式销售。Mac 端可以先进行开发和沙盒验收，支持内购的 Mac 新版本走独立审核。[Apple 商品跨平台配置](https://developer.apple.com/help/app-store-connect/configure-in-app-purchase-settings/overview-for-configuring-in-app-purchases/) · [当前进度](../../../docs/product/apps/mobile-app-roadmap.md#2026-11-24-mac-app-store-订阅接入)
+
+- **原生入口**。Mac App Store 构建沿用「我的」和 `InstalledAppHost.appleMembership`。Swift StoreKit 2 负责商品、购买、恢复、交易更新和管理订阅。Rust 命令要求 macOS、`mac-app-store` 编译特性与主窗口。Mac 和 iOS 共享账号校验及服务端验签流程，验单成功后才调用 `finish()`。嵌入页只收到商品和操作结果。
+- **系统兼容**。购买与 `AppStore.sync()` 从 macOS 12 开放。macOS 15.2 及以上使用 `purchase(confirmIn: NSWindow, …)`。订阅管理打开 [Apple 订阅入口](https://apps.apple.com/account/subscriptions)。
+- **沙盒**。使用已在 Apple 开发者账户注册的 Mac 和匹配 `me.cuberoot.app` 的 `MAC_APP_DEVELOPMENT` 描述文件。专用构建要求 macOS 13 及以上、Apple Development 签名和嵌入的开发描述文件。它使用独立的 CubeRoot 钥匙串会话、后端 Sandbox 路由与测试账号白名单，并只接受已验证的 Apple Sandbox 交易。正式商店构建使用上节命令。[Apple 沙盒测试说明](https://developer.apple.com/documentation/StoreKit/testing-in-app-purchases-with-sandbox)
+
+在 `core/` 运行以下命令。将变量值设为本机 Mac 开发描述文件的绝对路径。
+
+```sh
+mac_iap_profile=/absolute/path/to/Mac-Development.provisionprofile
+mac_iap_config="$(node -e 'console.log(JSON.stringify({bundle:{macOS:{files:{"embedded.provisionprofile":process.argv[1]}}}}))' "$mac_iap_profile")"
+pnpm --filter @cuberoot/desktop build:mac-iap-sandbox --config "$mac_iap_config"
+```
+
+打开生成的 `CubeRoot Sandbox.app`，用白名单中的 CubeRoot 测试账号进入「我的 → 订阅会员」。先核对月卡、年卡和本地化价格。Apple 首次要求登录时使用 Sandbox Apple Account，确认系统显示 Sandbox 测试环境后再确认购买。两项商品分别核对 Apple 交易、CubeRoot 权益和恢复后到期时间，另验收切换 CubeRoot 账号后原交易归属及同账号 iOS ↔ Mac 恢复。
+
 ## Windows 发布工作
 
 等待公司核验时，可从 `core/` 运行 `pnpm --filter @cuberoot/desktop store:materials --online`，检查公开链接/套餐并导出双语商店草稿、审核备注及空白身份模板；不加 `--online` 则仅离线准备。源文件在 `store/`，产物在 `.local-data/windows-store/materials-<unique>/`；它不生成 Windows 截图、正式身份或安装包，也不上传商店。`store:materials:check` 只校验不写文件。

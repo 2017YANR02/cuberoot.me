@@ -8,8 +8,13 @@ mod ble_address;
 mod file_export;
 mod native_print;
 mod primary_navigation;
+mod apple_membership;
 
-const SERVICE: &str = "me.cuberoot.app";
+const SERVICE: &str = if cfg!(all(target_os = "macos", feature = "apple-iap-sandbox")) {
+    "me.cuberoot.app.sandbox"
+} else {
+    "me.cuberoot.app"
+};
 
 #[tauri::command]
 fn copy_text(text: String) -> Result<(), String> {
@@ -117,6 +122,8 @@ pub fn run() {
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_dialog::init())
         .setup(|_app| {
+            #[cfg(all(target_os = "macos", feature = "mac-app-store"))]
+            apple_membership::listen_for_updates(_app.handle());
             #[cfg(target_os = "macos")]
             if let Some(window) = _app.get_webview_window("main") {
                 window.with_webview(|view| {
@@ -136,7 +143,7 @@ pub fn run() {
                 let _ = screen_awake::apply(false);
             }
         })
-        .invoke_handler(tauri::generate_handler![copy_text, navigation_menu::configure_navigation_menu, primary_navigation::render_primary_navigation, desktop_distribution, prepare_auth_callback, open_web_link, screen_awake::set_keep_awake, native_print::print_document, file_export::export_file, secure_get, secure_set, secure_remove, ble_notifications::ble_subscribe, ble_address::ble_device_mac])
+        .invoke_handler(tauri::generate_handler![copy_text, navigation_menu::configure_navigation_menu, primary_navigation::render_primary_navigation, desktop_distribution, prepare_auth_callback, open_web_link, screen_awake::set_keep_awake, native_print::print_document, file_export::export_file, secure_get, secure_set, secure_remove, ble_notifications::ble_subscribe, ble_address::ble_device_mac, apple_membership::apple_membership, apple_membership::apple_membership_mode])
         .run(tauri::generate_context!())
         .expect("error while running CubeRoot");
 }
