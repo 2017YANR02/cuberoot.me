@@ -1526,11 +1526,6 @@
   font-weight: 400;
 }
 .sim-anchor-menu { font-size: 13px; }
-.sim-playback-settings .settings-popover-panel {
-  /* anchored-panel: clamped (SettingsPopover uses usePanelClamp). */
-  top: auto;
-  bottom: calc(100% + 6px);
-}
 .sim-preview-notice { color: var(--muted-foreground); font-size: 13px; }
 .sim-preview-notice button,
 .sim-research-enable button {

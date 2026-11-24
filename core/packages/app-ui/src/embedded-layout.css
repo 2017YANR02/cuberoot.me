@@ -201,6 +201,18 @@
   padding-bottom: calc(24px + max(var(--sab), var(--installed-chrome-bottom, var(--native-embed-bottom, 0px))));
 }
 
+/* The fixed simulator fills the iframe underneath the native tab bar. Reserve
+   its measured overlap inside both the fixed and visual-viewport layouts. */
+:root[data-embedded-bottom-nav] .sim-page {
+  box-sizing: border-box;
+  padding-bottom: max(var(--embedded-nav-clearance), env(safe-area-inset-bottom, 0px));
+}
+
+/* Older site builds offset the panel a second time inside its positioned layer. */
+:root[data-embedded-bottom-nav] .settings-popover-layer > .sim-playback-settings-panel {
+  bottom: auto;
+}
+
 /* Keep the renewal banner above the installed navigation on every frame route. */
 :root[data-embedded-bottom-nav] .mem-reminder {
   bottom: max(var(--embedded-nav-clearance), env(safe-area-inset-bottom, 0px));
