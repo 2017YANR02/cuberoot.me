@@ -366,6 +366,7 @@ export default function LandingSearch({
   const onAnswerRevealed = useCallback((id:string, text:string) => {
     setRevealedAnswers(previous => previous[id] === text ? previous : {...previous, [id]:text});
     const sample=browserTiming.current;
+    if(sample?.id===id && text.trim() && !document.hidden) sample.timing.firstVisibleAnswerMs ??=Math.round(performance.now()-sample.started);
     if(sample?.id===id && sample.answer===text && sample.timing.responseMs!==undefined) {
       const visibleMs=Math.max(sample.timing.responseMs,Math.round(performance.now()-sample.started));
       browserTiming.current=null;
@@ -458,8 +459,15 @@ export default function LandingSearch({
       if(stream || !active || conversation?.active===false || Date.now()<reconnectAfter)return;
       const child=new AbortController();
       stream=child;
-      void watchAssistantQueue(durableId,AbortSignal.any([controller.signal,child.signal]),()=>{
-        connected=true;wake();
+      void watchAssistantQueue(durableId,AbortSignal.any([controller.signal,child.signal]),snapshot=>{
+        if(controller.signal.aborted || child.signal.aborted || getAuthUser()?.uid!==uid)return;
+        connected=true;
+        if(!snapshot){wake();return;}
+        if(latestSnapshot.current.id===durableId && latestSnapshot.current.revision>snapshot.revision)return;
+        active=!!snapshot.activeId || (!snapshot.paused && snapshot.messages.some(message=>message.state==='queued'));
+        if(browserTiming.current)browserTiming.current.timing.transport='sse';
+        applyQueue(snapshot);
+        if(!active){stream=undefined;connected=false;child.abort();}
       }).catch(()=>{}).finally(()=>{
         if(stream!==child)return;
         stream=undefined;connected=false;reconnectAfter=Date.now()+5000;wake();
@@ -472,7 +480,7 @@ export default function LandingSearch({
         const data=await assistantQueueRequest(durableId,'',undefined,AbortSignal.any([controller.signal,AbortSignal.timeout(15_000)]),undefined,!first && latestSnapshot.current.id===durableId?latestSnapshot.current.revision:undefined);
         first=false;
         if(controller.signal.aborted || getAuthUser()?.uid!==uid)return;
-        if(data && 'messages' in data) {
+        if(data && 'messages' in data && !(latestSnapshot.current.id===durableId && latestSnapshot.current.revision>data.revision)) {
           active=!!data.activeId || (!data.paused && data.messages.some(message=>message.state==='queued'));
           applyQueue(data);
           if(!active){stream?.abort();stream=undefined;connected=false;}

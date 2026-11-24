@@ -239,6 +239,17 @@ export default function AssistantMonitoring() {
           <label>{t('改进记录','Review note')} <textarea autoComplete="off" className="admin-dashboard-select" style={{display:'block',width:'100%'}} value={reviewNote} maxLength={500} onChange={e=>setReviewNote(e.target.value)} rows={2}/></label>{reviewNote&&<ClearButton onClick={()=>setReviewNote('')}/>}
           <button className="admin-boot__refresh" type="submit" disabled={reviewBusy}>{t('保存复核','Save review')}</button>{reviewError&&<p role="alert">{t('复核未保存，请重试。','Review was not saved. Please retry.')}</p>}
         </form>}
+        {(detail.metrics.timing || detail.metrics.browser) && <dl>
+          {([
+            [t('收件至认领','Receipt to claim'),detail.metrics.timing?.queueWaitMs],
+            [t('收件至首段可读取','Receipt to first saved answer'),detail.metrics.timing?.firstAnswerFromReceiptMs],
+            [t('收件至处理结束','Receipt to finish'),detail.metrics.timing?.finishedFromReceiptMs],
+            [t('提交至正文首次可见','Submit to first visible text'),detail.metrics.browser?.firstVisibleAnswerMs],
+            [t('提交至完整正文显示','Submit to full answer display'),detail.metrics.browser?.visibleMs],
+          ] as const).map(([label,ms])=>ms!=null && <div key={label}><dt>{label}</dt><dd>{seconds(ms)}</dd></div>)}
+          {detail.metrics.policy?.version && <div><dt>{t('回答策略版本','Answer policy')}</dt><dd>{detail.metrics.policy.version}</dd></div>}
+          {detail.metrics.policy?.release && <div><dt>{t('部署版本','Release')}</dt><dd>{detail.metrics.policy.release}</dd></div>}
+        </dl>}
         <h4>{t('各阶段耗时', 'Stage timings')}</h4><p>{t('并行或嵌套阶段可能重叠，阶段耗时不可直接相加。', 'Parallel or nested stages may overlap; durations are not additive.')}</p>
         <div className="admin-dashboard__table"><div className="sticky-scroll admin-dashboard__table-scroll"><table className="sticky-thead"><thead><tr><th>{t('阶段', 'Stage')}</th><th>{t('调用次数', 'Calls')}</th><th>{t('耗时', 'Latency')}</th><th>{t('失败次数', 'Failures')}</th></tr></thead><tbody>{Object.entries(detail.metrics.stages ?? {}).map(([stage, value]) => <tr key={stage}><th>{({ model: t('模型回答', 'Model'), data: t('读取数据', 'Data'), page: t('读取页面', 'Pages'), tool: t('使用工具', 'Tools'), rerank:t('重排序','Reranking'), total: t('整体', 'Overall') } as Record<string, string>)[stage] ?? stage}</th><td>{value.calls}</td><td>{seconds(value.ms)}</td><td>{value.errors}</td></tr>)}</tbody></table></div></div>
         {modelEstimates.length>0&&<p>{t('模型费用估算（含缓存折扣，元）','Model estimate with cache discounts (CNY)')}: {modelEstimateMin.toFixed(4)}–{modelEstimateMax.toFixed(4)} · {modelEstimates.length}/{detail.metrics.models?.length ?? 0} {t('次调用有估价；不含工具费用，非实际账单。','calls priced; excludes tools and is not an invoice.')}</p>}
