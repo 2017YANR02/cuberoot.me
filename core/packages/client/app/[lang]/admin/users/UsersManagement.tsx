@@ -621,7 +621,7 @@ export default function UsersManagement() {
         <ContentSkeleton variant="table" rows={6} columns={5} />
       </div>}
       </div>}
-      {tab === 'memberships' && <><AppLink href="/membership" prefetch={false}>{t('会员方案与权益', 'Membership plans and benefits')}</AppLink><MembershipList key={user?.uid ?? user?.wcaId} onChanged={() => setMembershipRevision(value => value + 1)} /></>}
+      {tab === 'memberships' && <MembershipList key={user?.uid ?? user?.wcaId} onChanged={() => setMembershipRevision(value => value + 1)} />}
       {tab === 'sponsors' && <SupportContent embedded />}
       {impersonationTarget && (
         <UserImpersonationDialog

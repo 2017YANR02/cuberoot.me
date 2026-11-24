@@ -208,7 +208,6 @@ export default function SubscriptionPage() {
       </>}
       {commerceRestricted === false && <p>{t('取消后权益保留至到期。', 'Access continues through the paid period after cancellation.')}</p>}
       <nav className="mem-service-links" aria-label={t('会员服务', 'Membership services')}>
-        <AppLink href="/contact" prefetch={false}>{t('联系会员客服', 'Contact membership support')}</AppLink>
         <AppLink href="/membership/renewal-terms" prefetch={false}>{t(MEMBERSHIP_COPY.agreement.zh, MEMBERSHIP_COPY.agreement.en)}</AppLink>
         <AppLink href="/membership" prefetch={false}>{t('会员权益与有效期', 'Membership benefits and validity')}</AppLink>
       </nav>

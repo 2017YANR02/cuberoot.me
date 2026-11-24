@@ -8,12 +8,17 @@ import { useLang } from '@/i18n/tr';
 import { displayCuberName } from '@/lib/cuber-name-display';
 import { fmtDate, fmtPrice, fmtVipId } from '@/lib/membership-format';
 import { adminList, adminRevoke, type Membership } from '@/lib/membership-api';
+import MembershipAdminPanel from './MembershipAdminPanel';
+import AutoRenewModal from '../../membership/AutoRenewModal';
+import '../../membership/membership.css';
+import type { MembershipPlan } from '@/lib/membership-api';
 import { ContentSkeleton } from '@/components/ContentSkeleton';
 
 export default function MembershipList({ onChanged }: { onChanged: () => void }) {
   const t = useT();
   const isZh = useLang() === 'zh';
   const [data, setData] = useState<Awaited<ReturnType<typeof adminList>> | null>(null);
+  const [renewalPlan, setRenewalPlan] = useState<MembershipPlan | null>(null);
   const [failed, setFailed] = useState(false);
   const [revision, setRevision] = useState(0);
   const [revoking, setRevoking] = useState<string | null>(null);
@@ -43,7 +48,19 @@ export default function MembershipList({ onChanged }: { onChanged: () => void })
     }
   }
 
-  return <section aria-labelledby="admin-membership-list-title">
+  return <>
+    {data?.plans && <MembershipAdminPanel isZh={isZh}
+      plans={data.plans.filter(plan => !['enterprise_yearly', 'enterprise_yearly_auto_renew'].includes(plan.slug))}
+      onGranted={() => { reload(); onChanged(); }}
+      onPlanUpdated={updated => setData(current => current && ({
+        ...current, plans: current.plans?.map(plan => plan.slug === updated.slug ? updated : plan),
+      }))}
+      onViewRenewal={setRenewalPlan} />}
+    {renewalPlan && (renewalPlan.period === 'month' || renewalPlan.period === 'year') &&
+      <AutoRenewModal plan={renewalPlan} isZh={isZh} period={renewalPlan.period} planSlug={renewalPlan.slug}
+        priceCents={renewalPlan.priceCents} price={fmtPrice(renewalPlan.priceCents, renewalPlan.currency)}
+        onPaid={() => { reload(); onChanged(); }} onClose={() => setRenewalPlan(null)} />}
+    <section aria-labelledby="admin-membership-list-title">
     <div className="admin-users-list-heading">
       <h2 id="admin-membership-list-title">{t('订阅会员', 'Membership records')}</h2>
     </div>
@@ -94,5 +111,6 @@ export default function MembershipList({ onChanged }: { onChanged: () => void })
       </table>
       {data.members.length === 0 && <p className="admin-users-status">{t('暂无会员', 'No memberships yet')}</p>}
     </div>}
-  </section>;
+    </section>
+  </>;
 }

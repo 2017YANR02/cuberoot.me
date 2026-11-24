@@ -150,16 +150,32 @@ export default function MemberProfileEditor({ profile, onSaved }: {
         multiple
         onChange={(event) => void addImages(event)}
       />
-      <button
-        type="button"
-        className="member-profile-upload"
-        onClick={() => fileRef.current?.click()}
-        disabled={uploading || imageIds.length >= MAX_IMAGES}
-      >
-        <ImagePlus size={16} aria-hidden="true" />
-        {uploading ? tr({ zh: '正在上传…', en: 'Uploading…' }) : tr({ zh: '选择图片', en: 'Choose images' })}
-        <span>{imageIds.length}/{MAX_IMAGES}</span>
-      </button>
+      <div className="member-profile-actions">
+        <button
+          type="button"
+          className="member-profile-upload"
+          onClick={() => fileRef.current?.click()}
+          disabled={uploading || imageIds.length >= MAX_IMAGES}
+        >
+          <ImagePlus size={16} aria-hidden="true" />
+          {uploading ? tr({ zh: '正在上传…', en: 'Uploading…' }) : tr({ zh: '选择图片', en: 'Choose images' })}
+          <span>{imageIds.length}/{MAX_IMAGES}</span>
+        </button>
+        <span className="member-profile-count">{intro.length}/{MAX_LENGTH}</span>
+        <button
+          type="button"
+          className="member-profile-save"
+          onClick={() => void save()}
+          aria-label={tr({ zh: '保存个人资料', en: 'Save personal profile' })}
+          disabled={saving || uploading || changingVisibility !== null || (
+            intro.trim() === savedValues.intro.trim()
+            && imageIds.join(',') === savedValues.imageIds.join(',')
+            && showInMemberList === savedValues.showInMemberList
+          )}
+        >
+          {saved ? <Check size={14} aria-hidden="true" /> : saving ? '…' : tr({ zh: '保存', en: 'Save' })}
+        </button>
+      </div>
       {imageIds.length > 0 && (
         <div className="member-profile-images">
           {imageIds.map((id) => (
@@ -192,22 +208,6 @@ export default function MemberProfileEditor({ profile, onSaved }: {
           ))}
         </div>
       )}
-      <div className="member-profile-actions">
-        <span className="member-profile-count">{intro.length}/{MAX_LENGTH}</span>
-        <button
-          type="button"
-          className="member-profile-save"
-          onClick={() => void save()}
-          aria-label={tr({ zh: '保存个人资料', en: 'Save personal profile' })}
-          disabled={saving || uploading || changingVisibility !== null || (
-            intro.trim() === savedValues.intro.trim()
-            && imageIds.join(',') === savedValues.imageIds.join(',')
-            && showInMemberList === savedValues.showInMemberList
-          )}
-        >
-          {saved ? <Check size={14} aria-hidden="true" /> : saving ? '…' : tr({ zh: '保存', en: 'Save' })}
-        </button>
-      </div>
       {error && <div className="member-profile-error" role="alert">{error}</div>}
     </section>
   );

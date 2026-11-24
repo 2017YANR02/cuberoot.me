@@ -24,7 +24,6 @@ vi.mock('@/components/CubeRootLogo', () => ({ default: () => null }));
 vi.mock('@/components/DonateModal', () => ({ default: () => null }));
 vi.mock('@/components/MemberProfileEditor', () => ({ default: () => null }));
 vi.mock('@/app/[lang]/membership/PayModal', () => ({ default: () => null }));
-vi.mock('@/app/[lang]/membership/AdminPanel', () => ({ default: () => null }));
 vi.mock('@/app/[lang]/membership/MemberContact', () => ({ default: () => null }));
 vi.mock('@/app/[lang]/membership/AutoRenewModal', () => ({ default: () => null }));
 vi.mock('@/app/[lang]/membership/AppleMembership', () => ({ default: () => null }));

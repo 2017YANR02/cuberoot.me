@@ -16,7 +16,7 @@ import BoolToggle from '@/components/BoolToggle';
 import AppLink from '@/components/AppLink';
 import { fetchPersonCard, type WcaPersonLite } from '@/lib/wca-api';
 import {
-  adminGrant, adminList, adminUpdatePlan, adminRenewalReadiness,
+  adminGrant, adminUpdatePlan, adminRenewalReadiness,
   isAutoRenewPlanSlug,
   type MembershipPlan,
   type RenewalReadiness,
@@ -26,12 +26,13 @@ interface Props {
   plans: MembershipPlan[];
   isZh: boolean;
   onPlanUpdated: (plan: MembershipPlan) => void;
+  onGranted: () => void;
   onViewRenewal: (plan: MembershipPlan) => void;
 }
 
-export default function AdminPanel({ plans, isZh, onPlanUpdated, onViewRenewal }: Props) {
+export default function AdminPanel({ plans, isZh, onPlanUpdated, onGranted, onViewRenewal }: Props) {
   const grantablePlans = useMemo(
-    () => plans.filter((plan) => !isAutoRenewPlanSlug(plan.slug)),
+    () => plans.filter((plan) => plan.active !== false && !isAutoRenewPlanSlug(plan.slug)),
     [plans],
   );
   const [picked, setPicked] = useState<WcaPersonLite | null>(null);
@@ -40,7 +41,6 @@ export default function AdminPanel({ plans, isZh, onPlanUpdated, onViewRenewal }
   const [granting, setGranting] = useState(false);
   const [err, setErr] = useState<string | null>(null);
 
-  const [adminPlans, setAdminPlans] = useState<MembershipPlan[]>(plans);
   const [priceDraft, setPriceDraft] = useState<Record<string, string>>({});
   const [planSaved, setPlanSaved] = useState<string | null>(null);
   const [planUpdating, setPlanUpdating] = useState<string | null>(null);
@@ -67,23 +67,7 @@ export default function AdminPanel({ plans, isZh, onPlanUpdated, onViewRenewal }
   useEffect(() => {
     if (!grantablePlans.some((plan) => plan.slug === grantPlan)) setGrantPlan(grantablePlans[0]?.slug ?? '');
   }, [grantablePlans, grantPlan]);
-  useEffect(() => {
-    if (adminPlans.length === 0 && plans.length > 0) setAdminPlans(plans);
-  }, [adminPlans.length, plans]);
-
-  function loadList() {
-    adminList().then((r) => {
-      const listedPlans = (r.plans ?? plans).filter(p => !['enterprise_yearly', 'enterprise_yearly_auto_renew'].includes(p.slug));
-      setAdminPlans(listedPlans);
-      setPriceDraft(Object.fromEntries(listedPlans.map((p) => [p.slug, String(p.priceCents / 100)])));
-    }).catch(() => {});
-  }
-  useEffect(() => { loadList(); }, []);
-
   function applyPlanUpdate(updatedPlan: MembershipPlan) {
-    setAdminPlans((current) => current
-      .map((plan) => plan.slug === updatedPlan.slug ? updatedPlan : plan)
-      .sort((a, b) => (a.sort ?? 0) - (b.sort ?? 0) || a.priceCents - b.priceCents));
     setPriceDraft((current) => ({ ...current, [updatedPlan.slug]: String(updatedPlan.priceCents / 100) }));
     onPlanUpdated(updatedPlan);
   }
@@ -103,7 +87,7 @@ export default function AdminPanel({ plans, isZh, onPlanUpdated, onViewRenewal }
     try {
       await adminGrant({ wcaId: picked.id, plan: grantPlan, name: picked.name, avatarUrl: avatar });
       setPicked(null); setAvatar(null);
-      loadList();
+      onGranted();
     } catch (e) {
       setErr(e instanceof Error ? e.message : String(e));
     } finally {
@@ -112,7 +96,7 @@ export default function AdminPanel({ plans, isZh, onPlanUpdated, onViewRenewal }
   }
 
   async function savePlan(p: MembershipPlan) {
-    const yuan = Number(priceDraft[p.slug]);
+    const yuan = Number(priceDraft[p.slug] ?? p.priceCents / 100);
     if (!Number.isFinite(yuan) || yuan < 0) return;
     setPlanUpdating(p.slug);
     try {
@@ -142,9 +126,12 @@ export default function AdminPanel({ plans, isZh, onPlanUpdated, onViewRenewal }
 
   return (
     <section className="mem-admin">
-      <h3 className="mem-admin-title">{tr({ zh: '会员管理', en: 'Membership admin' })}
-        <InfoTooltip iconSize={15} ariaLabel={tr({ zh: '会员管理说明', en: 'About membership administration' })} content={tr({ zh: '手动开通用于已收款用户。价格修改需逐项保存；公开开关即时生效。会员名单与撤销操作在用户管理页。', en: 'Grant membership for payments already received. Save each price change; visibility switches apply immediately. Member records and revocation are in user administration.' })} />
-      </h3>
+      <div className="mem-admin-heading">
+        <h2 className="mem-admin-title">{tr({ zh: '会员管理', en: 'Membership admin' })}
+          <InfoTooltip iconSize={15} ariaLabel={tr({ zh: '会员管理说明', en: 'About membership administration' })} content={tr({ zh: '手动开通用于已收款用户。价格修改需逐项保存；公开开关即时生效。', en: 'Grant membership for payments already received. Save each price change; visibility switches apply immediately.' })} />
+        </h2>
+        <AppLink href="/membership" prefetch={false}>{tr({ zh: '会员方案与权益', en: 'Membership plans and benefits' })}</AppLink>
+      </div>
       {/* 手动开通 */}
       <div className="mem-admin-block">
         <div className="mem-admin-grant">
@@ -159,7 +146,7 @@ export default function AdminPanel({ plans, isZh, onPlanUpdated, onViewRenewal }
           <select value={grantPlan} onChange={(e) => setGrantPlan(e.target.value)} className="mem-admin-plansel">
             {grantablePlans.map((p) => <option key={p.slug} value={p.slug}>{isZh ? p.nameZh : p.nameEn}</option>)}
           </select>
-          <button className="mem-admin-grant-btn" onClick={() => void grant()} disabled={!picked?.id || granting}>
+          <button className="mem-admin-grant-btn" onClick={() => void grant()} disabled={!picked?.id || !grantPlan || granting}>
             <Plus size={14} /> {granting ? '…' : tr({ zh: '开通', en: 'Grant'
             })}
           </button>
@@ -171,14 +158,14 @@ export default function AdminPanel({ plans, isZh, onPlanUpdated, onViewRenewal }
       <div className="mem-admin-block">
         <h4 className="mem-admin-subtitle">{tr({ zh: '套餐价格（元）', en: 'Plan prices (yuan)' })}</h4>
         <div className="mem-admin-planrows">
-          {adminPlans.map((p) => (
+          {plans.map((p) => (
             <div key={p.slug} className="mem-admin-planrow">
               <span className="mem-admin-planname">{isZh ? p.nameZh : p.nameEn}</span>
               <input
                 type="number" min="0" step="0.01"
                 className="mem-admin-priceinput"
                 aria-label={tr({ zh: '{name}价格（元）', en: '{name} price (yuan)' }).replace('{name}', tr({ zh: p.nameZh, en: p.nameEn }))}
-                value={priceDraft[p.slug] ?? ''}
+                value={priceDraft[p.slug] ?? String(p.priceCents / 100)}
                 onChange={(e) => setPriceDraft((d) => ({ ...d, [p.slug]: e.target.value }))}
               />
               <button className="mem-admin-plansave" onClick={() => void savePlan(p)} disabled={planUpdating === p.slug}>
@@ -195,7 +182,7 @@ export default function AdminPanel({ plans, isZh, onPlanUpdated, onViewRenewal }
           ))}
         </div>
         <div className="mem-service-links">
-          {adminPlans.filter((plan) => isAutoRenewPlanSlug(plan.slug)).map((plan) => (
+          {plans.filter((plan) => isAutoRenewPlanSlug(plan.slug)).map((plan) => (
             <button key={plan.slug} type="button" className="mem-link-btn" onClick={() => onViewRenewal(plan)}>
               {tr({ zh: '查看 {name} 签约说明', en: 'View {name} authorization details' }).replace('{name}', tr({ zh: plan.nameZh, en: plan.nameEn }))}
             </button>

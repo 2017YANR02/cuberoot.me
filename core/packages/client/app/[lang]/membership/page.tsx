@@ -1,14 +1,14 @@
 'use client';
+import { Tooltip } from '@/components/Tooltip';
 import PageBackLink from '@/components/PageBackLink';
 
 /**
  * /membership — 会员订阅。
  * 站内工具保持免费,会员是「支持本站 + 专属权益」(徽章 / 抢先体验 / 致谢署名)。
  * 自动续费与主动付款明确分开，签约不可用时不回退普通支付。
- * admin 登录后见管理面板。
  */
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Check, RefreshCw, AlertTriangle, Heart } from '@app-foundation/icons/lucide';
+import { Check, RefreshCw, AlertTriangle, Heart, UsersRound } from '@app-foundation/icons/lucide';
 import { useQueryState } from 'nuqs';
 import { useEntryRouter as useRouter } from '@/hooks/useEntryRouter';
 import { clearMembershipReturn, membershipReturnRequiresActive, membershipReturnPath, readMembershipReturn, rememberMembershipReturn } from '@/lib/membership-return';
@@ -28,10 +28,9 @@ import DonateModal from '@/components/DonateModal';
 import MembershipSkeleton from './MembershipSkeleton';
 import {
   listPlans, getMyMembership, getOrderStatus, membershipExpiry,
-  reconcileVisiblePlan, isAutoRenewPlanSlug, renewalAvailability,
+  isAutoRenewPlanSlug, renewalAvailability,
   type MembershipPlan, type Membership, type PayChannels,
 } from '@/lib/membership-api';
-import AdminPanel from './AdminPanel';
 import MemberContact from './MemberContact';
 import MemberProfileEditor from '@/components/MemberProfileEditor';
 import MoreToggle from '@/components/MoreToggle';
@@ -245,11 +244,6 @@ export default function MembershipPage() {
   const selectedPersonal = visiblePersonal.find(plan => plan.period === personalPeriod) ?? visiblePersonal[0];
   const selectedEnterprise = visibleEnterprise.find(plan => plan.period === enterprisePeriod) ?? visibleEnterprise[0];
 
-  const handlePlanUpdated = useCallback((updatedPlan: MembershipPlan) => {
-    setPlans((current) => current ? reconcileVisiblePlan(current, updatedPlan) : current);
-    if (isAutoRenewPlanSlug(updatedPlan.slug)) setRenewalPrices((current) => current.map((plan) => plan.slug === updatedPlan.slug ? updatedPlan : plan));
-  }, []);
-
   if (store) return <main className="mem-page"><AppleMembership key={`${store}:${user?.uid ?? ''}`} store={store} refresh={refreshMembership} benefits={renderPerks([...new Set([...universalPerks, ...intersectPerks(personalPlans)])].filter(perk => perk !== 'lifetime'))} /></main>;
 
   if (commerceRestricted === null) return (
@@ -328,6 +322,7 @@ export default function MembershipPage() {
     </>;
   }
 
+  const manageMembersLabel = tr({ zh: '会员管理', en: 'Manage memberships' });
   const personalSettings = activeMember && membership && (
     <>
       <MemberProfileEditor profile={membership}
@@ -343,13 +338,20 @@ export default function MembershipPage() {
           <CubeRootLogo className="mem-title-logo" height={22} variant="mark" />
           CubeRoot Pro
         </h1></div>
-        <button type="button" className="mem-donate" onClick={() => {
-          if (!loggedIn) { login(); return; }
-          setDonateOpen(true);
-        }}>
-          <Heart className="site-support-heart" size={18} aria-hidden="true" />
-          {tr({ zh: '赞赏', en: 'Donate' })}
-        </button>
+        <div className="mem-head-actions">
+          {admin && <Tooltip content={manageMembersLabel}>{tip =>
+            <AppLink {...tip} href="/admin/users?tab=memberships" prefetch={false} className="mem-admin-entry" aria-label={manageMembersLabel}>
+              <UsersRound size={20} aria-hidden="true" />
+            </AppLink>}
+          </Tooltip>}
+          <button type="button" className="mem-donate" onClick={() => {
+            if (!loggedIn) { login(); return; }
+            setDonateOpen(true);
+          }}>
+            <Heart className="site-support-heart" size={18} aria-hidden="true" />
+            {tr({ zh: '赞赏', en: 'Donate' })}
+          </button>
+        </div>
       </header>
 
       {directApp && <p className="mem-note">
@@ -449,32 +451,15 @@ export default function MembershipPage() {
         </div>
       )}
 
-
-
-
-
-      <p className="mem-foot-note">
-        <span className="mem-foot-links">
-          <AppLink href="/support">{tr({ zh: '查看致谢名单 →', en: 'See supporters →'
-          })}</AppLink>
-          <AppLink href="/contact">{tr({ zh: '联系我们 →', en: 'Contact us →'
-          })}</AppLink>
-        </span>
-      </p>
-
       {/* 会员联系方式(续费提醒 / 账号找回) */}
       {personalSettings && (admin ? <details className="mem-personal-settings mem-admin-fold">
         <MoreToggle as="summary">{tr({ zh: '个人资料与续费提醒', en: 'Personal profile and renewal reminders' })}</MoreToggle>
         {personalSettings}
       </details> : personalSettings)}
 
-      {/* admin 面板 */}
-      {admin && <AdminPanel key={user?.wcaId} plans={plans ?? []} isZh={isZh} onPlanUpdated={handlePlanUpdated} onViewRenewal={setSelectedAutoRenewPlan} />}
-
       <nav className="mem-service-links mem-service-links--main" aria-label={tr({ zh: '会员服务', en: 'Membership services' })}>
         <AppLink href="/membership/subscription" prefetch={false}>{tr(MEMBERSHIP_COPY.manage)}</AppLink>
         {!directApp && <AppLink href="/membership/renewal-terms" prefetch={false}>{tr(MEMBERSHIP_COPY.agreement)}</AppLink>}
-        <AppLink href="/contact" prefetch={false}>{tr({ zh: '会员客服', en: 'Membership support' })}</AppLink>
       </nav>
 
       {loggedIn && donateOpen && <DonateModal lang={lang} onClose={() => setDonateOpen(false)} />}

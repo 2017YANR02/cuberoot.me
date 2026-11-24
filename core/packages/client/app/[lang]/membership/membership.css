@@ -6,9 +6,13 @@
 
 /* ── header ── */
 .mem-head { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; margin-bottom: 24px; }
+.mem-head-actions { display: flex; align-items: center; gap: 12px; margin-inline-start: auto; }
+.mem-admin-entry { display: inline-grid; place-items: center; width: 44px; height: 44px; color: var(--foreground); border-radius: 10px; }
+.mem-admin-entry:hover { background: var(--muted); }
+.mem-admin-entry:focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }
 .mem-donate {
   display: inline-flex; align-items: center; justify-content: center; gap: 8px;
-  min-height: 44px; padding: 10px 16px; margin-inline-start: auto;
+  min-height: 44px; padding: 10px 16px;
   border: 1px solid var(--accent); border-radius: 10px;
   background: var(--accent-soft); color: var(--accent);
   font: inherit; font-weight: 600; cursor: pointer;
@@ -539,11 +543,15 @@
 
 /* ── admin ── */
 .mem-admin {
-  margin-top: 20px;
+  max-width: 46rem;
+  margin-top: 16px;
 }
+.mem-admin-heading { display: flex; align-items: baseline; flex-wrap: wrap; gap: 6px 18px; margin-bottom: 12px; }
+.mem-admin-heading a { font-size: 14px; color: var(--accent); }
+.mem-admin-heading .mem-admin-title { margin: 0; font-size: 20px; }
 .mem-admin-title { display: flex; align-items: center; gap: 8px; font-size: 16px; font-weight: 700; color: var(--foreground); margin: 0 0 12px; }
 .mem-admin-block { margin-bottom: 14px; }
-.mem-admin-subtitle { font-size: 13px; font-weight: 600; color: var(--muted-foreground); margin: 0 0 8px; }
+.mem-admin-subtitle { font-size: 15px; font-weight: 600; color: var(--foreground); margin: 0 0 8px; }
 .mem-admin-fold { margin: 4px 0; }
 .mem-admin-fold > summary { padding: 8px 0; font-size: 14px; font-weight: 600; }
 .mem-admin-fold-status { margin-inline-start: 8px; font-size: 12px; font-weight: 400; color: var(--muted-foreground); }
@@ -583,7 +591,7 @@
 .mem-admin-grant-btn:disabled, .mem-admin-plansave:disabled { opacity: 0.5; cursor: default; }
 .mem-admin-planrows {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 100px max-content max-content;
+  grid-template-columns: minmax(0, 15rem) 6rem max-content max-content;
   align-items: center;
   column-gap: 10px;
   row-gap: 8px;
@@ -592,7 +600,7 @@
 }
 .mem-admin-planrow { display: contents; }
 .mem-admin-planname {
-  font-size: 14px;
+  font-size: 15px;
   color: var(--foreground);
   white-space: nowrap;
 }
@@ -624,7 +632,7 @@
   .mem-title { font-size: 22px; }
   .mem-plans { grid-template-columns: 1fr; }
   .mem-admin-planrows { grid-template-columns: minmax(0, 1fr) 84px max-content max-content; column-gap: 6px; }
-  .mem-admin-planname { white-space: normal; font-size: 12px; }
+  .mem-admin-planname { white-space: normal; font-size: 14px; }
   .mem-admin-priceinput, .mem-admin-plansave { padding: 6px; font-size: 12px; }
   .mem-admin-checks { grid-template-columns: 1fr; }
 }
