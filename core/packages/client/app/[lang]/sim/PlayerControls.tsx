@@ -32,6 +32,7 @@ import type { TwistyPlayer } from 'cubing/twisty';
 import World from './engine/world';
 import AlgTransformPanel from './AlgTransformPanel';
 import { hasHandNotation } from './alg-manipulation';
+import { correctOllFrontFlickHtml } from '@cuberoot/shared/alg-html';
 import { algHtmlMatchesText, escapeAlgText, replaceAlgHtmlText, sanitizeAlgHtml } from '@/lib/alg_html';
 import { hasFingerMarks, playbackFingerAnnotations, selectedFingerMark, sliceAlgHtml, toggleFingerMark, type FingerAnnotation } from '@/lib/alg-finger-marks';
 import SimAppearancePanel from './SimAppearancePanel';
@@ -1107,8 +1108,12 @@ export default function PlayerControls({
     return convertSquareText(text, convert);
   }, [isSquarePuzzle, isSq1, squareFamilySpec, squareFormat]);
   const [algDraft, setAlgDraft] = useState(() => formatIncomingSquareText(alg));
-  const [htmlDraft, setHtmlDraft] = useState(() => algHtml && algHtmlMatchesText(alg, algHtml)
-    ? replaceAlgHtmlText(sanitizeAlgHtml(algHtml), alg) : escapeAlgText(alg));
+  const incomingHtml = useMemo(() => {
+    if (!algHtml || !algHtmlMatchesText(alg, algHtml)) return escapeAlgText(alg);
+    const html = puzzleKind === 3 ? correctOllFrontFlickHtml(alg, algHtml) : algHtml;
+    return replaceAlgHtmlText(sanitizeAlgHtml(html), alg);
+  }, [alg, algHtml, puzzleKind]);
+  const [htmlDraft, setHtmlDraft] = useState(incomingHtml);
   const htmlDraftRef = useRef(htmlDraft);
   const handMarkup = is3x3 || puzzleKind === 4;
   const marked = handMarkup && hasFingerMarks(htmlDraft);
@@ -1288,9 +1293,8 @@ export default function PlayerControls({
     lastCommittedAlgRef.current = alg;
     lastCommittedHtmlRef.current = algHtml;
     setAlgDraft(formatIncomingSquareText(alg));
-    const html = algHtml && algHtmlMatchesText(alg, algHtml) ? replaceAlgHtmlText(algHtml, alg) : escapeAlgText(alg);
-    recordMarkup(alg, html);
-  }, [alg, algHtml, formatIncomingSquareText, recordMarkup]);
+    recordMarkup(alg, incomingHtml);
+  }, [alg, algHtml, incomingHtml, formatIncomingSquareText, recordMarkup]);
   const changeMarkedAlg = useCallback((text: string, html: string) => {
     recordMarkup(text, html);
     setMoveEditing(false);

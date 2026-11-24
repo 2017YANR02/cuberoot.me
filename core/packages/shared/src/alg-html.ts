@@ -16,6 +16,22 @@ export function escapeAlgText(text: string): string {
   return text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 }
 
+// The OLL 15 import and its OLL 16 mirror marked the last front flick as a
+// middle-finger move. Recognize the two old catalog signatures in saved links.
+const legacyOllFrontFlicks = new Map([
+  ["(R' F' M F') (r U R' F R)",
+    "<strong>(R' </strong><u><strong>F'</strong></u><strong> M F') (r U R' </strong><s><strong>F</strong></s><strong> R)</strong>"],
+  ["(L F M F) (l' U' L F' L')",
+    "<strong>(L </strong><u><strong>F</strong></u><strong> M F) (l' U' L </strong><s><strong>F'</strong></s><strong> L')</strong>"],
+]);
+
+export function correctOllFrontFlickHtml(alg: string, html: string): string {
+  const legacy = legacyOllFrontFlicks.get(alg.trim());
+  if (!legacy) return html;
+  const signature = html.trim().replace(/<\/strong><strong>/g, '').replace(/&#(?:x27|39);/gi, "'");
+  return signature === legacy ? html.replace(/<\/?s>/g, '') : html;
+}
+
 /** Catalog convention: only an initial U half-turn loses its direction mark.
  * Keep later signed half-turns and all finger annotations unchanged. */
 export function canonicalizeInitialU2<T extends { alg: string; algHtml?: string }>(entry: T): T {
