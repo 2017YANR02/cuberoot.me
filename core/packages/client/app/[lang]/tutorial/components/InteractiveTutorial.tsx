@@ -8,6 +8,7 @@ import AlgPlayer, { type AlgPlayerHandle, type AlgStickerPlacement } from '@/com
 import { resolveSimPreviewMoves, type AlgPlayerPuzzle } from '@/components/AlgPlayer/player-setup';
 import { animateStickerHint, dimStickerColors } from '@/components/AlgPlayer/sticker-hint-fade';
 import AppLink from '@/components/AppLink';
+import BoolToggle from '@/components/BoolToggle';
 import ChatBubble from '@/components/ChatBubble';
 import { ClearButton } from '@/components/ClearButton';
 import PageBackLink from '@/components/PageBackLink';
@@ -267,12 +268,13 @@ const triggerMoveCopy: Record<string, Text> = {
   "R'": { zh: '把右层转下来。', en: 'Turn the right layer down.' },
 };
 
-export function TutorialAlgDemo({ insertion, puzzle, orientation, view, mutedStickers, stickeringAtStep, stickerColorOverrides, onClose }: {
+export function TutorialAlgDemo({ insertion, puzzle, orientation, view, mutedStickers, stickeringAtStep, stickerColorOverrides, handToggle = false, onClose }: {
   insertion: Omit<TutorialAlg, 'helpLabel' | 'steps'> & { steps: readonly TutorialAlgStep[] };
   puzzle: AlgPlayerPuzzle;
   orientation?: string;
   view: View;
   mutedStickers?: readonly string[];
+  handToggle?: boolean;
   onClose: () => void;
 } & Pick<ComponentProps<typeof AlgPlayer>, 'stickeringAtStep' | 'stickerColorOverrides'>) {
   const dialog = useRef<HTMLDialogElement>(null);
@@ -283,6 +285,7 @@ export function TutorialAlgDemo({ insertion, puzzle, orientation, view, mutedSti
   const [ready, setReady] = useState(false);
   const [playRequest, setPlayRequest] = useState(0);
   const [step, setStep] = useState(0);
+  const [handsVisible, setHandsVisible] = useState(false);
   const left = insertion.steps[0]?.notation === "L'";
   const title = insertion.demoTitle ?? (left ? { zh: '左手上勾下回', en: 'Left-hand trigger' } : insertion.progressLabel);
   const describeMove = ({ notation, detail, cue }: TutorialAlgStep, index: number): Text =>
@@ -316,7 +319,8 @@ export function TutorialAlgDemo({ insertion, puzzle, orientation, view, mutedSti
     return () => window.clearTimeout(timer);
   }, [ready]);
 
-  return <dialog ref={dialog} className="course-demo-dialog" data-long-alg={insertion.steps.length > 4 || undefined} aria-labelledby={titleId}
+  return <dialog ref={dialog} className="course-demo-dialog" data-long-alg={insertion.steps.length > 4 || undefined}
+    data-hand-toggle={handToggle || undefined} aria-labelledby={titleId}
     onCancel={event => { event.preventDefault(); close(); }} {...backdrop}>
     <div className="course-demo-panel" data-site-surface="popover">
       <header>
@@ -331,7 +335,8 @@ export function TutorialAlgDemo({ insertion, puzzle, orientation, view, mutedSti
             <AlgPlayer ref={player} puzzle={puzzle} set="" orientation={orientation} engine="sim"
               setup={insertion.demoSetup} alg={insertion.steps.map(({ notation }) => notation).join(' ')} sceneRot={view}
               hiddenStickers={mutedStickers} stickeringAtStep={stickeringAtStep} stickerColorOverrides={stickerColorOverrides}
-              showHands={insertion.showHands ?? !insertion.demoTitle} moveDurationMs={720}
+              showHands={handToggle || (insertion.showHands ?? !insertion.demoTitle)}
+              handsVisible={handToggle ? handsVisible : undefined} moveDurationMs={720}
               pauseAfterSteps={insertion.demoTitle ? undefined : triggerPauses} sectionPauseMs={300}
               onStepChange={setStep} playRequest={playRequest} onReady={() => setCubeReady(true)} fillPane />
           </div>
@@ -354,6 +359,8 @@ export function TutorialAlgDemo({ insertion, puzzle, orientation, view, mutedSti
             {tr(current ? describeMove(current, step - 1)
               : { zh: '选择一个动作可以单独播放。', en: 'Select a move to play it on its own.' })}
           </p>}
+          {handToggle && <BoolToggle className="course-demo-hands" label={tr({ zh: '手部动作', en: 'Hand animation' })}
+            value={handsVisible} onChange={setHandsVisible} />}
         </div>
       </div>
     </div>

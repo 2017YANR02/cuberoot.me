@@ -86,7 +86,7 @@
 .course-demo-dialog::backdrop { background: color-mix(in srgb, var(--foreground) 24%, transparent); }
 .course-demo-panel { padding: clamp(8px, 3vw, 20px); }
 .course-demo-panel > header { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-block-end: 10px; }
-.course-question-copy .course-demo-panel h2 { margin: 0; font-size: clamp(1.1rem, 3vw, 1.4rem); }
+.course-demo-panel > header h2 { margin: 0; font-size: clamp(1.1rem, 3vw, 1.4rem); }
 .course-demo-panel .clear-btn { min-inline-size: 44px; min-block-size: 44px; }
 .course-demo-body { display: grid; gap: 14px; }
 .course-demo-stage {
@@ -167,6 +167,25 @@
   }
   .course-demo-cues .course-demo-cue { min-block-size: 46px; }
   .course-demo-guide .course-demo-detail { display: none; }
+}
+.course-demo-dialog[data-hand-toggle] .course-demo-cues {
+  grid-template-columns: repeat(auto-fill, minmax(44px, 1fr));
+}
+.course-demo-dialog[data-hand-toggle] .course-demo-cue {
+  min-block-size: 44px;
+  font-size: 1.125rem;
+}
+.course-demo-dialog[data-hand-toggle] .course-demo-cue:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: -2px;
+}
+.course-demo-dialog[data-hand-toggle] [aria-current='step'] code { color: var(--foreground); }
+.course-demo-hands.bool-toggle {
+  display: flex;
+  justify-content: space-between;
+  margin-block-start: 12px;
+  padding-block-start: 8px;
+  border-block-start: 1px solid var(--border-default);
 }
 .course-turn-faces { display: flex; flex-wrap: wrap; gap: 6px 16px; margin: 10px 0 0; padding: 0; list-style: none; }
 .course-turn-faces li { display: flex; align-items: center; gap: 4px; }
