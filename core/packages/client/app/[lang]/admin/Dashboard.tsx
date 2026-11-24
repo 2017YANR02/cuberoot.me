@@ -130,6 +130,8 @@ export default function Dashboard() {
   const count = (value: number | undefined | null) => value == null ? (loading ? <SkeletonBlock className="admin-dashboard__number-skeleton" /> : '—') : value.toLocaleString();
   const cash = (value: number, code: string) => `${code} ${value.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
   const currencies = [...new Set(data?.revenue?.map(row => row.currency) ?? [])];
+  const showOrders = data?.revenue?.length !== 0;
+  const showSponsors = data?.sponsors?.length !== 0;
   const selectedCurrency = currencies.includes(currency) ? currency : currencies[0];
   const revenue = data?.revenue?.filter(row => row.currency === selectedCurrency) ?? [];
   // Refuse unsafe conversion instead of silently rounding financial totals.
@@ -182,19 +184,22 @@ export default function Dashboard() {
         </> : loading ? <SkeletonBlock className="admin-dashboard__chart admin-dashboard__chart-placeholder" /> : <p className="admin-dashboard__empty">{ t('尚无可用的流量报表，请稍后刷新或查看小时报表。', 'No traffic report available. Refresh later or open the hourly reports.')}</p>}
         <details className="admin-overview__disclosure"><MoreToggle as="summary">{t('报表与覆盖范围', 'Report and coverage')}</MoreToggle>{traffic && <>          <p>{traffic.windowStart.replace('T', ' ').slice(0, 16)} — {traffic.windowEnd.replace('T', ' ').slice(0, 16)} UTC</p>          {traffic.sources.filter(s => s.coverage === 'not_connected').map(s => <p key={s.source}>{s.source}: {t('未接入', 'Not connected')}</p>)}</>}<a href="https://github.com/2017YANR02/cuberoot.me/actions/workflows/traffic_monitor.yml" target="_blank" rel="noreferrer">{t('查看小时报表', 'View hourly reports')}</a></details>
       </section>
-      <section className="admin-dashboard__panel" data-site-surface="panel"><h3>{t('订单收退款', 'Order cash flow')} <InfoTooltip icon={HelpCircle} iconSize={15} ariaLabel={t('统计说明', 'About these metrics')} content={t('按实际收款与成功退款日期统计，未扣手续费、分成及拒付，不代表利润。', 'By receipt and successful refund date, before fees, revenue shares and chargebacks. Not profit.')} /></h3>
-        {currencies.length > 0 && <label>{t('币种', 'Currency')} <select className="admin-dashboard-select" aria-label={t('币种', 'Currency')} value={selectedCurrency} onChange={event => setCurrency(event.target.value)}>{currencies.map(code => <option key={code}>{code}</option>)}</select></label>}
-        {data?.revenue == null ? loading ? <SkeletonBlock className="admin-dashboard__chart admin-dashboard__chart-placeholder" /> : <p className="admin-dashboard__empty">{unavailable}</p> : !precise ? <p>{t('金额超出图表安全精度，请查看订单明细。', 'Amounts exceed chart precision. Please review order records.')}</p> : !currencies.length ? <p className="admin-dashboard__empty">{t('本期无收退款', 'No cash flow this period')}</p> : <>
-          <div className="admin-dashboard__cash"><span>{t('收款', 'Receipts')} <strong>{cash(Number(received) / 100, selectedCurrency)}</strong></span><span>{t('退款', 'Refunds')} <strong>{cash(Number(refunded) / 100, selectedCurrency)}</strong></span></div>
-          <DashboardChart integer={false} label={`${t('每日收款与退款', 'Daily receipts and refunds')} · ${selectedCurrency}`} labels={dates} series={[
-            { name: `${t('收款', 'Receipts')} (${selectedCurrency})`, type: 'bar', data: dates.map(date => Number(revenue.find(row => row.date === date)?.receivedMinor ?? 0) / 100) },
-            { name: `${t('退款', 'Refunds')} (${selectedCurrency})`, type: 'bar', data: dates.map(date => Number(revenue.find(row => row.date === date)?.refundedMinor ?? 0) / 100) },
-          ]} />
+      {(showOrders || showSponsors) && <section className="admin-dashboard__panel" data-site-surface="panel">
+        {showOrders && <>
+          <h3>{t('订单收退款', 'Order cash flow')} <InfoTooltip icon={HelpCircle} iconSize={15} ariaLabel={t('统计说明', 'About these metrics')} content={t('按实际收款与成功退款日期统计，未扣手续费、分成及拒付，不代表利润。', 'By receipt and successful refund date, before fees, revenue shares and chargebacks. Not profit.')} /></h3>
+          {currencies.length > 0 && <label>{t('币种', 'Currency')} <select className="admin-dashboard-select" aria-label={t('币种', 'Currency')} value={selectedCurrency} onChange={event => setCurrency(event.target.value)}>{currencies.map(code => <option key={code}>{code}</option>)}</select></label>}
+          {data?.revenue == null ? loading ? <SkeletonBlock className="admin-dashboard__chart admin-dashboard__chart-placeholder" /> : <p className="admin-dashboard__empty">{unavailable}</p> : !precise ? <p>{t('金额超出图表安全精度，请查看订单明细。', 'Amounts exceed chart precision. Please review order records.')}</p> : <>
+            <div className="admin-dashboard__cash"><span>{t('收款', 'Receipts')} <strong>{cash(Number(received) / 100, selectedCurrency)}</strong></span><span>{t('退款', 'Refunds')} <strong>{cash(Number(refunded) / 100, selectedCurrency)}</strong></span></div>
+            <DashboardChart integer={false} label={`${t('每日收款与退款', 'Daily receipts and refunds')} · ${selectedCurrency}`} labels={dates} series={[
+              { name: `${t('收款', 'Receipts')} (${selectedCurrency})`, type: 'bar', data: dates.map(date => Number(revenue.find(row => row.date === date)?.receivedMinor ?? 0) / 100) },
+              { name: `${t('退款', 'Refunds')} (${selectedCurrency})`, type: 'bar', data: dates.map(date => Number(revenue.find(row => row.date === date)?.refundedMinor ?? 0) / 100) },
+            ]} />
+          </>}
         </>}
-        <details className="admin-overview__disclosure"><MoreToggle as="summary">{t('累计赞助', 'Lifetime sponsorships')}</MoreToggle><p>{t('独立展示，不并入订单收入；现有记录无付款日期，不适用上方日期范围。', 'Shown separately from orders. Records have no payment date, so the period filter does not apply.')}</p>
-        {data?.sponsors == null ? <p>{unavailable}</p> : data.sponsors.length ? <div className="admin-dashboard__cash">{data.sponsors.map(row => <strong key={row.currency}>{row.currency} {row.amount}</strong>)}</div> : <p>{t('暂无赞助记录', 'No sponsorship records')}</p>}
-        <AppLink href="/support" prefetch={false}>{t('查看赞助记录', 'View sponsorships')}</AppLink></details>
-      </section>
+        {showSponsors && <details className="admin-overview__disclosure"><MoreToggle as="summary">{t('累计赞助', 'Lifetime sponsorships')}</MoreToggle><p>{t('独立展示，不并入订单收入；现有记录无付款日期，不适用上方日期范围。', 'Shown separately from orders. Records have no payment date, so the period filter does not apply.')}</p>
+        {data?.sponsors == null ? <p>{unavailable}</p> : <div className="admin-dashboard__cash">{data.sponsors.map(row => <strong key={row.currency}>{row.currency} {row.amount}</strong>)}</div>}
+        <AppLink href="/support" prefetch={false}>{t('查看赞助记录', 'View sponsorships')}</AppLink></details>}
+      </section>}
       <section className="admin-dashboard__panel" data-site-surface="panel"><h3>{t('待处理事项', 'Items to review')} <InfoTooltip icon={HelpCircle} iconSize={15} ariaLabel={t('统计说明', 'About these metrics')} content={t('当前状态，不受日期范围影响；未读投稿不等同于待审核。', 'Current state, independent of the date range. Unread submissions are not an approval queue.')} /></h3>
         {loading && !pending && <ContentSkeleton variant="text" />}
         <ul className="admin-dashboard__todos">{todo.filter(item => item.value != null && item.value > 0).map(item => <li key={item.href + item.label}><AppLink href={item.href} prefetch={false}><span>{item.label}</span><strong>{count(item.value)}</strong></AppLink></li>)}</ul>
