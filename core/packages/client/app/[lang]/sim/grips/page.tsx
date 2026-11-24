@@ -108,7 +108,7 @@ function OrderAtlas({ order, query, select }: {
       <p>{t(`${pairs} 种双手起手握姿 × ${moves.length} 种转动`, `${pairs} starting grip pairs × ${moves.length} turns`)}</p>
     </header>
     <label>{t('魔方阶数', 'Cube size')}{' '}
-      <select value={order} onChange={e => {
+      <select className="grip-atlas-select" value={order} onChange={e => {
         const next = Number(e.target.value) as AtlasOrder;
         void select({ order: `${next}`, move: atlasCatalog[next].resolve(query.move) ?? 'U' });
       }}>{[2, 3, 4].map(n => <option key={n} value={n}>{n}×{n}</option>)}</select>
@@ -127,14 +127,14 @@ function OrderAtlas({ order, query, select }: {
           })}
         </div>
         <div className="grip-atlas-controls">
-          <button type="button" disabled={index === 0} onClick={() => showIndex(index - 1)}>{t('上一项', 'Previous')}</button>
+          <button className="grip-atlas-button" type="button" disabled={index === 0} onClick={() => showIndex(index - 1)}>{t('上一项', 'Previous')}</button>
           {phase === 'error'
-            ? <button type="button" onClick={() => window.location.reload()}>{t('重新加载', 'Reload')}</button>
-            : <button type="button" disabled={!selected || !demo || phase === 'loading'} onClick={replayMove}>{t('重播', 'Replay')}</button>}
-          <button type="button" disabled={!demo || ['loading', 'end', 'error', 'unavailable'].includes(phase)} onClick={() => {
+            ? <button className="grip-atlas-button" type="button" onClick={() => window.location.reload()}>{t('重新加载', 'Reload')}</button>
+            : <button className="grip-atlas-button" type="button" disabled={!selected || !demo || phase === 'loading'} onClick={replayMove}>{t('重播', 'Replay')}</button>}
+          <button className="grip-atlas-button" type="button" disabled={!demo || ['loading', 'end', 'error', 'unavailable'].includes(phase)} onClick={() => {
             demo?.pause(!paused); setPaused(!paused);
           }}>{paused ? t('继续', 'Resume') : t('暂停', 'Pause')}</button>
-          <button type="button" disabled={index === count - 1} onClick={() => showIndex(index + 1)}>{t('下一项', 'Next')}</button>
+          <button className="grip-atlas-button" type="button" disabled={index === count - 1} onClick={() => showIndex(index + 1)}>{t('下一项', 'Next')}</button>
           <span>{index + 1} / {count}</span>
         </div>
         <details onToggle={event => {
@@ -160,7 +160,7 @@ function OrderAtlas({ order, query, select }: {
           </p>}
           {geometry && !review && gesture?.kind === 'flick' && !samples.length && <p>{t('尚未采到活动贴纸上的接触点', 'No contact sampled on a moving sticker yet')}</p>}
           {geometry && (demo?.candidateCount() ?? 0) > 1 && <p>{t('有多种已标定指法可用，按当前手指到发力区的距离和朝向选指。', 'Several calibrated strokes fit. Finger reach and orientation determine the choice.')}</p>}
-          {geometry && phase === 'end' && demo?.recording().entry && <button type="button" onClick={() => {
+          {geometry && phase === 'end' && demo?.recording().entry && <button className="grip-atlas-button" type="button" onClick={() => {
             const blob = new Blob([JSON.stringify({ move, left, right, ...demo.recording() }, null, 2)],
               { type: 'application/json' });
             const url = URL.createObjectURL(blob), link = document.createElement('a');
@@ -174,7 +174,7 @@ function OrderAtlas({ order, query, select }: {
         <div className="grip-atlas-selects">
           {(['left', 'right'] as const).map(side => <div key={side}>
             <label htmlFor={side}>{side === 'left' ? t('左手', 'Left hand') : t('右手', 'Right hand')}</label>
-            <select id={side} value={side === 'left' ? left : right} onChange={e => {
+            <select className="grip-atlas-select" id={side} value={side === 'left' ? left : right} onChange={e => {
               const grip = gripNames.find(name => name === e.target.value);
               if (grip) void select({ [side]: grip });
             }}>{gripNames.map(name => <option key={name} value={name}>
@@ -184,12 +184,12 @@ function OrderAtlas({ order, query, select }: {
         </div>
         <h2>{t('转动', 'Turns')}</h2>
         <div className="grip-atlas-groups">{moveGroups.map(g =>
-          <button type="button" key={g.en} aria-pressed={g === group} onClick={() => {
+          <button className="grip-atlas-button" type="button" key={g.en} aria-pressed={g === group} onClick={() => {
             if (g !== group) void select({ move: g.bases[0] });
           }}>{t(g.zh, g.en)}</button>)}</div>
         <div className="grip-atlas-grid">{group.bases.flatMap(base => suffixes.map(suffix => {
           const token = base + suffix;
-          return <button type="button" key={token} aria-pressed={selected === token}
+          return <button className="grip-atlas-button" type="button" key={token} aria-pressed={selected === token}
             onClick={() => selected === token ? replayMove() : void select({ move: token })}>{token}</button>;
         }))}</div>
       </section>
