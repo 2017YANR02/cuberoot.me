@@ -10,12 +10,24 @@ import { launchAndroid, listAndroidTargets } from './mobile-android-live.mjs';
 const mobile = realpathSync(fileURLToPath(new URL('../apps/mobile/', import.meta.url)));
 const cache = fileURLToPath(new URL('../../.tmp/cache/ios-live/', import.meta.url));
 const bundleId = 'me.cuberoot.app';
+const watchBundleId = `${bundleId}.watchkitapp`;
+const simulatorProducts = join(tmpdir(), 'cuberoot-mobile-ios-derived-data/Build/Products');
 const pairedPreviewBuild = 7;
 // The API already permits this loopback origin for installed-client development.
 const port = '1420';
 const url = `http://127.0.0.1:${port}`;
 const log = join(cache, 'vite.log');
 const script = fileURLToPath(import.meta.url);
+const launcherSimulatorNames = [
+  'iPhone Duo',
+  'iPhone 18 Pro',
+  'iPad (A16)',
+  'iPad mini (A20 Pro)',
+  'iPad Pro 11-inch (M5)',
+  'iPad Pro 13-inch (M5)',
+  'Apple Watch Ultra 4 (49mm)',
+  'CubeRoot Watch Store zh-Hans',
+];
 
 function run(command, args, options = {}) {
   const result = spawnSync(command, args, { encoding: 'utf8', ...options });
@@ -26,10 +38,48 @@ function run(command, args, options = {}) {
 
 const sim = (...args) => run('xcrun', ['simctl', ...args]);
 const device = (...args) => run('xcrun', ['devicectl', ...args]);
+const listDeviceHub = () => JSON.parse(device('list', 'devices', '--quiet', '--json-output', '-')).result.devices;
 
-function findDuo() {
+function availableSimulators() {
   const { devices } = JSON.parse(sim('list', 'devices', 'available', '-j'));
-  const matches = Object.values(devices).flat().filter(({ name }) => name === 'iPhone Duo');
+  return Object.entries(devices).flatMap(([runtime, entries]) => {
+    const match = runtime.match(/^com\.apple\.CoreSimulator\.SimRuntime\.(iOS|watchOS)-(\d+)-(\d+)(?:-(\d+))?/);
+    if (!match) return [];
+    const [, platform, major, minor, patch] = match;
+    const version = [major, minor, patch].filter(Boolean).join('.');
+    return entries.map(({ udid, name, state }) => ({ id: udid, name, state, platform, version }));
+  });
+}
+
+function simulatorTargets() {
+  const simulators = availableSimulators();
+  const hubIds = new Set();
+  try {
+    for (const { hardwareProperties } of listDeviceHub()) {
+      if (hardwareProperties.reality === 'simulated') hubIds.add(hardwareProperties.udid.toUpperCase());
+    }
+  } catch (error) {
+    console.error(error.message);
+  }
+  return launcherSimulatorNames.flatMap(name => {
+    const matches = simulators.filter(simulator => simulator.name === name);
+    const inHub = matches.filter(({ id }) => hubIds.has(id.toUpperCase()));
+    const candidates = inHub.length ? inHub : matches;
+    const target = candidates.find(({ state }) => state === 'Booted') ?? candidates[0];
+    if (!target) return [];
+    const { id, platform, version } = target;
+    return [{ id, name: `${name}（${platform} ${version} 模拟器）` }];
+  });
+}
+
+function findSimulator(selected) {
+  const simulators = availableSimulators();
+  if (selected) {
+    const target = simulators.find(({ id }) => id === selected);
+    if (!target) throw new Error('这个模拟器已不可用。请重新打开 CubeRoot Dev 并选择设备。');
+    return target;
+  }
+  const matches = simulators.filter(({ name }) => name === 'iPhone Duo');
   if (matches.length === 1) return matches[0];
   const booted = matches.filter(({ state }) => state === 'Booted');
   if (booted.length === 1) return booted[0];
@@ -96,7 +146,7 @@ function installedLiveApp(udid) {
 
 function installLiveApp(udid) {
   run('pnpm', ['ios:build'], { cwd: mobile, stdio: 'inherit' });
-  const builtApp = join(tmpdir(), 'cuberoot-mobile-ios-derived-data/Build/Products/Debug-iphonesimulator/App.app');
+  const builtApp = join(simulatorProducts, 'Debug-iphonesimulator/App.app');
   const stage = mkdtempSync(join(cache, 'install-'));
   try {
     const app = join(stage, 'App.app');
@@ -114,8 +164,7 @@ function installLiveApp(udid) {
 }
 
 function pairedPhones() {
-  const { result } = JSON.parse(device('list', 'devices', '--quiet', '--json-output', '-'));
-  return result.devices.filter(({ hardwareProperties, connectionProperties }) =>
+  return listDeviceHub().filter(({ hardwareProperties, connectionProperties }) =>
     hardwareProperties.reality === 'physical' && hardwareProperties.productType.startsWith('iPhone')
     && connectionProperties.pairingState === 'paired')
     .map(({ hardwareProperties, deviceProperties, connectionProperties }) => ({
@@ -208,13 +257,19 @@ async function launchPairedPhone(selected) {
     '--environment-variables', environment, bundleId));
 }
 
-async function launchSimulatorDuo() {
-  const { udid, state } = findDuo();
-  await startServer();
+async function launchSimulator(selected) {
+  const { id: udid, state, platform } = findSimulator(selected);
+  if (platform === 'iOS') await startServer();
   if (state === 'Shutdown') sim('boot', udid);
   sim('bootstatus', udid, '-b');
-  if (process.argv.includes('--rebuild') || !installedLiveApp(udid)) installLiveApp(udid);
-  console.log(sim('launch', udid, bundleId));
+  if (platform === 'watchOS') {
+    run('pnpm', ['watch:build'], { cwd: mobile, stdio: 'inherit' });
+    sim('install', udid, join(simulatorProducts, 'Debug-watchsimulator/CubeRootWatch.app'));
+    console.log(sim('launch', '--terminate-running-process', udid, watchBundleId));
+  } else {
+    if (process.argv.includes('--rebuild') || !installedLiveApp(udid)) installLiveApp(udid);
+    console.log(sim('launch', udid, bundleId));
+  }
   run('/usr/bin/open', ['-b', 'com.apple.dt.Devices', `devices://device/open?id=${udid}`]);
 }
 
@@ -222,6 +277,10 @@ try {
   const [mode, host, peer] = process.argv.slice(2);
   if (mode === '--paired-proxy') {
     forwardPairedDevice(host, peer);
+  } else if (mode === '--list-simulators') {
+    console.log(JSON.stringify(simulatorTargets()));
+  } else if (mode === '--list-apple-devices') {
+    console.log(JSON.stringify(pairedPhones().map(({ id, name }) => ({ id, name: `${name}（iPhone 真机）` }))));
   } else if (mode === '--list-phones') {
     console.log(JSON.stringify(pairedPhones().map(({ id, name }) => ({ id, name }))));
   } else if (mode === '--list-android') {
@@ -230,7 +289,7 @@ try {
     mkdirSync(cache, { recursive: true });
     if (mode === '--device') await launchPairedPhone(host);
     else if (mode === '--android') await launchAndroid(host, { run, mobile, startServer, startDetached, port, log: join(cache, 'android-emulator.log') });
-    else await launchSimulatorDuo();
+    else await launchSimulator(mode === '--simulator' ? host : undefined);
   }
 } catch (error) {
   console.error(error.message);

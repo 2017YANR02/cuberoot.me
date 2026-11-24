@@ -47,10 +47,10 @@ func present(_ alert: NSAlert) -> NSApplication.ModalResponse {
     return alert.runModal()
 }
 
-func discover(_ mode: String, arguments: String, suffix: String = "") -> [Target] {
+func discover(_ mode: String, arguments: String) -> [Target] {
     do {
         return try JSONDecoder().decode([Device].self, from: run([mode])).map {
-            Target(name: $0.name + suffix, arguments: [arguments, $0.id])
+            Target(name: $0.name, arguments: [arguments, $0.id])
         }
     } catch {
         NSLog("CubeRoot %@: %@", mode, error.localizedDescription)
@@ -62,7 +62,7 @@ func choose(_ targets: [Target]) -> Target? {
     guard targets.count > 1 else { return targets.first }
     let alert = NSAlert()
     alert.messageText = "在哪打开 CubeRoot？"
-    let picker = NSPopUpButton(frame: NSRect(x: 0, y: 0, width: 310, height: 30))
+    let picker = NSPopUpButton(frame: NSRect(x: 0, y: 0, width: 430, height: 30))
     var repeatedNames: [String: Int] = [:]
     picker.addItems(withTitles: targets.map { target in
         repeatedNames[target.name, default: 0] += 1
@@ -77,11 +77,14 @@ func choose(_ targets: [Target]) -> Target? {
     return targets[picker.indexOfSelectedItem]
 }
 
-let targets = [Target(name: "iPhone Duo 模拟器", arguments: [])]
-    + discover("--list-phones", arguments: "--device", suffix: "（iPhone 真机）")
+let targets = discover("--list-simulators", arguments: "--simulator")
+    + discover("--list-apple-devices", arguments: "--device")
     + discover("--list-android", arguments: "--android")
 
 do {
+    if targets.isEmpty {
+        throw CommandError(message: "没有可用的设备。请在 Device Hub 或 Android Studio 中检查模拟器和真机连接。")
+    }
     if let target = choose(targets) { _ = try run(target.arguments) }
 } catch {
     let alert = NSAlert()

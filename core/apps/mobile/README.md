@@ -69,9 +69,9 @@ pnpm --filter @cuberoot/mobile ios:run
 
 `cap:sync` remains the Android-compatible entry point. The platform-specific sync commands build the same web app and copy it into the selected native project. Run the matching command after changing React or shared code and before making a native build.
 
-### Live reload on physical phones
+### Open CubeRoot Dev on a simulator or phone
 
-Open **CubeRoot Dev** on the Mac and select the phone. Use the same launcher for iPhone and Android. Each phone connects to the same Mobile Vite server on the Mac, and React and CSS changes are picked up on save. Native changes still require rebuilding the development app. To resume live reload after quitting the phone app, open it again through **CubeRoot Dev**.
+Open **CubeRoot Dev** on the Mac and select a device. The menu shows the configured simulator shortlist, paired iPhones, and Android targets. When multiple local simulators share a name on the shortlist, the launcher prefers the one in Device Hub. iOS and Android previews use the same Mobile Vite server on that Mac. React and CSS changes are picked up on save, while native changes require rebuilding. Selecting an Apple Watch simulator builds, installs, and opens the native watchOS app. To resume live reload after quitting the mobile app, open it again through **CubeRoot Dev**.
 
 - **iPhone:** Pair once in [Xcode Device Hub](https://developer.apple.com/documentation/xcode/managing-your-simulated-and-physical-devices-in-device-hub) and enable Developer Mode. iOS 27 or later supports pairing over the same Wi‑Fi network. An already-paired phone can be selected even when its debug tunnel is idle. The development app keeps the WebView on `http://127.0.0.1:1420` and forwards to the paired Mac. That address stays stable across reconnects and is recognized by the website bridge. Earlier tunnel-address previews have their own WebView storage.
 - **Android:** Enable [Wireless debugging](https://developer.android.com/tools/adb#connect-to-a-device-over-wi-fi) and pair in Android Studio over the same Wi‑Fi network, or connect over USB and allow debugging. The launcher lists Android phones once ADB connects.
