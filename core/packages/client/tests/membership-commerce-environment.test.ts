@@ -3,7 +3,7 @@ import { act, createElement, type AnchorHTMLAttributes } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-const mocks = vi.hoisted(() => ({ listPlans: vi.fn(), getEnv: vi.fn(), login: vi.fn() }));
+const mocks = vi.hoisted(() => ({ listPlans: vi.fn(), getEnv: vi.fn(), login: vi.fn(), directApp: false }));
 vi.mock('@/lib/wechat-js-sdk', () => ({
   loadWeChatJsSdk: async () => ({ miniProgram: { navigateTo: vi.fn(), getEnv: mocks.getEnv } }),
 }));
@@ -15,6 +15,7 @@ vi.mock('@/lib/auth-store', () => ({
   isAdmin: () => false, getSessionToken: () => null, getWcaToken: () => null,
 }));
 vi.mock('@/lib/apple-membership-bridge', () => ({ isIosMembershipSurface: () => false, useAppleMembershipAvailable: () => false }));
+vi.mock('@/lib/web-membership-bridge', () => ({ useWebMembershipAvailable: () => mocks.directApp, webMembershipAvailable: () => mocks.directApp }));
 vi.mock('@/lib/membership-api', async (original) => ({
   ...await original<typeof import('@/lib/membership-api')>(), listPlans: mocks.listPlans, renewalAvailability: async () => ({ available: false, termsVersion: '2026-10-14' }),
 }));
@@ -38,6 +39,7 @@ describe('membership in the WeChat browser', () => {
     vi.spyOn(navigator, 'userAgent', 'get').mockReturnValue('Mozilla/5.0 (iPhone) MicroMessenger/8.0');
     mocks.getEnv.mockReset().mockImplementation((callback) => { reply = callback; });
     mocks.login.mockReset();
+    mocks.directApp = false;
     mocks.listPlans.mockReset().mockResolvedValue({
       plans: [{ slug: 'monthly', nameZh: '月度会员', nameEn: 'Monthly', period: 'month', periodCount: 1, priceCents: 3999, currency: 'CNY', perks: [] }],
       renewalPlans: [{ slug: 'monthly_auto_renew', nameZh: '连续包月', nameEn: 'Monthly auto-renewal', period: 'month', periodCount: 1, priceCents: 2999, currency: 'CNY', perks: [], active: false }],
@@ -92,5 +94,14 @@ describe('membership in the WeChat browser', () => {
       await act(async () => host.querySelector<HTMLButtonElement>('button[aria-label="付费方式"]')!.click());
       expect([...document.querySelectorAll('[role="option"]')].map(item => item.textContent)).toEqual(['自动续费']);
     }
+  });
+
+  it('offers only single purchases in the direct Android app', async () => {
+    mocks.directApp = true;
+    await act(async () => root.render(createElement(MembershipPage)));
+    await act(async () => reply({ miniprogram: false }));
+    expect(host.querySelector('button[aria-label="付费方式"]')).toBeNull();
+    expect(host.querySelector('.mem-plan-amount')?.textContent).toBe('¥39.99');
+    expect(host.textContent).not.toContain('自动续费服务协议');
   });
 });

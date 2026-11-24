@@ -246,19 +246,14 @@
 
 /* Shared App Store / Google Play surface; no store-specific payment styling. */
 .mem-store { overflow-wrap: anywhere; }
-.mem-store-benefits { margin-bottom: 20px; }
-.mem-note.mem-store-notice { margin: 0 0 24px; }
-.mem-store .mem-plan-mode-trigger {
-  display: inline-flex;
+.mem-store-benefits { margin-top: 20px; }
+.mem-store-catalog-status {
+  display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  gap: 4px;
-  padding: 0;
-  border: 0;
-  background: transparent;
-  color: inherit;
-  font: inherit;
-  cursor: pointer;
+  gap: 8px 12px;
 }
+.mem-store-catalog-status p { margin: 0; }
 .mem-plan-name { margin-top: 0; }
 .mem-store .mem-plan-price { margin-top: 0; flex-wrap: wrap; }
 .mem-store .mem-plan-cta { min-height: 44px; margin-top: auto; }
@@ -283,6 +278,7 @@
   cursor: pointer;
 }
 .mem-store-actions .mem-store-secondary { flex: 1 1 200px; }
+.mem-store-actions a.mem-store-secondary { box-sizing: border-box; text-align: center; text-decoration: none; }
 .mem-store-secondary:hover:not(:disabled) { background: var(--muted); }
 .mem-store .mem-plan-cta:disabled,
 .mem-store .mem-store-secondary:disabled { opacity: 0.55; cursor: not-allowed; }
