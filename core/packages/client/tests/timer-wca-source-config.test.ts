@@ -15,8 +15,9 @@ import {
   type TimerWcaSourceDataAdapter,
 } from '@cuberoot/timer-ui';
 import WebWcaSourceConfig from '@/components/WcaSourceConfig';
+import { loadComps } from '@/lib/comp-search';
 
-vi.mock('@/lib/comp-search', () => ({ loadComps: async () => [] }));
+vi.mock('@/lib/comp-search', () => ({ loadComps: vi.fn(async () => []) }));
 vi.mock('@/lib/timer-wca-difficulty-adapter', () => ({
   webTimerWcaDifficultyAdapter: {
     loadCatalog: async () => ({ distribution: null, eventLengths: null, layout: null }),
@@ -156,6 +157,31 @@ describe('shared controlled WCA source UI', () => {
   afterEach(async () => {
     await act(async () => root.unmount());
     host.remove();
+  });
+
+  it('offers only finished competitions for the current web timer event', async () => {
+    const portal = document.createElement('div');
+    document.body.appendChild(portal);
+    const dates = { start_date: '2026-04-05', end_date: '2026-04-06' };
+    const competitions = [
+      { id: 'Speed', name: 'Speed Open', country: 'us', events: ['3'], ...dates },
+      { id: 'FewestMoves', name: 'Fewest Moves Open', country: 'us', events: ['fm'], ...dates },
+      { id: 'Ongoing', name: 'Ongoing Open', country: 'us', events: ['3'], ...dates, end_date: '2999-04-06' },
+    ];
+    vi.mocked(loadComps).mockResolvedValueOnce(competitions).mockResolvedValueOnce(competitions);
+    const render = (event: '333' | '333fm') => act(async () => root.render(createElement(WebWcaSourceConfig, {
+      event, isZh: false, settings: DEFAULT_TIMER_WCA_SOURCE_SETTINGS,
+      updateSettings: vi.fn(), sourceSlot: portal,
+    })));
+    const optionNames = () => [...portal.querySelectorAll('[role="option"]')].map((row) => row.textContent);
+    try {
+      await render('333');
+      expect(optionNames()).toEqual([expect.stringContaining('Speed Open')]);
+      await render('333fm');
+      expect(optionNames()).toEqual([expect.stringContaining('Fewest Moves Open')]);
+    } finally {
+      portal.remove();
+    }
   });
 
   it.each(['333', '777'] as const)('leaves no inline spacer when %s source/difficulty controls live in menus, and preserves inline hosts', async (event) => {
