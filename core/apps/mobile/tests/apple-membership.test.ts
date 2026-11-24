@@ -1,4 +1,4 @@
-import { beforeEach, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 import type { WebSession } from '@cuberoot/shared/auth/web-session';
 import type { AppleMembershipRequest } from '@cuberoot/shared/apple-membership';
 const mocks = vi.hoisted(() => ({ restoreSession: vi.fn(), purchase: vi.fn(), products: vi.fn(), transactions: vi.fn(), restore: vi.fn(), finish: vi.fn(), manage: vi.fn(), fetch: vi.fn() }));
@@ -15,6 +15,7 @@ beforeEach(() => {
   mocks.purchase.mockResolvedValue({ status: 'purchased', transactionId: '123', signedTransaction: 'signed' });
   mocks.finish.mockResolvedValue(undefined);
 });
+afterEach(() => vi.unstubAllEnvs());
 it('acknowledges a transaction only after server verification succeeds', async () => {
   expect(await handleAppleMembership(request('purchase'), session)).toEqual({ status: 'success' });
   expect(mocks.fetch.mock.calls[1][1].body).toBe(JSON.stringify({ signedTransaction: 'signed' }));
@@ -41,4 +42,15 @@ it('still reconciles a valid transaction after an unrelated account transaction 
   mocks.fetch.mockResolvedValueOnce({ ok: false }).mockResolvedValueOnce({ ok: true, json: async () => ({}) });
   await expect(handleAppleMembership(request('restore'), session)).rejects.toThrow();
   expect(mocks.finish).toHaveBeenCalledExactlyOnceWith({ transactionId: '2' });
+});
+it('uses the sandbox selector for both account preflight and transaction verification in a sandbox build', async () => {
+  vi.stubEnv('VITE_APPLE_IAP_SANDBOX_ONLY', '1');
+  vi.resetModules();
+  const { handleAppleMembership: handleSandboxMembership } = await import('../src/apple-membership');
+  await expect(handleSandboxMembership(request('purchase'), session)).resolves.toEqual({ status: 'success' });
+  expect(mocks.fetch.mock.calls.map(([url]) => url)).toEqual([
+    'https://api.example.test/v1/membership/apple/me?environment=sandbox',
+    'https://api.example.test/v1/membership/apple/verify?environment=sandbox',
+  ]);
+  expect(mocks.purchase).toHaveBeenCalledWith(expect.objectContaining({ sandboxOnly: true }));
 });

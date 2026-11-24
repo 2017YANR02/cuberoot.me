@@ -6,9 +6,21 @@ import { APPLE_MEMBERSHIP_APP_ID, APPLE_MEMBERSHIP_BUNDLE, assertMembershipTrans
 
 export type AppleEnvironment = Environment.PRODUCTION | Environment.SANDBOX;
 export const appleIapEnabled = () => process.env.APPLE_IAP_ENABLED === '1';
+export const appleIapSandboxEnabled = () => process.env.APPLE_IAP_SANDBOX_ENABLED === '1';
+
+export function appleIapEnvironmentEnabled(environment: AppleEnvironment): boolean {
+  return appleIapEnabled() || (environment === Environment.SANDBOX && appleIapSandboxEnabled());
+}
+
+export function appleIapAccountEnvironment(uid: number, requested: string[]): AppleEnvironment | null {
+  if (requested.length === 0) return appleIapEnabled() ? Environment.PRODUCTION : null;
+  if (requested.length !== 1 || requested[0] !== 'sandbox') return null;
+  return appleIapEnvironmentEnabled(Environment.SANDBOX) && sandboxAllowed(uid) ? Environment.SANDBOX : null;
+}
+
 const clients = new Map<AppleEnvironment, { verifier: SignedDataVerifier; api: AppStoreServerAPIClient }>();
 function client(environment: AppleEnvironment) {
-  if (!appleIapEnabled()) throw new Error('Apple membership is not configured');
+  if (!appleIapEnvironmentEnabled(environment)) throw new Error('Apple membership is not configured');
   const existing = clients.get(environment);
   if (existing) return existing;
   const paths = (process.env.APPLE_IAP_ROOT_CERT_PATHS ?? '').split(',').filter(Boolean);
@@ -26,9 +38,9 @@ function client(environment: AppleEnvironment) {
 function sandboxAllowed(uid: number) {
   return (process.env.APPLE_IAP_SANDBOX_USER_IDS ?? '').split(',').map(s => s.trim()).includes(String(uid));
 }
-export async function appleAccountToken(uid: number): Promise<string> {
+export async function appleAccountToken(uid: number, environment: AppleEnvironment): Promise<string> {
   // Check all required credentials before presenting a purchasable product.
-  client(Environment.PRODUCTION);
+  client(environment);
   return withTransaction(async run => {
     await run('SELECT id FROM app_users WHERE id = ? FOR UPDATE', [uid]);
     const rows = await run<{ token: string }>('SELECT token FROM apple_membership_accounts WHERE user_id = ? ORDER BY created_at LIMIT 1', [uid]);
@@ -76,10 +88,13 @@ export async function reconcileAppleSubscription(environment: AppleEnvironment, 
   });
 }
 
-export async function verifyApplePurchase(signedTransaction: string, uid: number): Promise<void> {
+export async function verifyApplePurchase(signedTransaction: string, uid: number, requested: AppleEnvironment): Promise<void> {
   // Never use unverified JWS environment or account fields to choose the grant.
   let verified: { environment: AppleEnvironment; originalId: string } | undefined;
-  for (const environment of [Environment.PRODUCTION, Environment.SANDBOX] as const) {
+  const environments = requested === Environment.PRODUCTION && sandboxAllowed(uid)
+    ? [Environment.PRODUCTION, Environment.SANDBOX] as const
+    : [requested];
+  for (const environment of environments) {
     try {
       const t = await client(environment).verifier.verifyAndDecodeTransaction(signedTransaction);
       assertMembershipTransaction(t);
@@ -108,9 +123,9 @@ export async function receiveAppleNotification(environment: AppleEnvironment, si
   await query('INSERT INTO apple_membership_notifications (environment, notification_id) VALUES (?, ?) ON CONFLICT DO NOTHING', [environment, notification.notificationUUID]);
 }
 
-export async function appleSubscriptionStatus(uid: number) {
+export async function appleSubscriptionStatus(uid: number, sandboxOnly: boolean) {
   return query<{ environment: string; product_id: string; expires_at: Date; auto_renew: boolean; status: number }>(
     `SELECT s.environment, s.product_id, s.expires_at, s.auto_renew, s.status
      FROM apple_membership_subscriptions s JOIN apple_membership_accounts a ON a.token = s.account_token
-     WHERE a.user_id = ? ORDER BY s.expires_at DESC`, [uid]);
+     WHERE a.user_id = ? AND (? = FALSE OR s.environment = ?) ORDER BY s.expires_at DESC`, [uid, sandboxOnly, Environment.SANDBOX]);
 }
