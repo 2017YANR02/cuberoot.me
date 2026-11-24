@@ -16,7 +16,7 @@ describe('shared timer persistence schema', () => {
     expect(fresh.settings).toMatchObject({
       timingEnabled: true,
       inspectionSec: 0,
-      holdMs: 550,
+      holdMs: 300,
       autoSessionForEvent: false,
       autoEventForSession: false,
       hideTime: false,
@@ -42,7 +42,7 @@ describe('shared timer persistence schema', () => {
     legacyWideRange.settings.holdMs = 0;
     expect(decodeTimerStoreData(legacyWideRange)?.settings).toMatchObject({
       inspectionSec: 0,
-      holdMs: 550,
+      holdMs: 0,
     });
   });
 
