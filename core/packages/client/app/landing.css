@@ -114,14 +114,20 @@ body:has(.landing-page) { --landing-content-max: 1100px; }
     background: var(--accent-soft);
     border-color: var(--accent);
 }
-/* 未登录时更显著:实心 accent 底(配对 accent-foreground,随主题走) */
 :is(.landing-page, .home-navigation-drawer) .landing-auth-btn.is-login {
-    background: var(--accent);
-    border-color: var(--accent);
-    color: var(--accent-foreground);
+    padding-inline: 0.6rem;
+    border: none;
+    background: transparent;
+    color: var(--muted-foreground);
+    transition: background 0.15s, color 0.15s;
 }
-:is(.landing-page, .home-navigation-drawer) .landing-auth-btn.is-login:hover {
-    filter: brightness(1.08);
+:is(.landing-page, .home-navigation-drawer) .landing-auth-btn.is-login:is(:hover, :focus-visible) {
+    background: var(--muted);
+    color: var(--foreground);
+}
+:is(.landing-page, .home-navigation-drawer) .landing-auth-btn.is-login:focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 2px;
 }
 :is(.landing-page, .home-navigation-drawer) .landing-auth-avatar {
     width: 22px;

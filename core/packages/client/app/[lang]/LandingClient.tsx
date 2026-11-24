@@ -16,7 +16,7 @@ import { Suspense, useCallback, useEffect, useId, useMemo, useRef, useState, typ
 import dynamic from 'next/dynamic';
 import { usePathname } from 'next/navigation';
 import { parseAsBoolean, useQueryState } from 'nuqs';
-import { ArrowRight, Check, Crown, Download, Heart, LayoutDashboard, Lock, LockOpen, LogIn, Megaphone, Pencil, ShoppingBag, User, type LucideIcon } from '@app-foundation/icons/lucide';
+import { ArrowRight, Check, Crown, Download, Heart, LayoutDashboard, Lock, LockOpen, Megaphone, Pencil, ShoppingBag, User, type LucideIcon } from '@app-foundation/icons/lucide';
 import { closestCenter, DndContext, PointerSensor, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core';
 import { arrayMove, rectSortingStrategy, SortableContext } from '@dnd-kit/sortable';
 import Link from '@/components/AppLink';
@@ -589,7 +589,7 @@ export default function LandingPage({ initialLayout = null }: { initialLayout?: 
           <Link href={`/account${nextQuery(pathname)}`} className="landing-auth-btn is-login" prefetch={false}
             onClick={event => { if (event.button === 0 && !event.metaKey && !event.ctrlKey && !event.shiftKey && !event.altKey) { event.preventDefault(); authActions.login(); } }}
             aria-label={tr({ zh: '登录', en: 'Log in' })}>
-            <LogIn size={16} aria-hidden />
+            <User size={16} aria-hidden />
             <span>{tr({ zh: '登录', en: 'Log in' })}</span>
           </Link>
         ) : (
