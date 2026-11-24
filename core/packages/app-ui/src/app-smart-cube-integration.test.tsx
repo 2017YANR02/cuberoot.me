@@ -177,9 +177,15 @@ describe('installed App GAN lifecycle integration', () => {
     expect(saved()).toHaveLength(1);
   });
 
-  it('routes embedded timer links to the existing shell tab and rejects foreign or hidden frames', async () => {
+  it('preloads tools behind the timer, reuses its frame, and rejects foreign or hidden navigation', async () => {
+    expect(container.querySelector('iframe')).toBeNull();
     const onlineHost = { ...host, getNetworkStatus: async () => true };
     await act(async () => root.render(<App host={onlineHost} />));
+    await act(async () => { await new Promise((done) => setTimeout(done, 300)); });
+    const frame = container.querySelector<HTMLIFrameElement>('iframe')!;
+    expect(frame.src).toBe('https://cuberoot.me/en');
+    expect(frame.closest('section')?.hidden).toBe(true);
+    expect(container.querySelector('.primary-nav [aria-current="page"]')?.getAttribute('aria-label')).toBe('Timer');
     const tabs = [...container.querySelectorAll<HTMLButtonElement>('.primary-nav button')];
     expect(tabs.map(tab => tab.getAttribute('aria-label'))).toEqual(['Timer', 'Tools', 'Me']);
     expect(tabs.map(tab => tab.textContent)).toEqual(['', '', '']);
@@ -189,7 +195,17 @@ describe('installed App GAN lifecycle integration', () => {
       await act(async () => button.click());
     };
     await select('Tools');
-    const frame = container.querySelector<HTMLIFrameElement>('iframe')!;
+    expect(container.querySelector('iframe')).toBe(frame);
+    const loading = container.querySelector('.web-surface [role="status"]')!;
+    expect(loading.querySelector('.loading-brand-colours')).not.toBeNull();
+    expect(loading.querySelector('p')).toBeNull();
+    await act(async () => {
+      window.dispatchEvent(new MessageEvent('message', {
+        origin: 'https://cuberoot.me', source: frame.contentWindow,
+        data: { type: 'cuberoot:mobile:navigation', surface: 'tools', href: frame.src, depth: 0 },
+      }));
+    });
+    expect(container.querySelector('.web-surface-state')).toBeNull();
     const message = { type: 'cuberoot:mobile:select-tab', surface: 'tools', tab: 'timer' };
     const send = async (origin: string, source: MessageEventSource | null) => {
       await act(async () => window.dispatchEvent(new MessageEvent('message', { origin, source, data: message })));

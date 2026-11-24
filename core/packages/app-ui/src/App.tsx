@@ -359,6 +359,7 @@ import {
 } from './mobile-viewport';
 import type { InstalledAppHost } from './platform';
 import { startWebSurfaceHandshake } from './web-surface-handshake';
+import { LoadingBrandMark } from './LoadingBrandMark';
 import { installedWebEntryUrl } from './web-surface-url';
 import { useDraggablePrimaryNavigation, usePrimaryNavigation, useTimerNavigationAvoidance } from './use-primary-navigation';
 import { PrimaryNavigationOptics } from './PrimaryNavigationOptics';
@@ -382,6 +383,7 @@ function isEmbeddedTopBarRoute(surface: MobileEmbedSurface, pathname: string) {
 const MOBILE_EMBED_INIT_RETRY_MS = 400;
 const MOBILE_EMBED_INIT_RETRIES = 25;
 const MOBILE_EMBED_AUTH_TIMEOUT_MS = 10_000;
+const TOOLS_PRELOAD_DELAY_MS = 250;
 const repository = new TimerRepository(new IndexedDbTimerStoreDriver());
 const netRecordingOutbox = new NetRecordingOutbox(({ context, solve }) => repository.saveNetSolve(context.sessionId, solve), createNetOutboxStorage());
 
@@ -1948,6 +1950,15 @@ export function App({ host, loadingMark }: { host: InstalledAppHost; loadingMark
     setWebSurfaceReloadUrl((current) => ({ ...current, [surface]: nextUrl }));
     setWebSurfaceRevision((current) => ({ ...current, [surface]: current[surface] + 1 }));
   }, [accountWebUrl, clearAccountSyncTimeout, clearWebSurfaceHandshake, toolsWebUrl]);
+
+  useEffect(() => {
+    if (!storeLoaded || connection !== 'online' || openedWebViews.tools) return;
+    // Give the local timer its first paint before starting the online homepage.
+    const timeout = window.setTimeout(() => {
+      setOpenedWebViews((current) => current.tools ? current : { ...current, tools: true });
+    }, TOOLS_PRELOAD_DELAY_MS);
+    return () => window.clearTimeout(timeout);
+  }, [storeLoaded, connection, openedWebViews.tools]);
 
   useEffect(() => {
     for (const surface of MOBILE_EMBED_SURFACES) {
@@ -5086,6 +5097,7 @@ children: <>
           const canonicalUrl = surface === 'tools' ? toolsWebUrl : accountWebUrl;
           const frameUrl = webSurfaceReloadUrl[surface] ?? canonicalUrl;
           const showState = connection !== 'online' || status !== 'ready';
+          const showToolsLoadingMark = surface === 'tools' && connection !== 'offline' && status !== 'error';
           const stateLabel = connection === 'offline'
             ? copy.offline
             : status === 'error' ? copy.actionFailed : copy.checking;
@@ -5096,9 +5108,14 @@ children: <>
               hidden={view !== surface}
               key={surface}
             >
-              {showState && (
+              {showState && view === surface && (
                 <div className="web-surface-state" role={status === 'error' ? 'alert' : 'status'}>
-                  <p>{stateLabel}</p>
+                  {showToolsLoadingMark ? (
+                    <>
+                      {loadingMark ?? <LoadingBrandMark />}
+                      <span className="sr-only">{copy.loadingTools}</span>
+                    </>
+                  ) : <p>{stateLabel}</p>}
                   {status === 'error' && connection === 'online' && (
                     <div className="action-row">
                       <button

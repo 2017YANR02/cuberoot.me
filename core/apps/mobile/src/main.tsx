@@ -2,7 +2,6 @@ import { lazy, StrictMode, Suspense } from 'react';
 import { createRoot } from 'react-dom/client';
 
 import '@cuberoot/app-ui/app.css';
-import '@cuberoot/app-ui/loading-brand.css';
 import { LoadingBrandMark } from '@cuberoot/app-ui/loading-brand';
 
 import { capacitorHost } from './capacitor-host';

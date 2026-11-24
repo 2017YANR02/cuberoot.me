@@ -1,5 +1,6 @@
 @import '@cuberoot/timer-ui/typography.css';
 @import './appearance.css';
+@import './loading-brand.css';
 
 :root {
   font-family: var(--font-sans);

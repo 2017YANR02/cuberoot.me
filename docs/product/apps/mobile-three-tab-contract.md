@@ -58,6 +58,7 @@ Windows/macOS 共享桌面宿主    → core/apps/desktop（同一 Tauri 工程�
 只要生产 `/`、`/zh`、`/account`、`/zh/account` 未通过 `X-Frame-Options` 或 CSP `frame-ancestors` 禁止嵌入，就采用 App 内 iframe Web surface；每次发布前重新验证响应头：
 
 - 工具和我的各自拥有持久 browsing context，切换底栏不丢失当前子页面。
+- App 先显示本地计时页，在线时后台加载工具首页。切入工具栏时复用该 iframe，仍在加载时显示启动屏的品牌 Logo 流光。
 - iframe 直接访问 `https://cuberoot.me` 的真实路由，站内卡片与子页面无需客户端路由表。
 - 底栏由打包的 `@cuberoot/app-ui` 持有，不进入网站源码。
 - 网站与原生壳通过 `@cuberoot/shared/mobile-embed` 协作：网站报告当前栏的历史深度，宿主把系统返回动作送给当前 iframe；产品栏切换和 App 外观使用明确消息，不维护客户端页面路由副本。
