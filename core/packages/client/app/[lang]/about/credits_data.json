@@ -1,5 +1,17 @@
 [
   {
+    "name": "AndroidLiquidGlass / Kyant0",
+    "url": "https://github.com/Kyant0/AndroidLiquidGlass/blob/kmp/app/src/commonMain/kotlin/com/kyant/backdrop/catalog/components/LiquidBottomTabs.kt",
+    "zh": "Android 悬浮导航栏参考该底栏示例中选中胶囊的按住放大、跟手拖动与松手切换交互。",
+    "en": "The Android floating navigation bar takes inspiration from this demo’s selection capsule, which enlarges on press, follows the finger during a drag, and switches tabs on release."
+  },
+  {
+    "name": "liquid-glass-react / rdev",
+    "url": "https://github.com/rdev/liquid-glass-react",
+    "zh": "Android 悬浮导航栏的玻璃折射参考该项目在网页中用 SVG 位移滤镜处理背景的做法。",
+    "en": "The Android floating navigation bar’s glass refraction takes inspiration from this project’s use of SVG displacement filters on the web backdrop."
+  },
+  {
     "id": "magic-stew",
     "name": "Magic Stew / joongpa",
     "url": "https://github.com/joongpa/magic-stew",
