@@ -27,7 +27,7 @@ export function formatReplayAssistantDraft(summary: ReconstructAssistantSummary,
     t({ zh: '计时器复盘摘要', en: 'Timer replay summary' }),
     t({ zh: `三阶原始用时 ${total} 秒`, en: `3×3 raw time ${total} s` })
       + (summary.penalty === 'ok' ? '' : ` (${summary.penalty})`),
-    Number.isFinite(summary.stm) && Number.isFinite(summary.tps)
+    summary.stm !== null && summary.tps !== null && Number.isFinite(summary.stm) && Number.isFinite(summary.tps)
       ? `STM ${summary.stm} · TPS ${summary.tps.toFixed(2)}` : '',
     rows.length
       ? t({ zh: `${summary.method ?? ''} 阶段（计时器推断）`, en: `${summary.method ?? ''} stages (inferred by timer)` })

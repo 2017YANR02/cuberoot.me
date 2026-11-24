@@ -814,6 +814,10 @@ export const PAGE_META: Record<string, PageMetaEntry> = {
     title: { zh: '魔方空间', en: 'Cube Space' },
     description: { zh: '在开放的三维空间中摆放、移动和旋转魔方，自由切换视角并保存布局。', en: 'Arrange, move and rotate puzzles in an open 3D space. Explore every angle and save your layout.' },
   },
+  'sim/grips': {
+    title: { zh: '握姿与手法', en: 'Grip & Turn Atlas' },
+    description: { zh: '逐项回放二阶至四阶在不同双手握姿下的转动，观察换握、发力手指和双指接力。', en: 'Replay 2×2, 3×3 and 4×4 turns from each pair of starting grips and inspect regrips, driving fingers and relays.' },
+  },
   'sim/embed': {
     title: { zh: '魔方嵌入', en: 'Cube Embed' },
   },
@@ -901,7 +905,7 @@ export const PAGE_META: Record<string, PageMetaEntry> = {
     description: { zh: '用连续动画和可操作的魔方学习二阶层先法。', en: 'Learn the 2×2 layer-by-layer method with animated lessons and interactive practice.' },
   },
   'tutorial/2x2-fl': {
-    title: { zh: '二阶魔方 FL（第一层）', en: '2×2 First Layer (FL)' },
+    title: { zh: '二阶魔方第一层', en: '2×2 First Layer' },
     description: { zh: '进阶二阶第一层公式。按剩余两角的层位与 0、+、− 分组查阅 44 种盘面，配有图解和分步演示。', en: 'Advanced 2×2 first-layer algorithms. Browse 44 cases by corner position and 0, + or − orientation, with diagrams and step-by-step playback.' },
   },
   'tutorial/2x2-eg': {

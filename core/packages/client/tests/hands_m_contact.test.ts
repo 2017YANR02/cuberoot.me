@@ -52,7 +52,7 @@ describe.skipIf(!existsSync(asset(1)))('3×3 M in the two-hand home grip', () =>
     }
   });
 
-  it.each([['M', -1, 1], ['M′', 1, 1], ['M2', 1, 2]] as const)(
+  it.each([['M', -1, 1], ['underlined M', -1, 1], ['M′', 1, 1], ['M2', 1, 2]] as const)(
     '%s seats the correct surface and keeps the other fingertips at their grip points', async (_move, sign, quarters) => {
       const rig = new HandsRig(), cube = new Cube(3);
       const groups = cube.table.groups;
@@ -64,7 +64,10 @@ describe.skipIf(!existsSync(asset(1)))('3×3 M in the two-hand home grip', () =>
         rig.subscribeDiagnostics(value => { frame = value; });
         // The parser supplies the negative x direction for plain M2.
         const inputDirection = quarters === 2 ? -1 : sign;
-        expect(rig.prepareTwist('x', [1], inputDirection, quarters)).toBe(true);
+        const markedNail = _move === 'underlined M';
+        const prepare = () => rig.prepareTwist('x', [1], inputDirection, quarters, false, undefined, false,
+          markedNail ? { contact: 'nail' } : undefined);
+        expect(prepare()).toBe(true);
         rig.tick(0);
         const left = frame.models.L, skin = new FingerSurfaceSampler(left);
         const identity = new THREE.Matrix4();
@@ -90,7 +93,7 @@ describe.skipIf(!existsSync(asset(1)))('3×3 M in the two-hand home grip', () =>
         const ringStrain = knuckleStrain(left, 'ring');
         const single = quarters === 1;
         const startSticker = sign === -1 ? 'D7' : 'B7';
-        const release = 70;
+        const release = markedNail ? 42 : 70;
         const degreeStep = single ? .125 : .25;
         const mmPerUnit = 56 / 192;
         const trace = new GestureContactTrace();
@@ -121,7 +124,9 @@ describe.skipIf(!existsSync(asset(1)))('3×3 M in the two-hand home grip', () =>
           if (phase === 'turn') {
             const ring = measurements.find(f => f.name === 'ring')!;
             const pinky = measurements.find(f => f.name === 'pinky')!;
-            if (single) {
+            if (markedNail && progress <= release) {
+              expect(ring.nail.contacts.some(c => c.stickerId === 'D7'), at).toBe(true);
+            } else if (single && !markedNail) {
               const stickerIds = sign === -1 ? ['D7', 'D4'] : ['B7'];
               if (progress === 0 || progress === 15 || progress === 45)
                 expect(ring.pad.contacts.map(c => c.stickerId), at).toContain(startSticker);
@@ -172,7 +177,7 @@ describe.skipIf(!existsSync(asset(1)))('3×3 M in the two-hand home grip', () =>
           rig.tick(t ? 8 : 0);
           check('prepare', t);
         }
-        expect(rig.prepareTwist('x', [1], inputDirection, quarters)).toBe(false);
+        expect(prepare()).toBe(false);
         const group = groups.x[1], leftSeated = left.group.position.clone();
         group.drag();
         for (let degree = 0; degree <= 90 * quarters; degree += degreeStep) {
@@ -184,10 +189,10 @@ describe.skipIf(!existsSync(asset(1)))('3×3 M in the two-hand home grip', () =>
         }
         if (single) {
           const active = trace.read().filter(p => p.role === 'active' && p.finger === 'ring');
-          expect(active.some(p => p.surface === 'pad' && p.anchor?.stickerId === startSticker)).toBe(true);
+          expect(active.some(p => p.surface === 'pad' && p.anchor?.stickerId === startSticker)).toBe(!markedNail);
           const last = active.at(-1)!;
           expect(last.surface).toBe('nail');
-          expect(last.anchor?.stickerId).toBe(sign === -1 ? 'D4' : 'B7');
+          expect(last.anchor?.stickerId).toBe(markedNail ? 'D7' : sign === -1 ? 'D4' : 'B7');
           expect(last.contacts).toContain(last.anchor!.stickerId);
           expect(THREE.MathUtils.radToDeg(Math.abs(last.angle))).toBeCloseTo(release);
         }

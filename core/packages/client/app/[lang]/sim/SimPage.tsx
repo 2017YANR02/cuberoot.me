@@ -2537,6 +2537,9 @@ function SimEditor({ scope = '', active, seed, snapshotRef, onModeChange, onNew,
             {panelExpanded ? t('收起面板', 'Collapse panel') : t('展开面板', 'Expand panel')}
           </MoreToggle>
         )}
+        {animationMode && (puzzleKind === 2 || puzzleKind === 3 || puzzleKind === 4) && <AppLink href={puzzleKind === 3 ? '/sim/grips' : '/sim/grips?order=' + puzzleKind} prefetch={false} className="sim-open-recon">
+          {t('握姿与手法', 'Grip & turn atlas')}
+        </AppLink>}
         <div className="sim-spacer" />
         <div className="sim-header-recon">{reconLink}</div>
       </header>

@@ -67,3 +67,24 @@ it('exports library diagrams and exact algorithms in the requested display mode'
     if (display!=='text') expect(doc.content!.find(node => node.type==='pdfSvg')?.pdfSvg).toContain('<svg');
   }
 });
+
+it.each([
+  ['5x5', 'l2e', 'L2E 1', "Rw' U' R' U R' F R F' Rw", /<polygon\b/g, 78],
+  ['6x6', 'l2c', 'L2C 1', "3L' U 3R U' 3L U 3R'", /<polygon\b/g, 111],
+  ['sq1', 'co', '2-2', '1,0 / -1,0', /<path\b/g, 40],
+] as const)('exports a complete %s %s case diagram', async (puzzle, set, name, alg, shape, count) => {
+  const artifact: AssistantAlgorithms = {
+    kind: 'algorithms', version: 1, title: name, display: 'both', puzzle, set, offset: 0, total: 1,
+    cards: [{ name, puzzle, set, href: `/alg/${puzzle}/${set}`, alg,
+      sticker: { kind: 'raw', tag: '', attrs: {} }, alternative: 0, alternativeCount: 1 }],
+  };
+  const doc = await assistantPdfDocument(name, '如下', 'zh', [artifact]);
+  const svg = doc.content?.find(node => node.type === 'pdfSvg')?.pdfSvg ?? '';
+  expect(svg.match(shape)).toHaveLength(count);
+  if (puzzle === 'sq1') {
+    const [, , width, height] = svg.match(/viewBox="([^"]+)"/)![1].split(' ').map(Number);
+    expect(width).toBeGreaterThan(height);
+    expect(svg.match(/<rect\b/g)).toHaveLength(4);
+    expect(svg).toContain('fill="#FFFF00"');
+  }
+});

@@ -2,6 +2,19 @@ import { Alg, Move, Grouping, Commutator, Conjugate, type AlgNode } from 'cubing
 import { rotateAlg } from '@/lib/cube3';
 import { parseCubeAlg } from '@cuberoot/shared/alg-transform';
 import { MOVE_RE, stripComments } from '@cuberoot/shared/alg-notation';
+import { FTN_TOKEN } from './engine/hands/ftn';
+
+export const PUSH_TOKEN = /^((?:\d+(?:-\d+)?)?[A-Za-z]w?[2'′]{0,2})p$/;
+
+/** Keep UTF-16 editor offsets when push suffixes and FTN clauses share an alg
+ * with rich-text marks. Comments may immediately follow a marked move. */
+export function simFingerMarkSource(text: string): string {
+  return text.replace(/\/\/[^\n]*|[^\s↑↓·｜|/]+/g, token => {
+    if (token.startsWith('//')) return ' '.repeat(token.length);
+    const move = FTN_TOKEN.exec(token)?.[1] ?? token;
+    return (PUSH_TOKEN.exec(move)?.[1] ?? move).replace(/′/g, "'").padEnd(token.length);
+  });
+}
 
 export function hasHandNotation(text: string): boolean {
   return /[↑↓·p@<>]/.test(stripComments(text));

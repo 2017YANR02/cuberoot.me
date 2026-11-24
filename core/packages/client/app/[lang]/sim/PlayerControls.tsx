@@ -1,4 +1,5 @@
 'use client';
+import { RIGHT_PINCH_MOVES } from './engine/hands/rightCornerPinch';
 import { trackFeatureUse } from '@/lib/analytics-signal';
 
 /**
@@ -31,9 +32,13 @@ import { Alg, Commutator, Conjugate, Grouping, Move, Pause } from 'cubing/alg';
 import type { TwistyPlayer } from 'cubing/twisty';
 import World from './engine/world';
 import AlgTransformPanel from './AlgTransformPanel';
-import { hasHandNotation } from './alg-manipulation';
+import { hasHandNotation, PUSH_TOKEN, simFingerMarkSource } from './alg-manipulation';
+import { correctOllFrontFlickHtml } from '@cuberoot/shared/alg-html';
 import { algHtmlMatchesText, escapeAlgText, replaceAlgHtmlText, sanitizeAlgHtml } from '@/lib/alg_html';
-import { hasFingerMarks, playbackFingerAnnotations, selectedFingerMark, sliceAlgHtml, toggleFingerMark, type FingerAnnotation } from '@/lib/alg-finger-marks';
+import { inComment } from '@/lib/alg-autospace';
+import { isPushOrder, pushRule } from '@/lib/push-notation';
+import { evenFingerExamples, evenMarkFitsGrip, evenMarkedStroke } from './evenFingerNotation';
+import { fingerMarkTargets, hasFingerMarks, playbackFingerAnnotations, pushSuffixAt, selectedFingerMark, sliceAlgHtml, toggleFingerMark, type FingerAnnotation, type FingerMark } from '@/lib/alg-finger-marks';
 import SimAppearancePanel from './SimAppearancePanel';
 import type { SimPuzzle } from './puzzleOptions';
 import { TwistAction } from './engine/nxn/twister';
@@ -82,7 +87,7 @@ import { classifyMagicTokens, isMagicPuzzle, parseMagicMoves, magicMovesToString
 import { formatTimerCompoundScramble } from '@cuberoot/shared/timer';
 import { classifyDuoTokens, duoMovesToString, generatePyraminxDuoScramble, invertDuoMoves, parseDuoMoves, reduceDuoAlg, type DuoMove } from '@cuberoot/puzzle-solvers/pyraminx-duo';
 import { get_shortened_rotation } from '@/lib/roux/RotationHelp';
-import { cleanForPlayer, extractAlgFromText, findTokenPositions, findWhitespaceTokenPositions, type TokenPosition } from '@/lib/recon-alg-utils';
+import { cleanForPlayer, extractAlgFromText, findTokenPositions, findWhitespaceTokenPositions, reconPlaybackTokenPositions, type TokenPosition } from '@/lib/recon-alg-utils';
 import { deriveScrambleFromSolution } from '@/lib/scramble-from-solution';
 import { tnoodleRandomScramble } from '@/lib/cubing-scramble';
 import { pgRandomScramble } from '@/lib/pg-scramble';
@@ -93,6 +98,7 @@ import { cloudOptimalScramble } from '@/lib/cloud-optimal-scramble';
 import { useAuthUser, authActions } from '@/lib/auth-store';
 import { formatScrambleForEvent, canonicalSq1Alg, compactSq1Alg, simplifySq1Alg, invertSq1Alg } from '@cuberoot/shared/sq1-notation';
 import { toWca as toWcaSkewb, type SkewbNotation } from '@cuberoot/shared/skewb-notation';
+import FingerNotationGuide from './FingerNotationGuide';
 import SkewbNotationGuide from './SkewbNotationGuide';
 import { Slider, Toggle, KeymapModal, resetWorldView, mapFrames, DEFAULT_SETTINGS, type SimSettings, type SliderUnit } from './SettingDrawer';
 
@@ -107,8 +113,8 @@ import { resolveCaps } from './simCaps';
 import StickeringSelect from './StickeringSelect';
 
 import type { PickGrain, CustomTreatment, CustomBrush } from '@/components/sim-embed/customStickering';
-import { simulateGrips, type GripName, type GripSimStep, type HandSide, type PinSpec } from './engine/hands/handsRig';
-import { flattenAlg, stm, stripGripMarks, GRIP_MARK_SPLIT, parseGripMark, findGripMarks } from '@cuberoot/shared/alg-notation';
+import { settledGripName, simulateGrips, type GripName, type GripSimStep, type HandSide, type MarkedMotionProblem, type PinSpec } from './engine/hands/handsRig';
+import { flattenAlg, hasBalancedGrouping, stm, stripGripMarks, GRIP_MARK_SPLIT, parseGripMark, findGripMarks } from '@cuberoot/shared/alg-notation';
 import { canonicalFtoEifAlgorithm, invertFtoEifAlgorithm, reduceFtoEifAlgorithm } from '@cuberoot/shared/fto-notation';
 import { stripFtnBlocks, FTN_TOKEN, parseFtnPin } from './engine/hands/ftn';
 export { SIM_FIXED_PUZZLE_OPTIONS } from './puzzleOptions';
@@ -157,7 +163,6 @@ function parseScramblePreview(text: string): Alg {
 
 /** 指法后缀 `p`(推法,FINGERTRICKS.md §2):空白分隔的单招 token 尾接 p,如
  *  `U'p` = 右食指推 U'。喂 cubing.js / 变换工具前必须剥(Alg 解析不了)。 */
-const PUSH_TOKEN = /^((?:\d+(?:-\d+)?)?[A-Za-z]w?[2']{0,2})p$/;
 const stripPushMarks = (s: string): string =>
   s.split(/(\s+)/).map((tok) => { const m = PUSH_TOKEN.exec(tok); return m ? m[1] : tok; }).join('');
 /** 变换/导出前剥全部手部记号(FTN 注解块 + 换握 ↑↓· + 推法 p 后缀;块先剥,
@@ -183,7 +188,8 @@ function restoreHandGrips(world: World, cube: import('./engine/nxn/cube').defaul
     });
   }
   const g = simulateGrips(sim, cube.order);
-  hands.setGrips(g.R, g.L, g.wristAngles);
+  const next = items[target] ?? items[target - 1];
+  hands.setGrips(g.R, g.L, g.wristAngles, next?.kind === 'move' && !!next.push);
 }
 
 /** Two written quarter turns can share one physical wide stroke. Keep their
@@ -199,12 +205,15 @@ function isRightWidePair(items: readonly NxnPlayItem[], start: number): boolean 
  *  推法分类用,FINGERTRICKS.md),该步若需前置就位(F 族越顶 / U'p / D2' 小指)
  *  则启动/等待伸指动画并返回 true —— 调用方本轮不发 twist,下轮再问;
  *  false = 无需前置或已到位。 */
-function gateHandsReach(world: World | null, cube: import('./engine/nxn/cube').default, action: TwistAction, push = false, pin?: PinSpec, next?: NxnPlayItem, annotation?: FingerAnnotation, ftn?: string): boolean {
+function gateHandsReach(world: World | null, cube: import('./engine/nxn/cube').default, action: TwistAction,
+  { push = false, pin, annotation, ftn }: Pick<Extract<NxnPlayItem, { kind: 'move' }>, 'push' | 'pin' | 'annotation' | 'ftn'>,
+  next?: NxnPlayItem, pinch?: { step: number; reverse?: boolean }): boolean {
   const hands = world?.hands;
   if (!hands?.isEnabled) return false;
   // 上一步 reach 式手势(topPush/U'p/D2' 小指/@pin 钉指)收指未完先等:weld
   // 会把伸在魔方上方的指链烘着整手转进方块(oracle 实证 −11U)。
   if (hands.isReachRetreating) return true;
+  if (pinch && hands.prepareRightPinch(cube, pinch.step, pinch.reverse)) return true;
   const rotates = cube.table.convert(action);
   if (!rotates.length) return false;
   let nextSupport;
@@ -216,8 +225,9 @@ function gateHandsReach(world: World | null, cube: import('./engine/nxn/cube').d
         nextSupport = { axis, layers: following.map(r => r.group.layer),
           dir: following[0].twist > 0 ? 1 as const : -1 as const,
           quarters: Math.abs(following[0].twist), annotation: next.annotation };
-      } else if (axis === 'x' && following.length === 1 && following[0].group.layer === cube.order - 1) {
-        nextSupport = 'right-weld' as const;
+      } else if (axis === 'x' && following.length === 1) {
+        if (following[0].group.layer === cube.order - 1) nextSupport = 'right-weld' as const;
+        if (following[0].group.layer === 0) nextSupport = 'left-weld' as const;
       }
     }
   }
@@ -242,6 +252,10 @@ function parseNxnItems(text: string): NxnPlayItem[] {
     .join('\n');
   const items: NxnPlayItem[] = [];
   const segs = noComments.split(GRIP_MARK_SPLIT);
+  // A grip inside a plain group splits its parentheses across two move segments.
+  // Keep grip handedness on the original text and remove only grouping punctuation.
+  const plainGripGroups = segs.length > 1 && noComments.includes('(')
+    && !/\)[\d'′’]/.test(noComments) && hasBalancedGrouping(noComments);
   for (let si = 0; si < segs.length; si++) {
     const seg = segs[si];
     const next = segs[si + 1] ?? '';
@@ -266,7 +280,8 @@ function parseNxnItems(text: string): NxnPlayItem[] {
         if (node instanceof Move) items.push({ kind: 'move', action: new TwistAction(node.toString()) });
       }
     };
-    for (const chunk of seg.split(/(\s+)/)) {
+    const moves = plainGripGroups ? seg.replace(/[()]/g, ' ') : seg;
+    for (const chunk of moves.split(/(\s+)/)) {
       // FTN 注解 token(招式尾紧贴 [...],§7):剥块取招式,能解析出 @pin 则挂
       // 到该步;无法识别的块按 §7.4 剥净后招式照播(落回缓冲)。
       const fm = FTN_TOKEN.exec(chunk);
@@ -277,12 +292,14 @@ function parseNxnItems(text: string): NxnPlayItem[] {
         if (pm) { core = pm[1]; push = true; }
         let mv: Move | null = null;
         try {
-          const nodes = [...new Alg(core).expand().childAlgNodes()];
+          const nodes = [...new Alg(core.replace(/′/g, "'")).expand().childAlgNodes()];
           if (nodes.length === 1 && nodes[0] instanceof Move) mv = nodes[0];
         } catch { /* 非法招式:剥块后落回缓冲 */ }
         if (mv) {
           flush();
-          const pin = parseFtnPin(fm[2], mv.toString());
+          // The rig can execute one pin. A recognized clause alongside an
+          // unsupported clause still leaves part of the requested path unresolved.
+          const pin = fm[2].includes(';') ? undefined : parseFtnPin(fm[2], mv.toString());
           items.push({ kind: 'move', action: new TwistAction(mv.toString()), ftn: fm[2], ...(push ? { push: true } : {}), ...(pin ? { pin } : {}) });
         } else {
           buf += fm[1];
@@ -293,7 +310,7 @@ function parseNxnItems(text: string): NxnPlayItem[] {
       if (m) {
         let mv: Move | null = null;
         try {
-          const nodes = [...new Alg(m[1]).expand().childAlgNodes()];
+          const nodes = [...new Alg(m[1].replace(/′/g, "'")).expand().childAlgNodes()];
           if (nodes.length === 1 && nodes[0] instanceof Move) mv = nodes[0];
         } catch { /* 非法招式:当普通文本落回缓冲 */ }
         if (mv) {
@@ -1107,12 +1124,16 @@ export default function PlayerControls({
     return convertSquareText(text, convert);
   }, [isSquarePuzzle, isSq1, squareFamilySpec, squareFormat]);
   const [algDraft, setAlgDraft] = useState(() => formatIncomingSquareText(alg));
-  const [htmlDraft, setHtmlDraft] = useState(() => algHtml && algHtmlMatchesText(alg, algHtml)
-    ? replaceAlgHtmlText(sanitizeAlgHtml(algHtml), alg) : escapeAlgText(alg));
+  const incomingHtml = useMemo(() => {
+    if (!algHtml || !algHtmlMatchesText(alg, algHtml)) return escapeAlgText(alg);
+    const html = puzzleKind === 3 ? correctOllFrontFlickHtml(alg, algHtml) : algHtml;
+    return replaceAlgHtmlText(sanitizeAlgHtml(html), alg);
+  }, [alg, algHtml, puzzleKind]);
+  const [htmlDraft, setHtmlDraft] = useState(incomingHtml);
   const htmlDraftRef = useRef(htmlDraft);
-  const handMarkup = is3x3 || puzzleKind === 4;
+  const handMarkup = is3x3 || !isTwistyMode && (puzzleKind === 2 || puzzleKind === 4);
   const marked = handMarkup && hasFingerMarks(htmlDraft);
-  const [handPlaybackError, setHandPlaybackError] = useState<'unsupported-grip' | 'invalid-start' | null>(null);
+  const [handPlaybackError, setHandPlaybackError] = useState<MarkedMotionProblem | null>(null);
   const markHistory = useRef<{ entries: { text: string; html: string }[]; index: number }>({
     entries: [{ text: algDraft, html: htmlDraft }], index: 0,
   });
@@ -1288,9 +1309,8 @@ export default function PlayerControls({
     lastCommittedAlgRef.current = alg;
     lastCommittedHtmlRef.current = algHtml;
     setAlgDraft(formatIncomingSquareText(alg));
-    const html = algHtml && algHtmlMatchesText(alg, algHtml) ? replaceAlgHtmlText(algHtml, alg) : escapeAlgText(alg);
-    recordMarkup(alg, html);
-  }, [alg, algHtml, formatIncomingSquareText, recordMarkup]);
+    recordMarkup(alg, incomingHtml);
+  }, [alg, algHtml, incomingHtml, formatIncomingSquareText, recordMarkup]);
   const changeMarkedAlg = useCallback((text: string, html: string) => {
     recordMarkup(text, html);
     setMoveEditing(false);
@@ -1360,13 +1380,14 @@ export default function PlayerControls({
   const playbackKeymap = useMemo(() => pocket
     ? Object.fromEntries(Object.entries(keymap).filter(([, move]) => pocketKeyboardMove(move.sign)))
     : keymap, [pocket, keymap]);
+  const markSource = useMemo(() => simFingerMarkSource(algDraft), [algDraft]);
   const nxnParsed = useMemo<{ items: NxnPlayItem[]; annotationError?: boolean }>(() => {
     if (isSquarePuzzle || isIvy || corner || isTwistyMode) return { items: [] };
     if (invalidLayers || !algDraft.trim()) return { items: [] };
     try {
       const items = parseNxnItems(algDraft);
       if (marked) {
-        const annotations = playbackFingerAnnotations(algDraft, htmlDraft);
+        const annotations = playbackFingerAnnotations(algDraft, htmlDraft, markSource);
         if (annotations.length !== items.filter(item => item.kind === 'move').length) throw new Error('unsupported-finger-sequence');
         let index = 0;
         for (const item of items) if (item.kind === 'move') item.annotation = annotations[index++];
@@ -1375,9 +1396,24 @@ export default function PlayerControls({
     } catch {
       return { items: [], annotationError: marked };
     }
-  }, [invalidLayers, algDraft, htmlDraft, marked, isSquarePuzzle, isIvy, corner, isTwistyMode]);
+  }, [markSource, invalidLayers, algDraft, htmlDraft, marked, isSquarePuzzle, isIvy, corner, isTwistyMode]);
   const nxnItems = nxnParsed.items;
+  const rightPinch = useMemo(() => is3x3 && nxnItems.length === RIGHT_PINCH_MOVES.length
+    && nxnItems.every((item, i) => item.kind === 'move' && item.action.value === RIGHT_PINCH_MOVES[i]
+      && !item.push && !item.pin && item.ftn === undefined && !item.annotation?.finger && !item.annotation?.contact), [is3x3, nxnItems]);
+  // The parent attaches the hand rig after the controls' effects. Seat a hand
+  // enabled while paused at the existing timeline position.
+  useEffect(() => {
+    if (!rightPinch || !settings.hands || !world || !engineReady) return;
+    const frame = requestAnimationFrame(() => {
+      if (world.cube !== activeCube || replayPendingRef.current) return;
+      const cube = world.cube as import('./engine/nxn/cube').default;
+      if (!cube.busy) world.hands?.bindRightPinch(cube, stepRef.current);
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [rightPinch, settings.hands, world, engineReady, activeCube]);
   const stoppedItem = handPlaybackError ? nxnItems[step] : undefined;
+  const stoppedPush = stoppedItem?.kind === 'move' && stoppedItem.push ? pushRule(stoppedItem.action.value + 'p') : undefined;
   const hasWidePair = useCallback((start: number) => puzzleKind === 3 && settings.hands
     && isRightWidePair(nxnItems, start), [nxnItems, puzzleKind, settings.hands]);
 
@@ -1518,10 +1554,10 @@ export default function PlayerControls({
       });
     }
     // NxN: WCA move tokens + grip marks (↑↓·), merged back into text order.
-    const moves = findTokenPositions(algDraft);
+    const moves = findTokenPositions(markSource);
     const grips = findGripMarks(algDraft);
     return [...moves, ...grips].sort((a, b) => a.start - b.start);
-  }, [algDraft, isSquarePuzzle, isTwistyMode, isIvy, ivyCanPlay, corner]);
+  }, [algDraft, markSource, isSquarePuzzle, isTwistyMode, isIvy, ivyCanPlay, corner]);
 
   // Which play-item to paint orange. While the user navigates text (caretChar set,
   // not playing) it's the move on the caret's own line — the last item at/before
@@ -1561,6 +1597,60 @@ export default function PlayerControls({
     return p ? [p.start, p.end] : null;
   }, [playing, caretChar, itemPositions, step, algDraft, hasWidePair]);
 
+  function keyboardMarkRange(): [number, number] | null {
+    const el = algElRef.current;
+    if (!el || inComment(el.value, el.selectionStart)) return null;
+    return el.selectionStart === el.selectionEnd && highlightRange ? highlightRange : [el.selectionStart, el.selectionEnd];
+  }
+
+  function fingerKeyState(mark: FingerMark) {
+    const range = keyboardMarkRange();
+    const targets = range ? fingerMarkTargets(markSource, ...range) : [];
+    const html = htmlDraftRef.current;
+    if (targets.length && targets.every(move => selectedFingerMark(html, move.start, move.end, mark))) return 'selected';
+    if (!checkedOrder) return 'available';
+    const hasExisting = targets.some(move => sliceAlgHtml(html, move.start, move.end).includes(`<${mark}>`));
+    const cube = world?.cube as import('./engine/nxn/cube').default | undefined;
+    const positions = reconPlaybackTokenPositions(markSource);
+    if (!cube || cube.order !== checkedOrder || !targets.length || !nxnItems.length ||
+      positions.length !== nxnItems.filter(item => item.kind === 'move').length) {
+      return hasExisting ? 'selected' : 'disabled';
+    }
+    const selected = new Set(targets.map(move => move.start));
+    const annotation: FingerAnnotation = mark === 'u' ? { contact: 'nail' } : { finger: mark === 's' ? 'middle' : 'thumb' };
+    const seen = new Set<number>();
+    let moveIndex = 0, pose = simulateGrips([], cube.order);
+    const canAdd = nxnItems.every(item => {
+      if (item.kind === 'grip') {
+        pose = simulateGrips([item], cube.order, pose);
+        return true;
+      }
+      const move = positions[moveIndex++];
+      const turns = cube.table.convert(item.action);
+      if (selected.has(move.start)) {
+        seen.add(move.start);
+        const fragment = sliceAlgHtml(html, move.start, move.end);
+        if (item.push || item.ftn !== undefined || turns.length !== 1) return false;
+        // Finger choices replace each other. Underline adds a separate contact constraint.
+        if (mark === 'u' ? /<(s|em)>/.test(fragment) : fragment.includes('<u>')) return false;
+        const { group, twist } = turns[0];
+        const stroke = evenMarkedStroke(cube.order, group.axis, [group.layer], twist, Math.abs(twist), annotation);
+        if (!evenMarkFitsGrip(stroke, cube.order, twist, {
+          R: settledGripName(pose.R, pose.wristAngles.R), L: settledGripName(pose.L, pose.wristAngles.L),
+        })) return false;
+      }
+      if (turns[0]?.group.axis === 'x') pose = simulateGrips([{
+        axis: 'x', layers: turns.map(t => t.group.layer), quarters: turns[0].twist,
+      }], cube.order, pose);
+      return true;
+    });
+    return canAdd && seen.size === selected.size ? 'available' : hasExisting ? 'selected' : 'disabled';
+  }
+
+  const selectionStart = highlightRange?.[0] ?? itemPositions[step]?.start;
+  const selectionEnd = highlightRange?.[1] ?? itemPositions[step]?.end;
+  const selectedPush = selectionStart !== undefined && selectionEnd !== undefined
+    ? pushRule(algDraft.slice(selectionStart, selectionEnd + 1))?.token : undefined;
   const algHlBaseSpans = useMemo<SimAlgHighlightSpan[]>(
     () => algValidationSpans ?? [{ text: algDraft }],
     [algValidationSpans, algDraft],
@@ -1708,8 +1798,9 @@ export default function PlayerControls({
     // 手部握姿:静态推演前 target 项(weld 提交烘入 + 换握记号),瞬时摆到位 ——
     // 与逐步 live 播放的落点一致(跳步是瞬切,rig 轮询不到层角,不会自己烘)。
     restoreHandGrips(world, cube, nxnItems, target);
+    if (rightPinch) world.hands?.bindRightPinch(cube, target);
     setStep(target);
-  }, [world, activeCube, engineReady, clearFrozen, setupDraft, algDraft, nxnItems, squareActions, squareFamilyAlgMoves, squareFamilySpec, squareFamilyCanPlay, ivyActions, cornerActions, corner, toEngineText, isSquarePuzzle, isSq1, isIvy, isTwistyMode, ivyCanPlay, cornerCanPlay, playbackMode, invalidLayers, invertCubeAlg]);
+  }, [world, activeCube, engineReady, clearFrozen, setupDraft, algDraft, nxnItems, squareActions, squareFamilyAlgMoves, squareFamilySpec, squareFamilyCanPlay, ivyActions, cornerActions, corner, toEngineText, isSquarePuzzle, isSq1, isIvy, isTwistyMode, ivyCanPlay, cornerCanPlay, playbackMode, invalidLayers, invertCubeAlg, rightPinch]);
 
   // Notation guide (engine skewb): play ONE token on the main cube from solved so the
   // user sees which corner a letter turns. It only borrows the cube — setup/alg text is
@@ -1896,10 +1987,10 @@ export default function PlayerControls({
         if (cube.busy || world.hands?.isRegripping) return;
         const action = paired ? new TwistAction('r') : it.action;
         // 带标记动作等待伸指到位后自动完成本次单步；其它动作保留原点击行为。
-        if (gateHandsReach(world, cube, action, it.push, it.pin, nxnItems[nextStep], it.annotation, it.ftn)) {
+        if (gateHandsReach(world, cube, action, it, nxnItems[nextStep], rightPinch ? { step } : undefined)) {
           const problem = world.hands?.getMarkedMotionProblem() ?? null;
           setHandPlaybackError(problem);
-          if (cube.order === 4 || paired || it.annotation || it.action.sign === 'M') setPendingHandStep(problem ? null : 'forward');
+          if (world.hands?.isPreparingHomeStroke || cube.order === 4 || paired || rightPinch || it.annotation || it.ftn !== undefined || it.push || it.action.sign === 'M') setPendingHandStep(problem ? null : 'forward');
           return;
         }
         // 单步与播放同速:tween 在 twist() 同步捕获帧数,随即恢复抽屉值。
@@ -1913,7 +2004,7 @@ export default function PlayerControls({
       return;
     }
     jumpToStep(nextStep);
-  }, [activeCube, engineReady, clearFrozen, jumpToStep, step, settings.animatePlayback, settings.speed, playbackFrames, isSquarePuzzle, isIvy, isTwistyMode, corner, world, nxnItems, hasWidePair]);
+  }, [activeCube, engineReady, clearFrozen, jumpToStep, step, settings.animatePlayback, settings.speed, playbackFrames, isSquarePuzzle, isIvy, isTwistyMode, corner, world, nxnItems, hasWidePair, rightPinch]);
 
   const stepBack = useCallback(() => {
     if (pendingHandStep === 'forward') setPendingHandStep(null);
@@ -1938,12 +2029,15 @@ export default function PlayerControls({
       } else {
         // Going back restores the cube and grip state. A nail push cannot be
         // reversed into a physically different pull using the same annotation.
-        if (!paired && (it.annotation || cube.order === 4 && (it.ftn !== undefined || it.push))) { jumpToStep(previousStep); return; }
+        if (!paired && (it.annotation || it.ftn !== undefined || it.push)) { jumpToStep(previousStep); return; }
         if (cube.busy || world.hands?.isRegripping) return;
         const inv = paired ? new TwistAction("r'") : new TwistAction(it.action.sign, !it.action.reverse, it.action.times);
         // 倒播的 F' 同样先伸指到位再转(push 提示随逆招失义,分类自会回落)。
-        if (gateHandsReach(world, cube, inv, it.push)) {
-          if (cube.order === 4 || paired || inv.sign === 'M') setPendingHandStep('back');
+        if (gateHandsReach(world, cube, inv, { push: it.push }, undefined, rightPinch ? { step: previousStep, reverse: true } : undefined)) {
+          const problem = world.hands?.getMarkedMotionProblem() ?? null;
+          setHandPlaybackError(problem);
+          if (world.hands?.isPreparingHomeStroke || cube.order === 4 || paired || rightPinch || inv.sign === 'M')
+            setPendingHandStep(problem ? null : 'back');
           return;
         }
         timing.frames = playbackFrames;
@@ -1956,7 +2050,7 @@ export default function PlayerControls({
       return;
     }
     jumpToStep(previousStep);
-  }, [activeCube, engineReady, clearFrozen, jumpToStep, step, settings.animatePlayback, settings.speed, playbackFrames, isSquarePuzzle, isIvy, isTwistyMode, corner, world, nxnItems, pendingHandStep, hasWidePair]);
+  }, [activeCube, engineReady, clearFrozen, jumpToStep, step, settings.animatePlayback, settings.speed, playbackFrames, isSquarePuzzle, isIvy, isTwistyMode, corner, world, nxnItems, pendingHandStep, hasWidePair, rightPinch]);
 
   // A single step may need several frames of finger preparation.
   useEffect(() => {
@@ -2070,7 +2164,7 @@ export default function PlayerControls({
           if (cube.busy) return;
           // 前置就位:转动开始前指尖先到位(16ms 轮询幂等重入)。
           const action = paired ? new TwistAction('r') : it.action;
-          if (gateHandsReach(world, cube, action, it.push, it.pin, nxnItems[nextStep], it.annotation, it.ftn)) {
+          if (gateHandsReach(world, cube, action, it, nxnItems[nextStep], rightPinch ? { step: s } : undefined)) {
             const problem = world.hands?.getMarkedMotionProblem();
             if (problem) { setHandPlaybackError(problem); setPlaying(false); }
             return;
@@ -2087,7 +2181,7 @@ export default function PlayerControls({
       if (playTimerRef.current) { window.clearInterval(playTimerRef.current); playTimerRef.current = null; }
       timing.frames = mapFrames(settings.speed);
     };
-  }, [active, activeCube, engineReady, puzzleKind, playing, nxnItems, squareActions, ivyActions, cornerActions, corner, world, clearFrozen, playbackFrames, isSquarePuzzle, isIvy, settings.animatePlayback, settings.speed, hasWidePair]);
+  }, [active, activeCube, engineReady, puzzleKind, playing, nxnItems, squareActions, ivyActions, cornerActions, corner, world, clearFrozen, playbackFrames, isSquarePuzzle, isIvy, settings.animatePlayback, settings.speed, hasWidePair, rightPinch]);
 
   const replaceDrafts = async (nextSetup: string, nextAlg: string, restoreStep = 0) => {
     await restoreScramblePreview();
@@ -2956,22 +3050,33 @@ export default function PlayerControls({
             </select>
           )}
         </>}
-        algHelp={handPlaybackError ? <p className="sim-player-status" role="status">
-          {puzzleKind === 4 && stoppedItem?.kind === 'move' && <strong>
-            {t(`第 ${step + 1} 步`, `Step ${step + 1}`)} · {stoppedItem.action.value}{stoppedItem.push ? 'p' : ''}{stoppedItem.ftn !== undefined ? `[${stoppedItem.ftn}]` : ''}{' '}
-          </strong>}
-          {handPlaybackError === 'invalid-start'
-            ? tr('当前手指未能到达标记要求的接触位置，已停在这一步。', 'The finger could not reach the required contact position. Playback stopped at this move.')
-            : puzzleKind === 4
-              ? tr('这一步指定的四阶指法尚未标定。移除指法标记，或关闭「手指」后继续播放。', 'This marked 4×4 finger trick has not been calibrated. Remove the mark or turn off Hands to continue.')
+        algHelp={<>
+          {handPlaybackError ? <p className="sim-player-status" role="status">
+            {stoppedItem?.kind === 'move' && <strong>
+              {t(`第 ${step + 1} 步`, `Step ${step + 1}`)} · {stoppedItem.action.value}{stoppedItem.push ? 'p' : ''}{stoppedItem.ftn !== undefined ? `[${stoppedItem.ftn}]` : ''}{' '}
+            </strong>}
+            {stoppedPush && <>{t(stoppedPush.label[0], stoppedPush.label[1])}{' '}</>}
+            {handPlaybackError === 'model-unavailable'
+              ? t('手部模型加载失败，已停在这一步。', 'The hand model could not load. Playback stopped here.')
+              : handPlaybackError === 'invalid-start'
+              ? tr('当前手指未能到达标记要求的接触位置，已停在这一步。', 'The finger could not reach the required contact position. Playback stopped at this move.')
+              : stoppedPush
+                ? t('这个推法需要双手中握，且该步只带推法后缀。', 'This push requires both hands in home grip and a move marked only with p.')
               : tr('当前握姿还没有适合这一步标记的手部动作。可调整握姿或标记后继续。', 'No hand gesture is available for this mark in the current grip. Adjust the grip or mark to continue.')}
-        </p> : puzzleKind === 'skewb' && skewbNotation && !isTwistyMode && (
-          <SkewbNotationGuide
-            notation={skewbNotation}
-            onDemo={demoNotationMove}
-            onRestore={restoreFromDemo}
-          />
-        )}
+            {' '}<button type="button" className="skewb-guide-restore" onClick={() => {
+              world?.setHandsWanted(false);
+              onSettingsChange({ ...settings, hands: false });
+              void handleTogglePlay();
+            }}>{t('仅播放转动', 'Play turns only')}</button>
+          </p> : puzzleKind === 'skewb' && skewbNotation && !isTwistyMode && (
+            <SkewbNotationGuide
+              notation={skewbNotation}
+              onDemo={demoNotationMove}
+              onRestore={restoreFromDemo}
+            />
+          )}
+          {active && handMarkup && isPushOrder(puzzleKind) && <FingerNotationGuide key={puzzleKind} order={puzzleKind} selectedPush={stoppedPush?.token ?? selectedPush} onOpen={() => setPlaying(false)} />}
+        </>}
       />
 
       {active && (() => {
@@ -2991,7 +3096,7 @@ export default function PlayerControls({
       const speedControl = <div className="sim-playback-speed">
         <Slider label="TPS" value={settings.speed} onChange={speed => onSettingsChange({ ...settings, speed })} unit={UNIT_TPS} title={t('每秒转动步数', 'Turns per second')} />
       </div>;
-      const waitForHandStep = (pocket || puzzleKind === 4) && settings.hands && settings.animatePlayback !== false;
+      const waitForHandStep = (pocket || puzzleKind === 4 || rightPinch) && settings.hands && settings.animatePlayback !== false;
       const playbackBar = (
       <div className="sim-stage-controls">
       <PlaybackBar layout={compactPlayback ? 'wide' : 'balanced'}
@@ -3093,19 +3198,23 @@ export default function PlayerControls({
               const el = algElRef.current;
               if (el && el.selectionStart === el.selectionEnd && highlightRange) setCaretChar(highlightRange[0]);
             }}
-            fingerMarkSelected={mark => {
+            getPushSuffix={handMarkup && isPushOrder(puzzleKind) ? () => {
               const el = algElRef.current;
-              if (!el) return false;
-              const range = el.selectionStart === el.selectionEnd && highlightRange
-                ? highlightRange : [el.selectionStart, el.selectionEnd];
-              return selectedFingerMark(htmlDraftRef.current, range[0], range[1], mark);
-            }}
-            onFingerMark={is3x3 ? mark => {
-              const el = algElRef.current;
-              if (!el) return;
-              const range = el.selectionStart === el.selectionEnd && highlightRange
-                ? highlightRange : [el.selectionStart, el.selectionEnd];
-              changeMarkedAlg(el.value, toggleFingerMark(el.value, htmlDraftRef.current, range[0], range[1], mark));
+              if (!el) return null;
+              const { value, selectionStart, selectionEnd } = el;
+              if (inComment(value, selectionStart)) return null;
+              if (selectionStart === selectionEnd && highlightRange) {
+                return pushSuffixAt(value, highlightRange[0], highlightRange[1]);
+              }
+              return pushSuffixAt(value, selectionStart, selectionEnd);
+            } : undefined}
+            fingerMarkState={handMarkup ? fingerKeyState : undefined}
+            fingerExamples={handMarkup && checkedOrder ? evenFingerExamples[checkedOrder] : undefined}
+            onFingerMark={handMarkup ? mark => {
+              const range = keyboardMarkRange();
+              const state = fingerKeyState(mark);
+              if (!range || state === 'disabled') return;
+              changeMarkedAlg(algDraft, toggleFingerMark(algDraft, htmlDraftRef.current, ...range, mark, markSource, state === 'selected'));
             } : undefined}
             onInput={() => {
               const el = algElRef.current;

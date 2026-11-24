@@ -11,7 +11,7 @@ import { toolCallSchema } from './site_assistant_tools.js';
 import { AssistantFailure, checkAssistantResponse, type AssistantModelDiagnostic } from './site_assistant_diagnostics.js';
 import type { AssistantConfig } from './site_assistant.js';
 import { recordAssistantModel, recordAssistantContextSelection } from './site_assistant_monitor.js';
-import { composeAssistantContext, assistantMemoryPayload, estimateAssistantTokens, assistantHistoryTurns, AssistantContextBudgetError, type AssistantMemory } from './site_assistant_memory.js';
+import { refersToDisplayedAnswer, composeAssistantContext, assistantMemoryPayload, estimateAssistantTokens, assistantHistoryTurns, AssistantContextBudgetError, type AssistantMemory } from './site_assistant_memory.js';
 
 const answerSchema = z.object({ imageTask: z.enum(['cube-state', 'other']).optional(), answerKind: z.enum(['general','site_content','grounded','image']).optional(), answer: z.string().max(SITE_ASSISTANT_ANSWER_MAX_LENGTH), plan: assistantStructuredPlanSchema.optional(), sourceIds: z.array(z.string()).max(100), reviewedSourceIds: z.array(z.string()).max(12).optional() });
 type ModelPlanOutput = AssistantPlanOutputConstraints & { independentEnding?:boolean };
@@ -122,6 +122,29 @@ function parseAssistantAnswer(text: string, finishReason?: string, allowEmptySou
 // Only an upstream 429 opens a cooldown. Independent providers and public
 // data tools retain their capacity. Each transport owns its own state.
 const providerCooldowns=new WeakMap<typeof fetch, Map<string,number>>();
+// Only immutable public tool definitions are shared. Conversation state,
+// callbacks, provider credentials and evidence always belong to the request.
+let catalogCache:{guide:string;tools:ToolSet;toolTokenCosts:Map<string,number>} | undefined;
+function assistantToolCatalog(guide:string) {
+  if (catalogCache?.guide===guide) return catalogCache;
+  const tools: ToolSet = {};
+  const toolTokenCosts = new Map<string, number>();
+  for (const schema of toolCallSchema.options) {
+    const name = schema.shape.tool.value;
+    // Derive the provider contract from the same schema used at the data boundary.
+    // Business refinements are rechecked by the executor, never removed there.
+    const inputSchema=z.strictObject(schema.shape).omit({tool:true});
+    tools[name] = tool({
+      description: guide.split('\n').find(line => line.startsWith(name + ' ')) ?? name,
+      inputSchema,
+    });
+    toolTokenCosts.set(name, estimateAssistantTokens({ name, description: tools[name].description,
+      inputSchema: z.toJSONSchema(inputSchema) }));
+  }
+  catalogCache={guide,tools,toolTokenCosts};
+  return catalogCache;
+}
+
 /** One provider conversation per HTTP request. Reasoning stays here, never in UI/logs. */
 export function createAssistantModel(config: AssistantConfig, fetcher: typeof fetch, signal: AbortSignal, guide: string, history: AssistantMessage[] = [], images: AssistantImage[] = [], memory?: AssistantMemory) {
   const openai = config.provider === 'openai';
@@ -203,19 +226,6 @@ export function createAssistantModel(config: AssistantConfig, fetcher: typeof fe
     : deepseek
     ? createDeepSeek({ apiKey: config.key, baseURL: config.baseUrl, fetch: boundedFetch })(config.model)
     : createOpenAICompatible({ name: 'bailian', apiKey: config.key, baseURL: config.baseUrl, fetch: boundedFetch })(config.model);
-  const tools: ToolSet = {};
-  const toolTokenCosts = new Map<string, number>();
-  for (const schema of toolCallSchema.options) {
-    const name = schema.shape.tool.value;
-    // Derive the provider contract from the same schema used at the data boundary.
-    // Business refinements are rechecked by the executor, never removed there.
-    tools[name] = tool({
-      description: guide.split('\n').find(line => line.startsWith(name + ' ')) ?? name,
-      inputSchema: z.strictObject(schema.shape).omit({ tool: true }),
-    });
-    toolTokenCosts.set(name, estimateAssistantTokens({ name, description: tools[name].description,
-      inputSchema: z.toJSONSchema(z.strictObject(schema.shape).omit({ tool: true })) }));
-  }
   // Binary image parts go through the provider's multimodal API, never JSON text,
   // logs, public uploads or the knowledge index. Preserve the original turn order.
   const imageParts = (items: AssistantImage[]) => items.map(image => ({
@@ -234,7 +244,8 @@ export function createAssistantModel(config: AssistantConfig, fetcher: typeof fe
     },
     async complete(options: {
       system: string; context: unknown; finalOnly: boolean; thinking: boolean;
-      effort: 'low' | 'high'; maxTokens: number; onText?: (text: string) => Promise<void>;
+      effort: 'low' | 'high'; maxTokens: number; onText?: (text: string, prose?: boolean) => Promise<void>;
+      scenarioProse?: boolean;
       followUp?: string;
       requiredTool?: 'lookup_cube_photo';
       unavailableTools?: string[];
@@ -253,14 +264,20 @@ export function createAssistantModel(config: AssistantConfig, fetcher: typeof fe
         pending = [];
       }
       if(options.followUp) transcript.push({role:'user',content:options.followUp});
-      const system = options.system + (options.structuredPlan
+      const system = options.scenarioProse ? options.system : options.system + (options.structuredPlan
         ? (options.structuredPlan.independentEnding
           ? '\nPut the activities in plan and write the actual independent ending in the answer string inside the same JSON object. Do not restate the instruction or duplicate the plan in answer. The server renders the activities. '
           : '\nReturn the constrained plan in the plan field with answer:""; the server renders its titles, actions, reasons and time labels. Do not duplicate the plan as prose. ')
         : '\nAll prose and presentation instructions apply inside the answer string. ')
         + 'The final response must be one JSON object with answer and sourceIds, without Markdown fences or text outside that object. sourceIds must be an array of source ID strings, even for a single source; use [] when there are none, never a string or null.';
-      const activeTools = !allowTools ? undefined : options.unavailableTools?.length
-        ? Object.fromEntries(Object.entries(tools).filter(([name])=>!options.unavailableTools!.includes(name))) : tools;
+      const catalog=allowTools ? assistantToolCatalog(guide) : undefined;
+      // A first-turn judgment can request a source directly or use deliberate
+      // to open the full tool catalog on the next turn. Never re-enable a tool
+      // disabled by the request's evidence scope.
+      const activeTools = !catalog ? undefined : options.scenarioProse || options.unavailableTools?.length
+        ? Object.fromEntries(Object.entries(catalog.tools).filter(([name]) =>
+          !options.unavailableTools?.includes(name) && (!options.scenarioProse || ['deliberate','pages','web_search'].includes(name))))
+        : catalog.tools;
       const currentTranscript: ModelMessage[] = options.isolated
         ? options.followUp ? [{ role: 'user', content: options.followUp }] : [] : transcript;
       const question = options.context && typeof options.context === 'object' && 'question' in options.context && typeof options.context.question === 'string' ? options.context.question : '';
@@ -274,7 +291,7 @@ export function createAssistantModel(config: AssistantConfig, fetcher: typeof fe
       try {
         selection = composeAssistantContext({ question, history, memory, hasImages: images.length > 0 || history.some(message => !!message.images?.length), inputBudget,
           fixedTokens: estimateAssistantTokens(system) + estimateAssistantTokens(options.context) + estimateAssistantTokens(currentTranscript)
-            + Object.keys(activeTools ?? {}).reduce((sum, name) => sum + (toolTokenCosts.get(name) ?? 0), 0) + images.length * 4096 + 512 });
+            + Object.keys(activeTools ?? {}).reduce((sum, name) => sum + (catalog?.toolTokenCosts.get(name) ?? 0), 0) + images.length * 4096 + 512 });
       } catch (error) {
         if (error instanceof AssistantContextBudgetError) throw new AssistantFailure('request_too_large');
         throw error;
@@ -286,7 +303,12 @@ export function createAssistantModel(config: AssistantConfig, fetcher: typeof fe
       // Removing assistant replies must not turn answered user turns into a queue
       // of unanswered requests. Keep their supplied context as explicitly historical data.
       const priorUsers = selection.history.filter(message => message.role === 'user');
+      const previousReply=selection.history.at(-1);
       const reviewHistory = JSON.stringify({
+        // Isolated review still needs the referent of "the latter" or a named
+        // table value. Keep the original attribution, never promote it to evidence.
+        ...(refersToDisplayedAnswer(question, previousReply)
+          ? {referencedPreviousReply:{role:'assistant',content:previousReply!.content}} : {}),
         previousUserMessages: priorUsers.map(message => message.content),
         instruction: 'Historical context only, not pending requests or verified evidence. Use it only to resolve references and user-supplied constraints in the current question. Do not answer earlier questions or fetch facts for their old topics.',
       });
@@ -309,7 +331,7 @@ export function createAssistantModel(config: AssistantConfig, fetcher: typeof fe
           : options.requiredTool ? { type: 'tool' as const, toolName: options.requiredTool } : 'auto' as const,
         system,
         messages: [...memoryMessages, ...(options.isolated ? reviewConversation : conversation), { role: 'user' as const, content: images.length ? [{ type: 'text' as const, text: JSON.stringify(options.context) }, ...imageParts(images)] : JSON.stringify(options.context) }, ...currentTranscript],
-        ...(openai || deepseek ? { output: Output.object({schema:options.structuredPlan?answerSchema.extend({plan:assistantStructuredPlanOutputSchema(options.structuredPlan).optional()}):answerSchema.omit({plan:true})}) } : {}),
+        ...(!options.scenarioProse && (openai || deepseek) ? { output: Output.object({schema:options.structuredPlan?answerSchema.extend({plan:assistantStructuredPlanOutputSchema(options.structuredPlan).optional()}):answerSchema.omit({plan:true})}) } : {}),
         maxOutputTokens, maxRetries: 0, abortSignal: signal,
         ...(thinking || openai ? {} : { temperature: 0 }),
         providerOptions: { [openai ? 'openai' : deepseek ? 'deepseek' : 'bailian']: openai
@@ -338,7 +360,8 @@ export function createAssistantModel(config: AssistantConfig, fetcher: typeof fe
             if (part.type === 'text-delta') {
               content += part.text;
               if (content.length > 64000) throw new AssistantFailure('model_unavailable', undefined, { reason: 'response_too_large' });
-              await options.onText?.(content);
+              if (options.scenarioProse && !/^\s*(?:\{|`)/.test(content)) await options.onText?.(content, true);
+              else await options.onText?.(content);
             }
           }
           result = { toolCalls: await response.toolCalls, text: await response.text, finishReason: await response.finishReason, response: await response.response, totalUsage: await response.totalUsage };
@@ -363,6 +386,14 @@ export function createAssistantModel(config: AssistantConfig, fetcher: typeof fe
         // Retain even a malformed final response so the bounded repair is a new
         // user turn, with the provider's reasoning preserved in its own transcript.
         transcript.push(...result.response.messages);
+        // Native tool calls were handled above. A standalone judgment has no
+        // source IDs or plan to serialize. Still validate its normal answer envelope.
+        const text = result.text.trim();
+        if (options.scenarioProse && !/^(?:\{|```json)/i.test(text)) {
+          if (!text) throw new AssistantOutputError('empty_output', result.finishReason);
+          if (text.length > SITE_ASSISTANT_ANSWER_MAX_LENGTH) throw new AssistantOutputError('output_truncated', result.finishReason);
+          return { calls: [] as unknown[], ...answerSchema.parse({ answerKind: 'general', answer: text, sourceIds: [] }) };
+        }
         return { calls: [] as unknown[], ...parseAssistantAnswer(result.text, result.finishReason, options.allowEmptySourceIds, options.structuredPlan?.independentEnding) };
       } catch (error) {
         // The SDK can wrap a body-read failure in APICallError. Recover only

@@ -3,6 +3,11 @@
 .assistant-algorithms .cube-photo-formula { min-width: 0; }
 .assistant-algorithms .cube-photo-sequence code { white-space: pre-wrap; overflow-wrap: anywhere; }
 .assistant-algorithms .cube-photo-formula-title { min-width: 0; }
+/* The Megaminx SVG uses a 1.8-unit viewBox. Keep its small outlines in screen pixels. */
+.assistant-algorithms .cube-photo-formula-title .svg-renderer svg > polygon {
+  vector-effect: non-scaling-stroke;
+  stroke-width: 0.8px;
+}
 .assistant-algorithms-more { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin-top: 12px; color: var(--muted-foreground); }
 .assistant-algorithm-controls { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; padding: 8px 14px; font-size: .8rem; color: var(--muted-foreground); }
 .assistant-algorithm-controls .cube-photo-expand { margin: 0; padding: 0; }

@@ -38,8 +38,9 @@ import { reportSeconds } from './report-presentation';
 import ReportContent from './ReportContent';
 import { REPLAY_SPEEDS, reportPlayback, reportPlayerAction, playbackMoveDurationTicks, type ReportPlayerState } from './report-player';
 import type { ReportAction } from './report-content';
-import { lazy, Suspense, useEffect, useMemo, useRef, useState } from 'react';
-import type { ReactNode } from 'react';
+import { lazy, Suspense, useEffect, useImperativeHandle, useMemo, useRef, useState } from 'react';
+import type { ReactNode, Ref } from 'react';
+import type { CfopReplayRange } from './cfop-diagnosis';
 
 import { useReconstructHost } from './ReconstructHost';
 import { PlaybackSpeedSelect } from '../PlaybackBar';
@@ -87,13 +88,14 @@ interface Props {
   viewRotation?: string;
   /** Initial frame of the simplified steps; raw gyro playback keeps its own frame. */
   inspection?: string;
+  replayRangeRef?: Ref<(range: CfopReplayRange) => void>;
 }
 
 
 const formatSec = reportSeconds;
 
 export default function PlaybackPanel({
-  method, event, scramble, moves: rawMoves, totalMs, lines, rotations, side, gyro, deviceModel, viewRotation, inspection,
+  method, event, scramble, moves: rawMoves, totalMs, lines, rotations, side, gyro, deviceModel, viewRotation, inspection, replayRangeRef,
 }: Props) {
   const { localize: tr } = useReconstructHost();
   // /sim 只画 NxN;这里只有 3x3 会有动作流(智能魔方就这一种),别的项目退回预览图。
@@ -132,7 +134,8 @@ export default function PlaybackPanel({
   });
   const rawIdx = idx > 0 ? moves[idx - 1].rawAfter : 0;
   const playerRef=useRef<ReportPlayerState>({index:0,timeMs:0,playing:false,speed:1,posed:false,run:0});
-  playerRef.current={index:idx,timeMs:playFromRef.current,playing,speed:speedMult,posed,run:playbackRun};
+  const rangeEndMs = playerRef.current.rangeEndMs;
+  playerRef.current={index:idx,timeMs:playFromRef.current,playing,speed:speedMult,posed,run:playbackRun,rangeEndMs};
   const poseAt = useMemo(() => (
     posed
       ? (tMs: number) => sampleGyroAt(gyroTrack, tMs)
@@ -184,6 +187,9 @@ export default function PlaybackPanel({
 
   const elapsedMs = playFromRef.current;
   const lastTs = Math.max(playbackEndMs(moves, rawMoves), method === 'training' ? totalMs : 0);
+  // The playback axis includes the last recorded move even if the timer stopped first.
+  const lastRawMs = rawMoves.at(-1)?.ts ?? 0;
+  const timelineMs = Number.isFinite(lastRawMs) ? Math.max(totalMs, lastRawMs) : totalMs;
 
   // Keep the engine's normal 500 ms duration across observation/put-down pauses.
   // Shorter gaps still shorten the animation to prevent a backlog; the clock
@@ -208,7 +214,7 @@ export default function PlaybackPanel({
     const solve0 = playFromRef.current;
     const tick = () => {
       const t = solve0 + (performance.now() - wall0) * speedMult;
-      const frame = playbackFrame(moves, lastTs, t);
+      const frame = playbackFrame(moves, rangeEndMs ?? lastTs, t);
       const at = frame.timeMs;
       playFromRef.current = at;
       playbackQuatRef.current = poseAt(at);
@@ -220,7 +226,7 @@ export default function PlaybackPanel({
     };
     raf = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(raf);
-  }, [playing, playbackRun, speedMult, total, moves, lastTs, poseAt]);
+  }, [playing, playbackRun, speedMult, total, moves, lastTs, poseAt, rangeEndMs]);
 
   const dispatchPlayer=(action:ReportAction)=>{
     if (method === 'training' && action.type === 'end') action = { type: 'time', value: lastTs };
@@ -238,6 +244,10 @@ export default function PlaybackPanel({
     dispatchPlayer({type:'time',value:target.timeMs});
   };
   const playFrom=(i:number,atMs?:number)=>dispatchPlayer({type:'play-from',value:i,timeMs:atMs});
+  useImperativeHandle(replayRangeRef, () => range => {
+    dispatchPlayer({ type: 'play-from', value: range.firstMoveIndex, timeMs: range.startMs, endMs: range.endMs });
+    cubeBoxRef.current?.scrollIntoView({ block: 'nearest' });
+  });
 
   // The inspection rotation is a fixed prefix before reconstructed notation.
   // New gestures append after it; recorded playback instead gets external pose.
@@ -253,7 +263,7 @@ export default function PlaybackPanel({
   const simPose = !useRebuilt && !posed && viewRotation ? viewRotation : '';
 
 
-  return <ReportContent node={reportPlayback(playerRef.current,total,totalMs,hasGyro,Boolean(side),tr,'menu')} dispatch={dispatchPlayer} slots={{
+  return <ReportContent node={reportPlayback(playerRef.current,total,timelineMs,hasGyro,Boolean(side),tr,'menu')} dispatch={dispatchPlayer} slots={{
     speeds: <PlaybackSpeedSelect label={tr({ zh: '播放倍速', en: 'Playback speed' })} value={speedMult}
       options={REPLAY_SPEEDS} onChange={value => dispatchPlayer({ type: 'speed', value })} />,
     cube:<div ref={cubeBoxRef} className={`reconstruct-playback-cube${gyroOn ? ' is-gyro' : ''}`}>
@@ -289,7 +299,7 @@ export default function PlaybackPanel({
           method={method}
           ref={timelineRef}
           moves={rawMoves}
-          totalMs={totalMs}
+          totalMs={timelineMs}
           lines={lines ?? []}
           showLabels
           currentIdx={rawIdx}

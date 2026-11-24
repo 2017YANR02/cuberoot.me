@@ -17,6 +17,7 @@ export function CaseThumb({
   alt,
   sq1BlackTop = true,
   sq1SideBySide = false,
+  fullState = false,
   simplifyRecognition = false,
   viewAngle = 'default',
   orientation = DEFAULT_ALG_CUBE_ORIENTATION,
@@ -43,6 +44,8 @@ export function CaseThumb({
   sq1BlackTop?: boolean;
   /** Put both Square-1 layers left-to-right instead of top-to-bottom. */
   sq1SideBySide?: boolean;
+  /** Show the full case without the stage-specific recognition mask. */
+  fullState?: boolean;
   /** Show only the strongest recognition features on supported 3x3 plan views. */
   simplifyRecognition?: boolean;
   /** Rotate an applicable last-layer case by U / U2 / U' while keeping its solution coherent. */
@@ -57,8 +60,8 @@ export function CaseThumb({
   const rotating = useRef(false);
   const [busy, setBusy] = useState(false);
   const plan = useMemo(() => caseThumbPlan({
-    puzzle, set, sticker, alg, setup, mask: maskOverride, sq1BlackTop, sq1SideBySide, simplifyRecognition, viewAngle, orientation,
-  }), [puzzle, set, sticker, alg, setup, maskOverride, sq1BlackTop, sq1SideBySide, simplifyRecognition, viewAngle, orientation]);
+    puzzle, set, sticker, alg, setup, mask: maskOverride, sq1BlackTop, sq1SideBySide, fullState, simplifyRecognition, viewAngle, orientation,
+  }), [puzzle, set, sticker, alg, setup, maskOverride, sq1BlackTop, sq1SideBySide, fullState, simplifyRecognition, viewAngle, orientation]);
 
   // Square-1 flat SVGs stack two layers vertically. Render at 2x then crop the
   // upper half so a requested single layer keeps the same visual size as a full thumb.

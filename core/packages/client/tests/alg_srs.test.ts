@@ -291,6 +291,14 @@ describe('buildSrsQueue', () => {
     expect(q.every(x => x.kind === 'new')).toBe(true);
   });
 
+  it('opens an explicit single case outside the daily limits without widening the pool', () => {
+    const opts = { newLimit: 0, sessionLimit: 10, fillExtra: false, reviewSingleCase: true };
+    const recs = { t: mk(4, T0 + DAY) };
+    expect(buildSrsQueue(['t'], recs, T0, opts)).toEqual([{ key: 't', kind: 'extra' }]);
+    expect(buildSrsQueue(['new'], {}, T0, opts)).toEqual([{ key: 'new', kind: 'new' }]);
+    expect(buildSrsQueue(['t', 'new'], recs, T0, opts)).toEqual([]);
+  });
+
   it('空池 = 空队列', () => {
     expect(buildSrsQueue([], {}, T0, { newLimit: 5, sessionLimit: 20, fillExtra: true })).toEqual([]);
   });

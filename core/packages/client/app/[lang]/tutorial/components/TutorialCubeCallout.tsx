@@ -10,10 +10,11 @@ type Placement = 'left' | 'right' | 'above' | 'hidden';
 const gutter = 8; // Leave room for the bubble's tail at the pane boundary.
 
 export default function TutorialCubeCallout({
-  side = 'right', anchorY = .5, player, targetStickers, paneRef, requireAnchor, ...props
+  side = 'right', anchorY = .5, cubeRadiusRatio = .39, player, targetStickers, paneRef, requireAnchor, ...props
 }: Omit<ChatBubbleProps, 'tail' | 'ref'> & {
   side?: 'left' | 'right';
   anchorY?: number;
+  cubeRadiusRatio?: number;
   player?: RefObject<AlgPlayerHandle | null> | (() => AlgPlayerHandle | null);
   targetStickers?: readonly string[];
   paneRef?: RefObject<HTMLElement | null>;
@@ -50,7 +51,7 @@ export default function TutorialCubeCallout({
       const cx = cube.left + cube.width / 2;
       const cy = cube.top + cube.height / 2;
       // The renderer centers the cube in the canvas with transparent space around it.
-      const radius = Math.min(cube.width, cube.height) * .39;
+      const radius = Math.min(cube.width, cube.height) * cubeRadiusRatio;
       const vx = viewport?.offsetLeft ?? 0;
       const vy = viewport?.offsetTop ?? 0;
       const left = Math.max(bounds.left, vx) + gutter;
@@ -138,7 +139,7 @@ export default function TutorialCubeCallout({
       window.removeEventListener('resize', schedule);
       cancelAnimationFrame(frame);
     };
-  }, [side, anchorY, player, targetKey, paneRef, requireAnchor]);
+  }, [side, anchorY, cubeRadiusRatio, player, targetKey, paneRef, requireAnchor]);
 
   return <div className="tutorial-cube-callout" ref={overlay} data-placement={placement}>
     <ChatBubble {...props} ref={bubble} tail={placement === 'left' ? 'right' : placement === 'right' ? 'left' : 'bottom'} />

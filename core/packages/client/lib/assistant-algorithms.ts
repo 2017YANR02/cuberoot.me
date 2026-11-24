@@ -5,6 +5,10 @@ import { createAssistantAlgorithmLoader } from '@cuberoot/shared/site-assistant-
 import type { AlgFile } from '@cuberoot/shared/alg-types';
 import { apiUrl } from './api-base';
 
+export function assistantAlgorithmDiagramOptions(puzzle: AssistantAlgorithmCard['puzzle']) {
+  return { fullState: puzzle === '5x5' || puzzle === '6x6' || puzzle === 'sq1', sq1SideBySide: puzzle === 'sq1' };
+}
+
 // Read the same public snapshot used by the assistant tool, without model calls.
 export const loadNextAssistantAlgorithm = createAssistantAlgorithmLoader(async (puzzle, set) => {
   const response = await fetch(apiUrl(`/v1/alg/sets/${encodeURIComponent(puzzle)}/${encodeURIComponent(set)}`), {signal: AbortSignal.timeout(10000)});

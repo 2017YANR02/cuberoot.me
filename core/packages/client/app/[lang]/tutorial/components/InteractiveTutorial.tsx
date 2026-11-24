@@ -8,6 +8,7 @@ import AlgPlayer, { type AlgPlayerHandle, type AlgStickerPlacement } from '@/com
 import { resolveSimPreviewMoves, type AlgPlayerPuzzle } from '@/components/AlgPlayer/player-setup';
 import { animateStickerHint, dimStickerColors } from '@/components/AlgPlayer/sticker-hint-fade';
 import AppLink from '@/components/AppLink';
+import BoolToggle from '@/components/BoolToggle';
 import ChatBubble from '@/components/ChatBubble';
 import { ClearButton } from '@/components/ClearButton';
 import PageBackLink from '@/components/PageBackLink';
@@ -169,12 +170,14 @@ export type CourseChapter = {
 export type CoursePosition = { chapterIndex: number; sectionId: string };
 export type InteractiveTutorialProps = {
   title: Text;
+  centerContent?: boolean;
   headerAction?: ReactNode;
   puzzle: AlgPlayerPuzzle;
   orientation?: string;
   chapters: readonly CourseChapter[];
   basicsHref?: string;
   catalogHref?: string;
+  practiceEnabled?: boolean;
   location: CoursePosition;
   onNavigate: (position: CoursePosition, chapterChanged: boolean) => void;
 };
@@ -267,12 +270,13 @@ const triggerMoveCopy: Record<string, Text> = {
   "R'": { zh: '把右层转下来。', en: 'Turn the right layer down.' },
 };
 
-export function TutorialAlgDemo({ insertion, puzzle, orientation, view, mutedStickers, stickeringAtStep, stickerColorOverrides, onClose }: {
+export function TutorialAlgDemo({ insertion, puzzle, orientation, view, mutedStickers, stickeringAtStep, stickerColorOverrides, handToggle = false, onClose }: {
   insertion: Omit<TutorialAlg, 'helpLabel' | 'steps'> & { steps: readonly TutorialAlgStep[] };
   puzzle: AlgPlayerPuzzle;
   orientation?: string;
   view: View;
   mutedStickers?: readonly string[];
+  handToggle?: boolean;
   onClose: () => void;
 } & Pick<ComponentProps<typeof AlgPlayer>, 'stickeringAtStep' | 'stickerColorOverrides'>) {
   const dialog = useRef<HTMLDialogElement>(null);
@@ -283,6 +287,7 @@ export function TutorialAlgDemo({ insertion, puzzle, orientation, view, mutedSti
   const [ready, setReady] = useState(false);
   const [playRequest, setPlayRequest] = useState(0);
   const [step, setStep] = useState(0);
+  const [handsVisible, setHandsVisible] = useState(false);
   const left = insertion.steps[0]?.notation === "L'";
   const title = insertion.demoTitle ?? (left ? { zh: '左手上勾下回', en: 'Left-hand trigger' } : insertion.progressLabel);
   const describeMove = ({ notation, detail, cue }: TutorialAlgStep, index: number): Text =>
@@ -316,7 +321,8 @@ export function TutorialAlgDemo({ insertion, puzzle, orientation, view, mutedSti
     return () => window.clearTimeout(timer);
   }, [ready]);
 
-  return <dialog ref={dialog} className="course-demo-dialog" data-long-alg={insertion.steps.length > 4 || undefined} aria-labelledby={titleId}
+  return <dialog ref={dialog} className="course-demo-dialog" data-long-alg={insertion.steps.length > 4 || undefined}
+    data-hand-toggle={handToggle || undefined} aria-labelledby={titleId}
     onCancel={event => { event.preventDefault(); close(); }} {...backdrop}>
     <div className="course-demo-panel" data-site-surface="popover">
       <header>
@@ -331,7 +337,8 @@ export function TutorialAlgDemo({ insertion, puzzle, orientation, view, mutedSti
             <AlgPlayer ref={player} puzzle={puzzle} set="" orientation={orientation} engine="sim"
               setup={insertion.demoSetup} alg={insertion.steps.map(({ notation }) => notation).join(' ')} sceneRot={view}
               hiddenStickers={mutedStickers} stickeringAtStep={stickeringAtStep} stickerColorOverrides={stickerColorOverrides}
-              showHands={insertion.showHands ?? !insertion.demoTitle} moveDurationMs={720}
+              showHands={handToggle || (insertion.showHands ?? !insertion.demoTitle)}
+              handsVisible={handToggle ? handsVisible : undefined} moveDurationMs={720}
               pauseAfterSteps={insertion.demoTitle ? undefined : triggerPauses} sectionPauseMs={300}
               onStepChange={setStep} playRequest={playRequest} onReady={() => setCubeReady(true)} fillPane />
           </div>
@@ -354,6 +361,8 @@ export function TutorialAlgDemo({ insertion, puzzle, orientation, view, mutedSti
             {tr(current ? describeMove(current, step - 1)
               : { zh: '选择一个动作可以单独播放。', en: 'Select a move to play it on its own.' })}
           </p>}
+          {handToggle && <BoolToggle className="course-demo-hands" label={tr({ zh: '手部动作', en: 'Hand animation' })}
+            value={handsVisible} onChange={setHandsVisible} />}
         </div>
       </div>
     </div>
@@ -991,6 +1000,8 @@ function GuidedLesson({ section, task, puzzle, orientation, onQuizComplete }: {
   useEffect(() => { if (completion) onQuizComplete(); }, [completion, onQuizComplete]);
   const hasConceptHelp = Help && !(applying && task.hideHelpDuringAlgorithm);
   const hasAlgorithmHelp = applying && !completion;
+  const heading = tr(completion ? labels.completed : question.heading);
+  const alignmentHeading = preparing && !canRotateSideways && tr({ zh: '摆到位了', en: 'Aligned' });
   return <LessonPane layout="F" cube={
     <div ref={board} className="course-cube" role="group" tabIndex={0} aria-label={tr(section.title)} onKeyDown={keyInput}
       data-course-cube data-ready={ready} data-drag-enabled={ready} data-move-count={history.length} data-last-move={history.at(-1)}>
@@ -1015,8 +1026,10 @@ function GuidedLesson({ section, task, puzzle, orientation, onQuizComplete }: {
     </div>
   }>
     <InteractiveQuestionCopy sectionId={section.id} questions={steps} activeIndex={activeIndex} answer={done ? 'correct' : 'pending'}
-      heading={tr(completion ? labels.completed : settled && preparing && !canRotateSideways
-        ? { zh: '摆到位了', en: 'Aligned' } : question.heading)}
+      heading={alignmentHeading ? <span className="course-question-stable-heading">
+        <span aria-hidden={settled || undefined}>{heading}</span>
+        <span aria-hidden={!settled || undefined}>{alignmentHeading}</span>
+      </span> : heading}
       headingAction={(hasConceptHelp || hasAlgorithmHelp) && <>
         {hasAlgorithmHelp && <InteractiveQuestionHelpButton video onClick={() => setDemo(algorithm)}>
           {tr(algorithm.helpLabel)}
@@ -1030,6 +1043,7 @@ function GuidedLesson({ section, task, puzzle, orientation, onQuizComplete }: {
         })}
       </>}
       prompt={tr(completion ? task.completion : recognized && recognizing ? recognizing.explanation : question.prompt)}
+      reserveStatus={applying && !done}
       status={!revisableAlignment && !done ? feedbackMessage : undefined}
       action={<>
         {recognizing && !recognized && <div className="course-question-actions">
@@ -1192,7 +1206,7 @@ function UnfinishedQuizDialog({ onDismiss, onSkip }: { onDismiss: () => void; on
   </dialog>;
 }
 
-export default function InteractiveTutorial({ title, headerAction, puzzle, orientation, chapters, basicsHref, catalogHref, location, onNavigate }: InteractiveTutorialProps) {
+export default function InteractiveTutorial({ title, centerContent, headerAction, puzzle, orientation, chapters, basicsHref, catalogHref, practiceEnabled = true, location, onNavigate }: InteractiveTutorialProps) {
   const t = useT();
   const { chapterIndex: linkedChapter, sectionId: linkedSection } = location;
   const [chapterIndex, setChapter] = useState(linkedChapter);
@@ -1204,7 +1218,8 @@ export default function InteractiveTutorial({ title, headerAction, puzzle, orien
     completedRequest.current = Math.max(completedRequest.current, selection.request);
   }, [selection.request]);
   const currentPosition = useRef(location);
-  const [practice, setPractice] = useState(false);
+  const [practiceMode, setPractice] = useState(false);
+  const practice = practiceEnabled && practiceMode;
   const availableSections = (index: number) => chapters[index].sections.filter(section => !practice || 'exercise' in section);
   const sections = availableSections(chapterIndex);
   const sectionIndex = Math.max(0, sections.findIndex(section => section.id === selection.id));
@@ -1306,7 +1321,7 @@ export default function InteractiveTutorial({ title, headerAction, puzzle, orien
           {basicsHref && <AppLink href={basicsHref} prefetch={false} className="course-section-option">{tr(labels.basics)}</AppLink>}
         </SectionMenu>
       </div>}
-      {exerciseSection && <button type="button" className="course-control course-action" onClick={toggleExercise}>{tr(practice ? labels.review : labels.practice)}</button>}
+      {practiceEnabled && exerciseSection && <button type="button" className="course-control course-action" onClick={toggleExercise}>{tr(practice ? labels.review : labels.practice)}</button>}
       <button type="button" className="course-control" disabled={!next} aria-label={tr(labels.next)} onClick={requestNext}>
         <ArrowRight size={18} aria-hidden="true" />
       </button>
@@ -1315,7 +1330,7 @@ export default function InteractiveTutorial({ title, headerAction, puzzle, orien
   </div>;
 
   const catalogLabel = t(labels.catalog.zh, labels.catalog.en);
-  return <main className="tutorial-course" data-practice={practice}>
+  return <main className="tutorial-course" data-practice={practice} data-center-content={centerContent || undefined}>
     <header className="course-header" data-course-header>
       {catalogHref && <Tooltip content={catalogLabel}>{trigger =>
         <PageBackLink {...trigger} className="course-back-link" fallback={catalogHref} label={catalogLabel}

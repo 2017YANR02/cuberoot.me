@@ -255,9 +255,9 @@ export default class CubeGroup extends THREE.Group {
   get remainingTicks(): number { return this.tween?.remainingTicks ?? 0; }
 
   private animationPaused = false;
-  setAnimationPaused(paused: boolean): void {
+  setAnimationPaused(paused: boolean, atMs?: number): void {
     this.animationPaused = paused;
-    this.tween?.setPaused(paused);
+    this.tween?.setPaused(paused, atMs);
   }
 
   accelerateRealtime(ticks: number): void { this.tween?.shortenRemaining(ticks); }

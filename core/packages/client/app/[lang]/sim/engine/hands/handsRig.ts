@@ -29,15 +29,25 @@
 import * as THREE from "three";
 import { alignFrontIndex, easeFingerKnuckle } from "./frontKnuckle";
 import type { SkinStroke } from './halfPalmContactSkin';
+import { frontIndexNailPose } from './frontIndexNail';
+import { frontThumbNailPose } from './frontThumbNail';
+import { upperRingRelayPose } from './upperRingRelay';
 import { homeIndexHook } from "./homeIndexHook";
 import { HalfPalmPose } from "./halfPalmPose";
 import { UPPER_U_INDEX_FOLLOW, FRONT_INDEX_FOLLOW, frontIndexReturn } from "./frontIndexFollow";
+import { isPushOrder, pushRules } from '@/lib/push-notation';
+import { evenMarkFitsGrip, evenMarkedStroke, isEvenFrontQuarter } from '../../evenFingerNotation';
+import { calibratedStroke, frontCornerStroke, handBearings, strokeTangent, type CalibratedStroke } from './strokeGeometry';
+import type Cube from '../nxn/cube';
+import { capturePinchFingers, RightCornerPinch } from './rightCornerPinch';
+import { homePushPose, pocketPushMiddle } from './homePush';
+import { lowerHookPose } from './homeLowerHook';
 import { inspectWideGrip, WideSupport } from './wideSupport';
-import { mixedGripPose, isMixedPush, type MixedPush } from './mixedGripPush';
-import { isMiddleSliceStroke, middleSlicePose, middleSliceSupport, M_RELAY_SHIFT } from "./middleSliceMotion";
+import { mixedGripPose, isMixedPush, isSliceNail, lowerSliceBrace, type MixedPush } from './mixedGripPush';
+import { isMiddleSliceStroke, middleSlicePose, middleSliceSupport, middleSliceTiming, M_RELAY_SHIFT } from "./middleSliceMotion";
 import { sliceIndexPose } from "./sliceIndexMotion";
 import { frontDownPose } from "./frontDownMotion";
-import { FourLayerContact, type FourLayerStroke } from './fourLayerContact';
+import { FourLayerContact, innerRingApproachOffset, innerBraceProfile, isEquatorBand, type InnerBraceProfile, type FourLayerStroke } from './fourLayerContact';
 import { SIZE } from "../define";
 import { measureFinalHandPose } from './finalHandPose';
 import { ForearmRotation, WRIST_BEND_MAX, WRIST_RADIAL_SIN, WRIST_ULNAR_SIN } from "./armKinematics";
@@ -51,7 +61,7 @@ import { homeLeft, homeRight, POCKET_MIDDLE_CURL, POCKET_MIDDLE_SPLAY, type Hand
 import type { FingerAnnotation } from '@/lib/alg-finger-marks';
 import { chooseMarkedFingerPlan, fingerChannels, markedStartContact, MarkedFingerMotion, type MarkedTurnRequest } from './markedFingerMotion';
 import {
-  halfDownIndex, halfDownThumb, halfThumb, homeIndex, homeMiddle, homeMiddleClearance, leftDownRing, leftIndex, leftMiddle, rightDownRing,
+  applyPocketFingerPose, halfSupportClearance, halfDownIndex, halfDownThumb, halfThumb, homeIndex, homeMiddle, homeMiddleClearance, leftDownRing, leftIndex, leftMiddle, rightDownRing,
   reverseRingApproach, reverseRingContact, reverseRingSupport, seatPocketFinger, upperIndexClearance, upperMiddle, upperRingClearance,
   upperThumbClearance,
 } from './pocketFingerContact';
@@ -62,7 +72,11 @@ import { MARKED_CLEARANCE, MARKED_FINGER_PROFILES } from './markedFingerPoses';
 export interface HandsCubeLike {
   order: number;
   table: { groups: Record<"x" | "y" | "z", { angle: number; targetAngle?: number; isDragging?: boolean }[]> };
-  twister?: { backlog?: number; halfTurnDirection?: (axis: string, layer: number) => 1 | -1 | undefined };
+  twister?: {
+    backlog?: number;
+    halfTurnDirection?: (axis: string, layer: number) => 1 | -1 | undefined;
+    strokeEasing?: (axis: string, layers: readonly number[], twist: number) => import('@cuberoot/puzzle-render-core/engine/tweener').TweenEasing | undefined;
+  };
 }
 
 /** group.ts CubeGroup.AXIS_VECTOR 的同款轴向(x=(-1,0,0) 等)。这里复制而非
@@ -81,8 +95,8 @@ export type LayerClass = "high" | "low" | "mid" | "whole";
 /** 指弹样式(规格与编排细节见同目录 FINGERTRICKS.md):
  *  topPush 手局部食指路径(中起手 F 族 / 右上起手单步 U)/ hook 贴面勾拨(双中手 y 族,含连拨)/
  *  backHook 双中手 B' 右食指背钩 / downPush 左中右下 F 族右食指下拨 /
- *  upPush U' 推法(记号 U'p,右食指 RUB→BLU)。无 style = 遗留扫法(非标准握)。 */
-export type FlickStyle = "indexHook" | "reverseIndexHook" | "reverseRingHook" | "pocketThumbLift" | "topPush" | "hook" | "backHook" | "downPush" | "upPush" | "marked" | "middleSliceNail" | "middleSlicePad" | MixedPush;
+ *  upPush 顶层推法（左右食指从相应侧面的上排推向背面）。无 style = 遗留扫法(非标准握)。 */
+export type FlickStyle = "markedRingNail" | "frontIndexNail" | "frontThumbNail" | "lowerPush" | "lowerHook" | "upperRingRelay" | "indexHook" | "reverseIndexHook" | "reverseRingHook" | "pocketThumbLift" | "topPush" | "hook" | "backHook" | "downPush" | "upPush" | "marked" | "middleSliceNail" | "middleSlicePad" | MixedPush;
 
 export type HandGesture =
   | { kind: "weld"; hands: HandSide[] }
@@ -97,8 +111,94 @@ function prefersLeftUpperRelay({ R, L }: HandGripNames): boolean {
   return (L === 'home' && R !== 'home') || R === 'up' || R === 'down';
 }
 
-/** 播放/键盘路径的转前提示(prepareTwist 登记):quarters=180° 才连拨;push=U'p。 */
-export interface TwistHint { quarters?: number; push?: boolean; nail?: boolean }
+/** 播放/键盘路径的转前提示(prepareTwist 登记):quarters=180° 才连拨;push 表示显式 p 后缀。 */
+type HomeStroke = CalibratedStroke;
+
+function evenOrderStroke(order: 2 | 4, grips: HandGripNames, axis: Axis, layers: number[], dir: 1 | -1, quarters: number): HomeStroke | undefined {
+  const cls = classifyLayers(layers, order);
+  const hand = dir > 0 ? 'R' : 'L';
+  const double = quarters === 2;
+  if (cls === 'whole') return;
+  const native = gestureForLayers(axis, layers, dir, grips, { quarters }, order);
+  if (order === 2 && native.kind === 'flick' && native.style === 'pocketThumbLift') return;
+  if (cls === 'mid') {
+    if (order !== 4 || native.kind !== 'flick') return;
+    if (axis === 'z') {
+      // Front/back inner bands require the same top approach from opposite wrists.
+      return { grip: 'home', gesture: { kind: 'flick', hand, finger: 'index',
+        finger2: double ? 'middle' : undefined, style: 'topPush' } };
+    }
+    if (grips[native.hand] !== 'home') {
+      // The entry grip identifies the driving hand. Once reseated, use the
+      // stroke that actually starts from home, including the upper index hook.
+      const seated = gestureForLayers(axis, layers, dir, { ...grips, [native.hand]: 'home' }, { quarters }, order);
+      if (seated.kind === 'flick') return { grip: 'home', gesture: seated };
+    }
+    return;
+  }
+  if (axis === 'x') return;
+  if (!double || axis === 'y' && cls === 'high') {
+    if (native.kind !== 'flick' || native.style && (!double || native.finger2)) return;
+    if (axis === 'y' && cls === 'high') return { grip: 'home', gesture: { kind: 'flick', hand,
+      finger: 'index', finger2: double ? 'middle' : undefined, style: double ? 'hook' : 'indexHook' } };
+    if (axis === 'z' && cls === 'high') return { grip: 'down', gesture: { kind: 'flick', hand, finger: 'index', style: 'downPush' } };
+    return { grip: 'home', gesture: { kind: 'flick', hand, finger: axis === 'y' ? 'ring' : 'index',
+      style: axis === 'y' ? 'hook' : 'backHook' } };
+  }
+  if (axis === 'z' && cls === 'high') return { grip: 'down',
+    gesture: { kind: 'flick', hand, finger: 'index', finger2: 'middle', style: 'downPush' } };
+  if (cls === 'low') {
+    if (order === 4 && layers.length !== 2) return { grip: axis === 'z' ? 'down' : 'home',
+      gesture: { kind: 'flick', hand, finger: 'pinky', finger2: 'ring', style: 'lowerHook' } };
+    if (axis === 'z') return { grip: 'home',
+      gesture: { kind: 'flick', hand, finger: 'index', finger2: 'middle', style: 'backHook' } };
+    return { grip: 'home', gesture: { kind: 'flick', hand, finger: 'pinky', finger2: 'ring', style: 'hook' } };
+  }
+  return;
+}
+
+// The entry grip selects a rule. The required grip determines whether to
+// seat the driving wrist before starting the layer or use the finger directly.
+export function planHomeStroke(order: number, grips: HandGripNames, axis: Axis, layers: number[],
+  dir: 1 | -1, quarters: number): HomeStroke | undefined {
+  if (!grips.R || !grips.L || (quarters !== 1 && quarters !== 2)) return;
+  const cls = classifyLayers(layers, order);
+  const hand = dir > 0 ? 'R' : 'L';
+  const double = quarters === 2;
+  if (order === 2 || order === 4) return evenOrderStroke(order, grips, axis, layers, dir, quarters);
+  if (order !== 3) return;
+  const calibrated = calibratedStroke(grips, axis, cls, layers, dir, quarters);
+  if (calibrated) return calibrated;
+  const other = hand === 'R' ? 'L' : 'R';
+  const wide = layers.length === 2;
+  if (cls === 'whole' || axis === 'x' && cls !== 'mid') return;
+
+  // Keep calibrated native strokes. Generic sweeps have no sticker target.
+  const native = classifyHandGesture(axis, cls, dir, grips, { quarters }, !wide, order);
+  if (native.kind !== 'flick') return;
+  const upperWideRelay = axis === 'y' && cls === 'high' && wide && double;
+  if (!upperWideRelay && native.style && (!double || native.finger2 || !wide && native.style === 'topPush')) return;
+  if (axis === 'y' && cls === 'high')
+    return { grip: 'home', gesture: double
+      ? { kind: 'flick', hand, finger: 'index', finger2: 'middle', style: 'downPush' }
+      : { kind: 'flick', hand, finger: 'index', style: 'indexHook' } };
+  if (axis === 'z' && cls === 'high')
+    return { grip: 'down', gesture: { kind: 'flick', hand, finger: 'index', style: 'downPush' } };
+  if (cls !== 'mid') return;
+  if (axis === 'x')
+    return { grip: 'home', gesture: { kind: 'flick', hand: 'L',
+      finger: 'ring', finger2: double ? 'pinky' : undefined,
+      style: !double && dir < 0 ? 'middleSliceNail' : 'middleSlicePad' } };
+  if (axis === 'z' && !double)
+    return { grip: 'home', gesture: { kind: 'flick', hand, finger: 'index', style: 'topPush' } };
+  // A quarter turn of the wrist maps the S slice and its two side stickers to E.
+  return { grip: axis === 'y' ? 'down' : 'home', gesture: {
+    kind: 'flick', hand: axis === 'y' ? hand : other, finger: 'index', style: double ? 'sliceNailDouble' : 'sliceNail',
+  } };
+}
+
+export type MarkedMotionProblem = 'unsupported-grip' | 'invalid-start' | 'model-unavailable';
+export interface TwistHint { homeStroke?: HomeStroke; quarters?: number; push?: boolean; nail?: boolean; thumb?: boolean; middleRelay?: boolean }
 
 /** FTN `@pin` 注解(§7,解析层产出;编排目前仅 `R[R2:@C]`):weld 前置贴块
  *  钉指 —— 转动开始前指尖先到贴纸,weld 段随手刚体转,提交后收指。 */
@@ -108,7 +208,7 @@ export interface PinSpec { hand: HandSide; finger: FingerName; sticker: string }
 export interface HandDiagnosticFrame {
   atMs: number;
   event: 'prepare-u' | 'frame' | 'end-u' | 'reset' | 'disabled' | 'dispose' | 'grip-request' | 'grip-set';
-  gripRequest?: { name: GripName; sides: HandSide[]; halfDirection?: 'up' | 'down' };
+  gripRequest?: { name: GripName; sides: HandSide[]; halfDirection?: 'up' | 'down'; reason?: 'stroke-return' | 'stroke-seat' };
   preparedGesture?: HandGesture;
   grips: HandGripNames;
   hands: Record<HandSide, {
@@ -127,10 +227,14 @@ export interface HandDiagnosticFrame {
     flickAngle: number;
     decay: number;
   }>;
-  active: { axis: Axis; cls: LayerClass; layers: readonly number[]; angle: number; gesture: HandGesture | null } | null;
+  active: { axis: Axis; cls: LayerClass; layers: readonly number[]; angle: number; halfTurn?: boolean; bearing?: CalibratedStroke['bearing']; gesture: HandGesture | null } | null;
   wideSupport?: { hand: HandSide; fingers: readonly FingerName[]; shift: number[]; progress: number };
   marked?: { profile: string; hand: HandSide; finger: FingerName; contact: 'pad' | 'nail'; preparing: boolean; returning: boolean };
   models: Record<HandSide, HandModel>;
+}
+
+function isHomePushStyle(style?: FlickStyle | null): boolean {
+  return style === 'upPush' || style === 'lowerPush';
 }
 
 /**
@@ -159,26 +263,40 @@ export function classifyHandGesture(
     if (cls === "low") return { kind: "weld", hands: ["L"] };
     if (order === 3 && singleLayer && bothHome) {
       if (double) return { kind: "flick", hand: "L", finger: "ring", finger2: "pinky", style: "middleSlicePad" };
+      if (dir < 0 && hint?.nail) return { kind: 'flick', hand: 'L', finger: 'ring', style: 'markedRingNail' };
       return { kind: "flick", hand: "L", finger: "ring", style: dir < 0 ? "middleSliceNail" : "middleSlicePad" };
     }
     return { kind: "flick", hand: dir < 0 ? "L" : "R", finger: "middle" };
   }
   if (axis === "y") {
+    if (isPushOrder(order) && singleLayer && !double && bothHome && hint?.push) {
+      const rule = pushRules.find(r => r.layer === cls && r.dir === dir);
+      if (rule) return { kind: 'flick', hand: rule.hand, finger: rule.finger, style: rule.layer === 'low' ? 'lowerPush' : 'upPush' };
+    }
     if (cls === "high") {
-      // U 族食指。U'p 推法:仅 U'(dir<0)方向、双中手、显式 push 提示。
-      if (hint?.push && dir < 0 && bothHome) return { kind: "flick", hand: "R", finger: "index", style: "upPush" };
       const hand = dir > 0 ? "R" : "L";
-      // R 把 home 的 U8 就位姿转到 B0；上握 U 在手局部坐标中
-      // 等价于 home 的 F，复用同一食指接触路径（不是遗留裸扫）。
+      const other = hand === 'R' ? 'L' : 'R';
+      // The home index pushes from L1 (U) or R1 (U′). The support wrist stays seated.
+      if (order === 3 && singleLayer && !double && hint?.nail && grips[other] === 'home'
+        && (grips[hand] === 'home' || grips[hand] === 'up' || grips[hand] === 'down')) {
+        return { kind: 'flick', hand: other, finger: 'index', style: 'upPush' };
+      }
+      // R 把 home 的 U8 就位姿转到 B0；普通上握 U 的右食指复用中握 F 的接触路径。
       const upperDouble = singleLayer && hint?.quarters === 2;
+      if (order === 3 && upperDouble && hint?.nail && grips[hand] === 'home' && grips[other] === 'down') {
+        return { kind: 'flick', hand, finger: 'index', finger2: 'ring', style: 'upperRingRelay' };
+      }
       const leftRelay = hand === 'L' && prefersLeftUpperRelay(grips) && (order === 3 || order === 4);
+      if (order === 3 && upperDouble && hint?.middleRelay && grips[hand] === 'home') {
+        // A down-grip F double and a home-grip U double coincide in hand space.
+        return { kind: 'flick', hand, finger: 'index', finger2: 'middle', style: 'downPush' };
+      }
       const relayDouble = upperDouble && !hint?.push && (order === 2 || leftRelay);
       if ((dir > 0 || relayDouble) && (!double || upperDouble) && !hint?.push && grips[hand] === "up") {
         return relayDouble
           ? { kind: "flick", hand, finger: "index", finger2: "middle", style: "topPush" }
           : { kind: "flick", hand, finger: "index", style: "topPush" };
       }
-      const other = hand === 'R' ? 'L' : 'R';
       if (order === 2 && singleLayer && !double && !hint?.push
         && (grips[hand] === 'half' || grips[hand] === 'halfDown') && grips[other] === 'home') {
         return { kind: 'flick', hand: other, finger: 'index', style: 'reverseIndexHook' };
@@ -215,7 +333,16 @@ export function classifyHandGesture(
   if (cls === "high") {
     const hand = dir > 0 ? "R" : "L";
     const other = hand === 'R' ? 'L' : 'R';
-    if (singleLayer && !double && grips[hand] === 'home' && grips[other] === 'down') {
+    if (order === 3 && singleLayer && !double && dir > 0 && hint?.nail && grips.R === 'home' && (grips.L === 'down' || grips.L === 'home')) {
+      return { kind: 'flick', hand: 'R', finger: 'index', style: 'frontIndexNail' };
+    }
+    if (order === 3 && singleLayer && !double && dir < 0 && hint?.nail && grips.L === 'home' && (grips.R === 'down' || grips.R === 'home')) {
+      return { kind: 'flick', hand: 'L', finger: 'thumb', style: 'frontThumbNail' };
+    }
+    if (order === 3 && singleLayer && !double && hint?.thumb && grips[other] === 'down')
+      return { kind: 'flick', hand: other, finger: 'thumb', style: 'thumbLift' };
+    if (singleLayer && !double && grips[other] === 'down'
+      && (grips[hand] === 'home' || order === 3 && grips[hand] === 'up')) {
       return { kind: 'flick', hand: other, finger: 'thumb', style: 'thumbLift' };
     }
     if (grips[hand] === "down") {
@@ -239,13 +366,15 @@ export function classifyHandGesture(
       ? { kind: "flick", hand, finger: "index", finger2: "middle", style: "backHook" }
       : { kind: "flick", hand, finger: "index", style: "backHook" };
   }
-  if (cls === "mid" && !double) {
+  if (cls === "mid") {
     const hand = dir > 0 ? 'R' : 'L';
     const other = hand === 'R' ? 'L' : 'R';
-    if (singleLayer && grips[other] === 'home' && (hint?.nail || grips[hand] === 'up' || grips[hand] === 'down')) {
+    if (double) {
+      if (order === 3 && hint?.quarters === 2 && hint.nail && singleLayer && grips[other] === 'home')
+        return { kind: 'flick', hand: other, finger: 'index', style: 'sliceNailDouble' };
+    } else if (singleLayer && grips[other] === 'home' && (hint?.nail || grips[hand] === 'up' || grips[hand] === 'down')) {
       return { kind: 'flick', hand: other, finger: 'index', style: 'sliceNail' };
-    }
-    if (grips[hand] === 'home') return { kind: "flick", hand, finger: "index", style: "topPush" };
+    } else if (grips[hand] === 'home') return { kind: "flick", hand, finger: "index", style: "topPush" };
   }
   return { kind: "flick", hand: dir < 0 ? "L" : "R", finger: "middle" }; // B / S 族
 }
@@ -264,6 +393,11 @@ function sameLayers(a: readonly number[], b: readonly number[]): boolean {
   return a.length === b.length && a.every(layer => b.includes(layer));
 }
 
+function isPocketLowerRelay(order: number, axis: Axis, cls: LayerClass, gesture: HandGesture, support: GripName | null) {
+  return order === 2 && axis === 'y' && cls === 'low' && gesture.kind === 'flick'
+    && gesture.finger2 === 'ring' && (support === 'halfDown' || support === 'half');
+}
+
 function isFourWide(order: number, layers: readonly number[]): boolean {
   return order === 4 && layers.length === 2 && (layers.includes(0) || layers.includes(3));
 }
@@ -274,6 +408,7 @@ function isFourWide(order: number, layers: readonly number[]): boolean {
 export function gestureForLayers(axis: Axis, layers: number[], dir: 1 | -1,
   grips: HandGripNames, hint: TwistHint | undefined, order: number): HandGesture {
   const cls = classifyLayers(layers, order);
+  if (hint?.homeStroke) return hint.homeStroke.gesture;
   if (order === 4 && cls === 'mid' && axis === 'x') {
     const hand = layers.length === 1 && layers[0] === 2 ? 'R' : 'L';
     const double = hint?.quarters === 2;
@@ -288,7 +423,7 @@ export function gestureForLayers(axis: Axis, layers: number[], dir: 1 | -1,
       style: upper && hint?.quarters !== 2 && grips[hand] === 'home' ? 'indexHook' : 'hook' };
   }
   const half = isFourWide(order, layers);
-  return classifyHandGesture(axis, cls, dir, grips, hint, half || layers.length === 1, half ? 2 : order);
+  return classifyHandGesture(axis, cls, dir, grips, hint, (half && !hint?.push) || layers.length === 1, half ? 2 : order);
 }
 
 /** 遗留指弹的幅度限制；weld 腕转必须与层角一致，不能使用此压缩。 */
@@ -327,6 +462,14 @@ export function gripQuat(name: GripName): THREE.Quaternion {
   return q;
 }
 
+export function settledGripName(q: THREE.Quaternion, wristAngle: number): GripName | null {
+  if (q.angleTo(GRIP_Q_HOME) < .01) return 'home';
+  if (q.angleTo(GRIP_Q_UP) < .01) return 'up';
+  if (q.angleTo(GRIP_Q_DOWN) < .01) return 'down';
+  if (q.angleTo(GRIP_Q_HALF) < .01) return wristAngle < 0 ? 'halfDown' : 'half';
+  return null;
+}
+
 // A quaternion loses the signed wrist winding at 180°. Keep the angle as well.
 function wrapWristAngle(angle: number): number {
   const a = angle % (2 * Math.PI);
@@ -334,6 +477,12 @@ function wrapWristAngle(angle: number): number {
 }
 function wristAngleOf(q: THREE.Quaternion): number {
   return wrapWristAngle(2 * Math.atan2(-q.x, q.w));
+}
+// Unit-height clearance arc biased toward the start of withdrawal. Both
+// endpoints have zero lift, so committing a turn preserves its contact pose.
+function releaseLift(remaining: number, power: number): number {
+  const peak = power / (power + 1);
+  return (1 - remaining) / (1 - peak) * (remaining / peak) ** power;
 }
 function atHalfTurn(angle: number): boolean { return Math.abs(Math.abs(wrapWristAngle(angle)) - Math.PI) < 1e-6; }
 function gripWristAngle(name: GripName): number { return wristAngleOf(gripQuat(name)); }
@@ -353,9 +502,9 @@ export type GripSimStep =
  * 静态推演一串(转动 / 换握记号)后的两手握姿基座 — 跳步 / 拖进度条用,
  * 结果与逐步 live 播放的 weld 烘入一致(flick 不改握,weld 按层转烘入)。
  */
-export function simulateGrips(steps: GripSimStep[], order: number): { R: THREE.Quaternion; L: THREE.Quaternion; wristAngles: Record<HandSide, number> } {
-  const wristAngles = { R: 0, L: 0 };
-  const grips = { R: new THREE.Quaternion(), L: new THREE.Quaternion() };
+export function simulateGrips(steps: GripSimStep[], order: number, initial?: { R: THREE.Quaternion; L: THREE.Quaternion; wristAngles: Record<HandSide, number> }) {
+  const wristAngles = initial ? { ...initial.wristAngles } : { R: 0, L: 0 };
+  const grips = { R: initial?.R.clone() ?? new THREE.Quaternion(), L: initial?.L.clone() ?? new THREE.Quaternion() };
   const q = new THREE.Quaternion();
   for (const s of steps) {
     if ("grip" in s) {
@@ -544,7 +693,7 @@ const HOOK_PREP: Record<HandSide, Partial<Record<string, { c1: number; c2: numbe
  *  v(s) = lin·s + quad·s²,s = 本指扫角/90°。键 = `${style}_${finger}` + 连拨
  *  次指后缀 "2"(U=hook_index / D'=hook_ring / D2'=hook_pinky+hook_ring2 /
  *  U2 次指=hook_middle2 / B'=backHook_index / 右下手 F=downPush_index+
- *  downPush_middle2 / U'p=upPush_index)。两手各一套(镜像资产不对称,同
+ *  downPush_middle2)。两手各一套(镜像资产不对称,同
  *  topPush 先例);数值浏览器 oracle 坐标下降标定(判据:指腹对活动层 gap
  *  贴带 [0.6,2.6] + 全局 pen ≤0),改 home 姿必须重标。缺键回退各样式默认
  *  常量。splay 为本手局部值(不再 ×sideSign,两手各解各的)。三次项给「中段
@@ -612,13 +761,6 @@ const HOOK_FOLLOW: Record<HandSide, Record<string, HookFit>> = {
     // 2026-07-25 MANO 重解(r28,F2 连拨次指):Q2 全程 pen ≤ +0.03 瞬态,
     // 落地 gap 2.85U,tip (104.7, −30.3, 45)。
     downPush_middle2: { c1: [-0.78, 6.2775, -4.4715], c2: [3.554, -10.6715, 6.4863], c3: [-1.2216, 0.7531, 0.3106], splay: [-2.066, 4.9225, -2.6075] },
-    // upPush 推行程 v1:独臂只跟得住起推段(RUB→BLU 弧长 ~190U 超出可达域,
-    // 全程贴块需「腕偏航 + 其余四指同步避让」的整手编排,留待后续;wrist 通道
-    // 已备,见 UP_PUSH)。
-    // 2026-07-25 MANO 重解(15 参 = fit 12 + 腕偏航 3,穿模罚测全手五指):
-    // generic 值在 MANO 上推程末 16.7U;重解后全程 pen ≤ −0.75。腕偏航仍解到
-    // ≈0(最小幅度正则下无收益),v1 的「后半程脱面滑行」限制不变(§6)。
-    upPush_index: { c1: [2.09, -4.6035, 2.7821], c2: [-3.6072, 9.037, -5.9445], c3: [-4.3139, 13.6758, -10.5004], splay: [0.2685, -0.1035, 0.135] },
   },
   L: {
     // hook_index 全曲线重解(2026-07-09 U2' 镜像标定,方法同 R 侧 r3:节点
@@ -809,6 +951,8 @@ const F_EVADE: Record<HandSide, { thumb: { c1: number; c2: number; c3: number; s
   },
 };
 /** F_EVADE / S_EVADE 按握姿选指用的基座快照(gripQuat 每帧新建太浪费)。 */
+const GRIP_Q_HOME = gripQuat('home');
+const GRIP_Q_HALF = gripQuat('half');
 const GRIP_Q_UP = gripQuat("up");
 const GRIP_Q_DOWN = gripQuat("down");
 
@@ -952,43 +1096,6 @@ const DOWN_PUSH = {
   prep2: { c1: -0.29, c2: 0.309, c3: 0.0093, splay: -0.468 },
 };
 
-/** U' 推法(记号 U'p,FINGERTRICKS §4.5):右食指前置就位到 RUB 角块 U 贴纸
- *  (reach:从 BUR 的 B 面接触位爬过后上棱),推层 90° 指尖随初始角块到
- *  BLU。climb = reach 通道姿态;follow = 随层角展开(浏览器标定);
- *  wrist = 原地腕转 ψ 三次多项式(绕「过腕点、平行 y」轴,腕点不动 → 前臂
- *  静止;食指独臂只够 ~20° 推程,RUB→BLU 弧长 ~190U 必须腕转补,同
- *  topPush wrist 通道原理)。 */
-const UP_PUSH = {
-  // 2026-07-25 MANO 重解(5 通道 = 4 指关节 + climbPitch):就位 pad 落 RUB 角块
-  // U 贴纸 gap 1.04U、pen −0.65,reach 全程(r=0.25/0.5/0.75)pen ≤ −3.8。
-  // generic 值在 MANO 上把指列插进后上角 7.1U(pad 反在 R 面内 10U)。
-  climb: { c1: 0.017, c2: 0.178, c3: 0.0191, splay: -0.5618 },
-  /** 就位俯仰(rad,绕「过腕点、平行 x」轴,×sm(reachT)):MANO 手下食指 4 通道
-   *  够不到 U 贴纸(4D 网格 3087 点最优只能悬 3.8U),靠整手俯仰补;推导与
-   *  标定见 applyHand 内注释。 */
-  climbPitch: 0.25,
-  /** 本手拇指避让(×sm(reachT)):俯仰把压 F 面的拇指送进方块,同步收回。
-   *  2026-07-25 解:9 通道分两级(先冻结 climb/pitch 单解拇指,再联合抛光 ——
-   *  一步全通道下降会图省事把 pitch 直接归零,反把就位姿丢掉)。 */
-  thumbEvade: { c1: 0, c2: -0.188, c3: 0, splay: 0 },
-  // 转移凸包:home→climb 的 smR 直插会切过上后棱(真实播放 oracle 就位行程
-  // −11U,2026-07-08 —— 静态只验过 reach 终点没验过渡)。sin(π·reachT) 包络,
-  // 起止为零,中途抬高绕行;收指走同一路径倒放,天然同修。
-  transit: { c1: -0.081, c2: 0, c3: 0, splay: 0 },
-  /** 退场抬离包络(×decayK 双闸,见 applyHand):推程末指腹已绕到 RUB 角块的
-   *  **侧面**(半径 ~108U、y≈50~90),那处空当只在活动层转开时存在;层一归位
-   *  弧倒放就在实心方块里犁(oracle 冻结复现峰值 18.8U@decayK 0.6)。所以退场
-   *  不许原路倒放,先蜷指把指尖收回掌心侧再回家。原注释「U 面在 y 旋转下不变
-   *  ⇒ 弧退天然安全」只对**贴 U 面**的接触成立,MANO 重解后接触点已下移到侧面。 */
-  // 2026-07-25 解:只需基节 −0.125rad(≈7°,把指列整体撑离侧面),退场全程
-  // pen ≤ −0.5(峰值 18.8 → 清零);中/末节与 splay 正则解到 0,姿态改动最小。
-  retreat: { c1: -0.125, c2: 0, c3: 0, splay: 0 },
-  follow: { c1: 0.4, c2: 0.3, c3: 0.1, splay: 0.5, drift: 0.6 }, // 回退默认(实际走 HOOK_FOLLOW.upPush_index)
-  // 腕偏航通道(未启用,标定难点见 HOOK_FOLLOW.upPush_index 注释):裸偏航
-  // ±0.6 会把静止指排甩进魔方顶(oracle pen −61),须与四指避让联合解。
-  wrist: [0, 0, 0] as [number, number, number],
-};
-
 interface HandState {
   model: HandModel;
   halfPalm: HalfPalmPose;
@@ -1113,7 +1220,20 @@ export default class HandsRig extends THREE.Group {
   private diagnosticListeners = new Set<(frame: HandDiagnosticFrame) => void>();
   private ruPreparation: 'preparing' | 'turning' | 'held' | null = null;
   private markedMotion: MarkedFingerMotion | null = null;
-  private supportTransition: { motion: MarkedFingerMotion; rightTurnRadians: number; releasing: boolean } | null = null;
+  private supportTransition: { motion: MarkedFingerMotion; weldRadians: number; releasing: boolean } | null = null;
+  private rightPinch: RightCornerPinch | null = null;
+  private restorePinchFingers?: () => void;
+
+  bindRightPinch(cube: Cube, completed: number) {
+    if (this.enabled && cube.order === 3) this.rightPinch ??= new RightCornerPinch(cube, completed);
+  }
+
+  prepareRightPinch(cube: Cube, step: number, reverse = false) {
+    if (!this.hands) return this.enabled && this.loadState.hands !== 'error';
+    this.bindRightPinch(cube, reverse ? step + 1 : step);
+    return this.rightPinch?.prepare(step, reverse) ?? false;
+  }
+
   private readonly fourContacts = new WeakMap<HandModel, FourLayerContact>();
   private fourSeat: (FourLayerStroke & { gesture: HandGesture; progress: number }) | null = null;
 
@@ -1139,8 +1259,18 @@ export default class HandsRig extends THREE.Group {
   }
 
   private wideSupport: WideSupport | null = null;
-  private markedProblem: 'unsupported-grip' | 'invalid-start' | null = null;
-  getMarkedMotionProblem(): 'unsupported-grip' | 'invalid-start' | null { return this.markedProblem; }
+  private markedProblem: MarkedMotionProblem | null = null;
+  /** The gesture actually driving the current layer, after preparation and any grip changes. */
+  get activeBearing() { return this.active?.bearing; }
+  get strokeCandidates() { return this.active?.gesture?.kind === 'flick' && this.active.gesture.style === 'marked'
+    ? this.markedMotion?.plan.candidates : this.active?.candidates; }
+  get activeGesture(): HandGesture | null { return this.active?.gesture ?? null; }
+  get isPreparingHomeStroke(): boolean {
+    return this.pocketPushSupport !== this.pocketPushTarget
+      || !!(this.singleMarkSeat?.homeStroke || this.pendingHint?.homeStroke || this.wideSupport);
+  }
+
+  getMarkedMotionProblem(): MarkedMotionProblem | null { return this.markedProblem; }
 
   private releaseRUPreparation(): void {
     if (this.ruPreparation && this.hands) this.hands.R.reachTarget = 0;
@@ -1161,7 +1291,7 @@ export default class HandsRig extends THREE.Group {
         phase: this.markedMotion?.retreating ? 'returning' : this.markedMotion?.preparing ? 'preparing'
           : this.regripFlag && h.recoverT < 1 ? 'regripping'
           : h.flickDecay > 0 || (h.reachT > 0 && h.reachTarget === 0) || h.recoverT < 1 ? 'returning'
-          : h.reachTarget > h.reachT || h.pinReachTarget > h.pinReachT || side === 'R' && this.supportTransition?.motion.preparingPinch ? 'preparing'
+          : h.reachTarget > h.reachT || h.pinReachTarget > h.pinReachT || side !== this.supportTransition?.motion.plan.hand && this.supportTransition?.motion.preparingPinch ? 'preparing'
           : h.weldAxis || (this.active?.gesture?.kind === 'flick' && this.active.gesture.hand === side) ? 'turning'
           : 'stable',
         grip: h.grip.toArray(), position: h.model.group.position.toArray(),
@@ -1178,7 +1308,7 @@ export default class HandsRig extends THREE.Group {
       atMs: performance.now(), event, gripRequest, preparedGesture, grips: this.gripNames(),
       hands: { R: state('R'), L: state('L') },
       active: this.active ? { axis: this.active.axis, cls: this.active.cls, layers: this.active.layers,
-        angle: this.active.lastAngle, gesture: this.active.gesture } : null,
+        angle: this.active.lastAngle, halfTurn: this.active.halfTurn, bearing: this.active.bearing, gesture: this.active.gesture } : null,
       wideSupport: this.wideSupport ? { hand: this.wideSupport.hand, fingers: this.wideSupport.anchors,
         shift: this.wideSupport.shift.toArray(), progress: this.wideSupport.progress } : undefined,
       marked: this.markedMotion ? { profile: this.markedMotion.plan.profile.id, hand: this.markedMotion.plan.hand,
@@ -1247,13 +1377,15 @@ export default class HandsRig extends THREE.Group {
   private lastActivityAt = 0;
   private idleClock = 0;
   private regripFlag = false;
+  // A formatted single turn may borrow one wrist orientation until the digit clears.
+  private singleMarkSeat: { hand: HandSide; original: GripName; wristAngle: number; style: FlickStyle; homeStroke?: boolean; selection?: { dir: number; thumbOnly: boolean; stroke: HomeStroke }; returning: boolean } | null = null;
   private leftRelaySeat: { original: GripName; wristAngle: number; returning: boolean } | null = null;
   private wholeRegrip = false;
 
   /** 当前手势(某一轴上活动层的手势);null = 静止。dir=0 表示方向未提交;
    *  lastAngle 用于识别「同轴同类连发」(U 接 U:角度从 ~π/2 跳回 ~0);
    *  lastAngle 保存本帧层角。 */
-  private active: { axis: Axis; cls: LayerClass; layers: readonly number[]; dir: 0 | 1 | -1; gesture: HandGesture | null; halfTurn?: boolean; lastAngle: number } | null = null;
+  private active: { axis: Axis; cls: LayerClass; layers: readonly number[]; dir: 0 | 1 | -1; gesture: HandGesture | null; halfTurn?: boolean; candidates?: HomeStroke['candidates']; bearing?: CalibratedStroke['bearing']; lastAngle: number } | null = null;
 
   private thumbReferenceSeated = false;
   private thumbTapCount = 0;
@@ -1402,8 +1534,11 @@ export default class HandsRig extends THREE.Group {
       this.applyHand(side, false);
       this.hands[side].halfPalm.contactSkin.captureGripKnuckles(side === 'L');
     }
+    this.restorePinchFingers = capturePinchFingers(right);
     this.captureFourHome();
-    this.setGrips(this.pendingGrips.R, this.pendingGrips.L, this.pendingWristAngles);
+    const pendingPinch = this.rightPinch;
+    this.setGrips(this.pendingGrips.R, this.pendingGrips.L, this.pendingWristAngles, !!this.pocketPushTarget);
+    this.rightPinch = pendingPinch;
     for (const s of ["R", "L"] as const) {
       for (const m of this.hands[s].model.meshes) m.layers.enable(1);
     }
@@ -1612,9 +1747,16 @@ export default class HandsRig extends THREE.Group {
     }
     this.detachHalfTurnDirection();
     this.cube = cube;
-    if (cube?.twister) cube.twister.halfTurnDirection = this.animatedHalfTurnDirection;
+    if (cube?.twister) {
+      cube.twister.halfTurnDirection = this.animatedHalfTurnDirection;
+      cube.twister.strokeEasing = this.strokeEasing;
+    }
     this.active = null;
     this.resetGrips();
+    if (this.hands && cube?.order === 3) {
+      this.applyHand('R', false);
+      this.restorePinchFingers = capturePinchFingers(this.hands.R.model);
+    }
     this.captureFourHome();
   }
 
@@ -1628,10 +1770,12 @@ export default class HandsRig extends THREE.Group {
    * side 缺省 = 双手;单手记号(FINGERTRICKS §2 空格规则)只动指定手。
    * 把「当前显示偏移 ∘ 旧 grip」折算成相对新 grip 的回位余量,切换瞬间画面连续。
    */
-  regrip(name: GripName, only?: HandSide, wristAngle = gripWristAngle(name)): void {
+  regrip(name: GripName, only?: HandSide, wristAngle = gripWristAngle(name), reason?: 'stroke-return' | 'stroke-seat'): void {
+    this.pocketPushTarget = 0;
+    if (!only || only === this.singleMarkSeat?.hand) this.singleMarkSeat = null;
     if (only !== 'R') this.leftRelaySeat = null;
     if (this.fourSeat) this.fourSeat.returning = true;
-    if (this.wideSupport) this.wideSupport.returning = true;
+    if (this.wideSupport && !(reason === 'stroke-seat' && this.wideSupport.hand !== only)) this.wideSupport.returning = true;
     this.supportTransition = null;
     const halfDirection = name === 'halfDown' ? 'down' : 'up';
     this.markedMotion = null;
@@ -1648,6 +1792,8 @@ export default class HandsRig extends THREE.Group {
     }
     this.settleCompletedGesture();
     const q = HandsRig._qTmp;
+    const neutralHandoff = this.isLateralHandoff(hands.R)
+      && Math.abs(hands.R.gripAngle) < .01 && Math.abs(hands.L.gripAngle) < .01;
     let any = false;
     for (const side of only ? [only] : (["R", "L"] as const)) {
       const h = hands[side];
@@ -1658,8 +1804,7 @@ export default class HandsRig extends THREE.Group {
       if (h.weldAxis) {
         q.setFromAxisAngle(AXIS_VEC[h.weldAxis], h.weldAngle);
       } else if (h.recoverT < 1) {
-        const t = this.recoveryProgress(h.recoverT);
-        q.copy(h.recoverQuat).slerp(HandsRig._qIdent, t);
+        this.recoverOrientation(q, h, neutralHandoff);
       } else {
         q.identity();
       }
@@ -1690,11 +1835,14 @@ export default class HandsRig extends THREE.Group {
       this.regripFlag = true;
       this.lastActivityAt = performance.now();
     }
-    this.emitDiagnostic('grip-request', { name, sides: only ? [only] : ['R', 'L'], ...((name === 'half' || name === 'halfDown') ? { halfDirection } : {}) });
+    this.emitDiagnostic('grip-request', { name, ...(reason && { reason }), sides: only ? [only] : ['R', 'L'], ...((name === 'half' || name === 'halfDown') ? { halfDirection } : {}) });
   }
 
   /** 瞬时设定两手握姿基座(跳步 / 拖进度条的静态摆位,配 simulateGrips)。 */
-  setGrips(qR: THREE.Quaternion, qL: THREE.Quaternion, wristAngles?: Record<HandSide, number>): void {
+  setGrips(qR: THREE.Quaternion, qL: THREE.Quaternion, wristAngles?: Record<HandSide, number>, homePush = false): void {
+    this.pocketPushSupport = this.pocketPushTarget = Number(homePush && this.cube?.order === 2
+      && qR.angleTo(HandsRig._qIdent) < .01 && qL.angleTo(HandsRig._qIdent) < .01);
+    this.rightPinch = null;
     this.fourSeat = null;
     this.wideSupport = null;
     this.supportTransition = null;
@@ -1703,6 +1851,7 @@ export default class HandsRig extends THREE.Group {
     this.markedMotion = null;
     this.markedProblem = null;
     this.ruPreparation = null;
+    this.singleMarkSeat = null;
     this.emitDiagnostic('reset');
     this.leftRelaySeat = null;
     this.pendingWristAngles.R = wristAngles?.R ?? wristAngleOf(qR);
@@ -1782,66 +1931,83 @@ export default class HandsRig extends THREE.Group {
     return this.isRegripping || this.isReachRetreating;
   }
 
+  // A pocket cube has no stationary middle row. Seat both middle fingers
+  // outside the swept corners once and retain the seat between marked pushes.
+  private pocketPushSupport = 0;
+  private pocketPushTarget = 0;
+
   /** 转前提示(prepareTwist 登记,tick 建手势时按 (axis,cls,dir) 匹配消费):
-   *  quarters ≥2 才连拨、push = U'p 推法。3s 过期防陈旧提示污染后续拖拽。 */
-  private pendingHint: { axis: Axis; cls: LayerClass; layers: readonly number[]; dir: 1 | -1; quarters: number; push: boolean; nail: boolean; explicit: boolean; indexHook: boolean; at: number } | null = null;
+   *  quarters ≥2 才连拨、push 表示 U/D 单转的显式推法。3s 过期防陈旧提示污染后续拖拽。 */
+  private pendingHint: { axis: Axis; cls: LayerClass; layers: readonly number[]; dir: 1 | -1; quarters: number; push: boolean; nail: boolean; thumb: boolean; middleRelay: boolean; explicit: boolean; indexHook: boolean; homeStroke?: HomeStroke; at: number } | null = null;
 
   private takeHint(axis: Axis, cls: LayerClass, layers: number[], dir: 1 | -1): TwistHint | undefined {
     const hint = this.pendingHint;
     if (!hint || performance.now() - hint.at > 3000) return undefined;
     if (hint.axis !== axis || hint.cls !== cls || !sameLayers(hint.layers, layers) || hint.dir !== dir) return undefined;
     this.pendingHint = null;
-    return { quarters: hint.quarters, push: hint.push, nail: hint.nail };
+    return { homeStroke: hint.homeStroke, quarters: hint.quarters, push: hint.push, nail: hint.nail, thumb: hint.thumb, middleRelay: hint.middleRelay };
   }
 
   /** 两手握姿名判读(grip 是精确四分转积,阈值只兜浮点;非标准积 = null)。 */
-  private gripNames(): HandGripNames {
+  gripNames(): HandGripNames {
     const hands = this.hands;
-    const nameOf = (h: HandState): GripName | null => {
-      const q = h.grip;
-      if (q.angleTo(HandsRig._qIdent) < 0.01) return "home";
-      if (q.angleTo(gripQuat("up")) < 0.01) return "up";
-      if (q.angleTo(gripQuat("down")) < 0.01) return "down";
-      if (q.angleTo(gripQuat("half")) < 0.01) return h.gripAngle < 0 ? "halfDown" : "half";
-      return null;
-    };
     if (!hands) return { R: null, L: null };
-    return { R: nameOf(hands.R), L: nameOf(hands.L) };
+    return { R: settledGripName(hands.R.grip, hands.R.gripAngle), L: settledGripName(hands.L.grip, hands.L.gripAngle) };
   }
 
   /** 该手势是否走「前置伸指」(转动开始前指尖先到位;FINGERTRICKS §4.5/§4.2):
-   *  topPush(F 族越顶 / S 族中层下按)/ upPush(U'p 就位 RUB)/ D2' 首指小指伸至 D 层。 */
+   *  topPush(F 族越顶 / S 族中层下按)/ upPush（就位于左右侧面上排）/ D2' 首指小指伸至 D 层。 */
   private static needsReach(g: HandGesture): boolean {
     if (g.kind !== "flick") return false;
-    return g.style === 'pocketThumbLift' || g.style === "reverseIndexHook" || g.style === "reverseRingHook" || isMiddleSliceStroke(g.style) || isMixedPush(g.style) || g.style === "topPush" || g.style === "upPush" || (g.style === "hook" && g.finger === "pinky");
+    return g.style === 'frontIndexNail' || g.style === 'frontThumbNail' || g.style === 'upperRingRelay' || g.style === 'lowerPush' || g.style === 'lowerHook' || g.style === 'pocketThumbLift' || g.style === "reverseIndexHook" || g.style === "reverseRingHook" || isMiddleSliceStroke(g.style) || isMixedPush(g.style) || g.style === "topPush" || g.style === "upPush" || (g.style === "hook" && g.finger === "pinky");
   }
 
-  private placeWideSupport(axis: Axis, high: boolean, g: HandGesture): WideSupport {
+  private placeWideSupport(axis: Axis, high: boolean, g: HandGesture, homeUpper = false): WideSupport {
     const hand = (g.kind === 'weld' ? g.hands[0] : g.hand) === 'R' ? 'L' : 'R';
     const current = this.wideSupport;
-    if (current?.hand === hand && current.axis === axis && current.high === high && !current.returning) return current;
+    if (current?.hand === hand && current.axis === axis && current.high === high && current.homeUpper === homeUpper && !current.returning) return current;
     this.updateWorldMatrix(true, true);
     const h = this.hands![hand];
     const order = this.cube?.order ?? 3;
     const { anchors, travel } = inspectWideGrip(h.model, this.matrixWorld.clone().invert(), axis, high ? -1 : 1, order);
-    return this.wideSupport = new WideSupport(axis, high, hand, h.grip, anchors, travel, this.gripNames()[hand], order);
+    return this.wideSupport = new WideSupport(axis, high, hand, h.grip, anchors, travel, this.gripNames()[hand], order, homeUpper);
+  }
+
+  /** Detached snapshots in cube axes; safe to retain after turning or seeking. */
+  readHandGeometry() {
+    const hands = this.hands;
+    if (!hands) return null;
+    this.updateWorldMatrix(true, true);
+    const scale = (this.cube?.order ?? 3) / 3;
+    const toCube = new THREE.Matrix4().makeScale(scale, scale, scale)
+      .multiply(this.matrixWorld.clone().invert());
+    const grips = this.gripNames();
+    const read = (side: HandSide) => {
+      const h = hands[side];
+      const palm = toCube.clone().multiply(h.model.group.matrixWorld);
+      return { grip: grips[side], wristAngle: this.currentWristAngle(h),
+        position: new THREE.Vector3().setFromMatrixPosition(palm),
+        quaternion: new THREE.Quaternion().setFromRotationMatrix(new THREE.Matrix4().extractRotation(palm)),
+        fingers: handBearings(h.model, toCube) };
+    };
+    return { L: read('L'), R: read('R') };
   }
 
   private createMarkedMotion(request: MarkedTurnRequest): MarkedFingerMotion | null {
     const hands = this.hands;
-    if (!hands) return null;
-    const tips = {} as Record<HandSide, Record<FingerName, THREE.Vector3>>;
+    if (!hands || request.layers.length === 1 && this.cube?.order !== 3) return null;
+    this.updateWorldMatrix(true, true);
+    const toCube = this.matrixWorld.clone().invert();
+    const bearings = { L: handBearings(hands.L.model, toCube), R: handBearings(hands.R.model, toCube) };
     const home = {} as Record<HandSide, Record<FingerName, number[]>>;
     for (const side of ['L', 'R'] as const) {
-      tips[side] = {} as Record<FingerName, THREE.Vector3>;
       home[side] = {} as Record<FingerName, number[]>;
       for (const finger of ['thumb', 'index', 'middle', 'ring', 'pinky'] as const) {
-        tips[side][finger] = this.worldToLocal(hands[side].model.fingers[finger].tip.getWorldPosition(new THREE.Vector3()));
         home[side][finger] = fingerChannels(hands[side].home.fingers[finger]);
       }
     }
     const plan = chooseMarkedFingerPlan(request, MARKED_FINGER_PROFILES,
-      { L: hands.L.grip, R: hands.R.grip }, tips);
+      { L: hands.L.grip, R: hands.R.grip }, bearings);
     return plan ? new MarkedFingerMotion(plan, home, MARKED_CLEARANCE) : null;
   }
 
@@ -1851,91 +2017,190 @@ export default class HandsRig extends THREE.Group {
    * 调用方本轮不发 twist,等 isReachPreparing 落 false 再转。返回 false =
    * 无需前置或已到位。幂等,播放循环可 16ms 轮询重入。
    */
-  prepareTwist(axis: Axis, layers: number[], dir: 1 | -1, quarters = 1, push = false, pin?: PinSpec, nextIsU = false, annotation?: FingerAnnotation, nextSupport?: MarkedTurnRequest | 'right-weld', explicitPath = false): boolean {
+  prepareTwist(axis: Axis, layers: number[], dir: 1 | -1, quarters = 1, push = false, pin?: PinSpec, nextIsU = false, annotation?: FingerAnnotation, nextSupport?: MarkedTurnRequest | 'right-weld' | 'left-weld', explicitPath = false): boolean {
     const hands = this.hands;
     const cube = this.cube;
     if (!cube || !this.enabled || this.disposed || this.loadedHands === 'left-thumb') return false;
-    if (!hands) return this.loadState.hands !== 'error';
-    this.settleCompletedGesture();
     const explicit = !!(push || pin || annotation?.finger || annotation?.contact || explicitPath);
+    if (!hands) {
+      if (this.loadState.hands !== 'error') return true;
+      this.markedProblem = explicit ? 'model-unavailable' : null;
+      return explicit;
+    }
+    this.settleCompletedGesture();
+    if (!explicit && this.rightPinch?.driver(axis, layers, dir)) {
+      this.pendingHint = null;
+      return false;
+    }
+    const grips = this.gripNames();
     if (quarters === 2 && layers.length === 1) {
-      if (axis === 'x' || (cube.twister && !explicit)) dir = this.preferredHalfTurnDirection(axis, layers[0]) ?? dir;
+      // Both ordinary M half turns use the back-pad relay once the left wrist
+      // can seat at home. The twister must choose the same arc as preflight.
+      if (!explicit && cube.order === 3 && axis === 'x' && layers[0] === 1 && grips.L && grips.R) dir = 1;
+      else if (axis === 'x' || (cube.twister && !explicit)) dir = this.preferredHalfTurnDirection(axis, layers[0]) ?? dir;
     }
     if (this.isRegripping || this.isReachRetreating) return true;
     const leftHalfTurn = !explicit && axis === 'y' && layers.length === 1 && layers[0] === cube.order - 1
       && quarters === 2 && dir === -1;
-    if (cube.twister && leftHalfTurn && this.seatLeftForRelay(this.gripNames())) return true;
+    if (cube.twister && leftHalfTurn && !this.singleMarkSeat?.homeStroke && this.seatLeftForRelay(grips)) return true;
     // Playback can be paused or edited during preparation, before U2 starts.
     if (this.leftRelaySeat && !leftHalfTurn && !this.active) {
       this.regrip(this.leftRelaySeat.original, 'L', this.leftRelaySeat.wristAngle);
       return true;
     }
-    const rightWeld = axis === 'x' && layers.length === 1 && layers[0] === cube.order - 1;
+    const weldHand = axis === 'x' && layers.length === 1
+      ? layers[0] === cube.order - 1 ? 'R' : layers[0] === 0 ? 'L' : null : null;
     const transition = this.supportTransition;
     const cls = classifyLayers(layers, cube.order);
-    if (cube.order === 4 && (annotation?.finger || annotation?.contact || pin || explicitPath || push)) {
+    const evenFront = isEvenFrontQuarter(cube.order, axis, layers, quarters);
+    const evenMark = !pin && !explicitPath && !push ? evenMarkedStroke(cube.order, axis, layers, dir, quarters, annotation) : undefined;
+    const markedEven = evenMarkFitsGrip(evenMark, cube.order, dir, grips);
+    const markedThumb = markedEven && evenMark === 'frontThumb';
+    const pocketRelay = evenMark === 'upperRelay' && cube.order === 2;
+    const upperHand = dir > 0 ? 'R' : 'L';
+    const oppositeUpperHand = upperHand === 'R' ? 'L' : 'R';
+    if (cube.order !== 3 && !markedEven && (annotation?.finger || annotation?.contact || pin || explicitPath)) {
+      this.pendingHint = null;
       this.markedProblem = 'unsupported-grip';
       return true;
     }
     const nail = annotation?.contact === 'nail' && !annotation.finger;
-    const grips = this.gripNames();
-    const g = gestureForLayers(axis, layers, dir, grips, { quarters, push, nail }, cube.order);
-    const sliceNailMark = nail && g.kind === 'flick' && g.style === 'sliceNail';
-    const marked = !!(annotation?.finger || annotation?.contact) && !sliceNailMark;
-    const wide = (cube.order === 3 && layers.length === 2 || cube.order === 4 && layers.length === 3) && (cls === 'high' || cls === 'low');
-    // For an unmarked quarter turn try the same grip- and direction-qualified
-    // strokes used by Gc. Keep explicit annotations and their error handling.
-    let request = marked && annotation ? { axis, layers, dir, quarters, annotation } : null;
-    let automatic: MarkedFingerMotion | null = null;
-    if (wide && cube.order === 3 && !marked && !pin && !push && axis !== 'x' && quarters === 1) {
-      for (const fingerMark of [{ finger: 'middle' }, { finger: 'middle', contact: 'nail' }, { finger: 'thumb' }] as const) {
-        const candidate = { axis, layers, dir, quarters, annotation: fingerMark };
-        const current = this.markedMotion;
-        const motion = current?.matches(candidate) ? current : this.createMarkedMotion(candidate);
-        if (!motion || grips[motion.plan.hand] === 'half' || grips[motion.plan.hand] === 'halfDown') continue;
-        automatic = motion;
-        request = candidate;
-        break;
+    const readyPush = push && axis === 'y' && isPushOrder(cube.order) && layers.length === 1 && quarters === 1
+      && grips.R === 'home' && grips.L === 'home'
+      && pushRules.some(rule => rule.layer === cls && rule.dir === dir);
+    if ((push && (!readyPush || explicitPath || pin || annotation?.finger || annotation?.contact))
+      || (explicitPath && (!pin || grips[pin.hand] !== 'home' || annotation?.finger || annotation?.contact))) {
+      this.pendingHint = null;
+      this.markedProblem = 'unsupported-grip';
+      return true;
+    }
+    this.pocketPushTarget = Number(cube.order === 2 && readyPush);
+    if (this.pocketPushSupport !== this.pocketPushTarget) return true;
+    const thumb = annotation?.finger === 'thumb' && !annotation.contact;
+    const basic = (grip: GripName | null) => grip === 'home' || grip === 'up' || grip === 'down';
+    const seat = this.singleMarkSeat;
+    let singleMark: MixedPush | 'topPush' | null = null;
+    if (cube.order === 3 && axis === 'z' && layers.length === 1
+      && basic(grips.L) && basic(grips.R) && !push && !pin && !explicitPath) {
+      if (thumb && quarters === 1 && cls === 'high') singleMark = 'thumbLift';
+      if (nail && cls === 'mid' && (quarters === 1 || quarters === 2)) singleMark = quarters === 2 ? 'sliceNailDouble' : 'sliceNail';
+      // Ordinary S prefers an existing home grip. With neither hand seated,
+      // prepare the usual U5/U3 index-pad stroke and restore that wrist afterwards.
+      if (!explicit && quarters === 1 && cls === 'mid' && ((grips.L !== 'home' && grips.R !== 'home') || seat?.style === 'topPush')) {
+        singleMark = 'topPush';
       }
     }
+    const mixedUpper = cube.order === 3 && axis === 'y' && cls === 'high' && layers.length === 1
+      && quarters === 1 && !explicit && grips[oppositeUpperHand] === 'up'
+      && (grips[upperHand] === 'down' || seat?.style === 'indexHook' && seat.hand === upperHand);
+    const markedUpper = cube.order === 3 && axis === 'y' && cls === 'high' && layers.length === 1 && (quarters === 1 || quarters === 2)
+      && annotation?.finger === 'middle' && !annotation.contact && !push && !pin && !explicitPath && basic(grips.L) && basic(grips.R);
+    const middleRelay = markedUpper && quarters === 2;
+    // During repeated preflight calls the temporary seat already owns the
+    // active wrist. Compare against its entry grip until the stroke finishes.
+    const entry = seat?.homeStroke ? { ...grips, [seat.hand]: seat.original } : grips;
+    let ordinary = planHomeStroke(cube.order, entry, axis, layers, dir, quarters);
+    if (pocketRelay) {
+      ordinary = { grip: 'up', gesture: { kind: 'flick', hand: upperHand, finger: 'index', finger2: 'middle', style: 'topPush' } };
+    }
+    if (evenFront && (markedThumb || !explicit && (ordinary || entry.L === 'down' && entry.R === 'down'))) {
+      const cached = seat?.selection?.dir === dir && seat.selection.thumbOnly === markedThumb ? seat.selection.stroke : (this.pendingHint?.axis === axis && this.pendingHint.dir === dir
+        && this.pendingHint.quarters === quarters && this.pendingHint.explicit === explicit && sameLayers(this.pendingHint.layers, layers)
+        ? this.pendingHint.homeStroke : undefined);
+      if (cached?.candidates && (!markedThumb || cached.gesture.finger === 'thumb')) ordinary = cached;
+      else {
+        this.updateWorldMatrix(true, true);
+        const inverse = this.matrixWorld.clone().invert();
+        ordinary = frontCornerStroke(cube.order as 2 | 4, dir, entry,
+          { L: handBearings(hands.L.model, inverse), R: handBearings(hands.R.model, inverse) }, markedThumb);
+      }
+    }
+    const wide = (cube.order === 3 && layers.length === 2 || cube.order === 4 && layers.length === 3) && (cls === 'high' || cls === 'low');
+    let automatic: MarkedFingerMotion | null = null;
+    if (wide && cube.order === 3 && !explicit && !seat?.homeStroke && !ordinary?.slideUpper && axis !== 'x' && quarters === 1) {
+      const candidate: MarkedTurnRequest = { axis, layers, dir, quarters, annotation: {}, automatic: true };
+      const current = this.markedMotion;
+      automatic = current?.matches(candidate) ? current : this.createMarkedMotion(candidate);
+    }
+    const stroke = (explicit && !markedEven) || automatic ? undefined : ordinary;
+    const seatStyle = stroke?.gesture.style ?? (middleRelay ? 'downPush' : markedUpper ? 'marked' : mixedUpper ? 'indexHook' : singleMark);
+    const hand = stroke?.gesture.hand ?? (mixedUpper || markedUpper || singleMark === 'topPush' ? upperHand : dir > 0 ? 'L' : 'R');
+    if (seat && (seatStyle !== seat.style || hand !== seat.hand || !!seat.homeStroke !== !!stroke
+      || stroke && grips[hand] !== stroke.grip) && !this.active) {
+      hands[seat.hand].reachTarget = 0;
+      if (seat.style === 'marked') this.markedMotion?.finish();
+      seat.returning = true;
+      return true;
+    }
+    if (cube.order === 3 && axis === 'y' && layers.length === 1 && cls === 'high'
+      && annotation?.finger === 'middle' && !markedUpper) {
+      this.markedProblem = 'unsupported-grip';
+      return true;
+    }
+    if (ordinary && (pin || explicitPath)) {
+      this.pendingHint = null;
+      // These flicks have no FTN pin trajectory. Keep the
+      // written constraint visible to the player instead of borrowing a flick.
+      this.markedProblem = 'unsupported-grip';
+      return true;
+    }
+    if (seatStyle) {
+      const target = stroke?.grip ?? (seatStyle === 'thumbLift' ? 'down' : 'home');
+      if (grips[hand] !== target) {
+        const original = grips[hand]!, wristAngle = hands[hand].gripAngle;
+        if (wide && stroke && this.placeWideSupport(axis, cls === 'high', stroke.gesture).progress < 1) return true;
+        this.regrip(target, hand, gripWristAngle(target), 'stroke-seat');
+        this.singleMarkSeat = { hand, original, wristAngle, style: seatStyle, homeStroke: !!stroke,
+          selection: stroke?.candidates ? { dir, thumbOnly: markedThumb, stroke } : undefined, returning: false };
+        return true;
+      }
+    }
+    const nailHint = nail && !markedEven && (quarters !== 2 || singleMark === 'sliceNailDouble' || axis === 'y' && cls === 'high' && cube.order === 3);
+    const g = gestureForLayers(axis, layers, dir, grips, { homeStroke: stroke, quarters, push, nail: nailHint, thumb: singleMark === 'thumbLift', middleRelay }, cube.order);
+    const nativeMark = markedEven || g.kind === 'flick' && (middleRelay && g.finger2 === 'middle' || nail && (g.style === 'markedRingNail' || isSliceNail(g.style) || g.style === 'upPush' || g.style === 'upperRingRelay' || g.style === 'frontIndexNail' || g.style === 'frontThumbNail') || singleMark === 'thumbLift' && g.style === 'thumbLift');
+    const marked = !!(annotation?.finger || annotation?.contact) && !nativeMark;
+    const request = marked && annotation ? { axis, layers, dir, quarters, annotation } : automatic?.plan.request ?? null;
     if (!this.ruPreparation) {
       for (const side of ['L', 'R'] as const) {
         const h = hands[side];
-        if (h.reachTarget !== 1 || h.flickAxis !== 'z' || h.flickDecay || this.active?.gesture) continue;
+        if (h.reachTarget !== 1 || (h.flickAxis !== 'z' && h.flickStyle !== 'lowerHook') || h.flickDecay || this.active?.gesture) continue;
         if (!request && g.kind === 'flick' && g.hand === side && h.flickStyle === g.style
-          && h.flickAxis === axis && h.flickLayer === cls) continue;
+          && h.flickAxis === axis && h.flickLayer === cls
+          && (h.flickStyle !== 'lowerHook' || h.flickFinger === g.finger && h.flickFinger2 === (g.finger2 ?? null))) continue;
         h.reachTarget = 0;
         if (h.reachT > 0) return true;
       }
     }
     const driver = automatic?.plan.hand ?? (g.kind === 'weld' ? g.hands[0] : g.hand);
-    if (this.wideSupport && (!wide || marked || this.wideSupport.hand === driver
+    const supportGrip = grips[driver === 'L' ? 'R' : 'L'];
+    const pocketSupport = !explicit && isPocketLowerRelay(cube.order, axis, cls, g, supportGrip);
+    if (this.wideSupport && (!(wide || pocketSupport) || marked || this.wideSupport.hand === driver
       || this.wideSupport.axis !== axis || this.wideSupport.high !== (cls === 'high'))) {
       this.wideSupport.returning = true;
       if (this.wideSupport.moves && this.wideSupport.progress > 0) return true;
       this.wideSupport = null;
     }
-    const pinchEntry = rightWeld && dir === -1 && quarters === 2 && !marked
-      && nextSupport && nextSupport !== 'right-weld' && this.gripNames().R === 'home';
+    const pinchEntry = weldHand && dir === -1 && quarters === 2 && !marked
+      && nextSupport && typeof nextSupport !== 'string' && grips[weldHand] === 'home';
     if (transition && transition.motion.topPinch !== null) {
       const entering = pinchEntry && transition.motion.matches(nextSupport);
-      const continuing = request && transition.motion.matches(request) && this.gripNames().R === 'halfDown';
+      const continuing = request && transition.motion.matches(request) && grips[transition.motion.plan.hand === 'L' ? 'R' : 'L'] === 'halfDown';
       if (transition.releasing || !entering && !continuing) {
         transition.motion.finish();
         transition.releasing = true;
         return true;
       }
     }
-    if (transition && !rightWeld && !marked && !transition.motion.finished) transition.motion.finish();
-    if (transition?.motion.finished && !rightWeld) {
+    if (transition && !weldHand && !marked && !transition.motion.finished) transition.motion.finish();
+    if (transition?.motion.finished && !weldHand) {
       transition.releasing = true;
       return true;
     }
-    if (cube.order === 3 && rightWeld && !marked && nextSupport && nextSupport !== 'right-weld' && !transition) {
+    if (cube.order === 3 && weldHand && !marked && nextSupport && typeof nextSupport !== 'string' && !transition) {
       const preview = this.createMarkedMotion(nextSupport);
-      if (preview?.plan.hand === 'L' && preview.plan.profile.finger === 'middle') {
+      if (preview && !preview.plan.profile.singleUpper && preview.plan.hand !== weldHand && preview.plan.profile.finger === 'middle') {
         if (pinchEntry && preview.plan.profile.id === 'middle-pad-wide') preview.topPinch = 0;
-        this.supportTransition = { motion: preview, rightTurnRadians: quarters * HALF_PI, releasing: false };
+        this.supportTransition = { motion: preview, weldRadians: quarters * HALF_PI, releasing: false };
       }
     }
     if (pinchEntry && this.supportTransition?.motion.preparingPinch) return true;
@@ -1950,7 +2215,8 @@ export default class HandsRig extends THREE.Group {
         if (!motion) return true;
         motion.supportReady = transition?.motion.plan.profile === motion.plan.profile && !transition.motion.finished;
         if (motion.supportReady) motion.topPinch = transition!.motion.topPinch;
-        motion.holdSupport = nextSupport === 'right-weld' && motion.plan.hand === 'L' && motion.plan.profile.finger === 'middle';
+        motion.holdSupport = !motion.plan.profile.singleUpper && motion.plan.profile.finger === 'middle'
+          && nextSupport === (motion.plan.hand === 'L' ? 'right-weld' : 'left-weld');
         this.supportTransition = null;
         this.pendingHint = null;
         this.markedMotion = motion;
@@ -1977,7 +2243,7 @@ export default class HandsRig extends THREE.Group {
       this.releaseRUPreparation();
       return this.isReachRetreating;
     }
-    this.pendingHint = { axis, cls, layers, dir, quarters, push, nail, explicit, indexHook: g.kind === "flick" && g.style === "indexHook", at: performance.now() };
+    this.pendingHint = { homeStroke: stroke, axis, cls, layers, dir, quarters, push, nail: nailHint, thumb: singleMark === 'thumbLift', middleRelay, explicit, indexHook: g.kind === "flick" && g.style === "indexHook", at: performance.now() };
     // U 族接续闸(2026-07-09 U2' 镜像连拨):对侧手上一步 U 族 hook(钉角端姿)
     // 的回撤未完时,下一步 y.high 必须等 —— 回撤走廊在 U 带扫掠环带内侧
     // (半径 ~107U < 96√2),层再次转动会犁到回撤中的指链(真实播放 oracle
@@ -2022,8 +2288,8 @@ export default class HandsRig extends THREE.Group {
       this.lastActivityAt = performance.now();
       return h.pinReachT < 1;
     }
-    const widePreparing = wide && this.placeWideSupport(axis, cls === 'high', g).progress < 1;
-    const fourPreparing = cube.order === 4 && cls !== 'whole' && this.seatFour(axis, layers, dir, g).progress < 1;
+    const widePreparing = (wide || pocketSupport) && this.placeWideSupport(axis, cls === 'high', g, stroke?.slideUpper).progress < 1;
+    const fourPreparing = cube.order === 4 && !push && cls !== 'whole' && this.seatFour(axis, layers, dir, g).progress < 1;
     const waitingForSupport = widePreparing || fourPreparing;
     if (!HandsRig.needsReach(g) || g.kind !== "flick") {
       if (cube.order === 3 && axis === 'y' && layers.length === 1 && layers[0] === 2 && dir === 1 && quarters === 1
@@ -2067,7 +2333,7 @@ export default class HandsRig extends THREE.Group {
   get tuning(): {
     push: typeof TOP_PUSH; follow: typeof TOP_PUSH_FOLLOW; frontFollow: typeof FRONT_INDEX_FOLLOW;
     hook: typeof HOOK; hookFollow: typeof HOOK_FOLLOW; hookPrep: typeof HOOK_PREP;
-    pinkyReach: typeof PINKY_REACH; downPush: typeof DOWN_PUSH; upPush: typeof UP_PUSH;
+    pinkyReach: typeof PINKY_REACH; downPush: typeof DOWN_PUSH;
     backEvade: typeof BACK_EVADE;
     hookIndexEvade: typeof HOOK_INDEX_EVADE; lowEvade: typeof LOW_EVADE;
     midEvade: typeof MID_EVADE; bEvade: typeof B_EVADE; fEvade: typeof F_EVADE;
@@ -2079,7 +2345,7 @@ export default class HandsRig extends THREE.Group {
     return {
       push: TOP_PUSH, follow: TOP_PUSH_FOLLOW, frontFollow: FRONT_INDEX_FOLLOW,
       hook: HOOK, hookFollow: HOOK_FOLLOW, hookPrep: HOOK_PREP,
-      pinkyReach: PINKY_REACH, downPush: DOWN_PUSH, upPush: UP_PUSH,
+      pinkyReach: PINKY_REACH, downPush: DOWN_PUSH,
       backEvade: BACK_EVADE,
       hookIndexEvade: HOOK_INDEX_EVADE, lowEvade: LOW_EVADE,
       midEvade: MID_EVADE, bEvade: B_EVADE, fEvade: F_EVADE,
@@ -2094,6 +2360,7 @@ export default class HandsRig extends THREE.Group {
   get isReachPreparing(): boolean {
     const hands = this.hands;
     if (!hands || !this.enabled) return false;
+    if (this.pocketPushSupport !== this.pocketPushTarget) return true;
     if (this.fourSeat && !this.fourSeat.returning && this.fourSeat.progress < 1) return true;
     if (this.supportTransition?.motion.preparingPinch) return true;
     if (this.wideSupport && !this.wideSupport.returning && this.wideSupport.progress < 1) return true;
@@ -2114,13 +2381,14 @@ export default class HandsRig extends THREE.Group {
     if (!hands || !this.enabled) return false;
     if (this.fourSeat?.returning && this.fourSeat.progress > 0) return true;
     if (this.wideSupport?.returning && this.wideSupport.moves && this.wideSupport.progress > 0) return true;
-    if (this.markedMotion?.retreating || this.leftRelaySeat?.returning) return true;
+    if (this.markedMotion?.retreating || this.singleMarkSeat?.returning || this.leftRelaySeat?.returning) return true;
     return (["R", "L"] as const).some((s) => {
       const h = hands[s];
       // decay 段也算「收指未完」:reach 式手势 decay 结束必然接 walk-back,若只
       // 看 reachTarget,下一步会在 decay 期间放行,retreat 与 weld 叠加(oracle
       // 实测 R' 把回撤中的食指烘着转进方块 −11U)。
-      return (h.reachT > 0 && (h.reachTarget === 0 || h.flickDecay > 0))
+      return (h.flickAxis === 'y' && h.flickStyle === 'downPush' && h.flickDecay > 0)
+        || (h.reachT > 0 && (h.reachTarget === 0 || h.flickDecay > 0))
         || (h.pinReachT > 0 && h.pinReachTarget === 0);
     });
   }
@@ -2129,6 +2397,9 @@ export default class HandsRig extends THREE.Group {
     if (this.disposed) return;
     if (!on && this.enabled) this.emitDiagnostic('disabled');
     if (!on) {
+      this.rightPinch = null;
+      const seat = this.singleMarkSeat;
+      if (seat) this.regrip(seat.original, seat.hand, seat.wristAngle);
       if (this.leftRelaySeat) this.regrip(this.leftRelaySeat.original, 'L', this.leftRelaySeat.wristAngle);
       this.fourSeat = null;
       this.wideSupport = null;
@@ -2161,12 +2432,16 @@ export default class HandsRig extends THREE.Group {
   private preferredHalfTurnDirection(axis: string, layer: number): 1 | -1 | undefined {
     if (!this.isEnabled || !this.cube) return undefined;
     const { order } = this.cube;
+    const current = this.gripNames(), seat = this.singleMarkSeat;
+    const grips = seat?.homeStroke ? { ...current, [seat.hand]: seat.original } : current;
     if (axis === 'y' && order >= 2 && order <= 4 && layer === order - 1) {
-      return prefersLeftUpperRelay(this.gripNames()) ? -1 : undefined;
+      return prefersLeftUpperRelay(grips) ? -1 : undefined;
     }
     if (axis !== 'x' || layer !== 1 || order !== 3) return undefined;
-    const grips = this.gripNames();
-    return grips.L === 'home' && grips.R === 'home' ? 1 : undefined;
+    const hint = this.pendingHint;
+    const preparedRelay = hint?.homeStroke?.gesture.style === 'middleSlicePad'
+      && hint.axis === 'x' && hint.cls === 'mid' && hint.quarters === 2;
+    return preparedRelay || grips.L === 'home' && grips.R === 'home' ? 1 : undefined;
   }
 
   private readonly animatedHalfTurnDirection = (axis: string, layer: number): 1 | -1 | undefined => {
@@ -2174,6 +2449,7 @@ export default class HandsRig extends THREE.Group {
     // A queued keyboard turn may start between the preceding R/L drop and
     // the next rig tick. Commit that wrist before selecting the U arc.
     if (axis === 'y' && layer === (this.cube?.order ?? 0) - 1) {
+      if (this.rightPinch?.driver('y', [layer], -1)) return undefined;
       this.settleCompletedGesture();
       const marked = this.markedMotion?.plan.request;
       if (marked?.quarters === 2 && marked.axis === axis && marked.layers.length === 1 && marked.layers[0] === layer) return undefined;
@@ -2184,9 +2460,25 @@ export default class HandsRig extends THREE.Group {
     return this.preferredHalfTurnDirection(axis, layer);
   };
 
+  private readonly strokeEasing = (axis: string, layers: readonly number[], twist: number) => {
+    const order = this.cube?.order;
+    if (!this.isEnabled || !this.hands || this.markedMotion || this.pendingHint?.explicit) return;
+    // Both wrists travel with a whole half turn. Accelerate from rest and
+    // settle at the far side in the same formula beat.
+    if (layers.length === order && Math.abs(twist) === 2)
+      return (t: number) => THREE.MathUtils.smoothstep(t, 0, 1);
+    if (axis !== 'x' || (order !== 3 && order !== 4)
+      || layers.length !== order - 2 || layers.includes(0) || layers.includes(order - 1)) return;
+    // Three-layer M2 uses the pad relay in either written direction.
+    const relay = Math.abs(twist) === 2;
+    if (relay && order === 4) return;
+    return middleSliceTiming(order, twist, relay);
+  };
+
   private detachHalfTurnDirection(): void {
     const twister = this.cube?.twister;
     if (twister?.halfTurnDirection === this.animatedHalfTurnDirection) twister.halfTurnDirection = undefined;
+    if (twister?.strokeEasing === this.strokeEasing) twister.strokeEasing = undefined;
   }
 
   get isEnabled(): boolean {
@@ -2257,9 +2549,17 @@ export default class HandsRig extends THREE.Group {
     if (this.loadedHands === 'left-thumb') {
       return (!!this.cube && this.tickReferenceThumb(this.cube, dt, holdReferenceThumb)) || animating;
     }
+    if (this.pocketPushSupport !== this.pocketPushTarget) {
+      const distance = this.pocketPushTarget - this.pocketPushSupport;
+      this.pocketPushSupport += Math.sign(distance) * Math.min(Math.abs(distance), dt / 180);
+      animating = true;
+    }
+    if (this.rightPinch?.advance(dt)) animating = true;
     if (this.wideSupport) {
       const moving = this.wideSupport.returning || this.wideSupport.progress < 1;
-      this.wideSupport.advance(dt);
+      const driver = hands[this.wideSupport.hand === 'R' ? 'L' : 'R'];
+      const pocketRelease = this.cube?.order === 2 && this.wideSupport.returning && driver.flickDecay > 0;
+      if (!pocketRelease) this.wideSupport.advance(dt);
       if (this.wideSupport.returning && !this.wideSupport.progress) this.wideSupport = null;
       animating ||= moving;
     }
@@ -2270,7 +2570,7 @@ export default class HandsRig extends THREE.Group {
         this.markedMotion = null;
         if (completed.holdSupport && completed.started) {
           completed.restartSupportReturn();
-          this.supportTransition = { motion: completed, rightTurnRadians: 0, releasing: false };
+          this.supportTransition = { motion: completed, weldRadians: 0, releasing: false };
         }
       }
       animating = true;
@@ -2324,6 +2624,7 @@ export default class HandsRig extends THREE.Group {
       }
 
       if (axis && layers) {
+        if (this.rightPinch && !this.rightPinch.matches(axis, layers, repAngle)) this.rightPinch = null;
         this.lastActivityAt = now;
         animating = true;
         const cls = classifyLayers(layers, cube.order);
@@ -2349,7 +2650,7 @@ export default class HandsRig extends THREE.Group {
               && h.flickAxis === axis && h.flickLayer === cls)
             || (this.pendingHint?.axis === "z" && this.pendingHint.cls === "high"));
         const preparedHook = axis === 'y' && cls === 'high' && layers.length === 1
-          && this.pendingHint?.indexHook && this.pendingHint.dir === Math.sign(repAngle);
+          && (this.pendingHint?.indexHook || this.pendingHint?.middleRelay || this.pendingHint?.axis === 'y' && this.pendingHint.cls === 'high' && this.pendingHint.nail) && this.pendingHint.dir === Math.sign(repAngle);
         const preparedR = axis === 'x' && cls === 'high' && (this.ruPreparation === 'preparing'
           || layers.length === 1 && this.supportTransition?.motion.topPinch === 1);
         // The half grip already holds the outer column. Its hand is known
@@ -2359,11 +2660,13 @@ export default class HandsRig extends THREE.Group {
         const markedPlan = this.markedMotion?.plan;
         const preparedMarked = markedPlan && markedPlan.request.axis === axis
           && markedPlan.request.layers.length === layers.length && layers.every(layer => markedPlan.request.layers.includes(layer));
-        const pocketHint = (pocketStroke || cube.order === 4) && this.pendingHint?.axis === axis && this.pendingHint.cls === cls
+        const pocketHint = (pocketStroke || cube.order === 4 || this.pendingHint?.push || this.pendingHint?.homeStroke) && this.pendingHint?.axis === axis && this.pendingHint.cls === cls
           && sameLayers(this.pendingHint.layers, layers) && this.pendingHint.dir === Math.sign(repAngle) && now - this.pendingHint.at < 3000;
         const preparedM = axis === 'x' && cls === 'mid' && isMiddleSliceStroke(hands.L.flickStyle)
           && this.pendingHint?.dir === Math.sign(repAngle);
-        if (preparedM || pocketHint || cls === "whole" || Math.abs(repAngle) >= COMMIT_ANGLE || preparedFront || preparedHook || preparedR || seatedOuter || preparedMarked) {
+        const innerSlice = cube.order === 4 && cls === 'mid' && layers.length === 1;
+        const pinchDriver = this.rightPinch?.driver(axis, layers, Math.sign(repAngle));
+        if (pinchDriver || innerSlice || preparedM || pocketHint || cls === "whole" || Math.abs(repAngle) >= COMMIT_ANGLE || preparedFront || preparedHook || preparedR || seatedOuter || preparedMarked) {
           const dir: 1 | -1 = repAngle > 0 ? 1 : -1;
           if (cls !== "whole" && act.gesture && act.dir !== 0 && act.dir !== dir) {
             // 转向反转(拖拽回拉 / U 接 U'):换手重分类。
@@ -2381,7 +2684,7 @@ export default class HandsRig extends THREE.Group {
             // A pointer has no target angle yet. Stage the second finger while
             // the index drives the first quarter so crossing 90° stays continuous.
             let grips = this.gripNames();
-            if (!marked && !this.pendingHint?.explicit && singleUpper
+            if (!pinchDriver && !marked && !this.pendingHint?.explicit && singleUpper
               && timedArc !== undefined && Math.abs(timedArc + Math.PI) < 1e-6 && this.seatLeftForRelay(grips)) {
               grips = this.gripNames();
             }
@@ -2393,17 +2696,28 @@ export default class HandsRig extends THREE.Group {
             const hint = marked ? undefined : this.takeHint(axis, cls, layers, dir)
               ?? (dragRelay || timedArc !== undefined && Math.abs(Math.abs(timedArc) - Math.PI) < 1e-6 ? { quarters: 2 } : undefined);
             act.halfTurn = hint?.quarters === 2;
-            act.gesture = marked
+            act.candidates = hint?.homeStroke?.candidates;
+            act.bearing = marked ? { center: markedPlan.start, normal: markedPlan.normal,
+              tangent: strokeTangent(axis, dir, markedPlan.start) } : hint?.homeStroke?.bearing;
+            act.gesture = pinchDriver ?? (marked
               ? { kind: 'flick', hand: markedPlan.hand, finger: markedPlan.profile.finger, style: 'marked' }
-              : gestureForLayers(axis, layers, dir, grips, hint, cube.order);
-            if (!marked && (cube.order === 3 && layers.length === 2 || cube.order === 4 && layers.length === 3) && cls !== 'whole')
-              this.placeWideSupport(axis, cls === 'high', act.gesture);
+              : gestureForLayers(axis, layers, dir, grips, hint, cube.order));
+            const other = act.gesture.kind === 'flick' && act.gesture.hand === 'L' ? 'R' : 'L';
+            if (!marked && cls !== 'whole' && (cube.order === 3 && layers.length === 2 || cube.order === 4 && layers.length === 3
+              || isPocketLowerRelay(cube.order, axis, cls, act.gesture, grips[other])))
+              this.placeWideSupport(axis, cls === 'high', act.gesture, hint?.homeStroke?.slideUpper);
             act.dir = dir;
             this.beginGesture(act.gesture, axis);
           }
         }
         if (act.gesture) {
-          if (cube.order === 4 && cls !== 'whole') this.seatFour(axis, layers, act.dir, act.gesture).angle = repAngle;
+          if (cube.order === 4 && cls !== 'whole' && !(act.gesture.kind === 'flick' && isHomePushStyle(act.gesture.style))) {
+            const seat = this.seatFour(axis, layers, act.dir, act.gesture);
+            seat.angle = repAngle;
+            // Pointer drags and directly queued turns lack a pre-turn interval.
+            // Display the seated grip from the first moving frame.
+            if (innerSlice) seat.progress = 1;
+          }
           this.driveGesture(act.gesture, axis, repAngle);
         }
         act.lastAngle = repAngle;
@@ -2421,7 +2735,8 @@ export default class HandsRig extends THREE.Group {
     if (this.fourSeat) {
       const seat = this.fourSeat;
       const previous = seat.progress;
-      seat.progress = THREE.MathUtils.clamp(previous + (seat.returning ? -dt : dt) / 160, 0, 1);
+      const ringRelayReturn = seat.returning && this.usesFittedRingRelay(seat);
+      seat.progress = THREE.MathUtils.clamp(previous + (seat.returning ? -dt : dt) / (ringRelayReturn ? RECOVER_MS : 160), 0, 1);
       if (!seat.progress && seat.returning) this.fourSeat = null;
       animating ||= seat.progress !== previous;
     }
@@ -2430,13 +2745,13 @@ export default class HandsRig extends THREE.Group {
     if (transition) {
       if (transition.motion.topPinch !== null && !transition.motion.finished)
         transition.motion.topPinch = Math.min(1, transition.motion.topPinch + dt / 320);
-      const rightTurn = this.active?.axis === 'x' && this.active.cls === 'high';
+      const supportTurn = this.active?.axis === 'x' && this.active.cls === (transition.motion.plan.hand === 'L' ? 'high' : 'low');
       if (transition.motion.finished) {
-        if (rightTurn) transition.releasing = true;
+        if (supportTurn) transition.releasing = true;
         if (transition.releasing) transition.motion.advance(dt);
         if (transition.motion.done) this.supportTransition = null;
-      } else if (rightTurn) {
-        const t = Math.min(1, Math.abs(this.active!.lastAngle) / transition.rightTurnRadians);
+      } else if (supportTurn) {
+        const t = Math.min(1, Math.abs(this.active!.lastAngle) / transition.weldRadians);
         transition.motion.preparation = t * t * (3 - 2 * t);
       }
       animating = true;
@@ -2458,20 +2773,30 @@ export default class HandsRig extends THREE.Group {
       || atHalfTurn(h.gripAngle) || atHalfTurn(h.gripAngle + h.recoverWristAngle)));
     const middleSliceMotion = isMiddleSliceStroke(hands.L.flickStyle);
     const keepalive = !middleSliceMotion && !this.markedMotion && !fFingerMotion && !dFingerMotion && now - this.lastActivityAt < IDLE_KEEPALIVE_MS;
+    // On a whole half turn the hands finish on opposite sides. Return
+    // one quarter at a time, alternating support before their paths cross.
+    const twoSeats = this.wholeRegrip && hands.R.recoverQuat.angleTo(HandsRig._qIdent) > HALF_PI + .01;
+    const stop = twoSeats && hands.L.recoverT < .5 ? .5 : 1;
+    const returningHand = hands.R.recoverT < stop ? 'R' : 'L';
     for (const side of ["R", "L"] as const) {
       const h = hands[side];
-      if (h.recoverT < 1 && !(this.wholeRegrip && side === "L" && hands.R.recoverT < 1)) {
-        h.recoverT = Math.min(1, h.recoverT + dt / (this.isHalfBranchSwitch(h) ? 400 : RECOVER_MS));
+      if (h.recoverT < 1 && (!this.wholeRegrip || side === returningHand)) {
+        // Returning a hand around the cube sweeps a longer arc than a wrist regrip.
+        const angle = h.recoverQuat.angleTo(HandsRig._qIdent);
+        const duration = this.wholeRegrip ? Math.max(RECOVER_MS, angle * 390)
+          : this.isHalfBranchSwitch(h) ? 400 : RECOVER_MS;
+        h.recoverT = Math.min(this.wholeRegrip ? stop : 1, h.recoverT + dt / duration);
         if (h.recoverT === 1) h.halfSeatRelease = undefined;
         animating = true;
       }
       const withdrawingFront = h.flickStyle === 'topPush' && h.flickAxis === 'z' && h.flickLayer === 'high'
         && Math.abs(h.flickAmount) >= TOP_PUSH.retreatSplit;
+      const returnMs = isSliceNail(h.flickStyle) && cube?.order === 3 ? 460 : RECOVER_MS;
       const reachElapsed = withdrawingFront ? Math.max(0, dt - h.flickDecay * RECOVER_MS) : dt;
       if (h.flickDecay > 0) {
-        h.flickDecay = Math.max(0, h.flickDecay - dt / RECOVER_MS);
+        h.flickDecay = Math.max(0, h.flickDecay - dt / returnMs);
         if (h.flickDecay === 0) {
-          if (isMiddleSliceStroke(h.flickStyle) || isMixedPush(h.flickStyle)) {
+          if (h.flickStyle === 'frontIndexNail' || h.flickStyle === 'frontThumbNail' || h.flickStyle === 'upperRingRelay' || h.flickStyle === 'upPush' || h.flickStyle === 'lowerPush' || h.flickStyle === 'lowerHook' || isMiddleSliceStroke(h.flickStyle) || isMixedPush(h.flickStyle)) {
             h.reachT = h.reachTarget = 0;
             h.flickAmount = 0;
           } else if (h.flickStyle === "topPush" || h.reachT > 0) {
@@ -2570,6 +2895,11 @@ export default class HandsRig extends THREE.Group {
       this.regripFlag = false;
       this.wholeRegrip = false;
     }
+    const seat = this.singleMarkSeat;
+    if (seat?.returning && !this.active && !this.markedMotion && !this.fourSeat && !hands[seat.hand].flickDecay && !hands[seat.hand].reachT) {
+      this.regrip(seat.original, seat.hand, seat.wristAngle, 'stroke-return');
+      animating = true;
+    }
     // Wait for both digits to leave the top before rotating the palm back.
     if (this.leftRelaySeat?.returning && !this.active && !hands.L.flickDecay && !hands.L.reachT) {
       this.regrip(this.leftRelaySeat.original, 'L', this.leftRelaySeat.wristAngle);
@@ -2584,6 +2914,7 @@ export default class HandsRig extends THREE.Group {
   // ================= 手势生命周期 =================
 
   private beginGesture(g: HandGesture, axis: Axis): void {
+    if (g.kind !== 'flick' || !isHomePushStyle(g.style)) this.pocketPushTarget = 0;
     if (g.kind === 'flick' && g.style === 'marked') return;
     const hands = this.hands;
     if (!hands) return;
@@ -2668,6 +2999,11 @@ export default class HandsRig extends THREE.Group {
         h.weldRawAngle = 0; // 借力不烘入握姿
       }
     }
+    // The right index clears the front edge on its own from home.
+    if (g.kind === 'flick' && g.style === 'frontIndexNail') return;
+    // The downward grip drives an outer F from its own side. Keep the other grip seated.
+    if (this.cube?.order === 3 && axis === 'z' && this.active?.cls === 'high'
+      && this.active.layers.length === 1 && g.kind === 'flick' && hands[g.hand].grip.angleTo(GRIP_Q_DOWN) < .01) return;
     // Drive finger clearance from the displayed layer angle.
     if (axis === 'z' && this.active?.cls === 'high' && g.kind === "flick"
       && (g.style === "topPush" || g.style === "downPush")) {
@@ -2731,10 +3067,22 @@ export default class HandsRig extends THREE.Group {
 
   }
 
+  private usesFittedRingRelay(seat: typeof this.fourSeat): boolean {
+    if (!seat || seat.gesture.kind !== 'flick'
+      || seat.gesture.finger !== 'ring' || seat.gesture.finger2 !== 'pinky') return false;
+    if (seat.axis === 'x') return seat.layers.length === 1 ? seat.layers[0] === 1 || seat.layers[0] === 2
+      : seat.layers.length === 2 && seat.layers.includes(1) && seat.layers.includes(2);
+    if (seat.layers.length !== 1) return false;
+    const hand = this.hands?.[seat.gesture.hand];
+    return seat.axis === 'y' && seat.layers[0] === 1 && !!hand && hand.grip.angleTo(HandsRig._qIdent) < .01;
+  }
+
   private endGesture(): void {
     const hands = this.hands;
     const gesture = this.active?.gesture;
     if (!hands || !gesture) return;
+    if (this.singleMarkSeat && gesture.kind === 'flick' && gesture.hand === this.singleMarkSeat.hand
+      && gesture.style === this.singleMarkSeat.style) this.singleMarkSeat.returning = true;
     if (this.leftRelaySeat && gesture.kind === 'flick' && gesture.hand === 'L'
       && gesture.finger === 'index' && gesture.finger2 === 'middle') this.leftRelaySeat.returning = true;
     if (this.fourSeat) this.fourSeat.returning = true;
@@ -2790,11 +3138,16 @@ export default class HandsRig extends THREE.Group {
       }
       if (gesture.kind === 'flick' && gesture.hand === side && h.flickFinger) {
         h.flickDecay = 1;
+        if (this.usesFittedRingRelay(this.fourSeat)) {
+          // The inner relay owns its return while the palm leaves the strip.
+          h.flickDecay = h.reachTarget = h.reachT = 0;
+        }
         if (h.flickStyle === 'reverseIndexHook' || h.flickStyle === 'reverseRingHook') {
           // Keep the last driven angle through release, including a partial drag.
           h.flickDecay = h.reachTarget = 0;
         }
-        if (isMixedPush(h.flickStyle) && Math.abs(h.flickAmount) >= HALF_PI - .001) {
+        if ((h.flickStyle === 'thumbLift' || h.flickStyle === 'sliceNail' && this.cube?.order !== 3)
+          && Math.abs(h.flickAmount) >= HALF_PI - .001) {
           h.flickDecay = h.reachTarget = h.reachT = 0;
         }
         if (h.flickStyle === 'topPush' && h.flickAxis === 'z' && h.flickLayer === 'mid'
@@ -2829,6 +3182,7 @@ export default class HandsRig extends THREE.Group {
   private static _vTmp3 = new THREE.Vector3();
   private static _vTmp4 = new THREE.Vector3();
   private static _mTmp = new THREE.Matrix4();
+  private static _relayOffset = new THREE.Vector3();
   private static _elbowTarget = new THREE.Vector3();
   private static _armDirection = new THREE.Vector3();
   private static _armHome = new THREE.Vector3();
@@ -2841,9 +3195,33 @@ export default class HandsRig extends THREE.Group {
     return this.regripFlag ? t * t * (3 - 2 * t) : 1 - (1 - t) ** 3;
   }
 
+  private handRecoveryProgress(h: HandState): number {
+    const t = h.recoverT;
+    if (this.wholeRegrip && h.recoverQuat.angleTo(HandsRig._qIdent) > HALF_PI + .01) {
+      const quarter = t < .5 ? 0 : .5;
+      return quarter + .5 * THREE.MathUtils.smoothstep(2 * (t - quarter), 0, 1);
+    }
+    return this.recoveryProgress(t);
+  }
+
+  private isLateralHandoff(right: HandState): boolean {
+    return this.wholeRegrip && Math.abs(right.recoverQuat.x) < .01
+      && right.recoverQuat.angleTo(HandsRig._qIdent) > HALF_PI + .01;
+  }
+
+  private recoverOrientation(q: THREE.Quaternion, h: HandState, neutralHandoff: boolean): void {
+    const t = this.handRecoveryProgress(h);
+    q.copy(h.recoverQuat).slerp(HandsRig._qIdent, t);
+    if (neutralHandoff) {
+      // The hands use opposite top and bottom strips at the intermediate seat.
+      const roll = -h.model.side * HALF_PI * Math.sin(Math.PI * t);
+      q.multiply(HandsRig._qTmp2.setFromAxisAngle(AXIS_VEC.x, roll));
+    }
+  }
+
   private currentWristAngle(h: HandState): number {
     if (h.weldAxis) return h.gripAngle + (h.weldAxis === 'x' && !h.weldWhole ? h.weldAngle : 0);
-    const residual = 1 - this.recoveryProgress(h.recoverT);
+    const residual = 1 - this.handRecoveryProgress(h);
     return h.gripAngle + h.recoverWristAngle * residual;
   }
 
@@ -2953,7 +3331,8 @@ export default class HandsRig extends THREE.Group {
     const wideWeight = wide?.poseProgress ?? 0;
     const lowerSupport = !wide && mark && mark.plan.hand !== side && atHalfTurn(h.gripAngle)
       && mark.plan.request.axis === 'y' && mark.plan.request.layers.includes(2);
-    const pinchMotion = side === 'R' ? this.markedMotion ?? this.supportTransition?.motion : null;
+    const supportMotion = this.markedMotion ?? this.supportTransition?.motion;
+    const pinchMotion = supportMotion?.plan.hand !== side ? supportMotion : null;
     const pinch = pinchMotion?.topPinch != null ? THREE.MathUtils.smoothstep(pinchMotion.topPinch, 0, 1)
       * (1 - THREE.MathUtils.smoothstep(pinchMotion.returning, .20, 1)) : 0;
     const clearing = h.indexEvade || h.lowEvade || h.midEvade || h.bEvade || h.fEvade || h.sEvade;
@@ -2962,10 +3341,17 @@ export default class HandsRig extends THREE.Group {
     // before the turn starts. Its clearance pose is constant until release.
     const holding = mark && mark.plan.hand !== side && mark.preparation === 1 && !mark.finished ? mark : null;
     const halfRelaySupport = side === 'R' && this.rightHalfSupportsUpperRelay();
-    const settled = !halfRelaySupport && Math.abs(Math.abs(h.gripAngle) - Math.PI) < 1e-8 && Math.abs(h.grip.x) > 1 - 1e-8
+    const order = this.cube?.order ?? 3;
+    const turn = this.active;
+    const sweep = turn?.gesture?.kind === 'flick' && turn.gesture.hand !== side && turn.layers.length === 1
+      && !mark && !wide && !halfRelaySupport
+      ? halfSupportClearance(order, h.gripAngle, turn.axis, turn.cls) : undefined;
+    const lateralHandoff = this.isLateralHandoff(hands.R);
+    const mixedHandoff = lateralHandoff && Math.abs(hands.R.gripAngle - hands.L.gripAngle) > .01;
+    const settled = !mixedHandoff && !halfRelaySupport && Math.abs(Math.abs(h.gripAngle) - Math.PI) < 1e-8 && Math.abs(h.grip.x) > 1 - 1e-8
       && !wide && (!mark || holding) && !pinch && h.recoverT >= 1 && !h.weldAxis && !h.flickFinger && !h.pinFinger
       && !clearing;
-    if (settled && !this.fourSeat) {
+    if (settled && !sweep && !this.fourSeat && !this.rightPinch) {
       idle = false;
       const body = this.body?.visible ? this.body : null;
       const cached = this.settledHalf[side];
@@ -2981,8 +3367,7 @@ export default class HandsRig extends THREE.Group {
       q.setFromAxisAngle(AXIS_VEC[h.weldAxis], h.weldAngle);
     } else if (h.recoverT < 1) {
       // Explicit regrips ease both ends; turn overshoot decays from release.
-      const t = this.recoveryProgress(h.recoverT);
-      q.copy(h.recoverQuat).slerp(HandsRig._qIdent, t);
+      this.recoverOrientation(q, h, lateralHandoff && !mixedHandoff && Math.abs(h.gripAngle) < .01);
     } else {
       q.identity();
     }
@@ -3007,41 +3392,25 @@ export default class HandsRig extends THREE.Group {
         topEffRaw = amt * h.flickDecay; // 小角度残余原地缩回
       }
     }
-    // upPush 原地腕转(见 UP_PUSH 注释):绕「过腕点、平行 y」轴偏航 ψ(s),
-    // 把整手向左带,补足食指推 RUB→BLU 的可达缺口;decay 同乘倒放。
-    if (h.flickStyle === "upPush" && h.flickFinger && (h.reachT > 0 || h.flickAmount !== 0)) {
-      const smReach = h.reachT * h.reachT * (3 - 2 * h.reachT);
-      const decayW = h.flickDecay > 0 ? h.flickDecay : 1;
-      const su = Math.min(Math.abs(h.flickAmount), HALF_PI) / HALF_PI * decayW;
-      const wUp = UP_PUSH.wrist;
-      const psi = ((wUp[2] * su + wUp[1]) * su + wUp[0]) * su * smReach;
-      if (psi !== 0) {
-        const W = HandsRig._vTmp.copy(WRIST_LOCAL).applyQuaternion(g.quaternion).add(g.position);
-        const qp = HandsRig._qTmp2.setFromAxisAngle(AXIS_VEC.y, psi);
-        g.quaternion.premultiply(qp);
-        g.position.sub(W).applyQuaternion(qp).add(W);
-      }
-      // 就位俯仰(2026-07-25 MANO):食指自身 4 通道够不到 RUB 的 U 贴纸 ——
-      // 4D 网格 3087 点里「pen ≤0 且 pad 在贴纸足迹内」的解最好也只能悬 3.8U
-      // (手比 generic 大 18% + r21~r27 手根重解后指尖内收下沉)。补一个绕
-      // 「过腕点、平行 x」轴的俯仰,把指列抬过后上棱躺到 U 面 —— 腕点不动 ⇒
-      // 前臂静止、手掌不离位,reach 倒放天然收回。
-      if (UP_PUSH.climbPitch !== 0) {
-        const W = HandsRig._vTmp.copy(WRIST_LOCAL).applyQuaternion(g.quaternion).add(g.position);
-        const qp = HandsRig._qTmp2.setFromAxisAngle(AXIS_VEC.x, UP_PUSH.climbPitch * smReach);
-        g.quaternion.premultiply(qp);
-        g.position.sub(W).applyQuaternion(qp).add(W);
-      }
-    }
-
+    const pushFinger = h.flickStyle === 'upPush' ? 'index' : h.flickStyle === 'lowerPush' ? 'ring' : null;
     // The wrist follows the grip rotation itself. Fingers open around the
     // corners during recovery without adding a translation to that rotation.
-    let regripOpen = 0;
+    let regripOpen = 0, pinchOpen = 0;
     if (!h.weldAxis && h.recoverT < 1) {
       const angle = 2 * Math.acos(Math.min(1, Math.abs(h.recoverQuat.w)));
       if (angle > .3) {
-        regripOpen = Math.sin(Math.PI * this.recoveryProgress(h.recoverT)) * Math.min(1, angle / HALF_PI);
+        const progress = this.handRecoveryProgress(h);
+        // Close on the intermediate seat before the other hand releases.
+        const reach = this.wholeRegrip && angle > HALF_PI + .01 ? (2 * progress) % 1 : progress;
+        const travel = Math.min(1, angle / HALF_PI);
+        regripOpen = Math.sin(Math.PI * progress) * travel;
+        pinchOpen = Math.sin(Math.PI * reach) * travel;
       }
+    }
+
+    if (mixedHandoff) {
+      const separation = Math.abs(this.handRecoveryProgress(hands.R) - this.handRecoveryProgress(hands.L));
+      regripOpen = Math.max(regripOpen, Math.sin(Math.PI * separation));
     }
 
     // 待机微动:极轻的呼吸浮动(位移 ±1.0,相位左右手错开)。禁走 z —— 那是
@@ -3052,10 +3421,21 @@ export default class HandsRig extends THREE.Group {
     // 现形,存量 bug);外向 x 在任意绕 x 握姿下都切向安全,保留。指弹进行中
     // (flickFinger)也禁全部 —— topPush 无 weld,呼吸会叠在按压接触上抖
     // (±2U 噪声 > 1.2U 接触间隙,标定/oracle 全被污染,2026-07-07 现形)。
-    const canBreathe = idle && !h.weldAxis && !h.flickFinger && h.recoverT >= 1;
+    // Seat the supporting fingers as the wrists enter the grip, before F starts.
+    const partner = hands[side === 'R' ? 'L' : 'R'];
+    // Between the two half-grip windings the palm stays on the same face.
+    // The interpolated wrist angle passes through down without taking a down grip.
+    const supportedByLower = this.cube?.order === 3 && !this.isHalfBranchSwitch(partner)
+      ? Math.max(0, -Math.sin(this.currentWristAngle(partner))) : 0;
+    const wristAngle = this.currentWristAngle(h);
+    const upperBrace = supportedByLower * Math.max(0, Math.sin(wristAngle));
+    const lowerBrace = supportedByLower * Math.max(0, -Math.sin(wristAngle));
+    const homeBrace = supportedByLower * Math.max(0, Math.cos(wristAngle));
+    const partnerStyle = hands[side === 'L' ? 'R' : 'L'].flickStyle;
+    const canBreathe = !this.pocketPushSupport && partnerStyle !== 'upPush' && partnerStyle !== 'lowerPush' && partnerStyle !== 'frontIndexNail' && idle && !this.singleMarkSeat && !this.wideSupport?.homeUpper && !h.weldAxis && !h.flickFinger && h.recoverT >= 1;
     h.idleBlend = canBreathe ? Math.min(1, h.idleBlend + dtMs / 180) : 0;
     if (canBreathe) {
-      const blend = THREE.MathUtils.smoothstep(h.idleBlend, 0, 1);
+      const blend = THREE.MathUtils.smoothstep(h.idleBlend, 0, 1) * (1 - supportedByLower);
       const t = this.idleClock / 1000;
       const ph = side === "R" ? 0 : 1.7;
       // y 呼吸幅度 0.4(旧 1.0):2026-07-09 拇指 home 抬进 E 层带后可见肉
@@ -3066,14 +3446,63 @@ export default class HandsRig extends THREE.Group {
     }
 
     const elbowTarget = HandsRig._elbowTarget.copy(h.elbow);
-    const middleRelaySeat = h.flickStyle === 'middleSlicePad' && h.flickFinger2 === 'pinky'
-      ? THREE.MathUtils.smoothstep(h.reachT, 0, 1) * THREE.MathUtils.smoothstep(h.flickDecay || 1, 0, 1) : 0;
-    if (middleRelaySeat) {
-      const dx = (side === 'R' ? -1 : 1) * M_RELAY_SHIFT.x * middleRelaySeat, dy = M_RELAY_SHIFT.y * middleRelaySeat;
-      g.position.x += dx; g.position.y += dy;
-      elbowTarget.x += dx; elbowTarget.y += dy;
+    const thumbStroke = h.flickStyle === 'frontThumbNail' ? frontThumbNailPose(THREE.MathUtils.radToDeg(Math.abs(h.flickAmount))) : null;
+    const thumbWeight = thumbStroke ? THREE.MathUtils.smoothstep(h.reachT, 0, 1) * (h.flickDecay || 1) : 0;
+    if (thumbStroke) {
+      const shift = HandsRig._vTmp.set(thumbStroke.x, thumbStroke.y, thumbStroke.z).multiplyScalar(thumbWeight);
+      g.position.add(shift);
+      elbowTarget.add(shift);
+      const roll = HandsRig._qTmp2.setFromAxisAngle(AXIS_VEC.z, -THREE.MathUtils.degToRad(thumbStroke.rollDegrees) * thumbWeight);
+      g.quaternion.premultiply(roll);
+    }
+    if (h.flickStyle === 'upperRingRelay') {
+      const seat = THREE.MathUtils.smoothstep(h.reachT, 0, 1) * (h.flickDecay || 1);
+      // Approach the back sticker from behind and withdraw from the driving side.
+      const releasing = h.flickDecay > 0;
+      const clearance = releasing ? .25 + .75 * (1 - seat) ** 2 : .32;
+      const arc = 4 * seat * (1 - seat) * clearance;
+      const offset = HandsRig._relayOffset.set(
+        -sideSign * (13 * seat + (releasing ? 100 : 65) * arc),
+        53 * seat,
+        -8 * seat - (releasing ? 39 : 10) * arc,
+      );
+      g.position.add(offset);
+      elbowTarget.add(offset);
+    }
+    const nailStroke = isSliceNail(h.flickStyle) && this.cube?.order === 3 && h.flickFinger
+      ? mixedGripPose(h.flickStyle, h.reachT, THREE.MathUtils.radToDeg(Math.abs(h.flickAmount)),
+        h.flickDecay > 0 ? 1 - h.flickDecay : 0) : null;
+    if (nailStroke) {
+      const nailAxis = HandsRig._vTmp.copy(AXIS_VEC.z).applyQuaternion(h.grip);
+      const roll = HandsRig._qTmp2.setFromAxisAngle(nailAxis, nailStroke[6] * sideSign);
+      g.position.applyQuaternion(roll);
+      g.quaternion.premultiply(roll);
+      elbowTarget.applyQuaternion(roll);
+    }
+    const opposite = hands[side === 'L' ? 'R' : 'L'];
+    let sliceBrace = 0;
+    if (this.cube?.order === 3 && isSliceNail(opposite.flickStyle) && opposite.flickFinger && h.grip.angleTo(GRIP_Q_DOWN) < .01) {
+      sliceBrace = THREE.MathUtils.smoothstep(opposite.reachT, 0, .85)
+        * (opposite.flickDecay > 0 ? THREE.MathUtils.smoothstep(opposite.flickDecay, 0, .35) : 1);
+      const offset = sideSign * lowerSliceBrace.lateral * sliceBrace;
+      g.position.x -= offset;
+      elbowTarget.x -= offset;
     }
     const four = this.fourSeat;
+    const innerRelay = four?.axis === 'x' && four.gesture.kind === 'flick' && four.gesture.hand === side && this.usesFittedRingRelay(four);
+    const innerRelayRelease = this.cube?.order === 4 && h.flickAxis === 'x' && h.strokeLayers.length === 1
+      && (h.strokeLayers[0] === 1 || h.strokeLayers[0] === 2);
+    const middleRelaySeat = innerRelay ? THREE.MathUtils.smoothstep(four.progress, 0, 1)
+      : !innerRelayRelease && h.flickStyle === 'middleSlicePad' && h.flickFinger2 === 'pinky'
+        ? THREE.MathUtils.smoothstep(h.reachT, 0, 1) * THREE.MathUtils.smoothstep(h.flickDecay || 1, 0, 1) : 0;
+    if (middleRelaySeat) {
+      const delta = HandsRig._vTmp.set((side === 'R' ? -1 : 1) * M_RELAY_SHIFT.x, M_RELAY_SHIFT.y, 0);
+      if (innerRelay) delta.applyQuaternion(h.grip);
+      delta.multiplyScalar(middleRelaySeat);
+      g.position.add(delta);
+      elbowTarget.add(delta);
+    }
+    let braceProfile: InnerBraceProfile | undefined;
     if (four?.axis === 'x' && four.gesture.kind === 'weld' && four.gesture.hands.includes(side)) {
       // Bring the palm over the moving block before the wrist starts turning.
       // A single face retains its original wrist position.
@@ -3082,16 +3511,31 @@ export default class HandsRig extends THREE.Group {
       g.position.x += shift;
       elbowTarget.x += shift;
     }
-    if (four && four.gesture.kind === 'flick' && four.gesture.hand === side
-      && !four.layers.includes(3) && !four.layers.includes(0)) {
-      const sign = side === 'R' ? 1 : -1;
-      const center = ((Math.min(...four.layers) + Math.max(...four.layers))/2 - 1.5) * SIZE * .75;
-      const seat = THREE.MathUtils.smoothstep(four.progress, 0, 1);
+    if (four?.gesture.kind === 'flick' && !four.layers.includes(3) && !four.layers.includes(0)) {
+      const driver = four.gesture.hand === side;
       let shift = 0;
-      if (four.axis === 'x' && four.layers.length === 1) shift = center - sign * 44;
-      if (four.axis === 'y') shift = center - (four.gesture.finger === 'index' ? 62 : -62);
-      g.position[four.axis] += shift * seat;
-      elbowTarget[four.axis] += shift * seat;
+      if (four.layers.length === 1 || four.axis === 'x' && this.usesFittedRingRelay(four)) {
+        braceProfile = innerBraceProfile(four, h.grip, driver, this.usesFittedRingRelay(four));
+        if (braceProfile === 'innerX' || braceProfile === 'innerXRelay') shift = side === 'R' ? -20 : 20;
+        if (braceProfile === 'lowerY' || braceProfile === 'upperY') shift = four.layers[0] === 2 ? -38 : 38;
+      } else if (driver && four.axis === 'y') {
+        const row = four.gesture.finger2 === 'middle' ? 2 : (Math.min(...four.layers) + Math.max(...four.layers)) / 2;
+        const center = (row - 1.5) * SIZE * .75;
+        shift = center - (four.gesture.finger === 'index' ? 62 : -62);
+      }
+      shift *= THREE.MathUtils.smoothstep(four.progress, 0, 1);
+      g.position[four.axis] += shift;
+      elbowTarget[four.axis] += shift;
+    }
+    if (four && four.progress > 0 && four.progress < 1 && four.gesture.kind === 'flick' && four.gesture.hand === side
+      && (this.usesFittedRingRelay(four) || four.axis === 'x' && four.gesture.style === 'middleSliceNail' && !four.gesture.finger2)) {
+      // Approach outside the fixed shell. Fade the arc to zero before either
+      // digit drives its sticker and retrace it as the seated palm withdraws.
+      const p = four.progress;
+      const arc = 4 * p * (1 - p) * THREE.MathUtils.smoothstep(Math.min(p, 1 - p), 0, .12);
+      const clearance = HandsRig._vTmp.fromArray(innerRingApproachOffset(four.axis, four.dir, !!four.gesture.finger2, side));
+      g.position.addScaledVector(clearance, arc);
+      elbowTarget.addScaledVector(clearance, arc);
     }
     const carryForearm = mark?.applyWrist(side, g, elbowTarget) ?? false;
 
@@ -3104,7 +3548,6 @@ export default class HandsRig extends THREE.Group {
     // 一起恢复(用户硬规则)。
     const isDouble = h.flickFinger2 !== null;
     const rawAbs = Math.abs(h.flickAmount);
-    const order = this.cube?.order ?? 3;
     const pocketPose = order === 2 || (this.active ? isFourWide(order, this.active.layers)
       : !!h.flickFinger && isFourWide(order, h.strokeLayers));
     const pocketRelay = pocketPose && isDouble
@@ -3118,8 +3561,7 @@ export default class HandsRig extends THREE.Group {
     // decay 若把 s 缩小 = 沿接触曲线倒放,而提交后层角已归零(魔方恢复整体),
     // 倒放中段的贴面姿态直接穿进复位的层。改为 s 取未缩层角、decayK 只乘 fit
     // 输出 —— 回撤变成关节空间直线回 home(末端 fit(1)≈0 由 endHome 正则拉住,
-    // 起点即终姿,途中不再重返扫掠带)。upPush 弧退例外(U 面平面在 y 旋转下
-    // 不变,沿弧倒放贴面天然安全,保留原 share 语义)。
+    // 起点即终姿,途中不再重返扫掠带)。
     const sRaw1 = Math.min(rawAbs, HALF_PI) / HALF_PI;
     const sRaw2 = Math.max(0, Math.min(rawAbs - HALF_PI, HALF_PI)) / HALF_PI;
     const prep = sm(sRaw1);
@@ -3127,21 +3569,28 @@ export default class HandsRig extends THREE.Group {
     const indexHookRelay = h.flickStyle === 'hook' && h.flickFinger === 'index' && h.flickFinger2 === 'middle';
     // F 族遗留分支避让按本手握姿选指(见 F_EVADE 注释):up = 拇指+无名指在
     // F 带内 / down = 食指在 F 带内 / home 与非标准握的指肉都在带外,不动。
+    // Hold the support pose throughout the marked turn. Seat it while the
+    // driving index approaches, then let it recover as that finger withdraws.
+    const frontSupport = opposite.flickStyle === 'frontIndexNail' ? sm(opposite.reachT) * (opposite.flickDecay || 1) : 0;
+    const supportEvade = Math.max(h.fEvade, frontSupport);
     let fEvadeGrip: GripName | null = null;
-    if (h.fEvade > 0) {
+    if (supportEvade > 0) {
       if (h.grip.angleTo(GRIP_Q_UP) < 0.01) fEvadeGrip = "up";
       else if (h.grip.angleTo(GRIP_Q_DOWN) < 0.01) fEvadeGrip = "down";
     }
     // S 族避让同款握姿选指(见 S_EVADE 注释):up/down 握拇指+中指探进 S 带,
     // home 与非标准握的指肉都在带外,不动。
     let sEvadeGrip: GripName | null = null;
-    if (h.sEvade > 0) {
+    const sliceClearance = Math.max(h.sEvade, sliceBrace);
+    if (sliceClearance > 0) {
       if (h.grip.angleTo(GRIP_Q_UP) < 0.01) sEvadeGrip = "up";
       else if (h.grip.angleTo(GRIP_Q_DOWN) < 0.01) sEvadeGrip = "down";
     }
     // A lower 2×2 turn sweeps the corners underneath both front and back
     // support pads. Open those digits as the square's projected width grows.
     const pocketTurn = pocketPose ? this.active : null;
+    const pushDriver = pushFinger ? h : isHomePushStyle(partnerStyle) ? partner : null;
+    const pocketPushSeat = sm(this.pocketPushSupport);
     let lowerClearance = 0, frontClearance = 0, upperPhase: number | undefined;
     if (pocketTurn && pocketTurn.axis !== 'x' && pocketTurn.cls !== 'whole') {
       const angle = pocketTurn.lastAngle;
@@ -3165,8 +3614,36 @@ export default class HandsRig extends THREE.Group {
       const pose = h.home.fingers[name];
       let c1 = pose.curl[0];
       let c2 = pose.curl[1];
+      if (name === 'ring' && upperBrace > 0) {
+        c1 += F_EVADE[side].ring.c1 * upperBrace;
+        c2 += F_EVADE[side].ring.c2 * upperBrace;
+      } else if (name === 'index' && lowerBrace > 0) {
+        c1 += F_EVADE[side].index.c1 * lowerBrace;
+        c2 += F_EVADE[side].index.c2 * lowerBrace;
+      } else if (name === 'thumb') {
+        if (opposite.flickStyle === 'frontThumbNail' && Math.abs(h.grip.w) > .99999) {
+          // Let the front sticker slide past the resting thumb while the wrist stays home.
+          c1 += .035 * Math.sin(2 * Math.min(HALF_PI, Math.abs(opposite.flickAmount))) * (opposite.flickDecay || 1);
+        }
+        // The neutral thumb pad sits just clear of the front plane, including
+        // when both hands start at home and the corner passes the resting pad.
+        const frontNail = partnerStyle === 'frontIndexNail' || partnerStyle === 'frontThumbNail';
+        const pairedHome = frontNail && this.cube?.order === 3 ? Math.max(0, Math.cos(this.currentWristAngle(partner))) * Math.max(0, Math.cos(wristAngle)) : 0;
+        c2 -= .001 * Math.max(homeBrace, pairedHome);
+        if (nailStroke && Math.abs(h.grip.w) > .99999) c2 -= .0015 * sm(h.reachT) * (h.flickDecay || 1);
+      }
       let c3 = pose.curl[2];
       let splay = pose.splay * sideSign;
+      if (h.flickStyle === 'upperRingRelay') {
+        const raised = sm(h.reachT) * decayK;
+        if (name === 'thumb') c1 -= .65 * raised;
+        if (name === 'middle') {
+          // Keep the passage open until the ring finger has withdrawn.
+          const support = h.flickDecay > 0 ? Math.sqrt(raised) : raised;
+          c1 -= .13 * support;
+          splay += .11 * sideSign * support;
+        }
+      }
       // r11 轴向扭转(FingerCurl.twist,Euler x 槽,此前恒 0):拇指 CMC 旋前 /
       // 四指指柱滚转。topPush 叠加标定的食指 twist，其余动作保持姿态层值。
       let twist = (pose.twist ?? 0) * sideSign;
@@ -3193,13 +3670,25 @@ export default class HandsRig extends THREE.Group {
           splay -= .11 * clearance;
         }
       }
+      if (pocketPushSeat && name === 'middle') {
+        // Seat the pad once on the B-side corner before pushing. Both hands
+        // hold the same pose throughout the layer turn, in either direction.
+        const seat = pocketPushMiddle;
+        c1 += (seat[0] - c1) * pocketPushSeat;
+        c2 += (seat[1] - c2) * pocketPushSeat;
+        c3 += (seat[2] - c3) * pocketPushSeat;
+        splay += (seat[3] * sideSign - splay) * pocketPushSeat;
+        twist += (seat[4] * sideSign - twist) * pocketPushSeat;
+        pm = [THREE.MathUtils.lerp(pm?.[0] ?? 0, seat[5], pocketPushSeat),
+          THREE.MathUtils.lerp(pm?.[1] ?? 0, seat[6], pocketPushSeat)];
+      }
       const secondTopPush = h.flickStyle === 'topPush' && h.flickFinger2 === name;
       const topPush = h.flickStyle === "topPush" && (h.flickFinger === name || secondTopPush);
       // 本指角色与负担扫角(带符号):单指 = 全量;连拨首指钳 90°、次指接后半。
       const role = h.flickFinger === name ? 1 : h.flickFinger2 === name ? 2 : 0;
       if (pocketPose) {
         if (name === 'middle') {
-          c1 -= .18 * lowerClearance;
+          if (!pushDriver) c1 -= .18 * lowerClearance;
           if (secondTopPush) {
             // The relay is fitted from its raised seat. Interpolate from the
             // relaxed lower corner without moving its contact in quarter two.
@@ -3218,18 +3707,6 @@ export default class HandsRig extends THREE.Group {
           splay += .13 * lowerClearance * sideSign;
           if (role === 0) c2 -= .030 * frontClearance;
         }
-      }
-      // U'p 推法本手拇指避让(2026-07-25 MANO):climbPitch 把整手绕腕俯仰过去
-      // 时,压着 F 面的拇指被一起送进方块(pitch 0.25 实测 21.8U;其余四指反而
-      // 抬离 B 面,只有拇指受害)。随 sm(reachT) 与俯仰同步收回,reach 倒放天然
-      // 复位。数值与 climb/climbPitch 一起 9 通道联解。
-      if (name === "thumb" && role === 0 && h.flickStyle === "upPush" && h.flickFinger && h.reachT > 0) {
-        const ev = UP_PUSH.thumbEvade;
-        const t = sm(h.reachT);
-        c1 += ev.c1 * t;
-        c2 += ev.c2 * t;
-        c3 += ev.c3 * t;
-        splay += ev.splay * t;
       }
       // B 族静止指避让(见 BACK_EVADE 注释):backHook 期间静止的中/无名指抬离 B 面。
       if ((name === "middle" || name === "ring") && role === 0 && h.flickStyle === "backHook") {
@@ -3299,13 +3776,13 @@ export default class HandsRig extends THREE.Group {
       // 回 home 位,恰落进下一步的扫掠区(真实播放 oracle 实测 10.6U),且
       // decay 清零瞬间 role 0 才生效会造成单帧姿态跳变;正在扫的弹指
       // (flickDecay===0)不避,指尖要沿面扫。
-      if ((role === 0 || h.flickDecay > 0) && h.fEvade > 0 && fEvadeGrip !== null
+      if ((role === 0 || h.flickDecay > 0) && supportEvade > 0 && fEvadeGrip !== null
         && (fEvadeGrip === "up" ? name === "thumb" || name === "ring" : name === "index")) {
         const ev = F_EVADE[side][name as "thumb" | "ring" | "index"];
-        c1 += ev.c1 * h.fEvade;
-        c2 += ev.c2 * h.fEvade;
-        c3 += ev.c3 * h.fEvade;
-        splay += ev.splay * h.fEvade;
+        c1 += ev.c1 * supportEvade;
+        c2 += ev.c2 * supportEvade;
+        c3 += ev.c3 * supportEvade;
+        splay += ev.splay * supportEvade;
       }
       // S 族 up/down 握「拇指 + 中指」单指避让(见 S_EVADE 注释):受害不分
       // 弹指手,两手同走 tick 推进的 sEvade,按本手握姿选指(home 握不动);
@@ -3313,13 +3790,13 @@ export default class HandsRig extends THREE.Group {
       // 自身在 decay 段(flickDecay>0)也吃 evade(同 F_EVADE:同类连发时
       // 上一步弹指中指随 decayK 回落恰落进下一步扫掠区,且免 decay 清零瞬间
       // 的单帧姿态跳变);正在扫的弹指中指(flickDecay===0)不避,自己扫开。
-      if ((role === 0 || h.flickDecay > 0) && h.sEvade > 0 && sEvadeGrip !== null
+      if ((role === 0 || h.flickDecay > 0) && sliceClearance > 0 && sEvadeGrip !== null
         && (name === "thumb" || name === "middle")) {
         const ev = S_EVADE[side][name];
-        c1 += ev.c1 * h.sEvade;
-        c2 += ev.c2 * h.sEvade;
-        c3 += ev.c3 * h.sEvade;
-        splay += ev.splay * h.sEvade;
+        c1 += ev.c1 * sliceClearance;
+        c2 += ev.c2 * sliceClearance;
+        c3 += ev.c3 * sliceClearance;
+        splay += ev.splay * sliceClearance;
       }
       // E 族双手「拇指 + 中指」单指避让(见 MID_EVADE 注释):受害不分弹指手,
       // 两手同走 tick 推进的 midEvade(role===0 兜重叠帧,同上)。
@@ -3353,7 +3830,26 @@ export default class HandsRig extends THREE.Group {
         //  downPush/upPush:压面推层(FINGERTRICKS §4.3/§4.5);
         //  x/z 轴中指(M/B/S 族):接触立柱处层动是竖直的 → splay 竖扫为主。
         const open = Math.min(1, Math.abs(share) / HOOK.open);
-        if (isMiddleSliceStroke(h.flickStyle)) {
+        const angle = THREE.MathUtils.radToDeg(rawAbs);
+        if (h.flickStyle === 'frontIndexNail' && name === 'index') {
+          hookPose = frontIndexNailPose(angle, sm(h.reachT), h.flickDecay);
+        } else if (thumbStroke && name === 'thumb') {
+          hookPose = fingerChannels(pose).map((value, i) => THREE.MathUtils.lerp(value, thumbStroke.finger[i], thumbWeight));
+          // Flex the base slightly as the nail peels away from the front sticker.
+          if (h.flickDecay > 0) hookPose[0] += .8 * thumbWeight * (1 - thumbWeight);
+        } else if (h.flickStyle === 'upperRingRelay' && (name === 'index' || name === 'ring')) {
+          hookPose = upperRingRelayPose(name, angle, sm(h.reachT) * decayK, fingerChannels(pose));
+        } else if (pushFinger && name === pushFinger && h.flickFinger === pushFinger) {
+          hookPose = homePushPose(pushFinger, angle, sm(h.reachT), decayK, fingerChannels(pose), order);
+        } else if (h.flickStyle === 'lowerHook' && (name === 'ring' || name === 'pinky')) {
+          hookPose = lowerHookPose(name, angle, isDouble, sm(h.reachT), decayK, fingerChannels(pose));
+        }
+        if (hookPose) {
+          [c1, c2, c3] = hookPose;
+          splay = hookPose[3] * sideSign;
+          twist = hookPose[4] * sideSign;
+          [metaCurl, metaSplay, metaTwist] = hookPose.slice(5, 8);
+        } else if (isMiddleSliceStroke(h.flickStyle)) {
           const reverseFour = order === 4 && h.flickStyle === 'middleSliceNail' && !isDouble;
           const degrees = rawAbs * 180 / Math.PI;
           const p = reverseFour
@@ -3362,9 +3858,13 @@ export default class HandsRig extends THREE.Group {
           [c1, c2, c3, splay, twist, metaCurl, metaSplay, metaTwist] = p;
           if (p.length > 8) pm = [p[8], p[9]];
           if (side === 'R') { splay = -splay; twist = -twist; }
+        } else if (nailStroke) {
+          [c1, c2, c3] = nailStroke;
+          splay = nailStroke[3] * sideSign;
+          [metaCurl, metaSplay] = nailStroke.slice(4, 6);
         } else if (isMixedPush(h.flickStyle)) {
           const release = h.flickDecay > 0 ? 1 - h.flickDecay : 0;
-          const p = mixedGripPose(h.flickStyle, h.reachT, THREE.MathUtils.radToDeg(rawAbs), release);
+          const p = mixedGripPose(h.flickStyle, h.reachT, THREE.MathUtils.radToDeg(rawAbs), release, order);
           [c1, c2, c3] = p;
           splay = p[3] * sideSign;
           twist = p[4] * sideSign;
@@ -3492,43 +3992,6 @@ export default class HandsRig extends THREE.Group {
           splay = p[3] * sideSign;
           twist = ((pose.twist ?? 0) + p[4]) * sideSign;
           [metaCurl, metaSplay, metaTwist] = p.slice(5);
-        } else if (h.flickStyle === "upPush") {
-          // U'p 推法(FINGERTRICKS §4.5):reach 爬上 RUB 角块 U 贴纸,随层角
-          // 推初始角块到 BLU;decay 沿弧倒放 + 蜷指抬离(UP_PUSH.retreat —— 弧
-          // 本身在层归位后不再安全),收指段 reach 倒放爬回 B 面。
-          const smR = sm(h.reachT);
-          const t = Math.min(Math.abs(share), HALF_PI) / HALF_PI;
-          c1 += UP_PUSH.climb.c1 * smR;
-          c2 += UP_PUSH.climb.c2 * smR;
-          c3 += UP_PUSH.climb.c3 * smR;
-          splay += UP_PUSH.climb.splay * smR;
-          const tr = Math.sin(Math.PI * h.reachT); // 转移凸包(见 UP_PUSH.transit)
-          c1 += UP_PUSH.transit.c1 * tr;
-          c2 += UP_PUSH.transit.c2 * tr;
-          c3 += UP_PUSH.transit.c3 * tr;
-          splay += UP_PUSH.transit.splay * tr;
-          const fit = HOOK_FOLLOW[side][`upPush_${name}`];
-          if (fit) {
-            c1 += fitAt(fit, "c1", t);
-            c2 += fitAt(fit, "c2", t);
-            c3 += fitAt(fit, "c3", t);
-            splay += fitAt(fit, "splay", t);
-          } else {
-            c1 += UP_PUSH.follow.c1 * t;
-            c2 += UP_PUSH.follow.c2 * t;
-            c3 += UP_PUSH.follow.c3 * t;
-            splay += (UP_PUSH.follow.splay + UP_PUSH.follow.drift) * t;
-          }
-          if (h.flickDecay > 0) {
-            // 快攻-快收双闸(见 UP_PUSH.retreat):k=1 端要保住推程末姿(接得上
-            // 层归位那帧),k=0 端要回到 climb 就位姿(接得上后面的收指倒放),
-            // 中段全幅抬离。裸线性包络两端会拖尾,闸宽 0.07 卡在实测穿模带外。
-            const lift = sm(Math.min(1, (1 - decayK) / 0.07)) * sm(Math.min(1, decayK / 0.07));
-            c1 += UP_PUSH.retreat.c1 * lift;
-            c2 += UP_PUSH.retreat.c2 * lift;
-            c3 += UP_PUSH.retreat.c3 * lift;
-            splay += UP_PUSH.retreat.splay * lift;
-          }
         } else if (name === "thumb") {
           c1 -= open * 0.25;
           c2 -= open * 0.9;
@@ -3630,7 +4093,11 @@ export default class HandsRig extends THREE.Group {
       }
       // 换握张手:行程中段把弯曲压掉大半(见 regripOpen 注释),指尖伸展
       // 离开抓握半径;splay 不动(横向散开会互相打架)。
-      if (regripOpen > 0) {
+      // The thumb and a support finger take the intermediate hold. Free fingers
+      // remain clear while the opposite hand passes around that corner.
+      const supportDigit = mixedHandoff && side === 'L' ? 'ring' : 'index';
+      const opening = name === 'thumb' || name === supportDigit ? pinchOpen : regripOpen;
+      if (opening > 0) {
         if (name === "thumb") {
           // 拇指例外(2026-07-09 E 带姿):四指「张」= 压 curl 伸直离开抓握
           // 半径,但拇指压的是 F 面、末节大弯(c3≈1.1)—— 同款压 curl 会把
@@ -3638,17 +4105,17 @@ export default class HandsRig extends THREE.Group {
           // 已有暴露)。拇指的「张」= 轻开 curl + 绕根节向贴面外甩
           // (沿旧 D 拇指避让方向,随 open 渐入),yz 径向甩出箱体对角
           // 扫掠区。幅度 regrip play oracle 标定。
-          const k = 1 - regripOpen * 0.3;
+          const k = 1 - opening * 0.3;
           c1 *= k;
           c2 *= k;
           c3 *= k;
-          c2 -= 0.16 * regripOpen;
-          splay += (side === "R" ? -1 : 1) * 0.4 * regripOpen;
+          c2 -= 0.16 * opening;
+          splay += (side === "R" ? -1 : 1) * 0.4 * opening;
         } else {
           // oracle 标定:0.6 时 180° 换握中段剩 3.2U,0.72 剩 0.46U(↓→↑),
           // 0.78 全零(旧平摊 curl);2026-07-07 home 加弯档后残余绝对弯曲
           // 变大,中段指尖勾 U 面 1.38U → 提到 0.86。
-          const k = 1 - regripOpen * 0.86;
+          const k = 1 - opening * 0.86;
           c1 *= k;
           c2 *= k;
           c3 *= k;
@@ -3660,7 +4127,8 @@ export default class HandsRig extends THREE.Group {
         c1 -= .006 * THREE.MathUtils.smoothstep(degrees, 55, 70)
           * (1 - THREE.MathUtils.smoothstep(degrees, 80, 90));
       }
-      const markedPose = wide ? undefined : mark?.pose(side, name, !!lowerSupport || pinch > 0);
+      const upper = this.wideSupport?.homeUpper ? this.wideSupport : null;
+      const markedPose = upper ? upper.homeUpperPose(name, side !== upper.hand) : wide ? undefined : mark?.pose(side, name, !!lowerSupport || pinch > 0);
       if (wide) {
         const p = wide.pose(name);
         if (wide.frontHome && name === 'thumb') {
@@ -3690,6 +4158,16 @@ export default class HandsRig extends THREE.Group {
         metaSplay = markedPose[6] - (pose.meta?.[1] ?? 0);
         metaTwist = markedPose[7] - (pose.meta?.[2] ?? 0);
       }
+      if (h.flickStyle === 'lowerHook' && name === 'pinky') {
+        // Open the ulnar side of the palm as the ring takes over. Keep the
+        // little finger's contact through its own quarter, then clear its base.
+        const takingOver = isDouble ? THREE.MathUtils.smoothstep(rawAbs, 1.566, 1.72) : 1;
+        metaSplay -= .16 * takingOver * sm(h.reachT) * decayK;
+      }
+      if (h.flickStyle === 'lowerHook' && name === 'ring' && isDouble) {
+        const handoff = THREE.MathUtils.smoothstep(rawAbs, 1.45, 1.54) * (1 - THREE.MathUtils.smoothstep(rawAbs, 1.64, 1.76));
+        metaSplay += .070 * handoff * decayK;
+      }
       // Give free sweeps a weak distal response to PIP flexion. Contact
       // trajectories and support fingers keep their individually fitted DIP.
       if (role && !h.flickStyle && !markedPose && name !== 'thumb') {
@@ -3700,6 +4178,15 @@ export default class HandsRig extends THREE.Group {
       // rest bend when applying these rig envelopes (radians). CMC opposition
       // and thumb MCP out-of-plane rotation have separate calibrated channels.
       const limits = name === 'thumb' ? THUMB_HINGES : FINGER_HINGES;
+      // When the middle slab turns too, its leading corner reaches the
+      // resting thumb early and the middle finger late in each quarter.
+      if (order === 3 && h.strokeLayers.length === 2 && (h.flickStyle === 'downPush' || h.flickStyle === 'lowerHook')) {
+        const degrees = THREE.MathUtils.radToDeg(rawAbs), phase = degrees % 90;
+        if (name === 'thumb') c1 += .20 * THREE.MathUtils.smoothstep(phase, 0, 6)
+          * (1 - THREE.MathUtils.smoothstep(phase, 17, 27)) * decayK;
+        if (name === 'middle' && (h.flickStyle === 'lowerHook' || degrees < 90))
+          c1 -= .09 * THREE.MathUtils.smoothstep(phase, 61, 68) * (1 - THREE.MathUtils.smoothstep(phase, 77, 90)) * decayK;
+      }
       const downRing = role === 1 && name === 'ring' && order === 3 && !isDouble && h.flickStyle === 'middleSliceNail';
       const [middleRest, distalRest] = f.restBend ?? [0, 0];
       // The D-side roll uses a shallow extension at the PIP and allows a small
@@ -3745,10 +4232,20 @@ export default class HandsRig extends THREE.Group {
           f.meta.quaternion.identity();
         }
       }
+      if (sliceBrace && (name === 'thumb' || name === 'index')) {
+        // Extend to the static row after the palm clears the corner.
+        const contactWeight = sliceBrace ** 5;
+        applyPocketFingerPose(f, lowerSliceBrace[name], contactWeight, sideSign);
+        f.root.rotateZ(-.006 * sliceBrace * sideSign);
+        if (name === 'thumb') {
+          f.mid.rotateX(lowerSliceBrace.thumbMid[0] * contactWeight * sideSign);
+          f.mid.rotateZ(lowerSliceBrace.thumbMid[1] * contactWeight * sideSign);
+        }
+      }
     }
     let indexSkin = 0, middleSkin = 0, indexSkinRoll = 0, gripStretchWeight = 0;
     const frontPress = h.flickLayer === 'high' && (h.flickStyle === 'topPush'
-      || (h.flickAxis === 'z' && h.flickStyle === 'downPush'));
+      || h.flickStyle === 'downPush');
     if (frontPress) {
       const relay = h.flickFinger2 === 'middle';
       const weight = relay ? 1 - .85 * THREE.MathUtils.smoothstep(rawAbs, HALF_PI, Math.PI) : 1;
@@ -3756,7 +4253,7 @@ export default class HandsRig extends THREE.Group {
         : THREE.MathUtils.smoothstep(rawAbs, 0, .26) * (h.flickDecay > 0 ? sm(Math.min(1, 5 * h.flickDecay)) : 1);
       if (h.flickFinger === 'index') {
         easeFingerKnuckle(h.model.fingers.index, weight);
-        if (h.flickAxis === 'z') {
+        if (h.flickAxis === 'z' || h.flickStyle === 'downPush') {
           h.skinStroke.index = surfaceWeight;
           const edge = h.flickStyle === 'topPush' ? THREE.MathUtils.smoothstep(rawAbs, 1.25, HALF_PI) : 0;
           indexSkinRoll = alignFrontIndex(h.model.fingers.index, h.home.fingers.index, sideSign, 1 - .8 * edge);
@@ -3771,7 +4268,7 @@ export default class HandsRig extends THREE.Group {
         easeFingerKnuckle(h.model.fingers.middle, weight);
         const middleReturn = h.flickDecay > 0 ? THREE.MathUtils.smoothstep(h.flickDecay, .35, .58) : 1;
         middleSkin = indexSkin * middleReturn * THREE.MathUtils.smoothstep(rawAbs, .7 * HALF_PI, HALF_PI);
-        if (h.flickAxis === 'z') h.skinStroke.middle = middleSkin;
+        if (h.flickAxis === 'z' || h.flickStyle === 'downPush') h.skinStroke.middle = middleSkin;
       }
     }
     if ((h.flickStyle === 'indexHook' || h.flickStyle === 'reverseIndexHook') && h.flickFinger === 'index') {
@@ -3782,6 +4279,9 @@ export default class HandsRig extends THREE.Group {
       indexSkin = moving * (h.flickDecay > 0 ? sm(h.flickDecay) : 1);
       gripStretchWeight = indexSkin;
     }
+    if (this.wideSupport?.homeUpper && this.wideSupport.hand !== side) {
+      this.wideSupport.seatIndex(h.model.fingers.index, side === 'R' ? 1 : -1, THREE.MathUtils.radToDeg(rawAbs), decayK);
+    }
     const palmTurn = HandsRig._armTurn.copy(h.home.quat).invert().premultiply(g.quaternion).normalize();
     const displayedPalmWeight = halfGripWeight(2 * Math.acos(Math.min(1, Math.abs(palmTurn.w))));
     const targetPalmWeight = halfGripWeight(2 * Math.acos(Math.min(1, Math.abs(h.grip.w))));
@@ -3790,11 +4290,10 @@ export default class HandsRig extends THREE.Group {
     // Marked turns already calibrate the wrist and all five fingers together.
     // Keep the starting grip's correction; treating their wrist delta as a
     // new half grip applies a second bend and makes the free fingers cross.
-    const palmWeight = h.weldWhole || mark?.plan.hand === side ? targetPalmWeight
+    const palmWeight = h.weldWhole || nailStroke || mark?.plan.hand === side ? targetPalmWeight
       : this.regripFlag && h.recoverT < 1
-      ? THREE.MathUtils.lerp(h.regripArmWeight, targetPalmWeight, this.recoveryProgress(h.recoverT))
+      ? THREE.MathUtils.lerp(h.regripArmWeight, targetPalmWeight, this.handRecoveryProgress(h))
       : displayedPalmWeight;
-    const wristAngle = this.currentWristAngle(h);
     const winding = THREE.MathUtils.clamp(wristAngle / Math.PI, -1, 1);
     // Face turns with calibrated contact paths still use their authored
     // support. Signed half turns seat the entire gripping hand as one unit.
@@ -3811,20 +4310,21 @@ export default class HandsRig extends THREE.Group {
       seatWinding = Math.sign(h.gripAngle);
       transport = HandsRig._qTmp2.setFromAxisAngle(AXIS_VEC[h.weldAxis!], h.weldAngle);
     } else if (release) {
-      const leaving = atHalfTurn(release.source), t = this.recoveryProgress(h.recoverT);
+      const leaving = atHalfTurn(release.source), t = this.handRecoveryProgress(h);
       halfAim = leaving ? 1 - t : t;
       seatWinding = Math.sign(leaving ? release.source : h.gripAngle);
       if (leaving) transport = HandsRig._qTmp2.setFromAxisAngle(AXIS_VEC.x, release.layerAngle);
     } else if (this.wholeRegrip && h.recoverT < 1 && signedHalf) {
-      transport = HandsRig._qTmp2.copy(h.recoverQuat).slerp(HandsRig._qIdent, this.recoveryProgress(h.recoverT));
+      transport = HandsRig._qTmp2.copy(h.recoverQuat).slerp(HandsRig._qIdent, this.handRecoveryProgress(h));
     }
     h.halfPalm.apply(signedHalf || carrying && h.weldAxis === 'x' ? 0 : palmWeight, winding);
     const thumbRoll = carrying && h.weldAxis === 'x' && !h.weldWhole && atHalfTurn(h.gripAngle)
       ? carriedThumbWeight(h.gripAngle, h.weldAngle)
-      : h.recoverT < 1 ? h.halfThumbReturn * (1 - this.recoveryProgress(h.recoverT)) : 0;
+      : h.recoverT < 1 ? h.halfThumbReturn * (1 - this.handRecoveryProgress(h)) : 0;
     const slide = lowerSupport ? THREE.MathUtils.smoothstep(mark.preparation, 0, .85)
       * (1 - THREE.MathUtils.smoothstep(mark.returning, 0, .65)) : 0;
     if (wide?.moves) halfAim *= 1 - wideWeight;
+    if (braceProfile && four) halfAim *= 1 - THREE.MathUtils.smoothstep(four.progress, 0, 1);
     halfAim *= 1 - pinch;
     if (halfAim > 0) {
       h.halfPalm.placeStandard(halfAim, seatWinding, switching, transport, !!release || pinch > 0, Math.abs(thumbRoll));
@@ -3838,7 +4338,11 @@ export default class HandsRig extends THREE.Group {
         g.position.x -= h.model.side * halfAim * support * 1.5 * SIZE;
       }
     }
-    if (wide?.moves) {
+    if (this.wideSupport?.homeUpper) {
+      const slide = this.wideSupport.shift.y * this.wideSupport.slideWeight;
+      g.position.y += slide;
+      elbowTarget.y += slide;
+    } else if (wide?.moves) {
       g.position.addScaledVector(wide.shift, wide.slideWeight);
       elbowTarget.addScaledVector(wide.shift, wide.slideWeight);
       g.position.x += wide.lateralClearance;
@@ -3851,19 +4355,14 @@ export default class HandsRig extends THREE.Group {
     }
     if (thumbRoll) {
       const layerAngle = carrying ? h.weldAngle
-        : (release?.layerAngle ?? 0) + h.recoverWristAngle * (1 - this.recoveryProgress(h.recoverT));
+        : (release?.layerAngle ?? 0) + h.recoverWristAngle * (1 - this.handRecoveryProgress(h));
       h.halfPalm.rollCarriedThumb(thumbRoll, layerAngle);
     }
-    if (pocketPose && !mark) {
+    // The even-order half grip straddles the equatorial seam even when the
+    // next move is a single outer layer. Use its seated pads during idle too.
+    if ((order === 2 || order === 4) && !mark && halfAim > 0) {
       const { index, middle, thumb } = h.model.fingers;
-      const faceStroke = h.flickStyle === 'pocketThumbLift' ? pocketFrontThumb
-        : pocketRelay ? (h.flickStyle === 'backHook' ? pocketBackRelay : pocketBottomRelay) : null;
-      if (faceStroke) {
-        const reach = faceStroke === pocketBackRelay ? 1 : THREE.MathUtils.smoothstep(h.reachT, 0, 1);
-        applyPocketFaceStroke(faceStroke, THREE.MathUtils.radToDeg(rawAbs), decayK, reach,
-          side === 'L' ? 1 : -1, h.model.fingers, g.position, elbowTarget);
-      }
-      if (halfAim > 0 && seatWinding > 0) {
+      if (seatWinding > 0) {
         const turningTop = pocketTurn?.axis === 'y' && pocketTurn.cls === 'high' && pocketTurn.lastAngle * (side === 'R' ? 1 : -1) > 0;
         const degrees = turningTop ? THREE.MathUtils.radToDeg(Math.abs(pocketTurn.lastAngle)) % 90 : 0;
         // The thumb follows the passing corner while the opposite pads support the grip.
@@ -3881,8 +4380,7 @@ export default class HandsRig extends THREE.Group {
             * (1 - THREE.MathUtils.smoothstep(degrees, 39, 58));
           index.root.rotateY(.052 * lift * halfAim);
         }
-      }
-      if (halfAim > 0 && seatWinding < 0) {
+      } else if (seatWinding < 0) {
         const driven = pocketTurn?.axis === 'y' && pocketTurn.cls === 'low'
           && pocketTurn.gesture?.kind === 'flick' && pocketTurn.gesture.style === 'reverseRingHook';
         const degrees = driven ? THREE.MathUtils.radToDeg(Math.abs(pocketTurn.lastAngle)) : 0;
@@ -3891,7 +4389,17 @@ export default class HandsRig extends THREE.Group {
         seatPocketFinger(thumb, halfDownThumb, degrees, halfAim, mirror);
         middle.root.rotateY(.013 * halfAim);
       }
-      if (upperPhase !== undefined && halfAim === 0 && h.flickFinger2 !== 'middle' && h.flickFinger !== 'middle') {
+    }
+    if (pocketPose && !mark) {
+      const { index, middle, thumb } = h.model.fingers;
+      const faceStroke = h.flickStyle === 'pocketThumbLift' ? pocketFrontThumb
+        : pocketRelay ? (h.flickStyle === 'backHook' ? pocketBackRelay : pocketBottomRelay) : null;
+      if (faceStroke) {
+        const reach = faceStroke === pocketBackRelay ? 1 : THREE.MathUtils.smoothstep(h.reachT, 0, 1);
+        applyPocketFaceStroke(faceStroke, THREE.MathUtils.radToDeg(rawAbs), decayK, reach,
+          side === 'L' ? 1 : -1, h.model.fingers, g.position, elbowTarget);
+      }
+      if (!pushDriver && upperPhase !== undefined && halfAim === 0 && h.flickFinger2 !== 'middle' && h.flickFinger !== 'middle') {
         // Support the lower row below the moving edge, including F from a down grip.
         seatPocketFinger(middle, homeMiddleClearance, upperPhase, 1, side === 'R' ? 1 : -1);
       }
@@ -3935,7 +4443,7 @@ export default class HandsRig extends THREE.Group {
     // relay's arc, adjusting flexion where the narrower outer cuts pass the pad.
     const supportGrip = this.hands!.R.grip;
     const leftTopRelay = indexHookRelay && (order === 3 || order === 4) && side === 'L' && h.strokeLayers.length === 1 && h.strokeLayers[0] === order - 1
-      && supportGrip.angleTo(HandsRig._qIdent) >= .01;
+      && (order === 4 || supportGrip.angleTo(HandsRig._qIdent) >= .01);
     if (!mark && (pocketPose || leftTopRelay) && isDouble && h.flickAxis === 'y'
       && h.flickLayer === 'high' && h.flickFinger2 === 'middle') {
       const { index, middle, thumb } = h.model.fingers;
@@ -3958,6 +4466,13 @@ export default class HandsRig extends THREE.Group {
         if (leftTopRelay && order === 4) seatPocketFinger(middle, FOUR_U_RELAY_MIDDLE, degrees, decayK);
       }
     }
+    if (sweep && halfAim > 0 && turn) {
+      // The corner sweeps out and back once per quarter. Only lift the pad
+      // in that strip, leaving the other contact points on the fixed layer.
+      const weight = halfAim * Math.abs(Math.sin(2 * turn.lastAngle));
+      const mirror = side === 'R' ? 1 : -1;
+      for (const { finger, pose } of sweep) applyPocketFingerPose(h.model.fingers[finger], pose, weight, mirror);
+    }
     if (halfRelaySupport) h.halfPalm.clearUpperRelay(order, seatWinding, this.active!.lastAngle, halfAim);
     const halfRelief = palmWeight * THREE.MathUtils.smoothstep(Math.abs(winding), 0, 1);
     // Establish forearm support as the outer layer reaches upper grip. Once
@@ -3974,6 +4489,17 @@ export default class HandsRig extends THREE.Group {
     // 的滚转会随肘-腕方位漂,扁截面转离腕背 → 现台阶,故锚定掌平面)。
     // @4 融合前臂:前臂缝在手网格里,摆动 = forearm 骨绕腕的手局部旋转
     // Δ = 目标基 · 绑定基⁻¹(全程手局部)。
+    if (side === 'L' && this.rightPinch) {
+      this.rightPinch.applyLeftHome(h.model, h.home, h.flickStyle === 'topPush' ? h.reachT : 0);
+      h.halfPalm.baseQuaternion.copy(h.home.quat);
+      elbowTarget.copy(h.elbow);
+    }
+    const anchored = side === 'R' ? this.rightPinch : null;
+    if (anchored && this.restorePinchFingers) {
+      anchored.apply(h.model, h.home, this.restorePinchFingers);
+      h.halfPalm.baseQuaternion.copy(g.quaternion);
+      elbowTarget.copy(h.elbow);
+    }
     const wrist = HandsRig._vTmp.copy(WRIST_LOCAL).applyQuaternion(g.quaternion).add(g.position);
     const upperTurnSupport = h.weldAxis === 'x' && !h.weldWhole || h.grip.angleTo(GRIP_Q_UP) < .01;
     const armDirection = this.aimForearm(h, wrist, elbowTarget, palmWeight,
@@ -4054,20 +4580,72 @@ export default class HandsRig extends THREE.Group {
       const weight = halfRelaySupport ? 1 : THREE.MathUtils.smoothstep(seat.progress, 0, 1);
       contact?.apply(seat, seat.gesture.kind === 'weld' ? seat.gesture.hands[0] : seat.gesture.hand,
         flick?.finger, flick?.finger2, weight, side, h.grip.angleTo(HandsRig._qIdent) < .01,
-        this.hands![side === 'R' ? 'L' : 'R'].grip.angleTo(HandsRig._qIdent) < .01);
+        this.hands![side === 'R' ? 'L' : 'R'].grip.angleTo(HandsRig._qIdent) < .01, braceProfile);
+    }
+    if (order === 4 && wide) {
+      wide.clearRearMiddle(h.model.fingers.middle, 1 - THREE.MathUtils.smoothstep(seat?.progress ?? 0, 0, 1));
+    }
+    if (seat && seat.progress > 0 && seat.progress < 1) {
+      const p = seat.progress, mirror = side === 'R' ? 1 : -1;
+      if (seat.axis === 'x' && seat.layers.length === 3 && seat.gesture.kind === 'weld'
+        && seat.gesture.hands.includes(side) && Math.abs(h.gripAngle - Math.PI) < .01) {
+        // Roll the thumb off the outer corner before carrying all three rows.
+        applyPocketFingerPose(h.model.fingers.thumb, [.079, -.028, .045, -.005], 4 * p * (1 - p), mirror);
+      } else if (seat.returning && seat.axis === 'y' && seat.layers.length === 1 && seat.layers[0] === 1
+        && seat.gesture.kind === 'flick' && seat.gesture.hand === side && side === 'R' && seat.gesture.finger === 'ring'
+        && !seat.gesture.finger2 && opposite.grip.angleTo(HandsRig._qIdent) < .01) {
+        // Peel the driving nail off the stationary corner early in withdrawal.
+        const lift = releaseLift(p, 4);
+        applyPocketFingerPose(h.model.fingers.ring, [-.127, -.015, -.077, .012], lift, mirror);
+      }
     }
     // The layer is already baked. Let the driving pad clear the stationary
     // corner throughout its own recovery clock, including after fourSeat ends.
-    if (order === 4 && h.flickDecay > 0 && (h.flickAxis === 'y' || h.flickAxis === 'z') && h.flickFinger === 'index'
-      && h.grip.angleTo(HandsRig._qIdent) < .01 && this.hands![side === 'R' ? 'L' : 'R'].grip.angleTo(HandsRig._qIdent) < .01) {
+    if (order === 4 && !pushFinger && h.flickDecay > 0 && (h.flickAxis === 'y' || h.flickAxis === 'z') && h.flickFinger === 'index'
+      && h.grip.angleTo(HandsRig._qIdent) < .01 && (opposite.grip.angleTo(HandsRig._qIdent) < .01
+        || h.flickFinger2 === 'middle' && isEquatorBand(h.flickAxis, h.strokeLayers))) {
       this.fourContacts.get(h.model)?.releaseFlick(h.flickAxis, h.strokeLayers, h.flickFinger2 === 'middle', rawAbs, 1 - h.flickDecay, side);
+    }
+    if (!isDouble && h.flickStyle === 'lowerHook' && h.reachT > 0 && h.reachT < 1) {
+      const seat = sm(h.reachT);
+      applyPocketFingerPose(h.model.fingers.ring, [.033, .10, -.036, -.14],
+        4 * seat * (1 - seat), -sideSign);
+    }
+    if (order === 4 && !mark && isMiddleSliceStroke(h.flickStyle) && !isDouble) {
+      // Keep the free little finger outside the ring's pad-to-nail roll.
+      h.model.fingers.pinky.root.rotateZ(-sideSign * .15 * sm(h.reachT) * decayK);
+    }
+    if (h.flickDecay > 0 && !mark) {
+      // Lift the driving pad around the baked corner while the other hand
+      // supports the cube. Both endpoints stay on the authored trajectory.
+      const release = 4 * decayK * (1 - decayK);
+      const mirror = side === 'R' ? 1 : -1;
+      if (pocketRelay && h.flickStyle === 'hook') {
+        h.model.fingers.pinky.root.rotateZ(mirror * .34 * release);
+        h.model.fingers.pinky.root.rotateY(-.10 * release);
+        h.model.fingers.index.root.rotateY(.025 * release);
+      } else if (h.flickStyle === 'lowerHook') {
+        const ringTravel = rawAbs - (isDouble ? HALF_PI : 0);
+        const finished = THREE.MathUtils.smoothstep(ringTravel, 0, HALF_PI);
+        applyPocketFingerPose(h.model.fingers.ring, [.156, .094, -.003, -.354], release * finished, mirror);
+        if (order === 4 && isDouble && h.strokeLayers.length === 3) {
+          applyPocketFingerPose(h.model.fingers.ring, [-.080, .014, -.052, .002], releaseLift(decayK, 8) * finished, mirror);
+        }
+      } else if (order === 4 && h.flickStyle === 'downPush' && h.flickAxis === 'z' && h.flickFinger2 === 'middle') {
+        applyPocketFingerPose(h.model.fingers.middle, [.029, -.057, -.004, .028],
+          release * THREE.MathUtils.smoothstep(rawAbs, HALF_PI, Math.PI), mirror);
+      } else if (order === 4 && h.flickAxis === 'y' && h.strokeLayers.length === 1 && h.strokeLayers[0] === 2
+        && h.flickFinger === 'index' && !isDouble && h.grip.angleTo(HandsRig._qIdent) < .01) {
+        applyPocketFingerPose(h.model.fingers.index, [.091, -.493, -.071, .170],
+          release * THREE.MathUtils.smoothstep(rawAbs, 0, HALF_PI), mirror);
+      }
     }
     h.model.poseCorrective?.();
     const relayBlend = .63 + .37 * (h.flickAxis === 'z' && h.flickDecay > 0 ? THREE.MathUtils.smoothstep(1 - h.flickDecay, 0, .55) : 0);
     const frontBlend = frontPress ? indexSkin * (h.flickFinger2 ? relayBlend : frontPadWeight) : undefined;
     const foldRegion = frontPress && h.flickAxis === 'z' && h.flickStyle === 'topPush' ? 'proximal'
       : indexHookRelay ? 'pip' : undefined;
-    h.skinStroke.middleSlice = h.flickStyle === 'middleSlicePad' || (order === 3 && h.flickStyle === 'middleSliceNail');
+    h.skinStroke.middleSlice = h.flickStyle === 'middleSlicePad' || (order === 3 && isMiddleSliceStroke(h.flickStyle));
     h.halfPalm.contactSkin.apply(indexSkin, middleSkin, frontBlend, indexSkinRoll, gripStretchWeight, h.skinStroke, foldRegion);
   }
 

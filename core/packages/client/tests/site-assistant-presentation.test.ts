@@ -47,6 +47,31 @@ async function render(answer:AssistantAnswer,overrides:Partial<ComponentProps<ty
   return props;
 }
 
+it('opens the real 2×2 diagram on a saved text-only EG1 formula card',async()=>{
+  const answer:AssistantAnswer={answer:'EG1',sources:[],artifacts:[{
+    kind:'algorithms',version:1,title:'2x2 EG1',puzzle:'2x2',set:'eg1',display:'text',offset:0,total:40,nextOffset:1,cards:[{
+      caseId:1,puzzle:'2x2',set:'eg1',name:'EG1 S 1',href:'/alg/2x2/eg1',alg:"U' F' L U2 F2 R U' x'",alternative:0,alternativeCount:9,
+      sticker:{kind:'face',uf:'bygg',ur:'byoo',ub:'rybb',ul:'gorr',us:'ogyr'},
+    }],
+  }]};
+  const {onAsk}=await render(answer);
+  const card=document.querySelector('.assistant-algorithms')!;
+  const toggle=card.querySelector<HTMLButtonElement>('button[aria-expanded]')!;
+  const diagram=()=>card.querySelector('[role="img"][aria-label="EG1 S 1"] svg');
+  expect(toggle.textContent).toBe('显示状态图');
+  expect(diagram()).toBeNull();
+  await act(async()=>toggle.click());
+  expect(diagram()).not.toBeNull();
+  expect(toggle.getAttribute('aria-expanded')).toBe('true');
+  expect(card.querySelector('code')?.textContent).toBe("U' F' L U2 F2 R U' x'");
+  expect(onAsk).not.toHaveBeenCalled();
+  const loadMore=card.querySelector<HTMLButtonElement>('.assistant-algorithms-more button')!;
+  await act(async()=>loadMore.click());
+  expect(onAsk).toHaveBeenLastCalledWith(expect.stringContaining('状态图和公式'));
+  await act(async()=>toggle.click());
+  expect(diagram()).toBeNull();
+});
+
 describe('assistant general conversation controls',()=>{
   it('sends a frozen text selection while running and preserves the draft if acceptance fails',async()=>{
     const onAsk=vi.fn().mockResolvedValue(false),onDraftChange=vi.fn();

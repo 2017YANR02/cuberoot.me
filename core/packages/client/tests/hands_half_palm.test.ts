@@ -138,6 +138,27 @@ function segments(centers: number[][]) {
   return centers.slice(1).map((end, i) => new THREE.Vector3(...end).distanceTo(new THREE.Vector3(...centers[i])));
 }
 
+withHands.each([2, 3, 4])('separates both thumb surfaces in the paired upper half grip at order %i', async order => {
+  const rig = new HandsRig(), cube = new Cube(order);
+  try {
+    const { x, y, z } = cube.table.groups;
+    rig.attachCube({ order, table: { groups: { x, y, z } } });
+    rig.setEnabled(true);
+    await vi.waitFor(() => expect(rig.getLoadState().hands).toBe('ready'));
+    let frame!: HandDiagnosticFrame;
+    rig.subscribeDiagnostics(next => { frame = next; });
+    rig.setGrips(gripQuat('half'), gripQuat('half'), { R: Math.PI, L: Math.PI });
+    rig.tick(0);
+    const thumbs = (['L', 'R'] as const).map(side => {
+      const model = frame.models[side];
+      model.group.updateMatrixWorld(true);
+      const nail = model.nailMeshes!.find(mesh => mesh.userData.nail.finger === 'thumb')!;
+      return [...new FingerSurfaceSampler(model).sample('thumb'), ...meshTriangles(nail.geometry, nail.matrixWorld)];
+    });
+    expect(new FingerObstacle(thumbs[0]).intersections(thumbs[1])).toBe(0);
+  } finally { rig.dispose(); cube.dispose(); }
+});
+
 withHands('holds both standard seats with rigid palms, fixed phalanges and mirrored pad support', async () => {
   const rig = new HandsRig(), cube = new Cube(3);
   try {

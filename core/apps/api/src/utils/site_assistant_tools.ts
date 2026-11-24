@@ -1,5 +1,6 @@
 import { roundAnswer, type RoundRow } from './site_assistant_round.js';
 import { checkpointAssistantTool } from './site_assistant_execution.js';
+import { attendanceLocationResult } from './site_assistant_locations.js';
 import { annualAnswer, fourthsId } from './site_assistant_public_queries.js';
 import { z } from 'zod';
 import { formatWcaResult } from '@cuberoot/shared/wca-format-result';
@@ -34,7 +35,7 @@ export const toolCallSchema = z.discriminatedUnion('tool', [
   z.object({ tool: z.literal('news'), from: date.optional(), to: date.optional(), limit: z.number().int().min(1).max(10).default(5) }).strict().refine(value=>!value.from || !value.to || value.from<=value.to,{message:'Date range is reversed'}),
   z.object({ tool: z.literal('records'), event, region: z.string().regex(/^(world|[A-Z]{2})$/).default('world') }).strict(),
   z.object({ tool: z.literal('find_person'), query }).strict(),
-  z.object({ tool: z.literal('person_countries'), wcaId: z.string().regex(/^\d{4}[A-Z]{4}\d{2}$/), event: z.enum(WCA_EVENT_ORDER).optional(), from: date.optional(), to: date.optional() }).strict().refine(value=>!value.from || !value.to || value.from<=value.to,{message:'Date range is reversed'}),
+  z.object({ tool: z.literal('person_countries'), location: z.object({country:z.string().regex(/^[A-Z]{2}$/), view:z.enum(['regions','cities','competitions']),region:z.string().trim().min(1).max(40).regex(/^[\p{L} .’-]+$/u).optional()}).strict().optional(), wcaId: z.string().regex(/^\d{4}[A-Z]{4}\d{2}$/), event: z.enum(WCA_EVENT_ORDER).optional(), from: date.optional(), to: date.optional() }).strict().refine(value=>!value.from || !value.to || value.from<=value.to,{message:'Date range is reversed'}),
   z.object({ tool: z.literal('person_competitions'), wcaId: z.string().regex(/^\d{4}[A-Z]{4}\d{2}$/), event: z.enum(WCA_EVENT_ORDER).optional(), from: date.optional(), to: date.optional(), groupBy: z.literal('year').optional() }).strict().refine(value=>!value.from || !value.to || value.from<=value.to,{message:'Date range is reversed'}),
   z.object({ tool: z.literal('person'), wcaId: z.string().regex(/^\d{4}[A-Z]{4}\d{2}$/), event: z.enum([...WCA_EVENT_ORDER, 'all']).default('333'), metric: z.enum(['single','average']).optional(), rankings: z.boolean().optional(), progress: z.boolean().default(false), view: z.enum(['records','profile']).optional() }).strict().refine(value=>value.event!=='all' || !value.progress,{path:['event'],message:'Progress charts require one event; use all only for current personal bests.'}).refine(value=>value.view!=='profile' || (!value.metric && !value.progress && value.rankings===undefined),{path:['view'],message:'Use records view for metric, rankings or progress requests.'}),
   z.object({ tool: z.literal('rankings'), event, type: z.enum(['single','average']).default('single'), country: z.string().regex(/^([A-Z]{2}|_Asia|_Europe|_Africa|_North America|_South America|_Oceania)?$/).default(''), year: z.number().int().min(2003).max(2100).optional(), limit: z.number().int().min(1).max(20).default(10) }).strict(),
@@ -321,6 +322,7 @@ function selectAttendance(data: {results: Array<{competition_id: string; event_i
 
 /** Only fixed public origins/endpoints. Never forwards cookies or credentials. */
 async function executeDataTool(call: Exclude<AssistantToolCall, {tool:'pages'|'navigation'|'analysis_schema'|'analysis_query'|'web_search'|'deliberate'|'lookup_cube_photo'}>, lang: 'zh'|'en', read: JsonReader, findPeople = findAssistantPeople,today=new Date().toISOString().slice(0,10),timeZone='UTC'): Promise<ToolResult> {
+  if (call.tool === 'person_countries' && call.location) return attendanceLocationResult(call,call.location,lang,read);
   if (call.tool === 'annual_attendance') return annualAnswer(lang,call.limit);
   if (call.tool === 'competition_round') return roundAnswer(call,lang,read);
   if (call.tool === 'statistics_metadata') return call.view === 'runtime' ? readStatisticsRuntime(call, lang, read, Date.now, timeZone) : readStatisticsMetadata(call, lang);

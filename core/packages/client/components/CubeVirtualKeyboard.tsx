@@ -27,6 +27,8 @@ import { textPointAtOffset, placeCaretAtTextOffset, insertEditorText } from '@/l
 
 type EditorTarget = HTMLTextAreaElement | HTMLDivElement;
 
+type FingerKeyState = 'selected' | 'available' | 'hidden' | 'disabled';
+
 interface Props {
   pocket?: boolean;
   /** 目标编辑器(textarea 或 contenteditable div)的 ref */
@@ -37,7 +39,9 @@ interface Props {
   enableMarks?: boolean;
   /** A plain-text editor can retain the same marks in an HTML sidecar. */
   onFingerMark?: (mark: 'u' | 's' | 'em') => void;
-  fingerMarkSelected?: (mark: 'u' | 's' | 'em') => boolean;
+  fingerMarkState?: (mark: 'u' | 's' | 'em') => FingerKeyState;
+  fingerExamples?: Record<'s' | 'u' | 'em', readonly string[]>;
+  getPushSuffix?: () => { offset: number; marked: boolean } | null;
   onMarksOpen?: () => void;
   /** 键盘展开时挪进来的收起按钮(CubeKeyboardSection 传入),挤在触发器行最右侧省一行空间 */
   toggleButton?: ReactNode;
@@ -302,6 +306,7 @@ const MARK_ITEMS: Array<{ key: string; label: ReactNode; tip: { zh: string; en: 
   { key: 'mark-em',    label: <em>U</em>,                tip: { zh: '斜体', en: 'Italic' } },
   { key: 'mark-wavy',  label: <u className="wavy">U</u>, tip: { zh: '波浪线', en: 'Wavy underline' } },
   { key: 'mark-s',     label: <s>U</s>,                  tip: { zh: '删除线', en: 'Strikethrough' } },
+  { key: 'mark-push', label: 'p', tip: { zh: '推法', en: 'Push' } },
   { key: 'mark-up',    label: '↑',   tip: { zh: '上箭头', en: 'Up arrow' } },
   { key: 'mark-down',  label: '↓',   tip: { zh: '下箭头', en: 'Down arrow' } },
   { key: 'mark-up-double', label: '↑↑', tip: { zh: '向上半转换握', en: 'Half-turn grip via up' } },
@@ -311,7 +316,7 @@ const MARK_ITEMS: Array<{ key: string; label: ReactNode; tip: { zh: string; en: 
   { key: 'mark-mid',   label: '·',   tip: { zh: '间隔号', en: 'Middle dot' } },
 ];
 
-export default function CubeVirtualKeyboard({ pocket = false, target, onInput, enableMarks = false, onFingerMark, fingerMarkSelected, onMarksOpen, toggleButton }: Props) {
+export default function CubeVirtualKeyboard({ pocket = false, target, onInput, enableMarks = false, onFingerMark, fingerMarkState, fingerExamples, getPushSuffix, onMarksOpen, toggleButton }: Props) {
   const { t } = useTranslation();
   const [activePage, setActivePage] = useState(0);
   const [shiftState, setShiftState] = useState<ShiftState>('off');
@@ -532,6 +537,17 @@ export default function CubeVirtualKeyboard({ pocket = false, target, onInput, e
     const el = target.current;
     if (!el) return;
     focusTarget(el);
+    if (mk === 'mark-push') {
+      const suffix = getPushSuffix?.();
+      if (!suffix || isCE(el)) return;
+      el.setSelectionRange(suffix.offset, suffix.offset + Number(suffix.marked));
+      if (suffix.marked) {
+        document.execCommand('delete', false);
+        normAndNotify();
+        updateModifierState();
+      } else vkbInsert('p');
+      return;
+    }
     if (mk === 'mark-u' || mk === 'mark-s' || mk === 'mark-em' || mk === 'mark-wavy') {
       const kind = mk === 'mark-u' ? 'u' : mk === 'mark-s' ? 's' : mk === 'mark-em' ? 'em' : 'wavy';
       if (onFingerMark && kind !== 'wavy') { onFingerMark(kind); return; }
@@ -550,7 +566,7 @@ export default function CubeVirtualKeyboard({ pocket = false, target, onInput, e
     if (mk === 'mark-both-up') { vkbInsert('↑｜↑'); return; }
     if (mk === 'mark-both-down') { vkbInsert('↓｜↓'); return; }
     if (mk === 'mark-mid')  { vkbInsert('·'); return; }
-  }, [target, onInput, onFingerMark, vkbInsert]);
+  }, [target, onInput, onFingerMark, getPushSuffix, normAndNotify, updateModifierState, vkbInsert]);
 
   // NOTE: pointerdown
   const handlePointerDown = useCallback((e: React.PointerEvent) => {
@@ -902,6 +918,12 @@ export default function CubeVirtualKeyboard({ pocket = false, target, onInput, e
   /** 生成 QWERTY 行按键文本(根据 Shift 状态切换大小写) */
   const qwertyKey = (k: string) => isUpper ? k.toUpperCase() : k;
 
+  const markStates: Partial<Record<string, FingerKeyState>> = marksPopupVisible && fingerMarkState ? {
+    'mark-u': fingerMarkState('u'), 'mark-s': fingerMarkState('s'), 'mark-em': fingerMarkState('em'),
+  } : {};
+
+  const pushSuffix = marksPopupVisible ? getPushSuffix?.() : null;
+
   return (
     <div>
       {/* 联想建议条——始终保留高度,空态防止键盘上移 */}
@@ -1071,8 +1093,8 @@ export default function CubeVirtualKeyboard({ pocket = false, target, onInput, e
           data-site-surface="popover"
           style={{ left: marksPopupPos.left, top: marksPopupPos.top }}
         >
-          {MARK_ITEMS.filter(it => onFingerMark
-            ? it.key !== 'mark-wavy'
+          {MARK_ITEMS.filter(it => it.key === 'mark-push' ? !!getPushSuffix : onFingerMark
+            ? it.key !== 'mark-wavy' && markStates[it.key] !== 'hidden'
             : enableMarks || typeof it.label === 'string').map(it => (
             <button
               type="button"
@@ -1085,8 +1107,9 @@ export default function CubeVirtualKeyboard({ pocket = false, target, onInput, e
                 : onFingerMark && it.key === 'mark-em' ? tr({ zh: '拇指', en: 'Thumb' })
                 : onFingerMark && it.key === 'mark-u' ? tr({ zh: '指甲', en: 'Fingernail' }) : tr(it.tip)}
               data-mk={it.key}
-              aria-pressed={onFingerMark && (it.key === 'mark-s' || it.key === 'mark-em' || it.key === 'mark-u')
-                ? fingerMarkSelected?.(it.key.slice(5) as 'u' | 's' | 'em') : undefined}
+              disabled={it.key === 'mark-push' && !pushSuffix || markStates[it.key] === 'disabled'}
+              aria-pressed={it.key === 'mark-push' ? !!pushSuffix?.marked : onFingerMark && (it.key === 'mark-s' || it.key === 'mark-em' || it.key === 'mark-u')
+                ? markStates[it.key] === 'selected' : undefined}
               onPointerDown={e => e.preventDefault()}
               onClick={() => {
                 handleMarkItem(it.key);
@@ -1094,7 +1117,9 @@ export default function CubeVirtualKeyboard({ pocket = false, target, onInput, e
                 setActiveMark(null);
               }}
             >
-              {it.label}
+              {it.key === 'mark-em' && onFingerMark ? <em>{fingerExamples?.em[0] ?? 'F'}</em>
+                : it.key === 'mark-s' && fingerExamples ? <s>{fingerExamples.s[0]}</s>
+                : it.key === 'mark-u' && fingerExamples ? <u>{fingerExamples.u[0]}</u> : it.label}
             </button>
           ))}
         </div>,

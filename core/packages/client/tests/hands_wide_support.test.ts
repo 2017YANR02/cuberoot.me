@@ -5,7 +5,7 @@ import Cube from '@cuberoot/puzzle-render-core/engine/nxn/cube';
 import HandsRig, { gripQuat, type HandDiagnosticFrame } from '@/app/[lang]/sim/engine/hands/handsRig';
 import { buildManoHand } from '@/app/[lang]/sim/engine/hands/handModelMano';
 import { readDiagnosticPieces, measureIndexContact } from '@/app/[lang]/sim/engine/hands/uContactGeometry';
-import { FINGER_NAMES, FingerSurfaceSampler } from '@/app/[lang]/sim/engine/hands/fingerCollision';
+import { FINGER_NAMES, FingerObstacle, FingerSurfaceSampler } from '@/app/[lang]/sim/engine/hands/fingerCollision';
 import { nailPoints } from '@/app/[lang]/sim/engine/hands/gestureContactTrace';
 
 const asset = (side: number) => new URL(`../public/sim/hands/mano/${side === -1 ? 'right' : 'left'}.mano.json`, import.meta.url);
@@ -28,10 +28,11 @@ vi.mock('@/app/[lang]/sim/engine/hands/handSkeleton', async original => ({
 const cases = (['x', 'y', 'z'] as const).flatMap(axis =>
   ([false, true] as const).flatMap(high =>
     (['home', 'up', 'down', 'half', 'halfDown'] as const).flatMap(grip =>
-      ([1, -1] as const).map(dir => ({ axis, high, grip, dir })))));
+      ([1, -1] as const).flatMap(dir => (axis === 'z' && high ? [1, 2] : [1])
+        .map(quarters => ({ axis, high, grip, dir, quarters }))))));
 
 describe.skipIf(!existsSync(asset(-1)) || !existsSync(asset(1)))('wide-turn stationary layer', () => {
-  it.each(cases)('$axis high=$high dir=$dir with $grip hands', async ({ axis, high, grip, dir }) => {
+  it.each(cases)('$axis high=$high dir=$dir quarters=$quarters with $grip hands', async ({ axis, high, grip, dir, quarters }) => {
     const cube = new Cube(3), rig = new HandsRig();
     try {
       rig.attachCube({ order: 3, table: { groups: { x: cube.table.groups.x, y: cube.table.groups.y, z: cube.table.groups.z } } });
@@ -43,7 +44,7 @@ describe.skipIf(!existsSync(asset(-1)) || !existsSync(asset(1)))('wide-turn stat
       rig.tick(0);
       const layers = high ? [1, 2] : [0, 1];
       const groups = layers.map(layer => cube.table.groups[axis][layer]);
-      const prepare = () => rig.prepareTwist(axis, layers, dir);
+      const prepare = () => rig.prepareTwist(axis, layers, dir, quarters);
       prepare();
       rig.tick(0);
       const plan = frame.wideSupport!;
@@ -66,6 +67,12 @@ describe.skipIf(!existsSync(asset(-1)) || !existsSync(asset(1)))('wide-turn stat
           for (const { name, joint, start } of homeJoints)
             expect(joint.quaternion.clone().normalize().angleTo(start), phase + ' ' + name).toBeLessThan(name === 'thumb' ? .0041 : 1e-6);
         }
+        if (axis === 'y' && high && grip === 'up' && !holding) {
+          const middle = new FingerObstacle(sampler.sample('middle'));
+          for (const neighbor of ['index', 'ring'] as const) {
+            expect(middle.intersections(sampler.sample(neighbor)), phase + ' middle/' + neighbor).toBe(0);
+          }
+        }
         const pieces = readDiagnosticPieces(cube);
         for (const finger of FINGER_NAMES) {
           const skin = measureIndexContact(sampler.samplePoints(finger), pieces);
@@ -82,14 +89,17 @@ describe.skipIf(!existsSync(asset(-1)) || !existsSync(asset(1)))('wide-turn stat
           else { expect(stable.length, phase + ' ' + finger).toBeGreaterThan(0); held.set(finger, stable); }
         }
       };
-      for (let i = 0; i < 64; i++) { rig.tick(8); if (i % 2 === 0) inspect('prepare ' + i, false); }
+      for (let i = 0; i < 200 && prepare(); i++) {
+        rig.tick(8);
+        if (i % 2 === 0) inspect('prepare ' + i, false);
+      }
       expect(prepare()).toBe(false);
       expect(plan.fingers.length).toBeGreaterThanOrEqual(2);
       if (axis === 'x' && (grip === 'home' || grip === 'up' || grip === 'down')) expect(plan.shift).toEqual([0, 0, 0]);
       inspect('seated', true);
       const palm = model.group.position.clone();
       for (const group of groups) group.drag();
-      for (let angle = 2; angle <= 90; angle += 2) {
+      for (let angle = 2; angle <= quarters * 90; angle += 2) {
         for (const group of groups) group.angle = dir * THREE.MathUtils.degToRad(angle);
         rig.tick(0);
         expect(model.group.position.distanceTo(palm)).toBeLessThan(.001);

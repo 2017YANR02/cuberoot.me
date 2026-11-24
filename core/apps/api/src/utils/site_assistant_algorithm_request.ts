@@ -72,6 +72,15 @@ export function requestsDiagramInstead(question:string) {
     && !/(?:不要|不用|无需|别)(?:给我|给|显示|展示)?(?:状态图|图片|图像)/.test(question);
 }
 
+/** A formula card carries both parts unless the visitor requests a different format. */
+export function requestedAlgorithmDisplay(question:string):AssistantAlgorithms['display']|undefined {
+  const text=question.normalize('NFKC');
+  if(requestsDiagramInstead(text))return 'image';
+  if(/(?:只|仅|换成|改成)[^，。！？；]{0,16}(?:文字|文本)|(?:不要|不用|不需要|无需|别)(?:给我|给|配|放|显示|展示|附上)?(?:状态图|示意图|图片|图像|图)(?!文)|\b(?:text only|only text|no (?:images?|diagrams?))\b/i.test(text))return 'text';
+  if(/(?:只|仅)(?:要|给|看|显示|展示|提供)?\s*(?:状态图|示意图|图片|图像|图)(?!文)|(?:换成|改成)\s*(?:状态图|示意图|图片|图像|图)(?!文)|\b(?:images?|diagrams?)\s+only\b|\bonly\s+(?:images?|diagrams?)\b/i.test(text))return 'image';
+  if(/(?:带|加|附|配|要|看|看看)[^，。！？；]{0,16}(?:状态图|示意图|图片|图像|图)|图文|状态图和公式|\b(?:with|add|both)[^.!?]{0,35}(?:images?|diagrams?)\b/i.test(text))return 'both';
+}
+
 /** Resolve concrete formula requests centrally for every client. Case names
  * come from the selected library, so sentence wording is not a fixed command.
  * Concept/navigation questions remain with the ordinary planner. */
@@ -117,10 +126,7 @@ export async function resolveAssistantAlgorithmRequest(question:string,history:A
   const nextCase=/(?:下一个|换一个|另一个)\s*(?:case|情况|状态)|^(?:那|看)?下(?:一)?个(?:呢|吧)?[?？。!！\s]*$|\bnext\s+case\b/i.test(text);
   const another=!nextCase && /换(?:一(?:条|个|种|下)|条|个|种|公式)|再来|另一|(?:其他|其它|别的).*(?:公式|手顺|算法)|还有别|还有其他|还有其它|\b(?:another|alternative|different)\b/i.test(text);
   const more=/^(?:请|再)?(?:继续|接着|剩下的|还有呢|后面的)[。！?？\s]*$|(?:继续|加载|剩下|后面).*(?:公式|case)|\b(?:continue|remaining|load more|next page)\b/i.test(text);
-  const onlyImage=/(?:只|仅)(?:要|给|看|显示|展示|提供)?\s*(?:状态图|图片|图)(?!文)|(?:换成|改成)\s*(?:状态图|图片|图)(?!文)|\b(?:images?|diagrams?)\s+only\b|\bonly\s+(?:images?|diagrams?)\b/i.test(text);
-  const onlyText=/(?:只|仅|换成|改成).*(?:文字|文本)|(?:不要|不用|不需要)(?:状态)?图|\b(?:text only|only text|no (?:images?|diagrams?))\b/i.test(text);
-  const both=/(?:带|加|附|配|要|看|看看).*(?:图|图片)|(?:图文|状态图和公式)|\b(?:with|add|both).*(?:images?|diagrams?)\b/i.test(text);
-  const format=diagramInstead?'image':onlyText?'text':onlyImage?'image':both?'both':undefined;
+  const format=requestedAlgorithmDisplay(text);
   const refer=/[这那](?:个|条|张)|刚才|刚刚|上(?:一)?[个条]|第\s*[一二两三四五六七八九十\d]+\s*个|\b(?:this|that|previous|first|second|third)\b/i.test(text);
   const formula=/公式|手顺|算法|case|卡片|状态图|\b(?:algorithms?|moves?|perms?)\b/i.test(text);
   const want=/(?:给|发|来|要|看|有哪些|列出|展示|显示|附上|提供|怎么做|怎么拧|怎么转|如何做|如何拧)|\b(?:show|give|list|want|need|see|how.*(?:do|solve|execute))\b/i.test(text);

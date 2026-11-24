@@ -129,7 +129,7 @@ export function resolveAssistantPlanShape(question:string, priorUsers:string[]) 
   for(const [turn,text] of [...priorUsers,question].entries()) {
     const parsed=(turn===priorUsers.length?current:assistantPlanShape(text)) ?? (shape?assistantPlanShape('Plan activities. '+text):undefined);
     if(parsed){shape={...shape,...parsed};sources.push({turn,text});}
-    if(shape && /段落|一段|\bparagraph\b/i.test(text))shape.paragraph=true;
+    if(shape && (chineseParagraphOutput.test(text) || /段落|\bparagraph\b/i.test(text)))shape.paragraph=true;
     if(shape && /改成列表|改为列表|\b(?:make|change|use)\b.*\b(?:list|bullets)\b/i.test(text))delete shape.paragraph;
     if(shape && /取消.{0,8}(?:字数|词数)|remove.{0,20}word (?:limit|count)/i.test(text))delete shape.englishWords;
     if(shape && /(?:最多|至少|at most|at least|no more than)[^。；;\n]{0,25}(?:项|activities|activity)/i.test(text) && !parsed?.activities)delete shape.activities;
@@ -247,6 +247,8 @@ export function normalizeAssistantPlanParagraph(answer:string,maximumMinutes:num
   return [sentence(heading[1]),...steps.map(step=>sentence(step!))].join(' ');
 }
 
+// A counted recording, stretch of time or section of a solve is not a paragraph request.
+const chineseParagraphOutput=/(?:一段(?:话|文字|正文|段落)|(?:写成|改成|合(?:并|成)|浓缩成|整理成|只写|写在|放在)(?:同)?一段(?=$|[里中。？！；，、,\s])|(?:用|以)一段(?:来)?(?:说明|描述|回答|概括|介绍|呈现))/;
 const oneParagraphRequested=/\b(?:one|a single) (?:timed |continuous )?paragraph\b/i;
 
 /** A single whole-pass timer can use the visitor's cap without rewriting any
@@ -439,7 +441,7 @@ export function assistantPlanShape(question:string) {
   const headingDurationSeparator=question.match(/(?:标题|小标题)[^。！？\n]{0,20}(?:练习名|活动名|名称)\s*([：:])\s*(?:秒数|时长|时间)|\bheadings?\b[^.!?\n]{0,30}\b(?:name|title)\s*([：:])\s*(?:duration|seconds|time)\b|\b(?:name|title)\s*([：:])\s*(?:duration|seconds|time)\s+headings?\b/i);
   const describedSeparator=/\bheadings?\b[^.!?\n]{0,64}\b(?:name|title) followed by (?:a |the )?colon[^.!?\n]{0,20}\bseconds?\b/i.test(question)?':':undefined;
   const separator=headingDurationSeparator?.[1]??headingDurationSeparator?.[2]??headingDurationSeparator?.[3]??describedSeparator;
-  return activities||substepsPerActivity||englishWords||/一段/.test(question)||oneParagraphRequested.test(question)?{...(separator?{headingDurationSeparator:separator}:{}),...(bounds.activity?{activitySecondsMaximum:bounds.activity}:{}),...(bounds.step?{stepSecondsMaximum:bounds.step}:{}),...(activities?{activities}:{}),...(substepsPerActivity?{substepsPerActivity}:{}),...(englishWords?{englishWords}:{}),...(/段落|一段|\bparagraph\b/i.test(question)?{paragraph:true}:{})}:undefined;
+  return activities||substepsPerActivity||englishWords||chineseParagraphOutput.test(question)||oneParagraphRequested.test(question)?{...(separator?{headingDurationSeparator:separator}:{}),...(bounds.activity?{activitySecondsMaximum:bounds.activity}:{}),...(bounds.step?{stepSecondsMaximum:bounds.step}:{}),...(activities?{activities}:{}),...(substepsPerActivity?{substepsPerActivity}:{}),...(englishWords?{englishWords}:{}),...((chineseParagraphOutput.test(question) || /段落|\bparagraph\b/i.test(question))?{paragraph:true}:{})}:undefined;
 }
 
 const slowTurning=/慢拧|(?:慢|慢慢|缓慢|慢速)转|\bslow[- ](?:turns?|turning)\b|\bturn(?:ing)?(?: (?:the |a )?cube)? slowly\b/i;

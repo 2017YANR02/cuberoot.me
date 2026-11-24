@@ -32,9 +32,6 @@
   font-size: clamp(1rem, 2.8cqw, 1.2rem);
   text-wrap: balance;
 }
-@container course-reading (max-width: 760px) {
-  .two-lbl-chapter-overview { padding-block-start: clamp(12px, 6cqh, 36px); }
-}
 @container course-reading (max-height: 250px) {
   .two-lbl-chapter-overview {
     --overview-diagram-height: 50cqh;

@@ -18,7 +18,7 @@ Mac App Store 与 iOS 使用同一 App Store Connect 记录。商店构建走 `p
 
 ### macOS 订阅与沙盒构建
 
-Mac App Store 版复用 `me.cuberoot.app` 下的个人会员订阅组 `22424056` 和自动续费月卡、年卡。现有账号权益和服务端验单可跨 iOS 与 macOS 使用。两项商品首次随 iOS 1.0.2 送审，待商品批准后供正式销售。Mac 端可以先进行开发和沙盒验收，支持内购的 Mac 新版本走独立审核。[Apple 商品跨平台配置](https://developer.apple.com/help/app-store-connect/configure-in-app-purchase-settings/overview-for-configuring-in-app-purchases/) · [当前进度](../../../docs/product/apps/mobile-app-roadmap.md#2026-11-23-ios-102-与首批-apple-订阅)
+Mac App Store 版复用 `me.cuberoot.app` 下的个人会员订阅组 `22424056` 和自动续费月卡、年卡。现有账号权益和服务端验单可跨 iOS 与 macOS 使用。两项商品首次随 iOS 1.0.2 送审，待商品批准后供正式销售。Mac 端可以先进行开发和沙盒验收，支持内购的 Mac 新版本走独立审核。[Apple 商品跨平台配置](https://developer.apple.com/help/app-store-connect/configure-in-app-purchase-settings/overview-for-configuring-in-app-purchases/) · [当前进度](../../../docs/product/apps/mobile-app-roadmap.md#2026-11-24-mac-app-store-订阅接入)
 
 - **原生入口**。Mac App Store 构建沿用「我的」和 `InstalledAppHost.appleMembership`。Swift StoreKit 2 负责商品、购买、恢复、交易更新和管理订阅。Rust 命令要求 macOS、`mac-app-store` 编译特性与主窗口。Mac 和 iOS 共享账号校验及服务端验签流程，验单成功后才调用 `finish()`。嵌入页只收到商品和操作结果。
 - **系统兼容**。购买与 `AppStore.sync()` 从 macOS 12 开放。macOS 15.2 及以上使用 `purchase(confirmIn: NSWindow, …)`。订阅管理打开 [Apple 订阅入口](https://apps.apple.com/account/subscriptions)。

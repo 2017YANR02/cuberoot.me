@@ -336,6 +336,8 @@ export interface AdaptGltfOpts {
   thumbRoll?: number;
   /** 甲片半宽比例表覆盖(K = 背侧指尖满宽 ÷ 末节长,探针实测烘定值)。 */
   nailHalfWK?: Partial<Record<FingerName, number>>;
+  /** Dorsal thumb heights relative to the nail root, measured on the source mesh. */
+  thumbNailRidge?: { middle: number; tip: number };
   /** @4 融合前臂的绑定臂伸向(腕→肘,资产空间单位向量,转换器 forearmDir)。
    *  与骨名 "forearm" 同时存在才装配 HandModel.forearm。 */
   forearmDirAsset?: [number, number, number];
@@ -623,6 +625,10 @@ export function adaptGltfHand(src: THREE.Object3D, side: 1 | -1, skinMat: THREE.
       const t1 = Math.min(sApex / nf.len, 1 + (NAIL_REACH * rCap) / nf.len);
       const rTipRidge = rBase * (1 - 0.08); // 贴背段末端(t=1)脊高,悬出段起点
       const ridge = (sq: number): number => {
+        if (name === 'thumb' && opts?.thumbNailRidge) {
+          const t = sq / nf.len, { middle, tip } = opts.thumbNailRidge;
+          return rBase * (1 + (middle - 1) * sstep(.45, .68, t) + (tip - middle) * sstep(.88, 1, t));
+        }
         if (sq <= nf.len) return rBase * (1 - 0.08 * sstep(0.50, 1, sq / nf.len));
         const x = Math.min(1, (sq - nf.len) / (NAIL_REACH * rCap));
         return rTipRidge * (1 - NAIL_TIP_DIP * x * x);

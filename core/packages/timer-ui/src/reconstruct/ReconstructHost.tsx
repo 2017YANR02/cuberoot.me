@@ -6,14 +6,15 @@ import type { ReconTextLine } from '@cuberoot/shared/timer/reconstruct/recon-tex
 import BoolToggle, { type BoolToggleProps } from '../BoolToggle';
 
 import type { ReconstructLocalize } from './report-content';
+import type { CfopFormulaTarget, CfopFormulaFocus } from './cfop-diagnosis';
 export type { ReconstructLocalize } from './report-content';
 
 export interface ReconstructAssistantSummary {
   timeMs: number;
   penalty: Solve['penalty'];
   method: string | null;
-  stm: number;
-  tps: number;
+  stm: number | null;
+  tps: number | null;
   stages: Array<{
     label: string;
     stepMs: number | null;
@@ -30,7 +31,10 @@ export interface ReconstructHost {
   writeClipboardText: (text: string) => Promise<void>;
   replayUrl?: (solve: Solve) => string | null | Promise<string | null>;
   renderIntakeAction?: (solve: Solve, snapshot: ReconSnapshot | null) => ReactNode;
-  renderAssistantAction?: (summary: ReconstructAssistantSummary) => ReactNode;
+  renderAssistantAction?: (summary: ReconstructAssistantSummary, followUp?: boolean) => ReactNode;
+  renderAssistantTrainingLink?: (href: string, label: string) => ReactNode;
+  prepareAssistantFormula?: (set: CfopFormulaTarget['set']) => void;
+  renderAssistantFormula?: (target: CfopFormulaTarget, focus: CfopFormulaFocus, fallback: ReactNode) => ReactNode;
   renderAnnotationAction?: (line: ReconTextLine, seek: () => void) => ReactNode;
   renderCaseLink?: (href: string, label: ReactNode, className: string) => ReactNode;
   renderScrambleDiagram?: (scramble: string) => ReactNode;

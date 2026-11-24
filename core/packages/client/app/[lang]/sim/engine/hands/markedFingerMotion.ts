@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import type { FingerAnnotation } from '@/lib/alg-finger-marks';
+import { approachCost, strokeTangent, type FingerBearing } from './strokeGeometry';
 import type { FingerName, HandModel } from './handModel';
 import type { FingerCurl } from './handPoses';
 
@@ -29,18 +30,23 @@ export interface MarkedFingerProfile {
   axis: 'y' | 'z';
   dir: 1 | -1;
   start: readonly [number, number, number];
+  mirroredStart?: readonly [number, number, number];
   normal: readonly [number, number, number];
   destination: readonly [number, number, number];
   contactVertex: number;
+  mirroredContactVertex?: number;
+  /** Additive channels of the reflected middle finger, calibrated on its own mesh. */
+  mirroredRoll?: FingerPoseRows;
   /** Layer angles at which a pad roll begins, transfers to the nail and settles. */
   nailTransfer?: readonly [start: number, transfer: number, end: number];
   /** Only enable a mirror after its actual skin and nail contacts pass. */
   mirrorSafe?: boolean;
+  singleUpper?: boolean;
   approach: FingerPoseRows;
   turn: FingerPoseRows;
   support?: Partial<Record<FingerName, FingerChannels>>;
   /** Stationary sticker contacts covered by the distal pads. */
-  supportContacts?: Partial<Record<FingerName, { vertex: number; mirroredVertex?: number; point: readonly [number, number, number] }>>;
+  supportContacts?: Partial<Record<FingerName, { vertex: number; point: readonly [number, number, number] }>>;
   /** Progress, wrist translation/XYZ rotation, five fingers' channels, then optional elbow lift along the profile's Y axis. */
   handApproach?: FingerPoseRows;
   handTurn: FingerPoseRows;
@@ -53,9 +59,12 @@ export interface MarkedTurnRequest {
   dir: 1 | -1;
   quarters: number;
   annotation: FingerAnnotation;
+  automatic?: boolean;
 }
 
+type CandidateCost = { profile: string; hand: Side; finger: FingerName; surface: 'pad' | 'nail'; cost: number };
 export interface MarkedFingerPlan {
+  candidates: readonly CandidateCost[];
   profile: MarkedFingerProfile;
   request: MarkedTurnRequest;
   hand: Side;
@@ -80,19 +89,25 @@ function clearanceKey(axis: Axis, layers: readonly number[], grip: THREE.Quatern
  */
 export function chooseMarkedFingerPlan(
   request: MarkedTurnRequest, profiles: readonly MarkedFingerProfile[],
-  grips: Record<Side, THREE.Quaternion>, tips: Record<Side, Record<FingerName, THREE.Vector3>>,
+  grips: Record<Side, THREE.Quaternion>, bearings: Record<Side, Record<FingerName, FingerBearing>>,
 ): MarkedFingerPlan | null {
-  if (request.quarters !== 1 || request.layers.length !== 2 || request.layers.includes(0) === request.layers.includes(2)) return null;
+  const singleUpper = request.axis === 'y' && request.layers.length === 1 && request.layers[0] === 2;
+  if (singleUpper && (request.automatic || request.annotation.finger !== 'middle'
+    || [grips.L, grips.R].some(q => Math.abs(q.y) + Math.abs(q.z) > .01 || Math.abs(q.w) < .70))) return null;
+  if (request.quarters !== 1 || !singleUpper && (request.layers.length !== 2 || request.layers.includes(0) === request.layers.includes(2))) return null;
   const keys = { L: clearanceKey(request.axis, request.layers, grips.L), R: clearanceKey(request.axis, request.layers, grips.R) };
   if (!keys.L || !keys.R) return null;
-  const contact = request.annotation.contact ?? 'pad';
+  const contact = request.annotation.contact ?? (request.automatic ? undefined : 'pad');
+  const candidates: CandidateCost[] = [];
   let best: { plan: MarkedFingerPlan; cost: number } | undefined;
   for (const profile of profiles) {
     // The pose program must cover the full visual turn, including any release.
-    if (profile.handTurn.at(-1)![0] < 90) continue;
-    if (profile.contact !== contact || (request.annotation.finger && request.annotation.finger !== profile.finger)) continue;
+    if (!!profile.singleUpper !== singleUpper || profile.handTurn.at(-1)![0] < 90) continue;
+    if ((contact && profile.contact !== contact) || (request.annotation.finger && request.annotation.finger !== profile.finger)) continue;
     for (const mirrored of [false, true]) for (let quarter = 0; quarter < 4; quarter++) {
-      if (mirrored && profile.mirrorSafe === false) continue;
+      // Only the original face/direction family has a calibrated reflected stroke.
+      if (singleUpper && quarter !== 0) continue;
+      if (mirrored && (!profile.mirrorSafe || request.automatic || quarter !== 0)) continue;
       const rotation = new THREE.Quaternion().setFromAxisAngle(unit('x'), quarter * HALF_PI);
       const transform = (v: readonly number[]) => {
         const point = new THREE.Vector3(v[0], v[1], v[2]);
@@ -102,20 +117,25 @@ export function chooseMarkedFingerPlan(
       const axis = transform(unit(profile.axis).toArray());
       const targetAxis: Axis = Math.abs(axis.y) > .999 ? 'y' : 'z';
       if (targetAxis !== request.axis) continue;
-      const layers = axis[targetAxis] > 0 ? [1, 2] : [0, 1];
+      const layers = singleUpper ? [2] : axis[targetAxis] > 0 ? [1, 2] : [0, 1];
       const dir = profile.dir * Math.sign(axis[targetAxis]) * (mirrored ? -1 : 1);
       if (dir !== request.dir || !layers.every(layer => request.layers.includes(layer))) continue;
       const hand = mirrored ? (profile.side === 'R' ? 'L' : 'R') : profile.side;
+      // Half-up and half-down share a quaternion, and neither has a certified
+      // automatic wide-stroke starting pose for the driving hand.
+      if (request.automatic && Math.abs(grips[hand].w) < .01) continue;
       const targetGrip = new THREE.Quaternion().setFromAxisAngle(unit('x'), profile.gripAngle + quarter * HALF_PI);
       if (grips[hand].angleTo(targetGrip) > .01) continue;
-      const start = transform(profile.start), normal = transform(profile.normal), destination = transform(profile.destination);
+      const start = mirrored && profile.mirroredStart
+        ? new THREE.Vector3(...profile.mirroredStart).applyQuaternion(rotation) : transform(profile.start);
+      const normal = transform(profile.normal), destination = transform(profile.destination);
       // A nail must push toward the contacted cubie's adjacent face. Merely
       // reversing an existing pad gesture does not establish this condition.
-      const turnAxis = unit(request.axis).multiplyScalar(-request.dir);
-      if (contact === 'nail' && (Math.abs(normal.dot(destination)) > .01
-        || new THREE.Vector3().crossVectors(turnAxis, start).dot(destination) <= 0)) continue;
-      const cost = tips[hand][profile.finger].distanceToSquared(start);
-      const plan: MarkedFingerPlan = { profile, request, hand, rotation, mirrored, start, normal, destination,
+      const tangent = strokeTangent(request.axis, request.dir, start);
+      if (tangent.dot(destination) <= 0 || (profile.contact === 'nail' && Math.abs(normal.dot(destination)) > .01)) continue;
+      const cost = approachCost(bearings[hand][profile.finger], start, normal, profile.contact, tangent);
+      candidates.push({ profile: profile.id, hand, finger: profile.finger, surface: profile.contact, cost });
+      const plan: MarkedFingerPlan = { candidates, profile, request, hand, rotation, mirrored, start, normal, destination,
         clearance: { L: keys.L, R: keys.R } };
       if (!best || cost < best.cost) best = { plan, cost };
     }
@@ -180,7 +200,7 @@ function markedReturnTiming(rows: FingerPoseRows): readonly (readonly [number, n
   return timing;
 }
 
-function returnPhase(timing: readonly (readonly [number, number])[], time: number): number {
+export function timedPosePhase(timing: readonly (readonly [number, number])[], time: number): number {
   let low = 0, high = timing.length - 1;
   if (time >= timing[high][0]) return 1;
   while (high - low > 1) {
@@ -217,6 +237,7 @@ export class MarkedFingerMotion {
     const planned = this.plan.request;
     return planned.axis === request.axis && planned.dir === request.dir && planned.quarters === request.quarters
       && planned.layers.length === request.layers.length && planned.layers.every(layer => request.layers.includes(layer))
+      && !!planned.automatic === !!request.automatic
       && planned.annotation.finger === request.annotation.finger && planned.annotation.contact === request.annotation.contact;
   }
   get preparing(): boolean { return this.preparation < 1 && !this.finished; }
@@ -234,7 +255,7 @@ export class MarkedFingerMotion {
     }
     this.returnElapsed += dt;
     this.returning = this.started
-      ? returnPhase(markedReturnTiming(this.plan.profile.handReturn), this.returnElapsed)
+      ? timedPosePhase(markedReturnTiming(this.plan.profile.handReturn), this.returnElapsed)
       : Math.min(1, this.returnElapsed / MARKED_RETURN_MS);
   }
   turn(angle: number): void { this.started = true; this.degrees = Math.abs(angle) * 180 / Math.PI; }
@@ -267,6 +288,13 @@ export class MarkedFingerMotion {
       this.sampledRows = rows;
       this.sampledProgress = progress;
       this.sampledPose = sampleFingerPose(rows, progress);
+      if (this.plan.mirrored && profile.mirroredRoll) {
+        const angle = approach ? 0 : releasing ? 90 : progress;
+        const weight = approach ? smooth((progress - .42) / .58) : releasing ? 1 - smooth(progress / .42) : 1;
+        const correction = sampleFingerPose(profile.mirroredRoll, angle);
+        const offset = 6 + FINGERS.indexOf(profile.finger) * 10;
+        correction.forEach((value, i) => { this.sampledPose![offset + i] += weight * value; });
+      }
     }
     return this.sampledPose;
   }
@@ -332,7 +360,8 @@ export function markedStartContact(model: HandModel, reference: THREE.Object3D, 
   const mesh = profile.contact === 'nail' ? model.nailMeshes?.find(mesh => mesh.userData.nail.finger === profile.finger)
     : model.meshes.find(mesh => (mesh as THREE.SkinnedMesh).isSkinnedMesh);
   if (!mesh) return null;
-  const position = mesh.geometry.getAttribute('position'), normal = mesh.geometry.getAttribute('normal'), vertex = profile.contactVertex;
+  const position = mesh.geometry.getAttribute('position'), normal = mesh.geometry.getAttribute('normal');
+  const vertex = plan.mirrored ? profile.mirroredContactVertex ?? profile.contactVertex : profile.contactVertex;
   const toReference = reference.matrixWorld.clone().invert().multiply(mesh.matrixWorld);
   if (profile.contact === 'nail') {
     // Procedurally generated left/right nails have different vertex ordering.
@@ -347,6 +376,14 @@ export function markedStartContact(model: HandModel, reference: THREE.Object3D, 
     });
     const triangle = new THREE.Triangle(), closest = new THREE.Vector3(), weights = new THREE.Vector3();
     let best: { distance: number; facing: number; point: number[] } | null = null;
+    // The closest point on a curved triangle can face away while its rim
+    // still bears on the sticker. Include its outward-facing vertices.
+    if (plan.mirrored) {
+      for (const { point, normal } of points.values()) {
+        const facing = normal.dot(plan.normal), distance = point.distanceTo(plan.start);
+        if (facing <= -.9 && (!best || distance < best.distance)) best = { distance, facing, point: point.toArray() };
+      }
+    }
     for (let i = 0; i < index.count; i += 3) {
       const a = points.get(index.getX(i)), b = points.get(index.getX(i + 1)), c = points.get(index.getX(i + 2));
       if (!a || !b || !c) continue;

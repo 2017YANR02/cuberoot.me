@@ -19,16 +19,27 @@ export async function assistantQueueRequest(conversationId:string,action:''|'mes
   return data;
 }
 
-/** A notification only wakes the authenticated snapshot reader. */
-export async function watchAssistantQueue(id:string,signal:AbortSignal,onChange:()=>void) {
-  const response=await sessionFetch(assistantStreamApiUrl()+'/conversations/'+id,{
+/** Reconnect starts with an owned snapshot. Older servers may send wakeups only. */
+export async function watchAssistantQueue(id:string,signal:AbortSignal,onChange:(snapshot?:AssistantQueueSnapshot)=>void) {
+  const response=await sessionFetch(assistantStreamApiUrl()+'/conversations/'+id+'?updates=1',{
     headers:{...authHeaders(false),Accept:'text/event-stream'},signal,cache:'no-store',
   });
   if(!response.ok || !response.body || !response.headers.get('Content-Type')?.includes('text/event-stream')) {
     await response.body?.cancel();
     return;
   }
+  let current:AssistantQueueSnapshot|undefined;
   for await(const message of readAssistantEvents(response.body)) {
-    if(message==='changed')onChange();
+    if(message==='changed'){onChange();continue;}
+    const frame=JSON.parse(message);
+    if(frame.conversationId!==id || !Number.isSafeInteger(frame.revision) || !Array.isArray(frame.messages))throw new AssistantQueueError('network');
+    const {type,base,...state}=frame;
+    if(type==='snapshot') current=state as AssistantQueueSnapshot;
+    else if(type==='patch' && current && base===current.revision && frame.revision>=base) {
+      const rows=new Map(current.messages.map(row=>[row.id,row]));
+      for(const row of frame.messages)rows.set(row.id,row);
+      current={...state,messages:[...rows.values()].sort((a,b)=>a.sequence-b.sequence)};
+    } else throw new AssistantQueueError('network');
+    onChange(current);
   }
 }

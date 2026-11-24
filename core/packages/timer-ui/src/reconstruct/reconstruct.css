@@ -631,6 +631,88 @@
 /* 读完那几个数之后的动作:分享 / 再打一遍 / 拿到别的工具里看。靠左紧凑,不撑成
    一整行的条;分享只留图标,「用这条打乱」保留为主动作。 */
 .rc-actions { display: flex; flex-wrap: wrap; gap: 8px; margin: -6px 0 14px; }
+.cfop-analysis { margin-block: 8px 18px; }
+.cfop-layout { display: grid; gap: 12px; padding-block: 8px 4px; }
+.cfop-analysis :is(p, h3, h4) { margin: 0; }
+.cfop-analysis p { line-height: 1.55; }
+.cfop-analysis .cfop-note { color: var(--muted-foreground); font-size: .875rem; }
+.cfop-follow-up .rc-actions { margin: 0; }
+.cfop-history { border-block-start: 1px solid var(--border-default); padding-block-start: 8px; min-width: 0; }
+.cfop-filters, .cfop-actions, .cfop-replay-row {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px;
+}
+.cfop-filters label {
+  display: inline-flex; align-items: center; gap: 8px;
+  color: var(--muted-foreground); font-size: .875rem;
+}
+.cfop-filters select {
+  width: fit-content; max-width: 100%; padding: 4px 8px; min-height: 34px;
+  border: 1px solid var(--border-default); border-radius: 6px;
+  color: var(--foreground); background: var(--shell-chip); font: inherit;
+}
+.cfop-result {
+  display: grid; gap: 14px; min-width: 0; padding: clamp(12px, 2vw, 20px);
+  border: 1px solid var(--border-default); border-radius: 12px;
+}
+.cfop-result header { display: grid; gap: 4px; }
+.cfop-result h3 { font-size: 1.15rem; line-height: 1.3; }
+.cfop-result h4 { font-size: .875rem; font-weight: 650; }
+.cfop-why, .cfop-practice { display: grid; gap: 8px; min-width: 0; }
+.cfop-practice { border-block-start: 1px solid var(--border-default); padding-block-start: 12px; }
+.cfop-result .cfop-note { line-height: 1.45; }
+.cfop-evidence {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 126px), 1fr));
+  margin: 0; gap: 8px;
+}
+.cfop-evidence > div {
+  min-width: 0; padding: 4px 8px 4px 10px;
+  border-inline-start: 2px solid var(--border-default);
+}
+.cfop-evidence > [data-highlighted] { border-inline-start-color: var(--accent); }
+.cfop-evidence dt { color: var(--muted-foreground); font-size: .8125rem; }
+.cfop-evidence dd { margin: 3px 0 0; font-size: 1.02rem; font-weight: 650; font-variant-numeric: tabular-nums; }
+.cfop-evidence small { display: block; color: var(--muted-foreground); font-size: .75rem; font-weight: 400; }
+.cfop-replay-row span { color: var(--muted-foreground); font-size: .875rem; font-variant-numeric: tabular-nums; }
+.cfop-actions button:disabled { opacity: .5; cursor: default; }
+.cfop-history-result, .cfop-priorities { display: grid; gap: 12px; min-width: 0; }
+.cfop-priorities { padding: 0; margin: 0; list-style: none; }
+.cfop-quality {
+  display: grid; gap: 6px; padding-inline-start: 10px;
+  border-inline-start: 2px solid var(--border-default);
+  font-size: .875rem; line-height: 1.45;
+}
+.cfop-quality-list { display: grid; gap: 6px; padding: 0; margin: 0; list-style: none; }
+.cfop-quality-list li { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; }
+.cfop-quality-list li strong { font-weight: 600; }
+.cfop-quality-list li span { color: var(--muted-foreground); }
+.cfop-baseline-options {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 13rem), 1fr));
+  gap: .35rem .75rem;
+}
+.cfop-baseline-options label { font-size: .875rem; line-height: 1.5; }
+.cube-photo-formula.cfop-formula {
+  display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center;
+  width: fit-content; max-width: 100%; min-width: 0; gap: 8px 14px;
+  padding: 8px 10px; border-radius: 9px;
+}
+.cfop-formula-summary, .cfop-formula-prompt, .cfop-formula-status {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; min-width: 0;
+}
+.cfop-formula-summary .cube-photo-formula-title { flex: 0 1 auto; gap: 8px; }
+.cfop-formula-summary .cube-photo-sequence { min-width: 0; flex: 1 1 12ch; }
+.cfop-formula-summary code { font-size: .875rem; white-space: normal; overflow-wrap: anywhere; }
+.cfop-formula-answer { grid-column: 1 / -1; }
+.cfop-formula-answer[data-open='true'] {
+  border-block-start: 1px solid var(--border-default); padding-block-start: 6px;
+}
+.cfop-formula-start { justify-self: start; }
+@media (max-width: 600px) {
+  .cfop-evidence { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .cube-photo-formula.cfop-formula { grid-template-columns: minmax(0, 1fr); }
+  .cfop-formula-summary { display: grid; grid-template-columns: minmax(0, 1fr) auto; }
+  .cfop-formula-summary .cube-photo-formula-title { grid-column: 1 / -1; }
+}
 .rc-action {
   appearance: none; cursor: pointer;
   display: inline-flex; align-items: center; gap: 5px;

@@ -107,29 +107,41 @@ const cases = [
   { name: 'lower thumb pushes U5 with the index on D8', annotation: { finger: 'thumb' }, axis: 'z', dir: 1, grip: 'down', hand: 'R', finger: 'thumb', end: 90 },
   { name: 'upper thumb pushes U5 with the index on D8', annotation: { finger: 'thumb' }, axis: 'z', dir: 1, grip: 'up', hand: 'R', finger: 'thumb', end: 90 },
 ] as const;
-const verifiedCases = cases.map(spec => ({ ...spec, mirrored: false }));
+const opposite = (side: 'L' | 'R'): 'L' | 'R' => side === 'L' ? 'R' : 'L';
+const verifiedCases = cases.flatMap(spec => {
+  const direct = { ...spec, mirrored: false };
+  if (spec.name.startsWith('lower')) return [direct];
+  return [direct, { ...direct, mirrored: true, hand: opposite(spec.hand),
+    name: 'mirror ' + spec.name, dir: -spec.dir as 1 | -1 }];
+});
 
 it.each(MARKED_FINGER_PROFILES.filter(p => p.side === 'L' && p.finger === 'middle'))(
-  '$id lowers the original home grip before the index clears and the middle finger engages', profile => {
+  '$id seats the hand on the driven row before the index clears and the middle finger engages', profile => {
     const home = homeLeft().fingers;
     const neutral = FINGER_NAMES.flatMap(name => fingerChannels(home[name]));
     const approach = profile.handApproach!;
-    const bottom = Math.min(...approach.map(row => row[2]));
-    const seated = approach.findIndex(row => row[2] === bottom);
-    expect(bottom).toBeLessThan(0);
+    const height = profile.singleUpper ? Math.max(...approach.map(row => row[2])) : Math.min(...approach.map(row => row[2]));
+    const direction = profile.singleUpper ? 1 : -1;
+    const seated = approach.findIndex(row => row[2] === height);
+    expect(direction * height).toBeGreaterThan(0);
     expect(seated).toBeGreaterThan(0);
     expect(approach[0][2]).toBeCloseTo(0, 9);
     for (const [i, row] of approach.entries()) {
       expect([row[1], ...row.slice(3, 7)]).toEqual([0, 0, 0, 0, 0]);
       expect(row.at(-1)).toBe(row[2]);
-      expect(row[2]).toBeLessThanOrEqual(approach[Math.max(0, i - 1)][2]);
-      if (i <= seated) expect(row.slice(7, 57)).toEqual(neutral);
+      expect(direction * row[2]).toBeGreaterThanOrEqual(direction * approach[Math.max(0, i - 1)][2]);
+      if (i <= seated) {
+        const expected = [...neutral];
+        // The upper turn extends the stationary ring finger as the hand rises.
+        if (profile.singleUpper) expected[30] -= .012 * row[2] / height;
+        row.slice(7, 57).forEach((angle, j) => expect(angle).toBeCloseTo(expected[j], 10));
+      }
     }
     const indexSet = approach[seated + 1];
     expect(indexSet.slice(17, 27)).not.toEqual(neutral.slice(10, 20));
     expect(indexSet.slice(27, 37)).toEqual(neutral.slice(20, 30));
     for (const row of [...approach.slice(seated + 1), ...profile.handTurn!]) {
-      expect(row[2]).toBe(bottom);
+      expect(row[2]).toBe(height);
       expect(row.slice(17, 27)).toEqual(indexSet.slice(17, 27));
       expect(row.slice(37, 47)).toEqual(indexSet.slice(37, 47));
     }
@@ -247,34 +259,37 @@ describe.skipIf(!existsSync(files.R) || !existsSync(files.L))('marked MANO gestu
     rig.subscribeDiagnostics(f => { frame = f; }); rig.tick(0);
     const surfaces = { R: new FingerSurfaceSampler(frame.models.R), L: new FingerSurfaceSampler(frame.models.L) };
     const prepare = () => rig.prepareTwist(spec.axis, [1, 2], spec.dir, 1, false, undefined, false, spec.annotation as FingerAnnotation);
+    const supportSide = spec.mirrored ? 'L' : 'R', middleSide = opposite(supportSide);
+    const flipX = (x: number) => spec.mirrored ? -x : x;
     const indexPadCenter = () => {
-      const pad = surfaces.L.samplePoints('index').filter(sample => sample.pad);
+      const pad = surfaces[middleSide].samplePoints('index').filter(sample => sample.pad);
       return pad.reduce((sum, sample) => sum.add(sample.point), new THREE.Vector3()).divideScalar(pad.length);
     };
-    const startingWristFlex = frame.hands.R.finalPose!.wrist!.flex;
+    const startingWristFlex = frame.hands[supportSide].finalPose!.wrist!.flex;
     const restingIndex = spec.grip === 'halfDown' ? indexPadCenter() : null;
     const upperIndex = spec.grip === 'up' ? new THREE.Vector3(
       ...MARKED_FINGER_PROFILES.find(p => p.id === 'thumb-pad-wide')!.supportContacts!.index!.point) : null;
+    if (upperIndex) upperIndex.x = flipX(upperIndex.x);
     let upperWrist: { position: THREE.Vector3; orientation: THREE.Quaternion; bend: number } | undefined;
     const downNormal = new THREE.Vector3(0, -1, 0);
     const worst = { penetration: -Infinity, phase: '' }, collisions: string[] = [];
     const check = (phase: string, angle: number, crossings: boolean) => {
       if (spec.grip === 'halfDown' && phase.startsWith('turn')) {
         for (const [name, face, z] of [['thumb', FACE.B, -64], ['middle', FACE.F, 64]] as const) {
-          const piece = { initial: z < 0 ? 2 : 20, faces: [face], matrix: new THREE.Matrix4().makeTranslation(64, -64, z) };
-          expect(measureIndexContact(surfaces.R.samplePoints(name), [piece]).contacts, phase + ' right ' + name).not.toHaveLength(0);
+          const piece = { initial: (z < 0 ? 2 : 20) - (spec.mirrored ? 2 : 0), faces: [face], matrix: new THREE.Matrix4().makeTranslation(flipX(64), -64, z) };
+          expect(measureIndexContact(surfaces[supportSide].samplePoints(name), [piece]).contacts, phase + ' right ' + name).not.toHaveLength(0);
         }
       }
       if (upperIndex) {
-        expect(frame.grips.R).toBe('up');
+        expect(frame.grips[supportSide]).toBe('up');
         if (frame.marked) {
-          const palm = frame.models.R.group;
-          upperWrist ??= { position: palm.position.clone(), orientation: palm.quaternion.clone(), bend: frame.hands.R.wristBend! };
+          const palm = frame.models[supportSide].group;
+          upperWrist ??= { position: palm.position.clone(), orientation: palm.quaternion.clone(), bend: frame.hands[supportSide].wristBend! };
           expect(palm.position.distanceTo(upperWrist.position)).toBeLessThan(1e-7);
           expect(palm.quaternion.equals(upperWrist.orientation)).toBe(true);
-          expect(frame.hands.R.wristBend).toBeCloseTo(upperWrist.bend, 8);
+          expect(frame.hands[supportSide].wristBend).toBeCloseTo(upperWrist.bend, 8);
         }
-        expect(contactDistance(frame.models.R, surfaces.R, 'index', false, upperIndex, downNormal),
+        expect(contactDistance(frame.models[supportSide], surfaces[supportSide], 'index', false, upperIndex, downNormal),
           `right index on the same D8 point at ${phase}`).toBeLessThan(2);
       }
       if (restingIndex) {
@@ -314,12 +329,13 @@ describe.skipIf(!existsSync(files.R) || !existsSync(files.L))('marked MANO gestu
     const slideSamples: { y: number; bones: THREE.Matrix4[]; bend: number }[] = [];
     for (let i = 0; i <= 130; i++) {
       rig.tick(i === 0 ? 0 : 4);
-      check(`prepare ${i}`, 0, i % 5 === 0);
+      const seatingNail = spec.end === 75 && i >= 115 && i <= 122;
+      check(`prepare ${i}`, 0, i % 5 === 0 || seatingNail);
       if (spec.finger === 'middle' && i * 4 <= 120) {
-        const hand = frame.models.L;
+        const hand = frame.models[middleSide];
         const bones = [hand.group, ...Object.values(hand.fingers).flatMap(f => [f.meta, f.root, f.mid, f.tip])]
           .filter(b => !!b).map(b => b.matrixWorld.clone());
-        slideSamples.push({ y: hand.group.position.y, bones, bend: frame.hands.L.wristBend! });
+        slideSamples.push({ y: hand.group.position.y, bones, bend: frame.hands[middleSide].wristBend! });
       }
     }
     if (slideSamples.length) {
@@ -344,7 +360,8 @@ describe.skipIf(!existsSync(files.R) || !existsSync(files.L))('marked MANO gestu
     const contactReport = { nailAt24_25: 0, largestNailGap: 0, thumbDepthAt55: 0 };
     const contactSamples = (angle: number) => {
       const rotation = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, spec.axis === 'y' ? -1 : 0, spec.axis === 'z' ? -1 : 0), angle);
-      const target = transform(profile.start).applyQuaternion(rotation);
+      const start = spec.mirrored && profile.mirroredStart ? new THREE.Vector3(...profile.mirroredStart) : transform(profile.start);
+      const target = start.clone().applyQuaternion(rotation);
       const normal = transform(profile.normal).applyQuaternion(rotation);
       const active = frame.models[spec.hand], surface = surfaces[spec.hand];
       if (profile.nailTransfer) {
@@ -356,7 +373,7 @@ describe.skipIf(!existsSync(files.R) || !existsSync(files.L))('marked MANO gestu
         const inverse = rotation.clone().invert();
         const gap = Math.min(Infinity, ...patch.filter(({ normal: n }) => rolling || n.dot(normal) < -.85)
           .map(({point}) => point.clone().applyQuaternion(inverse))
-          .filter(p => p.x > -94 && p.x < -34 && Math.abs(p.y) < 30)
+          .filter(p => flipX(p.x) > -94 && flipX(p.x) < -34 && Math.abs(p.y) < 30)
           .map(p => Math.abs(p.z + 96)));
         expect(gap, `B5 ${rolling ? 'roll' : degrees >= transfer ? 'nail' : 'pad'} at ${degrees}°`).toBeLessThan(rolling ? 4 : 3);
       } else if (spec.finger === 'thumb') {
@@ -366,10 +383,10 @@ describe.skipIf(!existsSync(files.R) || !existsSync(files.L))('marked MANO gestu
         const inverse = rotation.clone().invert();
         const distances = contacts(active, surface, 'thumb').filter(p => p.normal.dot(normal) < -.90)
           .map(p => p.point.clone().applyQuaternion(inverse))
-          .filter(p => p.x > 33 && p.x < 95 && Math.abs(p.z) < 30)
+          .filter(p => flipX(p.x) > 33 && flipX(p.x) < 95 && Math.abs(p.z) < 30)
           .map(p => Math.abs(96 - p.y));
         expect(Math.min(...distances), `thumb pad over moving U5 at ${angle}`).toBeLessThan(3);
-        const anchor = new THREE.Vector3(...profile.supportContacts!.index!.point);
+        const anchor = transform(profile.supportContacts!.index!.point);
         expect(contactDistance(active, surface, 'index', false, anchor, new THREE.Vector3(0, -1, 0)))
           .toBeLessThan(2);
       } else {
@@ -384,11 +401,10 @@ describe.skipIf(!existsSync(files.R) || !existsSync(files.L))('marked MANO gestu
         expect(distance, `contact at ${angle}`).toBeLessThan(3);
       }
       // The block and contact both travel toward the declared adjacent face.
-      if (angle !== 0) expect(target.clone().sub(transform(profile.start)).dot(transform(profile.destination))).toBeGreaterThan(0);
+      if (angle !== 0) expect(target.clone().sub(start).dot(transform(profile.destination))).toBeGreaterThan(0);
       if (spec.finger === 'middle') for (const [finger, z] of [['thumb', 96], ['ring', -96]] as const) {
         const anchor = profile.supportContacts![finger]!;
-        const vertex = spec.mirrored ? anchor.mirroredVertex ?? anchor.vertex : anchor.vertex;
-        const current = contacts(frame.models[spec.hand], surfaces[spec.hand], finger).find(p => p.vertex === vertex)!;
+        const current = contacts(frame.models[spec.hand], surfaces[spec.hand], finger).find(p => p.vertex === anchor.vertex)!;
         expect(current, `${finger} distal-pad material point`).toBeDefined();
         // F6/B8 span [-96,-32] on both in-plane axes; retain 1U edge clearance.
         expect(Math.abs(current.point.x)).toBeGreaterThan(33);
@@ -398,7 +414,7 @@ describe.skipIf(!existsSync(files.R) || !existsSync(files.L))('marked MANO gestu
         if (finger === 'ring') {
           // The distal pad seats on the colored, rounded B8 face.
           const flat = STICKER_INNER / 2 - STICKER_CORNER_RADIUS;
-          const dx = Math.max(0, Math.abs(current.point.x + 64) - flat);
+          const dx = Math.max(0, Math.abs(flipX(current.point.x) + 64) - flat);
           const dy = Math.max(0, Math.abs(current.point.y + 64) - flat);
           expect(Math.hypot(dx, dy)).toBeLessThan(STICKER_CORNER_RADIUS);
           expect(Math.abs(current.point.z - z)).toBeLessThan(.5);
@@ -422,7 +438,7 @@ describe.skipIf(!existsSync(files.R) || !existsSync(files.L))('marked MANO gestu
     for (let degrees = .25; degrees <= 90; degrees += .25) {
       const angle = spec.dir * degrees * Math.PI / 180;
       cube.table.groups[spec.axis][1].angle = angle; cube.table.groups[spec.axis][2].angle = angle;
-      rig.tick(0); check(`turn ${degrees}`, angle, degrees % 2 === 0);
+      rig.tick(0); check(`turn ${degrees}`, angle, degrees % 2 === 0 || spec.finger === 'middle' && degrees >= 57 && degrees <= 63);
       if (degrees <= spec.end) contactSamples(angle);
       if (spec.end === 75 && degrees === 75) released = nailLinks.map(link => link.quaternion.clone());
       if (released && degrees > 75) {
@@ -430,13 +446,13 @@ describe.skipIf(!existsSync(files.R) || !existsSync(files.L))('marked MANO gestu
           'released nail holds its 75° pose as the layer coasts').toBeLessThan(1e-6));
       }
       if (spec.grip === 'up' && degrees === 55) {
-        const points = surfaces.R.samplePoints('thumb').map(sample => sample.point);
-        contactReport.thumbDepthAt55 = penetration([...points, ...nailPoints(frame.models.R, 'thumb')], spec.axis, angle);
+        const points = surfaces[supportSide].samplePoints('thumb').map(sample => sample.point);
+        contactReport.thumbDepthAt55 = penetration([...points, ...nailPoints(frame.models[supportSide], 'thumb')], spec.axis, angle);
       }
       if (spec.grip === 'halfDown') {
-        expect(frame.hands.R.finalPose!.wrist!.flex).toBeCloseTo(startingWristFlex, 2);
+        expect(frame.hands[supportSide].finalPose!.wrist!.flex).toBeCloseTo(startingWristFlex, 2);
       } else if (spec.finger === 'thumb') {
-        expect(frame.hands.R.wristBend!, `right wrist at ${degrees}° of the turn`).toBeLessThan(THREE.MathUtils.degToRad(65));
+        expect(frame.hands[supportSide].wristBend!, `right wrist at ${degrees}° of the turn`).toBeLessThan(THREE.MathUtils.degToRad(65));
       }
       for (const side of ['L', 'R'] as const) {
         expect(frame.models[side].group.matrixWorld.elements).toEqual(palms[side].elements);
@@ -451,7 +467,7 @@ describe.skipIf(!existsSync(files.R) || !existsSync(files.L))('marked MANO gestu
     if (spec.end === 90) {
       contactSamples(spec.dir * Math.PI / 2);
     } else {
-      const backFaceGap = Math.min(...nailPoints(frame.models.L, 'middle').map(point => -96 - point.z));
+      const backFaceGap = Math.min(...nailPoints(frame.models[middleSide], 'middle').map(point => -96 - point.z));
       expect(backFaceGap, 'nail has lifted from the rear sticker before recovery').toBeGreaterThan(2);
     }
     const activeHand = frame.models[spec.hand];
@@ -468,15 +484,15 @@ describe.skipIf(!existsSync(files.R) || !existsSync(files.L))('marked MANO gestu
       }
     }
     expect(frame.marked).toBeUndefined();
-    if (spec.finger === 'thumb') expect(frame.grips.R).toBe(spec.grip);
+    if (spec.finger === 'thumb') expect(frame.grips[supportSide]).toBe(spec.grip);
     // Bounded per-millisecond increments catch a visible snap even when
     // every pose along the return stays clear of the puzzle.
     expect(fastest, 'maximum local joint rotation in a 1 ms return sample').toBeLessThan(.022);
     if (process.env.MARKED_REPORT) console.log(spec.name, JSON.stringify({ worst, collisions, contactReport }));
     expect(collisions.slice(0, 8)).toEqual([]);
     expect(worst.penetration, worst.phase).toBeLessThanOrEqual(.1);
-    if (spec.grip === 'halfDown') {
-      const index = frame.models.R.fingers.index.root;
+    if (spec.grip === 'halfDown' && !spec.mirrored) {
+      const index = frame.models[supportSide].fingers.index.root;
       const previous = index.quaternion.clone();
       rig.prepareTwist('x', [2], 1);
       for (let degrees = 1; degrees <= 35; degrees++) {

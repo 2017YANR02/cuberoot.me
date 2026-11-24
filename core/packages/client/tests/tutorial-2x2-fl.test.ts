@@ -2,8 +2,13 @@ import { describe, expect, it } from 'vitest';
 import { Face } from '@cuberoot/visualcube';
 import { FACE } from '@cuberoot/puzzle-render-core/engine/define';
 import { ENGINE_TO_VC_FACE, netIndexOf } from '@cuberoot/puzzle-render-core/engine/nxn/netIndex';
-import { FL_CASES, FL_EXAMPLE, FL_RECOGNITION_EXAMPLES, FL_TWISTS, flAlignedTwist, flCaseGroups, flCornerLayer, flSectionId, hasLeftPair, randomFlLayerQuizSetup } from '@/app/[lang]/tutorial/2x2-fl/lesson-data';
-import { FL_LEFT_PAIR_GOAL, flLeftPairState, randomFlLeftPairSetup, solveFlLeftPair } from '@/app/[lang]/tutorial/2x2-fl/left-pair';
+import { TwistAction } from '@cuberoot/puzzle-render-core/engine/nxn/twister';
+import {
+  FL_CASES, FL_EXAMPLE, FL_RECOGNITION_EXAMPLES, FL_TWISTS, createFlAlignmentDemo, flAlignedTwist, flCaseGroups,
+  flCornerLayer, flRecognitionGroup, flSectionId, hasLeftPair, isFlPracticeTurn,
+  randomFlAlignmentRound, randomFlFourthCornerSetup, randomFlLayerQuizSetup, randomFlTwistQuizSetup,
+} from '@/app/[lang]/tutorial/2x2-fl/lesson-data';
+import { FL_LEFT_PAIR_GOAL, flCornerPairState, randomFlCornerQuizSetup, randomFlLeftPairSetup, solveFlLeftPair } from '@/app/[lang]/tutorial/2x2-fl/left-pair';
 import { isWhiteFirstLayer, twoByTwoState } from '@/app/[lang]/tutorial/lib/2x2-state';
 import { CUBE_ORIENTATIONS } from '@/lib/cube-orientation';
 import type { CubeFace } from '@/lib/cube-colors';
@@ -16,8 +21,10 @@ function cornerAt(state: State, [x, y, z]: readonly number[]) {
 }
 
 const positions = [[0, 0, 0], [1, 0, 0], [0, 1, 0], [1, 1, 0], [0, 0, 1], [1, 0, 1], [0, 1, 1], [1, 1, 1]];
+const locate = (state: State, colors: string) =>
+  positions.findIndex(position => Object.values(cornerAt(state, position)).sort().join('') === colors);
 
-function visiblePair(moves: string) {
+function visiblePair(moves: string, first = 'BOW', second = 'BRW') {
   const state = twoByTwoState(moves);
   const stickers = positions.map(position => cornerAt(state, position));
   const placement = (colors: string) => {
@@ -25,10 +32,26 @@ function visiblePair(moves: string) {
     const face = Object.entries(stickers[positionIndex]).find(([, color]) => color === 'W')![0] as CubeFace;
     return { positionIndex, face };
   };
-  return flLeftPairState(placement('BOW'), placement('BRW'));
+  return flCornerPairState(placement(first), placement(second));
 }
 
 describe('2×2 FL source cases', () => {
+  it('allows any dragged amount on the practice face without accepting a different layer', () => {
+    for (const face of ['U', 'R'] as const) {
+      for (const turns of [1, 2, 3, 4, 12]) {
+        for (const reversed of [false, true]) {
+          const move = new TwistAction(face, reversed, turns).value;
+          expect(isFlPracticeTurn(move, face), move).toBe(true);
+          expect(isFlPracticeTurn(move), move).toBe(true);
+          expect(isFlPracticeTurn(move, face === 'U' ? 'R' : 'U'), move).toBe(false);
+        }
+      }
+    }
+    for (const move of ['D', 'F2', "L3'", 'Uw', 'Rw2', '2U', 'y', 'U R']) {
+      expect(isFlPracticeTurn(move), move).toBe(false);
+    }
+  });
+
   it('groups UD and DD within each twist section of the bottom chapter', () => {
     for (const [index, twist] of FL_TWISTS.entries()) {
       const groups = (chapter: 'top' | 'bottom') => flCaseGroups(chapter, twist)
@@ -120,6 +143,21 @@ describe('2×2 FL source cases', () => {
     }
   });
 
+  it('demonstrates all three other top slots and reveals corner 4 after placing corner 3', () => {
+    const cornerSlots = new Set<number>();
+    for (let draw = 0; draw < 3; draw++) {
+      const { setup, moves, end } = createFlAlignmentDemo('top', () => draw);
+      const initial = twoByTwoState(setup);
+      const afterThird = twoByTwoState([setup, moves[0]].join(' '));
+      cornerSlots.add(positions.findIndex(position => Object.values(cornerAt(initial, position)).sort().join('') === 'GRW'));
+      expect(hasLeftPair(initial)).toBe(true);
+      expect(Object.values(cornerAt(afterThird, positions[6])).sort().join('')).toBe('GRW');
+      expect(Object.values(cornerAt(afterThird, positions[5])).sort().join('')).toBe('GOW');
+      expect(twoByTwoState([setup, ...moves].join(' '))).toEqual(twoByTwoState(end.setup));
+    }
+    expect(cornerSlots).toEqual(new Set([2, 3, 7]));
+  });
+
   it('generates every unsolved visible left-pair state exactly once over the 503 possible draws', () => {
     const states = new Set<number>();
     for (let draw = 0; draw < 503; draw++) {
@@ -132,6 +170,97 @@ describe('2×2 FL source cases', () => {
     }
     expect(states.size).toBe(503);
     expect(states.has(FL_LEFT_PAIR_GOAL)).toBe(false);
+  });
+
+  it('covers all allowed corner 3 poses and reaches a formula by placing it first', () => {
+    const upperTurns = ['', 'U', 'U2', "U'"];
+    const rightTurns = ['', 'R', 'R2', "R'"];
+    for (const [groupIndex, group] of (['top', 'mixed', 'bottom'] as const).entries()) {
+      const chapter = group === 'top' ? 'top' : 'bottom';
+      const target = chapter === 'top' ? 6 : 5;
+      const poses = new Set<string>();
+      const poseCount = chapter === 'top' ? 9 : 3;
+      for (let pose = 0; pose < poseCount; pose++) {
+        const choices = [chapter === 'top' ? 0 : groupIndex - 1, pose, 0, 0];
+        const { setup } = randomFlAlignmentRound(chapter, undefined, () => choices.shift()!);
+        const initial = twoByTwoState(setup);
+        const slot = locate(initial, 'GRW');
+        const direction = Object.entries(cornerAt(initial, positions[slot])).find(([, color]) => color === 'W')?.[0];
+        poses.add(slot + ':' + direction);
+        expect(hasLeftPair(initial)).toBe(true);
+        expect(flCornerLayer(slot)).toBe(chapter === 'top' ? 'U' : 'D');
+        expect(slot).not.toBe(target);
+        const firstTurns = chapter === 'top' ? upperTurns : rightTurns;
+        const first = firstTurns.find(move => locate(twoByTwoState(setup + ' ' + move), 'GRW') === target);
+        const secondTurns = group === 'top' ? rightTurns : group === 'mixed' ? upperTurns : [''];
+        const twists = secondTurns.map(move => {
+          const aligned = twoByTwoState([setup, first, move].join(' '));
+          const face = Object.entries(cornerAt(aligned, positions[target])).find(([, color]) => color === 'W')?.[0] as CubeFace;
+          return flAlignedTwist(group, { positionIndex: target, face }, locate(aligned, 'GOW'));
+        });
+        expect(twists, setup).toContain(FL_TWISTS[pose % 3]);
+
+        for (let draw = 0; draw < poseCount - 1; draw++) {
+          const reroll = [0, draw, 0, 0];
+          expect(randomFlAlignmentRound(chapter, pose, () => reroll.shift()!).pose).not.toBe(pose);
+        }
+      }
+      expect(poses.size).toBe(poseCount);
+    }
+  });
+
+  it('retries corner 4 with corner 3 in the same position and orientation', () => {
+    for (const chapter of ['top', 'bottom'] as const) {
+      const top = chapter === 'top';
+      const target = top ? 6 : 5;
+      const faces = top ? ['U', 'F', 'L'] : ['D', 'F', 'R'];
+      const group = top ? 'top' : 'mixed';
+      const moves = top ? ['R', 'R2', "R'"] : ['U', 'U2', "U'"];
+      for (const [twistIndex, twist] of FL_TWISTS.entries()) {
+        const fourthPoses = new Set<string>();
+        for (let caseIndex = 0; caseIndex < 3; caseIndex++) {
+          for (let offset = 0; offset < (top ? 2 : 3); offset++) {
+            const draws = [caseIndex, offset];
+            const setup = randomFlFourthCornerSetup(chapter, twist, () => draws.shift()!);
+            const state = twoByTwoState(setup);
+            expect(hasLeftPair(state)).toBe(true);
+            expect(locate(state, 'GRW')).toBe(target);
+            const face = faces[twistIndex] as CubeFace;
+            expect(cornerAt(state, positions[target])[face]).toBe('W');
+            const reference = { positionIndex: target, face };
+            const fourth = locate(state, 'GOW');
+            const whiteFace = Object.entries(cornerAt(state, positions[fourth])).find(([, color]) => color === 'W')?.[0];
+            fourthPoses.add(fourth + ':' + whiteFace);
+            expect(flAlignedTwist(group, reference, fourth)).toBeUndefined();
+            expect(moves.some(move => {
+              const moved = twoByTwoState(setup + ' ' + move);
+              return flAlignedTwist(group, reference, locate(moved, 'GOW')) === twist;
+            })).toBe(true);
+          }
+        }
+        expect(fourthPoses.size).toBe(top ? 6 : 9);
+      }
+    }
+  });
+
+  it('retries formula-group recognition with a different answer and both corners already aligned', () => {
+    for (const chapter of ['top', 'bottom'] as const) {
+      for (const previous of FL_TWISTS) {
+        for (let twistIndex = 0; twistIndex < 2; twistIndex++) {
+          for (let groupIndex = 0; groupIndex < (chapter === 'top' ? 1 : 2); groupIndex++) {
+            const draws = [twistIndex, groupIndex, 0];
+            const state = twoByTwoState(randomFlTwistQuizSetup(chapter, previous, () => draws.shift()!));
+            expect(hasLeftPair(state)).toBe(true);
+            const positionIndex = locate(state, 'GRW');
+            const fourth = locate(state, 'GOW');
+            const group = flRecognitionGroup(positionIndex, fourth)!;
+            const face = Object.entries(cornerAt(state, positions[positionIndex])).find(([, color]) => color === 'W')?.[0] as CubeFace;
+            const expected = FL_TWISTS.filter(twist => twist !== previous)[twistIndex];
+            expect(flAlignedTwist(group, { positionIndex, face }, fourth)).toBe(expected);
+          }
+        }
+      }
+    }
   });
 
   it('randomizes both recognition corners across available slots with the left pair solved', () => {
@@ -163,6 +292,24 @@ describe('2×2 FL source cases', () => {
     const freeSlots = new Set([1, 2, 3, 5, 6, 7]);
     expect(referenceSlots).toEqual(freeSlots);
     expect(lastSlots).toEqual(freeSlots);
+  });
+
+  it('draws each alternative unsolved third/fourth corner pose with the left pair intact', () => {
+    const recognitionPair = (setup: string) => visiblePair(setup, 'GRW', 'GOW');
+    const previous = recognitionPair('R');
+    const solved = recognitionPair('');
+    const poses = new Set<number>();
+    for (let draw = 0; draw < 268; draw++) {
+      const setup = randomFlCornerQuizSetup(previous, limit => {
+        expect(limit).toBe(268);
+        return draw;
+      });
+      expect(hasLeftPair(twoByTwoState(setup)), setup).toBe(true);
+      poses.add(recognitionPair(setup));
+    }
+    expect(poses.size).toBe(268);
+    expect(poses.has(previous)).toBe(false);
+    expect(poses.has(solved)).toBe(false);
   });
 
   it('updates the hints after unrelated layer turns and whole-cube rotations', () => {

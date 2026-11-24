@@ -157,6 +157,8 @@ export interface CaseThumbPlanInput {
   mask?: string;
   sq1BlackTop?: boolean;
   sq1SideBySide?: boolean;
+  /** Show the full case without the stage-specific recognition mask. */
+  fullState?: boolean;
   /** 3x3 plan-view teaching projection: hide noise without changing the case orientation. */
   simplifyRecognition?: boolean;
   /** User-selected final U-layer angle for applicable last-layer views. */
@@ -178,6 +180,7 @@ export function caseThumbPlan({
   mask,
   sq1BlackTop = true,
   sq1SideBySide = false,
+  fullState = false,
   simplifyRecognition = false,
   orientation = DEFAULT_ALG_CUBE_ORIENTATION,
 }: CaseThumbPlanInput): CaseThumbPlan {
@@ -191,14 +194,14 @@ export function caseThumbPlan({
     // The library resolves historical truncated CS/CSP setups before rendering.
     // Once supplied, the public state must win over any selected alternative.
     const forward = setup !== undefined ? setup : invertSq1Alg(alg);
-    const hidden = sq1StageHiddenStickerIds(set);
+    const hidden = fullState ? undefined : sq1StageHiddenStickerIds(set);
     const renderOptions = {
       ...(hidden ? { mask: { ids: hidden, color: 'transparent' } } : {}),
       compactFaces: !isCubeshape,
       sideBySide: sq1SideBySide,
     };
-    const showMiddle = !['cs', 'csp', 'parity'].includes(normalizedSet) && !hidden;
-    const colors = normalizedSet === 'cs'
+    const showMiddle = fullState || (!['cs', 'csp', 'parity'].includes(normalizedSet) && !hidden);
+    const colors = fullState ? DEFAULT_SQ1_COLORS : normalizedSet === 'cs'
       ? Object.fromEntries(
           Object.keys(DEFAULT_SQ1_COLORS).map(face => [face, 'var(--muted-foreground)']),
         )
@@ -271,7 +274,9 @@ export function caseThumbPlan({
     return { renderer: 'sr', kind: 'megaminx-top', driver: driverFor(setup, alg) };
   }
 
-  const params = cubeThumbParams(puzzle, set, sticker, mask);
+  const params: CubeThumbParams = fullState
+    ? { view: 'iso', puzzleSize: PUZZLE_SIZE[puzzle] }
+    : cubeThumbParams(puzzle, set, sticker, mask);
   const orientedScheme = supportsCubeOrientation(puzzle, params)
     ? visualCubeSchemeForOrientation(orientation, params.view === 'oll' && !params.mask)
     : params.scheme;

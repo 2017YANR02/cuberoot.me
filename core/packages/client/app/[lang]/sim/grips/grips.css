@@ -1,0 +1,57 @@
+.grip-atlas {
+  max-width: 74rem;
+  margin: 0 auto;
+  padding: clamp(1rem, 3vw, 2.5rem);
+  padding-bottom: max(7rem, env(safe-area-inset-bottom));
+  color: var(--foreground);
+}
+.grip-atlas header { margin-bottom: 1.3rem; }
+.grip-atlas header p, .grip-atlas-caption span, .grip-atlas-hands span, .grip-atlas-controls span {
+  color: var(--muted-foreground);
+  font-size: .88rem;
+}
+.grip-atlas header p { margin: .5rem 0 0; }
+.grip-atlas-layout { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(18rem, 1fr); align-items: start; gap: 1rem; }
+.grip-atlas-layout section {
+  border: 1px solid var(--border-default);
+  border-radius: 1rem;
+  padding: clamp(.85rem, 2vw, 1.4rem);
+}
+.grip-atlas-caption, .grip-atlas-controls, .grip-atlas-groups { display: flex; align-items: center; gap: .5rem; flex-wrap: wrap; }
+.grip-atlas-caption { justify-content: space-between; }
+.grip-atlas-caption strong { font-size: 1.6rem; }
+.grip-atlas-axis {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  font-size: .8rem;
+  font-weight: 700;
+  pointer-events: none;
+}
+.grip-atlas-canvas { position: relative; height: clamp(16rem, 45vh, 27rem); }
+.grip-atlas-hands, .grip-atlas-selects { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .75rem; }
+.grip-atlas-hands div, .grip-atlas-selects > div { display: grid; gap: .3rem; }
+.grip-atlas-hands { padding-block: .75rem 1rem; }
+.grip-atlas h2 { font-size: 1rem; margin: 0 0 .65rem; }
+.grip-atlas-selects { margin-bottom: 1.5rem; }
+.grip-atlas-selects label { font-size: .875rem; }
+.grip-atlas-button, .grip-atlas-select {
+  font: inherit;
+  color: inherit;
+  background: var(--background);
+  border: 1px solid var(--border-default);
+  border-radius: .45rem;
+  min-height: 2.45rem;
+  padding: .35rem .65rem;
+  cursor: pointer;
+}
+.grip-atlas-button:hover:not(:disabled), .grip-atlas-select:hover { border-color: var(--border-strong); }
+.grip-atlas-button[aria-pressed="true"] { background: var(--foreground); color: var(--background); }
+.grip-atlas-button:disabled { opacity: .5; cursor: default; }
+.grip-atlas-controls span { margin-inline-start: auto; font-variant-numeric: tabular-nums; }
+.grip-atlas-groups .grip-atlas-button, .grip-atlas-controls .grip-atlas-button { font-size: .875rem; }
+.grip-atlas-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: .35rem; margin-top: .85rem; }
+.grip-atlas-grid .grip-atlas-button { font-weight: 600; }
+@media (max-width: 730px) {
+  .grip-atlas-layout { grid-template-columns: minmax(0, 1fr); }
+  .grip-atlas-canvas { height: clamp(12rem, 32svh, 20rem); }
+}

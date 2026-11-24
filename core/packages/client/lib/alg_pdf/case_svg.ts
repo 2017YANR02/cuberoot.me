@@ -33,6 +33,7 @@ export interface CaseSvgInput {
   orientation?: string;
   viewAngle?: CaseViewAngle;
   sq1SideBySide?: boolean;
+  fullState?: boolean;
 }
 
 /** sr-puzzlegen 是 DOM 渲染器(往宿主元素里塞 <svg>),借个离屏容器取字符串。 */
@@ -79,9 +80,9 @@ export async function algCaseSvg(input: CaseSvgInput): Promise<string | null> {
 }
 
 async function renderCaseSvg({
-  puzzle, set, sticker, alg, setup, mask, size = 160, sq1BlackTop, simplifyRecognition, orientation, viewAngle, sq1SideBySide,
+  puzzle, set, sticker, alg, setup, mask, size = 160, sq1BlackTop, simplifyRecognition, orientation, viewAngle, sq1SideBySide, fullState,
 }: CaseSvgInput): Promise<string | null> {
-  const plan = caseThumbPlan({ puzzle, set, sticker, alg, setup, mask, sq1BlackTop, simplifyRecognition, orientation, viewAngle, sq1SideBySide });
+  const plan = caseThumbPlan({ puzzle, set, sticker, alg, setup, mask, sq1BlackTop, simplifyRecognition, orientation, viewAngle, sq1SideBySide, fullState });
   if (plan.renderer === 'inline-svg') return plan.svg || null;
   if (plan.renderer === 'asset') {
     try {

@@ -27,6 +27,17 @@ it('starts every independent conversation while other users are still waiting fo
   } finally {release.resolve();await worker.idle();}
   expect(store.finish).toHaveBeenCalledTimes(13);
 });
+it('coalesces a burst of wakeups into at most two concurrent claim scans',async()=>{
+  const {store}=fixture([]),first=gate(),second=gate();
+  vi.mocked(store.claim).mockImplementationOnce(async()=>{await first.promise;return undefined;})
+    .mockImplementationOnce(async()=>{await second.promise;return undefined;});
+  const worker=createAssistantQueueWorker({store,answer:vi.fn(),authorize:async()=>'2099TEST01',config:()=>null,reserve:async()=>({allowed:true,retryAfter:0})});
+  const wakeups=Array.from({length:25},()=>worker.kick());
+  expect(store.claim).toHaveBeenCalledTimes(2);
+  first.resolve();second.resolve();
+  await Promise.all(wakeups);
+  expect(store.claim.mock.calls.length).toBeGreaterThan(2);
+});
 it('does not lose an enqueue notification during an empty claim scan',async()=>{
   const {store,pending}=fixture([]),scan=gate();
   vi.mocked(store.claim).mockImplementationOnce(async()=>{await scan.promise;return undefined;});

@@ -1,6 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { existsSync, readFileSync } from 'node:fs';
 import Cube from '@cuberoot/puzzle-render-core/engine/nxn/cube';
+import { TwistAction } from '@cuberoot/puzzle-render-core/engine/nxn/twister';
+import tweener from '@cuberoot/puzzle-render-core/engine/tweener';
 import * as THREE from 'three';
 import HandsRig, { gripQuat, simulateGrips, type HandsCubeLike, type HandDiagnosticFrame } from '@/app/[lang]/sim/engine/hands/handsRig';
 import { loadManoHand } from '@/app/[lang]/sim/engine/hands/handModelMano';
@@ -12,8 +14,9 @@ import { SIZE } from '@/app/[lang]/sim/engine/define';
 import { homeLeft, homeRight } from '@/app/[lang]/sim/engine/hands/handPoses';
 import { findGripMarks } from '@cuberoot/shared/alg-notation';
 import { HalfPalmPose } from '@/app/[lang]/sim/engine/hands/halfPalmPose';
-import { UContactRecorder } from '@/app/[lang]/sim/engine/hands/uContactRecorder';
 import { FingerSurfaceSampler } from '@/app/[lang]/sim/engine/hands/fingerCollision';
+import { measureIndexContact, readDiagnosticPieces } from '@/app/[lang]/sim/engine/hands/uContactGeometry';
+import { UContactRecorder } from '@/app/[lang]/sim/engine/hands/uContactRecorder';
 
 // Keep the real animation lifecycle; substitute only asset IO / browser texture creation.
 vi.mock('@/app/[lang]/sim/engine/hands/handModelMano', async original => ({
@@ -62,6 +65,15 @@ function createRig() {
 }
 const ready = (rig: HandsRig) => vi.waitFor(() => expect(rig.getLoadState().hands).toBe('ready'));
 const haveManoHands = ['right', 'left'].every(name => existsSync(new URL(`../public/sim/hands/mano/${name}.mano.json`, import.meta.url)));
+
+async function useManoHands() {
+  const { buildManoHand } = await vi.importActual<typeof import('@/app/[lang]/sim/engine/hands/handModelMano')>('@/app/[lang]/sim/engine/hands/handModelMano');
+  vi.mocked(loadManoHand).mockImplementation(async (side, material) => {
+    const name = side === -1 ? 'right' : 'left';
+    const data = JSON.parse(readFileSync(new URL(`../public/sim/hands/mano/${name}.mano.json`, import.meta.url), 'utf8'));
+    return buildManoHand(data, side, material, `${name}.mano.json`);
+  });
+}
 
 beforeEach(() => {
   vi.mocked(loadManoHand).mockImplementation(async (side, material) => hand(side, material));
@@ -138,16 +150,56 @@ describe('hand playback and loading lifecycle', () => {
     }
     const support = frame.models.L.group.quaternion.clone().normalize();
     for (const layer of groups) layer.angle = 0;
-    for (let i = 0; i < 10; i++) {
+    for (let i = 0; i < 20; i++) {
+      const before = frame.models.R.group.quaternion.clone().normalize();
       rig.tick(16);
+      expect(before.angleTo(frame.models.R.group.quaternion.clone().normalize())).toBeLessThan(.08);
       expect(frame.models.L.group.quaternion.clone().normalize().angleTo(support)).toBeLessThan(1e-6);
     }
-    // After 160 ms on a 300 ms smooth return, the right hand is past halfway.
+    // The first hand passes halfway while the other still carries the cube.
     expect(frame.models.R.group.quaternion.clone().normalize().angleTo(last!)).toBeGreaterThan(Math.PI / 4);
-    for (let i = 0; i < 32; i++) rig.tick(16);
+    for (let i = 0; i < 64 && rig.isRegripping; i++) rig.tick(16);
     expect(rig.isRegripping).toBe(false);
     expect(frame.grips).toEqual({R: 'home', L: 'home'});
     expect(frame.models.L.group.quaternion.clone().normalize().angleTo(homeLeft().quat.clone().normalize())).toBeLessThan(1e-6);
+  });
+  it.runIf(haveManoHands)('alternates support at each quarter of a whole y2 return and bounds the wrist travel', async () => {
+    await useManoHands();
+    const { rig } = createRig(), cube = new Cube(3);
+    const { x, y, z } = cube.table.groups;
+    try {
+      rig.attachCube({ order: 3, table: { groups: { x, y, z } }, twister: cube.twister });
+      await ready(rig);
+      let frame!: HandDiagnosticFrame;
+      rig.subscribeDiagnostics(next => { frame = next; });
+      rig.tick(0);
+      const sides = ['R', 'L'] as const;
+      const skin = { R: new FingerSurfaceSampler(frame.models.R), L: new FingerSurfaceSampler(frame.models.L) };
+      const wrists = () => sides.map(side => frame.models[side].group.localToWorld(WRIST_LOCAL.clone()));
+      let previous = wrists(), peak = 0;
+      const sequence: string[] = [];
+      expect(cube.twister.twist(new TwistAction('y2'), false, false, 60)).toBe(true);
+      for (let i = 0; i < 260 && (cube.busy || rig.isRegripping); i++) {
+        tweener.update(.96);
+        rig.tick(16);
+        const next = wrists();
+        const distances = next.map((position, hand) => position.distanceTo(previous[hand]));
+        peak = Math.max(peak, ...distances);
+        if (!cube.busy && rig.isRegripping) {
+          const moving = sides.filter((_, hand) => distances[hand] > .1);
+          if (moving.length === 1 && sequence.at(-1) !== moving[0]) {
+            const support = moving[0] === 'R' ? 'L' : 'R';
+            const pieces = readDiagnosticPieces(cube);
+            expect(measureIndexContact(skin[support].samplePoints('index'), pieces).contacts.length).toBeGreaterThan(0);
+            sequence.push(moving[0]);
+          }
+        }
+        previous = next;
+      }
+      expect(rig.isRegripping || cube.busy).toBe(false);
+      expect(sequence).toEqual(['R', 'L', 'R', 'L']);
+      expect(peak).toBeLessThan(48);
+    } finally { cube.dispose(); }
   });
   it.each((['R', 'L'] as const).flatMap(side => (['up', 'down'] as const).map(direction => ({ side, direction }))))('half grip follows its specified route from either quaternion representation of home: $side $direction', async ({ side, direction }) => {
     const base = observeBasePalm();
@@ -272,12 +324,7 @@ describe('hand playback and loading lifecycle', () => {
 
   it.runIf(haveManoHands)(
     'records all four U checkpoints with real MANO skin in every grip pair', async () => {
-      const { buildManoHand } = await vi.importActual<typeof import('@/app/[lang]/sim/engine/hands/handModelMano')>('@/app/[lang]/sim/engine/hands/handModelMano');
-      vi.mocked(loadManoHand).mockImplementation(async (side, material) => {
-        const name = side === -1 ? 'right' : 'left';
-        const data = JSON.parse(readFileSync(new URL(`../public/sim/hands/mano/${name}.mano.json`, import.meta.url), 'utf8'));
-        return buildManoHand(data, side, material, `${name}.mano.json`);
-      });
+      await useManoHands();
       const { rig } = createRig();
       const cube = new Cube(3);
       rig.attachCube({ order: cube.order, table: { groups: {
@@ -291,7 +338,7 @@ describe('hand playback and loading lifecycle', () => {
         for (const R of ['home', 'up', 'down', 'half', 'halfDown'] as const) {
           for (const L of ['home', 'up', 'down', 'half', 'halfDown'] as const) {
             cube.reset(); rig.setGrips(gripQuat(R), gripQuat(L)); rig.tick(16);
-            if (R === 'up') {
+            if (R !== 'home') {
               expect(rig.prepareTwist('y', [2], 1)).toBe(true);
               for (let i = 0; i < 10; i++) rig.tick(40);
             }
@@ -302,7 +349,7 @@ describe('hand playback and loading lifecycle', () => {
             for (let i = 0; i < 10; i++) rig.tick(90);
             const data = recorder.read(), run = data.records.at(-1)!;
             expect(data.error).toBeNull();
-            expect(run.startGrips).toEqual({ R, L });
+            expect(run.startGrips).toEqual({ R: R === 'up' ? 'up' : 'home', L });
             expect(run.status).toBe('complete');
             checked++;
             expect(run.missingCheckpoints).toEqual([]);
@@ -332,16 +379,17 @@ describe('hand playback and loading lifecycle', () => {
     observed.rig.subscribeDiagnostics(frame => { frames.push(frame); });
     for (const pair of [observed, baseline]) {
       pair.rig.setGrips(gripQuat(R), gripQuat(L)); pair.rig.tick(16);
-      if (R === 'up') {
+      if (R !== 'home') {
         expect(pair.rig.prepareTwist('y', [2], 1)).toBe(true);
         for (let i = 0; i < 10; i++) pair.rig.tick(40);
       }
       expect(pair.rig.prepareTwist('y', [2], 1)).toBe(false);
     }
     const prepared = frames.find(frame => frame.event === 'prepare-u')!;
-    expect(prepared.grips).toEqual({ R, L });
+    const startsFromHome = R !== 'up';
+    expect(prepared.grips).toEqual({ R: startsFromHome ? 'home' : R, L });
     expect(prepared.preparedGesture).toEqual({ kind: 'flick', hand: 'R', finger: 'index',
-      ...(R === 'up' ? { style: 'topPush' } : R === 'home' ? { style: 'indexHook' } : {}) });
+      style: R === 'up' ? 'topPush' : 'indexHook' });
     const transforms = (rig: HandsRig) => {
       const values: number[] = [];
       rig.traverse(object => { values.push(...object.position.toArray(), ...object.quaternion.toArray()); });
@@ -376,7 +424,7 @@ describe('hand playback and loading lifecycle', () => {
     rig.subscribeDiagnostics(frame => { models = frame.models; });
     rig.tick(16);
     const sign = side === 'R' ? 1 : -1;
-    const selected = new Set<FingerName>(grip === 'down' && quarters === 2 ? ['index', 'middle'] : ['index']);
+    const selected = new Set<FingerName>(quarters === 2 ? ['index', 'middle'] : ['index']);
     const transforms = (includeMoving: boolean) => {
       const values: number[] = [];
       for (const s of ['R', 'L'] as const) {
@@ -392,8 +440,9 @@ describe('hand playback and loading lifecycle', () => {
     };
     rig.prepareTwist('z', [2], sign, quarters);
     rig.tick(0);
+    for (let i = 0; i < 40 && rig.prepareTwist('z', [2], sign, quarters); i++) rig.tick(25);
+    expect(rig.prepareTwist('z', [2], sign, quarters)).toBe(false);
     const fixed = transforms(false), before = transforms(true);
-    for (let i = 0; i < 6; i++) { rig.tick(50); rig.prepareTwist('z', [2], sign, quarters); }
     for (const progress of [.01, .25, .5, .75, 1]) {
       cube.table.groups.z[2].angle = sign * quarters * Math.PI / 2 * progress;
       rig.tick(16);
@@ -418,7 +467,10 @@ describe('hand playback and loading lifecycle', () => {
     for (const R of ['home', 'up', 'down', 'half'] as const) {
       for (const L of ['home', 'up', 'down', 'half'] as const) {
         rig.setGrips(gripQuat(R), gripQuat(L));
-        if (prepared) rig.prepareTwist('y', [0], dir, quarters);
+        if (prepared) {
+          for (let i = 0; i < 40 && rig.prepareTwist('y', [0], dir, quarters); i++) rig.tick(25);
+          expect(rig.prepareTwist('y', [0], dir, quarters)).toBe(false);
+        }
         else cube.table.groups.y[0].angle = dir * .001; // Direct drag has no preparation hint.
         rig.tick(0);
         const thumbs = transforms('thumb'), ringBefore = transforms('ring');
@@ -432,7 +484,7 @@ describe('hand playback and loading lifecycle', () => {
         expect(transforms('ring')).not.toEqual(ringBefore);
         cube.table.groups.y[0].angle = 0;
         // Check the recovery boundary too, before normal idle motion resumes.
-        for (let i = 0; i < 6; i++) { rig.tick(40); check(); }
+        for (let i = 0; i < 6; i++) { rig.tick(40); if (!rig.isRegripping) check(); }
       }
     }
   });
@@ -705,16 +757,26 @@ describe('hand playback and loading lifecycle', () => {
   it('does not restart the other hand’s return when another turn ends', async () => {
     const { rig, cube } = createRig();
     await ready(rig);
+    let frame!: HandDiagnosticFrame;
+    rig.subscribeDiagnostics(value => { frame = value; });
     cube.table.groups.y[2].angle = Math.PI / 2;
     rig.tick(16);
     cube.table.groups.y[2].angle = 0;
-    expect(rig.prepareTwist('y', [0], -1)).toBe(false); // left D can overlap right U recovery
+    // The left D now seats its ring finger before turning. The right U
+    // can withdraw during that preparation and should keep its elapsed time.
+    const prepareLeft = () => rig.prepareTwist('y', [0], -1);
+    expect(prepareLeft()).toBe(true);
+    for (let i = 0; i < 40 && prepareLeft(); i++) rig.tick(8);
+    expect(prepareLeft()).toBe(false);
+    expect(frame.hands.R.decay).toBeGreaterThan(0);
     cube.table.groups.y[0].angle = -Math.PI / 2;
-    rig.tick(100); rig.tick(50);
+    rig.tick(16);
+    const previous = frame.hands.R.decay;
     cube.table.groups.y[0].angle = 0;
-    rig.prepareTwist('y', [0], -1);
-    rig.tick(90); rig.tick(90);
-    expect(rig.prepareTwist('y', [0], 1)).toBe(false); // right hand has finished its original return
+    rig.tick(16);
+    expect(frame.hands.R.decay).toBeLessThan(previous);
+    rig.tick(100); rig.tick(100);
+    expect(frame.hands.R.phase).toBe('stable');
   });
 
   it('clears reach, recovery and active gestures when seeking to a static grip', async () => {

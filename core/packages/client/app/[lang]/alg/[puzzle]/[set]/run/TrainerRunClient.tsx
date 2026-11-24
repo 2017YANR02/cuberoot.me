@@ -1244,7 +1244,7 @@ export default function TrainerRunClient() {
 
   // 记忆模式按「整套(或该组)」排期 —— 用户从来没进过 select 页也该能直接开练,
   // 所以没勾选时回落到本页范围内的全部 case,而不是把人赶去选择页。
-  const memoPool = pool.length > 0 ? pool : memoScopeKeys;
+  const memoPool = linkedCaseKeys ?? (pool.length > 0 ? pool : memoScopeKeys);
 
   // 打印范围与本场出题范围同源:普通训练是「勾选 ∩ scope」,记忆模式没勾选时则
   // 回落到 scope 全集。这里只固定题库的规范序;覆盖乱序 / 随机抽题在点 PDF 时才现算。
@@ -2144,6 +2144,7 @@ export default function TrainerRunClient() {
           set={setSlug}
           cases={cases}
           pool={memoPool}
+          reviewSingleCase={linkedCaseKeys?.length === 1}
           scrambleKind={scrambleKind}
           onExit={() => {
             const next = trainingHost && drawParam === 'train' ? 'train' : 'recap';

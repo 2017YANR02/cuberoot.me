@@ -63,6 +63,19 @@
   container-name: course-reading;
 }
 .course-flow { overflow: hidden; }
+.tutorial-course[data-center-content] .course-reading > .tutorial-reading-fit > .tutorial-reading-fit-content {
+  display: flow-root;
+  flex: none;
+  margin-block: auto;
+}
+.tutorial-course[data-center-content] .course-flow > .lbl-flow-canvas {
+  display: flex;
+  flex-direction: column;
+}
+.tutorial-course[data-center-content] .course-flow > .lbl-flow-canvas > * {
+  flex: none;
+  margin-block: auto;
+}
 .course-overview { width: min(100%, 860px); padding: 12px min(4cqw, 24px); margin-inline: auto; }
 .course-overview p { margin: 0; line-height: 1.5; }
 .course-overview-steps { display: grid; gap: 10px; margin: 12px 0 0; padding: 0; list-style: none; }
@@ -108,14 +121,18 @@
   min-height: 0;
 }
 .course-cube > .alg-sim-player.is-fill { box-sizing: border-box; padding: 0; }
-.course-cube[data-drag-enabled='true'] .sim-stage-canvas > canvas {
+.tutorial-course[data-center-content] .sim-stage-canvas > canvas {
+  max-inline-size: 100%;
+  max-block-size: 100%;
+}
+.course-cube:is([data-drag-enabled='true'], [data-canvas-texture]) .sim-stage-canvas > canvas {
   background-color: color-mix(in srgb, var(--foreground) 2%, transparent);
   background-image: radial-gradient(color-mix(in srgb, var(--foreground) 13%, transparent) .7px, transparent .95px);
   background-size: 14px 14px;
   outline: 1px solid var(--border-default);
   outline-offset: -1px;
-  cursor: grab;
 }
+.course-cube[data-drag-enabled='true'] .sim-stage-canvas > canvas { cursor: grab; }
 .course-cube[data-drag-enabled='true'] .sim-stage-canvas > canvas:active { cursor: grabbing; }
 .course-caption {
   box-sizing: border-box;
@@ -191,11 +208,20 @@
   .course-cube { width: min(100%, 350px, 94cqh); }
   .course-caption { justify-content: safe center; }
 }
+@container course-stage not ((orientation: landscape) and (min-width: 440px) and (min-height: 120px)) {
+  .tutorial-course[data-center-content] .course-grid {
+    --stacked-cube-edge: min(100cqw, 350px, 62cqh);
+    grid-template-rows: var(--stacked-cube-edge) minmax(0, max-content);
+    align-content: safe center;
+  }
+  .tutorial-course[data-center-content] .course-cube { width: var(--stacked-cube-edge); }
+}
 @container course-stage (orientation: landscape) and (min-width: 760px) and (min-height: 360px) {
   .course-cube { width: min(100%, 480px); height: min(480px, 94cqh); aspect-ratio: auto; }
 }
 @container course-stage (max-width: 439px) and (max-height: 235px) {
   .course-cube { width: min(100%, max(84px, 47cqh)); }
+  .tutorial-course[data-center-content] .course-grid { --stacked-cube-edge: min(100cqw, max(84px, 47cqh)); }
 }
 @media (max-width: 760px), (orientation: landscape) and (max-height: 500px) {
   /* Give the docked site pet room above the tutorial footer. */

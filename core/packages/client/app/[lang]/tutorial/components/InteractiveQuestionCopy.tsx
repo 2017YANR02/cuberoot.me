@@ -42,7 +42,7 @@ export default function InteractiveQuestionCopy({ sectionId, questions, activeIn
   questions: ProgressSteps;
   activeIndex: number;
   answer: 'correct' | 'wrong' | 'pending';
-  heading: string;
+  heading: ReactNode;
   headingAction?: ReactNode;
   prompt?: string;
   action?: ReactNode;

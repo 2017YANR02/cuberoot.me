@@ -124,6 +124,9 @@ export function buildManoHand(data: ManoHandData, side: 1 | -1, skinMat: THREE.M
   const model = adaptGltfHand(src, side, skinMat, label, {
     thumbRoll: MANO_THUMB_ROLL,
     nailHalfWK: MANO_NAIL_HALFW_K,
+    // The dorsal thumb tapers before the tip. A flat ridge leaves opposing
+    // nail edges above the fingertip even with both pads seated on B.
+    thumbNailRidge: { middle: .65, tip: .30 },
     forearmDirAsset: data.forearmDir,
     handFrame: data.handFrame,
   });

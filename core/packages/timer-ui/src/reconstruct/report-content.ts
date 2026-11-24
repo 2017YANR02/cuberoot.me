@@ -13,10 +13,9 @@ import { gradeForDelta } from '@cuberoot/shared/timer/reconstruct/reference';
 import type { ReferenceResult } from '@cuberoot/shared/timer/reconstruct/reference';
 import { columnTotals, stageAverageDelta, reportTableVisibility, type Col } from './report-columns';
 import { projectReferenceRows, reportSeconds as sec } from './report-presentation';
-import { TIMER_USE_SCRAMBLE_COPY } from '../scramble/action-copy';
 
 export type ReconstructLocalize = <T>(text: { en: T; zh: T }) => T;
-export type ReportAction = { type: string; key?: string; value?: number | boolean | string; timeMs?: number; copyText?: string };
+export type ReportAction = { type: string; key?: string; value?: number | boolean | string; timeMs?: number; endMs?: number; copyText?: string };
 export interface ReportNode {
   notation?: { line: string; crossColor: import('@cuberoot/shared/timer').TimerColorLetter | null;
     links: import('@cuberoot/shared/recon/comment-links').ReconCommentLink[];
@@ -56,7 +55,7 @@ export function reportActions(solve:Solve,tr:ReconstructLocalize,state:ReportUIS
   const canShare=Boolean(solve.moves?.length),copied=state.copied==='share';
   return {...groupNode('actions',[
     shareAvailable&&buttonNode('share',!canShare?tr({zh:'没有动作记录，无法分享回放',en:'No move log — share unavailable'}):copied?tr({zh:'链接已复制',en:'Link copied'}):shareMode==='system'?tr({zh:'分享回放',en:'Share replay'}):tr({zh:'复制分享链接',en:'Copy share link'}),{type:'share'},shareClass,{disabled:!canShare,icon:copied?'check':'share'}),
-    canUse&&Boolean(solve.scramble?.trim())&&buttonNode('use',tr(TIMER_USE_SCRAMBLE_COPY),{type:'use-scramble'},useClass),
+    canUse&&Boolean(solve.scramble?.trim())&&buttonNode('use',tr({zh:'用这条打乱',en:'Use this scramble'}),{type:'use-scramble'},useClass),
   ],placement==='report'?'rc-actions':undefined,'row'),tag:placement==='report'?'div':'fragment'} as ReportNode;
 }
 export function reportSummary(solve:Solve,summary:{stm:number;tps:number;fluency:number|null},tr:ReconstructLocalize,date?:{short:string;full:string}) {

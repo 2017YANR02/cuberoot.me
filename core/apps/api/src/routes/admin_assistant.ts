@@ -82,6 +82,45 @@ export function createAdminAssistantRoutes(options: { authorize?: (c: Context) =
     return c.json({ timeZone: 'Asia/Shanghai', days, updatedAt: new Date().toISOString(), state: state[0] ?? null,
       health: assistantMonitorHealth(), totals: totals[0], daily, models, tools, errors });
   });
+  // Times measured at different boundaries remain separate. Include unsuccessful
+  // terminal requests in total latency and expose missing first-answer samples.
+  routes.get('/admin/assistant/latency', async c => {
+    const parsed=filters.shape.days.safeParse(c.req.query('days'));
+    if (!parsed.success) return c.json({error:'Invalid days'},400);
+    const groups=await run(`WITH samples AS (
+      SELECT id,status,metrics->'policy'->>'release' AS release,metrics->'policy'->>'version' AS policy,
+        CASE WHEN metrics->'tools'->>'analysis_query' IS NOT NULL THEN 'analysis'
+          WHEN jsonb_array_length(metrics->'models')>0 THEN 'model'
+          WHEN metrics->'tools' <> '{}'::jsonb THEN 'tool_only'
+          WHEN status='success' AND metrics->'models'='[]'::jsonb THEN 'local'
+          ELSE 'unknown' END AS route,
+        (metrics#>>'{timing,queueWaitMs}')::int AS queue_ms,
+        (metrics#>>'{timing,requestReadyMs}')::int AS ready_ms,
+        (metrics#>>'{timing,firstAnswerFromReceiptMs}')::int AS first_ms,
+        (metrics#>>'{timing,finishedFromReceiptMs}')::int AS total_ms,
+        (metrics#>>'{browser,firstAnswerMs}')::int AS browser_first_ms,
+        (metrics#>>'{browser,firstVisibleAnswerMs}')::int AS browser_first_visible_ms,
+        (metrics#>>'{browser,visibleMs}')::int AS browser_visible_ms,
+        metrics->'stages' AS stages,metrics->'toolTimings' AS tools
+      FROM site_assistant_requests WHERE scope='chat' AND status<>'running' AND ${windowSql}
+    ), ranked AS (
+      SELECT *,row_number() OVER (PARTITION BY release,policy,route ORDER BY total_ms DESC NULLS LAST,id) AS slow_rank
+      FROM samples
+    ) SELECT release,policy,route,count(*)::int AS requests,
+      count(*) FILTER (WHERE status<>'success')::int AS unsuccessful,
+      count(total_ms)::int AS measured_totals,count(first_ms)::int AS measured_first_answers,
+      count(browser_visible_ms)::int AS measured_visible,count(browser_first_visible_ms)::int AS measured_first_visible,
+      percentile_cont(0.95) WITHIN GROUP (ORDER BY browser_first_visible_ms) AS browser_first_visible_p95_ms,
+      percentile_cont(0.95) WITHIN GROUP (ORDER BY first_ms) AS first_p95_ms,
+      percentile_cont(0.95) WITHIN GROUP (ORDER BY total_ms) AS total_p95_ms,
+      percentile_cont(0.95) WITHIN GROUP (ORDER BY browser_visible_ms) AS browser_visible_p95_ms,
+      jsonb_agg(jsonb_build_object('id',id,'status',status,'queueMs',queue_ms,'readyMs',ready_ms,
+        'firstAnswerMs',first_ms,'totalMs',total_ms,'browserFirstMs',browser_first_ms,
+        'browserFirstVisibleMs',browser_first_visible_ms,'browserVisibleMs',browser_visible_ms,'stages',stages,'tools',tools) ORDER BY slow_rank)
+        FILTER (WHERE slow_rank<=3 AND total_ms IS NOT NULL) AS slowest
+      FROM ranked GROUP BY release,policy,route ORDER BY total_p95_ms DESC NULLS LAST`,[parsed.data]);
+    return c.json({days:parsed.data,groups});
+  });
   routes.get('/admin/assistant/requests', async c => {
     const parsed = filters.safeParse(c.req.query());
     if (!parsed.success) return c.json({ error: 'Invalid filters' }, 400);

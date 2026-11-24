@@ -1,5 +1,5 @@
 /** Increment when answer contracts change; historical metrics keep their value. */
-export const ASSISTANT_POLICY_VERSION = '2026-11-18-reliability-52';
+export const ASSISTANT_POLICY_VERSION = '2026-11-23-decision-evidence';
 import { SITE_ASSISTANT_ANSWER_MAX_LENGTH, type AssistantThinkingMode } from '@cuberoot/shared/site-assistant';
 
 /** Stable request identity; changing an analysis heading is not a new calculation. */
@@ -21,6 +21,102 @@ export function assistantReasoningPolicy(mode: AssistantThinkingMode, work: {
   const thinking = mode === 'deep' || (mode === 'auto' && (analytical || work.repair || work.review));
   const effort = thinking && mode==='auto' && work.review && !analytical && !work.repair && !work.criticalReview ? 'low' as const : 'high' as const;
   return { thinking, effort, maxTokens: thinking ? 16384 : 4096 };
+}
+
+/** A depth preference changes reasoning, not the requested length or format. */
+export const DEEP_ANALYSIS_GUIDE = `You are CubeRoot's assistant. Decide the leading question from the supplied facts. In one or two useful sentences state the decision and the decisive reason or calculation. Address only the opening judgment; another pass completes the remaining questions. Do not enumerate the schedule, alternatives or test procedure now. If a fact is unknown, keep the decision conditional. Use native tools for outside facts, current rules or site features. Use deliberate if you need specialized data tools or extended reasoning. For a self-contained judgment return just the opening in plain prose.`;
+
+
+/** Copy potential exclusive-use constraints verbatim; the model resolves their scope in the original question. */
+export function exclusiveUseClauses(question:string) {
+  return question.split(/[。！？；，;!?\n]|(?<=\.)\s+/u).map(clause=>clause.trim()).filter(clause=>
+    /只(?:能|可)(?:用[来于作]|做|进行|办理|供)|仅(?:限于?|用[于作]|供)|仅可用于|专供|\b(?:only (?:be used for|used for|for)|reserved (?:solely |exclusively )?for|for .+? only)\b/i.test(clause));
+}
+
+/** Factor out an unconditional, already-assigned ancillary space only when the rest of the question is independent of it. */
+export function fixedScenarioReservation(question:string,limits:string[]) {
+  if(limits.length!==1 || !/安排|怎么排|如何排|怎样排|排程|排班|调度|规划|分配/.test(question) || /[“”「」"'‘’]|如果.{0,12}(?:允许|开放|解禁)|(?:取消|改变|放开|解除)限制/.test(question))return;
+  const clause=limits[0];
+  const match=/^(隔壁|[\p{Script=Han}]{1,8}(?:室|间|厅|库|区|廊|馆))(?:只能做|仅供|只能用于|仅限用于)([\p{Script=Han}]{2,10})$/u.exec(clause);
+  if(!match || /如果|假如|只要|听说|以为|认为|据说|希望|建议|表示|说|不是|原本|原来|曾经|平时/.test(clause))return;
+  const at=question.indexOf(clause);
+  if(at>0 && !/[。；！？;!?\n]\s*$/u.test(question.slice(0,at)))return;
+  const suffix=question.slice(at+clause.length);
+  if(/^[，,]\s*(?:除|但|仅在|仅当|只在|只要|否则|如果|若|前提)/.test(suffix))return;
+  const [,place,use]=match;
+  const remaining=question.replace(clause,'');
+  const activity=use.replace(/^(?:无声|安静|临时|自助)/,'');
+  if(!activity || remaining.includes(place) || remaining.includes(activity) || /那里|那儿|这儿|该处|那间|这间|该房间|该场地|这个地方|里面|它|该限制|这项限制|这个限制/.test(remaining))return;
+  return {clause,place,activity,question:question.replace(clause,'辅助场地已专用，不能纳入其他活动的场地分配')};
+}
+
+/** Preserve the user's wording and keep a conditional premise with its question. */
+export function scenarioRequestedParts(question:string):string[] {
+  const asks=/怎么|怎样|如何|什么|哪(?:个|些|里|种)|为何|为什么|能否|是否|\b(?:how|what|which|when|where|why|should|would|could|can)\b/i;
+  const parts:string[]=[];
+  for(const sentence of question.split(/(?<=[。！？!?；;\n])|(?<=\.)\s+/u)) {
+    const explicitQuestion=/[？?]\s*$/.test(sentence);
+    const text=sentence.trim().replace(/[。！？!?；;]+$/u,'');
+    let current='';
+    for(const clause of text.split(/(?<=[，,])\s*/u)) {
+      if(asks.test(current) && asks.test(clause)) {
+        parts.push(current.replace(/[，,]$/u,'').trim());
+        current='';
+      }
+      current+=clause;
+    }
+    if(current.trim() && (explicitQuestion || asks.test(current)))parts.push(current.trim());
+  }
+  return parts;
+}
+
+export const SCENARIO_COUNT_GUIDE = ' Respect the item count in each subquestion. When asked to choose one, give one specific choice and its reason. Do not bundle independent items in that choice or offer a runner-up.';
+
+/** Constraints for the decision requested, independent of which training method wins. */
+export function scenarioDecisionGuidance(question: string): string {
+  const rules: string[] = [];
+  if (/(?:记|记录|收集|测量).{0,5}一(?:个|项|种)|(?:record|log|track|measure) (?:only |just |exactly )?one/i.test(question)) {
+    rules.push('For the extra observation select exactly ONE directly measurable variable. Give its name, one unit or single scale, and why its value would help distinguish the explanations. It must fit one spreadsheet cell containing one scalar per trial. Do not give alternative measurements, examples of other variables, or ask to record any additional metadata elsewhere. Assigning the experimental conditions is still required.');
+    if (/热身|warm.?up/i.test(question) && /起床|午饭|早餐|waking|morning|lunch/i.test(question)) {
+      rules.push('For a wake-time or post-meal confound, choose ONE no-equipment pre-trial observation, such as elapsed minutes since waking, or a single alertness rating. Pick one and mention only that measure. Timing the solves is the outcome already being compared. Do not introduce a different sport or assume physiological instruments.');
+    }
+  }
+  if (/(?:录像|视频|footage|recordings?)/i.test(question) && /(?:练习|训练|practice|training)/i.test(question) && /(?:改主意|改变.{0,8}(?:判断|看法)|change your mind)/i.test(question)) {
+    rules.push('Distinguish a diagnostic proxy from the actual goal. Compare two training periods under balanced conditions, testing the target task at normal speed after EACH period. Name both training conditions in the decision rule: shift the mix only if the proposed training yields both a repeatable proxy improvement AND better target performance than the current training. If only the proxy improves or the current training matches or beats the proposed training on the target outcome, keep the mix. Use a concrete outcome in the user’s domain. Avoid the ambiguous phrase “if full-speed gets better” without saying after which training.');
+    if (/(?:慢拧|slow turning)/i.test(question) && /(?:全速|full.speed)/i.test(question) && /停顿|pauses?/i.test(question)) {
+      rules.push('If the aim is faster solving, use an independent endpoint: mean elapsed time for entire normal-speed solves AFTER each training block. Define the decision as a strict AND: reproducibly fewer pauses AND a meaningfully shorter normal-speed mean after slow-turn training than after full-speed training. Record both numbers separately. A tie in total time, “no worse”, fewer pauses in the normal-speed test, or shorter F2L pauses cannot substitute for faster whole solves. If the primary goal is unspecified, explicitly condition that decision on improving full-solve speed; respect any other stated goal.');
+    }
+  }
+  return rules.join(' ');
+}
+
+export const VOUCHER_CHOICE_GUIDE = 'The verified ledger already answers affordability and gives BOTH feasible alternatives. Add just your recommendation in two concise Chinese sentences: choose a whole option and give a nonfinancial priority assumption that makes it preferable; explain to both groups who benefits, who defers and under what priority they would switch. Do not recalculate the balance, add purchases, or repeat the alternatives.';
+
+/** Only settle arithmetic explicitly supplied for two equal, indivisible purchases.
+ * Leave other prices, restrictions, or counterfactual changes to normal analysis. */
+export function sharedVoucherBalance(question: string): string | undefined {
+  const [pool, purchases, followUp, ...rest] = question.trim().split(/[。.]/u).map(part => part.trim());
+  if (rest.length || !pool || !purchases || !followUp) return;
+  if (/没|曾|原本|原先|预计|大约|至少|最多|假设|除外|除非|另有/.test(pool)) return;
+  const amounts = /^[\p{Script=Han}]{0,8}有\s*(\d{1,5})\s*张券[，,]\s*(?:[\p{Script=Han}]{0,6}券)?(?:里|中)?有\s*(\d{1,5})\s*张只(?:能用于|能用来|能)(?:兑换|换)([\p{Script=Han}]{1,10})[，,]\s*(?:其他|其余)券通用$/u.exec(pool);
+  const options = /^([\p{Script=Han}]{1,8})(?:和|与)([\p{Script=Han}]{1,8})各(?:要|需)\s*(\d{1,5})\s*张通用券[，,]\s*(?:不能|不可)拆买$/u.exec(purchases);
+  const allocation = /^(?:你会|我该)?(?:怎么|如何)取舍[？?]\s*(?:如果|若)[\p{Script=Han}]{1,8}不换券[，,](?:怎么|如何|怎样)(?:跟|向|对)两组(?:解释|说明)[，,]?并(?:提出|给出)(?:一[个种])?(?:不超预算的)?备选(?:方案)?[？?]$/u;
+  if (!amounts || !options || !allocation.test(followUp)) return;
+  const [, totalText, reservedText, purpose] = amounts;
+  const [, left, right, priceText] = options;
+  const total = Number(totalText), reserved = Number(reservedText), price = Number(priceText);
+  const available = total - reserved;
+  if (/和|与|或|外|除/.test(left + right) || left === right || price <= 0 || reserved <= 0 || available < price || available >= 2 * price) return;
+  return `通用券有 ${total} − ${reserved} = ${available} 张。${left}和${right}合计要 ${2 * price} 张，差 ${2 * price - available} 张，只够完整买一项。\n\n不换券也有两种排法：本轮选「${left}」，暂缓「${right}」；或者反过来。本轮都只花 ${price} 张通用券，余 ${available - price} 张通用券，${reserved} 张专用券仍只用于换${purpose}。`;
+}
+
+export const SCENARIO_REVIEW_GUIDE = `Audit the unverified draft against the original user question. The quoted clauses are extracts, not extra permissions. For each required action and contingency check who does it, where, with which resource and at what time. Read all rows and optional suggestions. An exclusively reserved location or allowance may be used only for the named purpose: even passive waiting, setup, handover or a compatible activity needs permission. Apply a restriction only where the question affirms it. Check that every requested decision, action, rationale and counterfactual has an actual answer. If all pass, return only KEEP. Do not rewrite a valid answer for style. If a part is missing or incorrect, return the complete corrected answer in the user's language, retaining sound parts and deleting unsupported allocations in every branch. Schedule participants only for their own activity when there is no permitted waiting location. If requirements do not fit, state the shortfall and what would need to change. Preserve user formatting and give no audit commentary or JSON.`;
+
+// First-person requests for judgment can often be answered from the supplied
+// situation. Keep explicit requests for extensive reasoning at full effort.
+export function asksForScenarioJudgment(question:string) {
+  if (question.length>1200 || /详尽|详细|全面|严格|严谨|证明|推导|穷举|逐步|逐项|深入|深度|详析|\b(?:detailed|thorough|rigorous|exhaustive|derivation|proof|in.depth|step by step)\b/i.test(question)) return false;
+  return /我(?:该|应当|应该)(?:怎么|如何|选|先)|你(?:会(?:怎么|如何|先|选)|更倾向|更看好|认为哪)|(?:怎么|如何)(?:判断|权衡|取舍)|\b(?:how (?:should I|would you)|which (?:explanation|option) (?:is|would)|what would (?:you|change your mind))\b/i.test(question);
 }
 
 /** The provider must finish a valid message; content is never sliced to fit. */

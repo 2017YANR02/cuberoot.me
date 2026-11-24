@@ -6,10 +6,10 @@ import { reportSeconds } from './report-presentation';
 export { playbackMoveDurationTicks } from '@cuberoot/shared/timer/reconstruct/recap';
 const BUTTON_REPLAY_SPEEDS = [0.5, 1, 2] as const;
 export const REPLAY_SPEEDS = [...BUTTON_REPLAY_SPEEDS, 10] as const;
-export interface ReportPlayerState {index:number;timeMs:number;playing:boolean;speed:number;posed:boolean;run:number}
+export interface ReportPlayerState {index:number;timeMs:number;playing:boolean;speed:number;posed:boolean;run:number;rangeEndMs?:number}
 export function reportPlayerAction(state:ReportPlayerState,action:ReportAction,track:PlaybackMove[],raw:SolveMove[],lastTs:number,hasGyro:boolean) {
   const next={...state};let seek=false,jump=false;
-  const at=(index:number,timeMs?:number)=>{Object.assign(next,playbackSeek(track,lastTs,index,timeMs));next.playing=false;seek=true;jump=true;};
+  const at=(index:number,timeMs?:number)=>{Object.assign(next,playbackSeek(track,lastTs,index,timeMs));next.playing=false;delete next.rangeEndMs;seek=true;jump=true;};
   switch(action.type){
     case 'pause':next.playing=false;break;
     case 'start':at(0);break;
@@ -17,8 +17,21 @@ export function reportPlayerAction(state:ReportPlayerState,action:ReportAction,t
     case 'seek':at(Number(action.value));break;
     case 'step':at(state.index+Number(action.value));jump=Number(action.value)<0;break;
     case 'time':at(playbackIndexAt(track,Number(action.value)),Number(action.value));break;
-    case 'play-from':{const target=rawPlaybackTarget(track,raw,Number(action.value),action.timeMs,true);at(target.index,target.timeMs);next.playing=track.length>0&&target.index<track.length;next.run++;break;}
-    case 'play':if(!track.length)break;if(state.index>=track.length){at(0);next.playing=true;}else next.playing=!state.playing;next.run++;break;
+    case 'play-from': {
+      const target = rawPlaybackTarget(track, raw, Number(action.value), action.timeMs, true);
+      at(target.index, target.timeMs);
+      if (action.endMs !== undefined && action.endMs > next.timeMs) next.rangeEndMs = Math.min(lastTs, action.endMs);
+      next.playing = track.length > 0 && target.index < track.length;
+      next.run++;
+      break;
+    }
+    case 'play':
+      if (!track.length) break;
+      if (state.index >= track.length) { at(0); next.playing = true; }
+      else next.playing = !state.playing;
+      if (next.rangeEndMs !== undefined && state.timeMs >= next.rangeEndMs) delete next.rangeEndMs;
+      next.run++;
+      break;
     case 'speed': {
       const speed = Number(action.value);
       if (REPLAY_SPEEDS.some(rate => rate === speed)) next.speed = speed;

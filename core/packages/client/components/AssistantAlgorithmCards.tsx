@@ -12,6 +12,8 @@ export default function AssistantAlgorithmCards({result, onAsk, onChange}: {resu
   onChange?:(index:number, expected:AssistantAlgorithmCard, next:AssistantAlgorithmCard)=>void}) {
   const pending = useRef(new Set<number>()), mounted = useRef(true);
   const [status, setStatus] = useState<Record<number, 'loading'|'error'|undefined>>({});
+  const [showDiagrams, setShowDiagrams] = useState(false);
+  const display = result.display === 'text' && showDiagrams ? 'both' : result.display;
   useEffect(() => { mounted.current = true; return () => { mounted.current = false; }; }, []);
   const another = async (index:number) => {
     const card = result.cards[index];
@@ -23,15 +25,17 @@ export default function AssistantAlgorithmCards({result, onAsk, onChange}: {resu
     } catch { if (mounted.current) setStatus(s => ({...s, [index]:'error'})); }
     finally { pending.current.delete(index); }
   };
-  const mode = {both:{zh:'状态图和公式',en:'diagrams and algorithms'},image:{zh:'只显示状态图',en:'diagrams only'},text:{zh:'只显示公式文字',en:'algorithm text only'}}[result.display];
+  const mode = {both:{zh:'状态图和公式',en:'diagrams and algorithms'},image:{zh:'只显示状态图',en:'diagrams only'},text:{zh:'只显示公式文字',en:'algorithm text only'}}[display];
   const more = () => onAsk?.(tr({zh:`继续展示 ${result.puzzle} ${result.set} ${result.query ?? ''}，从第 ${(result.nextOffset ?? 0)+1} 个 case 开始，${mode.zh}。`,en:`Continue ${result.puzzle} ${result.set} ${result.query ?? ''}, starting at case ${(result.nextOffset ?? 0)+1}, ${mode.en}.`}));
   return <section className="assistant-algorithms" aria-label={result.title}>
     <h4>{result.title}</h4>
     {!result.cards.length && <p>{tr({zh:'未找到符合条件的公式。',en:'No matching algorithm was found.'})}</p>}
+    {result.display==='text' && result.cards.length>0 && <button type="button" className="cube-photo-expand" aria-expanded={showDiagrams}
+      onClick={()=>setShowDiagrams(show=>!show)}>{tr(showDiagrams ? {zh:'隐藏状态图',en:'Hide diagrams'} : {zh:'显示状态图',en:'Show diagrams'})}</button>}
     <div className="cube-photo-formulas">{result.cards.map((card,i)=>{
       const playback=result.display!=='image' ? assistantCardPlayback(card) : undefined;
       return <article key={`${card.caseId ?? card.name}:${i}`} className="cube-photo-formula" data-site-surface="panel" aria-busy={status[i]==='loading'}>
-      <AlgorithmReplyCard card={card} display={result.display}/>
+      <AlgorithmReplyCard card={card} display={display}/>
       {(playback || (card.alternativeCount>1 && result.display!=='image')) && <div className="assistant-algorithm-controls">
         {playback && <AppLink href={playback} prefetch={false} target="_blank" rel="noopener noreferrer">{tr({zh:'播放这条公式',en:'Play this algorithm'})}</AppLink>}
         {card.alternativeCount>1 && <span>{tr({zh:`公式 ${card.alternative+1}/${card.alternativeCount}`,en:`Algorithm ${card.alternative+1}/${card.alternativeCount}`})}</span>}

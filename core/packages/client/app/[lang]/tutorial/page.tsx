@@ -277,7 +277,7 @@ export default function TutorialPage() {
         <AlgCard href="/tutorial/2x2-fl" prefetch={false}
           thumb={<VisualCube view="f2l" puzzleSize={2} size={112} local
             alt={tr({ zh: '第一层复原、顶层淡化的二阶魔方', en: '2×2 cube with the first layer solved and the top layer muted' })} />}
-          title={<T zh="FL（第一层）" en="First Layer (FL)" />}
+          title={<T zh="第一层" en="First Layer" />}
           sub={<T zh="先拼角对，再掌握 44 种盘面" en="Build a corner pair, then learn 44 first-layer cases" />} />
         <AlgCard href="/tutorial/2x2-eg" prefetch={false}
           thumb={<VisualCube algorithm="R U R' U R U2 R'" view="pll" puzzleSize={2} size={112} local scheme="ygrwbo"

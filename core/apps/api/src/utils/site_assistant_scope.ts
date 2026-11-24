@@ -41,6 +41,17 @@ export function singleRoundEvent(text:string) {
   return event ? {label,event} : undefined;
 }
 
+/** A single current official PB. Comparisons, ranks and date filters need separate scopes. */
+export function personalBestRequest(question:string) {
+  const q=question.normalize('NFKC').trim().replace(/[?!.。]+$/,'');
+  const event=singleRoundEvent(q);
+  if (!event) return;
+  const form=q.replace(event.label,'@').replace(/\s+/g,' ').trim();
+  const match=/^我的?\s*(?:官方\s*)?@\s*(?:官方\s*)?(单次|平均)\s*(?:PB|PR|个人(?:最佳|纪录|最好成绩))\s*(?:是多少|是什么|多少)?$/i.exec(form)
+    ?? /^(?:what is|what's) my (?:official )?@ (single|average) (?:pb|pr|personal best)$/i.exec(form);
+  if (match) return {event:event.event,metric:/单次|single/i.test(match[1])?'single' as const:'average' as const};
+}
+
 /** A narrow guard for personal attendance follow-ups, based only on user wording. */
 export function assistantAttendanceScope(question: string, history: AssistantMessage[], now: Date, timeZone: string, viewerWcaId?: string): AttendanceScope | undefined {
   let scope: AttendanceScope = {};

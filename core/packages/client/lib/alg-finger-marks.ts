@@ -1,3 +1,5 @@
+import { pushRule } from './push-notation';
+import { hasBalancedGrouping, stripComments } from '@cuberoot/shared/alg-notation';
 import { algHtmlRuns, algHtmlText, escapeAlgText, replaceAlgHtmlText } from './alg_html';
 import { findTokenPositions, reconPlaybackTokenPositions } from './recon-alg-utils';
 
@@ -41,14 +43,18 @@ function serialize(chars: { text: string; tags: string[] }[]): string {
   return html + active.reverse().map(close).join('');
 }
 
-/** Full selected moves, or the move immediately before the caret. Never mark whitespace/new input. */
-export function toggleFingerMark(text: string, html: string, start: number, end: number, mark: FingerMark): string {
-  const chars = characters(replaceAlgHtmlText(html || escapeAlgText(text), text));
-  const moves = findTokenPositions(text);
-  const targets = start === end ? moves.filter(move => move.start < start).slice(-1)
+export function fingerMarkTargets(source: string, start: number, end: number) {
+  const moves = findTokenPositions(source);
+  return start === end ? moves.filter(move => move.start < start).slice(-1)
     : moves.filter(move => move.start < end && move.end > start);
+}
+
+/** Full selected moves, or the move immediately before the caret. Never mark whitespace/new input. */
+export function toggleFingerMark(text: string, html: string, start: number, end: number, mark: FingerMark, source = text, removeOnly = false): string {
+  const chars = characters(replaceAlgHtmlText(html || escapeAlgText(text), text));
+  const targets = fingerMarkTargets(source, start, end);
   const tag = `<${mark}>`;
-  const remove = targets.length > 0 && targets.every(move => chars.slice(move.start, move.end).every(char => char.tags.includes(tag)));
+  const remove = removeOnly || targets.length > 0 && targets.every(move => chars.slice(move.start, move.end).every(char => char.tags.includes(tag)));
   for (const move of targets) for (let i = move.start; i < move.end; i++) {
     const char = chars[i];
     char.tags = char.tags.filter(existing => existing !== tag && (remove ||
@@ -56,6 +62,34 @@ export function toggleFingerMark(text: string, html: string, start: number, end:
     if (!remove) char.tags.push(tag);
   }
   return serialize(chars);
+}
+
+/** The push key changes one U/D quarter turn. Include the suffix in its hit area
+ * and leave adjacent moves, comments and FTN annotations untouched. */
+export function pushSuffixAt(text: string, start: number, end: number) {
+  const selected = text.slice(start, end);
+  if (selected.trim()) {
+    start += selected.length - selected.trimStart().length;
+    end -= selected.length - selected.trimEnd().length;
+  }
+  if (start === end && !/[UD]/.test(text[start] ?? '')) {
+    while (start > 0 && /[ \t]/.test(text[start - 1])) start--;
+    end = start;
+  }
+  for (const move of findTokenPositions(text)) {
+    if (!pushRule(move.text + 'p')) continue;
+    const offset = move.end;
+    const marked = text[offset] === 'p';
+    const after = offset + Number(marked);
+    if (start < move.start || end > after) continue;
+    if (move.start && !/[\s↑↓·]/.test(text[move.start - 1])) continue;
+    if (after < text.length && !/[\s↑↓·\[]/.test(text[after]) && !text.startsWith('//', after)) continue;
+    // Playback reads push marks on standalone turns, outside groups and FTN blocks.
+    const prefix = stripComments(text.slice(0, move.start));
+    if (!hasBalancedGrouping(prefix) || prefix.lastIndexOf('[') > prefix.lastIndexOf(']')) return null;
+    return { offset, marked };
+  }
+  return null;
 }
 
 export function sliceAlgHtml(html: string, start: number, end: number): string {
@@ -69,9 +103,9 @@ export function spliceAlgHtml(html: string, start: number, end: number, inserted
 }
 
 /** Source-to-playback mapping is verified; unsupported group inversions never silently lose marks. */
-export function playbackFingerAnnotations(text: string, html: string): FingerAnnotation[] {
+export function playbackFingerAnnotations(text: string, html: string, source = text): FingerAnnotation[] {
   if (algHtmlText(html) !== text) throw new Error('mismatched-finger-text');
-  const positions = reconPlaybackTokenPositions(text);
+  const positions = reconPlaybackTokenPositions(source);
   if (!positions.length && hasFingerMarks(html)) throw new Error('unsupported-finger-sequence');
   const chars = characters(html);
   return positions.map(move => {

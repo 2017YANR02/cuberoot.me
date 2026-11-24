@@ -2,19 +2,21 @@
 
 import { useCallback, useMemo, useState } from 'react';
 import { parseAsString, useQueryStates } from 'nuqs';
+import { PAGE_META } from '@cuberoot/shared/page-catalog';
 import CubeOrientationSelect from '@/components/CubeOrientationSelect';
 import { SettingsPopover } from '@/components/TrainingSettings';
 import { tr } from '@/i18n/tr';
 import InteractiveTutorial, { type CourseChapter, type CoursePosition } from '../components/InteractiveTutorial';
 import { TWO_BY_TWO_ORIENTATION } from '../lib/2x2-state';
-import { FL_CASES, FL_CHAPTERS, FL_TWISTS, flChapterTitle, flPalette, flSectionId, type FlChapter } from './lesson-data';
+import { FL_CASES, FL_CHAPTERS, FL_TWISTS, flSectionId, type FlChapter } from './lesson-data';
 import { CaseIndex, ChapterOverview, FirstLayerDemo, Introduction, walkthroughHeading } from './course-content';
 import RecognitionLesson from './RecognitionLesson';
+import AlignmentExercise from './AlignmentExercise';
 import './first-layer.css';
 
-const title = { zh: '二阶魔方 FL（第一层）', en: '2×2 First Layer (FL)' };
 const overviewTitle = { zh: '概览', en: 'Overview' };
 const recognitionTitle = { zh: '识别流程', en: 'Recognition flow' };
+const alignmentTitle = { zh: '摆位与识别', en: 'Align and recognize' };
 const walkthroughId = 'walkthrough';
 const formulaChapters = Object.keys(FL_CHAPTERS) as FlChapter[];
 const chaptersFor = (orientation: string): CourseChapter[] => [
@@ -28,10 +30,13 @@ const chaptersFor = (orientation: string): CourseChapter[] => [
   },
   ...formulaChapters.map((chapter): CourseChapter => ({
     id: chapter,
-    title: flChapterTitle(chapter, flPalette(orientation)),
+    title: FL_CHAPTERS[chapter].title,
     sections: [
-      { id: `${chapter}-overview`, title: overviewTitle, index: select =>
-        <ChapterOverview chapter={chapter} orientation={orientation} onSelect={twist => select(chapter, flSectionId(chapter, twist))} /> },
+      { id: `${chapter}-overview`, title: overviewTitle, content:
+        <ChapterOverview key={chapter} chapter={chapter} orientation={orientation} /> },
+      { id: `${chapter}-alignment`, title: alignmentTitle, stage: select =>
+        <AlignmentExercise chapter={chapter} orientation={orientation}
+          onSelect={twist => select(chapter, flSectionId(chapter, twist))} /> },
       ...FL_TWISTS.map(twist => ({
         id: flSectionId(chapter, twist),
         title: { zh: twist.symbol, en: twist.symbol },
@@ -70,7 +75,7 @@ export default function Page() {
     void setLocation({ step, section }, { history: chapterChanged ? 'push' : 'replace' });
   }, [chapters, setLocation]);
 
-  return <InteractiveTutorial title={title} puzzle="2x2" orientation={orientation} chapters={chapters}
+  return <InteractiveTutorial title={PAGE_META['tutorial/2x2-fl'].title} puzzle="2x2" orientation={orientation} chapters={chapters}
     catalogHref="/tutorial?puzzle=2x2"
     location={positionFor(step, section, chapters)} onNavigate={navigate}
     headerAction={<SettingsPopover className="fl-orientation-settings" iconSize={20}

@@ -2721,7 +2721,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
 
   // Keep the share URL copyable and reloadable, even after dismissing the dialog.
   const [shareId] = useQueryState('share', parseAsString);
-  const reconstructSolve = reconstruction?.shareId && reconstruction.shareId !== shareId
+  const reconstructSolve: Solve | null = reconstruction?.shareId && reconstruction.shareId !== shareId
     ? null : reconstruction?.solve ?? null;
   useEffect(() => {
     if (!shareId) return;

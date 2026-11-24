@@ -234,6 +234,42 @@ describe.skipIf(!enabled)('durable assistant inbox and checkpoints',()=>{
     const after=await (await app.request(url+'?after='+revision)).json();
     expect(after.paused).toBe(true);expect(after.revision).toBeGreaterThan(revision);
   });
+  it('pushes a committed answer and sources together, then restores them on reconnect',async()=>{
+    const cid=randomUUID(),id=randomUUID(),next=randomUUID();
+    let uid=7;
+    const app=createSiteAssistantRoutes({answer:vi.fn(),config,now:Date.now,reserve,authenticate:async()=>({uid,wcaId:'2099TEST01'}),queue:{store,worker:{kick:vi.fn()}}});
+    const url='/site-assistant/conversations/'+cid+'?updates=1', headers={Accept:'text/event-stream'};
+    const connect=async()=>{
+      const controller=new AbortController();
+      const response=await app.request(url,{headers,signal:controller.signal});
+      const reader=response.body!.getReader();
+      return {
+        frame:async()=>JSON.parse(new TextDecoder().decode((await reader.read()).value).replace(/^data: /,'')),
+        close:async()=>{controller.abort();await reader.cancel();},
+      };
+    };
+    await store.enqueue(uid,cid,id,'queue',input());
+    uid=8;
+    expect((await app.request(url,{headers})).status).toBe(404);
+    uid=7;
+    const claim=(await store.claim())!;
+    expect(claim.message.id).toBe(id);
+    const stream=await connect();
+    const answer={answer:'Verified 42 [[saved]]',sources:result.sources};
+    try {
+      const initial=await stream.frame();
+      expect(initial).toMatchObject({type:'snapshot',messages:[{id,state:'running'}]});
+      await store.finish(claim,Number(claim.message.sequence),answer);
+      const finished=await stream.frame();
+      expect(finished).toMatchObject({type:'patch',base:initial.revision,messages:[{id,state:'completed',answer}]});
+      await store.enqueue(uid,cid,next,'queue',input());
+      expect(await stream.frame()).toMatchObject({type:'patch',base:finished.revision,messages:[{id:next,state:'queued'}]});
+    } finally {await stream.close();}
+    const restored=await connect();
+    try {
+      expect(await restored.frame()).toMatchObject({type:'snapshot',messages:[{id,answer},{id:next}]});
+    } finally {await restored.close();await store.control(uid,cid,'stop');}
+  });
   it('wakes an SSE subscriber when an independent worker commits in PostgreSQL',async()=>{
     const cid=randomUUID(),ready=gate(),committed=gate();
     const observer=assistantQueueStore(run,tx,(notify,onReady)=>db.listen('cuberoot_assistant_queue_revision',notify,()=>{onReady();ready.resolve();}));

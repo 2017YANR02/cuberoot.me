@@ -30,7 +30,7 @@ export interface AssistantMetrics {
   contexts?: Array<{ relevance: 'strong' | 'weak'; recentTurns: number; estimatedTokens: number; inputBudget: number; compressed: string[]; layers: Record<string, number> }>;
   stages: Record<string, { calls: number; ms: number; errors: number }>;
   models: Array<{ model: string; thinking: boolean; input: number | null; output: number | null; cached: number | null; reasoning: number | null; durationMs?: number; firstActivityMs?: number; firstTextMs?: number; grossCny?: number | null; cacheAdjustedCny?: {min:number;max:number}|null; tariff?: unknown; round?: number; attempt?: number; promptFingerprint?: string; configurationFingerprint?: string; failure?: AssistantModelDiagnostic & { upstreamStatus?: number } }>;
-  timing?: { version: 1; receivedAt?:number; claimedAt?:number; poolStartMs?:number; queueWaitMs?:number; requestReadyMs?: number; firstProgressMs?: number; responseReadyMs?: number };
+  timing?: { version: 1; receivedAt?:number; claimedAt?:number; poolStartMs?:number; queueWaitMs?:number; requestReadyMs?: number; firstProgressMs?: number; responseReadyMs?: number; firstAnswerFromReceiptMs?:number; finishedFromReceiptMs?:number };
   toolTimings?: Record<string, { calls: number; ms: number; errors: number }>;
   embeddings: Array<{ model: string; tokens: number | null; grossCny?: number | null; tariff?: unknown }>;
   searches: Array<{ provider: string; requests: number | null; grossCny: number | null; tariff: unknown }>;
@@ -41,6 +41,11 @@ export interface AssistantMetrics {
   cost?: { grossCny: number; unpricedCalls: number };
 }
 const scope = new AsyncLocalStorage<AssistantMetrics>();
+/** Called only after the durable draft write completes. */
+export function recordAssistantPersistedAnswer(answer:string) {
+  const timing=scope.getStore()?.timing;
+  if (answer.trim() && timing?.receivedAt!==undefined) timing.firstAnswerFromReceiptMs ??=Math.max(0,Date.now()-timing.receivedAt);
+}
 /** Counts and static codes only; no rejected answer text in production logs. */
 export function recordAssistantPlanCheck(value:NonNullable<AssistantMetrics['planChecks']>[number]) {
   const metrics=scope.getStore();
@@ -187,11 +192,19 @@ export async function startAssistantMonitor(input: AssistantMonitorInput, run: Q
     ready() { (metrics.timing ??= { version: 1 }).requestReadyMs = Math.max(0, Math.round(performance.now() - started)); },
     progress() { (metrics.timing ??= { version: 1 }).firstProgressMs ??= Math.max(0, Math.round(performance.now() - started)); },
     run<T>(callback: () => Promise<T>) { return scope.run(metrics, callback); },
-    text(answer: string) { if (answer) { firstAnswer ??= Math.round(performance.now() - started); partial = answer.slice(0, SITE_ASSISTANT_ANSWER_MAX_LENGTH); } },
+    text(answer: string) {
+      if (!answer.trim()) return;
+      firstAnswer ??= Math.round(performance.now() - started);
+      partial=answer.slice(0,SITE_ASSISTANT_ANSWER_MAX_LENGTH);
+    },
     async finish(status: 'success' | 'error' | 'cancelled' | 'rejected', error?: string, result?: AssistantAnswer) {
       if (finished) return;
       finished = true;
       const duration = Math.round(performance.now() - started);
+      if (metrics.timing && input.receivedAt!==undefined) {
+        metrics.timing.finishedFromReceiptMs=Math.max(0,Date.now()-input.receivedAt);
+        if (status==='success' && result?.answer.trim()) metrics.timing.firstAnswerFromReceiptMs ??=metrics.timing.finishedFromReceiptMs;
+      }
       if (status === 'success') (metrics.timing ??= { version: 1 }).responseReadyMs = duration;
       const calls = [...metrics.models, ...metrics.embeddings, ...metrics.searches, ...metrics.reranks];
       metrics.cost = { grossCny: calls.reduce((n, call) => n + (call.grossCny ?? 0), 0), unpricedCalls: calls.filter(call => call.grossCny == null).length };

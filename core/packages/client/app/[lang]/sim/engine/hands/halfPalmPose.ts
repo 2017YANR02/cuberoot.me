@@ -255,7 +255,7 @@ export class HalfPalmPose {
     for (const name of FINGERS) {
       const amount = name === 'thumb' || name === 'index' ? weight : weight * clearance;
       const [x, y, z, mid, tip] = TOP_PINCH[name];
-      this.axis.set(x, y, z);
+      this.axis.set(-this.model.side * x, y, -this.model.side * z);
       const radians = THREE.MathUtils.degToRad(amount);
       const angle = this.axis.length() * radians;
       const finger = this.model.fingers[name];

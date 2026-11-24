@@ -170,7 +170,8 @@ describe.skipIf(!existsSync(files.R) || !existsSync(files.L))('F-layer MANO cont
     const coordinateFrame = new THREE.Object3D() as unknown as Cube;
     const sample = () => sampler.sample(coordinateFrame);
     const surfaces = { R: new FingerSurfaceSampler(models.R), L: new FingerSurfaceSampler(models.L) };
-    const moving = grip === 'down' && quarters === 2 ? ['index', 'middle'] as const : ['index'] as const;
+    const workingGrip = quarters === 2 ? 'down' : grip;
+    const moving = quarters === 2 ? ['index', 'middle'] as const : ['index'] as const;
     const other = side === 'R' ? 'L' : 'R';
     // The selected F gesture must also clear the passive hand in every grip.
     const supporting: ReturnType<typeof posedFinger>[] = [];
@@ -182,8 +183,12 @@ describe.skipIf(!existsSync(files.R) || !existsSync(files.L))('F-layer MANO cont
     rig.setGrips(gripQuat(side === 'R' ? grip : 'half'), gripQuat(side === 'L' ? grip : 'half'));
     rig.prepareTwist('z', [2], sign, quarters);
     rig.tick(0);
+    // The contact trace is relative to the seated palm.
+    while (rig.isRegripping) rig.tick(8);
+    rig.prepareTwist('z', [2], sign, quarters);
+    rig.tick(0);
     const strain = moving.map(name => knuckleStrain(models[side], name));
-    const folds = grip === 'home' && quarters === 1 ? indexFoldAngles(models[side], side) : null;
+    const folds = workingGrip === 'home' && quarters === 1 ? indexFoldAngles(models[side], side) : null;
     const gripFold = folds?.().at(-1) ?? 0;
     const checkFingers = (phase: string, withdrawing = false) => {
       if (folds) {
@@ -191,12 +196,12 @@ describe.skipIf(!existsSync(files.R) || !existsSync(files.L))('F-layer MANO cont
         for (const angle of angles) expect(angle, phase + ' index skin fold').toBeLessThan(95);
         expect(angles.at(-1)! - gripFold, phase + ' added knuckle fold').toBeLessThan(30.1);
       }
-      const homeReturn = grip === 'home' && withdrawing;
+      const homeReturn = workingGrip === 'home' && withdrawing;
       for (const sample of strain) {
         const { min, max } = sample();
         expect(min, phase + ' knuckle compression').toBeGreaterThan(.30);
         if (homeReturn) expect(max, phase + ' returning knuckle stretch').toBeLessThanOrEqual(quarters === 1 ? 1.50 : 1.92);
-        expect(max, phase + ' knuckle stretch').toBeLessThan(grip === 'home' ? 2.1 : 3.2);
+        expect(max, phase + ' knuckle stretch').toBeLessThan(workingGrip === 'home' ? 2.1 : 3.2);
       }
       for (const name of moving) {
         const finger = models[side].fingers[name];
@@ -231,7 +236,7 @@ describe.skipIf(!existsSync(files.R) || !existsSync(files.L))('F-layer MANO cont
       }
     };
     const checkMiddle = (angle: number, phase: string) => {
-      if (grip !== 'down' || quarters !== 2) return;
+      if (workingGrip !== 'down' || quarters !== 2) return;
       const middle = [...surfaces[side].samplePoints('middle'), ...sampleNail(models[side], 'middle')];
       expect(penetration(middle, angle), phase + ' middle/cube').toBeLessThanOrEqual(.1);
     };
@@ -252,7 +257,7 @@ describe.skipIf(!existsSync(files.R) || !existsSync(files.L))('F-layer MANO cont
       const angle = sign * degrees * Math.PI / 180;
       cube.table.groups.z[2].angle = angle; rig.tick(0);
       const points = sample();
-      if (grip === 'home') {
+      if (workingGrip === 'home') {
         const depth = tip.getWorldPosition(tipPosition).z;
         if (degrees >= 18 && degrees <= 42) depthSamples[0].push(depth);
         if (degrees >= 58 && degrees <= 82) depthSamples[1].push(depth);
@@ -276,7 +281,7 @@ describe.skipIf(!existsSync(files.R) || !existsSync(files.L))('F-layer MANO cont
       expect(penetration(points, angle), `index/cube at ${degrees}`).toBeLessThanOrEqual(.1);
       expect(models[side].group.matrixWorld.elements).toEqual(palm.elements);
     }
-    if (grip === 'home') {
+    if (workingGrip === 'home') {
       // Z is tangent to this sticker throughout an F turn. Excess travel
       // catches a reversal even when every frame still touches the sticker.
       for (const [phase, depths] of depthSamples.entries()) {
@@ -292,7 +297,7 @@ describe.skipIf(!existsSync(files.R) || !existsSync(files.L))('F-layer MANO cont
       expect(penetration(sampleNail(models[side], 'index'), angle), `withdraw nail ${degrees}`).toBeLessThanOrEqual(.1);
       worst = Math.max(worst, penetration(sample(), angle));
       if (degrees % .25 === 0) checkFingers(`withdraw ${degrees}`, true);
-      if (grip === 'down') {
+      if (workingGrip === 'down') {
         const middle = surfaces[side].samplePoints('middle');
         checkMiddle(angle, `relay ${degrees}`);
         // After the first quarter, the original UFL/UFR side sticker faces up.

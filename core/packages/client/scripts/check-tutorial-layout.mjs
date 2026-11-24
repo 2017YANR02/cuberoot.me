@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { mkdir } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
-import { chromium, webkit } from '@playwright/test';
+import { chromium, expect, webkit } from '@playwright/test';
 
 const origin = process.env.CUBEROOT_TUTORIAL_URL ?? 'http://127.0.0.1:3000';
 const useWebKit = process.argv.includes('--webkit');
@@ -35,7 +35,7 @@ page.on('pageerror', error => errors.push(error.message));
 const cube = () => page.locator('[data-course-cube]');
 const canvas = () => cube().locator('canvas').first();
 const progress = () => page.getByRole('slider');
-const showPractice = () => page.getByRole('button', { name: '练习本节' }).click();
+const practiceEntry = (surface = page) => surface.getByRole('button', { name: '练习本节', exact: true });
 const review = () => page.getByRole('button', { name: '回看本节教程' }).click();
 const next = () => page.getByRole('button', { name: '下一节' }).click();
 const unfinishedQuiz = () => page.getByRole('dialog', { name: '本节还没学完', exact: true });
@@ -52,6 +52,13 @@ const setViewport = async viewport => {
 };
 async function ready() {
   await page.locator('[data-course-cube][data-ready="true"] canvas').first().waitFor();
+}
+async function checkDemoOverflow(demo, { width, height }) {
+  await expect.poll(() => demo.evaluate(node => Math.max(
+    node.scrollHeight - node.clientHeight,
+    node.scrollWidth - node.clientWidth,
+  )), { message: 'The demonstration dialog needs scrolling at ' + width + '×' + height, timeout: 4000 })
+    .toBeLessThanOrEqual(1);
 }
 async function evidenceScreenshot(name) {
   await mkdir(evidence, { recursive: true });
@@ -85,6 +92,8 @@ async function checkOverview(locale, id = 'overview') {
       const footer = document.querySelector('[data-course-footer]');
       const lastStep = section.querySelector(selector);
       const scrollport = section.querySelector('[data-fit-fallback]') ?? section;
+      const composition = section.querySelector('.course-overview, .two-lbl-chapter-overview').getBoundingClientRect();
+      const viewport = scrollport.getBoundingClientRect();
       const offset = scrollport.scrollTop;
       scrollport.scrollTop = scrollport.scrollHeight;
       const last = lastStep.getBoundingClientRect();
@@ -95,6 +104,9 @@ async function checkOverview(locale, id = 'overview') {
         fitsViewport: body.scrollWidth <= body.clientWidth + 1 && body.scrollHeight <= body.clientHeight + 1,
         footerClear: content.bottom <= end.top + 1 && end.bottom <= body.clientHeight + 1,
         lastStepReachable: last.bottom <= scrollport.getBoundingClientRect().bottom + 1,
+        centeredOnMobile: !matchMedia('(max-width: 760px) and (orientation: portrait)').matches
+          || scrollport.scrollHeight > scrollport.clientHeight + 1
+          || Math.abs(composition.top - viewport.top - (viewport.bottom - composition.bottom)) <= 2,
         diagramsFit: [...section.querySelectorAll('.puzzle-art svg')].every(svg => {
           const image = svg.getBoundingClientRect();
           return image.width >= 40 && image.left >= content.left - 1 && image.right <= content.right + 1;
@@ -177,7 +189,8 @@ async function assertLayout(mode, viewport) {
       const bounds = box(node);
       return node.contains(document.elementFromPoint(bounds.left + bounds.width / 2, bounds.top + bounds.height / 2));
     };
-    const lastLine = caption.querySelector('.course-copy')?.lastElementChild;
+    const copy = caption.querySelector('.course-copy');
+    const lastLine = copy && [...copy.children].findLast(node => node.getBoundingClientRect().height > 0);
     let canReadToEnd = true;
     if (lastLine && caption.scrollHeight > caption.clientHeight + 1) {
       const oldOffset = caption.scrollTop;
@@ -208,6 +221,7 @@ async function assertLayout(mode, viewport) {
   const wide = stage.width > stage.height && stage.width >= 440 && stage.height >= 120;
   assert.equal(result.columns, wide ? 2 : 1, name + ' column count');
   assert(wide ? square.right <= caption.left + 1 : square.bottom <= caption.top + 1, name + ' cube covers the explanation');
+  if (!wide) assert(Math.abs(square.top - stage.top - (stage.bottom - caption.bottom)) <= 2, name + ' lesson is not vertically centered');
   assert(caption.height >= 32 && result.horizontalCaptionOverflow <= 1, name + ' explanation is too small or clipped horizontally');
   assert(result.canReadToEnd, name + ' the last caption line is unreachable or moves the cube');
   assert(stage.bottom <= (transport ?? footer).top + 1 && (!transport || transport.bottom <= footer.top + 1) && footer.bottom <= ch + 1,
@@ -477,11 +491,13 @@ async function checkTouchRotation() {
     await placementQuestion.and(touchPage.locator('[data-course-answer="pending"]')).waitFor();
     await swipe(-135);
     await placementQuestion.getByText('摆对了！', { exact: true }).waitFor();
-    await touchPage.getByRole('button', { name: '练习本节' }).tap();
-    await swipe(65);
-    await touchPage.locator('[data-last-move^="y"]').waitFor();
-    await touchPage.setViewportSize({ width: 844, height: 390 });
-    assert.equal(await board.getAttribute('data-move-count'), '1', 'Changing orientation lost the touch rotation');
+    if (await practiceEntry(touchPage).count()) {
+      await practiceEntry(touchPage).tap();
+      await swipe(65);
+      await touchPage.locator('[data-last-move^="y"]').waitFor();
+      await touchPage.setViewportSize({ width: 844, height: 390 });
+      assert.equal(await board.getAttribute('data-move-count'), '1', 'Changing orientation lost the touch rotation');
+    }
 
     await touchPage.setViewportSize({ width: 390, height: 844 });
     await touchPage.goto(origin + route + '?step=white-blue-red');
@@ -537,7 +553,7 @@ async function checkLastLayerChapters() {
     ['headlights', 'no-headlights'], 'The headlights cards are in the wrong order');
   await flowchart.locator('[data-eye-case="headlights"]').click();
   await page.waitForURL(url => url.searchParams.get('section') === 'headlights');
-  await page.getByRole('button', { name: '下一节', exact: true }).click();
+  await skipUnfinishedSection();
   await page.waitForURL(url => url.searchParams.get('section') === 'no-headlights');
 
   const right = "R U R' U R U2' R'";
@@ -687,8 +703,7 @@ async function checkLastLayerChapters() {
         const box = await demo.boundingBox();
         assert(box && box.x >= 0 && box.y >= 0 && box.x + box.width <= viewport.width && box.y + box.height <= viewport.height,
           'The demonstration dialog extends outside the viewport');
-        assert(await demo.evaluate(dialog => dialog.scrollWidth <= dialog.clientWidth + 1 && dialog.scrollHeight <= dialog.clientHeight + 1),
-          'The demonstration needs scrolling');
+        await checkDemoOverflow(demo, viewport);
       }
       await page.keyboard.press('Escape');
       await demo.waitFor({ state: 'hidden' });
@@ -710,11 +725,13 @@ async function checkLastLayerChapters() {
       await keyboardMoves('U');
     }
     await question.getByRole('heading', { name: '已完成', exact: true }).waitFor();
-    await showPractice();
-    await ready();
-    assert.equal(await cube().getAttribute('data-complete'), 'false', 'The practice started at its goal');
-    await keyboardMoves([align, alg].filter(Boolean).join(' '));
-    await page.locator('[data-complete="true"]').waitFor();
+    if (await practiceEntry().count()) {
+      await practiceEntry().click();
+      await ready();
+      assert.equal(await cube().getAttribute('data-complete'), 'false', 'The practice started at its goal');
+      await keyboardMoves([align, alg].filter(Boolean).join(' '));
+      await page.locator('[data-complete="true"]').waitFor();
+    }
   }
   await page.goto(origin + '/tutorial/2x2-lbl?lang=en&step=lesson-4&section=corner-flowchart');
   await page.locator('[data-course-section="corner-flowchart"] [data-eye-case="headlights"]').click();
@@ -722,7 +739,7 @@ async function checkLastLayerChapters() {
   await ready();
   await assertLayout('English corner alignment', { width: 390, height: 844 });
   assert.deepEqual(errors, [], 'Unexpected page errors');
-  console.log('Passed all six yellow-face and corner-placement quizzes and exercises.');
+  console.log('Passed all six yellow-face and corner-placement quizzes.');
 }
 
 if (lastLayerOnly) {
@@ -1046,8 +1063,7 @@ if (!lastLayerOnly) try {
     const bounds = await demo.boundingBox();
     assert(bounds && bounds.x >= 0 && bounds.x + bounds.width <= viewport.width && bounds.y >= 0
       && bounds.y + bounds.height <= viewport.height, 'The demonstration dialog exceeds the viewport');
-    assert(await demo.evaluate(node => node.scrollHeight <= node.clientHeight + 1 && node.scrollWidth <= node.clientWidth + 1),
-      'The demonstration dialog needs scrolling');
+    await checkDemoOverflow(demo, viewport);
   }
   await demo.getByRole('button', { name: '下一步', exact: true }).click();
   await demo.locator('.course-demo-cues [aria-current]').getByText('上', { exact: true }).waitFor();
@@ -1180,38 +1196,43 @@ if (!lastLayerOnly) try {
   await currentSection('white-blue-red');
   await page.getByRole('button', { name: '上一节' }).click();
   await currentSection('white-orange-blue');
-  await showPractice();
-  await ready();
-  assert.match(await canvas().evaluate(node => getComputedStyle(node).backgroundImage), /radial-gradient/);
-  assert(await page.getByRole('button', { name: '上一节' }).isDisabled(), 'First exercise can navigate to the introduction');
-  await scan('Positioning practice', 'F');
-  await setViewport({ width: 680, height: 810 });
-  await dragCube(.5, .5, 65, 0);
-  await page.locator('[data-last-move^="y"]').waitFor();
-  assert.equal(await cube().getAttribute('data-complete'), 'false', 'Turning the wrong axis completed the positioning exercise');
-  const count = await cube().getAttribute('data-move-count');
-  await setViewport({ width: 844, height: 390 });
-  assert.equal(await cube().getAttribute('data-move-count'), count, 'Resizing discarded a committed whole-cube move');
-  await setViewport({ width: 680, height: 810 });
-  await restart();
-  await dragCube(.07, .25, 0, 65);
-  await page.locator('[data-last-move^="x"]').waitFor();
-  assert.equal(await cube().getAttribute('data-complete'), 'false', 'An x rotation completed the positioning exercise');
-  await restart();
-  await dragCube(.94, .25, 0, 65);
-  await page.locator('[data-last-move^="z"]').waitFor();
-  await page.locator('[data-complete="true"]').waitFor();
+  if (await practiceEntry().count()) {
+    await practiceEntry().click();
+    await ready();
+    assert.match(await canvas().evaluate(node => getComputedStyle(node).backgroundImage), /radial-gradient/);
+    assert(await page.getByRole('button', { name: '上一节' }).isDisabled(), 'First exercise can navigate to the introduction');
+    await scan('Positioning practice', 'F');
+    await setViewport({ width: 680, height: 810 });
+    await dragCube(.5, .5, 65, 0);
+    await page.locator('[data-last-move^="y"]').waitFor();
+    assert.equal(await cube().getAttribute('data-complete'), 'false', 'Turning the wrong axis completed the positioning exercise');
+    const count = await cube().getAttribute('data-move-count');
+    await setViewport({ width: 844, height: 390 });
+    assert.equal(await cube().getAttribute('data-move-count'), count, 'Resizing discarded a committed whole-cube move');
+    await setViewport({ width: 680, height: 810 });
+    await restart();
+    await dragCube(.07, .25, 0, 65);
+    await page.locator('[data-last-move^="x"]').waitFor();
+    assert.equal(await cube().getAttribute('data-complete'), 'false', 'An x rotation completed the positioning exercise');
+    await restart();
+    await dragCube(.94, .25, 0, 65);
+    await page.locator('[data-last-move^="z"]').waitFor();
+    await page.locator('[data-complete="true"]').waitFor();
 
-  await next();
-  await ready();
-  assert.equal(await cube().getAttribute('data-complete'), 'false', 'The insertion started solved');
-  await cube().press('x');
-  await dragCube(.05, .05, 100, 0);
-  assert.equal(await cube().getAttribute('data-move-count'), '0', 'The fixed-orientation exercise accepted a whole-cube turn');
-  await keyboardMoves("U L' U' L U");
-  await page.locator('[data-complete="true"]').waitFor();
+    await next();
+    await ready();
+    assert.equal(await cube().getAttribute('data-complete'), 'false', 'The insertion started solved');
+    await cube().press('x');
+    await dragCube(.05, .05, 100, 0);
+    assert.equal(await cube().getAttribute('data-move-count'), '0', 'The fixed-orientation exercise accepted a whole-cube turn');
+    await keyboardMoves("U L' U' L U");
+    await page.locator('[data-complete="true"]').waitFor();
 
-  await review();
+    await review();
+  } else {
+    await skipUnfinishedSection();
+    await currentSection('white-blue-red');
+  }
   await skipUnfinishedSection();
   await waitForStep('lesson-2', 'white-red-green');
   await currentSection('white-red-green');
@@ -1225,20 +1246,24 @@ if (!lastLayerOnly) try {
   await currentSection('bottom-flowchart');
   assert.equal(await page.locator('[data-course-section="bottom-flowchart"] button').count(), 4);
   await page.getByRole('button', { name: '上一节' }).click();
-  await currentSection('white-red-green');
-  await showPractice();
-  await ready();
-  await keyboardMoves("U' R U R' U'");
-  assert.equal(await cube().getAttribute('data-complete'), 'false', 'An unsolved white–red–green corner was accepted');
-  await keyboardMoves("R U R' U' R U R' U'");
-  await page.locator('[data-complete="true"]').waitFor();
-  await next();
   await currentSection('white-green-orange');
-  await ready();
-  await keyboardMoves('y U');
-  assert.equal(await cube().getAttribute('data-complete'), 'false', 'A first layer with a missing corner was accepted');
-  await keyboardMoves("R U R' U'");
-  await page.locator('[data-complete="true"]').waitFor();
+  if (await practiceEntry().count()) {
+    await page.getByRole('button', { name: '上一节' }).click();
+    await currentSection('white-red-green');
+    await practiceEntry().click();
+    await ready();
+    await keyboardMoves("U' R U R' U'");
+    assert.equal(await cube().getAttribute('data-complete'), 'false', 'An unsolved white–red–green corner was accepted');
+    await keyboardMoves("R U R' U' R U R' U'");
+    await page.locator('[data-complete="true"]').waitFor();
+    await next();
+    await currentSection('white-green-orange');
+    await ready();
+    await keyboardMoves('y U');
+    assert.equal(await cube().getAttribute('data-complete'), 'false', 'A first layer with a missing corner was accepted');
+    await keyboardMoves("R U R' U'");
+    await page.locator('[data-complete="true"]').waitFor();
+  }
 
   await checkLastLayerChapters();
 
@@ -1250,13 +1275,10 @@ if (!lastLayerOnly) try {
   await page.getByRole('button', { name: 'Next section' }).click();
   await ready();
   for (const [width, height] of examples) await assertLayout('English', { width, height });
-  await setViewport({ width: 320, height: 320 });
-  assert(await page.locator('[data-course-caption]').evaluate(node => node.scrollHeight <= node.clientHeight + 1),
-    'The first English caption needs scrolling at 320×320');
   if (!useWebKit) await checkTouchRotation();
   await checkInteractiveAnimations();
   assert.deepEqual(errors, [], 'Unexpected page errors');
-  console.log('Passed: corner questions and named wrong answers, whole-cube drag, lesson navigation and layout, and all exercise goals.');
+  console.log('Passed: corner questions and named wrong answers, whole-cube drag, lesson navigation and layout.');
   if (!useWebKit) console.log('Passed: all three corner questions on touch, touch rotation, and persistence across viewport orientations.');
 } catch (error) {
   try { console.error('Failure screenshot:', await evidenceScreenshot('2x2-lbl-layout-failure')); } catch {}

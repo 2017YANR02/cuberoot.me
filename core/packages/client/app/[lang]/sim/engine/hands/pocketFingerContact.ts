@@ -1,5 +1,41 @@
+import type { Axis, LayerClass } from './handsRig';
 import type { FingerJoints } from './handModel';
 import { sampleFingerPose, type FingerPoseRows } from './markedFingerMotion';
+
+// Local MCP flexion, splay, PIP flexion and MCP roll for a resting pad
+// next to a turning strip. Fits use the right-hand frame and mirror in X.
+const halfSupport = {
+  pocketLower: [
+    { finger: 'index', pose: [.114, .010, .064, -.014] },
+    { finger: 'thumb', pose: [.055, .014, .035, -.022] },
+  ],
+  pocketUpper: [{ finger: 'ring', pose: [.103, .073, .064, -.044] }],
+  lower: [
+    { finger: 'index', pose: [.13, .033, .081, -.019] },
+    { finger: 'thumb', pose: [.019, .007, .013, -.006] },
+  ],
+  upperFromBelow: [
+    { finger: 'middle', pose: [.1, -.032, .065, .018] },
+    { finger: 'ring', pose: [.104, .044, .072, -.026] },
+  ],
+  middleFromBelow: [{ finger: 'thumb', pose: [.24, .103, -.263, -.014] }],
+  middle: [{ finger: 'thumb', pose: [.142, -.007, .022, -.015] }],
+  upper: [{ finger: 'thumb', pose: [.036, .078, .041, -.031] }],
+} as const;
+
+export function halfSupportClearance(order: number, gripAngle: number, axis: Axis, layer: LayerClass) {
+  if (order === 3 && Math.abs(gripAngle + Math.PI) < .01 && axis === 'x' && layer === 'mid') return halfSupport.middleFromBelow;
+  if (Math.abs(gripAngle + Math.PI) < .01 && axis === 'y') {
+    if (order === 2 && layer === 'low') return halfSupport.pocketLower;
+    if (order === 2 && layer === 'high') return halfSupport.pocketUpper;
+    if (order === 3 && layer === 'low') return halfSupport.lower;
+    if (order === 3 && layer === 'high') return halfSupport.upperFromBelow;
+  }
+  if (order === 3 && Math.abs(gripAngle - Math.PI) < .01) {
+    if (axis === 'x' && layer === 'mid') return halfSupport.middle;
+    if (axis === 'y' && layer === 'high') return halfSupport.upper;
+  }
+}
 
 // MANO pocket-cube contact fits. Each row is layer travel in degrees followed
 // by local root flexion, root splay and middle hinge offsets in radians.

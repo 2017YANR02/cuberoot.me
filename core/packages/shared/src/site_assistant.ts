@@ -156,6 +156,7 @@ export interface AssistantProgress {
 export interface AssistantBrowserTiming {
   firstProgressMs?: number;
   firstAnswerMs?: number;
+  firstVisibleAnswerMs?: number;
   responseMs: number;
   visibleMs: number;
   renderDelayMs: number;

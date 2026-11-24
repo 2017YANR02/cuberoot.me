@@ -9,6 +9,7 @@ import { CountryInput } from '@/components/CountryInput/CountryInput';
 import { localizeCompName } from '@/lib/comp-localize';
 import { loadComps } from '@/lib/comp-search';
 import { localizeCity } from '@/lib/city-localize';
+import { toWcaEventId } from '@/lib/wca-events';
 import { fetchWcaScrambles } from '@/lib/wca-results-api';
 import { webTimerWcaDifficultyAdapter } from '@/lib/timer-wca-difficulty-adapter';
 import type { EventId } from '@/app/[lang]/timer/_lib/types';
@@ -63,7 +64,13 @@ export default function WcaSourceConfig({
   const sourceAdapter = useMemo<TimerWcaSourceDataAdapter>(() => ({
     async loadCompetitions() {
       const competitions = await loadComps();
-      return competitions.map((competition) => ({
+      const today = toLocalIsoDate();
+      // The general catalog also contains live competitions and other events.
+      // Same-day competitions may still be running, depending on the venue.
+      return competitions.filter((competition) => (
+        (competition.end_date || competition.start_date) < today
+        && competition.events?.some((event) => toWcaEventId(event) === wcaEventId)
+      )).map((competition) => ({
         id: competition.id,
         name: competition.name,
         displayName: localizeCompName(competition.id, competition.name, isZh, {
@@ -87,7 +94,7 @@ export default function WcaSourceConfig({
         roundTypeId: row.round_type_id,
       })) ?? null;
     },
-  }), [isZh]);
+  }), [isZh, wcaEventId]);
 
   const sourceControls = (
       <TimerWcaSourceConfig
@@ -118,8 +125,8 @@ export default function WcaSourceConfig({
           group: tr({ zh: '组别', en: 'Group' }),
           groupOption: (group) => tr({ zh: `${group} 组`, en: `Group ${group}` }),
           noEventScrambles: tr({
-            zh: '该比赛没有当前项目的打乱。',
-            en: 'This competition has no scrambles for the current event.',
+            zh: '该比赛暂无当前项目的公开打乱。',
+            en: 'No public scrambles are available for this event at this competition.',
           }),
           noMatchingCompetitions: tr({ zh: '没有匹配的比赛。', en: 'No matching competitions.' }),
           retry: tr({ zh: '重试', en: 'Try again' }),

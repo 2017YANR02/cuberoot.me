@@ -47,6 +47,26 @@ describe('assistant library cards',()=>{
     expect(result.artifacts).toHaveLength(1);
     expect(result.artifacts?.[0]).toMatchObject({kind:'algorithms',set:'coll'});
   });
+  it.each([
+    ['二阶 EG 法是什么？', 'text', 'both'],
+    ['二阶 EG 法是什么？配上公式图片。', 'text', 'both'],
+    ['二阶 EG 法是什么？公式只要文字。', 'both', 'text'],
+    ['二阶 EG 法是什么？只给状态图，不要公式。', 'text', 'image'],
+  ] as const)('uses the user’s display preference when the planner retrieves EG1: %s',async(question,plannerDisplay,display)=>{
+    const eg1:AlgFile={...data,puzzle:'2x2',set:'eg1',cases:[{...data.cases[0],name:'EG1 S 1',algs:[[{alg:"U' F' L U2 F2 R U' x'"}]]}]};
+    const model=vi.fn<typeof fetch>()
+      .mockResolvedValueOnce(modelResponse({calls:[{tool:'algorithms',puzzle:'2x2',set:'eg1',display:plannerDisplay}]}))
+      .mockResolvedValueOnce(modelResponse({answer:'公式集见下。',sourceIds:['algorithms:2x2:eg1::0:0']}));
+    const fetcher:typeof fetch=async(url,init)=>{
+      if(String(url).endsWith('/v1/alg/sets/2x2/eg1'))return Response.json(eg1);
+      if(String(url).endsWith('/assistant/pages.json'))return Response.json({pages:[]});
+      if(String(url).endsWith('/stats/index.json'))return Response.json({categories:[]});
+      return model(url,init);
+    };
+    const result=await answerSiteQuestion(question,'zh',{key:'fixture',baseUrl:'https://model.example/v1',model:'fixture'},AbortSignal.timeout(5000),fetcher);
+    expect(model).toHaveBeenCalledTimes(2);
+    expect(result.artifacts).toEqual([expect.objectContaining({puzzle:'2x2',set:'eg1',display,cards:[expect.objectContaining({name:'EG1 S 1'})]})]);
+  });
   it('resolves T exactly and preserves the selected alternative and its drawing setup',()=>{
     const result=algorithmCards(data,{puzzle:'3x3',set:'pll',query:'T',alternative:1},'zh');
     expect(result.cards).toHaveLength(1);

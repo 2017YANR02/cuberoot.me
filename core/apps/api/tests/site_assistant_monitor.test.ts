@@ -1,7 +1,7 @@
 import { assistantPrice } from '../src/utils/site_assistant_pricing.js';
 import { describe, expect, it, vi } from 'vitest';
 import { HTTPException } from 'hono/http-exception';
-import { startAssistantMonitor, recordAssistantStage, recordAssistantModel, recordAssistantEmbedding, recordAssistantSearch, recordAssistantRetrieval, redactAssistantText } from '../src/utils/site_assistant_monitor.js';
+import { startAssistantMonitor, recordAssistantPersistedAnswer, recordAssistantStage, recordAssistantModel, recordAssistantEmbedding, recordAssistantSearch, recordAssistantRetrieval, redactAssistantText } from '../src/utils/site_assistant_monitor.js';
 import { createAdminAssistantRoutes } from '../src/routes/admin_assistant.js';
 import { createSiteAssistantRoutes } from '../src/routes/site_assistant.js';
 import { AssistantFailure } from '../src/utils/site_assistant_diagnostics.js';
@@ -9,6 +9,25 @@ import { assistantAnswerContext, rememberAssistantContext } from '../src/utils/s
 
 const input = { uid: 7, question: 'How do I practise PLL?', lang: 'en', model: 'test-model', streaming: true, imageCount: 1, historyCount: 2 };
 describe('private assistant monitoring', () => {
+  it('timestamps durable text separately from model output and includes failures in end-to-end timing',async()=>{
+    const run=vi.fn().mockResolvedValue([]);
+    const receivedAt=Date.now()-250,monitor=await startAssistantMonitor({...input,receivedAt,claimedAt:receivedAt+40},run);
+    await monitor.run(async()=>{
+      monitor.progress();monitor.text('candidate');
+      recordAssistantPersistedAnswer('   ');
+      recordAssistantPersistedAnswer('first saved');
+    });
+    await monitor.finish('error','timeout');
+    const timing=run.mock.calls.find(([sql])=>sql.startsWith('UPDATE'))![1][7].timing;
+    expect(timing.queueWaitMs).toBe(40);
+    expect(timing.firstAnswerFromReceiptMs).toBeGreaterThanOrEqual(250);
+    expect(timing.finishedFromReceiptMs).toBeGreaterThanOrEqual(timing.firstAnswerFromReceiptMs);
+    const second=await startAssistantMonitor({...input,receivedAt,claimedAt:receivedAt},run);
+    second.text('never saved');await second.finish('error','timeout');
+    const last=run.mock.calls.filter(([sql])=>sql.startsWith('UPDATE')).at(-1)![1][7].timing;
+    expect(last.firstAnswerFromReceiptMs).toBeUndefined();
+    expect(last.finishedFromReceiptMs).toBeGreaterThanOrEqual(250);
+  });
   it('retains failed attempt diagnostics alongside reported usage after a successful recovery',async()=>{
     const run=vi.fn().mockResolvedValue([]);
     const monitor=await startAssistantMonitor(input,run);
@@ -105,7 +124,7 @@ describe('private assistant monitoring', () => {
   it('requires admin authorization before every read and never caches private responses', async () => {
     const runQuery = vi.fn();
     const app = createAdminAssistantRoutes({ runQuery, authorize: async () => { throw new HTTPException(403); } });
-    for (const path of ['summary', 'requests', 'requests/aaaaaaaa-aaaa-4aaa-aaaa-aaaaaaaaaaaa']) {
+    for (const path of ['summary', 'latency', 'requests', 'requests/aaaaaaaa-aaaa-4aaa-aaaa-aaaaaaaaaaaa']) {
       const response = await app.request(`/admin/assistant/${path}`);
       expect(response.status).toBe(403);
       expect(response.headers.get('Cache-Control')).toBe('private, no-store');
