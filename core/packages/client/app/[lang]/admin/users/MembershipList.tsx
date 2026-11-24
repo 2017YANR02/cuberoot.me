@@ -41,8 +41,8 @@ export default function MembershipList({ onChanged }: { onChanged: () => void })
       await adminRevoke(member.wcaId);
       reload();
       onChanged();
-    } catch (error) {
-      setRevokeError(error instanceof Error ? error.message : String(error));
+    } catch {
+      setRevokeError(t('撤销未确认，请刷新会员列表核对状态。', 'Revocation was not confirmed. Refresh the member list to check its status.'));
     } finally {
       setRevoking(null);
     }
@@ -95,10 +95,10 @@ export default function MembershipList({ onChanged }: { onChanged: () => void })
               {profileHref
                 ? <AppLink href={profileHref} prefetch={false} className="admin-users-name">{displayCuberName(member.name, isZh)}</AppLink>
                 : <strong>{displayCuberName(member.name, isZh)}</strong>}
-              <span className="admin-users-id">{[member.vipId && fmtVipId(member.vipId), member.wcaId].filter(Boolean).join(' / ')}</span>
+              <span className="admin-users-id">{[member.vipId && fmtVipId(member.vipId), WCA_ID_REGEX.test(member.wcaId) && member.wcaId].filter(Boolean).join(' / ')}</span>
             </td>
-            <td>{plan ? t(plan.nameZh, plan.nameEn) : member.planSlug || '—'}</td>
-            <td>{manual ? t('手动开通', 'Manual grant') : channel ? methods[channel] || channel : t('未记录', 'Not recorded')}</td>
+            <td>{plan ? t(plan.nameZh, plan.nameEn) : t('未记录', 'Not recorded')}</td>
+            <td>{manual ? t('手动开通', 'Manual grant') : channel ? methods[channel] || t('其他支付方式', 'Other payment method') : t('未记录', 'Not recorded')}</td>
             <td>{manual ? '—' : payment?.paidAt ? fmtDate(payment.paidAt) : t('未记录', 'Not recorded')}</td>
             <td>{manual ? t('无支付', 'No payment') : payment ? `${fmtPrice(payment.amountCents, payment.currency)} ${payment.currency}` : t('未记录', 'Not recorded')}</td>
             <td>{member.lifetime ? t('永久', 'Lifetime') : fmtDate(member.expiresAt) || '—'}</td>

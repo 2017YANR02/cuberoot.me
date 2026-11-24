@@ -88,8 +88,8 @@ export default function AdminPanel({ plans, isZh, onPlanUpdated, onGranted, onVi
       await adminGrant({ wcaId: picked.id, plan: grantPlan, name: picked.name, avatarUrl: avatar });
       setPicked(null); setAvatar(null);
       onGranted();
-    } catch (e) {
-      setErr(e instanceof Error ? e.message : String(e));
+    } catch {
+      setErr(tr({ zh: '开通未确认，请刷新会员列表核对状态。', en: 'Membership activation was not confirmed. Refresh the member list to check.' }));
     } finally {
       setGranting(false);
     }
@@ -104,8 +104,8 @@ export default function AdminPanel({ plans, isZh, onPlanUpdated, onGranted, onVi
       applyPlanUpdate({ ...p, ...updatedPlan, active: updatedPlan.active ?? p.active ?? true });
       setPlanSaved(p.slug);
       window.setTimeout(() => setPlanSaved((s) => (s === p.slug ? null : s)), 1500);
-    } catch (e) {
-      window.alert(e instanceof Error ? e.message : String(e));
+    } catch {
+      window.alert(tr({ zh: '价格保存失败，请刷新后重试。', en: 'Could not save the price. Refresh and try again.' }));
     } finally {
       setPlanUpdating((slug) => slug === p.slug ? null : slug);
     }
@@ -117,8 +117,8 @@ export default function AdminPanel({ plans, isZh, onPlanUpdated, onGranted, onVi
     try {
       const updatedPlan = await adminUpdatePlan(p.slug, { active });
       applyPlanUpdate({ ...p, ...updatedPlan, active });
-    } catch (e) {
-      window.alert(e instanceof Error ? e.message : String(e));
+    } catch {
+      window.alert(tr({ zh: '套餐状态更新失败，请刷新后重试。', en: 'Could not update the plan. Refresh and try again.' }));
     } finally {
       setPlanUpdating((slug) => slug === p.slug ? null : slug);
     }
@@ -202,11 +202,15 @@ export default function AdminPanel({ plans, isZh, onPlanUpdated, onGranted, onVi
           {readinessLoading ? tr({ zh: '检查配置中…', en: 'Checking configuration…' }) : tr({ zh: '重新检查配置', en: 'Check configuration again' })}
         </button>
         </div>
-        {readinessFailed && <p role="alert">{tr({ zh: '无法读取接入状态。请确认接口已部署并重试；不能据此判断配置缺失。', en: 'Setup status could not be loaded. Ensure the endpoint is deployed and retry; this does not establish that configuration is missing.' })}</p>}
+        {readinessFailed && <p role="alert">{tr({ zh: '无法读取接入状态，请重新检查。', en: 'Could not load setup status. Check again.' })}</p>}
         {readiness && <div role="status">
           <ul className="mem-admin-checks">
             {readiness.checks.map((check) => <li key={check.name}>
-              <code>{check.name}</code>：{check.status === 'present'
+              {tr(({
+                WECHAT_PAPAY_APPID: { zh: '代扣应用', en: 'Payment application' },
+                WECHAT_PAPAY_MCHID: { zh: '代扣商户', en: 'Merchant account' },
+                WECHAT_PAPAY_API_V2_KEY: { zh: '代扣签名密钥', en: 'Payment signing key' },
+              } as Record<string, { zh: string; en: string }>)[check.name] ?? { zh: '其他配置', en: 'Other setting' })}：{check.status === 'present'
                 ? tr({ zh: '已配置，格式检查通过', en: 'Present; format valid' })
                 : check.status === 'missing' ? tr({ zh: '未配置', en: 'Missing' })
                   : tr({ zh: '格式不正确', en: 'Invalid format' })}

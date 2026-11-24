@@ -81,7 +81,7 @@ function providerLabel(provider: string, t: ReturnType<typeof useT>): string {
     none: ['无可用登录方式', 'No sign-in method'],
   };
   const label = labels[provider];
-  return label ? t(label[0], label[1]) : provider;
+  return label ? t(label[0], label[1]) : t('其他登录方式', 'Other sign-in method');
 }
 
 function genderLabel(gender: string | null, t: ReturnType<typeof useT>): string {
@@ -99,11 +99,11 @@ function formatTimestamp(value: string, locale: string): string {
   return new Intl.DateTimeFormat(locale, { dateStyle: 'medium', timeStyle: 'short' }).format(date);
 }
 
-function identityValue(identity: AdminUserRecord['identities'][number]): string {
+function identityValue(identity: AdminUserRecord['identities'][number]): string | undefined {
   if (identity.provider === 'email' || identity.provider === 'phone' || identity.provider === 'wca') {
     return identity.providerUid;
   }
-  return identity.providerUid.length <= 24 ? identity.providerUid : `${identity.providerUid.slice(0, 10)}…${identity.providerUid.slice(-6)}`;
+  return undefined;
 }
 
 function deviceTypeLabel(deviceType: NonNullable<AdminUserRecord['lastDevice']>['deviceType'], t: ReturnType<typeof useT>): string {
@@ -166,8 +166,8 @@ function UserImpersonationDialog({
           if (trimmedReason.length >= 5 && !busy) onSubmit(trimmedReason);
         }}
       >
-        <h2 id="admin-users-impersonation-title">{t(`以 ${name}（UID ${target.id}）身份查看`, `View as ${name} (UID ${target.id})`)}</h2>
-        <p>{t('将在新标签页中打开 30 分钟只读会话。原管理员标签页保持不变，任何写入都会被服务端拦截并记录。', 'A 30-minute read-only session will open in a new tab. This administrator tab stays unchanged, and the server blocks and records every write attempt.')}</p>
+        <h2 id="admin-users-impersonation-title">{t(`以 ${name} 身份查看`, `View as ${name}`)}</h2>
+        <p>{t('将在新标签页打开 30 分钟的只读会话，本次访问将留有记录。', 'A 30-minute read-only session opens in a new tab. This visit is logged.')}</p>
         <label htmlFor="admin-users-impersonation-reason">{t('查看理由', 'Reason for viewing')}</label>
         <textarea
           autoComplete="off"
@@ -410,7 +410,7 @@ export default function UsersManagement() {
             </div>
             {!data.activity && (
               <p className="admin-users-compat-notice" role="status">
-                {t('本地前端当前连接的是旧版统计接口，会员总数和会员趋势会在新接口运行后自动显示。', 'This local frontend is connected to the previous statistics API. Membership totals and trends appear automatically when the new API is running.')}
+                {t('会员统计暂不可用。', 'Membership statistics are currently unavailable.')}
               </p>
             )}
             <div className="admin-users-range-toolbar">
@@ -522,7 +522,7 @@ export default function UsersManagement() {
                           {record.countryIso2 && <Flag iso2={record.countryIso2} spanClassName="country-flag" imgClassName="country-flag-ct" />}
                           {record.wcaId ? displayCuberName(record.displayName, isZh) : record.displayName || t('未命名', 'Unnamed')}
                         </AppLink>
-                        <span className="admin-users-id">UID {record.id}{record.wcaId ? ` / ${record.wcaId}` : ''}</span>
+                        {record.wcaId && <span className="admin-users-id">{record.wcaId}</span>}
                       </td>
                       <td><div className="admin-users-methods">
                         {record.identities.map((identity) => <span key={`${identity.provider}:${identity.providerUid}`} title={identityValue(identity)}>{providerLabel(identity.provider, t)}</span>)}
@@ -556,12 +556,12 @@ export default function UsersManagement() {
                               </dd>
                             </div>
                             <div data-site-surface="panel"><dt>{t('地区和城市', 'Region and city')}</dt><dd>{[record.regionCode, record.cityName].filter(Boolean).join(' / ') || '—'}</dd></div>
-                            <div data-site-surface="panel"><dt>{t('界面语言', 'Interface language')}</dt><dd>{record.lang || '—'}</dd></div>
+                            <div data-site-surface="panel"><dt>{t('界面语言', 'Interface language')}</dt><dd>{record.lang === 'zh' ? t('中文', 'Chinese') : record.lang === 'en' ? t('英文', 'English') : '—'}</dd></div>
                             <div data-site-surface="panel"><dt>{t('邮件通知', 'Email notifications')}</dt><dd>{record.emailNotify ? t('开启', 'On') : t('关闭', 'Off')}</dd></div>
                             <div data-site-surface="panel"><dt>{t('资料更新时间', 'Profile updated')}</dt><dd>{formatTimestamp(record.updatedAt, locale)}</dd></div>
                             {record.identities.map((identity) => (
                               <div key={`${identity.provider}:${identity.providerUid}:detail`}>
-                                <dt>{providerLabel(identity.provider, t)}</dt><dd>{identityValue(identity)}</dd>
+                                <dt>{providerLabel(identity.provider, t)}</dt><dd>{identityValue(identity) ?? t('已关联', 'Linked')}</dd>
                               </div>
                             ))}
                           </dl>
