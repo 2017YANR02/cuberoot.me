@@ -98,6 +98,7 @@ export default function RecordsView({ embedded = false, leadingControls }: { emb
     setQ({ [k]: v || null } as Parameters<typeof setQ>[0]);
   };
 
+  const [fullColumns, setFullColumns] = useState(false);
   const [bundle, setBundle] = useState<Bundle | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -221,7 +222,7 @@ export default function RecordsView({ embedded = false, leadingControls }: { emb
   const teacherDirectory = useWcaTeachers(teacherStudentIds, teacherEventIds);
 
   return (
-    <div className={embedded ? "records-page" : "wse-page records-page"}>
+    <div data-full-columns={fullColumns || undefined} className={embedded ? "records-page" : "wse-page records-page"}>
       {!embedded && <header className="wse-header">
         <PageHeading backHref="/wca">{tr({ zh: '纪录', en: 'Records'
         })}</PageHeading>
@@ -247,6 +248,13 @@ export default function RecordsView({ embedded = false, leadingControls }: { emb
             onChange={v => update('gender', v === 'all' ? '' : v)} />
           {canFilterTeam && <WcaTeamFilterSelect teams={teamDirectory.teams} value={teamFilter} onChange={value => update('team', value)} />}
           {leadingControls}
+          {!sorScope && !derived && !canShowHistoryDetails && filteredRows.length > 0 && (
+            <label className="records-column-toggle">
+              <input type="checkbox" checked={fullColumns} onChange={e => setFullColumns(e.target.checked)} />
+              {tr({ zh: '显示全部列', en: 'Show all columns' })}
+              {fullColumns && <span>{tr({ zh: '（可横向滑动）', en: '(scroll horizontally)' })}</span>}
+            </label>
+          )}
           {!sorScope && !derived && <div className="wca-stats-tab-bar wca-stats-tab-bar-connected"
             role="group" aria-label={tr({ zh: '纪录范围', en: 'Record scope' })}>
             <button type="button" className={`wca-stats-tab${show === 'current' ? ' active' : ''}`}

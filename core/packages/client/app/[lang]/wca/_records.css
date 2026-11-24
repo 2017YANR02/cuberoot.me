@@ -66,3 +66,13 @@
   margin: 16px 0 8px;
   color: var(--foreground);
 }
+
+.records-column-toggle, .records-compact-date { display: none; }
+
+@media (max-width: 1400px) {
+  .records-column-toggle { display: inline-flex; align-items: center; gap: 4px; }
+  .records-page:not([data-full-columns]) .wca-record-rows-table :is(.records-extra-column, .wse-attempts-col) { display: none; }
+  .records-page:not([data-full-columns]) .records-compact-date { display: block; }
+  .records-page:not([data-full-columns]) .wca-record-rows-table :is(th, td) { padding-inline: 4px; }
+  .records-page:not([data-full-columns]) .wca-record-rows-table .comp-cell { white-space: normal; }
+}

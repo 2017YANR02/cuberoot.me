@@ -74,9 +74,9 @@ export function WcaRecordRowsTable({
           <th className="wse-value-col">{tr({ zh: '单次', en: 'Single' })}</th>
           <th className="wse-value-col">{tr({ zh: '平均', en: 'Average' })}</th>
           <th className="wse-name-col wca-person-column">{tr({ zh: '选手', en: 'Person' })}</th>
-          <WcaTeacherColumnHeader filter={{ ...teacherFilter.filter, onChange: value => { teacherFilter.filter.onChange(value); setExtra(0); } }} />
+          <WcaTeacherColumnHeader className="records-extra-column" filter={{ ...teacherFilter.filter, onChange: value => { teacherFilter.filter.onChange(value); setExtra(0); } }} />
           <th className="wse-name-col">{tr({ zh: '比赛', en: 'Competition' })}</th>
-          <th>{tr({ zh: '日期', en: 'Date' })}</th>
+          <th className="records-extra-column">{tr({ zh: '日期', en: 'Date' })}</th>
           <AttemptHeaderCells count={attemptCols} />
         </tr>
       </thead>
@@ -106,7 +106,7 @@ export function WcaRecordRowsTable({
                   <Flag iso2={personIso2} spanClassName="country-flag" imgClassName="country-flag-ct" />
                 )}{' '}</>} wcaId={row.p} name={row.pn} isZh={isZh} />
               </td>
-              <td>
+              <td className="records-extra-column">
                 <WcaTeacherCell
                   studentWcaId={row.p}
                   eventIds={[row.e]}
@@ -118,8 +118,9 @@ export function WcaRecordRowsTable({
                 <AppLink {...compLinkProps(row.c)}>
                   <CompCell compId={row.c} compName={row.cn} isZh={isZh} date={row.d} />
                 </AppLink>
+                <small className="records-compact-date">{formatDateRangeIso(row.d, row.de ?? row.d)}</small>
               </td>
-              <td className="wse-detail-cell">{formatDateRangeIso(row.d, row.de ?? row.d)}</td>
+              <td className="wse-detail-cell records-extra-column">{formatDateRangeIso(row.d, row.de ?? row.d)}</td>
               <AttemptCells attempts={row.a} eventId={row.e} count={attemptCols} />
             </tr>
           );
