@@ -69,6 +69,15 @@
   outline-offset: 2px;
 }
 
+/* Keep the link's slot in place so the pet has a stable destination. */
+.landing-page .landing-search-chat {
+  visibility: hidden;
+}
+
+body:has(.clawd-deskpet[data-home-pet="collapsed"]) .landing-page .landing-search-chat {
+  visibility: visible;
+}
+
 .landing-search-input {
   --landing-search-action-size: 36px;
   position: relative;

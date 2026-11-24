@@ -41,10 +41,7 @@ import { bottomDragReach, bottomPeekLine, bottomPeekViewport, createBottomPeekRe
 import { getMusicPlayerState, subscribeMusicPlayer } from '@/lib/music-player';
 import { mayUseMiniProgramBridge } from '@/lib/miniprogram-bridge';
 import { registerDeskPetExit, useDeskPetVisible } from '@/hooks/useDeskPetVisible';
-import {
-  DESKPET_EXIT_KEY, GENERIC_ENTER_MS, GENERIC_HOP_MS, GENERIC_SLEEP_MS, SLEEP_FADE_MS, enterKeyframes,
-  exitFadeKeyframes, exitHopKeyframes, loadMotionBlob, parseExitStyle, runDeskPetExit, type DeskPetExitStyle,
-} from '@/lib/deskpet-motion';
+import { GENERIC_ENTER_MS, enterKeyframes, loadMotionBlob } from '@/lib/deskpet-motion';
 import { clampDeskPetAxis, readDeskPetAnchor } from '@/lib/deskpet-position';
 import { subscribeBeat, getMetronomeState } from '@/lib/metronome';
 import { getDeskPetScene, PLAYTIME_SCENES } from '@/lib/deskpet-playtime';
@@ -337,14 +334,13 @@ function DeskPetOverlay() {
   const [character, setCharacter] = useState<ThemeId>('rootbeast');
   const selectedCharacter = useSyncExternalStore(subscribeDeskPetSelection, getDeskPetSelection, getServerDeskPetSelection);
   const [compact, setCompact] = useState(false);
-  const [visible] = useDeskPetVisible();
-  const [temporarilyHidden, setHidden] = useState(false);
-  const hidden = !visible || temporarilyHidden;
+  const [visible, setVisible] = useDeskPetVisible();
   const [resting, setResting] = useState(false);
   const user = useAuthUser();
   const owner = assistantOwner(user);
   const workspace = useAssistantWorkspace(owner);
   const pathname = usePathname();
+  const homeRoute = /^\/(?:(?:zh|en)\/?)?$/.test(pathname ?? '');
   const router = useRouter();
   const chatRoute = /^\/(?:zh\/|en\/)?chat\/?$/.test(pathname || '');
   const [authOverlay, setAuthOverlay] = useState<{ pathname: string | null; owner: string } | null>(null);
@@ -391,13 +387,9 @@ function DeskPetOverlay() {
     assistantConversations.setOpen(owner, true);
     requestAnimationFrame(() => window.scrollTo({ top: draft.scrollY, behavior: 'instant' }));
   }, [owner, pathname, user]);
-  useEffect(() => {
-    setHidden(false);
-  }, [visible]);
   const [touchActionsVisible, setTouchActionsVisible] = useState(false);
   const [lang, setLang] = useState<'zh' | 'en'>('en');
   const [randomMode, setRandomMode] = useState(false);
-  const [exitStyle, setExitStyle] = useState<DeskPetExitStyle>('hop');
   // Floating metronome panel — opened from the toolbar, lives here (root layout)
   // so it survives client-side navigation and keeps ticking across pages.
   const [metronomeOpen, setMetronomeOpen] = useState(false);
@@ -484,7 +476,7 @@ function DeskPetOverlay() {
   // gesture so the mobile keyboard opens; the search overlay's real input then
   // takes over once it mounts (which is async, hence out of the gesture).
   const kbdRef = useRef<HTMLInputElement>(null);
-  const ctrlRef = useRef<{ rest: () => void; wake: () => void; naturalSleep: (mode: 'drowsy' | 'sleep') => boolean; cling: () => void; inMini: () => boolean; resetPos: () => void; reposition: () => void; hide: () => void } | null>(null);
+  const ctrlRef = useRef<{ rest: () => void; wake: () => void; naturalSleep: (mode: 'drowsy' | 'sleep') => boolean; cling: () => void; inMini: () => boolean; resetPos: () => void; reposition: () => void } | null>(null);
   // Visual-center screen point captured right before a size/character change,
   // so the pet's visual center stays put (scales about itself; characters land
   // on the same point) instead of drifting from the bottom-right anchor.
@@ -498,21 +490,9 @@ function DeskPetOverlay() {
   // size/character recenter effect can keep the pet pinned to its edge.
   const miniRef = useRef<{ active: boolean; edge: 'left' | 'right' }>({ active: false, edge: 'right' });
   const pendingPlaytimeRef = useRef<string | null>(null);
-  // Read by the running engine, so changing the exit never restarts it.
-  const exitStyleRef = useRef<DeskPetExitStyle>('hop');
   // Set while hidden; the next engine start plays the entrance once.
   const reshowRef = useRef(false);
-  useEffect(() => { if (hidden) reshowRef.current = true; }, [hidden]);
-  useEffect(() => {
-    const updateExit = (event: StorageEvent) => {
-      if (event.key !== DESKPET_EXIT_KEY && event.key !== null) return;
-      const next = parseExitStyle(event.newValue);
-      exitStyleRef.current = next;
-      setExitStyle(next);
-    };
-    window.addEventListener('storage', updateExit);
-    return () => window.removeEventListener('storage', updateExit);
-  }, []);
+  useEffect(() => { if (!visible) reshowRef.current = true; }, [visible]);
 
   useEffect(() => {
     setMounted(true);
@@ -522,9 +502,6 @@ function DeskPetOverlay() {
       if (sz === 's' || sz === 'l') setSize(sz);
       // 动画(随机播放)默认关闭:仅显式存为 'random' 才开,空/未设(新用户)→ 关。
       if (localStorage.getItem('clawd-deskpet-mode') === 'random') setRandomMode(true);
-      const exit = parseExitStyle(localStorage.getItem(DESKPET_EXIT_KEY));
-      exitStyleRef.current = exit;
-      setExitStyle(exit);
     } catch {}
     // Touch devices still need the warmed overlay so the first tap can focus
     // its input in the gesture. Desktop users warm it on pointer/focus intent
@@ -680,7 +657,7 @@ function DeskPetOverlay() {
   }, [size, character]);
 
   useEffect(() => {
-    if (!mounted || hidden || !petAvailable || compact) return;
+    if (!mounted || !visible || !petAvailable || compact) return;
     const root = rootRef.current, svg = svgRef.current, img = imgRef.current, hit = hitRef.current;
     if (!root || !svg || !img || !hit) return;
     const eyes = svg.querySelector<SVGGElement>('#clawddp-eyes');
@@ -725,11 +702,13 @@ function DeskPetOverlay() {
     let leaving = false;
     let disposed = false;
     let capturedPointer: number | undefined;
-    let cancelSequence: (() => void) | undefined;
     const motionAnimations: Animation[] = [];
     const reducedMotion = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     const animate = (frames: Keyframe[], duration: number) => {
-      if (typeof root.animate === 'function') motionAnimations.push(root.animate(frames, { duration, fill: 'forwards', easing: 'ease-in-out' }));
+      if (typeof root.animate !== 'function') return;
+      const animation = root.animate(frames, { duration, fill: 'forwards', easing: 'ease-in-out' });
+      motionAnimations.push(animation);
+      return animation;
     };
     const clearMotion = () => { motionAnimations.splice(0).forEach(animation => animation.cancel()); };
     let dizzyRenderer: ReturnType<typeof createDizzyRenderer> | undefined;
@@ -940,7 +919,7 @@ function DeskPetOverlay() {
     else prewarmTimer = setTimeout(prewarm, 2000);
 
     const setState = (s: string, force = false, ready?: () => void) => {
-      if (disposed || (leaving && !s.startsWith('exit-'))) return;
+      if (disposed || leaving) return;
       if (interactionOwnsArt() && !s.startsWith('exit-')) return;
       if (s === state && !force) { ready?.(); return; }
       clearTimeout(autoTimer);
@@ -1821,11 +1800,7 @@ function DeskPetOverlay() {
     hit.addEventListener('pointerenter', onEnter);
     hit.addEventListener('pointerleave', onLeave);
 
-    let exitDone: (() => void) | undefined;
     const cancelLeaving = () => {
-      cancelSequence?.();
-      cancelSequence = undefined;
-      exitDone = undefined;
       leaving = false;
       root.classList.remove('leaving');
       clearMotion();
@@ -1839,10 +1814,10 @@ function DeskPetOverlay() {
       natural?.stop();
       hangPlay?.stop('hard');
       hunt?.stop('hard');
-      // A persistent hide can join a temporary exit without restarting it.
-      exitDone = done;
-      if (leaving) return cancelLeaving;
-      if (reducedMotion()) { releasePointer(); exitDone = undefined; done(); return; }
+      if (reducedMotion() || !root.getClientRects().length || typeof root.animate !== 'function') {
+        releasePointer();
+        return;
+      }
       leaving = true;
       dismissBottom();
       suspendMusic();
@@ -1854,37 +1829,40 @@ function DeskPetOverlay() {
       miniTransitioning = false;
       root.classList.remove('dragging');
       root.classList.add('leaving');
+      clearMotion();
       const rect = root.getBoundingClientRect();
       root.style.transition = '';
       root.style.right = vpW() - rect.right + 'px';
       root.style.bottom = vpH() - rect.bottom + 'px';
       clearTimeout(autoTimer); clearTimeout(idleTimer); clearTimeout(randomTimer);
       clearTimeout(miniTimer); clearTimeout(clickTimer); clearTimeout(longPressTimer);
-      clearMotion();
       setSearchOpen(false);
-      const sleep = exitStyleRef.current === 'sleep';
-      const pose = sleep ? 'exit-sleep' : 'exit-hop';
-      const clip = theme.motion?.[pose];
-      const duration = clip?.durationMs ?? (sleep ? GENERIC_SLEEP_MS : GENERIC_HOP_MS);
-      const dx = rect.left + rect.width / 2 < vpW() / 2 ? -rect.right - 20 : vpW() - rect.left + 20;
-      let painted = false;
-      cancelSequence = runDeskPetExit({
-        play: ready => setState(pose, true, () => { painted = true; ready(); }),
-        move: () => {
-          if (!painted) ++frameSeq; // A stalled load must not replace the retained frame halfway through exit.
-          if (!sleep) animate(exitHopKeyframes(dx, !clip), duration);
-        },
-        holdMs: duration,
-        fade: () => animate(exitFadeKeyframes(), SLEEP_FADE_MS),
-        fadeMs: sleep ? SLEEP_FADE_MS : 0,
-        finish: () => { const complete = exitDone; exitDone = undefined; complete?.(); },
-      });
-      return cancelLeaving;
+      const target = root.dataset.homePet === 'expanded'
+        ? document.querySelector('.landing-page .landing-search-chat > img')?.getBoundingClientRect()
+        : undefined;
+      let animation;
+      if (target?.width && rect.width) {
+        // Align the visible body, including the built-in padding in each character's art.
+        const [fx, fy] = VC[character];
+        const [tx, ty] = VC.rootbeast;
+        const scale = target.width / rect.width;
+        const dx = target.left + target.width * tx - rect.left - target.width * fx;
+        const dy = target.top + target.height * ty - rect.top - target.height * fy;
+        animation = animate([
+          { transformOrigin: '0 0', transform: 'translate(0, 0) scale(1)' },
+          { transformOrigin: '0 0', transform: `translate(${dx}px, ${dy}px) scale(${scale})` },
+        ], 320);
+      } else {
+        animation = animate([{ opacity: 1 }, { opacity: 0 }], 180);
+      }
+      if (animation) {
+        animation.onfinish = done;
+        return cancelLeaving;
+      }
     };
     const unregisterExit = registerDeskPetExit(startExit);
 
     ctrlRef.current = {
-      hide: () => { if (!leaving) startExit(() => { setSearchOpen(false); setHidden(true); }); },
       rest: enterRest,
       wake: exitRest,
       naturalSleep: mode => { const started = natural?.start(mode) ?? false; if (started) automaticNatural = false; return started; },
@@ -2055,7 +2033,6 @@ function DeskPetOverlay() {
       releasePointer();
       if (prewarmIdle !== undefined && typeof cancelIdleCallback === 'function') cancelIdleCallback(prewarmIdle);
       clearTimeout(prewarmTimer);
-      cancelSequence?.();
       unregisterExit();
       clearMotion();
       root.classList.remove('leaving', 'mini-turn', 'mini-mode', 'mini-left');
@@ -2095,7 +2072,7 @@ function DeskPetOverlay() {
       ctrlRef.current = null;
       delete (window as unknown as { clawdPet?: object }).clawdPet;
     };
-  }, [mounted, hidden, character, randomMode, user, petAvailable, visibleKey, compact]);
+  }, [mounted, visible, character, randomMode, user, petAvailable, visibleKey, compact]);
 
   if (douyin || !mounted) return null;
 
@@ -2149,7 +2126,7 @@ function DeskPetOverlay() {
   const maskInitialNight = character === 'rootbeast' && !routineBootReady
     && (routineSessionRef.current?.pendingInitial
       || (!routineSessionRef.current?.initialized && deskPetLocalPeriod(new Date()).instant));
-
+  const showFullPet = visible && !compact && petAvailable;
 
   return (
     <>
@@ -2164,14 +2141,14 @@ function DeskPetOverlay() {
         inputMode="search"
         style={{ position: 'fixed', bottom: 0, left: 0, width: 1, height: 1, opacity: 0, padding: 0, margin: 0, border: 0, fontSize: 16, background: 'transparent', pointerEvents: 'none', zIndex: -1 }}
       />
-      {compact && !hidden && !searchOpen && <CompactPet key={`compact:${owner}`} lang={curLang}
+      {compact && visible && !searchOpen && <CompactPet key={`compact:${owner}`} lang={curLang}
         onCompose={draft => {
           const id = crypto.randomUUID();
           assistantConversations.create(owner, id);
           if (draft) assistantConversations.patch(owner, id, { draft });
           setSearchOpen(true);
         }} />}
-      <div style={hidden || compact || !petAvailable || searchOpen ? { display: 'none' } : maskInitialNight ? { visibility: 'hidden' } : undefined} className={`clawd-deskpet${touchActionsVisible ? ' touch-actions' : ''}`} data-size={size} data-char={character} data-original={ORIGINAL_CHARACTERS.some(pet => pet.id === character)} data-pixel={THEMES[character].pixel} ref={rootRef}>
+      <div style={!showFullPet || searchOpen ? { display: 'none' } : maskInitialNight ? { visibility: 'hidden' } : undefined} className={`clawd-deskpet${touchActionsVisible ? ' touch-actions' : ''}`} data-home-pet={homeRoute ? (showFullPet ? 'expanded' : 'collapsed') : undefined} data-size={size} data-char={character} data-original={ORIGINAL_CHARACTERS.some(pet => pet.id === character)} data-pixel={THEMES[character].pixel} ref={rootRef}>
         <style>{CSS}</style>
         <AdminTools centerX={VC[character][0]} />
         <svg ref={svgRef} xmlns="http://www.w3.org/2000/svg" viewBox="-15 -25 45 45" aria-hidden>
@@ -2255,8 +2232,10 @@ function DeskPetOverlay() {
         <ClearButton
           variant="standalone"
           className="clawd-deskpet-dismiss"
-          ariaLabel={t('隐藏,刷新后恢复', 'Hide, restored on reload')}
-          onClick={() => ctrlRef.current?.hide()}
+          ariaLabel={homeRoute
+            ? tr({ zh: '收起桌宠', en: 'Collapse desk pet' })
+            : tr({ zh: '隐藏桌宠', en: 'Hide desk pet' })}
+          onClick={() => setVisible(false)}
         />
         <div
           className="clawd-deskpet-hit"
@@ -2290,13 +2269,6 @@ function DeskPetOverlay() {
           onNaturalSleep={character === 'rootbeast' ? mode => { ctrlRef.current?.naturalSleep(mode); } : undefined}
           randomMode={randomMode}
           onToggleRandom={toggleRandom}
-          exitStyle={exitStyle}
-          onSelectExitStyle={value => {
-            const next = parseExitStyle(value);
-            exitStyleRef.current = next;
-            setExitStyle(next);
-            persistItem(DESKPET_EXIT_KEY, next);
-          }}
         />
       )}
 

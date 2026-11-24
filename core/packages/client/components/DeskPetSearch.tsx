@@ -29,7 +29,6 @@ import { SEARCH_CARDS, isLandingSearchCardVisible } from '@/lib/landing-sections
 import { hasAdminAccess, useAuthUser } from '@/lib/auth-store';
 import { useFeedbackUnread, refreshFeedbackUnread } from '@/lib/feedback-unread';
 import { tr } from '@/i18n/tr';
-import type { DeskPetExitStyle } from '@/lib/deskpet-motion';
 import { ClearButton } from '@/components/ClearButton';
 import { Tooltip } from '@/components/Tooltip';
 import { ResizeDivider } from '@app-foundation/navigation-ui/resize-divider';
@@ -256,8 +255,6 @@ export default function DeskPetSearch({
   onNaturalSleep,
   randomMode,
   onToggleRandom,
-  exitStyle,
-  onSelectExitStyle,
   onOpenPetHome,
 }: {
   open: boolean;
@@ -278,8 +275,6 @@ export default function DeskPetSearch({
   onNaturalSleep?: (mode: 'drowsy' | 'sleep') => void;
   randomMode: boolean;
   onToggleRandom: () => void;
-  exitStyle: DeskPetExitStyle;
-  onSelectExitStyle: (value: string) => void;
   onOpenPetHome: () => void;
 }) {
   const [petVisible, setPetVisible] = useDeskPetVisible();
@@ -557,13 +552,6 @@ export default function DeskPetSearch({
                     <span className="deskpet-character-thumb" aria-hidden><Shuffle size={18} /></span>
                     <span>{tr({ zh: '随机动画', en: 'Random animations' })}</span>
                   </span>} />
-                <label className="deskpet-character-setting">
-                  <span>{tr({ zh: '退场动作', en: 'Exit animation' })}</span>
-                  <select value={exitStyle} onChange={event => onSelectExitStyle(event.target.value)}>
-                    <option value="hop">{tr({ zh: '轻跳离开', en: 'Hop away' })}</option>
-                    <option value="sleep">{tr({ zh: '盖被睡觉', en: 'Tuck in' })}</option>
-                  </select>
-                </label>
                 <button type="button" className="compact-select-option deskpet-character-rest" onClick={onToggleRest}>
                   <span className="deskpet-character-option">
                     <span className="deskpet-character-thumb" aria-hidden>

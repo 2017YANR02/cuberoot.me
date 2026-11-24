@@ -296,8 +296,8 @@ export const CATALOG: UtilEntry[] = [
     sig: 'useDeskPetVisible(): readonly [boolean, (visible: boolean) => void]',
     imp: "import { useDeskPetVisible } from '@/hooks/useDeskPetVisible';",
     category: 'hook',
-    zh: '桌宠全局显示偏好；训练页默认隐藏并单独记录本页选择。关闭时先播放退场，普通页面偏好保存在当前浏览器并同步标签页。',
-    en: 'Global pet visibility with separate, initially hidden choices on training pages. Hiding waits for the exit animation; the normal-page preference persists in this browser and syncs across tabs.',
+    zh: '训练页默认隐藏，可在当前页面开启。关闭桌宠会立即保存全局偏好并同步标签页，当前页面播放完退场动画后收起或隐藏。',
+    en: 'Training pages start with the pet hidden and can show it locally. Closing saves the global preference and syncs across tabs immediately, while the current page finishes its exit animation.',
   },
   {
     name: 'useHomeBackgroundChoice',

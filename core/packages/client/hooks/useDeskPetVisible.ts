@@ -32,22 +32,28 @@ export type DeskPetExitRequest = (done: () => void) => (() => void) | undefined;
 let exitRequest: DeskPetExitRequest | undefined;
 let cancelExit: (() => void) | undefined;
 let finishExit: (() => void) | undefined;
+let visibleDuringExit: boolean | undefined;
 
 function readVisible() {
+  if (visibleDuringExit !== undefined) return visibleDuringExit;
   if (visitChoice !== undefined) return visitChoice;
   try { return localStorage.getItem(STORAGE_KEY) !== 'false'; }
   catch { return true; }
 }
 
+function cancelPendingExit() {
+  const cancel = cancelExit;
+  cancelExit = undefined;
+  finishExit = undefined;
+  visibleDuringExit = undefined;
+  cancel?.();
+}
+
 function subscribe(notify: () => void) {
   const sync = (event: StorageEvent) => {
     if (event.key !== STORAGE_KEY && event.key !== null) return;
-    if (event.newValue !== 'false') {
-      const cancel = cancelExit;
-      cancelExit = undefined;
-      finishExit = undefined;
-      cancel?.();
-    }
+    cancelPendingExit();
+    if (event.newValue === 'false') pageChoices.clear();
     visitChoice = undefined;
     notify();
   };
@@ -59,41 +65,31 @@ function subscribe(notify: () => void) {
   };
 }
 
-function commit(visible: boolean) {
+function saveVisibility(visible: boolean) {
   visitChoice = persistItem(STORAGE_KEY, String(visible)) ? undefined : visible;
+}
+
+function notifyVisibility() {
   window.dispatchEvent(new Event(CHANGE_EVENT));
 }
 
-/**
- * Hiding waits for the mounted pet to finish its exit; the preference changes
- * only then. Repeated hide requests join the running exit, and showing again
- * cancels it.
- */
-export function setDeskPetVisible(visible: boolean) {
-  setVisibility(visible, readVisible, commit);
-}
-
-function setVisibility(visible: boolean, read: () => boolean, write: (value: boolean) => void) {
-  if (visible) {
-    const cancel = cancelExit;
-    cancelExit = undefined;
-    finishExit = undefined;
-    cancel?.();
-    write(true);
-    return;
-  }
-  if (cancelExit) return;
-  if (!exitRequest || !read()) { write(false); return; }
+function hideDeskPet(wasVisible: boolean) {
+  if (finishExit) return;
+  // Save before animating so a reload during the exit still remembers the choice.
+  visibleDuringExit = readVisible();
+  saveVisibility(false);
   let pending = true;
   const done = () => {
     if (!pending) return;
     pending = false;
     cancelExit = undefined;
     finishExit = undefined;
-    write(false);
+    visibleDuringExit = undefined;
+    pageChoices.clear();
+    notifyVisibility();
   };
   finishExit = done;
-  const cancel = exitRequest(done);
+  const cancel = wasVisible ? exitRequest?.(done) : undefined;
   if (!pending) return;
   if (!cancel) { done(); return; }
   cancelExit = () => { pending = false; cancel(); };
@@ -118,12 +114,12 @@ export function useDeskPetVisible() {
     () => quietPage ? pageChoices.get(quietPage) ?? false : readVisible(),
     () => !quietPage);
   const setPageVisible = (value: boolean) => {
-    if (!quietPage) { setDeskPetVisible(value); return; }
-    // Explicitly showing a pet here must not change the preference on other pages.
-    setVisibility(value, () => pageChoices.get(quietPage) ?? false, next => {
-      pageChoices.set(quietPage, next);
-      window.dispatchEvent(new Event(CHANGE_EVENT));
-    });
+    if (!value) { hideDeskPet(visible); return; }
+    cancelPendingExit();
+    // Opening on a quiet page applies only to that page.
+    if (quietPage) pageChoices.set(quietPage, true);
+    else saveVisibility(true);
+    notifyVisibility();
   };
   return [visible, setPageVisible] as const;
 }
