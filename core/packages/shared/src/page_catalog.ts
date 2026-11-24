@@ -364,6 +364,7 @@ export const PAGE_META: Record<string, PageMetaEntry> = {
     title: { zh: '账号全流程', en: 'Account lifecycle' },
     description: { zh: '直观展示网站、iOS、安卓与小程序的登录、绑定、账号合并、退出和注销流程，区分当前实现与目标方案。', en: 'Visualize sign-in, linking, merging, sign-out, and deletion across website, iOS, Android, and Mini Programs, separating implementation from proposals.' },
   },
+  'dev/registration-preview': { title: { zh: '注册流程预览', en: 'Registration preview' } },
   'dev/architecture': { title: { zh: '架构', en: 'Architecture' } },
   'dev/architecture/flow': { title: { zh: '请求流程', en: 'Request Flow' } },
   'dev/architecture/log': { title: { zh: '日志', en: 'Log' } },
