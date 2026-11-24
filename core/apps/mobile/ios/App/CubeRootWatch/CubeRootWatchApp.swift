@@ -49,27 +49,39 @@ private struct WatchScenePreview: View {
 
 struct WatchTimerView: View {
     @ObservedObject var model: WatchTimerModel
+    @State private var showsEvents = false
     @State private var showsCube = false
+    @State private var stats: [WatchCubeConnection.StatRow] = []
     var body: some View {
         GeometryReader { geometry in
             ScrollView {
                 VStack(spacing: 8) {
+                    if model.phase != "running" {
+                        let event = model.state.current?.event ?? model.state.selectedEvent ?? "333"
+                        let name = model.cube.events.first { $0.id == event }?.name(model.state.language)
+                        Button { showsEvents = true } label: {
+                            HStack(spacing: 4) {
+                                Image("event-\(model.cube.events.first { $0.id == event }?.training == true ? "333" : event)").resizable().scaledToFit().frame(width: 15, height: 15)
+                                Text(name ?? model.state.current?.eventName ?? event)
+                                Image(systemName: "chevron.down").font(.caption2)
+                            }.padding(.vertical, 3)
+                        }.buttonStyle(.plain).disabled(model.phase != "idle" || model.state.draft != nil)
+                        .font(.caption2)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                    }
                     // One tap surface covers the full content viewport, including whitespace.
                     // Controls are siblings so opening the device picker cannot start a solve.
-                    VStack(spacing: 8) {
+                    VStack(spacing: 3) {
                         if model.phase != "running", let slot = model.state.current {
-                            Text([slot.eventName, model.text("random"), slot.sessionName]
-                                .filter { !$0.isEmpty }.joined(separator: " · "))
-                                .font(.caption2).lineLimit(1).minimumScaleFactor(0.85)
                             WatchScrambleText(scramble: slot.scramble, slotID: slot.id, cube: model.cube)
-                                .font(.system(.footnote, design: .monospaced))
+                                .font(.system(.caption, design: .monospaced))
                                 .frame(maxWidth: .infinity, alignment: .leading)
                         }
                         Text(model.display)
                             .font(.system(size: model.phase == "running" ? 42 : 36, weight: .semibold, design: .rounded))
                             .monospacedDigit().minimumScaleFactor(0.5).lineLimit(1)
-                            .padding(.vertical, 8)
-                        WatchCubePreview(model: model, cube: model.cube)
+                            .padding(.vertical, 2)
+                        WatchPreviewWithStats(model: model, cube: model.cube, stats: stats)
                         if model.state.current == nil {
                             Text(model.text(model.generating ? "generating" : model.generationFailed ? "generationFailed" : model.state.unsupported ? "unsupported" : "empty")).font(.footnote)
                         }
@@ -90,7 +102,6 @@ struct WatchTimerView: View {
                         Button(model.text("cancel")) { model.cancelInspection() }
                     }
                     if model.state.outbox.count >= 1000 { Text(model.text("full")).font(.footnote) }
-                    if !model.state.outbox.isEmpty { Text(model.text("pending")).font(.caption2) }
                     if model.phase != "running" {
                         HStack(spacing: 8) {
                             if model.state.lastSolve?.moves?.isEmpty == false {
@@ -108,6 +119,12 @@ struct WatchTimerView: View {
             }
             .scrollDisabled(model.phase == "running")
         }
+        .task(id: [model.state.current?.id, model.state.lastSolve?.id]) {
+            guard let slot = model.state.current else { stats = []; return }
+            var records = model.state.history ?? model.state.outbox
+            if let last = model.state.lastSolve, !records.contains(where: { $0.id == last.id }) { records.append(last) }
+            stats = model.cube.timerStats(records, slot: slot)
+        }
         .onAppear {
             #if DEBUG
             // Device tools cannot tap watchOS; inspect the existing persisted
@@ -116,6 +133,30 @@ struct WatchTimerView: View {
                 model.reviewing = true
             }
             #endif
+        }
+        .sheet(isPresented: $showsEvents) {
+            NavigationStack {
+                List {
+                    ForEach(model.cube.events) { option in
+                        Button {
+                            model.selectEvent(option)
+                            showsEvents = false
+                        } label: {
+                            HStack {
+                                Image("event-\(option.training ? "333" : option.id)").resizable().scaledToFit().frame(width: 18, height: 18)
+                                Text(option.name(model.state.language))
+                                Spacer()
+                                if option.id == (model.state.current?.event ?? model.state.selectedEvent) {
+                                    Image(systemName: "checkmark")
+                                }
+                            }
+                        }
+                    }
+                    if model.state.selectedEvent != nil && !model.state.batchId.isEmpty {
+                        Button(model.text("followPhone")) { model.selectEvent(nil); showsEvents = false }
+                    }
+                }.navigationTitle(model.text("event"))
+            }
         }
         .sheet(isPresented: $showsCube) { WatchCubePicker(model: model, cube: model.cube) }
         .sheet(isPresented: $model.reviewing) {
@@ -359,7 +400,20 @@ private struct WatchReplayView: View {
             display.setAwake(scenePhase == .active, foreground: scenePhase != .background)
             guard let json = try? WatchTimerDisk.json(record),
                   let object = try? JSONSerialization.jsonObject(with: Data(json.utf8)) else { return }
-            let historyObjects = (try? JSONSerialization.jsonObject(with: JSONEncoder().encode(history))) ?? []
+            // The shared comparison uses the latest 12 completed recordings of this event.
+            // Encode them individually so a large log never duplicates the entire watch history.
+            let previous = history.filter {
+                $0.id != record.id && $0.slot.event == record.slot.event && $0.ts <= record.ts &&
+                $0.penalty != "DNF" && $0.moves?.isEmpty == false
+            }.sorted { $0.ts > $1.ts }.prefix(12)
+            var historyObjects: [Any] = []
+            var remaining = 512 * 1024
+            for entry in previous {
+                guard let data = try? JSONEncoder().encode(entry), data.count <= remaining,
+                      let item = try? JSONSerialization.jsonObject(with: data) else { break }
+                historyObjects.append(item)
+                remaining -= data.count
+            }
             display.command(["kind":"replay-load", "record":object, "language":language, "history":historyObjects, "capabilities":[
                 "canUse":onUseScramble != nil, "canFeedback":onFeedback != nil,
                 "date":["short":Date(timeIntervalSince1970: record.ts / 1000).formatted(date: .numeric, time: .omitted),
@@ -372,7 +426,7 @@ private struct WatchReplayView: View {
             if effect.type == "feedback" { onFeedback?(effect.value) }
             if effect.type == "use-scramble" { onUseScramble?() }
         }
-        .onDisappear { display.setReplayVisible(false) }
+        .onDisappear { display.setReplayVisible(false); display.clear() }
         .onChange(of: scenePhase) { _, phase in display.setAwake(phase == .active, foreground: phase != .background) }
     }
 }
@@ -405,11 +459,48 @@ private struct WatchScrambleText: View {
     var body: some View { Text(content) }
 }
 
+private struct WatchPreviewWithStats: View {
+    @ObservedObject var model: WatchTimerModel
+    @ObservedObject var cube: WatchCubeConnection
+    let stats: [WatchCubeConnection.StatRow]
+    private var statRail: some View {
+        VStack(alignment: .leading, spacing: 1) {
+            ForEach(stats, id: \.label) { row in
+                HStack(spacing: 3) {
+                    if !row.label.isEmpty { Text(row.label).fontWeight(.light) }
+                    Text(row.value).monospacedDigit()
+                }
+            }
+        }
+        .font(.caption2)
+        .fixedSize()
+        .padding(.leading, 16)
+    }
+    var body: some View {
+        if model.phase == "running" || (cube.phase == "connected" && model.cubeSupportsCurrentEvent) {
+            WatchCubePreview(model: model, cube: cube)
+        } else {
+            ViewThatFits(in: .horizontal) {
+                HStack(spacing: 8) {
+                    statRail
+                    Spacer(minLength: 0)
+                    WatchCubePreview(model: model, cube: cube)
+                }
+                VStack(alignment: .leading, spacing: 4) {
+                    statRail
+                    WatchCubePreview(model: model, cube: cube)
+                }
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+        }
+    }
+}
+
 private struct WatchCubePreview: View {
     @ObservedObject var model: WatchTimerModel
     @ObservedObject var cube: WatchCubeConnection
     var body: some View {
-        if cube.phase == "connected" {
+        if cube.phase == "connected" && model.cubeSupportsCurrentEvent {
             WatchLiveCubeView(display: cube.display, language: model.state.language)
             if cube.timingLate { Text(model.text("timingLate")).font(.footnote) }
             if model.phase != "running" { if cube.canReset { WatchCubeResetControl(model: model, cube: cube) } }
@@ -418,7 +509,7 @@ private struct WatchCubePreview: View {
         } else if model.phase != "running", let png = model.state.current?.previewPng,
                   let data = Data(base64Encoded: png), let preview = UIImage(data: data) {
             Image(uiImage: preview).resizable().scaledToFit()
-                .frame(maxWidth: 120, maxHeight: 100)
+                .frame(maxWidth: 96, maxHeight: 74)
                 .accessibilityLabel(model.text("preview"))
         }
     }
@@ -441,7 +532,7 @@ private struct WatchLocalScramblePreview: View {
         }
         // Keep a real, sized view mounted while loading. An initially empty
         // Group has no child whose onAppear can initialize the preview.
-        .frame(width: 120, height: preview.map { 120 * $0.height / $0.width } ?? 91)
+        .frame(width: 96, height: preview.map { 96 * $0.height / $0.width } ?? 74)
         .accessibilityLabel(label)
         .task(id: facelets) { preview = cube.scramblePreview(facelets) }
     }

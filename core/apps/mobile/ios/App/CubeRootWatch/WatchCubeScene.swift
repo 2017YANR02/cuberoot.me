@@ -235,7 +235,7 @@ final class WatchCubeScene: ObservableObject {
         render()
     }
     func clear() {
-        revision += 1; ready = false; failed = false; running = false
+        revision += 1; ready = false; failed = false; running = false; replay = nil
         pending = []; gyro = nil; calibration = nil; snapshot = nil; expected = ""; displayed = ""; detail = ""
         renderedAt = -Double.infinity
         groups.forEach { $0.removeFromParentNode() }; groups = []

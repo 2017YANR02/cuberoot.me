@@ -2,16 +2,16 @@ import Foundation
 
 enum WatchCopy {
     private static let strings: [String: [String: String]] = [
+        "event": ["en": "Event", "zh": "项目"],
+        "followPhone": ["en": "Use iPhone event", "zh": "跟随 iPhone 项目"],
         "preview": ["en": "Scrambled puzzle", "zh": "打乱状态图"],
         "localSession": ["en": "Watch", "zh": "手表"],
         "generating": ["en": "Generating scramble…", "zh": "正在生成打乱…"],
         "generationFailed": ["en": "Could not generate scramble", "zh": "打乱生成失败"],
         "retryGeneration": ["en": "Retry generation", "zh": "重试生成"],
         "cancel": ["en": "Cancel inspection", "zh": "取消观察"],
-        "random": ["en": "Random", "zh": "随机"],
-        "pending": ["en": "Saved on watch · waiting for iPhone", "zh": "已存手表 · 待传到 iPhone"],
         "empty": ["en": "Open CubeRoot on iPhone to load scrambles.", "zh": "打开 iPhone 上的 CubeRoot 获取打乱。"],
-        "unsupported": ["en": "Choose a standard timed event on iPhone. Training, blindfolded and FMC events are not in this version.", "zh": "请在 iPhone 选择常规计时项目。本版暂不支持专项、盲拧和最少步。"],
+        "unsupported": ["en": "Choose a supported event on the watch or iPhone.", "zh": "请在手表或 iPhone 上选择支持的项目。"],
         "storageError": ["en": "Could not save. Timing is paused until storage recovers.", "zh": "保存失败，存储恢复前无法开始新计时。"],
         "retry": ["en": "Retry saving", "zh": "重试保存"],
         "full": ["en": "Open CubeRoot on iPhone to sync before continuing.", "zh": "请打开 iPhone 上的 CubeRoot 同步后继续。"],
