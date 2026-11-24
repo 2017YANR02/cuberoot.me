@@ -3,7 +3,7 @@
 
 import {
   Film, BookOpen, Library, BookA,
-  Compass, Grid2x2, Trophy, Code as CodeIcon,
+  Compass, Grid2x2, Trophy, MonitorPlay, Ticket, Code as CodeIcon,
   Brain, Sigma, Scale, Sprout, Brush, MessageCircle, MessagesSquare, Shapes, Eye, Palette,
   CircleQuestionMark, Globe2, CalendarDays, Video, GraduationCap, School, Building2,
   FileText, Award, Radio, PanelsTopLeft, UserRound, UsersRound, HardDrive,
@@ -83,10 +83,10 @@ const CARD_VISUALS: Partial<Record<SiteDirectoryEntry['id'], CardVisual>> = {
   blddb: { iconImg: '/icons/upstream/blddb.png' },
   trainer: { iconImg: '/icons/upstream/algtrainer.png' },
   cstimer: { iconImg: '/cstimer_logo.png' },
-  contests: { iconImg: '/icons/upstream/recordranks.png' },
-  'online-competitions': { Icon: Trophy },
+  contests: { Icon: Trophy },
+  'online-competitions': { Icon: MonitorPlay },
   'comp-sim': { Icon: Radio },
-  draw: { Icon: Trophy },
+  draw: { Icon: Ticket },
   'frame-count': { Icon: Film },
   solver: { iconImg: '/icons/upstream/solver.png' },
   mosaic: { Icon: Grid2x2 },
