@@ -18,37 +18,50 @@ private final class WatchScrambleWorker {
         guard failed == 0 else { throw NSError(domain: "WatchScramble", code: 2, userInfo: [NSLocalizedDescriptionKey: result]) }
         return result
     }
-    func generate() throws -> (String, String) {
+    func releaseTables() { cw_destroy(engine); engine = nil }
+    private func prepare() throws {
+        if engine != nil { return }
+        engine = cw_create_scramble()
+        guard let url = Bundle.main.url(forResource: "WatchScramble", withExtension: "js") else {
+            throw NSError(domain: "WatchScramble", code: 3)
+        }
+        _ = try evaluate(String(contentsOf: url, encoding: .utf8))
+    }
+    func correction(from: String, target: String) throws -> String {
+        try prepare()
+        return try evaluate("WatchScramble.correction(...\(try WatchTimerDisk.json([from, target])))")
+    }
+    func generate(event: String) throws -> (String, String?, String?, String?) {
         do {
-            if engine == nil {
-                engine = cw_create_scramble()
-                guard let url = Bundle.main.url(forResource: "WatchScramble", withExtension: "js") else {
-                    throw NSError(domain: "WatchScramble", code: 3)
-                }
-                _ = try evaluate(String(contentsOf: url, encoding: .utf8))
-            }
-            _ = try evaluate("WatchScramble.start()")
+            try prepare()
+            let eventJSON = try WatchTimerDisk.json(event)
+            _ = try evaluate("WatchScramble.start(\(eventJSON))")
             // Pending Promise jobs are bounded; native search itself has a CPU limit.
             for _ in 0..<100 {
                 let result = try evaluate("WatchScramble.result()")
                 if result == "null" { continue }
                 let value = try JSONSerialization.jsonObject(with: Data(result.utf8)) as? [String: String]
                 guard let scramble = value?["scramble"], !scramble.isEmpty,
-                      let facelets = value?["facelets"], facelets.count == 54 else {
+                      event != "333" || value?["facelets"]?.count == 54 else {
                     throw NSError(domain: "WatchScramble", code: 4, userInfo: [NSLocalizedDescriptionKey: value?["error"] ?? result])
                 }
-                return (scramble, facelets)
+                return (scramble, value?["facelets"], value?["source"], value?["caseId"])
             }
             throw NSError(domain: "WatchScramble", code: 5)
         } catch {
-            cw_destroy(engine); engine = nil
+            releaseTables()
             throw error
         }
     }
 }
 
 struct WatchLocalState: Codable {
-    var language = Locale.current.language.languageCode?.identifier == "zh" ? "zh" : "en"
+    static var systemLanguage: String {
+        let preferred = Bundle.preferredLocalizations(from: ["en", "zh-Hans"], forPreferences: Locale.preferredLanguages)
+        return preferred.first == "zh-Hans" ? "zh" : "en"
+    }
+    var language = Self.systemLanguage
+    var selectedEvent: String?
     var batchId = ""
     var batchCursor = WatchBatchCursor()
     var current: WatchTimerSlot?
@@ -94,6 +107,13 @@ final class WatchTimerModel: NSObject, ObservableObject, WCSessionDelegate {
         super.init()
         do { try restoreFromDisk() }
         catch { diskFailed = true; errorKey = "storageError" }
+        cube.onCorrection = { [weak self] from, target, done in
+            guard let self else { done(nil); return }
+            self.scrambleQueue.async {
+                let answer = try? self.scrambleWorker.correction(from: from, target: target)
+                DispatchQueue.main.async { done(answer) }
+            }
+        }
         cube.onTimer = { [weak self] event in self?.receiveTimer(event) }
         cube.onFailure = { [weak self] in
             guard let self else { return }
@@ -112,6 +132,7 @@ final class WatchTimerModel: NSObject, ObservableObject, WCSessionDelegate {
     }
     private func restoreFromDisk() throws {
         var next = try WatchTimerDisk.load(file, default: WatchLocalState())
+        if next.batchId.isEmpty { next.language = WatchLocalState.systemLanguage }
         next.draft?.slot.previewPng = nil
         next.interrupted?.slot.previewPng = nil
         for index in next.outbox.indices { next.outbox[index].slot.previewPng = nil }
@@ -129,34 +150,56 @@ final class WatchTimerModel: NSObject, ObservableObject, WCSessionDelegate {
         guard !state.unsupported else { return nil }
         // Existing installations recover the most recent phone selection, including exhausted queues.
         if let slot = state.localTemplate ?? state.queue.last ?? state.current ?? state.lastSolve?.slot {
-            return slot.event == "333" ? slot : nil
+            return cube.events.contains(where: { $0.id == slot.event }) ? slot : nil
         }
         guard state.batchId.isEmpty else { return nil }
         return WatchTimerSlot(id: UUID().uuidString, sessionId: "watch-local-333", sessionName: text("localSession"),
                               event: "333", eventName: "3×3×3", scramble: "", inspectionSec: 0, holdMs: 300)
     }
+    func selectEvent(_ option: WatchCubeConnection.EventOption?) {
+        guard phase == "idle", state.draft == nil else { return }
+        var next = state
+        next.selectedEvent = option?.id
+        next.current = nil
+        next.queue = []
+        next.lastResult = nil
+        next.unsupported = false
+        next.requestId = ""
+        next.localTemplate = option.map {
+            WatchTimerSlot(id: UUID().uuidString, sessionId: "watch-local-" + $0.id, sessionName: text("localSession"),
+                           event: $0.id, eventName: $0.name(state.language), scramble: "",
+                           inspectionSec: state.current?.inspectionSec ?? 0, holdMs: state.current?.holdMs ?? 300,
+                           preScrT: state.current?.preScrT, cnMode: state.current?.cnMode,
+                           trainingStartMode: state.current?.trainingStartMode)
+        }
+        guard commit(next) else { return }
+        displayMs = 0
+        generationFailed = false
+        if option == nil { requestBatch() } else { replenishLocalScrambles() }
+    }
     func retryGeneration() { generationFailed = false; replenishLocalScrambles() }
     private func replenishLocalScrambles() {
-        guard active, phase == "idle", !diskFailed, !generating, !generationFailed,
-              state.draft == nil, state.outbox.count < 1000, state.queue.count < 3,
+        guard active, !reviewing, phase == "idle", !diskFailed, !generating, !generationFailed,
+              state.draft == nil, state.outbox.count < 1000, state.queue.isEmpty,
               let template = localTemplate else { return }
         generating = true
         let cursor = state.batchCursor
         scrambleQueue.async { [weak self] in
             guard let self else { return }
-            let result = Result { try self.scrambleWorker.generate() }
+            let result = Result { try self.scrambleWorker.generate(event: template.event) }
             DispatchQueue.main.async {
                 self.generating = false
                 // A newly received phone selection wins over an in-flight generation.
                 guard self.state.batchCursor.sourceId == cursor.sourceId,
                       self.state.batchCursor.sequence == cursor.sequence,
                       self.localTemplate?.sessionId == template.sessionId,
-                      self.localTemplate?.event == "333" else { self.replenishLocalScrambles(); return }
+                      self.localTemplate?.event == template.event else { self.replenishLocalScrambles(); return }
                 switch result {
-                case .success(let (scramble, facelets)):
+                case .success(let (scramble, facelets, source, caseId)):
                     var slot = template
                     slot.id = UUID().uuidString; slot.scramble = scramble
                     slot.previewPng = nil; slot.localFacelets = facelets
+                    slot.generator = source; slot.caseId = caseId
                     var next = self.state
                     next.localTemplate = slot
                     if next.current == nil { next.current = slot } else { next.queue.append(slot) }
@@ -220,8 +263,11 @@ final class WatchTimerModel: NSObject, ObservableObject, WCSessionDelegate {
         ticks += 1
         if ticks % 200 == 0 { flush(); replenishLocalScrambles() }
     }
+    var cubeSupportsCurrentEvent: Bool {
+        guard let event = state.current?.event else { return false }
+        return cube.smartCubeEvents.contains(event)
+    }
     func tapTimer() {
-        guard cube.phase != "connected" else { return }
         syncCubeContext()
         cube.tap()
     }
@@ -255,6 +301,7 @@ final class WatchTimerModel: NSObject, ObservableObject, WCSessionDelegate {
                 }
             }
             state.interrupted?.penalty = solve["autoPenalty"] as? String ?? "ok"
+            state.interrupted?.trainingStartMode = solve["trainingStartMode"] as? String
             state.interrupted?.inspectionMs = solve["inspectionMs"] as? Double ?? 0
             stop(solve["timeMs"] as? Double ?? 0)
         } else {
@@ -315,6 +362,9 @@ final class WatchTimerModel: NSObject, ObservableObject, WCSessionDelegate {
     }
     func sceneActive(_ value: Bool, state sceneState: String) {
         active = value
+        if sceneState == "background" {
+            scrambleQueue.async { [scrambleWorker] in scrambleWorker.releaseTables() }
+        }
         cube.sceneChanged(sceneState)
         cube.display.setAwake(value)
         // Wrist-down must not invent a stop.
@@ -324,6 +374,7 @@ final class WatchTimerModel: NSObject, ObservableObject, WCSessionDelegate {
     func requestBatch() {
         guard !diskFailed else { return }
         replenishLocalScrambles()
+        guard state.selectedEvent == nil else { return }
         if state.requestId.isEmpty {
             var next = state; next.requestId = UUID().uuidString
             guard commit(next) else { return }
@@ -369,6 +420,10 @@ final class WatchTimerModel: NSObject, ObservableObject, WCSessionDelegate {
         guard next.batchCursor.accept(source: source, revision: sequence) else { return }
         next.batchId = batch.id; next.language = batch.language
         next.recordingVersion = batch.recordingVersion
+        if next.selectedEvent != nil {
+            _ = commit(next)
+            return
+        }
         next.queue = batch.slots; next.requestId = ""; next.unsupported = batch.unsupported
         next.localTemplate = batch.slots.last
         // Never replace the scramble the user is reading, inspecting or solving.

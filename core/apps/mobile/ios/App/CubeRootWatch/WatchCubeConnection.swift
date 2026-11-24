@@ -29,6 +29,7 @@ final class WatchCubeConnection: NSObject, ObservableObject, CBCentralManagerDel
     private var selectedDeviceID = ""
     private var suppliedMac: String?
     let display = WatchCubeScene()
+    var onCorrection: ((String, String, @escaping (String?) -> Void) -> Void)?
     var onTimer: (([String: Any]) -> Void)?
     var onFailure: (() -> Void)?
     private var central: CBCentralManager!
@@ -147,6 +148,34 @@ final class WatchCubeConnection: NSObject, ObservableObject, CBCentralManagerDel
         } catch { macInvalid = true }
     }
     func cancelMac() { reply(pendingMac); pendingMac = nil; macPrompt = false; disconnect() }
+    struct EventOption: Decodable, Identifiable {
+        let id: String, en: String, zh: String
+        let training: Bool
+        func name(_ language: String) -> String { language == "zh" ? zh : en }
+    }
+    lazy var smartCubeEvents: Set<String> = {
+        guard let json = try? evaluate("JSON.stringify(smartCubeEvents)") else { return [] }
+        return (try? JSONDecoder().decode(Set<String>.self, from: Data(json.utf8))) ?? []
+    }()
+    lazy var events: [EventOption] = {
+        guard let json = try? evaluate("JSON.stringify(watchEvents)") else { return [] }
+        return (try? JSONDecoder().decode([EventOption].self, from: Data(json.utf8))) ?? []
+    }()
+    struct StatRow: Decodable {
+        let label: String
+        let value: String
+    }
+    func timerStats(_ records: [WatchTimerRecord], slot: WatchTimerSlot) -> [StatRow] {
+        let solves: [[String: Any]] = records
+            .filter { $0.slot.sessionId == slot.sessionId && $0.slot.event == slot.event }
+            .sorted { $0.ts < $1.ts }
+            .map { ["id": $0.id, "ts": $0.ts, "event": slot.event, "scramble": $0.slot.scramble,
+                    "timeMs": $0.timeMs, "penalty": $0.penalty] }
+        guard let data = try? JSONSerialization.data(withJSONObject: solves),
+              let json = try? evaluate("watchTimerStats(\(String(decoding: data, as: UTF8.self)))"),
+              let rows = try? JSONDecoder().decode([StatRow].self, from: Data(json.utf8)) else { return [] }
+        return rows
+    }
     struct ScramblePreview: Decodable {
         struct Cell: Decodable { let x: Double; let y: Double; let color: [Double] }
         let width: Double; let height: Double; let stroke: Double; let cells: [Cell]
@@ -185,6 +214,8 @@ final class WatchCubeConnection: NSObject, ObservableObject, CBCentralManagerDel
         let key = "\(slot?.id ?? ""):\(enabled)"
         guard contextKey != key else { return }; contextKey = key; guidance = nil
         send(["kind": "context", "id": slot?.id ?? "", "event": slot?.event ?? "333",
+              "preScrT": slot?.preScrT ?? "", "cnMode": slot?.cnMode ?? "none",
+              "trainingStartMode": slot?.trainingStartMode ?? "first-turn",
               "scramble": slot?.scramble ?? "", "inspectionSec": slot?.inspectionSec ?? 0, "enabled": enabled])
     }
     private func send(_ message: [String: Any]) {
@@ -338,6 +369,10 @@ final class WatchCubeConnection: NSObject, ObservableObject, CBCentralManagerDel
         let id = command["id"] as? Int
         stage = command["op"] as? String ?? "unknown"
         switch command["op"] as? String {
+        case "correction":
+            guard let from = command["from"] as? String, let target = command["target"] as? String,
+                  let onCorrection else { reply(id); return }
+            onCorrection(from, target) { [weak self] answer in self?.reply(id, value: answer ?? "") }
         case "needMac":
             pendingMac = id; macPrompt = true; macInput = ""; macInvalid = false; connectDeadline = nil
         case "getServices":
