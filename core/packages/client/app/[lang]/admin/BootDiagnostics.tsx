@@ -12,12 +12,9 @@ import { LoadingIndicator } from '@/components/LoadingIndicator';
 
 interface BootEvent {
   eventId: string;
-  code: string;
+  kind: string;
   path: string;
   online: boolean | null;
-  errorName: string;
-  errorMessage: string;
-  evidence: { source: string; name: string; message: string; url?: string }[];
   device: { browser: string; browserMajor: number | null; os: string; osMajor: number | null };
   receivedAt: string;
 }
@@ -41,7 +38,12 @@ export default function BootDiagnostics() {
     }).finally(() => {
       if (!controller.signal.aborted) setLoading(false);
     });
-    return () => controller.abort();
+    const kinds: Record<string, string> = {
+    network: t('网络连接失败', 'Network connection failed'), chunk: t('页面资源加载失败', 'Page resources failed to load'),
+    script: t('页面脚本出错', 'Page script failed'), promise: t('后台任务出错', 'Background task failed'),
+    timeout: t('启动超时', 'Startup timed out'), runtime: t('页面运行出错', 'Page failed to run'),
+  };
+  return () => controller.abort();
   }, [revision]);
 
   const browserNames: Record<string, string> = { wechat: t('微信', 'WeChat'), chrome: 'Chrome', edge: 'Edge', safari: 'Safari', firefox: 'Firefox', webview: 'WebView', other: t('其他浏览器', 'Other browser') };
@@ -51,7 +53,7 @@ export default function BootDiagnostics() {
     <details className="admin-monitoring__disclosure admin-monitoring__boot">
       <MoreToggle as="summary">{t('最近启动错误', 'Recent startup errors')}</MoreToggle>
       <div className="admin-boot__heading">
-        <InfoTooltip icon={HelpCircle} iconSize={16} ariaLabel={t('启动错误说明', 'About startup errors')} content={t('自动收集最近 50 条记录，保留 90 天。同一编号可能对应多次错误，不代表某一位用户。', 'The latest 50 automatic reports, retained for 90 days. A code can match multiple errors and does not identify a user.')} />
+        <InfoTooltip icon={HelpCircle} iconSize={16} ariaLabel={t('启动错误说明', 'About startup errors')} content={t('自动收集最近 50 条记录，保留 90 天。', 'The latest 50 automatic reports, retained for 90 days.')} />
         <button type="button" className="admin-boot__refresh" disabled={loading} onClick={() => setRevision(value => value + 1)}>
           {t('刷新', 'Refresh')}
         </button>
@@ -63,18 +65,11 @@ export default function BootDiagnostics() {
         <details key={event.eventId} className="admin-boot__event">
           <MoreToggle as="summary">
             <strong>{event.path}</strong>
-            <span>{browserNames[event.device.browser] ?? event.device.browser} {event.device.browserMajor} · {osNames[event.device.os] ?? event.device.os} {event.device.osMajor}</span>
+            <span>{browserNames[event.device.browser] ?? browserNames.other} {event.device.browserMajor} · {osNames[event.device.os] ?? osNames.other} {event.device.osMajor}</span>
             <time dateTime={event.receivedAt}>{new Date(event.receivedAt).toLocaleString()}</time>
-            <span>{event.errorName}: {event.errorMessage}</span>
+            <span>{kinds[event.kind] ?? t('启动失败', 'Startup failed')}</span>
           </MoreToggle>
-          <p>{t('诊断编号', 'Diagnostic code')}: <code>{event.code}</code></p>
           <p>{t('网络状态', 'Network status')}: {event.online === null ? t('未知', 'Unknown') : event.online ? t('在线', 'Online') : t('离线', 'Offline')}</p>
-          {event.evidence.map((item, index) => (
-            <div key={index}>
-              <p>{item.name}: {item.message}</p>
-              {item.url && <p><code>{item.url}</code></p>}
-            </div>
-          ))}
         </details>
       ))}
     </details>

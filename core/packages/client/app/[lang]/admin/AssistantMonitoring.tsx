@@ -1,8 +1,13 @@
 'use client';
+import { useDialogMotion, useModalBackdrop } from '@/hooks/useModalDismiss';
+import { SiteAssistantAnswerText, SiteAssistantResult, assistantToolLabel } from '@/components/SiteAssistantDialog';
+import AppLink from '@/components/AppLink';
+import { useLang } from '@/i18n/tr';
+import { ASSISTANT_ERROR_TEXT, type AssistantErrorCode, isAssistantSourceHref } from '@cuberoot/shared/site-assistant';
 import MoreToggle from '@/components/MoreToggle';
 import { InfoTooltip } from '@/components/InfoTooltip/InfoTooltip';
 import { ArrowDown, HelpCircle } from '@app-foundation/icons/lucide';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react';
 import { useT } from '@/hooks/useT';
 import { ClearButton } from '@/components/ClearButton';
 import { SearchInput } from '@/components/SearchInput';
@@ -17,8 +22,35 @@ const number = (value: number | null | undefined) => value == null ? '—' : val
 const timestamp = (value: string) => new Intl.DateTimeFormat('sv-SE', { timeZone: 'Asia/Shanghai', dateStyle: 'short', timeStyle: 'medium' }).format(new Date(value));
 const wrap = { whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' } as const;
 
+function ChatDetailWindow({ children, onClose }: { children: ReactNode; onClose: () => void }) {
+  const t = useT();
+  const dialog = useRef<HTMLDialogElement>(null);
+  const { motionRef, close } = useDialogMotion(onClose, { surface: true });
+  const backdrop = useModalBackdrop(close);
+  useLayoutEffect(() => {
+    const element = dialog.current!;
+    element.showModal();
+    return () => element.close();
+  }, []);
+  return <dialog ref={dialog} className="admin-chat-dialog" aria-labelledby="admin-chat-title"
+    onCancel={event => { event.preventDefault(); close(); }} {...backdrop}>
+    <div ref={motionRef} data-site-surface="popover">
+      <header className="admin-dashboard__toolbar"><h3 id="admin-chat-title">{t('问答详情', 'Chat details')}</h3>
+        <button type="button" className="admin-boot__refresh" onClick={close}>{t('关闭', 'Close')}</button>
+      </header>
+      <div className="admin-chat-dialog__body">{children}</div>
+    </div>
+  </dialog>;
+}
+
 export default function AssistantMonitoring() {
   const t = useT();
+  const lang = useLang();
+  const errorName = (code: string) => {
+    const message = Object.hasOwn(ASSISTANT_ERROR_TEXT, code) && ASSISTANT_ERROR_TEXT[code as AssistantErrorCode];
+    if (message) return t(message.zh, message.en);
+    return code === 'recording_unavailable' ? t('问答记录暂时不可用', 'Chat recording unavailable') : t('其他错误', 'Other error');
+  };
   const reviewsRef = useRef<HTMLDetailsElement>(null);
   const scrollToLoadedReviews = useRef(false);
   const [billing, setBilling] = useState<ChatBilling | null>(null);
@@ -30,6 +62,9 @@ export default function AssistantMonitoring() {
   const [q, setQ] = useState(''), [page, setPage] = useState(1), [refresh, setRefresh] = useState(0);
   const [summary, setSummary] = useState<ChatSummary | null>(null), [records, setRecords] = useState<ChatRecords | null>(null);
   const [selected, setSelected] = useState<string | null>(null), [detail, setDetail] = useState<ChatDetail | null>(null);
+  const relatedPages = [...new Map([...(detail?.response?.sources ?? []), ...(detail?.response?.actions ?? [])]
+    .filter(page => isAssistantSourceHref(page.href))
+    .map(page => [page.href, page])).values()];
   const modelEstimates=detail?.metrics.models?.flatMap(model=>model.cacheAdjustedCny?[model.cacheAdjustedCny]:[]) ?? [];
   const modelEstimateMin=modelEstimates.reduce((sum,value)=>sum+value.min,0),modelEstimateMax=modelEstimates.reduce((sum,value)=>sum+value.max,0);
   const [error, setError] = useState(false), [detailError, setDetailError] = useState(false), [loading, setLoading] = useState(false), [summaryError,setSummaryError]=useState(false);
@@ -168,16 +203,16 @@ export default function AssistantMonitoring() {
           <h3>{t('请求状态', 'Request status')}</h3>
           <dl className="admin-monitoring__status-grid">{statuses.map(key => <div key={key}><dt>{labels[key]}</dt><dd>{number(totals?.[key === 'error' ? 'errors' : key])}</dd></div>)}</dl>
           <details className="admin-monitoring__breakdown"><MoreToggle as="summary">{t('错误分类', 'Error breakdown')}</MoreToggle>
-            {summary.errors.length ? <dl className="admin-monitoring__count-list">{summary.errors.map(row => <div key={row.error_code}><dt>{row.error_code}</dt><dd>{number(row.requests)}</dd></div>)}</dl> : <p>{t('暂无错误。', 'No errors.')}</p>}
+            {summary.errors.length ? <dl className="admin-monitoring__count-list">{summary.errors.map(row => <div key={row.error_code}><dt>{errorName(row.error_code)}</dt><dd>{number(row.requests)}</dd></div>)}</dl> : <p>{t('暂无错误。', 'No errors.')}</p>}
           </details>
           <details className="admin-monitoring__breakdown"><MoreToggle as="summary">{t('工具调用', 'Tool calls')}</MoreToggle>
-            {summary.tools.length ? <dl className="admin-monitoring__count-list">{summary.tools.map(row => <div key={row.tool}><dt>{row.tool}</dt><dd>{number(row.calls)}</dd></div>)}</dl> : <p>{t('暂无工具调用。', 'No tool calls.')}</p>}
+            {summary.tools.length ? <dl className="admin-monitoring__count-list">{summary.tools.map(row => <div key={row.tool}><dt>{assistantToolLabel(row.tool)}</dt><dd>{number(row.calls)}</dd></div>)}</dl> : <p>{t('暂无工具调用。', 'No tool calls.')}</p>}
           </details>
         </section>
       </div>
       <details className="admin-dashboard__table"><MoreToggle as="summary">{t('每日用户、状态与耗时明细', 'Daily users, outcomes and latency')}</MoreToggle><div className="sticky-scroll admin-dashboard__table-scroll"><table className="sticky-thead"><thead><tr>{[t('日期', 'Date'),t('请求', 'Requests'),t('用户', 'Users'),...statuses.map(s => labels[s]),t('平均耗时', 'Average latency'),t('P95 耗时', 'P95 latency')].map(label => <th key={label}>{label}</th>)}</tr></thead><tbody>{summary.daily.map(day => <tr key={day.day}><th>{day.day}</th><td>{day.requests}</td><td>{day.users}</td>{statuses.map(s => <td key={s}>{day[s === 'error' ? 'errors' : s]}</td>)}<td>{seconds(day.avg_ms)}</td><td>{seconds(day.p95_ms)}</td></tr>)}</tbody></table></div></details>
       <h3>{t('模型用量', 'Model usage')}</h3><div className="admin-monitoring__help"><InfoTooltip icon={HelpCircle} iconSize={16} ariaLabel={t('说明', 'Details')} content={<>{t('包含同一问题的多轮和修复调用。缺失用量不是零；缓存与思考 tokens 是输入或输出的子集，不重复相加。向量区分在线查询和离线建库；实际费用以服务商账单为准。', 'Includes multiple rounds and repair calls. Missing usage is not zero. Cache/reasoning tokens are subsets, not additional totals. Embeddings distinguish online queries from offline indexing. Provider billing is authoritative.')}</>} /></div>
-      <div className="admin-dashboard__table"><div className="sticky-scroll admin-dashboard__table-scroll"><table className="sticky-thead"><thead><tr>{[t('模型', 'Model'),t('类型', 'Kind'),t('调用', 'Calls'),t('思考调用', 'Thinking calls'),t('输入', 'Input'),t('输出', 'Output'),t('缓存命中', 'Cache read'),t('思考', 'Reasoning'),t('用量缺失', 'Missing usage')].map(v => <th key={v}>{v}</th>)}</tr></thead><tbody>{summary.models.map(m => <tr key={m.kind + m.model}><th>{m.model}</th><td>{({chat:t('聊天','Chat'),embedding:t('查询向量','Query embeddings'),embedding_index:t('建库向量','Index embeddings'),rerank:t('重排序','Reranking')} as Record<string,string>)[m.kind]??m.kind}</td><td>{m.calls}</td><td>{m.thinking_calls}</td><td>{number(m.input_tokens)}</td><td>{number(m.output_tokens)}</td><td>{number(m.cached_tokens)}</td><td>{number(m.reasoning_tokens)}</td><td>{m.missing_usage}</td></tr>)}</tbody></table></div></div>
+      <div className="admin-dashboard__table"><div className="sticky-scroll admin-dashboard__table-scroll"><table className="sticky-thead"><thead><tr>{[t('模型', 'Model'),t('类型', 'Kind'),t('调用', 'Calls'),t('思考调用', 'Thinking calls'),t('输入', 'Input'),t('输出', 'Output'),t('缓存命中', 'Cache read'),t('思考', 'Reasoning'),t('用量缺失', 'Missing usage')].map(v => <th key={v}>{v}</th>)}</tr></thead><tbody>{summary.models.map(m => <tr key={m.kind + m.model}><th>{m.model}</th><td>{({chat:t('聊天','Chat'),embedding:t('查询向量','Query embeddings'),embedding_index:t('建库向量','Index embeddings'),rerank:t('重排序','Reranking')} as Record<string,string>)[m.kind]??t('其他','Other')}</td><td>{m.calls}</td><td>{m.thinking_calls}</td><td>{number(m.input_tokens)}</td><td>{number(m.output_tokens)}</td><td>{number(m.cached_tokens)}</td><td>{number(m.reasoning_tokens)}</td><td>{m.missing_usage}</td></tr>)}</tbody></table></div></div>
       <p>{summary.state && <>{t('开始记录', 'Recording since')} {timestamp(summary.state.enabled_at)} · {t('最近清理', 'Last cleanup')} {summary.state.last_cleanup_at ? timestamp(summary.state.last_cleanup_at) : '—'} · </>}{t('更新时间', 'Updated')} {timestamp(summary.updatedAt)} (UTC+8)</p>
       </details>
     </>}
@@ -195,19 +230,19 @@ export default function AssistantMonitoring() {
 
       <div className="admin-dashboard__grid"><section className="admin-dashboard__panel" data-site-surface="panel"><h4>{t('告警与恢复','Alerts and recovery')}</h4>
         {insights.alerts.length===0&&<p>{t('等待首次后台检查。','Awaiting the first background check.')}</p>}
-        {insights.alerts.map(a=><p key={a.code} role={a.active?'alert':undefined}>{a.active?t('异常','Alert'):t('正常','Normal')} · {({error_rate:t('错误率','Error rate'),latency:t('回答耗时','Latency'),recording:t('记录写入','Recording'),cost:t('日费用提醒','Daily cost threshold'),unpriced:t('费用覆盖不完整','Incomplete pricing')} as Record<string,string>)[a.code]??a.code} · {timestamp(a.checked_at)}<br/><small style={wrap}>{Object.entries(a.details as Record<string,number|null>).map(([key,value])=>{const labels:Record<string,string>={p95:t('P95 耗时','P95 latency'),thresholdMs:t('耗时阈值','Latency threshold'),grossCny:t('已知用量费用（元）','Priced usage (CNY)'),thresholdCny:t('日提醒阈值（元）','Daily alert threshold (CNY)'),requests:t('请求数','Requests'),pending:t('待补记','Awaiting replay'),errors:t('失败数','Failures'),threshold:t('失败率阈值','Error-rate threshold')};return (labels[key]??key)+': '+(key==='p95'||key==='thresholdMs'?seconds(value):key==='threshold'?String(Number(value)*100)+'%':number(value));}).join(' · ')}</small></p>)}
+        {insights.alerts.map(a=><p key={a.code} role={a.active?'alert':undefined}>{a.active?t('异常','Alert'):t('正常','Normal')} · {({error_rate:t('错误率','Error rate'),latency:t('回答耗时','Latency'),recording:t('记录写入','Recording'),cost:t('日费用提醒','Daily cost threshold'),unpriced:t('费用覆盖不完整','Incomplete pricing')} as Record<string,string>)[a.code]??t('其他告警','Other alert')} · {timestamp(a.checked_at)}<br/><small style={wrap}>{Object.entries(a.details as Record<string,number|null>).map(([key,value])=>{const labels:Record<string,string>={p95:t('P95 耗时','P95 latency'),thresholdMs:t('耗时阈值','Latency threshold'),grossCny:t('已知用量费用（元）','Priced usage (CNY)'),thresholdCny:t('日提醒阈值（元）','Daily alert threshold (CNY)'),requests:t('请求数','Requests'),pending:t('待补记','Awaiting replay'),errors:t('失败数','Failures'),threshold:t('失败率阈值','Error-rate threshold')};if (!labels[key]) return '';return labels[key]+': '+(key==='p95'||key==='thresholdMs'?seconds(value):key==='threshold'?String(Number(value)*100)+'%':number(value));}).filter(Boolean).join(' · ')}</small></p>)}
         <div className="admin-monitoring__help"><InfoTooltip icon={HelpCircle} iconSize={16} ariaLabel={t('说明', 'Details')} content={<>{t('每分钟检查；15 分钟内至少 10 次完成请求，失败率达到 20% 或 P95 超过 30 秒时告警。写入异常和费用阈值另行监测，恢复也通知；复用管理员站内通知及已启用的邮件通知。','Checks run each minute. At least 10 settled requests in 15 minutes trigger alerts at 20% failures or P95 above 30 seconds. Recording and cost have separate checks. Alerts and recovery use admin site notifications and enabled email notifications.')}</>} /></div>
       </section><section className="admin-dashboard__panel" data-site-surface="panel"><h4>{t('检索与入口失败','Retrieval and admission failures')}</h4>
-        {insights.retrievals.map((r,i)=><p key={i}>{({hybrid:t('混合检索','Hybrid'),database_lexical:t('数据库关键词','Database keywords'),local_lexical:t('本地关键词','Local keywords'),fallback:t('降级','Fallback'),web:t('联网搜索','Web search'),web_unavailable:t('联网未取得证据','No usable web evidence')} as Record<string,string>)[r.mode]??r.mode} · {({disabled_or_unconfigured:t('未启用向量检索','Vector search unavailable'),index_mismatch:t('索引版本不匹配','Index mismatch'),embedding_unavailable:t('向量服务不可用','Embedding unavailable'),retrieval_unavailable:t('检索服务不可用','Retrieval unavailable'),corpus_unavailable:t('资料索引不可用','Corpus unavailable'),not_configured:t('未配置联网服务','Web search not configured'),public_query_required:t('查询包含敏感信息','Query contains sensitive information'),provider_access:t('搜索服务权限不足','Search access denied'),provider_unavailable:t('搜索服务不可用','Search provider unavailable'),incomplete_response:t('搜索响应不完整','Incomplete search response'),no_relevant_evidence:t('未找到相关证据','No relevant evidence'),invalid_search_summary:t('搜索摘要格式异常','Invalid search summary'),missing_citations:t('搜索结果缺少引用','Missing search citations'),missing_search_sources:t('搜索结果缺少来源','Missing search sources'),insufficient_cited_evidence:t('有效引用不足','Insufficient cited evidence'),timeout:t('搜索超时','Search timed out')} as Record<string,string>)[r.reason??'']??r.reason??'—'} · {t('调用','Calls')} {r.calls} · {t('无结果','Empty')} {r.empty}</p>)}
+        {insights.retrievals.map((r,i)=><p key={i}>{({hybrid:t('混合检索','Hybrid'),database_lexical:t('数据库关键词','Database keywords'),local_lexical:t('本地关键词','Local keywords'),fallback:t('降级','Fallback'),web:t('联网搜索','Web search'),web_unavailable:t('联网未取得证据','No usable web evidence')} as Record<string,string>)[r.mode]??t('其他检索','Other retrieval')} · {({disabled_or_unconfigured:t('未启用向量检索','Vector search unavailable'),index_mismatch:t('索引版本不匹配','Index mismatch'),embedding_unavailable:t('向量服务不可用','Embedding unavailable'),retrieval_unavailable:t('检索服务不可用','Retrieval unavailable'),corpus_unavailable:t('资料索引不可用','Corpus unavailable'),not_configured:t('未配置联网服务','Web search not configured'),public_query_required:t('查询包含敏感信息','Query contains sensitive information'),provider_access:t('搜索服务权限不足','Search access denied'),provider_unavailable:t('搜索服务不可用','Search provider unavailable'),incomplete_response:t('搜索响应不完整','Incomplete search response'),no_relevant_evidence:t('未找到相关证据','No relevant evidence'),invalid_search_summary:t('搜索摘要格式异常','Invalid search summary'),missing_citations:t('搜索结果缺少引用','Missing search citations'),missing_search_sources:t('搜索结果缺少来源','Missing search sources'),insufficient_cited_evidence:t('有效引用不足','Insufficient cited evidence'),timeout:t('搜索超时','Search timed out')} as Record<string,string>)[r.reason??'']??'—'} · {t('调用','Calls')} {r.calls} · {t('无结果','Empty')} {r.empty}</p>)}
         {!insights.retrievals.length&&<p>{t('尚无资料检索调用。','No knowledge retrieval calls yet.')}</p>}
         <div className="admin-monitoring__help"><InfoTooltip icon={HelpCircle} iconSize={16} ariaLabel={t('说明', 'Details')} content={<>{t('混合检索、降级和最终本地检索分步记录；无检索不等于失败，直接查询成绩或打开工具无需 RAG。召回命中不代表资料一定相关。','Hybrid retrieval and fallbacks are recorded separately. Direct data/tool questions may need no RAG. A retrieval hit does not prove relevance.')}</>} /></div>
-        {insights.entries.map(r=><p key={r.code}>{r.code}: {r.requests}</p>)}
+        {insights.entries.map(r=><p key={r.code}>{errorName(r.code)} · {r.requests}</p>)}
       </section></div>
       <details><MoreToggle as="summary">{t('长期日汇总与下载','Long-term daily totals and download')}</MoreToggle><p>{t('保留 2 年，不含问题、回答和用户标识。每日用户数不能相加当作跨日独立用户数。','Retained for 2 years without text or user identifiers. Daily distinct users are not additive across days.')}</p>
         <button type="button" className="admin-boot__refresh" onClick={()=>{const rows=[['day','requests','daily_users','success','errors','feedback','helpful','clicked','gross_cny','unpriced_calls'],...insights.daily.map(d=>[d.day,d.metrics.requests,d.metrics.users,d.metrics.success,d.metrics.errors,d.metrics.feedback,d.metrics.helpful,d.metrics.clicked,d.metrics.gross_cny,d.metrics.unpriced_calls])];const url=URL.createObjectURL(new Blob([rows.map(r=>r.join(',')).join('\n')],{type:'text/csv;charset=utf-8'}));const a=document.createElement('a');a.href=url;a.download='assistant-daily.csv';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);}}>{t('下载日汇总 CSV','Download daily CSV')}</button>
         <DashboardChart label={t('长期每日提问','Long-term daily requests')} labels={insights.daily.map(d=>d.day)} series={[{name:t('提问','Requests'),type:'line',data:insights.daily.map(d=>d.metrics.requests)}]}/>
       </details>
-      <details><MoreToggle as="summary">{t('最近管理员访问与复核审计','Recent admin access and review audit')}</MoreToggle>{insights.audit.map((a,i)=><p key={i} style={wrap}>{timestamp(a.at)} · {a.actor} · {a.action} · {a.record_id??'—'}</p>)}</details>
+      <details><MoreToggle as="summary">{t('最近管理员访问与复核审计','Recent admin access and review audit')}</MoreToggle>{insights.audit.map((a,i)=><p key={i} style={wrap}>{timestamp(a.at)} · {a.action === 'read_list' ? t('查看问答列表', 'Viewed chat list') : a.action === 'read_detail' ? t('查看问答详情', 'Viewed chat details') : reviewLabels[a.action.replace(/^review:/, '')] ?? t('管理员操作', 'Admin activity')}</p>)}</details>
     </>}
     </details>
     <details className="admin-monitoring__disclosure" id="chat-monitoring-reviews" ref={reviewsRef}><MoreToggle as="summary">{t('逐条问答与复核', 'Questions and reviews')}</MoreToggle>
@@ -220,31 +255,37 @@ export default function AssistantMonitoring() {
     </div>
     <div className="admin-monitoring__help"><InfoTooltip icon={HelpCircle} iconSize={16} ariaLabel={t('说明', 'Details')} content={<>{t('搜索和状态筛选只影响明细，上方统计始终覆盖所选天数。', 'Search and status filters affect the list only; summary metrics cover the full selected period.')}</>} /></div>
     {error && <p role="alert">{t('明细加载失败，请刷新重试。', 'Could not load records. Refresh to retry.')}</p>}
-    {records && <><div className="admin-dashboard__table"><div className="sticky-scroll admin-dashboard__table-scroll"><table className="sticky-thead"><thead><tr>{[t('时间 (UTC+8)', 'Time (UTC+8)'),t('用户', 'User'),t('问题', 'Question'),t('状态', 'Status'),t('耗时', 'Latency')].map(v => <th key={v}>{v}</th>)}</tr></thead><tbody>{records.rows.map(row => <tr key={row.id}><th>{timestamp(row.started_at)}</th><td>{row.user_id ?? '—'}</td><td><button type="button" className="admin-boot__refresh" onClick={() => setSelected(row.id)}>{row.question || t('图片提问 / 正文已过期', 'Image question / expired text')}</button></td><td>{labels[row.status]}</td><td>{seconds(row.duration_ms)}</td></tr>)}</tbody></table></div></div>
+    {records && <><div className="admin-dashboard__table"><div className="sticky-scroll admin-dashboard__table-scroll"><table className="sticky-thead"><thead><tr>{[t('时间 (UTC+8)', 'Time (UTC+8)'),t('问题', 'Question'),t('状态', 'Status'),t('耗时', 'Latency')].map(v => <th key={v}>{v}</th>)}</tr></thead><tbody>{records.rows.map(row => <tr key={row.id}><th>{timestamp(row.started_at)}</th><td><button type="button" className="admin-boot__refresh" onClick={() => setSelected(row.id)}>{row.question || t('图片提问 / 正文已过期', 'Image question / expired text')}</button></td><td>{labels[row.status]}</td><td>{seconds(row.duration_ms)}</td></tr>)}</tbody></table></div></div>
       <div className="admin-dashboard__toolbar"><p>{t(`共 ${records.total} 条，第 ${page} 页`, `${records.total} records, page ${page}`)}</p><button type="button" className="admin-boot__refresh" disabled={page === 1 || loading} onClick={() => { setPage(n => n - 1); setSelected(null); }}>{t('上一页', 'Previous')}</button><button type="button" className="admin-boot__refresh" disabled={page * records.pageSize >= records.total || loading} onClick={() => { setPage(n => n + 1); setSelected(null); }}>{t('下一页', 'Next')}</button></div></>}
-    {selected && <section className="admin-dashboard__panel" data-site-surface="panel"><div className="admin-dashboard__toolbar"><h3>{t('问答详情', 'Chat details')}</h3><button type="button" className="admin-boot__refresh" onClick={() => setSelected(null)}>{t('关闭详情', 'Close details')}</button></div>
+    {selected && <ChatDetailWindow onClose={() => setSelected(null)}>
       {detailError ? <p role="alert">{t('详情加载失败，请刷新重试。', 'Could not load details. Refresh to retry.')}</p> : !detail ? <p><LoadingIndicator>{t('正在加载…', 'Loading…')}</LoadingIndicator></p> : <>
-        <p style={wrap}>{detail.id} · {detail.model} · {labels[detail.status]} · {seconds(detail.duration_ms)} · {detail.error_code}</p>
-        {detail.conversation_id&&detail.user_id&&<button type="button" className="admin-boot__refresh" onClick={()=>{setConversation({id:detail.conversation_id!,user:detail.user_id!});setQ('');setStatus('all');setFeedback('all');setPage(1);}}>{t('查看此会话的所有提问与重试','View all questions and retries in this conversation')}</button>}
-        <p style={wrap}>{t('上一轮','Parent')}: {detail.parent_id??'—'} · {t('重试来源','Retry of')}: {detail.retry_of??'—'}</p>
-        <p>{t(`图片 ${detail.image_count} 张，上下文 ${detail.history_count} 条`, `${detail.image_count} images, ${detail.history_count} history messages`)}</p>
+        <p>{[timestamp(detail.started_at) + ' (UTC+8)', labels[detail.status], detail.duration_ms != null && seconds(detail.duration_ms),
+          detail.retry_of && t('重新回答', 'Retry'), detail.image_count > 0 && t(`附图 ${detail.image_count} 张`, `Images: ${detail.image_count}`)].filter(Boolean).join(' · ')}</p>
         {detail.content_expired ? <p>{t('正文已超过 30 天保存期限。', 'Content has passed its 30-day retention period.')}</p> : <>
           <h4>{t('用户问题', 'Question')}</h4><p style={wrap}>{detail.question || t('仅图片', 'Images only')}</p>
-          <h4>{t('回答正文（未完成时为已输出片段）', 'Answer (partial if unfinished)')}</h4><p style={wrap}>{detail.answer || '—'}</p>
-          {!!detail.response && <details><MoreToggle as="summary">{t('来源、页面入口与结果表', 'Sources, destinations and result tables')}</MoreToggle><pre style={wrap}>{JSON.stringify(detail.response, null, 2)}</pre></details>}
+          <h4>{detail.answer && detail.status !== 'success' ? t('AI 回答（未完成）', 'Partial AI answer') : t('AI 回答', 'AI answer')}</h4>
+          {detail.answer ? <SiteAssistantAnswerText result={{...detail.response, sources: detail.response?.sources ?? [], answer: detail.answer}} partial={detail.status !== 'success'}/>
+            : <p>{t('暂无回答', 'No answer yet')}</p>}
+          {detail.response?.artifacts?.map((artifact, i) => <SiteAssistantResult key={i} artifact={artifact} lang={lang}/>)}
+          {relatedPages.length > 0 && <details>
+            <MoreToggle as="summary">{t('相关页面', 'Related pages')}</MoreToggle>
+            <ul>{relatedPages.map(page => <li key={page.href}><AppLink href={page.href} prefetch={false}>{page.title}</AppLink></li>)}</ul>
+          </details>}
         </>}
-        <p>{t('用户评价','User feedback')}: {detail.feedback?feedbackLabels[detail.feedback]:'—'} · {t('复核状态','Review')}: {reviewLabels[detail.review_status]}</p>
+        {detail.conversation_id&&detail.user_id&&<button type="button" className="admin-boot__refresh" onClick={()=>{setConversation({id:detail.conversation_id!,user:detail.user_id!});setQ('');setStatus('all');setFeedback('all');setPage(1);setSelected(null);}}>{t('查看完整会话','View conversation')}</button>}
+        {detail.feedback && <p>{t('用户评价', 'User feedback')} · {feedbackLabels[detail.feedback]}</p>}
+        {detail.content_expired && <p>{t('复核状态', 'Review status')} · {reviewLabels[detail.review_status]}</p>}
         {!detail.content_expired&&<form style={{display:'grid',gap:12}} onSubmit={e=>{e.preventDefault();setReviewBusy(true);setReviewError(false);void reviewAssistantRequest(detail.id,reviewStatus,reviewNote).then(()=>setRefresh(n=>n+1)).catch(()=>setReviewError(true)).finally(()=>setReviewBusy(false));}}>
           <label>{t('管理员复核','Admin review')} <select className="admin-dashboard-select" value={reviewStatus} onChange={e=>setReviewStatus(e.target.value)}>{Object.entries(reviewLabels).map(([value,label])=><option key={value} value={value}>{label}</option>)}</select></label>
           <label>{t('改进记录','Review note')} <textarea autoComplete="off" className="admin-dashboard-select" style={{display:'block',width:'100%'}} value={reviewNote} maxLength={500} onChange={e=>setReviewNote(e.target.value)} rows={2}/></label>{reviewNote&&<ClearButton onClick={()=>setReviewNote('')}/>}
           <button className="admin-boot__refresh" type="submit" disabled={reviewBusy}>{t('保存复核','Save review')}</button>{reviewError&&<p role="alert">{t('复核未保存，请重试。','Review was not saved. Please retry.')}</p>}
         </form>}
-        <h4>{t('各阶段耗时', 'Stage timings')}</h4><p>{t('并行或嵌套阶段可能重叠，阶段耗时不可直接相加。', 'Parallel or nested stages may overlap; durations are not additive.')}</p>
-        <div className="admin-dashboard__table"><div className="sticky-scroll admin-dashboard__table-scroll"><table className="sticky-thead"><thead><tr><th>{t('阶段', 'Stage')}</th><th>{t('调用次数', 'Calls')}</th><th>{t('耗时', 'Latency')}</th><th>{t('失败次数', 'Failures')}</th></tr></thead><tbody>{Object.entries(detail.metrics.stages ?? {}).map(([stage, value]) => <tr key={stage}><th>{({ model: t('模型回答', 'Model'), data: t('读取数据', 'Data'), page: t('读取页面', 'Pages'), tool: t('使用工具', 'Tools'), rerank:t('重排序','Reranking'), total: t('整体', 'Overall') } as Record<string, string>)[stage] ?? stage}</th><td>{value.calls}</td><td>{seconds(value.ms)}</td><td>{value.errors}</td></tr>)}</tbody></table></div></div>
+        <details><MoreToggle as="summary">{t('耗时与费用', 'Timing and cost')}</MoreToggle><p>{t('并行或嵌套阶段可能重叠，阶段耗时不可直接相加。', 'Parallel or nested stages may overlap; durations are not additive.')}</p>
+        <div className="admin-dashboard__table"><div className="sticky-scroll admin-dashboard__table-scroll"><table className="sticky-thead"><thead><tr><th>{t('阶段', 'Stage')}</th><th>{t('调用次数', 'Calls')}</th><th>{t('耗时', 'Latency')}</th><th>{t('失败次数', 'Failures')}</th></tr></thead><tbody>{Object.entries(detail.metrics.stages ?? {}).map(([stage, value]) => <tr key={stage}><th>{({ model: t('模型回答', 'Model'), data: t('读取数据', 'Data'), page: t('读取页面', 'Pages'), tool: t('使用工具', 'Tools'), rerank:t('重排序','Reranking'), total: t('整体', 'Overall') } as Record<string, string>)[stage] ?? t('其他', 'Other')}</th><td>{value.calls}</td><td>{seconds(value.ms)}</td><td>{value.errors}</td></tr>)}</tbody></table></div></div>
         {modelEstimates.length>0&&<p>{t('模型费用估算（含缓存折扣，元）','Model estimate with cache discounts (CNY)')}: {modelEstimateMin.toFixed(4)}–{modelEstimateMax.toFixed(4)} · {modelEstimates.length}/{detail.metrics.models?.length ?? 0} {t('次调用有估价；不含工具费用，非实际账单。','calls priced; excludes tools and is not an invoice.')}</p>}
-        <details><MoreToggle as="summary">{t('查看详细用量记录', 'Detailed usage records')}</MoreToggle><pre style={wrap}>{JSON.stringify(detail.metrics, null, 2)}</pre></details>
+        </details>
       </>}
-    </section>}
+    </ChatDetailWindow>}
     </details>
   </section>;
 }

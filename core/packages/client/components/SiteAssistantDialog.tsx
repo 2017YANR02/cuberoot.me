@@ -143,6 +143,9 @@ const QUESTION_EXAMPLES = [
     {zh:'找找耿暄一最近的三阶公开复盘。',en:'Find Xuanyi Geng’s latest public 3x3 reconstructions.'},
   ]},
 ];
+export function assistantToolLabel(tool: string) {
+  return tr(QUERY_LABELS[tool] ?? {zh:'查询资料', en:'Source lookup'});
+}
 function statusLabel(status:AssistantStatus) {
   if(status.phase==='querying') return tr(QUERY_LABELS[status.tool ?? ''] ?? {zh:'正在查询资料',en:'Looking up sources'});
   return tr(status.phase==='writing' ? {zh:'正在生成回答',en:'Writing answer'} : {zh:'正在思考',en:'Thinking'});
@@ -243,6 +246,18 @@ function Progress({chart}:{chart:AssistantChart}) {
 function AssistantModal({ children, onClose, motionRef }: { children: ReactNode; onClose: () => void; motionRef: RefObject<HTMLDivElement | null> }) {
   const backdrop = useModalDismiss(onClose);
   return createPortal(<div ref={motionRef} className="site-assistant-backdrop" {...backdrop}>{children}</div>, document.body);
+}
+
+export function SiteAssistantResult({artifact: a, lang}: {artifact: NonNullable<AssistantAnswer['artifacts']>[number]; lang: 'en' | 'zh'}) {
+  if (a.kind === 'algorithms') return <AssistantAlgorithmCards result={a}/>;
+  return a.kind==='cube-photo'?<PhotoChatResult result={a}/>:a.kind==='progress'?<Progress chart={a}/>:<section><h4>{a.title}</h4><div className="site-assistant-table"><table><thead><tr>{a.columns.map((c,k)=><th key={k}>{c}</th>)}</tr></thead><tbody>{a.rows.map((row,k)=><tr key={k}>{row.map((cell,c)=>{
+            const kind=a.columnKinds?.[c];
+            const href=a.cellLinks?.[k]?.[c] ?? (c===0 ? a.links?.[k] : undefined);
+            const compId=href && /^\/wca\/comp\/([A-Za-z0-9_-]+)$/.exec(href)?.[1];
+            const dateColumn=a.columnKinds?.indexOf('date') ?? -1;
+            const content=kind==='country' && cell ? <span title={countryName(cell,lang==='zh')}><Flag iso2={cell} spanClassName="country-flag" imgClassName="country-flag-ct"/></span> : compId ? <CompCell compId={compId} compName={cell} isZh={lang==='zh'} date={dateColumn>=0 ? row[dateColumn] : null}/> : cell;
+            return <td key={c} className={kind==='date' ? 'site-assistant-date' : kind==='country' ? 'site-assistant-country' : undefined}>{href && isAssistantSourceHref(href) ? <Link prefetch={false} href={href} {...sourceLinkProps(href)}>{content}</Link> : content}</td>;
+          })}</tr>)}</tbody></table></div></section>;
 }
 
 export default function SiteAssistantDialog({onAuthSend,authSendLabel,authPlaceholder,authNotice,onAlgorithmChange,onAnswerRevealed,turns,draft,images,onImagesChange:setImages,onDraftChange:setDraft,provider,openaiAvailable=false,onProviderChange,thinking,onThinkingChange,status={phase:'planning'},busy,paused=false,recovering=false,activeMessageId,onResume,stopping=false,stopUnconfirmed=false,error,lang,onAsk,onStop,onClose:onClosed,onNew,onFeedback,embedded=false,active=true,searchResults,onBranch}:Props) {
@@ -431,14 +446,7 @@ export default function SiteAssistantDialog({onAuthSend,authSendLabel,authPlaceh
           {((isRunning(turn,i)) || !!turn.progress?.length || !!turn.endState) && <AssistantExecutionProgress key={turn.createdAt ?? turn.requestId ?? i} turn={turn} busy={isRunning(turn,i)} stopping={stopping && isRunning(turn,i)} status={status} lang={lang}/>}
           {turn.result && (revealDone || hasPartialContent) && <div className="site-assistant-response" data-assistant-message="assistant" data-turn={i}><SiteAssistantAnswerText result={turn.result} partial={turn.partial} requestId={turn.requestId} animate={animate} onRevealComplete={onRevealComplete}/>
           {revealDone && !turn.partial && !!actions.length && <div className="site-assistant-response-actions site-assistant-navigation">{actions.map(action=><Link key={action.id} className="site-assistant-action" href={action.href} {...sourceLinkProps(action.href)} onClick={event=>{if(turn.requestId)void sendAssistantEvent(turn.requestId,{type:'click',kind:'action',id:action.id}).catch(()=>{});openSolverDocument(event);}} prefetch={false}>{tr({zh:`打开 ${action.title}`,en:`Open ${action.title}`})}</Link>)}</div>}
-          {turn.result.artifacts?.map((a,j)=>!revealDone && a.kind!=='algorithms' ? null : a.kind==='algorithms'?<AssistantAlgorithmCards key={j} result={a} onAsk={busy ? undefined : question=>onAsk(question)} onChange={onAlgorithmChange && !turn.partial ? (card,expected,next)=>changeAlgorithm(i,j,card,expected,next) : undefined}/>:a.kind==='cube-photo'?<PhotoChatResult key={j} result={a}/>:a.kind==='progress'?<Progress key={j} chart={a}/>:<section key={j}><h4>{a.title}</h4><div className="site-assistant-table"><table><thead><tr>{a.columns.map((c,k)=><th key={k}>{c}</th>)}</tr></thead><tbody>{a.rows.map((row,k)=><tr key={k}>{row.map((cell,c)=>{
-            const kind=a.columnKinds?.[c];
-            const href=a.cellLinks?.[k]?.[c] ?? (c===0 ? a.links?.[k] : undefined);
-            const compId=href && /^\/wca\/comp\/([A-Za-z0-9_-]+)$/.exec(href)?.[1];
-            const dateColumn=a.columnKinds?.indexOf('date') ?? -1;
-            const content=kind==='country' && cell ? <span title={countryName(cell,lang==='zh')}><Flag iso2={cell} spanClassName="country-flag" imgClassName="country-flag-ct"/></span> : compId ? <CompCell compId={compId} compName={cell} isZh={lang==='zh'} date={dateColumn>=0 ? row[dateColumn] : null}/> : cell;
-            return <td key={c} className={kind==='date' ? 'site-assistant-date' : kind==='country' ? 'site-assistant-country' : undefined}>{href && isAssistantSourceHref(href) ? <Link prefetch={false} href={href} {...sourceLinkProps(href)}>{content}</Link> : content}</td>;
-          })}</tr>)}</tbody></table></div></section>)}
+          {turn.result.artifacts?.map((a,j)=>!revealDone && a.kind!=='algorithms' ? null : a.kind==='algorithms'?<AssistantAlgorithmCards key={j} result={a} onAsk={busy ? undefined : question=>onAsk(question)} onChange={onAlgorithmChange && !turn.partial ? (card,expected,next)=>changeAlgorithm(i,j,card,expected,next) : undefined}/>:<SiteAssistantResult key={j} artifact={a} lang={lang}/>)}
         </div>}
           {turn.result && revealDone && !(isRunning(turn,i)) && <AssistantAnswerActions key={turn.requestId ?? i} turn={turn} lang={lang} active={active} onFeedback={onFeedback} onQuote={()=>useQuote(quote(turn,i,'assistant'))} onRetry={i===turns.length-1 && !error && !busy && editing===null ? ()=>turn.references?.length ? onAsk(turn.question,true,turn.images,turn.references) : onAsk(turn.question,true,turn.images) : undefined} onBranch={onBranch && !turn.partial && !busy ? ()=>onBranch(i) : undefined} preview={<><SiteAssistantAnswerText result={turn.result}/>{turn.result.artifacts?.filter(a=>a.kind==='algorithms').map((a,j)=><AssistantAlgorithmCards key={j} result={a}/>)}</>}/>}
           {turn.partial && hasPartialContent && !(isRunning(turn,i)) && <p className="site-assistant-incomplete">{tr({zh:'回答未完成',en:'Answer incomplete'})}</p>}
