@@ -18,7 +18,11 @@ import { FingerSurfaceSampler, FingerObstacle, FINGER_NAMES } from '@/app/[lang]
 import { homeLeft } from '@/app/[lang]/sim/engine/hands/handPoses';
 import { segmentAxialRotation } from '@/app/[lang]/sim/engine/hands/handModel';
 
-it.each([
+const asset = (side: number) => new URL(`../public/sim/hands/mano/${side === -1 ? 'right' : 'left'}.mano.json`, import.meta.url);
+const haveBothHands = existsSync(asset(-1)) && existsSync(asset(1));
+const withHands = it.runIf(haveBothHands);
+
+withHands.each([
   { move: 'U2', side: 'R', dir: 1, R: 'home', L: 'down' },
   { move: "U2'", side: 'L', dir: -1, R: 'down', L: 'home' },
 ] as const)('hands marked $move from $side index nail to ring nail with the other wrist down', async ({ move, side, dir, R, L }) => {
@@ -62,7 +66,7 @@ it.each([
   } finally { rig.dispose(); cube.dispose(); }
 });
 
-it.each([
+withHands.each([
   { move: 'F', supportGrip: 'home' }, { move: 'F', supportGrip: 'down' },
   { move: "F'", supportGrip: 'home' }, { move: "F'", supportGrip: 'down' },
 ] as const)('drives underlined $move on the same sticker with the supporting wrist $supportGrip', async ({ move, supportGrip }) => {
@@ -148,7 +152,6 @@ it('isolates axial roll from swing around an oblique binding segment', () => {
   expect(segmentAxialRotation(swing.setFromAxisAngle(across, Math.PI), axis)).toBeNull();
 });
 
-const asset = (side: number) => new URL(`../public/sim/hands/mano/${side === -1 ? 'right' : 'left'}.mano.json`, import.meta.url);
 vi.mock('@/app/[lang]/sim/engine/hands/handModelMano', async original => ({
   ...await original<typeof import('@/app/[lang]/sim/engine/hands/handModelMano')>(),
   loadManoHand: async (side: 1 | -1, material: THREE.Material) =>
@@ -191,7 +194,7 @@ function nailFacesFromPoints(nail: THREE.Mesh, points = nailVertices(nail)) {
   return faces;
 }
 
-describe.skipIf(!existsSync(asset(-1)) || !existsSync(asset(1)))('R U anticipation with real MANO skin', () => {
+describe.runIf(haveBothHands)('R U anticipation with real MANO skin', () => {
   it("holds the left home grip and the right F8/B6 pinch through the seven-step ring flick", async () => {
     const cube = new Cube(3), reference = new Cube(3), rig = new HandsRig();
     try {
@@ -1704,7 +1707,7 @@ describe.skipIf(!existsSync(asset(-1)) || !existsSync(asset(1)))('R U anticipati
   }, 30000);
 });
 
-describe.skipIf(!existsSync(asset(-1)) || !existsSync(asset(1)))('single U and U-prime home-index contact', () => {
+describe.runIf(haveBothHands)('single U and U-prime home-index contact', () => {
   it.each(['R', 'L'] as const)('rolls the %s index from pad to nail on its original corner, then clears the committed cube', async side => {
     const rig = new HandsRig(), cube = new Cube(3);
     try {
