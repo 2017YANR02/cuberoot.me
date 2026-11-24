@@ -156,6 +156,18 @@ export function createAssistantModel(config: AssistantConfig, fetcher: typeof fe
       }
       throw error;
     }
+    if (!openai && [400, 402, 403, 429].includes(response.status)) {
+      if (response.status === 402) {
+        await response.body?.cancel();
+        throw new AssistantFailure('model_unavailable', 402, { reason: 'quota_exhausted' });
+      }
+      // Inspect only the provider's structured error code. Ordinary rate limits keep their own retry policy.
+      const body = await response.json().catch(() => null);
+      const codes = [body?.code, body?.error?.code, body?.error?.type];
+      if (codes.some(code => typeof code === 'string' && /^(arrearage|allocationquota\.freetieronly|insufficient_quota|insufficient_balance|isv\.out_of_service)$/i.test(code))) {
+        throw new AssistantFailure('model_unavailable', response.status, { reason: 'quota_exhausted' });
+      }
+    }
     try { checkAssistantResponse(response, 'model'); }
     catch(error) {
       if(error instanceof AssistantFailure && error.upstreamStatus===429 && error.retryAfterMs && error.retryAfterMs>0){

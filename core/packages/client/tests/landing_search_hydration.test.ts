@@ -32,11 +32,6 @@ vi.mock('next/navigation', () => ({
 vi.mock('@/hooks/useSpeechToText', () => ({
   useSpeechToText: () => speechState,
 }));
-// Provider discovery has its own hook tests; these transport fixtures describe
-// chat replies and must not be consumed by the independent metadata request.
-vi.mock('@/hooks/useAssistantProvider', () => ({
-  useAssistantProvider: () => ({ provider: 'bailian', setProvider: vi.fn(), openaiAvailable: false }),
-}));
 vi.mock('@/lib/site-search', () => ({
   INITIAL_RENDER_CAP: 10,
   METRIC_LABEL_OVERRIDE: {},

@@ -32,7 +32,7 @@ import { describeAnalysis, runAnalysisQuery } from './site_assistant_analysis_db
 import { assistantAttendanceScope, applyAttendanceScope, attendanceScopeError, attendanceRequiresAnalysis } from './site_assistant_scope.js';
 import { championListPresentation, assistantPresentationContract, assistantPresentationInstruction, assistantPresentationViolation, assistantJsonAnswer, assistantLocalTailBoundary, assistantPlanSupplement } from './site_assistant_presentation.js';
 import { assistantContextFollowUpCall, assistantContextPeople, assistantContextSources, rememberAssistantContext, rememberAssistantConversation, resolveAssistantSnapshotAnswer, type AssistantContext, type AssistantObservation } from './site_assistant_context.js';
-import { resolveAssistantTime, SITE_ASSISTANT_ANSWER_MAX_LENGTH, isAssistantSourceHref, type AssistantThinkingMode, type AssistantStreamEvent, type AssistantAnswer, type AssistantSource, type AssistantTable, type AssistantMessage, type AssistantImage } from '@cuberoot/shared/site-assistant';
+import { resolveAssistantTime, SITE_ASSISTANT_ANSWER_MAX_LENGTH, isAssistantSourceHref, type AssistantProvider, type AssistantThinkingMode, type AssistantStreamEvent, type AssistantAnswer, type AssistantSource, type AssistantTable, type AssistantMessage, type AssistantImage } from '@cuberoot/shared/site-assistant';
 export type { AssistantSource, AssistantAnswer } from '@cuberoot/shared/site-assistant';
 import { SITE_DIRECTORY_GROUPS, SITE_DIRECTORY_TEXTS } from '@cuberoot/shared/site-directory';
 import { ALG_CATALOG, CFOP_SET_SLUGS } from '@cuberoot/shared/alg';
@@ -75,7 +75,7 @@ export function requestedAssistantLimit(question: string): number | undefined {
 }
 
 export interface AssistantConfig { key: string; baseUrl: string; model: string; provider?: 'openai'; visitorCountry?: string; contextWindowTokens?: number }
-export function assistantConfig(vision = false, selected?: 'bailian' | 'openai'): AssistantConfig | null {
+export function assistantConfig(vision = false, selected?: AssistantProvider): AssistantConfig | null {
   if (selected === 'openai') {
     const key = process.env.SITE_ASSISTANT_OPENAI_RELAY_SECRET;
     const origin = process.env.SITE_ASSISTANT_OPENAI_RELAY_ORIGIN;
@@ -89,7 +89,7 @@ export function assistantConfig(vision = false, selected?: 'bailian' | 'openai')
       return { key, baseUrl: `${url.origin}/api/site-assistant/openai`, model: ASSISTANT_OPENAI_MODEL, provider: 'openai' };
     } catch { return null; }
   }
-  if (vision) {
+  if (vision && selected !== 'deepseek') {
     const key = process.env.SITE_ASSISTANT_VISION_API_KEY || process.env.SITE_ASSISTANT_API_KEY;
     const baseUrl = process.env.SITE_ASSISTANT_VISION_BASE_URL || process.env.SITE_ASSISTANT_BASE_URL;
     const model = process.env.SITE_ASSISTANT_VISION_MODEL || 'qwen3.8-flash';
@@ -823,7 +823,9 @@ export async function answerSiteQuestion(
   let analysisIncomplete=false;
   let evidenceCharacters=0;
   let pendingReadFollowUp='';
-  const model = createAssistantModel(config, fetcher, signal, TOOL_GUIDE, history, images, priorContext?.memory);
+  const startModel = (selected: AssistantConfig) => createAssistantModel(selected, fetcher, signal, TOOL_GUIDE, history, images, priorContext?.memory);
+  let model = startModel(config);
+  let switchedProvider = false;
   const sheetContinuation=/(?:(?:同一张|原来的?|原有的?|之前的?)[\p{L}]{0,14}|原)(?:词表|对照表)|\b(?:both directions|same (?:two[- ]column |word[- ]and[- ]meaning )?(?:sheet|list)|(?:original|existing) (?:sheet|word list))\b/iu.test(question);
   const caseContinuation=/(?:那次|刚才(?:的)?|先前(?:的)?)(?:熟悉的)?插入|(?:那个|这个|该)(?:熟悉(?:的)?)?(?:插入)?(?:情形|局面|案例|场景)|\b(?:that (?:familiar )?(?:insertion )?case|the case we (?:were discussing|discussed|used))\b/i.test(question);
   const sheetTopic=/词表|对照表|word[- ](?:list|sheet)|word[- ]and[- ]meaning (?:list|sheet)|two[- ]column (?:list|sheet)/i;
@@ -951,7 +953,7 @@ export async function answerSiteQuestion(
     let formatRepair = '';
     let outputRepair = false;
     let transportRetries=0,formatRepairs=0;
-    for(let attempt=0;attempt<4;attempt++) {
+    for(let attempt=0;attempt<4 + Number(switchedProvider);attempt++) {
     try {
     // A retry is a new model step; apply queued corrections before spending another call.
     await assistantExecutionBoundary();
@@ -1029,6 +1031,20 @@ export async function answerSiteQuestion(
     return completion;
     } catch(error) {
       signal.throwIfAborted();
+      if (error instanceof AssistantFailure && error.diagnostic?.reason === 'quota_exhausted') {
+        if (switchedProvider || config.provider) throw error;
+        const alternate = assistantConfig(hasImages, new URL(config.baseUrl).origin === 'https://api.deepseek.com' ? 'bailian' : 'deepseek');
+        if (alternate && alternate.baseUrl !== config.baseUrl) {
+          config = alternate;
+          model = startModel(config);
+          switchedProvider = true;
+          // The new provider needs prior tool evidence in context instead of the old SDK transcript.
+          transcriptEvidence.clear();
+          await emit?.({type:'answer',answer:'',sources:[...sources.values()]});
+          continue;
+        }
+        throw error;
+      }
       // Separate short transport recovery from the one format repair, under
       // the same request deadline and quota reservation.
       const transient = error instanceof AssistantFailure && (error.diagnostic?.reason === 'network_error'

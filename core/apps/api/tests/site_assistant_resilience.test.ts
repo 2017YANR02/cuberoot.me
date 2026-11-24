@@ -76,6 +76,23 @@ describe('assistant resilience',()=>{
       expect(body.messages.at(-1).content).not.toContain('previous answer failed validation');
     } finally { vi.useRealTimers(); }
   });
+  it.each([true, false])('switches providers once on billing rejection (Qwen first: %s)',async qwenFirst=>{
+    vi.stubEnv('SITE_ASSISTANT_MODEL','qwen3.8-flash');
+    vi.stubEnv('SITE_ASSISTANT_BASE_URL','https://dashscope.aliyuncs.com/compatible-mode/v1');
+    vi.stubEnv('SITE_ASSISTANT_API_KEY','fixture');
+    vi.stubEnv('DEEPSEEK_API_KEY','fixture');
+    const qwen={...config,baseUrl:'https://dashscope.aliyuncs.com/compatible-mode/v1',model:'qwen3.8-flash'};
+    const ds={...config,baseUrl:'https://api.deepseek.com',model:'deepseek-flash'};
+    const primary=qwenFirst?qwen:ds, backup=qwenFirst?ds:qwen;
+    const rejected=()=>Response.json({error:{code:'AllocationQuota.FreeTierOnly'}},{status:qwenFirst?403:402});
+    const fetcher=vi.fn<typeof fetch>().mockImplementationOnce(rejected).mockResolvedValueOnce(model({answerKind:'general',answer:'Recovered.',sourceIds:[]}));
+    const ask=()=>answerSiteQuestion('Explain rain.','en',primary,AbortSignal.timeout(5000),withCatalog(fetcher));
+    expect((await ask()).answer).toBe('Recovered.');
+    expect(fetcher.mock.calls.map(([url])=>String(url))).toEqual([primary,backup].map(c=>c.baseUrl+'/chat/completions'));
+    fetcher.mockReset().mockImplementationOnce(rejected).mockImplementation(()=>Response.json({error:{code:'insufficient_quota'}},{status:429}));
+    await expect(ask()).rejects.toMatchObject({code:'model_unavailable'});
+    expect(fetcher).toHaveBeenCalledTimes(2);
+  });
   it('honors a long Retry-After without retrying early',async()=>{
     const fetcher=vi.fn<typeof fetch>().mockResolvedValue(new Response('',{status:429,headers:{'retry-after':'60'}}));
     await expect(answerSiteQuestion('Explain rain.','en',config,AbortSignal.timeout(5000),withCatalog(fetcher))).rejects.toMatchObject({code:'model_rate_limited',upstreamStatus:429,retryAfterMs:60000});

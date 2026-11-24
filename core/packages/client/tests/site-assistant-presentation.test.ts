@@ -40,7 +40,7 @@ async function render(answer:AssistantAnswer,overrides:Partial<ComponentProps<ty
   const props:ComponentProps<typeof SiteAssistantDialog>={
     turns:[{question:'历年世锦赛时间',result:answer}],busy:false,error:null,lang:'zh',draft:'',images:[],onImagesChange:vi.fn(),
     onDraftChange:vi.fn(),onFeedback:vi.fn(),onAsk:vi.fn(),onStop:vi.fn(),onClose:vi.fn(),onNew:vi.fn(),
-    thinking:'auto',onThinkingChange:vi.fn(),
+    provider:'bailian',onProviderChange:vi.fn(),thinking:'auto',onThinkingChange:vi.fn(),
     ...overrides,
   };
   await act(async()=>root.render(createElement(SiteAssistantDialog,props)));
@@ -115,23 +115,15 @@ describe('assistant general conversation controls',()=>{
     await act(async()=>roots.at(-1)!.render(createElement(SiteAssistantDialog,{...props,busy:false,paused:true})));
     expect(document.body.textContent).toContain('任务和队列已暂停');expect(document.body.textContent).toContain('恢复执行');
   });
-  it('shows the current model even when only Bailian is available and discloses the selected processor',async()=>{
-    const onProviderChange=vi.fn();
-    const props=await render({answer:'',sources:[]},{turns:[],embedded:true,openaiAvailable:false,onProviderChange});
-    expect(document.querySelector('[aria-label="AI 服务"]')).toBeNull();
-    expect(document.querySelector('.site-assistant-provider')?.textContent).toBe('Qwen3.8-Flash');
-    await act(async()=>roots.at(-1)!.render(createElement(SiteAssistantDialog,{...props,openaiAvailable:true,provider:'openai'})));
-    const button=document.querySelector<HTMLButtonElement>('[aria-label="AI 服务"]')!;
-    expect(button.textContent).toContain('GPT-5.4-mini');
-    expect(document.body.textContent).toContain('将交由 OpenAI 处理');
+  it('offers Qwen and DeepSeek in the composer',async()=>{
+    const props=await render({answer:'',sources:[]},{turns:[],embedded:true});
+    const button=document.querySelector<HTMLButtonElement>('[aria-label="聊天模型"]')!;
+    expect(button.textContent).toContain('千问 3.8 Flash');
     await act(async()=>button.click());
-    expect([...document.querySelectorAll('[role="option"]')].map(node=>node.textContent)).toEqual(['GPT-5.4-mini','Qwen3.8-Flash']);
-    const option=[...document.querySelectorAll<HTMLElement>('[role="option"]')].find(node=>node.textContent?.includes('Qwen3.8-Flash'))!;
-    expect(option).toBeDefined();
-    await act(async()=>option.click());
-    expect(onProviderChange).toHaveBeenCalledWith('bailian');
-    await act(async()=>roots.at(-1)!.render(createElement(SiteAssistantDialog,{...props,openaiAvailable:true,provider:'openai',busy:true})));
-    expect(document.querySelector('[aria-label="AI 服务"]')).toBeNull();
+    const options=[...document.querySelectorAll<HTMLElement>('[role="option"]')];
+    expect(options.map(option=>option.textContent)).toEqual(['千问 3.8 Flash','DeepSeek Flash']);
+    await act(async()=>options[1].click());
+    expect(props.onProviderChange).toHaveBeenCalledWith('deepseek');
   });
   it('shows actual execution states and collapses them after completion while revealing a complete answer and table immediately',async()=>{
     const createdAt=Date.now()-2000;

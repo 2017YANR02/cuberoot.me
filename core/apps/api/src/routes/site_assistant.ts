@@ -6,13 +6,10 @@ import { Hono, type Context } from 'hono';
 import { bodyLimit } from 'hono/body-limit';
 import { streamSSE } from 'hono/streaming';
 import { z } from 'zod';
-import { getIp } from '../utils/analytics_helpers.js';
-import { resolveIpCountry } from '../utils/ip_geolocation.js';
-import { assistantOpenAICountrySupported } from '@cuberoot/shared/site-assistant-openai';
 import { answerSiteQuestion, assistantConfig } from '../utils/site_assistant.js';
 import { standaloneChampionWindow } from '../utils/site_assistant_champions.js';
 import { reserveAssistantQuestion } from '../utils/site_assistant_quota.js';
-import { assistantTimeoutMs, boundAssistantHistory, SITE_ASSISTANT_ARTIFACT_FORMAT, SITE_ASSISTANT_QUESTION_MAX_LENGTH, SITE_ASSISTANT_HISTORY_MESSAGE_MAX_LENGTH, SITE_ASSISTANT_MAX_IMAGES, SITE_ASSISTANT_IMAGE_BYTES, SITE_ASSISTANT_BODY_BYTES, type AssistantAnswer, type AssistantStreamEvent } from '@cuberoot/shared/site-assistant';
+import { assistantTimeoutMs, boundAssistantHistory, SITE_ASSISTANT_ARTIFACT_FORMAT, SITE_ASSISTANT_QUESTION_MAX_LENGTH, SITE_ASSISTANT_HISTORY_MESSAGE_MAX_LENGTH, SITE_ASSISTANT_MAX_IMAGES, SITE_ASSISTANT_IMAGE_BYTES, SITE_ASSISTANT_BODY_BYTES, CHAT_PROVIDERS, type AssistantAnswer, type AssistantStreamEvent } from '@cuberoot/shared/site-assistant';
 import { AssistantFailure, assistantDeadline, assistantFailureCode, assistantStage } from '../utils/site_assistant_diagnostics.js';
 import { requireAuth, checkRateLimit } from '../utils/recon_helpers.js';
 import { getUserById } from '../utils/account.js';
@@ -60,7 +57,7 @@ const inputSchema = z.object({
   conversationId: z.string().uuid().optional(), parentId: z.string().uuid().optional(), retryOf: z.string().uuid().optional(),
   question: z.string().trim().max(SITE_ASSISTANT_QUESTION_MAX_LENGTH), lang: z.enum(['zh', 'en']),
   thinking: z.enum(['auto', 'fast', 'deep']).default('auto'),
-  provider: z.enum(['bailian', 'openai']).default('bailian'),
+  provider: z.enum(CHAT_PROVIDERS).default('bailian'),
   images: imagesSchema.optional(),
   timeZone: z.string().max(100).refine(zone => { try { new Intl.DateTimeFormat('en', { timeZone: zone }); return true; } catch { return false; } }, 'Invalid time zone').optional(),
   viewerWcaId: z.string().regex(/^\d{4}[A-Z]{4}\d{2}$/).optional(),
@@ -71,7 +68,7 @@ const inputSchema = z.object({
   .refine(input => (input.images?.length ?? 0) + input.history.reduce((count, message) => count + (message.images?.length ?? 0), 0) <= SITE_ASSISTANT_MAX_IMAGES, { path: ['images'] });
 
 // Burst limits are per process; the daily shared limit is atomic and durable.
-export function createSiteAssistantRoutes(deps: { answer: typeof answerSiteQuestion; config: typeof assistantConfig; country?: typeof resolveIpCountry; now: () => number; reserve: typeof reserveAssistantQuestion; authenticate: typeof requireAssistantUser; monitor?: typeof startAssistantMonitor; queue?: {store:typeof durableAssistantStore;worker:Pick<typeof durableAssistantWorker,'kick'>}; runs?: ReturnType<typeof assistantRunStore>; eventsQuery?: QueryRunner; contextQuery?: QueryRunner; entry?: typeof recordAssistantEntry; readAttachment?: typeof readAssistantAttachment; saveAttachment?: typeof saveAssistantAttachment } = { answer: answerSiteQuestion, config: assistantConfig, now: Date.now, reserve: reserveAssistantQuestion, authenticate: requireAssistantUser, monitor: startAssistantMonitor, entry: recordAssistantEntry, readAttachment: readAssistantAttachment, saveAttachment: saveAssistantAttachment }) {
+export function createSiteAssistantRoutes(deps: { answer: typeof answerSiteQuestion; config: typeof assistantConfig; now: () => number; reserve: typeof reserveAssistantQuestion; authenticate: typeof requireAssistantUser; monitor?: typeof startAssistantMonitor; queue?: {store:typeof durableAssistantStore;worker:Pick<typeof durableAssistantWorker,'kick'>}; runs?: ReturnType<typeof assistantRunStore>; eventsQuery?: QueryRunner; contextQuery?: QueryRunner; entry?: typeof recordAssistantEntry; readAttachment?: typeof readAssistantAttachment; saveAttachment?: typeof saveAssistantAttachment } = { answer: answerSiteQuestion, config: assistantConfig, now: Date.now, reserve: reserveAssistantQuestion, authenticate: requireAssistantUser, monitor: startAssistantMonitor, entry: recordAssistantEntry, readAttachment: readAssistantAttachment, saveAttachment: saveAssistantAttachment }) {
   const routes = new Hono();
   routes.route('/', createAssistantSpeechRoutes({ authenticate: deps.authenticate, run: deps.eventsQuery }));
   const runs = deps.runs ?? assistantRunStore();
@@ -117,13 +114,10 @@ export function createSiteAssistantRoutes(deps: { answer: typeof answerSiteQuest
           if(input.images?.some(image=>!('attachmentId' in image)) || input.history.some(message=>message.images?.some(image=>!('attachmentId' in image))))return c.json({error:'invalid_image'},400);
           const config=deps.config(!!input.images?.length || input.history.some(message=>!!message.images?.length),input.provider);
           if(!config && !standaloneChampionWindow({...input,timeZone:input.timeZone ?? 'UTC'}))return c.json({error:'provider_unavailable'},503);
-          const needsProviderRegion=config && input.provider==='openai';
-          const country=needsProviderRegion?await (deps.country ?? resolveIpCountry)(getIp(c)).catch(()=>null):undefined;
-          if(needsProviderRegion && !assistantOpenAICountrySupported(country))return c.json({error:'provider_region_unavailable'},403);
           // Verify attachment ownership before accepting a durable message.
           await resolveAssistantImages(user.uid,[...(input.images ?? []),...input.history.flatMap(message=>message.images ?? [])],deps.readAttachment ?? readAssistantAttachment);
           const {question,lang,thinking,provider,timeZone='UTC',images,references}=input;
-          await inbox.enqueue(user.uid,conversation.data,body.data.id,body.data.mode,{question,lang,thinking,provider,timeZone,images,references,history:boundAssistantHistory(input.history)},country ?? undefined);
+          await inbox.enqueue(user.uid,conversation.data,body.data.id,body.data.mode,{question,lang,thinking,provider,timeZone,images,references,history:boundAssistantHistory(input.history)});
           void worker.kick();
           return c.json({id:body.data.id},202);
         }
@@ -169,9 +163,7 @@ export function createSiteAssistantRoutes(deps: { answer: typeof answerSiteQuest
   });
   routes.get('/site-assistant/providers', async c => {
     c.header('Cache-Control', 'private, no-store');
-    const providers: Array<'bailian' | 'openai'> = [];
-    if (deps.config(false, 'bailian')) providers.push('bailian');
-    if (deps.config(false, 'openai') && assistantOpenAICountrySupported(await (deps.country ?? resolveIpCountry)(getIp(c)).catch(() => null))) providers.push('openai');
+    const providers = CHAT_PROVIDERS.filter(provider => deps.config(false, provider));
     return c.json({ providers });
   });
   routes.post('/site-assistant', async c => {
@@ -195,7 +187,7 @@ export function createSiteAssistantRoutes(deps: { answer: typeof answerSiteQuest
     let images = parsed.data.images;
     const hasImages = !!parsed.data.images?.length || history.some(message => !!message.images?.length);
     const config = deps.config(hasImages, parsed.data.provider);
-    if (!config) { const error = parsed.data.provider === 'openai' ? 'provider_unavailable' : hasImages ? 'vision_unavailable' : 'unavailable'; await deps.entry?.(error); return c.json({ error }, 503); }
+    if (!config) { const error = hasImages ? 'vision_unavailable' : 'unavailable'; await deps.entry?.(error); return c.json({ error }, 503); }
     // Authentication is part of the same total deadline and precedes quota/model work.
     const disconnect = new AbortController();
     const signal = AbortSignal.any([disconnect.signal, c.req.raw.signal, AbortSignal.timeout(assistantTimeoutMs(parsed.data.thinking) - 2000)]);
@@ -224,14 +216,6 @@ export function createSiteAssistantRoutes(deps: { answer: typeof answerSiteQuest
     try { return await assistantStage('total',()=>deadline(async()=>{
       const user = await assistantStage('auth',()=>deps.authenticate(c));
       signal.throwIfAborted();
-      if (parsed.data.provider === 'openai') {
-        const country = await assistantDeadline(() => (deps.country ?? resolveIpCountry)(getIp(c)).catch(() => null), signal);
-        if (!assistantOpenAICountrySupported(country)) {
-          await deps.entry?.('provider_region_unavailable');
-          return c.json({ error: 'provider_region_unavailable' }, 403);
-        }
-        config.visitorCountry = country!.toUpperCase();
-      }
       if(parsed.data.runId && parsed.data.conversationId) {
         if(!await runs.start(user.uid,parsed.data.conversationId,parsed.data.runId)) return c.json({error:'busy'},409);
         runOwner=user.uid;

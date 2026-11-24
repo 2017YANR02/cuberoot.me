@@ -11,7 +11,10 @@ export const SITE_ASSISTANT_QUESTION_MAX_LENGTH = 8000;
 export const SITE_ASSISTANT_HISTORY_MESSAGE_MAX_LENGTH = 12000;
 export const SITE_ASSISTANT_ANSWER_MAX_LENGTH = 12000;
 export type AssistantThinkingMode = 'auto' | 'fast' | 'deep';
-export type AssistantProvider = 'bailian' | 'openai';
+export const CHAT_PROVIDERS = ['bailian', 'deepseek'] as const;
+export type ChatProvider = typeof CHAT_PROVIDERS[number];
+// Existing durable messages can still carry the former relay provider.
+export type AssistantProvider = ChatProvider | 'openai';
 export function assistantTimeoutMs(mode: AssistantThinkingMode = 'auto'): number {
   return mode === 'fast' ? 30_000 : mode === 'deep' ? 90_000 : SITE_ASSISTANT_TIMEOUT_MS;
 }

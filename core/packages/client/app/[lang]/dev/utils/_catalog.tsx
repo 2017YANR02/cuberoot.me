@@ -87,14 +87,6 @@ export const CATALOG: UtilEntry[] = [
     en: 'Subscribe to the current account’s assistant conversation workspace.',
   },
   {
-    name: 'useAssistantProvider',
-    sig: 'useAssistantProvider(active: boolean)',
-    imp: "import { useAssistantProvider } from '@/hooks/useAssistantProvider';",
-    category: 'hook',
-    zh: '获取当前访客可用的聊天服务，默认阿里云；窗口重新聚焦时复查，实际发送仍由服务端独立校验地区。',
-    en: 'Load the visitor’s available chat providers, defaulting to Alibaba Cloud; recheck on focus while the server independently validates every send.',
-  },
-  {
     name: 'useAssistantThinkingMode',
     sig: 'useAssistantThinkingMode(): readonly [AssistantThinkingMode, (value: AssistantThinkingMode) => void]',
     imp: "import { useAssistantThinkingMode } from '@/hooks/useAssistantThinkingMode';",

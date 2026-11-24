@@ -14,42 +14,24 @@ const relaySecret = 'fixture-relay-secret-at-least-32-characters';
 const openai: AssistantConfig = { provider: 'openai', key: relaySecret, baseUrl: 'https://fixture.vercel.app/api/site-assistant/openai', model: ASSISTANT_OPENAI_MODEL, visitorCountry: 'US' };
 afterEach(() => { vi.unstubAllEnvs(); vi.restoreAllMocks(); });
 
-function routes(country: string | null) {
+function routes() {
   const answer = vi.fn().mockResolvedValue({ answer: 'ok', sources: [], artifacts: [] });
   const reserve = vi.fn().mockResolvedValue({ allowed: true, retryAfter: 60 });
-  const locate = vi.fn().mockResolvedValue(country);
-  const config = vi.fn((_vision = false, provider?: 'bailian' | 'openai') => provider === 'openai' ? { ...openai } : { key: 'bailian', baseUrl: 'https://dashscope.aliyuncs.com/compatible-mode/v1', model: 'qwen3.8-flash' });
-  return { answer, reserve, locate, config, app: createSiteAssistantRoutes({ answer, config, country: locate, reserve, authenticate: async () => ({ uid: 1, wcaId: '2017YANR02' }), now: Date.now }) };
+  const config = vi.fn((_vision = false, provider?: import('@cuberoot/shared/site-assistant').AssistantProvider) => provider === 'openai' ? { ...openai } : { key: 'deepseek', baseUrl: 'https://api.deepseek.com', model: 'deepseek-flash' });
+  return { answer, reserve, config, app: createSiteAssistantRoutes({ answer, config, reserve, authenticate: async () => ({ uid: 1, wcaId: '2017YANR02' }), now: Date.now }) };
 }
 
 describe('assistant provider admission', () => {
-  it.each(['CN', 'HK', 'MO', 'RU', 'IR', 'UA', null])('denies OpenAI for %s before quota or model calls, regardless of forged country headers', async country => {
-    const { app, answer, reserve, locate } = routes(country);
-    const response = await app.request('/site-assistant', { method: 'POST', headers: { 'Content-Type': 'application/json', 'x-real-ip': '1.2.3.4', 'x-vercel-ip-country': 'US', 'cf-ipcountry': 'US', 'x-assistant-country': 'US' }, body: JSON.stringify({ question: 'hi', lang: 'en', provider: 'openai' }) });
-    expect(response.status).toBe(403);
-    expect(await response.json()).toEqual({ error: 'provider_region_unavailable' });
-    expect(locate).toHaveBeenCalledWith('1.2.3.4');
-    expect(answer).not.toHaveBeenCalled(); expect(reserve).not.toHaveBeenCalled();
-  });
-  it('admits supported visitors and binds the verified region to the model config', async () => {
-    const { app, answer, reserve } = routes('us');
-    expect((await app.request('/site-assistant', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ question: 'hi', lang: 'en', provider: 'openai' }) })).status).toBe(200);
-    expect(answer.mock.calls[0][2]).toMatchObject({ provider: 'openai', visitorCountry: 'US' });
-    expect(reserve).toHaveBeenCalledTimes(1);
-  });
-  it('keeps Bailian available without GeoIP and does not share-cache provider choices', async () => {
-    const { app, answer, config } = routes(null);
+  it('lists the same two providers and defaults to Bailian', async () => {
+    const { app, config } = routes();
     const choices = await app.request('/site-assistant/providers');
-    expect(choices.headers.get('cache-control')).toBe('private, no-store');
-    expect(await choices.json()).toEqual({ providers: ['bailian'] });
-    const result = await app.request('/site-assistant', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ question: 'hi', lang: 'zh' }) });
-    expect(result.status).toBe(200); expect(config).toHaveBeenLastCalledWith(false, 'bailian'); expect(answer).toHaveBeenCalledTimes(1);
-  });
-  it('shows OpenAI only where eligible and configured', async () => {
-    const { app, config } = routes('US');
-    expect(await (await app.request('/site-assistant/providers')).json()).toEqual({ providers: ['bailian', 'openai'] });
-    config.mockImplementation((_vision, provider) => provider === 'openai' ? null! : { key: 'test', baseUrl: 'https://example.com', model: 'test' });
-    expect(await (await app.request('/site-assistant/providers')).json()).toEqual({ providers: ['bailian'] });
+    expect(await choices.json()).toEqual({providers:['bailian','deepseek']});
+    const ask = (provider?:string) => app.request('/site-assistant', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({question:'hi',lang:'en',provider})});
+    expect((await ask()).status).toBe(200);
+    expect(config).toHaveBeenLastCalledWith(false,'bailian');
+    expect((await ask('deepseek')).status).toBe(200);
+    expect(config).toHaveBeenLastCalledWith(false,'deepseek');
+    expect((await ask('openai')).status).toBe(400);
   });
   it('requires explicit activation and a Vercel origin without sending the OpenAI key to Hangzhou', () => {
     vi.stubEnv('SITE_ASSISTANT_OPENAI_ENABLED', '0');

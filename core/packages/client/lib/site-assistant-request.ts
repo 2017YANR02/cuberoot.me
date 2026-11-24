@@ -38,8 +38,8 @@ export async function requestSiteAssistant(url:string,request:AssistantRequest,i
   if(failure?.error!=='invalid_question')return response;
   // Never downgrade task control or silently discard explicit quotations.
   if(request.runId || request.references?.length) return response;
-  // Never send an explicit OpenAI question to another provider on an old API.
-  if (request.provider === 'openai') return Response.json({ error: 'provider_unavailable' }, { status: 503 });
+  // Never send a question with an explicit provider selection to another provider on an old API.
+  if (request.provider === 'openai' || request.provider === 'deepseek') return Response.json({ error: 'provider_unavailable' }, { status: 503 });
   if (request.provider === 'bailian') {
     const { provider: _provider, ...compatible } = request;
     request = compatible;

@@ -5,7 +5,7 @@ import { recordAssistantStage } from './site_assistant_monitor.js';
 import { startAssistantProgress } from './site_assistant_progress.js';
 
 export interface AssistantModelDiagnostic {
-  reason: 'empty_output' | 'invalid_json' | 'invalid_schema' | 'output_truncated' | 'unexpected_tool_call' | 'http_error' | 'network_error' | 'provider_error' | 'empty_body' | 'provider_cooldown' | 'response_too_large' | 'aborted';
+  reason: 'empty_output' | 'invalid_json' | 'invalid_schema' | 'output_truncated' | 'unexpected_tool_call' | 'http_error' | 'quota_exhausted' | 'network_error' | 'provider_error' | 'empty_body' | 'provider_cooldown' | 'response_too_large' | 'aborted';
   finishReason?: string;
   issues?: Array<{ path: string; code: string }>;
 }
