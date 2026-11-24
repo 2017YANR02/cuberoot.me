@@ -3,7 +3,7 @@ import { ASSISTANT_OPENAI_RELAY_PATH, ASSISTANT_OPENAI_RESPONSES_PATH, ASSISTANT
 const privateHeaders = { 'Cache-Control': 'private, no-store', 'X-Robots-Tag': 'noindex, nofollow' };
 const fail = (status: number) => Response.json({ error: 'OpenAI relay unavailable' }, { status, headers: privateHeaders });
 
-/** Only the authenticated, quota-limited API can sign model calls for eligible visitors. */
+/** Only the authenticated, quota-limited API can sign model calls. */
 export async function relayAssistantOpenAI(request: Request, protocol: 'chat/completions' | 'responses'): Promise<Response> {
   const secret = process.env.SITE_ASSISTANT_OPENAI_RELAY_SECRET ?? '';
   const apiKey = process.env.OPENAI_API_KEY;

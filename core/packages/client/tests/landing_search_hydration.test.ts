@@ -280,7 +280,7 @@ describe('LandingSearch placeholder hydration', () => {
   it('preserves thinking choice and validated external sources',async()=>{
     localStorage.setItem('cuberoot.assistant.thinking','deep');const server=queueServer({answer:'查到的资料。 [[external]]',sources:[{id:'external',title:'来源',href:'https://docs.example.org/reference',read:true}]});const chat=await mountChat('a'.repeat(1200));
     try{await chat.submit();expect(server.posts[0].body.input).toMatchObject({thinking:'deep',question:'a'.repeat(1200)});expect(document.querySelector('a[href="https://docs.example.org/reference"]')).not.toBeNull();
-      await click('button[aria-label="思考模式"]');await act(async()=>Array.from(document.querySelectorAll<HTMLButtonElement>('[role="option"]')).find(option=>option.textContent==='快速回答')!.click());expect(localStorage.getItem('cuberoot.assistant.thinking')).toBe('fast');
+      await click('button[aria-label="思考模式"]');await act(async()=>Array.from(document.querySelectorAll<HTMLButtonElement>('[role="option"]')).find(option=>option.textContent==='快速')!.click());expect(localStorage.getItem('cuberoot.assistant.thinking')).toBe('fast');
     }finally{await chat.close();}
   });
 

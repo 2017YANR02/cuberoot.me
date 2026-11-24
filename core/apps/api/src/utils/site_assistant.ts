@@ -39,7 +39,7 @@ import { ALG_CATALOG, CFOP_SET_SLUGS } from '@cuberoot/shared/alg';
 import { SITE_ANNOUNCEMENTS, findSiteAnnouncements } from '@cuberoot/shared/site-announcements';
 import { createCompetitionProof, COMPETITION_SERVICE_HEADER } from '@cuberoot/shared/competition-access';
 import { AssistantFailure, assistantDeadline, assistantFailureCode, assistantStage, checkAssistantResponse } from './site_assistant_diagnostics.js';
-import { ASSISTANT_OPENAI_MODEL, assistantOpenAICountrySupported } from '@cuberoot/shared/site-assistant-openai';
+import { ASSISTANT_OPENAI_MODEL } from '@cuberoot/shared/site-assistant-openai';
 
 // One public directory shared with the homepage; never import Web source or
 // accept a URL supplied by the visitor/model as a fetch destination.
@@ -74,7 +74,7 @@ export function requestedAssistantLimit(question: string): number | undefined {
   return value>=1 && value<=20?value:undefined;
 }
 
-export interface AssistantConfig { key: string; baseUrl: string; model: string; provider?: 'openai'; visitorCountry?: string; contextWindowTokens?: number }
+export interface AssistantConfig { key: string; baseUrl: string; model: string; provider?: 'openai'; contextWindowTokens?: number }
 export function assistantConfig(vision = false, selected?: AssistantProvider): AssistantConfig | null {
   if (selected === 'openai') {
     const key = process.env.SITE_ASSISTANT_OPENAI_RELAY_SECRET;
@@ -826,9 +826,8 @@ export async function answerSiteQuestion(
   const startModel = (selected: AssistantConfig) => createAssistantModel(selected, fetcher, signal, TOOL_GUIDE, history, images, priorContext?.memory);
   let model = startModel(config);
   const primaryProvider = config.provider ?? (new URL(config.baseUrl).origin === 'https://api.deepseek.com' ? 'deepseek' : 'bailian');
-  const visitorCountry = config.visitorCountry;
   const fallbacks = (['bailian', 'deepseek', 'openai'] as const).filter(provider =>
-    provider !== primaryProvider && (provider !== 'openai' || assistantOpenAICountrySupported(visitorCountry)));
+    provider !== primaryProvider);
   let providerSwitches = 0;
   const sheetContinuation=/(?:(?:同一张|原来的?|原有的?|之前的?)[\p{L}]{0,14}|原)(?:词表|对照表)|\b(?:both directions|same (?:two[- ]column |word[- ]and[- ]meaning )?(?:sheet|list)|(?:original|existing) (?:sheet|word list))\b/iu.test(question);
   const caseContinuation=/(?:那次|刚才(?:的)?|先前(?:的)?)(?:熟悉的)?插入|(?:那个|这个|该)(?:熟悉(?:的)?)?(?:插入)?(?:情形|局面|案例|场景)|\b(?:that (?:familiar )?(?:insertion )?case|the case we (?:were discussing|discussed|used))\b/i.test(question);
@@ -1042,7 +1041,7 @@ export async function answerSiteQuestion(
           if (alternate?.baseUrl === config.baseUrl) alternate = null;
         }
         if (alternate) {
-          config = { ...alternate, visitorCountry };
+          config = alternate;
           model = startModel(config);
           providerSwitches++;
           // The new provider needs prior tool evidence in context instead of the old SDK transcript.

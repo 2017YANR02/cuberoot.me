@@ -118,10 +118,10 @@ describe('assistant general conversation controls',()=>{
   it('offers Qwen and DeepSeek in the composer',async()=>{
     const props=await render({answer:'',sources:[]},{turns:[],embedded:true});
     const button=document.querySelector<HTMLButtonElement>('[aria-label="聊天模型"]')!;
-    expect(button.textContent).toContain('千问 3.8 Flash');
+    expect(button.textContent).toContain('Qwen-3.8 Flash');
     await act(async()=>button.click());
     const options=[...document.querySelectorAll<HTMLElement>('[role="option"]')];
-    expect(options.map(option=>option.textContent)).toEqual(['千问 3.8 Flash','DeepSeek Flash']);
+    expect(options.map(option=>option.textContent)).toEqual(['Qwen-3.8 Flash','DeepSeek Flash']);
     await act(async()=>options[1].click());
     expect(props.onProviderChange).toHaveBeenCalledWith('deepseek');
   });
@@ -183,7 +183,7 @@ describe('assistant general conversation controls',()=>{
     expect(document.body.textContent).toContain('写作与翻译');
     const choose=document.querySelector<HTMLButtonElement>('button[aria-label="思考模式"]')!;
     await act(async()=>choose.click());
-    await act(async()=>{Array.from(document.querySelectorAll<HTMLButtonElement>('[role="option"]')).find(option=>option.textContent==='深入思考')!.click();});
+    await act(async()=>{Array.from(document.querySelectorAll<HTMLButtonElement>('[role="option"]')).find(option=>option.textContent==='深入')!.click();});
     expect(props.onThinkingChange).toHaveBeenCalledWith('deep');
     await act(async()=>document.querySelector<HTMLButtonElement>('.site-assistant-compose button[type="submit"]')!.click());
     expect(props.onAsk).toHaveBeenCalledWith(draft,false,[],[],'queue');

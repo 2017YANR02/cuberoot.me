@@ -246,7 +246,7 @@ function AssistantModal({ children, onClose, motionRef }: { children: ReactNode;
 }
 
 export default function SiteAssistantDialog({onAuthSend,authSendLabel,authPlaceholder,authNotice,onAlgorithmChange,onAnswerRevealed,turns,draft,images,onImagesChange:setImages,onDraftChange:setDraft,provider,openaiAvailable=false,onProviderChange,thinking,onThinkingChange,status={phase:'planning'},busy,paused=false,recovering=false,activeMessageId,onResume,stopping=false,stopUnconfirmed=false,error,lang,onAsk,onStop,onClose:onClosed,onNew,onFeedback,embedded=false,active=true,searchResults,onBranch}:Props) {
-  const modelNames = {openai:'GPT-6 Luna',bailian:tr({zh:'千问 3.8 Flash',en:'Qwen 3.8 Flash'}),deepseek:'DeepSeek Flash'};
+  const modelNames = {openai:'GPT-6 Luna',bailian:'Qwen-3.8 Flash',deepseek:'DeepSeek Flash'};
   const retryAt=error==='model_rate_limited' ? turns.at(-1)?.progress?.at(-1)?.retryAt : undefined;
   const [deliveryMode,setDeliveryMode]=useState<'steer'|'queue'|'parallel'>('steer');
   const isRunning=(turn:AssistantTurn,index:number)=>busy && (activeMessageId?turn.messageId===activeMessageId:index===turns.length-1);
@@ -257,9 +257,9 @@ export default function SiteAssistantDialog({onAuthSend,authSendLabel,authPlaceh
   }, [onAnswerRevealed]);
   const titleId=useId();
   const thinkingItems=[
-    {value:'auto' as const,label:tr({zh:'自动思考',en:'Auto thinking'})},
-    {value:'fast' as const,label:tr({zh:'快速回答',en:'Quick answer'})},
-    {value:'deep' as const,label:tr({zh:'深入思考',en:'Deep thinking'})},
+    {value:'auto' as const,label:tr({zh:'自动',en:'Auto thinking'})},
+    {value:'fast' as const,label:tr({zh:'快速',en:'Quick answer'})},
+    {value:'deep' as const,label:tr({zh:'深入',en:'Deep thinking'})},
   ];
   const [imageError,setImageError]=useState<string|null>(null);
   const [processingImages,setProcessingImages]=useState(false);
@@ -469,7 +469,7 @@ export default function SiteAssistantDialog({onAuthSend,authSendLabel,authPlaceh
           {!busy && <CompactSelect<ChatProvider> className="site-assistant-thinking site-assistant-provider" popupClassName="site-assistant-menu"
             items={CHAT_PROVIDERS.filter(value => value !== 'openai' || openaiAvailable).map(value => ({value,label:modelNames[value]}))} label={modelNames[provider]}
             value={provider} onChange={onProviderChange} ariaLabel={tr({zh:'聊天模型',en:'Chat model'})} variant="plain" preserveFocus/>}
-          {!busy && <CompactSelect className="site-assistant-thinking" popupClassName="site-assistant-menu" items={thinkingItems} value={thinking} onChange={onThinkingChange} label={thinkingItems.find(item=>item.value===thinking)!.label} ariaLabel={tr({zh:'思考模式',en:'Thinking mode'})} variant="plain" preserveFocus/>}
+          {!busy && <CompactSelect className="site-assistant-thinking site-assistant-thinking-mode" popupClassName="site-assistant-menu" items={thinkingItems} value={thinking} onChange={onThinkingChange} label={thinkingItems.find(item=>item.value===thinking)!.label} ariaLabel={tr({zh:'思考模式',en:'Thinking mode'})} variant="plain" preserveFocus/>}
           <button className="site-assistant-action site-assistant-mic" type="button" disabled={editing!==null} onClick={()=>listening?stop():void start()} title={tr({zh:'语音输入',en:'Voice input'})} aria-label={tr({zh:'语音输入',en:'Voice input'})} aria-pressed={listening}><Mic size={19}/></button>
           {busy && <CompactSelect className="site-assistant-thinking" popupClassName="site-assistant-menu" items={[{value:'steer' as const,label:tr({zh:'调整当前任务',en:'Adjust current task'})},{value:'queue' as const,label:tr({zh:'加入队列',en:'Add to queue'})},{value:'parallel' as const,label:tr({zh:'在新对话并行处理',en:'Send in a new chat'})}]} value={deliveryMode} onChange={setDeliveryMode} label={modeLabel} ariaLabel={tr({zh:'发送方式',en:'Delivery mode'})} variant="plain" preserveFocus/>}
           {busy && <Tooltip content={tr(stopping?{zh:'正在停止',en:'Stopping'}:{zh:'停止',en:'Stop'})}>{tip=><button {...tip} className="site-assistant-action site-assistant-send" type="button" disabled={stopping} onClick={onStop} aria-label={tr({zh:'停止',en:'Stop'})}><Square size={16} fill="currentColor"/></button>}</Tooltip>}

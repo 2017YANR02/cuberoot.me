@@ -2,15 +2,15 @@ import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 import { POST as responsesPOST } from '@/app/api/site-assistant/openai/responses/route';
 import { POST } from '@/app/api/site-assistant/openai/chat/completions/route';
 import { readFileSync } from 'node:fs';
-import { ASSISTANT_OPENAI_RESPONSES_PATH, ASSISTANT_OPENAI_MODEL, assistantOpenAICountrySupported, signAssistantOpenAI, verifyAssistantOpenAI } from '@cuberoot/shared/site-assistant-openai';
+import { ASSISTANT_OPENAI_RESPONSES_PATH, ASSISTANT_OPENAI_MODEL, signAssistantOpenAI, verifyAssistantOpenAI } from '@cuberoot/shared/site-assistant-openai';
 
 const secret = 'fixture-server-relay-secret-at-least-32-chars';
 const body = JSON.stringify({ model: ASSISTANT_OPENAI_MODEL, store: false, max_completion_tokens: 4096, messages: [{ role: 'user', content: 'hi' }], stream: true });
 beforeEach(() => { vi.stubEnv('VERCEL', '1'); vi.stubEnv('VERCEL_REGION', 'iad1'); vi.stubEnv('SITE_ASSISTANT_OPENAI_RELAY_SECRET', secret); vi.stubEnv('OPENAI_API_KEY', 'fixture-openai-key'); });
 afterEach(() => { vi.unstubAllEnvs(); vi.unstubAllGlobals(); });
-async function request(text = body, country = 'US') {
+async function request(text = body, country = '') {
   const proof = await signAssistantOpenAI(secret, country, text);
-  return new Request('https://fixture.vercel.app/api/site-assistant/openai/chat/completions', { method: 'POST', body: text, headers: { 'x-assistant-country': country, 'x-assistant-proof': proof } });
+  return new Request('https://fixture.vercel.app/api/site-assistant/openai/chat/completions', { method: 'POST', body: text, headers: { ...(country ? { 'x-assistant-country': country } : {}), 'x-assistant-proof': proof } });
 }
 
 it.each(['chat/completions','responses'] as const)('opts the %s relay into runtime cancellation and forwards abort before the first chunk',async protocol=>{
@@ -69,8 +69,11 @@ it('rejects unapproved models and unbounded token requests even with a valid sig
   }
   expect(fetcher).not.toHaveBeenCalled();
 });
-it.each([null, '', 'CN', 'HK', 'MO', 'RU', 'IR', 'KP', 'UA', 'ZZ', 'US, CN'])('does not infer eligibility for %s', country => {
-  expect(assistantOpenAICountrySupported(country)).toBe(false);
+it('accepts a signed request without a visitor country', async () => {
+  vi.stubGlobal('fetch', vi.fn().mockResolvedValue(Response.json({})));
+  const signed = await request();
+  expect(signed.headers.has('x-assistant-country')).toBe(false);
+  expect((await POST(signed)).status).toBe(200);
 });
 
 it('relays reasoning plus tools through Responses and binds signatures to the endpoint', async () => {

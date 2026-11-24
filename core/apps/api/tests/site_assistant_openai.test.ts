@@ -11,28 +11,27 @@ function modelResponse(value: unknown) {
 }
 
 const relaySecret = 'fixture-relay-secret-at-least-32-characters';
-const openai: AssistantConfig = { provider: 'openai', key: relaySecret, baseUrl: 'https://fixture.vercel.app/api/site-assistant/openai', model: ASSISTANT_OPENAI_MODEL, visitorCountry: 'US' };
+const openai: AssistantConfig = { provider: 'openai', key: relaySecret, baseUrl: 'https://fixture.vercel.app/api/site-assistant/openai', model: ASSISTANT_OPENAI_MODEL };
 afterEach(() => { vi.unstubAllEnvs(); vi.restoreAllMocks(); });
 
-function routes(country: string | null = null) {
+function routes() {
   const answer = vi.fn().mockResolvedValue({ answer: 'ok', sources: [], artifacts: [] });
   const reserve = vi.fn().mockResolvedValue({ allowed: true, retryAfter: 60 });
   const config = vi.fn((_vision = false, provider?: import('@cuberoot/shared/site-assistant').AssistantProvider) => provider === 'openai' ? { ...openai } : { key: 'deepseek', baseUrl: 'https://api.deepseek.com', model: 'deepseek-flash' });
-  return { answer, reserve, config, app: createSiteAssistantRoutes({ answer, config, reserve, country: async () => country, authenticate: async () => ({ uid: 1, wcaId: '2017YANR02' }), now: Date.now }) };
+  return { answer, reserve, config, app: createSiteAssistantRoutes({ answer, config, reserve, authenticate: async () => ({ uid: 1, wcaId: '2017YANR02' }), now: Date.now }) };
 }
 
 describe('assistant provider admission', () => {
-  it.each(['US','CN',null])('lists and admits providers for region %s', async country => {
-    const { app, config } = routes(country);
-    const eligible = country === 'US';
+  it('lists and admits all configured providers without a location', async () => {
+    const { app, config } = routes();
     const choices = await app.request('/site-assistant/providers');
-    expect(await choices.json()).toEqual({providers:eligible ? ['openai','bailian','deepseek'] : ['bailian','deepseek']});
+    expect(await choices.json()).toEqual({providers:['openai','bailian','deepseek']});
     const ask = (provider?:string) => app.request('/site-assistant', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({question:'hi',lang:'en',provider})});
     expect((await ask()).status).toBe(200);
-    expect(config).toHaveBeenLastCalledWith(false,eligible ? 'openai' : 'bailian');
+    expect(config).toHaveBeenLastCalledWith(false,'openai');
     expect((await ask('deepseek')).status).toBe(200);
     expect(config).toHaveBeenLastCalledWith(false,'deepseek');
-    expect((await ask('openai')).status).toBe(eligible ? 200 : 403);
+    expect((await ask('openai')).status).toBe(200);
   });
   it('requires explicit activation and a Vercel origin without sending the OpenAI key to Hangzhou', () => {
     vi.stubEnv('SITE_ASSISTANT_OPENAI_ENABLED', '0');
@@ -65,7 +64,7 @@ it.each([false, true])('uses Responses with tools and signed continuation when t
     expect(url).toBe(openai.baseUrl + '/responses');
     const headers = new Headers(init?.headers), body = String(init?.body), wire = JSON.parse(body);
     expect(headers.has('authorization')).toBe(false);
-    expect(await verifyAssistantOpenAI(relaySecret, 'US', body, headers.get('x-assistant-proof')!, Date.now(), ASSISTANT_OPENAI_RESPONSES_PATH)).toBe(true);
+    expect(await verifyAssistantOpenAI(relaySecret, '', body, headers.get('x-assistant-proof')!, Date.now(), ASSISTANT_OPENAI_RESPONSES_PATH)).toBe(true);
     expect(wire).toMatchObject({ model: ASSISTANT_OPENAI_MODEL, store: false, reasoning: { effort: thinking ? 'high' : 'none' }, text: { format: { type: 'json_schema' } } });
     expect(wire.enable_thinking).toBeUndefined();
     expect(wire.max_output_tokens).toBe(4096);

@@ -143,8 +143,7 @@ export function createAssistantModel(config: AssistantConfig, fetcher: typeof fe
       if (typeof body !== 'string' || new TextEncoder().encode(body).byteLength > ASSISTANT_OPENAI_BODY_BYTES) throw new AssistantFailure('request_too_large');
       const headers = new Headers(init?.headers);
       headers.delete('authorization');
-      headers.set('x-assistant-country', config.visitorCountry ?? '');
-      headers.set('x-assistant-proof', await signAssistantOpenAI(config.key, config.visitorCountry ?? '', body, Date.now(), ASSISTANT_OPENAI_RESPONSES_PATH));
+      headers.set('x-assistant-proof', await signAssistantOpenAI(config.key, '', body, Date.now(), ASSISTANT_OPENAI_RESPONSES_PATH));
       init = { ...init, headers };
     }
     let response: Response;
