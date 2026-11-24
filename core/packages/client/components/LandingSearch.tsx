@@ -1262,6 +1262,7 @@ export default function LandingSearch({
           <div className="landing-search-input landing-search-voice" onKeyDown={event => {
             if (event.key === 'Escape') { micCancel(); setVoiceMode(false); setVoiceAction(null); }
           }}>
+            <span className="landing-search-glow" aria-hidden="true" />
             <button type="button" className="landing-search-voice-button" aria-label={tr({ zh: '取消语音输入', en: 'Cancel voice input' })}
               onClick={() => { micCancel(); setVoiceMode(false); setVoiceAction(null); setVoiceText(''); }}><X size={22} /></button>
             <div className="landing-search-wave" role="status"
@@ -1297,6 +1298,7 @@ export default function LandingSearch({
             }
           }}
         >
+          <span className="landing-search-glow" aria-hidden="true" />
           <button
             type="button"
             className="landing-search-plus"
