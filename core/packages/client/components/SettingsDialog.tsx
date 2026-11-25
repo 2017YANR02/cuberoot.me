@@ -1,13 +1,13 @@
 'use client';
 
-import { useEffect, useImperativeHandle, useRef, type ReactNode, type Ref } from 'react';
+import { useEffect, useImperativeHandle, useRef, type CSSProperties, type ReactNode, type Ref } from 'react';
 import { createPortal } from 'react-dom';
 import { ClearButton } from '@/components/ClearButton';
 import { useDialogMotion, useModalDismiss } from '@/hooks/useModalDismiss';
 import { tr } from '@/i18n/tr';
 import './training-settings.css';
 
-export default function SettingsDialog({ ref, label, heading = false, panelClassName, drawer = false, curtain = false, dismissDisabled = false, renderCloseButton, motionDuration, portalContainer, onCloseStart, onClose: onClosed, children }: {
+export default function SettingsDialog({ ref, label, heading = false, panelClassName, drawer = false, curtain = false, dismissDisabled = false, renderCloseButton, motionDuration, portalContainer, backdropStyle, onCloseStart, onClose: onClosed, children }: {
   ref?: Ref<{ close: () => void }>;
   label: string;
   heading?: ReactNode;
@@ -18,6 +18,7 @@ export default function SettingsDialog({ ref, label, heading = false, panelClass
   renderCloseButton?: (close: () => void, closing: boolean) => ReactNode;
   motionDuration?: number;
   portalContainer?: HTMLElement | null;
+  backdropStyle?: CSSProperties;
   onCloseStart?: () => void;
   onClose: () => void;
   children: ReactNode | ((close: () => void) => ReactNode);
@@ -34,7 +35,7 @@ export default function SettingsDialog({ ref, label, heading = false, panelClass
     };
   }, []);
   return createPortal(
-    <div ref={motionRef} className="settings-dialog-backdrop" {...backdropProps} data-no-timer>
+    <div ref={motionRef} className="settings-dialog-backdrop" style={backdropStyle} {...backdropProps} data-no-timer>
       <div ref={dialogRef} role="dialog" aria-modal="true" aria-label={label} tabIndex={-1}
         className="settings-dialog" onKeyDown={event => {
           if (event.key !== 'Tab') return;
