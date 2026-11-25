@@ -192,6 +192,7 @@ describe('main-site Platform PostgreSQL schema', () => {
       '0343_platform_homepage_recommendations.sql',
       '0349_platform_content_reviews.sql',
       '0350_platform_learning_stage_preferences.sql',
+      '0357_competition_double_elimination.sql',
     ].map((filename) => read(`../migrations/${filename}`)));
     const laterTables = laterMigrations.flatMap((source) =>
       [...source.matchAll(/^CREATE TABLE (platform_[a-z0-9_]+) \(/gm)].map((match) => match[1]));
@@ -200,8 +201,8 @@ describe('main-site Platform PostgreSQL schema', () => {
     // The snapshot groups related tables; later migration tables need not appear in migration order.
     expect(schemaTables.filter((table) => laterTables.includes(table)).sort()).toEqual([...laterTables].sort());
     expect(new Set(migrationTables).size).toBe(62);
-    expect(laterTables).toHaveLength(13);
-    expect(new Set(schemaTables).size).toBe(75);
+    expect(laterTables).toHaveLength(15);
+    expect(new Set(schemaTables).size).toBe(77);
     expect(schemaTables).toContain('platform_qr_scan_daily');
     expect(schemaTables).toContain('platform_qr_card_designs');
     expect(schema.indexOf('CREATE TABLE app_users')).toBeLessThan(schema.indexOf('CREATE TABLE platform_instructors'));
