@@ -88,7 +88,8 @@ export const SITE_DIRECTORY_TEXTS = {
   rankings: { en: 'Results', zh: '成绩' },
   statistics: { en: 'Statistics', zh: '统计' },
   about: { en: 'About', zh: '关于' },
-  acknowledgments: { en: 'Acknowledgments', zh: '致谢' },
+  credits: { en: 'Credits', zh: '致谢' },
+  sponsorship: { en: 'Sponsorship', zh: '赞助' },
   github: { en: 'GitHub', zh: 'GitHub' },
   comingSoon: { en: 'Coming soon', zh: '即将上线' },
   creditsPrefix: { en: 'Inspired by', zh: '致谢' },
@@ -249,12 +250,13 @@ export const SITE_DIRECTORY_GROUPS = [
     eyebrow: { en: 'ABOUT', zh: '关于' },
     title: { en: 'About CubeRoot.', zh: '了解 CubeRoot。' },
     sub: {
-      en: 'Project introduction, acknowledgments and source code.',
-      zh: '项目介绍、致谢与开源代码。',
+      en: 'Project introduction, credits, sponsorship, and source code.',
+      zh: '项目介绍、致谢、赞助与开源代码。',
     },
     entries: [
       { id: 'about', href: '/about', internal: true, tier: 'utility', nameKey: 'about' },
-      { id: 'support', href: '/support', internal: true, tier: 'utility', nameKey: 'acknowledgments' },
+      { id: 'credits', href: '/credits', internal: true, tier: 'utility', nameKey: 'credits' },
+      { id: 'support', href: '/support', internal: true, tier: 'utility', nameKey: 'sponsorship' },
       {
         id: 'github',
         href: 'https://github.com/2017YANR02/cuberoot.me',

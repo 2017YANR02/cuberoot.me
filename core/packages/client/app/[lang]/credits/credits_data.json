@@ -1,205 +1,243 @@
 [
   {
+    "name": "Liquid Glass Studio / Charles Yin",
+    "url": "https://github.com/iyinchao/liquid-glass-studio",
+    "zh": "网页液态玻璃通过 App Foundation 移植 Liquid Glass Studio 的边缘折射、色散和反光计算。上游采用 MIT 许可。",
+    "en": "Web liquid glass uses App Foundation’s port of Liquid Glass Studio’s edge refraction, dispersion, and highlight calculations. The upstream project is MIT-licensed.",
+    "section": "platform"
+  },
+  {
     "name": "AndroidLiquidGlass / Kyant0",
     "url": "https://github.com/Kyant0/AndroidLiquidGlass/blob/kmp/app/src/commonMain/kotlin/com/kyant/backdrop/catalog/components/LiquidBottomTabs.kt",
     "zh": "Android 悬浮导航栏参考该底栏示例中选中胶囊的按住放大、跟手拖动与松手切换交互。",
-    "en": "The Android floating navigation bar takes inspiration from this demo’s selection capsule, which enlarges on press, follows the finger during a drag, and switches tabs on release."
+    "en": "The Android floating navigation bar takes inspiration from this demo’s selection capsule, which enlarges on press, follows the finger during a drag, and switches tabs on release.",
+    "section": "platform"
   },
   {
     "name": "liquid-glass-react / rdev",
     "url": "https://github.com/rdev/liquid-glass-react",
     "zh": "Android 悬浮导航栏的玻璃折射参考该项目在网页中用 SVG 位移滤镜处理背景的做法。",
-    "en": "The Android floating navigation bar’s glass refraction takes inspiration from this project’s use of SVG displacement filters on the web backdrop."
+    "en": "The Android floating navigation bar’s glass refraction takes inspiration from this project’s use of SVG displacement filters on the web backdrop.",
+    "section": "platform"
   },
   {
     "id": "magic-stew",
     "name": "Magic Stew / joongpa",
     "url": "https://github.com/joongpa/magic-stew",
     "zh": "视频复盘使用 Magic Stew 的识别内核、ONNX 模型和 Rust/WASM 姿态拟合与动作搜索。界面由 CubeRoot 实现，复制公式时包含起手转体。",
-    "en": "Video Reconstruction uses Magic Stew’s recognition engine, ONNX models, and Rust/WASM pose fitting and move search. CubeRoot provides the interface and includes the initial grip in copied reconstructions."
+    "en": "Video Reconstruction uses Magic Stew’s recognition engine, ONNX models, and Rust/WASM pose fitting and move search. CubeRoot provides the interface and includes the initial grip in copied reconstructions.",
+    "section": "practice"
   },
   {
     "name": "Roboto Condensed / Google · Fontsource",
     "url": "https://fontsource.org/fonts/roboto-condensed",
     "zh": "复盘 PNG 可选 Roboto Condensed Regular 字体；通过 Fontsource 5.3.0 分发，遵循 SIL OFL 1.1 许可。",
-    "en": "Reconstruction PNG exports offer Roboto Condensed Regular, distributed through Fontsource 5.3.0 under SIL OFL 1.1."
+    "en": "Reconstruction PNG exports offer Roboto Condensed Regular, distributed through Fontsource 5.3.0 under SIL OFL 1.1.",
+    "section": "practice"
   },
   {
     "name": "AI SDK / Vercel",
     "url": "https://github.com/vercel/ai",
     "zh": "助手通过 Apache-2.0 许可的 AI SDK 使用标准模型工具调用及服务端流式响应。",
-    "en": "The assistant uses the Apache-2.0 AI SDK for native model tools and server-side streaming."
+    "en": "The assistant uses the Apache-2.0 AI SDK for native model tools and server-side streaming.",
+    "section": "platform"
   },
   {
     "name": "LangChain text splitters",
     "url": "https://github.com/langchain-ai/langchainjs",
     "zh": "公开资料通过 MIT 许可的 LangChain 文本分段器按段落拆分。",
-    "en": "Public documents are split into passages with MIT-licensed LangChain text splitters."
+    "en": "Public documents are split into passages with MIT-licensed LangChain text splitters.",
+    "section": "platform"
   },
   {
     "name": "MiniSearch / Luca Ongaro",
     "url": "https://github.com/lucaong/minisearch",
     "zh": "公开资料使用 MIT 许可的 MiniSearch 提供中文分词后的关键词检索与降级检索。",
-    "en": "Public documents use MIT-licensed MiniSearch for tokenized lexical search and retrieval fallback."
+    "en": "Public documents use MIT-licensed MiniSearch for tokenized lexical search and retrieval fallback.",
+    "section": "platform"
   },
   {
     "name": "pgvector",
     "url": "https://github.com/pgvector/pgvector",
     "zh": "公开资料向量检索使用 PostgreSQL 许可的 pgvector 扩展。",
-    "en": "Public document vector retrieval uses the PostgreSQL-licensed pgvector extension."
+    "en": "Public document vector retrieval uses the PostgreSQL-licensed pgvector extension.",
+    "section": "platform"
   },
   {
     "name": "WeChat emoji / Tencent · xxk8",
     "url": "https://github.com/xxk8/wechat-emojis",
     "zh": "微信表情图片版权归腾讯；非官方整理来自 xxk8/wechat-emojis。授权尚未确认，素材已移出公开资源和聊天清单，来源与声明仅保留在归档中。",
-    "en": "WeChat artwork copyright Tencent; unofficial collection from xxk8/wechat-emojis. Rights remain unconfirmed; assets are withheld from public resources and chat catalogs, with provenance retained in the archive."
+    "en": "WeChat artwork copyright Tencent; unofficial collection from xxk8/wechat-emojis. Rights remain unconfirmed; assets are withheld from public resources and chat catalogs, with provenance retained in the archive.",
+    "section": "platform"
   },
   {
     "name": "Emoji Mart / Missive",
     "url": "https://github.com/missive/emoji-mart",
     "zh": "聊天内置 emoji 分类和肤色数据来自 MIT 许可的 @emoji-mart/data；使用设备系统字体显示，未分发 Apple 表情图片。",
-    "en": "Built-in chat emoji categories and skin tones use MIT-licensed @emoji-mart/data, rendered with device fonts without distributing Apple emoji artwork."
+    "en": "Built-in chat emoji categories and skin tones use MIT-licensed @emoji-mart/data, rendered with device fonts without distributing Apple emoji artwork.",
+    "section": "platform"
   },
   {
     "name": "nissy-core H48 / Sebastiano Tronto and Enrico Tenuti",
     "url": "https://github.com/sebastianotronto/nissy-core",
     "zh": "H48 h10 原生整解表使用 nissy-core 源码生成；独立 Rust H0～H11 实验移植其坐标、对称变换和表格式；固定 H10 版本已复用已有表验收，通用版仅经编译和小数据检查，H11 未运行。固定源码及 GPL-3.0-or-later 许可保留在 solver/vendor/nissy-core，组合 Rust H48 程序遵循该许可。",
-    "en": "The native H48 h10 whole-cube table is generated with nissy-core. A separate Rust H0–H11 experiment ports its coordinates, symmetry transforms and table format. The fixed H10 build was validated with the existing table; the generic build has compilation and small-data checks only, and H11 has not been run. The pinned GPL-3.0-or-later source remains in solver/vendor/nissy-core, and the combined Rust H48 program uses that license."
+    "en": "The native H48 h10 whole-cube table is generated with nissy-core. A separate Rust H0–H11 experiment ports its coordinates, symmetry transforms and table format. The fixed H10 build was validated with the existing table; the generic build has compilation and small-data checks only, and H11 has not been run. The pinned GPL-3.0-or-later source remains in solver/vendor/nissy-core, and the combined Rust H48 program uses that license.",
+    "section": "solvers"
   },
   {
     "name": "cubeopt-wasm / Chen Shuang",
     "url": "https://github.com/cs0x7f/cubeopt-wasm",
     "zh": "三阶最优求解使用其 MIT 许可的 cube48opt WASM。独立的 Mac Rust 实验根据固定 opt1–9 编译产物恢复状态、坐标与搜索，原版用于建表和差分验证；实验尚未替换现用引擎。",
-    "en": "Optimal 3×3 solving uses its MIT-licensed cube48opt WASM. A separate Mac Rust experiment reconstructs state, coordinates and search from pinned opt1–9 artifacts, retaining the original for table generation and differential validation; it has not replaced the current engine."
+    "en": "Optimal 3×3 solving uses its MIT-licensed cube48opt WASM. A separate Mac Rust experiment reconstructs state, coordinates and search from pinned opt1–9 artifacts, retaining the original for table generation and differential validation; it has not replaced the current engine.",
+    "section": "solvers"
   },
   {
     "name": "The Math Flow: Rubik’s Cube ring animation",
     "url": "https://x.com/themathflow/status/2101154346583154801",
     "zh": "魔方与图论页面的圆环布局视觉参考，扇形参考见 GitHub issue #81。位置映射和交互独立实现，未复制第三方源码或将原视频、图片用作运行资源；发布账号不作为原作者归属证明。",
-    "en": "Visual reference for the ring layout on the cube graph page; the sector reference is in GitHub issue #81. Coordinate mappings and interactions are independently implemented without copying third-party source or embedding the original media. The posting account is not verified as the original creator."
+    "en": "Visual reference for the ring layout on the cube graph page; the sector reference is in GitHub issue #81. Coordinate mappings and interactions are independently implemented without copying third-party source or embedding the original media. The posting account is not verified as the original creator.",
+    "section": "visualization"
   },
   {
     "name": "Poly Haven: Tree Small 02 / Rico Cilliers",
     "space": true,
     "url": "https://polyhaven.com/a/tree_small_02",
     "zh": "阿里巴巴 X/Y/Z 园区植被使用 Rico Cilliers 制作的 CC0 枝叶颜色、镂空轮廓、法线和树皮贴图，贴图随 Blender 工程打包并本地导出。保留已有树位，树种仅作视觉替代，未核实为园区实种；树池覆盖层复用树皮作为覆盖物近似。查阅于 2026-09-12",
-    "en": "Alibaba X/Y/Z planting uses Rico Cilliers' CC0 leaf color, cutout, normal and bark textures, packed into Blender and exported locally. Existing tree positions are retained; the species is a visual proxy, not verified campus planting. Recessed beds reuse bark as approximate mulch. Accessed 2026-09-12"
+    "en": "Alibaba X/Y/Z planting uses Rico Cilliers' CC0 leaf color, cutout, normal and bark textures, packed into Blender and exported locally. Existing tree positions are retained; the species is a visual proxy, not verified campus planting. Recessed beds reuse bark as approximate mulch. Accessed 2026-09-12",
+    "section": "space-tools"
   },
   {
     "name": "Poly Haven: Concrete Floor 02 / Rob Tuytel",
     "space": true,
     "url": "https://polyhaven.com/a/concrete_floor_02",
     "zh": "阿里园区铺地与树池使用 Rob Tuytel 制作的 CC0 法线和粗糙度贴图，以约 2 米重复尺度增加表面细节，保留建筑材质原有底色；不是现场石材扫描。查阅于 2026-09-12",
-    "en": "Alibaba paving and planters use Rob Tuytel's CC0 normal and roughness textures at an approximately 2 m repeat scale, retaining the authored base colors. These are surface proxies, not scans of campus stone. Accessed 2026-09-12"
+    "en": "Alibaba paving and planters use Rob Tuytel's CC0 normal and roughness textures at an approximately 2 m repeat scale, retaining the authored base colors. These are surface proxies, not scans of campus stone. Accessed 2026-09-12",
+    "section": "space-tools"
   },
   {
     "name": "上海徐汇: 西岸艺岛 Art Tower",
     "space": true,
     "url": "https://m.thepaper.cn/baijiahao_9917546",
     "zh": "上海徐汇于 2020-11-09 发布的西岸艺岛实拍，位于龙耀路 8 号。用于 X 区七栋彼此倾斜的子楼、转折轮廓、绕角水平金属线条和入口场地参考。单栋层数、倾角和构件尺寸仍为照片估算；照片未用作运行贴图。查阅于 2026-09-12",
-    "en": "Shanghai Xuhui's built photographs of Art Tower at 8 Longyao Road, published 2020-11-09. References X's seven differently leaning wings, folded silhouettes, continuous horizontal metal fins and entrance site. Storeys, lean angles and component dimensions remain photo estimates; photographs are not runtime textures. Accessed 2026-09-12"
+    "en": "Shanghai Xuhui's built photographs of Art Tower at 8 Longyao Road, published 2020-11-09. References X's seven differently leaning wings, folded silhouettes, continuous horizontal metal fins and entrance site. Storeys, lean angles and component dimensions remain photo estimates; photographs are not runtime textures. Accessed 2026-09-12",
+    "section": "space-campus"
   },
   {
     "name": "SOM: Alibaba Shanghai Campus design",
     "space": true,
     "url": "https://www.som.com/news/som-designs-dynamic-user-controlled-headquarters-for-alibabas-shanghai-campus/",
     "zh": "SOM 于 2022-07-25 发布的阿里巴巴上海园区设计，参考 Z 区错层悬挑、玻璃幕墙、露台、开放中庭、连桥和屋顶花园。这是设计效果图依据，未核实为当前竣工状态，也非官方 BIM；模型尺寸及细节有估算。查阅于 2026-09-12",
-    "en": "SOM's Shanghai campus design published 2022-07-25. References Z's staggered cantilevers, glass facades, terraces, open court, bridges and roof gardens. Based on design renderings, not verified present-day as-built conditions or official BIM; model dimensions and details are estimated. Accessed 2026-09-12"
+    "en": "SOM's Shanghai campus design published 2022-07-25. References Z's staggered cantilevers, glass facades, terraces, open court, bridges and roof gardens. Based on design renderings, not verified present-day as-built conditions or official BIM; model dimensions and details are estimated. Accessed 2026-09-12",
+    "section": "space-campus"
   },
   {
     "name": "SOM / gooood: Alibaba design images and section",
     "space": true,
     "url": "https://www.gooood.cn/som-designs-headquarters-for-alibabas-shanghai-campus.htm",
     "zh": "2022-07-26 发布、SOM 提供的设计图与剖面，用于 Z 区俯拍轮廓、露台种植、屋顶光伏、悬挑木色底面及中庭 Alibaba 标识。图像仅作本地建模参考，未作为实景照片或运行贴图。查阅于 2026-09-12",
-    "en": "Design images and section supplied by SOM, published 2022-07-26. References Z's aerial massing, terrace planting, rooftop solar panels, timber-colored soffits and courtyard Alibaba lettering. Images are local modeling references, not built photographs or runtime textures. Accessed 2026-09-12"
+    "en": "Design images and section supplied by SOM, published 2022-07-26. References Z's aerial massing, terrace planting, rooftop solar panels, timber-colored soffits and courtyard Alibaba lettering. Images are local modeling references, not built photographs or runtime textures. Accessed 2026-09-12",
+    "section": "space-campus"
   },
   {
     "name": "上海市规划和自然资源局: 阿里巴巴上海徐汇项目",
     "space": true,
     "url": "https://ghzyj.sh.gov.cn/sj/20221008/f0f0cd851f8c4708835dac11d2dad17c.html",
     "zh": "2022-08-30 的项目建设资料用于核对 Y 区四至和北侧 Z 区的独立地块关系。模型沿用 OSM 场景坐标定位，并只替换对应旧建筑轮廓；未将早期用地资料当作当前施工完成证明。查阅于 2026-09-12",
-    "en": "Project update dated 2022-08-30 establishes Y's street boundaries and the separate Z parcel to its north. Models retain OSM scene coordinates and replace only matched old footprints. The early planning record is not evidence of present-day construction completion. Accessed 2026-09-12"
+    "en": "Project update dated 2022-08-30 establishes Y's street boundaries and the separate Z parcel to its north. Models retain OSM scene coordinates and replace only matched old footprints. The early planning record is not evidence of present-day construction completion. Accessed 2026-09-12",
+    "section": "space-campus"
   },
   {
     "name": "Foster + Partners: Alibaba Shanghai Campus / Fangfang Tian",
     "space": true,
     "url": "https://www.archdaily.com/1020980/alibaba-shanghai-campus-foster-plus-partners",
     "zh": "2024-09-10 发布的阿里巴巴徐汇滨江 Y 区竣工资料，摄影 Fangfang Tian。实拍用于 Blender 主楼的阶梯形开口、多层连廊、铝框幕墙、露台绿化、Alibaba 招牌与入口线性灯具。仅作本地建模参考，未将照片用于运行贴图；不是官方 BIM，构件、纹理及照明尺寸仍有估算。查阅于 2026-09-12",
-    "en": "Completed Y-campus project published 2024-09-10, photographed by Fangfang Tian. References the Blender building's stepped voids, bridges, aluminum curtain wall, planted terraces, Alibaba lettering and entrance strip lights. Photographs are local modeling references, not runtime textures. This is not official BIM; details, textures and lighting dimensions remain estimated. Accessed 2026-09-12"
+    "en": "Completed Y-campus project published 2024-09-10, photographed by Fangfang Tian. References the Blender building's stepped voids, bridges, aluminum curtain wall, planted terraces, Alibaba lettering and entrance strip lights. Photographs are local modeling references, not runtime textures. This is not official BIM; details, textures and lighting dimensions remain estimated. Accessed 2026-09-12",
+    "section": "space-campus"
   },
   {
     "name": "Alizila: Inside Alibaba's New Shanghai Campus",
     "space": true,
     "url": "https://www.alizila.com/podcast/redefining-the-workplace-inside-alibabas-new-shanghai-campus/",
     "zh": "阿里巴巴官方于 2024-12-11 发布的设计师访谈，用于核对 Y 区模块化开间、屋顶与立面开口、室外协作空间；不作为测绘尺寸来源。徐汇园区 X、Y、Z 不同片区分别建模。查阅于 2026-09-12",
-    "en": "Alibaba's architect interview published 2024-12-11 references Y's modular bays, roof and facade openings and outdoor collaboration spaces, without supplying survey dimensions. The X, Y and Z parcels are modeled separately. Accessed 2026-09-12"
+    "en": "Alibaba's architect interview published 2024-12-11 references Y's modular bays, roof and facade openings and outdoor collaboration spaces, without supplying survey dimensions. The X, Y and Z parcels are modeled separately. Accessed 2026-09-12",
+    "section": "space-campus"
   },
   {
     "name": "高层总部办公建筑生态共享空间设计研究",
     "space": true,
     "url": "https://journals.nassg.org/index.php/edc/article/download/7859/pdf",
     "zh": "魏倩、韩贵红的 2025 年案例研究列出阿里巴巴徐汇滨江 Y 区地上 11 层、约 56 米建筑高度及分层层高，用于模型尺度参考。非竣工测绘；平面定位另据 OSM way/792384120，开间与退台由实拍估算。查阅于 2026-09-12",
-    "en": "The 2025 case study by Wei Qian and Han Guihong documents 11 above-ground storeys, approximately 56 m height and floor heights for the Alibaba Xuhui Y campus. Used for scale, not as an as-built survey. Placement follows OSM way/792384120; bays and setbacks are photo estimates. Accessed 2026-09-12"
+    "en": "The 2025 case study by Wei Qian and Han Guihong documents 11 above-ground storeys, approximately 56 m height and floor heights for the Alibaba Xuhui Y campus. Used for scale, not as an as-built survey. Placement follows OSM way/792384120; bays and setbacks are photo estimates. Accessed 2026-09-12",
+    "section": "space-campus"
   },
   {
     "name": "Blender / KhronosGroup glTF-Blender-IO",
     "space": true,
     "url": "https://github.com/KhronosGroup/glTF-Blender-IO",
     "zh": "魔方空间的住宅、公司、海岛和上海静态场景使用 Blender 5.2.1 编辑，以内置 glTF 插件导入、导出 GLB。首次迁移使用 Three.js GLTFExporter；本站维护场景属性、纹理去重和网页加载脚本，未复制 Blender 插件源码。魔方、天气、水面和交通仍由 Three.js 实时运行。查阅于 2026-09-08",
-    "en": "Homes, office, island and Shanghai static scenes are edited in Blender 5.2.1 and imported/exported as GLB through its bundled glTF add-on. The initial migration used Three.js GLTFExporter. CubeRoot maintains scene metadata, texture deduplication and web loading scripts without copying the Blender add-on source. Puzzles, weather, water and traffic still run in Three.js. Accessed 2026-09-08"
+    "en": "Homes, office, island and Shanghai static scenes are edited in Blender 5.2.1 and imported/exported as GLB through its bundled glTF add-on. The initial migration used Three.js GLTFExporter. CubeRoot maintains scene metadata, texture deduplication and web loading scripts without copying the Blender add-on source. Puzzles, weather, water and traffic still run in Three.js. Accessed 2026-09-08",
+    "section": "space-tools"
   },
   {
     "name": "FFmpeg",
     "url": "https://ffmpeg.org/",
     "zh": "网盘云端视频转码与媒体校验，使用独立部署的 FFmpeg 和 ffprobe",
-    "en": "Cloud video transcoding and media verification for Drive, using separately deployed FFmpeg and ffprobe"
+    "en": "Cloud video transcoding and media verification for Drive, using separately deployed FFmpeg and ffprobe",
+    "section": "platform"
   },
   {
     "name": "SVT-AV1",
     "url": "https://gitlab.com/AOMediaCodec/SVT-AV1",
     "zh": "网盘压缩副本使用的开源 AV1 编码器",
-    "en": "Open-source AV1 encoder used for compressed Drive copies"
+    "en": "Open-source AV1 encoder used for compressed Drive copies",
+    "section": "platform"
   },
   {
     "name": "Netflix VMAF",
     "url": "https://github.com/Netflix/vmaf",
     "zh": "网盘视频压缩后的感知画质检查",
-    "en": "Perceptual quality checks for compressed Drive videos"
+    "en": "Perceptual quality checks for compressed Drive videos",
+    "section": "platform"
   },
   {
     "name": "汇丰大楼照明设计实拍 / HSBC lighting project photographs",
     "space": true,
     "url": "https://www.elicht.com/view/100309.html",
     "zh": "2019-04-28 发布的 2018 年汇丰大楼照明项目，设计署名 FMS 与十聿照明。已查看夜间实拍及屋顶灯位图，用于区分街边灯杆投光、柱廊阴影和屋顶独立照亮穹顶，并调整石材色彩。本站使用固定数量的 Three.js 投光灯，灯位、强度与尺寸仍为估算，未取得实测配光或现状测绘；照片仅本地对照，未作为运行贴图。查阅于 2026-09-08",
-    "en": "Published 2019-04-28 about the 2018 HSBC lighting project, credited to FMS and 十聿照明. Reviewed night photographs and roof luminaire diagrams to distinguish street-pole facade lighting, colonnade shadows and separate dome lighting, and to adjust stone colour. Implemented with a bounded Three.js spotlight pool; positions, intensity and dimensions remain estimates without measured photometry or an as-built survey. Photographs are local references, not runtime textures. Accessed 2026-09-08"
+    "en": "Published 2019-04-28 about the 2018 HSBC lighting project, credited to FMS and 十聿照明. Reviewed night photographs and roof luminaire diagrams to distinguish street-pole facade lighting, colonnade shadows and separate dome lighting, and to adjust stone colour. Implemented with a bounded Three.js spotlight pool; positions, intensity and dimensions remain estimates without measured photometry or an as-built survey. Photographs are local references, not runtime textures. Accessed 2026-09-08",
+    "section": "space-lighting"
   },
   {
     "name": "上海市政府：外滩亮灯 / Shanghai Government: Bund lighting",
     "space": true,
     "url": "https://www.shanghai.gov.cn/nw4411/20260820/f441a5da943447e79613ab4d5dbcc0a5.html",
     "zh": "夜景参考：2026-08-20 转载解放日报关于外滩 38 栋建筑、约 2000K 日常暖金照明与分层景观的报道。用于照明色彩和层次，不代表取得现场灯位、配光或测绘；不将夏季开灯时间套用到场景的固定春秋分时钟。查阅于 2026-09-08",
-    "en": "Night reference: the 2026-08-20 Jiefang Daily report on 38 Bund buildings, roughly 2000K everyday warm lighting and layered city illumination. Guides colour and hierarchy, without surveyed luminaire positions or photometry; its summer switch-on schedule is not applied to the scene's fixed-equinox clock. Accessed 2026-09-08"
+    "en": "Night reference: the 2026-08-20 Jiefang Daily report on 38 Bund buildings, roughly 2000K everyday warm lighting and layered city illumination. Guides colour and hierarchy, without surveyed luminaire positions or photometry; its summer switch-on schedule is not applied to the scene's fixed-equinox clock. Accessed 2026-09-08",
+    "section": "space-lighting"
   },
   {
     "name": "新华社：上海夜景实拍 / Xinhua: Shanghai night photographs",
     "space": true,
     "url": "https://www.xinhuanet.com/photo/20251231/f4a640207f67437c86c2d5db1b82644c/c.html",
     "zh": "实拍参考：王翔于 2025-12-31 拍摄的外滩和陆家嘴，用于建筑照明的明暗关系、江岸层次、水面倒影及白色前灯、红色尾灯的街道层次。滨江步道、路灯和长椅沿 OSM 位置近似重建，设施细节未实测。照片包含跨年特别灯光，不将红色活动灯幕作为日常现状；图片仅本地审图，未用作运行贴图。模型与灯光仍含估算。查阅于 2026-09-08",
-    "en": "Photo reference: Wang Xiang's 2025-12-31 Bund and Lujiazui photographs, used for lighting contrast, riverbank layers, water reflections and white headlights/red taillights at street level. Promenade paving, lamps and benches follow OSM alignment with estimated fixture details. They show special New Year lighting; red event displays are not treated as everyday conditions. Photos were reviewed locally, not distributed as runtime textures. Geometry and lighting remain estimates. Accessed 2026-09-08"
+    "en": "Photo reference: Wang Xiang's 2025-12-31 Bund and Lujiazui photographs, used for lighting contrast, riverbank layers, water reflections and white headlights/red taillights at street level. Promenade paving, lamps and benches follow OSM alignment with estimated fixture details. They show special New Year lighting; red event displays are not treated as everyday conditions. Photos were reviewed locally, not distributed as runtime textures. Geometry and lighting remain estimates. Accessed 2026-09-08",
+    "section": "space-lighting"
   },
   {
     "name": "文汇报：外滩 15-1 号 / Wenhui: Bund 15-1",
     "space": true,
     "url": "https://wenhui.whb.cn/third/yidian/201911/15/303082.html",
     "zh": "实拍对照：外滩公共服务中心的五层立面、中央通高玻璃入口及简洁竖向构件。采用 2019 年报道组合图最下方建成照片，不采用上方未建方案；OSM 平面，垂直尺寸估算，未获现状测绘。查阅于 2026-09-07",
-    "en": "Photo reference: the five-storey Bund Public Service Center, tall central glazed entrance and restrained vertical members. Uses the bottom completed-building photo in the 2019 report, not the unbuilt proposals above; OSM plan and estimated vertical dimensions, without a current survey. Accessed 2026-09-07"
+    "en": "Photo reference: the five-storey Bund Public Service Center, tall central glazed entrance and restrained vertical members. Uses the bottom completed-building photo in the 2019 report, not the unbuilt proposals above; OSM plan and estimated vertical dimensions, without a current survey. Accessed 2026-09-07",
+    "section": "space-bund"
   },
   {
     "name": "NOAA Global Monitoring Laboratory",
     "space": true,
     "url": "https://gml.noaa.gov/grad/solcalc/solareqns.PDF",
     "zh": "魔方空间太阳方向的时角与天顶角公式参考；场景采用固定春秋分的太阳时近似，查阅于 2026-09-07",
-    "en": "Hour-angle and zenith equations for Cube Space sun direction, using a fixed equinox and local solar time approximation; accessed 2026-09-07"
+    "en": "Hour-angle and zenith equations for Cube Space sun direction, using a fixed equinox and local solar time approximation; accessed 2026-09-07",
+    "section": "space-tools"
   },
   {
     "name": "Three.js",
@@ -207,210 +245,240 @@
     "url": "https://github.com/mrdoob/three.js",
     "zh": "魔方空间的 3D 渲染、物理材质、视角控制、镜面反射、江水及后期处理；外滩立体招牌复用官方 TTFLoader、FontLoader 和 ExtrudeGeometry，使用本地字体子集",
     "en": "3D rendering, physical materials, camera controls, reflections, river water and postprocessing in Cube Space; raised Bund signs reuse official TTFLoader, FontLoader and ExtrudeGeometry with a local font subset",
-    "long_en": "Three.js is licensed under the MIT license. Cube Space reuses its renderer, controls, Water shader, Reflector and postprocessing modules. The water normal texture from r183 is bundled locally."
+    "long_en": "Three.js is licensed under the MIT license. Cube Space reuses its renderer, controls, Water shader, Reflector and postprocessing modules. The water normal texture from r183 is bundled locally.",
+    "section": "space-tools"
   },
   {
     "name": "和平饭店入口与灯牌实拍 / Peace Hotel entrance and blade sign",
     "space": true,
     "url": "https://n.sinaimg.cn/sinakd20119/320/w717h403/20220831/51c5-e438a768e27ecac8115bad5575bd3b71.jpg",
     "zh": "新浪图床的 2022 年文章配图，用于和平饭店南侧双面弧顶竖灯牌、中英文并列竖排、入口与临江立面较亮而侧翼较暗的夜间层次。原文章现不可用，实际拍摄日期未确认；比例、字形和灯光为估算，未作为运行贴图。查阅于 2026-09-08",
-    "en": "Sina-hosted photo from a 2022 article: curved double-faced blade, adjacent vertical Chinese and English lettering, entrance and brighter riverfront versus dimmer wings at night. The article is unavailable and the capture date is unconfirmed. Dimensions, lettering and lighting are estimated, not a runtime texture. Accessed 2026-09-08"
+    "en": "Sina-hosted photo from a 2022 article: curved double-faced blade, adjacent vertical Chinese and English lettering, entrance and brighter riverfront versus dimmer wings at night. The article is unavailable and the capture date is unconfirmed. Dimensions, lettering and lighting are estimated, not a runtime texture. Accessed 2026-09-08",
+    "section": "space-lighting"
   },
   {
     "name": "携程：原汇丰大楼实拍 / Ctrip: former HSBC Building",
     "space": true,
     "url": "https://you.ctrip.com/sight/shanghai2/1831446.html",
     "zh": "游客实拍用于上海浦东发展银行位于底层入口上方的招牌，避免误放到高处柱廊檐口；尺寸和字体未实测，照片未作为运行贴图。查阅于 2026-09-08",
-    "en": "Visitor photographs locate the Shanghai Pudong Development Bank sign above the ground-floor entrances, rather than the upper portico cornice. Dimensions and typeface are not surveyed; photos are not runtime textures. Accessed 2026-09-08"
+    "en": "Visitor photographs locate the Shanghai Pudong Development Bank sign above the ground-floor entrances, rather than the upper portico cornice. Dimensions and typeface are not surveyed; photos are not runtime textures. Accessed 2026-09-08",
+    "section": "space-bund"
   },
   {
     "name": "文泉驿微米黑 / WenQuanYi Micro Hei",
     "space": true,
     "url": "https://sourceforge.net/projects/wqy/files/wqy-microhei/",
     "zh": "外滩招牌复用仓库现有字体，经 Three.js TTFLoader 提取 70 个字形，本地托管约 40 KB 轮廓数据。字体内嵌 Apache-2.0 许可和作者信息随子集保留，许可证随资源附带；通用字体不等于实物品牌字体。生成于 2026-09-08",
-    "en": "Bund signs subset 70 glyphs from the font already in this repository using Three.js TTFLoader, serving about 40 KB of outlines locally. Embedded Apache-2.0 and author notices are preserved and the license accompanies the asset. This general typeface is not an exact brand font. Generated 2026-09-08"
+    "en": "Bund signs subset 70 glyphs from the font already in this repository using Three.js TTFLoader, serving about 40 KB of outlines locally. Embedded Apache-2.0 and author notices are preserved and the license accompanies the asset. This general typeface is not an exact brand font. Generated 2026-09-08",
+    "section": "space-tools"
   },
   {
     "name": "Permasteelisa: Jin Mao Tower curtain wall",
     "space": true,
     "url": "https://www.permasteelisagroup.com/historic-project/jin-mao-tower/",
     "zh": "幕墙承建方记录金茂大厦 420.5 米、88 层，以及铝制翼片、不锈钢构件和退台铝板。已查看其俯拍、塔冠近景及幕墙细部照片，用于 Blender 工程的分段幕墙、横向栏杆、退台构件和分层翼片塔冠。宽度、层高、构件尺寸与照明仍为照片估算，未取得竣工测绘；照片仅作对照，未作为运行贴图。查阅于 2026-09-08",
-    "en": "The facade contractor documents Jin Mao Tower's 420.5 m height, 88 storeys, aluminum fins, stainless-steel members and aluminum-clad terraces. Aerial, crown and facade-detail photographs guide the Blender model's tiered curtain wall, horizontal rails, setback members and layered crown fins. Widths, floor heights, member dimensions and lighting remain photo estimates without an as-built survey. Photos are references, not runtime textures. Accessed 2026-09-08"
+    "en": "The facade contractor documents Jin Mao Tower's 420.5 m height, 88 storeys, aluminum fins, stainless-steel members and aluminum-clad terraces. Aerial, crown and facade-detail photographs guide the Blender model's tiered curtain wall, horizontal rails, setback members and layered crown fins. Widths, floor heights, member dimensions and lighting remain photo estimates without an as-built survey. Photos are references, not runtime textures. Accessed 2026-09-08",
+    "section": "space-lujiazui"
   },
   {
     "name": "Permasteelisa: Jin Mao crown photograph",
     "space": true,
     "url": "https://www.permasteelisagroup.com/wp-content/uploads/2025/07/Jin-Mao-Tower-Shanghai2.jpg",
     "zh": "塔冠近景用于校正密集退台、V 形金属面、两层翼片、包覆桅杆和圆形灯具外壳。尺寸、分板和灯具数量按照片估算，未取得施工图；照片拍摄日期未知，仅作对照，未作为运行贴图。查阅于 2026-09-13",
-    "en": "This crown close-up guides the closely spaced setbacks, V-shaped metal plates, two stages of fins, clad mast and round lamp housings. Dimensions, panel divisions and lamp counts are photo estimates without construction drawings. The capture date is unknown; this is a reference, not a runtime texture. Accessed 2026-09-13"
+    "en": "This crown close-up guides the closely spaced setbacks, V-shaped metal plates, two stages of fins, clad mast and round lamp housings. Dimensions, panel divisions and lamp counts are photo estimates without construction drawings. The capture date is unknown; this is a reference, not a runtime texture. Accessed 2026-09-13",
+    "section": "space-lujiazui"
   },
   {
     "name": "Permasteelisa: Jin Mao facade photograph",
     "space": true,
     "url": "https://www.permasteelisagroup.com/wp-content/uploads/2025/07/Jin-Mao-Tower-Shanghai3.jpg",
     "zh": "幕墙近景用于金茂的成对铝翼片、层间金属板、三道外置横杆、连接夹板与紧固件。构件截面随各面转向；开间、深度、螺栓尺寸及数量仍为照片估算。拍摄日期未知，照片仅作建模对照，未作为运行贴图。查阅于 2026-09-13",
-    "en": "This curtain-wall close-up guides Jin Mao's paired aluminum fins, metal spandrels, three external rails, connecting plates and fasteners. Member sections turn with each facade. Bay spacing, projections, bolt dimensions and counts remain photo estimates. The capture date is unknown; the photograph is a modeling reference, not a runtime texture. Accessed 2026-09-13"
+    "en": "This curtain-wall close-up guides Jin Mao's paired aluminum fins, metal spandrels, three external rails, connecting plates and fasteners. Member sections turn with each facade. Bay spacing, projections, bolt dimensions and counts remain photo estimates. The capture date is unknown; the photograph is a modeling reference, not a runtime texture. Accessed 2026-09-13",
+    "section": "space-lujiazui"
   },
   {
     "name": "The Skyscraper Museum: SOM Jin Mao section and plans",
     "space": true,
     "url": "https://old.skyscraper.org/EXHIBITIONS/CHINA_PROPHECY/jin_mao.php",
     "zh": "博物馆展示 SOM 提供的金茂剖面、平面和施工照片，用于核对分段轮廓与八角形结构关系。公开剖面图只有 300 × 834 像素，无法可靠读取精确尺寸，不能作为竣工测绘；塔身宽度和统一层高仍待校准。查阅于 2026-09-13",
-    "en": "The museum presents Jin Mao's section, plans and construction photographs courtesy of SOM, informing the tiered silhouette and octagonal structure. The public section image is only 300 by 834 pixels, so precise dimensions cannot be read reliably or treated as an as-built survey. Body widths and the uniform floor-height estimate still need calibration. Accessed 2026-09-13"
+    "en": "The museum presents Jin Mao's section, plans and construction photographs courtesy of SOM, informing the tiered silhouette and octagonal structure. The public section image is only 300 by 834 pixels, so precise dimensions cannot be read reliably or treated as an as-built survey. Body widths and the uniform floor-height estimate still need calibration. Accessed 2026-09-13",
+    "section": "space-lujiazui"
   },
   {
     "name": "SOM: Jin Mao Tower",
     "space": true,
     "url": "https://www.som.com/projects/jin-mao-tower/",
     "zh": "设计事务所的实拍用于金茂长塔身、上部退台、凹槽与塔冠对照。Tim Griffith 日景和文件标注 China Jin Mao Group 的夜景用于银色金属、深色玻璃与竖向亮线；夜景未列单张摄影署名，不代表当前灯光实测。© Nick Merrick | Hedrich Blessing 的入口照片用于裙房百叶、雨棚、石柱和悬挂遮板。拍摄日期未知，照片未作为运行贴图；三座超高层为本站独立几何，尺寸、材质和照明参数仍为估算。查阅于 2026-09-13",
-    "en": "The architect's photographs guide Jin Mao's shaft, setbacks, recesses and crown. Tim Griffith's daytime view and a night image whose filename identifies China Jin Mao Group inform metal, glass and vertical lighting; the latter has no individual photographer credit and is not a current lighting survey. Entrance photographs © Nick Merrick | Hedrich Blessing guide podium louvers, canopies, stone columns and suspended shades. Capture dates are unknown. Photos are not runtime textures; the three supertalls use locally authored geometry with estimated dimensions, materials and lighting. Accessed 2026-09-13"
+    "en": "The architect's photographs guide Jin Mao's shaft, setbacks, recesses and crown. Tim Griffith's daytime view and a night image whose filename identifies China Jin Mao Group inform metal, glass and vertical lighting; the latter has no individual photographer credit and is not a current lighting survey. Entrance photographs © Nick Merrick | Hedrich Blessing guide podium louvers, canopies, stone columns and suspended shades. Capture dates are unknown. Photos are not runtime textures; the three supertalls use locally authored geometry with estimated dimensions, materials and lighting. Accessed 2026-09-13",
+    "section": "space-lujiazui"
   },
   {
     "name": "SKYDB / Nephilim: Jin Mao base detail",
     "space": true,
     "url": "https://www.skydb.net/file/678996762/jin-mao-tower-shanghai/",
     "zh": "Nephilim 的塔楼基部近照用于石材分缝、细方孔格栅、圆孔金属遮阳板与成对竖肋。公开页面未注明拍摄日期，照片只供建模对照，不作为运行贴图；开孔、构件尺寸和重复数量仍为估算。查阅于 2026-09-13",
-    "en": "Nephilim's close-up guides the stone joints, fine square grilles, circular perforations in metal shades and paired vertical fins at the tower base. The public page gives no capture date. The photograph is a modeling reference, not a runtime texture; openings, member dimensions and repetition counts remain estimates. Accessed 2026-09-13"
+    "en": "Nephilim's close-up guides the stone joints, fine square grilles, circular perforations in metal shades and paired vertical fins at the tower base. The public page gives no capture date. The photograph is a modeling reference, not a runtime texture; openings, member dimensions and repetition counts remain estimates. Accessed 2026-09-13",
+    "section": "space-lujiazui"
   },
   {
     "name": "SKYDB / Nephilim: Jin Mao circular entrance",
     "space": true,
     "url": "https://www.skydb.net/file/534491510/jin-mao-tower-shanghai/",
     "zh": "Nephilim 的入口实拍用于圆形门框、玻璃分格、门扇、石材分缝，以及雨棚交叉拉杆、悬挂遮板、灯具和灰红色方形铺地。页面日期为 2005-02-22，日期字段未明确区分拍摄与发布，历史照片不能证明当前装修。入口方位、构件尺寸、铺地范围与配色仍为估算；照片未作为运行贴图。查阅于 2026-09-13",
-    "en": "Nephilim's entrance photograph guides the circular frame, glazing grid, doors, stone joints, canopy cross rods, suspended shades, lights and grey/red square paving. The page lists 2005-02-22 without distinguishing capture from publication; this historical view does not establish the current fit-out. Entrance orientation, member dimensions, paving extent and colours remain estimates. The photograph is not a runtime texture. Accessed 2026-09-13"
+    "en": "Nephilim's entrance photograph guides the circular frame, glazing grid, doors, stone joints, canopy cross rods, suspended shades, lights and grey/red square paving. The page lists 2005-02-22 without distinguishing capture from publication; this historical view does not establish the current fit-out. Entrance orientation, member dimensions, paving extent and colours remain estimates. The photograph is not a runtime texture. Accessed 2026-09-13",
+    "section": "space-lujiazui"
   },
   {
     "name": "AS+GG: Jin Mao podium and atrium",
     "space": true,
     "url": "https://www.smithgill.com/work/jin_mao_tower/",
     "zh": "六层裙房说明及第三张中庭实拍（© Adrian Smith）用于拱顶、玻璃端墙和内部空间对照。尺寸仍为估算，内部连桥和灯具尚未完成；照片拍摄日期未知，未作为运行贴图。查阅于 2026-09-13",
-    "en": "The six-story podium description and third atrium photograph (© Adrian Smith) guide the vaulted roof, glazed end walls and interior. Dimensions remain estimates; bridges and lighting are unfinished. The capture date is unknown, and the photograph is not a runtime texture. Accessed 2026-09-13"
+    "en": "The six-story podium description and third atrium photograph (© Adrian Smith) guide the vaulted roof, glazed end walls and interior. Dimensions remain estimates; bridges and lighting are unfinished. The capture date is unknown, and the photograph is not a runtime texture. Accessed 2026-09-13",
+    "section": "space-lujiazui"
   },
   {
     "name": "Architectural Record: Jin Mao, January 2000",
     "space": true,
     "url": "https://www.usmodernist.org/AR/AR-2000-01.pdf",
     "zh": "Thomas J. Campanella 的金茂文章（印刷页 82–89）中，第 84、85、87 页用于北入口、连接体和裙房中庭对照。刊期 2000-01，摄影日期未知；历史资料不代表当前装修，照片未作为运行贴图。查阅于 2026-09-13",
-    "en": "Thomas J. Campanella's Jin Mao article (printed pages 82–89), especially pages 84, 85 and 87, references the north entrance, connector and podium atrium. Published January 2000; capture dates are unknown. Historical material does not establish the current fit-out, and photographs are not runtime textures. Accessed 2026-09-13"
+    "en": "Thomas J. Campanella's Jin Mao article (printed pages 82–89), especially pages 84, 85 and 87, references the north entrance, connector and podium atrium. Published January 2000; capture dates are unknown. Historical material does not establish the current fit-out, and photographs are not runtime textures. Accessed 2026-09-13",
+    "section": "space-lujiazui"
   },
   {
     "name": "The Skyscraper Museum: Jin Mao",
     "space": true,
     "url": "https://old.skyscraper.org/EXHIBITIONS/BIG_BUILDINGS/CONTENT/jumbos/j_27.htm",
     "zh": "博物馆引用 SOM 的 88 层分段规则：底部 16 层，先每段减 2 层，再每段减 1 层。本站据此推导分段序列，宽度、层高和塔冠仍待施工图校准。查阅于 2026-09-07",
-    "en": "The museum quotes SOM's 88-floor setback rule: start with 16 floors, then reduce sections by two floors and subsequently by one. The model derives its sequence from this rule; widths, floor heights and crown details still lack construction-drawing calibration. Accessed 2026-09-07"
+    "en": "The museum quotes SOM's 88-floor setback rule: start with 16 floors, then reduce sections by two floors and subsequently by one. The model derives its sequence from this rule; widths, floor heights and crown details still lack construction-drawing calibration. Accessed 2026-09-07",
+    "section": "space-lujiazui"
   },
   {
     "name": "Jinmao: 2014 prospectus",
     "space": true,
     "url": "https://www.hkexnews.hk/listedco/listconews/sehk/2014/0619/LTN20140619048_C.pdf",
     "zh": "业主 2014 年招股资料提供金茂大厦 420.5 米、88 层依据；用于模型总高，不代表其他尺寸已经测绘。查阅于 2026-09-07",
-    "en": "The owner's 2014 prospectus documents Jin Mao Tower's 420.5 m height and 88 floors. It supplies the overall model height, not a survey of other dimensions. Accessed 2026-09-07"
+    "en": "The owner's 2014 prospectus documents Jin Mao Tower's 420.5 m height and 88 floors. It supplies the overall model height, not a survey of other dimensions. Accessed 2026-09-07",
+    "section": "space-lujiazui"
   },
   {
     "name": "Gensler: Shanghai Tower facade design",
     "space": true,
     "url": "https://www.gensler.com/uploads/document/242/file/Shanghai_Tower_Facade_Design_Process_11_10_2011.pdf",
     "zh": "设计研究用于上海中心 632 米轮廓、120° 扭转、圆角三角形外皮、收窄与倾斜塔顶。图 4 的 56.86% 上部比例作为建模参考；资料属于设计阶段，不能代替竣工测绘。查阅于 2026-09-07",
-    "en": "Design research references Shanghai Tower's 632 m profile, 120-degree twist, rounded triangular skin, taper and sloping crown. Figure 4's 56.86% upper-profile scale informs the model; this design-stage document is not an as-built survey. Accessed 2026-09-07"
+    "en": "Design research references Shanghai Tower's 632 m profile, 120-degree twist, rounded triangular skin, taper and sloping crown. Figure 4's 56.86% upper-profile scale informs the model; this design-stage document is not an as-built survey. Accessed 2026-09-07",
+    "section": "space-lujiazui"
   },
   {
     "name": "Gensler: Shanghai Tower project photographs",
     "space": true,
     "url": "https://www.gensler.com/projects/shanghai-tower",
     "zh": "2026-09-08 查看建筑师的竣工远景与仰拍照片，用于 Blender 上海中心的浅银蓝幕墙、水平分格、银色螺旋接缝和倾斜冠部。顶部内层与支撑尺寸仍为估算；程序石材微表面为本站制作，照片未用作运行贴图。尚未通过测绘 1:1 或电影级验收。",
-    "en": "Completed-building distance and upward photographs reviewed 2026-09-08 for the Blender model's pale silver-blue glazing, horizontal grid, silver spiral seam and sloping crown. Inner crown and strut dimensions remain estimates. Procedural stone micro-surfaces are original work; photographs are not runtime textures. Surveyed 1:1 and cinematic quality remain unverified."
+    "en": "Completed-building distance and upward photographs reviewed 2026-09-08 for the Blender model's pale silver-blue glazing, horizontal grid, silver spiral seam and sloping crown. Inner crown and strut dimensions remain estimates. Procedural stone micro-surfaces are original work; photographs are not runtime textures. Surveyed 1:1 and cinematic quality remain unverified.",
+    "section": "space-lujiazui"
   },
   {
     "name": "Masato Nawate: SWFC observation hall at night",
     "space": true,
     "url": "https://yakei.jp/abroad/shanghai/shanhai-hills-photo.html",
     "zh": "2026-09-13 对照绳手真人的夜间实拍，补充 100F 中央黑色灯槽、暖色筒灯、窗边扶手与反光柱饰。拍摄日期未列；照片仅作建模参考，未作为网页贴图。灯具间距、扶手尺寸和光度仍为估算。",
-    "en": "Masato Nawate's night photograph, reviewed 2026-09-13, references the 100F black central ceiling channel, warm recessed lamps, window handrails and reflective pier cladding. Capture date is unlisted. The photo is a modeling reference, not a runtime texture; fixture spacing, rail dimensions and photometry remain estimates."
+    "en": "Masato Nawate's night photograph, reviewed 2026-09-13, references the 100F black central ceiling channel, warm recessed lamps, window handrails and reflective pier cladding. Capture date is unlisted. The photo is a modeling reference, not a runtime texture; fixture spacing, rail dimensions and photometry remain estimates.",
+    "section": "space-lujiazui"
   },
   {
     "name": "Carsten Ullrich: SWFC Skywalk, September 2008",
     "space": true,
     "url": "https://commons.wikimedia.org/wiki/File:The_top_observatory_in_the_Shanghai_World_Financial_Center,_called_Skywalk.jpg",
     "zh": "Carsten Ullrich 于 2008-09-11 拍摄，CC BY-SA 2.0，查阅于 2026-09-13。用于核对 100F 一端的门洞、浅色面板、金属收边及绿色疏散灯；照片未作为网页贴图。端部方位、尺寸和灯具间距仍为估算，简化图形不是原标识的精确复制，背后电梯厅与另一端尚待补证。",
-    "en": "Photographed by Carsten Ullrich on 2008-09-11, CC BY-SA 2.0; reviewed 2026-09-13. References one 100F end elevation's doorway, pale panels, metal trim and green exit fixtures. The photo is not a runtime texture. End orientation, dimensions and fixture spacing remain estimates; simplified pictograms are not facsimiles. The rear lift lobby and opposite end need further evidence."
+    "en": "Photographed by Carsten Ullrich on 2008-09-11, CC BY-SA 2.0; reviewed 2026-09-13. References one 100F end elevation's doorway, pale panels, metal trim and green exit fixtures. The photo is not a runtime texture. End orientation, dimensions and fixture spacing remain estimates; simplified pictograms are not facsimiles. The rear lift lobby and opposite end need further evidence.",
+    "section": "space-lujiazui"
   },
   {
     "name": "Gerhard Huber: SWFC observation deck, April 2012",
     "space": true,
     "url": "https://global-geography.org/af/Geography/Asia/China/Pictures/Shanghai_2/Shanghai_World_Financial_Center_-_Observation_Deck_at_Night",
     "zh": "Gerhard Huber 于 2012 年 4 月拍摄的观光厅夜景，页面标注 CC BY-NC 4.0 + Edu，查阅于 2026-09-13。用于交叉核对筒灯、扶手、折面镜顶及柱脚绿色疏散灯；曝光与镜面波纹不能作为实测光度。照片未作为网页贴图，灯具间距、标识细字和精确材料参数尚待核定。",
-    "en": "Gerhard Huber's observation-hall night photograph from April 2012, labeled CC BY-NC 4.0 + Edu and reviewed 2026-09-13, cross-checks the downlights, handrails, folded reflective ceiling and low green exit fixtures. Exposure and panel ripples do not establish measured photometry. The photo is not a runtime texture; fixture spacing, fine sign lettering and exact material parameters remain unverified."
+    "en": "Gerhard Huber's observation-hall night photograph from April 2012, labeled CC BY-NC 4.0 + Edu and reviewed 2026-09-13, cross-checks the downlights, handrails, folded reflective ceiling and low green exit fixtures. Exposure and panel ripples do not establish measured photometry. The photo is not a runtime texture; fixture spacing, fine sign lettering and exact material parameters remain unverified.",
+    "section": "space-lujiazui"
   },
   {
     "name": "KPF: Shanghai World Financial Center",
     "space": true,
     "url": "https://www.kpf.com/project/shanghai-world-financial-center",
     "zh": "设计事务所的建成实拍与双向剖面，用于核对环球金融中心方形基部、弧形收削、顶部开口及观光桥底。2008 年为竣工年，照片作者与拍摄日期未列，未核得开放许可。顶部修订仍处于参考核查与候选准备，曲面、洞口尺寸及幕墙分格含估算，尚未完成模型验收。查阅于 2026-09-10",
-    "en": "The architect's completed-building photographs and two sectional views reference SWFC's square base, curved cuts, top aperture and observation-bridge underside. 2008 is the completion year; photo authors and capture dates are unlisted, with no open license established. Top revisions remain in reference review and candidate preparation. Curves, aperture dimensions and curtain-wall spacing include estimates; model acceptance is pending. Accessed 2026-09-10"
+    "en": "The architect's completed-building photographs and two sectional views reference SWFC's square base, curved cuts, top aperture and observation-bridge underside. 2008 is the completion year; photo authors and capture dates are unlisted, with no open license established. Top revisions remain in reference review and candidate preparation. Curves, aperture dimensions and curtain-wall spacing include estimates; model acceptance is pending. Accessed 2026-09-10",
+    "section": "space-lujiazui"
   },
   {
     "name": "Shanghai World Financial Center: project facts",
     "space": true,
     "url": "https://www.swfc-shanghai.com/pdf/swfc_project_brochure_cn.pdf",
     "zh": "业主项目册提供 492 米总高、地上 101 层，以及约 58×58 米标准办公层和北箭头。观光层图文用于核对 97 层玻璃顶与 100 层玻璃地板；顶部尺寸及跨图推定的朝向仍需校准。PDF 元数据日期为 2014-01-16，不代表照片拍摄日；单张图片作者与开放许可未核得。查阅于 2026-09-10",
-    "en": "The owner's brochure documents the 492 m height, 101 above-ground floors and an approximately 58×58 m standard office floor with a north arrow. Observatory text and images reference the 97F glass roof and 100F glass floor. Top dimensions and orientation inferred across drawings still need calibration. The PDF metadata date, 2014-01-16, is not a photo capture date; individual image authors and an open license were not established. Accessed 2026-09-10"
+    "en": "The owner's brochure documents the 492 m height, 101 above-ground floors and an approximately 58×58 m standard office floor with a north arrow. Observatory text and images reference the 97F glass roof and 100F glass floor. Top dimensions and orientation inferred across drawings still need calibration. The PDF metadata date, 2014-01-16, is not a photo capture date; individual image authors and an open license were not established. Accessed 2026-09-10",
+    "section": "space-lujiazui"
   },
   {
     "name": "Mori Building: SWFC observatory announcement",
     "space": true,
     "url": "https://www.mori.co.jp/press/release/post_202/",
     "zh": "2009-08-27 业主公告区分 100 层地上 474 米与海拔 477.96 米，并说明约 55 米观光桥和 97 层可开启玻璃顶。用于楼层与尺度核对；楼面标高不是桥底高度，走廊长度不是冠部外宽，也不代表当前灯光实测。查阅于 2026-09-10",
-    "en": "The owner's 2009-08-27 announcement distinguishes 100F at 474 m above ground from 477.96 m above sea level, and describes the approximately 55 m observation bridge and openable 97F glass roof. These anchor floor levels and scale: floor elevation is not the bridge underside, corridor length is not crown width, and the announcement provides no current lighting measurements. Accessed 2026-09-10"
+    "en": "The owner's 2009-08-27 announcement distinguishes 100F at 474 m above ground from 477.96 m above sea level, and describes the approximately 55 m observation bridge and openable 97F glass roof. These anchor floor levels and scale: floor elevation is not the bridge underside, corridor length is not crown width, and the announcement provides no current lighting measurements. Accessed 2026-09-10",
+    "section": "space-lujiazui"
   },
   {
     "name": "Quan et al. (2013): SWFC field measurements",
     "space": true,
     "url": "https://doi.org/10.1155/2013/902643",
     "zh": "同济大学 Quan、Wang、Gu、Kuang 的现场测风论文，2013 年发表，采用知识共享署名许可。图 2、5 及北箭头确认塔顶长轴沿东北—西南，用于纠正候选模型的对角朝向；示意图不能提供精确测绘方位。仪器间距与安装高度不作为观光桥尺寸。查阅于 2026-09-10",
-    "en": "The 2013 field-measurement paper by Quan, Wang, Gu and Kuang at Tongji University is published under a Creative Commons Attribution license. Figures 2 and 5 establish the northeast–southwest rooftop axis, informing correction of the candidate model's diagonal. These diagrams do not provide surveyed bearings; instrument spacing and mounting height are not observation-bridge dimensions. Accessed 2026-09-10"
+    "en": "The 2013 field-measurement paper by Quan, Wang, Gu and Kuang at Tongji University is published under a Creative Commons Attribution license. Figures 2 and 5 establish the northeast–southwest rooftop axis, informing correction of the candidate model's diagonal. These diagrams do not provide surveyed bearings; instrument spacing and mounting height are not observation-bridge dimensions. Accessed 2026-09-10",
+    "section": "space-lujiazui"
   },
   {
     "name": "The Skyscraper Museum: SWFC drawings",
     "space": true,
     "url": "https://old.skyscraper.org/EXHIBITIONS/TEN_TOPS/swfc.php",
     "zh": "博物馆发布、署名 KPF 的逐层平面与剖面，用于核对方形向对角收削截面的变化，以及 98/99 层两端分离、100 层由桥连接的关系。立面配图为渲染图，图纸日期未列，未见开放许可；图线不能替代竣工尺寸测绘。查阅于 2026-09-10",
-    "en": "Museum-published floor plans and sections credited to KPF reference the square-to-diagonally-cut profile and the separated ends at 98/99F joined by the 100F bridge. The accompanying elevations are renderings. Drawing dates are unlisted and no open license was found; the drawings do not replace an as-built dimensional survey. Accessed 2026-09-10"
+    "en": "Museum-published floor plans and sections credited to KPF reference the square-to-diagonally-cut profile and the separated ends at 98/99F joined by the 100F bridge. The accompanying elevations are renderings. Drawing dates are unlisted and no open license was found; the drawings do not replace an as-built dimensional survey. Accessed 2026-09-10",
+    "section": "space-lujiazui"
   },
   {
     "name": "Irie Miyake Architects & Engineers: SWFC photographs",
     "space": true,
     "url": "https://www.imae.co.jp/en/works/shanghai-world-financial-center",
     "zh": "项目页建成实拍用于核对 97 层白色玻璃顶框、100 层桥底与两端连接，以及高位外观。页面记载 2008 年竣工，未列摄影者或拍摄日，未核得开放许可。照片仅作参考，构件尺寸与材料参数仍为估算。查阅于 2026-09-10",
-    "en": "Completed-building photographs on the project page reference the white 97F glass-roof framing, the 100F bridge underside and end connections, and the elevated exterior view. The page records completion in 2008, without a photographer or capture date; no open license was established. Photos are references only, with member dimensions and material parameters still estimated. Accessed 2026-09-10"
+    "en": "Completed-building photographs on the project page reference the white 97F glass-roof framing, the 100F bridge underside and end connections, and the elevated exterior view. The page records completion in 2008, without a photographer or capture date; no open license was established. Photos are references only, with member dimensions and material parameters still estimated. Accessed 2026-09-10",
+    "section": "space-lujiazui"
   },
   {
     "name": "ArcelorMittal HISTAR: SWFC aerial photograph",
     "space": true,
     "url": "https://constructalia.arcelormittal.com/files/5_3_1_HISTAR_web--01d1dbea37a973eac1d0153ef74c1d7e.pdf",
     "zh": "2020 年 HISTAR 技术册第 34 页的建成俯照，原图署名 © Teri Meyer Boake / CTBUH，用于核对顶桥、97 层顶棚及冠部设备槽。2020 年为技术册版权年，照片拍摄日期未列，未见开放许可。照片仅作参考，槽深、设备尺寸与准确数量尚未核定。查阅于 2026-09-10",
-    "en": "The completed-building aerial photograph on page 34 of the 2020 HISTAR brochure is credited exactly as © Teri Meyer Boake / CTBUH. It references the top bridge, 97F canopy and crown equipment channel. 2020 is the brochure copyright year; the photo capture date is unlisted and no open license was found. The photo is a reference only; channel depth, equipment dimensions and exact counts remain unverified. Accessed 2026-09-10"
+    "en": "The completed-building aerial photograph on page 34 of the 2020 HISTAR brochure is credited exactly as © Teri Meyer Boake / CTBUH. It references the top bridge, 97F canopy and crown equipment channel. 2020 is the brochure copyright year; the photo capture date is unlisted and no open license was found. The photo is a reference only; channel depth, equipment dimensions and exact counts remain unverified. Accessed 2026-09-10",
+    "section": "space-lujiazui"
   },
   {
     "name": "上海绿色照明发展报告 2022",
     "space": true,
     "url": "https://www.shgbc.org/uploads/202311/08/231108103633829.pdf",
     "zh": "报告第 41–42 页的金外滩与汇丰穹顶夜景，用于暖色洗墙、檐口、绿色铜顶和金色穹顶对照。本站按建筑分层近似照明，未取得现场灯位、配光或色温测量；报告照片不代表当天亮灯状态。查阅于 2026-09-07",
-    "en": "Pages 41–42 show the Golden Bund and HSBC dome, referencing warm facade washes, cornices, green copper and a golden dome. Lighting is approximated per building without measured fixtures, photometry or color temperatures; historical photos do not document today's lighting state. Accessed 2026-09-07"
+    "en": "Pages 41–42 show the Golden Bund and HSBC dome, referencing warm facade washes, cornices, green copper and a golden dome. Lighting is approximated per building without measured fixtures, photometry or color temperatures; historical photos do not document today's lighting state. Accessed 2026-09-07",
+    "section": "space-lighting"
   },
   {
     "name": "上海市政府：外滩综合改造",
     "space": true,
     "url": "https://www.shanghai.gov.cn/nw9822/20200906/0001-9822_397499.html",
     "zh": "2010-03-23 改造报道提供地面四车道依据；本站沿 OSM 道路线重建外滩路面、标线、铺装和路灯。每侧 7 米宽度、铺装与灯具为估算，未取得现状测绘。查阅于 2026-09-07",
-    "en": "Shanghai's 2010-03-23 Bund renovation report documents four surface lanes. Roads, markings, paving and lamps follow OSM alignment; 7 m carriageways, paving and fixtures are estimates without a current street survey. Accessed 2026-09-07"
+    "en": "Shanghai's 2010-03-23 Bund renovation report documents four surface lanes. Roads, markings, paving and lamps follow OSM alignment; 7 m carriageways, paving and fixtures are estimates without a current street survey. Accessed 2026-09-07",
+    "section": "space-lighting"
   },
   {
     "name": "Three.js: Shadows",
     "space": true,
     "url": "https://threejs.org/manual/en/shadows.html",
     "zh": "官方阴影文档用于外滩近景的阴影覆盖与分辨率调整；汇丰和江海关的窗洞、石材及夜间洗墙为本站实现，尺寸和灯光尚未实测校准。查阅于 2026-09-07",
-    "en": "Official shadow documentation informs shadow coverage and resolution for close Bund views. Recessed windows, stone and night facade wash are local implementations, without surveyed dimensions or measured lighting. Accessed 2026-09-07"
+    "en": "Official shadow documentation informs shadow coverage and resolution for close Bund views. Recessed windows, stone and night facade wash are local implementations, without surveyed dimensions or measured lighting. Accessed 2026-09-07",
+    "section": "space-tools"
   },
   {
     "name": "ABYSSAL / natural-disasters",
@@ -418,7 +486,8 @@
     "url": "https://github.com/Token-Gremlin/natural-disasters",
     "zh": "魔方空间的大气散射、体积云、雨幕、分叉闪电、体积龙卷风、FFT 海浪与 GPU 飞沫，MIT，已适配住宅、孤岛海岸与镜面",
     "en": "Atmospheric scattering, volumetric clouds, rain, branching lightning, volumetric tornadoes, FFT ocean waves and GPU spray in Cube Space, adapted for buildings, island shores and mirrors under MIT",
-    "long_en": "Copyright (c) 2026 Davi (Token-Gremlin), MIT. Weather and ocean sources are pinned to d2bae38301ff43bc1d43bfdfd9477a552ca5420b. Adaptations include per-scene uniforms, resource disposal, a corrected 3D noise atlas, cloud sampling and spatial resolve, roof shelter, three-cascade FFT waves, projected-grid water shading, foam and ripple baking, airborne GPU spray, and integration with architectural lighting and planar reflections. Island terrain and shoreline attenuation are local additions. Disaster event simulation and demo postprocessing are omitted. Snow, hail, dust, mudslide, rainbow and surface wetness remain local effects."
+    "long_en": "Copyright (c) 2026 Davi (Token-Gremlin), MIT. Weather and ocean sources are pinned to d2bae38301ff43bc1d43bfdfd9477a552ca5420b. Adaptations include per-scene uniforms, resource disposal, a corrected 3D noise atlas, cloud sampling and spatial resolve, roof shelter, three-cascade FFT waves, projected-grid water shading, foam and ripple baking, airborne GPU spray, and integration with architectural lighting and planar reflections. Island terrain and shoreline attenuation are local additions. Disaster event simulation and demo postprocessing are omitted. Snow, hail, dust, mudslide, rainbow and surface wetness remain local effects.",
+    "section": "space-tools"
   },
   {
     "name": "OpenStreetMap contributors",
@@ -426,273 +495,312 @@
     "url": "https://www.openstreetmap.org/copyright",
     "zh": "上海河道、道路、绿地与建筑平面轮廓，ODbL 1.0。建筑由 Three.js 向上拉伸：优先使用记录高度，其次按楼层数 × 3.2 米估算，缺失时默认 12 米。目前多数建筑使用默认高度；地标外形、立面和窗光由本站代码简化生成，并非实景三维扫描。2026-09-08 从既有缓存补入道路单行方向与车道数，车流沿道路及桥面行驶；车辆外形、数量、速度和灯光为本站演示估算，未接入实时交通",
     "en": "Shanghai water, roads, parks and building footprints, ODbL 1.0. Three.js extrudes footprints using recorded heights, then floor counts × 3.2 m, or a 12 m fallback. Most buildings currently use the fallback. Landmark shapes, facades and window lights are simplified local models, not a 3D scan. On 2026-09-08, one-way and lane-count tags were added from existing cached extracts. Cars follow roads and bridge elevations; vehicle shapes, counts, speeds and lighting are locally authored visual estimates, not live traffic",
-    "long_en": "Map data copyright OpenStreetMap contributors, distributed under ODbL 1.0. Local extracts acquired 2026-09-07; bounds, source snapshots, height completeness and texture provenance are recorded in assets/space/shanghai-v1/SOURCE.json. Road metadata was reprocessed on 2026-09-08 without changing geographic coverage. Lane counts are retained as source metadata; traffic uses one central stream per one-way carriageway and two right-hand streams on two-way roads. Missing building heights use an explicit fallback; authored landmark meshes are approximate."
+    "long_en": "Map data copyright OpenStreetMap contributors, distributed under ODbL 1.0. Local extracts acquired 2026-09-07; bounds, source snapshots, height completeness and texture provenance are recorded in assets/space/shanghai-v1/SOURCE.json. Road metadata was reprocessed on 2026-09-08 without changing geographic coverage. Lane counts are retained as source metadata; traffic uses one central stream per one-way carriageway and two right-hand streams on two-way roads. Missing building heights use an explicit fallback; authored landmark meshes are approximate.",
+    "section": "space-tools"
   },
   {
     "name": "上海市土木工程学会：南浦大桥",
     "space": true,
     "url": "https://www.cnssce.org/50/201308/1188.html",
     "zh": "南浦大桥主桥 846 米、主跨 423 米、桥宽 30.35 米、塔高 150 米及拉索、横梁尺寸参考。本站重建几何，引桥高程和构件细部仍有估算。查阅于 2026-09-07",
-    "en": "Shanghai Society of Civil Engineering: Nanpu's 846 m main bridge, 423 m main span, 30.35 m width, 150 m towers, stays and crossbeams. Locally reconstructed geometry; approach elevations and some details remain estimated. Accessed 2026-09-07"
+    "en": "Shanghai Society of Civil Engineering: Nanpu's 846 m main bridge, 423 m main span, 30.35 m width, 150 m towers, stays and crossbeams. Locally reconstructed geometry; approach elevations and some details remain estimated. Accessed 2026-09-07",
+    "section": "space-campus"
   },
   {
     "name": "上海市土木工程学会：卢浦大桥",
     "space": true,
     "url": "https://www.cnssce.org/50/201308/1191.html",
     "zh": "卢浦大桥 100＋550＋100 米跨径、40 米桥宽、100 米拱矢高和 1:5 内倾比例参考。本站重建双拱与吊杆，拱线、杆件截面及高程未按施工图校准。查阅于 2026-09-07",
-    "en": "Shanghai Society of Civil Engineering: Lupu's 100 + 550 + 100 m spans, 40 m width, 100 m arch rise and 1:5 inward inclination. Locally reconstructed arches and hangers; profiles, member sections and elevations are not calibrated to construction drawings. Accessed 2026-09-07"
+    "en": "Shanghai Society of Civil Engineering: Lupu's 100 + 550 + 100 m spans, 40 m width, 100 m arch rise and 1:5 inward inclination. Locally reconstructed arches and hangers; profiles, member sections and elevations are not calibrated to construction drawings. Accessed 2026-09-07",
+    "section": "space-campus"
   },
   {
     "name": "上海市档案馆：外白渡桥",
     "space": true,
     "url": "https://www.shda.gov.cn/archives/gdxw/202601/t20260120_76430.html",
     "zh": "外白渡桥 107 米长度、18 米宽度、11 米车行道及不等高桁架形式参考。桁架高度、节点板和铆钉仍为形态重建，未取得完整工程模型。查阅于 2026-09-07",
-    "en": "Shanghai Municipal Archives: Waibaidu's 107 m length, 18 m width, 11 m carriageway and variable-height trusses. Truss heights, gussets and rivets are approximations; no complete engineering model was obtained. Accessed 2026-09-07"
+    "en": "Shanghai Municipal Archives: Waibaidu's 107 m length, 18 m width, 11 m carriageway and variable-height trusses. Truss heights, gussets and rivets are approximations; no complete engineering model was obtained. Accessed 2026-09-07",
+    "section": "space-campus"
   },
   {
     "name": "Tomson Group：Tomson Riviera",
     "space": true,
     "url": "https://en.tomson-group.com/product/20.html",
     "zh": "汤臣一品开发商项目实拍，用于四栋塔楼的石材、阳台、玻璃和冠顶对照。塔楼、五处裙房及泳池保留 OSM 轮廓；逐栋高度、立面和景观细节仍为估算，庭院没有实测图纸。实拍未作为运行贴图。查阅于 2026-09-07",
-    "en": "Developer photographs reference the four towers' stone, balconies, glazing and crowns. Tower, five podium and pool footprints follow OSM; individual heights, facades and landscape details remain estimated, without a surveyed garden plan. Photos are not runtime textures. Accessed 2026-09-07"
+    "en": "Developer photographs reference the four towers' stone, balconies, glazing and crowns. Tower, five podium and pool footprints follow OSM; individual heights, facades and landscape details remain estimated, without a surveyed garden plan. Photos are not runtime textures. Accessed 2026-09-07",
+    "section": "space-campus"
   },
   {
     "name": "新华社：上海海关钟楼",
     "space": true,
     "url": "https://www.news.cn/20251001/b3a3d636f61c47e4a23226b8f1680323/c.html",
     "zh": "2025-10-01 现场报道与实拍，提供江海关 79.2 米总高及钟楼形态参考。模型按 OSM 六处主体/附属轮廓重建，补正面凹窗、铜色窗间板和钟楼百叶；钟径、分层高度及构件尺寸仍为估算，四面指针随场景时间同步。查阅于 2026-09-07",
-    "en": "Xinhua onsite report and photographs, 2025-10-01: Customs House's 79.2 m overall height and clock-tower form. The local model uses six OSM building parts, with recessed front windows, bronze-colored spandrels and tower louvers. Dial diameter, stage heights and details remain estimated; all four clocks follow scene time. Accessed 2026-09-07"
+    "en": "Xinhua onsite report and photographs, 2025-10-01: Customs House's 79.2 m overall height and clock-tower form. The local model uses six OSM building parts, with recessed front windows, bronze-colored spandrels and tower louvers. Dial diameter, stage heights and details remain estimated; all four clocks follow scene time. Accessed 2026-09-07",
+    "section": "space-bund"
   },
   {
     "name": "乐游上海：外滩汇丰银行大楼",
     "space": true,
     "url": "https://www.thepaper.cn/newsDetail_forward_16367281",
     "zh": "上海旅游图文，经澎湃号转载于 2022-01-20；实拍用于六柱门廊、拱门铜格、凹窗与三角窗饰、八角塔楼、穹顶和石材层次对照。模型保留 OSM 内院，总高暂取 46.3 米，未获测绘证实，雕像等细部尚缺；夜景为近似照明。查阅于 2026-09-07",
-    "en": "Shanghai tourism text and photographs, republished on The Paper on 2022-01-20, reference the six-column portico, bronze arch grilles, recessed windows and pediments, octagonal drum, dome and stone facade. The OSM courtyard remains open; the model's 46.3 m height is unverified, statues remain missing and night lighting is approximate. Accessed 2026-09-07"
+    "en": "Shanghai tourism text and photographs, republished on The Paper on 2022-01-20, reference the six-column portico, bronze arch grilles, recessed windows and pediments, octagonal drum, dome and stone facade. The OSM courtyard remains open; the model's 46.3 m height is unverified, statues remain missing and night lighting is approximate. Accessed 2026-09-07",
+    "section": "space-bund"
   },
   {
     "name": "上海市政府：和平饭店建筑沿革",
     "space": true,
     "url": "https://www.shanghai.gov.cn/nw5827/20200905/0001-5827_632318.html",
     "zh": "和平饭店 77 米总高、19 米铜皮金字塔屋顶及花岗岩外墙参考；模型保留 OSM 三处内院，窗格、退台和楼层分配仍有估算。查阅于 2026-09-07",
-    "en": "Shanghai municipal architectural history: Peace Hotel's 77 m overall height, 19 m copper pyramid roof and granite facade. The model preserves three OSM courtyards; windows, setbacks and floor distribution remain approximate. Accessed 2026-09-07"
+    "en": "Shanghai municipal architectural history: Peace Hotel's 77 m overall height, 19 m copper pyramid roof and granite facade. The model preserves three OSM courtyards; windows, setbacks and floor distribution remain approximate. Accessed 2026-09-07",
+    "section": "space-bund"
   },
   {
     "name": "上海市民政局：外滩建筑群",
     "space": true,
     "url": "https://mzj.sh.gov.cn/lnb-wsws/20200518/MZ_LNB12_9104.html",
     "zh": "外滩建筑名称、门牌、年代与建筑风格的研究清单，用于后续逐栋核对；不代表文中建筑已全部精细复刻。查阅于 2026-09-07",
-    "en": "Shanghai Civil Affairs Bureau: a research inventory of Bund building names, addresses, dates and styles for individual reconstruction. Inclusion here does not mean every listed building has been rebuilt in detail. Accessed 2026-09-07"
+    "en": "Shanghai Civil Affairs Bureau: a research inventory of Bund building names, addresses, dates and styles for individual reconstruction. Inclusion here does not mean every listed building has been rebuilt in detail. Accessed 2026-09-07",
+    "section": "space-bund"
   },
   {
     "name": "Asisbiz: 外滩 12 汇丰大楼 / HSBC Building",
     "space": true,
     "url": "https://www.asisbiz.com/China/12-Zhongshan-Rd.html",
     "zh": "实拍用于六柱门廊、柱头叶饰、窗下线脚、入口银行招牌，以及两级八角鼓座、上层平头窗、石栏和穹顶轮廓。石材图为原创程序纹理，非照片扫描；尺寸、雕饰及全圈灯具布置含估算，穹顶雕像和完整立面未达到 1:1。拍摄日期未知，不能据档案照片判断当前招牌与灯光。实拍复核于 2026-09-10",
-    "en": "Photographs guide the six-column portico, capital leaves, window mouldings, bank sign, two octagonal drum levels, flat-headed upper windows, balustrades and dome silhouette. Masonry maps are original procedural textures, not scans. Dimensions, ornament and fixtures around the dome remain estimates; statues and the complete facade are not verified 1:1. Capture date unknown; archive photos do not establish current signage or lighting. Reviewed 2026-09-10"
+    "en": "Photographs guide the six-column portico, capital leaves, window mouldings, bank sign, two octagonal drum levels, flat-headed upper windows, balustrades and dome silhouette. Masonry maps are original procedural textures, not scans. Dimensions, ornament and fixtures around the dome remain estimates; statues and the complete facade are not verified 1:1. Capture date unknown; archive photos do not establish current signage or lighting. Reviewed 2026-09-10",
+    "section": "space-bund"
   },
   {
     "name": "ScareCriterion12：汇丰大楼正立面 / HSBC frontal photograph",
     "space": true,
     "url": "https://commons.wikimedia.org/wiki/File:上海外滩汇丰银行大楼2021.jpg",
     "zh": "ScareCriterion12 于 2021-06-20 拍摄，CC BY-SA 4.0。用于纠正六柱门廊的两组内侧成对柱列，柱间距依次为宽、窄、宽、窄、宽；取代此前误判的等距排列。照片未做正射校正，模型米制间距仍为估算；仅作几何对照，未作为运行贴图。查阅于 2026-09-10",
-    "en": "Photographed by ScareCriterion12 on 2021-06-20, CC BY-SA 4.0. Corrects the six-column portico to two close inner pairs with wide, narrow, wide, narrow, wide gaps, replacing the previously misread equal spacing. The photograph is not orthorectified; model dimensions in metres remain estimates. Used as a geometry reference, not a runtime texture. Accessed 2026-09-10"
+    "en": "Photographed by ScareCriterion12 on 2021-06-20, CC BY-SA 4.0. Corrects the six-column portico to two close inner pairs with wide, narrow, wide, narrow, wide gaps, replacing the previously misread equal spacing. The photograph is not orthorectified; model dimensions in metres remain estimates. Used as a geometry reference, not a runtime texture. Accessed 2026-09-10",
+    "section": "space-bund"
   },
   {
     "name": "Hermann Luyken：汇丰外部穹顶夜景 / HSBC exterior dome at night",
     "space": true,
     "url": "https://commons.wikimedia.org/wiki/File:2014.11.15.192101_Dome_HSBC_Building_Bund_night_Shanghai.jpg",
     "zh": "Hermann Luyken 于 2014-11-15 19:21:01 拍摄，CC0。对照外部平滑穹顶、水平细线、矩形窗亭、石栏、成组投光器和尖顶；不是室内马赛克穹顶。照片仅本地审图，未作为运行贴图。细部尺寸与灯具总数含估算，照片不代表当前配光或实测色温。查阅于 2026-09-10",
-    "en": "Photographed by Hermann Luyken on 2014-11-15 at 19:21:01, CC0. References the smooth exterior dome, horizontal details, rectangular dormers, balustrades, grouped floodlights and finial, rather than the interior mosaic ceiling. Reviewed locally, not used as a runtime texture. Fine dimensions and total fixture count remain estimates; this photo does not establish current photometry or measured color temperature. Accessed 2026-09-10"
+    "en": "Photographed by Hermann Luyken on 2014-11-15 at 19:21:01, CC0. References the smooth exterior dome, horizontal details, rectangular dormers, balustrades, grouped floodlights and finial, rather than the interior mosaic ceiling. Reviewed locally, not used as a runtime texture. Fine dimensions and total fixture count remain estimates; this photo does not establish current photometry or measured color temperature. Accessed 2026-09-10",
+    "section": "space-bund"
   },
   {
     "name": "Asisbiz: 外滩 13 江海关 / Customs House",
     "space": true,
     "url": "https://www.asisbiz.com/China/13-Zhongshan-Rd.html",
     "zh": "实拍用于七条主窗带、铜饰板、入口石柱、钟楼格栅及双侧亭；本轮核对六层转折檐口、基座正面可见的五个投光器，保留场景时间驱动的四面钟表。原图署名 Matthew Laird Acred，CC BY-SA 3.0；嵌套 EXIF 的 DateTimeOriginal 和 DateTimeDigitized 均标记 2008-11-14 17:25:05，纠正此前日期未知的说明。相机时钟与时区未经独立核验，页面更新于 2020-01-27；旧照不能作为当前灯光实测。石材图为原创程序纹理；尺寸、颜色及灯具均含估算，新增灯具外形不等于现场配光已还原。侧后立面、钟面与夜景待校准，尚非测绘 1:1。查阅于 2026-09-10",
-    "en": "Photographs guide seven window bands, bronze panels, entrance columns, tower grilles and paired roof pavilions. This review covers six-layer cornice returns and five visible front plinth floodlights; all four clocks retain scene-time control. The original credits Matthew Laird Acred, CC BY-SA 3.0. Nested EXIF DateTimeOriginal and DateTimeDigitized both report 2008-11-14 17:25:05, correcting the earlier unknown-date statement. The camera clock and timezone have not been independently verified; the page was updated on 2020-01-27. This older photo does not establish present-day lighting measurements. Masonry maps are original procedural textures. Dimensions, colors and fixtures remain estimates; modeled lamp housings do not establish restored photometry. Other elevations, clock faces and night lighting remain uncalibrated, not surveyed 1:1. Accessed 2026-09-10"
+    "en": "Photographs guide seven window bands, bronze panels, entrance columns, tower grilles and paired roof pavilions. This review covers six-layer cornice returns and five visible front plinth floodlights; all four clocks retain scene-time control. The original credits Matthew Laird Acred, CC BY-SA 3.0. Nested EXIF DateTimeOriginal and DateTimeDigitized both report 2008-11-14 17:25:05, correcting the earlier unknown-date statement. The camera clock and timezone have not been independently verified; the page was updated on 2020-01-27. This older photo does not establish present-day lighting measurements. Masonry maps are original procedural textures. Dimensions, colors and fixtures remain estimates; modeled lamp housings do not establish restored photometry. Other elevations, clock faces and night lighting remain uncalibrated, not surveyed 1:1. Accessed 2026-09-10",
+    "section": "space-bund"
   },
   {
     "name": "Wikimedia Commons: DvTor8303 江海关夜景 / Customs House at night",
     "space": true,
     "url": "https://commons.wikimedia.org/wiki/File:HSBC_Building_and_Custom_House,_Shanghai_at_night_20260417_(2).jpg",
     "zh": "DvTor8303 自摄，CC0 1.0；文件页与原图 EXIF 均标记 2026-04-17 20:34:53，相机时钟与时区未经独立核验。江海关夜景的首要实拍参考，用于核对钟盘石框、暖色塔冠、基座下亮上暗、檐下阴影与底层石墙的照明层次。照片仅本地审图，未作为运行贴图；六盏聚合投光代理的灯位与光度仍为估算，尚非现场配光或 1:1 复原。查阅于 2026-09-10",
-    "en": "Own photograph by DvTor8303, CC0 1.0. The file page and original EXIF both report 2026-04-17 20:34:53; camera clock and timezone have not been independently verified. The primary night reference for Customs House, covering the clock surround, warm crown, brighter lower plinth, cornice shadows and lower stonework. Reviewed locally, not used as a runtime texture. Positions and photometry of the six aggregate spotlights remain estimates, not a surveyed lighting scheme or a verified 1:1 replica. Accessed 2026-09-10"
+    "en": "Own photograph by DvTor8303, CC0 1.0. The file page and original EXIF both report 2026-04-17 20:34:53; camera clock and timezone have not been independently verified. The primary night reference for Customs House, covering the clock surround, warm crown, brighter lower plinth, cornice shadows and lower stonework. Reviewed locally, not used as a runtime texture. Positions and photometry of the six aggregate spotlights remain estimates, not a surveyed lighting scheme or a verified 1:1 replica. Accessed 2026-09-10",
+    "section": "space-lighting"
   },
   {
     "name": "Fairmont: 和平饭店官方夜景 / Peace Hotel night exterior",
     "space": true,
     "url": "https://www.fairmont.com/en/hotels/shanghai/fairmont-peace-hotel.html",
     "zh": "业主图集 aja_p_6133-03 与 HCM_P_6963970 用于铜顶下沿局部绿光、上部深绿、顶冠暖光及退台檐线的照明层次。官网未标明拍摄者和日期，原图没有相关 EXIF；不按照片反推光度。六盏 Blender 灯是合并视觉代理，灯位、颜色与强度含估算，未作为运行贴图，未通过 1:1 验收。查阅于 2026-09-10",
-    "en": "Owner gallery images aja_p_6133-03 and HCM_P_6963970 guide localized green light along the lower copper roof, a darker upper slope, a warm crown and lit setback cornices. Photographer and capture date are unspecified, with no corresponding EXIF; photographs are not photometric measurements. Six Blender lamps are grouped visual proxies with estimated positions, colors and intensities. Photos are not runtime textures; the replica is not verified 1:1. Accessed 2026-09-10"
+    "en": "Owner gallery images aja_p_6133-03 and HCM_P_6963970 guide localized green light along the lower copper roof, a darker upper slope, a warm crown and lit setback cornices. Photographer and capture date are unspecified, with no corresponding EXIF; photographs are not photometric measurements. Six Blender lamps are grouped visual proxies with estimated positions, colors and intensities. Photos are not runtime textures; the replica is not verified 1:1. Accessed 2026-09-10",
+    "section": "space-lighting"
   },
   {
     "name": "Suicasmo: 和平饭店夜景 2025 / Peace Hotel at night",
     "space": true,
     "url": "https://commons.wikimedia.org/wiki/File:Peace_Hotel_20250503.jpg",
     "zh": "Suicasmo 自摄，CC0 1.0；文件页和 EXIF 均标记 2025-05-03 23:04:28，时区与相机时钟未经独立校验。用于交叉核对整楼铜顶下亮上暗、暖色顶冠、檐线与暗拱洞。仅作夜景结构参考，不是当前现场的测量，也未作为运行贴图。查阅于 2026-09-10",
-    "en": "Own photograph by Suicasmo, CC0 1.0. Both the file page and EXIF report 2025-05-03 23:04:28; timezone and camera clock have not been independently verified. Cross-checks the brighter lower roof, dark upper slope, warm crown, cornices and dark ground arches. A lighting reference, not a present-day survey or runtime texture. Accessed 2026-09-10"
+    "en": "Own photograph by Suicasmo, CC0 1.0. Both the file page and EXIF report 2025-05-03 23:04:28; timezone and camera clock have not been independently verified. Cross-checks the brighter lower roof, dark upper slope, warm crown, cornices and dark ground arches. A lighting reference, not a present-day survey or runtime texture. Accessed 2026-09-10",
+    "section": "space-lighting"
   },
   {
     "name": "Asisbiz: 外滩 20 和平饭店 / Peace Hotel",
     "space": true,
     "url": "https://www.asisbiz.com/China/20-Zhongshan-Rd.html",
     "zh": "实拍用于截顶铜屋面、咬口、上部退台、七层 63 扇窗及底层双拱窗；本轮核对塔顶百叶凹腔、窄柱、分层铜檐、连续弧纹及屋脊接缝，保留现有灯牌。铜板与石材图为原创程序纹理，已纠正颜色编码造成的偏暗；板缝与细部数量为照片估算，背面缺少独立实拍，浮雕、旗帜与夜间铜顶照明未完成。原图 01、03、05 的 EXIF 标记拍摄于 2008-11-14，时区未知且相机时钟未经独立校验；文件名 1929 是建筑年代，旧照片不能证明当前招牌与灯光。查阅于 2026-09-10",
-    "en": "Photographs guide the truncated copper roof, seams, upper setbacks, 63 windows across seven levels and two ground arches. This review covers recessed crown louvers, narrow posts, layered copper eaves, repeated arcs and hip joints, retaining existing signs. Copper and masonry maps are original procedural textures; an encoding error that darkened them has been corrected. Joint spacing and detail counts are estimates; the rear lacks independent photographs, and relief, flags and roof night lighting remain unfinished. Originals 01, 03 and 05 carry EXIF capture dates of 2008-11-14, with no timezone or independent camera-clock verification. The filename year 1929 identifies construction; these older photos do not establish current signage or lighting. Accessed 2026-09-10"
+    "en": "Photographs guide the truncated copper roof, seams, upper setbacks, 63 windows across seven levels and two ground arches. This review covers recessed crown louvers, narrow posts, layered copper eaves, repeated arcs and hip joints, retaining existing signs. Copper and masonry maps are original procedural textures; an encoding error that darkened them has been corrected. Joint spacing and detail counts are estimates; the rear lacks independent photographs, and relief, flags and roof night lighting remain unfinished. Originals 01, 03 and 05 carry EXIF capture dates of 2008-11-14, with no timezone or independent camera-clock verification. The filename year 1929 identifies construction; these older photos do not establish current signage or lighting. Accessed 2026-09-10",
+    "section": "space-bund"
   },
   {
     "name": "Asisbiz: 外滩 1 亚细亚大楼 / Asia Building",
     "space": true,
     "url": "https://www.asisbiz.com/China/1-Zhongshan-Rd.html",
     "zh": "实拍对照：平顶阁楼、半圆窗、女儿墙端部凹曲线、成对入口柱和弧形门廊。平面据 OSM，高度、柱式及雨棚尺寸仍为照片估算，尚未通过 1:1 验收。照片仅供建模参考，拍摄时期不代表当前现状。查阅于 2026-09-08",
-    "en": "Photo reference: flat attic caps, semicircular windows, curved parapet ends, paired entrance columns and a barrel-vaulted portico. OSM plan; heights, column details and canopy dimensions remain photographic estimates, not a verified 1:1 replica. Photos are modeling references only and do not establish current conditions. Accessed 2026-09-08"
+    "en": "Photo reference: flat attic caps, semicircular windows, curved parapet ends, paired entrance columns and a barrel-vaulted portico. OSM plan; heights, column details and canopy dimensions remain photographic estimates, not a verified 1:1 replica. Photos are modeling references only and do not establish current conditions. Accessed 2026-09-08",
+    "section": "space-bund"
   },
   {
     "name": "Asisbiz: 外滩 2 上海总会 / Shanghai Club",
     "space": true,
     "url": "https://www.asisbiz.com/China/2-Zhongshan-Rd.html",
     "zh": "实拍对照：六根暖色石柱、五组三联顶层拱窗、五组柱廊后墙成对窗、顶部双亭及端部山花、入口双圆窗和坡面金属玻璃雨棚。平面据 OSM，高度、窗距、雕饰和雨棚尺寸仍为照片估算，尚未通过 1:1 验收。照片仅供建模参考，拍摄时期不代表当前现状。查阅于 2026-09-09",
-    "en": "Photo reference: six warm stone columns, five groups of three attic arches, five pairs of recessed upper gallery windows, twin roof pavilions, end pediments, entrance oculi and a pitched metal-and-glass canopy. OSM plan; heights, window spacing, reliefs and canopy dimensions remain photographic estimates, not a verified 1:1 replica. Photos are modeling references only and do not establish current conditions. Accessed 2026-09-09"
+    "en": "Photo reference: six warm stone columns, five groups of three attic arches, five pairs of recessed upper gallery windows, twin roof pavilions, end pediments, entrance oculi and a pitched metal-and-glass canopy. OSM plan; heights, window spacing, reliefs and canopy dimensions remain photographic estimates, not a verified 1:1 replica. Photos are modeling references only and do not establish current conditions. Accessed 2026-09-09",
+    "section": "space-bund"
   },
   {
     "name": "Asisbiz: 外滩 3 有利大楼 / Union Building",
     "space": true,
     "url": "https://www.asisbiz.com/China/3-Zhongshan-Rd.html",
     "zh": "实拍对照：东南角灯笼塔、拱窗、壁柱。平面据 OSM，高度和细部仍为照片估算，尚未通过 1:1 验收。照片仅供建模参考。查阅于 2026-09-07",
-    "en": "Photo reference: southeast lantern tower, arched windows and pilasters. OSM plan; heights and details remain photographic estimates, not a verified 1:1 replica. Photos are modeling references only. Accessed 2026-09-07"
+    "en": "Photo reference: southeast lantern tower, arched windows and pilasters. OSM plan; heights and details remain photographic estimates, not a verified 1:1 replica. Photos are modeling references only. Accessed 2026-09-07",
+    "section": "space-bund"
   },
   {
     "name": "Asisbiz: 外滩 5 日清大楼 / Nissin Building",
     "space": true,
     "url": "https://www.asisbiz.com/China/5-Zhongshan-Rd.html",
     "zh": "实拍对照：六层分区、四壁柱、双山花半圆窗。平面据 OSM，高度和细部仍为照片估算，尚未通过 1:1 验收。照片仅供建模参考。查阅于 2026-09-07；2026-09-08 补对照照片中的招牌：华夏银行。字形、安装尺寸和夜间亮度仍为近似；照片年代不等于当前租户现状。",
-    "en": "Photo reference: six-storey elevation, four pilasters and twin gables. OSM plan; heights and details remain photographic estimates, not a verified 1:1 replica. Photos are modeling references only. Accessed 2026-09-07; signage reviewed 2026-09-08: 华夏银行. Letterforms, mounting dimensions and night brightness remain approximations; photo dates do not establish the current tenant."
+    "en": "Photo reference: six-storey elevation, four pilasters and twin gables. OSM plan; heights and details remain photographic estimates, not a verified 1:1 replica. Photos are modeling references only. Accessed 2026-09-07; signage reviewed 2026-09-08: 华夏银行. Letterforms, mounting dimensions and night brightness remain approximations; photo dates do not establish the current tenant.",
+    "section": "space-bund"
   },
   {
     "name": "Asisbiz: 外滩 6 中国通商银行大楼 / China Commercial Bank",
     "space": true,
     "url": "https://asisbiz.com/China/6-Zhongshan-Rd.html",
     "zh": "实拍对照：五座主次山墙、四层不同窗型、门廊与八处 DOLCE&GABBANA 店招。2026-09-08 重新校正开间与店招位置。平面据 OSM，尺寸、字形及细部为照片估算，尚未通过 1:1 验收。实际拍摄日期未确认，不能据此认定当前租户；照片仅供建模参考。",
-    "en": "Photo reference: five gables of different sizes, four window orders, entrance portico and eight DOLCE&GABBANA signs. Bays and sign positions revised 2026-09-08. OSM plan; dimensions, lettering and details are estimates, not a verified 1:1 replica. Capture date is unconfirmed and does not establish current tenancy; reference photos only."
+    "en": "Photo reference: five gables of different sizes, four window orders, entrance portico and eight DOLCE&GABBANA signs. Bays and sign positions revised 2026-09-08. OSM plan; dimensions, lettering and details are estimates, not a verified 1:1 replica. Capture date is unconfirmed and does not establish current tenancy; reference photos only.",
+    "section": "space-bund"
   },
   {
     "name": "上海城建档案：外滩 6 号 / Shanghai Urban Construction Archives",
     "space": true,
     "url": "https://www.thepaper.cn/newsDetail_forward_25669123",
     "zh": "2023-12-16 发布，2026-09-08 查阅。用于校正通商银行圆拱、弧拱、矩形、尖拱四层窗型，中央高山墙、三条窄缝、四座小山墙、附楼和屋顶栏杆。尺寸按 OSM 与照片比例估算；档案照与店招照并非同一时期。夜间灯位、光度与侧后立面尚未实测，不能认定 1:1 或电影级通过。照片未作为在线贴图。",
-    "en": "Published 2023-12-16; accessed 2026-09-08. Reference for the bank's round, segmental, rectangular and pointed window orders, tall central gable with three slits, four small gables, annex and roof balustrade. Dimensions use OSM and photo proportions; archival and storefront photos show different periods. Night fixtures, photometry and side/rear elevations remain unverified; neither 1:1 nor cinematic quality is certified. Photos are not runtime textures."
+    "en": "Published 2023-12-16; accessed 2026-09-08. Reference for the bank's round, segmental, rectangular and pointed window orders, tall central gable with three slits, four small gables, annex and roof balustrade. Dimensions use OSM and photo proportions; archival and storefront photos show different periods. Night fixtures, photometry and side/rear elevations remain unverified; neither 1:1 nor cinematic quality is certified. Photos are not runtime textures.",
+    "section": "space-bund"
   },
   {
     "name": "商务旅行杂志：外滩 6 号夜景 / Business Travel Magazine",
     "space": true,
     "url": "https://style.sina.com.cn/lei/travel/2010-07-29/155165252.shtml",
     "zh": "新浪转载页面发表于 2010-07-29，2026-09-08 查阅并查看夜景照片。用于通商银行暖金色窗边照明、较亮的水平檐口与暗窗关系；小幅照片不用于精确配光或色温测量。拍摄日期与摄影者未标明，不代表当前灯光。本站灯位、光强及遮挡为近似，照片仅本地审图，不是运行贴图。",
-    "en": "Sina republication dated 2010-07-29; accessed and night photograph inspected 2026-09-08. Reference for warm window lighting, brighter horizontal cornices and dark glazing at the China Commercial Bank. The small image cannot establish exact photometry or color temperature. Capture date and photographer are unspecified; it does not establish current lighting. Fixture placement, intensity and occlusion are approximations. Local reference only, not a runtime texture."
+    "en": "Sina republication dated 2010-07-29; accessed and night photograph inspected 2026-09-08. Reference for warm window lighting, brighter horizontal cornices and dark glazing at the China Commercial Bank. The small image cannot establish exact photometry or color temperature. Capture date and photographer are unspecified; it does not establish current lighting. Fixture placement, intensity and occlusion are approximations. Local reference only, not a runtime texture.",
+    "section": "space-bund"
   },
   {
     "name": "Asisbiz: 外滩 7 大北电报公司大楼 / Great Northern Telegraph",
     "space": true,
     "url": "https://www.asisbiz.com/China/7-Zhongshan-Rd.html",
     "zh": "实拍对照：双侧穹顶、中央坡顶老虎窗。平面据 OSM，高度和细部仍为照片估算，尚未通过 1:1 验收。照片仅供建模参考。查阅于 2026-09-07；2026-09-08 补对照照片中的招牌：盘谷银行 / Bangkok Bank。字形、安装尺寸和夜间亮度仍为近似；照片年代不等于当前租户现状。",
-    "en": "Photo reference: twin domes and central roof dormers. OSM plan; heights and details remain photographic estimates, not a verified 1:1 replica. Photos are modeling references only. Accessed 2026-09-07; signage reviewed 2026-09-08: 盘谷银行 / Bangkok Bank. Letterforms, mounting dimensions and night brightness remain approximations; photo dates do not establish the current tenant."
+    "en": "Photo reference: twin domes and central roof dormers. OSM plan; heights and details remain photographic estimates, not a verified 1:1 replica. Photos are modeling references only. Accessed 2026-09-07; signage reviewed 2026-09-08: 盘谷银行 / Bangkok Bank. Letterforms, mounting dimensions and night brightness remain approximations; photo dates do not establish the current tenant.",
+    "section": "space-bund"
   },
   {
     "name": "Asisbiz: 外滩 9 轮船招商局大楼 / China Merchants Building",
     "space": true,
     "url": "https://www.asisbiz.com/China/9-Zhongshan-Rd.html",
     "zh": "实拍对照：三层红砖、细柱廊道、栏杆与坡顶。平面据 OSM，高度和细部仍为照片估算，尚未通过 1:1 验收。照片仅供建模参考。查阅于 2026-09-07",
-    "en": "Photo reference: three-storey red brick, slender veranda columns and hipped roof. OSM plan; heights and details remain photographic estimates, not a verified 1:1 replica. Photos are modeling references only. Accessed 2026-09-07"
+    "en": "Photo reference: three-storey red brick, slender veranda columns and hipped roof. OSM plan; heights and details remain photographic estimates, not a verified 1:1 replica. Photos are modeling references only. Accessed 2026-09-07",
+    "section": "space-bund"
   },
   {
     "name": "Asisbiz: 外滩 14 交通银行大楼 / Bank of Communications",
     "space": true,
     "url": "https://www.asisbiz.com/China/14-Zhongshan-Rd.html",
     "zh": "实拍对照：竖向翼墙、中央退台、深色入口。平面据 OSM，高度和细部仍为照片估算，尚未通过 1:1 验收。照片仅供建模参考。查阅于 2026-09-07；2026-09-08 补对照照片中的招牌：上海市总工会。字形、安装尺寸和夜间亮度仍为近似；照片年代不等于当前租户现状。",
-    "en": "Photo reference: vertical fins, stepped central crown and dark entrance. OSM plan; heights and details remain photographic estimates, not a verified 1:1 replica. Photos are modeling references only. Accessed 2026-09-07; signage reviewed 2026-09-08: 上海市总工会. Letterforms, mounting dimensions and night brightness remain approximations; photo dates do not establish the current tenant."
+    "en": "Photo reference: vertical fins, stepped central crown and dark entrance. OSM plan; heights and details remain photographic estimates, not a verified 1:1 replica. Photos are modeling references only. Accessed 2026-09-07; signage reviewed 2026-09-08: 上海市总工会. Letterforms, mounting dimensions and night brightness remain approximations; photo dates do not establish the current tenant.",
+    "section": "space-bund"
   },
   {
     "name": "Asisbiz: 外滩 15 华俄道胜银行大楼 / Russo-Chinese Bank",
     "space": true,
     "url": "https://www.asisbiz.com/China/15-Zhongshan-Rd.html",
     "zh": "实拍对照：跨两层六柱廊、基座拱窗、檐口。平面据 OSM，高度和细部仍为照片估算，尚未通过 1:1 验收。照片仅供建模参考。查阅于 2026-09-07；2026-09-08 补对照照片中的招牌：中国外汇交易中心。字形、安装尺寸和夜间亮度仍为近似；照片年代不等于当前租户现状。",
-    "en": "Photo reference: two-storey six-column portico, base arches and cornices. OSM plan; heights and details remain photographic estimates, not a verified 1:1 replica. Photos are modeling references only. Accessed 2026-09-07; signage reviewed 2026-09-08: 中国外汇交易中心. Letterforms, mounting dimensions and night brightness remain approximations; photo dates do not establish the current tenant."
+    "en": "Photo reference: two-storey six-column portico, base arches and cornices. OSM plan; heights and details remain photographic estimates, not a verified 1:1 replica. Photos are modeling references only. Accessed 2026-09-07; signage reviewed 2026-09-08: 中国外汇交易中心. Letterforms, mounting dimensions and night brightness remain approximations; photo dates do not establish the current tenant.",
+    "section": "space-bund"
   },
   {
     "name": "Asisbiz: 外滩 16 台湾银行大楼 / Bank of Taiwan",
     "space": true,
     "url": "https://www.asisbiz.com/China/16-Zhongshan-Rd.html",
     "zh": "实拍对照：四柱门廊、基座、上层窗区。平面据 OSM，高度和细部仍为照片估算，尚未通过 1:1 验收。照片仅供建模参考。查阅于 2026-09-07；2026-09-08 补对照照片中的招牌：招商银行 / CHINA MERCHANTS BANK。字形、安装尺寸和夜间亮度仍为近似；照片年代不等于当前租户现状。",
-    "en": "Photo reference: four-column portico, base and upper window level. OSM plan; heights and details remain photographic estimates, not a verified 1:1 replica. Photos are modeling references only. Accessed 2026-09-07; signage reviewed 2026-09-08: 招商银行 / CHINA MERCHANTS BANK. Letterforms, mounting dimensions and night brightness remain approximations; photo dates do not establish the current tenant."
+    "en": "Photo reference: four-column portico, base and upper window level. OSM plan; heights and details remain photographic estimates, not a verified 1:1 replica. Photos are modeling references only. Accessed 2026-09-07; signage reviewed 2026-09-08: 招商银行 / CHINA MERCHANTS BANK. Letterforms, mounting dimensions and night brightness remain approximations; photo dates do not establish the current tenant.",
+    "section": "space-bund"
   },
   {
     "name": "Asisbiz: 外滩 17 字林西报大楼 / North China Daily News AIA",
     "space": true,
     "url": "https://www.asisbiz.com/China/17-Zhongshan-Rd.html",
     "zh": "实拍对照：深色基座及顶部、浅色主体、双亭和上层拱窗。平面据 OSM，高度和细部仍为照片估算，尚未通过 1:1 验收。照片仅供建模参考。查阅于 2026-09-07；2026-09-08 补对照照片中的招牌：AIA / AMERICAN INTERNATIONAL ASSURANCE。字形、安装尺寸和夜间亮度仍为近似；照片年代不等于当前租户现状。",
-    "en": "Photo reference: dark base and upper floors, pale shaft, twin pavilions and upper arches. OSM plan; heights and details remain photographic estimates, not a verified 1:1 replica. Photos are modeling references only. Accessed 2026-09-07; signage reviewed 2026-09-08: AIA / AMERICAN INTERNATIONAL ASSURANCE. Letterforms, mounting dimensions and night brightness remain approximations; photo dates do not establish the current tenant."
+    "en": "Photo reference: dark base and upper floors, pale shaft, twin pavilions and upper arches. OSM plan; heights and details remain photographic estimates, not a verified 1:1 replica. Photos are modeling references only. Accessed 2026-09-07; signage reviewed 2026-09-08: AIA / AMERICAN INTERNATIONAL ASSURANCE. Letterforms, mounting dimensions and night brightness remain approximations; photo dates do not establish the current tenant.",
+    "section": "space-bund"
   },
   {
     "name": "Asisbiz: 外滩 18 麦加利银行大楼 / Chartered Bank",
     "space": true,
     "url": "https://asisbiz.com/China/18-Zhongshan-Rd.html",
     "zh": "实拍对照：中央双柱深凹廊、退台山花；2026-09-08 补五处底层洞口、Cartier / Ermenegildo Zegna 店招与橱窗边框、展示台。平面据 OSM，字形、尺寸和室内深度为估算，尚未通过 1:1 验收。实际拍摄日期未确认，不能据此认定当前租户；照片仅供建模参考。",
-    "en": "Photo reference: recessed two-column portico and setback pediment; reviewed 2026-09-08 for five ground openings, Cartier / Ermenegildo Zegna signs, display surrounds and plinths. OSM plan; lettering, dimensions and interior depth are estimated, not verified 1:1. Capture date and current tenancy are unconfirmed; reference photos only."
+    "en": "Photo reference: recessed two-column portico and setback pediment; reviewed 2026-09-08 for five ground openings, Cartier / Ermenegildo Zegna signs, display surrounds and plinths. OSM plan; lettering, dimensions and interior depth are estimated, not verified 1:1. Capture date and current tenancy are unconfirmed; reference photos only.",
+    "section": "space-bund"
   },
   {
     "name": "Asisbiz: 外滩 19 汇中饭店（和平南楼） / Palace Hotel Peace South",
     "space": true,
     "url": "https://www.asisbiz.com/China/19-Zhongshan-Rd.html",
     "zh": "实拍对照：红砖浅石分区、圆角窗、铜顶八角亭、南京路长翼。平面据 OSM，高度和细部仍为照片估算，尚未通过 1:1 验收。照片仅供建模参考。查阅于 2026-09-07；2026-09-08 补对照照片中的招牌：THE SWATCH ART PEACE HOTEL。字形、安装尺寸和夜间亮度仍为近似；照片年代不等于当前租户现状。",
-    "en": "Photo reference: red brick and pale stone, corner windows, copper-capped drums and Nanjing Road wing. OSM plan; heights and details remain photographic estimates, not a verified 1:1 replica. Photos are modeling references only. Accessed 2026-09-07; signage reviewed 2026-09-08: THE SWATCH ART PEACE HOTEL. Letterforms, mounting dimensions and night brightness remain approximations; photo dates do not establish the current tenant."
+    "en": "Photo reference: red brick and pale stone, corner windows, copper-capped drums and Nanjing Road wing. OSM plan; heights and details remain photographic estimates, not a verified 1:1 replica. Photos are modeling references only. Accessed 2026-09-07; signage reviewed 2026-09-08: THE SWATCH ART PEACE HOTEL. Letterforms, mounting dimensions and night brightness remain approximations; photo dates do not establish the current tenant.",
+    "section": "space-bund"
   },
   {
     "name": "Asisbiz: 外滩 23 中国银行大楼 / Bank of China",
     "space": true,
     "url": "https://www.asisbiz.com/China/23-Zhongshan-Rd.html",
     "zh": "实拍对照：两侧石花格、三列竖向窗、退台翘檐及西侧附楼。平面据 OSM，高度和细部仍为照片估算，尚未通过 1:1 验收。照片仅供建模参考。查阅于 2026-09-07；2026-09-08 补对照照片中的招牌：中国银行 / BANK OF CHINA。字形、安装尺寸和夜间亮度仍为近似；照片年代不等于当前租户现状。",
-    "en": "Photo reference: stone lattice screens, three central window bands, stepped Chinese eaves and west wing. OSM plan; heights and details remain photographic estimates, not a verified 1:1 replica. Photos are modeling references only. Accessed 2026-09-07; signage reviewed 2026-09-08: 中国银行 / BANK OF CHINA. Letterforms, mounting dimensions and night brightness remain approximations; photo dates do not establish the current tenant."
+    "en": "Photo reference: stone lattice screens, three central window bands, stepped Chinese eaves and west wing. OSM plan; heights and details remain photographic estimates, not a verified 1:1 replica. Photos are modeling references only. Accessed 2026-09-07; signage reviewed 2026-09-08: 中国银行 / BANK OF CHINA. Letterforms, mounting dimensions and night brightness remain approximations; photo dates do not establish the current tenant.",
+    "section": "space-bund"
   },
   {
     "name": "Asisbiz: 外滩 24 横滨正金银行大楼 / Yokohama Specie Bank",
     "space": true,
     "url": "https://www.asisbiz.com/China/24-Zhongshan-Rd.html",
     "zh": "实拍对照：四根巨柱、上部小柱廊、檐口。平面据 OSM，高度和细部仍为照片估算，尚未通过 1:1 验收。照片仅供建模参考。查阅于 2026-09-07；2026-09-08 补对照照片中的招牌：ICBC  中国工商银行。字形、安装尺寸和夜间亮度仍为近似；照片年代不等于当前租户现状。",
-    "en": "Photo reference: four-column giant order, upper colonnade and cornices. OSM plan; heights and details remain photographic estimates, not a verified 1:1 replica. Photos are modeling references only. Accessed 2026-09-07; signage reviewed 2026-09-08: ICBC  中国工商银行. Letterforms, mounting dimensions and night brightness remain approximations; photo dates do not establish the current tenant."
+    "en": "Photo reference: four-column giant order, upper colonnade and cornices. OSM plan; heights and details remain photographic estimates, not a verified 1:1 replica. Photos are modeling references only. Accessed 2026-09-07; signage reviewed 2026-09-08: ICBC  中国工商银行. Letterforms, mounting dimensions and night brightness remain approximations; photo dates do not establish the current tenant.",
+    "section": "space-bund"
   },
   {
     "name": "Asisbiz: 外滩 26 扬子水火保险公司大楼 / Yangtze Insurance Building",
     "space": true,
     "url": "https://www.asisbiz.com/China/26-Zhongshan-Rd.html",
     "zh": "实拍对照：窄立面、上部双柱、双侧深色老虎窗。平面据 OSM，高度和细部仍为照片估算，尚未通过 1:1 验收。照片仅供建模参考。查阅于 2026-09-07；2026-09-08 补对照照片中的招牌：ABC  中国农业银行 / AGRICULTURAL BANK OF CHINA。字形、安装尺寸和夜间亮度仍为近似；照片年代不等于当前租户现状。",
-    "en": "Photo reference: narrow facade, upper paired columns and dark end dormers. OSM plan; heights and details remain photographic estimates, not a verified 1:1 replica. Photos are modeling references only. Accessed 2026-09-07; signage reviewed 2026-09-08: ABC  中国农业银行 / AGRICULTURAL BANK OF CHINA. Letterforms, mounting dimensions and night brightness remain approximations; photo dates do not establish the current tenant."
+    "en": "Photo reference: narrow facade, upper paired columns and dark end dormers. OSM plan; heights and details remain photographic estimates, not a verified 1:1 replica. Photos are modeling references only. Accessed 2026-09-07; signage reviewed 2026-09-08: ABC  中国农业银行 / AGRICULTURAL BANK OF CHINA. Letterforms, mounting dimensions and night brightness remain approximations; photo dates do not establish the current tenant.",
+    "section": "space-bund"
   },
   {
     "name": "Asisbiz: 外滩 27 怡和洋行大楼 / Jardine Matheson Building",
     "space": true,
     "url": "https://asisbiz.com/China/27-Zhongshan-Rd.html",
     "zh": "实拍对照：六根巨柱、中央山花；2026-09-08 补 THE HOUSE OF ROOSEVELT / ROLEX 店招、绿色下窗与金属窗框。平面据 OSM，尺寸与灯光仍为估算，品牌专用字体及皇冠图形尚未复刻，未通过 1:1 验收。实际拍摄日期未确认，不能据此认定当前租户；照片仅供建模参考。",
-    "en": "Photo reference: six-column order and central pediment; reviewed 2026-09-08 for THE HOUSE OF ROOSEVELT / ROLEX signs, green lower panes and metal frames. OSM plan; dimensions and lighting remain estimated, with exact brand typefaces and crown symbols still missing. Not verified 1:1; capture date and current tenancy are unconfirmed. Reference photos only."
+    "en": "Photo reference: six-column order and central pediment; reviewed 2026-09-08 for THE HOUSE OF ROOSEVELT / ROLEX signs, green lower panes and metal frames. OSM plan; dimensions and lighting remain estimated, with exact brand typefaces and crown symbols still missing. Not verified 1:1; capture date and current tenancy are unconfirmed. Reference photos only.",
+    "section": "space-bund"
   },
   {
     "name": "Asisbiz: 外滩 28 格林邮船大楼 / Glen Line Building",
     "space": true,
     "url": "https://www.asisbiz.com/China/2-Beijing-Rd.html",
     "zh": "实拍对照：巨壁柱、中央逐级屋顶塔及半圆窗。平面据 OSM，高度和细部仍为照片估算，尚未通过 1:1 验收。照片仅供建模参考。查阅于 2026-09-07",
-    "en": "Photo reference: giant pilasters, stepped central roof pavilion and semicircular window. OSM plan; heights and details remain photographic estimates, not a verified 1:1 replica. Photos are modeling references only. Accessed 2026-09-07"
+    "en": "Photo reference: giant pilasters, stepped central roof pavilion and semicircular window. OSM plan; heights and details remain photographic estimates, not a verified 1:1 replica. Photos are modeling references only. Accessed 2026-09-07",
+    "section": "space-bund"
   },
   {
     "name": "Asisbiz: 外滩 29 东方汇理银行大楼 / Banque de Indochine",
     "space": true,
     "url": "https://www.asisbiz.com/China/29-Zhongshan-Rd.html",
     "zh": "实拍对照：三层古典立面、壁柱与中央山花。平面据 OSM，高度和细部仍为照片估算，尚未通过 1:1 验收。照片仅供建模参考。查阅于 2026-09-07；2026-09-08 补对照照片中的招牌：中国光大银行。字形、安装尺寸和夜间亮度仍为近似；照片年代不等于当前租户现状。",
-    "en": "Photo reference: three-storey classical facade, pilasters and central pediment. OSM plan; heights and details remain photographic estimates, not a verified 1:1 replica. Photos are modeling references only. Accessed 2026-09-07; signage reviewed 2026-09-08: 中国光大银行. Letterforms, mounting dimensions and night brightness remain approximations; photo dates do not establish the current tenant."
+    "en": "Photo reference: three-storey classical facade, pilasters and central pediment. OSM plan; heights and details remain photographic estimates, not a verified 1:1 replica. Photos are modeling references only. Accessed 2026-09-07; signage reviewed 2026-09-08: 中国光大银行. Letterforms, mounting dimensions and night brightness remain approximations; photo dates do not establish the current tenant.",
+    "section": "space-bund"
   },
   {
     "name": "Asisbiz: 外滩 33 英国领事馆 / Former British Consulate",
     "space": true,
     "url": "https://www.asisbiz.com/China/32-Zhongshan-Rd/images/Wiki-The-Consulate-General-of-the-United-Kingdom-building-in-Shanghai-01.jpg",
     "zh": "实拍对照：南侧两层主楼、坡顶烟囱、北侧官邸。平面据 OSM，高度和细部仍为照片估算，尚未通过 1:1 验收。照片仅供建模参考。查阅于 2026-09-07",
-    "en": "Photo reference: southern two-storey main house, hipped roof, chimneys and northern residence. OSM plan; heights and details remain photographic estimates, not a verified 1:1 replica. Photos are modeling references only. Accessed 2026-09-07"
+    "en": "Photo reference: southern two-storey main house, hipped roof, chimneys and northern residence. OSM plan; heights and details remain photographic estimates, not a verified 1:1 replica. Photos are modeling references only. Accessed 2026-09-07",
+    "section": "space-bund"
   },
   {
     "name": "Car Concept: Eric Chadwick / DGG",
@@ -700,7 +808,8 @@
     "url": "https://github.com/KhronosGroup/glTF-Sample-Assets/tree/main/Models/CarConcept",
     "zh": "魔方空间车库模型及贴图，Eric Chadwick / Darmstadt Graphics Group，2024，CC BY 4.0",
     "en": "Garage model and textures by Eric Chadwick / Darmstadt Graphics Group, 2024, CC BY 4.0",
-    "long_en": "Car Concept from Khronos glTF Sample Assets. Model and textures copyright 2024 Darmstadt Graphics Group GmbH, by Eric Chadwick, licensed under https://creativecommons.org/licenses/by/4.0/. Khronos and 3D Commerce logos remain subject to the Khronos trademark notice in the source repository. Hosted locally; scaled and glass rendering adapted for the space."
+    "long_en": "Car Concept from Khronos glTF Sample Assets. Model and textures copyright 2024 Darmstadt Graphics Group GmbH, by Eric Chadwick, licensed under https://creativecommons.org/licenses/by/4.0/. Khronos and 3D Commerce logos remain subject to the Khronos trademark notice in the source repository. Hosted locally; scaled and glass rendering adapted for the space.",
+    "section": "space-tools"
   },
   {
     "name": "Poly Haven",
@@ -708,139 +817,160 @@
     "url": "https://polyhaven.com/license",
     "zh": "魔方空间使用本地托管的 CC0 环境光、材质、家具与植物模型",
     "en": "Self-hosted CC0 lighting, materials, furniture and plant models for Cube Space",
-    "long_en": "Cube Space uses Poly Haven's belfast_sunset_puresky, marble_01, wood_floor, fabric_pattern_07, rough_linen, dirty_carpet, herringbone_parquet, sofa_03, modern_arm_chair_01, potted_plant_01, potted_plant_02, island_tree_02 and throw_pillows_01 assets, distributed under CC0. Runtime assets are hosted locally with the application."
+    "long_en": "Cube Space uses Poly Haven's belfast_sunset_puresky, marble_01, wood_floor, fabric_pattern_07, rough_linen, dirty_carpet, herringbone_parquet, sofa_03, modern_arm_chair_01, potted_plant_01, potted_plant_02, island_tree_02 and throw_pillows_01 assets, distributed under CC0. Runtime assets are hosted locally with the application.",
+    "section": "space-tools"
   },
   {
     "name": "Country State City",
     "url": "https://github.com/dr5hn/countrystatecity-npm",
     "zh": "账号国家、省份与城市选项数据（ODbL-1.0）",
     "en": "Country, state or province, and city option data for account profiles (ODbL-1.0)",
-    "long_en": "The private account location selector uses a compact, self-hosted snapshot generated from Country State City."
+    "long_en": "The private account location selector uses a compact, self-hosted snapshot generated from Country State City.",
+    "section": "platform"
   },
   {
     "name": "Feishin",
     "url": "https://github.com/jeffvli/feishin",
     "zh": "音乐播放器的信息层级、播放控制与同步歌词体验参考；CubeRoot 未复制其 GPL-3.0 源码或服务端适配",
     "en": "UX reference for the music player's information hierarchy, playback controls, and synced lyrics; CubeRoot copies no GPL-3.0 source code or server adapters",
-    "long_en": "Feishin is the primary product and UX reference for CubeRoot's music player. The implementation uses CubeRoot's own React UI and browser-native audio transport without copying Feishin's GPL-3.0 source code or server integrations."
+    "long_en": "Feishin is the primary product and UX reference for CubeRoot's music player. The implementation uses CubeRoot's own React UI and browser-native audio transport without copying Feishin's GPL-3.0 source code or server integrations.",
+    "section": "platform"
   },
   {
     "name": "YesPlayMusic",
     "url": "https://github.com/qier222/YesPlayMusic",
     "zh": "音乐播放器的视觉与产品分层参考；CubeRoot 未复制其 MIT 源码或第三方音乐服务实现",
     "en": "Visual and product-structure reference for the music player; CubeRoot copies no MIT source code or third-party music-service implementation",
-    "long_en": "YesPlayMusic informed the visual and product-layering research for CubeRoot's music player. CubeRoot does not copy its source code or integrate its third-party music-service behavior."
+    "long_en": "YesPlayMusic informed the visual and product-layering research for CubeRoot's music player. CubeRoot does not copy its source code or integrate its third-party music-service behavior.",
+    "section": "platform"
   },
   {
     "name": "Apple Music Like Lyrics",
     "url": "https://github.com/amll-dev/applemusic-like-lyrics",
     "zh": "逐词歌词交互的调研参考；当前播放器未引入或复制其 AGPL-3.0 组件",
     "en": "Research reference for word-synced lyric interactions; the current player neither imports nor copies its AGPL-3.0 components",
-    "long_en": "Apple Music Like Lyrics was evaluated as a reference for advanced word-synced lyric presentation. CubeRoot's current lightweight LRC implementation does not import or copy its AGPL-3.0 components."
+    "long_en": "Apple Music Like Lyrics was evaluated as a reference for advanced word-synced lyric presentation. CubeRoot's current lightweight LRC implementation does not import or copy its AGPL-3.0 components.",
+    "section": "platform"
   },
   {
     "name": "Handsontable/HyperFormula",
     "url": "https://github.com/handsontable/hyperformula",
     "zh": "在线协作表格的公式计算引擎（GPL-3.0）",
     "en": "Formula engine for collaborative spreadsheets (GPL-3.0)",
-    "long_en": "HyperFormula evaluates formulas, ranges, and cross-sheet references in the collaborative spreadsheet editor."
+    "long_en": "HyperFormula evaluates formulas, ranges, and cross-sheet references in the collaborative spreadsheet editor.",
+    "section": "platform"
   },
   {
     "name": "or18/RubiksSolverDemo",
     "url": "https://github.com/or18/RubiksSolverDemo",
     "zh": "3x3 求解器 demo + PWA 脚手架",
     "en": "3×3 solver demo",
-    "long_en": "3×3 solver & trainer pages, PWA scaffolding"
+    "long_en": "3×3 solver & trainer pages, PWA scaffolding",
+    "section": "solvers"
   },
   {
     "name": "mikavilpas/squanmate",
     "url": "https://github.com/mikavilpas/squanmate",
     "zh": "Square-1 形状训练、奇偶分析、数位与学习工具的功能和算法参考；移植页面复用本站 SQ1 状态、公式库、SVG 与 /sim 绘图引擎（EPL-1.0）",
     "en": "Feature and algorithm reference for the Square-1 shape trainer, parity analysis, count positions, and learning tools; the port reuses CubeRoot's SQ1 state, algorithm library, SVG, and /sim drawing engines (EPL-1.0)",
-    "long_en": "Squanmate by Mika Vilpas is the upstream functional reference for CubeRoot's Square-1 workspace: cubeshape and algorithm training, the 29 canonical single-layer shape names, scramble inspection, algorithm shape visualization and import, parity count positions, parity-sequence practice, and trainer controls. CubeRoot reuses its own notation/state implementation, algorithm database, SVG renderer, and /sim drawing system instead of carrying over Squanmate's ClojureScript UI stack."
+    "long_en": "Squanmate by Mika Vilpas is the upstream functional reference for CubeRoot's Square-1 workspace: cubeshape and algorithm training, the 29 canonical single-layer shape names, scramble inspection, algorithm shape visualization and import, parity count positions, parity-sequence practice, and trainer controls. CubeRoot reuses its own notation/state implementation, algorithm database, SVG renderer, and /sim drawing system instead of carrying over Squanmate's ClojureScript UI stack.",
+    "section": "practice"
   },
   {
     "name": "Daniel's Public PBL Doc",
     "url": "https://docs.google.com/spreadsheets/d/1VQNYNwdOLqqBkacHcfYtEBst22FOVhH9EAhTOYOZTgo/",
     "zh": "Square-1 PBL 公式数据与维护来源",
     "en": "Square-1 PBL algorithm-data and maintenance source",
-    "long_en": "Daniel's public Square-1 PBL workbook is the source reference for the normalized PBL algorithm library presented on CubeRoot."
+    "long_en": "Daniel's public Square-1 PBL workbook is the source reference for the normalized PBL algorithm library presented on CubeRoot.",
+    "section": "practice"
   },
   {
     "name": "Simple Square-1 PBL Finder v1.2 by Anuar and Lucas",
     "url": "https://www.dropbox.com/scl/fi/b47zgzc2z8w8w818pzi1m/Square-1-PBL-Finder.jar?rlkey=rxnjgdf319zpq1ubr4bkrddab&e=2&dl=0",
     "zh": "Square-1 PBL Finder 的行为参考；本站采用 clean-room 行为重实现，未复制源码，许可证尚未核实",
     "en": "Behavioral reference for the Square-1 PBL Finder; CubeRoot uses a clean-room behavioral reimplementation, copies no source code, and has not verified the license",
-    "long_en": "The supplied Simple Square-1 PBL Finder v1.2 JAR by Anuar and Lucas is used only as a black-box behavioral reference. CubeRoot's finder is a clean-room reimplementation built on its own Square-1 state and UI infrastructure; no source code was copied, and the original JAR's license remains unverified."
+    "long_en": "The supplied Simple Square-1 PBL Finder v1.2 JAR by Anuar and Lucas is used only as a black-box behavioral reference. CubeRoot's finder is a clean-room reimplementation built on its own Square-1 state and UI infrastructure; no source code was copied, and the original JAR's license remains unverified.",
+    "section": "practice"
   },
   {
     "name": "jonatanklosko/wca_statistics",
     "url": "https://github.com/jonatanklosko/wca_statistics",
     "zh": "WCA 统计管道原型(本站为 TS 重写版)",
     "en": "WCA statistics pipeline (TS rewrite here)",
-    "long_en": "statistics engine, SQL queries, plugin framework (TS rewrite)"
+    "long_en": "statistics engine, SQL queries, plugin framework (TS rewrite)",
+    "section": "competition"
   },
   {
     "name": "mihlefeld/Alg-Trainers",
     "url": "https://github.com/mihlefeld/Alg-Trainers",
     "zh": "公式训练器",
-    "en": "Algorithm trainer pages"
+    "en": "Algorithm trainer pages",
+    "section": "practice"
   },
   {
     "name": "carykh/hthgrapher",
     "url": "https://github.com/carykh/hthgrapher",
     "zh": "HTH 计算器(已 port 为 React)",
-    "en": "Head-to-Head Ao5 calculator (React port)"
+    "en": "Head-to-Head Ao5 calculator (React port)",
+    "section": "visualization"
   },
   {
     "name": "MatteoColombo/cube_challenge_timer",
     "url": "https://github.com/MatteoColombo/cube_challenge_timer",
     "zh": "1v1 对战计时器(已 port 为 React)",
-    "en": "1v1 battle timer logic (React port)"
+    "en": "1v1 battle timer logic (React port)",
+    "section": "practice"
   },
   {
     "name": "cs0x7f/cstimer",
     "url": "https://github.com/cs0x7f/cstimer",
     "zh": "csTimer 计时器(integrated)+ 非 WCA 打乱引擎(/scramble/gen 30+ puzzle 走 vendor 进 tools/cstimer-scramble/);部分 /scramble/solver 求解器也直接 wrap cstimer 自带 solver 当引擎(dino = redi IDA*、大金字塔 mpyrso = 两阶段、Square-1 = sq12phase 两阶段,后者上游只用于生成随机态打乱,我们在同一份搜索上加了求解入口);/timer 的智能魔方与智能计时器协议(GAN / 魔域 / 奇艺 / GoCube / Giiker)亦按其实现移植",
     "en": "csTimer & WCA random-state scramble engine; non-WCA puzzle scramble engine for /scramble/gen (vendored in tools/cstimer-scramble/); a few /scramble/solver solvers also wrap cstimer's own solver as the solve engine (Dino = redi IDA*, Master Pyraminx = two-phase, Square-1 = sq12phase two-phase — upstream only generates random-state scrambles with it, we added a solve entry point on the same search); /timer's smart-cube and smart-timer protocols (GAN / MoYu / QiYi / GoCube / Giiker) are ported from its implementations too",
-    "long_en": "professional speedcubing timer & WCA random-state scramble engine; also vendored at tools/cstimer-scramble/ to power non-WCA puzzle generation (gear/ivy/dino/sq2/giga/pyracrystal/heli/curvycopter/cuboids/15-puzzle/bicube/siamese cubes/...) via classic Web Worker bridge; for a few puzzles whose state space is too large for a full BFS/table, cstimer's own solver is wrapped directly as the SOLVING engine in /scramble/solver (Dino = redi IDA*, Master Pyraminx = two-phase, Square-1 = sq12phase two-phase); cstimer's megascramble model + poly3dlib geometry (makePuzzle) are also used as the bit-exact piece-model oracle when building from-scratch reductions (e.g. the Helicopter Cube and the Siamese 2×2×2 solvers)"
+    "long_en": "professional speedcubing timer & WCA random-state scramble engine; also vendored at tools/cstimer-scramble/ to power non-WCA puzzle generation (gear/ivy/dino/sq2/giga/pyracrystal/heli/curvycopter/cuboids/15-puzzle/bicube/siamese cubes/...) via classic Web Worker bridge; for a few puzzles whose state space is too large for a full BFS/table, cstimer's own solver is wrapped directly as the SOLVING engine in /scramble/solver (Dino = redi IDA*, Master Pyraminx = two-phase, Square-1 = sq12phase two-phase); cstimer's megascramble model + poly3dlib geometry (makePuzzle) are also used as the bit-exact piece-model oracle when building from-scratch reductions (e.g. the Helicopter Cube and the Siamese 2×2×2 solvers)",
+    "section": "practice"
   },
   {
     "name": "poliva/smartcube-web-bluetooth",
     "url": "https://github.com/poliva/smartcube-web-bluetooth",
     "zh": "全端共享的 MoYu32 地址发现参考其 MY32/MY33 有限候选探测设计；候选经加密状态校验后使用",
-    "en": "Reference for shared MoYu32 MY32/MY33 finite MAC candidate probing across clients; candidates are verified with encrypted state replies"
+    "en": "Reference for shared MoYu32 MY32/MY33 finite MAC candidate probing across clients; candidates are verified with encrypted state replies",
+    "section": "practice"
   },
   {
     "name": "mintydev789/RecordRanks",
     "url": "https://github.com/mintydev789/RecordRanks",
     "zh": "比赛管理、排名与纪录数据服务；/contests 以本站双语界面展示 Cubing Contests 公开数据，成绩格式与排名计算复用 RecordRanks",
-    "en": "Competition, ranking and record data service; /contests presents Cubing Contests public data in CubeRoot's bilingual UI, reusing RecordRanks result formatting and rankings"
+    "en": "Competition, ranking and record data service; /contests presents Cubing Contests public data in CubeRoot's bilingual UI, reusing RecordRanks result formatting and rankings",
+    "section": "competition"
   },
   {
     "name": "afedotov/gan-web-bluetooth",
     "url": "https://github.com/afedotov/gan-web-bluetooth",
     "zh": "GAN 智能魔方协议参考;/timer 的 GAN Gen2 / Gen4 陀螺仪四元数位布局按其规格实现",
-    "en": "GAN smart-cube protocol reference; /timer's GAN Gen2 / Gen4 gyroscope quaternion bit layouts follow its spec"
+    "en": "GAN smart-cube protocol reference; /timer's GAN Gen2 / Gen4 gyroscope quaternion bit layouts follow its spec",
+    "section": "practice"
   },
   {
     "name": "lukeburong/weilong-v10-ai-protocol",
     "url": "https://github.com/lukeburong/weilong-v10-ai-protocol",
     "zh": "魔域 MoYu32 (威龙 V10 AI) 协议文档;/timer 的 MoYu32 驱动与陀螺仪解码据此实现",
-    "en": "MoYu32 (WeiLong V10 Ai) protocol documentation; /timer's MoYu32 driver and gyroscope decoding are built from it"
+    "en": "MoYu32 (WeiLong V10 Ai) protocol documentation; /timer's MoYu32 driver and gyroscope decoding are built from it",
+    "section": "practice"
   },
   {
     "name": "cs0x7f/cube555",
     "url": "https://github.com/cs0x7f/cube555",
     "zh": "5x5 随机状态求解器(server-side daemon 驱动 /scramble/gen 5x5)",
     "en": "5x5 random-state solver (server-side daemon powers /scramble/gen 5x5)",
-    "long_en": "five-phase reduction 5x5x5 solver — runs as a Java child process under our Hono server"
+    "long_en": "five-phase reduction 5x5x5 solver — runs as a Java child process under our Hono server",
+    "section": "solvers"
   },
   {
     "name": "Roman-/mosaic",
     "url": "https://github.com/Roman-/mosaic",
     "zh": "魔方马赛克(已 port 为 React)",
-    "en": "Cube mosaic generator (React port)"
+    "en": "Cube mosaic generator (React port)",
+    "section": "visualization"
   },
   {
     "name": "huazhechen/cuber",
@@ -848,261 +978,300 @@
     "url": "https://github.com/huazhechen/cuber",
     "zh": "/sim 与 /space 共用的 three.js 魔方引擎(原 Vue + Vuetify,已 port 为 React)",
     "en": "Shared three.js cube engine for /sim and /space (originally Vue + Vuetify, ported to React)",
-    "long_en": "Virtual cube engine (Three.js cube/cubelet/group/twister/controller core), MIT, Copyright (c) 2018 huazhechen, ported to React for /sim and reused in /space. Reviewed upstream through 3750b892691c4d7582fc13c857c3b79542bba4af on 2026-10-12. Ordinary stickered NxN cubes in /sim use bf18e8d's additive coloured emission, 0.9 ambient / 0.25 directional lighting and sRGB/NoToneMapping pipeline, with c3858e3's face, plastic and specular defaults. Emission is adapted to instancing, masks, pictures and SVG export. Custom colours, the WCA palette, high-order rendering and other puzzle rigs are retained. The original UI was Vue + Vuetify; upstream's later React/Vite UI is not imported."
+    "long_en": "Virtual cube engine (Three.js cube/cubelet/group/twister/controller core), MIT, Copyright (c) 2018 huazhechen, ported to React for /sim and reused in /space. Reviewed upstream through 3750b892691c4d7582fc13c857c3b79542bba4af on 2026-10-12. Ordinary stickered NxN cubes in /sim use bf18e8d's additive coloured emission, 0.9 ambient / 0.25 directional lighting and sRGB/NoToneMapping pipeline, with c3858e3's face, plastic and specular defaults. Emission is adapted to instancing, masks, pictures and SVG export. Custom colours, the WCA palette, high-order rendering and other puzzle rigs are retained. The original UI was Vue + Vuetify; upstream's later React/Vite UI is not imported.",
+    "section": "space-tools"
   },
   {
     "name": "cubing/cubing.js",
     "url": "https://github.com/cubing/cubing.js",
     "zh": "Twizzle 同源的 cubing.js TwistyPlayer 用于模拟器与公式播放器，并提供智能魔方实况的可选三维引擎；公式解析、各项目随机状态打乱及二阶 FTO 求解器的几何与记号也复用此库",
     "en": "cubing.js TwistyPlayer, also used by Twizzle, powers simulator and alg players and the optional live smart-cube 3D engine; alg parsing, random-state scrambles and Baby FTO solver geometry and notation also share this library",
-    "long_en": "Lucas Garron's cubing.js — Pyraminx / Skewb / Megaminx canvases in `/sim` embed `TwistyPlayer` to mirror the alpha.twizzle.net/edit demo; the `Alg` parser, `randomScrambleForEvent`, and several `PuzzleID` utilities are reused across alg/recon/training pages. The Baby FTO exact solver uses cubing.js's named baby_fto loader and PuzzleGeometry move semantics, including the loader's invisible single-colour centre orientations and free whole-puzzle rotations. Baby FTO is isomorphic to the Diamond octahedron; its explicit cubing.js face labels and orientation convention are preserved instead of interpreting csTimer Diamond notation as interchangeable. The compact coordinate BFS and state exports are implemented in CubeRoot."
+    "long_en": "Lucas Garron's cubing.js — Pyraminx / Skewb / Megaminx canvases in `/sim` embed `TwistyPlayer` to mirror the alpha.twizzle.net/edit demo; the `Alg` parser, `randomScrambleForEvent`, and several `PuzzleID` utilities are reused across alg/recon/training pages. The Baby FTO exact solver uses cubing.js's named baby_fto loader and PuzzleGeometry move semantics, including the loader's invisible single-colour centre orientations and free whole-puzzle rotations. Baby FTO is isomorphic to the Diamond octahedron; its explicit cubing.js face labels and orientation convention are preserved instead of interpreting csTimer Diamond notation as interchangeable. The compact coordinate BFS and state exports are implemented in CubeRoot.",
+    "section": "visualization"
   },
   {
     "name": "huizhiLLL/DCTimer-BLE",
     "url": "https://github.com/huizhiLLL/DCTimer-BLE",
     "zh": "智能魔方专项训练规则及打乱逆序纠错交互参考（同层合并、红色纠错）；LSE/L10P 固定朝向随机状态约束参考其 Scrambler 实现，复用本站两阶段求解器生成打乱",
-    "en": "Reference for smart-cube training rules, scramble undo guidance with merged turns and inline red corrections, and fixed-grip LSE/L10P random-state constraints; scrambles use CubeRoot's existing two-phase solver"
+    "en": "Reference for smart-cube training rules, scramble undo guidance with merged turns and inline red corrections, and fixed-grip LSE/L10P random-state constraints; scrambles use CubeRoot's existing two-phase solver",
+    "section": "practice"
   },
   {
     "name": "MeigenChou/DCTimer-Android",
     "url": "https://github.com/MeigenChou/DCTimer-Android",
     "zh": "BLE / 协议参考;对战计时器设计灵感",
     "en": "BLE / protocol reference; battle-timer design inspiration",
-    "long_en": "design inspiration for the battle timer"
+    "long_en": "design inspiration for the battle timer",
+    "section": "practice"
   },
   {
     "name": "MnlPhlp/tauri-plugin-blec",
     "url": "https://github.com/MnlPhlp/tauri-plugin-blec",
     "zh": "Windows/macOS Tauri 宿主的系统 BLE transport；GAN 协议与状态机仍复用 CubeRoot 共享实现（MIT OR Apache-2.0）",
     "en": "Native BLE transport for the Windows/macOS Tauri host; GAN protocol and state remain in CubeRoot's shared implementation (MIT OR Apache-2.0)",
-    "long_en": "The installed Windows and macOS clients use tauri-plugin-blec only for native scanning, GATT connection, reads, writes, and notifications. Device selection, GAN v4 crypto, packet decoding, cube state, and timing behavior remain in CubeRoot's shared packages."
+    "long_en": "The installed Windows and macOS clients use tauri-plugin-blec only for native scanning, GATT connection, reads, writes, and notifications. Device selection, GAN v4 crypto, packet decoding, cube state, and timing behavior remain in CubeRoot's shared packages.",
+    "section": "practice"
   },
   {
     "name": "HarmonyOS Samples/BluetoothLowEnergy",
     "url": "https://gitee.com/harmonyos_samples/BluetoothLowEnergy",
     "zh": "HarmonyOS NEXT 原生 BLE API 与生命周期参考；宿主 adapter 按本站共享 GAN transport 合同重写（Apache-2.0）",
     "en": "HarmonyOS NEXT native BLE API and lifecycle reference; the host adapter is reimplemented against CubeRoot's shared GAN transport contract (Apache-2.0)",
-    "long_en": "Huawei's official BluetoothLowEnergy sample anchors the API 22 scan, GATT service, characteristic read/write, notification, and cleanup lifecycle used by the HarmonyOS NEXT thin host. CubeRoot keeps all GAN protocol and product behavior in the shared implementation."
+    "long_en": "Huawei's official BluetoothLowEnergy sample anchors the API 22 scan, GATT service, characteristic read/write, notification, and cleanup lifecycle used by the HarmonyOS NEXT thin host. CubeRoot keeps all GAN protocol and product behavior in the shared implementation.",
+    "section": "practice"
   },
   {
     "name": "huizhiLLL/WCA-Nemesizer-API",
     "url": "https://github.com/huizhiLLL/WCA-Nemesizer-API",
     "zh": "宿敌算法参考(client-side TS 重写;UI 灵感 nemesizer.com);数据基于最近的 WCA developer dump,每周自动更新",
     "en": "Nemesis algorithm reference (client-side TS reimpl; UI inspired by nemesizer.com); data refreshed weekly from the WCA developer dump",
-    "long_en": "nemesis-relation algorithm reference (client-side TS reimplementation; UI inspired by [nemesizer.com](https://nemesizer.com))"
+    "long_en": "nemesis-relation algorithm reference (client-side TS reimplementation; UI inspired by [nemesizer.com](https://nemesizer.com))",
+    "section": "competition"
   },
   {
     "name": "roudai/VisualCubeEditor2",
     "url": "https://github.com/roudai/VisualCubeEditor2",
     "zh": "VisualCube GUI 编辑器(UI 仿制,渲染换为 @cuberoot/visualcube)",
     "en": "VisualCube GUI editor (UI replicated; renderer swapped to ours)",
-    "long_en": "Vue + sr-visualizer GUI cube image editor; UI replicated in React for our own image studio, now the /sim image panel (renderer swapped to our `@cuberoot/visualcube` package)"
+    "long_en": "Vue + sr-visualizer GUI cube image editor; UI replicated in React for our own image studio, now the /sim image panel (renderer swapped to our `@cuberoot/visualcube` package)",
+    "section": "visualization"
   },
   {
     "name": "tdecker91/puzzle-gen",
     "url": "https://github.com/tdecker91/puzzle-gen",
     "zh": "非 NxN puzzle SVG 渲染(Square-1 / Megaminx / Pyraminx / Skewb)",
     "en": "Non-NxN puzzle SVG renderer (Square-1 / Megaminx / Pyraminx / Skewb)",
-    "long_en": "non-cube WCA puzzle SVG renderer (`sr-puzzlegen` v1.0.4, vendored as `@cuberoot/vendor-sr-puzzlegen`; Square-1, Megaminx, Pyraminx, Skewb — iso / net / top variants) used by the image studio"
+    "long_en": "non-cube WCA puzzle SVG renderer (`sr-puzzlegen` v1.0.4, vendored as `@cuberoot/vendor-sr-puzzlegen`; Square-1, Megaminx, Pyraminx, Skewb — iso / net / top variants) used by the image studio",
+    "section": "visualization"
   },
   {
     "name": "cube.rider.biz/visualcube.php",
     "url": "https://cube.rider.biz/visualcube.php",
     "zh": "PHP VisualCube(Cride5 / Yan / Kira 一脉);URL query API + 扩展 mask 形状 + fcs_format_alg 记号 → @cuberoot/visualcube",
     "en": "PHP VisualCube (Cride5 / Yan / Kira lineage); URL query API + extended masks + fcs_format_alg notation",
-    "long_en": "PHP VisualCube (Cride5 / Yan / Kira lineage); source of the URL query API (`pzl`/`alg`/`arw`/`ac`/`view=trans`/`stage` etc), extended mask shapes, and PHP `fcs_format_alg` notation extensions ported into our `@cuberoot/visualcube`"
+    "long_en": "PHP VisualCube (Cride5 / Yan / Kira lineage); source of the URL query API (`pzl`/`alg`/`arw`/`ac`/`view=trans`/`stage` etc), extended mask shapes, and PHP `fcs_format_alg` notation extensions ported into our `@cuberoot/visualcube`",
+    "section": "visualization"
   },
   {
     "name": "Spencer Chubb / CubingApp",
     "url": "https://cubingapp.com/",
     "zh": "Square-1、3x3 入门顶层与桥式、4x4 PLL Parity、Pyraminx 公式数据，以及 WCA Kinch 排名、姓名排名、个人纪录连续场次工具逻辑 (MIT)",
     "en": "Square-1, 3x3 beginner last layer and Roux, 4x4 PLL Parity, Pyraminx algorithms, plus WCA Kinch ranks, name ranks, and personal-record streak tool logic (MIT)",
-    "long_en": "Selected CubingApp data and calculator semantics ported from commit 613a49885dc618023368e5f0c2a25024b8c7e9a5 under the MIT License: Square-1 CS, CSP, CP, EO, EP and OBL; 2 Look OLL, PLL and CMLL; CMLL and OH CMLL supplements; Roux LSE EO and EOLR; 4x4 PLL Parity alternatives; Pyraminx last-layer and L4E supplements; Kinch rankings; name matching; and personal-record streaks"
+    "long_en": "Selected CubingApp data and calculator semantics ported from commit 613a49885dc618023368e5f0c2a25024b8c7e9a5 under the MIT License: Square-1 CS, CSP, CP, EO, EP and OBL; 2 Look OLL, PLL and CMLL; CMLL and OH CMLL supplements; Roux LSE EO and EOLR; 4x4 PLL Parity alternatives; Pyraminx last-layer and L4E supplements; Kinch rankings; name matching; and personal-record streaks",
+    "section": "practice"
   },
   {
     "name": "Jobarion/cubelib + joba.me/mallard",
     "url": "https://github.com/Jobarion/cubelib",
     "zh": "FMC 分步还原链行为参考(/scramble/analyzer 底部 EO→DR→HTR→FR→Finish + NISS;UI 仿 joba.me/mallard,FR 坐标 / 链编排 / NISS 全用 Rust + TS 按其行为自有重写,未拷源码)",
     "en": "FMC step-by-step solver reference (EO→DR→HTR→FR→Finish + NISS chain at the bottom of /scramble/analyzer; UI mirrors joba.me/mallard, engine reimplemented from scratch in Rust + TS — no code copied)",
-    "long_en": "Jobarion's cubelib Rust FMC solver + its joba.me/mallard web UI — behavior & UI reference for the step-by-step EO→DR→HTR→FR→Finish + NISS chain at the bottom of `/scramble/analyzer`. Our FR coordinate, chain orchestrator and NISS logic were reimplemented from scratch in Rust + TypeScript on our own solver engine; no cubelib source was copied"
+    "long_en": "Jobarion's cubelib Rust FMC solver + its joba.me/mallard web UI — behavior & UI reference for the step-by-step EO→DR→HTR→FR→Finish + NISS chain at the bottom of `/scramble/analyzer`. Our FR coordinate, chain orchestrator and NISS logic were reimplemented from scratch in Rust + TypeScript on our own solver engine; no cubelib source was copied",
+    "section": "solvers"
   },
   {
     "name": "trangium/MovecountCoefficient",
     "url": "https://github.com/trangium/trangium.github.io",
     "zh": "MCC 公式测速算法(algSpeed.js 已 port 为 TS,/scramble/mcc;MIT)",
     "en": "Movecount Coefficient alg-speed metric (algSpeed.js ported to TS for /scramble/mcc; MIT)",
-    "long_en": "trangium's Movecount Coefficient calculator — the algSpeed.js fingertrick-simulation metric is ported to TypeScript (golden-locked against upstream) to power the `/scramble/mcc` page; UI rebuilt in React"
+    "long_en": "trangium's Movecount Coefficient calculator — the algSpeed.js fingertrick-simulation metric is ported to TypeScript (golden-locked against upstream) to power the `/scramble/mcc` page; UI rebuilt in React",
+    "section": "practice"
   },
   {
     "name": "trangium/BatchSolver",
     "url": "https://github.com/trangium/trangium.github.io",
     "zh": "批量公式集求解引擎(worker.js 已 port 为 TS,/scramble/batch-solver 与 /scramble/sub-solver;MIT)",
     "en": "Batch Solver algset-generation engine (worker.js ported to TS for /scramble/batch-solver and /scramble/sub-solver; MIT)",
-    "long_en": "trangium's Batch Solver — the worker.js permutation engine (custom puzzle definitions, equivalence reduction, weighted prune/search, adjust handling, scramble DSL) is ported to TypeScript (golden-locked against upstream message-for-message) to power `/scramble/batch-solver`; `/scramble/sub-solver` (Subsolver's successor) runs on the same engine; UIs rebuilt in React"
+    "long_en": "trangium's Batch Solver — the worker.js permutation engine (custom puzzle definitions, equivalence reduction, weighted prune/search, adjust handling, scramble DSL) is ported to TypeScript (golden-locked against upstream message-for-message) to power `/scramble/batch-solver`; `/scramble/sub-solver` (Subsolver's successor) runs on the same engine; UIs rebuilt in React",
+    "section": "solvers"
   },
   {
     "name": "nbwzx/commutator",
     "url": "https://github.com/nbwzx/commutator",
     "zh": "换位子分解 / 展开引擎(Zixing Wang;ES module 重封装,UI 重写 React)",
     "en": "Commutator decomposition / expansion engine (Zixing Wang; ES module re-wrap, UI rebuilt in React)",
-    "long_en": "commutator decomposition / expansion engine (Zixing Wang) re-wrapped as ES module for the `/alg/commutator` tool; algorithm code unchanged from upstream, UI rebuilt in React"
+    "long_en": "commutator decomposition / expansion engine (Zixing Wang) re-wrapped as ES module for the `/alg/commutator` tool; algorithm code unchanged from upstream, UI rebuilt in React",
+    "section": "solvers"
   },
   {
     "name": "speedsolving.com/wiki: Pretty Pattern",
     "url": "https://www.speedsolving.com/wiki/index.php/Pretty_pattern",
     "zh": "/patterns 图案算法来源",
-    "en": "Pattern algorithms for /patterns"
+    "en": "Pattern algorithms for /patterns",
+    "section": "visualization"
   },
   {
     "name": "ruwix.com Rubik's Cube Patterns",
     "url": "https://ruwix.com/the-rubiks-cube/rubiks-cube-patterns-algorithms/",
     "zh": "/patterns 图案算法来源",
-    "en": "Pattern algorithms for /patterns"
+    "en": "Pattern algorithms for /patterns",
+    "section": "visualization"
   },
   {
     "name": "cubing.pro",
     "url": "https://cubing.pro/",
     "zh": "/wca 各子页与选手详情页 UI/概念参考；/sim 绘图模式的 SQ1、五魔方、Skewb、Pyraminx、FTO 平面模板与交互移植",
     "en": "UI / concept reference for /wca pages; drawing templates and interactions for SQ1, Megaminx, Skewb, Pyraminx, and FTO in /sim",
-    "long_en": "UI/concept reference for `/wca` sub-pages and person details. The source also provides the flat SVG templates and puzzle-specific controls ported into `/sim` drawing mode for SQ1, Megaminx, Skewb, Pyraminx, and FTO; CubeRoot supplies the shared editor, theme, responsive UI, and export pipeline."
+    "long_en": "UI/concept reference for `/wca` sub-pages and person details. The source also provides the flat SVG templates and puzzle-specific controls ported into `/sim` drawing mode for SQ1, Megaminx, Skewb, Pyraminx, and FTO; CubeRoot supplies the shared editor, theme, responsive UI, and export pipeline.",
+    "section": "competition"
   },
   {
     "name": "LowCubes / Raul Low",
     "url": "https://www.lowcubes.com/",
     "zh": "移植 FTO Bencisco L3T、Megaminx Full PLL 公式数据及 FTO EIF 图片生成器；页面、渲染器与交互按本站架构重写",
     "en": "FTO Bencisco L3T and Megaminx Full PLL data, plus the FTO EIF image-generator behavior; pages, renderer, and interactions are reimplemented for CubeRoot",
-    "long_en": "Source for the FTO Bencisco last-three-triangles library, Megaminx Full PLL library, and the EIF-notation FTO image generator behavior. CubeRoot reimplements the pages, strict notation parser, SVG renderer, simulator integration, responsive UI, and export flow in its own architecture."
+    "long_en": "Source for the FTO Bencisco last-three-triangles library, Megaminx Full PLL library, and the EIF-notation FTO image generator behavior. CubeRoot reimplements the pages, strict notation parser, SVG renderer, simulator integration, responsive UI, and export flow in its own architecture.",
+    "section": "practice"
   },
   {
     "name": "rullerzhou-afk/clawd-on-desk",
     "url": "https://github.com/rullerzhou-afk/clawd-on-desk",
     "zh": "桌面 AI 桌宠;右下角 Clawd 像素螃蟹的动画与交互移植自此(Clawd 形象版权归 Anthropic,非官方粉丝作品)",
     "en": "Desktop AI pet; the corner Clawd pixel crab ports its animations + interactions (Clawd character © Anthropic; unofficial fan use)",
-    "long_en": "desktop pixel pet that reacts to AI coding agents; its Clawd crab artwork + the idle eye-tracking / state-machine interaction model are ported into the site-wide web desk pet. The Clawd character is the property of Anthropic — this is an unofficial fan use."
+    "long_en": "desktop pixel pet that reacts to AI coding agents; its Clawd crab artwork + the idle eye-tracking / state-machine interaction model are ported into the site-wide web desk pet. The Clawd character is the property of Anthropic — this is an unofficial fan use.",
+    "section": "platform"
   },
   {
     "name": "spooncuber/bldtrainer",
     "url": "https://github.com/spooncuber/spooncuber.github.io",
     "zh": "三盲训练器引擎 + 各模块移植(/alg/3bld;作者 Zhi Qiao,GPL-3.0)",
     "en": "3BLD trainer engine + modules ported (/alg/3bld; author Zhi Qiao, GPL-3.0)",
-    "long_en": "3BLD trainer engine + modules ported — read-code engine, helper / memo / commutator / parity / flip / twist / float trainers and the resources list under `/alg/3bld` (author Zhi Qiao, GPL-3.0)"
+    "long_en": "3BLD trainer engine + modules ported — read-code engine, helper / memo / commutator / parity / flip / twist / float trainers and the resources list under `/alg/3bld` (author Zhi Qiao, GPL-3.0)",
+    "section": "practice"
   },
   {
     "name": "zhucidong/三盲助手",
     "url": "https://github.com/zhucidong/blindfolded_hepler",
     "zh": "盲拧助手 App;记忆回想训练器 + 换位子公式库 + 联想词表合并自此",
     "en": "Blindfolded helper app; memo recall trainer + commutator library + association words merged",
-    "long_en": "blindfolded helper Android app; its memo recall trainer, commutator library, and association-word dictionary are merged into the `/alg/3bld` modules"
+    "long_en": "blindfolded helper Android app; its memo recall trainer, commutator library, and association-word dictionary are merged into the `/alg/3bld` modules",
+    "section": "practice"
   },
   {
     "name": "AnnikaStein/SkewbPage",
     "url": "https://github.com/AnnikaStein/SkewbPage",
     "zh": "Skewb 技巧训练器(SkewbSkills;三模式首层 / L2L 公式 / One-Look 全 port 为 React /alg/skewb-trainer;作者 Annika Stein,Apache-2.0)",
     "en": "Skewb Skills trainer (SkewbSkills; three-mode First Layer / L2L Alg / One-Look ported to React at /alg/skewb-trainer; author Annika Stein, Apache-2.0)",
-    "long_en": "SkewbSkills web trainer — First Layer Trainer, L2L Algorithm Trainer, and One-Looking Trainer (alg database, RubiksSkewb→WCA notation conversion, scramble generation) ported to React for `/alg/skewb-trainer` (author Annika Stein, Apache-2.0)"
+    "long_en": "SkewbSkills web trainer — First Layer Trainer, L2L Algorithm Trainer, and One-Looking Trainer (alg database, RubiksSkewb→WCA notation conversion, scramble generation) ported to React for `/alg/skewb-trainer` (author Annika Stein, Apache-2.0)",
+    "section": "practice"
   },
   {
     "name": "onionhoney/roux-trainers",
     "url": "https://github.com/onionhoney/roux-trainers",
     "zh": "桥式训练器(/alg/roux;引擎 + three.js 渲染器全量 port 为 React、去 MUI;作者 Onionhoney,GPL-3.0)",
     "en": "Roux trainer (/alg/roux page; engine + three.js renderer fully ported to React, de-MUI'd; author Onionhoney, GPL-3.0)",
-    "long_en": "Roux-method trainer collection — first-block / analyzer / FS / SS / CMLL / LSE trainers + in-browser Roux solver + three.js cube renderer, ported to React (MUI removed) and embedded under the `/alg/roux` page (author Onionhoney, GPL-3.0)"
+    "long_en": "Roux-method trainer collection — first-block / analyzer / FS / SS / CMLL / LSE trainers + in-browser Roux solver + three.js cube renderer, ported to React (MUI removed) and embedded under the `/alg/roux` page (author Onionhoney, GPL-3.0)",
+    "section": "practice"
   },
   {
     "name": "WCA Website — English and Chinese locale contributors",
     "url": "https://github.com/thewca/worldcubeassociation.org",
     "zh": "/regulation/translation 的官网双语素材来自 WCA 官网中英语言文件，按相同 locale key 对齐，保留来源提交和原译疑点；感谢 WCA 及中文翻译贡献者",
-    "en": "The website bilingual corpus at /regulation/translation aligns the WCA website's English and Chinese locale strings, retaining the source commit and known discrepancies; credit to the WCA and Chinese translation contributors"
+    "en": "The website bilingual corpus at /regulation/translation aligns the WCA website's English and Chinese locale strings, retaining the source commit and known discrepancies; credit to the WCA and Chinese translation contributors",
+    "section": "competition"
   },
   {
     "name": "WCA Regulations & 5b5f Visual Guide",
     "url": "https://www.worldcubeassociation.org/regulations/full/",
     "zh": "/regulation 规则页:检查 / 打乱 / 判定 / 罚时等核心条款整理自 WCA 官方《竞赛规则与指南》;末节「拼装缺陷判定」的 11 张配图 + 文字移植自 WCA Regulations Committee《Regulation 5b5f Visual Guide》(均已注明来源)",
     "en": "/regulation page: core articles (inspection / scrambling / judging / penalties) compiled from the official WCA Regulations & Guidelines; the assembly-defect section reproduces the 11 photos + text from the WCA Regulations Committee's Regulation 5b5f Visual Guide (all credited)",
-    "long_en": "the `/regulation` page summarizes the most-asked WCA Regulations (inspection, scrambling, solved-state misalignment, +2/DNF, time limits, special events, puzzle rules) with diagrams; its final section reproduces, with attribution, the text and all example photos of the WCA Regulations Committee's official 5b5f Visual Guide slide deck on judging partially-detached / not-fully-placed pieces"
+    "long_en": "the `/regulation` page summarizes the most-asked WCA Regulations (inspection, scrambling, solved-state misalignment, +2/DNF, time limits, special events, puzzle rules) with diagrams; its final section reproduces, with attribution, the text and all example photos of the WCA Regulations Committee's official 5b5f Visual Guide slide deck on judging partially-detached / not-fully-placed pieces",
+    "section": "competition"
   },
   {
     "name": "Herbert Kociemba — Two-Phase Algorithm & Cube Explorer",
     "url": "https://kociemba.org/cube.htm",
     "zh": "Kociemba 两阶段算法 + 立方坐标模型(corner/edge 排列 / twist / flip 编码、面转表):/scramble/solver 的 3×3 两阶段解(含 crz3a 疯狂 3×3)、STM 最优解器的状态编码、cube48opt 服务端最优解器都基于此;Cube Explorer 是已知唯一的 STM 最优解器(参照);/scramble/pattern/search 的图案搜索移植自 Cube Explorer 的 Pattern Editor(PatternSearch.pas);/scramble/symmetry 的对称型搜索与 33 种类型数据移植自 Symmetry Editor(SymSearch.pas + Symmetries.pas + CubeDefs.pas)",
     "en": "Kociemba's two-phase algorithm + cube coordinate model (corner/edge perm, twist, flip encoders; face-move tables) underpin the /scramble/solver 3×3 two-phase solve (incl. the crz3a Crazy-3×3 solver), the STM optimal solver's state encoding, and the server-side cube48opt optimal solver; Cube Explorer is the only known prior STM-optimal solver (reference); /scramble/pattern/search ports Cube Explorer's Pattern Editor (PatternSearch.pas), and /scramble/symmetry ports its Symmetry Editor (SymSearch.pas + Symmetries.pas + CubeDefs.pas)",
-    "long_en": "Herbert Kociemba's two-phase algorithm and the Singmaster cubie coordinate model (corner/edge permutation ranks, corner-twist / edge-flip ranks, face-move arrays — also as ported in cs0x7f's min2phase.js) are the basis of the site's client-side 3×3 two-phase solver (the derive-scramble flow + the crz3a solver), the new pure-TS 3×3×3 STM optimal solver's state encoding (cross-validated against these tables), and the server-side cube48opt optimal-solve daemon. Cube Explorer (kociemba.org) is the only known pre-existing STM-optimal solver — the reference our STM goal-test (centers must end home) follows. The /scramble/pattern/search page is a faithful port of Cube Explorer's Pattern Editor (PatternSearch.pas: abstract face-pattern DFS with color-class bijection matching, continuity check, and isomorphism dedup). The /scramble/symmetry page ports the Symmetry Editor: the 48 symmetry cubie tables of Symmetries.pas, the 33 subgroup bitmasks and per-type position counts of CubeDefs.pas / SymSearch.pas, and the symmetry-constrained DFS of SymSearch.pas (equivariant piece placement, antisymmetry, per-face colour counts, permutation parity modes, exact-symmetry filtering)"
+    "long_en": "Herbert Kociemba's two-phase algorithm and the Singmaster cubie coordinate model (corner/edge permutation ranks, corner-twist / edge-flip ranks, face-move arrays — also as ported in cs0x7f's min2phase.js) are the basis of the site's client-side 3×3 two-phase solver (the derive-scramble flow + the crz3a solver), the new pure-TS 3×3×3 STM optimal solver's state encoding (cross-validated against these tables), and the server-side cube48opt optimal-solve daemon. Cube Explorer (kociemba.org) is the only known pre-existing STM-optimal solver — the reference our STM goal-test (centers must end home) follows. The /scramble/pattern/search page is a faithful port of Cube Explorer's Pattern Editor (PatternSearch.pas: abstract face-pattern DFS with color-class bijection matching, continuity check, and isomorphism dedup). The /scramble/symmetry page ports the Symmetry Editor: the 48 symmetry cubie tables of Symmetries.pas, the 33 subgroup bitmasks and per-type position counts of CubeDefs.pas / SymSearch.pas, and the symmetry-constrained DFS of SymSearch.pas (equivariant piece placement, antisymmetry, per-face colour counts, permutation parity modes, exact-symmetry filtering)",
+    "section": "solvers"
   },
   {
     "name": "Richard E. Korf — IDA* + Pattern Databases",
     "url": "https://web.cs.ucla.edu/~korf/",
     "zh": "Korf 的 IDA* + 模式数据库(AAAI 1997)+ 滑块 walking-distance 启发:STM 最优解器的角表(8!×3⁷)+ 双 6 棱表(12P6×2⁶)、h=max(...) 可采纳启发,数字华容道 15p 的 walking-distance,cube48opt 3×3 最优解都出自此法",
     "en": "Korf's IDA* with pattern databases (AAAI 1997) + the sliding-tile walking-distance heuristic: the STM optimal solver's corner PDB (8!×3⁷) + two 6-edge PDBs (12P6×2⁶) with h = max(...), the 15-puzzle (15p) walking-distance optimal solve, and cube48opt's 3×3 optimal solve all use this method",
-    "long_en": "Richard E. Korf's 'Finding Optimal Solutions to Rubik's Cube Using Pattern Databases' (AAAI 1997) — max/additive pattern-database IDA* — is the method behind the pure-TS 3×3×3 STM optimal solver (corner PDB 8!×3⁷ + two disjoint 6-edge PDBs 12P6×2⁶, admissible h = max of EXACT BFS distances rebuilt over the 27 STM generators) and, via his walking-distance heuristic, the 15-puzzle optimal solver (/scramble/solver 15p); the server-side cube48opt 3×3 optimal-solve daemon is in the same lineage"
+    "long_en": "Richard E. Korf's 'Finding Optimal Solutions to Rubik's Cube Using Pattern Databases' (AAAI 1997) — max/additive pattern-database IDA* — is the method behind the pure-TS 3×3×3 STM optimal solver (corner PDB 8!×3⁷ + two disjoint 6-edge PDBs 12P6×2⁶, admissible h = max of EXACT BFS distances rebuilt over the 27 STM generators) and, via his walking-distance heuristic, the 15-puzzle optimal solver (/scramble/solver 15p); the server-side cube48opt 3×3 optimal-solve daemon is in the same lineage",
+    "section": "solvers"
   },
   {
     "name": "thewca/tnoodle-lib",
     "url": "https://github.com/thewca/tnoodle-lib",
     "zh": "手表通过 TeaVM 运行 TNoodle-WCA-1.2.3 的二阶、三阶、金字塔和斜转生成器。WCA 官方打乱程序库:二阶 TwoByTwoCubePuzzle / TwoByTwoSolver 的均匀随机状态、恰好 11 步求解与 computeCost 握位代价已移植为共享 WCA 二阶打乱生成器;魔表的 18 位状态模型与转动表(ClockPuzzle.java)移植为 clock_svg.ts,也是本站魔表求解器 @cuberoot/puzzle-solvers/clock 的转动语义锚点;打乱图渲染与各项目配色方案亦照其实现",
     "en": "The watch uses TeaVM to run the TNoodle-WCA-1.2.3 generators for 2×2, 3×3, Pyraminx and Skewb. The WCA's official scrambling library: TwoByTwoCubePuzzle / TwoByTwoSolver's uniform random states, exact 11-move search, and computeCost grip model are ported as the shared WCA 2×2 generator; the Clock's 18-dial state model and move table (ClockPuzzle.java) are ported as clock_svg.ts and anchor our Clock solver's move semantics; the scramble-image renderer and per-event colour schemes follow TNoodle too",
-    "long_en": "TNoodle is the World Cube Association's official scramble generator. CubeRoot's runtime-neutral WCA 2×2 generator faithfully ports `TwoByTwoCubePuzzle` / `TwoByTwoSolver`: it samples a uniform normalized state, enumerates exact 11-move URF solutions, and selects the lowest-cost sequence under TNoodle's `computeCost` grip model. Its `ClockPuzzle.java` (18-dial posit model, the 18 pin-subset move rows, the y2 presentation flip, and the default per-part colour scheme) is also ported to `clock_svg.ts`, which serves as the independent gold standard for cell-by-cell cross-validation of the pure-TS optimal Clock solver"
+    "long_en": "TNoodle is the World Cube Association's official scramble generator. CubeRoot's runtime-neutral WCA 2×2 generator faithfully ports `TwoByTwoCubePuzzle` / `TwoByTwoSolver`: it samples a uniform normalized state, enumerates exact 11-move URF solutions, and selects the lowest-cost sequence under TNoodle's `computeCost` grip model. Its `ClockPuzzle.java` (18-dial posit model, the 18 pin-subset move rows, the y2 presentation flip, and the default per-part colour scheme) is also ported to `clock_svg.ts`, which serves as the independent gold standard for cell-by-cell cross-validation of the pure-TS optimal Clock solver",
+    "section": "solvers"
   },
   {
     "name": "Jaap Scherphuis — Jaap's Puzzle Page",
     "url": "https://www.jaapsch.net/puzzles/clock.htm",
     "zh": "魔表的群论背景与 God's algorithm 距离分布表(12^14 个状态逐档统计):/scramble/stats 的魔表分布页与求解器回归测试都以此为基准",
-    "en": "Rubik's Clock group theory and the God's-algorithm distance distribution (per-depth counts over all 12^14 states): the basis for our Clock distribution page and the solver's regression tests"
+    "en": "Rubik's Clock group theory and the God's-algorithm distance distribution (per-depth counts over all 12^14 states): the basis for our Clock distribution page and the solver's regression tests",
+    "section": "solvers"
   },
   {
     "name": "Rubik's Clock 最优求解先行工作(Kogler / Rokicki / OptClock / cs0x7f)",
     "url": "http://cube20.org/clock/",
     "zh": "魔表 God's number = 12 的证明与全空间分析:Jakob Kogler 2014 首证,Tomas Rokicki 用陪集求解器算出完整距离分布并公布 39,248 个距离 12 的位置(dist12.txt,本站用作求解器的精确对账集);Michael Gottlieb + Ben Whitmore 的 OptClock 与 Shuang Chen 的 ClockSolver.java 是两份独立的单状态最优求解器。四份代码原样收藏在 solver/reference/clock/(只读、不编译);本站 @cuberoot/puzzle-solvers/clock 为独立实现,未取用其代码",
     "en": "The proof that God's number for Clock is 12 and the full-space analysis: first proven by Jakob Kogler (2014); Tomas Rokicki computed the complete distance distribution with a coset solver and published all 39,248 distance-12 positions (dist12.txt — used here as an exact regression oracle); OptClock (Michael Gottlieb + Ben Whitmore) and ClockSolver.java (Shuang Chen) are two independent single-position optimal solvers. All four are archived verbatim under solver/reference/clock/ (read-only, never compiled); our @cuberoot/puzzle-solvers/clock implementation is independent and uses none of their code",
-    "long_en": "Prior art for optimally solving the Rubik's Clock. Jakob Kogler (2014) first proved God's number is 12 using a one-side lookup table plus iterative-deepening DFS. Tomas Rokicki then computed the complete distance distribution over all 1,283,918,464,548,864 states with a coset solver (subgroup fixing the front cross, 248,832 cosets reduced to 9,906 by mirror / rotation / coprime-multiplication symmetry, ~3 days on a couple of desktops) and published both his source (clockcoset11.cpp) and the 39,248 distance-12 positions (dist12.txt). OptClock by Michael Gottlieb (qqwref) with a Qt GUI by Ben Whitmore is the two-phase single-position optimal solver used to verify those positions. Shuang Chen's ClockSolver.java (GPLv3) is an independent Java optimal solver. All are archived read-only under solver/reference/clock/ with a README explaining each algorithm; dist12.txt is wired into our test suite so the hardest depth bucket is verified exactly rather than by sampling"
+    "long_en": "Prior art for optimally solving the Rubik's Clock. Jakob Kogler (2014) first proved God's number is 12 using a one-side lookup table plus iterative-deepening DFS. Tomas Rokicki then computed the complete distance distribution over all 1,283,918,464,548,864 states with a coset solver (subgroup fixing the front cross, 248,832 cosets reduced to 9,906 by mirror / rotation / coprime-multiplication symmetry, ~3 days on a couple of desktops) and published both his source (clockcoset11.cpp) and the 39,248 distance-12 positions (dist12.txt). OptClock by Michael Gottlieb (qqwref) with a Qt GUI by Ben Whitmore is the two-phase single-position optimal solver used to verify those positions. Shuang Chen's ClockSolver.java (GPLv3) is an independent Java optimal solver. All are archived read-only under solver/reference/clock/ with a README explaining each algorithm; dist12.txt is wired into our test suite so the hardest depth bucket is verified exactly rather than by sampling",
+    "section": "solvers"
   },
   {
     "name": "Dan Boharon — Cube Lookahead Challenge",
     "url": "https://app--cube-lookahead-24bc12e4.base44.app/",
     "zh": "/predict 预判训练的玩法原型(模式设定与 F2L 公式池)",
     "en": "Gameplay original behind /predict (modes + F2L alg pool)",
-    "long_en": "lookahead challenge concept, game modes, F2L insertion pool"
+    "long_en": "lookahead challenge concept, game modes, F2L insertion pool",
+    "section": "practice"
   },
   {
     "name": "cubing/CubePB (James Chang)",
     "url": "https://github.com/cubing/CubePB",
     "zh": "WCA 选手页个人 PB、历史记录与编辑流程来源；用 CubeRoot 现有账号、WCA 项目和成绩格式能力重新实现",
     "en": "Product flow behind personal PBs, history and editing on WCA person pages; reimplemented with CubeRoot's account, WCA event and result-formatting infrastructure",
-    "long_en": "CubePB established the personal-best profile, history and editing workflow. CubeRoot's implementation is a clean integration on WCA person pages, built on its existing authentication, WCA event selection, raw result encoding, bilingual UI and PostgreSQL API. Original project licensed under GPL-3.0."
+    "long_en": "CubePB established the personal-best profile, history and editing workflow. CubeRoot's implementation is a clean integration on WCA person pages, built on its existing authentication, WCA event selection, raw result encoding, bilingual UI and PostgreSQL API. Original project licensed under GPL-3.0.",
+    "section": "competition"
   },
   {
     "name": "Cube Platform / 2017YANR02",
     "url": "https://github.com/2017YANR02/cube-platform",
     "zh": "学习空间、商业与二维码卡片功能源自维护者的原 Cube Platform；迁入主站后复用统一账号、论坛、讲师名录与媒体能力，保留原卡片模板和提示积木来源。",
-    "en": "Learning, commerce and QR card features originate from the maintainer’s Cube Platform. The main-site integration reuses canonical accounts, forums, teacher profiles and media while retaining the provenance of card templates and prompt blocks."
+    "en": "Learning, commerce and QR card features originate from the maintainer’s Cube Platform. The main-site integration reuses canonical accounts, forums, teacher profiles and media while retaining the provenance of card templates and prompt blocks.",
+    "section": "platform"
   },
   {
     "name": "GeoNames",
     "url": "https://www.geonames.org/",
     "zh": "账号地名中文补充参考 GeoNames 数据（CC BY 4.0）；结合行政区汉字、原始坐标与省份消歧，避免将历史别名或治所误用为当前名称。",
-    "en": "Supplemental account location labels use GeoNames data (CC BY 4.0), checked against administrative names, source coordinates and province context to avoid substituting historical aliases or administrative seats."
+    "en": "Supplemental account location labels use GeoNames data (CC BY 4.0), checked against administrative names, source coordinates and province context to avoid substituting historical aliases or administrative seats.",
+    "section": "platform"
   },
   {
     "name": "Administrative divisions of China / modood",
     "url": "https://github.com/modood/Administrative-divisions-of-China",
     "zh": "账号中国城市中文标签的行政区汉字参考该项目整理的国家统计局行政区划数据；保留原始账号地点标识，按省份核对同音地名。",
-    "en": "Chinese account location labels reference National Bureau of Statistics administrative names collected by this project, preserving stored location identifiers and checking homographs by province."
+    "en": "Chinese account location labels reference National Bureau of Statistics administrative names collected by this project, preserving stored location identifiers and checking homographs by province.",
+    "section": "platform"
   },
   {
     "name": "中国行政区划公开数据 / dataxiv archive",
     "url": "https://github.com/dataxiv/data-district",
     "zh": "账号中国地区选项以民政部2025年末公开行政区划存档为基础，结合地方政府后续公告及港澳台官方资料校核；保留来源、存档版本和核对日期。",
-    "en": "Chinese account location options use an archived year-end 2025 MCA administrative dataset, checked against later local-government announcements and official Hong Kong, Macao and Taiwan sources, with provenance and review dates recorded."
+    "en": "Chinese account location options use an archived year-end 2025 MCA administrative dataset, checked against later local-government announcements and official Hong Kong, Macao and Taiwan sources, with provenance and review dates recorded.",
+    "section": "platform"
   },
   {
     "name": "QuickJS / Fabrice Bellard & Charlie Gordon",
     "url": "https://bellard.org/quickjs/",
     "zh": "Apple Watch 通过 MIT 许可的 QuickJS 核心直接运行既有智能魔方共享代码，避免另写协议和计时规则。",
-    "en": "Apple Watch uses the MIT-licensed QuickJS core to run existing shared smart-cube code without duplicating protocols or timing rules."
+    "en": "Apple Watch uses the MIT-licensed QuickJS core to run existing shared smart-cube code without duplicating protocols or timing rules.",
+    "section": "platform"
   },
   {
     "name": "Algorithm Translator / Conrad Rider",
     "url": "https://cube.rider.biz/algtrans.html",
     "zh": "模拟器公式变换与逐步改写的功能参考；实现复用本站公式解析和变换逻辑。",
-    "en": "Feature reference for simulator algorithm transformations and step editing, implemented with our existing algorithm parser and transformation utilities."
+    "en": "Feature reference for simulator algorithm transformations and step editing, implemented with our existing algorithm parser and transformation utilities.",
+    "section": "visualization"
   }
 ]

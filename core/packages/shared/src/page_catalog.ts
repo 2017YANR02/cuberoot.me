@@ -89,6 +89,13 @@ export const PAGE_META: Record<string, PageMetaEntry> = {
       en: 'About CubeRoot — what this site is, who maintains it, and where the data comes from.',
     },
   },
+  'credits': {
+    title: { zh: '致谢', en: 'Credits' },
+    description: {
+      zh: '查阅为魔方根提供帮助和启发的开源项目、公开资料、素材与相关工作。',
+      en: 'Open-source projects, public references, assets, and related work that helped build and inspire CubeRoot.',
+    },
+  },
   'about/ruimin': {
     title: { zh: '颜瑞民', en: 'Ruimin Yan' },
     description: {

@@ -1,4 +1,4 @@
-import credits from '../about/credits_data.json';
+import credits from '../credits/credits_data.json';
 import VideoReconGuide from './VideoReconGuide';
 
 export default function VideoReconAboutPage() {

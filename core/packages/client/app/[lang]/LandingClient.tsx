@@ -84,6 +84,7 @@ import { HOME_MEMBER_SECTION_IDS } from '@cuberoot/shared/site-directory';
 const ABOUT_FOOTER_ENTRY = FOOTER_ENTRIES.find((entry) => entry.id === 'about')!;
 const SUPPORT_FOOTER_ENTRY = FOOTER_ENTRIES.find((entry) => entry.id === 'support')!;
 const GITHUB_FOOTER_ENTRY = FOOTER_ENTRIES.find((entry) => entry.id === 'github')!;
+const CREDITS_FOOTER_ENTRY = FOOTER_ENTRIES.find((entry) => entry.id === 'credits')!;
 
 // Temporary homepage feature; restore the managed notice on 2026-09-17 (UTC+8).
 const HISTORY_HOME_FEATURE: PageNotice = {
@@ -717,6 +718,9 @@ export default function LandingPage({ initialLayout = null }: { initialLayout?: 
           <span>{t(SUPPORT_FOOTER_ENTRY.nameKey)}</span>
         </Link>
         <Link href="/membership" className="footer-membership" prefetch={false}>
+        <Link href={CREDITS_FOOTER_ENTRY.href} prefetch={false}>
+          {t(CREDITS_FOOTER_ENTRY.nameKey)}
+        </Link>
           <Crown size={14} aria-hidden="true" />
           <span>Pro</span>
         </Link>

@@ -1,0 +1,140 @@
+.credits-page {
+  min-height: 100vh;
+  padding: 2rem clamp(1.25rem, 5vw, 4rem) 4rem;
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans);
+}
+
+.credits-shell {
+  max-width: 53rem;
+  margin-inline: auto;
+}
+
+.credits-topbar {
+  margin-bottom: clamp(1.75rem, 4vw, 3rem);
+}
+
+.credits-intro {
+  margin-bottom: 2rem;
+}
+
+.credits-intro h1 {
+  margin: 0 0 0.65rem;
+  font-family: var(--font-serif);
+  font-size: clamp(2.5rem, 6vw, 3.75rem);
+  font-weight: 400;
+  line-height: 1.12;
+}
+
+.credits-intro p,
+.credits-list p {
+  color: var(--muted-foreground);
+  line-height: 1.65;
+}
+
+.credits-intro p {
+  margin: 0;
+}
+
+.credits-directory {
+  border-bottom: 1px solid var(--border-default);
+}
+
+.credits-group {
+  border-top: 1px solid var(--border-default);
+}
+
+.credits-group-toggle {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.75rem;
+  padding-block: 0.9rem;
+}
+
+.credits-group-toggle:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: -2px;
+}
+
+.credits-group-title,
+.credits-group-summary {
+  display: block;
+}
+
+.credits-group-title {
+  font-size: 1.06rem;
+  font-weight: 650;
+  line-height: 1.35;
+}
+
+.credits-group-toggle:hover .credits-group-title {
+  color: var(--accent);
+}
+
+.credits-group-summary {
+  margin-top: 0.2rem;
+  color: var(--muted-foreground);
+  font-size: 0.875rem;
+  line-height: 1.45;
+}
+
+.credits-subgroups {
+  margin-inline-start: 0.75rem;
+  padding-inline-start: clamp(0.75rem, 3vw, 1.5rem);
+  border-inline-start: 1px solid var(--border-default);
+  margin-bottom: 0.75rem;
+}
+
+.credits-subgroups > .credits-group:first-child {
+  border-top: none;
+}
+
+.credits-subgroups .credits-group-title {
+  font-size: 0.96rem;
+}
+
+.credits-list {
+  display: grid;
+  gap: 1.15rem;
+  margin: 0 0 1.25rem 0.75rem;
+  padding: 0 0 0 clamp(0.75rem, 3vw, 1.5rem);
+  border-inline-start: 1px solid var(--border-default);
+  list-style: none;
+  font-size: 0.91rem;
+  overflow-wrap: anywhere;
+}
+
+.credits-list a,
+.credits-source a {
+  color: inherit;
+  text-decoration: underline;
+  text-decoration-color: var(--border-strong);
+  text-underline-offset: 0.22em;
+}
+
+.credits-list a {
+  font-weight: 600;
+}
+
+.credits-list a:hover,
+.credits-source a:hover {
+  color: var(--accent);
+}
+
+.credits-list p {
+  margin: 0.25rem 0 0;
+}
+
+.credits-source {
+  margin: 1.5rem 0 0;
+  color: var(--muted-foreground);
+  font-size: 0.875rem;
+}
+
+@media screen {
+  body[data-site-scenery] .credits-page {
+    background: transparent;
+  }
+}

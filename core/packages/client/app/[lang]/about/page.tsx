@@ -3,7 +3,7 @@ import PageBackLink from '@/components/PageBackLink';
 // /about — port of packages/client-vite/src/pages/AboutPage.tsx.
 
 
-import CREDITS from './credits_data.json';
+import CREDITS from '../credits/credits_data.json';
 import './about.css';
 import { tr } from '@/i18n/tr';
 

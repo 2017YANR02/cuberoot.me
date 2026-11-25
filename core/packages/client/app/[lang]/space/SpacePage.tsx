@@ -18,7 +18,7 @@ import { commitLayout, DESTINATIONS, ENVIRONMENTS, type Environment, INITIAL_LAY
 import './space.css';
 import { turnButtons } from './space-turn';
 import { SHANGHAI_VIEWS, type ShanghaiView } from './space-shanghai';
-import CREDITS from '../about/credits_data.json';
+import CREDITS from '../credits/credits_data.json';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
 import type { SpaceAssetProgress } from './space-blender';
 
@@ -362,7 +362,7 @@ export default function SpacePage() {
             <span>{tr(credit)}</span>
           </li>)}
         </ul>
-        <AppLink href="/about" prefetch={false}>{tr({ zh: '查看全站致谢', en: 'All site credits' })}</AppLink>
+        <AppLink href="/credits" prefetch={false}>{tr({ zh: '查看全站致谢', en: 'All site credits' })}</AppLink>
       </details>
     </main>
   );
