@@ -911,8 +911,8 @@ export const PAGE_META: Record<string, PageMetaEntry> = {
   },
   'tutorial/2x2-eg': {
     title: { zh: '二阶魔方 EG 法教程', en: '2×2 EG Method Tutorial' },
-    description: { zh: '从层先法进阶到 EG。练习底层分组、顶层识别与起手摆位，跟看完整还原，并按组查阅 128 条 CLL、EG-1 和 EG-2 公式。',
-      en: 'Move from layer by layer to EG. Practice bottom and top recognition, follow a full solve, and browse 128 CLL, EG-1 and EG-2 algorithms.' },
+    description: { zh: '从层先法进阶到 EG。练习观察顶层、选公式和摆好起手朝向，跟看完整还原，并按组查阅 128 条 CLL、EG-1 和 EG-2 公式。',
+      en: 'Move from layer by layer to EG. Practice reading the top, choosing an algorithm and aligning the cube, follow a full solve, and browse 128 CLL, EG-1 and EG-2 algorithms.' },
   },
   'tutorial/f2l': {
     title: { zh: '三阶魔方 F2L 教程', en: '3×3 F2L Tutorial' },

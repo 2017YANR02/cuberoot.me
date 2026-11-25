@@ -270,7 +270,7 @@ const triggerMoveCopy: Record<string, Text> = {
   "R'": { zh: '把右层转下来。', en: 'Turn the right layer down.' },
 };
 
-export function TutorialAlgDemo({ insertion, puzzle, orientation, view, mutedStickers, stickeringAtStep, stickerColorOverrides, handToggle = false, onClose }: {
+export function TutorialAlgDemo({ insertion, puzzle, orientation, view, mutedStickers, stickeringAtStep, stickerColorOverrides, handToggle = false, onClose, children }: {
   insertion: Omit<TutorialAlg, 'helpLabel' | 'steps'> & { steps: readonly TutorialAlgStep[] };
   puzzle: AlgPlayerPuzzle;
   orientation?: string;
@@ -278,6 +278,7 @@ export function TutorialAlgDemo({ insertion, puzzle, orientation, view, mutedSti
   mutedStickers?: readonly string[];
   handToggle?: boolean;
   onClose: () => void;
+  children?: ReactNode;
 } & Pick<ComponentProps<typeof AlgPlayer>, 'stickeringAtStep' | 'stickerColorOverrides'>) {
   const dialog = useRef<HTMLDialogElement>(null);
   const player = useRef<AlgPlayerHandle>(null);
@@ -363,6 +364,7 @@ export function TutorialAlgDemo({ insertion, puzzle, orientation, view, mutedSti
           </p>}
           {handToggle && <BoolToggle className="course-demo-hands" label={tr({ zh: '手部动作', en: 'Hand animation' })}
             value={handsVisible} onChange={setHandsVisible} />}
+          {children}
         </div>
       </div>
     </div>

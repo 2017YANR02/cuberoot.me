@@ -1,4 +1,5 @@
 import { invertMoveString } from '@cuberoot/shared/alg-notation';
+import { simplifyAlg } from '@cuberoot/shared/recon/cube3';
 import { Face } from '@cuberoot/visualcube';
 import { twoByTwoState } from '../lib/2x2-state';
 import { EG_CASE_ALGS } from './case-algs';
@@ -39,13 +40,14 @@ const sideFaces = [Face.F, Face.R, Face.B, Face.L] as const;
 export const invertEg = (alg: string) => invertMoveString(alg).replaceAll("2'", '2');
 export const egMoves = (...moves: string[]) => moves.filter(Boolean).join(' ');
 
-export const EG_CASES = EG_CASE_ALGS.flatMap(([id, ...algs]) => {
+export const EG_RECOGNITION_CASES = EG_CASE_ALGS.flatMap(([id, ...algs]) => {
   const shape = casePrefixes.find(([prefix]) => id.startsWith(prefix))![1];
-  return EG_SETS.flatMap(({ id: set }, index): EgCase[] => {
+  return EG_SETS.map(({ id: set }, index): EgCase => {
     const alg = algs[index];
-    return alg ? [{ id, shape, set, alg, setup: invertEg(alg) }] : [];
+    return { id, shape, set, alg, setup: invertEg(alg) };
   });
 });
+export const EG_CASES = EG_RECOGNITION_CASES.filter(entry => entry.alg);
 
 export function egCase(set: EgSet, id: string) {
   const entry = EG_CASES.find(item => item.set === set && item.id === id);
@@ -88,13 +90,33 @@ export function egTopKey(setup: string) {
     sideColors[(sideColors.indexOf(color) + n) % 4])).sort()[0];
 }
 
-export const EG_WALKTHROUGH = (() => {
-  const entry = egCase('eg1', 'S+U');
-  const face = "R U R'";
-  const regrip = "y'";
-  const align = 'U';
-  const finish = 'U';
-  // Start the algorithm one U away from solved so the example also teaches AUF.
-  const start = egMoves(invertEg(finish), entry.setup, invertEg(align), invertEg(regrip), invertEg(face));
+export type EgWalkthrough = {
+  entry: EgCase;
+  start: string;
+  face: string;
+  regrip: string;
+  align: string;
+  finish: string;
+};
+
+function buildEgWalkthrough(entry: EgCase, face: string, regrip: string, align: string, finish: string): EgWalkthrough {
+  const start = simplifyAlg(egMoves(invertEg(finish), entry.setup, invertEg(align), invertEg(regrip), invertEg(face)));
   return { start, face, regrip, align, finish, entry };
-})();
+}
+
+export const EG_WALKTHROUGH = buildEgWalkthrough(egCase('eg1', 'S+U'), "R U R'", "y'", 'U', 'U');
+
+const faceOpenings = ["R U R'", "L' U' L", "F2 U' R U R'", "R2 U2 L' U' L", "L U F U' F'", "R U F U' F'"];
+const regrips = ['y', 'y2', "y'"];
+const topTurns = ['U', 'U2', "U'"];
+const finishingTurns = ['', ...topTurns];
+
+export function randomEgWalkthrough(previous: EgCase, randomBelow = (limit: number) => Math.floor(Math.random() * limit)): EgWalkthrough {
+  const cases = EG_CASES.filter(entry => entry.set !== previous.set || entry.id !== previous.id);
+  const entry = cases[randomBelow(cases.length)];
+  const face = faceOpenings[randomBelow(faceOpenings.length)];
+  const regrip = entry.set === 'eg1' ? regrips[randomBelow(regrips.length)] : '';
+  const align = topTurns[randomBelow(topTurns.length)];
+  const finish = finishingTurns[randomBelow(finishingTurns.length)];
+  return buildEgWalkthrough(entry, face, regrip, align, finish);
+}
