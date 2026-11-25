@@ -1,27 +1,34 @@
 /* Shared roles consume one material; host adapters retain their own geometry. */
-[data-site-surface='panel'] { background: var(--card); }
-[data-site-surface='popover'],
-[data-site-surface='heading'] { background: var(--popover); }
-
-body[data-site-scenery] [data-site-surface='panel'] {
-  background: var(--glass-surface-bg);
-  -webkit-backdrop-filter: var(--glass-filter);
-  backdrop-filter: var(--glass-filter);
+[data-site-surface='panel']:not(:where(.af-glass-surface)) { background: var(--card); }
+:is([data-site-surface='popover'], [data-site-surface='heading']):not(:where(.af-glass-surface)) {
+  background: var(--popover);
 }
-body[data-site-scenery] [data-site-surface='heading'] {
+
+body[data-site-scenery] [data-site-surface='panel']:not(:where(.af-glass-surface)) {
+  background-color: var(--glass-surface-bg);
+}
+body[data-site-scenery] [data-site-surface='heading']:not(:where(.af-glass-surface)) {
   background: var(--sticky-thead-background, var(--glass-popover-bg));
   -webkit-backdrop-filter: var(--glass-filter);
   backdrop-filter: var(--glass-filter);
 }
-body[data-site-scenery] [data-site-surface='popover'] {
+body[data-site-scenery] [data-site-surface='popover']:not(:where(.af-glass-surface)) {
   background-color: var(--glass-popover-bg);
+  box-shadow: var(--glass-shadow);
+}
+
+/* Legacy roles paint directly for compatibility with their existing layout. */
+body[data-site-scenery] :is([data-site-surface='panel'], [data-site-surface='popover']):not(:where(.af-glass-surface)) {
+  --af-glass-border-image: var(--af-studio-rim, none), var(--af-glass-border-gradient, none);
+  --af-glass-border-clip: border-box, var(--af-glass-border-region, padding-box);
   background-image: var(--af-glass-border-image);
   background-origin: border-box;
   background-clip: var(--af-glass-border-clip);
+  background-size: 100% 100%, auto, auto;
+  background-repeat: no-repeat;
   border-color: var(--af-glass-border-color);
-  -webkit-backdrop-filter: var(--glass-filter);
-  backdrop-filter: var(--glass-filter);
-  box-shadow: var(--glass-shadow);
+  -webkit-backdrop-filter: var(--af-studio-filter, var(--glass-filter));
+  backdrop-filter: var(--af-studio-filter, var(--glass-filter));
 }
 body[data-site-scenery] .timer-modal.settings-modal {
   background: var(--glass-dialog-bg);
