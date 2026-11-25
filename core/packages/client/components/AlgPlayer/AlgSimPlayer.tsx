@@ -895,7 +895,9 @@ const AlgSimPlayer = forwardRef<AlgPlayerHandle, {
   }, [playing, loop, resetAfterPlayback, sequenceKey, step, moves.length, hasCustomTiming, previewTiming.stepMs, replayRequest, jumpToStep, stepForward, highlightDaisyAlignment, pauseAfterSteps, sectionPauseMs, timedSectionPauses]);
 
   return (
-    <div className={`alg-sim-player${fillPane ? ' is-fill' : ''}`} style={{ '--alg-player-size': `${size}px` } as CSSProperties}>
+    <div className={`alg-sim-player${fillPane ? ' is-fill' : ''}`}
+      data-canvas-interactive={interactionMode === 'turn' || (interactionMode === 'view' && (!lockView || handlesCubeletTaps)) || undefined}
+      style={{ '--alg-player-size': `${size}px` } as CSSProperties}>
       {showHands && handsVisible && handsUnavailable && <small role="status">{t('手部模型加载失败', 'Could not load the hand models')}</small>}
       <SimStage
         size={size}

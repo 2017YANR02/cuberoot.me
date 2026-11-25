@@ -125,13 +125,6 @@
   max-inline-size: 100%;
   max-block-size: 100%;
 }
-.course-cube:is([data-drag-enabled='true'], [data-canvas-texture]) .sim-stage-canvas > canvas {
-  background-color: color-mix(in srgb, var(--foreground) 2%, transparent);
-  background-image: radial-gradient(color-mix(in srgb, var(--foreground) 13%, transparent) .7px, transparent .95px);
-  background-size: 14px 14px;
-  outline: 1px solid var(--border-default);
-  outline-offset: -1px;
-}
 .course-cube[data-drag-enabled='true'] .sim-stage-canvas > canvas { cursor: grab; }
 .course-cube[data-drag-enabled='true'] .sim-stage-canvas > canvas:active { cursor: grabbing; }
 .course-caption {

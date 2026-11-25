@@ -201,7 +201,7 @@ export default function Page() {
   }, [setLocation]);
 
   return <InteractiveTutorial title={{ zh: '二阶魔方层先法', en: '2×2 Layer by Layer' }} puzzle="2x2" centerContent
-    orientation={TWO_BY_TWO_ORIENTATION} chapters={chapters} basicsHref="/tutorial/lbl"
+    orientation={TWO_BY_TWO_ORIENTATION} chapters={chapters}
     catalogHref="/tutorial?puzzle=2x2" practiceEnabled={false}
     location={positionFor(step, section)} onNavigate={navigate} />;
 }

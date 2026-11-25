@@ -109,7 +109,7 @@ export default function PairEditor({ setup, orientation, onPiece, guide, onReady
     return () => cancelAnimationFrame(frame);
   }, [ready, !!guide]);
 
-  return <div className="f2l-editor-stage" ref={host}>
+  return <div className="f2l-editor-stage" data-canvas-interactive ref={host}>
     <SimStage size={size} mount={mount} onReady={() => { setReady(true); latest.current.onReady?.(); }}
       onResetView={hideResetView ? undefined : () => resetView.current?.()} busyLabel={tr({ zh: '正在加载练习魔方', en: 'Loading the practice cube' })} />
     {guide && <div ref={pointer} className="f2l-guide-pointer" data-clicking={guide.clicking} aria-hidden="true"><span /><MousePointer2 size={60} /></div>}
