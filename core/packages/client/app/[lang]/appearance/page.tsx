@@ -200,8 +200,8 @@ export default function AppearancePage() {
                 </span>
               </span>
 
-              <span className="palette-scope ac-preview-scope" data-palette={c.scope}>
-                <span className="ac-preview contrast-scope">
+              <span className="palette-scope ac-preview-scope" data-palette={c.scope} data-af-glass-theme>
+                <span className="ac-preview contrast-scope" data-af-glass-theme>
                   <span className="ac-pv-top">
                     <span className="ac-pv-dot" />
                     <span className="ac-pv-title">小根根</span>

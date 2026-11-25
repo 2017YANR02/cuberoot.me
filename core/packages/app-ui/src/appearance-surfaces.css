@@ -14,8 +14,11 @@ body[data-site-scenery] [data-site-surface='heading'] {
   backdrop-filter: var(--glass-filter);
 }
 body[data-site-scenery] [data-site-surface='popover'] {
-  background: var(--glass-popover-bg);
-  border-color: var(--glass-border);
+  background-color: var(--glass-popover-bg);
+  background-image: var(--af-glass-border-image);
+  background-origin: border-box;
+  background-clip: var(--af-glass-border-clip);
+  border-color: var(--af-glass-border-color);
   -webkit-backdrop-filter: var(--glass-filter);
   backdrop-filter: var(--glass-filter);
   box-shadow: var(--glass-shadow);

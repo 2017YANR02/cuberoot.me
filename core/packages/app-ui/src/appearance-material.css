@@ -1,12 +1,18 @@
-:root, body, .palette-scope, .contrast-scope {
-  --glass-surface-bg: var(--card);
-  --glass-popover-bg: var(--popover);
-  --glass-menu-bg: var(--popover);
-  --glass-dialog-bg: var(--popover);
+:root, body, [data-af-glass-theme] {
+  --af-glass-card: var(--card);
+  --af-glass-popover: var(--popover);
+  --af-glass-ink: var(--foreground);
+  --af-glass-border: var(--border-default);
+
+  /* Existing CubeRoot surfaces consume the same Foundation material tokens. */
+  --glass-surface-bg: var(--af-glass-panel-bg);
+  --glass-popover-bg: var(--af-glass-popover-bg);
+  --glass-menu-bg: var(--af-glass-menu-bg);
+  --glass-dialog-bg: var(--af-glass-dialog-bg);
   --glass-background: transparent;
-  --glass-border: var(--border-default);
+  --glass-border: var(--af-glass-material-edge);
   --glass-edge: var(--glass-border);
-  --glass-filter: var(--site-glass-refraction, none);
+  --glass-filter: var(--af-glass-backdrop);
   --glass-menu-filter: var(--glass-filter);
   --glass-capsule-filter: var(--glass-filter);
   --glass-nav-lens-filter: var(--glass-filter);
@@ -14,74 +20,16 @@
   --navigation-curtain-bg: color-mix(in srgb, var(--background) 40%, transparent);
 }
 
-@supports (color: color-mix(in srgb, black, white)) {
-/* One natural material. Resolve tokens locally for palette comparison samples. */
-:root, body, .palette-scope, .contrast-scope {
-  --glass-surface-bg: color-mix(in srgb, var(--card) 22%, transparent);
-  --glass-popover-bg: color-mix(in srgb, var(--popover) 38%, transparent);
-  --glass-menu-bg: color-mix(in srgb, var(--popover) 82%, transparent);
-  /* Dimming backdrops make translucent dialogs muddy; keep a stable reading layer. */
-  --glass-dialog-bg: color-mix(in srgb, var(--popover) 96%, transparent);
-  --glass-background: transparent;
-  --glass-border: color-mix(in srgb, var(--foreground) 22%, transparent);
-  --glass-edge: var(--glass-border);
-  --glass-shadow: none;
-}
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  :root, body, [data-af-glass-theme] {
+    --glass-background: var(--card);
+    --navigation-curtain-bg: var(--background);
+  }
 }
 
-/* Web starts with an opaque material until the shared optical filter is ready. */
-body[data-site-glass='solid'],
-body[data-site-glass='solid'] :is(.palette-scope, .contrast-scope) {
-  --glass-surface-bg: var(--card);
-  --glass-popover-bg: var(--popover);
-  --glass-menu-bg: var(--popover);
-  --glass-dialog-bg: var(--popover);
-  --glass-background: var(--card);
-  --glass-border: var(--border-default);
-  --navigation-curtain-bg: var(--background);
-}
-@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
-  :root, body, .palette-scope, .contrast-scope {
-    --glass-surface-bg: var(--card);
-    --glass-popover-bg: var(--popover);
-    --glass-menu-bg: var(--popover);
-    --glass-dialog-bg: var(--popover);
-    --glass-menu-filter: none;
-    --glass-background: var(--card);
-    --glass-filter: none;
-  }
-}
-@supports (color: color-mix(in srgb, black, white)) and ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
-  :root, body, .palette-scope, .contrast-scope {
-    --glass-capsule-glint: linear-gradient(to bottom, color-mix(in srgb, white 22%, transparent), transparent 62%);
-    --glass-capsule-shadow:
-      inset 0 1px 2px color-mix(in srgb, white 44%, transparent),
-      inset 0 0 0 1px var(--glass-edge),
-      0 5px 16px color-mix(in srgb, var(--foreground) 12%, transparent);
-    --glass-nav-lens-tint: color-mix(in srgb, var(--popover) 13%, transparent);
-    --glass-nav-lens-shadow:
-      inset 0 1px 1px color-mix(in srgb, white 93%, transparent),
-      inset 0 -2px 3px color-mix(in srgb, black 23%, transparent),
-      inset 0 0 0 1px var(--glass-edge),
-      0 2px 3px color-mix(in srgb, black 14%, transparent),
-      0 7px 16px color-mix(in srgb, black 21%, transparent);
-  }
-  .primary-nav[data-drag-lens] {
-    --glass-nav-lens-glint:
-      radial-gradient(ellipse 80% 52% at calc(38% - var(--app-nav-lens-travel, 0px) * .15) -8%, color-mix(in srgb, white 85%, transparent), transparent 82%),
-      radial-gradient(ellipse 70% 48% at 82% 110%, color-mix(in srgb, white 66%, transparent), transparent 74%);
-  }
-}
 @media (prefers-reduced-transparency: reduce), print {
-  :root, body, .palette-scope, .contrast-scope {
-    --navigation-curtain-bg: var(--background);
-    --glass-surface-bg: var(--card);
-    --glass-popover-bg: var(--popover);
-    --glass-menu-bg: var(--popover);
-    --glass-dialog-bg: var(--popover);
+  :root, body, [data-af-glass-theme] {
     --glass-background: var(--card);
-    --glass-filter: none;
-    --glass-capsule-glint: none;
-    --glass-capsule-shadow: inset 0 0 0 1px var(--glass-edge);
+    --navigation-curtain-bg: var(--background);
   }
 }

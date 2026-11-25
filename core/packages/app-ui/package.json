@@ -6,6 +6,7 @@
   "cuberoot": {
     "kind": "library",
     "externalRuntime": {
+      "@app-foundation/ui-controls": "react-dom",
       "lucide-react": "react-dom",
       "react": "react-dom",
       "@emoji-mart/data": "runtime-neutral",
@@ -57,6 +58,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@app-foundation/ui-controls": "file:../../vendor/app-foundation/app-foundation-ui-controls-0.2.4.tgz",
     "@cuberoot/puzzle-solvers": "workspace:*",
     "@cuberoot/shared": "workspace:*",
     "@cuberoot/timer-ui": "workspace:*",

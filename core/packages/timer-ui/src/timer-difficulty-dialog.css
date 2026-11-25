@@ -22,6 +22,7 @@
 .timer-difficulty-trigger:disabled,
 .timer-difficulty-actions button:disabled { opacity: .5; cursor: default; }
 .timer-room-dialog.timer-difficulty-dialog {
+  --af-glass-content: none;
   /* anchored-panel: clamped (trigger geometry and viewport bounds in TimerDifficultyDialog). */
   position: fixed;
   z-index: 80;

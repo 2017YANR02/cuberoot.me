@@ -1,6 +1,7 @@
 @import './range-input.css';
 
 .shell-topbar {
+  --af-glass-content: none;
   display: grid;
   min-height: 48px;
   grid-template-columns: 1fr auto 1fr;

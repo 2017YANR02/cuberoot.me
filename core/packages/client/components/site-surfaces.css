@@ -184,7 +184,7 @@ body[data-site-scenery] :is(
   .info-tooltip-pop,
   .info-modal,
   .landing-search-plus-menu,
-  .landing-search-panel,
+  .landing-search-panel:not(:where(.landing-search-results-surface > .landing-search-panel)),
   .list-select-popup,
   .wp-member-dialog,
   .wp-achievement-card,
@@ -207,8 +207,11 @@ body[data-site-scenery] :is(
 body[data-site-scenery] .comp-info-past-popover .comp-info-past-panel,
 body[data-site-scenery] .wca-stats-event-selector .event-btn::after,
 body[data-site-scenery] .wca-stats-event-selector .event-btn-remove:not(:hover) {
-  background: var(--glass-popover-bg);
-  border-color: var(--glass-border);
+  background-color: var(--glass-popover-bg);
+  background-image: var(--af-glass-border-image);
+  background-origin: border-box;
+  background-clip: var(--af-glass-border-clip);
+  border-color: var(--af-glass-border-color);
   -webkit-backdrop-filter: var(--glass-filter);
   backdrop-filter: var(--glass-filter);
   box-shadow: var(--glass-shadow);
@@ -239,7 +242,7 @@ body[data-site-scenery] .sites-filter-row .pp-popup,
 body[data-site-scenery] .compact-select-popup.recon-filter-popup,
 body[data-site-scenery] .compact-select-popup.stsv-solution-menu,
 body[data-site-scenery] .vc-export-formats {
-  background: var(--glass-menu-bg);
+  background-color: var(--glass-menu-bg);
   -webkit-backdrop-filter: var(--glass-menu-filter);
   backdrop-filter: var(--glass-menu-filter);
 }
@@ -357,25 +360,89 @@ body[data-site-scenery] :is(
   backdrop-filter: var(--glass-filter);
 }
 
-/* Keep the search control itself out of the backdrop-root chain so its
-   dictation tooltips can blur page content outside the input's bounds. */
-body[data-site-scenery] .landing-search-input:not(.is-drag-over) {
-  isolation: isolate;
-  background: transparent;
-  -webkit-backdrop-filter: none;
-  backdrop-filter: none;
+/* Connect the Foundation surface to CubeRoot's scenery and theme tokens.
+   The results scroller stays outside the backdrop-root chain. */
+:is(.landing-search-input, .home-navigation-surface, .landing-search-item, .landing-search-plus-menu).af-glass-surface {
+  --af-glass-content: none;
 }
 
-body[data-site-scenery] .landing-search-input:not(.is-drag-over)::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  z-index: -1;
-  border-radius: inherit;
-  pointer-events: none;
-  background: var(--glass-surface-bg);
-  -webkit-backdrop-filter: var(--glass-filter);
-  backdrop-filter: var(--glass-filter);
+body:not([data-site-scenery]) .landing-search-results-surface {
+  --af-glass-fill: var(--popover);
+  --af-glass-tint: var(--af-glass-fill);
+  --af-glass-filter: none;
+  --af-glass-reflection: none;
+  --af-glass-width: 0px;
+}
+
+body[data-site-scenery] :is(
+  .landing-search-input:not(.is-drag-over),
+  .home-navigation-surface,
+  .landing-search-results-surface,
+  .landing-search-results-surface .landing-search-item
+) {
+  --af-glass-content: '';
+  --af-glass-fill: var(--card);
+  --af-glass-tint: var(--glass-surface-bg);
+  --af-glass-edge: var(--glass-edge);
+  --af-glass-filter: var(--af-studio-filter, var(--glass-filter));
+  isolation: isolate;
+  background: transparent;
+}
+
+body[data-site-scenery] .landing-search-input:not(.is-drag-over) {
+  --af-glass-width: 0px;
+}
+
+body[data-site-scenery] :is(
+  .landing-page > .landing-search .landing-search-input:not(.is-drag-over),
+  .home-navigation-surface,
+  .landing-search-results-surface,
+  .landing-search-results-surface .landing-search-item
+) {
+  --af-glass-width: 1px;
+  border-color: transparent;
+}
+
+body[data-site-scenery] :is(.home-navigation-surface, .landing-search-results-surface) {
+  --af-glass-fill: var(--popover);
+  --af-glass-tint: var(--glass-popover-bg);
+}
+
+body[data-site-scenery] .landing-search-results-surface .landing-search-item {
+  position: relative;
+}
+
+body[data-site-scenery] .landing-search-results-surface .landing-search-item:hover {
+  --af-glass-fill: color-mix(in srgb, var(--accent) 12%, var(--card));
+  --af-glass-tint: var(--accent-soft);
+  --af-glass-edge: var(--accent);
+  --af-glass-rim: linear-gradient(var(--accent), var(--accent));
+}
+
+.landing-page > .landing-search .landing-search-input:not(.is-drag-over) {
+  --landing-search-lavender: #b9a0ea;
+  --landing-search-edge: color-mix(in srgb, var(--landing-search-lavender) 72%, var(--border-default));
+}
+
+.landing-page > .landing-search .landing-search-input:not(.is-drag-over):focus-within {
+  --landing-search-edge: var(--landing-search-lavender);
+  box-shadow: none;
+}
+
+body:not([data-site-scenery]) .landing-page > .landing-search .landing-search-input:not(.is-drag-over) {
+  border-color: var(--landing-search-edge);
+}
+
+body[data-site-scenery] .landing-page > .landing-search .landing-search-input:not(.is-drag-over) {
+  --af-glass-edge: var(--landing-search-edge);
+}
+
+body[data-site-scenery] .landing-search-plus-menu.af-glass-surface[data-site-surface='popover'] {
+  --af-glass-content: '';
+  background: transparent;
+  border-color: transparent;
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
 }
 
 /* Composite controls paint their visual surface on a sibling or parent layer. */
@@ -399,15 +466,9 @@ body[data-site-scenery] .timer-shell:has(.shell-rail .solver-panel[data-open='tr
   backdrop-filter: var(--glass-filter);
 }
 
-body[data-site-scenery] .solver-sheet {
-  background: var(--glass-dialog-bg);
-  -webkit-backdrop-filter: var(--glass-filter);
-  backdrop-filter: var(--glass-filter);
-}
-
-/* The homepage navigation stays opaque, including over scenery. */
+/* The drawer's shared surface paints behind its scroll container. */
 body[data-site-scenery] .home-navigation-drawer[data-site-surface='popover'] {
-  background: var(--background);
+  background: transparent;
   -webkit-backdrop-filter: none;
   backdrop-filter: none;
 }
@@ -422,16 +483,9 @@ body[data-site-scenery] .sor-race .sor-race-bar {
   backdrop-filter: none;
 }
 
-body[data-site-scenery] .timer-shell .shell-topbar::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  z-index: -1;
-  pointer-events: none;
-  border-radius: inherit;
-  background: var(--glass-popover-bg);
-  -webkit-backdrop-filter: var(--glass-filter);
-  backdrop-filter: var(--glass-filter);
+body[data-site-scenery] .timer-shell .shell-topbar.af-glass-surface {
+  --af-glass-content: '';
+  --af-glass-width: 0px;
 }
 
 /* Keep the country menu above the chart's own glass stacking context. */
@@ -471,22 +525,28 @@ body[data-site-scenery] .timer-statistics-actions > .timer-statistics-report {
 
 body[data-site-scenery] :is(
   .tsession-panel,
-  .timer-history-quick-panel,
-  .timer-history-quick-sheet,
+  .timer-history-quick-panel
+),
+body[data-site-scenery] .timer-room-dialog.stsv-settings-dialog[data-site-surface='panel'],
+body[data-site-scenery] .stsv-modal-backdrop > .stsv-modal[data-site-surface='panel'] {
+  /* Direct paint stays fixed while these menus scroll their own content. */
+  background-color: var(--glass-popover-bg);
+  background-image: var(--af-glass-border-image);
+  background-origin: border-box;
+  background-clip: var(--af-glass-border-clip);
+  border-color: var(--af-glass-border-color);
+  box-shadow: var(--glass-shadow);
+  -webkit-backdrop-filter: var(--glass-filter);
+  backdrop-filter: var(--glass-filter);
+}
+
+body[data-site-scenery] :is(
   .timer-history-compare-modal,
   .timer-solve-detail-modal
 ) {
   border-color: var(--glass-border);
   -webkit-backdrop-filter: var(--glass-filter);
   backdrop-filter: var(--glass-filter);
-}
-
-body[data-site-scenery] :is(
-  .tsession-panel,
-  .timer-history-quick-panel,
-  .timer-history-quick-sheet
-) {
-  background: var(--glass-popover-bg);
 }
 
 body[data-site-scenery] :is(
@@ -552,25 +612,16 @@ body .timer-room-overlay:has(> .visualcube-preview) {
   backdrop-filter: var(--glass-filter);
 }
 
-body[data-site-scenery] .timer-room-dialog.timer-difficulty-dialog {
+body[data-site-scenery] .timer-room-dialog.timer-difficulty-dialog.af-glass-surface {
   /* Nested method menus must sample the slider and text behind them. Keep the
      dialog's glass on a sibling paint layer instead of making a backdrop root. */
+  --af-glass-content: '';
+  --af-glass-inset: 0px;
   background: transparent;
-  border-color: var(--glass-border);
+  border-color: transparent;
+  box-shadow: var(--glass-shadow);
   -webkit-backdrop-filter: none;
   backdrop-filter: none;
-}
-
-body[data-site-scenery] .timer-room-dialog.timer-difficulty-dialog::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  z-index: -1;
-  pointer-events: none;
-  border-radius: inherit;
-  background: var(--glass-popover-bg);
-  -webkit-backdrop-filter: var(--glass-filter);
-  backdrop-filter: var(--glass-filter);
 }
 
 /* Session controls retain their own hit-area surface. */

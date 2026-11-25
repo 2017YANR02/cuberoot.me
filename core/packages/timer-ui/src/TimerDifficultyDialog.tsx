@@ -51,7 +51,7 @@ export function TimerDifficultyDialog({ anchorRef, language, disabled, canApply 
     };
   }, [anchorRef]);
   return createPortal(<div ref={panelRef} role="dialog" aria-label={{ en: 'Difficulty', zh: '难度' }[language]} tabIndex={-1}
-    className="timer-room-dialog timer-difficulty-dialog" data-site-surface="popover" data-no-timer
+    className="timer-room-dialog timer-difficulty-dialog af-glass-surface" data-af-glass-role="popover" data-site-surface="popover" data-no-timer
     onKeyUp={event => event.stopPropagation()} onKeyDown={event => {
       event.stopPropagation();
       if (event.key === 'Escape') { onClose(); anchorRef.current?.focus(); }

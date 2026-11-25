@@ -122,7 +122,7 @@ export function TimerTopbar({ brand, controls, actions, className, availableTopB
   }, [availableTopBar, brand]);
 
   return (
-    <header ref={headerRef} className={`shell-topbar surface-chrome${className ? ` ${className}` : ''}`} data-topbar-actions={actions ? 'true' : undefined}>
+    <header ref={headerRef} className={`shell-topbar surface-chrome af-glass-surface${className ? ` ${className}` : ''}`} data-af-glass-role="popover" data-topbar-actions={actions ? 'true' : undefined}>
       {brand}
       <div ref={controlsRef} className="shell-topbar-left">{controls}</div>
       <div ref={actionsRef} className="shell-topbar-right">{actions}</div>

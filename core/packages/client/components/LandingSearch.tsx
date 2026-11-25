@@ -797,7 +797,7 @@ export default function LandingSearch({
             key={p.wcaId}
             href={`/wca/persons/${p.wcaId}`}
             prefetch={false}
-            className="landing-search-item landing-search-item--rich"
+            className="af-glass-surface landing-search-item landing-search-item--rich"
             onClick={closeAfter}
           >
             <WcaPersonTeamBadge wcaId={p.wcaId} linked={false} />
@@ -829,7 +829,7 @@ export default function LandingSearch({
                     data-analytics-placement="search"
                     href={c.href}
                     prefetch={false}
-                    className="landing-search-item"
+                    className="af-glass-surface landing-search-item"
                     onClick={closeAfter}
                   >
                     <span className="landing-search-item-name">{(isZh ? c.nameZh : c.nameEn)}</span>
@@ -846,11 +846,11 @@ export default function LandingSearch({
             {assistantBusy ? <p>{tr({ zh: '正在回答…', en: 'Preparing an answer…' })}</p>
               : assistantError ? <>
                 <p>{tr(ASSISTANT_ERROR_TEXT[assistantError])}</p>
-                {(assistantError === 'login_required' || assistantError === 'wca_link_required') && <button type="button" className="landing-search-item" onClick={() => authActions.login()}>{tr({ zh: '前往账号页', en: 'Go to account' })}</button>}
-                {totalCount > 0 && <button type="button" className="landing-search-item" onClick={goFirstResult}>{tr({ zh: '打开首个搜索结果', en: 'Open the first search result' })}</button>}
+                {(assistantError === 'login_required' || assistantError === 'wca_link_required') && <button type="button" className="af-glass-surface landing-search-item" onClick={() => authActions.login()}>{tr({ zh: '前往账号页', en: 'Go to account' })}</button>}
+                {totalCount > 0 && <button type="button" className="af-glass-surface landing-search-item" onClick={goFirstResult}>{tr({ zh: '打开首个搜索结果', en: 'Open the first search result' })}</button>}
               </> : assistantAnswer ? <>
                 <div className="landing-search-answer-text"><SiteAssistantAnswerText result={assistantAnswer}/></div>
-                <button type="button" className="landing-search-item" onClick={() => setAssistantDialog(true)}>{tr({zh:'继续对话',en:'Continue conversation'})}</button>
+                <button type="button" className="af-glass-surface landing-search-item" onClick={() => setAssistantDialog(true)}>{tr({zh:'继续对话',en:'Continue conversation'})}</button>
 
               </> : <p>{tr({ zh: `请把问题缩短到 ${SITE_ASSISTANT_QUESTION_MAX_LENGTH} 字以内。`, en: `Please keep your question within ${SITE_ASSISTANT_QUESTION_MAX_LENGTH} characters.` })}</p>}
           </section>
@@ -865,7 +865,7 @@ export default function LandingSearch({
                 <Link
                   href={hrefWithQuery('/wca/comp', `year=${yearMatch}`)}
                   prefetch={false}
-                  className="landing-search-item"
+                  className="af-glass-surface landing-search-item"
                   onClick={closeAfter}
                 >
                   <span className="landing-search-item-name">{(isZh ? `${yearMatch} 年比赛日历` : `${yearMatch} competitions`)}</span>
@@ -885,7 +885,7 @@ export default function LandingSearch({
               <div className="landing-search-grid">
                 <button
                   type="button"
-                  className="landing-search-item"
+                  className="af-glass-surface landing-search-item"
                   onClick={() => goPasteIntent(pasteIntent)}
                 >
                   <span className="landing-search-item-name">{(isZh ? pasteIntent.labelZh : pasteIntent.labelEn)}</span>
@@ -912,7 +912,7 @@ export default function LandingSearch({
                 {translationMatches.map(match => <Link
                   key={`${match.component}:${match.unitId}`}
                   href={`/regulation/translation/search?q=${encodeURIComponent(query.trim())}#translation-${match.component}-${match.unitId}`}
-                  prefetch={false} className="landing-search-item" onClick={closeAfter}
+                  prefetch={false} className="af-glass-surface landing-search-item" onClick={closeAfter}
                 >
                   <span className="landing-search-item-name" lang="en">{match.en}</span>
                   <span className="landing-search-item-meta" lang="zh-Hans">{match.zh}</span>
@@ -939,7 +939,7 @@ export default function LandingSearch({
                   key={thread.id}
                   href={`/forum/t/${thread.id}`}
                   prefetch={false}
-                  className="landing-search-item"
+                  className="af-glass-surface landing-search-item"
                   onClick={closeAfter}
                 >
                   <span className="landing-search-item-name">{thread.title}</span>
@@ -956,7 +956,7 @@ export default function LandingSearch({
           {(platformMatches.length > 0 || platformSearchError) && <section className="landing-search-section">
             <div className="landing-search-section-header"><Library size={14} strokeWidth={1.75} /><h3>{tr({ zh: '课程、活动与商城', en: 'Courses, events and shop' })}</h3></div>
             {platformSearchError && <p role="status">{tr({ zh: '课程与商城搜索暂时不可用，其他结果仍可浏览。', en: 'Course and shop search is temporarily unavailable. Other results are still available.' })}</p>}
-            <div className="landing-search-grid">{platformMatches.slice(0, 12).map(item => <Link key={item.type + ':' + item.id} href={item.href} prefetch={false} className="landing-search-item" onClick={closeAfter}>
+            <div className="landing-search-grid">{platformMatches.slice(0, 12).map(item => <Link key={item.type + ':' + item.id} href={item.href} prefetch={false} className="af-glass-surface landing-search-item" onClick={closeAfter}>
               <span className="landing-search-item-name">{tr({ zh: item.titleZh || item.titleEn, en: item.titleEn || item.titleZh })}</span>
             </Link>)}</div>
             {platformMatches.length > 12 && <Link href={'/platform/search?q=' + encodeURIComponent(query.trim())} prefetch={false} onClick={closeAfter}>{tr({ zh: '查看全部内容结果', en: 'View all content results' })}</Link>}
@@ -974,7 +974,7 @@ export default function LandingSearch({
                     key={`${a.puzzle}/${a.setSlug}`}
                     href={a.path}
                     prefetch={false}
-                    className="landing-search-item landing-search-item--alg"
+                    className="af-glass-surface landing-search-item landing-search-item--alg"
                     onClick={closeAfter}
                   >
                     <EventIcon event={a.puzzle} className="landing-search-event-icon" />
@@ -1000,7 +1000,7 @@ export default function LandingSearch({
                     key={it.path}
                     href={it.path}
                     prefetch={false}
-                    className="landing-search-item"
+                    className="af-glass-surface landing-search-item"
                     onClick={closeAfter}
                   >
                     <span className="landing-search-item-name">{tr(it)}</span>
@@ -1023,7 +1023,7 @@ export default function LandingSearch({
                     key={`${it.path}|${it.extraQuery ?? ''}|${it.en}`}
                     href={hrefWithQuery(it.path, it.extraQuery)}
                     prefetch={false}
-                    className="landing-search-item"
+                    className="af-glass-surface landing-search-item"
                     onClick={closeAfter}
                   >
                     <span className="landing-search-item-name">{tr(it)}</span>
@@ -1050,7 +1050,7 @@ export default function LandingSearch({
                           key={`s:${s.id}`}
                           href={`/wca/${s.id}`}
                           prefetch={false}
-                          className="landing-search-item"
+                          className="af-glass-surface landing-search-item"
                           onClick={closeAfter}
                         >
                           <span className="landing-search-item-name">{(isZh ? s.titleZh : s.titleEn)}</span>
@@ -1065,7 +1065,7 @@ export default function LandingSearch({
                         key={`m:${parent.id}:${metric.id}`}
                         href={`/wca/${parent.id}#metric=${metric.id}`}
                         prefetch={false}
-                        className="landing-search-item"
+                        className="af-glass-surface landing-search-item"
                         onClick={closeAfter}
                       >
                         <span className="landing-search-item-name">{parentTitle} · {metricLabel}</span>
@@ -1090,7 +1090,7 @@ export default function LandingSearch({
                     key={a.id}
                     href={`/wca/about/${a.id}`}
                     prefetch={false}
-                    className="landing-search-item"
+                    className="af-glass-surface landing-search-item"
                     onClick={closeAfter}
                   >
                     <span className="landing-search-item-name">{(isZh ? a.titleZh : a.titleEn)}</span>
@@ -1113,7 +1113,7 @@ export default function LandingSearch({
                     key={s.slug}
                     href={`/dev/stack/${s.slug}`}
                     prefetch={false}
-                    className="landing-search-item"
+                    className="af-glass-surface landing-search-item"
                     onClick={closeAfter}
                   >
                     <span className="landing-search-item-name">{s.name}</span>
@@ -1144,7 +1144,7 @@ export default function LandingSearch({
                     key={g.slug}
                     href={`/wiki#${g.slug}`}
                     prefetch={false}
-                    className="landing-search-item"
+                    className="af-glass-surface landing-search-item"
                     onClick={closeAfter}
                   >
                     <span className="landing-search-item-name">{g.head}</span>
@@ -1180,7 +1180,7 @@ export default function LandingSearch({
                     <Link
                       key={c.id}
                       {...compLinkProps(c.id)}
-                      className="landing-search-item landing-search-item--rich"
+                      className="af-glass-surface landing-search-item landing-search-item--rich"
                       onClick={closeAfter}
                     >
                       <Flag iso2={c.country} className="country-flag" />
@@ -1221,7 +1221,7 @@ export default function LandingSearch({
                     key={r.id}
                     href={`/recon/${reconPathSeg(r)}`}
                     prefetch={false}
-                    className="landing-search-item landing-search-item--rich"
+                    className="af-glass-surface landing-search-item landing-search-item--rich"
                     onClick={closeAfter}
                   >
                     {r.personIso2 && <Flag iso2={r.personIso2} className="country-flag" />}
@@ -1259,10 +1259,9 @@ export default function LandingSearch({
     <div className={`landing-search${persistentResults ? ' landing-search--page' : ''}`} ref={wrapRef} style={workspaceEntry && workspace.open ? { display: 'none' } : undefined}>
       <div className="landing-search-controls">
         {voiceMode ? (
-          <div className="landing-search-input landing-search-voice" onKeyDown={event => {
+          <div className="af-glass-surface landing-search-input landing-search-voice" onKeyDown={event => {
             if (event.key === 'Escape') { micCancel(); setVoiceMode(false); setVoiceAction(null); }
           }}>
-            <span className="landing-search-glow" aria-hidden="true" />
             <button type="button" className="landing-search-voice-button" aria-label={tr({ zh: '取消语音输入', en: 'Cancel voice input' })}
               onClick={() => { micCancel(); setVoiceMode(false); setVoiceAction(null); setVoiceText(''); }}><X size={22} /></button>
             <div className="landing-search-wave" role="status"
@@ -1286,7 +1285,7 @@ export default function LandingSearch({
         ) : (
         // allow-manual-search: Results update on change. The form identifies the field to password managers.
         <form
-          className="landing-search-input"
+          className="af-glass-surface landing-search-input"
           role="search"
           method="get"
           onSubmit={event => event.preventDefault()}
@@ -1298,7 +1297,6 @@ export default function LandingSearch({
             }
           }}
         >
-          <span className="landing-search-glow" aria-hidden="true" />
           <button
             type="button"
             className="landing-search-plus"
@@ -1383,7 +1381,7 @@ export default function LandingSearch({
           </Link>
         )}
         {plusMenuOpen && (
-          <div ref={plusMenuRef} className="landing-search-plus-menu" data-site-surface="popover" role="menu">
+          <div ref={plusMenuRef} className="landing-search-plus-menu af-glass-surface" data-af-glass-role="menu" data-site-surface="popover" role="menu">
             {!searchOnly && <button type="button" className="landing-search-plus-menu-btn" role="menuitem" aria-label={tr({zh:'图片提问',en:'Ask with images'})} onClick={() => {
               if (workspaceEntry) { ensureAssistantConversation(owner); assistantConversations.setOpen(owner, true); router.push(`${langPrefix}/chat`); }
               else { setAssistantDraft(query); setAssistantDialog(true); }
@@ -1403,6 +1401,9 @@ export default function LandingSearch({
             </button>
           </div>
         )}
+        {usesAssistantWorkspace && showDropdown && !assistantDialog && (
+          <div className="af-glass-surface landing-search-results-surface">{searchResults}</div>
+        )}
       </div>
 
       {(micError || (listening && microphone)) && (
@@ -1415,7 +1416,7 @@ export default function LandingSearch({
       {authNotice && <p className="landing-search-speech-status" role="alert">{authNotice}</p>}
       {!searchOnly && assistantDialog && assistantView}
 
-      {showDropdown && !assistantDialog && searchResults}
+      {!usesAssistantWorkspace && showDropdown && !assistantDialog && searchResults}
     </div>
   );
 }

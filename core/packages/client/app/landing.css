@@ -319,11 +319,32 @@ body:has(.landing-page) { --landing-content-max: 1100px; }
     overflow-wrap: anywhere;
 }
 
-.landing-page > .landing-search .landing-search-panel,
+.landing-page > .landing-search > :where(.landing-search-controls) > .landing-search-results-surface,
 .landing-page > .landing-search .landing-search-plus-menu {
     /* anchored-panel: safe (bottom-fixed host; panels open upward within the viewport). */
     top: auto;
     bottom: calc(100% + 0.5rem);
+}
+.landing-page > .landing-search > :where(.landing-search-controls) > .landing-search-results-surface {
+    position: absolute;
+    /* The results use the input's column; the chat link has its own column. */
+    grid-area: 1 / 1 / 2 / 2;
+    inset-inline: 0;
+    z-index: 50;
+    border: 1px solid var(--border-default);
+    border-radius: 12px;
+}
+.landing-page > .landing-search > :where(.landing-search-controls) > .landing-search-results-surface > .landing-search-panel {
+    position: relative;
+    inset: auto;
+    z-index: auto;
+    max-height: calc(min(60dvh, 100dvh - 10rem - var(--sat) - max(var(--sab), var(--installed-chrome-bottom, 0px))) - 2px);
+    border: 0;
+    border-radius: inherit;
+    background: transparent;
+    box-shadow: none;
+}
+.landing-page > .landing-search .landing-search-plus-menu {
     max-height: min(60dvh, calc(100dvh - 10rem - var(--sat) - max(var(--sab), var(--installed-chrome-bottom, 0px))));
     overflow-y: auto;
 }
@@ -468,6 +489,18 @@ body:has(.landing-page) { --landing-content-max: 1100px; }
     color: var(--accent);
 }
 .landing-page .landing-card-icon .record-badge {
+.landing-page .landing-card.af-glass-surface {
+    --landing-card-light: 7%;
+    --af-glass-tint: color-mix(in srgb, var(--glass-popover-bg), var(--foreground) var(--landing-card-light));
+    position: relative;
+    background: transparent;
+    border-color: transparent;
+    overflow: visible;
+}
+.landing-page .landing-card.af-glass-surface:hover {
+    --landing-card-light: 11%;
+    --af-glass-edge: var(--accent);
+}
     font-size: 22px;
 }
 

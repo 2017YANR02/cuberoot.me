@@ -118,10 +118,10 @@ export default function RootLayout({
             app down to the old engine; it only renders an actionable fallback. */}
         <script dangerouslySetInnerHTML={{ __html: APP_BOOT_EARLY_SCRIPT }} />
       </head>
-      <body data-site-glass="solid">
+      <body>
         <AppNuqsAdapter>
           <SiteChrome><SiteBackground /></SiteChrome>
-          <PrimaryNavigationOptics siteWide displacementScale={28} />
+          <PrimaryNavigationOptics siteWide />
           <SiteCorners exclude=".maplibregl-map" containers=".cg-card, .rc-card, .recon-card, .sortable-card, .timer-workspace-panel" />
           <InstalledContentBoundary>{children}</InstalledContentBoundary>
           <SiteChrome>

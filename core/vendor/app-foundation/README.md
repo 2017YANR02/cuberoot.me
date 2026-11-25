@@ -11,3 +11,5 @@ Navigation UI 0.1.0: local shared sidebar candidate from App Foundation; both si
 Navigation UI 0.1.2 is the current local candidate: adds grouped menus, count badges and embedded content without nested main landmarks. Mira admin/notifications and CubeRoot contact also consume it; both sites pin identical bytes. Unpublished.
 
 Careers UI 0.1.0 is a shared local candidate for the careers browser and detail sections. Both sites pin the same artifact; positions, labels, routes and styling remain host-owned. Publish an immutable artifact before deployment.
+
+UI Controls 0.2.4 provides the shared Liquid Glass Studio optics and material tokens. Both sites pin the same local artifact. Publish an immutable artifact before deployment.

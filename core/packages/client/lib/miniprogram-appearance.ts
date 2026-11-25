@@ -22,11 +22,13 @@ function resolveColors(scheme: 'light' | 'dark', palette: string | null): Native
     // its local colors as the user's global preference.
     const probe = document.createElement('div');
     probe.className = 'native-appearance-scope palette-scope';
+    probe.setAttribute('data-af-glass-theme', '');
     probe.dataset.theme = scheme;
     if (palette) probe.dataset.palette = palette;
     probe.style.display = 'none';
     const contrast = document.createElement('div');
     contrast.className = 'contrast-scope';
+    contrast.setAttribute('data-af-glass-theme', '');
     probe.appendChild(contrast);
     document.body.appendChild(probe);
     const style = getComputedStyle(contrast);

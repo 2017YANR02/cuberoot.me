@@ -145,17 +145,36 @@ describe('site materials have one definition and shared scenery tokens', () => {
     expect(scanSiteMaterial('.page { --glass-filter: none; --glass-background: var(--card); }', 'app/[lang]/home-background.css')).toEqual([]);
   });
 
+  it('keeps the homepage search results fallback out of the glass layout', () => {
+    const layout = readFileSync(join(ROOT, 'app/landing.css'), 'utf8');
+    const surfaces = readFileSync(join(ROOT, 'components/site-surfaces.css'), 'utf8');
+    expect(layout).not.toMatch(/\.landing-search-results-surface\s*(?:,[^{}]*)?\{[^{}]*\bbackground(?:-[\w-]+)?\s*:/);
+    expect(surfaces).toMatch(/body:not\(\[data-site-scenery\]\) \.landing-search-results-surface\s*\{[^{}]*--af-glass-fill: var\(--popover\);[^{}]*--af-glass-filter: none;/);
+  });
+
   it('keeps timer dialogs on the shared high-opacity reading layer', () => {
-    const material = readFileSync(join(dirname(require.resolve('@cuberoot/app-ui/appearance.css')), 'appearance-material.css'), 'utf8');
+    const appearance = dirname(require.resolve('@cuberoot/app-ui/appearance.css'));
+    const material = readFileSync(join(appearance, 'appearance-material.css'), 'utf8');
+    const foundation = readFileSync(require.resolve('@app-foundation/ui-controls/glass-surface.css', { paths: [appearance] }), 'utf8');
     const surfaces = readFileSync(join(ROOT, 'components/site-surfaces.css'), 'utf8');
     const timer = readFileSync(join(ROOT, 'app/[lang]/timer/timer.css'), 'utf8');
     const battle = readFileSync(join(ROOT, 'app/[lang]/timer/_battle/battle.css'), 'utf8');
 
-    expect(material).toContain('--glass-dialog-bg: color-mix(in srgb, var(--popover) 96%, transparent);');
+    expect(material).toContain('--glass-dialog-bg: var(--af-glass-dialog-bg);');
+    expect(foundation).toContain('--af-glass-dialog-bg: color-mix(in srgb, var(--af-glass-popover, Canvas) 96%, transparent);');
     expect(timer).toMatch(/body\[data-site-scenery\] \.timer-modal:where\(:not\(\.bt-timer-modal\)\)\s*\{\s*background: var\(--glass-dialog-bg\);/);
-    expect(surfaces).toMatch(/body\[data-site-scenery\] \.solver-sheet\s*\{\s*background: var\(--glass-dialog-bg\);/);
     expect(surfaces).toMatch(/:is\(\s*\.timer-history-compare-modal,\s*\.timer-solve-detail-modal,\s*\.timer-room-dialog\s*\)\s*\{\s*background: var\(--glass-dialog-bg\);/);
     expect(battle).toMatch(/body\[data-site-scenery\] \.ao-detail-panel\s*\{\s*background: var\(--glass-dialog-bg\);/);
+  });
+
+  it('keeps the full-screen solution viewer opaque over site scenery', () => {
+    const solverPath = require.resolve('@cuberoot/timer-ui/TimerSolverPanel');
+    const solver = readFileSync(solverPath, 'utf8');
+    const styles = readFileSync(join(dirname(solverPath), 'timer-solver-panel.css'), 'utf8');
+    const surfaces = readFileSync(join(ROOT, 'components/site-surfaces.css'), 'utf8');
+    expect(solver).not.toMatch(/className="solver-sheet [^"]*\baf-glass-surface\b/);
+    expect(styles).toMatch(/\.solver-sheet\s*\{[^{}]*background: var\(--background\);/);
+    expect(surfaces).not.toMatch(/\.solver-sheet\b/);
   });
 
   it('requires a reason on the same declaration line for intentional exceptions', () => {

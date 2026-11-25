@@ -26,6 +26,7 @@ export default function HomeNavigation({ selected, onSelect, isAdmin, sections, 
   const [open, setOpen] = useState(false);
   const [drawerClosing, setDrawerClosing] = useState(false);
   const [drawerSection, setDrawerSection] = useState<string | null>(null);
+  const [drawerTop, setDrawerTop] = useState(0);
   const drawerDialogRef = useRef<{ close: () => void }>(null);
   const drawerToggleRef = useRef<HTMLButtonElement>(null);
   useLayoutEffect(() => {
@@ -160,7 +161,7 @@ export default function HomeNavigation({ selected, onSelect, isAdmin, sections, 
       headerRef.current?.querySelector<HTMLButtonElement>(`#home-nav-${allowedFlyout}`)?.focus();
       closeFlyout();
     }}>
-    <span className="home-navigation-surface" data-site-surface="heading" aria-hidden="true" />
+    <span className="home-navigation-surface af-glass-surface" aria-hidden="true" />
     <button type="button" className="home-navigation-brand" aria-label={tr({ zh: '首页', en: 'Home' })}
       onPointerEnter={closeFlyout} onClick={() => { closeFlyout(); onSelect('home'); }}>{brand}</button>
     <div className="home-navigation-desktop">{menu()}</div>
@@ -169,12 +170,13 @@ export default function HomeNavigation({ selected, onSelect, isAdmin, sections, 
       data-menu-closing={open && drawerClosing || undefined}
       aria-haspopup="dialog" onClick={() => {
         closeFlyout();
+        setDrawerTop(headerRef.current?.getBoundingClientRect().top ?? 0);
         setDrawerSection(items.find(item => item.active)?.id ?? null);
         setDrawerClosing(false);
         setOpen(true);
       }} />
     <div className="home-navigation-curtain" aria-hidden="true" onPointerEnter={scheduleClose} onClick={closeFlyout} />
-    <div id="home-navigation-flyout" className="home-navigation-flyout" role="region"
+    <div id="home-navigation-flyout" className="home-navigation-flyout af-glass-surface" data-af-glass-role="popover" role="region"
       aria-labelledby={allowedFlyout ? `home-nav-${allowedFlyout}` : undefined} aria-hidden={!shown} inert={!shown}
       onPointerEnter={cancelLeave}>
       <div ref={contentRef} className="home-navigation-flyout-content">
@@ -184,12 +186,13 @@ export default function HomeNavigation({ selected, onSelect, isAdmin, sections, 
       </div>
     </div>
     {open && <SettingsDialog ref={drawerDialogRef} curtain motionDuration={650} portalContainer={headerRef.current?.parentElement}
+      backdropStyle={{ '--home-drawer-top': `${drawerTop}px` } as CSSProperties}
       label={label} heading={<CubeRootLogoImage />}
       renderCloseButton={(close, closing) => <button type="button"
         className="home-navigation-toggle home-navigation-drawer-toggle menu-toggle-icon"
         aria-label={tr({ zh: '关闭', en: 'Close' })} aria-expanded={!closing}
         aria-disabled={closing || undefined} onClick={close} />}
-      panelClassName="home-navigation-drawer" onCloseStart={() => setDrawerClosing(true)} onClose={() => setOpen(false)}>
+      panelClassName="home-navigation-drawer af-glass-surface" onCloseStart={() => setDrawerClosing(true)} onClose={() => setOpen(false)}>
       {close => <div className="home-navigation-drawer-content">
         {menu(close)}
         <div className="home-navigation-drawer-actions"

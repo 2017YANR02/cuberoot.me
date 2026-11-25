@@ -1,4 +1,5 @@
 @import "@cuberoot/shared/timer/classic-appearance.css";
+@import "@app-foundation/ui-controls/glass-surface.css";
 @import "./appearance-material.css";
 @import "./appearance-surfaces.css";
 @import "./appearance-accent.css";

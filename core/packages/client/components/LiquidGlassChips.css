@@ -2,29 +2,14 @@
 
 .lg-chips {
     position: relative;
-    isolation: isolate;
     display: inline-flex;
-    border: 1px solid color-mix(in srgb, currentColor 8%, transparent);
+    border: 1px solid transparent;
     border-radius: 999px;
     padding: 3px;
     gap: 0;
     touch-action: pan-y;
     user-select: none;
     -webkit-user-select: none;
-    box-shadow: var(--glass-shadow);
-}
-
-/* The track and thumb sample the page independently. */
-.lg-chips::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    z-index: -1;
-    pointer-events: none;
-    border-radius: inherit;
-    background: var(--glass-surface-bg);
-    -webkit-backdrop-filter: var(--glass-filter);
-    backdrop-filter: var(--glass-filter);
 }
 
 /* Shared optical thumb stays below labels and never receives pointer events. */
@@ -41,11 +26,7 @@
     position: absolute;
     transform: translate(-50%, -50%);
     border-radius: 999px;
-    background: var(--glass-popover-bg);
-    box-shadow: var(--glass-shadow);
-    border: 1px solid var(--glass-border);
-    -webkit-backdrop-filter: var(--glass-filter);
-    backdrop-filter: var(--glass-filter);
+    border: 1px solid transparent;
     transition: top 0.2s ease-out, left 0.2s ease-out, width 0.2s ease-out, height 0.2s ease-out;
 }
 

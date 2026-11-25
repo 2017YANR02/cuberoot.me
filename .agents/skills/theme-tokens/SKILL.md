@@ -74,10 +74,10 @@ background: color-mix(in srgb, var(--accent) 12%, transparent); /* tag 弱化 */
 - 已迁移首页听写、WcaEventSelector 图标提示、LessonVideoPlayer 按钮提示和复盘列表截断文本提示；后者使用 `onlyWhenOverflow`，播放器全屏由组件自动选择 Portal 容器。写入 Hook 与 CI `site-material-guard.test.ts` 共用 `scanSiteMaterial`，禁止重新引入 `content: attr(data-tooltip/data-tip/title)` 气泡。原生 title、图表坐标提示与点击说明属于不同用途，不做机械替换。
 - 按钮/链接的短悬停提示统一使用 `components/Tooltip`（`<Tooltip content={tr({zh,en})}>{(tip) => <button {...tip}>…</button>}</Tooltip>`），禁止另写页面级提示气泡或用 native `title` 代替需要设计样式的提示。触发属性放在实际按钮上；已有同名事件须组合调用。组件负责 hover/focus、Escape、可移入提示、Portal 和视口钳制，页面不再定义 blur/透明度。可交互内容不放 Tooltip，点击展开的说明继续用 InfoTooltip。Portal 继承全站主题；局部配色预览须单独核验。
 
-- 唯一材质源 `core/packages/app-ui/src/appearance-material.css`（由公开 `@cuberoot/app-ui/appearance.css` 引入；Web `components/glass-material.css` 仅兼容转接）；场景开关由 `SiteBackground` 管理 `body[data-site-scenery]`，旧样式集中接入 `site-surfaces.css`。
+- Web 液态玻璃的折射、反光边、浓度和回退源在 `@app-foundation/ui-controls/glass-surface.css`。CubeRoot 在 `appearance-material.css` 绑定主题色并兼容现有材质变量，由 `@cuberoot/app-ui/appearance.css` 引入。场景开关由 `SiteBackground` 管理 `body[data-site-scenery]`，旧样式集中接入 `site-surfaces.css`。
 - 新面板/菜单/吸顶头在实际表面声明 `data-site-surface="panel|popover|heading"`（选一个值）；复用已有元素，不加包装组件、不标遮罩、不用内联实底盖它。
 - ListSelect、CompactSelect、成绩浮层已接材质；标准表格沿用 `<table className="sticky-thead">`，非标准表头声明 `heading`，禁止页面重复定义玻璃色值、透明度或 blur。
-- 浮层和表头共用 `--glass-popover-bg` + `--glass-filter` 保可读；普通面板用 `--glass-surface-bg`；只在唯一材质源调整浓度。
+- 浮层和表头共用 `--glass-popover-bg` + `--glass-filter` 保可读；普通面板用 `--glass-surface-bg`；在 App Foundation 调整共享浓度。需要让内层内容独立采样背景时，用 `af-glass-surface` 将材质画在控件后面的独立层。
 - 保留 hover/选中/危险状态、纪录标记、魔方色块和媒体画布；原生 option/optgroup 无法透出页面，保留系统实底。
 - 保留无背景/图片失败时的主题实底，以及不支持 backdrop-filter、减少透明效果、打印的统一回退；内层实底或父级 backdrop-filter 会遮挡场景，须实测。
 - 承载非 portal 菜单的工具栏不能直接加 `backdrop-filter`，也不能在该容器上标记会加 blur 的表面角色；它会成为 backdrop root，菜单超出工具栏的部分无法模糊底下页面。比赛、成绩汇总和分布图工具栏外层保持透明，不加额外底框。确实需要底色时，玻璃画在不承载菜单的 `::before` 层，并检查菜单高于后面的图表；参考 `site-surfaces.css` 的计时器工具栏。全屏遮罩和菜单完全处于其内的对话框不等同于这种越界问题。

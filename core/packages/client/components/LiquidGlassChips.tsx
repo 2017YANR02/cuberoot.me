@@ -89,7 +89,7 @@ export default function LiquidGlassChips<T extends string | number>({
   return (
     <div
       ref={containerRef}
-      className={`lg-chips${className ? ` ${className}` : ''}`}
+      className={`lg-chips af-glass-surface${className ? ` ${className}` : ''}`}
       role="tablist"
       aria-label={ariaLabel}
       onPointerDown={onPointerDown}
@@ -100,7 +100,8 @@ export default function LiquidGlassChips<T extends string | number>({
       <div className="lg-chips-thumb-layer">
         {chipBox.w > 0 && (
           <div
-            className="lg-chips-thumb-fallback"
+            className="lg-chips-thumb-fallback af-glass-surface"
+            data-af-glass-role="popover"
             aria-hidden="true"
             style={{
               top: chipBox.centerY,

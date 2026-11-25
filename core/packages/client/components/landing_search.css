@@ -45,14 +45,10 @@
 }
 
 .landing-search-controls:has(> .landing-search-chat) {
-  display: flex;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
   gap: 0.5rem;
-}
-
-.landing-search-controls:has(> .landing-search-chat) > .landing-search-input {
-  flex: 1;
-  min-width: 0;
 }
 
 .landing-search-chat {
@@ -114,64 +110,41 @@ body:has(.clawd-deskpet[data-home-pet="collapsed"]) .landing-page .landing-searc
   box-shadow: 0 0 0 3px var(--accent-soft);
 }
 
-/* Keep the glow separate from the shared glass background. */
 @property --landing-search-glow-angle {
   syntax: '<angle>';
   inherits: false;
   initial-value: -105deg;
 }
 
-.landing-page .landing-search-input:not(.is-drag-over) {
-  --landing-search-lavender: #b9a0ea;
-  border-color: transparent;
-}
-
-.landing-search-glow {
-  display: none;
-}
-
-.landing-page .landing-search-input:not(.is-drag-over) > .landing-search-glow {
-  display: block;
-  position: absolute;
-  inset: -1px;
-  border-radius: inherit;
-  pointer-events: none;
-  filter: drop-shadow(0 0 5px color-mix(in srgb, var(--landing-search-lavender) 85%, transparent));
-}
-
-.landing-page .landing-search-input:not(.is-drag-over) > .landing-search-glow::before {
-  --landing-search-glow-base: color-mix(in srgb, var(--landing-search-lavender) 36%, transparent);
-  --landing-search-glow-tail: color-mix(in srgb, var(--landing-search-lavender) 72%, transparent);
-  content: '';
-  position: absolute;
-  inset: 0;
-  padding: 1.5px;
-  border-radius: inherit;
-  background: conic-gradient(from var(--landing-search-glow-angle, -105deg),
-    var(--landing-search-glow-base),
-    var(--landing-search-glow-tail) 24deg,
-    color-mix(in srgb, var(--landing-search-lavender) 72%, white) 48deg,
-    var(--landing-search-glow-tail) 68deg,
-    var(--landing-search-glow-base) 106deg 360deg);
-  -webkit-mask: linear-gradient(black 0 0) content-box, linear-gradient(black 0 0);
-  mask: linear-gradient(black 0 0) content-box, linear-gradient(black 0 0);
-  -webkit-mask-composite: xor;
-  mask-composite: exclude;
-}
-
-@media (prefers-reduced-motion: no-preference) {
-  .landing-page .landing-search-input:not(.is-drag-over) > .landing-search-glow::before {
-    animation: landing-search-glow-orbit 12s linear infinite;
+@media screen and (prefers-reduced-motion: no-preference) {
+  @supports (mask-composite: exclude) or (-webkit-mask-composite: xor) {
+    /* Paint the moving highlight within the existing one-pixel rim. */
+    .landing-page > .landing-search .landing-search-input:not(.is-drag-over)::after {
+      --landing-search-glow-tail: color-mix(in srgb, var(--landing-search-lavender) 72%, transparent);
+      content: '';
+      position: absolute;
+      inset: -1px;
+      padding: 1px;
+      border-radius: inherit;
+      background: conic-gradient(from var(--landing-search-glow-angle, -105deg),
+        transparent,
+        var(--landing-search-glow-tail) 24deg,
+        color-mix(in srgb, var(--landing-search-lavender) 48%, white) 48deg,
+        var(--landing-search-glow-tail) 68deg,
+        transparent 106deg 360deg);
+      -webkit-mask: linear-gradient(black 0 0) content-box, linear-gradient(black 0 0);
+      mask: linear-gradient(black 0 0) content-box, linear-gradient(black 0 0);
+      -webkit-mask-composite: xor;
+      mask-composite: exclude;
+      pointer-events: none;
+      animation: landing-search-glow-orbit 12s linear infinite;
+    }
   }
 }
 
 @keyframes landing-search-glow-orbit {
   from { --landing-search-glow-angle: -105deg; }
   to { --landing-search-glow-angle: 255deg; }
-}
-
-.landing-page .landing-search-input:not(.is-drag-over):focus-within {
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--landing-search-lavender) 18%, transparent);
 }
 
 .landing-search-input.landing-search-voice {

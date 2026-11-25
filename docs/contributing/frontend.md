@@ -70,7 +70,7 @@
 
 写任何 CSS 色值前调 `theme-tokens` skill(token 表 + dark-locked 页清单 + color-mix 规则);禁 `#888 #aaa` 等硬码灰阶。
 
-透明背景材质只在 `core/packages/app-ui/src/appearance-material.css` 定义，由公开 `@cuberoot/app-ui/appearance.css` 同时供 Web 与安装端消费；Web `glass-material.css` 仅兼容转接，旧样式由 `site-surfaces.css` 适配；新表面复用 `data-site-surface="panel|popover|heading"`，禁页面另造透明度/blur，保留状态色和无障碍回退，详 `theme-tokens` skill。
+网站玻璃材质由 `@app-foundation/ui-controls/glass-surface.css` 定义，通过 `@cuberoot/app-ui/appearance.css` 接入。CubeRoot 在 `appearance-material.css` 绑定主题色并兼容现有材质变量，`site-surfaces.css` 适配旧页面。新表面可复用 `data-site-surface="panel|popover|heading"`，需要独立绘制层时使用 `af-glass-surface`。页面保留布局与状态色，折射、反光边和无障碍回退沿用共享材质。
 
 多余底框只约束已确认的位置，复用现有材质 Hook/CI；截图巡检按需运行，不作为日常开发或提交的额外门槛，不凭候选自动扩大禁用范围，详 `docs/design/glass/glass-menu-regression.md`。
 
