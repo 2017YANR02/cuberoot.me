@@ -161,9 +161,12 @@ describe('site materials have one definition and shared scenery tokens', () => {
   });
 
   it('keeps timer dialogs on the shared high-opacity reading layer', () => {
-    const appearance = dirname(require.resolve('@cuberoot/app-ui/appearance.css'));
-    const material = readFileSync(join(appearance, 'appearance-material.css'), 'utf8');
-    const foundation = readFileSync(require.resolve('@app-foundation/ui-controls/glass-surface.css', { paths: [appearance] }), 'utf8');
+    const appearance = require.resolve('@cuberoot/app-ui/appearance.css');
+    const appearanceCss = readFileSync(appearance, 'utf8');
+    const glassImport = appearanceCss.match(/^@import ["']([^"']+\/glass-surface\.css)["'];/m)?.[1];
+    if (!glassImport) throw new Error('Missing shared glass stylesheet in App UI');
+    const material = readFileSync(join(dirname(appearance), 'appearance-material.css'), 'utf8');
+    const foundation = readFileSync(createRequire(appearance).resolve(glassImport), 'utf8');
     const surfaces = readFileSync(join(ROOT, 'components/site-surfaces.css'), 'utf8');
     const timer = readFileSync(join(ROOT, 'app/[lang]/timer/timer.css'), 'utf8');
     const battle = readFileSync(join(ROOT, 'app/[lang]/timer/_battle/battle.css'), 'utf8');
