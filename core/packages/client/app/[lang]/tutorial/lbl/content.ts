@@ -40,6 +40,7 @@ export const J_ALG = "R U R' F' R U R' U' R' F R2 U' R'";
 export const CORNER_POSITION = `${J_ALG} U'`;
 export const CORNER_POSITION_COPY = {
   headlightsLeft: text('转体把眼放左', 'Rotate the cube to put the headlights on the left'),
+  turnTopForHeadlights: text('转顶层把眼放左', 'Turn the top to put the headlights on the left'),
   applyJ: text('做 J 公式', 'Do the J algorithm'),
   makeHeadlights: text('做一遍 J 公式造眼', 'Do the J algorithm once to create headlights'),
 };
@@ -191,9 +192,9 @@ export const LBL_STEPS: Step[] = [
       text("先找眼", "First look for headlights"),
     ],
     examples: [
-      example('有眼：眼放左', 'Headlights: Hold on the left', `y ${J_ALG}`,
-        [CORNER_POSITION_COPY.headlightsLeft.zh, CORNER_POSITION_COPY.applyJ.zh].join(' → '),
-        [CORNER_POSITION_COPY.headlightsLeft.en, CORNER_POSITION_COPY.applyJ.en].join(' → '), `(y ${J_ALG})' d`),
+      example('有眼：眼放左', 'Headlights: Hold on the left', `U ${J_ALG}`,
+        [CORNER_POSITION_COPY.turnTopForHeadlights.zh, CORNER_POSITION_COPY.applyJ.zh].join(' → '),
+        [CORNER_POSITION_COPY.turnTopForHeadlights.en, CORNER_POSITION_COPY.applyJ.en].join(' → '), `(y ${J_ALG})' d`),
       example('无眼：先造眼', 'No headlights: Create a pair', J_ALG,
         CORNER_POSITION_COPY.makeHeadlights.zh, CORNER_POSITION_COPY.makeHeadlights.en, `(${CORNER_POSITION} U2 ${CORNER_POSITION} U2)'`),
     ],

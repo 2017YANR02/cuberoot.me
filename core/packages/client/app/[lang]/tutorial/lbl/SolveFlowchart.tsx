@@ -41,7 +41,7 @@ const stages: { done: Text; paths: CasePath[] }[] = [
     [text('4灰？', '4 gray?'), text('四不碰，右鱼公式', '4: avoid yellow, right Sune'), { row: 0, label: text('变成三灰小鱼', '3-gray fish case') }],
   ] },
   { done: text('四个顶角已归位？', 'Top corners positioned?'), paths: [
-    [text('有眼？', 'Headlights?'), text('J 公式\n转顶层对齐', 'J algorithm\nAlign top')],
+    [text('有眼？', 'Headlights?'), text('J 公式', 'J algorithm')],
     [text('无眼？', 'No headlights?'), text('J 公式造眼', 'J algorithm to make eyes'), { row: 0, label: text('变成有眼 case', 'Headlights case') }],
   ] },
   { done: text('整颗魔方已复原？', 'Cube solved?'), paths: [

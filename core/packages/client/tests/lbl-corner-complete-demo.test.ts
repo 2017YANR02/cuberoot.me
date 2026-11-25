@@ -105,7 +105,12 @@ describe('LBL top-corner placement', () => {
     expect(eyeCount(withoutEyes.setup!)).toBe(0);
     expect(withoutEyes.alg).toBe(J_ALG);
     expect(eyeCount(`${withoutEyes.setup} ${withoutEyes.alg}`)).toBe(1);
-    expect(withEyes.alg).toBe(`y ${J_ALG}`);
+    expect(withEyes.alg).toBe(`U ${J_ALG}`);
+    const leftCorners = (alg: string) => [0, 2].map(index => state(alg)[Face.L][index][0]);
+    const [initialLeft, initialRight] = leftCorners(withEyes.setup!);
+    expect(initialLeft).not.toBe(initialRight);
+    const [adjustedLeft, adjustedRight] = leftCorners(`${withEyes.setup} U`);
+    expect(adjustedLeft).toBe(adjustedRight);
     const beforeAlignment = `${withEyes.setup} ${withEyes.alg}`;
     expect(eyeCount(beforeAlignment)).toBe(4);
     expect(demoGoalReached(stage, beforeAlignment)).toBe(true);
