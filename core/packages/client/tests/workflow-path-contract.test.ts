@@ -247,7 +247,7 @@ const NEXT_PATHS = [
   corePath('turbo.json'),
   corePath('patches', '**'),
   corePath('vendor', 'continuous-corners-*.tgz'),
-  ...['careers-ui', 'icons', 'navigation-ui', 'registration-ui']
+  ...['careers-ui', 'icons', 'navigation-ui', 'registration-ui', 'ui-controls']
     .map(name => corePath('vendor', 'app-foundation', `app-foundation-${name}-*.tgz`)),
   corePath('scripts', 'resolve-workspace-path.mjs'),
   corePath('scripts', 'build-cubing-worker.mjs'),

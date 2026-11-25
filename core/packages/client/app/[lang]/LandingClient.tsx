@@ -715,14 +715,14 @@ export default function LandingPage({ initialLayout = null }: { initialLayout?: 
         <Link href="/careers" prefetch={false}>
           {tr({ zh: '加入我们', en: 'Careers' })}
         </Link>
+        <Link href={CREDITS_FOOTER_ENTRY.href} prefetch={false}>
+          {t(CREDITS_FOOTER_ENTRY.nameKey)}
+        </Link>
         <Link href={SUPPORT_FOOTER_ENTRY.href} className="footer-credits" prefetch={false}>
           <Heart className="site-support-heart" size={12} aria-hidden="true" />
           <span>{t(SUPPORT_FOOTER_ENTRY.nameKey)}</span>
         </Link>
         <Link href="/membership" className="footer-membership" prefetch={false}>
-        <Link href={CREDITS_FOOTER_ENTRY.href} prefetch={false}>
-          {t(CREDITS_FOOTER_ENTRY.nameKey)}
-        </Link>
           <Crown size={14} aria-hidden="true" />
           <span>Pro</span>
         </Link>

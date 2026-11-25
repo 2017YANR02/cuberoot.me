@@ -33,6 +33,7 @@ on:
       - 'core/vendor/app-foundation/app-foundation-icons-*.tgz'
       - 'core/vendor/app-foundation/app-foundation-navigation-ui-*.tgz'
       - 'core/vendor/app-foundation/app-foundation-registration-ui-*.tgz'
+      - 'core/vendor/app-foundation/app-foundation-ui-controls-*.tgz'
       - 'core/scripts/resolve-workspace-path.mjs'
       - 'core/scripts/build-cubing-worker.mjs'
       - 'core/scripts/build-video-recon-workers.mjs'
