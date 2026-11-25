@@ -51,7 +51,7 @@ export function CompetitionSupervisionDesk({ entries, activeId, onSelect, render
       {groups.filter(group => group.entries.length).map(group => <section key={group.label}>
         <h3>{group.label}</h3>
         <ul>{group.entries.map(entry => <li key={entry.id}>
-          <button type="button" aria-current={entry.id === selected?.id ? 'true' : undefined} onClick={event => { origin.current = event.currentTarget; onSelect(entry.id); }}>
+          <button type="button" className="competition-queue-entry" aria-current={entry.id === selected?.id ? 'true' : undefined} onClick={event => { origin.current = event.currentTarget; onSelect(entry.id); }}>
             <EventIcon event={entry.project} />
             <span><strong>{displayCuberName(entry.displayName, lang === 'zh')}</strong><small>{eventDisplayName(entry.project, lang === 'zh')} · {competitionDeviceName(entry.device, t)}</small></span>
             {entry.checkedInAt && !!entry.attemptNumber && !finished(entry) ? <span className="competition-queue-progress">{entry.attemptNumber}/5</span>

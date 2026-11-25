@@ -167,7 +167,7 @@
 
 .eg-comparison-demo { margin-block: 1.25rem .75rem; padding-block-start: .85rem; border-block-start: 1px solid var(--border-default); }
 .eg-comparison-demo-heading { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .6rem; }
-.eg-comparison-demo-heading button { min-height: 44px; }
+.eg-comparison-demo-heading > .eg-control { min-height: 44px; }
 .eg-comparison-demo .eg-comparison-demo-setup { display: flex; align-items: center; gap: .4rem; block-size: 1.5em; margin-block-start: .6rem; }
 .eg-comparison-demo-setup > span:first-child { flex-shrink: 0; }
 .eg-comparison-demo-value { min-width: 0; block-size: 100%; overflow-x: auto; scrollbar-width: none; white-space: nowrap; }
@@ -253,7 +253,7 @@
 }
 .eg-recognition-prompt figure { min-width: 0; margin: 0; text-align: center; }
 .eg-recognition-prompt figcaption { font-size: .875rem; }
-.eg-recognition-prompt select { min-height: 40px; max-width: 100%; }
+.eg-recognition-example { min-height: 40px; max-width: 100%; }
 .eg-recognition-answers .eg-actions { margin-block: .5rem; }
 .eg-recognition-answers > .eg-control { min-height: 44px; margin-block-start: .5rem; }
 .eg-recognition-candidates { color: var(--muted-foreground); font-size: .875rem; }

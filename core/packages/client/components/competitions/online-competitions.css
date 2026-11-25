@@ -192,7 +192,8 @@
 .competition-offline-attempts .competition-score-form { margin-block: 12px; }
 @media (max-width: 650px) {
   .competition-detail-grid { grid-template-columns: minmax(0, 1fr); }
-  .competition-project, .competition-session, .competition-review-tabs button { min-height: 44px; }
+  .competition-project, .competition-session, .competition-review-tabs > .competition-primary,
+  .competition-review-tabs > .competition-secondary { min-height: 44px; }
   .competition-entry { padding: 14px; }
   .competition-filters { gap: 5px; }
   .competition-filters .compact-select { flex: 1 1 0; min-width: 0; }
@@ -292,11 +293,11 @@ button.competition-match-player { cursor: pointer; }
 }
 .competition-supervision-queue h3 { color: var(--muted-foreground); margin: 14px 0 5px; font-size: .77rem; font-weight: 600; }
 .competition-supervision-queue ul { margin: 0; padding: 0; list-style: none; }
-.competition-supervision-queue button { display: grid; grid-template-columns: 20px minmax(0, 1fr) auto; align-items: center; gap: 8px; width: 100%; min-height: 50px; padding: 6px 8px; border: 0; border-radius: 8px; background: transparent; color: var(--foreground); font: inherit; font-size: .81rem; cursor: pointer; text-align: start; }
-.competition-supervision-queue button:hover { background: var(--muted); }
-.competition-supervision-queue button[aria-current] { background: var(--accent-soft); }
-.competition-supervision-queue button small { display: block; color: var(--muted-foreground); }
-.competition-supervision-queue button strong { display: block; overflow-wrap: anywhere; }
+.competition-queue-entry { display: grid; grid-template-columns: 20px minmax(0, 1fr) auto; align-items: center; gap: 8px; width: 100%; min-height: 50px; padding: 6px 8px; border: 0; border-radius: 8px; background: transparent; color: var(--foreground); font: inherit; font-size: .81rem; cursor: pointer; text-align: start; }
+.competition-queue-entry:hover { background: var(--muted); }
+.competition-queue-entry[aria-current] { background: var(--accent-soft); }
+.competition-queue-entry small { display: block; color: var(--muted-foreground); }
+.competition-queue-entry strong { display: block; overflow-wrap: anywhere; }
 .competition-queue-progress { font-size: .74rem; color: var(--signal-success); font-weight: 620; }
 .competition-supervision-stage { min-width: 0; scroll-margin-block-start: 20px; }
 .competition-supervision-stage .competition-participation { margin-top: 0; }

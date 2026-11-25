@@ -20,6 +20,7 @@ import BoolToggle from '@/components/BoolToggle';
 import { CompactSelect } from '@/components/CompactSelect';
 import { EventIcon } from '@/components/EventIcon/EventIcon';
 import { useT } from '@/hooks/useT';
+import { persistItem } from '@/lib/safe-storage';
 import { CompetitionHostAccessContext, useCompetitionRole } from '@/hooks/useCompetitionRole';
 import { hasAdminAccess, nextQuery, useAuthUser } from '@/lib/auth-store';
 import { useLang } from '@/i18n/tr';
@@ -767,7 +768,7 @@ function CompetitionParticipation({ competition, registration, endsAt, onSaved, 
       else return;
     }
     const queued = retry.current;
-    try { localStorage.setItem(retryStorage, JSON.stringify(queued)); } catch { /* Current tab retains the pending result. */ }
+    persistItem(retryStorage, JSON.stringify(queued));
     await completeCompetitionSelfAttempt(registration.id, number, queued.body, queued.key);
     retry.current = null;
     try { localStorage.removeItem(retryStorage); } catch { /* Current tab is already synchronized. */ }

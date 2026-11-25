@@ -39,7 +39,7 @@ export default function GroupRecognitionDialog({ set, shape, onClose, onLearn }:
           <RecognitionDiagram method={method} check={check} example={sample} focused keepReference size={136} />
           <figcaption>
             <label><T zh="示例" en="Example" />{' '}
-              <select value={sample.entry.id} onChange={event => setSampleId(event.target.value)}>
+              <select className="eg-recognition-example" value={sample.entry.id} onChange={event => setSampleId(event.target.value)}>
                 {entries.map(entry => <option key={entry.id} value={entry.id}>{tr(egCaseName(entry.id))}</option>)}
               </select>
             </label>

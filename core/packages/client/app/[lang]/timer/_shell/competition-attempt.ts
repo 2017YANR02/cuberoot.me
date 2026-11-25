@@ -6,6 +6,7 @@ import { authHeaders, handleApi } from '@/lib/admin-api';
 import { apiUrl } from '@/lib/api-base';
 import { getCompetitionDuel, listCompetitionRegistrations, setCompetitionDuelPhase, type CompetitionAttempt } from '@/lib/online-competition-api';
 import { useAuthUser } from '@/lib/auth-store';
+import { persistItem } from '@/lib/safe-storage';
 
 type Attempt = CompetitionAttempt & { telemetry?: { runId: string; status: 'started' | 'device_reported' } | null };
 type Device = { brand: string; deviceName: string };
@@ -138,8 +139,7 @@ export function useCompetitionAttempt() {
   const queueReport = useCallback((report: Report) => {
     reportKey.current = crypto.randomUUID();
     pendingReport.current = report;
-    try { localStorage.setItem(`competition-device-report:${report.runId}`, JSON.stringify({ key: reportKey.current, report })); }
-    catch { /* The current tab retains the pending report. */ }
+    persistItem(`competition-device-report:${report.runId}`, JSON.stringify({ key: reportKey.current, report }));
     setRevision(value => value + 1);
   }, []);
 

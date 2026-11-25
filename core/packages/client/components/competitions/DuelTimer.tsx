@@ -3,6 +3,7 @@
 import { useEffect, useEffectEvent, useRef, useState } from 'react';
 import { inspectionPenalty } from '@cuberoot/shared/timer';
 import { useT } from '@/hooks/useT';
+import { persistItem } from '@/lib/safe-storage';
 import { recordCompetitionDuel, setCompetitionDuelPhase, type CompetitionAttemptResult, type CompetitionDuel } from '@/lib/online-competition-api';
 
 import { useCompetitionTimerControls } from './useCompetitionTimerControls';
@@ -47,7 +48,7 @@ export function DuelTimer({ duel, clockOffset, onSaved }: { duel: CompetitionDue
   function queue(result: CompetitionAttemptResult) {
     const submission = { result, key: crypto.randomUUID() };
     setPending(submission);
-    try { localStorage.setItem(key, JSON.stringify(submission)); } catch { /* Keep the result in this tab. */ }
+    persistItem(key, JSON.stringify(submission));
     return submission;
   }
 
