@@ -3,6 +3,7 @@ import path from 'node:path';
 import { requirePlatformActor, type PlatformActor } from '../platform/auth.js';
 import { platformDb, platformQuery, platformTransaction, type PlatformDb } from '../platform/db.js';
 import { badRequest, conflict, forbidden, notFound } from '../platform/errors.js';
+import { createPlatformMediaToken, verifyPlatformMediaToken } from '../platform/media_access.js';
 import { platformRouter, privateNoStore } from '../platform/http.js';
 import { DRIVE_STORAGE_ROOT } from '../utils/drive_storage.js';
 import { checkRateLimit } from '../utils/recon_helpers.js';
@@ -19,19 +20,23 @@ function uuid(value: string): string {
 function filePath(id: string): string { return path.join(DIRECTORY, uuid(id)); }
 
 async function access(db: PlatformDb, id: string, actor: PlatformActor, upload = false) {
-  const [row] = await platformQuery(db, `SELECT r.user_id,r.status,s.supervisor_user_id,c.finalized_at,
+  const [row] = await platformQuery(db, `SELECT r.user_id,r.status,s.supervisor_user_id,c.finalized_at,s.session_kind,
+    (s.session_kind='self_service' AND EXISTS (SELECT 1 FROM organization_members m JOIN organizations o ON o.id=m.organization_id
+      WHERE o.status='active' AND m.organization_id=c.organization_id AND m.user_id=$2
+        AND m.role IN ('owner','admin') AND m.status='active')) AS organizer,
     EXISTS(SELECT 1 FROM platform_competition_disputes d WHERE d.registration_id=r.id AND d.resolved_at IS NULL) AS disputed
     FROM platform_event_registrations r JOIN platform_competition_sessions s ON s.id=r.competition_session_id
-    JOIN platform_competitions c ON c.event_id=r.event_id WHERE r.id=$1::uuid`, [id]);
+    JOIN platform_competitions c ON c.event_id=r.event_id WHERE r.id=$1::uuid`, [id, actor.userId]);
   if (!row) notFound('Registration');
   const participant = actor.userId != null && [Number(row.user_id),Number(row.supervisor_user_id)].includes(actor.userId);
-  if (!participant && !(actor.isAdmin && !upload)) forbidden('Only the entrant, assigned supervisor and platform administrators can view this evidence');
+  if (!participant && (upload || (!actor.isAdmin && !row.organizer))) forbidden('Competition evidence is restricted to authorized entrants and reviewers');
   if (upload && (!participant || !['confirmed','attended'].includes(String(row.status)) || row.finalized_at)) {
     conflict('Evidence can only be uploaded for an active registration before results are finalized');
   }
+  return row;
 }
 
-const SELECT = `SELECT id::text,mime,size_bytes AS "sizeBytes",created_at AS "createdAt",expires_at AS "expiresAt"
+const SELECT = `SELECT id::text,mime,size_bytes AS "sizeBytes",attempt_number AS "attemptNumber",created_at AS "createdAt",expires_at AS "expiresAt"
   FROM platform_competition_evidence WHERE registration_id=$1::uuid ORDER BY created_at`;
 
 platformCompetitionEvidenceRoutes.get('/platform/competitions/registrations/:id/evidence', async(c) => {
@@ -47,6 +52,9 @@ platformCompetitionEvidenceRoutes.post('/platform/competitions/registrations/:id
   privateNoStore(c);
   const actor = await requirePlatformActor(c);
   const id = uuid(c.req.param('id'));
+  const requestedAttempt = c.req.query('attemptNumber');
+  if (requestedAttempt !== undefined && !/^[1-5]$/.test(requestedAttempt)) badRequest('Invalid attempt number');
+  const attemptNumber = requestedAttempt === undefined ? null : Number(requestedAttempt);
   await access(platformDb(),id,actor,true);
   if (actor.userId == null) forbidden('An account is required');
   try { checkRateLimit(String(actor.userId), {bucket:'competition-evidence',max:6}); }
@@ -62,14 +70,19 @@ platformCompetitionEvidenceRoutes.post('/platform/competitions/registrations/:id
       // Match finalization/dispute lock order, then recheck after the potentially long upload.
       await platformQuery(db, `SELECT c.event_id FROM platform_competitions c JOIN platform_event_registrations r ON r.event_id=c.event_id WHERE r.id=$1::uuid FOR UPDATE OF c`,[id]);
       await platformQuery(db, `SELECT id FROM platform_event_registrations WHERE id=$1::uuid FOR UPDATE`,[id]);
-      await access(db,id,actor,true);
+      const registration = await access(db,id,actor,true);
+      if (attemptNumber !== null) {
+        const [attempt] = await platformQuery(db, `SELECT attempt_number FROM platform_competition_attempts
+          WHERE registration_id=$1::uuid AND attempt_number=$2`, [id, attemptNumber]);
+        if (registration.session_kind !== 'self_service' || !attempt) badRequest('A clip must reference an issued self-service attempt');
+      }
       const existing = await platformQuery(db,SELECT,[id]);
       if (existing.length >= 2) conflict('Each registration supports at most two evidence videos');
       stored = filePath(received.stem);
       await fs.rename(received.tempPath,stored);
       temporary = undefined;
-      await platformQuery(db,`INSERT INTO platform_competition_evidence(id,registration_id,uploaded_by,mime,size_bytes)
-        VALUES($1::uuid,$2::uuid,$3,$4,$5)`,[received.stem,id,actor.userId,received.mime,received.sizeBytes]);
+      await platformQuery(db,`INSERT INTO platform_competition_evidence(id,registration_id,uploaded_by,mime,size_bytes,attempt_number)
+        VALUES($1::uuid,$2::uuid,$3,$4,$5,$6)`,[received.stem,id,actor.userId,received.mime,received.sizeBytes,attemptNumber]);
       return await platformQuery(db,SELECT,[id]);
     });
     stored = undefined;
@@ -83,13 +96,30 @@ platformCompetitionEvidenceRoutes.post('/platform/competitions/registrations/:id
   }
 });
 
-platformCompetitionEvidenceRoutes.get('/platform/competitions/evidence/:id/content', async(c) => {
+function evidenceBinding(registrationId: string) { return `competition-evidence:${registrationId}`; }
+
+platformCompetitionEvidenceRoutes.get('/platform/competitions/evidence/:id/playback', async c => {
   privateNoStore(c);
   const actor = await requirePlatformActor(c);
   const id = uuid(c.req.param('id'));
+  const [row] = await platformQuery(platformDb(), 'SELECT registration_id::text FROM platform_competition_evidence WHERE id=$1::uuid', [id]);
+  if (!row) notFound('Evidence');
+  const registrationId = String(row.registration_id);
+  await access(platformDb(), registrationId, actor);
+  const { token, expiresAt } = createPlatformMediaToken({ mediaId: id, binding: evidenceBinding(registrationId) });
+  return c.json({ token, expiresAt });
+});
+
+platformCompetitionEvidenceRoutes.get('/platform/competitions/evidence/:id/content', async(c) => {
+  privateNoStore(c);
+  const token = c.req.query('token');
+  const actor = token ? null : await requirePlatformActor(c);
+  const id = uuid(c.req.param('id'));
   const [row] = await platformQuery(platformDb(),`SELECT registration_id::text,mime,size_bytes FROM platform_competition_evidence WHERE id=$1::uuid`,[id]);
   if (!row) notFound('Evidence');
-  await access(platformDb(),String(row.registration_id),actor);
+  const registrationId = String(row.registration_id);
+  if (actor) await access(platformDb(), registrationId, actor);
+  else if (!token || !verifyPlatformMediaToken({ token, mediaId: id, binding: evidenceBinding(registrationId) })) forbidden('Playback link is invalid or expired');
   try { await fs.access(filePath(id)); } catch { notFound('Evidence file'); }
   const response = storedVideoResponse({filePath:filePath(id),mime:String(row.mime),size:Number(row.size_bytes),rangeHeader:c.req.header('Range'),headOnly:c.req.method==='HEAD'});
   response.headers.set('Cache-Control','private, no-store');

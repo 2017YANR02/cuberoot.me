@@ -16,9 +16,15 @@ async function one(db:PlatformDb,id:string){return serialize((await platformQuer
 platformOrganizerApplicationRoutes.get('/platform/organizer-applications/me',async c=>{
   const actor=await requirePlatformActor(c);privateNoStore(c);
   const applications=await platformQuery(platformDb(),`${projection} WHERE a.applicant_user_id=$1 ORDER BY a.created_at DESC LIMIT 100`,[actor.userId]);
-  const eligible=await platformQuery<{id:string}>(platformDb(),`SELECT o.id::text FROM organizations o WHERE o.status='active' AND o.competition_organizer_approved_at IS NOT NULL
-    AND ($2 OR EXISTS(SELECT 1 FROM organization_members m WHERE m.organization_id=o.id AND m.user_id=$1 AND m.status='active' AND m.role IN ('owner','admin')))`,[actor.userId,actor.isAdmin]);
-  return c.json({applications:applications.map(serialize),eligibleOrganizationIds:eligible.map(o=>o.id)});
+  const eligible = await platformQuery<{ id: string; name: string }>(platformDb(), `
+    SELECT o.id::text, o.name FROM organizations o WHERE o.status='active' AND o.competition_organizer_approved_at IS NOT NULL
+    AND ($2 OR EXISTS(SELECT 1 FROM organization_members m WHERE m.organization_id=o.id AND m.user_id=$1 AND m.status='active' AND m.role IN ('owner','admin')))
+    ORDER BY o.name, o.id`, [actor.userId, actor.isAdmin]);
+  return c.json({
+    applications: applications.map(serialize),
+    eligibleOrganizationIds: eligible.map(organization => organization.id),
+    ...(c.req.query('v') === '2' ? { eligibleOrganizations: eligible } : {}),
+  });
 });
 platformOrganizerApplicationRoutes.get('/platform/organizer-applications/review-queue',async c=>{
   await requirePlatformAdmin(c);privateNoStore(c);

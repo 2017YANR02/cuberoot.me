@@ -193,6 +193,7 @@ export interface PlatformActionResult {
   message?: string;
   entity?: PlatformEntity;
   course?: { id?: string; slug?: string; reviewStatus?: string | null };
+  event?: { id: string };
   lesson?: { id?: string; reviewStatus?: string | null };
   id?: string;
   entitlementId?: string | null;

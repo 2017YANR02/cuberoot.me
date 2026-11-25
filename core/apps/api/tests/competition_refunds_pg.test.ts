@@ -21,11 +21,12 @@ vi.mock('../src/platform/payment.js', () => ({
 }));
 vi.mock('../src/platform/refund_provider.js', () => ({ assertRefundProvider: () => undefined, runProviderRefund: state.refund }));
 import { platformCommerceRoutes } from '../src/routes/platform_commerce.js';
+import { platformCompetitionRoutes } from '../src/routes/platform_competitions.js';
 import { platformRefundRoutes } from '../src/routes/platform_refunds.js';
-import { competitionSettlement } from '../src/platform/competition_settlement.js';
+import { competitionHostOverview, competitionSettlement } from '../src/platform/competition_settlement.js';
 import type { PlatformDb } from '../src/platform/db.js';
 
-const app = new Hono().route('/v1/platform', platformCommerceRoutes).route('/v1', platformRefundRoutes);
+const app = new Hono().route('/v1/platform', platformCommerceRoutes).route('/v1', platformRefundRoutes).route('/v1', platformCompetitionRoutes);
 const databaseUrl = process.env.COMPETITION_TEST_DATABASE_URL;
 
 describe.skipIf(!databaseUrl)('paid competition refund with real PostgreSQL fulfillment', () => {
@@ -37,6 +38,9 @@ describe.skipIf(!databaseUrl)('paid competition refund with real PostgreSQL fulf
     method: 'POST', headers: { 'Content-Type': 'application/json', 'Idempotency-Key': key }, body: JSON.stringify(body),
   });
   const statement = () => competitionSettlement(db as unknown as PlatformDb, event);
+  const overview = () => competitionHostOverview(db as unknown as PlatformDb, {
+    userId: 1, ownerKey: 'user:1', displayName: 'Organizer', isAdmin: false, viaApiKey: false, wcaId: null,
+  });
   beforeAll(async () => {
     if (!['localhost', '127.0.0.1'].includes(new URL(databaseUrl!).hostname)) throw new Error('Loopback PostgreSQL required');
     vi.stubEnv('WECHAT_MCHID', 'fixture-merchant');
@@ -46,7 +50,7 @@ describe.skipIf(!databaseUrl)('paid competition refund with real PostgreSQL fulf
       CREATE TABLE app_users(id BIGINT PRIMARY KEY);
       CREATE TABLE teacher_directory_entries(id BIGINT PRIMARY KEY);`);
     await db.unsafe(migration('0142_teaching_foundation.sql').split('CREATE TABLE student_profiles')[0]);
-    for (const name of ['0167_platform_core.sql', '0224_online_competitions.sql', '0226_competition_settlement_ledger.sql', '0228_platform_provider_refunds.sql']) await db.unsafe(migration(name));
+    for (const name of ['0167_platform_core.sql', '0224_online_competitions.sql', '0226_competition_settlement_ledger.sql', '0228_platform_provider_refunds.sql', '0354_competition_draft_setup.sql', '0355_competition_draft_project_fee.sql']) await db.unsafe(migration(name));
     await db.unsafe(`INSERT INTO app_users VALUES(1),(2),(3);
       INSERT INTO organizations(id,slug,name,created_by_user_id) VALUES('${org}','refund-test','Refund test',1);
       INSERT INTO organization_members(organization_id,user_id,role,joined_at) VALUES('${org}',1,'owner',NOW()),('${org}',2,'teacher',NOW());
@@ -54,6 +58,7 @@ describe.skipIf(!databaseUrl)('paid competition refund with real PostgreSQL fulf
       INSERT INTO platform_competitions(event_id,organization_id,registration_opens_at,registration_closes_at,commission_bps,settlement_days,settlement_anchor) VALUES('${event}','${org}',NOW()-INTERVAL '1 day',NOW()+INTERVAL '30 minutes',1000,0,'finalized');
       INSERT INTO platform_event_ticket_types(id,event_id,code,title_zh,title_en,amount_minor,currency,capacity,competition_project,competition_device) VALUES('${ticket}','${event}','333','三阶','3x3',1000,'CNY',1,'333','ordinary');
       INSERT INTO platform_competition_sessions(id,event_id,starts_at,ends_at,capacity,supervisor_user_id) VALUES('${session}','${event}',NOW()+INTERVAL '1 hour',NOW()+INTERVAL '2 hours',1,2);`);
+    await db.unsafe(migration('0356_competition_unified_workflow.sql'));
   }, 60_000);
   afterAll(async () => {
     vi.unstubAllEnvs(); await db?.end();
@@ -70,6 +75,11 @@ describe.skipIf(!databaseUrl)('paid competition refund with real PostgreSQL fulf
     expect(registration.status).toBe('confirmed');
     expect((await db.unsafe(`SELECT sold_quantity,reserved_quantity FROM platform_event_ticket_types WHERE id=$1`, [ticket]))[0]).toMatchObject({ sold_quantity: 1, reserved_quantity: 0 });
     expect(await statement()).toMatchObject({ organizerAmountMinor: '900', netCollectedMinor: '1000' });
+    const paidOverview = { registered: 1, organizerAmountMinor: '900', netCollectedMinor: '1000', refundedMinor: '0' };
+    expect(await overview()).toMatchObject({ totals: paidOverview, competitions: [{ id: event, ...paidOverview }] });
+    await db.unsafe('UPDATE platform_competitions SET commission_bps=NULL WHERE event_id=$1', [event]);
+    expect(await overview()).toMatchObject({ totals: { ...paidOverview, organizerAmountMinor: null } });
+    await db.unsafe('UPDATE platform_competitions SET commission_bps=1000 WHERE event_id=$1', [event]);
     // Seed a previously completed external transfer to exercise refund-after-settlement reconciliation.
     const { transfers: _transfers, ...snapshot } = await statement();
     await db.unsafe(`INSERT INTO platform_competition_settlement_ledger(event_id,entry_type,amount_minor,provider_reference_hash,transferred_at,statement_snapshot,actor_user_id,actor_key)
@@ -95,6 +105,8 @@ describe.skipIf(!databaseUrl)('paid competition refund with real PostgreSQL fulf
     expect((await db.unsafe(`SELECT status FROM platform_orders WHERE id=$1`, [order.id]))[0].status).toBe('refunded');
     expect((await db.unsafe(`SELECT status FROM platform_payment_attempts WHERE order_id=$1`, [order.id]))[0].status).toBe('refunded');
     expect(await statement()).toMatchObject({ organizerAmountMinor: '0', netCollectedMinor: '0', refundedMinor: '1000', outstandingMinor: '-900', transferStatus: 'reconciliation_required' });
+    const refundedOverview = { registered: 0, organizerAmountMinor: '0', netCollectedMinor: '0', refundedMinor: '1000' };
+    expect(await overview()).toMatchObject({ totals: refundedOverview, competitions: [{ id: event, ...refundedOverview }] });
     const replay = await post(`/v1/admin/refunds/${refund.id}/refresh`); expect(replay.status).toBe(200); expect((await replay.json()).status).toBe('succeeded');
     expect(state.refund).toHaveBeenCalledTimes(2);
     expect(state.refund.mock.calls[1][0].requestId).toBe(state.refund.mock.calls[0][0].requestId);
@@ -111,8 +123,18 @@ describe.skipIf(!databaseUrl)('paid competition refund with real PostgreSQL fulf
     const created = await post('/v1/platform/orders', { clientOrderKey: randomUUID(), items: [{ sellableType: 'event_ticket', eventTicketTypeId: ticket, quantity: 1, competitionSessionId: session, device: 'ordinary' }] });
     const order = await created.json(); expect(created.status, JSON.stringify(order)).toBe(201);
     expect((await db.unsafe(`SELECT reserved_quantity FROM platform_event_ticket_types WHERE id=$1`, [ticket]))[0].reserved_quantity).toBe(1);
+    const { entries } = await (await app.request('/v1/platform/competitions/me/entries')).json();
+    expect(entries).toEqual(expect.arrayContaining([expect.objectContaining({
+      orderId: order.id, action: 'pay', reservationExpiresAt: expect.any(String),
+    })]));
+    const entry = entries.find((row: { orderId: string }) => row.orderId === order.id);
+    expect(Date.parse(entry.reservationExpiresAt)).toBeGreaterThan(Date.now());
     const payment = await post(`/v1/platform/orders/${order.id}/payment-attempts`, { provider: 'wechat', clientType: 'pc' }); expect(payment.status).toBe(201);
     await db.unsafe(`UPDATE platform_orders SET created_at=NOW()-INTERVAL '31 minutes' WHERE id=$1`, [order.id]);
+    await db.unsafe(`UPDATE platform_event_registrations r SET reservation_expires_at=NOW()-INTERVAL '1 minute'
+      FROM platform_order_items i WHERE r.order_item_id=i.id AND i.order_id=$1`, [order.id]);
+    expect(await (await app.request(`/v1/platform/competitions/${event}`)).json())
+      .toMatchObject({ competition: { projects: [{ id: ticket, available: 1 }], sessions: [{ id: session, available: 1 }] } });
     const key = randomUUID();
     const expired = await post('/v1/platform/admin/orders/expire-reservations', { limit: 10 }, key);
     expect(expired.status, await expired.clone().text()).toBe(200); expect(await expired.json()).toMatchObject({ expiredOrders: 1, expiredAttempts: 0 });

@@ -173,6 +173,7 @@ describe('/dev/api endpoint catalog drift', () => {
       ['platform_content.ts', '/v1'],
       ['platform_competitions.ts', '/v1'],
       ['platform_competition_device_reports.ts', '/v1'],
+      ['platform_competition_brackets.ts', '/v1'],
       ['platform_organizer_applications.ts', '/v1'],
       ['platform_competition_attempts.ts', '/v1'],
       ['platform_competition_evidence.ts', '/v1'],

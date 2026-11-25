@@ -1,3 +1,5 @@
+import { inspectionPenalty } from '@cuberoot/shared/timer';
+import { applyCubieAlg, cubieStateFromFacelets, cubieToFacelets, smartCubeTargetFacelets, SOLVED_SMART_CUBE_FACELETS } from '@cuberoot/shared/smart-cube/cubie';
 import { badRequest } from './errors.js';
 import { arrayField, booleanField, integerField, isObject, stringField, type JsonObject } from './validation.js';
 
@@ -8,6 +10,7 @@ export function validateCompetitionDeviceReport(body: JsonObject) {
   if (!Number.isFinite(Date.parse(serverIssuedAt))) badRequest('serverIssuedAt must be a valid timestamp');
   const scramble=stringField(body,'scramble',{required:true,max:2000})!;
   const durationMs=integerField(body,'durationMs',{required:true,min:0,max:86_400_000})!;
+  const inspectionMs = integerField(body, 'inspectionMs', { min: 0, max: 86_400_000 });
   const disconnected=booleanField(body,'disconnected');
   if(disconnected===undefined)badRequest('disconnected is required');
   if(!disconnected&&durationMs===0)badRequest('A completed device report requires a positive duration');
@@ -25,8 +28,23 @@ export function validateCompetitionDeviceReport(body: JsonObject) {
     previous=elapsedMs;return {move,elapsedMs};
   });
   if(!moves.length&&!disconnected)badRequest('A completed device report requires recorded moves');
-  return {runId,serverIssuedAt:new Date(serverIssuedAt).toISOString(),scramble,durationMs,moves,
+  return {runId,...(inspectionMs === undefined ? {} : { inspectionMs }),serverIssuedAt:new Date(serverIssuedAt).toISOString(),scramble,durationMs,moves,
     startFacelets:facelets('startFacelets'),endFacelets:facelets('endFacelets'),
     deviceBrand:stringField(body,'deviceBrand',{required:true,max:100})!,
     deviceName:stringField(body,'deviceName',{max:100})??'',disconnected};
+}
+
+export function verifyCompletedCompetitionDeviceReport(report: ReturnType<typeof validateCompetitionDeviceReport>) {
+  const state = cubieStateFromFacelets(report.startFacelets);
+  if (!state || report.startFacelets !== smartCubeTargetFacelets(report.scramble)
+    || report.endFacelets !== SOLVED_SMART_CUBE_FACELETS
+    || cubieToFacelets(applyCubieAlg(state, report.moves.map(move => move.move).join(' '))) !== report.endFacelets) {
+    badRequest('The recorded moves do not connect the issued scramble to a solved cube');
+  }
+}
+
+export function competitionDeviceResult(report: ReturnType<typeof validateCompetitionDeviceReport>) {
+  const penalty = inspectionPenalty(report.inspectionMs ?? 0, 15);
+  if (report.disconnected || penalty === 'DNF') return { centiseconds: null, penalty: 'DNF' } as const;
+  return { centiseconds: Math.max(1, Math.floor(report.durationMs / 10)), penalty: penalty === '+2' ? '+2' as const : 'none' as const };
 }

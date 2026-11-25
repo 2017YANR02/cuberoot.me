@@ -454,6 +454,14 @@ export const PAGE_META: Record<string, PageMetaEntry> = {
   'dev/wcif': { title: { zh: 'WCIF', en: 'WCIF' } },
   'cross_trainer': { title: { zh: '十字训练', en: 'Cross Trainer' } },
   'cstimer': { title: { zh: 'csTimer', en: 'csTimer' } },
+  'competitions': {
+    title: { zh: '线上比赛与线下合作赛', en: 'Online and in-person partner competitions' },
+    description: {
+      zh: '查看 CubeRoot 线上自助赛、视频监考赛和线下合作赛，报名参赛并查询成绩。',
+      en: 'Find CubeRoot self-service, supervised and in-person partner competitions, register and view results.',
+    },
+  },
+  'competitions/[...segments]': { title: { zh: '比赛详情', en: 'Competition details' } },
   'contests': {
     title: { zh: '非官方比赛与纪录', en: 'Unofficial contests & records' },
     description: {

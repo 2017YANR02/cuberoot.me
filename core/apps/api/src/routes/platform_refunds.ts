@@ -128,13 +128,16 @@ platformRefundRoutes.post('/platform/orders/:id/refund-requests', async c => {
     const order=await lockOrder(db,id);
     if(!actor.isAdmin && !ownsOrder(order.buyer_user_id,actor))notFound('Order');
     if(!['paid','partially_fulfilled','fulfilled'].includes(order.status) || Number(order.total_amount_minor)<=0)conflict('Only paid orders can be refunded');
-    const [scope]=await platformQuery<{eligible:boolean}>(db,`SELECT COUNT(*)>0 AND BOOL_AND(c.event_id IS NOT NULL) AS eligible
+    const [scope]=await platformQuery<{eligible:boolean;within_policy:boolean}>(db,`SELECT COUNT(*)>0 AND BOOL_AND(c.event_id IS NOT NULL) AS eligible,
+      BOOL_AND(CASE c.refund_template WHEN 'before_24h' THEN NOW()<=e.starts_at-INTERVAL '24 hours'
+        WHEN 'before_start' THEN NOW()<e.starts_at ELSE TRUE END) AS within_policy
       FROM platform_order_items i LEFT JOIN platform_event_ticket_types t ON t.id=i.event_ticket_type_id
-      LEFT JOIN platform_competitions c ON c.event_id=t.event_id WHERE i.order_id=$1::uuid`,[id]);
-    if(!scope?.eligible)conflict('Automatic refund requests currently support online competition orders');
+      LEFT JOIN platform_competitions c ON c.event_id=t.event_id LEFT JOIN platform_events e ON e.id=c.event_id WHERE i.order_id=$1::uuid`,[id]);
+    if(!scope?.eligible)conflict('Automatic refund requests currently support competition orders');
     const [existing]=await platformQuery<RefundRow>(db,`SELECT * FROM platform_refunds WHERE order_id=$1::uuid
       AND (status IN ('requested','pending','succeeded','chargeback') OR approved_at IS NOT NULL) ORDER BY created_at DESC LIMIT 1`,[id]);
     if(existing)return {status:200,body:view(existing),resourceType:'platform_refund',resourceId:existing.id};
+    if(scope.within_policy===false && !actor.isAdmin)conflict('The deadline in the competition refund policy has passed');
     const [payment]=await platformQuery<{id:string;provider:string}>(db,`SELECT id::text,provider FROM platform_payment_attempts
       WHERE order_id=$1::uuid AND status='succeeded' ORDER BY succeeded_at DESC LIMIT 1`,[id]);
     if(!payment)conflict('No succeeded payment exists');

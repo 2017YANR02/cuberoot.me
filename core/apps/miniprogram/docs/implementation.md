@@ -156,7 +156,7 @@
 | [x] | 训练 | `trainer` | `/alg-trainers` | 网页白名单 |
 | [x] | 训练 | `cstimer` | `/cstimer` | 网页白名单 |
 | [x] | 工具 | `contests` | `/contests` | 网页白名单 |
-| [x] | 工具 | `online-competitions` | `/platform/events/online` | 网页白名单，报名复用平台订单 |
+| [x] | 工具 | `online-competitions` | `/competitions` | 共享目录的网页入口，报名复用平台订单 |
 | [x] | 工具 | `comp-sim` | `/comp-sim` | 网页白名单 |
 | [x] | 工具 | `frame-count` | `/frame-count` | 网页白名单 |
 | [x] | 工具 | `solver` | `/solver` | 网页白名单 |

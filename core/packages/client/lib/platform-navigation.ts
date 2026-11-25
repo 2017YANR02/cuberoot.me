@@ -7,7 +7,7 @@ const item = (id: string, href: string, zh: string, en: string): NavItem => ({ i
 
 export const PLATFORM_SECTION_NAV: Record<PlatformPrimary, readonly NavItem[]> = {
   discover: [],
-  events: [item('events', '/platform/events', '全部活动', 'All events'), item('online-competitions', '/platform/events/online', '线上比赛', 'Online competitions')],
+  events: [item('events', '/platform/events', '全部活动', 'All events')],
   courses: [],
   community: [item('community-feed', '/platform/community/feed', '动态', 'Feed'), item('community', '/platform/community', '版块', 'Boards'), item('leaderboard', '/platform/leaderboard', '学习榜', 'Learning leaderboard')],
   teachers: [],
@@ -24,7 +24,7 @@ const ADMIN_GROUPS = [
   { id: 'overview', label: { zh: '概览', en: 'Overview' }, routes: ['admin', 'admin-homepage', 'admin-event-analytics', 'admin-logs'] },
   { id: 'learning', label: { zh: '课程', en: 'Courses' }, routes: ['admin-courses', 'admin-paths', 'admin-invites', 'admin-algorithms'] },
   { id: 'teaching', label: { zh: '讲师', en: 'Instructors' }, routes: ['admin-teachers', 'admin-applications', 'admin-payouts'] },
-  { id: 'operations', label: { zh: '运营', en: 'Operations' }, routes: ['admin-events', 'admin-competition-applications', 'admin-organization-verification', 'admin-news', 'admin-community'] },
+  { id: 'operations', label: { zh: '运营', en: 'Operations' }, routes: ['admin-events', 'admin-organization-verification', 'admin-news', 'admin-community'] },
   { id: 'commerce', label: { zh: '交易', en: 'Commerce' }, routes: ['admin-orders', 'admin-products', 'admin-coupons', 'admin-reconcile'] },
   { id: 'qr', label: { zh: '二维码', en: 'QR codes' }, routes: ['admin-qr', 'admin-qr-cards', 'admin-qr-prompts', 'admin-qr-stats'] },
 ] as const;
@@ -81,7 +81,7 @@ export function platformNavigationState(pathname: string): {
   } else if (['courses', 'membership'].includes(segments[0])) {
     primary = 'courses';
   } else if (segments[0] === 'events') {
-    primary = 'events'; secondary = segments[1] === 'online' || segments[1] === 'preview' ? 'online-competitions' : 'events';
+    primary = 'events'; secondary = 'events';
   } else if (definition?.id === 'home' || segments[0] === 'paths') {
     primary = 'discover';
   }

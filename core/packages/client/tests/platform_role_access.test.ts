@@ -48,8 +48,6 @@ vi.mock('@/components/platform/PlatformLanding', () => ({ PlatformLanding: () =>
 vi.mock('@/components/platform/PlatformInfoViews', () => ({ PlatformAboutView: () => null, PlatformOrganizationAdmission: () => null, PlatformOfflineView: () => null, PlatformAccountView: () => null, PlatformCanonicalView: () => null }));
 vi.mock('@/components/platform/PlatformOrderPayment', () => ({ PlatformOrderPayment: () => null }));
 vi.mock('@/components/platform/PlatformQrAdmin', () => ({ PlatformQrAdmin: () => null }));
-vi.mock('@/components/platform/OnlineCompetitions', () => ({ OnlineCompetitions: () => null }));
-vi.mock('@/components/platform/OnlineCompetitionPreview', () => ({ OnlineCompetitionPreview: () => null }));
 import { PlatformRouteView } from '@/components/platform/PlatformRouteView';
 import { PlatformLearningPath } from '@/components/platform/PlatformLearningWorkspace';
 import { PLATFORM_ROUTES } from '@/lib/platform-routes';
@@ -587,7 +585,7 @@ it.each(['events', 'news', 'paths', 'membership', 'leaderboard', 'teacher-apply'
   await renderInShell(id);
   expect(host.querySelector('h1')?.classList.contains('sr-only')).toBe(id === 'leaderboard');
   expect(host.querySelector('.platform-route-labels')).toBeNull();
-  if (id === 'events') expect(host.querySelector('a[href="/platform/events/online"]')).not.toBeNull();
+  if (id === 'events') expect(host.querySelector('a[href="/competitions"]')).not.toBeNull();
   if (id === 'membership') expect(host.querySelector('.platform-route-header p')?.textContent).toContain('课程会员用于解锁课程');
 });
 

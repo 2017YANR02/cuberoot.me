@@ -11,8 +11,8 @@
   },
   {
     "path": "app/[lang]/tutorial/2x2-eg/page.tsx",
-    "call": "setLocation({step,section,group}) history=chapterChanged ? 'push' : 'replace'",
-    "reason": "二阶 EG 章导航进入历史记录；同章小节、公式分组和练习切换替换当前地址"
+    "call": "setLocation({step,section}) history=chapterChanged ? 'push' : 'replace'",
+    "reason": "二阶 EG 章导航进入历史记录；同章小节替换当前地址"
   },
   {
     "path": "app/[lang]/tutorial/2x2-fl/page.tsx",
@@ -270,17 +270,12 @@
     "reason": "选手详情主要标签导航"
   },
   {
-    "path": "components/platform/OnlineCompetitionPreview.tsx",
-    "call": "useQueryState('view') history='push'",
-    "reason": "线上比赛角色及主要内容标签导航"
+    "path": "components/competitions/CompetitionBracket.tsx",
+    "call": "useQueryState('match') history='push'",
+    "reason": "双败签表与本人对战席之间的导航"
   },
   {
-    "path": "components/platform/OnlineCompetitionPreview.tsx",
-    "call": "useQueryState('tab') history='push'",
-    "reason": "线上比赛角色及主要内容标签导航"
-  },
-  {
-    "path": "components/platform/OnlineCompetitions.tsx",
+    "path": "components/competitions/OnlineCompetitions.tsx",
     "call": "useQueryState('entry') history='push'",
     "reason": "线上比赛管理功能或具体报名详情"
   },

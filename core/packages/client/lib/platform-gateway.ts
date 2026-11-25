@@ -26,6 +26,7 @@ export interface PlatformLoadOptions {
   pageSize?: number;
   category?: string;
   days?: number;
+  activitiesOnly?: boolean;
   includeCourseAccess?: boolean;
   reviewPage?: number;
   signal?: AbortSignal;
@@ -141,7 +142,7 @@ function readPath(resource: PlatformResource, options: PlatformLoadOptions): str
     case 'admin-coupons': return `/v1/platform/admin/coupons${query}`;
     case 'admin-courses': return `/v1/platform/admin/courses${id ? `/${id}` : ''}${query}`;
     case 'admin-paths': return `/v1/platform/admin/paths${id ? `/${id}` : ''}${query}`;
-    case 'admin-events': return `/v1/platform/admin/events${id ? `/${id}` : ''}${query}`;
+    case 'admin-events': return `/v1/platform/admin/${options.activitiesOnly ? 'activities' : 'events'}${id ? `/${id}` : ''}${query}`;
     case 'admin-analytics': return `/v1/platform/admin/analytics${query}`;
     case 'admin-logs': return `/v1/platform/admin/logs${query}`;
     case 'admin-payouts': return `/v1/platform/admin/instructor-payouts${query}`;

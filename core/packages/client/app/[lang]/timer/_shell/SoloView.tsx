@@ -1,4 +1,5 @@
 'use client';
+import { competitionHref } from '@/lib/competition-links';
 import { useTimerLiveShare, TimerLiveShareSettings, TimerLiveShareStatus } from '@cuberoot/timer-ui/live-share';
 import { useInstalledCommunityDisabled } from '@/lib/installed-content';
 import { captureTimerLiveAttempt, timerLiveHistory, timerLiveCompletedAttempt, timerLiveSolveDetail, type TimerLiveCompletion } from '@cuberoot/shared/timer/live-share';
@@ -188,7 +189,7 @@ import { compSourceLine } from '@/lib/comp-schedule';
 import { useIsAdmin, useAuthUser, getAuthUser } from '@/lib/auth-store';
 import AppLink from '@/components/AppLink';
 import { useCompetitionAttempt } from './competition-attempt';
-import '@/components/platform/online-competitions.css';
+import '@/components/competitions/online-competitions.css';
 import { cloudOptimalScramble } from '@/lib/cloud-optimal-scramble';
 import { ownerKey as computeOwnerKey } from '@cuberoot/shared/account';
 import {
@@ -315,7 +316,7 @@ import '../_components/charts/practice_heatmap.css';
 const SolveModal = dynamic(() => import('../_components/SolveModal'), { ssr: false });
 // Optional workspaces must not hold the ordinary keyboard timer behind their
 // video SDK, charts or configuration UI. Their existing render gates own loading.
-const CompetitionVideoRoom = dynamic(() => import('@/components/platform/CompetitionVideoRoom').then(m => m.CompetitionVideoRoom), { ssr: false });
+const CompetitionVideoRoom = dynamic(() => import('@/components/competitions/CompetitionVideoRoom').then(m => m.CompetitionVideoRoom), { ssr: false });
 const SettingsPanel = dynamic(() => import('../_components/SettingsPanel'), { ssr: false });
 const TimerReplayImportModal = dynamic(() => import('@cuberoot/timer-ui').then(m => m.TimerReplayImportModal), { ssr: false });
 const TimerStatisticsWorkspace = dynamic(() => import('@cuberoot/timer-ui').then(m => m.TimerStatisticsWorkspace), { ssr: false });
@@ -1534,7 +1535,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
       const faces = bluetoothCubeRef.current?.getFaces();
       const currentRun = competitionRef.current.run();
       if (currentRun) competitionRef.current.complete(res.timeMs, smartCubeAttemptProducerRef.current.snapshotMoves(),
-        faces ? toFaceletString(faces) : currentRun.startFacelets, !competitionSolvedRef.current);
+        faces ? toFaceletString(faces) : currentRun.startFacelets, !competitionSolvedRef.current, res.inspectionMs);
       competitionSolvedRef.current = false;
       return;
     }
@@ -1626,6 +1627,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
   const trainingTimingModeRef = useRef(trainingTimingMode);
   trainingTimingModeRef.current = trainingTimingMode;
   const timer = useTimer(recordSolve, (startedAtMs, cubeStart) => {
+    if (competitionRef.current.enabled) competitionRef.current.markSolving();
     const history = scrambleHistRef.current;
     const entry = multiEnabledRef.current ? multiTrainingRef.current?.active()?.context?.entry
       : competitionRef.current.enabled ? competitionScrambleEntry : history.list[history.idx];
@@ -1661,7 +1663,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
         orientation: timerSmartCubeTrainingOrientation(event, getSettings().preScrT) }
       : undefined, cubeStart);
     clearLiveSolve();
-  }, () => ({ trainingStartMode: trainingTimingModeRef.current() }));
+  }, () => competitionRef.current.enabled ? { inspectionSec: 15 } : { trainingStartMode: trainingTimingModeRef.current() });
   useEffect(() => {
     if (timer.phase === 'idle') cancelCameraCapture();
   }, [timer.phase, cancelCameraCapture]);
@@ -1797,7 +1799,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
     if (source) previewAnchorsRef.current.set(id, source);
     else previewAnchorsRef.current.delete(id);
   }, []);
-  const trainingOrientation = timerSmartCubeTrainingOrientation(event, settings.preScrT);
+  const trainingOrientation = competition.enabled ? '' : timerSmartCubeTrainingOrientation(event, settings.preScrT);
   const previousTrainingOrientationRef = useRef(trainingOrientation);
   useLayoutEffect(() => { if (!multiEnabledRef.current) scrambleGyroRef.current = null; }, [scramble, trainingOrientation]);
   useLayoutEffect(() => {
@@ -3129,7 +3131,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
   const stats = useMemo(() => summarize(solves, event), [solves, event]);
   const trainingStatistics = useMemo(() => timerTrainingSummaries(solves, event, settings.trainingStartMode),
     [solves, event, settings.trainingStartMode]);
-  const inspectionLimit = settings.inspectionSec;
+  const inspectionLimit = competition.enabled ? 15 : settings.inspectionSec;
   const liveShareHistory = useMemo(() => timerLiveHistory(Object.values(byEvent).flat()), [byEvent]);
   const liveShare = useTimerLiveShare({ apiUrl: liveApiUrl, websocketUrl: websocketApiUrl('/v1/timer/live-shares/socket') }, {
     snapshot: () => {
@@ -3473,11 +3475,14 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
     <main className="competition-page" data-no-timer>
       <header className="competition-heading">
         <h1>{tr({ zh: '智能魔方赛场', en: 'Smart cube competition' })}</h1>
-        <AppLink prefetch={false} href={`/platform/events/online/${encodeURIComponent(competition.competitionId)}`}>
+        <AppLink prefetch={false} href={competitionHref(competition.competitionId) + (competition.matchId ? `?match=${encodeURIComponent(competition.matchId)}`
+          : competition.registrationId ? `?entry=${encodeURIComponent(competition.registrationId)}` : '')}>
           {tr({ zh: '比赛信息', en: 'Competition details' })}
         </AppLink>
       </header>
-      <p className="competition-muted">{tr({ zh: '连接魔方，按本轮打乱完成准备。动作和用时提交后，由监督员确认成绩。', en: 'Connect your cube and apply this attempt’s scramble. Your supervisor confirms the reported moves and time.' })}</p>
+      <p className="competition-muted">{competition.automatic
+        ? tr({ zh: '连接魔方并按正式打乱完成准备。服务端验证动作数据后计分。', en: 'Connect your cube and apply the issued scramble. The server scores the solve after verifying the moves.' })
+        : tr({ zh: '连接魔方，按本轮打乱完成准备。动作和用时提交后，由监督员确认成绩。', en: 'Connect your cube and apply this attempt’s scramble. Your supervisor confirms the reported moves and time.' })}</p>
       {!competition.authorized && <p role="status">{tr({ zh: '请先登录，并在已报名的三阶智能魔方场次完成签到。', en: 'Sign in and check in to your registered 3×3 smart cube session first.' })}</p>}
       {competition.error && <p role="alert" className="competition-error">{competition.error}</p>}
       {competition.authorized && <>
@@ -3485,13 +3490,21 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
           <button type="button" className="competition-secondary" onClick={() => setBluetoothOpen(true)}>{bluetoothCube.status.connected ? bluetoothCube.status.deviceName : tr({ zh: '连接智能魔方', en: 'Connect smart cube' })}</button>
           {competition.attempt && <span>{tr({ zh: `第 ${competition.attempt.attemptNumber} 次`, en: `Attempt ${competition.attempt.attemptNumber}` })}</span>}
         </div>
-        {!competition.attempt && <p role="status">{tr({ zh: '等待监督员发布下一次打乱或确认本轮成绩。', en: 'Waiting for your supervisor to issue the next scramble or finalize your results.' })}</p>}
+        {!competition.attempt && <p role="status">{competition.automatic
+          ? tr({ zh: '回到赛场领取下一把打乱或等待下一局。', en: 'Return to the competition to get the next scramble or wait for the next game.' })
+          : tr({ zh: '等待监督员发布下一次打乱或确认本轮成绩。', en: 'Waiting for your supervisor to issue the next scramble or finalize your results.' })}</p>}
         {competition.attempt && <>
           <p className="competition-scramble">{scramble}</p>
           <TimingSurface phase={timer.phase} colorClass={`tf-${settings.timerFont}`} fontSize={fontSize}
             digits={<TimerReadout text={digitsText} />} digitsRef={digitsRef} surfaceRef={surfaceRef} />
-          {competition.interrupted ? <p role="status">{tr({ zh: '本次连接已中断或页面已重载，请监督员处理本次成绩。不能重新开始同一次。', en: 'This attempt was interrupted or reloaded. Ask your supervisor to resolve it; the same attempt cannot restart.' })}</p>
-            : competition.reported ? <p role="status">{tr({ zh: '已结束，等待监督员确认。设备数据不等于正式成绩。', en: 'Finished. Waiting for your supervisor; device data is not an official result.' })}</p>
+          {competition.interrupted ? competition.automatic
+            ? <><p role="status">{tr({ zh: '设备记录已中断。', en: 'The device run was interrupted.' })}</p>
+              {!competition.pendingReport && <button type="button" className="competition-secondary" disabled={competition.busy}
+                onClick={competition.abandon}>{tr({ zh: '本把记 DNF', en: 'Mark this attempt DNF' })}</button>}</>
+            : <p role="status">{tr({ zh: '本次连接已中断或页面已重载，请监督员处理本次成绩。', en: 'This attempt was interrupted or reloaded. Ask your supervisor to resolve it.' })}</p>
+            : competition.reported ? <p role="status">{competition.automatic
+              ? tr({ zh: '设备数据已提交。', en: 'Device data submitted.' })
+              : tr({ zh: '已结束，等待监督员确认。设备数据不等于正式成绩。', en: 'Finished. Waiting for your supervisor; device data is not an official result.' })}</p>
             : <button type="button" className="competition-primary" disabled={!competition.canPrepare || event !== '333' || !bluetoothCube.status.connected || bluetoothCube.hijacked || scrambleGuidance.match !== true}
               onClick={async () => {
                 const faces = bluetoothCube.getFaces();
@@ -3508,7 +3521,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
               }}>{competition.busy ? tr({ zh: '正在准备…', en: 'Preparing…' }) : competition.canStart() ? tr({ zh: '准备就绪，转动开始', en: 'Ready — turn to start' }) : tr({ zh: '打乱正确后准备', en: 'Prepare after matching the scramble' })}</button>}
           {competition.pendingReport && <button type="button" className="competition-secondary" disabled={competition.busy} onClick={() => void competition.retry()}>{tr({ zh: '重试提交设备数据', en: 'Retry sending device data' })}</button>}
         </>}
-        <CompetitionVideoRoom registrationId={competition.registrationId} />
+        {competition.videoRegistrationId && <CompetitionVideoRoom registrationId={competition.videoRegistrationId} />}
       </>}
       {bluetoothDialog}
     </main>

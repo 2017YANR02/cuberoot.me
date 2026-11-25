@@ -13,14 +13,12 @@ interface Props {
   admin: boolean;
   instructor: boolean;
   organization: boolean;
-  organizer: boolean;
-  supervisor: boolean;
   learner: boolean;
   applicationLabel: string;
   close: () => void;
 }
 
-export function PlatformAccountMenu({ name, signedIn, admin, instructor, organization, organizer, supervisor, learner, applicationLabel, close }: Props) {
+export function PlatformAccountMenu({ name, signedIn, admin, instructor, organization, learner, applicationLabel, close }: Props) {
   const t = useT();
   const panel = useRef<HTMLDivElement>(null);
   useEffect(() => {
@@ -31,8 +29,6 @@ export function PlatformAccountMenu({ name, signedIn, admin, instructor, organiz
   const workspaces = [
     instructor && link('/platform/instructor', t('讲师工作台', 'Instructor workspace')),
     organization && link('/platform/org', t('机构工作台', 'Organization workspace')),
-    organizer && link('/platform/competitions/manage', t('赛事管理', 'Competition management')),
-    supervisor && link('/platform/competitions/supervise', t('我的执场', 'My supervision assignments')),
   ].filter(Boolean);
 
   return <div className="platform-account-content" ref={panel}>
@@ -49,7 +45,6 @@ export function PlatformAccountMenu({ name, signedIn, admin, instructor, organiz
         <MoreToggle as="summary">{t('我的工作台', 'My workspaces')}</MoreToggle>
         {workspaces}
       </details>}
-      {organization && !organizer && link('/platform/competitions/apply', t('申请主办方', 'Apply as organizer'))}
       {signedIn && <details name="platform-account-section">
         <MoreToggle as="summary">{t('个人空间', 'Personal space')}</MoreToggle>
         {PLATFORM_PERSONAL_ROUTES.filter(item => !['account-courses', 'account-invites', 'me-membership'].includes(item.id))

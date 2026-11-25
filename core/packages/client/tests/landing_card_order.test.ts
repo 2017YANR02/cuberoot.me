@@ -13,6 +13,7 @@ describe('homepage card order', () => {
 
   it('migrates only the exact previous saved section order and preserves new manual choices', () => {
     const cards = SECTIONS.find(section => section.id === 'tool')!.cards;
+    expect(cards.find(card => card.id === 'online-competitions')?.href).toBe('/competitions');
     const previous = ['contests', 'online-competitions', 'comp-sim', 'frame-count', 'solver', 'mosaic', 'space', 'paper-odyssey', 'paint', 'icon', 'timezone', 'calendar'];
     const ranked = applyHomeSectionOrder('tool', cards, previous);
     expect(ranked.slice(0, 4).map(card => card.id)).toEqual(['contests', 'calendar', 'mosaic', 'solver']);

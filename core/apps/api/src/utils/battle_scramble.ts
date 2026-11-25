@@ -10,7 +10,7 @@ import {
  * modified client choose a favorable state for everyone else, so room mutations never persist
  * request scramble text. This reuses the same shared timer registry/generators as Web and Mobile.
  */
-export async function generateNetBattleScramble(event: NetBattleEventId): Promise<string> {
+export async function generateNetBattleScramble(event: Parameters<typeof generateTimerScramble>[0]['event']): Promise<string> {
   const generated = await generateTimerScramble({ event });
   if (!generated.ok || generated.kind !== 'generated' || !generated.scramble.trim()) {
     throw new Error(`battle scramble unavailable: ${event}`);

@@ -3,6 +3,7 @@
 import { ArrowRight, CalendarDays, MapPin, Plus, Trophy } from '@app-foundation/icons/lucide';
 import { useEffect, useState } from 'react';
 import AppLink from '@/components/AppLink';
+import { competitionHref } from '@/lib/competition-links';
 import { entityStatusLabel } from '@/components/teaching/TeachingUi';
 import { useT } from '@/hooks/useT';
 import { PLATFORM_ACTION_LABELS } from '@/lib/platform-gateway';
@@ -41,7 +42,7 @@ function EventCards({ items }: { items: PlatformEntity[] }) {
     }
     const state = now && Number.isFinite(ends) && now >= ends ? t('已结束', 'Ended') : now && Number.isFinite(starts) && now >= starts ? t('进行中', 'In progress') : t('即将开始', 'Upcoming');
     const price = typeof data.fromAmountMinor === 'number' || typeof data.fromAmountMinor === 'string' ? Number(data.fromAmountMinor) : NaN;
-    const href = competition ? `/platform/events/online/${encodeURIComponent(item.id)}` : `/platform/events/${encodeURIComponent(item.id)}`;
+    const href = competition ? competitionHref(item.id) : `/platform/events/${encodeURIComponent(item.id)}`;
     const content = <>
       <div className="platform-event-card-banner"><span className="platform-event-card-icon">{competition ? <Trophy aria-hidden /> : <CalendarDays aria-hidden />}</span><span className="platform-status">{state}</span></div>
       <div className="platform-event-card-content"><div className="platform-event-card-tags"><span>{online ? t('线上', 'Online') : t('线下', 'In person')}</span>{typeof data.category === 'string' && data.category && <span>{data.category}</span>}</div><h2>{item.title}</h2>
@@ -107,12 +108,14 @@ function entityDisplayFields(item: PlatformEntity, t: ReturnType<typeof useT>): 
 export function PlatformEntityList({
   definition,
   items,
+  detailBaseHref,
   redeemedCourseIds,
   onAction,
   actionBusy,
 }: {
   definition: PlatformRouteDefinition;
   items: PlatformEntity[];
+  detailBaseHref?: string;
   redeemedCourseIds: ReadonlySet<string>;
   onAction: (action: PlatformActionId, id: string, payload?: Record<string, unknown>) => void;
   actionBusy: string | null;
@@ -176,7 +179,8 @@ export function PlatformEntityList({
   return (
     <div className={`platform-entity-list${learnerCourses ? ' platform-course-list' : ''}${instructorCourses ? ' platform-instructor-course-list' : ''}`}>
       {items.map((item) => {
-        const href = instructorCourses ? localDetailHref(definition, item) : item.href?.startsWith('/') ? item.href : localDetailHref(definition, item);
+        const href = detailBaseHref ? `${detailBaseHref}/${encodeURIComponent(item.id)}`
+          : !instructorCourses && item.href?.startsWith('/') ? item.href : localDetailHref(definition, item);
         const title = orderContent ? String(item.data?.orderNumber ?? item.title) : item.title;
         const amount = Number(item.data?.totalAmountMinor);
         const currency = typeof item.data?.currency === 'string' ? item.data.currency : '';

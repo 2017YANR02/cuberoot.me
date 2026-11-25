@@ -15,9 +15,9 @@ import { useT } from '@/hooks/useT';
 import { useLang } from '@/i18n/tr';
 import { useAuthUser, useIsAdmin } from '@/lib/auth-store';
 import { SEARCH_CARDS, isLandingSearchCardVisible } from '@/lib/landing-sections';
-import { isPlatformCourseClassroom, isPlatformInstructorApplication, isPlatformInstructorCourseEditor, PLATFORM_PUBLIC_NAV } from '@/lib/platform-routes';
+import { isPlatformCourseClassroom, isPlatformInstructorApplication, isPlatformInstructorCourseEditor, platformParentHref, PLATFORM_PUBLIC_NAV } from '@/lib/platform-routes';
 import { PLATFORM_ADMIN_NAV, PLATFORM_SECTION_NAV, platformAdminNavigationState, platformNavigationState, platformPathname, platformWorkspaceRoutes } from '@/lib/platform-navigation';
-import { PlatformCompetitionAccessContext, PlatformNavigationContext, PlatformInstructorAccessRefreshContext } from '@/lib/platform-navigation-context';
+import { PlatformNavigationContext, PlatformInstructorAccessRefreshContext } from '@/lib/platform-navigation-context';
 import { PlatformAccountMenu } from './PlatformAccountMenu';
 import { PlatformState } from './PlatformState';
 import { canUseAssistant } from '@/lib/assistant-auth-continuation';
@@ -84,11 +84,6 @@ function PlatformSecondaryNav({ items, active, label, className = '', navRef }: 
   </nav>;
 }
 
-function isLearningSpaceOutsideWorkspace(href: string): boolean {
-  const path = platformPathname(href);
-  return (path === '/platform' || path.startsWith('/platform/')) && !/^\/platform\/(instructor|admin|org|competitions)(\/|$)/.test(path);
-}
-
 export function PlatformShell({ children, shared = false }: { children: ReactNode; shared?: boolean }) {
   const hasShell = useContext(PlatformNavigationContext);
   // Shared rewrites can retain the previous route layout while the destination loads.
@@ -120,10 +115,13 @@ function PlatformShellContent({ children, shared }: { children: ReactNode; share
   const instructorHome = definition?.id === 'instructor';
   const instructorCourseEditor = isPlatformInstructorCourseEditor(definition?.id);
   const instructorStudio = instructorWorkspace && !instructorCourseEditor;
-  const competitionWorkspace = definition?.id.startsWith('competition-') ?? false;
   const organizationWorkspace = definition?.area === 'organization';
   const focusMode = isPlatformCourseClassroom(definition?.id) || instructorCourseEditor || definition?.id === 'teacher-apply-start';
-  const privateWorkspace = definition?.area === 'admin' || competitionWorkspace || organizationWorkspace;
+  const privateWorkspace = definition?.area === 'admin' || organizationWorkspace;
+  const workspaceParent = privateWorkspace
+    ? platformParentHref(platformPathname(pathname).split('/').slice(2).filter(Boolean).map(decodeURIComponent))
+    : '/';
+  const workspaceFallback = workspaceParent === '/platform' ? '/' : workspaceParent;
   const checkInstructor = Boolean(owner);
   useEffect(() => {
     if (!checkInstructor) return;
@@ -135,29 +133,24 @@ function PlatformShellContent({ children, shared }: { children: ReactNode; share
     return () => controller.abort();
   }, [owner, checkInstructor, instructorRevision]);
   const isInstructor = checkInstructor && instructorAccess?.owner === owner && instructorAccess.active;
-  const [roles, setRoles] = useState<{ owner: string; organization: boolean; learner: boolean; organizer: boolean; supervisor: boolean } | null>(null);
-  const checkRoles = accountOpen || competitionWorkspace || organizationWorkspace;
+  const [roles, setRoles] = useState<{ owner: string; organization: boolean; learner: boolean } | null>(null);
+  const checkRoles = accountOpen || organizationWorkspace;
   useEffect(() => {
     if (!owner) { setRoles(null); return; }
     if (!checkRoles) return;
     let current = true;
     const teaching = import('@/lib/teaching-saas-api');
-    const competitions = import('@/lib/online-competition-api');
     void Promise.allSettled([
       teaching.then(api => api.listTeachingOrganizations()).then(items => items.some(item => item.status === 'active')),
       teaching.then(api => api.listTeachingLearningContexts()).then(items => items.length > 0),
-      competitions.then(api => api.listOrganizerApplications()).then(result => result.eligibleOrganizationIds.length > 0),
-      competitions.then(api => api.listSupervisedCompetitions()).then(result => result.competitions.length > 0),
     ]).then(results => {
       if (!current) return;
-      const [organization, learner, organizer, supervisor] = results.map(result => result.status === 'fulfilled' && result.value);
-      setRoles({ owner, organization, learner, organizer, supervisor });
+      const [organization, learner] = results.map(result => result.status === 'fulfilled' && result.value);
+      setRoles({ owner, organization, learner });
     });
     return () => { current = false; };
   }, [owner, checkRoles]);
   const mine = roles?.owner === owner ? roles : null;
-  const organizer = Boolean(mine?.organizer);
-  const supervisor = Boolean(mine?.supervisor);
   const organization = Boolean(mine?.organization);
   const applicationLabel = isInstructor ? t('讲师身份设置', 'Instructor account settings') : instructorAccess?.owner === owner && instructorAccess.pending
     ? t('查看讲师申请进度', 'Instructor application status') : t('成为讲师', 'Become an instructor');
@@ -186,7 +179,7 @@ function PlatformShellContent({ children, shared }: { children: ReactNode; share
   const instructorDenied = instructorWorkspace && Boolean(owner) && instructorAccess?.owner === owner && !isInstructor;
   const instructorChecking = instructorWorkspace && Boolean(owner) && instructorAccess?.owner !== owner;
   const guardedContent = instructorChecking ? <PlatformState kind="loading" /> : instructorDenied ? <PlatformState kind="permission" message={t('当前账号没有有效讲师身份。', 'This account does not have an active instructor role.')} permissionHref="/platform/teachers/apply" permissionLabel={t('查看讲师身份', 'View instructor status')} /> : children;
-  const pageContent = <PlatformInstructorAccessRefreshContext value={refreshInstructorAccess}><PlatformCompetitionAccessContext value={{ organizer, supervisor, ready: !owner || Boolean(mine) }}>{guardedContent}</PlatformCompetitionAccessContext></PlatformInstructorAccessRefreshContext>;
+  const pageContent = <PlatformInstructorAccessRefreshContext value={refreshInstructorAccess}>{guardedContent}</PlatformInstructorAccessRefreshContext>;
   const header = <header className="platform-home-header">
     <div className="platform-masthead-brand"><CubeRootLogo className="back-home platform-home-logo" height={38}><span className="platform-home-brand-text">{t('魔方根 CubeRoot', 'CubeRoot')}</span></CubeRootLogo></div>
     <nav className="platform-home-nav" aria-label={t('学习导航', 'Learning navigation')}>
@@ -199,8 +192,8 @@ function PlatformShellContent({ children, shared }: { children: ReactNode; share
       <CompactSelect open={accountOpen} onOpenChange={setAccountOpen} unstyledTrigger className="platform-home-account" triggerClassName="platform-home-icon" popupClassName="platform-account-menu"
         ariaLabel={user ? t('我的账号', 'My account') : t('登录与账号', 'Sign in and account')} label={user ? <HomeAvatar key={user.avatar} name={user.name} avatar={user.avatar} /> : <UserRound aria-hidden />}
         items={[]} onChange={() => {}} panelContent={<PlatformAccountMenu key={owner} name={user?.name} signedIn={Boolean(user)}
-          admin={isAdmin} instructor={Boolean(isInstructor)} organization={organization} organizer={organizer}
-          supervisor={supervisor} learner={Boolean(mine?.learner)} applicationLabel={applicationLabel}
+          admin={isAdmin} instructor={Boolean(isInstructor)} organization={organization}
+          learner={Boolean(mine?.learner)} applicationLabel={applicationLabel}
           close={() => setAccountOpen(false)} />} />
     </div>
     {assistantOpen && <HomeAssistant close={() => setAssistantOpen(false)} lang={lang} cards={cards} />}
@@ -227,9 +220,7 @@ function PlatformShellContent({ children, shared }: { children: ReactNode; share
         renderLink={props=><AppLink {...props} prefetch={false} scroll={false}/>}
         togglePlacement="sidebar"
         header={mobileToggle=><header className="platform-instructor-navigation platform-instructor-studio-header" data-site-surface="heading">
-          <div className="platform-instructor-masthead"><div className="platform-instructor-studio-brand">{mobileToggle}<PageBackLink fallback={instructorHome?'/platform':'/platform/instructor'}
-            label={instructorHome?t('返回学习空间','Back to Learning Space'):t('返回讲师工作台','Back to instructor workspace')}
-            acceptEntry={instructorHome?isLearningSpaceOutsideWorkspace:href=>platformPathname(href)==='/platform/instructor'}/><span>{t('讲师工作台','Instructor studio')}</span></div></div>
+          <div className="platform-instructor-masthead"><div className="platform-instructor-studio-brand">{mobileToggle}<PageBackLink fallback={instructorHome ? '/' : '/platform/instructor'} /><span>{t('讲师工作台','Instructor studio')}</span></div></div>
         </header>}
       >{pageContent}</NavigationShell>
     </div></PlatformNavigationContext>;
@@ -237,7 +228,7 @@ function PlatformShellContent({ children, shared }: { children: ReactNode; share
 
   return <PlatformNavigationContext value={true}>
     <div className={`platform-shell${shared ? ' platform-shell--shared' : ''}${home ? ' platform-home-shell' : ''}`}>
-      {focusMode ? null : privateWorkspace ? <header className="platform-private-header" data-site-surface="heading"><PageBackLink fallback="/platform" label={t('返回学习空间', 'Back to learning space')} acceptEntry={isLearningSpaceOutsideWorkspace} /><strong>{definition?.area === 'admin' ? t('平台管理', 'Platform administration') : organizationWorkspace ? t('机构工作台', 'Organization workspace') : t('赛事工作台', 'Competition workspace')}</strong></header> : header}
+      {focusMode ? null : privateWorkspace ? <header className="platform-private-header" data-site-surface="heading"><PageBackLink fallback={workspaceFallback} /><strong>{definition?.area === 'admin' ? t('平台管理', 'Platform administration') : t('机构工作台', 'Organization workspace')}</strong></header> : header}
       {!home && admin && <PlatformSecondaryNav items={PLATFORM_ADMIN_NAV.map(group => ({ ...group, href: group.items[0].href }))} active={admin.group.id} label={t('管理功能区', 'Administration sections')} className="platform-admin-group-nav" />}
       {!home && !focusMode && contextNav}
       {!admin && !focusMode && workspaceNav}

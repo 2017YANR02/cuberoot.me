@@ -29,6 +29,7 @@ describe.skipIf(!databaseUrl)('competition migration and concurrent registration
   const schema=`competition_test_${randomUUID().replaceAll('-','')}`;
   let admin:ReturnType<typeof postgres>; let db:ReturnType<typeof postgres>;
   const org=randomUUID(),otherOrg=randomUUID(),event=randomUUID(),ticket=randomUUID(),session=randomUUID();
+  const smartTicket=randomUUID(),secondSession=randomUUID();
   beforeAll(async()=>{
     const url=new URL(databaseUrl!);
     if(!['localhost','127.0.0.1'].includes(url.hostname))throw new Error('Competition integration tests require loopback PostgreSQL');
@@ -40,19 +41,30 @@ describe.skipIf(!databaseUrl)('competition migration and concurrent registration
       CREATE TABLE organizations(id UUID PRIMARY KEY,status TEXT NOT NULL);
       CREATE TABLE organization_members(organization_id UUID,user_id BIGINT,status TEXT,role TEXT);
       CREATE TABLE platform_events(id UUID PRIMARY KEY,status TEXT,starts_at TIMESTAMPTZ,ends_at TIMESTAMPTZ);
-      CREATE TABLE platform_event_ticket_types(id UUID PRIMARY KEY,event_id UUID NOT NULL REFERENCES platform_events(id),amount_minor BIGINT DEFAULT 0,status TEXT DEFAULT 'active');
+      CREATE TABLE platform_event_ticket_types(
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),event_id UUID NOT NULL REFERENCES platform_events(id),
+        code TEXT NOT NULL,title_zh TEXT NOT NULL DEFAULT '',title_en TEXT NOT NULL DEFAULT '',
+        amount_minor BIGINT DEFAULT 0,currency TEXT NOT NULL DEFAULT 'CNY',capacity INTEGER NOT NULL DEFAULT 10,
+        status TEXT DEFAULT 'active',sales_start_at TIMESTAMPTZ,sales_end_at TIMESTAMPTZ,UNIQUE(event_id,code)
+      );
       CREATE TABLE platform_payment_attempts(id UUID PRIMARY KEY);
-      CREATE TABLE platform_event_registrations(id UUID PRIMARY KEY DEFAULT gen_random_uuid(),event_id UUID NOT NULL REFERENCES platform_events(id),user_id BIGINT REFERENCES app_users(id),status TEXT NOT NULL,quantity INTEGER NOT NULL DEFAULT 1);
+      CREATE TABLE platform_event_registrations(id UUID PRIMARY KEY DEFAULT gen_random_uuid(),event_id UUID NOT NULL REFERENCES platform_events(id),ticket_type_id UUID NOT NULL REFERENCES platform_event_ticket_types(id),user_id BIGINT REFERENCES app_users(id),status TEXT NOT NULL,quantity INTEGER NOT NULL DEFAULT 1);
     `);
     await db.unsafe(readFileSync(new URL('../migrations/0224_online_competitions.sql',import.meta.url),'utf8'));
     await db.unsafe(readFileSync(new URL('../migrations/0227_competition_device_reports.sql',import.meta.url),'utf8'));
+    for (const migration of ['0354_competition_draft_setup.sql', '0355_competition_draft_project_fee.sql', '0356_competition_unified_workflow.sql']) {
+      await db.unsafe(readFileSync(new URL('../migrations/' + migration, import.meta.url), 'utf8'));
+    }
     await db.unsafe(`INSERT INTO app_users(id) VALUES(1),(2),(3),(4),(5),(6),(99);
       INSERT INTO organizations VALUES('${org}','active'),('${otherOrg}','active');
       INSERT INTO organization_members VALUES('${org}',1,'active','owner'),('${otherOrg}',2,'active','owner');
       INSERT INTO platform_events VALUES('${event}','published',NOW()+INTERVAL '1 hour',NOW()+INTERVAL '3 hours');
       INSERT INTO platform_competitions(event_id,organization_id,registration_opens_at,registration_closes_at,commission_bps,settlement_days,settlement_anchor) VALUES('${event}','${org}',NOW()-INTERVAL '1 day',NOW()+INTERVAL '30 minutes',0,0,'finalized');
-      INSERT INTO platform_event_ticket_types(id,event_id,competition_project,competition_device) VALUES('${ticket}','${event}','333','ordinary');
-      INSERT INTO platform_competition_sessions(id,event_id,starts_at,ends_at,capacity,supervisor_user_id) VALUES('${session}','${event}',NOW()+INTERVAL '1 hour',NOW()+INTERVAL '2 hours',1,99);
+      INSERT INTO platform_event_ticket_types(id,event_id,code,competition_project,competition_device)
+        VALUES('${ticket}','${event}','333-ordinary','333','ordinary'),('${smartTicket}','${event}','333-smart','333','smart');
+      INSERT INTO platform_competition_sessions(id,event_id,starts_at,ends_at,capacity,supervisor_user_id)
+        VALUES('${session}','${event}',NOW()+INTERVAL '1 hour',NOW()+INTERVAL '2 hours',1,99),
+          ('${secondSession}','${event}',NOW()+INTERVAL '2 hours',NOW()+INTERVAL '3 hours',2,99);
     `);
   },30_000);
   afterAll(async()=>{
@@ -63,8 +75,8 @@ describe.skipIf(!databaseUrl)('competition migration and concurrent registration
   async function reserve(userId:number){
     return db.begin(async(tx)=>{
       const result=await competitionOrderContext(tx as unknown as PlatformDb,context(userId));
-      await tx.unsafe(`INSERT INTO platform_event_registrations(event_id,user_id,status,competition_session_id,competition_project)
-        VALUES($1::uuid,$2,'reserved',$3::uuid,$4)`,[event,userId,session,String(result!.project)]);
+      await tx.unsafe(`INSERT INTO platform_event_registrations(event_id,ticket_type_id,user_id,status,competition_session_id,competition_project)
+        VALUES($1::uuid,$2::uuid,$3,'reserved',$4::uuid,$5)`,[event,ticket,userId,session,String(result!.project)]);
       return result;
     });
   }
@@ -82,15 +94,18 @@ describe.skipIf(!databaseUrl)('competition migration and concurrent registration
     await expect(reserve(6)).resolves.toMatchObject({project:'333'});
     expect((await db.unsafe(`SELECT COUNT(*)::integer AS n FROM platform_event_registrations`))[0].n).toBe(3);
   });
-  it('blocks duplicate project, multi-quantity, wrong device and supervisor self-entry',async()=>{
+  it('blocks duplicate division, multi-quantity, wrong device and supervisor self-entry',async()=>{
     await expect(reserve(6)).rejects.toThrow('already have');
     for(const change of [{quantity:2},{device:'smart'},{sessionId:undefined},{userId:99}]){
       await expect(db.begin(tx=>competitionOrderContext(tx as unknown as PlatformDb,{...context(1),...change}))).rejects.toThrow();
     }
   });
-  it('database uniqueness protects same user/project across sessions',async()=>{
-    await expect(db.unsafe(`INSERT INTO platform_event_registrations(event_id,user_id,status,competition_session_id,competition_project)
-      VALUES($1::uuid,6,'confirmed',$2::uuid,'333')`,[event,session])).rejects.toMatchObject({code:'23505'});
+  it('enforces a single entry per division across sessions and allows a separate equipment division',async()=>{
+    const registerInSecondSession = (ticketId: string) => db.unsafe(
+      `INSERT INTO platform_event_registrations(event_id,ticket_type_id,user_id,status,competition_session_id,competition_project)
+       VALUES($1::uuid,$2::uuid,6,'confirmed',$3::uuid,'333') RETURNING ticket_type_id::text`,[event,ticketId,secondSession]);
+    await expect(registerInSecondSession(ticket)).rejects.toMatchObject({code:'23505'});
+    await expect(registerInSecondSession(smartTicket)).resolves.toEqual([{ ticket_type_id: smartTicket }]);
   });
   it('denies cross-organization and inactive manager access',async()=>{
     const actor={userId:2,ownerKey:'test',wcaId:null,displayName:'test',isAdmin:false,viaApiKey:false};
@@ -101,7 +116,8 @@ describe.skipIf(!databaseUrl)('competition migration and concurrent registration
   });
   it('binds exactly one device run to a real issued attempt under concurrent starts',async()=>{
     const registration=randomUUID();
-    await db.unsafe(`INSERT INTO platform_event_registrations(id,event_id,user_id,status,competition_session_id,competition_project) VALUES($1,$2,5,'cancelled',$3,'333')`,[registration,event,session]);
+    await db.unsafe(`INSERT INTO platform_event_registrations(id,event_id,ticket_type_id,user_id,status,competition_session_id,competition_project)
+      VALUES($1,$2,$3,5,'cancelled',$4,'333')`,[registration,event,ticket,session]);
     await expect(db.unsafe(`INSERT INTO platform_competition_device_reports(registration_id,attempt_number,reported_by) VALUES($1,1,5)`,[registration])).rejects.toMatchObject({code:'23503'});
     await db.unsafe(`INSERT INTO platform_competition_attempts(registration_id,attempt_number,scramble) VALUES($1,1,'R U')`,[registration]);
     const runs=await Promise.all([1,2].map(()=>db.unsafe(`INSERT INTO platform_competition_device_reports(registration_id,attempt_number,reported_by) VALUES($1,1,5) ON CONFLICT DO NOTHING RETURNING run_id`,[registration])));

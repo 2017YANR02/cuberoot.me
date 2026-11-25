@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { Hono } from 'hono';
 
 const mocks = vi.hoisted(() => ({actor:vi.fn(),query:vi.fn(),receive:vi.fn(),rename:vi.fn(),unlink:vi.fn(),access:vi.fn(),readdir:vi.fn(),stat:vi.fn(),rate:vi.fn(),response:vi.fn()}));
@@ -38,6 +38,8 @@ beforeEach(() => {
   });
 });
 
+afterEach(() => vi.unstubAllEnvs());
+
 describe('private competition evidence',()=>{
   it('requires authentication before reading files',async()=>{
     mocks.actor.mockRejectedValue(new PlatformApiError('UNAUTHENTICATED',401,'Login required'));
@@ -70,6 +72,23 @@ describe('private competition evidence',()=>{
     expect(result.headers.get('Cache-Control')).toBe('private, no-store');
     expect(result.headers.get('X-Content-Type-Options')).toBe('nosniff');
     expect(mocks.response.mock.calls[0][0].rangeHeader).toBe('bytes=0-9');
+  });
+  it('issues a short-lived playback grant only to an authorized viewer and streams byte ranges', async () => {
+    vi.stubEnv('PLATFORM_MEDIA_SIGNING_SECRET', 'competition-fixture-key-at-least-32-bytes');
+    const path = `/v1/platform/competitions/evidence/${evidenceId}`;
+    mocks.actor.mockResolvedValue({ userId: 3, isAdmin: false });
+    expect((await app.request(path + '/playback')).status).toBe(403);
+    mocks.actor.mockResolvedValue({ userId: 1, isAdmin: false });
+    const grant = await app.request(path + '/playback');
+    expect(grant.status).toBe(200);
+    const { token, expiresAt } = await grant.json();
+    expect(Date.parse(expiresAt) - Date.now()).toBeLessThanOrEqual(300000);
+    mocks.actor.mockRejectedValue(new PlatformApiError('UNAUTHENTICATED', 401, 'Login required'));
+    expect((await app.request(path + '/content?token=invalid')).status).toBe(403);
+    const stream = await app.request(path + '/content?' + new URLSearchParams({ token }), { headers: { Range: 'bytes=10-29' } });
+    expect(stream.status).toBe(200);
+    expect(stream.headers.get('Cache-Control')).toBe('private, no-store');
+    expect(mocks.response.mock.calls.at(-1)?.[0].rangeHeader).toBe('bytes=10-29');
   });
   it('rejects finalized registrations before upload',async()=>{
     registration.finalized_at='2026-09-10T00:00:00Z';

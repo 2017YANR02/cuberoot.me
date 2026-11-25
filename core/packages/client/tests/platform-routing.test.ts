@@ -25,6 +25,7 @@ import {
   PLATFORM_CANONICAL_REWRITES,
 } from '@/lib/platform-routes';
 import { isPlatformPaymentAttemptResult } from '@/lib/platform-types';
+import { isRetiredRoute } from '@/lib/retired-routes';
 import { proxy } from '../proxy';
 import type {
   PlatformActionId,
@@ -136,18 +137,16 @@ describe('Platform route conservation', () => {
     expect(matchPlatformRoute(['instructor', 'courses', 'course-1'])?.definition.id).toBe('instructor-course');
     expect(matchPlatformRoute(['instructor', 'courses', 'course-1', 'lessons', 'new'])?.definition).toMatchObject({ id: 'instructor-lesson-new', kind: 'form', access: 'instructor' });
   });
-  it('reserves real online competition routes independently of generic events and the preview', () => {
-    expect(matchPlatformRoute(['events', 'online'])?.definition.id).toBe('online-competitions');
-    expect(matchPlatformRoute(['events', 'online', 'event-123'])).toMatchObject({ definition: { id: 'online-competition' }, params: { id: 'event-123' } });
+  it('retires the old competition pages without capturing generic event details', () => {
+    expect(isRetiredRoute('/platform/events/online')).toBe(true);
+    expect(isRetiredRoute('/platform/events/online/event-123')).toBe(true);
+    expect(isRetiredRoute('/platform/events/preview')).toBe(true);
+    expect(isRetiredRoute('/platform/competitions/create')).toBe(true);
+    expect(isRetiredRoute('/platform/competitions/manage/sample')).toBe(true);
+    expect(isRetiredRoute('/platform/admin/competition-applications')).toBe(true);
+    expect(isRetiredRoute('/platform/events/event-123')).toBe(false);
     expect(matchPlatformRoute(['events', 'event-123'])?.definition.id).toBe('event-detail');
-    expect(matchPlatformRoute(['events', 'online', 'event-123', 'extra'])).toBeNull();
-  });
-  it('reserves the online competition preview without capturing event detail routes', () => {
-    expect(matchPlatformRoute(['events', 'preview'])?.definition).toMatchObject({
-      id: 'online-competition-preview', access: 'public', kind: 'landing',
-    });
-    expect(matchPlatformRoute(['events', 'event-123'])?.definition.id).toBe('event-detail');
-    expect(matchPlatformRoute(['events', 'preview', 'extra'])).toBeNull();
+    expect(matchPlatformRoute(['events', 'online', 'event-123'])).toBeNull();
   });
 
   it('allows guests to enter both current sections, leaving lesson permissions to the player', () => {
@@ -579,8 +578,7 @@ describe('Platform gateway contracts', () => {
 describe('platform parent navigation', () => {
   it.each([
     [[], '/'],
-    [['events', 'online'], '/platform/events'],
-    [['events', 'online', 'competition'], '/platform/events/online'],
+    [['events', 'event-123'], '/platform/events'],
     [['courses', 'course', 'sections', 'core'], '/platform/courses/course'],
     [['account', 'courses'], '/platform/account'],
   ] as const)('resolves %j to %s', (segments, parent) => {

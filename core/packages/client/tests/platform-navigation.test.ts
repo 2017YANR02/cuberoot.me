@@ -26,8 +26,8 @@ describe('Platform navigation context', () => {
     expect(platformNavigationState('/platform/orders')).toMatchObject({ primary: null, secondary: null });
     expect(platformNavigationState('/platform/progress')).toMatchObject({ primary: null, secondary: null });
     expect(platformNavigationState('/platform/events')).toMatchObject({ primary: 'events', secondary: 'events' });
-    expect(platformNavigationState('/platform/events/online/example')).toMatchObject({ primary: 'events', secondary: 'online-competitions' });
-    expect(platformNavigationState('/platform/competitions/manage/example')).toMatchObject({ primary: null, secondary: null });
+    expect(platformNavigationState('/competitions/example')).toMatchObject({ primary: null, secondary: null });
+    expect(platformNavigationState('/competitions/workspace/manage/example')).toMatchObject({ primary: null, secondary: null });
     expect(platformNavigationState('/platform/news')).toMatchObject({ primary: null, secondary: null });
   });
 

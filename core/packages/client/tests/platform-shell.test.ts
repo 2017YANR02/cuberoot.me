@@ -9,14 +9,10 @@ vi.mock('next/navigation', () => ({ usePathname: vi.fn(() => '/zh/platform/teach
 vi.mock('@/hooks/useT', () => ({ useT: () => (zh: string) => zh }));
 vi.mock('@/i18n/tr', () => ({ useLang: () => 'zh', tr: ({ zh }: { zh: string }) => zh, T: ({ zh }: { zh: string }) => zh }));
 const auth = vi.hoisted(() => ({ admin: false, user: null as null | { uid: number; name?: string; avatar?: string }, loadInstructor: vi.fn() }));
-const access = vi.hoisted(() => ({ organization: false, learner: false, organizer: false, supervisor: false }));
+const access = vi.hoisted(() => ({ organization: false, learner: false }));
 vi.mock('@/lib/teaching-saas-api', () => ({
   listTeachingOrganizations: async () => access.organization ? [{ status: 'active' }] : [],
   listTeachingLearningContexts: async () => access.learner ? [{}] : [],
-}));
-vi.mock('@/lib/online-competition-api', () => ({
-  listOrganizerApplications: async () => ({ eligibleOrganizationIds: access.organizer ? ['org'] : [] }),
-  listSupervisedCompetitions: async () => ({ competitions: access.supervisor ? [{}] : [] }),
 }));
 const navigate = vi.hoisted(() => vi.fn());
 vi.mock('@/lib/auth-store', () => ({ useAuthUser: () => auth.user, useIsAdmin: () => auth.admin }));
@@ -50,12 +46,28 @@ describe('Platform shell ownership during shared-page navigation', () => {
         pathname.mockReturnValue(`/zh/platform${route.pattern ? '/' + route.pattern.replace(/:[a-zA-Z]+\*?/g, 'sample') : ''}`);
         const host = document.createElement('div');
         host.innerHTML = renderToString(createElement(PlatformShell, { children: createElement('article', null, route.id) }));
-        const privatePage = isPlatformCourseClassroom(route.id) || isPlatformInstructorCourseEditor(route.id) || route.id === 'teacher-apply-start' || (route.area === 'instructor' && !isPlatformInstructorApplication(route.id)) || route.area === 'admin' || route.area === 'organization' || route.id.startsWith('competition-');
+        const privatePage = isPlatformCourseClassroom(route.id) || isPlatformInstructorCourseEditor(route.id) || route.id === 'teacher-apply-start' || (route.area === 'instructor' && !isPlatformInstructorApplication(route.id)) || route.area === 'admin' || route.area === 'organization';
         expect(host.querySelectorAll('.platform-home-header'), route.id).toHaveLength(privatePage ? 0 : 1);
         expect(host.querySelectorAll('.platform-shared-footer'), route.id).toHaveLength(privatePage ? 0 : 1);
         expect(host.querySelector('.platform-site-search'), route.id).toBeNull();
         expect(host.querySelector('.platform-admin-group-nav'), route.id).toBeNull();
         if (!privatePage) expect(host.querySelector('.platform-home-header a[aria-label="搜索"]')?.getAttribute('href'), route.id).toBe('/search');
+      }
+    } finally { pathname.mockReturnValue('/zh/platform/teachers'); }
+  });
+  it('uses the workspace parent or site entry as the direct-open return destination', () => {
+    const pathname = vi.mocked(usePathname);
+    try {
+      for (const [path, fallback] of [
+        ['/zh/platform/admin', '/'],
+        ['/zh/platform/admin/events/new', '/platform/admin/events'],
+        ['/zh/platform/org', '/'],
+        ['/zh/platform/org/sample', '/platform/org'],
+      ]) {
+        pathname.mockReturnValue(path);
+        const host = document.createElement('div');
+        host.innerHTML = renderToString(createElement(PlatformShell, { children: null }));
+        expect(host.querySelector('.platform-private-header .back-home')?.getAttribute('href'), path).toBe(fallback);
       }
     } finally { pathname.mockReturnValue('/zh/platform/teachers'); }
   });
@@ -100,9 +112,9 @@ describe('Platform shell ownership during shared-page navigation', () => {
       }
     } finally { auth.user = null; auth.admin = false; auth.loadInstructor.mockReset(); pathname.mockReturnValue('/zh/platform/teachers'); await act(async () => root.unmount()); }
   });
-  it('shows only the workspaces of the current account even for administrators', async () => {
+  it('shows learning workspaces without competition links', async () => {
     const host = document.createElement('div'), root = createRoot(host);
-    const paths = { organization: '/platform/org', learner: '/learn', organizer: '/platform/competitions/manage', supervisor: '/platform/competitions/supervise' };
+    const paths = { organization: '/platform/org', learner: '/learn' };
     const roles = Object.keys(paths) as (keyof typeof paths)[];
     auth.loadInstructor.mockResolvedValue({ items: [] });
     try {
@@ -119,6 +131,7 @@ describe('Platform shell ownership during shared-page navigation', () => {
         }
         const panel = host.querySelector('.platform-account-content')!;
         expect(panel.querySelector('details[open]')).toBeNull();
+        expect(panel.querySelector('a[href^="/competitions"], a[href^="/platform/competitions"]')).toBeNull();
         expect(panel.querySelector('a')?.textContent).toBe(auth.admin ? '平台管理' : '我的学习');
         expect(panel.querySelector('a[href="/platform/orders"]')?.closest('details')?.querySelector('summary')?.textContent).toBe('个人空间');
         const membership = panel.querySelector('.platform-account-primary a[href="/platform/membership"]');
@@ -253,8 +266,7 @@ describe('Platform shell ownership during shared-page navigation', () => {
         expect(host.querySelector('.platform-shared-footer')).toBeNull();
         expect(host.querySelector('.platform-instructor-studio-brand .back-home')).not.toBeNull();
         expect(host.querySelector('.af-nav-sidebar > .af-nav-toggle')).not.toBeNull();
-        expect(host.querySelector('.platform-instructor-masthead .back-home')?.getAttribute('aria-label')).toBe(path === 'instructor' ? '返回学习空间' : '返回讲师工作台');
-        expect(host.querySelector('.platform-instructor-masthead .back-home')?.getAttribute('href')).toBe(path === 'instructor' ? '/platform' : '/platform/instructor');
+        expect(host.querySelector('.platform-instructor-masthead .back-home')?.getAttribute('href')).toBe(path === 'instructor' ? '/' : '/platform/instructor');
         expect(host.querySelector('[data-search-scope="instructor-courses"]')).toBeNull();
         expect(host.querySelector('.platform-workspace-nav')).toBeNull();
         const sidebar=host.querySelector('nav[aria-label="讲师工作台导航"]');

@@ -1,5 +1,6 @@
 'use client';
 
+import { competitionHref } from '@/lib/competition-links';
 import { useCallback, useEffect, useRef, useState, type SyntheticEvent } from 'react';
 import AppLink from '@/components/AppLink';
 import { VisualCube } from '@/components/VisualCube';
@@ -196,7 +197,7 @@ function OrderItems({ items, status }: { items: unknown[]; status?: string }) {
                       : t('报名状态请在比赛页面查看。', 'Check your entry status on the competition page.')
                   : status === 'fulfilled' ? t(`数量 ${quantity}，已发放`, `Quantity ${quantity}, fulfilled`)
                     : t(`数量 ${quantity}`, `Quantity ${quantity}`)}</span>
-              {competitionId ? <AppLink href={`/platform/events/online/${encodeURIComponent(competitionId)}`} prefetch={false}>{t('查看比赛与报名', 'View competition and entry')}</AppLink> : null}
+              {competitionId ? <AppLink href={competitionHref(competitionId)} prefetch={false}>{t('查看比赛与报名', 'View competition and entry')}</AppLink> : null}
               {events.map((eventRaw, eventIndex) => {
                 const event = record(eventRaw) ?? {};
                 const type = string(event.type) ?? t('履约', 'Fulfillment');

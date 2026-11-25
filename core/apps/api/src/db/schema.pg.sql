@@ -1434,7 +1434,7 @@ CREATE TRIGGER platform_events_set_updated_at BEFORE UPDATE ON platform_events
 CREATE TABLE platform_event_ticket_types (
   CONSTRAINT competition_ticket_device CHECK ((competition_project IS NULL) = (competition_device IS NULL) AND (competition_device <> 'smart' OR competition_project = '333')),
   competition_device TEXT CHECK (competition_device IN ('ordinary','smart')),
-  competition_project TEXT CHECK (competition_project IN ('222','333','444','555')),
+  competition_project TEXT CHECK (competition_project IN ('333','222','444','555','666','777','333bf','333oh','clock','minx','pyram','skewb','sq1','444bf','555bf')),
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   event_id UUID NOT NULL REFERENCES platform_events(id) ON DELETE RESTRICT,
   code VARCHAR(64) NOT NULL CHECK (code = LOWER(BTRIM(code)) AND code ~ '^[a-z0-9][a-z0-9_-]{0,63}$'),
@@ -8703,6 +8703,25 @@ CREATE TABLE platform_competitions (
   recording_policy TEXT NOT NULL DEFAULT '',
   submitted_at TIMESTAMPTZ,
   finalized_at TIMESTAMPTZ,
+  brackets_generated_at TIMESTAMPTZ,
+  competition_format TEXT CHECK (competition_format IN ('average', 'advancement')),
+  competition_device TEXT CHECK (competition_device IN ('ordinary', 'smart')),
+  participant_limit INTEGER CHECK (participant_limit BETWEEN 1 AND 1000000),
+  competition_project TEXT CHECK (competition_project IN (
+    '333', '222', '444', '555', '666', '777', '333bf', '333oh',
+    'clock', 'minx', 'pyram', 'skewb', 'sq1', '444bf', '555bf'
+  )),
+  registration_fee_minor INTEGER CHECK (registration_fee_minor BETWEEN 0 AND 10000000),
+  supervision_mode TEXT NOT NULL DEFAULT 'supervised'
+    CHECK (supervision_mode IN ('self_service', 'supervised', 'offline')),
+  review_status TEXT NOT NULL DEFAULT 'draft'
+    CHECK (review_status IN ('draft', 'pending_approval', 'rejected', 'approved')),
+  review_note TEXT NOT NULL DEFAULT '',
+  reviewed_by BIGINT REFERENCES app_users(id) ON DELETE SET NULL,
+  reviewed_at TIMESTAMPTZ,
+  refund_template TEXT NOT NULL DEFAULT 'before_24h'
+    CHECK (refund_template IN ('before_24h', 'before_start', 'custom')),
+  offline_venue JSONB CHECK (jsonb_typeof(offline_venue) = 'object'),
   CHECK (registration_closes_at > registration_opens_at)
 );
 CREATE TABLE platform_competition_sessions (
@@ -8710,17 +8729,22 @@ CREATE TABLE platform_competition_sessions (
   event_id UUID NOT NULL REFERENCES platform_competitions(event_id) ON DELETE RESTRICT,
   starts_at TIMESTAMPTZ NOT NULL,
   ends_at TIMESTAMPTZ NOT NULL,
-  capacity INTEGER NOT NULL CHECK (capacity BETWEEN 1 AND 1000),
+  capacity INTEGER NOT NULL CHECK (capacity BETWEEN 1 AND 1000000),
   supervisor_user_id BIGINT REFERENCES app_users(id) ON DELETE SET NULL,
   assistance_requested BOOLEAN NOT NULL DEFAULT FALSE,
+  session_kind TEXT NOT NULL DEFAULT 'supervised' CHECK (session_kind IN ('supervised', 'self_service', 'offline')),
+  CONSTRAINT platform_competition_session_staffing CHECK (
+    session_kind = 'supervised' OR (supervisor_user_id IS NULL AND NOT assistance_requested)
+  ),
   UNIQUE(event_id,id),
   CHECK (ends_at > starts_at)
 );
 -- Both tables must exist before the registration/session foreign key is added.
 ALTER TABLE platform_event_registrations ADD CONSTRAINT competition_registration_session_fk
   FOREIGN KEY(event_id,competition_session_id) REFERENCES platform_competition_sessions(event_id,id) ON DELETE RESTRICT;
-CREATE UNIQUE INDEX idx_competition_registration_active ON platform_event_registrations(event_id,user_id,competition_project) WHERE competition_project IS NOT NULL AND status IN ('reserved','confirmed','attended');
+CREATE UNIQUE INDEX idx_competition_registration_active ON platform_event_registrations(event_id,user_id,ticket_type_id) WHERE competition_project IS NOT NULL AND status IN ('reserved','confirmed','attended');
 CREATE INDEX idx_competition_registration_session ON platform_event_registrations(competition_session_id,status);
+CREATE UNIQUE INDEX idx_competition_default_session ON platform_competition_sessions(event_id) WHERE session_kind <> 'supervised';
 CREATE TABLE platform_competition_disputes (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   registration_id UUID NOT NULL REFERENCES platform_event_registrations(id) ON DELETE RESTRICT,
@@ -8744,12 +8768,17 @@ CREATE TABLE platform_competition_attempts (
   penalty TEXT CHECK(penalty IN ('none','+2','DNF','DNS')),
   recorded_at TIMESTAMPTZ,
   recorded_by BIGINT REFERENCES app_users(id) ON DELETE SET NULL,
+  review_required BOOLEAN NOT NULL DEFAULT FALSE,
   PRIMARY KEY(registration_id,attempt_number),
   CHECK ((recorded_at IS NULL) = (penalty IS NULL)),
   CHECK (penalty IS NULL OR ((penalty IN ('DNF','DNS')) = (centiseconds IS NULL)))
 );
 
 CREATE TABLE platform_competition_evidence (
+  attempt_number SMALLINT,
+  CONSTRAINT competition_evidence_attempt_fk
+    FOREIGN KEY (registration_id, attempt_number)
+    REFERENCES platform_competition_attempts (registration_id, attempt_number) ON DELETE RESTRICT,
   id UUID PRIMARY KEY,
   registration_id UUID NOT NULL REFERENCES platform_event_registrations(id) ON DELETE RESTRICT,
   uploaded_by BIGINT NOT NULL REFERENCES app_users(id) ON DELETE RESTRICT,
@@ -10041,4 +10070,75 @@ CREATE TABLE workspace_payroll_payments (
 CREATE TABLE platform_learning_stage_preferences (
   user_id BIGINT PRIMARY KEY REFERENCES app_users(id) ON DELETE CASCADE,
   stage TEXT NOT NULL CHECK (stage IN ('first-solve','sub60','sub30','sub20','sub15','sub10'))
+);
+CREATE TABLE platform_competition_matches (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  event_id UUID NOT NULL REFERENCES platform_competitions(event_id) ON DELETE RESTRICT,
+  ticket_type_id UUID NOT NULL,
+  bracket_side TEXT NOT NULL CHECK (bracket_side IN ('winners', 'losers', 'grand_final')),
+  round_number SMALLINT NOT NULL CHECK (round_number > 0),
+  match_number INTEGER NOT NULL CHECK (match_number > 0),
+  best_of SMALLINT NOT NULL CHECK (best_of IN (3, 5)),
+  player_a_registration_id UUID REFERENCES platform_event_registrations(id) ON DELETE RESTRICT,
+  player_b_registration_id UUID REFERENCES platform_event_registrations(id) ON DELETE RESTRICT,
+  slot_a_resolved BOOLEAN NOT NULL DEFAULT FALSE,
+  slot_b_resolved BOOLEAN NOT NULL DEFAULT FALSE,
+  score_a SMALLINT NOT NULL DEFAULT 0 CHECK (score_a BETWEEN 0 AND 3),
+  score_b SMALLINT NOT NULL DEFAULT 0 CHECK (score_b BETWEEN 0 AND 3),
+  winner_registration_id UUID REFERENCES platform_event_registrations(id) ON DELETE RESTRICT,
+  next_win_match_id UUID,
+  next_win_slot SMALLINT CHECK (next_win_slot IN (1, 2)),
+  next_loss_match_id UUID,
+  next_loss_slot SMALLINT CHECK (next_loss_slot IN (1, 2)),
+  status TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'ready', 'in_progress', 'completed', 'bye')),
+  UNIQUE (ticket_type_id, bracket_side, round_number, match_number),
+  UNIQUE (ticket_type_id, id),
+  FOREIGN KEY (event_id, ticket_type_id) REFERENCES platform_event_ticket_types(event_id, id) ON DELETE RESTRICT,
+  FOREIGN KEY (ticket_type_id, next_win_match_id) REFERENCES platform_competition_matches(ticket_type_id, id) ON DELETE RESTRICT,
+  FOREIGN KEY (ticket_type_id, next_loss_match_id) REFERENCES platform_competition_matches(ticket_type_id, id) ON DELETE RESTRICT,
+  CHECK ((next_win_match_id IS NULL) = (next_win_slot IS NULL)),
+  CHECK ((next_loss_match_id IS NULL) = (next_loss_slot IS NULL)),
+  CHECK (best_of = CASE WHEN bracket_side = 'grand_final' THEN 5 ELSE 3 END),
+  CHECK (player_a_registration_id IS NULL OR slot_a_resolved),
+  CHECK (player_b_registration_id IS NULL OR slot_b_resolved),
+  CHECK (player_a_registration_id IS NULL OR player_b_registration_id IS NULL OR player_a_registration_id <> player_b_registration_id),
+  CHECK (winner_registration_id IS NULL OR winner_registration_id IS NOT DISTINCT FROM player_a_registration_id OR winner_registration_id IS NOT DISTINCT FROM player_b_registration_id)
+);
+CREATE INDEX idx_competition_matches_event ON platform_competition_matches(event_id, ticket_type_id);
+
+CREATE TABLE platform_competition_match_games (
+  match_id UUID NOT NULL REFERENCES platform_competition_matches(id) ON DELETE RESTRICT,
+  game_number INTEGER NOT NULL CHECK (game_number > 0),
+  ready_a_at TIMESTAMPTZ,
+  ready_b_at TIMESTAMPTZ,
+  start_at TIMESTAMPTZ,
+  scramble TEXT,
+  inspect_a_at TIMESTAMPTZ,
+  inspect_b_at TIMESTAMPTZ,
+  solve_a_at TIMESTAMPTZ,
+  solve_b_at TIMESTAMPTZ,
+  authoritative_timing BOOLEAN NOT NULL DEFAULT TRUE,
+  phase_a TEXT CHECK (phase_a IN ('inspecting', 'solving')),
+  phase_b TEXT CHECK (phase_b IN ('inspecting', 'solving')),
+  result_a JSONB CHECK (jsonb_typeof(result_a) = 'object'),
+  result_b JSONB CHECK (jsonb_typeof(result_b) = 'object'),
+  run_a UUID,
+  run_b UUID,
+  run_a_at TIMESTAMPTZ,
+  run_b_at TIMESTAMPTZ,
+  report_a JSONB CHECK (jsonb_typeof(report_a) = 'object'),
+  report_b JSONB CHECK (jsonb_typeof(report_b) = 'object'),
+  winner_registration_id UUID REFERENCES platform_event_registrations(id) ON DELETE RESTRICT,
+  resolved_at TIMESTAMPTZ,
+  CONSTRAINT competition_match_timing_order CHECK (
+    (inspect_a_at IS NULL OR (start_at IS NOT NULL AND inspect_a_at >= start_at)) AND
+    (inspect_b_at IS NULL OR (start_at IS NOT NULL AND inspect_b_at >= start_at)) AND
+    (solve_a_at IS NULL OR (inspect_a_at IS NOT NULL AND solve_a_at >= inspect_a_at)) AND
+    (solve_b_at IS NULL OR (inspect_b_at IS NOT NULL AND solve_b_at >= inspect_b_at))
+  ),
+  PRIMARY KEY (match_id, game_number),
+  CHECK ((start_at IS NULL) = (scramble IS NULL)),
+  CHECK (start_at IS NULL OR (ready_a_at IS NOT NULL AND ready_b_at IS NOT NULL)),
+  CHECK ((run_a IS NULL) = (run_a_at IS NULL)),
+  CHECK ((run_b IS NULL) = (run_b_at IS NULL))
 );

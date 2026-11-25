@@ -55,6 +55,22 @@ export const CATALOG: UtilEntry[] = [
     en: 'Acquire the rear camera while enabled, with retry support; release it on disable, unmount, or late permission results.',
   },
   {
+    name: 'useCompetitionRole',
+    sig: "useCompetitionRole(role: 'organizer' | 'supervisor' | 'applicant' | null): { ready: boolean; allowed: boolean }",
+    imp: "import { useCompetitionRole } from '@/hooks/useCompetitionRole';",
+    category: 'hook',
+    zh: '查询当前账号的办赛、执场或申请资格，返回查询就绪状态和是否具备资格。传入 null 可跳过查询。',
+    en: 'Check the current account’s organizer, supervisor or applicant eligibility and report readiness and access. Pass null to skip the check.',
+  },
+  {
+    name: 'useAssistantProvider',
+    sig: 'useAssistantProvider(active: boolean): { providerForSend: () => Promise<AssistantProvider>; provider: AssistantProvider; setProvider: Dispatch<SetStateAction<AssistantProvider>>; openaiAvailable: boolean }',
+    imp: "import { useAssistantProvider } from '@/hooks/useAssistantProvider';",
+    category: 'hook',
+    zh: '在助手启用时查询 OpenAI 可用性，提供模型选择和发送时的服务确认。',
+    en: 'Discover OpenAI availability while the assistant is active, expose the selected provider, and resolve it before sending.',
+  },
+  {
     name: 'useAssistantTextReveal',
     sig: 'useAssistantTextReveal(text: string, animate: boolean, id?: string, onComplete?: (id: string, text: string) => void): string',
     imp: "import { useAssistantTextReveal } from '@/hooks/useAssistantTextReveal';",

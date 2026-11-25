@@ -34,7 +34,7 @@ export async function platformPageMetadata(lang: string, segments: string[]): Pr
 
   const noindex = match.definition.access !== 'public'
     || ['shop-cart', 'shop-checkout'].includes(match.definition.id)
-    || ['search', 'offline', 'login', 'notifications', 'online-competition-preview', 'course-lesson', 'course-section-introduction', 'course-section-trial', 'course-section-core', 'certificate', 'qr'].includes(match.definition.id);
+    || ['search', 'offline', 'login', 'notifications', 'course-lesson', 'course-section-introduction', 'course-section-trial', 'course-section-core', 'certificate', 'qr'].includes(match.definition.id);
   const detail = noindex ? null : await detailMetadata(match.definition.id, match.params.id);
   const design = match.definition.id === 'product-detail' ? findShopDesign(match.params.id) : undefined;
   const metadata = metadataFromEntry(detail ?? (design ? { title: design.title, description: design.summary } : {

@@ -5,6 +5,7 @@ import LangToggle from '@/components/LangToggle';
 import { currentEntryHref } from '@/lib/entry-navigation';
 import { useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { ArrowRight, BookOpen, ExternalLink, Plus, Search } from '@app-foundation/icons/lucide';
+import { COMPETITIONS_PATH } from '@/lib/competition-links';
 import { parseAsFloat, parseAsInteger, parseAsString, parseAsStringEnum, useQueryState } from 'nuqs';
 import AppLink from '@/components/AppLink';
 import Paginator from '@/components/wca-stats/Paginator';
@@ -13,6 +14,7 @@ import SearchInput from '@/components/SearchInput';
 import { ContentSkeleton } from '@/components/ContentSkeleton';
 import SortArrow from '@/components/SortArrow';
 import { useT } from '@/hooks/useT';
+import { useEntryRouter } from '@/hooks/useEntryRouter';
 import { useLang } from '@/i18n/tr';
 import { nextQuery, useAuthUser, useIsAdmin } from '@/lib/auth-store';
 import { executePlatformAction, loadPlatformResource, localizePlatformEntity, PlatformPermissionError } from '@/lib/platform-gateway';
@@ -58,17 +60,21 @@ const EMPTY_PLATFORM_ENTITIES: PlatformEntity[] = [];
 export function PlatformResourceRouteView({
   definition,
   params,
+  activityManagementHref,
 }: {
   definition: PlatformRouteDefinition;
   params: Record<string, string>;
+  activityManagementHref?: string;
 }) {
   const t = useT();
   const lang = useLang();
+  const router = useEntryRouter();
   const user = useAuthUser();
   const isAdmin = useIsAdmin();
   const inPlatformShell = useContext(PlatformNavigationContext);
   const refreshInstructorAccess = useContext(PlatformInstructorAccessRefreshContext);
   const instructorCourseList = definition.id === 'instructor-courses';
+  const activityDetail = Boolean(activityManagementHref) && definition.id === 'admin-event';
   const instructorApplication = isPlatformInstructorApplication(definition.id);
   const applicationStart = definition.id === 'teacher-apply-start';
   const pageSizeOptions = definition.area === 'instructor' && definition.id !== 'teacher-apply' ? PLATFORM_INSTRUCTOR_PAGE_SIZES : [20, 50, 100];
@@ -188,6 +194,7 @@ export function PlatformResourceRouteView({
       owned: owned === '1',
       page: requestPage, pageSize: requestSize, category: requestCategory,
       days: resource === 'admin-analytics' ? days : undefined,
+      activitiesOnly: Boolean(activityManagementHref),
       includeCourseAccess: withAccess,
       signal: controller.signal,
     });
@@ -212,7 +219,7 @@ export function PlatformResourceRouteView({
       if (!controller.signal.aborted) setError(reason instanceof Error ? reason : new Error(String(reason)));
     });
     return () => controller.abort();
-  }, [allowed, definition.resource, loadsResource, mounted, owned, params, retry, courseCatalog, requestQuery, requestSort, requestPage, requestSize, requestCategory, days, includeCourseAccess]);
+  }, [allowed, definition.resource, loadsResource, mounted, owned, params, retry, courseCatalog, requestQuery, requestSort, requestPage, requestSize, requestCategory, days, includeCourseAccess, activityManagementHref]);
 
   useEffect(() => {
     const needsCourseOwnership = definition.id === 'courses';
@@ -323,6 +330,11 @@ export function PlatformResourceRouteView({
       const response = await executePlatformAction(definition, { action, resourceId: id, payload });
       if (action === 'archive-instructor') refreshInstructorAccess();
       if (!isCurrent()) return undefined;
+      if (activityManagementHref && definition.id === 'admin-event-new' && action === 'admin-save' && response.event?.id) {
+        const path = (lang === 'zh' ? '/zh' : '') + activityManagementHref;
+        router.replace(`${path}/${encodeURIComponent(response.event.id)}`);
+        return response;
+      }
       if (definition.id === 'instructor-profile' && (action === 'initialize-instructor-profile' || action === 'link-instructor-profile')) {
         const teacherEntryId = Number(response.teacherEntryId ?? (action === 'link-instructor-profile' ? payload.teacherEntryId : undefined));
         if (!Number.isSafeInteger(teacherEntryId) || teacherEntryId <= 0) throw new Error(t('暂时无法确认个人主页，请重试。', 'Unable to confirm the personal profile. Try again.'));
@@ -427,7 +439,7 @@ export function PlatformResourceRouteView({
     ? platformNavigationState(`/platform/${fillPlatformParams(definition.pattern, params)}`) : null;
   const workspaceRoutes = navigation ? platformWorkspaceRoutes(definition, Boolean(user), isAdmin) : [];
   const headingInNavigation = definition.id !== 'events' && (navigation?.secondary === definition.id || workspaceRoutes.some(item => item.id === definition.id));
-  const showAreaTitle = definition.area !== 'discover' && !inviteManager && !orderPage && !courseCatalog && areaTitle !== pageTitle
+  const showAreaTitle = !activityManagementHref && definition.area !== 'discover' && !inviteManager && !orderPage && !courseCatalog && areaTitle !== pageTitle
     && !(inPlatformShell && definition.area === 'instructor' && definition.id !== 'teacher-apply' && !instructorCourseEditor)
     && !navigation?.primary && workspaceRoutes.length === 0;
   const showDescription = !courseClassroom && !courseDetail && !inviteManager && !orderPage && Boolean(pageDescription);
@@ -454,7 +466,7 @@ export function PlatformResourceRouteView({
 
       {newRoute && (definition.id !== 'instructor-courses' || (result && !error)) ? <div className={`platform-route-actions${definition.id === 'instructor-courses' ? ' platform-instructor-course-create-actions' : ''}`}>
         {definition.id === 'instructor-courses' && <div className="platform-instructor-course-count"><span className="platform-instructor-course-count-icon"><BookOpen aria-hidden /></span><strong>{pageTotal === undefined ? t(`本页 ${sortedItems.length} 门课程`, `${sortedItems.length} courses on this page`) : t(query ? `找到 ${pageTotal} 门课程` : `共 ${pageTotal} 门课程`, query ? `${pageTotal} matching courses` : `${pageTotal} courses`)}</strong></div>}
-        <AppLink className="platform-button platform-button-primary" href={`/platform/${newRoute.pattern}`} prefetch={false}>{titleFor(t, newRoute)}{definition.id === 'instructor-courses' && <Plus aria-hidden />}</AppLink>
+        <AppLink className="platform-button platform-button-primary" href={activityManagementHref ? `${activityManagementHref}/new` : `/platform/${newRoute.pattern}`} prefetch={false}>{titleFor(t, newRoute)}{(activityManagementHref || definition.id === 'instructor-courses') && <Plus aria-hidden />}</AppLink>
       </div> : null}
       {['admin', 'admin-event-analytics'].includes(definition.id) && allowed ? <CompactSelect label={t('统计范围', 'Period')} ariaLabel={t('统计范围', 'Period')} value={String(days)} items={[{ value: '7', label: t('最近 7 天', 'Last 7 days') }, { value: '30', label: t('最近 30 天', 'Last 30 days') }, { value: '90', label: t('最近 90 天', 'Last 90 days') }]} onChange={value => { void setDays(Number(value)); }} /> : null}
 
@@ -575,7 +587,7 @@ export function PlatformResourceRouteView({
                 courses={filteredCourses.slice((coursePage - 1) * pageSize, coursePage * pageSize)} />
             ) : hasCourseFilters ? <PlatformState kind="empty" message={t('没有符合条件的课程。试试清除筛选或更换关键词。', 'No courses match. Clear a filter or try another search.')} /> : null
           ) : inviteManager || instructorApplication ? null : sortedItems.length === 0 && definition.id === 'events' ? (
-            <div className="platform-teacher-empty" data-site-surface="panel"><h2>{query ? t('没有匹配的活动', 'No matching events') : t('暂无平台活动', 'No upcoming events')}</h2><p>{t('你也可以查看线上比赛。', 'You can also explore online competitions.')}</p><AppLink className="platform-button" href="/platform/events/online" prefetch={false}>{t('查看线上比赛', 'Browse online competitions')}<ArrowRight aria-hidden /></AppLink></div>
+            <div className="platform-teacher-empty" data-site-surface="panel"><h2>{query ? t('没有匹配的活动', 'No matching events') : t('暂无平台活动', 'No upcoming events')}</h2><p>{t('你也可以查看线上比赛。', 'You can also explore online competitions.')}</p><AppLink className="platform-button" href={COMPETITIONS_PATH} prefetch={false}>{t('查看线上比赛', 'Browse online competitions')}<ArrowRight aria-hidden /></AppLink></div>
           ) : sortedItems.length === 0 && definition.id !== 'membership' && definition.id !== 'me-membership' ? (
             <PlatformState
               kind="empty"
@@ -584,10 +596,11 @@ export function PlatformResourceRouteView({
                 ? t('这个旧讲师标识没有对应的主站讲师资料。旧 Platform 的演示讲师未导入，请返回主站讲师名录查找真实资料。', 'This legacy teacher identifier has no matching main-site profile. Demo teachers from the legacy Platform were not imported; use the main-site directory to find current profiles.')
                 : undefined}
             />
-          ) : courseDetail || courseSection || instructorCourseEditor || ['path-detail', 'certificate', 'event-detail', 'news-detail', 'product-detail', 'admin', 'admin-event-analytics', 'admin-application'].includes(definition.id) || definition.id === 'membership' || definition.id === 'me-membership' || definition.id === 'qr' ? null : (
+          ) : activityDetail || courseDetail || courseSection || instructorCourseEditor || ['path-detail', 'certificate', 'event-detail', 'news-detail', 'product-detail', 'admin', 'admin-event-analytics', 'admin-application'].includes(definition.id) || definition.id === 'membership' || definition.id === 'me-membership' || definition.id === 'qr' ? null : (
             <PlatformEntityList
               definition={definition}
               items={sortedItems}
+              detailBaseHref={activityManagementHref}
               redeemedCourseIds={visibleRedeemedCourseIds}
               actionBusy={actionBusy}
               onAction={(action, id, payload) => { void runAction(action, id, payload); }}
@@ -603,7 +616,7 @@ export function PlatformResourceRouteView({
 
           {!instructorProfile && !instructorCourseEditor && !catalogOnly && !permissionDenied && !orderUnavailable ? <PlatformDomainContent definition={definition} params={params} entity={sortedItems[0]} previewRedirect={stay === '1'} selectedLessonId={selectedLessonId} lessonStartTime={lessonStartTime ?? undefined} onSelectLesson={id => { void setLessonStartTime(null); void setSelectedLessonId(id); }} /> : null}
 
-          {instructorProfile || (instructorCourseNew && (!canCreateInstructorCourse || error)) || ((definition.id === 'instructor-course' || instructorLessonNew) && (!sortedItems[0] || error)) || catalogOnly || permissionDenied || orderUnavailable || definition.id === 'qr' || (courseDetail && !course) || (['membership', 'me-membership'].includes(definition.id) && !result) || (instructorApplicationFlow && (!result || error)) ? null : (
+          {instructorProfile || (instructorCourseNew && (!canCreateInstructorCourse || error)) || ((activityDetail || definition.id === 'instructor-course' || instructorLessonNew) && (!sortedItems[0] || error)) || catalogOnly || permissionDenied || orderUnavailable || definition.id === 'qr' || (courseDetail && !course) || (['membership', 'me-membership'].includes(definition.id) && !result) || (instructorApplicationFlow && (!result || error)) ? null : (
             <PlatformDomainActions
               definition={definition}
               params={params}

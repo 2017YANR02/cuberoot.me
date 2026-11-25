@@ -104,11 +104,13 @@ const TABLES: Table[] = [
   { name: 'record_notification_events', domain: 'comp', origin: '0238', purpose: { zh: '跨成绩来源去重的纪录事件及待投递状态', en: 'Source-independent record event deduplication and pending delivery' } },
   { name: 'auth_identity_pending', domain: 'account', origin: '0232', purpose: { zh: '首次身份认证的 15 分钟尝试；票据只存摘要，另存已验证身份资料及必要加密凭据，明确创建或绑定后单次核销，不提前创建账号', en: '15-minute first-time identity attempts; tickets are hashed, with verified identity data and required encrypted credentials stored separately; consumed once after explicit creation or linking without creating an account in advance' } },
   { name: 'platform_organizer_applications', domain: 'platform', origin: '0229', purpose: { zh: '主办方申请、关联组织与平台审批记录', en: 'Organizer applications, linked organizations and platform reviews' } },
-  { name: 'platform_competitions', domain: 'platform', origin: '0224', purpose: { zh: '主办组织、报名窗口、抽成及结算配置', en: 'Organizer, registration window, commission and settlement configuration' } },
-  { name: 'platform_competition_sessions', domain: 'platform', origin: '0224', purpose: { zh: '监督场次、名额与人员排班', en: 'Supervised session capacity and staff assignment' } },
+  { name: 'platform_competitions', domain: 'platform', origin: '0224 / 0354 / 0355 / 0356', purpose: { zh: '主办组织、赛制、赛型、审核、报名窗口与结算配置', en: 'Organizer, format, supervision mode, review, registration window and settlement terms' } },
+  { name: 'platform_competition_matches', domain: 'platform', origin: '0357', purpose: { zh: '项目分组的双败对阵、比分与胜败晋级指向', en: 'Per-division double-elimination match scores and winner and loser paths' } },
+  { name: 'platform_competition_match_games', domain: 'platform', origin: '0357', evolved: [358], purpose: { zh: '双败小局的双方准备、同步打乱、观察限时、起表、比赛成绩和设备证据', en: 'Game readiness, shared scramble, inspection deadlines, solve starts, results and device evidence' } },
+  { name: 'platform_competition_sessions', domain: 'platform', origin: '0224 / 0356', purpose: { zh: '线上监督排班和自助、线下赛事的默认场次', en: 'Supervised slots and default sessions for self-service and in-person competitions' } },
   { name: 'platform_competition_attempts', domain: 'platform', origin: '0224', purpose: { zh: '服务器逐把打乱与监督员成绩确认', en: 'Server-issued scrambles and supervisor-recorded attempts' } },
   { name: 'platform_competition_disputes', domain: 'platform', origin: '0224', purpose: { zh: '成绩争议与平台处理记录', en: 'Result disputes and platform resolutions' } },
-  { name: 'platform_competition_evidence', domain: 'platform', origin: '0225', purpose: { zh: '限授权访问的争议录像与保留期限', en: 'Private dispute videos and retention dates' } },
+  { name: 'platform_competition_evidence', domain: 'platform', origin: '0225', evolved: [358], purpose: { zh: '限授权访问的争议与单把抽检录像及保留期限', en: 'Private dispute and per-attempt review clips with retention dates' } },
   { name: 'platform_competition_settlement_ledger', domain: 'platform', origin: '0226', purpose: { zh: '主办方转账、追回与退款调整的审计台账', en: 'Audited organizer transfers, recoveries and refund adjustments' } },
   { name: 'platform_competition_device_reports', domain: 'platform', origin: '0227', purpose: { zh: '绑定已下发打乱的设备采集场次与辅助证据', en: 'Device runs and supporting evidence bound to issued attempts' } },
   { name: 'sim_mask_layouts', domain: 'alg', origin: '0223', purpose: { zh: '按阶数保存阶段分组顺序与归属', en: 'Stage group order and membership per cube size' }, cols: [{ name: 'cube_size, groups' }] },
@@ -613,6 +615,11 @@ const TABLES: Table[] = [
 ];
 
 const MIGRATIONS: { n: number; slug: string; desc: Bi }[] = [
+  { n: 358, slug: 'competition_timing_and_review', desc: { zh: '记录对战观察与起表时间，并将抽检录像关联到单把尝试。', en: 'Persist duel inspection and solve starts and link review clips to individual attempts.' } },
+  { n: 357, slug: 'competition_double_elimination', desc: { zh: '保存双败签表、同步开赛时间、小局结果和智能魔方证据。', en: 'Store double-elimination brackets, synchronized starts, game results and smart-cube evidence.' } },
+  { n: 356, slug: 'competition_unified_workflow', desc: { zh: '统一赛事审核、赛型、项目票种、默认场次和自助成绩。', en: 'Unify competition reviews, supervision modes, ticket divisions, default sessions and self-service results.' } },
+  { n: 355, slug: 'competition_draft_project_fee', desc: { zh: '保存线上比赛草稿的项目与报名费。', en: 'Persist the event and entry fee for online competition drafts.' } },
+  { n: 354, slug: 'competition_draft_setup', desc: { zh: '保存线上比赛草稿的赛制、设备类型和参赛人数上限。', en: 'Persist format, device type and the entry limit for online competition drafts.' } },
   { n: 353, slug: 'membership_benefit_copy', desc: { zh: '精简订阅页的权益说明，保留自定义条目和编辑顺序。', en: 'Condense subscription benefits while preserving custom entries and ordering.' } },
   { n: 352, slug: 'membership_pro_names', desc: { zh: '统一个人及企业订阅的中英文套餐名称为 Pro。', en: 'Use Pro for individual and business subscription names in both languages.' } },
   { n: 351, slug: 'calendar_event_status', desc: { zh: '为日程保存已确认或待定状态，已有日程默认已确认。', en: 'Store confirmed or tentative status for calendar events. Existing events default to confirmed.' } },

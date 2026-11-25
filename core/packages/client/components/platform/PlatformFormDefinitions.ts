@@ -100,7 +100,7 @@ const EVENT_FIELDS = [
   field('category', '活动分类', 'Event category'),
   field('program', '活动项目（每行一项）', 'Program (one per line)', { kind: 'lines' }),
   field('timezone', '时区', 'Timezone', { required: true, defaultValue: 'Asia/Shanghai' }),
-  field('venue', '场地 JSON', 'Venue JSON', { kind: 'json', rows: 5, required: true }),
+  field('venue', '场地 JSON', 'Venue JSON', { kind: 'json', rows: 5, defaultValue: '{}' }),
   field('tickets', '票种 JSON 数组', 'Ticket JSON array', { kind: 'json', rows: 8, required: true }),
 ] satisfies ContractFields<PlatformEventWrite>;
 

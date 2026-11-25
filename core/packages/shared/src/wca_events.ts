@@ -9,6 +9,11 @@ export const WCA_EVENT_ORDER = [
   '333ft', '333mbo', 'magic', 'mmagic',
 ] as const;
 
+/** Active events ranked by elapsed solve time. */
+export const WCA_TIMED_EVENT_ORDER = WCA_EVENT_ORDER.filter(event =>
+  event !== '333fm' && event !== '333mbf' && event !== '333ft'
+  && event !== '333mbo' && event !== 'magic' && event !== 'mmagic');
+
 /** Compact Chinese event names shared by Web and record notifications. */
 export const EVENT_DISPLAY_ZH: Record<string, string> = {
   '333': '三阶', '222': '二阶', '444': '四阶', '555': '五阶', '666': '六阶', '777': '七阶',

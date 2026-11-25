@@ -78,6 +78,29 @@ describe.skipIf(!databaseUrl)('organizer approval transaction and authorization 
     const id=(await (await post('',body)).json()).application.id;
     state.actor={userId:99,ownerKey:'99',isAdmin:true};expect((await post(`/${id}/review`,{decision:'reject'})).status).toBe(400);
     expect((await post(`/${id}/review`,{decision:'reject',note:'Please clarify supervision staffing'})).status).toBe(200);
-    state.actor={userId:3,ownerKey:'3',isAdmin:false};expect((await post('',body)).status).toBe(201);
+    state.actor={userId:3,ownerKey:'3',isAdmin:false};
+    expect(await (await app.request(base+'/me?v=2')).json()).toMatchObject({
+      applications: [{ id, status: 'rejected', reviewNote: 'Please clarify supervision staffing' }],
+      eligibleOrganizationIds: [], eligibleOrganizations: [],
+    });
+    const retried = await post('', {...body, description: 'Two assigned supervisors'});
+    expect(retried.status).toBe(201);
+    expect(await (await app.request(base+'/me?v=2')).json()).toMatchObject({
+      applications: [{ status: 'pending', description: 'Two assigned supervisors' }, { id, status: 'rejected' }],
+      eligibleOrganizations: [],
+    });
+  });
+  it('names approved organizers for the administrator without granting those organizations to other applicants', async () => {
+    state.actor = { userId: 99, ownerKey: '99', isAdmin: true };
+    const response = await app.request(base + '/me?v=2');
+    const access = await response.json();
+    expect(response.headers.get('Cache-Control')).toBe('private, no-store');
+    expect(access.eligibleOrganizations).toMatchObject([{ id: existing, name: 'Existing school' }, { name: 'New organizer' }]);
+    expect(access.eligibleOrganizationIds).toEqual(access.eligibleOrganizations.map((organization: { id: string }) => organization.id));
+    const legacy = await (await app.request(base + '/me')).json();
+    expect(legacy.eligibleOrganizations).toBeUndefined();
+
+    state.actor = { userId: 3, ownerKey: '3', isAdmin: false };
+    expect(await (await app.request(base + '/me?v=2')).json()).toMatchObject({ eligibleOrganizations: [] });
   });
 });

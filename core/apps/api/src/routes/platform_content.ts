@@ -207,9 +207,11 @@ function eventFields(body: JsonObject, required: boolean) {
   };
 }
 
-async function listAdminEvents(c: Context): Promise<Response> {
+async function listAdminEvents(c: Context, activitiesOnly = false): Promise<Response> {
   await requirePlatformAdmin(c); const {page,pageSize,offset}=pagination(c,100);
   const id=c.req.param('id')?requiredParam(c,'id'):null;const q=c.req.query('q')?.trim().slice(0,200)??'';
+  const activityFilter = activitiesOnly
+    ? 'AND NOT EXISTS (SELECT 1 FROM platform_competitions cc WHERE cc.event_id = e.id)' : '';
   const rows=await platformQuery(platformDb(),`
     SELECT e.id::text AS id,e.slug,e.title_zh AS "titleZh",e.title_en AS "titleEn",
       e.description_zh AS "descriptionZh",e.description_en AS "descriptionEn",e.status,
@@ -219,13 +221,20 @@ async function listAdminEvents(c: Context): Promise<Response> {
         'reservedQuantity',t.reserved_quantity,'soldQuantity',t.sold_quantity,'salesStartAt',t.sales_start_at,'salesEndAt',t.sales_end_at)
         ORDER BY t.created_at,t.id) FILTER(WHERE t.id IS NOT NULL),'[]'::jsonb) AS tickets
     FROM platform_events e LEFT JOIN platform_event_ticket_types t ON t.event_id=e.id
-    WHERE ($1::text IS NULL OR e.id::text=$1 OR e.slug=$1) AND ($4='' OR e.title_zh ILIKE '%'||$4||'%' OR e.title_en ILIKE '%'||$4||'%') GROUP BY e.id ORDER BY e.updated_at DESC LIMIT $2 OFFSET $3
+    WHERE ($1::text IS NULL OR e.id::text=$1 OR e.slug=$1) AND ($4='' OR e.title_zh ILIKE '%'||$4||'%' OR e.title_en ILIKE '%'||$4||'%')
+      ${activityFilter}
+    GROUP BY e.id ORDER BY e.updated_at DESC, e.id LIMIT $2 OFFSET $3
   `,[id,pageSize,offset,q]);
   if(id&&!rows[0])notFound('Event'); privateNoStore(c);
-  const counts=await platformQuery<{total:number}>(platformDb(),`SELECT COUNT(*)::int AS total FROM platform_events WHERE ($1='' OR title_zh ILIKE '%'||$1||'%' OR title_en ILIKE '%'||$1||'%')`,[q]);return c.json(id?{event:rows[0]}:{events:rows,page,pageSize,total:counts[0]?.total??0});
+  if (id) return c.json({ event: rows[0] });
+  const counts=await platformQuery<{total:number}>(platformDb(),`SELECT COUNT(*)::int AS total FROM platform_events e
+    WHERE ($1='' OR e.title_zh ILIKE '%'||$1||'%' OR e.title_en ILIKE '%'||$1||'%') ${activityFilter}`,[q]);
+  return c.json({ events: rows, page, pageSize, total: counts[0]?.total ?? 0 });
 }
-platformContentRoutes.get('/platform/admin/events',listAdminEvents);
-platformContentRoutes.get('/platform/admin/events/:id',listAdminEvents);
+platformContentRoutes.get('/platform/admin/events',(c) => listAdminEvents(c));
+platformContentRoutes.get('/platform/admin/events/:id',(c) => listAdminEvents(c));
+platformContentRoutes.get('/platform/admin/activities',(c) => listAdminEvents(c, true));
+platformContentRoutes.get('/platform/admin/activities/:id',(c) => listAdminEvents(c, true));
 
 async function saveEvent(c: Context,creating:boolean):Promise<Response>{
   const actor=await requirePlatformAdmin(c); const id=creating?null:requiredParam(c,'id');
