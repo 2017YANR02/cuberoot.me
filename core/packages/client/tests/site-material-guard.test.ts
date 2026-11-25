@@ -152,6 +152,14 @@ describe('site materials have one definition and shared scenery tokens', () => {
     expect(surfaces).toMatch(/body:not\(\[data-site-scenery\]\) \.landing-search-results-surface\s*\{[^{}]*--af-glass-fill: var\(--popover\);[^{}]*--af-glass-filter: none;/);
   });
 
+  it('leaves icon-only calendar navigation frameless and gives homepage cards a single glass layer', () => {
+    const landing = readFileSync(join(ROOT, 'app/[lang]/LandingClient.tsx'), 'utf8');
+    const legacy = readFileSync(join(ROOT, 'app/[lang]/home-background.css'), 'utf8');
+    expect(landing).toMatch(/const isCalendar = card\.id === 'calendar';\s*const useGlass = !isDisabled && !isCalendar;/);
+    expect(legacy.match(/[^{}]+\{[^{}]*backdrop-filter:[^{}]+\}/)?.[0]).toContain(':not(:where(.af-glass-surface, .landing-calendar-link *))');
+    expect(legacy).not.toMatch(/:hover\s*\{[^{}]*scale\(/);
+  });
+
   it('keeps timer dialogs on the shared high-opacity reading layer', () => {
     const appearance = dirname(require.resolve('@cuberoot/app-ui/appearance.css'));
     const material = readFileSync(join(appearance, 'appearance-material.css'), 'utf8');

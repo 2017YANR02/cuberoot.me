@@ -72,6 +72,24 @@
 .alg-card--cover .alg-card-title {
   color: var(--accent);
 }
+.alg-card.af-glass-surface {
+  background: transparent;
+  border-color: transparent;
+}
+.alg-card.af-glass-surface:hover {
+  --af-glass-tint: var(--glass-popover-bg);
+  --af-glass-edge: var(--accent);
+}
+.alg-card--cover.af-glass-surface {
+  --af-glass-fill: color-mix(in srgb, var(--accent) 7%, var(--card));
+  --af-glass-tint: color-mix(in srgb, var(--accent) 7%, var(--glass-surface-bg));
+  --af-glass-edge: color-mix(in srgb, var(--accent) 28%, var(--glass-edge));
+}
+.alg-card--cover.af-glass-surface:hover {
+  --af-glass-fill: color-mix(in srgb, var(--accent) 14%, var(--card));
+  --af-glass-tint: color-mix(in srgb, var(--accent) 14%, var(--glass-popover-bg));
+  --af-glass-edge: var(--accent);
+}
 .alg-card > .more-toggle-chevron {
   position: absolute;
   top: 8px;

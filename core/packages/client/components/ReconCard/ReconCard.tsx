@@ -111,7 +111,7 @@ export function ReconCard({ solve, isZh, href, horizontal = false, showScrambleF
   const single = formatReconSingle(solve.event, solve.value, solve.rawTime);
 
   return (
-    <Link href={href} prefetch={false} className={`recon-card${horizontal ? ' recon-card--row' : ''}`}>
+    <Link href={href} prefetch={false} className={`recon-card af-glass-surface${horizontal ? ' recon-card--row' : ''}`}>
       <ReconCardMedia solve={solve} isZh={isZh} showScrambleFallback={showScrambleFallback} />
       <div className="recon-card-body">
         {/* 成绩 + 项目图标 + 国旗 + 选手名；宽度不足时姓名换行完整显示。 */}

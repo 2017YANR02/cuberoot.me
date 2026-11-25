@@ -29,7 +29,8 @@ interface AlgCardProps {
 export default function AlgCard({
   thumb, title, sub, href, onClick, prefetch = false, ariaLabel, ariaControls, tooltip, expand, className,
 }: AlgCardProps) {
-  const cls = `alg-card${expand ? ' alg-card--cover' : ''}${className ? ` ${className}` : ''}`;
+  const plain = className?.split(/\s+/).includes('alg-card--subgroup-plain');
+  const cls = `alg-card${plain ? '' : ' af-glass-surface'}${expand ? ' alg-card--cover' : ''}${className ? ` ${className}` : ''}`;
   const body = (
     <>
       <div className="alg-card-thumb">{thumb}</div>

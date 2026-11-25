@@ -1070,6 +1070,7 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
   const f2lSlots = data && !showSubgroupPicker && puzzleParam === '3x3' && (set === 'f2l' || set === 'adv-f2l')
     ? (data.cases[0]?.oriNames ?? []).map(shortOriName)
     : [];
+  const isCardsView = effectiveView === 'cards';
 
   const renderGroupCases = (cases: AlgCase[]) => (
     <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
@@ -1077,7 +1078,7 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
           items={cases.map(c => c.id).filter((x): x is number => typeof x === 'number')}
           strategy={rectSortingStrategy}
         >
-      <div className={`alg-case-list${effectiveView === 'cards' ? ' is-cards' : ''}`}>
+      <div className={`alg-case-list${isCardsView ? ' is-cards' : ''}`}>
         {cases.map(c => {
           const rawOri = caseOri[c.name] ?? activeOri;
           const oriIdx = rawOri < c.algs.length ? rawOri : 0;
@@ -1141,7 +1142,7 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
             <article
               data-alg-motion-case={c.id ?? c.name}
               data-alg-motion-ori={oriIdx}
-              className={`alg-case${flashId === c.id ? ' is-flash' : ''}${selectedId === c.id ? ' is-selected' : ''}${isAdmin && c.id != null && invalidIds.has(c.id) ? ' is-invalid' : ''}`}
+              className={`alg-case${isCardsView ? ' af-glass-surface' : ''}${flashId === c.id ? ' is-flash' : ''}${selectedId === c.id ? ' is-selected' : ''}${isAdmin && c.id != null && invalidIds.has(c.id) ? ' is-invalid' : ''}`}
               id={c.id != null ? `case-${c.id}` : undefined}
               title={isAdmin && c.id != null && invalidIds.has(c.id)
                 ? tr({ zh: '这个 case 有公式校验不通过', en: 'This case has failing algs' })

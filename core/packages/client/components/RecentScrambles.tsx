@@ -373,7 +373,7 @@ function ScrambleCard({ event, scramble, m, lp, isZh, ssTarget, color, dotColors
     practice: true, optimal, competition: m, sourceColors: dotList.join(''), sourceEn: describeSource('en'), sourceZh: describeSource('zh'),
   });
   return (
-    <div className="rs-scard">
+    <div className="rs-scard af-glass-surface">
       <div className="rs-scard-cube">
         <div className="rs-scard-actions">
         {dotList.length > 0 && (

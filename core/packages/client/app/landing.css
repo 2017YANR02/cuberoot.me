@@ -500,6 +500,24 @@ body:has(.landing-page) { --landing-content-max: 1100px; }
 .landing-page .landing-card.af-glass-surface:hover {
     --landing-card-light: 11%;
     --af-glass-edge: var(--accent);
+@media (prefers-reduced-motion: no-preference) {
+    .landing-page :is(.landing-card, .rc-card, .rs-scard, .recon-card, .ongoing-comps-chip).af-glass-surface::before { transition: background-color 180ms ease; }
+}
+.landing-page .landing-featured-news.af-glass-surface {
+    --af-glass-inset: 0px;
+    --af-glass-tint: color-mix(in srgb, var(--glass-popover-bg), var(--home-news-color) 9%);
+    position: relative;
+    background: transparent;
+}
+.landing-page .landing-card-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    /* 定高 = 最高的那个图标(WCA 34px logo):lucide 30px 与 logo 34px 混排时卡片才等高 */
+    height: 34px;
+    color: var(--accent);
+}
+.landing-page .landing-card-icon .record-badge {
 }
     font-size: 22px;
 }

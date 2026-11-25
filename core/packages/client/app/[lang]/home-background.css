@@ -9,8 +9,8 @@
 }
 
 /* Filter behind the card so its border is painted after refraction. */
-:root:has(.landing-page) :is(.landing-card, .card, .rs-scard, .recon-card, .rc-card, .ongoing-comps-chip),
-:root:has(.landing-page) :is(.landing-card, .card, .rs-scard, .recon-card, .rc-card, .ongoing-comps-chip):hover,
+:root:has(.landing-page) :is(.landing-card, .card, .rs-scard, .recon-card, .rc-card, .ongoing-comps-chip):not(:where(.af-glass-surface, .landing-calendar-link *)),
+:root:has(.landing-page) :is(.landing-card, .card, .rs-scard, .recon-card, .rc-card, .ongoing-comps-chip):not(:where(.af-glass-surface, .landing-calendar-link *)):hover,
 :root .landing-page :is(.landing-card, .card).is-disabled,
 :root .landing-page :is(.landing-card, .card).is-disabled:hover {
   position: relative;
@@ -39,7 +39,7 @@
 
 @media (hover: hover) and (pointer: fine) {
   :root .landing-page :is(.landing-card, .card, .rs-scard, .recon-card, .rc-card, .ongoing-comps-chip):not(.is-disabled):hover {
-    transform: translateY(-2px) scale(1.006);
+    transform: translateY(-2px);
   }
   /* Pinned cards fill a scroll container; scaling would expand its scroll width. */
   :root .landing-page .landing-pinned-recons .recon-card:not(.is-disabled):hover {

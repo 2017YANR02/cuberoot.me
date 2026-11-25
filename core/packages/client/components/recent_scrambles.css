@@ -101,6 +101,11 @@
   border-color: color-mix(in srgb, var(--accent) 50%, var(--border-default));
   transform: translateY(-2px);
 }
+.rs-scard.af-glass-surface {
+  position: relative;
+  background: transparent;
+  border-color: transparent;
+}
 .rs-scard-cube {
   position: relative;
   display: flex;

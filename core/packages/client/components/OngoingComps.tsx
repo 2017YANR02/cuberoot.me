@@ -133,7 +133,7 @@ function CompChip({ comp, lang, isZh, showFlag }: {
   return (
     <Link
       {...compLinkProps(comp.id, undefined, lang)}
-      className="ongoing-comps-chip"
+      className="ongoing-comps-chip af-glass-surface"
       title={`${comp.name}  ${formatDateRangeIso(comp.start_date, comp.end_date)}`}
     >
       {showFlag && <Flag iso2={(comp.country || '').toLowerCase()} className="ongoing-comps-chip-flag" />}

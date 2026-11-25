@@ -100,7 +100,7 @@ export function CompCard({ comp, isZh, lang, pill, registrationTiming, dimmed, f
   );
 
   return (
-    <div className={`rc-card${dimmed ? ' is-closed' : ''}`}>
+    <div className={`rc-card${dimmed ? ' is-closed' : ' af-glass-surface'}`}>
       {follow && (
         <FollowStar
           variant="corner"

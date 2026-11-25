@@ -44,7 +44,7 @@
 .alg-index-credit a { color: inherit; text-decoration: underline; text-underline-offset: 2px; }
 .alg-index-credit a:hover { color: var(--accent); }
 
-/* 套列表共用 AlgCard，入口以无外框的缩略图和名称展示。 */
+/* The set grid shares its card material with the other algorithm views. */
 .alg-bento {
   max-width: 1200px;
   margin: 0 auto;
@@ -63,11 +63,6 @@
 }
 .alg-bento .alg-card {
   width: 100%;
-  background: transparent;
-  border: 0;
-}
-.alg-bento .alg-card:hover {
-  background: transparent;
 }
 /* SQ1 双层横排封面放大；窄屏由卡片宽度约束，外框随 SVG 等比缩小。 */
 .alg-bento .alg-card--sq1-set .puzzle-art {
@@ -692,6 +687,9 @@
   height: 100%;
   box-sizing: border-box;
   position: relative;
+}
+.alg-case.af-glass-surface {
+  background: transparent;
 }
 .alg-case-head {
   display: flex;
@@ -2614,6 +2612,7 @@ a.alg-case-navigation-link:active { transform: scale(.97); }
 
 /* 这个 case 里有公式过不了校验(admin 才扫、才看得到)—— 红框直接指出来该修哪张 */
 .alg-case.is-invalid {
+  --af-glass-edge: var(--destructive);
   border-color: var(--destructive);
   box-shadow: 0 0 0 1px color-mix(in srgb, var(--destructive) 30%, transparent);
 }
@@ -2654,12 +2653,14 @@ a.alg-case-navigation-link:active { transform: scale(.97); }
    iOS Safari 只对「看起来能点」的元素稳定派发 tap ⟹ 整张卡给 cursor:pointer。 */
 .alg-case { cursor: pointer; }
 .alg-case.is-selected {
+  --af-glass-edge: var(--signal-warning);
   border-color: var(--signal-warning);
   box-shadow: 0 0 0 2px color-mix(in srgb, var(--signal-warning) 26%, transparent);
 }
 .alg-case.is-flash,
 .alg-case.is-invalid.is-flash,
 .alg-case.is-selected.is-flash {
+  --af-glass-edge: var(--accent);
   border-color: var(--accent);
   box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 22%, transparent);
 }
@@ -2841,7 +2842,7 @@ button.alg-mirror-line { padding: 0; border: 0; background: none; color: inherit
   }
 
   body[data-site-scenery] .alg-pdf-menu,
-  body[data-site-scenery] .alg-case,
+  body[data-site-scenery] .alg-case:not(.af-glass-surface),
   body[data-site-scenery] .alg-admin-modal {
     background: var(--glass-surface-bg);
     box-shadow: var(--glass-shadow);

@@ -21,6 +21,21 @@
   box-shadow: 0 6px 18px color-mix(in srgb, var(--foreground) 10%, transparent);
 }
 
+.recon-card.af-glass-surface {
+  position: relative;
+  background: transparent;
+  border-color: transparent;
+  overflow: visible;
+}
+.recon-card.af-glass-surface > .recon-card-media {
+  border-start-start-radius: inherit;
+  border-start-end-radius: inherit;
+}
+.recon-card--row.af-glass-surface > .recon-card-media {
+  border-start-end-radius: 0;
+  border-end-start-radius: inherit;
+}
+
 /* 横向变体(首页「今日复盘」):缩略图在左,信息在右 */
 .recon-card--row {
   flex-direction: row;

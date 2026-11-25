@@ -354,12 +354,14 @@ export default function LandingPage({ initialLayout = null }: { initialLayout?: 
       </>
     );
     const isDisabled = isLocked;
-    const className = `landing-card tier-${card.tier}${isDisabled ? '' : ' af-glass-surface'}${isDevelopment && !isAdmin ? ' is-disabled' : ''}`;
+    const isCalendar = card.id === 'calendar';
+    const useGlass = !isDisabled && !isCalendar;
+    const className = `landing-card tier-${card.tier}${useGlass ? ' af-glass-surface' : ''}${isDevelopment && !isAdmin ? ' is-disabled' : ''}`;
     let cardElement;
     if (isDisabled) {
       cardElement = (
         <div className={className} id={`card-${card.id}`}
-          title={developmentLabel} aria-label={card.id === 'calendar' ? t(card.nameKey) : undefined}
+          title={developmentLabel} aria-label={isCalendar ? t(card.nameKey) : undefined}
           aria-disabled="true" role="link">
           {content}
         </div>
@@ -368,7 +370,7 @@ export default function LandingPage({ initialLayout = null }: { initialLayout?: 
       cardElement = (
         <Link href={card.href} className={className} id={`card-${card.id}`} prefetch={false}
           data-analytics-entry={card.id}
-          aria-label={card.id === 'calendar' ? t(card.nameKey) : undefined}>
+          aria-label={isCalendar ? t(card.nameKey) : undefined}>
           {content}
         </Link>
       );
@@ -587,10 +589,10 @@ export default function LandingPage({ initialLayout = null }: { initialLayout?: 
           followedIds={compFollows.follows} />
       </div>}
         <div className="landing-training-links">
-          <Link href="/alg/3x3/zbll/run" className="landing-card" data-site-surface="panel" prefetch={false}>
+          <Link href="/alg/3x3/zbll/run" className="landing-card af-glass-surface" prefetch={false}>
             <LandingCardContent label={tr({ zh: 'ZBLL 训练', en: 'ZBLL Training' })} />
           </Link>
-          <Link href="/alg/3x3/lsll/run" className="landing-card" data-site-surface="panel" prefetch={false}>
+          <Link href="/alg/3x3/lsll/run" className="landing-card af-glass-surface" prefetch={false}>
             <LandingCardContent label={tr({ zh: 'LSLL 训练', en: 'LSLL Training' })} />
           </Link>
         </div>
@@ -600,7 +602,7 @@ export default function LandingPage({ initialLayout = null }: { initialLayout?: 
         if (!featuredNotice.href) return null;
         const FeaturedIcon = iconFor(featuredNotice);
         const isHistoryFeature = featuredNotice === HISTORY_HOME_FEATURE;
-        const featureClass = `landing-featured-news${isHistoryFeature ? ' landing-history-feature' : ''}`;
+        const featureClass = `landing-featured-news af-glass-surface${isHistoryFeature ? ' landing-history-feature' : ''}`;
         const body = tr(homepageNoticeTitle(featuredNotice));
         const inner = (
           <>
