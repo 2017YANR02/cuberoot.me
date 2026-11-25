@@ -34,8 +34,10 @@
 .settings-modal-close { display: grid; place-items: center; border: 0; border-radius: 6px; cursor: pointer; }
 .settings-modal .settings-section h2 { margin: 0 0 6px; font-size: 18px; }
 .settings-modal .settings-row-control { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
-.settings-modal .settings-row-control-input, .settings-modal .settings-row-control-select {
-  max-width: 100%; border: 1px solid var(--input); border-radius: 4px;
+.settings-modal :is(.settings-row-control-input, .settings-row-control-select) { max-width: 100%; }
+.settings-modal .settings-row-control-input:where(:not([type="range"])),
+.settings-modal .settings-row-control-select {
+  border: 1px solid var(--input); border-radius: 4px;
   padding: 4px 8px; background: var(--background); color: var(--foreground); font: inherit;
 }
 /* --- SettingsPanel --- */

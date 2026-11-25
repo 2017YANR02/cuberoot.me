@@ -123,13 +123,7 @@
   flex-direction: column;
   background: var(--background);
   color: var(--foreground);
-  animation: solver-sheet-in 180ms ease;
 }
-@keyframes solver-sheet-in {
-  from { opacity: 0; transform: translateY(12px); }
-  to   { opacity: 1; transform: none; }
-}
-@media (prefers-reduced-motion: reduce) { .solver-sheet { animation: none; } }
 .solver-sheet-head {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
