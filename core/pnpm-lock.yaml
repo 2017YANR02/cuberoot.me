@@ -581,8 +581,8 @@ importers:
         specifier: file:../../vendor/continuous-corners-0.3.2.tgz
         version: file:vendor/continuous-corners-0.3.2.tgz(patch_hash=81fff432eb9408346d3e6ce997250c7dcc9cf00a2d343abace0dc2bbc360517d)(react@19.2.4)
       '@app-foundation/ui-controls':
-        specifier: file:../../vendor/app-foundation/app-foundation-ui-controls-0.2.5.tgz
-        version: file:vendor/app-foundation/app-foundation-ui-controls-0.2.5.tgz(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
+        specifier: file:../../vendor/app-foundation/app-foundation-ui-controls-0.2.6.tgz
+        version: file:vendor/app-foundation/app-foundation-ui-controls-0.2.6.tgz(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
       '@cuberoot/puzzle-solvers':
         specifier: workspace:*
         version: link:../puzzle-solvers
@@ -1397,9 +1397,9 @@ packages:
     version: 0.1.1
     engines: {node: '>=16.13'}
 
-  '@app-foundation/ui-controls@file:vendor/app-foundation/app-foundation-ui-controls-0.2.5.tgz':
-    resolution: {integrity: sha512-3lX6w3lKdsw10AVXUBht1dMZaelO2pin5hK7sgsxHqkpmMHbXYdTioJRRmozURg91TfZ6CjlK8aK6aHkSS8EQg==, tarball: file:vendor/app-foundation/app-foundation-ui-controls-0.2.5.tgz}
-    version: 0.2.5
+  '@app-foundation/ui-controls@file:vendor/app-foundation/app-foundation-ui-controls-0.2.6.tgz':
+    resolution: {integrity: sha512-SW4s1EuHvlw73iQWP1+PsyfQPrIBpNMx/prgipoT2HqLk9vT7RqDL8BSlXMBxlPz0QvwhnvsEDi+w27qh/WTUg==, tarball: file:vendor/app-foundation/app-foundation-ui-controls-0.2.6.tgz}
+    version: 0.2.6
     engines: {node: '>=22'}
     peerDependencies:
       react: '>=19'
@@ -6982,7 +6982,7 @@ snapshots:
 
   '@app-foundation/sms@https://github.com/2017YANR02/app-foundation/releases/download/v0.3.1/app-foundation-sms-0.1.1.tgz': {}
 
-  '@app-foundation/ui-controls@file:vendor/app-foundation/app-foundation-ui-controls-0.2.5.tgz(react-dom@19.2.4(react@19.2.4))(react@19.2.4)':
+  '@app-foundation/ui-controls@file:vendor/app-foundation/app-foundation-ui-controls-0.2.6.tgz(react-dom@19.2.4(react@19.2.4))(react@19.2.4)':
     dependencies:
       react: 19.2.4
       react-dom: 19.2.4(react@19.2.4)

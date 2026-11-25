@@ -691,6 +691,9 @@
 .alg-case.af-glass-surface {
   background: transparent;
 }
+body:where(:not([data-site-scenery]), [data-site-scenery='transparent']) .alg-case-list.is-cards .alg-case.af-glass-surface::before {
+  --af-glass-filter: none;
+}
 .alg-case-head {
   display: flex;
   gap: 12px;

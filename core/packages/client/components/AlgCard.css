@@ -76,6 +76,10 @@
   background: transparent;
   border-color: transparent;
 }
+/* The set gallery still paints its glass rim over a flat page background. */
+body:where(:not([data-site-scenery]), [data-site-scenery='transparent']) .alg-bento .alg-card.af-glass-surface::before {
+  --af-glass-filter: none;
+}
 .alg-card.af-glass-surface:hover {
   --af-glass-tint: var(--glass-popover-bg);
   --af-glass-edge: var(--accent);
