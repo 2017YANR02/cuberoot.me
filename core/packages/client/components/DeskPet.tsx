@@ -14,6 +14,7 @@ import { installedGenerativeAiDisabled, installedPetAvailable, useInstalledGener
 
 import { useCallback, useEffect, useLayoutEffect, useRef, useState, useSyncExternalStore } from 'react';
 import { useAssistantWorkspace } from '@/hooks/useAssistantWorkspace';
+import { rememberReplayTraining, replayReturnChannel } from '@/lib/replay-training-session';
 import { ASSISTANT_PAGE_DRAFT_EVENT, assistantConversations, assistantOwner, type AssistantPageDraft } from '@/lib/assistant-conversations';
 import { SITE_ASSISTANT_QUESTION_MAX_LENGTH } from '@cuberoot/shared/site-assistant';
 import dynamic from 'next/dynamic';
@@ -347,6 +348,8 @@ function DeskPetOverlay() {
   const chatRoute = /^\/(?:zh\/|en\/)?chat\/?$/.test(pathname || '');
   const [pageOverlay, setPageOverlay] = useState<{ pathname: string | null; owner: string; trigger?: HTMLButtonElement } | null>(null);
   const searchOpen = chatRoute || (pageOverlay !== null && pageOverlay.pathname === pathname && pageOverlay.owner === owner);
+  const returnedTriggers = useRef(new WeakSet<HTMLButtonElement>());
+  const practiceTriggers = useRef(new Map<string, { owner: string; trigger: HTMLButtonElement }>());
   const restoredAuthDraft = useRef('');
   const setSearchOpen = useCallback((open: boolean) => {
     const prefix = pathname?.startsWith('/zh') ? '/zh' : '';
@@ -364,6 +367,21 @@ function DeskPetOverlay() {
   // and account without restarting the animation/gesture lifecycle.
   const searchNavigationRef = useRef(setSearchOpen);
   useLayoutEffect(() => { searchNavigationRef.current = setSearchOpen; }, [setSearchOpen]);
+  useEffect(() => {
+    if (typeof BroadcastChannel === 'undefined') return;
+    const channel = new BroadcastChannel(replayReturnChannel);
+    channel.onmessage = event => {
+      if (event.data?.type !== 'return') return;
+      const entry = practiceTriggers.current.get(event.data.id);
+      if (entry?.owner !== owner || !entry.trigger.isConnected || (searchOpen && pageOverlay?.trigger !== entry.trigger)) return;
+      returnedTriggers.current.add(entry.trigger);
+      channel.postMessage({ type: 'ready', id: event.data.id });
+      window.focus();
+      if (searchOpen) setSearchOpen(false);
+      else entry.trigger.focus();
+    };
+    return () => channel.close();
+  }, [pageOverlay, searchOpen, owner, setSearchOpen]);
   useEffect(() => { assistantConversations.setOpen(owner, searchOpen); }, [owner, searchOpen]);
   useEffect(() => {
     if (douyin || !canOpenPageDraft) return;
@@ -373,7 +391,18 @@ function DeskPetOverlay() {
       if (!detail || detail.owner !== owner || owner !== assistantOwner(current) || !canUseAssistant(current)
         || !detail.trigger?.isConnected || typeof detail.draft !== 'string' || !detail.draft.trim()
         || detail.draft.length > SITE_ASSISTANT_QUESTION_MAX_LENGTH || installedGenerativeAiDisabled()) return;
-      assistantConversations.create(owner, crypto.randomUUID(), detail.draft);
+      const id = crypto.randomUUID();
+      const practiceId = detail.practice && rememberReplayTraining(id, detail.practice) ? id : undefined;
+      for (const [key, entry] of practiceTriggers.current) {
+        if (!entry.trigger.isConnected || entry.owner !== owner) practiceTriggers.current.delete(key);
+      }
+      if (practiceId) practiceTriggers.current.set(practiceId, { owner, trigger: detail.trigger });
+      const report = detail.report && {
+        ...detail.report,
+        afterPractice: returnedTriggers.current.delete(detail.trigger) || (!detail.report.summary.focus && !!detail.report.summary.evidence?.training),
+      };
+      assistantConversations.create(owner, id, detail.draft, report);
+      if (detail.send) assistantConversations.submit(owner, id, detail.draft, []);
       setPageOverlay({ pathname, owner, trigger: detail.trigger });
     };
     window.addEventListener(ASSISTANT_PAGE_DRAFT_EVENT, openDraft);

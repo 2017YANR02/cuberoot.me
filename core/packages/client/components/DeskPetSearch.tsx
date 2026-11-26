@@ -323,7 +323,13 @@ export default function DeskPetSearch({
   const t = (z: string, e: string) => (zh ? z : e);
   const chatTitle = (id: string) => {
     const chat = chats.conversations.find(item => item.id === id);
-    return (typeof chat?.title === 'string' && chat.title) || chat?.snapshot.turns[0]?.question || chat?.snapshot.draft.trim() || t('新聊天', 'New chat');
+    if (typeof chat?.title === 'string' && chat.title) return chat.title;
+    const report = chat?.snapshot.turns[0]?.replayReport ?? (!chat?.snapshot.turns.length && chat?.snapshot.replayDraft?.report);
+    if (report) {
+      const time = (report.summary.timeMs / 1000).toFixed(3);
+      return report.afterPractice ? t(`${time} 秒 · 训练复测`, `${time} s · Practice retest`) : t(`${time} 秒 · 复盘分析`, `${time} s · Solve review`);
+    }
+    return chat?.snapshot.turns[0]?.question || chat?.snapshot.draft.trim() || t('新聊天', 'New chat');
   };
   const currentCharacter = characters.find(item => item.id === character);
   const [editingName, setEditingName] = useState(false);
@@ -597,7 +603,9 @@ export default function DeskPetSearch({
 
   return (
     // This workspace closes explicitly; blank space is not a dismiss target.
-    <div className="deskpet-search-workspace" data-no-timer data-mobile-panel={mobile && !!activePanel} ref={workspaceRef} style={open ? undefined : { display: 'none' }} inert={!open}>
+    <div className="deskpet-search-workspace" role={returnToReplay ? 'dialog' : undefined}
+      aria-modal={returnToReplay || undefined} aria-label={returnToReplay ? t('复盘对话', 'Replay conversation') : undefined}
+      data-no-timer data-mobile-panel={mobile && !!activePanel} ref={workspaceRef} style={open ? undefined : { display: 'none' }} inert={!open}>
       <style>{CSS}</style>
       <NavigationShell className="deskpet-navigation" iconOnly mobileLayout="rail" togglePlacement="header" collapseTarget="panel" onPanelOpen={() => setActivePanel('chats')} panelVisible={!!activePanel} mainClassName="deskpet-search-main" contentAs="div"
         items={navigation} renderLink={renderNavigationItem}
