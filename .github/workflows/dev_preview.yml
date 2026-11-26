@@ -7,6 +7,7 @@ on:
       - 'core/scripts/dev-preview/**'
       - 'core/scripts/local-dev.ts'
       - 'core/scripts/local-dev.mts'
+      - 'core/scripts/check-web-startup-dependencies.mjs'
       - 'core/scripts/resolve-workspace-path.mjs'
       - 'core/packages/shared/src/dev-preview.ts'
       - 'ops/dev-preview/**'
@@ -17,6 +18,7 @@ on:
       - 'core/scripts/dev-preview/**'
       - 'core/scripts/local-dev.ts'
       - 'core/scripts/local-dev.mts'
+      - 'core/scripts/check-web-startup-dependencies.mjs'
       - 'core/scripts/resolve-workspace-path.mjs'
       - 'core/packages/shared/src/dev-preview.ts'
       - 'ops/dev-preview/**'
@@ -37,6 +39,7 @@ jobs:
             core/scripts/dev-preview
             core/scripts/local-dev.ts
             core/scripts/local-dev.mts
+            core/scripts/check-web-startup-dependencies.mjs
             core/scripts/resolve-workspace-path.mjs
             core/packages/shared/src/dev-preview.ts
             ops/dev-preview
