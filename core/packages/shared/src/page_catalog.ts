@@ -553,6 +553,28 @@ export const PAGE_META: Record<string, PageMetaEntry> = {
       en: 'God\'s Number — the diameter of the cube group in the half-turn and quarter-turn metrics, how the values 20 and 26 were proved, and the equivalent results for other WCA puzzles.',
     },
   },
+  'math/cubing-lean': {
+    title: { zh: 'Cubing Lean 魔方数学证明', en: 'Cubing Lean: Formal Proofs of Cube Mathematics' },
+    description: {
+      zh: '查看任意阶魔方上帝之数和三阶魔方群换位子的 Lean 证明，本地复核公理，参与新的数学证明。',
+      en: 'Read and verify Lean proofs about generalized cube diameter and commutators in the 3×3×3 cube group, and contribute a theorem.',
+    },
+  },
+  'math/cubing-lean/short-solutions': {
+    title: { zh: '在小魔方上找大魔方的短解', en: 'Find short solutions on a smaller cube' },
+    description: { zh: '亲手改变阶数、打乱和步数，查看短解定理保留的层与贴纸。', en: 'Change the size, scramble and move budget to see which layers and stickers survive the short-solution reduction.' },
+  },
+  'math/cubing-lean/papers/short-solution-kernel': {
+    title: { zh: '高阶魔方的短解与规模缩减', en: 'A kernel for short solutions of the generalized Rubik’s Cube' },
+    description: { zh: '阅读 Ruimin Yan 的英文审阅稿，下载 PDF 与经过核验的 Lean 证明。', en: 'Read Ruimin Yan’s working manuscript and download the PDF and verified Lean sources.' },
+  },
+  'math/cubing-lean/papers/full-cycle-commutators': {
+    title: { zh: '三阶魔方群的全循环换位子', en: 'Full-cycle commutators in the Rubik’s Cube group' },
+    description: {
+      zh: '在线阅读 Ruimin Yan 的英文论文，了解如何用两个 24 阶元素的换位子表示三阶魔方的任意偶状态，下载 PDF 及 Lean 证明。',
+      en: 'Read Ruimin Yan’s paper on expressing every even cube position as a commutator of two full-cycle elements of order 24. Download the PDF and verified Lean sources.',
+    },
+  },
   'math/cube-graph': {
     title: { zh: '魔方与图论', en: 'Rubik’s Cube & Graph Theory' },
     description: {

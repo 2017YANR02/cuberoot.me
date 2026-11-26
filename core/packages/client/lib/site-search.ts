@@ -20,19 +20,14 @@ import { searchForum, type SearchData, type SearchThread } from '@/lib/forum-api
 import { useWcaTranslationSearch, type TranslationMatch } from '@/lib/wca-translation-search';
 import { isInstalledCommunityHref, useInstalledCommunityDisabled } from '@/lib/installed-content';
 
-export interface SiteSearchCard {
-  id: string;
-  href: string;
-  internal: boolean;
-  adminOnly?: boolean;
-  lockedForNonAdmin?: boolean;
-  nameEn: string;
-  nameZh: string;
-  sectionTitleEn: string;
-  sectionTitleZh: string;
-  /** Additional aliases/descriptions from the page's existing catalog. */
-  keywords?: string;
-}
+import {
+  allSiteSearchTokensIn as allTokensIn,
+  searchSiteCards,
+  tokenizeSiteSearch as tokenize,
+  type SiteSearchCard,
+} from '@cuberoot/shared/site-directory';
+
+export { searchSiteCards, type SiteSearchCard } from '@cuberoot/shared/site-directory';
 
 export interface ToolItem { path: string; zh: string; en: string; }
 export interface LookupItem { path: string; extraQuery?: string; zh: string; en: string; }
@@ -127,23 +122,6 @@ const hasNonLatin = (s: string) => /[^\x00-\x7F]/.test(s);
 
 const MATCH_HARD_CAP = 500;
 export const INITIAL_RENDER_CAP = 50;
-
-function tokenize(q: string): string[] {
-  const withBoundary = q
-    .replace(/([^\x00-\x7F])([a-z0-9])/gi, '$1 $2')
-    .replace(/([a-z0-9.])([^\x00-\x7F])/gi, '$1 $2');
-  return withBoundary.split(/\s+/).map(t => t.trim()).filter(t => t.length > 0);
-}
-function allTokensIn(haystack: string, tokens: readonly string[]): boolean {
-  for (const t of tokens) if (!haystack.includes(t)) return false;
-  return true;
-}
-
-export function searchSiteCards(cards: readonly SiteSearchCard[], query: string): SiteSearchCard[] {
-  const tokens=tokenize(query.trim().toLowerCase());
-  if(!tokens.length) return [];
-  return cards.filter(c=>allTokensIn(`${c.nameEn}\n${c.nameZh}\n${c.sectionTitleEn}\n${c.sectionTitleZh}\n${c.href}\n${c.keywords ?? ''}`.toLowerCase(),tokens));
-}
 
 interface GlossaryEntry { head: string; body: string }
 interface GlossarySection { entries?: GlossaryEntry[] }
