@@ -14,17 +14,8 @@ import { ALG_CATALOG, type AlgPuzzle } from '../alg_catalog';
 import { displaySq1ShapeName } from '../sq1_shapes';
 export { SQ1_SHAPE_NAMES } from '../sq1_shapes';
 
-/** OLL 编号(1..57) → 社区英文名。来源:用户提供的 OLL 命名表。 */
-export const OLL_NAME_BY_NUMBER: Record<number, string> = {
-  1: 'DH', 2: 'DPi', 3: 'DS+', 4: 'DS-', 5: 'O+', 6: 'O-', 7: 'N+', 8: 'N-',
-  9: 'Y-', 10: 'Y+', 11: 'M+', 12: 'M-', 13: 'J+', 14: 'J-', 15: 'L+', 16: 'L-',
-  17: 'DL', 18: 'DU', 19: 'DT', 20: 'X', 21: 'H', 22: 'Pi', 23: 'U', 24: 'T',
-  25: 'L', 26: 'S-', 27: 'S+', 28: 'A', 29: 'F+', 30: 'F-', 31: 'Q-', 32: 'Q+',
-  33: 'T2', 34: 'C1', 35: 'K1', 36: 'W-', 37: 'K2', 38: 'W+', 39: 'Z-', 40: 'Z+',
-  41: 'G-', 42: 'G+', 43: 'P-', 44: 'P+', 45: 'T1', 46: 'C3', 47: 'V-', 48: 'V+',
-  49: 'R+', 50: 'R-', 51: 'I2', 52: 'I3', 53: 'E-', 54: 'E+', 55: 'I4', 56: 'I1',
-  57: 'B',
-};
+import { OLL_NAME_BY_NUMBER } from './oll_names';
+export { OLL_NAME_BY_NUMBER };
 
 /** PLL 旧识别名到公式库主名的兼容映射。 */
 export const PLL_RENAME: Record<string, string> = {

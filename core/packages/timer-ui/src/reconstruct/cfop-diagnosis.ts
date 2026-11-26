@@ -1,6 +1,6 @@
 import { replayFingerprint } from '@cuberoot/shared/timer/replay-verified';
 import type { Solve, SolveMove } from '@cuberoot/shared/timer/types';
-import { OLL_NAME_BY_NUMBER } from '@cuberoot/shared/recon/alg-case-display';
+import { OLL_NAME_BY_NUMBER } from '@cuberoot/shared/recon/oll-names';
 import type { ReconTextLine } from '@cuberoot/shared/timer/reconstruct/recon-text';
 import type { ReplayZbll } from './replay-zbll';
 import { countHtm } from '@cuberoot/shared/timer/reconstruct/htm';

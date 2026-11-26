@@ -75,6 +75,7 @@
       "./recon/pll-lookup": "mixed",
       "./recon/zbll-lookup": "mixed",
       "./recon/f2l-lookup": "mixed",
+      "./recon/oll-names": "runtime-neutral",
       "./recon/alg-case-display": "mixed",
       "./recon/alg-case-link": "mixed",
       "./recon/comment-links": "mixed",
@@ -554,6 +555,10 @@
     "./recon/f2l-lookup": {
       "node": "./dist/recon/f2l_lookup.js",
       "default": "./src/recon/f2l_lookup.ts"
+    },
+    "./recon/oll-names": {
+      "node": "./dist/recon/oll_names.js",
+      "default": "./src/recon/oll_names.ts"
     },
     "./recon/alg-case-display": {
       "node": "./dist/recon/alg_case_display.js",
