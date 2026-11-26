@@ -22,13 +22,14 @@ import { computeF2lSlots } from '@/app/[lang]/timer/_lib/reconstruct/f2l_slots';
 import { isSlotSolved } from '@/app/[lang]/timer/_lib/reconstruct/f2l_slots';
 import type { F2lSlotId } from '@/app/[lang]/timer/_lib/reconstruct/f2l_slots';
 import {
-  computeF2lSlotReferences, computeStageReferences, gradeForDelta,
+  computeF2lSlotReferences, computeStageReferences, gradeForDelta, slotReferenceSteps,
 } from '@/app/[lang]/timer/_lib/reconstruct/reference';
 import { computeStepMetrics } from '@/app/[lang]/timer/_lib/reconstruct/step_metrics';
 import { applyOneToken } from '@/app/[lang]/timer/_lib/reconstruct/stage_segments';
 import { applyScramble } from '@/app/[lang]/timer/_lib/cube/state';
 import type { CubeFaces } from '@/app/[lang]/timer/_lib/cube/state';
-import { isCross } from '@/app/[lang]/timer/_lib/cube/cfop_detect';
+import { isCross, isSolved } from '@/app/[lang]/timer/_lib/cube/cfop_detect';
+import { normalizeSolve } from '@cuberoot/shared/timer/reconstruct/orient';
 import { F2L_SLOT_FLAG, solveF2lTo } from '@cuberoot/puzzle-solvers/timer-333-step';
 import { faceTurnToken } from '@cuberoot/puzzle-solvers/timer-333-cube';
 
@@ -59,6 +60,59 @@ function apply(state: CubeFaces, tokens: readonly string[]): CubeFaces {
 
 describe('computeF2lSlotReferences', () => {
   const slots = computeF2lSlots(SCRAMBLE, moves, totalMs)!;
+
+  it('verifies alternatives from the recorded start and checks any full-route claim to the finish', () => {
+    const work = slotReferenceSteps(SCRAMBLE,moves,slots,true);
+    let next = work.next();
+    while (!next.done) next = work.next();
+    const refs = next.value!;
+    expect(refs.map(r=>r.alternatives?.length)).toEqual([3,2,1,0]);
+    for (const ref of refs) {
+      for (const other of ref.alternatives ?? []) {
+        expect(other.slot).not.toBe(ref.slot);
+        const state=applyScramble(3,ref.comparison!.setup+' '+other.alg);
+        expect(isCross(state)).toBe(true);
+        expect(isSlotSolved(state,other.slot)).toBe(true);
+        for (const preserved of ref.comparison!.preserved) expect(isSlotSolved(state,preserved)).toBe(true);
+      }
+      if (ref.fullRoute) {
+        const state=applyScramble(3,ref.fullRoute.setup+' '+ref.fullRoute.alg);
+        expect(isSolved(state)).toBe(true);
+      }
+    }
+  });
+
+  it('replays each line from the actual rotated GAN position and counts the isolated pair', () => {
+    // Public replay pQp3frgq9f8. Its last PLL packet arrives after the timer stops.
+    const scramble = "D U' B' F2 U2 B2 D2 L R D U2 L' U2 B' R2 F D2 B2 U2";
+    const sequence = "R' U F' R B L L U U U B' D' B F D F' B D B' D D F' D' D' F D' F' D F D D D R' D R D F D F' F D' D' F' D' F D' F' D D F D F' D' F' R F F D' F' D' F D F' R' D'";
+    const times = [0,336,458,565,735,996,1075,1866,2731,2798,3408,3487,3558,4758,4840,4959,5100,5210,5369,6082,6191,6445,6497,
+      6546,6693,6840,6978,7088,7271,7751,7833,8544,8832,8990,9219,9716,9813,9887,9978,10601,10645,10685,10817,10900,10983,11074,
+      11155,11764,11837,11999,12096,12159,12220,12309,12350,12415,12454,12490,12587,12642,12702,12792,12882,12950,13020];
+    const recorded = sequence.split(' ').map((m, i) => ({m, ts: times[i]}));
+    const slots = computeF2lSlots(scramble, recorded, 12998.5)!;
+    const refs = computeF2lSlotReferences(scramble, recorded, slots)!;
+    expect(refs.map(r => [r.slot, r.userTurns, r.refTurns])).toEqual([
+      ['BL', 3, 3], ['BR', 6, 6], ['FR', 8, 7], ['FL', 8, 8],
+    ]);
+    expect(slots.slots[3].turns).toBe(7);
+    const grip = normalizeSolve(scramble, recorded).rotation;
+    expect(grip).not.toBe('');
+    let previous = slots.segments.crossEndIdx!;
+    for (const [i, ref] of refs.entries()) {
+      const { setup, original, preserved } = ref.comparison!;
+      const physical = [scramble, ...recorded.slice(0, previous + 1).map(move => move.m), grip].join(' ');
+      expect(applyScramble(3, setup)).toEqual(applyScramble(3, physical));
+      previous = slots.slots[i].endIdx!;
+      expect(applyScramble(3, setup + ' ' + original)).toEqual(applyScramble(3,
+        [scramble, ...recorded.slice(0, previous + 1).map(move => move.m), grip].join(' ')));
+      for (const line of [original, ref.refSolution]) {
+        const end = applyScramble(3, setup + ' ' + line);
+        expect(isCross(end)).toBe(true);
+        for (const slot of [ref.slot, ...preserved]) expect(isSlotSolved(end, slot)).toBe(true);
+      }
+    }
+  });
 
   it('四对都拿到参考步数,而且都不为零(这把没有白给的对)', () => {
     const refs = computeF2lSlotReferences(SCRAMBLE, moves, slots)!;

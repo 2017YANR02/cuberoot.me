@@ -392,6 +392,24 @@ export async function correctLibraryLine(line: ReconTextLine, candidates: AlgEnt
   return line;
 }
 
+// AUF and grip can differ between an OLL/COLL listing and the recorded ZBLL.
+export const executionBodyKey = (moves:string[]) => strictOuterForm(moves).key
+  .replace(/^(?:U[2']?\s*)+|(?:\s+U[2']?)+$/g, '').trim();
+
+const libraryBodies = new WeakMap<AlgCase[],Set<string>>();
+export function sharesLibraryExecution(moves:string[], cases:AlgCase[]) {
+  let bodies = libraryBodies.get(cases);
+  if (!bodies) {
+    bodies = new Set<string>();
+    for (const item of cases) for (const entry of item.algs.flat()) {
+      const formula = cachedFormula(entry.alg);
+      if (formula) bodies.add(executionBodyKey(formula.moves));
+    }
+    libraryBodies.set(cases,bodies);
+  }
+  return [[],['y'],['y2'],["y'"]].some(rotation => bodies.has(executionBodyKey([...rotation,...moves])));
+}
+
 const fingerprintCache = new Map<string, string>();
 
 /** All recognized last-layer families share strict matching; library failures retain source. */

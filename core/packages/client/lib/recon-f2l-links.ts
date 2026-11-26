@@ -1,4 +1,4 @@
-import { loadAlg } from '@cuberoot/shared/alg';
+import { loadAlg, type AlgFile } from '@cuberoot/shared/alg';
 import { CUBE_ORIENTATIONS } from '@cuberoot/shared/timer';
 import { Masking } from '@cuberoot/visualcube';
 import { cubeColorGroups, crossColorFromReconText } from '@cuberoot/timer-ui/CubeColorChip';
@@ -131,25 +131,7 @@ export async function reconF2lAnnotations(scramble: string, text: string, onDiag
   // Drawing uses only the recorded state. Publish it before any library I/O;
   // the library is needed solely to turn fingerprints into case links.
   onDiagrams?.(diagrams);
-  const indexCases = async (set: 'f2l' | 'adv-f2l') => {
-    const file = await loadAlg('3x3', set);
-    const slugs = buildCaseSlugMap(file.cases, set);
-    const hrefByState = new Map<string, Set<string>>();
-    for (const c of file.cases) {
-      const slug = c.id == null ? undefined : slugs.byId.get(c.id);
-      if (!slug || !c.setup) continue;
-      // Case setup, not an algorithm that may solve several different cases.
-      const reference = applyScramble(3, c.setup);
-      for (const auf of ['', 'U', 'U2', "U'"]) {
-        const key = f2lSlotFingerprint(rotate(reference, auf), 'FR');
-        if (!key) continue;
-        const hrefs = hrefByState.get(key) ?? new Set<string>();
-        hrefs.add(algCaseDetailHref('3x3', set, slug));
-        hrefByState.set(key, hrefs);
-      }
-    }
-    return hrefByState;
-  };
+  const indexCases = async (set: 'f2l' | 'adv-f2l') => f2lCaseIndex(await loadAlg('3x3', set), set);
   const standard = await indexCases('f2l');
   const needsAdvanced = [...links.values()].some(pairs => [...pairs.values()].some(key => !standard.has(key)));
   // Advanced lookup must not make already identified standard cases disappear.
@@ -163,4 +145,29 @@ export async function reconF2lAnnotations(scramble: string, text: string, onDiag
     if (!pairs.size) links.delete(line);
   }
   return { links, diagrams };
+}
+
+const caseIndexes = new WeakMap<AlgFile, Map<string, Set<string>>>();
+
+/** Share the same AUF-normalized library index with the single-case trainer. */
+export function f2lCaseIndex(file: AlgFile, set: 'f2l' | 'adv-f2l') {
+  const cached = caseIndexes.get(file);
+  if (cached) return cached;
+  const slugs = buildCaseSlugMap(file.cases, set);
+  const hrefByState = new Map<string, Set<string>>();
+  for (const c of file.cases) {
+    const slug = c.id == null ? undefined : slugs.byId.get(c.id);
+    if (!slug || !c.setup) continue;
+    // Case setup, not an algorithm that may solve several different cases.
+    const reference = applyScramble(3, c.setup);
+    for (const auf of ['', 'U', 'U2', "U'"]) {
+      const key = f2lSlotFingerprint(rotate(reference, auf), 'FR');
+      if (!key) continue;
+      const hrefs = hrefByState.get(key) ?? new Set<string>();
+      hrefs.add(algCaseDetailHref('3x3', set, slug));
+      hrefByState.set(key, hrefs);
+    }
+  }
+  caseIndexes.set(file, hrefByState);
+  return hrefByState;
 }

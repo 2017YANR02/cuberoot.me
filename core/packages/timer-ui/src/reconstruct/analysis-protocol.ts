@@ -11,6 +11,7 @@ export interface AnalysisInput {
 }
 
 export interface AnalysisSnapshot {
+  zbll?: import('./replay-zbll').ReplayZbll;
   text: ReconTextResult | null;
   reference: ReferenceResult | null;
   slotReference: SlotReference[] | null;

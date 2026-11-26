@@ -20,6 +20,7 @@ export const cfopIssueLabels: Record<CfopHistoryIssue, Copy> = {
 };
 
 const recognitionPlans: Record<Exclude<Training, 'auf'>, Copy> = {
+  zbll: {zh:'从四个顶层朝向各辨认一次角块和棱块，再核对 case。',en:'Identify the corners and edges from four top-layer angles, then check the case.'},
   cross: {
     zh: '用 5 条新打乱练十字。观察时想好前两枚棱的顺序，再起手。',
     en: 'Use five new scrambles. During inspection, plan your first two cross edges before turning.',
@@ -39,6 +40,7 @@ const recognitionPlans: Record<Exclude<Training, 'auf'>, Copy> = {
 };
 
 const executionPlans: Record<Training, Copy> = {
+  zbll: {zh:'从本局起点慢做公式，核对最终顶层对齐，再连做 5 次并记录正确次数。',en:'Rehearse from the recorded position, check the final alignment, then log five attempts and their accuracy.'},
   cross: {
     zh: '用同一打乱慢做十字 3 次，确认四条棱落位。再换新打乱计时做 5 次。',
     en: 'Redo the cross slowly three times and check all four edges. Then time five crosses on new scrambles.',
@@ -62,6 +64,7 @@ const executionPlans: Record<Training, Copy> = {
 };
 
 const fewerTurnPlans: Record<Exclude<Training, 'auf'>, Copy> = {
+  zbll: {zh:'从本局起点慢做公式，核对最终顶层对齐，再连做 5 次并记录正确次数。',en:'Rehearse from the recorded position, check the final alignment, then log five attempts and their accuracy.'},
   cross: {
     zh: '把原打乱摆回去，找一条能少转几步的十字解法。各试 3 次，核对四条棱是否正确落位。',
     en: 'Set up the original scramble and look for a shorter cross. Try each solution three times and check all four edges.',
@@ -80,6 +83,12 @@ const fewerTurnPlans: Record<Exclude<Training, 'auf'>, Copy> = {
   },
 };
 
+export function cfopPracticeInstruction(stage: Training, focus: CfopFormulaFocus | 'turns'): Copy {
+  if (stage !== 'auf' && focus === 'recognition') return recognitionPlans[stage];
+  if (stage !== 'auf' && focus === 'turns') return fewerTurnPlans[stage];
+  return executionPlans[stage];
+}
+
 export function CfopPracticePlan({ stage, focus, tr, children }: {
   stage: Training; focus: CfopFormulaFocus | 'turns'; tr: ReconstructLocalize; children?: ReactNode;
 }) {
@@ -87,7 +96,7 @@ export function CfopPracticePlan({ stage, focus, tr, children }: {
   const fewerTurns = stage !== 'auf' && focus === 'turns';
   return <section className="cfop-practice">
     <h4>{tr({ zh: '训练计划', en: 'Practice plan' })}</h4>
-    <p>{tr(fewerTurns ? fewerTurnPlans[stage] : recognition ? recognitionPlans[stage] : executionPlans[stage])}</p>
+    <p>{tr(cfopPracticeInstruction(stage, focus))}</p>
     <p className="cfop-note">{tr(stage === 'auf' ? {
       zh: '复测时记录 5 次中一次对齐了几次。',
       en: 'On the retest, count how many of the five attempts align in one move.',
@@ -106,12 +115,36 @@ export function CfopPracticePlan({ stage, focus, tr, children }: {
 }
 
 export function CfopEvidence({ items }: {
-  items: Array<{ label: string; value: ReactNode; detail?: string; highlighted?: boolean }>;
+  items: Array<{ key?: string; label: string; value: ReactNode; detail?: string; highlighted?: boolean }>;
 }) {
-  return <dl className="cfop-evidence">{items.map(({ label, value, detail, highlighted }) =>
-    <div key={label} data-highlighted={highlighted || undefined}>
+  return <dl className="cfop-evidence">{items.map(({ key, label, value, detail, highlighted }) =>
+    <div key={key ?? label} data-metric={key} data-highlighted={highlighted || undefined}>
       <dt>{label}</dt>
       <dd>{value}{detail && <small>{detail}</small>}</dd>
     </div>,
   )}</dl>;
+}
+
+export function CfopStageTable({stages, tr}: {
+  stages: readonly {label: string; stepMs: number | null; recognitionMs: number | null; executionMs: number | null; turns: number | null}[];
+  tr: (text: Copy) => string;
+}) {
+  const time = (ms: number | null) => ms == null ? '—' : cfopSeconds(ms);
+  const peak = (field: 'stepMs' | 'recognitionMs') => {
+    const measured = stages.filter(stage => stage[field] != null && stage[field]! > 0);
+    const longest = Math.max(...measured.map(stage => stage[field]!));
+    return measured.filter(stage => stage[field] === longest);
+  };
+  const slowest = peak('stepMs'), longestStart = peak('recognitionMs');
+  const describe = (rows: typeof slowest, field: 'stepMs' | 'recognitionMs') =>
+    rows.map(row => row.label).join(' / ') + ' · ' + time(rows[0][field]) + ' ' + tr({zh:'秒',en:'s'});
+  return <><table className="cfop-retest-times"><caption>{tr({zh:'各阶段用时（秒）',en:'Stage times (seconds)'})}</caption>
+    <thead><tr>{[{zh:'阶段',en:'Stage'}, {zh:'总用时',en:'Total'}, {zh:'起手前',en:'Before turning'},
+      {zh:'执行',en:'Execution'}, {zh:'步数',en:'HTM'}].map(label => <th key={label.en} scope="col">{tr(label)}</th>)}</tr></thead>
+    <tbody>{stages.map(stage => <tr key={stage.label}><th scope="row">{stage.label}</th><td>{time(stage.stepMs)}</td>
+      <td>{time(stage.recognitionMs)}</td><td>{time(stage.executionMs)}</td><td>{stage.turns ?? '—'}</td></tr>)}</tbody>
+  </table>
+    {!!slowest.length && <p>{tr({zh:'总用时最长',en:'Longest stage'})} · {describe(slowest, 'stepMs')}</p>}
+    {!!longestStart.length && <p>{tr({zh:'起手前用时最长',en:'Longest before turning'})} · {describe(longestStart, 'recognitionMs')}</p>}
+  </>;
 }

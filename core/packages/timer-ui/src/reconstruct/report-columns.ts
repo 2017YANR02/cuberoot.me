@@ -12,6 +12,7 @@ import type { MethodWalkResult } from '@cuberoot/shared/timer/reconstruct/method
 export interface Col {
   key: string;
   label: string;
+  caseFingerprint?: string;
   chip: string | null;
   /** Colour band index, so the bar and the heading agree. */
   tone: number;
@@ -21,8 +22,8 @@ export interface Col {
   cumulativeMs: number | null;
   turns: number | null;
   refTurns: number | null;
-  /** 参考实际比的那个用户步数。末层是执行步数(不含起手 AUF),其余就是步数格
-   *  本身。两者不同的时候必须说出来,否则「7 / 6 / 最优」看着像算错了。 */
+  /** Reference-compatible user HTM. A slot is counted independently from its
+   * start; last-layer comparisons exclude the leading AUF. */
   refUserTurns: number | null;
   refDelta: number | null;
   /** The reference line itself, shown under the table beside the sequence. */
@@ -76,7 +77,7 @@ export function buildCfopColumns(
       // the walker went wrong — matching by index keeps a mismatch loud.
       const sr = slotReference?.[i] ?? null;
       cols.push({
-        key: `slot-${s.slot}`,
+        key: `slot-${s.slot}`, caseFingerprint: s.caseFingerprint,
         label: `F${i + 1}`,
         chip: null,
         tone: 1,

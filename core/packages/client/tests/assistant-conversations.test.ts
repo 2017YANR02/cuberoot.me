@@ -22,6 +22,58 @@ describe('assistant workspace conversations', () => {
     expect(defaultReplayAnswer(draft+' 请按识别耗时判断。','zh')).toBeUndefined();
   });
 
+  it('keeps the selected slot, isolated HTM and timing exclusion in both chat languages', () => {
+    const summary = {
+      timeMs: 12998.5, penalty: 'ok' as const, method: 'CFOP', stm: 55, tps: null,
+      stages: [{ label: 'F4', slot: 'FL', stepMs: 2707, recognitionMs: 1561, executionMs: 1146,
+        turns: 7, cumulativeMs: 9978, range: {startMs: 7271, first: 30, last: 39},
+        refUserTurns: 8, refTurns: 8, refSolution: "U2 L' U' L U' F U F'", original: "U U U L' U L U F U F'"}],
+      focus: {label: 'F4', goal: 'recognitionMs' as const}, notes: ['PLL · after-timer'],
+    };
+    for (const lang of ['zh', 'en'] as const) {
+      const draft = formatReplayAssistantDraft(summary, entry => entry[lang]);
+      const result = defaultReplayAnswer(draft, lang);
+      expect(result?.answer).toContain('F4 · FL');
+      expect(result?.answer).toContain('7.271–9.978');
+      expect(result?.answer).toContain(summary.stages[0].refSolution);
+      expect(result?.answer).toContain('PLL · after-timer');
+      expect(result?.actions?.[0].href).toBe('/alg/3x3/f2l/select');
+    }
+  });
+
+  it('keeps the recorded pair and completed retest linked to their own single-case trainers', () => {
+    const summary = {
+      timeMs: 9569, penalty: 'ok' as const, method: 'CFOP', stm: null, tps: null,
+      stages: [{ label: 'F1', slot: 'FL', stepMs: 1764, recognitionMs: 1004, executionMs: 760,
+        turns: 8, cumulativeMs: 2578, range: { startMs: 814, first: 8, last: 16 }, refUserTurns: 8, refTurns: 6 }],
+      focus: { label: 'F1', goal: 'recognitionMs' as const },
+      notes: ['训练复测（训练器记录）：F1 · 自选 case W+'],
+    };
+    const cases = { recorded: { set: 'f2l', id: 3828 }, retest: { set: 'f2l', id: 3827 } } as const;
+    const draft = formatReplayAssistantDraft(summary, text => text.zh, cases);
+    const result = defaultReplayAnswer(draft, 'zh');
+    expect(result?.actions).toMatchObject([
+      { title: '练本局第一对', href: '/alg/3x3/f2l/run?cases=3828&mode=train' },
+      { title: '重练复测公式', href: '/alg/3x3/f2l/run?cases=3827&mode=train' },
+    ]);
+    const withoutRetest = formatReplayAssistantDraft({ ...summary, notes: [] }, text => text.zh, cases);
+    expect(defaultReplayAnswer(withoutRetest, 'zh')?.actions).toEqual(result?.actions?.slice(0, 1));
+    const otherPair = draft.replace('@case F1 recorded', '@case F2 recorded');
+    expect(defaultReplayAnswer(otherPair, 'zh')?.actions).toEqual(result?.actions?.slice(1));
+  });
+
+  it('answers a whole-solve follow-up with every measured stage, even when one stage is much longer', () => {
+    const stage = {label:'Cross', stepMs:1807, executionMs:1807, recognitionMs:0, turns:13, cumulativeMs:1807};
+    const summary = {timeMs:9010, penalty:'ok' as const, method:'CFOP', stm:57, tps:6.33,
+      evidence:{wholeSolve:true}, stages:[stage, {...stage,label:'F3',stepMs:1439,recognitionMs:1128,executionMs:311,turns:8,cumulativeMs:4305}]};
+    for (const lang of ['zh','en'] as const) {
+      const question = formatReplayAssistantDraft(summary, text => text[lang]);
+      const answer = defaultReplayAnswer(question, lang)?.answer;
+      expect(answer).toContain('Cross · 1.807');
+      expect(answer).toContain('F3 · 1.439');
+      expect(answer).not.toContain('F1');
+    }
+  });
   it('stages only the selected replay measurements in a new unsent, account-scoped draft', () => {
     const store = createAssistantConversations();
     store.create('alice', 'existing', 'My existing draft');
@@ -31,7 +83,10 @@ describe('assistant workspace conversations', () => {
       id: 'local-solve-id', scramble: 'unsent-raw-scramble', moves: ['unsent-raw-turns'],
     };
     const draft = formatReplayAssistantDraft(replay, text => text.en);
-    store.create('alice', 'replay', draft);
+    const report = { summary: replay };
+    store.create('alice', 'replay', draft, report);
+    store.patch('alice', 'replay', {draft: ''});
+    expect(store.read('alice').conversations[1].snapshot.replayDraft).toEqual({question: draft, report});
     expect(draft).toContain('F2L 5.100 s, execution 4.900 s, 24 turns (HTM), playback through 7.610 s');
     expect(draft).not.toMatch(/local-solve-id|unsent-raw|recognition 0/);
     expect(store.takeSubmission('alice', 'replay')).toBeNull();

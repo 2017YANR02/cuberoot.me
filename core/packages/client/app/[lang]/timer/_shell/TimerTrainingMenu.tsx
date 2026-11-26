@@ -16,6 +16,8 @@ import { TRAINING_DIRECTORY, resolveTrainingTarget, trainingEventForTarget, trai
 import { timerPracticeContents, selectedTimerPracticeContent, type TimerPracticeContent } from '@/lib/timer-practice-navigation';
 import { use222Type } from '@/lib/scramble-222-mode';
 import { TimerState, trainerPool, mixSessionId, useTrainerStore } from '@/lib/trainer-store';
+import { primaryCaseName } from '@cuberoot/shared/recon/alg-case-display';
+import { findCaseByKey } from '@/lib/trainer-case-key';
 import { parseMixSets } from '@/lib/alg-mix';
 import { virtualTrainingSessionId } from '@/lib/training-set-metadata';
 import { useSettings, updateSettings } from '../_lib/settings';
@@ -65,6 +67,13 @@ export default function TimerTrainingMenu({ currentEvent, disabled = false, show
   const isTrainer = target?.kind === 'alg-run' || target?.kind === 'alg-select';
   const isRun = target?.kind === 'alg-run';
   const ownsSession = !!training && !!content?.puzzle && storePuzzle === content.puzzle && storeSet === sessionId;
+  const linkedCaseId = params.get('train.cases');
+  const linkedCaseName = useTrainerStore(s => {
+    if (!isRun || !ownsSession || !linkedCaseId || s.scope?.length !== 1 || !s.selected.includes(s.scope[0])) return null;
+    const item = findCaseByKey(s.cases, s.scope[0]);
+    if (!item || String(item.id) !== linkedCaseId) return null;
+    return storeSet==='zbll' ? primaryCaseName('3x3',storeSet,item) : item.name;
+  });
   const running = ownsSession && isRun && storeTimerState !== TimerState.NOT_RUNNING;
   const { eligible: splitActive } = useTrainerSplitScreen({
     requested: params.get('train.split') === '1', sessionReady: ownsSession && isRun,
@@ -184,7 +193,7 @@ export default function TimerTrainingMenu({ currentEvent, disabled = false, show
   const contentLabel = content ? tr(content.title) : tr(target?.title ?? { zh: '请选择', en: 'Choose content' });
   const casesLabel = method === 'memo' && ownsSession && selectedCount === 0
     ? params.get('train.scope') ? tr({ zh: '当前分组', en: 'Current group' }) : tr({ zh: '全部情况', en: 'All cases' })
-    : tr({ zh: '选定', en: 'Selected' });
+    : linkedCaseName ? tr({ zh: `仅 ${linkedCaseName}`, en: `Only ${linkedCaseName}` }) : tr({ zh: '选定', en: 'Selected' });
   const sourceItems = [
     ...(content?.timer ? [{ value: 'random', label: tr({ zh: '随机状态', en: 'Random state' }) }] : []),
     ...(content?.selectPath ? [{ value: 'cases', label: tr({ zh: '选定情况', en: 'Selected cases' }) }] : []),

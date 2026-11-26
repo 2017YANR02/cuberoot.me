@@ -96,6 +96,8 @@ export interface F2lSlotSegment {
   endIdx: number | null;
   /** Where the two pieces were when the pair's clock started. */
   start: F2lStart;
+  /** Pair at the recorded boundary, viewed with its target slot in front-right. */
+  caseFingerprint?: string;
   /** Previous pair's last turn → this pair's first non-AUF turn. */
   recognitionMs: number | null;
   /** First non-AUF turn → the turn that closed the slot. */
@@ -204,6 +206,17 @@ export function f2lSlotFingerprint(faces: CubeFaces, id: F2lSlotId): string | nu
   const corner = locate(CORNER_POSITIONS, slotCornerKey(faces, spec));
   const edge = locate(EDGE_POSITIONS, slotEdgeKey(faces, spec));
   return corner != null && edge != null ? `${corner}/${edge}` : null;
+}
+
+function frontRightFingerprint(state: CubeFaces, slot: F2lSlotId) {
+  const centers = [...slot].map(face => state[face as Face][4]);
+  let faces = state;
+  for (let i = 0; i < 4; i++) {
+    if (centers.includes(faces.F[4]) && centers.includes(faces.R[4])) {
+      return isSlotSolved(faces, 'FR') ? undefined : f2lSlotFingerprint(faces, 'FR') ?? undefined;
+    }
+    faces = applyOneToken(faces, 'y');
+  }
 }
 
 /** Colour set of a position, as a sorted key so it compares by contents. */
@@ -431,11 +444,12 @@ export function computeF2lSlots(
         cumulativeMs: null, turns: null, tps: null,
       };
     }
+    const caseFingerprint = f.endIdx > prevEndIdx ? frontRightFingerprint(startState, f.id) : undefined;
     const m = metricForRange(moves, counted, prevEndIdx, prevEndTs, f.endIdx);
     prevEndIdx = f.endIdx;
     prevEndTs = moves[f.endIdx].ts;
     return {
-      slot: f.id, order: i + 1, free: false, endIdx: f.endIdx, start,
+      slot: f.id, order: i + 1, free: false, endIdx: f.endIdx, start, caseFingerprint,
       recognitionMs: m.recognitionMs, executionMs: m.executionMs, stepMs: m.stepMs,
       cumulativeMs: m.cumulativeMs, turns: m.turns, tps: m.tps,
     };

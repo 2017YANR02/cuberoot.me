@@ -1,7 +1,11 @@
 import { describe, expect, it, vi } from 'vitest';
 // All 41 canonical setups from the public F2L API, captured 2026-10-08.
 import cases from './fixtures/recon-f2l-cases.json';
-import { reconF2lLinks, reconF2lAnnotations } from '@/lib/recon-f2l-links';
+import type { AlgFile } from '@cuberoot/shared/alg';
+import { computeF2lSlots } from '@cuberoot/shared/timer/reconstruct/f2l-slots';
+import approvedSolve from './fixtures/recon-workbook/4a6aW4XJ_5E.json';
+import libraries from './fixtures/recon-workbook/libraries.json';
+import { f2lCaseIndex, reconF2lLinks, reconF2lAnnotations } from '@/lib/recon-f2l-links';
 import { CUBE_ORIENTATIONS } from '@cuberoot/shared/timer';
 import { applyScramble } from '@cuberoot/shared/timer/reconstruct/state';
 import { FACE_COLOR_KEY } from '@cuberoot/shared/timer/reconstruct/orient';
@@ -16,6 +20,13 @@ vi.mock('@cuberoot/shared/alg', async importOriginal => ({
 }));
 
 describe('F2L comment state recognition', () => {
+  it('maps the actual slot boundaries to the approved case links across all four pairs', () => {
+    const {scramble, moves, timeMs} = approvedSolve.recording;
+    const slots = computeF2lSlots(scramble, moves, timeMs)!.slots;
+    const index = f2lCaseIndex(libraries.f2l as AlgFile, 'f2l');
+    const matches = slots.map(slot => [...(index.get(slot.caseFingerprint ?? '') ?? [])]);
+    expect(matches).toEqual(approvedSolve.displayRows.slice(3,7).map(row => row.hrefs));
+  });
   it('shows only the green-orange pair above the cross in recon 2795', async () => {
     const { diagrams } = await reconF2lAnnotations("U' L F L2 U' F L2 U R2 D B' F D' U2 R D R'", [
       "x' z' // insp",

@@ -6,7 +6,7 @@ import MoreToggle, { MoreTogglePanel } from '../MoreToggle';
 import { TimerRoomDialog } from '../TimerRoomDialog';
 import PlaybackPanel from './PlaybackPanel';
 import { cfopTrainingHref, type CfopReplayRange } from './cfop-diagnosis';
-import { analyzeCfopHistory, cfopBaselineCandidates, CFOP_BASELINE_LIMIT, CFOP_BASELINE_MIN, type CfopHistoryIssue, type CfopStageReplay, type CfopTrainingPriority } from './cfop-personal-baseline';
+import { type CfopHistoryAnalysis, analyzeCfopHistory, cfopBaselineCandidates, CFOP_BASELINE_LIMIT, CFOP_BASELINE_MIN, type CfopHistoryIssue, type CfopStageReplay, type CfopTrainingPriority } from './cfop-personal-baseline';
 import type { ReconstructHost, ReconstructLocalize } from './ReconstructHost';
 import { CfopEvidence, CfopPracticePlan, cfopIssueLabels, cfopSeconds as seconds } from './CfopAnalysisDetails';
 const starts = {
@@ -17,7 +17,7 @@ const starts = {
   'both-slotted': { zh: '角块与棱块都在槽内', en: 'Both pieces in the slot' },
 };
 
-function trainingPriorityName({ situation }: CfopTrainingPriority, tr: ReconstructLocalize, hideAnswer: boolean) {
+export function trainingPriorityName({ situation }: Pick<CfopTrainingPriority, 'situation'>, tr: ReconstructLocalize, hideAnswer: boolean) {
   if (situation.stage === 'cross') {
     const face = situation.side.split('-')[0];
     return tr({
@@ -43,13 +43,16 @@ function HistoricalSegment({ solve, range, tr, onClose }: {
   </TimerRoomDialog>;
 }
 
-export default function CfopPersonalBaseline({ history, current, tr, renderTrainingLink, prepareFormula, renderFormula }: {
+export default function CfopPersonalBaseline({ history, current, tr, renderTrainingLink, prepareFormula, renderFormula, renderPairTraining, onAnalysis, renderRetest }: {
+  onAnalysis: (result: CfopHistoryAnalysis | null) => void;
+  renderRetest?: (priority: CfopTrainingPriority, name: string) => ReactNode;
   history: readonly Solve[];
   current: Solve;
   tr: ReconstructLocalize;
   renderTrainingLink: (href: string, label: string) => ReactNode;
   prepareFormula?: ReconstructHost['prepareAssistantFormula'];
   renderFormula?: ReconstructHost['renderAssistantFormula'];
+  renderPairTraining?: ReconstructHost['renderPairTraining'];
 }) {
   const [open, setOpen] = useState(false);
   const [showSamples, setShowSamples] = useState(true);
@@ -59,10 +62,11 @@ export default function CfopPersonalBaseline({ history, current, tr, renderTrain
   const panelId = useId();
   const samplePanelId = useId();
   const resultRef = useRef<HTMLDivElement>(null);
-  const candidates = open ? cfopBaselineCandidates(history, current) : [];
+  const candidates = open || analysis ? cfopBaselineCandidates(history, current) : [];
   const chosen = candidates.filter(solve => selected.has(solve.id));
   const result = analysis?.solves.length === chosen.length && analysis.solves.every((solve, i) => solve === chosen[i])
     ? analysis.result : null;
+  useEffect(() => { onAnalysis(result); }, [onAnalysis, result]);
   useEffect(() => {
     if (result && !showSamples) resultRef.current?.focus({ preventScroll: true });
   }, [result, showSamples]);
@@ -87,18 +91,14 @@ export default function CfopPersonalBaseline({ history, current, tr, renderTrain
       {tr({ zh: '用近期复盘建立个人基线', en: 'Build a personal baseline from recent solves' })}
     </MoreToggle>
     <MoreTogglePanel expanded={open} id={panelId} animate={false} contentClassName="cfop-layout">
-      {!current.device?.model || !current.device.name ? <p className="cfop-note">{tr({
-        zh: '这局缺少设备记录。请打开一局带设备信息的复盘，再做多局比较。',
-        en: 'Open a solve with device information to compare multiple attempts.',
-      })}</p> : <>
         {candidates.length ? <>
           <MoreToggle expanded={showSamples} aria-controls={samplePanelId} onToggle={() => setShowSamples(value => !value)} animate={false}>
             {tr({ zh: `复盘样本 · 已选 ${chosen.length} / ${candidates.length} 局`, en: `Solves · ${chosen.length} of ${candidates.length} selected` })}
           </MoreToggle>
           <MoreTogglePanel expanded={showSamples} id={samplePanelId} animate={false} contentClassName="cfop-layout">
             <p className="cfop-note">{tr({
-              zh: `从当前计时会话中选择同一设备的近期复盘，最多 ${CFOP_BASELINE_LIMIT} 局。至少需要 ${CFOP_BASELINE_MIN} 局有效三阶 CFOP 记录。`,
-              en: `Choose up to ${CFOP_BASELINE_LIMIT} recent solves recorded on the same device in this timer session. At least ${CFOP_BASELINE_MIN} valid 3×3 CFOP solves are needed.`,
+              zh: `从当前计时会话中选择你自己的近期复盘，最多 ${CFOP_BASELINE_LIMIT} 局。至少需要 ${CFOP_BASELINE_MIN} 局有效三阶 CFOP 记录。同类局面按相同分段口径比较。`,
+              en: `Choose up to ${CFOP_BASELINE_LIMIT} of your recent solves from this timer session. At least ${CFOP_BASELINE_MIN} valid 3×3 CFOP solves are needed. Matching positions use the same stage timing rules.`,
             })}</p>
             <div className="cfop-baseline-options" role="group" aria-label={tr({ zh: '近期复盘', en: 'Recent solves' })}>
               {candidates.map(solve => <label key={solve.id}>
@@ -187,7 +187,8 @@ export default function CfopPersonalBaseline({ history, current, tr, renderTrain
                   <CfopEvidence items={[
                     { label: tr({ zh: '以往中位数', en: 'Earlier median' }), value: time(priority.baselineMs),
                       detail: tr({ zh: `${priority.baselineCount} 局同类局面`, en: `${priority.baselineCount} matching solves` }) },
-                    { label: tr({ zh: '近期中位数', en: 'Recent median' }), value: time(priority.recentMs), highlighted: true },
+                    { label: tr({ zh: '近期中位数', en: 'Recent median' }), value: time(priority.recentMs), highlighted: true,
+                      detail: tr({zh:`${priority.recentCount} 局同类局面`, en:`${priority.recentCount} matching solves`}) },
                     { label: tr({ zh: '明显变慢', en: 'Clear slowdowns' }), value: tr({
                       zh: `${priority.slowerCount} / ${priority.recentCount} 局`, en: `${priority.slowerCount} / ${priority.recentCount} solves`,
                     }) },
@@ -204,13 +205,15 @@ export default function CfopPersonalBaseline({ history, current, tr, renderTrain
                   en: `${seconds(example.range.startMs)}–${seconds(example.range.endMs)} s`,
                 })}</span></div>}
                 <CfopPracticePlan stage={priority.situation.stage} focus={focus} tr={tr}>
-                  {target && renderFormula ? renderFormula(target, focus, stageTraining) : <div>{stageTraining}</div>}
+                  {priority.situation.stage === 'f2l' && renderPairTraining
+                    ? renderPairTraining(example?.pairFingerprint, tr({zh:'历史示例',en:'History example'}), stageTraining)
+                    : target && renderFormula ? renderFormula(target, focus, stageTraining) : <div>{stageTraining}</div>}
                 </CfopPracticePlan>
+                {renderRetest?.(priority, trainingPriorityName(priority, tr, false))}
               </li>;
             })}</ol>}
           </>}
         </div>}
-      </>}
     </MoreTogglePanel>
     {replay && replaySolve && <HistoricalSegment solve={replaySolve} range={replay.range} tr={tr} onClose={() => setReplay(null)}/>}
   </section>;

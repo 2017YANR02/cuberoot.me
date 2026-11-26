@@ -124,9 +124,9 @@ export function reportStepTable(cols:Col[],sequences:Map<string,string[]>,rotati
   if(rotations)row('rotations',tr({zh:'转体',en:'Rotations'}),cols.map((c,i)=>cell(c.key,num(rotations[i]))),cell('total',num(rotations.reduce((a,b)=>a+b,0))));
   if(hasRef)row('reference',tr({zh:'参考',en:'Reference'}),cols.map(c=>{
     const optimal=!c.skipped&&gradeForDelta(c.refDelta)==='optimal';
-    const extra=c.refTurns==null?undefined:optimal?{...textNode('grade',tr({zh:'最优',en:'Optimal'}),'sa-grade optimal'),title:tr({zh:'和参考解法一样短',en:'As short as the reference line'})}:c.refDelta?textNode('delta',`${c.refDelta>0?'+':''}${c.refDelta}`,`sa-delta ${c.refDelta>0?'slower':'faster'}`):undefined;
+    const extra=c.refTurns==null?undefined:optimal?{...textNode('grade',tr(c.key === 'cross' ? {zh:'最优',en:'Optimal'} : {zh:'等长',en:'Equal length'}),'sa-grade optimal'),title:tr({zh:'和参考解法一样短',en:'As short as the reference line'})}:c.refDelta?textNode('delta',`${c.refDelta>0?'+':''}${c.refDelta}`,`sa-delta ${c.refDelta>0?'slower':'faster'}`):undefined;
     const cmp=c.refUserTurns;
-    return cell(c.key,num(c.refTurns),extra,cmp!=null&&c.turns!=null&&cmp!==c.turns?tr({zh:`比的是执行步数 ${cmp}(不含起手 AUF)—— 参考公式本身没有 AUF`,en:`Compared against ${cmp} execution turns (the leading AUF is excluded — the reference alg has none)`}):undefined);
+    return cell(c.key,num(c.refTurns),extra,cmp!=null&&c.turns!=null&&cmp!==c.turns?tr(c.key.startsWith('slot-') ? {zh:`从槽位起点单独计数为 ${cmp} HTM。整局计数会跨阶段合并同面动作。`,en:`The isolated slot takes ${cmp} HTM. Whole-solve counting merges same-face turns across boundaries.`} : {zh:`比的是执行步数 ${cmp}(不含起手 AUF)—— 参考公式本身没有 AUF`,en:`Compared against ${cmp} execution turns (the leading AUF is excluded — the reference alg has none)`}):undefined);
   }),cell('total',num(reference?.refTurns)),'sa-row-ref');
   if(hasAvg)row('average',method==='cfop'?tr({zh:'对比 ao12',en:'vs ao12'}):tr({zh:'对比近期阶段均值',en:'vs recent stage mean'}),cols.map(c=>{
     const delta=stageAverageDelta(c);return delta==null?cell(c.key,'–'):textNode(c.key,`${delta>0?'+':''}${delta}%`,`sa-delta ${delta>0?'slower':'faster'}`);

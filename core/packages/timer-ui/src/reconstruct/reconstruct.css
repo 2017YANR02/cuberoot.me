@@ -631,7 +631,33 @@
 /* 读完那几个数之后的动作:分享 / 再打一遍 / 拿到别的工具里看。靠左紧凑,不撑成
    一整行的条;分享只留图标,「用这条打乱」保留为主动作。 */
 .rc-actions { display: flex; flex-wrap: wrap; gap: 8px; margin: -6px 0 14px; }
+.cfop-analysis, .cfop-pair-comparison { container-type: inline-size; min-width: 0; }
 .cfop-analysis { margin-block: 8px 18px; }
+.cfop-pair-comparison { margin-block: 18px; }
+.cfop-pair-toolbar {
+  display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px 16px;
+}
+.cfop-pair-toolbar h4, .cfop-pair-comparison article h4 { margin: 0; font-size: 1.05rem; }
+.cfop-pair-toolbar .rc-actions {
+  display: inline-flex; flex-wrap: wrap; gap: 2px; margin: 0; padding: 3px;
+  border: 1px solid var(--border-default); border-radius: 12px;
+}
+.cfop-pair-toolbar .rc-action { border: 0; border-radius: 8px; background: transparent; min-height: 34px; }
+.cfop-pair-toolbar button[aria-pressed="true"] { background: var(--accent-soft); color: var(--foreground); font-weight: 700; }
+.cfop-pair-comparison article {
+  margin-top: 10px; padding: clamp(14px, 2vw, 22px); border: 1px solid var(--border-default); border-radius: 14px;
+}
+.cfop-pair-comparison article > p { color: var(--muted-foreground); margin-block: 6px 12px; line-height: 1.5; }
+.cfop-pair-comparison article > .cfop-pair-note { font-size: .825rem; margin-block: 14px 0; }
+.cfop-pair-lines { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px 16px; }
+.cfop-pair-lines > section {
+  display: grid; grid-row: span 3; grid-template-rows: subgrid; align-items: start;
+  min-width: 0; padding: 14px; border: 1px solid var(--border-default); border-radius: 10px;
+}
+.cfop-pair-lines strong { font-size: .98rem; }
+.cfop-pair-lines section > p {
+  margin: 0; font-family: var(--font-mono, monospace); line-height: 1.5; overflow-wrap: anywhere;
+}
 .cfop-layout { display: grid; gap: 12px; padding-block: 8px 4px; }
 .cfop-analysis :is(p, h3, h4) { margin: 0; }
 .cfop-analysis p { line-height: 1.55; }
@@ -641,15 +667,8 @@
 .cfop-filters, .cfop-actions, .cfop-replay-row {
   display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px;
 }
-.cfop-filters label {
-  display: inline-flex; align-items: center; gap: 8px;
-  color: var(--muted-foreground); font-size: .875rem;
-}
-.cfop-filters select {
-  width: fit-content; max-width: 100%; padding: 4px 8px; min-height: 34px;
-  border: 1px solid var(--border-default); border-radius: 6px;
-  color: var(--foreground); background: var(--shell-chip); font: inherit;
-}
+.cfop-filters > div { display: inline-flex; align-items: center; gap: 8px; }
+.cfop-filters > div > span { color: var(--muted-foreground); font-size: .85rem; }
 .cfop-result {
   display: grid; gap: 14px; min-width: 0; padding: clamp(12px, 2vw, 20px);
   border: 1px solid var(--border-default); border-radius: 12px;
@@ -672,6 +691,56 @@
 .cfop-evidence dt { color: var(--muted-foreground); font-size: .8125rem; }
 .cfop-evidence dd { margin: 3px 0 0; font-size: 1.02rem; font-weight: 650; font-variant-numeric: tabular-nums; }
 .cfop-evidence small { display: block; color: var(--muted-foreground); font-size: .75rem; font-weight: 400; }
+.cfop-stage-card { gap: 18px; }
+.cfop-result .cfop-stage-header {
+  display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 18px;
+}
+.cfop-stage-header h3 { font-size: clamp(1.22rem, 2vw, 1.55rem); }
+.cfop-stage-header p { color: var(--muted-foreground); font-size: .88rem; }
+.cfop-stage-play, .cfop-stage-play span { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
+.cfop-stage-play span { color: var(--muted-foreground); font-size: .85rem; font-variant-numeric: tabular-nums; }
+.cfop-timing { border-block: 1px solid var(--border-default); padding-block: 15px; }
+.cfop-timing .cfop-evidence { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px 14px; }
+.cfop-timing .cfop-evidence > div { border: 0; padding: 0; }
+.cfop-timing .cfop-evidence dd { font-size: clamp(1.1rem, 2vw, 1.4rem); line-height: 1.25; }
+.cfop-evidence dd { overflow-wrap: anywhere; }
+.cfop-timing [data-highlighted] dd { font-weight: 750; text-decoration: underline; text-decoration-color: var(--accent); text-underline-offset: .22em; }
+.cfop-timing[data-split] :is([data-metric="recognitionMs"],[data-metric="executionMs"]) dt::before {
+  content: ''; display: inline-block; width: .55em; height: .55em; margin-inline-end: .4em;
+  vertical-align: .08em; border-radius: 50%; background: var(--accent);
+}
+.cfop-timing[data-split] [data-metric="executionMs"] dt::before { background: var(--muted-foreground); }
+.cfop-time-track { display: flex; overflow: hidden; height: 7px; margin-top: 14px; border-radius: 6px; }
+.cfop-time-track span { flex-basis: 0; background: var(--accent); }
+.cfop-time-track span + span { background: var(--muted-foreground); }
+.cfop-stage-body { display: grid; grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); gap: 24px; }
+.cfop-stage-body > section { align-content: start; justify-items: start; gap: 8px; }
+.cfop-stage-body > .cfop-practice { padding: 0 0 0 20px; border: 0; border-inline-start: 1px solid var(--border-default); }
+.cfop-stage-body h4 { font-size: 1rem; }
+.cfop-priorities > .cfop-result { align-content: start; }
+@container (min-width: 920px) {
+  .cfop-priorities:has(> :nth-child(2)) { grid-template-columns: repeat(2, minmax(0,1fr)); align-items: start; }
+}
+.cfop-compare-action { justify-self: start; }
+.cfop-retest .cfop-layout { justify-items: start; }
+.cfop-retest label { max-width: 100%; }
+.cfop-retest :is(select,textarea) { max-width: 100%; }
+.cfop-retest-times {
+  width: min(100%, 40rem); table-layout: fixed; overflow-wrap: anywhere; border-collapse: collapse; font-size: .875rem;
+  font-variant-numeric: tabular-nums; text-align: end;
+}
+.cfop-retest-times caption { text-align: start; font-weight: 600; margin-bottom: 4px; }
+.cfop-retest-times :is(th,td) { border-bottom: 1px solid var(--border-default); padding: 7px 4px; text-align: end; }
+.cfop-retest-times th:first-child { text-align: start; }
+.cfop-retest-times :is(thead,small) { color: var(--muted-foreground); font-weight: 500; }
+.cfop-retest-result { border-inline-start: 3px solid var(--accent); padding-inline-start: 10px; font-variant-numeric: tabular-nums; }
+@container (max-width: 640px) {
+  .cfop-stage-body { grid-template-columns: minmax(0, 1fr); gap: 12px; }
+  .cfop-stage-body > .cfop-practice { padding: 12px 0 0; border: 0; border-block-start: 1px solid var(--border-default); }
+  .cfop-pair-lines { grid-template-columns: minmax(0, 1fr); }
+  .cfop-timing .cfop-evidence { grid-template-columns: repeat(2,minmax(0,1fr)); }
+  .cfop-timing[data-split] [data-metric="turns"] { grid-column: 2; grid-row: 1; }
+}
 .cfop-replay-row span { color: var(--muted-foreground); font-size: .875rem; font-variant-numeric: tabular-nums; }
 .cfop-actions button:disabled { opacity: .5; cursor: default; }
 .cfop-history-result, .cfop-priorities { display: grid; gap: 12px; min-width: 0; }
@@ -800,6 +869,10 @@
   .rc-summary { gap: 4px; }
   .rc-summary-cell { padding: 8px 6px; }
   .rc-summary .rc-summary-big { font-size: 20px; }
+  .rc-modal-summary .rc-summary { gap: 6px 16px; }
+  .rc-modal-summary .rc-summary-cell { flex: 0 1 auto; }
+  .rc-modal-summary dt { margin-bottom: 2px; }
+  .rc-modal-summary .rc-summary-big { font-size: 1.05rem; }
 }
 
 /* ── 「复盘对不对?」 ──────────────────────────────────────────────────

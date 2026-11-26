@@ -42,6 +42,8 @@ import { lazy, Suspense, useEffect, useImperativeHandle, useMemo, useRef, useSta
 import type { ReactNode, Ref } from 'react';
 import type { CfopReplayRange } from './cfop-diagnosis';
 
+import { reconstructedReviewPoses, reviewCamera, reviewColorPrefix } from './replay-view';
+import { HOME_SCENE_ROT } from '@cuberoot/puzzle-render-core/engine/viewControls';
 import { useReconstructHost } from './ReconstructHost';
 import { PlaybackSpeedSelect } from '../PlaybackBar';
 
@@ -57,6 +59,8 @@ import type { ReconTextLine } from '@cuberoot/shared/timer/reconstruct/recon-tex
 import type { SolveMove } from '@cuberoot/shared/timer/reconstruct/stage-segments';
 import type { ReconstructionType } from '@cuberoot/shared/timer/reconstruct/recon-text';
 import SolveTimeline from './SolveTimeline';
+import StageTimeline, { stageReplayCaption, stageReplayRange } from './StageTimeline';
+import type { ReconstructAssistantSummary } from './ReconstructHost';
 import type { SolveTimelineHandle } from './SolveTimeline';
 import { reconstructedTrack, playbackIndexAt, playbackEndMs, rawPlaybackTarget, playbackFrame, type PlaybackMove } from './playback-track';
 
@@ -88,6 +92,9 @@ interface Props {
   viewRotation?: string;
   /** Initial frame of the simplified steps; raw gyro playback keeps its own frame. */
   inspection?: string;
+  stageTimeline?: { stages: ReconstructAssistantSummary['stages']; focus?: string };
+  recordedView?: { rotation: string; slot?: string; label?: string };
+  allowRearView?: boolean;
   replayRangeRef?: Ref<(range: CfopReplayRange) => void>;
 }
 
@@ -95,11 +102,12 @@ interface Props {
 const formatSec = reportSeconds;
 
 export default function PlaybackPanel({
-  method, event, scramble, moves: rawMoves, totalMs, lines, rotations, side, gyro, deviceModel, viewRotation, inspection, replayRangeRef,
+  method, event, scramble, moves: rawMoves, totalMs, lines, rotations, side, gyro, deviceModel, viewRotation, inspection, replayRangeRef, allowRearView, stageTimeline, recordedView,
 }: Props) {
   const { localize: tr } = useReconstructHost();
   // /sim 只画 NxN;这里只有 3x3 会有动作流(智能魔方就这一种),别的项目退回预览图。
   const isNxn3 = nxnSizeForEvent(event) === 3;
+  const [selectedStage, setSelectedStage] = useState<string>();
   const [playing, setPlaying] = useState(false);
   const [playbackRun, setPlaybackRun] = useState(0);
   const [seekIdx, setSeekIdx] = useState(0);
@@ -110,6 +118,7 @@ export default function PlaybackPanel({
   const timelineRef = useRef<SolveTimelineHandle | null>(null);
   const counterRef = useRef<HTMLSpanElement | null>(null);
   const playbackQuatRef = useRef<Quat | null>(null);
+  const [rear, setRear] = useState(false);
   const viewOrbitRef = useRef<{ x: number; y: number; z: number } | null>(null);
 
   // 解一次就够,别每帧解。空录像 → 没开关。
@@ -118,10 +127,13 @@ export default function PlaybackPanel({
   const calibrated = gyroTrack[0]?.frame === 'scramble';
   const posed = gyroOn && hasGyro;
   const rebuilt = useMemo(() => reconstructedTrack(lines, rawMoves), [lines, rawMoves]);
-  const useRebuilt = !posed && rebuilt !== null;
-  const moves = useMemo<PlaybackMove[]>(() => useRebuilt ? rebuilt! : rawMoves.map((move, i) => ({
+  // Stage links in the report and in chat replay the same recorded turns in the scramble frame.
+  const stageRecording = selectedStage !== undefined;
+  const useRebuilt = !stageRecording && !posed && rebuilt !== null;
+  const recordedTrack = useMemo<PlaybackMove[]>(() => rawMoves.map((move, i) => ({
     ...move, endTs: move.ts, rawAfter: i + 1,
-  })), [useRebuilt, rebuilt, rawMoves]);
+  })), [rawMoves]);
+  const moves = useRebuilt ? rebuilt : recordedTrack;
   const total = moves.length;
   // Track identity prevents interpreting a raw encoder cursor as a gesture cursor
   // for even one render when the gyro mode or reconstruction changes.
@@ -139,12 +151,12 @@ export default function PlaybackPanel({
   const poseAt = useMemo(() => (
     posed
       ? (tMs: number) => sampleGyroAt(gyroTrack, tMs)
-      : useRebuilt ? () => null
+      : useRebuilt || stageRecording ? () => null
         // Written rotations are clockwise in the displayed frame. The detector's
         // body-frame quaternion uses the opposite sign and composition order.
         : (tMs: number) => notationQuaternion((rotations ?? [])
           .filter(rotation => rotation.tMs <= tMs).map(rotation => rotation.token).join(' '))
-  ), [posed, useRebuilt, gyroTrack, rotations]);
+  ), [posed, useRebuilt, stageRecording, gyroTrack, rotations]);
 
   useEffect(() => {
     playbackQuatRef.current = poseAt(playFromRef.current);
@@ -228,12 +240,13 @@ export default function PlaybackPanel({
     return () => cancelAnimationFrame(raf);
   }, [playing, playbackRun, speedMult, total, moves, lastTs, poseAt, rangeEndMs]);
 
-  const dispatchPlayer=(action:ReportAction)=>{
+  const dispatchPlayer=(action:ReportAction, track = moves)=>{
     if (method === 'training' && action.type === 'end') action = { type: 'time', value: lastTs };
-    const result=reportPlayerAction({...playerRef.current,timeMs:playFromRef.current},action,moves,rawMoves,lastTs,hasGyro);
+    if (!['pause','speed','gyro'].includes(action.type)) setSelectedStage(undefined);
+    const result=reportPlayerAction({...playerRef.current,timeMs:playFromRef.current},action,track,rawMoves,lastTs,hasGyro);
     const next=result.state;playerRef.current=next;
     playFromRef.current=next.timeMs;playbackQuatRef.current=poseAt(next.timeMs);
-    setIdx(next.index);setPlaying(next.playing);setSpeedMult(next.speed);setGyroOn(next.posed);setPlaybackRun(next.run);
+    setPosition({track, index:next.index});setPlaying(next.playing);setSpeedMult(next.speed);setGyroOn(next.posed);setPlaybackRun(next.run);
     if(result.jump)setSeekIdx(next.index);
     timelineRef.current?.setPlayhead(next.timeMs);
     if(counterRef.current)counterRef.current.textContent=formatSec(next.timeMs);
@@ -244,28 +257,48 @@ export default function PlaybackPanel({
     dispatchPlayer({type:'time',value:target.timeMs});
   };
   const playFrom=(i:number,atMs?:number)=>dispatchPlayer({type:'play-from',value:i,timeMs:atMs});
-  useImperativeHandle(replayRangeRef, () => range => {
-    dispatchPlayer({ type: 'play-from', value: range.firstMoveIndex, timeMs: range.startMs, endMs: range.endMs });
+  const playRange = (range: CfopReplayRange, stageLabel?: string) => {
+    stageLabel ??= stageTimeline?.stages.find(stage => stage.range && stage.range.first <= range.endMoveIndex + 1
+      && stage.range.last >= range.endMoveIndex + 1)?.label;
+    dispatchPlayer({ type: 'play-from', value: range.firstMoveIndex, timeMs: range.startMs, endMs: range.endMs }, stageLabel ? recordedTrack : moves);
+    setSelectedStage(stageLabel);
     cubeBoxRef.current?.scrollIntoView({ block: 'nearest' });
-  });
+  };
+  useImperativeHandle(replayRangeRef, () => playRange);
 
   // The inspection rotation is a fixed prefix before reconstructed notation.
   // New gestures append after it; recorded playback instead gets external pose.
   const rebuiltInspection = inspection ?? viewRotation ?? '';
-  const simMoves = useMemo(
-    () => [
-      ...scramble.trim().split(/\s+/).filter(Boolean),
+  const selected = stageTimeline?.stages.find(stage => stage.label === selectedStage);
+  const rotation = recordedView?.rotation;
+  const teaching = rotation !== undefined && !posed;
+  const rebuiltPoses = useMemo(() => rotation !== undefined && rebuilt
+    ? reconstructedReviewPoses(rebuiltInspection, rebuilt, rotation) : undefined, [rotation, rebuilt, rebuiltInspection]);
+  const stages = stageTimeline?.stages;
+  const active = selected?.range && rawIdx >= selected.range.first - 1 && rawIdx <= selected.range.last
+    ? selected : stages?.find(stage => stage.range && rawIdx < stage.range.last) ?? stages?.at(-1);
+  const camera = teaching ? reviewCamera(recordedView?.slot ?? active?.slot, recordedView?.label ?? active?.label) : undefined;
+  const orbit = useMemo(() => rear ? {...(camera ?? HOME_SCENE_ROT), y: (camera ?? HOME_SCENE_ROT).y + Math.PI} : camera, [camera, rear]);
+  const simMoves = useMemo(() => {
+    const prefix = teaching ? reviewColorPrefix(rotation) : '';
+    return [
+      ...[prefix, scramble].filter(Boolean).join(' ').trim().split(/\s+/).filter(Boolean),
       ...(useRebuilt ? rebuiltInspection.trim().split(/\s+/).filter(Boolean) : []),
-      ...moves.slice(0, idx).map(m => m.m),
-    ],
-    [scramble, moves, idx, useRebuilt, rebuiltInspection],
-  );
-  const simPose = !useRebuilt && !posed && viewRotation ? viewRotation : '';
-
-
-  return <ReportContent node={reportPlayback(playerRef.current,total,timelineMs,hasGyro,Boolean(side),tr,'menu')} dispatch={dispatchPlayer} slots={{
-    speeds: <PlaybackSpeedSelect label={tr({ zh: '播放倍速', en: 'Playback speed' })} value={speedMult}
-      options={REPLAY_SPEEDS} onChange={value => dispatchPlayer({ type: 'speed', value })} />,
+      ...moves.slice(0, idx).map(move => move.m),
+    ];
+  }, [teaching, rotation, scramble, useRebuilt, rebuiltInspection, moves, idx]);
+  const simPose = teaching ? (useRebuilt ? rebuiltPoses?.[idx] : rotation)
+    : !stageRecording && !useRebuilt && !posed ? viewRotation ?? '' : '';
+  const selectedRange = selected && stageReplayRange(selected);
+  return <>{stageTimeline && <StageTimeline totalMs={totalMs} stages={stageTimeline.stages} focus={stageTimeline.focus}
+    selected={selectedStage} tr={tr} onReplay={(stage,range)=>playRange(range,stage.label)}>
+    {selected && selectedRange && <small className="rr-time-selection" role="status">
+      {stageReplayCaption(selected.label,selected.slot,selectedRange,tr)}
+    </small>}
+  </StageTimeline>}
+  <ReportContent node={reportPlayback(playerRef.current,total,timelineMs,hasGyro,Boolean(side),tr,'menu')} dispatch={dispatchPlayer} slots={{
+    speeds: <>{allowRearView && <button type="button" aria-pressed={rear} onClick={()=>setRear(previous => !previous)}>{tr({zh:'背面视角',en:'Rear view'})}</button>}<PlaybackSpeedSelect label={tr({ zh: '播放倍速', en: 'Playback speed' })} value={speedMult}
+      options={REPLAY_SPEEDS} onChange={value => dispatchPlayer({ type: 'speed', value })} /></>,
     cube:<div ref={cubeBoxRef} className={`reconstruct-playback-cube${gyroOn ? ' is-gyro' : ''}`}>
           {isNxn3 ? (cubeNear ? (
             <Suspense fallback={<div className="timer-live-cube-3d" aria-hidden />}><SimCubeView
@@ -274,8 +307,9 @@ export default function PlaybackPanel({
               viewOrbitRef={viewOrbitRef}
               moves={simMoves}
               pose={simPose}
-              key={useRebuilt ? `rebuilt:${rebuiltInspection}` : 'recorded'}
-              quatRef={useRebuilt ? undefined : playbackQuatRef}
+              sceneRot={orbit}
+              key={useRebuilt ? `rebuilt:${rebuiltInspection}` : posed ? 'gyro' : 'recorded'}
+              quatRef={teaching || useRebuilt ? undefined : playbackQuatRef}
               sensorBasis={posed && !calibrated ? sensorBasisForBrand(deviceModel) : 'identity'}
               mirror={posed && !calibrated ? mirrorForBrand(deviceModel) : false}
               // 播放 / 下一步是纯追加,那几手会转给你看;拖时间轴、上一步是跳,瞬切。
@@ -301,10 +335,10 @@ export default function PlaybackPanel({
           moves={rawMoves}
           totalMs={timelineMs}
           lines={lines ?? []}
-          showLabels
+          showLabels={!stageTimeline}
           currentIdx={rawIdx}
           onSeek={seekRaw}
         />,
     notation:side?.({idx:rawIdx,seek:seekRaw,playFrom}),
-  }}/>;
+  }}/></>;
 }

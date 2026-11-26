@@ -271,6 +271,7 @@ export interface SimCubeViewProps {
    */
   /** 'smart' uses an elevated front view with gyro, an oblique view without. */
   view?: CubeView;
+  sceneRot?: { x: number; y: number; z: number };
   /** Fired once the WebGL context is up and the first cube state is applied. */
   onReady?: () => void;
   /** Screen-reader label. Defaults to the live-mirror wording; the replay
@@ -306,6 +307,7 @@ export default function SimCubeView(props: SimCubeViewProps): JSX.Element {
     stickering = '',
     stickeringOrientation = '',
     view = 'iso',
+    sceneRot,
     onReady,
     ariaLabel,
     className = 'timer-live-cube-3d',
@@ -334,6 +336,7 @@ export default function SimCubeView(props: SimCubeViewProps): JSX.Element {
   const cadenceRef = useRef(new LiveTurnCadence());
   /** 挂载时读一次(避免先按等轴画一帧);之后的改动走下面的 effect。 */
   const viewRef = useRef(view);
+  const sceneRotRef = useRef(sceneRot);
   const gyroViewActiveRef = useRef(false);
   const basisRef = useRef<SensorBasisName>(sensorBasis);
   const mirrorRef = useRef(mirror);
@@ -410,7 +413,7 @@ export default function SimCubeView(props: SimCubeViewProps): JSX.Element {
         faceHints: false,
         pixelRatioCap: 2,
         preserveDrawingBuffer: !realtime,
-        sceneRot: retainedOrbit?.current ?? sceneRotation(viewRef.current, gyroViewActiveRef.current),
+        sceneRot: retainedOrbit?.current ?? sceneRotRef.current ?? sceneRotation(viewRef.current, gyroViewActiveRef.current),
         onFrame: (world: World, dtMs: number): boolean => {
           const raw = externalQuatRef.current?.current ?? rawRef.current;
           if (!hasValidOrientation(raw)) return false;
@@ -539,13 +542,15 @@ export default function SimCubeView(props: SimCubeViewProps): JSX.Element {
   // Update the viewing angle without remounting the cube or altering its moves.
   useEffect(() => {
     viewRef.current = view;
+    if (sceneRotRef.current !== sceneRot && retainedOrbit) retainedOrbit.current = null;
+    sceneRotRef.current = sceneRot;
     const world = mountRef.current?.world;
     if (!ready || !world) return;
-    const rot = retainedOrbit?.current ?? sceneRotation(view, gyroViewActiveRef.current);
+    const rot = retainedOrbit?.current ?? sceneRot ?? sceneRotation(view, gyroViewActiveRef.current);
     world.scene.rotation.set(rot.x, rot.y, rot.z);
     world.scene.updateMatrix();
     mountRef.current?.invalidate();
-  }, [ready, retainedOrbit, view]);
+  }, [ready, retainedOrbit, view, sceneRot]);
 
   // ── /sim stage mask. ──
   // Keep the visualcube bridge out of the ordinary live-cube bundle: most

@@ -2716,7 +2716,9 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
       console.warn('[timer] invalid ?replay= payload');
     } else {
       const ephemeral = solveFromReplay(decoded, byEvent[decoded.event] ?? []);
-      setReconstruction({ solve: ephemeral });
+      const originalId = new URLSearchParams(window.location.search).get('practiceSolve');
+      const original = originalId && byEvent[decoded.event]?.find(s => s.id === originalId && s.scramble === decoded.scramble && Math.round(s.timeMs) === decoded.totalMs);
+      setReconstruction({ solve: original || ephemeral });
     }
     void setReplay(null);
   }, [replay, setReplay, byEvent]);

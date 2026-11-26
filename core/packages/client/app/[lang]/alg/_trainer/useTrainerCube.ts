@@ -259,6 +259,7 @@ export function useTrainerCube(opts: UseTrainerCubeOpts): TrainerCubeState {
   const submitMac = useCallback((mac: string) => answerMac(mac), [answerMac]);
   const cancelMac = useCallback(() => answerMac(null), [answerMac]);
 
+  const deviceRef = useRef<string | null>(null);
   const finishAttempt = () => {
     if (!enabledRef.current || !armedRef.current) return;
     if (practiceRef.current === 'manual') {
@@ -273,7 +274,7 @@ export function useTrainerCube(opts: UseTrainerCubeOpts): TrainerCubeState {
       return;
     }
     if (useTrainerStore.getState().timerState !== TimerState.RUNNING) return;
-    stopTimer(lastMoveEpochRef.current ?? undefined);
+    stopTimer(lastMoveEpochRef.current ?? undefined, deviceRef.current ? `${practiceRef.current}:${deviceRef.current}` : 'unknown');
     // The shared trainer store queues the next case after stopping.
     setTimerState(TimerState.NOT_RUNNING);
   };
@@ -343,6 +344,7 @@ export function useTrainerCube(opts: UseTrainerCubeOpts): TrainerCubeState {
    * would move the finish line out from under a rep in progress.
    */
   const connected = cube.status.connected;
+  deviceRef.current = connected ? cube.status.deviceId || null : null;
   const previousConnection = useRef(connected);
   // Cancel the previous input owner's clock before preparing this cube's target.
   useEffect(() => {

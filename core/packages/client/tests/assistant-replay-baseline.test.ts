@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { decodeReplayParam } from '@cuberoot/shared/timer/replay-decode';
 import type { Solve } from '@cuberoot/shared/timer/types';
-import { analyzeCfopHistory, cfopBaselineCandidates } from '@cuberoot/timer-ui/reconstruct/cfop-personal-baseline';
+import { analyzeCfopHistory, cfopBaselineCandidates, compareF2lTraining } from '@cuberoot/timer-ui/reconstruct/cfop-personal-baseline';
 import snapshot from './fixtures/recon-ground-truth.json';
 
 const replay = decodeReplayParam(snapshot.fixtures.find(row => row.id === '2464')!.replay)!;
@@ -20,7 +20,7 @@ function attempt(ts: number, pauseMs = 0, shorterGap = false): Solve {
 function all(history: Solve[]) { return new Set(history.map(solve => solve.id)); }
 
 describe('CFOP personal baseline', () => {
-  it('limits candidates to distinct recorded attempts on the same known device', () => {
+  it('accepts distinct recorded attempts regardless of device label', () => {
     const first = attempt(1);
     const history: Solve[] = [
       current, first, first, attempt(6), { ...attempt(3), penalty: '+2' },
@@ -28,8 +28,8 @@ describe('CFOP personal baseline', () => {
       { ...attempt(7), device: { ...device, model: 'moyu32' } }, { ...attempt(8), event: '333oh' },
       { ...attempt(9), penalty: 'DNF' }, { ...attempt(10), reconOk: false }, attempt(101),
     ];
-    expect(cfopBaselineCandidates(history, current).map(solve => solve.id)).toEqual(['101', 'current', '10', '6', '3', '1']);
-    expect(cfopBaselineCandidates(history, { ...current, device: undefined })).toEqual([]);
+    expect(cfopBaselineCandidates(history, current).map(solve => solve.id)).toEqual(['101', 'current', '10', '7', '6', '5', '4', '3', '1']);
+    expect(cfopBaselineCandidates(history, { ...current, device: undefined })).toEqual(cfopBaselineCandidates(history, current));
     expect(cfopBaselineCandidates(Array.from({ length: 30 }, (_, i) => attempt(i)), current)
       .map(solve => solve.id)).toEqual(Array.from({ length: 24 }, (_, i) => String(29 - i)));
   });
@@ -88,7 +88,11 @@ describe('CFOP personal baseline', () => {
 
   it('requires repeated slowdowns across distinct solves and ranks bigger recurring losses first', () => {
     const history = Array.from({ length: 10 }, (_, i) => attempt(i, i === 9 ? 4000 : 0));
-    expect(analyzeCfopHistory(history, current, all(history)).priorities).toEqual([]);
+    const isolated = analyzeCfopHistory(history, {...history[9], id:'replay-shared'}, all(history));
+    expect(isolated.priorities).toEqual([]);
+    expect(isolated.comparisons).toContainEqual(expect.objectContaining({
+      signal:'recognitionMs', situation:{stage:'f2l',start:'corner-slotted'}, slowerCount:1, otherRecentCount:4, otherSlowerCount:0,
+    }));
 
     const repeat = Array.from({ length: 10 }, (_, i) => {
       const solve = attempt(i, i < 5 ? 0 : 850);
@@ -108,5 +112,36 @@ describe('CFOP personal baseline', () => {
     });
     expect(priorities[1].replay).toMatchObject({ solveId: '9', range: { startMs: 4689, endMs: 8982 } });
     expect(priorities[1].replay?.target).toBeUndefined();
+  });
+});
+
+describe('F2L practice transfer', () => {
+  it('keeps independent full scrambles on either side of practice, with one vote per solve', async () => {
+    const before = attempt(1000);
+    const after = {...attempt(90000, 500), scramble: current.scramble + " R R'"};
+    const overlapping = {...attempt(40000), scramble: current.scramble + " L L'"};
+    const window = {start: 30000, end: 40000};
+    const observations = (solve: Solve) => analyzeCfopHistory([], solve, new Set()).observations
+      .filter(row => row.replay.slot && row.replay.pairFingerprint);
+    const pairs = observations(before);
+    expect(pairs.length).toBeGreaterThan(1);
+    const target = {window, fingerprints: new Set(pairs.map(row => row.replay.pairFingerprint!))};
+    const incomplete = Array.from({length: 25}, (_, i) => ({...attempt(150000 + i),
+      scramble: "F F' ".repeat(i + 1) + current.scramble, moves: [{m:'U', ts:0}]}));
+    const sample = [after, ...incomplete, {...before, id:'different-id', ts:250000}, before, overlapping,
+      {...after, penalty:'DNF' as const, id:'dnf'}, {...after, id:'manual', scrambleSource:{kind:'manual' as const, identity:'manual'}}];
+    const [group, empty] = await compareF2lTraining(sample, {...current, scramble:'B2'}, [target, {window, fingerprints:new Set()}]);
+    for (const [period, solve] of [[group.before, before], [group.after, after]] as const) {
+      const rows = observations(solve).filter(row => target.fingerprints.has(row.replay.pairFingerprint!));
+      expect(period.count).toBe(1);
+      expect(period.hits.map(hit => [hit.solveId,hit.label,hit.range])).toEqual(rows.map(row => [solve.id,row.label,row.replay.range]));
+      for (const signal of ['recognitionMs','executionMs'] as const) {
+        const values = rows.map(row => row[signal]!).sort((a,b) => a-b);
+        expect(period[signal]).toBe((values[Math.floor((values.length-1)/2)] + values[Math.floor(values.length/2)])/2);
+      }
+    }
+    expect(group.before.reviewed).toBe(1);
+    expect(group.after.reviewed).toBe(26);
+    expect(empty.after).toMatchObject({count:0, recognitionMs:null, executionMs:null, hits:[]});
   });
 });

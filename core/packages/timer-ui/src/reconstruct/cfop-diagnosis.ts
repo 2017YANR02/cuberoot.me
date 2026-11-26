@@ -1,11 +1,27 @@
-import type { SolveMove } from '@cuberoot/shared/timer/types';
+import { replayFingerprint } from '@cuberoot/shared/timer/replay-verified';
+import type { Solve, SolveMove } from '@cuberoot/shared/timer/types';
+import { OLL_NAME_BY_NUMBER } from '@cuberoot/shared/recon/alg-case-display';
+import type { ReconTextLine } from '@cuberoot/shared/timer/reconstruct/recon-text';
+import type { ReplayZbll } from './replay-zbll';
+import { countHtm } from '@cuberoot/shared/timer/reconstruct/htm';
 import type { Col } from './report-columns';
 
 export type CfopReplayGoal = 'stepMs' | 'recognitionMs' | 'executionMs' | 'turns';
-export type CfopFormulaTarget = { set: 'oll' | 'pll'; caseName: string };
+export type CfopFormulaTarget = { set: 'oll' | 'pll' | 'zbll'; caseName: string };
 export type CfopFormulaFocus = 'recognition' | 'execution';
 
-export function cfopFormulaTarget(set: 'oll' | 'pll', label: string | null | undefined): CfopFormulaTarget | undefined {
+export function cfopFormulaTarget(set: 'oll' | 'pll', label: string | null | undefined, notationLabel?: string | null): CfopFormulaTarget | undefined {
+  // The final notation identifies the case from the reconstructed playing frame.
+  // A null label means the displayed notation has no confirmed case yet.
+  if (notationLabel === null) return;
+  if (notationLabel !== undefined) {
+    if (set === 'pll') label = notationLabel.replace(/^E?PLL[- ]/, 'PLL ');
+    else {
+      const alias = notationLabel.replace(/^OLL[- ]/, '');
+      const match = Object.entries(OLL_NAME_BY_NUMBER).find(([, name]) => name === alias);
+      label = match ? `OLL ${match[0]}` : notationLabel;
+    }
+  }
   if (set === 'oll') {
     const number = /^OLL (\d{1,2})(?: \([^()\r\n]+\))?$/.exec(label ?? '')?.[1];
     if (number && +number >= 1 && +number <= 57) return { set, caseName: `OLL ${+number}` };
@@ -23,11 +39,13 @@ export interface CfopReplayRange {
 }
 
 type CfopDiagnosisColumn = Pick<Col, 'key' | 'label' | 'stepMs' | 'recognitionMs' | 'executionMs'
-  | 'cumulativeMs' | 'turns' | 'endIdx' | 'skipped' | 'refTurns' | 'refUserTurns'>;
+  | 'cumulativeMs' | 'turns' | 'endIdx' | 'skipped' | 'refTurns' | 'refUserTurns'> & Partial<Pick<Col, 'refSolution' | 'caseFingerprint'>>;
 
 export interface CfopReplayStage extends CfopReplayRange {
   column: CfopDiagnosisColumn;
-  training: 'cross' | 'f2l' | 'oll' | 'pll';
+  longestGap?: CfopReplayRange;
+  training: 'cross' | 'f2l' | 'oll' | 'pll' | 'zbll';
+  zbll?: ReplayZbll;
   finalAdjustmentOnly: boolean;
   formula?: CfopFormulaTarget;
 }
@@ -47,7 +65,23 @@ export function buildCfopDiagnosis(
   solvedEndIndex: number | null,
   cases: { pllCase?: string | null; ollCase?: string | null } = {},
   reconOk?: boolean,
+  notation?: readonly Pick<ReconTextLine, 'key' | 'label'>[] | null,
+  zbll?: ReplayZbll,
 ) {
+  if (zbll && zbll.disposition !== 'opportunity') {
+    const oll = columns.find(c => c.key === 'oll' && !c.skipped);
+    const pll = columns.find(c => c.key === 'pll' && !c.skipped);
+    const last = pll ?? oll;
+    if (oll && last && oll.recognitionMs != null && oll.stepMs != null && (!pll || pll.stepMs != null)) {
+      const stepMs = oll.stepMs + (pll?.stepMs ?? 0);
+      const turns = (alg: string) => countHtm(alg.split(/\s+/).map((m,ts) => ({m, ts})));
+      columns = [...columns.filter(c => c.key !== 'oll' && c.key !== 'pll'), {
+        ...oll, key:'zbll', label:zbll.disposition === 'executed' ? 'ZBLL' : 'LL', endIdx:last.endIdx,
+        cumulativeMs:last.cumulativeMs, stepMs, executionMs:stepMs - oll.recognitionMs,
+        turns:turns(zbll.original), refUserTurns:turns(zbll.original), refTurns:turns(zbll.reference), refSolution:zbll.reference,
+      }];
+    }
+  }
   const stages: CfopReplayStage[] = [];
   const limited: CfopLimitedStage[] = [];
   const freePairs = columns.filter(column => column.skipped && column.key.startsWith('slot-')).length;
@@ -103,11 +137,21 @@ export function buildCfopDiagnosis(
     } else if (endMs > startMs) {
       // If OLL and PLL finish together, the timing could include a combined
       // last-layer solution. Keep the stage, without assigning its time to an OLL case.
-      const formula = key === 'pll' ? cfopFormulaTarget('pll', cases.pllCase)
-        : key === 'oll' && !skipped.includes('PLL') ? cfopFormulaTarget('oll', cases.ollCase) : undefined;
+      const notationLabel = notation === undefined ? undefined : notation?.find(line => line.key === key)?.label ?? null;
+      const formula = key === 'zbll' && zbll ? {set:'zbll' as const, caseName:zbll.caseName} : key === 'pll' ? cfopFormulaTarget('pll', cases.pllCase, notationLabel)
+        : key === 'oll' && !skipped.includes('PLL') ? cfopFormulaTarget('oll', cases.ollCase, notationLabel) : undefined;
+      // Both moves must belong to this stage. The incoming transition is scored separately.
+      let longestGap: CfopReplayRange | undefined;
+      for (let i = firstMoveIndex + 1; i <= endIdx; i++) {
+        const start = moves[i - 1].ts;
+        const end = moves[i].ts;
+        if (!longestGap || end - start > longestGap.endMs - longestGap.startMs) {
+          longestGap = {startMs: start, endMs: end, firstMoveIndex: i - 1, endMoveIndex: i};
+        }
+      }
       stages.push({
-        ...range, column,
-        training: key === 'cross' || key === 'oll' || key === 'pll' ? key : 'f2l',
+        ...range, column, longestGap, zbll: key === 'zbll' || (key === 'oll' && zbll?.disposition === 'opportunity') ? zbll : undefined,
+        training: key === 'cross' || key === 'oll' || key === 'pll' || key === 'zbll' ? key : 'f2l',
         finalAdjustmentOnly: key === 'pll' && cases.pllCase === 'PLL skip' && column.turns === 1,
         formula,
       });
@@ -133,6 +177,12 @@ export function selectCfopReplayStage(stages: readonly CfopReplayStage[], goal: 
     stage: winner,
     tied: ranked.filter(stage => stage.column[goal] === winner.column[goal]).length > 1,
   };
+}
+
+export function cfopPracticeSolveId(solve: Solve) {
+  return solve.id.startsWith('replay-') ? replayFingerprint({
+    event: solve.event, scramble: solve.scramble, moves: solve.moves ?? [], totalMs: solve.timeMs,
+  }) : solve.id;
 }
 
 export function cfopTrainingHref(training: CfopReplayStage['training']) {

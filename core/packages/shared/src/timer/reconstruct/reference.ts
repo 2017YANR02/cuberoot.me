@@ -49,7 +49,10 @@
 import ollData from '../../../data/oll.json';
 import pllData from '../../../data/pll.json';
 
-import { isOll, isSolved } from './cfop-detect';
+import { countHtm } from './htm';
+import { normalizeSolve } from './orient';
+import { isSlotSolved } from './f2l_slots';
+import { isCross, isOll, isSolved } from './cfop-detect';
 import type { CubeFaces } from './state';
 import { applyScramble } from './state';
 import { parseScramble } from '@cuberoot/puzzle-solvers/cube-moves';
@@ -78,6 +81,7 @@ export type ReferenceNote =
 
 export interface StageReference {
   step: StepKey;
+  comparison?: { setup: string; original: string; reference: string };
   /** How the reference was derived; null when there is none. */
   kind: ReferenceKind | null;
   refTurns: number | null;
@@ -157,6 +161,7 @@ export interface LibraryAlgReference {
   turns: number;
   /** The line as it would be executed from here (closing AUF included). */
   solution: string;
+  openingAuf?: string;
 }
 
 /**
@@ -217,6 +222,7 @@ export function shortestLibraryAlg(
         if (!done(closing ? applyOneToken(afterAlg, closing) : afterAlg)) continue;
         best = {
           case: caseId,
+          ...(pre ? {openingAuf: AUF_TOKENS[pre]} : {}),
           turns,
           solution: closing ? `${tokens.join(' ')} ${closing}` : tokens.join(' '),
         };
@@ -237,12 +243,12 @@ function emptyRef(step: StepKey, note: ReferenceNote, userTurns: number | null):
  * (non-3x3 or unparseable), or a scramble the engine's alphabet can't express.
  */
 export function* stageReferenceSteps(
-  scramble: string,
-  moves: SolveMove[],
+  physicalScramble: string,
+  physicalMoves: SolveMove[],
   metrics: StepMetricsResult,
 ): Generator<void, ReferenceResult | null> {
-  if (!moves || moves.length === 0) return null;
-  if (!scramble || !scramble.trim()) return null;
+  if (!physicalMoves?.length || !physicalScramble?.trim()) return null;
+  const { scramble, moves, rotation } = normalizeSolve(physicalScramble, physicalMoves);
 
   // The mask engine replays the scramble as tokens, so a scramble containing
   // anything outside its alphabet costs us the two stages that need that
@@ -298,6 +304,7 @@ export function* stageReferenceSteps(
   };
 
   const stages: StageReference[] = [];
+  const openingAuf: Partial<Record<StepKey, string>> = {};
 
   for (const step of STEP_ORDER) {
     yield;
@@ -392,12 +399,28 @@ export function* stageReferenceSteps(
       });
       continue;
     }
+    openingAuf[step] = best.openingAuf;
     stages.push({
       step, kind: 'library-alg', refTurns: best.turns, refSolution: best.solution,
       userTurns,
       delta: userTurns !== null ? userTurns - best.turns : null,
       note: null,
     });
+  }
+
+  // Playback includes both opening alignments. The displayed execution counts
+  // above retain their existing definition, excluding the opening AUF.
+  const boundaries = {cross: [-1, segs.crossEndIdx], f2l: [segs.crossEndIdx, segs.f2lEndIdx],
+    oll: [segs.f2lEndIdx, segs.ollEndIdx], pll: [segs.ollEndIdx, segs.solvedEndIdx]};
+  for (const stage of stages) {
+    const [previousEnd, end] = boundaries[stage.step];
+    if (!stage.refSolution || previousEnd == null || end == null || end <= previousEnd) continue;
+    const start = previousEnd + 1;
+    stage.comparison = {
+      setup: [rotation, scramble, ...moves.slice(0, start).map(move => move.m)].filter(Boolean).join(' '),
+      original: moves.slice(start, end + 1).map(move => move.m).join(' '),
+      reference: [openingAuf[stage.step], stage.refSolution].filter(Boolean).join(' '),
+    };
   }
 
   let refTotal: number | null = null;
@@ -421,6 +444,10 @@ export function* stageReferenceSteps(
 /* ------------------------------------------------------------------ */
 
 export interface SlotReference {
+  alternatives?: {slot:F2lSlotId; turns:number; alg:string}[];
+  fullRoute?: {originalTurns:number; turns:number; setup:string; alg:string};
+  /** Both lines use this exact cross-on-D position and grip. */
+  comparison?: { setup: string; original: string; preserved: F2lSlotId[] };
   slot: F2lSlotId;
   /** Turns the shortest line costs for THIS pair, given everything already in. */
   refTurns: number | null;
@@ -455,14 +482,18 @@ export function* slotReferenceSteps(
   scramble: string,
   moves: SolveMove[],
   slots: F2lSlotsResult,
+  compareOtherSlots = false,
 ): Generator<void, SlotReference[] | null> {
   if (!moves || moves.length === 0) return null;
   if (!scramble || !scramble.trim()) return null;
   const crossEndIdx = slots.segments.crossEndIdx;
   if (crossEndIdx === null || crossEndIdx === undefined) return null;
 
+  // The slot walker names slots in its cross-on-D frame, even for a U-cross
+  // encoder recording. Use that same frame for search and both previews.
+  const frame = normalizeSolve(scramble, moves);
   const scrTokens: string[] = [];
-  for (const raw of scramble.trim().split(/\s+/)) {
+  for (const raw of frame.scramble.trim().split(/\s+/)) {
     if (!raw) continue;
     const tok = faceTurnToken(raw);
     // One token the engine can't express and every pair is unpriceable — the
@@ -475,7 +506,7 @@ export function* slotReferenceSteps(
     }
     scrTokens.push(tok);
   }
-  const userTokens = moves.map(mv => faceTurnToken(mv.m));
+  const userTokens = frame.moves.map(mv => faceTurnToken(mv.m));
 
   const out: SlotReference[] = [];
   // Pairs already standing when the cross landed cost nothing and block nothing
@@ -518,20 +549,60 @@ export function* slotReferenceSteps(
       continue;
     }
     const want = standing | F2L_SLOT_FLAG[s.slot];
-    const sol = solveF2lTo(prefix, want);
-    if (sol === null) {
+    const preserved = slots.slots.filter(pair => standing & F2L_SLOT_FLAG[pair.slot]).map(pair => pair.slot);
+    const segmentMoves = frame.moves.slice(prevEndIdx + 1, s.endIdx + 1);
+    const original = segmentMoves.map(move => move.m).join(' ');
+    // Whole-solve attribution can merge or cancel a turn across a slot boundary.
+    // A line starting at this position must count its own moves independently.
+    const userTurns = countHtm(segmentMoves);
+    const start = prefix.join(' ');
+    const reachesGoal = (alg: string) => {
+      const end = applyScramble(3, start + ' ' + alg);
+      return isCross(end) && isSlotSolved(end, s.slot) && preserved.every(slot => isSlotSolved(end, slot));
+    };
+    const validOriginal = reachesGoal(original);
+    const comparison = validOriginal && original ? { setup: [frame.rotation, start].filter(Boolean).join(' '), original, preserved } : undefined;
+    const alternatives: SlotReference['alternatives'] = [];
+    if (compareOtherSlots && validOriginal) {
+      for (const target of slots.slots) {
+        if (target.slot === s.slot || standing & F2L_SLOT_FLAG[target.slot]) continue;
+        yield;
+        const line = solveF2lTo(prefix, standing | F2L_SLOT_FLAG[target.slot]);
+        if (!line?.length) continue;
+        const alg = line.map(move => move.trim()).join(' ');
+        const end = applyScramble(3, start + ' ' + alg);
+        if (isCross(end) && isSlotSolved(end,target.slot) && preserved.every(slot => isSlotSolved(end,slot))) {
+          alternatives.push({slot:target.slot, turns:line.length, alg});
+        }
+      }
+    }
+    const sol = validOriginal ? solveF2lTo(prefix, want) : null;
+    if (sol === null || !reachesGoal(sol.join(' '))) {
       out.push({
+        comparison, ...(compareOtherSlots && {alternatives}),
         slot: s.slot, refTurns: null, refSolution: null,
-        userTurns: s.turns, delta: null, note: 'no-reference',
+        userTurns, delta: null, note: 'no-reference',
       });
     } else {
       const refTurns = sol.length;
+      const referenceAlg = sol.map(move => move.trim()).join(' ');
+      let fullRoute: SlotReference['fullRoute'];
+      if (compareOtherSlots && refTurns < userTurns) {
+        const tokens = [...frame.moves.slice(0,prevEndIdx+1).map(move => move.m), ...referenceAlg.split(' '),
+          ...frame.moves.slice(s.endIdx+1).map(move => move.m)];
+        const alg = tokens.join(' ');
+        if (isSolved(applyScramble(3, frame.scramble + ' ' + alg))) {
+          fullRoute = {setup:[frame.rotation,frame.scramble].filter(Boolean).join(' '), alg,
+            originalTurns:countHtm(frame.moves), turns:countHtm(tokens.map((m,ts) => ({m,ts})))};
+        }
+      }
       out.push({
+        comparison, ...(compareOtherSlots && {alternatives, fullRoute}),
         slot: s.slot,
         refTurns,
-        refSolution: sol.map(m => m.trim()).join(' '),
-        userTurns: s.turns,
-        delta: s.turns !== null ? s.turns - refTurns : null,
+        refSolution: referenceAlg,
+        userTurns,
+        delta: userTurns - refTurns,
         note: null,
       });
     }

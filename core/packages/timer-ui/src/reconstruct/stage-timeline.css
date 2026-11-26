@@ -1,0 +1,45 @@
+/* Stage rows share one elapsed-time scale, including when the chat is narrow. */
+.rr-timeline { container-type:inline-size; box-sizing:border-box; min-width:0; padding:14px 16px; color:var(--foreground); border:1px solid var(--border-default); border-radius:var(--radius); background:var(--card); font-variant-numeric:tabular-nums; --time-entry:var(--accent); --time-execution:var(--muted-foreground); }
+.rr-timeline-head h4 { margin:3px 0 5px; font-size:1.05rem; line-height:1.35; }
+.rr-timeline-head,.rr-time-key { display:flex; align-items:center; gap:12px; }
+.rr-timeline-head { justify-content:space-between; flex-wrap:wrap; }
+.rr-time-key { color:var(--muted-foreground); font-size:.8rem; }
+.rr-time-key span { display:inline-flex; align-items:center; gap:5px; }
+.rr-time-key span::before { content:""; height:8px; width:8px; border-radius:2px; background:var(--time-entry); }
+.rr-time-key span+span::before { background:var(--time-execution); }
+.rr-timeline-chart { margin-block:12px 8px; }
+.rr-time-axis,.rr-time-row {
+  display:grid; grid-template-columns:5rem minmax(0,1fr) 4.4rem 14px;
+  align-items:center; gap:10px; padding-inline:8px;
+}
+.rr-time-axis { color:var(--muted-foreground); font-size:.78rem; padding-block:0 6px; border-bottom:1px solid var(--border-default); }
+.rr-time-axis div { display:flex; justify-content:space-between; position:relative; }
+.rr-time-axis div span:nth-child(2) { position:absolute; inset-inline-start:50%; transform:translateX(-50%); }
+.rr-time-axis > :nth-child(3),.rr-time-amount { text-align:end; }
+.rr-time-row {
+  appearance:none; width:100%; min-height:34px; text-align:start; font:inherit; font-size:.89rem;
+  border:0; border-radius:5px; color:var(--foreground); background:transparent; cursor:pointer;
+}
+.rr-time-row[data-review] { background:var(--accent-soft); }
+.rr-time-row:not(:disabled):hover,.rr-time-row[aria-pressed=true] { background:var(--muted); }
+.rr-time-row:focus-visible { outline:2px solid var(--ring); outline-offset:1px; }
+.rr-time-row:disabled { cursor:default; }
+.rr-time-name { display:flex; align-items:baseline; flex-wrap:wrap; gap:4px; line-height:1.15; }
+.rr-time-name b { font-weight:600; }
+.rr-time-name small,.rr-time-amount small { color:var(--muted-foreground); font-size:.77rem; }
+.rr-time-lane { position:relative; height:100%; border-inline:1px solid var(--border-default); }
+.rr-time-lane::before { content:""; position:absolute; inset-block:0; inset-inline-start:50%; border-inline-start:1px dashed var(--border-default); }
+.rr-time-span { position:absolute; top:50%; transform:translateY(-50%); height:9px; overflow:hidden; border-radius:3px; background:var(--time-execution); }
+.rr-time-span[data-split=false] { background:transparent; border:1px dashed var(--faint-foreground); }
+.rr-time-span i { display:block; height:100%; background:var(--time-entry); }
+.rr-time-play { color:var(--muted-foreground); }
+.rr-time-row[data-review] .rr-time-play,.rr-time-row[aria-pressed=true] .rr-time-play { color:var(--accent); }
+@container (max-width:500px) {
+  .rr-time-axis,.rr-time-row { grid-template-columns:3.6rem minmax(0,1fr) 3.8rem 13px; gap:5px; padding-inline:5px; }
+  .rr-time-row { min-height:38px; }
+}
+
+.rr-time-selection { color:var(--muted-foreground); font-size:.85rem; }
+
+/* The player below the chart retains a continuous seek control. */
+.rr-timeline + .reconstruct-playback .stl-seg { display:none; }

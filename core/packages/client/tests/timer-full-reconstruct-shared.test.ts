@@ -83,7 +83,7 @@ describe('the complete shared reconstruction report', () => {
       expect(container.querySelector('.sa-row-avg')?.textContent).toContain('vs recent stage mean');
     });
     expect(container.querySelector('.sa-method-select')).toBeNull();
-    expect([...container.querySelectorAll('.stl-names .stl-cap')].map(el=>el.textContent)).toEqual(['FB','SB','CMLL','LSE']);
+    expect([...container.querySelectorAll('.rr-time-name b')].map(el=>el.textContent)).toEqual(['FB','SB','CMLL','LSE']);
     expect(localStorage.getItem('cuberoot.reconstruction.stage-cache.v1')).toContain('previous-4');
   });
 

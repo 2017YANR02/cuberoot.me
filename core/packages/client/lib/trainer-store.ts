@@ -18,8 +18,12 @@ import {
 } from './sq1-cs-storage';
 import { histBack, histForward, histPush, type ScrambleHist } from '@cuberoot/shared/timer';
 import { caseOrbit } from './alg_probability';
+import { assistantOwner } from './assistant-conversations';
+import { getAuthUser } from './auth-store';
+import { linkedReplayPractice, type ReplayAttemptSource } from './replay-training-session';
 import { petReact } from './deskpet';
 import { persistItem } from './safe-storage';
+import { inPracticeSlot } from './replay-practice-view';
 import { createRoom as apiCreateRoom, getRoom as apiGetRoom, claimRoomBatch, nextRoundRoom, type RoomOrder } from './trainer-room-api';
 
 export const TimerState = {
@@ -63,6 +67,7 @@ export interface TrainerRoom {
 }
 
 export interface TrainerSolve {
+  practiceSample?: { id: string; startedAt: number; owner: string; clock: string; conditions: string; replay?: ReplayAttemptSource };
   i: number;
   caseKey: string;
   caseName: string;
@@ -168,6 +173,25 @@ const persist = (p: string, s: string, data: PersistedSession) => {
 export function presetSessionSelection(puzzle: string, sessionId: string, keys: readonly string[]): void {
   const prev = loadPersisted(puzzle, sessionId);
   persist(puzzle, sessionId, { ...prev, selected: [...keys] });
+}
+
+export function readPracticeSolves(set: string): TrainerSolve[] {
+  return loadPersisted('3x3', set).solves;
+}
+
+/** Direct case windows share session results while keeping independent question pools. */
+export function subscribeTrainerHistory(puzzle: string, sessionId: string): () => void {
+  const key = sessionKey(puzzle, sessionId);
+  function sync(event: StorageEvent) {
+    const state = useTrainerStore.getState();
+    if (event.storageArea !== localStorage || event.key !== key || state.puzzle !== puzzle || state.set !== sessionId || state.doubleZbll) return;
+    const { solves } = loadPersisted(puzzle, sessionId);
+    if (JSON.stringify(solves) === JSON.stringify(state.solves)) return;
+    const last = Math.max(0, solves.length - 1);
+    useTrainerStore.setState({ solves, observingIdx: state.observingPinned ? Math.min(state.observingIdx, last) : last });
+  }
+  window.addEventListener('storage', sync);
+  return () => window.removeEventListener('storage', sync);
 }
 
 /** Read an externally preset selection without exposing the trainer storage key. */
@@ -344,6 +368,7 @@ interface TrainerState {
    * set 级进来是 null(不限)。实际出题池 = selected ∩ scope。
    */
   scope: string[] | null;
+  replaySlot?: F2LSlot;
   solves: TrainerSolve[];
   currentKey: string | null;
   currentName: string | null;
@@ -459,7 +484,7 @@ interface TrainerState {
    */
   loadMixSession: (p: AlgPuzzle, sets: string[], cases: AlgCase[]) => void;
   setSelected: (keys: string[]) => void;
-  setScope: (keys: string[] | null) => void;
+  setScope: (keys: string[] | null, replaySlot?: F2LSlot) => void;
   setScrambleKind: (k: ScrambleKind) => void;
   hydratePrefs: () => void;
   setPreAuf: (v: boolean) => void;
@@ -527,7 +552,7 @@ interface TrainerState {
    * Keyboard callers omit it.
    */
   startTimer: (at?: number) => void;
-  stopTimer: (at?: number) => void;
+  stopTimer: (at?: number, clock?: string) => void;
   setTimerState: (s: TimerState) => void;
 
   setObservingIdx: (i: number) => void;
@@ -764,10 +789,12 @@ export const useTrainerStore = create<TrainerState>((set, get) => {
     st: TrainerState,
     adjustment?: F2LFinalAdjustment,
   ): string => {
-    return generateScramble(c, st.puzzle!, st.scrambleKind, {
+    const scramble = generateScramble(c, st.puzzle!, st.scrambleKind, {
       ...aufOpts(st),
-      ...(adjustment ? { f2lFinalAdjustment: adjustment } : {}),
+      ...(st.replaySlot ? {f2lSlots: ['FR'], f2lFinalAdjustment: adjustment && {...adjustment, y:''}} :
+        adjustment ? {f2lFinalAdjustment: adjustment} : {}),
     });
+    return inPracticeSlot(scramble, st.replaySlot);
   };
 
   /** 某个 case 的 setup 到位后,把当时留空的打乱补上(当前 / 预抽两条 / 历史里同一 case)。 */
@@ -1316,6 +1343,7 @@ export const useTrainerStore = create<TrainerState>((set, get) => {
       set: sessionId,
       sets,
       cases,
+      replaySlot: undefined,
       caseResolver: opts?.caseResolver ?? null,
       caseResolveErrors: {},
       noAufDefault: !!opts?.noAufDefault,
@@ -1480,9 +1508,10 @@ export const useTrainerStore = create<TrainerState>((set, get) => {
       }
     },
 
-    setScope: (keys) => {
+    setScope: (keys, replaySlot) => {
+      const viewChanged = get().replaySlot !== replaySlot;
       const previousPool = trainerPool(get().selected, get().scope);
-      set({ scope: keys });
+      set({ scope: keys, replaySlot });
       // 当前题落在范围外(或还没有题)⟹ 清掉历史、立刻按新范围出一道
       const st = get();
       if (st.room) return; // 房间模式题面由服务端领取,scope 不本地出题
@@ -1493,7 +1522,7 @@ export const useTrainerStore = create<TrainerState>((set, get) => {
         pickFresh();
         return;
       }
-      if (pool.length > 0 && (!st.currentKey || !pool.includes(st.currentKey) || (st.doubleZbll && !pool.includes(st.hist.list[st.hist.idx]?.bottomKey ?? '')))) {
+      if (pool.length > 0 && (viewChanged || !st.currentKey || !pool.includes(st.currentKey) || (st.doubleZbll && !pool.includes(st.hist.list[st.hist.idx]?.bottomKey ?? '')))) {
         if (st.timerState === TimerState.NOT_RUNNING) {
           set({ hist: EMPTY_HIST });
           pickFresh();
@@ -1886,7 +1915,7 @@ export const useTrainerStore = create<TrainerState>((set, get) => {
       set({ timerStarted: at ?? Date.now(), timerState: TimerState.RUNNING });
     },
 
-    stopTimer: (at) => {
+    stopTimer: (at, clock = 'manual') => {
       if (!sessionActive || get().timerState !== TimerState.RUNNING) return;
       const { puzzle, set: setSlug, solves, currentKey, currentName, currentScramble, timerStarted } = get();
       if (!puzzle || !setSlug) return;
@@ -1897,7 +1926,22 @@ export const useTrainerStore = create<TrainerState>((set, get) => {
         set({ timerState: TimerState.STOPPING });
         return;
       }
+      const settings = get();
+      const owner = assistantOwner(getAuthUser());
+      const search = new URLSearchParams(typeof window === 'undefined' ? '' : window.location.search);
+      const caseId = settings.scope?.length === 1 && settings.scope[0] === currentKey && settings.mode === 'train'
+        ? findCaseByKey(settings.cases, currentKey)?.id : undefined;
+      const source = caseId && search.get('train.cases') === String(caseId)
+        ? linkedReplayPractice(search.get('train.replayPractice'), owner, setSlug, caseId) : undefined;
+      const measured = puzzle === '3x3' && (source || ['cross', 'f2l', 'oll', 'pll'].includes(setSlug)) && !settings.room && !settings.doubleZbll;
       const newSolve: TrainerSolve = {
+        ...(measured && clock !== 'unknown' ? { practiceSample: {
+          id: crypto.randomUUID?.() ?? Array.from(crypto.getRandomValues(new Uint8Array(16)), byte => byte.toString(16).padStart(2, '0')).join(''),
+          startedAt: timerStarted, owner, clock,
+          ...(source ? { replay: { scope: source.scope, role: source.role } } : {}),
+          conditions: JSON.stringify([settings.mode, settings.scrambleKind, settings.preAuf, settings.postAuf,
+            settings.randomFinalAuf, settings.replaySlot ? [settings.replaySlot] : settings.f2lSlots, settings.oriSel]),
+        } } : {}),
         i: solves.length,
         caseKey: currentKey,
         caseName: currentName,

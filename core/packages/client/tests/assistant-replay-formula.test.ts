@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import type { AlgFile } from '@cuberoot/shared/alg';
 import { cfopFormulaTarget } from '@cuberoot/timer-ui/reconstruct/cfop-diagnosis';
 import { preferredAlgRef, preferredAlgSlot } from '@/lib/alg-preferred-algs';
-import { replayFormulaCard, replayFormulaTrainingHref } from '@/lib/replay-formula-training';
+import { replayFormulaCard, replayFormulaTrainingHref, summarizeReplayRetest } from '@/lib/replay-formula-training';
 import { retiredAlgTrainerHref } from '@/lib/timer-training-catalog';
 import { trainingSearchParams } from '@/lib/timer-training-location';
 import { caseKeysFromIds } from '@/lib/trainer-case-key';
@@ -19,6 +19,15 @@ describe('replay formula training', () => {
     expect(replayFormulaCard(oll, ollTarget, {})).toMatchObject({ set: 'oll', caseId: 3927 });
     expect(replayFormulaCard(pll, aPerm, {})).toMatchObject({ caseId: 4305, href: '/alg/3x3/pll/a+' });
     expect(replayFormulaCard(pll, ua, {})?.href).toBe('/alg/3x3/pll/u-');
+  });
+
+  it('uses the case on the final replay line for the single-case trainer', () => {
+    expect(cfopFormulaTarget('pll', 'PLL Gb', null)).toBeUndefined();
+    const target = cfopFormulaTarget('pll', 'PLL Gb', 'PLL-Ga')!;
+    expect(replayFormulaCard(pll, target, {})).toMatchObject({ caseId: 4309, name: 'Ga' });
+    expect(cfopFormulaTarget('pll', 'PLL Ua', 'EPLL-U-')).toEqual({ set: 'pll', caseName: 'U-' });
+    expect(cfopFormulaTarget('oll', 'OLL 8', 'OLL-N+')).toEqual({ set: 'oll', caseName: 'OLL 7' });
+    expect(cfopFormulaTarget('pll', 'PLL Ga', 'PLL Skip')).toBeUndefined();
   });
 
   it('uses a saved formula when present without substituting a different case or layout', () => {
@@ -50,6 +59,15 @@ describe('replay formula training', () => {
       expect(url.pathname).toBe('/timer');
       expect(training.get('mode')).toBe(mode);
       expect(caseKeysFromIds(pll.cases, training.get('cases'))).toEqual([`${pll.cases.find(c => c.id === 4309)!.subgroup}|Ga`]);
+    }
+  });
+
+  it('keeps failed attempts in the accuracy count and uses successful times for the median', () => {
+    expect(summarizeReplayRetest('1.9, 1.2\nDNF，1.4 1.5')).toEqual({ invalid: false, completed: true, correct: 4, medianMs: 1450 });
+    expect(summarizeReplayRetest('DNF DNF 1.2 DNF 1.4')).toEqual({ invalid: false, completed: true, correct: 2, medianMs: null });
+    expect(summarizeReplayRetest('1 1 1 1')).toMatchObject({ completed: false, medianMs: null });
+    for (const value of ['1 2 3 4 5 6', '1 2 3 4 -5', '1 2 3 4 1e2']) {
+      expect(summarizeReplayRetest(value)).toMatchObject({ invalid: true, completed: false, medianMs: null });
     }
   });
 });

@@ -1,8 +1,14 @@
 import type { AssistantImage, AssistantReference } from '@cuberoot/shared/site-assistant';
 import type { AssistantTurn } from '@/components/SiteAssistantDialog';
+import type { ReconstructAssistantSummary } from '@cuberoot/timer-ui/reconstruct-report';
+import type { ReplayF2lCases } from '@cuberoot/shared/site-assistant-replay';
 import { persistItem } from '@/lib/safe-storage';
 
+export type ReplayRecording = {scramble: string; moves: import('@cuberoot/shared/timer/types').SolveMove[]};
+export type ReplayPracticeOrigin = {owner: string; solveKey: string; returnPath: string; recording?: ReplayRecording};
+export type ReplayReply = { origin?: ReplayPracticeOrigin; summary: ReconstructAssistantSummary; cases?: ReplayF2lCases; afterPractice?: boolean };
 export interface AssistantConversationSnapshot {
+  replayDraft?: { question: string; report: ReplayReply };
   delivery?: {key:string;id:string;input:import('@cuberoot/shared/site-assistant').AssistantDurableInput};
   draft: string;
   images: AssistantImage[];
@@ -25,6 +31,9 @@ export interface AssistantPageDraft {
   owner: string;
   draft: string;
   trigger: HTMLButtonElement;
+  send?: boolean;
+  report?: ReplayReply;
+  practice?: import('./replay-training-session').ReplayTrainingSession;
 }
 export const assistantOwner = (user: { uid?: number; wcaId?: string | null } | null) => user ? JSON.stringify([user.uid, user.wcaId]) : 'guest';
 
@@ -80,10 +89,10 @@ export function createAssistantConversations() {
       if (!found || !nextTitle || found.title === nextTitle) return;
       write(owner, { ...current, conversations: current.conversations.map(item => item.id === id ? { ...item, title: nextTitle } : item) });
     },
-    create(owner: string, id: string, draft = '') {
+    create(owner: string, id: string, draft = '', report?: ReplayReply) {
       const current = read(owner);
       if (current.conversations.some(item => item.id === id)) return;
-      const conversation: AssistantConversation = { id, snapshot: { draft, images: [], turns: [], conversationId: null } };
+      const conversation: AssistantConversation = { id, snapshot: { draft, images: [], turns: [], conversationId: null, ...(report && { replayDraft: { question: draft, report } }) } };
       write(owner, { ...current, activeId: id, conversations: [...current.conversations, conversation] });
     },
     branch(owner: string, id: string, turns: AssistantTurn[]) {
@@ -142,7 +151,7 @@ export function createAssistantConversations() {
     update(owner: string, id: string, snapshot: AssistantConversationSnapshot) {
       const current = read(owner);
       const found = current.conversations.find(item => item.id === id);
-      if (!found || (found.snapshot.draft === snapshot.draft && found.snapshot.images === snapshot.images && found.snapshot.turns === snapshot.turns && found.snapshot.conversationId === snapshot.conversationId && found.snapshot.delivery === snapshot.delivery)) return;
+      if (!found || (found.snapshot.draft === snapshot.draft && found.snapshot.images === snapshot.images && found.snapshot.turns === snapshot.turns && found.snapshot.conversationId === snapshot.conversationId && found.snapshot.delivery === snapshot.delivery && found.snapshot.replayDraft === snapshot.replayDraft)) return;
       write(owner, { ...current, conversations: current.conversations.map(item => item.id === id ? { ...item, snapshot } : item) });
     },
   };

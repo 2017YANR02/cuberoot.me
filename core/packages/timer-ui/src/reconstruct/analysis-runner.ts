@@ -1,3 +1,5 @@
+import { identifyReplayZbll } from './replay-zbll';
+export { identifyReplayZbll } from './replay-zbll';
 import { reconstructionLibraries } from './library-cache';
 import { runReconstructionNotation } from './analysis-notation';
 import { stageReferenceSteps, slotReferenceSteps } from '@cuberoot/shared/timer/reconstruct/reference';
@@ -34,9 +36,14 @@ export async function runReconstructionAnalysis(data: AnalysisWorkerRequest, pub
       await new Promise<void>(resolve => setTimeout(resolve, 0));
       if (isCancelled()) return;
       if (text.slots) {
-        send({ patch: { slotReference: await runSteps(slotReferenceSteps(physical.scramble, physical.moves, text.slots), isCancelled) } });
+        send({ patch: { slotReference: await runSteps(slotReferenceSteps(physical.scramble, physical.moves, text.slots, true), isCancelled) } });
       }
     } catch (error) { failed(error); }
+  }
+  if (scoreable && (!text.method || text.method === 'cfop') && !isCancelled()) {
+    const zbll = await identifyReplayZbll(text, reconstructionLibraries.load).catch(() => undefined);
+    if (isCancelled()) return;
+    if (zbll) send({ patch: { zbll } });
   }
   send({ done: true });
 }

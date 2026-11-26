@@ -23,6 +23,8 @@ import { computeStepMetrics } from '@/app/[lang]/timer/_lib/reconstruct/step_met
 import { computeStageReferences } from '@/app/[lang]/timer/_lib/reconstruct/reference';
 import type { StageReference } from '@/app/[lang]/timer/_lib/reconstruct/reference';
 import type { SolveMove } from '@/app/[lang]/timer/_lib/reconstruct/stage_segments';
+import { applyScramble } from '@cuberoot/shared/timer/reconstruct/state';
+import { isCross, isF2l, isOll, isSolved } from '@cuberoot/shared/timer/reconstruct/cfop-detect';
 import ollData from '@cuberoot/shared/data/oll.json';
 import pllData from '@cuberoot/shared/data/pll.json';
 
@@ -122,6 +124,15 @@ describe('a full CFOP solve, priced stage by stage', () => {
     expect(pll.refSolution).toBe("F2 U' F2 D R2 B2 U B2 D' R2");
     expect(pll.userTurns).toBe(14);
     expect(pll.delta).toBe(4);
+  });
+
+  it('plays both lines from the same stage start, including opening AUF for last-layer references', () => {
+    for (const [stage, done] of [[cross, isCross], [f2l, isF2l], [oll, isOll], [pll, isSolved]] as const) {
+      const comparison = stage.comparison!;
+      expect(done(applyScramble(3, comparison.setup + ' ' + comparison.original))).toBe(true);
+      expect(done(applyScramble(3, comparison.setup + ' ' + comparison.reference))).toBe(true);
+    }
+    expect(oll.comparison!.reference).not.toBe(oll.refSolution);
   });
 
   it('totals only over stages that have both numbers', () => {

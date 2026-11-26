@@ -53,21 +53,25 @@ import StepAnalysis from './StepAnalysis';
 import ReportContent from './ReportContent';
 import { reportComposition, reportNotationExtras, reportSummary, reportTrainingSummary, reportRawMoves, reportReferences, reportMeta, reportBld, initialReportUI, reduceReportUI, resolveReportSlots } from './report-content';
 import { rememberMethodStages, useMethodHistory } from './method-history';
+import { recordingRotation } from './replay-view';
 import StepMoveList from './StepMoveList';
 import { simplifyF2lRotations } from '@cuberoot/shared/timer/reconstruct/recon-text';
 import { reconstructionSummary, trainingCaseHistory, trainingCaseStatistics } from './report-presentation';
 import { buildCfopColumns, buildWalkColumns } from './report-columns';
 import { snapshotReconNotation } from './review-snapshot';
 import ReconstructActions from './ReconstructActions';
+import CfopPairComparison from './CfopPairComparison';
+import { cfopIssueLabels, cfopPracticeInstruction } from './CfopAnalysisDetails';
+import type { ReplayReportEvidence, ReconstructAssistantSummary } from './ReconstructHost';
 import CfopReplayDiagnosis from './CfopReplayDiagnosis';
-import CfopPersonalBaseline from './CfopPersonalBaseline';
-import { buildCfopDiagnosis, type CfopReplayRange } from './cfop-diagnosis';
+import { reviewClips, wholeSolveCoaching } from './replay-coaching';
+import { buildCfopDiagnosis, cfopPracticeSolveId, type CfopReplayRange } from './cfop-diagnosis';
 
 import { memoize3bld } from '@cuberoot/shared/timer/reconstruct/bld-helper';
 import PlaybackPanel from './PlaybackPanel';
 import './reconstruct.css';
 import { ReconstructHostContext, useReconstructHost, type ReconstructHost } from './ReconstructHost';
-export type { ReconstructAssistantSummary, ReconstructHost } from './ReconstructHost';
+export type { ReplayTrainingEvidence, ReplayReportEvidence, ReplayPairTrainingInput, ReplayPracticeTarget, ReconstructAssistantSummary, ReconstructHost } from './ReconstructHost';
 
 export interface ReconstructReportProps {
   /** Review observes completed default CFOP notation; never writes back to the solve. */
@@ -124,6 +128,9 @@ function ReconstructReportBody({
   const host = useReconstructHost();
   const { localize: tr } = host;
   const replayRange = useRef<((range: CfopReplayRange) => void) | null>(null);
+  const pairPanel = useRef<HTMLDivElement>(null);
+  const [pairChoice, setPairChoice] = useState<{solveId: string; slot: string | null} | null>(null);
+  const selectPair = (slot: string | null) => setPairChoice({solveId: solve.id, slot});
   const moves = solve.moves ?? [];
   const frameTimed = solve.videoReconstruction === 'solved';
   const methodMoves = moves.map(move => move.m).join(' ');
@@ -139,6 +146,8 @@ function ReconstructReportBody({
     live && liveGyroSamples ? liveGyroSamples.slice() : undefined),
   [solve.scramble, moves, solve.timeMs, solve.gyro, solve.device?.model, method, isZh, live, liveGyroSamples]);
   const { view, stageSegs, stepMx, slots } = prepared;
+  const reviewRotation = useMemo(() => !live && method === 'cfop' ? recordingRotation({scramble:solve.scramble, moves}) : undefined,
+    [live, method, solve.scramble, moves]);
   // Wasted-work detection (state revisits — see error_detect.ts). Gated the
   // same way: the walker models a 3x3.
   const waste = useMemo(
@@ -351,40 +360,103 @@ function ReconstructReportBody({
     </>
   );
 
-  // Keep the handoff on the replay being inspected. Only pass the displayed
-  // measurements, never the local solve ID, move log, scramble, or history.
-  const assistantStages = host.renderAssistantAction && solve.event === '333' && moves.length > 0 && Number.isFinite(solve.timeMs) && solve.timeMs > 0
+  // The chat card keeps local playback setups. The text handoff sends only measurements and compared lines.
+  const assistantStages = (!live || host.renderAssistantAction) && solve.event === '333' && moves.length > 0 && Number.isFinite(solve.timeMs) && solve.timeMs > 0
     ? solve.penalty === 'DNF' || solve.penalty === 'DNS' ? []
       : method === 'cfop' && stageSegs ? buildCfopColumns(stageSegs, stepMx, slots, analysis?.reference ?? null, analysis?.slotReference ?? null, null)
       : walk ? buildWalkColumns(walk, isZh) : []
     : null;
-  const diagnosis = assistantStages && method === 'cfop' && host.renderAssistantTrainingLink
+  const diagnosis = assistantStages && method === 'cfop'
     && solve.penalty !== 'DNF' && solve.penalty !== 'DNS'
-    ? buildCfopDiagnosis(assistantStages, moves, solve.timeMs, stageSegs?.solvedEndIdx ?? null, stageSegs ?? undefined, solve.reconOk)
+    ? buildCfopDiagnosis(assistantStages, moves, solve.timeMs, stageSegs?.solvedEndIdx ?? null, stageSegs ?? undefined, solve.reconOk,
+      analysis?.provisional ? null : reconText?.lines ?? null, analysis?.zbll)
     : null;
   const summaryStages = diagnosis ? diagnosis.stages.map(stage => stage.column) : assistantStages;
-  const assistantDraft = assistantStages && host.renderAssistantAction?.({
-    timeMs: solve.timeMs,
-    penalty: solve.penalty,
-    method: summaryStages?.length ? method.toUpperCase() : null,
-    stm: diagnosis?.issue ? null : stmCount,
-    tps: diagnosis?.issue || diagnosis?.limited.length ? null : stmTps,
-    stages: (summaryStages ?? []).filter(stage=>!stage.skipped).slice(0, 12).map(({label,stepMs,recognitionMs,executionMs,turns,cumulativeMs}) =>
-      ({label,stepMs,recognitionMs,executionMs,turns,cumulativeMs})),
-  }, diagnosis !== null);
+  const makeReportStages = (whole: boolean, focus?: ReconstructAssistantSummary['focus']): ReconstructAssistantSummary['stages'] =>
+    (summaryStages ?? []).filter(stage=>!stage.skipped).slice(0, 12).map((column, index, columns) => {
+      const {label,stepMs,recognitionMs,executionMs,turns,cumulativeMs,refTurns,refUserTurns,refSolution} = column;
+      const stage = diagnosis?.stages.find(item => item.column.key === column.key);
+      const slot = column.key.startsWith('slot-') ? column.key.slice(5) : undefined;
+      const slotRef = slot ? analysis?.slotReference?.find(pair => pair.slot === slot) : undefined;
+      const pairComparison = slotRef?.comparison;
+      const stepComparison = !slot && whole ? analysis?.reference?.stages.find(ref => ref.step === column.key)?.comparison : undefined;
+      const combined = column.key === 'zbll' ? stage?.zbll : undefined;
+      const comparison = combined ?? pairComparison ?? stepComparison;
+      const previousEnd = index === 0 ? -1 : columns[index - 1].endIdx;
+      const start = stage?.firstMoveIndex ?? (walk && previousEnd != null ? previousEnd + 1 : undefined);
+      const end = stage?.endMoveIndex ?? column.endIdx;
+      const rawPlayback = whole && solve.reconOk !== false && start != null && end != null && end >= start && end < moves.length;
+      const original = comparison?.original ?? (rawPlayback ? moves.slice(start, end + 1).map(move => move.m).join(' ') : undefined);
+      const setup = comparison?.setup ?? (rawPlayback ? [solve.scramble, ...moves.slice(0, start).map(move => move.m)].join(' ') : undefined);
+      const shorterPair = slot && refTurns != null && refUserTurns != null && refTurns < refUserTurns;
+      const practiceFocus = (recognitionMs ?? 0) > (executionMs ?? 0) ? 'recognition' : shorterPair ? 'turns' : 'execution';
+      const instruction = stage && tr(cfopPracticeInstruction(stage.finalAdjustmentOnly ? 'auf' : stage.training,
+        practiceFocus));
+      return {label,stepMs,recognitionMs,executionMs,turns,cumulativeMs,refTurns,refUserTurns,refSolution,
+        slot, original, rawSetup: rawPlayback && !comparison, setup: whole || focus?.label === label ? setup : undefined,
+        ...((whole || (stage?.zbll && focus?.label === label)) && {key:column.key, fingerprint:column.caseFingerprint, formula:stage?.formula, instruction,
+          alternatives:slotRef?.alternatives, fullRoute:slotRef?.fullRoute, ...(stage && reviewClips(stage,solve.scramble,moves)),
+          longestGap:stage?.longestGap && {durationMs:stage.longestGap.endMs - stage.longestGap.startMs,
+            first:stage.longestGap.firstMoveIndex + 1, last:stage.longestGap.endMoveIndex + 1},
+          zbll:stage?.zbll, playbackReference:combined?.reference ?? (pairComparison ? refSolution ?? undefined : stepComparison?.reference)}),
+        range: stage ? {startMs:stage.startMs, first:stage.firstMoveIndex+1, last:stage.endMoveIndex+1}
+          : rawPlayback && cumulativeMs!=null && stepMs!=null && stepMs>0 && cumulativeMs>=stepMs
+            ? {startMs:cumulativeMs-stepMs, first:start+1, last:end+1} : undefined};
+    });
+  const wholeStages = makeReportStages(true);
+  const timeline = !live && wholeStages.some(stage => stage.range)
+    ? { stages: wholeStages, focus: wholeSolveCoaching(wholeStages, solve.timeMs, diagnosis?.freePairs ?? 0, tr).review?.label }
+    : undefined;
+  const assistantDraft = (focus?: ReconstructAssistantSummary['focus'], trainingNotes: string[] = [], retestCaseKey?: string, practiceScope?: string, evidence?: ReplayReportEvidence) => {
+    if (!assistantStages || !host.renderAssistantAction) return null;
+    const pair = focus
+      ? summaryStages?.find(column => column.label === focus.label && column.key.startsWith('slot-')) : undefined;
+    const lastLayer = ['OLL','PLL','ZBLL','LL'].includes(focus?.label ?? '');
+    const whole = evidence?.wholeSolve ?? !focus;
+    const pending = analysisInput && (!analysis || analysis.status === 'pending');
+    const pairPending = Boolean((whole || lastLayer) && pending) || Boolean(pair && analysisInput && (!analysis || analysis.status === 'pending')
+      && (!reconText || analysis?.provisional || (pair && analysisInput.scoreable && !analysis?.slotReference)));
+    const formula = diagnosis?.stages.find(stage => stage.column.label === focus?.label)?.formula;
+    const pairTraining = whole && (diagnosis || walk) ? {history, origin: {solve, scope: cfopPracticeSolveId(solve)}} : pair || formula ? {
+      origin: practiceScope ? { solve, scope: practiceScope } : undefined,
+      fingerprint: pair?.caseFingerprint, formula, retestCaseKey,
+    } : undefined;
+    return host.renderAssistantAction({
+      reviewRotation, focus, evidence: evidence ?? (!focus ? {wholeSolve:true} : undefined),
+      notes: diagnosis && [
+        ...trainingNotes,
+        ...(pair && analysisInput?.scoreable && !pairPending && pair.refTurns == null
+          ? [tr({ zh: `${pair.label} 缺少可比较的同槽参考解。`, en: `No comparable same-slot reference is available for ${pair.label}.` })] : []),
+        ...(diagnosis.issue ? [tr(cfopIssueLabels[diagnosis.issue])] : []),
+        ...diagnosis.limited.map(row => row.label + ' · ' + row.issues.map(issue => tr(cfopIssueLabels[issue])).join(', ')
+          + tr({zh:'（不计入用时比较）',en:' (excluded from timing comparisons)'})),
+        ...(!diagnosis.issue && diagnosis.skipped.length ? [tr({ zh: `跳过 ${diagnosis.skipped.join(', ')}`, en: `Skipped ${diagnosis.skipped.join(', ')}` })] : []),
+        ...(!diagnosis.issue && diagnosis.freePairs ? [tr({ zh: `十字带入 ${diagnosis.freePairs} 对`, en: `${diagnosis.freePairs} pairs solved with the cross` })] : []),
+      ] || undefined,
+      timeMs: solve.timeMs,
+      penalty: solve.penalty,
+      method: summaryStages?.length ? method.toUpperCase() : null,
+      stm: diagnosis?.issue ? null : stmCount,
+      tps: diagnosis?.issue || diagnosis?.limited.length ? null : stmTps,
+      stages: whole ? wholeStages : makeReportStages(false,focus),
+    }, true, pairPending, pairTraining);
+  };
   const assistantAction = diagnosis && host.renderAssistantTrainingLink ? <CfopReplayDiagnosis
     key={solve.id}
     diagnosis={diagnosis}
     tr={tr}
     onReplay={range => replayRange.current?.(range)}
+    onCompare={host.renderPairPlayer && scoreable && slots ? slot => {
+      selectPair(slot);
+      pairPanel.current?.focus({preventScroll: true});
+      pairPanel.current?.scrollIntoView({block: 'center'});
+    } : undefined}
     renderTrainingLink={host.renderAssistantTrainingLink}
     prepareFormula={host.prepareAssistantFormula}
-    renderFormula={host.renderAssistantFormula}
+    renderFormula={host.renderAssistantFormula} renderPairTraining={host.renderPairTraining}
     followUp={assistantDraft}
-    personalBaseline={history && <CfopPersonalBaseline history={history} current={solve} tr={tr}
-      renderTrainingLink={host.renderAssistantTrainingLink} prepareFormula={host.prepareAssistantFormula}
-      renderFormula={host.renderAssistantFormula} />}
-  /> : assistantDraft;
+    history={history} current={solve} renderRetest={host.renderPracticeRetest}
+  /> : assistantDraft();
 
   const extras=reportNotationExtras(solve,playbackRecon,initialReportUI(solve.reconOk),tr,{recordGyro:host.recordGyro,canEnableGyro:Boolean(host.onEnableGyro),canFeedback:Boolean(onReconFeedback)});
   const composition=reportComposition({solve,recon:reconText,analysis:analysis??null,hasAnalysis:Boolean(analysisInput),scoreable,state:reportUI,tr,
@@ -405,9 +477,17 @@ function ReconstructReportBody({
       : <ReportContent node={summary} dispatch={() => {}} />,
     actions:<ReconstructActions host={host} solve={solve} onUseScramble={onUseScramble} placement="report" snapshot={reviewSnapshot}/>,
     'assistant-action':assistantAction,
-    analysis:analysisBlock,
+    analysis:<>{analysisBlock}
+      {scoreable && method === 'cfop' && solve.penalty !== 'DNS' && solve.reconOk !== false && slots && host.renderPairPlayer &&
+        stageSegs?.solvedEndIdx === moves.length - 1 &&
+        <div ref={pairPanel} tabIndex={-1}><CfopPairComparison solve={solve} rotation={reviewRotation} slots={slots} references={analysis?.slotReference ?? null}
+          active={pairChoice?.solveId === solve.id ? pairChoice.slot : null} onSelect={selectPair}
+          pending={!analysis || analysis.status === 'pending'}/></div>}
+    </>,
     playback:<PlaybackPanel
           key={solve.id}
+          stageTimeline={timeline}
+          recordedView={reviewRotation === undefined ? undefined : {rotation:reviewRotation}}
           replayRangeRef={replayRange}
           method={method}
           event={solve.event}
@@ -517,3 +597,9 @@ export default function ReconstructReport({ host, ...props }: ReconstructReportP
   return <ReconstructHostContext.Provider value={host}>{timerSupportsTrainingTiming(props.solve.event)
     ? <TrainingReportBody {...props} /> : <ReconstructReportBody {...props} />}</ReconstructHostContext.Provider>;
 }
+
+export { CfopStageTable } from './CfopAnalysisDetails';
+
+export { wholeSolveCoaching } from './replay-coaching';
+
+export { default as StageTimeline, stageReplayCaption } from './StageTimeline';

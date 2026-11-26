@@ -1,4 +1,5 @@
 'use client';
+import dynamic from 'next/dynamic';
 import F2lSlotSelector from '@/components/F2lSlotSelector';
 import MoreToggle from '@/components/MoreToggle';
 import '@cuberoot/timer-ui/compact-select.css';
@@ -22,7 +23,7 @@ import { ALG_CATALOG, getAlgSetMeta, type AlgCase } from '@cuberoot/shared/alg';
 import { loadTrainingAlg as loadAlg } from '@/lib/alg_case_alignment';
 import {
   useTrainerStore, TimerState, trainerPool, trainerScramblesReady, mixSessionId,
-  completedRecapCount, readSessionSelection, type TrainerMode, type TrainerSolve,
+  completedRecapCount, readSessionSelection, subscribeTrainerHistory, type TrainerMode, type TrainerSolve,
 } from '@/lib/trainer-store';
 import TimerFontPicker from '@/components/TimerFontPicker';
 import { useTrainerLayout } from '@/app/[lang]/alg/_trainer/useTrainerLayout';
@@ -35,6 +36,9 @@ import BoolToggle from '@/components/BoolToggle';
 import AlgCaseMetaModal from '@/components/AlgCaseMetaModal';
 import AlgPdfButton from '@/components/AlgPdfButton';
 import { CaseThumb } from '@/components/CaseThumb';
+import { linkedReplayPractice, returnToTrainingReplay } from '@/lib/replay-training-session';
+import { assistantOwner } from '@/lib/assistant-conversations';
+import { useAuthUser } from '@/lib/auth-store';
 import { caseKey, caseKeysFromIds, findCaseByKey } from '@/lib/trainer-case-key';
 import { canonicalZbllSubgroupSlug } from '@/lib/alg_zbll_subgroups';
 import { displayZbllToken } from '@/lib/alg_case_display';
@@ -64,6 +68,7 @@ import MemoryTrainer from '@/app/[lang]/alg/_trainer/MemoryTrainer';
 import MixSetPicker from '@/app/[lang]/alg/_trainer/MixSetPicker';
 import SmartCubeRow from '@/app/[lang]/alg/_trainer/SmartCubeRow';
 import OrientationPicker from '@/app/[lang]/alg/_trainer/OrientationPicker';
+import { ReplayPracticeCube } from '@/components/ReplayPracticeCube';
 import TrainerLiveCube from '@/app/[lang]/alg/_trainer/TrainerLiveCube';
 import TrainerSplitScreen from './TrainerSplitScreen';
 import { useTrainerCube } from '@/app/[lang]/alg/_trainer/useTrainerCube';
@@ -152,7 +157,20 @@ function F2LSlotPicker({
   );
 }
 
+const GoalTrainer = dynamic(() => import('@/components/ReplayGoalTrainer'), {ssr:false});
+
 export default function TrainerRunClient() {
+  const query = useTrainingSearchParams();
+  const {set} = useParams<{set:string}>();
+  const owner = assistantOwner(useAuthUser());
+  const caseId = Number(query?.get('cases'));
+  const token = query?.get('replayPractice') ?? null;
+  const session = useMemo(()=>linkedReplayPractice(token,owner,set,caseId),[token,owner,set,caseId]);
+  if (session?.drill) return <GoalTrainer key={session.id} owner={owner} set={set} caseId={caseId} session={{...session,drill:session.drill}}/>;
+  return <StandardTrainer/>;
+}
+
+function StandardTrainer() {
   const trainingHost = useTrainingHost();
   const trainingSearch = useTrainingSearchParams();
   const activityRef = useRef(0);
@@ -187,6 +205,10 @@ export default function TrainerRunClient() {
   const [modeParam, setModeParam] = useQueryState('mode');
   const [drawParam] = useQueryState('draw');
   const [caseIdsParam] = useQueryState('cases');
+  const owner = assistantOwner(useAuthUser());
+  const practiceToken = trainingSearch?.get('replayPractice') ?? null;
+  const replayOrigin = useMemo(() => linkedReplayPractice(practiceToken, owner, setSlug, Number(caseIdsParam)),
+    [practiceToken, owner, setSlug, caseIdsParam]);
   const caseSelectionApplied = useRef<string | null>(null);
   // 进度清单的「专练」:case key 已预置在独立会话里,虚拟集按 key 反建这批 case。
   const [drillParam] = useQueryState('drill');
@@ -604,6 +626,9 @@ export default function TrainerRunClient() {
   // scope slug → 该组全部 case key(与 AlgCategoryView 的 top/sub 两级匹配同一套约定)
   const linkedCaseKeys = useMemo(() => isMix || virtual || roomParam ? null : caseKeysFromIds(cases, caseIdsParam),
     [cases, caseIdsParam, isMix, virtual, roomParam]);
+  useEffect(() => {
+    if (sessionReady && linkedCaseKeys !== null) return subscribeTrainerHistory(puzzle, sessionId);
+  }, [sessionReady, linkedCaseKeys, puzzle, sessionId]);
   const scopedKeys = useMemo(() => {
     if (linkedCaseKeys !== null) return linkedCaseKeys;
     // 虚拟集的 ?scope= 决定的是「装哪一批 case」,装进来的整批就是范围,不用再筛一次
@@ -625,8 +650,8 @@ export default function TrainerRunClient() {
         state.setSelected(linkedCaseKeys);
       }
     } else caseSelectionApplied.current = null;
-    setScope(scopedKeys);
-  }, [sessionReady, cases.length, puzzle, sessionId, caseIdsParam, linkedCaseKeys, scopedKeys, setScope]);
+    setScope(scopedKeys, replayOrigin?.slot);
+  }, [sessionReady, cases.length, puzzle, sessionId, caseIdsParam, linkedCaseKeys, scopedKeys, setScope, replayOrigin?.slot]);
 
   // 记忆模式没勾选 case 时回落到本页可见的整套(有 scope 就是该组)。
   const allKeys = useMemo(() => cases.map(caseKey), [cases]);
@@ -1963,7 +1988,7 @@ export default function TrainerRunClient() {
                       />
                     )}
                   </div>
-                  {setScrambleFeatures.f2lSlots && (
+                  {setScrambleFeatures.f2lSlots && !replayOrigin?.slot && (
                     <F2LSlotPicker slots={f2lSlots} onChange={setF2LSlots} />
                   )}
                   {setScrambleFeatures.psf2lSlots && (
@@ -2116,6 +2141,11 @@ export default function TrainerRunClient() {
                     })}
               </div>
         </SettingsPopover>
+        {replayOrigin && <button type="button" className="trainer-progress-link" data-no-timer
+          disabled={timerState !== TimerState.NOT_RUNNING}
+          onClick={() => returnToTrainingReplay(replayOrigin.id, replayOrigin.returnPath)}>
+          {tr({ zh: '返回本局复盘', en: 'Return to this replay' })}
+        </button>}
         {trainingHost && !timing && !isMemo && !splitActive && (leftShown || historyVisible) && (
           <button type="button" className="trainer-progress-link timer-training-stats-toggle" data-no-timer
             aria-haspopup="dialog" onClick={() => setHistoryOpen(true)}>
@@ -2201,7 +2231,9 @@ export default function TrainerRunClient() {
                         <CaseMarkBar k={caseKey(row.c)} onlyActive />
                       </div>
                     )}
-                    <div className="trainer-layout-cube">{showStageThumb && row.c && row.bottom && row.s ? <DoubleZbllThumb top={row.c} bottom={row.bottom} scramble={row.s} /> : showStageThumb && row.c && (
+                    <div className="trainer-layout-cube">{showStageThumb && row.c && row.bottom && row.s ? <DoubleZbllThumb top={row.c} bottom={row.bottom} scramble={row.s} /> : showStageThumb && replayOrigin && row.s ? (
+                      <ReplayPracticeCube setup={'z2 ' + row.s} slot={replayOrigin.slot} set={setSlug} size={140}/>
+                    ) : showStageThumb && row.c && (
                       <CaseThumb
                         puzzle={puzzle}
                         set={setSlug}
@@ -2268,7 +2300,9 @@ export default function TrainerRunClient() {
                   {showStageThumb && currentScramble && (
                     <div className="trainer-stage-thumb">
                       {(() => {
-                        const thumb = (
+                        const thumb = replayOrigin ? (
+                          <ReplayPracticeCube setup={'z2 ' + currentScramble} slot={replayOrigin.slot} set={setSlug} size={140}/>
+                        ) : (
                           <CaseThumb local
                             puzzle={puzzle}
                             set={setSlug}
@@ -2300,7 +2334,7 @@ export default function TrainerRunClient() {
               </div>
             </>
           ))}
-          {suggest && (
+          {suggest && (!replayOrigin || linkedCaseKeys?.includes(suggest.k)) && (
             <div className="trainer-mark-suggest" data-no-timer>
               <span>
                 {suggest.kind === 'master'
