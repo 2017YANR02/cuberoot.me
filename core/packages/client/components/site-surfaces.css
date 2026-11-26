@@ -446,6 +446,29 @@ body[data-site-scenery] .landing-search-plus-menu.af-glass-surface[data-site-sur
   backdrop-filter: none;
 }
 
+/* Paint glass behind the controls. Filtering the dialog itself composites
+   sharp message text beneath the dock's blur in Chromium. */
+body[data-site-scenery] .site-assistant-dialog[data-site-surface="panel"],
+.site-assistant-compose .site-assistant-input {
+  isolation: isolate;
+  background: transparent;
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+
+body[data-site-scenery] .site-assistant-dialog[data-site-surface="panel"]::before,
+.site-assistant-compose .site-assistant-input::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: inherit;
+  pointer-events: none;
+  background: var(--glass-surface-bg);
+  -webkit-backdrop-filter: var(--glass-filter);
+  backdrop-filter: var(--glass-filter);
+}
+
 /* Composite controls paint their visual surface on a sibling or parent layer. */
 body[data-site-scenery] :is(
   .landing-search-input .landing-search-field,

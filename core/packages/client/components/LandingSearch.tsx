@@ -4,7 +4,8 @@ import { installedGenerativeAiDisabled, useInstalledGenerativeAiDisabled } from 
 import { THEMES } from '@/lib/deskpet-themes';
 import { saveAssistantImages } from '@/lib/site-assistant-images';
 import { getAuthUser } from '@/lib/auth-store';
-import { watchAssistantQueue, assistantQueueRequest, AssistantQueueError } from '@/lib/assistant-queue';
+import { subscribeAssistantQueue } from '@/lib/assistant-queue-subscription';
+import { assistantQueueRequest, AssistantQueueError } from '@/lib/assistant-queue';
 import { defaultReplayAnswer } from '@cuberoot/shared/site-assistant-replay';
 import { useAssistantProvider } from '@/hooks/useAssistantProvider';
 import type { AssistantDeliveryMode, AssistantQueueSnapshot, AssistantDurableInput } from '@cuberoot/shared/site-assistant';
@@ -31,7 +32,7 @@ import { useEntryRouter as useRouter } from '@/hooks/useEntryRouter';
 import dynamic from 'next/dynamic';
 import {
   ImagePlus, Plus, Trophy, BarChart3, Medal, UserRound, Tent, Globe2, Pin, MessageSquare,
-  CalendarDays, LayoutGrid, Wrench, ArrowRight, ArrowUp, X, Square, Search, Clipboard,
+  CalendarDays, LayoutGrid, Wrench, ArrowRight, ArrowUp, Search, Clipboard,
   ScanSearch, BookA, BookOpen, Library, Code as CodeIcon, Mic, Sparkles, type LucideIcon,
 } from '@app-foundation/icons/lucide';
 import { Flag } from '@/components/Flag';
@@ -50,6 +51,7 @@ import {
   type AlgSetHit,
 } from '@/lib/site-search';
 import { detectPasteIntent, type PasteIntent } from '@/lib/smart-paste';
+import { speechInputError } from '@/lib/speech-input-error';
 import { useSpeechToText } from '@/hooks/useSpeechToText';
 import './landing_search.css';
 import { usePanelClamp } from '@/hooks/usePanelClamp';
@@ -58,7 +60,7 @@ import { assistantConversations, assistantOwner, type AssistantConversation } fr
 import { tr } from '@/i18n/tr';
 import { useAuthUser, authActions } from '@/lib/auth-store';
 import SiteAssistantDialog, { SiteAssistantAnswerText, type AssistantTurn } from '@/components/SiteAssistantDialog';
-import { SITE_ASSISTANT_QUESTION_MAX_LENGTH, type AssistantStatus, type AssistantAnswer, type AssistantErrorCode, type AssistantImage } from '@cuberoot/shared/site-assistant';
+import { isAssistantNavigationTarget, assistantOpenTarget, SITE_ASSISTANT_QUESTION_MAX_LENGTH, type AssistantStatus, type AssistantAnswer, type AssistantErrorCode, type AssistantImage } from '@cuberoot/shared/site-assistant';
 import { ASSISTANT_ERROR_TEXT } from '@/lib/site-assistant-errors';
 import { useAssistantThinkingMode } from '@/hooks/useAssistantThinkingMode';
 import { assistantImageHistory, sendAssistantEvent } from '@/lib/site-assistant-request';
@@ -122,18 +124,6 @@ export type LandingSearchCard = SiteSearchCard;
 
 const RECON_INITIAL_CAP = 10;
 const COMP_INITIAL_CAP = 10;
-
-const SPEECH_ERRORS: Record<string, { zh: string; en: string }> = {
-  unsupported: { zh: '此浏览器不支持网页语音输入，请使用键盘上的听写功能或打字搜索。', en: 'This browser does not support voice input. Use keyboard dictation or type your search.' },
-  'not-allowed': { zh: '无法使用麦克风，请检查网站和系统的麦克风权限。', en: 'Microphone access was denied. Check microphone permissions for this site and your system.' },
-  'audio-capture': { zh: '无法获取麦克风声音，请检查输入设备。', en: 'Cannot capture audio. Check your microphone input device.' },
-  network: { zh: '无法连接语音识别服务，请重试，或使用键盘上的听写功能。', en: 'Cannot connect to speech recognition. Retry or use keyboard dictation.' },
-  'no-speech': { zh: '没有识别到文字，请检查麦克风是否静音、输入设备是否正确，然后重试。', en: 'No words were recognized. Check that the correct microphone is selected and unmuted, then retry.' },
-  timeout: { zh: '语音识别长时间没有返回结果，已停止。请重试，或使用键盘上的听写功能。', en: 'Speech recognition did not respond in time and has stopped. Retry or use keyboard dictation.' },
-  'language-not-supported': { zh: '语音服务不支持当前语言，请使用键盘上的听写功能。', en: 'The speech service does not support this language. Use keyboard dictation.' },
-  'service-not-allowed': { zh: '浏览器的语音识别服务不可用，请使用键盘上的听写功能或打字搜索。', en: 'The browser speech service is unavailable. Use keyboard dictation or type your search.' },
-  aborted: { zh: '语音识别已中断，请重试。', en: 'Speech recognition was interrupted. Please retry.' },
-};
 
 const PLACEHOLDERS_ZH = [
   '今天从哪里开始?',
@@ -277,15 +267,11 @@ export default function LandingSearch({
     onQueryChange?.(value);
   }, [controlledQuery, onQueryChange, workspaceEntry, owner, rememberDraft]);
   const [open, setOpen] = useState(false);
-  const [voiceMode, setVoiceMode] = useState(false);
-  const [voiceText, setVoiceText] = useState('');
-  const [voiceAction, setVoiceAction] = useState<'stop' | 'send' | null>(null);
-  const { listening, waveform, waveformOffset, status: micStatus, error: micError, microphone, start: micStart, stop: micStop, cancel: micCancel } = useSpeechToText({
-    visualizeAudio: true,
-    continuous: true,
+  const { listening, status: micStatus, error: micError, microphone, start: micStart, stop: micStop, cancel: micCancel } = useSpeechToText({
     lang: isZh ? 'zh-CN' : 'en-US',
-    onResult: (text) => { setVoiceText(text); },
+    onResult: text => { setQuery(text); setOpen(true); },
   });
+  const micLabel = listening ? tr({ zh: '停止录音', en: 'Stop dictation' }) : tr({ zh: '语音输入', en: 'Voice input' });
   const [plusMenuOpen, setPlusMenuOpen] = useState(false);
   const plusMenuRef = useRef<HTMLDivElement>(null);
   usePanelClamp(plusMenuOpen, plusMenuRef);
@@ -397,6 +383,31 @@ export default function LandingSearch({
     onConversationChange?.({ turns: assistantTurns, conversationId: assistantConversation.current });
   }, [assistantTurns, onConversationChange]);
 
+  // Only this mounted chat may consume its own fresh, explicit open request.
+  // Restored turns, background completions, polling and Back never arm it.
+  const navigationRequest=useRef<{messageId:string;conversationId:string;href:string}|null>(null);
+  useEffect(()=>{
+    const request=navigationRequest.current;
+    if (!request) return;
+    if (!conversation?.active || document.hidden || request.href!==window.location.href
+      || request.conversationId!==assistantConversation.current) {navigationRequest.current=null;return;}
+    const turn=assistantTurns.find(turn=>turn.messageId===request.messageId);
+    if (!turn || !turn.endState) return;
+    navigationRequest.current=null;
+    const result=turn.result, action=result?.actions?.[0];
+    if (turn.endState!=='complete' || turn.targetId || turn.partial || result?.navigation!=='open'
+      || result.actions?.length!==1 || !action || !isAssistantNavigationTarget(action.href)
+      || !result.sources.some(s=>s.id===action.id && s.href===action.href)) return;
+    router.push(langPrefix+action.href);
+  },[assistantTurns,conversation?.active,router,langPrefix]);
+  useEffect(()=>{
+    const cancel=()=>{navigationRequest.current=null;};
+    const visibility=()=>{if(document.hidden)cancel();};
+    window.addEventListener('pagehide',cancel);
+    document.addEventListener('visibilitychange',visibility);
+    return ()=>{cancel();window.removeEventListener('pagehide',cancel);document.removeEventListener('visibilitychange',visibility);};
+  },[owner,conversation?.id]);
+
   const queueActivity=useRef(false);
   const applyQueue=useCallback((snapshot:AssistantQueueSnapshot)=>{
     if(latestSnapshot.current.id===snapshot.conversationId && latestSnapshot.current.revision>snapshot.revision)return;
@@ -440,64 +451,17 @@ export default function LandingSearch({
   },[setAssistantTurns]);
   useEffect(()=>{
     if(!durableId || !assistantUser?.uid)return;
-    const controller=new AbortController();let timer:ReturnType<typeof setTimeout>|undefined;
-    const uid=assistantUser.uid;
-    let reading=false,again=false,connected=false,active=false,first=true;
-    let stream:AbortController|undefined,reconnectAfter=0;
-    let wakeScheduled=false;
-    const schedule=(ms:number)=>{
-      clearTimeout(timer);
-      wakeScheduled=ms===35;
-      timer=setTimeout(()=>{wakeScheduled=false;void poll();},ms);
-    };
-    const wake=()=>{
-      if(controller.signal.aborted)return;
-      if(reading)again=true;
-      else if(!wakeScheduled)schedule(35);
-    };
-    const listen=()=>{
-      if(stream || !active || conversation?.active===false || Date.now()<reconnectAfter)return;
-      const child=new AbortController();
-      stream=child;
-      void watchAssistantQueue(durableId,AbortSignal.any([controller.signal,child.signal]),snapshot=>{
-        if(controller.signal.aborted || child.signal.aborted || getAuthUser()?.uid!==uid)return;
-        connected=true;
-        if(!snapshot){wake();return;}
-        if(latestSnapshot.current.id===durableId && latestSnapshot.current.revision>snapshot.revision)return;
-        active=!!snapshot.activeId || (!snapshot.paused && snapshot.messages.some(message=>message.state==='queued'));
-        if(browserTiming.current)browserTiming.current.timing.transport='sse';
+    const uid = assistantUser.uid;
+    return subscribeAssistantQueue(durableId, {
+      initialActive: queueActivity.current,
+      background: conversation?.active === false,
+      isCurrentOwner: () => getAuthUser()?.uid === uid,
+      revision: () => latestSnapshot.current.id === durableId ? latestSnapshot.current.revision : undefined,
+      onSnapshot: (snapshot, transport) => {
+        if (transport === 'sse' && browserTiming.current) browserTiming.current.timing.transport = 'sse';
         applyQueue(snapshot);
-        if(!active){stream=undefined;connected=false;child.abort();}
-      }).catch(()=>{}).finally(()=>{
-        if(stream!==child)return;
-        stream=undefined;connected=false;reconnectAfter=Date.now()+5000;wake();
-      });
-    };
-    const poll=async()=>{
-      if(reading || controller.signal.aborted)return;
-      reading=true;
-      try {
-        const data=await assistantQueueRequest(durableId,'',undefined,AbortSignal.any([controller.signal,AbortSignal.timeout(15_000)]),undefined,!first && latestSnapshot.current.id===durableId?latestSnapshot.current.revision:undefined);
-        first=false;
-        if(controller.signal.aborted || getAuthUser()?.uid!==uid)return;
-        if(data && 'messages' in data && !(latestSnapshot.current.id===durableId && latestSnapshot.current.revision>data.revision)) {
-          active=!!data.activeId || (!data.paused && data.messages.some(message=>message.state==='queued'));
-          applyQueue(data);
-          if(!active){stream?.abort();stream=undefined;connected=false;}
-        }
-        listen();
-      } catch { /* The durable snapshot remains available on reconnect. */ }
-      finally {
-        reading=false;
-        if(!controller.signal.aborted)schedule(again?35:!active || connected?10000:conversation?.active===false?5000:1000);
-        again=false;
-      }
-    };
-    // Always read the initial full state, including when a prior effect consumed
-    // its revision before this subscription attached.
-    active=!!queueActivity.current;
-    void poll();
-    return()=>{controller.abort();stream?.abort();clearTimeout(timer);};
+      },
+    });
   },[durableId,assistantUser?.uid,applyQueue,queueRefresh,conversation?.active]);
   const stopAssistant=useCallback(async()=>{
     const id=assistantConversation.current,uid=getAuthUser()?.uid;if(!id)return true;
@@ -530,7 +494,8 @@ export default function LandingSearch({
       setAuthNotice(tr({ zh: '无法保存问题，请允许浏览器存储后重试。', en: 'Could not save your question. Allow browser storage and try again.' }));
       return false;
     }
-    micStop(); setOpen(false);
+    if (listening) micCancel();
+    setOpen(false);
     if (assistantUser) {
       sessionStorage.setItem('wca_oauth_intent', 'link');
       authActions.loginWithWca(assistantReturnPath());
@@ -558,7 +523,8 @@ export default function LandingSearch({
     if(workspaceEntry) {
       const chat=ensureAssistantConversation(owner),attachments=images.length?images:chat.snapshot.images;
       if((!question&&!attachments.length)||question.length>SITE_ASSISTANT_QUESTION_MAX_LENGTH)return false;
-      micStop();setOpen(false);setPlusMenuOpen(false);
+      if (listening) micCancel();
+      setOpen(false);setPlusMenuOpen(false);
       assistantConversations.submit(owner,chat.id,question,attachments);router.push(`${langPrefix}/chat`);return true;
     }
     if((!question&&!images.length)||question.length>SITE_ASSISTANT_QUESTION_MAX_LENGTH)return false;
@@ -569,13 +535,16 @@ export default function LandingSearch({
       const result=defaultReplayAnswer(question,lang);
       if(result) {
         const completedAt=Date.now();
-        setAssistantTurns([{question,result,endState:'complete',createdAt:completedAt,finishedAt:completedAt}]);
+        const source = conversation?.initial.replayDraft;
+        const replayReport = source?.question === question ? source.report : undefined;
+        setAssistantTurns([{question,result,replayReport,endState:'complete',createdAt:completedAt,finishedAt:completedAt}]);
         setAssistantAnswer(result);
         setAssistantError(null);
         setAssistantDialog(true);
         return true;
       }
     }
+    navigationRequest.current=null;
     submitting.current=true;const epoch=submissionEpoch.current,ownerAtSubmit=owner,submitStarted=performance.now();
     const controller=new AbortController();assistantRequest.current=controller;
     try {
@@ -596,6 +565,11 @@ export default function LandingSearch({
         onConversationChange?.({delivery,images:saved});
       }
       if(epoch!==submissionEpoch.current || assistantOwner(getAuthUser())!==ownerAtSubmit)return false;
+      if (!_replaceLast && !images.length && !references.length && conversation?.active && !document.hidden
+        && !conversation.initial.delivery && /^\/(?:zh\/|en\/)?chat\/?$/.test(window.location.pathname)
+        && assistantOpenTarget(question)) {
+        navigationRequest.current={messageId:delivery.id,conversationId:id,href:window.location.href};
+      }
       await assistantQueueRequest(id,'messages',{id:delivery.id,mode,input:delivery.input},AbortSignal.any([controller.signal,AbortSignal.timeout(20_000)]));
       if(epoch!==submissionEpoch.current || assistantOwner(getAuthUser())!==ownerAtSubmit)return false;
       if(mode==='queue' || !queueSnapshot?.activeId)browserTiming.current={messageId:delivery.id,started:submitStarted,timing:{wasHidden:document.hidden,transport:'json'}};
@@ -603,7 +577,8 @@ export default function LandingSearch({
       setQueueRefresh(value=>value+1);
       pendingDelivery.current=undefined;
       onConversationChange?.({delivery:undefined});
-      setAssistantDialog(true);micStop();setAssistantError(null);setStopUnconfirmed(false);
+      if (listening) micCancel();
+      setAssistantDialog(true);setAssistantError(null);setStopUnconfirmed(false);
       const snapshot=await assistantQueueRequest(id).catch(()=>undefined);
       if(epoch===submissionEpoch.current && snapshot && 'messages' in snapshot)applyQueue(snapshot);
       return true;
@@ -633,8 +608,8 @@ export default function LandingSearch({
     setOpen(false);
     setPlusMenuOpen(false);
     textInputRef.current?.blur();
-    micStop();
-  }, [workspaceEntry, workspace.open]);
+    if (listening) micCancel();
+  }, [workspaceEntry, workspace.open, listening, micCancel]);
 
   useEffect(() => {
     setPlaceholderDay(dayOfYear(new Date()));
@@ -670,23 +645,7 @@ export default function LandingSearch({
     return () => document.removeEventListener('mousedown', onDown);
   }, [open]);
 
-  // Wait for stop() to deliver its final transcript before editing or sending.
-  useEffect(() => {
-    if (!voiceMode || listening) return;
-    if (micError) {
-      setVoiceMode(false);
-      setVoiceAction(null);
-      if (voiceText) setQuery(voiceText);
-      return;
-    }
-    if (!voiceAction) return;
-    setVoiceMode(false);
-    setVoiceAction(null);
-    if (voiceAction === 'send') void askAssistant(voiceText);
-    else { setQuery(voiceText); setOpen(true); }
-  });
-
-  const showDropdown = !voiceMode && (persistentResults || open) && q !== '';
+  const showDropdown = (persistentResults || open) && q !== '';
 
   // Prepend [lang] segment to internal paths. Vite uses ?lang= query;
   // Next uses /<lang>/* path prefix.
@@ -1248,7 +1207,7 @@ export default function LandingSearch({
         </div>
   );
 
-  const assistantView = <SiteAssistantDialog onAlgorithmChange={(index,artifact,card,expected,next)=>setAssistantTurns(turns=>turns.map((turn,i)=> {
+  const assistantView = <SiteAssistantDialog practiceChatId={conversation?.id} onAlgorithmChange={(index,artifact,card,expected,next)=>setAssistantTurns(turns=>turns.map((turn,i)=> {
     if(i!==index || !turn.result) return turn;
     const result=replaceAssistantAlgorithm(turn.result,artifact,card,expected,next);
     return result===turn.result ? turn : {...turn,result};
@@ -1260,32 +1219,7 @@ export default function LandingSearch({
   return (
     <div className={`landing-search${persistentResults ? ' landing-search--page' : ''}`} ref={wrapRef} style={workspaceEntry && workspace.open ? { display: 'none' } : undefined}>
       <div className="landing-search-controls">
-        {voiceMode ? (
-          <div className="af-glass-surface landing-search-input landing-search-voice" data-af-glass-optics={inputOptics} onKeyDown={event => {
-            if (event.key === 'Escape') { micCancel(); setVoiceMode(false); setVoiceAction(null); }
-          }}>
-            <button type="button" className="landing-search-voice-button" aria-label={tr({ zh: '取消语音输入', en: 'Cancel voice input' })}
-              onClick={() => { micCancel(); setVoiceMode(false); setVoiceAction(null); setVoiceText(''); }}><X size={22} /></button>
-            <div className="landing-search-wave" role="status"
-              aria-label={micStatus === 'starting' ? tr({ zh: '正在启动语音输入', en: 'Starting voice input' })
-                : micStatus === 'stopping' ? tr({ zh: '正在识别', en: 'Transcribing' })
-                : listening ? tr({ zh: '正在聆听', en: 'Listening' }) : tr({ zh: '语音输入已结束', en: 'Voice input finished' })}>
-              <div className="landing-search-wave-track" aria-hidden="true" style={{ transform: `translateX(${-waveformOffset * 100 / waveform.length}%)` }}>
-                {waveform.map((amplitude, index) => <span key={index} style={{ height: `${3 + amplitude * 25}px` }} />)}
-              </div>
-            </div>
-            <Tooltip content={tr({ zh: '停止听写', en: 'Stop dictation' })}>{(tip) => <button {...tip} type="button" className="landing-search-voice-button landing-search-voice-stop" disabled={voiceAction !== null}
-              aria-label={tr({ zh: '停止并编辑文字', en: 'Stop and edit text' })}
-              onClick={() => { setVoiceAction('stop'); micStop(); }}>
-              <Square size={15} fill="currentColor" />
-            </button>}</Tooltip>
-            <button type="button" className="landing-search-voice-button landing-search-voice-send"
-              disabled={voiceAction !== null || !voiceText.trim() || voiceText.trim().length > SITE_ASSISTANT_QUESTION_MAX_LENGTH || assistantBusy}
-              aria-label={tr({ zh: '发送语音提问', en: 'Send voice question' })}
-              onClick={() => { setVoiceAction('send'); micStop(); }}><ArrowUp size={24} /></button>
-          </div>
-        ) : (
-        // allow-manual-search: Results update on change. The form identifies the field to password managers.
+        {/* allow-manual-search: Results update on change. The form identifies the field to password managers. */}
         <form
           className="af-glass-surface landing-search-input"
           data-af-glass-optics={inputOptics}
@@ -1323,7 +1257,7 @@ export default function LandingSearch({
             autoFocus={autoFocus}
             className="landing-search-field"
             value={query}
-            onChange={e => { setQuery(e.target.value); setOpen(true); }}
+            onChange={e => { if (listening) micCancel(); setQuery(e.target.value); setOpen(true); }}
             onFocus={() => setOpen(true)}
             onPaste={e => {
               const intent = detectPasteIntent(e.clipboardData.getData('text'));
@@ -1354,20 +1288,21 @@ export default function LandingSearch({
                 else beginAssistantAuth(query);
               }
             }}
-            placeholder={searchOnly ? tr({ zh: '全站搜索', en: 'Site search' }) : micStatus === 'starting' ? tr({ zh: '正在启动语音输入…', en: 'Starting voice input…' })
+            placeholder={searchOnly ? tr({ zh: '全站搜索', en: 'Site search' }) : micStatus === 'awaiting-permission' ? tr({ zh: '请允许使用麦克风…', en: 'Allow microphone access…' })
+              : micStatus === 'starting' ? tr({ zh: '正在启动语音输入…', en: 'Starting voice input…' })
               : micStatus === 'stopping' ? tr({ zh: '正在等待识别结果…', en: 'Waiting for speech results…' })
                 : listening ? tr({ zh: '请说…', en: 'Listening…' }) : assistantAllowed ? rotatingPlaceholder(isZh, placeholderDay) : authPlaceholder}
             aria-label={tr({ zh: '全站搜索', en: 'Site search' })}
           />
 
           {/* allow-manual-search: Dictation only fills speech text; typed search still updates through onChange. */}
-          {!searchOnly && <Tooltip content={tr({ zh: '听写', en: 'Dictate' })}>{(tip) => <button {...tip}
+          {!searchOnly && <Tooltip content={micLabel}>{(tip) => <button {...tip}
             type="button"
-            className="landing-search-mic landing-search-dictation"
+            className={`landing-search-mic landing-search-dictation${listening ? ' is-listening' : ''}`}
             aria-pressed={listening}
             disabled={micStatus === 'stopping'}
-            onClick={() => { setVoiceText(''); setVoiceAction(null); setVoiceMode(true); setOpen(false); setPlusMenuOpen(false); micStart(); }}
-            aria-label={tr({ zh: '听写', en: 'Dictate' })}
+            onClick={() => { if (listening) micStop(); else { setOpen(true); setPlusMenuOpen(false); micStart(); } }}
+            aria-label={micLabel}
           >
             <Mic size={16} strokeWidth={1.75} />
           </button>}</Tooltip>}
@@ -1376,7 +1311,7 @@ export default function LandingSearch({
               aria-label={assistantAllowed ? tr({ zh: '提问', en: 'Ask' }) : authSendLabel} title={assistantAllowed ? tr({ zh: '提问（回车）', en: 'Ask (Enter)' }) : authSendLabel}>
               {assistantAllowed ? <ArrowUp size={20} strokeWidth={1.75} /> : authSendLabel}
             </button>}
-        </form>)}
+        </form>
         {workspaceEntry && showChatLink && (
           <Link href="/chat" className="landing-search-chat" aria-label={chatLinkLabel} title={chatLinkLabel}>
             <img src={THEMES.rootbeast.thumb} alt="" width={32} height={32}
@@ -1412,7 +1347,7 @@ export default function LandingSearch({
       {(micError || (listening && microphone)) && (
         <p className="landing-search-speech-status" role="status">
           {microphone && <span>{tr({ zh: '麦克风：', en: 'Microphone: ' })}{microphone}{micError ? ' · ' : ''}</span>}
-          {micError && tr(SPEECH_ERRORS[micError] ?? SPEECH_ERRORS['service-not-allowed'])}
+          {micError && tr(speechInputError(micError))}
         </p>
       )}
 

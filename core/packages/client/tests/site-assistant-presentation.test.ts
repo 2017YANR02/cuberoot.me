@@ -39,7 +39,7 @@ async function render(answer:AssistantAnswer,overrides:Partial<ComponentProps<ty
   const root=createRoot(host);roots.push(root);
   const props:ComponentProps<typeof SiteAssistantDialog>={
     turns:[{question:'历年世锦赛时间',result:answer}],busy:false,error:null,lang:'zh',draft:'',images:[],onImagesChange:vi.fn(),
-    onDraftChange:vi.fn(),onFeedback:vi.fn(),onAsk:vi.fn(),onStop:vi.fn(),onClose:vi.fn(),onNew:vi.fn(),
+    onDraftChange:vi.fn(),onFeedback:vi.fn(),onResume:vi.fn(),onAsk:vi.fn(),onStop:vi.fn(),onClose:vi.fn(),onNew:vi.fn(),
     provider:'bailian',onProviderChange:vi.fn(),thinking:'auto',onThinkingChange:vi.fn(),
     ...overrides,
   };
@@ -73,6 +73,67 @@ it('opens the real 2×2 diagram on a saved text-only EG1 formula card',async()=>
 });
 
 describe('assistant general conversation controls',()=>{
+  it('submits the selected example once and keeps it for retry if delivery fails',async()=>{
+    let rejectDelivery!: (accepted:boolean)=>void;
+    const onAsk=vi.fn(()=>new Promise<boolean>(resolve=>{rejectDelivery=resolve;}));
+    const {onDraftChange}=await render(result,{turns:[],onAsk});
+    const example=document.querySelector<HTMLButtonElement>('.site-assistant-featured button')!;
+    await act(async()=>{example.click();example.click();});
+    expect(onAsk).toHaveBeenCalledExactlyOnceWith(example.textContent,false,[],[],'queue');
+    await act(async()=>rejectDelivery(false));
+    expect(onDraftChange).toHaveBeenCalledWith(example.textContent);
+  });
+  it('opens the image picker without sending and submits the selected image with its own question',async()=>{
+    const image={mediaType:'image/png' as const,data:'fixture'};
+    vi.mocked(prepareAssistantImage).mockResolvedValue(image);
+    const props=await render(result,{turns:[]});
+    expect(document.querySelectorAll('.site-assistant-featured button')).toHaveLength(4);
+    const details=document.querySelector('details.site-assistant-more-examples')!;
+    expect(details.hasAttribute('open')).toBe(true);
+    await act(async()=>details.querySelector('summary')!.click());
+    expect(details.hasAttribute('open')).toBe(false);
+    await act(async()=>details.querySelector('summary')!.click());
+    expect(details.hasAttribute('open')).toBe(true);
+    const question=details.querySelector<HTMLButtonElement>('[aria-label^="选择图片"]')!;
+    const picker=document.querySelector<HTMLInputElement>('input[type=file]')!;
+    const choose=vi.spyOn(picker,'click');
+    await act(async()=>question.click());
+    expect(choose).toHaveBeenCalledOnce();
+    expect(props.onAsk).not.toHaveBeenCalled();
+    Object.defineProperty(picker,'files',{value:[new File(['a'],'a.png',{type:'image/png'})]});
+    await act(async()=>picker.dispatchEvent(new Event('change',{bubbles:true})));
+    expect(props.onAsk).toHaveBeenCalledExactlyOnceWith(question.textContent,false,[image],[],'queue');
+  });
+  it('attaches resume to the failed root even with a later queued question',async()=>{
+    const onResume=vi.fn();
+    const props=await render(result,{onResume,paused:true,turns:[
+      {messageId:'failed',question:'first',deliveryState:'error',deliveryError:'timeout',endState:'error'},
+      {messageId:'next',question:'second',deliveryState:'queued'},
+    ]});
+    const turns=document.querySelectorAll('.site-assistant-turn');
+    await act(async()=>turns[0].querySelector<HTMLButtonElement>('.site-assistant-recovery button')!.click());
+    expect(turns[1].querySelector('.site-assistant-recovery')).toBeNull();
+    expect(onResume).toHaveBeenCalledOnce();
+    expect(props.onAsk).not.toHaveBeenCalled();
+  });
+  it('labels the new chat explicitly when a paused legacy turn has no resumable message ID',async()=>{
+    const props=await render(result,{paused:true,error:'timeout',turns:[{question:'Legacy question',endState:'error'}]});
+    const retry=document.querySelector<HTMLButtonElement>('.site-assistant-recovery button')!;
+    expect(retry.textContent).toBe('在新对话重新提问');
+    await act(async()=>retry.click());
+    expect(props.onAsk).toHaveBeenCalledWith('Legacy question',true,undefined,undefined,'parallel');
+    expect(props.onResume).not.toHaveBeenCalled();
+  });
+  it('starts sign-in and send with the selected guest question',async()=>{
+    const onAuthSend=vi.fn();
+    const {onAsk,onDraftChange}=await render(result,{turns:[],authSendLabel:'登录并发送',onAuthSend});
+    const example=document.querySelector<HTMLButtonElement>('.site-assistant-featured button')!;
+    await act(async()=>example.click());
+    expect(onDraftChange).toHaveBeenCalledWith(example.textContent);
+    expect(onAsk).not.toHaveBeenCalled();
+    expect(onAuthSend).toHaveBeenCalledExactlyOnceWith(example.textContent,[],[]);
+    expect(example.getAttribute('aria-label')).toContain('登录并发送');
+  });
   it('sends a frozen text selection while running and preserves the draft if acceptance fails',async()=>{
     const onAsk=vi.fn().mockResolvedValue(false),onDraftChange=vi.fn();
     const turn={messageId:'run-one',answerVersion:3,question:'统计 2020—2025 年中国选手的三阶成绩',partial:true,result:{answer:'共涉及 128 场比赛。',sources:[]}};
@@ -108,6 +169,17 @@ describe('assistant general conversation controls',()=>{
     await act(async()=>roots.at(-1)!.render(createElement(SiteAssistantDialog,{...props,busy:false,turns:[{...turn,endState:'stopped'}]})));
     expectHidden();
   });
+  it.each([true,false])('uses the motion preference for a jump to a quoted message (%s)',async reduced=>{
+    const turn={messageId:'source',question:'Original',result};
+    await render(result,{turns:[turn,{question:'Follow-up',references:[{messageId:'source:user',messageVersion:1,role:'user',selectedText:'Original',sourceStatus:'complete'}]}]});
+    const original=document.querySelector<HTMLElement>('.site-assistant-turn')!;
+    original.scrollIntoView=vi.fn();
+    vi.stubGlobal('matchMedia',vi.fn(()=>({matches:reduced})));
+    try {
+      await act(async()=>document.querySelector<HTMLButtonElement>('.site-assistant-quote-content')!.click());
+      expect(original.scrollIntoView).toHaveBeenCalledWith({block:'center',behavior:reduced?'instant':'smooth'});
+    } finally {vi.unstubAllGlobals();}
+  });
   it('quotes an exact selection from an older message outside the history window',async()=>{
     const turns=Array.from({length:12},(_,i)=>({messageId:`turn-${i}`,question:`Question ${i}`,result:{answer:`Answer ${i}: exact phrase.`,sources:[]}}));
     const onAsk=vi.fn().mockResolvedValue(true);
@@ -138,7 +210,7 @@ describe('assistant general conversation controls',()=>{
     await act(async()=>document.querySelector<HTMLButtonElement>('.site-assistant-compose button[type="submit"]')!.click());
     expect(onAsk).toHaveBeenCalledWith('next task',false,[],[],'queue');
     await act(async()=>roots.at(-1)!.render(createElement(SiteAssistantDialog,{...props,busy:false,paused:true})));
-    expect(document.body.textContent).toContain('任务和队列已暂停');expect(document.body.textContent).toContain('恢复执行');
+    expect(document.body.textContent).toContain('任务和队列已暂停');expect(document.body.textContent).toContain('恢复队列');
   });
   it('offers Qwen and DeepSeek in the composer',async()=>{
     const props=await render({answer:'',sources:[]},{turns:[],embedded:true});
@@ -180,6 +252,17 @@ describe('assistant general conversation controls',()=>{
     expect(document.querySelector('.site-assistant-progress .more-toggle')?.getAttribute('aria-expanded')).toBe('true');
     expect(document.querySelectorAll('.site-assistant-progress-steps li')).toHaveLength(4);
     expect(document.querySelector('.site-assistant-progress-steps')?.textContent).toContain('已读取 2 条来源');
+  });
+  it('summarizes incomplete query evidence before a later planning timeout, with all steps still available',async()=>{
+    await render(result,{error:'timeout',turns:[{question:'查比赛',deliveryError:'timeout',endState:'error',progress:[
+      {id:1,phase:'tool',state:'partial',tool:'analysis_query',elapsedMs:100,reused:true},
+      {id:2,phase:'model',activity:'plan',state:'running',elapsedMs:200},
+    ]}]});
+    const heading=document.querySelector('.site-assistant-progress-heading')!;
+    expect(heading.textContent).toContain('资料不完整');
+    expect(heading.textContent).toContain('可缩小范围后再查');
+    await act(async()=>heading.querySelector<HTMLButtonElement>('button')!.click());
+    expect(document.querySelectorAll('.site-assistant-progress-steps li')).toHaveLength(2);
   });
   it('identifies the timed-out action in one line and suppresses an empty unfinished draft',async()=>{
     await render({answer:'',sources:[]},{busy:false,error:'timeout',turns:[{

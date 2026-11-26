@@ -123,3 +123,28 @@ it('disables click and hover, closes an open menu, and allows selection after re
   expect(selections).toEqual(['SH']);
   expect(popup()).toBeNull();
 });
+
+it('opens on the selected option and skips disabled options during keyboard selection', async () => {
+  await open();
+  const onChange = vi.fn();
+  await act(async () => root.render(createElement(CompactSelect<string>, {
+    label: 'Home', ariaLabel: 'Starting grip', value: 'home', keyboardListNavigation: true,
+    items: [{ value: 'down', label: 'Down' }, { value: 'home', label: 'Home' },
+      { value: 'half', label: 'Half', disabled: true }, { value: 'up', label: 'Up' }],
+    onChange,
+  })));
+  const trigger = host.querySelector('button')!;
+  await act(async () => trigger.click()); // Close the popup opened by the fixture.
+  trigger.focus();
+  const press = (key: string) => act(async () => {
+    document.activeElement!.dispatchEvent(new KeyboardEvent('keydown', { key, bubbles: true }));
+  });
+  await press('ArrowDown');
+  expect(document.activeElement?.textContent).toBe('Home');
+  await press('ArrowDown');
+  expect(document.activeElement?.textContent).toBe('Up');
+  await act(async () => (document.activeElement as HTMLButtonElement).click());
+  expect(onChange).toHaveBeenCalledWith('up');
+  expect(popup()).toBeNull();
+  expect(document.activeElement).toBe(trigger);
+});

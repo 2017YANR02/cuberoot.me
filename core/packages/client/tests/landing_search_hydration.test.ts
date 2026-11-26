@@ -16,6 +16,7 @@ vi.mock('@/lib/auth-store', () => ({ useAuthUser: () => authState.user, getAuthU
 vi.mock('@/lib/admin-api', async original => ({ ...await original<object>(), authHeaders: () => ({ 'Content-Type': 'application/json', Authorization: 'Bearer session-test' }) }));
 
 const routeState = vi.hoisted(() => ({ lang: 'zh' as 'zh' | 'en' }));
+const dictation = vi.hoisted(() => ({ onResult: undefined as ((text: string, final: boolean) => void) | undefined }));
 const speechState = vi.hoisted(() => ({ supported: false, listening: false, status: 'idle', error: null as string | null, microphone: null as string | null, start: vi.fn(), stop: vi.fn() }));
 
 vi.mock('next/dynamic', () => ({ default: () => () => null }));
@@ -30,7 +31,12 @@ vi.mock('next/navigation', () => ({
   useRouter: () => ({ push: vi.fn() }),
 }));
 vi.mock('@/hooks/useSpeechToText', () => ({
-  useSpeechToText: () => ({ ...speechState, waveform: [0], waveformOffset: 0 }),
+  useSpeechToText: (options: typeof dictation) => { dictation.onResult = options.onResult; return speechState; },
+}));
+// Provider discovery has its own hook tests; these transport fixtures describe
+// chat replies and must not be consumed by the independent metadata request.
+vi.mock('@/hooks/useAssistantProvider', () => ({
+  useAssistantProvider: () => ({ provider: 'bailian', providerForSend: async () => 'bailian', setProvider: vi.fn(), openaiAvailable: false }),
 }));
 vi.mock('@/lib/site-search', () => ({
   INITIAL_RENDER_CAP: 10,
@@ -110,7 +116,8 @@ describe('LandingSearch placeholder hydration', () => {
 
       await act(async () => host.querySelector<HTMLButtonElement>('.landing-search-dictation')!.click());
       expect(host.querySelectorAll(lens)).toHaveLength(1);
-      expect(host.querySelector(lens)).toBe(host.querySelector('.landing-search-voice'));
+      expect(host.querySelector(lens)).toBe(host.querySelector('form.landing-search-input'));
+      expect(host.querySelector('.landing-search-field')).toBeTruthy();
     } finally {
       await act(async () => root.unmount());
     }
@@ -257,7 +264,7 @@ describe('LandingSearch placeholder hydration', () => {
       expect(server.posts.map(post=>post.body.input.question)).toEqual(['怎么数帧','只讲操作','最后用两行']);
       expect(server.snapshot.messages.slice(1).every(message=>message.targetId===server.posts[0].body.id)).toBe(true);
       await click('button[aria-label="停止"]');expect(server.snapshot.paused).toBe(true);expect(document.body.textContent).toContain('回答未完成');
-      await act(async()=>Array.from(document.querySelectorAll<HTMLButtonElement>('button')).find(button=>button.textContent==='恢复执行')!.click());await settle();expect(server.snapshot.paused).toBe(false);expect(server.posts).toHaveLength(3);
+      await act(async()=>Array.from(document.querySelectorAll<HTMLButtonElement>('button')).find(button=>button.textContent==='继续当前任务')!.click());await settle();expect(server.snapshot.paused).toBe(false);expect(server.posts).toHaveLength(3);
       await server.update(snapshot=>{snapshot.activeId=undefined;Object.assign(snapshot.messages[0],{state:'completed',answer:{answer:'第一行\n第二行',sources:[]},updatedAt:Date.now()});});
       expect(document.querySelector('.site-assistant-prose')?.textContent).toContain('第一行');
     }finally{await chat.close();}
@@ -432,6 +439,33 @@ describe('LandingSearch placeholder hydration', () => {
     expect(host.querySelector('.landing-search-header-more')?.getAttribute('href'))
       .toBe(`${prefix}/forum/search?q=${encodeURIComponent('蓝牙')}`);
     expect(host.querySelector('.landing-search-header-more')?.textContent).toBe('+14');
+  });
+
+  it('keeps the homepage field visible and editable while browser dictation returns text', async () => {
+    const host = document.createElement('div');
+    const root = createRoot(host);
+    const render = () => root.render(createElement(LandingSearch, { cards: [], lang: 'zh' }));
+    try {
+      await act(async () => render());
+      const mic = host.querySelector<HTMLButtonElement>('.landing-search-dictation')!;
+      const field = host.querySelector<HTMLInputElement>('.landing-search-field')!;
+      await act(async () => mic.click());
+      expect(speechState.start).toHaveBeenCalled();
+      speechState.listening = true;
+      await act(async () => render());
+      await act(async () => dictation.onResult?.('双人', false));
+      expect(field.value).toBe('双人');
+      expect(host.querySelector('.landing-search-field')).toBe(field);
+      expect(mic.getAttribute('aria-pressed')).toBe('true');
+      await act(async () => mic.click());
+      expect(speechState.stop).toHaveBeenCalled();
+      speechState.listening = false;
+      await act(async () => { dictation.onResult?.('双人计时', true); render(); });
+      expect(field.value).toBe('双人计时');
+      expect(mic.getAttribute('aria-pressed')).toBe('false');
+    } finally {
+      await act(async () => root.unmount());
+    }
   });
 
   it('keeps the controlled URL query when a standalone-search result is opened', async () => {

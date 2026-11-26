@@ -40,6 +40,8 @@ export interface CompactSelectProps<T extends string | number> {
   onPreview?: (value: T | null) => void;
   ariaLabel: string;
   valueText?: string;
+  /** Move focus into a single-column option list when opened from the keyboard. */
+  keyboardListNavigation?: boolean;
   title?: string;
   className?: string;
   triggerClassName?: string;
@@ -89,6 +91,7 @@ export function CompactSelect<T extends string | number>({
   onPreview,
   ariaLabel,
   valueText,
+  keyboardListNavigation = false,
   title,
   className,
   triggerClassName,
@@ -119,6 +122,7 @@ export function CompactSelect<T extends string | number>({
   };
   const triggerRef = useRef<HTMLButtonElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
+  const focusOptionOnOpen = useRef(false);
   const previousOpenRef = useRef(open);
   const close = () => setOpen(false);
   const hasPanelContent = panelContent != null;
@@ -185,6 +189,16 @@ export function CompactSelect<T extends string | number>({
     contentKey: String(items.length) + ':' + hasPanelContent,
   });
 
+  const panelVisible = panelStyle?.visibility === 'visible';
+  useEffect(() => {
+    if (!open || !panelVisible || !focusOptionOnOpen.current) return;
+    focusOptionOnOpen.current = false;
+    const panel = panelRef.current;
+    const option = panel?.querySelector<HTMLButtonElement>('button[role="option"][aria-selected="true"]:enabled')
+      ?? panel?.querySelector<HTMLButtonElement>('button[role="option"]:enabled');
+    option?.focus();
+  }, [open, panelVisible]);
+
   return (
     <div
       className={[
@@ -194,11 +208,33 @@ export function CompactSelect<T extends string | number>({
       ].filter(Boolean).join(' ')}
       data-no-timer={dataNoTimer ? '' : undefined}
       onKeyDown={event => {
-        if (!open || event.key !== 'Escape') return;
+        if (open && event.key === 'Escape') {
+          event.preventDefault();
+          event.stopPropagation();
+          close();
+          triggerRef.current?.focus();
+          return;
+        }
+        if (!keyboardListNavigation) return;
+        if (open && event.key === 'Tab') {
+          triggerRef.current?.focus();
+          close();
+          return;
+        }
+        if (!['ArrowDown', 'ArrowUp', 'Home', 'End'].includes(event.key)) return;
         event.preventDefault();
         event.stopPropagation();
-        close();
-        triggerRef.current?.focus();
+        if (!open) {
+          focusOptionOnOpen.current = true;
+          setOpen(true);
+          return;
+        }
+        const options = Array.from(panelRef.current?.querySelectorAll<HTMLButtonElement>('button[role="option"]:enabled') ?? []);
+        const current = options.indexOf(document.activeElement as HTMLButtonElement);
+        let next = current + (event.key === 'ArrowUp' ? -1 : 1);
+        if (event.key === 'Home') next = 0;
+        if (event.key === 'End') next = options.length - 1;
+        options[Math.max(0, Math.min(options.length - 1, next))]?.focus();
       }}
     >
       <button
@@ -207,7 +243,11 @@ export function CompactSelect<T extends string | number>({
         disabled={disabled}
         type="button"
         className={['compact-select-trigger', unstyledTrigger && 'compact-select-trigger--unstyled', triggerClassName].filter(Boolean).join(' ')}
-        onClick={() => { if (!disabled) setOpen(current => !current); }}
+        onClick={event => {
+          if (disabled) return;
+          focusOptionOnOpen.current = keyboardListNavigation && !open && event.detail === 0;
+          setOpen(current => !current);
+        }}
         onPointerDown={keepEditorFocus}
         onMouseDown={keepEditorFocus}
         onPointerEnter={event => {
@@ -266,8 +306,9 @@ export function CompactSelect<T extends string | number>({
                   onPointerLeave={event => { tip.onPointerLeave?.(event); onPreview?.(null); }}
                   onFocus={event => { tip.onFocus?.(event); if (!item.disabled) onPreview?.(item.value); }}
                   onBlur={event => { tip.onBlur?.(event); onPreview?.(null); }}
-                  onClick={() => {
+                  onClick={event => {
                     if (item.disabled) return;
+                    if (keyboardListNavigation && event.detail === 0) triggerRef.current?.focus();
                     onChange(item.value);
                     if (!panelContainer) close();
                   }}
