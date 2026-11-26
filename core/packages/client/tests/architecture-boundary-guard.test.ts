@@ -64,13 +64,14 @@ describe('architecture boundary guard', () => {
     // One registered offline adapter rebuilds the OpenCV pose bindings.
     // Three assistant evaluation subprocess identities are covered by the two
     // registered resource-supervision contracts.
-    expect(CURRENT).toHaveLength(MANIFEST.legacyFindings.length + 51);
+    // The scramble example regression compiles C++, runs its binary and invokes Python.
+    expect(CURRENT).toHaveLength(MANIFEST.legacyFindings.length + 54);
     expect(MANIFEST.legacyFindings.filter((finding: { rule: string }) => finding.rule === 'shared-root-import')).toHaveLength(139);
     expect(MANIFEST.legacyFindings.filter((finding: { rule: string }) => finding.rule === 'cross-package-alias-import')).toHaveLength(0);
   });
 
   it('keeps every semantic edge contract tied to live repository evidence', () => {
-    expect(MANIFEST.manualContracts).toHaveLength(45);
+    expect(MANIFEST.manualContracts).toHaveLength(46);
     expect(validateManifestSchema(MANIFEST)).toEqual([]);
     expect(validateManualContracts(MANIFEST.manualContracts)).toEqual([]);
     expect(new Set(MANIFEST.manualContracts.map((item: { phase: string }) => item.phase))).toEqual(new Set([
