@@ -57,7 +57,7 @@ describe('community evidence and executable answers', () => {
     expect(invertedScrambleLoop(python.replace('while (valid(moves, size - 1))','while (valid(moves, size))'),'en')).toBeUndefined();
   });
 
-  it.skipIf(spawnSync('c++',['--version']).status!==0)('compiles the published C++ and checks every face transition', () => {
+  it.skipIf(spawnSync('c++',['--version'],{timeout:5000}).status!==0)('compiles the published C++ and checks every face transition', () => {
     const question='My scramble generator uses cout << move. How do I prevent opposing faces repeating more than once, like R L R?';
     const answer=checkedScrambleExample(question,'en')!;
     expect(answer).toContain(cppFaceWalk);
@@ -68,9 +68,9 @@ describe('community evidence and executable answers', () => {
     try {
       const exe=join(dir,'check');
       const main=answer.split('```cpp\n')[1].split('\n```')[0];
-      const compile=(input:string)=>spawnSync('c++',['-std=c++17','-x','c++','-','-o',exe],{input,encoding:'utf8'});
+      const compile=(input:string)=>spawnSync('c++',['-std=c++17','-x','c++','-','-o',exe],{input,encoding:'utf8',timeout:10000});
       expect(compile(main).status).toBe(0);
-      expect(spawnSync(exe,[],{encoding:'utf8'}).stdout.trim().split(/\s+/)).toHaveLength(22);
+      expect(spawnSync(exe,[],{encoding:'utf8',timeout:2000}).stdout.trim().split(/\s+/)).toHaveLength(22);
       const test=cppFaceWalk+`\nint main() {
         for (int a=0; a<6; ++a) for (int b=0; b<6; ++b) for (int c=0; c<6; ++c) {
             bool sameAxis = a/2 == b/2;
@@ -79,9 +79,9 @@ describe('community evidence and executable answers', () => {
         return !(allowedFace(-1,0,1) && allowedFace(0,4,0) && !allowedFace(0,1,0));
       }`;
       expect(compile(test).status).toBe(0);
-      expect(spawnSync(exe).status).toBe(0);
+      expect(spawnSync(exe,[],{timeout:2000}).status).toBe(0);
     } finally { rmSync(dir,{recursive:true,force:true}); }
-  });
+  },30000);
 
   it('distinguishes a positive index from a predecessor, and preserves move suffixes', () => {
     const length='Python cube scramble: more than one item?\nif turns:\n    print(turns[-1])\nturns.append(move)';
@@ -212,7 +212,7 @@ describe('community requests through the public Agent entry', () => {
     const code=pythonMoveDispatch(q,'en')?.split('```python\n')[1]?.split('```')[0];
     expect(code).toBeDefined();
     const check='\nseen=[]\nclass Cube:\n    def up(self, flag=None): seen.append(flag)\nfrom unittest.mock import patch\nwith patch("random.choice", side_effect=[0,1]*25): random_cube(Cube())\nassert seen == [None,"inverted"]*25\n';
-    expect(spawnSync('python3',['-I','-c',code+check]).status).toBe(0);
+    expect(spawnSync('python3',['-I','-c',code+check],{timeout:3000}).status).toBe(0);
   });
 });
 

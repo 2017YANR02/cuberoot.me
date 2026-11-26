@@ -21,6 +21,25 @@
   },
   "manualContracts": [
     {
+      "id": "assistant-scramble-example-regression",
+      "from": "apps/api/tests/site_assistant_community_accuracy.test.ts",
+      "to": "C++17 compiler, temporary test binary and isolated Python interpreter",
+      "phase": "subprocess-native",
+      "mechanism": "Vitest compiles the built-in C++ example and executes it with fixed assertions, then checks the built-in Python dispatch example with a deterministic move sequence.",
+      "owner": "server",
+      "rationale": "Exercise the program text returned by the assistant, including opposite-face transitions and Python method dispatch.",
+      "replacement": "Keep execution confined to the offline regression suite and the source-controlled examples.",
+      "subprocessCalls": [
+        {"file":"apps/api/tests/site_assistant_community_accuracy.test.ts","mechanism":"spawnSync","target":"c++","count":2},
+        {"file":"apps/api/tests/site_assistant_community_accuracy.test.ts","mechanism":"spawnSync","target":"<dynamic>","count":2},
+        {"file":"apps/api/tests/site_assistant_community_accuracy.test.ts","mechanism":"spawnSync","target":"python3","count":1}
+      ],
+      "evidence": [
+        {"file":"core/apps/api/tests/site_assistant_community_accuracy.test.ts","contains":"const exe=join(dir,'check')"},
+        {"file":"core/apps/api/tests/site_assistant_community_accuracy.test.ts","contains":"spawnSync('python3',['-I','-c',code+check],{timeout:3000})"}
+      ]
+    },
+    {
       "id": "video-recon-opencv-wasm-build",
       "from": "packages/client/lib/video-recon/pose-fitter/tools/build-opencv-wasm.mjs",
       "to": "CMake and the operator-provided Emscripten SDK",
