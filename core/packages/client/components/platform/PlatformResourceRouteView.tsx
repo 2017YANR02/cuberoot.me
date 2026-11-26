@@ -1,5 +1,7 @@
 'use client';
 
+import BoolToggle from '@/components/BoolToggle';
+
 import PageBackLink from '@/components/PageBackLink';
 import LangToggle from '@/components/LangToggle';
 import { currentEntryHref } from '@/lib/entry-navigation';
@@ -498,9 +500,9 @@ export function PlatformResourceRouteView({
               }}
             /> : <div className="platform-toolbar"><CourseCatalogSearch query={query} onQuery={updateQuery} /></div>}
             <div className="platform-catalog-count">
-              <label><input type="checkbox" checked={trialOnly === '1'} onChange={event => {
-                void setPage(null); void setTrialOnly(event.target.checked ? '1' : null);
-              }} /> {t('仅看免费试听', 'Free previews only')}</label>
+              <BoolToggle label={t('仅看免费试听', 'Free previews only')} value={trialOnly === '1'} onChange={enabled => {
+                void setPage(null); void setTrialOnly(enabled ? '1' : null);
+              }} />
               {result && <span>{hasCourseFilters ? t(`找到 ${courseTotal} 门课程`, `${courseTotal} matching courses`) : t(`共 ${courseTotal} 门课程`, `${courseTotal} courses`)}</span>}
               {hasCourseFilters && <button type="button" className="platform-button" onClick={() => {
                 void setPage(null); void setQuery(null); void setPuzzle(null); void setCategory(null); void setTrialOnly(null);
@@ -542,11 +544,12 @@ export function PlatformResourceRouteView({
           ) : null}
 
 
-          {pendingFilter && <label className="platform-write-actions">
-            <input type="checkbox" checked={pendingOnly === '1'} onChange={event => { void setPage(null); void setPendingOnly(event.target.checked ? '1' : null); }} />
-            {definition.id === 'admin-courses' ? t('仅看待审核（含课时）', 'Pending reviews only (including lessons)')
-              : definition.id === 'admin-payouts' ? t('仅看待处理结算', 'Pending payouts only') : t('仅看未解决差异', 'Unresolved differences only')}
-          </label>}
+          {pendingFilter && <div className="platform-write-actions">
+            <BoolToggle
+              label={definition.id === 'admin-courses' ? t('仅看待审核（含课时）', 'Pending reviews only (including lessons)')
+                : definition.id === 'admin-payouts' ? t('仅看待处理结算', 'Pending payouts only') : t('仅看未解决差异', 'Unresolved differences only')}
+              value={pendingOnly === '1'} onChange={enabled => { void setPage(null); void setPendingOnly(enabled ? '1' : null); }} />
+          </div>}
           {definition.id === 'order-detail' && !permissionDenied && !orderUnavailable && sortedItems[0] ? <PlatformOrderPayment key={sortedItems[0].id}
             entity={sortedItems[0]} busy={actionBusy} runAction={runAction} message={actionMessage} /> : null}
 

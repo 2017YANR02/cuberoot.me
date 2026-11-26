@@ -153,7 +153,7 @@ export function ArenaTop({ competition, project, round, status, cube }: {
     </div>
     {status}
     {cube && device && <div className="competition-arena-hardware">
-      <button ref={anchor} type="button" onClick={() => setDeviceOpen(true)} className={device.connected ? 'competition-secondary' : 'competition-primary'}>
+      <button ref={anchor} type="button" onClick={() => setDeviceOpen(true)} className={`competition-arena-device ${device.connected ? 'competition-secondary' : 'competition-primary'}`}>
         {device.connected && <i className="competition-arena-connected" aria-hidden="true" />}<span>{device.connected ? device.deviceName : t('连接魔方', 'Connect cube')}</span>
         {device.connected && device.battery !== null && <><BatteryLevelIcon level={device.battery} /><span>{device.battery}%</span></>}
       </button>

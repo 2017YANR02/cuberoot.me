@@ -343,18 +343,20 @@ export function PlatformDomainContent({ definition, entity, params, previewRedir
 }) {
   const t = useT();
   const isAdmin = useIsAdmin();
-  const [autoContinue, setAutoContinue] = useState(() => {
-    try { return localStorage.getItem('platform.lesson.autoplay') === 'true'; } catch { return false; }
-  });
+  const [autoContinue, setAutoContinue] = useState(false);
+  useEffect(() => {
+    try { setAutoContinue(localStorage.getItem('platform.lesson.autoplay') === 'true'); } catch {}
+  }, []);
   const updateAutoContinue = (enabled: boolean) => {
     setAutoContinue(enabled);
     persistItem('platform.lesson.autoplay', String(enabled));
   };
-  const [autoPlayLessonId, setAutoPlayLessonId] = useState<string | null>(() =>
-    classroomAutoplay && classroomAutoplay.expires > Date.now()
-      && classroomAutoplay.course === params.id && classroomAutoplay.lesson === params.lessonId ? params.lessonId : null);
+  const [autoPlayLessonId, setAutoPlayLessonId] = useState<string | null>(null);
   useEffect(() => {
-    if (classroomAutoplay?.course === params.id && classroomAutoplay?.lesson === params.lessonId) classroomAutoplay = undefined;
+    const arrival = classroomAutoplay;
+    if (!arrival || arrival.course !== params.id || arrival.lesson !== params.lessonId) return;
+    classroomAutoplay = undefined;
+    if (arrival.expires > Date.now()) setAutoPlayLessonId(arrival.lesson);
   }, [params.id, params.lessonId]);
   const [localLessonId, setLocalLessonId] = useState<string | null>(null);
   if (['product-detail', 'event-detail', 'news-detail', 'admin', 'admin-event-analytics'].includes(definition.id)) return <PlatformCommerceContent definition={definition} entity={entity} />;

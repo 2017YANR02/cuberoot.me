@@ -34,7 +34,7 @@ body:has(.competition-arena) .clawd-deskpet { display: none; }
 }
 .competition-arena-brand > a { display: grid; place-items: center; flex: 0 0 34px; height: 34px; color: inherit; border-radius: 8px; }
 .competition-arena-brand > a:hover { background: var(--muted); }
-.competition-arena-brand > strong, .competition-arena-name, .competition-arena-hardware button > span:first-of-type {
+.competition-arena-brand > strong, .competition-arena-name, .competition-arena-hardware > .competition-arena-device > span:first-of-type {
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -48,8 +48,8 @@ body:has(.competition-arena) .clawd-deskpet { display: none; }
   padding: 4px 7px;
 }
 .competition-arena-hardware { justify-self: end; min-width: 0; }
-.competition-arena-hardware > button { width: max-content; max-width: 100%; }
-.competition-arena-hardware > button > svg { flex: none; width: 20px; height: 14px; }
+.competition-arena-hardware > .competition-arena-device { width: max-content; max-width: 100%; }
+.competition-arena-hardware > .competition-arena-device > svg { flex: none; width: 20px; height: 14px; }
 .competition-arena-connected,
 .competition-arena-points i {
   display: inline-block;
@@ -252,10 +252,10 @@ body:has(.competition-arena) .clawd-deskpet { display: none; }
   .competition-arena-brand > a { height: 30px; flex-basis: 24px; }
   .competition-arena-brand > .competition-state { padding: 3px 4px; font-size: 10px; }
   .competition-arena-status { gap: 4px; font-size: 10px; }
-  .competition-arena-hardware > button, .competition-arena-status > .competition-secondary { gap: 4px; padding-inline: 8px; font-size: 11px; }
+  .competition-arena-hardware > .competition-arena-device, .competition-arena-status > .competition-secondary { gap: 4px; padding-inline: 8px; font-size: 11px; }
   .competition-arena-status > span { max-width: 105px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .competition-arena-hardware { max-width: 110px; }
-  .competition-arena-hardware > button > svg, .competition-arena-status progress { display: none; }
+  .competition-arena-hardware > .competition-arena-device > svg, .competition-arena-status progress { display: none; }
   .competition-arena-stage, .competition-arena-seat--own { --cube-h: clamp(170px, 26dvh, 230px); padding: 5px 7px; }
   .competition-arena-score { min-height: 35px; gap: 5px; padding: 2px 6px; font-size: 12px; }
   .competition-arena-score > div { gap: 4px; }

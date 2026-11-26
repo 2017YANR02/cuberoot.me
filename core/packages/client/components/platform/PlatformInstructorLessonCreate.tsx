@@ -1,5 +1,7 @@
 'use client';
 
+import BoolToggle from '@/components/BoolToggle';
+
 import { useEffect, useRef, useState } from 'react';
 import { Upload, Film } from '@app-foundation/icons/lucide';
 import { useT } from '@/hooks/useT';
@@ -265,7 +267,9 @@ function LessonCreator({ courseId, draftKey, nextOrdinal, entity, busy, runActio
           const trialTouched = draft.trialTouched ?? typeof draft.trial === 'boolean';
           update({ lessonType, trialTouched, trial: trialTouched ? draft.trial : lessonType === 'introduction' });
         }}><option value="core">{t('正式课', 'Core lesson')}</option><option value="introduction">{t('引言', 'Introduction')}</option></select></label>
-        <label><input type="checkbox" checked={draft.trial ?? draft.lessonType === 'introduction'} disabled={saving} onChange={event => update({ trial: event.target.checked, trialTouched: true })} /> {t('免费试听（发布后任何人可查看）', 'Free preview (public after publication)')}</label>
+        <BoolToggle label={t('免费试听（发布后任何人可查看）', 'Free preview (public after publication)')}
+          value={draft.trial ?? draft.lessonType === 'introduction'} disabled={saving}
+          onChange={trial => update({ trial, trialTouched: true })} />
         <small>{t('引言课默认公开可看，可手动更改。', 'Introductions are public by default. You can change access.')}</small>
       </div>
     </section>

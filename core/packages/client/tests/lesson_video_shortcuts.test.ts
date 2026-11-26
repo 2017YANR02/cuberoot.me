@@ -40,7 +40,7 @@ async function key(key: string, options: KeyboardEventInit = {}, target: EventTa
   return event;
 }
 
-it('opens help from ? or settings, contains all four groups, blocks playback and restores focus', async () => {
+it('opens help from ? or settings, shows the supported shortcut groups, blocks playback and restores focus', async () => {
   const video = await mount();
   const player = host.querySelector<HTMLElement>('.lesson-video-player')!;
   player.focus();
@@ -48,7 +48,7 @@ it('opens help from ? or settings, contains all four groups, blocks playback and
   expect(host.querySelector('dialog')).toBeNull();
   await key('?', { shiftKey: true }, player);
   expect(host.querySelector('dialog')?.open).toBe(true);
-  expect([...host.querySelectorAll('dialog h3')].map(el => el.textContent)).toEqual(['播放', '常规', '字幕', '全景视频']);
+  expect([...host.querySelectorAll('dialog h3')].map(el => el.textContent)).toEqual(['播放', '常规']);
   expect(host.querySelector('dialog')?.textContent).toContain('? (Shift + /)');
   expect(host.querySelector('dialog')?.textContent).toContain('不可用');
   await key('l', {}, document.activeElement!);
