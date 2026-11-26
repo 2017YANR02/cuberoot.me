@@ -321,7 +321,7 @@ describe('assistant linked table presentation',()=>{
     const competition=rows[0].children[5];
     expect(competition.querySelector('a')?.getAttribute('href')).toBe('/zh/wca/comp/WC2025');
     expect(competition.querySelector('.comp-cell')?.firstElementChild?.classList.contains('fi-us')).toBe(true);
-    expect(competition.textContent).toBe(' World Championship');
+    expect(competition.textContent).toBe(' 世界锦标赛');
     expect(rows[1].children[5].querySelector('img.cr-flag-img')?.getAttribute('alt')).toBe('Chinese Taipei');
     expect(document.querySelector('a[href="/zh/wca/persons/2017WANY29"]')).not.toBeNull();
     expect(document.querySelector('.site-assistant-navigation')).toBeNull();
