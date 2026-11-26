@@ -36,10 +36,10 @@ export async function run(input,fetcher){
  const all=input.history ?? [];let prior;
  ${withMemory ? "for(let i=0;i<all.length;i+=2){const answer=rememberAssistantConversation({answer:all[i+1].content,sources:[]},all[i].content,[],prior);prior=assistantAnswerContext(answer);}" : ''}
  const history=boundAssistantHistory(all);let metrics,firstAnswerMs=null;
- const config=assistantConfig(),started=performance.now(),lang=input.lang ?? 'zh';
- const monitor=await startAssistantMonitor({uid:null,question:input.question,lang,model:config.model,streaming:true,imageCount:0,historyCount:history.length,thinking:'auto'},async(sql,params)=>{if(sql.startsWith('UPDATE'))metrics=params[7];return [];});
+ const config=assistantConfig(),started=performance.now(),lang=input.lang ?? 'zh',thinking=input.thinking ?? 'auto';
+ const monitor=await startAssistantMonitor({uid:input.viewerUserId ?? null,question:input.question,lang,model:config.model,streaming:true,imageCount:0,historyCount:history.length,thinking},async(sql,params)=>{if(sql.startsWith('UPDATE'))metrics=params[7];return [];});
  const emit=async event=>{if(event.type==='answer'&&event.answer){firstAnswerMs??=performance.now()-started;monitor.text(event.answer);}};
- try{const result=await monitor.run(()=>answerSiteQuestion(input.question,lang,config,input.signal,fetcher,history,undefined,emit,'America/Los_Angeles',[],'auto',{},prior));await monitor.finish('success',undefined,result);const durationMs=performance.now()-started;return {result,metrics,durationMs,firstAnswerMs,firstVisibleMs:firstAnswerMs??durationMs,streamed:firstAnswerMs!==null};}
+ try{const result=await monitor.run(()=>answerSiteQuestion(input.question,lang,config,input.signal,fetcher,history,input.viewerWcaId,emit,'America/Los_Angeles',[],thinking,{viewerUserId:input.viewerUserId},prior));await monitor.finish('success',undefined,result);const durationMs=performance.now()-started;return {result,metrics,durationMs,firstAnswerMs,firstVisibleMs:firstAnswerMs??durationMs,streamed:firstAnswerMs!==null};}
  catch(error){await monitor.finish('error',error.code??error.name);return {error:error.code??error.name,metrics,durationMs:performance.now()-started,firstAnswerMs};}
 }`;
     await build({ stdin: { contents: entry, resolveDir: path.join(root, 'core/apps/api'), sourcefile: `context-${variant}.ts`, loader: 'ts' },
@@ -139,15 +139,19 @@ export async function run(input,fetcher){
   }
   const providerOrigin = new URL(config.baseUrl).origin, nativeFetch = globalThis.fetch;
   const spec=read('cases.json'), repeats=evaluationRepeats(spec);
+  const singleVariant=spec.onlyVariant;
+  if (singleVariant!==undefined && (!['before','after'].includes(singleVariant) || suite.length!==1 || repeats.length!==1))
+    throw Error('Single-arm recovery requires exactly one named evaluation position');
   const costLimit=spec.maxGrossCny;
   if(costLimit!==undefined && (!Number.isFinite(costLimit) || costLimit<=0 || config.model!=='deepseek-flash' || providerOrigin!=='https://api.deepseek.com'))throw Error('Invalid evaluation cost limit or unknown provider');
   const resume = loadEvaluationResume(dir,root);
-  const ledger = fs.existsSync(path.join(dir, 'paid-ledger.json')) ? read('paid-ledger.json') : resume?.ledger ?? { answers: 0, calls: 0, input: 0, output: 0, missingUsage: 0, maxAnswers: suite.length * 2 * repeats.length, maxCalls: 240, maxInput: 2_250_000, maxOutput: 225_000 };
-  const configFingerprint = sha(JSON.stringify({ model: config.model, providerOrigin, thinking: 'auto', contextWindow: process.env.SITE_ASSISTANT_CONTEXT_WINDOW_TOKENS ?? '64000', sources, web: false }));
+  const ledger = fs.existsSync(path.join(dir, 'paid-ledger.json')) ? read('paid-ledger.json') : resume?.ledger ?? { answers: 0, calls: 0, input: 0, output: 0, missingUsage: 0, maxAnswers: suite.length * (singleVariant ? 1 : 2) * repeats.length, maxCalls: 240, maxInput: 2_250_000, maxOutput: 225_000 };
+  const thinking = suite.some(item=>item.thinking && item.thinking!=='auto') ? 'per-case' : 'auto';
+  const configFingerprint = sha(JSON.stringify({ model: config.model, providerOrigin, thinking, contextWindow: process.env.SITE_ASSISTANT_CONTEXT_WINDOW_TOKENS ?? '64000', sources, web: false }));
   if(resume && resume.configFingerprint!==configFingerprint)throw new Error('Configuration changed from stopped evaluation');
   if (fs.existsSync(path.join(dir, 'run-manifest.json')) && read('run-manifest.json').configFingerprint !== configFingerprint) throw new Error('Configuration changed during resume');
   if (!fs.existsSync(path.join(dir, 'run-manifest.json'))) save('run-manifest.json', { createdAt: new Date().toISOString(), model: config.model, providerOrigin, configFingerprint,
-    repeats: repeats.length, maxGrossCny: costLimit, order: 'AB/BA alternated per case and reversed on repeat 2', surface: 'actual in-process agent, real model, fixed synthetic histories, frozen public fixtures, no production writes, no browser or DB latency',
+    repeats: repeats.length, maxGrossCny: costLimit, order: singleVariant ?? 'AB/BA alternated per case and reversed on repeat 2', surface: 'actual in-process agent, real model, fixed synthetic histories, frozen public fixtures, no production writes, no browser or DB latency',
     sources, runnerSha256: sha(fs.readFileSync(fileURLToPath(import.meta.url))),
     cache: 'provider cache uncontrolled; actual cached tokens reported separately', historicalState: manifest.baselineMemory ? 'both graphs constructed from the same full fixture transcript before timing' : 'candidate graph constructed from the same full fixture transcript before timing; baseline retains its original recent-message policy', limits: ledger });
   const resultsFile = path.join(dir, 'results.jsonl');
@@ -211,7 +215,7 @@ export async function run(input,fetcher){
     }));
     return response;
   };
-  for (const repeat of repeats) for (const [index, item] of suite.entries()) for (const variant of (index + repeat) % 2 ? ['before', 'after'] : ['after', 'before']) {
+  for (const repeat of repeats) for (const [index, item] of suite.entries()) for (const variant of singleVariant ? [singleVariant] : (index + repeat) % 2 ? ['before', 'after'] : ['after', 'before']) {
     if (done.has(`${repeat}:${variant}:${item.id}`)) continue;
     check(); if (ledger.answers >= ledger.maxAnswers || ledger.missingUsage) throw new Error('Evaluation stopped at budget or unknown usage');
     ledger.answers++; save('paid-ledger.json', ledger); active = { repeat, variant, id: item.id }; calls = []; pending = []; reads = []; fixtureMisses = [];
