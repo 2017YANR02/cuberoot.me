@@ -406,6 +406,39 @@ export function directCommunityProof(question:string, lang:Lang):string|undefine
 
 // Keep sufficiently specified stand-alone questions entirely local. A second
 // clause (e.g. a proof, a link or a requested move metric) goes to composition.
+// Mathematical examples such as F(U,R) name arguments to an order
+// function. They are not an attempt to execute parenthesized cube notation.
+export async function functionOrderExamples(question:string,lang:Lang) {
+  if (!/order|repetitions?|how many times|周期|重复/i.test(question) ||
+      !/sequence|algorithm|转序/i.test(question) || !/function|函数|算法/i.test(question) ||
+      /supercube|marked cent|图案中心|[24-9]\s*[x×]|shortest|最短/i.test(question)) return;
+  const examples=[...question.replace(/[’′]/g,"'").matchAll(/\b[A-Za-z]\(\s*([URFDLB]['2]?(?:\s*,\s*[URFDLB]['2]?){1,19})\s*\)/g)]
+    .map(match=>match[1].replace(/\s*,\s*/g,' '));
+  const words=[...new Set(examples)];
+  if (!words.length || words.length>8) return;
+  const cube=await getCube3();
+  const descriptions=[];
+  for (const word of words) {
+    const transform=cube.algToTransformation(word).transformationData;
+    const cycles:number[]=[];
+    for (const [orbit,mod] of [['CORNERS',3],['EDGES',2]] as const) {
+      const {permutation,orientationDelta}=transform[orbit];
+      const seen=new Set<number>();
+      for (let i=0;i<permutation.length;i++) {
+        if (seen.has(i)) continue;
+        let j=i,twist=0,length=0;
+        do { seen.add(j);twist+=orientationDelta[j];length++;j=permutation[j]; } while(j!==i);
+        const period=length*(twist%mod===0?1:mod);
+        if (period>1) cycles.push(period);
+      }
+    }
+    const order=await colourCubeOrder(word);
+    descriptions.push('`'+word+'` → lcm('+cycles.join(', ')+') = '+order+(lang==='en'?' repetitions, ':' 次，')+order*word.split(' ').length+(lang==='en'?' face turns.':' 步面转。'));
+  }
+  const method=lang==='en'?'For an ordinary 3×3, label the 48 moving facelets, apply the input sequence once, decompose the resulting permutation into cycles and return the least common multiple of their lengths (1 for the identity). This includes twists and flips. Equivalently, each corner or edge cycle contributes its length times the order of its net orientation change. The independently checked cycle contributions are below. There is no general relation to powers of four: composing quarter turns need not give an order divisible by four.':'普通三阶可给 48 张活动贴纸编号，执行一次输入转序，分解所得置换的循环并求循环长度的最小公倍数，恒等转序为 1。这样已包含扭角和翻棱。按块计算时，每条循环的长度要乘上净朝向变化的周期。它与四的幂没有普遍关系，四分之一转的组合不一定有四的倍数周期。';
+  return [method,...descriptions].join('\n\n');
+}
+
 export async function directOrderAnswer(question: string, lang: Lang) {
   const normalized = question.trim().replace(/[′’]/g,"'");
   const english = /^(?:on (?:a |the )?(?:standard )?3[x×]3(?: cube)?,?\s*)?(?:what(?:'s| is) the (?:order|period|cycle length) of|how many (?:times|repetitions) (?:do I (?:repeat|apply)|does it take (?:to repeat|for)))\s+`?([URFDLB2' ]{1,80}?)`?(?:\s+(?:on (?:a |the )?(?:standard )?(?:3[x×]3(?: cube)?|rubik's cube)|to (?:return to (?:the )?(?:start|solved)|restore the cube)))?[?.!]*$/i;
@@ -449,4 +482,45 @@ export function invalidPocketColourWitness(answer:string,lang:Lang) {
         :'从复原态验证 `'+word+'` 后，至少有一面仍有重色，因此该转序未达到六面各有四种颜色的目标。';
     }
   }
+}
+
+// A single generator and its inverse span only its cyclic subgroup. Compute
+// its size from the supplied word rather than relying on a named algorithm.
+export function generalSolveCommutator(question:string) {
+  if (question.length>360 || !/solv|复原|还原/i.test(question) ||
+      !/only|solely|只用|仅用/i.test(question) || !/commutator|交换子/i.test(question) ||
+      /rotat|conjugat|multiple|换面|共轭|[24-9]\s*[x×]|this (?:scramble|state|position)|given (?:scramble|state)|from (?:the )?solved|starting (?:state|from)|打乱为|给定局面|从复原态/i.test(question)) return;
+  if (!/solv(?:e|ing)\s+(?:an? |any |every |the |all |arbitrary |legal |standard |scrambled )*(?:3\s*[x×]\s*3|cube|rubik)|(?:还原|复原).{0,10}(?:任意|三阶|魔方)/i.test(question)) return;
+  const groups=[...question.replace(/，/g,',').matchAll(/\[([^\[\]]*)\]/g)];
+  if (/\b(?:if|unless|except|also|my scramble|already solved|particular (?:state|position))\b|如果|除非|已经复原|另外|同时/i.test(question)) return;
+  if (groups.length!==1 || !/^[URFDLB'’′2\s]+,[URFDLB'’′2\s]+$/.test(groups[0][1])) return;
+  const alg=groups[0][0].replace(/[′’]/g,"'");
+  const operands=alg.slice(1,-1).split(',').map(word=>word.trim());
+  if (!operands.every(word=>/^(?:[URFDLB]['2]?\s*){1,10}$/.test(word))) return;
+  return alg;
+}
+
+export async function singleCommutatorSolve(alg:string,lang:Lang) {
+  const order=await colourCubeOrder(alg);
+  return lang==='en'?'No. With the faces held fixed, repeating '+alg+' (including its inverse) reaches only its cyclic subgroup. Its checked order on a standard 3×3 is '+order+', so only '+(order===1?'one state is':order+' states are')+' reachable from solved. Each commutator has even corner permutation: the signs of its factors and inverses cancel. A single quarter turn gives a legal state with odd corner permutation, which these repetitions cannot solve.':'不能。固定参照系，重复 '+alg+' 或其逆只能遍历一个循环子群。三阶状态引擎算出的周期为 '+order+'，从复原态只能到达 '+order+' 个状态。交换子的角排列为偶置换，而单面四分之一转就能产生合法的奇角排列局面。';
+}
+
+export function threeFaceBlindSolve(question:string,lang:Lang) {
+  if (question.length>950 || !/blind|盲拧/i.test(question) ||
+      !/unmodified|solvable|legal|3\s*[x×]\s*3|合法|三阶/i.test(question) ||
+      /(?:[24-9]|\d{2,})\s*[x×]|[二四五六七八九十]阶|pocket|supercube|additional (?:photo|view)|多张照片/i.test(question)) return;
+  const named=/\b([URFLDB])\s*(?:[,，、/]|和)\s*([URFLDB])\s*(?:[,，、]\s*(?:and\s+)?|and\s+|\/|和)\s*([URFLDB])\b/.exec(question);
+  if (named && !/(?:see|seen|visible|view|looking|observ|shown|看|观察|见)/i.test(question)) return;
+  if (/number of (?:possible |hidden )?states|how many (?:states|positions)|known scramble|only (?:the )?last layer|给定打乱|局面数|多少种/i.test(question)) return;
+  if (named && new Set(question.match(/\b[URFLDB]\b/g)).size===3 && new Set(named.slice(1)).size===3) {
+    const visible=named.slice(1);
+    const hidden=['DB','DL','BL','DR','BR','DF','FL','FR','UB','UL','UR','UF']
+      .filter(edge=>[...edge].every(face=>!visible.includes(face)));
+    const pair=hidden.slice(0,2);
+    return lang==='en'
+      ? 'No. With '+visible.join(', ')+' visible on an otherwise unknown legal 3×3, the hidden edges are '+hidden.join(', ')+'. From any compatible state, flip the two edges at '+pair.join(' and ')+'. All visible stickers stay identical. Two flips preserve edge-flip parity without changing any permutation or corner, so both states are reachable. A blind solution is invertible and cannot solve both.'
+      : '不能。对其余信息未知的合法三阶，观察 '+visible.join('、')+' 面时，完全隐藏的棱是 '+hidden.join('、')+'。把其中 '+pair.join('、')+' 两条棱同时翻向，可见贴纸完全相同。偶数条棱翻向仍然合法，排列和角块也不变。同一盲拧转序可逆，无法同时解开这两种局面。';
+  }
+  if (named || !/three (?:mutually )?adjacent (?:sides|faces)|三个相邻面|三个互相相邻的面/i.test(question)) return;
+  return lang==='en'?'No initial view of three adjacent faces uniquely determines an otherwise unknown legal 3×3. Call the visible faces U, F and R. The DB, DL and BL edge positions are entirely hidden. From any compatible state, flip the two edges at DB and DL. Two flips preserve even edge-flip parity; all permutations and corners are unchanged, so the second state is also reachable by legal turns and looks identical on every visible sticker. Any fixed blind solution is invertible and can solve at most one of those two states. Even three apparently solved faces leave this ambiguity. Further information would have to distinguish the hidden states.':'只观察三个相邻面，无法唯一确定未知合法三阶。把可见面记作 U、F、R，DB、DL、BL 三条棱完全不可见。从任何符合观察的局面把 DB 和 DL 两条棱同时翻向，棱翻转数仍为偶数，排列和角块都不变，因此另一个局面也能经过合法转动得到，三个可见面完全一样。同一盲拧转序可逆，不可能同时解开这两个局面。';
 }

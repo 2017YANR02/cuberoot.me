@@ -34,6 +34,14 @@ function cubeOrder(question: string): CubeOrder | undefined {
 // A reported attempt is context for a diagnosis. Keep operands in an explicit
 // check (including "for example, does … solve it?"), and any supplied setup.
 function requestedMoveText(question: string) {
+  // Source code and mathematical function arguments are not executable cube
+  // notation. Keep the surrounding prose so a separate explicit check survives.
+  if (/\b(?:python|import random|import pygame)\b/i.test(question)) {
+    question=question.replace(/```[\s\S]*?(?:```|$)/g,' ').split(/\r?\n/)
+      .filter(line=>!/^\s*(?:import |from \w+ import |(?:class|def) \w+|[\w.]+\s*=|(?:for|if|while) .+:)|^ {4,}/.test(line)).join('\n');
+  }
+  if (/\b[A-Za-z]\(\s*[URFDLB]['′2]?\s*,/.test(question) && /\bfunction\b|函数/i.test(question) && /order|repetit|how many times|周期|重复/i.test(question) &&
+      !/\b(?:verify|simulate|compare|check) (?:this|the|these)|验证这|模拟这/i.test(question)) return '';
   const background = /\b(?:for (?:example|instance)|e\.g\.|(?:I|we) (?:have )?(?:tried|used|found)|(?:cannot|can't|couldn.t) seem to solve it using|the tutorial (?:uses|shows))\b|例如|比如|举例|我(?:之前|刚才|曾经)?(?:试过|尝试|用过)|教程里(?:用|举例)/i;
   if (!background.test(question)) return question;
   const parts = question.split(/(?<=[.!?。！？；;])\s+|(?<=[。！？；;])|[,，]\s*(?=(?:but |now |please |请|现在|再验证|但))/u);

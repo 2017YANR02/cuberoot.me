@@ -172,6 +172,26 @@ export function pairFindingDrill(question: string, history: AssistantMessage[], 
   return [budget,'1. '+first,'2. '+second+(lang==='zh'?'':' ')+check].filter(Boolean).join('\n\n');
 }
 
+const reductionFacts = {
+  en:'For a standard N×N cube with N ≥ 4, solve each (N−2)×(N−2) centre in the correct colour scheme, then group the N−2 edge pieces of each of the 12 edges by colour and wing orbit. Treat each centre and grouped edge as a unit and finish using a 3×3 method. Odd orders have a fixed centre on each face and a middle edge piece on each edge. Wing-pairing cases can still arise, but after full correct pairing the middle edges and corners obey the 3×3 constraints. Even orders have neither reference piece. A fully paired even cube can show one apparently flipped composite edge or an isolated swap of two composite edges; these require a parity correction.',
+  zh:'标准 N 阶魔方（N ≥ 4）的降阶法分三步。先按正确配色拼好六个 (N−2)×(N−2) 中心，再按颜色和翼棱轨道，把每条棱上的 N−2 块配成一组。最后把每组棱和每个中心视作一个整体，按三阶解完。奇数阶每面有固定中心，每条棱有一块中棱。配棱过程中仍可能遇到特殊情况，全部正确配好后，中棱和角满足三阶约束。偶数阶没有固定中心和中棱，降阶后可能只见一组棱翻转或两组棱互换，需要对应的奇偶修正。',
+};
+export function oddCubeCornerExchange(question:string,lang:Lang) {
+  if (question.length>650 || !/\b([3579])\s*[×x]\s*\1\b|(?:三|五|七|九)阶/i.test(question)
+      || !/(?:two|2|both|两|两个).{0,16}(?:corners?|角).{0,20}(?:swap|exchang|互换|交换)|(?:swap|exchange).{0,16}(?:two|2) corners/i.test(question)
+      || !/illegal|disassembl|sticker|otherwise solved|rest (?:is|are) solved|only two|贴纸|拆|其余.*复原/i.test(question)
+      || /also|compare|probability|prove|even.order|另[外一]|偶数阶/i.test(question)) return;
+  return lang==='en'
+    ? 'If just those two corners have exchanged positions and everything else is solved, no legal sequence will fix it. With the fixed centres aligned, the eight corners and twelve middle edge pieces on an odd cube obey the same permutation parity as on a 3×3. A single corner swap changes only one of those parities. Check all twelve middle edges against the centres, then check the three colours and their order on each suspect corner. Re-glued stickers can imitate a swap. Correct the misplaced labels if confirmed; consider physical reassembly only if the pieces themselves were put back incorrectly.'
+    : '如果确实只互换了两个角、其余全部复原，合法转动无法单独换回这两个角。以固定中心为参照，奇数阶的八个角与十二个中棱和三阶一样，排列奇偶性必须一致。单换两角只改变其中一方。先对照中心逐个检查十二个中棱，再核对两个可疑角的三种颜色及环绕顺序。贴纸粘错也会呈现类似外观。确认错贴就纠正贴纸，只有确认实体块装错时才考虑重新装配。';
+}
+
+export function reductionDefinition(question:string,lang:Lang) {
+  const topic=question.trim().replace(/[？?！!.。]+$/,'').replace(/降階/g,'降阶').replace(/高階/g,'高阶');
+  if (/^(?:(?:高阶|大)\s*(?:方塊|方块|魔方)\s*)?(?:什么是降阶法|什麼是降阶法|降阶法是(?:什么|什麼))$/.test(topic)
+      || /^(?:what is|explain) (?:the )?reduction(?: method)?(?: (?:on|for) (?:a |the )?(?:big|higher.order|[4-9][x×][4-9]) cubes?)?$/i.test(topic)) return reductionFacts[lang];
+}
+
 export function reductionParityGuide(question: string, lang: Lang): AssistantAnswer|undefined {
   if (!/(?:四|4)阶|4\s*[×x]\s*4/i.test(question) || !/降阶|配.{0,3}棱|reduction|paired|parity|奇偶/i.test(question) ||
       !/单.{0,3}翻|翻.{0,5}(?:一|1|棱)|两.{0,4}棱.{0,4}(?:换|交换)|OLL\s*parity|PLL\s*parity|flipped edge|edge.{0,12}(?:flipped|swap)/i.test(question)) return;
@@ -295,8 +315,9 @@ export function checkedFaceColourAnswer(question: string, lang: Lang): Assistant
 // Stable mechanics for explanatory turns. Supply facts to the composer rather
 // than classifying a mixed question as fully answered by a single keyword.
 export function cubeConceptFacts(question: string): string | undefined {
-  if (!/魔方|三阶|四阶|[2345]\s*[x×]\s*[2345]|\bcub(?:e|es|ing)\b|rubik|speedcub|tetrad twist|\b(?:CFOP|F2L|OLL|PLL)\b/i.test(question)) return;
-  const facts: string[] = [];
+  const bigCube=/(?:[4-9]\s*[x×]\s*[4-9]|[四五六七八九高大][阶階]|big cubes?|higher.order cubes?)/i.test(question) && /parity|edge|wing|cent[er]{2}|reduc|降[阶階]|配[棱边邊]|奇偶/i.test(question);
+  if (!bigCube && !/魔方|三阶|四阶|[2345]\s*[x×]\s*[2345]|\bcub(?:e|es|ing)\b|rubik|speedcub|tetrad twist|\b(?:CFOP|F2L|OLL|PLL)\b/i.test(question)) return;
+  const facts: string[] = bigCube ? [reductionFacts.en] : [];
   if (/commutator|交换子|任意阶|n[×*x]n/i.test(question)) facts.push('A commutator can move pieces outside the intersection of its operands’ supports. Test the full permutation on each affected orbit before claiming that it isolates a cycle. For reduction, solve centres and pair each dedge before treating the puzzle as a 3×3; address wing parity where applicable.');
   if (/memori[sz]|memor[yia]|背公式/i.test(question) && /minimum|fewest|least|最少/i.test(question)) facts.push('Distinguish a fixed generating set from memorised algorithms with free setups, inverses or regrips. A cyclic subgroup argument applies to powers of a single fixed element, not all of its conjugates. A construction gives an upper bound unless shorter alternatives are ruled out. Pure three-cycles cannot fix odd permutations alone.');
   if (/打乱|scrambl/i.test(question)) facts.push('A random-state generator samples a legal state and produces moves to reach it. Repeating a fixed sequence from solved always gives the same state. Appearance or a skipped step does not establish randomness.');
@@ -337,4 +358,56 @@ export function cubeConceptFacts(question: string): string | undefined {
     facts.push('For big-cube reduction, identify the order, reference orientation and the specific OLL or PLL parity case. Rehearse one algorithm as finger-friendly chunks, chain adjacent chunks, then recall it from its case. Wing and slice notation depends on puzzle size. Square-1 uses a different mechanism and notation.');
   }
   return facts.join(' ') || undefined;
+}
+
+// A position and an orientation are different diagnoses. A face quarter-turn
+// is odd on both permutations; two flipped edges are not a transposition.
+export function lastPairExchange(question:string,lang:Lang) {
+  if (question.length>520 || !/(?:last|final)[- ]layer|末层|最后一层/i.test(question)
+      || !/everything else (?:is )?solved|(?:cube|puzzle) is solved except|all (?:but|except)|其余.{0,5}复原/i.test(question)
+      || !/(?:two|2|两).{0,30}(?:edges?|side pieces|棱)/i.test(question)
+      || /corner|角|even.order|[2456789]\s*[×x]|四阶|对比|also|prove|shortest|probability|without|give.{0,12}sequence/i.test(question)) return;
+  return lang==='en'
+    ? 'First check whether the last two edges are in each other’s slots or merely flipped in their own slots. On a standard 3×3 with everything else solved, a swap alone is impossible. A face quarter-turn makes one four-cycle of edges and one of corners. Each four-cycle is odd (three transpositions), so the two permutation parities always match. Swapping just two edges would break that equality. If both are in their correct slots but flipped, that is a legal two-edge flip and calls for an orientation algorithm. Compare both colours of each edge with the adjacent centres and check all corners before considering misplaced stickers or reassembly. If this is a larger cube, its order and whether the edges have been paired matter.'
+    : '先分清两条棱是互占对方的位置，还是位置正确、各自翻向。普通三阶若其余全好，单独换两棱没有合法转法。一次面四分之一转对棱、角各做一个四循环，各等于三次对换，都是奇置换，因而角棱两者的排列奇偶性始终相同。若两棱均在自己的槽位且同时翻向，则是合法的双翻棱，可用定向算法。先把两块棱的两色与相邻中心逐一核对，并确认所有角归位，再判断是否错贴或错装。若是高阶，还需确认阶数和配棱状态。';
+}
+
+export function cubieRepresentation(question:string, lang:Lang) {
+  if (!/(?:rubik|魔方)/i.test(question) || !/code|software|program|编码|程序|求解器/i.test(question)) return;
+  // Match the whole request, including repeated title/body formulations.
+  const sentences=question.split(/[?？。!！\n]/).map(s=>s.trim()).filter(Boolean);
+  const ask=/^(?:(?:if (?:you|I) (?:were|was) (?:developing|writing) (?:software|a program) to solve a rubik['’]?s cube,\s*))?how (?:would|should|can|do) (?:you|I|we) represent (?:a rubik['’]?s cube|the cube)(?: (?:in (?:code|software|a program)|for a solver))?$/i;
+  if (!sentences.length || !sentences.every(s=>ask.test(s) || /^(?:在程序中|用代码)(?:如何|怎么)表示(?:一个)?(?:三阶)?魔方$/.test(s))) return;
+  return lang==='en'
+    ? 'For a standard 3×3 solver I would store four arrays indexed by slot: corner piece IDs and twists (8 entries each), and edge IDs and flips (12 each). In the solved state the IDs equal the slot indices and every orientation is zero. For each face turn precompute the source slot and orientation change for every destination. Read from the old arrays into new ones, add corner twists modulo 3, and XOR edge flips. This gives reversible move updates without moving individual stickers. Validate input by checking each ID occurs once, the twist sum is 0 mod 3, the flip sum is even, and corner and edge permutation parity agree. Convert to 54 facelets for display or colour entry. There are more than 2^65 legal fixed-centre states, so a lossless single-integer encoding needs at least 66 bits.'
+    : '普通三阶求解器可用四个按槽位索引的数组：八个角块的编号和扭向、十二个棱块的编号和翻向。复原时编号等于槽号，朝向全为零。为每种面转预先存好每个目标槽的来源和朝向变化，从旧数组读取、写入新数组。角扭向按模 3 相加，棱翻向用异或。输入时检查每种块只出现一次、角扭向和为 0（模 3）、翻棱数为偶数、角棱排列奇偶相同。显示或录入颜色时再转成 54 个贴面。固定中心的合法状态数超过 2 的 65 次方，无损单整数编码至少需要 66 位。';
+}
+
+// Identify the observable defect before suggesting a physical repair: a
+// sticker describes a cubie, whereas its current slot changes on every turn.
+export function repeatedEdgeColour(question:string,lang:Lang) {
+  if (!/stickers?|贴纸/i.test(question) || !/\bedge\b|棱块/i.test(question) ||
+      !/same colou?r|both sides?.{0,18}(?:white|yellow|red|green|blue|orange)|两面.{0,6}同色/i.test(question) ||
+      /picture cube|shape mod|supercube|blindfold|证明|derive|probability/i.test(question)) return;
+  return lang==='en'
+    ? 'On a standard six-colour cube each edge carries two different adjacent face colours. Turning the cube cannot change a white-white (or any same-colour) edge into a valid pair. Before removing a sticker, use the fixed centres to list the 12 expected unordered pairs and inventory all 12 actual edges. The missing pairs and the duplicates identify possible donor stickers; a scrambled edge’s current slot alone does not identify its colours. If just two stickers were exchanged, solve as much as possible, align the affected slots with the centres and try the proposed exchange on paper. Check that each edge exists once, the edge flip sum is even and corner and edge permutation parity agree. The two identical stickers can give the same pair inventory but leave different flip states. If several assignments fit, the report cannot identify a unique sticker to lift.'
+    : '标准六色魔方每条棱都带相邻两面的两种不同颜色。转动无法修复两面同色的棱。先按固定中心列出应有的 12 组无序色对，再盘点全部棱，找出缺失和重复的色对，缩小可能换错的贴纸范围。打乱时棱所在的槽不能决定它原来的颜色。若确实只换错两张，先尽量复原其余块，对齐中心，在纸上试换，再核对十二种棱各有一块、翻棱数为偶、角棱排列同奇偶。交换两张同色贴纸中的不同一张可能得到相同色对，却留下不同的翻向。若仍有多个候选，只凭这段描述无法唯一指定应揭哪一张。';
+}
+
+export function repeatedCornerOrientation(question:string,lang:Lang) {
+  if (!/corner|角块/i.test(question) || !/orient|twist|扭向|朝向/i.test(question) ||
+      !/\b(?:three|3) (?:times|repeats|repetitions)|(?:repeat|perform)\w*.{0,30}(?:three|3) times|重复三次/i.test(question) ||
+      /(?:[RUFLDB]['2]?\s+){2}[RUFLDB]['2]?\b|specific sequence|following algorithm|以下公式|给定转序/i.test(question)) return;
+  return lang==='en'
+    ? 'Three repetitions do not always restore corner orientation. Hold the cube fixed and use the usual U/D sticker convention. Take R alone: R³ = R′, so four corners still have their U/D stickers off the U/D faces. One application of any fixed sequence sends each corner to a fixed new slot and adds a fixed twist modulo 3 for that step. A corner moving from B to A brings its previous twist with it. On a permutation cycle of length k, one trip of k applications returns that corner to its slot and adds the sum s of the twists along the cycle. Positions and orientations on that cycle both reset after k applications if s = 0 mod 3, otherwise after 3k. A corner fixed in place always loses any added twist after three repetitions; a moving corner need not. On a three-cycle specifically, three repetitions restore those corners’ orientations exactly when the three increments sum to 0 mod 3. The whole cube’s twist sum being zero does not imply that each individual cycle has zero sum.'
+    : '重复三次不一定恢复角朝向。固定整块魔方，以顶底色贴纸为参照，仅做 R，三次后 R³ = R′，仍有四个角的顶底色没有朝向顶底面。固定转序把每个角送往确定的新槽位，并在每一步加上确定的扭向增量（模 3）。从 B 到 A 的角携带原有扭向。在长度为 k 的置换循环中，重复 k 次回到原槽，净扭向是沿途增量之和 s。若 s 模 3 为零，该循环的位置和朝向都在 k 次后复原；否则要 3k 次。原位扭角重复三次会抵消。若是三循环，重复三次能否恢复朝向取决于该循环的增量和；所有角的总和为零不能推出每条循环的和都为零。';
+}
+
+export function matchScrambledState(question:string,lang:Lang) {
+  if (question.length>650 || !/3\s*[×x]\s*3|三阶/i.test(question) || !/scrambl|打乱/i.test(question) ||
+      !/same as another|exact(?:ly)? (?:the )?same|和另.{0,8}一样/i.test(question) ||
+      /probability|odds|chance|how (?:likely|many)|shortest|最短|概率|几个/i.test(question)) return;
+  return lang==='en'
+    ? 'Yes. Hold the two ordinary 3×3s with the same centre colours at the top and front. Solved means all six faces match their centres. To make a legal scrambled A look exactly like a legal scrambled B, record a solution for each in that frame. On A, first apply its own solution, then apply the inverse of B’s solution: reverse the order of the moves and invert each turn (half turns stay the same). The first part gets A to solved; the second takes solved to B. You can obtain B’s solution by entering its six faces into a solver or by solving it while recording the moves. If you already know the scramble that created B, use it directly for the second part. This assumes the same colour scheme and legally reachable states.'
+    : '可以。把两个普通三阶摆成相同的顶色和前色，六个面的颜色都与各自中心一致时就是复原。要让合法打乱 A 完全匹配合法打乱 B，先在同一参照系分别记下两者的解法。在 A 上执行它自己的解法，再执行 B 解法的逆序列：倒序排列并逐步取逆，半转不变。这样先从 A 到复原，再从复原到 B。可把 B 的六面录入求解器，或实际还原并记录过程。若已有 B 原本的打乱，第二段直接用该打乱即可。前提是两者配色相同、局面合法。';
 }
