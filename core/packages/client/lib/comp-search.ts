@@ -3,7 +3,8 @@ import {
   CompetitionIndexContractError,
   mergeCompetitionIndexes,
 } from '@cuberoot/shared/competition-index';
-import { compNameZh, countryToIso2, loadFlagData } from './country-flags';
+import { countryToIso2, loadFlagData } from './country-flags';
+import { resolveCompName } from './comp-localize';
 import { localizeCity, resolveCnProvince } from './city-localize';
 import { statsUrl } from './stats-base';
 
@@ -184,7 +185,7 @@ export function searchComps(query: string, comps: Comp[], limit = 20): Comp[] {
   for (const c of comps) {
     const id = c.id.toLowerCase();
     const name = c.name.toLowerCase();
-    const nameZh = c.name_zh || compNameZh(c.name);
+    const nameZh = resolveCompName(c.id, c.name, true, { explicitNameZh: c.name_zh });
     const city = (c.city || '').toLowerCase();
     const cityZh = c.city ? localizeCity(c.city, true, c.country) : '';
     const province = c.country.toUpperCase() === 'CN' && c.city

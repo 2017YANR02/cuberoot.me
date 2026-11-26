@@ -67,6 +67,15 @@ export function resolveCompName(
   if (opts?.explicitNameZh) return opts.explicitNameZh;
   const upcomingName = opts?.upcomingNameZhById?.get(id);
   if (upcomingName) return upcomingName;
+  // WCA Worlds share an ID format even when sponsors change the English title.
+  const worldChampionship = /^WC(\d{4})$/i.exec(id);
+  if (worldChampionship) {
+    const year = worldChampionship[1];
+    let sponsor = '';
+    if (/\bmoyu\b/i.test(name)) sponsor = '魔域';
+    else if (/\brubik['’]s\b/i.test(name)) sponsor = '鲁比克';
+    return `${sponsor}世界锦标赛${year}`;
+  }
   const mappedName = opts?.resolveNameZh?.(name);
   if (mappedName) return mappedName;
   return name;
