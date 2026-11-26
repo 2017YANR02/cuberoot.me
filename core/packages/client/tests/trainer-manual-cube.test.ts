@@ -163,7 +163,7 @@ describe('manual smart-cube training', () => {
     expect(rig.store.startTimer).toHaveBeenCalledWith(performance.timeOrigin + 1300);
     await act(async () => { move("R'", '', 1700); rig.opts.onSolved?.(1700); rig.opts.onSolved?.(1700); });
     expect(rig.store.stopTimer).toHaveBeenCalledTimes(1);
-    expect(rig.store.stopTimer).toHaveBeenCalledWith(performance.timeOrigin + 1700);
+    expect(rig.store.stopTimer).toHaveBeenCalledWith(performance.timeOrigin + 1700, 'manual:test');
     expect(state.armed).toBe(false);
     // A new draw can repeat the exact same case and scramble.
     options = { ...options, currentAttempt: {} }; await draw();

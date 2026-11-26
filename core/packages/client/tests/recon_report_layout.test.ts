@@ -216,9 +216,9 @@ describe('关闭连续陀螺仪仍回放已识别转体', () => {
 
   it('关闭时执行重建动作，开启时读取原始姿态', () => {
     expect(pb).toContain('reconstructedTrack(lines, rawMoves)');
-    expect(pb).toContain('useRebuilt ? () => null');
+    expect(pb).toContain('useRebuilt || stageRecording ? () => null');
     expect(pb).toMatch(/playbackQuatRef\.current = poseAt\(at\)/);
-    expect(pb).toMatch(/quatRef=\{useRebuilt \? undefined : playbackQuatRef\}/);
+    expect(pb).toMatch(/quatRef=\{teaching \|\| useRebuilt \? undefined : playbackQuatRef\}/);
   });
 });
 
