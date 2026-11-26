@@ -63,6 +63,7 @@ const EXACT = new Set([
   'packages/client/lib/onboarding.ts', 'packages/client/components/OnboardingGuideModal.tsx',
   'packages/client/app/[lang]/LandingClient.tsx',
   'apps/api/src/routes/site_assistant.ts',
+  'apps/api/src/utils/site_assistant_formula_reviews.ts',
   'apps/api/src/utils/site_assistant_queue.ts', 'apps/api/src/utils/site_assistant_worker.ts',
   'apps/api/src/utils/site_assistant_runs.ts',
   'apps/api/migrations/0334_assistant_run_control.sql', 'apps/api/migrations/0335_assistant_durable_queue.sql',
