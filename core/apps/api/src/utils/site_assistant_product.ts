@@ -140,13 +140,30 @@ export function onlyScrambleFilterRequests(parts:string[]) {
 
 export interface IssueEvidence {
   source:AssistantSource;
-  statements:{role:string;text:string}[];
+  reporter?:string;
+  statements:{role:string;text:string;author?:string;originalReporter?:boolean;summaryText?:string}[];
   reportBody?:string;
+  reportTruncated?:boolean;
   implementation?:{source:AssistantSource;signature:string;uses:string[];targets:string[]};
   duplicateResolution?:{source:AssistantSource;version:string};
   originalReport?:boolean;
   completeDiscussion?:boolean;
+  completeSummaryText?:boolean;
 }
+// When a verbatim statement is attributed to a login, check the comment itself.
+// Unquoted paraphrases still go through ordinary evidence review.
+export function misattributedIssueQuote(issue:IssueEvidence,answer:string) {
+  const normalize=(s:string)=>s.replace(/\s+/g,' ').trim().toLowerCase();
+  const comments=issue.statements.filter(s=>s.author);
+  for (const match of answer.matchAll(/@([\w-]+)\s+(?:(?:wrote|said|replied|commented|posted)|(?:回复|写道|表示))[,，:：]?\s*[“"]([^”"\n]{10,})[”"]/gi)) {
+    const quote=normalize(match[2]);
+    const speakers=comments.filter(s=>normalize(s.text).includes(quote) || (s.summaryText && normalize(s.summaryText).includes(quote))).map(s=>s.author!);
+    if (issue.reporter && issue.reportBody && normalize(issue.reportBody).includes(quote)) speakers.push(issue.reporter);
+    if (speakers.length && !speakers.some(author=>author.toLowerCase()===match[1].toLowerCase())) return true;
+  }
+  return false;
+}
+
 // Read public indexes by repository only. No visitor text or identifiers are
 // sent to GitHub. A question must identify the thread by URL or its whole title.
 export async function productIssue(product:Product,question:string,read:(url:string)=>Promise<unknown>):Promise<IssueEvidence|undefined> {
@@ -183,25 +200,35 @@ export async function productIssue(product:Product,question:string,read:(url:str
   }
   if (!issue || !issue.comments) return;
   const commentsUrl=api+'/'+issue.number+'/comments?per_page=30';
-  const first=await read(commentsUrl);
-  if (!Array.isArray(first)) return;
-  let comments=first;
-  if (Number.isSafeInteger(issue.comments) && issue.comments>30) {
-    const latest=await read(commentsUrl+'&page='+Math.ceil(issue.comments/30));
-    if (!Array.isArray(latest)) return;
-    comments=[...first,...latest];
-  }
+  const pages=[commentsUrl];
+  if (Number.isSafeInteger(issue.comments) && issue.comments>30)pages.push(commentsUrl+'&page='+Math.ceil(issue.comments/30));
+  // Both URLs and the final page number are known from the thread metadata.
+  const batches=await Promise.all(pages.map(url=>read(url)));
+  if (!batches.every(Array.isArray))return;
+  const comments=batches.flat();
   let clipped=false;
+  const login=(value:unknown) => typeof value==='string' && /^[A-Za-z0-9][A-Za-z0-9-]{0,38}(?:\[bot\])?$/.test(value) ? value : undefined;
+  const reporter=login(issue.user?.login);
   const statements=comments.flatMap(c=>{
-    const role=['OWNER','MEMBER','COLLABORATOR','CONTRIBUTOR'].includes(c?.author_association)?'repository participant':c?.user?.login && c.user.login===issue.user?.login?'original reporter':'thread participant';
+    const author=login(c?.user?.login);
+    const originalReporter=!!author && author.toLowerCase()===reporter?.toLowerCase();
+    const role=['OWNER','MEMBER','COLLABORATOR','CONTRIBUTOR'].includes(c?.author_association)?'repository participant':originalReporter?'original reporter':'thread participant';
     if (typeof c?.body!=='string') return [];
     const text=c.body.split(/\nOn .{1,200} wrote:/)[0].split(/\r?\n/).filter((line:string)=>!line.trimStart().startsWith('>')).join('\n').trim();
-    if (text.length>1400) clipped=true;
-    return text?[{role,text:text.slice(0,1400)}]:[];
+    if (text.length>2400) clipped=true;
+    const excerpt=text.length>2400 ? text.slice(0,2400).replace(/[^.!?\n]*$/,'') : text;
+    // A large Markdown comparison table may separate a comment's observation
+    // from its bottom-line explanation. Retain the surrounding narrative for
+    // discussion summaries without treating omitted cells as inspected facts.
+    const logsToSummary=(body:string)=>body.replace(/```[\s\S]*?(?:```|$)/g,block=>
+      block.split(/\r?\n/).filter(line=>/^Checked \d+ rounds?\. \d+ discrepancies found\.?$/i.test(line.trim())).join('\n'));
+    const narrative=text.length>2400 ? logsToSummary(text).split(/\r?\n/).filter((line:string)=>!/^\s*\|/.test(line)).join('\n').trim() : undefined;
+    const summaryText=text.length<=2400 ? text : narrative && narrative.length<=4000 ? narrative : undefined;
+    return excerpt?[{role,author,originalReporter,text:excerpt,summaryText}]:[];
   });
   if (!statements.length) return;
   // Keep the resolution at the end of long threads as well as the initial diagnosis.
-  const selected = statements.length<=(product.repo==='thewca/worldcubeassociation.org'?12:6) ? statements : [...statements.slice(0,2),...statements.slice(-4)];
+  const selected = statements.length<=(/summari[sz]e.{0,32}discussion|总结.{0,8}讨论/i.test(question)?30:product.repo==='thewca/worldcubeassociation.org'?12:6) ? statements : [...statements.slice(0,2),...statements.slice(-4)];
   const sameBody=(text:string)=>text.replace(/\s+/g,' ').trim();
   // Follow one explicitly confirmed duplicate in the same repository. An
   // unavailable or ambiguous parent must not suppress the original discussion.
@@ -249,8 +276,11 @@ export async function productIssue(product:Product,question:string,read:(url:str
     }
   }
   return {source:{id:'product:issue:'+product.repo+':'+issue.number,title:product.name+' · '+issue.title,
-    href:'https://github.com/'+product.repo+'/issues/'+issue.number,read:true},statements:selected,duplicateResolution,implementation,reportBody:typeof issue.body==='string'?issue.body.slice(0,6000):undefined,
+    href:'https://github.com/'+product.repo+'/issues/'+issue.number,read:true},reporter,statements:selected,duplicateResolution,implementation,reportBody:typeof issue.body==='string'?issue.body.slice(0,6000):undefined,
+    reportTruncated:typeof issue.body==='string' && issue.body.length>6000,
     originalReport:!target && typeof issue.body==='string' && !!body.length && sameBody(body.join('\n'))===sameBody(issue.body),
+    completeSummaryText:comments.length===issue.comments && selected.length===comments.length &&
+      selected.every(s=>s.summaryText),
     completeDiscussion:!clipped && comments.length===issue.comments && selected.length===comments.length};
 }
 
@@ -271,6 +301,12 @@ function discussionContext(issue:IssueEvidence,lang:'en'|'zh') {
   const cite=' [['+issue.source.id+']]';
   const quotes=(items:string[])=>items.map(text=>'“'+text+'”'+cite).join(' ');
   const lines=issue.statements;
+  const invitation=contributionHandoff(issue);
+  if (invitation) {
+    const [reviewer,reporter]=invitation;
+    return {answer:(en?'@'+reviewer.author+' replied: ':'@'+reviewer.author+' 回复：')+quotes([reviewer.text])+' '+
+      (en?'The original reporter @'+reporter.author+' then wrote: ':'原报告者 @'+reporter.author+' 随后写道：')+quotes([reporter.text]),sources:[issue.source]};
+  }
   for (let i=1;i<lines.length;i++) {
     const reply=lines[i], prev=lines[i-1];
     if (!safe(reply.text) || reply.role!=='repository participant') continue;
@@ -301,6 +337,18 @@ function discussionContext(issue:IssueEvidence,lang:'en'|'zh') {
     return {answer:(en?'One participant proposed a protocol-level fix. A second participant described what the client already sends: ':'一位参与者给出了协议层的修复思路，另一位补充了客户端的现有行为：')+
       quotes(lines.map(s=>s.text))+(en?' A suggested fix in this discussion is not confirmation that a release contains it.':'工单记录的是建议，仍缺少已发布修复的证据。'),sources:[issue.source]};
   }
+}
+
+// A first-person commitment belongs to its author even if both commenters
+// have the same repository association. Only close a complete two-turn handoff.
+function contributionHandoff(issue:IssueEvidence) {
+  if (!issue.completeDiscussion || issue.statements.length!==2) return;
+  const [reviewer,reporter]=issue.statements;
+  if (!reviewer.author || !reporter.author || reviewer.originalReporter || !reporter.originalReporter ||
+      reviewer.role!=='repository participant' || reviewer.author.toLowerCase()===reporter.author.toLowerCase()) return;
+  if (![reviewer,reporter].every(s=>s.text.length<=420 && !/[<>[\]]|https?:|ignore .*instructions/i.test(s.text))) return;
+  if (/\b(?:welcome to|feel free to|please) (?:open|raise|submit|send|create) (?:a |the )?(?:PR|pull request)\b/i.test(reviewer.text)
+      && /\bI(?:['’]ll| will) (?:have|open|raise|submit|work|start|implement|fix|do)\b/i.test(reporter.text)) return [reviewer,reporter];
 }
 
 // Publish only a short resolution from the identified thread. A suggestion is
@@ -407,7 +455,7 @@ export function issueOpening(issue: IssueEvidence, lang: 'en'|'zh'): AssistantAn
     const discussion=websiteDiscussion(issue,lang);
     if (discussion) return discussion;
   }
-  const observations=issue.statements.filter(s=>s.role==='original reporter' && s.text.length<=350 &&
+  const observations=issue.statements.filter(s=>(s.originalReporter || s.role==='original reporter') && s.text.length<=350 &&
     /\b(?:only (?:appears?|happens?|occurs?)|only (?:when|if)|same behavio[u]?r on|reproduced (?:it|this) on|works? (?:when|after))\b/i.test(s.text) &&
     !/[<>\[\]\n]|[?？]$|https?:\/\//i.test(s.text));
   if (observations.length) {
@@ -419,7 +467,7 @@ export function issueOpening(issue: IssueEvidence, lang: 'en'|'zh'): AssistantAn
 // Keep questions, proposals, and actions attributed. A closed issue or an
 // invitation to contribute alone does not establish that a feature shipped.
 function websiteDiscussion(issue:IssueEvidence, lang:'en'|'zh'): AssistantAnswer | undefined {
-  const evidence:{role:string;text:string;rank:number;order:number}[]=[];
+  const evidence:{role:string;author?:string;text:string;rank:number;order:number}[]=[];
   for (const [order,statement] of issue.statements.entries()) {
     const text=statement.text.replace(/(?:https:\/\/(?:next\.)?worldcubeassociation\.org)(\/[\w/-]+)(?=\s|$)/gi,'$1')
       .replace(/(?:^|\s)@[\w-]+\s*/g,' ').trim();
@@ -446,16 +494,16 @@ function websiteDiscussion(issue:IssueEvidence, lang:'en'|'zh'): AssistantAnswer
       const rank=instructions?4:action?3:2;
       const rationale=paragraphs[index-1];
       if (/strongly opposed/i.test(paragraph) && rationale && rationale.length<=350 && statement.role==='repository participant') {
-        evidence.push({role:statement.role,text:rationale,rank,order});
+        evidence.push({role:statement.role,author:statement.author,text:rationale,rank,order});
       }
-      evidence.push({role:statement.role,text:paragraph,rank,order});
+      evidence.push({role:statement.role,author:statement.author,text:paragraph,rank,order});
     }
   }
   if (!evidence.length) return;
   const selected=evidence.sort((a,b)=>b.rank-a.rank || a.order-b.order).slice(0,4).sort((a,b)=>a.order-b.order);
   const lines=selected.map(s=>{
     const who=s.role==='repository participant'?(lang==='en'?'A project participant':'项目参与者'):(lang==='en'?'A thread participant':'工单讨论者');
-    return who+(lang==='en'?' wrote, “':'写道：“')+s.text+'” [['+issue.source.id+']]';
+    return (s.author?'@'+s.author:who)+(lang==='en'?' wrote, “':'写道：“')+s.text+'” [['+issue.source.id+']]';
   });
   // Label the scope of a complete exchange. In a truncated thread a later
   // decision could reverse these replies, so keep the attributed excerpts.
@@ -484,9 +532,83 @@ function websiteDiscussion(issue:IssueEvidence, lang:'en'|'zh'): AssistantAnswer
 // needs composition; it can use the same verified first paragraph.
 export function resolvesOriginalReport(issue:IssueEvidence, question:string) {
   const body=question.split(/\r?\n/).slice(1).join('\n').trim();
+  if (issue.originalReport && contributionHandoff(issue) && /(?:oversight|intended|bug|expected behavio[u]?r)/i.test(body) && !/[?？]|\b(?:also|compare|explain|show me|tell me|give me|list)\b/i.test(body)) return true;
   if (body.length>400 || /^\s*(?:#{1,6}\s|\d+[.)]\s|[-*]\s)/m.test(body)) return false;
   if (!issue.originalReport || !issue.completeDiscussion || /[?？]|\b(?:also|in addition|explain|compare|which version|step.by.step|show me|tell me|give me)\b/i.test(question)) return false;
   const substantive = issue.statements.filter(s=>!/^(?:(?:awesome|great|perfect|ok|good luck|thank(?:s| you)(?: so much)?)(?:[ ,.!]+|$))+$/i.test(s.text.trim()));
   if (substantive.length!==1 || substantive[0].role!=='repository participant') return false;
   return /\b(?:fixed|solved in|implemented|not (?:yet )?supported|not yet open|long.term goal|has been out for a while)\b/i.test(substantive[0].text);
+}
+
+// Select original prose for an attributed opening. Preserve qualification and
+// sentence boundaries. Other people's quoted replies do not belong to the author.
+export function attributedIssueOpening(issue:IssueEvidence, question:string, lang:'en'|'zh') {
+  if (!issue.reporter || !issue.reportBody || !issue.source.read ||
+      !/reporter|who (?:said|proposed|explained)|summari[sz]e.{0,32}discussion|originally reported|谁.{0,8}(?:说|提议)|报告者|总结.{0,8}(?:工单|讨论)/i.test(question)) return;
+  const ref=' [['+issue.source.id+']]';
+  const prose=(body:string)=>body
+    .replace(/```[\s\S]*?(?:```|$)/g,'')
+    .replace(/https:\/\/github\.com\/[\w.-]+\/[\w.-]+\/(?:issues|pull)\/(\d+)/g,'#$1')
+    .replace(/(?<!!)\[([^\]\n]{1,100})\]\(https?:\/\/[^)\s]+\)/g,'$1')
+    .replace(/https:\/\/(?:www\.)?worldcubeassociation\.org\/competitions\/([a-z0-9_-]+)(?:\/[a-z0-9_/-]*)?/gi,'$1')
+    .replace(/https:\/\/github\.com\/([\w.-]+\/[\w.-]+)\/blob\/[\w.-]+\/([\w./-]+)(#[\w.-]+)?/g,'$1/$2$3')
+    .split(/\r?\n/).map(line=>line.trim()).filter(line=>line && !line.startsWith('>') &&
+      !/\[\[|\]\]|https?:\/\/|[<>]|^!\[|^\*\*[^*]+\*\*$|^#{1,6} |^steps to reproduce|ignore (?:previous|all) instructions/i.test(line))
+    .flatMap(line=>/^(?:\d+[.)] |(?:edit|update):)/i.test(line) ? [line] : line.split(/(?<=[.!?])\s+(?=[A-Z(@"'])/)).filter(line=>(line.length>=12 || /^(?:will do|agreed|yes|no|done|fixed)[.!]?$/i.test(line)) && line.length<=550);
+  const reportLines=prose(issue.reportBody);
+  // Short reports fit in full. In longer reports preserve explicit requirements
+  // and corrections even when introductory context takes several sentences.
+  const decision=/^(?:[-*] |\d+[.)] |(?:edit|update|expected|actual|outcome|decision|resolution):)|\b(?:we (?:decided|agreed)|decided against|on hold|rolled back|reverted|superseded|withdrawn)\b/i;
+  const shortReport=reportLines.join(' ').length<=900;
+  const report=reportLines.filter((line,i)=>shortReport || i<2 || decision.test(line));
+  if (!report.length) return;
+  const attributed=(author:string,passage:string)=>'@'+author+(lang==='en'?' wrote, “':' 写道：“')+passage+'”'+ref;
+  const observation=(lang==='en'?'Original report · ':'原始报告 · ')+attributed(issue.reporter,report.join(' '));
+  const points=issue.statements.flatMap(statement=>{
+    if (!statement.author) return [];
+    const sentences=prose(statement.summaryText ?? statement.text);
+    // Rank whole sentences within a comment, then restore their original order.
+    // Keep a hypothesis with its rationale and a proposal with its caveat.
+    const ranked=sentences.map((line,i)=>({line,i,score:
+      Number(/\b(?:because|theory|suspect|propos\w*|fix|filed|workaround|not yet|will|no longer|only|instead|should|option|haven't|side.effects|fails|problem|need|refresh|currently)\b|#\d+/i.test(line))*2
+      + 4*Number(/#\d+/.test(line)) + Number(i===0)})).sort((a,b)=>b.score-a.score || a.i-b.i).slice(0,3).sort((a,b)=>a.i-b.i);
+    // A numbered choice or checklist is part of the proposal. Keeping only
+    // a high-ranked introductory sentence can silently drop a required item.
+    const kept=new Set(ranked.map(item=>item.i));
+    sentences.forEach((line,i)=>{ if (decision.test(line)) kept.add(i); });
+    return kept.size?[attributed(statement.author,sentences.filter((_,i)=>kept.has(i)).join(' '))]:[];
+  });
+  // When attribution and outcome are separate obligations, mark the actual
+  // closing statement. A courtesy reply by itself cannot establish an outcome.
+  if (/\bwhat was (?:decided|the outcome)\b/i.test(question) && points.length===issue.statements.length &&
+      /\b(?:will do|will (?:implement|work)|merged|reverted|rolled back|on hold|we decided|on board|closed|deferred)\b/i.test(issue.statements.at(-1)?.text ?? '')) {
+    points[points.length-1]=(lang==='en'?'Outcome recorded in the discussion · ':'讨论记录的结果 · ')+points[points.length-1];
+  }
+  const paragraphs=[observation,...points];
+  // Source rendering imposes a hard transport limit. An opening must always
+  // fit even when several of the sampled comments hit their individual limit.
+  let used=0;
+  const bounded=paragraphs.filter(text=>{
+    if (used+text.length+2>8400) return false;
+    used+=text.length+2;
+    return true;
+  });
+  return {answer:bounded.join('\n\n'),sources:[issue.source],coversEveryComment:points.length===issue.statements.length && bounded.length===paragraphs.length};
+}
+
+// A request for the public thread alone can be answered from its attributed
+// record. Extra instructions, missing turns or a truncated discussion still
+// need the normal composer and its per-requirement checks.
+export function requestsOnlyIssueDiscussion(issue:IssueEvidence,question:string) {
+  if (issue.reportTruncated || !(issue.completeDiscussion || issue.completeSummaryText) || !issue.reporter || !issue.statements.every(s=>s.author)) return false;
+  const [prefix,suffix,...extra]=question.trim().split(issue.source.href);
+  if (suffix===undefined || extra.length) return false;
+  const before=prefix.trim().replace(/\s+(?:in|on|of|at)$/i,'');
+  const lines=[before,...suffix.split(/\r?\n/)].map(line=>line.trim()).filter(Boolean);
+  if (issue.source.title.endsWith(' · '+lines[0])) lines.shift();
+  const parts=lines.join(' ').toLowerCase().split(/[?.!]+/).map(s=>s.trim()).filter(Boolean);
+  const report=/^what (?:was (?:originally )?(?:reported|requested)(?: or requested)?|did the (?:reporter|author) (?:report|observe|request))$/;
+  const summary=/^(?:please )?(?:summari[sz]e|outline) (?:the |this )?(?:issue|thread|discussion)(?:,? (?:including|attributing) (?:the )?(?:proposals?|decisions?|outcome|suggestions?)(?: and (?:the )?(?:outcome|decisions?))?(?: to (?:their authors|the people who made them))?)?$/;
+  const attribution=/^who (?:said|suggested|proposed) what(?:,? and what was (?:decided|the outcome))?$/;
+  return parts.some(s=>summary.test(s) || attribution.test(s)) && parts.every(s=>summary.test(s) || attribution.test(s) || report.test(s));
 }
