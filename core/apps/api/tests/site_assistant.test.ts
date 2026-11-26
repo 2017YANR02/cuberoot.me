@@ -327,7 +327,7 @@ describe('site assistant grounding', () => {
     ] : String(input).endsWith('/comp_names_zh.json') ? {} : []));
     const all=await answerSiteQuestion('历年世锦赛的日期是什么？','zh',config,AbortSignal.timeout(5000),fetcher);
     expect(all.answer).toBe('查到 1 届世锦赛，日期见下表；点击比赛名可查看详情。');
-    expect(all.artifacts[0]).toMatchObject({rows:[["Rubik's Cube World Championship",'Budapest','HU','1982-06-05']]});
+    expect(all.artifacts[0]).toMatchObject({rows:[['鲁比克世界锦标赛','Budapest','HU','1982-06-05']]});
     const missing=await answerSiteQuestion('WC2021 的日期是什么？','zh',config,AbortSignal.timeout(5000),fetcher);
     expect(missing.answer).toContain('未找到 2021 年世锦赛的日期');
     expect(missing.sources).toEqual([]);
