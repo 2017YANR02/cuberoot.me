@@ -489,6 +489,11 @@ body[data-site-scenery] .timer-shell .shell-topbar.af-glass-surface {
   --af-glass-width: 0px;
 }
 
+/* The edge-to-edge solo toolbar has no rim. Its popovers keep their own highlights. */
+body[data-site-scenery] .timer-shell .timer-solo-topbar::before {
+  --af-glass-reflection: none;
+}
+
 /* Keep the country menu above the chart's own glass stacking context. */
 body[data-site-scenery] .sor-race .sor-race-bar {
   position: relative;
