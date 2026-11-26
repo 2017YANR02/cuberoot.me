@@ -106,7 +106,9 @@ export function assistantOpenTarget(question:string):string|undefined {
 
   // A first-person setup can precede a separate request. Speech transcripts
   // often omit the comma; require an explicit addressee at that boundary.
-  const scene=/^((?:我想|我要|我在|我和|我跟|我俩|我们)[^，,。；;！？!?]{1,80}?)(?:[，,。；;]\s*|(?=请帮我|帮我|麻烦你))(.+)$/u.exec(text);
+  const trailing=/^((?:我?想|我要)[^，,。；;！？!?]{1,60})[，,。；;]\s*(?:请|帮我)?(?:直接)?(?:带我去|带我过去|帮我打开)$/u.exec(text);
+  if (trailing && !/[“”「」『』"'‘’]|不要|别|如果|假如|怎么|解释|说|翻译/.test(trailing[1])) return trailing[1];
+  const scene=/^((?:想|我想|我要|我在|我和|我跟|我俩|我们)[^，,。；;！？!?]{1,80}?)(?:[，,。；;]\s*|(?=请帮我|帮我|麻烦你))(.+)$/u.exec(text);
   if (!scene || /[“”「」『』"'‘’]|不|别|没|假如|如果|要是|是否|知道|了解|问|怎么|如何|为什么|举例|解释|说|告诉|让|以为|教|翻译|引用|这句话|这句指令|听到|写下/.test(scene[1])) return;
   return command.exec(scene[2])?.[1];
 }

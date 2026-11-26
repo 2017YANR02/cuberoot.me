@@ -70,7 +70,13 @@ export function officialRegulationPassages(html:string,excerpts:Excerpt[],query=
     return [{id,article:id.match(/^(\d+|[A-Z])/)![0],text:(own.textContent ?? '').replace(/\s+/g,' ').trim()}];
   });
   const scoped=excerpts.flatMap(p=>regulationExcerptArticles(p,query).map(article=>({...p,article})));
-  const requested=[...new Set(scoped.map(p=>p.article))];
+  // A search may return broad chapters before the clause named in the
+  // question. Spend the shared excerpt budget on explicitly requested rules first.
+  const family=(id:string)=>id.match(/^(?:\d+[a-z]|[A-Z]\d)/)![0];
+  const explicit=clauseReferences(query);
+  const namedArticles=new Set(explicit.map(id=>id.match(/^(\d+|[A-Z])/)![0]));
+  const namedFamilies=new Set(explicit.map(family));
+  const requested=[...new Set(scoped.map(p=>p.article))].sort((a,b)=>Number(namedArticles.has(b))-Number(namedArticles.has(a)));
   let remaining=12500;
   return requested.flatMap(article=>{
     const chapter=clauses.filter(c=>c.article===article);
@@ -90,13 +96,13 @@ export function officialRegulationPassages(html:string,excerpts:Excerpt[],query=
     const groups=new Map<string,typeof chapter>();
     for(const clause of relevant){const key=clause.id.match(/^(?:\d+[a-z]|[A-Z]\d)/)![0];groups.set(key,[...(groups.get(key)??[]),clause]);}
     const kept:typeof chapter=[];
-    for(const group of groups.values()){
+    const ranked=[...groups].sort(([a],[b])=>Number(namedFamilies.has(b))-Number(namedFamilies.has(a)));
+    for(const [,group] of ranked){
       const size=group.reduce((sum,c)=>sum+c.text.length+1,0);
       if(size>remaining)continue;
       kept.push(...group);remaining-=size;
     }
     if(!kept.length)return [];
-    const family=(id:string)=>id.match(/^(?:\d+[a-z]|[A-Z]\d)/)![0];
     const completeFamilies=[...new Set(kept.map(c=>family(c.id)))];
     const omittedFamilies=[...new Set(chapter.map(c=>family(c.id)))].filter(id=>!completeFamilies.includes(id));
     const exceptions=kept.flatMap(c=>{
@@ -116,9 +122,28 @@ const otherIncident = /故障|触碰|碰到|没(?:有)?放|未(?:完全)?松|掉
 
 export function inspectionStartTimes(question:string):number[]|undefined {
   if (headToHead.test(question) || stopping.test(question)) return;
-  if (!/观察|inspection/i.test(question) || !/裁判|WCA|判罚|怎么判|是否罚|罚时|\b(?:judge|penalty|penalized|ruling)\b/i.test(question) ||
+  const elapsedSingle=/^(?:普通)?(?:三阶)?比赛从(?:开始观察|揭罩)到(?:启动(?:计时器|Stackmat)?|起表|开始还原)(?:用了|经过)\s*(\d+(?:\.\d+)?)\s*秒[，,]?(?:成绩)?(?:要加几秒|怎么判|如何判罚)[？?。]?$/iu.exec(question.trim());
+  if(elapsedSingle && Number(elapsedSingle[1])<=120) return [Number(elapsedSingle[1])];
+  const spoken=/^(?:(?:如果|普通|三阶|比赛|我|从开始)\s*)*观察(?:时间)?(?:用了|用时|经过)?\s*(\d+(?:\.\d+)?)\s*秒(?:整)?(?:时|才|后)?(?:启动\s*(?:Stackmat|计时器)|开始还原|起表)[，,]?\s*(?:应该怎么判|怎么判|还能记作加二吗|算加二吗|会加几秒|是加二还是DNF)[?？。!！]?$/iu.exec(question.trim());
+  if(spoken && Number(spoken[1])<=120) return [Number(spoken[1])];
+  if (!/观察|揭罩|inspection/i.test(question) || !/裁判|WCA|判罚|怎么判|是否罚|罚时|\b(?:judge|penalty|penalized|ruling)\b/i.test(question) ||
       !/起表|启动计时器|开始还原|start(?:s|ed)? (?:the (?:timer|solve)|solving)/i.test(question) ||
       /第一步|第一转|首转|转动|触碰|盲|单手|最少步|故障|掉件|残障|例外|额外|\b(?:turn|move|blind|touch|exception|incident|extra|defect|stopwatch|accommodation)\b/i.test(question)) return;
+  // An elapsed-time list has one common start and end. Units may be
+  // repeated on each measurement; an unrelated second event is not a list.
+  const elapsed = /从(?:揭罩|观察开始|开始观察)(?:计时)?到(?:选手)?(?:起表|启动计时器|开始还原)[，,：:\s]*(?:分别|依次)?(?:经过|用了|用时|耗时|为|是)?\s*(\d+(?:\.\d+)?(?:\s*秒?\s*(?:、|，|,|和|与|或|以及)\s*\d+(?:\.\d+)?)*\s*秒)/u.exec(question);
+  if (elapsed) {
+    const prefix = question.slice(0,elapsed.index).replace(/3\s*[x×]\s*3(?:\s*[x×]\s*3)?|3阶/gi,'');
+    const tail = question.slice(elapsed.index+elapsed[0].length);
+    // Only consume requests for the verdicts and their basis. Keep mixed
+    // incidents, uncertainty, extra calculations and unrelated asks on the planner.
+    const verdictWords = /[\s，,、。.;；:：?？!！]|请|把|这|两|三|各|种|次|都|的|分别|依次|按顺序|告诉我|给出|说明|附上|列出|以及|并|和|到|对应|具体|怎么判|如何判|裁判|结果|依据|处罚|判罚|规则|编号|条款/gu;
+    const setupWords = /[\s，,、。.;；:：]|请|帮我|查阅|查询|查|按照|根据|按|WCA|官网|官方|比赛|规则|常规|普通|三阶|平均轮|轮次|轮|选手|使用|采用|用|Stackmat|速拧计时器/giu;
+    if (prefix.replace(setupWords,'')
+        || tail.replace(verdictWords,'') || !/判|罚|依据|条款|结果/.test(tail)) return;
+    const times = elapsed[1].match(/\d+(?:\.\d+)?/g)!.map(Number);
+    return times.length<=12 && times.every(t=>t<=120) ? times : undefined;
+  }
   const list=question.match(/(?:^|[^.\d-])(\d+(?:\.\d+)?(?:\s*(?:、|，|,|和|与|或|以及|and|or)\s*\d+(?:\.\d+)?)*)\s*(?:秒|seconds?\b)/i);
   if (!list || list.index===undefined) return;
   const after=question.slice(list.index+list[0].length);
@@ -206,6 +231,42 @@ export function cornerTwistContestVerdict(html:string,sourceUrl:string,lang:'zh'
   const shortcut=lang==='en'?'In WCA competition, deliberately twisting corners to finish a layer faster causes an intentional defect and disqualifies the attempt.':'在 WCA 比赛中，故意扭角以加快某一层的还原属于主动制造故障，本次 DNF。';
   const repair=lang==='en'?'If a defect makes the puzzle unsolvable and twisting one corner restores solvability, the competitor may twist it in place without taking the puzzle apart. For multiple defect-induced twists, the number corrected must not exceed the number caused by defects. The repair must give no solving advantage.':'若故障导致无解，而就地扭一个角能恢复可解性，选手可直接扭角修复。若故障扭动了多个角，纠正数量不得超过故障造成的数量，且修复不得带来还原优势。';
   return result([mechanics,shortcut+' '+cite('5d')+' '+cite('5d3'),repair+' '+cite('5b3c')+' '+cite('5b2')].join('\n\n'),['5d','5d3','5b3c','5b2']);
+}
+
+export function multiBlindTimeCount(question:string) {
+  const m=/^(?:三阶)?多盲(?:我报名|我想|如果要|打算|准备)?(?:试|挑战|报)\s*(\d{1,3})\s*个(?:魔方)?[，,]?(?:按每个十分钟算[，,]?)?(?:最多能用多久|时限是多少|还能给\s*\d+\s*分钟吗)[？?。]?$/u.exec(question.trim());
+  if(m && Number(m[1])>=2) return Number(m[1]);
+}
+
+export function multiBlindTimeVerdict(html:string,url:string,count:number,lang:'zh'|'en') {
+  const rules=readVerdictClauses(html,url,lang);
+  const terms=rules?.clause('H1b').match(/fewer than (\d+) puzzles.*?time limit of (\d+) minutes times the number of puzzles.*?else the time limit is (\d+) minutes/i);
+  if(!rules || !terms) return;
+  const [threshold,perPuzzle,cap]=terms.slice(1).map(Number);
+  const minutes=count<threshold?count*perPuzzle:cap;
+  const summary=lang==='zh'?count+' 个魔方的通常时限为 '+minutes+' 分钟。少于 '+threshold+' 个时每个 '+perPuzzle+' 分钟，达到 '+threshold+' 个后总时限为 '+cap+' 分钟。':minutes+' minutes for '+count+' puzzles: below '+threshold+' puzzles allow '+perPuzzle+' minutes each; otherwise the limit is '+cap+' minutes.';
+  return rules.result(summary+' '+rules.cite('H1b'),['H1b']);
+}
+
+export function fewestMovesQuestion(question:string) {
+  if (!/^(?:FMC|最少步(?:还原)?)/i.test(question)) return;
+  const text=question.replace(/^(?:FMC|最少步(?:还原)?)/i,'').trim();
+  if (/^(?:可不可以|可以|能不能|能)(?:直接)?把(?:官方)?打乱(?:序列|公式)?(?:倒过来|取逆|逆过来)(?:写成|当作|当成)(?:解法|解|答案)吗[？?。]?$/u.test(text)) return 'inverse';
+  if (/^(?:每轮|一轮)(?:从开始到交答案)?(?:通常|一般)?(?:给|有)(?:多长时间|多少分钟)[？?。]?$/u.test(text)) return 'time';
+}
+
+export function fewestMovesVerdict(html:string,url:string,kind:'inverse'|'time',lang:'zh'|'en') {
+  const rules=readVerdictClauses(html,url,lang);
+  if (!rules) return;
+  const id=kind==='inverse'?'E2e':'E2b';
+  const clause=rules.clause(id);
+  const minutes=/total time limit of (\d+) minutes to find and write a solution/i.exec(clause)?.[1];
+  if(kind==='time' && !minutes) return;
+  if(kind==='inverse' && !/must not be directly derived from any part of the scramble sequence/i.test(clause)) return;
+  const answer=kind==='inverse'
+    ? (lang==='zh'?'不能把逆打乱直接当作答案提交。它确实能还原，但这样的解直接来自打乱，违反 E2e。':'The inverse does solve the puzzle, but submitting it directly violates E2e because it is derived from the scramble.')
+    : (lang==='zh'?'每轮共 '+minutes+' 分钟，找解和写下答案都在这段时间内。':'Competitors have '+minutes+' minutes in total to find and write the solution.');
+  return rules.result(answer+' '+rules.cite(id),[id]);
 }
 
 export function inspectionVerdicts(html:string, sourceUrl:string, scenario:InspectionScenario, lang:'zh'|'en') {

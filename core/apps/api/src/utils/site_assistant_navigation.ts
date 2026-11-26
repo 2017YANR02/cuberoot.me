@@ -144,6 +144,30 @@ function similarSpokenPaths(subject:string) {
   return found.size<=3 ? [...found] : [];
 }
 
+// Resolve descriptive requests against registered destinations. Never treat explanatory
+// prose, a negated command, or a bare feature mention as permission to navigate.
+const describedFeatures: Array<[string,RegExp]> = [
+  ['/alg/3bld/edge', /(?:盲拧|三盲).*棱块.*公式|棱块.*盲拧.*公式/],
+  ['/wca/comp/stats', /比赛日历.{0,5}统计|日历统计/],
+  ['/frame-count', /数帧|逐帧计时/],
+  ['/alg/sq1/parity-game', /sq[ -]?1.*奇偶.*(?:游戏|小游戏)/i],
+  ['/memo/colpi', /colpi|盲拧.*字母对.*(?:联想词|词库)|字母对联想词/i],
+  ['/alg/fto/notation', /fto.*(?:转动)?记号/i],
+  ['/scramble/solver?event=222', /二阶.*(?:涂色|涂颜色).*求解/],
+  ['/color-test/relations', /对色.*邻色.*(?:测试|小测)|邻色.*对色.*(?:测试|小测)/],
+  ['/cross_trainer', /(?:只想练|专练)十字/],
+];
+function describedPaths(phrase:string) {
+  if (/为什么|怎么用|如何用|解释|区别|是否|源码|听说|帮我写|教程怎么|先别|不用|不想打开|什么意思|翻译|不要打开|别打开|是否需要|能不能打开|[“「『]|和.*(?:两个|都)|然后|另外/.test(phrase)) return [];
+  const matches=describedFeatures.filter(([,pattern])=>pattern.test(phrase)).map(([href])=>href);
+  if (/(?:双人|两个人|两人|俩人|两位|2人).{0,8}计时/.test(phrase)) {
+    const remote=/联机|远程|异地|各(?:用|拿)|各自/.test(phrase);
+    matches.push(remote?'/timer?players=net':'/timer?players=2');
+    if(remote && /共用|同屏|同一台/.test(phrase)) matches.push('/timer?players=2');
+  }
+  return matches.filter(href=>destinations.has(href));
+}
+
 export function assistantNavigationRequest(question:string,history:AssistantMessage[],lang:Lang):AssistantAnswer|undefined {
   const q=question.normalize('NFKC').trim().replace(/[。.！!？?]+$/u,'').trim();
   // A question about a command previews the same registered destination but
@@ -165,7 +189,8 @@ export function assistantNavigationRequest(question:string,history:AssistantMess
   } else {
     const link=/^(?:请)?(?:给我|发我)(.+?)(?:的)?(?:入口|链接)$|^(.+?)(?:的)?(?:入口|链接)(?:在(?:哪(?:里|儿)?|什么地方)|是什么)?$|^(.+?)在哪(?:里|儿)?(?:打开|找)?$|^(?:where (?:is|can i find)|link to) (.+)$/i.exec(q);
     const task=/^(?:我想|我要|我想要)(.+)$/u.exec(q);
-    const subject=target ?? link?.slice(1).find(Boolean) ?? task?.[1];
+    const asksForLink=/(?:给|发)(?:我|个|一个)?[^。！？!?]{0,48}(?:入口|链接)|(?:入口|链接)(?:吗|就好|发我)|哪(?:一|个)页|在哪(?:里|儿)看|哪[里儿]可以/.test(q);
+    const subject=target ?? link?.slice(1).find(Boolean) ?? task?.[1] ?? (asksForLink?q:undefined);
     if(!subject) return;
     const name=normalize(subject);
     const objectPrompt=objectRequests.get(name);
@@ -174,6 +199,19 @@ export function assistantNavigationRequest(question:string,history:AssistantMess
     // Resolve the whole noun phrase. A timer mentioned inside a how-to question
     // is not a request to open it. A remote opponent uses the online mode.
     paths=[...(byName.get(name) ?? byName.get(feature) ?? [])];
+    if (!paths.length && (target || asksForLink || link) && !hypothetical) {
+      const generic=/^(?:这个|那个|对应的)?(?:工具|页面|功能)$/.test(target ?? '');
+      const phrase=target && !generic ? target : q;
+      if (/不含|排除|除了|还要打开|再打开/.test(phrase)) return;
+      const alternatives=phrase.split(/或者|还是|或是|或/u);
+      if (alternatives.length>1) {
+        const groups=alternatives.map(part=>[...(byName.get(normalize(part)) ?? describedPaths(part))]);
+        if (groups.some(group=>!group.length)) return;
+        paths=[...new Set(groups.flat())];
+      } else {
+        paths=describedPaths(phrase);
+      }
+    }
     if (paths.includes('/timer?players=2')) {
       const remote=/(?:异地|不同(?:的)?(?:城市|电脑)|各自(?:的)?(?:电脑|设备)|远程|线上|在线|联机)/u.test(q);
       const sameDevice=/(?:同屏|同机|(?:一台|同一台|同一部|同一块)(?:电脑|设备|手机|屏幕))/u.test(q);

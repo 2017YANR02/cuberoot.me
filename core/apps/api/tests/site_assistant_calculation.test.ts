@@ -1,5 +1,5 @@
 import {expect,it,vi} from 'vitest';
-import {suppliedAverageAnswer,suppliedTrainingComparison} from '../src/utils/site_assistant_calculation.js';
+import {suppliedAverageAnswer,suppliedTrainingComparison,suppliedTargetMean} from '../src/utils/site_assistant_calculation.js';
 import {answerSiteQuestion,canReadPublicResult} from '../src/utils/site_assistant.js';
 
 it.each([
@@ -62,4 +62,12 @@ it.each([
   comparison.replace('两组的成功率','仅用决赛成绩计算两组的成功率'),
 ])('preserves invalid counts and additional instructions for the planner: %s',q=>{
   expect(suppliedTrainingComparison(q,'zh')).toBeUndefined();
+});
+
+it('derives a remaining target from supplied counts, and declines inconsistent or mixed requests',()=>{
+  const q='我前2次均值3.00秒，后1次均值4.00秒。前3次合并的平均是多少？要让总共5次平均3秒，最后2次该平均多少？写出算式。';
+  expect(suppliedTargetMean(q,'zh')).toBe('(2 × 3.00 + 1 × 4.00) ÷ 3 ≈ 3.33 秒\n\n(5 × 3 − 10.00) ÷ 2 = 2.50 秒');
+  expect(suppliedTargetMean(q.replace('总共5次','总共6次'),'zh')).toBeUndefined();
+  expect(suppliedTargetMean(q+'再算我的 Ao5。','zh')).toBeUndefined();
+  expect(suppliedTargetMean(q.replace('5次平均3秒','5次平均1秒'),'zh')).toContain('无法达到');
 });

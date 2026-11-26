@@ -1,10 +1,29 @@
 import {averageOfN,meanOfN} from '@cuberoot/shared/timer/stats';
 import type {Solve} from '@cuberoot/shared/timer/types';
 
+/** Four completed solves and a target trimmed mean, all measured in hundredths. */
+function lastAo5Limit(question:string,lang:'zh'|'en') {
+  const seconds=String.raw`(\d{1,4}(?:\.\d{1,2})?)`;
+  const sep=String.raw`\s*秒?\s*[,，、和]\s*`;
+  const pattern=new RegExp('^(?:我(?:要|想要)|目标(?:是)?)?(?:五把平均|Ao5(?:目标)?(?:平均)?)\\s*'+seconds+'\\s*秒[，,。]前[四4]把(?:是|为)?\\s*'+[seconds,seconds,seconds,seconds].join(sep)+'\\s*秒?[，,。]最后一把(?:最慢|最多)(?:能|可以|是)?多少(?:秒)?[？?。]?(?:按\\s*Ao5[。.]?)?$','i');
+  const match=pattern.exec(question.trim());
+  if(!match) return;
+  const [target,...times]=match.slice(1).map(v=>Math.round(Number(v)*100));
+  if(!target || target>=60_000 || times.some(v=>!v || v>=60_000)) return;
+  const [a,b,c,d]=times.sort((x,y)=>x-y);
+  const limit=3*target-b-c;
+  const sec=(v:number)=>(v/100).toFixed(2);
+  if(limit<a || limit>d) return lang==='zh'?'这个精确目标无法达到。第五把无论多快或多慢，去掉最好和最差后，平均只能在 '+sec((a+b+c)/3)+' 至 '+sec((b+c+d)/3)+' 秒之间。':'That exact target is outside the range of possible trimmed means.';
+  if(limit===d) return lang==='zh'?'最后一把没有有限的最慢上限。只要不快于 '+sec(d)+' 秒，第五把会作为最慢成绩去掉，平均正好是 '+sec(target)+' 秒。':'There is no finite upper limit. At '+sec(d)+' s or slower, the last solve is dropped and the mean equals the target.';
+  const display=limit+1>=d?(lang==='zh'?'没有有限上限':'unbounded'):sec(limit+1)+(lang==='zh'?' 秒':' s');
+  return lang==='zh'?'按未舍入的平均，最后一把最慢为 '+sec(limit)+' 秒。中间三把需合计 '+sec(3*target)+' 秒，扣除 '+sec(b)+' 和 '+sec(c)+' 秒即可。若只要求四舍五入到百分秒后显示目标值，最慢为'+display+'。':'For the exact mean the slowest last solve is '+sec(limit)+' s. For the target rounded to hundredths, the upper limit is '+display+'.';
+}
 /** Only a complete, explicitly timed list and a single calculation request.
  * Unknown units, penalties, extra questions and stored-record requests stay
  * with the normal planner. Never extract incidental numbers from prose. */
 export function suppliedAverageAnswer(question:string,lang:'zh'|'en'):string|undefined {
+  const last=lastAo5Limit(question,lang);
+  if(last) return last;
   const token=String.raw`(?:\d+(?:\.\d{1,3})?\s*(?:秒|seconds?|s)?|DNF|DNS)`;
   const list=String.raw`(${token}(?:\s*(?:[,，、]|和|及|and)\s*${token}){2,4})`;
   // An explicit change to one named attempt is two independent Ao5 calculations.
@@ -45,6 +64,38 @@ export function suppliedAverageAnswer(question:string,lang:'zh'|'en'):string|und
     ? {zh:'去掉一个最好和一个最差成绩后，计算剩余三次的平均；两次及以上 DNF/DNS 则为 DNF。',en:'Discard one best and one worst result, then average the remaining three; two or more DNF/DNS results make the average DNF.'}[lang]
     : {zh:'三次全部计入平均；任意一次 DNF/DNS 都使平均为 DNF。',en:'Average all three results; any DNF/DNS makes the mean DNF.'}[lang];
   return `${format} = ${result}${unit}。${method}`.replace(/。/g,lang==='en'?'. ':'。');
+}
+
+/** Self-contained two-block arithmetic means, with an explicit overall target.
+ * Parse the entire question so extra goals, rounded input, and other average
+ * conventions still reach the planner. Work in integer centiseconds. */
+export function suppliedTargetMean(question:string,lang:'zh'|'en'):string|undefined {
+  const text=question.replace(/\s/g,'');
+  const count=String.raw`([1-9]\d{0,4})`;
+  const seconds=String.raw`(\d{1,4}(?:\.\d{1,2})?)秒`;
+  const block=count+'(?:把|次)(?:的)?(?:算术)?(?:平均|均值)(?:用时|成绩)?(?:是|为)?'+seconds;
+  const sequence=new RegExp('^(?:训练记录分成两组[。；;])?(?:我)?前'+block+'[，,；;]后'+block+'[。；;，,]');
+  const groups=sequence.exec(text);
+  if(!groups)return;
+  const combined=new RegExp('^(?:前'+count+'(?:把|次))?(?:合起来|合并|合在一起)(?:的)?(?:算术)?(?:平均|均值)(?:是|为)?多少[？?，,。]');
+  const ask=combined.exec(text.slice(groups[0].length));
+  if(!ask)return;
+  const target=new RegExp('^(?:想|要)?让(?:全部|总共|总计|一共)?'+count+'(?:把|次)(?:的)?(?:算术)?(?:平均|均值)(?:恰好|正好)?(?:是|为)?'+seconds+'[，,]'+
+    '(?:接下来|最后|剩下)(?:的)?'+count+'(?:把|次)(?:该|要)?(?:的)?(?:平均|均值)(?:该|需|要)?多少[？?。]?(?:(?:请)?(?:写出|给我|列出)算式[。.]?)?$');
+  const goal=target.exec(text.slice(groups[0].length+ask[0].length));
+  if(!goal)return;
+  const n=Number(groups[1]),m=Number(groups[3]),total=Number(goal[1]),remaining=Number(goal[3]);
+  if ((ask[1] && Number(ask[1])!==n+m) || total!==n+m+remaining)return;
+  const cents=(value:string)=>Math.round(Number(value)*100);
+  const a=cents(groups[2]),b=cents(groups[4]),desired=cents(goal[2]);
+  if(!a || !b || !desired)return;
+  const used=n*a+m*b, needed=total*desired-used;
+  const value=(amount:number)=>(amount/100).toFixed(2);
+  const mean=(sum:number,size:number)=>(sum%size?' ≈ ':' = ')+value(sum/size);
+  const first='('+n+' × '+groups[2]+' + '+m+' × '+groups[4]+') ÷ '+(n+m)+mean(used,n+m);
+  const unit=lang==='zh'?' 秒':' s';
+  if(needed<=0)return first+unit+'\n\n'+(lang==='zh'?'已用时间达到或超过目标总用时，剩余每次用时为正，无法达到目标平均。':'The time already used reaches or exceeds the target total, so positive remaining times cannot meet it.');
+  return first+unit+'\n\n('+total+' × '+goal[2]+' − '+value(used)+') ÷ '+remaining+mean(needed,remaining)+unit;
 }
 
 type TrainingGroup = { label: string; successes: number; trials: number };
