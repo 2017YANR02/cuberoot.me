@@ -8,6 +8,7 @@ import { useLang } from '@/i18n/tr';
 import { phases, type Phase, useBuildSnapshot } from './useBuildSnapshot';
 import RiemannExplorer from './RiemannExplorer';
 import ProofRoute from './ProofRoute';
+import CompactProgress from './CompactProgress';
 import ZeroReflection from './ZeroReflection';
 import TheoryNotes from './TheoryNotes';
 import guide from './explainer.module.css';
@@ -68,16 +69,19 @@ export default function GrhPage() {
         <div className={styles.formula}><span>{t('临界线', 'Critical line')}</span><strong><TeX src={String.raw`\operatorname{Re}(s)=\tfrac12`} /></strong></div>
       </header>
       <nav className={guide.contents} aria-label={t('本页目录', 'On this page')}>
-        <a href="#live">{t('验证结果', 'Verification result')}</a>
+        {process.env.NODE_ENV === 'development' && <a href="#compact">{t('精简版核验', 'Compact proof verification')}</a>}
+        <a href="#live">{t('原版核验', 'Original proof verification')}</a>
         <a href="#zeros">{t('认识零点', 'Explore the zeros')}</a>
         <a href="#proof-route">{t('证明路线', 'The proof')}</a>
         <a href="#symmetry">{t('对称性实验', 'Try the symmetry')}</a>
         <a href="#theory-value">{t('素数与理论价值', 'Primes and new ideas')}</a>
       </nav>
 
+      {process.env.NODE_ENV === 'development' && <CompactProgress />}
+
       <section id="live" className={styles.progressPanel} data-site-surface="panel" aria-labelledby="grh-progress-title">
         <div className={styles.sectionHead}>
-          <h2 id="grh-progress-title">{data?.stage === 'completed' ? t('经典黎曼猜想通过本机核验', 'Local verification of the Riemann hypothesis passed') : replaying ? t('内核重检进度', 'Kernel replay progress') : t('编译进度', 'Compilation progress')}</h2>
+          <h2 id="grh-progress-title">{data?.stage === 'completed' ? t('原版 · 经典黎曼猜想通过本机核验', 'Original proof · local verification of the Riemann hypothesis passed') : replaying ? t('内核重检进度', 'Kernel replay progress') : t('编译进度', 'Compilation progress')}</h2>
           <div className={styles.status} data-tone={tone} role="status">{status}</div>
         </div>
         <p>{t(
