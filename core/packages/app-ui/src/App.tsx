@@ -391,6 +391,10 @@ const MOBILE_EMBED_AUTH_TIMEOUT_MS = 10_000;
 const repository = new TimerRepository(new IndexedDbTimerStoreDriver());
 const netRecordingOutbox = new NetRecordingOutbox(({ context, solve }) => repository.saveNetSolve(context.sessionId, solve), createNetOutboxStorage());
 
+function isAccountDetailsPage(page: AccountPage): page is Exclude<AccountPage, 'home' | 'sign-in'> {
+  return page !== 'home' && page !== 'sign-in';
+}
+
 type AppView = 'timer' | 'tools' | 'account' | 'history' | 'settings' | 'appearance';
 type PrimaryView = Extract<AppView, 'timer' | 'tools' | 'account'>;
 type ConnectionState = 'checking' | 'offline' | 'online';
@@ -490,7 +494,8 @@ export function App({ host, loadingMark }: { host: InstalledAppHost; loadingMark
   const [view, setView] = useState<AppView>('timer');
   const [accountPage, setAccountPage] = useState<AccountPage>('home');
   const accountPageRef = useRef<AccountPage>('home');
-  const accountDetails = accountPage !== 'home' && accountPage !== 'sign-in';
+  const [accountFramePage, setAccountFramePage] = useState<Exclude<AccountPage, 'home' | 'sign-in'>>('profile');
+  const accountDetails = isAccountDetailsPage(accountPage);
   const [accountDetailsReady, setAccountDetailsReady] = useState(false);
   const appearanceReturnRef = useRef<Exclude<AppView, 'appearance'>>('account');
   const selectedView = view === 'appearance' ? appearanceReturnRef.current : view;
@@ -703,9 +708,9 @@ export function App({ host, loadingMark }: { host: InstalledAppHost; loadingMark
     ? siteRouteUrl(language, toolsEntryRoute)
     : siteUrl(language), language);
   const accountEntryLocale = accountFrameLocale ?? language;
-  const accountWebUrl = installedWebEntryUrl(accountPage === 'membership'
+  const accountWebUrl = installedWebEntryUrl(accountFramePage === 'membership'
     ? siteRouteUrl(accountEntryLocale, '/membership')
-    : accountUrl(accountEntryLocale, accountPage === 'security' ? 'signin' : undefined), accountEntryLocale);
+    : accountUrl(accountEntryLocale, accountFramePage === 'security' ? 'signin' : undefined), accountEntryLocale);
   const auth = host.useAuth(language);
   const activeAuthSession = wcaAutoMarkLiveSession(auth.session, auth.busy);
   const authSessionRef = useRef(auth.session);
@@ -1950,18 +1955,20 @@ export function App({ host, loadingMark }: { host: InstalledAppHost; loadingMark
     if (page === 'home' && (accountPageRef.current === 'profile' || accountPageRef.current === 'security')
       && authSessionRef.current) void auth.refreshAccountSession().catch(() => undefined);
     accountPageRef.current = page;
-    const details = page !== 'home' && page !== 'sign-in';
+    webDepthRef.current.account = 0;
+    setAccountPage(page);
     clearAccountSyncTimeout();
     accountSyncInFlightRef.current = null;
     accountSyncedTokenRef.current = null;
-    webDepthRef.current.account = 0;
+    // Keep the trusted account frame available for explicit web-session cleanup on sign-out.
+    if (!isAccountDetailsPage(page)) return;
+    setAccountFramePage(page);
     webBridgeReadyRef.current.account = false;
     setWebSurfaceStatus(current => ({ ...current, account: 'loading' }));
     setWebSurfaceReloadUrl(current => ({ ...current, account: null }));
     setWebSurfaceRevision(current => ({ ...current, account: current.account + 1 }));
     setAccountDetailsReady(false);
-    setOpenedWebViews(current => ({ ...current, account: details }));
-    setAccountPage(page);
+    setOpenedWebViews(current => ({ ...current, account: true }));
   }, [auth.refreshAccountSession, clearAccountSyncTimeout]);
 
   useEffect(() => {
@@ -2083,7 +2090,7 @@ export function App({ host, loadingMark }: { host: InstalledAppHost; loadingMark
   const syncAccountWebSession = useCallback(async () => {
     const token = auth.session?.token;
     const frame = webFrameRefs.current.account;
-    if (!token || !frame?.contentWindow || !webBridgeReadyRef.current.account) return;
+    if (!isAccountDetailsPage(accountPageRef.current) || !token || !frame?.contentWindow || !webBridgeReadyRef.current.account) return;
     if (accountSyncedTokenRef.current === token
       || accountSyncInFlightRef.current?.token === token) return;
     clearAccountSyncTimeout();
@@ -2299,6 +2306,10 @@ export function App({ host, loadingMark }: { host: InstalledAppHost; loadingMark
   useEffect(() => {
     const onMessage = (event: MessageEvent) => {
       if (event.origin !== SITE_ORIGIN) return;
+      const accountFrame = webFrameRefs.current.account;
+      const accountSource = Boolean(accountFrame && event.source === accountFrame.contentWindow);
+      const authClear = decodeMobileEmbedAuthClear(event.data);
+      if (accountSource && !isAccountDetailsPage(accountPageRef.current) && !authClear) return;
       if (event.data?.type === 'cuberoot:mobile:embedded-search-blur') {
         if (event.source === webFrameRefs.current.tools?.contentWindow) setDockedKeyboardTop(null);
         return;
@@ -2326,9 +2337,6 @@ export function App({ host, loadingMark }: { host: InstalledAppHost; loadingMark
         else openAppAppearance();
         return;
       }
-      const accountFrame = webFrameRefs.current.account;
-      const accountSource = Boolean(accountFrame && event.source === accountFrame.contentWindow);
-
       const purchase = decodeAppleMembershipRequest(event.data) ?? decodeGoogleMembershipRequest(event.data) ?? decodeWebMembershipRequest(event.data);
       if (purchase) {
         const frame = webFrameRefs.current[purchase.surface];
@@ -2370,12 +2378,11 @@ export function App({ host, loadingMark }: { host: InstalledAppHost; loadingMark
         return;
       }
 
-      const authClear = decodeMobileEmbedAuthClear(event.data);
       if (accountSource && authClear) {
         clearAccountSyncTimeout();
         accountSyncInFlightRef.current = null;
         accountSyncedTokenRef.current = null;
-        void auth.logout();
+        if (authSessionRef.current) void auth.logout();
         navigateAccount('home');
         return;
       }
@@ -3462,7 +3469,7 @@ export function App({ host, loadingMark }: { host: InstalledAppHost; loadingMark
     const receiveAccountAppearance = (event: MessageEvent) => {
       const accountWindow = webFrameRefs.current.account?.contentWindow;
       if (event.origin !== SITE_ORIGIN || !accountWindow || event.source !== accountWindow
-        || !accountInlineSettingsRef.current || viewRef.current !== 'account') return;
+        || !accountInlineSettingsRef.current || viewRef.current !== 'account' || !isAccountDetailsPage(accountPageRef.current)) return;
       const change = decodeMobileEmbedAppearance(event.data);
       if (change?.surface !== 'account' || JSON.stringify(change.preferences) === JSON.stringify(appearanceRef.current)) return;
       updateAppAppearance(change.preferences, true);
@@ -5220,7 +5227,7 @@ children: <>
             <section
               aria-label={title}
               className={`web-surface web-surface--${surface}`}
-              hidden={view !== surface || (surface === 'tools' && toolsHomeVisible)}
+              hidden={view !== surface || (surface === 'tools' ? toolsHomeVisible : !accountDetails)}
               key={surface}
             >
               {surface === 'tools' && (

@@ -179,35 +179,35 @@ describe('installed App GAN lifecycle integration', () => {
     expect(saved()).toHaveLength(1);
   });
 
-  it('preloads tools behind the timer, reuses its frame, and rejects foreign or hidden navigation', async () => {
-    expect(container.querySelector('iframe')).toBeNull();
+  it('opens Tools locally, loads a detail frame on demand, and rejects foreign or hidden navigation', async () => {
     const onlineHost = { ...host, getNetworkStatus: async () => true };
     await act(async () => root.render(<App host={onlineHost} />));
-    await act(async () => { await new Promise((done) => setTimeout(done, 300)); });
-    const frame = container.querySelector<HTMLIFrameElement>('iframe')!;
-    expect(frame.src).toBe('https://cuberoot.me/en');
-    expect(frame.closest('section')?.hidden).toBe(true);
+    await settle();
+    expect(container.querySelector('iframe')).toBeNull();
     expect(container.querySelector('.primary-nav [aria-current="page"]')?.getAttribute('aria-label')).toBe('Timer');
     const tabs = [...container.querySelectorAll<HTMLButtonElement>('.primary-nav button')];
     expect(tabs.map(tab => tab.getAttribute('aria-label'))).toEqual(['Timer', 'Tools', 'Me']);
     expect(tabs.map(tab => tab.textContent)).toEqual(['', '', '']);
     const select = async (name: string) => {
-      const button = [...container.querySelectorAll<HTMLButtonElement>('.primary-nav button')]
-        .find(item => item.getAttribute('aria-label') === name)!;
-      await act(async () => button.click());
+      await act(async () => tabs.find(tab => tab.getAttribute('aria-label') === name)!.click());
     };
     await select('Tools');
-    expect(container.querySelector('iframe')).toBe(frame);
+    expect(container.querySelector('.installed-tools-home')?.hasAttribute('hidden')).toBe(false);
+    expect(container.querySelector('iframe')).toBeNull();
+
+    await act(async () => container.querySelector<HTMLButtonElement>('.installed-tools-site-search')!.click());
+    const frame = container.querySelector<HTMLIFrameElement>('.web-surface--tools iframe')!;
+    expect(new URL(frame.src).pathname).toBe('/en/search');
+    expect(container.querySelector('.installed-tools-home')?.hasAttribute('hidden')).toBe(true);
     const loading = container.querySelector('.web-surface [role="status"]')!;
     expect(loading.querySelector('.loading-brand-colours')).not.toBeNull();
     expect(loading.querySelector('p')).toBeNull();
-    await act(async () => {
-      window.dispatchEvent(new MessageEvent('message', {
-        origin: 'https://cuberoot.me', source: frame.contentWindow,
-        data: { type: 'cuberoot:mobile:navigation', surface: 'tools', href: frame.src, depth: 0 },
-      }));
-    });
+    await act(async () => window.dispatchEvent(new MessageEvent('message', {
+      origin: 'https://cuberoot.me', source: frame.contentWindow,
+      data: { type: 'cuberoot:mobile:navigation', surface: 'tools', href: frame.src, depth: 0 },
+    })));
     expect(container.querySelector('.web-surface-state')).toBeNull();
+
     const message = { type: 'cuberoot:mobile:select-tab', surface: 'tools', tab: 'timer' };
     const send = async (origin: string, source: MessageEventSource | null) => {
       await act(async () => window.dispatchEvent(new MessageEvent('message', { origin, source, data: message })));
@@ -219,56 +219,81 @@ describe('installed App GAN lifecycle integration', () => {
     await send('https://cuberoot.me', frame.contentWindow);
     expect(frame.closest<HTMLElement>('.web-surface')?.hidden).toBe(true);
     expect(container.querySelector('.primary-nav [aria-current="page"]')?.getAttribute('aria-label')).toBe('Timer');
-    expect(container.querySelectorAll('iframe')).toHaveLength(1);
+    expect(container.querySelector('iframe')).toBe(frame);
     await select('Me');
     await send('https://cuberoot.me', frame.contentWindow);
     expect(container.querySelector('.primary-nav [aria-current="page"]')?.getAttribute('aria-label')).toBe('Me');
   });
 
-  it('applies committed Account appearance without opening a new surface or reloading the frame', async () => {
-    const account = container.querySelector<HTMLButtonElement>('.primary-nav button[aria-label="Me"]')!;
-    await act(async () => account.click());
-    const frame = container.querySelector<HTMLIFrameElement>('.web-surface--account iframe')!;
-    const previousSrc = frame.src;
-    const send = (data: object, source: Window | null = frame.contentWindow) => act(async () => {
-      window.dispatchEvent(new MessageEvent('message', { origin: 'https://cuberoot.me', source, data }));
-    });
-    await send({ type: 'cuberoot:mobile:navigation', surface: 'account',
-      href: 'https://cuberoot.me/en/account?settings=general', depth: 0, inlineAccountSettings: true });
-    const appearance = { type: 'cuberoot:mobile:appearance', surface: 'account',
-      preferences: { ...readAppearancePreferences(), theme: 'dark', locale: 'zh' } };
-    await send(appearance, window);
-    expect(localStorage.getItem('trainer-lang')).toBe('en');
-    await send(appearance);
+  it('applies Account settings through the bundled appearance screen', async () => {
+    await act(async () => container.querySelector<HTMLButtonElement>('.primary-nav button[aria-label="Me"]')!.click());
+    const settings = [...container.querySelectorAll<HTMLButtonElement>('.installed-account-action')]
+      .find(button => button.textContent?.trim() === 'Settings')!;
+    await act(async () => settings.click());
+    expect(container.querySelector('.app-shell--appearance')).not.toBeNull();
+    expect(container.querySelector('iframe')).toBeNull();
+
+    await act(async () => container.querySelector<HTMLButtonElement>('[aria-label="Language"]')!.click());
+    const chinese = [...document.querySelectorAll<HTMLElement>('[role="option"]')]
+      .find(option => option.textContent?.trim() === '简体中文')!;
+    await act(async () => chinese.click());
+    expect(readAppearancePreferences().locale).toBe('zh');
     expect(localStorage.getItem('trainer-lang')).toBe('zh');
-    expect(container.querySelector('.app-shell--account')).not.toBeNull();
-    expect(container.querySelector('.app-shell--appearance')).toBeNull();
-    expect(container.querySelector('.web-surface--account iframe')).toBe(frame);
-    expect(frame.src).toBe(previousSrc);
+    await act(async () => container.querySelector<HTMLButtonElement>('[aria-label="返回"]')!.click());
+    expect(container.querySelector('.installed-account h1')?.textContent).toBe('我的');
+    expect(container.querySelector('iframe')).toBeNull();
   });
 
-  it('keeps a loaded account form visible when native sign-in fails', async () => {
+  it('keeps the bundled account form visible when native sign-in fails', async () => {
     let authError = false;
     const accountHost: InstalledAppHost = { ...host,
       getNetworkStatus: async () => true,
       useAuth: () => ({ ...host.useAuth('en'), error: authError }),
     };
     await act(async () => root.render(<App host={accountHost} />));
-    const accountButton = [...container.querySelectorAll<HTMLButtonElement>('button')]
-      .find(button => button.getAttribute('aria-label') === 'Me');
-    expect(accountButton).toBeDefined();
-    await act(async () => accountButton!.click());
-    const frame = container.querySelector<HTMLIFrameElement>('.web-surface--account iframe')!;
-    await act(async () => frame.dispatchEvent(new Event('load')));
-    expect(frame.getAttribute('aria-hidden')).toBe('false');
+    await act(async () => container.querySelector<HTMLButtonElement>('.primary-nav button[aria-label="Me"]')!.click());
+    await act(async () => container.querySelector<HTMLButtonElement>('.installed-account-login')!.click());
+    const form = container.querySelector('.installed-account-signin')!;
+    expect(form).not.toBeNull();
+    expect(form.querySelector('input')).not.toBeNull();
 
     authError = true;
     await act(async () => root.render(<App host={accountHost} />));
 
-    expect(container.querySelector('.web-surface--account iframe')).toBe(frame);
-    expect(frame.getAttribute('aria-hidden')).toBe('false');
-    expect(container.querySelector('.web-surface--account .web-surface-state')).toBeNull();
+    expect(container.querySelector('.installed-account-signin')).toBe(form);
+    expect(container.querySelector('iframe')).toBeNull();
     expect(container.textContent).toContain('Account sign-in is temporarily unavailable. Try again.');
+  });
+
+  it('clears the website session when signing out after returning from account details', async () => {
+    const logout = vi.fn(async () => undefined);
+    const accountHost: InstalledAppHost = { ...host, getNetworkStatus: async () => true,
+      useAuth: () => ({ ...host.useAuth('en'), logout, session: { token: 'test-session', user: {
+        uid: 7, wcaId: null, name: 'Test', avatar: '', avatarSource: 'auto', avatarPreset: null, isAdmin: false,
+      } } }),
+    };
+    await act(async () => root.render(<App host={accountHost} />));
+    await act(async () => container.querySelector<HTMLButtonElement>('.primary-nav button[aria-label="Me"]')!.click());
+    const clickAccountAction = async (label: string) => {
+      const button = [...container.querySelectorAll<HTMLButtonElement>('.installed-account-action')]
+        .find(action => action.textContent?.trim() === label)!;
+      await act(async () => button.click());
+    };
+    await clickAccountAction('Account & security');
+    const frame = container.querySelector<HTMLIFrameElement>('.web-surface--account iframe')!;
+    expect(new URL(frame.src).searchParams.get('view')).toBe('signin');
+    const post = vi.spyOn(frame.contentWindow!, 'postMessage');
+    await act(async () => container.querySelector<HTMLButtonElement>('[aria-label="Back to My account"]')!.click());
+    expect(container.querySelector('.web-surface--account iframe')).toBe(frame);
+    expect(frame.closest('section')?.hidden).toBe(true);
+    await act(async () => window.dispatchEvent(new MessageEvent('message', {
+      origin: 'https://cuberoot.me', source: frame.contentWindow,
+      data: { type: 'cuberoot:mobile:select-tab', surface: 'account', tab: 'timer' },
+    })));
+    expect(container.querySelector('.primary-nav [aria-current="page"]')?.getAttribute('aria-label')).toBe('Me');
+    await clickAccountAction('Sign out');
+    expect(post).toHaveBeenCalledWith({ type: 'cuberoot:mobile:auth-clear', surface: 'account' }, 'https://cuberoot.me');
+    expect(logout).toHaveBeenCalledOnce();
   });
 
   it('opens notification destinations in the real Tools surface after auth, reuses the shell and ignores duplicate/foreign taps', async () => {
