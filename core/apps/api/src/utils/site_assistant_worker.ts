@@ -2,7 +2,7 @@ import { restoreAssistantContext } from './site_assistant_context.js';
 import { query } from '../db/connection.js';
 import { assistantAnswerHistory, assistantTimeoutMs, boundAssistantHistory, type AssistantAnswer, type AssistantProgress, type AssistantStreamEvent } from '@cuberoot/shared/site-assistant';
 import { BANNED_WCA_IDS } from '@cuberoot/shared/admin';
-import { answerSiteQuestion, assistantConfig, canReadPublicResult } from './site_assistant.js';
+import { answerSiteQuestion, assistantConfig, canReadPublicResult, readCurrentOfficialRules } from './site_assistant.js';
 import { runRecentChampionQuery, standaloneChampionWindow } from './site_assistant_champions.js';
 import { assistantQueueStore, type AssistantClaim, type Checkpoint } from './site_assistant_queue.js';
 import { AssistantSteered, markAssistantToolReused, withAssistantExecution } from './site_assistant_execution.js';
@@ -16,6 +16,7 @@ import { getUserById } from './account.js';
 
 export function createAssistantQueueWorker(deps:{
   store:ReturnType<typeof assistantQueueStore>; answer:typeof answerSiteQuestion; config:typeof assistantConfig;
+  warmPublicRules?: () => Promise<string>;
   authorize:(uid:number)=>Promise<string>; reserve:typeof reserveAssistantQuestion;
   attachment?:typeof readAssistantAttachment; monitor?:typeof startAssistantMonitor;
 }) {
@@ -180,6 +181,8 @@ export function createAssistantQueueWorker(deps:{
   return {
     kick:()=>kick().catch(()=>{}),
     start() {
+      // Cold rule questions join this read. A failed warmup is retried on demand.
+      void deps.warmPublicRules?.().catch(()=>{});
       const timer=setInterval(()=>void kick().catch(()=>{}),2000);timer.unref();
       const retention=setInterval(()=>void deps.store.prune().catch(()=>{}),3600_000);retention.unref();
       void kick().catch(()=>{});
@@ -189,7 +192,7 @@ export function createAssistantQueueWorker(deps:{
   };
 }
 export const durableAssistantStore=assistantQueueStore();
-export const durableAssistantWorker=createAssistantQueueWorker({store:durableAssistantStore,answer:answerSiteQuestion,config:assistantConfig,reserve:reserveAssistantQuestion,monitor:startAssistantMonitor,authorize:async uid=>{
+export const durableAssistantWorker=createAssistantQueueWorker({warmPublicRules:readCurrentOfficialRules,store:durableAssistantStore,answer:answerSiteQuestion,config:assistantConfig,reserve:reserveAssistantQuestion,monitor:startAssistantMonitor,authorize:async uid=>{
   const account=await getUserById(uid);
   if(!account?.wca_id || !/^\d{4}[A-Z]{4}\d{2}$/.test(account.wca_id))throw new AssistantFailure('wca_link_required');
   if(BANNED_WCA_IDS.includes(account.wca_id))throw new AssistantFailure('account_forbidden');

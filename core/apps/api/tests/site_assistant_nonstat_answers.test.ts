@@ -61,6 +61,11 @@ describe('non-statistical question constraints',()=>{
     expect(reductionParityGuide(q+' 也给出公式。','zh')).toBeUndefined();
     expect(inspectionStartTimes('三阶 WCA 观察恰好 15.00 秒起表怎么判？')).toEqual([15]);
     expect(inspectionStartTimes('观察第 8 秒报时，裁判忘了选手何时起表，会罚时吗？')).toBeUndefined();
+    const timed='WCA 三阶，从揭罩到起表分别用了14.99秒、15秒和17秒。请按顺序告诉我裁判结果和依据。';
+    expect(inspectionStartTimes(timed)).toEqual([14.99,15,17]);
+    expect(inspectionStartTimes(timed+'同时解释怎么申诉。')).toBeUndefined();
+    expect(inspectionStartTimes('请先介绍规则历史。'+timed)).toBeUndefined();
+    expect(inspectionStartTimes(timed.replace('15秒和','15秒停表后'))).toBeUndefined();
     expect(inspectionStartTimes('裁判观察 14.999、15.00 秒起表，何时报时？')).toEqual([14.999,15]);
     expect(inspectionStartTimes('裁判观察 14.99、15.00 秒起表，第一转慢了怎么判，何时报时？')).toBeUndefined();
   });

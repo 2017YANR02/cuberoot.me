@@ -7,7 +7,11 @@ const fixtures=vi.hoisted(()=>({
   config:{key:'test-only',baseUrl:'https://model.example',model:'fixture'},
   answer:vi.fn(async()=>({answer:'Fixture answer',sources:[]})),
 }));
-vi.mock('../src/utils/site_assistant.js',()=>({answerSiteQuestion:fixtures.answer,assistantConfig:()=>fixtures.config}));
+vi.mock('../src/utils/site_assistant.js',()=>({
+  answerSiteQuestion:fixtures.answer,
+  assistantConfig:()=>fixtures.config,
+  readCurrentOfficialRules:vi.fn(async()=>null),
+}));
 vi.mock('../src/utils/account.js',async importOriginal=>({...await importOriginal<object>(),getUserById:vi.fn(async()=>({id:66,wca_id:'2017YANR02'}))}));
 vi.mock('../src/utils/session.js',async importOriginal=>({...await importOriginal<object>(),signSession:()=> 'fixture-session'}));
 vi.mock('../src/routes/site_assistant.js',async importOriginal=>{

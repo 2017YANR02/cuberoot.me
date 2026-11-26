@@ -1,8 +1,34 @@
 import {afterEach,beforeEach,expect,it,vi} from 'vitest';
 import {officialRegulationPassages,regulationExcerptArticles,WCA_REGULATIONS_URL,WCA_REGULATIONS_MIRROR_URL,savedRegulationChapter} from '../src/utils/site_assistant_regulations.js';
 import {runDataTool} from '../src/utils/site_assistant_tools.js';
-import {answerSiteQuestion} from '../src/utils/site_assistant.js';
+import {answerSiteQuestion, readCurrentOfficialRules} from '../src/utils/site_assistant.js';
 import {modelResponse,wireEvidence} from './fixtures/site_assistant_model.js';
+
+it('shares the anonymous rules warmup and revalidates an expired official version',async()=>{
+  const page = '<ul><li id="A4d1">Version one</li></ul>';
+  const updated = page.replace('one','two');
+  const fetcher = vi.fn<typeof fetch>()
+    .mockResolvedValueOnce(new Response(page,{headers:{etag:'"v1"'}}))
+    .mockResolvedValueOnce(new Response(null,{status:304}))
+    .mockResolvedValueOnce(new Response('unavailable',{status:503}))
+    .mockResolvedValueOnce(new Response(updated,{headers:{etag:'"v2"'}}));
+  const now = Date.now();
+  const time = vi.spyOn(Date,'now').mockReturnValue(now);
+  vi.stubGlobal('fetch',fetcher);
+  try {
+    expect(await Promise.all([readCurrentOfficialRules(),readCurrentOfficialRules()])).toEqual([page,page]);
+    expect(fetcher).toHaveBeenCalledTimes(1);
+    time.mockReturnValue(now+61_000);
+    expect(await readCurrentOfficialRules()).toBe(page);
+    expect(new Headers(fetcher.mock.calls[1][1]?.headers).get('if-none-match')).toBe('"v1"');
+    time.mockReturnValue(now+122_000);
+    await expect(readCurrentOfficialRules()).rejects.toThrow();
+    expect(await readCurrentOfficialRules()).toBe(updated);
+  } finally {
+    time.mockRestore();
+    vi.unstubAllGlobals();
+  }
+});
 
 const config={key:'test-only',baseUrl:'https://model.example/v1',model:'qwen3.8-flash'};
 // Minimal clause structure; the paid evaluation separately uses the frozen WCA
@@ -178,4 +204,44 @@ it('does not turn an optional glossary navigation link into a page-body requirem
   });
   const answer=await answerSiteQuestion('查 TPS 百科定义和论坛主题，查不到就说明。','zh',config,AbortSignal.timeout(4000),fetcher);
   expect(answer.answer).toContain('每秒步数');expect(models).toBe(2);
+});
+
+it('preserves the explicitly requested clause family before spending the excerpt budget on other chapters',()=>{
+  const html='<html><body><ul><li id="9a">'+('Other events. '.repeat(720))+'</li><li id="A1">'+('Format. '.repeat(680))+'</li><li id="A4">Start.<ul><li id="A4d1">'+('Inspection. '.repeat(390))+'</li><li id="A4d1+">Boundary.</li></ul></li></ul></body></html>';
+  const pages=officialRegulationPassages(html,[{href:'/regulation/events',content:'9a'},{href:'/regulation/speed-solving',content:'A1'}],'What does A4d1 say?');
+  expect(pages[0].id).toBe('wca:regulations:A');
+  expect(pages[0].metadata.clauses).toEqual(expect.arrayContaining(['A4d1','A4d1+']));
+  expect(pages[0].href).toContain('#A4');
+});
+
+it.each(['auto','fast'] as const)('repairs an invented slow-turn allocation in %s mode', async mode => {
+  const question='慢拧那段录像停顿多，全速那段少，可后者的打乱我认识。我该把练习比例倒过来吗？请把两种练法各自用什么题单验收说清，给一个取舍指标。';
+  const first='1. 先保留原配比：熟悉打乱会影响判断。\n2. A 原练法（慢拧）与 B 新练法（全速）等时练习，各测一份不重叠的新打乱，以练后整把用时中位数取舍。';
+  const corrected='1. 先保留当前配比：两段录像不足以判断，且打乱熟悉度不同。\n2. A 用当前配比，B 用倒过来的配比；等时等难练习后，A、B 各测一份未练过、彼此不重叠的新打乱。复测时交换顺序并换新题，B 的整把用时中位数稳定更低才改。';
+  const fetcher=vi.fn<typeof fetch>()
+    .mockResolvedValueOnce(modelResponse({answerKind:'general',answer:first}))
+    .mockResolvedValueOnce(modelResponse({answerKind:'general',answer:corrected}));
+  const result=await answerSiteQuestion(question,'zh',config,AbortSignal.timeout(5000),fetcher,[],undefined,undefined,'UTC',[],mode);
+  expect(result.answer).toContain('A 用当前配比，B 用倒过来的配比');
+  expect(result.answer).not.toContain('A 原练法（慢拧）');
+  expect(fetcher).toHaveBeenCalledTimes(2);
+});
+
+it('uses deep reasoning once for a complete mix comparison and repairs a false difficulty claim without repeating it', async()=>{
+  const question='慢拧那段录像停顿多，全速那段少，可后者的打乱我认识。我该把练习比例倒过来吗？请把两种练法各自用什么题单验收说清，给一个取舍指标。';
+  const right='1. 暂留当前配比，认识打乱使识别更容易。\n2. A 按当前配比，B 用倒过来的配比，等时练习，各测一份彼此不重叠的陌生打乱；只比较练后整把中位时间。';
+  for(const wrong of [false,true]){
+    const body:Array<Record<string, unknown>>=[];
+    const fetcher:typeof fetch=async (_input,init)=>{
+      body.push(JSON.parse(String(init?.body)));
+      const answer=wrong && body.length===1?right.replace('认识打乱使识别更容易','两组打乱难度不同'):right;
+      return modelResponse({answerKind:'general',answer});
+    };
+    const deep={...config,baseUrl:'https://api.deepseek.com',model:'deepseek-flash'};
+    const result=await answerSiteQuestion(question,'zh',deep,AbortSignal.timeout(5000),fetcher,[],undefined,undefined,'UTC',[],'deep');
+    expect(result.answer).toBe(right);
+    expect(body).toHaveLength(wrong?2:1);
+    expect(body[0]).toMatchObject({thinking:{type:'enabled'},reasoning_effort:'low'});
+    if(wrong)expect(body[1]).toMatchObject({thinking:{type:'disabled'}});
+  }
 });
