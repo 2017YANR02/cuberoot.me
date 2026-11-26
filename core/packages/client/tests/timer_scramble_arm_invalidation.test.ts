@@ -9,11 +9,10 @@ const solo = readFileSync(
 describe('Web Timer scramble-context arm invalidation', () => {
   it('cancels holding, ready and inspection before replacing a scramble slot', () => {
     expect(solo).toMatch(
-      /const applyScrambleHist = useCallback[\s\S]*?cancelArmForScrambleChangeRef\.current\(\);[\s\S]*?setScrambleHist\(next\)/,
+      /const applyScrambleHist = useCallback[\s\S]*?if \(!multiEnabledRef\.current\) cancelArmForScrambleChangeRef\.current\(\);[\s\S]*?setScrambleHist\(next\)/,
     );
     expect(solo).toContain(
-      'cancelArmForScrambleChangeRef.current = competition.enabled ? () => {} : timer.cancelArm;',
+      'cancelArmForScrambleChangeRef.current = timer.cancelArm;',
     );
-    expect(solo).toContain('}, [competition.enabled, competition.attemptKey, timer.reset]);');
   });
 });

@@ -496,11 +496,10 @@ describe('Web migration consumes the shared contract', () => {
       compilerOptions: { target: ts.ScriptTarget.ES2022 },
     }).outputText;
     for (const mode of [undefined, 'manual']) {
-      for (const blocked of ['none', 'competition', 'layout', 'unready', 'mismatch', 'timing-disabled']) {
+      for (const blocked of ['none', 'layout', 'unready', 'mismatch', 'timing-disabled']) {
         const timer = { armFromCube: vi.fn(() => true), onPressDown: vi.fn() };
         const context = {
           isPllChain: false,
-          competitionRef: { current: { enabled: blocked === 'competition' } },
           multiEnabledRef: { current: false },
           layoutEditingRef: { current: blocked === 'layout' },
           simulationFile: undefined,
@@ -515,7 +514,7 @@ describe('Web migration consumes the shared contract', () => {
         };
         const press = runInNewContext(code, context) as () => boolean;
         const allowed = mode === 'manual' ? blocked === 'none'
-          : !['competition', 'layout', 'unready'].includes(blocked);
+          : !['layout', 'unready'].includes(blocked);
         expect(press(), String(mode) + ':' + blocked).toBe(allowed);
         expect(timer.armFromCube).toHaveBeenCalledTimes(allowed && mode === 'manual' ? 1 : 0);
         expect(timer.onPressDown).toHaveBeenCalledTimes(allowed && !mode ? 1 : 0);
@@ -524,13 +523,13 @@ describe('Web migration consumes the shared contract', () => {
     }
   });
 
-  it('routes starts through the practice gate or authorized competition preparation', () => {
+  it('routes practice starts through the shared timing gate', () => {
     const soloSource = readFileSync(new URL(
       '../app/[lang]/timer/_shell/SoloView.tsx', import.meta.url,
     ), 'utf8');
 
     expect(soloSource).toMatch(
-      /const attemptCanStart = competition\.enabled\s*\? competition\.authorized && Boolean\(competition\.attempt\)\s*:\s*isPllChain \? pllChain\.ready : timerCanStartAttempt\(\{/,
+      /const attemptCanStart = isPllChain \? pllChain\.ready : timerCanStartAttempt\(\{/,
     );
     expect(soloSource).toContain("? 'loading'");
     expect(soloSource).toContain("? 'unavailable'");
@@ -538,13 +537,9 @@ describe('Web migration consumes the shared contract', () => {
       'sourceMatches: scrambleGeneratorAtHistoryResetRef.current === genScramble',
     );
     expect(soloSource).toContain('timerCanHandleAttemptPress(');
-    expect(soloSource.match(/timer\.onPressDown\(\)/g)).toHaveLength(2);
-
+    expect(soloSource.match(/timer\.onPressDown\(\)/g)).toHaveLength(1);
     expect(soloSource).toMatch(
-      /if \(!await competition\.begin\(scrambleTarget, bluetoothCube\.status\)\) return;[\s\S]*?if \(!latest\?\.status\.connected \|\| latest\.hijacked \|\| !latestFaces \|\| toFaceletString\(latestFaces\) !== scrambleTarget\) \{[\s\S]*?return;\s*\}\s*timer\.onPressDown\(\)/,
-    );
-    expect(soloSource).toMatch(
-      /const smartCubeTimerOptions = useMemo[\s\S]*?canStartAttempt: \(\) => !layoutEditingRef\.current && \(multiEnabledRef\.current[\s\S]*?: attemptCanStartRef\.current\)[\s\S]*?competitionRef\.current\.canStart\(\)[\s\S]*?startFromCube: \(timestamp, clock\) => \{[\s\S]*?timerHandleRef\.current\.startFromCube\(timestamp, clock\)/,
+      /const smartCubeTimerOptions = useMemo[\s\S]*?canStartAttempt: \(\) => !layoutEditingRef\.current && \(multiEnabledRef\.current[\s\S]*?: attemptCanStartRef\.current\)[\s\S]*?startFromCube: \(timestamp, clock\) => \{[\s\S]*?timerHandleRef\.current\.startFromCube\(timestamp, clock\)/,
     );
     expect(soloSource).toContain('new SmartCubeSoloTimerController(smartCubeTimerOptions)');
     expect(soloSource).toMatch(

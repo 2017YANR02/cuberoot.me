@@ -122,7 +122,7 @@ describe('online battle shared attempt', () => {
       getNetRoom: vi.fn(),
       roomRef, pidRef: ref('self'), credentialsRef: ref({ playerId: 'self', playerToken: 'token' }),
       attemptAuthRef: ref(null), getActiveSessionId: () => 'original-session',
-      roomController: { poll: vi.fn() },
+      roomController: { poll: vi.fn() }, setRecordedSolve: vi.fn(), overlayOpenRef: ref(false),
       netRecordingOutbox: { enqueue: appendSolves }, postNetResult: vi.fn(async () => ({})), applyState: vi.fn(), tr: vi.fn(), setErr: vi.fn(),
       btStatusRef: ref({ connected: true, brand: 'gan-v4', deviceName: 'Original' }),
       netAttemptRef: ref(producer), phaseRef: ref('ready'), localSolveRef: ref(null),
@@ -141,6 +141,7 @@ describe('online battle shared attempt', () => {
     if (mode === 'cube') startCube(1_000);
     else start(1_000);
     expect(context.phaseRef.current).toBe('running');
+    expect(context.setRecordedSolve).toHaveBeenCalledWith(null);
     producer.recordMove("U'", 1_000);
     const phaseEffect = callback(net, node => ts.isCallExpression(node)
       && node.expression.getText() === 'useEffect'
@@ -153,6 +154,7 @@ describe('online battle shared attempt', () => {
     const solve = callback(net, named('onSolve'), context);
     solve({ timeMs: 500, autoPenalty: '+2', inspectionMs: 15_100 });
     expect(appendSolves.mock.calls[0]?.[1]).toBe(true);
+    expect(context.setRecordedSolve).toHaveBeenLastCalledWith(appendSolves.mock.calls[0]![0]);
     const saved = appendSolves.mock.calls[0]![0].solve;
     expect(appendSolves.mock.calls[0]![0].context.sessionId).toBe('original-session');
     expect(saved).toMatchObject({ event: '333', scramble: 'R U', timeMs: 500, penalty: '+2',
