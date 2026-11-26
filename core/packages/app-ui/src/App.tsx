@@ -29,7 +29,7 @@ import { TimerHistoryWorkspace, TimerStatsModal, type TimerHistoryWorkspaceHandl
 import { createInstalledBattleScrambleProvider } from './data/local-battle-scramble';
 import { buildLocalBattleCsv } from '@cuberoot/shared/timer';
 import { TimerBattleSourceSettings } from '@cuberoot/timer-ui';
-import { NetRecordingOutbox, uploadNetRecordedAttempt } from '@cuberoot/shared/timer';
+import { indexNetRecordedReplays, NetRecordingOutbox, uploadNetRecordedAttempt } from '@cuberoot/shared/timer';
 import { createNetOutboxStorage, TimerNetOutboxNotice } from '@cuberoot/timer-ui';
 import { BluetoothTimerModal, StackmatModal } from '@cuberoot/timer-ui/external';
 import { useExternalDevices } from './hooks/use-external-devices';
@@ -890,6 +890,8 @@ export function App({ host, loadingMark }: { host: InstalledAppHost; loadingMark
   const targetMs = trainingSettings.targetMsByEvent[activeEvent] ?? null;
   const trainingRound = useTimerRound(solves, trainingSettings.round, `${store?.database.activeSessionId ?? ''}|${activeEvent}`);
   const allSessionSolves = useMemo(() => store ? Object.values(store.database.dataBySession[store.database.activeSessionId] ?? {}).flatMap(list => list ?? []) : [], [store?.database]);
+  const netHistoryReplays = useMemo(() => timerMode === 'net' && store?.database
+    ? indexNetRecordedReplays(Object.values(store.database.dataBySession)) : undefined, [timerMode, store?.database]);
   useEffect(() => { if (view !== 'history') setStatsOpen(false); }, [view]);
   const historyContext = `${store?.database.activeSessionId ?? ''}|${activeEvent}`;
   const historyDetailSolve = historyDetail?.context === historyContext
@@ -5056,6 +5058,16 @@ children: <>
 
         {view === 'timer' && timerMode === 'net' && communityAvailable && (
           <NetBattleMode
+            sound={timerSound}
+            timingSettings={{
+              value: store!.settings, onChange: updateSettings,
+              voiceAvailable: timerSound.isVoiceAvailable(), onWarmup: timerSound.warmupSound,
+              onPreview: () => timerSound.play('start'),
+            }}
+            historyReplays={netHistoryReplays}
+            renderAttemptReplay={(solve, onClose) => <Suspense fallback={null}>
+              <ReconstructModal solve={solve} host={reconstructionHost} isZh={language === 'zh'} onClose={onClose} />
+            </Suspense>}
             smartCubeSettings={store!.settings}
             sessionId={store!.database.activeSessionId}
             recordGyro={store!.settings.recordGyro}

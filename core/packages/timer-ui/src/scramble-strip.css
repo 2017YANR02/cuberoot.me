@@ -59,6 +59,15 @@ html[data-theme=dark] { --scramble-fg: #fff; }
   color: var(--scramble-fg);
   font-size: var(--scramble-adaptive-fs);
 }
+.scramble-strip button.scramble-text {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  font-family: inherit;
+  line-height: inherit;
+  cursor: pointer;
+}
+.scramble-strip button.scramble-text:focus-visible { outline: 2px solid var(--ring); }
 .scramble-strip .scramble-moves,
 .timing-surface-scramble .scramble-strip .scramble-moves {
   min-width: 0;

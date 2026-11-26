@@ -106,7 +106,11 @@ describe('battle video cancellation', () => {
     mocks.getVideoToken.mockReset();
     container = document.createElement('div'); root = createRoot(container);
   });
-  afterEach(async () => { await act(async () => root.unmount()); });
+  afterEach(async () => {
+    await act(async () => root.unmount());
+    vi.restoreAllMocks();
+    vi.useRealTimers();
+  });
 
   it('requires a click, allows cancelling a pending request, and ignores a late token', async () => {
     let resolve!: (value: unknown) => void;
@@ -137,12 +141,58 @@ describe('battle video cancellation', () => {
     expect(mocks.getVideoToken).toHaveBeenCalledTimes(1);
   });
 
-  it('stops on background and requires another click on return', async () => {
+  it('stops immediately on pagehide and requires another click on return', async () => {
     mocks.getVideoToken.mockResolvedValue({ token: 'first' });
     await render(); await act(async () => current.toggle());
     await act(async () => window.dispatchEvent(new Event('pagehide')));
     expect(current.token).toBeNull(); expect(current.wanted).toBe(false);
     await render(); expect(mocks.getVideoToken).toHaveBeenCalledTimes(1);
+  });
+
+  it('keeps a call on a quick return and releases it after 45 seconds in the background', async () => {
+    vi.useFakeTimers();
+    const visibility = vi.spyOn(document, 'hidden', 'get').mockReturnValue(false);
+    const change = async (hidden: boolean) => {
+      visibility.mockReturnValue(hidden);
+      await act(async () => document.dispatchEvent(new Event('visibilitychange')));
+    };
+    mocks.getVideoToken.mockResolvedValue({ token: 'first' });
+    await render(); await act(async () => current.toggle());
+
+    await change(true);
+    await act(async () => vi.advanceTimersByTime(44_999));
+    expect(current.token?.token).toBe('first');
+    await change(false);
+    await act(async () => vi.advanceTimersByTime(45_000));
+    expect(current.token?.token).toBe('first');
+    expect(mocks.getVideoToken).toHaveBeenCalledTimes(1);
+
+    await change(true);
+    await act(async () => vi.advanceTimersByTime(20_000));
+    await change(true); // A repeated hidden event does not extend the deadline.
+    await act(async () => vi.advanceTimersByTime(25_000));
+    expect(current.token).toBeNull();
+    expect(current.wanted).toBe(false);
+    await change(false);
+    expect(mocks.getVideoToken).toHaveBeenCalledTimes(1);
+  });
+
+  it('expires an in-flight request on late foregrounding if the WebView suspended timers', async () => {
+    vi.useFakeTimers();
+    const visibility = vi.spyOn(document, 'hidden', 'get').mockReturnValue(false);
+    let resolve!: (value: unknown) => void;
+    mocks.getVideoToken.mockImplementation(() => new Promise(done => { resolve = done; }));
+    await render(); await act(async () => current.toggle());
+    const signal = mocks.getVideoToken.mock.calls[0][3] as AbortSignal;
+    visibility.mockReturnValue(true);
+    await act(async () => document.dispatchEvent(new Event('visibilitychange')));
+    vi.setSystemTime(Date.now() + 45_001);
+    visibility.mockReturnValue(false);
+    await act(async () => document.dispatchEvent(new Event('visibilitychange')));
+    expect(signal.aborted).toBe(true);
+    await act(async () => resolve({ token: 'late' }));
+    expect(current.token).toBeNull();
+    expect(current.wanted).toBe(false);
   });
 
   it('does not restart media when a delayed enabled config arrives', async () => {

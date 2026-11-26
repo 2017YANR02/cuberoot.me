@@ -59,7 +59,9 @@ describe('Mobile capability surface guard', () => {
     expect(app).toContain('host.writeClipboardText');
     expect(app).toContain('writeClipboardText={host.writeClipboardText}');
     expect(battleModes).toContain('copyKind: "invite"');
-    expect(battleModes).toContain("writeClipboardText(`https://cuberoot.me${language === 'zh' ? '/zh' : ''}/timer?players=net&room=${room.code}`)");
+    expect(battleModes).toContain('writeClipboardText(inviteUrl)');
+    expect(battleModes).toContain('url: inviteUrl');
+    expect(battleModes).toContain('copyScramble: { text: scramble, writeText: writeClipboardText }');
     expect(`${app}\n${battleModes}`).not.toContain('navigator.clipboard');
   });
 

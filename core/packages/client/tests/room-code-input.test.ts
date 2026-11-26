@@ -51,6 +51,26 @@ describe('RoomCodeInput', () => {
     expect(complete).toHaveBeenCalledTimes(1);
   });
 
+  it.each([
+    'Invite from 2026 https://cuberoot.me:3000/zh/timer?room=0427&players=net',
+    'Join https://cuberoot.me/timer?players=net&room=0427#timer',
+    'a0b-42c7',
+  ])('pastes the full code before the input maxLength applies (%s)', async (text) => {
+    const complete = vi.fn();
+    function Harness() {
+      const [value, setValue] = useState('');
+      return createElement(RoomCodeInput, { value, onValueChange: setValue, onComplete: complete });
+    }
+    await act(async () => root.render(createElement(Harness)));
+    const input = host.querySelector('input')!;
+    const paste = new Event('paste', { bubbles: true, cancelable: true });
+    Object.defineProperty(paste, 'clipboardData', { value: { getData: () => text } });
+    await act(async () => input.dispatchEvent(paste));
+    expect(paste.defaultPrevented).toBe(true);
+    expect(input.value).toBe('0427');
+    expect(complete).toHaveBeenCalledExactlyOnceWith('0427');
+  });
+
   it('does not resubmit a completed code when callbacks or disabled state rerender', async () => {
     const first = vi.fn();
     const second = vi.fn();

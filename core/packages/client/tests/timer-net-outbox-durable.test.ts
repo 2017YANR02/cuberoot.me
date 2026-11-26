@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import 'fake-indexeddb/auto';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { NetRecordingOutbox, uploadNetRecordedAttempt, type NetRecordedAttempt, type NetBattleClient, type NetRoomState } from '@cuberoot/shared/timer';
+import { decodeNetOutboxEntry, NetRecordingOutbox, uploadNetRecordedAttempt, upsertNetRecordedSolve, type NetRecordedAttempt, type NetBattleClient, type NetRoomState, type Solve } from '@cuberoot/shared/timer';
 import { createNetOutboxStorage } from '@cuberoot/timer-ui';
 
 const record = (id = 'net-1234-abcdef-1'): NetRecordedAttempt => ({
@@ -77,7 +77,44 @@ describe('durable online result delivery', () => {
     const storage = createNetOutboxStorage(), save = vi.fn(); const outbox = new NetRecordingOutbox(save, storage);
     outbox.setUploader(async () => 'rejected'); await outbox.enqueue(record(), true);
     expect(save).toHaveBeenCalledWith(record()); expect(outbox.getSnapshot().rejected).toBe(1);
+    const reopened = new NetRecordingOutbox(save, storage);
+    await reopened.retry();
+    expect(outbox.result(record().context)).toBeUndefined();
+    expect(reopened.result(record().context)).toBeUndefined();
     await outbox.acknowledgeRejected(); expect(await storage.load()).toEqual([]); expect(save).toHaveBeenCalledTimes(1);
+    expect(outbox.result(record().context)).toBeUndefined();
+  });
+  it('uploads a fresh solve in the same round and preserves the rejected local recording', async () => {
+    const storage = createNetOutboxStorage();
+    let history: Solve[] = [];
+    const save = ({ solve }: NetRecordedAttempt) => { history = upsertNetRecordedSolve(history, solve); };
+    const first = new NetRecordingOutbox(save, storage);
+    const rejected = record(); rejected.solve.timeMs = 0.4;
+    first.setUploader(async () => 'rejected');
+    await first.enqueue(rejected, true);
+    const reopened = new NetRecordingOutbox(save, storage);
+    const uploader = vi.fn(async () => 'uploaded' as const);
+    reopened.setUploader(uploader);
+    await reopened.retry();
+    const next = record(); next.solve.ts = next.context.ts = 200;
+    await reopened.enqueue(next, true);
+    expect(uploader).toHaveBeenCalledExactlyOnceWith(next);
+    expect(reopened.result(next.context)).toEqual({ t: 1000, p: 'ok' });
+    expect(history.map(solve => solve.timeMs)).toEqual([0.4, 1000]);
+    expect(new Set(history.map(solve => solve.id)).size).toBe(2);
+  });
+  it('submits a sub-millisecond blindfolded result using the room event id', async () => {
+    const state = { ...room(), event: '333bld' as const, scrambles: { '333bld': 'R' } };
+    state.players.abcdef!.event = '333bld';
+    const post = vi.fn(async () => ({ ...state, results: { '1': { abcdef: { t: 0, p: 'ok' as const } } } }));
+    const client = { getNetRoom: vi.fn(async () => state), postNetResult: post } as unknown as NetBattleClient;
+    const attempt = record(); attempt.context.event = attempt.solve.event = '333bld'; attempt.solve.timeMs = 0.4;
+    expect(await uploadNetRecordedAttempt(attempt, client, { load: async () => session })).toBe('uploaded');
+    expect(post).toHaveBeenCalledExactlyOnceWith('1234', session, 1, 0, 'ok');
+    const oldEntry = decodeNetOutboxEntry({ version: 1, revision: 'legacy', localSaved: false, upload: 'pending', record: {
+      context: { ...attempt.context, event: '333bf' }, solve: { ...attempt.solve, event: '333bf' },
+    } });
+    expect(oldEntry?.record).toEqual(attempt);
   });
   it('verifies already accepted results, rejects expired rounds and never reuses another membership', async () => {
     const state = room(); const post = vi.fn(async () => ({ ...state, results: { '1': { abcdef: { t: 1000, p: 'ok' as const } } } }));

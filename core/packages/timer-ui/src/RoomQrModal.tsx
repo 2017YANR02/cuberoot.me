@@ -1,14 +1,14 @@
-import { Check, Copy, X } from 'lucide-react';
-import { useEffect, useId, useMemo, useRef, useState } from 'react';
-import { createPortal } from 'react-dom';
+import { Check, Copy } from 'lucide-react';
+import { useMemo } from 'react';
+import { useClipboardFeedback } from './browser-clipboard';
 import { timerRoomQrSvg } from './room-qr';
-
+import { TimerRoomDialog } from './TimerRoomDialog';
 import './room-qr-modal.css';
-import { useModalBackdrop } from './useModalDismiss';
 
 export interface RoomQrModalLabels {
-  close: string;
-  copied: string;
+  copiedCode: string;
+  copiedInvite: string;
+  copyCode: string;
   copyFailed: string;
   copyInvite: string;
   scanToJoin: string;
@@ -17,140 +17,33 @@ export interface RoomQrModalLabels {
 export interface RoomQrModalProps {
   code: string;
   labels: RoomQrModalLabels;
+  language: 'en' | 'zh';
   onClose(): void;
   url: string;
   writeClipboardText(text: string): Promise<void>;
 }
-
-const FOCUSABLE_SELECTOR = [
-  'a[href]',
-  'button:not([disabled])',
-  'input:not([disabled])',
-  'select:not([disabled])',
-  'textarea:not([disabled])',
-  '[tabindex]:not([tabindex="-1"])',
-].join(',');
 
 export function RoomQrCode({ url }: { url: string }) {
   const svg = useMemo(() => timerRoomQrSvg(url), [url]);
   return <div className="room-qr-code" dangerouslySetInnerHTML={{ __html: svg }} />;
 }
 
-/** Runtime-shared invite modal used by Web and every installed React host. */
-export function RoomQrModal({ code, labels, onClose, url, writeClipboardText }: RoomQrModalProps) {
-  const [copyStatus, setCopyStatus] = useState<'idle' | 'copied' | 'failed'>('idle');
-  const closeRef = useRef<HTMLButtonElement>(null);
-  const dialogRef = useRef<HTMLDivElement>(null);
-  const mountedRef = useRef(true);
-  const onCloseRef = useRef(onClose);
-  const resetRef = useRef<number | null>(null);
-  const backdrop = useModalBackdrop(() => onCloseRef.current());
-  const titleId = useId();
-  onCloseRef.current = onClose;
-
-  useEffect(() => {
-    mountedRef.current = true;
-    const previousFocus = document.activeElement instanceof HTMLElement
-      ? document.activeElement
-      : null;
-    const focusableElements = () => Array.from(
-      dialogRef.current?.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR) ?? [],
-    ).filter((element) => element.tabIndex >= 0 && element.getAttribute('aria-hidden') !== 'true');
-    const focusFirst = () => (focusableElements()[0] ?? dialogRef.current)?.focus();
-    const onKey = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') {
-        event.preventDefault();
-        onCloseRef.current();
-        return;
-      }
-      if (event.key !== 'Tab') return;
-      const dialog = dialogRef.current;
-      const focusable = focusableElements();
-      if (!dialog || focusable.length === 0) {
-        event.preventDefault();
-        dialog?.focus();
-        return;
-      }
-      const first = focusable[0];
-      const last = focusable[focusable.length - 1];
-      if (!dialog.contains(document.activeElement)) {
-        event.preventDefault();
-        (event.shiftKey ? last : first).focus();
-      } else if (event.shiftKey && document.activeElement === first) {
-        event.preventDefault();
-        last.focus();
-      } else if (!event.shiftKey && document.activeElement === last) {
-        event.preventDefault();
-        first.focus();
-      }
-    };
-    const onFocusIn = (event: FocusEvent) => {
-      const dialog = dialogRef.current;
-      if (dialog && event.target instanceof Node && !dialog.contains(event.target)) focusFirst();
-    };
-    window.addEventListener('keydown', onKey);
-    document.addEventListener('focusin', onFocusIn);
-    closeRef.current?.focus();
-    return () => {
-      mountedRef.current = false;
-      window.removeEventListener('keydown', onKey);
-      document.removeEventListener('focusin', onFocusIn);
-      if (resetRef.current !== null) window.clearTimeout(resetRef.current);
-      if (previousFocus?.isConnected) previousFocus.focus();
-    };
-  }, []);
-
-  if (typeof document === 'undefined') return null;
-  return createPortal(
-    <div className="room-qr-backdrop" {...backdrop}>
-      <div
-        aria-labelledby={titleId}
-        aria-modal="true"
-        className="room-qr-modal"
-        onClick={(event) => event.stopPropagation()}
-        ref={dialogRef}
-        role="dialog"
-        tabIndex={-1}
-      >
-        <button
-          aria-label={labels.close}
-          className="room-qr-close"
-          onClick={() => onCloseRef.current()}
-          ref={closeRef}
-          type="button"
-        >
-          <X size={18} />
-        </button>
-        <h2 id={titleId}>{labels.scanToJoin}</h2>
-        <RoomQrCode url={url} />
-        <div className="room-qr-code-text">{code}</div>
-        <button
-          className="room-qr-link"
-          onClick={() => {
-            void writeClipboardText(url).then(() => {
-              if (!mountedRef.current) return;
-              setCopyStatus('copied');
-              if (resetRef.current !== null) window.clearTimeout(resetRef.current);
-              resetRef.current = window.setTimeout(() => setCopyStatus('idle'), 1_200);
-            }).catch(() => {
-              if (!mountedRef.current) return;
-              setCopyStatus('failed');
-              if (resetRef.current !== null) window.clearTimeout(resetRef.current);
-              resetRef.current = window.setTimeout(() => setCopyStatus('idle'), 1_200);
-            });
-          }}
-          title={labels.copyInvite}
-          type="button"
-        >
-          {copyStatus === 'copied' ? <Check size={13} /> : <Copy size={13} />}
-          <span aria-live="polite" className="room-qr-link-text">
-            {copyStatus === 'copied'
-              ? labels.copied
-              : copyStatus === 'failed' ? labels.copyFailed : url}
-          </span>
-        </button>
-      </div>
-    </div>,
-    document.body,
-  );
+export function RoomQrModal({ code, labels, language, onClose, url, writeClipboardText }: RoomQrModalProps) {
+  const { copy, feedback } = useClipboardFeedback(JSON.stringify([code, url]), writeClipboardText);
+  const codeCopied = feedback?.target === 'code' && feedback.copied;
+  const inviteCopied = feedback?.target === 'invite' && feedback.copied;
+  return <TimerRoomDialog title={labels.scanToJoin} language={language} className="room-qr-modal" onClose={onClose}>
+    <RoomQrCode url={url} />
+    <button type="button" className="room-qr-code-text" aria-label={`${labels.copyCode}: ${code}`}
+      onClick={() => void copy(code, 'code')}>
+      {code}{codeCopied ? <Check size={16} aria-hidden /> : <Copy size={16} aria-hidden />}
+    </button>
+    <button type="button" className="room-qr-link" aria-label={labels.copyInvite} onClick={() => void copy(url, 'invite')}>
+      {inviteCopied ? <Check size={13} aria-hidden /> : <Copy size={13} aria-hidden />}
+      <span className="room-qr-link-text">{url}</span>
+    </button>
+    <div className="room-qr-status" role="status">{feedback && (
+      !feedback.copied ? labels.copyFailed : codeCopied ? labels.copiedCode : labels.copiedInvite
+    )}</div>
+  </TimerRoomDialog>;
 }

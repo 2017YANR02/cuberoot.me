@@ -1,4 +1,4 @@
-import { myScramble, playerEventOf, netEventToSelectorId, type NetBattleClient, type NetBattleSessionStore, type NetResult } from './net-battle';
+import { myScramble, playerEventOf, type NetBattleClient, type NetBattleSessionStore, type NetResult } from './net-battle';
 import { netRoomGoneReason } from './net-room-controller';
 import type { NetRecordedAttempt } from './net-attempt';
 
@@ -19,7 +19,7 @@ export async function uploadNetRecordedAttempt(record: NetRecordedAttempt,
     const saved = state.results[String(context.round)]?.[context.playerId]
       ?? state.history.find(round => round.round === context.round)?.results[context.playerId];
     if (saved?.t === expected.t && saved.p === expected.p) return 'uploaded';
-    if (state.round !== context.round || netEventToSelectorId(playerEventOf(state, context.playerId)) !== context.event
+    if (state.round !== context.round || playerEventOf(state, context.playerId) !== context.event
       || myScramble(state, context.playerId) !== context.scramble) return 'rejected';
     // Leaving/rejoining while the read was pending revokes this send's authority.
     const latest = await sessions.load();

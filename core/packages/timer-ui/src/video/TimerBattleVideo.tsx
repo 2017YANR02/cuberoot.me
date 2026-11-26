@@ -9,6 +9,8 @@ import VideoTiles from './VideoTiles';
 import { LIVEKIT_ROOM_OPTIONS, denyMessage, disconnectMessage, type FailReason } from './video-call';
 import './video-strip.css';
 
+const BACKGROUND_GRACE_MS = 45_000;
+
 interface Intent { session: string; attempt: number }
 interface Connection { key: string; token: VideoToken | null; busy: boolean; error: FailReason | null; disconnected?: DisconnectReason }
 export interface VideoRoom {
@@ -50,15 +52,39 @@ export function useTimerBattleVideo(client: BattleVideoClient, code: string | nu
   }, [session]);
 
   useEffect(() => {
-    const stop = () => { setIntent(null); setConnection(null); };
-    const visibility = () => { if (document.hidden) stop(); };
+    if (!wanted) return;
+    let timeout: ReturnType<typeof setTimeout> | undefined;
+    let deadline: number | null = null;
+    const clearGracePeriod = () => {
+      clearTimeout(timeout);
+      deadline = null;
+    };
+    const stop = () => {
+      clearGracePeriod();
+      setIntent(null);
+      setConnection(null);
+    };
+    const visibility = () => {
+      if (document.hidden) {
+        if (deadline !== null) return;
+        deadline = Date.now() + BACKGROUND_GRACE_MS;
+        timeout = setTimeout(stop, BACKGROUND_GRACE_MS);
+      } else if (deadline !== null && Date.now() >= deadline) {
+        // Some WebViews suspend JavaScript until the app is foregrounded.
+        stop();
+      } else {
+        clearGracePeriod();
+      }
+    };
     document.addEventListener('visibilitychange', visibility);
     window.addEventListener('pagehide', stop);
+    visibility();
     return () => {
+      clearGracePeriod();
       document.removeEventListener('visibilitychange', visibility);
       window.removeEventListener('pagehide', stop);
     };
-  }, []);
+  }, [session, wanted]);
 
   useEffect(() => {
     if (!wanted || !code || !pid || !playerToken || !available) return;

@@ -42,6 +42,8 @@ import {
   myScramble,
   netAttemptSolveId,
   netErrorMessage,
+  netRoomGoneReason,
+  joinOrRestoreNetRoom,
   nextLocalBattleCubeHolder,
   normalizeNetBattleRoomCode,
   playerEventOf,
@@ -76,11 +78,13 @@ import {
   type NetRecordingOutbox,
   type NetRoomState,
   type Penalty,
+  type Solve,
   type SolveResult,
   type TimerScramblePreviewSettings,
   type TimerStoreSettings,
   type TimerTypographySettings,
 } from '@cuberoot/shared/timer';
+import type { TimerSoundOutput } from '@cuberoot/shared/timer/sound-feedback';
 import { createBattleVideoClient } from '@cuberoot/shared/video';
 import {
   SegmentTime,
@@ -99,6 +103,10 @@ import {
   TimerScrambleStrip,
   shouldIgnoreTimerTarget,
   useTimerBattleOrientation,
+  useNetBattleCountdown,
+  useTimerSoundFeedback,
+  type TimerNetBattleSettingsProps,
+  useNetRecentRooms,
   type TimerPlayersValue,
   type TimerPuzzlePickerGroup,
 } from '@cuberoot/timer-ui';
@@ -839,6 +847,10 @@ export interface NetBattleModeProps extends BattleModeBaseProps {
   recordingOutbox?: NetRecordingOutbox;
   onRecordSolve?(record: NetRecordedAttempt): Promise<void>;
   renderRecordedSolve?(record: NetRecordedAttempt): ReactNode;
+  historyReplays?: ReadonlyMap<string, Solve>;
+  renderAttemptReplay?(solve: Solve, onClose: () => void): ReactNode;
+  sound?: TimerSoundOutput;
+  timingSettings?: Omit<TimerNetBattleSettingsProps, 'language' | 'onClose'>;
   onOverlayCloseChange?(close: (() => void) | null): void;
   accountIdentity?: NetIdentity;
   capability?: InstalledAppNetBattle;
@@ -857,10 +869,12 @@ function netResultText(timeMs: number, penalty: NetPenalty, precision: 2 | 3): s
 }
 
 
+const SILENT_BATTLE_SOUND: TimerSoundOutput = { play() {}, cancelVoice() {} };
+
 /** Shared-contract online room host; no room DTO, scoring or transport is reimplemented here. */
 export function NetBattleMode({
   smartCubeSettings = { liveCubeView: 'net', gyroEnabled: true },
-  sessionId, recordGyro, onRecordSolve, recordingOutbox, renderRecordedSolve,
+  sessionId, recordGyro, onRecordSolve, recordingOutbox, renderRecordedSolve, historyReplays, renderAttemptReplay, timingSettings, sound = SILENT_BATTLE_SOUND,
   accountIdentity,
   capability,
   copy,
@@ -883,6 +897,7 @@ export function NetBattleMode({
   writeClipboardText,
 }: NetBattleModeProps) {
   const [room, setRoom] = useState<NetRoomState | null>(null);
+  const { rooms: recentRooms, remember: rememberRoom, forget: forgetRoom } = useNetRecentRooms();
   const [credentials, setCredentials] = useState<NetBattleCredentials | null>(null);
   const video = useTimerBattleVideo(battleVideoClient, room?.code ?? null, credentials?.playerId ?? null, credentials?.playerToken ?? null, room?.videoGeneration ?? null, language);
   const [name, setName] = useState('');
@@ -890,29 +905,28 @@ export function NetBattleMode({
   const [accountPerson, setAccountPerson] = useState<WcaPersonLite | null>(null);
   const [showAdmin, setShowAdmin] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
+  const [showTimerSettings, setShowTimerSettings] = useState(false);
+  const [inspectRound, setInspectRound] = useState<number | null>(null);
   const [renameOpen, setRenameOpen] = useState(false);
   const [roomActionTarget, setRoomActionTarget] = useState<string | null>(null);
   const [qrOpen, setQrOpen] = useState(false);
-  useEffect(() => {
-    onOverlayCloseChange?.(qrOpen ? () => setQrOpen(false)
-      : renameOpen ? () => setRenameOpen(false)
-        : showAdmin ? () => setShowAdmin(false)
-          : showHistory ? () => setShowHistory(false) : null);
-    return () => onOverlayCloseChange?.(null);
-  }, [onOverlayCloseChange, qrOpen, renameOpen, showAdmin, showHistory]);
   const [joinCode, setJoinCode] = useState('');
   const [lobbyEvent, setLobbyEvent] = useState<NetBattleEventId>('333');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
+  const activeRoomCode = room?.code;
+  useEffect(() => {
+    if (!error || !activeRoomCode) return;
+    const timeout = setTimeout(() => setError(''), 5_000);
+    return () => clearTimeout(timeout);
+  }, [error, activeRoomCode]);
   const [copied, setCopied] = useState(false);
-  const [countdownMs, setCountdownMs] = useState<number | null>(null);
   const roomRef = useRef(room);
   const credentialsRef = useRef(credentials);
   const roomControllerRef = useRef(new NetRoomController());
   const roomController = roomControllerRef.current;
   const offsetRef = useRef<number | null>(null);
   const admissionGateRef = useRef(createNetAdmissionGate());
-  const autoStartedRef = useRef<number | null>(null);
   const netAttemptRef = useRef(new NetBattleAttemptRecorder());
   const attemptAuthRef = useRef<NetBattleCredentials | null>(null);
   const [recordedSolve, setRecordedSolve] = useState<NetRecordedAttempt | null>(null);
@@ -922,6 +936,10 @@ export function NetBattleMode({
   roomRef.current = room;
   credentialsRef.current = credentials;
   const event = room && credentials ? playerEventOf(room, credentials.playerId) : lobbyEvent;
+  const playerId = credentials?.playerId;
+  useEffect(() => {
+    if (activeRoomCode && playerId) rememberRoom({ code: activeRoomCode, event });
+  }, [activeRoomCode, playerId, event, rememberRoom]);
   const cubeConnected = timerSupportsNetBattleSmartCube(event) && smartCube?.phase === 'connected';
   useEffect(() => {
     if (!timerSupportsNetBattleSmartCube(event) && smartCube?.phase === 'connected') void smartCube.disconnect();
@@ -983,6 +1001,23 @@ export function NetBattleMode({
     : undefined;
   const scramble = room && credentials ? myScramble(room, credentials.playerId) ?? '' : '';
 
+  const inRoundRoster = room && credentials ? isNetRoundParticipant(room, credentials.playerId) : false;
+  const synchronizedStart = room?.startAt != null && inRoundRoster && !myResult;
+  const settingsOpen = showTimerSettings && !synchronizedStart;
+  const overlayOpen = inputBlocked || showAdmin || showHistory || qrOpen || renameOpen || settingsOpen;
+  useEffect(() => {
+    if (showTimerSettings && !settingsOpen) setShowTimerSettings(false);
+  }, [showTimerSettings, settingsOpen]);
+  useEffect(() => {
+    onOverlayCloseChange?.(inspectRound !== null ? () => setInspectRound(null)
+      : settingsOpen ? () => setShowTimerSettings(false)
+      : qrOpen ? () => setQrOpen(false)
+      : renameOpen ? () => setRenameOpen(false)
+        : showAdmin ? () => setShowAdmin(false)
+          : showHistory ? () => setShowHistory(false) : null);
+    return () => onOverlayCloseChange?.(null);
+  }, [onOverlayCloseChange, inspectRound, settingsOpen, qrOpen, renameOpen, showAdmin, showHistory]);
+
   const fail = useCallback((reason: unknown) => {
     setError(netErrorMessage(reason)[language]);
   }, [language]);
@@ -1014,9 +1049,11 @@ export function NetBattleMode({
     void roomController.submitResult(round, () => capability.client.postNetResult(code, auth, round, result.timeMs, penalty), { t: result.timeMs, p: penalty });
   }, [roomController, capability, fail, persistRecording]);
 
+  const onSoundTransition = useTimerSoundFeedback(sound);
   const timer = useTimerController({
+    onTransition: onSoundTransition,
     smartCubeActive: () => cubeConnected || cubeAttemptRef.current,
-    canStart: !inputBlocked && !showAdmin && !showHistory && !qrOpen && !renameOpen && Boolean(room && credentials && scramble && !myResult),
+    canStart: !overlayOpen && Boolean(room && credentials && scramble && !myResult),
     holdMs,
     inspectionSec,
     onComplete,
@@ -1038,9 +1075,16 @@ export function NetBattleMode({
   });
   const timerPhase = timer.machine.phase;
   useEffect(() => { if (timerPhase !== 'running') cubeAttemptRef.current = false; }, [timerPhase]);
-  const inRoundRoster = room && credentials
-    ? isNetRoundParticipant(room, credentials.playerId)
-    : false;
+  const countdown = useNetBattleCountdown({
+    scope: room && credentials ? [room.code, room.round, credentials.playerId].join(':') : null,
+    startAt: room?.startAt ?? null,
+    eligible: inRoundRoster && !myResult,
+    offset: offsetRef,
+    play: sound.play,
+    onStart: late => {
+      if (netTimerPhaseRef.current !== 'running') timer.startNow(late);
+    },
+  });
   const gate = room && credentials
     ? syncGate(room, credentials.playerId)
     : { gated: false, ready: false, waiting: 0 };
@@ -1051,7 +1095,7 @@ export function NetBattleMode({
     || timerPhase === 'inspecting'
     || timerPhase === 'holding'
     || timerPhase === 'ready'
-    || countdownMs !== null;
+    || countdown !== null;
   const netSmartCubeSupported = timerSupportsNetBattleSmartCube(event);
   const netSmartCubeTarget = useMemo(() => (
     timerSupportsNetBattleSmartCube(event) && scramble
@@ -1085,8 +1129,9 @@ export function NetBattleMode({
           return;
         }
         if (!netSmartCubeSupported
+          || overlayOpen
           || gate.gated
-          || countdownMs !== null
+          || countdown !== null
           || myResult
           || !inRoundRoster
           || !canManuallyStart) return;
@@ -1109,8 +1154,9 @@ export function NetBattleMode({
     return () => onSmartCubeHandlersChange(null);
   }, [
     canManuallyStart,
+    overlayOpen,
     recordGyro,
-    countdownMs,
+    countdown,
     event,
     gate.gated,
     inRoundRoster,
@@ -1163,9 +1209,10 @@ export function NetBattleMode({
         roomController.activate(state, auth);
       },
       missing: () => undefined,
+      gone: forgetRoom,
       error: error => roomController.callbacks.onError(error),
     });
-  }, [roomController, capability]);
+  }, [roomController, capability, forgetRoom]);
 
   roomController.callbacks = {
     onState: state => {
@@ -1175,12 +1222,14 @@ export function NetBattleMode({
     },
     onError: fail,
     onGone: reason => {
+      const code = roomRef.current?.code;
+      if (code) forgetRoom(code, reason);
       admissionGateRef.current.cancel();
       credentialsRef.current = null;
       roomRef.current = null;
-      setBusy(false); setRoom(null); setCredentials(null); setCountdownMs(null);
-      setRecordedSolve(null); setShowAdmin(false); setShowHistory(false); setRenameOpen(false); setQrOpen(false); setRoomActionTarget(null);
-      autoStartedRef.current = null; offsetRef.current = null;
+      setBusy(false); setRoom(null); setCredentials(null);
+      setRecordedSolve(null); setShowAdmin(false); setShowHistory(false); setInspectRound(null); setShowTimerSettings(false); setRenameOpen(false); setQrOpen(false); setRoomActionTarget(null);
+      offsetRef.current = null;
       netAttemptRef.current.reset(); timer.reset();
       fail(new Error(reason));
       void capability?.sessions.clear().catch(() => undefined);
@@ -1214,29 +1263,10 @@ export function NetBattleMode({
   }, [roomController, capability, credentials, room?.code, timerPhase]);
 
   useEffect(() => {
-    const startAt = room?.startAt ?? null;
-    if (startAt === null || !inRoundRoster || myResult || autoStartedRef.current === startAt) {
-      setCountdownMs(null);
-      return;
+    if (capability && !myResult && (netTimerPhaseRef.current === 'idle' || netTimerPhaseRef.current === 'stopped')) {
+      void roomController.clearAbandonedPhase(capability.client.postNetStatus);
     }
-    let interval = 0;
-    const tick = () => {
-      const left = startAt - (Date.now() + (offsetRef.current ?? 0));
-      if (left > 0) {
-        setCountdownMs(left);
-        return;
-      }
-      window.clearInterval(interval);
-      setCountdownMs(null);
-      if (autoStartedRef.current === startAt) return;
-      autoStartedRef.current = startAt;
-      if (netTimerPhaseRef.current === 'running') return;
-      timer.startNow(Math.max(0, -left));
-    };
-    tick();
-    interval = window.setInterval(tick, 50);
-    return () => window.clearInterval(interval);
-  }, [inRoundRoster, myResult, room?.round, room?.startAt, timer.startNow]);
+  }, [capability, room, myResult, timerPhase, roomController]);
 
   const previousRoundRef = useRef<number | null>(null);
   useEffect(() => {
@@ -1283,6 +1313,7 @@ export function NetBattleMode({
           await capability.client.leaveNetRoom(admission.state.code, admission.credentials).catch(() => undefined);
           return;
         }
+        setQrOpen(true);
         await adopt(admission, identityName);
       })
       .catch(error => { if (admissionGateRef.current.isCurrent(intent)) fail(error); })
@@ -1298,22 +1329,27 @@ export function NetBattleMode({
     }
     const intent = admissionGateRef.current.beginExclusive();
     if (intent === null) return;
-    const identityName = identity.name;
     setBusy(true);
     setError('');
-    void capability.client.joinNetRoom(code, identity)
-      .then(async (admission) => {
-        if (!admissionGateRef.current.isCurrent(intent)) {
-          await capability.client.leaveNetRoom(admission.state.code, admission.credentials).catch(() => undefined);
-          return;
-        }
-        await adopt(admission, identityName);
-      })
-      .catch(fail)
-      .finally(() => {
-        admissionGateRef.current.finish(intent);
-        setBusy(false);
-      });
+    const current = () => admissionGateRef.current.isCurrent(intent);
+    void joinOrRestoreNetRoom({
+      code, identity, load: () => capability.sessions.load(), clear: () => capability.sessions.clear(),
+      current, client: capability.client,
+    }).then(async admission => {
+      if (!admission) return;
+      const { state, credentials, name, restored } = admission;
+      if (!current()) {
+        if (!restored) await capability.client.leaveNetRoom(state.code, credentials).catch(() => undefined);
+        return;
+      }
+      if (restored) setName(name);
+      await adopt(admission, name);
+      setJoinCode('');
+    }).catch(error => {
+      if (!current()) return;
+      forgetRoom(code, netRoomGoneReason(error));
+      fail(error);
+    }).finally(() => { if (admissionGateRef.current.finish(intent)) setBusy(false); });
   };
 
   const leaveRoom = useCallback(async () => {
@@ -1327,9 +1363,8 @@ export function NetBattleMode({
     setRoom(null);
     setCredentials(null);
     setError('');
-    setCountdownMs(null);
-    setRecordedSolve(null); setShowAdmin(false); setShowHistory(false); setRenameOpen(false); setQrOpen(false); setRoomActionTarget(null);
-    autoStartedRef.current = null; offsetRef.current = null;
+    setRecordedSolve(null); setShowAdmin(false); setShowHistory(false); setInspectRound(null); setShowTimerSettings(false); setRenameOpen(false); setQrOpen(false); setRoomActionTarget(null);
+    offsetRef.current = null;
     timer.reset();
     await capability?.sessions.clear().catch(() => undefined);
     if (capability && currentRoom && auth) {
@@ -1370,6 +1405,7 @@ export function NetBattleMode({
         code: joinCode,
         busy: busy,
         error: error,
+        recentRooms,
         onCodeChange: setJoinCode,
         onJoin: joinRoom,
         onExit: () => changeMode(1),
@@ -1387,8 +1423,8 @@ export function NetBattleMode({
   const displayMs = timer.machine.phase === 'running'
     ? Math.max(0, timer.nowMs - (timer.machine.startedAtMs ?? timer.nowMs))
     : timer.machine.lastMs ?? currentResult?.t ?? 0;
-  const timerText = countdownMs !== null
-    ? String(Math.max(1, Math.ceil(countdownMs / 1_000)))
+  const timerText = countdown !== null
+    ? String(countdown)
     : currentResult
       ? netResultText(currentResult.t, currentResult.p, precision)
       : formatTimerTimingDisplay({
@@ -1430,6 +1466,17 @@ export function NetBattleMode({
         : timerPhase === 'inspecting' ? language === 'zh' ? '观察中' : 'Inspecting'
           : gate.ready ? language === 'zh' ? '已准备' : 'Ready' : language === 'zh' ? '待开始' : 'Waiting';
 
+  const replayForRound = (round: number) => historyReplays?.get(netAttemptSolveId({ code: room.code, playerId: credentials.playerId, round }));
+  const historyReplay = showHistory && inspectRound !== null ? replayForRound(inspectRound) : undefined;
+  const openRename = !accountIdentity ? (name: string) => {
+    const player = room.players[credentials.playerId];
+    setName(name);
+    setSelectedPerson(player?.wcaId ? { id: player.wcaId, name: player.name, country_iso2: player.iso2 ?? '' } : null);
+    setRenameOpen(true);
+  } : undefined;
+
+  const inviteUrl = `https://cuberoot.me${language === 'zh' ? '/zh' : ''}/timer?players=net&room=${room.code}`;
+
   return <TimerNetBattlePage language={language} className="battle-mode battle-mode--net" ariaLabel={copy.battleOnlineTitle}
     solving={timerPhase === 'running'} topbar={{
       controls: (
@@ -1461,16 +1508,16 @@ export function NetBattleMode({
       devices: smartCube && deviceControls,
       toolbar: {
         language: language,
-        code: room.code,
-        round: room.round,
-        syncStart: room.syncStart,
         copied: copied,
         copyKind: "invite",
         disabled: active,
         historyOpen: showHistory,
         adminOpen: showAdmin,
+        timerSettingsOpen: settingsOpen,
+        timerSettingsDisabled: (overlayOpen && !settingsOpen) || gate.ready || synchronizedStart,
+        onTimerSettings: timingSettings ? () => setShowTimerSettings(true) : undefined,
         onCopy: () => {
-          void writeClipboardText(`https://cuberoot.me${language === 'zh' ? '/zh' : ''}/timer?players=net&room=${room.code}`).then(() => {
+          void writeClipboardText(inviteUrl).then(() => {
             if (!mountedRef.current) return;
             setCopied(true);
             if (copiedResetRef.current !== null) window.clearTimeout(copiedResetRef.current);
@@ -1495,14 +1542,10 @@ export function NetBattleMode({
           return id === credentials.playerId ? cubeConnected && !!smartCube?.facelets
             : !!live?.connected && live.smart && live.round === room.round && !!live.facelets;
         },
-        onRename: !accountIdentity ? (name) => {
-          const player = room.players[credentials.playerId];
-          setName(name);
-          setSelectedPerson(player?.wcaId ? { id: player.wcaId, name: player.name, country_iso2: player.iso2 ?? '' } : null);
-          setRenameOpen(true);
-        } : undefined
+        onRename: openRename,
       },
       stage: {
+        copyScramble: { text: scramble, writeText: writeClipboardText },
         scramble: {
           font: typographySettings.scrambleFont,
           fontScale: typographySettings.scrambleFontScale,
@@ -1528,7 +1571,7 @@ export function NetBattleMode({
             />
           ) : undefined),
           digits: <SegmentTime text={timerText} />,
-          interactive: Boolean(scramble && !currentResult && inRoundRoster && (
+          interactive: Boolean(!overlayOpen && scramble && !currentResult && inRoundRoster && (
             gate.gated || canManuallyStart || timerPhase === 'running'
           )),
           onContextMenu: (event) => event.preventDefault(),
@@ -1538,7 +1581,7 @@ export function NetBattleMode({
             timer.cancelPress();
           },
           onPointerDown: (pointer) => {
-            if (shouldIgnoreTimerTarget(pointer.target)
+            if (overlayOpen || shouldIgnoreTimerTarget(pointer.target)
               || pointer.button !== 0
               || currentResult
               || !inRoundRoster) return;
@@ -1556,7 +1599,8 @@ export function NetBattleMode({
             if (shouldIgnoreTimerTarget(pointer.target)
               || !pointer.currentTarget.hasPointerCapture(pointer.pointerId)) return;
             pointer.currentTarget.releasePointerCapture(pointer.pointerId);
-            if (!gate.gated && (canManuallyStart || timerPhase === 'running')) timer.pressUp();
+            if (overlayOpen) timer.cancelPress();
+            else if (!gate.gated && (canManuallyStart || timerPhase === 'running')) timer.pressUp();
           },
           phase: timer.machine.phase,
 
@@ -1566,9 +1610,11 @@ export function NetBattleMode({
           currentPlayerId: credentials.playerId,
           language: language,
           idle: timerPhase === 'idle' || timerPhase === 'stopped',
-          countdown: countdownMs !== null,
+          countdown: countdown !== null,
           cubeAutoReadySuspended: smartCube?.phase === 'connected',
-          onReady: () => { void roomController.execute(() => capability.client.postNetStatus(room.code, credentials, gate.ready ? 'idle' : 'ready')); },
+          onReady: () => {
+            if (!overlayOpen) void roomController.execute(() => capability.client.postNetStatus(room.code, credentials, gate.ready ? 'idle' : 'ready'));
+          },
           onPenalty: (penalty) => {
             if (!currentResult) return;
             const record = netAttemptRef.current.penalty({ code: room.code, playerId: credentials.playerId, round: room.round }, penalty);
@@ -1589,7 +1635,7 @@ export function NetBattleMode({
         }, error
       },
       renderStage: own => activePkLock ? <TimerNetPkArena room={room} pid={credentials.playerId}
-        lock={activePkLock} liveCubePlayers={liveCubePlayers} ownStatus={ownPkStatus} language={language}
+        lock={activePkLock} liveCubePlayers={liveCubePlayers} ownStatus={ownPkStatus} onRename={openRename} language={language}
         liveCubeView={smartCubeSettings.liveCubeView} timerFont={typographySettings.timerFont}
         timerFontScale={typographySettings.timerFontScale} precision={precision} clockOffsetMs={offsetRef.current}>
         {own}
@@ -1618,8 +1664,12 @@ export function NetBattleMode({
         currentPlayerId: credentials.playerId,
         language: language,
         precision: precision,
-        onClose: () => setShowHistory(false)
+        writeClipboardText,
+        canInspectAttempt: round => !!renderAttemptReplay && !!replayForRound(round),
+        onInspectAttempt: setInspectRound,
+        onClose: () => { setShowHistory(false); setInspectRound(null); }
       },
+      settings: settingsOpen && timingSettings && { ...timingSettings, onClose: () => setShowTimerSettings(false) },
       rename: renameOpen && {
         identity: <TimerRoomIdentity language={language} value={selectedPerson} defaultQuery={name} disabled={busy}
           onQueryChange={setName} onChange={(person) => { setSelectedPerson(person); setName(''); }} />, busy, onClose: () => setRenameOpen(false), onSave: () => {
@@ -1629,17 +1679,11 @@ export function NetBattleMode({
       },
       qr: qrOpen && {
         code: room.code,
-        labels: {
-          close: copy.close,
-          copied: copy.copied,
-          copyFailed: copy.actionFailed,
-          copyInvite: copy.battleCopyInvite,
-          scanToJoin: copy.battleScanToJoin,
-        },
         onClose: () => setQrOpen(false),
-        url: `https://cuberoot.me${language === 'zh' ? '/zh' : ''}/timer?players=net&room=${room.code}`,
+        url: inviteUrl,
         writeClipboardText: writeClipboardText
       },
     }}
+    overlays={historyReplay && renderAttemptReplay?.(historyReplay, () => setInspectRound(null))}
     recap={recordedSolve && timerPhase !== 'running' && renderRecordedSolve?.(recordedSolve)} />;
 }

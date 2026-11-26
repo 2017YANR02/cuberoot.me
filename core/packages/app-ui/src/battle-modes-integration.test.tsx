@@ -4,12 +4,14 @@ import type {
   NetBattleClient,
   NetBattleSession,
   NetRoomState,
+  Solve,
 } from '@cuberoot/shared/timer';
-import { generateTimerScramble } from '@cuberoot/shared/timer';
+import { DEFAULT_TIMER_TIMING_SETTINGS, generateTimerScramble, indexNetRecordedReplays, NET_RECENT_ROOMS_KEY, netAttemptSolveId, NetRecordingOutbox, type NetOutboxUploader } from '@cuberoot/shared/timer';
 import { TwistyPlayer } from 'cubing/twisty';
 import { smartCubeTargetFacelets } from '@cuberoot/shared/smart-cube/cubie';
 import { SOLVED_3X3 } from '@cuberoot/puzzle-solvers/timer-333-cube';
-import { act } from 'react';
+import { act, useState } from 'react';
+import { TimerRoomDialog, type TimerNetBattleSettingsProps } from '@cuberoot/timer-ui';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -317,7 +319,7 @@ describe('installed app multiplayer modes', () => {
     await act(async () => root.render(<LocalBattleMode {...baseProps} playerCount={2} />));
     await act(async () => Promise.resolve());
 
-    const retry = host.querySelector<HTMLElement>('.scramble-text[role="button"]')!;
+    const retry = host.querySelector<HTMLElement>('button.scramble-text')!;
     expect(retry.textContent).toContain('Unable to load scramble. Retry');
     await act(async () => retry.click());
     await act(async () => Promise.resolve());
@@ -343,7 +345,7 @@ describe('installed app multiplayer modes', () => {
     const key = 'cuberoot_local_battle_rounds_v1';
     const original = JSON.parse(localStorage.getItem(key)!)[0];
     expect(original.attempts[0].solve.scramble).toBe('F');
-    const retry = host.querySelector<HTMLElement>('.scramble-text[role="button"]')!;
+    const retry = host.querySelector<HTMLElement>('button.scramble-text')!;
     await act(async () => retry.click());
     expect(host.querySelector('.scramble-strip')?.textContent).toContain('U');
     expect(JSON.parse(localStorage.getItem(key)!)[0].id).toBe(original.id);
@@ -395,8 +397,10 @@ describe('installed app multiplayer modes', () => {
     ));
     await act(async () => Promise.resolve());
     if (entry === 'create') {
-      await act(async () => host.querySelector<HTMLButtonElement>('.timer-room-lobby-actions button')!.click());
+      await act(async () => host.querySelector<HTMLButtonElement>('.timer-room-lobby-create > button:last-child')!.click());
       expect(createNetRoom).toHaveBeenCalledWith('333', { name: 'Cuber' });
+      expect(document.querySelector('.room-qr-modal')).not.toBeNull();
+      await act(async () => document.querySelector<HTMLButtonElement>('.room-qr-modal [aria-label="Close"]')!.click());
     } else {
       const codeInput = host.querySelector<HTMLInputElement>('[aria-label="Room code"]')!;
       await act(async () => {
@@ -405,6 +409,7 @@ describe('installed app multiplayer modes', () => {
       });
       expect(client.joinNetRoom).toHaveBeenCalledExactlyOnceWith('1234', { name: 'Cuber' });
       expect(createNetRoom).not.toHaveBeenCalled();
+      expect(document.querySelector('.room-qr-modal')).toBeNull();
     }
     expect(saved).toEqual({ code: '1234', name: 'Cuber', ...credentials });
     const fetcher = vi.spyOn(globalThis, 'fetch').mockResolvedValue(new Response(JSON.stringify({ error: 'bandwidth' }), { status: 503 }));
@@ -442,7 +447,8 @@ describe('installed app multiplayer modes', () => {
     await act(async () => dispatchPointer(surface, 'pointercancel', 1));
     const scrambleStrip = surface.querySelector<HTMLElement>('.scramble-strip')!;
     await act(async () => dispatchPointer(scrambleStrip, 'pointerdown', 2));
-    expect(surface.querySelector('.timer-display')?.classList).toContain('holding');
+    expect(surface.querySelector('.timer-display')?.classList).toContain('idle');
+    expect(surface.hasPointerCapture(2)).toBe(false);
     await act(async () => {
       dispatchPointer(surface, 'pointerup', 2);
       dispatchPointer(surface, 'pointercancel', 2);
@@ -451,6 +457,9 @@ describe('installed app multiplayer modes', () => {
     expect(surface.hasPointerCapture(2)).toBe(false);
     expect(postNetStatus).not.toHaveBeenCalled();
     expect(writeClipboardText).not.toHaveBeenCalled();
+    await act(async () => scrambleStrip.querySelector<HTMLButtonElement>('button')!.click());
+    expect(writeClipboardText).toHaveBeenCalledExactlyOnceWith("R U R'");
+    expect(scrambleStrip.querySelector('.scramble-copied-check')).not.toBeNull();
     await act(async () => dispatchPointer(surface, 'pointercancel', 1));
     await act(async () => host.querySelector<HTMLButtonElement>(
       `[aria-label="${COPY.en.battleCopyInvite}"]`,
@@ -469,7 +478,7 @@ describe('installed app multiplayer modes', () => {
     expect(document.querySelector('.room-qr-link')?.textContent).toContain(
       'https://cuberoot.me/timer?players=net&room=1234',
     );
-    await act(async () => document.querySelector<HTMLButtonElement>('.room-qr-close')!.click());
+    await act(async () => document.querySelector<HTMLButtonElement>('.room-qr-modal [aria-label="Close"]')!.click());
     await act(async () => host.querySelector<HTMLButtonElement>('.timer-room-player-name')!.click());
     const nickname = document.querySelector<HTMLInputElement>('.timer-room-dialog input')!;
     await act(async () => {
@@ -479,6 +488,50 @@ describe('installed app multiplayer modes', () => {
     await act(async () => document.querySelector<HTMLButtonElement>('.timer-room-dialog .timer-room-actions button')!.click());
     expect(client.renameNetPlayer).toHaveBeenCalledWith('1234', credentials, { name: 'Guest alias' });
     expect(document.querySelector('.timer-room-dialog')).toBeNull();
+  });
+
+  it('clears a restored running status and allows another solve after a rejected quick stop', async () => {
+    vi.useFakeTimers();
+    let clock = 1000;
+    vi.spyOn(performance, 'now').mockImplementation(() => clock);
+    let state = roomState();
+    state.players.abcdef.ph = 'solving';
+    const session = { code: state.code, name: 'Cuber', playerId: 'abcdef', playerToken: 'x'.repeat(48) };
+    const postNetStatus = vi.fn<NetBattleClient['postNetStatus']>(async (_code, _auth, ph) => {
+      state = { ...state, revision: state.revision + 1, players: { abcdef: { ...state.players.abcdef, ph } } };
+      return state;
+    });
+    const capability: InstalledAppNetBattle = {
+      client: { getNetRoom: async () => state, postNetStatus } as unknown as NetBattleClient,
+      sessions: { clear: async () => {}, load: async () => session, save: async () => {} },
+    };
+    const outbox = new NetRecordingOutbox(vi.fn());
+    const upload = vi.fn<NetOutboxUploader>().mockResolvedValueOnce('rejected').mockResolvedValue('uploaded');
+    outbox.setUploader(upload);
+    await act(async () => root.render(<NetBattleMode {...baseProps} capability={capability} sessionId="original"
+      recordingOutbox={outbox} onRecordSolve={record => outbox.enqueue(record, true)} />));
+    expect(postNetStatus.mock.calls.map(call => call[2])).toEqual(['idle']);
+
+    const surface = host.querySelector<HTMLElement>('.timer-room-stage .timing-surface')!;
+    const solve = async (duration: number) => {
+      await act(async () => {
+        dispatchPointer(surface, 'pointerdown', 1);
+        await vi.advanceTimersByTimeAsync(550);
+        dispatchPointer(surface, 'pointerup', 1);
+      });
+      await act(async () => {
+        clock += duration;
+        dispatchPointer(surface, 'pointerdown', 1);
+        dispatchPointer(surface, 'pointerup', 1);
+      });
+    };
+    await solve(0.4);
+    expect(outbox.getSnapshot().rejected).toBe(1);
+    expect(state.players.abcdef.ph).toBe('idle');
+    clock = 2000;
+    await solve(1000);
+    expect(upload.mock.calls.map(([record]) => record.context.round)).toEqual([1, 1]);
+    expect(upload.mock.calls[1][0].solve.timeMs).toBe(1000);
   });
 
   it('allows manual timing on unsupported events while a previous cube disconnect is pending', async () => {
@@ -494,7 +547,8 @@ describe('installed app multiplayer modes', () => {
     await act(async () => root.render(<NetBattleMode {...baseProps} capability={capability}
       smartCube={{ phase: 'connected', model: 'moyu32', deviceName: 'WCU_MY32_test', facelets: SOLVED_3X3,
         lastMove: '', connect: async () => '', disconnect }} />));
-    await act(async () => host.querySelector<HTMLButtonElement>('.timer-room-lobby-actions button')!.click());
+    await act(async () => host.querySelector<HTMLButtonElement>('.timer-room-lobby-create > button:last-child')!.click());
+    await act(async () => document.querySelector<HTMLButtonElement>('.room-qr-modal [aria-label="Close"]')!.click());
     expect(disconnect).toHaveBeenCalled();
     expect(host.querySelector('.timer-live-cube')).toBeNull();
     const surface = host.querySelector<HTMLElement>('.timer-room-stage .timing-surface')!;
@@ -542,13 +596,15 @@ describe('installed app multiplayer modes', () => {
         capability={capability}
         sessionId="session-original"
         onRecordSolve={onRecordSolve}
+        renderRecordedSolve={({ solve }) => <output data-test-recap>{solve.moves?.length}</output>}
         recordGyro
         deviceControls={<button data-device-controls onClick={openDevice}>Device operations</button>}
         onSmartCubeHandlersChange={(next) => { handlers = next; }}
         smartCube={smartCube}
       />,
     ));
-    await act(async () => host.querySelector<HTMLButtonElement>('.timer-room-lobby-actions button')!.click());
+    await act(async () => host.querySelector<HTMLButtonElement>('.timer-room-lobby-create > button:last-child')!.click());
+    await act(async () => document.querySelector<HTMLButtonElement>('.room-qr-modal [aria-label="Close"]')!.click());
     expect(handlers).not.toBeNull();
 
     expect(host.querySelector('.timer-live-cube')).not.toBeNull();
@@ -587,6 +643,7 @@ describe('installed app multiplayer modes', () => {
     await act(async () => Promise.resolve());
     expect(postNetResult).not.toHaveBeenCalled();
     expect(onRecordSolve).toHaveBeenCalledTimes(1);
+    expect(host.querySelector('[data-test-recap]')?.textContent).toBe('3');
     expect(onRecordSolve.mock.calls[0]![0]).toMatchObject({
       context: { code: '1234', round: 1, sessionId: 'session-original' },
       solve: { timeMs: 1000, scramble: "R U R'", moves: [
@@ -648,6 +705,8 @@ describe('installed app multiplayer modes', () => {
   });
 
   it('keeps manual input disabled while the server owns a synchronized countdown', async () => {
+    vi.useFakeTimers();
+    const playSound = vi.fn();
     const state = roomState();
     state.syncStart = true;
     state.now = Date.now();
@@ -656,7 +715,8 @@ describe('installed app multiplayer modes', () => {
     const credentials = { playerId: 'abcdef', playerToken: 'x'.repeat(48) };
     const client = {
       createNetRoom: vi.fn(async () => ({ state, credentials })),
-      getNetRoom: vi.fn(async () => state),
+      getNetRoom: vi.fn(async () => ({ ...state, now: Date.now() })),
+      postNetStatus: vi.fn(async () => ({ ...state, now: Date.now() })),
     } as unknown as NetBattleClient;
     const capability: InstalledAppNetBattle = {
       client,
@@ -667,12 +727,20 @@ describe('installed app multiplayer modes', () => {
       },
     };
 
-    await act(async () => root.render(<NetBattleMode {...baseProps} capability={capability} />));
-    await act(async () => host.querySelector<HTMLButtonElement>('.timer-room-lobby-actions button')!.click());
+    await act(async () => root.render(<NetBattleMode {...baseProps} capability={capability} sound={{ play: playSound, cancelVoice() {} }} />));
+    await act(async () => host.querySelector<HTMLButtonElement>('.timer-room-lobby-create > button:last-child')!.click());
+    await act(async () => document.querySelector<HTMLButtonElement>('.room-qr-modal [aria-label="Close"]')!.click());
 
     const surface = host.querySelector<HTMLElement>('.timer-room-stage .timing-surface')!;
     expect(surface.getAttribute('role')).toBeNull();
     expect(surface.querySelector('.timer-display')?.textContent).toBe('3');
+    await act(async () => vi.advanceTimersByTimeAsync(1_000));
+    expect(surface.querySelector('.timer-display')?.textContent).toBe('2');
+    await act(async () => vi.advanceTimersByTimeAsync(1_000));
+    expect(surface.querySelector('.timer-display')?.textContent).toBe('1');
+    await act(async () => vi.advanceTimersByTimeAsync(1_000));
+    expect(surface.querySelector('.timer-display')?.classList).toContain('running');
+    expect(playSound.mock.calls).toEqual([['sync-countdown'], ['sync-countdown'], ['sync-countdown'], ['start']]);
   });
 
   it('restores the same room identity after a temporary outage and clears an expired room on wake', async () => {
@@ -723,7 +791,8 @@ describe('installed app multiplayer modes', () => {
     };
 
     await act(async () => root.render(<NetBattleMode {...baseProps} capability={capability} />));
-    await act(async () => host.querySelector<HTMLButtonElement>('.timer-room-lobby-actions button')!.click());
+    await act(async () => host.querySelector<HTMLButtonElement>('.timer-room-lobby-create > button:last-child')!.click());
+    await act(async () => document.querySelector<HTMLButtonElement>('.room-qr-modal [aria-label="Close"]')!.click());
     await act(async () => Promise.resolve());
 
     expect(host.querySelector('.timer-room-event')?.textContent).toBe(event === '333' ? '3×3' : '3×3 blindfolded');
@@ -732,6 +801,100 @@ describe('installed app multiplayer modes', () => {
     const nextButton = [...host.querySelectorAll<HTMLButtonElement>('button')].find(button => button.textContent?.includes('Next round'))!;
     await act(async () => nextButton.click());
     expect(nextNetRound).toHaveBeenCalledWith('1234', credentials, 1, false);
+  });
+
+  it('opens recent rooms through admission and removes a definitive missing room', async () => {
+    const state = roomState();
+    const credentials = { playerId: 'abcdef', playerToken: 'x'.repeat(48) };
+    localStorage.setItem(NET_RECENT_ROOMS_KEY, JSON.stringify([
+      { code: '5678', event: '222', updatedAt: Date.now() },
+      { code: '1234', event: '333', updatedAt: Date.now() - 1 },
+    ]));
+    const joinNetRoom = vi.fn<NetBattleClient['joinNetRoom']>(async code => {
+      if (code === '5678') throw new Error('room not found');
+      return { state, credentials };
+    });
+    const capability: InstalledAppNetBattle = {
+      client: { joinNetRoom, getNetRoom: async () => state } as unknown as NetBattleClient,
+      sessions: { load: async () => null, save: async () => {}, clear: async () => {} },
+    };
+    await act(async () => root.render(<NetBattleMode {...baseProps} capability={capability} />));
+    const recent = () => [...host.querySelectorAll<HTMLButtonElement>('.timer-room-recent button')];
+    expect(recent().map(button => button.querySelector('strong')?.textContent)).toEqual(['5678', '1234']);
+    await act(async () => recent()[0].click());
+    expect(host.querySelector('[role="alert"]')?.textContent).toMatch(/room not found/i);
+    expect(recent()).toHaveLength(1);
+    expect(JSON.parse(localStorage.getItem(NET_RECENT_ROOMS_KEY)!).map((entry: { code: string }) => entry.code)).toEqual(['1234']);
+    await act(async () => recent()[0].click());
+    expect(joinNetRoom).toHaveBeenLastCalledWith('1234', { name: 'Cuber' });
+    expect(host.querySelector('.timer-room-toolbar')).not.toBeNull();
+  });
+
+  it('changes room timing preferences in place, blocks background input, and clears request errors after five seconds', async () => {
+    vi.useFakeTimers();
+    const state = roomState();
+    state.syncStart = true;
+    state.players.rival = { ...state.players.abcdef, name: 'Rival' };
+    const credentials = { playerId: 'abcdef', playerToken: 'x'.repeat(48) };
+    const postNetStatus = vi.fn(async () => { throw new Error('Failed to fetch'); });
+    const capability: InstalledAppNetBattle = {
+      client: { getNetRoom: async () => state, postNetStatus } as unknown as NetBattleClient,
+      sessions: { load: async () => ({ code: '1234', name: 'Cuber', ...credentials }), save: async () => {}, clear: async () => {} },
+    };
+    const patches = vi.fn();
+    function Fixture() {
+      const [value, setValue] = useState<TimerNetBattleSettingsProps['value']>({
+        ...DEFAULT_TIMER_TIMING_SETTINGS, inspectionSec: 0, soundsEnabled: false, voiceInspection: 'none', volume: 0.5, liveCubeView: 'net',
+      });
+      return <NetBattleMode {...baseProps} capability={capability} holdMs={value.holdMs} inspectionSec={value.inspectionSec}
+        smartCubeSettings={{ liveCubeView: value.liveCubeView, gyroEnabled: true }}
+        timingSettings={{ value, voiceAvailable: true, onWarmup: vi.fn(), onPreview: vi.fn(),
+          onChange: patch => { patches(patch); setValue(previous => ({ ...previous, ...patch })); } }} />;
+    }
+
+    await act(async () => root.render(<Fixture />));
+    const settings = host.querySelector<HTMLButtonElement>('[aria-label="Timer settings"]')!;
+    const surface = host.querySelector('.timing-surface')!;
+    await act(async () => settings.click());
+    const dialog = document.querySelector('[aria-modal="true"]')!;
+    expect(settings.getAttribute('aria-expanded')).toBe('true');
+    await act(async () => {
+      dispatchPointer(surface, 'pointerdown', 2);
+      document.activeElement!.dispatchEvent(new KeyboardEvent('keydown', { code: 'Space', key: ' ', bubbles: true }));
+    });
+    expect(postNetStatus).not.toHaveBeenCalled();
+    expect(surface.querySelector('.timer-display')?.classList).toContain('idle');
+
+    const click = (label: string) => act(async () => dialog.querySelector<HTMLButtonElement>('[role="switch"][aria-label="' + label + '"]')!.click());
+    await click('WCA inspection');
+    const hold = dialog.querySelector<HTMLInputElement>('[data-setting-id="settings.timer.hold-threshold"] input')!;
+    await act(async () => {
+      hold.focus();
+      Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')!.set!.call(hold, '450');
+      hold.dispatchEvent(new Event('input', { bubbles: true }));
+    });
+    await act(async () => hold.blur());
+    await click('Sounds');
+    const select = (setting: string, value: string) => act(async () => {
+      const input = dialog.querySelector<HTMLSelectElement>('[data-setting-id="' + setting + '"] select')!;
+      input.value = value;
+      input.dispatchEvent(new Event('change', { bubbles: true }));
+    });
+    await select('settings.sound.voice-inspection', 'en-female');
+    await select('settings.smart-cube.live-view', '3d');
+    expect(patches.mock.calls).toEqual([
+      [{ inspectionSec: 15 }], [{ holdMs: 450 }], [{ soundsEnabled: true }], [{ voiceInspection: 'en-female' }], [{ liveCubeView: '3d' }],
+    ]);
+    await act(async () => dialog.querySelector<HTMLButtonElement>('[aria-label="Close"]')!.click());
+    expect(host.querySelector('.timer-room-toolbar')).not.toBeNull();
+
+    await act(async () => dispatchPointer(surface, 'pointerdown', 3));
+    expect(postNetStatus).toHaveBeenCalledOnce();
+    expect(host.querySelector('[role="alert"]')?.textContent).toMatch(/network error/i);
+    await act(async () => vi.advanceTimersByTimeAsync(4_999));
+    expect(host.querySelector('[role="alert"]')).not.toBeNull();
+    await act(async () => vi.advanceTimersByTimeAsync(1));
+    expect(host.querySelector('[role="alert"]')).toBeNull();
   });
 
   it('renders shared room statistics and delegates host transfer and removal to the room client', async () => {
@@ -790,10 +953,19 @@ describe('installed app multiplayer modes', () => {
     };
     vi.spyOn(window, 'confirm').mockReturnValue(true);
 
+    const solve: Solve = {
+      id: netAttemptSolveId({ code: state.code, playerId: credentials.playerId, round: 1 }),
+      event: '333', timeMs: 2_000, ts: 100, penalty: 'ok', scramble: "U R U'",
+      moves: [{ m: 'R', ts: 0 }],
+    };
+    const historyReplays = indexNetRecordedReplays([{ '333': [solve] }]);
+    const renderAttemptReplay = vi.fn((record: Solve, onClose: () => void) =>
+      <TimerRoomDialog title="Reconstruct" language="en" onClose={onClose}>{record.scramble}</TimerRoomDialog>);
     let closeOverlay: (() => void) | null = null;
-    await act(async () => root.render(<NetBattleMode {...baseProps} capability={capability}
-      onOverlayCloseChange={(close) => { closeOverlay = close; }} />));
-    await act(async () => host.querySelector<HTMLButtonElement>('.timer-room-lobby-actions button')!.click());
+    await act(async () => root.render(<NetBattleMode {...baseProps} capability={capability} historyReplays={historyReplays}
+      renderAttemptReplay={renderAttemptReplay} onOverlayCloseChange={(close) => { closeOverlay = close; }} />));
+    await act(async () => host.querySelector<HTMLButtonElement>('.timer-room-lobby-create > button:last-child')!.click());
+    await act(async () => document.querySelector<HTMLButtonElement>('.room-qr-modal [aria-label="Close"]')!.click());
 
     const historyButton = Array.from(host.querySelectorAll<HTMLButtonElement>('.timer-room-toolbar button'))
       .find((button) => button.getAttribute('aria-label') === 'Scramble history and results')!;
@@ -806,7 +978,14 @@ describe('installed app multiplayer modes', () => {
     expect(document.querySelector('.timer-room-dialog [data-test-twisty-player]')).not.toBeNull();
     expect(vi.mocked(TwistyPlayer).mock.calls.some(([options]) => options?.puzzle === '3x3x3')).toBe(true);
 
+    const resultButton = document.querySelector<HTMLButtonElement>('.timer-room-history-result button')!;
+    await act(async () => resultButton.click());
+    expect(renderAttemptReplay).toHaveBeenLastCalledWith(solve, expect.any(Function));
+    expect(document.querySelectorAll('[aria-modal="true"]')).toHaveLength(2);
     expect(closeOverlay).not.toBeNull();
+    await act(async () => { closeOverlay?.(); });
+    expect(document.querySelectorAll('[aria-modal="true"]')).toHaveLength(1);
+    expect(document.activeElement).toBe(resultButton);
     await act(async () => { closeOverlay?.(); });
     expect(document.querySelector('.timer-room-dialog')).toBeNull();
     const adminButton = Array.from(host.querySelectorAll<HTMLButtonElement>('.timer-room-toolbar button'))

@@ -15,7 +15,7 @@
 }
 .net-cube-connection-state { color: var(--signal-warning); }
 .net-pk-arena {
-  flex: 1;
+  flex: 1 0 auto;
   min-width: 0;
   min-height: 0;
   display: grid;
@@ -38,12 +38,14 @@
   min-height: 36px;
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: 7px;
   padding: 6px 14px;
   border-bottom: 1px solid var(--border-default);
 }
 .net-pk-side-name {
   min-width: 0;
+  flex: 1 1 5rem;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -51,25 +53,46 @@
   font-weight: 700;
   color: var(--foreground);
 }
+button.net-pk-side-name {
+  min-height: 44px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  text-align: start;
+  cursor: pointer;
+}
+button.net-pk-side-name:focus-visible { outline: 2px solid var(--ring); }
 .net-pk-side-role {
   flex: none;
   font-size: 11px;
   color: var(--faint-foreground);
 }
 .net-pk-side-status {
-  margin-left: auto;
   flex: none;
   font-family: var(--font-mono);
   font-size: 11px;
   color: var(--muted-foreground);
   white-space: nowrap;
 }
+.net-pk-standing {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.net-pk-standing svg { color: var(--signal-warning); }
+.net-pk-wins { font-weight: 600; }
+.net-pk-gap { color: var(--muted-foreground); }
 .net-pk-side > .timing-surface {
-  min-height: 0;
-  flex-basis: 0;
-  --timer-cube-h: min(18vw, 24dvh, 220px);
+  min-height: min-content;
+  flex: 1 0 auto;
+  --net-pk-cube-height: min(18vw, 24vh, 220px);
+  --timer-cube-h: var(--net-pk-cube-height);
 }
 .net-pk-side .timing-surface-sub { gap: 8px; }
+.net-pk-side .timing-surface.timing-surface--net .timing-surface-sub { --timer-cube-h: var(--net-pk-cube-height); }
 .net-pk-side.is-opponent .timing-surface {
   cursor: default;
   touch-action: pan-y;
@@ -78,7 +101,7 @@
 @media (max-width: 720px) {
   .net-pk-arena {
     grid-template-columns: minmax(0, 1fr);
-    grid-template-rows: repeat(2, minmax(190px, 1fr));
+    grid-template-rows: minmax(150px, auto) minmax(min-content, 1fr);
     grid-template-areas:
       'opponent'
       'self';
@@ -90,7 +113,7 @@
   }
   .net-pk-side > .timing-surface {
     padding: 10px;
-    --timer-cube-h: min(24vw, 11dvh, 110px);
+    --net-pk-cube-height: min(24vw, 12vh, 110px);
   }
   .net-pk-side-head {
     min-height: 32px;

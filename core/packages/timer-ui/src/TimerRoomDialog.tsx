@@ -4,6 +4,7 @@ import { X } from 'lucide-react';
 import { modalFocusableElements } from './modal-focus';
 import { useDialogMotion } from './useDialogMotion';
 import { useModalBackdrop } from './useModalDismiss';
+import './timer-room.css';
 
 export interface TimerRoomDialogProps {
   title: string;

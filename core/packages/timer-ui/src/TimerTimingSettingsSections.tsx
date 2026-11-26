@@ -25,6 +25,8 @@ export interface TimerTimingSettingsSectionsProps {
   active?: boolean;
   /** Hosts with mandatory timing omit the legacy untimed-practice control. */
   timingRequired?: boolean;
+  /** Room settings only expose the inspection and hold controls. */
+  basicOnly?: boolean;
   /** An input device can require a fixed arming interval without overwriting the normal setting. */
   fixedHoldMs?: number;
   localize: (copy: TimerSettingCopy) => string;
@@ -192,6 +194,7 @@ export function TimerTimingSettingsSections({
   liveShare,
   active = true,
   timingRequired = false,
+  basicOnly = false,
   fixedHoldMs,
   localize,
   onChange,
@@ -212,8 +215,8 @@ export function TimerTimingSettingsSections({
   return (
     <>
       {liveShare}
-      <TimerSettingsSection title={localize(TIMER_TIMING_SECTION_COPY.timing)}>
-        {!timingRequired && <TimerBooleanSettingRow
+      <TimerSettingsSection title={basicOnly ? undefined : localize(TIMER_TIMING_SECTION_COPY.timing)}>
+        {!timingRequired && !basicOnly && <TimerBooleanSettingRow
           field={TIMING_FIELDS.timingEnabled}
           label={label(TIMING_FIELDS.timingEnabled)}
           onChange={(timingEnabled) => onChange({ timingEnabled })}
@@ -244,63 +247,65 @@ export function TimerTimingSettingsSections({
         </TimerSettingRow>
       </TimerSettingsSection>
 
-      <TimerSettingsSection title={localize(TIMER_TIMING_SECTION_COPY.timingDisplay)}>
-        <TimerBooleanSettingRow
-          field={TIMING_FIELDS.hideTime}
-          label={label(TIMING_FIELDS.hideTime)}
-          onChange={(hideTime) => onChange({ hideTime })}
-          renderBooleanControl={renderBooleanControl}
-          value={settings.hideTime}
-        />
+      {!basicOnly && <>
+        <TimerSettingsSection title={localize(TIMER_TIMING_SECTION_COPY.timingDisplay)}>
+          <TimerBooleanSettingRow
+            field={TIMING_FIELDS.hideTime}
+            label={label(TIMING_FIELDS.hideTime)}
+            onChange={(hideTime) => onChange({ hideTime })}
+            renderBooleanControl={renderBooleanControl}
+            value={settings.hideTime}
+          />
 
-        <TimerSettingRow
-          field={TIMING_FIELDS.runningPrecision}
-          label={label(TIMING_FIELDS.runningPrecision)}
-        >
-          <select
-            className="settings-row-control-select"
-            aria-label={label(TIMING_FIELDS.runningPrecision)}
-            onChange={(event) => onChange({
-              runningPrecision: normalizeTimerRunningPrecision(Number(event.target.value)),
-            })}
-            value={settings.runningPrecision}
+          <TimerSettingRow
+            field={TIMING_FIELDS.runningPrecision}
+            label={label(TIMING_FIELDS.runningPrecision)}
           >
-            {RUNNING_PRECISION_VALUES.map((precision) => (
-              <option key={precision} value={precision}>{precisionLabel(precision)}</option>
-            ))}
-          </select>
-        </TimerSettingRow>
-        <TimerSettingRow field={TIMING_FIELDS.precision} label={label(TIMING_FIELDS.precision)}>
-          <select
-            className="settings-row-control-select"
-            aria-label={label(TIMING_FIELDS.precision)}
-            onChange={(event) => onChange({
-              precision: normalizeTimerResultPrecision(Number(event.target.value)),
-            })}
-            value={settings.precision}
-          >
-            {RESULT_PRECISION_VALUES.map((precision) => (
-              <option key={precision} value={precision}>{precisionLabel(precision)}</option>
-            ))}
-          </select>
-        </TimerSettingRow>
-      </TimerSettingsSection>
-      <TimerSettingsSection title={localize(TIMER_TIMING_SECTION_COPY.eventsAndSessions)}>
-        <TimerBooleanSettingRow
-          field={TIMING_FIELDS.autoSessionForEvent}
-          label={label(TIMING_FIELDS.autoSessionForEvent)}
-          onChange={(autoSessionForEvent) => onChange({ autoSessionForEvent })}
-          renderBooleanControl={renderBooleanControl}
-          value={settings.autoSessionForEvent}
-        />
-        <TimerBooleanSettingRow
-          field={TIMING_FIELDS.autoEventForSession}
-          label={label(TIMING_FIELDS.autoEventForSession)}
-          onChange={(autoEventForSession) => onChange({ autoEventForSession })}
-          renderBooleanControl={renderBooleanControl}
-          value={settings.autoEventForSession}
-        />
-      </TimerSettingsSection>
+            <select
+              className="settings-row-control-select"
+              aria-label={label(TIMING_FIELDS.runningPrecision)}
+              onChange={(event) => onChange({
+                runningPrecision: normalizeTimerRunningPrecision(Number(event.target.value)),
+              })}
+              value={settings.runningPrecision}
+            >
+              {RUNNING_PRECISION_VALUES.map((precision) => (
+                <option key={precision} value={precision}>{precisionLabel(precision)}</option>
+              ))}
+            </select>
+          </TimerSettingRow>
+          <TimerSettingRow field={TIMING_FIELDS.precision} label={label(TIMING_FIELDS.precision)}>
+            <select
+              className="settings-row-control-select"
+              aria-label={label(TIMING_FIELDS.precision)}
+              onChange={(event) => onChange({
+                precision: normalizeTimerResultPrecision(Number(event.target.value)),
+              })}
+              value={settings.precision}
+            >
+              {RESULT_PRECISION_VALUES.map((precision) => (
+                <option key={precision} value={precision}>{precisionLabel(precision)}</option>
+              ))}
+            </select>
+          </TimerSettingRow>
+        </TimerSettingsSection>
+        <TimerSettingsSection title={localize(TIMER_TIMING_SECTION_COPY.eventsAndSessions)}>
+          <TimerBooleanSettingRow
+            field={TIMING_FIELDS.autoSessionForEvent}
+            label={label(TIMING_FIELDS.autoSessionForEvent)}
+            onChange={(autoSessionForEvent) => onChange({ autoSessionForEvent })}
+            renderBooleanControl={renderBooleanControl}
+            value={settings.autoSessionForEvent}
+          />
+          <TimerBooleanSettingRow
+            field={TIMING_FIELDS.autoEventForSession}
+            label={label(TIMING_FIELDS.autoEventForSession)}
+            onChange={(autoEventForSession) => onChange({ autoEventForSession })}
+            renderBooleanControl={renderBooleanControl}
+            value={settings.autoEventForSession}
+          />
+        </TimerSettingsSection>
+      </>}
 
     </>
   );

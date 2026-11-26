@@ -8,6 +8,7 @@
 
 import {
   timerEventIdFromSelector,
+  timerEventPickerName,
   timerEventSelectorId,
 } from './event-catalog';
 import type { EventId } from './types';
@@ -21,6 +22,8 @@ export const NET_BATTLE_SESSION_STORAGE_KEY = 'net_battle_session';
 export const NET_BATTLE_REQUEST_TIMEOUT_MS = 12_000;
 
 export function normalizeNetBattleRoomCode(value: string): string {
+  const invited = /[?&]room=([0-9]{4})(?=$|[&#\s)\]}>.,;!?"'])/.exec(value);
+  if (invited) return invited[1];
   return [...value].filter((character) => character >= '0' && character <= '9')
     .join('').slice(0, NET_BATTLE_ROOM_CODE_LENGTH);
 }
@@ -42,6 +45,38 @@ const NET_EVENT_SET = new Set<EventId>(NET_EVENTS);
 
 export function isNetBattleEventId(value: unknown): value is NetBattleEventId {
   return typeof value === 'string' && NET_EVENT_SET.has(value as EventId);
+}
+
+export const NET_RECENT_ROOMS_KEY = 'net_battle_recent_rooms';
+export const NET_RECENT_ROOM_TTL_MS = 24 * 60 * 60 * 1_000;
+
+export interface NetRecentRoom {
+  code: string;
+  event: NetBattleEventId;
+  updatedAt: number;
+}
+
+export function decodeNetRecentRooms(value: unknown, now: number): NetRecentRoom[] {
+  const byCode = new Map<string, NetRecentRoom>();
+  if (!Array.isArray(value)) return [];
+  for (const item of value) {
+    if (!isRecord(item) || !isNetBattleRoomCode(item.code) || !isNetBattleEventId(item.event)
+      || typeof item.updatedAt !== 'number' || !Number.isFinite(item.updatedAt)
+      || item.updatedAt > now || now - item.updatedAt >= NET_RECENT_ROOM_TTL_MS) continue;
+    const previous = byCode.get(item.code);
+    if (!previous || item.updatedAt >= previous.updatedAt) {
+      byCode.set(item.code, { code: item.code, event: item.event, updatedAt: item.updatedAt });
+    }
+  }
+  return [...byCode.values()].sort((a, b) => b.updatedAt - a.updatedAt).slice(0, 3);
+}
+
+export function rememberNetRecentRoom(rooms: readonly NetRecentRoom[], room: Pick<NetRecentRoom, 'code' | 'event'>, now: number) {
+  return decodeNetRecentRooms([{ ...room, updatedAt: now }, ...rooms.filter(entry => entry.code !== room.code)], now);
+}
+
+export function forgetNetRecentRoom(rooms: readonly NetRecentRoom[], code: string, now: number) {
+  return decodeNetRecentRooms(rooms.filter(room => room.code !== code), now);
 }
 
 export type NetPhase = 'idle' | 'ready' | 'inspecting' | 'solving' | 'done';
@@ -815,19 +850,24 @@ export function decodeNetRoomState(value: unknown): NetRoomState {
   };
 }
 
+export const TIMER_NET_SCRAMBLE_COPY = {
+  en: { action: 'Copy original scramble', copied: 'Copied the scramble', failed: 'Copy failed. Try again.', loading: 'Generating scramble…' },
+  zh: { action: '复制原打乱', copied: '已复制原打乱', failed: '复制失败，请重试', loading: '生成打乱中…' },
+};
+
 export const TIMER_ROOM_LOBBY_COPY = {
-  en: { title: 'Online battle', create: 'Create room', code: 'Room code', or: 'or enter', joining: 'Joining room…', retry: 'Retry', own: 'Create my own room', exit: 'Exit online mode' },
-  zh: { title: '联机对战', create: '创建房间', code: '房间码', or: '或输入', joining: '正在进入房间…', retry: '重试', own: '创建自己的房间', exit: '退出联机' },
+  en: { title: 'Online battle', create: 'Create room', join: 'Join room', recent: 'Recent rooms', code: 'Room code', joining: 'Opening room…', retry: 'Retry', own: 'Create my own room', exit: 'Exit online mode' },
+  zh: { title: '联机对战', create: '创建房间', join: '加入房间', recent: '最近房间', code: '房间码', joining: '正在进入房间…', retry: '重试', own: '创建自己的房间', exit: '退出联机' },
 };
 
 export const TIMER_ROOM_TOOLBAR_COPY = {
-  en: { round: 'Round', room: 'Room', sync: 'Synchronized start', code: 'Copy room code', invite: 'Copy invite link', copiedCode: 'Room code copied', copiedInvite: 'Invite link copied', qr: 'Room QR code', history: 'Scramble history and results', admin: 'Room settings', leave: 'Leave room' },
-  zh: { round: '轮次', room: '房间', sync: '同时开始计时', code: '复制房间码', invite: '复制邀请链接', copiedCode: '已复制房间码', copiedInvite: '已复制邀请链接', qr: '房间二维码', history: '历史打乱与战绩', admin: '房间管理', leave: '离开房间' },
+  en: { round: 'Round', room: 'Room', sync: 'Synchronized start', code: 'Copy room code', invite: 'Copy invite link', copiedCode: 'Room code copied', copiedInvite: 'Invite link copied', qr: 'Room QR code', history: 'Scramble history and results', admin: 'Room settings', timerSettings: 'Timer settings', leave: 'Leave room', confirmLeave: 'Confirm leaving the room' },
+  zh: { round: '轮次', room: '房间', sync: '同时开始计时', code: '复制房间码', invite: '复制邀请链接', copiedCode: '已复制房间码', copiedInvite: '已复制邀请链接', qr: '房间二维码', history: '历史打乱与战绩', admin: '房间管理', timerSettings: '计时设置', leave: '离开房间', confirmLeave: '确认离开房间' },
 };
 
 export const TIMER_ROOM_ROUND_STATUS_COPY = {
-  en: { ready: "I'm ready", cancel: 'Cancel ready', skip: 'Skip waiting — next round', next: 'Next round', noResult: 'No valid result this round', pending: (n: number) => `Waiting for others to finish (${n} left)…`, waiting: (n: number) => `Waiting for others to get ready (${n} left)…`, sync: 'A 3s countdown begins once everyone is ready', auto: 'Auto-ready is off during a synchronized start. Tap ready; the cube stops the timer when solved.', spectator: 'This round has started. You can watch and join the next round.', countdown: 'Starting together — get ready!' },
-  zh: { ready: '我准备好了', cancel: '取消准备', skip: '不等了，直接开下一轮', next: '下一轮', noResult: '本轮无有效成绩', pending: (n: number) => `等待其他玩家完成（还差 ${n} 人）…`, waiting: (n: number) => `等其他人准备（还差 ${n} 人）…`, sync: '全员准备后，3 秒倒计时一起开始', auto: '同时起表期间不自动预备，请手动准备；魔方还原时停表。', spectator: '本轮已经开始，你可以旁观并等待下一轮', countdown: '一起起表，准备！' },
+  en: { ready: "I'm ready", cancel: 'Cancel ready', skip: 'Skip to next round', confirmSkip: 'Confirm skipping unfinished solves', next: 'Next round', noResult: 'No valid result this round', pending: (n: number) => `Waiting for others to finish (${n} left)…`, waiting: (n: number) => `Waiting for others to get ready (${n} left)…`, sync: 'A 3s countdown begins once everyone is ready', auto: 'Auto-ready is off during a synchronized start. Tap ready; the cube stops the timer when solved.', spectator: 'This round has started. You can watch and join the next round.', countdown: 'Starting together — get ready!' },
+  zh: { ready: '我准备好了', cancel: '取消准备', skip: '跳过等待，开下一轮', confirmSkip: '确认跳过未完成的还原', next: '下一轮', noResult: '本轮无有效成绩', pending: (n: number) => `等待其他玩家完成（还差 ${n} 人）…`, waiting: (n: number) => `等其他人准备（还差 ${n} 人）…`, sync: '全员准备后，3 秒倒计时一起开始', auto: '同时起表期间不自动预备，请手动准备；魔方还原时停表。', spectator: '本轮已经开始，你可以旁观并等待下一轮', countdown: '一起起表，准备！' },
 };
 
 export const TIMER_ROOM_ADMIN_COPY = {
@@ -840,6 +880,11 @@ export const TIMER_ROOM_PLAYERS_COPY = {
   zh: { players: '玩家', me: '（我）', host: '房主', score: '得分', view: '查看魔方', rename: '改名', offline: '离线', ready: '已准备', inspecting: '观察中', waiting: '待开始' },
 };
 
+export const TIMER_NET_PK_RESULT_COPY = {
+  en: { wins: (count: number) => `${count} ${count === 1 ? 'win' : 'wins'}`, winner: 'Round winner', gap: (value: string) => `Time difference ${value}` },
+  zh: { wins: (count: number) => `${count} 胜`, winner: '本轮获胜', gap: (value: string) => `时间差 ${value}` },
+};
+
 export function timerRoomPlayerName(player: { name: string; wcaId?: string }, language: 'en' | 'zh'): string {
   if (!player.wcaId) return player.name;
   const base = player.name.replace(/ \(\d+\)$/, '');
@@ -847,8 +892,8 @@ export function timerRoomPlayerName(player: { name: string; wcaId?: string }, la
 }
 
 export const TIMER_ROOM_HISTORY_COPY = {
-  en: { title: 'Scramble history and results', player: 'Player', wins: 'Wins', best: 'Best', mean: 'Mean', history: 'Scramble history', round: 'Round', live: 'In progress', noScramble: 'No scramble', unknown: 'Former player', cube: 'Scramble preview' },
-  zh: { title: '历史打乱与战绩', player: '选手', wins: '胜场', best: '最佳', mean: '平均', history: '历史打乱', round: '轮次', live: '进行中', noScramble: '打乱未生成', unknown: '已离开玩家', cube: '打乱预览' },
+  en: { title: 'Scramble history and results', copy: 'Copy standings', copied: 'Standings copied', replay: 'View reconstruction', rank: 'Rank', event: 'Event', player: 'Player', wins: 'Wins', best: 'Best', mean: 'Mean', history: 'Scramble history', round: 'Round', live: 'In progress', noScramble: 'No scramble', unknown: 'Former player', cube: 'Scramble preview' },
+  zh: { title: '历史打乱与战绩', copy: '复制战报', copied: '已复制战报', replay: '查看复盘', rank: '名次', event: '项目', player: '选手', wins: '胜场', best: '最佳', mean: '平均', history: '历史打乱', round: '轮次', live: '进行中', noScramble: '打乱未生成', unknown: '已离开玩家', cube: '打乱预览' },
 };
 
 export function formatNetHistoryStat(value: number | null, precision: 0 | 1 | 2 | 3) {
@@ -856,4 +901,32 @@ export function formatNetHistoryStat(value: number | null, precision: 0 | 1 | 2 
 }
 export function formatNetHistoryResult(result: NetResult | undefined, precision: 0 | 1 | 2 | 3) {
   return !result ? '—' : result.p === 'dnf' ? 'DNF' : formatMs(effectiveNetMs(result), precision) + (result.p === '+2' ? '+' : '');
+}
+
+export function netRoomStandings(room: NetRoomState) {
+  const players = sortedNetPlayers(room.players).sort((a, b) => (room.scores[b.id] ?? 0) - (room.scores[a.id] ?? 0));
+  let rank = 0;
+  let previousWins: number | undefined;
+  return players.map((player, index) => {
+    const wins = room.scores[player.id] ?? 0;
+    if (wins !== previousWins) rank = index + 1;
+    previousWins = wins;
+    return { player, rank, wins, event: playerEventOf(room, player.id), stats: playerStats(playerTimeline(room, player.id)) };
+  });
+}
+
+export function formatNetRoomStandings(
+  room: NetRoomState, language: 'en' | 'zh', precision: 0 | 1 | 2 | 3,
+  standings = netRoomStandings(room),
+): string {
+  const copy = TIMER_ROOM_HISTORY_COPY[language];
+  const heading = TIMER_ROOM_TOOLBAR_COPY[language];
+  return [
+    heading.room + ' ' + room.code + ' · ' + heading.round + ' ' + room.round,
+    [copy.rank, copy.player, copy.event, copy.wins, copy.best, 'ao5', 'ao12', copy.mean].join('\t'),
+    ...standings.map(({ rank, player, event, wins, stats }) => [
+      rank, timerRoomPlayerName(player, language).replace(/\s+/g, ' ').trim(), timerEventPickerName(event, language), wins,
+      ...[stats.single, stats.ao5, stats.ao12, stats.mean].map(value => formatNetHistoryStat(value, precision)),
+    ].join('\t')),
+  ].join('\n');
 }

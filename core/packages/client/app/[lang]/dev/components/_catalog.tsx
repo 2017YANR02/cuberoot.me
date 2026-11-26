@@ -1929,11 +1929,11 @@ export const CATALOG: ComponentEntry[] = [
     en: 'Complete local and online battle pages shared by Web and installed apps: lobby, room, video, timing, player layouts, settings, history, invitations, and rename dialogs. Hosts retain state, storage, input, and system adapters.',
   },
   {
-    name: 'TimerRoomPlayers',
-    import: "import { TimerRoomPlayers, TimerRoomLayout, TimerRoomToolbar, TimerRoomAdmin, TimerRoomHistory, TimerRoomDialog, TimerRoomLobby, TimerRoomIdentity, TimerRoomRoundStatus } from '@cuberoot/timer-ui';",
+    name: 'TimerRoomPlayers / TimerNetBattleSettings / useNetRecentRooms',
+    import: "import { TimerRoomPlayers, TimerRoomLayout, TimerRoomToolbar, TimerRoomAdmin, TimerRoomHistory, TimerRoomDialog, TimerRoomLobby, TimerRoomIdentity, TimerRoomRoundStatus, TimerNetBattleSettings, useNetRecentRooms } from '@cuberoot/timer-ui';",
     category: 'more',
-    zh: 'Web 与五端 App 共用的联机玩家列表及房间内容布局，统一房主、自己、在线状态、成绩、得分和姓名；宿主注入实况查看、改名及逐帧读数。',
-    en: 'Shared online roster and room layout with host/self markers, presence, results, scores, and names. Hosts inject live-cube selection, rename, and live readout updates.',
+    zh: 'Web 与五端 App 共用的联机玩家列表及房间内容布局，统一房主、自己、在线状态、成绩、得分和姓名；包含历史战报、房间内计时设置和设备本地最近房间。',
+    en: 'Shared online roster and room layout with host/self markers, presence, results, scores, and names. Includes standings, in-room timer settings, and device-local recent rooms.',
   },
   {
     name: 'TimerBattlePlayer',
@@ -1971,8 +1971,8 @@ export const CATALOG: ComponentEntry[] = [
     en: 'Shared goal and round settings, daily progress, round projections and target feedback. Hosts supply solve history and persistence.',
   },
   {
-    name: 'TimerSoundSettings / TimerMetronomeSettings / useTimerSoundFeedback',
-    import: "import { TimerSoundSettings, TimerMetronomeSettings, useTimerSoundFeedback, createTimerSound } from '@cuberoot/timer-ui';",
+    name: 'TimerSoundSettings / TimerMetronomeSettings / useTimerSoundFeedback / useNetBattleCountdown',
+    import: "import { TimerSoundSettings, TimerMetronomeSettings, useTimerSoundFeedback, useNetBattleCountdown, createTimerSound } from '@cuberoot/timer-ui';",
     category: 'more',
     zh: 'Web 与安装端共享声音、语音、节拍器、敲击定速和自定义观察提示设置；音频时钟调度、起停警告和失败回退同源。',
     en: 'Shared sound, voice, metronome, tap-tempo and custom inspection cues, backed by one audio-clock scheduler and warning/fallback implementation.',

@@ -71,6 +71,7 @@ export interface TimerScrambleStripProps {
   match?: boolean | null;
   nonOptimal?: TimerScrambleNonOptimalLabel;
   onActivate?: () => void;
+  activationLabel?: string;
   /** Plain scramble presses use the surrounding timer's existing input path. */
   timingEnabled?: boolean;
   scramble: string;
@@ -154,6 +155,7 @@ export function TimerScrambleStrip({
   match = null,
   nonOptimal,
   onActivate,
+  activationLabel,
   timingEnabled = true,
   scramble,
   status,
@@ -188,15 +190,25 @@ export function TimerScrambleStrip({
     '--scramble-length-scale': lengthScale,
   } as CSSProperties;
 
-  const stripActivate = editor || status?.onRetry || status?.delayedAction ? undefined : onActivate;
-  const activateFromKeyboard = (event: KeyboardEvent<HTMLSpanElement>) => {
-    if (event.target !== event.currentTarget
-      || !stripActivate
-      || (event.key !== 'Enter' && event.key !== ' ')) return;
-    event.preventDefault();
-    event.stopPropagation();
-    stripActivate();
+  const plainContent = scramble || status || typeof fallback === 'string';
+  const stripActivate = !plainContent || editor || status?.onRetry || status?.delayedAction ? undefined : onActivate;
+  const stopTimingKey = (event: KeyboardEvent<HTMLButtonElement>) => {
+    if (event.key === 'Enter' || event.key === ' ') event.stopPropagation();
   };
+  const scrambleContent = editor ?? (scramble
+    ? <>
+        <span className="scramble-moves">
+          {liveHint
+            ? <ScrambleHintMoves moves={moves} tailExtra={copiedCheck} />
+            : <TimerScramblePlainText scramble={scramble} tailExtra={copiedCheck} />}
+        </span>
+        {nonOptimal && <span className="scramble-nonopt" data-no-timer title={nonOptimal.title}>{nonOptimal.label}</span>}
+      </>
+    : status
+      ? <TimerScrambleStatus {...status} />
+      : fallbackKind === 'empty'
+        ? <span className="scramble-empty">{fallback}</span>
+        : fallback);
 
   return (
     <div
@@ -208,35 +220,10 @@ export function TimerScrambleStrip({
       style={style}
       title={title}
     >
-      <span
-        className="scramble-text"
-        onClick={stripActivate}
-        onKeyDown={activateFromKeyboard}
-        onKeyUp={(event) => {
-          if (stripActivate && (event.key === 'Enter' || event.key === ' ')) event.stopPropagation();
-        }}
-        role={stripActivate ? 'button' : undefined}
-        tabIndex={stripActivate ? 0 : undefined}
-      >
-        {editor ?? (scramble
-          ? <>
-              <span className="scramble-moves">
-                {liveHint
-                  ? <ScrambleHintMoves moves={moves} tailExtra={copiedCheck} />
-                  : <TimerScramblePlainText scramble={scramble} tailExtra={copiedCheck} />}
-              </span>
-              {nonOptimal && (
-                <span className="scramble-nonopt" data-no-timer title={nonOptimal.title}>
-                  {nonOptimal.label}
-                </span>
-              )}
-            </>
-          : status
-            ? <TimerScrambleStatus {...status} />
-          : fallbackKind === 'empty'
-            ? <span className="scramble-empty">{fallback}</span>
-            : fallback)}
-      </span>
+      {stripActivate
+        ? <button type="button" className="scramble-text" aria-label={activationLabel ?? (scramble ? undefined : title)}
+            onClick={stripActivate} onKeyDown={stopTimingKey} onKeyUp={stopTimingKey}>{scrambleContent}</button>
+        : <span className="scramble-text">{scrambleContent}</span>}
 
       {liveHint && correctionActive && copied && (
         <span className="scramble-verify" data-ok="true">

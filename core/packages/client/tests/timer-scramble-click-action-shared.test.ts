@@ -144,8 +144,11 @@ describe('shared scramble click action setting', () => {
           text.dispatchEvent(new KeyboardEvent('keydown', { key: ' ', bubbles: true, cancelable: true }));
           text.dispatchEvent(new KeyboardEvent('keyup', { key: ' ', bubbles: true }));
         });
-        expect(activate).toHaveBeenCalledOnce();
+        expect(text).toBeInstanceOf(HTMLButtonElement);
         expect(globalKey).not.toHaveBeenCalled();
+        // jsdom does not synthesize the native button click for Space.
+        act(() => (text as HTMLButtonElement).click());
+        expect(activate).toHaveBeenCalledOnce();
       } finally {
         window.removeEventListener('keydown', globalKey);
         window.removeEventListener('keyup', globalKey);

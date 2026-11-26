@@ -34,6 +34,7 @@ export const TIMER_AUDIO_CUES = {
   'inspection-start': [{ freq: 660, ms: 80 }],
   'warn-8': [{ freq: 880, ms: 100 }, { freq: 880, ms: 100 }],
   'warn-12': [{ freq: 990, ms: 120 }, { freq: 990, ms: 120 }, { freq: 990, ms: 120 }],
+  'sync-countdown': [{ freq: 880, ms: 80 }],
   start: [{ freq: 440, ms: 50 }],
   stop: [{ freq: 740, ms: 50 }, { freq: 880, ms: 80 }],
   penalty: [{ freq: 220, ms: 200, type: 'sawtooth' }],

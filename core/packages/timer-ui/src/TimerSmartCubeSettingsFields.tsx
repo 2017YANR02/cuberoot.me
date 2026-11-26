@@ -31,6 +31,22 @@ const FIELDS = TIMER_SETTING_FIELD_CONTRACTS.filter((field) => (
 export const TIMER_SMART_CUBE_SETTING_FIELD_IDS = FIELDS.map(field => field.id);
 const field = (path: keyof TimerSmartCubeSettings): TimerSettingFieldContract => FIELDS.find((candidate) => candidate.storagePath === path)!;
 
+export function TimerSmartCubeLiveViewSetting({ value, localize, onChange }: {
+  value: TimerSmartCubeSettings['liveCubeView'];
+  localize: TimerSmartCubeSettingsFieldsProps['localize'];
+  onChange(value: TimerSmartCubeSettings['liveCubeView']): void;
+}) {
+  const liveView = field('liveCubeView');
+  return (
+    <TimerSettingRow field={liveView} label={localize(liveView.copy)}>
+      <select className="settings-row-control-select" aria-label={localize(TIMER_SMART_CUBE_LIVE_VIEW_LABEL)} value={value}
+        onChange={(event) => onChange(normalizeTimerSmartCubeSettings({ liveCubeView: event.target.value }).liveCubeView)}>
+        {TIMER_SMART_CUBE_LIVE_VIEWS.map((view) => <option key={view} value={view}>{localize(TIMER_SMART_CUBE_LIVE_VIEW_COPY[view])}</option>)}
+      </select>
+    </TimerSettingRow>
+  );
+}
+
 /** The shared smart-cube rows; hosts only persist patches. */
 export function TimerSmartCubeSettingsFields({ value, localize, onChange, renderBooleanControl, orientationControl }: TimerSmartCubeSettingsFieldsProps) {
   const settings = normalizeTimerSmartCubeSettings(value);
@@ -45,7 +61,6 @@ export function TimerSmartCubeSettingsFields({ value, localize, onChange, render
     setLimitInput(String(limit));
     if (limit !== settings.smartCubeCorrectionLimit) onChange({ smartCubeCorrectionLimit: limit });
   };
-  const liveView = field('liveCubeView');
   const liveAnalysis = field('liveSolutionAnalysis');
   const recap = field('autoRecap');
   const solution = field('autoOpenSolution');
@@ -71,12 +86,8 @@ export function TimerSmartCubeSettingsFields({ value, localize, onChange, render
       <TimerBooleanSettingRow field={calibration} label={localize(calibration.copy)} value={settings.autoCalibrateGyro}
         onChange={(autoCalibrateGyro) => onChange({ autoCalibrateGyro })} renderBooleanControl={renderBooleanControl}
         hint={localize(TIMER_SMART_CUBE_AUTO_CALIBRATE_HINT)} />
-      <TimerSettingRow field={liveView} label={localize(liveView.copy)}>
-        <select className="settings-row-control-select" aria-label={localize(TIMER_SMART_CUBE_LIVE_VIEW_LABEL)} value={settings.liveCubeView}
-          onChange={(event) => onChange({ liveCubeView: normalizeTimerSmartCubeSettings({ liveCubeView: event.target.value }).liveCubeView })}>
-          {TIMER_SMART_CUBE_LIVE_VIEWS.map((view) => <option key={view} value={view}>{localize(TIMER_SMART_CUBE_LIVE_VIEW_COPY[view])}</option>)}
-        </select>
-      </TimerSettingRow>
+      <TimerSmartCubeLiveViewSetting value={settings.liveCubeView} localize={localize}
+        onChange={liveCubeView => onChange({ liveCubeView })} />
       {orientationControl}
       <TimerBooleanSettingRow field={liveAnalysis} label={localize(liveAnalysis.copy)} value={settings.liveSolutionAnalysis}
         onChange={(liveSolutionAnalysis) => onChange({ liveSolutionAnalysis })} renderBooleanControl={renderBooleanControl} />

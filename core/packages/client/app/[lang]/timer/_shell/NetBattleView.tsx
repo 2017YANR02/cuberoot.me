@@ -1,7 +1,7 @@
 'use client';
 import PageBackLink from '@/components/PageBackLink';
 import type { MoveClockSample } from '@cuberoot/shared/smart-cube/move-clock';
-import { usesStackmatPads } from '@/components/stackmat-catalog';
+import { STACKMAT_PAD_HOLD_MS, usesStackmatPads } from '@/components/stackmat-catalog';
 import TimerReadout from '../_components/TimerReadout';
 import { TimerNetPkArena, TimerRemoteLiveCube, useNetBattleLiveView } from '@cuberoot/timer-ui';
 
@@ -9,10 +9,12 @@ import {
   TimerNetBattleEvent,
   TimerNetBattlePage,
   browserClipboardTransport,
+  useNetBattleCountdown,
+  useNetRecentRooms,
   type TimerNetBattleStageProps,
 } from '@cuberoot/timer-ui';
 
-import { NetRoomController, startNetRoomPolling, startNetRoomRestore } from '@cuberoot/shared/timer';
+import { joinOrRestoreNetRoom, netRoomGoneReason, NetRoomController, startNetRoomPolling, startNetRoomRestore } from '@cuberoot/shared/timer';
 
 
 import type { CubeMoveMetadata } from '../_lib/bluetooth';
@@ -46,13 +48,14 @@ import type { CubeMoveMetadata } from '../_lib/bluetooth';
  */
 
 import { useQueryState } from 'nuqs';
+import dynamic from 'next/dynamic';
 import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore, type ReactNode } from 'react';
 
 
 
 import { EventIcon } from '@/components/EventIcon';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
-import { tr } from '@/i18n/tr';
+import { tr, useLang } from '@/i18n/tr';
 import { useAuthUser } from '@/lib/auth-store';
 import { persistItem } from '@/lib/safe-storage';
 import { shouldIgnoreTimerTarget } from '@/lib/timer-ignore-target';
@@ -62,9 +65,11 @@ import { LiveSmartCubeAnchor, type LiveSmartCubeAnchorSnapshot } from '@cuberoot
 import { formatScrambleForEvent } from '@cuberoot/shared/sq1-notation';
 import {
   NetBattleAttemptRecorder,
+  indexNetRecordedReplays,
   TIMER_EVENT_PICKER_GROUPS,
   netAttemptSolveId,
   timerSupportsNetBattleSmartCube,
+  type NetRecordedAttempt,
 } from '@cuberoot/shared/timer';
 import {
   TimerCubePreview,
@@ -74,7 +79,6 @@ import {
   TimerRoomIdentity,
   timerRoomPlayerName,
 } from '@cuberoot/timer-ui';
-import { useTranslation } from 'react-i18next';
 import { useVideoRoom } from '../_battle/VideoStrip';
 import BluetoothModal from '../_components/BluetoothModal';
 import LiveCubeState from '../_components/LiveCubeState';
@@ -87,10 +91,11 @@ import { normalizeWcaScramble } from '@cuberoot/shared/normalize-wca-scramble';
 import { applyScramble, facesEqual, type CubeFaces } from '../_lib/cube/state';
 import { useNetBattleLiveCube, type NetBattleLiveCubePlayer } from '../_lib/net-battle-live';
 import type { TimerPresenceReport } from '../_lib/presence';
-import { useSettings } from '../_lib/settings';
+import { getSettings, updateSettings, useSettings } from '../_lib/settings';
+import { timerSound } from '../_lib/sound';
 import { formatMs } from '../_lib/stats';
-import { getActiveSessionId, makeSolve, netRecordingOutbox } from '../_lib/storage/db';
-import type { EventId } from '../_lib/types';
+import { getActiveSessionId, loadAllSessionData, makeSolve, netRecordingOutbox, subscribeNetSolveSaved } from '../_lib/storage/db';
+import type { EventId, Solve } from '../_lib/types';
 import { formatInspectionDisplay, inspectionPenalty } from '../_shared/inspection';
 import { useTimer, type SolveResult } from '../_shared/useTimer';
 
@@ -142,6 +147,8 @@ import './shell.css';
 
 const LS_NAME = 'net_battle_name';
 const SS_KEY = 'net_battle_session';
+const ReconstructModal = dynamic(() => import('../_components/ReconstructModal'), { ssr: false });
+const ReconstructReport = dynamic(() => import('../_components/ReconstructReport'), { ssr: false });
 /** 访客不填昵称时的回落名(与服务端 sanitizeName 的默认值一致)。 */
 const GUEST_NAME = 'Cuber';
 type SavedSession = NetBattleSession;
@@ -183,19 +190,36 @@ interface NetBattleViewProps {
 
 export default function NetBattleView({ playersControl, presenceControl, onPresenceChange, onExitNet }: NetBattleViewProps) {
   useDocumentTitle('联机对战', 'Online Battle');
-  const { i18n } = useTranslation();
-  const isZh = i18n.language.startsWith('zh');
+  const language = useLang();
+  const isZh = language === 'zh';
   const settings = useSettings();
   const authUser = useAuthUser();
 
   // ── 房间状态 ────────────────────────────────────────────────
   const [roomParam, setRoomParam] = useQueryState('room');
   const [room, setRoom] = useState<NetRoomState | null>(null);
+  const { rooms: recentRooms, remember: rememberRoom, forget: forgetRoom } = useNetRecentRooms();
   const [pid, setPid] = useState<string | null>(null);
   const [playerToken, setPlayerToken] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
+  const activeRoomCode = room?.code;
+  useEffect(() => {
+    if (!err || !activeRoomCode) return;
+    const timeout = setTimeout(() => setErr(null), 5_000);
+    return () => clearTimeout(timeout);
+  }, [err, activeRoomCode]);
   const [showStats, setShowStats] = useState(false);
+  const [showTimerSettings, setShowTimerSettings] = useState(false);
+  const overlayOpenRef = useRef(false);
+  const [historyReplays, setHistoryReplays] = useState<ReadonlyMap<string, Solve>>(() => new Map());
+  const [inspectRound, setInspectRound] = useState<number | null>(null);
+  useEffect(() => {
+    if (!showStats) return;
+    const refresh = () => setHistoryReplays(indexNetRecordedReplays(loadAllSessionData().map(entry => entry.byEvent)));
+    refresh();
+    return subscribeNetSolveSaved(refresh);
+  }, [showStats]);
   const [showAdmin, setShowAdmin] = useState(false);
   const [renameOpen, setRenameOpen] = useState(false);
   /** 邀请二维码弹窗(队友扫码直接落加入页)。建房时自动弹一次,所以要声明在 doCreate 之前。 */
@@ -269,13 +293,16 @@ export default function NetBattleView({ playersControl, presenceControl, onPrese
   const myResult = room && pid ? netRecordingOutbox.result({ code: room.code, playerId: pid, round: room.round })
     ?? room.results[String(room.round)]?.[pid] : undefined;
   const myEvent = room && pid ? playerEventOf(room, pid) : (room?.event ?? '333');
+  useEffect(() => {
+    if (activeRoomCode && pid) rememberRoom({ code: activeRoomCode, event: myEvent });
+  }, [activeRoomCode, pid, myEvent, rememberRoom]);
   const onlinePlayerCount = room
     ? Math.max(1, Object.values(room.players).filter(player => isNetOnline(player, room.now)).length)
     : 1;
   /** A synchronized countdown freezes its roster. Players outside it observe this round but
       cannot accidentally start or submit a solve until the next round. */
   const inRoundRoster = !!room && isNetRoundParticipant(room, pid);
-  const canSolve = !!room && !!pid && inRoundRoster && !myResult;
+  const canSolve = !!room && !!pid && inRoundRoster && !myResult && !!myScramble(room, pid);
   const complete = room ? isRoundComplete(room) : false;
   /** 还没交本轮成绩的在线玩家数。 */
   const waiting = room ? pendingCount(room) : 0;
@@ -291,8 +318,10 @@ export default function NetBattleView({ playersControl, presenceControl, onPrese
     ? syncGate(room, pid)
     : { gated: false, ready: false, waiting: 0 };
   const startAt = room?.startAt ?? null;
-  /** 倒计时剩余毫秒(仅倒计时期间非 null,驱动读数显示 3/2/1)。 */
-  const [countdownMs, setCountdownMs] = useState<number | null>(null);
+  const settingsOpen = showTimerSettings && !(startAt !== null && inRoundRoster && !myResult);
+  useEffect(() => {
+    if (showTimerSettings && !settingsOpen) setShowTimerSettings(false);
+  }, [showTimerSettings, settingsOpen]);
   const gateRef = useRef(gate.gated); gateRef.current = gate.gated;
   const startAtRef = useRef(startAt); startAtRef.current = startAt;
 
@@ -313,19 +342,22 @@ export default function NetBattleView({ playersControl, presenceControl, onPrese
   }, [roomController]);
 
   const netAttemptRef = useRef(new NetBattleAttemptRecorder());
+  const [recordedSolve, setRecordedSolve] = useState<NetRecordedAttempt | null>(null);
   const onSolve = useCallback((res: SolveResult) => {
     const completed = netAttemptRef.current.finish(res);
     if (!completed) return;
     if (completed.record) {
+      setRecordedSolve(completed.record);
       void netRecordingOutbox.enqueue(completed.record, true).then(() => roomController.poll(getNetRoom));
     }
 
-  }, [roomController, tr]);
+  }, [roomController]);
 
   const timer = useTimer(onSolve, (startedAtMs, cubeStart) => {
     const r = roomRef.current, auth = credentialsRef.current;
     if (!r || !auth) return;
-    const event = netEventToSelectorId(playerEventOf(r, auth.playerId)) as EventId;
+    setRecordedSolve(null);
+    const event = playerEventOf(r, auth.playerId);
     const scramble = myScramble(r, auth.playerId) ?? '';
     const identity = makeSolve({ event, scramble, timeMs: 0, penalty: 'ok' });
     const bt = btStatusRef.current;
@@ -359,33 +391,26 @@ export default function NetBattleView({ playersControl, presenceControl, onPrese
     const r = roomRef.current, auth = credentialsRef.current;
     if (!r || !auth) return;
     const next = r.players[auth.playerId]?.ph === 'ready' ? 'idle' : 'ready';
+    if (next === 'ready' && getSettings().soundsEnabled) timerSound.warmupSound();
     void roomController.execute(() => postNetStatus(r.code, auth, next));
   }, [roomController]);
 
-  // 倒计时:startAt(服务器时钟)换算到本机(减去时钟偏移),归零即 startNow 同时起表。
-  // 每个 startAt 只消费一次;断线/后台后迟到的 roster 成员从服务器起点恢复。
-  const autoStartedRef = useRef<number | null>(null);
-  useEffect(() => {
-    if (startAt === null || !inRoundRoster) { setCountdownMs(null); return; }
-    if (autoStartedRef.current === startAt) return;
-    let iv = 0;
-    const tick = () => {
-      const left = startAt - (Date.now() + (offsetRef.current ?? 0));
-      if (left > 0) { setCountdownMs(left); return; }
-      window.clearInterval(iv);
-      setCountdownMs(null);
-      if (autoStartedRef.current === startAt) return;
-      autoStartedRef.current = startAt;
-      const late = -left;
+  const hasResult = myResult !== undefined;
+  const countdown = useNetBattleCountdown({
+    scope: room && pid ? [room.code, room.round, pid].join(':') : null,
+    startAt, eligible: inRoundRoster && !hasResult, offset: offsetRef, play: timerSound.play,
+    onStart: late => {
       const r = roomRef.current, id = pidRef.current;
-      if (!r || !id || r.results[String(r.round)]?.[id]) return; // 已交卷的人不跟着起表
-      if (phaseRef.current === 'running') return;
+      if (!r || !id || r.results[String(r.round)]?.[id] || phaseRef.current === 'running') return;
       timerStartNow(late);
-    };
-    tick();
-    iv = window.setInterval(tick, 50);
-    return () => window.clearInterval(iv);
-  }, [inRoundRoster, startAt, timerStartNow]);
+    },
+  });
+
+  useEffect(() => {
+    if (!hasResult && (phaseRef.current === 'idle' || phaseRef.current === 'stopped')) {
+      void roomController.clearAbandonedPhase(postNetStatus);
+    }
+  }, [room, hasResult, timer.phase, roomController]);
 
   // 新一轮到达(自己开的或轮询收到):计时器空闲/停止时归零;计时中不打断
   const prevRoundRef = useRef<number | null>(null);
@@ -405,10 +430,11 @@ export default function NetBattleView({ playersControl, presenceControl, onPrese
     roomController.deactivate();
     timerReset();
     netAttemptRef.current.reset();
+    setRecordedSolve(null);
     setRoom(null); setPid(null); setPlayerToken(null); setErr(msg);
     roomRef.current = null; credentialsRef.current = null;
-    setShowAdmin(false); setShowStats(false); setRenameOpen(false); setQrOpen(false); setCountdownMs(null);
-    autoStartedRef.current = null; offsetRef.current = null;
+    setShowAdmin(false); setShowStats(false); setInspectRound(null); setShowTimerSettings(false); setRenameOpen(false); setQrOpen(false);
+    offsetRef.current = null;
     try { sessionStorage.removeItem(SS_KEY); } catch { /* ignore */ }
     void setRoomParam(null);
   }, [admissionGate, setRoomParam]);
@@ -420,7 +446,11 @@ export default function NetBattleView({ playersControl, presenceControl, onPrese
       setRoom(state);
     },
     onError: error => setErr(tr(netErrorMessage(error))),
-    onGone: reason => handleRoomGone(tr(netErrorMessage(new Error(reason)))),
+    onGone: reason => {
+      const code = roomRef.current?.code;
+      if (code) forgetRoom(code, reason);
+      handleRoomGone(tr(netErrorMessage(new Error(reason))));
+    },
     isTiming: () => phaseRef.current === 'running',
   };
   const code = room?.code ?? null;
@@ -503,17 +533,26 @@ export default function NetBattleView({ playersControl, presenceControl, onPrese
     const intent = admissionGate.beginExclusive();
     if (intent === null) return;
     setBusy(true); setErr(null);
-    void Promise.resolve().then(() => joinNetRoom(codeUp, id))
-      .then(({ state, credentials }) => {
-        if (!admissionGate.isCurrent(intent)) {
-          void leaveNetRoom(state.code, credentials).catch(() => { });
-          return;
-        }
-        adopt(state, credentials, id.name); setJoinCode(''); void setRoomParam(state.code);
-      })
-      .catch((e: Error) => { if (admissionGate.isCurrent(intent)) setErr(tr(netErrorMessage(e))); })
-      .finally(() => { if (admissionGate.finish(intent)) setBusy(false); });
-  }, [admissionGate, adopt, setRoomParam]);
+    void joinOrRestoreNetRoom({
+      code: codeUp, identity: id, load: async () => readSession(),
+      clear: async () => { sessionStorage.removeItem(SS_KEY); },
+      current: () => admissionGate.isCurrent(intent),
+      client: { getNetRoom, joinNetRoom },
+    }).then(admission => {
+      if (!admission) return;
+      const { state, credentials, name, restored } = admission;
+      if (!admissionGate.isCurrent(intent)) {
+        if (!restored) void leaveNetRoom(state.code, credentials).catch(() => undefined);
+        return;
+      }
+      if (restored) setName(name);
+      adopt(state, credentials, name); setJoinCode(''); void setRoomParam(state.code);
+    }).catch(error => {
+      if (!admissionGate.isCurrent(intent)) return;
+      forgetRoom(codeUp, netRoomGoneReason(error));
+      setErr(tr(netErrorMessage(error)));
+    }).finally(() => { if (admissionGate.finish(intent)) setBusy(false); });
+  }, [admissionGate, adopt, forgetRoom, setRoomParam]);
 
   // 邀请链接 / 扫码 ?room=CODE:直接进房,不停确认页 —— 扫码的人要的就是「进这个房」,
   // 中间再插一屏点「加入」纯属挡路。身份取现成的(登录用户 = WCA 姓名,访客 =
@@ -533,6 +572,7 @@ export default function NetBattleView({ playersControl, presenceControl, onPrese
       clear: async () => { try { sessionStorage.removeItem(SS_KEY); } catch { /* ignore */ } },
       restored: (session, state) => adopt(state, session, session.name),
       missing: () => doJoin(codeUp),
+      gone: forgetRoom,
       error: error => setErr(tr(netErrorMessage(error))),
     });
     return () => {
@@ -540,7 +580,7 @@ export default function NetBattleView({ playersControl, presenceControl, onPrese
       if (admissionGate.isCurrent(intent)) admissionGate.cancel();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [roomParam, room, busy, admissionGate, adopt, doJoin]);
+  }, [roomParam, room, busy, admissionGate, adopt, doJoin, forgetRoom]);
 
   // ── 房主操作(授权在服务端;这里只管发请求 + 同步状态)────────────
   const setSyncStart = useCallback((v: boolean) => {
@@ -593,10 +633,11 @@ export default function NetBattleView({ playersControl, presenceControl, onPrese
     admissionGate.cancel();
     setBusy(false);
     netAttemptRef.current.reset();
+    setRecordedSolve(null);
     setRoom(null); setPid(null); setPlayerToken(null); setErr(null);
     roomRef.current = null; credentialsRef.current = null;
-    setShowAdmin(false); setShowStats(false); setRenameOpen(false); setQrOpen(false); setCountdownMs(null);
-    autoStartedRef.current = null; offsetRef.current = null;
+    setShowAdmin(false); setShowStats(false); setInspectRound(null); setShowTimerSettings(false); setRenameOpen(false); setQrOpen(false);
+    offsetRef.current = null;
     autoJoinRef.current = false;
     prevRoundRef.current = null;
     try { sessionStorage.removeItem(SS_KEY); } catch { /* ignore */ }
@@ -624,15 +665,7 @@ export default function NetBattleView({ playersControl, presenceControl, onPrese
     setMacPrompt(null);
   }, []);
 
-  // 连接提示复用房间自己的 err 行 —— 本文件唯一的通知位,不引 Solo 的 toast。
-  // 掉线 / 重连中 / 重连失败写进去;重连成功只撤「我们写的那条」,不误清别人的报错。
-  const btNoticeRef = useRef<string | null>(null);
-  const setBtNotice = useCallback((msg: string | null) => {
-    const prev = btNoticeRef.current;
-    btNoticeRef.current = msg;
-    if (msg !== null) { setErr(msg); return; }
-    setErr((cur) => (cur !== null && cur === prev ? null : cur));
-  }, []);
+  const [btNotice, setBtNotice] = useState<string | null>(null);
 
   // hook 只给一个 onMove;订阅者(自动预备、实况魔方和录制)统一从这里分发,与 Solo 的
   // bluetoothSubscribersRef 同构,避免为每条消费路径各自读一套蓝牙状态。
@@ -653,7 +686,7 @@ export default function NetBattleView({ playersControl, presenceControl, onPrese
   const startFromCubeRef = useRef<(ts: number, clock?: MoveClockSample) => void>(() => { });
   startFromCubeRef.current = (ts, clock) => {
     if (!timerSupportsNetBattleSmartCube(myEvent)) return;
-    if (gateRef.current || startAtRef.current !== null || !canSolveRef.current) return;
+    if (overlayOpenRef.current || gateRef.current || startAtRef.current !== null || !canSolveRef.current) return;
     if (!timer.startFromCube(ts, clock)) return;
     // useTimer has already begun the producer synchronously in onStart.
     cubeStartedRef.current = true;
@@ -698,8 +731,10 @@ export default function NetBattleView({ playersControl, presenceControl, onPrese
     },
     onNeedMac: requestMac,
     onConnectionEvent: (ev) => {
-      if (ev.kind === 'disconnected' && ev.reason === 'manual') return; // 用户自己点的断开
-      if (ev.kind === 'reconnected') { setBtNotice(null); return; }
+      if (ev.kind === 'reconnected' || (ev.kind === 'disconnected' && ev.reason === 'manual')) {
+        setBtNotice(null);
+        return;
+      }
       setBtNotice(
         ev.kind === 'disconnected'
           ? tr({ zh: '智能魔方连接断开', en: 'Smart cube disconnected' })
@@ -721,6 +756,7 @@ export default function NetBattleView({ playersControl, presenceControl, onPrese
     void attempt.catch(() => undefined);
   }, [myEvent, bluetoothCube]);
   const cubeConnected = timerSupportsNetBattleSmartCube(myEvent) && bluetoothCube.status.connected;
+  useEffect(() => { if (cubeConnected) setBtNotice(null); }, [cubeConnected]);
   useEffect(() => {
     if (!timerSupportsNetBattleSmartCube(myEvent)) setBluetoothOpen(false);
   }, [myEvent]);
@@ -771,6 +807,7 @@ export default function NetBattleView({ playersControl, presenceControl, onPrese
   // 由下面的打乱校验那段直接触发预备。两条路的房间态门控是同一套。
   const autoReadyEnabled =
     (settings.bluetoothAutoReady === 'still' || settings.bluetoothAutoReady === 'double-flick')
+    && !settingsOpen
     && cubeConnected
     && canSolve
     && !gate.gated
@@ -781,7 +818,7 @@ export default function NetBattleView({ playersControl, presenceControl, onPrese
     onReady: () => {
       // fire 与判定之间隔着 2 秒静置,期间房间状态可能已经变(别人开了同时起表 /
       // 倒计时落下来了),这里按 ref 复查一遍,门一合上就作废。
-      if (gateRef.current || startAtRef.current !== null || !canSolveRef.current) return;
+      if (overlayOpenRef.current || gateRef.current || startAtRef.current !== null || !canSolveRef.current) return;
       const ph = phaseRef.current;
       if (ph === 'idle' || ph === 'inspecting' || ph === 'stopped') timer.onPressDown();
     },
@@ -857,7 +894,7 @@ export default function NetBattleView({ playersControl, presenceControl, onPrese
 
   const { activePkLock, viewedCubePlayerId, setViewedCubePlayerId } = useNetBattleLiveView({
     room, pid, cubeConnected, localFacelets: bluetoothCube.facelets, liveCubePlayers, liveRoomReady,
-    language: isZh ? 'zh' : 'en',
+    language: language,
   });
   // dev 专用假魔方(生产构建里整段是空操作)。房里这条路和 Solo 不是同一条 —— 起表
   // 门控、打乱校验、录制都是这个文件自己的 —— 所以没硬件时也要能真的走一遍。
@@ -920,6 +957,7 @@ export default function NetBattleView({ playersControl, presenceControl, onPrese
       // 于是每把结束都会自动预备下一把,下一条打乱的头几手就把表起了。
       // 房间态门控与 useAutoReady 那段同一套(理由见其上的长注释)。
       if (match
+        && !overlayOpenRef.current
         && settings.bluetoothAutoReady === 'scrambled'
         && !gateRef.current && startAtRef.current === null && canSolveRef.current) {
         const ph = phaseRef.current;
@@ -962,12 +1000,12 @@ export default function NetBattleView({ playersControl, presenceControl, onPrese
     const el = surfaceRef.current;
     if (!el) return;
     const down = (e: PointerEvent) => {
-      if (shouldIgnoreTimerTarget(e.target)) return;
+      if (overlayOpenRef.current || shouldIgnoreTimerTarget(e.target)) return;
       e.preventDefault();
       pressDownRef.current();
     };
     const up = (e: PointerEvent) => {
-      if (shouldIgnoreTimerTarget(e.target)) return;
+      if (overlayOpenRef.current || shouldIgnoreTimerTarget(e.target)) return;
       pressUpRef.current();
     };
     el.addEventListener('pointerdown', down);
@@ -983,8 +1021,8 @@ export default function NetBattleView({ playersControl, presenceControl, onPrese
   // 弹层打开时全局空格不进计时(同 Solo 的 anyModalOpen)。蓝牙弹窗里有 MAC 输入框,
   // 战绩 / 管理面板可以点到背景 —— 焦点一旦不在 button/input 上,空格就会穿透去
   // 「准备」或起表。
-  const overlayOpen = showStats || showAdmin || bluetoothOpen || renameOpen || qrOpen;
-  const overlayOpenRef = useRef(overlayOpen); overlayOpenRef.current = overlayOpen;
+  const overlayOpen = showStats || showAdmin || bluetoothOpen || renameOpen || qrOpen || settingsOpen;
+  overlayOpenRef.current = overlayOpen;
   useEffect(() => {
     if (!inRoom || usesStackmatPads(settings)) return;
     const kd = (e: KeyboardEvent) => {
@@ -1013,13 +1051,14 @@ export default function NetBattleView({ playersControl, presenceControl, onPrese
     const cur = netRecordingOutbox.result({ code: r.code, playerId: id, round: r.round }) ?? r.results[String(r.round)]?.[id];
     if (!cur) return;
     const local = netAttemptRef.current.penalty({ code: r.code, playerId: id, round: r.round }, p);
-    const event = netEventToSelectorId(playerEventOf(r, id)) as EventId;
+    if (local && recordedSolve?.solve.id === local.solve.id) setRecordedSolve(local);
+    const event = playerEventOf(r, id);
     const identity = { code: r.code, playerId: id, round: r.round };
     const solve = makeSolve({ event, scramble: myScramble(r, id) ?? '', timeMs: cur.t, penalty: p === 'dnf' ? 'DNF' : p });
     solve.id = netAttemptSolveId(identity);
     const record = local ?? { context: { ...identity, id: solve.id, ts: solve.ts, event, scramble: solve.scramble, sessionId: getActiveSessionId() }, solve };
     void netRecordingOutbox.enqueue(record, true).then(() => roomController.poll(getNetRoom));
-  }, [roomController]);
+  }, [recordedSolve?.solve.id, roomController]);
 
   // ── 邀请链接复制 ────────────────────────────────────────────
   const [linkCopied, setLinkCopied] = useState(false);
@@ -1054,7 +1093,7 @@ export default function NetBattleView({ playersControl, presenceControl, onPrese
   const inspectionLimit = settings.inspectionSec > 0 ? settings.inspectionSec : 15;
 
   /** 同时起表倒计时正在走(且我还没交卷)→ 读数位显示 3/2/1。 */
-  const showCountdown = countdownMs !== null && !myResult;
+  const showCountdown = countdown !== null;
 
   const colorClass = useMemo(() => {
     if (showCountdown) return 'inspection';
@@ -1075,7 +1114,7 @@ export default function NetBattleView({ playersControl, presenceControl, onPrese
   }, [showCountdown, timer.phase, timer.inspectionDisplayMs, inspectionLimit, myResult, myPenalty]);
 
   const digitsText = useMemo(() => {
-    if (showCountdown) return String(Math.max(1, Math.ceil((countdownMs ?? 0) / 1000)));
+    if (countdown !== null) return String(countdown);
     if (timer.phase === 'inspecting') {
       return formatInspectionDisplay(timer.inspectionDisplayMs, inspectionLimit);
     }
@@ -1089,7 +1128,7 @@ export default function NetBattleView({ playersControl, presenceControl, onPrese
       return formatMs(myResult.t, settings.precision);
     }
     return formatMs(timer.displayMs, settings.precision);
-  }, [showCountdown, countdownMs, timer.phase, timer.inspectionDisplayMs, timer.displayMs, inspectionLimit, myResult, myPenalty, settings.hideTime, settings.precision, settings.runningPrecision]);
+  }, [countdown, timer.phase, timer.inspectionDisplayMs, timer.displayMs, inspectionLimit, myResult, myPenalty, settings.hideTime, settings.precision, settings.runningPrecision]);
 
   const fontSize = `calc(clamp(48px, 10vw, 132px) * ${settings.timerFontScale})`;
 
@@ -1121,14 +1160,14 @@ export default function NetBattleView({ playersControl, presenceControl, onPrese
     actions: presenceControl
   };
 
-  const identityField = <TimerRoomIdentity language={isZh ? 'zh' : 'en'}
+  const identityField = <TimerRoomIdentity language={language}
     account={authUser ? identity : null} value={picked} defaultQuery={name}
     onChange={(person) => { setPicked(person); setName(''); }} onQueryChange={setName} disabled={busy} />;
 
   if (!room) {
-    return <TimerNetBattlePage language={isZh ? 'zh' : 'en'} className="timer-shell net-shell" mainClassName="shell-main timer-workspace-main"
+    return <TimerNetBattlePage language={language} className="timer-shell net-shell" mainClassName="shell-main timer-workspace-main"
       topbar={topbar} video={video} lobby={{
-        language: isZh ? 'zh' : 'en',
+        language: language,
         identity: identityField,
         event: <TimerPuzzlePicker dataNoTimer groups={eventPickerGroups} puzzleLabel={tr({ en: 'Puzzle', zh: '项目' })} selectedEvent={netEventToSelectorId(lobbyEvent)}
           scrambleTypeLabel={tr({ en: 'Scramble type', zh: '打乱类型' })}
@@ -1136,6 +1175,7 @@ export default function NetBattleView({ playersControl, presenceControl, onPrese
         code: joinCode,
         busy: busy,
         error: err,
+        recentRooms,
         inviteCode: roomParam?.trim().toUpperCase(),
         onCodeChange: setJoinCode,
         onJoin: doJoin,
@@ -1144,6 +1184,12 @@ export default function NetBattleView({ playersControl, presenceControl, onPrese
         onExit: onExitNet
       }} />;
   }
+  const replayForRound = (round: number) => pid ? historyReplays.get(netAttemptSolveId({ code: room.code, playerId: pid, round })) : undefined;
+  const historyReplay = showStats && inspectRound !== null ? replayForRound(inspectRound) : undefined;
+  const openRename = !authUser ? (name: string) => {
+    setName(baseName(name));
+    setRenameOpen(true);
+  } : undefined;
   const serverNowEst = Date.now() + (offsetRef.current ?? 0);
   const displayScramble = myScr ? formatScrambleForEvent(myEvent,
     cubeConnected && timerSupportsNetBattleSmartCube(myEvent)
@@ -1151,7 +1197,7 @@ export default function NetBattleView({ playersControl, presenceControl, onPrese
       : myScr) : '';
   const renderRemoteCubeSlot = (playerId: string, live: NetBattleLiveCubePlayer, ownerLabel?: string, reconnecting = false) => (
     <TimerRemoteLiveCube playerId={playerId} live={live} ownerLabel={ownerLabel} reconnecting={reconnecting}
-      mode={settings.liveCubeView} language={isZh ? 'zh' : 'en'} />);
+      mode={settings.liveCubeView} language={language} />);
   const ownLiveCubeSlot = bluetoothCube.facelets ? (
     <div className="shell-corner-net">
       <div className="shell-corner-net-imgbox">
@@ -1223,8 +1269,8 @@ export default function NetBattleView({ playersControl, presenceControl, onPrese
   /** 房内是否存在多种项目(决定玩家条/历史是否显示各自项目图标)。 */
 
   const ownTimingStage: TimerNetBattleStageProps = {
+    copyScramble: { text: myScr ?? '', writeText: browserClipboardTransport },
     scramble: {
-      copied: false,
       font: settings.scrambleFont,
       fontScale: settings.scrambleFontScale,
       hint: scrambleHint,
@@ -1246,18 +1292,21 @@ export default function NetBattleView({ playersControl, presenceControl, onPrese
     }, status: {
       room: room,
       currentPlayerId: pid!,
-      language: isZh ? 'zh' : 'en',
+      language: language,
       idle: timer.phase === 'idle' || timer.phase === 'stopped',
       countdown: showCountdown,
       cubeAutoReadySuspended: cubeConnected && (settings.bluetoothAutoReady === 'still' || settings.bluetoothAutoReady === 'double-flick'),
       onPenalty: adjustPenalty,
       onReady: toggleReady,
       onNext: advance
-    }, error: err
+    }, error: err, deviceNotice: timerSupportsNetBattleSmartCube(myEvent) ? btNotice : null
   };
 
-  return <TimerNetBattlePage language={isZh ? 'zh' : 'en'} className="timer-shell net-shell" mainClassName="shell-main timer-workspace-main"
+  return <TimerNetBattlePage language={language} className="timer-shell net-shell" mainClassName="shell-main timer-workspace-main"
     solving={timer.phase === 'running'} topbar={topbar} video={video}
+    recap={recordedSolve?.context.code === room.code && recordedSolve.solve.moves?.length
+      ? <ReconstructReport key={recordedSolve.solve.id} solve={recordedSolve.solve} isZh={isZh} hideDate />
+      : null}
     room={{
       devices: timerSupportsNetBattleSmartCube(myEvent) ? <TimerDeviceCenter triggerRef={bluetoothButtonRef} ariaLabel={tr({ en: 'Timer devices', zh: '计时设备' })}
         menuLabel={tr({ en: 'Timer devices', zh: '计时设备' })} triggerLabel={tr({ en: 'Devices', zh: '设备' })}
@@ -1266,15 +1315,15 @@ export default function NetBattleView({ playersControl, presenceControl, onPrese
           label: tr({ en: 'Smart cube', zh: '智能魔方' }), detail: bluetoothCube.status.deviceName ?? undefined,
           onSelect: connectSmartCubeCenter
         }]} /> : null, toolbar: {
-          language: isZh ? 'zh' : 'en',
-          code: room.code,
-          round: room.round,
-          syncStart: room.syncStart,
+          language: language,
           copied: linkCopied,
           copyKind: "invite",
           disabled: timer.phase !== 'idle' && timer.phase !== 'stopped',
           historyOpen: showStats,
           adminOpen: showAdmin,
+          timerSettingsOpen: settingsOpen,
+          timerSettingsDisabled: (overlayOpen && !settingsOpen) || gate.ready || (startAt !== null && inRoundRoster && !myResult),
+          onTimerSettings: () => setShowTimerSettings(true),
           onCopy: copyLink,
           onQr: () => setQrOpen(true),
           onHistory: () => setShowStats(true),
@@ -1284,7 +1333,7 @@ export default function NetBattleView({ playersControl, presenceControl, onPrese
       players: activePkLock ? undefined : {
         room: room,
         currentPlayerId: pid,
-        language: isZh ? 'zh' : 'en',
+        language: language,
         precision: settings.precision,
         nowMs: serverNowEst,
         viewedPlayerId: viewedCubePlayerId,
@@ -1294,21 +1343,21 @@ export default function NetBattleView({ playersControl, presenceControl, onPrese
           return id === pid ? cubeConnected && !!bluetoothCube.facelets
             : !!live?.connected && live.smart && live.round === room.round && !!live.facelets;
         },
-        onRename: !authUser ? (name) => { setName(baseName(name)); setRenameOpen(true); } : undefined,
+        onRename: openRename,
         runningTime: (id, elapsed) => <span id={`net-live-${id}`}>{formatMs(elapsed, 2)}</span>,
         eventIcon: (event) => <EventIcon event={netEventToSelectorId(event)} title={eventDisplayName(netEventToSelectorId(event), isZh)} />
       },
       stage: ownTimingStage,
       renderStage: (ownTimingSurface) => (activePkLock ? (
         <TimerNetPkArena room={room} pid={pid!} lock={activePkLock} liveCubePlayers={liveCubePlayers}
-          ownStatus={ownPkStatus} language={isZh ? 'zh' : 'en'} liveCubeView={settings.liveCubeView}
+          ownStatus={ownPkStatus} onRename={openRename} language={language} liveCubeView={settings.liveCubeView}
           timerFont={settings.timerFont} timerFontScale={settings.timerFontScale} fontSize={fontSize}
           precision={settings.precision} clockOffsetMs={offsetRef.current}>{ownTimingSurface}</TimerNetPkArena>
       ) : ownTimingSurface),
       admin: showAdmin && iAmAdmin && {
         room: room,
         currentPlayerId: pid,
-        language: isZh ? 'zh' : 'en',
+        language: language,
         onSyncStart: setSyncStart,
         onTransfer: transferAdmin,
         onKick: kickPlayer,
@@ -1317,9 +1366,20 @@ export default function NetBattleView({ playersControl, presenceControl, onPrese
       history: showStats && {
         room: room,
         currentPlayerId: pid,
-        language: isZh ? 'zh' : 'en',
+        language: language,
         precision: settings.precision,
-        onClose: () => setShowStats(false)
+        writeClipboardText: browserClipboardTransport,
+        canInspectAttempt: round => !!replayForRound(round),
+        onInspectAttempt: setInspectRound,
+        onClose: () => { setShowStats(false); setInspectRound(null); }
+      },
+      settings: settingsOpen && {
+        value: settings, onChange: updateSettings,
+        fixedHoldMs: usesStackmatPads(settings) ? STACKMAT_PAD_HOLD_MS : undefined,
+        voiceAvailable: timerSound.isVoiceAvailable(),
+        onWarmup: timerSound.warmupSound,
+        onPreview: () => timerSound.play('start'),
+        onClose: () => setShowTimerSettings(false),
       },
       rename: renameOpen && { identity: identityField, busy, onClose: () => setRenameOpen(false), onSave: () => doRename(identityRef.current, () => setRenameOpen(false)) },
       qr: qrOpen && roomInviteUrl() ? {
@@ -1327,32 +1387,35 @@ export default function NetBattleView({ playersControl, presenceControl, onPrese
         code: room.code,
         onClose: () => setQrOpen(false)
       } : false,
-    }} overlays={bluetoothOpen && <BluetoothModal
-      anchorRef={bluetoothButtonRef}
-      isZh={isZh}
-      cube={bluetoothCube}
-      connectAttempt={bluetoothConnectAttempt}
-      onResetGyro={() => {
-        const q = gyroQuatRef.current;
-        gyroCalibrationRef.current = q ? { ...q } : null;
-        gyroCalibrationPendingRef.current = !q;
-        if (q && settings.gyroEnabled) publishLiveGyro(q, {
-          basis: sensorBasisForBrand(bluetoothCube.status.brand),
-          mirror: mirrorForBrand(bluetoothCube.status.brand),
-          reference: gyroCalibrationRef.current,
-        });
-        setCalibrateNonce(n => n + 1);
-      }}
-      macPrompt={macPrompt}
-      onSubmitMac={(mac) => resolveMac(mac)}
-      onCancelMac={() => resolveMac(null)}
-      onClose={() => {
-        if (macResolverRef.current) resolveMac(null);
-        setBluetoothOpen(false);
-        setBluetoothConnectAttempt(null);
-      }}
-      // 失败也交给弹窗:它知道断在哪一步(选设备 / GATT / 握手),说得比这里清楚,
-      // 而且 Solo、对战、房间三处不会再各报各的。
-      onConnect={pick => bluetoothCube.connect(pick)}
-    />} />;
+    }} overlays={<>
+      {historyReplay && <ReconstructModal solve={historyReplay} isZh={isZh} onClose={() => setInspectRound(null)} />}
+      {bluetoothOpen && <BluetoothModal
+        anchorRef={bluetoothButtonRef}
+        isZh={isZh}
+        cube={bluetoothCube}
+        connectAttempt={bluetoothConnectAttempt}
+        onResetGyro={() => {
+          const q = gyroQuatRef.current;
+          gyroCalibrationRef.current = q ? { ...q } : null;
+          gyroCalibrationPendingRef.current = !q;
+          if (q && settings.gyroEnabled) publishLiveGyro(q, {
+            basis: sensorBasisForBrand(bluetoothCube.status.brand),
+            mirror: mirrorForBrand(bluetoothCube.status.brand),
+            reference: gyroCalibrationRef.current,
+          });
+          setCalibrateNonce(n => n + 1);
+        }}
+        macPrompt={macPrompt}
+        onSubmitMac={(mac) => resolveMac(mac)}
+        onCancelMac={() => resolveMac(null)}
+        onClose={() => {
+          if (macResolverRef.current) resolveMac(null);
+          setBluetoothOpen(false);
+          setBluetoothConnectAttempt(null);
+        }}
+        // 失败也交给弹窗:它知道断在哪一步(选设备 / GATT / 握手),说得比这里清楚,
+        // 而且 Solo、对战、房间三处不会再各报各的。
+        onConnect={pick => bluetoothCube.connect(pick)}
+      />}
+    </>} />;
 }

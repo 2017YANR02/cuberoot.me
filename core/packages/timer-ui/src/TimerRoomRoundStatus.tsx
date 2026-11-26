@@ -2,6 +2,7 @@ import { TIMER_ROOM_ROUND_STATUS_COPY } from '@cuberoot/shared/timer/net-battle'
 import { isNetRoundParticipant, pendingCount, roundWinners, syncGate, type NetRoomState, type NetPenalty } from '@cuberoot/shared/timer';
 import { TimerPenaltyActions } from './TimerPenaltyActions';
 import { timerRoomPlayerName } from './TimerRoomPlayers';
+import { TimerRoomConfirmAction } from './TimerRoomToolbar';
 
 export interface TimerRoomRoundStatusProps {
   room: NetRoomState;
@@ -26,7 +27,12 @@ export function TimerRoomRoundStatus({ room, currentPlayerId, language, idle, co
   if (result) return <div className="timer-room-round-status" data-no-timer>
     <TimerPenaltyActions language={language} value={result.p} onChange={onPenalty} />
     <p role="status">{waiting > 0 ? copy.pending(waiting) : winners.length ? winners.map((id) => timerRoomPlayerName(room.players[id], language)).join(' / ') : copy.noResult}</p>
-    <div className="timer-room-actions"><button type="button" onClick={() => onNext(waiting > 0)}>{waiting > 0 ? copy.skip : copy.next}</button></div>
+    <div className="timer-room-actions">
+      {waiting > 0
+        ? <TimerRoomConfirmAction key={`${room.code}:${room.round}:${currentPlayerId}`} label={copy.skip}
+            confirmLabel={copy.confirmSkip} warning required onClick={() => onNext(true)} />
+        : <button type="button" onClick={() => onNext(false)}>{copy.next}</button>}
+    </div>
   </div>;
   if (!isNetRoundParticipant(room, currentPlayerId)) return <p className="timer-room-round-status" data-no-timer>{copy.spectator}</p>;
   if (!gate.gated) return null;

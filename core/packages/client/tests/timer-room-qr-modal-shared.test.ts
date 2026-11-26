@@ -9,8 +9,9 @@ import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 const labels = {
-  close: 'Close',
-  copied: 'Copied',
+  copiedCode: 'Room code copied',
+  copiedInvite: 'Invite link copied',
+  copyCode: 'Copy room code',
   copyFailed: 'Copy failed. Try again.',
   copyInvite: 'Copy invite link',
   scanToJoin: 'Scan to join',
@@ -49,13 +50,14 @@ describe('shared RoomQrModal accessibility', () => {
     await act(async () => root.render(createElement(RoomQrModal, {
       code: '1234',
       labels,
+      language: 'en',
       onClose,
       url: 'https://cuberoot.me/timer?players=net&room=1234',
       writeClipboardText,
     })));
 
     const dialog = document.querySelector<HTMLElement>('.room-qr-modal')!;
-    const close = document.querySelector<HTMLButtonElement>('.room-qr-close')!;
+    const close = document.querySelector<HTMLButtonElement>('.room-qr-modal [aria-label="Close"]')!;
     const copy = document.querySelector<HTMLButtonElement>('.room-qr-link')!;
     expect(dialog.getAttribute('role')).toBe('dialog');
     expect(dialog.getAttribute('aria-modal')).toBe('true');
@@ -64,23 +66,26 @@ describe('shared RoomQrModal accessibility', () => {
     expect(document.activeElement).toBe(close);
 
     copy.focus();
-    window.dispatchEvent(new KeyboardEvent('keydown', { bubbles: true, key: 'Tab' }));
+    await act(async () => document.activeElement!.dispatchEvent(new KeyboardEvent('keydown', { bubbles: true, key: 'Tab' })));
     expect(document.activeElement).toBe(close);
-    window.dispatchEvent(new KeyboardEvent('keydown', {
+    await act(async () => document.activeElement!.dispatchEvent(new KeyboardEvent('keydown', {
       bubbles: true,
       key: 'Tab',
       shiftKey: true,
-    }));
+    })));
     expect(document.activeElement).toBe(copy);
     await act(async () => copy.click());
     expect(writeClipboardText).toHaveBeenCalledWith(
       'https://cuberoot.me/timer?players=net&room=1234',
     );
-    expect(copy.textContent).toContain(labels.copied);
+    expect(dialog.querySelector('[role="status"]')?.textContent).toBe(labels.copiedInvite);
+    await act(async () => dialog.querySelector<HTMLButtonElement>('.room-qr-code-text')!.click());
+    expect(writeClipboardText).toHaveBeenLastCalledWith('1234');
+    expect(dialog.querySelector('[role="status"]')?.textContent).toBe(labels.copiedCode);
     trigger.focus();
     expect(document.activeElement).toBe(close);
 
-    window.dispatchEvent(new KeyboardEvent('keydown', { bubbles: true, key: 'Escape' }));
+    await act(async () => document.activeElement!.dispatchEvent(new KeyboardEvent('keydown', { bubbles: true, key: 'Escape' })));
     expect(onClose).toHaveBeenCalledTimes(1);
     await act(async () => root.render(null));
     expect(document.activeElement).toBe(trigger);
@@ -91,12 +96,11 @@ describe('shared RoomQrModal accessibility', () => {
       new URL(import.meta.resolve('@cuberoot/timer-ui/room-qr-modal.css')),
       'utf8',
     );
-    expect(css).toMatch(/\.room-qr-close \{[^}]*width: 44px;[^}]*height: 44px;/s);
-    expect(css).toMatch(/\.room-qr-link \{[^}]*min-width: 44px;[^}]*min-height: 44px;/s);
+    expect(css).toMatch(/\.room-qr-code-text, \.room-qr-link\) \{[^}]*min-width: 44px;[^}]*min-height: 44px;/s);
   });
 
   it('delegates clipboard access instead of assuming a browser transport', () => {
-    expect(roomQrSource).toContain('writeClipboardText(url)');
+    expect(roomQrSource).toContain('writeClipboardText');
     expect(roomQrSource).not.toContain('navigator.clipboard');
   });
 
@@ -104,12 +108,13 @@ describe('shared RoomQrModal accessibility', () => {
     await act(async () => root.render(createElement(RoomQrModal, {
       code: '1234',
       labels,
+      language: 'en',
       onClose: vi.fn(),
       url: 'https://cuberoot.me/timer?players=net&room=1234',
       writeClipboardText: vi.fn(async () => Promise.reject(new Error('denied'))),
     })));
     await act(async () => document.querySelector<HTMLButtonElement>('.room-qr-link')!.click());
-    expect(document.querySelector('.room-qr-link-text')?.textContent).toBe(labels.copyFailed);
+    expect(document.querySelector('.room-qr-modal [role="status"]')?.textContent).toBe(labels.copyFailed);
   });
 
   it('rejects cleanly when the browser has no clipboard transport', async () => {

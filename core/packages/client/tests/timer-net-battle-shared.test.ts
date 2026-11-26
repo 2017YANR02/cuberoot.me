@@ -1,6 +1,10 @@
 import { describe, expect, it, vi } from 'vitest';
 import {
   NET_EVENTS,
+  NET_RECENT_ROOM_TTL_MS,
+  decodeNetRecentRooms,
+  rememberNetRecentRoom,
+  forgetNetRecentRoom,
   NET_BATTLE_REQUEST_TIMEOUT_MS,
   acceptNetRoomResponse,
   createNetBattleClient,
@@ -323,4 +327,26 @@ describe('shared online battle migration', () => {
     expect(settled.winners.sort()).toEqual(['a', 'b', 'c']);
     expect(settled.scored.sort()).toEqual(['a', 'b']);
   });
+});
+
+it('keeps only the three newest valid room shortcuts and discards expired entries and private fields', () => {
+  const now = ROOM.now;
+  const decoded = decodeNetRecentRooms([
+    { code: '0000', event: '333', updatedAt: now - NET_RECENT_ROOM_TTL_MS },
+    { code: '0427', event: '222', updatedAt: now - 5 },
+    { code: '0427', event: '333', updatedAt: now - 1, playerToken: AUTH.playerToken },
+    { code: '1234', event: '222', updatedAt: now - 2 },
+    { code: '2345', event: '333', updatedAt: now - 3 },
+    { code: '3456', event: '333', updatedAt: now - 4 },
+    { code: '4567', event: 'invalid', updatedAt: now },
+    { code: '5678', event: '333', updatedAt: now + 1 },
+  ], now);
+  expect(decoded).toEqual([
+    { code: '0427', event: '333', updatedAt: now - 1 },
+    { code: '1234', event: '222', updatedAt: now - 2 },
+    { code: '2345', event: '333', updatedAt: now - 3 },
+  ]);
+  const reopened = rememberNetRecentRoom(decoded, { code: '2345', event: '222' }, now);
+  expect(reopened.map(entry => [entry.code, entry.event])).toEqual([['2345', '222'], ['0427', '333'], ['1234', '222']]);
+  expect(forgetNetRecentRoom(reopened, '0427', now).map(entry => entry.code)).toEqual(['2345', '1234']);
 });

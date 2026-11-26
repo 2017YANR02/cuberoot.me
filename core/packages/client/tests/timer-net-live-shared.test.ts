@@ -1,8 +1,8 @@
 // @vitest-environment jsdom
-import { act, createElement as h } from 'react';
+import { act, createElement as h, createRef } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { beforeEach, afterEach, expect, it, vi } from 'vitest';
-import { useNetBattleLiveCube, useNetBattleLiveView, type UseNetBattleLiveCubeOptions } from '@cuberoot/timer-ui';
+import { TimerNetPkArena, TimerNetBattleStage, useNetBattleCountdown, useNetBattleLiveCube, useNetBattleLiveView, type UseNetBattleLiveCubeOptions } from '@cuberoot/timer-ui';
 import { SOLVED_3X3, cubeMove } from '@cuberoot/puzzle-solvers/timer-333-cube';
 import type { NetRoomState } from '@cuberoot/shared/timer';
 import { applyOrientation } from '@cuberoot/shared/smart-cube/orientation';
@@ -146,4 +146,106 @@ it('cancels a queued pose when leaving the room and never leaks it to the next r
   await act(async () => next.message({ type: 'ready', version: 1, gyro: true }));
   vi.advanceTimersByTime(100);
   expect(next.sent.filter(m => m.type === 'gyro').every(m => m.quaternion === null)).toBe(true);
+});
+
+it('shows PK wins, the round winner and the signed effective-time gap', async () => {
+  const results: NetRoomState['results'] = { '1': { player01: { t: 8_000, p: '+2' } } };
+  const rename = vi.fn();
+  const render = (onRename?: (name: string) => void) => act(async () => root.render(h(TimerNetPkArena, {
+    room: { ...room, results, scores: { player01: 3, player02: 1 } },
+    pid: 'player01', lock: { code: room.code, round: room.round, opponentId: 'player02', opponentName: 'Opponent' },
+    onRename, liveCubePlayers: {}, ownStatus: 'Finished', language: 'en', liveCubeView: 'net',
+    timerFont: 'segment', timerFontScale: 1, precision: 2, clockOffsetMs: null, children: null,
+  })));
+  const self = () => container.querySelector('.net-pk-side.is-self')!;
+  const other = () => container.querySelector('.net-pk-side.is-opponent')!;
+  await render(rename);
+  const nameButton = self().querySelector<HTMLButtonElement>('button.net-pk-side-name')!;
+  expect(nameButton.type).toBe('button');
+  await act(async () => nameButton.click());
+  expect(rename).toHaveBeenCalledExactlyOnceWith('player01');
+  expect(other().querySelector('button.net-pk-side-name')).toBeNull();
+  expect(self().querySelector('.net-pk-wins')?.textContent).toBe('3 wins');
+  expect(other().querySelector('.net-pk-wins')?.textContent).toBe('1 win');
+  expect(container.querySelector('[aria-label="Round winner"]')).toBeNull();
+  expect(container.querySelector('.net-pk-gap')).toBeNull();
+
+  results['1'].player02 = { t: 10_350, p: 'ok' };
+  await render();
+  expect(self().querySelector('button.net-pk-side-name')).toBeNull();
+  expect(self().querySelector('[aria-label="Round winner"]')).not.toBeNull();
+  expect(other().querySelector('[aria-label="Round winner"]')).toBeNull();
+  expect(self().querySelector('.net-pk-gap')?.textContent).toBe('-0.35s');
+  expect(other().querySelector('.net-pk-gap')?.textContent).toBe('+0.35s');
+
+  results['1'].player02 = { t: 8_000, p: 'dnf' };
+  await render();
+  expect(self().querySelector('[aria-label="Round winner"]')).not.toBeNull();
+  expect(container.querySelector('.net-pk-gap')).toBeNull();
+});
+
+it('copies the original scramble while displaying normalized moves and keeps device notices separate', async () => {
+  vi.useFakeTimers();
+  const writeText = vi.fn(async () => {});
+  const render = (round: number, deviceNotice: string | null) => act(async () => root.render(h(TimerNetBattleStage, {
+    timing: { phase: 'idle', colorClass: '', digits: '0.00', surfaceRef: createRef<HTMLDivElement>() },
+    scramble: { scramble: "R U R'", match: true },
+    copyScramble: { text: "x R U R' x'", writeText },
+    status: { room: { ...room, round }, currentPlayerId: 'player01', idle: true, countdown: false, language: 'en',
+      onPenalty: vi.fn(), onReady: vi.fn(), onNext: vi.fn() },
+    error: 'Room request failed',
+    deviceNotice,
+  })));
+  await render(1, 'Reconnecting to smart cube');
+  const button = container.querySelector<HTMLButtonElement>('button.scramble-text')!;
+  expect(button.textContent).toBe("R U R'");
+  await act(async () => button.click());
+  expect(writeText).toHaveBeenCalledExactlyOnceWith("x R U R' x'");
+  expect(container.querySelector('.scramble-copied-check')).not.toBeNull();
+  expect(container.querySelector('.timer-room-device-notice')?.getAttribute('role')).toBe('status');
+  expect(container.querySelector('[role="alert"]')?.textContent).toBe('Room request failed');
+
+  await act(async () => vi.advanceTimersByTime(1_200));
+  expect(container.querySelector('.scramble-copied-check')).toBeNull();
+  await act(async () => button.click());
+  await render(2, null);
+  expect(container.querySelector('.scramble-copied-check')).toBeNull();
+  expect(container.querySelector('.timer-room-device-notice')).toBeNull();
+  expect(container.querySelector('[role="alert"]')?.textContent).toBe('Room request failed');
+});
+
+it('plays each synchronized second once and consumes the start once despite offset corrections', async () => {
+  vi.useFakeTimers();
+  const play = vi.fn();
+  const start = vi.fn(() => play('start'));
+  const offset = { current: 0 };
+  const deadline = Date.now() + 3_000;
+  const log: number[] = [];
+  function Countdown({ eligible }: { eligible: boolean }) {
+    const second = useNetBattleCountdown({ scope: '1234:1:player01', startAt: deadline, eligible, offset,
+      play: cue => { play(cue); log.push(Date.now() + offset.current - deadline); }, onStart: start });
+    return h('span', null, second);
+  }
+  const render = (eligible: boolean) => act(async () => root.render(h(Countdown, { eligible })));
+  await render(true);
+  expect(container.textContent).toBe('3');
+  await act(async () => vi.advanceTimersByTime(1_000));
+  expect(container.textContent).toBe('2');
+  offset.current = -200;
+  await act(async () => vi.advanceTimersByTime(200));
+  expect(container.textContent).toBe('2');
+  await render(false);
+  await render(true);
+  expect(play).toHaveBeenCalledTimes(2);
+  offset.current = 0;
+  await act(async () => vi.advanceTimersByTime(800));
+  expect(container.textContent).toBe('1');
+  await act(async () => vi.advanceTimersByTime(1_000));
+  expect(container.textContent).toBe('');
+  expect(log).toEqual([-3_000, -2_000, -1_000]);
+  expect(play.mock.calls).toEqual([['sync-countdown'], ['sync-countdown'], ['sync-countdown'], ['start']]);
+  expect(start).toHaveBeenCalledExactlyOnceWith(0);
+  await render(false);
+  await render(true);
+  expect(start).toHaveBeenCalledOnce();
 });

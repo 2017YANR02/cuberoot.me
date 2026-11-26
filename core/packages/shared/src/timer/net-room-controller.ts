@@ -1,4 +1,4 @@
-import { preferLatestNetRoomState, type NetBattleCredentials, type NetBattleSession, type NetRoomState, type NetResult } from './net-battle';
+import { isNetRoundParticipant, preferLatestNetRoomState, type NetBattleClient, type NetBattleCredentials, type NetIdentity, type NetBattleSession, type NetRoomState, type NetResult } from './net-battle';
 
 export type NetRoomGoneReason = 'room not found' | 'invalid player capability' | 'removed from room';
 export function netRoomGoneReason(error: unknown): NetRoomGoneReason | null {
@@ -14,6 +14,31 @@ export async function restoreNetRoomSession(session: NetBattleSession,
   if (state.code !== session.code) throw new Error('invalid player capability');
   if (!state.players[session.playerId]) throw new Error('removed from room');
   return state;
+}
+
+/** An explicit join can resume the stored seat. A failed restore is returned to the lobby. */
+export async function joinOrRestoreNetRoom(options: {
+  code: string;
+  identity: NetIdentity;
+  load(): Promise<NetBattleSession | null>;
+  clear(): Promise<void>;
+  current(): boolean;
+  client: Pick<NetBattleClient, 'getNetRoom' | 'joinNetRoom'>;
+}) {
+  const session = await options.load();
+  if (!options.current()) return null;
+  if (session?.code !== options.code) {
+    const admission = await options.client.joinNetRoom(options.code, options.identity);
+    return { ...admission, name: options.identity.name, restored: false };
+  }
+  try {
+    const state = await restoreNetRoomSession(session, options.client.getNetRoom);
+    const { playerId, playerToken, name } = session;
+    return { state, credentials: { playerId, playerToken }, name, restored: true };
+  } catch (error) {
+    if (options.current() && netRoomGoneReason(error)) await options.clear().catch(() => undefined);
+    throw error;
+  }
 }
 
 type Session = { code: string; auth: NetBattleCredentials };
@@ -35,6 +60,7 @@ export class NetRoomController {
   private displayed: NetRoomState | null = null;
   private polling = false;
   private advancing = false;
+  private resettingPhase = false;
   private ensuring = new Set<string>();
   private submissions = new Map<number, Promise<boolean>>();
   get isAdvancing(): boolean { return this.advancing; }
@@ -48,6 +74,7 @@ export class NetRoomController {
     this.session = null;
     this.latest = this.displayed = null;
     this.polling = this.advancing = false;
+    this.resettingPhase = false;
     this.ensuring = new Set();
     this.submissions = new Map();
   }
@@ -59,12 +86,13 @@ export class NetRoomController {
     if (!state.players[this.session.auth.playerId]) { this.end('removed from room'); return; }
     this.latest = state;
     const current = this.displayed;
-    if (current && state.round > current.round && (!advance || this.callbacks.isTiming())) {
+    const historical = current && state.history.find(round => round.round === current.round)?.results;
+    const result = current && (historical?.[this.session.auth.playerId] ?? current.results[String(current.round)]?.[this.session.auth.playerId]);
+    if (current && state.round > current.round && (this.callbacks.isTiming() || (!advance && result))) {
       // Keep this device's result visible until it explicitly continues; refresh membership/heartbeats.
       const players = Object.fromEntries(Object.entries(state.players).map(([id, player]) => [id,
         current.players[id] ? { ...current.players[id], seen: player.seen } : player,
       ]));
-      const historical = state.history.find(round => round.round === current.round)?.results;
       this.displayed = { ...current, now: state.now, admin: state.admin, players,
         results: { ...current.results, ...(historical ? { [current.round]: historical } : {}), ...state.results },
         history: state.history, scores: state.scores };
@@ -107,6 +135,19 @@ export class NetRoomController {
     this.polling = true;
     try { await this.execute(({ code, auth }) => getRoom(code, auth), { quiet: true }); }
     finally { if (generation === this.generation) this.polling = false; }
+  }
+  async clearAbandonedPhase(postStatus: (code: string, auth: NetBattleCredentials, phase: 'idle') => Promise<NetRoomState>): Promise<void> {
+    if (this.resettingPhase || this.callbacks.isTiming() || !this.session || !this.latest
+      || this.displayed?.round !== this.latest.round) return;
+    const { playerId } = this.session.auth;
+    if (!isNetRoundParticipant(this.latest, playerId)) return;
+    const phase = this.latest.players[playerId]?.ph;
+    if ((phase !== 'solving' && phase !== 'inspecting') || this.latest.results[String(this.latest.round)]?.[playerId]) return;
+    this.resettingPhase = true;
+    await this.execute(({ code, auth }) => postStatus(code, auth, 'idle'), {
+      quiet: true,
+      onSettled: () => { this.resettingPhase = false; },
+    });
   }
   submitResult(round: number, request: Request, expected: NetResult): Promise<boolean> {
     const generation = this.generation, submissions = this.submissions;
@@ -160,23 +201,29 @@ export function startNetRoomRestore(options: {
   clear(): Promise<void>;
   restored(session: NetBattleSession, state: NetRoomState): void;
   missing(): void;
+  gone?(code: string, reason: NetRoomGoneReason): void;
   error(error: unknown): void;
 }): () => void {
   let stopped = false;
   let retry: ReturnType<typeof setTimeout> | undefined;
   const current = () => !stopped && options.current();
   const run = async () => {
+    let session: NetBattleSession | null = null;
     try {
-      const session = await options.load();
+      session = await options.load();
       if (!current()) return;
       if (!session) { options.missing(); return; }
       const state = await restoreNetRoomSession(session, options.getRoom);
       if (current()) options.restored(session, state);
     } catch (error) {
       if (!current()) return;
-      if (netRoomGoneReason(error)) {
+      const reason = netRoomGoneReason(error);
+      if (reason) {
         await options.clear().catch(() => undefined);
-        if (current()) options.error(error);
+        if (current()) {
+          if (session) options.gone?.(session.code, reason);
+          options.error(error);
+        }
       } else {
         options.error(error);
         retry = setTimeout(() => { if (current()) void run(); }, 1_000);

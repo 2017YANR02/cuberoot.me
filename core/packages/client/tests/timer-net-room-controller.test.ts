@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { NetRoomController, startNetRoomPolling, startNetRoomRestore, type NetRoomState } from '@cuberoot/shared/timer';
+import { joinOrRestoreNetRoom, NetRoomController, startNetRoomPolling, startNetRoomRestore, type NetRoomState } from '@cuberoot/shared/timer';
 
 const auth = { playerId: 'abcdef', playerToken: 'a'.repeat(48) };
 function room(patch: Partial<NetRoomState> = {}): NetRoomState {
@@ -69,6 +69,31 @@ describe('shared room lifecycle', () => {
     await controller.poll(async () => room({ round: 2, revision: 3, players: {} }));
     expect(onGone).toHaveBeenCalledWith('removed from room');
   });
+  it('catches up to the next round when an unscored attempt is no longer running', async () => {
+    const { controller, onState } = setup();
+    let timing = true;
+    controller.callbacks.isTiming = () => timing;
+    const next = async () => room({ round: 2, revision: 2 });
+    await controller.poll(next);
+    expect(onState.mock.lastCall?.[0].round).toBe(1);
+    timing = false;
+    await controller.poll(next);
+    expect(onState.mock.lastCall?.[0].round).toBe(2);
+  });
+  it('clears a stale running phase after restoring a room without a local timer', async () => {
+    const { controller, onState } = setup();
+    const stale = room({ revision: 2 });
+    stale.players.abcdef!.ph = 'solving';
+    await controller.poll(async () => stale);
+    const post = vi.fn(async () => room({ revision: 3 }));
+    controller.callbacks.isTiming = () => true;
+    await controller.clearAbandonedPhase(post);
+    expect(post).not.toHaveBeenCalled();
+    controller.callbacks.isTiming = () => false;
+    await Promise.all([controller.clearAbandonedPhase(post), controller.clearAbandonedPhase(post)]);
+    expect(post).toHaveBeenCalledExactlyOnceWith('1234', auth, 'idle');
+    expect(onState.mock.lastCall?.[0].players.abcdef.ph).toBe('idle');
+  });
   it('serializes result retry before a newer penalty so the old value cannot overwrite it', async () => {
     const { controller } = setup();
     const first = deferred<NetRoomState>();
@@ -116,4 +141,36 @@ describe('shared room lifecycle', () => {
     const stop2 = startNetRoomRestore({ current: () => true, load: async () => session, getRoom: async () => { throw new Error('invalid player capability'); }, clear, restored, missing, error: vi.fn() });
     await vi.advanceTimersByTimeAsync(0); expect(clear).toHaveBeenCalledOnce(); expect(missing).not.toHaveBeenCalled(); stop2();
   });
+});
+
+it('restores matching room credentials, joins when absent, and does not re-join on an expired or removed seat', async () => {
+  const state = room();
+  const session = { code: state.code, name: 'Original', ...auth };
+  const clear = vi.fn(async () => {});
+  const getNetRoom = vi.fn().mockResolvedValue(state);
+  const joinNetRoom = vi.fn().mockResolvedValue({ state, credentials: auth });
+  const current = vi.fn(() => true);
+  const load = vi.fn().mockResolvedValue(session);
+  const options = { code: state.code, identity: { name: 'New guest' }, load, clear, current, client: { getNetRoom, joinNetRoom } };
+
+  expect(await joinOrRestoreNetRoom(options)).toEqual({ state, name: 'Original', credentials: auth, restored: true });
+  expect(joinNetRoom).not.toHaveBeenCalled();
+  expect(getNetRoom).toHaveBeenCalledWith(state.code, session);
+
+  getNetRoom.mockRejectedValueOnce(new Error('Failed to fetch'));
+  await expect(joinOrRestoreNetRoom(options)).rejects.toThrow('Failed to fetch');
+  expect(clear).not.toHaveBeenCalled();
+
+  getNetRoom.mockResolvedValueOnce({ ...state, players: {} });
+  await expect(joinOrRestoreNetRoom(options)).rejects.toThrow('removed from room');
+  expect(clear).toHaveBeenCalledOnce();
+  expect(joinNetRoom).not.toHaveBeenCalled();
+
+  load.mockResolvedValue(null);
+  expect(await joinOrRestoreNetRoom(options)).toEqual({ state, name: 'New guest', credentials: auth, restored: false });
+  expect(joinNetRoom).toHaveBeenCalledExactlyOnceWith(state.code, options.identity);
+
+  current.mockReturnValue(false);
+  expect(await joinOrRestoreNetRoom(options)).toBeNull();
+  expect(joinNetRoom).toHaveBeenCalledOnce();
 });

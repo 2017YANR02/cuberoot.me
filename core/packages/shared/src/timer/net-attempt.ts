@@ -2,7 +2,7 @@ import { SmartCubeAttemptProducer, type SmartCubeAttemptDevice } from './smart-c
 import type { Solve } from './types';
 import type { CubeTimerStart, SolveResult } from './machine';
 import type { MoveClockSample } from '../smart_cube/move_clock';
-import { NET_EVENTS, type NetPenalty, type NetResult } from './net-battle';
+import { selectorIdToNetEvent, type NetPenalty, type NetResult } from './net-battle';
 import { decodeTimerSolve } from './persistence';
 import type { Quat } from '../smart_cube/orientation';
 
@@ -14,9 +14,24 @@ export interface NetAttemptContext extends NetAttemptIdentity {
   event: Solve['event'];
   scramble: string;
 }
+const NET_ATTEMPT_SOLVE_PREFIX = 'net-';
+
 export function netAttemptSolveId(identity: NetAttemptIdentity): string {
-  return `net-${identity.code}-${identity.playerId}-${identity.round}`;
+  return `${NET_ATTEMPT_SOLVE_PREFIX}${identity.code}-${identity.playerId}-${identity.round}`;
 }
+/** Index saved smart-cube attempts across all local timer sessions. */
+export function indexNetRecordedReplays(sessions: Iterable<Partial<Record<Solve['event'], readonly Solve[]>>>) {
+  const replays = new Map<string, Solve>();
+  for (const session of sessions) {
+    for (const solves of Object.values(session)) {
+      for (const solve of solves ?? []) {
+        if (solve.id.startsWith(NET_ATTEMPT_SOLVE_PREFIX) && solve.moves?.length) replays.set(solve.id, solve);
+      }
+    }
+  }
+  return replays;
+}
+
 export interface NetRecordedAttempt { context: NetAttemptContext; solve: Solve }
 
 /** Freeze room, round and local session at start; polling must never retarget a recording. */
@@ -58,9 +73,14 @@ export class NetBattleAttemptRecorder {
 
 /** Repeated delivery is idempotent; penalty changes preserve later comments and feedback. */
 export function upsertNetRecordedSolve(solves: readonly Solve[], solve: Solve): Solve[] {
-  return solves.some(item => item.id === solve.id)
-    ? solves.map(item => item.id === solve.id ? { ...item, penalty: solve.penalty } : item)
-    : [...solves, solve].sort((a, b) => a.ts - b.ts);
+  const previous = solves.find(item => item.id === solve.id);
+  if (!previous) return [...solves, solve].sort((a, b) => a.ts - b.ts);
+  if (previous.timeMs === null || solve.timeMs === null || Math.round(previous.timeMs) === Math.round(solve.timeMs)) {
+    return solves.map(item => item.id === solve.id ? { ...item, penalty: solve.penalty } : item);
+  }
+  // A new solve after a rejection takes the round's slot. Retain the rejected take in local history.
+  const archived = { ...previous, id: `${previous.id}-${previous.ts}` };
+  return [...solves.filter(item => item.id !== previous.id), archived, solve].sort((a, b) => a.ts - b.ts);
 }
 
 export const NET_RECORDING_SAVE_COPY = {
@@ -85,20 +105,28 @@ export interface NetOutboxStorage {
   remove(id: string, revision: string): Promise<void>;
   exclusive<T>(work: () => Promise<T>): Promise<T>;
 }
+export function mergeNetOutboxEntry(previous: NetOutboxEntry | undefined, next: NetOutboxEntry): NetOutboxEntry {
+  // Finish saving a rejected attempt locally before it can be replaced by a new attempt.
+  if (!previous || (previous.upload === 'rejected' && previous.localSaved)) return next;
+  return { ...next, record: { ...previous.record, solve: { ...previous.record.solve, penalty: next.record.solve.penalty } } };
+}
 export function decodeNetOutboxEntry(value: unknown): NetOutboxEntry | null {
   if (!value || typeof value !== 'object') return null;
   const e = value as NetOutboxEntry, c = e.record?.context, s = e.record?.solve;
+  const event = typeof c?.event === 'string' ? selectorIdToNetEvent(c.event) : null;
   if (e.version !== 1 || typeof e.revision !== 'string' || !c || !s
-    || !NET_EVENTS.includes(c.event as typeof NET_EVENTS[number])
+    || !event
     || !/^\d{4}$/.test(c.code) || typeof c.playerId !== 'string' || !c.playerId
     || !Number.isSafeInteger(c.round) || c.round < 1 || typeof c.sessionId !== 'string' || !c.sessionId
     || typeof e.localSaved !== 'boolean' || !['none', 'pending', 'rejected', 'uploaded'].includes(e.upload)) return null;
-  const solve = decodeTimerSolve(s, c.event);
+  const solveEvent = typeof s.event === 'string' ? selectorIdToNetEvent(s.event) : null;
+  if (solveEvent !== event) return null;
+  const solve = decodeTimerSolve({ ...s, event }, event);
   if (!solve || c.id !== solve.id || c.ts !== solve.ts || c.scramble !== solve.scramble) return null;
   // Rebuild the context explicitly: credentials must never enter the journal.
   return { version: 1, revision: e.revision, localSaved: e.localSaved, upload: e.upload,
     record: { context: { code: c.code, playerId: c.playerId, round: c.round, sessionId: c.sessionId,
-      id: c.id, ts: c.ts, event: c.event, scramble: c.scramble }, solve } };
+      id: c.id, ts: c.ts, event, scramble: c.scramble }, solve } };
 }
 export type NetOutboxUploader = (record: NetRecordedAttempt) => Promise<'uploaded' | 'waiting' | 'rejected'>;
 
@@ -108,7 +136,9 @@ export class NetRecordingOutbox {
   private readonly records = new Map<string, NetOutboxEntry>();
   private lastCompleted: NetRecordedAttempt | null = null;
   result(identity: NetAttemptIdentity): NetResult | undefined {
-    const record = this.records.get(netAttemptSolveId(identity))?.record ?? this.lastCompleted;
+    const entry = this.records.get(netAttemptSolveId(identity));
+    if (entry?.upload === 'rejected' && entry.localSaved) return undefined;
+    const record = entry?.record ?? this.lastCompleted;
     if (!record || record.context.code !== identity.code || record.context.playerId !== identity.playerId
       || record.context.round !== identity.round || record.solve.timeMs === null) return undefined;
     return { t: record.solve.timeMs, p: record.solve.penalty === 'DNF' || record.solve.penalty === 'DNS' ? 'dnf' : record.solve.penalty };
@@ -129,11 +159,10 @@ export class NetRecordingOutbox {
     for (const listener of this.listeners) listener();
   }
   enqueue(record: NetRecordedAttempt, upload = false): Promise<void> {
-    const entry: NetOutboxEntry = { version: 1, revision: globalThis.crypto.randomUUID(), record,
-      localSaved: false, upload: upload ? 'pending' : 'none' };
-    const previous = this.records.get(record.solve.id);
-    if (previous) entry.record = { ...previous.record, solve: { ...previous.record.solve, penalty: record.solve.penalty } };
-    this.lastCompleted = entry.record;
+    const entry = mergeNetOutboxEntry(this.records.get(record.solve.id), {
+      version: 1, revision: globalThis.crypto.randomUUID(), record, localSaved: false,
+      upload: upload ? 'pending' : 'none',
+    });
     this.records.set(record.solve.id, entry);
     this.dirty.add(record.solve.id);
     this.publish(Boolean(this.running), true);
@@ -175,7 +204,6 @@ export class NetRecordingOutbox {
       await this.writing;
       if (this.dirty.has(id)) throw new Error('Pending result journal failed');
       if (this.records.get(id) !== entry) continue;
-      this.lastCompleted = entry.record;
       this.publish(true);
       this.dirty.delete(id);
       if (!entry.localSaved) {
@@ -192,6 +220,7 @@ export class NetRecordingOutbox {
       }
       if (this.records.get(id) !== entry) continue;
       if (entry.localSaved && (entry.upload === 'none' || entry.upload === 'uploaded')) {
+        if (entry.upload === 'uploaded') this.lastCompleted = entry.record;
         await this.storage?.remove(id, entry.revision);
         if (this.records.get(id) === entry) this.records.delete(id);
       }

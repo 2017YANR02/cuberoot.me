@@ -176,16 +176,14 @@ describe('shared TimerScrambleStrip', () => {
     expect(strip.querySelector('.scramble-verify')).toBeNull();
     expect(strip.lastElementChild?.className).toBe('scramble-src-row');
     expect(strip.getAttribute('role')).toBeNull();
-    expect(text.getAttribute('role')).toBe('button');
+    expect(text).toBeInstanceOf(HTMLButtonElement);
     expect(text.textContent).not.toContain('Answer');
     expect(shouldIgnoreTimerTarget(strip.querySelector('.scramble-moves'))).toBe(true);
 
     act(() => text.click());
-    act(() => text.dispatchEvent(new KeyboardEvent('keydown', { bubbles: true, key: 'Enter' })));
-    act(() => text.dispatchEvent(new KeyboardEvent('keydown', { bubbles: true, key: ' ' })));
-    expect(activate).toHaveBeenCalledTimes(3);
-    act(() => strip.querySelector<HTMLButtonElement>('button')!.click());
-    expect(activate).toHaveBeenCalledTimes(3);
+    expect(activate).toHaveBeenCalledOnce();
+    act(() => strip.querySelector<HTMLButtonElement>('.scramble-src-row button')!.click());
+    expect(activate).toHaveBeenCalledOnce();
   });
 
   it('keeps space-free Square-1 scrambles wrappable instead of making the whole string nowrap', () => {

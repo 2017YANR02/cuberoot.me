@@ -1,4 +1,4 @@
-import { decodeNetOutboxEntry, type NetOutboxEntry, type NetOutboxStorage } from '@cuberoot/shared/timer';
+import { decodeNetOutboxEntry, mergeNetOutboxEntry, type NetOutboxEntry, type NetOutboxStorage } from '@cuberoot/shared/timer';
 
 /** Shared DOM host adapter. Per-entry transactions and Web Locks prevent tab-wide array clobbering. */
 export function createNetOutboxStorage(): NetOutboxStorage {
@@ -27,8 +27,7 @@ export function createNetOutboxStorage(): NetOutboxStorage {
       read.onsuccess = () => {
         const previous = read.result === undefined ? undefined : decodeNetOutboxEntry(read.result);
         if (previous === null) { store.transaction.abort(); return; }
-        const next = previous ? { ...entry, record: { ...previous.record,
-          solve: { ...previous.record.solve, penalty: entry.record.solve.penalty } } } : entry;
+        const next = mergeNetOutboxEntry(previous, entry);
         store.put(next, entry.record.solve.id); value(next);
       };
     }),

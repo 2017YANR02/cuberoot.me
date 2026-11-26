@@ -249,7 +249,7 @@
 .settings-modal .settings-row-control input[type="text"]:not(.country-input-field) {
   max-width: 100%;
 }
-.settings-modal .settings-main .hint-btn {
+.settings-modal :is(.settings-main, .settings-row-control) .hint-btn {
   display: inline-flex;
   align-items: center;
   min-height: 34px;

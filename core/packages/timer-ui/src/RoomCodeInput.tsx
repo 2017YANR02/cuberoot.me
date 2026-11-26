@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, type InputHTMLAttributes, type KeyboardEvent } from 'react';
+import { useEffect, useRef, type ClipboardEvent, type InputHTMLAttributes, type KeyboardEvent } from 'react';
 import { NET_BATTLE_ROOM_CODE_LENGTH, normalizeNetBattleRoomCode } from '@cuberoot/shared/timer';
 
 
@@ -29,6 +29,7 @@ export function RoomCodeInput({
   onComplete,
   disabled = false,
   onKeyDown,
+  onPaste,
   placeholder,
   'aria-label': ariaLabel,
   ...inputProps
@@ -59,6 +60,18 @@ export function RoomCodeInput({
     onComplete(code);
   };
 
+  const handlePaste = (event: ClipboardEvent<HTMLInputElement>) => {
+    onPaste?.(event);
+    if (event.defaultPrevented || disabled) return;
+    const pasted = normalizeRoomCode(event.clipboardData.getData('text/plain'));
+    if (!pasted) return;
+    event.preventDefault();
+    const { selectionStart, selectionEnd } = event.currentTarget;
+    const next = pasted.length === ROOM_CODE_LENGTH
+      ? pasted : code.slice(0, selectionStart ?? code.length) + pasted + code.slice(selectionEnd ?? code.length);
+    onValueChange(normalizeRoomCode(next));
+  };
+
   return (
     <input
       {...inputProps}
@@ -66,6 +79,7 @@ export function RoomCodeInput({
       value={code}
       onChange={(event) => onValueChange(normalizeRoomCode(event.target.value))}
       onKeyDown={handleKeyDown}
+      onPaste={handlePaste}
       maxLength={ROOM_CODE_LENGTH}
       inputMode="numeric"
       pattern="[0-9]*"
