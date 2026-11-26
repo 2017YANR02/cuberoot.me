@@ -104,7 +104,7 @@ export function StagePractice({stage, origin, retestKey, goal, exact, practiceRo
       window.removeEventListener('focus', refresh);
     };
   }, [origin, scope, target, role, goal, stage, slot, execution, exact?.id]);
-  if (status === 'failed') return <button type="button" onClick={() => setRetry(retry + 1)}>{t('重新查找公式','Retry formula lookup')}</button>;
+  if (status === 'failed') return <button className="rr-action" type="button" onClick={() => setRetry(retry + 1)}>{t('重新查找公式','Retry formula lookup')}</button>;
   if (status === 'pending' || (target && origin && scope && token === undefined)) return <small role="status">{t('正在匹配公式…','Matching case…')}</small>;
   if (!target) return <small>{t('未匹配到唯一公式，可跟练本段原解。','No unique library case. Rehearse the recorded moves.')}</small>;
   if (goal && !token) return <small>{t('本机无法保存关联训练。','Linked training requires local storage.')}</small>;
@@ -195,7 +195,7 @@ export default function ReplayStageCard({id, stage: source, origin, playing, tog
   const possible = useMemo<Stage | undefined>(() => zbll?.disposition === 'opportunity' ? {
     ...stage, key:'optional-zbll', label:'ZBLL', fingerprint:undefined, formula:{set:'zbll',caseName:zbll.caseName},
   } : undefined,[stage,zbll]);
-  const simulate = (label:string, setup:string, alg:string, note?:string, slot = stage.slot, raw = false) => <button type="button" key={label} aria-pressed={selected?.label === label}
+  const simulate = (label:string, setup:string, alg:string, note?:string, slot = stage.slot, raw = false) => <button className="rr-action" type="button" key={label} aria-pressed={selected?.label === label}
     onClick={() => select(selected?.label === label ? undefined : {...(cfop ? reviewAlg(setup,alg,rotation,raw) : {setup,alg}),label,note,slot})}>{label}</button>;
   const unit = t('秒','s');
   const original = stage.original, reference = stage.playbackReference;
@@ -223,7 +223,7 @@ export default function ReplayStageCard({id, stage: source, origin, playing, tog
     {finding && <p>{finding}</p>}
     {stage.instruction && <p>{stage.instruction}</p>}
     <div className="rr-actions">
-      {hasPlayer && <button type="button" aria-expanded={playing} onClick={toggle}>{playing ? t('收起模拟','Close simulation')
+      {hasPlayer && <button className="rr-action" type="button" aria-expanded={playing} onClick={toggle}>{playing ? t('收起模拟','Close simulation')
         : reference ? t('模拟对比','Compare solutions') : t('跟练本段原解','Rehearse recorded moves')}</button>}
       {(stage.slot || stage.formula) && <StagePractice stage={stage} origin={origin}/>}
       {stage.key === 'cross' && <AppLink className="site-assistant-action" target="_blank" rel="noopener noreferrer" href="/alg/3x3/cross">{t('练十字','Practise cross')}</AppLink>}

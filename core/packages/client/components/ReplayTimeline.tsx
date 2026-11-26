@@ -1,6 +1,7 @@
 'use client';
 
-import { Play, X, Columns2 } from '@app-foundation/icons/lucide';
+import { ClearButton } from './ClearButton';
+import { Play, Columns2 } from '@app-foundation/icons/lucide';
 import { useState } from 'react';
 import dynamic from 'next/dynamic';
 import type { CfopReplayRange } from '@cuberoot/timer-ui/reconstruct/cfop-diagnosis';
@@ -43,14 +44,14 @@ export default function ReplayTimeline({report, coach, compare}: {
     {(coach.priority || focus) && <div className="rr-time-note">
       {coach.priority && <p>{coach.priority}</p>}
       {focus && <div className="rr-actions">
-      {recording && focus.range && <button type="button" className="rr-time-primary" onClick={()=>open(focus,clip)}><Play size={14} aria-hidden/>{clip?.kind === 'transition'
+      {recording && focus.range && <button type="button" className="rr-action rr-time-primary" onClick={()=>open(focus,clip)}><Play size={14} aria-hidden/>{clip?.kind === 'transition'
         ? t('回放衔接','Play transition') : clip?.kind === 'pause' ? t('回放停顿','Play gap') : t('回放 ','Play ')+focus.label}</button>}
-      {focus.original && focus.playbackReference && <button type="button" onClick={()=>compare(focus)}>
+      {focus.original && focus.playbackReference && <button className="rr-action" type="button" onClick={()=>compare(focus)}>
         <Columns2 size={14} aria-hidden/>{focus.refUserTurns!=null && focus.refTurns!=null ? t('对照 ','Compare ')+focus.refUserTurns+' / '+focus.refTurns+t(' 步',' HTM') : t('模拟对照','Compare simulations')}</button>}
       {(focus.fingerprint || focus.formula) && <StagePractice stage={focus} origin={origin} goal={clip?.kind==='transition'?'transition':coach.review?.kind==='entry'?'recognition':coach.review?.kind==='route'?'routes':'execution'}/>}
       </div>}
     </div>}
     {play && recording && <div className="rr-timeline-player"><div className="rr-heading"><strong>{play.title}</strong>
-      <button type="button" className="rr-time-close" aria-label={t('收起','Close')} onClick={()=>setPlay(undefined)}><X size={16} aria-hidden/></button></div><Player key={play.run} recording={recording} range={play.range} slot={play.slot} rotation={summary.reviewRotation} cfopStage={summary.method?.toUpperCase() === 'CFOP' ? play.stage : undefined}/></div>}
+      <ClearButton variant="standalone" className="rr-time-close" ariaLabel={t('收起','Close')} onClick={()=>setPlay(undefined)}/></div><Player key={play.run} recording={recording} range={play.range} slot={play.slot} rotation={summary.reviewRotation} cfopStage={summary.method?.toUpperCase() === 'CFOP' ? play.stage : undefined}/></div>}
   </StageTimeline>;
 }

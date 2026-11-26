@@ -9,9 +9,9 @@
 .rr-time,.rr-number { white-space:nowrap; font-size:clamp(1.65rem,5cqi,2.35rem); letter-spacing:-.045em; line-height:1.2; }
 .rr-time small { font-size:.875rem; font-weight:500; letter-spacing:0; }
 .rr-switch { display:flex; gap:2px; background:var(--muted); border:1px solid var(--border-default); border-radius:10px; padding:3px; width:fit-content; }
-.rr-switch button,.rr-actions button,.rr-actions a.site-assistant-action { border-radius:7px; font:inherit; font-size:.875rem; cursor:pointer; padding:7px 12px; }
-.rr-switch button { border:0; background:transparent; color:var(--muted-foreground); }
-.rr-switch button[aria-pressed=true] { background:var(--card); color:var(--foreground); box-shadow:0 1px 3px var(--border-strong); font-weight:600; }
+.rr-switch .rr-view-choice,.rr-actions .rr-action,.rr-actions a.site-assistant-action { border-radius:7px; font:inherit; font-size:.875rem; cursor:pointer; padding:7px 12px; }
+.rr-switch .rr-view-choice { border:0; background:transparent; color:var(--muted-foreground); }
+.rr-switch .rr-view-choice[aria-pressed=true] { background:var(--card); color:var(--foreground); box-shadow:0 1px 3px var(--border-strong); font-weight:600; }
 .rr-grid,.rr-lines { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; }
 .rr-panel { min-width:0; padding:14px 16px; border:1px solid var(--border-default); border-radius:var(--radius); background:var(--card); }
 .replay-reply .rr-panel h4 { margin:3px 0 5px; font-size:1.05rem; line-height:1.35; }
@@ -31,8 +31,8 @@
 .rr-lines strong,.rr-lines code { display:block; font-size:.875rem; }
 .rr-lines code { white-space:normal; overflow-wrap:anywhere; }
 .rr-actions { flex-wrap:wrap; margin-top:10px; }
-.rr-actions button,.rr-actions a.site-assistant-action { border:1px solid var(--border-default); background:var(--card); color:var(--foreground); }
-.rr-actions button { background:var(--primary); color:var(--primary-foreground); }
+.rr-actions .rr-action,.rr-actions a.site-assistant-action { border:1px solid var(--border-default); background:var(--card); color:var(--foreground); }
+.rr-actions .rr-action { background:var(--primary); color:var(--primary-foreground); }
 .rr-case { margin:5px 0; font-size:1.1rem; }
 .rr-median { align-items:end; margin:8px 0; }
 .rr-median strong,.rr-median small { display:block; }
@@ -58,14 +58,14 @@
 .rr-transfer details { margin-top:8px; }
 .rr-transfer summary { cursor:pointer; }
 .rr-transfer .rr-actions { gap:5px; }
-.rr-transfer .rr-actions button { padding:5px 8px; }
+.rr-transfer .rr-actions .rr-action { padding:5px 8px; }
 .rr-guided { max-width:44rem; margin:16px auto; align-content:start; }
 .rr-guided code { overflow-wrap:anywhere; }
 
 
 .rr-time-note,.rr-timeline-player { border-top:1px solid var(--border-default); padding-top:9px; }
 .rr-time-note .rr-actions { gap:6px; }
-.rr-time-note .rr-actions :is(button,a.site-assistant-action) { display:inline-flex; align-items:center; gap:6px; padding:6px 10px; background:var(--card); color:var(--foreground); }
+.rr-time-note .rr-actions :is(.rr-action,a.site-assistant-action) { display:inline-flex; align-items:center; gap:6px; padding:6px 10px; background:var(--card); color:var(--foreground); }
 .rr-time-note .rr-actions .rr-time-primary { color:var(--primary-foreground); background:var(--primary); border-color:var(--primary); }
 .rr-timeline-player { margin-top:12px; }
 .rr-time-close { display:grid; place-items:center; padding:6px; border:0; border-radius:6px; background:var(--muted); color:var(--foreground); }
@@ -84,8 +84,8 @@
 .rr-exec-moves code[data-gap] { box-shadow:inset 0 -2px var(--accent); }
 .rr-exec-moves code[aria-current=step] { color:var(--accent); background:var(--accent-soft); }
 .rr-exec-controls { display:flex; margin-block:10px 4px; }
-.rr-exec-controls button { display:inline-flex; align-items:center; gap:5px; }
-.rr-exec-controls input { min-width:48px; flex:1; accent-color:var(--accent); }
+.rr-exec-controls .rr-action { display:inline-flex; align-items:center; gap:5px; }
+.rr-exec-controls .rr-seek { min-width:48px; flex:1; accent-color:var(--accent); }
 .rr-exec-controls output { font-size:.85rem; font-variant-numeric:tabular-nums; }
 .rr-exec-pair > small { display:block; margin-block-end:12px; }
 .rr-exec-pair > p code { overflow-wrap:anywhere; }

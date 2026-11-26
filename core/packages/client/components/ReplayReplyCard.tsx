@@ -61,7 +61,7 @@ function Pair({stage, action, target, rotation}: {stage: Stage; rotation?: strin
       {stage.setup && !playing && <VisualCube scheme={visualCubeSchemeForOrientation('')} setup={[reviewAlg(stage.setup, '', rotation).setup, reviewSlotYaw[stage.slot ?? '']].filter(Boolean).join(' ')} view="iso" size={48} local alt={t('同一起始局面','Shared starting position')}/>}
       <span><strong>{line.label} · {t(`${line.count} 步`,`${line.count} moves`)}</strong><code dir="ltr">{line.alg}</code></span>
       {stage.setup && playing && line.alg && <Player puzzle="3x3" set="" sceneRot={reviewCamera(stage.slot)} {...reviewAlg(stage.setup, line.alg, rotation)} size={170} moveDurationMs={450}/>}</div>)}</div>
-    <div className="rr-actions">{stage.setup && <button type="button" aria-expanded={playing} onClick={()=>setPlaying(!playing)}>{playing ? t('收起回放','Close players') : t('对照回放','Compare playback')}</button>}{action}</div>
+    <div className="rr-actions">{stage.setup && <button className="rr-action" type="button" aria-expanded={playing} onClick={()=>setPlaying(!playing)}>{playing ? t('收起回放','Close players') : t('对照回放','Compare playback')}</button>}{action}</div>
   </section>;
 }
 
@@ -101,7 +101,7 @@ export default function ReplayReplyCard({report,recordedAction,retestAction,chil
     <div className="rr-kicker">{t('智能复盘','Solve review')} · {summary.method}</div>
     <header><div><h3>{title}</h3>{view==='analysis' && evidence?.selected!=null && <p>{t(`个人基线取自 ${evidence.selected} 局复盘`,`Personal baseline from ${evidence.selected} solves`)}</p>}{view==='training' && <p>{t('本局关联训练','Practice linked to this solve')}</p>}</div>
       <strong className="rr-time">{seconds(summary.timeMs)} <small>{t('秒','s')} {summary.penalty!=='ok' && summary.penalty}</small></strong></header>
-    {hasTraining && <div className="rr-switch" role="group" aria-label={t('报告视图','Report view')}>{(['analysis','training'] as const).map(v=><button key={v} type="button" aria-pressed={v===view}
+    {hasTraining && <div className="rr-switch" role="group" aria-label={t('报告视图','Report view')}>{(['analysis','training'] as const).map(v=><button className="rr-view-choice" key={v} type="button" aria-pressed={v===view}
       onClick={()=>setView(v)}>{v==='analysis' ? t('本局分析','Solve analysis') : t('训练复测','Practice and retest')}</button>)}</div>}
     {view==='analysis' && coach && stages.length>0 && <ReplayTimeline report={report} coach={coach} compare={s=>{
       setPlayingStage(s.key);

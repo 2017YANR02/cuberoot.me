@@ -73,9 +73,9 @@ function Comparison({slow, fast, name, practice, cohort}: {slow: Execution; fast
       return <ExecutionLane key={clip.hit.solveId} practice={practice[i]} clip={clip} index={next < 0 ? clip.moves.length-1 : Math.max(0,next-1)} playing={playing}/>;
     })}</div>
     <div className="rr-exec-controls rr-actions">
-      <button type="button" onClick={()=>{if (!playing && clock.current>=duration) seek(0); setPlaying(!playing);}}>
+      <button className="rr-action" type="button" onClick={()=>{if (!playing && clock.current>=duration) seek(0); setPlaying(!playing);}}>
         {playing ? <Pause size={14}/> : <Play size={14}/>} {playing ? t('暂停','Pause') : t('同步回放','Play both')}</button>
-      <input type="range" min={0} max={duration} step="any" value={elapsed} onChange={e=>seek(Number(e.target.value))}
+      <input className="rr-seek" type="range" min={0} max={duration} step="any" value={elapsed} onChange={e=>seek(Number(e.target.value))}
         aria-label={t('同步执行时间','Shared execution time')} aria-valuetext={sec(elapsed)+' s'}/>
       <output>{sec(elapsed)} s</output>
     </div>
@@ -85,7 +85,7 @@ function Comparison({slow, fast, name, practice, cohort}: {slow: Execution; fast
       {share != null && t(`这段折返占两段执行用时差的 ${share}%。`,` This accounts for ${share}% of the time difference between these two executions.`)}</p>}
     {gap && <p><b>{t('专项训练','Practice')}</b> · {t(`先回看 ${slow.hit.label} 第 ${slow.first+gap.from}→${slow.first+gap.to} 个动作，再看 ${fast.hit.label} 的路线。`,`Review moves ${slow.first+gap.from}→${slow.first+gap.to} in ${slow.hit.label}, then watch the route in ${fast.hit.label}. `)}
       {loop ? t('练前先说出入槽方向，连续做对 5 次。记录折返次数和执行中位数，再用新打乱复测。','Confirm the insertion direction, then complete five correct repetitions. Track returns and median execution time, then retest on fresh scrambles.') : t('把间隔两侧的动作连练 5 次，复测最长间隔和执行用时中位数。','Link the two turns across the gap five times, then remeasure the longest gap and median execution time.')}</p>}
-    <div className="rr-actions">{gap && <button type="button" onClick={()=>seek(slow.moves[gap.from].ts)}>{t('定位最长间隔','Seek to longest gap')}</button>}</div>
+    <div className="rr-actions">{gap && <button className="rr-action" type="button" onClick={()=>seek(slow.moves[gap.from].ts)}>{t('定位最长间隔','Seek to longest gap')}</button>}</div>
   </section>;
 }
 

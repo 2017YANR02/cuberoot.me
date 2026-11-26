@@ -88,7 +88,7 @@ export default function ReplayGoalTrainer({owner, set, caseId, session}: {owner:
   }
   return <section className="replay-reply rr-panel rr-guided" data-no-timer aria-label={t('复盘专项练习','Guided replay practice')}>
     <header><h3>{item?.name} · {t(goalLabels[goal].zh,goalLabels[goal].en)}{drill.sourceStage && ' · '+drill.sourceStage+' '+(session.slot ?? '')}</h3></header>
-    {loadError ? <button type="button" onClick={()=>setRetry(n=>n+1)}>{t('重新加载公式','Reload case')}</button> : !item ? <p role="status">{t('正在加载公式…','Loading case…')}</p> : setup ? <>
+    {loadError ? <button className="rr-action" type="button" onClick={()=>setRetry(n=>n+1)}>{t('重新加载公式','Reload case')}</button> : !item ? <p role="status">{t('正在加载公式…','Loading case…')}</p> : setup ? <>
       <p>{goal==='recognition'?t('记住原位。开始后，选择让顶层回到原位的调整。','Study this orientation. Start, then choose the adjustment that restores it.')
         : goal==='transition'?t('按打乱摆好起点。从上一段末尾连做，进入目标段时标记一次，完成后停止。','Set up the position and start from the previous stage. Mark entry to the target stage, then finish.')
         : goal==='routes'?t('从同一起点交替练原解和参考解，每轮记录正确情况和用时。','Alternate the recorded and reference routes from this position. Mark each result and time.')
@@ -96,7 +96,7 @@ export default function ReplayGoalTrainer({owner, set, caseId, session}: {owner:
       {stepping && line ? <Player puzzle="3x3" set="" setup={viewSetup} alg={line} sceneRot={reviewCamera(session.slot,set)}
         size={200} moveDurationMs={450} interactionMode="none" hideResetView onStepChange={setStep}/> :
         <ReplayPracticeCube setup={viewSetup} slot={session.slot} set={set} size={160} alt={t('当前练习局面','Current practice position')}/>}
-      {goal!=='recognition' && line && !attempt && <div className="rr-actions"><button type="button" aria-pressed={stepping}
+      {goal!=='recognition' && line && !attempt && <div className="rr-actions"><button className="rr-action" type="button" aria-pressed={stepping}
         onClick={()=>{setStep(0);setStepping(!stepping);}}>{stepping?t('收起逐步跟练','Close walkthrough'):t('逐步跟练','Step through')}</button></div>}
       {goal!=='recognition' && <><details><summary>{t('起始打乱','Starting scramble')}</summary><code>{inViewerGrip(setup, session.slot) ?? setup}</code></details>
         {line && <p>{route==='reference'?t('参考解','Reference'):route==='recorded'?t('原解','Recorded'):t('练习路线','Practice moves')}{session.slot && shownLine && t('（当前视角）',' (as viewed)')} · <code>{(shownLine ?? line).split(/\s+/).map((m,i)=><span key={i}>{i>0?' ':''}{drill.entryAfter===i && <b> | </b>}{stepping && step===i+1 ? <strong aria-current="step"><u>{m}</u></strong> : m}</span>)}</code>
@@ -105,21 +105,21 @@ export default function ReplayGoalTrainer({owner, set, caseId, session}: {owner:
           {drill.entryAfter!=null && <small>{t(' ｜ 后进入目标段',' · Target stage begins after |')}</small>}</p>}</>}
       {goal!=='recognition' && <details><summary>{t('智能魔方转动间隔','Smart cube turn intervals')}</summary>
         <p>{t('连接后记录首末转动用时和最长相邻转动间隔。','Connect to measure first-to-last turn time and the longest gap between turns.')}</p>
-        <button type="button" disabled={!!attempt} onClick={()=>cube.status.connected?cube.disconnect():void cube.connect().catch(()=>
+        <button className="rr-action" type="button" disabled={!!attempt} onClick={()=>cube.status.connected?cube.disconnect():void cube.connect().catch(()=>
           setFeedback(t('连接未完成，可继续手动计时。','Connection incomplete. Manual timing is available.')))}>
           {cube.status.connected?t('断开智能魔方','Disconnect cube'):t('连接智能魔方','Connect cube')}</button>
         {macRequest && <form onSubmit={e=>{e.preventDefault();macRequest.finish(mac.trim());setMacRequest(undefined);}}>
           <label>{macRequest.device} MAC <input value={mac} required onChange={e=>setMac(e.target.value)}/></label>
           <button type="submit">{t('确认','Confirm')}</button><button type="button" onClick={()=>{macRequest.finish(null);setMacRequest(undefined);}}>{t('取消','Cancel')}</button></form>}
       </details>}
-      <div className="rr-actions">{!attempt ? <button type="button" onClick={start}>{t('开始本次练习','Start attempt')}</button> :
-        goal==='recognition' ? aufs.map((auf,i)=><button key={i} type="button" onClick={()=>finish((attempt.adjustment+i)%4===0)}>{auf || t('原位','Aligned')}</button>) :
-          <>{goal==='transition' && attempt.entryMs==null ? <button type="button" onClick={()=>{
+      <div className="rr-actions">{!attempt ? <button className="rr-action" type="button" onClick={start}>{t('开始本次练习','Start attempt')}</button> :
+        goal==='recognition' ? aufs.map((auf,i)=><button className="rr-action" key={i} type="button" onClick={()=>finish((attempt.adjustment+i)%4===0)}>{auf || t('原位','Aligned')}</button>) :
+          <>{goal==='transition' && attempt.entryMs==null ? <button className="rr-action" type="button" onClick={()=>{
             const marked={...attempt,entryMs:Math.round(performance.now()-attempt.tick)};active.current=marked;setAttempt(marked);
-          }}>{t('进入目标段','Mark stage entry')}</button> : <button type="button" onClick={()=>finish(true)}>{t('完成 · 正确','Finish · correct')}</button>}
-          <button type="button" onClick={()=>finish(false)}>{t('记为失误','Mark missed')}</button></>}</div>
+          }}>{t('进入目标段','Mark stage entry')}</button> : <button className="rr-action" type="button" onClick={()=>finish(true)}>{t('完成 · 正确','Finish · correct')}</button>}
+          <button className="rr-action" type="button" onClick={()=>finish(false)}>{t('记为失误','Mark missed')}</button></>}</div>
       <small>{t('手动计时','Manual timing')} · {t('本次已记','Attempts saved')} {completed}</small>
     </> : <p role="status">{t('此公式缺少经确认的起始局面。','A verified starting position is unavailable for this case.')}</p>}
-    <p role="status">{feedback}</p><div className="rr-actions"><button type="button" onClick={()=>returnToTrainingReplay(session.id,session.returnPath)}>{t('回到本局复盘','Return to this solve')}</button></div>
+    <p role="status">{feedback}</p><div className="rr-actions"><button className="rr-action" type="button" onClick={()=>returnToTrainingReplay(session.id,session.returnPath)}>{t('回到本局复盘','Return to this solve')}</button></div>
   </section>;
 }

@@ -49,7 +49,7 @@ export default function ReplayTransferComparison({summary,origin}: Pick<ReplayRe
         {periods.map(([key, period, label]) => period.count < MIN_TRANSFER_SOLVES && <p key={key}>
           <strong>{t(label+'样本不足',label+' · limited sample')}</strong>
           {t('，至少需要 '+MIN_TRANSFER_SOLVES+' 局同公式记录。',' · At least '+MIN_TRANSFER_SOLVES+' matching solves needed.')}</p>)}
-        {examples.length>0 && <div className="rr-actions"><button type="button" aria-expanded={openPair===stage.key+role+name}
+        {examples.length>0 && <div className="rr-actions"><button className="rr-action" type="button" aria-expanded={openPair===stage.key+role+name}
           onClick={()=>{setSelected(undefined);setOpenPair(openPair===stage.key+role+name ? undefined : stage.key+role+name);}}>
           {openPair===stage.key+role+name ? t('收起对照','Close comparison') : t('并排回放','Compare replays')} · {examples[0].label} / {examples[1].label} · {examples[0].slot}
         </button></div>}
@@ -62,14 +62,14 @@ export default function ReplayTransferComparison({summary,origin}: Pick<ReplayRe
           <p>{t('起手前中位数','Median entry')} {seconds(c.before.recognitionMs)} → {seconds(c.after.recognitionMs)} s
             {' · '}{t('执行中位数','Median execution')} {seconds(c.before.executionMs)} → {seconds(c.after.executionMs)} s</p>
           {Math.min(c.before.count,c.after.count)<MIN_TRANSFER_SOLVES && <small>{t('样本不足','Limited sample')}</small>}
-          <div className="rr-actions">{c.after.hits.map(hit=><button type="button" key={hit.solveId+':'+hit.range.firstMoveIndex}
+          <div className="rr-actions">{c.after.hits.map(hit=><button className="rr-action" type="button" key={hit.solveId+':'+hit.range.firstMoveIndex}
             onClick={()=>show(hit)}>▷ {seconds(hit.timeMs)} s · {hit.label} {hit.slot}</button>)}</div>
         </details>)}
         {periods.map(([key, period, label]) => period.hits.length > 0 && <details key={key} open={key === 'after'}>
           <summary>{t(label+'命中记录',label+' · matching segments')} · {period.hits.length}</summary>
           <div className="rr-actions">{period.hits.map(hit => {
             const title = caseName+' · '+seconds(hit.timeMs)+' s · '+hit.label+' '+hit.slot;
-            return <button key={hit.solveId+':'+hit.range.firstMoveIndex} type="button"
+            return <button className="rr-action" key={hit.solveId+':'+hit.range.firstMoveIndex} type="button"
               data-solve={hit.solveId} aria-label={t('回放 ','Play ')+title}
               onClick={() => show(hit)}>
               ▷ {seconds(hit.timeMs)} s · {hit.label} {hit.slot}</button>;
