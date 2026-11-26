@@ -285,6 +285,25 @@ export class InstalledAuthClient {
     return operation;
   }
 
+  async installCredentialSession(session: WebSession, isCurrent: () => boolean): Promise<WebSession | null> {
+    const validated = decodeWebSession(session);
+    if (!validated || !isCurrent()) return null;
+    const revision = ++this.sessionRevision;
+    const saved = await this.mutateStorage(revision, async () => {
+      if (!isCurrent()) return;
+      await this.runtime.storage.removeItem(PENDING_KEY);
+      if (!isCurrent()) return;
+      const previous = await this.runtime.storage.getItem(SESSION_KEY);
+      if (!isCurrent()) return;
+      await this.runtime.storage.setItem(SESSION_KEY, JSON.stringify(validated));
+      if (!isCurrent()) {
+        if (previous) await this.runtime.storage.setItem(SESSION_KEY, previous);
+        else await this.runtime.storage.removeItem(SESSION_KEY);
+      }
+    });
+    return saved && isCurrent() ? validated : null;
+  }
+
   private async finishOnce(callbackUrl: string): Promise<WebSession | null> {
     const revision = this.sessionRevision;
     const callback = decodeMobileAuthCallback(callbackUrl);

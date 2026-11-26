@@ -1,0 +1,63 @@
+.installed-account {
+  min-width: 0;
+  min-height: 0;
+  padding: 18px max(16px, env(safe-area-inset-right)) max(24px, var(--account-nav-clearance, 0px)) max(16px, env(safe-area-inset-left));
+}
+
+.installed-account-content { width: min(100%, 480px); margin-inline: auto; }
+.installed-account-header { display: flex; align-items: center; gap: 8px; margin-bottom: 18px; }
+.installed-account-header h1 { margin: 0; font-size: 1.35rem; }
+.installed-account-header:has(.installed-account-back) { margin-left: -8px; }
+.installed-account-back {
+  display: inline-grid;
+  place-items: center;
+  flex: 0 0 44px;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  color: var(--foreground);
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+}
+.installed-account-detail-header { position: relative; z-index: 2; display: flex; flex: 0 0 auto; align-items: center; gap: 6px; padding-inline: 6px; border-bottom: 1px solid var(--border-default); }
+.installed-account-identity { display: flex; align-items: center; gap: 12px; padding-block: 4px 18px; }
+.installed-account-identity > div { display: grid; gap: 2px; min-width: 0; overflow-wrap: anywhere; }
+.installed-account-membership { color: var(--accent); }
+.installed-account-identity > div > span { color: var(--muted-foreground); font-size: 0.9rem; }
+.installed-account-avatar {
+  display: grid;
+  place-items: center;
+  width: 54px;
+  height: 54px;
+  flex-shrink: 0;
+  object-fit: cover;
+  border-radius: 50%;
+  background: var(--muted);
+  color: var(--muted-foreground);
+}
+.installed-account-login { width: 100%; min-height: 44px; margin-bottom: 14px; }
+.installed-account-actions { display: grid; }
+.installed-account-action {
+  display: grid;
+  grid-template-columns: 22px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  min-height: 48px;
+  padding: 8px 4px;
+  border: 0;
+  border-bottom: 1px solid var(--border-default);
+  background: transparent;
+  color: var(--foreground);
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
+}
+.installed-account-action:disabled { opacity: 0.55; cursor: default; }
+.installed-account-action > span { display: grid; place-items: center; }
+.installed-account-action > span > svg { width: 19px; height: 19px; }
+.installed-account-action > svg { color: var(--muted-foreground); }
+.installed-account-signin .auth-input { min-height: 44px; font-size: 16px; }
+.installed-account-signin .auth-primary,
+.installed-account-signin .auth-sso { min-height: 44px; }
+.installed-account-signin .auth-otp-cell { min-width: 0; }

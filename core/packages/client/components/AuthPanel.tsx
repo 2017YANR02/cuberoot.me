@@ -9,7 +9,7 @@ import '@cuberoot/timer-ui/compact-select.css';
 //  2. AccountPanel —— 已绑定身份 + 绑定新方式 + 设/改密码 + 解绑。同样只渲染于账户设置。
 // 两者共用同一套表单原语(CodeFlow / 密码表单 / 错误文案),故同处一文件。
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
 import { Check, Copy, Loader2, Mail, Smartphone, KeyRound, Merge } from '@app-foundation/icons/lucide';
 import { SiApple, SiWechat, SiQq, SiAlipay, SiTiktok } from 'react-icons/si';
 import { primaryHandle, visibleAccountIdentities, ACCOUNT_PROVIDER_LABELS as PROVIDER_LABEL } from '@cuberoot/shared/account';
@@ -18,7 +18,6 @@ import AppLink from '@/components/AppLink';
 import { PasswordInput } from '@/components/PasswordInput';
 import { ClearButton } from '@/components/ClearButton';
 import { applySession, useAuthUser, authActions, getAuthUser } from '@/lib/auth-store';
-import { persistItem } from '@/lib/safe-storage';
 import { useLang } from '@/i18n/tr';
 import { useT } from '@/hooks/useT';
 import {
@@ -33,25 +32,12 @@ import {
 import { requestGoogleAssertion } from '@/lib/google-auth';
 import { startSocialLogin, isBlockedWebview } from '@/lib/social-auth';
 import { AccountChoiceRequired, clearIdentityChoice, getIdentityChoice, rememberIdentityChoice, updateIdentityChoice, useIdentityChoice, type IdentityChoice } from '@/lib/identity-choice';
+import { authErrorText, CodeFlow, CredentialFormsProvider, FirstPartyLogin, SetPasswordForm,
+  type CredentialFormPort, type SignedIn } from '@cuberoot/app-ui/account-forms';
+import '@cuberoot/app-ui/account-forms.css';
 import './auth-panel.css';
 
 const ICON = 16;
-const CODE_LEN = 6;
-type Channel = 'email' | 'phone';
-
-// A convenience hint only: never store passwords, codes or authorization here.
-function readRememberedLogin(channel: Channel): string {
-  try { return localStorage.getItem('cuberoot_login_' + channel) ?? ''; }
-  catch { return ''; }
-}
-function rememberLogin(channel: Channel, value: string): void {
-  try {
-    const key = 'cuberoot_login_' + channel;
-    if (value.trim()) persistItem(key, value.trim());
-    else localStorage.removeItem(key);
-  } catch { /* Remembering an account is optional; sign-in still succeeds. */ }
-}
-
 /** Login and identity-linking share one cancellable redirect lifecycle. */
 function useSocialRedirect() {
   const [busy, setBusy] = useState<RedirectAuthProvider | null>(null);
@@ -96,8 +82,30 @@ function useSocialRedirect() {
  * 刚建的),hasWca 说明账号已带 WCA 身份。两者一起决定要不要给新人做「有 WCA ID 吗」的引导:
  * 只对刚注册、且还没绑 WCA 的人问一次。
  */
-export interface SignedIn { isNew?: boolean; hasWca?: boolean }
+export type { SignedIn };
 type OnSignedIn = (info?: SignedIn) => void;
+
+const webCredentialPort: CredentialFormPort = {
+  sendEmailCode, verifyEmailCode, sendPhoneCode, verifyPhoneCode,
+  sendPhonePasswordResetCode, verifyPhonePasswordResetCode, loginPassword, apiSetPassword,
+  applySession: (token, user, signal) => applySession(token, user, () => !signal.aborted),
+  async handleChoice(error) {
+    if (!(error instanceof AccountChoiceRequired)) return false;
+    await rememberIdentityChoice(error, window.location.href);
+    return true;
+  },
+  manage: {
+    send: (channel, target) => channel === 'email' ? linkEmailSend(target) : linkPhoneSend(target),
+    verify: (channel, mode, target, code) => mode === 'replace'
+      ? channel === 'email' ? replaceEmailVerify(target, code) : replacePhoneVerify(target, code)
+      : channel === 'email' ? linkEmailVerify(target, code) : linkPhoneVerify(target, code),
+  },
+};
+
+function WebCredentialForms({ children }: { children: ReactNode }) {
+  const t = useT();
+  return <CredentialFormsProvider t={t} port={webCredentialPort}>{children}</CredentialFormsProvider>;
+}
 
 /** Google 官方四色 "G" 标(内嵌 SVG,自包含,不依赖外部图标 CDN)。 */
 function GoogleGlyph({ size = 16 }: { size?: number }) {
@@ -156,471 +164,6 @@ function ProviderGlyph({ provider }: { provider: string }) {
   return <span className="auth-idicon">{G ? <G size={16} /> : null}</span>;
 }
 
-/** Apple 风格分格验证码输入:6 个格子 + 高亮当前格 + 跳动光标。一个透明原生 input 承接
- *  键盘/粘贴/iOS 短信自动填充(autocomplete=one-time-code),格子只做展示、始终左到右填。 */
-function CodeCells({ value, onChange, disabled }: {
-  value: string; onChange: (v: string) => void; disabled?: boolean;
-}) {
-  const ref = useRef<HTMLInputElement>(null);
-  const [focused, setFocused] = useState(false);
-  const toEnd = () => { const el = ref.current; if (el) el.setSelectionRange(el.value.length, el.value.length); };
-  return (
-    <div className="auth-otp" onMouseDown={(e) => { e.preventDefault(); ref.current?.focus(); toEnd(); }}>
-      <input
-        ref={ref}
-        className="auth-otp-native"
-        inputMode="numeric"
-        autoComplete="one-time-code"
-        pattern="\d*"
-        maxLength={CODE_LEN}
-        value={value}
-        autoFocus
-        disabled={disabled}
-        aria-label="verification code"
-        onFocus={() => { setFocused(true); toEnd(); }}
-        onBlur={() => setFocused(false)}
-        onChange={(e) => onChange(e.target.value.replace(/\D/g, '').slice(0, CODE_LEN))}
-      />
-      {Array.from({ length: CODE_LEN }).map((_, i) => {
-        const active = focused && (i === value.length || (value.length === CODE_LEN && i === CODE_LEN - 1));
-        return (
-          <div key={i} className={`auth-otp-cell${active ? ' is-active' : ''}${value[i] ? ' is-filled' : ''}`}>
-            {value[i] ? <span>{value[i]}</span> : active ? <span className="auth-otp-caret" /> : null}
-          </div>
-        );
-      })}
-    </div>
-  );
-}
-
-/** 把后端英文错误串 / HTTP 码翻成给用户看的本地化文案;未识别的原样回退。 */
-function authErrorText(raw: string, t: (zh: string, en: string) => string): string {
-  if (raw === 'invalid account session') return t('登录响应无效，请重新登录。', 'The sign-in response was invalid. Sign in again.');
-  if (raw === 'account changed; sign in again') return t('当前账号已更改，请重新登录并确认。', 'Your account changed. Sign in and confirm again.');
-  if (raw === 'identity already linked to another account') return t('这个登录方式已绑定其他账号，请先检查账号状态。', 'This sign-in method is linked to another account. Check your account first.');
-  if (raw === 'identity ticket expired or already used') return t('本次登录已过期或已完成，请先检查账号状态，再重新登录。', 'This sign-in request expired or was already completed. Check your account before signing in again.');
-  if (raw === 'session storage failed' || raw.includes('account choice requires browser storage')) return t('无法保存登录状态，请允许浏览器使用存储后重试。', 'Could not save your session. Allow browser storage and retry.');
-  if (raw === 'account not found') return t('未找到已有账号，请使用原来绑定的登录方式。', 'No existing account found. Use a sign-in method already linked to your account.');
-  const m = raw.toLowerCase();
-  if (m.includes('too frequent')) return t('操作太频繁,请 60 秒后再试', 'Too many requests — please wait a minute');
-  if (m.includes('wrong or expired')) return t('验证码错误或已过期', 'Wrong or expired code');
-  if (m.includes('wrong email or password')) return t('邮箱或密码错误,或该邮箱未设密码', 'Wrong email or password (or no password set)');
-  if (m.includes('wrong current password')) return t('当前密码不正确', 'Current password is incorrect');
-  if (m.includes('phone not linked to an account')) return t('该手机号未绑定账号', 'No account is linked to this phone number');
-  if (m.includes('confirmation does not match')) return t('输入的内容与账号标识不一致', "That doesn't match your account identifier");
-  if (m.includes('cancel automatic renewal before deleting account')) return t('请先取消自动续费，确认退订成功后再注销账号。注销账号不会代替微信解约。', 'Cancel automatic renewal and confirm it has ended before deleting your account. Account deletion does not revoke your WeChat payment authorization.');
-  if (m.includes('invalid password')) return t('密码至少 8 位', 'Password must be at least 8 characters');
-  if (m.includes('not configured')) return t('该登录方式暂未开放', "This sign-in method isn't available yet");
-  if (m.includes('account already has an email')) return t('原账号已绑定其他邮箱，请在账号设置中更换。', 'Your account already has another email. Change it in account settings.');
-  if (m.includes('account already has a phone')) return t('原账号已绑定其他手机号，请在账号设置中更换。', 'Your account already has another phone number. Change it in account settings.');
-  if (m.includes('already linked')) return t('该方式已绑定到另一个账号', 'Already linked to another account');
-  if (m.includes('credential_conflict')) return t('两个账号存在重复登录凭据,请先在其中一个账号解绑同类方式或移除密码', 'The accounts have duplicate sign-in credentials. Unlink the duplicate type or remove one password first');
-  if (m.includes('wca_conflict')) return t('两个账号绑定了不同的 WCA ID,不能自动合并', 'The accounts have different WCA IDs and cannot be merged automatically');
-  if (m.includes('linked_data')) return t('待合并账号含有需要人工确认归属的数据,请联系管理员', 'The account contains data that needs an administrator to review');
-  if (m.includes('data_conflict')) return t('两个账号存在无法自动合并的重复数据,原账号均未改动', 'The accounts contain conflicting data; neither account was changed');
-  if (m.includes('already_merged')) return t('其中一个账号已经合并过', 'One of these accounts has already been merged');
-  if (m.includes('invalid merge code')) return t('合并码格式不正确', 'Invalid merge code');
-  if (m.includes('invalid email')) return t('邮箱格式不正确', 'Invalid email address');
-  // 只支持中国大陆号(sms.ts 走的是国内通道)。旧文案「手机号格式不正确」对一个合法的
-  // 美国号码是句假话,人家会以为自己填错了。说清楚不支持,并指路还能用的方式。
-  if (m.includes('invalid phone')) return t('请输入 11 位中国大陆手机号。国外号码暂不支持,可用邮箱 / WCA / Google 登录', 'Enter an 11-digit mainland China number. Other countries aren’t supported yet — use email, WCA or Google instead');
-  if (m.includes('invalid input')) return t('输入有误,请检查', 'Invalid input');
-  if (m.includes('send failed')) return t('发送失败,请稍后重试', 'Send failed — please try again');
-  if (m.includes('popup_closed')) return t('登录窗口已关闭', 'Sign-in window closed');
-  if (m.includes('popup_failed_to_open')) return t('无法打开登录窗口,请检查浏览器弹窗拦截', 'Could not open sign-in window — check your popup blocker');
-  if (m.includes('apple sign-in requires browser storage')) return t('请允许浏览器存储后重试 Apple 登录', 'Allow browser storage and try Apple sign-in again');
-  if (m.includes('apple authorization requires system browser')) return t('请更新 App 后在系统浏览器中完成 Apple 授权', 'Update the app and complete Apple authorization in the system browser');
-  if (m.startsWith('apple linking requires canonical site: ')) return t('请先在以下网站登录已有账号，再绑定 Apple：', 'Sign in to your existing account on this site before linking Apple: ') + raw.slice('Apple linking requires canonical site: '.length);
-  if (/invalid (wechat|qq|alipay|google|apple) (code|token|authorization|credential)/.test(m)) return t('第三方登录失败,请重试', 'Third-party sign-in failed — please try again');
-  if (m.includes('apple service unavailable') || m.includes('account service unavailable') || m.includes('http 404') || /http 5\d\d/.test(m)) return t('服务暂时不可用,请稍后重试', 'Service temporarily unavailable — please try again');
-  return raw;
-}
-
-/**
- * 邮箱/手机验证码流程(发码 → 输码 → 校验)。
- *   login    验证后登录
- *   link     绑到当前账号
- *   replace  换掉当前账号已有的那条(邮箱 / 手机号)—— 发码与 link 同一条链路,只有最后落库不同
- *   reset    仅手机找回密码;验证码和登录用途隔离,验证后签出 10 分钟重置授权
- */
-function CodeFlow({ channel, mode, onDone }: { channel: Channel; mode: 'login' | 'link' | 'replace' | 'reset'; onDone: OnSignedIn }) {
-  const t = useT();
-  const [target, setTarget] = useState('');
-  useEffect(() => {
-    if (mode === 'login' || mode === 'reset') setTarget(readRememberedLogin(channel));
-  }, [channel, mode]);
-  const [code, setCode] = useState('');
-  const [step, setStep] = useState<'input' | 'code'>('input');
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const verification = useRef<AbortController | null>(null);
-  useEffect(() => () => { verification.current?.abort(); }, []);
-
-  const label = channel === 'email' ? t('邮箱', 'Email') : t('手机号', 'Phone');
-  const placeholder = channel === 'email' ? undefined : t('11 位手机号', '11-digit phone');
-
-  const send = useCallback(async () => {
-    setError(null);
-    setBusy(true);
-    try {
-      if (mode === 'link' || mode === 'replace') {
-        channel === 'email' ? await linkEmailSend(target) : await linkPhoneSend(target);
-      } else if (mode === 'reset') {
-        await sendPhonePasswordResetCode(target);
-      } else {
-        channel === 'email' ? await sendEmailCode(target) : await sendPhoneCode(target);
-      }
-      setStep('code');
-    } catch (e) {
-      setError(authErrorText(e instanceof Error ? e.message : String(e), t));
-    } finally {
-      setBusy(false);
-    }
-  }, [channel, mode, target]);
-
-  const verify = useCallback(async () => {
-    if (verification.current) return;
-    const controller = new AbortController();
-    verification.current = controller;
-    setError(null);
-    setBusy(true);
-    try {
-      if (mode === 'replace') {
-        channel === 'email' ? await replaceEmailVerify(target, code) : await replacePhoneVerify(target, code);
-        if (!controller.signal.aborted) onDone();
-      } else if (mode === 'link') {
-        channel === 'email' ? await linkEmailVerify(target, code) : await linkPhoneVerify(target, code);
-        if (!controller.signal.aborted) onDone();
-      } else if (mode === 'reset') {
-        const r = await verifyPhonePasswordResetCode(target, code, controller.signal);
-        if (controller.signal.aborted) return;
-        if (!(await applySession(r.token, r.user))) throw new Error('session storage failed');
-        rememberLogin(channel, target);
-        onDone();
-      } else {
-        const r = channel === 'email' ? await verifyEmailCode(target, code, { signal: controller.signal }) : await verifyPhoneCode(target, code, { signal: controller.signal });
-        if (controller.signal.aborted) return;
-        if (!(await applySession(r.token, r.user))) throw new Error('session storage failed');
-        rememberLogin(channel, target);
-        onDone({ isNew: r.isNew, hasWca: !!r.user.wcaId });
-      }
-    } catch (e) {
-      if (controller.signal.aborted) return;
-      if (mode === 'login' && e instanceof AccountChoiceRequired) {
-        try { await rememberIdentityChoice(e, window.location.href); }
-        catch (storageError) { setError(authErrorText(String(storageError), t)); }
-        return;
-      }
-      setError(authErrorText(e instanceof Error ? e.message : String(e), t));
-    } finally {
-      if (verification.current === controller) verification.current = null;
-      if (!controller.signal.aborted) setBusy(false);
-    }
-  }, [channel, mode, target, code, onDone]);
-
-  // 满 6 位自动提交(Apple 风格,免点按钮);验证失败后 code 不变不会重复触发。
-  useEffect(() => {
-    if (step === 'code' && code.length === CODE_LEN && !busy) void verify();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [code, step]);
-
-  const input = (
-    <input
-      className="auth-input"
-      type={channel === 'email' ? 'email' : 'tel'}
-      value={target}
-      autoComplete={channel === 'email' ? 'email' : 'tel-national'}
-      autoFocus
-      placeholder={placeholder}
-      onChange={(e) => setTarget(e.target.value)}
-      onKeyDown={(e) => { if (e.key === 'Enter' && target && !busy) void send(); }}
-    />
-  );
-
-  return (
-    <div className="auth-flow">
-      {step === 'input' ? (
-        <>
-          <label className="auth-label">{label}</label>
-          {/* 手机号框挂一个 +86 前缀:只支持中国大陆号,这事该在输入前就说,而不是等人填完
-              国外号码再回一句错误。前缀纯装饰,不进 target —— normalizePhone 认裸 11 位。 */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            {channel === 'phone' ? (
-              <div className="auth-phonefield" style={{ flex: 1, minWidth: 0 }}>
-                <span className="auth-phoneprefix">+86</span>
-                {input}
-              </div>
-          ) : input}
-          {target && !busy && <ClearButton variant="standalone" ariaLabel={t('清除并忘记账号', 'Clear and forget account')} onClick={() => { setTarget(''); if (mode === 'login' || mode === 'reset') rememberLogin(channel, ''); }} />}
-          </div>
-          {error && <p className="auth-error">{error}</p>}
-          <button className="auth-primary" disabled={!target || busy} onClick={() => void send()}>
-            {busy ? <Loader2 size={ICON} className="auth-spin" /> : null}
-            {t('发送验证码', 'Send code')}
-          </button>
-        </>
-      ) : (
-        <>
-          <label className="auth-label">{t('验证码', 'Verification code')} · {target}</label>
-          <CodeCells value={code} onChange={setCode} disabled={busy} />
-          {error && <p className="auth-error">{error}</p>}
-          <button className="auth-primary" disabled={code.length !== CODE_LEN || busy} onClick={() => void verify()}>
-            {busy ? <Loader2 size={ICON} className="auth-spin" /> : null}
-            {mode === 'login' ? t('登录', 'Sign in') : mode === 'replace' ? t('更换', 'Change') : mode === 'reset' ? t('继续', 'Continue') : t('绑定', 'Link')}
-          </button>
-          <button className="auth-textbtn" disabled={busy} onClick={() => { setStep('input'); setCode(''); setError(null); }}>
-            {t('改用其它' + label, 'Use another ' + label.toLowerCase())}
-          </button>
-        </>
-      )}
-    </div>
-  );
-}
-
-/**
- * 邮箱验证码登录(受控 email,发码 → 输码 → 校验)。默认方式,passwordless(Vercel/Notion 风)。
- * reset=true 时是「忘记密码」进来的:同一套验证码,只是验完不关窗,交由上层引导设新密码。
- */
-function EmailCodeFlow({ email, setEmail, onDone, toPassword, reset }: {
-  email: string; setEmail: (v: string) => void; onDone: OnSignedIn; toPassword: () => void; reset?: boolean;
-}) {
-  const t = useT();
-  const [code, setCode] = useState('');
-  const [step, setStep] = useState<'input' | 'code'>('input');
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const verification = useRef<AbortController | null>(null);
-  useEffect(() => () => { verification.current?.abort(); }, []);
-
-  const send = useCallback(async () => {
-    setError(null);
-    setBusy(true);
-    try {
-      await sendEmailCode(email);
-      setStep('code');
-    } catch (e) {
-      setError(authErrorText(e instanceof Error ? e.message : String(e), t));
-    } finally {
-      setBusy(false);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [email]);
-
-  const verify = useCallback(async () => {
-    if (verification.current) return;
-    const controller = new AbortController();
-    verification.current = controller;
-    setError(null);
-    setBusy(true);
-    try {
-      const r = await verifyEmailCode(email, code, { existingOnly: reset, signal: controller.signal });
-      if (controller.signal.aborted) return;
-      if (!(await applySession(r.token, r.user))) throw new Error('session storage failed');
-      rememberLogin('email', email);
-      onDone({ isNew: r.isNew, hasWca: !!r.user.wcaId });
-    } catch (e) {
-      if (controller.signal.aborted) return;
-      if (!reset && e instanceof AccountChoiceRequired) {
-        try { await rememberIdentityChoice(e, window.location.href); }
-        catch (storageError) { setError(authErrorText(String(storageError), t)); }
-        return;
-      }
-      setError(authErrorText(e instanceof Error ? e.message : String(e), t));
-    } finally {
-      if (verification.current === controller) verification.current = null;
-      if (!controller.signal.aborted) setBusy(false);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [email, code, onDone, reset]);
-
-  // 满 6 位自动提交;验证失败后 code 不变不会重复触发。
-  useEffect(() => {
-    if (step === 'code' && code.length === CODE_LEN && !busy) void verify();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [code, step]);
-
-  if (step === 'code') {
-    return (
-      <div className="auth-flow">
-        <p className="auth-hint">{t(`验证码已发送至 ${email}`, `We sent a code to ${email}`)}</p>
-        <CodeCells value={code} onChange={setCode} disabled={busy} />
-        {error && <p className="auth-error">{error}</p>}
-        <button className="auth-primary" disabled={code.length !== CODE_LEN || busy} onClick={() => void verify()}>
-          {busy ? <Loader2 size={ICON} className="auth-spin" /> : null}
-          {reset ? t('继续', 'Continue') : t('登录', 'Sign in')}
-        </button>
-        <button className="auth-textbtn" disabled={busy} onClick={() => { setStep('input'); setCode(''); setError(null); }}>
-          {t('换邮箱 / 重新发送', 'Change email / resend')}
-        </button>
-      </div>
-    );
-  }
-  return (
-    <div className="auth-flow">
-      {reset && (
-        <p className="auth-hint">
-          {t('给你的邮箱发一个验证码,验证后即可设置新密码。', "We'll email you a code — verify it and you can set a new password.")}
-        </p>
-      )}
-      <label className="auth-label">{t('邮箱', 'Email')}</label>
-      <div className="auth-clearfield">
-        <input
-          className="auth-input"
-          type="email"
-          style={{ minWidth: 0 }}
-          value={email}
-          autoFocus
-          autoComplete="email"
-          onChange={(e) => setEmail(e.target.value)}
-          onKeyDown={(e) => { if (e.key === 'Enter' && email && !busy) void send(); }}
-        />
-        {email && !busy && <ClearButton ariaLabel={t('清除并忘记账号', 'Clear and forget account')} onClick={() => { setEmail(''); rememberLogin('email', ''); }} />}
-      </div>
-      {error && <p className="auth-error">{error}</p>}
-      <button className="auth-primary" disabled={!email || busy} onClick={() => void send()}>
-        {busy ? <Loader2 size={ICON} className="auth-spin" /> : null}
-        {t('发送验证码', 'Send code')}
-      </button>
-      <button className="auth-textbtn" onClick={toPassword}>
-        {reset ? t('返回密码登录', 'Back to password sign-in') : t('用密码登录', 'Sign in with a password')}
-      </button>
-    </div>
-  );
-}
-
-/** 邮箱 + 密码登录(受控 email;仅登录已设密码的账号,未设密码走验证码 + 账号面板设密码)。 */
-// 密码登录只对「已注册且已设密码」的账号成立 → 永远不是新注册,onDone 不带 info。
-function EmailPasswordFlow({ email, setEmail, onDone, toCode, onForgot }: {
-  email: string; setEmail: (v: string) => void; onDone: OnSignedIn; toCode: () => void; onForgot: () => void;
-}) {
-  const lang = useLang();
-  const t = (zh: string, en: string) => (lang === 'zh' ? zh : en);
-  const [pw, setPw] = useState('');
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  const submit = useCallback(async () => {
-    setError(null);
-    setBusy(true);
-    try {
-      const r = await loginPassword(email, pw);
-      if (!(await applySession(r.token, r.user))) throw new Error('session storage failed');
-      rememberLogin('email', email);
-      onDone();
-    } catch (e) {
-      setError(authErrorText(e instanceof Error ? e.message : String(e), t));
-    } finally {
-      setBusy(false);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [email, pw, onDone]);
-
-  return (
-    <div className="auth-flow">
-      <label className="auth-label">{t('邮箱', 'Email')}</label>
-      <div className="auth-clearfield">
-        <input
-          className="auth-input"
-          type="email"
-          style={{ minWidth: 0 }}
-          value={email}
-          autoFocus
-          autoComplete="username"
-          onChange={(e) => setEmail(e.target.value)}
-        />
-        {email && !busy && <ClearButton ariaLabel={t('清除并忘记账号', 'Clear and forget account')} onClick={() => { setEmail(''); rememberLogin('email', ''); }} />}
-      </div>
-      <label className="auth-label">{t('密码', 'Password')}</label>
-      <PasswordInput
-        className="auth-input"
-        value={pw}
-        onChange={setPw}
-        autoComplete="current-password"
-        placeholder={t('密码', 'Password')}
-        onEnter={() => { if (email && pw && !busy) void submit(); }}
-      />
-      {error && <p className="auth-error">{error}</p>}
-      <button className="auth-primary" disabled={!email || !pw || busy} onClick={() => void submit()}>
-        {busy ? <Loader2 size={ICON} className="auth-spin" /> : null}
-        {t('登录', 'Sign in')}
-      </button>
-      <button className="auth-textbtn" onClick={toCode}>{t('用邮箱验证码登录', 'Email me a code instead')}</button>
-      <button className="auth-textbtn" onClick={onForgot}>{t('忘记密码?', 'Forgot your password?')}</button>
-    </div>
-  );
-}
-
-/**
- * 邮箱凭据区:验证码(默认)/ 密码两种方式,email 提升到此以便切换时保留已输入的地址。
- *
- * 忘记密码走 reset:同一套邮箱验证码 —— 验完即登录(会话带 amr=email_code)→ 不关窗,
- * 直接落到「设置新密码」表单(免旧密码,后端认这个 grant)。等价于别家的重置邮件链接,
- * 但不必再发第二种邮件、也不必再造一个 /reset-password 页。
- */
-function EmailAuth({ onDone }: { onDone: OnSignedIn }) {
-  const lang = useLang();
-  const t = (zh: string, en: string) => (lang === 'zh' ? zh : en);
-  const [email, setEmail] = useState('');
-  useEffect(() => { setEmail(readRememberedLogin('email')); }, []);
-  const [mode, setMode] = useState<'code' | 'password' | 'reset'>('code');
-  const [newPw, setNewPw] = useState(false); // 重置流验证通过,待设新密码
-
-  if (newPw) {
-    return (
-      <div className="auth-flow">
-        <p className="auth-hint">{t('邮箱已验证。设置一个新密码,下次即可用它登录。', 'Email verified. Set a new password to sign in with next time.')}</p>
-        <SetPasswordForm needCurrent={false} label={t('新密码', 'New password')} onDone={onDone} />
-        <button className="auth-textbtn" onClick={() => onDone()}>{t('跳过', 'Skip')}</button>
-      </div>
-    );
-  }
-  if (mode === 'password') {
-    return (
-      <EmailPasswordFlow
-        email={email} setEmail={setEmail} onDone={onDone}
-        toCode={() => setMode('code')}
-        onForgot={() => setMode('reset')}
-      />
-    );
-  }
-  return (
-    <EmailCodeFlow
-      email={email} setEmail={setEmail}
-      reset={mode === 'reset'}
-      onDone={(info) => (mode === 'reset' ? setNewPw(true) : onDone(info))}
-      toPassword={() => setMode('password')}
-    />
-  );
-}
-
-/** 手机登录及独立的找回密码用途。普通登录码不能获得重置权限。 */
-function PhoneAuth({ onDone }: { onDone: OnSignedIn }) {
-  const lang = useLang();
-  const t = (zh: string, en: string) => (lang === 'zh' ? zh : en);
-  const [reset, setReset] = useState(false);
-  const [newPw, setNewPw] = useState(false);
-
-  if (newPw) {
-    return (
-      <div className="auth-flow">
-        <p className="auth-hint">{t('手机号已验证。现在可以为账号设置新密码。', 'Phone number verified. You can now set a new account password.')}</p>
-        <SetPasswordForm needCurrent={false} label={t('新密码', 'New password')} onDone={onDone} />
-      </div>
-    );
-  }
-
-  return (
-    <>
-      {reset && <p className="auth-hint">{t('给已绑定的手机号发一个验证码,验证后即可设置新密码。', "We'll text your linked phone number a code — verify it and you can set a new password.")}</p>}
-      <CodeFlow key={reset ? 'reset' : 'login'} channel="phone" mode={reset ? 'reset' : 'login'} onDone={reset ? () => setNewPw(true) : onDone} />
-      <p className="auth-hint">{t('目前仅支持中国大陆手机号(+86)。', 'Mainland China (+86) numbers only for now.')}</p>
-      <button className="auth-textbtn" onClick={() => setReset((value) => !value)}>
-        {reset ? t('返回手机号登录', 'Back to phone sign-in') : t('用手机号重置密码', 'Reset password with phone')}
-      </button>
-    </>
-  );
-}
-
 /** 「或」分隔线(两侧发丝线 + 居中文字),分隔主凭据区与第三方登录。 */
 function OrDivider() {
   const lang = useLang();
@@ -646,79 +189,6 @@ function SsoButton({ icon, label, busy, mobileAuthProvider, onClick }: {
       <span className="auth-sso-icon">{busy ? <Loader2 size={ICON} className="auth-spin" /> : icon}</span>
       <span className="auth-sso-label">{label}</span>
     </button>
-  );
-}
-
-/**
- * 设置 / 修改 / 重置密码。needCurrent 决定要不要先验旧密码 —— 与后端同一条规矩:
- * 已有密码要改 → 要旧密码;首次设置、或本次会话刚验过邮箱(忘记密码) → 不要。
- */
-function SetPasswordForm({ needCurrent, label, onDone }: {
-  needCurrent: boolean; label: string; onDone: () => void;
-}) {
-  const lang = useLang();
-  const t = (zh: string, en: string) => (lang === 'zh' ? zh : en);
-  const [current, setCurrent] = useState('');
-  const [next, setNext] = useState('');
-  const [confirm, setConfirm] = useState('');
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [done, setDone] = useState(false);
-
-  const submit = useCallback(async () => {
-    setError(null);
-    if (next.length < 8) { setError(t('密码至少 8 位', 'Password must be at least 8 characters')); return; }
-    if (next !== confirm) { setError(t('两次输入的密码不一致', 'Passwords do not match')); return; }
-    setBusy(true);
-    try {
-      await apiSetPassword(next, needCurrent ? current : undefined);
-      setDone(true);
-      window.setTimeout(onDone, 800);
-    } catch (e) {
-      setError(authErrorText(e instanceof Error ? e.message : String(e), t));
-      setBusy(false);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [current, next, confirm, needCurrent, onDone]);
-
-  if (done) {
-    return <div className="auth-flow auth-pwform"><p className="auth-hint">{t('密码已保存。', 'Password saved.')}</p></div>;
-  }
-  return (
-    <div className="auth-flow auth-pwform">
-      {needCurrent && (
-        <>
-          <label className="auth-label">{t('当前密码', 'Current password')}</label>
-          <PasswordInput className="auth-input" value={current} onChange={setCurrent} autoComplete="current-password" autoFocus />
-        </>
-      )}
-      <label className="auth-label">{label}</label>
-      <PasswordInput
-        className="auth-input"
-        value={next}
-        onChange={setNext}
-        autoComplete="new-password"
-        autoFocus={!needCurrent}
-        placeholder={t('至少 8 位', 'At least 8 characters')}
-      />
-      <label className="auth-label">{t('确认密码', 'Confirm password')}</label>
-      <PasswordInput
-        className="auth-input"
-        value={confirm}
-        onChange={setConfirm}
-        autoComplete="new-password"
-        onEnter={() => { if (!busy) void submit(); }}
-      />
-      {error && <p className="auth-error">{error}</p>}
-      <button
-        className="auth-primary"
-        disabled={busy || !next || !confirm || (needCurrent && !current)}
-        onClick={() => void submit()}
-      >
-        {busy ? <Loader2 size={ICON} className="auth-spin" /> : null}
-        {t('保存', 'Save')}
-      </button>
-    </div>
   );
 }
 
@@ -871,13 +341,6 @@ function LoginFormFields({
   const avail = providers ?? { email: true, phone: true, wca: true, apple: false, googleClientId: null, googleRelayUrl: null, social: { wechat: null, qq: null, alipay: null, douyin: null } };
   const googleOn = !!(avail.googleClientId && avail.googleRelayUrl);
 
-  // 主凭据区:邮箱(默认)/ 手机;仅邮箱未开放时落到手机。
-  const [credMode, setCredMode] = useState<'email' | 'phone'>('email');
-  useEffect(() => {
-    if (providers && !avail.email && avail.phone) setCredMode('phone');
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [providers]);
-
   const [gBusy, setGBusy] = useState(false);
   const [gError, setGError] = useState<string | null>(null);
   const googleMounted = useRef(false);
@@ -958,13 +421,7 @@ function LoginFormFields({
     <>
       <h2 className="auth-title">{t('登录 / 注册', 'Sign in / up')}</h2>
 
-      {credMode === 'email' && avail.email && <EmailAuth onDone={onDone} />}
-      {credMode === 'phone' && avail.phone && <PhoneAuth onDone={onDone} />}
-      {avail.email && avail.phone && (
-        <button className="auth-textbtn auth-cred-switch" onClick={() => setCredMode((m) => (m === 'email' ? 'phone' : 'email'))}>
-          {credMode === 'email' ? t('用手机号登录', 'Use phone number') : t('用邮箱登录', 'Use email')}
-        </button>
-      )}
+      <WebCredentialForms><FirstPartyLogin email={avail.email} phone={avail.phone} onDone={onDone} /></WebCredentialForms>
 
       {hasCred && hasSso && <OrDivider />}
 
@@ -1086,7 +543,11 @@ function MiniProgramLinkCodePanel({ emphasized = false }: { emphasized?: boolean
  * 账号面板:已绑定身份 + 绑定新方式 + 解绑 + 设/改密码。只渲染于账户设置。
  * 姓名与登出归宿主页头部管(那是页面级信息),这里只管凭据本身。
  */
-export function AccountPanel({ expectedAppleUid, miniProgramLogin = false }: { expectedAppleUid?: number | null; miniProgramLogin?: boolean }) {
+export function AccountPanel(props: { expectedAppleUid?: number | null; miniProgramLogin?: boolean }) {
+  return <WebCredentialForms><AccountSecurity {...props} /></WebCredentialForms>;
+}
+
+function AccountSecurity({ expectedAppleUid, miniProgramLogin = false }: { expectedAppleUid?: number | null; miniProgramLogin?: boolean }) {
   const lang = useLang();
   const currentUid = useAuthUser()?.uid;
   const appleAccountMismatch = expectedAppleUid !== undefined && (!expectedAppleUid || currentUid !== expectedAppleUid);

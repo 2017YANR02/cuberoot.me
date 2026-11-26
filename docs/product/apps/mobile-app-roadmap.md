@@ -8,7 +8,7 @@
 
 > Android、iOS、HarmonyOS NEXT、Windows 和 macOS 已由仓库所有者于 2026-08-31 确认为同一个完整产品目标。五端一次设计，但绝不维护五套业务代码；宿主、共享层、能力接口和总体完成口径以 [cross-platform-app-contract.md](./cross-platform-app-contract.md) 为最高优先级合同，当前状态只在本路线图记录。网站继续作为第六个在线 surface 与内容事实源。
 
-> 顶层产品结构已由仓库所有者于 2026-08-30 明确为“计时 / 工具 / 我的”三栏，且五端共用 `@cuberoot/app-ui` 的同一 React 实现；网站首页、子页面和未改写的 `/account` 必须直接复用，不在 App 复制。页面或按钮可见不等于完成；所有当前已配置登录方式、子页交互与会话状态都要按平台端到端验收。唯一合同与成本回退规则见 [mobile-three-tab-contract.md](./mobile-three-tab-contract.md)。
+> 顶层产品结构已由仓库所有者于 2026-08-30 明确为“计时 / 工具 / 我的”三栏，且五端共用 `@cuberoot/app-ui` 的同一 React 实现；工具和我的首页随 App 打包，工具目录复用网站同一份数据。网站工具和账号管理子页继续直接复用。页面或按钮可见不等于完成；所有当前已配置登录方式、子页交互与会话状态都要按平台端到端验收。唯一合同与成本回退规则见 [mobile-three-tab-contract.md](./mobile-three-tab-contract.md)。
 >
 > 计时器产品面的 Web/五端完整 UI/UX 一致性已由仓库所有者于 2026-08-30 提升为明确合同，逐项状态与验收证据统一记录在 [mobile-timer-parity-tracker.md](./mobile-timer-parity-tracker.md)。本路线图继续负责 App 总体范围与发布门槛，不再用“首版不覆盖网站 100%”解释 `/timer` 内的假控件或交互缺失。
 
@@ -23,6 +23,27 @@
 ## 0. 当前进度与验收入口
 
 本节保留总体范围、当前验收入口与待完成检查。按日期的旧实现批次已归入[历史记录](history/mobile-app-history.md)，其中旧开关、商店状态和“未实现”不代表当前状态。只有完成实现并取得对应验证证据后才打勾；只完成代码但缺少真机、账号或商店证据的项目保持未勾选，并注明依赖条件。
+
+### 2026-11-26 五端工具首页
+
+- 工具首页随共享 App 打包，复用网站目录、双语匹配和公开排序、可见性配置。工具子页和全站搜索沿用网站路由。
+- iPhone Duo 模拟器通过本地热加载验证了九宫格、目录即时筛选、打乱子页、全站搜索入口及返回。其余平台的设备验收待完成。
+
+### 2026-11-26 五端 App 内登录
+
+- iOS、Android、HarmonyOS NEXT、Windows 和 macOS 共用「我的」首页与随 App 打包的登录页。App 与网站共用第一方表单和同一账号 API。App 直接安装第一方会话，第三方保留系统浏览器与深链回跳。账号空间、安全与会员按需打开原有网站子页。
+- iPhone Duo 模拟器通过 CubeRoot Dev 的本地 Vite 热加载显示新首页，邮箱、手机号、密码输入保持在 App 内，示例无效手机号收到服务端校验响应。真实验证码、已有账号及第三方账号验收待完成。
+
+### 2026-11-25 iOS 与 macOS 复审
+
+- macOS `0.1.2`（构建 7）因中英文商店描述缺少使用条款链接被退回（3.1.2）。已在两种语言补齐 Apple 标准 EULA，复用已上传的构建，于 22:01 PST 用 ASC CLI 重送 [macOS 审核](https://appstoreconnect.apple.com/apps/6816632957/distribution/reviewsubmissions/details/f90c912a-b32d-4ae2-8377-2ab397ccbb3f)，回读为「等待审核」。
+- iOS `1.0.2`（构建 8）已补齐两种语言的 EULA。后续审核员在 iPad 上未找到月卡和年卡（2.1(b)）。审核账号重新通过邮箱密码登录，正式与 Sandbox 商品接口均返回两项商品并确认账号绑定。两项订阅均配置了 148 个地区，包括美国和中国大陆。已在审核备注和回复中写明「我的 → 资料名称旁的皇冠按钮『订阅 Pro』→ 月卡或年卡」。沿用原构建、订阅组与两项订阅，于 22:04 PST 用 ASC CLI 重送 [iOS 审核](https://appstoreconnect.apple.com/apps/6816632957/distribution/reviewsubmissions/details/63c0190e-a8d1-4682-9c35-f979b1c14667)，回读为「等待审核」。iPad 的商店沙盒流程待 Apple 复审。
+- 两端均设为审核通过后自动发布。待 Apple 确认版本与订阅商品可售后，再验收正式购买、权益到账和恢复。
+
+### 2026-11-25 中国大陆合规复核
+
+- 在 [CubeRoot 的 App 合规页面](https://appstoreconnect.apple.com/apps/6816632957/distribution/compliance) 复核：人工智能生成或合成内容、安全评估两项均于 11 月 20 日保存为「否」，当前状态均为「有效」。安全评估栏的「有效」对应已保存的声明，没有附政府审核通过记录或评估报告。App 列表仍显示通用公告。
+- iOS 与 Mac App Store 宿主停用生成式 AI 助手及其分享路径。大陆 App 的论坛、公开发布、链接分享、计时实况及在线对战继续受地区限制。两条线上线路的地区接口均可访问，已运行地区与论坛搜索的 62 项相关测试。恢复相关功能前，按实际服务核对申报及材料。[Apple 中国大陆合规说明](https://developer.apple.com/cn/help/app-store-connect/manage-compliance-information/view-china-mainland-compliance-information/)
 
 ### 2026-11-24 Mac App Store 订阅接入
 

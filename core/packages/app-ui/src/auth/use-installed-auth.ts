@@ -1,5 +1,5 @@
-import type { MobileAuthProvider } from '@cuberoot/shared/auth/web-session';
-import { useCallback, useEffect, useState } from 'react';
+import type { MobileAuthProvider, WebSession } from '@cuberoot/shared/auth/web-session';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 import type { SupportedLanguage } from '../copy';
 import type { InstalledAppAuth, InstalledAppListener } from '../platform';
@@ -15,23 +15,24 @@ export function useInstalledAuth(
   language: SupportedLanguage,
   port: InstalledAuthPort,
 ): InstalledAppAuth {
-  const [state, setState] = useState<Omit<InstalledAppAuth, 'issueWebSessionTicket' | 'login' | 'logout'>>({
+  const [state, setState] = useState<Pick<InstalledAppAuth, 'busy' | 'error' | 'loading' | 'session'>>({
     busy: false,
     error: false,
     loading: true,
     session: null,
   });
+  const sessionVersion = useRef(0);
 
   useEffect(() => {
     let active = true;
-    let callbackApplied = false;
+    const startupVersion = sessionVersion.current;
     let listener: InstalledAppListener | undefined;
 
     const acceptCallback = async (url: string) => {
       try {
         const session = await port.client.finish(url);
         if (active && session) {
-          callbackApplied = true;
+          sessionVersion.current++;
           setState({ busy: false, error: false, loading: false, session });
         }
       } catch {
@@ -48,13 +49,13 @@ export function useInstalledAuth(
 
     void (async () => {
       for (const url of await port.getLaunchUrls()) await acceptCallback(url);
-      if (!active || callbackApplied) return;
+      if (!active || startupVersion !== sessionVersion.current) return;
       const session = await port.client.restore();
-      if (active && !callbackApplied) setState((current) => ({ ...current, loading: false, session }));
+      if (active && startupVersion === sessionVersion.current) setState((current) => ({ ...current, loading: false, session }));
     })().catch(() => {
       // A native callback can finish while startup storage/network work is pending.
       // Its authenticated session is newer than the failed startup snapshot.
-      if (active && !callbackApplied) setState((current) => ({ ...current, error: true, loading: false }));
+      if (active && startupVersion === sessionVersion.current) setState((current) => ({ ...current, error: true, loading: false }));
     });
 
     return () => {
@@ -74,6 +75,7 @@ export function useInstalledAuth(
   }, [language, port]);
 
   const logout = useCallback(async () => {
+    sessionVersion.current++;
     setState((current) => ({ ...current, busy: true, error: false }));
     try {
       await port.client.logout();
@@ -87,11 +89,25 @@ export function useInstalledAuth(
     () => port.client.issueWebSessionTicket(),
     [port],
   );
+  const installCredentialSession = useCallback(async (candidate: WebSession, isCurrent: () => boolean) => {
+    const session = await port.client.installCredentialSession(candidate, isCurrent);
+    if (!session || !isCurrent()) return false;
+    sessionVersion.current++;
+    setState({ busy: false, error: false, loading: false, session });
+    return true;
+  }, [port]);
+  const refreshAccountSession = useCallback(async () => {
+    const version = sessionVersion.current;
+    const session = await port.client.restore();
+    if (version === sessionVersion.current) setState(current => ({ ...current, session }));
+  }, [port]);
 
   return {
     ...state,
     issueWebSessionTicket,
+    installCredentialSession,
     login,
     logout,
+    refreshAccountSession,
   };
 }

@@ -91,7 +91,7 @@ async function post<T>(path: string, body: unknown, auth = false, signal?: Abort
 export const sendEmailCode = (email: string) => post<{ ok: true }>('/v1/auth/email/send', { email });
 export const verifyEmailCode = (email: string, code: string, options: { existingOnly?: boolean; signal?: AbortSignal } = {}) => postCanonicalSession('/v1/auth/email/verify', { email, code, ...(options.existingOnly || existingAccountRequired() ? { existingOnly: true } : {}) }, false, options.signal);
 // 邮箱 + 密码登录(账号已设密码即可,不依赖邮件服务)
-export const loginPassword = (email: string, password: string) => postCanonicalSession('/v1/auth/email/password', { email, password });
+export const loginPassword = (email: string, password: string, signal?: AbortSignal) => postCanonicalSession('/v1/auth/email/password', { email, password }, false, signal);
 // 设置 / 修改 / 重置密码(登录态)。改密要 currentPassword;刚验证邮箱,或通过专用短信找回流程时可免旧密码。
 export const setPassword = (password: string, currentPassword?: string) =>
   post<{ ok: true; hasPassword: true }>('/v1/auth/password/set', { password, currentPassword }, true);

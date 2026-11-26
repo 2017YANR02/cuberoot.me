@@ -91,6 +91,9 @@ import {
 } from '@cuberoot/shared/mobile-embed';
 import { MOBILE_AUTH_PROVIDERS } from '@cuberoot/shared/auth/web-session';
 import { openInstalledAccountManagement } from './auth/account-management';
+import { AccountBack, AccountHome, type AccountPage } from './auth/AccountHome';
+import { isAdminWcaId } from '@cuberoot/shared/admin';
+import { ToolsHome } from './tools/ToolsHome';
 import { decodeWebMembershipRequest } from '@cuberoot/shared/mobile-embed';
 import { toLocalIsoDate } from '@cuberoot/shared/iso-date';
 import { formatScrambleForEvent } from '@cuberoot/shared/sq1-notation';
@@ -276,6 +279,7 @@ import {
   useAutoReady,
 } from '@cuberoot/timer-ui';
 import {
+  ChevronLeft,
   Clock3,
   Grid2X2,
   Settings as SettingsIcon,
@@ -384,7 +388,6 @@ function isEmbeddedTopBarRoute(surface: MobileEmbedSurface, pathname: string) {
 const MOBILE_EMBED_INIT_RETRY_MS = 400;
 const MOBILE_EMBED_INIT_RETRIES = 25;
 const MOBILE_EMBED_AUTH_TIMEOUT_MS = 10_000;
-const TOOLS_PRELOAD_DELAY_MS = 250;
 const repository = new TimerRepository(new IndexedDbTimerStoreDriver());
 const netRecordingOutbox = new NetRecordingOutbox(({ context, solve }) => repository.saveNetSolve(context.sessionId, solve), createNetOutboxStorage());
 
@@ -406,7 +409,7 @@ function privacyUrl(language: SupportedLanguage): string {
   return language === 'zh' ? `${SITE_ORIGIN}/zh/privacy` : `${SITE_ORIGIN}/privacy`;
 }
 
-function accountUrl(language: SupportedLanguage, view?: 'delete'): string {
+function accountUrl(language: SupportedLanguage, view?: 'delete' | 'signin'): string {
   const path = language === 'zh' ? `${SITE_ORIGIN}/zh/account` : `${SITE_ORIGIN}/account`;
   return view ? `${path}?view=${view}` : path;
 }
@@ -485,6 +488,10 @@ export function App({ host, loadingMark }: { host: InstalledAppHost; loadingMark
   const recapAttemptRevisionRef = useRef(0);
   const [loadError, setLoadError] = useState<Error | null>(null);
   const [view, setView] = useState<AppView>('timer');
+  const [accountPage, setAccountPage] = useState<AccountPage>('home');
+  const accountPageRef = useRef<AccountPage>('home');
+  const accountDetails = accountPage !== 'home' && accountPage !== 'sign-in';
+  const [accountDetailsReady, setAccountDetailsReady] = useState(false);
   const appearanceReturnRef = useRef<Exclude<AppView, 'appearance'>>('account');
   const selectedView = view === 'appearance' ? appearanceReturnRef.current : view;
   const [settingsCategory, setSettingsCategory] = useState<TimerSettingCategoryId>('timer');
@@ -524,6 +531,10 @@ export function App({ host, loadingMark }: { host: InstalledAppHost; loadingMark
   }, []);
   const [openedWebViews, setOpenedWebViews] = useState({ tools: false, account: false });
   const [toolsEntryRoute, setToolsEntryRoute] = useState<string | null>(null);
+  const toolsEntryRouteRef = useRef<string | null>(null);
+  const [toolsHomeOpened, setToolsHomeOpened] = useState(false);
+  const [toolsHomeRefresh, setToolsHomeRefresh] = useState(0);
+  const toolsSearchInput = useRef<HTMLInputElement>(null);
   const [webSurfaceStatus, setWebSurfaceStatus] = useState<Record<MobileEmbedSurface, WebSurfaceStatus>>({
     account: 'loading',
     tools: 'loading',
@@ -541,7 +552,6 @@ export function App({ host, loadingMark }: { host: InstalledAppHost; loadingMark
   const [primaryNavBottomInset, setPrimaryNavBottomInset] = useState(0);
   const primaryNavRef = useRef<HTMLElement>(null);
   const toolsSearchRef = useRef<HTMLButtonElement>(null);
-  const [toolsSearchReady, setToolsSearchReady] = useState(false);
   const [toolsSearchOpen, setToolsSearchOpen] = useState(false);
   const [dockedKeyboardTop, setDockedKeyboardTop] = useState<number | null>(null);
   const [searchViewportTop, setSearchViewportTop] = useState(0);
@@ -693,7 +703,9 @@ export function App({ host, loadingMark }: { host: InstalledAppHost; loadingMark
     ? siteRouteUrl(language, toolsEntryRoute)
     : siteUrl(language), language);
   const accountEntryLocale = accountFrameLocale ?? language;
-  const accountWebUrl = installedWebEntryUrl(accountUrl(accountEntryLocale), accountEntryLocale);
+  const accountWebUrl = installedWebEntryUrl(accountPage === 'membership'
+    ? siteRouteUrl(accountEntryLocale, '/membership')
+    : accountUrl(accountEntryLocale, accountPage === 'security' ? 'signin' : undefined), accountEntryLocale);
   const auth = host.useAuth(language);
   const activeAuthSession = wcaAutoMarkLiveSession(auth.session, auth.busy);
   const authSessionRef = useRef(auth.session);
@@ -1933,6 +1945,29 @@ export function App({ host, loadingMark }: { host: InstalledAppHost; loadingMark
     accountSyncTimeoutRef.current = null;
   }, []);
 
+  const navigateAccount = useCallback((page: AccountPage) => {
+    if (page === accountPageRef.current) return;
+    if (page === 'home' && (accountPageRef.current === 'profile' || accountPageRef.current === 'security')
+      && authSessionRef.current) void auth.refreshAccountSession().catch(() => undefined);
+    accountPageRef.current = page;
+    const details = page !== 'home' && page !== 'sign-in';
+    clearAccountSyncTimeout();
+    accountSyncInFlightRef.current = null;
+    accountSyncedTokenRef.current = null;
+    webDepthRef.current.account = 0;
+    webBridgeReadyRef.current.account = false;
+    setWebSurfaceStatus(current => ({ ...current, account: 'loading' }));
+    setWebSurfaceReloadUrl(current => ({ ...current, account: null }));
+    setWebSurfaceRevision(current => ({ ...current, account: current.account + 1 }));
+    setAccountDetailsReady(false);
+    setOpenedWebViews(current => ({ ...current, account: details }));
+    setAccountPage(page);
+  }, [auth.refreshAccountSession, clearAccountSyncTimeout]);
+
+  useEffect(() => {
+    if (accountDetails && !auth.loading && !auth.session) navigateAccount('home');
+  }, [accountDetails, auth.loading, auth.session, navigateAccount]);
+
   const retryWebSurface = useCallback((surface: MobileEmbedSurface) => {
     clearWebSurfaceHandshake(surface);
     webBridgeReadyRef.current[surface] = false;
@@ -1941,6 +1976,7 @@ export function App({ host, loadingMark }: { host: InstalledAppHost; loadingMark
       clearAccountSyncTimeout();
       accountSyncInFlightRef.current = null;
       accountSyncedTokenRef.current = null;
+      setAccountDetailsReady(false);
     }
     const fallbackUrl = surface === 'tools' ? toolsWebUrl : accountWebUrl;
     let nextUrl = webLastHrefRef.current[surface] || fallbackUrl;
@@ -1953,15 +1989,6 @@ export function App({ host, loadingMark }: { host: InstalledAppHost; loadingMark
     setWebSurfaceReloadUrl((current) => ({ ...current, [surface]: nextUrl }));
     setWebSurfaceRevision((current) => ({ ...current, [surface]: current[surface] + 1 }));
   }, [accountWebUrl, clearAccountSyncTimeout, clearWebSurfaceHandshake, toolsWebUrl]);
-
-  useEffect(() => {
-    if (!storeLoaded || connection !== 'online' || openedWebViews.tools) return;
-    // Give the local timer its first paint before starting the online homepage.
-    const timeout = window.setTimeout(() => {
-      setOpenedWebViews((current) => current.tools ? current : { ...current, tools: true });
-    }, TOOLS_PRELOAD_DELAY_MS);
-    return () => window.clearTimeout(timeout);
-  }, [storeLoaded, connection, openedWebViews.tools]);
 
   useEffect(() => {
     for (const surface of MOBILE_EMBED_SURFACES) {
@@ -2099,7 +2126,8 @@ export function App({ host, loadingMark }: { host: InstalledAppHost; loadingMark
       SITE_ORIGIN,
     );
     await auth.logout();
-  }, [auth.logout, clearAccountSyncTimeout]);
+    navigateAccount('home');
+  }, [auth.logout, clearAccountSyncTimeout, navigateAccount]);
   logoutEverywhereRef.current = logoutEverywhere;
 
   const selectPrimaryView = useCallback((next: PrimaryView) => {
@@ -2109,16 +2137,11 @@ export function App({ host, loadingMark }: { host: InstalledAppHost; loadingMark
       announce(copy.finishAttemptFirst);
       return false;
     }
-    if (next === 'tools' || next === 'account') {
-      setOpenedWebViews((current) => {
-        if (current[next]) return current;
-        webDepthRef.current[next] = 0;
-        return { ...current, [next]: true };
-      });
-    }
+    if (next === 'tools') setToolsHomeOpened(true);
+    if (next === 'account' && viewRef.current === 'account') navigateAccount('home');
     setView(next);
     return true;
-  }, [announce, copy.finishAttemptFirst]);
+  }, [announce, copy.finishAttemptFirst, navigateAccount]);
 
   const openAppAppearance = useCallback(() => {
     if (timingRunningRef.current || battleModeActiveRef.current || timerContextMutationBusyRef.current) {
@@ -2143,10 +2166,43 @@ export function App({ host, loadingMark }: { host: InstalledAppHost; loadingMark
     return () => window.removeEventListener('keydown', onKeyDown);
   }, [view, closeAppAppearance]);
 
+  const closeToolsPage = useCallback(() => {
+    toolsEntryRouteRef.current = null;
+    webDepthRef.current.tools = 0;
+    clearWebSurfaceHandshake('tools');
+    webBridgeReadyRef.current.tools = false;
+    webSurfaceLoadedRef.current.tools = false;
+    desktopToolsHistory.current = [];
+    setToolsEntryRoute(null);
+    setOpenedWebViews(current => current.tools ? { ...current, tools: false } : current);
+    setWebSurfaceReloadUrl(current => ({ ...current, tools: null }));
+    setWebSurfaceStatus(current => ({ ...current, tools: 'loading' }));
+  }, [clearWebSurfaceHandshake]);
+
+  const backFromToolsPage = useCallback(() => {
+    if (webBridgeReadyRef.current.tools && webDepthRef.current.tools > 0) {
+      webFrameRefs.current.tools?.contentWindow?.postMessage(mobileEmbedBackMessage('tools'), SITE_ORIGIN);
+      return;
+    }
+    const history = desktopToolsHistory.current;
+    if (history.length > 1) {
+      history.pop();
+      setWebSurfaceReloadUrl(current => ({ ...current, tools: history[history.length - 1]! }));
+      setWebSurfaceRevision(current => ({ ...current, tools: current.tools + 1 }));
+      return;
+    }
+    closeToolsPage();
+  }, [closeToolsPage]);
+
+  const canOpenTool = useCallback((href: string) => {
+    const url = new URL(href, SITE_ORIGIN);
+    return !installedContentUnavailable(url.href, host.generativeAiDisabled)
+      && (communityAvailable || !isInstalledCommunityHref(url.href));
+  }, [communityAvailable, host.generativeAiDisabled]);
+
   const openToolsRoute = useCallback((route: string) => {
     const destination = new URL(route, SITE_ORIGIN);
-    if (destination.origin !== SITE_ORIGIN || installedContentUnavailable(destination.href, host.generativeAiDisabled)
-      || (!communityAvailableRef.current && isInstalledCommunityHref(destination.href))) {
+    if (destination.origin !== SITE_ORIGIN || !canOpenTool(destination.href)) {
       announce(copy.actionFailed);
       return;
     }
@@ -2158,14 +2214,31 @@ export function App({ host, loadingMark }: { host: InstalledAppHost; loadingMark
     if (!selectPrimaryView('tools')) return;
     const path = destination.pathname.replace(/^\/(en|zh)(?=\/|$)/, '') || '/';
     const entry = path + destination.search + destination.hash;
+    if (entry === '/') {
+      closeToolsPage();
+      return;
+    }
     const href = installedWebEntryUrl(siteRouteUrl(language, entry), language);
+    if (toolsEntryRouteRef.current !== entry) {
+      webDepthRef.current.tools = 0;
+      setWebSurfaceReloadUrl(current => ({ ...current, tools: null }));
+    }
+    toolsEntryRouteRef.current = entry;
     setToolsEntryRoute(entry);
+    setOpenedWebViews(current => current.tools ? current : { ...current, tools: true });
     if (href === toolsWebUrl && webLastHrefRef.current.tools !== href) {
       webDepthRef.current.tools = 0;
       setWebSurfaceReloadUrl(current => ({ ...current, tools: null }));
       setWebSurfaceRevision(current => ({ ...current, tools: current.tools + 1 }));
     }
-  }, [announce, copy.actionFailed, host.generativeAiDisabled, language, selectPrimaryView, toolsWebUrl]);
+  }, [announce, canOpenTool, closeToolsPage, copy.actionFailed, language, selectPrimaryView, toolsWebUrl]);
+
+  const openDirectoryEntry = (href: string, internal: boolean) => {
+    if (internal) openToolsRoute(href);
+    else if (canOpenTool(href)) {
+      void host.openExternal(new URL(href, SITE_ORIGIN).href).catch(() => announce(copy.actionFailed));
+    }
+  };
 
   const remoteReturnRef = useRef(0);
   useEffect(() => {
@@ -2237,7 +2310,6 @@ export function App({ host, loadingMark }: { host: InstalledAppHost; loadingMark
           const top = event.data.top === true;
           if (frame && event.source === frame) {
             setNativeTopBars(current => current[surface] === top ? current : { ...current, [surface]: top });
-            if (surface === 'tools') setToolsSearchReady(event.data.search === true);
           }
         }
         return;
@@ -2248,7 +2320,9 @@ export function App({ host, loadingMark }: { host: InstalledAppHost; loadingMark
       if (shellAction) {
         const frame = webFrameRefs.current[shellAction.surface];
         if (!frame || event.source !== frame.contentWindow || viewRef.current !== shellAction.surface) return;
-        if (selectTab) selectPrimaryView(selectTab.tab);
+      if (selectTab) {
+        if (selectPrimaryView(selectTab.tab) && selectTab.surface === 'tools' && selectTab.tab === 'tools') closeToolsPage();
+      }
         else openAppAppearance();
         return;
       }
@@ -2280,7 +2354,7 @@ export function App({ host, loadingMark }: { host: InstalledAppHost; loadingMark
         );
         if (accountManagementRequestRef.current) { reply(false); return; }
         accountManagementRequestRef.current = management.requestId;
-        void openInstalledAccountManagement(management, accountWebUrl, {
+        void openInstalledAccountManagement(management, accountUrl(accountEntryLocale), {
           currentSession: () => authSessionRef.current,
           openExternal: (href) => host.openExternal(href),
         }).then(() => reply(true)).catch(() => reply(false)).finally(() => {
@@ -2291,7 +2365,8 @@ export function App({ host, loadingMark }: { host: InstalledAppHost; loadingMark
 
       const authRequest = decodeMobileEmbedAuthRequest(event.data);
       if (accountSource && authRequest) {
-        void auth.login(authRequest.provider);
+        if (authRequest.provider) void auth.login(authRequest.provider);
+        else navigateAccount(authSessionRef.current ? 'home' : 'sign-in');
         return;
       }
 
@@ -2301,6 +2376,7 @@ export function App({ host, loadingMark }: { host: InstalledAppHost; loadingMark
         accountSyncInFlightRef.current = null;
         accountSyncedTokenRef.current = null;
         void auth.logout();
+        navigateAccount('home');
         return;
       }
 
@@ -2310,7 +2386,10 @@ export function App({ host, loadingMark }: { host: InstalledAppHost; loadingMark
         if (!pending || pending.requestId !== webSessionResult.requestId) return;
         clearAccountSyncTimeout();
         accountSyncInFlightRef.current = null;
-        if (webSessionResult.ok) accountSyncedTokenRef.current = pending.token;
+        if (webSessionResult.ok) {
+          accountSyncedTokenRef.current = pending.token;
+          setAccountDetailsReady(true);
+        }
         else {
           setWebSurfaceStatus((current) => ({ ...current, account: 'error' }));
           announce(copy.authError);
@@ -2339,6 +2418,12 @@ export function App({ host, loadingMark }: { host: InstalledAppHost; loadingMark
       } catch {
         return;
       }
+      if (navigation.surface === 'tools' && !destination.hash
+        && isEmbeddedTopBarRoute('tools', destination.pathname)
+        && [...destination.searchParams.keys()].every(key => key === 'lang')) {
+        closeToolsPage();
+        return;
+      }
       const previousHref = webLastHrefRef.current[navigation.surface];
       webLastHrefRef.current[navigation.surface] = navigation.href;
       if (host.listenDesktopNavigation && navigation.surface === 'tools') {
@@ -2349,10 +2434,6 @@ export function App({ host, loadingMark }: { host: InstalledAppHost; loadingMark
       }
       if (!isEmbeddedTopBarRoute(navigation.surface, destination.pathname)) {
         setNativeTopBars(current => current[navigation.surface] ? { ...current, [navigation.surface]: false } : current);
-        if (navigation.surface === 'tools') {
-          setToolsSearchReady(false);
-          setToolsSearchOpen(false);
-        }
       } else if (floatingNavigation && previousHref !== navigation.href &&
         (!previousHref || !isEmbeddedTopBarRoute(navigation.surface, new URL(previousHref, SITE_ORIGIN).pathname))) {
         postWebSurfaceInit(navigation.surface);
@@ -2371,14 +2452,16 @@ export function App({ host, loadingMark }: { host: InstalledAppHost; loadingMark
     return () => window.removeEventListener('message', onMessage);
   }, [
     announce,
-    accountWebUrl,
+    accountEntryLocale,
     auth.login,
     auth.logout,
     clearAccountSyncTimeout,
+    closeToolsPage,
     copy.actionFailed,
     copy.authError,
     finishWebSurfaceHandshake,
     floatingNavigation,
+    navigateAccount,
     postWebSurfaceInit,
     selectPrimaryView,
     openAppAppearance,
@@ -2413,6 +2496,10 @@ export function App({ host, loadingMark }: { host: InstalledAppHost; loadingMark
     void host.addBackButtonListener(() => {
       if (toolsBlePickerRef.current) { toolsBlePickerRef.current.cancel(); return; }
       const current = viewRef.current;
+      if (current === 'account' && accountPageRef.current !== 'home' && webDepthRef.current.account === 0) {
+        navigateAccount('home');
+        return;
+      }
       if (current === 'appearance') { setView(appearanceReturnRef.current); return; }
       if (layoutEditingRef.current) { finishLayoutEditing(); return; }
       if (trainerSubsetOpenRef.current) { trainerSubsetOpenRef.current = null; setTrainerSubsetOpen(null); return; }
@@ -2480,7 +2567,8 @@ export function App({ host, loadingMark }: { host: InstalledAppHost; loadingMark
         return;
       }
       if (action === 'close-subview') {
-        setView('timer');
+        if (current === 'tools' && toolsEntryRouteRef.current) closeToolsPage();
+        else setView('timer');
         return;
       }
       if (action === 'embedded-back' && (current === 'tools' || current === 'account')) {
@@ -2502,7 +2590,7 @@ export function App({ host, loadingMark }: { host: InstalledAppHost; loadingMark
       active = false;
       void removeListener?.();
     };
-  }, [announce, closeHistorySolveDetail, copy.finishAttemptFirst, host]);
+  }, [announce, closeHistorySolveDetail, closeToolsPage, copy.finishAttemptFirst, host, navigateAccount]);
 
   useEffect(() => {
     const onFullscreenChange = () => setFullscreen(document.fullscreenElement !== null);
@@ -3096,8 +3184,8 @@ export function App({ host, loadingMark }: { host: InstalledAppHost; loadingMark
   }, [announce, copy, smartCube, external.timer, external.stackmat]);
 
   useEffect(() => {
-    if (view !== 'tools') void revokeToolsBle();
-  }, [view, revokeToolsBle]);
+    if (view !== 'tools' || !toolsEntryRoute) void revokeToolsBle();
+  }, [view, toolsEntryRoute, revokeToolsBle]);
 
   const prepareToolsBleRef = useRef(async () => {});
   prepareToolsBleRef.current = async () => {
@@ -4208,8 +4296,8 @@ export function App({ host, loadingMark }: { host: InstalledAppHost; loadingMark
   const hideRunningChrome = timerMode === 1 && store && timerHidesRunningUi(timer.machine.phase, store.settings);
   const canShowNavigation = Boolean(store && !fullscreen && !hideRunningChrome && (!floatingNavigation
     || (view !== 'settings' && !timerOverlayBlocking && !manualEntryOpen && !toolsBlePicker)));
-  const canShowToolsSearch = Boolean(floatingNavigation && (toolsSearchReady || webChrome.tools) && canShowNavigation && view === 'tools'
-    && connection === 'online' && webSurfaceStatus.tools === 'ready');
+  const toolsHomeVisible = view === 'tools' && toolsEntryRoute === null;
+  const canShowToolsSearch = floatingNavigation && canShowNavigation && toolsHomeVisible;
   const toolsSearchExpanded = canShowToolsSearch && toolsSearchOpen;
   const searchKeyboardVisible = toolsSearchExpanded && dockedKeyboardTop !== null;
   const navVisible = canShowNavigation && !searchKeyboardVisible;
@@ -4220,7 +4308,7 @@ export function App({ host, loadingMark }: { host: InstalledAppHost; loadingMark
       return;
     }
     const viewport = window.visualViewport;
-    // WebKit can pan its visible viewport to reveal the focused iframe field.
+    // WebKit can pan its visible viewport to reveal the focused search field.
     let contracted = false;
     const update = () => {
       setSearchViewportTop(Math.max(0, viewport?.pageTop ?? window.scrollY));
@@ -4281,28 +4369,15 @@ export function App({ host, loadingMark }: { host: InstalledAppHost; loadingMark
       }
       if (view !== 'tools') return;
       if (command === 'refresh') {
-        if (webSurfaceStatus.tools === 'ready') {
+        if (toolsHomeVisible) setToolsHomeRefresh(current => current + 1);
+        else if (webSurfaceStatus.tools === 'ready') {
           webFrameRefs.current.tools?.contentWindow?.postMessage({ type: 'cuberoot:desktop:reload-tool' }, SITE_ORIGIN);
         } else retryWebSurface('tools');
-      } else if (command === 'back') {
-        if (webDepthRef.current.tools > 0) {
-          webFrameRefs.current.tools?.contentWindow?.postMessage(mobileEmbedBackMessage('tools'), SITE_ORIGIN);
-        } else if (desktopToolsHistory.current.length > 1) {
-          const history = desktopToolsHistory.current;
-          history.pop();
-          const previous = history[history.length - 1]!;
-          setWebSurfaceReloadUrl(current => ({ ...current, tools: previous }));
-          setWebSurfaceRevision(current => ({ ...current, tools: current.tools + 1 }));
-        } else if (toolsEntryRoute || !isEmbeddedTopBarRoute('tools', new URL(webLastHrefRef.current.tools || toolsWebUrl, SITE_ORIGIN).pathname)) {
-          setToolsEntryRoute(null);
-          setWebSurfaceReloadUrl(current => ({ ...current, tools: installedWebEntryUrl(siteUrl(language), language) }));
-          setWebSurfaceRevision(current => ({ ...current, tools: current.tools + 1 }));
-        }
-      } else if (command === 'search' && showToolsSearch) {
-        const frame = webFrameRefs.current.tools;
-        frame?.focus();
-        if (toolsSearchExpanded) frame?.contentWindow?.postMessage({ type: 'cuberoot:desktop:focus-search' }, SITE_ORIGIN);
+      } else if (command === 'back' && !toolsHomeVisible) {
+        backFromToolsPage();
+      } else if (command === 'search' && toolsHomeVisible) {
         setToolsSearchOpen(true);
+        requestAnimationFrame(() => toolsSearchInput.current?.focus());
       } else if (command === 'escape' && toolsSearchExpanded) {
         setToolsSearchOpen(false);
         toolsSearchRef.current?.focus();
@@ -4447,7 +4522,7 @@ export function App({ host, loadingMark }: { host: InstalledAppHost; loadingMark
     />
   );
   const contentRect = hostViewport?.content;
-  const frameUsesTopBar = (view === 'account' || view === 'tools') && (webChrome[view] || nativeTopBars[view]);
+  const frameUsesTopBar = view === 'tools' && !toolsHomeVisible && (webChrome.tools || nativeTopBars.tools);
   const webTop = embeddedTopBar && frameUsesTopBar ? nativeTopBar?.y : undefined;
   const shellTop = webTop ?? contentRect?.y ?? 0;
   const trackSearchViewport = toolsSearchExpanded && (searchKeyboardVisible || searchViewportTop > 0);
@@ -5112,13 +5187,31 @@ children: <>
           />
         )}
 
+        {view === 'account' && (accountPage === 'home' || accountPage === 'sign-in') && (
+          <div style={{ '--account-nav-clearance': `${embeddedBottom}px` } as CSSProperties}>
+            <AccountHome auth={auth} language={language} page={accountPage} onNavigate={navigateAccount}
+              onSettings={openAppAppearance} onLogout={() => void logoutEverywhere()}
+              openPolicy={(policy) => void host.openExternal(siteRouteUrl(language, `/${policy}`)).catch(() => announce(copy.actionFailed))} />
+          </div>
+        )}
+
+        {toolsHomeOpened && (
+          <ToolsHome language={language} active={toolsHomeVisible} hidden={!toolsHomeVisible}
+            online={connection === 'online'} checking={connection === 'checking'} refreshKey={toolsHomeRefresh}
+            searchVisible={!floatingNavigation || toolsSearchOpen} searchInput={toolsSearchInput}
+            isAdmin={Boolean(auth.session?.user.isAdmin || isAdminWcaId(auth.session?.user.wcaId))}
+            canOpen={canOpenTool} onOpen={openDirectoryEntry} bottomInset={embeddedBottom}
+            rightInset={sideNavigation && contentRect && hostViewport?.bar
+              ? Math.max(24, contentRect.x + contentRect.width - hostViewport.bar.x + 12) : 24} />
+        )}
+
         {MOBILE_EMBED_SURFACES.map((surface) => {
           if (!openedWebViews[surface]) return null;
           const status = webSurfaceStatus[surface];
           const title = surface === 'tools' ? copy.tools : copy.my;
           const canonicalUrl = surface === 'tools' ? toolsWebUrl : accountWebUrl;
           const frameUrl = webSurfaceReloadUrl[surface] ?? canonicalUrl;
-          const showState = connection !== 'online' || status !== 'ready';
+          const showState = connection !== 'online' || status !== 'ready' || (surface === 'account' && !accountDetailsReady);
           const showLoadingMark = connection !== 'offline' && status !== 'error';
           const stateLabel = connection === 'offline'
             ? copy.offline
@@ -5126,10 +5219,26 @@ children: <>
           return (
             <section
               aria-label={title}
-              className={`web-surface${surface === 'account' ? ' web-surface--account' : ''}`}
-              hidden={view !== surface}
+              className={`web-surface web-surface--${surface}`}
+              hidden={view !== surface || (surface === 'tools' && toolsHomeVisible)}
               key={surface}
             >
+              {surface === 'tools' && (
+                <header className="installed-tools-detail-header">
+                  <button type="button" className="installed-account-back" aria-label={copy.backToTools} onClick={backFromToolsPage}>
+                    <ChevronLeft size={22} aria-hidden="true" />
+                  </button>
+                </header>
+              )}
+              {surface === 'account' && (
+                <header className="installed-account-detail-header">
+                  <AccountBack language={language} onBack={() => navigateAccount('home')} />
+                  <strong>{accountPage === 'security'
+                    ? ({ zh: '账号与安全', en: 'Account & security' })[language]
+                    : accountPage === 'membership' ? ({ zh: '订阅 Pro', en: 'Subscribe to Pro' })[language]
+                      : ({ zh: '我的空间', en: 'My space' })[language]}</strong>
+                </header>
+              )}
               {showState && view === surface && (
                 <div className="web-surface-state" role={status === 'error' ? 'alert' : 'status'}>
                   {showLoadingMark ? (
@@ -5159,14 +5268,12 @@ children: <>
                   ? `clipboard-write; fullscreen; camera; microphone${host.listenDesktopNavigation ? '; focus-without-user-activation https://cuberoot.me' : ''}`
                   : 'clipboard-write; fullscreen'}
                 aria-hidden={showState}
-                inert={host.generativeAiDisabled && showState}
+                inert={showState && (surface === 'account' || host.generativeAiDisabled)}
                 key={`${surface}-${webSurfaceRevision[surface]}`}
                 name={(host.generativeAiDisabled ? MOBILE_EMBED_NO_GENERATIVE_AI_FRAME_NAMES : MOBILE_EMBED_FRAME_NAMES)[surface]}
                 onLoad={() => {
                   if (surface === 'tools') {
                     void revokeToolsBle();
-                    setToolsSearchReady(false);
-                    setToolsSearchOpen(false);
                   } else {
                     accountInlineSettingsRef.current = false;
                   }
@@ -5341,7 +5448,7 @@ children: <>
               renderBooleanControl={({ disabled, label, onChange, value }) => (
                 <TimerPillToggle ariaLabel={label} disabled={disabled} onChange={onChange} value={value} />
               )}
-              rankings={<TimerRankSettings language={language} scopes={store!.settings.rankScopes} country={store!.settings.rankCountry} accountCountry={rankAccountCountry} onScopes={rankScopes => updateSettings({ rankScopes })} onCountry={rankCountry => updateSettings({ rankCountry })} login={!activeAuthSession ? () => void auth.login() : undefined} />}
+              rankings={<TimerRankSettings language={language} scopes={store!.settings.rankScopes} country={store!.settings.rankCountry} accountCountry={rankAccountCountry} onScopes={rankScopes => updateSettings({ rankScopes })} onCountry={rankCountry => updateSettings({ rankCountry })} login={!activeAuthSession ? () => { if (selectPrimaryView('account')) navigateAccount('sign-in'); } : undefined} />}
             />
 
             </>}
@@ -5505,7 +5612,7 @@ children: <>
                   <button
                     className="primary-action"
                     disabled={auth.busy}
-                    onClick={() => void auth.login()}
+                    onClick={() => { if (selectPrimaryView('account')) navigateAccount('sign-in'); }}
                     type="button"
                   >{auth.busy ? copy.signingIn : copy.signIn}</button>
                 </>
@@ -5524,7 +5631,7 @@ children: <>
                 )}
               </div>
               <TimerBackupSettings language={language} every={store!.settings.autoBackupEvery} onEveryChange={autoBackupEvery => updateSettings({ autoBackupEvery })}
-                disabled={!sourceControlsEnabled} owner={activeAuthSession?.token ?? null} login={() => void auth.login()}
+                disabled={!sourceControlsEnabled} owner={activeAuthSession?.token ?? null} login={() => { if (selectPrimaryView('account')) navigateAccount('sign-in'); }}
                 local={{ create: () => repository.createBackup(), list: () => repository.listBackups(), restore: (key, canCommit) => restoreDatabaseBackup(() => repository.restoreBackup(key, () => canCommit() && canCommitSettingsData())) }}
                 cloud={{ meta: () => backupClient.meta(), upload: async () => {
                   const token = activeAuthSession?.token;
@@ -5568,10 +5675,7 @@ children: <>
             <div className="settings-section">
               <h2>{copy.fullSite}</h2>
               <p>{copy.fullSiteDetail}</p>
-              <a className="site-link" href={siteUrl(language)} onClick={event => {
-                event.preventDefault();
-                openToolsRoute('/');
-              }}>
+              <a className="site-link" href={siteUrl(language)} onClick={openExternal}>
                 {copy.openFullSite}
               </a>
             </div>

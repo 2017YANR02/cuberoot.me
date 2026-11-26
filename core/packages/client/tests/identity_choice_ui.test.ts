@@ -90,7 +90,7 @@ describe('verified email and phone use the canonical choice UI', () => {
     const verify = provider === 'email' ? mocks.verifyEmailCode : mocks.verifyPhoneCode;
     verify.mockResolvedValue({ token: 'known', user: { uid: 42 }, isNew: false });
     await render(); await enterCredential(provider);
-    expect(mocks.applySession).toHaveBeenCalledExactlyOnceWith('known', { uid: 42 });
+    expect(mocks.applySession).toHaveBeenCalledExactlyOnceWith('known', { uid: 42 }, expect.any(Function));
     expect(done).toHaveBeenCalledExactlyOnceWith({ isNew: false, hasWca: false });
     expect(getIdentityChoice()).toBeNull();
   });

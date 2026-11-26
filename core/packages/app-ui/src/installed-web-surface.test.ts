@@ -9,10 +9,12 @@ const css = readFileSync(new URL('./app.css', import.meta.url), 'utf8');
 describe('installed website surfaces', () => {
   afterEach(() => vi.useRealTimers());
 
-  it('uses one shared iframe lifecycle for Tools and Account', () => {
+  it('uses a bundled Account home and one shared iframe lifecycle for website details and tools', () => {
     expect(app).toContain("const MOBILE_EMBED_SURFACES = ['tools', 'account'] as const");
     expect(app.match(/<iframe/g)).toHaveLength(1);
     expect(app).toContain('MOBILE_EMBED_SURFACES.map((surface) =>');
+    expect(app).toContain('<AccountHome auth={auth}');
+    expect(app).toContain('account: details');
   });
 
   it('bounds init retries, lets a trusted acknowledgement stop early, and exposes recovery', () => {
@@ -49,7 +51,8 @@ describe('installed website surfaces', () => {
   it('correlates Account session handoff and exposes native login failures', () => {
     expect(app).toContain('pending.requestId !== webSessionResult.requestId');
     expect(app).toContain('MOBILE_EMBED_AUTH_TIMEOUT_MS');
-    expect(app).toMatch(/if \(accountSource && authRequest\) \{\s*void auth\.login\(authRequest\.provider\);/);
+    expect(app).toContain('if (authRequest.provider) void auth.login(authRequest.provider);');
+    expect(app).toContain("else navigateAccount(authSessionRef.current ? 'home' : 'sign-in');");
     // Browser.open resolves before the callback: delayed login failures must
     // still reach the Account error state once the auth client is no longer busy.
     expect(app).toMatch(/if \(auth\.busy\) return;\s*if \(auth\.error\) \{[^}]*announce\(copy\.authError\);/);

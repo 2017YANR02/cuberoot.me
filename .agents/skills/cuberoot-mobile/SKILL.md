@@ -18,8 +18,7 @@ description: "Use for CubeRoot installed-client work across Android, iOS, Harmon
   `docs/product/apps/mobile-timer-source-adversarial-audit.md`。这些文件仍标记 `NOT COMPLETE` 时，
   不得根据局部截图、一个项目或一条 happy path 声称“完全一致”。
 - 修改底部导航、工具页或账号页：必须读取 `docs/product/apps/mobile-three-tab-contract.md`；
-  三栏固定为“计时 / 工具 / 我的”，工具与账号深链以网站路由为内容事实源，原生壳只负责
-  导航、安全区、登录桥与平台能力，不复制网站卡片或另造账号 UI。
+  三栏固定为“计时 / 工具 / 我的”。「工具」和「我的」首页以及第一方登录由共享 App 提供。工具目录和匹配逻辑复用网站的共享实现，工具子页、全站搜索与账号管理子页沿用网站路由。原生壳负责导航、安全区和系统能力。
 - 账号、上架或进度：再读 `docs/product/apps/mobile-app-roadmap.md` 与 `docs/compliance/mobile-store-submission.md`。
 - 修改共享契约：再读 `core/packages/shared` 中相关入口与消费者。
 - iOS 首次接入、签名或 TestFlight：读 [references/ios-release.md](references/ios-release.md)。
@@ -75,8 +74,8 @@ description: "Use for CubeRoot installed-client work across Android, iOS, Harmon
 ## 平台与账号边界
 
 - 先检测操作系统和工具链；Windows 不执行 Xcode，Mac 不重写 Android 业务层。
-- App 登录复用网站唯一账号和 `LoginForm`：系统浏览器 → 90 秒单次 mobile ticket → PKCE S256 + state → App deep link。长期 JWT 与 verifier 不得进入 URL；请求、回调、session 契约统一走 `@cuberoot/shared/auth/web-session`。
-- 底栏 Account 始终加载原始 `/account`，不加 `auth=mobile`。iframe 内整个 canonical `LoginForm`（邮箱/手机/密码及 SSO）通过 `@cuberoot/shared/mobile-embed` 委托系统 Browser；native secure session 再申请 90 秒 `web-session` ticket 回灌 iframe。iframe logout/删除与 App logout 要互相清会话；生产/五平台 provider E2E 未验收前不得只凭按钮或单测宣称闭环，外部 Browser 独立 logout 也不能假装会主动通知休眠 App。
+- App 登录复用网站唯一账号和 `LoginForm`。邮箱验证码、短信验证码和邮箱密码使用共用表单，直接调用原有账号 API 并安全保存会话。第三方继续走系统 Browser 与 state 校验的 App 深链回跳。长期 JWT 与 verifier 不得进入 URL 或消息；请求、回调与会话契约统一走 `@cuberoot/shared/auth/web-session`。
+- 底栏 Account 打开打包的「我的」首页。进入网站账号管理或会员子页时，通过关联 `requestId` 的 90 秒 `web-session` ticket 交接已登录的 App 会话。iframe logout/删除与 App logout 要互相清会话；生产与五平台真实账号验收分别记录。外部 Browser 的独立 logout 不会通知休眠 App。
 - 五端共用 `@cuberoot/app-ui` 的 `InstalledAuthClient` 和同一网站账号/PKCE 契约；`core/apps/mobile/src/mobile-auth.ts` 只接 Capacitor Browser 与 Keychain/Keystore，Desktop 只接系统 keyring，Harmony 只接 ArkTS 系统安全存储 bridge。不要添加原生凭据表单、第二套账号表或平台各自的 token 模型；某个平台源码接线不等于 provider E2E 已通过。
 - 移动交接中，provider-null 路径只显示网站现有邮箱/手机号，provider-tagged 路径显示 canonical SSO 列表并继续同一 PKCE 流。启用 WCA、Google、微信、QQ、支付宝等第三方主账号登录前，必须重新核对当时的 Apple 4.8，并先完成需要的 Sign in with Apple 等价路径。
 - 登录与同步是两个里程碑。当前计时、备注、设置仍只在本机；没有完成匿名数据合并、冲突、删除和多设备验证前，不得把登录文案或路线图写成“已同步”。账号资料、身份绑定和账号注销继续打开网站统一管理页。

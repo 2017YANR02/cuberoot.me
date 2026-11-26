@@ -30,7 +30,9 @@
       "./apple-membership": "runtime-neutral",
       "./appearance": "react-dom",
       "./appearance.css": "asset",
-      "./settings-typography.css": "asset"
+      "./settings-typography.css": "asset",
+      "./account-forms": "react-dom",
+      "./account-forms.css": "asset"
     }
   },
   "exports": {
@@ -50,7 +52,9 @@
     "./apple-membership": "./src/apple-membership.ts",
     "./appearance": "./src/appearance.ts",
     "./appearance.css": "./src/appearance.css",
-    "./settings-typography.css": "./src/settings-typography.css"
+    "./settings-typography.css": "./src/settings-typography.css",
+    "./account-forms": "./src/auth/account-forms.ts",
+    "./account-forms.css": "./src/auth/credential-forms.css"
   },
   "sideEffects": true,
   "scripts": {

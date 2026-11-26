@@ -72,6 +72,19 @@ function setup(fetcher = vi.fn<typeof fetch>()) {
 }
 
 describe('mobile auth', () => {
+  it('installs a first-party API session in secure storage without opening Browser', async () => {
+    const { client, fetcher, openBrowser, storage } = setup();
+    await client.start('en', 'apple');
+    openBrowser.mockClear();
+    const session = { token: token(), user: USER };
+    await expect(client.installCredentialSession(session, () => true)).resolves.toEqual(session);
+    expect(JSON.parse(storage.values.get('session')!)).toEqual(session);
+    expect(storage.values.has('pending_auth')).toBe(false);
+    expect(openBrowser).not.toHaveBeenCalled();
+    fetcher.mockResolvedValueOnce(response({ user: USER }));
+    await expect(client.restore()).resolves.toEqual(session);
+  });
+
   it('starts the shared website flow without putting the verifier in the URL', async () => {
     const { client, openBrowser, storage } = setup();
 

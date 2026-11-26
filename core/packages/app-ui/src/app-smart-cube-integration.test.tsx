@@ -75,6 +75,8 @@ const host: InstalledAppHost = {
   useAuth: () => ({ busy: false, error: false, loading: false, session: null,
     login: async () => undefined, logout: async () => undefined,
     issueWebSessionTicket: async () => { throw new Error('offline test'); },
+    installCredentialSession: async () => false,
+    refreshAccountSession: async () => undefined,
   }),
   useSmartCube: (callbacks) => {
     options = callbacks;

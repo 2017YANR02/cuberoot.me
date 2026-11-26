@@ -30,9 +30,11 @@ export interface InstalledAppAuth {
   busy: boolean;
   error: boolean;
   issueWebSessionTicket(): Promise<WebSessionTicketEnvelope>;
+  installCredentialSession(session: WebSession, isCurrent: () => boolean): Promise<boolean>;
   loading: boolean;
   login(provider?: MobileAuthProvider | null): Promise<void>;
   logout(): Promise<void>;
+  refreshAccountSession(): Promise<void>;
   session: WebSession | null;
 }
 
