@@ -80,7 +80,7 @@
       "device": "windows",
       "os": "windows",
       "transport": "ssh",
-      "status": "pending",
+      "status": "active",
       "localPort": 3000,
       "remotePort": 7109,
       "certificate": "dev-yuan-windows",

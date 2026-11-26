@@ -8,5 +8,6 @@ export const DEV_PREVIEW_HOSTS: readonly string[] = [
   "dev-czy-y9000p.cuberoot.me",
   "dev-ruimin-macbook-pro.cuberoot.me",
   "dev-lzz-macbook-pro.cuberoot.me",
-  "dev-mzx-mac-mini.cuberoot.me"
+  "dev-mzx-mac-mini.cuberoot.me",
+  "dev-yuan-windows.cuberoot.me"
 ];
