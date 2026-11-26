@@ -87,7 +87,7 @@
       "entry": ["src/index.ts"]
     },
     "{packages/server,apps/api}": {
-      "ignoreBinaries": ["flock"],
+      "ignoreBinaries": ["flock", "^c[+][+]$", "python3"],
       "entry": [
         "scripts/**/*.{ts,mjs}",
         "tests/fixtures/**/*_pg.ts",
