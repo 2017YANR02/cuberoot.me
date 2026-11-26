@@ -74,6 +74,17 @@
       "remotePort": 7108,
       "certificate": "dev-mzx-mac-mini",
       "aliases": []
+    },
+    {
+      "owner": "yuan",
+      "device": "windows",
+      "os": "windows",
+      "transport": "ssh",
+      "status": "pending",
+      "localPort": 3000,
+      "remotePort": 7109,
+      "certificate": "dev-yuan-windows",
+      "aliases": []
     }
   ],
   "reservedPorts": [
