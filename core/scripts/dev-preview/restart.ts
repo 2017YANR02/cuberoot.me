@@ -136,11 +136,15 @@ async function stopPreviousDev(workspace: string, client: string) {
     const isNext = listener && listener.uid === user && /next-server|next.*\bdev\b/.test(listener.command);
     const listenerDir = isNext ? directory(pid) : undefined;
     if (isNext && !listenerDir && !alive(pid)) continue;
-    if (!listener || listenerDir !== client) {
-      throw Error(`Port 3000 belongs to an unrecognized service (${pid}); no cache was cleared.`);
+    // Next can inherit the listening socket before it sets its process title.
+    // A verified watcher in its ancestry also identifies this checkout's child.
+    const root = listener && findRoot(listener);
+    const verifiedParent = root && root.pid !== pid && directory(pid) === client && (
+      checkoutWatch(root) || /^(?:\S*\/)?node\s+\S*\/next\s+dev(?:\s|$)/.test(root.command)
+    );
+    if (!root || (listenerDir !== client && !verifiedParent)) {
+      return new Error(`Port 3000 belongs to an unrecognized service (${pid}); no cache was cleared.`);
     }
-    const root = findRoot(listener);
-    if (!root) throw Error(`Cannot confirm that PID ${pid} is this checkout's development server.`);
     roots.set(root.pid, root);
   }
   // A watcher can be rebuilding while its Next child isn't listening yet.
@@ -154,17 +158,19 @@ async function stopPreviousDev(workspace: string, client: string) {
 
 export async function clearPreviousDev(workspace: string, client: string) {
   const workspaceDir = realpathSync(workspace), clientDir = realpathSync(client);
-  await stopPreviousDev(workspaceDir, clientDir);
   const occupied = () => new Promise<boolean>(done => {
     const socket = createConnection({ host: '127.0.0.1', port: 3000 });
     const finish = (value: boolean) => { socket.destroy(); done(value); };
     socket.once('connect', () => finish(true)); socket.once('error', () => finish(false)); socket.setTimeout(1000, () => finish(true));
   });
-  for (let i = 0; i < 10 && await occupied(); i++) {
-    await stopPreviousDev(workspaceDir, clientDir);
-    await pause(500);
+  for (let attempt = 0; ; attempt++) {
+    const conflict = await stopPreviousDev(workspaceDir, clientDir);
+    // lsof, ps and cwd are separate snapshots. Re-read all three before
+    // classifying an unknown owner as persistent, even if the PID changed.
+    if (!conflict && !await occupied()) break;
+    if (attempt === 10) throw conflict ?? Error('Port 3000 is still occupied. Cache was not cleared.');
+    await pause(conflict ? 150 : 500);
   }
-  if (await occupied()) throw Error('Port 3000 is still occupied. Cache was not cleared.');
   // Honor the same custom directory as next.config; never delete outside the client workspace.
   const cache = resolve(client, process.env.NEXT_DEV_DIST_DIR || '.next');
   if (!cache.startsWith(resolve(client) + '/') && process.platform !== 'win32') throw Error('Development cache must be inside the client workspace.');

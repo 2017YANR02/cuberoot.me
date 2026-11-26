@@ -44,8 +44,9 @@ test('an unrelated port owner is neither killed nor allowed to lose its cache', 
   } finally {rmSync(root,{recursive:true,force:true});}
 });
 
-for (const lateListener of [false, true]) test(
-  lateListener ? 'rechecks ownership when Next starts listening after the first scan' : 'stops only this checkout’s watcher before Next listens',
+for (const scenario of ['watcher', 'late', 'replaced']) test(
+  scenario === 'replaced' ? 'rescans a replaced listener and recognizes a Next child before its title changes' :
+  scenario === 'late' ? 'rechecks ownership when Next starts listening after the first scan' : 'stops only this checkout’s watcher before Next listens',
   { skip: process.platform === 'win32' }, () => {
     const root = fixture(), client = join(root, 'client');
     mkdirSync(join(client, '.next'), { recursive: true });
@@ -59,21 +60,25 @@ for (const lateListener of [false, true]) test(
         import { syncBuiltinESMExports } from 'node:module';
         const root = fs.realpathSync(${JSON.stringify(root)}), client = fs.realpathSync(${JSON.stringify(client)});
         const uid = process.getuid();
-        const late = ${lateListener}, stopped = [];
+        const late = ${scenario !== 'watcher'}, replaced = ${scenario === 'replaced'}, stopped = [];
         const watch = '/bin/turbo watch dev:serve --filter=@cuberoot/client';
         const rows = new Map([[54321, [1, watch, root]], [54322, [1, watch, '/other/checkout']]]);
         if (late) rows.set(54323, [1, 'node /repo/next dev -p 3000', client]);
+        if (replaced) rows.set(54324, [54323, 'node worker.js', client]);
         let scans = 0;
         const realpath = fs.realpathSync;
         fs.realpathSync = path => path.startsWith('/proc/') ? rows.get(Number(path.split('/')[2]))?.[2] : realpath(path);
         cp.execFileSync = (command, args, options) => {
           if (command === 'ps') {
             const started = options?.env?.LC_ALL === 'C' ? 'Sun Nov 22 02:59:26 2026' : '日 11月/22 02:59:26 2026';
+            if (replaced && scans === 1) return [uid, 54325, 1, started, 'node worker.js'].join(' ');
             return [...rows].filter(([pid]) => !late || scans > 1 || pid === 54322)
               .map(([pid, [parent, cmd]]) => [uid, pid, parent, started, cmd].join(' ')).join('\\n');
           }
           if (args.includes('-d')) return 'n' + rows.get(Number(args[args.indexOf('-p') + 1]))?.[2];
-          return ++scans > 1 && rows.has(54323) ? '54323' : '';
+          scans++;
+          if (replaced && scans === 1) return '54325';
+          return scans > 1 && rows.has(54323) ? (replaced ? '54324' : '54323') : '';
         };
         net.createConnection = () => {
           const socket = new EventEmitter(); socket.destroy = () => {}; socket.setTimeout = () => {};
@@ -87,7 +92,7 @@ for (const lateListener of [false, true]) test(
         syncBuiltinESMExports();
         const { clearPreviousDev } = await import(${JSON.stringify(moduleUrl)});
         await clearPreviousDev(root, client);
-        assert.deepEqual(stopped, late ? [54323, 54321] : [54321]);
+        assert.deepEqual(stopped, replaced ? [54323, 54324, 54321] : late ? [54323, 54321] : [54321]);
         assert.equal(rows.has(54322), true);
         assert.equal(fs.existsSync(client + '/.next'), false);
       `;
