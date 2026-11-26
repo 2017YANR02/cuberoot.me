@@ -249,7 +249,9 @@ export function createAssistantModel(config: AssistantConfig, fetcher: typeof fe
       system: string; context: unknown; finalOnly: boolean; thinking: boolean;
       effort: 'low' | 'high'; maxTokens: number; onText?: (text: string, prose?: boolean) => Promise<void>;
       checklist?: boolean;
+      sentenceReplies?: { items:number; sentences:number; separator:string };
       scenarioProse?: boolean;
+      decisionToolsOnly?: boolean;
       followUp?: string;
       requiredTool?: 'lookup_cube_photo';
       unavailableTools?: string[];
@@ -269,7 +271,19 @@ export function createAssistantModel(config: AssistantConfig, fetcher: typeof fe
         pending = [];
       }
       if(options.followUp) transcript.push({role:'user',content:options.followUp});
-      const system = options.scenarioProse ? options.system : options.system + (options.structuredPlan
+      // For sentence-constrained coaching replies the ordered answers themselves
+      // are the coverage excerpts. Generate each once and render the prose locally.
+      const format = options.sentenceReplies;
+      const sentenceGroups = format ? Array.from({ length: format.items }, (_, index) => {
+        const start = Math.floor(index * format.sentences / format.items);
+        const end = Math.floor((index + 1) * format.sentences / format.items);
+        return Array.from({ length: end - start }, (_, offset) => 'sentence' + (start + offset + 1));
+      }) : [];
+      const keys = sentenceGroups.flat();
+      const replySchema = keys.length ? z.object(Object.fromEntries(keys.map(key => [key, z.string().trim().min(1).max(300)]))).strict() : undefined;
+      const assignment = sentenceGroups.map((group, index) => 'request ' + (index + 1) + ' uses ' + group.join(', ')).join('; ');
+      const system = replySchema ? options.system + ' Return only the JSON keys assigned here: ' + assignment
+        + '. Write one short, complete, punctuated sentence in each field. Omit numbering. In order these sentences are the entire reply.' : options.scenarioProse ? options.system : options.system + (options.structuredPlan
         ? (options.structuredPlan.independentEnding
           ? '\nPut the activities in plan and write the actual independent ending in the answer string inside the same JSON object. Do not restate the instruction or duplicate the plan in answer. The server renders the activities. '
           : '\nReturn the constrained plan in the plan field with answer:""; the server renders its titles, actions, reasons and time labels. Do not duplicate the plan as prose. ')
@@ -279,11 +293,12 @@ export function createAssistantModel(config: AssistantConfig, fetcher: typeof fe
       // A first-turn judgment can request a source directly or use deliberate
       // to open the full tool catalog on the next turn. Never re-enable a tool
       // disabled by the request's evidence scope.
-      const activeTools = !catalog ? undefined : options.scenarioProse || options.lookupTool || options.unavailableTools?.length
+      const decisionTools = options.scenarioProse || options.decisionToolsOnly;
+      const activeTools = !catalog ? undefined : decisionTools || options.lookupTool || options.unavailableTools?.length
         ? Object.fromEntries(Object.entries(catalog.tools).filter(([name]) =>
           !options.unavailableTools?.includes(name)
           && (!options.lookupTool || name===options.lookupTool || name==='deliberate')
-          && (!options.scenarioProse || ['deliberate','pages','web_search'].includes(name))))
+          && (!decisionTools || ['deliberate','pages','web_search'].includes(name))))
         : catalog.tools;
       const currentTranscript: ModelMessage[] = options.isolated
         ? options.followUp ? [{ role: 'user', content: options.followUp }] : [] : transcript;
@@ -348,7 +363,7 @@ export function createAssistantModel(config: AssistantConfig, fetcher: typeof fe
           : options.requiredTool ? { type: 'tool' as const, toolName: options.requiredTool } : 'auto' as const,
         system,
         messages: [...memoryMessages, ...conversation, { role: 'user' as const, content: images.length ? [{ type: 'text' as const, text: contextJson }, ...imageParts(images)] : contextJson }, ...currentTranscript],
-        ...(!options.scenarioProse && (openai || deepseek) ? { output: Output.object({schema:options.structuredPlan?answerSchema.extend({plan:assistantStructuredPlanOutputSchema(options.structuredPlan).optional()}):options.checklist ? answerSchema.omit({plan:true}) : answerSchema.omit({plan:true,requirementChecks:true})}) } : {}),
+        ...(!options.scenarioProse && (openai || deepseek) ? { output: Output.object<Record<string, unknown>>({schema:replySchema ?? (options.structuredPlan?answerSchema.extend({plan:assistantStructuredPlanOutputSchema(options.structuredPlan).optional()}):options.checklist ? answerSchema.omit({plan:true}) : answerSchema.omit({plan:true,requirementChecks:true}))}) } : {}),
         maxOutputTokens, maxRetries: 0, abortSignal: signal,
         ...(thinking || openai ? {} : { temperature: 0 }),
         providerOptions: { [openai ? 'openai' : deepseek ? 'deepseek' : 'bailian']: openai
@@ -406,6 +421,15 @@ export function createAssistantModel(config: AssistantConfig, fetcher: typeof fe
         // Native tool calls were handled above. A standalone judgment has no
         // source IDs or plan to serialize. Still validate its normal answer envelope.
         const text = result.text.trim();
+        if(replySchema && format) {
+          let data:unknown;
+          try {data=JSON.parse(text.replace(/^```(?:json)?\s*|\s*```$/gi,''));}
+          catch {throw new AssistantOutputError('invalid_json',result.finishReason);}
+          const parsed=replySchema.safeParse(data);
+          if(!parsed.success)throw new AssistantOutputError('invalid_schema',result.finishReason);
+          const sections = sentenceGroups.map(group => group.map(key => parsed.data[key]).join(format.separator));
+          return {calls:[] as unknown[],...answerSchema.parse({answerKind:'general',answer:sections.join(format.separator),sourceIds:[],requirementChecks:sentenceGroups.map(group => parsed.data[group[0]])})};
+        }
         if (options.scenarioProse && !/^(?:\{|```json)/i.test(text)) {
           if (!text) throw new AssistantOutputError('empty_output', result.finishReason);
           if (text.length > SITE_ASSISTANT_ANSWER_MAX_LENGTH) throw new AssistantOutputError('output_truncated', result.finishReason);

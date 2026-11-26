@@ -2,9 +2,11 @@ import type { ToolResult } from './site_assistant_tools.js';
 
 /** Tool completion and factual completeness are different states. */
 export function assistantToolOutcome(result: ToolResult): NonNullable<ToolResult['outcome']> {
-  if(result.outcome)return result.outcome;
   const data=result.evidence;
-  if(data && typeof data==='object' && (('notEvidence' in data && data.notEvidence===true) || ('contextIncomplete' in data && data.contextIncomplete===true)))return {state:'partial',reason:'evidence_incomplete'};
+  if(result.outcome && (result.outcome.state==='blocked' || result.outcome.state==='temporary_failure'))return result.outcome;
+  if(data && typeof data==='object' && 'notEvidence' in data && data.notEvidence===true)return {state:'partial',reason:'evidence_incomplete'};
+  if(result.outcome)return result.outcome;
+  if(data && typeof data==='object' && 'contextIncomplete' in data && data.contextIncomplete===true)return {state:'partial',reason:'evidence_incomplete'};
   if(data && typeof data==='object' && 'status' in data && data.status==='unavailable')return {state:'temporary_failure',reason:'source_unavailable'};
   const arrays=Array.isArray(data)?[data]:data && typeof data==='object'
     ? ['rows','articles','competitions','results','items','entries'].flatMap(key=>Array.isArray((data as Record<string,unknown>)[key])?[(data as Record<string,unknown>)[key] as unknown[]]:[]):[];
@@ -48,9 +50,12 @@ export function boundAssistantEvidence(input:unknown,budget:number):unknown {
 /** A dropped evidence unit must not leave behind a citeable source. */
 export function boundAssistantToolResult(result:ToolResult,budget:number):ToolResult {
   const evidence=boundAssistantEvidence(result.evidence,budget);
-  if(evidence===result.evidence)return result;
-  const data=evidence as Record<string,unknown>;
-  if(data.notEvidence)return {...result,evidence,sources:[],artifacts:[],factualSummary:undefined,outcome:{state:'partial',reason:'context_budget'}};
+  const data=evidence as Record<string,unknown> | null;
+  if(data?.notEvidence===true) {
+    const outcome=result.outcome && ['partial','blocked','temporary_failure'].includes(result.outcome.state) ? result.outcome : {state:'partial' as const,reason:evidence===result.evidence?'evidence_unavailable':'context_budget'};
+    return {...result,evidence,sources:[],artifacts:[],roundRows:undefined,factualSummary:undefined,outcome};
+  }
+  if(evidence===result.evidence || !data)return result;
   const keyed=['pages','entries','originals','destinations'].filter(key=>Array.isArray(data[key]));
   const ids=new Set(keyed.flatMap(key=>(data[key] as Array<{id?:unknown;sourceId?:unknown}>).flatMap(item=>[item.id,item.sourceId]).filter((id):id is string=>typeof id==='string')));
   const sources=keyed.length?result.sources.filter(source=>ids.has(source.id)):result.sources;

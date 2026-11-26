@@ -1,11 +1,14 @@
 /** Increment when answer contracts change; historical metrics keep their value. */
-export const ASSISTANT_POLICY_VERSION = '2026-11-23-decision-evidence';
+export const ASSISTANT_POLICY_VERSION = '2026-11-25-practice-mix-evidence';
 import { SITE_ASSISTANT_ANSWER_MAX_LENGTH, type AssistantThinkingMode } from '@cuberoot/shared/site-assistant';
 
 /** Stable request identity; changing an analysis heading is not a new calculation. */
 export function assistantToolKey(call:Record<string,unknown>) {
   const stable=(value:unknown):unknown => Array.isArray(value)?value.map(stable):value && typeof value==='object'
-    ? Object.fromEntries(Object.entries(value).sort(([a],[b])=>a.localeCompare(b)).map(([k,v])=>[k,stable(v)])):value;
+    ? Object.fromEntries(Object.entries(value).sort(([a],[b])=>a.localeCompare(b)).map(([key,entry])=>{
+      const heading=call.tool==='analysis_query' && key==='label' && 'as' in value && 'expr' in value;
+      return [key,heading && typeof entry==='string' && entry.length>0 && entry.length<=60 ? true : stable(entry)];
+    })):value;
   const {title,description,goal,...queryCall}=call;
   return JSON.stringify(stable(call.tool==='analysis_query'?queryCall:call));
 }
@@ -72,6 +75,152 @@ export function scenarioRequestedParts(question:string):string[] {
 
 export const SCENARIO_COUNT_GUIDE = ' Respect the item count in each subquestion. When asked to choose one, give one specific choice and its reason. Do not bundle independent items in that choice or offer a runner-up.';
 
+/** A coaching decision about a described observation or training comparison.
+ * This identifies the task; the strength of the user's evidence decides the answer. */
+export function isTrainingDecision(question:string) {
+  const evidence=/录像|视频|回看|复盘|教练看|打乱|对照试验|轮换|footage|video|clips?|scrambles?|controlled trial/i;
+  const practice=/训练|练习|练法|练过|练\s*\d+\s*分钟|主练|练识别|练手法|慢拧|找块|手法课|配比|practice|train(?:ing)?|drills?/i;
+  const decision=/比例|配比|瓶颈|原因|替换|换成|该换|要不要换|换主练|砍掉|应该改|该改|bottleneck|cause|ratio|mix|switch|reallocate|replace/i;
+  const crossSplit=crossAllocation.test(question) && /规划/.test(question) && /执行/.test(question) && /成|比例|配比/.test(question) && testRequest.test(question);
+  const morePractice=/(?:多练|增加|加练).{0,4}(?:全速|慢拧)/.test(question) && evidence.test(question) && testRequest.test(question);
+  return crossSplit || morePractice || reversesPracticeMix(question) || (evidence.test(question) && practice.test(question) && decision.test(question));
+}
+
+// Build the comparison for the goal the visitor actually named. In particular,
+// changing the order of two drills does not change their allocation.
+const wholeSet = /整[套组轮]|全套|(?:whole|entire) (?:set|batch|round)/i;
+const accuracyGoal = /成功率|全(?:部)?(?:做)?对|准确|正确率|accuracy|success rate|all correct|every (?:case|solve) correct/i;
+const crossAllocation = /十字|\bcross\b/i;
+const reallocate = /砍掉|一半|配比|比例|各.{0,3}分钟|一半时间|\b(?:half|split|reallocate|ratio)\b/i;
+const testRequest = /对照|验证|检验|怎么测|比较|测试|公平|\b(?:test|compare|comparison|experiment|verify|validate|fair)\b/i;
+
+function asksForFairSpeedComparison(question: string) {
+  return /公平|\bfair(?:ly)?\b/i.test(question) && /慢拧|全速|slow.turn|full.speed/i.test(question);
+}
+
+export function reversesPracticeMix(question: string) {
+  return /慢拧|慢速|slow.turn/i.test(question) && /全速|速拧|full.speed/i.test(question)
+    && /比例|配比|比重|分配|时间|时长|ratio|proportion|split|mix|time/i.test(question)
+    && /倒过来|调过来|对调|调换|互换|反过来|颠倒|反转|倒转|reverse|swap|invert|flip/i.test(question);
+}
+
+// Familiarity changes recognition and recall. It does not establish the
+// intrinsic difficulty of either recorded scramble.
+const familiarScramble = /(?:打乱|题单|题目|题).{0,12}(?:认识|认得|熟悉|背过|做过|练过|见过)|(?:认识|认得|熟悉|背过|做过|练过|见过).{0,12}(?:打乱|题单|题目)|(?:那|这)[组套批].{0,5}(?:背过|见过|做过)|familiar|recogni[sz]ed|memori[sz]ed|seen before/i;
+const difficultyDifference = /难度(?:和熟悉度|与熟悉度)?(?:都|均|也)?(?:不一(?:样|致)|不同|(?:并)?不(?:对)?等|有差异)|(?:这|那|慢拧|全速)(?:一)?(?:组|段|次|边|套)(?:的)?(?:打乱|题目|题)?(?:明显|本身|本来)?(?:更难|更容易|更简单)|(?:different|unequal) (?:scramble )?difficult(?:y|ies)/i;
+const uncertainDifficulty = /可能|不一定|未必|无法|不能|不等于|不代表|没有证据|是否|假如|如果|排除|即使|控制|避免|perhaps|might|may |does not|do not|whether|avoid/i;
+function assertsDifficultyDifference(text: string) {
+  return text.split(/[，,。！？!?；;\n]/u).some(clause =>
+    difficultyDifference.test(clause) && !uncertainDifficulty.test(clause));
+}
+
+export function inventsScrambleDifficulty(question: string, answer: string) {
+  return familiarScramble.test(question) && !assertsDifficultyDifference(question) && assertsDifficultyDifference(answer);
+}
+
+const reversedMixGuide = 'A=当前配比，B=倒过来的配比。对调的是两项的时间份额，练法本身相同。未说明哪项占多时只用这两个标签，不补主次或百分比；已说明的数量要保留。练后按相同速度要求测整把，用两份不重叠的陌生打乱。';
+const reversedMixGuideEn = 'A is the current mix and B the reversed mix. Swap the shares of the two methods, keeping the methods themselves fixed. If the user did not specify the shares, use only those relative labels; never assign a dominant method or invent percentages. Preserve any supplied split. Test both arms at the same pace on disjoint unfamiliar scrambles.';
+
+// Numbers describing the footage, success rate or test count do not specify
+// an allocation. Look for the allocation alongside a named practice method.
+function suppliedPracticeSplit(text: string) {
+  const method = /慢拧|慢速|全速|速拧|slow.turn|full.speed/i;
+  return text.split(/[。！？!?；;\n]/u).some(sentence => {
+    if (!method.test(sentence) || /没(?:有)?说|未(?:说明|给出)|没给|不以.{0,8}为主|如果|假如|假设|要是|是否|为主吗|unspecified|haven.t (?:said|specified)|\b(?:if|suppose|what if)\b/i.test(sentence)) return false;
+    const dominance = /(?:慢拧|慢速|全速|速拧)(?:为主|为辅|居多|更多|较多|偏多)|(?:主练|主要练)\s*(?:慢拧|慢速|全速|速拧)|(?:mostly|primarily|mainly)\s+(?:slow.turn\w*|full.speed)/i;
+    const share = /(?:慢拧|慢速|全速|速拧)\s*(?:占|练)?\s*(?:\d+(?:\.\d+)?\s*[%％]|[一二三四五六七八九]成|一半)|(?:\d+\s*[%％]|[一二三四五六七八九]成|一半)\s*(?:的?时间)?(?:练|用来练|分给|给)?\s*(?:慢拧|全速|slow.turn|full.speed)|(?:慢拧|全速|slow.turn\w*|full.speed).{0,14}(?:配比|比例|ratio|split)\s*(?:是|为|is|of)?\s*\d+\s*[:：/]\s*\d+/i;
+    // One duration alone says nothing about which method gets the larger share.
+    const slowMinutes = /(?:慢拧|慢速|slow.turn\w*)\s*(?:练|用)?\s*\d+(?:\.\d+)?\s*(?:分钟|小时|min|hour)/i;
+    const fullMinutes = /(?:全速|速拧|full.speed)\s*(?:练|用)?\s*\d+(?:\.\d+)?\s*(?:分钟|小时|min|hour)/i;
+    return dominance.test(sentence) || share.test(sentence) || (slowMinutes.test(sentence) && fullMinutes.test(sentence));
+  });
+}
+
+export function requiresNeutralPracticeMix(question: string, priorUserText = '') {
+  return reversesPracticeMix(question) && !suppliedPracticeSplit(question) && !suppliedPracticeSplit(priorUserText);
+}
+
+export function inventsPracticeSplit(answer: string) {
+  return answer.split(/[。！？!?；;\n]/u).some(sentence => {
+    if (/如果|假设|假如|例如|举例|未说明|没说|不能假定|不假设|不是|并非|\b(?:if|suppose|assuming|example|unknown|unspecified)\b/i.test(sentence)) return false;
+    const dominance = /(?:慢拧|慢速|全速|速拧)(?:为主|为辅|更多|占多|占大头)|(?:主练|主要练)\s*(?:慢拧|慢速|全速|速拧)(?:为主)?|\b(?:mostly|primarily|mainly)\s+(?:slow.turn\w*|full.speed)/i;
+    const arm = /(?:[AB]\s*组?|原练法|现练法|拟议改动|新练法)\s*[（(＝=:：]\s*(?:慢拧|慢速|全速|速拧|slow.turn\w*|full.speed)\s*(?:[)），,。；;\s]|$)|[AB]\s*组?(?:用|只练|只做)\s*(?:慢拧|慢速|全速)(?:题单|打乱)/i;
+    const share = /(?:慢拧|全速)\s*(?:占)?\s*(?:\d+\s*[%％]|[一二三四五六七八九]成)|(?:\d+\s*[%％]|[一二三四五六七八九]成)\s*(?:练)?\s*(?:慢拧|全速)|(?:[AB]\s*组?|当前配比|原配比|倒过来的配比)\s*[（(＝=:：为是]?\s*\d+\s*[:：/]\s*\d+/i;
+    const namedShares = /(?:慢拧|全速)(?:练得|占比)?[多少]\s*[、，,]\s*(?:全速|慢拧)(?:练得|占比)?[多少](?![量次])/u;
+    return dominance.test(sentence) || namedShares.test(sentence) || arm.test(sentence) || share.test(sentence);
+  });
+}
+
+/** Only the scoring rule for the visitor's goal belongs in the prompt.
+ * Keep the common method ahead of that rule for provider prefix caching. */
+export function automaticTrainingGuidance(question: string): string {
+  const goal = accuracyGoal.test(question)
+    ? wholeSet.test(question)
+      ? '按用户口径比较成功整组数/尝试组数。只求全对时，犹豫但全对仍算成功，一例错则整组失败。'
+      : '按用户指定的正确率及计分单位比较。'
+    : '若目标是整把提速，就比较练后整把用时中位数。';
+  const allocation = crossAllocation.test(question) && reallocate.test(question)
+    ? '写明原配比与试验配比、从哪项挪多少给十字。减半时只挪这半份，保留总时长。'
+    : crossAllocation.test(question) && /规划/.test(question) && /执行/.test(question) ? '按题中现有和拟议的规划、执行时间份额设 A、B。比较两种分配练完之后的十字表现。'
+    : /多练.{0,3}(?:全速|慢拧)/.test(question) ? 'A 是当前配比，B 是适量增加所提练法的配比，两组练后都按相同速度验收，不能直接比较全速动作和慢拧动作的当场用时。'
+    : reversesPracticeMix(question) ? reversedMixGuide : '说明 A 的原练法和 B 的拟议改动，保留给定数量。';
+  return [
+    '你是速拧教练，用中文直接回答。先给决定和题中最关键的理由。少量录像不足以确认或排除瓶颈，暂留原安排，可另做试验。若已有多轮可比证据，按结果判断。',
+    '把方法写紧凑：两组练习等时等难，练后各测一份陌生、彼此不重叠且没练过的打乱，复测交换顺序并换新题。用户问公平性时直接答。每个条件只写一次。',
+    '只用用户的目标作取舍；B 在复测中稳定改善才改，否则保留。不自设百分比，不用录像里的数值当门槛。简单问题通常每项一两句；保留用户要求的细节、句数和另外指定的条件。',
+    ...(familiarScramble.test(question) ? ['保留题中给定的难度信息。解释录像差异时指出熟题会帮助预判；别把熟悉程度改写成题目难度。'] : []),
+    allocation, goal,
+  ].join(' ');
+}
+
+export function trainingDecisionGuidance(question: string): string {
+  const measure = wholeSet.test(question) && accuracyGoal.test(question)
+    ? 'Apply the user’s explicit scoring criteria. For correctness alone, a fully correct set is one success, even after a pause; one wrong case fails that entire set. Compare successful sets / attempted sets. Do not use pauses as a second metric or tie-break unless the user makes fluency a separate goal.'
+    : accuracyGoal.test(question) ? 'Use the requested accuracy measure and its stated scoring unit.'
+    : 'For overall speed compare median full-solve times measured AFTER practice; otherwise use the stated goal.';
+  const conditions = crossAllocation.test(question) && reallocate.test(question)
+    ? 'Describe both equal-duration allocations explicitly: A retains the usual cross AND other practice; B transfers the proposed time FROM the donor practice TO cross. If asked to halve the donor block, give that half to cross. Preserve supplied minutes. To break a whole-solve time target, switch only if median full-solve times improve repeatedly. A faster cross with unchanged total time does not meet that goal.'
+    : reversesPracticeMix(question) ? reversedMixGuideEn : 'A uses the current routine; B uses the proposed change. Preserve stated quantities.';
+  return [
+    'Distinguish observed results from causes. A few clips cannot locate or exclude a bottleneck. Keep regular practice unchanged on weak evidence; a temporary experiment is separate. Repeated balanced gains may justify switching while tracking the outcome.',
+    conditions, asksForFairSpeedComparison(question)
+      ? 'To answer the fairness question explicitly, describe A and B in one instruction: equal time and difficulty of practice, then A tests on new list A and B on independent new list B. Neither list overlaps practice or each other. Reverse order on repetition with fresh lists.'
+      : 'For a comparison, match practice duration and difficulty. Test A on unseen list A and B on a different unseen list B: zero overlap with practice or each other. Reverse condition order on repetition, using fresh lists again.',
+    ...(familiarScramble.test(question) ? ['Name the familiarity or recall advantage in the observation. Unless stated, scramble difficulty is unknown; matching difficulty is a future test control.'] : []),
+    measure, 'Give the keep/switch criterion.',
+  ].join(' ');
+}
+
+/** Catch positive recommendations that directly contradict a requested test.
+ * Quoting a bad proposal in order to reject it is a valid answer. */
+export function trainingComparisonIssue(question: string, answer: string, neutralMix = requiresNeutralPracticeMix(question)): string | undefined {
+  if (inventsScrambleDifficulty(question, answer)) return 'training_unsupported_difficulty';
+  if (neutralMix && inventsPracticeSplit(answer)) return 'training_unspecified_mix';
+  if (!testRequest.test(question)) return;
+  const clauses = answer.split(/[。！？!?；;\n]/u);
+  // Only reject a scoring conflict when correctness despite hesitation is
+  // explicit. A user can also define a fluency goal that penalizes pauses.
+  const hesitationAllowed = /(?:犹豫|停顿|想一下)[^，,。！？]{0,12}(?:算成功|算对|算正确|也算完成)|允许(?:停顿|犹豫|想一下)|hesitation (?:is allowed|is fine)/i;
+  if (wholeSet.test(question) && accuracyGoal.test(question) && hesitationAllowed.test(question + '。' + answer)
+    && clauses.some(clause => /(?:犹豫|停顿)(?:即|就|也)(?:算|判|视为).{0,6}失败|(?:hesitation|pausing) (?:counts as|is) (?:a )?failure/i.test(clause)
+      && !/不(?:是|应|该|能|要)(?:把|因为)?[^，,]{0,12}(?:犹豫|停顿)|does not count as/i.test(clause))) return 'training_set_scoring';
+
+  if (/慢拧|全速|slow.turn|full.speed/i.test(question)) {
+    const sharedTest = /(?:练完|练习后|测验|测试|测)[^，,。]{0,12}(?:同一(?:批|组|套|张|份)|相同的?一套)[^，,。]{0,10}(?:打乱|题单)|(?:test (?:both )?on|after practice use) the same (?:list|scrambles)/i;
+    const rejected = /不要|不能|不该|不应|避免|拒绝|不公平|do not|don't|avoid|unfair|shouldn't/i;
+    if (clauses.some(clause => sharedTest.test(clause) && !rejected.test(clause))) return 'training_shared_test_list';
+    // Only repair a missing duration when explicitly designing a fair test.
+    // Numeric schedules and custom time budgets keep their own interpretation.
+    if (asksForFairSpeedComparison(question) && !/分钟|小时|时长|时间|minutes?|hours?|duration/i.test(question)
+      && !/等时|时长|一样久|(?:相同|同样|等量|一样|相等)(?:的)?(?:练习|训练)?时间|(?:练习|训练)时间.{0,8}(?:相同|相等|一致|对齐|匹配|一样)|分钟|小时|(?:same|equal|match\w*)[^.,;]{0,22}(?:time|duration)|\b(?:minutes?|hours?)\b/i.test(answer)) return 'training_match_duration';
+  }
+  if (crossAllocation.test(question) && reallocate.test(question)) {
+    const orderOnly = /先十字[^。！？]{0,18}后.{0,6}后两层[^。！？]{0,24}先后两层[^。！？]{0,18}后十字|cross first[^.!?]{0,60}(?:cross last|last two layers first)/i;
+    const transfer = /(?:挪|拨|移|转|腾|分|让|省|划).{0,14}(?:给|到|用于|十字)|(?:少|减).{0,16}(?:多|增加)|\d+\s*(?:分钟|min|%)|transfer|reallocat/i;
+    if (orderOnly.test(answer) && !transfer.test(answer)) return 'training_allocation';
+  }
+}
+
 /** Constraints for the decision requested, independent of which training method wins. */
 export function scenarioDecisionGuidance(question: string): string {
   const rules: string[] = [];
@@ -81,7 +230,16 @@ export function scenarioDecisionGuidance(question: string): string {
       rules.push('For a wake-time or post-meal confound, choose ONE no-equipment pre-trial observation, such as elapsed minutes since waking, or a single alertness rating. Pick one and mention only that measure. Timing the solves is the outcome already being compared. Do not introduce a different sport or assume physiological instruments.');
     }
   }
-  if (/(?:录像|视频|footage|recordings?)/i.test(question) && /(?:练习|训练|practice|training)/i.test(question) && /(?:改主意|改变.{0,8}(?:判断|看法)|change your mind)/i.test(question)) {
+  if (/空场|清场|empty (?:room|hall)|room must be empty/i.test(question) &&
+      /等候|不能等|排队|到场|arriv|wait|queu/i.test(question)) {
+    rules.push('When early waiting is prohibited and no other staging area is available, schedule arrivals at each group’s own start time. Keep every required empty interval empty, including optional setup by participants. Apply the same restrictions to alternatives. Compare the sum of minimum session lengths and the empty interval with the available time. Give the timetable and shortfall concisely.');
+  }
+  if (reversesPracticeMix(question)) rules.push(reversedMixGuideEn);
+  const trainingComparison = /练习|训练|练法|慢拧|practice|training/i.test(question) && /对照|比较|比例|compare|ratio|mix/i.test(question);
+  const oneMetric = /(?:一[个项种]|单一|唯一).{0,3}指标|(?:one|single) (?:metric|measure|indicator)/i.test(question);
+  if (trainingComparison && oneMetric && /录像|视频|打乱|footage|recordings?|scramble/i.test(question)) {
+    rules.push('Lead with the decision and a brief reason. Describe both training blocks and both tests within the requested time window. Counterbalance their order in a repeat only if time permits; keep the first comparison executable on its own. Omit extra logging, recaps, dates and invented thresholds. Keep the user’s training proportions verbatim; do not convert fractions to ratios. Use one decision metric for the user’s actual goal. For overall solving speed compare the median of timed whole normal-speed solves AFTER each training mix. Keep the current mix when the new one fails to improve that outcome consistently. Pauses or TPS alone cannot establish an improvement in total time. Respect an explicitly different goal. Give a short executable comparison: equal training time and matched difficulty. Generate two DISJOINT test lists, A and B: no scramble appears in both or in earlier practice. Explicitly say the conditions use different lists. Counterbalance the order. Treat any user-specified test protocol as a constraint and explain its limitations. Use the same single metric and definition throughout.');
+  } else if (/(?:录像|视频|footage|recordings?)/i.test(question) && /(?:练习|训练|practice|training)/i.test(question) && /(?:改主意|改变.{0,8}(?:判断|看法)|change your mind)/i.test(question)) {
     rules.push('Distinguish a diagnostic proxy from the actual goal. Compare two training periods under balanced conditions, testing the target task at normal speed after EACH period. Name both training conditions in the decision rule: shift the mix only if the proposed training yields both a repeatable proxy improvement AND better target performance than the current training. If only the proxy improves or the current training matches or beats the proposed training on the target outcome, keep the mix. Use a concrete outcome in the user’s domain. Avoid the ambiguous phrase “if full-speed gets better” without saying after which training.');
     if (/(?:慢拧|slow turning)/i.test(question) && /(?:全速|full.speed)/i.test(question) && /停顿|pauses?/i.test(question)) {
       rules.push('If the aim is faster solving, use an independent endpoint: mean elapsed time for entire normal-speed solves AFTER each training block. Define the decision as a strict AND: reproducibly fewer pauses AND a meaningfully shorter normal-speed mean after slow-turn training than after full-speed training. Record both numbers separately. A tie in total time, “no worse”, fewer pauses in the normal-speed test, or shorter F2L pauses cannot substitute for faster whole solves. If the primary goal is unspecified, explicitly condition that decision on improving full-solve speed; respect any other stated goal.');

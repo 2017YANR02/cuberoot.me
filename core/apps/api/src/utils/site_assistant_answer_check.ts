@@ -83,6 +83,23 @@ export function missingAssistantRequirements(items: string[], answer: string, ex
   });
 }
 
+/** The compact coaching prompt requests one answer line per item. Derive the
+ * private coverage excerpts from those exact lines, without generating a copy
+ * of every sentence. Malformed or ambiguous layouts use normal verification. */
+export function coachingAnswerSections(answer:string,items:string[]):string[]|undefined {
+  const lines=answer.split(/\r?\n/).map(line=>line.trim()).filter(Boolean);
+  if(!items.length || lines.length!==items.length)return;
+  const sections:string[]=[];
+  for(const [index,line] of lines.entries()) {
+    const heading=/^(\d{1,2})(?:[)）、]|\.\s+)\s*/u.exec(line);
+    if(heading && Number(heading[1])!==index+1)return;
+    const body=line.slice(heading?.[0].length ?? 0).trim();
+    if(!body || body.length>300)return;
+    sections.push(body);
+  }
+  if(!missingAssistantRequirements(items,sections.join('\n'),sections).length)return sections;
+}
+
 /** A succeeding numbered heading closes the previous item. Keep the current
  * item private until its boundary arrives or the complete answer passes review. */
 export function createRequirementPreview(items: string[]) {

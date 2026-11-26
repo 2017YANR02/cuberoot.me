@@ -253,3 +253,27 @@ it('honors a provider retry time across chats while other models keep running',a
   await expect(call('other')).resolves.toMatchObject({answer:'OK'});
   expect(fetcher).toHaveBeenCalledTimes(2);
 });
+
+it('renders sentence-constrained coaching answers in request order and rejects a missing item',async()=>{
+  const sentenceReplies={items:2,sentences:3,separator:''};
+  const first='保持原安排。',second='两局不足以确定原因。先对照两种练法的整把用时。';
+  const run=(content:object)=>createAssistantModel(config,vi.fn<typeof fetch>().mockResolvedValue(response({content:JSON.stringify(content)})),AbortSignal.timeout(2000),'',[])
+    .complete({...options,thinking:false,sentenceReplies});
+  expect(await run({sentence2:"两局不足以确定原因。",sentence3:"先对照两种练法的整把用时。",sentence1:first})).toMatchObject({answer:first+second,requirementChecks:[first,"两局不足以确定原因。"],sourceIds:[]});
+  await expect(run({sentence1:first})).rejects.toThrow();
+});
+
+it('keeps standalone coaching structured and exposes specialist tools once it deliberates', async () => {
+  const fetcher = vi.fn<typeof fetch>()
+    .mockResolvedValueOnce(response({ content: null, tool_calls: [{id:'choice', type:'function', function:{name:'deliberate',arguments:'{}'}}] },'tool_calls'))
+    .mockResolvedValueOnce(response({ content: JSON.stringify({answerKind:'general',answer:'Done',sourceIds:[]}) }));
+  const model = createAssistantModel(config,fetcher,AbortSignal.timeout(2000),'');
+  const first = await model.complete({...options,thinking:false,decisionToolsOnly:true,unavailableTools:['web_search']});
+  expect(first.calls).toEqual([{tool:'deliberate'}]);
+  model.record(first.calls[0],{ready:true});
+  await model.complete({...options,unavailableTools:['web_search']});
+  const names = (index:number) => JSON.parse(String(fetcher.mock.calls[index][1]?.body)).tools.map((tool:{function:{name:string}})=>tool.function.name);
+  expect(names(0).sort()).toEqual(['deliberate','pages']);
+  expect(names(1)).toContain('analysis_schema');
+  expect(names(1)).not.toContain('web_search');
+});
