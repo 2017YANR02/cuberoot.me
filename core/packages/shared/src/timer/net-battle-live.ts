@@ -7,6 +7,9 @@ import {
 import type { Quat } from '../smart_cube/orientation';
 
 export const NET_BATTLE_LIVE_PATH = '/v1/smart-cube/relay?mode=battle';
+export const COMPETITION_LIVE_PATH = '/v1/smart-cube/relay?mode=competition';
+export const isCompetitionLiveRoom = (value: unknown): value is string =>
+  typeof value === 'string' && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(value);
 export const NET_BATTLE_LIVE_PROTOCOL_VERSION = 1 as const;
 export const NET_BATTLE_LIVE_MAX_MESSAGE_BYTES = 2 * 1024;
 
@@ -90,11 +93,11 @@ function copyQuaternion(q: Quat | null): Quat | null {
   return q ? { w: q.w, x: q.x, y: q.y, z: q.z } : null;
 }
 
-export function parseNetBattleLiveHello(value: unknown): NetBattleLiveHello | null {
+export function parseNetBattleLiveHello(value: unknown, validRoom = isNetBattleRoomCode): NetBattleLiveHello | null {
   if (!isRecord(value)
     || value.type !== 'hello'
     || value.version !== NET_BATTLE_LIVE_PROTOCOL_VERSION
-    || !isNetBattleRoomCode(value.code)
+    || !validRoom(value.code)
     || !isNetBattleCredentials(value)) return null;
   return {
     type: 'hello',

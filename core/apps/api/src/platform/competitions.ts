@@ -88,15 +88,15 @@ export async function competitionOrderContext(db: PlatformDb, input: {
     refundPolicy: config.refund_policy, recordingPolicy: config.recording_policy };
 }
 
-export async function requireCompetitionRegistration(db: PlatformDb, id: string) {
-  const rows = await platformQuery<{ id: string; user_id: number; status: string; event_id: string; competition_project: (typeof WCA_TIMED_EVENT_ORDER)[number]; competition_video_generation: string; supervisor_user_id: number | null; session_kind: string; competition_format: string | null; device: string; in_window: boolean; checked_in_at: string | null }>(db, `
-    SELECT r.id::text,r.user_id,r.status,r.event_id::text,r.checked_in_at,r.competition_project,r.competition_video_generation::text,s.supervisor_user_id,s.session_kind,c.competition_format,t.competition_device AS device,
+export async function requireCompetitionRegistration(db: PlatformDb, id: string, lock = true) {
+  const rows = await platformQuery<{ id: string; user_id: number; status: string; event_id: string; session_id: string; competition_project: (typeof WCA_TIMED_EVENT_ORDER)[number]; competition_video_generation: string; supervisor_user_id: number | null; session_kind: string; competition_format: string | null; device: string; in_window: boolean; checked_in_at: string | null }>(db, `
+    SELECT r.id::text,r.user_id,r.status,r.event_id::text,s.id::text AS session_id,r.checked_in_at,r.competition_project,r.competition_video_generation::text,s.supervisor_user_id,s.session_kind,c.competition_format,t.competition_device AS device,
       (NOW()>=s.starts_at AND NOW()<s.ends_at) AS in_window
     FROM platform_event_registrations r JOIN platform_competition_sessions s ON s.id=r.competition_session_id
     JOIN platform_events e ON e.id=r.event_id AND e.status='published'
     JOIN platform_competitions c ON c.event_id=r.event_id
     JOIN platform_event_ticket_types t ON t.id=r.ticket_type_id
-    WHERE r.id=$1::uuid FOR UPDATE OF r
+    WHERE r.id=$1::uuid ${lock ? 'FOR UPDATE OF r' : ''}
   `, [id]);
   if (!rows[0]) notFound('Competition registration');
   return rows[0];

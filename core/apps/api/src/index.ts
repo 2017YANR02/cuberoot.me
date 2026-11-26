@@ -141,6 +141,7 @@ import { driveRoutes } from './routes/drive.js';
 import { musicRoutes } from './routes/music.js';
 import { collaborativeDocuments } from './documents/realtime.js';
 import { smartCubeRelay } from './smart_cube/relay.js';
+import { authorizeCompetitionLive, competitionLiveRelay, startCompetitionLiveNotifications } from './platform/competition_live.js';
 import { battleRoomLiveRelay } from './battle_live_relay.js';
 import { calcLiveRelay } from './calc/live_relay.js';
 import { ensureDaemon as ensureCubeoptDaemon, isEnabled as cubeoptEnabled } from './cubeopt/daemon.js';
@@ -346,9 +347,10 @@ app.get('/v1/smart-cube/relay', upgradeWebSocket((c) => {
           ws.close(code, reason);
         },
       };
-      connection = c.req.query('mode') === 'battle'
-        ? battleRoomLiveRelay.connect(socket, authorizeBattleRoomLivePlayer, getIp(c))
-        : smartCubeRelay.connect(socket, getIp(c));
+      const mode = c.req.query('mode');
+      if (mode === 'competition') connection = competitionLiveRelay.connect(socket, authorizeCompetitionLive, getIp(c));
+      else if (mode === 'battle') connection = battleRoomLiveRelay.connect(socket, authorizeBattleRoomLivePlayer, getIp(c));
+      else connection = smartCubeRelay.connect(socket, getIp(c));
     },
     onMessage(event) {
       connection?.handleMessage(event.data);
@@ -478,6 +480,7 @@ startMembershipContractSync();
 startMembershipRenewals();
 startPlatformRefundReconciliation();
 startCompetitionBracketScheduling();
+startCompetitionLiveNotifications();
 startWechatPayoutRecovery();
 
 const PORT = Number(process.env.PORT) || 3001;

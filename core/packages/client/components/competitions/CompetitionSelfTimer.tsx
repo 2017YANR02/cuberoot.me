@@ -1,5 +1,7 @@
 import { useEffect, useEffectEvent, useRef, useState } from 'react';
-import { inspectionPenalty } from '@cuberoot/shared/timer';
+import { COMPETITION_STAGE_LIMIT_MS, inspectionPenalty } from '@cuberoot/shared/timer';
+import { formatWcaResult } from '@/lib/wca-format-result';
+import { attemptValue } from './competition-results';
 import { useT } from '@/hooks/useT';
 import type { CompetitionAttemptResult } from '@/lib/online-competition-api';
 import { useCompetitionTimerControls } from './useCompetitionTimerControls';
@@ -7,8 +9,9 @@ import { useCompetitionTimerControls } from './useCompetitionTimerControls';
 const INSPECTION_SECONDS = 15;
 const DNF = { centiseconds: null, penalty: 'DNF' } as const;
 
-export function CompetitionSelfTimer({ disabled, onResult }: {
-  disabled: boolean; onResult: (result: CompetitionAttemptResult) => void;
+export function CompetitionSelfTimer({ disabled, onResult, onPhase, project = '333' }: {
+  disabled: boolean; project?: string; onResult: (result: CompetitionAttemptResult) => void;
+  onPhase?: (phase: 'inspecting' | 'solving', inspectionMs?: number) => void;
 }) {
   const t = useT();
   const [inspectAt, setInspectAt] = useState<number | null>(null);
@@ -32,6 +35,7 @@ export function CompetitionSelfTimer({ disabled, onResult }: {
     const time = performance.now();
     setNow(time);
     setInspectAt(time);
+    onPhase?.('inspecting');
   }
 
   function start() {
@@ -40,6 +44,7 @@ export function CompetitionSelfTimer({ disabled, onResult }: {
     const penalty = inspectionPenalty(at - inspectAt, INSPECTION_SECONDS);
     if (penalty === 'DNF') finish(DNF);
     else {
+      onPhase?.('solving', Math.min(16000, Math.round(at - inspectAt)));
       setNow(at);
       setSolve({ at, penalty: penalty === '+2' ? '+2' : 'none' });
     }
@@ -47,12 +52,14 @@ export function CompetitionSelfTimer({ disabled, onResult }: {
 
   function stop() {
     if (!solve) return;
+    if (performance.now() - solve.at >= COMPETITION_STAGE_LIMIT_MS) { finish(DNF); return; }
     finish({ centiseconds: Math.max(1, Math.floor((performance.now() - solve.at) / 10)), penalty: solve.penalty });
   }
 
   const tick = useEffectEvent(() => {
     const time = performance.now();
-    if (!solve && inspectAt !== null && inspectionPenalty(time - inspectAt, INSPECTION_SECONDS) === 'DNF') finish(DNF);
+    if (solve && time - solve.at >= COMPETITION_STAGE_LIMIT_MS) finish(DNF);
+    else if (!solve && inspectAt !== null && inspectionPenalty(time - inspectAt, INSPECTION_SECONDS) === 'DNF') finish(DNF);
     else setNow(time);
   });
   const locked = disabled || result !== null;
@@ -62,9 +69,10 @@ export function CompetitionSelfTimer({ disabled, onResult }: {
     return () => clearInterval(interval);
   }, [locked, phase]);
   const controls = useCompetitionTimerControls({ phase, disabled: locked, onInspect: inspect, onStart: start, onStop: stop });
+  const elapsedCentiseconds = solve ? Math.max(0, Math.floor((now - solve.at) / 10)) : 0;
   const display = result
-    ? result.penalty === 'DNF' ? 'DNF' : ((result.centiseconds ?? 0) / 100).toFixed(2) + (result.penalty === '+2' ? ' +2' : '')
-    : solve ? (Math.floor(Math.max(0, now - solve.at) / 10) / 100).toFixed(2)
+    ? formatWcaResult(attemptValue({ ...result, penalty: result.penalty === '+2' ? 'none' : result.penalty }), project, 'single') + (result.penalty === '+2' ? ' +2' : '')
+    : solve ? (elapsedCentiseconds ? formatWcaResult(elapsedCentiseconds, project, 'single') : '0.00')
       : inspection === '+2' ? '+2' : `${Math.max(0, Math.ceil(INSPECTION_SECONDS - elapsed / 1000))}s`;
 
   const face = <output aria-label={t('内置计时', 'Built-in timer')} aria-live="off" data-ready={controls.ready || undefined}>{display}</output>;

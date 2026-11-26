@@ -108,7 +108,8 @@ const TABLES: Table[] = [
   { name: 'platform_competition_matches', domain: 'platform', origin: '0357', purpose: { zh: '项目分组的双败对阵、比分与胜败晋级指向', en: 'Per-division double-elimination match scores and winner and loser paths' } },
   { name: 'platform_competition_match_games', domain: 'platform', origin: '0357', evolved: [358], purpose: { zh: '双败小局的双方准备、同步打乱、观察限时、起表、比赛成绩和设备证据', en: 'Game readiness, shared scramble, inspection deadlines, solve starts, results and device evidence' } },
   { name: 'platform_competition_sessions', domain: 'platform', origin: '0224 / 0356', purpose: { zh: '线上监督排班和自助、线下赛事的默认场次', en: 'Supervised slots and default sessions for self-service and in-person competitions' } },
-  { name: 'platform_competition_attempts', domain: 'platform', origin: '0224', purpose: { zh: '服务器逐把打乱与监督员成绩确认', en: 'Server-issued scrambles and supervisor-recorded attempts' } },
+  { name: 'platform_competition_arena_rounds', domain: 'platform', origin: '0363', purpose: { zh: '统一发乱的赛场轮次及其起止时间', en: 'Arena rounds with a shared scramble and start and completion times' } },
+  { name: 'platform_competition_attempts', domain: 'platform', origin: '0224', evolved: [363], purpose: { zh: '服务器逐把打乱与监督员成绩确认', en: 'Server-issued scrambles and supervisor-recorded attempts' } },
   { name: 'platform_competition_disputes', domain: 'platform', origin: '0224', purpose: { zh: '成绩争议与平台处理记录', en: 'Result disputes and platform resolutions' } },
   { name: 'platform_competition_evidence', domain: 'platform', origin: '0225', evolved: [358], purpose: { zh: '限授权访问的争议与单把抽检录像及保留期限', en: 'Private dispute and per-attempt review clips with retention dates' } },
   { name: 'platform_competition_settlement_ledger', domain: 'platform', origin: '0226', purpose: { zh: '主办方转账、追回与退款调整的审计台账', en: 'Audited organizer transfers, recoveries and refund adjustments' } },
@@ -616,6 +617,7 @@ const TABLES: Table[] = [
 ];
 
 const MIGRATIONS: { n: number; slug: string; desc: Bi }[] = [
+  { n: 363, slug: 'competition_arena', desc: { zh: '记录统一发乱、阶段时间、DNF 原因与实时轮次通知。', en: 'Persist shared rounds, stage clocks, DNF reasons and live round notifications.' } },
   { n: 362, slug: 'platform_quiz_content_reviews', desc: { zh: '增加测验发布审核，并校验所属课时及前后修订。', en: 'Add quiz publication reviews and validate lesson ownership and both revisions.' } },
   { n: 361, slug: 'platform_course_presentation_defaults', desc: { zh: '增加课程展示默认值字段，保留已封存的历史修订。', en: 'Store course display defaults while preserving sealed historical revisions.' } },
   { n: 360, slug: 'platform_lesson_type_and_order', desc: { zh: '新增显式课时类型并支持原子交换课时顺序。', en: 'Add explicit lesson types and support atomic lesson reordering.' } },

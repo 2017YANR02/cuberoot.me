@@ -1,4 +1,4 @@
-import { inspectionPenalty } from '@cuberoot/shared/timer';
+import { COMPETITION_INSPECTION_MS, COMPETITION_STAGE_LIMIT_MS, inspectionPenalty } from '@cuberoot/shared/timer';
 import type { Context } from 'hono';
 import { randomUUID } from 'node:crypto';
 import { requirePlatformActor } from '../platform/auth.js';
@@ -9,12 +9,15 @@ import { enumField, integerField, readJsonObject, stringField } from '../platfor
 import { requireCompetitionManager, validateCompetitionAttempt } from '../platform/competitions.js';
 import { decideCompetitionGame, generateCompetitionBrackets, type Match, type MatchResult } from '../platform/competition_brackets.js';
 import { competitionId, competitionScramble } from '../platform/competition_workflow.js';
-import { competitionDeviceResult, validateCompetitionDeviceReport, verifyCompletedCompetitionDeviceReport } from '../platform/competition_device_reports.js';
+import { competitionDeviceResult, competitionReplay, validateCompetitionDeviceReport, verifyCompletedCompetitionDeviceReport } from '../platform/competition_device_reports.js';
+import { arenaDnfReason, arenaSolveAt, sweepCompetitionArenas } from '../platform/competition_arena.js';
+import { competitionLiveCredentials, competitionLivePlayer } from '../platform/competition_live.js';
+import { smartCubeTargetFacelets } from '@cuberoot/shared/smart-cube/cubie';
 import { competitionSupervisionReady } from './video_rooms.js';
 
 export const platformCompetitionBracketRoutes = platformRouter();
 
-const SCRAMBLE_LIMIT_MS = 60_000;
+const SCRAMBLE_LIMIT_MS = COMPETITION_STAGE_LIMIT_MS;
 const INSPECTION_SECONDS = 15;
 const DNF = { centiseconds: null, penalty: 'DNF' } as const;
 type PlayerSide = 'a' | 'b';
@@ -33,10 +36,12 @@ type SeatMatch = Match & {
   supervision: string; a_checked: boolean; b_checked: boolean;
   a_supervisor: string | null; b_supervisor: string | null;
   a_video: string | null; b_video: string | null;
+  a_wca_id: string | null; b_wca_id: string | null; a_country: string | null; b_country: string | null;
 };
 const MATCH_DETAILS = `SELECT m.*,t.competition_project AS project,t.competition_device AS device,
     a.user_id::text AS a_user,b.user_id::text AS b_user,a.status AS a_status,b.status AS b_status,
     c.supervision_mode AS supervision,
+    ua.wca_id AS a_wca_id,ub.wca_id AS b_wca_id,ua.country_iso2 AS a_country,ub.country_iso2 AS b_country,
     (a.checked_in_at IS NOT NULL AND sa.starts_at<=NOW() AND sa.ends_at>NOW()) AS a_checked,
     (b.checked_in_at IS NOT NULL AND sb.starts_at<=NOW() AND sb.ends_at>NOW()) AS b_checked,
     sa.supervisor_user_id::text AS a_supervisor,sb.supervisor_user_id::text AS b_supervisor,
@@ -48,6 +53,7 @@ const MATCH_DETAILS = `SELECT m.*,t.competition_project AS project,t.competition
   JOIN platform_competitions c ON c.event_id=m.event_id
   LEFT JOIN platform_event_registrations a ON a.id=m.player_a_registration_id
   LEFT JOIN platform_event_registrations b ON b.id=m.player_b_registration_id
+  LEFT JOIN app_users ua ON ua.id=a.user_id LEFT JOIN app_users ub ON ub.id=b.user_id
   LEFT JOIN platform_competition_sessions sa ON sa.id=a.competition_session_id
   LEFT JOIN platform_competition_sessions sb ON sb.id=b.competition_session_id
   LEFT JOIN platform_order_items ai ON ai.id=a.order_item_id LEFT JOIN platform_orders ao ON ao.id=ai.order_id
@@ -77,11 +83,14 @@ function timedOrdinaryGame(match: Pick<SeatMatch, 'device'>, game: Pick<Game, 'a
   return match.device === 'ordinary' && game.authoritative_timing;
 }
 
-function timingExpired(game: Game, side: PlayerSide, now: Date) {
-  if (!game.start_at || game[`solve_${side}_at`]) return false;
-  const inspected = game[`inspect_${side}_at`];
+function timingExpired(game: Game, side: PlayerSide, now: Date, smart = false) {
+  if (!game.start_at) return false;
+  const inspected = game[`inspect_${side}_at`] ?? (smart ? game[`run_${side}_at`] : null);
+  const solve = game[`solve_${side}_at`];
+  if (smart) return arenaDnfReason(game.start_at, inspected, solve, now) !== null;
+  if (solve) return +now - +solve >= COMPETITION_STAGE_LIMIT_MS;
   return inspected ? inspectionPenalty(+now - +inspected, INSPECTION_SECONDS) === 'DNF'
-    : +now - +game.start_at > SCRAMBLE_LIMIT_MS;
+    : +now - +game.start_at >= SCRAMBLE_LIMIT_MS;
 }
 
 function requireActiveMatch(match: SeatMatch) {
@@ -190,6 +199,10 @@ platformCompetitionBracketRoutes.get('/platform/competitions/matches/:id', async
   const actor = await requirePlatformActor(c);
   const id = competitionId(c.req.param('id'));
   const { match, side } = await ownMatch(platformDb(), id, actor.userId);
+  if (match.status === 'in_progress' && match.eligible) await platformTransaction(async db => {
+    const { match: locked } = await ownMatch(db, id, actor.userId, true);
+    await expireMatchGame(db, locked, locked.device === 'smart');
+  });
   // Scores, the active game, and the prior result must come from the same snapshot.
   type SettledGame = Pick<Game, 'game_number' | 'result_a' | 'result_b'> & { winner_registration_id: string | null };
   const [snapshot] = await platformQuery<{
@@ -197,36 +210,60 @@ platformCompetitionBracketRoutes.get('/platform/competitions/matches/:id', async
     active: (Omit<Game, 'start_at' | 'inspect_a_at' | 'inspect_b_at' | 'solve_a_at' | 'solve_b_at'> & {
       start_at: string | null; inspect_a_at: string | null; inspect_b_at: string | null; solve_a_at: string | null; solve_b_at: string | null;
     }) | null; last: SettledGame | null;
+    history: Array<SettledGame & { replay_a: boolean; replay_b: boolean }>;
   }>(platformDb(), `SELECT clock_timestamp() AS now,m.status,m.score_a,m.score_b,
     (SELECT to_jsonb(g) FROM (
-      SELECT ${GAME_FIELDS} FROM platform_competition_match_games WHERE match_id=m.id AND resolved_at IS NULL ORDER BY game_number DESC LIMIT 1
+      SELECT ${GAME_FIELDS} FROM platform_competition_match_games WHERE match_id=m.id AND resolved_at IS NULL AND m.status IN ('ready','in_progress') ORDER BY game_number DESC LIMIT 1
     ) g) AS active,
     (SELECT to_jsonb(g) FROM (
       SELECT game_number,result_a,result_b,winner_registration_id FROM platform_competition_match_games
       WHERE match_id=m.id AND resolved_at IS NOT NULL ORDER BY game_number DESC LIMIT 1
-    ) g) AS last
+    ) g) AS last,
+    COALESCE((SELECT jsonb_agg(g ORDER BY game_number) FROM (
+      SELECT game_number,result_a,result_b,winner_registration_id,report_a IS NOT NULL AND result_a->>'penalty'='none' AS replay_a,
+        report_b IS NOT NULL AND result_b->>'penalty'='none' AS replay_b
+      FROM platform_competition_match_games WHERE match_id=m.id AND resolved_at IS NOT NULL
+    ) g),'[]'::jsonb) AS history
     FROM platform_competition_matches m WHERE m.id=$1::uuid`, [id]);
   const { active: game, last, now } = snapshot;
   const opponent = side === 'a' ? 'b' : 'a';
   const registrationId = side === 'a' ? match.player_a_registration_id : match.player_b_registration_id;
-  const iso = (timestamp: string | null) => timestamp ? new Date(timestamp).toISOString() : null;
+  const checkedIn = !!match[`${side}_checked`];
+  const canReadLive = match.device !== 'smart' || checkedIn;
+  const iso = (timestamp: string | Date | null) => timestamp ? new Date(timestamp).toISOString() : null;
+  const effectiveSolveAt = (seat: PlayerSide) => {
+    const solve = game?.[`solve_${seat}_at`];
+    if (solve) return iso(solve);
+    const inspect = game?.[`inspect_${seat}_at`] ?? game?.[`run_${seat}_at`];
+    if (!inspect || match.device !== 'smart') return null;
+    const automatic = new Date(+new Date(inspect) + COMPETITION_INSPECTION_MS);
+    return automatic <= now ? iso(automatic) : null;
+  };
   const activeGame = game ? {
     gameNumber: game.game_number,
     startAt: iso(game.start_at),
-    scramble: game.start_at && new Date(game.start_at) <= now ? game.scramble : null,
+    scramble: canReadLive && game.start_at && new Date(game.start_at) <= now ? game.scramble : null,
     ownReady: !!game[`ready_${side}_at`], opponentReady: !!game[`ready_${opponent}_at`],
     ownResult: game[`result_${side}`], opponentFinished: !!game[`result_${opponent}`],
+    opponentResult: game[`result_${opponent}`],
     opponentPhase: game[`phase_${opponent}`],
+    opponentInspectAt: iso(game[`inspect_${opponent}_at`] ?? game[`run_${opponent}_at`]),
+    opponentSolveAt: effectiveSolveAt(opponent),
     runId: game[`run_${side}`],
     authoritativeTiming: timedOrdinaryGame(match, game),
-    inspectAt: iso(game[`inspect_${side}_at`]), solveAt: iso(game[`solve_${side}_at`]),
+    inspectAt: iso(game[`inspect_${side}_at`] ?? game[`run_${side}_at`]), solveAt: effectiveSolveAt(side),
     scrambleDeadlineAt: game.start_at ? new Date(+new Date(game.start_at) + SCRAMBLE_LIMIT_MS) : null,
-    inspectionSeconds: INSPECTION_SECONDS,
+    inspectionSeconds: match.device === 'smart' ? COMPETITION_INSPECTION_MS / 1000 : INSPECTION_SECONDS,
   } : null;
   return c.json({
     id, eventId: match.event_id, project: match.project, device: match.device, status: snapshot.status,
     registrationId,
-    supervisionMode: match.supervision, requiresSupervision: match.supervision === 'supervised', checkedIn: !!match[`${side}_checked`],
+    bestOf: match.best_of, bracketSide: match.bracket_side,
+    credentials: canReadLive ? competitionLiveCredentials(id, actor.userId) : null,
+    ownIdentity: { name: match[`title_${side}`], wcaId: match[`${side}_wca_id`], countryCode: match[`${side}_country`] },
+    opponentIdentity: { name: match[`title_${opponent}`], wcaId: match[`${opponent}_wca_id`], countryCode: match[`${opponent}_country`] },
+    opponentPlayerId: competitionLivePlayer(match[`${opponent}_user`]),
+    supervisionMode: match.supervision, requiresSupervision: match.supervision === 'supervised', checkedIn,
     ownName: side === 'a' ? match.title_a : match.title_b, opponentName: side === 'a' ? match.title_b : match.title_a,
     ownScore: side === 'a' ? snapshot.score_a : snapshot.score_b, opponentScore: side === 'a' ? snapshot.score_b : snapshot.score_a,
     serverNow: now,
@@ -237,6 +274,11 @@ platformCompetitionBracketRoutes.get('/platform/competitions/matches/:id', async
     ownResult: activeGame?.ownResult ?? null, opponentFinished: activeGame?.opponentFinished ?? false,
     opponentPhase: activeGame?.opponentPhase ?? null, runId: activeGame?.runId ?? null,
     activeGame,
+    history: snapshot.history.map(game => ({
+      gameNumber: game.game_number, ownResult: game[`result_${side}`], opponentResult: game[`result_${opponent}`],
+      ownReplay: game[`replay_${side}`], opponentReplay: game[`replay_${opponent}`],
+      winner: game.winner_registration_id == null ? 'draw' : game.winner_registration_id === registrationId ? 'own' : 'opponent',
+    })),
     lastGame: last ? {
       gameNumber: last.game_number, ownResult: last[`result_${side}`], opponentResult: last[`result_${opponent}`],
       winner: last.winner_registration_id == null ? 'draw' : last.winner_registration_id === registrationId ? 'own' : 'opponent',
@@ -252,6 +294,7 @@ platformCompetitionBracketRoutes.post('/platform/competitions/matches/:id/ready'
   return sendMutation(c, await withIdempotency(c, actor, `competition.match.ready:${id}:${number}`, body, async db => {
     const { match, side } = await ownMatch(db, id, actor.userId, true);
     requireActiveMatch(match);
+    if (match.device === 'smart' && !match[`${side}_checked`]) conflict('Check in before readying a smart cube seat');
     const game = await activeGame(db, id);
     if (game && game.game_number !== number) conflict('This game is no longer current');
     await requireMatchSupervision(match, game && !game[`ready_${side}_at`] ? ['a', 'b'] : [side]);
@@ -271,14 +314,15 @@ platformCompetitionBracketRoutes.post('/platform/competitions/matches/:id/ready'
   }));
 });
 
-async function playableGame(db: PlatformDb, id: string, userId: number | null, number: number) {
+async function playableGame(db: PlatformDb, id: string, userId: number | null, number: number, requireCameras = true) {
   const { match, side } = await ownMatch(db, id, userId, true);
   requireActiveMatch(match);
+  if (match.device === 'smart' && !match[`${side}_checked`]) conflict('Check in before playing a smart cube match');
   const game = await activeGame(db, id);
   if (!game || game.game_number !== number || !game.start_at) conflict('This game is no longer active');
   const [clock] = await platformQuery<{ now: Date }>(db, 'SELECT clock_timestamp() AS now');
   if (game.start_at > clock.now) conflict('The game has not started');
-  await requireMatchSupervision(match, [side]);
+  if (requireCameras) await requireMatchSupervision(match, [side]);
   return { match, side, game, now: clock.now };
 }
 
@@ -296,13 +340,28 @@ platformCompetitionBracketRoutes.post('/platform/competitions/matches/:id/phase'
   const id = competitionId(c.req.param('id'));
   const body = await readJsonObject(c);
   const number = integerField(body, 'gameNumber', { required: true, min: 1 })!;
-  const phase = enumField(body, 'phase', ['inspecting', 'solving', 'timeout'], { required: true })!;
+  const phase = enumField(body, 'phase', ['inspecting', 'solving', 'timeout', 'disconnected'], { required: true })!;
+  const inspectionMs = integerField(body, 'inspectionMs', { min: 0, max: COMPETITION_INSPECTION_MS });
   return sendMutation(c, await withIdempotency(c, actor, `competition.match.phase:${id}:${number}`, body, async db => {
-    const { match, side, game, now } = await playableGame(db, id, actor.userId, number);
+    const { match, side, game, now } = await playableGame(db, id, actor.userId, number, phase !== 'disconnected' && phase !== 'timeout');
     const inspectAt = game[`inspect_${side}_at`];
     const solveAt = game[`solve_${side}_at`];
     const priorResult = game[`result_${side}`];
     if (priorResult) return { status: 200, body: { inspectAt, solveAt, result: priorResult } };
+    if (match.device === 'smart') {
+      const inspected = inspectAt ?? game[`run_${side}_at`];
+      if (phase === 'disconnected' || timingExpired(game, side, now, true)) {
+        await saveMatchResult(db, match, side, game, { ...DNF, dnfReason: phase === 'disconnected' ? 'disconnected' : inspected ? 'solve_timeout' : 'scramble_timeout' });
+        return { status: 200, body: { result: DNF } };
+      }
+      if (phase !== 'solving' || !inspected || solveAt) return { status: 200, body: { inspectAt: inspected, solveAt } };
+      const solve = arenaSolveAt(inspected, now, inspectionMs);
+      if (+solve > +now + 1000) badRequest('The inspection duration exceeds the server clock');
+      await platformQuery(db, `UPDATE platform_competition_match_games SET phase_${side}='solving',inspect_${side}_at=$3,solve_${side}_at=$4
+        WHERE match_id=$1::uuid AND game_number=$2`, [id, number, inspected, solve]);
+      return { status: 200, body: { inspectAt: inspected, solveAt: solve } };
+    }
+    if (phase === 'disconnected') badRequest('This seat does not use Bluetooth timing');
     if (!timedOrdinaryGame(match, game)) {
       if (phase === 'timeout') return { status: 200, body: { inspectAt, solveAt } };
       if (game[`phase_${side}`] === 'solving') return { status: 200, body: { phase: 'solving', inspectAt, solveAt } };
@@ -368,15 +427,22 @@ platformCompetitionBracketRoutes.post('/platform/competitions/matches/:id/games/
   const body = await readJsonObject(c);
   const issued = stringField(body, 'serverIssuedAt', { required: true, max: 64 });
   const scramble = stringField(body, 'scramble', { required: true, max: 2000 });
+  const facelets = stringField(body, 'startFacelets', { required: true, min: 54, max: 54 });
   return sendMutation(c, await withIdempotency(c, actor, `competition.match.device-start:${id}:${number}`, body, async db => {
-    const { match, side, game } = await playableGame(db, id, actor.userId, number);
+    const { match, side, game, now } = await playableGame(db, id, actor.userId, number);
     if (match.device !== 'smart' || game.start_at!.toISOString() !== issued || game.scramble !== scramble || game[`run_${side}`]) {
       conflict('A new smart cube run requires the current server-issued scramble');
     }
+    if (game[`result_${side}`]) conflict('Your result is already recorded');
+    if (timingExpired(game, side, now, true)) {
+      await saveMatchResult(db, match, side, game, { ...DNF, dnfReason: 'scramble_timeout' });
+      return { status: 200, body: { status: 'DNF' } };
+    }
+    if (facelets !== smartCubeTargetFacelets(scramble!)) badRequest('The cube must match the issued scramble');
     const runId = randomUUID();
-    await platformQuery(db, `UPDATE platform_competition_match_games SET run_${side}=$3::uuid,run_${side}_at=clock_timestamp(),phase_${side}='inspecting'
-      WHERE match_id=$1::uuid AND game_number=$2`, [id, number, runId]);
-    return { status: 201, body: { runId, status: 'started' } };
+    await platformQuery(db, `UPDATE platform_competition_match_games SET run_${side}=$3::uuid,run_${side}_at=$4,inspect_${side}_at=$4,phase_${side}='inspecting'
+      WHERE match_id=$1::uuid AND game_number=$2`, [id, number, runId, now]);
+    return { status: 201, body: { runId, status: 'started', startedAt: now } };
   }));
 });
 
@@ -390,51 +456,86 @@ platformCompetitionBracketRoutes.post('/platform/competitions/matches/:id/games/
     const started = game[`run_${side}_at`];
     if (match.device !== 'smart' || game[`run_${side}`] !== report.runId || !started
       || game.start_at!.toISOString() !== report.serverIssuedAt || game.scramble !== report.scramble) conflict('The device report does not match the active game');
+    const solve = arenaSolveAt(started, now, report.inspectionMs);
+    const reason = arenaDnfReason(game.start_at!, started, game[`solve_${side}_at`] ?? solve, now);
+    if (reason || report.disconnected) {
+      await saveMatchResult(db, match, side, game, { ...DNF, dnfReason: reason ?? 'disconnected' });
+      return { status: 200, body: { status: 'DNF' } };
+    }
+    if (report.inspectionMs === undefined) badRequest('The report must include the observation duration');
+    if (game[`solve_${side}_at`] && Math.abs(+game[`solve_${side}_at`]! - +solve) > 2) badRequest('The reported inspection does not match the recorded start');
     if (report.durationMs + (report.inspectionMs ?? 0) > now.getTime() - started.getTime() + 1000) badRequest('The report exceeds the time since the device run started');
     if (!report.disconnected) verifyCompletedCompetitionDeviceReport(report);
-    await platformQuery(db, `UPDATE platform_competition_match_games SET report_${side}=$3::jsonb WHERE match_id=$1::uuid AND game_number=$2`, [id, number, report]);
+    await platformQuery(db, `UPDATE platform_competition_match_games SET report_${side}=$3::jsonb WHERE match_id=$1::uuid AND game_number=$2`, [id, number, { ...report, timestamp: now.toISOString() }]);
     await saveMatchResult(db, match, side, game, competitionDeviceResult(report));
     return { status: 201, body: { status: 'device_reported' } };
   }));
 });
 
-export async function closeExpiredOrdinaryGames(db: PlatformDb) {
-  const expired = `g.authoritative_timing AND g.resolved_at IS NULL AND g.start_at IS NOT NULL
-    AND ((g.result_a IS NULL AND g.solve_a_at IS NULL AND clock_timestamp()>COALESCE(
-      g.inspect_a_at+make_interval(secs=>$2),g.start_at+make_interval(secs=>$1)))
-    OR (g.result_b IS NULL AND g.solve_b_at IS NULL AND clock_timestamp()>COALESCE(
-      g.inspect_b_at+make_interval(secs=>$2),g.start_at+make_interval(secs=>$1))))`;
-  const limits = [SCRAMBLE_LIMIT_MS / 1000, INSPECTION_SECONDS + 2];
-  const [competition] = await platformQuery<{ id: string; now: Date }>(db, `SELECT c.event_id::text AS id,clock_timestamp() AS now
-    FROM platform_competitions c JOIN platform_events e ON e.id=c.event_id
-    WHERE c.competition_format='advancement' AND e.status='published' AND e.ends_at>NOW()
-      AND EXISTS(SELECT 1 FROM platform_competition_matches m
-        JOIN platform_event_ticket_types t ON t.id=m.ticket_type_id AND t.competition_device='ordinary'
-        JOIN platform_competition_match_games g ON g.match_id=m.id
-        WHERE m.event_id=c.event_id AND m.status='in_progress' AND ${expired})
-    ORDER BY e.ends_at,c.event_id LIMIT 1 FOR UPDATE OF c SKIP LOCKED`, limits);
-  if (!competition) return;
-  const matches = await platformQuery<Match>(db, `SELECT m.* FROM platform_competition_matches m
-    JOIN platform_event_ticket_types t ON t.id=m.ticket_type_id AND t.competition_device='ordinary'
-    JOIN platform_competition_match_games g ON g.match_id=m.id
-    WHERE m.event_id=$3::uuid AND m.status='in_progress' AND ${expired}
-    ORDER BY g.start_at,m.id LIMIT 32`, [...limits, competition.id]);
-  for (const match of matches) {
-    const game = await activeGame(db, match.id);
-    if (!game) continue;
-    for (const side of ['a', 'b'] as const) {
-      if (game[`result_${side}`] || !timingExpired(game, side, competition.now)) continue;
-      await saveMatchResult(db, match, side, game, DNF);
-      game[`result_${side}`] = DNF;
-    }
+platformCompetitionBracketRoutes.get('/platform/competitions/matches/:id/games/:number/telemetry', async c => {
+  privateNoStore(c);
+  const actor = await requirePlatformActor(c);
+  const { id, number } = gameParams(c);
+  const { side } = await ownMatch(platformDb(), id, actor.userId);
+  const other = side === 'a' ? 'b' : 'a';
+  const [game] = await platformQuery<{
+    own_report: ReturnType<typeof validateCompetitionDeviceReport> | null;
+    opponent_report: ReturnType<typeof validateCompetitionDeviceReport> | null;
+    own_result: MatchResult | null; opponent_result: MatchResult | null;
+    resolved_at: Date | null;
+  }>(platformDb(), `SELECT report_${side} AS own_report,report_${other} AS opponent_report,
+    result_${side} AS own_result,result_${other} AS opponent_result,resolved_at
+    FROM platform_competition_match_games WHERE match_id=$1::uuid AND game_number=$2`, [id, number]);
+  if (!game || !game.own_result) notFound('Completed game');
+  return c.json({
+    own: competitionReplay(game.own_report, game.resolved_at, game.own_result.penalty),
+    opponent: game.resolved_at ? competitionReplay(game.opponent_report, game.resolved_at, game.opponent_result?.penalty) : null,
+  });
+});
+
+async function expireMatchGame(db: PlatformDb, match: Match, smart: boolean) {
+  const game = await activeGame(db, match.id);
+  if (!game?.start_at || (!smart && !game.authoritative_timing)) return;
+  const [{ now }] = await platformQuery<{ now: Date }>(db, 'SELECT clock_timestamp() AS now');
+  for (const side of ['a', 'b'] as const) {
+    if (game[`result_${side}`] || !timingExpired(game, side, now, smart)) continue;
+    const result = { ...DNF, dnfReason: game[`inspect_${side}_at`] || game[`run_${side}_at`] ? 'solve_timeout' : 'scramble_timeout' } as const;
+    await saveMatchResult(db, match, side, game, result);
+    game[`result_${side}`] = result;
   }
 }
 
+export async function closeExpiredCompetitionGames(db: PlatformDb) {
+  const deadline = (side: PlayerSide) => `CASE WHEN t.competition_device='smart' THEN
+    COALESCE(g.solve_${side}_at,COALESCE(g.inspect_${side}_at,g.run_${side}_at)+$2*INTERVAL '1 millisecond',g.start_at)+$1*INTERVAL '1 millisecond'
+    ELSE COALESCE(g.solve_${side}_at+$1*INTERVAL '1 millisecond',g.inspect_${side}_at+INTERVAL '17 seconds',g.start_at+$1*INTERVAL '1 millisecond') END`;
+  const expired = `(g.result_a IS NULL AND ${deadline('a')}<=clock_timestamp())
+    OR (g.result_b IS NULL AND ${deadline('b')}<=clock_timestamp())`;
+  const limits = [COMPETITION_STAGE_LIMIT_MS, COMPETITION_INSPECTION_MS];
+  const [event] = await platformQuery<{ id: string }>(db, `SELECT c.event_id::text AS id FROM platform_competitions c
+    JOIN platform_events e ON e.id=c.event_id
+    WHERE c.competition_format='advancement' AND e.status='published' AND e.ends_at>clock_timestamp() AND EXISTS(
+      SELECT 1 FROM platform_competition_matches m JOIN platform_event_ticket_types t ON t.id=m.ticket_type_id
+      JOIN platform_competition_match_games g ON g.match_id=m.id
+      WHERE m.event_id=c.event_id AND m.status='in_progress' AND g.resolved_at IS NULL AND g.start_at IS NOT NULL
+        AND (t.competition_device='smart' OR g.authoritative_timing) AND (${expired}))
+    ORDER BY e.ends_at,c.event_id LIMIT 1 FOR UPDATE OF c SKIP LOCKED`, limits);
+  if (!event) return;
+  const matches = await platformQuery<Match & { device: string }>(db, `SELECT m.*,t.competition_device AS device
+    FROM platform_competition_matches m JOIN platform_event_ticket_types t ON t.id=m.ticket_type_id
+    JOIN platform_competition_match_games g ON g.match_id=m.id
+    WHERE m.event_id=$3::uuid AND m.status='in_progress' AND g.resolved_at IS NULL AND g.start_at IS NOT NULL
+      AND (t.competition_device='smart' OR g.authoritative_timing) AND (${expired})
+    ORDER BY g.start_at,m.id LIMIT 32`, [...limits, event.id]);
+  for (const match of matches) await expireMatchGame(db, match, match.device === 'smart');
+}
+
 export function startCompetitionBracketScheduling() {
-  let running = false;
-  const tick = async () => {
-    if (running) return;
-    running = true;
+  let generating = false;
+  let settling = false;
+  const generate = async () => {
+    if (generating) return;
+    generating = true;
     try {
       await platformTransaction(async db => {
         const [event] = await platformQuery<{ id: string }>(db, `SELECT e.id::text
@@ -444,9 +545,18 @@ export function startCompetitionBracketScheduling() {
           ORDER BY c.registration_closes_at LIMIT 1 FOR UPDATE OF c SKIP LOCKED`);
         if (event) await generateCompetitionBrackets(db, event.id);
       });
-      await platformTransaction(closeExpiredOrdinaryGames);
     } catch (error) { console.warn('Competition bracket generation failed', error); }
-    finally { running = false; }
+    finally { generating = false; }
   };
-  setInterval(() => void tick(), 15_000).unref();
+  const settle = async () => {
+    if (settling) return;
+    settling = true;
+    try {
+      await platformTransaction(closeExpiredCompetitionGames);
+      await platformTransaction(sweepCompetitionArenas);
+    } catch (error) { console.warn('Competition timeout settlement failed', error); }
+    finally { settling = false; }
+  };
+  setInterval(() => void generate(), 15_000).unref();
+  setInterval(() => void settle(), 1000).unref();
 }

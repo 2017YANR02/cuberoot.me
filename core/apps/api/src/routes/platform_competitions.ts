@@ -10,6 +10,7 @@ import { paymentAvailability } from '../platform/payment.js';
 import { competitionId as uuid, requiredCompetitionTimestamp as requiredTimestamp, readCompetitionDraft,
   readCompetitionProjects, saveCompetitionDraft, saveCompetitionProjects, lockCompetitionSupervisors, validateCompetitionSupervisor } from '../platform/competition_workflow.js';
 import { closeEndedCompetitionBrackets, generateCompetitionBrackets } from '../platform/competition_brackets.js';
+import { validateCompetitionDeviceCheckIn } from '../platform/competition_device_reports.js';
 import { competitionHostOverview } from '../platform/competition_settlement.js';
 
 export const platformCompetitionRoutes = platformRouter();
@@ -66,7 +67,7 @@ platformCompetitionRoutes.get('/platform/competitions/me/entries', async (c) => 
   const entries = await platformQuery(platformDb(), `
     WITH own_entries AS (
       SELECT r.id::text AS "registrationId", e.id::text AS "competitionId",
-        e.title_zh AS "titleZh", e.title_en AS "titleEn", r.status,
+        e.title_zh AS "titleZh", e.title_en AS "titleEn", r.status, t.competition_device AS device,
         i.order_id::text AS "orderId", s.starts_at AS "sessionStartsAt",
         CASE WHEN r.status='reserved' AND o.status='pending_payment' THEN r.reservation_expires_at END AS "reservationExpiresAt",
         CASE
@@ -82,6 +83,7 @@ platformCompetitionRoutes.get('/platform/competitions/me/entries', async (c) => 
           ELSE 'details'
         END AS action
       FROM platform_event_registrations r
+      JOIN platform_event_ticket_types t ON t.id = r.ticket_type_id
       JOIN platform_competition_sessions s ON s.id = r.competition_session_id
       JOIN platform_competitions cc ON cc.event_id = r.event_id
       JOIN platform_events e ON e.id = cc.event_id
@@ -430,11 +432,11 @@ platformCompetitionRoutes.get('/platform/competitions/:id/registrations',async(c
       WHERE a.registration_id=r.id AND a.recorded_at IS NOT NULL AND a.review_required),'[]'::jsonb) AS "reviewAttempts",
     r.result_recorded_at AS "resultRecordedAt",r.reservation_expires_at AS "reservationExpiresAt",
     (r.user_id=$2 AND r.status='confirmed' AND s.session_kind<>'offline'
-      AND (s.session_kind='supervised' OR COALESCE(c.competition_format,'average')='average') AND NOW()>=s.starts_at AND NOW()<s.ends_at) AS "canCheckIn",
+      AND (s.session_kind='supervised' OR t.competition_device='smart' OR COALESCE(c.competition_format,'average')='average') AND NOW()>=s.starts_at AND NOW()<s.ends_at) AS "canCheckIn",
     (s.supervisor_user_id=$2 AND r.user_id<>$2 AND r.checked_in_at IS NOT NULL AND r.status='confirmed'
       AND NOW()>=s.starts_at AND NOW()<s.ends_at) AS "canJoinVideo",
     (s.supervisor_user_id=$2 AND r.user_id<>$2 AND r.checked_in_at IS NOT NULL AND r.status IN ('confirmed','attended')
-      AND NOW()>=s.starts_at AND NOW()<s.ends_at AND COALESCE(c.competition_format,'average')='average') AS "canRecordResult"
+      AND t.competition_device='ordinary' AND NOW()>=s.starts_at AND NOW()<s.ends_at AND COALESCE(c.competition_format,'average')='average') AS "canRecordResult"
     FROM platform_event_registrations r JOIN platform_order_items i ON i.id=r.order_item_id JOIN platform_orders o ON o.id=i.order_id
     JOIN platform_event_ticket_types t ON t.id=r.ticket_type_id JOIN platform_competition_sessions s ON s.id=r.competition_session_id
     JOIN platform_competitions c ON c.event_id=r.event_id WHERE r.event_id=$1::uuid AND (r.user_id=$2 OR s.supervisor_user_id=$2 OR $3
@@ -446,8 +448,9 @@ platformCompetitionRoutes.post('/platform/competitions/registrations/:id/check-i
   return sendMutation(c,await withIdempotency(c,actor,`competition.checkin:${registrationId}`,body,async(db)=>{
     const r=await requireCompetitionRegistration(db,registrationId);
     if(Number(r.user_id)!==actor.userId)forbidden('Only the registered participant can check in');
-    if (r.session_kind === 'offline' || (r.competition_format === 'advancement' && r.session_kind !== 'supervised')
+    if (r.session_kind === 'offline' || (r.competition_format === 'advancement' && r.session_kind !== 'supervised' && r.device !== 'smart')
       || !['confirmed','attended'].includes(r.status) || !r.in_window) conflict('Check-in requires an active online registration during the competition');
+    if (r.device === 'smart') validateCompetitionDeviceCheckIn(body);
     await platformQuery(db,`UPDATE platform_event_registrations SET checked_in_at=COALESCE(checked_in_at,NOW()) WHERE id=$1::uuid`,[registrationId]);
     return {status:200,body:{id:registrationId,checkedIn:true}};
   }));
@@ -483,6 +486,7 @@ platformCompetitionRoutes.post('/platform/competitions/:id/offline-results', asy
       const changed = await platformQuery(db, `UPDATE platform_event_registrations r SET competition_attempts=$3::jsonb,
         result_recorded_by=$4,result_recorded_at=NOW(),status='attended'
         WHERE r.event_id=$1::uuid AND r.id=$2::uuid AND r.status IN ('confirmed','attended')
+          AND EXISTS (SELECT 1 FROM platform_event_ticket_types t WHERE t.id=r.ticket_type_id AND t.competition_device='ordinary')
           AND r.competition_session_id IS NOT NULL AND NOT EXISTS (
             SELECT 1 FROM platform_competition_disputes d WHERE d.registration_id=r.id AND d.resolved_at IS NULL
           ) RETURNING id`, [eventId, entry.registrationId, entry.attempts, actor.userId]);
@@ -543,10 +547,19 @@ platformCompetitionRoutes.post('/platform/competitions/disputes/:id/resolve',asy
     const located=await platformQuery<{event_id:string;registration_id:string}>(db,`SELECT r.event_id::text,d.registration_id::text FROM platform_competition_disputes d JOIN platform_event_registrations r ON r.id=d.registration_id WHERE d.id=$1::uuid`,[disputeId]);
     if(!located.length)notFound('Dispute');
     await requireCompetitionManager(db,actor,located[0].event_id);
-    const rows=await platformQuery<{competition_attempts:unknown;resolved_at:unknown;finalized_at:unknown}>(db,`SELECT r.competition_attempts,d.resolved_at,c.finalized_at FROM platform_event_registrations r JOIN platform_competition_disputes d ON d.registration_id=r.id JOIN platform_competitions c ON c.event_id=r.event_id WHERE d.id=$1::uuid FOR UPDATE OF r,d`,[disputeId]);
+    const rows=await platformQuery<{competition_attempts:unknown;resolved_at:unknown;finalized_at:unknown;device:string}>(db,`SELECT r.competition_attempts,d.resolved_at,c.finalized_at,t.competition_device AS device
+      FROM platform_event_registrations r JOIN platform_competition_disputes d ON d.registration_id=r.id
+      JOIN platform_competitions c ON c.event_id=r.event_id JOIN platform_event_ticket_types t ON t.id=r.ticket_type_id WHERE d.id=$1::uuid FOR UPDATE OF r,d`,[disputeId]);
     if(rows[0].resolved_at||rows[0].finalized_at)conflict('The dispute is already resolved or competition finalized');
     if(corrected){
       if(!rows[0].competition_attempts)conflict('Close the supervised result before correcting it');
+      if (rows[0].device === 'smart') {
+        const previous = validateCompetitionAttempts(rows[0].competition_attempts);
+        if (corrected.some((attempt, i) => attempt.penalty !== 'DNF'
+          && (attempt.penalty !== previous[i].penalty || attempt.centiseconds !== previous[i].centiseconds))) {
+          conflict('Smart cube results require verified device data');
+        }
+      }
       await platformQuery(db,`UPDATE platform_event_registrations SET competition_attempts=$2::jsonb,competition_video_generation=gen_random_uuid() WHERE id=$1::uuid`,[located[0].registration_id,corrected]);
     }
     await platformQuery(db,`UPDATE platform_competition_disputes SET resolution=$2,resolved_by=$3,resolved_at=NOW(),original_attempts=$4::jsonb,corrected_attempts=$5::jsonb WHERE id=$1::uuid`,[disputeId,resolution,actor.userId,rows[0].competition_attempts,corrected]);

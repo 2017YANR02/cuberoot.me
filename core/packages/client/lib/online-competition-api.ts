@@ -1,3 +1,4 @@
+import type { CompetitionDnfReason, NetBattleCredentials } from '@cuberoot/shared/timer';
 import { optionalSessionGet, sessionFetch } from '@/lib/session-fetch';
 import type { WCA_TIMED_EVENT_ORDER } from '@cuberoot/shared/wca-events';
 import { authHeaders, handleApi } from './admin-api';
@@ -120,6 +121,7 @@ export interface MyCompetitionEntry {
   titleZh: string;
   titleEn: string;
   status: string;
+  device: CompetitionDevice | null;
   orderId: string;
   sessionStartsAt: string;
   reservationExpiresAt?: string | null;
@@ -193,7 +195,7 @@ export const listOnlineCompetitions = (managed = false) => managed
 export const listSupervisedCompetitions = () => request<{ competitions: OnlineCompetitionSummary[] }>(`${base}/me/supervised?v=3`);
 export const getCompetitionHostOverview = () => request<CompetitionHostOverview>(`${base}/host/overview`);
 export async function listMyCompetitionEntries() {
-  const response = await sessionFetch(apiUrl(`${base}/me/entries`), { headers: authHeaders(false), cache: 'no-store' });
+  const response = await sessionFetch(apiUrl(`${base}/me/entries?v=2`), { headers: authHeaders(false), cache: 'no-store' });
   // The website can reach an older API revision during independent rollouts.
   if (response.status === 404) return { entries: [] };
   return handleApi<{ entries: MyCompetitionEntry[] }>(response);
@@ -219,7 +221,9 @@ export const recordOfflineCompetitionResults = (id: string, results: Array<{ reg
   request(`${path(id)}/offline-results`, 'POST', { results });
 export const listCompetitionRegistrations = (id: string) => request<{ registrations: CompetitionRegistration[] }>(`${path(id)}/registrations`);
 const registrationPath = (id: string) => `${base}/registrations/${encodeURIComponent(id)}`;
-export const checkInCompetition = (registrationId: string) => request(`${registrationPath(registrationId)}/check-in`, 'POST', {});
+export type CompetitionCheckInDevice = { deviceBrand: string; deviceName: string; facelets: string };
+export const checkInCompetition = (registrationId: string, device?: CompetitionCheckInDevice) =>
+  request(`${registrationPath(registrationId)}/check-in`, 'POST', device ?? {});
 export const getCompetitionAttempts = (id: string) => request<{ attempts: CompetitionAttempt[] }>(`${registrationPath(id)}/attempts`);
 export const nextCompetitionAttempt = (id: string) => request(`${registrationPath(id)}/attempts/next`, 'POST', {});
 export const nextCompetitionSelfAttempt = (id: string) => request(`${registrationPath(id)}/self-attempts/next`, 'POST', {});
@@ -280,7 +284,7 @@ export async function competitionEvidencePlayback(id: string) {
   return apiUrl(`${basePath}/content?${new URLSearchParams({ token: result.token })}`);
 }
 export function getCompetitionAttemptReplay(id: string, number: number, publiclyAvailable = false) {
-  type Replay = { report: { scramble: string; moves: Array<{ move: string; elapsedMs: number }>; durationMs: number } | null };
+  type Replay = { report: CompetitionReplay | null };
   const url = `${registrationPath(id)}/attempts/${number}/telemetry`;
   return publiclyAvailable ? publicGet<Replay>(url) : request<Replay>(url);
 }
@@ -306,29 +310,71 @@ export type CompetitionBracketStanding = {
   id: string; ticketId: string; name: string; rank: number; wins: number; best: number | null;
   wcaId: string | null; countryCode: string | null; recordedAt?: string | null;
 };
+export type CompetitionReplay = {
+  scramble: string; durationMs: number; moves: Array<{ move: string; elapsedMs: number }>;
+  gyro?: string | null; timestamp?: string | null; penalty?: string | null; inspectionMs?: number; disconnected?: boolean;
+};
+
+export type CompetitionArenaIdentity = { name: string; wcaId: string | null; countryCode: string | null };
+export type CompetitionArenaAttempt = {
+  attemptNumber: number; centiseconds: number | null; penalty: CompetitionAttemptResult['penalty'] | null;
+  inspectAt: string | null; solveAt: string | null; dnfReason: CompetitionDnfReason | null; replay: boolean;
+};
+export type CompetitionArenaPlayer = CompetitionArenaIdentity & { id: string; attempts: CompetitionArenaAttempt[] };
+export type CompetitionArenaSnapshot = {
+  serverNow: string; checkedIn?: boolean; roundNumber: number | null; seated: boolean; completed: boolean; legacy?: boolean;
+  roomId: string | null; startsAt: string | null; scramble: string | null; credentials: NetBattleCredentials | null;
+  inspectAt: string | null; solveAt: string | null; players: CompetitionArenaPlayer[];
+};
+export type CompetitionArenaPhase = 'inspecting' | 'solving' | 'timeout' | 'disconnected';
+export type CompetitionTelemetryReport = CompetitionReplay & {
+  runId: string; serverIssuedAt: string; startFacelets: string; endFacelets: string;
+  deviceBrand: string; deviceName: string; disconnected: boolean; inspectionMs: number;
+};
+export type CompetitionDuelGame = {
+  gameNumber: number; ownResult: (CompetitionAttemptResult & { dnfReason?: CompetitionDnfReason }) | null;
+  opponentResult: (CompetitionAttemptResult & { dnfReason?: CompetitionDnfReason }) | null;
+  winner: 'own' | 'opponent' | 'draw'; ownReplay?: boolean; opponentReplay?: boolean;
+};
 export type CompetitionDuel = {
   id: string; eventId: string; project: string; device: CompetitionDevice; status: CompetitionBracketMatch['status'];
   registrationId: string | null; supervisionMode: CompetitionMode; requiresSupervision: boolean; checkedIn: boolean;
   ownName: string; opponentName: string; ownScore: number; opponentScore: number;
+  bestOf?: number; bracketSide?: CompetitionBracketMatch['side']; credentials?: NetBattleCredentials | null;
+  ownIdentity?: CompetitionArenaIdentity; opponentIdentity?: CompetitionArenaIdentity; opponentPlayerId?: string | null;
   serverNow: string; gameNumber: number; startAt: string | null; canPlay: boolean;
   scramble: string | null; ownReady: boolean; opponentReady: boolean;
-  ownResult: CompetitionResult['attempts'][number] | null; opponentFinished: boolean; runId: string | null;
+  ownResult: CompetitionDuelGame['ownResult']; opponentFinished: boolean; runId: string | null;
   opponentPhase: 'inspecting' | 'solving' | null;
   activeGame?: {
     gameNumber: number; authoritativeTiming: boolean; inspectAt: string | null; solveAt: string | null;
     scrambleDeadlineAt: string | null; inspectionSeconds: number;
+    opponentResult?: CompetitionDuelGame['opponentResult']; opponentInspectAt?: string | null; opponentSolveAt?: string | null;
   } | null;
-  lastGame?: {
-    gameNumber: number; ownResult: CompetitionAttemptResult | null; opponentResult: CompetitionAttemptResult | null;
-    winner: 'own' | 'opponent' | 'draw';
-  } | null;
+  lastGame?: CompetitionDuelGame | null;
+  history?: CompetitionDuelGame[];
 };
 const matchPath = (id: string) => `${base}/matches/${encodeURIComponent(id)}`;
 export const getCompetitionBrackets = (id: string) => publicGet<{ generated: boolean; matches: CompetitionBracketMatch[]; standings: CompetitionBracketStanding[] }>(`${path(id)}/brackets`);
 export const generateCompetitionBrackets = (id: string) => request(`${path(id)}/brackets/generate`, 'POST', {});
 export const getCompetitionDuel = (id: string) => request<CompetitionDuel>(matchPath(id));
-export const readyCompetitionDuel = (id: string, gameNumber: number) => request(`${matchPath(id)}/ready`, 'POST', { gameNumber });
-export const setCompetitionDuelPhase = (id: string, gameNumber: number, phase: 'inspecting' | 'solving' | 'timeout') =>
-  request<{ inspectAt: string | null; solveAt: string | null; result?: CompetitionAttemptResult }>(`${matchPath(id)}/phase`, 'POST', { gameNumber, phase });
+export const readyCompetitionDuel = (id: string, gameNumber: number, key?: string) =>
+  request(`${matchPath(id)}/ready`, 'POST', { gameNumber }, key);
+export const setCompetitionDuelPhase = (id: string, gameNumber: number, phase: CompetitionArenaPhase, key?: string, inspectionMs?: number) =>
+  request<{ inspectAt: string | null; solveAt: string | null; result?: CompetitionAttemptResult }>(`${matchPath(id)}/phase`, 'POST', { gameNumber, phase, ...(phase === 'disconnected' ? { disconnected: true } : {}), ...(inspectionMs === undefined ? {} : { inspectionMs }) }, key);
 export const recordCompetitionDuel = (id: string, gameNumber: number, result: CompetitionResult['attempts'][number], key: string) =>
   request<{ recorded: true; result: CompetitionAttemptResult }>(`${matchPath(id)}/result`, 'POST', { gameNumber, ...result }, key);
+
+export const getCompetitionArena = (id: string) => request<CompetitionArenaSnapshot>(`${registrationPath(id)}/arena`);
+export const readyCompetitionArena = (id: string, key: string) => request(`${registrationPath(id)}/arena`, 'POST', {}, key);
+export const setCompetitionArenaPhase = (id: string, attemptNumber: number, phase: CompetitionArenaPhase, key: string, inspectionMs?: number) =>
+  request(`${registrationPath(id)}/arena/phase`, 'POST', { attemptNumber, phase, ...(phase === 'disconnected' ? { disconnected: true } : {}), ...(inspectionMs === undefined ? {} : { inspectionMs }) }, key);
+const telemetryPath = (entryId: string, duel: boolean, number: number) =>
+  duel ? `${matchPath(entryId)}/games/${number}/telemetry` : `${registrationPath(entryId)}/attempts/${number}/telemetry`;
+export const startCompetitionTelemetry = (id: string, duel: boolean, number: number,
+  body: { scramble: string; serverIssuedAt: string; startFacelets: string }, key: string) =>
+  request<{ runId?: string; startedAt?: string; status: string }>(`${telemetryPath(id, duel, number)}/start`, 'POST', body, key);
+export const reportCompetitionTelemetry = (id: string, duel: boolean, number: number, body: CompetitionTelemetryReport, key: string) =>
+  request<{ status: string }>(telemetryPath(id, duel, number), 'POST', body, key);
+export const getCompetitionDuelReplay = (id: string, number: number) =>
+  request<{ own: CompetitionReplay | null; opponent: CompetitionReplay | null }>(telemetryPath(id, true, number));

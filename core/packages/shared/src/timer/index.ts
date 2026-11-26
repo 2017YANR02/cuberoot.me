@@ -96,3 +96,5 @@ export * from './solve-metrics';
 export * from './record-badge';
 
 export * from './reanalyze';
+
+export * from './competition-timing';

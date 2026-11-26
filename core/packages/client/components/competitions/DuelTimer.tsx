@@ -1,8 +1,10 @@
 'use client';
 
 import { useEffect, useEffectEvent, useRef, useState } from 'react';
-import { inspectionPenalty } from '@cuberoot/shared/timer';
+import { COMPETITION_STAGE_LIMIT_MS, inspectionPenalty } from '@cuberoot/shared/timer';
 import { useT } from '@/hooks/useT';
+import { formatWcaResult } from '@/lib/wca-format-result';
+import { attemptValue } from './competition-results';
 import { persistItem } from '@/lib/safe-storage';
 import { recordCompetitionDuel, setCompetitionDuelPhase, type CompetitionAttemptResult, type CompetitionDuel } from '@/lib/online-competition-api';
 
@@ -28,7 +30,8 @@ export function DuelTimer({ duel, clockOffset, onSaved }: { duel: CompetitionDue
   const now = clock ? clock + clockOffset : Date.parse(duel.serverNow);
   const inspection = inspectAt ? Math.max(0, now - Date.parse(inspectAt)) : 0;
   const inspectionStatus = inspectionPenalty(inspection, limit);
-  const expired = !solveAt && (inspectAt ? inspectionStatus === 'DNF' : deadline !== null && now > deadline);
+  const expired = solveAt ? now - Date.parse(solveAt) >= COMPETITION_STAGE_LIMIT_MS
+    : inspectAt ? inspectionStatus === 'DNF' : deadline !== null && now >= deadline;
 
   useEffect(() => {
     if (pending || saved) return;
@@ -90,7 +93,9 @@ export function DuelTimer({ duel, clockOffset, onSaved }: { duel: CompetitionDue
 
   function stop() {
     if (pending || saved || requestActive.current || !solveAt) return;
-    const centiseconds = Math.max(1, Math.floor((performance.now() + clockOffset - Date.parse(solveAt)) / 10));
+    const elapsed = performance.now() + clockOffset - Date.parse(solveAt);
+    if (elapsed >= COMPETITION_STAGE_LIMIT_MS) { void changePhase('timeout'); return; }
+    const centiseconds = Math.max(1, Math.floor(elapsed / 10));
     // Migrated games already in progress keep their original client-side inspection penalty.
     const legacyPenalty = inspectAt && !authority ? inspectionPenalty(Date.parse(solveAt) - Date.parse(inspectAt), limit) : 'ok';
     queue(legacyPenalty === 'DNF' ? DNF : { centiseconds, penalty: legacyPenalty === '+2' ? '+2' : 'none' });
@@ -115,11 +120,11 @@ export function DuelTimer({ duel, clockOffset, onSaved }: { duel: CompetitionDue
   });
 
   const result = pending?.result;
-  const display = result?.penalty === 'DNF' ? 'DNF' : result || solveAt
-    ? ((result?.centiseconds ?? Math.max(0, Math.floor((now - Date.parse(solveAt!)) / 10))) / 100).toFixed(2) + (result?.penalty === '+2' ? ' +2' : '')
-    : expired ? 'DNF' : inspectAt
-      ? inspectionStatus === '+2' ? '+2' : `${Math.max(0, Math.ceil((limit * 1000 - inspection) / 1000))}s`
-      : deadline === null ? `${limit}s` : `${Math.max(0, Math.ceil((deadline - now) / 1000))}s`;
+  const elapsedCentiseconds = solveAt ? Math.max(0, Math.floor((now - Date.parse(solveAt)) / 10)) : 0;
+  const display = result ? formatWcaResult(attemptValue({ ...result, penalty: result.penalty === '+2' ? 'none' : result.penalty }), duel.project, 'single') + (result.penalty === '+2' ? ' +2' : '')
+    : expired ? 'DNF' : solveAt ? (elapsedCentiseconds ? formatWcaResult(elapsedCentiseconds, duel.project, 'single') : '0.00')
+      : inspectAt ? inspectionStatus === '+2' ? '+2' : `${Math.max(0, Math.ceil((limit * 1000 - inspection) / 1000))}s`
+        : deadline === null ? `${limit}s` : `${Math.max(0, Math.ceil((deadline - now) / 1000))}s`;
 
   return <div className="competition-duel-timer">
     <output aria-label={t('对战计时', 'Match timer')} aria-live="off" data-ready={heldReady || undefined}>{display}</output>

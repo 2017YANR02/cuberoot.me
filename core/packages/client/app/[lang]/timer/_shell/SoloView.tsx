@@ -1,5 +1,4 @@
 'use client';
-import { competitionHref } from '@/lib/competition-links';
 import { useTimerLiveShare, TimerLiveShareSettings, TimerLiveShareStatus } from '@cuberoot/timer-ui/live-share';
 import { useInstalledCommunityDisabled } from '@/lib/installed-content';
 import { captureTimerLiveAttempt, timerLiveHistory, timerLiveCompletedAttempt, timerLiveSolveDetail, type TimerLiveCompletion } from '@cuberoot/shared/timer/live-share';
@@ -188,8 +187,6 @@ import { localizeCompName } from '@/lib/comp-localize';
 import { compSourceLine } from '@/lib/comp-schedule';
 import { useIsAdmin, useAuthUser, getAuthUser } from '@/lib/auth-store';
 import AppLink from '@/components/AppLink';
-import { useCompetitionAttempt } from './competition-attempt';
-import '@/components/competitions/online-competitions.css';
 import { cloudOptimalScramble } from '@/lib/cloud-optimal-scramble';
 import { ownerKey as computeOwnerKey } from '@cuberoot/shared/account';
 import {
@@ -285,7 +282,6 @@ import {
   TimerWcaScrambleSource,
   TimerScrambleSourceSelect,
   TimerStatRail,
-  TimingSurface,
   timerCubePreviewAspect,
   browserPrintTransport,
   useGestureWheel,
@@ -316,7 +312,6 @@ import '../_components/charts/practice_heatmap.css';
 const SolveModal = dynamic(() => import('../_components/SolveModal'), { ssr: false });
 // Optional workspaces must not hold the ordinary keyboard timer behind their
 // video SDK, charts or configuration UI. Their existing render gates own loading.
-const CompetitionVideoRoom = dynamic(() => import('@/components/competitions/CompetitionVideoRoom').then(m => m.CompetitionVideoRoom), { ssr: false });
 const SettingsPanel = dynamic(() => import('../_components/SettingsPanel'), { ssr: false });
 const TimerReplayImportModal = dynamic(() => import('@cuberoot/timer-ui').then(m => m.TimerReplayImportModal), { ssr: false });
 const TimerStatisticsWorkspace = dynamic(() => import('@cuberoot/timer-ui').then(m => m.TimerStatisticsWorkspace), { ssr: false });
@@ -471,11 +466,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
   const douyin = useDouyinToolSurface();
   const authUser = useAuthUser();
   const isAdmin = useIsAdmin();
-  const competition = useCompetitionAttempt();
-  const fakeCubeEnabled = isAdmin && settings.showAdminFakeCube && !competition.enabled;
-  const competitionRef = useRef(competition);
-  competitionRef.current = competition;
-  const competitionSolvedRef = useRef(false);
+  const fakeCubeEnabled = isAdmin && settings.showAdminFakeCube;
   const { country: rankCountry } = useRankCountry();
 
   const isMobile = useTimerSoloCompactLayout();
@@ -569,7 +560,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
       .withDefault('333')
       .withOptions({ history: 'replace', clearOnDefault: false }),
   );
-  const event: EventId = competition.enabled ? '333' : queryEvent;
+  const event: EventId = queryEvent;
   const isPllChain = event === 'pll-chain';
   const pllChain = usePllChain(isPllChain);
   const pllChainRef = useRef(pllChain); pllChainRef.current = pllChain;
@@ -579,10 +570,9 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
   // A plain timer URL starts with WCA scrambles. Other sources retain their existing
   // detailed settings; no stored preference may override a shared cases/random link.
   useEffect(() => {
-    if (competition.enabled) return;
     const source = sourceParam === 'manual' ? 'manual' : sourceParam === null || sourceParam === 'wca' ? 'wca' : 'random';
     if (getSettings().scrambleSource !== source) updateSettings({ scrambleSource: source });
-  }, [sourceParam, competition.enabled]);
+  }, [sourceParam]);
   useEffect(() => { persistItem('cuberoot-timer.event', event); }, [event]);
 
   const selectEvent = useCallback((nextEvent: EventId) => {
@@ -929,9 +919,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
     scrambleHistRef.current = next;
     setScrambleHist(next);
   }, []);
-  const competitionScrambleEntry = useMemo(() => timerScrambleHistoryEntry(competition.attempt?.scramble ?? ''), [competition.attempt?.scramble, competition.attemptKey]);
-  const currentScrambleEntry = competition.enabled ? competitionScrambleEntry
-    : scrambleHist.list[scrambleHist.idx] ?? timerScrambleHistoryEntry('');
+  const currentScrambleEntry = scrambleHist.list[scrambleHist.idx] ?? timerScrambleHistoryEntry('');
   const currentScrambleEntryId = currentScrambleEntry.id;
   const scramble = currentScrambleEntry.scramble;
   const isCurrentEmptyScrambleEntry = useCallback((expectedId: number) => {
@@ -960,7 +948,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
   const ordinaryFailed = ordinaryFailedId === currentScrambleEntryId;
   const ordinaryLoading = Boolean(randomRequest && event !== 'custom' && !scramble && !ordinaryFailed);
   useEffect(() => {
-    if (!randomRequest || scramble || competition.enabled) return;
+    if (!randomRequest || scramble) return;
     const controller = new AbortController();
     const entryId = currentScrambleEntryId;
     setOrdinaryFailedId(null);
@@ -972,7 +960,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
         result.kind === 'generated' ? result.metadata?.caseId ?? null : null);
     });
     return () => controller.abort();
-  }, [randomRequest, scramble, competition.enabled, currentScrambleEntryId, ordinaryRetry,
+  }, [randomRequest, scramble, currentScrambleEntryId, ordinaryRetry,
     ordinaryRandom, genScramble, isCurrentEmptyScrambleEntry, fillCurrentEmptyScrambleEntry]);
   // Leaving random for a manual/official/specialist source releases its buffer.
   useEffect(() => { if (!randomRequest) ordinaryRandom.reset(); }, [randomRequest, ordinaryRandom]);
@@ -982,7 +970,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
   const seedFailed = seedFailedId === currentScrambleEntryId;
   const seedLoading = Boolean(seedRequest && !scramble && !seedFailed);
   useEffect(() => {
-    if (!seedRequest || scramble || competition.enabled) return;
+    if (!seedRequest || scramble) return;
     const controller = new AbortController();
     const entryId = currentScrambleEntryId;
     setSeedFailedId(null);
@@ -995,7 +983,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
       if (!controller.signal.aborted && isCurrentEmptyScrambleEntry(entryId)) setSeedFailedId(entryId);
     });
     return () => controller.abort();
-  }, [seedRequest, currentScrambleEntryId, scramble, seedRetry, competition.enabled, genScramble, isCurrentEmptyScrambleEntry, fillCurrentEmptyScrambleEntry]);
+  }, [seedRequest, currentScrambleEntryId, scramble, seedRetry, genScramble, isCurrentEmptyScrambleEntry, fillCurrentEmptyScrambleEntry]);
   // 「预打乱朝向」只进打乱图,不改打乱正文(同 csTimer:正文保持官方口径,图按你手持的朝向画)。
   const previewScramble = applyOrientationPrefix(
     scramble,
@@ -1291,7 +1279,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
     trainerSigVal,
   ]);
 
-  const attemptCanStart = competition.enabled ? competition.authorized && Boolean(competition.attempt) : isPllChain ? pllChain.ready : timerCanStartAttempt({
+  const attemptCanStart = isPllChain ? pllChain.ready : timerCanStartAttempt({
     availability: ordinaryLoading || seedLoading || randomOptimalLoading || scrambleLoading || cstimerLoading
       || trainerLoading || byStepsLoading
       ? 'loading'
@@ -1417,7 +1405,6 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
   }, [solves, event, authUser, settings.autoMarkWcaScramble]);
 
   const nextScramble = useCallback(() => {
-    if (competitionRef.current.enabled) return;
     if (multiEnabledRef.current && !multiTrainingRef.current?.snapshot().scrambleId) return;
     const cur = scrambleHistRef.current;
     applyScrambleHist((multiEnabledRef.current ? null : histForward(cur)) ?? histPush(cur, genScramble()));
@@ -1433,7 +1420,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
   }, [applyScrambleHist]);
 
   const useReconTestScramble = useCallback((source: ReconTestSource) => {
-    if (multiEnabledRef.current || !bluetoothCubeRef.current?.status.connected || competitionRef.current.enabled
+    if (multiEnabledRef.current || !bluetoothCubeRef.current?.status.connected
       || (phaseRef.current !== 'idle' && phaseRef.current !== 'stopped')) return false;
     applyScrambleHist(histPush(scrambleHistRef.current,
       timerScrambleHistoryEntry(source.scramble.trim(), null, null, reconTestScrambleSource(source.id, source.sourceHash))));
@@ -1500,7 +1487,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
   const [cameraOpen, setCameraOpen] = useState(false);
   const [cameraMounted, setCameraMounted] = useState(false);
   const cameraSupportedEvent = event === '333' || event === '333oh';
-  const simulationAllowed = isAdmin && !douyin && !competition.enabled && !multiEnabled && cameraSupportedEvent;
+  const simulationAllowed = isAdmin && !douyin && !multiEnabled && cameraSupportedEvent;
   const [simulationFile, setSimulationFile] = useState<File>();
   const simulationFileInput = useRef<HTMLInputElement>(null);
   const simulationAttempt = useRef(false);
@@ -1531,14 +1518,6 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
   }, [cancelCameraConnect]);
 
   const recordSolve = useCallback((res: SolveResult) => {
-    if (competitionRef.current.enabled) {
-      const faces = bluetoothCubeRef.current?.getFaces();
-      const currentRun = competitionRef.current.run();
-      if (currentRun) competitionRef.current.complete(res.timeMs, smartCubeAttemptProducerRef.current.snapshotMoves(),
-        faces ? toFaceletString(faces) : currentRun.startFacelets, !competitionSolvedRef.current, res.inspectionMs);
-      competitionSolvedRef.current = false;
-      return;
-    }
     const ev = eventAtStartRef.current;
     const { bld, stages } = attemptSplitRecorder.finish(res.timeMs);
     const solve = makeSolve({
@@ -1622,15 +1601,14 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
     if (!multiEnabledRef.current) nextScramble();
   }, [attemptSplitRecorder, isDesktop, nextScramble, settings.autoOpenSolution, settings.precision, settings.autoRecap, stopCameraCapture]);
 
-  const trainingTimingMode = () => !competitionRef.current.enabled && (isPllChain || timerSupportsTrainingTiming(event))
+  const trainingTimingMode = () => (isPllChain || timerSupportsTrainingTiming(event))
     && bluetoothCubeRef.current?.status.connected ? isPllChain ? 'first-turn' as const : getSettings().trainingStartMode : undefined;
   const trainingTimingModeRef = useRef(trainingTimingMode);
   trainingTimingModeRef.current = trainingTimingMode;
   const timer = useTimer(recordSolve, (startedAtMs, cubeStart) => {
-    if (competitionRef.current.enabled) competitionRef.current.markSolving();
     const history = scrambleHistRef.current;
     const entry = multiEnabledRef.current ? multiTrainingRef.current?.active()?.context?.entry
-      : competitionRef.current.enabled ? competitionScrambleEntry : history.list[history.idx];
+      : history.list[history.idx];
     if (entry) {
       scrambleAtStartRef.current = supportsSmartCube && bluetoothCubeRef.current?.status.connected
         ? timerSmartCubeAttemptScramble(event, entry.scramble, getSettings().preScrT)
@@ -1642,7 +1620,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
     }
     eventAtStartRef.current = event;
     simulationAttempt.current = !!simulationFile;
-    if (cameraOpen && !competitionRef.current.enabled && !multiEnabledRef.current && (event === '333' || event === '333oh')) {
+    if (cameraOpen && !multiEnabledRef.current && (event === '333' || event === '333oh')) {
       if (simulationFile && getSettings().scrambleSource !== 'manual') scrambleAtStartRef.current = '';
       startCameraCapture(scrambleAtStartRef.current, startedAtMs, simulationFile);
     }
@@ -1663,7 +1641,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
         orientation: timerSmartCubeTrainingOrientation(event, getSettings().preScrT) }
       : undefined, cubeStart);
     clearLiveSolve();
-  }, () => competitionRef.current.enabled ? { inspectionSec: 15 } : { trainingStartMode: trainingTimingModeRef.current() });
+  }, () => ({ trainingStartMode: trainingTimingModeRef.current() }));
   useEffect(() => {
     if (timer.phase === 'idle') cancelCameraCapture();
   }, [timer.phase, cancelCameraCapture]);
@@ -1673,8 +1651,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
       closeCamera();
     }
   }, [simulationFile, simulationAllowed, closeCamera, timer.reset, timer.snapshot]);
-  cancelArmForScrambleChangeRef.current = competition.enabled ? () => {} : timer.cancelArm;
-  useLayoutEffect(() => { timer.reset(); smartCubeAttemptProducerRef.current.reset(); }, [competition.enabled, competition.attemptKey, timer.reset]);
+  cancelArmForScrambleChangeRef.current = timer.cancelArm;
   timerDisplayMsRef.current = timer.displayMs;
 
   // Set when the smart cube started this attempt. That path has already done
@@ -1708,7 +1685,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
     multiEnabledRef.current || (supportsSmartCube && bluetoothCubeRef.current?.status.connected) || cubeStartedRef.current
   ), [supportsSmartCube]);
   const onPressDown = useCallback((withWarmup = false): boolean => {
-    if (competitionRef.current.enabled || layoutEditingRef.current) return false;
+    if (layoutEditingRef.current) return false;
     if (simulationFile && phaseSnapshotRef.current !== 'running' &&
       (!simulationAllowed || cameraWaiting || !cameraWorkspace?.getSnapshot().timerReady)) return false;
     if (isPllChain && bluetoothCubeRef.current?.status.connected) {
@@ -1738,7 +1715,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
     return true;
   }, [isPllChain, smartCubeInputBlocked, timer.onPressDown, timer.armFromCube, simulationFile, simulationAllowed, cameraWaiting, cameraWorkspace]);
   const onPressUp = useCallback((): boolean => {
-    if (competitionRef.current.enabled || layoutEditingRef.current || smartCubeInputBlocked()) return false;
+    if (layoutEditingRef.current || smartCubeInputBlocked()) return false;
     if (!multiEnabledRef.current && !attemptCanStartRef.current && phaseSnapshotRef.current !== 'running') {
       timer.cancelArm();
       return false;
@@ -1799,7 +1776,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
     if (source) previewAnchorsRef.current.set(id, source);
     else previewAnchorsRef.current.delete(id);
   }, []);
-  const trainingOrientation = competition.enabled ? '' : timerSmartCubeTrainingOrientation(event, settings.preScrT);
+  const trainingOrientation = timerSmartCubeTrainingOrientation(event, settings.preScrT);
   const previousTrainingOrientationRef = useRef(trainingOrientation);
   useLayoutEffect(() => { if (!multiEnabledRef.current) scrambleGyroRef.current = null; }, [scramble, trainingOrientation]);
   useLayoutEffect(() => {
@@ -1830,17 +1807,15 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
       }
       return armed;
     },
-    autoReadyOnScramble: () => !competitionRef.current.enabled
-      && (trainingTimingModeRef.current() ? trainingTimingModeRef.current() !== 'manual'
-        : multiEnabledRef.current || getSettings().bluetoothAutoReady === 'scrambled'),
+    autoReadyOnScramble: () => trainingTimingModeRef.current() ? trainingTimingModeRef.current() !== 'manual'
+      : multiEnabledRef.current || getSettings().bluetoothAutoReady === 'scrambled',
     canStartAttempt: () => !layoutEditingRef.current && (multiEnabledRef.current
       ? !multiResetPendingRef.current && scrambleSourceCurrentRef.current
-        && Boolean(multiTrainingRef.current?.active()?.context?.scramble) : attemptCanStartRef.current)
-      && (!competitionRef.current.enabled || competitionRef.current.canStart()),
+        && Boolean(multiTrainingRef.current?.active()?.context?.scramble) : attemptCanStartRef.current),
     isInputBlocked: () => autoRecapInputBlockedRef.current,
     getPhase: () => phaseSnapshotRef.current,
     correctionLimit: () => getSettings().smartCubeCorrectionLimit,
-    isTimingEnabled: () => competitionRef.current.enabled || getSettings().timingEnabled,
+    isTimingEnabled: () => getSettings().timingEnabled,
     onGuidanceChange: setScrambleGuidance,
     onMove: ({ metadata, move, timestamp }) => {
       for (const subscriber of bluetoothSubscribersRef.current) {
@@ -1976,7 +1951,6 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
     onSolved: (atMs, clock) => {
       if (multiEnabledRef.current) { multiTraining.solved(cubeId, atMs, clock); return; }
       if (cubeId !== FIRST_TRAINING_CUBE) return;
-      competitionSolvedRef.current = competitionRef.current.enabled && atMs !== undefined;
       smartCubeSoloController.solved(atMs, clock);
     },
     onNeedMac: requestMac,
@@ -1987,17 +1961,6 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
         && phaseSnapshotRef.current === 'running') pllChainRef.current.interrupt();
       if (multiEnabledRef.current && ev.kind === 'disconnected') {
         multiTraining.connect(cubeId, false);
-      }
-      if (ev.kind === 'disconnected' && competitionRef.current.enabled) {
-        const currentRun = competitionRef.current.run();
-        if (currentRun) {
-          const faces = bluetoothCubeRef.current?.getFaces();
-          const moves = smartCubeAttemptProducerRef.current.snapshotMoves();
-          competitionRef.current.complete(Math.max(timerDisplayMsRef.current, moves.at(-1)?.ts ?? 0), moves,
-            faces ? toFaceletString(faces) : currentRun.startFacelets, true);
-        }
-        timer.reset();
-        return;
       }
       // Keep a smart-cube attempt device-driven while reconnecting.
       if (ev.kind === 'disconnected' && phaseSnapshotRef.current === 'running'
@@ -2035,13 +1998,6 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
       : scramble);
   const bluetoothCubeRef = useRef<typeof bluetoothCube | null>(null);
   bluetoothCubeRef.current = bluetoothCube;
-  useEffect(() => {
-    // A mode transition must not inherit a training offset, fake peripheral or active solve.
-    trainingCubes.first.disconnect();
-    trainingCubes.disconnectExtras();
-  }, [competition.enabled, trainingCubes.first.disconnect, trainingCubes.disconnectExtras]);
-  useEffect(() => { if (competition.enabled && bluetoothCube.hijacked) bluetoothCube.clearHijack(); }, [competition.enabled, bluetoothCube.hijacked, bluetoothCube.clearHijack]);
-
   // Dev-only: publish the fake-smart-cube console API. Gives the whole
   // smart-cube flow (connect → scramble check → auto-stop → live view) a way
   // to be exercised without hardware. No-op in production builds.
@@ -2071,7 +2027,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
   );
   liveAnchorRef.current = liveAnchor;
   const cubeConnected = supportsSmartCube && bluetoothCube.status.connected;
-  const multiEligible = !competition.enabled && !isPllChain && (event === '333' || timerSupportsTrainingTiming(event)) && !mayUseMiniProgramBridge();
+  const multiEligible = !isPllChain && (event === '333' || timerSupportsTrainingTiming(event)) && !mayUseMiniProgramBridge();
   useLayoutEffect(() => {
     if (!multiEligible && timer.phase !== 'running') {
       trainingCubes.disconnectExtras();
@@ -2144,7 +2100,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
         .then(() => reconstructionAnalyzer.warmup()).catch(() => {});
     }
   }, [cubeConnected]);
-  const trainingTimingActive = cubeConnected && !competition.enabled && timerSupportsTrainingTiming(event);
+  const trainingTimingActive = cubeConnected && timerSupportsTrainingTiming(event);
   useEffect(() => {
     // A new start preference or lost transport cancels an unstarted observation;
     // an already running attempt keeps its frozen mode and timestamps.
@@ -2369,7 +2325,6 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
   const externalTimeRecordRef = useRef<((ms: number, context?: ExternalRecordContext) => void) | null>(null);
   externalTimeRecordRef.current = (ms: number, context?: ExternalRecordContext) => {
     if (layoutEditingRef.current) return;
-    if (competitionRef.current.enabled) return;
     if (!Number.isFinite(ms) || ms < 0) {
       setInfoToast({
         msg: tr({ zh: '计时器返回了无效读数，未保存成绩', en: 'The timer returned an invalid reading; no result was saved' }),
@@ -2424,7 +2379,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
   const bluetoothTimer = useBluetoothTimer({
     onNeedMac: requestBluetoothTimerMac,
     onEvent: (timerEvent) => {
-      if (competitionRef.current.enabled || layoutEditingRef.current) return;
+      if (layoutEditingRef.current) return;
       if (timerEvent.state === 'IDLE' || timerEvent.state === 'GAN_RESET') {
         bluetoothTimerAttemptRef.current = null;
         timer.reset();
@@ -2462,7 +2417,6 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
       }
     },
     onStop: (ms, timerEvent) => {
-      if (competitionRef.current.enabled) return;
       const attempt = bluetoothTimerAttemptRef.current;
       if (phaseSnapshotRef.current !== 'running' || attempt === null) return;
       eventAtStartRef.current = attempt.event;
@@ -2472,7 +2426,6 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
       bluetoothTimerAttemptRef.current = null;
     },
     onConnectionLost: () => {
-      if (competitionRef.current.enabled) return;
       const interrupted = bluetoothTimerAttemptRef.current !== null;
       bluetoothTimerAttemptRef.current = null;
       if (interrupted) timer.reset();
@@ -2518,7 +2471,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
   const { wheelRef: gestureWheelRef } = useGestureWheel({
     surfaceRef,
     canGesture: () => {
-      if (competitionRef.current.enabled || layoutEditingRef.current || usesStackmatPads(getSettings())) return false;
+      if (layoutEditingRef.current || usesStackmatPads(getSettings())) return false;
       const ph = phaseSnapshotRef.current;
       return timerCanUseGestureWheel(ph);
     },
@@ -2537,9 +2490,9 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
       if (!getSettings().timingEnabled || usesStackmatPads(getSettings())) return;
       onPressDown(true);
     },
-    onPressCancel: () => { if (!competitionRef.current.enabled && !smartCubeInputBlocked()) cancelPress(); },
+    onPressCancel: () => { if (!smartCubeInputBlocked()) cancelPress(); },
     onPressUp: () => { if (usesStackmatPads(getSettings())) return; if (!getSettings().timingEnabled) { nextScramble(); return; } onPressUp(); },
-    onArmCancel: () => { if (!competitionRef.current.enabled && !smartCubeInputBlocked()) cancelArm(); },
+    onArmCancel: () => { if (!smartCubeInputBlocked()) cancelArm(); },
     ignoreTarget: shouldIgnoreTimerTarget,
   });
 
@@ -2903,7 +2856,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
     // covering the timer cancels gestures; returning starts a fresh lifetime.
     // Multi-cube handoff is driven by each ticket's scramble verification;
     // single-cube gestures must not arm a different cube's waiting attempt.
-    enabled: !isPllChain && !multiEnabled && !trainingTimingActive && !competition.enabled && settings.timingEnabled && attemptCanStart && !anyModalOpen
+    enabled: !isPllChain && !multiEnabled && !trainingTimingActive && settings.timingEnabled && attemptCanStart && !anyModalOpen
       && (timer.phase === 'idle' || timer.phase === 'inspecting' || timer.phase === 'stopped')
       && (settings.bluetoothAutoReady === 'still' || settings.bluetoothAutoReady === 'double-flick')
       && cubeConnected,
@@ -3029,7 +2982,6 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
     };
 
     const onKeyDown = (e: KeyboardEvent) => {
-      if (competitionRef.current.enabled) return;
       if (usesStackmatPads(getSettings()) && e.code !== 'Escape') return;
       const modal: TimerKeyboardModalState = timerSoloModalState(anyModalOpenRef.current && !hintsOnlyRef.current, hintsOnlyRef.current);
       executeKeyboardDecision(timerKeyDownDecision({
@@ -3045,7 +2997,6 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
       }), e, modal);
     };
     const onKeyUp = (e: KeyboardEvent) => {
-      if (competitionRef.current.enabled) return;
       executeKeyboardDecision(timerKeyUpDecision({
         input: e,
         target: timerKeyboardTargetContext(e.target),
@@ -3133,7 +3084,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
   const stats = useMemo(() => summarize(solves, event), [solves, event]);
   const trainingStatistics = useMemo(() => timerTrainingSummaries(solves, event, settings.trainingStartMode),
     [solves, event, settings.trainingStartMode]);
-  const inspectionLimit = competition.enabled ? 15 : settings.inspectionSec;
+  const inspectionLimit = settings.inspectionSec;
   const liveShareHistory = useMemo(() => timerLiveHistory(Object.values(byEvent).flat()), [byEvent]);
   const liveShare = useTimerLiveShare({ apiUrl: liveApiUrl, websocketUrl: websocketApiUrl('/v1/timer/live-shares/socket') }, {
     snapshot: () => {
@@ -3165,7 +3116,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
       const solve = Object.values(byEvent).flat().find(s => s.id === id);
       return solve ? timerLiveSolveDetail(solve) : null;
     },
-  }, !communityDisabled && !competition.enabled && !multiEnabled);
+  }, !communityDisabled && !multiEnabled);
   const liveShareSettings = !communityDisabled && <TimerLiveShareSettings controller={liveShare} language={isZh ? 'zh' : 'en'} copy={browserClipboardTransport}
     watchBase={typeof window === 'undefined' ? 'https://cuberoot.me/timer/watch' : `${window.location.origin}${isZh ? '/zh' : ''}/timer/watch`} />;
   const colorClass = useMemo(() => {
@@ -3201,7 +3152,6 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
     });
   }, [timer.phase, timer.inspectionDisplayMs, timer.displayMs, inspectionLimit, lastPenalty, settings.hideTime, settings.precision, settings.runningPrecision, settings.timingEnabled, trainingTimingActive]);
 
-  const fontSize = `calc(clamp(48px, 10vw, 132px) * ${settings.timerFontScale})`;
 
   // 短按进入 holding 时屏幕仍显示上一把成绩,排名徽章也应保持不动；长按到 ready
   // 后读数已清零,再隐藏徽章。inspectionDisplayMs 用来排除观察阶段里的 holding。
@@ -3473,61 +3423,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
       onConnect={connectFromBluetoothModal} />
   );
 
-  if (competition.enabled) return (
-    <main className="competition-page" data-no-timer>
-      <header className="competition-heading">
-        <h1>{tr({ zh: '智能魔方赛场', en: 'Smart cube competition' })}</h1>
-        <AppLink prefetch={false} href={competitionHref(competition.competitionId) + (competition.matchId ? `?match=${encodeURIComponent(competition.matchId)}`
-          : competition.registrationId ? `?entry=${encodeURIComponent(competition.registrationId)}` : '')}>
-          {tr({ zh: '比赛信息', en: 'Competition details' })}
-        </AppLink>
-      </header>
-      <p className="competition-muted">{competition.automatic
-        ? tr({ zh: '连接魔方并按正式打乱完成准备。服务端验证动作数据后计分。', en: 'Connect your cube and apply the issued scramble. The server scores the solve after verifying the moves.' })
-        : tr({ zh: '连接魔方，按本轮打乱完成准备。动作和用时提交后，由监督员确认成绩。', en: 'Connect your cube and apply this attempt’s scramble. Your supervisor confirms the reported moves and time.' })}</p>
-      {!competition.authorized && <p role="status">{tr({ zh: '请先登录，并在已报名的三阶智能魔方场次完成签到。', en: 'Sign in and check in to your registered 3×3 smart cube session first.' })}</p>}
-      {competition.error && <p role="alert" className="competition-error">{competition.error}</p>}
-      {competition.authorized && <>
-        <div className="competition-actions">
-          <button type="button" className="competition-secondary" onClick={() => setBluetoothOpen(true)}>{bluetoothCube.status.connected ? bluetoothCube.status.deviceName : tr({ zh: '连接智能魔方', en: 'Connect smart cube' })}</button>
-          {competition.attempt && <span>{tr({ zh: `第 ${competition.attempt.attemptNumber} 次`, en: `Attempt ${competition.attempt.attemptNumber}` })}</span>}
-        </div>
-        {!competition.attempt && <p role="status">{competition.automatic
-          ? tr({ zh: '回到赛场领取下一把打乱或等待下一局。', en: 'Return to the competition to get the next scramble or wait for the next game.' })
-          : tr({ zh: '等待监督员发布下一次打乱或确认本轮成绩。', en: 'Waiting for your supervisor to issue the next scramble or finalize your results.' })}</p>}
-        {competition.attempt && <>
-          <p className="competition-scramble">{scramble}</p>
-          <TimingSurface phase={timer.phase} colorClass={`tf-${settings.timerFont}`} fontSize={fontSize}
-            digits={<TimerReadout text={digitsText} />} digitsRef={digitsRef} surfaceRef={surfaceRef} />
-          {competition.interrupted ? competition.automatic
-            ? <><p role="status">{tr({ zh: '设备记录已中断。', en: 'The device run was interrupted.' })}</p>
-              {!competition.pendingReport && <button type="button" className="competition-secondary" disabled={competition.busy}
-                onClick={competition.abandon}>{tr({ zh: '本把记 DNF', en: 'Mark this attempt DNF' })}</button>}</>
-            : <p role="status">{tr({ zh: '本次连接已中断或页面已重载，请监督员处理本次成绩。', en: 'This attempt was interrupted or reloaded. Ask your supervisor to resolve it.' })}</p>
-            : competition.reported ? <p role="status">{competition.automatic
-              ? tr({ zh: '设备数据已提交。', en: 'Device data submitted.' })
-              : tr({ zh: '已结束，等待监督员确认。设备数据不等于正式成绩。', en: 'Finished. Waiting for your supervisor; device data is not an official result.' })}</p>
-            : <button type="button" className="competition-primary" disabled={!competition.canPrepare || event !== '333' || !bluetoothCube.status.connected || bluetoothCube.hijacked || scrambleGuidance.match !== true}
-              onClick={async () => {
-                const faces = bluetoothCube.getFaces();
-                if (!faces || !scrambleTarget || toFaceletString(faces) !== scrambleTarget || bluetoothCube.hijacked) return;
-                smartCubeAttemptProducerRef.current.reset(); timer.reset();
-                if (!await competition.begin(scrambleTarget, bluetoothCube.status)) return;
-                const latest = bluetoothCubeRef.current;
-                const latestFaces = latest?.getFaces();
-                if (!latest?.status.connected || latest.hijacked || !latestFaces || toFaceletString(latestFaces) !== scrambleTarget) {
-                  competitionRef.current.complete(0, [], latestFaces ? toFaceletString(latestFaces) : scrambleTarget, true);
-                  return;
-                }
-                timer.onPressDown();
-              }}>{competition.busy ? tr({ zh: '正在准备…', en: 'Preparing…' }) : competition.canStart() ? tr({ zh: '准备就绪，转动开始', en: 'Ready — turn to start' }) : tr({ zh: '打乱正确后准备', en: 'Prepare after matching the scramble' })}</button>}
-          {competition.pendingReport && <button type="button" className="competition-secondary" disabled={competition.busy} onClick={() => void competition.retry()}>{tr({ zh: '重试提交设备数据', en: 'Retry sending device data' })}</button>}
-        </>}
-        {competition.videoRegistrationId && <CompetitionVideoRoom registrationId={competition.videoRegistrationId} />}
-      </>}
-      {bluetoothDialog}
-    </main>
-  );
+
 
   return (
     <TimerWorkspace soloLayout={settings.soloLayout} resizeLabel={tr({ zh: '拖动调整侧栏宽度', en: 'Drag to resize panel' })} panelOpen={Boolean(panelTab) && !liveSolutionPanel} recap={liveSolutionPanel ?? solveRecap}
@@ -3576,10 +3472,10 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
           <>
           {!communityDisabled && <TimerLiveShareStatus controller={liveShare} language={isZh ? 'zh' : 'en'} />}
           {trainingOrg && trainingAssignment && <AppLink className="tb-btn" data-no-timer prefetch={false} href={`/training/${encodeURIComponent(trainingOrg)}?assignment=${encodeURIComponent(trainingAssignment)}`}>{tr({ zh: '训练打卡进度', en: 'Training check-in progress' })}</AppLink>}
-          {showReconTestEntry(isAdmin, cubeConnected, event, competition.enabled) && <ReconTestPicker
+          {showReconTestEntry(isAdmin, cubeConnected, event, false) && <ReconTestPicker
             canSelect={cubeConnected && (timer.phase === 'idle' || timer.phase === 'stopped')}
             onSelect={useReconTestScramble} />}
-          {!douyin && !competition.enabled && !multiEnabled &&
+          {!douyin && !multiEnabled &&
             <button type="button" className="tb-btn timer-camera-toggle" data-no-timer
               aria-label={cameraLabel} aria-pressed={cameraOpen} disabled={cameraToggleDisabled}
               onClick={() => {
@@ -3753,7 +3649,7 @@ fontScale: settings.timerFontScale,
 digits: <TimerReadout text={digitsText} padHost={{
               down: () => onPressDown(true), up: onPressUp, cancel: timer.cancelPress,
               running: () => phaseSnapshotRef.current === 'running', indicator: timer.phase === 'ready' ? 'ready' : timer.phase === 'holding' ? 'holding' : 'idle',
-              enabled: !anyModalOpen && !layoutEditing && !competitionRef.current.enabled && settings.timingEnabled && !smartCubeInputBlocked() && !stackmat.status.listening && !bluetoothTimer.status.connected,
+              enabled: !anyModalOpen && !layoutEditing && settings.timingEnabled && !smartCubeInputBlocked() && !stackmat.status.listening && !bluetoothTimer.status.connected,
             }} />,
 digitsRef: digitsRef,
 surfaceRef: surfaceRef,
@@ -3932,7 +3828,7 @@ children: <>
           {cameraMounted && <div className="timer-camera-preview" hidden={!cameraOpen || !cameraSupportedEvent}>
             {simulationFile && simulationAllowed && <p>{simulationLabel} · <bdi>{simulationFile.name}</bdi></p>}
             <CameraTimerWorkspace
-              mode={cameraOpen && (cameraSupportedEvent || cameraWaiting) && !competition.enabled && !multiEnabled && (!simulationFile || simulationAllowed) ? 'timer' : null}
+              mode={cameraOpen && (cameraSupportedEvent || cameraWaiting) && !multiEnabled && (!simulationFile || simulationAllowed) ? 'timer' : null}
               simulatedCamera={simulationFile && simulationAllowed ? { pick: chooseSimulationFile, disconnect: closeCamera } : undefined}
               onWorkspace={attachCamera} />
           </div>}
@@ -4035,7 +3931,7 @@ children: <>
             }}
             history={modalSolve.simulated ? [] : byEvent[modalSolve.s.event] ?? []}
             onUseScramble={!modalSolve.simulated && modalSolve.s.event === event
-              && !competition.enabled && !multiEnabled && timerCanSwitchScramble(timer.phase)
+              && !multiEnabled && timerCanSwitchScramble(timer.phase)
               ? (text) => {
                 useScramble(text);
                 if (isMobile) closeResultsPanel();

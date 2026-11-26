@@ -37,6 +37,7 @@ interface RemoteRuntime {
 
 export interface UseNetBattleLiveCubeOptions {
   websocketUrl: string;
+  onInvalidate?: () => void;
   solve: Solve333;
   code: string | null;
   credentials: NetBattleCredentials | null;
@@ -69,13 +70,15 @@ export function useNetBattleLiveCube({
   round,
   localConnected,
   localFacelets,
-  websocketUrl, solve,
+  websocketUrl, solve, onInvalidate,
 }: UseNetBattleLiveCubeOptions): {
   players: Record<string, NetBattleLiveCubePlayer>;
   ready: boolean;
   publishMove(move: string): void;
   publishGyro(quaternion: Quat | null, options?: OrientationOptions & { reference?: Quat | null }): void;
 } {
+  const invalidateRef = useRef(onInvalidate);
+  invalidateRef.current = onInvalidate;
   const [players, setPlayersState] = useState<Record<string, NetBattleLiveCubePlayer>>({});
   const [ready, setReady] = useState(false);
   const playersRef = useRef(players);
@@ -330,6 +333,10 @@ export function useNetBattleLiveCube({
         try {
           raw = JSON.parse(event.data) as unknown;
         } catch {
+          return;
+        }
+        if (raw && typeof raw === 'object' && 'type' in raw && raw.type === 'invalidate') {
+          invalidateRef.current?.();
           return;
         }
         const message = parseNetBattleLiveServerPayload(raw);

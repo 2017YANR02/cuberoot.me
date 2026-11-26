@@ -1,3 +1,5 @@
+import { COMPETITION_INTERMISSION_MS, type CompetitionDnfReason } from '@cuberoot/shared/timer';
+import { competitionScramble } from './competition_workflow.js';
 import { randomUUID } from 'node:crypto';
 import { conflict } from './errors.js';
 import { platformQuery, type PlatformDb } from './db.js';
@@ -17,7 +19,7 @@ export type Match = {
   next_loss_match_id: string | null; next_loss_slot: Slot | null;
   score_a: number; score_b: number; status: string;
 };
-export type MatchResult = ReturnType<typeof validateCompetitionAttempt>;
+export type MatchResult = ReturnType<typeof validateCompetitionAttempt> & { dnfReason?: CompetitionDnfReason };
 
 function foldedSeedOrder(size: number) {
   let order = [1, 2];
@@ -157,7 +159,7 @@ export function effectiveMatchTime(result: MatchResult) {
   return result.centiseconds == null ? Infinity : result.centiseconds + (result.penalty === '+2' ? 200 : 0);
 }
 
-export async function decideCompetitionGame(db: PlatformDb, match: Match, gameNumber: number, a: MatchResult, b: MatchResult) {
+export async function decideCompetitionGame(db: PlatformDb, match: Match, gameNumber: number, a: MatchResult, b: MatchResult, scheduleNext = true) {
   const timeA = effectiveMatchTime(a);
   const timeB = effectiveMatchTime(b);
   const winner = timeA < timeB ? match.player_a_registration_id : timeB < timeA ? match.player_b_registration_id : null;
@@ -167,11 +169,18 @@ export async function decideCompetitionGame(db: PlatformDb, match: Match, gameNu
   await platformQuery(db, `UPDATE platform_competition_match_games SET winner_registration_id=$3::uuid,resolved_at=NOW()
     WHERE match_id=$1::uuid AND game_number=$2`, [match.id, gameNumber, winner]);
   await platformQuery(db, `UPDATE platform_competition_matches SET score_a=$2,score_b=$3,
-    status=$4,winner_registration_id=$5::uuid WHERE id=$1::uuid`, [match.id, scoreA, scoreB, done ? 'completed' : 'ready', done ? winner : null]);
+    status=$4,winner_registration_id=$5::uuid WHERE id=$1::uuid`, [match.id, scoreA, scoreB, done ? 'completed' : scheduleNext ? 'in_progress' : 'ready', done ? winner : null]);
   if (done) {
     const loser = winner === match.player_a_registration_id ? match.player_b_registration_id : match.player_a_registration_id;
     await advanceCompetitionMatch(db, match, winner, loser);
     await resolveCompetitionBracketSlots(db, match.event_id);
+  } else if (scheduleNext) {
+    const [ticket] = await platformQuery<{ project: Parameters<typeof competitionScramble>[0] }>(db,
+      'SELECT competition_project AS project FROM platform_event_ticket_types WHERE id=$1::uuid', [match.ticket_type_id]);
+    const scramble = await competitionScramble(ticket.project);
+    await platformQuery(db, `INSERT INTO platform_competition_match_games(match_id,game_number,ready_a_at,ready_b_at,start_at,scramble)
+      VALUES($1::uuid,$2,clock_timestamp(),clock_timestamp(),clock_timestamp()+$3*INTERVAL '1 millisecond',$4)`,
+    [match.id, gameNumber + 1, COMPETITION_INTERMISSION_MS, scramble]);
   }
 }
 
@@ -211,7 +220,7 @@ export async function closeEndedCompetitionBrackets(db: PlatformDb, eventId: str
         const dns: MatchResult = { centiseconds: null, penalty: 'DNS' };
         await platformQuery(db, `UPDATE platform_competition_match_games SET result_a=COALESCE(result_a,$3::jsonb),result_b=COALESCE(result_b,$3::jsonb)
           WHERE match_id=$1::uuid AND game_number=$2`, [match.id, game.game_number, dns]);
-        await decideCompetitionGame(db, match, game.game_number, game.result_a ?? dns, game.result_b ?? dns);
+        await decideCompetitionGame(db, match, game.game_number, game.result_a ?? dns, game.result_b ?? dns, false);
       }
       const [current] = await platformQuery<Match>(db, 'SELECT * FROM platform_competition_matches WHERE id=$1::uuid', [match.id]);
       if (current.status !== 'completed') {

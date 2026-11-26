@@ -85,6 +85,16 @@ export class BattleRoomLiveRelay {
   private readonly rooms = new Map<string, BattleRoomLiveRoom>();
   private readonly pending = new Map<string, number>();
 
+  constructor(private readonly options: {
+    validRoom?: (value: unknown) => value is string;
+    maxPeers?: number;
+  } = {}) {}
+
+  invalidate(code: string): void {
+    const room = this.rooms.get(code);
+    if (room) this.broadcast(room, '{"type":"invalidate"}');
+  }
+
   connect(
     socket: BattleRoomLiveSocket,
     authorize: BattleRoomLiveAuthorize,
@@ -138,7 +148,7 @@ export class BattleRoomLiveRelay {
         this.rooms.set(hello.code, room);
       }
       const existing = room.peers.get(hello.playerId);
-      if (!existing && room.peers.size >= MAX_PEERS_PER_ROOM) {
+      if (!existing && room.peers.size >= (this.options.maxPeers ?? MAX_PEERS_PER_ROOM)) {
         reject('room full');
         return;
       }
@@ -197,7 +207,7 @@ export class BattleRoomLiveRelay {
             reject('authentication pending');
             return;
           }
-          const hello = parseNetBattleLiveHello(message);
+          const hello = parseNetBattleLiveHello(message, this.options.validRoom);
           if (!hello) {
             reject('hello required');
             return;

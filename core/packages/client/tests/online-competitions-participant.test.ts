@@ -1,8 +1,10 @@
 // @vitest-environment jsdom
-import { act, createElement, type ComponentProps, type ReactNode } from 'react';
+import { act, createElement, useEffect, useSyncExternalStore, type ComponentProps, type ReactNode } from 'react';
 import { createRoot } from 'react-dom/client';
+import { SOLVED_SMART_CUBE_FACELETS } from '@cuberoot/shared/smart-cube/cubie';
 import { NuqsTestingAdapter } from 'nuqs/adapters/testing';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { CompetitionDuelArena } from '@/components/competitions/CompetitionArena';
 import { OnlineCompetitions } from '@/components/competitions/OnlineCompetitions';
 import { CompetitionReportShare } from '@/components/competitions/CompetitionReport';
 import CompetitionCenter from '@/app/[lang]/competitions/page';
@@ -29,6 +31,9 @@ const api = vi.hoisted(() => ({
   listCompetitionRegistrations: vi.fn(),
   getCompetitionBrackets: vi.fn(),
   getCompetitionDuel: vi.fn(),
+  getCompetitionArena: vi.fn(),
+  readyCompetitionArena: vi.fn(),
+  readyCompetitionDuel: vi.fn(),
   listCompetitionResults: vi.fn(),
   getCompetitionAttemptReplay: vi.fn(),
   getCompetitionAttempts: vi.fn(),
@@ -48,6 +53,7 @@ const api = vi.hoisted(() => ({
 vi.mock('@/lib/online-competition-api', () => api);
 vi.mock('@/lib/auth-store', () => ({
   useAuthUser: () => api.user,
+  useIsAdmin: () => false,
   useOwnerKey: () => String(api.user?.uid ?? ''),
   hasAdminAccess: (user: typeof api.user) => Boolean(user?.isAdmin),
   nextQuery: (value: string) => '?next=' + encodeURIComponent(value),
@@ -82,6 +88,40 @@ vi.mock('@/components/PuzzlePicker/PuzzlePicker', () => ({
 }));
 vi.mock('@/hooks/useT', () => ({ useT: () => translate }));
 vi.mock('@/i18n/tr', () => ({ useLang: () => 'zh', tr: ({ zh }: { zh: string }) => zh, T: ({ zh }: { zh: string }) => zh }));
+vi.mock('@/lib/use-web-reconstruct-host', () => ({ useWebReconstructHost: () => ({ localize: ({ zh }: { zh: string }) => zh }) }));
+vi.mock('@cuberoot/timer-ui', async importOriginal => ({
+  ...await importOriginal<typeof import('@cuberoot/timer-ui')>(),
+  TimerCubePreview: () => createElement('span', { role: 'img' }),
+}));
+const cubeFixture = vi.hoisted(() => ({
+  connected: false, facelets: null as string | null, connect: vi.fn(), mounted: vi.fn(), unmounted: vi.fn(),
+  version: 0, listeners: new Set<() => void>(),
+}));
+function subscribeCube(listener: () => void) {
+  cubeFixture.listeners.add(listener);
+  return () => { cubeFixture.listeners.delete(listener); };
+}
+function publishCubeState(connected: boolean, facelets: string | null) {
+  cubeFixture.connected = connected;
+  cubeFixture.facelets = facelets;
+  cubeFixture.version++;
+  for (const listener of cubeFixture.listeners) listener();
+}
+vi.mock('@/components/competitions/useCompetitionCube', () => ({
+  useCompetitionCube: () => {
+    useSyncExternalStore(subscribeCube, () => cubeFixture.version);
+    useEffect(() => { cubeFixture.mounted(); return () => { cubeFixture.unmounted(); }; }, []);
+    return {
+      cube: {
+        status: { connected: cubeFixture.connected, brand: 'gan', deviceName: 'GAN 16 test', battery: null },
+        facelets: cubeFixture.facelets,
+      },
+      connect: cubeFixture.connect,
+      anchor: { moves: [], algAnchored: false },
+      guidance: { correctionActive: false }, phase: null, moves: 0, recap: null, live: { players: {} },
+    };
+  },
+}));
 vi.mock('@/components/AppLink', () => ({
   default: ({ prefetch: _prefetch, ...props }: ComponentProps<'a'> & { prefetch?: boolean }) => createElement('a', props),
 }));
@@ -119,6 +159,13 @@ describe('online competition views', () => {
     document.body.append(host);
     root = createRoot(host);
     api.user = null;
+    cubeFixture.connected = false;
+    cubeFixture.facelets = null;
+    cubeFixture.connect.mockReset().mockResolvedValue(undefined);
+    cubeFixture.mounted.mockClear();
+    cubeFixture.unmounted.mockClear();
+    api.readyCompetitionArena.mockReset().mockResolvedValue({});
+    api.readyCompetitionDuel.mockReset().mockResolvedValue({});
     api.pathname = '/zh/competitions/workspace';
     api.listOnlineCompetitions.mockReset().mockResolvedValue({ competitions: [] });
     api.listOrganizerApplications.mockReset().mockResolvedValue({ applications: [], eligibleOrganizationIds: [] });
@@ -136,6 +183,7 @@ describe('online competition views', () => {
     api.checkInCompetition.mockReset().mockResolvedValue({ checkedIn: true });
     api.push.mockReset();
     api.listCompetitionRegistrations.mockResolvedValue({ registrations: [] });
+    api.getCompetitionArena.mockReset().mockResolvedValue({ serverNow: new Date().toISOString(), legacy: true, roomId: null, players: [] });
     api.getCompetitionBrackets.mockReset().mockResolvedValue({ generated: true, matches: [], standings: [] });
     api.listCompetitionResults.mockReset().mockResolvedValue({ results: [] });
     api.getCompetitionAttemptReplay.mockReset().mockResolvedValue({ report: null });
@@ -545,7 +593,7 @@ describe('online competition views', () => {
     api.user = { uid: 7 };
     const start = new Date().toISOString();
     const entry = { registrationId: 'bracket-entry', competitionId: 'my-bracket', titleZh: '淘汰赛', titleEn: 'Bracket',
-      status: 'confirmed', orderId: 'order', sessionStartsAt: start, action: 'enter_bracket' } satisfies MyCompetitionEntry;
+      status: 'confirmed', device: 'ordinary', orderId: 'order', sessionStartsAt: start, action: 'enter_bracket' } satisfies MyCompetitionEntry;
     api.listMyCompetitionEntries.mockResolvedValue({ entries: [entry, {
       ...entry, registrationId: 'pay-entry', titleZh: '待支付场次', status: 'reserved', action: 'pay',
       reservationExpiresAt: new Date(Date.now() + 65_000).toISOString(),
@@ -556,6 +604,98 @@ describe('online competition views', () => {
     expect(host.querySelector('.competition-reservation-remaining')?.textContent).toBe('锁位剩余 1:05');
     await act(async () => { vi.advanceTimersByTime(3000); });
     expect(host.querySelector('.competition-reservation-remaining')?.textContent).toBe('锁位剩余 1:02');
+  });
+
+  function smartEntry(id: string): CompetitionRegistration {
+    return {
+      id, userId: 7, displayName: '选手甲', project: '333', device: 'smart', status: 'confirmed',
+      sessionId: 'session', sessionKind: 'self_service', orderId: 'order', canCheckIn: true,
+      canRecordResult: false, resultRecordedAt: null,
+    };
+  }
+
+  it('checks in a paired Ao5 late entrant and calls POST to join an already open arena', async () => {
+    api.user = { uid: 7 };
+    api.getOnlineCompetition.mockResolvedValue({ competition: fixture('late-check-in', { format: 'average' }) });
+    const entry = smartEntry('late');
+    api.listCompetitionRegistrations.mockResolvedValue({ registrations: [entry] });
+    let checkedIn = false;
+    let seated = false;
+    const startsAt = new Date(Date.now() - 20_000).toISOString();
+    api.getCompetitionArena.mockImplementation(async () => ({
+      serverNow: new Date().toISOString(), checkedIn, seated, completed: false,
+      roomId: checkedIn ? 'already-open-room' : null, roundNumber: checkedIn ? 1 : null,
+      startsAt: checkedIn ? startsAt : null, scramble: seated ? 'R U F2' : null,
+      inspectAt: null, solveAt: null, credentials: null, players: [],
+    }));
+    api.checkInCompetition.mockImplementation(async () => { checkedIn = true; });
+    api.readyCompetitionArena.mockImplementation(async () => { seated = true; });
+    const draw = () => createElement(NuqsTestingAdapter, {
+      hasMemory: true, children: createElement(OnlineCompetitions, { id: 'late-check-in' }),
+    });
+
+    await act(async () => root.render(draw()));
+    await act(async () => button('连接魔方检录').click());
+    await act(async () => { await vi.waitFor(() => expect(host.textContent).toContain('连接魔方并检录')); });
+    expect(api.checkInCompetition).not.toHaveBeenCalled();
+    expect(api.readyCompetitionArena).not.toHaveBeenCalled();
+    expect(host.textContent).not.toContain('R U F2');
+    await act(async () => button('连接魔方并检录').click());
+    expect(cubeFixture.connect).toHaveBeenCalledOnce();
+
+    await act(async () => publishCubeState(true, 'U'.repeat(54)));
+    expect(api.checkInCompetition).not.toHaveBeenCalled();
+
+    await act(async () => publishCubeState(true, SOLVED_SMART_CUBE_FACELETS));
+    expect(api.checkInCompetition).toHaveBeenCalledExactlyOnceWith('late', {
+      deviceBrand: 'gan', deviceName: 'GAN 16 test', facelets: SOLVED_SMART_CUBE_FACELETS,
+    });
+    expect(api.readyCompetitionArena).toHaveBeenCalledExactlyOnceWith('late', expect.any(String));
+    expect((host.querySelector('.competition-arena-scramble')?.textContent ?? '').replace(/\s+/g, '')).toContain('RUF2');
+    expect(api.checkInCompetition.mock.invocationCallOrder[0]).toBeLessThan(api.readyCompetitionArena.mock.invocationCallOrder[0]);
+    expect(cubeFixture.mounted).toHaveBeenCalledOnce();
+    expect(cubeFixture.unmounted).not.toHaveBeenCalled();
+  });
+
+  it('checks in before a duel exists and keeps the connected cube when the match becomes available', async () => {
+    api.user = { uid: 7 };
+    const competition = fixture('duel-check-in', { format: 'advancement' });
+    const entry = smartEntry('duelist');
+    api.getOnlineCompetition.mockResolvedValue({ competition });
+    api.listCompetitionRegistrations.mockResolvedValue({ registrations: [entry] });
+    api.getCompetitionBrackets.mockResolvedValue({ generated: false, matches: [], standings: [] });
+
+    await act(async () => root.render(createElement(NuqsTestingAdapter, {
+      hasMemory: true, children: createElement(OnlineCompetitions, { id: competition.id }),
+    })));
+    await act(async () => button('连接魔方检录').click());
+    await act(async () => { await vi.waitFor(() => expect(host.textContent).toContain('等待检录')); });
+    await act(async () => button('连接魔方并检录').click());
+    expect(cubeFixture.connect).toHaveBeenCalledOnce();
+    expect(api.checkInCompetition).not.toHaveBeenCalled();
+
+    let finishCheckIn!: () => void;
+    api.checkInCompetition.mockImplementation(() => new Promise<void>(resolve => { finishCheckIn = resolve; }));
+    await act(async () => publishCubeState(true, SOLVED_SMART_CUBE_FACELETS));
+    expect(api.checkInCompetition).toHaveBeenCalledExactlyOnceWith('duelist', {
+      deviceBrand: 'gan', deviceName: 'GAN 16 test', facelets: SOLVED_SMART_CUBE_FACELETS,
+    });
+    expect(api.readyCompetitionDuel).not.toHaveBeenCalled();
+
+    api.getCompetitionBrackets.mockResolvedValue({ generated: true, standings: [], matches: [
+      { id: 'match', ticketId: 'ticket', project: '333', device: 'smart', status: 'ready', playerA: entry.id, playerB: 'other' },
+    ] });
+    api.getCompetitionDuel.mockResolvedValue({
+      id: 'match', eventId: competition.id, project: '333', device: 'smart', registrationId: entry.id,
+      status: 'ready', gameNumber: 1, ownName: '甲', opponentName: '乙', ownScore: 0, opponentScore: 0,
+      supervisionMode: 'self_service', serverNow: new Date().toISOString(), canPlay: true, checkedIn: true,
+      ownReady: false, startAt: null, scramble: null,
+    });
+    await act(async () => finishCheckIn());
+    expect(api.readyCompetitionDuel).toHaveBeenCalledExactlyOnceWith('match', 1, expect.any(String));
+    expect(cubeFixture.connect).toHaveBeenCalledOnce();
+    expect(cubeFixture.mounted).toHaveBeenCalledOnce();
+    expect(cubeFixture.unmounted).not.toHaveBeenCalled();
   });
 
   it('keeps the last game score visible when the active duel advances', async () => {
@@ -571,17 +711,19 @@ describe('online competition views', () => {
       id: 'match-a', ticketId: 'ticket', project: '333', device: 'ordinary', status: 'ready', playerA: 'entrant-a', playerB: 'entrant-b',
     }] });
     api.getCompetitionDuel.mockReset().mockResolvedValue({
-      id: 'match-a', project: '333', status: 'ready', gameNumber: 2, ownName: '选手甲', opponentName: '选手乙',
-      ownScore: 1, opponentScore: 0, serverNow: new Date().toISOString(), canPlay: true, activeGame: null,
+      id: 'match-a', eventId: 'duel', project: '333', status: 'ready', gameNumber: 2, ownName: '选手甲', opponentName: '选手乙',
+      ownScore: 1, opponentScore: 0, serverNow: new Date().toISOString(), canPlay: true, startAt: new Date(Date.now() + 3000).toISOString(),
+      scramble: null, ownReady: true, opponentReady: true, activeGame: null,
       lastGame: { gameNumber: 1, ownResult: { centiseconds: 1000, penalty: '+2' }, opponentResult: { centiseconds: null, penalty: 'DNF' }, winner: 'own' },
     });
-    await act(async () => root.render(createElement(NuqsTestingAdapter, { searchParams: '?match=match-a', children: createElement(OnlineCompetitions, { id: 'duel' }) })));
-    const previous = host.querySelector('.competition-last-game');
-    expect(previous?.textContent).toContain('上一局结果 · 第 1 局');
+    await act(async () => root.render(createElement(NuqsTestingAdapter, null,
+      createElement(CompetitionDuelArena, { id: 'match-a', competition: fixture('duel') }))));
+    const previous = host.querySelector('.competition-arena-game');
+    expect(previous?.textContent).toContain('G1');
     expect(previous?.textContent).toContain('12.00 (+2)');
     expect(previous?.textContent).toContain('DNF');
-    expect(previous?.textContent).toContain('你赢下了这局');
-    expect(host.querySelector('.competition-room-status')?.textContent).toContain('第 2 局');
+    expect(previous?.textContent).toContain('胜');
+    expect(host.querySelector('.competition-arena-hud')?.textContent).toContain('G2');
   });
 
   it('renders a semantic scoreboard and loads a published replay without participant access', async () => {
@@ -600,11 +742,10 @@ describe('online competition views', () => {
     expect(host.querySelector('th.wca-person-column[scope="col"]')?.textContent).toBe('选手');
     expect(host.querySelector('th[scope="row"] .wca-person-team-slot')).toBeTruthy();
     expect(host.querySelector('th[scope="row"] .country-flag')).toBeTruthy();
-    const summaries = [...host.querySelectorAll('summary')].filter(item => item.textContent === '智能魔方复盘');
-    expect(summaries).toHaveLength(1);
-    await act(async () => { summaries[0].parentElement!.setAttribute('open', ''); button('第 2 把').click(); });
+    const replays = host.querySelectorAll<HTMLButtonElement>('.competition-result-attempts .competition-replay-button');
+    expect(replays).toHaveLength(1);
+    await act(async () => replays[0].click());
     expect(api.getCompetitionAttemptReplay).toHaveBeenCalledWith('replay-entry', 2, true);
-    expect(host.querySelector('.competition-replay')).toBeTruthy();
   });
 
   it('allows a spot-check decision in the host workspace', async () => {
@@ -635,7 +776,7 @@ describe('online competition views', () => {
     api.getCompetitionAttempts.mockResolvedValue({ attempts: [{ attemptNumber: 1, scramble: 'R U', issuedAt: now, recordedAt: null }] });
     api.uploadCompetitionEvidence.mockResolvedValue({ evidence: [{ id: 'uploaded-clip', mime: 'video/mp4', attemptNumber: 1, sizeBytes: 5, createdAt: now }] });
     await act(async () => root.render(createElement(NuqsTestingAdapter, { searchParams: '?entry=self-entry', children: createElement(OnlineCompetitions, { id: 'self' }) })));
-    expect(host.querySelector('.competition-self-timer output')?.textContent).toBe('15s');
+    await act(async () => { await vi.waitFor(() => expect(host.querySelector('.competition-self-timer output')?.textContent).toBe('15s')); });
     expect(host.querySelector('.competition-scramble-layout[data-preview] svg')).toBeTruthy();
     await act(async () => select(host.querySelector<HTMLSelectElement>('#competition-timing-mode')!, 'external'));
     const score = host.querySelector<HTMLInputElement>('.competition-score-form input')!;
@@ -693,6 +834,7 @@ describe('online competition views', () => {
     api.listCompetitionResults.mockResolvedValue({ results: [{ ...entry, rank: 2, recordedAt, finalizedAt: null }] });
     await act(async () => root.render(createElement(NuqsTestingAdapter, { searchParams: '?entry=finished-entry',
       children: createElement(OnlineCompetitions, { id: 'report' }) })));
+    await act(async () => { await vi.waitFor(() => expect(host.querySelector('.competition-report')).toBeTruthy()); });
     const report = host.querySelector('.competition-report');
     expect(report?.querySelector('.competition-report-metrics')?.textContent).toContain('7.37');
     expect(report?.querySelector('.competition-report-attempts')?.textContent).toContain('(5.82)');
@@ -762,7 +904,7 @@ describe('online competition views', () => {
     api.user = { uid: 7 };
     const entry: MyCompetitionEntry = {
       registrationId: 'personal-entry', competitionId: 'my-competition', titleZh: '参赛场次', titleEn: 'My session',
-      status: 'confirmed', orderId: 'order', sessionStartsAt: new Date().toISOString(), action: 'check_in',
+      status: 'confirmed', device: 'ordinary', orderId: 'order', sessionStartsAt: new Date().toISOString(), action: 'check_in',
     };
     api.listMyCompetitionEntries.mockResolvedValue({ entries: [entry] });
     await act(async () => root.render(createElement(CompetitionCenter)));
@@ -771,5 +913,23 @@ describe('online competition views', () => {
     await act(async () => next.click());
     expect(api.checkInCompetition).toHaveBeenCalledWith(entry.registrationId);
     expect(api.push).toHaveBeenCalledWith('/zh/competitions/my-competition?entry=personal-entry');
+  });
+
+  it('opens the smart cube check-in seat from the homepage without posting check-in', async () => {
+    api.user = { uid: 7 };
+    const entry: MyCompetitionEntry = {
+      registrationId: 'smart-entry', competitionId: 'my-competition', titleZh: '智能魔方组', titleEn: 'Smart cube division',
+      status: 'confirmed', device: 'smart', orderId: 'order', sessionStartsAt: new Date().toISOString(), action: 'check_in',
+    };
+    api.listMyCompetitionEntries.mockResolvedValue({ entries: [entry] });
+    await act(async () => root.render(createElement(CompetitionCenter)));
+
+    const link = host.querySelector<HTMLAnchorElement>('.my-competition-row a.competition-primary');
+    expect(link?.textContent).toBe('连接魔方检录');
+    expect(link?.getAttribute('href')).toBe('/competitions/my-competition?entry=smart-entry');
+    expect(host.querySelector('.my-competition-row button')).toBeNull();
+    link!.addEventListener('click', event => event.preventDefault(), { once: true });
+    await act(async () => link!.click());
+    expect(api.checkInCompetition).not.toHaveBeenCalled();
   });
 });

@@ -1,11 +1,13 @@
 import { requirePlatformActor } from '../platform/auth.js';
-import { platformDb, platformQuery, sendMutation, withIdempotency, type PlatformDb } from '../platform/db.js';
+import { platformDb, platformQuery, platformTransaction, sendMutation, withIdempotency, type PlatformDb } from '../platform/db.js';
 import { badRequest, conflict, forbidden, notFound } from '../platform/errors.js';
 import { platformRouter, privateNoStore } from '../platform/http.js';
 import { booleanField, enumField, integerField, readJsonObject, stringField } from '../platform/validation.js';
 import type { WCA_TIMED_EVENT_ORDER } from '@cuberoot/shared/wca-events';
 import { finishCompetitionSelfAttempt, requireCompetitionManager, requireCompetitionRegistration, validateCompetitionAttempts, validateCompetitionAttempt } from '../platform/competitions.js';
 import { competitionScramble } from '../platform/competition_workflow.js';
+import { advanceCompetitionArena, arenaDnfReason, arenaEntry, arenaSolveAt, competitionArenaSnapshot, lockArenaRound, recordArenaDnf, startCompetitionArena } from '../platform/competition_arena.js';
+import { competitionLiveCredentials } from '../platform/competition_live.js';
 import { competitionSupervisionReady } from './video_rooms.js';
 
 export const platformCompetitionAttemptRoutes = platformRouter();
@@ -17,14 +19,15 @@ function registrationId(value: string): string {
 
 type Registration = {
   id: string; user_id: number; supervisor_user_id: number; status: string; event_status: string;
-  checked_in_at: string | null; in_window: boolean; competition_video_generation: string;
+  checked_in_at: string | null; in_window: boolean; device: string; competition_video_generation: string;
   competition_project: (typeof WCA_TIMED_EVENT_ORDER)[number]; competition_format: string | null; result_recorded_at: string | null;
 };
 async function registration(db: PlatformDb, id: string, userId: number | null, lock = false, adminRead = false): Promise<Registration> {
-  const [row] = await platformQuery<Registration>(db, `SELECT r.id::text,r.user_id,r.status,r.checked_in_at,
+  const [row] = await platformQuery<Registration>(db, `SELECT r.id::text,r.user_id,r.status,r.checked_in_at,t.competition_device AS device,
     r.competition_video_generation::text,r.competition_project,r.result_recorded_at,s.supervisor_user_id,e.status AS event_status,c.competition_format,
     (NOW()>=s.starts_at AND NOW()<s.ends_at) AS in_window
     FROM platform_event_registrations r JOIN platform_competition_sessions s ON s.id=r.competition_session_id
+    JOIN platform_event_ticket_types t ON t.id=r.ticket_type_id
     JOIN platform_events e ON e.id=r.event_id JOIN platform_competitions c ON c.event_id=e.id WHERE r.id=$1::uuid ${lock ? 'FOR UPDATE OF r,s' : ''}`, [id]);
   if (!row) notFound('Registration');
   if (!adminRead && (userId == null || ![Number(row.user_id),Number(row.supervisor_user_id)].includes(userId))) forbidden('Only the entrant and assigned supervisor can access attempts');
@@ -45,14 +48,82 @@ const ATTEMPTS = `SELECT a.attempt_number AS "attemptNumber",a.scramble,a.issued
     'startedAt',d.started_at,'reportedAt',d.reported_at,'durationMs',d.report->'durationMs','disconnected',d.report->'disconnected',
     'deviceBrand',d.report->'deviceBrand','moveCount',jsonb_array_length(d.report->'moves'))
    FROM platform_competition_device_reports d WHERE d.registration_id=a.registration_id AND d.attempt_number=a.attempt_number) AS telemetry
-  FROM platform_competition_attempts a WHERE a.registration_id=$1::uuid ORDER BY a.attempt_number`;
+  FROM platform_competition_attempts a WHERE a.registration_id=$1::uuid AND a.issued_at<=clock_timestamp() ORDER BY a.attempt_number`;
+
+platformCompetitionAttemptRoutes.get('/platform/competitions/registrations/:id/arena', async c => {
+  privateNoStore(c);
+  const actor = await requirePlatformActor(c);
+  const id = registrationId(c.req.param('id'));
+  return c.json(await platformTransaction(async db => {
+    const entry = await arenaEntry(db, id, actor.userId, true);
+    if (!entry.checked) return {
+      serverNow: new Date(), checkedIn: false, roomId: null, roundNumber: null, startsAt: null,
+      seated: false, completed: false, scramble: null, credentials: null, inspectAt: null, solveAt: null, players: [],
+    };
+    const round = await lockArenaRound(db, entry);
+    if (round) await advanceCompetitionArena(db, round);
+    const snapshot = await competitionArenaSnapshot(db, entry);
+    const roomId = typeof snapshot?.roomId === 'string' && snapshot.seated ? snapshot.roomId : null;
+    return { ...snapshot, checkedIn: true, credentials: roomId ? competitionLiveCredentials(roomId, actor.userId) : null };
+  }));
+});
+
+platformCompetitionAttemptRoutes.post('/platform/competitions/registrations/:id/arena', async c => {
+  const actor = await requirePlatformActor(c);
+  const id = registrationId(c.req.param('id'));
+  const body = await readJsonObject(c);
+  return sendMutation(c, await withIdempotency(c, actor, `competition.arena.ready:${id}`, body, async db => {
+    const entry = await arenaEntry(db, id, actor.userId);
+    const registration = await requireCompetitionRegistration(db, id, false);
+    if (entry.kind === 'supervised') {
+      if (!registration.supervisor_user_id || !await competitionSupervisionReady(id, registration.competition_video_generation, Number(registration.user_id), Number(registration.supervisor_user_id))) {
+        conflict('The entrant and supervisor must both be connected with their cameras on');
+      }
+    }
+    return { status: 200, body: { roomId: await startCompetitionArena(db, entry) } };
+  }));
+});
+
+platformCompetitionAttemptRoutes.post('/platform/competitions/registrations/:id/arena/phase', async c => {
+  const actor = await requirePlatformActor(c);
+  const id = registrationId(c.req.param('id'));
+  const body = await readJsonObject(c);
+  const number = integerField(body, 'attemptNumber', { required: true, min: 1, max: 5 })!;
+  const phase = enumField(body, 'phase', ['inspecting', 'solving', 'timeout', 'disconnected'], { required: true })!;
+  const inspectionMs = integerField(body, 'inspectionMs', { min: 0, max: 16000 });
+  return sendMutation(c, await withIdempotency(c, actor, `competition.arena.phase:${id}:${number}`, body, async db => {
+    const entry = await arenaEntry(db, id, actor.userId);
+    await requireCompetitionRegistration(db, id);
+    const [attempt] = await platformQuery<{
+      issued_at: Date; inspect_at: Date | null; solve_at: Date | null; recorded_at: Date | null; now: Date; dnf_reason: string | null;
+    }>(db, `SELECT a.*,clock_timestamp() AS now FROM platform_competition_attempts a
+      WHERE a.registration_id=$1::uuid AND a.attempt_number=$2`, [id, number]);
+    if (!attempt || attempt.issued_at > attempt.now) conflict('The round has not started');
+    if (attempt.recorded_at) return { status: 200, body: { dnfReason: attempt.dnf_reason } };
+    const reason = arenaDnfReason(attempt.issued_at, attempt.inspect_at, attempt.solve_at, attempt.now)
+      ?? (phase === 'disconnected' && entry.device === 'smart' ? 'disconnected' : null);
+    if (reason) {
+      await recordArenaDnf(db, id, number, reason);
+      return { status: 200, body: { dnfReason: reason } };
+    }
+    if (phase === 'inspecting' && !attempt.inspect_at && entry.device === 'ordinary') {
+      await platformQuery(db, 'UPDATE platform_competition_attempts SET inspect_at=$3 WHERE registration_id=$1::uuid AND attempt_number=$2', [id, number, attempt.now]);
+    }
+    if (phase === 'solving' && attempt.inspect_at && !attempt.solve_at) {
+      const solve = arenaSolveAt(attempt.inspect_at, attempt.now, inspectionMs);
+      if (+solve > +attempt.now + 1000) badRequest('The inspection duration exceeds the server clock');
+      await platformQuery(db, 'UPDATE platform_competition_attempts SET solve_at=$3 WHERE registration_id=$1::uuid AND attempt_number=$2', [id, number, solve]);
+    }
+    return { status: 200, body: {} };
+  }));
+});
 
 platformCompetitionAttemptRoutes.get('/platform/competitions/registrations/:id/attempts', async (c) => {
   privateNoStore(c);
   const actor = await requirePlatformActor(c);
   const id = registrationId(c.req.param('id'));
   const row = await registration(platformDb(),id,actor.userId,false,actor.isAdmin);
-  if (!['confirmed','attended'].includes(row.status)) forbidden('The registration is no longer active');
+  if (!['confirmed','attended'].includes(row.status) || (row.device === 'smart' && !row.checked_in_at)) forbidden('An active checked-in registration is required');
   return c.json({ attempts: await platformQuery(platformDb(),ATTEMPTS,[id]) });
 });
 
@@ -68,6 +139,11 @@ platformCompetitionAttemptRoutes.post('/platform/competitions/registrations/:id/
     const attempts = await platformQuery(db,ATTEMPTS,[id]);
     const pending = attempts.find(attempt => !attempt.recordedAt);
     if (pending) return { status:200,body:{attempt:pending} };
+    const [arena] = await platformQuery(db, `SELECT 1 FROM platform_competition_arena_rounds ar
+      JOIN platform_event_registrations r ON r.competition_session_id=ar.session_id AND r.competition_project=ar.project
+      JOIN platform_event_ticket_types t ON t.id=r.ticket_type_id AND t.competition_device=ar.device
+      WHERE r.id=$1::uuid AND EXISTS (SELECT 1 FROM platform_competition_attempts a WHERE a.registration_id=r.id AND a.arena_round_id=ar.id)`, [id]);
+    if (arena || !attempts.length) conflict('The arena releases the next scramble automatically');
     if (attempts.length >= 5) conflict('All five attempts have already been recorded');
     const busy = await platformQuery(db,`SELECT a.registration_id FROM platform_competition_attempts a
       JOIN platform_event_registrations r ON r.id=a.registration_id JOIN platform_competition_sessions s ON s.id=r.competition_session_id
@@ -92,8 +168,19 @@ platformCompetitionAttemptRoutes.post('/platform/competitions/registrations/:id/
   return sendMutation(c,await withIdempotency(c,actor,`competition.attempt.result:${id}:${number}`,body,async(db) => {
     const row = await registration(db,id,actor.userId,true);
     await supervised(row,actor.userId);
+    if (row.device === 'smart') conflict('Smart cube results require a verified device report');
+    const [arena] = await platformQuery<{ issued_at: Date; inspect_at: Date | null; solve_at: Date | null; now: Date }>(db, `SELECT a.*,clock_timestamp() AS now
+      FROM platform_competition_attempts a
+      WHERE a.registration_id=$1::uuid AND a.attempt_number=$2 AND a.arena_round_id IS NOT NULL AND a.recorded_at IS NULL`, [id, Number(number)]);
+    if (arena) {
+      if (arena.issued_at > arena.now) conflict('This arena seat requires its active timing flow');
+      const reason = arenaDnfReason(arena.issued_at, arena.inspect_at, arena.solve_at, arena.now);
+      if (reason) await recordArenaDnf(db, id, Number(number), reason);
+      else await finishCompetitionSelfAttempt(db, id, Number(number), actor.userId, result, false);
+      return { status: 200, body: { attempts: await platformQuery(db, ATTEMPTS, [id]) } };
+    }
     const changed = await platformQuery(db,`UPDATE platform_competition_attempts SET centiseconds=$3,penalty=$4,recorded_at=NOW(),recorded_by=$5
-      WHERE registration_id=$1::uuid AND attempt_number=$2 AND recorded_at IS NULL RETURNING attempt_number`,[id,Number(number),result.centiseconds,result.penalty,actor.userId]);
+      WHERE registration_id=$1::uuid AND attempt_number=$2 AND recorded_at IS NULL AND issued_at<=clock_timestamp() RETURNING attempt_number`,[id,Number(number),result.centiseconds,result.penalty,actor.userId]);
     if (!changed.length) conflict('The attempt has not been issued or was already recorded');
     return { status:200,body:{attempts:await platformQuery(db,ATTEMPTS,[id])},resourceType:'competition_attempt',resourceId:id };
   }));
@@ -118,6 +205,11 @@ platformCompetitionAttemptRoutes.post('/platform/competitions/registrations/:id/
     const attempts = await platformQuery(db, ATTEMPTS, [id]);
     const pending = attempts.find(attempt => !attempt.recordedAt);
     if (pending) return { status: 200, body: { attempt: pending } };
+    const [arena] = await platformQuery(db, `SELECT 1 FROM platform_competition_arena_rounds ar
+      WHERE ar.session_id=$1::uuid AND ar.project=$2 AND ar.device=$3
+        AND EXISTS (SELECT 1 FROM platform_competition_attempts a WHERE a.registration_id=$4::uuid AND a.arena_round_id=ar.id)`,
+    [row.session_id, row.competition_project, row.device, id]);
+    if (arena || !attempts.length) conflict('The arena releases the next scramble automatically');
     if (attempts.length >= 5) conflict('All attempts are recorded');
     const scramble = await competitionScramble(row.competition_project);
     await platformQuery(db, `INSERT INTO platform_competition_attempts(registration_id,attempt_number,scramble)
@@ -139,13 +231,21 @@ platformCompetitionAttemptRoutes.post('/platform/competitions/registrations/:id/
     const row = await selfServiceRegistration(db, id, actor.userId);
     if (!['confirmed', 'attended'].includes(row.status) || row.device !== 'ordinary') conflict('Only ordinary self-service results can be entered manually');
     const attemptNumber = Number(number);
-    const [attempt] = await platformQuery<{ recorded_at: string | null; centiseconds: number | null; penalty: string | null; elapsed_ms: string }>(
-      db, `SELECT recorded_at,centiseconds,penalty,EXTRACT(EPOCH FROM NOW()-issued_at)*1000 AS elapsed_ms
+    const [attempt] = await platformQuery<{ recorded_at: string | null; centiseconds: number | null; penalty: string | null; elapsed_ms: string; issued_at: Date; arena_round_id: string | null; inspect_at: Date | null; solve_at: Date | null; now: Date }>(
+      db, `SELECT recorded_at,centiseconds,penalty,issued_at,arena_round_id,inspect_at,solve_at,clock_timestamp() AS now,EXTRACT(EPOCH FROM clock_timestamp()-COALESCE(solve_at,issued_at))*1000 AS elapsed_ms
       FROM platform_competition_attempts WHERE registration_id=$1::uuid AND attempt_number=$2`, [id, attemptNumber]);
     if (!attempt) notFound('Issued attempt');
     if (attempt.recorded_at) {
       if (attempt.centiseconds !== result.centiseconds || attempt.penalty !== result.penalty) conflict('This attempt already has a different result');
       return { status: 200, body: { finished: row.status === 'attended' } };
+    }
+    if (attempt.issued_at > attempt.now) conflict('The round has not started');
+    if (attempt.arena_round_id) {
+      const reason = arenaDnfReason(attempt.issued_at, attempt.inspect_at, attempt.solve_at, attempt.now);
+      if (reason) {
+        await recordArenaDnf(db, id, attemptNumber, reason);
+        return { status: 200, body: { finished: attemptNumber === 5, dnfReason: reason } };
+      }
     }
     const recordedLocally = booleanField(body, 'recordedLocally');
     const evidenceId = stringField(body, 'recordingEvidenceId', { max: 36 });

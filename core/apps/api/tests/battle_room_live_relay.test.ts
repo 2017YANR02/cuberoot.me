@@ -267,3 +267,26 @@ describe('BattleRoomLiveRelay', () => {
     expect(relay.roomCount()).toBe(0);
   });
 });
+
+it('isolates competition invalidations by authenticated arena UUID', async () => {
+  const { isCompetitionLiveRoom } = await import('@cuberoot/shared/timer');
+  const relay = new BattleRoomLiveRelay({ validRoom: isCompetitionLiveRoom });
+  const first = '11111111-1111-4111-8111-111111111111';
+  const second = '22222222-2222-4222-8222-222222222222';
+  async function connect(code: string, playerId: string, allowed: boolean) {
+    const socket = fakeSocket();
+    const authorize = vi.fn(async () => allowed);
+    const connection = relay.connect(socket, authorize);
+    connection.handleMessage(JSON.stringify({ type: 'hello', version: 1, code, playerId, playerToken: TOKEN }));
+    await vi.waitFor(() => expect(authorize).toHaveBeenCalledWith(code, { playerId, playerToken: TOKEN }));
+    return socket;
+  }
+  const seat = await connect(first, PLAYER_A, true);
+  const otherRoom = await connect(second, PLAYER_B, true);
+  const outsider = await connect(first, PLAYER_C, false);
+  await vi.waitFor(() => expect(outsider.close).toHaveBeenCalledWith(1008, 'invalid player capability'));
+  relay.invalidate(first);
+  expect(messages(seat)).toContainEqual({ type: 'invalidate' });
+  expect(messages(otherRoom)).not.toContainEqual({ type: 'invalidate' });
+  expect(messages(outsider)).toEqual([]);
+});

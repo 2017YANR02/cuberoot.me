@@ -70,21 +70,32 @@ describe('supervised attempts HTTP boundaries', () => {
     expect((await post('/next')).status).toBe(409);
     expect(mocks.scramble).not.toHaveBeenCalled();
   });
-  it('returns the pending scramble on repeated next requests', async () => {
-    expect((await post('/next')).status).toBe(201);
+  it('resumes an issued attempt and no longer creates an individual first scramble', async () => {
+    expect((await post('/next')).status).toBe(409);
+    attempts.push({ attemptNumber: 1, scramble: 'R U', recordedAt: null });
     expect((await post('/next')).status).toBe(200);
-    expect(mocks.scramble).toHaveBeenCalledTimes(1);
-    expect(attempts.length).toBe(1);
+    expect(mocks.scramble).not.toHaveBeenCalled();
   });
   it('does not allow one supervisor to issue simultaneous attempts to multiple entrants', async () => {
+    attempts.push({ attemptNumber: 1, scramble: 'R U', recordedAt: '2026-09-10T12:01:00Z' });
     busy = true;
     expect((await post('/next')).status).toBe(409);
     expect(mocks.scramble).not.toHaveBeenCalled();
   });
+  it('rejects a manual smart-cube score even for the assigned supervisor and a legacy attempt', async () => {
+    row.device = 'smart';
+    attempts.push({ attemptNumber: 1, scramble: 'R U', recordedAt: null });
+    const result = await post('/1/result', { centiseconds: 1000, penalty: 'none' });
+    expect(result.status).toBe(409);
+    expect(await result.json()).toMatchObject({ error: { message: 'Smart cube results require a verified device report' } });
+    expect(attempts[0].recordedAt).toBeNull();
+  });
+
   it('records only an issued attempt, exactly once, and advances to five', async () => {
     expect((await post('/1/result', { centiseconds: 1000, penalty: 'none' })).status).toBe(409);
     for (let n = 1; n <= 5; n++) {
-      expect((await post('/next')).status).toBe(201);
+      if (n === 1) attempts.push({ attemptNumber: 1, scramble: 'R U', recordedAt: null });
+      else expect((await post('/next')).status).toBe(201);
       expect((await post(`/${n}/result`, { centiseconds: 1000 + n, penalty: 'none' })).status).toBe(200);
       expect((await post(`/${n}/result`, { centiseconds: 999, penalty: 'none' })).status).toBe(409);
     }

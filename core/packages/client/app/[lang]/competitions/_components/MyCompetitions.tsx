@@ -106,7 +106,9 @@ export function MyCompetitions() {
         </p>}
       </div>
       {action === 'check_in'
-        ? <button type="button" className="competition-primary" disabled={!!busyEntry} onClick={() => { void checkIn(entry); }}>{busyEntry === entry.registrationId ? t('正在检录…', 'Checking in…') : actionLabel}</button>
+        ? entry.device === 'smart'
+          ? <AppLink href={roomHref(entry)} className="competition-primary" prefetch={false}>{t('连接魔方检录', 'Connect cube to check in')}</AppLink>
+          : <button type="button" className="competition-primary" disabled={!!busyEntry} onClick={() => { void checkIn(entry); }}>{busyEntry === entry.registrationId ? t('正在检录…', 'Checking in…') : actionLabel}</button>
         : <AppLink href={target} className={['pay', 'enter', 'enter_bracket'].includes(action) ? 'competition-primary' : 'competition-secondary'} prefetch={false}>{actionLabel}</AppLink>}
     </div>;
   }

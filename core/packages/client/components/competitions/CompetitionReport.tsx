@@ -20,9 +20,9 @@ const width = 760;
 const height = 520;
 const scale = 2;
 
-export function CompetitionRank({ rank, final }: { rank: number | null | undefined; final: boolean }) {
+export function CompetitionRank({ rank, final, podium = final }: { rank: number | null | undefined; final: boolean; podium?: boolean }) {
   if (!rank) return <>—</>;
-  if (!final || rank > 3) return <>{rank}</>;
+  if (!podium || rank > 3) return <>{rank}</>;
   return <span className="competition-podium-rank" data-place={rank}>{rank}</span>;
 }
 
