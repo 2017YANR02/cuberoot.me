@@ -60,8 +60,8 @@
 .modes button[aria-pressed=true] { border-color: var(--accent); color: var(--foreground); font-weight: 650; }
 .lesson { overflow: hidden; border: 1px solid var(--border-default); border-radius: 14px; }
 .steps { display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); }
-.steps button { padding: 12px 5px; background: transparent; color: var(--muted-foreground); border: none; border-bottom: 2px solid var(--border-default); font: inherit; font-weight: 550; cursor: pointer; }
-.steps button[aria-pressed=true] { color: var(--foreground); border-color: var(--accent); background: var(--accent-soft); }
+.stepButton { padding: 12px 5px; background: transparent; color: var(--muted-foreground); border: none; border-bottom: 2px solid var(--border-default); font: inherit; font-weight: 550; cursor: pointer; }
+.stepButton[aria-pressed=true] { color: var(--foreground); border-color: var(--accent); background: var(--accent-soft); }
 .diagrams { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); background: radial-gradient(ellipse at 25% 50%, var(--muted), transparent 68%); }
 .front, .model { margin: 0; padding: 16px 8px; display: grid; justify-items: center; align-items: center; grid-template-rows: auto minmax(0,1fr) auto; min-width: 0; }
 .front { border-inline-start: 1px solid var(--border-default); }
@@ -92,7 +92,7 @@
 .question p { margin: 4px 0; }
 @media(max-width:650px) {
   .lessonText { align-items: flex-start; flex-direction: column; gap: 6px; }
-  .steps button { font-size: .85rem; }
+  .stepButton { font-size: .85rem; }
   .diagrams figcaption { font-size: .9rem; }
   .front svg { max-height: 190px; }
 

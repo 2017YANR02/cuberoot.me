@@ -71,7 +71,7 @@ export default function Walkthrough({ onExplore }: { onExplore: () => void }) {
       action: t('试一个三步打乱', 'Try a three-move scramble') },
   ];
   return <section aria-label={t('分步演示', 'Guided example')} className={s.lesson} data-site-surface="panel">
-    <div className={s.steps}>{stages.map((stage, i) => <button key={i} aria-pressed={step === i} onClick={() => setStep(i)}>{stage.tab}</button>)}</div>
+    <div className={s.steps}>{stages.map((stage, i) => <button type="button" className={s.stepButton} key={i} aria-pressed={step === i} onClick={() => setStep(i)}>{stage.tab}</button>)}</div>
     <div className={s.diagrams}>
       <figure className={s.model}><figcaption>{t('原来的 16 阶魔方', 'Original 16 × 16 cube')}</figcaption>
         <div className={s.modelCanvas}><CubeModel n={size} alg={step === 3 ? "10D' 10D" : "10D'"}/></div>
