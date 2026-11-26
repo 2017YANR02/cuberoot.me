@@ -1,3 +1,4 @@
+import { authErrorText } from '@cuberoot/app-ui/account-forms';
 // 注销账号的分层守卫。这件事没有第二次机会:点下去数据就没了,漏一张表 = 用户以为删干净了
 // 其实没有,多删一张 = 删了不该删的。三层各钉一条:
 //   清单 ↔ schema  两张清单里的每个 (表, 列) 都真实存在,且**所有**带归属列的表都被表过态
@@ -460,9 +461,9 @@ describe('跨包契约', () => {
   });
 
   it('确认不匹配的错误串两端对得上', () => {
-    const panel = readFileSync(join(CLIENT, 'components/AuthPanel.tsx'), 'utf8');
-    expect(ROUTE).toContain('confirmation does not match');
-    expect(panel).toContain('confirmation does not match');
+    const error = 'confirmation does not match';
+    expect(ROUTE).toContain(error);
+    expect(authErrorText(error, (zh, _en) => zh)).toBe('输入的内容与账号标识不一致');
   });
 
   it('注销入口链到独立一屏,不是弹层', () => {

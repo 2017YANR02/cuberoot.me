@@ -507,7 +507,7 @@ it('uploads a video before publishing an independent lesson and keeps its course
   expect(host.querySelector('.back-home')?.getAttribute('href')).toBe('/platform/instructor/courses/course-upload-test');
   expect([...host.querySelectorAll('.platform-lesson-create-details label span')].map(label => label.textContent)).toEqual(['中文标题', '英文标题', '中文课时内容', '英文课时内容', '目录分组']);
   expect(host.querySelector<HTMLSelectElement>('.platform-lesson-create-details select')?.value).toBe('core');
-  expect(host.querySelector<HTMLInputElement>('.platform-lesson-create-details input[type=checkbox]')?.checked).toBe(false);
+  expect(host.querySelector('.platform-lesson-create-details button[role=switch]')?.getAttribute('aria-checked')).toBe('false');
   expect(host.querySelector('.platform-lesson-create-details input[type=number]')).toBeNull();
   const publish = [...host.querySelectorAll('button')].find(button => button.textContent === '提交审核')!;
   expect(publish.disabled).toBe(true);
@@ -1082,14 +1082,14 @@ it('defaults new introductions to public while respecting an explicit access cho
   const click = async (label: string) => act(async () => [...host.querySelectorAll('button')].find(button => button.textContent === label)!.click());
   await click('图文课时');
   const select = host.querySelector<HTMLSelectElement>('.platform-lesson-create-details select')!;
-  const preview = host.querySelector<HTMLInputElement>('.platform-lesson-create-details input[type=checkbox]')!;
+  const preview = host.querySelector<HTMLButtonElement>('.platform-lesson-create-details button[role=switch]')!;
   const choose = (value: string) => act(async () => { select.value = value; select.dispatchEvent(new Event('change', { bubbles: true })); });
   await choose('introduction');
-  expect(preview.checked).toBe(true);
+  expect(preview.getAttribute('aria-checked')).toBe('true');
   await act(async () => preview.click());
   await choose('core');
   await choose('introduction');
-  expect(preview.checked).toBe(false);
+  expect(preview.getAttribute('aria-checked')).toBe('false');
   await fillCourseField('中文标题', '引言');
   await click('提交审核');
   expect(state.execute).toHaveBeenCalledWith(expect.anything(), expect.objectContaining({

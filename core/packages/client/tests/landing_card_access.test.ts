@@ -41,12 +41,16 @@ vi.mock('@/lib/home-card-order-api', () => ({
     return { locks, orders };
   },
 }));
-vi.mock('@/lib/page-notices-api', () => ({ fetchPageNotices: optionalApi.fetchPageNotices }));
+vi.mock('@/lib/page-notices-api', async importOriginal => ({
+  ...await importOriginal<typeof import('@/lib/page-notices-api')>(),
+  fetchPageNotices: optionalApi.fetchPageNotices,
+}));
 const memberApi = vi.hoisted(() => ({ listPublicMembers: vi.fn(async (): Promise<PublicMember[]> => []) }));
 vi.mock('@/lib/membership-api', () => memberApi);
 vi.mock('@/lib/onboarding', () => ({ isOnboardingGuided: async () => true, markOnboardingGuided: vi.fn() }));
 vi.mock('@/components/LazyVisible', () => ({ default: () => null }));
-vi.mock('@/lib/auth-store', () => ({ useAuthUser: () => auth.user, authActions: { login: vi.fn() },
+vi.mock('@/lib/auth-store', () => ({ useAuthUser: () => auth.user,
+  useIsAdmin: () => Boolean(auth.user && ADMIN_WCA_IDS.some(id => id === auth.user?.wcaId)), authActions: { login: vi.fn() },
   useAuthStore: (select: (state: typeof auth) => unknown) => select(auth), nextQuery: () => '' }));
 vi.mock('next/dynamic', () => ({ default: () => () => null }));
 vi.mock('next/navigation', () => ({ usePathname: () => '/zh', useParams: () => ({ lang: 'zh' }) }));

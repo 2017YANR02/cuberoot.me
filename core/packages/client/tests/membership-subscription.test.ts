@@ -18,7 +18,10 @@ vi.mock('@/lib/store-membership-bridge', () => ({
   useStoreMembershipAvailable: (store: string) => mocks.store === store,
   requestStoreMembership: mocks.requestStore,
 }));
-vi.mock('@/lib/account-api', () => ({ deleteAccount: mocks.deleteAccount, fetchIdentities: mocks.fetchIdentities }));
+vi.mock('@/lib/account-api', async original => ({
+  ...await original<typeof import('@/lib/account-api')>(),
+  deleteAccount: mocks.deleteAccount, fetchIdentities: mocks.fetchIdentities,
+}));
 vi.mock('@/lib/membership-api', () => ({ listMySubscriptions: mocks.list, cancelMySubscription: mocks.cancel }));
 vi.mock('@/components/AppLink', () => ({
   default: ({ prefetch: _prefetch, ...props }: AnchorHTMLAttributes<HTMLAnchorElement> & { prefetch?: boolean }) => createElement('a', props),

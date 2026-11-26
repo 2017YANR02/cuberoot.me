@@ -22,7 +22,7 @@ vi.mock('@/lib/auth-store', () => ({ useAuthUser: () => user, authActions: { log
 vi.mock('@/components/BackHome', () => ({ default: () => null }));
 vi.mock('@/lib/clipboard', () => ({ copyClipboardText: vi.fn() }));
 vi.mock('@/hooks/usePinnedCountries', () => ({ usePinnedCountries: () => [[], vi.fn()] }));
-vi.mock('@/i18n/tr', () => ({ tr: ({ zh }: { zh: string }) => zh }));
+vi.mock('@/i18n/tr', () => ({ useLang: () => 'zh', tr: ({ zh }: { zh: string }) => zh }));
 vi.mock('@/lib/api-base', () => ({ apiUrl: (path: string) => path, directApiUrl: (path: string) => path }));
 vi.mock('@/lib/admin-api', () => ({ authHeaders: () => ({}), handleApi: (response: Response) => response.json() }));
 vi.mock('@/lib/vault-crypto', async (importOriginal) => ({

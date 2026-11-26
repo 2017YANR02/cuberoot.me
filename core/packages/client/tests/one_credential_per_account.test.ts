@@ -12,6 +12,7 @@ import { describe, it, expect } from 'vitest';
 import { readFileSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { workspaceFixturePath } from './workspace-fixture-path';
+import { authErrorText } from '@cuberoot/app-ui/account-forms';
 
 const SERVER = workspaceFixturePath('@cuberoot/server');
 const CLIENT = join(__dirname, '..');
@@ -73,7 +74,10 @@ describe.each(CREDS)('$provider:三层约束', ({ provider, index, errorKey, tak
   });
 
   it('authErrorText 认得服务端那个串(跨包契约)', () => {
-    expect(panel).toContain(errorKey);
+    const translate = (_zh: string, en: string) => en;
+    expect(authErrorText(errorKey, translate)).toBe(
+      `Your account already has another ${provider === 'email' ? 'email' : 'phone number'}. Change it in account settings.`,
+    );
   });
 
   it('已有该凭据时不渲染绑定入口', () => {
