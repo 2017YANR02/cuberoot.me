@@ -229,17 +229,13 @@ it('detects unread glossary comparisons while retaining requested, body-backed a
   const backed=await runDataTool({tool:'glossary',query:'OLL'},'zh',async()=>({sections:[{entries:[{id:439,headEn:'OLL (Orientation of Last Layer)',headZh:'顶层定向',bodyEn:'OLL precedes PLL.'}]}]}));
   expect(glossaryDefinitionScopeViolation(lookup,'OLL ... PLL',[{call:{tool:'glossary'},result:backed}])).toBeUndefined();
 });
-it.each([false,true])('closes a heading-only correction over actual fields even when model drafts overclaim (%s)',async repeat=>{
-  const bad='OLL 是 Orientation of Last Layer，中文为还原顶层色向；PLL 是顶层排列。[[wiki:439]][[wiki:348]]';
-  const good='OLL 是 Orientation of Last Layer，中文为还原顶层色向。[[wiki:439]][[wiki:348]]';
-  const requests:Array<Record<string,any>>=[];
-  const fetcher=vi.fn<typeof fetch>(async(input,init)=>{
-    if(String(input).endsWith('/wiki/terms'))return Response.json(data);
-    requests.push(JSON.parse(String(init?.body)));
-    return modelResponse({answerKind:'grounded',answer:requests.length===1||repeat?bad:good,sourceIds:['wiki:439','wiki:348']});
+it('closes a heading-only correction over actual fields before drafting',async()=>{
+  const fetcher=vi.fn<typeof fetch>(async input=>{
+    expect(String(input)).toMatch(/\/wiki\/terms$/);
+    return Response.json(data);
   });
   const result=await answerSiteQuestion(lookup+'纠正之前的说法。','zh',{key:'fixture',baseUrl:'https://api.deepseek.com/v1',model:'deepseek-flash'},AbortSignal.timeout(5000),fetcher);
-  expect(requests).toHaveLength(1);
+  expect(fetcher).toHaveBeenCalledTimes(1);
   expect(result.answer).toBe('OLL：Orientation of Last Layer，即“还原顶层色向”[[wiki:439]][[wiki:348]]。');
   expect(result.answer).not.toContain('PLL');
   expect(result.sources.map(s=>s.id)).toEqual(['wiki:439','wiki:348']);

@@ -94,13 +94,13 @@ export function createAssistantQueueWorker(deps:{
         };
         const boundary=async()=>{
           signal.throwIfAborted();
-          const latest=await deps.store.inspect(claim);
+          const latest=await deps.store.controlState(claim);
           if(latest.paused){lifetime.abort('user_cancel');signal.throwIfAborted();}
           if(latest.revision!==revision){const error=new AssistantSteered();step.abort(error);throw error;}
         };
         try {
           await boundary();
-          await deps.store.acknowledge(claim,revision);
+          if (current.messages.length > 1) await deps.store.acknowledge(claim,revision);
           let checkpointWrite=Promise.resolve();
           const run=()=>withAssistantExecution({boundary,messages:inputs.map(value=>value.question),bindings:JSON.stringify({lang:input.lang,timeZone:input.timeZone,day:new Date().toISOString().slice(0,10),wcaId}),scope:JSON.stringify({question,lang:input.lang,history,references,images:savedImages,priorContext}),tool:async(_call,key,read)=>{
             const cached=checkpoints[key];
@@ -125,7 +125,7 @@ export function createAssistantQueueWorker(deps:{
             return result;
           }},()=>withAssistantProgress(emit,signal,started,()=>{
             if(championWindow)return runRecentChampionQuery(championWindow,input.lang,signal,emit);
-            return deps.answer(question,input.lang,config,signal,undefined,resolvedHistory,wcaId,emit,input.timeZone,images,input.thinking,{},priorContext,references);
+            return deps.answer(question,input.lang,config,signal,undefined,resolvedHistory,wcaId,emit,input.timeZone,images,input.thinking,{ viewerUserId: claim.uid },priorContext,references);
           },Math.max(0,...progress.map(p=>p.id))));
           monitor?.ready?.();
           const answer:AssistantAnswer=await (monitor?monitor.run(run):run());
@@ -146,7 +146,7 @@ export function createAssistantQueueWorker(deps:{
       // A dead worker cannot overwrite a replacement's checkpoint or final answer.
       if(lifetime.signal.reason==='shutdown')await deps.store.abandon(claim).catch(()=>{});
       else {
-        const latest=await deps.store.inspect(claim).catch(()=>undefined);
+        const latest=await deps.store.controlState(claim).catch(()=>undefined);
         if(latest){
           if(error instanceof AssistantFailure && error.code==='model_rate_limited' && error.retryAfterMs && !latest.paused) {
             progress.push({id:1+Math.max(0,...progress.map(p=>p.id)),phase:'model',state:'error',elapsedMs:Date.now()-new Date(claim.message.created_at).getTime(),retryAt:Date.now()+error.retryAfterMs});

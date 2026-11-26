@@ -255,3 +255,19 @@ describe('site assistant capability regressions', () => {
     expect(fetcher).not.toHaveBeenCalled();
   });
 });
+it('gives a comparable retest from the selected stage and stays at the evidence boundary without splits', async () => {
+  const raw = '计时器复盘摘要\n三阶原始用时 8.200 秒\n';
+  const request = '\n\n哪个阶段最该练？给我练习和复测标准。';
+  const timed = raw + 'CFOP 阶段 (计时器推断)\n- F3 2.000 秒, 回放截至 4.000 秒\n- PLL 1.500 秒, 回放截至 8.200 秒';
+  const fetcher = vi.fn<typeof fetch>();
+  const signal = AbortSignal.timeout(3000);
+  const result = await answerSiteQuestion(timed + request, 'zh', null, signal, fetcher);
+  expect(result.answer).toContain('F3 的阶段用时为 2.000 秒');
+  expect(result.answer).toContain('练习前后各做 5 次');
+  expect(result.answer).toContain('正确样本的该阶段总用时中位数');
+  expect(result.actions?.[0].href).toBe('/alg/3x3/f2l/select');
+  const missing = await answerSiteQuestion(raw + '没有可靠的分阶段用时。' + request, 'zh', null, signal, fetcher);
+  expect(missing.answer).toContain('没有可靠的分段用时');
+  expect(missing.actions).toBeUndefined();
+  expect(fetcher).not.toHaveBeenCalled();
+});

@@ -36,6 +36,11 @@ export function assistantQueueStore(run:QueryRunner=query, transaction:QueueTran
     if(row.lease!==claim.lease || row.active_id!==claim.message.id || !row.lease_active)throw new AssistantQueueConflict('lease_lost');
     return row;
   };
+  const renewLease = async (tx: QueryRunner, claim: AssistantClaim) => {
+    const rows = await tx<{paused:boolean}>("UPDATE site_assistant_conversations SET lease_until=NOW()+INTERVAL '45 seconds' WHERE id=? AND user_id=? AND active_id=? AND lease=? AND lease_until>NOW() RETURNING paused", [claim.conversationId,claim.uid,claim.message.id,claim.lease]);
+    if (!rows.length) throw new AssistantQueueConflict('lease_lost');
+    return rows[0].paused;
+  };
   return {
     subscribe(uid:number,id:string,listener:()=>void) {
       const key=uid+'/'+id;
@@ -148,16 +153,22 @@ export function assistantQueueStore(run:QueryRunner=query, transaction:QueueTran
       }
     },
     async heartbeat(claim:AssistantClaim) {
-      const rows=await run<{paused:boolean}>("UPDATE site_assistant_conversations SET lease_until=NOW()+INTERVAL '45 seconds' WHERE id=? AND user_id=? AND active_id=? AND lease=? AND lease_until>NOW() RETURNING paused",[claim.conversationId,claim.uid,claim.message.id,claim.lease]);
-      if (!rows.length) throw new AssistantQueueConflict('lease_lost');
-      return rows[0].paused;
+      return renewLease(run, claim);
+    },
+    async controlState(claim: AssistantClaim) {
+      return transaction(async tx => {
+        // Lock the conversation first so the next statement sees any steering
+        // already committed by a writer we waited for. No message bodies needed.
+        const paused = await renewLease(tx, claim);
+        const [latest] = await tx<{sequence:string}>('SELECT sequence FROM site_assistant_messages WHERE id=? OR target_id=? ORDER BY sequence DESC LIMIT 1', [claim.message.id, claim.message.id]);
+        return { paused, revision: Number(latest.sequence) };
+      });
     },
     async inspect(claim:AssistantClaim) {
       return transaction(async tx=>{
-        const c=await owned(tx,claim);
-        await tx("UPDATE site_assistant_conversations SET lease_until=NOW()+INTERVAL '45 seconds' WHERE id=?",[c.id]);
+        const paused = await renewLease(tx, claim);
         const messages=await tx<Message>('SELECT id,sequence,payload FROM site_assistant_messages WHERE id=? OR target_id=? ORDER BY sequence',[claim.message.id,claim.message.id]);
-        return {paused:c.paused,messages,revision:Number(messages.at(-1)!.sequence)};
+        return {paused,messages,revision:Number(messages.at(-1)!.sequence)};
       });
     },
     async abandon(claim:AssistantClaim) {

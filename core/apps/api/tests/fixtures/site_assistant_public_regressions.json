@@ -1,0 +1,68 @@
+{
+  "repeats": 1,
+  "cases": [
+    {
+      "id": "R01",
+      "category": "scrambling",
+      "lang": "en",
+      "question": "If I wanted to solve a physical Rubik's cube multiple times, for practice, what is the best, most random way, to scramble the solved cube? The best way I can think is to hold it behind my back and turn randomly until, when I look at it, it looks random enough. Is there a better way?",
+      "expected": "Recommend generating a random reachable state and applying a generated scramble to the solved cube (or using a recognized random-state 3x3 generator); distinguish from eyeballed or fixed-length hand turns.",
+      "history": [],
+      "source": "https://puzzling.stackexchange.com/questions/323/what-is-the-best-method-of-scrambling-a-rubiks-cube"
+    },
+    {
+      "id": "R02",
+      "category": "WCA",
+      "lang": "zh",
+      "question": "我怎样才能获得 WCA ID 和 WCA 个人成绩页？",
+      "expected": "Both created after first official competition results are published; registering an account alone is insufficient.",
+      "history": [],
+      "source": "https://www.worldcubeassociation.org/faq#how-do-i-obtain-a-wca-id-and-a-wca-profile"
+    },
+    {
+      "id": "R03",
+      "category": "cube mechanics",
+      "lang": "en",
+      "question": "Why is a single-corner twist not a valid position on a Rubik's cube?",
+      "expected": "Explain signed corner twist sum modulo 3 is invariant under every legal face turn, initially zero, and one twist violates it.",
+      "history": [],
+      "source": "https://puzzling.stackexchange.com/questions/20/why-is-a-single-corner-twist-not-a-valid-position-on-a-rubiks-cube"
+    },
+    {
+      "id": "R04",
+      "category": "WCA",
+      "lang": "zh",
+      "question": "我该怎么报名参加比赛？如果报名遇到问题，可以联系谁？",
+      "expected": "Use the named competition registration page/instructions or the listed external system, and contact its organizers for problems.",
+      "history": [],
+      "source": "https://www.worldcubeassociation.org/faq#how-can-i-register-for-a-competition-who-can-i-refer-to-if-i-have-problems-registering-for-a-competition"
+    },
+    {
+      "id": "R05",
+      "category": "notation",
+      "lang": "en",
+      "question": "What is the Official notation on rubik's revenge(4x4)?",
+      "expected": "Give correct official 4x4 outer and two-layer wide notation (R and Rw/2Rw), note r can vary between unofficial conventions. No incorrect WCA rule about lowercase being official inner layer.",
+      "history": [],
+      "source": "https://puzzling.stackexchange.com/questions/12098/what-is-the-official-notation-on-rubiks-revenge4x4"
+    },
+    {
+      "id": "R08",
+      "category": "WCA",
+      "lang": "zh",
+      "question": "我的魔方掉了一枚中心盖或一个部件，还能用它参赛吗？",
+      "expected": "The FAQ disallows competing with this damaged/distinguishable puzzle; a correct repair/replacement before use is acceptable. Do not conflate with in-solve puzzle defects.",
+      "history": [],
+      "source": "https://www.worldcubeassociation.org/faq#i-lost-a-center-cap-or-a-piece-of-my-puzzle-am-i-still-allowed-to-use-it"
+    },
+    {
+      "id": "R12",
+      "category": "big cubes",
+      "lang": "en",
+      "question": "Why does the 4x4 Rubik's cube have parity cases, while the 3x3 does not?",
+      "expected": "Explain paired 4x4 wings and interchangeable centers/reduction conceal permutations. Account for apparent one edge flip (wing exchange/orientation) and two paired-edge swap, which violate 3x3 constraints but are possible on 4x4.",
+      "history": [],
+      "source": "https://puzzling.stackexchange.com/questions/4818/why-does-the-4x4-rubiks-cube-have-parity-cases-while-the-3x3-does-not"
+    }
+  ]
+}

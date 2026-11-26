@@ -8,7 +8,7 @@ const claim=(uid:number):AssistantClaim=>({uid,conversationId:`conversation-${ui
 const gate=()=>{let resolve!:()=>void;const promise=new Promise<void>(r=>{resolve=r;});return {promise,resolve};};
 function fixture(claims:AssistantClaim[]) {
   const pending=[...claims];
-  const store={claim:vi.fn(async()=>pending.shift()),inspect:vi.fn(async(c:AssistantClaim)=>({paused:false,revision:Number(c.message.sequence),messages:[c.message]})),history:vi.fn(async()=>[]),acknowledge:vi.fn(),update:vi.fn(),finish:vi.fn(async()=> 'completed'),abandon:vi.fn(),prune:vi.fn()} as unknown as ReturnType<typeof assistantQueueStore>;
+  const store={claim:vi.fn(async()=>pending.shift()),controlState:vi.fn(async(c:AssistantClaim)=>({paused:false,revision:Number(c.message.sequence)})),inspect:vi.fn(async(c:AssistantClaim)=>({paused:false,revision:Number(c.message.sequence),messages:[c.message]})),history:vi.fn(async()=>[]),acknowledge:vi.fn(),update:vi.fn(),finish:vi.fn(async()=> 'completed'),abandon:vi.fn(),prune:vi.fn()} as unknown as ReturnType<typeof assistantQueueStore>;
   return {store,pending};
 }
 it('starts every independent conversation while other users are still waiting for models',async()=>{

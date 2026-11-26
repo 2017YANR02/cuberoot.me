@@ -1,0 +1,572 @@
+{
+  "repeats": 1,
+  "cases": [
+    {
+      "id": "H01",
+      "question": "I want to practice solving the last layer, but the online scramblers I've seen are full cube only. Is there a Rubik's scramble generator for the top layer only?",
+      "category": "community",
+      "lang": "en",
+      "expected": "A concrete last-layer subset/generator or a valid method to generate last-layer-only states preserving F2L; U-only turns do not suffice.",
+      "history": [],
+      "source": "https://puzzling.stackexchange.com/questions/47671/is-there-a-rubiks-scramble-generator-for-the-top-layer-only"
+    },
+    {
+      "id": "H02",
+      "question": "When are the results of a WCA competition uploaded to the WCA website?",
+      "category": "WCA FAQ",
+      "lang": "en",
+      "expected": "Delegate checks and sends results for WCA publication; timing varies, no guaranteed deadline.",
+      "history": [],
+      "source": "https://www.worldcubeassociation.org/faq#when-are-the-results-of-a-wca-competition-uploaded-to-the-wca-website"
+    },
+    {
+      "id": "H04",
+      "question": "Is it possible to scramble a Rubik's cube such that no two squares of the same color are touching?",
+      "category": "community",
+      "lang": "en",
+      "expected": "Yes; give a valid pattern or construction such as the checkerboard with alternating facelets. No false claims about adjacent colors.",
+      "history": [],
+      "source": "https://puzzling.stackexchange.com/questions/429/is-it-possible-to-scramble-a-rubiks-cube-such-that-no-two-squares-of-the-same-c"
+    },
+    {
+      "id": "H05",
+      "question": "如何关联我的 WCA ID？",
+      "category": "WCA FAQ",
+      "lang": "zh",
+      "expected": "WCA 账号登录后认领已有 WCA ID；不能把新建账号等同于已完成绑定。",
+      "history": [],
+      "source": "https://www.worldcubeassociation.org/faq#how-do-i-connect-my-wca-account-with-my-wca-id"
+    },
+    {
+      "id": "H06",
+      "question": "Assuming two different (valid) configurations for a Rubik's Cube - A and B - does going from A to B directly have the same complexity as solving the cube? Considering solving a cube can be done in 20 moves, we would never need more than 40 moves, considering: A -> [solved] <- B ...but what about A -> B ? If there is a difference, what makes the \"solved\" state special? Bonus Round: Is there a(n online) solver where you can input two custom configurations? (My Google-skills didn't find one.)",
+      "category": "community",
+      "lang": "en",
+      "expected": "For two reachable states on a standard 3x3 the relative group element gives the same diameter, 20 HTM; no need for 40, individual pairs may be shorter.",
+      "history": [],
+      "source": "https://puzzling.stackexchange.com/questions/86060/rubiks-cube-does-going-from-one-arbitrary-configuration-to-another-have-same-g"
+    },
+    {
+      "id": "H08",
+      "question": "When a rubik's cube is solved, will the tiles always be in the same position? For example, if you were to write the number 1-9 on one of the sides before scrambling it, will the numbers always be in the same order once the cube is solved on all sides?",
+      "category": "community",
+      "lang": "en",
+      "expected": "Corners and edges return to their unique sticker positions relative to centers; a marked center can rotate in place, but a center digit remains in the middle. Distinguish position and orientation.",
+      "history": [],
+      "source": "https://puzzling.stackexchange.com/questions/46267/will-tiles-on-a-solved-rubiks-cube-always-be-in-the-same-position"
+    },
+    {
+      "id": "H09",
+      "question": "How do I memorize parity algorithms for higher-order Rubik's cubes?",
+      "category": "community",
+      "lang": "en",
+      "expected": "Give an actionable memorization technique for a chosen parity algorithm (chunks, triggers or visual checkpoints); no unsupported universal shortest algorithm.",
+      "history": [],
+      "source": "https://puzzling.stackexchange.com/questions/40357/how-do-i-memorize-parity-algorithms-for-higher-order-rubiks-cubes"
+    },
+    {
+      "id": "H11",
+      "question": "Once I solve a Rubik's Cube I obviously want to start again. I just scramble it until it seems to be enough; however, sometimes when I then solve it, I can skip entire steps from the beginner's method . Is this normal or was the cube not scrambled enough? How can one determine if the cube is scrambled enough?",
+      "category": "community",
+      "lang": "en",
+      "expected": "Skips can occur in a good scramble, visual appearance/skips cannot establish randomness; recommend an independently generated random-state scramble or comparable reliable method.",
+      "history": [],
+      "source": "https://puzzling.stackexchange.com/questions/88/how-to-determine-if-a-rubiks-cube-is-sufficiently-scrambled"
+    },
+    {
+      "id": "C01",
+      "question": "I'm a new fan of cubing. I've recently bought a speed cube and for now I have only mastered the beginner's method and solve it in barely a minute and a half (which is way over what a speedcuber is supposed to do). So I'm wondering, is there any recommended method to learn after the beginner's method in order to improve my time ?",
+      "lang": "en",
+      "category": "community",
+      "expected": "Give a sensible transition from LBL such as intuitive F2L/2-look LL or Roux, with at least one practical training step.",
+      "history": [],
+      "source": "https://puzzling.stackexchange.com/questions/27672/best-cubing-algorithm-to-learn-after-beginners"
+    },
+    {
+      "id": "C02",
+      "question": "Can a Rubik's Cube be reassembled so that when viewed from a particular angle (i.e. only 3 sides are visible) we know it cannot be solved? \"Reassembled\" here means taking a regular cube apart to its constituent pieces - 8 corners, 12 edges, and the piece containing all the centres - and reassembling. Swapping stickers or taking apart the centre piece are not allowed.",
+      "lang": "en",
+      "category": "community",
+      "expected": "No for physically reassembled intact standard cubies with unchanged centers and only three adjacent faces visible. Hidden edges and corner permit correcting edge flip, twist and parity independently.",
+      "history": [],
+      "source": "https://puzzling.stackexchange.com/questions/131262/when-only-three-sides-are-shown-can-a-rubiks-cube-be-impossible"
+    },
+    {
+      "id": "C03",
+      "question": "Sometimes, when solving the Void Rubik's Cube using the standard beginner method , it gets \"stuck.\" What I mean by this is that the top edge of one face and the top edge of an adjacent face's colors are swapped. Typically, I've just turned random faces until the cube is sufficiently messed up and then started over. However, there must be a better way - what is it?",
+      "lang": "en",
+      "category": "community",
+      "expected": "Explain apparent edge swap caused by lack of visible center reference on Void; offer valid corrective slice/re-establish virtual centers or verified parity method.",
+      "history": [],
+      "source": "https://puzzling.stackexchange.com/questions/19/how-can-i-fix-stuck-positions-on-the-void-rubiks-cube-using-the-standard-beg"
+    },
+    {
+      "id": "C04",
+      "question": "How Random does a 3x3x3 (or other rubik cubes) need to be in speed solving?\nIs there a rule/method to know how \"random\" should the cube be when solving it? in order for it to be a \"valid\" score?",
+      "lang": "en",
+      "category": "community",
+      "expected": "Distinguish official WCA-generated scramble procedures from visual randomness/hand-turn count; no visual test for score validity.",
+      "history": [],
+      "source": "https://puzzling.stackexchange.com/questions/446/how-random-does-a-3x3x3-or-other-rubik-cubes-need-to-be-in-speed-solving"
+    },
+    {
+      "id": "C05",
+      "question": "I have been trying to solve Rubik's cube using beginner's method provided here: https://ruwix.com/the-rubiks-cube/how-to-solve-the-rubiks-cube-beginners-method/ I ended up with just one last corner which is not oriented properly as shown in the picture. I cannot seem to solve it using R’ D’ R D algorithm, it messes up the whole square when the corner piece gets oriented. Every time I try to solve the cube, it again has just one last corner disoriented. None of the algorithms mention one last corner case. they always talk about 2 or more corners disoriented. I don't understand. Can someone explain whats happening and how to solve it?",
+      "lang": "en",
+      "category": "community",
+      "expected": "If exactly one corner twisted with remaining cube solved, impossible with legal turns, restore physical orientation. An algorithm cannot fix just one twist.",
+      "history": [],
+      "source": "https://puzzling.stackexchange.com/questions/32740/rubiks-cube-with-one-disoriented-corner"
+    },
+    {
+      "id": "C06",
+      "question": "What is the meaning of a \"tetrad twist\" in Thistlethwaite's algorithm?",
+      "lang": "en",
+      "category": "community",
+      "expected": "The tetrad twist is a relative permutation constraint between corner tetrads in the half-turn subgroup (factor 3), not physical cubie orientation.",
+      "history": [],
+      "source": "https://puzzling.stackexchange.com/questions/5402/what-is-the-meaning-of-a-tetrad-twist-in-thistlethwaites-algorithm"
+    },
+    {
+      "id": "C07",
+      "question": "How can I swap opposite corners on the same face of a 2x2 cube?\nI've been experimenting with using Y-permutations to solve the 2x2 cube as described here . I ended up with the cube solved but for a single face where the opposite corners were swapped and disoriented. I managed to solve the cube, but I wonder if there is a shorter algorithm to accomplish this task.",
+      "lang": "en",
+      "category": "community",
+      "expected": "A legal diagonal corner permutation is possible on 2x2. Provide a valid setup/Y-perm or equivalent and handle disoriented corners separately or ask for orientation for exact shortest solution.",
+      "history": [],
+      "source": "https://puzzling.stackexchange.com/questions/51764/how-can-i-swap-opposite-corners-on-the-same-face-of-a-2x2-cube"
+    },
+    {
+      "id": "C08",
+      "question": "I have a rubik cube, which always have two swapped edges in the last layer. No matter which color I start with, there are always two edges in the last layer which remained swapped with each other. How to solve this scenario. Or if this is an invalid scenario, please can somebody explain how is this an invalid scenario. See this image for sample:",
+      "lang": "en",
+      "category": "community",
+      "expected": "Exactly a single edge transposition on otherwise solved standard 3x3 is impossible; explain corner/edge permutation parity and repair or check other pieces.",
+      "history": [],
+      "source": "https://puzzling.stackexchange.com/questions/10753/swap-the-edges-in-a-solved-rubiks-cube"
+    },
+    {
+      "id": "C09",
+      "question": "Is solving the Rubik's cube face by face even possible?\nMany methods, if not all, recommend solving it layer by layer, but is it actually possible to solve it face by face? If so, explain how you would do this, if not, prove it impossible.",
+      "lang": "en",
+      "category": "community",
+      "expected": "Facewise milestones are possible if completed faces can be temporarily disturbed; a face is not a layer. Address the stricter never-disturb interpretation or describe a feasible construction.",
+      "history": [],
+      "source": "https://puzzling.stackexchange.com/questions/6219/is-solving-the-rubiks-cube-face-by-face-even-possible"
+    },
+    {
+      "id": "C10",
+      "question": "One corner rotated in 4x4x4\nI know that in a 3x3x3 this should never happen (unsolvable state), but is the same true in a 4x4x4? (the rest of the cube is solved) The following answer seems to say that everything about the 3x3x3 is true about NxNxN, except that the orientation isn’t fixed. Why is a single-corner twist not a valid position on a Rubik's cube? Does that mean that my orientation is wrong? The cube came solved, and since this isn’t a speed cube, I don’t see how I could have accidentally twisted a corner.",
+      "lang": "en",
+      "category": "community",
+      "expected": "Lone twisted corner on otherwise solved 4x4 impossible; inner layers do not change corner twist sum. Distinguish from reduced-edge parity.",
+      "history": [],
+      "source": "https://puzzling.stackexchange.com/questions/87595/one-corner-rotated-in-4x4x4"
+    },
+    {
+      "id": "C11",
+      "question": "Is it possible to scramble a Rubik's cube so that each face has no more than 2 squares of the same color?",
+      "lang": "en",
+      "category": "community",
+      "expected": "Yes; give a genuinely reachable arrangement/construction if claiming a specific one. An ordinary two-color checkerboard fails the per-face multiplicity bound.",
+      "history": [],
+      "source": "https://puzzling.stackexchange.com/questions/52975/is-it-possible-to-scramble-a-rubiks-cube-so-that-each-face-has-no-more-than-2-s"
+    },
+    {
+      "id": "C12",
+      "question": "I bought a new Rubik's Cube and was able to solve it with some tutorials. However, I made a wrong movement, so that one piece came out. I think, I put it wrong together, because I'm not able to solve the cube anymore. When I try to solve my cube online with https://cube-solver.com/ I get the following error: This configuration of the cube is not solvable, please check that you've entered all pieces correctly. This is my cube. As you can see, I can't solve the last layer anymore: Is it possible to find out, which piece is wrongly assembled?",
+      "lang": "en",
+      "category": "community",
+      "expected": "Explain how to diagnose physical assembly via twist/flip/permutation constraints, no uniquely identifiable original wrong piece from invalidity alone. No invented exact repair from missing state.",
+      "history": [],
+      "source": "https://puzzling.stackexchange.com/questions/114564/adjusting-wrongly-assembled-rubiks-cube"
+    },
+    {
+      "id": "N01",
+      "question": "Flip edge in Equator layer\nIf you use the Beginners' Method to solve the Rubik's cube, and solve the equator layer (the layer between the U-layer and D-layer), it can happen that one of the edges is flipped, like this: Screenshot generated using Cube Explorer A way to solve this is to replace the flipped edge by a random block and then put the edge at its right place. However, I would prefer a shorter way to do this. It does not matter what happens to the top layer. How can I do this?",
+      "expected": "A middle edge may be reinserted oriented correctly with the top unconstrained. Supply a valid setup/reinsertion method, not an impossibility claim about one edge in a solved cube.",
+      "category": "community",
+      "lang": "en",
+      "history": [],
+      "source": "https://puzzling.stackexchange.com/questions/163/flip-edge-in-equator-layer"
+    },
+    {
+      "id": "N02",
+      "question": "Minimum effort to detect a solved Rubik's Cube\nWhen writing a program to permute a Rubik's Cube and then subsequently detect whether it is solved or not, what is the absolute minimum amount of programmatic effort required to determine if the cube is solved? One can obviously check all six sides to determine if the cube is solved, and return early if anything appears out of order. One can also reduce that effort, by always ignoring one side, since five solved sides implies that the sixth side is solved. Are there any other optimizations one can introduce? Note: My attempts at googling this answer ended up with a lot of cube solving materials, and some code that actually detects solved cubes, but nothing in the way of optimal solutions to programmatically detecting a solved cube.",
+      "expected": "Distinguish representation and assumptions. Give a correct cheaper solved test exploiting constrained remaining pieces or an exact maintained mismatch count; justify any absolute minimality claim.",
+      "category": "community",
+      "lang": "en",
+      "history": [],
+      "source": "https://puzzling.stackexchange.com/questions/86916/minimum-effort-to-detect-a-solved-rubiks-cube"
+    },
+    {
+      "id": "N03",
+      "question": "Worst way to solve Rubik's in one algorithm\nIf you apply the same algorithm over and over again the cube will be solved. I want to know what algorithm is the worst one (the one with the longest cycle) I have found RU (cycle of 60 times) I have found one of 72 but I can't remember it",
+      "expected": "Maximum order 1260 for the ordinary 3x3. Provide a correct example or explanation if proposing one; do not mistake the illustrated RU for the user request.",
+      "category": "community",
+      "lang": "en",
+      "history": [],
+      "source": "https://puzzling.stackexchange.com/questions/91897/worst-way-to-solve-rubiks-in-one-algorithm"
+    },
+    {
+      "id": "N04",
+      "question": "Illegal patterns for the Rubik's cube\nIt is known that if you take apart the Rubik's cube and then reassemble it randomly, you will end out in one of $12$ cases, among which only one is solvable. The others result in having (1) one piece or edge piece turned, or (2) two edge or corner pieces swapped, or (3) both (1) and (2). However, for the $2\\times 2\\times 2$ cube (or pocket cube), the only unsolvable configurations are those from (1), when at the end one (corner) piece is turned $120^\\circ$ or $240^\\circ$. But even if the reassembled cube is in an illegal configuration, you can at least solve it to a checkerboard pattern, like this: This suggests a game: you get a reassembled $2\\times 2\\times 2$ cube, and you have to solve it to one of the above three states: same color, or one of the two checkerboard patterns. The point is to figure out ASAP in which case you are. So this game will consist not only in solving the cube, but also in figuring out the task itself. I think it would be interesting to know if we can play a similar game with the $3\\times 3\\times 3$ Rubik's cube. Question: What are some \"nice\"${}^\\dagger$ patterns for each of the $11$ illegal possible cases? ${}^\\dagger$ ( Lengthy technical footnote, better ignore it ) I was asked to define \"nice\" more objectively. One of the purposes of the $2\\times 2\\times 2$ example was to suggest what \"nice\" means, without explaining it mathematically, because many cubers have great intuition without knowing the math behind, and I could lose some nice answers. But for the readers who want more rigorous and objective definitions, I would say \"patterns which exhibit larger symmetry groups\". For example, the $2\\times 2\\times 2$ checkerboard patterns (2) and (3) in the picture are invariant to the following transformations (call the initially turned corner the main corner and the long diagonal of the cube determined by it the main diagonal , and consider them fixed): $\\mathbb{Z}_3\\times 120^\\circ$ rotations around the main diagonal, flips along the same diagonal followed by a $60^\\circ$ rotation and the transformations resulting from their combinations. All these transformation \"fixed\" by the appropriate color permutation to get the original checkerboard pattern. This is the group of the rotations of the cube preserving the main diagonal, which is isomorphic to the chiral dihedral group $D_{3}$, of order $6$. By comparison, the original corner turned configurations (1) and (2) from the picture admit a symmetry group of order $3$ (obtained from $\\mathbb{Z}_3\\times 120^\\circ$ rotations, combined with color permutations). So I would suggest measuring the \"nicety\" by the order of symmetry group of transformations consisting in rotations or reflections of the cube combined with color permutations, which leave the pattern unchanged. But don't let this definition stay in your way , maybe there are interesting patterns whose symmetry group is of low order, even the trivial group of order $1$. Edit 2: Also, as @JaapScherphuis commented, the superflip pattern has the full symmetry, but it's not very nice, so fewer colors on each face means nicer too. Also the symmetries of the faces matter. So maybe we should combine them into a single formula, which seems to be hard because there are so many ways, and we can only choose one subjectively. So let's go back to whatever everybody means by \"nice\" (or maybe I should've said \"pretty\" like here https://ruwix.com/the-rubiks-cube/rubiks-cube-patterns-algorithms/ ). Defining \"nice\" seems to be a rabbit hole :)",
+      "expected": "Address patterns in nontrivial invariant cosets, preserve two-colour constraint if giving an example; distinguish what is established from an unsupported universal claim.",
+      "category": "community",
+      "lang": "en",
+      "history": [],
+      "source": "https://puzzling.stackexchange.com/questions/66862/illegal-patterns-for-the-rubiks-cube"
+    },
+    {
+      "id": "N05",
+      "question": "Mathematical Proof of a Rubik’s Cube\nHas it been proven (or disproven) that, from a solved state, there exists a number “x” for any algorithm, such that you can perform said algorithm x times to get back to a solved state. I feel like this is something any cuber will tell you is true, but I am a mathematician first and a cuber second. I want to prove (or disprove) this mathematically if it hasn’t been done.",
+      "expected": "Finite invertible move action implies some positive power is identity; give a proof by repetition and cancellation or disjoint cycles.",
+      "category": "community",
+      "lang": "en",
+      "history": [],
+      "source": "https://puzzling.stackexchange.com/questions/100001/mathematical-proof-of-a-rubik-s-cube"
+    },
+    {
+      "id": "N06",
+      "question": "Solving Rubik's cube with one algorithm\nI was wondering if it's possible to solve a Rubik's cube just iterating a single algorithm. It doesn't matter how complex the algorithm is (as long as it is less than 1 million moves), nor the time required to solve the cube; I just want to know if there exists a \"periodic\" sequence of moves that allows to turn any valid scrambled configuration to the solved configuration. Once you start executing the algorithm, you can't stop it (unless you finish, of course), rotate the cube and start it on another face. If the question is still unclear, let's make an example. You have to find a sequence like this one, to be repeated an unlimited number of times, that lets you solve any configuration: Example: U D R' U' F L' U F' R' U' L D' R to be repeated 12412183213 times! Note: The above sequence is just an example, 99,999% it's not working! I just ask you to prove whether such sequence exists or not. If it exists, I would appreciate you to post it, unless it consists of more than 1000 moves.",
+      "expected": "Stopping mid-sequence matters. A sequence under 1 million cannot visit all states even with infinite repeats: per period length times order, order at most 1260. Distinguish an unrestricted longer walk.",
+      "category": "community",
+      "lang": "en",
+      "history": [],
+      "source": "https://puzzling.stackexchange.com/questions/11797/solving-rubiks-cube-with-one-algorithm"
+    },
+    {
+      "id": "N07",
+      "question": "Turn 4x4x4 Rubik's Cube into 3x3x3 Rubik's Cube\nI have a 4x4x4 Rubik's Cube, but all I want is a normal 3x3x3 Rubik's Cube. Luckily, I also have an unlimited supply of small pieces of tape. Each piece of tape can cover the face of two neighbouring squares on my Rubik's Cube. When two pieces are taped together, they cannot be moved away from each other. What is the minimum number of pieces of tape I must use to ensure that my 4x4x4 will always behave like a 3x3x3?",
+      "expected": "Four pieces suffice; explain two perpendicular pairs on adjacent centers and why fewer fail even after allowed outer moves.",
+      "category": "community",
+      "lang": "en",
+      "history": [],
+      "source": "https://puzzling.stackexchange.com/questions/29327/turn-4x4x4-rubiks-cube-into-3x3x3-rubiks-cube"
+    },
+    {
+      "id": "N08",
+      "question": "How to get faster at 3x3\nI am new to speed cubing and would like to figure out how to get faster at cubing based on my personal stats. Which aspect should I focus on? Which principles would be the most useful for me (lookahead or any other concept)? And, any fingertricks I should know for faster rotation (especially for M/M')? Target speed: sub-25 to sub-35 Current record: 51 sec Current average: 1 min 05 sec Turns per second: 2.2 Cube: Original Rubik's brand Method: F2L + Beginners method for Yellow and Final Time breakdown: 5-8 seconds for cross; 30-40 second for F2L; 10-15 seconds for yellow orientation; and 10-15 for finishing the last layer. I can use PLL for case H and OLL for these: EDIT: Thanks for all the responses, everyone! I got a MF3RS2 and Cubicle Weight 5 for Christmas, and it's better than I hoped for. I learned full 4LLL plus a bunch of extra algs (Y, Ja/b, T/P/C-shapes) and worked on TPS to get my average down to sub-40 with a record of 28. I also found J-Perm's Cross + F2L videos incredibly helpful, and I'm trying to get that stage to sub-15. Can't wait for my first comp in February (Bremium Cubing 2019); looking to be sub-30 by then. Happy cubing!",
+      "expected": "Use supplied F2L and cross times; give actionable practice, lookahead and an M/M-prime finger trick; avoid treating 51s PB as average.",
+      "category": "community",
+      "lang": "en",
+      "history": [],
+      "source": "https://puzzling.stackexchange.com/questions/67970/how-to-get-faster-at-3x3"
+    },
+    {
+      "id": "N09",
+      "question": "Flags in all faces in rubik cubes\nAnyone knows if it is possible to obtain a diferent country flag in all six faces of the Rubik Cube? Thanks",
+      "expected": "Explicit assumptions about normal center colours and flag rendition. Give supported impossibility under exact stripe designs or a valid six-face reachable construction for a broader interpretation; a list of independent flags is insufficient.",
+      "category": "community",
+      "lang": "en",
+      "history": [],
+      "source": "https://puzzling.stackexchange.com/questions/75972/flags-in-all-faces-in-rubik-cubes"
+    },
+    {
+      "id": "N10",
+      "question": "Cube Scrambling\nTake a normal 3x3 rubiks cube (the Classic unmodded cube). I know the WCA method for scrambling is to pick a random (valid) cube state and calculate a sequence of moves to go from solved to that state, for the convenience of the competition scramblers. AFAIK, this is a very hard thing to implement (I want to make my own scrambler). So I thought \"Hey, I'll just print out 20 random moves from the set [F,F',F2,U,U',U2,L,L',L2,R,R',R2,D,D',D2,B,B',B2] and I'll make sure that no face is turned consecutively\". But would this actually generate a high quality scramble? Or would it be indistinguishable from a normal WCA scramble? EDIT Would there be certain characteristics to my scramble method? And would using mine instead of the WCA page's be detrimental to my WCA performance on real scrambles? My thinking was that because 20 moves is God's Number for the Rubiks Cube, less would be too easy of a scramble (too little \"randomness\") and more would be pointless (just like shuffling a deck of cards too much is pointless).",
+      "expected": "Twenty random moves avoiding consecutive faces are not uniform random states. Explain bias/cancellations and distinguish practical scrambling from uniform sampling.",
+      "category": "community",
+      "lang": "en",
+      "history": [],
+      "source": "https://puzzling.stackexchange.com/questions/86222/cube-scrambling"
+    },
+    {
+      "id": "N11",
+      "question": "Rubik's cube with no squares of same color nearby\nIt's easy to 'scramble' a Rubik's cube so no squares of the same color are touching each other. The moves U2 D2 R2 L2 F2 B2 accomplish that. A side with no squares of the same color nearby requires that the colors are not touching horizontally, vertically or diagonally. Like this: The question is: Can you 'scramble' a cube so there are no squares with the same color nearby in all sides?",
+      "expected": "Yes. Provide a reachable witness or equivalent verified construction for all faces, including diagonal adjacency; the ordinary two-colour checkerboard fails.",
+      "category": "community",
+      "lang": "en",
+      "history": [],
+      "source": "https://puzzling.stackexchange.com/questions/69904/rubiks-cube-with-no-squares-of-same-color-nearby"
+    },
+    {
+      "id": "N12",
+      "question": "Can you make a Rubik's Cube pattern with a 4 color flower on every side?\nI enjoy putting my cubes into aesthetically interesting patterns (using legal moves, of course). I'm trying to make a pattern where each side has exactly 4 different colors in the following arrangement: A B A C D C A B A I can get 4 sides, but I haven't managed to get all 6 without a color collision somewhere. Is it doable?",
+      "expected": "Yes. Provide a reachable six-face witness for the four-color flower (corners same, opposite edge pairs and center distinct), e.g. E M2 S.",
+      "category": "community",
+      "lang": "en",
+      "history": [],
+      "source": "https://puzzling.stackexchange.com/questions/75388/can-you-make-a-rubiks-cube-pattern-with-a-4-color-flower-on-every-side"
+    },
+    {
+      "id": "M04",
+      "question": "Can any Rubik's cube solvable the regular way be solved if you alternate clockwise and counter-clockwise moves?\nLet's say you a Rubik's cube that can be solved using a sequences of the 12 standard moves. Can it be solved if you are required to alternate between clockwise and counter-clockwise moves? If not, which positions can you solve a Rubik's cube using these moves? One way to solve this problem would be to show that regular clockwise quarter turn on a Rubick's cube can be simulated by an even number of these alternating moves, since then you could string these plays together for every clockwise quarter turn required to solve the rubik's cube the regular way (we only need to consider clockwise quarter turns since any normally solvable rubik's cube can be solved using only clockwise quarter turns). I'm not sure if this is the only way though.",
+      "expected": "Not every state is reachable by alternating clockwise/anticlockwise quarter turns. Explain actual limitation or subgroup, do not offer an invalid inverse/identity trick.",
+      "category": "community",
+      "lang": "en",
+      "history": [],
+      "source": "https://puzzling.stackexchange.com/questions/49471/can-any-rubiks-cube-solvable-the-regular-way-be-solved-if-you-alternate-clockwi"
+    },
+    {
+      "id": "M08",
+      "question": "Scrambling and solving the 3×3×3 Rubik’s Cube using only half turns?\nConsider the standard $3\\times 3\\times 3$ Rubik’s Cube. Restrict the allowed moves to half turns only, namely $$U^2,\\; D^2,\\; L^2,\\; R^2,\\; F^2,\\; B^2,$$ together with half turns of the middle-layer moves $$F_s^2,\\; U_s^2,\\; L_s^2,$$ where $F_s$ denotes a quarter turn of the vertical middle slice clockwise as viewed from the front, and $U_s$ and $L_s$ are defined analogously. Suppose the cube is scrambled using only these moves and their inverses. I then attempt to solve the cube using the same restricted move set. Here are some results: any cubie that is in the correct position must also have the correct orientation under these move restrictions. Therefore, it suffices to consider only the positions of cubies, ignoring orientations. The commutator $U^2L_s^2U^2L_s^2$ interchanges two pairs of cubies: up-front and up-back, down-front and down-back. It's easy to solve all corner cubies or solve all edge cubies. How can the entire standard Rubik's Cube be solved using half turns, if it was scrambled using only half-turns? I would particularly like to approach this problem using group-theoretic techniques, such as commutators and conjugation, to explicitly construct the required move sequence (if it exists). My understanding of the Rubik’s Cube group is largely based on Michael Hutchings’ note, The Mathematics of the Rubik’s Cube (available at https://math.berkeley.edu/~hutching/rubik.pdf￼ ), and the problem of scrambling and solving the cube using this restricted move set is explicitly stated in the final section of the note.",
+      "expected": "Give a constructive solver for the specified half-turn generators (e.g. subgroup search tracking joint state), preserving the move restriction. Discuss commutators/conjugates accurately if used.",
+      "category": "community",
+      "lang": "en",
+      "history": [],
+      "source": "https://puzzling.stackexchange.com/questions/136473/scrambling-and-solving-the-3%c3%973%c3%973-rubik-s-cube-using-only-half-turns"
+    },
+    {
+      "id": "M12",
+      "question": "Simplest Rubik's cube \"algorithm\" with cycle length 3\nA regular Rubik's cube has a staggering number of possible states. However, that number is most decidedly finite; after all, a quintillion is just as far from infinity as seven is. From this finiteness it immediately follows, that any sequence of rotations, twists and turns, however complex, will have a cycle. What I mean by that is that if you perform the sequence again on the resulting cube, and just keep on repeating, the cube will at some point return to the original position. (The cube will eventually run out of states that weren't already visited.) These sequences are usually called algorithms. For the purpose of this puzzle , I'll redefine \"algorithm\" in terms of real world appearance of the cube: An algorithm is any sequence of physical manipulation of the cube that results in the cube being in the same shape as before, in the same place as before, and at least one of the sticker positions now showing a different colour. $^*$ You are to keep this definition as a given, even if it might contradict with any other definitions, including the one you think is the correct one. Now then, all algorithms can be categorised by the length of their cycle. For example, the algorithm typically denoted with U (a quarter turn of the topmost layer) will return the cube to the original position after exactly 4 repetitions. Therefore, U has a cycle length of 4. Some examples of algorithms with cycle length 2 would be 180° turn on the left face ( L2 ) swapping any two pieces while preserving orientation turning the cube upside down flipping any given pair of edges ..and so on and so forth. It's pretty easy to come up with algorithms with a cycle length of any N, as long as N is a power of two. Finding cycles of other lengths is a bit more challenging. Especially the ones that have a cycle length of 3 are not so common, and the first ones that spring to mind are usually quite complicated. So here, finally, we get to the puzzle: Find the simplest algorithm (as defined above) that returns the original colours to all sticker positions when performed exactly 3 times. The intended solution is simple both in terms of the physical movements involved, and speed, as in \"time required to perform on a cube initially lying on a timer pad\". $^*$: You probably already noticed why it's important to disallow \"null algorithms\" and twists that are not a multiple of 90°. Also, you probably agree that even though the definition basically allows disassembling and reassembling the entire cube, it doesn't really matter here.",
+      "expected": "Provide a valid shortest or well-qualified short order-three sequence under stated metric, verify 3 repetitions return and 1 and 2 do not. Distinguish whole rotations vs face turns if relevant.",
+      "category": "community",
+      "lang": "en",
+      "history": [],
+      "source": "https://puzzling.stackexchange.com/questions/58128/simplest-rubiks-cube-algorithm-with-cycle-length-3"
+    },
+    {
+      "id": "M01",
+      "question": "Are there any Rubik's cubers who can solve a cube to an arbitrary position?\nBy \"solve to an arbitrary position\" I mean something like I give you two scrambled cubes and you make one cube match the other. This question and its answers confirms that it's possible, but are there any well-known human cubers who can do this repeatedly or quickly? Note: based on feedback in the comments, I've edited the question to clarify that I'm asking about humans who can solve cubes this way",
+      "expected": "Explain how people can match a reachable target; address the request for known human practitioners, distinguish reliable evidence about names/speed from a method.",
+      "category": "community",
+      "lang": "en",
+      "history": [],
+      "source": "https://puzzling.stackexchange.com/questions/116929/are-there-any-rubiks-cubers-who-can-solve-a-cube-to-an-arbitrary-position"
+    },
+    {
+      "id": "M02",
+      "question": "Can the state of Rubiks cube be determined by viewing it standing on the table (three sides)?\nWhen the Rubiks Cube lies on the table you can see only three sides when you are not moving. Is it possible to calculate all pieces of the cube? In this position, there are only 7 pieces completely not visible. 12 we can see partially. And 7 are completely visible. The question came to mind when I was looking at the permutations of the cube. Every include at least one that is outside the set of invisible pieces. Does that mean that the cube can be recognized only by three sides?",
+      "expected": "No: two distinct legal full states give the same three faces. Supply a valid hidden-piece example or proof.",
+      "category": "community",
+      "lang": "en",
+      "history": [],
+      "source": "https://puzzling.stackexchange.com/questions/61511/can-the-state-of-rubiks-cube-be-determined-by-viewing-it-standing-on-the-table"
+    },
+    {
+      "id": "M05",
+      "question": "Do stickerless cubes provide speedsolvers with an advantage?\nIn July 2015 the World Cube Association changed their regulations to allow the use of stickerless puzzles in speed solving. I'm curious whether or not that event changed the sport somehow. Are some professional solvers still using cubes with stickers or did everyone move to stickerless cubes on day one? Is someone collecting statistics about the use of different cube types?",
+      "expected": "Discuss recognition/visibility, historical rules and possible performance effects. Address continued stickered use and statistics without inventing adoption data.",
+      "category": "community",
+      "lang": "en",
+      "history": [],
+      "source": "https://puzzling.stackexchange.com/questions/95254/do-stickerless-cubes-provide-speedsolvers-with-an-advantage"
+    },
+    {
+      "id": "M06",
+      "question": "Rubiks Cube 4x4x4 Top Layer Issue - One Edge Pair Flipped\nI have trouble with that edge. Please give algorithm or images for solutions for turning it up so that I can form a cross.",
+      "expected": "Identify a reduced flipped edge pair on 4x4 as OLL parity and give a valid oriented fix, concrete appropriate algorithm or diagram.",
+      "category": "community",
+      "lang": "en",
+      "history": [],
+      "source": "https://puzzling.stackexchange.com/questions/84668/rubiks-cube-4x4x4-top-layer-issue-one-edge-pair-flipped"
+    },
+    {
+      "id": "M07",
+      "question": "Can two corners be swapped using commutators?\nThis question is about solving a Rubik's cube using commutators and conjugates - it is a question about the group theory of the Rubik's cube, rather than a \"how do I\" kind of question. This video gives a very helpful overview of how to use commutators and conjugates to solve Rubik's cubes and their larger versions. When it comes to corner moves, the only commutators it describes are 3-cycles and orientation swaps. Both of these now seem very simple and intuitive to me. However, sometimes my cube gets into a state where all corners are solved apart from two of them on the last face. These may be adjacent or opposite corners. The other six corners are all in the correct positions and oriented correctly, so I just need to swap the remaining two. The edges are solved only in one layer, as I generally solve the corners first. Swapping two corners doesn't fit the pattern of what can be done with commutators: a 3-cycle swaps the positions of three cubies, and an orientation swap changes the orientation of two, but I need to change the position of two. I know that algorithms for this exist - one can be found here , for example - and I'm not asking for an algorithm in this question. Rather I would like to understand the following: Can a corner swap be performed using commutators and conjugates only, or is it a \"parity\" case that requires a non-commutator move to accomplish? If it can be done with commutators, is there a nice intuitive way that I could see how to create my own commutator to solve this case? I can now do this easily with 3-cycles and orientation swaps, but not with this kind of 2-cycle. If it can't, is there some easy principle through which the parity can be removed? I mean something along the lines of the parities in the 4x4 cube (explained towards the end of the video above), where a single quarter-turn removes the parity, putting the cube into a state that can be solved with commutators and conjugates only, although it does take quite a few moves to do so. (I tried making a single quarter turn of my cube, but re-solving it with combinators just put it into the same state, of needing two corners to be swapped.) (Note: my cube is a 4x4x4, but I'm solving the corners first, so I don't care about moving edges or even centres around. I had assumed the same situation could arise on all cubes if the edges aren't solved, but if this is wrong it would be interesting to know.)",
+      "expected": "A commutator has even corner permutation; conjugates of even permutations preserve sign. To deal with odd corners on the 4x4 use one outer quarter turn and even corner cycles to finish, accepting changes elsewhere.",
+      "category": "community",
+      "lang": "en",
+      "history": [],
+      "source": "https://puzzling.stackexchange.com/questions/66023/can-two-corners-be-swapped-using-commutators"
+    },
+    {
+      "id": "M09",
+      "question": "Rubik's Cube with no two squares of the same color on any horizontal, vertical or diagonal line\nConsider the 12 lines depicted below which all run through the centers of the 9 color squares of a single face of Rubik's Cube. Can you find a scramble such that on each line all squares have different colors? And this of course simultaneously on all six faces. Find a scramble which needs only 14 moves. If you assume six colors on each face this scramble is unique up to rotation and reflection of the cube and there is no shorter scramble. Hint 1: There are only three possible ways how colors can be distributed on one face (up to rotation and reflection of the face and up to permutation of the colors). You can find them with pencil and paper. Hint 2: The second question is impossible to answer without a computer program. But with the pattern editor of the freely downloadable Cube Explorer program an answer to the question is not difficult to obtain.",
+      "expected": "Provide a valid reachable six-face witness satisfying ALL specified lines and requested 14-move constraint; adjacent-only checking is insufficient.",
+      "category": "community",
+      "lang": "en",
+      "history": [],
+      "source": "https://puzzling.stackexchange.com/questions/126803/rubiks-cube-with-no-two-squares-of-the-same-color-on-any-horizontal-vertical-o"
+    },
+    {
+      "id": "M10",
+      "question": "What does it mean for a Rubik's cube to be perfectly scrambled, and how do you reach it? Without doing a checker board\nCan you picture the perfectly scrambled cube? A Rubik's Cube that's perfectly scrambled? How would it look? Is it even possible? The quest for the Perfect Scramble is now upon us, and I challenge you puzzlers to find the state that is \"perfectly scrambled\" and how to do this scramble, starting with a solved cube, in minimum moves. But first, before you can even begin to figure it out, mathematically prove it, or even brute force it, you must define it. What exactly is a perfectly scrambled cube? there's 6 faces to the cube, and 9 squares on each one, so how do you define the perfect scramble? The perfect scramble is the scramble farthest away from the perfect cube. What would that look like? The quest for the perfect scramble is upon you. It's up to you to solve this Rubik's crisis! Can you do it?",
+      "expected": "Define the proposed meaning of perfect scramble, distinguish uniform sampling and maximum distance, provide a valid construction meeting the original stated conditions and no unsupported uniqueness claim.",
+      "category": "community",
+      "lang": "en",
+      "history": [],
+      "source": "https://puzzling.stackexchange.com/questions/5462/what-does-it-mean-for-a-rubiks-cube-to-be-perfectly-scrambled-and-how-do-you-r"
+    },
+    {
+      "id": "T01",
+      "question": "Mix a 2x2 Rubik’s cube\nWhat is the minimum number of 1/4 turns of a solved 2x2 Rubik’s cube, such that no face will have two tiles of the same color? (I do not have this puzzle’s solution.)",
+      "category": "community",
+      "lang": "en",
+      "history": [],
+      "expected": "Four quarter turns are necessary and sufficient, e.g. L D2 B. No sequence of at most three quarter turns makes all six faces four-coloured. R D R D F works in five, but is not minimal.",
+      "source": "https://puzzling.stackexchange.com/questions/109888/mix-a-2x2-rubik-s-cube"
+    },
+    {
+      "id": "T02",
+      "question": "Is there a term for ZZ with CFOP F2L?\nCFOP is my preferred method for speedcubing. Recently I thought of learning ZZ. Although recognition of bad edges was difficult, it made F2L a whole lot easier. However I feel that the basic CFOP-based F2L is much more easier along with the initial EOLine step of ZZ instead of block-building. Removing bad edges cut down my CFOP F2L times in half by avoiding F/B moves. Is there any term for the method that uses ZZ's EOLine and FOP of CFOP for the rest? Or should I just call it ZZ-CFOP hybrid?",
+      "category": "community",
+      "lang": "en",
+      "history": [],
+      "expected": "Distinguish ZZ EOLine from EOCross before naming the hybrid. Address F2L after EO and terminology without inventing an official method.",
+      "source": "https://puzzling.stackexchange.com/questions/51226/is-there-a-term-for-zz-with-cfop-f2l"
+    },
+    {
+      "id": "T03",
+      "question": "Is the exact number of states for the Rubik's cube on far distances (>=16 in QTM, HTM) known?\nAt https://www.cube20.org/ the numbers of states on distance 16 and beyond is written as: \" about 1,100,000,000,000,000,000\". Question: Are these numbers (for QTM and HTM metrics) are known precisely? Or is there only approximate information? For QTM as far as I understand for distances 24,25,26 there is the following information: Distance 24: Approximately 150,000 positions. Distance 25: Only two known positions (and their rotations). Distance 26: Only the superflip plus fourspot position (and its two rotations).",
+      "category": "community",
+      "lang": "en",
+      "history": [],
+      "expected": "Distinguish exact enumerations, lower bounds and estimates by metric; no unsupported exact counts for far distances. State date/source for new research.",
+      "source": "https://puzzling.stackexchange.com/questions/131902/is-the-exact-number-of-states-for-the-rubiks-cube-on-far-distances-16-in-qtm"
+    },
+    {
+      "id": "T04",
+      "question": "Rubik's cube with restricted moves\nSuppose you have some modified Rubik's Cube such that the face rotations are blocked unless a special edge (let's take the UR edge w.l.o.g.) unlocks the two faces where the edge is currently in. So for a solved cube you may only turn the U-face or R-face. If you do a 180° U-face turn the UR edge is in U-face and L-face, so now you may apply rotations of the L-face (another move of the U-face is not particulary useful). Continue in this way as long as you want. How many different cube positions can be reached in this way If we only count positions where the UR-edge is in it's home position again (in this case the set of positions is a subgroup of the Rubik's Cube group)? If we count all achievable positions regardless of the end position of the UR-edge? I myself currently do not know the answer to these questions.",
+      "category": "community",
+      "lang": "en",
+      "history": [],
+      "expected": "UR-edge constrained turns yield 7151455567872000 unrestricted or 297977315328000 when edge returns with orientation, with a valid group argument.",
+      "source": "https://puzzling.stackexchange.com/questions/131041/rubiks-cube-with-restricted-moves"
+    },
+    {
+      "id": "T06",
+      "question": "Minimum number of stickers to inspect in a Rubik cube to define a scrambled position?\nThis is for a robotics solver using a real cube. How many facelets must the machine check to figure out the position of everything in a scrambled cube?",
+      "category": "community",
+      "lang": "en",
+      "history": [],
+      "expected": "Give a justified upper bound or optimality proof under stated observation assumptions. Distinguish an upper bound such as 39 from a proven minimum.",
+      "source": "https://puzzling.stackexchange.com/questions/22848/minimum-number-of-stickers-to-inspect-in-a-rubik-cube-to-define-a-scrambled-posi"
+    },
+    {
+      "id": "T07",
+      "question": "What's the minimum number of sequences required to be learn to solve Rubik's cube in under half an hour?\nI'm not asking for minimum moves. I know it's 20. I also know that it can be solved using only 1 sufficiently long sequence, but that would take ages to perform and it'd be nearly impossible to remember. I also know that if you know hundreds of sequences you can solve it in 30 seconds or less, but you can achieve the same results as many of those hundreds of sequences but using more moves. What I'd like to know is, efficiency aside, the least amount of sequences needed to be learned to solve it. As this sequences have to be memorized it could also be put this way. If I sum up the amount of moves of each sequence, what's the minimum amount of moves I have to learn?. The sequences of moves should be the same to solve any starting point, of course.",
+      "category": "community",
+      "lang": "en",
+      "history": [],
+      "expected": "Discuss what is counted (setups, rotations, inverses, memorised algorithms). Give a working universal construction under stated assumptions; do not assert unproved minimum.",
+      "source": "https://puzzling.stackexchange.com/questions/32758/whats-the-minimum-number-of-sequences-required-to-be-learn-to-solve-rubiks-cub"
+    },
+    {
+      "id": "T08",
+      "question": "n*n*n Rubik's cube algorithm\nIs there a universally working (I mean, regardless of n ) algorithm for Rubik's cube n×n×n ? It is acceptable to divide n according to whether n is odd or even. (or it is of a form 4k+1,.., etc) It's okay if it takes a long time, as long as it's not a format like Brute Force. The core concept is... the principle on which the algorithm is applied must be the same regardless of the value of n. For example, if there is a way to change just two elements while leaving other elements the same, we could use it repeatedly to get the final form.",
+      "category": "community",
+      "lang": "en",
+      "history": [],
+      "expected": "Give size-independent constructive reduction: centers, paired wings, solve reduced cube, address even-order parity and base cases. Do not offer illegal isolated swaps as universal moves.",
+      "source": "https://puzzling.stackexchange.com/questions/120385/nnn-rubiks-cube-algorithm"
+    },
+    {
+      "id": "V01",
+      "lang": "en",
+      "history": [],
+      "category": "community",
+      "question": "How do people find more efficient algorithms for cubing?\nI was wondering how people are able to simplify Cubing algorithms. Is there a piece of software or something that brute forces possibilities. Or is there an actual method to this?",
+      "expected": "Describe both computer search and human development or improvement (e.g. commutators, cancellations) with a concrete correct example or tool.",
+      "source": "https://puzzling.stackexchange.com/questions/49055/how-do-people-find-more-efficient-algorithms-for-cubing"
+    },
+    {
+      "id": "V02",
+      "lang": "en",
+      "history": [],
+      "category": "community",
+      "question": "Multiple solutions for Rubik's cube?\nI got a novelty cube at as swag at a convention once; it was like a normal cube, but with slogans written on the squares of the cube. If you solved the cube, you could read the slogan. This got me to wondering if it's possible to solve this cube such that some of the words faced the wrong way. If you have a standard Rubik's cube, and draw arrows on each label (all arrows on each face point in the same direction), is it possible to solve the cube such that some of the arrows face different directions from the original orientation? If so, how many distinct solved cubes are there? Note: obviously, for all the non-center faces, there is only one possible orientation. For example, if the red-blue edge has \"up\" on the blue face pointing at red, then the red-blue-yellow and red-blue-green corners must be next to that edge, and must also have \"up\" on the blue faces point toward red. Thus, the orientations of the edges and corners is fixed, but it might be possible for the centers to end up rotated.",
+      "expected": "In fixed centre frame identify only centres can vary, parity constraint and 2048 solved-looking states.",
+      "source": "https://puzzling.stackexchange.com/questions/93717/multiple-solutions-for-rubiks-cube"
+    },
+    {
+      "id": "V03",
+      "lang": "en",
+      "history": [],
+      "category": "community",
+      "question": "Axis mirror cube has one centre piece rotated by 90 degrees\nIn front of me, I have a z axis cube . Sometimes when I scramble and attempt solve it, I end up with one of the centre pieces being rotated by 90 degrees. I know that in principle it is not possible that only one centre piece is rotated by 90 degrees - it is possible to rotate two centres by 90 degrees or to rotate one center by 180 degrees. My thoughts are that it has something to do with the fact that this cube has a lot of identical pieces, and thus several can be swapped invisibly. So far, my best way of going at this is rescrambling the cube and solving it again. Then I end up with a valid solve, I would say, about half of the time. There must be a better way... So my question is: Is there a way to swap some of the other pieces around in order to rotate this centre piece? I have thought of swapping three identical edges on the face of the rotated centre (algorithm) , and then moving the corner pieces until they are oriented correctly (algorithm) . Of course, the centre piece is effectively not rotated, so this does not work. The way I solve the cube is using beginner LBL , with - for ease of recognising the eventual cube shape - orienting the center pieces of the second layer after solving the first layer. I know that this should not make any difference than first solving the cube and fixing the rotated centre pieces in the end. With this in mind, I have another question: Is there anything I should look out for while solving the cube, that could prevent the centre piece from being rotated in the end?",
+      "expected": "Explain the axis shape symmetry and a valid way to swap suitable indistinguishable pieces, compensating the quarter-turn (specific setup or equivalent).",
+      "source": "https://puzzling.stackexchange.com/questions/69320/axis-mirror-cube-has-one-centre-piece-rotated-by-90-degrees"
+    },
+    {
+      "id": "V04",
+      "lang": "en",
+      "history": [],
+      "category": "community",
+      "question": "Another closed path on the Rubik's cube\nIs it possible to draw a closed path on the surface of a standard $3\\times3\\times3$ Rubik's cube such that the path traverses exactly one diagonal of each of the $54$ little squares, and such that the path does not intersect itself?",
+      "expected": "Give yes/no plus a valid obstruction or construction accounting for exactly one diagonal per cell.",
+      "source": "https://puzzling.stackexchange.com/questions/24108/another-closed-path-on-the-rubiks-cube"
+    },
+    {
+      "id": "V05",
+      "lang": "en",
+      "history": [],
+      "category": "community",
+      "question": "4x4x4 Rubiks Cube strategy\nWith a 4x4x4 cube, it's possible to apply the same strategies as for a 3x3x3, either treating it as a 3x3x3 with a double-width middle or else as a 2x2x2 and just working on the corner \"quadrants\". Centres of each face can also be handled as a 2x2x2 cube, ignoring the outer layers entirely. Is it better to apply those strategies in one order rather than the other?",
+      "expected": "Give a feasible 4x4 solving order with correct colour arrangement, centres, edge pairing, ordinary 3x3 finish and justified choice.",
+      "source": "https://puzzling.stackexchange.com/questions/413/4x4x4-rubiks-cube-strategy"
+    },
+    {
+      "id": "V06",
+      "lang": "en",
+      "history": [],
+      "category": "community",
+      "question": "Can anyone explain me the logic behind a J perm(or similar)?\nI learned to solve a Rubik's cube recently by intuition and some basic cube theory (not by myself). At the last step, I use corner 3-cycles and corner rotations to reach the final solved state. I understood corner rotation this way: If a corner is rotated CW, then another corner can be rotated CCW without disturbing any other part of cube. Similarly I understood a corner 3-cycle this way (using commutator notations): A - replace a corner C1 from left face from right face C2 . [ U'RU ] B - Rotate left face so that a new corner from left face C3 gets the place where C1 was. [ L ] A' - place the corner C3 from where C2 was taken. [ U'R'U ] B' - Rotate left face the other way. [ L' ] Move : ABA'B' Result : A corner 3-cycle. I can't apply the same logic to do a 2 corner swap + 2 edge swap. Can any one explain how J perm (or any other PLL which swaps 2 corners and 2 edges simultaneously) works? P.S : I learned to solve the cube from this video .",
+      "expected": "Explain the permutation parity obstruction and how a turn plus even cycles or an equivalent construction implements a J-perm, satisfying notation/intuition asked.",
+      "source": "https://puzzling.stackexchange.com/questions/68355/can-anyone-explain-me-the-logic-behind-a-j-permor-similar"
+    },
+    {
+      "id": "V07",
+      "lang": "en",
+      "history": [],
+      "category": "community",
+      "question": "Identify unpopular cube solving method\nI just got back into cubing for fun, not speed. There was an interesting solving method I used to like and can't remember the name of. I believe it started with solving all the corners, then solving the left and right sides by moving the unsolved edge to change to the top layer and spinning the vertical middle layer up and down for the most part. The last part was solving the edges in the vertical middle layer which I think was the only time you really needed to memorize an algorithm. Does this method have a name I could look up?",
+      "expected": "Identify plausible 3x3 corners-first method matching the described progression, especially 3x3 Ortega or verified equivalent, distinguishing from unrelated methods.",
+      "source": "https://puzzling.stackexchange.com/questions/126297/identify-unpopular-cube-solving-method"
+    },
+    {
+      "id": "V08",
+      "lang": "en",
+      "history": [],
+      "category": "community",
+      "question": "Rubiks 3x3 Cube Solution - an old method to relearn (3 corner rotation)\nI am trying to relearn a method for solving the 3x3 Rubik’s cube that I was taught many years ago by a departed relative – it is for this reason that I want to relearn this method, eventhough it is not the quickest method (e.g. there is no “white cross” in this method). The method follows the following steps: Make top face and first row Make second row correct, there are two steps getting the row correct a. First step will fix (for eg) the piece on the left as you look at it, but this will change the position of the piece on the right b. Second step allows you to fix the piece on the left (again as eg) but will not change the position on the right Make the corners on the third (ie bottom) row, again two methods: a. First moves / swaps the positions of 3 out of the 4 corners (the “focus” corner is unaffected) b. Second changes the orientation of the 3 corners but does not change their position. Change the focus face to a different one (ie one that was previously one of the side pieces) then fix its second row using the same technique at 2b. The only step I cannot remember is 3b. I know my description is not great, but if you can point me in the right direction that would be great. Again I am looking to relearn this method, not a new one.",
+      "expected": "Give an executable three-corner twist sequence in correct orientation, restoring needed pattern including any adjustment; state setup and direction.",
+      "source": "https://puzzling.stackexchange.com/questions/91242/rubiks-3x3-cube-solution-an-old-method-to-relearn-3-corner-rotation"
+    },
+    {
+      "id": "F01",
+      "question": "Can the state of 2x2x2 Rubik's cube be determined by viewing it standing on the table (three sides)?\nSimilar to this question. Can you always determine the configuration of a 2x2x2 Rubik's cube from viewing three adjacent faces? I.e. you are looking at that cube so that a corner is in the center and so you can see three sides simultaneously. Assume you know the opposite colour pairs (w/y, b/g, o/r). This is possible if all three side you see are solved (you can deduce the whole cube is solved). Can you and how can you determine the colours on the other three sides in a general case?",
+      "category": "community",
+      "lang": "en",
+      "history": [],
+      "expected": "Correct non-uniqueness in general under known opposite colours, supported by two indistinguishable legal states, valid counting or equivalent rigorous reasoning; respect solved special case.",
+      "source": "https://puzzling.stackexchange.com/questions/137223/can-the-state-of-2x2x2-rubiks-cube-be-determined-by-viewing-it-standing-on-the"
+    },
+    {
+      "id": "F02",
+      "question": "Theoretical Question - Rubik's Cubes\nI have a very basic question on Rubik's Cubes. Take any completely solved cube or skewb. Now pick out (with hand) any two similar pieces and swap their positions, without changing positions/orientation of any other pieces in the cube/skewb. This new cube/skewb is also completely solved except for the swapped pieces. Can this new cube/skewb be achieved from the old solved cube/skewb by using only moves, without any hand picking? I have an intuition that it is not possible to do so, but I am unable to prove it formally.",
+      "category": "community",
+      "lang": "en",
+      "history": [],
+      "expected": "For ordinary 3x3 and Skewb justify both impossibilities with valid parity argument for their moves and relevant piece orbits.",
+      "source": "https://puzzling.stackexchange.com/questions/52743/theoretical-question-rubiks-cubes"
+    },
+    {
+      "id": "F03",
+      "question": "One Hundred Prisoners and a Rubik's Cube\nSay there are 100 perfectly intelligent prisoners (who don't have incredibly good memories) who are jailed for life (and also live eternally). The warden decides to play a game with them. There is a room in the prison which has one 3x3 Rubik's Cube and a robot which can solve it. Every day, the warden chooses a prisoner at random, regardless of whether he has entered the room before or not, and leaves him there until he comes out (of his own accord). While inside, he can do anything to the 3x3 Rubik's Cube in there and let the machine solve it but is not allowed to touch anything else or to take anything in / leave with something (That includes making a visible mark on ANYTHING, though you're allowed to turn the cube). If one prisoner comes up to the warden while in the room and correctly says, \"All 100 prisoners have entered this room since the game began,\" all of the prisioners will be set free. However, if the prisoner is incorrect, all of them will be immediately executed. The prisoners are all confined in their own cells with no way of communication with any other prisoner. However, all the prisoners have one tool each, a permanent marker, which must not leave their cell . The day before the game begins, the warden lets the prisioners go into the courtyard to formulate an action plan. If the prisoners all want to escape, what will their plan be?",
+      "category": "community",
+      "lang": "en",
+      "history": [],
+      "expected": "Give a safe complete protocol with memory and random selection; handle unknown first cube state or explicitly initialize without false positives. No communication outside allowed state.",
+      "source": "https://puzzling.stackexchange.com/questions/28846/one-hundred-prisoners-and-a-rubiks-cube"
+    },
+    {
+      "id": "F04",
+      "question": "Shortest algorithm to rotate 2 corners on a Rubik's Cube\nI'm looking for the shortest algorithm to rotate 2 corners without rearranging any other pieces location or orientation. For example, turning the Top-Front-Right corner clockwise and the Top-Front-Left corner counter-clockwise. My current best is 13 (formerly 16) turns, but would like to learn better if someone can share it.",
+      "category": "community",
+      "lang": "en",
+      "history": [],
+      "expected": "For specified locations and twists, verify any concrete sequence and its metric. An improved 12-or-fewer solution or correct justified optimality/inability to improve with useful verified result; no unsupported shortest claim.",
+      "source": "https://puzzling.stackexchange.com/questions/117511/shortest-algorithm-to-rotate-2-corners-on-a-rubiks-cube"
+    },
+    {
+      "id": "F05",
+      "question": "Is twisting a corner of a Rubik's cube a valid move?\nI believe the question is self-explanatory but I'm asking the question in different contexts. I understand that it makes the 3x3x3 unsolvable if you twist a single corner but there are cases where it could still be solvable if you twist pairs of corners, although I'm not sure of the mathematics behind twisting a corner of a Rubik's cube. Here are the contexts which I am particularly interested in Is it a valid move in the intended original cube? Is the move \"allowed\" as it seems to be only available in modern constructions of the cubes Is it a valid move in speedcubing? I have faced some special cases where twisting two corners would dramatically speed up solving a 2x2x2 layer",
+      "category": "community",
+      "lang": "en",
+      "history": [],
+      "expected": "Address original physical twist versus legal puzzle move, total twist mod 3 for both sizes, competition application and exception for a genuinely accidental unsolvable twist, no legal intentional shortcut.",
+      "source": "https://puzzling.stackexchange.com/questions/54183/is-twisting-a-corner-of-a-rubiks-cube-a-valid-move"
+    },
+    {
+      "id": "F06",
+      "question": "Way to calculate the total tetrad twist of a rubik's cube\nI am working on an implementation of Thistlewaite's algorithm to solve a Rubik's cube and I am now facing the problem of tetrad twists. Thanks to this answer , I understand what they are and how they reduce the amount of states in phase 3, but the problem I have is to find a way to calculate the total tetrad twist of a cube from it's state only. The way I am implementing this algorithm is not with a breadth-first search and I therefore cannot simply use the stronger condition found here and here to know if I am done with stage 3 since that is not useful for me. The way I am doing it is that I precalculate lookup tables and look in them to know to to solve a certain state. For that reason I need to fully characterize the information needed to distinguish different stage 3 states. I already have corner tetrads, edges slices and parity done, the last thing I need is a way to express the tetrad twist of a state (or any equivalent info). The best thing would be to simply be able to give a value between 0, 1 or 2 and use that to describe the total twist. I hope my question is clear, and if it is not, feel free to ask questions in the comments, I'll do my best to explain it further.",
+      "category": "community",
+      "lang": "en",
+      "history": [],
+      "expected": "Give an implementable state-to-three-valued coordinate or equivalent canonicalization with the relative tetrad permutation invariant; ordinary twist sum is insufficient.",
+      "source": "https://puzzling.stackexchange.com/questions/101256/way-to-calculate-the-total-tetrad-twist-of-a-rubiks-cube"
+    }
+  ]
+}

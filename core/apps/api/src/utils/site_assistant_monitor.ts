@@ -24,12 +24,14 @@ const write: QueryRunner = async <T>(statement: string, params: unknown[] = []) 
   let index = 0;
   return await db.unsafe(statement.replace(/\?/g, () => `$${++index}`), params as never[]) as unknown as T[];
 };
+export type AssistantModelPurpose = 'generation' | 'review' | 'transport_retry' | 'format_repair';
 export interface AssistantMetrics {
+  reviewChecks?: Array<{ before?: string; after?: string; textChanged: boolean }>;
   answerRejections?: Array<{ reason: string }>;
   planChecks?: Array<{ phase:'draft'|'repair'; reason?:string; words:number; minimum?:number; maximum?:number }>;
   contexts?: Array<{ relevance: 'strong' | 'weak'; recentTurns: number; estimatedTokens: number; inputBudget: number; compressed: string[]; layers: Record<string, number> }>;
   stages: Record<string, { calls: number; ms: number; errors: number }>;
-  models: Array<{ model: string; thinking: boolean; input: number | null; output: number | null; cached: number | null; reasoning: number | null; durationMs?: number; firstActivityMs?: number; firstTextMs?: number; grossCny?: number | null; cacheAdjustedCny?: {min:number;max:number}|null; tariff?: unknown; round?: number; attempt?: number; promptFingerprint?: string; configurationFingerprint?: string; failure?: AssistantModelDiagnostic & { upstreamStatus?: number } }>;
+  models: Array<{ model: string; thinking: boolean; input: number | null; output: number | null; cached: number | null; reasoning: number | null; durationMs?: number; firstActivityMs?: number; firstTextMs?: number; grossCny?: number | null; cacheAdjustedCny?: {min:number;max:number}|null; tariff?: unknown; round?: number; attempt?: number; purpose?: AssistantModelPurpose; promptFingerprint?: string; configurationFingerprint?: string; failure?: AssistantModelDiagnostic & { upstreamStatus?: number } }>;
   timing?: { version: 1; receivedAt?:number; claimedAt?:number; poolStartMs?:number; queueWaitMs?:number; requestReadyMs?: number; firstProgressMs?: number; responseReadyMs?: number; firstAnswerFromReceiptMs?:number; finishedFromReceiptMs?:number };
   toolTimings?: Record<string, { calls: number; ms: number; errors: number }>;
   embeddings: Array<{ model: string; tokens: number | null; grossCny?: number | null; tariff?: unknown }>;
@@ -41,6 +43,13 @@ export interface AssistantMetrics {
   cost?: { grossCny: number; unpricedCalls: number };
 }
 const scope = new AsyncLocalStorage<AssistantMetrics>();
+// Record categories, never the wording of a rejected claim or user-supplied term.
+export function recordAssistantReviewCheck(before: string | undefined, after: string | undefined, textChanged: boolean) {
+  const metrics = scope.getStore();
+  if (metrics && (metrics.reviewChecks?.length ?? 0) < 8) {
+    (metrics.reviewChecks ??= []).push({ before: before?.split(':',1)[0], after: after?.split(':',1)[0], textChanged });
+  }
+}
 /** Called only after the durable draft write completes. */
 export function recordAssistantPersistedAnswer(answer:string) {
   const timing=scope.getStore()?.timing;
@@ -73,7 +82,7 @@ export function recordAssistantStage(name: string, ms: number, failed: boolean, 
   }
 }
 const token = (value?: number) => Number.isSafeInteger(value) && value! >= 0 ? value! : null;
-export function recordAssistantModel(model: string, thinking: boolean, origin = '', step: { round?: number; attempt?: number; promptFingerprint?: string; configurationFingerprint?: string } = {}) {
+export function recordAssistantModel(model: string, thinking: boolean, origin = '', step: { round?: number; attempt?: number; purpose?: AssistantModelPurpose; promptFingerprint?: string; configurationFingerprint?: string } = {}) {
   const started = performance.now();
   const entry: AssistantMetrics['models'][number] = { model, thinking, ...step, input: null, output: null, cached: null, reasoning: null };
   scope.getStore()?.models.push(entry);

@@ -260,9 +260,13 @@ export function composeAssistantContext(input: {
   const memory = { ...seeded, episodes: seeded.episodes.filter(episode => episode.passages.length > 0) };
   const layers = selectAssistantMemory(input.question, input.history, memory, kept);
   // Also protect exact constraints from user messages that will leave the window.
-  for (const [index, turn] of turns.entries()) for (const sentence of turn.messages[0].content.match(/[^。！？.!?\n]+[。！？.!?]?/g) ?? []) {
-    if (assistantTopicRelevance(continuation(input.question) ? priorQuestion : input.question, turn.messages[0].content) === 'strong'
-      && constraintPattern.test(sentence)) layers.protectedConstraints.push({ source: `history:${index}`, text: sentence });
+  const constraintTopic = continuation(input.question) ? priorQuestion : input.question;
+  for (const [index, turn] of turns.entries()) {
+    const content = turn.messages[0].content;
+    if (assistantTopicRelevance(constraintTopic, content) !== 'strong') continue;
+    for (const sentence of content.match(/[^。！？.!?\n]+[。！？.!?]?/g) ?? []) {
+      if (constraintPattern.test(sentence)) layers.protectedConstraints.push({ source: `history:${index}`, text: sentence });
+    }
   }
   layers.protectedConstraints = layers.protectedConstraints.filter((item, index, all) => all.findIndex(other => other.text === item.text) === index);
   const compressed: string[] = [];
@@ -270,15 +274,26 @@ export function composeAssistantContext(input: {
     const selected = new Set(turns.slice(-kept || turns.length).flatMap(turn => turn.messages));
     return input.history.filter(message => selected.has(message) || unpaired.has(message));
   };
-  const size = () => input.fixedTokens + estimateAssistantTokens(assistantMemoryPayload(layers)) + estimateAssistantTokens(history().map(message => ({ role: message.role, content: message.content })))
-    + history().reduce((sum, message) => sum + (message.images?.length ?? 0) * 4096, 0);
-  // Layer 6 / 7 first, then 5, then 4, then complete turns. Each removal keeps
-  // source/role attribution intact; no JSON/string slicing or tool-pair removal.
+  let selected = history();
+  const historyCost = () => estimateAssistantTokens(selected.map(({role, content}) => ({role, content})))
+    + selected.reduce((sum, message) => sum + (message.images?.length ?? 0) * 4096, 0);
+  let selectedTokens = historyCost();
+  let memoryTokens = estimateAssistantTokens(assistantMemoryPayload(layers));
+  const size = () => input.fixedTokens + memoryTokens + selectedTokens;
   for (const key of ['historicalTopics', 'longTermMemory', 'activeExtracts', 'slidingSummary'] as const) {
-    while (size() > input.inputBudget && layers[key].length) { layers[key].shift(); if (!compressed.includes(key)) compressed.push(key); }
+    while (size() > input.inputBudget && layers[key].length) {
+      layers[key].shift();
+      memoryTokens = estimateAssistantTokens(assistantMemoryPayload(layers));
+      if (!compressed.includes(key)) compressed.push(key);
+    }
   }
-  while (size() > input.inputBudget && kept > minimum) { kept--; if (!compressed.includes('recentTurns')) compressed.push('recentTurns'); }
+  while (size() > input.inputBudget && kept > minimum) {
+    kept--;
+    selected = history();
+    selectedTokens = historyCost();
+    if (!compressed.includes('recentTurns')) compressed.push('recentTurns');
+  }
   const estimatedTokens = size();
   if (estimatedTokens > input.inputBudget) throw new AssistantContextBudgetError(estimatedTokens, input.inputBudget);
-  return { relevance, history: history(), layers, estimatedTokens, inputBudget: input.inputBudget, compressed };
+  return { relevance, history: selected, layers, estimatedTokens, inputBudget: input.inputBudget, compressed };
 }

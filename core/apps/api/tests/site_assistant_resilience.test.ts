@@ -119,6 +119,16 @@ describe('assistant resilience',()=>{
     expect(fetcher).toHaveBeenCalledTimes(3);
     expect(fetcher.mock.calls.map(([,init])=>JSON.parse(String(init?.body)).enable_thinking)).toEqual([false,false,false]);
   });
+  it('shares transport recovery across tool rounds in one request', async () => {
+    let calls = 0;
+    const fetcher = vi.fn<typeof fetch>(async url => {
+      if (String(url).endsWith('/wiki/terms')) return Response.json({sections: []});
+      if (++calls === 3) return model([{tool:'glossary',query:'CFOP'}]);
+      return new Response('', {status:502});
+    });
+    await expect(answerSiteQuestion('Look up CFOP.', 'en', config, AbortSignal.timeout(5000), withCatalog(fetcher))).rejects.toMatchObject({upstreamStatus:502});
+    expect(calls).toBe(4);
+  });
   it('preserves one format repair after a transport retry',async()=>{
     const fetcher=vi.fn<typeof fetch>()
       .mockResolvedValueOnce(new Response('',{status:502}))

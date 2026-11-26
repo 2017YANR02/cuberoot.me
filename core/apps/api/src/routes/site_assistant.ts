@@ -228,8 +228,8 @@ export function createSiteAssistantRoutes(deps: { answer: typeof answerSiteQuest
     };
     let monitor: Awaited<ReturnType<typeof startAssistantMonitor>> | undefined;
     let priorContext: AssistantContext | undefined;
-    const answer = (user: { wcaId: string }, emit?: (event: AssistantStreamEvent) => Promise<void>) => {
-      const run = () => withAssistantProgress(emit, signal, requestStarted, () => deps.answer(parsed.data.question, parsed.data.lang, config, signal, undefined, history, user.wcaId, emit, parsed.data.timeZone, images, parsed.data.thinking, {}, priorContext, parsed.data.references));
+    const answer = (user: Awaited<ReturnType<typeof deps.authenticate>>, emit?: (event: AssistantStreamEvent) => Promise<void>) => {
+      const run = () => withAssistantProgress(emit, signal, requestStarted, () => deps.answer(parsed.data.question, parsed.data.lang, config, signal, undefined, history, user.wcaId, emit, parsed.data.timeZone, images, parsed.data.thinking, { viewerUserId: user.uid }, priorContext, parsed.data.references));
       return monitor ? monitor.run(run) : run();
     };
     const failure = async (error: unknown) => {

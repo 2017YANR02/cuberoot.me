@@ -3,6 +3,7 @@ import { modelResponse, wireEvidence } from './fixtures/site_assistant_model.js'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { createSiteAssistantRoutes as createRoutes } from '../src/routes/site_assistant.js';
 import { answerSiteQuestion, assistantConfig, pageText, requestedAssistantLimit } from '../src/utils/site_assistant.js';
+import { beginnerLessonAnswer } from '../src/utils/site_assistant_cubing_help.js';
 import { cubeAgentConfig } from '../src/utils/cube_agents.js';
 import { runAnalysisQuery } from '../src/utils/site_assistant_analysis_db.js';
 import { findAssistantPeople } from '../src/utils/site_assistant_people.js';
@@ -21,6 +22,37 @@ const ask = () => new Request('https://api.example/site-assistant', {
 });
 
 describe('site assistant grounding', () => {
+  it.each([
+    ['我该如何复原一颗三阶魔方？', 'zh', 'structure&section=overview', '先做小花和白十字'],
+    ['三阶魔方怎么还原？', 'zh', 'structure&section=overview', '凑齐四格白色'],
+    ['How do I solve a 3×3 cube?', 'en', 'structure&section=overview', 'Solve it layer by layer'],
+    ['我一个面都不会拼，第一步干什么？', 'zh', 'structure&section=overview', '只有两种颜色'],
+    ['三阶魔方的小花怎么做？', 'zh', 'daisy&section=overview', '黄心四周有四格白色'],
+    ['我已经做好小花了，接下来呢？', 'zh', 'cross&section=white-edge', '对准同色中心'],
+    ['我还没做完小花，下一步怎么做？', 'zh', 'daisy&section=overview', '黄心四周有四格白色'],
+    ['白十字做好了，下一步呢？', 'zh', 'corners&section=overview', '四条白棱'],
+    ['白色已经拼满了，为什么又让我重来？', 'zh', 'corners&section=overview', '每排都和本面中心同色'],
+    ['三阶魔方的白十字怎么做？', 'zh', 'cross&section=white-edge', '有没有四片白色花瓣'],
+    ['`R′` 怎么拧？', 'zh', 'structure&section=notation', '正对右面看'],
+    ['U2怎么转？', 'zh', 'structure&section=notation', '只把这一层转半圈'],
+    ['我刚才拧错一步怎么办？', 'zh', 'structure&section=notation', '哪一层动了'],
+    ['How do I make the daisy on a 3×3 cube?', 'en', 'daisy&section=overview', 'yellow center'],
+    ['只给我白十字教程的链接', 'zh', 'cross&section=white-edge', '三阶层先法 · 白棱归位'],
+  ] as const)('answers a beginner question with the exact LBL lesson: %s', async (question, lang, destination, cue) => {
+    const fetcher = vi.fn<typeof fetch>();
+    const result = await answerSiteQuestion(question, lang, config, AbortSignal.timeout(5000), fetcher);
+    expect(fetcher).not.toHaveBeenCalled();
+    expect(result.answer).toContain(cue);
+    expect(result.actions).toMatchObject([{ href: `/tutorial/lbl?step=${destination}` }]);
+    expect(result.sources).toMatchObject([{ ...result.actions![0], read: false }]);
+  });
+
+  it.each([
+    '四阶魔方白十字怎么做？', '不要链接，白十字怎么做？', '白十字怎么拼，顺便查一下世界纪录', "r'怎么拧？",
+  ])('leaves unrelated or explicitly constrained requests to the normal assistant: %s', question => {
+    expect(beginnerLessonAnswer(question, 'zh', false)).toBeUndefined();
+  });
+
   it.each(['魔方根', '魔方根？', 'CubeRoot', 'cuberoot', 'Cube Root', '魔方根CubeRoot', 'cuberoot.me'])('recognizes the site identity before speculative person lookup: %s',async question=>{
     vi.mocked(findAssistantPeople).mockClear();
     const fetcher=vi.fn<typeof fetch>().mockResolvedValue(modelResponse({answerKind:'general',answer:'魔方根就是 CubeRoot，也是站长的个人 IP。我是本站的聊天助手。',sourceIds:[]}));
@@ -334,15 +366,14 @@ describe('site assistant grounding', () => {
   });
   it.each(['WC 2027','2027年世锦赛的相关信息','世锦赛 2027 在哪办','明年世锦赛在哪里办','Where will next year\'s World Championship be held?'])('reads the official announcement summary before treating %s as a missing competition',async question=>{
     vi.useFakeTimers();vi.setSystemTime(new Date('2026-10-02T12:00:00Z'));
-    const fetcher=vi.fn<typeof fetch>().mockResolvedValueOnce(modelResponse({answer:'暂无比赛信息。'})).mockResolvedValueOnce(modelResponse({answer:'2027 年世锦赛将在瑞典乌普萨拉举办；2025 年 7 月公告未公布日期和报名安排。',sourceIds:['announcement:wc-2027']}))
-      .mockResolvedValueOnce(modelResponse({answer:'2027 年世锦赛将在瑞典乌普萨拉举办；2025 年 7 月公告未公布日期和报名安排。',sourceIds:['announcement:wc-2027']}));
+    const fetcher=vi.fn<typeof fetch>().mockResolvedValueOnce(modelResponse({answer:'2027 年世锦赛将在瑞典乌普萨拉举办；2025 年 7 月公告未公布日期和报名安排。',sourceIds:['announcement:wc-2027']}));
     const result=await answerSiteQuestion(question,'zh',config,AbortSignal.timeout(5000),withCatalog(fetcher));
-    const request=JSON.parse(String(fetcher.mock.calls[1][1]?.body));
+    const request=JSON.parse(String(fetcher.mock.calls[0][1]?.body));
     expect(request.messages[1].content).toContain('瑞典乌普萨拉');
     expect(request.messages[1].content).toContain('未公布具体比赛日期');
     expect(result.actions?.map(a=>a.href)).toEqual(['/wca/wc-2027']);
     expect(result.sources[0].read).toBe(true);
-    expect(fetcher).toHaveBeenCalledTimes(2);
+    expect(fetcher).toHaveBeenCalledTimes(1);
   });
   it('retains the actual topic when the model searches with a broad paraphrase',async()=>{
     const destinations=[...Array.from({length:15},(_,i)=>({lang:'en',href:`/map-${i}`,title:`Site map ${i}`})),{lang:'en',href:'/dev/architecture',title:'Architecture Atlas'}];
@@ -539,7 +570,7 @@ describe('site assistant grounding', () => {
     expect(messages.some((m:any)=>m.role==='user' && m.content.includes('"viewerWcaId":"2017YANR02"'))).toBe(true);
   });
   it.each(['我去年去了哪些国家参加比赛？每个国家多少场？','Which countries did I compete in during 2025?'])('preserves temporal constraints for the analytical planner: %s',async question=>{
-    const fetcher=vi.fn<typeof fetch>().mockResolvedValue(modelResponse({answer:'A date-filtered analysis is required.'}));
+    const fetcher=vi.fn<typeof fetch>().mockImplementation(async()=>modelResponse({answer:'1. The requested countries require date-filtered records.\n2. The per-country counts cannot be confirmed without those records.'}));
     await answerSiteQuestion(question,'en',config,AbortSignal.timeout(5000),withCatalog(fetcher),[],'2017YANR02');
     expect(fetcher.mock.calls[0][0]).toBe('https://model.example/v1/chat/completions');
     expect(JSON.parse(String(fetcher.mock.calls[0][1]?.body)).messages[1].content).toContain(question);
@@ -551,12 +582,12 @@ describe('site assistant grounding', () => {
     expect(result.artifacts).toEqual([]);
     expect(fetcher).not.toHaveBeenCalled();
   });
-  it('reads an explicitly numbered reconstruction even when the planner treats its ID as seconds',async()=>{
+  it('reads an explicitly numbered reconstruction before any model planning',async()=>{
     const fetcher=vi.fn<typeof fetch>()
-      .mockResolvedValueOnce(modelResponse({calls:[{tool:'recons',value:456,limit:1}]}))
       .mockResolvedValueOnce(Response.json({visibility:'public',solution:"R U // PLL"}));
     const result=await answerSiteQuestion('复盘 456 的 PLL 是什么？','zh',config,AbortSignal.timeout(5000),withCatalog(fetcher));
-    expect(fetcher.mock.calls[1][0]).toBe('https://api.cuberoot.me/v1/recon/456');
+    expect(fetcher).toHaveBeenCalledTimes(1);
+    expect(fetcher.mock.calls[0][0]).toBe('https://api.cuberoot.me/v1/recon/456');
     expect(result.artifacts?.[0]).toMatchObject({rows:[['1','R U // PLL']]});
   });
   it.each(['复盘 4.72 秒','复盘 456 秒','reconstruction 456 seconds','复盘 2026 年的比赛','复盘2026年的比赛'])('does not reinterpret an explicit duration as a reconstruction ID: %s',async question=>{
@@ -794,14 +825,16 @@ describe('site assistant grounding', () => {
     expect(other).toMatchObject({enable_thinking:false,temperature:0,max_tokens:4096});
     expect(other).not.toHaveProperty('thinking');
   });
-  it('uses the fast final response after a navigation-only lookup',async()=>{
+  it('uses the model fallback to find a video tool by description and returns the verified entry',async()=>{
     const bodies:any[]=[];
     const fetcher:typeof fetch=async(url,init)=>{
       if(String(url).endsWith('/assistant/pages.json'))return Response.json({pages:[],destinations:[]});
       const body=JSON.parse(String(init?.body));bodies.push(body);
       return modelResponse(bodies.length===1?{calls:[{tool:'navigation',query:'数帧',pageIds:[]}]}:{answer:'打开数帧页面。',sourceIds:['frame-count']});
     };
-    await answerSiteQuestion('打开数帧','zh',{...config,baseUrl:'https://api.deepseek.com'},AbortSignal.timeout(5000),withCatalog(fetcher));
+    const answer=await answerSiteQuestion('找一下能从复盘视频里数帧的工具','zh',{...config,baseUrl:'https://api.deepseek.com'},AbortSignal.timeout(5000),withCatalog(fetcher));
+    expect(answer.actions?.map(action=>action.href)).toEqual(['/frame-count']);
+    expect(answer.navigation).not.toBe('open');
     expect(bodies).toHaveLength(2);
     expect(bodies[0]).toMatchObject({thinking:{type:'disabled'}});
     expect(bodies[1]).toMatchObject({thinking:{type:'disabled'},max_tokens:4096});
@@ -847,12 +880,11 @@ describe('site assistant grounding', () => {
   });
   it('does not relabel ZBLS/ZBLL annotations as OLL/PLL from model memory',async()=>{
     const fetcher=vi.fn<typeof fetch>()
-      .mockResolvedValueOnce(modelResponse({calls:[{tool:'recon',id:2763}]}))
       .mockResolvedValueOnce(Response.json({visibility:'public',solution:"R U // GR/ZBLS\nR U R' // ZBLL-T6"}));
     const result=await answerSiteQuestion('复盘 2763 使用了什么 OLL 和 PLL？','zh',config,AbortSignal.timeout(5000),withCatalog(fetcher));
     expect(result.answer).toContain('没有独立的 OLL/PLL 标注');
     expect(result.answer).toContain('GR/ZBLS / ZBLL-T6');
-    expect(fetcher).toHaveBeenCalledTimes(2);
+    expect(fetcher).toHaveBeenCalledTimes(1);
     expect(result.artifacts?.[0]).toMatchObject({rows:[['1','R U // GR/ZBLS'],['2',"R U R' // ZBLL-T6"]]});
   });
   it('renders actual scope choices when requested first, without inventing a ranking or spending another model call',async()=>{
@@ -1199,3 +1231,13 @@ describe('site assistant authenticated route', () => {
 });
 
 const withCatalog = (fetcher: typeof fetch): typeof fetch => (url, init) => String(url)==='https://static.cuberoot.me/stats/index.json' ? Promise.resolve(Response.json({categories:[]})) : fetcher(url,init);
+
+it('retains an independent writing request after reading exact reconstruction labels',async()=>{
+  const model=vi.fn(async()=>modelResponse({answerKind:'grounded',answer:'1. 原始标注是 PLL-T。[[recon:76123]]\n2. 请把魔方递给我，好吗？',sourceIds:['recon:76123']}));
+  const fetcher:typeof fetch=async input=>String(input).endsWith('/recon/76123')
+    ? Response.json({visibility:'public',solution:'R U // PLL-T'}) : model();
+  const result=await answerSiteQuestion('请逐项回答：1）复盘 76123 的 PLL 是什么？2）把“给我魔方”改成礼貌请求。','zh',config,AbortSignal.timeout(4000),withCatalog(fetcher));
+  expect(result.answer).toContain('请把魔方递给我');
+  expect(result.answer).toContain('[[recon:76123]]');
+  expect(model).toHaveBeenCalledTimes(1);
+});

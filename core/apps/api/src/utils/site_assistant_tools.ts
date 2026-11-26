@@ -1,3 +1,4 @@
+import { glossaryText, glossaryNotationKey, glossaryListParts, glossaryGroupingSubject } from './site_assistant_glossary_aliases.js';
 import { roundAnswer, type RoundRow } from './site_assistant_round.js';
 import { checkpointAssistantTool } from './site_assistant_execution.js';
 import { attendanceLocationResult } from './site_assistant_locations.js';
@@ -8,6 +9,7 @@ import { selectCurrentRecords, personalRecordFlags, type WcaRecordRow } from '@c
 import { displayCuberName } from '@cuberoot/shared/cuber-name-display';
 import { WCA_EVENT_ORDER, EVENT_DISPLAY_ZH, EVENT_DISPLAY_EN } from '@cuberoot/shared/wca-events';
 import { localizeCompName } from '@cuberoot/shared/comp-localize';
+import { localizeCity } from '@cuberoot/shared/city-localize';
 import { formatDateRangeIso, isValidIsoDate } from '@cuberoot/shared/iso-date';
 import { roundChronologicalOrder } from '@cuberoot/shared/wca-round';
 import { mergeCompetitionIndexes } from '@cuberoot/shared/competition-index';
@@ -19,7 +21,9 @@ import { readAssistantNews } from './site_assistant_news.js';
 import { readStatisticsMetadata } from './site_assistant_statistics_metadata.js';
 import { readStatisticsRuntime } from './site_assistant_statistics_runtime.js';
 import { algorithmCards } from './site_assistant_algorithms.js';
+import { formulaReviewCall } from './site_assistant_formula_reviews.js';
 import { verifyCubeMovesCall } from './site_assistant_moves.js';
+import { competitionScheduleCall, readCompetitionSchedule } from './site_assistant_competition_schedule.js';
 
 const id = z.string().regex(/^[A-Za-z0-9_-]{1,100}$/);
 const competitionId = id.refine(value=>!/^\d{4}[A-Z]{4}\d{2}$/.test(value),'This is a person WCA ID; use wcaId, not compId.');
@@ -30,16 +34,18 @@ export const toolCallSchema = z.discriminatedUnion('tool', [
   analysisSchemaCall,
   analysisQueryCall,
   verifyCubeMovesCall,
+  formulaReviewCall,
+  competitionScheduleCall,
   z.object({ tool: z.literal('deliberate') }).strict(),
   z.object({ tool: z.literal('web_search'), query: z.string().trim().min(2).max(300), recency: z.enum(['any','day','week','month','year']).default('any'), from: date.optional(), to: date.optional(), dateBasis: z.enum(['publication','event']).optional() }).strict().refine(value=>!value.from || !value.to || value.from<=value.to,{message:'Date range is reversed'}),
   z.object({ tool: z.literal('news'), from: date.optional(), to: date.optional(), limit: z.number().int().min(1).max(10).default(5) }).strict().refine(value=>!value.from || !value.to || value.from<=value.to,{message:'Date range is reversed'}),
   z.object({ tool: z.literal('records'), event, region: z.string().regex(/^(world|[A-Z]{2})$/).default('world') }).strict(),
   z.object({ tool: z.literal('find_person'), query }).strict(),
   z.object({ tool: z.literal('person_countries'), location: z.object({country:z.string().regex(/^[A-Z]{2}$/), view:z.enum(['regions','cities','competitions']),region:z.string().trim().min(1).max(40).regex(/^[\p{L} .’-]+$/u).optional()}).strict().optional(), wcaId: z.string().regex(/^\d{4}[A-Z]{4}\d{2}$/), event: z.enum(WCA_EVENT_ORDER).optional(), from: date.optional(), to: date.optional() }).strict().refine(value=>!value.from || !value.to || value.from<=value.to,{message:'Date range is reversed'}),
-  z.object({ tool: z.literal('person_competitions'), wcaId: z.string().regex(/^\d{4}[A-Z]{4}\d{2}$/), event: z.enum(WCA_EVENT_ORDER).optional(), from: date.optional(), to: date.optional(), groupBy: z.literal('year').optional() }).strict().refine(value=>!value.from || !value.to || value.from<=value.to,{message:'Date range is reversed'}),
+  z.object({ tool: z.literal('person_competitions'), wcaId: z.string().regex(/^\d{4}[A-Z]{4}\d{2}$/), event: z.enum(WCA_EVENT_ORDER).optional(), from: date.optional(), to: date.optional(), groupBy: z.literal('year').optional(), view: z.literal('latest').optional() }).strict().refine(value=>!value.from || !value.to || value.from<=value.to,{message:'Date range is reversed'}).refine(value=>!value.groupBy || !value.view),
   z.object({ tool: z.literal('person'), wcaId: z.string().regex(/^\d{4}[A-Z]{4}\d{2}$/), event: z.enum([...WCA_EVENT_ORDER, 'all']).default('333'), metric: z.enum(['single','average']).optional(), rankings: z.boolean().optional(), progress: z.boolean().default(false), view: z.enum(['records','profile']).optional() }).strict().refine(value=>value.event!=='all' || !value.progress,{path:['event'],message:'Progress charts require one event; use all only for current personal bests.'}).refine(value=>value.view!=='profile' || (!value.metric && !value.progress && value.rankings===undefined),{path:['view'],message:'Use records view for metric, rankings or progress requests.'}),
   z.object({ tool: z.literal('rankings'), event, type: z.enum(['single','average']).default('single'), country: z.string().regex(/^([A-Z]{2}|_Asia|_Europe|_Africa|_North America|_South America|_Oceania)?$/).default(''), year: z.number().int().min(2003).max(2100).optional(), limit: z.number().int().min(1).max(20).default(10) }).strict(),
-  z.object({ tool: z.literal('competitions'), query: z.string().max(100).default(''), country: z.string().regex(/^([A-Z]{2})?$/).default(''), upcoming: z.boolean().default(true), from:date.optional(),to:date.optional(), limit: z.number().int().min(1).max(20).default(10) }).strict().refine(value=>!value.from || !value.to || value.from<=value.to,{message:'Date range is reversed'}),
+  z.object({ tool: z.literal('competitions'), query: z.string().max(100).default(''), city: z.string().trim().min(1).max(100).optional(), country: z.string().regex(/^([A-Z]{2})?$/).default(''), upcoming: z.boolean().default(true), from:date.optional(),to:date.optional(), limit: z.number().int().min(1).max(20).default(10) }).strict().refine(value=>!value.from || !value.to || value.from<=value.to,{message:'Date range is reversed'}),
   z.object({ tool: z.literal('annual_attendance'), limit:z.number().int().min(1).max(20).default(3) }).strict(),
   z.object({ tool: z.literal('competition_round'), compId:competitionId,event,details:z.boolean().optional(),people:z.array(z.string().regex(/^\d{4}[A-Z]{4}\d{2}$/)).min(1).max(20).optional(),round:z.enum(['semifinal','final','first','second','third','f','c','1','2','3','d','e','g','b','h','0']).default('final'),limit:z.number().int().min(1).max(20).default(10) }).strict(),
   z.object({ tool: z.literal('scrambles'), compId: competitionId, event, round: z.string().regex(/^[a-z0-9]{1,2}$/).default('f') }).strict(),
@@ -89,7 +95,6 @@ interface GlossaryEntry {
   headEn?: string | null; headZh?: string | null; bodyEn?: string | null; bodyZh?: string | null;
   source?: string;
 }
-const glossaryText = (value: string) => value.normalize('NFKC').trim().toLowerCase().replace(/\s+/g,' ');
 /** Resolve a bounded, unambiguous one-hop abbreviation from the same public read.
  * Preserve quoted headings; derived expansions carry both source identities. */
 function glossaryExpansions(entries: GlossaryEntry[], selected: GlossaryEntry[]) {
@@ -123,8 +128,13 @@ function glossaryMatches(entries: GlossaryEntry[], query: string) {
     return {entry,heads,aliases,bodies:[entry.bodyEn,entry.bodyZh,entry.body].filter((value):value is string=>typeof value==='string').map(glossaryText)};
   });
   const normalized=glossaryText(query);
-  const exact=(term:string)=>records.filter(record=>record.aliases.includes(term));
-  const punctuated=normalized.split(/\s*[,，、/;&+]\s*/).filter(Boolean);
+  const exact=(term:string)=>{
+    const literal=records.filter(record=>record.aliases.includes(term));
+    if(literal.length)return literal;
+    const key=glossaryNotationKey(term);
+    return key ? records.filter(record=>record.aliases.includes(key)) : [];
+  };
+  const punctuated=glossaryListParts(normalized);
   const knownTerms=(text:string)=>{
     if(exact(text).length) return [text];
     const connected=text.split(/\s*(?:和|与|及|\b(?:and|versus|vs\.?)\b)\s*/i).filter(Boolean);
@@ -139,7 +149,7 @@ function glossaryMatches(entries: GlossaryEntry[], query: string) {
     ? [...new Set(candidates)] : [normalized];
   const matches=terms.map(term=>{
     const direct=exact(term);
-    if(direct.length) return direct;
+    if(direct.length || glossaryNotationKey(term)) return direct;
     // Unknown terms retain the original full-text/phrase search behavior.
     const contains=(text:string)=>text.includes(term);
     return records.map(record=>({record,rank:record.heads.some(contains)?1:record.bodies.some(contains)?2:0}))
@@ -169,7 +179,7 @@ export function glossaryFieldAnswer(question:string,query:string,result:ToolResu
   const words=new Set('look up in the site glossary give its fully expanded english full complete name expand every all abbreviation abbreviations and chinese meaning one sentence with source sources citations each respectively please answer respond write'.split(' '));
   let rest=question.normalize('NFKC');
   for(const term of terms)rest=rest.replace(new RegExp(`\\b${term}\\b`,'g'),'');
-  rest=rest.replace(/英文|中文|完整|全称|名称|含义|意思|释义|是什么|站内|本站|百科|词条|根据|依据|查询|核对|分别|一句话|一句|每句|给出|并给|附上|来源|引用|展开|所有|缩写|只写|请|查|和|及|的|用|都|并|附/g,'')
+  rest=rest.replace(/英文|中文|完整|全称|名称|含义|意思|释义|是什么|站内|本站|百科|词条|词典|辞典|字典|术语表|解释|根据|依据|查询|核对|分别|一句话|一句|每句|给出|并给|附上|来源|引用|展开|所有|缩写|只写|请|查|和|及|的|用|都|并|附/g,'')
     .replace(/\b[a-z]+\b/gi,word=>words.has(word.toLowerCase())?'':word).replace(/[^\p{L}\p{N}]/gu,'');
   if(rest)return;
   const sources=new Map(result.sources.filter(source=>source.read).map(source=>[source.id,source]));
@@ -234,7 +244,7 @@ export function glossaryNameOnlyAnswer(question:string, observations:Array<{call
     for(const term of terms)rest=rest.replace(new RegExp(`\\b${term}\\b`,'g'),'');
     const words=new Set('what does mean means meaning definition define name stand stands for look up in the site glossary give its fully expanded english full complete expand every all abbreviation abbreviations and chinese one sentence with source sources citations each respectively please answer respond write correct correction earlier previous mistaken statement my your only actually is was not it that'.split(' '));
     if(expansionOnly)for(const word of ['just','expansion','form','of','cuberoot','citation','entry','entries','needed','to','support','supports','supporting','provide','include','a','cite','this'])words.add(word);
-    rest=rest.replace(/英文|中文|完整|全称|名称|含义|意思|释义|定义|是什么|什么意思|站内|本站|百科|词条|根据|依据|查询|核对|分别|一句话|一句|每句|给出|并给|附上|来源|引用|展开|所有|缩写|只写|只要|仅|请|查|和|及|的|用|都|并|附|纠正|更正|之前|刚才|前面|说法|错误|误说|我|你|说|成|不是|而是|是/g,'')
+    rest=rest.replace(/英文|中文|完整|全称|名称|含义|意思|释义|定义|是什么|什么意思|站内|本站|百科|词条|词典|辞典|字典|术语表|解释|根据|依据|查询|核对|分别|一句话|一句|每句|给出|并给|附上|来源|引用|展开|所有|缩写|只写|只要|仅|请|查|和|及|的|用|都|并|附|纠正|更正|之前|刚才|前面|说法|错误|误说|我|你|说|成|不是|而是|是/g,'')
       .replace(/\b[a-z]+\b/gi,word=>words.has(word.toLowerCase())?'':word).replace(/[^\p{L}\p{N}]/gu,'');
     if(rest)return;
     for(const term of terms) {
@@ -250,6 +260,52 @@ export function glossaryNameOnlyAnswer(question:string, observations:Array<{call
     }
   }
   return clauses.length?{answer:[...new Set(clauses)].join(english?'; ':'；')+(english?'.':'。'),sources:[...sources.values()],artifacts:[]}:undefined;
+}
+
+/** A complete first glossary answer can precede model composition. Only show
+ * a direct field of the uniquely named entry, with its actual provenance. */
+export function glossaryItemPreview(item:string, result:ToolResult, lang:'en'|'zh'):AssistantAnswer|undefined {
+  const text=item.trim().replace(/[。？?.!！]+$/u,'');
+  const name=text.match(/^([A-Z][A-Z0-9-]{1,12})\s*的(?:英文)?全称(?:是什么)?$/)
+    ?? text.match(/^what (?:is ([a-z0-9-]+) short for|does ([a-z0-9-]+) (?:stand for|expand to))$/i);
+  const usage=text.match(/^([\p{L}\d-]{1,30})(?:有什么用途|在(?:魔方)?(?:转动记号|公式记号|转动序列|记号|公式)(?:里|中)起什么作用)$/u);
+  const term=name?.[1] ?? name?.[2] ?? usage?.[1] ?? glossaryGroupingSubject(item);
+  if (!term) return;
+  if (name) {
+    // Reuse validation of all linked expansion source IDs. The lookup may
+    // contain other terms, but this preview answers exactly one requirement.
+    return glossaryNameOnlyAnswer('Give only the full name of '+term.toUpperCase(),[{call:{tool:'glossary',query:term.toUpperCase()},result}],lang);
+  }
+  const data=result.evidence as {entries?:Array<{sourceId:string;headZh?:string;headEn?:string;bodyZh?:string;bodyEn?:string}>;notEvidence?:boolean;truncated?:boolean;contextIncomplete?:boolean};
+  if(data?.notEvidence || data?.truncated || data?.contextIncomplete)return;
+  const key=glossaryNotationKey(term);
+  const matches=data?.entries?.filter(row=>row.headZh===term || row.headEn===term
+    || (key && row.headEn && glossaryText(row.headEn)===key));
+  if(matches?.length!==1)return;
+  const row=matches[0], source=result.sources.find(s=>s.read && s.id===row.sourceId);
+  const body=lang==='zh'?row.bodyZh:row.bodyEn;
+  if(!source || !body || body.length>400 || /\[|https?:\/\//i.test(body)
+    || !/用于|用来|用途|\bused (?:to|for)\b|\bfor grouping\b/i.test(body))return;
+  return {answer:body+' [['+source.id+']]',sources:[source],artifacts:[]};
+}
+
+/** An exact localized entry can supply the definition in a two-part request. */
+export function glossaryDefinitionExcerpt(term:string, result:ToolResult, lang:'zh'|'en'):AssistantAnswer|undefined {
+  const data=result.evidence as {entries?:Array<GlossaryEntry & {sourceId:string}>;total?:number;truncated?:boolean;contextIncomplete?:boolean;unmatchedTerms?:string[];notEvidence?:boolean};
+  if(data?.total!==1 || data.entries?.length!==1 || data.truncated || data.contextIncomplete || data.notEvidence || data.unmatchedTerms?.length)return;
+  const row=data.entries[0], subject=glossaryText(term);
+  const heads=[row.headEn,row.headZh,row.head].filter((s):s is string=>!!s).map(glossaryText);
+  const names=heads.flatMap(head=>[head,head.split('(',1)[0].trim()]);
+  const key=glossaryNotationKey(term);
+  if(!names.includes(subject) && !(key && names.includes(key)))return;
+  const source=result.sources.find(s=>s.id===row.sourceId && s.read);
+  const body=(lang==='zh'?row.bodyZh:row.bodyEn)?.trim();
+  const title=(lang==='zh'?row.headZh:row.headEn)?.trim();
+  if(!body || !title || !source || body.length>400 || /^(?:see\b|refer to\b|cf\.|参见|详见|另见)/iu.test(body))return;
+  // Allow notation such as [A:B], but no links, embedded markup or citation tokens.
+  const prose=(title+' '+body).replace(/\[[A-Za-z\d'′ ,:]+\]/gu,'');
+  if(/[\[\]<>|`*_\\#\r\n]|https?:\/\//iu.test(prose))return;
+  return {answer:title+(lang==='zh'?'：':': ')+body+' [['+source.id+']]',sources:[source],artifacts:[]};
 }
 
 /** Close only explicitly used derived names over their already-read sources. */
@@ -321,10 +377,11 @@ function selectAttendance(data: {results: Array<{competition_id: string; event_i
 }
 
 /** Only fixed public origins/endpoints. Never forwards cookies or credentials. */
-async function executeDataTool(call: Exclude<AssistantToolCall, {tool:'pages'|'navigation'|'analysis_schema'|'analysis_query'|'web_search'|'deliberate'|'lookup_cube_photo'}>, lang: 'zh'|'en', read: JsonReader, findPeople = findAssistantPeople,today=new Date().toISOString().slice(0,10),timeZone='UTC'): Promise<ToolResult> {
+async function executeDataTool(call: Exclude<AssistantToolCall, {tool:'pages'|'navigation'|'analysis_schema'|'analysis_query'|'web_search'|'deliberate'|'lookup_cube_photo'|'my_formula_reviews'}>, lang: 'zh'|'en', read: JsonReader, findPeople = findAssistantPeople,today=new Date().toISOString().slice(0,10),timeZone='UTC'): Promise<ToolResult> {
   if (call.tool === 'person_countries' && call.location) return attendanceLocationResult(call,call.location,lang,read);
   if (call.tool === 'annual_attendance') return annualAnswer(lang,call.limit);
   if (call.tool === 'competition_round') return roundAnswer(call,lang,read);
+  if (call.tool === 'competition_schedule') return readCompetitionSchedule(call, lang, read);
   if (call.tool === 'statistics_metadata') return call.view === 'runtime' ? readStatisticsRuntime(call, lang, read, Date.now, timeZone) : readStatisticsMetadata(call, lang);
   if (call.tool === 'news') return readAssistantNews(call, lang, read, timeZone);
   const label = (zh: string, en: string) => ({ zh, en })[lang];
@@ -416,6 +473,22 @@ async function executeDataTool(call: Exclude<AssistantToolCall, {tool:'pages'|'n
     // Results contain multiple events/rounds per competition. Count each ID
     // once, including DNF results; unrelated competition metadata is not attendance.
     const {competitions,unknownDateCompetitions} = selectAttendance(data,call);
+    if (call.view === 'latest') {
+      const sourceId = `person-latest-competition:${call.wcaId}:${call.event ?? 'all'}:${call.from ?? 'all'}:${call.to ?? 'all'}`;
+      out.sources.push(source(sourceId, title, `/wca/persons/${call.wcaId}`));
+      const latestDate = competitions.map(comp => comp.start!).sort().at(-1);
+      const latestIds = new Set(competitions.filter(comp => comp.start === latestDate).map(comp => comp.id));
+      const latest = data.comps.filter((comp: any) => latestIds.has(comp.id))
+        .map((comp: any) => ({ id: comp.id, name: compName(comp.id, comp.name ?? comp.id, comp.start_date), start: comp.start_date }));
+      out.evidence = { updated, wcaId: call.wcaId, latest, unknownDateCompetitions,
+        basis: 'Most recent competition start date among result-bearing competitions in imported WCA results. Preserve ties and the import cutoff. Missing dates may affect order. Registration is not attendance.' };
+      if (latest.length) {
+        for (const comp of latest) out.sources.push(source(`comp:${comp.id}`, comp.name, `/wca/comp/${comp.id}`));
+        table(label('最近有正式成绩的比赛', 'Most recent competitions with official results'), [label('比赛','Competition'), label('开始日期','Start date')],
+          latest.map((comp: {name: string; start: string}) => [comp.name, comp.start]), latest.map((comp: {id: string}) => `/wca/comp/${comp.id}`));
+      }
+      return out;
+    }
     const years = new Map<string,number>();
     const count = competitions.length;
     if (call.groupBy==='year') for (const comp of competitions) {
@@ -527,7 +600,19 @@ async function executeDataTool(call: Exclude<AssistantToolCall, {tool:'pages'|'n
     const upcomingOnly=call.upcoming && years.length===0 && !(call.from && call.from<today) && !(call.to && call.to<today);
     const all = upcomingOnly ? upcoming : mergeCompetitionIndexes(await read(`${stat}/all_past_comps.json`),upcoming);
     const q=call.query.toLocaleLowerCase().replace(/\s/g,'');
-    const matches=all.filter((c:any)=>(!upcomingOnly || c.end_date >= today) && (!call.from || c.end_date>=call.from) && (!call.to || c.start_date<=call.to) && (!call.country || c.country===call.country) && (worldQuery ? /^WC(?:19|20)\d{2}$/.test(c.id) && (!years.length || years.includes(c.id.slice(2))) : !q || `${c.id} ${c.name} ${c.city}`.toLocaleLowerCase().replace(/\s/g,'').includes(q)))
+    const cityKey = (value: string) => value.normalize('NFKC').trim().toLowerCase().replace(/\s+/g, '').replace(/市$/, '');
+    const city = call.city && cityKey(call.city);
+    const matchesCity = (host: unknown, country: string) => {
+      if (!city) return true;
+      if (typeof host !== 'string') return false;
+      const municipality = host.split(/[,，]/, 1)[0];
+      return [host, municipality, localizeCity(municipality, true, country)].some(name => cityKey(name) === city);
+    };
+    const localizedQuery = lang === 'zh' && /[\u3400-\u9fff]/.test(q);
+    const matches=all.filter((c:any)=>(!upcomingOnly || c.end_date >= today) && (!call.from || c.end_date>=call.from) && (!call.to || c.start_date<=call.to) && (!call.country || c.country===call.country)
+      && matchesCity(c.city,c.country)
+      && (worldQuery ? /^WC(?:19|20)\d{2}$/.test(c.id) && (!years.length || years.includes(c.id.slice(2))) : !q || `${c.id} ${c.name} ${c.city}`.toLocaleLowerCase().replace(/\s/g,'').includes(q)
+      || (localizedQuery && compName(c.id,c.name,c.start_date).replace(/\s/g,'').includes(q))))
       .sort((a:any,b:any)=>upcomingOnly ? a.start_date.localeCompare(b.start_date) : b.start_date.localeCompare(a.start_date));
     const rows=matches.slice(0,call.limit);
     out.evidence={...call,total:matches.length,returnedRows:rows.length,truncated:rows.length<matches.length,
@@ -575,6 +660,7 @@ async function executeDataTool(call: Exclude<AssistantToolCall, {tool:'pages'|'n
   } else if (call.tool === 'forum') {
     const data=await read(url(`${api}/forum/search`,{q:call.query,size:6}));
     out.evidence=data.threads.map((r:any)=>({id:r.id,title:r.title,snippet:r.snippet}));
+    if (!data.threads.length) out.outcome={state:'empty',reason:'no_matching_threads'};
     out.sources=data.threads.map((r:any)=>source(`forum:${r.id}`,r.title,`/forum/t/${r.id}`));
   } else if (call.tool === 'algorithms') {
     const path=call.set ? `${api}/alg/sets/${call.puzzle}/${call.set}` : `${api}/alg/sets`;

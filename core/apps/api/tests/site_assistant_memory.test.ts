@@ -159,6 +159,26 @@ describe('ordered compression and immutable inputs', () => {
     expect(result.history).not.toContain(messages[0]);
     expect(result.layers.protectedConstraints.some(item => item.text === messages[0].content)).toBe(true);
   });
+  it('rechecks the current evidence budget and isolates review memory across rounds', async () => {
+    const messages = history(8);
+    const fetcher = vi.fn<typeof fetch>().mockImplementation(async () => response());
+    const engine = createAssistantModel({...modelConfig, contextWindowTokens:16_384}, fetcher, AbortSignal.timeout(3000), '', messages);
+    await engine.complete(options);
+    await engine.complete({...options, isolated:true});
+    await engine.complete(options);
+    const inputs = fetcher.mock.calls.map(([, init]) => JSON.parse(String(init?.body)).messages);
+    expect(inputs[0][1].content).toContain('conversationMemory');
+    expect(inputs[2][1]).toEqual(inputs[0][1]);
+    const reviewMemory = JSON.parse(inputs[1][1].content).conversationMemory;
+    for (const layer of ['slidingSummary', 'activeExtracts']) {
+      for (const episode of reviewMemory[layer] ?? []) {
+        expect(episode.passages.every((p:{role:string}) => p.role === 'user')).toBe(true);
+      }
+    }
+    await expect(engine.complete({...options, context:{...options.context, evidence:'z'.repeat(60_000)}}))
+      .rejects.toMatchObject({code:'request_too_large'});
+    expect(fetcher).toHaveBeenCalledTimes(3);
+  });
   it('preserves system, question and required evidence on the real provider request', async () => {
     const fetcher = vi.fn<typeof fetch>().mockImplementation(async () => response());
     const context = { question: '写一封会议邀请邮件', evidence: [{ source: 'verified', value: 'EXACT_EVIDENCE' }] };

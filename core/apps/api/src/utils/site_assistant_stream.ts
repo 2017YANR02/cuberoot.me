@@ -1,26 +1,40 @@
-/** Native tools carry planning separately. Read only the final answer field.
- * Incomplete JSON escapes (including surrogate pairs) wait for the next chunk. */
-export function partialAssistantAnswer(json: string): string | undefined {
-  const prefix = /^\s*\{\s*(?:"answerKind"\s*:\s*"(?:general|site_content|grounded|image)"\s*,\s*)?"answer"\s*:\s*"/.exec(json);
-  if (!prefix) return;
+const answerPrefix = /^\s*\{\s*(?:"answerKind"\s*:\s*"(?:general|site_content|grounded|image)"\s*,\s*)?"answer"\s*:\s*"/;
+const escapes: Record<string, string> = { '"': '"', '\\': '\\', '/': '/', n: '\n', r: '\r', t: '\t', b: '\b', f: '\f' };
+
+/** One append-only provider response per reader. Never expose fields after answer. */
+export function createPartialAnswerReader() {
+  let offset = 0;
   let value = '';
-  for (let i = prefix[0].length; i < json.length; i++) {
-    const char = json[i];
-    if (char === '"') break;
-    if (char !== '\\') { value += char; continue; }
-    const escape = json[++i];
-    if (!escape) break;
-    if (escape === 'u') {
-      const hex = json.slice(i + 1, i + 5);
-      if (!/^[\da-f]{4}$/i.test(hex)) break;
-      value += String.fromCharCode(parseInt(hex, 16)); i += 4;
-    } else {
-      const escapes: Record<string, string> = { '"': '"', '\\': '\\', '/': '/', n: '\n', r: '\r', t: '\t', b: '\b', f: '\f' };
-      if (!(escape in escapes)) break;
-      value += escapes[escape];
+  let ended = false;
+  return (json: string): string | undefined => {
+    if (!offset) {
+      const match = answerPrefix.exec(json);
+      if (!match) return;
+      offset = match[0].length;
     }
-  }
-  return value.replace(/[\uD800-\uDBFF]$/, '');
+    while (!ended && offset < json.length) {
+      const char = json[offset];
+      if (char === '"') { ended = true; break; }
+      if (char !== '\\') { value += char; offset++; continue; }
+      const escape = json[offset + 1];
+      if (escape === 'u') {
+        const hex = json.slice(offset + 2, offset + 6);
+        if (!/^[\da-f]{4}$/i.test(hex)) break;
+        value += String.fromCharCode(parseInt(hex, 16));
+        offset += 6;
+      } else {
+        if (!escape || !(escape in escapes)) break;
+        value += escapes[escape];
+        offset += 2;
+      }
+    }
+    const last = value.charCodeAt(value.length - 1);
+    return last >= 0xd800 && last <= 0xdbff ? value.slice(0, -1) : value;
+  };
+}
+
+export function partialAssistantAnswer(json: string) {
+  return createPartialAnswerReader()(json);
 }
 
 /** Metadata precedes prose so an ungrounded site draft is held before display. */

@@ -7,7 +7,13 @@ import { fileURLToPath } from 'node:url';
 import { mkdirSync, mkdtempSync, writeFileSync, readFileSync, rmSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { createHash } from 'node:crypto';
-import { loadEvaluationResume, resumeHelperSha256 } from '../scripts/assistant-evaluation-resume.mts';
+import { evaluationRepeats, loadEvaluationResume, resumeHelperSha256 } from '../scripts/assistant-evaluation-resume.mts';
+
+it('uses only the authorized repeats of a paired comparison',()=>{
+  expect(evaluationRepeats({})).toEqual([1,2]);
+  expect(evaluationRepeats({repeats:1})).toEqual([1]);
+  for(const repeats of [0,1.5,3])expect(()=>evaluationRepeats({repeats})).toThrow();
+});
 
 it.each([['memory_headroom',false],['memory_headroom',true],['monitor_lease_expired',false],['worker-memory',true]] as const)(
   'resumes only unfinished keys after %s with measured usage %s and rejects altered evidence', (reason,measured) => {
@@ -75,6 +81,17 @@ it.each([['memory_headroom',false],['memory_headroom',true],['monitor_lease_expi
       writeFileSync(resolve(prior,responseFile),'complete provider response');
     }
     if(reason==='worker-memory'){
+      const log='local-resources.jsonl';
+      const initial=JSON.parse(readFileSync(resolve(prior,log),'utf8').trim());
+      const terminal={...usage,free:workerStop.free,at:new Date(12012).toISOString(),monotonicAtMs:1212};
+      const recordTerminal=(value:typeof terminal)=>{
+        rows(prior,log,[initial,value]);
+        save(next,'resume.json',{...spec,priorFiles:{...spec.priorFiles,[log]:hash(resolve(prior,log))}});
+      };
+      recordTerminal(terminal);expect(loadEvaluationResume(next,root)!.done).toEqual(['1:before:A']);
+      recordTerminal({...terminal,free:usage.free});expect(()=>loadEvaluationResume(next,root)).toThrow();
+      recordTerminal({...terminal,swapouts:1});expect(()=>loadEvaluationResume(next,root)).toThrow();
+      rows(prior,log,[initial]);
       save(prior,'resource-stop.json',{...workerStop,at:new Date(25000).toISOString()});
       save(next,'resume.json',{...spec,priorFiles:{...spec.priorFiles,'resource-stop.json':hash(resolve(prior,'resource-stop.json'))}});
       expect(()=>loadEvaluationResume(next,root)).toThrow(); // A rehashed record still needs the matching supervisor sample.

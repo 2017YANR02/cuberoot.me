@@ -2,7 +2,7 @@ import { modelResponse } from './fixtures/site_assistant_model.js';
 import { AssistantSteered, withAssistantExecution } from '../src/utils/site_assistant_execution.js';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { readAssistantEvents, type AssistantStreamEvent } from '@cuberoot/shared/site-assistant';
-import { partialAssistantAnswer, partialAssistantAnswerKind } from '../src/utils/site_assistant_stream.js';
+import { createPartialAnswerReader, partialAssistantAnswer, partialAssistantAnswerKind } from '../src/utils/site_assistant_stream.js';
 import { answerSiteQuestion, requestedAssistantLimit } from '../src/utils/site_assistant.js';
 import { createSiteAssistantRoutes } from '../src/routes/site_assistant.js';
 import { AssistantFailure } from '../src/utils/site_assistant_diagnostics.js';
@@ -18,6 +18,15 @@ const request = () => new Request('https://api.example/site-assistant', { method
 const deps = { config: () => config, now: Date.now, reserve: async () => ({ allowed: true, retryAfter: 60 }), authenticate: async () => ({ uid: 1, wcaId: '2017YANR02' }) };
 
 describe('assistant streaming', () => {
+  it('decodes append-only previews identically across every escape and field boundary', () => {
+    const reader = createPartialAnswerReader();
+    const wire = '{"answerKind":"general","answer":"A\\n\\uD83D\\uDE00中\\"Z","sourceIds":["hidden"]}';
+    for (let end = 1; end <= wire.length; end++) {
+      const prefix = wire.slice(0, end);
+      expect(reader(prefix)).toBe(partialAssistantAnswer(prefix));
+    }
+    expect(reader(wire)).toBe(JSON.parse(wire).answer);
+  });
   it.each(['数量改为只看最近 1 条公开复盘。','只保留一条。','Show only one reconstruction.'])('uses the newest message limit before validating and caching a tool call: %s',async update=>{
     const messages=['查最近 3 条公开复盘，列出选手和比赛。',update,'保留来源链接。'];
     const calls:unknown[]=[];let models=0;

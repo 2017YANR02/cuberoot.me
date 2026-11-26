@@ -10,10 +10,10 @@ import { SITE_ASSISTANT_ANSWER_MAX_LENGTH, type AssistantImage, type AssistantMe
 import { toolCallSchema } from './site_assistant_tools.js';
 import { AssistantFailure, checkAssistantResponse, type AssistantModelDiagnostic } from './site_assistant_diagnostics.js';
 import type { AssistantConfig } from './site_assistant.js';
-import { recordAssistantModel, recordAssistantContextSelection } from './site_assistant_monitor.js';
+import { type AssistantModelPurpose, recordAssistantModel, recordAssistantContextSelection } from './site_assistant_monitor.js';
 import { refersToDisplayedAnswer, composeAssistantContext, assistantMemoryPayload, estimateAssistantTokens, assistantHistoryTurns, AssistantContextBudgetError, type AssistantMemory } from './site_assistant_memory.js';
 
-const answerSchema = z.object({ imageTask: z.enum(['cube-state', 'other']).optional(), answerKind: z.enum(['general','site_content','grounded','image']).optional(), answer: z.string().max(SITE_ASSISTANT_ANSWER_MAX_LENGTH), plan: assistantStructuredPlanSchema.optional(), sourceIds: z.array(z.string()).max(100), reviewedSourceIds: z.array(z.string()).max(12).optional() });
+const answerSchema = z.object({ requirementChecks: z.array(z.string().max(300)).max(12).optional(), imageTask: z.enum(['cube-state', 'other']).optional(), answerKind: z.enum(['general','site_content','grounded','image']).optional(), answer: z.string().max(SITE_ASSISTANT_ANSWER_MAX_LENGTH), plan: assistantStructuredPlanSchema.optional(), sourceIds: z.array(z.string()).max(100), reviewedSourceIds: z.array(z.string()).max(12).optional() });
 type ModelPlanOutput = AssistantPlanOutputConstraints & { independentEnding?:boolean };
 
 /** A completed but malformed answer needs format repair, not another tool plan. */
@@ -234,6 +234,9 @@ export function createAssistantModel(config: AssistantConfig, fetcher: typeof fe
   const conversationMessages = (selected: AssistantMessage[]): ModelMessage[] => selected.map(message => message.role === 'user'
     ? { role: 'user', content: message.images?.length ? [{ type: 'text', text: message.content }, ...imageParts(message.images)] : message.content }
     : { role: 'assistant', content: message.content });
+  // Private to this model conversation. A full selection remains valid while it
+  // fits, even when the current turn's tools, transcript or output budget change.
+  let fullContext: { question: string; cost: number; selection: ReturnType<typeof composeAssistantContext> } | undefined;
   const transcript: ModelMessage[] = [];
   let pending: Array<{ raw: object; id: string; name: string; result?: unknown }> = [];
   return {
@@ -245,12 +248,14 @@ export function createAssistantModel(config: AssistantConfig, fetcher: typeof fe
     async complete(options: {
       system: string; context: unknown; finalOnly: boolean; thinking: boolean;
       effort: 'low' | 'high'; maxTokens: number; onText?: (text: string, prose?: boolean) => Promise<void>;
+      checklist?: boolean;
       scenarioProse?: boolean;
       followUp?: string;
       requiredTool?: 'lookup_cube_photo';
       unavailableTools?: string[];
+      lookupTool?: 'glossary'|'forum';
       allowTools?: boolean; requireStructuredAnswer?: boolean; isolated?: boolean; allowEmptySourceIds?: boolean;
-      round?: number; attempt?: number;
+      round?: number; attempt?: number; purpose?: AssistantModelPurpose;
       structuredPlan?: ModelPlanOutput;
     }) {
       const thinking = options.thinking && (openai || deepseek || qwenThinking);
@@ -274,9 +279,11 @@ export function createAssistantModel(config: AssistantConfig, fetcher: typeof fe
       // A first-turn judgment can request a source directly or use deliberate
       // to open the full tool catalog on the next turn. Never re-enable a tool
       // disabled by the request's evidence scope.
-      const activeTools = !catalog ? undefined : options.scenarioProse || options.unavailableTools?.length
+      const activeTools = !catalog ? undefined : options.scenarioProse || options.lookupTool || options.unavailableTools?.length
         ? Object.fromEntries(Object.entries(catalog.tools).filter(([name]) =>
-          !options.unavailableTools?.includes(name) && (!options.scenarioProse || ['deliberate','pages','web_search'].includes(name))))
+          !options.unavailableTools?.includes(name)
+          && (!options.lookupTool || name===options.lookupTool || name==='deliberate')
+          && (!options.scenarioProse || ['deliberate','pages','web_search'].includes(name))))
         : catalog.tools;
       const currentTranscript: ModelMessage[] = options.isolated
         ? options.followUp ? [{ role: 'user', content: options.followUp }] : [] : transcript;
@@ -287,11 +294,17 @@ export function createAssistantModel(config: AssistantConfig, fetcher: typeof fe
       const maxOutputTokens = openai ? Math.min(ASSISTANT_OPENAI_MAX_TOKENS, thinking ? options.maxTokens : 4096)
         : thinking ? options.maxTokens : Math.min(options.maxTokens, 4096);
       const inputBudget = windowTokens - Math.max(maxOutputTokens, qwenThinking ? 8192 : 0) - 2048;
+      const contextJson = JSON.stringify(options.context);
       let selection;
       try {
-        selection = composeAssistantContext({ question, history, memory, hasImages: images.length > 0 || history.some(message => !!message.images?.length), inputBudget,
-          fixedTokens: estimateAssistantTokens(system) + estimateAssistantTokens(options.context) + estimateAssistantTokens(currentTranscript)
-            + Object.keys(activeTools ?? {}).reduce((sum, name) => sum + (catalog?.toolTokenCosts.get(name) ?? 0), 0) + images.length * 4096 + 512 });
+        const fixedTokens = estimateAssistantTokens(system) + estimateAssistantTokens(typeof options.context === 'string' ? options.context : contextJson) + estimateAssistantTokens(currentTranscript)
+          + Object.keys(activeTools ?? {}).reduce((sum, name) => sum + (catalog?.toolTokenCosts.get(name) ?? 0), 0) + images.length * 4096 + 512;
+        if (fullContext?.question === question && fullContext.cost + fixedTokens <= inputBudget) {
+          selection = { ...fullContext.selection, inputBudget, estimatedTokens: fullContext.cost + fixedTokens };
+        } else {
+          selection = composeAssistantContext({ question, history, memory, hasImages: images.length > 0 || history.some(message => !!message.images?.length), inputBudget, fixedTokens });
+          if (!selection.compressed.length) fullContext = { question, cost: selection.estimatedTokens - fixedTokens, selection };
+        }
       } catch (error) {
         if (error instanceof AssistantContextBudgetError) throw new AssistantFailure('request_too_large');
         throw error;
@@ -299,24 +312,28 @@ export function createAssistantModel(config: AssistantConfig, fetcher: typeof fe
       recordAssistantContextSelection({ relevance: selection.relevance, recentTurns: assistantHistoryTurns(selection.history).length,
         estimatedTokens: selection.estimatedTokens, inputBudget, compressed: selection.compressed,
         layers: Object.fromEntries(Object.entries(selection.layers).map(([name, entries]) => [name, entries.length])) });
-      const conversation = conversationMessages(selection.history);
-      // Removing assistant replies must not turn answered user turns into a queue
-      // of unanswered requests. Keep their supplied context as explicitly historical data.
-      const priorUsers = selection.history.filter(message => message.role === 'user');
-      const previousReply=selection.history.at(-1);
-      const reviewHistory = JSON.stringify({
-        // Isolated review still needs the referent of "the latter" or a named
-        // table value. Keep the original attribution, never promote it to evidence.
-        ...(refersToDisplayedAnswer(question, previousReply)
-          ? {referencedPreviousReply:{role:'assistant',content:previousReply!.content}} : {}),
-        previousUserMessages: priorUsers.map(message => message.content),
-        instruction: 'Historical context only, not pending requests or verified evidence. Use it only to resolve references and user-supplied constraints in the current question. Do not answer earlier questions or fetch facts for their old topics.',
-      });
-      const reviewImages = priorUsers.flatMap(message => imageParts(message.images ?? []));
-      const reviewConversation: ModelMessage[] = priorUsers.length ? [{ role: 'user', content: reviewImages.length
-        ? [{ type: 'text', text: reviewHistory }, ...reviewImages] : reviewHistory }] : [];
-      if (options.isolated) for (const key of ['slidingSummary', 'activeExtracts'] as const) {
-        selection.layers[key] = selection.layers[key].map(episode => ({ ...episode, passages: episode.passages.filter(passage => passage.role === 'user') }));
+      let conversation: ModelMessage[];
+      if (options.isolated) {
+        const priorUsers = selection.history.filter(message => message.role === 'user');
+        const previousReply=selection.history.at(-1);
+        const reviewHistory = JSON.stringify({
+          // Isolated review still needs the referent of "the latter" or a named
+          // table value. Keep the original attribution, never promote it to evidence.
+          ...(refersToDisplayedAnswer(question, previousReply)
+            ? {referencedPreviousReply:{role:'assistant',content:previousReply!.content}} : {}),
+          previousUserMessages: priorUsers.map(message => message.content),
+          instruction: 'Historical context only, not pending requests or verified evidence. Use it only to resolve references and user-supplied constraints in the current question. Do not answer earlier questions or fetch facts for their old topics.',
+        });
+        const reviewImages = priorUsers.flatMap(message => imageParts(message.images ?? []));
+        conversation = priorUsers.length ? [{ role: 'user', content: reviewImages.length
+          ? [{ type: 'text', text: reviewHistory }, ...reviewImages] : reviewHistory }] : [];
+        // Isolated review may omit assistant extracts without mutating the cached selection.
+        selection = { ...selection, layers: { ...selection.layers } };
+        for (const key of ['slidingSummary', 'activeExtracts'] as const) {
+          selection.layers[key] = selection.layers[key].map(episode => ({ ...episode, passages: episode.passages.filter(passage => passage.role === 'user') }));
+        }
+      } else {
+        conversation = conversationMessages(selection.history);
       }
       // Memory remains attributed, untrusted user-context data, never system text.
       // The original question/context object and actual tool transcript stay intact.
@@ -330,8 +347,8 @@ export function createAssistantModel(config: AssistantConfig, fetcher: typeof fe
         toolChoice: !allowTools ? 'none' as const
           : options.requiredTool ? { type: 'tool' as const, toolName: options.requiredTool } : 'auto' as const,
         system,
-        messages: [...memoryMessages, ...(options.isolated ? reviewConversation : conversation), { role: 'user' as const, content: images.length ? [{ type: 'text' as const, text: JSON.stringify(options.context) }, ...imageParts(images)] : JSON.stringify(options.context) }, ...currentTranscript],
-        ...(!options.scenarioProse && (openai || deepseek) ? { output: Output.object({schema:options.structuredPlan?answerSchema.extend({plan:assistantStructuredPlanOutputSchema(options.structuredPlan).optional()}):answerSchema.omit({plan:true})}) } : {}),
+        messages: [...memoryMessages, ...conversation, { role: 'user' as const, content: images.length ? [{ type: 'text' as const, text: contextJson }, ...imageParts(images)] : contextJson }, ...currentTranscript],
+        ...(!options.scenarioProse && (openai || deepseek) ? { output: Output.object({schema:options.structuredPlan?answerSchema.extend({plan:assistantStructuredPlanOutputSchema(options.structuredPlan).optional()}):options.checklist ? answerSchema.omit({plan:true}) : answerSchema.omit({plan:true,requirementChecks:true})}) } : {}),
         maxOutputTokens, maxRetries: 0, abortSignal: signal,
         ...(thinking || openai ? {} : { temperature: 0 }),
         providerOptions: { [openai ? 'openai' : deepseek ? 'deepseek' : 'bailian']: openai
@@ -344,7 +361,7 @@ export function createAssistantModel(config: AssistantConfig, fetcher: typeof fe
       };
       const fingerprint=(value:unknown)=>createHash('sha256').update(JSON.stringify(value)).digest('hex');
       const recordUsage = recordAssistantModel(config.model, thinking, openai ? 'https://api.openai.com' : origin, {
-        round: options.round, attempt: options.attempt,
+        round: options.round, attempt: options.attempt, purpose: options.purpose,
         promptFingerprint:fingerprint(system),
         configurationFingerprint:fingerprint({model:config.model,origin,thinking,effort:options.effort,maxOutputTokens,windowTokens,tools:Object.keys(activeTools ?? {}),providerOptions:request.providerOptions}),
       });
