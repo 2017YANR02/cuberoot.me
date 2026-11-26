@@ -1,109 +1,127 @@
-/* /about — 纯文字"关于"页 */
-
 .about-page {
   min-height: 100vh;
+  padding: 2rem clamp(1.25rem, 5vw, 4rem) 4rem;
   background: var(--background);
   color: var(--foreground);
-  padding: 2rem 1.5rem 4rem;
   font-family: var(--font-sans);
 }
 
-.about-header {
-  max-width: 720px;
-  margin: 0 auto 2rem;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
+.about-shell {
+  max-width: 62rem;
+  margin-inline: auto;
 }
 
-.about-back {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  color: var(--muted-foreground);
-  text-decoration: none;
-  font-size: 0.85rem;
-  transition: color 0.15s;
+.about-topbar {
+  margin-bottom: clamp(2rem, 6vw, 4rem);
 }
 
-.about-back:hover {
-  color: var(--foreground);
+.about-intro {
+  max-width: 39rem;
+  margin-bottom: clamp(2rem, 5vw, 3.75rem);
 }
 
-.about-main {
-  max-width: 720px;
-  margin: 0 auto;
-}
-
-.about-title {
+.about-intro h1 {
+  margin: 0 0 1rem;
   font-family: var(--font-serif);
-  font-size: 2rem;
+  font-size: clamp(2.5rem, 6vw, 4rem);
   font-weight: 400;
-  letter-spacing: -0.01em;
-  margin: 0 0 1rem;
+  line-height: 1.12;
+  letter-spacing: -0.025em;
 }
 
-.about-lead {
-  font-size: 0.95rem;
-  line-height: 1.6;
+.about-intro p {
+  margin: 0;
   color: var(--muted-foreground);
-  margin: 0 0 2.5rem;
+  font-size: clamp(1rem, 2vw, 1.125rem);
+  line-height: 1.75;
 }
 
-.about-section-title {
-  font-family: var(--font-serif);
-  font-size: 1.2rem;
-  font-weight: 500;
-  margin: 0 0 1rem;
-  padding-bottom: 0.5rem;
+.about-founders,
+.about-related {
+  border-top: 1px solid var(--border-default);
 }
 
-.about-credits {
-  list-style: none;
-  padding: 0;
-  margin: 0 0 2.5rem;
-  font-size: 0.9rem;
-  line-height: 1.85;
+.about-founders {
+  padding-top: clamp(1.5rem, 4vw, 2.5rem);
 }
 
-.about-credits li {
+.about-founders h2 {
+  margin: 0 0 1.75rem;
+  font-size: clamp(1.5rem, 4vw, 2rem);
+  line-height: 1.2;
+  letter-spacing: -0.015em;
+}
+
+.about-founder-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 2.5rem clamp(2rem, 8vw, 6rem);
+}
+
+.about-founder-photo {
+  width: min(100%, 13.5rem);
+  aspect-ratio: 1;
+  margin-bottom: 1.25rem;
+  overflow: hidden;
+}
+
+.about-founder-photo img {
   display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
-.about-credits a {
-  color: var(--foreground);
-  text-decoration: none;
-  font-weight: 500;
-  transition: color 0.15s;
+.about-founder-photo[data-crop="close"] img {
+  object-position: 53% center;
+  transform: scale(1.6);
+  transform-origin: 65% 25%;
 }
 
-.about-credits a:hover {
+.about-founder h3 {
+  margin: 0;
+  font-size: clamp(1.35rem, 3vw, 1.65rem);
+  line-height: 1.25;
+}
+
+.about-founder-role {
+  margin: 0.35rem 0 0.75rem;
+  font-weight: 600;
+}
+
+.about-founder-bio {
+  margin: 0;
+  color: var(--muted-foreground);
+  line-height: 1.75;
+}
+
+.about-related {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem 1.5rem;
+  margin-top: clamp(2.5rem, 6vw, 4rem);
+  padding-top: 1.25rem;
+}
+
+.about-founder h3 a,
+.about-related a {
+  color: inherit;
+  text-decoration: underline;
+  text-decoration-color: var(--border-strong);
+  text-underline-offset: 0.24em;
+}
+
+.about-founder h3 a:hover,
+.about-related a:hover {
   color: var(--accent);
 }
 
-.about-credits-desc {
-  color: var(--muted-foreground);
+@media (max-width: 600px) {
+  .about-founder-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
 }
 
-.about-source {
-  font-size: 0.85rem;
-  color: var(--muted-foreground);
-  margin-top: 2rem;
-}
-
-.about-source a {
-  color: var(--muted-foreground);
-  text-decoration: underline;
-  text-decoration-color: var(--border-default);
-  text-underline-offset: 3px;
-  transition: color 0.15s;
-}
-
-.about-source a:hover {
-  color: var(--foreground);
-}
-
-/* Site scenery: preserve the original surface when scenery is disabled. */
 @media screen {
   body[data-site-scenery] .about-page {
     background: transparent;

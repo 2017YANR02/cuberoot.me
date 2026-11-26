@@ -197,7 +197,7 @@
 | [x] | 其他 | `site` | `/site` | 网页白名单 |
 | [x] | 其他 | `wb` | `/wb` | 网页白名单 |
 | [x] | 其他 | `achievements` | `/achievements` | 网页白名单 |
-| [x] | 其他 | `creator` | `/about/ruimin` | 网页白名单 |
+| [x] | 其他 | `creator` | `/ruimin-yan` | 网页白名单 |
 | [x] | 关于 | `about` | `/about` | 网页白名单 |
 | [x] | 关于 | `credits` | `/credits` | 网页白名单 |
 | [x] | 关于 | `support` | `/support` | 网页白名单，与“我的”页复用同一路由 |

@@ -30,7 +30,7 @@ export const unframedSurfaces = [
   { selector: '.t10h-controls', kind: 'container', route: '/zh/wca/results?events=333,222' },
   ...[
     ['.wca-stats-index-section-header', '/zh/wca'],
-    ['.about-section-title', '/zh/about'],
+    ['.about-founders h2', '/zh/about'],
     ['.wiki-section-title', '/zh/wiki'],
     ['.calca-section-title', '/zh/calc-about'],
     ['.fca-section-title', '/zh/frame-count-about'],

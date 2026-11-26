@@ -1,7 +1,7 @@
 import { existsSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { AWARD_GROUPS, EDUCATION } from '@/app/[lang]/about/ruimin/profile-data';
+import { AWARD_GROUPS, EDUCATION } from '@/app/[lang]/ruimin-yan/profile-data';
 import { CREATOR_PROFILE, creatorProfileHrefForWcaId } from '@/lib/creator-profile';
 
 describe('creator profile', () => {

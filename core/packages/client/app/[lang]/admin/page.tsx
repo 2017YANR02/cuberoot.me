@@ -42,7 +42,7 @@ const DESTINATIONS: AdminDestination[] = [
   { href: '/music/manage', Icon: Music, title: ['音乐审核与管理', 'Music review and management'] },
   { href: '/quiz/manage', Icon: ListChecks, title: ['社区题管理', 'Community questions'] },
   { href: '/site', Icon: Compass, title: ['网站导航管理', 'Site directory'] },
-  { href: '/about/ruimin', Icon: Images, title: ['创作者作品管理', 'Creator gallery'] },
+  { href: '/ruimin-yan', Icon: Images, title: ['创作者作品管理', 'Creator gallery'] },
   { href: '/membership', Icon: Users, title: ['会员方案与权益', 'Membership plans and benefits'] },
   { href: '/forum/review', Icon: ShieldCheck, title: ['论坛审核', 'Forum moderation'] },
   { href: '/wiki', Icon: BookOpen, title: ['词条管理', 'Wiki entries'] },

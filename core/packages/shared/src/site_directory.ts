@@ -98,7 +98,7 @@ export const SITE_DIRECTORY_TEXTS = {
 export type SiteDirectoryTextKey = keyof typeof SITE_DIRECTORY_TEXTS;
 
 export const SITE_CREATOR_PROFILE = {
-  href: '/about/ruimin',
+  href: '/ruimin-yan',
   wcaId: '2017YANR02',
   nameZh: '颜瑞民',
   nameEn: 'Ruimin Yan',

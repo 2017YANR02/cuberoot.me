@@ -83,10 +83,10 @@ export const PAGE_META: Record<string, PageMetaEntry> = {
   },
   'competition-verify': { title: { zh: '输入验证码', en: 'Enter the image code' } },
   'about': {
-    title: { zh: '关于', en: 'About' },
+    title: { zh: '关于魔方根', en: 'About CubeRoot' },
     description: {
-      zh: '关于 CubeRoot:这个站是什么、由谁维护、数据从哪来。',
-      en: 'About CubeRoot — what this site is, who maintains it, and where the data comes from.',
+      zh: '了解魔方根的计时、复盘、公式训练、求解和 WCA 数据工具，以及网站的创始团队。',
+      en: 'Learn about CubeRoot’s timing, reconstruction, algorithm training, solving, and WCA data tools, and meet its founders.',
     },
   },
   'credits': {
@@ -96,7 +96,7 @@ export const PAGE_META: Record<string, PageMetaEntry> = {
       en: 'Open-source projects, public references, assets, and related work that helped build and inspire CubeRoot.',
     },
   },
-  'about/ruimin': {
+  'ruimin-yan': {
     title: { zh: '颜瑞民', en: 'Ruimin Yan' },
     description: {
       zh: 'CubeRoot 创始人颜瑞民的个人介绍、教育经历、魔方与数学工作，以及高中与大学阶段的获奖档案。',

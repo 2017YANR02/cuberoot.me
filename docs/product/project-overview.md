@@ -22,8 +22,8 @@
 
 - `/membership` 及公开 `GET https://api.cuberoot.me/v1/membership/plans`：本轮读取到个人 monthly/yearly、enterprise_monthly/enterprise_yearly。会员页仍标注测试状态与自动续费未开放；API `payEnabled` 为 true 不代表微信及全部资质完成，不进行真实下单。
 - `lib/membership-perks.ts`：从原会员页提取原文，供会员页与 BP 共用。个人包含云端求解、高手复盘，会员页另有个人视频复盘；企业增加师生展示、企业页、资料存储和课程方案。提取未改会员支付逻辑、价格、权益或额度。
-- `/about/ruimin`：南开数学/金融数学与物理、乔治华盛顿数学硕士、数学竞赛获奖、2017 年起参赛、著作与内容积累。没有读取私有访谈。
-- `/achievements` 与现有工具入口：原创求解、交互、复盘、统计；开源和数据边界链接 `/about`。
+- `/ruimin-yan`：南开数学/金融数学与物理、乔治华盛顿数学硕士、数学竞赛获奖、2017 年起参赛、著作与内容积累。没有读取私有访谈。
+- `/achievements` 与现有工具入口：原创求解、交互、复盘、统计；开源和数据边界链接 `/credits`。
 - `lib/infrastructure-costs.ts`：成本类别与用途、设备名称复用原清单，本页不渲染价格、总额或汇率；设备记录不等同于本项目累计实付，不重复列为新采购。
 - `docs/product/platform/teaching-saas-plan.md`、`docs/product/apps/mobile-app-roadmap.md`：只用于核对研发基础与未来方向，不把文档中的本地实现直接说成已完成机构商用或所有端发布。
 

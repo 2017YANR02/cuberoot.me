@@ -124,7 +124,7 @@
 | --- | --- | --- | --- |
 | [core/packages/client/app/[lang]/2x2x2/page.tsx](<../../../core/packages/client/app/[lang]/2x2x2/page.tsx>) | `/2x2x2` | 其他产品页（待确认表面） | 待浏览 |
 | [core/packages/client/app/[lang]/about/page.tsx](<../../../core/packages/client/app/[lang]/about/page.tsx>) | `/about` | 文档/内容/演示（候选） | 待浏览 |
-| [core/packages/client/app/[lang]/about/ruimin/page.tsx](<../../../core/packages/client/app/[lang]/about/ruimin/page.tsx>) | `/about/ruimin` | 文档/内容/演示（候选） | 待浏览 |
+| [core/packages/client/app/[lang]/ruimin-yan/page.tsx](<../../../core/packages/client/app/[lang]/ruimin-yan/page.tsx>) | `/ruimin-yan` | 文档/内容/演示（候选） | 待浏览 |
 | [core/packages/client/app/[lang]/account/guardian-binding/page.tsx](<../../../core/packages/client/app/[lang]/account/guardian-binding/page.tsx>) | `/account/guardian-binding` | 账户/权限工作区（候选） | 待浏览 |
 | [core/packages/client/app/[lang]/account/page.tsx](<../../../core/packages/client/app/[lang]/account/page.tsx>) | `/account` | 账户/权限工作区（候选） | 待浏览 |
 | [core/packages/client/app/[lang]/account/student-binding/page.tsx](<../../../core/packages/client/app/[lang]/account/student-binding/page.tsx>) | `/account/student-binding` | 账户/权限工作区（候选） | 待浏览 |

@@ -105,7 +105,7 @@ export default function BusinessPlanPage() {
 
       <div className="overview-summary overview-wrap">
         {[
-          { number: { zh: `${CREATOR_AUDIENCE.followersApprox / 10000} 万`, en: `${CREATOR_AUDIENCE.followersApprox / 1000}K` }, label: { zh: '平台合计关注', en: 'Aggregate follows' }, text: { zh: '已有内容与推广渠道', en: 'An existing distribution channel' }, href: '/about/ruimin#ruimin-profile-heading' },
+          { number: { zh: `${CREATOR_AUDIENCE.followersApprox / 10000} 万`, en: `${CREATOR_AUDIENCE.followersApprox / 1000}K` }, label: { zh: '平台合计关注', en: 'Aggregate follows' }, text: { zh: '已有内容与推广渠道', en: 'An existing distribution channel' }, href: '/ruimin-yan#ruimin-profile-heading' },
           { number: { zh: '500+', en: '500+' }, label: { zh: '教师社群成员', en: 'Teacher-group members' }, text: { zh: '创始人为群主 · 机构合作洽谈中', en: 'Founder-led group · institution talks ongoing' }, href: '/contact' },
           { number: { zh: '3 类', en: '3' }, label: { zh: '业务方向', en: 'Business streams' }, text: { zh: '订阅 · 课程 · 线上赛事', en: 'Subscriptions · courses · online events' }, href: '#bp-business' },
         ].map(item => <div key={item.label.en}><span className="bp-stat-number">{tr(item.number)}</span><strong>{tr(item.label)}</strong><span>{tr(item.text)}</span><AppLink href={item.href} prefetch={false} className="overview-text-link">{tr({ zh: '查看介绍', en: 'View details' })}<ArrowUpRight size={14} aria-hidden /></AppLink></div>)}
@@ -165,7 +165,7 @@ export default function BusinessPlanPage() {
       </section>
 
       <section id="bp-founder" className="overview-section overview-wrap overview-founder" aria-labelledby="bp-founder-title">
-        <div><h2 id="bp-founder-title">{tr({ zh: '懂专业，也能把产品做出来。', en: 'Domain expertise with product execution.' })}</h2><AppLink href="/about/ruimin" prefetch={false} className="overview-text-link">{tr({ zh: '颜瑞民 · 公开履历与获奖档案', en: 'Ruimin Yan · profile and awards' })}<ArrowUpRight size={16} aria-hidden /></AppLink><div className="overview-founder-note"><School size={24} aria-hidden /><p>{tr({ zh: '数学与物理 × 参赛与教学 × 内容与开发', en: 'Mathematics & physics × competing & teaching × content & development' })}</p></div></div>
+        <div><h2 id="bp-founder-title">{tr({ zh: '懂专业，也能把产品做出来。', en: 'Domain expertise with product execution.' })}</h2><AppLink href="/ruimin-yan" prefetch={false} className="overview-text-link">{tr({ zh: '颜瑞民 · 公开履历与获奖档案', en: 'Ruimin Yan · profile and awards' })}<ArrowUpRight size={16} aria-hidden /></AppLink><div className="overview-founder-note"><School size={24} aria-hidden /><p>{tr({ zh: '数学与物理 × 参赛与教学 × 内容与开发', en: 'Mathematics & physics × competing & teaching × content & development' })}</p></div></div>
         <div className="bp-founder-profile"><div className="bp-founder-art" data-site-surface="panel"><span className="bp-founder-monogram" aria-hidden>∑</span><span className="bp-founder-name"><PersonLink wcaId={CREATOR_PROFILE.wcaId} title={tr({ zh: '查看个人成绩主页', en: 'View competition results' })}>{tr({ zh: '颜瑞民', en: 'Ruimin Yan' })}</PersonLink></span><p>{tr({ zh: '创始人 · 数学硕士 · 魔方内容创作者', en: 'Founder · mathematics graduate · cubing creator' })}</p><div className="bp-founder-credentials"><span>{tr({ zh: '南开大学', en: 'Nankai University' })}</span><span>{tr({ zh: '乔治华盛顿大学', en: 'George Washington University' })}</span></div></div><FounderEvidence /><details className="bp-detail"><MoreToggle as="summary">{tr({ zh: '创始人的专业与教学经历', en: 'Founder’s professional and teaching background' })}</MoreToggle><div className="overview-story bp-detail-body">
           <p>{tr({ zh: '颜瑞民拥有南开大学数学与金融数学、物理学学士学位，以及乔治华盛顿大学数学硕士学位。曾两次获全国高中数学联赛一等奖，并获中国数学奥林匹克铜牌。专业训练为求解算法、数据分析和复杂产品开发提供基础。', en: 'Ruimin Yan holds bachelor’s degrees in Mathematics and Financial Mathematics, and Physics from Nankai University, and a master’s in Mathematics from George Washington University. He won first prize twice in the National High School Mathematics League and a bronze medal at the Chinese Mathematical Olympiad.' })}</p>
           <p>{tr({ zh: '自 2017 年起参加 WCA 比赛，持续开展速拧课程、公式库和自媒体内容工作，著有《超脑思维：魔方游戏技巧从入门到精通》。内容创作、教学与亲身训练使他能够把专业能力转换为用户理解和使用的产品。', en: 'Competing in WCA events since 2017, he works on speedcubing courses, algorithms and media, and wrote Superbrain Thinking: Rubik’s Cube Skills from Beginner to Mastery. Teaching, content and practice help translate expertise into usable products.' })}</p>
@@ -234,9 +234,9 @@ export default function BusinessPlanPage() {
           ['/courses', { zh: '课程内容与教学入口', en: 'Courses & learning' }],
           ['/contact', { zh: '创作者账号与社群介绍', en: 'Creator channels & communities' }],
           ['/membership', { zh: '会员权益与当前开放状态', en: 'Membership benefits & availability' }],
-          ['/about/ruimin', { zh: '创始人公开履历与获奖资料', en: 'Founder profile & awards' }],
+          ['/ruimin-yan', { zh: '创始人公开履历与获奖资料', en: 'Founder profile & awards' }],
           ['/achievements', { zh: '原创工具与技术成果', en: 'Original tools & technical work' }],
-          ['/about', { zh: '公开数据与开源致谢', en: 'Public data & open-source credits' }],
+          ['/credits', { zh: '公开数据与开源致谢', en: 'Public data & open-source credits' }],
         ].map(([href, label]) => <AppLink key={String(href)} href={String(href)} prefetch={false}>{tr(label as { zh: string; en: string })}<ArrowUpRight size={15} aria-hidden /></AppLink>)}</div>
       </section>
       <p className="overview-print-url">cuberoot.me/zh/bp</p>

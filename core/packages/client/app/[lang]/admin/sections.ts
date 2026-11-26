@@ -32,7 +32,7 @@ export const DESTINATION_SECTIONS: Record<string, Exclude<AdminSection, 'overvie
   '/music/manage': 'content', '/recon/ground-truth': 'content', '/wca/result-watch': 'content',
   '/membership': 'users', '/site': 'content', '/scramble/pattern/search': 'content',
   '/sim': 'content', '/alg': 'content', '/account': 'content', '/recon': 'content',
-  '/teachers': 'commerce', '/wiki': 'content', '/about/ruimin': 'content',
+  '/teachers': 'commerce', '/wiki': 'content', '/ruimin-yan': 'content',
   '/org#enterprise-admin': 'commerce', '/docs': 'system',
   '/courses': 'commerce', '/regulation/post': 'content',
 };

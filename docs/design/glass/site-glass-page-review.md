@@ -38,7 +38,7 @@
 | CSS 文件 | 状态 |
 | --- | --- |
 | [about/about.css](../../../core/packages/client/app/[lang]/about/about.css) | 静态通过，视觉待验收 |
-| [about/ruimin/ruimin.css](../../../core/packages/client/app/[lang]/about/ruimin/ruimin.css) | 静态通过，视觉待验收 |
+| [ruimin-yan/ruimin.css](../../../core/packages/client/app/[lang]/ruimin-yan/ruimin.css) | 静态通过，视觉待验收 |
 | [alg/3bld/3bld.css](../../../core/packages/client/app/[lang]/alg/3bld/3bld.css) | 静态通过，视觉待验收 |
 | [alg/alg.css](../../../core/packages/client/app/[lang]/alg/alg.css) | 静态通过，视觉待验收 |
 | [alg/commutator/commutator.css](../../../core/packages/client/app/[lang]/alg/commutator/commutator.css) | 静态通过，视觉待验收 |
