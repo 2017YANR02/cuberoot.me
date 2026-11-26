@@ -30,7 +30,7 @@ vi.mock('next/navigation', () => ({
   useRouter: () => ({ push: vi.fn() }),
 }));
 vi.mock('@/hooks/useSpeechToText', () => ({
-  useSpeechToText: () => speechState,
+  useSpeechToText: () => ({ ...speechState, waveform: [0], waveformOffset: 0 }),
 }));
 vi.mock('@/lib/site-search', () => ({
   INITIAL_RENDER_CAP: 10,
@@ -94,6 +94,26 @@ describe('LandingSearch placeholder hydration', () => {
     vi.useRealTimers();
     vi.restoreAllMocks();
     vi.unstubAllGlobals();
+  });
+
+  it('keeps the mobile glass lens on the floating field when switching to dictation', async () => {
+    const host = document.createElement('div');
+    const root = createRoot(host);
+    const lens = '[data-af-glass-optics="lens"]';
+    try {
+      await act(async () => root.render(createElement(LandingSearch, { cards: [], lang: 'zh', persistentResults: true })));
+      expect(host.querySelector(lens)).toBeNull();
+
+      await act(async () => root.render(createElement(LandingSearch, { cards: [], lang: 'zh', workspaceEntry: true })));
+      expect(host.querySelectorAll(lens)).toHaveLength(1);
+      expect(host.querySelector(lens)).toBe(host.querySelector('form.landing-search-input'));
+
+      await act(async () => host.querySelector<HTMLButtonElement>('.landing-search-dictation')!.click());
+      expect(host.querySelectorAll(lens)).toHaveLength(1);
+      expect(host.querySelector(lens)).toBe(host.querySelector('.landing-search-voice'));
+    } finally {
+      await act(async () => root.unmount());
+    }
   });
 
   it.each([

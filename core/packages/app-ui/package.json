@@ -58,7 +58,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@app-foundation/ui-controls": "file:../../vendor/app-foundation/app-foundation-ui-controls-0.2.6.tgz",
+    "@app-foundation/ui-controls": "file:../../vendor/app-foundation/app-foundation-ui-controls-0.2.7.tgz",
     "@cuberoot/puzzle-solvers": "workspace:*",
     "@cuberoot/shared": "workspace:*",
     "@cuberoot/timer-ui": "workspace:*",

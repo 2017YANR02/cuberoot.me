@@ -1255,11 +1255,13 @@ export default function LandingSearch({
   }))} onAnswerRevealed={onAnswerRevealed} onBranch={index => { assistantConversations.branch(owner, crypto.randomUUID(), assistantTurns.slice(0, index + 1)); router.push(`${langPrefix}/chat`); }} searchResults={conversation?.active && query.trim() && !assistantBusy ? searchResults : undefined} embedded={!!conversation} active={conversation?.active ?? true} key={`${assistantUser?.uid ?? "guest"}:${assistantUser?.wcaId ?? ""}`} images={assistantImages} onImagesChange={setAssistantImages} provider={assistantProvider} openaiAvailable={openaiAvailable} onProviderChange={setAssistantProvider} thinking={assistantThinking} onThinkingChange={setAssistantThinking} lang={lang} draft={assistantDraft} onDraftChange={value => { rememberDraft(value); setAssistantDraft(value); }} authSendLabel={assistantAllowed ? undefined : authSendLabel} authPlaceholder={assistantAllowed ? undefined : authPlaceholder} authNotice={authNotice} onAuthSend={beginAssistantAuth} turns={assistantTurns} onFeedback={(id,value)=>setAssistantTurns(turns=>turns.map(turn=>turn.requestId===id?{...turn,feedback:value}:turn))} status={assistantStatus} busy={assistantBusy} stopping={assistantStopping} paused={queueSnapshot?.paused} recovering={queueSnapshot?.recovering} activeMessageId={queueSnapshot?.activeId} onResume={resumeAssistant} stopUnconfirmed={stopUnconfirmed} error={assistantError} onAsk={askAssistant} onStop={()=>{submissionEpoch.current++;void stopAssistant();}} onClose={closeAssistant} onNew={() => { submissionEpoch.current++; assistantConversation.current = null; setDurableId(null);setQueueSnapshot(undefined);pendingDelivery.current=undefined;setAssistantBusy(false);setAssistantStopping(false); setAssistantDraft(''); setAssistantImages([]); setAssistantTurns([]); setAssistantAnswer(null); setAssistantError(null); }} />;
   if (conversation) return searchOnly ? null : assistantView;
 
+  // Only the floating homepage control samples moving page content on mobile.
+  const inputOptics = usesAssistantWorkspace ? 'lens' : undefined;
   return (
     <div className={`landing-search${persistentResults ? ' landing-search--page' : ''}`} ref={wrapRef} style={workspaceEntry && workspace.open ? { display: 'none' } : undefined}>
       <div className="landing-search-controls">
         {voiceMode ? (
-          <div className="af-glass-surface landing-search-input landing-search-voice" onKeyDown={event => {
+          <div className="af-glass-surface landing-search-input landing-search-voice" data-af-glass-optics={inputOptics} onKeyDown={event => {
             if (event.key === 'Escape') { micCancel(); setVoiceMode(false); setVoiceAction(null); }
           }}>
             <button type="button" className="landing-search-voice-button" aria-label={tr({ zh: '取消语音输入', en: 'Cancel voice input' })}
@@ -1286,6 +1288,7 @@ export default function LandingSearch({
         // allow-manual-search: Results update on change. The form identifies the field to password managers.
         <form
           className="af-glass-surface landing-search-input"
+          data-af-glass-optics={inputOptics}
           role="search"
           method="get"
           onSubmit={event => event.preventDefault()}
