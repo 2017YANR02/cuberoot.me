@@ -1,0 +1,50 @@
+name: Cubing Lean
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'research/cubing-lean/**'
+      - 'core/packages/client/app/\[lang\]/math/cubing-lean/proofs.json'
+      - '.github/workflows/cubing_lean.yml'
+  pull_request:
+    paths:
+      - 'research/cubing-lean/**'
+      - 'core/packages/client/app/\[lang\]/math/cubing-lean/proofs.json'
+      - '.github/workflows/cubing_lean.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  proofs:
+    runs-on: ubuntu-latest
+    env:
+      LEAN_NUM_THREADS: 2
+    defaults:
+      run:
+        working-directory: research/cubing-lean
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            /research/cubing-lean/
+            /core/packages/client/app/\[lang\]/math/cubing-lean/proofs.json
+            /.node-version
+          filter: blob:none
+          persist-credentials: false
+      - uses: leanprover/lean-action@ba3fdfe5c4476c925da13bf11a005ddb47e47aee # v1
+        with:
+          lake-package-directory: research/cubing-lean
+          auto-config: 'false'
+          use-mathlib-cache: 'false'
+          use-github-cache: 'false'
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .node-version
+      - run: node sync-site.mts --check
+      - run: bash cache.sh
+      - run: lake build
+      - run: lake env lean -DwarningAsError=true Audit.lean
+      - run: lake env leanchecker --verbose CubeDiameter CubeComm CubeKernel CubeMixing CubingLean

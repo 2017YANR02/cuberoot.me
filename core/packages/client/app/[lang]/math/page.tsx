@@ -25,6 +25,12 @@ const GRH_PATH = '/math/generalized-riemann-hypothesis';
 
 const CARDS: Card[] = [
   {
+    to: '/math/cubing-lean',
+    Icon: Sigma,
+    zh: { title: 'Cubing Lean 魔方数学证明', desc: '读任意阶魔方上帝之数与三阶换位子的 Lean 证明，复核或认领一道定理' },
+    en: { title: 'Cubing Lean', desc: 'Read, verify and contribute Lean proofs about cube diameter and commutators' },
+  },
+  {
     to: '/math/cube-graph',
     Icon: Boxes,
     zh: { title: '魔方与图论', desc: '三维魔方与 54 枚贴纸的圆环、扇形映射同步转动，理解置换与凯莱图的区别' },

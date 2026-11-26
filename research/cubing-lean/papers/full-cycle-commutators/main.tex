@@ -1,0 +1,321 @@
+\documentclass[11pt,letterpaper]{article}
+\usepackage[letterpaper,textwidth=437pt,textheight=634pt,hcentering,top=81pt,headsep=22pt,headheight=16pt]{geometry}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage[hidelinks]{hyperref}
+\hypersetup{pdftitle={Full-cycle commutators in the Rubik's Cube group},
+  pdfauthor={Ruimin Yan},pdfsubject={Finite permutation groups},
+  pdfkeywords={Rubik's Cube group, commutator, permutation group, augmentation module, Lean}}
+
+\theoremstyle{definition}
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{corollary}[theorem]{Corollary}
+\theoremstyle{remark}
+\newtheorem{example}[theorem]{Example}
+\newcommand{\F}{\mathbb F}
+\newcommand{\sgn}{\operatorname{sgn}}
+\newcommand{\ord}{\operatorname{ord}}
+\newcommand{\im}{\operatorname{im}}
+\newcommand{\id}{\mathrm{id}}
+\newcommand{\FC}{\mathcal F}
+\newcommand{\cl}[2]{[#1,#2]}
+
+\title{\fontsize{20}{24}\selectfont\bfseries Full-cycle commutators\\ in the Rubik's Cube group}
+\author{Ruimin Yan}
+\date{November 26, 2026}
+\pagestyle{myheadings}
+\markright{Full-cycle commutators in the Rubik's Cube group}
+
+\begin{document}
+\maketitle
+\begin{abstract}
+Every even position of the fixed-centre Rubik's Cube is a single commutator,
+by a theorem of Timothy Sun. We show that both factors can be required to
+induce an eight-cycle on the corners and a twelve-cycle on the edges.
+Each factor then has exact order \(24\). We give two proofs. The first
+deduces the factorization from a long-cycle theorem of Bader, B\"ohmler
+and Wegener by lifting permutations through the corner and edge orientation
+modules. For a fixed pair of edge cycles, the only obstruction to lifting
+all orientations is that the cycles induce the same alternating
+bipartition. The second proof, formalized in Lean~4, verifies finite
+certificates for the position cycle types and treats pure edge flips
+separately.
+\end{abstract}
+
+\section{The restricted commutator map}
+
+Let \(G\) be the group of the ordinary \(3\times3\times3\) Rubik's Cube,
+with the six centres fixed and unmarked. Write \(G^+\) for the subgroup
+of positions inducing even permutations on both the corner slots and the
+edge slots. We compose actions from right to left and put
+\(\cl{A}{B}=ABA^{-1}B^{-1}\). The sign of the corner permutation is a
+homomorphism on \(G\), so every commutator lies in \(G^+\). Sun proved the
+converse: every element of \(G^+\) is a single commutator
+\cite[Theorem~18]{sun}. We ask how far one may restrict the two factors
+while retaining this image.
+
+Let \(\FC\subseteq G\) consist of the positions whose corner permutation
+is an \(8\)-cycle and whose edge permutation is a \(12\)-cycle. An element
+of \(\FC\) moves every corner and every edge. The orientation increments
+of its pieces are subject to the usual legality conditions.
+
+\begin{theorem}\label{thm:main}
+The map
+\[
+  \FC\times\FC\longrightarrow G^+,\qquad (A,B)\longmapsto\cl{A}{B},
+\]
+is surjective. Every member of \(\FC\) has order \(24\).
+\end{theorem}
+
+For example, a position which flips just two edges and leaves every
+other piece fixed admits such a factorization. All position changes
+cancel in the commutator, even though both factors move every piece.
+
+Prescribing the cycle types of commutator factors is a classical question
+for symmetric groups; see Vavpeti\v{c}~\cite{vavpetic}. Bader, B\"ohmler and
+Wegener~\cite[Theorem~3.1 and Proposition~3.4]{bbw} give the permutation
+input used in our first proof. Their signed-cycle theorem prescribes
+negative sign product on each factor. A legal edge action on the cube
+has positive sign product, since it flips an even number of edges.
+We use their positional construction and their bipartition argument on
+the even orientation space; the corner lift takes place in characteristic
+three. Section~\ref{sec:cert} describes a second proof of the same
+cube-group statement using explicit witnesses in dimensions eight and
+twelve. The two proofs have different dependencies.
+
+\section{Lifting a positional commutator}\label{sec:lift}
+
+For \(m\in\{2,3\}\), let \(I_n=\{0,\ldots,n-1\}\) and set
+\[
+ V_{n,m}=\{v\in\F_m^{I_n}:\textstyle\sum_{i\in I_n}v_i=0\}.
+\]
+The pair \((p,v)\), with \(p\in S_n\) and \(v\in V_{n,m}\), sends an
+oriented piece \((i,z)\) to \((p(i),z+v_i)\). Thus the increment is
+indexed by the source slot. Write \(H_{n,m}\) for the group of these
+actions. The standard cubie-coordinate theorem identifies \(G\) with
+\begin{equation}\label{eq:cube}
+ \big\{((p,v),(q,w))\in H_{8,3}\times H_{12,2}:
+                       \sgn(p)=\sgn(q)\big\}.
+\end{equation}
+Here \(v\) records corner twists and \(w\) records edge flips. The two
+zero-sum conditions and the equality of signs are also sufficient for
+face-turn reachability \cite[\S3]{sun}.
+
+For \(c\in S_n\) put \((\Delta_c x)_i=x_{c(i)}-x_i\). This map preserves
+\(V_{n,m}\). Fix a target \(T=(t,u)\) and write \(A=(a,x)\), \(B=(b,y)\).
+The equality \(\cl{A}{B}=T\) is equivalent to \(AB=TBA\). Applying both
+sides to \((i,0)\) gives the two conditions
+\begin{align}
+ ab&=tba, \label{eq:position}\\
+ \Delta_b x-\Delta_a y&=u\circ ba. \label{eq:orientation}
+\end{align}
+For example, the two increments before subtraction are
+\(y_i+x_{b(i)}\) and \(x_i+y_{a(i)}+u_{b(a(i))}\). This also proves
+sufficiency, since both actions add the initial orientation \(z\).
+Once \(a,b\) have been chosen, the possible right-hand sides in
+\eqref{eq:orientation} form the sum of the images of the two difference
+maps restricted to \(V_{n,m}\).
+
+\begin{lemma}\label{lem:corner}
+If \(c\) is an \(n\)-cycle and \(m\nmid n\), then
+\(\Delta_c:V_{n,m}\longrightarrow V_{n,m}\) is an isomorphism.
+\end{lemma}
+\begin{proof}
+A vector fixed by an \(n\)-cycle is constant. A constant vector with value
+\(k\) has coordinate sum \(nk\), which vanishes only for \(k=0\).
+The claim follows by equality of dimensions.
+\end{proof}
+
+For even \(n\), let \(\mathcal P(c)=\{R_c,B_c\}\) be the two orbits of
+\(c^2\) for an \(n\)-cycle \(c\). The two classes alternate around the
+cycle. The following description of the binary difference map is the
+balanced-bipartition lemma of \cite[Lemmas~5.4 and~5.6]{bbw}; we give the
+argument in source-slot coordinates.
+
+\begin{lemma}\label{lem:edge}
+For even \(n\ge4\), in \(V=V_{n,2}\) one has
+\[
+ \im(\Delta_c|_V)=U_c,\qquad
+ U_c=\{w\in V:\textstyle\sum_{i\in R_c}w_i=0\}.
+\]
+This is a hyperplane of \(V\). For \(n\)-cycles \(a,b\),
+\(U_a+U_b=V\) if and only if \(\mathcal P(a)\ne\mathcal P(b)\).
+\end{lemma}
+\begin{proof}
+Summing \(\Delta_c x\) over \(R_c\) gives the sum of \(x\) over all
+slots in characteristic two. Thus the image is contained in \(U_c\).
+A vector with ones at one red and one blue slot shows that \(U_c\) is a
+proper hyperplane. The kernel on \(V\) is the one-dimensional space of
+constant vectors, so the image and \(U_c\) both have dimension \(n-2\).
+If two unordered bipartitions differ, two slots in the same class of
+one lie in different classes of the other. Their two-point indicator
+distinguishes the hyperplanes. Two distinct hyperplanes span \(V\);
+identical bipartitions give the same proper hyperplane.
+\end{proof}
+
+\section{Proof of the factorization}\label{sec:proof}
+
+We use the following consequence of \cite[Theorem~3.1 and
+Proposition~3.4]{bbw}. For \(n\ge6\), each \(t\in A_n\) has a
+representation \(t=\cl{a}{b}\) with \(a,b\) both \(n\)-cycles. If \(n\)
+is even and \(t\ne\id\), one can moreover arrange
+\(\mathcal P(a)\ne\mathcal P(b)\). For clarity, Proposition~3.4 there
+gives a representative of each nonidentity even cycle type using the
+standard cycle and a normalized parity-unstable cycle. A parity defect
+in the latter places a label in the opposite alternating class, so the
+two bipartitions differ. Their convention for the commutator is
+\(a^{-1}b^{-1}ab\); replacing both cycles by their inverses converts it
+to ours and preserves both bipartitions. Simultaneous conjugation then
+gives the prescribed \(t\).
+
+\begin{proposition}\label{prop:oneorbit}
+For \((n,m)=(8,3)\) or \((12,2)\), every \((t,u)\in H_{n,m}\) with
+\(t\in A_n\) is a commutator of two elements whose position permutations
+are \(n\)-cycles.
+\end{proposition}
+\begin{proof}
+For the corners, choose \(8\)-cycles \(a,b\) with \(t=\cl{a}{b}\).
+Since \(3\nmid8\), Lemma~\ref{lem:corner} solves
+\(\Delta_b x=u\circ ba\) in \(V_{8,3}\); take \(y=0\).
+This includes \(t=\id\), for which one can take \(a=b\).
+
+For the edges with \(t\ne\id\), choose \(12\)-cycles \(a,b\) with
+distinct alternating bipartitions as above. Lemma~\ref{lem:edge} shows
+that every balanced \(u\circ ba\) belongs to \(U_b+U_a\).
+Consequently \eqref{eq:orientation} has a solution with \(x,y\in V_{12,2}\).
+
+It remains to produce a pure flip \((\id,u)\). Pair the ones of \(u\)
+among themselves, and the zeros among themselves. Both multiplicities
+are even, so this gives six disjoint pairs, including when \(u=0\) or
+\(u\) is all ones. Let \(R\) be the union of any three pairs. It has six
+slots and \(\sum_{i\in R}u_i=0\). Choose a cycle \(c\) alternating between
+\(R\) and its complement, and take \(a=b=c\). Its square preserves
+\(R\), hence \(u\circ c^2\in U_c\). Lemma~\ref{lem:edge} now supplies
+\(x\in V_{12,2}\) with \(\Delta_c x=u\circ c^2\); take \(y=0\).
+This is the twelve-slot case of the support selection in
+\cite[Lemma~6.6]{bbw}. In all three cases \eqref{eq:position}
+and \eqref{eq:orientation} give the asserted commutator.
+\end{proof}
+
+\begin{proof}[Proof of Theorem~\ref{thm:main}]
+Apply Proposition~\ref{prop:oneorbit} to the corner and edge components
+of \(g\in G^+\). Write these components as \(\cl{A_c}{B_c}\) and
+\(\cl{A_e}{B_e}\). The \(8\)-cycle in \(A_c\) and the \(12\)-cycle in
+\(A_e\) both have negative sign. Their offsets are balanced, so
+\(A=(A_c,A_e)\) belongs to \(G\) by \eqref{eq:cube}. The same holds for
+\(B=(B_c,B_e)\). Commutators are taken componentwise in the product,
+which gives \(\cl{A}{B}=g\).
+
+If \((c,x)\in H_{n,m}\) has an \(n\)-cycle as its permutation, its
+\(n\)-th power fixes each slot and adds \(\sum_i x_i=0\) at each slot.
+Every power acting trivially on positions has exponent divisible by \(n\).
+Thus the corner and edge actions of any member of \(\FC\) have exact
+orders \(8\) and \(12\), respectively. The order in their direct product
+is \(\operatorname{lcm}(8,12)=24\).
+\end{proof}
+
+\begin{corollary}[Sun's single-commutator theorem]
+\(G^+\) is the derived subgroup of \(G\), and each of its elements is
+a single commutator in \(G\).
+\end{corollary}
+\begin{proof}
+The corner sign kills every commutator, hence its kernel contains the
+derived subgroup. Theorem~\ref{thm:main} puts every element of that
+kernel in the image of the commutator map.
+\end{proof}
+
+\begin{example}[The superflip]\label{ex:superflip}
+Number the corner and edge slots cyclically, starting at zero, and let
+\(c_n(i)=i+1\bmod n\). Give \(A\) and \(B\) the same two position cycles
+\(c_8,c_{12}\). Give both zero corner offsets; on edges take \(x=0\)
+for \(A\) and \(y_i=i\bmod2\) for \(B\). Exactly six entries of \(y\)
+are nonzero. The left side of \eqref{eq:orientation} is the all-ones
+edge vector, and the position commutator is trivial. Thus \(\cl{A}{B}\)
+flips every edge in place and fixes the corners. This pair is explicit
+in the accompanying formalization.
+\end{example}
+
+\section{An independent finite proof in Lean}\label{sec:cert}
+
+The ancillary development proves Theorem~\ref{thm:main} in the group
+\eqref{eq:cube}. It replaces the cited long-cycle construction by
+finite witnesses and checks the orientation lifts directly. Its
+declaration \texttt{CubeComm.every\_even\_cube} asserts membership of the
+two witnesses in the legal group, their full cycles, their exact orders
+and their commutator equation. The identification of \eqref{eq:cube}
+with the face-turn group uses the classical reachability theorem.
+
+For each position cycle type, choose a representative \(t\). A row
+specifies full cycles \(a,b\) and a balanced solution of
+\eqref{eq:orientation} for each target \(u=e_j-e_{n-1}\),
+\(0\le j<n-1\), where \(e_j\) is a coordinate unit vector. These targets
+form a basis of \(V_{n,m}\), including in characteristic two when \(m\)
+divides \(n\). Indeed, any balanced vector \(u\) is
+\(\sum_{j<n-1}u_j(e_j-e_{n-1})\). The linear combination of the stored
+solutions with these coefficients therefore solves the equation for \(u\).
+The number of basis witnesses checked is
+\[
+   \underbrace{12\cdot7}_{\text{corners}}+
+   \underbrace{39\cdot11}_{\text{nonidentity edge types}}=513.
+\]
+For example, the corner identity type still has seven independent
+twist targets. The edge identity type uses a separate argument.
+
+Coverage follows from cycle type in the full symmetric group. The
+catalogue includes the partitions \(\lambda\) of \(n\) for which
+\(n-\ell(\lambda)\) is even, omitting \(1^{12}\) only on the edge side.
+Lean checks these lists against the cycle types of the actual rows.
+Conjugating by a relabelling \(d\) sends \((p,v)\) to
+\((dpd^{-1},v\circ d^{-1})\), so both balance and \eqref{eq:orientation}
+transport to any labelling of the same type. The relabelling of one
+piece orbit need not itself be a physical move: it is a change of
+coordinates, and the resulting paired factors satisfy \eqref{eq:cube}.
+
+For pure edge flips, the formal proof uses three fixed six-element sets
+\[
+ P=\{0,1,2,3,4,5\},\qquad Q=\{0,1,2,6,7,8\},\qquad R=P\mathbin{\triangle}Q.
+\]
+At least one of their three subset sums vanishes in \(\F_2\), since the
+third is the sum of the first two. For each set a fixed alternating
+cycle and explicit offsets solve the equation whenever its sum vanishes.
+This covers all \(2^{11}\) balanced flip vectors. Finally the two
+permutation signs, the componentwise equality and the order calculation
+give the result in the subgroup \(G\).
+
+\paragraph{Reproducibility.}
+The ancillary files include the Lean sources, the finite witnesses and
+the dependency manifest. The optional generator searches for witnesses;
+Lean checks each row, its cycle label and the exhaustiveness assertion.
+With the pinned Lean~4.35.0 toolchain and mathlib revision in the
+manifest, run the following commands from the ancillary directory:
+\begin{verbatim}
+bash cache.sh
+lake build CubeComm
+lake env lean -DwarningAsError=true AuditPaper.lean
+lake env leanchecker CubeComm
+\end{verbatim}
+The audit checks the main theorem and its single-commutator corollary.
+Their transitive axiom dependencies are propositional extensionality,
+classical choice and quotient soundness.
+
+\paragraph{Use of AI tools.}
+OpenAI Codex assisted in the preparation of the Lean development,
+the literature comparison, and the drafting of the mathematical exposition.
+
+\begin{thebibliography}{9}
+\bibitem{bbw} P.~Bader, B.~B\"ohmler, and P.~Wegener,
+\emph{Commutators of signed \(n\)-cycles}, preprint, 2026.
+\href{https://arxiv.org/abs/2609.24518v1}{arXiv:2609.24518v1 [math.GR]}.
+
+\bibitem{sun} T.~Sun, \emph{Commutators in the Rubik's Cube group},
+Amer. Math. Monthly \textbf{131} (2024), no.~1, 3--19.
+\href{https://doi.org/10.1080/00029890.2023.2263158}{doi:10.1080/00029890.2023.2263158}.
+
+\bibitem{vavpetic} A.~Vavpeti\v{c}, \emph{Commutators of cycles in permutation
+groups}, Ars Math. Contemp. \textbf{10} (2016), no.~1, 67--77.
+\href{https://doi.org/10.26493/1855-3974.430.eaf}{doi:10.26493/1855-3974.430.eaf}.
+\end{thebibliography}
+\end{document}

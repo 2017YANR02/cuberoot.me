@@ -23,6 +23,7 @@ This file provides guidance to Codex (Codex.ai/code) when working with code in t
 | `core/jobs/*` | 离线 job，输出统计、数据或迁移生成物，不是在线 app |
 | `core/packages/platform` | workspace 外的退役历史归档，不测试、不构建、不部署、不新增依赖或功能 |
 | `solver/` | workspace 外 Rust 求解引擎，产 native 分析器和 WASM；`target/`、`tables/`、`pkg-*` 仅本机有 |
+| [`research/cubing-lean/`](../../research/cubing-lean/README.md) | 独立 Lake 包，收录魔方数学的 Lean 证明；数学页面展示经 CI 对照源码的定理摘录 |
 | `research/reconer/` | workspace 外速拧视频自动复盘研发；进入前读 `research/reconer/AGENTS.md`、`roadmap.md`、`plan.md` 和 `human.md` |
 | `tools/` / `stats/` | `static.cuberoot.me` 的 upstream/教学资源与本地生成数据；统计快照由 `wca-data-latest` Release 管理，不再提交 Git |
 | `ops/` / `docs/` / `.github/workflows` | 运维、状态/设计记录和 CI/部署契约 |

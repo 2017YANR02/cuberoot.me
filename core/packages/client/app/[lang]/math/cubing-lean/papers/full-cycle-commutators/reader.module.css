@@ -1,0 +1,54 @@
+.reader {
+  width: min(100%, 1180px); box-sizing: border-box; margin: 0 auto;
+  padding: 0 clamp(18px, 4vw, 54px) 72px; color: var(--foreground);
+}
+.bar, .actions, .bar a, .contents summary { display: flex; align-items: center; }
+.bar { min-height: 62px; justify-content: space-between; gap: 12px; border-bottom: 1px solid var(--border-default); }
+.bar a, .contents summary, .contents nav a { font: 550 .88rem/1.4 var(--font-sans, system-ui, sans-serif); }
+.bar a { gap: 7px; min-height: 42px; color: var(--foreground); text-decoration: none; }
+.actions { flex-wrap: wrap; gap: 6px 20px; justify-content: flex-end; }
+.contents { margin-top: 12px; }
+.contents summary { width: fit-content; list-style: none; gap: 5px; min-height: 40px; cursor: pointer; color: var(--muted-foreground); }
+.contents summary::-webkit-details-marker { display: none; }
+.contents[open] summary svg { transform: rotate(180deg); }
+.contents nav { display: grid; gap: 6px; padding: 6px 0 18px; }
+.reader :is(a,summary):focus-visible { outline: 2px solid var(--ring); outline-offset: 3px; }
+.bar a:hover, .contents nav a:hover { text-decoration: underline; text-underline-offset: 3px; }
+.text { width: min(100%, 96ch); margin: 14px auto 0; font-family: Georgia, 'Times New Roman', serif; font-size: clamp(1.06rem, 1.35vw, 1.24rem); line-height: 1.65; overflow-wrap: break-word; }
+.text h1 { margin: 0 auto 12px; max-width: 30ch; font-size: clamp(2rem, 3.8vw, 3.4rem); font-weight: 700; line-height: 1.12; text-align: center; text-wrap: balance; }
+.text :global(.ltx_authors), .text :global(.ltx_dates) { text-align: center; }
+.text :global(.ltx_dates) { color: var(--muted-foreground); font-size: .9em; }
+.text :global(.ltx_abstract) { margin: clamp(26px,4vw,48px) auto; width: min(100%, 82ch); }
+.text :global(.ltx_title_abstract) { font-size: 1.12em; text-align: center; margin: 0 0 .5em; }
+.text section { margin-top: 2em; }
+.text [id] { scroll-margin-top: 20px; }
+.text h2 { margin: 0 0 .55em; font-size: 1.5em; font-weight: 700; line-height: 1.25; }
+.text h3 { margin: 0 0 .35em; font-size: 1em; font-weight: 700; }
+.text p { margin: .65em 0; }
+.text :global(.ltx_theorem) { margin: 1.2em 0; border-inline-start: 2px solid var(--border-strong); padding-inline-start: .95em; }
+.text :global(.ltx_proof) { margin: 1em 0; }
+.text :global(.ltx_font_italic), .text :global(.ltx_title_proof) { font-style: italic; }
+.text :global(.ltx_font_bold) { font-weight: 700; }
+.text :global(.ltx_font_typewriter) { font-family: var(--font-mono, monospace); font-size: .88em; }
+.text a { color: inherit; text-decoration: underline; text-decoration-color: var(--border-strong); text-underline-offset: 3px; }
+.text a:hover { text-decoration-color: currentColor; }
+.text pre { padding: 12px 16px; overflow-x: auto; background: var(--muted); }
+.text table { display: block; width: 100%; overflow-x: auto; margin: .9em 0; }
+.text tbody { display: table; width: 100%; }
+.text :global(.ltx_eqn_center_padleft), .text :global(.ltx_eqn_center_padright) { width: 50%; }
+.text :global(.ltx_align_right) { text-align: right; }
+.text :global(.ltx_align_left) { text-align: left; }
+.text :global(.ltx_eqn_eqno) { padding-left: 12px; }
+.text :global(.ltx_bibitem) { margin: .6em 0; list-style: none; }
+@media (max-width: 580px) {
+  .bar { flex-wrap: wrap; padding-block: 5px; gap: 0 6px; }
+  .actions { gap: 2px 9px; }
+  .bar a { font-size: .8rem; gap: 4px; }
+  .text { margin-top: 12px; }
+  .text :global(.ltx_abstract) { width: 100%; }
+}
+@media print {
+  .bar, .contents { display: none; }
+  .reader, .text { width: auto; max-width: none; margin: 0; padding: 0; }
+  .text { font-size: 11pt; }
+}

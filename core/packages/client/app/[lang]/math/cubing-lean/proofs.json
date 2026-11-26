@@ -1,0 +1,32 @@
+[
+  {
+    "name": "paper2011",
+    "file": "CubeDiameter/Main.lean",
+    "line": 97,
+    "source": "theorem paper2011 : Paper2011 := by\n  obtain ⟨N,hN⟩ := upper2026 1 (by norm_num)\n  refine ⟨1/128,61/2+1,by norm_num,by norm_num,max 16 N,?_⟩\n  intro n hn\n  exact ⟨by simpa only [one_div,div_eq_inv_mul,mul_one] using lower2011 n ((le_max_left ..).trans hn),\n    hN n ((le_max_right ..).trans hn)⟩",
+    "statement": {
+      "name": "Paper2011",
+      "file": "CubeDiameter/Targets.lean",
+      "line": 10,
+      "source": "def Paper2011 : Prop :=\n  ∃ c C : ℝ, 0 < c ∧ 0 < C ∧ ∃ N, ∀ n ≥ N,\n    c * scale n ≤ diameter n ∧ (diameter n : ℝ) ≤ C * scale n"
+    }
+  },
+  {
+    "name": "paper2026",
+    "file": "CubeDiameter/Main.lean",
+    "line": 90,
+    "source": "theorem paper2026 : Paper2026 := by\n  intro ε he\n  obtain ⟨A,ha⟩ := sharp_lower ε he\n  obtain ⟨B,hb⟩ := upper2026 ε he\n  exact ⟨max A B,fun n hn => ⟨ha n (le_max_left A B |>.trans hn),hb n (le_max_right A B |>.trans hn)⟩⟩",
+    "statement": {
+      "name": "Paper2026",
+      "file": "CubeDiameter/Targets.lean",
+      "line": 17,
+      "source": "def Paper2026 : Prop := ∀ ε : ℝ, 0 < ε → ∃ N, ∀ n ≥ N,\n  (countingConstant - ε) * scale n ≤ diameter n ∧\n  (diameter n : ℝ) ≤ (61/2 + ε) * scale n"
+    }
+  },
+  {
+    "name": "every_even_cube",
+    "file": "CubeComm/Universal.lean",
+    "line": 29,
+    "source": "theorem every_even_cube (g : cubeGroup) (even : EvenCube g) :\n    ∃ A B : cubeGroup, FullCycles A ∧ FullCycles B ∧ orderOf A = 24 ∧ orderOf B = 24 ∧\n      A * B * A⁻¹ * B⁻¹ = g := by\n  obtain ⟨s, legal, target, sign⟩ := even\n  obtain ⟨ca, cb, cornersEq⟩ := corners s.cp s.twists sign legal.2.1\n  obtain ⟨ea, eb, edgesEq⟩ := edges s.ep s.flips (legal.1.symm.trans sign) legal.2.2\n  refine ⟨pairFactors ca ea, pairFactors cb eb, pair_full .., pair_full ..,\n    pair_order .., pair_order .., Subtype.ext ?_⟩\n  exact (Prod.ext cornersEq edgesEq : _ = s.action).trans target"
+  }
+]

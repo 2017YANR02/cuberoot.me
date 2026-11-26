@@ -1,0 +1,18 @@
+name: Cubing Lean
+description: 认领魔方定理、提议证明或审阅模型 / Claim a theorem, propose a proof, or review a model
+title: "[Cubing Lean] "
+body:
+  - type: textarea
+    id: statement
+    attributes:
+      label: 数学命题或待审问题 / Statement or review question
+      description: 指明魔方模型、计步规则或已有题目 / Specify the model, metric, or starter task.
+    validations:
+      required: true
+  - type: textarea
+    id: contribution
+    attributes:
+      label: 你愿意做哪部分？ / How would you like to contribute?
+      description: 可以提供 Lean 代码、纸笔证明、文献或反例 / Lean code, a paper proof, a reference, and counterexamples are all welcome.
+    validations:
+      required: true

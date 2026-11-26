@@ -11,6 +11,8 @@ Time your solves, train algorithms, explore WCA stats, and solve puzzles in your
 
 </div>
 
+[Cubing Lean](./research/cubing-lean/README.md) collects machine-checked proofs about cube diameter and the Rubik’s Cube group. [Contribute a proof or review a model](./research/cubing-lean/CONTRIBUTING.md).
+
 ## Local development
 
 Use the Node.js version in [`.node-version`](./.node-version) and the pnpm version in [`core/package.json`](./core/package.json). Run these commands from the repository root.

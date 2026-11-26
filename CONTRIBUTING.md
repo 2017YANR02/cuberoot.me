@@ -2,6 +2,8 @@
 
 **所有有仓库写入权限的成员都可以直接推送 `main`，无需 PR 或他人审批。** 内部员工使用原仓库，不使用个人 Fork。
 
+魔方数学贡献者可直接进入 [Cubing Lean 题目与贡献指南](research/cubing-lean/CONTRIBUTING.md)。
+
 ## 首次开始
 
 - 联系维护者开通仓库写入权限，并接受 GitHub 邀请。

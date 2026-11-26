@@ -1,0 +1,150 @@
+\documentclass[11pt,letterpaper]{article}
+\usepackage[letterpaper,textwidth=437pt,textheight=634pt,hcentering,top=81pt]{geometry}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern,amsmath,amssymb,amsthm}
+\usepackage[hidelinks]{hyperref}
+\hypersetup{pdftitle={A kernel for short solutions of the generalized Rubik's Cube},pdfauthor={Ruimin Yan}}
+\newtheorem{theorem}{Theorem}
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{corollary}[theorem]{Corollary}
+\title{\bfseries A kernel for short solutions of the generalized Rubik's Cube}
+\author{Ruimin Yan}
+\date{November 26, 2026\\[3pt]\small Working manuscript}
+\begin{document}
+\maketitle
+\begin{abstract}
+Given a six-colour cube of side $n$ and a budget of $k$ single-layer turns,
+we give a polynomial-time reduction that either rejects the instance or produces
+an equivalent cube of the same parity and side at most $4k+7$.
+The output uses at most $6(4k+7)^2$ stickers. The same reduction works for
+a prescribed solved colouring and for the goal that each face has one colour
+and all six colours differ. A lifting argument uses two spare mirror depths
+to verify every omitted sticker. The reduction, equivalence of the physical
+instances, and a search bound have been formalized in Lean~4.
+\end{abstract}
+
+\section{The decision problem}
+Each move rotates one layer orthogonal to a coordinate axis by
+$90^\circ$, $-90^\circ$, or $180^\circ$. Each costs one move. The input lists
+the colours on the six $n$ by $n$ faces in fixed coordinates, with $n\ge2$.
+Demaine, Eisenstat and Rudoy proved NP-completeness of the unrestricted
+decision problem \cite{der}. Their colour goal permits any six distinct
+monochromatic faces. We study the dependence of exact search on the move
+budget. Direct enumeration already decides the problem in at most
+$\sum_{i=0}^k(9n)^i$ candidate words. Its dependence on $n$ motivates
+reducing the set of candidate layers before searching.
+
+\begin{theorem}\label{thm:main}
+Given a legal coloured cube $X$ and an integer $k\ge0$, a polynomial-time
+algorithm certifies that the distance to the prescribed solved colouring
+exceeds $k$, or returns a legal cube $Y$ of side $2\le n'\le4k+7$
+and of the same parity as $n$. The original instance satisfies $d(X)\le k$
+if and only if $d(Y)\le k$. The same choice of retained layers preserves solvability within $k$ moves
+for the goal of six distinctly coloured monochromatic faces.
+\end{theorem}
+
+For example, with $n=1000$ and $k=10$, every returned instance has even
+side at most $46$. The decision concerns this particular budget. The
+argument makes no assertion about equality of distances exceeding it.
+
+\section{Mirror depths and changes of coordinates}
+Number the layers on each axis from $0$ through $n-1$. The two outer
+layers are distinguished, as is the central layer when $n$ is odd. Group
+the remaining indices in pairs $\{i,n-1-i\}$, called ordinary depths.
+There are $r=\lfloor(n-2)/2\rfloor$ such pairs. Use the same depth labels
+on all three axes. A permutation of the $r$ labels acts on the layers of
+each axis, preserving the side within each pair. A surface sticker has a
+face and two tangential coordinates. Its support, the set of ordinary
+depth labels among those coordinates, has size at most two.
+
+A relabelling commutes with coordinate reversal $i\mapsto n-1-i$. A
+quarter turn of a layer tests its layer index and exchanges its two tangential
+coordinates with one reversal. Relabelling therefore carries that turn to the
+turn on the renamed layer. It fixes the prescribed solved colouring, which
+depends only on the face. These identities extend to turn words by composition.
+A word of length at most $k$ names at most $k$ ordinary depths.
+
+Call two depths equivalent for $X$ if their transposition, applied
+simultaneously on all three axes, preserves every sticker colour of $X$.
+This is an equivalence relation. Indeed the stabilizer of $X$ is a group,
+and conjugating $(b\,c)$ by $(a\,b)$ gives $(a\,c)$ for distinct labels.
+If a word of length at most $k$ generates $X$ from the prescribed target,
+all unused depths belong to one class. Swapping any two of them fixes both
+the word and the solved colouring. Inversion exchanges generating and
+solving words and preserves length.
+
+\section{Reduction and proof}
+If $r\le2k+2$, retain all depths. Otherwise find an equivalence class $C$
+whose complement has size at most $k$. If none exists, the unused-depth
+observation certifies rejection. Keep all of the complement and exactly
+$k+2$ members of $C$. This is possible since $r>2k+2$. Let $R$ be the
+retained set. Restrict each face to the surviving rows and columns and
+renumber the depths consecutively in their original order. Keep both outer
+layers and the odd central layer.
+
+\begin{lemma}\label{lem:lift}
+The restricted colouring can be generated from the prescribed target in
+at most $k$ turns if and only if the original colouring can be generated
+from its prescribed target in at most $k$ turns.
+\end{lemma}
+\begin{proof}
+Any word on the original cube projects by omitting turns on removed layers.
+A retained sticker stays in retained coordinates under every retained turn.
+A removed-layer turn fixes it. Thus projection preserves the colour read
+at each retained sticker and cannot increase the length. Projection also
+preserves legality for an input generated by an arbitrarily long word.
+
+Conversely, embed a short word on the smaller cube by replacing each new
+depth label with its original label. Call the colouring it produces $Z$.
+The turn identities above give $Z=X$ on all retained stickers. If all
+depths were retained we are done. Otherwise at least two of the $k+2$
+retained members of $C$ are unused by the embedded word. For an omitted
+sticker choose a distinct spare representative for each omitted depth in
+its support, avoiding the retained depths already in that support.
+There are enough spares because the support has size at most two.
+Swap each omitted label with its chosen representative. Every such swap
+fixes $X$ by the definition of $C$, and fixes $Z$ because its labels are
+unused by the embedded word. Together the swaps carry the sticker to the
+retained set. Equality at its image proves equality at the original
+sticker. This proves $Z=X$ everywhere.
+\end{proof}
+
+\begin{proof}[Proof of Theorem~\ref{thm:main}]
+There are at most $2k+2$ retained depths. With two outer layers and
+possibly one central layer, the side is at most $2(2k+2)+3=4k+7$.
+The parity is unchanged. Lemma~\ref{lem:lift} gives both directions.
+For the monochromatic goal, a completed cube assigns the six colours
+bijectively to the six faces. A bijection on colours preserves every
+equality tested by a depth swap. All $6!$ target assignments consequently
+use the same retained set. Applying the fixed-target equivalence to each
+assignment proves the second assertion.
+\end{proof}
+
+\section{Search complexity and verification}
+With random access to the six colour arrays, the full table testing
+ordered depth pairs has $6r^2n^2$ colour comparisons. Selecting a class,
+sorting representatives and materializing the smaller faces take polynomial
+time in the input size. The smaller cube has $9n'$ moves. For a fixed target
+the search considers at most $(9(4k+7)+1)^k$ candidate words, including
+prefixes. Checking a word against the smaller colouring costs a polynomial
+in $k+1$. This yields a fixed-parameter algorithm. Testing all permitted
+face colours multiplies the search bound by at most $720$.
+
+The physical decision theorem is in \texttt{CubeKernel.Monochrome}, the six-array encoding in
+\texttt{CubeKernel.Packed}, and the search-tree and comparison counts in
+\texttt{CubeKernel.Cost}. For a prescribed target, the implementation in
+\texttt{CubeKernel.Solution} returns solving turns with the original layer
+numbers. The download includes the Lean toolchain and dependency lock.
+The complexity statement uses the array model above. The checked
+counts bound comparisons in the complete table and words in the search tree.
+
+\paragraph{Status and assistance.}
+This working manuscript reports a machine-checked result. The literature
+comparison does not establish a claim of priority. OpenAI Codex assisted in
+developing the argument, implementing the Lean proofs and drafting the text.
+\begin{thebibliography}{9}
+\bibitem{der} E.~D. Demaine, S.~Eisenstat and M.~Rudoy.
+\href{https://erikdemaine.org/papers/Rubik_STACS2018/paper.pdf}{Solving the Rubik's Cube optimally is NP-complete}.
+35th Symposium on Theoretical Aspects of Computer Science, 2018, article~25.
+\end{thebibliography}
+\end{document}
