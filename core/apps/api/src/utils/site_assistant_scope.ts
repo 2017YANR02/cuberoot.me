@@ -33,11 +33,14 @@ const scopedEvent = (scope: AttendanceScope) => {
   return WCA_EVENT_ORDER.find(event=>event===id);
 };
 
+export function roundEventMentions(text:string) {
+  return [...text.matchAll(eventPattern)].map(([label])=>({label,event:scopedEvent({event:{text:label}})}));
+}
+
 export function singleRoundEvent(text:string) {
-  const matches=[...text.matchAll(eventPattern)];
-  if (matches.length!==1) return;
-  const label=matches[0][0];
-  const event=scopedEvent({event:{text:label}});
+  const mentions=roundEventMentions(text);
+  if (mentions.length!==1) return;
+  const {label,event}=mentions[0];
   return event ? {label,event} : undefined;
 }
 

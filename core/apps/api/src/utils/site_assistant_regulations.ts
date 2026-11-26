@@ -163,7 +163,7 @@ export function inspectionScenario(question:string):InspectionScenario|undefined
   return times && {kind:'standard',times};
 }
 
-export function inspectionVerdicts(html:string, sourceUrl:string, scenario:InspectionScenario, lang:'zh'|'en') {
+function readVerdictClauses(html:string, sourceUrl:string, lang:'zh'|'en') {
   const {document}=parseHTML(html);
   const clause=(id:string)=>{
     const element=document.getElementById(id);
@@ -179,6 +179,39 @@ export function inspectionVerdicts(html:string, sourceUrl:string, scenario:Inspe
     answer:answer+(version?'\n\n'+versionLabel[lang]+version:''),
     sources:ids.map(id=>({id:'wca:clause:'+id,title:'WCA '+id,href:sourceUrl+'#'+id,read:true})),
   });
+  return {clause,cite,result};
+}
+
+export function cornerTwistContestQuestion(question:string) {
+  if (!/twist(?:ing|ed)? (?:a |one |two |the )?corner|corner twist|扭角|拧角/i.test(question)
+      || !/speedcubing|competiti(?:on|ve)|WCA|比赛/i.test(question)) return false;
+  // Restrict direct rulings to the legality questions we actually answer.
+  // Free-form requests, unusual events and separate incidents need composition.
+  if (/\b(?:also|then|explain|list|compare|cite|show|calculate|give|write|draw|provide|describe|design|recommend|include|summarize|demonstrate|except|only if|assume|blindfold(?:ed)?|one.hand|extra attempt|inspection|time limit|judge|appeal|when|why|how)\b|另外|同时|解释|盲拧|单手|观察|裁判|申诉|额外|举例|[;；:：]/i.test(question)) return false;
+  const asks=question.match(/[^.!?。？！\n]+[?？]/g) ?? [];
+  return asks.length>0 && asks.every(ask=>/(?:is (?:it|the move|twisting a corner of a Rubik.s cube) (?:a (?:valid|legal) move|["“]?allowed["”]?)(?: in (?:speedcubing|the intended original cube))?|(?:比赛中|比赛时)?(?:可以|允许|能否)(?:用手)?(?:扭角|拧角)(?:吗)?)[?？]$/i.test(ask.trim()));
+}
+
+export function cornerTwistContestVerdict(html:string,sourceUrl:string,lang:'zh'|'en') {
+  const read=readVerdictClauses(html,sourceUrl,lang);
+  if (!read) return;
+  const {clause,cite,result}=read;
+  if (!/not permitted to cause a puzzle defect intentionally/i.test(clause('5d'))
+      || !/disqualification.*DNF/i.test(clause('5d3'))
+      || !/must not give the competitor an advantage/i.test(clause('5b2'))
+      || !/unsolvable.*single corner piece.*twisting it in place without disassembling.*does not exceed/i.test(clause('5b3c'))) return;
+  const mechanics=lang==='en'
+    ? 'A legal move turns a layer. Forcing an individual corner to twist in its socket can be physically possible on some mechanisms, but it is outside the intended moves. On both the 2×2 and 3×3 the total corner twist is zero modulo three after any legal turn sequence. One forced twist breaks that invariant. Two opposite twists preserve it and can leave a solvable state; physically doing them is still outside the move set.'
+    : '合法转动转的是一层。有些结构允许直接在角槽中拧动单个角块，这种物理操作超出了魔方设计的转动方式。标准二阶与三阶的角扭总和在合法转动下恒为模三的零。单独扭一角会破坏该约束，把两个角各向相反方向扭一次则可能仍可解，但手扭仍不属于合法步。';
+  const shortcut=lang==='en'?'In WCA competition, deliberately twisting corners to finish a layer faster causes an intentional defect and disqualifies the attempt.':'在 WCA 比赛中，故意扭角以加快某一层的还原属于主动制造故障，本次 DNF。';
+  const repair=lang==='en'?'If a defect makes the puzzle unsolvable and twisting one corner restores solvability, the competitor may twist it in place without taking the puzzle apart. For multiple defect-induced twists, the number corrected must not exceed the number caused by defects. The repair must give no solving advantage.':'若故障导致无解，而就地扭一个角能恢复可解性，选手可直接扭角修复。若故障扭动了多个角，纠正数量不得超过故障造成的数量，且修复不得带来还原优势。';
+  return result([mechanics,shortcut+' '+cite('5d')+' '+cite('5d3'),repair+' '+cite('5b3c')+' '+cite('5b2')].join('\n\n'),['5d','5d3','5b3c','5b2']);
+}
+
+export function inspectionVerdicts(html:string, sourceUrl:string, scenario:InspectionScenario, lang:'zh'|'en') {
+  const read=readVerdictClauses(html,sourceUrl,lang);
+  if (!read) return;
+  const {clause,cite,result}=read;
   if (scenario.kind==='head-to-head') {
     if (!/usual penalties.*do not apply in Head to Head/i.test(clause('I4c6')) ||
         !/14 seconds.*GO.*intentionally delaying.*DNF.*discretion/i.test(clause('I4c5')) ||

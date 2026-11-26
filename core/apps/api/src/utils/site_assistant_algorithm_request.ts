@@ -84,6 +84,12 @@ export function requestedAlgorithmDisplay(question:string):AssistantAlgorithms['
 /** Resolve concrete formula requests centrally for every client. Case names
  * come from the selected library, so sentence wording is not a fixed command.
  * Concept/navigation questions remain with the ordinary planner. */
+const squareOne = /\b(?:sq|square)[\s‐‑–-]*1\b|正方一号/i;
+export function isBigCubeParity(question: string) {
+  return !squareOne.test(question) && /parit(?:y|ies)|特殊情况|奇偶/i.test(question)
+    && /(?:高|大|[四五六七八九4-9])阶|[4-9]\s*[x×]\s*[4-9]|\b(?:higher[ -]order|big(?:ger)?|larger?|even[ -](?:order|layered))\s+(?:rubik.?s\s+)?cubes?\b/i.test(question);
+}
+
 export async function resolveAssistantAlgorithmRequest(question:string,history:AssistantMessage[],lang:'zh'|'en',load:(puzzle:AlgPuzzle,set:string)=>Promise<AlgFile>):Promise<Resolution|undefined> {
   const text=question.normalize('NFKC').trim();
   if(!text || text.length>1000)return;
@@ -91,14 +97,25 @@ export async function resolveAssistantAlgorithmRequest(question:string,history:A
   // Explicit negation, counts, navigation and drills do not ask for formula content.
   const diagramInstead=requestsDiagramInstead(text);
   if((excludesFormulaCards(text) && !diagramInstead) || /只(?:要|给|发).*(?:链接|入口|网址)|(?:打开|进入|跳转|在哪|哪里).*(?:页面|公式库|指南)|(?:入口|链接|网址)|(?:多少|几个|数量|总数)|\b(?:how many|count|link|url|open|navigate)\b/i.test(text))return;
-  if(/训练|练习|学习顺序|\b(?:training|practice)\b/i.test(text)
+  if(/训练|练习|学习顺序|怎么记|如何记|记忆方法|\b(?:training|practice|memori[sz](?:e|ing|ation))\b/i.test(text)
     && !/(?:给|发|列出|展示|附上|带上|show|give|list).*(?:公式|卡片|状态图|algorithms?|cards?|diagrams?)/i.test(text))return;
 
+  // Method names in a terminology question do not select algorithm cases.
+  if (/term for|name for|what.{0,16}(?:method|approach).{0,12}called|叫(?:什么|啥).{0,5}(?:方法|解法)|解法.{0,5}叫什么/i.test(text)
+      && !/(?:show|give|include|list|展示|附上|列出).{0,35}(?:algorithms?|cases?|cards?|公式|卡片)/i.test(text)) return;
   const previous=displayed(history);
-  const size=text.match(/([2-7])\s*[x×]\s*\1|([二三四五六七])阶/i);
-  const n=size?.[1] ?? (size?.[2] ? String('零一二三四五六七'.indexOf(size[2])) : undefined);
-  const puzzle=(n ? `${n}x${n}` : /\bsq[- ]?1\b/i.test(text) ? 'sq1' : undefined) as AlgPuzzle|undefined;
+  const size=text.match(/([2-7])\s*[x×]\s*\1|([二三四五六七2-7])\s*阶/i);
+  const n=size?.[1] ?? (size?.[2] ? String(Number(size[2]) || '零一二三四五六七'.indexOf(size[2])) : undefined);
+  const puzzle=(n ? `${n}x${n}` : squareOne.test(text) ? 'sq1' : undefined) as AlgPuzzle|undefined;
+  // A catalog slug called "parity" is not enough to identify the puzzle.
+  // Higher-order is a family, not an instruction to default to a specific size.
+  if (!puzzle && isBigCubeParity(text)) return;
   let targets=setsIn(text,puzzle);
+  // Layer names occur in ordinary NxN explanations too. FTO's catalog uses
+  // "Top Layer" as an English title; require its puzzle or an existing FTO card.
+  if (!/八面体|\b(?:FTO|octahedron)\b/i.test(text) && !previous?.groups.some(group=>group.puzzle==='fto')) {
+    targets=targets.filter(target=>target.puzzle!=='fto' || !/top layer|顶层/i.test(text));
+  }
   if(targets.length>1 && !puzzle) {
     const recent=previous?.groups;
     const inherited=targets.filter(t=>recent?.some(g=>g.puzzle===t.puzzle && g.set===t.set));

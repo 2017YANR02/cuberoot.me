@@ -45,7 +45,7 @@ describe('assistant verification of supplied 3×3 moves', () => {
     expect(await verifyAssistantCubeMoves({ tool, setup: 'R', algorithm: 'F', comparison: 'R' },
       'Compare `R` and `R` from setup `F`: same state?', 'en', signal())).toBeUndefined();
     expect(await verifyAssistantCubeMoves({ tool, algorithm: 'R' },
-      'Does `R` solve the 4x4?', 'en', signal())).toBeUndefined();
+      'Does `R` solve the 5x5?', 'en', signal())).toBeUndefined();
   });
 
   it('verifies complete input at the normal assistant entry without a model rewrite', async () => {
@@ -113,6 +113,29 @@ describe('assistant verification of supplied 3×3 moves', () => {
     ]);
     expect(fetcher).not.toHaveBeenCalled();
   });
+});
+
+it.each([
+  ["二阶从复原态比较 `Rw` 和 `x`，两套转法的终态是否相同？", '2', undefined, ['Rw', 'x']],
+  ["四阶起始局面为 `U2`。比较 `2R` 和 `Rw R′`，转法的终态是否相同？", '4', 'U2', ['2R', "Rw R'"]],
+] as const)('compares both complete sequences in the specified puzzle and plays from the same setup', async (question, order, setup, algorithms) => {
+  const fetcher = vi.fn<typeof fetch>();
+  const result = await answerSiteQuestion(question, 'zh', null, signal(), fetcher);
+  expect(result.answer).toContain('最终状态相同');
+  expect(result.actions?.map(action => new URL(action.href, 'https://cuberoot.me').searchParams)).toEqual(
+    algorithms.map(alg => new URLSearchParams({ puzzle: order, anchor: 'start', ...(setup ? { setup } : {}), alg })),
+  );
+  expect(fetcher).not.toHaveBeenCalled();
+});
+
+it.each([
+  ['Does `x` return the 2x2 to the solved state in the original orientation?', 'differs from the solved state'],
+  ['Does `M R` solve the 2x2?', 'each complete 2×2 sequence'],
+  ['Does 5Rw R solve the 4x4?', 'each complete 4×4 sequence'],
+] as const)('keeps fixed orientation and rejects unsupported layers: %s', async (question, expected) => {
+  const result = await answerSiteQuestion(question, 'en', null, signal(), vi.fn());
+  expect(result.answer).toContain(expected);
+  if (expected.includes('complete')) expect(result.actions).toBeUndefined();
 });
 
 it.each([

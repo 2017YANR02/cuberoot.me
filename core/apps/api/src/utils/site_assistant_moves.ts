@@ -1,5 +1,6 @@
 import { parseCubeAlg } from '@cuberoot/shared/alg-transform';
 import { type Alg, Move, Grouping, Commutator, Conjugate } from 'cubing/alg';
+import { puzzles } from 'cubing/puzzles';
 import { canonicalize3x3WideMoves, countMoves, tokenizeMoves } from '@cuberoot/shared/alg-notation';
 import { getCube3, invertAlg } from '@cuberoot/shared/recon/cube3';
 import type { AssistantAnswer, AssistantMessage } from '@cuberoot/shared/site-assistant';
@@ -14,24 +15,84 @@ export const verifyCubeMovesCall = z.object({
 }).strict();
 
 export type VerifyCubeMovesCall = z.infer<typeof verifyCubeMovesCall>;
+type CubeOrder = 2 | 3 | 4;
+
+function cubeOrder(question: string): CubeOrder | undefined {
+  const orders = new Set<number>();
+  for (const [, first, second, third] of question.matchAll(/(?<!\d)(\d{1,2})\s*[x×]\s*(\d{1,2})(?:\s*[x×]\s*(\d{1,2}))?(?!\d)/gi)) {
+    if (first !== second || (third && first !== third)) return;
+    orders.add(Number(first));
+  }
+  for (const [, value] of question.matchAll(/([二三四五六七八九十]|\d+)\s*阶/g)) {
+    orders.add(/^\d+$/.test(value) ? Number(value) : '一二三四五六七八九十'.indexOf(value)+1);
+  }
+  if (orders.size > 1 || /SQ-?1|Pyraminx|Skewb|Megaminx|斜转|五魔方|金字塔/i.test(question)) return;
+  const [size = 3] = orders;
+  if (size === 2 || size === 3 || size === 4) return size;
+}
+
+// A reported attempt is context for a diagnosis. Keep operands in an explicit
+// check (including "for example, does … solve it?"), and any supplied setup.
+function requestedMoveText(question: string) {
+  const background = /\b(?:for (?:example|instance)|e\.g\.|(?:I|we) (?:have )?(?:tried|used|found)|(?:cannot|can't|couldn.t) seem to solve it using|the tutorial (?:uses|shows))\b|例如|比如|举例|我(?:之前|刚才|曾经)?(?:试过|尝试|用过)|教程里(?:用|举例)/i;
+  if (!background.test(question)) return question;
+  const parts = question.split(/(?<=[.!?。！？；;])\s+|(?<=[。！？；;])|[,，]\s*(?=(?:but |now |please |请|现在|再验证|但))/u);
+  const operation = /\b(?:verify|check|simulate|test|compare)\b|\b(?:does|will|would)\s+(?:this|that|it|the sequence|doing|applying)\b|\b(?:does|will|would)\s*[`“"(]|\bis (?:it|this|that) equivalent\b|验证|校验|模拟|比较|是否(?:等价|复原)|能否(?:还原|复原)/i;
+  const literalQuestion = /\b(?:does|will|would)\s+[URFDLBMES](?:w|2|['′’])?(?=\s|$)/;
+  const requested = parts.filter(part => !background.test(part) || operation.test(part) || literalQuestion.test(part) || /(?:starting (?:position|state)|\bsetup\b|起始局面|初始打乱)/i.test(part));
+  // A later explicit reference can make an example the requested operand.
+  if (requested.some(part => /(?:(?:verify|check|simulate|test) (?:it|that (?:sequence|example))|(?:does|will|would) (?:it|that sequence) (?:solve|restore|return))\b|验证(?:这个例子|上面这串)/i.test(part))
+    && parts.length - requested.length === 1) return question;
+  return requested.join(' ');
+}
 
 export function requestsCubeMoveVerification(question: string) {
+  const original = question;
+  question = requestedMoveText(question);
   const intent = /(?:验证|校验|核验|检验|检查|对比|比较|等价|能(?:否|不能|不能够)|是否|会不会|一样|试一下)|\b(?:verify|check|test|simulate|compare|equivalent|identical|same|will|does|would|do|can)\b/i;
-  const moves = /魔方|三阶|起始局面|转法|手顺|(?:两套|这[套条]|这[两二]套)公式|\b(?:cube|moves?|algorithms?|scramble|3\s*[x×]\s*3|[URFDLBMESxyz](?:w)?[2']?)\b/i;
+  const moves = /魔方|[二三四]阶|起始局面|转法|手顺|(?:两套|这[套条]|这[两二]套)公式|\b(?:cube|moves?|algorithms?|scramble|[234]\s*[x×]\s*[234]|[URFDLBMESxyz](?:w)?[2']?)\b/i;
   const goal = /能否还原|能不能还原|是否还原|能还原|还原吗|复原|归位|等价|(?:终态|状态|局面|结果).{0,8}(?:一样|相同|不同|一致|相等)|(?:一样|相同|不同|一致|相等).{0,8}(?:终态|状态|局面|结果)|\b(?:solv(?:e[ds]?|ing)|equivalent|identical|(?:same|different)\s+(?:(?:final|ending)\s+)?(?:state|pattern|result|position|stickers?))\b/i;
   const stateEquality = /\b(?:final|ending)[ -]state (?:equality|equivalence)\b/i;
   if (!intent.test(question) || !moves.test(question) || !(goal.test(question) || stateEquality.test(question))) return false;
-  const supplied = suppliedSequences(question);
-  return supplied === undefined || supplied.length > 0;
+  const order = cubeOrder(original);
+  if (!order) return false;
+  // Establish that the user wants the effect of a concrete operation before
+  // asking the notation parser for operands. In prose, x is often a variable
+  // and [R,U,...] can be the alphabet of a random walk.
+  const request = /验证|校验|核验|模拟|对比|比较|等价|\b(?:verify|test|simulate|compare|equivalent|identical)\b/i.test(question);
+  const alphabet = /(?:动作集|候选动作|随机(?:选|抽)|\b(?:set|pool|list|choice) of (?:possible |allowed )?(?:moves|turns)|\b(?:random|sample|pick|choose)\b[^.!?。]{0,100}\b(?:from|set)\b)/i;
+  if (alphabet.test(question) && !/(?:验证|模拟|比较)(?:这|下)|\b(?:verify|simulate|compare) (?:this|these|the following)\b/i.test(question)) return false;
+  const literal = /[`“「"(（\[]\s*(?:(?:[URFDLBMES]{1,8}|[xyz])(?:w|2|['′’])?(?=[\s,:'′’2)）\]`”」"]|$))/u;
+  const action = /(?:这(?:串|套|条)(?:转法|公式|手顺)|从复原态(?:做|转)|\b(?:[Dd]oes|[Ww]ould|[Ww]ill|[Cc]an|[Aa]pply|[Aa]pplying|[Aa]fter|[Ss]etup)\s+(?:the sequence\s+)?[URFDLBMES](?:w|2|['′’])?(?=\s|$))/u;
+  const malformedWide = /(?<![a-z0-9])(?:\d+(?:-\d+)?)?[URFDLBMES]w(?:2|['′’])?(?![a-z0-9])/iu;
+  // Quoted algebraic variables are not whole-cube rotations unless the
+  // question actually asks to turn/verify them.
+  const operands = suppliedSequences(question, order);
+  if (!request && /(?:number|variable|次数|变量).{0,10}[`“"「]?[xyz][`”"」]?\b|\b[xyz] times\b/i.test(question)
+    && !/\b(?:rotate|rotation|apply this sequence)\b|转体|执行这串/i.test(question)) return false;
+  const moveText = literal.test(question) || action.test(question) || malformedWide.test(question);
+  if (!moveText && /(?:局面|状态|配置|\b(?:states?|positions?|configurations?)\b)/i.test(question)
+    && /(?:距离|最少.{0,4}步|最短|\b(?:distance|diameter|complexity|arbitrary|at most|minimum|maximum)\b)/i.test(question)) return false;
+  if (operands === undefined) return moveText && (request || /能否|是否|还原吗|\b(?:does|will|would)\b/i.test(question));
+  if (!operands.length) return false;
+  if (!request && !moveText && !/(?:终态|最后的状态).{0,9}(?:一样|相同|不同|一致)/.test(question)) {
+    return operands.some(span => span.alg.includes(' ') && /还原|复原|终态|\bsolve[ds]?\b/i.test(question.slice(span.end,span.end+50)));
+  }
+  if (operands.every(span => /^[xyz]$/.test(span.alg)) && /变量|任意|次数|\b(?:number|times|variable|any algorithm|arbitrary)\b/i.test(question)
+    && !/转体|转动|转法|\b(?:rotation|rotate|verify|simulate)\b/i.test(question)) return false;
+  return true;
 }
 
 const normalizePrimes = (value: string) => value.replace(/[’′]/g, "'");
 const supportedMove = /^(?:[URFDLB]w?|[urfdlbMESmsexyz])(?:[2']|2')?$/;
+const pocketTurn = /^(?:2?[URFDLB]w|[URFDLBurfdlbxyz])(?:[2']|2')?$/;
+const fourTurn = /^(?:(?:2)?[URFDLB]|(?:[23]|2-3)?[URFDLB]w|[urfdlbxyz])(?:[2']|2')?$/;
 
-function plainCubeAlg(value: string) {
+function plainCubeAlg(value: string, order: CubeOrder = 3) {
+  const legalMove = order === 3 ? supportedMove : order === 2 ? pocketTurn : fourTurn;
   if (/[()[\]]/.test(value)) {
     const normalized = normalizePrimes(value);
-    if (normalized.length > 480 || !/^[URFDLBMESurfdlbmesxyzw\d',:\s()[\]]+$/.test(normalized)) return;
+    if (normalized.length > 480 || !/^[URFDLBMESurfdlbmesxyzw\d',:\s()[\]-]+$/.test(normalized)) return;
     try {
       const tree = parseCubeAlg(normalized);
       // Bound the expanded leaf count before iterating any repetitions. Reject
@@ -39,7 +100,7 @@ function plainCubeAlg(value: string) {
       function size(alg: Alg): number {
         let total = 0;
         for (const node of alg.childAlgNodes()) {
-          if (node instanceof Move && supportedMove.test(node.toString())) total++;
+          if (node instanceof Move && legalMove.test(node.toString())) total++;
           else if (node instanceof Grouping) total += size(node.alg) * Math.abs(node.amount);
           else if (node instanceof Commutator) total += 2*(size(node.A)+size(node.B));
           else if (node instanceof Conjugate) total += 2*size(node.A)+size(node.B);
@@ -53,25 +114,26 @@ function plainCubeAlg(value: string) {
     } catch { return; }
   }
   const { moves, junk } = tokenizeMoves(normalizePrimes(value));
-  if (junk.length || moves.length === 0 || moves.length > 120 || moves.some(move => !supportedMove.test(move.raw))) return;
+  if (junk.length || moves.length === 0 || moves.length > 120 || moves.some(move => !legalMove.test(move.raw))) return;
   return moves.map(move => move.raw).join(' ');
 }
 
 /** Accept complete sequences only. A model may label the supplied inputs, never rewrite them. */
 type SuppliedSequence = { alg: string; start: number; end: number };
 
-function suppliedSequences(question: string) {
+function suppliedSequences(question: string, order: CubeOrder = 3) {
   const sequences: SuppliedSequence[] = [];
   let invalidQuote = false;
   let unquoted = normalizePrimes(question).replace(/`([^`\n]+)`|"([^"\n]+)"|“([^”\n]+)”|「([^」\n]+)」/g,
     (match, code: string, double: string, curved: string, angle: string, start: number) => {
-      const alg = plainCubeAlg(code || double || curved || angle);
+      const alg = plainCubeAlg(code || double || curved || angle, order);
       if (alg) sequences.push({ alg, start, end: start + match.length });
       else invalidQuote = true;
       return '|'.padEnd(match.length);
     });
   if (invalidQuote || /[`“”「」]/.test(unquoted)) return;
-  const groupStart = /[([](?=\s*(?:[URFDLBMESurfdlbmesxyz][URFDLBMESurfdlbmesxyzw2']*(?=[\s,:()[\]]|$)|[([]))/g;
+  if (order !== 3) unquoted = unquoted.replace(/(?<!\d)[24]\s*[x×]\s*[24](?:\s*[x×]\s*[24])?(?!\d)/gi, match => ' '.repeat(match.length));
+  const groupStart = /[([](?=\s*(?:(?:\d+(?:-\d+)?)?[URFDLBMESurfdlbmesxyz][URFDLBMESurfdlbmesxyzw2']*(?=[\s,:()[\]]|$)|[([]))/g;
   for (let match; (match = groupStart.exec(unquoted));) {
     const start = match.index;
     let depth = 1, end = start + 1;
@@ -82,7 +144,7 @@ function suppliedSequences(question: string) {
     }
     if (depth) return;
     end += /^\d*'?/.exec(unquoted.slice(end))![0].length;
-    const alg = plainCubeAlg(unquoted.slice(start,end));
+    const alg = plainCubeAlg(unquoted.slice(start,end), order);
     if (!alg) return;
     sequences.push({alg,start,end});
     unquoted = unquoted.slice(0,start) + '|'.repeat(end-start) + unquoted.slice(end);
@@ -95,7 +157,7 @@ function suppliedSequences(question: string) {
   // dropped from the verification. English 'I' is a pronoun in prose.
   if (sequences.length && /(?<![A-Za-z0-9])[CGHJKNOPQTVWXYZ](?:2'?|')?(?![A-Za-z0-9])/.test(prose)) return;
   const add = (start: number, end: number) => {
-    const alg = plainCubeAlg(unquoted.slice(start, end));
+    const alg = plainCubeAlg(unquoted.slice(start, end), order);
     if (alg) sequences.push({ alg, start, end });
   };
   let start = 0, end = 0;
@@ -103,7 +165,9 @@ function suppliedSequences(question: string) {
     // A prose word such as "use" or "Use" is not a series of compact moves.
     // Recognized single turns such as Rw are still valid outside quotes.
     const wordLike = /^[A-Za-z][a-z]+$/.test(token[0]) && !supportedMove.test(token[0]);
-    if (wordLike || !plainCubeAlg(token[0])) {
+    const alg = wordLike ? undefined : plainCubeAlg(token[0], order);
+    if (!alg && order !== 3 && !wordLike && /^(?=.*[URFDLBMESurfdlbmesxyz])[URFDLBMESurfdlbmesxyzw\d'-]+$/.test(token[0])) return;
+    if (!alg) {
       if (end > start) add(start, end);
       end = start = token.index + token[0].length;
       continue;
@@ -123,7 +187,7 @@ function suppliedSequences(question: string) {
     const adjacent = previous && connector === '' && !/[`"“「]/.test(question.slice(previous.start,span.end));
     if (previous && (adjacent || /^(?:(?:and )?then|followed by|后|接着|然后|再(?:转|做)?)$/i.test(connector ?? ''))
       && !suppliesSetup(question,previous)) {
-      const alg = plainCubeAlg(previous.alg+' '+span.alg);
+      const alg = plainCubeAlg(previous.alg+' '+span.alg, order);
       if (!alg) return;
       ordered[ordered.length-1]={alg,start:previous.start,end:span.end};
     } else ordered.push(span);
@@ -135,7 +199,7 @@ function suppliesSetup(question: string, span: SuppliedSequence) {
   const before = question.slice(Math.max(0, span.start - 60), span.start);
   const after = question.slice(span.end, span.end + 64);
   return /(?:初始|起始|开始)(?:局面|状态)?(?:是|为)?[：:\s]*$|(?:打乱(?:是|为)?|摆成|从)[：:\s]*$|\b(?:setup|scramble|starting (?:state|position))\s*(?:(?:is|from|of|sequence)\s*)?[:：\s]*$/i.test(before)
-    || /(?:已(?:经)?|刚(?:刚)?|先)(?:把(?:三阶|魔方)(?:魔方)?)?\s*(?:摆到|转到|转成|做完)\s*$/i.test(before)
+    || /(?:已(?:经)?|刚(?:刚)?|先)(?:把(?:[二三四]阶|魔方)(?:魔方)?)?\s*(?:摆到|转到|转成|做完)\s*$/i.test(before)
     || (/\b(?:from|after)\s*$/i.test(before) && /\b(?:back to (?:the )?solved|solves?|return(?:s)? to (?:the )?solved|compare)\b/i.test(question))
     || /^\s*(?:作为(?:初始|起始|打乱)|开始|as (?:the |a )?(?:(?:shared|common) )?(?:3\s*[x×]\s*3 )?(?:setup|scramble|starting (?:setup|state|position))\b)/i.test(after);
 }
@@ -145,10 +209,11 @@ function needsComparison(question: string) {
     && !/(?:与|和|跟|是否与)(?:原|出发|开始|起始|初始)?(?:朝向的)?(?:复原态|复原状态)|\b(?:as|to) (?:a |the )?solved (?:state|position)\b/i.test(question);
 }
 
-function suppliedMoveCall(question: string): VerifyCubeMovesCall | undefined {
-  const otherSize = [...question.matchAll(/\b(\d{1,2})\s*[x×]\s*(\d{1,2})\b/gi)].some(match => match[1] !== '3' || match[2] !== '3');
-  if (otherSize || /(?:[二四五六七八九十]|\b(?!3\s*阶)\d+)\s*阶|SQ-?1|Pyraminx|Skewb|Megaminx/i.test(question)) return;
-  const supplied = suppliedSequences(question);
+function suppliedMoveCall(question: string): (VerifyCubeMovesCall & { order: CubeOrder }) | undefined {
+  const order = cubeOrder(question);
+  if (!order) return;
+  question = requestedMoveText(question);
+  const supplied = suppliedSequences(question, order);
   if (!supplied) return;
   const setups = supplied.filter(span => suppliesSetup(question, span));
   if (setups.length > 1) return;
@@ -157,10 +222,15 @@ function suppliedMoveCall(question: string): VerifyCubeMovesCall | undefined {
   if (moves.length < 1 || moves.length > 2 || (moves.length === 1 && needsComparison(question))) return;
   if (!setup && !/从复原|\bfrom (?:a |the )?solved\b/i.test(question)
     && /打乱为|摆成|从.{0,12}(?:打乱|当前|照片|局面)|\b(?:given scramble|current state|scrambled state|from the photo|(?:from|after) (?:the )?setup)\b/i.test(question)) return;
-  return { tool: 'verify_cube_moves', setup, algorithm: moves[0].alg, comparison: moves[1]?.alg };
+  return { tool: 'verify_cube_moves', order, setup, algorithm: moves[0].alg, comparison: moves[1]?.alg };
 }
 
 export function moveVerificationInputHelp(lang: 'en' | 'zh', question = ''): AssistantAnswer {
+  const order = cubeOrder(question);
+  if (order === 2 || order === 4) return { answer: {
+    zh: `请用反引号分别标出完整的 ${order}×${order} 转法和起始打乱。支持外层、宽层和转体${order === 4 ? '，四阶也支持 2R 一类的内层记号' : ''}。每串展开后可验证 1–120 步。`,
+    en: `Use backticks around each complete ${order}×${order} sequence and setup. Face, wide and rotation moves are supported${order === 4 ? ', including inner turns such as 2R' : ''}. Each expanded sequence may contain 1–120 moves.`,
+  }[lang], sources: [] };
   if (/[([（［]\s*[URFDLBMESurfdlbmesxyz](?:w)?(?:2|['’′])?(?=[\s'’′2,:[\])）］])/u.test(question)) {
     return { answer: {
       zh: '请核对转法中的括号、重复次数和动作符号。每串展开后可验证 1–120 步。',
@@ -180,10 +250,10 @@ export async function verifyAssistantCubeMoves(call: VerifyCubeMovesCall, questi
   const supplied = suppliedMoveCall(question);
   if (!supplied) return;
   const provided = [supplied.algorithm, supplied.comparison].filter(Boolean).sort();
-  const algorithm = plainCubeAlg(call.algorithm);
-  const comparison = call.comparison && plainCubeAlg(call.comparison);
+  const algorithm = plainCubeAlg(call.algorithm, supplied.order);
+  const comparison = call.comparison && plainCubeAlg(call.comparison, supplied.order);
   if (!algorithm || (call.comparison && !comparison)
-    || (call.setup ? plainCubeAlg(call.setup) : '') !== (supplied.setup ?? '')) return;
+    || (call.setup ? plainCubeAlg(call.setup, supplied.order) : '') !== (supplied.setup ?? '')) return;
   const used = [algorithm, comparison].filter(Boolean).sort();
   if (provided.length !== used.length || provided.some((value, index) => value !== used[index])) return;
   return simulateCubeMoves(supplied, lang, signal, question);
@@ -192,6 +262,31 @@ export async function verifyAssistantCubeMoves(call: VerifyCubeMovesCall, questi
 export function verifySuppliedCubeMoves(question: string, lang: 'en' | 'zh', signal: AbortSignal) {
   const supplied = suppliedMoveCall(question);
   return supplied && simulateCubeMoves(supplied, lang, signal, question);
+}
+
+/** Prove a single cubie orientation constraint from the puzzle's face generators.
+ * Only take the standalone diagnostic; compound questions keep their checklist. */
+export async function singleOrientationAnswer(question: string, lang: 'en'|'zh', signal: AbortSignal): Promise<AssistantAnswer|undefined> {
+  const english = /^(?:why (?:is|isn't)|(?:is|can)) (?:just |exactly )?(?:one|a single) (twisted corner|flipped edge) (?:not (?:a )?|an? |be )?(?:possible|impossible|valid|solvable|solved|fixed)(?: (?:position|state))? (?:on|of) (?:an? |the )?(?:(?:standard )?3\s*[x×]\s*3(?:\s*[x×]\s*3)?(?: (?:rubik['’]s )?cube)?|rubik['’]s cube)(?: (?:with (?:all|the) (?:other pieces|rest) solved|by legal turns))?[?.!]*$/i;
+  const chinese = /^(?:为什么)?(?:标准)?三阶(?:魔方)?(?:其余(?:都|全部)?(?:已)?(?:还原|复原)[，,])?(?:只|单独)(翻一(?:个|条)?棱|扭一(?:个)?角)(?:块)?(?:可(?:以|能)吗|能(?:否|不能)复原|为什么无解|不能复原|是否合法)[？?。]*$/u;
+  const match = english.exec(question.trim()) ?? chinese.exec(question.trim());
+  if (!match) return;
+  const corner = /corner|角/i.test(match[1]);
+  const orbit = corner ? 'CORNERS' : 'EDGES';
+  const modulus = corner ? 3 : 2;
+  const solved = (await getCube3()).defaultPattern();
+  signal.throwIfAborted();
+  const invariant = ['R','L','F','B','U','D'].every(move =>
+    solved.applyAlg(move).patternData[orbit].orientation.reduce((sum,value)=>sum+value,0) % modulus === 0);
+  if (!invariant) return;
+  return {answer: lang==='en'
+    ? 'With everything else solved, '+(corner?'one twisted corner':'one flipped edge')+' is unreachable by legal turns. Each of the six face turns preserves the total '+(corner?'corner twist modulo 3':'edge flip modulo 2')+', so any sequence preserves it too. Check the other pieces first. If this is the only defect, '+(corner?'physically restore the corner’s orientation.':'physically reorient the edge.')
+    : '若其他块均已复原，'+(corner?'单角扭转':'单棱翻转')+'无法靠合法转动复原。六个面转都保持'+(corner?'角扭总和模 3':'翻棱总和模 2')+'不变，任意转序也一样。先检查其余块；若这是唯一异常，需要将该块的物理朝向复位。',sources:[]};
+}
+
+export function hasExplicitCubeMoveCheck(question: string) {
+  const order = cubeOrder(question);
+  return (order === 2 || order === 4) && requestsCubeMoveVerification(question);
 }
 
 // Verified examples for open-ended explanations. Other user-specified operands
@@ -209,9 +304,9 @@ export async function notationExampleEvidence(question:string):Promise<string|un
   });
   return 'A commutator [A,B] expands to A B A^-1 B^-1. A conjugate [A:B] expands to A B A^-1. With A=R and B=U, the cube engine verifies: '+examples.join('; ')+'. Use these examples if compatible with the requested operands. Explain that a commutator measures failure to commute: it is the identity if A and B commute, otherwise its support depends on A and B and can be large. A conjugate relocates the action of B under the setup A. Never assert that either construction necessarily changes few pieces or is more localized. Only add piece counts when requested.';
 }
-function moveAction(alg: string, suffix: string, title: string, setup?: string) {
+function moveAction(alg: string, suffix: string, title: string, setup?: string, order: CubeOrder = 3) {
   return { id: 'cube-move-check:' + suffix, title,
-    href: '/sim?' + new URLSearchParams({ puzzle: '3', anchor: 'start', ...(setup ? { setup } : {}), alg }).toString() };
+    href: '/sim?' + new URLSearchParams({ puzzle: String(order), anchor: 'start', ...(setup ? { setup } : {}), alg }).toString() };
 }
 
 const forEngine = (alg: string) => canonicalize3x3WideMoves(alg).replace(/\b[mse]/g, move => move.toUpperCase());
@@ -270,7 +365,7 @@ export async function inverseMoveAnswer(question: string, lang: 'en'|'zh', signa
   if (/(?:不要|不用|不需要|别).{0,4}(?:逆序|倒放|求逆)|\b(?:without|do not|don't) (?:undo|invert|reverse)\b/i.test(question)) return;
   const spans = suppliedSequences(question);
   const call = suppliedMoveCall(question);
-  if (!call || call.setup || spans?.length !== 1) return;
+  if (!call || call.order !== 3 || call.setup || spans?.length !== 1) return;
   // Outside the accepted span, stray notation, group delimiters or an unknown
   // uppercase move can mean that tokenization recovered only part of the input.
   const rest = question.slice(0,spans[0].start)+' '+question.slice(spans[0].end);
@@ -300,13 +395,28 @@ export async function inverseMoveAnswer(question: string, lang: 'en'|'zh', signa
   return {answer:noExplanation.test(question)||movesOnly.test(question)?compact:[answer, counts, detail].filter(Boolean).join(' '),actions,sources:actions.map(a=>({...a,read:false}))};
 }
 
-async function simulateCubeMoves({ setup, algorithm, comparison }: VerifyCubeMovesCall, lang: 'en' | 'zh', signal: AbortSignal, question:string): Promise<AssistantAnswer> {
-  const cube = await getCube3();
+const pocketRotations: Record<string, string> = { R: 'x', L: "x'", U: 'y', D: "y'", F: 'z', B: "z'" };
+const pocketForEngine = (alg: string) => alg.split(' ').map(move => {
+  const wide = /^(?:2?([URFDLB])w|([urfdlb]))(2'?|'?)$/.exec(move);
+  if (!wide) return move;
+  const rotation = pocketRotations[(wide[1] ?? wide[2]).toUpperCase()];
+  if (wide[3].startsWith('2')) return rotation[0] + '2';
+  return rotation[0] + (rotation.endsWith("'") !== (wide[3] === "'") ? "'" : '');
+}).join(' ');
+
+async function simulateCubeMoves({ setup, algorithm, comparison, order }: VerifyCubeMovesCall & { order: CubeOrder }, lang: 'en' | 'zh', signal: AbortSignal, question:string): Promise<AssistantAnswer> {
+  const cube = await (order === 3 ? getCube3() : puzzles[order === 2 ? '2x2x2' : '4x4x4'].kpuzzle());
   signal.throwIfAborted();
   const solved = cube.defaultPattern();
-  const start = setup ? solved.applyAlg(forEngine(setup)) : solved;
-  const result = start.applyAlg(forEngine(algorithm));
-  const matches = result.isIdentical(comparison ? start.applyAlg(forEngine(comparison)) : solved);
+  const normalize = order === 3 ? forEngine : order === 2 ? pocketForEngine : (alg: string) => alg.replace(/2'/g,'2');
+  let matches: boolean;
+  try {
+    const start = setup ? solved.applyAlg(normalize(setup)) : solved;
+    const result = start.applyAlg(normalize(algorithm));
+    matches = result.isIdentical(comparison ? start.applyAlg(normalize(comparison)) : solved);
+  } catch {
+    return moveVerificationInputHelp(lang, question);
+  }
   const outcome = comparison
     ? matches ? { zh: '两套转法的最终状态相同。', en: 'Both sequences produce the same final state.' }
       : { zh: '两套转法的最终状态不同。', en: 'The two sequences produce different final states.' }
@@ -316,9 +426,11 @@ async function simulateCubeMoves({ setup, algorithm, comparison }: VerifyCubeMov
     ? { zh: '已从你提供的起始局面验证，使用固定朝向。', en: 'Verified from your supplied setup with a fixed orientation.' }
     : { zh: '已从复原态验证，使用固定朝向。', en: 'Verified from a solved starting state with a fixed orientation.' };
   const rotationOnly = !setup && !comparison && !matches && algorithm.split(' ').every(move => /^[xyz]/.test(move));
-  const orientation = rotationOnly ? { zh: '方块相对中心仍是复原的，变化的是整个魔方的朝向。', en: 'The pieces are still solved relative to the centers. The whole cube is facing a different orientation.' }[lang] : '';
-  const actions = [moveAction(algorithm, 'first', { zh: '在模拟器查看转法', en: 'Open sequence in simulator' }[lang], setup)];
-  if (comparison) actions.push(moveAction(comparison, 'second', { zh: '在模拟器查看对照转法', en: 'Open comparison in simulator' }[lang], setup));
+  const orientation = rotationOnly ? (order === 2
+    ? { zh: '各面仍是单色，变化的是整个魔方的朝向。', en: 'Each face is still a single color. The whole cube is facing a different orientation.' }
+    : { zh: '方块相对中心仍是复原的，变化的是整个魔方的朝向。', en: 'The pieces are still solved relative to the centers. The whole cube is facing a different orientation.' })[lang] : '';
+  const actions = [moveAction(algorithm, 'first', { zh: '在模拟器查看转法', en: 'Open sequence in simulator' }[lang], setup, order)];
+  if (comparison) actions.push(moveAction(comparison, 'second', { zh: '在模拟器查看对照转法', en: 'Open comparison in simulator' }[lang], setup, order));
   const details: string[] = [];
   if (/展开|\bexpand(?:ed)?\b/i.test(question)) {
     details.push((lang==='zh'?'第一串展开':'First expansion')+' `'+algorithm+'`');

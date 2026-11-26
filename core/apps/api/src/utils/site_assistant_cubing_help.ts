@@ -1,3 +1,4 @@
+import { applyScramble, toFaceletString } from '@cuberoot/shared/timer/reconstruct/state';
 import { parseHTML } from 'linkedom';
 import { assistantDeadline } from './site_assistant_diagnostics.js';
 import { publicReadCache } from './site_assistant_public_queries.js';
@@ -7,6 +8,104 @@ import type { AssistantAnswer, AssistantMessage } from '@cuberoot/shared/site-as
 import { asksToLocatePair, assistantObservationOnlyPlan, assistantPlanPieceFacts, assistantPlanShape, assistantPlanTimeBounds } from './site_assistant_plan.js';
 
 type Lang = 'zh'|'en';
+
+// The LBL page accepts chapter and lesson IDs, which stay stable when the visible chapter order changes.
+const beginnerLessons = {
+  start: {
+    step: 'structure', section: 'overview', title: { zh: '三阶层先法 · 引言', en: '3×3 beginner method · Introduction' },
+    hint: { zh: '先找一块带白色、只有两种颜色的块。这是棱块，只有一格颜色的是中心块。',
+      en: 'First find a piece with white and one other color. That is an edge. A one-color piece is a center.' },
+  },
+  daisy: {
+    step: 'daisy', section: 'overview', title: { zh: '三阶层先法 · 做小花', en: '3×3 beginner method · Make the daisy' },
+    hint: { zh: '把黄心朝上，先找一块白棱，让它的白色格到黄心旁边。黄心四周有四格白色，小花就完成了。',
+      en: 'Hold the yellow center on top. Bring one white edge sticker next to it. The daisy is complete when all four edge stickers around the yellow center are white.' },
+  },
+  cross: {
+    step: 'cross', section: 'white-edge', title: { zh: '三阶层先法 · 白棱归位', en: '3×3 beginner method · Solve one white edge' },
+    hint: { zh: '先把一片白色花瓣的侧面颜色对准同色中心，再把对齐的那一面转 180°。完成后，这条白棱在底面，侧面颜色也与中心对齐。',
+      en: 'Match one petal’s side color to its center, then turn that face 180°. The white sticker should now be on the bottom, with its side color still matching the center.' },
+  },
+  corners: {
+    step: 'corners', section: 'overview', title: { zh: '三阶层先法 · 底层角块', en: '3×3 beginner method · Bottom corners' },
+    hint: { zh: '把白面朝下，检查四个侧面最靠白面的一排。每排都和本面中心同色了吗？对不齐的白角，要按它另外两种颜色找位置。',
+      en: 'Hold the white face down. Does the bottom row on each side match its center? Use the other two colors on any misplaced white corner to find its slot.' },
+  },
+  notation: {
+    step: 'structure', section: 'notation', title: { zh: '三阶层先法 · 转动记号', en: '3×3 beginner method · Move notation' },
+    hint: { zh: '先正对要转的那一面看。单个字母表示顺时针转 90°，带撇号就逆时针转 90°，带 2 就转半圈。',
+      en: 'Look straight at the face you are turning. A letter means 90° clockwise, a prime means 90° counterclockwise, and 2 means a half turn.' },
+  },
+} as const;
+
+const beginnerFaces: Partial<Record<string, { zh: string; en: string }>> = {
+  U: { zh: '顶面', en: 'top' }, R: { zh: '右面', en: 'right' }, F: { zh: '前面', en: 'front' },
+  D: { zh: '底面', en: 'bottom' }, L: { zh: '左面', en: 'left' }, B: { zh: '后面', en: 'back' },
+};
+
+export function asksForBeginnerSolve(question: string) {
+  const text = question.normalize('NFKC').trim().replace(/[。.!！？?]+$/, '');
+  return /^(?:我(?:想知道|想学|该|应该)?[，,\s]*|请问[，,\s]*)?(?:(?:怎么|如何|怎样)(?:才能)?(?:复原|还原|拼好|拼回去)(?:(?:一|这|那)[颗个只块])?\s*(?:三阶|3\s*[x×]\s*3)(?:魔方)?|(?:三阶|3\s*[x×]\s*3)魔方(?:该|要)?(?:怎么|如何|怎样)(?:才能)?(?:复原|还原|拼好|拼回去))$/i.test(text)
+    || /^(?:please\s+)?how (?:do|should|can) I (?:solve|restore) (?:a |my |this |the )?3\s*[x×]\s*3(?: cube)?$/i.test(text)
+    || (/(?:三阶|3\s*[x×]\s*3)/i.test(text)
+      && /层先法|\blayer[- ]by[- ]layer\b/i.test(text)
+      && /从哪.{0,2}开始|分哪几步|分几步|完整.{0,8}(?:流程|步骤)|\b(?:where (?:do|should) I (?:start|begin)|what are the (?:main )?steps|overview)\b/i.test(text));
+}
+
+/** Match short beginner questions. Unknown states and compound tasks still go to the planner. */
+export function beginnerLessonAnswer(question: string, lang: Lang, linkOnly: boolean): AssistantAnswer | undefined {
+  const text = question.normalize('NFKC').trim().replace(/[。.!！?？]+$/, '');
+  if (!text || text.length > 130 || /[;；\n]|同时|顺便|另外|分别|以及|对比|比较|写成|不少于|不超过|计时|比赛|复盘|四阶|五阶|二阶|盲拧|(?:不要|不用|不需要)(?:给|讲|附)?(?:教程|链接|步骤)|\b(?:[24]\s*[x×]\s*[24]|CFOP|F2L|OLL|PLL|Roux|compare|also|separately|timer|competition|replay|words|no links)\b/i.test(text)) return;
+
+  let lesson: keyof typeof beginnerLessons | undefined;
+  let hint: string | undefined;
+  const move = text.match(/^(?:(?:魔方(?:的)?|三阶(?:魔方)?(?:的)?|请问)\s*)?`?([URFDLB])([2'′’]?)`?\s*(?:要)?(?:怎么拧|怎么转|如何转|怎么做|是什么意思|是什么)$/)
+    ?? text.match(/^(?:how (?:do I |to )?(?:turn|do|perform)|what does)\s+`?([URFDLB])([2'′’]?)`?(?:\s+mean)?(?:\s+on (?:a |my )?(?:3x3 )?cube)?$/i);
+  const face = move && beginnerFaces[move[1]];
+  if (asksForBeginnerSolve(text)) {
+    lesson = 'start';
+    hint = { zh: '三阶可以按层先法来。先做小花和白十字，再拼好白角与中层，最后处理黄面和顶层位置。第一层完成时，四个侧面的底排也要和各自的中心同色。现在把黄色中心朝上，找一块只有两种颜色的白棱，先让白色格贴到黄心旁边。黄心周围凑齐四格白色，小花就做好了。',
+      en: 'Solve it layer by layer. Make the daisy and white cross, solve the white corners and middle layer, then finish the yellow face and position its pieces. The first layer is complete when the bottom row of each side also matches its center. Start with the yellow center up. Bring the white sticker on a two-color edge next to it. Four white edge stickers around the yellow center complete the daisy.' }[lang];
+  } else if (move && face) {
+    lesson = 'notation';
+    const suffix = move[2];
+    const turn = suffix === '2' ? { zh: '转半圈（180°）', en: '180°' } : suffix
+      ? { zh: '逆时针转 90°', en: '90° counterclockwise' } : { zh: '顺时针转 90°', en: '90° clockwise' };
+    hint = { zh: `保持魔方朝向，正对${face.zh}看，只把这一层${turn.zh}。另外两层保持原位。`,
+      en: `Keep the cube oriented the same way. Looking straight at the ${face.en} face, turn just that layer ${turn.en}. The other two layers stay in place.` }[lang];
+  } else if (/^(?:(?:我|魔方|三阶魔方|I)\s*)?(?:刚才|刚刚|不小心|手滑|just |accidentally )?(?:拧错|转错|拧反|转反|made the wrong move|turned the wrong way)(?:了|一步|了一步)?[，, ]*(?:怎么办|怎么(?:退回|撤销|恢复)|what (?:now|should I do)|how (?:do I undo it|to undo it))$/i.test(text)) {
+    lesson = 'notation';
+    hint = { zh: '先停一下，保持魔方朝向。确定最后转了哪一层、向哪边时，把那一层向反方向转同样的角度。记不清的话，你最后看到哪一层动了？',
+      en: 'Pause and keep the cube oriented the same way. If you know the last layer and direction you turned, undo it by turning that layer back by the same amount. If you’re unsure, which layer did you last see move?' }[lang];
+  } else if (!/(?:怎么|如何|为什么|哪里|在哪|哪一|哪步|第一步|下一步|接下来|对不上|入口|链接|教程|教我|\b(?:how|where|what|why|tutorial|lesson|link|show|next)\b)/i.test(text)) {
+    return;
+  } else if (/白(?:色)?(?:的)?(?:那(?:一|个))?面.{0,12}(?:拼满|拼好|齐了|好了)|白色(?:已经|都)?拼满|(?:拼满|拼好)了?白(?:色)?面|(?:white (?:face|side)|[ao]ne white face).{0,18}(?:done|solved|complete|filled)|(?:solved|finished|made) (?:the |a |my )?white (?:face|side)|底层角块|第一层(?:的)?(?:角块|怎么拼|怎么做|教程)|\bbottom corners\b/i.test(text)) {
+    lesson = 'corners';
+  } else if (/白(?:色)?十字(?:已经)?(?:拼好|做好|完成|好了).{0,12}(?:接下来|下一步|然后)|\b(?:finished|solved|completed) (?:the |my )?white cross\b.{0,16}\bnext\b/i.test(text)) {
+    lesson = 'corners';
+    hint = { zh: '先核对四条白棱的侧面颜色是否都对准中心。对齐后，找一块带白色的角，按它另外两种颜色确定该放在哪两个侧面之间。',
+      en: 'Check that all four white edges match their side centers. Once they do, find a white corner and use its other two colors to identify its slot.' }[lang];
+  } else if (/小花(?:已经|都)?(?:好了|做好了?|做完了?|做成了?|完成了?|拼好了?).{0,12}(?:接下来|下一步|然后)|(?:做好|做完|完成|拼好)了?小花.{0,12}(?:接下来|下一步|然后)|白(?:色)?十字|底面十字|白棱归位|\b(?:white cross|bottom cross|solve one white edge)\b|\b(?:made|finished|completed) (?:the |my )?daisy\b.{0,18}\bnext\b|\bnext after (?:making|finishing) the daisy\b/i.test(text)) {
+    lesson = 'cross';
+    if (/(?:还)?(?:没(?:有)?|未)(?:做好|做完|完成|拼好)了?小花|\b(?:haven't|have not) (?:made|finished) (?:the |my )?daisy\b/i.test(text)) {
+      lesson = 'daisy';
+    } else if (!/小花|花瓣|daisy|petal|白棱归位|solve one white edge/i.test(text)) {
+      hint = { zh: '先看看黄心旁边有没有四片白色花瓣。有的话，试着把其中一片的侧面颜色对准同色中心。白十字完成时，四条白棱的侧色也都要对齐。',
+        en: 'Check for four white petals around the yellow center. If you have them, start by lining up the side color of one petal with its center. A finished white cross also has all four side colors aligned.' }[lang];
+    }
+  } else if (/小花|花瓣|\bdaisy\b/i.test(text)) {
+    lesson = 'daisy';
+  } else if (/转动记号|转法记号|\b(?:move|cube) notation\b/i.test(text)) {
+    lesson = 'notation';
+  } else if (/(?:三阶|魔方|3\s*[x×]\s*3|\bcube\b).{0,25}(?:零基础|新手|入门|第一次|从哪.{0,2}开始|第一步|层先法|beginners?|start|first step)|(?:零基础|新手|入门|第一次|第一步|怎么开始|beginner|first step|start).{0,25}(?:三阶|魔方|3\s*[x×]\s*3|\bcube\b)|一个面.{0,8}(?:都不会|也不会).{0,8}第一步/i.test(text)) {
+    lesson = 'start';
+  }
+  if (!lesson) return;
+
+  const { step, section, title, hint: defaultHint } = beginnerLessons[lesson];
+  const action = { id: `page:lbl:${step}:${section}`, href: `/tutorial/lbl?step=${step}&section=${section}`, title: title[lang] };
+  return { answer: linkOnly ? action.title : hint ?? defaultHint[lang], sources: [{ ...action, read: false }], actions: [action] };
+}
 
 /** A stand-alone recognition question about one corner. Extra clauses, including
  * requests for an insertion or a drill, still go to the general assistant. */
@@ -174,4 +273,68 @@ export async function brandRosterAnswer(question:string, lang:Lang, read:(url:st
     signal.throwIfAborted();
     return {answer:{zh:'当前未能读取成员名单。可打开战队目录，展开 '+brand+'，选择旗下战队查看成员。',en:'The roster could not be read. Open Teams, expand '+brand+' and select a team to see its members.'}[lang]+' [['+source.id+']]',sources:[{...source,read:false}],actions:[source]};
   }
+}
+
+// A constructive answer proves existence only. Match the entire request so a
+// second constraint, a different puzzle, or a request for sources stays with the planner.
+export function checkedFaceColourAnswer(question: string, lang: Lang): AssistantAnswer | undefined {
+  const text = question.trim();
+  const english = /^(?:is it possible to|can (?:you|one)) (?:scramble|arrange) (?:a |the )?(?:3\s*[x×]\s*3\s+|rubik['’]s )?cube (?:so(?: that)?|such that) (?:each|every) face (?:has|shows) (?:no more than|at most) (?:2|two) (?:squares|stickers) (?:of (?:the same|any (?:one|single)) colou?r)[?.!]*$/i;
+  const chinese = /^(?:能否|可不可以|可以|能不能)(?:把|将)?(?:一个)?(?:三阶)?魔方(?:打乱|转成|摆成)[，,使让成 ]*每(?:一?面|个面)(?:每种颜色|同色|相同颜色)(?:都)?(?:不超过|至多|最多)(?:两|2)(?:个|格|块){0,2}(?:吗)?[？?。]*$/u;
+  if (!english.test(text) && !chinese.test(text)) return;
+  const moves = 'R2 L2 U2 D2 F2 B2 L R U D L';
+  const faces = toFaceletString(applyScramble(3,moves)).match(/.{9}/g);
+  if (faces?.length !== 6) return;
+  const maxima = faces.map(face => Math.max(...[...new Set(face)].map(colour => face.split(colour).length - 1)));
+  if (maxima.some(max => max > 2)) return;
+  return {answer: lang === 'en'
+    ? 'Yes. From solved, apply `'+moves+'`. Counting all nine stickers on each face gives these six maximum frequencies: '+maxima.join(', ')+'. This is a reachable example.'
+    : '可以。从复原态做 `'+moves+'`。逐面统计九格中出现最多的颜色，六个面的格数依次为 '+maxima.join('、')+'，均满足条件。',sources:[]};
+}
+
+// Stable mechanics for explanatory turns. Supply facts to the composer rather
+// than classifying a mixed question as fully answered by a single keyword.
+export function cubeConceptFacts(question: string): string | undefined {
+  if (!/魔方|三阶|四阶|[2345]\s*[x×]\s*[2345]|\bcub(?:e|es|ing)\b|rubik|speedcub|tetrad twist|\b(?:CFOP|F2L|OLL|PLL)\b/i.test(question)) return;
+  const facts: string[] = [];
+  if (/commutator|交换子|任意阶|n[×*x]n/i.test(question)) facts.push('A commutator can move pieces outside the intersection of its operands’ supports. Test the full permutation on each affected orbit before claiming that it isolates a cycle. For reduction, solve centres and pair each dedge before treating the puzzle as a 3×3; address wing parity where applicable.');
+  if (/memori[sz]|memor[yia]|背公式/i.test(question) && /minimum|fewest|least|最少/i.test(question)) facts.push('Distinguish a fixed generating set from memorised algorithms with free setups, inverses or regrips. A cyclic subgroup argument applies to powers of a single fixed element, not all of its conjugates. A construction gives an upper bound unless shorter alternatives are ruled out. Pure three-cycles cannot fix odd permutations alone.');
+  if (/打乱|scrambl/i.test(question)) facts.push('A random-state generator samples a legal state and produces moves to reach it. Repeating a fixed sequence from solved always gives the same state. Appearance or a skipped step does not establish randomness.');
+  if (/打乱|scrambl/i.test(question) && /random|uniform|perfect|god.s number|随机|均匀|最乱/i.test(question)) {
+    facts.push('Uniform randomness describes a sampling distribution, not the appearance of a single state. Drawing a fixed number of face turns, even excluding consecutive turns on one face, weights states by the number of allowed walks ending there. God’s number 20 in the 3x3 face-turn metric bounds shortest solutions, not the mixing time of a random walk. State sampling followed by inverting a solution generates the chosen state.');
+  }
+  if (/初学|新手|beginner|intuitive/i.test(question) && /\b(?:F2L|OLL|PLL|CFOP)\b|层先|进阶/i.test(question)) {
+    facts.push('A practical LBL-to-CFOP path is cross planning and intuitive F2L, two-look OLL and two-look PLL, then full PLL (21 cases) before full OLL (57). New F2L can initially be slower; learn recognition and insertions before memorizing exceptions. Two-look OLL and PLL conventionally use ten and six algorithms respectively, some shared with beginner methods.');
+  }
+  if (/fingertrick|指法/i.test(question) && /\bM\b|中层/.test(question)) facts.push('M turns like L: the back center moves up. M-prime moves the front center up and the back center down. A right ring finger can flick at the bottom/back; specify the contact location before describing the direction.');
+  if (/commutator|交换子/i.test(question)) facts.push('For any piece orbit, permutation sign is multiplicative, so every commutator A B A^-1 B^-1 has positive permutation sign there. Conjugation preserves the sign of its operand. An outer face quarter turn is a four-cycle on corners (negative sign). A single swap cannot be a product of commutators, regardless of what happens to edges. An odd setup can move the residual problem into the even subgroup; do not undo that setup as a conjugation.');
+  if (/tetrad twist|四面体.{0,4}扭转/i.test(question)) facts.push('In Thistlethwaite reduction, tetrad twist classifies the relative PERMUTATIONS of the two four-corner tetrads before entering the half-turn subgroup. Corner orientations are already fixed. The three possibilities are not physical corner twists.');
+  if (/beginner|入门|初学/i.test(question) && /improve|faster|next method|recommended method|提速|进阶/i.test(question)) facts.push('Intuitive F2L pairs and slow cross planning are useful next steps after LBL. Standard two-look OLL has ten algorithms and two-look PLL six; some may already be familiar.');
+  if (/face by face|逐面复原/i.test(question)) facts.push('Solving successive faces as milestones can use temporary disruption and restoration with piece cycles. A face is not a full layer. Once five faces are monochromatic the sixth is already monochromatic by sticker counts; do not assume a last unsolved face after five solved faces.');
+  if (/角块|棱块|奇偶|角扭|翻棱|parity|wing|corner|edge flip|reassembl|put back together/i.test(question)) {
+    facts.push('On a standard 3x3, corner twists sum to 0 modulo 3, edge flips sum to 0 modulo 2, and corner and edge permutation signs match. U and D preserve corner orientations; side quarter turns twist two corners each way. A 4-cycle has odd sign. On a reduced 4x4 each dedge contains two distinct wings: exchanging its wings looks like one flipped edge; exchanging two whole dedges swaps two pairs of wings. Same-color center pieces can conceal permutations.');
+  }
+  if (/corner|edge|wrongly assembled|wrong together|角块|棱块|扭角|翻棱|装错/i.test(question)) {
+    facts.push('If all other pieces on a standard 3x3 are solved, a single twisted corner, flipped edge or transposition of just two edges cannot be fixed by legal turns. Restore the violated invariant physically: untwist the corner, unflip the edge, or interchange the two pieces respectively. These are distinct repairs. A move sequence quoted as a failed attempt does not specify the starting state. During an unfinished layer solve the unsolved pieces can compensate. On a 2x2 there is no edge parity constraint; isolated corner swaps are possible, but the total corner twist must still be zero.');
+    if (/wrong|reassembl|装错|装反/i.test(question)) facts.push('Invariants diagnose the kind of assembly defect, not the identity of the originally mishandled piece after subsequent moves. Distinguish a sufficient repair from a historical identification.');
+  }
+  if (/void cube|void rubik|空心魔方/i.test(question)) facts.push('On a Void Cube an odd virtual-center permutation can appear as just two edges swapped. One middle-slice quarter turn changes parity; then re-solve the disturbed pieces with the virtual centers in mind. A middle-slice half turn does not toggle parity.');
+  if (/reassembl|重新组装/i.test(question) && /(?:three|3) (?:faces|sides)|三(?:面|个面)/i.test(question)) facts.push('For three adjacent visible faces of a standard reassembled 3x3 with intact cubies and fixed centers, a hidden corner can compensate total twist, a hidden edge can compensate total flip, and exchanging two hidden edges can correct permutation sign. The same visible stickers therefore admit a solvable completion. Do not extrapolate to arbitrary recoloring or claim the actual unseen arrangement is solvable.');
+  if (/记号|notation|wide turn/i.test(question)) facts.push('In WCA Article 12a outer face R is one layer; Rw or 2Rw turns the outer two together on a 4x4. R\' and R2 mean inverse and half turn. Lowercase r is convention-dependent in unofficial texts and cannot be assumed to mean a WCA inner slice.');
+  if (!/(?:[245-9]\s*[x×]\s*[245-9]|[二四五六七八九]阶|pocket cube)/i.test(question) && /局面|状态|\b(?:states?|positions?|configurations?)\b/i.test(question) && /距离|最短|最多.{0,3}步|\b(?:distance|diameter|complexity|arbitrary|god.s number)\b/i.test(question)) {
+    facts.push("With a fixed frame and move metric, the distance from reachable A to B equals the distance from identity to the relative group element A inverse times B. The standard 3x3 diameter is 20 face turns (HTM), including between arbitrary endpoints. Going via solved gives a bound, not necessarily a shortest path. Kociemba's RubiksCube-TwophaseSolver documents solveto(cubestring, goalstring, ...); distinguish this local API from a verified public online interface.");
+  }
+  if (/贴纸|编号|数字|\b(?:stickers?|tiles?|numbered|numbers on)\b/i.test(question)) {
+    facts.push('On a standard 3x3 each edge color pair and corner color triple identifies one cubie. A color-solved cube restores every edge/corner sticker to its original square relative to centers. A marked center can rotate in place without changing which square it occupies.');
+  }
+  if (/相邻|棋盘|adjacent|touching|checkerboard/i.test(question)) {
+    facts.push('For edge adjacency, the reachable 3x3 checkerboard can be made by R2 L2 U2 D2 F2 B2 from solved. Its alternating squares on each face and different color pairs on adjacent faces give a counterexample to forced same-color contact. Diagonal contact and counts per face are different constraints; this pattern has only two colors per face.');
+  }
+  if (/顶层|末层|(?:top|last)[ -]layer/i.test(question) && /打乱|scrambl/i.test(question)) {
+    facts.push('For random last-layer practice choose the 3x3 last-layer (LL) subset in a trainer such as csTimer (3x3x3 CFOP → last layer), or invert a complete last-layer solution from solved F2L to set up that case. OLL and PLL subsets train narrower tasks. A lone R U R-prime U-prime trigger does not preserve solved F2L.');
+  }
+  if (/parity|奇偶|特殊情况/i.test(question) && /记忆|怎么记|如何记|memori[sz]/i.test(question)) {
+    facts.push('For big-cube reduction, identify the order, reference orientation and the specific OLL or PLL parity case. Rehearse one algorithm as finger-friendly chunks, chain adjacent chunks, then recall it from its case. Wing and slice notation depends on puzzle size. Square-1 uses a different mechanism and notation.');
+  }
+  return facts.join(' ') || undefined;
 }
