@@ -36,7 +36,7 @@ export default function ReplayFormulaTraining({ set, caseName, focus, fallback }
   return <article className="cube-photo-formula cfop-formula" data-site-surface="panel">
     {focus === 'recognition' ? <div className="cfop-formula-prompt">
       <CaseThumb local puzzle={card.puzzle} set={set} sticker={card.sticker} alg={card.alg} setup={card.setup} size={52}
-        alt={tr({ zh: '用于识别练习的魔方局面', en: 'Cube position for recognition practice' })}/>
+        alt={tr({ zh: '用于识别练习的魔方状态', en: 'Cube position for recognition practice' })}/>
       <MoreToggle expanded={revealed} aria-controls={answerId} onToggle={() => setRevealed(value => !value)} animate={false}>
         {tr(revealed ? { zh: '隐藏答案', en: 'Hide answer' } : { zh: '揭开并核对公式', en: 'Reveal and check the algorithm' })}
       </MoreToggle>

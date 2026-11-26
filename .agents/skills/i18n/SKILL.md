@@ -34,6 +34,8 @@ description: "Use for any new or edited user-visible React text, 中英双语、
 
 ## 魔方术语(termbase)
 
+- 描述整个魔方时，`cube state` 和 `position` 统一写「状态」，不用「局面」。例如「打乱状态」「复原状态」「可达状态」。单个块的 `position` 指「位置」，如「角块的位置与朝向」。
+
 - 翻译 WCA 规则、公告、意外事件记录前，先读 [`WCA 英中翻译参考`](../../../core/packages/client/public/regulation/wca-translation-reference.md)，按条款号查同目录 `wca-regulations-bilingual.md`。网页 `/regulation/translation`，公开 AI 入口 `/llms.txt`。规则语境参考该表，一般社区词汇仍查下述词典；保留版本、义务强弱与处罚范围，原译疑点单列，不能把对齐视为翻译质量认证。
 - 一般社区魔方术语查 `app/[lang]/wiki/glossary.json`(713+ 条社区中英对照，结构化字段 `headZh`/`bodyZh`)；WCA 专名、角色和规则术语优先按下述官方来源及适用语境核对，社区词典不覆盖规则定义。禁按通用语感直译。
 - **glossary.json 是 DB 导出,非手改**:真源 = PG `wiki_terms`(结构化 head_en/head_zh/body_en/body_zh);词条在 `/wiki` 页登录后用 en/zh 双框编辑,改完跑 `pnpm --filter @cuberoot/server gen-glossary` 重导出(手改会被覆盖)。首页全站搜索(`lib/site-search.ts`)运行时 import 它。

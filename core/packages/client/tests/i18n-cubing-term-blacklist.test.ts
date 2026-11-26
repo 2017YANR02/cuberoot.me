@@ -40,6 +40,8 @@ const WCA_RULES: Rule[] = [
 
 const RULES: Rule[] = [
   ...WCA_RULES,
+  // 只匹配明确描述魔方状态的搭配，保留一般中文语境。
+  { term: 'cube state / position', ban: /(?:魔方|合法|可达)局面/, fix: '状态' },
   // trangium MCC:同一手指连续使用要等它回位 —— 社区叫「复用」,不是劳累义的直译
   { term: 'overwork', ban: /过劳/, fix: '复用' },
   // glossary: Finger Trick 指法
