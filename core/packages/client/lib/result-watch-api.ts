@@ -58,19 +58,18 @@ export interface ResultChangeField {
 }
 
 interface PlacementChangeEvidence {
-  changeId: number;
   wcaId: string;
   personName: string | null;
-  oldPlace: number;
+  oldPlace: number | null;
   newPlace: number | null;
 }
 
 type PlacementChangeReason = {
-  kind: 'inferred' | 'unknown';
+  kind: 'inferred' | 'round_comparison' | 'unknown';
   causes: (PlacementChangeEvidence & {
-    changeType: 'modified' | 'removed';
+    changeType: 'modified' | 'removed' | 'added';
     field: 'average' | 'best';
-    oldValue: number;
+    oldValue: number | null;
     newValue: number | null;
   })[];
 } | {

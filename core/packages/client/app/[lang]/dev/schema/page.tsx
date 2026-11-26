@@ -198,7 +198,8 @@ const TABLES: Table[] = [
   { name: 'wca_person_results_snapshot', domain: 'recon', origin: '0048', purpose: { zh: '选手全成绩 JSONB 快照,成绩变更监控的 diff 基线', en: 'Per-person results JSONB snapshot — baseline for change diff' }, cols: [
     { name: 'wca_id (PK)' }, { name: 'results_json JSONB' }, { name: 'content_hash', note: { zh: '内容指纹,变了才更新', en: 'fingerprint; refreshed only on change' } }, { name: 'checked_at, updated_at' },
   ] },
-  { name: 'wca_result_changes', domain: 'recon', origin: '0048', evolved: [51, 56], naturalKey: true, purpose: { zh: 'append-only 成绩变更链:取消 / 修正 / 管理员手录', en: 'Append-only result-change log: removals, fixes, manual edits' } },
+  { name: 'wca_result_changes', domain: 'recon', origin: '0048', evolved: [51, 56, 359], naturalKey: true, purpose: { zh: 'append-only 成绩变更链:取消 / 修正 / 管理员手录', en: 'Append-only result-change log: removals, fixes, manual edits' } },
+  { name: 'wca_result_watch_round_revisions', domain: 'recon', origin: '0359', naturalKey: true, purpose: { zh: '保存影响关注选手名次的 WCA 整轮成绩前后版本', en: 'Stores both versions of WCA rounds that affect watched placements' } },
   { name: 'wca_live_person_results', domain: 'recon', origin: '0050', purpose: { zh: '官方收录前的直播成绩(WCA Live / cubing.com)', en: 'Live results before they land in the official export' } },
   { name: 'wca_person_aka', domain: 'recon', origin: '0053', evolved: [54], purpose: { zh: '选手曾用名 + 国籍变更', en: 'Former names + nationality changes' }, cols: [
     { name: 'wca_id (PK)' }, { name: 'former_names JSONB' }, { name: 'former_detail', note: { zh: '含国籍变更([{name,iso2}])', en: 'incl. nationality ([{name,iso2}])' } },
@@ -573,7 +574,7 @@ const TABLES: Table[] = [
     { name: 'is_curated, is_visible', note: { zh: '管理员认证与作者控制的公开状态', en: 'admin curation and owner-controlled public visibility' } },
     { name: 'owner_key, owner_name', note: { zh: '作者身份与显示名;公开列表不返回 owner_key', en: 'author identity and display name; the public list omits owner_key' } },
   ] },
-  { name: 'creator_gallery_captions', domain: 'community', origin: '0176', purpose: { zh: '/about/ruimin 个人图库的双语照片说明;图片本体作为前端静态资源保存', en: 'Bilingual captions for the /about/ruimin personal gallery; image files remain frontend static assets' }, cols: [
+  { name: 'creator_gallery_captions', domain: 'community', origin: '0176', purpose: { zh: '/ruimin-yan 个人图库的双语照片说明;图片本体作为前端静态资源保存', en: 'Bilingual captions for the /ruimin-yan personal gallery; image files remain frontend static assets' }, cols: [
     { name: 'image_key', note: { zh: '固定对应 photo-01 至 photo-08', en: 'Fixed to photo-01 through photo-08' } },
     { name: 'caption_zh, caption_en' },
     { name: 'updated_at' },
@@ -741,6 +742,7 @@ const MIGRATIONS: { n: number; slug: string; desc: Bi }[] = [
   { n: 54, slug: 'wca_person_aka_detail', desc: { zh: '曾用名细节(含国籍变更)另存', en: 'Former-name detail incl. nationality' } },
   { n: 55, slug: 'paint_drawings', desc: { zh: '/paint 矢量画作云存', en: 'Cloud-stored paint drawings' } },
   { n: 56, slug: 'wca_result_changes_status', desc: { zh: '成绩变更加 status 状态', en: 'Add status to result changes' } },
+  { n: 359, slug: 'wca_result_watch_round_evidence', desc: { zh: '保存整轮成绩版本及名次变更证据。', en: 'Preserve round standings and evidence for placement changes.' } },
   { n: 57, slug: 'wca_scramble_steps', desc: { zh: '按难度抽真题:逐阶段最优步数 + 热列', en: 'Per-step optimal lengths for difficulty' } },
   { n: 58, slug: 'feedback_conversation', desc: { zh: '反馈加多轮对话', en: 'Threaded replies for feedback' } },
   { n: 59, slug: 'alg_submission_reads', desc: { zh: '公式投稿已读状态(admin 红点)', en: 'Read state for alg submissions' } },

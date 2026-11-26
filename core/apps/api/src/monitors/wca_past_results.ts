@@ -21,6 +21,7 @@ import { sendBark } from './bark.js';
 import { startPoller } from './poll.js';
 import { isChineseRegion, SITE_BASE } from './config.js';
 import { formatTime } from '../utils/record_format.js';
+import { resolveRoundPlacementEvidence } from './wca_round_placement_evidence.js';
 
 const WCA_API = 'https://www.worldcubeassociation.org/api/v0';
 const FETCH_TIMEOUT_MS = 20_000;
@@ -446,6 +447,16 @@ async function runOnce(): Promise<void> {
 
   // CONCURRENCY=1 → 单 worker 串行;熔断标志由它设置
   await Promise.all(Array.from({ length: Math.min(CONCURRENCY, queue.length) }, () => worker()));
+  if (!aborted) {
+    try {
+      await resolveRoundPlacementEvidence(async (competitionId, eventId) => {
+        await sleep(REQUEST_GAP_MS);
+        return wcaJson(`${WCA_API}/competitions/${encodeURIComponent(competitionId)}/results/${encodeURIComponent(eventId)}`);
+      });
+    } catch (e) {
+      console.warn(`[wca-past-results] placement evidence check failed: ${(e as Error).message}`);
+    }
+  }
   console.log(
     `[wca-past-results] cycle ${aborted ? 'ABORTED' : 'done'}: ${persons.length} watched, ${totalChanges} change(s), ${failures} fetch failure(s)`,
   );

@@ -28,6 +28,7 @@ import {
 } from '@app-foundation/icons/lucide';
 import './result-watch.css';
 import { ContentSkeleton } from '@/components/ContentSkeleton';
+import { ResultPlacementReason } from '@/components/persons/ResultPlacementReason';
 
 const FIELD_ORDER = ['best', 'average', 'attempts', 'pos', 'regional_single_record', 'regional_average_record'];
 
@@ -288,6 +289,8 @@ function ChangeCard({ change: c, isZh, t, admin, onModerated }: {
           </ul>
         )}
       </div>
+
+      {!isPending && <ResultPlacementReason change={c} isZh={isZh} className="rw-card-diff" linkClassName="rw-comp-link" />}
 
       {isPending && (
         <div className="rw-card-actions">

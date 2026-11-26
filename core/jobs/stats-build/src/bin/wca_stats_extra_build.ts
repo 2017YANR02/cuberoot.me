@@ -1518,6 +1518,32 @@ BEGIN
   IF pre = 0 THEN
     RAISE EXCEPTION 'wca_person_results is empty; refusing an implicit bootstrap';
   END IF;
+  -- Archive both versions in the same transaction that replaces the official mirror.
+  -- This also covers imports completed before the next live result-watch scan.
+  IF to_regclass('wca_result_watch_round_revisions') IS NOT NULL THEN
+    WITH changed_rounds AS MATERIALIZED (
+      SELECT DISTINCT incoming.comp_id, incoming.event_id, incoming.round_type_id
+      FROM _wpr_delta incoming
+      JOIN watched_persons watched USING (wca_id)
+      JOIN wca_person_results previous USING (comp_id, event_id, round_type_id, wca_id)
+      WHERE previous.pos <> incoming.pos
+        AND previous.format_id = incoming.format_id
+        AND previous.best = incoming.best AND previous.average = incoming.average
+    ), before_rounds AS (
+      SELECT comp_id, event_id, round_type_id, jsonb_agg(to_jsonb(previous) ORDER BY previous.wca_id) AS rows
+      FROM changed_rounds
+      JOIN wca_person_results previous USING (comp_id, event_id, round_type_id)
+      GROUP BY comp_id, event_id, round_type_id
+    ), after_rounds AS (
+      SELECT comp_id, event_id, round_type_id, jsonb_agg(to_jsonb(incoming) ORDER BY incoming.wca_id) AS rows
+      FROM changed_rounds
+      JOIN _wpr_delta incoming USING (comp_id, event_id, round_type_id)
+      GROUP BY comp_id, event_id, round_type_id
+    )
+    INSERT INTO wca_result_watch_round_revisions (comp_id, event_id, round_type_id, before_rows, after_rows)
+    SELECT comp_id, event_id, round_type_id, before_rounds.rows, after_rounds.rows
+    FROM before_rounds JOIN after_rounds USING (comp_id, event_id, round_type_id);
+  END IF;
   DELETE FROM wca_person_results WHERE comp_id IN (SELECT comp_id FROM _wrf_del);
   INSERT INTO wca_person_results SELECT * FROM _wpr_delta;
   SELECT count(*) INTO n FROM wca_person_results;

@@ -7,6 +7,22 @@
 --   int unsigned (epoch) → BIGINT  (PG 无 UNSIGNED,BIGINT 安全)
 --   datetime           → TIMESTAMP (无 TZ,跟 MariaDB datetime 等价)
 --   timestamp DEFAULT current_timestamp() → TIMESTAMP DEFAULT NOW()
+
+-- WCA result-watch evidence (0359). The change log itself comes from 0048.
+CREATE TABLE wca_result_watch_round_revisions (
+  id BIGSERIAL PRIMARY KEY,
+  comp_id VARCHAR(50) NOT NULL,
+  event_id VARCHAR(20) NOT NULL,
+  round_type_id VARCHAR(4) NOT NULL,
+  before_rows JSONB NOT NULL,
+  after_rows JSONB NOT NULL,
+  archived_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+CREATE INDEX wca_result_watch_round_revisions_lookup
+  ON wca_result_watch_round_revisions (comp_id, event_id, round_type_id, archived_at DESC);
+ALTER TABLE IF EXISTS wca_result_changes
+  ADD COLUMN IF NOT EXISTS placement_reason JSONB,
+  ADD COLUMN IF NOT EXISTS placement_reason_checked_at TIMESTAMPTZ;
 --
 -- alg_submissions 是新表,MariaDB 上从未存在,这次随迁移一起上线。
 
@@ -3757,7 +3773,7 @@ CREATE INDEX idx_page_notices_enabled ON page_notices(enabled) WHERE enabled;
 CREATE TRIGGER page_notices_updated_at BEFORE UPDATE ON page_notices
   FOR EACH ROW EXECUTE FUNCTION trg_set_updated_at();
 
--- ── 22c. creator_gallery_captions (/about/ruimin 图库说明) ──
+-- ── 22c. creator_gallery_captions (/ruimin-yan 图库说明) ──
 -- migration 0176。图片文件在 client/public，数据库只存管理员维护的双语说明。
 CREATE TABLE creator_gallery_captions (
   image_key   VARCHAR(16)  PRIMARY KEY,

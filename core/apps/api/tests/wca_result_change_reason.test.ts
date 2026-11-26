@@ -1,5 +1,5 @@
 import { expect, it, vi } from 'vitest';
-import { inferPlacementChangeReason, type ReasonChange } from '../src/utils/wca_result_change_reason';
+import { compareRoundPlacements, inferPlacementChangeReason, type ReasonChange, type RoundStanding } from '../src/utils/wca_result_change_reason';
 
 const query = vi.hoisted(() => vi.fn());
 vi.mock('../src/db/connection.js', () => ({ query }));
@@ -110,4 +110,40 @@ it('returns opponent evidence even when the public query filters to one person a
   expect(body.changes).toHaveLength(1);
   expect(body.changes[0].placementReason.causes[0].wcaId).toBe('2019WANY36');
   expect(query.mock.calls[1][1]).toEqual([[77], 1800000, 1800000]);
+});
+
+const roundChange = { ...subject, before_json: { ...fp, p: 2 }, after_json: { ...fp, p: 1 } };
+const watchedStanding: RoundStanding = {
+  wca_id: subject.wca_id, pos: 2, best: fp.b, average: fp.a, attempts: fp.at, format_id: fp.f,
+};
+const opponentStanding: RoundStanding = {
+  ...watchedStanding, wca_id: '2024TEST01', name: 'Opponent', pos: 1, average: 602, best: 520,
+};
+const reranked = { ...watchedStanding, pos: 1 };
+
+it('explains a rank shift from an unwatched opponent’s full-round DNF', () => {
+  const dnf = { ...opponentStanding, pos: 2, best: -1, average: -1, attempts: [-1, -1, -1, -1, -1] };
+  expect(compareRoundPlacements(roundChange, [opponentStanding, watchedStanding], [reranked, dnf]))
+    .toEqual({ kind: 'round_comparison', causes: [{
+      wcaId: opponentStanding.wca_id, personName: 'Opponent', changeType: 'modified',
+      field: 'average', oldValue: 602, newValue: -1, oldPlace: 1, newPlace: 2,
+    }] });
+});
+
+it('requires matching subject snapshots and enough official standings to account for each rank', () => {
+  const oldRound = [opponentStanding, watchedStanding];
+  const inconsistent = { ...opponentStanding, pos: 2 };
+  expect(compareRoundPlacements(roundChange, oldRound, [reranked, inconsistent])).toBeNull();
+  expect(compareRoundPlacements(roundChange, [watchedStanding], [reranked])).toBeNull();
+  expect(compareRoundPlacements(roundChange, oldRound, [reranked, reranked])).toBeNull();
+  expect(compareRoundPlacements(roundChange, oldRound, [{ ...reranked, attempts: [578] }])).toBeNull();
+});
+
+it('distinguishes a removed or added round result from an edit', () => {
+  const standings = [opponentStanding, watchedStanding];
+  const reverse = { ...roundChange, before_json: roundChange.after_json, after_json: roundChange.before_json };
+  expect(compareRoundPlacements(roundChange, standings, [reranked])?.causes[0])
+    .toMatchObject({ changeType: 'removed', oldPlace: 1, newPlace: null });
+  expect(compareRoundPlacements(reverse, [reranked], standings)?.causes[0])
+    .toMatchObject({ changeType: 'added', oldPlace: null, newPlace: 1 });
 });

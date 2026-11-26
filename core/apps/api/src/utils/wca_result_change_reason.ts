@@ -22,6 +22,34 @@ interface Fingerprint {
   a: number; b: number; p: number; at: number[];
 }
 
+export interface RoundStanding {
+  wca_id: string;
+  name?: string | null;
+  format_id: string;
+  pos: number;
+  best: number;
+  average: number;
+  attempts: (number | null)[] | null;
+}
+
+interface RoundCause {
+  wcaId: string;
+  personName: string | null;
+  changeType: 'modified' | 'removed' | 'added';
+  field: 'average' | 'best';
+  oldValue: number | null;
+  newValue: number | null;
+  oldPlace: number | null;
+  newPlace: number | null;
+}
+
+export interface RoundPlacementReason {
+  kind: 'round_comparison';
+  causes: RoundCause[];
+}
+
+const STANDARD_FORMATS = ['a', 'm', '1', '2', '3', '5'];
+
 function fingerprint(value: Record<string, unknown> | null): Fingerprint | null {
   if (!value || !['c', 'e', 'r', 'f'].every(key => typeof value[key] === 'string')
     || !['a', 'b', 'p'].every(key => Number.isInteger(value[key]))
@@ -58,6 +86,91 @@ function placementOnlyPair(change: ReasonChange) {
 
 export function isPlacementOnlyChange(change: ReasonChange): boolean {
   return placementOnlyPair(change) !== null;
+}
+
+export function roundComparisonPair(change: ReasonChange) {
+  const pair = placementOnlyPair(change);
+  if (!pair || change.source !== 'auto' || change.status !== 'approved'
+    || !STANDARD_FORMATS.includes(pair.before.f)
+    || pair.before.c !== change.competition_id || pair.before.e !== change.event_id
+    || pair.before.r !== change.round_type_id) return null;
+  return pair;
+}
+
+function standingFingerprint(row: RoundStanding, target: Fingerprint): Fingerprint {
+  return { ...target, a: row.average, b: row.best, p: row.pos, at: row.attempts?.map(value => value ?? 0) ?? [] };
+}
+
+function matchesRoundStanding(row: RoundStanding | undefined, target: Fingerprint): boolean {
+  if (!row || row.format_id !== target.f || row.pos !== target.p) return false;
+  const normalized = (values: number[]) => {
+    let length = values.length;
+    while (length > 0 && values[length - 1] === 0) length--;
+    return values.slice(0, length);
+  };
+  const standing = standingFingerprint(row, target);
+  return sameScores({ ...standing, at: normalized(standing.at) }, { ...target, at: normalized(target.at) });
+}
+
+export function matchesRoundBaseline(change: ReasonChange, standings: readonly RoundStanding[]): boolean {
+  const pair = placementOnlyPair(change);
+  return !!pair && matchesRoundStanding(standings.find(row => row.wca_id === change.wca_id), pair.before);
+}
+
+function indexStandings(standings: readonly RoundStanding[], target: Fingerprint) {
+  const index = new Map<string, RoundStanding>();
+  for (const row of standings) {
+    if (typeof row?.wca_id !== 'string' || !row.wca_id || index.has(row.wca_id) || row.format_id !== target.f
+      || !Number.isInteger(row.pos) || row.pos <= 0
+      || !Number.isInteger(row.best) || !Number.isInteger(row.average)
+      || (row.attempts != null && (!Array.isArray(row.attempts)
+        || !row.attempts.every(value => value === null || Number.isInteger(value))))) return null;
+    index.set(row.wca_id, row);
+  }
+  // A missing row ahead, duplicated athlete, or partial feed cannot explain a rank.
+  return standings.filter(row => row.pos < target.p).length === target.p - 1 ? index : null;
+}
+
+/** Explain only crossings supported by both official placements and score order. */
+export function compareRoundPlacements(
+  change: ReasonChange,
+  previous: readonly RoundStanding[],
+  current: readonly RoundStanding[],
+): RoundPlacementReason | null {
+  const pair = roundComparisonPair(change);
+  if (!pair) return null;
+  const { before, after } = pair;
+  const oldRows = indexStandings(previous, before);
+  const newRows = indexStandings(current, after);
+  if (!oldRows || !newRows || !matchesRoundStanding(oldRows.get(change.wca_id), before)
+    || !matchesRoundStanding(newRows.get(change.wca_id), after)) return null;
+
+  const causes: RoundCause[] = [];
+  for (const wcaId of new Set([...oldRows.keys(), ...newRows.keys()])) {
+    if (wcaId === change.wca_id) continue;
+    const old = oldRows.get(wcaId);
+    const next = newRows.get(wcaId);
+    const wasAhead = !!old && old.pos < before.p;
+    const isAhead = !!next && next.pos < after.p;
+    if (wasAhead === isAhead) continue;
+    const oldScore = old && standingFingerprint(old, before);
+    const newScore = next && standingFingerprint(next, after);
+    if ((oldScore && ahead(oldScore, before) !== wasAhead)
+      || (newScore && ahead(newScore, after) !== isAhead)
+      || (oldScore && newScore && sameScores(oldScore, newScore))) return null;
+    const byAverage = before.f === 'a' || before.f === 'm';
+    const field = byAverage && old?.average !== next?.average ? 'average' : 'best';
+    causes.push({
+      wcaId, personName: next?.name ?? old?.name ?? null,
+      changeType: !old ? 'added' : !next ? 'removed' : 'modified',
+      field, oldValue: old?.[field] ?? null, newValue: next?.[field] ?? null,
+      oldPlace: old?.pos ?? null, newPlace: next?.pos ?? null,
+    });
+  }
+  if (!causes.length) return null;
+  causes.sort((a, b) => (a.oldPlace ?? Infinity) - (b.oldPlace ?? Infinity)
+    || (a.newPlace ?? Infinity) - (b.newPlace ?? Infinity) || a.wcaId.localeCompare(b.wcaId));
+  return { kind: 'round_comparison', causes };
 }
 
 function isCorrelated(change: ReasonChange, candidate: ReasonChange): boolean {
@@ -107,7 +220,7 @@ export function inferPlacementChangeReason(change: ReasonChange, candidates: rea
   if (change.source !== 'auto' || change.status !== 'approved') return unknown;
   const related = candidates.filter(candidate => isCorrelated(change, candidate));
   if (before.f === 'h') return inferHeadToHeadSingleOrder(change, before, after, related) ?? unknown;
-  if (!['a', 'm', '1', '2', '3', '5'].includes(before.f)) return unknown;
+  if (!STANDARD_FORMATS.includes(before.f)) return unknown;
   const causes = [];
   const seen = new Set<string>();
   let delta = 0;

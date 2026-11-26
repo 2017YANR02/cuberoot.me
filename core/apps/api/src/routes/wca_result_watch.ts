@@ -23,7 +23,7 @@ import { query } from '../db/connection.js';
 import { requireAdminOrApiKey, requireAuth, checkRateLimit } from '../utils/recon_helpers.js';
 import { isPenaltyOnlyFields } from '@cuberoot/shared/result-penalty';
 import { visibleResultChangeSql } from '../utils/wca_result_change_visibility.js';
-import { inferPlacementChangeReason, isPlacementOnlyChange, RESULT_CHANGE_CORRELATION_MS, type ReasonChange } from '../utils/wca_result_change_reason.js';
+import { inferPlacementChangeReason, isPlacementOnlyChange, RESULT_CHANGE_CORRELATION_MS, type ReasonChange, type RoundPlacementReason } from '../utils/wca_result_change_reason.js';
 
 export const wcaResultWatchRoutes = new Hono();
 
@@ -107,6 +107,7 @@ interface ChangeRow {
   status: string | null;
   person_name: string | null;
   person_iso2: string | null;
+  placement_reason: RoundPlacementReason | null;
 }
 
 wcaResultWatchRoutes.get('/wca/result-watch/changes', async (c) => {
@@ -136,7 +137,7 @@ wcaResultWatchRoutes.get('/wca/result-watch/changes', async (c) => {
             cc.iso2         AS comp_iso2,
             ch.event_id, ch.round_type_id, ch.change_type,
             ch.fields, ch.before_json, ch.after_json, ch.detected_at,
-            ch.note, ch.effective_at, ch.source, ch.created_by, ch.edited_at, ch.status,
+            ch.note, ch.effective_at, ch.source, ch.created_by, ch.edited_at, ch.status, ch.placement_reason,
             COALESCE(s.person_name, wp.match_key) AS person_name,
             s.country_iso2 AS person_iso2
        FROM wca_result_changes ch
@@ -150,7 +151,7 @@ wcaResultWatchRoutes.get('/wca/result-watch/changes', async (c) => {
     params,
   );
 
-  const placementRows = rows.filter(isPlacementOnlyChange);
+  const placementRows = rows.filter(r => !r.placement_reason && isPlacementOnlyChange(r));
   // Fetch evidence independently of the public page limit and person filter.
   // Reuse the visibility predicate so republished results cannot become causes.
   const candidates = placementRows.length ? await query<ReasonChange>(
@@ -198,7 +199,7 @@ wcaResultWatchRoutes.get('/wca/result-watch/changes', async (c) => {
       createdBy: r.created_by ?? null,
       editedAt: r.edited_at ?? null,
       status: r.status ?? 'approved',
-      placementReason: inferPlacementChangeReason(r, candidates),
+      placementReason: r.placement_reason ?? inferPlacementChangeReason(r, candidates),
     })),
   });
 });
@@ -377,7 +378,8 @@ wcaResultWatchRoutes.put('/wca/result-watch/changes/:id', async (c) => {
   const updated = await query<{ id: number | string }>(
     `UPDATE wca_result_changes SET
        wca_id = ?, result_id = ?, competition_id = ?, event_id = ?, round_type_id = ?,
-       change_type = ?, fields = ?::jsonb, note = ?, effective_at = ?, edited_at = NOW()
+       change_type = ?, fields = ?::jsonb, note = ?, effective_at = ?, edited_at = NOW(),
+       placement_reason = NULL, placement_reason_checked_at = NULL
      WHERE id = ?
      RETURNING id`,
     [
