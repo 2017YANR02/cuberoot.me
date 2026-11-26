@@ -60,7 +60,12 @@ export function subscribeAssistantQueue(id: string, options: QueueSubscription):
       stream = undefined;
       connected = false;
       reconnectAfter = Date.now() + 5000;
-      wake();
+      if (controller.signal.aborted || !options.isCurrentOwner()) return;
+      if (first && !reading) {
+        // A server or proxy may decline SSE before sending the first snapshot.
+        clearTimeout(timer);
+        void poll();
+      } else wake();
     });
   }
 
