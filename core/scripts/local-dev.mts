@@ -3,9 +3,9 @@
 import { spawn, execFileSync, type StdioOptions } from 'node:child_process';
 import { createConnection } from 'node:net';
 import { resolve, join } from 'node:path';
-import { existsSync } from 'node:fs';
 import { pathToFileURL } from 'node:url';
 import { parseArgs } from 'node:util';
+import { prepareWebStartupDependencies } from './check-web-startup-dependencies.mjs';
 import { resolveWorkspacePath } from './resolve-workspace-path.mjs';
 import { restartManaged, registerSession, clearPreviousDev } from './dev-preview/restart.ts';
 export { restartManaged, registerSession, clearPreviousDev, stopLegacyRunner } from './dev-preview/restart.ts';
@@ -33,7 +33,7 @@ export function prepareLocalDev(workspace: string, stdio: StdioOptions = 'inheri
   const client = join(workspace, resolveWorkspacePath('@cuberoot/client', workspace));
   const next = join(client, 'node_modules/next/dist/bin/next');
   const turbo = join(workspace, 'node_modules/turbo/bin/turbo');
-  if (!existsSync(next) || !existsSync(turbo)) throw Error('Dependencies missing. Run pnpm install in core.');
+  prepareWebStartupDependencies(workspace, [next, turbo], stdio);
   // Reuse the existing asset generators; do not duplicate their implementation.
   for (const args of [
     ['--import', 'tsx', 'packages/client/scripts/build-cube-history.ts'],

@@ -498,6 +498,11 @@ jobs:
         working-directory: core
         run: pnpm install --frozen-lockfile
 
+      - name: Check web startup dependency exports
+        if: ${{ github.event_name == 'workflow_dispatch' || github.event_name == 'schedule' || needs.changes.outputs.client == 'true' }}
+        working-directory: core
+        run: node scripts/check-web-startup-dependencies.mjs
+
       - name: Verify upstream sync TypeScript contract
         if: ${{ github.event_name == 'workflow_dispatch' || github.event_name == 'schedule' || needs.changes.outputs.upstream == 'true' }}
         working-directory: core

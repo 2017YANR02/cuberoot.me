@@ -26,6 +26,8 @@ Mac mini 复用既有常驻 FRP；MacBook Pro 的 preview runner 管理独立 SS
 
 用户说“帮我配置 dev，名字是…电脑是…”、新增同事开发域名或撤销某台电脑时，读取 `.agents/skills/dev-preview/SKILL.md` 和 `docs/contributing/dev-preview-onboarding.md`。以 `ops/dev-preview/machines.json` 为唯一设备清单，使用 `core/scripts/dev-preview/cli.ts` 和 `client.ts` 完成登记、授权、DNS、证书、部署、电脑自启和验收；不能只改 DNS 就报完成。新增同事使用每设备独立 SSH 密钥，不分发现有 FRP 共用令牌。
 
+`cuberoot` 发现本机依赖与锁文件不一致或启动依赖缺失时，按锁文件补装一次。启动器和 Web CI 共用同一项检查，从实际安装的 `@app-foundation/ui-controls` 验证全站布局依赖的组件和样式。更新公共接口时一起更新包和锁文件。
+
 ## 开发命令
 
 - **代码量统计（维护者要求，2026-10-22）**：用户说“统计代码量”“看看代码统计”等时，AI 直接运行 `cloc` 并汇总结果，不只提供命令让用户自行执行。默认在仓库根目录用 `cloc --vcs=git` 统计 Git 跟踪文件的当前本地内容，按需补充语言和主要模块统计；明确区分代码、注释、空行，以及数据、资源、第三方和生成内容，不把总行数称为自研代码量。维护者 Mac 已通过 Homebrew 安装 cloc；换环境先检查可用性。
