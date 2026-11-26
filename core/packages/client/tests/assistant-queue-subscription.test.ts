@@ -15,7 +15,7 @@ describe('queue snapshot ownership and ordering', () => {
     vi.useFakeTimers();
     const pendingRead = Promise.withResolvers<AssistantQueueSnapshot>();
     const stream = Promise.withResolvers<void>();
-    vi.mocked(assistantQueueRequest).mockResolvedValueOnce(snapshot(1)).mockReturnValueOnce(pendingRead.promise);
+    vi.mocked(assistantQueueRequest).mockReturnValueOnce(pendingRead.promise);
     vi.mocked(watchAssistantQueue).mockReturnValue(stream.promise);
     let revision = 0;
     const seen: number[] = [];
@@ -24,12 +24,14 @@ describe('queue snapshot ownership and ordering', () => {
       onSnapshot: value => { revision = value.revision; seen.push(revision); },
     });
     try {
+      expect(watchAssistantQueue).toHaveBeenCalledTimes(1);
+      expect(assistantQueueRequest).not.toHaveBeenCalled();
       await vi.advanceTimersByTimeAsync(1000);
       const onChange = vi.mocked(watchAssistantQueue).mock.calls[0][2];
       onChange(snapshot(3));
       pendingRead.resolve(snapshot(2));
       await vi.advanceTimersByTimeAsync(0);
-      expect(seen).toEqual([1, 3]);
+      expect(seen).toEqual([3]);
       stream.reject(new Error('connection lost'));
       await vi.advanceTimersByTimeAsync(35);
       expect(vi.mocked(assistantQueueRequest).mock.lastCall?.[5]).toBe(3);

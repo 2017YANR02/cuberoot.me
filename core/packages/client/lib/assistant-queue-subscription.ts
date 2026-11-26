@@ -51,8 +51,9 @@ export function subscribeAssistantQueue(id: string, options: QueueSubscription):
     stream = child;
     void watchAssistantQueue(id, AbortSignal.any([controller.signal, child.signal]), snapshot => {
       if (controller.signal.aborted || child.signal.aborted || !options.isCurrentOwner()) return;
+      if (!connected && snapshot && !reading)schedule(10_000);
       connected = true;
-      if (snapshot) apply(snapshot, 'sse');
+      if (snapshot) {first=false;apply(snapshot, 'sse');}
       else wake();
     }).catch(() => {}).finally(() => {
       if (stream !== child) return;
@@ -82,7 +83,12 @@ export function subscribeAssistantQueue(id: string, options: QueueSubscription):
     }
   }
 
-  void poll();
+  if (active && !options.background) {
+    // The stream starts with a full snapshot. Keep a bounded fallback for a
+    // proxy that accepts the connection but buffers or drops its first frame.
+    listen();
+    schedule(1000);
+  } else void poll();
   return () => {
     controller.abort();
     stream?.abort();

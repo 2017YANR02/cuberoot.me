@@ -552,8 +552,7 @@ export default function LandingSearch({
       assistantConversation.current=id;setDurableId(id);
       // Save the conversation pointer even when the acceptance response is lost.
       onConversationChange?.({conversationId:id});
-      const saved=await saveAssistantImages(images,id,controller.signal);
-      const provider = await providerForSend();
+      const [saved,provider]=await Promise.all([saveAssistantImages(images,id,controller.signal),providerForSend()]);
       const content=JSON.stringify({id,question,images:saved,references,mode,lang,provider,thinking:assistantThinking});
       const key=Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',new TextEncoder().encode(content)))).map(byte=>byte.toString(16).padStart(2,'0')).join('');
       let delivery=pendingDelivery.current;
@@ -574,13 +573,13 @@ export default function LandingSearch({
       if(epoch!==submissionEpoch.current || assistantOwner(getAuthUser())!==ownerAtSubmit)return false;
       if(mode==='queue' || !queueSnapshot?.activeId)browserTiming.current={messageId:delivery.id,started:submitStarted,timing:{wasHidden:document.hidden,transport:'json'}};
       if (conversation?.id) assistantAuthContinuation.clear(conversation.id);
+      queueActivity.current=true;
       setQueueRefresh(value=>value+1);
       pendingDelivery.current=undefined;
       onConversationChange?.({delivery:undefined});
       if (listening) micCancel();
       setAssistantDialog(true);setAssistantError(null);setStopUnconfirmed(false);
-      const snapshot=await assistantQueueRequest(id).catch(()=>undefined);
-      if(epoch===submissionEpoch.current && snapshot && 'messages' in snapshot)applyQueue(snapshot);
+      // The refreshed owner-scoped subscription supplies the initial snapshot.
       return true;
     } catch(error){if(epoch===submissionEpoch.current)setAssistantError(error instanceof AssistantQueueError?error.code:'network');return false;}
     finally{submitting.current=false;if(assistantRequest.current===controller)assistantRequest.current=null;}

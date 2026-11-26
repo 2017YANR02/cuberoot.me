@@ -5,7 +5,15 @@ import MoreToggle, { MoreTogglePanel } from '@/components/MoreToggle';
 import { lazy, Suspense, useCallback, useEffect, useId, useLayoutEffect, useRef, useState } from 'react';
 import type { MouseEvent, ReactNode, RefObject } from 'react';
 import remarkGfm from 'remark-gfm';
-const Markdown = lazy(() => import('react-markdown').catch(() => ({ default: ({ children }: { children?: string | null }) => <>{children}</> })));
+// Keep Markdown off the homepage's initial path. Resolve it while the visitor
+// composes so the first verified answer can paint with its citation links.
+type MarkdownRenderer = typeof import('react-markdown')['default'];
+let readyMarkdown: MarkdownRenderer | undefined;
+const loadMarkdown = () => import('react-markdown').then(module => {
+  readyMarkdown = module.default;
+  return module;
+}).catch(() => ({ default: ({ children }: { children?: string | null }) => <>{children}</> }));
+const DeferredMarkdown = lazy(loadMarkdown);
 const WrHistoryChart = lazy(() => import('@/components/wca-stats/WrHistoryChart').catch(() => ({ default: () => null })));
 import { useCopy } from '@/hooks/useCopy';
 import { createPortal } from 'react-dom';
@@ -235,6 +243,7 @@ function answerPresentation(result:AssistantAnswer,partial?:boolean) {
   return {sources,text,withFallback};
 }
 export function SiteAssistantAnswerText({result,partial,requestId,shared=false,animate=false,onRevealComplete}:{result:AssistantAnswer;partial?:boolean;requestId?:string;shared?:boolean;animate?:boolean;onRevealComplete?:(id:string,text:string)=>void}) {
+  const Markdown=readyMarkdown ?? DeferredMarkdown;
   const {sources,text,withFallback}=answerPresentation(result,partial);
   const resolveLink=assistantAnswerLinks(result);
   const markdown=withFallback.replace(/\[\[([^\]\n]+)\]\]/g,(_marker,id:string)=>{
@@ -279,6 +288,7 @@ export function SiteAssistantResult({artifact: a, lang}: {artifact: NonNullable<
 }
 
 export default function SiteAssistantDialog({practiceChatId,onAuthSend,authSendLabel,authPlaceholder,authNotice,onAlgorithmChange,onAnswerRevealed,turns,draft,images,onImagesChange:setImages,onDraftChange:setDraft,provider,openaiAvailable=false,onProviderChange,thinking,onThinkingChange,status={phase:'planning'},busy,paused=false,recovering=false,activeMessageId,onResume,stopping=false,stopUnconfirmed=false,error,lang,onAsk,onStop,onClose:onClosed,onNew,onFeedback,embedded=false,active=true,searchResults,onBranch}:Props) {
+  useEffect(()=>{if(active && !readyMarkdown)void loadMarkdown();},[active]);
   const modelNames = {openai:'GPT-6 Luna',bailian:'Qwen-3.8 Flash',deepseek:'DeepSeek Flash'};
   const [deliveryMode,setDeliveryMode]=useState<'steer'|'queue'|'parallel'>('steer');
   const isRunning=(turn:AssistantTurn,index:number)=>busy && (activeMessageId?turn.messageId===activeMessageId:index===turns.length-1);
