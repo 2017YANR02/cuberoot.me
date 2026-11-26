@@ -1,11 +1,12 @@
 import { spawn, spawnSync } from 'node:child_process';
 import { closeSync, mkdirSync, mkdtempSync, openSync, readFileSync, realpathSync, rmSync, writeFileSync } from 'node:fs';
 import { BlockList, createConnection, createServer, isIPv6 } from 'node:net';
-import { homedir, networkInterfaces, tmpdir } from 'node:os';
+import { networkInterfaces, tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { setTimeout as delay } from 'node:timers/promises';
 import { fileURLToPath } from 'node:url';
 import { launchAndroid, listAndroidTargets } from './mobile-android-live.mjs';
+import { devicePreviewDerivedData } from './mobile-ios-preview-cache.mjs';
 
 const mobile = realpathSync(fileURLToPath(new URL('../apps/mobile/', import.meta.url)));
 const cache = fileURLToPath(new URL('../../.tmp/cache/ios-live/', import.meta.url));
@@ -231,8 +232,8 @@ function installOnPhoneIfNeeded(udid) {
   const installed = result.apps[0];
   if (installed?.builtByDeveloper && Number(installed.bundleVersion) >= pairedPreviewBuild) return;
 
-  const derivedData = join(homedir(), 'Library/Developer/Xcode/DerivedData/CubeRoot-Device-Preview');
   run('pnpm', ['cap:sync:ios'], { cwd: mobile, stdio: 'inherit' });
+  const derivedData = devicePreviewDerivedData(mobile);
   run('xcrun', ['xcodebuild', '-project', 'ios/App/App.xcodeproj', '-scheme', 'App', '-configuration', 'Debug',
     '-destination', `platform=iOS,id=${udid}`, '-derivedDataPath', derivedData, `CURRENT_PROJECT_VERSION=${pairedPreviewBuild}`, 'build'],
     { cwd: mobile, stdio: 'inherit' });

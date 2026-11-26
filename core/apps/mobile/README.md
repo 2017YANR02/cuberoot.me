@@ -76,6 +76,8 @@ Open **CubeRoot Dev** on the Mac and select a device. The menu shows the configu
 - **iPhone:** Pair once in [Xcode Device Hub](https://developer.apple.com/documentation/xcode/managing-your-simulated-and-physical-devices-in-device-hub) and enable Developer Mode. iOS 27 or later supports pairing over the same Wi‑Fi network. An already-paired phone can be selected even when its debug tunnel is idle. The development app keeps the WebView on `http://127.0.0.1:1420` and forwards to the paired Mac. That address stays stable across reconnects and is recognized by the website bridge. Earlier tunnel-address previews have their own WebView storage.
 - **Android:** Enable [Wireless debugging](https://developer.android.com/tools/adb#connect-to-a-device-over-wi-fi) and pair in Android Studio over the same Wi‑Fi network, or connect over USB and allow debugging. The launcher lists Android phones once ADB connects.
 
+Each checkout has its own iPhone build cache in Xcode's DerivedData directory. If the launcher finds a relocated cache or a missing downloaded Swift package artifact, it builds in a fresh directory and keeps the old cache in place.
+
 ### Android payment distributions
 
 One source tree and one Web bundle serve both channels. Gradle `-PmobileDistribution=play` (the default) enables Google Play Billing; `-PmobileDistribution=direct` exposes the existing website Alipay/WeChat H5 checkout through the native Browser adapter. The native `Distribution` plugin reads `BuildConfig.DISTRIBUTION`; URL parameters, user agents and Vite environment variables cannot switch channels. Missing/unknown native configuration fails closed to Play. iOS keeps its Apple adapter.
