@@ -1,11 +1,12 @@
 .team-lifecycle.onboarding-compact { display: block; }
 .cuberoot-workspace-navigation .staff-main:has(.onboarding-compact) { padding-block: 24px; }
+.staff-handbook-main:has(.onboarding-compact) .workspace-toolbar-select { background-color: var(--card); }
 .onboarding-heading { margin-bottom: 24px; }
 .staff-start .onboarding-heading h2 { margin: 0 0 10px; font-size: 28px; line-height: 1.3; }
 .onboarding-heading > div { display: flex; align-items: center; gap: 10px; }
 .staff-start .onboarding-heading p { margin: 0; color: var(--muted-foreground); font-size: 18px; line-height: 1.5; }
 .onboarding-steps { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; align-items: stretch; }
-.onboarding-step { display: flex; flex-direction: column; align-items: flex-start; gap: 14px; padding: 20px; border: 1px solid var(--border-default); border-radius: 16px; min-width: 0; }
+.onboarding-step { display: flex; flex-direction: column; align-items: flex-start; gap: 14px; padding: 20px; border: 1px solid var(--border-default); border-radius: 16px; min-width: 0; background: var(--card); }
 .onboarding-step-heading { display: flex; align-items: center; gap: 10px; width: 100%; }
 .onboarding-step-heading > svg { flex: none; }
 .onboarding-compact .onboarding-step-heading h3 { font-size: 20px; line-height: 1.4; }

@@ -1,9 +1,10 @@
 'use client';
 
+import { useState } from 'react';
+import { ArrowRight, Copy } from '@app-foundation/icons/lucide';
 import PageBackLink from '@/components/PageBackLink';
 import MoreToggle from '@/components/MoreToggle';
 import Link from '@/components/AppLink';
-import { InfoTooltip } from '@/components/InfoTooltip/InfoTooltip';
 import { useT } from '@/hooks/useT';
 import ReferenceCatalog from '../_shared/ReferenceCatalog';
 import { tr } from '@/i18n/tr';
@@ -1289,6 +1290,61 @@ function pathParams(p: string): string[] {
 
 const CATEGORIES = DOMAINS.map(domain => ({ id: domain.key, zh: domain.zh, en: domain.en }));
 const ENTRIES = ENDPOINTS.map(endpoint => ({ ...endpoint, name: `${endpoint.m} ${endpoint.p}`, category: endpoint.d }));
+type ApiEntry = (typeof ENTRIES)[number];
+
+const TOPIC_SECTIONS = [
+  { zh: '魔方与训练', en: 'Cubing & training', categories: ['scramble', 'alg', 'timer', 'recon', 'smart-cube', 'quiz'] },
+  { zh: '比赛与数据', en: 'Competitions & data', categories: ['comp', 'live', 'wca-stats', 'wca-fun', 'wca-data', 'pb', 'nemesizer', 'calendar'] },
+  { zh: '内容与协作', en: 'Content & collaboration', categories: ['forum', 'documents', 'drive', 'vault', 'friend', 'notification', 'feedback', 'music'] },
+  { zh: '账号与服务', en: 'Accounts & services', categories: ['auth', 'account', 'membership', 'platform', 'teaching-saas', 'enterprise-verification', 'wechat'] },
+  { zh: '系统与运维', en: 'System & operations', categories: ['system', 'content'] },
+];
+const STARTER_ENDPOINTS = ['/v1/alg/sets', '/v1/wca/scrambles/random', '/v1/wca/persons-directory'].flatMap(path =>
+  ENTRIES.filter(entry => entry.p === path && entry.m === 'GET' && entry.g === 'public'));
+const QUICK_START_COMMAND = `curl 'https://${BASE}/v1/alg/sets'`;
+
+function ApiQuickStart({ open }: { open: (entry: ApiEntry) => void }) {
+  const t = useT();
+  const [copyState, setCopyState] = useState<'idle' | 'copied' | 'failed'>('idle');
+  async function copyCommand() {
+    try {
+      await navigator.clipboard.writeText(QUICK_START_COMMAND);
+      setCopyState('copied');
+    } catch {
+      setCopyState('failed');
+    }
+  }
+
+  return <>
+    <p>{t('用 CubeRoot API 查询 WCA 数据、获取打乱和读取公式集。公开接口无需登录。', 'Use the CubeRoot API to look up WCA data, retrieve scrambles, and read algorithm sets. Public endpoints require no sign-in.')}</p>
+    <h3>{t('发送第一个请求', 'Make your first request')}</h3>
+    <p>{t('获取公式集列表。响应是 JSON 数组，以下是首项的部分字段。', 'Fetch the list of algorithm sets. The response is a JSON array. Here are some fields from the first item.')}</p>
+    <div className="api-reference-examples">
+      <div className="api-reference-example">
+        <div><span>cURL</span>
+          <button type="button" onClick={() => void copyCommand()}><Copy size={14} aria-hidden />{t('复制命令', 'Copy command')}</button>
+        </div>
+        <pre><code>{QUICK_START_COMMAND}</code></pre>
+        {copyState !== 'idle' && <p className="api-reference-copy-status" role="status">{copyState === 'copied'
+          ? t('命令已复制。', 'Command copied.')
+          : t('复制失败，可手动选中命令复制。', 'Couldn’t copy. Select and copy the command manually.')}</p>}
+      </div>
+      <div className="api-reference-example">
+        <div><span>{t('响应示例', 'Example response')}</span></div>
+        <pre><code>{JSON.stringify([{ puzzle: '2x2', setSlug: 'cll', count: 40 }], null, 2)}</code></pre>
+      </div>
+    </div>
+    <h3>{t('常用公开接口', 'Common public endpoints')}</h3>
+    <ul className="api-reference-starters">
+      {STARTER_ENDPOINTS.map(entry => <li key={entry.name}>
+        <button type="button" onClick={() => open(entry)}>
+          <span><strong>{tr(entry)}</strong><code>{entry.name}</code></span>
+          <ArrowRight size={16} aria-hidden />
+        </button>
+      </li>)}
+    </ul>
+  </>;
+}
 
 export default function ApiCatalogPage() {
   const t = useT();
@@ -1296,15 +1352,14 @@ export default function ApiCatalogPage() {
     <header className="dev-reference-page-heading">
       <PageBackLink fallback="/dev" />
       <h1>{t('API 端点目录', 'API endpoints')}</h1>
-      <InfoTooltip iconSize={18} ariaLabel={t('API 使用说明', 'About this API')}
-        content={t('按业务领域、请求方法和权限检索。空格分隔的关键词需同时匹配；可搜索路径、参数名和中英文用途。接口基址为 https://api.cuberoot.me，Web 内部请求复用 apiUrl()。', 'Filter by domain, method and access. Space-separated terms must all match; search paths, parameter names and descriptions in either language. The base URL is https://api.cuberoot.me; Web callers use apiUrl().')} />
     </header>
     <ReferenceCatalog entries={ENTRIES} categories={CATEGORIES} categoryParam="domain"
       directoryLabel={t('端点目录', 'Endpoint directory')}
       searchPlaceholder={t('搜索路径、参数或用途', 'Search paths, parameters or purposes')}
+      topics={{ sections: TOPIC_SECTIONS, overviewLabel: t('快速开始', 'Quick start'), overview: open => <ApiQuickStart open={open} /> }}
       facets={[
         { key: 'method', label: t('方法', 'Method'), options: METHODS.map(value => ({ value, label: value })), value: entry => entry.m },
-        { key: 'gate', label: t('权限', 'Access'), options: GATES.map(value => ({ value, label: tr(GATE_LABEL[value]) })), value: entry => entry.g },
+        { key: 'gate', label: t('权限', 'Access'), options: GATES.map(value => ({ value, label: tr(GATE_LABEL[value]) })), value: entry => entry.g, defaultValue: 'public' },
       ]}
       searchText={entry => {
         const domain = DOMAINS.find(domain => domain.key === entry.d);

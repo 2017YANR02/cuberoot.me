@@ -4,3 +4,104 @@
 .api-reference-method[data-method="DELETE"] { color: var(--destructive); }
 .api-reference-params { display: flex; flex-wrap: wrap; gap: 8px 16px; }
 .api-reference-params code { color: var(--accent); font-size: 14px; }
+
+.api-reference.dev-reference-page { gap: 14px; }
+.api-reference .dev-reference-controls { gap: 12px; margin-bottom: 14px; }
+.api-reference .dev-reference-workspace {
+  --dev-reference-sidebar-size: clamp(250px, var(--dev-reference-sidebar-width, clamp(250px, 26%, 320px)), calc(100% - 320px));
+  position: relative;
+  grid-template-columns: var(--dev-reference-sidebar-size) minmax(0, 1fr);
+  border: 0;
+  border-radius: 0;
+}
+.api-reference .dev-reference-divider { inset-inline-start: calc(var(--dev-reference-sidebar-size) - 12px); }
+.api-reference .dev-reference-directory { padding: 12px 10px; scrollbar-gutter: stable; }
+.api-reference .dev-reference-topic {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  min-height: 40px;
+  padding: 7px 9px;
+  border-radius: 8px;
+  color: var(--foreground);
+  text-align: start;
+}
+.api-reference .dev-reference-topic:hover { background: var(--muted); }
+.api-reference .dev-reference-topic[aria-expanded="true"],
+.api-reference .dev-reference-topic[aria-current="true"],
+.api-reference .dev-reference-entry[aria-current="true"] { background: var(--accent-soft); }
+.api-reference .dev-reference-topic svg { flex: none; color: var(--muted-foreground); }
+.api-reference .dev-reference-topic[aria-expanded="true"] svg { transform: rotate(90deg); }
+.api-reference .dev-reference-topic strong { font-size: 14px; font-weight: 600; line-height: 1.4; }
+.api-reference .dev-reference-topic small { margin-inline-start: auto; color: var(--muted-foreground); font-variant-numeric: tabular-nums; }
+.api-reference .dev-reference-overview { font-size: 15px; font-weight: 600; }
+.api-reference .dev-reference-overview svg { color: var(--accent); }
+.api-reference .dev-reference-topic-section { margin-top: 19px; }
+.api-reference .dev-reference-topic-section h2,
+.api-reference .dev-reference-search-count { margin: 0 9px 5px; color: var(--muted-foreground); font-size: 12px; font-weight: 600; }
+.api-reference .dev-reference-search-count { margin-top: 16px; }
+.api-reference .dev-reference-topic-entries { margin: 3px 0 6px 16px; padding-inline-start: 8px; border-inline-start: 1px solid var(--border-default); }
+.api-reference .dev-reference-entry { padding: 8px; overflow-wrap: anywhere; }
+.api-reference .dev-reference-entry strong { font-size: 14px; line-height: 1.4; }
+.api-reference .dev-reference-entry code { display: block; margin-top: 3px; color: var(--muted-foreground); font-size: 12px; line-height: 1.45; }
+.api-reference .dev-reference-topic-entries .dev-reference-pagination { justify-content: flex-start; border-top: 0; padding-inline: 0; }
+.api-reference .dev-reference-empty { padding: 12px 9px; }
+.api-reference .dev-reference-selected-heading {
+  position: static;
+  padding: 24px clamp(18px, 4vw, 48px) 16px;
+  background: none;
+  border: 0;
+}
+.api-reference .dev-reference-selected-heading h2 { max-width: 74ch; font-size: clamp(24px, 3vw, 34px); overflow-wrap: anywhere; }
+.api-reference .dev-reference-selected .dev-reference-detail { padding: 20px clamp(18px, 4vw, 48px) 42px; }
+.api-reference .dev-reference-detail > * { max-width: 760px; }
+.api-reference .dev-reference-selected .dev-reference-detail h3 { font-size: 18px; color: var(--foreground); }
+.api-reference .dev-reference-purpose code { color: var(--accent); font-size: 15px; }
+
+.api-reference-examples {
+  display: grid;
+  align-items: start;
+  gap: 12px;
+  margin: 12px 0;
+}
+.api-reference-example {
+  min-width: 0;
+  overflow: hidden;
+  border: 1px solid var(--border-default);
+  border-radius: 10px;
+  background: var(--muted);
+}
+.api-reference-example > div {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 40px;
+  padding: 0 12px;
+  border-bottom: 1px solid var(--border-default);
+  color: var(--muted-foreground);
+  font-size: 13px;
+}
+.api-reference-example button { display: inline-flex; align-items: center; gap: 6px; min-height: 36px; padding: 4px 8px; border-radius: 8px; color: var(--foreground); }
+.api-reference-example button:hover { background: var(--background); }
+.api-reference .dev-reference-detail .api-reference-example pre { margin: 0; padding: 12px; border: 0; background: transparent; }
+.api-reference .dev-reference-detail .api-reference-copy-status { margin: 0 12px 10px; color: var(--muted-foreground); font-size: 13px; }
+.api-reference-starters { margin: 8px 0 0; padding: 0; list-style: none; }
+.api-reference-starters li { border-bottom: 1px solid var(--border-default); }
+.api-reference-starters button { display: flex; align-items: center; justify-content: space-between; gap: 12px; width: 100%; padding: 10px 4px; text-align: start; }
+.api-reference-starters button:hover strong, .api-reference-starters svg { color: var(--accent); }
+.api-reference-starters svg { flex: none; }
+.api-reference-starters code { display: block; margin-top: 3px; color: var(--muted-foreground); font-size: 12px; overflow-wrap: anywhere; }
+
+@media (min-width: 1050px) {
+  .api-reference-examples { grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); }
+}
+
+@media (max-width: 700px) {
+  .api-reference .dev-reference-divider { display: none; }
+  .api-reference .dev-reference--workspace[data-detail] .dev-reference-controls { display: none; }
+  .api-reference .dev-reference-controls .dev-reference-category { font-size: 14px; }
+  .api-reference .dev-reference-topic { min-height: 44px; }
+  .api-reference .dev-reference-selected-heading { padding: 14px 16px; }
+  .api-reference .dev-reference-selected .dev-reference-detail { padding: 16px 16px 32px; }
+}

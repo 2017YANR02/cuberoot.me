@@ -1,97 +1,75 @@
 # 前端组件与交互规范
 
-本文件承接根 [AGENTS.md](../../AGENTS.md) 中的对应细则（2026-11-05 整理），是当前维护规则，不是历史归档。涉及本主题时先读；当次用户指令优先。代码路径除明确标注外均相对仓库根目录，core 命令在 `core/` 执行。发布授权统一见[发布规则](release.md)。
+根 [AGENTS.md](../../AGENTS.md) 细则（2026-11-05）。当次指令优先。路径相对仓库根，命令在 `core/` 执行。授权见[发布规则](release.md)。
 
 ## 移动端布局检查记录
 
-主要功能页的竖屏/横屏问题、复现条件、修复顺序和接手验收见 [2026-11-09 Web 移动端布局清单](../design/history/mobile-web-layout-audit-2026-11-09.md)。这是待办与历史检查记录，不替代下述组件规范。
+竖屏、横屏的复现、修复和验收待办见 [2026-11-09 布局清单](../design/history/mobile-web-layout-audit-2026-11-09.md)。
 
 ## 代码风格
 
-- **选手身份展示复用（维护者要求，2026-11-04）**：以 `/wca/results?tab=records` 的共享实现为准。跳转选手主页用 `PersonLink`，国旗通过其 `flag` 传入，不再手写战队 logo + 国旗 + 姓名链接；姓名模式、曾用名和历史国籍仍保留各自数据语义。比赛成绩弹窗、自定义目的地、整张可点击卡片和纯文本标题使用 `PersonLink` 同源的 `WcaPersonIdentity` 包裹原有内容，并传入 `flag`，不得为复用改变点击行为或嵌套链接；卡片/按钮内徽标用 `linked={false}`。表格中的国旗必须跨行对齐：共享紧凑 logo 列保留相同宽度，logo 靠右紧邻国旗；无战队行仍保留这列以对齐国旗，表头对齐国旗起点。不要将“不要占位”误解为允许国旗随 logo 宽度左右跳动；非表格保持自然宽度。logo 列宽、最大尺寸和比例统一由 `wca-person-team-badge.css` 管理，不在页面复制尺寸或叠加 logo 外边距。详见 `.agents/skills/cuber-name-display/SKILL.md`。
+### 复用与验证
 
-- **展开与收起（维护者要求，2026-10-30）**：展开/收起控件使用图标库中的线性图标（如 ChevronRight/ChevronDown），不得使用浏览器默认实心三角形、三角字符或 CSS 三角形。使用 details/summary 时隐藏原生 marker，图标随展开状态变化，保留原生键盘操作与无障碍语义。
+- 新增或复刻前全仓查组件、数据、工具、交互及资源。同职责复用，内嵌逻辑按职责抽取并保留原行为。优先改旧文件，跨端只加必要适配。禁复制、依赖原业务入口或擅加功能。
+- 权限、回收站按根 AGENTS，保留他人改动。可读 Git 状态、差异及历史。typecheck 见[开发与验证](development.md)。先找根因、最小修复，禁症状补丁及多余抽象。日志、EXPLAIN、运行或浏览器证据支持结论，未证实标假设。性能、502、OOM 先 profile。
+- UI 优先找 Playwright MCP（可能延迟加载），遵循内置浏览器规则，fixtures 查全集。新路由查重，改名或合并不加旧路由 redirect。
+- 浏览器源码禁正则后行断言，用捕获边界或前字符判断（Hook + CI）。`browserslist` 跟随 Next 官方基线，旧 WebView 和开发工具走启动失败提示。顶层 `ssr:false` 用 `ClientLoadStatus`（`browser-support-policy.test.ts`、`timer-bootstrap.test.ts`）。
+- 可复用组件或 hook 登记到 `/dev` 的 `_catalog.tsx`（`dev-catalog-sync`、`dev-tokens-drift`）。
 
-  过渡由 `@cuberoot/timer-ui/MoreToggle` 统一管理，Web 从 `@/components/MoreToggle` 使用。`as="summary"` 默认给所属 `details` 添加 220ms 高度过渡；不支持 `interpolate-size` / `::details-content` 的浏览器保留原生即时展开。按钮控制的内容使用同模块导出的 `MoreTogglePanel expanded={open}`，不要在外层用 `open &&` 卸载面板；默认首次展开才挂载内容，访问后保留以完成收起动画，`keepMounted` 可提前挂载。触发器和面板各支持 `animate={false}`，并统一遵循减少动态效果偏好；页面不再重复写折叠动画。加载更多、切换视图等按钮不自动套用内容面板。示例见 `/dev/components` 的 MoreToggle。
+### 数据与首屏
 
-- **厂商与培训机构 logo（维护者要求，2026-10-26）**：不加白色或其他装饰性描边、外框、光晕；原素材自带的白色轮廓也应使用无描边版本替换。保留品牌原色与标志形状，优先复用真实 SVG 矢量资源，不把 PNG 嵌入 SVG 冒充矢量。统一复用 `CubingBrandLabel` 和 `public/images/brands/` 资源，新增品牌或机构时同样遵循；logo 内部有意义的白色图形不视为装饰描边。
+- 格式化、隐藏步骤、本地化只用于渲染和复制。播放、计算、校验、保存、API 及派生用原值。登录和管理态只增操作权限。
+- **日期**中英文均 `yyyy-mm-dd`，含时间的提示同样适用。字符串保留原日历日，`Date` / 时间戳用 `@cuberoot/shared/iso-date` 的 `toLocalIsoDate`，禁 `toLocaleDateString()` 或截 UTC。WCA 区间见 [comp-date-range](../../.agents/skills/comp-date-range/SKILL.md)。
+- WCA 时间序列默认从 2003-08-22 起步，第 0 帧为 1982 快照。统计聚合含 1982 场。
+- SSR 首次 render / `useState` 禁读随机、当前时间和浏览器存储，固定首屏后用 effect 更新。外部存储用 `useSyncExternalStore` 服务端快照。
+- **登录态**React 统一从 `@/lib/auth-store` 用 `useAuthUser()`、`useIsAdmin()`、`useOwnerKey()`（服务端快照，挂载后读当前会话）。登录、退出、刷新用 `authActions`。`getAuthUser()` 用于事件、effect 或异步返回后的核对，`subscribeAuthUser()` 用于会话桥接和缓存，均不派生首屏。`useAuthStore` / `isAdmin()` 仅供认证实现及非 React 命令。API 独立鉴权。
+  - `eslint.auth.config.mjs` 限制 `app/`、`components/`、`hooks/` 的 TS/TSX 和 `lib/` 的 TSX（含别名、命名空间、转导出）。CI 跑 `pnpm --filter @cuberoot/client lint:auth`。`auth-hydration.test.ts` 覆盖游客、用户、管理员首屏、后续挂载及账号、角色变化。
+- **标题**用 metadata / `useDocumentTitle`。弹窗、嵌入保留外层标题，`AlgCaseView` 传 `embedded`。一个监听器协调标题，关闭时恢复仍挂载的拥有者（`tests/recon-case-dialog-title.test.ts`）。
+- Observer（`MutationObserver` / `ResizeObserver`）和 effect 检查写入重触发。相同值不重写，共享 DOM 单写入，卸载清订阅。嵌套页面或弹窗须跑有硬次数上限的隔离回归，覆盖挂载、关闭及重挂载，禁以单组件或延时代替。
 
-- **界面与文案精简（维护者要求，2026-10-19）**：不要重复内容、常驻提示和阅读套话。同一信息只展示一次，不重复标题、名称或说明；不添加“点击即可…”等常驻操作提示，以及“请阅读以下内容”“温馨提示”等无实际信息的引导套话。必要说明放到设置、按需帮助或交互时的短暂反馈中，正文只保留用户完成任务所需的信息。
+### 布局与交互
 
-- 页面层级优先用留白、间距和排版区分；分隔线仅在确实帮助辨识内容边界时使用。导航、标题和工具栏已有清晰布局时保持简洁，去掉多余的装饰性横线。
-- 布局保持均衡，根据内容量和屏幕宽度合理安排列数、容器宽度与间距，避免大面积无意义留白；通过调整布局保持紧凑与可读性。
+- **界面（2026-10-19）**信息只显示一次，去掉常驻提示和套话。必要说明放设置、按需帮助或短反馈。列数、宽度、间距随内容和屏幕调整，优先留白与排版，分隔线只标实际边界。
+- **并排面板（2026-11-25）**独立两栏必须可拖动调宽。复用 `@app-foundation/navigation-ui/resize-divider` 的 `ResizeDivider` 和 `resize-divider.css`，保留计时器热区及左右键。页面设栏宽上下限，窄屏单栏隐藏分隔线。表格列线和装饰线除外。见[计时器](../../core/packages/timer-ui/src/TimerWorkspace.tsx)、[API 目录](../../core/packages/client/app/[lang]/dev/_shared/ReferenceCatalog.tsx)。
+- **展开（2026-10-30）**用状态对应的线性 Chevron，禁原生 marker 和字符或 CSS 三角。`details/summary` 保留键盘和语义。`@cuberoot/timer-ui/MoreToggle`（Web `@/components/MoreToggle`）的 `as="summary"` 默认 220ms 高度过渡，缺 `interpolate-size` / `::details-content` 时立即展开。按钮用 `MoreTogglePanel expanded={open}`，禁外层 `open &&`。首次展开挂载后保留，`keepMounted` 提前挂载。触发器、面板均支持 `animate={false}` 和减少动态效果。加载更多、切视图不自动套面板。例见 `/dev/components`。
+- **弹窗**点按遮罩关闭，内点或向外拖不关闭。遮罩接 `useModalDismiss` props，已有生命周期用 `useModalBackdrop`。关闭即取消，无隐式保存或提交，仅提交中可禁用（Hook + CI）。
+- **过渡**大弹窗用 `@cuberoot/timer-ui/dialog-motion` 的 `useDialogMotion`（Web `hooks/useModalDismiss`）。`motionRef` 挂遮罩，按钮和 dismiss 接 `close`，退出后回调。嵌入 `enabled: false`，手机日程底窗 `sheet: true`。仅变遮罩颜色、面板位移及缩放，玻璃祖先禁 opacity/filter，不留入场填充态。支持减少动态效果和卸载取消。跨模块用语言 layout 的 `PageTransition`，查询参数、换题、同模块详情不加全页动画。
+- **按钮**用去 UA 样式的 `<button>` 或 `AppLink`，图标可用 lucide-react。禁 div/span 点击（iOS Safari），特例 div 加 `role="button"`、`tabIndex`、`onKeyDown`、`allow-static-onclick`（Hook + CI ratchet）。
+- **返回（2026-10-20）**页面不新增返回按钮，wizard 步骤除外。已有或确需的导航仅显示箭头，保留 `aria-label` / `sr-only`，暂不加 Hook。恢复内容操作除外。回首页用 `BackHome`，放正文同宽容器，禁直挂 full-bleed root。其余复用现有返回组件。
+- **共享控件**。选择、搜索框非空用 `components/ClearButton`。密码用带显隐眼睛的 `components/PasswordInput`，禁手写 `type="password"`。切换默认下拉，≤4 项且需横比才用 chip。chip、tab、下拉项不显示计数。答题对错用 `components/TrainingFeedbackOverlay` 的绿 ✅、红 ❌。
+- **开关**。布尔用 `BoolToggle`，含独立标签的 DOM 一律左文右开关，禁 `row-reverse` / `order` 反转。同组纵向设置行撑满，开关右齐。二选一用原生 `<select>`，`PillToggle` 仅作无文字开关底层。禁裸 checkbox，特例标 `allow-checkbox: <理由>`（Hook + CI ratchet）。`block-toggle-side.mts` 和 `toggle-side-guard.test.ts` 共用扫描器覆盖 client/timer-ui/app-ui，Hook 查增量，CI 查全集及共享 DOM 顺序。
+- **菜单与表格**。下拉宽度 `fit-content`，列 flex 加 `align-self:flex-start`，禁固定 `min-width`。absolute + `top:100%` 锚定面板用 `hooks/usePanelClamp`，标 `anchored-panel: clamped`。确证安全标 `anchored-panel: safe (<理由>)`（Hook + CI ratchet，`audit:overflow` popup 已通过）。表头排序用 `components/SortArrow`，只在当前列文字右侧显示（CI）。吸顶表头用 `components/sticky-table.css` 的 `.sticky-scroll`、`.sticky-thead`，契约见文件头。
+- **CSS 定位**。共享控件用 `.共享class.角色class` 等明确作用域，禁止同优先级单 class 覆盖。absolute/fixed 改 relative 重置原 inset/top/left 等。改 static 重置 transform/translate，未生效的 inset 无需修。全局固定按钮右沿用 `right: max(16px, calc((100vw - <content-max-width>) / 2))`。定位守卫为 `block-css-position-cascade.mts` 和 `css-position-cascade-guard.test.ts`（共用扫描器）。规则内 `allow-css-position: 具体理由` 可豁免，动态 class 或复杂选择器须浏览器复核。
+- **项目选择**统一 `components/PuzzlePicker`，禁自写菜单（Hook + CI `component-reuse-guard`）。WCA 选择器、内联例外和比赛表头按下文链接的 wca-event。
 
-- 弹窗必须支持点击/触摸外部遮罩关闭,内部操作和从内部拖到外部不得误关;新改弹窗遮罩复用 `useModalDismiss` 返回的 props(已有生命周期用 `useModalBackdrop`),关闭等同取消且不得隐式保存/提交,仅提交中的临时禁用可阻止关闭;hook + CI 检查漏接关闭事件。
-- 大弹窗开关过渡复用 `@cuberoot/timer-ui/dialog-motion` 的 `useDialogMotion`（Web 可从 `hooks/useModalDismiss` 导入）：`motionRef` 挂遮罩、`close` 接关闭按钮与 dismiss hook，退出结束后再调用原关闭回调；嵌入内容用 `enabled: false`，手机底部日程窗用 `sheet: true`。共享实现只动画遮罩颜色与面板位移/缩放，不对玻璃祖先施加 opacity/filter，不保留入场动画填充态；支持减少动态效果和卸载取消。页面跨模块过渡由语言 layout 中的 `PageTransition` 负责，查询参数、换题和同模块详情沿用各自交互，不另加全页动画。
-- 新增或复刻任何功能前先全仓搜索现有组件、数据源、工具、交互契约与资源，存在同职责实现时直接复用或先提取单一事实源，禁止复制后改名、各端维护副本或擅自增加源实现没有的内容，跨运行时只保留必要的平台适配层。
-- 复用内嵌逻辑时，能抽取就优先抽取：若逻辑仍属于某个页面、组件或业务入口，先将可共用部分移到职责合适的公共模块，再让原调用方和新调用方共同引用，避免新调用方直接依赖原业务入口或复制实现。抽取保持原调用方行为不变；已经独立的公共实现直接复用，不为抽取而新增无必要的层级或 package。
-- 优先编辑已有文件；typecheck 范围遵循全局验证规则。
-- 改动先定位根因,禁止在症状点打补丁;根因定位后落地用最小实现,不臆造抽象层/翻译层。
-- 展示格式化、隐藏步骤和本地化后的值只用于渲染或复制;播放器、计算、校验、保存、API 和派生状态必须使用无损原值,登录/管理员态只能增加操作能力,不得改变公开内容语义。
-- **日期展示**：全站日期统一用 `yyyy-mm-dd`（如 `2026-11-22`），中英文使用同一格式，包含时间的提示也沿用此日期格式。已有日期字符串按原日历日期展示；把 `Date` 或时间戳转为本地日期时复用 `@cuberoot/shared/iso-date` 的 `toLocalIsoDate`，禁止用 `toLocaleDateString()` 或截取 UTC 时间戳来替代。WCA 比赛日期区间按 [comp-date-range](../../.agents/skills/comp-date-range/SKILL.md) 的紧凑格式展示。
-- SSR 首次 render / useState 初始化禁读随机数、当前时间或浏览器存储;固定首屏后再用 effect 更新,外部存储走 useSyncExternalStore 的 server snapshot。
-- **登录态渲染**：组件和 React hooks 从 `@/lib/auth-store` 使用 `useAuthUser()` / `useIsAdmin()` / `useOwnerKey()`；它们通过 React `useSyncExternalStore` 的服务端快照保证首屏一致，后续挂载直接读取当前会话。`authActions` 提供登录、退出、刷新等命令；`getAuthUser()` 仅用于事件、effect 或异步返回后的实时账号核对，`subscribeAuthUser()` 用于会话桥接和外部缓存订阅，不能用这些命令接口派生首屏 UI。底层 `useAuthStore` / `isAdmin()` 保留给认证实现和非 React 命令代码。`eslint.auth.config.mjs` 用标准 `no-restricted-imports` 限制 `app/`、`components/`、`hooks/` 的 TS/TSX 及 `lib/` 的 TSX 导入底层接口（含别名、命名空间和转导出）；`pnpm --filter @cuberoot/client lint:auth` 已接入 CI。`auth-hydration.test.ts` 覆盖游客/普通用户/管理员首屏、后续挂载及账号/角色变化。安全 hook 是渲染契约，服务端 API 仍独立验证权限。
-- 浏览器标题统一使用 metadata 或 `useDocumentTitle`；弹窗/嵌入内容不得抢外层页面标题，复用 `AlgCaseView` 时传 `embedded`。动态标题 hook 由单一监听器协调多个使用者，禁止恢复为每实例各建标题 MutationObserver；关闭时恢复仍挂载的标题拥有者。回归见 `tests/recon-case-dialog-title.test.ts`。
-- 新增或修改 MutationObserver/ResizeObserver/effect 同步时，核对回调写入是否会再次触发自身或其他监听器；相同值不重复写，共享 DOM 状态只保留一个写入入口，卸载时清理订阅。涉及页面嵌套/弹窗时用有硬性次数上限的隔离回归验证挂载、关闭与重新挂载，不能只验证单组件或用延时掩盖循环。
-- 浏览器端源码禁用正则后行断言,改用捕获边界或显式前字符判断;Hook + CI 守卫。
-- UI 可用 lucide-react;不放页面级"返回"按钮(wizard 步骤间不算)。
-- **返回导航（维护者要求，2026-10-20）**：全站已有或确需保留的返回导航只显示箭头，不显示“返回”“首页”“Back”等文字；通过 `aria-label` 或 `sr-only` 保留明确的无障碍名称。返回首页复用 `BackHome`，其他返回导航优先复用已有组件，不另造带可见文字的版本。本规则不要求新增返回入口，也不适用于“返回公式”等恢复内容的功能操作。暂不增加 hook。
-- `BackHome` 必须放进与正文同宽的 header/topbar/wrap，禁直接挂在 full-bleed page root 下。
-- 按钮式交互必须真 `<button>`(剥 UA 样式)或 `AppLink`,禁 `<div/span onClick>`(iOS Safari tap 不可靠);例外 div 加 `role="button"`+`tabIndex`+`onKeyDown`;豁免注释 `allow-static-onclick`。守卫:hook + CI ratchet。
-- 选择/搜索输入框非空时显示清除按钮,统一 `components/ClearButton`。
-- 所有密码输入统一复用 `components/PasswordInput`,必须带可切换明文的眼睛按钮,禁页面手写 `type="password"`。
-- 切换器默认下拉;chip 仅当选项 ≤4 且需左右对比。
-- 布尔开关用 `BoolToggle`，全项目统一内容/文字在左、开关在右（共享组件保持此 DOM 顺序，页面不得用 row-reverse/order 反转）；同组纵向设置行须占满共同宽度，开关右侧对齐，不得随标签长短错位；设置行已有独立标签时，开关也放在标签右侧。`block-toggle-side.mts` 与 `toggle-side-guard.test.ts` 共用扫描器，覆盖 client/timer-ui/app-ui；Hook 检查新增片段，CI 验证完整源码和共享 DOM 顺序。二选一统一用浏览器原生 `<select>` 菜单；`PillToggle` 仅保留无文字开关底层，不再提供二选一形态;禁裸 checkbox,特例注释 `allow-checkbox: <理由>`。守卫:hook + CI ratchet。
-- 表头排序一律 `components/SortArrow`(文字右侧,仅当前列显示)。CI 守卫。
-- 下拉/菜单宽度 fit-content,column flex 加 `align-self:flex-start`;禁钉 `min-width`。
-- 锚定下拉面板(absolute + top:100%)必挂 `hooks/usePanelClamp` 钳视口,CSS 注明 `anchored-panel: clamped`;确证安全注明 `anchored-panel: safe (<理由>)`。守卫:hook + CI ratchet;实测 `audit:overflow` popup pass。
-- 共享控件的页面定位覆盖不能依赖 CSS 加载顺序：用 `.共享class.角色class` 等明确作用域，禁止同优先级单 class 覆盖。absolute/fixed 改 relative 时显式重置原有 inset/top/left 等偏移，改 static 时重置 transform/translate；静态定位下未生效的 inset 不视为 bug。Hook `block-css-position-cascade.mts` 与 CI `css-position-cascade-guard.test.ts` 共用扫描器；规则内 `allow-css-position: 具体理由` 才能豁免，动态 class/复杂选择器仍须浏览器复核。
-- 吸顶表头走 `components/sticky-table.css`(`.sticky-scroll` + `.sticky-thead`),禁手写 sticky thead;契约见文件头注。
-- 新可复用组件/hook 登记 `/dev` catalog(`_catalog.tsx`)。CI 守卫:`dev-catalog-sync` + `dev-tokens-drift`。
-- 答题/训练的对错提示统一复用 `components/TrainingFeedbackOverlay` 的绿色 ✅ / 红色 ❌,禁页面自画。
-- 浏览器基线跟随当前 Next 官方支持范围，禁为旧 WebView/开发者工具下调 `browserslist`；旧内核走全站启动失败提示，顶层 `ssr:false` 加载态用 `ClientLoadStatus`。CI:`browser-support-policy.test.ts` + `timer-bootstrap.test.ts`。
-- 项目菜单统一用 `components/PuzzlePicker`;WCA 筛选用默认菜单式 `WcaEventSelector`/`WcaEventMultiSelector`，师生编辑和双人计时浮层显式 `presentation="inline"`；比赛列表保留项目表头；禁页面自写项目菜单。hook + CI 守卫:`component-reuse-guard`。
-- `/alg` case 详情统一走 `AlgCaseView`:静态主图用 `CaseThumb`,动画用 `AlgPlayer`;多朝向不得省略主图或另造结构,桌面一行一朝向且动画左公式右。
-- 公式详情的普通行、编辑行和 F2L 入槽行统一复用 `AlgFormulaRow` / `AlgFormulaReadRow`；图标、文字、工具区的尺寸只在 `components/alg-formula-row.css` 定义，不按编辑模式另写补偿间距。标签图标、操作栏图标及标签菜单文字统一使用该文件唯一的 `--alg-ui-size`；Portal 菜单也接入同一声明，组件图标用 `1em`，不再写独立像素尺寸。展示标签的位置与去重完全由共享行负责，详情页和 F2L 分组只传 `tags`，不得自行追加标签；`alg-row-tags.test.ts` 同时检查渲染结果与调用方边界。工具展开与输入焦点不得改变行尺寸，切换模式须保留选中状态。涉及这些组件或公式布局 CSS 时，在 `core/` 运行 `pnpm --filter @cuberoot/client test:alg-layout`：使用实际组件及 CSS，在 Chromium 检查宽窄屏、触屏、分组、长公式和加粗状态的坐标；不启动 Next、不访问数据库。该检查已接入 client CI；本地默认使用已安装的 Chrome，CI 使用 Playwright Chromium。
-- **魔方静态图的本地绘制（2026-10-16）**：`/alg`、`/recon`、`/timer` 的应用内状态图优先复用现有 `CaseThumb` / `VisualCube` / 计时器共享绘图器，不依赖 `/v1/visualcube.svg` 的网络往返。当前题、上一个、弹窗等少量图使用 `local`；长列表、选择网格和旧成绩必须使用 `local` + `loading="lazy"`，由 `VisualCube` 复用 `LazyVisible`，在接近视口后才生成 SVG，并预留准确宽高。禁止为了本地化一次同步生成全库，也禁止把旧记录悄悄切回网络图；新增同类页面沿用此契约。动画继续用既有播放器，视频封面、静态资源与对外可分享的 SVG URL 不属本地绘图替换范围。回归见 `tests/visualcube-lazy-local.test.ts`；相关技能见 `.agents/skills/visualcube/SKILL.md`。
-- 全局固定按钮对齐内容右沿:`right: max(16px, calc((100vw - <content-max-width>) / 2))`。
-- chip/tab/下拉项不显示数量计数。
-- WCA 时间锚点:时间序列默认视图从 2003-08-22 起步(第 0 帧 = 1982 快照),统计聚合必含 1982 场。
-- 可为任务边界读取 `git status`/diff，仅需历史证据时读 `git log`；文件和配置的增删改遵守部署章节的长期授权、当次任务范围及权限边界，保留他人未提交工作，执行仍遵循全局回收站规则。
-- 报根因/"修好了"/done 前必须实证(日志/EXPLAIN/run 输出/playwright);未证实标「假设」;性能/502/OOM 先 profile 禁猜。
-- UI 验证先搜并用 Playwright MCP(可能延迟加载);fixtures 全集别采样。
-- 新路由先 grep 防撞名;路由改名/合并不为旧路径加 redirect。
+### 身份、品牌与公式
+
+- **选手身份（2026-11-04）**用 `PersonLink` 或 `WcaPersonIdentity`，传 `flag`，保留姓名模式、曾用名、历史国籍与点击行为。表格国旗跨行对齐，禁止单页改 logo 尺寸或加外边距。组件选择、链接嵌套和对齐细则见 [cuber-name-display](../../.agents/skills/cuber-name-display/SKILL.md)。
+- **厂商与培训机构 logo（2026-10-26）**。统一 `CubingBrandLabel` 和 `public/images/brands/`。保留品牌原色及轮廓，含有意义的内部白色图形。去掉装饰描边、外框、光晕，自带白边换无边素材。优先真实 SVG，禁嵌 PNG 冒充矢量。
+- **公式详情**。`/alg` case 用 `AlgCaseView`、静态主图 `CaseThumb`、动画 `AlgPlayer`。多朝向保留主图与共享结构，桌面一行一朝向、左动画右公式。普通、编辑、F2L 入槽行共用 `AlgFormulaRow` / `AlgFormulaReadRow`。行尺寸只由 `components/alg-formula-row.css` 管理，编辑模式不加补偿。标签图标、工具图标和菜单文字（含 Portal）共用 `--alg-ui-size`，图标用 `1em`。详情、F2L 分组只传 `tags`，共享行定位、去重（`alg-row-tags.test.ts` 验渲染和调用边界）。展开工具、输入聚焦保持行尺寸，切换模式保留选中。
+  - 改公式行组件或布局 CSS 时运行 `pnpm --filter @cuberoot/client test:alg-layout`。实测宽窄屏、触屏、分组、长公式和加粗坐标。本地 Chrome，CI Playwright Chromium，无需 Next 或数据库。
+- **魔方静态图（2026-10-16）**。`/alg`、`/recon`、`/timer` 及同类页复用 `CaseThumb`、`VisualCube` 或计时器绘图器。少量图用 `local`，长列表、选择网格、旧成绩加 `loading="lazy"`。参数、回归及网络图例外见 [visualcube](../../.agents/skills/visualcube/SKILL.md)。
 
 ## 主题/颜色
 
-`/dev/expenses` 与 `/dev/infrastructure` 新增设备时，同次补齐对应型号、配色的产品图，不用通用图标、其他型号或空白占位；`infrastructure-costs.ts` 的 `imageSrc` 保持必填。设备名称按用户提供的完整型号保留，不能省略屏幕版本等型号区别；普通屏幕版不能替代 PROLED XDR 版。优先官方素材或用户提供的图片，复用现有 `.infra-equipment-art` / `.infra-equipment-image` 的尺寸、比例、留白和对齐。
-
-设备图片必须是实际透明背景的产品抠图，不能把白底、棋盘格或其他底色烘焙进图片。仅检查 PNG/WebP 的 `hasAlpha` 不够：还要检查产品外空白区域的像素透明度，并在深色、浅色背景上预览。透明图片用 `next/image` 时保留 `unoptimized`，本地曾实测 Next 图片优化把它们转成白底 JPEG。替换已浏览过的同名图片时更换资源 URL，避免缓存继续显示旧图。设备图片来源见[素材记录](../design/equipment-images.md)。
-
-写任何 CSS 色值前调 `theme-tokens` skill(token 表 + dark-locked 页清单 + color-mix 规则);禁 `#888 #aaa` 等硬码灰阶。
-
-网站玻璃材质由 `@app-foundation/ui-controls/glass-surface.css` 定义，通过 `@cuberoot/app-ui/appearance.css` 接入。CubeRoot 在 `appearance-material.css` 绑定主题色并兼容现有材质变量，`site-surfaces.css` 适配旧页面。新表面可复用 `data-site-surface="panel|popover|heading"`，需要独立绘制层时使用 `af-glass-surface`。页面保留布局与状态色，折射、反光边和无障碍回退沿用共享材质。
-
-多余底框只约束已确认的位置，复用现有材质 Hook/CI；截图巡检按需运行，不作为日常开发或提交的额外门槛，不凭候选自动扩大禁用范围，详 `docs/design/glass/glass-menu-regression.md`。
-
-- 按钮/链接的短悬停提示统一使用 `components/Tooltip`（`<Tooltip content={tr({zh,en})}>{(tip) => <button {...tip}>…</button>}</Tooltip>`），禁止另写页面级提示气泡或用 native `title` 代替需要设计样式的提示。触发属性放在实际按钮上；已有同名事件须组合调用。写入 Hook 和 CI 共用材质扫描器拦截 `content: attr(data-tooltip/data-tip/title)` 伪元素气泡（不覆盖任意 JSX 或动态样式）；组件负责 hover/focus、Escape、可移入提示、Portal 和视口钳制，页面不再定义 blur/透明度。可交互内容不放 Tooltip，点击展开的说明继续用 InfoTooltip。Portal 继承全站主题；局部配色预览须单独核验。
+- 写 CSS 色值前读 [theme-tokens](../../.agents/skills/theme-tokens/SKILL.md)，禁硬码灰阶。
+- **设备图**。`/dev/expenses`、`/dev/infrastructure` 新设备同次配齐准确型号、配色的产品图。`infrastructure-costs.ts` 的 `imageSrc` 保持必填。保留用户给出的完整型号（含屏幕版本，普通屏不可代替 PROLED XDR）。优先官方或用户素材，复用 `.infra-equipment-art` / `.infra-equipment-image` 的尺寸、比例、留白和对齐。禁通用图标及其他型号或空白占位。
+- **图片透明与缓存**。用真实透明抠图，禁烘焙底色（含棋盘格）。验产品外像素透明度并预览深浅背景。`next/image` 保留 `unoptimized`（曾输出白底 JPEG）。替换浏览过的同名图须换 URL。见[素材记录](../design/equipment-images.md)。
+- **玻璃**定义在 `@app-foundation/ui-controls/glass-surface.css`，经 `@cuberoot/app-ui/appearance.css` 接入。本站 `appearance-material.css` 绑定主题并兼容旧变量，`site-surfaces.css` 适配旧页面。新表面用 `data-site-surface="panel|popover|heading"`，独立绘制层用 `af-glass-surface`。页面负责布局和状态色，共享材质负责折射、反光边、无障碍回退。多余底框只约束已确认位置，候选不自动扩大范围，复用材质 Hook/CI。截图巡检按需，不作日常开发或提交门槛。见[玻璃回归](../design/glass/glass-menu-regression.md)。
+- **提示**。按钮或链接的短悬停提示用 `components/Tooltip`，如 `<Tooltip content={tr({zh,en})}>{(tip) => <button {...tip}>…</button>}</Tooltip>`。触发 props 挂实际元素，合并同名事件。组件处理 hover/focus、Escape、移入提示、Portal、视口钳制。页面禁自写气泡、blur/透明度或以原生 `title` 代替设计提示。Hook/CI 共用材质扫描器拦截 `content: attr(data-tooltip/data-tip/title)` 伪元素，范围不含任意 JSX 或动态样式。可交互内容避开 Tooltip。点击说明用 InfoTooltip。Portal 继承全站主题，局部配色预览单独核验。
 
 ## 项目菜单短名
 
 ### 项目图标先进入图标库（维护者要求，2026-10-20）
 
-新增或修复具体拼图的图标时，先按 [wca-event skill](../../.agents/skills/wca-event/SKILL.md) 在 `core/packages/event-icon/svg/` 制作或复用真实 SVG，生成共享映射并确认 `/zh/icon`（英文 `/icon`）可查看、搜索和下载，再让模拟器、打乱器、计时器与 App 消费同一键。原创图放 `svg/puzzle/`，保留上游原稿；按实际外形、切割、阶数和联体重叠绘制，不借相似图冒充，不用文字缩写长期替代具体拼图的图标。训练阶段、自定义模式可保留语义文字徽标。同步中英文名称与事件别名，运行现有 `puzzle-icon-catalog.test.ts` 覆盖检查，并在图标库及实际菜单小尺寸、深浅主题下目检；新增模拟器必须同一任务交付图标，不留给下一轮 AI 补。
+按 [wca-event](../../.agents/skills/wca-event/SKILL.md) 先入共享 SVG 库、生成映射并核验图标库，再用同一键接入各端。新增模拟器同次交付图标。源文件、图形要求、双语别名、例外及验证命令见该技能。
 
-网站所有项目选择菜单（含分组、选中项、提示名称）不得出现「魔方」二字，例如「二重奏」「枫叶」「齿轮」。使用统一 PuzzlePicker 的展示规则，并在项目目录数据中直接写短名；不得改项目 ID、计算或保存值。此规则只约束项目菜单，不禁止文章正文等正常用词。写入守卫 `block-puzzle-menu-label.mts` 与 CI `puzzle-menu-label-guard.test.ts` 共同维护；新增菜单数据源时同步纳入检查。
-
-项目菜单的三维尺寸省略乘号，写作 `233`、`334`、`335`，不写 `2×3×3`、`3x3x4`；中英文名称、左侧文字标签、选中提示保持一致。仅格式化展示，不改项目 ID。
+项目目录直接写双语短名。分组、选中项及提示均省「魔方」，三维尺寸省乘号（`233`、`334`、`335`），左侧文字与提示一致。保留 ID、计算及保存值，正文用词照常。新数据源纳入 wca-event 所列守卫。
 
 ## 圆角
 
-统一复用 `@2017yanr02/continuous-corners`：全站入口 `core/packages/client/app/layout.tsx` 的 `SiteCorners`；自定义／反向圆角用包内 `continuousCornerRadii` 生成。禁止用渐变、手绘曲线或 CSS squircle 替代；真圆保持圆形。
+用 `@2017yanr02/continuous-corners`。全站入口为 `core/packages/client/app/layout.tsx` 的 `SiteCorners`。自定义或反向圆角用 `continuousCornerRadii`，真圆保持圆形，禁渐变、手绘曲线或 CSS squircle 替代。
 
 ## 导航
 
-新增或修改导航相关 UI 前，先查 `@app-foundation/navigation-ui` 的 README 与导出，优先复用；通用能力补进共享包，避免本站重复实现。
-
-内部工作台与联系页侧栏复用 `@app-foundation/navigation-ui`，接入见 `core/packages/client/app/[lang]/{workspace,contact}/page.tsx`；布局、动画和圆角在共享包修改，业务菜单与权限留在本站。
+先查 `@app-foundation/navigation-ui` 的 README 和导出。通用布局、动画及圆角归共享包，业务菜单与权限归本站。内部工作台和联系页侧栏均复用该包，入口为 `core/packages/client/app/[lang]/{workspace,contact}/page.tsx`。

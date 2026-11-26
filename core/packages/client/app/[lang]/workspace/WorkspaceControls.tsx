@@ -19,7 +19,7 @@ export function WorkspaceButton({ action, iconOnly = true, showTooltip = true, v
   return compact && showTooltip ? <Tooltip content={label!}>{tip => button(tip)}</Tooltip> : button();
 }
 
-export function WorkspaceDialog({ title, children, onClose, wide }: WorkspaceDialogProps) {
+export function WorkspaceDialog({ title, children, onClose, wide, solid = false }: WorkspaceDialogProps & { solid?: boolean }) {
   const t = useT();
   const ref = useRef<HTMLDialogElement>(null);
   const heading = useId();
@@ -46,7 +46,7 @@ export function WorkspaceDialog({ title, children, onClose, wide }: WorkspaceDia
     return () => { cancelAnimationFrame(frame); observer.disconnect(); dialog.close(); document.body.style.overflow = previous; if (trigger?.isConnected) trigger.focus(); };
   }, []);
   return <dialog ref={ref} {...backdrop} className={`staff-workspace workspace-dialog${wide ? ' workspace-dialog-wide' : ''}`} aria-labelledby={heading} onCancel={event => { event.preventDefault(); requestClose(); }} onKeyDownCapture={event => { if (event.key === 'Escape' && ref.current?.querySelector('[role="dialog"]')) event.preventDefault(); }} onInputCapture={() => setDirty(true)} onChangeCapture={() => setDirty(true)}>
-    <div className="workspace-dialog-surface" data-site-surface="popover">
+    <div className="workspace-dialog-surface" data-site-surface={solid ? undefined : 'popover'}>
       <header className="workspace-dialog-heading"><h2 id={heading}>{title}</h2><ClearButton variant="standalone" className="btn workspace-icon-action workspace-action workspace-dialog-close" disabled={busy} ariaLabel={t('关闭', 'Close')} onClick={requestClose} /></header>
       {confirmClose && <div className="workspace-discard" role="alert"><p>{t('放弃未保存的更改？', 'Discard unsaved changes?')}</p><div className="staff-actions"><WorkspaceButton variant="secondary" disabled={busy} onClick={() => setConfirmClose(false)}>{t('继续编辑', 'Keep editing')}</WorkspaceButton><WorkspaceButton disabled={busy} onClick={() => { if (!ref.current?.querySelector('[aria-busy="true"]')) onClose(); }}>{t('放弃更改', 'Discard changes')}</WorkspaceButton></div></div>}
       <div className="workspace-dialog-body">{children}</div>

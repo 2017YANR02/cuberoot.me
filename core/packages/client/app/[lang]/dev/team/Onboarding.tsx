@@ -76,12 +76,12 @@ export default function GetStartedPage() {
       <h2>{t('入职', 'Onboarding')}</h2>
     </header>
     <div className="onboarding-steps">
-      <article className="onboarding-step" data-site-surface="panel" aria-labelledby="onboarding-identity">
+      <article className="onboarding-step" aria-labelledby="onboarding-identity">
         <div className="onboarding-step-heading"><UserRound size={24} aria-hidden /><h3 id="onboarding-identity">{t('确认身份', 'Identify yourself')}</h3></div>
         <MemberAccessRequest />
         <AppLink className="onboarding-account" href="/account" prefetch={false}>{t('我的账号', 'My account')}<ArrowRight size={16} aria-hidden /></AppLink>
       </article>
-      <article className="onboarding-step" data-site-surface="panel" aria-labelledby="onboarding-setup">
+      <article className="onboarding-step" aria-labelledby="onboarding-setup">
         <div className="onboarding-step-heading"><Laptop size={24} aria-hidden /><h3 id="onboarding-setup">{t('配置电脑', 'Set up your computer')}</h3></div>
         <p>{t('一次配置本地开发环境和共享预览网址。', 'Set up local development and a shared preview URL together.')}</p>
         <div className="onboarding-command"><code>cuberoot</code><InfoTooltip iconSize={18} ariaLabel={t('启动与停止', 'Start and stop')} content={t('配置完成后，在终端输入 cuberoot 启动项目并打开共享预览网址；保持终端运行，按 Ctrl+C 停止。', 'After setup, run cuberoot to start the project and open the shared preview URL. Keep the terminal running; press Ctrl+C to stop.')} /></div>
@@ -89,7 +89,7 @@ export default function GetStartedPage() {
         <button type="button" className="onboarding-prompt-open" aria-haspopup="dialog" aria-label={t('查看配置指令', 'View setup prompt')} onClick={() => setPromptOpen('setup')}>{t('查看指令', 'View prompt')}<ArrowRight size={16} aria-hidden /></button>
         <button type="button" className="onboarding-prompt-open" aria-haspopup="dialog" onClick={() => setPromptOpen('preview')}>{t('开发网址与进度', 'Development URL and progress')}<ArrowRight size={16} aria-hidden /></button>
       </article>
-      <article className="onboarding-step" data-site-surface="panel" aria-labelledby="onboarding-practice">
+      <article className="onboarding-step" aria-labelledby="onboarding-practice">
         <div className="onboarding-step-heading"><ClipboardCheck size={24} aria-hidden /><h3 id="onboarding-practice">{t('完成练习', 'Practice')}</h3></div>
         <p>{t('说明需求，核验结果，留下交接。', 'Brief, verify and hand off a small task.')}</p>
         <AppLink className="onboarding-account" href="/admin/team?section=sop" prefetch={false}>{t('开发规范', 'Development standards')}<ArrowRight size={16} aria-hidden /></AppLink>
@@ -117,13 +117,13 @@ export default function GetStartedPage() {
     <section className="team-lifecycle-boundaries" aria-labelledby="onboarding-boundaries">
       <div className="team-lifecycle-section-heading"><ShieldCheck size={22} aria-hidden="true" /><h2 id="onboarding-boundaries">{t('把工作交给 AI，把授权留给自己', 'Delegate work. Keep control of access.')}</h2></div>
       <div className="team-lifecycle-comparison">
-        <article className="team-lifecycle-example team-lifecycle-example--good" data-site-surface="panel">
+        <article className="team-lifecycle-example team-lifecycle-example--good">
           <h3><Check size={18} aria-hidden="true" />{t('可以这样做', 'Do this')}</h3>
           <div className="team-lifecycle-access-flow" aria-hidden="true"><FileText size={26} /><span>{t('任务与资料', 'Brief and files')}</span><ArrowRight size={16} /><Sparkles size={26} /><span>AI</span></div>
           <p>{t('提供相关文件、截图和完整报错，让 AI 先检查再执行。', 'Share relevant files, screenshots and full errors. Have AI inspect before acting.')}</p>
           <p>{t('登录和系统授权由本人完成；开发接入使用自己的设备与密钥。', 'Handle sign-in and system permissions yourself. Use your own device and keys.')}</p>
         </article>
-        <article className="team-lifecycle-example team-lifecycle-example--bad" data-site-surface="panel">
+        <article className="team-lifecycle-example team-lifecycle-example--bad">
           <h3><X size={18} aria-hidden="true" />{t('不要这样做', 'Avoid this')}</h3>
           <div className="team-lifecycle-access-flow" aria-hidden="true"><KeyRound size={26} /><span>{t('密码与私钥', 'Passwords and keys')}</span><X className="team-lifecycle-stop" size={18} /><Sparkles size={26} /><span>AI</span></div>
           <p>{t('不把密码、令牌、私钥或无关客户资料粘进聊天。', 'Keep passwords, tokens, private keys and unrelated customer data out of chats.')}</p>
@@ -131,7 +131,7 @@ export default function GetStartedPage() {
         </article>
       </div>
     </section>
-    <section className="team-lifecycle-first-task" data-site-surface="panel" aria-labelledby="onboarding-first-task">
+    <section className="team-lifecycle-first-task" aria-labelledby="onboarding-first-task">
       <div className="team-lifecycle-section-heading"><ClipboardCheck size={22} aria-hidden="true" /><h2 id="onboarding-first-task">{t('第一项练习：改好一个页面', 'First exercise: improve one page')}</h2></div>
       <p className="team-lifecycle-task-brief">{t('选一个不写入线上数据的小任务。把“做漂亮一点”改成明确的改动与验收条件。', 'Choose a small task with no production writes. Replace “make it nicer” with specific changes and acceptance criteria.')}</p>
       <div className="team-lifecycle-delivery">
@@ -150,7 +150,7 @@ export default function GetStartedPage() {
     <MacSetupChecklist />
 
     </MoreTogglePanel>
-    {promptOpen === 'preview' && <WorkspaceDialog wide title={t('开发网址与进度', 'Development URL and progress')} onClose={() => setPromptOpen(null)}>
+    {promptOpen === 'preview' && <WorkspaceDialog wide solid title={t('开发网址与进度', 'Development URL and progress')} onClose={() => setPromptOpen(null)}>
       <DevPreview key={user.uid} onTicketIssued={(value) => {
         const uid = user.uid;
         if (typeof uid !== 'number' || getAuthUser()?.uid !== uid) return;
@@ -158,7 +158,7 @@ export default function GetStartedPage() {
         setPromptOpen('setup');
       }} />
     </WorkspaceDialog>}
-    {(promptOpen === 'setup' || promptOpen === 'learning') && <WorkspaceDialog wide title={promptOpen === 'setup' ? t('配置电脑与开发预览', 'Computer and preview setup') : t('AI 带练指令', 'AI coaching prompt')} onClose={() => setPromptOpen(null)}>
+    {(promptOpen === 'setup' || promptOpen === 'learning') && <WorkspaceDialog wide solid title={promptOpen === 'setup' ? t('配置电脑与开发预览', 'Computer and preview setup') : t('AI 带练指令', 'AI coaching prompt')} onClose={() => setPromptOpen(null)}>
       <div className="onboarding-prompt-window">
         <WorkspaceButton className="onboarding-prompt-copy" action="copy" iconOnly={false} variant="secondary" onClick={() => copy(promptOpen === 'setup' ? aiPrompt : learningPrompt, `ai-${promptOpen}`)}>{copiedKey === `ai-${promptOpen}` ? t('已复制', 'Copied') : t('复制完整指令', 'Copy full prompt')}</WorkspaceButton>
         <pre tabIndex={0} className="onboarding-prompt-text">{promptOpen === 'setup' ? aiPrompt : learningPrompt}</pre>
