@@ -132,7 +132,7 @@ it('shows the self-assessed path states for the matching account, without derivi
 });
 
 it.each(['trial', 'two-trials', 'finished', 'enrolled', 'unlocked', 'mixed', 'unknown'])('only shows the redemption hint for verified trial-only learning (%s)', async scenario => {
-  const entity = (id: string, watchedTrial = true) => ({ id, title: id, status: 'published', data: { presentation: { trialLessonIds: ['trial'] }, lessons: [{ id: 'trial', accessScope: 'public', durationSeconds: 240 }, { id: 'core', accessScope: 'entitled', durationSeconds: 300 }, ...(!watchedTrial ? [{ id: 'public-core', accessScope: 'public', durationSeconds: 200 }] : [])], lessonAccess: scenario === 'unknown' ? undefined : [{ id: 'trial' }, ...(scenario === 'unlocked' ? [{ id: 'core' }] : [])] } });
+  const entity = (id: string, watchedTrial = true) => ({ id, title: id, status: 'published', data: { presentation: { trialLessonIds: ['trial'] }, lessons: [{ id: 'trial', accessScope: 'public', durationSeconds: 240 }, { id: 'core', accessScope: 'entitled', durationSeconds: 300 }, ...(!watchedTrial ? [{ id: 'public-core', lessonType: 'introduction', accessScope: 'public', durationSeconds: 200 }] : [])], lessonAccess: scenario === 'unknown' ? undefined : [{ id: 'trial' }, ...(scenario === 'unlocked' ? [{ id: 'core' }] : [])] } });
   const first = entity('course-1'), second = entity('course-2', scenario !== 'mixed');
   mocks.load.mockImplementation(async (resource: PlatformResource, options: { params: { id?: string } }) => {
     if (resource === 'account-progress') return { items: [{ id: 'trial', title: '试听课', data: { courseId: 'course-1', lessonId: 'trial', status: scenario === 'finished' ? 'completed' : 'in_progress', positionSeconds: scenario === 'finished' ? 240 : 30, progressBps: scenario === 'finished' ? 10000 : 1250 } }, ...(['two-trials', 'mixed'].includes(scenario) ? [{ id: 'other', title: '另一课时', data: { courseId: 'course-2', lessonId: scenario === 'mixed' ? 'public-core' : 'trial', status: 'completed' } }] : [])] };
@@ -232,10 +232,10 @@ it.runIf(process.env.PLATFORM_BROWSER_LAYOUT === '1')('fits guest, learner and e
                 });
                 const path = document.querySelector<HTMLElement>('.path-grid')!;
                 const cards = [...path.querySelectorAll('button')].map(button => button.getBoundingClientRect());
-                const row = cards.every(rect => Math.abs(rect.top - cards[0]!.top) < 1);
-                return { overflow: document.documentElement.scrollWidth > innerWidth, offset: Math.abs(main.left - (innerWidth - main.right)), minFont: Math.min(...links.map(link => parseFloat(getComputedStyle(link).fontSize))), contrast: Math.min(...ratios), contained: links.every(link => { const rect = link.getBoundingClientRect(); return rect.left >= 0 && rect.right <= innerWidth + 1; }), row, minCardHeight: Math.min(...cards.map(rect => rect.height)), floatsHidden: [...document.querySelectorAll('.clawd-deskpet,.deskpet-compact')].every(element => getComputedStyle(element).display === 'none') };
+                const columnCount = cards.filter(rect => Math.abs(rect.top - cards[0]!.top) < 1).length;
+                return { overflow: document.documentElement.scrollWidth > innerWidth, offset: Math.abs(main.left - (innerWidth - main.right)), minFont: Math.min(...links.map(link => parseFloat(getComputedStyle(link).fontSize))), contrast: Math.min(...ratios), contained: links.every(link => { const rect = link.getBoundingClientRect(); return rect.left >= 0 && rect.right <= innerWidth + 1; }), columnCount, minCardHeight: Math.min(...cards.map(rect => rect.height)), floatsHidden: [...document.querySelectorAll('.clawd-deskpet,.deskpet-compact')].every(element => getComputedStyle(element).display === 'none') };
               });
-              expect(result, `${state}/${width}/${theme}`).toMatchObject({ overflow: false, contained: true, floatsHidden: true, row: true });
+              expect(result, `${state}/${width}/${theme}`).toMatchObject({ overflow: false, contained: true, floatsHidden: true, columnCount: width < 700 ? 2 : 6 });
               expect(result.offset).toBeLessThanOrEqual(1);
               expect(result.minFont).toBeGreaterThanOrEqual(13);
               expect(result.minCardHeight).toBeGreaterThanOrEqual(44);

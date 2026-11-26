@@ -2,11 +2,12 @@
 
 import { Tooltip } from '@/components/Tooltip';
 import { useCallback, useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type SyntheticEvent } from 'react';
-import { AudioLines, Bug, Check, ChevronLeft, ChevronRight, CircleHelp, Code, Gauge, Info, Keyboard, Link, Maximize, Minimize, Moon, Pause, PictureInPicture2, Play, RectangleHorizontal, Repeat2, Settings, SlidersHorizontal, Subtitles, Volume1, Volume2, VolumeX } from '@app-foundation/icons/lucide';
+import { Bug, Check, ChevronLeft, ChevronRight, CircleHelp, FlipHorizontal2, Gauge, Info, Keyboard, Link, Maximize, Minimize, Moon, Pause, PictureInPicture2, Play, RectangleHorizontal, Repeat2, Settings, SlidersHorizontal, Volume1, Volume2, VolumeX } from '@app-foundation/icons/lucide';
 import { browserClipboardTransport } from '@cuberoot/timer-ui';
 import { ClearButton } from '@/components/ClearButton';
 import BoolToggle from '@/components/BoolToggle';
 import { usePanelClamp } from '@/hooks/usePanelClamp';
+import { persistItem } from '@/lib/safe-storage';
 import { useT } from '@/hooks/useT';
 import './lesson-video-player.css';
 
@@ -24,9 +25,12 @@ interface Props {
   mediaId?: string;
   mimeType?: string;
   startTime?: number;
+  transitionFrame?: string;
+  onFrameReady?: () => void;
   onVideoElement?: (element: HTMLVideoElement | null) => void;
 }
 
+const PLAYBACK_PREFERENCES = 'platform.lesson.playback';
 const PLAYBACK_RATES = [0.25, 0.5, 0.75, 1, 1.25, 1.5, 1.75, 2];
 
 function timeLabel(time: number) {
@@ -35,7 +39,7 @@ function timeLabel(time: number) {
   return `${minutes >= 60 ? `${Math.floor(minutes / 60)}:` : ''}${minutes >= 60 ? String(minutes % 60).padStart(2, '0') : minutes}:${String(seconds % 60).padStart(2, '0')}`;
 }
 
-export function LessonVideoPlayer({ src, poster, onError, onLoadedMetadata, autoContinue = false, onAutoContinueChange, onNext, onPrevious, autoPlay = false, lessonId, mediaId, mimeType, startTime = 0, onVideoElement }: Props) {
+export function LessonVideoPlayer({ src, poster, onError, onLoadedMetadata, autoContinue = false, onAutoContinueChange, onNext, onPrevious, autoPlay = false, lessonId, mediaId, mimeType, startTime = 0, onVideoElement, transitionFrame, onFrameReady }: Props) {
   const t = useT();
   const root = useRef<HTMLDivElement>(null);
   const video = useRef<HTMLVideoElement>(null);
@@ -50,6 +54,7 @@ export function LessonVideoPlayer({ src, poster, onError, onLoadedMetadata, auto
   const [volume, setVolume] = useState(1);
   const [muted, setMuted] = useState(false);
   const [rate, setRate] = useState(1);
+  const [mirrored, setMirrored] = useState(false);
   const [menu, setMenu] = useState<'main' | 'speed' | 'sleep' | 'quality' | null>(null);
   const [sleepMinutes, setSleepMinutes] = useState(0);
   const [fullscreen, setFullscreen] = useState(false);
@@ -72,6 +77,14 @@ export function LessonVideoPlayer({ src, poster, onError, onLoadedMetadata, auto
   const cancelLongPress = () => { if (longPress.current) clearTimeout(longPress.current); };
   const setVideoRef = useCallback((element: HTMLVideoElement | null) => {
     video.current = element;
+    if (element) {
+      try {
+        const saved = JSON.parse(localStorage.getItem(PLAYBACK_PREFERENCES) ?? '{}');
+        if (PLAYBACK_RATES.includes(saved.rate)) element.defaultPlaybackRate = element.playbackRate = saved.rate;
+        if (typeof saved.volume === 'number' && saved.volume >= 0 && saved.volume <= 1) element.volume = saved.volume;
+        if (typeof saved.muted === 'boolean') element.muted = saved.muted;
+      } catch { /* Playback works with browser defaults when storage is unavailable. */ }
+    }
     onVideoElement?.(element);
   }, [onVideoElement]);
   useEffect(() => cancelLongPress, []);
@@ -184,7 +197,11 @@ export function LessonVideoPlayer({ src, poster, onError, onLoadedMetadata, auto
   const shareUrl = (withTime = false) => {
     // Share the authorized lesson page, never its expiring signed media URL or unrelated query values.
     const url = new URL(window.location.pathname, window.location.origin);
-    if (lessonId) url.searchParams.set('lesson', lessonId);
+    if (lessonId) {
+      const direct = /^(\/(?:zh\/|en\/)?platform\/courses\/[^/]+\/learn\/)[^/]+\/?$/.exec(url.pathname);
+      if (direct) url.pathname = `${direct[1]}${encodeURIComponent(lessonId)}`;
+      else url.searchParams.set('lesson', lessonId);
+    }
     if (withTime) url.searchParams.set('t', String(Math.floor(video.current?.currentTime ?? 0)));
     return url.href;
   };
@@ -341,7 +358,6 @@ export function LessonVideoPlayer({ src, poster, onError, onLoadedMetadata, auto
       [t('上一帧（暂停时）', 'Previous frame (while paused)'), ','], [t('下一帧（暂停时）', 'Next frame (while paused)'), '.'],
       [t('减慢播放速度', 'Decrease playback speed'), '< (Shift + ,)'], [t('加快播放速度', 'Increase playback speed'), '> (Shift + .)'],
       [t('跳转至视频的某个时间点（例如 7 为总时长的 70%）', 'Seek to a point in the video (e.g. 7 for 70%)'), '0…9'],
-      [t('跳到上一章', 'Previous chapter'), 'Ctrl + ←', true], [t('跳到下一章', 'Next chapter'), 'Ctrl + →', true],
     ] },
     { title: t('常规', 'General'), rows: [
       [t('切换全屏模式', 'Toggle fullscreen'), 'f'], [t('切换影院模式', 'Toggle theater mode'), 't'],
@@ -350,14 +366,6 @@ export function LessonVideoPlayer({ src, poster, onError, onLoadedMetadata, auto
       [t('静音／取消静音', 'Mute / unmute'), 'm'],
       [t('增大／减小音量', 'Increase / decrease volume'), '↑ / ↓'],
       [t('显示键盘快捷键', 'Show keyboard shortcuts'), '? (Shift + /)'],
-    ] },
-    { title: t('字幕', 'Subtitles'), rows: [
-      [t('开启／关闭字幕', 'Toggle subtitles'), 'c', true], [t('放大字体', 'Increase font size'), '+', true], [t('缩小字体', 'Decrease font size'), '-', true],
-    ] },
-    { title: t('全景视频', '360° video'), rows: [
-      [t('向上平移', 'Pan up'), 'w', true], [t('向左平移', 'Pan left'), 'a', true],
-      [t('向下平移', 'Pan down'), 's', true], [t('向右平移', 'Pan right'), 'd', true],
-      [t('放大', 'Zoom in'), t('] 或数字小键盘 +', '] or Numpad +'), true], [t('缩小', 'Zoom out'), t('[ 或数字小键盘 -', '[ or Numpad -'), true],
     ] },
   ];
   const screenshot = () => {
@@ -368,6 +376,7 @@ export function LessonVideoPlayer({ src, poster, onError, onLoadedMetadata, auto
       canvas.width = element.videoWidth; canvas.height = element.videoHeight;
       const context = canvas.getContext('2d');
       if (!context) return;
+      if (mirrored) { context.translate(canvas.width, 0); context.scale(-1, 1); }
       context.drawImage(element, 0, 0);
       const link = document.createElement('a');
       link.download = `lesson-${Math.floor(element.currentTime)}.png`;
@@ -377,7 +386,6 @@ export function LessonVideoPlayer({ src, poster, onError, onLoadedMetadata, auto
   const quality = resolution ? `${resolution}p` : t('原画', 'Original');
   const speed = rate === 1 ? t('正常', 'Normal') : `${rate}×`;
   const sleep = sleepMinutes ? t(`${sleepMinutes} 分钟`, `${sleepMinutes} minutes`) : t('关闭', 'Off');
-  const unavailable = t('当前视频不提供此功能', 'This feature is unavailable for this video');
   const controlsVisible = visible || !playing || menu !== null || contextMenu !== null;
   // allow-static-onclick: root captures synthetic touch clicks; playback actions are real buttons.
   return <div ref={root} className={`lesson-video-player${controlsVisible ? ' controls-visible' : ''}${theater ? ' is-theater' : ''}`} tabIndex={0}
@@ -398,21 +406,28 @@ export function LessonVideoPlayer({ src, poster, onError, onLoadedMetadata, auto
         event.preventDefault(); setMenu(null); setContextMenu({ x: 16, y: 16 }); return;
       }
     }}>
-    <video ref={setVideoRef} src={src} poster={poster} playsInline preload="metadata" autoPlay={autoPlay} loop={loop} onError={onError}
+    <video ref={setVideoRef} style={mirrored ? { transform: 'scaleX(-1)' } : undefined} src={src} poster={poster} playsInline preload="metadata" autoPlay={autoPlay} loop={loop} onError={onError}
       onLoadedMetadata={event => {
         const element = event.currentTarget;
         setDuration(Number.isFinite(element.duration) ? element.duration : 0);
         setResolution(element.videoHeight);
         if (Number.isFinite(startTime) && startTime > 0 && Number.isFinite(element.duration)) element.currentTime = Math.min(startTime, element.duration);
         onLoadedMetadata(event);
+        setRate(element.playbackRate); setVolume(element.volume); setMuted(element.muted);
       }}
+      onLoadedData={event => { if (!event.currentTarget.seeking) onFrameReady?.(); }}
+      onSeeked={onFrameReady}
       onDurationChange={event => setDuration(Number.isFinite(event.currentTarget.duration) ? event.currentTarget.duration : 0)}
       onTimeUpdate={event => setCurrent(event.currentTarget.currentTime)}
       onProgress={event => { const element = event.currentTarget; if (element.buffered.length) setBuffered(element.buffered.end(element.buffered.length - 1)); }}
-      onVolumeChange={event => { setVolume(event.currentTarget.volume); setMuted(event.currentTarget.muted); }}
-      onRateChange={event => setRate(event.currentTarget.playbackRate)}
+      onVolumeChange={event => { const player = event.currentTarget; setVolume(player.volume); setMuted(player.muted); persistItem(PLAYBACK_PREFERENCES, JSON.stringify({ rate: player.defaultPlaybackRate, volume: player.volume, muted: player.muted })); }}
+      onRateChange={event => { const player = event.currentTarget; setRate(player.playbackRate); if (player.defaultPlaybackRate !== player.playbackRate) player.defaultPlaybackRate = player.playbackRate; persistItem(PLAYBACK_PREFERENCES, JSON.stringify({ rate: player.playbackRate, volume: player.volume, muted: player.muted })); }}
       onPlay={() => { setPlaying(true); reveal(); }} onPause={() => setPlaying(false)}
       onEnded={() => { setPlaying(false); if (!loop && autoContinue && sleepMinutes === 0) onNext?.(); }} />
+    {transitionFrame && <img aria-hidden="true" alt="" src={transitionFrame} style={{
+      position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'contain', pointerEvents: 'none',
+      transform: mirrored ? 'scaleX(-1)' : undefined,
+    }} />}
     <button type="button" className="lesson-video-button lesson-video-surface" aria-label={playing ? t('暂停视频', 'Pause video') : t('播放视频', 'Play video')}
       tabIndex={-1}
       onPointerDown={event => {
@@ -449,7 +464,6 @@ export function LessonVideoPlayer({ src, poster, onError, onLoadedMetadata, auto
           {onAutoContinueChange && <Tooltip content={autoContinue ? t('自动播放模式已开启', 'Autoplay is on') : t('自动播放模式已关闭', 'Autoplay is off')}>{(tip) => <span {...tip} className="lesson-video-autoplay" >
             <BoolToggle value={autoContinue} onChange={onAutoContinueChange} ariaLabel={t('自动播放下一课', 'Autoplay next lesson')} label={autoContinue ? <Play size={10} fill="currentColor" /> : <Pause size={10} fill="currentColor" />} />
           </span>}</Tooltip>}
-          <button type="button" className="lesson-video-button lesson-video-icon" aria-label={t('字幕不可用', 'Subtitles unavailable')} disabled title={t('此视频没有字幕', 'This video has no subtitles')}><Subtitles /></button>
           <Tooltip content={t('设置', 'Settings')}>{(tip) => <button {...tip} ref={settingsButton} type="button" className={`lesson-video-button lesson-video-icon lesson-video-settings${menu ? ' is-open' : ''}`} aria-label={t('设置', 'Settings')} aria-expanded={menu !== null} aria-haspopup="dialog"  onClick={() => setMenu(menu ? null : 'main')}><Settings /></button>}</Tooltip>
           {canPip && <Tooltip content={t('画中画', 'Picture-in-picture')}>{(tip) => <button {...tip} type="button" className="lesson-video-button lesson-video-icon lesson-video-pip" aria-label={t('画中画', 'Picture-in-picture')} aria-pressed={pip}  onClick={() => void togglePip()}><PictureInPicture2 /></button>}</Tooltip>}
           <Tooltip content={t('影院模式 (t)', 'Theater mode (t)')}>{(tip) => <button {...tip} type="button" className="lesson-video-button lesson-video-icon lesson-video-theater" aria-label={t('影院模式', 'Theater mode')} aria-pressed={theater}  onClick={() => setTheater(!theater)}><RectangleHorizontal /></button>}</Tooltip>
@@ -459,9 +473,9 @@ export function LessonVideoPlayer({ src, poster, onError, onLoadedMetadata, auto
     </div>
     {menu && <div ref={panel} className="lesson-video-menu" role="dialog" aria-label={t('播放设置', 'Playback settings')}>
       {menu === 'main' ? <>
-        <div className="lesson-video-menu-row is-unavailable" title={unavailable}><AudioLines /><span>{t('稳定音量', 'Stable volume')}</span><BoolToggle value={false} onChange={() => {}} label="" ariaLabel={t('稳定音量不可用', 'Stable volume unavailable')} disabled /></div>
-        <div className="lesson-video-menu-row is-unavailable" title={unavailable}><Volume2 /><span>{t('语音增强', 'Voice boost')}</span><BoolToggle value={false} onChange={() => {}} label="" ariaLabel={t('语音增强不可用', 'Voice boost unavailable')} disabled /></div>
-        <button type="button" className="lesson-video-button lesson-video-menu-row" disabled><Subtitles /><span>{t('字幕', 'Subtitles')}</span><small>{t('不可用', 'Unavailable')}</small></button>
+        <button type="button" className="lesson-video-button lesson-video-menu-row" aria-pressed={mirrored} onClick={() => setMirrored(value => !value)}>
+          <FlipHorizontal2 /><span>{t('水平镜像', 'Mirror horizontally')}</span><small>{mirrored ? t('开启', 'On') : t('关闭', 'Off')}</small>
+        </button>
         <button type="button" className="lesson-video-button lesson-video-menu-row" onClick={() => setMenu('sleep')}><Moon /><span>{t('休眠定时器', 'Sleep timer')}</span><small>{sleep}</small><ChevronRight /></button>
         <button type="button" className="lesson-video-button lesson-video-menu-row" onClick={() => setMenu('speed')}><Gauge /><span>{t('播放速度', 'Playback speed')}</span><small>{speed}</small><ChevronRight /></button>
         <button type="button" className="lesson-video-button lesson-video-menu-row" onClick={() => setMenu('quality')}><SlidersHorizontal /><span>{t('画质', 'Quality')}</span><small>{quality}</small><ChevronRight /></button>
@@ -487,7 +501,6 @@ export function LessonVideoPlayer({ src, poster, onError, onLoadedMetadata, auto
       <button className="lesson-video-button" type="button" role="menuitem" disabled={!canPip} onClick={() => { setContextMenu(null); void togglePip(); }}><PictureInPicture2 /><span>{t('迷你播放器', 'Miniplayer')}</span></button>
       <button className="lesson-video-button" type="button" role="menuitem" onClick={() => void copy(shareUrl())}><Link /><span>{t('复制视频网址', 'Copy video URL')}</span></button>
       <button className="lesson-video-button" type="button" role="menuitem" onClick={() => void copy(shareUrl(true))}><Link /><span>{t('复制当前时间的视频网址', 'Copy video URL at current time')}</span></button>
-      <button className="lesson-video-button" type="button" role="menuitem" onClick={() => void copy(`<iframe src="${shareUrl().replace(/&/g, '&amp;').replace(/"/g, '&quot;')}" title="CubeRoot" width="560" height="315" style="max-width:100%;border:0" allow="fullscreen; picture-in-picture" allowfullscreen></iframe>`)}><Code /><span>{t('复制嵌入代码', 'Copy embed code')}</span></button>
       <button className="lesson-video-button" type="button" role="menuitem" onClick={() => void copy(JSON.stringify(readStats(), null, 2))}><Bug /><span>{t('复制调试信息', 'Copy debug info')}</span></button>
       <button className="lesson-video-button" type="button" role="menuitem" onClick={() => showDetails('help')}><CircleHelp /><span>{t('排查播放问题', 'Troubleshoot playback issue')}</span></button>
       <button className="lesson-video-button" type="button" role="menuitem" onClick={() => showDetails('stats')}><Info /><span>{t('详细统计信息', 'Stats for nerds')}</span></button>
@@ -529,7 +542,7 @@ export function LessonVideoPlayer({ src, poster, onError, onLoadedMetadata, auto
           <dt>{label}{disabled && <small>{t('不可用', 'Unavailable')}</small>}</dt><dd><kbd>{keys}</kbd></dd>
         </div>)}</dl>
       </section>)}</div>
-      <p className="lesson-video-shortcut-note">{t('逐帧按播放采样估算帧长，采样前按 30 fps；当前视频未提供字幕、章节及全景数据。', 'Frame stepping uses sampled frame timing, or 30 fps before sampling. This video has no subtitles, chapters or 360° data.')}</p>
+      <p className="lesson-video-shortcut-note">{t('逐帧按播放采样估算帧长，采样前按 30 fps。', 'Frame stepping uses sampled frame timing, or 30 fps before sampling.')}</p>
       <footer><button className="lesson-video-button" type="button" onClick={() => setShortcuts(false)}>{t('关闭', 'Close')}</button></footer>
     </dialog>}
   </div>;

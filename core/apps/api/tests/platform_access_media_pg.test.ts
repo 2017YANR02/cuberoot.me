@@ -23,7 +23,7 @@ vi.mock('../src/utils/recon_helpers.js', () => ({
     if (c.req.header('X-Admin-Key') !== 'fixture-only-valid') throw new Error('Invalid key');
   },
 }));
-vi.mock('../src/utils/account.js', () => ({ findUserByWcaId: state.lookup }));
+vi.mock('../src/utils/account.js', async importOriginal => ({ ...await importOriginal<typeof import('../src/utils/account.js')>(), findUserByWcaId: state.lookup }));
 
 import { requirePlatformActor, requirePlatformAdmin } from '../src/platform/auth.js';
 import { platformRouter } from '../src/platform/http.js';
@@ -32,6 +32,13 @@ import { authorizeCourseWrite } from '../src/platform/catalog/course-access.js';
 import { registerCourseRoutes, saveCourseTrialLessonSelection } from '../src/platform/catalog/course-routes.js';
 import { registerContentReviewRoutes } from '../src/platform/catalog/content-review-routes.js';
 import { contentReviewIntent, requiresContentReview } from '../src/platform/catalog/content-review.js';
+import { registerPublicRoutes } from '../src/platform/catalog/public-routes.js';
+import { registerQuizRoutes } from '../src/platform/catalog/quiz-routes.js';
+import { registerQuizRoutes as registerClassroomQuizRoutes } from '../src/platform/learning/quiz-routes.js';
+import { registerProgressRoutes } from '../src/platform/learning/progress-routes.js';
+import { registerCertificateRoutes } from '../src/platform/learning/certificate-routes.js';
+import { registerReviewRoutes } from '../src/platform/learning/review-routes.js';
+import { registerEnrollmentRoutes } from '../src/platform/learning/enrollment-routes.js';
 import { registerLessonRoutes } from '../src/platform/catalog/lesson-routes.js';
 import { registerMediaRoutes } from '../src/platform/learning/media-routes.js';
 import { platformDb, type PlatformDb } from '../src/platform/db.js';
@@ -89,6 +96,7 @@ const databaseUrl = process.env.PLATFORM_MEDIA_TEST_DATABASE_URL;
 describe.skipIf(!databaseUrl)('course access and signed media with PostgreSQL and actual files', () => {
   const schema = `platform_media_${randomUUID().replaceAll('-', '')}`;
   const courseId = randomUUID();
+  const legacyCourseId = randomUUID();
   const lessons = [randomUUID(), randomUUID(), randomUUID()];
   const mediaId = randomUUID();
   const coverId = randomUUID();
@@ -101,6 +109,13 @@ describe.skipIf(!databaseUrl)('course access and signed media with PostgreSQL an
   registerLessonRoutes(app);
   registerCourseRoutes(app);
   registerContentReviewRoutes(app);
+  registerPublicRoutes(app);
+  registerQuizRoutes(app);
+  registerClassroomQuizRoutes(app);
+  registerProgressRoutes(app);
+  registerCertificateRoutes(app);
+  registerReviewRoutes(app);
+  registerEnrollmentRoutes(app);
   app.get('/course/:id/write-access', async c => c.json({
     id: await authorizeCourseWrite(platformDb(), await requirePlatformActor(c), c.req.param('id')),
   }));
@@ -123,13 +138,22 @@ describe.skipIf(!databaseUrl)('course access and signed media with PostgreSQL an
     await writeFile(path.join(mediaDirectory, 'lesson.mp4'), bytes);
     await writeFile(path.join(mediaDirectory, 'cover.png'), bytes);
     vi.stubEnv('PLATFORM_MEDIA_DIR', mediaDirectory);
+    vi.stubEnv('PLATFORM_DATA_ENCRYPTION_KEY_V1', Buffer.alloc(32, 47).toString('base64'));
     vi.stubEnv('PLATFORM_MEDIA_SIGNING_SECRET', 'platform-media-integration-fixture-secret');
     await db.unsafe(`CREATE FUNCTION trg_set_updated_at() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN NEW.updated_at=NOW(); RETURN NEW; END $$;
-      CREATE TABLE app_users(id BIGINT PRIMARY KEY);
-      CREATE TABLE teacher_directory_entries(id BIGINT PRIMARY KEY);`);
-    for (const migration of ['0167_platform_core.sql', '0184_drive.sql', '0189_drive_shares.sql', '0216_drive_member_folders.sql', '0218_drive_compressions.sql', '0219_platform_lesson_grants.sql', '0244_platform_lesson_covers.sql', '0259_platform_learning_completion.sql', '0349_platform_content_reviews.sql']) {
+      CREATE TABLE app_users(id BIGINT PRIMARY KEY, wca_id VARCHAR(20), display_name TEXT);
+      CREATE TABLE teacher_directory_entries(id BIGINT PRIMARY KEY, kind TEXT, is_visible BOOLEAN, name_zh TEXT, name_en TEXT);`);
+    for (const migration of ['0070_notifications.sql', '0167_platform_core.sql', '0184_drive.sql', '0189_drive_shares.sql', '0216_drive_member_folders.sql', '0218_drive_compressions.sql', '0219_platform_lesson_grants.sql', '0220_platform_review_titles.sql', '0244_platform_lesson_covers.sql', '0259_platform_learning_completion.sql', '0349_platform_content_reviews.sql', '0360_platform_lesson_type_and_order.sql']) {
       await db.unsafe(await readFile(new URL(`../migrations/${migration}`, import.meta.url), 'utf8'));
     }
+    await db.unsafe(`INSERT INTO platform_courses(id,slug) VALUES($1,'yan-ruimin-3x3-beginner')`, [legacyCourseId]);
+    await db.unsafe(`INSERT INTO platform_course_revisions(course_id,revision,title_en,status,content_hash,presentation)
+      VALUES($1,1,'Legacy course','draft',decode(repeat('ab',32),'hex'),'{"targetEn":"Custom goal"}'::jsonb)`, [legacyCourseId]);
+    await db.unsafe('UPDATE platform_courses SET current_revision=1 WHERE id=$1', [legacyCourseId]);
+    await db.unsafe(await readFile(new URL('../migrations/0361_platform_course_presentation_defaults.sql', import.meta.url), 'utf8'));
+    await db.unsafe(await readFile(new URL('../migrations/0362_platform_quiz_content_reviews.sql', import.meta.url), 'utf8'));
+    await db.unsafe('ALTER TABLE notifications ADD COLUMN dedupe_key VARCHAR(200)');
+    await db.unsafe('CREATE UNIQUE INDEX test_notification_dedupe ON notifications(user_key,kind,dedupe_key)');
     await db.unsafe('INSERT INTO app_users VALUES (1),(2),(3),(4),(5)');
     await db.unsafe(`INSERT INTO platform_courses(id,slug,status)
       VALUES ($1,'media-course','draft')`, [courseId]);
@@ -254,6 +278,209 @@ describe.skipIf(!databaseUrl)('course access and signed media with PostgreSQL an
     const { lesson: { reviewId: editReview } } = await edit.json();
     expect((await mutation(`/platform/admin/courses/${id}/content-reviews/${editReview}/decision`, 'POST', 5, { decision: 'rejected', note: 'Please revise' })).status).toBe(200);
     expect((await query())[0].body_en).toEqual({ markdown: 'Original text' });
+    const [notification] = await db.unsafe('SELECT title, excerpt FROM notifications WHERE dedupe_key=$1',
+      [`content-review:${editReview}:rejected`]);
+    expect(notification).toMatchObject({ title: expect.stringContaining('Rejected'), excerpt: 'Original lesson\nPlease revise' });
+  });
+
+  it('publishes a text preview, reorders lessons atomically and preserves hidden reviews after edits', async () => {
+    const write = (url: string, actor: number, body: unknown, method = 'POST', idempotencyKey: string = randomUUID()) => app.request(url, {
+      method, headers: { ...headers(actor), 'Content-Type': 'application/json', 'Idempotency-Key': idempotencyKey },
+      body: JSON.stringify(body),
+    });
+    const create = await write('/platform/instructor/courses', 3, {
+      slug: 'qa-text-course', titleEn: 'Text-only beginner course', status: 'published',
+      presentation: { tags: ['puzzle:333', 'topic:beginner'], target: 'Solve independently' },
+    });
+    expect(create.status, await create.clone().text()).toBe(201);
+    const id = (await create.json()).course.id;
+    const editor = `/platform/instructor/courses/${id}`;
+    const adminCourse = `/platform/admin/courses/${id}`;
+    const createLesson = (slug: string, ordinal: number, lessonType: string, accessScope: string) => write(`${editor}/lessons`, 3, {
+      slug, ordinal, lessonType, accessScope, status: 'published', titleEn: `QA ${slug}`, bodyEn: { markdown: '**Notes**' },
+    });
+    const introResult = await createLesson('intro-qa', 4, 'introduction', 'public');
+    const trialResult = await createLesson('free-qa', 9, 'core', 'public');
+    expect([introResult.status, trialResult.status]).toEqual([201, 201]);
+    const { lesson: { id: intro } } = await introResult.json();
+    const { lesson: { id: trial } } = await trialResult.json();
+    const reviewQueue = await app.request('/platform/admin/courses?pending=1', { headers: headers(5) });
+    expect(await reviewQueue.json()).toMatchObject({ courses: expect.arrayContaining([expect.objectContaining({ id, reviewStatus: 'pending' })]) });
+    const quiz = { titleEn: 'After reading', status: 'published', passingScoreBps: 6000,
+      questions: [{ type: 'boolean', promptEn: 'Read the notes?', answerKey: true, explanation: 'The lesson includes written notes.' }] };
+    expect((await write(`${editor}/lessons/${trial}/quizzes`, 3, quiz)).status).toBe(409);
+    const approveUrl = `${adminCourse}/content-reviews/approve-all`;
+    expect((await write(approveUrl, 3, {})).status).toBe(403);
+    const approved = await write(approveUrl, 5, {}, 'POST', 'qa-batch-approve');
+    expect(approved.status, await approved.clone().text()).toBe(200);
+    expect(await approved.json()).toEqual({ approvedCount: 3 });
+    expect(await (await write(approveUrl, 5, {}, 'POST', 'qa-batch-approve')).json()).toEqual({ approvedCount: 3 });
+    expect(await db.unsafe(`SELECT count(*)::int AS count FROM notifications
+      WHERE user_key='u3' AND kind='teaching_message' AND dedupe_key LIKE '%:approved' AND link=$1`, [`/platform/instructor/courses/${id}`])).toEqual([{ count: 3 }]);
+    expect(await db.unsafe(`SELECT count(*)::int AS count FROM platform_outbox_events
+      WHERE event_type='platform.lesson.updated' AND aggregate_id=ANY($1::text[])`, [[intro, trial]])).toEqual([{ count: 2 }]);
+
+    const quizResult = await write(`${editor}/lessons/${trial}/quizzes`, 3, quiz);
+    expect(quizResult.status, await quizResult.clone().text()).toBe(201);
+    const { id: quizId, reviewId: quizReview, reviewStatus } = (await quizResult.json()).quiz;
+    expect(reviewStatus).toBe('pending');
+    const quizPath = `${editor}/lessons/${trial}/quizzes/${quizId}`;
+    const adminQuizPath = `${adminCourse}/lessons/${trial}/quizzes/${quizId}`;
+    const readQuiz = async (url: string, actor: number) => (await app.request(url, { headers: headers(actor) })).json();
+    const readLiveQuiz = async () => (await db.unsafe('SELECT slug,status,current_revision FROM platform_quizzes WHERE id=$1', [quizId]))[0];
+    const initialQuiz = await readLiveQuiz();
+    expect(initialQuiz.slug).toMatch(/^quiz-[0-9a-f-]+$/);
+    expect(initialQuiz.status).toBe('draft');
+    expect((await write(`/learning/lessons/${trial}/quiz`, 1, { quizId, answers: [false] })).status).toBe(404);
+    expect((await readQuiz(adminCourse, 5)).course.pendingQuizzes).toMatchObject([{ id: quizId, lessonId: trial, titleEn: quiz.titleEn }]);
+    expect((await readQuiz(adminQuizPath, 5)).quiz).toMatchObject({
+      titleZh: quiz.titleEn, titleEn: quiz.titleEn, reviewId: quizReview,
+      questions: [expect.objectContaining({ explanation: 'The lesson includes written notes.' })],
+    });
+    expect((await write(quizPath, 3, { titleEn: 'Pending lock' }, 'PATCH')).status).toBe(409);
+    expect((await write(approveUrl, 5, {})).status).toBe(200);
+    const liveQuiz = await readLiveQuiz();
+    expect(liveQuiz.status).toBe('published');
+    expect(liveQuiz.current_revision).toBeGreaterThan(initialQuiz.current_revision);
+    const submission = await write(`/learning/lessons/${trial}/quiz`, 1, { quizId, answers: [false] });
+    expect(submission.status, await submission.clone().text()).toBe(201);
+    expect(await submission.json()).toMatchObject({ passed: false, feedback: [
+      expect.objectContaining({ correct: false, explanation: 'The lesson includes written notes.' }),
+    ] });
+
+    const draft = await write(quizPath, 3, { status: 'draft', titleZh: '新版测验', titleEn: '', passingScoreBps: 7000,
+      questions: [{ type: 'single_choice', promptEn: 'Read the notes?', choices: ['No', 'Yes'], answerKey: 1, explanation: 'New explanation.' }],
+    }, 'PATCH');
+    expect(draft.status, await draft.clone().text()).toBe(200);
+    expect(await readLiveQuiz()).toEqual(liveQuiz);
+    expect((await readQuiz(quizPath, 3)).quiz).toMatchObject({ editStatus: 'draft', titleEn: '新版测验', revision: expect.any(Number) });
+    const resubmitQuiz = () => write(quizPath, 3, { status: 'pending_review', targetStatus: 'published' }, 'PATCH');
+    const pendingQuiz = await resubmitQuiz();
+    expect(pendingQuiz.status, await pendingQuiz.clone().text()).toBe(200);
+    const pendingId = (await pendingQuiz.json()).quiz.reviewId;
+    expect((await readQuiz(adminQuizPath, 5)).quiz).toMatchObject({
+      passingScoreBps: 7000, questions: [{ choices: ['No', 'Yes'], explanation: 'New explanation.' }],
+      reviewBase: { titleEn: quiz.titleEn, passingScoreBps: 6000, questions: [{ explanation: 'The lesson includes written notes.' }] },
+    });
+    expect((await write(`${editor}/content-reviews/${pendingId}/withdraw`, 3, {})).status).toBe(200);
+    expect((await readQuiz(quizPath, 3)).quiz.reviewStatus).toBe('withdrawn');
+    expect(await readLiveQuiz()).toEqual(liveQuiz);
+    const rejectedId = (await (await resubmitQuiz()).json()).quiz.reviewId;
+    expect((await write(`${adminCourse}/content-reviews/${rejectedId}/decision`, 5, { decision: 'rejected', note: 'Revise options' })).status).toBe(200);
+    expect((await readQuiz(quizPath, 3)).quiz).toMatchObject({ reviewStatus: 'rejected', reviewNote: 'Revise options' });
+    expect(await readLiveQuiz()).toEqual(liveQuiz);
+    const finalReview = (await (await resubmitQuiz()).json()).quiz.reviewId;
+    expect((await write(`${adminCourse}/content-reviews/${finalReview}/decision`, 5, { decision: 'approved' })).status).toBe(200);
+    expect((await readLiveQuiz()).current_revision).toBeGreaterThan(liveQuiz.current_revision);
+    expect((await db.unsafe('SELECT title, excerpt FROM notifications WHERE dedupe_key=$1', [`content-review:${finalReview}:approved`]))[0])
+      .toMatchObject({ title: expect.stringContaining('Quiz'), excerpt: '新版测验' });
+
+    const moved = await write(`${editor}/lessons/${trial}`, 3, { move: 'up' }, 'PATCH', 'qa-move-lesson');
+    expect(moved.status, await moved.clone().text()).toBe(200);
+    expect((await write(`${editor}/lessons/${trial}`, 3, { move: 'up' }, 'PATCH', 'qa-move-lesson')).status).toBe(200);
+    expect(await db.unsafe('SELECT id::text, ordinal FROM platform_lessons WHERE course_id=$1 ORDER BY ordinal', [id]))
+      .toEqual([{ id: trial, ordinal: 4 }, { id: intro, ordinal: 9 }]);
+
+    const list = '/platform/courses?trial=1&puzzle=333&category=beginner&facets=1&q=Text-only+beginner&pageSize=1';
+    const catalog = await app.request(list);
+    expect(catalog.status, await catalog.clone().text()).toBe(200);
+    expect(await catalog.json()).toMatchObject({ total: 1, courses: [{ id, firstTrialLessonId: trial, presentation: { target: 'Solve independently' } }],
+      categories: expect.arrayContaining(['puzzle:333', 'topic:beginner']), catalogTopicPuzzles: { beginner: ['333'] } });
+    expect(await (await app.request(list + '&page=2')).json()).toMatchObject({ total: 1, courses: [] });
+    const lessonPage = await app.request(`/platform/courses/${id}/lessons/${trial}`);
+    expect(await lessonPage.json()).toMatchObject({ lesson: { mediaId: null, lessonType: 'core', bodyEn: { markdown: '**Notes**' } } });
+    expect((await app.request(`/lessons/${trial}/media`)).status).toBe(404);
+
+    const [entitlement] = await db.unsafe('INSERT INTO platform_course_entitlements(user_id,course_id,valid_from) VALUES(1,$1,NOW()) RETURNING id', [id]);
+    await db.unsafe(`INSERT INTO platform_entitlement_ledger(entitlement_id,entry_type,delta_access,valid_from,reason,actor_user_id)
+      VALUES($1,'grant',1,NOW(),'Course test fixture',5)`, [entitlement.id]);
+    for (const lessonId of [trial, intro]) {
+      const progress = await write(`/me/progress/${lessonId}`, 1, { positionSeconds: 0, progressBps: 10000, status: 'completed' }, 'PUT');
+      expect(progress.status, await progress.clone().text()).toBe(200);
+    }
+    const courses = await app.request(`/me/courses?courseIds=${id}`, { headers: headers(1) });
+    expect(await courses.json()).toMatchObject({ items: [{ id, completedLessons: 2, progressBps: 10000 }] });
+    const certificate = await write('/me/certificates', 1, { courseId: id });
+    expect(certificate.status, await certificate.clone().text()).toBe(201);
+
+    const review = await write(`/courses/${id}/reviews`, 1, { rating: 2, body: 'Original comment' });
+    expect(review.status, await review.clone().text()).toBe(200);
+    const { id: reviewId } = await review.json();
+    const hideUrl = `/admin/courses/${id}/reviews/${reviewId}`;
+    expect((await write(hideUrl, 1, { note: 'Test moderation' }, 'PATCH')).status).toBe(403);
+    const hidden = await write(hideUrl, 5, { note: 'Test moderation' }, 'PATCH');
+    expect(hidden.status, await hidden.clone().text()).toBe(200);
+    expect(await (await write(`/courses/${id}/reviews`, 1, { rating: 3, body: 'Edited comment' })).json())
+      .toMatchObject({ status: 'hidden', body: 'Edited comment' });
+    const view = await app.request(adminCourse, { headers: headers(5) });
+    expect(view.status, await view.clone().text()).toBe(200);
+    expect(await view.json()).toMatchObject({ course: { reviewsForModeration: [{ id: reviewId, status: 'hidden', moderationNote: 'Test moderation' }] } });
+
+    const resubmit = await write(editor, 3, { status: 'published', titleEn: 'Updated lesson course', baseAmountMinor: 3500 }, 'PATCH');
+    expect(resubmit.status).toBe(200);
+    const comparison = await app.request(adminCourse, { headers: headers(5) });
+    expect(await comparison.json()).toMatchObject({ course: {
+      titleEn: 'Updated lesson course', reviewMetadata: { baseAmountMinor: 3500 },
+      reviewBase: { titleEn: 'Text-only beginner course', baseAmountMinor: 0 },
+    } });
+  });
+
+  it('keeps effective trial permissions through old snapshots and independent course and lesson approvals', async () => {
+    const id = randomUUID();
+    await db.begin(async tx => {
+      await tx.unsafe("INSERT INTO platform_courses(id,slug,status,current_revision,published_at) VALUES($1,'qa-stale-trials','published',1,NOW())", [id]);
+      await tx.unsafe(`INSERT INTO platform_course_revisions(course_id,revision,title_en,status,content_hash,presentation,published_at)
+        VALUES($1,1,'Independent trials','published',decode(repeat('ab',32),'hex'),'{"trialLessonIds":[]}'::jsonb,NOW())`, [id]);
+      await tx.unsafe(`INSERT INTO platform_course_owners(course_id,instructor_id,role)
+        SELECT $1,id,'owner' FROM platform_instructors WHERE user_id=3`, [id]);
+    });
+    const editor = `/platform/instructor/courses/${id}`;
+    const adminCourse = `/platform/admin/courses/${id}`;
+    const write = (path: string, actor: number, body: unknown, method = 'POST') => app.request(path, {
+      method, headers: { ...headers(actor), 'Content-Type': 'application/json', 'Idempotency-Key': randomUUID() }, body: JSON.stringify(body),
+    });
+    const getCourse = async (path: string, actor: number) => (await (await app.request(path, { headers: headers(actor) })).json()).course;
+    const add = async (ordinal: number, lessonType: string, accessScope?: string) => {
+      const result = await write(`${adminCourse}/lessons`, 5, { ordinal, lessonType, slug: `trial-test-${ordinal}`, titleZh: `课时 ${ordinal}`, status: 'published', accessScope });
+      expect(result.status, await result.clone().text()).toBe(201);
+      return (await result.json()).lesson.id;
+    };
+    const scope = async (lesson: string) => (await db.unsafe('SELECT access_scope FROM platform_lessons WHERE id=$1', [lesson]))[0].access_scope;
+    const intro = await add(1, 'introduction');
+    const preview = await add(2, 'core', 'public');
+    const paid = await add(3, 'core', 'entitled');
+    const other = await add(4, 'core', 'entitled');
+    expect(await scope(intro)).toBe('public');
+    expect((await getCourse(editor, 3)).presentation).not.toHaveProperty('trialLessonIds');
+    const stale = await write(adminCourse, 5, { titleEn: 'Title only', presentation: { trialLessonIds: [] } }, 'PATCH');
+    expect(stale.status, await stale.clone().text()).toBe(200);
+    expect(await scope(preview)).toBe('public');
+    const next = await write(editor, 3, { status: 'published', trialSelectionChanged: true, presentation: { trialLessonIds: [preview, paid] } }, 'PATCH');
+    expect(next.status, await next.clone().text()).toBe(200);
+    expect((await getCourse(editor, 3)).presentation.trialLessonIds).toEqual([paid, preview].sort());
+    const lessonChange = await write(`${editor}/lessons/${other}`, 3, { status: 'published', accessScope: 'public' }, 'PATCH');
+    expect(lessonChange.status, await lessonChange.clone().text()).toBe(200);
+    expect((await getCourse(editor, 3)).lessons.find((lesson: { id: string }) => lesson.id === other)).toMatchObject({
+      accessScope: 'public', liveAccessScope: 'entitled', reviewBase: { accessScope: 'entitled' },
+    });
+    const { reviewId: lessonReview } = (await lessonChange.json()).lesson;
+    expect((await write(`${adminCourse}/content-reviews/${lessonReview}/decision`, 5, { decision: 'approved' })).status).toBe(200);
+    expect((await write(`${adminCourse}/content-reviews/approve-all`, 5, {})).status).toBe(200);
+    expect(await Promise.all([intro, preview, paid, other].map(scope))).toEqual(['public', 'public', 'public', 'public']);
+    const published = await getCourse(`/platform/courses/${id}`, 1);
+    expect(published.presentation).not.toHaveProperty('trialLessonIds');
+    expect(published.lessons[0]).toMatchObject({ lessonType: 'introduction', titleZh: '课时 1', titleEn: '课时 1' });
+    expect((await (await app.request('/platform/courses?trial=1&q=Title+only')).json()).courses).toMatchObject([{ id, firstTrialLessonId: preview }]);
+  });
+
+  it('exposes legacy presentation defaults without changing the sealed course revision', async () => {
+    const response = await app.request(`/platform/admin/courses/${legacyCourseId}`, { headers: headers(5) });
+    expect(response.status, await response.clone().text()).toBe(200);
+    expect(await response.json()).toMatchObject({ course: { presentation: {
+      levelZh: '零基础学员', targetEn: 'Custom goal', tags: ['puzzle:333', 'topic:beginner'],
+    } } });
+    const [row] = await db.unsafe('SELECT presentation FROM platform_course_revisions WHERE course_id=$1', [legacyCourseId]);
+    expect(row.presentation).toEqual({ targetEn: 'Custom goal' });
   });
 
   it('denies new media access when an entitlement expires or is revoked', async () => {

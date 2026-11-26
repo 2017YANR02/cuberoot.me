@@ -4,7 +4,7 @@ import { badRequest, notFound } from '../errors.js';
 import { publicCache, privateNoStore } from '../http.js';
 import { pagination, resourceId, integerField, positiveIntegerParam } from '../validation.js';
 import { courseKey } from './course-access.js';
-import { COURSE_PROJECTION } from './course-fields.js';
+import { COURSE_PRESENTATION, COURSE_PROJECTION } from './course-fields.js';
 import { type Hono } from 'hono';
 
 const REVIEW_PAGE_SIZE = 10;
@@ -53,27 +53,76 @@ async function readCourseReviewPage(db: PlatformDb, courseId: string, page: numb
 export function registerPublicRoutes(platformCatalogRoutes: Hono): void {
   platformCatalogRoutes.get('/platform/courses', async (c) => {
     const { page, pageSize, offset } = pagination(c, 60);
-    const q = c.req.query('q')?.trim().slice(0, 200) ?? '';
-    const rows = await platformQuery(platformDb(), `
-      SELECT ${COURSE_PROJECTION}, ${PUBLIC_COURSE_INSTRUCTORS}, ${PUBLIC_COURSE_LESSON_COUNT}
+    const db = platformDb();
+    const terms = (c.req.query('q')?.trim().slice(0, 200) ?? '').split(/\s+/).filter(Boolean);
+    const puzzle = c.req.query('puzzle')?.slice(0, 40) ?? '';
+    const category = c.req.query('category')?.slice(0, 40) ?? '';
+    const trialOnly = c.req.query('trial') === '1';
+    const params = [terms, puzzle, category, trialOnly];
+    const catalog = `
       FROM platform_courses c
       JOIN platform_course_revisions r ON r.course_id = c.id AND r.revision = c.current_revision
-      WHERE c.status = 'published'
-        AND ($1 = '' OR r.title_zh ILIKE '%' || $1 || '%' OR r.title_en ILIKE '%' || $1 || '%'
-          OR r.summary_zh ILIKE '%' || $1 || '%' OR r.summary_en ILIKE '%' || $1 || '%')
-      ORDER BY CASE WHEN $4='title' THEN COALESCE(NULLIF(r.title_zh,''),r.title_en) END ASC, c.updated_at DESC, c.id
-      LIMIT $2 OFFSET $3
-    `, [q, pageSize, offset,c.req.query('sort')??'updated']);
-    const totals = await platformQuery<{ total: number }>(platformDb(), `
-      SELECT COUNT(*)::int AS total
-      FROM platform_courses c
-      JOIN platform_course_revisions r ON r.course_id = c.id AND r.revision = c.current_revision
-      WHERE c.status = 'published'
-        AND ($1 = '' OR r.title_zh ILIKE '%' || $1 || '%' OR r.title_en ILIKE '%' || $1 || '%'
-          OR r.summary_zh ILIKE '%' || $1 || '%' OR r.summary_en ILIKE '%' || $1 || '%')
-    `, [q]);
+      LEFT JOIN LATERAL (
+        SELECT l.id::text AS "firstTrialLessonId"
+        FROM platform_lessons l
+        JOIN platform_lesson_revisions lr ON lr.lesson_id=l.id AND lr.revision=l.current_revision
+        WHERE l.course_id=c.id AND l.status='published' AND l.access_scope='public'
+          AND CASE WHEN l.lesson_type IS NOT NULL THEN l.lesson_type='core'
+            ELSE NOT (l.slug ~* '^intro(duction)?-' OR COALESCE(NULLIF(lr.title_zh,''),lr.title_en) ~* '^(引言|先导课|Introduction)')
+          END
+        ORDER BY l.ordinal, l.id LIMIT 1
+      ) trial ON TRUE
+      WHERE c.status='published'
+        AND ($2='' OR (${COURSE_PRESENTATION}->'tags') ? ('puzzle:'||$2))
+        AND ($3='' OR (${COURSE_PRESENTATION}->'tags') ? ('topic:'||$3))
+        AND (NOT $4::boolean OR trial."firstTrialLessonId" IS NOT NULL)
+        AND NOT EXISTS (
+          SELECT 1 FROM unnest($1::text[]) term
+          WHERE strpos(lower(concat_ws(' ', r.title_zh, r.title_en, r.summary_zh, r.summary_en,
+            ${COURSE_PRESENTATION}->>'level', ${COURSE_PRESENTATION}->>'levelZh', ${COURSE_PRESENTATION}->>'levelEn',
+            ${COURSE_PRESENTATION}->>'tags',
+            (SELECT string_agg(concat_ws(' ', i.display_name_snapshot, t.name_zh, t.name_en), ' ')
+             FROM platform_course_owners o JOIN platform_instructors i ON i.id=o.instructor_id
+             LEFT JOIN teacher_directory_entries t ON t.id=i.teacher_entry_id
+             WHERE o.course_id=c.id AND o.status='active' AND i.status='active')
+          )), lower(term))=0
+        )
+    `;
+    const [rows, totals, tags] = await Promise.all([
+      platformQuery(db, `
+        SELECT ${COURSE_PROJECTION}, ${PUBLIC_COURSE_INSTRUCTORS}, ${PUBLIC_COURSE_LESSON_COUNT}, trial."firstTrialLessonId"
+        ${catalog}
+        ORDER BY CASE WHEN $5='title' THEN COALESCE(NULLIF(r.title_zh,''),r.title_en) END, c.updated_at DESC, c.id
+        LIMIT $6 OFFSET $7
+      `, [...params, c.req.query('sort') ?? 'updated', pageSize, offset]),
+      platformQuery<{ total: number }>(db, `SELECT COUNT(*)::int AS total ${catalog}`, params),
+      c.req.query('facets') === '1' ? platformQuery<{ tag: string; puzzle: string | null }>(db, `
+        SELECT DISTINCT tag, puzzle
+        FROM platform_courses c
+        JOIN platform_course_revisions r ON r.course_id=c.id AND r.revision=c.current_revision
+        CROSS JOIN LATERAL jsonb_array_elements_text(
+          CASE WHEN jsonb_typeof(${COURSE_PRESENTATION}->'tags')='array' THEN ${COURSE_PRESENTATION}->'tags' ELSE '[]'::jsonb END
+        ) tag
+        LEFT JOIN LATERAL (
+          SELECT substr(value, 8) AS puzzle FROM jsonb_array_elements_text(
+            CASE WHEN jsonb_typeof(${COURSE_PRESENTATION}->'tags')='array' THEN ${COURSE_PRESENTATION}->'tags' ELSE '[]'::jsonb END
+          ) value WHERE value LIKE 'puzzle:%'
+        ) topic_puzzles ON tag LIKE 'topic:%'
+        WHERE c.status='published' AND (tag LIKE 'puzzle:%' OR tag LIKE 'topic:%')
+        ORDER BY tag, puzzle
+      `) : Promise.resolve(undefined),
+    ]);
+    const topicPuzzles = new Map<string, string[]>();
+    for (const { tag, puzzle: matchingPuzzle } of tags ?? []) {
+      if (!tag.startsWith('topic:')) continue;
+      const key = tag.slice(6);
+      const puzzles = topicPuzzles.get(key) ?? [];
+      if (matchingPuzzle) puzzles.push(matchingPuzzle);
+      topicPuzzles.set(key, puzzles);
+    }
     publicCache(c, rows.length > 0);
-    return c.json({ courses: rows, total: totals[0]?.total ?? 0, page, pageSize });
+    return c.json({ courses: rows, total: totals[0]?.total ?? 0, page, pageSize,
+      ...(tags && { categories: [...new Set(tags.map(row => row.tag))], catalogTopicPuzzles: Object.fromEntries(topicPuzzles) }) });
   });
 
   platformCatalogRoutes.get('/platform/courses/:id', async (c) => {
@@ -94,7 +143,7 @@ export function registerPublicRoutes(platformCatalogRoutes: Hono): void {
     const rows = await platformQuery<{ id: string } & Record<string, unknown>>(db, `
       SELECT ${COURSE_PROJECTION},
         COALESCE((SELECT jsonb_agg(jsonb_build_object(
-          'id', l.id::text, 'slug', l.slug, 'ordinal', l.ordinal,
+          'id', l.id::text, 'slug', l.slug, 'ordinal', l.ordinal, 'lessonType', l.lesson_type,
           'titleZh', lr.title_zh, 'titleEn', lr.title_en,
           'durationSeconds', lr.duration_seconds, 'accessScope', l.access_scope
         ) ORDER BY l.ordinal)
@@ -150,7 +199,7 @@ export function registerPublicRoutes(platformCatalogRoutes: Hono): void {
     const db = platformDb();
     const rows = await platformQuery<{ course_id: string; access_scope: string } & Record<string, unknown>>(db, `
       SELECT l.course_id::text, l.access_scope,
-        l.id::text AS id, l.slug, l.ordinal, l.status, l.access_scope AS "accessScope",
+        l.id::text AS id, l.slug, l.ordinal, l.status, l.lesson_type AS "lessonType", l.access_scope AS "accessScope",
         lr.revision, lr.title_zh AS "titleZh", lr.title_en AS "titleEn",
         lr.body_zh AS "bodyZh", lr.body_en AS "bodyEn",
         lr.media_id::text AS "mediaId", lr.duration_seconds AS "durationSeconds",

@@ -3,11 +3,20 @@ import { act, createElement } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { PlatformEntity } from '@/lib/platform-types';
-const mocks = vi.hoisted(() => ({ embedded: false, wechat: false, copy: vi.fn(), pay: vi.fn() }));
-vi.mock('@/i18n/tr', () => ({ useLang: () => 'zh' }));
+const mocks = vi.hoisted(() => ({ embedded: false, wechat: false, copy: vi.fn(), pay: vi.fn(), quote: vi.fn() }));
+vi.mock('@/i18n/tr', () => ({ useLang: () => 'zh', tr: ({ zh }: { zh: string }) => zh }));
 vi.mock('@/lib/miniprogram-bridge', () => ({ isMiniProgramCommerceRestricted: async () => mocks.embedded, openMiniProgramOrderPayment: vi.fn() }));
 vi.mock('@/lib/wechat-share', () => ({ isInWeChat: () => mocks.wechat }));
 vi.mock('@/lib/page-share', () => ({ copyPageLink: mocks.copy }));
+vi.mock('@/lib/auth-store', async importOriginal => ({
+  ...await importOriginal<typeof import('@/lib/auth-store')>(),
+  useAuthUser: () => ({ uid: 1 }),
+}));
+vi.mock('@/lib/platform-checkout', async importOriginal => ({
+  ...await importOriginal<typeof import('@/lib/platform-checkout')>(),
+  quotePlatformOrder: mocks.quote,
+}));
+import { PlatformPurchaseForm } from '@/components/platform/PlatformPurchaseForm';
 import { PlatformOrderPayment } from '@/components/platform/PlatformOrderPayment';
 
 describe('order checkout controls', () => {
@@ -57,4 +66,43 @@ describe('order checkout controls', () => {
     entity.data = { ...entity.data, paymentChannels: {} }; await render(); expect(host.querySelector('button')).toBeNull();
     entity.data = { ...entity.data, status: 'paid' }; await render(); expect(host.textContent).toBe('');
   });
+});
+
+it('automatically quotes a single course, reprices a coupon, and keeps the retry on one order key', async () => {
+  vi.useFakeTimers();
+  const host = document.createElement('div'), root = createRoot(host);
+  const quote = { currency: 'CNY', subtotalAmountMinor: 2000, discountAmountMinor: 0, totalAmountMinor: 2000, member: false };
+  mocks.quote.mockReset().mockResolvedValueOnce(quote).mockResolvedValueOnce({ ...quote, discountAmountMinor: 500, totalAmountMinor: 1500 });
+  const pending = Promise.withResolvers<undefined>();
+  const order = vi.fn().mockReturnValueOnce(pending.promise).mockResolvedValueOnce(undefined);
+  try {
+    await act(async () => root.render(createElement(PlatformPurchaseForm, {
+      kind: 'course', busy: null, runAction: order,
+      entity: { id: 'course-1', title: 'Course', data: { baseAmountMinor: 2000, currency: 'CNY' } },
+    })));
+    await act(async () => vi.advanceTimersByTimeAsync(0));
+    expect(mocks.quote).toHaveBeenCalledWith([{ courseId: 'course-1', quantity: 1 }], '', expect.any(AbortSignal));
+    expect(host.querySelector('select, input[type=number]')).toBeNull();
+    const input = host.querySelector('input')!;
+    const submit = host.querySelector<HTMLButtonElement>('button[type=submit]')!;
+    expect(submit.disabled).toBe(false);
+    await act(async () => {
+      Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')!.set!.call(input, 'CUT5');
+      input.dispatchEvent(new Event('input', { bubbles: true }));
+    });
+    expect(submit.disabled).toBe(true);
+    await act(async () => vi.advanceTimersByTimeAsync(400));
+    expect(mocks.quote).toHaveBeenLastCalledWith([{ courseId: 'course-1', quantity: 1 }], 'CUT5', expect.any(AbortSignal));
+    expect(host.querySelector('.platform-quote strong')?.textContent).toContain('15.00');
+    const placeOrder = () => host.querySelector('form')!.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
+    await act(async () => { placeOrder(); placeOrder(); });
+    expect(order).toHaveBeenCalledTimes(1);
+    await act(async () => pending.resolve(undefined));
+    await act(async () => placeOrder());
+    expect(order).toHaveBeenCalledTimes(2);
+    expect(order.mock.calls[1]).toEqual(order.mock.calls[0]);
+    expect(order).toHaveBeenLastCalledWith('create-order', undefined, {
+      sellableType: 'course', sellableId: 'course-1', quantity: 1, couponCode: 'CUT5', requestKey: expect.any(String),
+    });
+  } finally { await act(async () => root.unmount()); vi.useRealTimers(); }
 });

@@ -42,7 +42,7 @@ async function managedLessonMedia(c: Context, admin: boolean): Promise<Response>
       media.id::text AS "mediaId", media.mime_type AS "mediaMimeType", media.size_bytes AS "mediaSizeBytes",
       cover.id::text AS "coverMediaId", cover.mime_type AS "coverMimeType", cover.size_bytes AS "coverSizeBytes"
     FROM platform_lessons lesson
-    LEFT JOIN LATERAL (SELECT * FROM platform_content_reviews WHERE lesson_id=lesson.id AND base_revision=lesson.current_revision ORDER BY submitted_at DESC,id DESC LIMIT 1) review ON true
+    LEFT JOIN LATERAL (SELECT * FROM platform_content_reviews WHERE lesson_id=lesson.id AND quiz_id IS NULL AND base_revision=lesson.current_revision ORDER BY submitted_at DESC,id DESC LIMIT 1) review ON true
     JOIN platform_lesson_revisions revision
       ON revision.lesson_id = lesson.id AND revision.revision = CASE
         WHEN review.status IN ('pending','rejected','withdrawn') THEN review.candidate_revision ELSE lesson.current_revision END
@@ -99,7 +99,7 @@ async function uploadLessonCover(c: Context, admin: boolean): Promise<Response> 
             revision.media_id::text AS "mediaId", revision.duration_seconds AS "durationSeconds",
             lesson.status, lesson.slug, lesson.ordinal, lesson.access_scope AS "accessScope"
           FROM platform_lessons lesson
-          LEFT JOIN LATERAL (SELECT candidate_revision,status FROM platform_content_reviews WHERE lesson_id=lesson.id AND base_revision=lesson.current_revision ORDER BY submitted_at DESC,id DESC LIMIT 1) review ON true
+          LEFT JOIN LATERAL (SELECT candidate_revision,status FROM platform_content_reviews WHERE lesson_id=lesson.id AND quiz_id IS NULL AND base_revision=lesson.current_revision ORDER BY submitted_at DESC,id DESC LIMIT 1) review ON true
           JOIN platform_lesson_revisions revision
             ON revision.lesson_id = lesson.id AND revision.revision = CASE WHEN review.status IN ('rejected','withdrawn') THEN review.candidate_revision ELSE lesson.current_revision END
           WHERE lesson.course_id = $1::uuid AND (lesson.id::text = $2 OR lesson.slug = $2)

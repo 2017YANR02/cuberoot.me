@@ -1,6 +1,6 @@
-import { requirePlatformActor } from '../auth.js';
+import { requirePlatformActor, requirePlatformAdmin } from '../auth.js';
 import { findCourseReviewEntitlement, withIdempotency, platformQuery, sendMutation } from '../db.js';
-import { badRequest } from '../errors.js';
+import { badRequest, notFound } from '../errors.js';
 import { resourceId, readJsonObject, integerField, stringField } from '../validation.js';
 import { type Hono } from 'hono';
 
@@ -19,7 +19,7 @@ export function registerReviewRoutes(platformLearningRoutes: Hono): void {
         INSERT INTO platform_course_reviews (user_id, course_id, entitlement_id, rating, body, title)
         VALUES ($1, $2::uuid, $3::uuid, $4, $5, $6)
         ON CONFLICT (user_id, course_id) DO UPDATE SET rating = EXCLUDED.rating, body = EXCLUDED.body, title = EXCLUDED.title,
-          entitlement_id = EXCLUDED.entitlement_id, status = 'published', moderation_note = NULL
+          entitlement_id = EXCLUDED.entitlement_id
         RETURNING id::text, course_id::text AS "courseId", rating, body, title, status,
                   created_at AS "createdAt", updated_at AS "updatedAt"
       `, [actor.userId, courseId, entitlementId, rating, reviewBody, reviewTitle]);
@@ -27,4 +27,22 @@ export function registerReviewRoutes(platformLearningRoutes: Hono): void {
     });
     return sendMutation(c, result);
   });
+  platformLearningRoutes.patch('/admin/courses/:courseId/reviews/:reviewId', async c => {
+    const actor = await requirePlatformAdmin(c);
+    const courseId = resourceId(c.req.param('courseId'), 'courseId');
+    const reviewId = resourceId(c.req.param('reviewId'), 'reviewId');
+    const body = await readJsonObject(c);
+    const note = stringField(body, 'note', { required: true, max: 4000 })!;
+    const result = await withIdempotency(c, actor, `learning.review.hide:${courseId}:${reviewId}`, body, async db => {
+      const [review] = await platformQuery(db, `
+        UPDATE platform_course_reviews SET status='hidden', moderation_note=$3
+        WHERE course_id::text=$1 AND id::text=$2 AND status IN ('published', 'hidden')
+        RETURNING id::text, status, moderation_note AS "moderationNote"
+      `, [courseId, reviewId, note]);
+      if (!review) notFound('Course review');
+      return { status: 200, body: { review }, resourceType: 'course_review', resourceId: reviewId };
+    });
+    return sendMutation(c, result);
+  });
+
 }

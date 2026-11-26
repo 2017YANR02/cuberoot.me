@@ -44,7 +44,7 @@ export function PlatformInstructorActions(props: CommonProps) {
   if (definition.id === 'instructor-course') {
     return (
       <div className="platform-domain-stack platform-instructor-course-management">
-        <PlatformContentReview entity={entity} courseId={entity?.id ?? params.id} admin={false} busy={busy} runAction={runAction} />
+        <PlatformContentReview entity={entity} courseId={entity?.id ?? params.id} admin={false} busy={busy} runAction={runAction} preview />
         <PlatformCourseContentManager {...props} />
         <section className="platform-instructor-course-info">
           {entity?.data?.reviewStatus !== 'pending' && <DomainForm definition={definition} entity={reviewEditableEntity(entity)} resourceId={params.id} busy={busy} runAction={runAction}

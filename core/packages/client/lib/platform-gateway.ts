@@ -25,10 +25,16 @@ export interface PlatformLoadOptions {
   page?: number;
   pageSize?: number;
   category?: string;
+  puzzle?: string;
+  trialOnly?: boolean;
+  facets?: boolean;
+  pendingOnly?: boolean;
+  courseIds?: string;
   days?: number;
   activitiesOnly?: boolean;
   includeCourseAccess?: boolean;
   reviewPage?: number;
+  moderationPage?: number;
   signal?: AbortSignal;
 }
 
@@ -90,7 +96,13 @@ function queryString(options: PlatformLoadOptions): string {
   if (options.page) query.set('page', String(options.page));
   if (options.pageSize) query.set('pageSize', String(options.pageSize));
   if (options.days) query.set('days', String(options.days));
+  if (options.moderationPage) query.set('moderationPage', String(options.moderationPage));
   if (options.category) query.set('category', options.category);
+  if (options.puzzle) query.set('puzzle', options.puzzle);
+  if (options.trialOnly) query.set('trial', '1');
+  if (options.facets) query.set('facets', '1');
+  if (options.pendingOnly) query.set('pending', '1');
+  if (options.courseIds) query.set('courseIds', options.courseIds);
   const value = query.toString();
   return value ? `?${value}` : '';
 }
@@ -100,7 +112,7 @@ function readPath(resource: PlatformResource, options: PlatformLoadOptions): str
   const id = encodedId(options);
   const rawQuery = queryString(options);
   const reviewsOnly = resource === 'courses' && id && options.reviewPage;
-  const version = resource === 'courses' ? (reviewsOnly ? 6 : 7)
+  const version = resource === 'courses' ? (reviewsOnly ? 6 : !id && (options.facets || options.trialOnly || options.puzzle) ? 8 : 7)
     : ['paths', 'events', 'news', 'products', 'search'].includes(resource) ? 3
     : ['orders', 'admin-orders', 'admin-applications', 'account-courses', 'instructor-students', 'instructor-earnings'].includes(resource) ? 2 : null;
   const query = version ? rawQuery + (rawQuery ? '&' : '?') + 'v=' + version : rawQuery;
@@ -220,6 +232,7 @@ function normalizeResource(value: unknown): PlatformResourceResult {
   const collectionKeys = ['items', 'results', 'courses', 'paths', 'products', 'events', 'articles', 'orders', 'instructors', 'applications', 'coupons', 'payouts', 'records', 'notifications', 'threads'];
   const array = collectionKeys.map(key => envelope[key]).find(Array.isArray)
     ?? Object.entries(envelope).find(([key, value]) => key !== 'categories' && Array.isArray(value))?.[1];
+  const topicPuzzles = asRecord(envelope.catalogTopicPuzzles);
   const items = Array.isArray(array)
     ? array.map(entity).filter((item): item is PlatformEntity => item !== null)
     : [];
@@ -229,6 +242,8 @@ function normalizeResource(value: unknown): PlatformResourceResult {
     nextCursor: stringValue(envelope.nextCursor) ?? stringValue(envelope.next_cursor),
     page: typeof envelope.page === 'number' ? envelope.page : undefined,
     pageSize: typeof envelope.pageSize === 'number' ? envelope.pageSize : undefined,
+    catalogTopicPuzzles: topicPuzzles ? Object.fromEntries(Object.entries(topicPuzzles).map(([topic, puzzles]) =>
+      [topic, Array.isArray(puzzles) ? puzzles.filter((puzzle): puzzle is string => typeof puzzle === 'string') : []])) : undefined,
     categories: Array.isArray(envelope.categories) ? envelope.categories.filter((item): item is string => typeof item === 'string') : undefined,
   };
 }
@@ -552,7 +567,7 @@ export async function executePlatformAction(
     case 'update-progress': return write(`/v1/platform/me/progress/${requiredId(input)}`, 'PUT', payload);
     case 'submit-quiz': return write(`/v1/platform/learning/lessons/${requiredId(input)}/quiz`, 'POST', payload);
     case 'enroll': return write(`/v1/platform/courses/${requiredId(input)}/enrollment`, 'POST', payload);
-    case 'create-order': return createPlatformOrder(orderPayload(payload));
+    case 'create-order': return createPlatformOrder(orderPayload(payload), typeof payload.requestKey === 'string' ? payload.requestKey : undefined);
     case 'start-payment': return write(`/v1/platform/orders/${requiredId(input)}/payment-attempts`, 'POST', payload);
     case 'cancel-order': return write(`/v1/platform/orders/${requiredId(input)}/cancel`, 'POST', payload);
     case 'apply-instructor': return write('/v1/platform/instructor/applications', 'POST', payload);
@@ -561,6 +576,8 @@ export async function executePlatformAction(
     case 'link-instructor-profile': return write('/v1/platform/instructor/profile-link', 'POST', payload);
     case 'initialize-instructor-profile': return write('/v1/platform/instructor/profile', 'POST', {});
     case 'save-instructor-course': return write(`/v1/platform/instructor/courses${id ? `/${encodeURIComponent(id)}` : ''}`, id ? 'PATCH' : 'POST', publicationReviewPayload(payload));
+    case 'approve-course-reviews': return write(`/v1/platform/admin/courses/${requiredId(input)}/content-reviews/approve-all`, 'POST', {});
+    case 'hide-course-review': return write(`/v1/platform/admin/courses/${requiredId(input)}/reviews/${requiredPayloadId(payload, 'reviewId')}`, 'PATCH', withoutPayloadKeys(payload, ['reviewId']));
     case 'decide-content-review': return write(`/v1/platform/admin/courses/${requiredId(input)}/content-reviews/${requiredPayloadId(payload, 'reviewId')}/decision`, 'POST', withoutPayloadKeys(payload, ['reviewId']));
     case 'withdraw-content-review': return write(`/v1/platform/instructor/courses/${requiredId(input)}/content-reviews/${requiredPayloadId(payload, 'reviewId')}/withdraw`, 'POST', {});
     case 'delete-course': return write(`/v1/platform/${courseManagementScope(route)}/courses/${requiredId(input)}`, 'DELETE');
@@ -587,7 +604,7 @@ export async function executePlatformAction(
       return write(
         `/v1/platform/${courseManagementScope(route)}/courses/${requiredId(input)}/lessons/${lessonId}/quizzes${quizId ? `/${quizId}` : ''}`,
         quizId ? 'PATCH' : 'POST',
-        withoutPayloadKeys(payload, ['lessonId', 'quizId']),
+        withoutPayloadKeys(route.area === 'instructor' ? publicationReviewPayload(payload) : payload, ['lessonId', 'quizId']),
       );
     }
     case 'delete-course-quiz': {
@@ -661,6 +678,8 @@ export const PLATFORM_ACTION_LABELS: Record<PlatformActionId, { zh: string; en: 
   'link-instructor-profile': { zh: '关联讲师资料', en: 'Link teaching profile' },
   'initialize-instructor-profile': { zh: '创建个人主页', en: 'Create personal profile' },
   'save-instructor-course': { zh: '保存讲师课程', en: 'Save instructor course' },
+  'approve-course-reviews': { zh: '通过本课程全部待审内容', en: 'Approve all pending content' },
+  'hide-course-review': { zh: '隐藏评价', en: 'Hide review' },
   'decide-content-review': { zh: '审核发布', en: 'Review publication' },
   'withdraw-content-review': { zh: '撤回审核', en: 'Withdraw review' },
   'delete-course': { zh: '归档课程', en: 'Archive course' },

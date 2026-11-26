@@ -1163,7 +1163,9 @@ CREATE TABLE platform_courses (
   CHECK (status NOT IN ('published', 'unlisted') OR published_at IS NOT NULL),
   CHECK (status <> 'archived' OR archived_at IS NOT NULL),
   CHECK (status = 'draft' OR current_revision IS NOT NULL),
-  CHECK (member_amount_minor IS NULL OR member_amount_minor <= base_amount_minor)
+  CHECK (member_amount_minor IS NULL OR member_amount_minor <= base_amount_minor),
+  -- 0361_platform_course_presentation_defaults.sql
+  presentation_defaults JSONB NOT NULL DEFAULT '{}'::jsonb CHECK (jsonb_typeof(presentation_defaults) = 'object')
 );
 CREATE INDEX idx_platform_courses_public ON platform_courses(status, published_at DESC, id)
   WHERE status IN ('published', 'unlisted');
@@ -1228,12 +1230,14 @@ CREATE TABLE platform_lessons (
   ordinal INTEGER NOT NULL CHECK (ordinal BETWEEN 0 AND 1000000),
   status VARCHAR(20) NOT NULL DEFAULT 'draft' CHECK (status IN ('draft', 'published', 'archived')),
   access_scope VARCHAR(20) NOT NULL DEFAULT 'entitled' CHECK (access_scope IN ('public', 'entitled')),
+  -- 0360_platform_lesson_type_and_order.sql
+  lesson_type VARCHAR(20) CHECK (lesson_type IN ('introduction', 'core')),
   current_revision INTEGER CHECK (current_revision > 0),
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   UNIQUE (course_id, id),
   UNIQUE (course_id, slug),
-  UNIQUE (course_id, ordinal),
+  CONSTRAINT platform_lessons_course_id_ordinal_key UNIQUE (course_id, ordinal) DEFERRABLE INITIALLY IMMEDIATE,
   CHECK (status = 'draft' OR current_revision IS NOT NULL)
 );
 CREATE INDEX idx_platform_lessons_course ON platform_lessons(course_id, ordinal, id);
@@ -1268,6 +1272,8 @@ CREATE TABLE platform_content_reviews (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   course_id UUID NOT NULL REFERENCES platform_courses(id) ON DELETE RESTRICT,
   lesson_id UUID,
+  -- 0362_platform_quiz_content_reviews.sql
+  quiz_id UUID,
   base_revision INTEGER NOT NULL CHECK (base_revision > 0),
   candidate_revision INTEGER NOT NULL CHECK (candidate_revision > 0),
   target_status VARCHAR(20) NOT NULL CHECK (target_status IN ('published', 'unlisted')),
@@ -1279,12 +1285,17 @@ CREATE TABLE platform_content_reviews (
   submitted_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   decided_at TIMESTAMPTZ,
   FOREIGN KEY (course_id, lesson_id) REFERENCES platform_lessons(course_id, id) ON DELETE RESTRICT,
-  CHECK (lesson_id IS NULL OR target_status = 'published')
+  CHECK (lesson_id IS NULL OR target_status = 'published'),
+  CONSTRAINT platform_content_reviews_quiz_parent_check CHECK (quiz_id IS NULL OR lesson_id IS NOT NULL)
 );
 CREATE UNIQUE INDEX uq_platform_content_review_course ON platform_content_reviews(course_id)
   WHERE lesson_id IS NULL AND status = 'pending';
 CREATE UNIQUE INDEX uq_platform_content_review_lesson ON platform_content_reviews(lesson_id)
-  WHERE lesson_id IS NOT NULL AND status = 'pending';
+  WHERE lesson_id IS NOT NULL AND quiz_id IS NULL AND status = 'pending';
+CREATE UNIQUE INDEX uq_platform_content_review_quiz ON platform_content_reviews(quiz_id)
+  WHERE quiz_id IS NOT NULL AND status = 'pending';
+CREATE INDEX idx_platform_content_review_quiz_history ON platform_content_reviews(quiz_id, submitted_at DESC)
+  WHERE quiz_id IS NOT NULL;
 CREATE INDEX idx_platform_content_review_history ON platform_content_reviews(course_id, lesson_id, submitted_at DESC);
 
 CREATE TABLE platform_learning_paths (
@@ -1328,7 +1339,8 @@ CREATE TABLE platform_quizzes (
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   UNIQUE (lesson_id, slug),
-  CHECK (status = 'draft' OR current_revision IS NOT NULL)
+  CHECK (status = 'draft' OR current_revision IS NOT NULL),
+  CONSTRAINT platform_quizzes_lesson_identity UNIQUE (lesson_id, id)
 );
 CREATE TRIGGER platform_quizzes_set_updated_at BEFORE UPDATE ON platform_quizzes
   FOR EACH ROW EXECUTE FUNCTION trg_set_updated_at();
@@ -1352,6 +1364,14 @@ CREATE TABLE platform_quiz_revisions (
 ALTER TABLE platform_quizzes ADD CONSTRAINT platform_quizzes_current_revision_fk
   FOREIGN KEY (id, current_revision) REFERENCES platform_quiz_revisions(quiz_id, revision)
   DEFERRABLE INITIALLY DEFERRED;
+
+ALTER TABLE platform_content_reviews
+  ADD CONSTRAINT platform_content_reviews_quiz_parent_fk FOREIGN KEY (lesson_id, quiz_id)
+    REFERENCES platform_quizzes(lesson_id, id) ON DELETE RESTRICT,
+  ADD CONSTRAINT platform_content_reviews_quiz_base_fk FOREIGN KEY (quiz_id, base_revision)
+    REFERENCES platform_quiz_revisions(quiz_id, revision) ON DELETE RESTRICT,
+  ADD CONSTRAINT platform_content_reviews_quiz_candidate_fk FOREIGN KEY (quiz_id, candidate_revision)
+    REFERENCES platform_quiz_revisions(quiz_id, revision) ON DELETE RESTRICT;
 
 CREATE TABLE platform_quiz_questions (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),

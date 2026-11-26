@@ -46,6 +46,7 @@ export type PlatformCourseStatus = typeof PLATFORM_COURSE_STATUSES[number];
 
 /** Existing introduction lessons keep their distinct section and access policy. */
 export function isPlatformIntroductionLesson(lesson: Readonly<Record<string, unknown>>): boolean {
+  if (lesson.lessonType === 'introduction' || lesson.lessonType === 'core') return lesson.lessonType === 'introduction';
   return /^intro(?:duction)?-/i.test(String(lesson.slug ?? ''))
     || /^(?:引言|先导课|Introduction)/i.test(String(lesson.titleZh || lesson.titleEn || ''));
 }

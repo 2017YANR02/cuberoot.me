@@ -135,9 +135,9 @@ export function registerReconciliationRoutes(platformCommerceRoutes: Hono): void
     await requirePlatformAdmin(c);
     const { page, pageSize, offset } = pagination(c);
     const q=c.req.query('q')?.trim().slice(0,200)??'';
-    const rows = await platformQuery(platformDb(), `SELECT id::text, provider, merchant_account AS "merchantAccount", statement_date AS "statementDate", provider_transaction_id AS "providerTransactionId", payment_attempt_id::text AS "paymentAttemptId", refund_id::text AS "refundId", amount_minor AS "amountMinor", currency, status, resolution_note AS "resolutionNote", resolved_at AS "resolvedAt", created_at AS "createdAt" FROM platform_reconciliation_records WHERE ($3='' OR provider_transaction_id ILIKE '%'||$3||'%') ORDER BY statement_date DESC, id DESC LIMIT $1 OFFSET $2`, [pageSize, offset,q]);
+    const rows = await platformQuery(platformDb(), `SELECT id::text, provider, merchant_account AS "merchantAccount", statement_date AS "statementDate", provider_transaction_id AS "providerTransactionId", payment_attempt_id::text AS "paymentAttemptId", refund_id::text AS "refundId", amount_minor AS "amountMinor", currency, status, resolution_note AS "resolutionNote", resolved_at AS "resolvedAt", created_at AS "createdAt" FROM platform_reconciliation_records WHERE ($3='' OR provider_transaction_id ILIKE '%'||$3||'%') AND (NOT $4::boolean OR resolved_at IS NULL AND status NOT IN ('matched','ignored')) ORDER BY statement_date DESC, id DESC LIMIT $1 OFFSET $2`, [pageSize, offset,q,c.req.query('pending') === '1']);
     privateNoStore(c);
-    const counts=await platformQuery<{total:number}>(platformDb(),`SELECT COUNT(*)::int AS total FROM platform_reconciliation_records WHERE TRUE AND ($1='' OR provider_transaction_id ILIKE '%'||$1||'%')`,[q]);
+    const counts=await platformQuery<{total:number}>(platformDb(),`SELECT COUNT(*)::int AS total FROM platform_reconciliation_records WHERE TRUE AND ($1='' OR provider_transaction_id ILIKE '%'||$1||'%') AND (NOT $2::boolean OR resolved_at IS NULL AND status NOT IN ('matched','ignored'))`,[q,c.req.query('pending') === '1']);
     return c.json({ items: rows, page, pageSize,total:counts[0]?.total??0 });
   });
 

@@ -13,15 +13,17 @@ import type { PlatformEntity } from '@/lib/platform-types';
 import { PlatformState } from './PlatformState';
 import './platform-learning.css';
 
-interface MediaProps { lessonId: string; startTime: number; onVideoElement: (video: HTMLVideoElement | null) => void; onNext?: () => void; onPrevious?: () => void }
-interface Props { courseId: string; lessonId: string; lessons?: LearningLesson[]; startTime?: number; onSelectLesson?: (id: string) => void; renderMedia: (props: MediaProps) => ReactNode }
+interface MediaProps { lessonId: string; startTime: number; hasMedia: boolean; denied?: 401 | 403; onVideoElement: (video: HTMLVideoElement | null) => void; onNext?: () => void; onPrevious?: () => void }
+interface Props { courseId: string; lessonId: string; lessons?: LearningLesson[]; locked?: boolean; startTime?: number; onSelectLesson?: (id: string) => void; renderMedia: (props: MediaProps) => ReactNode }
 
 /** One learning session for both section pages and direct lesson links. */
-export function PlatformClassroom({ courseId, lessonId, lessons: initialLessons = [], startTime, onSelectLesson, renderMedia }: Props) {
+export function PlatformClassroom({ courseId, lessonId, lessons: initialLessons = [], locked = false, startTime, onSelectLesson, renderMedia }: Props) {
   const t = useT(); const user = useAuthUser();
   const [lesson,setLesson] = useState<PlatformEntity | null>(null);
   const [state,setState] = useState<LessonLearningState | null>(null);
   const [publicLessons,setPublicLessons]=useState<LearningLesson[]>([]);
+  const [permissionStatus, setPermissionStatus] = useState<401 | 403>();
+  const classroom = useRef<HTMLDivElement>(null);
   const [error,setError] = useState(''); const [saveError,setSaveError] = useState('');
   const [video,setVideo] = useState<HTMLVideoElement | null>(null);
   const [initialPosition,setInitialPosition] = useState(startTime ?? 0);
@@ -37,7 +39,8 @@ export function PlatformClassroom({ courseId, lessonId, lessons: initialLessons 
     if(session.current.lessonId===lessonId&&session.current.user===user)setState(data);
   },[lessonId,user]);
   useEffect(()=>{
-    const abort=new AbortController();setLesson(null);setState(null);setPublicLessons([]);setError('');setSaveError('');setNoteOpen(false);setEditing(null);setDraft('');
+    if (locked) return;
+    const abort=new AbortController();setLesson(null);setPermissionStatus(undefined);setState(null);setPublicLessons([]);setError('');setSaveError('');setNoteOpen(false);setEditing(null);setDraft('');
     void (async()=>{
       const result=await loadPlatformResource('course-lesson',{params:{id:courseId,lessonId},signal:abort.signal});
       if(abort.signal.aborted) return; setLesson(result.items[0]??null);
@@ -52,29 +55,32 @@ export function PlatformClassroom({ courseId, lessonId, lessons: initialLessons 
           if(!abort.signal.aborted&&Array.isArray(directory))setPublicLessons(directory.filter((item):item is LearningLesson=>!!item&&typeof item==='object'&&typeof item.id==='string'));
         }
       }
-    })().catch(reason=>{if(!abort.signal.aborted){if(reason instanceof PlatformPermissionError){setLesson({id:lessonId,title:'',data:{}});setState({progress:null,notes:[],lessons:[],attempts:[]});}else setError(String(reason.message??reason));}});
+    })().catch(reason=>{if(!abort.signal.aborted){if(reason instanceof PlatformPermissionError){setPermissionStatus(reason.status);setLesson({id:lessonId,title:'',data:{}});setState({progress:null,notes:[],lessons:[],attempts:[]});}else setError(String(reason.message??reason));}});
     return()=>abort.abort();
-  },[courseId,lessonId,user,startTime]);
+  },[courseId,lessonId,user,startTime,locked,initialLessons.length]);
   useEffect(()=>{
     if(!video||!user||!state)return;
     const ownerKey=getOwnerKey();
     let last=0;
-    const save=(ended=false)=>{
+    const save=(ended=false, keepalive=false)=>{
       if(!Number.isFinite(video.duration)||video.duration<=0)return;
       const positionSeconds=Math.max(0,Math.min(86400,Math.floor(video.currentTime)));
       const progressBps=Math.max(progress.current.progressBps,ended?10000:Math.min(9999,Math.round(video.currentTime/video.duration*10000)));
       const status=ended||progress.current.status==='completed'?'completed':'in_progress';
       progress.current={progressBps,status};
-      saveQueue.current=saveQueue.current.catch(()=>{}).then(async()=>{
+      const write = async () => {
         if(getOwnerKey()!==ownerKey)return;
-        await platformLearningRequest(`/me/progress/${encodeURIComponent(lessonId)}`,{positionSeconds,progressBps,status},'PUT');if(session.current.lessonId===lessonId&&session.current.user===user)setSaveError('');
+        await platformLearningRequest(`/me/progress/${encodeURIComponent(lessonId)}`,{positionSeconds,progressBps,status},'PUT',undefined,undefined,keepalive);if(session.current.lessonId===lessonId&&session.current.user===user)setSaveError('');
         if(ended) await refresh();
-      }).catch(()=>setSaveError(t('学习记录暂未同步，暂停或继续播放时会重试。','Progress could not sync. Pausing or continuing playback retries.')));
+      };
+      const report = () => { if (session.current.lessonId === lessonId && session.current.user === user) setSaveError(t('学习记录暂未同步，暂停或继续播放时会重试。','Progress could not sync. Pausing or continuing playback retries.')); };
+      if (keepalive) void write().catch(report);
+      else saveQueue.current = saveQueue.current.then(write).catch(report);
     };
     const tick=()=>{if(Date.now()-last>=10000){last=Date.now();save();}};
-    const pause=()=>save(); const ended=()=>save(true); const visibility=()=>{if(document.visibilityState==='hidden')save();};
-    video.addEventListener('timeupdate',tick);video.addEventListener('pause',pause);video.addEventListener('ended',ended);document.addEventListener('visibilitychange',visibility);
-    return()=>{save();video.removeEventListener('timeupdate',tick);video.removeEventListener('pause',pause);video.removeEventListener('ended',ended);document.removeEventListener('visibilitychange',visibility);};
+    const pause=()=>save(); const ended=()=>save(true); const pagehide=()=>save(false,true); const visibility=()=>{if(document.visibilityState==='hidden')pagehide();};
+    video.addEventListener('timeupdate',tick);video.addEventListener('pause',pause);video.addEventListener('ended',ended);document.addEventListener('visibilitychange',visibility);window.addEventListener('pagehide',pagehide);
+    return()=>{save();video.removeEventListener('timeupdate',tick);video.removeEventListener('pause',pause);video.removeEventListener('ended',ended);document.removeEventListener('visibilitychange',visibility);window.removeEventListener('pagehide',pagehide);};
     // Only a new player/session installs listeners; progress updates must not trigger save loops.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   },[video,user,lessonId,Boolean(state)]);
@@ -85,25 +91,67 @@ export function PlatformClassroom({ courseId, lessonId, lessons: initialLessons 
   const title=(item:LearningLesson)=>String(item[english?'titleEn':'titleZh']||item.titleZh||item.titleEn||'');
   const seek=(seconds:number)=>{if(video){video.currentTime=Math.min(seconds,Number.isFinite(video.duration)?video.duration:seconds);void video.play().catch(()=>{});}};
   const saveNote=async()=>{setBusy(true);try{await platformLearningRequest(`/me/notes/${encodeURIComponent(lessonId)}`,{...(editing?{noteId:editing.id}:{}),contentMarkdown:draft,positionSeconds:draftPosition},'PUT');setNoteOpen(false);setEditing(null);setDraft('');await refresh();}catch(reason){setSaveError(String(reason));}finally{setBusy(false);}};
+  const completeReading = async () => {
+    setBusy(true);
+    setSaveError('');
+    try {
+      await platformLearningRequest(`/me/progress/${encodeURIComponent(lessonId)}`, {
+        positionSeconds: 0, progressBps: 10000, status: 'completed',
+      }, 'PUT');
+      await refresh();
+    } catch {
+      setSaveError(t('未能保存学习进度，请重试。', 'Could not save your progress. Try again.'));
+    } finally { setBusy(false); }
+  };
+  const denied = locked ? 403 : permissionStatus;
+  const data = lesson?.data ?? {};
+  const hasMedia = !denied && data.mediaId !== null;
+  const onPrevious = previous && onSelectLesson ? () => onSelectLesson(previous.id) : undefined;
+  const onNext = next && onSelectLesson ? () => onSelectLesson(next.id) : undefined;
+  useEffect(() => {
+    if (hasMedia || denied) return;
+    const switchLesson = (event: KeyboardEvent) => {
+      const key = event.key.toLowerCase();
+      if (!event.shiftKey || event.altKey || event.metaKey || event.ctrlKey || event.isComposing || event.defaultPrevented) return;
+      const target = event.target;
+      if (target instanceof HTMLElement && (target.closest('input, textarea, select, [contenteditable]')
+        || (target !== document.body && target !== document.documentElement && !classroom.current?.contains(target)))) return;
+      const action = key === 'n' ? onNext : key === 'p' ? onPrevious : undefined;
+      if (action) { event.preventDefault(); action(); }
+    };
+    document.addEventListener('keydown', switchLesson);
+    return () => document.removeEventListener('keydown', switchLesson);
+  }, [hasMedia, denied, onNext, onPrevious]);
   if(error)return <PlatformState kind="error" message={error}/>;
-  if(!lesson || (user&&!state))return <PlatformState kind="loading"/>;
-  const data=lesson.data??{};
+  if(!denied && (!lesson || (user&&!state)))return <PlatformState kind="loading"/>;
   const readBody=(body:unknown):string=>{if(typeof body==='string')return body; if(!body||typeof body!=='object')return ''; const fields=body as Record<string,unknown>; return ['markdown','text','content'].map(key=>fields[key]).find((value):value is string=>typeof value==='string'&&Boolean(value.trim()))??'';};
   const markdown=readBody(data[english?'bodyEn':'bodyZh'])||readBody(data[english?'bodyZh':'bodyEn']);
-  return <div className="platform-learning-classroom">
-    <nav className="platform-learning-directory" data-site-surface="panel"><h2>{t('课程目录','Course lessons')}</h2>{lessons.map(item=>{
-      const done=state?.lessons.find(row=>row.id===item.id)?.status==='completed';
-      const label=<><span>{title(item)}</span>{done||item.accessScope==='public'||item.durationSeconds?<small>{done?t('已完成','Completed'):item.accessScope==='public'?t('试看','Preview'):learningTime(item.durationSeconds??0)}</small>:null}</>;
-      if (item.locked) return <button className="platform-learning-directory-locked" type="button" key={item.id} disabled>
-        <span>{title(item)}</span><LockKeyhole size={14} aria-hidden /><span className="sr-only">{t('需要解锁','Unlock required')}</span>
-      </button>;
-      return onSelectLesson||initialLessons.length?<button type="button" key={item.id} aria-current={item.id===lessonId?'step':undefined} onClick={()=>onSelectLesson?.(item.id)}>{label}</button>:<AppLink key={item.id} href={`/platform/courses/${courseId}/learn/${item.id}`} prefetch={false} aria-current={item.id===lessonId?'step':undefined}>{label}</AppLink>;
+  return <div className="platform-learning-classroom" ref={classroom}>
+    <nav className="platform-learning-directory" data-site-surface="panel"><h2>{t('课程目录','Course lessons')}</h2>{lessons.map((item, index) => {
+      const done = item.id === lessonId ? state?.progress?.status === 'completed' || item.status === 'completed'
+        : state?.lessons.find(row => row.id === item.id)?.status === 'completed' || item.status === 'completed';
+      const label = <><span>{title(item)}</span>{done ? <small>{t('已完成','Completed')}</small> : item.trial || item.accessScope === 'public' ? <small>{t('试看','Preview')}</small> : item.durationSeconds ? <small>{learningTime(item.durationSeconds)}</small> : null}</>;
+      const previousSection = lessons[index - 1]?.section;
+      return <div key={item.id}>
+        {item.section && item.section !== previousSection ? <h3>{t(item.section.zh, item.section.en)}</h3> : null}
+        {item.locked ? <button className="platform-learning-directory-locked" type="button" disabled aria-current={item.id === lessonId ? 'step' : undefined}>
+          <span>{title(item)}</span><LockKeyhole size={14} aria-hidden /><span className="sr-only">{t('需要解锁','Unlock required')}</span>
+        </button> : onSelectLesson ? <button type="button" aria-current={item.id === lessonId ? 'step' : undefined} onClick={() => onSelectLesson(item.id)}>{label}</button>
+          : <AppLink href={`/platform/courses/${courseId}/learn/${item.id}`} prefetch={false} aria-current={item.id === lessonId ? 'step' : undefined}>{label}</AppLink>}
+      </div>;
     })}</nav>
-    <div className="platform-learning-stage">{renderMedia({lessonId,startTime:initialPosition,onVideoElement:setVideo,onPrevious:previous&&onSelectLesson?()=>onSelectLesson(previous.id):undefined,onNext:next&&onSelectLesson?()=>onSelectLesson(next.id):undefined})}
+    <div className="platform-learning-stage">{renderMedia({ lessonId, startTime: initialPosition, hasMedia, denied, onVideoElement: setVideo, onPrevious, onNext })}
       {saveError?<p role="status">{saveError}</p>:null}{markdown?<div className="platform-prose">{renderArticleMarkdown(markdown)}</div>:null}
-      {!user?<p>{t('登录后同步进度、笔记和测验。','Sign in to sync progress, notes and quizzes.')}</p>:<>
+      {!denied && !hasMedia && user ? <button className="platform-button platform-button-primary" type="button" disabled={busy || state?.progress?.status === 'completed'} onClick={() => void completeReading()}>
+        {state?.progress?.status === 'completed' ? t('本节已完成', 'Lesson completed') : t('完成本节学习', 'Mark lesson complete')}
+      </button> : null}
+      {!denied && !hasMedia && (onPrevious || onNext) ? <div className="platform-write-actions">
+        {onPrevious && <button type="button" className="platform-button" onClick={onPrevious}>{t('上一节', 'Previous lesson')}</button>}
+        {onNext && <button type="button" className="platform-button" onClick={onNext}>{t('下一节', 'Next lesson')}</button>}
+      </div> : null}
+      {denied ? null : !user?<p>{t('登录后同步进度、笔记和测验。','Sign in to sync progress, notes and quizzes.')}</p>:<>
       <section className="platform-learning-panel" data-site-surface="panel"><h3>{t('课程笔记','Lesson notes')}</h3>
-        <button className="platform-button" type="button" onClick={()=>{setEditing(null);setDraft('');setDraftPosition(Math.floor(video?.currentTime??0));setNoteOpen(true);}}>{t('在当前时间记一笔','Take a note at this moment')}</button>
+        <button className="platform-button" type="button" onClick={()=>{if (video && !video.paused) video.pause();setEditing(null);setDraft('');setDraftPosition(Math.floor(video?.currentTime??0));setNoteOpen(true);}}>{t('在当前时间记一笔','Take a note at this moment')}</button>
         {noteOpen?<form onSubmit={event=>{event.preventDefault();void saveNote();}}><label>{t('笔记','Note')} · {learningTime(draftPosition)}<textarea autoComplete="off" className="platform-field-control" required maxLength={20000} rows={4} value={draft} onChange={event=>setDraft(event.target.value)}/></label><div className="platform-write-actions"><button className="platform-button platform-button-primary" disabled={busy}>{t('保存','Save')}</button><button className="platform-button" type="button" onClick={()=>setNoteOpen(false)}>{t('取消','Cancel')}</button></div></form>:null}
         {!state?.notes.length?<p>{t('还没有笔记。','No notes yet.')}</p>:state.notes.map(note=><article key={note.id}><button type="button" className="platform-text-button" onClick={()=>seek(note.positionSeconds??0)}>{learningTime(note.positionSeconds??0)}</button><div className="platform-prose">{renderArticleMarkdown(note.body)}</div><div className="platform-write-actions"><button type="button" className="platform-text-button" onClick={()=>{setEditing(note);setDraft(note.body);setDraftPosition(note.positionSeconds??0);setNoteOpen(true);}}>{t('编辑','Edit')}</button><button type="button" className="platform-text-button" disabled={busy} onClick={()=>{if(window.confirm(t('删除这条笔记？','Delete this note?')))void platformLearningRequest(`/me/notes/${note.id}`,{},'DELETE').then(refresh).catch(reason=>setSaveError(String(reason)));}}>{t('删除','Delete')}</button></div></article>)}
       </section><ClassroomQuiz key={String(data.quizId??lessonId)} data={data} lessonId={lessonId} attempts={state?.attempts??[]} onSaved={refresh}/></>}

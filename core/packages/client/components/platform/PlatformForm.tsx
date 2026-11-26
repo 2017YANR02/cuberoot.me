@@ -124,6 +124,10 @@ export function DomainForm({ spec, definition, entity, resourceId, busy, runActi
     return [item.key, typeof restored === 'string' || typeof restored === 'boolean' ? restored : initialValue(item, entity)];
   })), [entity, spec.fields, storedDraft]);
   const { values, setValues, submission, accept } = usePlatformFormDraft(`${definition.id}:${resourceId ?? entity?.id ?? ''}`, initial);
+  const trialSelectionEdited = useRef(false);
+  const lessonAccessEdited = useRef(false);
+  const courseEditor = definition.id === 'instructor-course' || definition.id === 'admin-course';
+  const courseTrialCandidate = courseEditor && ['pending', 'rejected', 'withdrawn'].includes(String(entity?.data?.reviewStatus));
   const [validation, setValidation] = useState<string | null>(null);
   const [pendingUploads, setPendingUploads] = useState<ReadonlySet<string>>(() => new Set());
   const submittedResourceId = spec.resourceIdField ? String(values[spec.resourceIdField] ?? '').trim() : resourceId;
@@ -146,13 +150,21 @@ export function DomainForm({ spec, definition, entity, resourceId, busy, runActi
     setStep(next);
   };
 
+  const flexibleTitles = definition.area === 'instructor'
+    && ['save-instructor-course', 'save-course-lesson', 'save-course-quiz'].includes(spec.action)
+    && spec.fields.some(item => item.key === 'titleZh');
+  const titleFields = ['titleZh', 'titleEn'];
+  const missingTitle = () => !titleFields.some(key => String(values[key] ?? '').trim());
+  const titleRequired = () => t('请填写至少一种语言的标题。', 'Enter a title in at least one language.');
+
   const wizardProblem = (index: number) => {
     if(applicationWizard&&index===2)return homepageChoice==='pending'||(homepageChoice==='configured'&&!homepageDraft)?t('请完成个人主页或选择以后再设置。','Complete your profile or choose to set it up later.'):null;
     const fields = spec.fields.filter(item => wizardSteps[index].fields.includes(item.key));
+    if (flexibleTitles && fields.some(item => titleFields.includes(item.key)) && missingTitle()) return titleRequired();
     for (const item of fields) {
       const value = String(values[item.key] ?? '').trim();
       const label = t(item.label.zh, item.label.en);
-      if ((item.required || (applicationWizard && item.key==='city' && values.teachingMode!=='online')) && !value) return t(`请填写${item.label.zh}。`, `Enter ${item.label.en}.`);
+      if (((item.required && !(flexibleTitles && titleFields.includes(item.key))) || (applicationWizard && item.key==='city' && values.teachingMode!=='online')) && !value) return t(`请填写${item.label.zh}。`, `Enter ${item.label.en}.`);
       if (value && ((item.pattern && !new RegExp(`^(?:${item.pattern})$`).test(value)) || (item.maxLength && value.length > item.maxLength) || (item.minLength && value.length < item.minLength))) {
         return t(`请检查${label}的格式或长度。`, `Check the format or length of ${label}.`);
       }
@@ -191,9 +203,14 @@ export function DomainForm({ spec, definition, entity, resourceId, busy, runActi
       setValidation(t(`请选择${missingSelect.label.zh}。`, `Select ${missingSelect.label.en}.`));
       return;
     }
+    if (flexibleTitles && missingTitle()) { setValidation(titleRequired()); return; }
     let payload: Record<string, unknown>;
     try {
       payload = { ...spec.payloadBase, ...Object.fromEntries(spec.fields.map((item) => [item.key, payloadValue(item, values[item.key] ?? '')])) };
+      if (flexibleTitles) {
+        payload.titleZh ||= payload.titleEn;
+        payload.titleEn ||= payload.titleZh;
+      }
       if(applicationWizard){
         if(homepageChoice==='deferred')Object.assign(payload,{profileDeferred:true,profileVisible:false,publicBio:null});
         else if(homepageDraft)payload.homepage=homepageDraft;
@@ -202,6 +219,10 @@ export function DomainForm({ spec, definition, entity, resourceId, busy, runActi
       if (spec.fields.some((item) => item.kind === 'rating' && (!Number.isInteger(payload[item.key]) || Number(payload[item.key]) < 1 || Number(payload[item.key]) > 5))) {
         setValidation(t('请先选择星级评分。', 'Choose a star rating first.'));
         return;
+      }
+      if (courseEditor && (spec.action === 'save-instructor-course' || spec.action === 'admin-save') && payload.presentation && typeof payload.presentation === 'object') {
+        if (trialSelectionEdited.current) payload.trialSelectionChanged = true;
+        else if (!courseTrialCandidate) delete (payload.presentation as Record<string, unknown>).trialLessonIds;
       }
       if (spec.resourceIdField) delete payload[spec.resourceIdField];
       const problem = validatePayload(definition.id, payload, t);
@@ -251,8 +272,9 @@ export function DomainForm({ spec, definition, entity, resourceId, busy, runActi
             })}</div><label><span>{t('擅长方向（公开，每行一项）','Specialties (public, one per line)')}</span><textarea className="platform-field-control platform-field-textarea" rows={3} value={String(value)} required onChange={event=>setValues(current=>({...current,specialties:event.target.value}))}/></label><small>{t(`${tags.length}/8 项，先选项目，再选择对应方向，也可手动补充。每项不超过 50 个字符。`,`${tags.length}/8 specialties. Choose a puzzle and its teaching focus, or add your own. Up to 50 characters each.`)}</small></div>;
           }
           if (item.key === 'instructorId') return <PlatformReferenceField key={item.key} source="instructorId" label={t('讲师','Instructor')} multiple={false} selected={value?[String(value)]:[]} onChange={ids=>setValues(current=>({...current,[item.key]:ids[0]??''}))}/>;
-          if (item.kind === 'structured') return <PlatformStructuredField key={`${resourceId ?? entity?.id ?? ''}:${item.key}:${coursePart ?? ''}`} fieldKey={item.key} label={label} routeId={definition.id} value={String(value)} coursePart={coursePart} courseLessons={item.key === 'presentation' && definition.id === 'instructor-course' ? (Array.isArray(entity?.data?.lessons) ? entity.data.lessons : []) : undefined} onChange={next => setValues(current=>({...current,[item.key]:next}))} onUploadPending={(key, pending) => setPendingUploads(current => { const next = new Set(current); if (pending) next.add(key); else next.delete(key); return next; })} />;
-          if (item.kind === 'markdown') return <label key={item.key} className="platform-form-wide"><span>{label}</span><textarea className="platform-field-control platform-field-textarea" rows={item.rows??8} required={item.required} value={String(value)} onChange={event=>setValues(current=>({...current,[item.key]:event.target.value}))}/><details><MoreToggle as="summary">{t('预览正文','Preview content')}</MoreToggle><div className="platform-prose">{renderArticleMarkdown(String(value))}</div></details></label>;
+          if (item.kind === 'structured') return <PlatformStructuredField key={`${resourceId ?? entity?.id ?? ''}:${item.key}:${coursePart ?? ''}`} fieldKey={item.key} label={label} routeId={definition.id} value={String(value)} coursePart={coursePart} courseLessons={item.key === 'presentation' && courseEditor ? (Array.isArray(entity?.data?.lessons) ? entity.data.lessons : []) : undefined}
+            courseTrialCandidate={courseTrialCandidate} onCourseTrialChange={() => { trialSelectionEdited.current = true; }} onChange={next => setValues(current=>({...current,[item.key]:next}))} onUploadPending={(key, pending) => setPendingUploads(current => { const next = new Set(current); if (pending) next.add(key); else next.delete(key); return next; })} />;
+          if (item.kind === 'markdown') return <label key={item.key} className="platform-form-wide"><span>{label}</span><textarea className="platform-field-control platform-field-textarea" rows={item.rows??8} required={item.required && !(flexibleTitles && titleFields.includes(item.key))} value={String(value)} onChange={event=>setValues(current=>({...current,[item.key]:event.target.value}))}/><details><MoreToggle as="summary">{t('预览正文','Preview content')}</MoreToggle><div className="platform-prose">{renderArticleMarkdown(String(value))}</div></details></label>;
           if (item.kind === 'datetime-local' && definition.id === 'admin-invites') {
             return <InviteExpiryField key={item.key} label={label} value={String(value)}
               onChange={next => setValues(current => ({ ...current, [item.key]: next }))} />;
@@ -264,7 +286,14 @@ export function DomainForm({ spec, definition, entity, resourceId, busy, runActi
               <span>{label}</span>
               <CompactSelect className="platform-form-select" triggerClassName="platform-field-control" unstyledTrigger showArrow
                 label={current} ariaLabel={label} valueText={current} value={String(value)} items={items}
-                onChange={next => setValues(previous => ({ ...previous, [item.key]: next }))} />
+                onChange={next => {
+                  if (item.key === 'accessScope') lessonAccessEdited.current = true;
+                  setValues(previous => ({
+                    ...previous, [item.key]: next,
+                    ...(item.key === 'lessonType' && next === 'introduction' && !lessonAccessEdited.current && { accessScope: 'public' }),
+                  }));
+                }} />
+              {item.key === 'lessonType' && <small>{t('引言课默认公开可看，可手动更改。', 'Introductions are public by default. You can change access.')}</small>}
               {item.key === 'currency' && value === 'USD' && values.enrollmentMode === 'purchase' && <small role="status">{t('美元课程暂未接入在线支付。', 'Online payment is not yet available for USD courses.')}</small>}
             </div>;
           }
@@ -275,7 +304,7 @@ export function DomainForm({ spec, definition, entity, resourceId, busy, runActi
                 <div className="platform-rating-stars">
                   {[1, 2, 3, 4, 5].map((star) => (
                     <label key={star} className="platform-rating-star" data-filled={star <= Number(value)}>
-                      <input className="platform-rating-input" type="radio" name={item.key} value={star} checked={Number(value) === star} required={item.required}
+                      <input className="platform-rating-input" type="radio" name={item.key} value={star} checked={Number(value) === star} required={item.required && !(flexibleTitles && titleFields.includes(item.key))}
                         aria-label={t(`${star} 星`, `${star} ${star === 1 ? 'star' : 'stars'}`)}
                         onChange={() => setValues((current) => ({ ...current, [item.key]: String(star) }))} />
                       <Star size={32} strokeWidth={1.5} aria-hidden="true" />
@@ -289,11 +318,11 @@ export function DomainForm({ spec, definition, entity, resourceId, busy, runActi
             <label key={item.key} className={item.kind === 'textarea' || item.kind === 'lines' || item.kind === 'json' ? 'platform-form-wide' : undefined}>
               <span className={spec.action === 'redeem-invite' ? 'sr-only' : undefined}>{label}</span>
               {item.kind === 'textarea' || item.kind === 'lines' || item.kind === 'json' ? (
-                <textarea className="platform-field-control platform-field-textarea" value={String(value)} rows={courseWizard && item.key.startsWith('description') ? 4 : item.rows ?? 4} required={item.required} maxLength={item.maxLength} onChange={(event) => setValues((current) => ({ ...current, [item.key]: event.target.value }))} />
+                <textarea className="platform-field-control platform-field-textarea" value={String(value)} rows={courseWizard && item.key.startsWith('description') ? 4 : item.rows ?? 4} required={item.required && !(flexibleTitles && titleFields.includes(item.key))} maxLength={item.maxLength} onChange={(event) => setValues((current) => ({ ...current, [item.key]: event.target.value }))} />
               ) : item.kind === 'date' ? (
                 <DateInput
                   value={String(value)}
-                  required={item.required}
+                  required={item.required && !(flexibleTitles && titleFields.includes(item.key))}
                   aria-label={label}
                   onChange={(nextValue) => setValues((current) => ({ ...current, [item.key]: nextValue }))}
                 />

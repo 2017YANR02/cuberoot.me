@@ -22,7 +22,7 @@ function isLearningSpaceEntry(href: string): boolean {
   return path === '/platform' || path.startsWith('/platform/');
 }
 
-export function PlatformCourseDetail({ course, lessons }: { course: PlatformEntity; lessons: Record<string, unknown>[] }) {
+export function PlatformCourseDetail({ course, lessons, preview = false }: { course: PlatformEntity; lessons: Record<string, unknown>[]; preview?: boolean }) {
   const t = useT();
   const lang = useLang();
   const user = useAuthUser();
@@ -87,16 +87,16 @@ export function PlatformCourseDetail({ course, lessons }: { course: PlatformEnti
         ? { label: t('加入课程', 'Enroll'), href: '#platform-course-access' }
         : { label: t('查看获取方式', 'How to get access'), href: '#platform-course-access' };
   const instructors = Array.isArray(data.instructors) ? data.instructors.map(commerceRecord) : [];
-  const summary = data.slug === 'yan-ruimin-3x3-beginner'
-    ? t('用层先法，从十字开始学到独立复原。', 'Learn the layer-by-layer method, from the first cross to solving on your own.')
-    : course.summary;
+  const summary = course.summary;
+  const audience = t(details.audience.zh, details.audience.en);
+  const target = t(details.target.zh, details.target.en);
   const lock = <><LockKeyhole size={14} aria-hidden /><span className="sr-only">{t('需要解锁', 'Unlock required')}</span></>;
 
   return <div className="platform-course-detail-content">
     <header className="platform-course-overview">
-      <PageBackLink fallback="/platform/courses" label={t('返回课程列表或上一层', 'Back to courses or previous page')} acceptEntry={isLearningSpaceEntry} />
+      {!preview && <PageBackLink fallback="/platform/courses" label={t('返回课程列表或上一层', 'Back to courses or previous page')} acceptEntry={isLearningSpaceEntry} />}
       <div className="platform-course-overview-title">
-        <h1>{course.title}</h1>
+        {preview ? <h3>{course.title}</h3> : <h1>{course.title}</h1>}
         {instructors.length > 0 ? <div className="platform-course-instructors">
           {instructors.map((instructor, index) => {
             const name = commerceText(instructor, 'displayName', t);
@@ -116,8 +116,10 @@ export function PlatformCourseDetail({ course, lessons }: { course: PlatformEnti
       <PlatformCourseCover {...details} eager />
       <div className="platform-course-overview-copy">
         {summary && <p>{summary}</p>}
+        {audience && <p>{t('适合人群', 'Suitable for')} · {audience}</p>}
+        {target && <p>{t('目标水平', 'Target level')} · {target}</p>}
         {composition && <p className="platform-course-access-note">{composition}</p>}
-        <div className="platform-home-actions">
+        {!preview && <div className="platform-home-actions">
           {nextLesson && <AppLink className="platform-button platform-button-primary" href={lessonHref(nextLesson)} prefetch={false}>
             <Play aria-hidden />{firstAction}
           </AppLink>}
@@ -127,7 +129,7 @@ export function PlatformCourseDetail({ course, lessons }: { course: PlatformEnti
           {locked && <AppLink className={nextLesson ? 'platform-button' : 'platform-button platform-button-primary'} href={unlock.href} prefetch={false}>
             {unlock.label}<ArrowRight aria-hidden />
           </AppLink>}
-        </div>
+        </div>}
         {locked && data.enrollmentMode === 'invite' && <p className="platform-course-access-note">{t('带锁课时需兑换后观看。', 'Redeem a code to watch locked lessons.')}</p>}
         {locked && data.enrollmentMode === 'purchase' && data.baseAmountMinor != null && <p className="platform-course-access-note">
           {commerceMoney(data.baseAmountMinor, data.currency)}
@@ -146,7 +148,8 @@ export function PlatformCourseDetail({ course, lessons }: { course: PlatformEnti
         </MoreToggle>
         <ol className="platform-course-lesson-rows">
           {group.lessons.map(lesson => <li key={lesson.id}>
-            {lesson.locked ? <span className="platform-course-lesson-row platform-course-lesson-locked">
+            {preview ? <span className="platform-course-lesson-row"><span>{lesson.title}</span>{lesson.preview && <small>{t('试听', 'Preview')}</small>}</span>
+              : lesson.locked ? <span className="platform-course-lesson-row platform-course-lesson-locked">
               <span>{lesson.title}</span>
               <span className="platform-course-lesson-actions">
                 {lesson.duration > 0 && <small>{learningTime(lesson.duration)}</small>}

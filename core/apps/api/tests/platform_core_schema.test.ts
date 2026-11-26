@@ -102,7 +102,7 @@ describe('main-site Platform PostgreSQL schema', () => {
     expect(schema).toContain('cover_media_id UUID REFERENCES platform_media_assets(id) ON DELETE SET NULL');
     expect(readme).toContain('0244_platform_lesson_covers.sql');
     expect(devSchema).toContain("{ n: 244, slug: 'platform_lesson_covers'");
-    expect(devSchema).toContain("evolved: [203, 244, 258, 259, 260]");
+    expect(devSchema).toContain("evolved: [203, 244, 258, 259, 260, 360, 361, 362]");
   });
 
   it('keeps Platform account deletion compatible with immutable evidence', async () => {

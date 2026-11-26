@@ -2,15 +2,15 @@ import { sessionFetch } from '@/lib/session-fetch';
 import { apiUrl } from './api-base';
 import { authHeaders, handleApi } from './admin-api';
 
-export async function platformLearningRequest<T>(path: string, body?: Record<string, unknown>, method = 'POST', signal?: AbortSignal, idempotencyKey?: string): Promise<T> {
+export async function platformLearningRequest<T>(path: string, body?: Record<string, unknown>, method = 'POST', signal?: AbortSignal, idempotencyKey?: string, keepalive = false): Promise<T> {
   return handleApi<T>(await sessionFetch(apiUrl(`/v1/platform${path}`), {
     method: body === undefined ? 'GET' : method,
     headers: { ...authHeaders(), ...(body === undefined ? {} : { 'Idempotency-Key': idempotencyKey ?? crypto.randomUUID() }) },
-    ...(body === undefined ? {} : { body: JSON.stringify(body) }), signal,
+    ...(body === undefined ? {} : { body: JSON.stringify(body) }), signal, keepalive,
   }));
 }
 export interface LearningNote { id: string; body: string; positionSeconds: number | null; updatedAt?: string; lessonId?: string; courseId?: string; title?: string; courseTitleZh?: string; courseTitleEn?: string }
-export interface LearningLesson { id: string; titleZh?: string; titleEn?: string; ordinal?: number; status?: string; progressBps?: number; durationSeconds?: number; accessScope?: string; locked?: boolean }
+export interface LearningLesson { id: string; titleZh?: string; titleEn?: string; ordinal?: number; status?: string; progressBps?: number; durationSeconds?: number; accessScope?: string; locked?: boolean; section?: { zh: string; en: string }; trial?: boolean }
 export interface QuizFeedback { questionId: string; selected: unknown; expected: unknown; correct: boolean; explanation?: string }
 export interface LearningAttempt { id: string; quizId: string; quizRevision?: number; attemptNumber: number; scoreBps: number; passed: boolean; gradedAt?: string; feedback?: QuizFeedback[]; awardedPoints?: boolean }
 export interface LessonLearningState { progress: { status: string; progressBps: number; positionSeconds: number } | null; notes: LearningNote[]; lessons: LearningLesson[]; attempts: LearningAttempt[] }

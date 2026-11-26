@@ -24,8 +24,9 @@ export function createPlatformMediaToken(input: {
   mediaId: string;
   binding: string;
   nowSeconds?: number;
+  ttlSeconds?: number;
 }): { token: string; expiresAt: string } {
-  const expires = Math.floor(input.nowSeconds ?? Date.now() / 1000) + TOKEN_TTL_SECONDS;
+  const expires = Math.floor(input.nowSeconds ?? Date.now() / 1000) + (input.ttlSeconds ?? TOKEN_TTL_SECONDS);
   const message = `${input.mediaId}.${input.binding}.${expires}`;
   return {
     token: `${expires}.${signature(message)}`,
@@ -38,12 +39,13 @@ export function verifyPlatformMediaToken(input: {
   mediaId: string;
   binding: string;
   nowSeconds?: number;
+  ttlSeconds?: number;
 }): boolean {
   const match = /^(\d{10})\.([A-Za-z0-9_-]{43})$/.exec(input.token);
   if (!match) return false;
   const expires = Number(match[1]);
   const now = Math.floor(input.nowSeconds ?? Date.now() / 1000);
-  if (!Number.isSafeInteger(expires) || expires < now || expires > now + TOKEN_TTL_SECONDS) return false;
+  if (!Number.isSafeInteger(expires) || expires < now || expires > now + (input.ttlSeconds ?? TOKEN_TTL_SECONDS)) return false;
   const expected = Buffer.from(signature(`${input.mediaId}.${input.binding}.${expires}`), 'base64url');
   const received = Buffer.from(match[2], 'base64url');
   return received.length === expected.length && timingSafeEqual(received, expected);

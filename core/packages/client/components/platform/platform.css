@@ -3085,3 +3085,9 @@ body:has(.platform-shell) :is(.clawd-deskpet, .deskpet-compact) { display: none;
 .platform-pagination .paginator-input { width: 64px; padding: 8px; color: var(--foreground); background: var(--background); border: 1px solid var(--input); border-radius: 6px; }
 .platform-pagination .wse-page-select { width: fit-content; padding: 8px; color: var(--foreground); background: var(--background); border: 1px solid var(--input); border-radius: 6px; }
 .platform-pagination .wse-page-btn:disabled { opacity: .45; cursor: default; }
+
+.platform-content-review-field { padding: 0.65rem 0; }
+.platform-content-review-field > h4 small { margin-inline-start: 0.65rem; color: var(--accent); }
+.platform-content-review-field[data-changed] { border-inline-start: 2px solid var(--accent); padding-inline: 0.8rem; }
+.platform-content-review-comparison { display: grid; gap: 0.75rem; grid-template-columns: repeat(auto-fit, minmax(min(100%, 15rem), 1fr)); overflow-wrap: anywhere; }
+.platform-content-review-comparison > div { display: grid; align-content: start; gap: 0.4rem; }

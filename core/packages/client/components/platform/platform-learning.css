@@ -2,6 +2,8 @@
 .platform-learning-classroom { display:grid; grid-template-columns:minmax(180px,260px) minmax(0,1fr); gap:24px; align-items:start; }
 .platform-learning-directory { padding:16px; border:1px solid var(--border-default); border-radius:16px; display:grid; gap:8px; }
 .platform-learning-directory :is(button,a) { display:flex; justify-content:space-between; gap:8px; text-align:start; background:none; color:var(--foreground); border:0; padding:10px; font:inherit; text-decoration:none; border-radius:8px; cursor:pointer; }
+.platform-learning-directory :is(button,a) { width:100%; }
+.platform-learning-directory h3 { margin:8px 10px 4px; font-size:0.85rem; color:var(--muted-foreground); }
 .platform-learning-directory [aria-current=step] { background:var(--accent-soft); color:var(--accent); }
 .platform-learning-directory .platform-learning-directory-locked:disabled { color:var(--muted-foreground); cursor:default; }
 .platform-learning-directory .platform-learning-directory-locked:disabled svg { flex:none; }

@@ -399,6 +399,10 @@ platformContentRoutes.get('/platform/admin/analytics', async (c) => {
   const [summary, daily, money, recent, statuses] = await Promise.all([
     platformQuery(platformDb(),`SELECT
       (SELECT COUNT(*)::int FROM platform_courses WHERE status='published') AS "publishedCourses",
+      (SELECT COUNT(*)::int FROM platform_instructor_applications WHERE status='pending') AS "pendingInstructorApplications",
+      (SELECT COUNT(*)::int FROM platform_content_reviews WHERE status='pending') AS "pendingContentReviews",
+      (SELECT COUNT(*)::int FROM platform_instructor_payouts WHERE status IN ('draft','approved','processing','failed')) AS "pendingPayouts",
+      (SELECT COUNT(*)::int FROM platform_reconciliation_records WHERE resolved_at IS NULL AND status NOT IN ('matched','ignored')) AS "unresolvedReconciliation",
       (SELECT COUNT(*)::int FROM platform_course_entitlements WHERE status='active') AS "activeEntitlements",
       (SELECT COUNT(*)::int FROM platform_orders WHERE created_at>=NOW()-make_interval(days=>$1)) AS orders,
       (SELECT COUNT(*)::int FROM platform_orders WHERE paid_at>=NOW()-make_interval(days=>$1)) AS "paidOrders"`,[days]),

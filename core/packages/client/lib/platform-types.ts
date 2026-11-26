@@ -103,6 +103,7 @@ export interface PlatformResourceResult {
   page?: number;
   pageSize?: number;
   categories?: string[];
+  catalogTopicPuzzles?: Record<string, string[]>;
   instructorHomepageDraft?: boolean;
 }
 
@@ -123,6 +124,8 @@ export type PlatformActionId =
   | 'link-instructor-profile'
   | 'initialize-instructor-profile'
   | 'save-instructor-course'
+  | 'approve-course-reviews'
+  | 'hide-course-review'
   | 'decide-content-review'
   | 'withdraw-content-review'
   | 'delete-course'

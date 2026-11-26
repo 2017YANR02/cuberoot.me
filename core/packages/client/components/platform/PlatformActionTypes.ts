@@ -42,5 +42,7 @@ export interface CommonProps {
   busy: string | null;
   runAction: RunAction;
   onSaved?: () => void;
+  moderationPage?: number;
+  onModerationPage?: (page: number) => void;
   reviewMessage?: { text: string; error?: boolean } | null;
 }

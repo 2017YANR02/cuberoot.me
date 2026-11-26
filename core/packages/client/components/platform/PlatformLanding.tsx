@@ -15,7 +15,7 @@ import type { TeachingLearningContext } from '@cuberoot/shared/teaching';
 import type { TeachingOrganizationAccess } from '@/lib/teaching-saas-api';
 import type { PlatformEntity } from '@/lib/platform-types';
 import { SkeletonBlock } from '@/components/ContentSkeleton';
-import { courseCatalogDetails, courseLessonAccess, loadCourseCatalog } from '@/lib/platform-course-catalog';
+import { courseCatalogDetails, courseLessonAccess, firstPlatformTrialLessonId } from '@/lib/platform-course-catalog';
 import { commerceRecord } from '@/lib/platform-commerce-format';
 import { learningTime } from '@/lib/platform-learning';
 import { platformCourseLessonSection } from '@/lib/platform-routes';
@@ -84,23 +84,15 @@ export function PlatformLanding() {
     void fetchTeacherDirectory().then(items => {
       if (!controller.signal.aborted) setTeachers(items.filter(item => item.kind === 'teacher').slice(0, 3));
     }).catch(() => {});
-    void loadPlatformResource('courses', { params: {}, page: 1, pageSize: 12, signal: controller.signal }).then(async result => {
+    void loadPlatformResource('courses', { params: {}, trialOnly: true, page: 1, pageSize: 12, signal: controller.signal }).then(result => {
       if (controller.signal.aborted) return;
-      const courses = result.items.filter(item => item.status === 'published');
-      const candidates = courses.filter(item => platformTrialLessonIds(item.data?.presentation)?.length !== 0).toSorted((a, b) => Number(Boolean(platformTrialLessonIds(b.data?.presentation)?.length)) - Number(Boolean(platformTrialLessonIds(a.data?.presentation)?.length)) || Number(courseCatalogDetails(b).topics.includes('beginner')) - Number(courseCatalogDetails(a).topics.includes('beginner')));
-      let incomplete = result.total != null ? result.total > result.items.length : result.items.length >= 12;
-      for (const candidate of candidates) {
-        if (controller.signal.aborted) return;
-        try {
-          const detail = (await loadPlatformResource('courses', { params: { id: candidate.id }, signal: controller.signal })).items[0];
-          const lessons = Array.isArray(detail?.data?.lessons) ? detail.data.lessons.map(commerceRecord) : [];
-          const ids = platformTrialLessonIds(detail?.data?.presentation);
-          const first = lessons.find(lesson => typeof lesson.id === 'string' && lesson.accessScope === 'public' && platformCourseLessonSection(lesson, ids) === 'trial');
-          if (first && !controller.signal.aborted) { setTrial({ id: candidate.id, lessonId: String(first.id) }); return; }
-          if (!detail) incomplete = true;
-        } catch { incomplete = true; /* Try the next published course if this detail is unavailable. */ }
+      const candidates = result.items.filter(item => item.status === 'published').toSorted((a, b) =>
+        Number(courseCatalogDetails(b).topics.includes('beginner')) - Number(courseCatalogDetails(a).topics.includes('beginner')));
+      for (const course of candidates) {
+        const lessonId = firstPlatformTrialLessonId(course);
+        if (lessonId) { setTrial({ id: course.id, lessonId }); break; }
       }
-      if (!controller.signal.aborted && !incomplete) setTrialChecked(true);
+      setTrialChecked(result.total === 0 || (result.total == null && result.items.length < 12));
     }).catch(() => {});
     return () => controller.abort();
   }, []);
@@ -112,10 +104,15 @@ export function PlatformLanding() {
     const options = { params: {}, signal: controller.signal };
     void Promise.allSettled([
       loadPlatformResource('account-courses', options).then(async result => {
-        const publicIds = result.items.some(item => item.data?.courseStatus == null)
-          ? new Set((await loadCourseCatalog(controller.signal)).map(item => item.id)) : null;
-        return { courses: result.items.filter(item => (item.status == null || item.status === 'active') && (item.data?.courseStatus === 'published'
-          || (item.data?.courseStatus == null && publicIds?.has(item.id)))), accountCourseIds: new Set(result.items.map(item => item.id)) };
+        const active = result.items.filter(item => item.status == null || item.status === 'active');
+        const unknown = active.some(item => item.data?.courseStatus == null);
+        const publicIds = unknown
+          ? new Set((await loadPlatformResource('courses', { ...options, page: 1, pageSize: 60 })).items.map(item => item.id))
+          : null;
+        return {
+          courses: active.filter(item => item.data?.courseStatus === 'published' || (item.data?.courseStatus == null && publicIds?.has(item.id))),
+          accountCourseIds: new Set(result.items.map(item => item.id)),
+        };
       }),
       loadPlatformResource('account-progress', options),
     ]).then(async ([courses, progress]) => {
@@ -168,24 +165,23 @@ export function PlatformLanding() {
     const controller = new AbortController();
     // Confirm every studied course, including courses not visible on the home
     // page. Public lessons alone do not prove the user lacks full access.
-    void (async () => {
-      for (const id of new Set(studied.map(item => String(item.data?.courseId)))) {
-        if (controller.signal.aborted) return;
-        const detail = (await loadPlatformResource('courses', { params: { id }, includeCourseAccess: true, signal: controller.signal })).items[0];
-        const data = detail?.data;
-        if (detail?.id !== id || !Array.isArray(data?.lessons) || !Array.isArray(data.lessonAccess)) return;
-        const lessons = data.lessons.map(commerceRecord);
-        const { canWatch } = courseLessonAccess(data);
-        const restricted = lessons.filter(lesson => lesson.accessScope === 'entitled');
-        const trialIds = platformTrialLessonIds(data.presentation);
-        if (!restricted.length || restricted.some(lesson => typeof lesson.id !== 'string' || canWatch(lesson.id, lesson.accessScope))) return;
-        if (!studied.filter(record => record.data?.courseId === id).every(record => {
-          const lesson = lessons.find(row => row.id === (record.data?.lessonId ?? record.id));
-          return lesson?.accessScope === 'public' && platformCourseLessonSection(lesson, trialIds) === 'trial';
-        })) return;
-      }
-      if (!controller.signal.aborted) setTrialHint({ personal: current, courseId });
-    })().catch(() => { /* Unknown entitlement or incomplete history: no redemption prompt. */ });
+    const ids = [...new Set(studied.map(item => String(item.data?.courseId)))];
+    void Promise.all(ids.map(async id => {
+      const detail = (await loadPlatformResource('courses', { params: { id }, includeCourseAccess: true, signal: controller.signal })).items[0];
+      const data = detail?.data;
+      if (detail?.id !== id || !Array.isArray(data?.lessons) || !Array.isArray(data.lessonAccess)) return false;
+      const lessons = data.lessons.map(commerceRecord);
+      const { canWatch } = courseLessonAccess(data);
+      const restricted = lessons.filter(lesson => lesson.accessScope === 'entitled');
+      const trialIds = platformTrialLessonIds(data.presentation);
+      if (!restricted.length || restricted.some(lesson => typeof lesson.id !== 'string' || canWatch(lesson.id, lesson.accessScope))) return false;
+      return studied.filter(item => item.data?.courseId === id).every(item => {
+        const lesson = lessons.find(row => row.id === (item.data?.lessonId ?? item.id));
+        return lesson?.accessScope === 'public' && platformCourseLessonSection(lesson, trialIds) === 'trial';
+      });
+    })).then(results => {
+      if (!controller.signal.aborted && results.every(Boolean)) setTrialHint({ personal: current, courseId });
+    }).catch(() => { /* Unknown entitlement or incomplete history: no redemption prompt. */ });
     return () => controller.abort();
   }, [current, courseId, resumeProgress]);
   const hasLessonRows = Array.isArray(course?.data?.lessons);

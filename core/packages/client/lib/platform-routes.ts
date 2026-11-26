@@ -39,6 +39,8 @@ export function platformCourseLessonSection(lesson: Readonly<Record<string, unkn
   const slug = String(lesson.slug ?? '');
   const title = String(lesson.titleZh || lesson.titleEn || '');
   if (isPlatformIntroductionLesson(lesson)) return 'introduction';
+  if (lesson.accessScope === 'public') return 'trial';
+  if (lesson.accessScope === 'entitled') return 'core';
   if (trialLessonIds !== undefined) return typeof lesson.id === 'string' && trialLessonIds.includes(lesson.id) ? 'trial' : 'core';
   if (/^trial-/i.test(slug) || /^(?:试听课|Trial lessons?)/i.test(title)) return 'trial';
   return 'core';
@@ -182,7 +184,7 @@ export const PLATFORM_ROUTES: readonly PlatformRouteDefinition[] = [
   route({ id: 'admin-applications', pattern: 'admin/teacher-applications', area: 'admin', access: 'admin', kind: 'collection', title: text('讲师申请', 'Instructor applications'), resource: 'admin-applications' }),
   route({ id: 'admin-coupons', pattern: 'admin/coupons', area: 'admin', access: 'admin', kind: 'collection', title: text('优惠券', 'Coupons'), resource: 'admin-coupons', actions: ['admin-save', 'admin-delete'] }),
   route({ id: 'admin-course-new', pattern: 'admin/courses/new', area: 'admin', access: 'admin', kind: 'form', title: text('新建课程', 'New course'), resource: 'admin-courses', actions: ['admin-save'] }),
-  route({ id: 'admin-course', pattern: 'admin/courses/:id', area: 'admin', access: 'admin', kind: 'detail', title: text('编辑课程', 'Edit course'), resource: 'admin-courses', actions: ['admin-save', 'delete-course', 'save-course-lesson', 'delete-course-lesson', 'save-course-quiz', 'delete-course-quiz', 'decide-content-review'] }),
+  route({ id: 'admin-course', pattern: 'admin/courses/:id', area: 'admin', access: 'admin', kind: 'detail', title: text('编辑课程', 'Edit course'), resource: 'admin-courses', actions: ['admin-save', 'delete-course', 'save-course-lesson', 'delete-course-lesson', 'save-course-quiz', 'delete-course-quiz', 'decide-content-review', 'approve-course-reviews', 'hide-course-review'] }),
   route({ id: 'admin-courses', pattern: 'admin/courses', area: 'admin', access: 'admin', kind: 'collection', title: text('课程管理', 'Course management'), resource: 'admin-courses', actions: ['delete-course'] }),
   route({ id: 'admin-paths', pattern: 'admin/paths', area: 'admin', access: 'admin', kind: 'collection', title: text('学习路径管理', 'Learning path management'), resource: 'admin-paths', actions: ['admin-save'] }),
   route({ id: 'admin-event-new', pattern: 'admin/events/new', area: 'admin', access: 'admin', kind: 'form', title: text('新建活动', 'New event'), resource: 'admin-events', actions: ['admin-save'] }),

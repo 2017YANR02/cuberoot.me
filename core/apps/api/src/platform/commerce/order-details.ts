@@ -17,7 +17,14 @@ export async function orderDetails(db: PlatformDb, predicate: string, parameters
            o.paid_at AS "paidAt", o.cancelled_at AS "cancelledAt", o.fulfilled_at AS "fulfilledAt", o.created_at AS "createdAt",
            COALESCE(jsonb_agg(jsonb_build_object(
              'id', i.id::text, 'sellableType', i.sellable_type, 'fulfillmentType', i.fulfillment_type,
-             'quantity', i.quantity,
+             'quantity', i.quantity, 'courseId', i.course_id::text,
+             'learningLessonId', CASE WHEN o.status IN ('paid','fulfilled') AND i.course_id IS NOT NULL THEN (
+               SELECT lesson.id::text FROM platform_lessons lesson
+               JOIN platform_courses course ON course.id=lesson.course_id
+               WHERE lesson.course_id=i.course_id AND lesson.status='published' AND lesson.current_revision IS NOT NULL
+                 AND course.status IN ('published','unlisted')
+               ORDER BY lesson.ordinal, lesson.id LIMIT 1
+             ) END,
              'unitAmountMinor', i.unit_amount_minor, 'lineTotalAmountMinor', i.line_total_amount_minor,
              'currency', i.currency, 'snapshot', i.sellable_snapshot
            ) ORDER BY i.line_number) FILTER (WHERE i.id IS NOT NULL), '[]'::jsonb) AS items

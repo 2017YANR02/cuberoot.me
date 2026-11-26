@@ -103,10 +103,10 @@ export function registerPayoutRoutes(platformCommerceRoutes: Hono): void {
     await requirePlatformAdmin(c);
     const { page, pageSize, offset } = pagination(c);
     const q=c.req.query('q')?.trim().slice(0,200)??'';
-    const rows = await platformQuery(platformDb(), `SELECT p.id::text, p.payout_number AS "payoutNumber", p.instructor_id::text AS "instructorId", p.status, p.payout_profile_snapshot_encrypted, p.payout_key_version, (SELECT t.state FROM platform_wechat_payout_transfers t WHERE t.payout_id=p.id) AS "transferState", p.amount_minor AS "amountMinor", p.currency, p.provider_reference AS "providerReference", p.failure_code AS "failureCode", p.created_at AS "createdAt" FROM platform_instructor_payouts p WHERE ($3='' OR p.payout_number ILIKE '%'||$3||'%') ORDER BY p.created_at DESC, p.id DESC LIMIT $1 OFFSET $2`, [pageSize, offset,q]);
+    const rows = await platformQuery(platformDb(), `SELECT p.id::text, p.payout_number AS "payoutNumber", p.instructor_id::text AS "instructorId", p.status, p.payout_profile_snapshot_encrypted, p.payout_key_version, (SELECT t.state FROM platform_wechat_payout_transfers t WHERE t.payout_id=p.id) AS "transferState", p.amount_minor AS "amountMinor", p.currency, p.provider_reference AS "providerReference", p.failure_code AS "failureCode", p.created_at AS "createdAt" FROM platform_instructor_payouts p WHERE ($3='' OR p.payout_number ILIKE '%'||$3||'%') AND (NOT $4::boolean OR status IN ('draft','approved','processing','failed')) ORDER BY p.created_at DESC, p.id DESC LIMIT $1 OFFSET $2`, [pageSize, offset,q,c.req.query('pending') === '1']);
     for (const row of rows) { row.payoutMode = payoutProfile(row as { payout_profile_snapshot_encrypted: Buffer; payout_key_version: number }).method; delete row.payout_profile_snapshot_encrypted; delete row.payout_key_version; }
     privateNoStore(c);
-    const counts=await platformQuery<{total:number}>(platformDb(),`SELECT COUNT(*)::int AS total FROM platform_instructor_payouts WHERE TRUE AND ($1='' OR payout_number ILIKE '%'||$1||'%')`,[q]);
+    const counts=await platformQuery<{total:number}>(platformDb(),`SELECT COUNT(*)::int AS total FROM platform_instructor_payouts WHERE TRUE AND ($1='' OR payout_number ILIKE '%'||$1||'%') AND (NOT $2::boolean OR status IN ('draft','approved','processing','failed'))`,[q,c.req.query('pending') === '1']);
     return c.json({ items: rows, page, pageSize,total:counts[0]?.total??0 });
   });
 

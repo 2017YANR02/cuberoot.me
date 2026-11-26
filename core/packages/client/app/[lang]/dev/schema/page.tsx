@@ -402,13 +402,13 @@ const TABLES: Table[] = [
   { name: 'platform_learning_stage_preferences', domain: 'platform', origin: '0350', purpose: { zh: '按账号保存学习推荐阶段，注销账号时级联删除；不影响课程访问权限', en: 'Account-owned learning recommendation stage, deleted with the account; does not grant course access' }, cols: [
     { name: 'user_id BIGINT (PK, FK app_users), stage TEXT' },
   ] },
-  { name: 'platform_content_reviews', domain: 'platform', origin: '0349', purpose: { zh: '课程及课时的版本化发布审核，保留提交、撤回与审核记录', en: 'Versioned publication reviews for courses and lessons, retaining submissions, withdrawals and decisions' }, cols: [
-    { name: 'id UUID (PK), course_id, lesson_id' }, { name: 'base_revision, candidate_revision, target_status, metadata' }, { name: 'status, submitted_by_user_id, decided_by_user_id, decision_note, submitted_at, decided_at' },
+  { name: 'platform_content_reviews', domain: 'platform', origin: '0349', evolved: [362], purpose: { zh: '课程、课时与测验的版本化发布审核，保留提交、撤回与审核记录', en: 'Versioned publication reviews for courses, lessons and quizzes, retaining submissions, withdrawals and decisions' }, cols: [
+    { name: 'id UUID (PK), course_id, lesson_id, quiz_id' }, { name: 'base_revision, candidate_revision, target_status, metadata' }, { name: 'status, submitted_by_user_id, decided_by_user_id, decision_note, submitted_at, decided_at' },
   ] },
   { name: 'platform_homepage_settings', domain: 'platform', origin: '0343', naturalKey: true, purpose: { zh: '学习空间首页的精选内容、展示时间和自动推荐栏目顺序', en: 'Learning homepage featured content, display schedules and automatic recommendation order' }, cols: [
     { name: 'singleton BOOLEAN (PK), featured_items JSONB, sections JSONB, updated_at' },
   ] },
-  { name: 'platform_*', domain: 'platform', origin: '0167', evolved: [203, 244, 258, 259, 260], purpose: { zh: '主站 Platform 的 PostgreSQL 底座：统一账号下的目录、学习、交易、内容、讲师、QR、隐私、审计、outbox 与幂等；不恢复旧 SQLite 双写，也不迁移少量 demo / 计时器历史数据', en: 'The PostgreSQL foundation for main-site Platform catalog, learning, commerce, content, instructors, QR, privacy, audit, outbox, and idempotency under canonical accounts; no legacy SQLite dual-write or small demo/timer-history migration' }, family: [
+  { name: 'platform_*', domain: 'platform', origin: '0167', evolved: [203, 244, 258, 259, 260, 360, 361, 362], purpose: { zh: '主站 Platform 的 PostgreSQL 底座：统一账号下的目录、学习、交易、内容、讲师、QR、隐私、审计、outbox 与幂等；不恢复旧 SQLite 双写，也不迁移少量 demo / 计时器历史数据', en: 'The PostgreSQL foundation for main-site Platform catalog, learning, commerce, content, instructors, QR, privacy, audit, outbox, and idempotency under canonical accounts; no legacy SQLite dual-write or small demo/timer-history migration' }, family: [
     'platform_instructors', 'platform_instructor_applications', 'platform_media_assets', 'platform_courses',
     'platform_course_owners', 'platform_course_revisions', 'platform_lessons', 'platform_lesson_revisions',
     'platform_learning_paths', 'platform_learning_path_items', 'platform_quizzes', 'platform_quiz_revisions',
@@ -616,6 +616,9 @@ const TABLES: Table[] = [
 ];
 
 const MIGRATIONS: { n: number; slug: string; desc: Bi }[] = [
+  { n: 362, slug: 'platform_quiz_content_reviews', desc: { zh: '增加测验发布审核，并校验所属课时及前后修订。', en: 'Add quiz publication reviews and validate lesson ownership and both revisions.' } },
+  { n: 361, slug: 'platform_course_presentation_defaults', desc: { zh: '增加课程展示默认值字段，保留已封存的历史修订。', en: 'Store course display defaults while preserving sealed historical revisions.' } },
+  { n: 360, slug: 'platform_lesson_type_and_order', desc: { zh: '新增显式课时类型并支持原子交换课时顺序。', en: 'Add explicit lesson types and support atomic lesson reordering.' } },
   { n: 358, slug: 'competition_timing_and_review', desc: { zh: '记录对战观察与起表时间，并将抽检录像关联到单把尝试。', en: 'Persist duel inspection and solve starts and link review clips to individual attempts.' } },
   { n: 357, slug: 'competition_double_elimination', desc: { zh: '保存双败签表、同步开赛时间、小局结果和智能魔方证据。', en: 'Store double-elimination brackets, synchronized starts, game results and smart-cube evidence.' } },
   { n: 356, slug: 'competition_unified_workflow', desc: { zh: '统一赛事审核、赛型、项目票种、默认场次和自助成绩。', en: 'Unify competition reviews, supervision modes, ticket divisions, default sessions and self-service results.' } },

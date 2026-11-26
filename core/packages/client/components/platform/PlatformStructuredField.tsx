@@ -26,7 +26,15 @@ const variantFields:Column[]=[{key:'sku',zh:'规格编号',en:'SKU',required:tru
 const ticketFields:Column[]=[{key:'code',zh:'票种编号',en:'Ticket code',required:true},{key:'titleZh',zh:'中文名称',en:'Chinese name',required:true},{key:'titleEn',zh:'英文名称',en:'English name'},{key:'amountMinor',zh:'票价（元）',en:'Price (major units)',kind:'money',required:true},{key:'currency',zh:'币种',en:'Currency',required:true},{key:'capacity',zh:'名额',en:'Capacity',kind:'number',required:true},{key:'salesStartAt',zh:'开售时间（本地时间）',en:'Sales open (local time)',kind:'datetime-local'},{key:'salesEndAt',zh:'截止时间（本地时间）',en:'Sales close (local time)',kind:'datetime-local'}];
 const venueFields:Column[]=[{key:'name',zh:'场地名称',en:'Venue name'},{key:'city',zh:'城市',en:'City'},{key:'address',zh:'地址',en:'Address'},{key:'url',zh:'场地网址',en:'Venue URL',kind:'url'}];
 const productPresentation:Column[]=[{key:'brand',zh:'品牌',en:'Brand'},{key:'imageUrl',zh:'主图网址或站内路径',en:'Main image URL or site path'},{key:'imageUrls',zh:'其他图片（每行一个网址或路径）',en:'Additional images (one URL or path per line)',kind:'lines'},{key:'subtitleZh',zh:'中文简述',en:'Chinese subtitle'},{key:'subtitleEn',zh:'英文简述',en:'English subtitle'},{key:'shippingZh',zh:'中文配送说明',en:'Chinese delivery details',kind:'textarea'},{key:'shippingEn',zh:'英文配送说明',en:'English delivery details',kind:'textarea'},{key:'originalAmountMinor',zh:'原价（元，可空）',en:'Original price (optional)',kind:'money'},{key:'featuresZh',zh:'中文特性（每行一项）',en:'Chinese features (one per line)',kind:'lines'},{key:'featuresEn',zh:'英文特性（每行一项）',en:'English features (one per line)',kind:'lines'}];
-const coursePresentation:Column[]=[{key:'level',zh:'适合水平',en:'Level'},{key:'format',zh:'课程形式',en:'Format'},{key:'highlights',zh:'课程亮点（每行一项）',en:'Highlights (one per line)',kind:'lines'},{key:'nextLiveAt',zh:'下次直播',en:'Next live session',kind:'datetime-local'}];
+const coursePresentation: Column[] = [
+  { key: 'levelZh', zh: '中文适合人群', en: 'Audience in Chinese' },
+  { key: 'levelEn', zh: '英文适合人群', en: 'Audience in English' },
+  { key: 'targetZh', zh: '中文目标水平', en: 'Target level in Chinese' },
+  { key: 'targetEn', zh: '英文目标水平', en: 'Target level in English' },
+  { key: 'format', zh: '课程形式', en: 'Format' },
+  { key: 'highlights', zh: '课程亮点（每行一项）', en: 'Highlights (one per line)', kind: 'lines' },
+  { key: 'nextLiveAt', zh: '下次直播', en: 'Next live session', kind: 'datetime-local' },
+];
 const courseWcaEvents = new Set(ALL_EVENT_IDS);
 
 function CourseCoverUpload({ label, portrait, value, onChange, onPending }: {
@@ -110,17 +118,20 @@ function PathItem({row,onChange,courses}:{row:Entry;onChange:(row:Entry)=>void;c
 
 function Question({row,onChange}:{row:Entry;onChange:(row:Entry)=>void}) {
   const t=useT();const choices=Array.isArray(row.choices)?row.choices.map(String):[];const type=String(row.type??'single_choice');const selected=Array.isArray(row.answerKey)?row.answerKey:[];
-  return <div className="platform-structured-row"><label>{t('题型','Question type')}<select className="platform-field-control" value={type} onChange={event=>{const next=event.target.value;onChange({...row,type:next,choices:next.includes('choice')?['','']:[],answerKey:next==='boolean'?true:next==='text'?'':next==='multiple_choice'?[0]:0});}}><option value="single_choice">{t('单选','Single choice')}</option><option value="multiple_choice">{t('多选','Multiple choice')}</option><option value="boolean">{t('判断','True / false')}</option><option value="text">{t('填空','Text answer')}</option></select></label><Fields row={row} onChange={onChange} columns={[{key:'promptZh',zh:'中文题目',en:'Chinese question',kind:'textarea',required:true},{key:'promptEn',zh:'英文题目',en:'English question',kind:'textarea'},{key:'points',zh:'分值',en:'Points',kind:'number',required:true}]}/>
+  return <div className="platform-structured-row"><label>{t('题型','Question type')}<select className="platform-field-control" value={type} onChange={event=>{const next=event.target.value;onChange({...row,type:next,choices:next.includes('choice')?['','']:[],answerKey:next==='boolean'?true:next==='text'?'':next==='multiple_choice'?[0]:0});}}><option value="single_choice">{t('单选','Single choice')}</option><option value="multiple_choice">{t('多选','Multiple choice')}</option><option value="boolean">{t('判断','True / false')}</option><option value="text">{t('填空','Text answer')}</option></select></label><Fields row={row} onChange={onChange} columns={[{key:'promptZh',zh:'中文题目',en:'Chinese question',kind:'textarea',required:true},{key:'promptEn',zh:'英文题目',en:'English question',kind:'textarea'},{key:'points',zh:'分值',en:'Points',kind:'number',required:true},{key:'explanation',zh:'答案解析（选填）',en:'Answer explanation (optional)',kind:'textarea'}]}/>
     {type.includes('choice')?<><h4>{t('选项与正确答案','Choices and correct answers')}</h4>{choices.map((choice,index)=><div className="platform-structured-fields" key={index}><input autoComplete="off" className="platform-field-control" required aria-label={t(`选项 ${index+1}`,`Choice ${index+1}`)} value={choice} onChange={event=>onChange({...row,choices:choices.map((value,i)=>i===index?event.target.value:value)})}/>{type==='single_choice'?<label><input type="radio" name={`correct-${String(row.editorKey??row.promptZh)}`} checked={row.answerKey===index} onChange={()=>onChange({...row,answerKey:index})}/>{t('正确答案','Correct answer')}</label>:<BoolToggle label={t('正确答案','Correct answer')} value={selected.includes(index)} onChange={checked=>onChange({...row,answerKey:checked?[...selected,index]:selected.filter(value=>value!==index)})}/>}</div>)}<button type="button" className="platform-button" onClick={()=>onChange({...row,choices:[...choices,'']})}>{t('添加选项','Add choice')}</button>{choices.length>2?<button type="button" className="platform-button" onClick={()=>onChange({...row,choices:choices.slice(0,-1),answerKey:type==='multiple_choice'?selected.filter(value=>Number(value)<choices.length-1):Math.min(Number(row.answerKey),choices.length-2)})}>{t('移除最后一个选项','Remove last choice')}</button>:null}</>:type==='boolean'?<BoolToggle label={t('正确答案为“对”','Correct answer is true')} value={row.answerKey===true} onChange={value=>onChange({...row,answerKey:value})}/>:<Scalar column={{key:'answerKey',zh:'正确答案',en:'Correct answer',required:true}} value={row.answerKey} onChange={value=>onChange({...row,answerKey:value})}/>}
   </div>;
 }
 
 export type CoursePresentationPart = 'positioning' | 'introduction' | 'cover' | 'outline';
 
-function CourseTrialSelection({ lessons, presentation, onChange }: { lessons: unknown[]; presentation: Entry; onChange: (ids: string[]) => void }) {
+function CourseTrialSelection({ lessons, trialIds, onChange }: {
+  lessons: unknown[]; trialIds?: readonly string[]; onChange: (ids: string[]) => void;
+}) {
   const t = useT();
-  const eligible = lessons.map(commerceRecord).filter(lesson => typeof lesson.id === 'string' && lesson.status !== 'archived' && !isPlatformIntroductionLesson(lesson));
-  const selected = new Set(platformTrialLessonIds(presentation) ?? eligible.filter(lesson => lesson.accessScope === 'public').map(lesson => String(lesson.id)));
+  const eligible = lessons.map(commerceRecord).filter(lesson => typeof lesson.id === 'string' && lesson.status !== 'archived'
+    && !isPlatformIntroductionLesson(lesson.liveSection ? commerceRecord(lesson.liveSection) : lesson));
+  const selected = new Set(trialIds ?? eligible.filter(lesson => (lesson.liveAccessScope ?? lesson.accessScope) === 'public').map(lesson => String(lesson.id)));
   return <section className="platform-course-trial-settings" aria-label={t('试听课选择', 'Trial lesson selection')}>
     <h3>{t('试听课', 'Trial lessons')}</h3>
     {eligible.length ? <>
@@ -140,16 +151,35 @@ function CourseTrialSelection({ lessons, presentation, onChange }: { lessons: un
   </section>;
 }
 
-export function PlatformStructuredField({fieldKey,label,value,onChange,routeId,onUploadPending,coursePart,compactOutline=false,courseLessons}:{fieldKey:string;label:string;value:string;onChange:(value:string)=>void;routeId:string;onUploadPending?:(key:string,pending:boolean)=>void;coursePart?:CoursePresentationPart;compactOutline?:boolean;courseLessons?:unknown[]}) {
+export function PlatformStructuredField({fieldKey,label,value,onChange,routeId,onUploadPending,coursePart,compactOutline=false,courseLessons,courseTrialCandidate,onCourseTrialChange}:{fieldKey:string;label:string;value:string;onChange:(value:string)=>void;routeId:string;onUploadPending?:(key:string,pending:boolean)=>void;coursePart?:CoursePresentationPart;compactOutline?:boolean;courseLessons?:unknown[];courseTrialCandidate?:boolean;onCourseTrialChange?:()=>void}) {
   const t=useT();let parsed:unknown;try{parsed=JSON.parse(value||(['venue','presentation','eligibility'].includes(fieldKey)?'{}':'[]'));}catch{parsed={};}
   const rows=Array.isArray(parsed)?parsed.map(commerceRecord):[];const object=commerceRecord(parsed);
   const currentObject = useRef(object);
   currentObject.current = object;
   const [courses,setCourses]=useState<Entry[]>([]);const [loadError,setLoadError]=useState('');
   const [outlineIndex,setOutlineIndex]=useState(0);
+  const [trialEdited, setTrialEdited] = useState(false);
   useEffect(()=>{if(fieldKey!=='items')return;const controller=new AbortController();void(async()=>{try{const loaded:Entry[]=[];for(let page=1;page<=100;page++){const response=await sessionFetch(apiUrl(`/v1/platform/admin/courses?page=${page}&pageSize=100`),{headers:authHeaders(false),signal:controller.signal});const result=await handleApi<{courses:Entry[];total?:number}>(response);loaded.push(...result.courses);if(result.courses.length<100||(result.total!=null&&loaded.length>=result.total))break;}setCourses(loaded);setLoadError('');}catch(reason){if(!controller.signal.aborted)setLoadError(String(reason));}})();return()=>controller.abort();},[fieldKey]);
   const save=(next:unknown)=>onChange(JSON.stringify(next));
   const updateCourseField=(key:string,next:unknown)=>{ const updated={...currentObject.current,[key]:next}; currentObject.current=updated; save(updated); };
+  const positioningValue = (key: string) => {
+    const stem = key.replace(/(?:Zh|En)$/, '');
+    if ((stem === 'level' || stem === 'target') && !object[`${stem}Zh`] && !object[`${stem}En`]) return object[stem];
+    return object[key];
+  };
+  const updatePositioningField = (key: string, next: unknown) => {
+    const stem = key.replace(/(?:Zh|En)$/, '');
+    if (stem !== 'level' && stem !== 'target') { updateCourseField(key, next); return; }
+    const previous = currentObject.current;
+    const updated = { ...previous, [key]: next };
+    if (previous[stem] && !previous[`${stem}Zh`] && !previous[`${stem}En`]) {
+      const other = key.endsWith('Zh') ? 'En' : 'Zh';
+      updated[`${stem}${other}`] = previous[stem];
+    }
+    delete updated[stem];
+    currentObject.current = updated;
+    save(updated);
+  };
   const update=(index:number,next:Entry)=>save(rows.map((row,i)=>i===index?next:row));
   const editingCourse = fieldKey === 'presentation' && !routeId.includes('product');
   const objectColumns=fieldKey==='venue'?venueFields:fieldKey==='presentation'?(routeId.includes('product')?productPresentation:coursePresentation):null;
@@ -159,9 +189,10 @@ export function PlatformStructuredField({fieldKey,label,value,onChange,routeId,o
       <CourseCoverUpload portrait label={t('手机竖版封面（选填）','Mobile portrait cover (optional)')} value={object.mobileCoverUrl} onChange={next=>updateCourseField('mobileCoverUrl',next)} onPending={pending=>onUploadPending?.('mobileCoverUrl',pending)} />
     </div>}
     {(!coursePart || coursePart === 'positioning') && <CourseTags value={object.tags} onChange={next=>updateCourseField('tags',next)} />}
-    {(!coursePart || coursePart === 'positioning' || coursePart === 'introduction') && <div className="platform-structured-fields">{coursePresentation.filter(column=>!coursePart || (coursePart === 'introduction' ? column.key === 'highlights' : column.key !== 'highlights')).map(column=><Scalar key={column.key} column={coursePart === 'introduction' ? {...column,rows:2} : column} value={object[column.key]} onChange={next=>updateCourseField(column.key,next)} />)}</div>}
+    {(!coursePart || coursePart === 'positioning' || coursePart === 'introduction') && <div className="platform-structured-fields">{coursePresentation.filter(column=>!coursePart || (coursePart === 'introduction' ? column.key === 'highlights' : column.key !== 'highlights')).map(column=><Scalar key={column.key} column={coursePart === 'introduction' ? {...column,rows:2} : column} value={positioningValue(column.key)} onChange={next=>updatePositioningField(column.key,next)} />)}</div>}
     {(!coursePart || coursePart === 'outline') && <PlatformStructuredField fieldKey="outline" label={t('课程大纲','Course outline')} value={JSON.stringify(object.outline??[])} routeId={routeId} onChange={next=>updateCourseField('outline',JSON.parse(next))} compactOutline={Boolean(coursePart)} />}
-    {courseLessons && <CourseTrialSelection lessons={courseLessons} presentation={object} onChange={ids=>updateCourseField('trialLessonIds',ids)} />}
+    {courseLessons && <CourseTrialSelection lessons={courseLessons} trialIds={(courseTrialCandidate || trialEdited) ? platformTrialLessonIds(object) : undefined}
+      onChange={ids => { setTrialEdited(true); onCourseTrialChange?.(); updateCourseField('trialLessonIds', ids); }} />}
   </fieldset>;
   if(objectColumns)return <fieldset className="platform-structured-editor"><legend>{label}</legend><Fields columns={objectColumns} row={object} onChange={save}/></fieldset>;
   if(fieldKey==='eligibility')return <fieldset className="platform-structured-editor"><legend>{label}</legend><BoolToggle label={t('仅限会员使用','Members only')} value={object.memberOnly===true} onChange={value=>save({...object,memberOnly:value})}/>{['courseIds','productIds','productVariantIds','eventIds','eventTicketTypeIds','membershipPlanIds'].map(key=><PlatformReferenceField key={key} source={key} label={t(({courseIds:'适用课程',productIds:'适用商品',productVariantIds:'适用规格',eventIds:'适用活动',eventTicketTypeIds:'适用票种',membershipPlanIds:'适用会员套餐'} as Record<string,string>)[key],({courseIds:'Courses',productIds:'Products',productVariantIds:'Variants',eventIds:'Events',eventTicketTypeIds:'Ticket types',membershipPlanIds:'Membership plans'} as Record<string,string>)[key])} selected={Array.isArray(object[key])?(object[key] as unknown[]).map(String):[]} onChange={values=>save({...object,[key]:values})}/>)}</fieldset>;

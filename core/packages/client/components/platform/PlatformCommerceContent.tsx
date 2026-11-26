@@ -1,9 +1,5 @@
 'use client';
 
-import { sessionFetch } from '@/lib/session-fetch';
-import { useQueryState, parseAsInteger } from 'nuqs';
-import { apiUrl } from '@/lib/api-base';
-import { authHeaders, handleApi } from '@/lib/admin-api';
 import { useEffect, useState } from 'react';
 import AppLink from '@/components/AppLink';
 import { productHref } from '@/lib/shop';
@@ -42,16 +38,14 @@ function PlatformOrderTrend({rows}:{rows:unknown[]}) {
 
 export function PlatformCommerceContent({ definition, entity }: { definition: PlatformRouteDefinition; entity?: PlatformEntity }) {
   const t = useT();
-  const [days,setDays]=useQueryState('days',parseAsInteger.withDefault(30));
-  const [overview,setOverview]=useState<Record<string,unknown>|null>(null);
-  const [overviewError,setOverviewError]=useState('');
-  const analytics=definition.id==='admin'||definition.id==='admin-event-analytics';
-  useEffect(()=>{if(!analytics)return;const controller=new AbortController();setOverviewError('');setOverview(null);
-    void sessionFetch(apiUrl(`/v1/platform/admin/analytics?days=${[7,30,90].includes(days)?days:30}`),{headers:authHeaders(false),signal:controller.signal}).then(response=>handleApi<{item:Record<string,unknown>}>(response)).then(result=>setOverview(result.item)).catch(reason=>{if(!controller.signal.aborted)setOverviewError(reason instanceof Error?reason.message:String(reason));});return()=>controller.abort();
-  },[analytics,days]);
-  const data = (analytics?overview:null) ?? entity?.data ?? {};
+  const data = entity?.data ?? {};
   const [now, setNow] = useState(0);
-  useEffect(() => { setNow(Date.now()); const timer = window.setInterval(() => setNow(Date.now()), 30000); return () => window.clearInterval(timer); }, []);
+  useEffect(() => {
+    if (definition.id !== 'event-detail') return;
+    setNow(Date.now());
+    const timer = window.setInterval(() => setNow(Date.now()), 30000);
+    return () => window.clearInterval(timer);
+  }, [definition.id]);
   const local = (item: Record<string, unknown>, key: string) => commerceText(item, key, t);
   if (definition.id === 'news-detail') {
     const zh = bodyText(data.bodyZh); const en = bodyText(data.bodyEn);
@@ -89,7 +83,22 @@ export function PlatformCommerceContent({ definition, entity }: { definition: Pl
   if (definition.id === 'admin' || definition.id === 'admin-event-analytics') {
     const summary=commerceRecord(data.summary);
     const labels: Record<string,string>={publishedCourses:t('在售课程','Published courses'),activeEntitlements:t('有效课程权益','Active course access'),orders:t('创建订单','Orders created'),paidOrders:t('付款订单','Orders paid')};
-    return <section className="platform-commerce-content"><label>{t('统计范围','Reporting period')}<select className="platform-field-control" value={days} onChange={event=>{void setDays(Number(event.target.value));}}>{[7,30,90].map(value=><option key={value} value={value}>{t(`最近 ${value} 天`,`Last ${value} days`)}</option>)}</select></label>{overviewError?<p role="alert">{overviewError}</p>:null}<p>{t(`最近 ${data.days??30} 天，按 UTC 统计。数据来自订单和退款记录。`,`Last ${data.days??30} days in UTC, based on order and refund records.`)}</p><div className="platform-commerce-grid">{Object.entries(labels).map(([key,label])=><article key={key} data-site-surface="panel"><h3>{label}</h3><strong className="platform-commerce-price">{String(summary[key]??0)}</strong></article>)}</div>
+    if (!entity) return null;
+    const tasks = [
+      { key: 'pendingInstructorApplications', label: t('待审讲师申请', 'Instructor applications'), href: '/platform/admin/teacher-applications?category=pending' },
+      { key: 'pendingContentReviews', label: t('待审课程、课时与测验', 'Course, lesson and quiz reviews'), href: '/platform/admin/courses?pending=1' },
+      { key: 'pendingPayouts', label: t('待处理讲师结算', 'Instructor payouts'), href: '/platform/admin/payouts?pending=1' },
+      { key: 'unresolvedReconciliation', label: t('未解决对账差异', 'Reconciliation differences'), href: '/platform/admin/reconcile?pending=1' },
+    ];
+    return <section className="platform-commerce-content">
+      {definition.id === 'admin' && <section>
+        <h2>{t('运营待办', 'Operations to-do')}</h2>
+        <div className="platform-commerce-grid">{tasks.map(task => <article key={task.key} data-site-surface="panel">
+          <h3><AppLink href={task.href} prefetch={false}>{task.label}</AppLink></h3>
+          <strong className="platform-commerce-price">{String(summary[task.key] ?? '—')}</strong>
+        </article>)}</div>
+      </section>}
+      <p>{t(`最近 ${data.days??30} 天，按 UTC 统计。数据来自订单和退款记录。`,`Last ${data.days??30} days in UTC, based on order and refund records.`)}</p><div className="platform-commerce-grid">{Object.entries(labels).map(([key,label])=><article key={key} data-site-surface="panel"><h3>{label}</h3><strong className="platform-commerce-price">{String(summary[key]??0)}</strong></article>)}</div>
       {Array.isArray(data.money) ? data.money.map(raw=>{const row=commerceRecord(raw);return <p key={String(row.currency)}><strong>{String(row.currency)}</strong> · {t('付款金额','Payments')}: {commerceMoney(row.paidAmountMinor,row.currency)} · {t('退款金额','Refunds')}: {commerceMoney(row.refundedAmountMinor,row.currency)} · {t('净额','Net')}: {commerceMoney(Number(row.paidAmountMinor)-Number(row.refundedAmountMinor),row.currency)}</p>;}) : null}
       <PlatformOrderTrend rows={Array.isArray(data.daily)?data.daily:[]}/><h2>{t('每日订单','Daily orders')}</h2><p>{t('按订单创建日期分组；已付款和金额表示这些订单目前的付款情况。','Grouped by order creation date; paid counts and amounts reflect the current payment state of those orders.')}</p><div className="sticky-scroll"><table className="sticky-thead"><thead><tr><th>{t('日期','Date')}</th><th>{t('币种','Currency')}</th><th>{t('订单','Orders')}</th><th>{t('已付款','Paid')}</th><th>{t('金额','Amount')}</th></tr></thead><tbody>{Array.isArray(data.daily) ? data.daily.map(raw=>{const row=commerceRecord(raw);return <tr key={`${row.date}-${row.currency}`}><td>{String(row.date)}</td><td>{String(row.currency)}</td><td>{String(row.orders)}</td><td>{String(row.paidOrders)}</td><td>{commerceMoney(row.paidAmountMinor,row.currency)}</td></tr>;}) : null}</tbody></table></div>
       <h2>{t('最近订单','Recent orders')}</h2>{Array.isArray(data.recent) ? data.recent.map(raw=>{const row=commerceRecord(raw);return <p key={String(row.id)}><AppLink href={`/platform/admin/orders/${encodeURIComponent(String(row.id))}`} prefetch={false}>{String(row.orderNumber)}</AppLink> · {commerceMoney(row.totalAmountMinor,row.currency)}</p>;}) : null}

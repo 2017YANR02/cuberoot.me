@@ -16,7 +16,6 @@ export const COURSE_TOPICS = {
 
 export type CourseTopic = keyof typeof COURSE_TOPICS;
 export const COURSE_TOPIC_IDS = Object.keys(COURSE_TOPICS) as CourseTopic[];
-export const COURSE_FILTER_THRESHOLD = 6;
 const PUZZLE_IDS = new Set([...ALL_EVENT_IDS, ...CSTIMER_SOLVABLE_IDS]);
 
 export function isCourseCatalogTag(tag: string): boolean {
@@ -41,7 +40,6 @@ export function courseCatalogDetails(course: PlatformEntity) {
   const tags = Array.isArray(presentation.tags) ? presentation.tags.map(nonEmptyText) : [];
   const puzzles = tags.filter(tag => tag.startsWith('puzzle:')).map(tag => tag.slice(7)).filter(id => PUZZLE_IDS.has(id));
   const topics = COURSE_TOPIC_IDS.filter(topic => tags.includes(`topic:${topic}`));
-  const ruiminCourse = data.slug === 'yan-ruimin-3x3-beginner';
   const coverUrl = courseCoverUrl(presentation.coverUrl);
   const mobileCoverUrl = courseCoverUrl(presentation.mobileCoverUrl);
   const instructorRecords = Array.isArray(data.instructors) ? data.instructors.map(commerceRecord) : [];
@@ -52,14 +50,22 @@ export function courseCatalogDetails(course: PlatformEntity) {
   const instructorsEn = instructorNames('En', 'Zh');
   const lessonCount = Number(data.lessonCount);
   return {
-    puzzles: ruiminCourse && !puzzles.length ? ['333'] : puzzles,
-    topics: ruiminCourse && !topics.length ? ['beginner' as const] : topics,
-    coverUrl: coverUrl ?? (ruiminCourse ? '/images/ruimin/gallery/photo-03.webp' : mobileCoverUrl),
-    mobileCoverUrl: mobileCoverUrl ?? (ruiminCourse && !coverUrl ? '/images/ruimin/gallery/course-cover-portrait.webp' : undefined),
-    instructors: instructors.length || !ruiminCourse ? instructors : ['颜瑞民'],
-    instructorsEn: instructorsEn.length || !ruiminCourse ? instructorsEn : ['Yan Ruimin'],
+    puzzles,
+    topics,
+    coverUrl: coverUrl ?? mobileCoverUrl,
+    mobileCoverUrl,
+    instructors,
+    instructorsEn,
     lessonCount: data.lessonCount != null && Number.isInteger(lessonCount) && lessonCount >= 0 ? lessonCount : undefined,
     level: nonEmptyText(presentation.level),
+    audience: {
+      zh: nonEmptyText(presentation.levelZh) || nonEmptyText(presentation.levelEn) || nonEmptyText(presentation.level),
+      en: nonEmptyText(presentation.levelEn) || nonEmptyText(presentation.levelZh) || nonEmptyText(presentation.level),
+    },
+    target: {
+      zh: nonEmptyText(presentation.targetZh) || nonEmptyText(presentation.targetEn) || nonEmptyText(presentation.target),
+      en: nonEmptyText(presentation.targetEn) || nonEmptyText(presentation.targetZh) || nonEmptyText(presentation.target),
+    },
     tags,
   };
 }
@@ -84,50 +90,19 @@ export function matchesCourseCatalog(
   return terms.every(term => searchable.includes(term));
 }
 
-/** Catalog metadata advertises previews; detail data confirms their public scope. */
+/** Prefer the catalog's verified trial ID and accept older course detail records. */
+export function firstPlatformTrialLessonId(course: PlatformEntity): string | undefined {
+  const data = course.data ?? {};
+  if ('firstTrialLessonId' in data) return nonEmptyText(data.firstTrialLessonId) || undefined;
+  const ids = platformTrialLessonIds(data.presentation);
+  if (!Array.isArray(data.lessons)) return ids?.[0];
+  const lesson = data.lessons.map(commerceRecord).find(item =>
+    item.accessScope === 'public' && platformCourseLessonSection(item, ids) === 'trial');
+  return nonEmptyText(lesson?.id) || undefined;
+}
+
 export function hasCourseTrial(course: PlatformEntity): boolean {
-  const ids = platformTrialLessonIds(course.data?.presentation);
-  const lessons = course.data?.lessons;
-  return Array.isArray(lessons)
-    ? lessons.map(commerceRecord).some(lesson => lesson.accessScope === 'public' && platformCourseLessonSection(lesson, ids) === 'trial')
-    : Boolean(ids?.length);
-}
-
-/** The public endpoint paginates at 60 courses. Filters and facets need the entire snapshot. */
-export async function loadCourseCatalog(signal: AbortSignal): Promise<PlatformEntity[]> {
-  const items = new Map<string, PlatformEntity>();
-  let count = 0;
-  for (let page = 1; ; page++) {
-    const batch = await loadPlatformResource('courses', { params: {}, page, pageSize: 60, sort: 'updated', signal });
-    if (signal.aborted) return [];
-    for (const item of batch.items) items.set(item.id, item);
-    count += batch.items.length;
-    if (!batch.items.length || (batch.total === undefined ? batch.items.length < (batch.pageSize ?? 60) : count >= batch.total)) break;
-  }
-  return [...items.values()];
-}
-
-/** Legacy public catalog rows may omit trial IDs. Resolve only missing
- * metadata from the existing public detail endpoint, without blocking the list. */
-export async function loadLegacyCatalogPreviews(items: PlatformEntity[], signal: AbortSignal): Promise<PlatformEntity[]> {
-  const missing = items.filter(item => platformTrialLessonIds(item.data?.presentation) === undefined && !Array.isArray(item.data?.lessons));
-  if (!missing.length) return items;
-  const resolved = new Map<string, string[]>();
-  for (let offset = 0; offset < missing.length && !signal.aborted; offset += 6) {
-    await Promise.allSettled(missing.slice(offset, offset + 6).map(async item => {
-      const result = await loadPlatformResource('courses', { params: { id: item.id }, signal });
-      const detail = result.items.find(course => course.id === item.id)?.data;
-      if (!Array.isArray(detail?.lessons)) return;
-      const trialIds = platformTrialLessonIds(detail.presentation);
-      resolved.set(item.id, detail.lessons.map(commerceRecord)
-        .flatMap(lesson => typeof lesson.id === 'string' && lesson.accessScope === 'public' && platformCourseLessonSection(lesson, trialIds) === 'trial' ? [lesson.id] : []));
-    }));
-  }
-  if (signal.aborted || !resolved.size) return items;
-  return items.map(item => {
-    const ids = resolved.get(item.id);
-    return ids ? { ...item, data: { ...item.data, presentation: { ...commerceRecord(item.data?.presentation), trialLessonIds: ids } } } : item;
-  });
+  return Boolean(firstPlatformTrialLessonId(course));
 }
 
 export function courseLessonAccess(data: Record<string, unknown>) {

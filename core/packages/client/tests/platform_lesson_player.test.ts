@@ -3,16 +3,17 @@ import { act, createElement, useState, type ReactNode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { beforeEach, expect, it, vi } from 'vitest';
 import type { PlatformEntity, PlatformRouteDefinition } from '@/lib/platform-types';
-const { access, load, loadManaged, uploadCover, learningRequest } = vi.hoisted(() => ({
+const { access, load, loadManaged, uploadCover, learningRequest, lessonData } = vi.hoisted(() => ({
   access: { admin: false, user: null as null | {id:number} },
   learningRequest: vi.fn(),
+  lessonData: vi.fn(),
   load: vi.fn(),
   loadManaged: vi.fn(),
   uploadCover: vi.fn(),
 }));
 vi.mock('@/lib/platform-gateway', () => ({
   loadPlatformLessonMedia: load,
-  loadPlatformResource: async (resource: string, options: {params: Record<string,string>}) => ({items:[{id:options.params.lessonId,title:'Lesson',data:resource==='courses'?{lessons:[{id:'first',titleZh:'公开课时一'},{id:'second',titleZh:'公开课时二'}]}:{mediaId:'media',bodyZh:{text:'课时正文'},bodyEn:{markdown:''}}}]}),
+  loadPlatformResource: async (resource: string, options: {params: Record<string,string>}) => ({items:[{id:options.params.lessonId,title:'Lesson',data:resource==='courses'?{lessons:[{id:'first',titleZh:'公开课时一'},{id:'second',titleZh:'公开课时二'}]}:lessonData(options.params.lessonId)}]}),
   loadPlatformManagedLessonMedia: loadManaged,
   uploadPlatformLessonCover: uploadCover,
   platformMediaBrowserUrl: (value: string) => {
@@ -44,7 +45,10 @@ import { PlatformPermissionError } from '@/lib/platform-gateway';
 beforeEach(() => {
   (globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
   access.admin = false;access.user=null;
+  localStorage.removeItem('platform.lesson.playback');
+  localStorage.removeItem('platform.lesson.autoplay');
   learningRequest.mockReset().mockResolvedValue({progress:{positionSeconds:45,progressBps:5000,status:'in_progress'},notes:[],attempts:[],lessons:[]});
+  lessonData.mockReset().mockReturnValue({mediaId:'media',bodyZh:{text:'课时正文'},bodyEn:{markdown:''}});
   load.mockReset().mockResolvedValue({ mimeType: 'video/mp4', accessUrl: '/signed-video', expiresAt: '2099-01-01T00:00:00Z' });
   loadManaged.mockReset().mockResolvedValue({
     mediaId: 'media', mimeType: 'video/mp4', sizeBytes: 100, accessUrl: 'https://api.cuberoot.me/v1/platform/lessons/first/media?token=signed', expiresAt: '2099-01-01T00:00:00Z',
@@ -159,7 +163,8 @@ it('shows a blurred course visual with only the redemption action when a lesson 
     await act(async () => root.render(createElement(PlatformDomainContent, {
       definition: { id: 'course-section-core' } as PlatformRouteDefinition,
       entity: { id: 'course', title: 'Course', data: {
-        slug: 'yan-ruimin-3x3-beginner',
+        slug: 'yan-ruimin-3x3-beginner', enrollmentMode: 'invite',
+        presentation: { coverUrl: '/images/ruimin/gallery/photo-03.webp' },
         lessons: [{ id: 'first', titleZh: '正式课 01' }],
       } } as PlatformEntity,
       params: {},
@@ -192,7 +197,8 @@ it('opens the video menu, prioritizes looping, and copies safe lesson links and 
     const open = () => act(async () => { host.querySelector('.lesson-video-surface')!.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, cancelable: true, clientX: 100, clientY: 80 })); });
     const item = (name: string) => [...host.querySelectorAll<HTMLButtonElement>('[role="menu"] button')].find(button => button.textContent === name)!;
     await open();
-    expect(host.querySelectorAll('[role="menu"] button')).toHaveLength(8);
+    expect(host.querySelectorAll('[role="menu"] button')).toHaveLength(7);
+    expect(item('复制嵌入代码')).toBeUndefined();
     expect(document.activeElement?.textContent).toBe('循环播放');
     await act(async () => item('循环播放').click());
     expect(video.loop).toBe(true);
@@ -214,9 +220,17 @@ it('opens the video menu, prioritizes looping, and copies safe lesson links and 
     await open();
     await act(async () => item('复制视频网址').click());
     expect(new URL(writeText.mock.calls.at(-1)![0]).searchParams.has('t')).toBe(false);
+    window.history.replaceState({}, '', '/zh/platform/courses/course-1/learn/lesson-1?lesson=lesson-2&t=5');
+    try {
+      await open();
+      await act(async () => item('复制当前时间的视频网址').click());
+      const shared = new URL(writeText.mock.calls.at(-1)![0]);
+      expect(shared.pathname + shared.search).toBe('/zh/platform/courses/course-1/learn/lesson-2?t=42');
+    } finally { window.history.replaceState({}, '', '/'); }
+
     await open();
-    await act(async () => item('复制嵌入代码').click());
-    expect(writeText.mock.calls.at(-1)![0]).toContain('<iframe src=');
+    expect(item('复制嵌入代码')).toBeUndefined();
+    expect(writeText.mock.calls.at(-1)![0]).not.toContain('<iframe src=');
     expect(writeText.mock.calls.at(-1)![0]).not.toContain('private-video');
     await open();
     await act(async () => item('复制调试信息').click());
@@ -346,11 +360,13 @@ it('shows public and locked rows in two groups while preserving existing classro
     expect(host.textContent).toContain('这个课时需要解锁');
     expect(load.mock.calls).toHaveLength(mediaCalls);
 
-    for (const [index, section] of ['introduction', 'trial', 'core'].entries()) {
+    for (const section of ['introduction', 'trial', 'core']) {
       const legacyLessons = lessons.map(lesson => ({ ...lesson, titleZh: lesson.titleZh.split('：')[0] }));
       await render(legacyLessons, `course-section-${section}`, lessons.map(lesson => ({ id: lesson.id, status: 'not_started' })));
-      const expected = index === 2 ? ['1', '2', ...Array.from({ length: 19 }, (_, n) => String(n + 1))] : ['1', '2'];
-      expect([...host.querySelectorAll('nav button')].map(node => node.textContent)).toEqual(expected);
+      const expected = ['1', '2', '1', '2', ...Array.from({ length: 19 }, (_, n) => String(n + 1))];
+      expect([...host.querySelectorAll('nav button > span:first-child')].map(node => node.textContent)).toEqual(expected);
+      expect(host.querySelectorAll('nav h3')).toHaveLength(3);
+      expect(host.querySelector('nav [aria-current="step"] > span')?.textContent).toBe('1');
       expect(host.querySelectorAll('video')).toHaveLength(1);
     }
     locale.english = true;
@@ -363,7 +379,7 @@ it('shows public and locked rows in two groups while preserving existing classro
   } finally { locale.english = false; await act(async () => root.unmount()); }
 });
 
-it('restores the legacy preview link only when the signed-in viewer can access the lesson', async () => {
+it('keeps legacy classroom links usable without advertising entitled lessons as free previews', async () => {
   const lessons = [
     { id: 'preview', slug: 'trial-01', titleZh: '试听课 01：做小花', accessScope: 'entitled' },
     { id: 'locked', slug: 'trial-02', titleZh: '试听课 02：小花实例', accessScope: 'entitled' },
@@ -379,12 +395,12 @@ it('restores the legacy preview link only when the signed-in viewer can access t
   try {
     await render();
     const signIn = Array.from(host.querySelectorAll('a')).find(link => link.textContent === '登录查看试看');
-    expect(signIn).toBeDefined();
-    expect(decodeURIComponent(signIn!.getAttribute('href')!)).toContain('/sections/core?lesson=preview');
-    const signInRows = [...host.querySelectorAll('.platform-course-lesson-sign-in')];
-    expect(signInRows.map(link => link.textContent)).toEqual(['登录解锁', '登录解锁']);
-    expect(decodeURIComponent(signInRows[1].getAttribute('href')!)).toContain('/sections/core?lesson=locked');
-    expect(signInRows[1].nextElementSibling?.tagName.toLowerCase()).toBe('svg');
+    expect(signIn).toBeUndefined();
+    expect(host.querySelectorAll('.platform-course-lesson-sign-in')).toHaveLength(0);
+    expect(host.querySelectorAll('details .platform-course-lesson-locked')).toHaveLength(3);
+    await render(undefined, 'course-section-core', 'preview');
+    expect(host.querySelector('video')).toBeNull();
+    expect(host.textContent).toContain('这个课时需要解锁');
     access.user = { id: 42 };
     await render([{ id: 'preview' }]);
     expect(host.querySelector('.platform-course-lesson-sign-in')).toBeNull();
@@ -443,7 +459,7 @@ it.each([
       definition: { id: `course-section-${section}` } as PlatformRouteDefinition,
       entity: { id: 'course', title: 'Course', data: { lessons: [lesson] } } as PlatformEntity, params: {},
     })));
-    expect(host.querySelector('nav button')?.textContent).toBe(expected);
+    expect(host.querySelector('nav button > span')?.textContent).toBe(expected);
     expect(host.querySelector('.platform-classroom-stage h2')?.textContent).toBe(expected);
     expect(lesson).toEqual({ id: 'lesson', titleZh, titleEn });
   } finally { locale.english = false; await act(async () => root.unmount()); }
@@ -566,6 +582,15 @@ it('connects playback, seeking, mute and speed controls to the media element', a
     await act(async () => button('播放速度').click());
     await act(async () => button('1.5×').click());
     expect(video.playbackRate).toBe(1.5);
+    await act(async () => button('水平镜像').click());
+    expect(video.style.transform).toBe('scaleX(-1)');
+    expect(button('水平镜像').getAttribute('aria-pressed')).toBe('true');
+    expect(JSON.parse(localStorage.getItem('platform.lesson.playback')!)).toMatchObject({ rate: 1.5, muted: true });
+    await act(async () => root.render(createElement(LessonVideoPlayer, {
+      key: 'next-player', src: '/second-test', onError: vi.fn(), onLoadedMetadata: vi.fn(),
+    })));
+    expect(host.querySelector('video')?.playbackRate).toBe(1.5);
+    expect(host.querySelector('video')?.muted).toBe(true);
     await act(async () => document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' })));
     expect(host.querySelector('[role="dialog"]')).toBeNull();
   } finally { await act(async () => root.unmount()); host.remove(); }
@@ -627,7 +652,11 @@ it('refreshes saved notes through GET and renders structured lesson text with la
     await act(async()=>root.render(createElement(PlatformDomainContent,{definition:{id:'course-lesson'} as PlatformRouteDefinition,entity:{id:'first',title:'Lesson',data:{}} as PlatformEntity,params:{id:'course'},lessonStartTime:0})));
     expect(host.textContent).toContain('课时正文');
     const add=[...host.querySelectorAll('button')].find(button=>button.textContent==='Take a note at this moment')!;
+    const activeVideo = host.querySelector('video')!;
+    Object.defineProperty(activeVideo, 'paused', { value: false, configurable: true });
+    const pause = vi.spyOn(activeVideo, 'pause').mockImplementation(() => {});
     await act(async()=>add.click());
+    expect(pause).toHaveBeenCalledOnce();
     const textarea=host.querySelector('textarea')!;
     await act(async()=>{Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype,'value')!.set!.call(textarea,'My note');textarea.dispatchEvent(new Event('input',{bubbles:true}));});
     await act(async()=>host.querySelector('form')!.dispatchEvent(new Event('submit',{bubbles:true,cancelable:true})));
@@ -635,6 +664,11 @@ it('refreshes saved notes through GET and renders structured lesson text with la
     expect(reads).toHaveLength(2);expect(reads.every(call=>call[2]==='GET')).toBe(true);
     const video=host.querySelector('video')!;Object.defineProperty(video,'duration',{value:120,configurable:true});
     await act(async()=>video.dispatchEvent(new Event('loadedmetadata')));expect(video.currentTime).toBe(0);
+    await act(async () => window.dispatchEvent(new Event('pagehide')));
+    expect(learningRequest.mock.calls).toContainEqual([
+      '/me/progress/first', { positionSeconds: 0, progressBps: 5000, status: 'in_progress' },
+      'PUT', undefined, undefined, true,
+    ]);
   } finally {locale.english=false;await act(async()=>root.unmount());}
 });
 
@@ -659,4 +693,74 @@ it('drops queued progress writes when the authenticated owner changes',async()=>
   access.user={id:2};await act(async()=>{release();await pending;});
   expect(learningRequest.mock.calls.filter(call=>call[2]==='PUT')).toHaveLength(1);
  }finally{release();await act(async()=>root.unmount());}
+});
+
+it('completes a text-only lesson without requesting media and updates its directory status', async () => {
+  access.user = { id: 1 };
+  lessonData.mockReturnValue({ mediaId: null, bodyZh: { markdown: '## 图文讲义' } });
+  let completed = false;
+  learningRequest.mockImplementation(async (_path, _body, method) => {
+    if (method === 'PUT') completed = true;
+    return { progress: completed ? { status: 'completed', progressBps: 10000, positionSeconds: 0 } : null, lessons: [], notes: [], attempts: [] };
+  });
+  const host = document.createElement('div'), root = createRoot(host);
+  try {
+    await act(async () => root.render(createElement(PlatformDomainContent, {
+      definition: { id: 'course-lesson' } as PlatformRouteDefinition,
+      params: { id: 'course', lessonId: 'reading' },
+      entity: { id: 'course', title: 'Course', data: { lessons: [{ id: 'reading', titleZh: '图文' }] } },
+    })));
+    expect(host.querySelector('.platform-prose h2')?.textContent).toBe('图文讲义');
+    expect(load).not.toHaveBeenCalled();
+    const complete = Array.from(host.querySelectorAll('button')).find(button => button.textContent === '完成本节学习')!;
+    await act(async () => complete.click());
+    expect(learningRequest).toHaveBeenCalledWith('/me/progress/reading', {
+      positionSeconds: 0, progressBps: 10000, status: 'completed',
+    }, 'PUT');
+    expect(host.querySelector('nav [aria-current="step"] small')?.textContent).toBe('已完成');
+    expect(complete.disabled).toBe(true);
+  } finally { await act(async () => root.unmount()); }
+});
+
+it('keeps the same player when time-based renewal changes the signed URL', async () => {
+  vi.useFakeTimers();
+  const host = document.createElement('div'), root = createRoot(host);
+  const first = { mediaId: 'id', mimeType: 'video/mp4', accessUrl: '/original', expiresAt: new Date(Date.now() + 90_000).toISOString() };
+  load.mockResolvedValueOnce(first).mockResolvedValue({ ...first, accessUrl: '/renewed', expiresAt: new Date(Date.now() + 3_000_000).toISOString() });
+  try {
+    await act(async () => root.render(createElement(PlatformDomainContent, {
+      definition: { id: 'course-lesson' } as PlatformRouteDefinition,
+      params: { id: 'course', lessonId: 'first' },
+      entity: { id: 'course', title: 'Course', data: { lessons: [{ id: 'first', titleZh: 'Lesson' }] } },
+    })));
+    const video = host.querySelector('video')!;
+    await act(async () => {
+      video.currentTime = 31;
+      video.playbackRate = 1.5;
+      video.volume = 0.4;
+      video.muted = true;
+      await vi.advanceTimersByTimeAsync(30_000);
+    });
+    expect(load).toHaveBeenCalledTimes(2);
+    expect(host.querySelector('video')).toBe(video);
+    expect(video.getAttribute('src')).toBe('/renewed');
+    await act(async () => video.dispatchEvent(new Event('loadedmetadata')));
+    expect([video.currentTime, video.playbackRate, video.volume, video.muted]).toEqual([31, 1.5, 0.4, true]);
+  } finally { await act(async () => root.unmount()); vi.useRealTimers(); }
+});
+
+it.each(['paid', 'fulfilled'])('links a %s course order straight to the classroom', async status => {
+  const host = document.createElement('div'), root = createRoot(host);
+  try {
+    await act(async () => root.render(createElement(PlatformDomainContent, {
+      definition: { id: 'order-detail' } as PlatformRouteDefinition,
+      params: { id: 'order' },
+      entity: { id: 'order', title: 'Order', data: { status, items: [
+        { id: 'course-line', sellableType: 'course', courseId: 'course-1', learningLessonId: 'lesson-1', quantity: 1 },
+        { id: 'membership-line', sellableType: 'platform_membership', quantity: 1 },
+      ] } },
+    })));
+    expect([...host.querySelectorAll('a.platform-button-primary')].map(link => link.getAttribute('href')))
+      .toEqual(['/platform/courses/course-1/learn/lesson-1', '/platform/account/courses']);
+  } finally { await act(async () => root.unmount()); }
 });

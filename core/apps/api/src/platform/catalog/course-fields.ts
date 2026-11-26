@@ -18,7 +18,7 @@ function coursePresentation(value: unknown): Record<string, unknown> | undefined
   if (value === undefined) return undefined;
   if (!isObject(value)) badRequest('presentation must be an object');
   const result: Record<string, unknown> = {};
-  for (const key of ['level','format','coverUrl','mobileCoverUrl','previewUrl','nextLiveAt']) {
+  for (const key of ['level','levelZh','levelEn','target','targetZh','targetEn','format','coverUrl','mobileCoverUrl','previewUrl','nextLiveAt']) {
     const text = stringField(value,key,{max:2048});
     if (text && ['coverUrl','mobileCoverUrl','previewUrl'].includes(key)) {
       const sitePath = key === 'mobileCoverUrl' ? /^\/(?![/\\])/.test(text) : text.startsWith('/');
@@ -64,15 +64,29 @@ export function courseFields(body: JsonObject, required: boolean) {
   };
 }
 
-export function requireBilingualTitle(titleZh: string | undefined, titleEn: string | undefined): void {
-  if (!titleZh && !titleEn) badRequest('At least one of titleZh and titleEn is required');
+export function requireBilingualTitle(titleZh: string | undefined, titleEn: string | undefined) {
+  const zh = titleZh?.trim() || '';
+  const en = titleEn?.trim() || '';
+  if (!zh && !en) badRequest('At least one of titleZh and titleEn is required');
+  return { titleZh: zh || en, titleEn: en || zh };
 }
 
-export const COURSE_PROJECTION = `
+export const COURSE_PRESENTATION = `((
+  (c.presentation_defaults - ARRAY['summaryZh','summaryEn'])
+  - CASE WHEN r.presentation ? 'level' THEN ARRAY['levelZh','levelEn'] ELSE ARRAY[]::text[] END
+  - CASE WHEN r.presentation ? 'target' THEN ARRAY['targetZh','targetEn'] ELSE ARRAY[]::text[] END
+) || COALESCE(r.presentation, '{}'::jsonb))`;
+
+export function courseProjection(presentation = `(${COURSE_PRESENTATION} - 'trialLessonIds')`) {
+  return `
   c.id::text AS id, c.slug, c.status, c.base_amount_minor AS "baseAmountMinor",
   c.member_amount_minor AS "memberAmountMinor", c.currency,
   c.enrollment_mode AS "enrollmentMode", c.current_revision AS "currentRevision",
-  r.title_zh AS "titleZh", r.title_en AS "titleEn", r.summary_zh AS "summaryZh",
-  r.summary_en AS "summaryEn", r.description_zh AS "descriptionZh",
-  r.description_en AS "descriptionEn", r.presentation, c.published_at AS "publishedAt",
+  r.title_zh AS "titleZh", r.title_en AS "titleEn",
+  COALESCE(NULLIF(r.summary_zh,''), c.presentation_defaults->>'summaryZh', r.summary_zh) AS "summaryZh",
+  COALESCE(NULLIF(r.summary_en,''), c.presentation_defaults->>'summaryEn', r.summary_en) AS "summaryEn", r.description_zh AS "descriptionZh",
+  r.description_en AS "descriptionEn", ${presentation} AS presentation, c.published_at AS "publishedAt",
   c.created_at AS "createdAt", c.updated_at AS "updatedAt"`;
+}
+
+export const COURSE_PROJECTION = courseProjection();

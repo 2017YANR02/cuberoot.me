@@ -224,7 +224,7 @@ export function PlatformEntityList({
               </div>
               {learnerCourses && redeemedCourseIds.has(item.id) ? <span className="platform-course-redeemed">{t('已兑换', 'Redeemed')}</span> : null}
               {!learnerContent && item.status ? <span className="platform-status">{orderContent ? orderStatuses[item.status] ?? t('等待确认', 'Awaiting confirmation') : platformStatusLabel(item.status, t)}</span> : null}
-              {definition.id === 'admin-courses' && <><ContentReviewBadge entity={item} />{Array.isArray(item.data?.lessons) && item.data.lessons.some(lesson => !!lesson && typeof lesson === 'object' && 'reviewStatus' in lesson && lesson.reviewStatus === 'pending') && <span className="platform-status">{t('课时待审核', 'Lessons awaiting review')}</span>}</>}
+              {definition.id === 'admin-courses' && <><ContentReviewBadge entity={item} />{Array.isArray(item.data?.lessons) && item.data.lessons.some(lesson => !!lesson && typeof lesson === 'object' && 'reviewStatus' in lesson && lesson.reviewStatus === 'pending') && <span className="platform-status">{t('课时待审核', 'Lessons awaiting review')}</span>}{Number(item.data?.pendingQuizCount) > 0 && <span className="platform-status">{t('测验待审核', 'Quizzes awaiting review')}</span>}</>}
             </div>
             {item.summary ? <p>{item.summary}</p> : null}
             {fields?.length ? (

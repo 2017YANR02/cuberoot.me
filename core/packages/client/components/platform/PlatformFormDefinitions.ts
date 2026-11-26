@@ -26,6 +26,7 @@ interface PlatformLessonPayload {
   durationSeconds?: number | null;
   driveVideo?: string | null;
   status: 'draft' | 'published' | 'archived';
+  lessonType?: 'introduction' | 'core';
   accessScope: 'public' | 'entitled';
 }
 
@@ -111,8 +112,8 @@ const NEWS_FIELDS = [
   field('slug', 'Slug', 'Slug', { required: true, pattern: '[a-z0-9][a-z0-9_-]{0,159}', maxLength: 160 }),
   field('titleZh', '中文标题', 'Chinese title', { required: true, maxLength: 240 }),
   field('titleEn', '英文标题', 'English title', { required: true, maxLength: 240 }),
-  field('bodyZh', '中文正文 JSON', 'Chinese body JSON', { kind: 'json', rows: 10, required: true }),
-  field('bodyEn', '英文正文 JSON', 'English body JSON', { kind: 'json', rows: 10, required: true }),
+  field('bodyZh', '中文正文', 'Chinese article', { kind: 'markdown', rows: 10, required: true }),
+  field('bodyEn', '英文正文', 'English article', { kind: 'markdown', rows: 10, required: true }),
   field('status', '状态', 'Status', { kind: 'select', options: [option('draft', '草稿', 'Draft'), option('published', '已发布', 'Published'), option('archived', '已归档', 'Archived')] }),
 ] satisfies ContractFields<PlatformNewsWrite>;
 
@@ -158,12 +159,13 @@ export const LESSON_FIELDS = [
   field('ordinal', '顺序', 'Order', { kind: 'number', min: 0, max: 1000000, step: 1, required: true }),
   field('titleZh', '中文标题', 'Chinese title', { required: true, maxLength: 240 }),
   field('titleEn', '英文标题', 'English title', { required: true, maxLength: 240 }),
-  field('bodyZh', '中文课时内容 JSON', 'Chinese lesson content JSON', { kind: 'json', rows: 9, required: true, defaultValue: '{}' }),
-  field('bodyEn', '英文课时内容 JSON', 'English lesson content JSON', { kind: 'json', rows: 9, required: true, defaultValue: '{}' }),
+  field('bodyZh', '中文课时内容', 'Chinese lesson content', { kind: 'markdown', rows: 9 }),
+  field('bodyEn', '英文课时内容', 'English lesson content', { kind: 'markdown', rows: 9 }),
   field('driveVideo', '网盘视频（文件 ID 或预览网址）', 'Drive video (file ID or preview URL)', { maxLength: 2048, placeholder: text('在网盘打开视频预览后，复制地址栏网址', 'Open the video preview in Drive, then copy the address-bar URL') }),
   field('durationSeconds', '时长（秒）', 'Duration (seconds)', { kind: 'number', min: 0, max: 86400, step: 1 }),
   field('status', '状态', 'Status', { kind: 'select', defaultValue: 'draft', options: [option('draft', '草稿', 'Draft'), option('published', '已发布', 'Published'), option('archived', '已归档', 'Archived')] }),
-  field('accessScope', '访问范围', 'Access scope', { kind: 'select', defaultValue: 'entitled', options: [option('public', '公开', 'Public'), option('entitled', '需课程权益', 'Entitled learners')] }),
+  field('lessonType', '目录分组', 'Lesson section', { kind: 'select', options: [option('', '沿用现有分组', 'Keep current section'), option('core', '正式课', 'Core lesson'), option('introduction', '引言', 'Introduction')] }),
+  field('accessScope', '免费试听', 'Free preview', { kind: 'select', defaultValue: 'entitled', options: [option('public', '免费试听', 'Free preview'), option('entitled', '需课程权益', 'Entitled learners')] }),
 ] satisfies ContractFields<PlatformLessonPayload>;
 
 export const QUIZ_FIELDS = [
@@ -189,7 +191,7 @@ export const SHIPPING_ADDRESS_FIELDS = [
   field('addressLine2', '补充地址', 'Address line 2', { maxLength: 240 }),
 ] satisfies ContractFields<PlatformShippingAddressPayload>;
 
-export const LESSON_EDIT_FIELDS = LESSON_FIELDS.filter((item) => !['bodyZh', 'bodyEn', 'durationSeconds'].includes(item.key));
+export const LESSON_EDIT_FIELDS = LESSON_FIELDS.filter((item) => item.key !== 'durationSeconds');
 
 export const ADMIN_FORMS: Readonly<Record<string, DomainFormSpec>> = {
   'admin-course-new': { title: text('课程资料', 'Course details'), action: 'admin-save', fields: COURSE_FIELDS },

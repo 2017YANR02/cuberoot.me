@@ -41,7 +41,13 @@ vi.mock('@/components/platform/PlatformDomainActions', async () => {
 });
 vi.mock('@/components/platform/PlatformDomainContent', async () => {
   const { InstructorApplicationDetails } = await import('@/components/platform/PlatformInstructorApplication');
-  return { PlatformDomainContent: (props: Pick<import('@/components/platform/PlatformActionTypes').CommonProps, 'definition' | 'entity'>) => props.definition.id === 'admin-application' && props.entity ? createElement(InstructorApplicationDetails, { entity: props.entity, admin: true }) : null };
+  return { PlatformDomainContent: (props: Pick<import('@/components/platform/PlatformActionTypes').CommonProps, 'definition' | 'entity'> & { onSelectLesson?: (id: string) => void }) => {
+    if (props.definition.id === 'admin-application' && props.entity) return createElement(InstructorApplicationDetails, { entity: props.entity, admin: true });
+    if (props.definition.id === 'course-lesson' && props.entity) {
+      return createElement('button', { onClick: () => props.onSelectLesson?.('lesson-2') }, '下一节');
+    }
+    return null;
+  } };
 });
 vi.mock('@/components/platform/PlatformEntityList', () => ({ PlatformEntityList: ({ items }: { items: { title: string }[] }) => createElement('div', {}, items.map(item => item.title).join(',')) }));
 vi.mock('@/components/platform/PlatformLanding', () => ({ PlatformLanding: () => null }));
@@ -81,7 +87,7 @@ it('shows server course progress and hides price for redeemed courses only', asy
   await render('courses');
   expect(host.textContent).toContain('已学 3%');
   expect(host.textContent).toContain('继续学习');
-  expect(host.textContent).toContain('共 1 门课程，更多课程陆续上线');
+  expect(host.textContent).toContain('共 1 门课程');
   expect(host.querySelector('input[aria-label="搜索课程名称、讲师或关键词"]')).not.toBeNull();
   expect(host.querySelector('.platform-course-toolbar')).toBeNull();
   expect(host.textContent).not.toContain('已兑换');
@@ -121,19 +127,17 @@ it('groups owned courses before the public catalog and gives each course one sta
   expect(host.querySelectorAll('.platform-catalog-section-title')).toHaveLength(0);
 });
 
-it('resolves an advertised free preview from a legacy public course detail', async () => {
+it('renders the projected free preview without requesting a course detail', async () => {
   state.user = null;
-  const course = { id: 'legacy-course', title: '入门课程', data: { enrollmentMode: 'invite' } };
-  state.load.mockImplementation(async (_resource: string, options: { params?: { id?: string } }) => ({
-    items: options.params?.id ? [{ ...course, data: { ...course.data, lessons: [
-      { id: 'preview-1', slug: 'trial-one', accessScope: 'public' },
-      { id: 'locked-1', slug: 'trial-two', accessScope: 'entitled' },
-    ] } }] : [course],
-  }));
+  const course = { id: 'legacy-course', title: '入门课程', data: { enrollmentMode: 'invite', firstTrialLessonId: 'preview-1' } };
+  state.load.mockResolvedValue({ items: [course], total: 1 });
   await render('courses');
   expect(host.querySelector('.platform-course-card-link')?.getAttribute('href')).toBe('/platform/courses/legacy-course');
   expect(host.querySelector('.platform-catalog-card-actions a')?.getAttribute('href'))
     .toBe('/platform/courses/legacy-course/sections/core?lesson=preview-1');
+  expect(state.load.mock.calls.filter(([resource]) => resource === 'courses')).toEqual([
+    ['courses', expect.objectContaining({ params: {}, page: 1, facets: true })],
+  ]);
 });
 
 const fillCourseField = async (name: string, value: string) => act(async () => {
@@ -149,11 +153,17 @@ const currentCourseStep = () => host.querySelector('.platform-wizard-progress [a
 
 it('combines real catalog facets with the masthead and applies or resets them together', async () => {
   state.user = null;
-  state.load.mockResolvedValue({ items: [
+  const items = [
     { id: 'course-1', title: '三阶入门课程', data: { presentation: { tags: ['puzzle:333', 'topic:beginner'], trialLessonIds: [] }, instructors: [{ displayName: 'legacy', displayNameZh: '示例讲师', displayNameEn: 'Example teacher' }], lessonCount: 3 } },
     { id: 'course-2', title: '二阶进阶课程', data: { presentation: { tags: ['puzzle:222', 'topic:speed'], trialLessonIds: [] } } },
     ...Array.from({ length: 4 }, (_, index) => ({ id: `course-${index + 3}`, title: `其他课程 ${index + 1}`, data: { presentation: { tags: ['puzzle:222', 'topic:speed'], trialLessonIds: [] } } })),
-  ] });
+  ];
+  state.load.mockImplementation(async (_resource, options) => {
+    const filtered = items.filter(item => (!options.puzzle || item.data.presentation.tags.includes(`puzzle:${options.puzzle}`))
+      && (!options.category || item.data.presentation.tags.includes(`topic:${options.category}`)) && (!options.query || item.title.includes(options.query)));
+    return { items: filtered, total: filtered.length, categories: ['puzzle:333', 'puzzle:222', 'topic:beginner', 'topic:speed'],
+      catalogTopicPuzzles: { beginner: ['333'], speed: ['222'] } };
+  });
   function Embedded() {
     const [binding, setBinding] = useState<PlatformSearchBinding | null>(null);
     return createElement('div', null, createElement(PlatformScopedSearch, { lang: 'zh', scope: 'courses', binding }),
@@ -197,7 +207,12 @@ it('combines real catalog facets with the masthead and applies or resets them to
   });
   expect(host.querySelectorAll('.platform-course-card')).toHaveLength(1);
   expect(host.querySelector('.platform-course-card')?.textContent).toContain('三阶入门课程');
-  expect(state.load.mock.calls.filter(call => call[0] === 'courses')).toHaveLength(1);
+  expect(state.load.mock.calls.filter(call => call[0] === 'courses').map(call => call[1])).toEqual([
+    expect.objectContaining({ page: 1, puzzle: '', category: '', query: '', facets: true }),
+    expect.objectContaining({ page: 1, puzzle: '333', category: 'beginner', query: '', facets: true }),
+    expect.objectContaining({ page: 1, puzzle: '', category: '', query: '', facets: true }),
+    expect.objectContaining({ page: 1, puzzle: '', category: '', query: '三阶', facets: true }),
+  ]);
 });
 
 it('searches and sorts learning paths from the same masthead', async () => {
@@ -346,7 +361,7 @@ it('uploads both course covers without dropping other form edits and waits for u
   await fillCourseField('中文标题', '测试课程');
   await fillCourseField('英文标题', 'Fixture Course');
   await advanceCourse();
-  await fillCourseField('适合水平', '入门');
+  await fillCourseField('中文适合人群', '入门');
   await advanceCourse();
   await advanceCourse();
   expect(currentCourseStep()).toBe('课程封面');
@@ -384,7 +399,7 @@ it('uploads both course covers without dropping other form edits and waits for u
   await act(async () => form.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true })));
   expect(state.execute).toHaveBeenCalledWith(expect.objectContaining({ id: 'instructor-course-new' }), expect.objectContaining({ payload: expect.objectContaining({
     titleZh: '测试课程', slug: expect.stringMatching(/^fixture-course-[a-f0-9-]+$/), baseAmountMinor: 0,
-    presentation: expect.objectContaining({ level: '入门', coverUrl: 'https://api.example.com/landscape.webp', mobileCoverUrl: 'https://api.example.com/portrait.webp', outline: [{ label: '第一章' }, { label: '第二章' }] }),
+    presentation: expect.objectContaining({ levelZh: '入门', coverUrl: 'https://api.example.com/landscape.webp', mobileCoverUrl: 'https://api.example.com/portrait.webp', outline: [{ label: '第一章' }, { label: '第二章' }] }),
   }) }));
 });
 
@@ -488,10 +503,11 @@ it('uploads a video before publishing an independent lesson and keeps its course
   state.execute.mockResolvedValue({ lesson: { id: 'new-lesson' } });
   await renderInShell('instructor-lesson-new', { id: 'course-upload-test' });
   await act(async () => { await vi.dynamicImportSettled(); });
-  expect(host.querySelector('.back-home')?.getAttribute('aria-label')).toBe('返回讲师课程');
-  expect(host.querySelector('.back-home')?.getAttribute('href')).toBe('/platform/instructor/courses');
-  expect([...host.querySelectorAll('.platform-lesson-create-details label span')].map(label => label.textContent)).toEqual(['中文标题', '英文标题']);
-  expect(host.querySelector('.platform-lesson-create-details select')).toBeNull();
+  expect(host.querySelector('.back-home')?.getAttribute('aria-label')).toBe('返回课程管理');
+  expect(host.querySelector('.back-home')?.getAttribute('href')).toBe('/platform/instructor/courses/course-upload-test');
+  expect([...host.querySelectorAll('.platform-lesson-create-details label span')].map(label => label.textContent)).toEqual(['中文标题', '英文标题', '中文课时内容', '英文课时内容', '目录分组']);
+  expect(host.querySelector<HTMLSelectElement>('.platform-lesson-create-details select')?.value).toBe('core');
+  expect(host.querySelector<HTMLInputElement>('.platform-lesson-create-details input[type=checkbox]')?.checked).toBe(false);
   expect(host.querySelector('.platform-lesson-create-details input[type=number]')).toBeNull();
   const publish = [...host.querySelectorAll('button')].find(button => button.textContent === '提交审核')!;
   expect(publish.disabled).toBe(true);
@@ -505,11 +521,12 @@ it('uploads a video before publishing an independent lesson and keeps its course
   expect(publish.disabled).toBe(false);
   expect(state.execute).not.toHaveBeenCalled();
   await fillCourseField('中文标题', '新课时');
+  await fillCourseField('中文课时内容', '**讲义**');
   expect(JSON.parse(localStorage.getItem(key)!).titleZh).toBe('新课时');
   await act(async () => publish.click());
   expect(state.execute).toHaveBeenCalledWith(expect.objectContaining({ id: 'instructor-lesson-new' }), expect.objectContaining({ action: 'save-course-lesson', resourceId: 'course-upload-test', payload: expect.objectContaining({ titleZh: '新课时', titleEn: '新课时', ordinal: 10, appendToCourse: true, driveVideo: 'node-fixture', status: 'published' }) }));
-  expect(state.execute.mock.calls.at(-1)?.[1].payload).not.toHaveProperty('accessScope');
-  expect(state.replace).toHaveBeenCalledWith('/zh/platform/instructor/courses');
+  expect(state.execute.mock.calls.at(-1)?.[1].payload).toMatchObject({ accessScope: 'entitled', lessonType: 'core', bodyZh: { markdown: '**讲义**' } });
+  expect(state.replace).toHaveBeenCalledWith('/zh/platform/instructor/courses/course-upload-test');
   expect(localStorage.getItem(key)).toBeNull();
 });
 
@@ -1041,4 +1058,88 @@ it('discards cancelled path progress and clears a previous error after account r
   await act(async () => finish({ items: [{ id: 'course', completedLessons: 10, totalLessons: 10, progressBps: 10000 }] }));
   expect(host.textContent).toContain('整体进度 2/10');
   expect(host.textContent).not.toContain('整体进度 10/10');
+});
+
+it('replaces a direct classroom path and preserves only nonconflicting query parameters', async () => {
+  window.history.replaceState({}, '', '/zh/platform/courses/course-1/learn/lesson-1?lesson=lesson-1&t=35&entry=fixture');
+  state.user = null;
+  state.load.mockResolvedValue({ items: [{ id: 'course-1', title: 'Course', data: { lessons: [] } }] });
+  try {
+    await renderInShell('course-lesson', { id: 'course-1', lessonId: 'lesson-1' });
+    await act(async () => { await vi.dynamicImportSettled(); });
+    const next = [...host.querySelectorAll('button')].find(button => button.textContent === '下一节')!;
+    await act(async () => next.click());
+    expect(state.replace).toHaveBeenCalledOnce();
+    expect(state.replace).toHaveBeenCalledWith('/zh/platform/courses/course-1/learn/lesson-2?entry=fixture', { scroll: false });
+  } finally { window.history.replaceState({}, '', '/'); }
+});
+
+it('defaults new introductions to public while respecting an explicit access choice', async () => {
+  state.load.mockResolvedValue({ items: [{ id: 'intro-course', title: 'Course', data: { lessons: [] } }] });
+  state.execute.mockResolvedValue({ lesson: { id: 'new-intro' } });
+  await renderInShell('instructor-lesson-new', { id: 'intro-course' });
+  await act(async () => { await vi.dynamicImportSettled(); });
+  const click = async (label: string) => act(async () => [...host.querySelectorAll('button')].find(button => button.textContent === label)!.click());
+  await click('图文课时');
+  const select = host.querySelector<HTMLSelectElement>('.platform-lesson-create-details select')!;
+  const preview = host.querySelector<HTMLInputElement>('.platform-lesson-create-details input[type=checkbox]')!;
+  const choose = (value: string) => act(async () => { select.value = value; select.dispatchEvent(new Event('change', { bubbles: true })); });
+  await choose('introduction');
+  expect(preview.checked).toBe(true);
+  await act(async () => preview.click());
+  await choose('core');
+  await choose('introduction');
+  expect(preview.checked).toBe(false);
+  await fillCourseField('中文标题', '引言');
+  await click('提交审核');
+  expect(state.execute).toHaveBeenCalledWith(expect.anything(), expect.objectContaining({
+    payload: expect.objectContaining({ lessonType: 'introduction', accessScope: 'entitled' }),
+  }));
+});
+
+it('opens the course editor with effective trials and the four bilingual positioning inputs', async () => {
+  state.load.mockResolvedValue({ items: [{ id: 'preview-course', title: 'Course', data: {
+    titleZh: '课程', status: 'published', enrollmentMode: 'purchase', currency: 'CNY', baseAmountMinor: 2500,
+    presentation: { level: '入门学员', target: '独立复原', trialLessonIds: [] },
+    lessons: [
+      { id: 'visible', titleZh: '公开课时', accessScope: 'public', status: 'published' },
+      { id: 'queued', titleZh: '候选课时', accessScope: 'public', liveAccessScope: 'entitled', status: 'published', reviewStatus: 'pending' },
+      { id: 'intro', titleZh: '引言课时', accessScope: 'public', lessonType: 'introduction', status: 'published' },
+    ],
+  } }] });
+  state.execute.mockResolvedValue({});
+  await renderInShell('instructor-course', { id: 'preview-course' });
+  await act(async () => { await vi.dynamicImportSettled(); });
+  const choices = [...host.querySelectorAll('.platform-course-trial-settings [role=switch]')];
+  expect(choices.map(choice => choice.getAttribute('aria-checked'))).toEqual(['true', 'false']);
+  const input = (label: string) => [...host.querySelectorAll('label')].find(item => item.querySelector('span')?.textContent === label)?.querySelector('input');
+  expect(['中文适合人群', '英文适合人群', '中文目标水平', '英文目标水平'].map(label => input(label)?.value))
+    .toEqual(['入门学员', '入门学员', '独立复原', '独立复原']);
+  expect(input('适合水平')).toBeUndefined();
+  expect(input('目标水平')).toBeUndefined();
+  const form = host.querySelector('.platform-instructor-course-info form')!;
+  await act(async () => form.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true })));
+  const action = state.execute.mock.calls.find(([, input]) => input.action === 'save-instructor-course');
+  expect(action?.[1].payload.presentation).toMatchObject({ level: '入门学员', target: '独立复原' });
+  expect(action?.[1].payload.presentation).not.toHaveProperty('trialLessonIds');
+});
+
+it('reads a pending quiz in both roles and displays its live question comparison for administrators', async () => {
+  const { PlatformContentReview } = await import('@/components/platform/PlatformContentReview');
+  const runAction = vi.fn().mockResolvedValue({});
+  const entity = { id: 'quiz', title: '新测验', data: {
+    titleZh: '新测验', reviewId: 'review-quiz', reviewStatus: 'pending', passingScoreBps: 7000,
+    questions: [{ promptZh: '新题', choices: ['选项甲', '选项乙'], answerKey: 1, explanation: '新解析' }],
+    reviewBase: { titleZh: '旧测验', passingScoreBps: 6000, questions: [{ promptZh: '旧题', choices: ['旧选项'], explanation: '旧解析' }] },
+  } };
+  await act(async () => root.render(createElement(PlatformContentReview, { entity, courseId: 'course', quiz: true, admin: false, busy: null, runAction })));
+  expect(host.textContent).toContain('新解析');
+  expect(host.textContent).toContain('撤回审核');
+  await act(async () => root.render(createElement(PlatformContentReview, { entity, courseId: 'course', quiz: true, admin: true, busy: null, runAction })));
+  expect(host.textContent).toContain('60%');
+  expect(host.textContent).toContain('70%');
+  expect(host.textContent).toContain('旧选项');
+  expect(host.textContent).toContain('选项乙');
+  expect(host.textContent).toContain('旧解析');
+  expect(host.textContent).toContain('新解析');
 });

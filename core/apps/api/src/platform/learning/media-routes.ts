@@ -6,6 +6,8 @@ import { verifyPlatformMediaToken, servePlatformMedia, createPlatformMediaToken 
 import { resourceId } from '../validation.js';
 import { type Context, type Hono } from 'hono';
 
+const PLAYBACK_TTL_SECONDS = 45 * 60;
+
 async function lessonMediaContext(c: Context) {
   const lessonKey = c.req.param('lessonId');
   if (!lessonKey) badRequest('lessonId is required');
@@ -55,7 +57,7 @@ export function registerMediaRoutes(platformLearningRoutes: Hono): void {
     };
     const binding = `${preview ? 'lesson-review' : 'lesson'}:${lessonId}:${revision}`;
     if (token != null) {
-      if (!verifyPlatformMediaToken({ token, mediaId: asset.id, binding })) {
+      if (!verifyPlatformMediaToken({ token, mediaId: asset.id, binding, ttlSeconds: preview ? undefined : PLAYBACK_TTL_SECONDS })) {
         throw new PlatformApiError('FORBIDDEN', 403, 'Media access token is invalid or expired');
       }
       return servePlatformMedia(c, {
@@ -64,7 +66,7 @@ export function registerMediaRoutes(platformLearningRoutes: Hono): void {
         sizeBytes: asset.size_bytes,
       }, 'private, no-store');
     }
-    const signed = createPlatformMediaToken({ mediaId: asset.id, binding });
+    const signed = createPlatformMediaToken({ mediaId: asset.id, binding, ttlSeconds: PLAYBACK_TTL_SECONDS });
     const accessUrl = new URL(c.req.url);
     accessUrl.search = '';
     accessUrl.searchParams.set('token', signed.token);

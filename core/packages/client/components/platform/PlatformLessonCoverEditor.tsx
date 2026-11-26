@@ -18,6 +18,7 @@ interface Props {
   lessonId: string;
   currentVideo?: boolean;
   videoElement?: HTMLVideoElement | null;
+  onDraftCover?: (file: File) => void;
   onCoverUpdated?: (posterUrl: string | null) => void;
 }
 
@@ -28,6 +29,7 @@ export function PlatformLessonCoverEditor({
   currentVideo = false,
   videoElement,
   onCoverUpdated,
+  onDraftCover,
 }: Props) {
   const t = useT();
   const fileInput = useRef<HTMLInputElement>(null);
@@ -59,6 +61,12 @@ export function PlatformLessonCoverEditor({
   };
 
   const upload = async (file: File) => {
+    if (onDraftCover) {
+      onDraftCover(file);
+      setMessage(t('封面将在保存课时时上传。', 'The cover will be uploaded when you save the lesson.'));
+      if (fileInput.current) fileInput.current.value = '';
+      return;
+    }
     setUploading(true);
     setMessage('');
     try {
@@ -109,7 +117,7 @@ export function PlatformLessonCoverEditor({
       setOpened(nextOpened);
       if (nextOpened && !currentVideo && !media && !loading) void load();
     }}>
-      <MoreToggle as="summary">{currentVideo ? t('编辑封面', 'Edit cover') : t('视频封面', 'Video cover')}</MoreToggle>
+      <MoreToggle as="summary">{currentVideo && !onDraftCover ? t('编辑封面', 'Edit cover') : t('视频封面', 'Video cover')}</MoreToggle>
       {opened && (
         <div className="platform-video-cover-editor-content">
           {loading ? <p className="platform-domain-note"><LoadingIndicator>{t('正在加载…', 'Loading…')}</LoadingIndicator></p> : (

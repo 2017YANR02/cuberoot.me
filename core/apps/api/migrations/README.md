@@ -88,6 +88,10 @@ WCA 自学来源增量 `0185_wca_self_taught.sql` 允许老师关系的老师 ID
 
 `0349_platform_content_reviews.sql` 新增课程及课时发布审核记录，保留历史线上版本，不改变既有已发布内容；审核与撤回均记录候选版本。申请者及审核者注销后由外键清除账号关联，保留审核结果。
 
+- `0360_platform_lesson_type_and_order.sql` 新增显式课时类型，并支持同一事务交换相邻课时顺序。
+- `0361_platform_course_presentation_defaults.sql` 为历史课程补齐展示默认值，保留既有课程修订。
+- `0362_platform_quiz_content_reviews.sql` 扩展课程内容审核，校验测验所属课时及审核版本，并为每份测验保留独立的待审记录。账号注销沿用审核记录的账号外键。
+
 `0328_wca_multiple_teams.sql` 将 WCA ID 唯一约束改为 `(wca_id, team_id)` 组合唯一，保留旧成员编号及全部归属。`0329_cubicle_roster.sql` 按维护者名单增加 Cubicle 的 14 位成员归属，不替换原厂商战队；身份核对及姓名差异确认见 [导入记录](../../../../docs/data/imports/cubicle-2026-11-12.md)。目录按 WCA ID 去重，无 WCA ID 的同名成员仍按独立 `member_id` 计数。先迁移并部署 API，再发布客户端；新版 PUT 要求 `names` 数组，旧版单个 `name` 请求会被拒绝，避免旧编辑器清空新增归属。
 
 2026-11-13 只读核对生产 ledger：`0325_assistant_share_versions.sql`、`0326_assistant_context.sql`、`0327_assistant_knowledge_metadata.sql` 已应用，两个 WCA 文件未应用。因此仅将尚未提交的 WCA 文件从冲突的 0325/0326 改为 0328/0329，SQL 字节和 SHA-256 保持不变，并同步文档与测试引用。不得修改已应用的助手迁移。

@@ -6,7 +6,8 @@ import AppLink from '@/components/AppLink';
 import { VisualCube } from '@/components/VisualCube';
 import { useT } from '@/hooks/useT';
 import { nextQuery, useIsAdmin } from '@/lib/auth-store';
-import { courseLessonAccess } from '@/lib/platform-course-catalog';
+import { persistItem } from '@/lib/safe-storage';
+import { courseCatalogDetails, courseLessonAccess } from '@/lib/platform-course-catalog';
 import { loadPlatformLessonMedia, platformMediaBrowserUrl, PlatformPermissionError, type PlatformLessonMedia } from '@/lib/platform-gateway';
 import type { PlatformEntity, PlatformRouteDefinition } from '@/lib/platform-types';
 import { PLATFORM_COURSE_SECTIONS, platformCourseLessonSection, platformCourseSectionsIncludedBy } from '@/lib/platform-routes';
@@ -90,9 +91,34 @@ function DomainList({ title, items, href, showStatus = true }: {
   return <section className="platform-domain-content"><h2>{title}</h2>{list}</section>;
 }
 
-function LessonMedia({ lessonId, courseSlug, autoContinue, onAutoContinueChange, onNext, onPrevious, autoPlay, startTime, posterOverride, onVideoElement }: {
+function LessonGate({ status, courseId, enrollmentMode, courseCover }: {
+  status: 401 | 403; courseId: string; enrollmentMode?: string; courseCover?: string;
+}) {
+  const t = useT();
+  if (status === 403) {
+    const invite = enrollmentMode === 'invite';
+    const href = invite ? '/platform/account/invites' : `/platform/courses/${encodeURIComponent(courseId)}${['purchase', 'free'].includes(enrollmentMode ?? '') ? '#platform-course-access' : ''}`;
+    const action = invite ? t('兑换课程', 'Redeem course') : enrollmentMode === 'purchase' ? t('前往购买课程', 'Buy this course')
+      : enrollmentMode === 'free' ? t('前往免费报名', 'Enroll for free') : t('查看课程与解锁方式', 'View course and access options');
+    return <div className="platform-locked-media">
+      <div className="platform-locked-media-visual" aria-hidden="true">{courseCover ? <img src={courseCover} alt="" /> : <VisualCube view="iso" size={240} local alt="" />}</div>
+      <AppLink className="platform-locked-media-action" href={href} prefetch={false}>{action}</AppLink>
+    </div>;
+  }
+  const href = `/account${nextQuery(`${window.location.pathname}${window.location.search}`)}`;
+  return <div className="platform-domain-note">
+    <p>{t('请先登录，再继续观看这个课时。', 'Sign in to continue watching this lesson.')}</p>
+    <AppLink className="platform-action-link" href={href} prefetch={false}>
+      {t('前往登录', 'Go to sign in')}
+    </AppLink>
+  </div>;
+}
+
+function LessonMedia({ lessonId, courseId, enrollmentMode, courseCover, autoContinue, onAutoContinueChange, onNext, onPrevious, autoPlay, startTime, posterOverride, onVideoElement }: {
   lessonId: string;
-  courseSlug?: string;
+  courseId: string;
+  enrollmentMode?: string;
+  courseCover?: string;
   startTime?: number;
   autoContinue?: boolean;
   onAutoContinueChange?: (enabled: boolean) => void;
@@ -106,68 +132,97 @@ function LessonMedia({ lessonId, courseSlug, autoContinue, onAutoContinueChange,
   const [media, setMedia] = useState<PlatformLessonMedia | null>(null);
   const [error, setError] = useState<Error | null>(null);
   const [reload, setReload] = useState(0);
-  const resume = useRef({ time: 0, playing: false });
-  const refreshing = useRef(false);
+  const [transitionFrame, setTransitionFrame] = useState<string>();
+  const element = useRef<HTMLMediaElement | null>(null);
+  const resume = useRef<{ time: number; playing: boolean; rate: number; volume: number; muted: boolean } | null>(null);
+  const attachVideo = useCallback((video: HTMLVideoElement | null) => { element.current = video; onVideoElement?.(video); }, [onVideoElement]);
   useEffect(() => {
     const controller = new AbortController();
-    setMedia(null);
-    setError(null);
-    void loadPlatformLessonMedia(lessonId, controller.signal)
-      .then((value) => {
-        if (!controller.signal.aborted) { refreshing.current = false; setMedia(value); }
-      })
-      .catch((reason: unknown) => {
-        if (!controller.signal.aborted) setError(reason instanceof Error ? reason : new Error(String(reason)));
-      });
-    return () => controller.abort();
+    let timer: ReturnType<typeof setTimeout>;
+    let pending = false;
+    let expires = Infinity;
+    const renew = async () => {
+      if (pending || controller.signal.aborted) return;
+      clearTimeout(timer);
+      pending = true;
+      try {
+        const value = await loadPlatformLessonMedia(lessonId, controller.signal);
+        if (controller.signal.aborted) return;
+        const player = element.current;
+        if (player) resume.current ??= {
+          time: player.currentTime, playing: !player.paused && !player.ended,
+          rate: player.playbackRate, volume: player.volume, muted: player.muted,
+        };
+        if (player instanceof HTMLVideoElement && player.videoWidth && player.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA) {
+          try {
+            const frame = document.createElement('canvas');
+            frame.width = Math.min(player.videoWidth, 640);
+            frame.height = Math.round(frame.width * player.videoHeight / player.videoWidth);
+            frame.getContext('2d')?.drawImage(player, 0, 0, frame.width, frame.height);
+            setTransitionFrame(frame.toDataURL('image/jpeg', 0.8));
+          } catch { /* The browser may restrict reading frames from a cross-origin source. */ }
+        }
+        setMedia(value);
+        setError(null);
+        expires = Date.parse(value.expiresAt);
+        const delay = expires - Date.now() - 60_000;
+        if (delay > 0) timer = setTimeout(() => void renew(), Math.min(delay, 2_147_483_647));
+      } catch (reason) {
+        if (controller.signal.aborted) return;
+        if (reason instanceof PlatformPermissionError || !element.current?.src || expires <= Date.now()) {
+          setError(reason instanceof Error ? reason : new Error(String(reason)));
+        } else {
+          timer = setTimeout(() => void renew(), 15_000);
+        }
+      } finally { pending = false; }
+    };
+    const onVisible = () => {
+      if (document.visibilityState === 'visible' && expires - Date.now() <= 60_000) void renew();
+    };
+    void renew();
+    document.addEventListener('visibilitychange', onVisible);
+    return () => {
+      controller.abort();
+      clearTimeout(timer);
+      document.removeEventListener('visibilitychange', onVisible);
+    };
   }, [lessonId, reload]);
   const onError = (event: SyntheticEvent<HTMLMediaElement>) => {
-    resume.current = { time: event.currentTarget.currentTime, playing: !event.currentTarget.paused };
-    // Renew authorization only after expiry; unsupported codecs must not cause a retry loop.
-    if (media && Date.parse(media.expiresAt) <= Date.now() && !refreshing.current) {
-      refreshing.current = true;
+    const player = event.currentTarget;
+    if (media && Date.parse(media.expiresAt) <= Date.now()) {
+      if (resume.current) return;
+      resume.current = { time: player.currentTime, playing: !player.paused && !player.ended, rate: player.playbackRate, volume: player.volume, muted: player.muted };
       setReload(value => value + 1);
-    } else setError(new Error(t('播放失败，请重新加载后再试。', 'Playback failed. Reload and try again.')));
+    } else {
+      setError(new Error(t('播放失败，请重新加载后再试。', 'Playback failed. Reload and try again.')));
+    }
   };
   const onLoadedMetadata = (event: SyntheticEvent<HTMLMediaElement>) => {
-    const element = event.currentTarget;
-    if (resume.current.time > 0) element.currentTime = resume.current.time;
-    if (resume.current.playing) void element.play().catch(() => { /* Native play control remains available. */ });
+    const player = event.currentTarget;
+    const previous = resume.current;
+    resume.current = null;
+    if (!previous) return;
+    player.currentTime = Number.isFinite(player.duration) ? Math.min(previous.time, player.duration) : previous.time;
+    player.playbackRate = previous.rate;
+    player.volume = previous.volume;
+    player.muted = previous.muted;
+    if (previous.playing) void player.play().catch(() => {});
   };
-  if (error instanceof PlatformPermissionError && error.status === 403) {
-    return <div className="platform-locked-media">
-      <div className="platform-locked-media-visual" aria-hidden="true">
-        {courseSlug === 'yan-ruimin-3x3-beginner'
-          ? <img src="/images/ruimin/gallery/photo-03.webp" alt="" />
-          : <VisualCube view="iso" size={240} local alt="" />}
-      </div>
-      <AppLink className="platform-locked-media-action" href="/platform/account/invites" prefetch={false}>
-        {t('兑换课程', 'Redeem course')}
-      </AppLink>
-    </div>;
-  }
-  if (error instanceof PlatformPermissionError) {
-    const href = `/account${nextQuery(`${window.location.pathname}${window.location.search}`)}`;
-    return <div className="platform-domain-note">
-      <p>{t('请先登录，再继续观看这个课时。', 'Sign in to continue watching this lesson.')}</p>
-      <AppLink className="platform-action-link" href={href} prefetch={false}>
-        {t('前往登录', 'Go to sign in')}
-      </AppLink>
-    </div>;
-  }
+  if (error instanceof PlatformPermissionError) return <LessonGate status={error.status} courseId={courseId} enrollmentMode={enrollmentMode} courseCover={courseCover} />;
   if (error) return <div className="platform-domain-note">
     <p>{t('课时媒体暂时无法加载：', 'Lesson media could not be loaded: ')}{error.message}</p>
-    <button type="button" className="platform-action-link" onClick={() => setReload(value => value + 1)}>{t('重新加载播放器', 'Reload player')}</button>
+    <button type="button" className="platform-action-link" onClick={() => { resume.current = null; setTransitionFrame(undefined); setError(null); setMedia(null); setReload(value => value + 1); }}>{t('重新加载播放器', 'Reload player')}</button>
   </div>;
   if (!media) return <p className="platform-domain-note">{t('正在取得课时媒体访问权限。', 'Requesting lesson media access.')}</p>;
   if (media.mimeType.startsWith('video/')) return <LessonVideoPlayer src={platformMediaBrowserUrl(media.accessUrl)} poster={posterOverride ?? (media.posterUrl ? platformMediaBrowserUrl(media.posterUrl) : undefined)} onError={onError} onLoadedMetadata={onLoadedMetadata}
-    lessonId={lessonId} mediaId={media.mediaId} mimeType={media.mimeType} startTime={startTime}
-    autoContinue={autoContinue} onAutoContinueChange={onAutoContinueChange} onNext={onNext} onPrevious={onPrevious} autoPlay={autoPlay} onVideoElement={onVideoElement} />;
-  if (media.mimeType.startsWith('audio/')) return <audio className="platform-lesson-media" controls preload="metadata" src={media.accessUrl} onError={onError} onLoadedMetadata={onLoadedMetadata} />;
+    lessonId={lessonId} mediaId={media.mediaId} mimeType={media.mimeType} startTime={resume.current ? 0 : startTime}
+    transitionFrame={transitionFrame} onFrameReady={() => setTransitionFrame(undefined)}
+    autoContinue={autoContinue} onAutoContinueChange={onAutoContinueChange} onNext={onNext} onPrevious={onPrevious} autoPlay={autoPlay && !resume.current} onVideoElement={attachVideo} />;
+  if (media.mimeType.startsWith('audio/')) return <audio ref={audio => { element.current = audio; }} className="platform-lesson-media" controls preload="metadata" src={media.accessUrl} onError={onError} onLoadedMetadata={onLoadedMetadata} />;
   return <a className="platform-action-link" href={media.accessUrl} target="_blank" rel="noreferrer">{t('打开课时媒体', 'Open lesson media')}</a>;
 }
 
-function OrderItems({ items, status }: { items: unknown[]; status?: string }) {
+function OrderItems({ items, status, learner }: { items: unknown[]; status?: string; learner: boolean }) {
   const t = useT();
   const english = t('zh', 'en') === 'en';
   if (!items.length) return <p className="platform-domain-note">{t('订单没有项目。', 'This order has no items.')}</p>;
@@ -178,6 +233,11 @@ function OrderItems({ items, status }: { items: unknown[]; status?: string }) {
         {items.map((raw, index) => {
           const item = record(raw) ?? {};
           const snapshot = record(item.snapshot) ?? {};
+          const paid = learner && (status === 'paid' || status === 'fulfilled');
+          const courseId = item.sellableType === 'course' ? string(item.courseId) ?? string(snapshot.id) : null;
+          const lessonId = string(item.learningLessonId);
+          const learningHref = paid && courseId ? `/platform/courses/${encodeURIComponent(courseId)}${lessonId ? `/learn/${encodeURIComponent(lessonId)}` : ''}`
+            : paid && (item.sellableType === 'platform_membership' || item.sellableType === 'course_membership') ? '/platform/account/courses' : null;
           const competitionId = record(snapshot.competition) && string(snapshot.eventId);
           const fulfillment = record(item.fulfillment) ?? {};
           const events = Array.isArray(fulfillment.events) ? fulfillment.events : [];
@@ -198,6 +258,9 @@ function OrderItems({ items, status }: { items: unknown[]; status?: string }) {
                   : status === 'fulfilled' ? t(`数量 ${quantity}，已发放`, `Quantity ${quantity}, fulfilled`)
                     : t(`数量 ${quantity}`, `Quantity ${quantity}`)}</span>
               {competitionId ? <AppLink href={competitionHref(competitionId)} prefetch={false}>{t('查看比赛与报名', 'View competition and entry')}</AppLink> : null}
+              {learningHref && <AppLink className="platform-button platform-button-primary" href={learningHref} prefetch={false}>
+                {courseId ? t('开始学习', 'Start learning') : t('查看我的课程', 'View my courses')}
+              </AppLink>}
               {events.map((eventRaw, eventIndex) => {
                 const event = record(eventRaw) ?? {};
                 const type = string(event.type) ?? t('履约', 'Fulfillment');
@@ -213,11 +276,14 @@ function OrderItems({ items, status }: { items: unknown[]; status?: string }) {
   );
 }
 
-function ClassroomLessonStage({ title, courseId, lessonId, courseSlug, canEditCover, startTime, autoContinue, onAutoContinueChange, autoPlay, onPrevious, onNext, onVideoElement }: {
+function ClassroomLessonStage({ title, courseId, lessonId, enrollmentMode, hasMedia, canEditCover, startTime, autoContinue, onAutoContinueChange, autoPlay, onPrevious, onNext, onVideoElement, denied, courseCover }: {
   title: string;
   courseId: string;
   lessonId: string;
-  courseSlug?: string;
+  enrollmentMode?: string;
+  hasMedia: boolean;
+  denied?: 401 | 403;
+  courseCover?: string;
   canEditCover: boolean;
   startTime?: number;
   autoContinue?: boolean;
@@ -227,13 +293,14 @@ function ClassroomLessonStage({ title, courseId, lessonId, courseSlug, canEditCo
   onNext?: () => void;
   onVideoElement?: (video: HTMLVideoElement | null) => void;
 }) {
+  const t = useT();
   const [posterOverride, setPosterOverride] = useState<string>();
   const [videoElement, setVideoElement] = useState<HTMLVideoElement | null>(null);
   const attachVideo = useCallback((element: HTMLVideoElement | null) => { setVideoElement(element); onVideoElement?.(element); }, [onVideoElement]);
   return <section className="platform-classroom-stage" aria-label={title}>
     <div className="platform-classroom-stage-heading">
       <h2 aria-live="polite">{title}</h2>
-      {canEditCover ? <PlatformLessonCoverEditor
+      {canEditCover && hasMedia && !denied ? <PlatformLessonCoverEditor
         scope="admin"
         courseId={courseId}
         lessonId={lessonId}
@@ -242,9 +309,14 @@ function ClassroomLessonStage({ title, courseId, lessonId, courseSlug, canEditCo
         onCoverUpdated={(posterUrl) => { if (posterUrl) setPosterOverride(posterUrl); }}
       /> : null}
     </div>
-    <div className="platform-classroom-player"><LessonMedia
+    {denied ? <div className="platform-classroom-player">
+      {denied === 403 && <p>{t('这个课时需要解锁。', 'This lesson requires access.')}</p>}
+      <LessonGate status={denied} courseId={courseId} enrollmentMode={enrollmentMode} courseCover={courseCover} />
+    </div> : hasMedia ? <div className="platform-classroom-player"><LessonMedia
       lessonId={lessonId}
-      courseSlug={courseSlug}
+      courseId={courseId}
+      enrollmentMode={enrollmentMode}
+      courseCover={courseCover}
       startTime={startTime}
       autoContinue={autoContinue}
       onAutoContinueChange={onAutoContinueChange}
@@ -253,9 +325,12 @@ function ClassroomLessonStage({ title, courseId, lessonId, courseSlug, canEditCo
       onNext={onNext}
       posterOverride={posterOverride}
       onVideoElement={attachVideo}
-    /></div>
+    /></div> : null}
   </section>;
 }
+
+// Direct lesson navigation may remount the classroom. Carry autoplay in memory for that arrival.
+let classroomAutoplay: { course: string; lesson: string; expires: number } | undefined;
 
 export function PlatformDomainContent({ definition, entity, params, previewRedirect, selectedLessonId, onSelectLesson, lessonStartTime }: {
   definition: PlatformRouteDefinition;
@@ -268,8 +343,20 @@ export function PlatformDomainContent({ definition, entity, params, previewRedir
 }) {
   const t = useT();
   const isAdmin = useIsAdmin();
-  const [autoContinue, setAutoContinue] = useState(false);
-  const [autoPlayLessonId, setAutoPlayLessonId] = useState<string | null>(null);
+  const [autoContinue, setAutoContinue] = useState(() => {
+    try { return localStorage.getItem('platform.lesson.autoplay') === 'true'; } catch { return false; }
+  });
+  const updateAutoContinue = (enabled: boolean) => {
+    setAutoContinue(enabled);
+    persistItem('platform.lesson.autoplay', String(enabled));
+  };
+  const [autoPlayLessonId, setAutoPlayLessonId] = useState<string | null>(() =>
+    classroomAutoplay && classroomAutoplay.expires > Date.now()
+      && classroomAutoplay.course === params.id && classroomAutoplay.lesson === params.lessonId ? params.lessonId : null);
+  useEffect(() => {
+    if (classroomAutoplay?.course === params.id && classroomAutoplay?.lesson === params.lessonId) classroomAutoplay = undefined;
+  }, [params.id, params.lessonId]);
+  const [localLessonId, setLocalLessonId] = useState<string | null>(null);
   if (['product-detail', 'event-detail', 'news-detail', 'admin', 'admin-event-analytics'].includes(definition.id)) return <PlatformCommerceContent definition={definition} entity={entity} />;
   if (!entity?.data) return null;
   const data = entity.data;
@@ -280,59 +367,54 @@ export function PlatformDomainContent({ definition, entity, params, previewRedir
   }
 
   const selectedSection = PLATFORM_COURSE_SECTIONS.find(section => definition.id === `course-section-${section.slug}`);
-  if (definition.id === 'course-detail' || selectedSection) {
-    const lessons = Array.isArray(data.lessons) ? data.lessons.map(raw => {
+  const directLesson = definition.id === 'course-lesson';
+  if (definition.id === 'course-detail' || selectedSection || (directLesson && Array.isArray(data.lessons))) {
+    const lessons = Array.isArray(data.lessons) ? data.lessons.flatMap(raw => {
       const lesson = record(raw);
       const titleZh = string(lesson?.titleZh);
-      // Keep existing lesson data readable after the introduction label change.
-      return lesson && titleZh ? { ...lesson, titleZh: titleZh.replace(/^先导课/, PLATFORM_COURSE_SECTIONS[0].title.zh) } : raw;
+      return lesson ? [titleZh ? { ...lesson, titleZh: titleZh.replace(/^先导课/, PLATFORM_COURSE_SECTIONS[0].title.zh) } : lesson] : [];
     }) : [];
-    if (selectedSection) {
-      const { canWatch } = courseLessonAccess(data);
-      const trialLessonIds = platformTrialLessonIds(data.presentation);
-      // Invalid or stale query IDs fall back to the first lesson in this section.
-      const sectionLessons = platformCourseSectionsIncludedBy(selectedSection.slug).flatMap(section => lessons.flatMap(raw => {
-        const lesson = record(raw);
-        const id = string(lesson?.id) ?? string(lesson?.slug);
-        if (!lesson || !id || platformCourseLessonSection(lesson, trialLessonIds) !== section.slug) return [];
-        return [{
-          id,
-          title: sectionLessonTitle(localized(lesson, 'title', english) ?? t('未命名课时', 'Untitled lesson'), section),
-          locked: !canWatch(id, lesson.accessScope),
-        }];
-      }));
-      const active = sectionLessons.find(lesson => lesson.id === selectedLessonId)
-        ?? sectionLessons.find(lesson => !lesson.locked)
-        ?? sectionLessons[0];
-      if (!active) return <p className="platform-domain-note">{t('暂无课时。', 'No lessons yet.')}</p>;
-      if (active.locked) return <div className="platform-domain-note">
-        <p>{t('这个课时需要解锁。', 'This lesson requires access.')}</p>
-        <AppLink className="platform-button" href={`/platform/courses/${encodeURIComponent(entity.id)}`} prefetch={false}>
-          {t('查看课程与解锁方式', 'View course and access options')}
-        </AppLink>
-      </div>;
-      return <PlatformClassroom key={active.id} courseId={entity.id} lessonId={active.id}
-        lessons={sectionLessons.map(item => ({ id: item.id, titleZh: item.title, titleEn: item.title, locked: item.locked }))}
-        startTime={lessonStartTime} onSelectLesson={onSelectLesson ? id=>{setAutoPlayLessonId(null);onSelectLesson(id);} : undefined}
-        renderMedia={mediaProps=><ClassroomLessonStage {...mediaProps} title={active.title} courseId={entity.id} courseSlug={string(data.slug)??undefined}
-          canEditCover={isAdmin} autoContinue={autoContinue} onAutoContinueChange={setAutoContinue} autoPlay={autoPlayLessonId===active.id}
-          onNext={mediaProps.onNext ? () => {
-            const activeIndex = sectionLessons.findIndex(item => item.id === active.id);
-            const next = sectionLessons.slice(activeIndex + 1).find(item => !item.locked);
-            if (!next) return;
-            setAutoPlayLessonId(next.id);
-            onSelectLesson?.(next.id);
-          } : undefined} />} />;
-    }
-    return <PlatformCourseDetail course={entity} lessons={lessons.flatMap(item => {
-      const lesson = record(item);
-      return lesson ? [lesson] : [];
-    })} />;
+    if (!selectedSection && !directLesson) return <PlatformCourseDetail course={entity} lessons={lessons} />;
+
+    const { canWatch, entries } = courseLessonAccess(data);
+    const progress = new Map(entries.map(item => [item.id, item.status]));
+    const trialLessonIds = platformTrialLessonIds(data.presentation);
+    const directory = PLATFORM_COURSE_SECTIONS.flatMap(section => lessons.flatMap(lesson => {
+      const id = string(lesson.id) ?? string(lesson.slug);
+      if (!id || platformCourseLessonSection(lesson, trialLessonIds) !== section.slug) return [];
+      const title = sectionLessonTitle(localized(lesson, 'title', english) ?? t('未命名课时', 'Untitled lesson'), section);
+      return [{
+        id, slug: lesson.slug, title, titleZh: title, titleEn: title, section: section.title,
+        sectionId: section.slug, locked: !canWatch(id, lesson.accessScope),
+        status: string(progress.get(id)) ?? undefined, durationSeconds: Number(lesson.durationSeconds) || undefined,
+        trial: lesson.accessScope === 'public',
+      }];
+    }));
+    const sectionIds = selectedSection ? platformCourseSectionsIncludedBy(selectedSection.slug).map(section => section.slug) : [];
+    const defaults = selectedSection ? directory.filter(item => sectionIds.includes(item.sectionId)) : directory;
+    const requested = selectedLessonId ?? localLessonId ?? (directLesson ? params.lessonId : undefined);
+    const active = (requested ? directory.find(item => item.id === requested || item.slug === requested) : undefined)
+      ?? (directLesson && requested ? undefined : defaults.find(item => !item.locked) ?? defaults[0]);
+    if (!active) return <p className="platform-domain-note">{t('暂无课时。', 'No lessons yet.')}</p>;
+    const chooseLesson = onSelectLesson ?? setLocalLessonId;
+    const select = (id: string) => { classroomAutoplay = undefined; setAutoPlayLessonId(null); chooseLesson(id); };
+    const next = directory.slice(directory.indexOf(active) + 1).find(item => !item.locked);
+    return <PlatformClassroom key={active.id} courseId={entity.id} lessonId={active.id}
+      lessons={directory} locked={active.locked} startTime={lessonStartTime} onSelectLesson={select}
+      renderMedia={mediaProps => <ClassroomLessonStage {...mediaProps} title={active.title} courseId={entity.id}
+        enrollmentMode={string(data.enrollmentMode) ?? undefined} courseCover={courseCatalogDetails(entity).coverUrl}
+        canEditCover={isAdmin} autoContinue={autoContinue} onAutoContinueChange={updateAutoContinue}
+        autoPlay={autoPlayLessonId === active.id}
+        onNext={next ? () => {
+          if (directLesson && onSelectLesson) classroomAutoplay = { course: params.id, lesson: next.id, expires: Date.now() + 15_000 };
+          setAutoPlayLessonId(next.id);
+          chooseLesson(next.id);
+        } : undefined} />} />;
   }
 
-  if (definition.id === 'course-lesson') {
+  if (directLesson) {
     return <PlatformClassroom key={entity.id} courseId={params.id} lessonId={entity.id} startTime={lessonStartTime}
-      renderMedia={mediaProps=><ClassroomLessonStage {...mediaProps} title={entity.title} courseId={params.id} canEditCover={isAdmin} />} />;
+      renderMedia={mediaProps => <ClassroomLessonStage {...mediaProps} title={entity.title} courseId={params.id} canEditCover={isAdmin} />} />;
   }
   if (definition.id === 'path-detail') return <PlatformLearningPath entity={entity} />;
 
@@ -355,7 +437,7 @@ export function PlatformDomainContent({ definition, entity, params, previewRedir
     const refunds = Array.isArray(data.refunds) ? data.refunds : [];
     return (
       <div className="platform-domain-stack">
-        <OrderItems items={lines} status={string(data.status) ?? undefined} />
+        <OrderItems items={lines} status={string(data.status) ?? undefined} learner={definition.id === 'order-detail'} />
         {payments.length ? <DomainList title={t('支付记录', 'Payment attempts')} items={payments} /> : null}
         {refunds.length ? <DomainList title={t('退款记录', 'Refunds')} items={refunds} /> : null}
       </div>

@@ -78,7 +78,10 @@ export function PlatformAdminActions(props: CommonProps) {
     }
     const editor = <DomainForm definition={definition} entity={entity} resourceId={params.id ?? params.code} busy={busy} runAction={runAction} spec={form} />;
     if (definition.id === 'admin-course') {
-      return <div className="platform-domain-stack"><PlatformContentReview entity={entity} courseId={entity?.id ?? params.id} admin busy={busy} runAction={runAction} />{entity?.data?.reviewStatus !== 'pending' && editor}<PlatformCourseContentManager {...props} /></div>;
+      return <PlatformCourseContentManager {...props} courseEditor={<div className="platform-domain-stack">
+        <PlatformContentReview entity={entity} courseId={entity?.id ?? params.id} admin busy={busy} runAction={runAction} />
+        {entity?.data?.reviewStatus !== 'pending' && editor}
+      </div>} />;
     }
     if (definition.id === 'admin-teacher') {
       const entryId = entity?.data?.teacherEntryId;

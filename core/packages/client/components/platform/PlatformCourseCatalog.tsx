@@ -8,8 +8,7 @@ import PuzzlePicker from '@/components/PuzzlePicker/PuzzlePicker';
 import SearchInput from '@/components/SearchInput';
 import { useT } from '@/hooks/useT';
 import { useLang } from '@/i18n/tr';
-import { COURSE_TOPICS, hasCourseTrial, type CourseTopic, type courseCatalogDetails } from '@/lib/platform-course-catalog';
-import { platformTrialLessonIds } from '@cuberoot/shared/platform';
+import { COURSE_TOPICS, firstPlatformTrialLessonId, type CourseTopic, type courseCatalogDetails } from '@/lib/platform-course-catalog';
 import { commerceMoney } from '@/lib/platform-commerce-format';
 import type { PlatformEntity, PlatformRouteDefinition } from '@/lib/platform-types';
 import { eventDisplayName } from '@/lib/wca-events';
@@ -111,7 +110,8 @@ export function PlatformCourseLabels({ details, limit }: { details: CourseDetail
   const isZh = useLang() === 'zh';
   const puzzles = new Set(details.puzzles.map(id => eventDisplayName(id, isZh)));
   const topics = new Set(details.topics.map(topic => t(COURSE_TOPICS[topic].zh, COURSE_TOPICS[topic].en)));
-  if (details.level) topics.add(details.level);
+  const audience = t(details.audience.zh, details.audience.en);
+  if (audience) topics.add(audience);
   const labels = [...[...puzzles].map(label => ({ label, puzzle: true })), ...[...topics].filter(label => !puzzles.has(label)).map(label => ({ label, puzzle: false }))].slice(0, limit);
   if (!labels.length) return null;
   return <div className="platform-course-card-labels">
@@ -142,8 +142,8 @@ export function PlatformCourseCards({ courses, definition, ownedCourses }: {
         ? `/platform/courses/${encodeURIComponent(course.id)}/learn/${encodeURIComponent(lessonId)}` : href;
       const hasProgress = progress !== null && progress > 0;
       const free = data.enrollmentMode === 'free' || (data.enrollmentMode !== 'invite' && data.enrollmentMode !== 'admin_grant' && hasPrice && Number(price) === 0);
-      const trial = !owned && !free && hasCourseTrial(course);
-      const trialId = trial ? platformTrialLessonIds(data.presentation)?.[0] : undefined;
+      const trialId = !owned && !free ? firstPlatformTrialLessonId(course) : undefined;
+      const trial = Boolean(trialId);
       const actionHref = owned ? continueHref : trialId ? `/platform/courses/${encodeURIComponent(course.id)}/sections/core?lesson=${encodeURIComponent(trialId)}` : null;
       const status = owned ? t('已解锁', 'Unlocked')
         : free ? t('免费', 'Free')
