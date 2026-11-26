@@ -100,7 +100,7 @@ function LblLessonView({ archive }: { archive: boolean }) {
     const chapterIndex = linkedStep ? Math.max(0, linkedChapter)
       : Math.max(0, chapters.findIndex(item => item.id === savedChapter));
     const target = chapters[chapterIndex];
-    const linkedSectionIndex = linkedSection === 'flowchart'
+    const linkedSectionIndex = (!linkedStep || linkedChapter >= 0) && linkedSection
       ? target.lessons.findIndex(lesson => lesson.id === linkedSection) : -1;
     const savedLeftLift = target.id === 'daisy' && savedLesson === 'case-1';
     const sectionIndex = initial && savedChapter === target.id

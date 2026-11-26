@@ -23,6 +23,7 @@ const MeetClient = dynamic(() => import('./MeetClient'), {
 export default function MeetPage() {
   const user = useAuthUser();
   const pathname = usePathname();
+  const [view] = useQueryState('view');
   const [roomParam] = useQueryState('room', { history: 'push' });
   const urlCode = roomParam ? normalizeMeetCode(roomParam) : '';
   const [mounted, setMounted] = useState(false);
@@ -47,6 +48,8 @@ export default function MeetPage() {
 
   // ── 未登录 ───────────────────────────────────────────────
   if (!user) {
+    const target = urlCode ? pathname + '?room=' + urlCode
+      : view && ['join', 'schedule', 'past'].includes(view) ? pathname + '?view=' + view : pathname;
     return (
       <main className="meet-page">
         <PageHeading titleClassName="meet-title">{tr({ zh: '会议', en: 'Meeting' })}</PageHeading>
@@ -57,7 +60,7 @@ export default function MeetPage() {
             每一个第一次点邀请链接的人登录完都会落在空荡荡的大厅里,还得回聊天记录里
             再翻一次链接。而这恰恰是收到邀请的人**必经**的一条路(会议要求登录)。 */}
         <AppLink
-          href={`/account${nextQuery(urlCode ? `${pathname}?room=${urlCode}` : pathname)}`}
+          href={`/account${nextQuery(target)}`}
           className="meet-go"
           prefetch={false}
         >

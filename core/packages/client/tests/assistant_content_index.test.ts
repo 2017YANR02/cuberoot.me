@@ -2,11 +2,18 @@ import {afterEach,describe,it,expect} from 'vitest';
 import {mkdtemp,mkdir,readFile,rm,writeFile} from 'node:fs/promises';
 import {tmpdir} from 'node:os';
 import path from 'node:path';
+import { ASSISTANT_FEATURE_LINKS } from '@cuberoot/shared/site-assistant';
+import { assistantFeatureLinks } from '../scripts/build-assistant-feature-links.mts';
 import {getRouteCacheKey} from 'next/dist/server/lib/route-cache-key';
 import type {RouteKind} from 'next/dist/server/route-kind';
 import {indexPublicHtml,discoverPublicPages,discoverNavigationLinks,solverDestinations,metadataDestinations,platformDestinations,discoverBuildArtifacts} from '../scripts/build-assistant-index';
 
 describe('assistant build-time public content index',()=>{
+  it('keeps offline feature links in sync with Web routes and published statistic IDs', () => {
+    const stats = ASSISTANT_FEATURE_LINKS.filter(([href]) => href.startsWith('/wca/')).map(([href,titleZh,titleEn]) =>
+      ({id:href.slice('/wca/'.length),titleZh,titleEn}));
+    expect(assistantFeatureLinks(stats)).toEqual(ASSISTANT_FEATURE_LINKS);
+  });
   it('includes concrete platform entries while excluding parameterized entity routes',()=>{
     const destinations=platformDestinations();
     expect(destinations.some(p=>p.href==='/platform')).toBe(true);

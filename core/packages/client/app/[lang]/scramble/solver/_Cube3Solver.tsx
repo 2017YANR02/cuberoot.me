@@ -156,6 +156,14 @@ export default function Cube3Solver() {
   const pendingSolutionsRef = useRef<string[]>([]);
   const [stateInfo, setStateInfo] = useState<string | null>(null);
   const [paintFacelet, setPaintFacelet] = useState(EMPTY_FACELET);
+  const [linkedFacelets] = useQueryState('facelets');
+  useEffect(() => {
+    if (linkedFacelets && /^[URFDLB]{54}$/.test(linkedFacelets)
+      && [4, 13, 22, 31, 40, 49].map(index => linkedFacelets[index]).join('') === 'URFDLB'
+      && validateFacelet(linkedFacelets) === null) {
+      setPaintFacelet(linkedFacelets);
+    }
+  }, [linkedFacelets]);
   const [paintColor, setPaintColor] = useState<PaintColor>('U');
   const [paintCanvasSize, setPaintCanvasSize] = useState(360);
   useEffect(() => {

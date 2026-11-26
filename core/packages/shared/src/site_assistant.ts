@@ -1,3 +1,4 @@
+export { ASSISTANT_FEATURE_LINKS, ASSISTANT_MODE_DESTINATIONS, isAssistantNavigationTarget } from './site_assistant_destinations';
 import { isValidIsoDate } from './iso-date';
 import { WCA_EVENT_ORDER } from './wca_events';
 
@@ -97,7 +98,20 @@ export function assistantAlgorithmsText(a: AssistantAlgorithms): string {
   ].join('\n');
 }
 export type AssistantArtifact = AssistantTable | AssistantChart | AssistantAlgorithms | import('./cube-photo/result').CubePhotoArtifact;
+export function assistantOpenTarget(question:string):string|undefined {
+  const text=question.normalize('NFKC').trim().replace(/[。.！!？?]+$/u,'').trim();
+  const command=/^(?:请(?:帮我)?|麻烦(?:你)?(?:帮我)?|帮我)?(?:直接)?(?:带我去|跳转到|前往|打开|进入)\s*(.+)$|^(?:please )?(?:open|take me to|go to) (.+)$/i;
+  const direct=command.exec(text);
+  if (direct) return direct[1] ?? direct[2];
+
+  // A first-person setup can precede a separate request. Speech transcripts
+  // often omit the comma; require an explicit addressee at that boundary.
+  const scene=/^((?:我想|我要|我在|我和|我跟|我俩|我们)[^，,。；;！？!?]{1,80}?)(?:[，,。；;]\s*|(?=请帮我|帮我|麻烦你))(.+)$/u.exec(text);
+  if (!scene || /[“”「」『』"'‘’]|不|别|没|假如|如果|要是|是否|知道|了解|问|怎么|如何|为什么|举例|解释|说|告诉|让|以为|教|翻译|引用|这句话|这句指令|听到|写下/.test(scene[1])) return;
+  return command.exec(scene[2])?.[1];
+}
 export interface AssistantAnswer {
+  navigation?: 'choose' | 'link' | 'open';
   answer: string; sources: AssistantSource[]; artifacts?: AssistantArtifact[];
   /** Verified destinations selected from site catalogs or public data adapters. */
   actions?: Array<{ id: string; title: string; href: string }>;
