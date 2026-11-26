@@ -1,4 +1,5 @@
 export const RECONSTRUCTION_TIMEOUT_MS = 30_000;
+export const RECONSTRUCTION_TIMEOUT_MESSAGE = `Reconstruction timed out after ${RECONSTRUCTION_TIMEOUT_MS / 1000} seconds`;
 export type {SearchConfig as MoveSearchConfig} from '../pose-fitter/runtime/reconstruction-policy.mjs';
 export interface MoveStep {
   postprocessed?:boolean;

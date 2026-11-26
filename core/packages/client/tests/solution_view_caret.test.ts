@@ -83,6 +83,21 @@ describe('SolutionView caret mapping', () => {
     expect(host.querySelector('.detail-cursor')).toBeNull();
   });
 
+  it('preserves selected notation when releasing a drag over the solution', async () => {
+    const onSeek = vi.fn();
+    await act(async () => root.render(createElement(SolutionView, {
+      text: 'R U F L', playback: { offset: null, onSeek },
+    })));
+    const pre = host.querySelector('pre')!;
+    const textNode = document.createTreeWalker(pre, NodeFilter.SHOW_TEXT).nextNode()!;
+    const selection = window.getSelection()!;
+    selection.setBaseAndExtent(textNode, 0, textNode, 3);
+
+    await act(async () => pre.dispatchEvent(new MouseEvent('click', { bubbles: true })));
+    expect(selection.toString()).toBe('R U');
+    expect(onSeek).not.toHaveBeenCalled();
+  });
+
   it.each(['timer', 'recon'])('resolves a bare OLL(CP) label to an exact case in %s', async surface => {
     const moves = "R U R' U R U2 R'";
     vi.mocked(loadAlg).mockResolvedValue({ cases: [{ id: 1, name: 'OLLCP27 1', algs: [[{ alg: moves }]] }] } as AlgFile);

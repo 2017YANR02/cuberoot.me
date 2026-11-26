@@ -235,13 +235,13 @@
   align-items: flex-start;
 }
 
-/* All form controls except the solution share one height. */
+/* Standard form controls share one height. */
 .submit-form {
   --submit-control-height: 40px;
 }
 .submit-form .submit-field :is(
   .submit-field-input, .submit-field-select,
-  .submit-field-textarea:not(.submit-solution-textarea),
+  .submit-field-textarea:not(.submit-solution-textarea, .submit-scramble-textarea),
   .comp-picker-input, .cuber-search-input,
   .record-select-input, .pp-trigger,
   .submit-solver-pill, .submit-comp-pill, .submit-add-cosolver,
@@ -643,9 +643,16 @@
   transition: border-color 0.2s, box-shadow 0.2s;
 }
 
-/* Only the solution editor grows with its content. */
 .submit-field .submit-field-textarea {
   resize: none;
+}
+
+.submit-field .submit-field-textarea.submit-scramble-textarea {
+  box-sizing: border-box;
+  min-height: var(--submit-control-height);
+  field-sizing: content;
+  resize: vertical;
+  scrollbar-width: none;
 }
 
 .submit-field .submit-field-input:focus,

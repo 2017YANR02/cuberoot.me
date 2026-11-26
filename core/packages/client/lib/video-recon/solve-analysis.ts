@@ -1,9 +1,9 @@
-import { toMoveStringStrict } from '@cuberoot/shared/alg-notation';
+import { mergeAdjacentMoves, toMoveStringStrict } from '@cuberoot/shared/alg-notation';
 import { getCube3 } from '@cuberoot/shared/recon/cube3';
 import { SLICE_PAIRS } from '@cuberoot/shared/recon-slice';
 import { CUBE_ORIENTATIONS, orientedFaceColors } from '@cuberoot/shared/timer';
 import type { CoreTrack } from '@cuberoot/shared/timer/reconstruct/core-track';
-import { conjugateSequence, facePermFor, type CubeFace } from '@cuberoot/shared/timer/reconstruct/gyro-orient';
+import { compactCubeRotations, conjugateSequence, facePermFor, type CubeFace } from '@cuberoot/shared/timer/reconstruct/gyro-orient';
 import { detectSolveMethod } from '@cuberoot/shared/timer/reconstruct/method-walk';
 import { buildReconText, formattedReconMoves, formatReconLine, prepareReconstruction, type ReconTextLine, type ReconTextResult } from '@cuberoot/shared/timer/reconstruct/recon-text';
 import type { RotationEvent } from '@cuberoot/shared/timer/reconstruct/rotation-detect';
@@ -128,6 +128,8 @@ export function observeVideoSolve(scramble: string, steps: readonly MoveStep[], 
 
 export type VideoSolveObservation = ReturnType<typeof observeVideoSolve>;
 
+type VideoReconText = ReconTextResult & { openingRotation: string; inspectionEndMs?: number };
+
 /** A compact scramble can solve the written turns while rotating all of the
  * opening stickers. Require the recognized state in the standard frame. */
 export async function matchVideoOpeningScramble(recognized: string, compact: string) {
@@ -143,10 +145,12 @@ export async function matchVideoOpeningScramble(recognized: string, compact: str
 
 /** Keep the renderer's text offsets paired with recorded frames. A compact
  * gesture can contain multiple notation tokens that share one video frame. */
-export function videoNotationTimeline(result: ReconTextResult, openingMs: number) {
+export function videoNotationTimeline(result: VideoReconText, openingMs: number) {
   const tokens = findTokenPositions(result.text);
   const inspectionLength = findTokenPositions(result.inspection).length;
-  const timeline = tokens.slice(0, inspectionLength).map(token => ({ offset: token.end, timestampMs: openingMs }));
+  const timeline = tokens.slice(0, inspectionLength).map(token => ({
+    offset: token.end, timestampMs: result.inspectionEndMs ?? openingMs,
+  }));
   let index = inspectionLength;
   for (const line of result.lines) {
     for (const [moveIndex, move] of formattedReconMoves(line).entries()) {
@@ -203,7 +207,87 @@ function compactVideoSlices(line: ReconTextLine, rotationChanges: Map<string, st
     : { ...line, moves: ranges.map(move => move.token), moveRanges: ranges, wasteGroups: groups };
 }
 
+/** A same-direction turn on either side of an x rotation can be written as
+ * one half turn. Keep the rotation time and seek the half turn at its finish. */
+function mergeVideoXTurns(line: ReconTextLine): ReconTextLine {
+  if (!line.moveRanges || !line.moves.some(token => /^x(?:2'?|')?$/.test(token))) return line;
+  const ranges = [...line.moveRanges];
+  const groups = line.wasteGroups && [...line.wasteGroups];
+  let algorithmGroups = line.algorithmGroups;
+  for (let i = 0; i + 2 < ranges.length; i++) {
+    const [first, rotation, last] = ranges.slice(i, i + 3);
+    if (!/^x(?:2'?|')?$/.test(rotation.token) || !/^[RL]'?$/.test(first.token) || first.token !== last.token) continue;
+    if (groups?.[i] !== groups?.[i + 1] || groups?.[i] !== groups?.[i + 2]) continue;
+    if (algorithmGroups?.some(({ from, to }) => (from > i && from <= i + 2) || (to > i && to <= i + 2))) continue;
+    ranges.splice(i, 3,
+      { ...rotation, startIdx: first.startIdx, endIdx: first.startIdx - 1 },
+      { ...first, token: mergeAdjacentMoves(`${first.token} ${last.token}`), endTs: last.endTs, endIdx: last.endIdx },
+    );
+    groups?.splice(i + 2, 1);
+    algorithmGroups = algorithmGroups?.map(({ from, to }) => ({
+      from: from > i + 2 ? from - 1 : from,
+      to: to > i + 2 ? to - 1 : to,
+    }));
+    i++;
+  }
+  return ranges.length === line.moveRanges.length ? line
+    : { ...line, moves: ranges.map(range => range.token), moveRanges: ranges, wasteGroups: groups, algorithmGroups };
+}
+
 const Z_FRAMES = ['', 'z', 'z2', "z'"].map(facePermFor);
+
+function conjugateVideoMove(token: string, frame: ReturnType<typeof facePermFor>) {
+  const spaced = toMoveStringStrict(token).replace(/\b([rludfb])/g, face => `${face.toUpperCase()}w`);
+  return conjugateSequence(spaced, frame)?.replaceAll(' ', '') ?? null;
+}
+
+/** Put one internal yaw before a ZBLS formula by renaming only its prefix. */
+function moveZblsYawToStart(line: ReconTextLine): ReconTextLine {
+  if (!/\bZBLS\b/.test(line.label ?? '') || !line.moveRanges || line.algorithmGroups?.length) return line;
+  const isRotation = (move: string) => /^[xyz](?:2'?|')?$/.test(move);
+  const index = line.moves.findIndex(isRotation);
+  if (index <= 0 || index === line.moves.length - 1 || line.moves.findLastIndex(isRotation) !== index
+    || !line.moves[index].startsWith('y') || line.wasteGroups?.[index] != null) return line;
+
+  const frame = facePermFor(line.moves[index]);
+  const prefix = line.moves.slice(0, index).map(token => conjugateVideoMove(token, frame));
+  if (prefix.some(token => token === null)) return line;
+  const first = line.moveRanges[0];
+  const rotation = { ...line.moveRanges[index], ts: first.ts, endTs: first.ts,
+    startIdx: first.startIdx, endIdx: first.startIdx - 1 };
+  const ranges = [rotation, ...prefix.map((token, i) => ({ ...line.moveRanges![i], token: token! })),
+    ...line.moveRanges.slice(index + 1)];
+  const groups = line.wasteGroups;
+  return { ...line, moves: ranges.map(({ token }) => token), moveRanges: ranges,
+    wasteGroups: groups && [null, ...groups.slice(0, index), ...groups.slice(index + 1)] };
+}
+
+/** A rotation moved ahead of a half turn can join the inspection notation.
+ * The camera and grip picker still refer to the original opening frame. */
+function compactVideoInspection(result: ReconTextResult): VideoReconText {
+  const { inspection: openingRotation, lines } = result;
+  const original = { ...result, openingRotation };
+  const first = lines[0];
+  if (!openingRotation || !first?.moveRanges) return original;
+
+  const firstTurn = first.moves.findIndex((token, i) => !/^[xyz](?:2'?|')?$/.test(token) || first.wasteGroups?.[i] != null);
+  if (firstTurn <= 0) return original;
+  const prefix = [...openingRotation.split(' '), ...first.moves.slice(0, firstTurn)];
+  const inspection = compactCubeRotations(prefix.join(' '));
+  if (inspection && inspection.split(' ').length >= prefix.length) return original;
+
+  const absorbed = new Set(first.moveRanges.slice(0, firstTurn).flatMap(({ rotationMs, token }) =>
+    rotationMs === undefined ? [] : [rotationKey(rotationMs, token)]));
+  return {
+    ...original, inspection, inspectionEndMs: first.moveRanges[firstTurn - 1].endTs,
+    rotations: result.rotations.filter(({ tMs, token }) => !absorbed.has(rotationKey(tMs, token))),
+    lines: [{ ...first, moves: first.moves.slice(firstTurn), moveRanges: first.moveRanges.slice(firstTurn),
+      wasteGroups: first.wasteGroups?.slice(firstTurn),
+      algorithmGroups: first.algorithmGroups?.filter(({ to }) => to > firstTurn)
+        .map(({ from, to }) => ({ from: Math.max(0, from - firstTurn), to: to - firstTurn })),
+    }, ...lines.slice(1)],
+  };
+}
 
 /** Absorb z into local gestures first. Carry any remaining z through the
  * rest of the solve as a change of frame for face, slice and rotation names. */
@@ -221,10 +305,8 @@ function rewriteVideoNotation(result: ReconTextResult) {
         return [];
       }
       if (!inverseZ) return [{ token, index }];
-      const spaced = toMoveStringStrict(token).replace(/\b([rludfb])/g, face => `${face.toUpperCase()}w`);
-      const mapped = conjugateSequence(spaced, Z_FRAMES[inverseZ]);
-      if (mapped === null) throw new Error(`Cannot reorient video reconstruction move: ${token}`);
-      const move = mapped.replaceAll(' ', '');
+      const move = conjugateVideoMove(token, Z_FRAMES[inverseZ]);
+      if (move === null) throw new Error(`Cannot reorient video reconstruction move: ${token}`);
       if (range?.rotationMs !== undefined) rotationChanges.set(rotationKey(range.rotationMs, token), move);
       return [{ token: move, index }];
     });
@@ -232,7 +314,7 @@ function rewriteVideoNotation(result: ReconTextResult) {
       moveRanges: line.moveRanges && entries.map(({ token, index }) => ({ ...line.moveRanges![index], token })),
       wasteGroups: line.wasteGroups && entries.map(({ index }) => line.wasteGroups![index]),
     };
-  });
+  }).map(mergeVideoXTurns).map(moveZblsYawToStart);
   const rotations = result.rotations.flatMap(rotation => {
     const token = rotationChanges.get(rotationKey(rotation.tMs, rotation.token));
     return token === null ? [] : [{ ...rotation, token: token ?? rotation.token }];
@@ -283,7 +365,7 @@ export async function analyzeVideoSolve(observation: VideoSolveObservation, grip
   };
 
   const report = async (input: typeof text) => {
-    const result = rewriteVideoNotation(await buildReconText(input));
+    const result = compactVideoInspection(rewriteVideoNotation(await buildReconText(input)));
     const lines = result.lines.map(line => ({
       ...line,
       // A commit frame does not locate the onset of the gesture or split
@@ -303,7 +385,7 @@ export async function analyzeVideoSolve(observation: VideoSolveObservation, grip
     let score = best && scoreOpeningGrip(best);
     // The starting up face stays fixed. Keep the camera estimate on a tie.
     if (!best || (score && score.some(Boolean))) {
-      const faces = facePermFor(result.inspection);
+      const faces = facePermFor(result.openingRotation);
       const alternates = grips.filter(candidate => faces[candidate.top] === 'U' && faces[candidate.front] !== 'F');
       for (const candidate of alternates) {
         const input = prepare(candidate.rotation);

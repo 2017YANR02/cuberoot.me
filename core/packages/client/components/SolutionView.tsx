@@ -148,6 +148,9 @@ export default function SolutionView({ text, html, event, scramble = '', sourceT
     if (!e.currentTarget.contains(e.target as Node) || (e.target as Element).closest('a, button')) return;
     const el = preRef.current;
     if (!el) return;
+    // Releasing a text selection also fires a click. Seeking can replace the selected text nodes.
+    const selection = el.ownerDocument.getSelection();
+    if (selection && !selection.isCollapsed && selection.getRangeAt(0).intersectsNode(el)) return;
     let offset = getTextOffsetInElement(el, { x: e.clientX, y: e.clientY });
     if (offset < 0) return;
     const tokens = findTokenPositions(plainText);

@@ -105,7 +105,7 @@ export function VideoSolveAnalysis({ scramble, steps, measured, fps, clockFps, s
   }, [verifiedDraft, onDraftReady]);
 
   const { result, method, solved, fallback } = current?.value ?? {};
-  const openingRotation = selection ?? result?.inspection;
+  const openingRotation = selection ?? result?.openingRotation;
   const openingPose = observation.opening?.pose.rotation;
   useEffect(() => {
     if (openingPose && openingRotation !== undefined) onOpeningView(openingGripView(openingPose, openingRotation));
@@ -162,6 +162,9 @@ export function VideoSolveAnalysis({ scramble, steps, measured, fps, clockFps, s
           } }} />
       </div>
       <div className="video-recon-actions">
+        {onDraftApply && verifiedDraft && <button type="button" className="btn-primary" onClick={() => onDraftApply(verifiedDraft)}>
+          {t('使用', 'Apply')}
+        </button>}
         <Tooltip content={copied ? t('已复制', 'Copied') : copyLabel}>{tip =>
           <button {...tip} type="button" className="playback-bar-btn" aria-label={copyLabel} onClick={() => copy(clipboard, clipboard)}>
             {copied ? <Check size={15} aria-hidden /> : <Copy size={15} aria-hidden />}
@@ -170,9 +173,6 @@ export function VideoSolveAnalysis({ scramble, steps, measured, fps, clockFps, s
         {editorHref && <AppLink className="btn-secondary" href={editorHref} target="_blank" rel="noopener noreferrer">
           <ExternalLink size={15} aria-hidden />{t('在复盘中编辑', 'Edit in Reconstruction')}
         </AppLink>}
-        {onDraftApply && verifiedDraft && <button type="button" className="btn-primary" onClick={() => onDraftApply(verifiedDraft)}>
-          {t('使用这份解法', 'Use this solution')}
-        </button>}
         <span className="sr-only" role="status">{copied && t('已复制', 'Copied')}</span>
       </div>
     </>}

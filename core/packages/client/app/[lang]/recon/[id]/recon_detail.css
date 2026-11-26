@@ -211,6 +211,21 @@
   font-family: inherit;
 }
 
+.detail-content-pane > .scramble-statistics {
+  box-sizing: border-box;
+  border: 1px solid var(--border-default);
+  border-radius: 8px;
+  padding: 8px 12px;
+}
+
+.detail-content-pane > .scramble-statistics :is(
+  .scramble-statistics-matrix + .scramble-statistics-header,
+  .scramble-statistics-group
+) {
+  border-top: 1px solid var(--border-default);
+  padding-top: 0.4rem;
+}
+
 /* --- 统计网格 --- */
 .detail-stats-grid {
   display: grid;

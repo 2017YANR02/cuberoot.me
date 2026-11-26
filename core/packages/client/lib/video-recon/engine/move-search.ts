@@ -1,7 +1,7 @@
 import { createVideoWorker } from "./worker-assets";
 import type { FrameResult } from "./detector";
 import type { FittedPose } from "./pose-types";
-import { RECONSTRUCTION_TIMEOUT_MS, type MoveSearchConfig, type MoveSearchResult } from "./move-search-types";
+import { RECONSTRUCTION_TIMEOUT_MESSAGE, RECONSTRUCTION_TIMEOUT_MS, type MoveSearchConfig, type MoveSearchResult } from "./move-search-types";
 import {videoFrameIdentity} from '../pose-fitter/runtime/reconstruction-policy.mjs';
 import type {SearchAction} from '../pose-fitter/runtime/incremental-search.mjs';
 import {ParallelMoveSearch} from './parallel-move-search';
@@ -91,7 +91,7 @@ export class MoveSearch {
     // Keep the deadline on the UI thread so a blocked worker or fitting promise
     // cannot prevent termination. Repeated closure attempts keep the same limit.
     if(this.video&&!this.closed&&!this.terminal&&this.deadline===undefined)this.deadline=setTimeout(()=>{
-      this.dispose();this.onError("Reconstruction timed out after 30 seconds");
+      this.dispose();this.onError(RECONSTRUCTION_TIMEOUT_MESSAGE);
     },RECONSTRUCTION_TIMEOUT_MS);
   }
   private maybeEnd(){

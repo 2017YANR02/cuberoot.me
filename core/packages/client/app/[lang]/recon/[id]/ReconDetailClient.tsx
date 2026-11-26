@@ -699,7 +699,6 @@ function StatsGrid({ solve }: { solve: ReconSolve }) {
     const time = (isBldEvent(solve.event) ? solve.execTime : solve.rawTime) ?? 0;
     return computeAllStats(text, time, solve.event);
   }, [methodOnly, solve.solution, solve.recon, solve.rawTime, solve.execTime, solve.event]);
-  const yRot = computed ? computed.yRot : solve.yRot;
   const regrip = computed ? computed.regrip : solve.regrip;
   const lockup = computed ? computed.lockup : solve.lockup;
   const sMove = computed ? computed.sMove : solve.sMove;
@@ -711,7 +710,6 @@ function StatsGrid({ solve }: { solve: ReconSolve }) {
   const items: [string, React.ReactNode | undefined][] = methodOnly ? [] : [
     [t('recon.memo'), isBld && solve.memoTime != null ? Number(solve.memoTime).toFixed(2) : undefined],
     [t('recon.exec'), isBld && solve.execTime != null ? Number(solve.execTime).toFixed(2) : undefined],
-    [t('recon.yRot'), isBld || isSq1 ? undefined : yRot],
     [t('recon.regrip'), isSq1 ? undefined : regrip],
     [t('recon.lockup'), isSq1 ? undefined : lockup],
     [t('recon.sMove'), isSq1 ? undefined : sMove],

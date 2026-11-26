@@ -185,7 +185,7 @@ function VaultTextArea({ className, value, readOnly, ...props }: VaultTextAreaPr
   return (
     <div className="vault-grow-textarea" data-readonly={readOnly || undefined}>
       <div className={className} data-vault-text-measure aria-hidden="true">{value}{'\u200b'}</div>
-      <textarea {...props} className={className} value={value} readOnly={readOnly} rows={readOnly ? 1 : props.rows} />
+      <textarea {...props} className={`vault-grow-input ${className ?? ''}`} value={value} readOnly={readOnly} rows={readOnly ? 1 : props.rows} />
     </div>
   );
 }

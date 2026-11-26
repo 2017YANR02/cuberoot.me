@@ -3,12 +3,14 @@ import { act, createElement } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 import ReconSubmitForm from '@/app/[lang]/recon/submit/ReconSubmitForm';
-import { getRecon, updateRecon, deleteRecon, uploadReconVideo, RECON_VIDEO_MAX_BYTES } from '@/lib/recon-api';
+import { getRecon, listRecons, updateRecon, deleteRecon, uploadReconVideo, RECON_VIDEO_MAX_BYTES } from '@/lib/recon-api';
 import { checkReconCompletion, type ReconCompletionResult } from '@cuberoot/shared/recon-completion';
+import type { VerifiedVideoDraft } from '@/app/[lang]/video-recon/VideoSolveAnalysis';
 
 const fixture = vi.hoisted(() => ({
   user: null as null | { uid: number; wcaId: string; name: string; isAdmin?: boolean },
   member: true,
+  searchParams: new URLSearchParams(),
   solve: { id: 2795, official: 'practice', event: '3x3', person: 'Example', solution: "\n  R U R' // original\n\n", scramble: "R U'", addedById: 'u7', note: 'Original note', rawTime: 2.51, regionalSingleRecord: 'WR' },
   changeSolution: null as null | ((value: string) => void),
 }));
@@ -16,7 +18,7 @@ vi.mock('@cuberoot/shared/recon-completion', async original => ({
   ...await original<typeof import('@cuberoot/shared/recon-completion')>(),
   checkReconCompletion: vi.fn(async () => ({ status: 'unchecked' })),
 }));
-vi.mock('next/navigation', () => ({ usePathname: () => '/zh/recon/edit', useParams: () => ({ lang: 'zh' }), useSearchParams: () => new URLSearchParams(), useRouter: () => ({ push: vi.fn(), refresh: vi.fn() }) }));
+vi.mock('next/navigation', () => ({ usePathname: () => '/zh/recon/edit', useParams: () => ({ lang: 'zh' }), useSearchParams: () => fixture.searchParams, useRouter: () => ({ push: vi.fn(), refresh: vi.fn() }) }));
 vi.mock('@/app/[lang]/recon/revalidate-action', () => ({ revalidateRecon: vi.fn(async () => {}) }));
 vi.mock('@/lib/auth-store', async original => ({
   ...await original<typeof import('@/lib/auth-store')>(),
@@ -26,17 +28,32 @@ vi.mock('@/lib/auth-store', async original => ({
 }));
 vi.mock('@/lib/recon-api', async original => ({
   ...await original<typeof import('@/lib/recon-api')>(),
-  getRecon: vi.fn(), updateRecon: vi.fn(), deleteRecon: vi.fn(), uploadReconVideo: vi.fn(),
+  getRecon: vi.fn(), listRecons: vi.fn(), updateRecon: vi.fn(), deleteRecon: vi.fn(), uploadReconVideo: vi.fn(),
   checkDuplicate: vi.fn(async () => ({ duplicate: false })), fetchMethodCubeHistory: vi.fn(async () => ({ methods: [], cubes: [] })),
 }));
 vi.mock('@/hooks/useMembership', () => ({ useMembership: () => ({ isMember: fixture.member }) }));
 vi.mock('@/hooks/useRequireMembership', () => ({ useRequireMembership: () => () => true }));
 vi.mock('@/hooks/useIsMobile', () => ({ useIsMobile: () => false }));
 vi.mock('@/lib/comp-search', async original => ({ ...await original<typeof import('@/lib/comp-search')>(), loadComps: vi.fn(async () => []) }));
+vi.mock('@/lib/comp-wcif', async original => ({
+  ...await original<typeof import('@/lib/comp-wcif')>(),
+  fetchCompRounds: vi.fn(async () => ({})),
+}));
+vi.mock('@/lib/wca-results-api', async original => ({
+  ...await original<typeof import('@/lib/wca-results-api')>(),
+  fetchAttempts: vi.fn(async () => null), fetchResultRow: vi.fn(async () => null),
+  fetchScrambleGroups: vi.fn(async () => ['A', 'E']),
+  fetchMatchingScrambleGroup: vi.fn(async () => null),
+  fetchScrambles: vi.fn(async () => null), fetchOptimalScrambles: vi.fn(async () => null),
+}));
 vi.mock('@/components/ReconPlayerPane', () => ({ default: () => null }));
 vi.mock('@/app/[lang]/video-recon/VideoReconClient', () => ({
-  VideoReconWorkspace: ({ submission }: { submission: { file: File; autoStart: boolean; onApply?: unknown } }) =>
-    createElement('output', { 'data-video-review': submission.autoStart, 'data-can-apply': !!submission.onApply }, submission.file.name),
+  VideoReconWorkspace: ({ submission }: { submission: { file: File; onApply?: (draft: VerifiedVideoDraft) => void } }) =>
+    createElement('div', null,
+      createElement('output', { 'data-video-review': true, 'data-can-apply': !!submission.onApply }, submission.file.name),
+      submission.onApply && createElement('button', {
+        type: 'button', 'data-use-video-solution': true, onClick: () => submission.onApply!({ solution: "R' // verified" }),
+      }, 'Use this solution')),
 }));
 vi.mock('@/components/ReconSolutionField', () => ({ default: ({ value, onChange }: { value: string; onChange: (value: string) => void }) => {
   fixture.changeSolution = onChange;
@@ -50,6 +67,8 @@ beforeEach(() => {
   (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
   fixture.user = null;
   fixture.member = true;
+  fixture.searchParams = new URLSearchParams();
+  vi.mocked(listRecons).mockReset().mockResolvedValue([]);
   vi.mocked(checkReconCompletion).mockReset().mockResolvedValue({ status: 'unchecked' });
   vi.mocked(getRecon).mockReset().mockResolvedValue(fixture.solve as Awaited<ReturnType<typeof getRecon>>);
   vi.mocked(updateRecon).mockReset().mockResolvedValue({ ok: true }); vi.mocked(deleteRecon).mockClear(); vi.mocked(uploadReconVideo).mockReset();
@@ -91,36 +110,53 @@ it('keeps a private or missing record out of the edit form', async () => {
   expect(host.textContent).not.toContain(fixture.solve.solution);
 });
 
-it('rechecks saved unsolved reasons and updates the requirement after edits', async () => {
+it('requires an explanation for an unsolved reconstruction only after submitting', async () => {
   vi.useFakeTimers();
   fixture.user = { uid: 7, wcaId: '', name: 'Editor' };
-  vi.mocked(getRecon).mockResolvedValue({ ...fixture.solve, unsolvedReason: 'Old reason', completionStatus: 'unsolved' } as Awaited<ReturnType<typeof getRecon>>);
-  vi.mocked(checkReconCompletion).mockResolvedValue({ status: 'solved' });
-  await render();
-  await act(async () => { await vi.advanceTimersByTimeAsync(200); });
-  expect(checkReconCompletion).toHaveBeenCalledWith({ event: '3x3', scramble: fixture.solve.scramble, solution: fixture.solve.solution });
-  expect(host.textContent).not.toContain('Reason the puzzle is not solved');
-  expect(updateRecon).not.toHaveBeenCalled();
-
   vi.mocked(checkReconCompletion).mockResolvedValue({ status: 'unsolved' });
+  await render();
   await act(async () => fixture.changeSolution!('R'));
   await act(async () => { await vi.advanceTimersByTimeAsync(200); });
+  expect(checkReconCompletion).not.toHaveBeenCalled();
+  expect(host.textContent).not.toContain('Reason the puzzle is not solved');
+
+  const submit = () => (host.querySelector('.submit-btn-primary') as HTMLButtonElement).click();
+  await act(async () => submit());
+  expect(checkReconCompletion).toHaveBeenCalledWith({ event: '3x3', scramble: fixture.solve.scramble, solution: 'R' });
   expect(host.textContent).toContain('Reason the puzzle is not solved');
-  expect([...host.querySelectorAll('textarea')].some(input => input.value === 'Old reason')).toBe(true);
+  expect(updateRecon).not.toHaveBeenCalled();
+
+  vi.mocked(checkReconCompletion).mockResolvedValue({ status: 'solved' });
+  await act(async () => fixture.changeSolution!("U R'"));
+  expect(host.textContent).not.toContain('Reason the puzzle is not solved');
+  await act(async () => submit());
+  expect(updateRecon).toHaveBeenCalledWith(2795, expect.objectContaining({ unsolvedReason: null }));
 });
 
 it('ignores a stale completion check that finishes after a newer solution', async () => {
-  vi.useFakeTimers();
   fixture.user = { uid: 7, wcaId: '', name: 'Editor' };
   let finishOld!: (result: ReconCompletionResult) => void;
   vi.mocked(checkReconCompletion).mockImplementationOnce(() => new Promise(resolve => { finishOld = resolve; }));
   await render();
-  await act(async () => { await vi.advanceTimersByTimeAsync(200); });
-  vi.mocked(checkReconCompletion).mockResolvedValue({ status: 'solved' });
+  await act(async () => (host.querySelector('.submit-btn-primary') as HTMLButtonElement).click());
   await act(async () => fixture.changeSolution!("R'"));
-  await act(async () => { await vi.advanceTimersByTimeAsync(200); });
   await act(async () => finishOld({ status: 'unsolved' }));
   expect(host.textContent).not.toContain('Reason the puzzle is not solved');
+});
+
+it('lets an editor review an existing explanation after submitting', async () => {
+  fixture.user = { uid: 7, wcaId: '', name: 'Editor' };
+  vi.mocked(getRecon).mockResolvedValue({ ...fixture.solve, unsolvedReason: 'Old reason' } as Awaited<ReturnType<typeof getRecon>>);
+  vi.mocked(checkReconCompletion).mockResolvedValue({ status: 'unsolved' });
+  await render();
+  expect(host.textContent).not.toContain('Reason the puzzle is not solved');
+
+  const submit = () => (host.querySelector('.submit-btn-primary') as HTMLButtonElement).click();
+  await act(async () => submit());
+  expect([...host.querySelectorAll('textarea')].some(input => input.value === 'Old reason' && !input.disabled)).toBe(true);
+  expect(updateRecon).not.toHaveBeenCalled();
+  await act(async () => submit());
+  expect(updateRecon).toHaveBeenCalledWith(2795, expect.objectContaining({ unsolvedReason: 'Old reason' }));
 });
 
 it.each([null, 8])('opens local video reconstruction without membership for visitor %s', async uid => {
@@ -139,12 +175,38 @@ it.each([null, 8])('opens local video reconstruction without membership for visi
   expect(uploadReconVideo).not.toHaveBeenCalled();
 });
 
-async function selectMemberVideo() {
+async function openVideoReview() {
   const file = new File(['local video'], 'solve.mp4', { type: 'video/mp4' });
   const input = host.querySelector<HTMLInputElement>('#recon-video-local')!;
   Object.defineProperty(input, 'files', { value: [file], configurable: true });
   await act(async () => input.dispatchEvent(new Event('change', { bubbles: true })));
   await act(async () => vi.waitFor(() => expect(document.querySelector('[data-video-review="true"]')).not.toBeNull()));
+  return file;
+}
+
+it('fills the solution before closing video review when the group comes from an earlier solve', async () => {
+  fixture.user = { uid: 7, wcaId: '', name: 'Editor' };
+  fixture.searchParams = new URLSearchParams({
+    event: '3x3', round: '2', solveNum: '2', official: 'wca', scramble: 'R', compWcaId: 'Example2026',
+    comp: 'Example 2026', personId: '2025TEST01', person: 'Example',
+  });
+  vi.mocked(listRecons).mockResolvedValue([{
+    ...fixture.solve, official: 'wca', compWcaId: 'Example2026', personId: '2025TEST01', round: '2', solveNum: 1, groupId: 'E',
+  } as Awaited<ReturnType<typeof listRecons>>[number]]);
+  await render(null);
+  const group = [...host.querySelectorAll('label')].find(label => label.querySelector('.submit-group-compare'))?.querySelector('select');
+  expect(group?.value).toBe('E');
+  await openVideoReview();
+  expect(host.querySelector<HTMLTextAreaElement>('[data-editor]')?.value).toBe('');
+
+  await act(async () => document.querySelector<HTMLButtonElement>('[data-use-video-solution]')!.click());
+  expect(host.querySelector<HTMLTextAreaElement>('[data-editor]')?.value).toBe("R' // verified");
+  expect(document.querySelector('[data-video-review]')).toBeNull();
+  expect(group?.value).toBe('E');
+});
+
+async function selectMemberVideo() {
+  const file = await openVideoReview();
   await act(async () => document.querySelector<HTMLButtonElement>('[role="dialog"] button[aria-label="Close"]')!.click());
   return file;
 }

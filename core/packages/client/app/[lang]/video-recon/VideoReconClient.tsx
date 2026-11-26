@@ -6,12 +6,13 @@ import { VideoCropSelection } from '@/components/VideoCropSelection';
 import { INITIAL_VIDEO_TRANSFORM, VideoImageTools, videoImageTransformCss, type VideoImageTransform } from '@/components/VideoImageTools';
 import { useVideoViewport } from '@/hooks/useVideoViewport';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
+import MoreToggle from '@/components/MoreToggle';
 import { Tooltip } from '@/components/Tooltip';
 import { useT } from '@/hooks/useT';
 import { createVideoWorkspace, type VideoWorkspace, type WorkspaceTab } from '@/lib/video-recon/workspace';
 import { prepareOfflineVideoRecon } from '@/lib/video-recon/offline';
-import type { MoveStep } from '@/lib/video-recon/engine/move-search-types';
-import { AUTO_RECON_MAX_SECONDS, type SolveRange as TimeRange } from '@/lib/video-recon/engine/solve-range';
+import { RECONSTRUCTION_TIMEOUT_MESSAGE, RECONSTRUCTION_TIMEOUT_MS, type MoveSearchResult, type MoveStep } from '@/lib/video-recon/engine/move-search-types';
+import { timecode, type SolveRange as TimeRange } from '@/lib/video-recon/engine/solve-range';
 import type { SourceCrop } from '@/lib/video-recon/engine/source-crop';
 import { CameraDisconnectButton, CameraRecordingAction, CameraRecordingControls } from './CameraRecordingControls';
 import { ProjectedCube } from './ProjectedCube';
@@ -28,6 +29,36 @@ const ignoreReplayPosition = () => {};
 const noWorkspace = () => null;
 const noSubscription = () => () => {};
 
+function reconstructionFailure(result: MoveSearchResult | undefined, error: string, t: ReturnType<typeof useT>) {
+  const timedOut = error === RECONSTRUCTION_TIMEOUT_MESSAGE;
+  if (error && !timedOut) {
+    return t('处理动作时出错，请重试。', 'An error interrupted move tracking. Try again.');
+  }
+  if (result?.inference_failure === 'no_solved_end' ||
+      result?.bidirectional_fallback === 'No corroborated flat solved end frame') {
+    return t('没能从收尾画面确认已还原的魔方。请把清晰的还原画面包含在区间内。',
+      'The solved cube could not be confirmed. Include a clear view of the solved cube in the selected range.');
+  }
+  if (result?.inference_failure === 'no_supported_opening') {
+    return t('看到了还原局面，但没能从视频追溯到打乱后的局面。',
+      'The solved state was detected, but the moves could not be traced back to the scrambled state.');
+  }
+  if (timedOut) {
+    const seconds = RECONSTRUCTION_TIMEOUT_MS / 1000;
+    return result?.status === 'waiting_for_frames'
+      ? t(`画面分析超时（${seconds} 秒），动作搜索未能开始。`, `Frame preparation timed out after ${seconds} seconds before move search could start.`)
+      : t(`动作搜索超时（${seconds} 秒），没能验证完整还原。`, `Move search timed out after ${seconds} seconds before it could verify the complete solve.`);
+  }
+  if (result?.status === 'state_limit') {
+    return t('动作搜索达到上限，仍没能验证完整还原。',
+      'Move search reached its limit before it could verify the complete solve.');
+  }
+  if (result?.status === 'already_solved') {
+    return t('区间内没有检测到还原动作。', 'No solve moves were detected in the selected range.');
+  }
+  return t('没能根据识别到的画面验证完整还原。', 'The detected frames did not yield a verified solve.');
+}
+
 export interface VideoReconHandoff {
   file: File;
   range: TimeRange;
@@ -38,7 +69,7 @@ export interface VideoReconHandoff {
 export function VideoReconWorkspace({ mode, handoff, submission, onModeChange, onTimerBusyChange, onWorkspace, simulatedCamera }: {
   mode: WorkspaceTab | null;
   handoff?: VideoReconHandoff;
-  submission?: NonNullable<VideoSolveAnalysisProps['draftTarget']> & { file: File; autoStart: boolean };
+  submission?: NonNullable<VideoSolveAnalysisProps['draftTarget']> & { file: File };
   onModeChange?: (mode: Exclude<WorkspaceTab, 'timer'>) => void;
   onWorkspace?: (workspace: VideoWorkspace | undefined) => void;
   onTimerBusyChange?: (busy: boolean) => void;
@@ -62,8 +93,6 @@ export function VideoReconWorkspace({ mode, handoff, submission, onModeChange, o
   const resetViewport = viewport.reset;
   const initialMode = useRef(mode ?? 'detector');
   const appliedHandoff = useRef<VideoReconHandoff>(undefined);
-  const [openedSubmission, setOpenedSubmission] = useState<VideoWorkspace>();
-  const autoAttempted = useRef<VideoWorkspace>(undefined);
   const starting = useRef<VideoWorkspace>(undefined);
   const submissionFile = submission?.file;
   const submissionScramble = submission?.scramble;
@@ -123,31 +152,18 @@ export function VideoReconWorkspace({ mode, handoff, submission, onModeChange, o
 
   useEffect(() => {
     if (!workspace || !submissionFile || submissionScramble === undefined) return;
-    let active = true;
     workspace.setScramble(submissionScramble);
-    void workspace.openFile(submissionFile).then(() => {
-      if (active) setOpenedSubmission(workspace);
-    });
-    return () => { active = false; };
+    void workspace.openFile(submissionFile);
   }, [workspace, submissionFile, submissionScramble]);
 
   const beginReconstruction = useCallback(() => {
     if (!workspace || starting.current === workspace) return;
-    autoAttempted.current = workspace;
     starting.current = workspace;
     resetViewport();
     void workspace.beginReconstruction().finally(() => {
       if (starting.current === workspace) starting.current = undefined;
     });
   }, [workspace, resetViewport]);
-
-  useEffect(() => {
-    if (!submission?.autoStart || !workspace || openedSubmission !== workspace ||
-      autoAttempted.current === workspace || view?.status !== 'ready' || !view.trimming ||
-      view.cropPreview || view.cropLoading || view.mediaError || view.duration <= 0 ||
-      view.duration > AUTO_RECON_MAX_SECONDS) return;
-    beginReconstruction();
-  }, [submission?.autoStart, workspace, openedSubmission, view, beginReconstruction]);
 
   useEffect(() => {
     if (mode === 'record' && view?.activeTab === 'record' && view.cameraRecordingPhase === 'error' &&
@@ -177,6 +193,9 @@ export function VideoReconWorkspace({ mode, handoff, submission, onModeChange, o
   const fileCanCrop = view?.sourceKind === 'image' || view?.trimming;
   const searchSteps = view?.searchResult?.steps ?? NO_MOVES;
   const hasMoves = searchSteps.some(step => step.state_moves.length);
+  const lastMove = reviewing && !view.cubeSolved && view.sourceFps > 0
+    ? searchSteps.findLast(step => step.state_moves.length > 0) : undefined;
+  const lastMoveTime = lastMove && view ? timecode(lastMove.frame_index / view.sourceFps) : undefined;
   const shownSteps = pendingResult ? liveResult?.steps ?? NO_MOVES : searchSteps;
   const measured = view?.measuredCubeTimeline;
   const modelDownload = view?.modelDownload;
@@ -294,9 +313,7 @@ export function VideoReconWorkspace({ mode, handoff, submission, onModeChange, o
           onPlay={() => void workspace.togglePlayback()} onSpeed={workspace.changePlaybackSpeed}
           onSeekIndex={workspace.seekReviewIndex} onStep={workspace.stepReview} />}
         {workspace && view?.trimming && (!filming || view.recordingReview === 'range') && <SolveRange view={view} workspace={workspace}
-          fixedScramble={!!submission} onBegin={beginReconstruction} />}
-        {submission?.autoStart && view?.trimming && view.duration > AUTO_RECON_MAX_SECONDS
-          && <p className="video-recon-muted">{t('请选择一把还原的区间，再开始复盘。', 'Select the range of a single solve, then start reconstruction.')}</p>}
+          showScramble={!submission} onBegin={beginReconstruction} />}
         {view?.status === 'loading' && <VideoReconProgress
           label={downloading ? t('正在下载识别模型', 'Downloading detector models')
             : downloadProgress === 100 ? t('正在初始化识别模型', 'Initializing detector models')
@@ -306,16 +323,13 @@ export function VideoReconWorkspace({ mode, handoff, submission, onModeChange, o
           <VideoReconAnalysisProgress value={frameProgress} />}
         {reviewing && (!view.cubeSolved || submission && !hasMoves) && <div className="video-recon-muted" role="status">
           <strong>{t('未能完成复盘', 'Reconstruction incomplete')}</strong>
-          <span> · {view.searchResult?.inference_failure === 'no_solved_end'
-            ? t('请在区间末尾保留清晰的还原局面。', 'Include a clear view of the solved cube at the end.')
-            : view.searchResult?.inference_failure === 'no_supported_opening'
-              ? t('无法从画面确认起始局面和完整动作。', 'The opening state and full move sequence could not be verified from the video.')
-              : hasMoves ? t('已保留识别出的动作。', 'Recovered moves are available.') : t('未识别到可用动作。', 'No moves were recovered.')}</span>
-          {submissionScramble?.trim() && !view.cubeSolved && <p>{t(
-            '请核对视频与表单打乱是否对应同一次还原。',
-            'Check that the video and the scramble in the form match the same solve.',
-          )}</p>}
-          {view.searchError && <details><summary>{t('技术详情', 'Technical details')}</summary>{view.searchError}</details>}
+          <p>{reconstructionFailure(view.searchResult, view.searchError, t)}</p>
+          {lastMoveTime && <p>{t(`已保留候选动作，最后一步位于 ${lastMoveTime}。`,
+            `Candidate moves retained up to ${lastMoveTime}.`)}</p>}
+          {view.searchError && <details>
+            <MoreToggle as="summary">{t('技术详情', 'Technical details')}</MoreToggle>
+            {view.searchError}
+          </details>}
         </div>}
         {mediaError && <div className="video-recon-error" role="alert">
           <strong>{t('无法处理当前画面。', 'Could not process the current source.')}</strong>

@@ -18,7 +18,7 @@ import { appendReconVideo, splitReconVideoGroups, normalizeReconVideoUrls } from
  * add/edit-alternative form (AltSubmitForm) so both stay UI/UX-identical.
  */
 
-import { useEffect, useLayoutEffect, useState, useCallback, useMemo, useRef } from 'react';
+import { useEffect, useId, useLayoutEffect, useState, useCallback, useMemo, useRef } from 'react';
 import dynamic from 'next/dynamic';
 import SettingsDialog from '@/components/SettingsDialog';
 import Link from '@/components/AppLink';
@@ -38,6 +38,7 @@ import { SubsetSwatch, COLOR_LETTERS, COLOR_NAME } from '@/components/SubsetColo
 import { CompCell } from '@/components/CompCell/CompCell';
 import { ClearButton } from '@/components/ClearButton';
 import { CompactSelect } from '@/components/CompactSelect';
+import { InfoTooltip } from '@/components/InfoTooltip/InfoTooltip';
 import { DateInput } from '@/components/DateInput';
 import { CompPicker } from '@/components/CompPicker';
 import { CountryInput } from '@/components/CountryInput/CountryInput';
@@ -90,7 +91,7 @@ import {
 } from '@cuberoot/shared/recon-completion';
 import { loadComps, type Comp } from '@/lib/comp-search';
 import type { WcaPersonLite } from '@/lib/wca-api';
-import { ArrowRightLeft, Film, History, Home, LogIn, UserPlus, AlertTriangle, Rows3 } from '@app-foundation/icons/lucide';
+import { ArrowRightLeft, Film, History, Home, LogIn, UserPlus, AlertTriangle, Rows3, HelpCircle } from '@app-foundation/icons/lucide';
 import { Spinner } from '@/components/Spinner/Spinner';
 import '../recon.css';
 import './recon_submit.css';
@@ -104,11 +105,15 @@ const VideoReconWorkspace = dynamic(
 );
 
 type SubmitVideo = { file: File; owner: string };
-type VideoReview = { video: SubmitVideo; draft: string; scramble: string; autoStart: boolean };
+type VideoReview = { video: SubmitVideo; draft: string; scramble: string };
 
 function videoDraftKey(owner: string, form: Partial<ReconSolve>) {
   return JSON.stringify([owner, form.event, form.official, form.personId || form.person, form.compWcaId || form.comp,
     form.round, form.groupId, form.solveNum]);
+}
+
+function withInheritedRoundGroup(form: Partial<ReconSolve>, group: string | null) {
+  return group && !form.groupId ? { ...form, groupId: group } : form;
 }
 
 function hasDraftSolution(form: Partial<ReconSolve>) {
@@ -225,10 +230,11 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
   const [saveVideo, setSaveVideo] = useState<{ video: SubmitVideo; draft: string }>();
   const hostedVideo = useRef<{ video: SubmitVideo; url: string }>(undefined);
   const [videoReview, setVideoReview] = useState<VideoReview>();
-  const [appliedVideo, setAppliedVideo] = useState<{ review: VideoReview; scramble: string; solution: string }>();
+  const [appliedVideo, setAppliedVideo] = useState<{ review: VideoReview; scramble: string; solution: string; closeReview: boolean }>();
   const [inferredOpening, setInferredOpening] = useState<{ draft: string; scramble: string }>();
   const syncedVideo = useRef<typeof appliedVideo>(undefined);
   const closingVideoReview = useRef<VideoReview>(undefined);
+  const videoReviewDialogRef = useRef<{ close: () => void }>(null);
   const localVideoInputRef = useRef<HTMLInputElement>(null);
   const [loadingEdit, setLoadingEdit] = useState(isEditing || !!fromId);
   const [flagVer, setFlagVer] = useState(flagDataVersion());
@@ -245,6 +251,7 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
   }, [flagVer]);
 
   const solutionFieldRef = useRef<ReconSolutionFieldHandle>(null);
+  const timingFieldId = useId();
   const unsolvedReasonRef = useRef<HTMLTextAreaElement>(null);
   const solverUserTouched = useRef(false);
 
@@ -294,10 +301,10 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
     && groupOptions && groupOptions.length > 1
     ? JSON.stringify([editViewerKey, personId, compWcaId, event, round]) : null;
   const [resolvedRoundGroup, setResolvedRoundGroup] = useState<{ key: string; group: string | null } | null>(null);
-  const inheritedGroup = roundGroupKey && resolvedRoundGroup?.key === roundGroupKey ? resolvedRoundGroup.group : null;
+  const inheritedGroup = roundGroupKey && resolvedRoundGroup?.key === roundGroupKey && resolvedRoundGroup.group
+    && groupOptions?.includes(resolvedRoundGroup.group) ? resolvedRoundGroup.group : null;
   const roundGroupPending = !!roundGroupKey && !baseForm.groupId && resolvedRoundGroup?.key !== roundGroupKey;
-  const form = inheritedGroup && !baseForm.groupId && groupOptions?.includes(inheritedGroup)
-    ? { ...baseForm, groupId: inheritedGroup } : baseForm;
+  const form = withInheritedRoundGroup(baseForm, inheritedGroup);
 
   useEffect(() => {
     if (!roundGroupKey || !personId || !compWcaId || !event || !round) return;
@@ -332,7 +339,7 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
   const [avgInput, setAvgInput] = useState('');
   const [execInput, setExecInput] = useState('');
   const [dupId, setDupId] = useState<number | null>(null);
-  const [needsUnsolvedReason, setNeedsUnsolvedReason] = useState(false);
+  const [unsolvedSubmissionKey, setUnsolvedSubmissionKey] = useState<string | null>(null);
   const [avgUserTouched, setAvgUserTouched] = useState(false);
   const [avgAutoSource, setAvgAutoSource] = useState<string | null>(null);
   const [avgLoading, setAvgLoading] = useState(false);
@@ -404,6 +411,8 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
   const completionScramble = getReconScramble(form);
   const draftOwner = JSON.stringify([authUser?.uid, editId, fromId]);
   const draftIdentity = videoDraftKey(draftOwner, form);
+  const needsUnsolvedReason = !timingOnly && unsolvedSubmissionKey !== null
+    && unsolvedSubmissionKey === JSON.stringify([draftIdentity, completionScramble, form.solution]);
   const videoScramble = normalizeReconScrambleSpacing('3x3', completionScramble);
   const canReviewVideo = !readOnly && form.event === '3x3';
   const canSelectVideo = canReviewVideo || (!readOnly && !!authUser && isMember);
@@ -432,22 +441,6 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
       videoContext.current = { draftOwner: '', draftIdentity: '', readOnly: true, activeVideoReview: undefined, hasSolution: false };
     };
   }, [draftOwner, draftIdentity, readOnly, activeVideoReview, form.solution, form.solutionHtml, form.recon]);
-  useEffect(() => {
-    let active = true;
-    setNeedsUnsolvedReason(false);
-    if (timingOnly) return;
-    const timer = setTimeout(() => {
-      void checkReconCompletion({
-        event: form.event || '',
-        scramble: completionScramble,
-        solution: form.solution || '',
-      }).then(result => {
-        if (active) setNeedsUnsolvedReason(result.status === 'unsolved');
-      });
-    }, 200);
-    return () => { active = false; clearTimeout(timer); };
-  }, [form.event, completionScramble, form.solution, timingOnly]);
-
   const setField = useCallback(<K extends keyof ReconSolve>(key: K, value: ReconSolve[K]) => {
     setForm(prev => ({ ...prev, [key]: value }));
     setSubmitError(error => error?.field === key
@@ -470,7 +463,7 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
     setSaveVideo(undefined);
     setAppliedVideo(undefined);
     setSubmitVideo(video);
-    if (canReviewVideo) setVideoReview({ video, draft: draftIdentity, scramble: videoScramble, autoStart: true });
+    if (canReviewVideo) setVideoReview({ video, draft: draftIdentity, scramble: videoScramble });
   };
 
   const requestVideoMembership = () => {
@@ -1601,22 +1594,21 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
   const applyVideoSolution = useCallback((review: VideoReview, result: VerifiedVideoDraft, replace: boolean) => {
     const current = videoContext.current;
     if (current.activeVideoReview !== review || closingVideoReview.current === review ||
-      current.readOnly || (!replace && current.hasSolution)) return false;
+      current.readOnly || (!replace && current.hasSolution)) return;
     const { solution } = result;
     const inferred = normalizeReconScrambleSpacing('3x3', result.inferredScramble ?? '');
-    if (review.scramble ? inferred : !inferred) return false;
+    if (review.scramble ? inferred : !inferred) return;
     const scramble = review.scramble || inferred;
-    current.hasSolution = true;
     setForm(prev => {
       // A pending official lookup or manual edit may already be queued with React.
-      if (videoDraftKey(draftOwner, prev) !== review.draft || (!replace && hasDraftSolution(prev)) ||
+      if (videoDraftKey(draftOwner, withInheritedRoundGroup(prev, inheritedGroup)) !== review.draft ||
+          (!replace && hasDraftSolution(prev)) ||
           normalizeReconScrambleSpacing('3x3', getReconScramble(prev)) !== videoScramble ||
           (inferred && (prev.wcaScramble?.trim() || prev.optimalScramble?.trim()))) return prev;
       return { ...prev, ...(inferred ? { scramble: inferred } : {}), solution, solutionHtml: escapeAlgText(solution) };
     });
-    setAppliedVideo({ review, scramble, solution });
-    return true;
-  }, [draftOwner, videoScramble]);
+    setAppliedVideo({ review, scramble, solution, closeReview: replace });
+  }, [draftOwner, videoScramble, inheritedGroup]);
   useLayoutEffect(() => {
     if (!videoApplied || !appliedVideo || syncedVideo.current === appliedVideo) return;
     syncedVideo.current = appliedVideo;
@@ -1627,7 +1619,8 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
       setInferredOpening({ draft: appliedVideo.review.draft, scramble: appliedVideo.scramble });
       setSubmitError(error => error?.field === 'scramble' ? null : error);
     }
-  }, [videoApplied, appliedVideo]);
+    if (appliedVideo.closeReview && appliedVideo.review === activeVideoReview) videoReviewDialogRef.current?.close();
+  }, [videoApplied, appliedVideo, activeVideoReview]);
   const autoApplyVideoSolution = useCallback((result: VerifiedVideoDraft) => {
     if (activeVideoReview) applyVideoSolution(activeVideoReview, result, false);
   }, [activeVideoReview, applyVideoSolution]);
@@ -1748,15 +1741,20 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
       if (solution !== (form.solution || '') || wcaScramble !== (form.wcaScramble || '') || optimalScramble !== (form.optimalScramble || '') || scramble !== (form.scramble || '')) {
         setForm(previous => ({ ...previous, solution, wcaScramble, optimalScramble, scramble }));
       }
+      const submittedScramble = getReconScramble({ optimalScramble, wcaScramble, scramble });
       const completion = timingOnly ? { status: 'unchecked' as const } : await checkReconCompletion({
         event: form.event || '',
-        scramble: getReconScramble({ optimalScramble, wcaScramble, scramble }),
+        scramble: submittedScramble,
         solution,
       });
+      if (!isCurrentSubmission()) return;
+      const submissionKey = completion.status === 'unsolved'
+        ? JSON.stringify([draftIdentity, submittedScramble, solution]) : null;
+      setUnsolvedSubmissionKey(submissionKey);
       if (completion.status === 'invalid') {
         const scrambleCheck = await checkReconCompletion({
           event: form.event || '',
-          scramble: getReconScramble({ optimalScramble, wcaScramble, scramble }),
+          scramble: submittedScramble,
           solution: '',
         });
         setSubmitError({ field: scrambleCheck.status === 'invalid' ? 'scramble' : 'solution', message: tr({
@@ -1766,12 +1764,10 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
         return;
       }
       const unsolvedReason = form.unsolvedReason?.trim() ?? '';
-      if (completion.status === 'unsolved' && !unsolvedReason) {
-        setNeedsUnsolvedReason(true);
+      if (completion.status === 'unsolved' && (!unsolvedReason || (isEditing && unsolvedSubmissionKey !== submissionKey))) {
         requestAnimationFrame(() => unsolvedReasonRef.current?.focus());
         return;
       }
-      setNeedsUnsolvedReason(completion.status === 'unsolved');
 
       const data: Partial<ReconSolve> = {
         ...form,
@@ -1905,26 +1901,23 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
       {videoPickerLabel}
     </button>
     {currentVideo && <button type="button" className="submit-reuse-btn"
-      onClick={() => setVideoReview({ video: currentVideo, draft: draftIdentity, scramble: videoScramble, autoStart: false })}>
+      onClick={() => setVideoReview({ video: currentVideo, draft: draftIdentity, scramble: videoScramble })}>
       {tr({ zh: '查看视频复盘', en: 'Review video reconstruction' })}
     </button>}
   </>;
   const videoError = videoUploadError && <span className="submit-hint submit-hint-warn" role="alert">{videoUploadError}</span>;
-  const videoReviewDialog = activeVideoReview && <SettingsDialog label={tr({ zh: '自动复盘', en: 'Automatic reconstruction' })} heading
+  const videoReviewDialog = activeVideoReview && <SettingsDialog ref={videoReviewDialogRef} label={tr({ zh: '自动复盘', en: 'Automatic reconstruction' })} heading
     panelClassName="submit-video-review" onCloseStart={() => { closingVideoReview.current = activeVideoReview; }}
     onClose={() => setVideoReview(prev => prev === activeVideoReview ? undefined : prev)}>
-    {close => <>
-      {videoApplied && <p className="submit-hint" role="status">
-        {tr({ zh: '已将解法填入表单。调整结果后，点击“使用这份解法”更新表单。', en: 'The solution is in the form. After adjusting the result, choose “Use this solution” to update the form.' })}
-      </p>}
-      <VideoReconWorkspace mode="detector" submission={{
-        file: activeVideoReview.video.file,
-        scramble: activeVideoReview.scramble,
-        autoStart: activeVideoReview.autoStart,
-        onReady: authUser ? autoApplyVideoSolution : undefined,
-        onApply: authUser ? solution => { if (applyVideoSolution(activeVideoReview, solution, true)) close(); } : undefined,
-      }} />
-    </>}
+    {videoApplied && <p className="submit-hint" role="status">
+      {tr({ zh: '已将解法填入表单。调整结果后，点击“使用”更新表单。', en: 'The solution is in the form. After adjusting the result, choose “Apply” to update the form.' })}
+    </p>}
+    <VideoReconWorkspace mode="detector" submission={{
+      file: activeVideoReview.video.file,
+      scramble: activeVideoReview.scramble,
+      onReady: authUser ? autoApplyVideoSolution : undefined,
+      onApply: authUser ? solution => applyVideoSolution(activeVideoReview, solution, true) : undefined,
+    }} />
   </SettingsDialog>;
 
   // ── Login gate ──
@@ -2512,7 +2505,7 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
                 value={activeScrambleValue}
                 readOnly={scrambleField === 'wca' && !!scrambleAutoSource}
                 inputMode={isMobile ? 'none' : undefined}
-                className={`submit-field-textarea${scrambleField === 'wca' && scrambleAutoSource ? ' submit-input-locked' : ''}`}
+                className={`submit-field-textarea submit-scramble-textarea${scrambleField === 'wca' && scrambleAutoSource ? ' submit-input-locked' : ''}`}
                 title={scrambleField === 'wca' && scrambleAutoSource
                   ? tr({ zh: '自动填充值不可编辑;改 比赛/项目/轮次/分组/第几把 以重新获取', en: 'auto-filled, read-only; change comp/event/round/group/# to refetch'
                                     })
@@ -2654,14 +2647,28 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
             </div>
 
             <div className="submit-row">
-              {(['pickupTime', 'putdownTime'] as const).map(field => (
-                <label className="submit-field submit-field-duration" key={field}>
-                  <span className="submit-label">{field === 'pickupTime' ? tr({ zh: '起表（秒）', en: 'Pickup (seconds)' }) : tr({ zh: '拍表（秒）', en: 'Putdown (seconds)' })}</span>
-                  <input className="submit-field-input" type="number" inputMode="decimal" min="0" max="359999.999" step="0.001"
-                    value={form[field] ?? ''} onChange={e => setField(field, e.target.value === '' ? null : Number(e.target.value))} />
-                  <span className="submit-hint">{field === 'pickupTime' ? tr({ zh: '起表到第一步刚刚开始做', en: 'Timer start to the start of the first move' }) : tr({ zh: '最后一步完全做完到拍表', en: 'Completion of the last move to timer stop' })}</span>
-                </label>
-              ))}
+              {(['pickupTime', 'putdownTime'] as const).map(field => {
+                const isPickup = field === 'pickupTime';
+                const inputId = `${timingFieldId}-${field}`;
+                return (
+                  <div className="submit-field submit-field-duration" key={field}>
+                    <div className="submit-label-row">
+                      <label className="submit-label" htmlFor={inputId}>
+                        {isPickup
+                          ? tr({ zh: '起表到第一步刚刚开始做（秒）', en: 'Timer start to first move start (s)' })
+                          : tr({ zh: '最后一步完全做完到拍表（秒）', en: 'Last move end to timer stop (s)' })}
+                      </label>
+                      <InfoTooltip icon={HelpCircle} iconSize={14}
+                        ariaLabel={isPickup ? tr({ zh: '起表用时说明', en: 'About pickup time' }) : tr({ zh: '拍表用时说明', en: 'About putdown time' })}
+                        content={isPickup
+                          ? tr({ zh: '如果起表后 250 毫秒才开始转第一步，就填写 0.250。', en: 'Enter 0.250 if the first turn starts 250 milliseconds after the timer starts.' })
+                          : tr({ zh: '如果最后一步做完后过了 250 毫秒才拍表，就填写 0.250。', en: 'Enter 0.250 if you stop the timer 250 milliseconds after finishing the last turn.' })} />
+                    </div>
+                    <input id={inputId} className="submit-field-input" type="number" inputMode="decimal" min="0" max="359999.999" step="0.001"
+                      value={form[field] ?? ''} onChange={e => setField(field, e.target.value === '' ? null : Number(e.target.value))} />
+                  </div>
+                );
+              })}
             </div>
 
             {needsUnsolvedReason && (

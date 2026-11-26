@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import { toMoveStringStrict } from '@cuberoot/shared/alg-notation';
+import { invertMoveString, toMoveStringStrict } from '@cuberoot/shared/alg-notation';
+import { getCube3 } from '@cuberoot/shared/recon/cube3';
 import { checkReconCompletion } from '@cuberoot/shared/recon-completion';
-import { facePermFor } from '@cuberoot/shared/timer/reconstruct/gyro-orient';
+import { conjugateSequence, facePermFor } from '@cuberoot/shared/timer/reconstruct/gyro-orient';
 import { decodeUrlAlg } from '@/lib/cubedb-url';
 import { buildReconSubmitQuery } from '@/lib/sim-recon-link';
 import { axisAngle, multiply, type CubePose, type Quaternion, type V3 } from '@/lib/video-recon/engine/cube-motion';
@@ -64,6 +65,66 @@ describe('video solve reconstruction', () => {
     const query = new URLSearchParams(buildReconSubmitQuery('3x3', result.scramble, result.text, { method: 'CFOP' }));
     expect(decodeUrlAlg(query.get('alg')!)).toBe(result.text);
     expect(decodeUrlAlg(query.get('scramble')!)).toBe(scramble);
+  });
+
+  it.each([
+    { scramble: "U' R2", face: 'R', finish: 'U', vector: [Math.PI / 2, 0, 0],
+      expected: [["x'", 367], ['R2', 800]] },
+    { scramble: "R' U2", face: 'U', finish: 'R', vector: [0, 0, -Math.PI / 2],
+      expected: [['U', 200], ['y', 367], ['U', 800]] },
+  ])('formats repeated $face turns across a video regrip', async ({ scramble, face, finish, vector, expected }) => {
+    const steps = [commit(6, face), commit(24, face), commit(28, finish)];
+    const observation = observeVideoSolve(scramble, steps, frames(axisAngle(vector as V3)), fps, 0, 1.15);
+    const analysis = (await analyzeVideoSolve(observation, playerGrip('U', 'F')!.rotation, 'en'))!;
+    expect(analysis).toMatchObject({ solved: true, fallback: false });
+    const result = analysis.result;
+    const timeline = videoNotationTimeline(result, 0).map(({ offset, timestampMs }) =>
+      [result.text.slice(0, offset).split(/\s+/).at(-1), timestampMs]);
+    expect(timeline.slice(0, expected.length)).toEqual(expected);
+    expect(await checkReconCompletion({ event: '3x3', scramble, solution: result.text })).toEqual({ status: 'solved' });
+  });
+
+  it('compacts x z followed by a leading x prime and retains the recorded seek times', async () => {
+    const scramble = "U' F2";
+    const steps = [commit(6, 'F'), commit(24, 'F'), commit(28, 'U')];
+    const observation = observeVideoSolve(scramble, steps, frames(axisAngle([0, -Math.PI / 2, 0])), fps, 0, 1.15);
+    const analysis = (await analyzeVideoSolve(observation, 'x z', 'en'))!;
+    expect(analysis).toMatchObject({ solved: true, fallback: false });
+    const { result } = analysis;
+    expect(result.openingRotation).toBe('x z');
+    expect(result.inspection).toBe("y'");
+    expect(result.lines[0].moves[0]).toBe('R2');
+    expect(result.text.split('\n')[0]).toBe("y' // insp");
+    expect(videoNotationTimeline(result, 0).slice(0, 2)).toEqual([
+      { offset: 2, timestampMs: 367 },
+      { offset: result.text.indexOf('R2') + 2, timestampMs: 800 },
+    ]);
+    expect(await checkReconCompletion({ event: '3x3', scramble, solution: result.text })).toEqual({ status: 'solved' });
+  });
+
+  it('puts the yaw before the ZBLS formula and keeps the turn seek times', async () => {
+    const afterYaw = "L' U2 L F U R U R' U R U2' R' U2";
+    const raw = `R' U ${conjugateSequence(afterYaw, facePermFor("y'"))}`;
+    const scramble = invertMoveString(raw);
+    const steps = raw.split(' ').map((move, i) => commit(3 + 3 * i, move));
+    const observation = observeVideoSolve(scramble, steps, [], fps, 0, 2);
+    const analysis = (await analyzeVideoSolve({
+      ...observation,
+      core: {
+        ...observation.core,
+        events: [...observation.core.events, { token: 'y', tMs: 250, angleRad: Math.PI / 2, regripOnly: true }],
+      },
+    }, '', 'en'))!;
+    expect(analysis).toMatchObject({ solved: true, fallback: false });
+    const { result } = analysis;
+    const zb = result.lines.find(line => line.label?.includes('ZBLS'));
+    const formula = zb?.moves.join(' ');
+    expect(formula).toBe("y F' U L' U2 L F");
+    const initial = (await getCube3()).defaultPattern().applyAlg(scramble);
+    expect(initial.applyAlg(formula!).isIdentical(initial.applyAlg("R' U y L' U2 L F"))).toBe(true);
+    expect(zb?.moveRanges?.map(({ endTs }) => endTs)).toEqual([100, 100, 200, 300, 400, 500, 600]);
+    expect(result.rotations).toMatchObject([{ token: 'y', tMs: 250 }]);
+    expect(await checkReconCompletion({ event: '3x3', scramble, solution: result.text })).toEqual({ status: 'solved' });
   });
 
   it.each([

@@ -276,7 +276,7 @@ export default function ReconAutofill({ textareaRef, value, setValue, scramble, 
   const openPopup = useCallback(async () => {
     if (!enabled) return;
     const ta = textareaRef.current;
-    if (!ta) return;
+    if (!ta || document.activeElement !== ta) return;
     const caret = editorCaret(ta);
     const { start, end } = lineRange(value, caret);
     const lineUpToCaret = value.substring(start, caret);
@@ -287,6 +287,7 @@ export default function ReconAutofill({ textareaRef, value, setValue, scramble, 
     const slashIdx = lineUpToCaret.indexOf('//');
     if (slashIdx >= 0) {
       const p = await buildCommentPopup(caret, true);
+      if (document.activeElement !== ta) return;
       if (p) {
         setPopup(p);
         setSelected(0);
@@ -298,6 +299,7 @@ export default function ReconAutofill({ textareaRef, value, setValue, scramble, 
     const movesLineText = movesOnly(fullLine);
     if (movesLineText.length > 0 && !lineUpToCaret.includes('//')) {
       const p = await buildCommentPopup(caret, true);
+      if (document.activeElement !== ta) return;
       if (p) {
         setPopup(p);
         setSelected(0);
@@ -308,6 +310,7 @@ export default function ReconAutofill({ textareaRef, value, setValue, scramble, 
     // Otherwise try alg popup (fresh blank line after labeled line)
     if (movesLineText.length === 0 || !lineUpToCaret.includes('//')) {
       const p = await buildAlgPopup(caret);
+      if (document.activeElement !== ta) return;
       // No cross yet → there's no OLL/PLL/F2L to match; fall back to the
       // analyzer engine for optimal cross / xcross / xxcross suggestions.
       if (p && p.kind === 'alg' && p.entries.length === 0
@@ -336,9 +339,19 @@ export default function ReconAutofill({ textareaRef, value, setValue, scramble, 
     const onSel = () => {
       if (document.activeElement === ta) setCaretVersion(v => v + 1);
     };
+    const onBlur = () => {
+      firstStageTokenRef.current++;
+      lastAutoOpenKeyRef.current = '';
+      lastBuildKeyRef.current = '';
+      close();
+    };
     document.addEventListener('selectionchange', onSel);
-    return () => document.removeEventListener('selectionchange', onSel);
-  }, [enabled, textareaRef]);
+    ta.addEventListener('blur', onBlur);
+    return () => {
+      document.removeEventListener('selectionchange', onSel);
+      ta.removeEventListener('blur', onBlur);
+    };
+  }, [enabled, textareaRef, close]);
 
   /**
    * Auto-open popup as user types — matches cubedb.net behavior.
@@ -353,7 +366,8 @@ export default function ReconAutofill({ textareaRef, value, setValue, scramble, 
     if (!enabled) return;
     if (popup) return;
     const ta = textareaRef.current;
-    if (!ta) return;
+    // A draft can be populated while the user is in a different control or dialog.
+    if (!ta || document.activeElement !== ta) return;
     const caret = editorCaret(ta);
 
     const lineIdx = (value.substring(0, caret).match(/\n/g) ?? []).length;
@@ -390,7 +404,7 @@ export default function ReconAutofill({ textareaRef, value, setValue, scramble, 
         const ap = await buildAlgPopup(caret);
         if (ap && ap.entries.length > 0) p = ap;
       }
-      if (cancelled) return;
+      if (cancelled || document.activeElement !== ta) return;
       if (p) {
         setPopup(p);
         setSelected(0);
@@ -403,7 +417,7 @@ export default function ReconAutofill({ textareaRef, value, setValue, scramble, 
   useEffect(() => {
     if (!popup) return;
     const ta = textareaRef.current;
-    if (!ta) return;
+    if (!ta || document.activeElement !== ta) return;
     const caret = editorCaret(ta);
     const key = `${value}\x00${caret}\x00${popup.kind}`;
     if (key === lastBuildKeyRef.current) return;
@@ -428,7 +442,7 @@ export default function ReconAutofill({ textareaRef, value, setValue, scramble, 
       const next = popup.kind === 'comment'
         ? await buildCommentPopup(caret, popup.explicit)
         : await buildAlgPopup(caret);
-      if (cancelled) return;
+      if (cancelled || document.activeElement !== ta) return;
       // alg 空态(没匹配的提示文本)只在手动 Tab 触发时给反馈;边打边过滤遇到没
       // 匹配就静默关掉,不要骚扰用户("没有公式以你输入的开头"半成品时无意义)
       const isEmptyAlg = next && next.kind === 'alg' && next.entries.length === 0;
@@ -524,7 +538,7 @@ export default function ReconAutofill({ textareaRef, value, setValue, scramble, 
     return () => document.removeEventListener('selectionchange', checkCaret);
   }, [popup, textareaRef, close]);
 
-  // Click outside / blur closes popup
+  // Click outside closes popup.
   useEffect(() => {
     if (!popup) return;
     const onClick = (e: MouseEvent) => {
