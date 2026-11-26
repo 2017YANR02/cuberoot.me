@@ -49,14 +49,15 @@ function canSelectSpeechMicrophone(): boolean {
 interface Options {
   lang: 'zh-CN' | 'en-US';
   visualizeAudio?: boolean;
+  onAudioLevel?: (level: number) => void;
   continuous?: boolean;
   /** 每次有新文本(含中途 interim)时回调。isFinal=true 表示这是最终结果。 */
   onResult?: (text: string, isFinal: boolean) => void;
 }
 
-export function useSpeechToText({ lang, onResult, visualizeAudio = false, continuous = false }: Options) {
+export function useSpeechToText({ lang, onResult, onAudioLevel, visualizeAudio = false, continuous = false }: Options) {
   const [supported, setSupported] = useState(false);
-  const [status, setStatus] = useState<'idle' | 'starting' | 'listening' | 'stopping'>('idle');
+  const [status, setStatus] = useState<'idle' | 'starting' | 'awaiting-permission' | 'listening' | 'stopping'>('idle');
   const [error, setError] = useState<string | null>(null);
   const [microphone, setMicrophone] = useState<string | null>(null);
   const [speaking, setSpeaking] = useState(false);
@@ -80,7 +81,7 @@ export function useSpeechToText({ lang, onResult, visualizeAudio = false, contin
     setError(null);
   }, []);
 
-  const start = useCallback(() => {
+  const startSession = useCallback((captureMode: 'default' | 'browser') => {
     const SR = getSR();
     sessionRef.current?.cancel();
     setError(null);
@@ -94,6 +95,7 @@ export function useSpeechToText({ lang, onResult, visualizeAudio = false, contin
       setStatus('idle'); setError('service-not-allowed'); return;
     }
     let timer: ReturnType<typeof setTimeout>;
+    let permission: PermissionStatus | undefined;
     let receivedText = false;
     let stopping = false;
     let started = false;
@@ -105,7 +107,12 @@ export function useSpeechToText({ lang, onResult, visualizeAudio = false, contin
     let analyser: AnalyserNode | null = null;
     let frame = 0;
     const active = () => sessionRef.current === session;
+    const stopWatchingPermission = () => {
+      if (permission) permission.onchange = null;
+      permission = undefined;
+    };
     const cancel = () => {
+      stopWatchingPermission();
       clearTimeout(timer);
       cancelAnimationFrame(frame);
       audioSource?.disconnect();
@@ -125,13 +132,13 @@ export function useSpeechToText({ lang, onResult, visualizeAudio = false, contin
       setWaveformOffset(0);
       if (reason) setError(reason);
     };
-    const deadline = (ms: number) => {
+    const deadline = (ms: number, reason = 'timeout') => {
       clearTimeout(timer);
       timer = setTimeout(() => {
         // A track-backed recognizer may keep delivering interim text until
         // stop(). Request its final result instead of reporting a false failure.
         if (receivedText && !stopping) session.stop();
-        else finish('timeout');
+        else finish(reason);
       }, ms);
     };
     const session = {
@@ -210,22 +217,42 @@ export function useSpeechToText({ lang, onResult, visualizeAudio = false, contin
       }
     };
     const trackRecognition = canSelectSpeechMicrophone();
-    if (visualizeAudio) {
+    const measureAudio = (trackRecognition || captureMode === 'default') && (visualizeAudio || !!onAudioLevel);
+    if (measureAudio) {
       // Create/resume within the user gesture, before microphone permission resolves.
       try {
         audioContext = new AudioContext();
         void audioContext.resume().catch(() => finish('audio-capture'));
       } catch { finish('audio-capture'); return; }
     }
-    if (trackRecognition || visualizeAudio) {
-      deadline(30_000);
+    if (trackRecognition || measureAudio) {
+      deadline(30_000, 'capture-timeout');
+      // Observe alongside capture so requesting the mic stays in the click gesture.
+      void navigator.permissions?.query({ name: 'microphone' as PermissionName }).then(result => {
+        if (!active() || stream) return;
+        permission = result;
+        const update = () => {
+          if (result.state === 'denied') { finish('not-allowed'); return; }
+          if (result.state === 'prompt') {
+            clearTimeout(timer);
+            setStatus('awaiting-permission');
+          } else {
+            setStatus('starting');
+            deadline(12_000, 'device-timeout');
+          }
+        };
+        result.onchange = update;
+        update();
+      }).catch(() => { /* Permission queries are optional. Capture still reports its own result. */ });
       // Chromium's literal "default" follows the OS input, whereas omitting
       // deviceId can select a saved browser device (including a silent virtual
       // driver). Do not enumerate or automatically open unrelated microphones.
       if (!navigator.mediaDevices?.getUserMedia) { finish('audio-capture'); return; }
-      void navigator.mediaDevices.getUserMedia({ audio: trackRecognition ? { deviceId: { exact: 'default' } } : true })
+      void navigator.mediaDevices.getUserMedia({ audio: trackRecognition && captureMode === 'default' ? { deviceId: { exact: 'default' } } : true })
         .then(captured => {
           if (!active()) { captured.getTracks().forEach(track => track.stop()); return; }
+          stopWatchingPermission();
+          setStatus('starting');
           stream = captured;
           const track = captured.getAudioTracks()[0];
           if (!track || track.readyState !== 'live') { finish('audio-capture'); return; }
@@ -247,12 +274,13 @@ export function useSpeechToText({ lang, onResult, visualizeAudio = false, contin
                 let peak = 0;
                 for (const value of samples) peak = Math.max(peak, Math.abs(value));
                 const amplitude = Math.min(1, peak * 4);
-                setWaveform(history => [...history.slice(1), amplitude]);
+                onAudioLevel?.(amplitude);
+                if (visualizeAudio) setWaveform(history => [...history.slice(1), amplitude]);
                 lastPaint = now;
               }
               // Translate between sample ticks, including silence. At the next
               // tick the history shifts by one cell and translation starts over.
-              setWaveformOffset((now - lastPaint) / 100);
+              if (visualizeAudio) setWaveformOffset((now - lastPaint) / 100);
               frame = requestAnimationFrame(sample);
             };
             frame = requestAnimationFrame(sample);
@@ -260,19 +288,25 @@ export function useSpeechToText({ lang, onResult, visualizeAudio = false, contin
           startRecognition(trackRecognition ? track : undefined);
         })
         .catch(cause => {
-          finish(cause instanceof DOMException && (cause.name === 'NotAllowedError' || cause.name === 'SecurityError')
-            ? 'not-allowed' : 'audio-capture');
+          const name = cause instanceof DOMException ? cause.name : '';
+          if (name === 'NotAllowedError' || name === 'SecurityError') finish('not-allowed');
+          else if (name === 'NotFoundError' || name === 'OverconstrainedError') finish('device-not-found');
+          else if (name === 'NotReadableError') finish('device-unreadable');
+          else finish('audio-capture');
         });
     } else {
       // Safari, Android and older engines keep their native capture path.
       startRecognition();
     }
-  }, [lang, visualizeAudio, continuous]);
+  }, [lang, onAudioLevel, visualizeAudio, continuous]);
+
+  const start = useCallback(() => startSession('default'), [startSession]);
+  const startWithBrowserMicrophone = useCallback(() => startSession('browser'), [startSession]);
 
   // 卸载时停掉
   useEffect(() => {
     return () => { sessionRef.current?.cancel(); };
   }, []);
 
-  return { supported, listening: status !== 'idle', speaking, waveform, waveformOffset, status, error, microphone, start, stop, cancel };
+  return { supported, listening: status !== 'idle', speaking, waveform, waveformOffset, status, error, microphone, start, startWithBrowserMicrophone, stop, cancel };
 }

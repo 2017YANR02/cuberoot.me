@@ -270,11 +270,14 @@ describe('browser speech recognition lifecycle', () => {
       }
     });
 
-    it.each(['NotAllowedError', 'NotFoundError', 'NotReadableError', 'OverconstrainedError'])('handles capture failure %s without silently opening another input', async (name) => {
+    it.each([
+      ['NotAllowedError', 'not-allowed'], ['NotFoundError', 'device-not-found'],
+      ['NotReadableError', 'device-unreadable'], ['OverconstrainedError', 'device-not-found'],
+    ])('handles capture failure %s without silently opening another input', async (name, reason) => {
       const { getUserMedia } = capture();
       getUserMedia.mockRejectedValue(new DOMException('Capture failed', name));
       await act(async () => speech.start());
-      expect(speech.error).toBe(name === 'NotAllowedError' ? 'not-allowed' : 'audio-capture');
+      expect(speech.error).toBe(reason);
       expect(speech.status).toBe('idle');
       expect(current().start).not.toHaveBeenCalled();
     });
@@ -293,6 +296,44 @@ describe('browser speech recognition lifecycle', () => {
       expect(track.stop).toHaveBeenCalledOnce();
       expect(current().start).not.toHaveBeenCalled();
       expect(vi.getTimerCount()).toBe(0);
+    });
+
+    it('waits for permission before starting the device deadline', async () => {
+      const { getUserMedia, stream, track } = capture();
+      const permission = { state: 'prompt', onchange: null as (() => void) | null };
+      vi.stubGlobal('navigator', { ...navigator, permissions: { query: async () => permission } });
+      let grant!: (value: typeof stream) => void;
+      getUserMedia.mockReturnValue(new Promise(resolve => { grant = resolve; }));
+      await act(async () => speech.start());
+      await act(async () => vi.advanceTimersByTime(45_000));
+      expect(speech.status).toBe('awaiting-permission');
+      await act(async () => { permission.state = 'granted'; permission.onchange?.(); });
+      expect(speech.status).toBe('starting');
+      await act(async () => grant(stream));
+      expect(current().start).toHaveBeenCalledExactlyOnceWith(track);
+      expect(permission.onchange).toBeNull();
+    });
+
+    it('recovers from a stalled authorized device and discards the late track', async () => {
+      const { getUserMedia, stream, track } = capture();
+      vi.stubGlobal('navigator', { ...navigator, permissions: { query: async () => ({ state: 'granted' }) } });
+      let resolveDevice!: (value: typeof stream) => void;
+      const browserTrack = { ...track, label: 'Browser microphone', stop: vi.fn() };
+      const browserStream = { getTracks: () => [browserTrack], getAudioTracks: () => [browserTrack] };
+      getUserMedia.mockReturnValueOnce(new Promise(resolve => { resolveDevice = resolve; }))
+        .mockResolvedValueOnce(browserStream);
+      await act(async () => speech.start());
+      await act(async () => vi.advanceTimersByTime(12_000));
+      expect(speech.error).toBe('device-timeout');
+      await act(async () => speech.startWithBrowserMicrophone());
+      await act(async () => resolveDevice(stream));
+      expect(getUserMedia).toHaveBeenNthCalledWith(2, { audio: true });
+      expect(current().start).toHaveBeenCalledExactlyOnceWith(browserTrack);
+      expect(browserTrack.stop).not.toHaveBeenCalled();
+      expect(track.stop).toHaveBeenCalledOnce();
+      await act(async () => current().result([['魔方', true]]));
+      expect(onResult).toHaveBeenCalledWith('魔方', true);
+      expect(speech.error).toBeNull();
     });
 
     it('does not let an old permission result take over a newer session', async () => {
