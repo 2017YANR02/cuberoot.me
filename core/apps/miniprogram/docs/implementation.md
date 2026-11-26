@@ -68,7 +68,7 @@
 
 #### 新公司备案迁移（2026-10-27）
 
-本节始于 2026-10-27，备案状态已更新至 2026-11-20。跨平台进度见[备案与主体迁移进度](../../../../docs/compliance/filing-and-identity.md#备案与主体迁移进度2026-11-15)。下方旧应用的配置属于历史记录。原生实现和审核缺口见[抖音原生化审核核查](douyin-native-review-audit.md)。
+本节始于 2026-10-27，备案和版本状态更新至 2026-11-26。跨平台进度见[备案与主体迁移进度](../../../../docs/compliance/filing-and-identity.md#当前进度与下一步2026-11-26)。下方旧应用的配置属于历史记录。原生实现和审核缺口见[抖音原生化审核核查](douyin-native-review-audit.md)。
 
 新公司应用的超级管理员登录说明保存在本机仓库根目录的 `.password.md`，标题为「抖音开放平台 · 魔方根新公司应用」。处理抖音上传、提审或账号交接时先查该条记录，再分别核对网页控制台和开发者工具中的目标 AppID。
 
@@ -80,17 +80,17 @@
 | 新小程序 AppID | `tt550923b4cb7781f301` | 2026-11-20 登录控制台，确认上海魔方根科技有限公司名下的「魔方根」及超级管理员权限 |
 | 图标、简介 | 已提交，审核中 | 截图分别显示“审核中”；简介为“魔方计时、成绩统计、公式与赛事信息查询” |
 | 服务类目 | 待核对 | 本次截图未展示类目及其审核结果 |
-| 新主体小程序备案 | 平台审核完成，管局审核中 | 2026-11-20 核对[新应用备案页](https://developer.open-douyin.com/microapp/tt550923b4cb7781f301/setting/base/registration) |
-| 新应用代码版本 | 已上传测试版 `1.0.0`，暂无审核或线上版本 | 2026-11-20 在[新应用版本页](https://developer.open-douyin.com/microapp/tt550923b4cb7781f301/publish)核对。提交审核预检提示该应用尚未配置隐私协议 |
+| 新主体小程序 ICP 备案 | 管局审核通过 | 2026-11-26 核对[新应用备案页](https://developer.open-douyin.com/microapp/tt550923b4cb7781f301/setting/base/registration)。2026-11-20 时仍在管局审核。实际通过日期未显示 |
+| 新应用代码版本 | `1.0.0` 于 2026-11-25 送审，审核中，暂无线上版本 | 2026-11-26 核对[新应用版本页](https://developer.open-douyin.com/microapp/tt550923b4cb7781f301/publish)。2026-11-20 尚为测试版，预检曾提示隐私协议未配置 |
+| 公安小程序登记 | 2026-11-26 已提交，徐汇区网安支队待审核 | 以新公司名下本 AppID 的抖音开发者工具计时器运行截图作为附件。从[公安工作台](https://beian.mps.gov.cn/web/dashboard/home)的「我的申请 → 魔方根 · 新增小程序」查看 |
 | 阿里云 ICP 主体变更 | 已完成 | 维护者于 2026-11-07 确认 ICP 备案完成 |
 
 下一步按以下顺序推进：
 
 1. 等待图标、简介审核结果，并核对匹配实际功能的服务类目。新小程序名称“魔方根”已通过，AppID 已取得，无需重复创建。截图提示发布前名称可保留 30 天，需及时发布版本或完成小程序备案；具体保留截止时间以后台为准，不将本次基础信息提审视为备案或版本提审。
-2. 等待企业小程序备案的管局审核结果。收到补正要求时，以后台通知为准。
-3. **跨平台同名小程序需串行备案**：官方 FAQ 还要求同主体、同名称的小程序不要同时在多个平台发起备案，先等一个平台出结果，再去另一个平台办理；另一平台可能走新增接入。这一限制独立于新主体首次备案限制，修正此前将微信与抖音备案一概并行的排期假设。
-4. 等待备案期间可并行核对新 AppID 对应的请求/socket 域名、隐私声明、开发成员和服务端登录配置。新 AppID 写入被忽略的 `apps/miniprogram/project.douyin.config.json`；`DOUYIN_MINI_APP_SECRET` 仅由服务端安全配置，不写文档或提交代码。不因企业认证通过就直接切换旧应用的生产凭据。
-5. 先按实际用到的能力配置新应用的隐私协议，并用已上传的测试版检查登录和原生计时功能。提审并发布前，核对名称、备案及原生化审核清单的实际状态。
+2. 查看 `1.0.0` 版本审核及补件。通过后按授权发布并核对线上真机；公安小程序登记按实际运行资料单独推进。
+3. **跨平台同名小程序需串行办理 ICP**：官方 FAQ 要求同主体、同名称的小程序按平台先后出结果再办理，另一平台可能走新增接入。抖音管局已有结果，微信旧备案注销与重报的暂停决定见[跨平台跟踪](../../../../docs/compliance/filing-and-identity.md#当前进度与下一步2026-11-26)。
+4. 核对新 AppID 的请求与 socket 域名、隐私声明、开发成员、登录配置及原生计时。新 AppID 写入被忽略的 `apps/miniprogram/project.douyin.config.json`；`DOUYIN_MINI_APP_SECRET` 仅由服务端安全配置，不写文档或提交代码。不因企业认证通过就直接切换旧应用的生产凭据。
 
 官方依据（2026-10-27 核对）：[开发准备](https://developer.open-douyin.com/docs/resource/zh-CN/mini-app/introduction/develop-process/prepare)、[小程序 ICP 备案指引](https://developer.open-douyin.com/docs/resource/zh-CN/mini-app/operation/miniapp-creation/ICPFiling/ICPintroduce)、[备案 FAQ：首次备案与跨平台同名限制](https://developer.open-douyin.com/docs/resource/zh-CN/mini-app/operation/miniapp-creation/ICPFiling/guide)。
 
