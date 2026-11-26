@@ -6,7 +6,7 @@ import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { parseEnv } from 'node:util';
 import { parseVm } from '../../../scripts/mac-system-recorder.mts';
-import { loadEvaluationResume, resumeHelperSha256 } from './assistant-evaluation-resume.mts';
+import { evaluationRepeats, loadEvaluationResume, resumeHelperSha256 } from './assistant-evaluation-resume.mts';
 import { monitorClockMs, type MonitorLease } from './assistant-monitor-lease.mts';
 
 const GiB = 2 ** 30;
@@ -61,7 +61,7 @@ async function main() {
   if (resume && (resume.boot !== baseline.boot || resume.swapouts !== baseline.swapouts)) throw Error('Original resource baseline changed');
   const fingerprint = { runner: sha(runner), manifest: sha(resolve(dir, 'build-manifest.json')), supervisor: sha(fileURLToPath(import.meta.url)), resume: resume?.sha256 ?? null, resumeHelper: resumeHelperSha256 };
   if (!process.argv.includes('--run')) {
-    console.log(JSON.stringify({ baseline, fingerprint, limits, priorElapsedMs, remainingRequests: resume ? read('cases.json').cases.length * 4 - resume.done.length : undefined, keyPresent: Boolean(env.DEEPSEEK_API_KEY?.trim()), osNoSwapGuaranteed: false }));
+    console.log(JSON.stringify({ baseline, fingerprint, limits, priorElapsedMs, remainingRequests: resume ? read('cases.json').cases.length * 2 * evaluationRepeats(read('cases.json')).length - resume.done.length : undefined, keyPresent: Boolean(env.DEEPSEEK_API_KEY?.trim()), osNoSwapGuaranteed: false }));
     return;
   }
   if (!env.DEEPSEEK_API_KEY?.trim()) throw Error('Fill DEEPSEEK_API_KEY in the private evaluation file');

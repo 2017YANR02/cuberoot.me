@@ -6,6 +6,11 @@ import { leaseLimits } from './assistant-monitor-lease.mts';
 
 export const resumeHelperSha256 = createHash('sha256').update(readFileSync(new URL(import.meta.url))).digest('hex');
 const sha = (file: string) => createHash('sha256').update(readFileSync(file)).digest('hex');
+export function evaluationRepeats(spec: {repeats?: number}): number[] {
+  if (spec.repeats === 1) return [1];
+  if (spec.repeats === undefined || spec.repeats === 2) return [1, 2];
+  throw Error('Expected one or two paired evaluation repeats');
+}
 const key = (row: any) => `${row.repeat}:${row.variant}:${row.id}`;
 
 /** Verify both stopped segments before continuing with the remaining requests. */
@@ -54,8 +59,8 @@ function loadChainedContinuation(dir: string, root: string, spec: any) {
     && last.priorElapsedMs===first.elapsedMs && priorElapsedMs===first.elapsedMs+last.elapsedMs && priorElapsedMs>=0 && priorElapsedMs<1800000);
   require([first.baseline,last.baseline,last.last].every(s=>s.boot===first.baseline.boot && s.swapouts===first.baseline.swapouts && s.pressure===1));
 
-  const suite = read(original,'cases.json').cases;
-  const order = [1,2].flatMap(repeat => suite.flatMap((item:any,index:number) => ((index+repeat)%2?['before','after']:['after','before'])
+  const questions = read(original,'cases.json'), suite = questions.cases;
+  const order = evaluationRepeats(questions).flatMap(repeat => suite.flatMap((item:any,index:number) => ((index+repeat)%2?['before','after']:['after','before'])
     .map(variant => key({repeat,variant,id:item.id}))));
   const rows = [...lines(original,'results.jsonl'),...lines(previous,'results.jsonl')];
   const done = rows.map(key);
@@ -140,11 +145,11 @@ function loadFirstContinuation(dir: string, root: string, spec: any, helperSha25
   for (const variant of ['before', 'after']) {
     if (sha(resolve(dir, variant + '.mjs')) !== old.variants[variant].bundleSha256) fail();
   }
-  const suite = read(prior, 'cases.json').cases;
-  const order = [1,2].flatMap(repeat => suite.flatMap((item:any,index:number) => ((index+repeat)%2?['before','after']:['after','before'])
+  const questions = read(prior,'cases.json'), suite = questions.cases;
+  const order = evaluationRepeats(questions).flatMap(repeat => suite.flatMap((item:any,index:number) => ((index+repeat)%2?['before','after']:['after','before'])
     .map(variant => key({repeat,variant,id:item.id}))));
   const expected = new Set<string>(order);
-  if (expected.size !== suite.length * 4) fail();
+  if (expected.size !== suite.length * 2 * evaluationRepeats(questions).length) fail();
   const rows = lines(prior, 'results.jsonl'), starts = lines(prior, 'provider-starts.jsonl'), calls = lines(prior, 'provider-calls.jsonl');
   const done = rows.map(key);
   if (done.length >= expected.size || done.some((k,i) => k !== order[i])) fail();
@@ -169,8 +174,21 @@ function loadFirstContinuation(dir: string, root: string, spec: any, helperSha25
     if(unknown.length || exit.exitCode!==1 || !Number.isSafeInteger(stop.rss) || stop.rss<=0 || stop.rss>2**30
       || !Number.isFinite(exit.last.free) || exit.last.free>=memoryFloor
       || !['local-resources.jsonl','worker-monitor-leases.jsonl','real-model.log'].every(name=>spec.priorFiles?.[name]))fail();
-    const sample=lines(prior,'local-resources.jsonl').at(-1), lease=lines(prior,'worker-monitor-leases.jsonl').at(-1);
-    const at=Date.parse(stop.at), lag=at-Date.parse(sample?.at), exitLag=Date.parse(exit.last.at)-at;
+    const samples=lines(prior,'local-resources.jsonl'), leases=lines(prior,'worker-monitor-leases.jsonl');
+    const terminal=samples.at(-1), lease=leases.at(-1), at=Date.parse(stop.at);
+    let sample=terminal;
+    // The supervisor logs a failed sample before stopping, without sending it
+    // as a lease. It can observe the same memory stop just after the worker.
+    if (Date.parse(terminal?.at)>at) {
+      sample=samples.at(-2);
+      if (!sample || samples.length!==leases.length+1 || lease?.sequence!==leases.length
+        || terminal.boot!==exit.baseline.boot || terminal.swapouts!==exit.baseline.swapouts || terminal.pressure!==1
+        || !Number.isSafeInteger(terminal.free) || terminal.free<0 || terminal.free>=memoryFloor
+        || !Number.isSafeInteger(terminal.rss) || terminal.rss<=0 || terminal.rss>2**30
+        || !Number.isFinite(terminal.monotonicAtMs) || !(terminal.monotonicAtMs>sample.monotonicAtMs
+          && terminal.monotonicAtMs<=exit.last.monotonicAtMs && Date.parse(terminal.at)<=Date.parse(exit.last.at)))fail();
+    }
+    const lag=at-Date.parse(sample?.at), exitLag=Date.parse(exit.last.at)-at;
     if(!(lag>=0 && lag<leaseLimits.maximumAgeMs && exitLag>=0 && exitLag<leaseLimits.maximumAgeMs)
       || sample?.boot!==exit.baseline.boot || sample?.swapouts!==exit.baseline.swapouts || sample?.pressure!==1
       || lease?.type!=='resource-sample' || lease.sampledAt!==Date.parse(sample.at) || lease.sampledMonotonicAtMs!==sample.monotonicAtMs

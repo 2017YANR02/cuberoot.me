@@ -10,7 +10,8 @@ import { parseEnv } from 'node:util';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { build } from 'esbuild';
 import { monitorClockMs, requireResourceMonitor } from './assistant-monitor-lease.mts';
-import { loadEvaluationResume, resumeHelperSha256 } from './assistant-evaluation-resume.mts';
+import { assistantPrice } from '../src/utils/site_assistant_pricing.ts';
+import { evaluationRepeats, loadEvaluationResume, resumeHelperSha256 } from './assistant-evaluation-resume.mts';
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../../..');
 const dir = path.resolve(root, process.argv.find(value => value.startsWith('--out='))?.slice(6) ?? '.local-data/assistant-context-evaluation-20261115');
 const sha = value => createHash('sha256').update(value).digest('hex');
@@ -137,13 +138,16 @@ export async function run(input,fetcher){
     process.exit(0);
   }
   const providerOrigin = new URL(config.baseUrl).origin, nativeFetch = globalThis.fetch;
+  const spec=read('cases.json'), repeats=evaluationRepeats(spec);
+  const costLimit=spec.maxGrossCny;
+  if(costLimit!==undefined && (!Number.isFinite(costLimit) || costLimit<=0 || config.model!=='deepseek-flash' || providerOrigin!=='https://api.deepseek.com'))throw Error('Invalid evaluation cost limit or unknown provider');
   const resume = loadEvaluationResume(dir,root);
-  const ledger = fs.existsSync(path.join(dir, 'paid-ledger.json')) ? read('paid-ledger.json') : resume?.ledger ?? { answers: 0, calls: 0, input: 0, output: 0, missingUsage: 0, maxAnswers: suite.length * 4, maxCalls: 240, maxInput: 2_250_000, maxOutput: 225_000 };
+  const ledger = fs.existsSync(path.join(dir, 'paid-ledger.json')) ? read('paid-ledger.json') : resume?.ledger ?? { answers: 0, calls: 0, input: 0, output: 0, missingUsage: 0, maxAnswers: suite.length * 2 * repeats.length, maxCalls: 240, maxInput: 2_250_000, maxOutput: 225_000 };
   const configFingerprint = sha(JSON.stringify({ model: config.model, providerOrigin, thinking: 'auto', contextWindow: process.env.SITE_ASSISTANT_CONTEXT_WINDOW_TOKENS ?? '64000', sources, web: false }));
   if(resume && resume.configFingerprint!==configFingerprint)throw new Error('Configuration changed from stopped evaluation');
   if (fs.existsSync(path.join(dir, 'run-manifest.json')) && read('run-manifest.json').configFingerprint !== configFingerprint) throw new Error('Configuration changed during resume');
   if (!fs.existsSync(path.join(dir, 'run-manifest.json'))) save('run-manifest.json', { createdAt: new Date().toISOString(), model: config.model, providerOrigin, configFingerprint,
-    repeats: 2, order: 'AB/BA alternated per case and reversed on repeat 2', surface: 'actual in-process agent, real model, fixed synthetic histories, frozen public fixtures, no production writes, no browser or DB latency',
+    repeats: repeats.length, maxGrossCny: costLimit, order: 'AB/BA alternated per case and reversed on repeat 2', surface: 'actual in-process agent, real model, fixed synthetic histories, frozen public fixtures, no production writes, no browser or DB latency',
     sources, runnerSha256: sha(fs.readFileSync(fileURLToPath(import.meta.url))),
     cache: 'provider cache uncontrolled; actual cached tokens reported separately', historicalState: manifest.baselineMemory ? 'both graphs constructed from the same full fixture transcript before timing' : 'candidate graph constructed from the same full fixture transcript before timing; baseline retains its original recent-message policy', limits: ledger });
   const resultsFile = path.join(dir, 'results.jsonl');
@@ -169,6 +173,14 @@ export async function run(input,fetcher){
     }
     check();
     if (ledger.calls >= ledger.maxCalls || ledger.input + (ledger.reservedInput ?? 0) >= ledger.maxInput || ledger.output + (ledger.reservedOutput ?? 0) >= ledger.maxOutput || ledger.missingUsage) throw new Error('Paid evaluation budget reached');
+    if(costLimit!==undefined) {
+      // Settle previous streaming usage, then reserve a full 1M-token context
+      // and the actual requested output at the uncached peak tariff.
+      await Promise.all(pending);
+      const request=JSON.parse(String(init?.body)), output=request.max_tokens ?? request.max_completion_tokens;
+      const gross=assistantPrice(config.model,providerOrigin,ledger.input+(ledger.reservedInput??0)+1_048_576,ledger.output+(ledger.reservedOutput??0)+output).grossCny;
+      if(inFlight.size || ledger.missingUsage || request.model!==config.model || !Number.isSafeInteger(output) || output<=0 || gross===null || gross>costLimit)throw Error('Cannot reserve next call within the authorized cost');
+    }
     ledger.calls++; save('paid-ledger.json', ledger);
     const request = JSON.parse(String(init?.body)), start = performance.now();
     const record = { ...active, call: ledger.calls, model: request.model, startedAt: new Date().toISOString(), startedMonotonicAtMs: monitorClockMs(), requestSha256: sha(String(init?.body)) };
@@ -199,7 +211,7 @@ export async function run(input,fetcher){
     }));
     return response;
   };
-  for (let repeat = 1; repeat <= 2; repeat++) for (const [index, item] of suite.entries()) for (const variant of (index + repeat) % 2 ? ['before', 'after'] : ['after', 'before']) {
+  for (const repeat of repeats) for (const [index, item] of suite.entries()) for (const variant of (index + repeat) % 2 ? ['before', 'after'] : ['after', 'before']) {
     if (done.has(`${repeat}:${variant}:${item.id}`)) continue;
     check(); if (ledger.answers >= ledger.maxAnswers || ledger.missingUsage) throw new Error('Evaluation stopped at budget or unknown usage');
     ledger.answers++; save('paid-ledger.json', ledger); active = { repeat, variant, id: item.id }; calls = []; pending = []; reads = []; fixtureMisses = [];
