@@ -9,6 +9,7 @@
     "recon:intake:dev": "tsx apps/api/scripts/dev-recon-intake.ts",
     "prepare": "node scripts/recon-ground-truth-gate.mjs install",
     "setup:local": "pnpm --filter @cuberoot/client build:deps && node scripts/setup-local.ts",
+    "assistant:feature-links": "tsx --tsconfig packages/client/tsconfig.json scripts/build-assistant-feature-links.mts",
     "audit:boundaries": "node scripts/check-architecture-boundaries.mjs",
     "solver:build-wasm": "tsx ../solver/scripts/build_wasm.mts",
     "solver:verify": "tsx ../solver/scripts/verify.mts",
