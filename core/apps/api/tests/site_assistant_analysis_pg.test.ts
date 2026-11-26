@@ -3,7 +3,7 @@ import postgres from 'postgres';
 import { beforeAll,afterAll,describe,it,expect,vi } from 'vitest';
 import { ANALYSIS_DATASETS,compileAnalysis } from '../src/utils/site_assistant_analysis.js';
 import { executeAnalysis } from '../src/utils/site_assistant_analysis_db.js';
-import { answerSiteQuestion } from '../src/utils/site_assistant.js';
+import { canReadPublicResult, answerSiteQuestion } from '../src/utils/site_assistant.js';
 import { recentChampionWindow } from '../src/utils/site_assistant_champions.js';
 import { withAssistantProgress } from '../src/utils/site_assistant_progress.js';
 import type { AssistantStreamEvent } from '@cuberoot/shared/site-assistant';
@@ -43,10 +43,89 @@ describe.skipIf(!enabled)('assistant analysis PostgreSQL isolation and calculati
       INSERT INTO recons(id,visibility,raw_time) VALUES (1,'public',4.5),(2,'private',1),(3,'unlisted',2);
       INSERT INTO wiki_terms(id,head_en,deleted_at) VALUES (1,'Public',null),(2,'Deleted',now());`);
     await db.unsafe(await readFile(new URL('../../../../ops/bin/provision-assistant-reader.sql',import.meta.url),'utf8'));
+    await db.unsafe("INSERT INTO wca_countries VALUES ('China','CN','China','_Asia'),('Japan','JP','Japan','_Asia')");
     await db.unsafe('GRANT cuberoot_assistant_reader TO CURRENT_USER');
     await db.unsafe(await readFile(new URL('../migrations/0267_assistant_public_analysis.sql',import.meta.url),'utf8'));
   });
   afterAll(async()=>{await db.end();});
+  it('streams the same verified annual count for two viewers in auto and deep, without a model',async()=>{
+    vi.useFakeTimers({toFake:['Date']});
+    try {
+      // Shanghai is already in 2026, while UTC is still in 2025.
+      vi.setSystemTime(new Date('2025-12-31T23:30:00Z'));
+      const question='今年亚洲有多少场比赛', timeZone='Asia/Shanghai';
+      const fetcher=vi.fn<typeof fetch>();
+      const outputs=new Set<string>();
+      for(const [uid,wcaId] of [[1,'2000TEST01'],[2,'2000TEST02']] as const) for(const mode of ['auto','deep'] as const) {
+        expect(canReadPublicResult({question,provider:'openai',timeZone,history:[]})).toBe(true);
+        const events:AssistantStreamEvent[]=[];
+        const emit=async(e:AssistantStreamEvent)=>{events.push(e);};
+        const result=await answerSiteQuestion(question,'zh',null,signal(),fetcher,[],wcaId,emit,timeZone,[],mode,{viewerUserId:uid});
+        expect(result.answer).toContain('2026 年亚洲收录的 WCA 比赛共有 2 场');
+        expect(result.answer).toContain('[['+result.sources[0].id+']]');
+        expect(events.find(e=>e.type==='answer')).toMatchObject({answer:result.answer,sources:result.sources});
+        outputs.add(result.answer);
+      }
+      expect(outputs.size).toBe(1);
+      for (const [q,zone,n] of [[question,'UTC',1],['今年欧洲有多少场比赛',timeZone,0],['今年日本有多少场比赛',timeZone,1],['本月亚洲有多少场比赛',timeZone,1],['2026-01-01 至 2026-02-01 亚洲有多少场比赛',timeZone,2],['亚洲今年有多少场比赛',timeZone,2],['今年亚洲的比赛有几场？',timeZone,2]] as const) {
+        const result=await answerSiteQuestion(q,'zh',null,signal(),fetcher,[],undefined,undefined,zone);
+        expect(result.answer).toContain('共有 '+n+' 场');
+      }
+      for(const q of ['今年亚洲有多少场比赛，其中有几场是盲拧？','今年我在亚洲参加了多少场比赛','今年亚洲有哪些比赛','今年亚洲未来有多少场比赛'])
+        expect(canReadPublicResult({question:q,provider:'openai',history:[]})).toBe(false);
+      const saved=await db`SELECT updated_at FROM meta_historical WHERE key='last_imported_at'`;
+      await db`UPDATE meta_historical SET updated_at=NULL WHERE key='last_imported_at'`;
+      try {
+        const unavailable=await answerSiteQuestion(question,'zh',null,signal(),fetcher);
+        expect(unavailable.sources).toEqual([]);
+        expect(unavailable.answer).toContain('暂时无法核实');
+        expect(unavailable.answer).not.toContain('0 场');
+      } finally { await db`UPDATE meta_historical SET updated_at=${saved[0].updated_at} WHERE key='last_imported_at'`; }
+      expect(fetcher).not.toHaveBeenCalled();
+    } finally {vi.useRealTimers();}
+  });
+  it('answers four public count units with the same evidence for both accounts and modes',async()=>{
+    vi.useFakeTimers({toFake:['Date']});
+    vi.setSystemTime(new Date('2026-04-15T12:00:00Z'));
+    const questions=[
+      ['今年亚洲有多少场比赛','共有 2 场'],
+      ['今年全球有多少名选手参赛','为 1 人'],
+      ['今年亚洲有多少个城市举办过比赛','为 2 个'],
+      ['今年全球有多少个国家或地区举办过比赛','为 2 个'],
+      ['去年中国有多少个城市举办比赛','为 1 个'],
+      ['今年欧洲有多少名选手参赛','为 0 人'],
+      ['How many different competitors competed in Asia in 2026?','1 distinct competitor'],
+      ['How many cities hosted competitions in Japan in 2026?','1 distinct host city'],
+      ['How many different countries or regions hosted competitions in Asia from 2026-01-01 to 2026-02-02?','2 distinct host countries or regions'],
+    ];
+    try {
+      const fetcher=vi.fn<typeof fetch>();
+      for (const [question,expected] of questions) {
+        const replies=new Set<string>();
+        for (const uid of [1,2]) for (const mode of ['auto','deep'] as const) {
+          const lang=question.startsWith('How')?'en':'zh';
+          expect(canReadPublicResult({question,provider:'openai',history:[]})).toBe(true);
+          const result=await answerSiteQuestion(question,lang,null,signal(),fetcher,[],uid===1?'2000TEST01':'2000TEST02',undefined,'UTC',[],mode,{viewerUserId:uid});
+          expect(result.answer,question).toContain(expected);
+          expect(result.sources).toHaveLength(1);
+          expect(result.answer).toContain('[['+result.sources[0].id+']]');
+          replies.add(JSON.stringify([result.answer,result.sources]));
+        }
+        expect(replies.size,question).toBe(1);
+      }
+      expect(fetcher).not.toHaveBeenCalled();
+    } finally {vi.useRealTimers();}
+  });
+  it('distinguishes a missing host-country mapping from a verified empty region',async()=>{
+    await db.unsafe("INSERT INTO wca_competitions VALUES ('MissingHost','Missing','Unknown',NULL,'City','2031-01-01','2031-01-01')");
+    try {
+      const result=await answerSiteQuestion('2031年欧洲有多少场比赛','zh',null,signal(),vi.fn());
+      expect(result.sources).toHaveLength(0);
+      expect(result.answer).toContain('暂时无法核实');
+      const unaffected=await answerSiteQuestion('2026年欧洲有多少场比赛','zh',null,signal(),vi.fn());
+      expect(unaffected.answer).toContain('共有 0 场');
+    } finally {await db.unsafe("DELETE FROM wca_competitions WHERE id='MissingHost'");}
+  });
   it('matches the catalog and denies private base tables and writes at the DB boundary',async()=>{
     const columns=await db`SELECT table_name,column_name FROM information_schema.columns WHERE table_schema='assistant_public' ORDER BY ordinal_position`;
     for(const [name,definition] of Object.entries(ANALYSIS_DATASETS))expect(columns.filter(c=>c.table_name===name).map(c=>c.column_name)).toEqual([...definition.columns]);

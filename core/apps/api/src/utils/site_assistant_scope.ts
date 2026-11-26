@@ -1,6 +1,7 @@
+import { dateRangeProven, exactSelection } from './site_assistant_predicate.js';
 import { resolveAssistantTime, type AssistantMessage } from '@cuberoot/shared/site-assistant';
-import { EVENT_DISPLAY_EN, EVENT_DISPLAY_ZH, WCA_EVENT_ORDER } from '@cuberoot/shared/wca-events';
-import { EVENT_NAME_BY_ID } from '@cuberoot/shared/record-news';
+import { eventAliasId, eventForLabel, eventPattern, singleRoundEvent } from './site_assistant_event_scope.js';
+export { roundEventMentions, singleRoundEvent } from './site_assistant_event_scope.js';
 import { analysisQuerySchema, compileAnalysis, type AnalysisExpr } from './site_assistant_analysis.js';
 
 interface AttendanceScope {
@@ -10,39 +11,7 @@ interface AttendanceScope {
 interface AttendanceCall { tool: string; wcaId?: string; event?: string; from?: string; to?: string; query?: unknown; view?: string }
 const attendance = /参赛|比赛|\bcompetitions?\b|\bcompeted\b|\bparticipat|\battend/i;
 const self = /我(?:\s|\d{4}年|的|在|去|参|比|一共|总共|总计|已经|今年|去年|前年|历年|生涯|所有|全部|不限)|\bmy\b|\bI\s+(?:have\s+|did\s+)?(?:compet|attend|participat|visit)/i;
-const escape = (text: string) => text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-const normalizeEvent = (text: string) => text.toLowerCase().replace(/×/g,'x').replace(/\s+/g,' ').trim();
-const eventAliases = new Map<string,string>();
-// Reuse published names; add qualified spellings of the existing short labels.
-// Include known non-WCA names so "四阶金字塔" cannot become a 4x4 attendance filter.
-for (const id of Object.keys(EVENT_DISPLAY_ZH)) {
-  const labels=[id,EVENT_DISPLAY_ZH[id],EVENT_DISPLAY_EN[id],EVENT_NAME_BY_ID[id]];
-  if (/^[345]{3}[a-z]+$/.test(id)) {
-    const base=id.slice(0,3);
-    labels.push(EVENT_DISPLAY_ZH[base]+(id.endsWith('bf') && !id.includes('mb')?'盲拧':EVENT_DISPLAY_ZH[id]));
-    labels.push(EVENT_DISPLAY_EN[base]+' '+EVENT_DISPLAY_EN[id]);
-  }
-  for (const label of labels) if (label) eventAliases.set(normalizeEvent(label),id);
-}
-const eventPattern = new RegExp([...eventAliases.keys()].sort((a,b)=>b.length-a.length).map(label=>{
-  const pattern=escape(label).replace(/(\d)x(?=\d)/g,'$1[x×]').replace(/ /g,'\\s+');
-  return /[\u3400-\u9fff]/.test(label)?pattern:`\\b${pattern}\\b`;
-}).join('|'),'gi');
-const scopedEvent = (scope: AttendanceScope) => {
-  const id=scope.event && eventAliases.get(normalizeEvent(scope.event.text));
-  return WCA_EVENT_ORDER.find(event=>event===id);
-};
-
-export function roundEventMentions(text:string) {
-  return [...text.matchAll(eventPattern)].map(([label])=>({label,event:scopedEvent({event:{text:label}})}));
-}
-
-export function singleRoundEvent(text:string) {
-  const mentions=roundEventMentions(text);
-  if (mentions.length!==1) return;
-  const {label,event}=mentions[0];
-  return event ? {label,event} : undefined;
-}
+const scopedEvent = (scope:AttendanceScope) => scope.event && eventForLabel(scope.event.text);
 
 /** A single current official PB. Comparisons, ranks and date filters need separate scopes. */
 export function personalBestRequest(question:string) {
@@ -84,7 +53,7 @@ export function assistantAttendanceScope(question: string, history: AssistantMes
     else {
       const matches = [...text.matchAll(eventPattern)];
       const events = matches.map(match=>match[0]);
-      const ids = new Set(events.map(event=>eventAliases.get(normalizeEvent(event))));
+      const ids = new Set(events.map(eventAliasId));
       const qualified = matches.map(match=>{
         const before=text.slice(0,match.index).match(/(?:不(?:算|含|包括|统计|计入|看|要|是)|排除|除(?:了|去)?|非|\b(?:except(?: for)?|exclud(?:e|ing)|without|not))\s*$/i)?.[0] ?? '';
         const after=text.slice(match.index+match[0].length).match(/^\s*(?:除外|以外|之外|不算|不计)/)?.[0] ?? '';
@@ -125,9 +94,6 @@ function analysisMatchesScope(scope: AttendanceScope, input: unknown, viewerWcaI
   // Unresolved natural-language ranges remain subject to the ordinary query review.
   if (!viewerWcaId || scope.event && !eventId || scope.date && (!scope.date.from || !scope.date.to)) return;
   const conjuncts = (expr?: AnalysisExpr): AnalysisExpr[] => expr && 'op' in expr && expr.op === 'and' ? expr.args.flatMap(conjuncts) : expr ? [expr] : [];
-  const equals = (expr: AnalysisExpr, column: string, value: string | number) => 'op' in expr && expr.op === '=' && expr.args.length === 2
-    && ((('col' in expr.args[0] && expr.args[0].col === column) && 'value' in expr.args[1] && expr.args[1].value === value)
-      || (('col' in expr.args[1] && expr.args[1].col === column) && 'value' in expr.args[0] && expr.args[0].value === value));
   const joined = (expr: AnalysisExpr, a: string, b: string) => 'op' in expr && expr.op === '=' && expr.args.length === 2
     && expr.args.every(part => 'col' in part) && expr.args.some(part => 'col' in part && part.col === a) && expr.args.some(part => 'col' in part && part.col === b);
   const references = (expr: AnalysisExpr, columns: Set<string>): boolean => 'col' in expr ? columns.has(expr.col)
@@ -141,8 +107,8 @@ function analysisMatchesScope(scope: AttendanceScope, input: unknown, viewerWcaI
     for (const relation of [query.from, ...query.joins].filter(item => ['results', 'attempts'].includes(item.dataset))) {
       rawSources++;
       const prefix = relation.as + '.';
-      if (!predicates.some(p => equals(p, prefix + 'wca_id', viewerWcaId))) return false;
-      if (eventId && !predicates.some(p => equals(p, prefix + 'event_id', eventId))) return false;
+      if (!exactSelection(predicates,prefix+'wca_id',[viewerWcaId])) return false;
+      if (eventId && !exactSelection(predicates,prefix+'event_id',[eventId])) return false;
       const dateColumns = [prefix + 'comp_date'];
       // A joined competition's start date is the same attendance date basis.
       for (const comp of [query.from, ...query.joins].filter(item => item.dataset === 'competitions')) {
@@ -168,19 +134,7 @@ function analysisMatchesScope(scope: AttendanceScope, input: unknown, viewerWcaI
 
 function datePredicatesCover(predicates: AnalysisExpr[], column: string, from: string, to: string): boolean {
   const following = new Date(new Date(to + 'T00:00:00Z').getTime() + 86400000).toISOString().slice(0,10);
-  let lower = false, upper = false;
-  for (const predicate of predicates) {
-    if (!('op' in predicate) || predicate.args.length !== 2) continue;
-    let [left, right] = predicate.args, op = predicate.op;
-    if ('value' in left) { [left, right] = [right, left]; op = ({'>=':'<=','<=':'>=','>':'<','<':'>'} as Record<string,string>)[op] ?? op; }
-    if (!('value' in right)) continue;
-    if ('fn' in left && left.fn === 'year' && left.args.length === 1 && 'col' in left.args[0] && left.args[0].col === column
-      && op === '=' && String(right.value) === from.slice(0,4) && from.endsWith('-01-01') && to === from.slice(0,4) + '-12-31') return true;
-    if (!('col' in left) || left.col !== column || typeof right.value !== 'string') continue;
-    if (op === '>=' && right.value === from) lower = true;
-    if (op === '<=' && right.value === to || op === '<' && right.value === following) upper = true;
-  }
-  return lower && upper;
+  return dateRangeProven(predicates,column,from,following);
 }
 
 export function attendanceScopeError(scope: AttendanceScope | undefined, call: AttendanceCall, viewerWcaId?: string): string | undefined {

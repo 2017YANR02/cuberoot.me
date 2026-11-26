@@ -14,7 +14,7 @@ export type CompiledAnalysis = ReturnType<typeof compileAnalysis>;
 export interface AnalysisRows { rows:Record<string,unknown>[]; importedAt:string|null }
 
 /** Fresh, independent connection; never queues behind or changes the business pool. */
-export async function executeAnalysis<Query extends Pick<CompiledAnalysis,'sql'|'params'|'datasets'>>(query:Query,signal:AbortSignal):Promise<AnalysisRows> {
+export async function executeAnalysis<Query extends Pick<CompiledAnalysis,'sql'|'params'|'datasets'>>(query:Query,signal:AbortSignal,goal?:AnalysisGoal):Promise<AnalysisRows> {
   signal.throwIfAborted();
   if(active>=2)throw new AnalysisInputError('Analysis is busy. Do not retry in this answer; ask the visitor to try later.');
   active++;
@@ -28,7 +28,7 @@ export async function executeAnalysis<Query extends Pick<CompiledAnalysis,'sql'|
   const timer=setTimeout(close,6500);
   signal.addEventListener('abort',close,{once:true});
   try {
-    return await db.begin('read only',async tx=>{
+    return await db.begin('isolation level repeatable read read only',async tx=>{
       const run=async(statement:string,params:unknown[]=[])=>{
         signal.throwIfAborted();
         const task=tx.unsafe(statement,params as never[]);pending=task;
@@ -36,7 +36,21 @@ export async function executeAnalysis<Query extends Pick<CompiledAnalysis,'sql'|
       };
       signal.throwIfAborted();
       await run('SET LOCAL ROLE cuberoot_assistant_reader');
-      const [freshness]=await run('SELECT imported_at FROM assistant_public.freshness');
+      // Read freshness and required public projections in the same snapshot as the answer.
+      // An empty/missing import component cannot establish a zero for a visitor's filters.
+      const required=['competitions','results','persons','countries'].filter(dataset=>query.datasets.some(name=>name===dataset || (name==='attempts' && dataset==='results')));
+      const checks=required.map(dataset=>'EXISTS (SELECT 1 FROM assistant_public.'+dataset+')');
+      const coverageParams:string[]=[];
+      const needsHostMap=goal?.location?.basis==='host' && 'continentIds' in goal.location || goal?.metric==='countries' && !goal.location;
+      if (needsHostMap && required.includes('competitions') && required.includes('countries')) {
+        if (goal?.time?.basis==='competition_start')coverageParams.push(goal.time.from,goal.time.before);
+        checks.push(`NOT EXISTS (SELECT 1 FROM assistant_public.competitions c
+          LEFT JOIN assistant_public.countries h ON h.id=c.country_id
+          WHERE (h.id IS NULL OR NULLIF(h.continent_id,'') IS NULL)`+
+          (coverageParams.length?' AND c.start_date >= $1 AND c.start_date < $2':'')+')');
+      }
+      const [freshness]=await run('SELECT imported_at, '+(checks.join(' AND ') || 'TRUE')+' AS complete FROM assistant_public.freshness',coverageParams);
+      if (required.length && freshness?.complete===false)throw new AnalysisInputError('A required WCA projection or host country mapping is incomplete; no count is verified.');
       const importedAt=freshness?.imported_at instanceof Date?freshness.imported_at.toISOString():freshness?.imported_at?String(freshness.imported_at):null;
       if(query.datasets.some(name=>['results','attempts','competitions','persons','countries'].includes(name)) && !importedAt)throw new AnalysisInputError('The WCA import timestamp is missing; coverage is unavailable, not zero.');
       const plans=await run('EXPLAIN (FORMAT JSON) '+query.sql,query.params);
@@ -54,15 +68,19 @@ export async function executeAnalysis<Query extends Pick<CompiledAnalysis,'sql'|
   }
 }
 
-export async function runAnalysisQuery(call:{title:string;description:string;query:unknown;goal?:AnalysisGoal},lang:'en'|'zh',signal:AbortSignal,knownPeople:Set<string>,execute=executeAnalysis,context?:{question:string;viewerWcaId?:string}):Promise<ToolResult> {
+export async function runAnalysisQuery(call:{title:string;description:string;query:unknown;goal?:AnalysisGoal},lang:'en'|'zh',signal:AbortSignal,knownPeople:Set<string>,execute=executeAnalysis,context?:{question:string;normalizedQuestion?:string;viewerWcaId?:string}):Promise<ToolResult> {
   try {
-    const compiled=compileAnalysis(call.query);
+    let compiled:CompiledAnalysis;
+    try {compiled=compileAnalysis(call.query);} catch (error) {
+      if (!(error instanceof AnalysisInputError))throw error;
+      return {sources:[],artifacts:[],evidence:{notEvidence:true,error:error.message,validation:{status:'rejected',issues:[error.message]}}};
+    }
     if(context && !call.goal)throw new AnalysisInputError('Provide a compact goal matching the original question before executing analysis_query.');
     const goal=call.goal?analysisGoalSchema.parse(call.goal):undefined;
     const validation=goal?checkAnalysisGoal(compiled,goal,context):undefined;
     if(validation?.status==='rejected')return {sources:[],artifacts:[],evidence:{notEvidence:true,error:'The plan does not implement the requested goal. Correct the actual query; changing titles cannot repair it.',goal,actualQuery:compiled.plan,validation}};
     for(const value of compiled.params)if(typeof value==='string' && /^\d{4}[A-Z]{4}\d{2}$/.test(value) && !knownPeople.has(value))throw new AnalysisInputError('Unresolved WCA ID. Use find_person first; never invent a person ID.');
-    const result=await execute(compiled,signal);
+    const result=await execute(compiled,signal,goal);
     let truncated=result.rows.length>compiled.limit,characters=0;
     const rows:string[][]=[];
     for(const row of result.rows.slice(0,compiled.limit)) {

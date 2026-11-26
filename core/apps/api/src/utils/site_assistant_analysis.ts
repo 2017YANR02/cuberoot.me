@@ -1,10 +1,14 @@
+import { resolveAssistantTime } from '@cuberoot/shared/site-assistant';
+import { comparison, dateRangeProven, exactSelection } from './site_assistant_predicate.js';
+import { singleRoundEvent } from './site_assistant_event_scope.js';
 import { z } from 'zod';
+import { publicCountRequest, continentIds, matchesHostCountry, requestedAnalysisPeriod, requestedHostContinent } from './site_assistant_competition_scope.js';
 
 /** Public projections only. Adding a dataset requires a reviewed DB view + ACL. */
 export const ANALYSIS_DATASETS = {
   results: { columns: ['wca_id','comp_id','comp_date','event_id','round_type_id','format_id','pos','best','average','single_record','average_record'], href:'/wca/results', note:'One official ROUND result, NOT one solve attempt. best is the best attempt of that round; individual attempts and their DNF rate require the attempts dataset. Count DISTINCT comp_id for participation. comp_date is competition START date, not solve date. best/average: >0 valid, -1 DNF, -2 DNS, 0 absent. Times in centiseconds; FMC single in moves, FMC average in moves*100; multi-blind is encoded, do not average/divide it as seconds. Finals are round_type_id f or c. Records are historical flags, not currently held records. No historical competitor nationality here.' },
   attempts: { columns: ['wca_id','comp_id','comp_date','event_id','round_type_id','attempt_number','value'], href:'/wca/results', note:'One attempt from the results array, numbered from 1. value is the actual measured result, NOT a status flag: 1 means exactly one centisecond/move, NOT all successful solves. 0 is an absent slot; -1 DNF; -2 DNS. Successful solves require value > 0. Attempted solves require (value > 0 OR value = -1), never value IN (1,-1). DNF rate = count(value=-1) / count(value>0 OR value=-1). State the chosen denominator; compute numerator, denominator and rate in the query. Same units as results.best.' },
-  competitions: { columns: ['id','name','country_id','country_iso2','city','start_date','end_date'], href:'/wca/comp', note:'Competition HOST location. Join results.comp_id = competitions.id. Imported competitions, not live future registrations. Count DISTINCT competition id after joining results.' },
+  competitions: { columns: ['id','name','country_id','country_iso2','city','start_date','end_date'], href:'/wca/comp', note:'Competition HOST location. Join results.comp_id = competitions.id. Imported competition listings; cancellation status is unavailable. A listed start date does not prove that a competition took place. Published round results can establish competitions with recorded results, not all registrations. Count DISTINCT competition id after joining results.' },
   persons: { columns: ['wca_id','name','country_id'], href:'/wca/persons', note:'One row per WCA ID. Name may include a parenthesized local name. country_id is CURRENT nationality; never use it for nationality at a historical result. Resolve named people with find_person first.' },
   countries: { columns: ['id','iso2','name','continent_id'], href:'/wca/results', note:'Join persons.country_id or competitions.country_id = countries.id; distinguish nationality and host location.' },
   recons: { columns: ['id','person','person_id','event','method','date','comp','comp_wca_id','official','raw_time','stm','tps','oll','pll','completion_status','record_type'], href:'/recon', note:'Public reconstructions only. official is wca/non_wca/practice, event is usually 3x3 (not WCA 333), raw_time is seconds. Missing metrics are NULL, not zero. A recorded reconstruction is not necessarily a verified solve; preserve completion_status.' },
@@ -51,7 +55,10 @@ export const analysisGoalSchema=z.object({
   subject:z.enum(['all','resolved_people','viewer']),personIds:z.array(z.string().regex(/^\d{4}[A-Z]{4}\d{2}$/)).max(5).default([]),
   event:z.string().regex(/^[a-z0-9]{2,10}$/).optional(),grain:z.enum(['total','month','year','other']),
   time:z.object({basis:z.enum(['competition_start','reconstruction_date']),from:z.iso.date(),before:z.iso.date()}).strict().optional(),
-  location:z.object({basis:z.enum(['host','nationality']),countryIds:z.array(z.string().min(1).max(50)).min(1).max(5)}).strict().optional(),
+  location:z.union([
+    z.object({basis:z.enum(['host','nationality']),countryIds:z.array(z.string().min(1).max(50).refine(id=>!continentIds.includes(id),'Use continentIds for a WCA continent')).min(1).max(5)}).strict(),
+    z.object({basis:z.enum(['host','nationality']),continentIds:z.array(z.string().refine(id=>continentIds.includes(id),'Unknown WCA continent ID')).min(1).max(6)}).strict(),
+  ]).optional(),
   outputs:z.array(z.string().min(1).max(80)).min(1).max(8),
 }).strict();
 export type AnalysisGoal=z.infer<typeof analysisGoalSchema>;
@@ -132,6 +139,14 @@ export function compileAnalysis(input:unknown) {
   const used=new Set<AnalysisDataset>();
   const available=new Map<string,readonly string[]>(Object.entries(ANALYSIS_DATASETS).map(([name,data])=>[name,data.columns]));
   // Preserve direct-column provenance through CTEs for display-only name formatting.
+  const keyDomains=new Map<string,string>();
+  for (const [domain,columns] of Object.entries({
+    competition:['competitions.id','results.comp_id','attempts.comp_id','recons.comp_wca_id'],
+    competitor:['persons.wca_id','results.wca_id','attempts.wca_id'],
+    country:['countries.id','competitions.country_id','persons.country_id'],
+    iso2:['countries.iso2','competitions.country_iso2'],continent:['countries.continent_id'],
+    event:['results.event_id','attempts.event_id'],
+  })) for (const column of columns) keyDomains.set(column,domain);
   const personNames=new Set(['persons.name','recons.person']);
   const arg=(value:string|number|boolean|null)=>{
     const key=JSON.stringify(value);
@@ -157,6 +172,8 @@ export function compileAnalysis(input:unknown) {
         if(!('op' in e))return false;
         if(e.op==='and')return e.args.length>0 && e.args.every(joinKey);
         if(e.op!=='=' || e.args.length!==2 || !('col' in e.args[0]) || !('col' in e.args[1]))return false;
+        const left=keyDomains.get(columnOrigin(query,e.args[0])), right=keyDomains.get(columnOrigin(query,e.args[1]));
+        if (left && right && left!==right) reject('Incompatible join keys: '+e.args[0].col+' ('+left+') and '+e.args[1].col+' ('+right+').');
         const a=e.args[0].col.split('.')[0],b=e.args[1].col.split('.')[0];
         return a===join.as && previous.has(b) || b===join.as && previous.has(a);
       }
@@ -203,17 +220,22 @@ export function compileAnalysis(input:unknown) {
     return `SELECT ${query.distinct?'DISTINCT ':''}${query.select.map(c=>`${expr(c.expr)} AS ${quote(c.as)}`).join(',')} FROM ${base} ${joins.join(' ')}${query.where?' WHERE '+expr(query.where):''}${query.groupBy.length?' GROUP BY '+query.groupBy.map(expr).join(','):''}${query.having?' HAVING '+expr(query.having):''}${query.orderBy.length?' ORDER BY '+query.orderBy.map(o=>`${expr(o.expr)} ${o.direction.toUpperCase()} NULLS LAST`).join(','):''}`;
   }
   const steps:string[]=[];
-  function isPersonName(query:z.infer<typeof selectSchema>,e:AnalysisExpr):boolean {
-    if(!('col' in e))return false;
+  function columnOrigin(query:z.infer<typeof selectSchema>,e:AnalysisExpr):string {
+    if(!('col' in e))return '';
     const [alias,column]=e.col.split('.');
     const dataset=[query.from,...query.joins].find(r=>r.as===alias)?.dataset;
-    return !!dataset && personNames.has(dataset+'.'+column);
+    return dataset ? dataset+'.'+column : '';
   }
   for(const step of plan.steps){
     if(available.has(step.name))reject('Step name shadows an existing dataset: '+step.name);
     steps.push(`${quote(step.name)} AS (${select(step.query)})`);
     available.set(step.name,step.query.select.map(c=>c.as));
-    for(const c of step.query.select)if(isPersonName(step.query,c.expr))personNames.add(step.name+'.'+c.as);
+    for(const column of step.query.select) {
+      const origin=columnOrigin(step.query,column.expr), projected=step.name+'.'+column.as;
+      if(personNames.has(origin))personNames.add(projected);
+      const domain=keyDomains.get(origin);
+      if(domain)keyDomains.set(projected,domain);
+    }
   }
   const body=select(plan);
   // No limit inside any aggregate input. Fetch one extra final row to detect truncation.
@@ -225,11 +247,37 @@ export function compileAnalysis(input:unknown) {
     return `left(CASE WHEN pg_typeof(${column}) = 'numeric'::regtype THEN trim_scale((${column})::text::numeric)::text ELSE (${column})::text END,501) AS ${column}`;
   }).join(',')} FROM (${sql}) AS analysis_output`;
   const measures=countMeasures(plan);
-  return {sql:output,params,datasets:[...used],plan,columns:plan.select.map(c=>({key:c.as,label:c.label,personName:isPersonName(plan,c.expr),...(measures.has(c.as)?{countMeasure:measures.get(c.as)!}:{})})),limit:plan.limit};
+  return {sql:output,params,datasets:[...used],plan,columns:plan.select.map(c=>({key:c.as,label:c.label,personName:personNames.has(columnOrigin(plan,c.expr)),...(measures.has(c.as)?{countMeasure:measures.get(c.as)!}:{})})),limit:plan.limit};
 }
 
 /** Conservative, executable checks. Unknown expression semantics remain for isolated review. */
-export function checkAnalysisGoal(compiled:ReturnType<typeof compileAnalysis>,goal:AnalysisGoal,context:{question?:string;viewerWcaId?:string}={}) {
+// Prove the filter and the join on the same countries alias. Column names
+// alone cannot distinguish the host country from a second, nationality join.
+function continentScopeProven(plan:AnalysisQuery, basis:'host'|'nationality', ids:string[]) {
+  const provenSteps = new Set<string>();
+  const conjuncts = (e:AnalysisExpr):AnalysisExpr[] => 'op' in e && e.op==='and' ? e.args.flatMap(conjuncts) : [e];
+  function proven(q:z.infer<typeof selectSchema>) {
+    if (provenSteps.has(q.from.dataset) && !q.joins.length) return true;
+    const relations = [q.from,...q.joins];
+    const anchors = relations.filter(r=>r.dataset===(basis==='host'?'competitions':'persons'));
+    if (anchors.length!==1 || !q.where) return false;
+    const anchor = anchors[0].as;
+    const filters = conjuncts(q.where);
+    return relations.filter(r=>r.dataset==='countries').some(country=>{
+      const keys = [[anchor+'.country_id',country.as+'.id']];
+      if (basis==='host')keys.push([anchor+'.country_iso2',country.as+'.iso2']);
+      // WHERE on the right-hand country makes its left join null-rejecting.
+      const joins = q.joins.filter(j=>j.type==='inner' || j.as===country.as).flatMap(j=>conjuncts(j.on));
+      const joined = joins.some(e=>'op' in e && e.op==='=' && e.args.every(a=>'col' in a) &&
+        keys.some(([left,right])=>e.args.some(a=>'col' in a && a.col===left) && e.args.some(a=>'col' in a && a.col===right)));
+      return joined && exactSelection(filters,country.as+'.continent_id',ids);
+    });
+  }
+  for (const step of plan.steps) if (proven(step.query)) provenSteps.add(step.name);
+  return proven(plan);
+}
+
+export function checkAnalysisGoal(compiled:ReturnType<typeof compileAnalysis>,goal:AnalysisGoal,context:{question?:string;normalizedQuestion?:string;viewerWcaId?:string}={}) {
   const issues:string[]=[],notes:string[]=[];
   type Lineage={columns:Map<string,AnalysisExpr>;predicates:AnalysisExpr[];groups:AnalysisExpr[]};
   const relations=new Map<string,Lineage>(Object.entries(ANALYSIS_DATASETS).map(([name,d])=>[name,{columns:new Map(d.columns.map(c=>[c,{col:`${name}.${c}`} as AnalysisExpr])),predicates:[],groups:[]}]));
@@ -252,38 +300,65 @@ export function checkAnalysisGoal(compiled:ReturnType<typeof compileAnalysis>,go
     return {columns:new Map(q.select.map((c,i)=>[c.as,finalSelect[i]])),predicates,groups:finalGroups};
   }
   for(const step of compiled.plan.steps)relations.set(step.name,visit(step.query));visit(compiled.plan);
-  const same=(a:unknown,b:unknown)=>JSON.stringify(a)===JSON.stringify(b);
-  const has=(column:string,op:string,value:unknown)=>predicates.some(p=>'op'in p && ((p.op===op && same(p.args[0],{col:column}) && same(p.args[1],{value})) || (op==='=' && p.op==='in' && same(p.args[0],{col:column}) && p.args.length===2 && same(p.args[1],{value}))));
+
   const question=context.question ?? '';
   const ids=goal.subject==='viewer' && context.viewerWcaId?[context.viewerWcaId]:goal.personIds;
   if(goal.subject==='viewer' && goal.personIds.length && !goal.personIds.every(id=>id===context.viewerWcaId))issues.push('Goal person IDs do not match the authenticated viewer.');
   if(goal.subject!=='all' && !ids.length)issues.push('The subject requires a resolved person ID.');
-  const exactIds=(column:string)=>ids.length===1?has(column,'=',ids[0]):predicates.some(p=>'op'in p && p.op==='in' && same(p.args[0],{col:column}) && same(p.args.slice(1).map(a=>'value'in a?a.value:null).sort(),[...ids].sort()));
+  const exactIds=(column:string)=>exactSelection(predicates,column,ids);
   if(ids.length && !['results.wca_id','attempts.wca_id','persons.wca_id'].some(exactIds))issues.push('Missing exact subject filter: '+ids.join(','));
   if(/(?:我的|我在|当前认证选手|\bmy\b)/i.test(question) && (goal.subject!=='viewer' || !context.viewerWcaId))issues.push('The original question requires the authenticated viewer.');
-  if(goal.event && !['results.event_id','attempts.event_id','recons.event'].some(c=>has(c,'=',goal.event)))issues.push('Missing event filter: '+goal.event);
-  if(/(?:三阶|3x3)/i.test(question) && goal.event!=='333' && goal.event!=='3x3')issues.push('The original question requires 3x3.');
+  const event=goal.event;
+  if(event && !['results.event_id','attempts.event_id','recons.event'].some(c=>exactSelection(predicates,c,[event])))issues.push('Missing event filter: '+goal.event);
+  // An example, comparison or exclusion is not an equality constraint.
+  if (!/(?:例如|举例|比如|排除|除外|之外|除了|不含|不限|不包括|所有项目|哪些项目|其他项目|各项目|对比|相比|比较|分别|\b(?:except|excluding|without|including|example|compare|versus|which events|other events|all events)\b)/i.test(question)) {
+    const mention=singleRoundEvent(question);
+    const named=mention && (!/^\d+$/.test(mention.label) || /(?:项目|event)\s*[:：]?\s*\d{3}\b/i.test(question)) ? mention.event : undefined;
+    if (named==='333' && compiled.datasets.includes('recons') && !compiled.datasets.includes('results') && !compiled.datasets.includes('attempts') && event!=='3x3' && event!=='333')issues.push('Preserve the requested 3x3 reconstruction event.');
+    if (named && compiled.datasets.some(d=>d==='results' || d==='attempts') && goal.event!==named) issues.push('Preserve the requested WCA event: '+named);
+  }
   if(goal.time){
     const t=goal.time,col=t.basis==='competition_start'?['results.comp_date','attempts.comp_date','competitions.start_date']:['recons.date'];
     if(t.from>=t.before)issues.push('Time interval must be nonempty.');
-    if(!col.some(c=>has(c,'>=',t.from) && has(c,'<',t.before)))issues.push('Missing exact start-inclusive/end-exclusive date filters on the same time basis: '+t.basis);
+    if(!col.some(c=>dateRangeProven(predicates,c,t.from,t.before)))issues.push('Missing exact start-inclusive/end-exclusive date filters on the same time basis: '+t.basis);
   }
-  const years=[...question.matchAll(/(?:^|\D)((?:19|20)\d{2})\s*年/g)].map(m=>Number(m[1]));
-  if(years.length===1 && (!goal.time || goal.time.from!==`${years[0]}-01-01` || goal.time.before!==`${years[0]+1}-01-01`))issues.push('Goal does not preserve the requested year.');
+  const normalized=context.normalizedQuestion ?? resolveAssistantTime(question,new Date()).normalizedQuestion;
+  const expected=publicCountRequest(normalized);
+  const interval=expected ?? requestedAnalysisPeriod(question,normalized);
+  if(interval && (!goal.time || goal.time.from!==interval.from || goal.time.before!==interval.before))
+    issues.push('Preserve the requested calendar interval: '+interval.from+' to '+interval.before+' (exclusive).');
+  if(/(?:每年|按年(?!龄|纪)(?:度|份)?|逐年|\b(?:yearly|annually|by year)\b)/i.test(question) && goal.grain!=='year')issues.push('Goal must preserve yearly grouping.');
   if(/(?:每月|按月|\bmonthly\b)/i.test(question) && goal.grain!=='month')issues.push('Goal must preserve monthly grouping.');
-  if(goal.grain==='month' && !finalGroups.some(e=>'fn'in e && e.fn==='month'))issues.push('Monthly grouping is missing from the actual final plan.');
-  if(goal.grain==='year' && !finalGroups.some(e=>'fn'in e && e.fn==='year'))issues.push('Year grouping is missing from the actual final plan.');
+  if(goal.grain==='month' || goal.grain==='year') {
+    const dates=goal.time?.basis==='competition_start' ? ['results.comp_date','attempts.comp_date','competitions.start_date'] : goal.time ? ['recons.date'] : undefined;
+    const grouped=(unit:string)=>finalGroups.some(e=>'fn' in e && e.fn===unit && e.args.length===1 && 'col' in e.args[0] && (!dates || dates.includes(e.args[0].col)));
+    if (!grouped(goal.grain)) issues.push('Group the final rows by the requested '+goal.grain+' on the requested date basis.');
+    if (goal.grain==='month' && goal.time && goal.time.before>(Number(goal.time.from.slice(0,4))+1)+'-01-01'
+      && !grouped('year') && !/季节|历年同月|seasonal|across years/i.test(question)) issues.push('Monthly totals across years must keep year and month together.');
+  }
   if(goal.grain==='total' && finalGroups.length)issues.push('A total-only goal cannot return an unrequested grouping.');
   const metric=goal.metric;
   const measures=compiled.columns.flatMap(c=>c.countMeasure?[c.countMeasure]:[]);
   if(['competitions','cities','countries','persons','results','attempts'].includes(metric) && measures.length && !measures.includes(metric as CountMeasure))issues.push('Actual count unit '+measures.join(',')+' does not match goal '+metric+'.');
   if(/(?:城市数|多少.{0,3}城市)/.test(question) && metric!=='cities')issues.push('The original question asks for distinct cities.');
   if(/(?:比赛数量|比赛场数|多少场|不同比赛)/.test(question) && metric!=='competitions')issues.push('The original question asks for distinct competitions, not rounds.');
-  if(goal.location){
-    const cols=goal.location.basis==='host'?['competitions.country_id','competitions.country_iso2']:['persons.country_id'];
-    const exactCountries=(column:string)=>goal.location!.countryIds.length===1?has(column,'=',goal.location!.countryIds[0]):predicates.some(p=>'op'in p && p.op==='in' && same(p.args[0],{col:column}) && same(p.args.slice(1).map(a=>'value'in a?a.value:null).sort(),[...goal.location!.countryIds].sort()));
-    if(!cols.some(exactCountries))issues.push('Location filters do not establish '+goal.location.basis+' scope.');
-    if(/(?:举办|举办地|\bhost)/i.test(question) && goal.location.basis!=='host')issues.push('The question concerns host location, not nationality.');
+  const location = goal.location;
+  const requestedContinent = expected?.region.kind==='continent' ? expected.region.id : requestedHostContinent(question);
+  if(requestedContinent && (location?.basis!=='host' || !('continentIds' in location) || location.continentIds.length!==1 || location.continentIds[0]!==requestedContinent))
+    issues.push('Preserve the requested host continent in goal.location.continentIds: '+requestedContinent);
+  if(expected && (goal.grain!=='total' || goal.metric!==expected.metric || goal.subject!=='all' || goal.time?.basis!=='competition_start' || goal.time.from!==expected.from || goal.time.before!==expected.before))
+    issues.push('Preserve the requested public measure, total and competition start interval.');
+  if(expected?.region.kind==='world' && location) issues.push('A worldwide count must not restrict the host region.');
+  if(expected?.region.kind==='country' && (location?.basis!=='host' || !('countryIds' in location) || location.countryIds.length!==1 || !matchesHostCountry(location.countryIds[0],expected.region.id)))
+    issues.push('Preserve the requested host country: '+expected.region.id);
+  if(location && 'continentIds' in location) {
+    if (!continentScopeProven(compiled.plan, location.basis, location.continentIds)) issues.push('Join the requested host or nationality country to countries.id and filter that same alias by the exact continent IDs.');
+  }
+  if(location && 'countryIds' in location){
+    const cols=location.basis==='host'?['competitions.country_id','competitions.country_iso2']:['persons.country_id'];
+    const exactCountries=(column:string)=>exactSelection(predicates,column,location.countryIds);
+    if(!cols.some(exactCountries))issues.push('Location filters do not establish '+location.basis+' scope.');
+    if(/(?:举办|举办地|\bhost)/i.test(question) && location.basis!=='host')issues.push('The question concerns host location, not nationality.');
   }
   const walk=(e:AnalysisExpr):AnalysisExpr[]=>[e,...('op'in e?e.args.flatMap(walk):'fn'in e?[...e.args.flatMap(walk),...(e.filter?walk(e.filter):[])]: 'case'in e?[...e.case.flatMap(c=>[...walk(c.when),...walk(c.then)]),...walk(e.else)]:[])];
   const expressions=finalSelect.flatMap(walk);
@@ -294,8 +369,8 @@ export function checkAnalysisGoal(compiled:ReturnType<typeof compileAnalysis>,go
     // Other columns, DISTINCT and windows still require a separate proof.
     const count=(e:AnalysisExpr):e is Extract<AnalysisExpr,{fn:string}>=>'fn'in e && e.fn==='count'
       && (!e.args.length || (e.args.length===1 && 'col'in e.args[0] && ['attempts.value','attempts.attempt_number'].includes(e.args[0].col))) && !e.distinct && !e.over;
-    const denominator=(e:AnalysisExpr)=>count(e) && e.filter && 'op'in e.filter && e.filter.op==='or' && e.filter.args.length===2 && e.filter.args.some(a=>'op'in a && a.op==='>' && same(a.args,[{col:'attempts.value'},{value:0}])) && e.filter.args.some(a=>'op'in a && a.op==='=' && same(a.args,[{col:'attempts.value'},{value:-1}]));
-    const numerator=(e:AnalysisExpr)=>count(e) && e.filter && 'op'in e.filter && e.filter.op==='=' && same(e.filter.args,[{col:'attempts.value'},{value:-1}]);
+    const denominator=(e:AnalysisExpr)=>count(e) && e.filter && 'op'in e.filter && e.filter.op==='or' && e.filter.args.length===2 && e.filter.args.some(a=>comparison(a,'attempts.value','>',0)) && e.filter.args.some(a=>comparison(a,'attempts.value','=',-1));
+    const numerator=(e:AnalysisExpr)=>count(e) && e.filter && comparison(e.filter,'attempts.value','=',-1);
     if(!expressions.some(e=>'op'in e && e.op==='/' && e.args.length===2 && numerator(e.args[0]) && denominator(e.args[1])))issues.push('DNF rate must divide the actual count(value=-1) by count(value>0 OR value=-1).');
     if(!finalSelect.some(numerator) || !finalSelect.some(denominator))issues.push('Return the DNF numerator and denominator as separate columns.');
   }
@@ -303,7 +378,7 @@ export function checkAnalysisGoal(compiled:ReturnType<typeof compileAnalysis>,go
   return {status:issues.length?'rejected' as const:'program_checks_passed' as const,issues,notes,semanticReviewRequired:true};
 }
 
-export const ANALYSIS_PLAN_GUIDE = `Use analysis_query {title,description,goal,query} to compute from public raw rows when existing tools do not answer the question. goal is REQUIRED for this complex tool: {metric:"competitions|cities|countries|persons|results|attempts|dnf_rate|other",subject:"all|resolved_people|viewer",personIds:[resolved WCA IDs],event?:"333",grain:"total|month|year|other",time?:{basis:"competition_start|reconstruction_date",from:"YYYY-MM-DD",before:"YYYY-MM-DD"},location?:{basis:"host|nationality",countryIds:[exact IDs]},outputs:[requested output measures]}. Preserve the ORIGINAL question. Use half-open date intervals, including both year bounds. A goal is a hypothesis checked against the plan, never evidence. Do not give up because no precomputed statistic exists. First call analysis_schema {datasets:[]} (all) or a selected list. Only returned datasets/columns exist.
+export const ANALYSIS_PLAN_GUIDE = `Use analysis_query {title,description,goal,query} to compute from public raw rows when existing tools do not answer the question. goal is REQUIRED for this complex tool: {metric:"competitions|cities|countries|persons|results|attempts|dnf_rate|other",subject:"all|resolved_people|viewer",personIds:[resolved WCA IDs],event?:"333",grain:"total|month|year|other",time?:{basis:"competition_start|reconstruction_date",from:"YYYY-MM-DD",before:"YYYY-MM-DD"},location?:{basis:"host|nationality",countryIds:[exact IDs] OR continentIds:[exact WCA continent IDs such as "_Asia"]},outputs:[requested output measures]}. For continent filters join the host competition or the person country_id to countries.id and filter that same alias on continent_id. Preserve the ORIGINAL question. Use half-open date intervals, including both year bounds. A goal is a hypothesis checked against the plan, never evidence. Do not give up because no precomputed statistic exists. First call analysis_schema {datasets:[]} (all) or a selected list. Only returned datasets/columns exist.
 Plan the smallest final table that answers the request. Final select contains only requested dimensions/measures and identifiers needed to understand the rows. A total-only question needs one aggregate column and one row, not earliest/latest dates or example records. Filters, joins, grouping and intermediate steps may use additional columns without displaying them. Do not add other metrics, ranks, date columns or breakdowns merely because the schema makes them available. Table titles and final display headings use the visitor's language and clear units; do not add a second code/ID column alongside a name unless needed to distinguish rows or explicitly requested.
 For person/result listings (including winners), join persons on wca_id and select persons.name; a WCA ID alone does not answer who. Join competitions on results.comp_id = competitions.id and select competitions.name when listing competitions; do not substitute internal competition IDs for names. Champions require final rounds f/c and pos=1, not the fastest single across rounds. Preserve the requested event scope; if defaulting an unspecified event to 333, state that assumption briefly. For weekend questions use the weekend dates in timeContext, not the whole week; use competitions.start_date/end_date overlap for competitions held during that weekend. Document that competition dates do not establish the exact final/solve date in description; include a brief user-facing qualification when needed to avoid implying otherwise.
 query: {from:{dataset,as},select:[{as:"output_name",label:"display heading",expr}],where?:expr,joins?:[{dataset,as,type:"inner"|"left",on:expr}],groupBy?:[expr],having?:expr,orderBy?:[{expr,direction:"asc"|"desc"}],distinct?:boolean,limit?:1..100,steps?:[{name,query:the same select structure WITHOUT steps/limit}]}. Up to 3 steps are untruncated CTEs; later steps/final query may read earlier steps as datasets. Filters and grouping always happen before the final output limit. Join on equal columns from new and existing aliases; no cross joins. orderBy must repeat expressions or use an earlier step's columns, not current output aliases.
