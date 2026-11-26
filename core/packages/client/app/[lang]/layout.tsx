@@ -1,7 +1,7 @@
 import { Suspense } from 'react';
 import { notFound } from 'next/navigation';
 import I18nProvider from '@/i18n/I18nProvider';
-import PageNoticeBar from '@/components/PageNoticeBar';
+import { SubpageNoticeBar } from '@/components/PageNoticeBar';
 import SiteChrome from '@/components/SiteChrome';
 import WeChatShareSync from '@/components/WeChatShareSync';
 import PageTransition from '@/components/PageTransition';
@@ -31,7 +31,7 @@ export default async function LangLayout({
   return (
     <I18nProvider initialLang={lang as Locale}>
       <Suspense fallback={<ClientLoadStatus />}>
-        <SiteChrome><PageNoticeBar /></SiteChrome>
+        <SiteChrome><SubpageNoticeBar /></SiteChrome>
         <PageTransition><PlatformSharedSurface>{children}</PlatformSharedSurface></PageTransition>
       </Suspense>
       <WeChatShareSync />

@@ -152,6 +152,11 @@ function formForNotice(n: PageNotice): FormState {
   };
 }
 
+export function SubpageNoticeBar() {
+  const pathname = usePathname();
+  return pageKeyFromPathname(pathname || '/') === '/' ? null : <PageNoticeBar />;
+}
+
 export default function PageNoticeBar() {
   const pathname = usePathname();
   const lang = useLang();

@@ -35,7 +35,6 @@ html[data-theme=dark] {
 }
 .page-notice-wrap[data-home] {
   --pn-max-w: var(--landing-content-max, 1100px);
-  padding: max(8px, var(--sat)) max(var(--home-inline-gutter, 16px), var(--sar)) 0 max(var(--home-inline-gutter, 16px), var(--sal));
 }
 .page-notice-wrap[data-home] .page-notice { border-radius: 8px; }
 .page-notice-wrap[data-home] .page-notice + .page-notice { margin-top: 6px; }

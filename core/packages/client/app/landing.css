@@ -503,12 +503,6 @@ body:has(.landing-page) { --landing-content-max: 1100px; }
 @media (prefers-reduced-motion: no-preference) {
     .landing-page :is(.landing-card, .rc-card, .rs-scard, .recon-card, .ongoing-comps-chip).af-glass-surface::before { transition: background-color 180ms ease; }
 }
-.landing-page .landing-featured-news.af-glass-surface {
-    --af-glass-inset: 0px;
-    --af-glass-tint: color-mix(in srgb, var(--glass-popover-bg), var(--home-news-color) 9%);
-    position: relative;
-    background: transparent;
-}
 .landing-page .landing-card-icon {
     display: flex;
     align-items: center;

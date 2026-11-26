@@ -26,6 +26,7 @@ import SortableCard from '@/components/SortableCard';
 import { RecordBadge } from '@/components/RecordBadge';
 import { CubingIcon } from '@cuberoot/event-icon';
 import HeaderToggles from '@/components/HeaderToggles';
+import PageNoticeBar from '@/components/PageNoticeBar';
 import HomeNavigation from './HomeNavigation';
 import { CubeRootLogoImage } from '@/components/CubeRootLogo';
 import { Tooltip } from '@/components/Tooltip';
@@ -580,6 +581,7 @@ export default function LandingPage({ initialLayout = null }: { initialLayout?: 
           </Link>
         )}
       </div>} />
+      <PageNoticeBar />
       <LandingSearch cards={searchCards} lang={lang} workspaceEntry showChatLink />
       <div className="landing-home-content" hidden={activeSection !== 'home'}>
       <div className="landing-personal-row">
@@ -607,7 +609,7 @@ export default function LandingPage({ initialLayout = null }: { initialLayout?: 
         const body = tr(homepageNoticeTitle(featuredNotice));
         if (featuredNotice === HISTORY_HOME_FEATURE) {
           return (
-            <Link key={featuredNotice.id} href={href} className="landing-featured-news landing-history-feature af-glass-surface" prefetch={false}>
+            <Link key={featuredNotice.id} href={href} className="landing-featured-news landing-history-feature" prefetch={false}>
               <img className="landing-history-preview" src="/assets/history-home-v1.webp" width={1080} height={293} alt="" decoding="async" />
               <span className="landing-featured-news-body">
                 <span className="landing-history-label">{tr({ zh: '新功能：交互历史画卷', en: 'New: an interactive history scroll' })}</span>
@@ -626,7 +628,7 @@ export default function LandingPage({ initialLayout = null }: { initialLayout?: 
           </>
         );
         return (
-          <div key={featuredNotice.id} className="landing-featured-news af-glass-surface"
+          <div key={featuredNotice.id} className="landing-featured-news"
             style={{ '--home-news-color': colorFor(featuredNotice) } as CSSProperties}>
             {href.startsWith('/') && !href.startsWith('//')
               ? <Link href={href} className="landing-featured-news-target" prefetch={false}>{inner}</Link>
