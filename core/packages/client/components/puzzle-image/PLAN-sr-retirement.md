@@ -86,7 +86,7 @@ sr 共 12 种 visualizer type、5 类拼图:
 服务端:
 - [x] `GET /v1/visualcube.svg` view=**iso** → `@cuberoot/puzzle-render-core/iso-svg`（Phase 4 本地 ✅；top 留独立 renderer；部署待验）
 
-退役时要一并清的登记点:`client/server package.json` 依赖、`knip.json`、`about/credits_data.json`、`/dev/stack` 的 `pnpm.tsx`/`monorepo.tsx` 文案、pnpm-lock。
+退役时要一并清的登记点:`client/server package.json` 依赖、`knip.json`、`credits/credits_data.json`、`/dev/stack` 的 `pnpm.tsx`/`monorepo.tsx` 文案、pnpm-lock。
 
 ## 4. 方案分阶段
 

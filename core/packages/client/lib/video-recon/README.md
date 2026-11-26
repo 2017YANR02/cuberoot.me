@@ -5,7 +5,7 @@ The engine is imported from Magic Stew at
 `engine/` contains the browser workers, media pipeline, pose and search adapters,
 and replay math from upstream `web/src/lib/`. `pose-fitter/` contains the matching
 Rust crate, WASM host, OpenCV wrapper and notices. The CubeRoot credits live at
-[/about](https://cuberoot.me/about).
+[/credits](https://cuberoot.me/credits).
 
 The pinned source revision does not declare a repository-wide license. The
 [author's weights repository](https://huggingface.co/joongpa/you-only-cube-once)

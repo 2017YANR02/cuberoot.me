@@ -259,7 +259,7 @@ MAC 发现：
 
 ### 1.5 鸣谢（仓库硬规则）
 
-`app/[lang]/about/credits_data.json` 已有 `cs0x7f/cstimer` 条目 —— 扩写它，补上「智能魔方 / 智能计时器协议移植」。另新增两条（都是论坛帖推荐的参考源）：
+`app/[lang]/credits/credits_data.json` 已有 `cs0x7f/cstimer` 条目 —— 扩写它，补上「智能魔方 / 智能计时器协议移植」。另新增两条（都是论坛帖推荐的参考源）：
 - `afedotov/gan-web-bluetooth` —— GAN Gen2/Gen4 陀螺仪位布局
 - `lukeburong/weilong-v10-ai-protocol` —— MoYu32 (威龙 V10 AI) 协议与陀螺仪
 

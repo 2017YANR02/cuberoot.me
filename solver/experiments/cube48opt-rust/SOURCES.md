@@ -43,5 +43,5 @@ the generalized executable. The 39-file pre-generalization snapshot and
 accepted executable are preserved with a manifest and hashes at
 `/Users/eula/Developer/cuberoot.me-backups/rust-h10-before-h0-h11-2026-10-13/`.
 
-Repository attribution is maintained in the site's [About](https://cuberoot.me/about)
+Repository attribution is maintained in the site's [Credits](https://cuberoot.me/credits)
 page, backed by its existing `credits_data.json` entries.

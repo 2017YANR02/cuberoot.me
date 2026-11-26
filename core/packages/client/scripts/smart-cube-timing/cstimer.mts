@@ -6,7 +6,7 @@ import { createContext, runInContext } from 'node:vm';
 import { extractFunction } from '../../tests/_cstimer_sandbox';
 
 // Read-only oracle. No copied/reimplemented regression or edits to tools/cstimer.
-// csTimer is already credited in about/credits_data.json. Keep its license in cache.
+// csTimer is already credited in credits/credits_data.json. Keep its license in cache.
 export const CSTIMER_COMMIT = '103f4c2ccdddc0d0c3a574aac1f3e378d02a06e5';
 export const CSTIMER_FILES = {
   'src/js/tools/bluetoothutil.js': 'ae2904ea3dd392c001716edcfa6f371f8f0f9bd5e2081ddcfbedff8091b86dff',

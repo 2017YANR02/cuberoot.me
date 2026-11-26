@@ -4,7 +4,7 @@
 
 [generated-artifacts.json](./generated-artifacts.json) 是本仓库受治理生成物、上游快照和数据迁移族的唯一事实源（single source of truth）。artifact ID、来源与 ref、license 证据、生成或同步 owner、patch owner、命令、输出、版本记录和验证入口只在该文件维护，本页不复制清单。
 
-公开页面的第三方署名仍以 `core/packages/client/app/[lang]/about/credits_data.json` 为唯一事实源；artifact ledger 只描述工程归属和可复现性，不能代替面向用户的 credit。
+公开页面的第三方署名仍以 `core/packages/client/app/[lang]/credits/credits_data.json` 为唯一事实源；artifact ledger 只描述工程归属和可复现性，不能代替面向用户的 credit。
 
 ## 生命周期约定
 

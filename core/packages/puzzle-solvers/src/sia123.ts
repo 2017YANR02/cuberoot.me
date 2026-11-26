@@ -43,7 +43,7 @@
  *
  * PRIOR ART / ATTRIBUTION — scramble + bonded geometry from cstimer (cs0x7f/cstimer, megascramble.js); the
  * restricted-⟨U,R,r⟩ IDA*+PDB algorithm is the textbook Korf/Kociemba approach; the direct-product reduction was
- * proven by an in-repo measurement agent. See about/credits_data.json (cstimer entry) + restricted-cube-solver.ts.
+ * proven by an in-repo measurement agent. See credits/credits_data.json (cstimer entry) + restricted-cube-solver.ts.
  */
 
 import {

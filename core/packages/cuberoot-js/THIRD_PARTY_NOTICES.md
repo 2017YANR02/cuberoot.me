@@ -8,4 +8,4 @@ The CubeRoot code is distributed under GNU GPL v3. See the bundled `LICENSE`.
 - The HTML element bundles [React](https://github.com/facebook/react), React DOM and Scheduler. See the bundled `licenses/react-MIT.txt`, `licenses/react-dom-MIT.txt` and `licenses/scheduler-MIT.txt`.
 - The playback bar bundles icons from [Lucide](https://github.com/lucide-icons/lucide). See the bundled `licenses/lucide-react.txt`.
 
-See [CubeRoot credits](https://cuberoot.me/about) for project-wide acknowledgments.
+See [CubeRoot credits](https://cuberoot.me/credits) for project-wide acknowledgments.

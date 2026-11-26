@@ -171,7 +171,7 @@ CUBEOPT_BACKEND=h10 node solver/experiments/cube48opt-rust/guard.mts h10-manual 
 
 ## 数据与来源
 
-上游 `cubeopt-wasm` 固定提交 `1733d1f1ca0e7e7d9860d2b70662336ab4e6ff41` 只有编译产物和包装，当前未取得原 C++ 核心源码。本目录依据固定 Opt1–9 WASM 的反编译及行为对照重建，原 MIT 许可保留于 `LICENSE-MIT`。Nissy H48 后端移植固定 nissy-core GPL-3.0-or-later 源码的坐标、对称和表读取；组合程序遵循 GPL-3.0-or-later，完整来源与许可见 [SOURCES.md](SOURCES.md)。作者致谢统一维护于站点 [About](https://www.cuberoot.me/about)。原 `core/packages/client/public/cubeopt/` 文件未修改。
+上游 `cubeopt-wasm` 固定提交 `1733d1f1ca0e7e7d9860d2b70662336ab4e6ff41` 只有编译产物和包装，当前未取得原 C++ 核心源码。本目录依据固定 Opt1–9 WASM 的反编译及行为对照重建，原 MIT 许可保留于 `LICENSE-MIT`。Nissy H48 后端移植固定 nissy-core GPL-3.0-or-later 源码的坐标、对称和表读取；组合程序遵循 GPL-3.0-or-later，完整来源与许可见 [SOURCES.md](SOURCES.md)。作者致谢统一维护于站点 [致谢](https://cuberoot.me/credits)。原 `core/packages/client/public/cubeopt/` 文件未修改。
 
 REA 6.4.0 的本地 CLI 已实际尝试，但该文件触发 `Unsupported WABT section header format`。直接使用官方 WABT 1.0.42 得到 WAT 和反编译结果后继续分析；不将 REA 的失败记作成功反编译，也不声称恢复了原始 C++ 源码。
 

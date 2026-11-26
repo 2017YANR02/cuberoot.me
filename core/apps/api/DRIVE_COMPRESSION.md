@@ -26,4 +26,4 @@ DRIVE_FFMPEG_BIN_DIR=/root/core-api/artifacts/ffmpeg/9b920f7f702cdc918654d37e517
 
 The normal Deploy Core workflow bundles the worker, verifies native capabilities, applies migration 0218, installs the unit and checks it is active. It resolves the deployed Node path because systemd does not load nvm. API rollback also restores the previous worker bundle. The unit permits only loopback networking and storage writes under the Drive storage root. Changing `DRIVE_STORAGE_DIR` requires updating its `ReadWritePaths`.
 
-Inspect `journalctl -u cuberoot-drive-compression.service` and `drive_compressions.status/error/report`. Setting the flag to `0`, stopping the unit and reloading the API disables new work without removing files. Source credits are maintained at `/about`.
+Inspect `journalctl -u cuberoot-drive-compression.service` and `drive_compressions.status/error/report`. Setting the flag to `0`, stopping the unit and reloading the API disables new work without removing files. Source credits are maintained at `/credits`.

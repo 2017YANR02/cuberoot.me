@@ -9,4 +9,4 @@ module is excluded because process execution is unavailable on watchOS. The smal
 `bridge.c` exposes evaluation to Swift with a 16 MiB heap and bounded execution;
 it does not implement JavaScript, cube protocols, cryptography or timer rules.
 The bundled source is produced from the existing app-ui/shared code at build time.
-Credits are maintained in the project's canonical `/about` data.
+Credits are maintained in the project's canonical `/credits` data.

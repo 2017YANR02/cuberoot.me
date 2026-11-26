@@ -259,7 +259,7 @@ Use case: stylized-concept.
 - 最后重载至八风格切换复查期间，浏览器控制台错误 `0`、警告 `0`。此前版本首次编译警告的历史记录仍保留，不代表全部设备兼容性已验证。
 - 本地资产 `v1` 为 6 文件、3,591,373 字节，`v2` 为 51 文件、25,528,285 字节；合计约 29.12 MB，不是每个风格都下载全部文件。57 个资产逐个请求均返回 HTTP 200，6 个 GLTF 的缓冲与图片引用全部可解析。
 - 庭院树几何缓冲压至 6,164,040 字节；两种盆栽分别由 176,226 / 69,806 降至 49,306 / 33,054 三角形。原始资产与优化脚本保存在忽略的临时目录，发布目录仅保留实际使用的文件。
-- Poly Haven 的 CC0 资产来源已统一登记到 `about/credits_data.json`；运行时从本站 `/assets/space/` 加载，没有外部 CDN 依赖。本轮未增加依赖、未运行 Next build、未提交或发布。
+- Poly Haven 的 CC0 资产来源已统一登记到 `credits/credits_data.json`；运行时从本站 `/assets/space/` 加载，没有外部 CDN 依赖。本轮未增加依赖、未运行 Next build、未提交或发布。
 
 ### 仍未达标的部分
 
@@ -318,7 +318,7 @@ Use case: stylized-concept.
 - 首载数据保存在 space-v8-cold.json（历史引用：`../core/.tmp/png/space-v8-cold.json`；当前路径不存在）。第八轮仍有 1,481 ms、416 ms 等主线程长任务，不能据此宣称完全无卡顿。
 - 八风格暖切换从点击至模型加载及视角静止：简约 3,002 ms、赛博 4,276 ms、现代 2,707 ms、复古 5,031 ms、意大利 2,725 ms、顶层 3,972 ms、日式 2,655 ms、公司 1,244 ms。首次切换仍需等待。
 - v1/v2/v3 共 58 个发布资产，40,898,346 字节。新增车辆 GLB 为 11,778,688 字节，按接近车库加载，不计入默认现代客厅的首次资源；实测 HTTP 200、`model/gltf-binary`、`Cache-Control: public, max-age=2592000`。
-- Car Concept 来自 Khronos glTF Sample Assets，© 2024 DGG、Eric Chadwick，CC BY 4.0；出处、许可、商标与材质修改已写入统一 `about/credits_data.json`。关闭车辆的透射通道并保留透明玻璃近似，避免新增全场景透射渲染。公司原始实拍没有复制到公共资产。
+- Car Concept 来自 Khronos glTF Sample Assets，© 2024 DGG、Eric Chadwick，CC BY 4.0；出处、许可、商标与材质修改已写入统一 `credits/credits_data.json`。关闭车辆的透射通道并保留透明玻璃近似，避免新增全场景透射渲染。公司原始实拍没有复制到公共资产。
 
 ### 第八轮真实网页截图
 
@@ -338,7 +338,7 @@ Use case: stylized-concept.
 
 ## 第九轮：天气系统与三轮画面修正
 
-2026-09-06。用户要求晴天、雨雪与多种极端天气，并允许使用热门 GitHub 项目。本轮复用已安装的 [Three.js 官方 Sky](https://github.com/mrdoob/three.js) 天空散射和云层组件；查询时仓库约 115,200 星。另查 three-nebula（约 1,200 星）、three.proton（528 星），没有为已有能力增加粒子依赖。来源同步登记到统一 `about/credits_data.json`。
+2026-09-06。用户要求晴天、雨雪与多种极端天气，并允许使用热门 GitHub 项目。本轮复用已安装的 [Three.js 官方 Sky](https://github.com/mrdoob/three.js) 天空散射和云层组件；查询时仓库约 115,200 星。另查 three-nebula（约 1,200 星）、three.proton（528 星），没有为已有能力增加粒子依赖。来源同步登记到统一 `credits/credits_data.json`。
 
 ### 已落地
 
@@ -576,7 +576,7 @@ Use case: stylized-concept.
 - [x] 320px/375px 触摸与无溢出验证；修正缩放栏与漫游方向键重叠，检查四种系统/显式明暗组合。桌面城市 4–24,000 米、室内约 0.2–5.9703 米端点和滚轮同步实测通过。
 - [x] 时间/地图两份相关测试共 24 项和 client typecheck 通过；全天 1,440 个分钟值均验证。浏览器检查六个时刻、全部 19 种天气、存档与英文标签，记录见 clock-zoom-check.json（历史引用：`../core/.tmp/png/clock-zoom-check.json`；当前路径不存在） 和 clock-zoom-ui.json（历史引用：`../core/.tmp/png/clock-zoom-ui.json`；当前路径不存在）。
 - [x] 孤岛台风实际运行后暂停，再切换四个时刻：天气时间保持约 0.2502 秒、FFT 时间保持约 1.0838 秒，飞沫读纹理标识不变、reset 为 false，资源数量保持 431 几何体/119 纹理。此项验证时钟不会重置模拟；不是完整加载后的资源基线或 GPU 数值复测。
-- [x] 页面增加“来源与致谢”链接到统一 `/about`，技术索引记录 GitHub 固定版本、地图/材质/模型/太阳公式来源与日期；未下载和未集成的项目单独说明。
+- [x] 页面增加“来源与致谢”链接到统一 `/credits`，技术索引记录 GitHub 固定版本、地图/材质/模型/太阳公式来源与日期；未下载和未集成的项目单独说明。
 - [ ] 确认用户所说“徐家汇家园”的准确小区，再校准目的地；当前入口仅名“徐家汇”。
 - [ ] 海洋电影级白沫、飞溅和上海精细楼高/立面仍未通过验收，继续保留原有待办；本轮未宣称完成这些视觉目标。
 
@@ -586,7 +586,7 @@ Use case: stylized-concept.
 
 2026-09-07。根据用户要求，来源内容直接展示在 `/space` 底部，默认展开，可用鼠标、触摸或键盘收起；仍保留全站致谢链接。
 
-- 来源名称、链接和中英文用途直接读取统一 `about/credits_data.json` 中 `space: true` 的七项条目，不维护独立来源副本。
+- 来源名称、链接和中英文用途直接读取统一 `credits/credits_data.json` 中 `space: true` 的七项条目，不维护独立来源副本。
 - 上海说明明确建筑由 OSM 平面轮廓拉伸，使用记录高度、楼层数 × 3.2 米或默认 12 米；多数楼高使用默认值，地标、立面和窗光为程序化简化模型，不是实景扫描。场景状态提示同步去掉容易误解的“部分楼高”表述。
 - client typecheck 通过；浏览器检查全部七项链接、默认展开、键盘收放、中英文、1440/375/320px 无横向溢出，以及系统/显式明暗四种组合。收放说明保持同一个 3D canvas，交互检查未收到 pageerror。
 - 窄屏截图见 space-sources-mobile320.png（历史引用：`../core/.tmp/png/space-sources-mobile320.png`；当前路径不存在）。没有新增测试、运行 Next build、提交或发布；本轮未改动城市几何或天气渲染，不更新此前的视觉达标结论。

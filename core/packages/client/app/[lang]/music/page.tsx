@@ -458,7 +458,7 @@ export default function MusicPage() {
                     <ListMusic aria-hidden="true" />{isAdmin ? tr({ zh: '审核与管理', en: 'Review & manage' }) : tr({ zh: '我的上传', en: 'My uploads' })}
                   </AppLink>
                 </>}
-                <AppLink href="/about" prefetch={false} className="music-text-button">{tr({ zh: '开源项目与致谢', en: 'Open-source credits' })}</AppLink>
+                <AppLink href="/credits" prefetch={false} className="music-text-button">{tr({ zh: '开源项目与致谢', en: 'Open-source credits' })}</AppLink>
               </div>
             </details>
             </div>

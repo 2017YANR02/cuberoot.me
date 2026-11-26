@@ -408,7 +408,7 @@ export default function Sq1PblFinder() {
           </label>
           <p className={styles.sourceLine}>
             {tr({ zh: '旧版兼容模式复现原工具行为；严格模式额外检查中层状态。', en: 'Legacy mode reproduces the original tool; strict mode also checks the middle layer.' })}
-            {' '}<AppLink href="/about" prefetch={false}>{tr({ zh: '来源与致谢', en: 'Sources and credits' })}</AppLink>
+            {' '}<AppLink href="/credits" prefetch={false}>{tr({ zh: '来源与致谢', en: 'Sources and credits' })}</AppLink>
           </p>
           <div className={styles.auxiliarySection}>
             <div className={styles.auxiliaryHeading}>
