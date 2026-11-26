@@ -49,8 +49,9 @@ const COMING_SOON = { zh: '即将上线', en: 'Coming soon' } as const;
 const APP_PLATFORMS = [
   { label: { zh: '网站', en: 'Website' }, value: { zh: CONTACT_WEBSITE, en: CONTACT_WEBSITE }, href: '/', qr: '/contact/website-qr.png' },
   { label: { zh: '微信小程序', en: 'WeChat Mini Program' }, value: { zh: '魔方根', en: 'CubeRoot' }, href: null, qr: '/contact/wechat-miniprogram-qr.jpg' },
-  { label: { zh: 'iOS', en: 'iOS' }, value: COMING_SOON, href: null },
-  { label: { zh: 'macOS', en: 'macOS' }, value: COMING_SOON, href: null },
+  { label: { zh: 'Mac', en: 'Mac' }, value: COMING_SOON, href: null },
+  { label: { zh: 'iPad', en: 'iPad' }, value: COMING_SOON, href: null },
+  { label: { zh: 'iPhone', en: 'iPhone' }, value: COMING_SOON, href: null },
   { label: { zh: 'Apple Watch', en: 'Apple Watch' }, value: COMING_SOON, href: null },
   { label: { zh: '抖音小程序', en: 'Douyin Mini Program' }, value: COMING_SOON, href: null },
   { label: { zh: '安卓', en: 'Android' }, value: COMING_SOON, href: null },
@@ -193,7 +194,7 @@ export default function ContactDetails() {
         <h2 className="contact-column-heading"><Users size={ICON_SIZE} aria-hidden="true" />{tr({ zh: '社交', en: 'Social' })}</h2>
         <div className="contact-social-details">
           {platforms.map(platform => (
-            <button key={platform.id} type="button" className="contact-qr-trigger contact-social-logo"
+            <button key={platform.id} type="button" className="contact-qr-trigger contact-social-logo" data-platform={platform.id}
               aria-label={tr(platform.label)} aria-haspopup="dialog" onClick={() => setSelectedPlatform(platform)}>
               {PLATFORM_ICONS[platform.id]}
             </button>

@@ -117,6 +117,7 @@ html[data-theme=dark] {
   border-radius: 4px;
 }
 .page-notice-btn .clear-btn-icon { width: 16px; height: 16px; }
+:is(.page-notice-wrap[data-home], .landing-featured-news) .page-notice-btn .clear-btn-icon > path { stroke-width: 1; }
 .page-notice-btn:hover {
   color: var(--foreground);
   background: color-mix(in srgb, var(--foreground) 8%, transparent);

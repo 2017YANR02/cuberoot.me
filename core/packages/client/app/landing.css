@@ -373,13 +373,11 @@ body:has(.landing-page) { --landing-content-max: 1100px; }
 .landing-page .landing-featured-news {
     --home-news-color: var(--accent);
     display: grid;
-    grid-template-columns: max-content minmax(0, 1fr) auto;
+    grid-template-columns: minmax(0, 1fr) auto;
     align-items: center;
-    gap: 0.7rem;
     width: 100%;
     max-width: 720px;
     margin: 0 auto 0.75rem;
-    padding: 0.7rem 0.85rem;
     color: var(--foreground);
     background: color-mix(in srgb, var(--home-news-color) 10%, var(--background));
     border-left: 3px solid var(--home-news-color);
@@ -390,11 +388,22 @@ body:has(.landing-page) { --landing-content-max: 1100px; }
 .landing-page .landing-featured-news:hover {
     background: color-mix(in srgb, var(--home-news-color) 16%, var(--background));
 }
-.landing-page .landing-featured-news:focus-visible {
+.landing-page .landing-featured-news-target {
+    display: flex;
+    align-self: stretch;
+    align-items: center;
+    gap: 0.7rem;
+    min-width: 0;
+    padding: 0.7rem 0 0.7rem 0.85rem;
+    color: inherit;
+    text-decoration: none;
+}
+.landing-page :is(.landing-featured-news-target, .landing-history-feature):focus-visible {
     outline: 2px solid var(--ring);
-    outline-offset: 3px;
+    outline-offset: -2px;
 }
 .landing-page .landing-featured-news-icon {
+    flex: none;
     color: var(--home-news-color);
 }
 .landing-page .landing-featured-news-body {
@@ -549,10 +558,9 @@ body:has(.landing-page) { --landing-content-max: 1100px; }
         grid-template-columns: repeat(2, minmax(0, 1fr));
         gap: 0.5rem;
     }
-    .landing-page .landing-featured-news {
-        grid-template-columns: max-content minmax(0, 1fr) auto;
+    .landing-page .landing-featured-news-target {
         gap: 0.35rem;
-        padding: 0.65rem 0.5rem;
+        padding: 0.65rem 0 0.65rem 0.5rem;
     }
     .landing-page .landing-featured-news-body {
         font-size: 0.8125rem;
@@ -1092,6 +1100,7 @@ body:has(.landing-page) { --landing-content-max: 1100px; }
 }
 
 .landing-page .landing-contact-details {
+    --footer-contact-size: 0.75rem;
     margin: 0;
 }
 
@@ -1111,7 +1120,7 @@ body:has(.landing-page) { --landing-content-max: 1100px; }
 .landing-contact-details .contact-details-columns .contact-column-heading {
     margin: 0;
     padding: 0;
-    font-size: 0.75rem;
+    font-size: var(--footer-contact-size);
     font-weight: 500;
     color: var(--muted-foreground);
 }
@@ -1130,7 +1139,7 @@ body:has(.landing-page) { --landing-content-max: 1100px; }
 .landing-contact-details .contact-app-platform-list {
     display: flex;
     flex-wrap: wrap;
-    font-size: 0.75rem;
+    font-size: var(--footer-contact-size);
     gap: 0 0.375rem;
     padding-left: 0;
 }
@@ -1153,12 +1162,23 @@ body:has(.landing-page) { --landing-content-max: 1100px; }
 
 .landing-contact-details .contact-social-logo > svg,
 .landing-contact-details .contact-direct-details .contact-details-icon > svg {
-    width: 18px;
-    height: 18px;
+    width: var(--footer-contact-size);
+    height: var(--footer-contact-size);
+    /* BrandIcon sets its original brand color inline. */
+    color: var(--muted-foreground) !important;
+    filter: grayscale(1);
+}
+
+.landing-contact-details .contact-social-logo[data-platform="xiaohongshu"] > svg {
+    box-sizing: border-box;
+    padding: 1px;
+    border-radius: 12%;
+    background-color: var(--muted-foreground);
+    color: var(--background) !important;
 }
 
 .landing-contact-details .contact-direct-details .contact-details-icon {
-    width: 18px;
+    width: var(--footer-contact-size);
 }
 
 @media (max-width: 900px) {

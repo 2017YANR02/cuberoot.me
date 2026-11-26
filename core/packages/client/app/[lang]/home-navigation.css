@@ -5,14 +5,13 @@ body:has(.landing-page--navigation) {
   --home-inline-gutter: 2rem;
 }
 .page-notice-wrap[data-home] {
-  position: sticky;
-  top: 0;
+  position: relative;
   z-index: 101;
   background: var(--background);
 }
 body .landing-page.landing-page--navigation {
   --landing-inline-gutter: var(--home-inline-gutter);
-  --home-navigation-top: max(var(--sat, 0px), var(--page-notice-h, 0px));
+  --home-navigation-top: var(--sat, 0px);
   --home-navigation-row-height: 48px;
   padding-top: max(0px, calc(var(--sat) - var(--page-notice-h, 0px)));
   padding-bottom: max(16px, var(--sab), var(--installed-chrome-bottom, 0px));
@@ -22,7 +21,7 @@ body .landing-page.landing-page--navigation {
   --home-navigation-row-height: 44px;
 }
 .landing-page--navigation:has(> .home-navigation[data-floating]) {
-  --home-navigation-top: max(10px, var(--sat, 0px), var(--page-notice-h, 0px));
+  --home-navigation-top: max(10px, var(--sat, 0px));
   --home-mobile-nav-padding: 8px;
 }
 .home-navigation {
@@ -43,8 +42,8 @@ body .landing-page.landing-page--navigation {
 }
 .home-navigation-surface {
   position: absolute;
-  background: var(--popover);
   inset: 0;
+  background: var(--popover);
   border: 1px solid var(--border-default);
   border-radius: 999px;
   opacity: 0;
@@ -139,8 +138,8 @@ body .landing-page.landing-page--navigation {
 .home-navigation::before {
   content: '';
   position: fixed;
-  inset: var(--page-notice-h, 0px) 0 auto;
-  height: calc(var(--home-nav-bottom, 0px) - var(--page-notice-h, 0px));
+  inset: 0 0 auto;
+  height: var(--home-nav-bottom, 0px);
   background: var(--background);
   pointer-events: none;
   opacity: 0;
@@ -172,10 +171,10 @@ body .landing-page.landing-page--navigation {
   scrollbar-width: none;
   visibility: hidden;
   transition: height 240ms var(--home-nav-ease) 120ms, visibility 360ms step-end;
+}
 .home-navigation-flyout,
 .settings-dialog .settings-dialog-panel.home-navigation-drawer {
   --af-glass-inset: 0px;
-}
 }
 .home-navigation-flyout::-webkit-scrollbar { display: none; }
 .home-navigation-flyout-content {
@@ -254,8 +253,8 @@ body .landing-page.landing-page--navigation {
   inset-block-start: var(--home-drawer-top);
   justify-content: flex-start;
   align-items: stretch;
-  background: var(--navigation-curtain-bg);
   padding: 0;
+  background: var(--navigation-curtain-bg);
 }
 .settings-dialog:has(.home-navigation-drawer) {
   width: 100%;

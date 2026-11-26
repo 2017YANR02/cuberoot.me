@@ -206,6 +206,14 @@ export const CATALOG: UtilEntry[] = [
     en: 'Refresh read effects on return without polling; pause while editing or a dialog is open.',
   },
   {
+    name: 'usePageNoticeDismissals',
+    sig: 'usePageNoticeDismissals()',
+    imp: "import { usePageNoticeDismissals } from '@/hooks/usePageNoticeDismissals';",
+    category: 'hook',
+    zh: '在当前浏览器记住已关闭的公告。公告更新后重新显示。',
+    en: 'Remember dismissed notices in the current browser and show them again after an update.',
+  },
+  {
     name: 'Web smart cube / browser solver',
     sig: 'useBluetoothCube(opts: UseBluetoothCubeOpts = {}): BluetoothCubeHandle; randomState333(): Promise<string>',
     imp: "import { useBluetoothCube } from '@/lib/bluetooth'; import { randomState333, solve333 } from '@/lib/kociemba/random_state';",

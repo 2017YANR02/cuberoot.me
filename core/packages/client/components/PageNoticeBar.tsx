@@ -18,7 +18,7 @@ import { DateInput } from './DateInput';
 import AppLink from './AppLink';
 import { ClearButton } from './ClearButton';
 import SettingsDialog from './SettingsDialog';
-import { persistItem } from '@/lib/safe-storage';
+import { usePageNoticeDismissals } from '@/hooks/usePageNoticeDismissals';
 import { regulationPostForHref } from '@/lib/regulation-posts';
 import {
   type PageNotice, type NoticeLevel, type NoticePlacement, type PageNoticeInput,
@@ -29,8 +29,6 @@ import {
   ICONS, ICON_KEYS, LEVEL_ICON, COLOR_KEYS, isColorKey as isColor, colorVar, iconFor,
 } from '@/lib/page-notice-visuals';
 import './PageNoticeBar.css';
-
-const DISMISS_KEY = 'pn-dismissed';
 
 // 常用模板:点一下填 级别 + 图标 + 颜色 + 中英文,填完仍可自由改。
 // 颜色刻意八个各不相同(红/蓝/琥珀/青/紫/赤陶/绿/粉),让通知一眼能按语义区分,不再清一色蓝。
@@ -162,7 +160,7 @@ export default function PageNoticeBar() {
   const key = pageKeyFromPathname(pathname || '/');
 
   const [notices, setNotices] = useState<PageNotice[]>([]);
-  const [dismissed, setDismissed] = useState<Record<string, string>>({});
+  const { dismissed, dismiss } = usePageNoticeDismissals();
   const [form, setForm] = useState<FormState | null>(null);
   const refreshKey = useContentRefreshKey(form === null);
   const [saving, setSaving] = useState(false);
@@ -175,14 +173,6 @@ export default function PageNoticeBar() {
     return () => { active = false; };
   }, [key, refreshKey]);
 
-  // 本地「已关闭」记录(id → updatedAt;内容变更后 updatedAt 变,重新出现)。
-  useEffect(() => {
-    try {
-      const raw = localStorage.getItem(DISMISS_KEY);
-      if (raw) setDismissed(JSON.parse(raw));
-    } catch { /* ignore */ }
-  }, []);
-
   // 写操作后用返回行就地更新，改动即时可见。
   const applyResult = (row: PageNotice) => {
     setNotices((prev) => {
@@ -190,14 +180,6 @@ export default function PageNoticeBar() {
         n.path === row.path && (n.placement ?? 'page_top') === (row.placement ?? 'page_top')
       ));
       return row.enabled ? [...rest, row] : rest;
-    });
-  };
-
-  const dismiss = (n: PageNotice) => {
-    setDismissed((prev) => {
-      const next = { ...prev, [n.id]: n.updatedAt };
-      persistItem(DISMISS_KEY, JSON.stringify(next));
-      return next;
     });
   };
 
@@ -290,10 +272,14 @@ export default function PageNoticeBar() {
 
   const pick = (n: PageNotice) => (lang === 'en' ? (n.bodyEn || n.bodyZh) : (n.bodyZh || n.bodyEn));
 
-  const matched = matchNotices(notices, key);
-  const visible = matched.filter((n) => isAdmin || !(n.dismissible && dismissed[n.id] === n.updatedAt));
-  const hasBanner = visible.length > 0;
   const onHome = key === '/';
+  const visible = matchNotices(notices, key)
+    .map((notice) => ({
+      notice,
+      canDismiss: notice.dismissible && (!isAdmin || (onHome && notice.path === '/')),
+    }))
+    .filter(({ notice, canDismiss }) => !canDismiss || dismissed[notice.id] !== notice.updatedAt);
+  const hasBanner = visible.length > 0;
 
   // 把本条实际高度写进 --page-notice-h,供全屏页(position:fixed;inset:0,如 /sim /paint)
   // 顶部让位。编辑器在独立弹窗里，无横幅时置 0。
@@ -321,14 +307,15 @@ export default function PageNoticeBar() {
   return (
     <>
       {hasBanner && <div className="page-notice-wrap" data-home={onHome || undefined} ref={wrapRef}>
-        {visible.map((n) => {
+        {visible.map(({ notice: n, canDismiss }) => {
           const Icon = iconFor(n);
           const kind = douyin && n.href?.startsWith('/') && !douyinContentAvailable(n.href) ? null : targetKind(n.href);
+          const showLinkIcon = !onHome || !canDismiss;
           const content = <>
             <Icon className="page-notice-icon" size={17} aria-hidden />
             <span className="page-notice-body">{kind ? pick(n) : linkifyText(pick(n))}</span>
-            {kind === 'internal' && <ArrowRight className="page-notice-arrow" size={16} aria-hidden />}
-            {kind === 'external' && <ExternalLink className="page-notice-arrow" size={15} aria-hidden />}
+            {showLinkIcon && kind === 'internal' && <ArrowRight className="page-notice-arrow" size={16} aria-hidden />}
+            {showLinkIcon && kind === 'external' && <ExternalLink className="page-notice-arrow" size={15} aria-hidden />}
           </>;
           return (
             <div key={n.id} className="page-notice" data-level={n.level}
@@ -345,7 +332,7 @@ export default function PageNoticeBar() {
                 : n.href && kind === 'external'
                   ? <a className="page-notice-content page-notice-target" href={n.href} target="_blank" rel="noopener noreferrer">{content}</a>
                   : <div className="page-notice-content">{content}</div>}
-              {!isAdmin && n.dismissible && (
+              {canDismiss && (
                 <div className="page-notice-actions">
                   <ClearButton variant="standalone" className="page-notice-btn" onClick={() => dismiss(n)}
                     ariaLabel={tr({ en: 'Dismiss', zh: '关闭' })} />

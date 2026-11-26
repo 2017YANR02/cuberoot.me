@@ -7,6 +7,7 @@ import { isInstalledCommunityHref, useInstalledCommunityDisabled } from '@/lib/i
 
 import { useRetainedState } from '@/hooks/useRetainedState';
 import { useContentRefreshKey } from '@/hooks/useContentRefreshKey';
+import { usePageNoticeDismissals } from '@/hooks/usePageNoticeDismissals';
 import { useHomeScrollRestoration } from '@/hooks/useHomeScrollRestoration';
 import { applyHomeSectionOrder } from '@/lib/home-section-order';
 import { SkeletonBlock } from '@/components/ContentSkeleton';
@@ -28,6 +29,7 @@ import HeaderToggles from '@/components/HeaderToggles';
 import HomeNavigation from './HomeNavigation';
 import { CubeRootLogoImage } from '@/components/CubeRootLogo';
 import { Tooltip } from '@/components/Tooltip';
+import { ClearButton } from '@/components/ClearButton';
 import OnboardingGuideModal from '@/components/OnboardingGuideModal';
 import { isOnboardingGuided, markOnboardingGuided } from '@/lib/onboarding';
 import './home-background.css';
@@ -82,9 +84,9 @@ import { getPinnedRecons, setReconHomePin } from '@/lib/recon-api';
 import { HOME_MEMBER_SECTION_IDS } from '@cuberoot/shared/site-directory';
 
 const ABOUT_FOOTER_ENTRY = FOOTER_ENTRIES.find((entry) => entry.id === 'about')!;
+const CREDITS_FOOTER_ENTRY = FOOTER_ENTRIES.find((entry) => entry.id === 'credits')!;
 const SUPPORT_FOOTER_ENTRY = FOOTER_ENTRIES.find((entry) => entry.id === 'support')!;
 const GITHUB_FOOTER_ENTRY = FOOTER_ENTRIES.find((entry) => entry.id === 'github')!;
-const CREDITS_FOOTER_ENTRY = FOOTER_ENTRIES.find((entry) => entry.id === 'credits')!;
 
 // Temporary homepage feature; restore the managed notice on 2026-09-17 (UTC+8).
 const HISTORY_HOME_FEATURE: PageNotice = {
@@ -188,6 +190,7 @@ export default function LandingPage({ initialLayout = null }: { initialLayout?: 
     setSelectedSection(section);
   };
   const [featuredNotices, setFeaturedNotices] = useRetainedState<PageNotice[]>('home:featuredNotices', []);
+  const { dismissed, dismiss } = usePageNoticeDismissals();
   const [publicMembers, setPublicMembers] = useRetainedState<PublicMember[] | null>('home:publicMembers', null);
   const [visibleWidgets, setVisibleWidgets] = useRetainedState<Record<string, boolean>>('home:visibleWidgets', {});
   const rememberWidget = (key: string) => setVisibleWidgets(previous => previous[key] ? previous : { ...previous, [key]: true });
@@ -599,39 +602,41 @@ export default function LandingPage({ initialLayout = null }: { initialLayout?: 
       </div>
       <div className="landing-featured-notices">
       {featuredNotices.map((featuredNotice) => {
-        if (!featuredNotice.href) return null;
-        const FeaturedIcon = iconFor(featuredNotice);
-        const isHistoryFeature = featuredNotice === HISTORY_HOME_FEATURE;
-        const featureClass = `landing-featured-news af-glass-surface${isHistoryFeature ? ' landing-history-feature' : ''}`;
+        const { href } = featuredNotice;
+        if (!href || dismissed[featuredNotice.id] === featuredNotice.updatedAt) return null;
         const body = tr(homepageNoticeTitle(featuredNotice));
+        if (featuredNotice === HISTORY_HOME_FEATURE) {
+          return (
+            <Link key={featuredNotice.id} href={href} className="landing-featured-news landing-history-feature af-glass-surface" prefetch={false}>
+              <img className="landing-history-preview" src="/assets/history-home-v1.webp" width={1080} height={293} alt="" decoding="async" />
+              <span className="landing-featured-news-body">
+                <span className="landing-history-label">{tr({ zh: '新功能：交互历史画卷', en: 'New: an interactive history scroll' })}</span>
+                <span className="landing-history-title">{body}</span>
+                <span className="landing-history-invitation">{tr({ zh: '进入画卷，沿途看看 CubeRoot 的每一次更新。', en: 'Explore CubeRoot’s story, one day at a time.' })}</span>
+              </span>
+              <ArrowRight className="landing-featured-news-arrow" size={16} aria-hidden="true" />
+            </Link>
+          );
+        }
+        const FeaturedIcon = iconFor(featuredNotice);
         const inner = (
           <>
-            {isHistoryFeature
-              ? <img className="landing-history-preview" src="/assets/history-home-v1.webp" width={1080} height={293} alt="" decoding="async" />
-              : <FeaturedIcon className="landing-featured-news-icon" size={15} aria-hidden="true" />}
-            <span className="landing-featured-news-body">
-              {isHistoryFeature && <span className="landing-history-label">{tr({ zh: '新功能：交互历史画卷', en: 'New: an interactive history scroll' })}</span>}
-              <span className={isHistoryFeature ? 'landing-history-title' : undefined}>{body}</span>
-              {isHistoryFeature && <span className="landing-history-invitation">{tr({ zh: '进入画卷，沿途看看 CubeRoot 的每一次更新。', en: 'Explore CubeRoot’s story, one day at a time.' })}</span>}
-            </span>
-            <ArrowRight className="landing-featured-news-arrow" size={16} aria-hidden="true" />
+            <FeaturedIcon className="landing-featured-news-icon" size={15} aria-hidden="true" />
+            <span className="landing-featured-news-body">{body}</span>
           </>
         );
-        const style = { '--home-news-color': colorFor(featuredNotice) } as CSSProperties;
-        // allow-nested-link: internal AppLink and external anchor are mutually exclusive branches, with no links inside inner.
-        return featuredNotice.href.startsWith('/') && !featuredNotice.href.startsWith('//')
-          ? (
-              <Link key={featuredNotice.id} href={featuredNotice.href} className={featureClass} style={style} prefetch={false}>
-                {inner}
-              </Link>
-            )
-          : (
-              // allow-nested-link: this anchor is the mutually exclusive external branch; the internal Link above is already closed.
-              <a key={featuredNotice.id} href={featuredNotice.href} className={featureClass} style={style}
-                target="_blank" rel="noopener noreferrer">
-                {inner}
-              </a>
-            );
+        return (
+          <div key={featuredNotice.id} className="landing-featured-news af-glass-surface"
+            style={{ '--home-news-color': colorFor(featuredNotice) } as CSSProperties}>
+            {href.startsWith('/') && !href.startsWith('//')
+              ? <Link href={href} className="landing-featured-news-target" prefetch={false}>{inner}</Link>
+              : <a href={href} className="landing-featured-news-target" target="_blank" rel="noopener noreferrer">{inner}</a>}
+            <div className="page-notice-actions">
+              <ClearButton variant="standalone" className="page-notice-btn" onClick={() => dismiss(featuredNotice)}
+                ariaLabel={tr({ en: `Dismiss ${body}`, zh: `关闭${body}` })} />
+            </div>
+          </div>
+        );
       })}
       </div>
 
