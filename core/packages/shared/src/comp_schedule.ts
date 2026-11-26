@@ -10,7 +10,7 @@ export interface RawActivity {
   activityCode: string;
   startTime: string;   // UTC ISO with Z
   endTime: string;
-  childActivities?: RawActivity[]; // ignored at top level
+  childActivities?: RawActivity[];
 }
 export interface RawRoom { id: number; name: string; color: string; activities?: RawActivity[]; }
 export interface RawVenue {
@@ -61,7 +61,8 @@ export interface ScheduleData {
   startDate: string;          // "2025-07-03"
   numberOfDays: number;
   venues: ScheduleVenue[];
-  activities: ScheduleActivity[]; // flattened top-level activities, childActivities dropped
+  activities: ScheduleActivity[]; // flattened top-level activities
+  groupActivities?: ScheduleActivity[]; // absent in older cached schedules
   rounds: Record<string, RoundInfo>; // by round id
 }
 
@@ -84,6 +85,10 @@ export function parseActivityCode(code: string): {
   }
   return out;
 }
+
+/** A timed group slot, without an attempt or a personal assignment. */
+export const isScheduleGroupCode = (code: string) =>
+  /^[a-z0-9]+-r[1-9]\d*-g[A-Za-z0-9]{1,16}$/.test(code);
 
 /**
  * Pure: RawWcif → ScheduleData | null (null if no schedule node at all).
@@ -116,6 +121,7 @@ export function trimWcif(raw: RawWcif): ScheduleData | null {
 
   const venues: ScheduleVenue[] = [];
   const activities: ScheduleActivity[] = [];
+  const groupActivities: ScheduleActivity[] = [];
   for (const v of sched.venues ?? []) {
     venues.push({
       id: v.id,
@@ -125,18 +131,19 @@ export function trimWcif(raw: RawWcif): ScheduleData | null {
       rooms: (v.rooms ?? []).map(r => ({ id: r.id, name: r.name, color: r.color })),
     });
     for (const room of v.rooms ?? []) {
+      const trimActivity = (activity: RawActivity): ScheduleActivity => ({
+        id: activity.id, name: activity.name, activityCode: activity.activityCode,
+        startTime: activity.startTime, endTime: activity.endTime,
+        roomId: room.id, roomName: room.name, roomColor: room.color,
+      });
       for (const a of room.activities ?? []) {
-        // top-level activity only; childActivities (groups) discarded
-        activities.push({
-          id: a.id,
-          name: a.name,
-          activityCode: a.activityCode,
-          startTime: a.startTime,
-          endTime: a.endTime,
-          roomId: room.id,
-          roomName: room.name,
-          roomColor: room.color,
-        });
+        activities.push(trimActivity(a));
+        const pending = [a];
+        while (pending.length) {
+          const activity = pending.pop()!;
+          if (isScheduleGroupCode(activity.activityCode)) groupActivities.push(trimActivity(activity));
+          for (const child of activity.childActivities ?? []) pending.push(child);
+        }
       }
     }
   }
@@ -146,6 +153,7 @@ export function trimWcif(raw: RawWcif): ScheduleData | null {
     numberOfDays: sched.numberOfDays,
     venues,
     activities,
+    groupActivities,
     rounds,
   };
 }
