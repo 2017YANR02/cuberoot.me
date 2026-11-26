@@ -16,7 +16,7 @@
 .page *, .page *::before, .page *::after { box-sizing: border-box; }
 .page a { color: inherit; text-decoration: none; }
 .page :is(a, button, input, summary, pre):focus-visible { outline: 2px solid var(--ring); outline-offset: 3px; }
-.page button, .page summary { cursor: pointer; }
+.proofToggle, .codeCopy, .orbitButton, .page summary { cursor: pointer; }
 .page svg { flex-shrink: 0; }
 .page [hidden] { display: none; }
 .mono { font: 500 .77rem/1.5 var(--mono); letter-spacing: .06em; }
@@ -24,7 +24,7 @@
 .topbar, .breadcrumb, .tools, .tools > a, .heroActions, .primary, .secondary, .checked,
 .figureHead, .figureFoot, .figureFoot > span, .orbits, .rotateHint, .contents a,
 .resultHead, .resultHead a, .proofToggle, .sourceLinks, .sourceLinks a, .rowActions, .rowActions > a,
-.experiment summary, .codeHead, .codeHead span, .codeHead button, .record, .tasks a, .barLabel { display: flex; align-items: center; }
+.experiment summary, .codeHead, .codeHead span, .codeCopy, .record, .tasks a, .barLabel { display: flex; align-items: center; }
 .topbar { min-height: 62px; justify-content: space-between; border-bottom: 1px solid var(--rule); }
 .breadcrumb, .tools { gap: 12px; color: var(--subtle); font-size: .84rem; }
 .breadcrumb b { font-weight: 600; color: var(--ink); }
@@ -71,8 +71,8 @@
 .figureFoot > span { gap: 8px; font-size: .79rem; font-weight: 540; }
 .dot { width: 9px; height: 9px; border-radius: 2px; background: var(--orbit-mark); border: 1px solid var(--orbit-grid); }
 .orbits { border: 1px solid var(--rule); border-radius: 6px; background: var(--background); padding: 2px; }
-.orbits button { min-width: 31px; min-height: 27px; border-radius: 4px; border: 0; color: var(--subtle); background: transparent; font: 600 .75rem/1 var(--mono); }
-.orbits button[aria-pressed="true"] { background: var(--foreground); color: var(--background); }
+.orbitButton { min-width: 31px; min-height: 27px; border-radius: 4px; border: 0; color: var(--subtle); background: transparent; font: 600 .75rem/1 var(--mono); }
+.orbitButton[aria-pressed="true"] { background: var(--foreground); color: var(--background); }
 .rotateHint { position: absolute; right: 16px; top: 50%; gap: 4px; writing-mode: vertical-rl; font-size: .68rem; color: var(--subtle); }
 .rotateHint svg { margin-bottom: 2px; }
 
@@ -116,8 +116,8 @@
 .code { margin: 12px 0; border-radius: 9px; border: 1px solid var(--rule); overflow: hidden; background: var(--wash); }
 .codeHead { padding: 3px 12px; min-height: 39px; border-bottom: 1px solid var(--rule); justify-content: space-between; gap: 8px; }
 .codeHead > span { min-width: 0; overflow-wrap: anywhere; gap: 7px; font: 510 .76rem var(--mono); color: var(--subtle); }
-.codeHead button { gap: 5px; padding: 5px 6px; min-height: 32px; color: var(--subtle); font-size: .75rem; background: none; border: none; }
-.codeHead button:hover { color: var(--ink); }
+.codeCopy { gap: 5px; padding: 5px 6px; min-height: 32px; color: var(--subtle); font-size: .75rem; background: none; border: none; }
+.codeCopy:hover { color: var(--ink); }
 .code pre { margin: 0; padding: 14px 16px; font: .82rem/1.7 var(--mono); overflow-x: auto; white-space: pre; }
 .sourceLinks { flex-wrap: wrap; gap: 4px 20px; }
 .sourceLinks a { min-height: 34px; }
@@ -132,7 +132,7 @@
 .sliders label { display: grid; }
 .sliders label > span { display: flex; justify-content: space-between; align-items: baseline; gap: 6px; font-size: .88rem; }
 .sliders output, .barLabel > span:last-child { color: var(--subtle); font: .79rem var(--mono); }
-.sliders input { width: 100%; height: 30px; accent-color: var(--accent); }
+.countingSlider { width: 100%; height: 30px; accent-color: var(--accent); }
 .bars { margin: 16px 0; }
 .bars svg { display: block; height: 7px; width: 100%; fill: var(--accent); border-radius: 3px; }
 .bars > div + div svg { fill: var(--subtle); }
@@ -174,7 +174,7 @@
   .specimen { height: 135px; }
   .specimen :global(.puzzle-art) { transform: scale(.69); }
   .rotateHint { top: auto; right: 12px; bottom: 55px; writing-mode: horizontal-tb; }
-  .orbits button { min-width: 34px; min-height: 31px; }
+  .orbitButton { min-width: 34px; min-height: 31px; }
   .contents > div { justify-content: space-between; }
   .contents a { gap: 5px; font-size: .78rem; padding-inline: 5px; }
   .contents a svg { width: 14px; }

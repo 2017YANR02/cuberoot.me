@@ -82,14 +82,14 @@
   color: var(--muted-foreground);
   font-size: 13px;
 }
-.api-reference-example button { display: inline-flex; align-items: center; gap: 6px; min-height: 36px; padding: 4px 8px; border-radius: 8px; color: var(--foreground); }
-.api-reference-example button:hover { background: var(--background); }
+.api-reference-copy-command { display: inline-flex; align-items: center; gap: 6px; min-height: 36px; padding: 4px 8px; border-radius: 8px; color: var(--foreground); }
+.api-reference-copy-command:hover { background: var(--background); }
 .api-reference .dev-reference-detail .api-reference-example pre { margin: 0; padding: 12px; border: 0; background: transparent; }
 .api-reference .dev-reference-detail .api-reference-copy-status { margin: 0 12px 10px; color: var(--muted-foreground); font-size: 13px; }
 .api-reference-starters { margin: 8px 0 0; padding: 0; list-style: none; }
 .api-reference-starters li { border-bottom: 1px solid var(--border-default); }
-.api-reference-starters button { display: flex; align-items: center; justify-content: space-between; gap: 12px; width: 100%; padding: 10px 4px; text-align: start; }
-.api-reference-starters button:hover strong, .api-reference-starters svg { color: var(--accent); }
+.api-reference-open-endpoint { display: flex; align-items: center; justify-content: space-between; gap: 12px; width: 100%; padding: 10px 4px; text-align: start; }
+.api-reference-open-endpoint:hover strong, .api-reference-starters svg { color: var(--accent); }
 .api-reference-starters svg { flex: none; }
 .api-reference-starters code { display: block; margin-top: 3px; color: var(--muted-foreground); font-size: 12px; overflow-wrap: anywhere; }
 

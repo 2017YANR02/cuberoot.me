@@ -10,16 +10,15 @@
 .hero p, .explanation p, .rejected p { color: var(--muted-foreground); line-height: 1.8; }
 .hero p { max-width: 77ch; margin: 12px 0 0; }
 .examples, .views { flex-wrap: wrap; }
-.examples button { cursor: pointer; padding: 7px 12px; border: 1px solid var(--border-default); background: transparent; border-radius: 999px; font: inherit; font-size: .85rem; color: var(--foreground); }
-.examples button[aria-pressed=true] { color: var(--primary-foreground); background: var(--primary); border-color: var(--primary); }
+.exampleButton { cursor: pointer; padding: 7px 12px; border: 1px solid var(--border-default); background: transparent; border-radius: 999px; font: inherit; font-size: .85rem; color: var(--foreground); }
+.exampleButton[aria-pressed=true] { color: var(--primary-foreground); background: var(--primary); border-color: var(--primary); }
 .controls { margin-top: 22px; display: grid; grid-template-columns: auto minmax(0,1fr) auto; gap: 14px; }
 .controls label { display: grid; gap: 5px; font-size: .86rem; font-weight: 600; }
-.page select, .controls input { min-width: 0; background: var(--background); color: var(--foreground); font: inherit; border: 1px solid var(--border-strong); border-radius: 6px; padding: 7px 10px; }
-.controls input, .caption code, .layerMap { font-family: var(--font-mono, monospace); }
+.exploreSelect, .scrambleInput { min-width: 0; background: var(--background); color: var(--foreground); font: inherit; border: 1px solid var(--border-strong); border-radius: 6px; padding: 7px 10px; }
+.scrambleInput, .caption code, .layerMap { font-family: var(--font-mono, monospace); }
 .hint, .explanation small, .caption small { font-size: .82rem; color: var(--muted-foreground); line-height: 1.6; }
 .hint { margin: 7px 0 15px; }
 .views { justify-content: space-between; font-size: .85rem; margin: 18px 0 10px; }
-.views input { accent-color: var(--accent); }
 .comparison { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: clamp(8px,2vw,20px); }
 .cube, .rejected { min-width: 0; border: 1px solid var(--border-default); border-radius: 12px; padding: clamp(10px,2vw,20px); }
 .cubeHead, .caption { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 4px 10px; }
@@ -55,9 +54,9 @@
 
 
 .modes { display: flex; gap: 18px; border-bottom: 1px solid var(--border-default); margin-bottom: 20px; }
-.modes button, .previous { font: inherit; color: var(--muted-foreground); background: transparent; border: none; cursor: pointer; }
-.modes button { padding: 10px 2px; border-bottom: 2px solid transparent; }
-.modes button[aria-pressed=true] { border-color: var(--accent); color: var(--foreground); font-weight: 650; }
+.modeButton, .previous { font: inherit; color: var(--muted-foreground); background: transparent; border: none; cursor: pointer; }
+.modeButton { padding: 10px 2px; border-bottom: 2px solid transparent; }
+.modeButton[aria-pressed=true] { border-color: var(--accent); color: var(--foreground); font-weight: 650; }
 .lesson { overflow: hidden; border: 1px solid var(--border-default); border-radius: 14px; }
 .steps { display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); }
 .stepButton { padding: 12px 5px; background: transparent; color: var(--muted-foreground); border: none; border-bottom: 2px solid var(--border-default); font: inherit; font-weight: 550; cursor: pointer; }

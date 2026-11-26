@@ -70,8 +70,8 @@ export default function ShortSolutions() {
     <header className={s.hero}><h1>{t('在小魔方上找大魔方的短解', 'Find short solutions on a smaller cube')}</h1>
       <p>{t('给定一个魔方状态，能在指定步数内复原吗？可以先看六面的颜色，把问题缩到更小的魔方上。同样的步数限制，两个魔方的答案相同。', 'Can a position be solved within a given number of moves? The colours on all six faces can let you reduce the question to a smaller cube. With the same move limit, both answers agree.')}</p></header>
     <div className={s.modes}>
-      <button aria-pressed={!explore} onClick={() => setExplore(false)}>{t('分步演示', 'Walkthrough')}</button>
-      <button aria-pressed={explore} onClick={() => setExplore(true)}>{t('自由实验', 'Try a scramble')}</button>
+      <button type="button" className={s.modeButton} aria-pressed={!explore} onClick={() => setExplore(false)}>{t('分步演示', 'Walkthrough')}</button>
+      <button type="button" className={s.modeButton} aria-pressed={explore} onClick={() => setExplore(true)}>{t('自由实验', 'Try a scramble')}</button>
     </div>
     {!explore ? <>
       <Walkthrough onExplore={() => { applyExample(examples[1]); setExplore(true); }} />
@@ -85,12 +85,12 @@ export default function ShortSolutions() {
       </section>
     </> : <>
     <h2 className={s.tryTitle}>{t('选个打乱，再决定给自己几步', 'Pick a scramble, then set your move limit')}</h2>
-    <div className={s.examples}>{examples.map(e => <button key={e.en} aria-pressed={n === e.n && k === e.k && input === e.alg}
+    <div className={s.examples}>{examples.map(e => <button type="button" className={s.exampleButton} key={e.en} aria-pressed={n === e.n && k === e.k && input === e.alg}
       onClick={() => applyExample(e)}>{t(e.zh, e.en)}</button>)}</div>
     <div className={s.controls}>
-      <label>{t('原魔方阶数', 'Original size')}<select value={n} onChange={e => setN(+e.target.value)}>{numbers(23, 2).map(i => <option key={i}>{i}</option>)}</select></label>
-      <label>{t('怎样打乱', 'Scramble moves')}<input aria-describedby="notation" aria-invalid={!turns} value={input} maxLength={256} spellCheck={false} onChange={e => setInput(e.target.value)} /></label>
-      <label>{t('最多用几步复原？', 'How many moves to solve?')}<select value={k} onChange={e => setK(+e.target.value)}>{numbers(9).map(i => <option key={i}>{i}</option>)}</select></label>
+      <label>{t('原魔方阶数', 'Original size')}<select className={s.exploreSelect} value={n} onChange={e => setN(+e.target.value)}>{numbers(23, 2).map(i => <option key={i}>{i}</option>)}</select></label>
+      <label>{t('怎样打乱', 'Scramble moves')}<input className={s.scrambleInput} aria-describedby="notation" aria-invalid={!turns} value={input} maxLength={256} spellCheck={false} onChange={e => setInput(e.target.value)} /></label>
+      <label>{t('最多用几步复原？', 'How many moves to solve?')}<select className={s.exploreSelect} value={k} onChange={e => setK(+e.target.value)}>{numbers(9).map(i => <option key={i}>{i}</option>)}</select></label>
     </div>
     <p className={s.hint} id="notation">{t("10D′ 是一个动作：从底面数到第 10 层，看着底面逆时针转一下。每次只转一层，转 90° 或 180° 都算一步。", "10D′ is one move. Count ten layers in from the bottom and turn just that layer counterclockwise as seen from below. A quarter or half turn of one layer counts as one move.")}</p>
     {!turns || !result ? <p role="alert">{t("请用单层转动，例如 R、3F2 或 U'，层号不能超过当前阶数。清空打乱可查看复原状态。", "Enter single-layer turns such as R, 3F2 or U'. Layer numbers must fit the cube. Clear the field for the solved state.")}</p> : <>
@@ -101,7 +101,7 @@ export default function ShortSolutions() {
           k === 0 ? t('不能。魔方还没复原，至少要转一下。', 'No. At least one turn is needed because the cube is scrambled.') :
           t(`还需搜索。已把问题转到 ${m} 阶魔方上，是否有足够短的解法还未确定。`, `You can now look for a solution on the size-${m} cube. The reduction alone hasn’t settled this case.`)}</p>
         <small>{t('只改“最多用几步复原”，手里仍是同一只打乱的魔方。', 'Change just the move limit and you still start with exactly the same scramble.')}</small></div>
-      <div className={s.views}><label>{t('查看', 'View')} <select value={face} onChange={e => setFace(+e.target.value)}>
+      <div className={s.views}><label>{t('查看', 'View')} <select className={s.exploreSelect} value={face} onChange={e => setFace(+e.target.value)}>
         {faces.map((f, i) => <option key={f} value={i}>{t(['上面','右面','正面','底面','左面','背面'][i], ['Top','Right','Front','Bottom','Left','Back'][i])} ({f})</option>)}
         <option value={-1}>{t('可旋转的 3D 魔方', 'Rotatable 3D cubes')}</option></select></label>
         {face >= 0 && small && m < n && <BoolToggle value={fade} onChange={setFade} label={t('淡化要删的行列', 'Fade rows and columns to remove')}/>}</div>

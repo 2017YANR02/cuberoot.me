@@ -1322,7 +1322,7 @@ function ApiQuickStart({ open }: { open: (entry: ApiEntry) => void }) {
     <div className="api-reference-examples">
       <div className="api-reference-example">
         <div><span>cURL</span>
-          <button type="button" onClick={() => void copyCommand()}><Copy size={14} aria-hidden />{t('复制命令', 'Copy command')}</button>
+          <button type="button" className="api-reference-copy-command" onClick={() => void copyCommand()}><Copy size={14} aria-hidden />{t('复制命令', 'Copy command')}</button>
         </div>
         <pre><code>{QUICK_START_COMMAND}</code></pre>
         {copyState !== 'idle' && <p className="api-reference-copy-status" role="status">{copyState === 'copied'
@@ -1337,7 +1337,7 @@ function ApiQuickStart({ open }: { open: (entry: ApiEntry) => void }) {
     <h3>{t('常用公开接口', 'Common public endpoints')}</h3>
     <ul className="api-reference-starters">
       {STARTER_ENDPOINTS.map(entry => <li key={entry.name}>
-        <button type="button" onClick={() => open(entry)}>
+        <button type="button" className="api-reference-open-endpoint" onClick={() => open(entry)}>
           <span><strong>{tr(entry)}</strong><code>{entry.name}</code></span>
           <ArrowRight size={16} aria-hidden />
         </button>

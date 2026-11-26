@@ -32,7 +32,7 @@ export default function OrbitFigure() {
     <figcaption className={s.figureFoot}>
       <span><i className={s.dot} />{t('每面 4 枚，共 24 枚', '4 per face, 24 in all')}</span>
       <div className={s.orbits} role="group" aria-label={t('选择中心轨道', 'Select centre orbit')}>
-        {['A', 'B'].map((letter,i) => <button key={letter} type="button" aria-pressed={orbit === i}
+        {['A', 'B'].map((letter,i) => <button key={letter} className={s.orbitButton} type="button" aria-pressed={orbit === i}
           aria-label={t(`轨道 ${letter}`, `Orbit ${letter}`)} onClick={() => setOrbit(i)}>{letter}</button>)}
       </div>
     </figcaption>

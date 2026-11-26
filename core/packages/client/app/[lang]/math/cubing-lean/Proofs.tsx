@@ -60,7 +60,7 @@ function CodeBlock({ text, title }: {text: string; title: string}) {
   const { copy, copied } = useCopy();
   return <div className={s.code}>
     <div className={s.codeHead}><span><Terminal size={15} />{title}</span>
-      <button type="button" onClick={() => copy(text)} aria-label={t('复制代码', 'Copy code')}>
+      <button className={s.codeCopy} type="button" onClick={() => copy(text)} aria-label={t('复制代码', 'Copy code')}>
         {copied ? <Check size={15} /> : <Copy size={15} />}<span aria-live="polite">{copied ? t('已复制', 'Copied') : t('复制', 'Copy')}</span>
       </button>
     </div>

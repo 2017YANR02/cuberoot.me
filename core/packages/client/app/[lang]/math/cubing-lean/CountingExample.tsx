@@ -33,8 +33,8 @@ export default function CountingExample() {
     <div className={s.experimentBody}>
       <p>{t('如果可达状态比步数限制内的转法还多，就一定有状态需要更多步才能复原。', 'If reachable states outnumber the available move sequences, at least one state needs more moves.')}</p>
       <div className={s.sliders}>
-        <label htmlFor="counting-cube-size"><span>{t('魔方阶数', 'Cube size')} <output>n = {n}</output></span><input id="counting-cube-size" type="range" min={4} max={16} value={n} onChange={e => setN(Number(e.target.value))} /></label>
-        <label htmlFor="counting-move-budget"><span>{t('步数预算', 'Move budget')} <output>k = {k}</output></span><input id="counting-move-budget" type="range" min={0} max={320} value={k} onChange={e => setK(Number(e.target.value))} /></label>
+        <label htmlFor="counting-cube-size"><span>{t('魔方阶数', 'Cube size')} <output>n = {n}</output></span><input className={s.countingSlider} id="counting-cube-size" type="range" min={4} max={16} value={n} onChange={e => setN(Number(e.target.value))} /></label>
+        <label htmlFor="counting-move-budget"><span>{t('步数预算', 'Move budget')} <output>k = {k}</output></span><input className={s.countingSlider} id="counting-move-budget" type="range" min={0} max={320} value={k} onChange={e => setK(Number(e.target.value))} /></label>
       </div>
       <figure className={s.bars}>
         {bars.map(({ label, bits }) => <div key={label}>
