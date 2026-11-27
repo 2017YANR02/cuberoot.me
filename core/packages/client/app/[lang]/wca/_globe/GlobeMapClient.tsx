@@ -22,7 +22,7 @@ import type { GeoJSONSource, MapMouseEvent, MapGeoJSONFeature } from 'maplibre-g
 import 'maplibre-gl/dist/maplibre-gl.css';
 import * as OpenCC from 'opencc-js';
 import { localizeCity } from '@/lib/city-localize';
-import { stripWcaPrefix } from '@/lib/comp-localize';
+import { localizeCompName as localizeSharedCompName } from '@cuberoot/shared/comp-localize';
 import { compNameZh } from '@/lib/country-flags';
 import { countryName } from '@/lib/country-name';
 import { statsUrl, staticUrl } from '@/lib/stats-base';
@@ -803,18 +803,18 @@ export default function GlobeMapClient({ embedded = false }: { embedded?: boolea
     }
   }, [isZh, nameZhMap, compNameEnToZh]);
 
-  const localizeCompName = useCallback((id: string, name: string): string => {
-    if (!name) return name;
-    const resolved = (() => {
-      if (!isZh) return name;
-      const zh1 = nameZhMap?.get(id)?.name_zh;
-      if (zh1) return zh1;
-      const zh2 = compNameEnToZh?.[name];
-      if (zh2) return zh2;
-      if (CJK_RE.test(name)) { try { return openccT2S(name); } catch { /* */ } }
-      return name;
-    })();
-    return stripWcaPrefix(resolved);
+  const localizeCompName = useCallback((id: string, name: string, zh = isZh): string => {
+    return localizeSharedCompName(id, name, zh, {
+      explicitNameZh: nameZhMap?.get(id)?.name_zh,
+      resolveNameZh: (canonicalName) => {
+        const mappedName = compNameEnToZh?.[canonicalName] || compNameZh(canonicalName);
+        if (mappedName) return mappedName;
+        if (CJK_RE.test(canonicalName)) {
+          try { return openccT2S(canonicalName); } catch { /* Retain the source name. */ }
+        }
+        return '';
+      },
+    });
   }, [isZh, nameZhMap, compNameEnToZh]);
   const localizeCompNameRef = useRef(localizeCompName);
   useEffect(() => { localizeCompNameRef.current = localizeCompName; }, [localizeCompName]);
@@ -852,15 +852,15 @@ export default function GlobeMapClient({ embedded = false }: { embedded?: boolea
     if (q.length < 2) return [];
     const seen = new Set<string>();
     const matches: CompResult[] = [];
-    const isHit = (name: string, city: string, country?: string): boolean => {
+    const isHit = (id: string, name: string, city: string, country?: string): boolean => {
       if (name.toLowerCase().includes(q)) return true;
       if (city.toLowerCase().includes(q)) return true;
-      if (compNameZh(name).includes(raw)) return true;
+      if (localizeCompName(id, name, true).toLowerCase().includes(q)) return true;
       if (city && localizeCity(city, true, country).includes(raw)) return true;
       return false;
     };
     for (const c of (comps ?? [])) {
-      if (isHit(c.name, c.city, c.country)) {
+      if (isHit(c.id, c.name, c.city, c.country)) {
         seen.add(c.id);
         matches.push({ id: c.id, name: c.name, city: c.city, country: c.country, lng: c.longitude_degrees, lat: c.latitude_degrees, date: c.start_date, tag: 'upcoming' });
       }
@@ -868,7 +868,7 @@ export default function GlobeMapClient({ embedded = false }: { embedded?: boolea
     for (const c of (pastComps ?? [])) {
       if (seen.has(c.id)) continue;
       if (c.latitude_degrees == null || c.longitude_degrees == null) continue;
-      if (isHit(c.name, c.city, c.country)) {
+      if (isHit(c.id, c.name, c.city, c.country)) {
         matches.push({ id: c.id, name: c.name, city: c.city, country: c.country, lng: c.longitude_degrees, lat: c.latitude_degrees, date: c.start_date, tag: 'past' });
       }
     }
@@ -877,7 +877,7 @@ export default function GlobeMapClient({ embedded = false }: { embedded?: boolea
       return b.date.localeCompare(a.date);
     });
     return matches.slice(0, 8);
-  }, [searchQuery, comps, pastComps]);
+  }, [searchQuery, comps, pastComps, localizeCompName]);
   // 一旦开始搜索就把历史比赛拉进来(才能搜到 past comp);loadPastCompsOnce 整页只下一次
   useEffect(() => {
     if (searchQuery.trim().length < 2 || pastComps !== null || pastLoading) return;
