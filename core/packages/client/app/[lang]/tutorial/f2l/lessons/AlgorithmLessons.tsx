@@ -7,10 +7,12 @@ import useReferenceFitFallback from '../../components/useReferenceFitFallback';
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { parseAsString, useQueryState, useQueryStates } from 'nuqs';
-import { Shuffle, Wand2 } from '@app-foundation/icons/lucide';
+import { Play, Shuffle, Wand2 } from '@app-foundation/icons/lucide';
 import { Alg } from 'cubing/alg';
 import { VisualCube } from '@/components/VisualCube';
 import { Tooltip } from '@/components/Tooltip';
+import SettingsDialog from '@/components/SettingsDialog';
+import { AlgFormulaReadRow } from '@/components/AlgFormulaRow';
 import AlgPlayer, { type AlgPlayerHandle } from '@/components/AlgPlayer/AlgPlayer';
 import { tr, T } from '@/i18n/tr';
 import ClassifiedSectionNavigation from '../components/ClassifiedSectionNavigation';
@@ -29,6 +31,7 @@ export default function AlgorithmLessons({ stepId, orientation, pauseBetween, fl
   const [caseName, setCaseName] = useQueryState('algCase', parseAsString.withDefault('').withOptions({ history: 'replace' }));
   const [{ algGroup }, setSelection] = useQueryStates({ algGroup: parseAsString, algCase: parseAsString }, { history: 'replace' });
   const [, setPracticeRoute] = useQueryStates({ view: parseAsString, step: parseAsString, algCase: parseAsString, algGroup: parseAsString });
+  const [dialogContainer, setDialogContainer] = useState<HTMLDivElement | null>(null);
   const player = useRef<AlgPlayerHandle>(null);
   const segmentFrame = useRef(0);
   const actualStep = useRef(0);
@@ -129,26 +132,11 @@ export default function AlgorithmLessons({ stepId, orientation, pauseBetween, fl
       </span>
     </button>
   )) : [];
-  return <>
-    <TutorialNavigationShell className="f2l-study-layout">
-
-      {!lesson ? <p><T zh="本节教学案例待补充" en="Teaching examples for this chapter are being prepared." /></p> : <>
-        {classified && activeCategory ? <ClassifiedSectionNavigation active={activeCategory} orientation={orientation}
-          onSelect={id => void setSelection({ algGroup: id, algCase: null })} /> : chapter === 4 ? <SectionNavigation label={tr(f2lGroupName(activeGroup))} items={lessonGroups.map((group) => ({ id: String(group), icon: sectionIcon(lessons.find(c => c.group === group)!.name), label: tr(f2lGroupName(group)), active: activeGroup === group, onSelect: () => void setSelection({ algGroup: group, algCase: null }) }))} /> : <SectionNavigation label={lesson.name} items={visibleLessons.map((c) => ({ id: String(c.name), icon: sectionIcon(c.name), label: c.name, active: lesson.name === c.name, onSelect: () => setCaseName(c.name) }))} />}
-        <div className="f2l-study-main">
-          {!showGallery && activeCategory?.recognition && <p>{tr(activeCategory.recognition)}</p>}
-          {showGallery ? <>
-            <ReadingFit><div data-tutorial-layout="E">
-            {activeCategory?.recognition && <p>{tr(activeCategory.recognition)}</p>}
-            <div className="f2l-recognition f2l-teaching-cases" role="group" aria-label={tr({ zh: '选择教学情况', en: 'Choose a teaching case' })}>
-              {visibleLessons.map(c => <button type="button" key={c.name} className="f2l-section-button" onClick={() => void setCaseName(c.name)}>
-                <VisualCube local loading="lazy" view="iso" size={120} faceletColors={diagrams.find(item => item.name === c.name)!.facelets} alt="" />
-                <span>{c.name}</span>
-              </button>)}
-            </div>
-            </div></ReadingFit>
-            <StudyActions onPrevious={previousSection} onContinue={nextSection} />
-          </> : <>
+  const startPractice = () => {
+    cancelSegment();
+    void setPracticeRoute({ view: 'practice', algCase: lesson.name }, { history: 'push' });
+  };
+  const teachingContent = lesson ? <>
           <div className="f2l-teaching-alg-summary">
             <div className="f2l-teaching-alg-row">
               <Tooltip content={tr({ zh: '打乱', en: 'Scramble' })}>{tip =>
@@ -179,7 +167,7 @@ export default function AlgorithmLessons({ stepId, orientation, pauseBetween, fl
                 {stageButtons.map((button, index) => <li key={lesson.sections[index].start}>{button}</li>)}
               </ol>
             </section>}
-          {chapter === 4 && <>
+          {chapter === 4 && !classified && <>
             <button type="button" className="f2l-case-return-text tutorial-inline-action" onClick={() => void setSelection({ algGroup: activeGroup, algCase: null })}>
               <T zh="点击返回选择" en="Click to return to case selection" />
             </button>
@@ -187,13 +175,57 @@ export default function AlgorithmLessons({ stepId, orientation, pauseBetween, fl
             </ReadingFit></div>
           </div></div>
 
+  </> : null;
+  return <>
+    <div ref={setDialogContainer} className="f2l-alg-dialog-host" />
+    <TutorialNavigationShell className="f2l-study-layout">
+
+      {!lesson ? <p><T zh="本节教学案例待补充" en="Teaching examples for this chapter are being prepared." /></p> : <>
+        {classified && activeCategory ? <ClassifiedSectionNavigation active={activeCategory} orientation={orientation}
+          onSelect={id => void setSelection({ algGroup: id, algCase: null })} /> : chapter === 4 ? <SectionNavigation label={tr(f2lGroupName(activeGroup))} items={lessonGroups.map((group) => ({ id: String(group), icon: sectionIcon(lessons.find(c => c.group === group)!.name), label: tr(f2lGroupName(group)), active: activeGroup === group, onSelect: () => void setSelection({ algGroup: group, algCase: null }) }))} /> : <SectionNavigation label={lesson.name} items={visibleLessons.map((c) => ({ id: String(c.name), icon: sectionIcon(c.name), label: c.name, active: lesson.name === c.name, onSelect: () => setCaseName(c.name) }))} />}
+        <div className="f2l-study-main">
+          {!classified && !showGallery && activeCategory?.recognition && <p>{tr(activeCategory.recognition)}</p>}
+          {(classified || showGallery) ? <>
+            <ReadingFit><div data-tutorial-layout="E">
+            {activeCategory?.recognition && <p>{tr(activeCategory.recognition)}</p>}
+            {classified ? <ul className="f2l-alg-card-grid" aria-label={tr({ zh: '选择教学情况', en: 'Choose a teaching case' })}>
+              {visibleLessons.map(c => <li key={c.name} data-site-surface="panel">
+                <button type="button" className="f2l-alg-card-preview" aria-haspopup="dialog" onClick={() => void setCaseName(c.name)}>
+                  <VisualCube local loading="lazy" view="iso" size={104} faceletColors={diagrams.find(item => item.name === c.name)!.facelets} alt="" />
+                  <span>{c.name}</span>
+                </button>
+                <AlgFormulaReadRow selected actions={<button type="button" className="f2l-alg-card-play" aria-haspopup="dialog"
+                  aria-label={tr({ zh: '演示', en: 'Play' }) + ' ' + c.name} onClick={() => void setCaseName(c.name)}><Play size="1em" aria-hidden="true" /></button>}>
+                  <code>{c.alg}</code>
+                </AlgFormulaReadRow>
+              </li>)}
+            </ul> : <div className="f2l-recognition f2l-teaching-cases" role="group" aria-label={tr({ zh: '选择教学情况', en: 'Choose a teaching case' })}>
+              {visibleLessons.map(c => <button type="button" key={c.name} className="f2l-section-button" onClick={() => void setCaseName(c.name)}>
+                <VisualCube local loading="lazy" view="iso" size={120} faceletColors={diagrams.find(item => item.name === c.name)!.facelets} alt="" />
+                <span>{c.name}</span>
+              </button>)}
+            </div>}
+
+            </div></ReadingFit>
+            <StudyActions onPrevious={previousSection} onContinue={nextSection} />
+          </> : <>
+          {teachingContent}
+
           <StudyActions onPrevious={previousSection} onContinue={nextSection}>
-            <button type="button" className="f2l-footer-button f2l-footer-next tutorial-practice-button" onClick={() => {
-              void setPracticeRoute({ view: 'practice', algCase: lesson.name }, { history: 'push' });
-            }}><T zh="练习" en="Practice" /></button>
+            <button type="button" className="f2l-footer-button f2l-footer-next tutorial-practice-button" onClick={startPractice}><T zh="练习" en="Practice" /></button>
           </StudyActions>
           </>}
         </div>
       </>}
-    </TutorialNavigationShell></>;
+    </TutorialNavigationShell>
+    {classified && selectedLesson && dialogContainer && <SettingsDialog label={lesson.name} heading surface="dialog"
+      panelClassName="f2l-alg-dialog f2l-study-layout" portalContainer={dialogContainer}
+      onCloseStart={cancelSegment}
+      onClose={() => void setSelection({ algGroup: activeGroup, algCase: null })}>
+      <div className="f2l-study-main f2l-alg-dialog-content">{teachingContent}</div>
+      <div className="f2l-alg-dialog-actions">
+        <button type="button" className="btn-primary" onClick={startPractice}><T zh="练习" en="Practice" /></button>
+      </div>
+    </SettingsDialog>}
+  </>;
 }
