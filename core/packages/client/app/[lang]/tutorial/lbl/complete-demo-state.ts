@@ -112,7 +112,7 @@ const solved = (cube: Cube) => AllFaces.every(face => cube.faces[face].every((_,
 const bottomCornerCount = (cube: Cube) => sides.filter((face, i) =>
   matches(cube, face, 8) && matches(cube, sides[(i + 1) % 4], 6)
   && matches(cube, Face.D, [2, 8, 6, 0][i])).length;
-const middleEdgeCount = (cube: Cube) => sides.filter((face, i) =>
+export const middleEdgeCount = (cube: Cube) => sides.filter((face, i) =>
   matches(cube, face, 5) && matches(cube, sides[(i + 1) % 4], 3)).length;
 const grayCount = (cube: Cube) => cornerIndices.filter(i => !matches(cube, Face.U, i)).length;
 const yellowCornerSignature = (cube: Cube) => [Face.U, ...sides].flatMap(face =>
@@ -121,7 +121,10 @@ const eyes = (cube: Cube) => sides.filter(face => color(cube, face, 0) === color
 const walls = (cube: Cube) => sides.filter(face => [0, 1, 2].every(i => matches(cube, face, i)));
 
 export function demoGoalReached(stage: string, alg: string): boolean {
-  const cube = state(alg);
+  return demoGoalReachedOnCube(stage, state(alg));
+}
+
+export function demoGoalReachedOnCube(stage: string, cube: Cube): boolean {
   switch (stage) {
     case 'daisy': return petals(cube).length === 4;
     case 'cross': return sides.every(face => matches(cube, face, 7)) && edgeIndices.every(i => matches(cube, Face.D, i));
@@ -591,7 +594,7 @@ export function walkthroughCompletionStickers(stage: LblLessonStageId, alg: stri
 }
 
 /** Track the same edge and matching center throughout alignment and insertion. */
-function buildWalkthroughCrossDemo(setup: string): CompleteDemo {
+export function buildWalkthroughCrossDemo(setup: string): CompleteDemo {
   const alg = buildBottomCrossFromDaisy(setup);
   const moves = movesOf(alg);
   const phases: DemoPhase[] = [];

@@ -22,6 +22,8 @@
 import { forwardRef, useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState, type CSSProperties, type ReactNode } from 'react';
 import { Lock } from '@app-foundation/icons/lucide';
 import { invertMoveString } from '@cuberoot/shared/alg-notation';
+import { QUAT_IDENTITY, quatAngleTo, quatInverse, quatMul, slerpTowards, type Quat } from '@cuberoot/shared/smart-cube/orientation';
+import { notationQuaternion } from '@cuberoot/shared/timer/reconstruct/gyro-orient';
 import { planLiveSimUpdate, type SimLogState } from '@cuberoot/shared/timer/sim-log';
 import SimStage, { afterFirstPaint } from '@/components/sim-embed/SimStage';
 import { useT } from '@/hooks/useT';
@@ -121,6 +123,7 @@ const AlgSimPlayer = forwardRef<AlgPlayerHandle, {
   stickerColorOverrides?: Readonly<Record<string, string>>;
   setup?: string;
   livePosition?: SimLogState;
+  liveOrientation?: { current: Quat | null };
   orientation?: string;
   sceneRot?: { x: number; y: number; z: number };
   hintFacelets?: boolean;
@@ -159,7 +162,7 @@ const AlgSimPlayer = forwardRef<AlgPlayerHandle, {
   fillPane?: boolean;
 }>(function AlgSimPlayer({
   alg, puzzle, puzzleOrder, set, additionalStickering, hiddenStickers, outlinedStickers, highlightedStickers, frontFaceArrow, moveHint, moveHintRecovery = false, stickerColorOverrides, setup, orientation = '', sceneRot, startSolved = false, autoPlay = false, playRequest = 0, loop = false, resetAfterPlayback = false, controlMode = 'full', stepMarkers, hideResetView = false, interactionMode = 'view', lockView = false, wholeCubeDrag, onUserMove, onCubeletTap, orbitSnapDegrees, orbitSnapLocked, pauseAfterSteps, sectionPauseMs, onStepChange, onReady, stickeringAtStep, highlightDaisyAlignment = false, showHands = false, moveDurationMs, size = 260, fillPane = false,
-  stageOverlay, daisyAlignmentFace, hintFacelets = false, maxFramingEdge, allowUserLayerTurn, onBlockedUserLayerTurn, cornerSlotHint, handsVisible = true, holdReferenceThumb = false, moveHintStyle, livePosition,
+  stageOverlay, daisyAlignmentFace, hintFacelets = false, maxFramingEdge, allowUserLayerTurn, onBlockedUserLayerTurn, cornerSlotHint, handsVisible = true, holdReferenceThumb = false, moveHintStyle, livePosition, liveOrientation,
 }, ref) {
   const t = useT();
   const [handsUnavailable, setHandsUnavailable] = useState(false);
@@ -441,6 +444,8 @@ const AlgSimPlayer = forwardRef<AlgPlayerHandle, {
   /** 上一帧同步到引擎的状态 —— 用来判断「是不是刚好往前一步」。 */
   const lastRef = useRef<{ sequenceKey: string; setupAlg: string; step: number } | null>(null);
   const lastLivePosition = useRef<SimLogState | null>(null);
+  const liveOrientationRef = useRef(liveOrientation);
+  liveOrientationRef.current = liveOrientation;
 
   // 换公式 = 从头开始。
   useEffect(() => { jumpToStep(0); setPlaying(false); }, [sequenceKey, jumpToStep]);
@@ -469,12 +474,42 @@ const AlgSimPlayer = forwardRef<AlgPlayerHandle, {
       ? await import('./daisy-alignment') : null;
     let hands: HandsRig | null = null;
     let alignment: ReturnType<NonNullable<typeof alignmentModule>['attachDaisyAlignment']> | undefined;
+    let shownOrientation: Quat | undefined;
+    let appliedOffset: Quat | undefined;
+    let shownModelPose: string | undefined;
+    let inverseModelPose = QUAT_IDENTITY;
+    const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+    const followLiveOrientation = (world: SimMount['world'], dt: number) => {
+      const target = liveOrientationRef.current?.current;
+      const modelPose = lastLivePosition.current?.pose;
+      if (!target || modelPose === undefined) {
+        if (!appliedOffset) return false;
+        appliedOffset = undefined;
+        shownOrientation = undefined;
+        world.cube.quaternion.identity();
+        world.cube.updateMatrix();
+        return true;
+      }
+      if (modelPose !== shownModelPose) {
+        inverseModelPose = quatInverse(notationQuaternion(modelPose));
+        shownModelPose = modelPose;
+      }
+      shownOrientation = shownOrientation && !reducedMotion.matches ? slerpTowards(shownOrientation, target, dt) : target;
+      // The move log has already applied its teaching pose to the piece coordinates.
+      const offset = quatMul(shownOrientation, inverseModelPose);
+      if (appliedOffset && quatAngleTo(appliedOffset, offset) <= 1e-4) return false;
+      appliedOffset = offset;
+      world.cube.quaternion.set(offset.x, offset.y, offset.z, offset.w);
+      world.cube.updateMatrix();
+      return true;
+    };
     const m = mountSimWorld({ host, puzzle: puzzleKind, interactive: true, sceneRot, maxFramingEdge,
-      onFrame: (_world, dt) => {
+      onFrame: (world, dt) => {
+        const orientationChanged = followLiveOrientation(world, dt);
         const handsChanged = hands?.tick(dt, holdReferenceThumbRef.current);
         const hintChanged = updateMoveHintRef.current?.() ?? false;
         const cornerHintChanged = updateCornerSlotHint.current?.() ?? false;
-        return (alignment?.update() ?? false) || (handsChanged ?? false) || hintChanged || cornerHintChanged;
+        return (alignment?.update() ?? false) || (handsChanged ?? false) || hintChanged || cornerHintChanged || orientationChanged;
       },
       onRendered: () => { for (const listener of viewListeners.current) listener(); },
     });

@@ -24,6 +24,7 @@
 .lbl-practice-page .lbl-exercise { box-sizing: border-box; min-height: 0; margin-top: 0; display: grid; grid-template-rows: 64px minmax(0, 1fr) auto; }
 .lbl-practice-page .lbl-exercise-heading { min-height: 0; overflow: auto; }
 .lbl-practice-heading-actions { display: flex; flex: none; align-items: center; gap: 6px; }
+.lbl-practice-heading-actions .lbl-smart-practice-link { display: inline-flex; align-items: center; min-height: 44px; font-size: .85rem; white-space: nowrap; }
 .lbl-practice-device {
   display: inline-flex;
   align-items: center;
@@ -45,13 +46,6 @@
 .lbl-practice-device:focus-visible { border-color: var(--border-strong); }
 .lbl-practice-device[data-connected='true'] { color: var(--accent); }
 .lbl-practice-page .lbl-exercise[data-single-heading] .lbl-exercise-heading { gap: 8px; }
-.lbl-exercise[data-single-heading] .lbl-practice-device { min-block-size: 44px; padding-inline: 6px; }
-.lbl-exercise[data-single-heading] .lbl-practice-device-label { display: none; }
-.lbl-exercise[data-single-heading] .lbl-practice-device-compact { display: inline; }
-.lbl-practice-cube-setup { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; font-size: .85rem; }
-.lbl-practice-page .lbl-cube[data-live-fallback] > .alg-sim-player { visibility: hidden; }
-.lbl-practice-live-fallback { position: absolute; inset: 0; pointer-events: none; }
-.lbl-practice-live-fallback svg { display: block; width: 100%; height: 100%; }
 .lbl-practice-page .lbl-exercise .lbl-basic-content { min-height: 0; overflow: auto; overscroll-behavior: contain; align-items: start; }
 .lbl-practice-page .lbl-exercise .lbl-basic-copy { align-self: start; padding-top: 16px; }
 .lbl-practice-page .lbl-exercise-reference { display: grid; }

@@ -39,3 +39,8 @@ it('falls back for invalid parameters and disables the global previous action', 
   expect(props.initialIndex).toBe(props.exampleOrder![0]);
   expect(props.onPreviousChapter).toBeUndefined();
 });
+it('keeps the existing drag practice entry and lesson review history', () => {
+  const props = render();
+  props.onClose();
+  expect(state.setRoute).toHaveBeenCalledWith({ view: null, step: 'corners', case: '2' }, { history: 'push' });
+});

@@ -945,6 +945,10 @@ export const PAGE_META: Record<string, PageMetaEntry> = {
     title: { zh: '三阶魔方层先法', en: '3×3 LBL' },
     description: { zh: '从小花到六面复原，跟随可交互魔方逐步学习三阶层先法。', en: 'Learn to solve the 3×3 layer by layer with interactive demonstrations, from the daisy to the last edges.' },
   },
+  'tutorial/lbl/smart-practice': {
+    title: { zh: '三阶层先法智能魔方练习', en: '3×3 LBL Smart Cube Practice' },
+    description: { zh: '连接蓝牙魔方，按三阶层先法逐题练习，实时同步转动并检查是否达到本题目标。', en: 'Connect a Bluetooth cube to practice 3×3 layer-by-layer exercises with live turns and goal checks.' },
+  },
   'tutorial/2x2-lbl': {
     title: { zh: '二阶魔方层先法', en: '2×2 Layer by Layer' },
     description: { zh: '用连续动画和可操作的魔方学习二阶层先法。', en: 'Learn the 2×2 layer-by-layer method with animated lessons and interactive practice.' },
