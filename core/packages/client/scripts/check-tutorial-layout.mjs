@@ -1,36 +1,140 @@
 import assert from 'node:assert/strict';
 import { mkdir } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
+import { parseArgs } from 'node:util';
 import { chromium, expect, webkit } from '@playwright/test';
 
+const { values } = parseArgs({ options: {
+  tutorial: { type: 'string', multiple: true },
+  all: { type: 'boolean' },
+  locale: { type: 'string', default: 'zh' },
+  quick: { type: 'boolean' },
+  webkit: { type: 'boolean' },
+  'last-layer': { type: 'boolean' },
+  help: { type: 'boolean' },
+} });
+if (values.help) {
+  console.log(`Usage: node scripts/check-tutorial-layout.mjs [--quick] [--webkit]
+  Without a target, run the original 2×2 LBL interaction and layout suite.
+  --last-layer              Run only the 2×2 LBL last-layer suite.
+  --all                     Check sample lessons from all current tutorials.
+  --tutorial <name|path>    Check a tutorial or direct lesson URL path. Repeatable.
+  --locale <zh|en|both>     Language for shared checks (default: zh).
+  --quick                   Use device sizes and breakpoint samples.
+  --webkit                  Use Playwright WebKit instead of Chromium.
+
+Examples:
+  node scripts/check-tutorial-layout.mjs --all --quick
+  node scripts/check-tutorial-layout.mjs --tutorial lbl --tutorial f2l --locale both --quick
+  node scripts/check-tutorial-layout.mjs --tutorial "/tutorial/lbl?view=practice&step=corners&case=1" --quick
+
+Set CUBEROOT_TUTORIAL_URL to use a preview other than http://127.0.0.1:3000.`);
+  process.exit(0);
+}
 const origin = process.env.CUBEROOT_TUTORIAL_URL ?? 'http://127.0.0.1:3000';
-const useWebKit = process.argv.includes('--webkit');
-const quick = process.argv.includes('--quick');
-const lastLayerOnly = process.argv.includes('--last-layer');
+const { webkit: useWebKit, quick, 'last-layer': lastLayerOnly, locale } = values;
+assert(['zh', 'en', 'both'].includes(locale), '--locale expects zh, en or both');
+assert(!(lastLayerOnly && (values.all || values.tutorial?.length)), '--last-layer is specific to the 2×2 LBL suite');
 const evidence = new URL('../../../../.tmp/png/', import.meta.url);
 const minRenderedCubeRatio = 0.45;
+const smallPhonePortrait = { width: 320, height: 568 };
+const smallPhoneLandscape = { width: smallPhonePortrait.height, height: smallPhonePortrait.width };
 const widths = [320, 375, 390, 440, 480, 600, 744, 760, 761, 844, 1024, 1280, 1440, 1920];
 const heights = [320, 350, 390, 499, 500, 501, 568, 720, 844, 956, 1024, 1200];
-const examples = [[320, 320], [320, 568], [390, 844], [440, 956], [568, 320], [844, 390],
-  [956, 440], [744, 900], [760, 760], [761, 760], [768, 1024], [1024, 768], [1440, 900], [1920, 1200]];
-const bySize = new Map((quick ? examples : [...widths.flatMap(width => heights.map(height => [width, height])), ...examples])
+const examples = [[smallPhonePortrait.width, smallPhonePortrait.height], [smallPhoneLandscape.width, smallPhoneLandscape.height],
+  [375, 667], [667, 375], [390, 844], [844, 390], [440, 956], [956, 440],
+  [744, 900], [760, 760], [761, 760], [900, 499], [900, 500], [900, 501], [1000, 600], [1000, 601],
+  [768, 1024], [1024, 768], [1280, 720], [1440, 900], [1920, 1200]];
+// Either axis can be the short one. The other must have room for a small phone's long side.
+const matrix = quick ? examples : [...examples, ...widths.flatMap(width => heights.map(height => [width, height]))];
+const bySize = new Map(matrix
+  .filter(([width, height]) => Math.min(width, height) >= smallPhonePortrait.width
+    && Math.max(width, height) >= smallPhonePortrait.height)
   .map(([width, height]) => [width + '×' + height, { width, height }]));
 const views = [...bySize.values()];
 const route = '/zh/tutorial/2x2-lbl';
+
+// Built-in paths exercise different page layouts. Direct lesson paths use the same checks.
+const tutorialSamples = new Map([
+  ['2x2-lbl', [
+    ['', '[data-course-section="overview"]'],
+    ['?step=lesson-2&section=white-orange-blue', '[data-course-section="white-orange-blue"]'],
+    ['?step=lesson-3&section=yellow-flowchart', '[data-course-section="yellow-flowchart"]'],
+  ]],
+  ['2x2-fl', [
+    ['', '[data-course-section="overview"]'],
+    ['?step=recognition', '.course-stage[data-tutorial-layout="F"]'],
+    ['?step=walkthrough', '[data-course-section="walkthrough"]'],
+  ]],
+  ['2x2-eg', [
+    ['', '.eg-overview'],
+    ['?step=cll&section=o', '.eg-case-grid'],
+    ['?section=side-colors', '[data-course-section="side-colors"]'],
+    ['?step=practice', '[data-course-section="eg-walkthrough"]'],
+  ]],
+  ['lbl', [
+    ['?step=structure', '.lbl-lesson-scroll [data-tutorial-layout]'],
+    ['?step=corners&case=1', '.lbl-lesson-scroll [data-tutorial-mode]'],
+    ['?view=practice&step=corners&case=1', '.lbl-exercise canvas'],
+    ['?view=walkthrough', '.lbl-complete-player'],
+  ]],
+  ['f2l', [
+    ['?step=lesson-1', '.f2l-lesson-scroll [data-tutorial-layout]'],
+    ['?step=lesson-2', '.f2l-case-introduction'],
+    ['?step=lesson-6', '[data-tutorial-layout="F"]'],
+    ['?step=lesson-12', '.f2l-lesson[data-tutorial-layout="B"]'],
+  ]],
+  ['ivy', [['', '.tutorial-article']]],
+]);
+
+function layoutTargets() {
+  const requests = [...(values.all ? tutorialSamples.keys() : []), ...(values.tutorial ?? [])];
+  const targets = new Map();
+  for (const request of requests) {
+    const samples = tutorialSamples.get(request);
+    const path = request === 'ivy' ? '/tutorial?puzzle=ivy' : '/tutorial/' + request;
+    for (const [destination, readySelector] of samples ? samples.map(([query, selector]) => [path + query, selector]) : [[request]]) {
+      // Use unprefixed paths for English, the site's default locale.
+      const match = /^(?:\/(zh|en))?(\/tutorial(?:\/[\w-]+)*\/?)(\?.*)?$/.exec(destination.startsWith('/')
+        ? destination : '/tutorial/' + destination);
+      assert(match, 'Expected a tutorial name or a /tutorial path: ' + destination);
+      const [, explicitLocale, pathname, query = ''] = match;
+      const queryLocale = new URLSearchParams(query).get('lang');
+      const languageOverride = ['zh', 'en'].includes(queryLocale) ? queryLocale : explicitLocale;
+      const languages = languageOverride ? [languageOverride] : locale === 'both' ? ['zh', 'en'] : [locale];
+      for (const language of languages) {
+        const url = (language === 'zh' ? '/zh' : '') + pathname + query;
+        if (!targets.has(url)) targets.set(url, { language, readySelector });
+      }
+    }
+  }
+  return targets;
+}
+
+const targets = layoutTargets();
 const browser = useWebKit ? await webkit.launch() : await chromium.launch({
   ...(process.env.CUBEROOT_CHROMIUM_PATH
     ? { executablePath: process.env.CUBEROOT_CHROMIUM_PATH } : { channel: 'chrome' }),
   args: ['--enable-webgl', '--use-angle=swiftshader', '--enable-unsafe-swiftshader'],
 });
 
-const page = await browser.newPage({ viewport: { width: 1280, height: 850 }, reducedMotion: 'reduce' });
-await page.addInitScript(() => {
-  const hideIndicator = () => document.querySelector('nextjs-portal')?.style.setProperty('display', 'none', 'important');
-  const observer = new MutationObserver(hideIndicator);
-  observer.observe(document, { childList: true, subtree: true });
-});
+async function openPage(language = 'zh') {
+  const surface = await browser.newPage({
+    viewport: { width: 1280, height: 850 },
+    reducedMotion: 'reduce',
+    locale: language === 'en' ? 'en-US' : 'zh-CN',
+  });
+  await surface.addInitScript(() => {
+    const hideIndicator = () => document.querySelector('nextjs-portal')?.style.setProperty('display', 'none', 'important');
+    const observer = new MutationObserver(hideIndicator);
+    observer.observe(document, { childList: true, subtree: true });
+  });
+  return surface;
+}
+
+const page = targets.size ? null : await openPage();
 const errors = [];
-page.on('pageerror', error => errors.push(error.message));
+page?.on('pageerror', error => errors.push(error.message));
 
 const cube = () => page.locator('[data-course-cube]');
 const canvas = () => cube().locator('canvas').first();
@@ -46,9 +150,9 @@ async function skipUnfinishedSection() {
 const currentSection = id => page.locator('[data-course-section="' + id + '"]').waitFor();
 const waitForStep = (step, section = null) => page.waitForURL(url =>
   url.searchParams.get('step') === step && url.searchParams.get('section') === section);
-const setViewport = async viewport => {
-  await page.setViewportSize(viewport);
-  await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
+const setViewport = async (viewport, surface = page) => {
+  await surface.setViewportSize(viewport);
+  await surface.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
 };
 async function ready() {
   await page.locator('[data-course-cube][data-ready="true"] canvas').first().waitFor();
@@ -60,11 +164,146 @@ async function checkDemoOverflow(demo, { width, height }) {
   )), { message: 'The demonstration dialog needs scrolling at ' + width + '×' + height, timeout: 4000 })
     .toBeLessThanOrEqual(1);
 }
-async function evidenceScreenshot(name) {
+async function evidenceScreenshot(name, surface = page) {
   await mkdir(evidence, { recursive: true });
   const path = fileURLToPath(new URL(name + '.png', evidence));
-  await page.screenshot({ path });
+  await surface.screenshot({ path, timeout: 5000 });
   return path;
+}
+
+// Inspect the tutorial shell, allowing local scrolling and full-page scrolling on articles.
+function measureTutorialLayout(root) {
+  const visible = node => {
+    const box = node.getBoundingClientRect();
+    return box.width > 0 && box.height > 0 && getComputedStyle(node).visibility === 'visible';
+  };
+  const label = node => (node.getAttribute('aria-label') ?? node.textContent.trim()) || node.className;
+  const regions = selector => [...root.querySelectorAll(selector)].filter(visible);
+  const ruler = document.documentElement;
+  const tolerance = 1;
+  const issues = [];
+  const framed = root.matches('.tutorial-course, .lbl-page, .lbl-practice-page, .f2l-page');
+  if (ruler.scrollWidth > ruler.clientWidth + tolerance) {
+    issues.push('document overflows horizontally by ' + (ruler.scrollWidth - ruler.clientWidth) + ' px');
+  }
+  if (framed && ruler.scrollHeight > ruler.clientHeight + tolerance) {
+    issues.push('fixed tutorial shell scrolls by ' + (ruler.scrollHeight - ruler.clientHeight) + ' px');
+  }
+
+  const chrome = regions('footer, .lbl-basic-footer, .lbl-demo-toolbar, .f2l-dock-host');
+  const controls = chrome.flatMap(row => [...row.querySelectorAll('button:enabled, a[href], summary, [role="slider"], input[type="range"]')]);
+  for (const control of new Set(controls)) {
+    if (!visible(control) || control.closest('[inert], [aria-hidden="true"], details:not([open]) > :not(summary)')) continue;
+    const { left, top, right, bottom, width, height } = control.getBoundingClientRect();
+    const hit = document.elementFromPoint(left + width / 2, top + height / 2);
+    if (framed && (left < -tolerance || right > ruler.clientWidth + tolerance
+      || top < -tolerance || bottom > ruler.clientHeight + tolerance)) {
+      issues.push('control outside viewport: ' + label(control));
+    } else if (hit && !control.contains(hit)) {
+      issues.push('covered control: ' + label(control));
+    }
+  }
+
+  const stages = regions('[data-tutorial-layout]');
+  const pairs = [
+    ['[data-course-grid]', '[data-course-cube]', '[data-course-caption]'],
+    ['.lbl-content[data-tutorial-layout]', '.lbl-demonstration', '.lbl-explanation'],
+    ['.lbl-demo-split', '.lbl-cube', '.lbl-complete-thought'],
+    ['.lbl-basic-content', '.lbl-cube', '.lbl-basic-copy'],
+    ['.f2l-lesson[data-tutorial-layout]', '.f2l-cube', '.f2l-guidance'],
+  ];
+  for (const [gridSelector, cubeSelector, captionSelector] of pairs) {
+    for (const grid of regions(gridSelector)) {
+      const cube = grid.querySelector(cubeSelector);
+      const explanation = grid.querySelector(captionSelector);
+      if (!cube || !explanation || !visible(cube) || !visible(explanation)) continue;
+      const cubeBox = cube.getBoundingClientRect();
+      if (Math.min(cubeBox.width, cubeBox.height) < 84) issues.push('cube viewport is smaller than 84 px');
+      // Some practice layouts reserve an empty caption before a case has been set up.
+      const hasCopy = [...explanation.childNodes].some(node => node.nodeType === Node.TEXT_NODE
+        ? node.textContent.trim() : node instanceof Element && visible(node) && !node.closest('[aria-hidden="true"]'));
+      if (!hasCopy) continue;
+      const caption = explanation.getBoundingClientRect();
+      if (caption.height < 32) issues.push('explanation is shorter than 32 px');
+      if (Math.min(cubeBox.right, caption.right) - Math.max(cubeBox.left, caption.left) > tolerance
+        && Math.min(cubeBox.bottom, caption.bottom) - Math.max(cubeBox.top, caption.top) > tolerance) {
+        issues.push('cube overlaps the explanation');
+      }
+    }
+  }
+
+  const reading = regions([
+    '[data-course-caption]', '[data-course-reading]', '[data-fit-fallback]',
+    '.lbl-lesson-scroll', '.lbl-explanation', '.lbl-practice-side-content', '.f2l-lesson-scroll', '.f2l-guidance',
+  ].join(', '));
+  for (const region of reading) {
+    const { overflowX, overflowY } = getComputedStyle(region);
+    if (!['auto', 'scroll'].includes(overflowX) && region.scrollWidth > region.clientWidth + tolerance) {
+      issues.push('content clipped horizontally: ' + (region.className || region.tagName));
+    }
+    if (['auto', 'scroll'].includes(overflowY) && region.scrollHeight > region.clientHeight + tolerance) {
+      const previous = region.scrollTop;
+      const end = region.scrollHeight - region.clientHeight;
+      region.scrollTo({ top: end, behavior: 'instant' });
+      if (Math.abs(region.scrollTop - end) > tolerance) issues.push('cannot scroll to the end: ' + region.className);
+      region.scrollTo({ top: previous, behavior: 'instant' });
+    }
+  }
+  return { issues, layouts: [...new Set(stages.map(node => node.dataset.tutorialLayout))] };
+}
+
+async function checkTutorials() {
+  const failures = [];
+  for (const [path, { language, readySelector }] of targets) {
+    const surface = await openPage(language);
+    const pageErrors = new Set();
+    const issues = new Map();
+    const layouts = new Set();
+    const screenshotName = 'tutorial-layout-' + path.replace(/[^\w-]+/g, '-').replace(/^-/, '').slice(0, 100);
+    let screenshot;
+    surface.on('pageerror', error => pageErrors.add(error.message));
+    try {
+      const response = await surface.goto(new URL(path, origin).href, { waitUntil: 'commit' });
+      assert(response?.ok(), 'HTTP ' + response?.status());
+      const finalPath = new URL(response.url()).pathname;
+      assert.equal(finalPath.startsWith('/zh/') ? 'zh' : 'en', language, 'Unexpected language at ' + finalPath);
+      const main = surface.locator('main:visible').first();
+      await main.waitFor();
+      if (readySelector) await main.locator(readySelector).first().waitFor();
+      for (const viewport of views) {
+        await setViewport(viewport, surface);
+        let report = await main.evaluate(measureTutorialLayout);
+        if (report.issues.length) {
+          // The viewport may have changed before ResizeObserver-driven panes settle.
+          await expect.poll(async () => {
+            report = await main.evaluate(measureTutorialLayout);
+            return report.issues;
+          }, { timeout: 1500 }).toEqual([]).catch(() => {});
+        }
+        for (const layout of report.layouts) layouts.add(layout);
+        const size = viewport.width + '×' + viewport.height;
+        for (const issue of report.issues) {
+          if (!issues.has(issue)) issues.set(issue, new Set());
+          issues.get(issue).add(size);
+        }
+        if (report.issues.length && !screenshot) {
+          screenshot = await evidenceScreenshot(screenshotName + '-' + size, surface).catch(() => null);
+        }
+      }
+      for (const error of pageErrors) issues.set('page error: ' + error, new Set());
+      if (issues.size) throw new Error([...issues].map(([issue, sizes]) =>
+        issue + (sizes.size ? ' [' + [...sizes].slice(0, 6).join(', ') + (sizes.size > 6 ? ', …' : '') + ']' : '')).join('\n  '));
+      console.log('PASS ' + path + ' · ' + views.length + ' viewports' + (layouts.size ? ' · ' + [...layouts].sort().join('/') : ''));
+    } catch (error) {
+      failures.push(path);
+      console.error('FAIL ' + path + '\n  ' + error.message);
+      screenshot ??= await evidenceScreenshot(screenshotName + '-failure', surface).catch(() => null);
+      if (screenshot) console.error('  Screenshot: ' + screenshot);
+    } finally {
+      await surface.close();
+    }
+  }
+  if (failures.length) throw new Error(failures.length + ' of ' + targets.size + ' tutorial pages failed the shared layout checks');
 }
 
 async function checkOverview(locale, id = 'overview') {
@@ -88,14 +327,14 @@ async function checkOverview(locale, id = 'overview') {
 
   for (const [width, height] of examples) {
     await setViewport({ width, height });
-    const report = await overview.evaluate((section, selector) => {
+    await expect.poll(() => overview.evaluate((section, selector) => {
       const footer = document.querySelector('[data-course-footer]');
       const lastStep = section.querySelector(selector);
       const scrollport = section.querySelector('[data-fit-fallback]') ?? section;
       const composition = section.querySelector('.course-overview, .two-lbl-chapter-overview').getBoundingClientRect();
       const viewport = scrollport.getBoundingClientRect();
       const offset = scrollport.scrollTop;
-      scrollport.scrollTop = scrollport.scrollHeight;
+      scrollport.scrollTo({ top: scrollport.scrollHeight, behavior: 'instant' });
       const last = lastStep.getBoundingClientRect();
       const end = footer.getBoundingClientRect();
       const content = section.getBoundingClientRect();
@@ -112,10 +351,15 @@ async function checkOverview(locale, id = 'overview') {
           return image.width >= 40 && image.left >= content.left - 1 && image.right <= content.right + 1;
         }),
       };
-      scrollport.scrollTop = offset;
+      scrollport.scrollTo({ top: offset, behavior: 'instant' });
       return result;
-    }, lastSelector);
-    assert(Object.values(report).every(Boolean), id + ' (' + locale + ') ' + width + '×' + height + ': ' + JSON.stringify(report));
+    }, lastSelector), { message: id + ' (' + locale + ') ' + width + '×' + height }).toEqual({
+      fitsViewport: true,
+      footerClear: true,
+      lastStepReachable: true,
+      centeredOnMobile: true,
+      diagramsFit: true,
+    });
   }
   console.log(id + ' (' + locale + ') passed at ' + examples.length + ' viewports.');
 }
@@ -539,13 +783,14 @@ async function checkTouchRotation() {
 }
 
 async function checkLastLayerChapters() {
-  await page.goto(origin + route + '?step=lesson-3');
+  const navigation = { waitUntil: 'commit' };
+  await page.goto(origin + route + '?step=lesson-3', navigation);
   await checkOverview('zh', 'yellow-overview');
-  await page.goto(origin + route + '?step=lesson-3&section=yellow-flowchart');
+  await page.goto(origin + route + '?step=lesson-3&section=yellow-flowchart', navigation);
   await page.getByText('进入角位置', { exact: true }).click();
   await page.waitForURL(url => url.searchParams.get('step') === 'lesson-4' && !url.searchParams.has('section'));
   await checkOverview('zh', 'corner-overview');
-  await page.goto(origin + route + '?step=lesson-4&section=corner-flowchart');
+  await page.goto(origin + route + '?step=lesson-4&section=corner-flowchart', navigation);
   const flowchart = page.locator('[data-course-section="corner-flowchart"][data-tutorial-layout="G"]');
   await flowchart.waitFor();
   const cards = flowchart.locator('[data-eye-case]');
@@ -569,7 +814,7 @@ async function checkLastLayerChapters() {
   ];
   for (const [section, chapter, align, alg] of cases) {
     await setViewport({ width: 1440, height: 900 });
-    await page.goto(`${origin}${route}?step=lesson-${chapter}&section=${section}`);
+    await page.goto(`${origin}${route}?step=lesson-${chapter}&section=${section}`, navigation);
     await currentSection(section);
     await ready();
     const board = await canvas().elementHandle();
@@ -600,7 +845,7 @@ async function checkLastLayerChapters() {
       await playhead.press('End');
       await video.locator('[data-tutorial-layout="D"]').waitFor();
       assert.deepEqual(await video.locator('figcaption').allTextContents(), ['有眼', '无眼']);
-      for (const viewport of [{ width: 320, height: 320 }, { width: 390, height: 844 }, { width: 844, height: 390 }]) {
+      for (const viewport of [smallPhonePortrait, smallPhoneLandscape, { width: 390, height: 844 }, { width: 844, height: 390 }]) {
         await setViewport(viewport);
         assert(await video.evaluate(node => node.scrollWidth <= node.clientWidth + 1 && node.scrollHeight <= node.clientHeight + 1),
           'The headlights video needs scrolling');
@@ -692,13 +937,13 @@ async function checkLastLayerChapters() {
     if (section === 'two-touch' || chapter === 4) {
       await assertLayout('Guided ' + section, { width: 768, height: 1024 });
       await assertLayout('Guided ' + section, { width: 844, height: 390 });
-      await assertLayout('Guided ' + section, { width: 320, height: 320 });
+      await assertLayout('Guided ' + section, smallPhonePortrait);
       const quizMoveCount = await question.locator('.course-alg > span').count();
       await question.getByRole('button', { name: '看公式演示', exact: true }).click();
       const demo = page.getByRole('dialog');
       await demo.getByRole('button', { name: '下一步', exact: true }).click();
       assert.equal(await demo.getByRole('listitem').count(), quizMoveCount, 'The demonstration and quiz have different move counts');
-      for (const viewport of [{ width: 320, height: 320 }, { width: 844, height: 390 }]) {
+      for (const viewport of [smallPhonePortrait, smallPhoneLandscape, { width: 844, height: 390 }]) {
         await setViewport(viewport);
         const box = await demo.boundingBox();
         assert(box && box.x >= 0 && box.y >= 0 && box.x + box.width <= viewport.width && box.y + box.height <= viewport.height,
@@ -733,7 +978,7 @@ async function checkLastLayerChapters() {
       await page.locator('[data-complete="true"]').waitFor();
     }
   }
-  await page.goto(origin + '/tutorial/2x2-lbl?lang=en&step=lesson-4&section=corner-flowchart');
+  await page.goto(origin + '/tutorial/2x2-lbl?lang=en&step=lesson-4&section=corner-flowchart', navigation);
   await page.locator('[data-course-section="corner-flowchart"] [data-eye-case="headlights"]').click();
   await page.getByRole('heading', { name: 'Put the headlights on the right', exact: true }).waitFor();
   await ready();
@@ -742,7 +987,13 @@ async function checkLastLayerChapters() {
   console.log('Passed all six yellow-face and corner-placement quizzes.');
 }
 
-if (lastLayerOnly) {
+if (targets.size) {
+  try {
+    await checkTutorials();
+  } finally {
+    await browser.close();
+  }
+} else if (lastLayerOnly) {
   try {
     await checkLastLayerChapters();
   } catch (error) {
@@ -751,7 +1002,7 @@ if (lastLayerOnly) {
   } finally { await browser.close(); }
 }
 
-if (!lastLayerOnly) try {
+if (!targets.size && !lastLayerOnly) try {
   const entry = await page.goto(origin + '/zh/tutorial?puzzle=2x2');
   assert(entry?.ok(), 'Tutorial directory failed to load (HTTP ' + entry?.status() + ')');
   await page.locator('a[href="/zh/tutorial/2x2-lbl"]').click();
@@ -769,8 +1020,9 @@ if (!lastLayerOnly) try {
   assert.equal(await page.locator('[data-course-transport]').count(), 0, 'Corner identification has a playback row');
   await scan('Find the first corner', 'F');
   let smallestRenderedRatio = 1;
-  for (const [width, height] of [[320, 320], [390, 844], [844, 390], [1440, 900]]) {
-    const result = await assertLayout('Rendered first corner', { width, height });
+  for (const viewport of [smallPhonePortrait, smallPhoneLandscape, { width: 390, height: 844 }, { width: 1440, height: 900 }]) {
+    const { width, height } = viewport;
+    const result = await assertLayout('Rendered first corner', viewport);
     const rendered = await readRenderedCube();
     const ratio = Math.min(rendered.width / result.cube.width, rendered.height / result.cube.height);
     smallestRenderedRatio = Math.min(smallestRenderedRatio, ratio);
@@ -789,7 +1041,7 @@ if (!lastLayerOnly) try {
   const wrongBubble = page.getByText('你选的是「白蓝红角」。再试一次。', { exact: true });
   await wrongBubble.waitFor();
   await assertPositionsUnchanged('Incorrect-answer bubble', originalQuestion, originalQuestionPositions);
-  await assertLayout('Incorrect corner feedback', { width: 320, height: 320 });
+  await assertLayout('Incorrect corner feedback', smallPhonePortrait);
   await wrongBubble.waitFor({ state: 'hidden', timeout: 5000 });
   await setViewport({ width: 1440, height: 900 });
   await page.reload();
@@ -847,7 +1099,7 @@ if (!lastLayerOnly) try {
   assert.deepEqual(await placementProgress.getByRole('listitem').allTextContents(), ['认角块', '转体摆放']);
   await placementQuestion.getByText('现在在底层右前，白格朝前。', { exact: true }).waitFor();
   assert.equal(await placementQuestion.getAttribute('data-course-answer'), 'pending');
-  await assertLayout('Live placement feedback', { width: 320, height: 320 });
+  await assertLayout('Live placement feedback', smallPhonePortrait);
   await setViewport({ width: 1440, height: 900 });
   await dragCube(.36, .45, 104, 0);
   await dragCube(.46, .47, 0, 30);
@@ -866,7 +1118,7 @@ if (!lastLayerOnly) try {
   await dragCube(.46, .47, 135, 0);
   await placementQuestion.getByText('摆对了！', { exact: true }).waitFor();
   assert.equal(await cube().getAttribute('data-move-count'), '5');
-  await assertLayout('Placement feedback', { width: 320, height: 320 });
+  await assertLayout('Placement feedback', smallPhonePortrait);
 
   await setViewport({ width: 1440, height: 900 });
   await page.reload();
@@ -891,7 +1143,7 @@ if (!lastLayerOnly) try {
   await placementProgress.locator('[aria-current="step"]').getByText('转体摆放').waitFor();
   await assertLayout('Reorientation prompt', { width: 390, height: 844 });
   await assertLayout('Reorientation prompt', { width: 844, height: 390 });
-  await assertLayout('Reorientation prompt', { width: 320, height: 320 });
+  await assertLayout('Reorientation prompt', smallPhonePortrait);
   await setViewport({ width: 1440, height: 900 });
   assert.equal(await cube().getAttribute('data-move-count'), '3', 'Automatic orientation was recorded as a student move');
   assert(await canvas().evaluate((node, previous) => node === previous, beforeReorientation), 'Reorientation remounted the cube');
@@ -967,7 +1219,7 @@ if (!lastLayerOnly) try {
   await keyboardMoves([inverseTurn(front), inverseTurn(right), inverseTurn(top), 'U'].join(' '));
   const firstQuizCanvas = await canvas().elementHandle();
   await page.emulateMedia({ reducedMotion: 'no-preference' });
-  await setViewport({ width: 320, height: 320 });
+  await setViewport(smallPhonePortrait);
   await continueAfterTurns.click();
   const alignment = page.locator('[data-course-question="2"]');
   await alignment.and(page.locator('[data-corner-reveal="1"]')).waitFor();
@@ -1016,7 +1268,7 @@ if (!lastLayerOnly) try {
   assert.equal(await visibleSlotHintPixels(), 0, 'The corner hint stayed visible after a turn');
   await alignedHeading.waitFor();
   assert.equal(await quizProgress.locator('[data-done="true"]').count(), 2);
-  await assertLayout('Front-left alignment result', { width: 320, height: 320 });
+  await assertLayout('Front-left alignment result', smallPhonePortrait);
   await keyboardMoves('U');
   await alignmentHeading.waitFor();
   assert.equal(await alignment.locator('p').first().innerText(), originalPrompt, 'Leaving the target did not restore the original prompt');
@@ -1040,7 +1292,7 @@ if (!lastLayerOnly) try {
   assert(await alignmentCanvas.evaluate(node => node === document.querySelector('[data-course-cube] canvas')), 'Quiz 3 remounted the cube');
   await page.waitForFunction(frame => document.querySelector('[data-course-cube] canvas').toDataURL() !== frame, alignedFrame);
   await alignmentCanvas.dispose();
-  await assertLayout('Left-hand trigger quiz', { width: 320, height: 320 });
+  await assertLayout('Left-hand trigger quiz', smallPhonePortrait);
   assert.equal(await insertion.getAttribute('data-course-answer'), 'pending', 'Aligning the corner completed the insertion quiz');
   await keyboardMoves('L U');
   assert.equal(await cube().getAttribute('data-move-count'), alignmentMoves, 'Quiz 3 accepted the wrong face or direction');
@@ -1058,7 +1310,7 @@ if (!lastLayerOnly) try {
   await demo.locator('canvas').waitFor();
   await demo.locator('[data-demo-ready="true"]').waitFor({ timeout: 120000 });
   assert.deepEqual(await demo.locator('.course-demo-cues li span').allTextContents(), ['上', '勾', '下', '回']);
-  for (const viewport of [{ width: 390, height: 844 }, { width: 844, height: 390 }, { width: 320, height: 320 }]) {
+  for (const viewport of [smallPhonePortrait, smallPhoneLandscape, { width: 390, height: 844 }, { width: 844, height: 390 }]) {
     await setViewport(viewport);
     const bounds = await demo.boundingBox();
     assert(bounds && bounds.x >= 0 && bounds.x + bounds.width <= viewport.width && bounds.y >= 0
@@ -1118,7 +1370,7 @@ if (!lastLayerOnly) try {
   await scan('White–red–green alignment', 'F');
   await keyboardMoves("U'");
   await rightAlignment.getByRole('button', { name: '继续', exact: true }).click();
-  await assertLayout('White–red–green insertion', { width: 320, height: 320 });
+  await assertLayout('White–red–green insertion', smallPhonePortrait);
   await keyboardMoves("R U R' U' R U R' U'");
   await cube().getByText('已完成 1 次，继续', { exact: true }).waitFor();
   await cube().getByText('已完成 2 次，继续', { exact: true }).waitFor();
@@ -1157,7 +1409,7 @@ if (!lastLayerOnly) try {
   assert(await continueRotation.isEnabled(), 'The leftward snap did not move the slot to the required corner');
   await slotFeedback.waitFor();
   await assertPositionsUnchanged('Desktop rotation feedback appeared', rotationTargets, beforeRotation);
-  for (const viewport of [{ width: 390, height: 844 }, { width: 844, height: 390 }, { width: 320, height: 320 }]) {
+  for (const viewport of [smallPhonePortrait, smallPhoneLandscape, { width: 390, height: 844 }, { width: 844, height: 390 }]) {
     await setViewport(viewport);
     const mode = 'Rotation feedback ' + viewport.width + '×' + viewport.height;
     const withFeedback = await capturePositions(rotationTargets);
@@ -1179,7 +1431,7 @@ if (!lastLayerOnly) try {
   await scan('White–green–orange alignment', 'F');
   await keyboardMoves('U');
   await lastAlignment.getByRole('button', { name: '继续', exact: true }).click();
-  await assertLayout('White–green–orange insertion', { width: 320, height: 320 });
+  await assertLayout('White–green–orange insertion', smallPhonePortrait);
   await keyboardMoves("R U R' U'");
   await page.getByText('底层完成。底面全白，四个侧面的底排也各自同色。', { exact: true }).waitFor();
   await setViewport({ width: 390, height: 844 });

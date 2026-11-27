@@ -41,6 +41,7 @@
 - **菜单与表格**。下拉宽度 `fit-content`，列 flex 加 `align-self:flex-start`，禁固定 `min-width`。absolute + `top:100%` 锚定面板用 `hooks/usePanelClamp`，标 `anchored-panel: clamped`。确证安全标 `anchored-panel: safe (<理由>)`（Hook + CI ratchet，`audit:overflow` popup 已通过）。表头排序用 `components/SortArrow`，只在当前列文字右侧显示（CI）。吸顶表头用 `components/sticky-table.css` 的 `.sticky-scroll`、`.sticky-thead`，契约见文件头。
 - **CSS 定位**。共享控件用 `.共享class.角色class` 等明确作用域，禁止同优先级单 class 覆盖。absolute/fixed 改 relative 重置原 inset/top/left 等。改 static 重置 transform/translate，未生效的 inset 无需修。全局固定按钮右沿用 `right: max(16px, calc((100vw - <content-max-width>) / 2))`。定位守卫为 `block-css-position-cascade.mts` 和 `css-position-cascade-guard.test.ts`（共用扫描器）。规则内 `allow-css-position: 具体理由` 可豁免，动态 class 或复杂选择器须浏览器复核。
 - **项目选择**统一 `components/PuzzlePicker`，禁自写菜单（Hook + CI `component-reuse-guard`）。WCA 选择器、内联例外和比赛表头按下文链接的 wca-event。
+- **共享元素的位置稳定（维护者要求，2026-11-25）**：在相同视口下，同类页面或同一流程各状态共用的主图、导航、操作按钮等元素，应相对各自的容器保持稳定。随步骤出现、消失或改变长度的控件和文案，放在共享元素下方或独立区域。验收时对照切换前后的元素位置，同时检查外框尺寸。
 
 ### 身份、品牌与公式
 
