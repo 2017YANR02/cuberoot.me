@@ -3,6 +3,7 @@
 import { useMemo, useEffect, useId, useCallback, useLayoutEffect, useRef, useState, type ComponentProps, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import AppLink from '@/components/AppLink';
+import BoolToggle from '@/components/BoolToggle';
 import FingerAnnotationExample, { pinExampleHref } from './FingerAnnotationExample';
 import type PlaybackBar from '@/components/PlaybackBar';
 import { BookOpen, ExternalLink, Play } from 'lucide-react';
@@ -352,16 +353,17 @@ export default function FingerNotationGuide({ order, onOpen, selectedPush, ...st
                 return chip(<><Example entry={item} text={item.mark ? item.examples[0] : 'p'} /> {key === 'push' ? t('推法', 'Push') : t(...item.name)}</>,
                   technique === key, () => chooseTechnique(key), key);
               })}
-              {(technique === 'middle' || technique === 'thumb') && <label><input type="checkbox" checked={nailOnly}
-                onChange={e => { stop(); setNailOnly(e.target.checked); setMove(''); setVariant(''); }} />{t('叠加指甲', 'With fingernail')}</label>}
+              {(technique === 'middle' || technique === 'thumb') && <BoolToggle value={nailOnly}
+                label={t('叠加指甲', 'With fingernail')}
+                onChange={value => { stop(); setNailOnly(value); setMove(''); setVariant(''); }} />}
             </div>
             <div className="finger-guide-actions" ref={setActionSlot} />
           </div>
           {technique && <div className="finger-guide-moves" role="group" aria-label={t('可演示转动', 'Available moves')}>
             <div className="finger-guide-move-heading">
               <strong>{t('可演示转动', 'Available moves')}</strong>
-              <label><input type="checkbox" checked={directOnly} onChange={e => { stop(); setDirectOnly(e.target.checked); }} />
-                {t('只看当前起手可直接做', 'Only moves available without regripping')}</label>
+              <BoolToggle value={directOnly} label={t('只看当前起手可直接做', 'Only moves available without regripping')}
+                onChange={value => { stop(); setDirectOnly(value); }} />
             </div>
             {!choices.length ? <p className="skewb-guide-caption">{t('此条件下暂无可演示转动。', 'No demonstrations match this selection.')}</p>
               : !groupByLayer && columns.length === 1 ? <div className="skewb-guide-chips">{choices.map(moveButton)}</div>
