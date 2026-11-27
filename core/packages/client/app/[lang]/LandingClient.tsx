@@ -42,6 +42,7 @@ import PersonUpcomingComps from '@/components/persons/sections/PersonUpcomingCom
 import { useCompFollows } from '@/components/CompFollow';
 import SearchInput from '@/components/SearchInput';
 import LazyVisible from '@/components/LazyVisible';
+import { RecentWorldRecords, useRecentRecords } from '@/components/RecentRecords';
 import {
   FOOTER_ENTRIES,
   PRIMARY_CARDS,
@@ -174,6 +175,7 @@ export default function LandingPage({ initialLayout = null }: { initialLayout?: 
   }, []);
 
   const lang: 'zh' | 'en' = (i18n.language.startsWith('zh') ? 'zh' : 'en');
+  const { filled: recentRecords } = useRecentRecords(lang === 'zh');
   const user = useAuthUser();
   const compFollows = useCompFollows();
   const personalKey = user ? `${user.uid ?? ''}:${user.wcaId}` : null;
@@ -591,6 +593,7 @@ export default function LandingPage({ initialLayout = null }: { initialLayout?: 
       <LandingSearch cards={searchCards} lang={lang} workspaceEntry showChatLink />
       <div className="landing-home-content" hidden={activeSection !== 'home'}>
       <div className="landing-shortcuts-and-notices">
+        <RecentWorldRecords records={recentRecords} isZh={lang === 'zh'} />
         <div className="landing-featured-notices">
         {featuredNotices.map((featuredNotice) => {
           const { href } = featuredNotice;
@@ -667,7 +670,7 @@ export default function LandingPage({ initialLayout = null }: { initialLayout?: 
       )}
 
       <LazyVisible className="landing-widget landing-widget--comps" minHeight={0} rootMargin="120px 0px" initiallyVisible={visibleWidgets.comps} onVisible={() => rememberWidget('comps')}>
-        <OngoingComps lang={lang} compFollows={compFollows} />
+        <OngoingComps lang={lang} compFollows={compFollows} records={recentRecords} />
       </LazyVisible>
 
       </div>

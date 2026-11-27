@@ -14,13 +14,14 @@ import { eventDisplayName, toWcaEventId } from '@/lib/wca-events';
 import { formatWcaResult } from '@/lib/wca-format-result';
 import { displayCuberName } from '@/lib/cuber-name-display';
 import { RecordBadge } from '@/components/RecordBadge/RecordBadge';
+import { WcaPersonIdentity } from '@/components/WcaPersonIdentity';
 import { usePinnedCountries } from '@/hooks/usePinnedCountries';
 import { useCopy } from '@/hooks/useCopy';
 import { stripRecordNewsPrefix } from '@/lib/record-news';
 import './recent_records.css';
 import { tr } from '@/i18n/tr';
 
-interface RecentRecord {
+export interface RecentRecord {
   id: string;
   tag: string;
   type: string;
@@ -40,12 +41,14 @@ interface ApiResponse {
   records: RecentRecord[];
 }
 
+const WORLD_RECORD_TAGS = new Set(['WR', 'FWR', 'NWR']);
+
 /** Stable within each tier; country priority applies only to national records. */
 export function sortRecentRecords<T extends Pick<RecentRecord, 'tag' | 'countryIso2'>>(
   records: readonly T[], countries: readonly string[],
 ): T[] {
   const level = (tag: string) => {
-    if (tag === 'WR' || tag === 'FWR' || tag === 'NWR') return 0;
+    if (WORLD_RECORD_TAGS.has(tag)) return 0;
     if (tag === 'CR' || Object.hasOwn(RECORD_BADGE_CONTINENT, tag)) return 1;
     return tag === 'NR' ? 2 : 3;
   };
@@ -127,9 +130,7 @@ function renderFormatted(text: string): React.ReactNode[] {
   return parts;
 }
 
-// Data hook — fetch + 60s sync + language-filtered list. Lifted out so the host
-// (OngoingComps) can show a tab with the count and render the list inside the
-// shared scroll panel.
+// One snapshot serves both the homepage highlights and the full records tab.
 export function useRecentRecords(isZh: boolean) {
   const [records, setRecords] = useState<RecentRecord[] | null>(null);
   const [, , defaultCountries] = usePinnedCountries();
@@ -181,6 +182,43 @@ export function useRecentRecords(isZh: boolean) {
   );
 
   return { records, filled };
+}
+
+export function RecentWorldRecords({ records, isZh }: { records: RecentRecord[]; isZh: boolean }) {
+  const worldRecords = records.filter(record => WORLD_RECORD_TAGS.has(record.tag));
+  if (worldRecords.length === 0) return null;
+
+  return (
+    <section className="landing-world-records" aria-label={tr({ zh: '世界纪录快讯', en: 'Recent world records' })}>
+      <ul className="landing-world-records-list">
+        {worldRecords.map(record => {
+          const eventId = toWcaEventId(record.eventId);
+          const kind = record.type === 'average' ? 'average' : 'single';
+          return (
+            <li key={record.id}>
+              <Link {...compLinkProps(record.competitionId)}
+                href={compRecordHref({ ...record, eventId })} className="landing-world-record">
+                <span className="landing-world-record-result">
+                  <strong>{formatWcaResult(record.attemptResult, eventId, kind)}</strong>
+                  <RecordBadge record={record.tag} />
+                </span>
+                <span className="landing-world-record-event">
+                  <EventIcon event={eventId} />
+                  <span>{eventDisplayName(eventId, isZh)} {kind === 'average'
+                    ? tr({ zh: '平均', en: 'Average' })
+                    : tr({ zh: '单次', en: 'Single' })}</span>
+                </span>
+                <WcaPersonIdentity linked={false} showTeam={false}
+                  flag={record.countryIso2 && <Flag iso2={record.countryIso2} />}>
+                  {' '}{displayCuberName(record.personName, isZh)}
+                </WcaPersonIdentity>
+              </Link>
+            </li>
+          );
+        })}
+      </ul>
+    </section>
+  );
 }
 
 /** Competition reports already have canonical text and their own round link. */
