@@ -536,7 +536,7 @@ const TABLES: Table[] = [
   { name: 'article_report', domain: 'community', origin: '0027', purpose: { zh: '长文举报 / 审核(防滥用)', en: 'Article reports / moderation queue' } },
   { name: 'comments', domain: 'community', origin: 'snapshot', purpose: { zh: '评论', en: 'Comments' } },
   { name: 'recon_featured_solves', domain: 'community', origin: '0263', purpose: { zh: '管理员精选复盘，与首页置顶独立管理', en: 'Administrator-featured solves, independent of homepage pins' } },
-  { name: 'recon_home_pins', domain: 'community', origin: '0262', purpose: { zh: '管理员设置的首页复盘置顶，支持多条', en: 'Multiple administrator-selected homepage reconstruction pins' } },
+  { name: 'recon_home_pins', domain: 'community', origin: '0262', purpose: { zh: '管理员设置的唯一首页置顶复盘', en: 'Single administrator-selected homepage reconstruction pin' } },
   { name: 'recon_favorites', domain: 'community', origin: '0275', purpose: { zh: '登录账号的复盘收藏，随账号或复盘删除级联清理', en: 'Account-scoped reconstruction favorites with cascading deletion' } },
   { name: 'recon_comment_votes', domain: 'community', origin: '0261', purpose: { zh: '复盘评论赞踩，每账号每条评论一票，删除评论或账号时级联清理', en: 'One vote per account per reconstruction comment, cascading on comment or account deletion' } },
   { name: 'edits', domain: 'community', origin: 'snapshot', purpose: { zh: '编辑记录', en: 'Edit records' } },
@@ -618,6 +618,7 @@ const TABLES: Table[] = [
 
 const MIGRATIONS: { n: number; slug: string; desc: Bi }[] = [
   { n: 363, slug: 'competition_arena', desc: { zh: '记录统一发乱、阶段时间、DNF 原因与实时轮次通知。', en: 'Persist shared rounds, stage clocks, DNF reasons and live round notifications.' } },
+  { n: 364, slug: 'single_home_recon_pin', desc: { zh: '保留最近一条可展示的首页置顶复盘，限制同时置顶一条。', en: 'Keep the newest eligible homepage reconstruction pin and enforce a single pin.' } },
   { n: 362, slug: 'platform_quiz_content_reviews', desc: { zh: '增加测验发布审核，并校验所属课时及前后修订。', en: 'Add quiz publication reviews and validate lesson ownership and both revisions.' } },
   { n: 361, slug: 'platform_course_presentation_defaults', desc: { zh: '增加课程展示默认值字段，保留已封存的历史修订。', en: 'Store course display defaults while preserving sealed historical revisions.' } },
   { n: 360, slug: 'platform_lesson_type_and_order', desc: { zh: '新增显式课时类型并支持原子交换课时顺序。', en: 'Add explicit lesson types and support atomic lesson reordering.' } },

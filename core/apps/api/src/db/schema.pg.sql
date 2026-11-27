@@ -117,7 +117,7 @@ CREATE INDEX idx_person_id ON recons(person_id);
 CREATE INDEX idx_person ON recons(person);
 CREATE INDEX idx_added_by_id ON recons(added_by_id);
 
--- 首页复盘置顶，支持多条；管理状态与复盘内容写入权限隔离。
+-- 管理员精选复盘；管理状态与复盘内容写入权限隔离。
 CREATE TABLE recon_featured_solves (
   recon_id INTEGER PRIMARY KEY REFERENCES recons(id) ON DELETE CASCADE,
   featured_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
@@ -127,6 +127,7 @@ CREATE TABLE recon_home_pins (
   recon_id INTEGER PRIMARY KEY REFERENCES recons(id) ON DELETE CASCADE,
   pinned_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
+CREATE UNIQUE INDEX recon_home_pins_singleton ON recon_home_pins ((true));
 
 -- 会员上传的复盘视频:文件落持久目录,PG 只保留归属与存储元数据(见 migration 0162)。
 CREATE TABLE recon_videos (
