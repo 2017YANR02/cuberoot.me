@@ -50,7 +50,7 @@
   flex: 1;
 }
 
-/* 桌面头部与移动端展示区共用的复盘文字入口。 */
+/* 复盘入口随页头换行，给画布小窗留出空间。 */
 .sim-open-recon {
   display: inline-flex;
   align-items: center;
@@ -70,8 +70,6 @@
   color: var(--foreground);
 }
 .sim-open-recon-arrow { display: block; }
-.sim-header-recon { display: contents; }
-.sim-stage-recon { display: none; }
 
 .sim-counter {
   font-variant-numeric: tabular-nums;
@@ -185,45 +183,44 @@
   overflow: hidden;
 }
 
-/* 浮层关闭钮 —— 图像浮层 / 背面小窗共用一款,钉在各自右上内角。两个宿主都是
-   pointer-events:none(拖动要穿透到主画布),按钮自己收回 auto。
-   固定黑底白字不走 token:它压在 data-board-bg 上,而那 5 档背景是 art-directed
-   的固定色(纯白 / 深灰 / 棋盘),跟主题无关 —— 用 --card/--foreground 会在白底档
-   变成白钮糊掉。色值与紧邻的 .sim-backview-swap 逐值一致,同一族浮层 chrome。 */
-.sim-float-close {
+/* The back-view buttons keep a full hit target; only the icon tile paints over the puzzle. */
+.sim-canvas-wrap > :is(.sim-float-close--backview, .sim-backview-swap) {
   position: absolute;
-  top: 4px;
-  right: 4px;
-  width: 20px;
-  height: 20px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  border-radius: 6px;
-  background: rgba(0, 0, 0, 0.55);
+  right: calc(var(--sim-backview-right, 8px) + 4px);
+  z-index: 11;
+  display: flex;
+  justify-content: flex-end;
+  box-sizing: border-box;
+  width: 44px;
+  height: 44px;
+  padding: 2px;
+  border: 0;
+  background: transparent;
   color: #fff;
   cursor: pointer;
-  pointer-events: auto;
-  opacity: 0;
-  transition: opacity 0.15s;
-  z-index: 11;
 }
-/* 默认隐身,鼠标进画布(或键盘聚焦)才浮现 —— 常驻会一直压在图上。挂在画布而不是
-   浮层自身:两个浮层都 pointer-events:none,:hover 永远不会命中它们。触屏无 hover,
-   coarse pointer 下常显。 */
-.sim-canvas-wrap:hover .sim-float-close,
-.sim-float-close:focus-visible { opacity: 1; }
-@media (hover: none) {
-  .sim-float-close { opacity: 1; }
-}
-.sim-float-close:hover { background: rgba(0, 0, 0, 0.75); }
-/* 背面小窗自身 pointer-events:none,关闭钮只能挂在画布层,坐标 = 小窗 top/right (8px)
-   再进 4px 内角,与 .sim-backview-swap 由 JS 钉右下角的做法同源(这个是定值,免 JS)。 */
 .sim-float-close--backview {
   top: 12px;
-  right: 12px;
+  align-items: flex-start;
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+.sim-canvas-wrap > .sim-backview-swap {
+  top: calc(8px + var(--sim-float-size, 140px) - 4px);
+  translate: 0 -100%;
+  align-items: flex-end;
+}
+.sim-canvas-wrap > :is(.sim-float-close--backview, .sim-backview-swap) > svg {
+  box-sizing: border-box;
+  width: clamp(26px, calc(var(--sim-float-size, 140px) * .21), 32px);
+  height: auto;
+  aspect-ratio: 1;
+  padding: 5px;
+}
+.sim-canvas-wrap:hover .sim-float-close--backview,
+.sim-float-close--backview:focus-visible { opacity: 1; }
+@media (hover: none) {
+  .sim-float-close--backview { opacity: 1; }
 }
 /* Background and stickering controls share a row below the canvas. */
 .sim-canvas-tools {
@@ -403,6 +400,10 @@
   flex-direction: column;
 }
 
+@media (min-width: 768px) {
+  /* Leave the split-pane divider's 24px drag target clear. */
+  .sim-page:not(.sim-page--fullscreen) .sim-stage { --sim-backview-right: 24px; }
+}
 .resize-divider.sim-pane-divider { right: 0; }
 @media (max-width: 767px) {
   .resize-divider.sim-pane-divider { display: none; }
@@ -544,7 +545,7 @@
 .sim-backview {
   position: absolute;
   top: 8px;
-  right: 8px;
+  right: var(--sim-backview-right, 8px);
   background: none;
   pointer-events: none;
   z-index: 9;
@@ -555,24 +556,15 @@
   height: 100% !important;
 }
 
-/* 交换主视图 / 背面视图的浮动按钮 — JS (layoutBackView) 把它钉在背面小窗右下内角。
-   z-index 高于小窗 (9) 和全屏按钮 (10);小窗本身 pointer-events:none,本按钮自带 auto。 */
-.sim-backview-swap {
-  position: absolute;
-  width: 28px;
-  height: 28px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0;
-  background: rgba(0, 0, 0, 0.55);
-  color: #fff;
+/* These controls sit on fixed board colors, including white and both checkerboards. */
+.sim-canvas-wrap > :is(.sim-float-close--backview, .sim-backview-swap) > svg,
+.sim-image-swap {
   border: 1px solid rgba(255, 255, 255, 0.2);
   border-radius: 6px;
-  cursor: pointer;
-  z-index: 11;
+  background: rgba(0, 0, 0, 0.55);
 }
-.sim-backview-swap:hover {
+.sim-canvas-wrap > :is(.sim-float-close--backview, .sim-backview-swap):is(:hover, :focus-visible) > svg,
+.sim-image-swap:hover {
   background: rgba(0, 0, 0, 0.75);
 }
 
@@ -580,6 +572,16 @@
    浮层自身 pointer-events:none(拖拽穿透),按钮必须自己收回 auto —— 背面小窗那个
    交换钮挂在画布层不需要,这里是浮层子元素,少了这条真实点击会穿透无效。 */
 .sim-image-swap {
+  position: absolute;
+  z-index: 11;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  color: #fff;
+  cursor: pointer;
   right: 6px;
   bottom: 6px;
   pointer-events: auto;
@@ -775,15 +777,7 @@
 @media (max-width: 767px) {
   .sim-header { gap: 6px; padding: 8px; }
   .sim-drawing-toolbar { padding-inline: 8px; }
-  .sim-header-recon { display: none; }
   .sim-stage { position: relative; }
-  .sim-stage-recon {
-    display: block;
-    position: absolute;
-    top: 8px;
-    right: 8px;
-    z-index: 12;
-  }
   .sim-header .sim-tool-select { max-width: 100%; }
   .sim-project-controls { flex: 0 1 auto; }
   .sim-panel-toggle { display: inline-flex; }
@@ -979,8 +973,6 @@
     border-left: 1px solid var(--border-default);
   }
   .sim-panel-toggle { display: none; }
-  .sim-header-recon { display: contents; }
-  .sim-stage-recon { display: none; }
   .sim-page--panel-expanded .sim-playback-under { display: flex; }
   .sim-page--panel-expanded .sim-image-overlay,
   .sim-page--panel-expanded .sim-backview,

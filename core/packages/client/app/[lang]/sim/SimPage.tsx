@@ -138,10 +138,6 @@ import './sim.css';
 
 import { useT } from "@/hooks/useT";
 
-/** Gap (px) between the back-view window and the canvas top-right corner.
- *  Must match the `top`/`right` in `.sim-backview` (sim.css). */
-const BACKVIEW_MARGIN = 8;
-
 const PuzzleDrawWorkspace = dynamic(() => import('./PuzzleDrawWorkspace'), { ssr: false });
 
 export { TWISTY_PUZZLES, isTwistyPuzzle } from './twistyPuzzles';
@@ -563,9 +559,6 @@ function SimEditor({ scope = '', active, seed, snapshotRef, onModeChange, onNew,
   // Back-view mini window (NxN / SQ1 only — twisty puzzles use cubing.js native
   // backView). Second renderer shares world.scene with a camera mirrored 180°
   // about Y, rendered into an overlay canvas so snapshots/exports stay clean.
-  // Swap button (main view ↔ back-view mini window). Anchored over the back-view
-  // window's bottom-right corner via layoutBackView; only mounted when backView on.
-  const swapButtonRef = useRef<HTMLButtonElement>(null);
   const swapTweenRef = useRef<Tween | null>(null);
   const backFrameRef = useRef<HTMLDivElement>(null);
   const backViewButtonRef = useRef<HTMLButtonElement>(null);
@@ -814,12 +807,6 @@ function SimEditor({ scope = '', active, seed, snapshotRef, onModeChange, onNew,
     if (backSizeRef.current !== size) {
       backSizeRef.current = size;
       backViewRef.current?.setSize(size);
-    }
-    // Pin the swap button to the back-view window's bottom-right inner corner.
-    const swapBtn = swapButtonRef.current;
-    if (swapBtn) {
-      swapBtn.style.top = `${BACKVIEW_MARGIN + size - 34}px`;
-      swapBtn.style.right = `${BACKVIEW_MARGIN + 6}px`;
     }
   }, []);
 
@@ -1766,7 +1753,7 @@ function SimEditor({ scope = '', active, seed, snapshotRef, onModeChange, onNew,
     prevSettingsRef.current = renderSettings;
   }, [settings, renderSettings, clearPartialFreeze, scope, seed, worldTick]);
 
-  // Re-layout the back-view window (size + fullscreen-button offset) and force a
+  // Re-layout the back-view window and force a
   // repaint when the toggle flips, the puzzle engine changes, or the world is
   // (re)created. applySettings already marks world.dirty, but layout depends on
   // the DOM frame which only the component owns.
@@ -2605,7 +2592,7 @@ function SimEditor({ scope = '', active, seed, snapshotRef, onModeChange, onNew,
           {t('握姿与手法', 'Grip & turn atlas')}
         </AppLink>}
         <div className="sim-spacer" />
-        <div className="sim-header-recon">{reconLink}</div>
+        {reconLink}
       </header>
 
       {!animationMode && (
@@ -2627,7 +2614,6 @@ function SimEditor({ scope = '', active, seed, snapshotRef, onModeChange, onNew,
             body.style.setProperty('--sim-side-width', `${width / body.clientWidth * 100}%`);
             return width;
           }} />
-        <div className="sim-stage-recon">{reconLink}</div>
         {roomsActive && <div className="sim-room-toolbar">
           <select
             className="sim-tool-select"
@@ -2717,16 +2703,15 @@ function SimEditor({ scope = '', active, seed, snapshotRef, onModeChange, onNew,
                 实时 3D 缩进左上小框(纯 CSS 换位,见 .sim-canvas-wrap--imgswap)。
                 net 视图没有可缩的主 3D → 不给按钮。 */}
             {!flatMode && (
-              <button
+              <Tooltip placement="bottom" content={t('交换主图与伴图', 'Swap main view / companion image')}>{tip => <button {...tip}
                 type="button"
                 className="sim-backview-swap sim-image-swap"
                 onClick={() => setImgSwap((v) => !v)}
                 aria-pressed={imgSwap}
-                title={t('交换主图与伴图', 'Swap main view / companion image')}
                 aria-label={t('交换主图与伴图', 'Swap main view / companion image')}
               >
                 <ArrowLeftRight size={14} />
-              </button>
+              </button>}</Tooltip>
             )}
           </div>
           {/* Back-view window for the cuber engine (NxN / SQ1). Always mounted
@@ -2745,28 +2730,26 @@ function SimEditor({ scope = '', active, seed, snapshotRef, onModeChange, onNew,
               back-view is on (NxN / SQ1); twisty puzzles use cubing.js native
               back-view and aren't covered here. */}
           {animationMode && !showLesson && !twisty && !flatMode && settings.backView && (
-            <button
-              ref={swapButtonRef}
+            <Tooltip placement="bottom" content={t('交换主视图与背面视图', 'Swap main / back view')}>{tip => <button {...tip}
               type="button"
               className="sim-backview-swap"
               onClick={handleSwapView}
-              title={t('交换主视图与背面视图', 'Swap main / back view')}
               aria-label={t('交换主视图与背面视图', 'Swap main / back view')}
             >
               <ArrowLeftRight size={14} />
-            </button>
+            </button>}</Tooltip>
           )}
           {/* 背面小窗的关闭钮 —— 与图像浮层那个同款,钉在小窗右上内角。小窗自身
               pointer-events:none,按钮在 .sim-float-close 里自带 auto。 */}
           {animationMode && !showLesson && !twisty && !flatMode && settings.backView && (
-            <button
+            <Tooltip content={t('关闭背面视图', 'Hide back view')}>{tip => <button {...tip}
               type="button"
               className="sim-float-close sim-float-close--backview"
               onClick={() => setSettings((prev) => ({ ...prev, backView: false }))}
-              aria-label={t('关闭小窗', 'Hide back view')}
+              aria-label={t('关闭背面视图', 'Hide back view')}
             >
               <X size={12} />
-            </button>
+            </button>}</Tooltip>
           )}
         </div>
           {/* Shared adjustment row below the canvas. */}
