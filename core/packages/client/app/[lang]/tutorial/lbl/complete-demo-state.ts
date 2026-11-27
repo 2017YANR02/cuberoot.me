@@ -1,4 +1,5 @@
 import { Alg } from 'cubing/alg';
+import { normalizeWcaScramble } from '@cuberoot/shared/normalize-wca-scramble';
 import { AllFaces, CubeData, Face, parseAlgorithm } from '@cuberoot/visualcube';
 import { resolvePlayerSetup } from '@/components/AlgPlayer/player-setup';
 import { CORNER_ALIGNMENT_COPY, CORNER_POSITION_COPY, EDGE_POSITION_LEFT, EDGE_POSITION_RIGHT, J_ALG, LEFT, LEFT_SUNE, LBL_STEPS, MIDDLE_LEFT, MIDDLE_RIGHT, MIDDLE_MISPLACED_SETUP, RIGHT, RIGHT_SUNE } from './content';
@@ -637,6 +638,24 @@ export function buildWalkthroughDemo(scramble: string): CompleteDemo {
     phases.push({ start: end, end, stage, act: { text: demo.done, outlines: walkthroughCompletionStickers(stage, setup) } });
   }
   return { setup: scramble, alg: moves.join(' '), phases, done: done['edge-position'], stageMarkers: stageMarkers.filter(step => step < moves.length) };
+}
+
+export function buildWhiteUpWalkthrough(scramble: string) {
+  const displayScramble = normalizeWcaScramble(`z2 ${scramble}`);
+  if (!displayScramble) throw new Error('Expected a face-turn scramble for the walkthrough');
+  const teaching = buildWalkthroughDemo(scramble);
+  const demo: CompleteDemo = {
+    ...teaching,
+    // Keep the existing yellow-up sticker IDs for the recognition outlines.
+    setup: `${scramble} z2`,
+    alg: `z2 ${teaching.alg}`,
+    phases: [
+      { stage: 'daisy', start: 0, end: 1, act: { text: t('把黄面朝上', 'Hold yellow on top') } },
+      ...teaching.phases.map(phase => ({ ...phase, start: phase.start + 1, end: phase.end + 1 })),
+    ],
+    stageMarkers: teaching.stageMarkers?.map(step => step + 1),
+  };
+  return { scramble: displayScramble, demo };
 }
 
 const DAISY_DEMO_SETUPS = [

@@ -188,7 +188,7 @@ function LblLessonView({ archive }: { archive: boolean }) {
         <ChevronLeft size={17} aria-hidden="true" /><T zh="教程" en="Tutorials" />
       </AppLink>
       <div className="lbl-header-title">
-        {!archive && <AppLink href="/tutorial/lbl?view=walkthrough" prefetch={false}><T zh="完整还原" en="Full solve" /></AppLink>}
+        {!archive && <AppLink href="/tutorial/lbl?view=walkthrough" prefetch={false}><T zh="完整示范" en="Full walkthrough" /></AppLink>}
         <h1><T zh="层先法" en="LBL" /></h1>
       </div>
     </header>

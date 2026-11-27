@@ -1,13 +1,116 @@
 import { describe, expect, it } from 'vitest';
+import { Alg } from 'cubing/alg';
+import { puzzles } from 'cubing/puzzles';
 import { Face } from '@cuberoot/visualcube';
 import { FACE } from '@cuberoot/puzzle-render-core/engine/define';
 import Cube from '@/app/[lang]/sim/engine/nxn/cube';
-import { BOTTOM_OVERVIEW, sampleCubeState, TWO_BY_TWO_OVERVIEW, TWO_BY_TWO_SAMPLE } from '@/app/[lang]/tutorial/2x2-lbl/lesson-data';
+import { BOTTOM_OVERVIEW, sampleCubeState, TWO_BY_TWO_ORIENTATION, TWO_BY_TWO_OVERVIEW, TWO_BY_TWO_SAMPLE, TWO_BY_TWO_WALKTHROUGH } from '@/app/[lang]/tutorial/2x2-lbl/lesson-data';
+import { randomTwoByTwoWalkthrough } from '@/app/[lang]/tutorial/2x2-lbl/walkthrough-data';
+import { isWhiteFirstLayer } from '@/app/[lang]/tutorial/lib/2x2-state';
 
 describe('the 2×2 LBL tutorial', () => {
+  const toTeachingFrame = new Alg(TWO_BY_TWO_ORIENTATION).invert().toString();
+  const walkthroughState = (alg: string) => sampleCubeState(`${toTeachingFrame} ${alg}`);
   const [bottom, yellow, corners] = TWO_BY_TWO_SAMPLE;
   const [positioning, insertion, third, fourth] = bottom.sections.map(section => section.exercise);
   const twoTouch = yellow.sections.find(section => section.id === 'two-touch')!.exercise;
+
+  it('keeps each full walkthrough step consistent with its demonstrated result', () => {
+    const { scramble, phases } = TWO_BY_TWO_WALKTHROUGH;
+    const sides = [Face.F, Face.R, Face.B, Face.L];
+    const isSolved = (state: ReturnType<typeof sampleCubeState>) =>
+      Object.values(state).every(row => row.every(color => color === row[0]));
+    const eyes = (state: ReturnType<typeof sampleCubeState>) =>
+      sides.filter(side => state[side][0] === state[side][1]);
+
+    let alg = scramble;
+    const [whiteCorners, yellowFace, cornerPlacement] = phases.map(phase => phase.steps.map(step => {
+      alg += ' ' + step.alg;
+      return walkthroughState(alg);
+    }));
+    expect(walkthroughState('')[Face.U]).toEqual(['W', 'W', 'W', 'W']);
+    expect(walkthroughState('')[Face.F]).toEqual(['G', 'G', 'G', 'G']);
+    expect(walkthroughState(scramble)).not.toEqual(whiteCorners[0]);
+    expect([whiteCorners[0][Face.D][2], whiteCorners[0][Face.B][3], whiteCorners[0][Face.L][2]])
+      .toEqual(['W', 'O', 'B']);
+    expect(whiteCorners[1][Face.L].slice(2)).toEqual(['B', 'B']);
+    expect(whiteCorners[2][Face.F].slice(2)).toEqual(['R', 'R']);
+    expect(isWhiteFirstLayer(whiteCorners[3])).toBe(true);
+    expect(whiteCorners[3][Face.U].filter(color => color === 'Y')).toHaveLength(2);
+    expect(yellowFace[0][Face.U].filter(color => color === 'Y')).toHaveLength(1);
+    expect(yellowFace[0][Face.U][3]).toBe('Y');
+    expect(yellowFace[0][Face.F][0]).toBe('Y');
+    expect(yellowFace[1][Face.U]).toEqual(['Y', 'Y', 'Y', 'Y']);
+    expect(yellowFace.every(isWhiteFirstLayer)).toBe(true);
+    expect(eyes(yellowFace[1])).toEqual([]);
+    expect(eyes(cornerPlacement[0])).toEqual([Face.B]);
+    expect(eyes(cornerPlacement[1])).toEqual(sides);
+    expect(isSolved(cornerPlacement[1])).toBe(false);
+    expect(isSolved(cornerPlacement[2])).toBe(true);
+  });
+
+  it('matches the generated teaching steps to the states of successive random scrambles', async () => {
+    const model = await puzzles['2x2x2'].kpuzzle();
+    const sides = [Face.F, Face.R, Face.B, Face.L];
+    const eyes = (state: ReturnType<typeof sampleCubeState>) => sides.filter(side => state[side][0] === state[side][1]);
+    let seed = 417;
+    const rng = () => {
+      seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0;
+      return seed / 2 ** 32;
+    };
+    const seen = new Set<string>();
+    let previous: string = TWO_BY_TWO_WALKTHROUGH.scramble;
+    for (let i = 0; i < 192; i++) {
+      const { scramble, phases } = await randomTwoByTwoWalkthrough(previous, rng);
+      expect(scramble).not.toBe(previous);
+      previous = scramble;
+      let alg = scramble;
+
+      const bottom = phases[0].steps.map(step => {
+        alg += ' ' + step.alg;
+        return walkthroughState(alg);
+      });
+      expect([bottom[0][Face.D][2], bottom[0][Face.B][3], bottom[0][Face.L][2]], scramble).toEqual(['W', 'O', 'B']);
+      expect(bottom[1][Face.L].slice(2), scramble).toEqual(['B', 'B']);
+      expect(bottom[2][Face.F].slice(2), scramble).toEqual(['R', 'R']);
+      expect(isWhiteFirstLayer(bottom[3]), scramble).toBe(true);
+
+      for (const step of phases[1].steps) {
+        const initial = walkthroughState(alg)[Face.U].filter(color => color === 'Y').length;
+        alg += ' ' + step.alg;
+        const state = walkthroughState(alg);
+        expect(isWhiteFirstLayer(state), scramble).toBe(true);
+        if (step.title.zh.endsWith('变小鱼')) {
+          expect(initial).toBe(step.title.zh.startsWith('二碰') ? 2 : 0);
+          expect(state[Face.U].filter(color => color === 'Y')).toHaveLength(1);
+        } else {
+          expect(state[Face.U]).toEqual(['Y', 'Y', 'Y', 'Y']);
+          expect(initial).toBe(step.alg ? 1 : 4);
+        }
+        seen.add(step.title.zh);
+      }
+
+      for (const step of phases[2].steps) {
+        const before = eyes(walkthroughState(alg)).length;
+        alg += ' ' + step.alg;
+        const state = walkthroughState(alg);
+        expect(isWhiteFirstLayer(state), scramble).toBe(true);
+        expect(state[Face.U]).toEqual(['Y', 'Y', 'Y', 'Y']);
+        const after = eyes(state).length;
+        if (step.title.zh.startsWith('无眼')) expect([before, after]).toEqual([0, 1]);
+        else if (step.title.zh.startsWith('把眼')) expect([before, after]).toEqual([1, 4]);
+        else expect([before, after]).toEqual([4, 4]);
+        seen.add(step.title.zh);
+      }
+      expect(model.defaultPattern().applyAlg(alg).experimentalIsSolved({
+        ignorePuzzleOrientation: true, ignoreCenterOrientation: true,
+      }), scramble).toBe(true);
+    }
+    expect([...seen]).toEqual(expect.arrayContaining([
+      '二碰变小鱼', '四不碰变小鱼', '用左鱼翻出黄面', '用右鱼翻出黄面', '顶面已全黄',
+      '无眼，先造一对眼', '把眼放右面，再做公式', '对齐顶层', '六面已复原',
+    ]));
+  });
 
   it('illustrates the end of each stage with a different cube state', () => {
     const [firstLayer, yellowTop, solved] = TWO_BY_TWO_OVERVIEW.map(step => sampleCubeState(step.setup));

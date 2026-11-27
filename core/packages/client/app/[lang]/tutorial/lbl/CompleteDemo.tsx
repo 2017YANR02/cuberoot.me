@@ -1,14 +1,15 @@
 'use client';
 
 import ReadingFit from '../components/ReadingFit';
+import { CUBE_FRAMING_EDGE } from '../components/InteractiveTutorial';
+import WalkthroughPane, { type WalkthroughStage } from '../components/WalkthroughPane';
 
-import { useEffect, useMemo, useRef, useState, useSyncExternalStore, type ReactNode } from 'react';
+import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
 import { createPortal } from 'react-dom';
 import { persistItem } from '@/lib/safe-storage';
 import AlgPlayer, { type AlgPlayerHandle } from '@/components/AlgPlayer/AlgPlayer';
 import { resolveSimMoveDurationScale } from '@/components/AlgPlayer/player-setup';
 import AlgPlaybackControls from '@/components/AlgPlayer/AlgPlaybackControls';
-import { CompactSelect } from '@/components/CompactSelect';
 import { pickStickering } from '@/components/AlgPlayer/stickering';
 import { FM_OUTLINE, FM_REGULAR, mergeStickeringMaskFns, stickeringMaskFn } from '@cuberoot/puzzle-render-core/engine/nxn/stickering';
 import { withBrightCenters } from './cross-display';
@@ -19,7 +20,7 @@ import { J_ALG, LBL_LEFT_VIEW_YAW, LBL_STEPS, LESSON_STICKERING, MIDDLE_LEFT, MI
 import { usePlayerVisible } from './use-player-visible';
 import { getLblAlgGroups, sideTurn } from './alg-cues';
 import { SIDE_VIEW_PAUSE_MS, SIDE_VIEW_TURN_MS } from './schedule-demo-play';
-import { LBL_LESSON_STAGE_IDS, type LblLessonStageId } from './lesson-runs';
+import { LBL_LESSON_STAGE_IDS } from './lesson-runs';
 import { buildBottomCrossFromDaisy, buildEdgePositionExample, completeDemoPool, yellowFaceTouchSticker, type CompleteDemoStage, type DemoContent, type DemoPhase, type DemoView, type CompleteDemo as Demo, walkthroughCompletionStickers } from './complete-demo-state';
 
 const CAPTION_FADE_MS = 450;
@@ -116,8 +117,9 @@ type DemoFrame = {
   orbitDuration?: number;
 };
 
-export function Demonstration({ stage, demo, onCaseCueChange, opening, stagePickerHost }: {
-  stage: CompleteDemoStage | 'cross' | 'walkthrough'; demo: Demo; opening?: ReactNode; stagePickerHost?: HTMLElement | null;
+export function Demonstration({ stage, demo, onCaseCueChange, walkthroughCase }: {
+  stage: CompleteDemoStage | 'cross' | 'walkthrough'; demo: Demo;
+  walkthroughCase?: { scramble: string; onRandomCase: () => void };
 } & CueProps) {
   const walkthrough = stage === 'walkthrough';
   const [recognitionOutlines, setRecognitionOutlines] = useState<string[]>(NO_OUTLINES);
@@ -184,8 +186,6 @@ export function Demonstration({ stage, demo, onCaseCueChange, opening, stagePick
   const playerVisible = usePlayerVisible(player, demo.setup);
   const [ready, setReady] = useState(false);
   const [playing, setPlaying] = useState(false);
-  const [openingDismissed, setOpeningDismissed] = useState(false);
-  const waitForPlay = Boolean(opening);
   const [hiddenOutlines, setHiddenOutlines] = useState<string[] | null>(null);
   const lastBlinkedOutlines = useRef<string[] | null>(null);
   const [position, setPosition] = useState(0);
@@ -198,11 +198,22 @@ export function Demonstration({ stage, demo, onCaseCueChange, opening, stagePick
   const frame = timeline[position];
   const currentStage = frame.phase?.stage ?? stage;
   const total = timeline[timeline.length - 1].step;
-  const stageStarts = useMemo(() => walkthrough ? LBL_LESSON_STAGE_IDS.map(id => ({
-    id,
-    title: LBL_STEPS.find(item => item.id === id)!.title,
-    frameIndex: timeline.findIndex(item => item.phase?.stage === id),
-  })) : [], [timeline, walkthrough]);
+  const { stages, phaseStarts } = useMemo(() => {
+    const phaseStarts = new Map<DemoPhase, number>();
+    const stages: WalkthroughStage[] = [];
+    if (walkthrough) {
+      timeline.forEach(({ phase }, id) => {
+        if (phase && !phaseStarts.has(phase)) phaseStarts.set(phase, id);
+      });
+      for (const stage of LBL_LESSON_STAGE_IDS) {
+        const steps = [...phaseStarts].filter(([phase]) => phase.stage === stage)
+          .map(([phase, id]) => ({ id, title: phase.act.text }));
+        if (stage === 'edge-position') steps.push({ id: timeline.length - 1, title: demo.done });
+        stages.push({ title: LBL_STEPS.find(item => item.id === stage)!.title, steps });
+      }
+    }
+    return { stages, phaseStarts };
+  }, [timeline, walkthrough, demo.done]);
   const boundaries = useMemo(() => {
     if (demo.stageMarkers) return demo.stageMarkers;
     // Each R2 finishes one white edge; its preparation moves share the same segment.
@@ -212,17 +223,22 @@ export function Demonstration({ stage, demo, onCaseCueChange, opening, stagePick
     return [...new Set(ends)].filter(step => step > 0 && (stage === 'cross' ? step <= total : step < total));
   }, [demo, stage, total]);
 
+  const completionFocus = useMemo(() => walkthrough ? walkthroughCompletionStickers('edge-position', demo.setup + ' ' + demo.alg) : undefined, [walkthrough, demo]);
+  const content: DemoContent = frame.caption === 'done' ? { text: demo.done, outlines: completionFocus }
+    : frame.caption === 'observe' ? { text: frame.phase!.observe! }
+      : frame.caption === 'recognize' ? frame.phase!.recognize! : frame.phase!.act;
+  const walkthroughOutlines = content.outlines ?? NO_OUTLINES;
   useEffect(() => {
     if (!walkthrough) return;
     setHiddenOutlines(null);
-    if (!playing || !recognitionOutlines.length || lastBlinkedOutlines.current === recognitionOutlines
+    if (!playing || !walkthroughOutlines.length || lastBlinkedOutlines.current === walkthroughOutlines
       || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-    lastBlinkedOutlines.current = recognitionOutlines;
+    lastBlinkedOutlines.current = walkthroughOutlines;
     const timers = [180, 360, 540, 720].map((delay, index) => window.setTimeout(() => {
-      setHiddenOutlines(index % 2 === 0 ? recognitionOutlines : null);
+      setHiddenOutlines(index % 2 === 0 ? walkthroughOutlines : null);
     }, delay));
     return () => timers.forEach(timer => window.clearTimeout(timer));
-  }, [walkthrough, playing, recognitionOutlines]);
+  }, [walkthrough, playing, walkthroughOutlines]);
 
   useEffect(() => {
     let id = 0;
@@ -231,12 +247,12 @@ export function Demonstration({ stage, demo, onCaseCueChange, opening, stagePick
       if (!player.current || player.current.isUserMovePending?.()) id = requestAnimationFrame(loaded);
       else {
         setReady(true);
-        if (!waitForPlay) timer = window.setTimeout(() => setPlaying(!window.matchMedia('(prefers-reduced-motion: reduce)').matches && !document.hidden), 1000);
+        if (!walkthrough) timer = window.setTimeout(() => setPlaying(!window.matchMedia('(prefers-reduced-motion: reduce)').matches && !document.hidden), 1000);
       }
     };
     id = requestAnimationFrame(loaded);
     return () => { cancelAnimationFrame(id); clearTimeout(timer); };
-  }, [waitForPlay]);
+  }, [walkthrough]);
 
   // One paused/resumable timeline owns both captions and turns. A result is
   // described only after the preceding turn has actually finished.
@@ -327,44 +343,31 @@ export function Demonstration({ stage, demo, onCaseCueChange, opening, stagePick
   };
   const seek = (step: number) => {
     const target = Math.max(0, Math.min(total, step));
-    if (waitForPlay && target > 0) setOpeningDismissed(true);
+    if (walkthrough && target > 0 && target < total) {
+      const turn = timeline.findIndex(item => item.move === target - 1);
+      if (turn >= 0) { seekFrame(turn); return; }
+    }
     const next = target === 0 ? 0 : target === total ? timeline.length - 1
       : timeline.findIndex(item => item.step === target && item.move === undefined);
     seekFrame(next >= 0 ? next : timeline.findIndex(item => item.step === target));
   };
-  const selectStage = (id: LblLessonStageId) => {
-    const target = stageStarts.find(item => item.id === id);
-    if (!target || target.frameIndex < 0) return;
-    setOpeningDismissed(true);
-    seekFrame(target.frameIndex);
-  };
-  const completionFocus = useMemo(() => walkthrough ? walkthroughCompletionStickers('edge-position', demo.setup + ' ' + demo.alg) : undefined, [walkthrough, demo]);
-  const content: DemoContent = frame.caption === 'done' ? { text: demo.done, outlines: completionFocus }
-    : frame.caption === 'observe' ? { text: frame.phase!.observe! }
-      : frame.caption === 'recognize' ? frame.phase!.recognize! : frame.phase!.act;
   // Classify the whole lesson, never the current caption or move.
-  const layout = walkthrough || stage === 'middle' || stage === 'corner-position' ? 'B' : 'A';
+  const layout = stage === 'middle' || stage === 'corner-position' ? 'B' : 'A';
   const message: ThoughtContent = { ...content, text: tr(content.text), detail: content.detail ? tr(content.detail) : undefined };
   const touchHighlight = useMemo(() => content.touchSticker
     ? [yellowFaceTouchSticker(`${demo.setup} ${demo.alg.split(' ').slice(0, frame.step).join(' ')}`)]
     : undefined, [content.touchSticker, demo, frame.step]);
-  const visibleOutlines = playing && hiddenOutlines === recognitionOutlines ? NO_OUTLINES : recognitionOutlines;
-  const thought = <Thought {...message} layout={layout} stage={currentStage} playing={playing} revision={revision}
-    onCaseCueChange={onCaseCueChange} opening={openingDismissed ? undefined : opening}
-    onRecognitionOutlinesChange={setRecognitionOutlines} />;
-
-  return <div className="lbl-demo lbl-demo-split lbl-complete-player" data-tutorial-mode="teaching" data-tutorial-layout={layout} data-player-ready={playerVisible} aria-busy={!playerVisible}>
-    <div className="lbl-cube" data-player-ready={playerVisible} aria-busy={!playerVisible}><div className="lbl-complete-playback"><AlgPlayer ref={player} puzzle="3x3" engine="sim" controlMode="none" hideResetView
+  const cube = <AlgPlayer ref={player} puzzle="3x3" engine="sim" controlMode="none" hideResetView
       highlightDaisyAlignment={stage === 'cross'}
       daisyAlignmentFace={demo.alg.split(/\s+/)[frame.step] === 'R2' ? 'R' : 'F'}
       set={walkthrough ? '' : LESSON_STICKERING[stage]} additionalStickering={!walkthrough && (stage.startsWith('yellow-') || stage.endsWith('-position')) ? 'F2L' : undefined} orientation="z2"
-      highlightedStickers={walkthrough ? (hiddenOutlines === recognitionOutlines ? NO_OUTLINES : (content.outlines ?? visibleOutlines)) : stage === 'yellow-face' ? touchHighlight ?? visibleOutlines : undefined}
+      highlightedStickers={walkthrough ? (hiddenOutlines === walkthroughOutlines ? NO_OUTLINES : touchHighlight ?? walkthroughOutlines) : stage === 'yellow-face' ? touchHighlight ?? recognitionOutlines : undefined}
       sceneRot={lblDemoView()} setup={demo.setup} alg={demo.alg} stickeringAtStep={stickeringAtStep}
-      onStepChange={step => { playerStep.current = step; }} fillPane moveDurationMs={walkthrough ? 1100 : 850} />
-      <AlgPlaybackControls step={frame.step} count={total} playing={playing} stepMarkers={boundaries}
+      onStepChange={step => { playerStep.current = step; }} fillPane maxFramingEdge={walkthrough ? CUBE_FRAMING_EDGE : undefined}
+      moveDurationMs={walkthrough ? 1100 : 850} />;
+  const transport = <AlgPlaybackControls step={frame.step} count={total} playing={playing} stepMarkers={boundaries}
         onScrub={seek} onStepBack={() => seek(frame.step - 1)} onStepForward={() => seek(frame.step + 1)}
         onTogglePlay={() => {
-          if (waitForPlay) setOpeningDismissed(true);
           if (frame.caption === 'done') seek(0);
           setPlaying(current => frame.caption === 'done' || !current);
         }} onResetView={() => {
@@ -372,45 +375,29 @@ export function Demonstration({ stage, demo, onCaseCueChange, opening, stagePick
           player.current?.resetView?.();
           viewOffset.current = { x: 0, y: 0 };
           viewMotion.current = null;
-        }} />
-    </div></div>
-    {walkthrough ? <div className="lbl-walkthrough-guide">
-      {thought}
-      <WalkthroughStages stages={stageStarts} disabled={!playerVisible} onSelect={selectStage} pickerHost={stagePickerHost}
-        active={openingDismissed ? frame.phase?.stage ?? stageStarts.at(-1)?.id : undefined} />
-    </div> : thought}
+        }} />;
+  if (walkthroughCase) {
+    const phase = frame.phase;
+    const turns = frame.caption === 'act' && phase ? demo.alg.split(' ').slice(phase.start, phase.end) : [];
+    const algGroups = !turns.length ? [] : currentStage === 'corners' && content.alg
+      ? getLblAlgGroups(currentStage, turns.join(' ')).map(group => ({ turns: group.map(item => item.notation), bracketed: group.length > 1 }))
+      : [{ turns, bracketed: !!content.alg && turns.length > 1 && currentStage !== 'daisy' && currentStage !== 'cross' }];
+    return <WalkthroughPane {...walkthroughCase} stages={stages} currentStep={phase ? phaseStarts.get(phase)! : timeline.length - 1}
+      title={content.text} note={content.detail} algGroups={algGroups} activeTurn={phase && frame.move !== undefined ? frame.move - phase.start : -1}
+      position={position} onSeek={seekFrame} seekDisabled={!playerVisible}
+      cube={<div className="lbl-walkthrough-playback" data-player-ready={playerVisible} aria-busy={!playerVisible}>{cube}{transport}</div>} />;
+  }
+
+  return <div className="lbl-demo lbl-demo-split lbl-complete-player" data-tutorial-mode="teaching" data-tutorial-layout={layout} data-player-ready={playerVisible} aria-busy={!playerVisible}>
+    <div className="lbl-cube" data-player-ready={playerVisible} aria-busy={!playerVisible}><div className="lbl-complete-playback">{cube}{transport}</div></div>
+    <Thought {...message} layout={layout} stage={currentStage} playing={playing} revision={revision}
+      onCaseCueChange={onCaseCueChange} onRecognitionOutlinesChange={setRecognitionOutlines} />
     {['corners', 'yellow-cross', 'yellow-face', 'edge-position'].includes(stage) && <div className="lbl-complete-legend-space" aria-hidden="true" />}
   </div>;
 }
 
-function WalkthroughStages({ stages, active, disabled, onSelect, pickerHost }: {
-  stages: readonly { id: LblLessonStageId; title: (typeof LBL_STEPS)[number]['title'] }[];
-  active?: LblLessonStageId;
-  disabled: boolean;
-  onSelect: (id: LblLessonStageId) => void;
-  pickerHost?: HTMLElement | null;
-}) {
-  const label = tr({ zh: '还原步骤', en: 'Solve stages' });
-  const items = stages.map(({ id, title }) => ({ value: id, label: tr(title) }));
-  const activeTitle = items.find(item => item.value === active)?.label;
-  return <>
-    <nav className="lbl-walkthrough-stages" aria-label={label}>
-      <span>{label}</span>
-      <ol>{items.map(({ value, label: title }) => <li key={value}>
-        <button type="button" className="lbl-walkthrough-stage-button" disabled={disabled} aria-current={value === active ? 'step' : undefined}
-          onClick={() => onSelect(value)}>{title}</button>
-      </li>)}</ol>
-    </nav>
-    {pickerHost && createPortal(<CompactSelect className="lbl-walkthrough-stage-picker" popupClassName="lbl-walkthrough-stage-popup"
-      ariaLabel={label} showArrow side="top"
-      label={activeTitle ?? label} valueText={activeTitle}
-      items={items} value={active} disabled={disabled} onChange={onSelect} />, pickerHost)}
-  </>;
-}
-
-function Thought({ text, detail, alg, caseIndex, outlines, playing, revision, onCaseCueChange, onRecognitionOutlinesChange, stage, layout, opening }: ThoughtContent & {
+function Thought({ text, detail, alg, caseIndex, outlines, playing, revision, onCaseCueChange, onRecognitionOutlinesChange, stage, layout }: ThoughtContent & {
   layout: 'A' | 'B'; stage: string; playing: boolean; revision: number; onRecognitionOutlinesChange: (outlines: string[]) => void;
-  opening?: ReactNode;
 } & CueProps) {
   const key = `${text}\n${detail ?? ''}\n${alg ?? ''}\n${caseIndex ?? ''}\n${outlines?.join(',') ?? ''}`;
   const [displayed, setDisplayed] = useState({ key, text, detail, alg, caseIndex, outlines, revision });
@@ -432,7 +419,7 @@ function Thought({ text, detail, alg, caseIndex, outlines, playing, revision, on
   }, [key, text, detail, alg, caseIndex, outlines, playing, revision, displayed.key, displayed.revision]);
   const bracketJFormula = stage === 'corner-position' && displayed.alg === J_ALG;
   return <div className={`lbl-complete-thought${layout === 'A' ? ' tutorial-single-caption' : ''}`} aria-live="polite">
-    {opening ?? <ReadingFit pane>
+    <ReadingFit pane>
     <p data-fading={fading}>
       <span>{displayed.text}</span>
       {displayed.alg ? <code className="lbl-complete-detail lbl-complete-alg">{getLblAlgGroups(stage, displayed.alg).map((group, index) => {
@@ -441,5 +428,5 @@ function Thought({ text, detail, alg, caseIndex, outlines, playing, revision, on
       })}</code>
         : <span className="lbl-complete-detail">{displayed.detail}</span>}
     </p>
-  </ReadingFit>}</div>;
+  </ReadingFit></div>;
 }

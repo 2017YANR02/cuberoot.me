@@ -155,7 +155,7 @@ type CourseSection = {
   | { interaction?: never; observation?: never; guided: GuidedCourseLesson });
 type ReadingSection = { id: string; title: Text; content: ReactNode };
 type SelectCourseSection = (chapterId: string, sectionId?: string) => void;
-type CourseIndexSection = { id: string; title: Text; index: (select: SelectCourseSection) => ReactNode };
+type CourseIndexSection = { id: string; title: Text; icon?: ReactNode; index: (select: SelectCourseSection) => ReactNode };
 type CourseStageSection = { id: string; title: Text; stage: (select: SelectCourseSection) => ReactNode };
 export type CourseFlowSection = {
   id: string;
@@ -1281,6 +1281,7 @@ export default function InteractiveTutorial({ title, centerContent, headerAction
   };
   const navigation = chapter.sections.map(item => ({
     id: item.id, label: tr(item.title), active: item.id === section.id,
+    icon: 'icon' in item ? item.icon : undefined,
     onSelect: () => select(chapterIndex, item.id),
   }));
 
@@ -1319,7 +1320,9 @@ export default function InteractiveTutorial({ title, centerContent, headerAction
       </button>
       {!practice && <div className="course-section-picker">
         <SectionMenu label={tr(section.title)}>
-          {navigation.map(item => <button key={item.id} type="button" className="course-section-option" aria-current={item.active ? 'page' : undefined} onClick={item.onSelect}>{item.label}</button>)}
+          {navigation.map(item => <button key={item.id} type="button" className="course-section-option" aria-current={item.active ? 'page' : undefined} onClick={item.onSelect}>
+            {item.icon}{item.label}
+          </button>)}
           {basicsHref && <AppLink href={basicsHref} prefetch={false} className="course-section-option">{tr(labels.basics)}</AppLink>}
         </SectionMenu>
       </div>}
@@ -1332,7 +1335,7 @@ export default function InteractiveTutorial({ title, centerContent, headerAction
   </div>;
 
   const catalogLabel = t(labels.catalog.zh, labels.catalog.en);
-  return <main className="tutorial-course" data-practice={practice} data-center-content={centerContent || undefined}>
+  return <main className="tutorial-course" data-course-puzzle={puzzle} data-practice={practice} data-center-content={centerContent || undefined}>
     <header className="course-header" data-course-header>
       {catalogHref && <Tooltip content={catalogLabel}>{trigger =>
         <PageBackLink {...trigger} className="course-back-link" fallback={catalogHref} label={catalogLabel}

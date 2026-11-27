@@ -1,0 +1,140 @@
+.course-caption.walkthrough-caption {
+  justify-content: safe center;
+  overflow: clip;
+}
+.walkthrough-copy {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  block-size: 25rem;
+  min-block-size: 0;
+}
+.walkthrough-scramble {
+  display: flex;
+  align-items: center;
+  gap: .75rem;
+  padding-block-end: .8rem;
+}
+.walkthrough-scramble-copy { flex: 1; min-inline-size: 0; }
+.walkthrough-scramble-label {
+  display: block;
+  color: var(--muted-foreground);
+  font-size: .875rem;
+  line-height: 1.35;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.walkthrough-scramble-line {
+  display: flex;
+  align-items: flex-start;
+  gap: .4rem;
+  margin-block-start: .25rem;
+}
+.walkthrough-scramble-line svg { flex: none; margin-block-start: .1rem; }
+.walkthrough-scramble code {
+  display: block;
+  flex: 1;
+  min-inline-size: 0;
+  block-size: 1.6rem;
+  font-size: .9375rem;
+  line-height: 1.25;
+  white-space: nowrap;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: thin;
+}
+.walkthrough-scramble .walkthrough-random-case {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  gap: .4rem;
+  inline-size: 8rem;
+  min-block-size: 44px;
+  padding-inline: .65rem;
+  white-space: nowrap;
+}
+.walkthrough-current-step {
+  min-block-size: 0;
+  padding-block: clamp(.7rem, 3cqh, 1.35rem);
+  border-block-start: 1px solid var(--border-default);
+  overflow-y: auto;
+  overscroll-behavior-y: contain;
+  overflow-anchor: none;
+  scrollbar-gutter: stable;
+}
+.walkthrough-current-step .walkthrough-current-phase {
+  margin: 0 0 .38rem;
+  color: var(--accent);
+  font-size: .9rem;
+  font-weight: 600;
+}
+.walkthrough-current-step h2 {
+  margin: 0;
+  font-size: clamp(1.35rem, 3.7cqw, 2rem);
+  font-weight: 650;
+  line-height: 1.22;
+}
+.walkthrough-current-step code {
+  display: block;
+  margin-block-start: .8rem;
+  padding: .55rem .75rem;
+  border-radius: .35rem;
+  background: var(--accent-soft);
+  font-size: clamp(1.125rem, 2.7cqw, 1.45rem);
+  line-height: 1.4;
+}
+.walkthrough-alg-group { display: inline-block; max-inline-size: 100%; }
+.walkthrough-current-step code [aria-current="step"] {
+  color: var(--accent);
+  text-decoration: underline;
+  text-underline-offset: .18em;
+}
+.walkthrough-current-step .walkthrough-current-note {
+  margin: .8rem 0 0;
+  font-size: clamp(1rem, 2.4cqw, 1.125rem);
+  line-height: 1.55;
+}
+.walkthrough-all-steps {
+  display: flex;
+  align-items: center;
+  gap: .45rem;
+  min-block-size: 44px;
+  padding: 0;
+  border: 0;
+  border-block-start: 1px solid var(--border-default);
+  background: transparent;
+  color: inherit;
+  font-weight: 550;
+  text-align: start;
+  cursor: pointer;
+}
+.walkthrough-all-steps:hover { color: var(--accent); }
+.walkthrough-copy :is(.walkthrough-current-step, .walkthrough-all-steps):focus-visible,
+.walkthrough-step-index button:focus-visible { outline: 2px solid var(--ring); outline-offset: -2px; }
+
+.walkthrough-step-index section + section { margin-block-start: .9rem; }
+.walkthrough-step-index h3 { margin: 0 0 .2rem; color: var(--muted-foreground); font-size: .85rem; font-weight: 600; }
+.walkthrough-step-index ol { margin: 0; padding: 0; list-style: none; }
+.walkthrough-step-index button {
+  inline-size: 100%;
+  min-block-size: 44px;
+  padding: .45rem .65rem;
+  border: 0;
+  border-radius: .35rem;
+  background: transparent;
+  color: inherit;
+  text-align: start;
+  cursor: pointer;
+}
+.walkthrough-step-index button:hover { background: var(--muted); }
+.walkthrough-step-index button[aria-current='step'] { background: var(--accent-soft); font-weight: 600; }
+
+@container course-stage (max-height: 260px) {
+  .walkthrough-scramble { padding-block-end: .35rem; }
+  .walkthrough-current-step { padding-block: .4rem; }
+  .walkthrough-current-step .walkthrough-current-phase { margin-block-end: .12rem; }
+  .walkthrough-current-step code, .walkthrough-current-step .walkthrough-current-note { margin-block-start: .4rem; }
+  .walkthrough-current-step code { padding: .25rem .45rem; }
+}

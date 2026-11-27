@@ -2,50 +2,37 @@
 
 import { useMemo, useState } from 'react';
 import { ChevronLeft } from '@app-foundation/icons/lucide';
-import { NavigationMenu } from '@app-foundation/navigation-ui';
 import AppLink from '@/components/AppLink';
+import { CompactSelect } from '@/components/CompactSelect';
 import { T, tr } from '@/i18n/tr';
 import { Demonstration } from './CompleteDemo';
-import SectionMenu from '../components/SectionMenu';
-import TutorialNavigationShell, { sectionItems, sectionLink } from '../components/TutorialNavigationShell';
-import { buildWalkthroughDemo } from './complete-demo-state';
+import { buildWhiteUpWalkthrough } from './complete-demo-state';
 import { LBL_LESSON_RUNS } from './lesson-runs';
 
 const IGNORE_CASE_CUE = () => {};
 export default function Walkthrough() {
   const [runIndex, setRunIndex] = useState(0);
-  const [stagePickerHost, setStagePickerHost] = useState<HTMLDivElement | null>(null);
   const scramble = LBL_LESSON_RUNS[runIndex].scramble;
-  const demo = useMemo(() => buildWalkthroughDemo(scramble), [scramble]);
+  const { demo, scramble: displayScramble } = useMemo(() => buildWhiteUpWalkthrough(scramble), [scramble]);
   const examples = LBL_LESSON_RUNS.map((_, index) => ({
-    id: String(index),
-    onSelect: () => setRunIndex(index),
+    value: String(index),
     label: tr({ zh: `示例 ${index + 1}`, en: `Example ${index + 1}` }),
-
-    active: index === runIndex,
   }));
-  const exampleNavigation = <NavigationMenu items={sectionItems(examples)} collapsed={false} label={tr({ zh: '示例', en: 'Examples' })} renderLink={sectionLink(examples)} />;
-  return <main className="lbl-page lbl-walkthrough">
-    <header className="lbl-header">
-      <AppLink href="/tutorial/lbl" prefetch={false}>
-        <ChevronLeft size={17} aria-hidden="true" /><T zh="层先法" en="LBL" />
+  const nextRandomCase = () => {
+    const offset = 1 + Math.floor(Math.random() * (LBL_LESSON_RUNS.length - 1));
+    setRunIndex(current => (current + offset) % LBL_LESSON_RUNS.length);
+  };
+
+  return <main className="tutorial-course lbl-walkthrough-page" data-center-content>
+    <header className="course-header">
+      <AppLink className="course-back-link" href="/tutorial/lbl" prefetch={false} aria-label={tr({ zh: '返回层先法教程', en: 'Back to the LBL tutorial' })}>
+        <ChevronLeft size={18} aria-hidden="true" />
       </AppLink>
-      <h1><T zh="完整还原" en="Full solve" /></h1>
+      <h1><T zh="完整示范" en="Full walkthrough" /></h1>
+      <CompactSelect className="lbl-walkthrough-example" ariaLabel={tr({ zh: '选择示例', en: 'Choose example' })} label={examples[runIndex].label}
+        showArrow items={examples} value={String(runIndex)} onChange={value => setRunIndex(Number(value))} />
     </header>
-    <TutorialNavigationShell className="lbl-body" sections={{ items: examples }}>
-      <div className="lbl-learning">
-        <div className="lbl-lesson-scroll">
-          <div className="lbl-complete">
-            <Demonstration key={runIndex} stage="walkthrough" demo={demo} onCaseCueChange={IGNORE_CASE_CUE} stagePickerHost={stagePickerHost}
-              opening={<p className="lbl-walkthrough-scramble-row">
-                <span><T zh="打乱：" en="Scramble:" /></span><code className="lbl-walkthrough-scramble">{scramble}</code>
-              </p>} />
-          </div>
-        </div>
-        <div className="lbl-demo-toolbar" ref={setStagePickerHost}>
-          <SectionMenu label={examples[runIndex].label}>{exampleNavigation}</SectionMenu>
-        </div>
-      </div>
-    </TutorialNavigationShell>
+    <Demonstration key={runIndex} stage="walkthrough" demo={demo} onCaseCueChange={IGNORE_CASE_CUE}
+      walkthroughCase={{ scramble: displayScramble, onRandomCase: nextRandomCase }} />
   </main>;
 }

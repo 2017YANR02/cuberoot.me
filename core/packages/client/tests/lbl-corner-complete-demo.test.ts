@@ -1,7 +1,7 @@
 import { Alg } from 'cubing/alg';
 import { AllFaces, CubeData, Face, parseAlgorithm } from '@cuberoot/visualcube';
 import { describe, expect, it } from 'vitest';
-import { buildWalkthroughDemo, completeDemoPool, demoGoalReached } from '@/app/[lang]/tutorial/lbl/complete-demo-state';
+import { buildWalkthroughDemo, buildWhiteUpWalkthrough, completeDemoPool, demoGoalReached } from '@/app/[lang]/tutorial/lbl/complete-demo-state';
 import { LBL_LESSON_RUNS, LBL_LESSON_STAGE_IDS } from '@/app/[lang]/tutorial/lbl/lesson-runs';
 import { CORNER_ALIGNMENT_COPY, J_ALG, LBL_STEPS, RIGHT } from '@/app/[lang]/tutorial/lbl/content';
 
@@ -82,6 +82,12 @@ describe('LBL bottom-corner complete demos', () => {
       }
       const playedMoves = demo.phases.flatMap(({ start, end }) => Array.from({ length: end - start }, (_, index) => start + index));
       expect(playedMoves).toEqual(moves.map((_, index) => index));
+      const whiteUp = buildWhiteUpWalkthrough(scramble);
+      expect(state(whiteUp.scramble)).toEqual(state(`z2 ${whiteUp.demo.setup}`));
+      expect(whiteUp.demo.phases[0]).toMatchObject({ start: 0, end: 1 });
+      expect(whiteUp.demo.alg.split(' ')[0]).toBe('z2');
+      expect(state(`${whiteUp.demo.setup} z2`)).toEqual(state(demo.setup));
+      expect(whiteUp.demo.stageMarkers).toEqual(demo.stageMarkers?.map(step => step + 1));
       const cornerTurns = demo.phases.filter(phase => phase.stage === 'corner-position' && phase.end > phase.start);
       const lastCornerTurn = cornerTurns.at(-1);
       if (lastCornerTurn) {

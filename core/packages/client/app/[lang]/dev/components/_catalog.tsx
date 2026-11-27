@@ -844,6 +844,13 @@ export const CATALOG: ComponentEntry[] = [
     en: 'Tutorial content fitting; pane mode fits A/B copy independently and keeps mobile B copy scrollable.',
   },
   {
+    name: 'WalkthroughPane',
+    import: "import WalkthroughPane from '@/app/[lang]/tutorial/components/WalkthroughPane';",
+    category: 'more',
+    zh: '二阶、三阶层先法共用的完整示范布局，包含固定打乱栏、逐转高亮和分组步骤弹窗。',
+    en: 'Shared 2×2 and 3×3 LBL walkthrough layout with a fixed scramble row, move highlighting, and a grouped steps dialog.',
+  },
+  {
     name: 'VideoProgress',
     import: "import VideoProgress from '@/app/[lang]/tutorial/components/VideoProgress';",
     category: 'more',

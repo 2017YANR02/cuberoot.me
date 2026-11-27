@@ -17,6 +17,7 @@ import YellowFaceFlowchart from './YellowFaceFlowchart';
 import FishRecognitionHelp from './FishRecognitionHelp';
 import CornerPositionFlowchart from './CornerPositionFlowchart';
 import HeadlightsHelp from './HeadlightsHelp';
+import Walkthrough from './Walkthrough';
 import './chapter-overview.css';
 
 const overviewTitle = { zh: '概览', en: 'Overview' };
@@ -92,7 +93,9 @@ const cornerSections = corners.sections.map(section => ({
 }));
 const chapters = [introduction, { ...bottom, sections: [bottomOverview, ...bottom.sections, bottomFlowchart] },
   { ...yellow, sections: [yellowOverview, ...yellowSections, yellowFlowchart] },
-  { ...corners, sections: [cornerOverview, ...cornerSections, cornerFlowchart] }];
+  { ...corners, sections: [cornerOverview, ...cornerSections, cornerFlowchart] },
+  { id: 'walkthrough', title: { zh: '完整示范', en: 'Full walkthrough' },
+    sections: [{ id: 'walkthrough', title: { zh: '从打乱到复原', en: 'From scramble to solved' }, stage: () => <Walkthrough /> }] }];
 
 function positionFor(step: string | null, section: string | null): CoursePosition {
   const chapterIndex = chapters.findIndex((chapter, index) => step === `lesson-${index + 1}` || step === chapter.id);

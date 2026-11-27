@@ -17,8 +17,6 @@
 .lbl-page .lbl-section-button { width: 100%; border: 0; text-align: left; }
 .lbl-thumbnail { position: relative; display: inline-flex; }
 .lbl-learning { min-width: 0; min-height: 0; display: grid; grid-template-rows: minmax(0, 1fr) minmax(40px, auto) auto; }
-.lbl-walkthrough .lbl-learning { grid-template-rows: minmax(0, 1fr) auto; }
-.lbl-walkthrough .lbl-walkthrough-footer { display: none; }
 .lbl-demo-toolbar { min-width: 0; display: flex; justify-content: center; align-items: start; gap: 8px; }
 .lbl-footer-actions { display: flex; justify-content: flex-end; margin-inline-start: auto; }
 .lbl-footer-actions .lbl-complete-toolbar { position: static; }
@@ -412,7 +410,6 @@
   .lbl-explanation > img { float: right; width: 80px; height: 80px; margin: 0 0 12px 16px; }
   .lbl-explanation::after { content: ''; display: block; clear: both; }
   .lbl-footer { padding-top: var(--lbl-mobile-footer-padding); }
-  .lbl-walkthrough .lbl-walkthrough-footer { display: flex; justify-content: center; }
   .lbl-page .lbl-footer-button { gap: 4px; padding: 8px 6px; font-size: .8rem; }
   .lbl-page .lbl-footer-button { width: 96px; }
   .lbl-stage-overview {
@@ -531,18 +528,6 @@
   font-size: var(--lbl-text-emphasis);
 }
 
-/* Full solve keeps the lesson's typography and two-column teaching layout. */
-.lbl-page.lbl-walkthrough { grid-template-rows: auto minmax(0, 1fr); }
-.lbl-walkthrough .lbl-body { grid-template-columns: 156px minmax(0, 1fr); gap: 24px; }
-.lbl-page.lbl-walkthrough .tutorial-section-navigation { padding-right: 12px; }
-.lbl-walkthrough .tutorial-section-navigation .af-nav-link { height: auto; min-height: 44px; padding-block: 10px; }
-.lbl-walkthrough .tutorial-section-navigation .af-nav-icon:empty { display: none; }
-.lbl-walkthrough .lbl-lesson-scroll::before { flex: 0 0 0; }
-.lbl-walkthrough .lbl-walkthrough-scramble-row { display: flex; align-items: baseline; gap: 8px; }
-.lbl-walkthrough .lbl-walkthrough-scramble-row > span { flex-shrink: 0; }
-.lbl-walkthrough .lbl-walkthrough-scramble { min-width: 0; overflow-wrap: anywhere; font-size: inherit; color: inherit; line-height: inherit; }
-.lbl-walkthrough .lbl-complete-legend-space { display: none; }
-
 @media (prefers-reduced-motion: reduce) { .lbl-content { animation: none; } }
 
 /* Piece lessons share stable mobile anchors regardless of paragraph wrapping. */
@@ -578,93 +563,20 @@
   .lbl-lesson-scroll :is(.lbl-demonstration, .lbl-complete .lbl-cube) .alg-sim-player.is-fill { height: auto; flex: none; padding: 0; }
 }
 
-.lbl-walkthrough-guide {
+.tutorial-course.lbl-walkthrough-page { grid-template-rows: auto minmax(0, 1fr); }
+.lbl-walkthrough-page .lbl-walkthrough-example { margin-inline-start: auto; }
+.lbl-walkthrough-playback {
   display: grid;
-  grid-template-rows: minmax(0, 1fr) minmax(0, min(312px, 66%));
-  gap: 12px;
-  align-self: center;
+  grid-template-rows: minmax(0, 1fr) auto;
   height: 100%;
-  max-height: 488px;
-  min-width: 0;
   min-height: 0;
 }
-.lbl-walkthrough-guide .lbl-complete-thought {
-  min-height: 0;
+.lbl-walkthrough-playback > .alg-sim-player.is-fill { padding: 0; }
+.lbl-walkthrough-playback > .playback-bar { justify-self: center; }
+.lbl-walkthrough-page .walkthrough-scramble code {
+  block-size: 2lh;
+  white-space: normal;
+  overflow-wrap: normal;
+  overflow-x: hidden;
   overflow-y: auto;
-  overscroll-behavior-y: contain;
-  align-items: safe center;
-}
-.lbl-walkthrough-stages {
-  min-height: 0;
-  overflow-y: auto;
-  overscroll-behavior-y: contain;
-  border-top: 1px solid var(--border-default);
-  padding: 8px 4px 4px;
-}
-.lbl-walkthrough-stages > span { color: var(--muted-foreground); font-size: .875rem; }
-.lbl-walkthrough-stages ol {
-  list-style: decimal;
-  margin: 4px 0 0;
-  padding-inline-start: 1.6em;
-}
-.lbl-walkthrough-stages li::marker { color: var(--muted-foreground); font-variant-numeric: tabular-nums; }
-.lbl-walkthrough-stages .lbl-walkthrough-stage-button {
-  width: 100%;
-  min-height: 34px;
-  padding: 4px 8px;
-  border: 0;
-  border-radius: 8px;
-  background: transparent;
-  color: var(--foreground);
-  font: inherit;
-  text-align: start;
-  cursor: pointer;
-}
-.lbl-walkthrough-stages .lbl-walkthrough-stage-button:disabled { cursor: default; }
-.lbl-walkthrough-stages .lbl-walkthrough-stage-button:hover:not(:disabled) { background: var(--muted); }
-.lbl-walkthrough-stages .lbl-walkthrough-stage-button[aria-current='step'] { background: var(--accent-soft); color: var(--accent); }
-.lbl-walkthrough-stages .lbl-walkthrough-stage-button:focus-visible { outline: 2px solid var(--ring); outline-offset: -2px; }
-.lbl-walkthrough .lbl-walkthrough-stage-picker { display: none; }
-
-@media (max-width: 760px), (orientation: landscape) and (max-height: 500px) {
-  .lbl-walkthrough .lbl-body { grid-template-columns: minmax(0, 1fr); gap: 0; }
-  .lbl-walkthrough-guide {
-    align-self: stretch;
-    height: auto;
-    max-height: none;
-    grid-template-rows: minmax(0, 1fr);
-  }
-  .lbl-walkthrough-stages { display: none; }
-  .lbl-walkthrough .lbl-demo-toolbar { position: relative; align-items: center; gap: 16px; }
-  .lbl-walkthrough .lbl-demo-toolbar .tutorial-section-menu { position: static; }
-  .lbl-walkthrough .lbl-walkthrough-stage-picker {
-    display: block;
-    min-width: 0;
-  }
-  .lbl-walkthrough-stage-picker .compact-select-trigger { min-height: 44px; max-width: 100%; }
-}
-
-@media (min-width: 761px) and (min-height: 501px) {
-  .compact-select-popup.lbl-walkthrough-stage-popup { display: none; }
-}
-
-@media (orientation: landscape) and (max-height: 500px) {
-  .lbl-page.lbl-walkthrough .lbl-learning { grid-template-rows: minmax(0, 1fr) auto; }
-
-  @container lbl-lesson (width < 480px) or (height < 120px) {
-    .lbl-page.lbl-walkthrough .lbl-lesson-scroll .lbl-complete .lbl-demo.lbl-demo-split {
-      display: flex;
-      flex: none;
-      flex-direction: column;
-      height: auto;
-      min-height: 100%;
-    }
-    .lbl-page.lbl-walkthrough .lbl-lesson-scroll .lbl-complete-player > .lbl-cube {
-      height: auto;
-      aspect-ratio: auto;
-      flex: none;
-    }
-    .lbl-walkthrough-guide { min-height: 88px; }
-    .lbl-walkthrough-guide .lbl-complete-thought { overflow: visible; }
-  }
 }
