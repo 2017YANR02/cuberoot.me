@@ -1,8 +1,17 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { absorb, collectEvents, LIGHTPANDA_DENY_RULE_ID, managedRule, OPEN_MODE_BYPASS_RULE_ID, SOURCES } from './relay.ts';
+import { absorb, collectEvents, incidentRuleLayout, LIGHTPANDA_DENY_RULE_ID, managedRule, OPEN_MODE_BYPASS_RULE_ID, SOURCES } from './relay.ts';
 const now = Date.parse('2026-09-26T07:00:00Z');
 const event = { startTime: '2026-09-26 06:55:00.000', public_ip: '198.51.100.1', ruleId: [...SOURCES][0], action: 'deny' };
+test('permanent competition denials stay outside the rolling rule range', () => {
+ const top = { id: LIGHTPANDA_DENY_RULE_ID };
+ const cn = { id: 'rule_china_mainland_traffic_exemption_aOC64j' };
+ const open = { id: OPEN_MODE_BYPASS_RULE_ID };
+ const permanent = { id: 'historical', name: 'Permanent competition history 01' };
+ assert.deepEqual(incidentRuleLayout([top, permanent, cn, open]), { chinaIndex: 2, openModeIndex: 3, firstManagedIndex: 4 });
+ assert.deepEqual(incidentRuleLayout([top, cn, open]), { chinaIndex: 1, openModeIndex: 2, firstManagedIndex: 3 });
+ assert.throws(() => incidentRuleLayout([top, { id: 'unexpected' }, cn, open]), /rule order changed/);
+});
 test('30-day expiry, repeated events do not extend, expiry is removed', () => {
  const s = absorb({ cursor: now, bans: {} }, [event], now);
  assert.equal(s.bans[event.public_ip], Date.parse('2026-10-26T06:55:00Z'));

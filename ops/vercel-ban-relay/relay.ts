@@ -11,9 +11,12 @@ export const LIGHTPANDA_DENY_RULE_ID = 'rule_temp_2026_11_22_deny_lightpanda_on_
 export const OPEN_MODE_BYPASS_RULE_ID = 'rule_temp_2026_11_22_keep_other_traffic_in_open_mode_hD4mIW';
 const CHINA_EXEMPTION_RULE_ID = 'rule_china_mainland_traffic_exemption_aOC64j';
 
-export function incidentRuleLayout(rules: readonly { id: string }[]) {
+export function incidentRuleLayout(rules: readonly { id: string; name?: string }[]) {
   const lightpandaIndex = rules.findIndex(rule => rule.id === LIGHTPANDA_DENY_RULE_ID);
-  const chinaIndex = lightpandaIndex === -1 ? 0 : 1;
+  let chinaIndex = lightpandaIndex === -1 ? 0 : 1;
+  // These owner-approved denies stay ahead of the bypasses in either mode.
+  // The rolling ledger may only manage its own rules below the bypasses.
+  while (/^Permanent competition history \d{2}$/.test(rules[chinaIndex]?.name ?? '')) chinaIndex++;
   const openModeIndex = lightpandaIndex === -1 ? -1 : chinaIndex + 1;
   if (lightpandaIndex > 0 || rules[chinaIndex]?.id !== CHINA_EXEMPTION_RULE_ID
     || (openModeIndex !== -1 && rules[openModeIndex]?.id !== OPEN_MODE_BYPASS_RULE_ID)) {
