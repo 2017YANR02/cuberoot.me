@@ -16,10 +16,13 @@ interface Props<T extends string | number> {
   /** 额外加在 root 上的 class,用于宿主页面控制布局/响应式。 */
   className?: string;
   ariaLabel?: string;
+  role?: 'tablist' | 'listbox';
+  /** A completed click, tap or keyboard choice, after drag previews have settled. */
+  onCommit?: () => void;
 }
 
 export default function LiquidGlassChips<T extends string | number>({
-  items, value, onChange, getLabel, className, ariaLabel,
+  items, value, onChange, getLabel, className, ariaLabel, role = 'tablist', onCommit,
 }: Props<T>) {
   const containerRef = useRef<HTMLDivElement>(null);
   const chipRefs = useRef<(HTMLButtonElement | null)[]>([]);
@@ -67,7 +70,7 @@ export default function LiquidGlassChips<T extends string | number>({
       if (r && clientX >= r.left && clientX <= r.right) return i;
     }
     if (rects[0] && clientX < rects[0].left) return 0;
-    return rects.length - 1;
+    return items.length - 1;
   };
 
   const onPointerDown = (e: ReactPointerEvent<HTMLDivElement>) => {
@@ -90,7 +93,9 @@ export default function LiquidGlassChips<T extends string | number>({
     <div
       ref={containerRef}
       className={`lg-chips af-glass-surface${className ? ` ${className}` : ''}`}
-      role="tablist"
+      role={role}
+      aria-orientation="horizontal"
+      onClick={onCommit}
       aria-label={ariaLabel}
       onPointerDown={onPointerDown}
       onPointerMove={onPointerMove}
@@ -117,7 +122,7 @@ export default function LiquidGlassChips<T extends string | number>({
           key={String(item)}
           ref={(el) => { chipRefs.current[i] = el; }}
           type="button"
-          role="tab"
+          role={role === 'listbox' ? 'option' : 'tab'}
           aria-selected={item === localValue}
           className={`lg-chips-chip${item === localValue ? ' is-active' : ''}`}
           onClick={() => select(item)}

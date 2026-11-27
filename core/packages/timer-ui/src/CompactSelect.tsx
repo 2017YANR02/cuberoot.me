@@ -45,6 +45,7 @@ export interface CompactSelectProps<T extends string | number> {
   title?: string;
   className?: string;
   triggerClassName?: string;
+  triggerTooltip?: string;
   /** Keep menu behavior while the host supplies the trigger's complete appearance. */
   unstyledTrigger?: boolean;
   /** Pointer activation keeps the current text editor focused (and its keyboard open). */
@@ -60,7 +61,7 @@ export interface CompactSelectProps<T extends string | number> {
   showArrow?: boolean;
   footer?: (close: () => void) => ReactNode;
   /** Replace options with an inline editor, preserving anchoring and dismissal. */
-  panelContent?: ReactNode;
+  panelContent?: ReactNode | ((close: () => void) => ReactNode);
   dataNoTimer?: boolean;
   /** Mouse hover opens the menu; touch and keyboard keep click activation. */
   openOnHover?: boolean;
@@ -95,6 +96,7 @@ export function CompactSelect<T extends string | number>({
   title,
   className,
   triggerClassName,
+  triggerTooltip,
   unstyledTrigger = false,
   preserveFocus = false,
   popupClassName,
@@ -199,6 +201,43 @@ export function CompactSelect<T extends string | number>({
     option?.focus();
   }, [open, panelVisible]);
 
+  const trigger = (tip: HTMLAttributes<HTMLElement> = {}) => (
+    <button
+      {...tip}
+      ref={triggerRef}
+      id={id}
+      disabled={disabled}
+      type="button"
+      className={['compact-select-trigger', unstyledTrigger && 'compact-select-trigger--unstyled', triggerClassName].filter(Boolean).join(' ')}
+      onClick={event => {
+        if (disabled) return;
+        focusOptionOnOpen.current = keyboardListNavigation && !open && event.detail === 0;
+        setOpen(current => !current);
+      }}
+      onPointerDown={keepEditorFocus}
+      onMouseDown={keepEditorFocus}
+      onPointerEnter={event => {
+        tip.onPointerEnter?.(event);
+        if (!disabled && openOnHover && event.pointerType === 'mouse') setOpen(true);
+      }}
+      aria-label={ariaLabel}
+      aria-description={valueText}
+      aria-expanded={open && !disabled}
+      aria-haspopup={hasPanelContent ? 'dialog' : 'listbox'}
+      title={title}
+    >
+      <span className="compact-select-current">{label}</span>
+      {showArrow && (
+        <ChevronDown
+          size={14}
+          strokeWidth={2}
+          className={`compact-select-arrow${open ? ' open' : ''}`}
+          aria-hidden="true"
+        />
+      )}
+    </button>
+  );
+
   return (
     <div
       className={[
@@ -221,7 +260,8 @@ export function CompactSelect<T extends string | number>({
           close();
           return;
         }
-        if (!['ArrowDown', 'ArrowUp', 'Home', 'End'].includes(event.key)) return;
+        const horizontal = hasPanelContent && (event.key === 'ArrowLeft' || event.key === 'ArrowRight');
+        if (!horizontal && !['ArrowDown', 'ArrowUp', 'Home', 'End'].includes(event.key)) return;
         event.preventDefault();
         event.stopPropagation();
         if (!open) {
@@ -229,46 +269,18 @@ export function CompactSelect<T extends string | number>({
           setOpen(true);
           return;
         }
-        const options = Array.from(panelRef.current?.querySelectorAll<HTMLButtonElement>('button[role="option"]:enabled') ?? []);
+        const group = horizontal ? document.activeElement?.closest('[role="listbox"]') : null;
+        const options = Array.from((group ?? panelRef.current)?.querySelectorAll<HTMLButtonElement>('button[role="option"]:enabled') ?? []);
         const current = options.indexOf(document.activeElement as HTMLButtonElement);
-        let next = current + (event.key === 'ArrowUp' ? -1 : 1);
+        let next = current + (event.key === 'ArrowUp' || event.key === 'ArrowLeft' ? -1 : 1);
         if (event.key === 'Home') next = 0;
         if (event.key === 'End') next = options.length - 1;
         options[Math.max(0, Math.min(options.length - 1, next))]?.focus();
       }}
     >
-      <button
-        ref={triggerRef}
-        id={id}
-        disabled={disabled}
-        type="button"
-        className={['compact-select-trigger', unstyledTrigger && 'compact-select-trigger--unstyled', triggerClassName].filter(Boolean).join(' ')}
-        onClick={event => {
-          if (disabled) return;
-          focusOptionOnOpen.current = keyboardListNavigation && !open && event.detail === 0;
-          setOpen(current => !current);
-        }}
-        onPointerDown={keepEditorFocus}
-        onMouseDown={keepEditorFocus}
-        onPointerEnter={event => {
-          if (!disabled && openOnHover && event.pointerType === 'mouse') setOpen(true);
-        }}
-        aria-label={ariaLabel}
-        aria-description={valueText}
-        aria-expanded={open && !disabled}
-        aria-haspopup={hasPanelContent ? 'dialog' : 'listbox'}
-        title={title}
-      >
-        <span className="compact-select-current">{label}</span>
-        {showArrow && (
-          <ChevronDown
-            size={14}
-            strokeWidth={2}
-            className={`compact-select-arrow${open ? ' open' : ''}`}
-            aria-hidden="true"
-          />
-        )}
-      </button>
+      {triggerTooltip
+        ? <Tooltip content={triggerTooltip} disabled={disabled || open}>{trigger}</Tooltip>
+        : trigger()}
 
       {open && !disabled && typeof document !== 'undefined' && createPortal(
         <div
@@ -280,9 +292,13 @@ export function CompactSelect<T extends string | number>({
           aria-multiselectable={!hasPanelContent && selectedValues ? true : undefined}
           aria-label={ariaLabel}
           data-no-timer={dataNoTimer ? '' : undefined}
+          onMouseDown={hasPanelContent && keyboardListNavigation && preserveFocus ? keepEditorFocus : undefined}
           style={panelStyle}
         >
-          {panelContent ?? <div className="compact-select-options">
+          {typeof panelContent === 'function' ? panelContent(() => {
+            if (panelRef.current?.contains(document.activeElement)) triggerRef.current?.focus();
+            close();
+          }) : panelContent ?? <div className="compact-select-options">
             {items.map(item => {
               const active = selectedValues ? selectedValues.includes(item.value) : item.value === value;
               const option = (tip: HTMLAttributes<HTMLElement> = {}) => (
