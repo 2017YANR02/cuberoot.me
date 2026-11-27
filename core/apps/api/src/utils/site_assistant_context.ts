@@ -22,12 +22,21 @@ const observationSchema = z.object({ call: z.lazy(()=>toolCallSchema), sourceIds
 }).strict();
 const contextSchema = z.object({ version: z.literal(ASSISTANT_CONTEXT_VERSION), createdAt: z.string().datetime(), expiresAt: z.string().datetime(),
   sources: z.array(sourceSchema).max(12), observations: z.array(observationSchema).max(6), memory: assistantMemorySchema.optional(),
+  scenario: z.object({key:z.string().regex(/^[0-9a-f]{64}$/), log:z.string().max(10000)}).strict().optional(),
 }).strict();
 export type AssistantContext = z.infer<typeof contextSchema>;
 export interface AssistantObservation { call: AssistantToolCall; result: ToolResult }
 // Internal metadata never enters JSON/SSE, public shares or model-authored answers.
 const answerContexts = new WeakMap<AssistantAnswer, AssistantContext>();
 export const assistantAnswerContext = (answer: AssistantAnswer) => answerContexts.get(answer);
+
+/** Attach only a server-validated worked example to the private conversation state. */
+export function rememberScenarioLog(answer:AssistantAnswer, scenario:NonNullable<AssistantContext['scenario']>) {
+  const context=answerContexts.get(answer);
+  if(context && scenario.log.length<=10000 && Buffer.byteLength(JSON.stringify({...context,scenario}))<=ASSISTANT_CONTEXT_MAX_BYTES)
+    answerContexts.set(answer,{...context,scenario});
+  return answer;
+}
 
 /** Extend the existing private JSON snapshot; never expose memory in answers,
  * shares or accept a client-provided graph. Ordinary chat now retains context too. */
@@ -47,6 +56,7 @@ export function rememberAssistantConversation(answer: AssistantAnswer, question:
   // Source-backed snapshots keep priority over optional derived memory at the
   // persistence boundary. Neither the journal nor the 30-day retention expands.
   if (Buffer.byteLength(JSON.stringify(context)) > ASSISTANT_CONTEXT_MAX_BYTES) delete context.memory;
+  delete context.scenario; // Only an answer that applied the matching example may bind the next turn.
   answerContexts.set(answer, context);
   return answer;
 }
