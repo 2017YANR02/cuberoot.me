@@ -11,19 +11,22 @@ import { retryable } from './retry.ts';
 const dns = new Resolver({ timeout: 5000, tries: 2 });
 dns.setServers(['223.5.5.5', '1.1.1.1']);
 async function resolvePublicIPv4(host: string): Promise<string[]> {
-  try { return await dns.resolve4(host); }
+  try {
+    const addresses = await dns.resolve4(host);
+    if (!addresses.some(address => /^198\.(?:18|19)\./.test(address))) return addresses;
+  }
   catch (error) {
     // Some administrator networks block direct DNS traffic. Keep verification
     // independent of local proxy DNS, using authenticated HTTPS instead.
     if (!['ECONNREFUSED', 'ETIMEOUT', 'ESERVFAIL'].includes((error as NodeJS.ErrnoException).code ?? '')) throw error;
-    const response = await fetch(`https://dns.google/resolve?name=${encodeURIComponent(host)}&type=A`, { signal: AbortSignal.timeout(15_000) });
-    if (!response.ok) throw Error(`Public DNS HTTPS failed: ${response.status}`);
-    const result = await response.json() as { Status: number; Answer?: { type: number; data: string }[] };
-    if (result.Status !== 0) throw Error(`Public DNS response failed: ${result.Status}`);
-    const addresses = (result.Answer ?? []).filter(a => a.type === 1).map(a => a.data);
-    if (!addresses.length) throw Error('Public DNS returned no IPv4 address');
-    return addresses;
   }
+  const response = await fetch(`https://dns.google/resolve?name=${encodeURIComponent(host)}&type=A`, { signal: AbortSignal.timeout(15_000) });
+  if (!response.ok) throw Error(`Public DNS HTTPS failed: ${response.status}`);
+  const result = await response.json() as { Status: number; Answer?: { type: number; data: string }[] };
+  if (result.Status !== 0) throw Error(`Public DNS response failed: ${result.Status}`);
+  const addresses = (result.Answer ?? []).filter(a => a.type === 1).map(a => a.data);
+  if (!addresses.length) throw Error('Public DNS returned no IPv4 address');
+  return addresses;
 }
 import { allocate, authorizeScript, hostOf, idOf, nginx, origins, publicKey, sh, slug, userOf, validate, type Machine, type Registry } from './model.ts';
 

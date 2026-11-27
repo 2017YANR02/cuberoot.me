@@ -52,7 +52,8 @@ async function listening(port: number) {
 }
 async function localCheck(p: Profile, startedFrontend = false) {
   const url = `http://127.0.0.1:${p.localPort}/zh`;
-  const response = await fetch(url, { signal: AbortSignal.timeout(45_000) });
+  // Cold development compilation can take several minutes on a memory-constrained workstation.
+  const response = await fetch(url, { signal: AbortSignal.timeout(startedFrontend ? 300_000 : 45_000) });
   if (response.status === 200 && (await response.text()).includes('CubeRoot')) return;
 
   const detail = `The service at ${url} is not serving a healthy CubeRoot page (HTTP status ${response.status}).`;
