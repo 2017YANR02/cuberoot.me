@@ -105,7 +105,16 @@ export type HandGesture =
 /** 两手当前握姿名(null = 非标准握,如 weld 途中/自定义积);由 grip 四元数判读。 */
 export interface HandGripNames { R: GripName | null; L: GripName | null }
 
-function prefersLeftUpperRelay({ R, L }: HandGripNames): boolean {
+export function isNativeNailStroke(style: FlickStyle | undefined) {
+  return style === 'markedRingNail' || isSliceNail(style) || style === 'upPush'
+    || style === 'upperRingRelay' || style === 'frontIndexNail' || style === 'frontThumbNail';
+}
+
+export function isBasicGrip(grip: GripName | null): boolean {
+  return grip === 'home' || grip === 'up' || grip === 'down';
+}
+
+export function prefersLeftUpperRelay({ R, L }: HandGripNames): boolean {
   // A home left hand can start immediately. When both wrists are turned,
   // retain the existing regrip path for a quarter-turned right wrist.
   return (L === 'home' && R !== 'home') || R === 'up' || R === 'down';
@@ -2077,11 +2086,10 @@ export default class HandsRig extends THREE.Group {
     this.pocketPushTarget = Number(cube.order === 2 && readyPush);
     if (this.pocketPushSupport !== this.pocketPushTarget) return true;
     const thumb = annotation?.finger === 'thumb' && !annotation.contact;
-    const basic = (grip: GripName | null) => grip === 'home' || grip === 'up' || grip === 'down';
     const seat = this.singleMarkSeat;
     let singleMark: MixedPush | 'topPush' | null = null;
     if (cube.order === 3 && axis === 'z' && layers.length === 1
-      && basic(grips.L) && basic(grips.R) && !push && !pin && !explicitPath) {
+      && isBasicGrip(grips.L) && isBasicGrip(grips.R) && !push && !pin && !explicitPath) {
       if (thumb && quarters === 1 && cls === 'high') singleMark = 'thumbLift';
       if (nail && cls === 'mid' && (quarters === 1 || quarters === 2)) singleMark = quarters === 2 ? 'sliceNailDouble' : 'sliceNail';
       // Ordinary S prefers an existing home grip. With neither hand seated,
@@ -2094,7 +2102,7 @@ export default class HandsRig extends THREE.Group {
       && quarters === 1 && !explicit && grips[oppositeUpperHand] === 'up'
       && (grips[upperHand] === 'down' || seat?.style === 'indexHook' && seat.hand === upperHand);
     const markedUpper = cube.order === 3 && axis === 'y' && cls === 'high' && layers.length === 1 && (quarters === 1 || quarters === 2)
-      && annotation?.finger === 'middle' && !annotation.contact && !push && !pin && !explicitPath && basic(grips.L) && basic(grips.R);
+      && annotation?.finger === 'middle' && !annotation.contact && !push && !pin && !explicitPath && isBasicGrip(grips.L) && isBasicGrip(grips.R);
     const middleRelay = markedUpper && quarters === 2;
     // During repeated preflight calls the temporary seat already owns the
     // active wrist. Compare against its entry grip until the stroke finishes.
@@ -2157,7 +2165,7 @@ export default class HandsRig extends THREE.Group {
     }
     const nailHint = nail && !markedEven && (quarters !== 2 || singleMark === 'sliceNailDouble' || axis === 'y' && cls === 'high' && cube.order === 3);
     const g = gestureForLayers(axis, layers, dir, grips, { homeStroke: stroke, quarters, push, nail: nailHint, thumb: singleMark === 'thumbLift', middleRelay }, cube.order);
-    const nativeMark = markedEven || g.kind === 'flick' && (middleRelay && g.finger2 === 'middle' || nail && (g.style === 'markedRingNail' || isSliceNail(g.style) || g.style === 'upPush' || g.style === 'upperRingRelay' || g.style === 'frontIndexNail' || g.style === 'frontThumbNail') || singleMark === 'thumbLift' && g.style === 'thumbLift');
+    const nativeMark = markedEven || g.kind === 'flick' && (middleRelay && g.finger2 === 'middle' || nail && isNativeNailStroke(g.style) || singleMark === 'thumbLift' && g.style === 'thumbLift');
     const marked = !!(annotation?.finger || annotation?.contact) && !nativeMark;
     const request = marked && annotation ? { axis, layers, dir, quarters, annotation } : automatic?.plan.request ?? null;
     if (!this.ruPreparation) {
@@ -2525,7 +2533,7 @@ export default class HandsRig extends THREE.Group {
   }
 
   /** 每帧驱动;返回 true = 画面有变化需要重渲。 */
-  tick(dtMs: number, holdReferenceThumb = false): boolean {
+  tick(dtMs: number, holdReferenceThumb = false, allowIdleMotion = true): boolean {
     if (!this.visible) return false;
     const dt = Math.min(dtMs, 100); // 掉帧保护
     let animating = false;
@@ -2772,7 +2780,7 @@ export default class HandsRig extends THREE.Group {
     const halfRecovery = [hands.R, hands.L].some(h => h.recoverT < 1 && (h.halfSeatRelease
       || atHalfTurn(h.gripAngle) || atHalfTurn(h.gripAngle + h.recoverWristAngle)));
     const middleSliceMotion = isMiddleSliceStroke(hands.L.flickStyle);
-    const keepalive = !middleSliceMotion && !this.markedMotion && !fFingerMotion && !dFingerMotion && now - this.lastActivityAt < IDLE_KEEPALIVE_MS;
+    const keepalive = allowIdleMotion && !middleSliceMotion && !this.markedMotion && !fFingerMotion && !dFingerMotion && now - this.lastActivityAt < IDLE_KEEPALIVE_MS;
     // On a whole half turn the hands finish on opposite sides. Return
     // one quarter at a time, alternating support before their paths cross.
     const twoSeats = this.wholeRegrip && hands.R.recoverQuat.angleTo(HandsRig._qIdent) > HALF_PI + .01;
