@@ -4,7 +4,8 @@ import type { ToolResult } from './site_assistant_tools.js';
 /** Result queries and maintenance queries have different evidence contracts. */
 export function requestsStatisticsMetadata(question: string): boolean {
   const subject = /统计|榜单|排名榜|平均榜|题库|预计算表|剪枝表|距离表|全状态|精确分布|LSLL|ZBLL|\b(?:statistics?|stats|rankings?|leaderboards?|corpus|precomputed|pruning tables?|distance tables?|distributions?)\b/i.test(question);
-  const maintenance = /运行|执行状态|最近.{0,8}(?:成功|失败)|(?:当前|最新|线上).{0,8}版本|计算量|计算成本|耗时|耗内存|耗\s*(?:CPU|算力)|最耗|重计算|离线|生成|更新|刷新|全量|增量|续算|发布|上线|打开页面.*计算|\b(?:cost|expensive|CPU|memory|offline|generat\w*|updat\w*|refresh\w*|incremental|recomput\w*|publish\w*|pipeline|runs?)\b/i.test(question);
+  const scopeStripped=question.replace(/已(?:经)?发布(?:的)?(?=榜|表|行|记录|数据)/g,'');
+  const maintenance = /运行|执行状态|最近.{0,8}(?:成功|失败)|(?:当前|最新|线上).{0,8}版本|计算量|计算成本|耗时|耗内存|耗\s*(?:CPU|算力)|最耗|重计算|离线|生成|更新|刷新|全量|增量|续算|发布|上线|打开页面.*计算|\b(?:cost|expensive|CPU|memory|offline|generat\w*|updat\w*|refresh\w*|incremental|recomput\w*|publish\w*|pipeline|runs?)\b/i.test(scopeStripped);
   return subject && maintenance;
 }
 

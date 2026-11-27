@@ -76,6 +76,19 @@ export interface ToolResult {
   reconstructionAnnotations?: string[];
   factualSummary?: string;
 }
+/** Keep table keys identical for model tools and direct reads, including nested panels. */
+export function publishedStatisticTables(data:any,lang:'zh'|'en') {
+  const tables:Array<{key:string;title:string;scope:unknown;header:any[];rows:unknown[][]}>=[];
+  const walk=(node:any,key:string,labels:string[],header:any[])=>{
+    const nextLabels=[...labels,node.titleZh && lang==='zh' ? node.titleZh : node.title ?? (lang==='zh'?node.labelZh:node.labelEn) ?? ''].filter(Boolean);
+    const columns=node.header?.length ? node.header : header;
+    if (Array.isArray(node.rows) && node.rows.length) tables.push({key,title:nextLabels.join(' · '),scope:node.recordScope,header:columns,rows:node.rows});
+    ['metricPanels','panels','sections','sourcePanels'].forEach((field,group)=>node[field]?.forEach((child:any,i:number)=>walk(child,key+'.'+group+'.'+i,nextLabels,columns)));
+  };
+  walk(data,'0',[],data.header ?? []);
+  return tables;
+}
+
 export type JsonReader = (url: string) => Promise<any>;
 const api = 'https://api.cuberoot.me/v1';
 const stat = 'https://static.cuberoot.me/stats';
@@ -399,14 +412,7 @@ async function executeDataTool(call: Exclude<AssistantToolCall, {tool:'pages'|'n
       return out;
     }
     const data=await read(stat+'/'+entry.id+'.json');
-    const tables:Array<{key:string;title:string;scope:unknown;header:any[];rows:unknown[][]}>=[];
-    const walk=(node:any,key:string,labels:string[],header:any[])=>{
-      const nextLabels=[...labels,node.titleZh && lang==='zh' ? node.titleZh : node.title ?? (lang==='zh'?node.labelZh:node.labelEn) ?? ''].filter(Boolean);
-      const columns=node.header?.length ? node.header : header;
-      if (Array.isArray(node.rows) && node.rows.length) tables.push({key,title:nextLabels.join(' · '),scope:node.recordScope,header:columns,rows:node.rows});
-      ['metricPanels','panels','sections','sourcePanels'].forEach((field,group)=>node[field]?.forEach((child:any,i:number)=>walk(child,key+'.'+group+'.'+i,nextLabels,columns)));
-    };
-    walk(data,'0',[],data.header ?? []);
+    const tables=publishedStatisticTables(data,lang);
     if(tables.length>1) out.scopeChoices={total:tables.length,titles:tables.slice(0,20).map(t=>t.title)};
     const selected=tables.find(t=>t.key===call.tableKey) ?? (tables.length===1?tables[0]:undefined);
     const offset=call.offset ?? 0;
