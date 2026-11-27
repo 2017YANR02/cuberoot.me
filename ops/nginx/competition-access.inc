@@ -1,10 +1,14 @@
 # Runs in the access phase, including before proxy_cache HIT / stale responses.
+# Evaluate these URI maps in the client request, before auth_request changes $uri.
+set $cuberoot_comp_gate_target $cuberoot_comp_access_path;
+set $cuberoot_comp_gate_scraper $cuberoot_comp_scraper_denied;
 auth_request /_cuberoot_competition_access;
 error_page 403 = @cuberoot_access_denied;
 
 location = /_cuberoot_competition_access {
     internal;
     auth_request off;
+    if ($cuberoot_comp_gate_scraper) { return 403; }
     if ($cuberoot_comp_check = 0) { return 204; }
     rewrite_by_lua_block {
         if ngx.var.cuberoot_comp_check == "3" and (tonumber(ngx.var.cuberoot_comp_only_until) or 0) <= ngx.time() then
@@ -31,6 +35,10 @@ location @cuberoot_access_denied {
     add_header Access-Control-Allow-Credentials "true" always;
     add_header Vary "Origin" always;
     content_by_lua_block {
+        if ngx.var.cuberoot_comp_gate_scraper == "1" then
+            ngx.header["X-CubeRoot-Comp-Scraper"] = "blocked"
+            return ngx.exit(403)
+        end
         -- Preserve unrelated 403s, including the incident calculator denial.
         if ngx.var.cuberoot_comp_check == "0" then return ngx.exit(403) end
         if ngx.var.cuberoot_comp_check == "3" and (tonumber(ngx.var.cuberoot_comp_only_until) or 0) <= ngx.time() then
