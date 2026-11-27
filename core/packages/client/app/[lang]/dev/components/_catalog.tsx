@@ -872,6 +872,13 @@ export const CATALOG: ComponentEntry[] = [
     en: 'Shared mobile section menu for LBL and F2L tutorial footers.',
   },
   {
+    name: 'CourseHeader',
+    import: "import CourseHeader from '@/app/[lang]/tutorial/components/CourseHeader';",
+    category: 'more',
+    zh: '教程页头，统一返回按钮、课程标题和可选的右侧操作入口。',
+    en: 'Shared tutorial header with a back button, course title, and optional right-side action.',
+  },
+  {
     name: 'ChapterNavigation',
     import: "import ChapterNavigation from '@/app/[lang]/tutorial/components/ChapterNavigation';",
     category: 'more',

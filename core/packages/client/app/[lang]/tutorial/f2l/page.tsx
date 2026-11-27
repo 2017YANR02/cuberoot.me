@@ -2,10 +2,9 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { parseAsString, parseAsStringEnum, useQueryState, useQueryStates } from 'nuqs';
-import PageBackLink from '@/components/PageBackLink';
-import Link from '@/components/AppLink';
 import JsonLd from '@/components/JsonLd';
-import { tr, T } from '@/i18n/tr';
+import { tr } from '@/i18n/tr';
+import CourseHeader from '../components/CourseHeader';
 import { F2L_CHAPTERS, F2L_NAV_CHAPTERS, type ChapterId } from './data/chapters';
 import { F2L_CASES, ORDERED_BASIC_CASES } from './data/basic-cases';
 import { F2L_CLASSIFICATION_SECTIONS } from './data/classification';
@@ -107,17 +106,9 @@ export default function F2lTutorial() {
   const dialogue = F2L_CHAPTERS.find(chapter => chapter.id === stepId)!;
 
   return <main className={`f2l-page${isPractice ? ' f2l-practice-page' : ''}`} ref={page}>
-    <header className="f2l-header">
-      <div className="f2l-header-links">
-        <PageBackLink fallback="/tutorial?puzzle=3x3" />
-        <Link href="/tutorial?puzzle=3x3" prefetch={false}><T zh="教程" en="Tutorials" /></Link>
-      </div>
-      <div className="f2l-header-title">
-        <TutorialSettings orientation={orientation} pauseBetween={pauseBetween} flowTeaching={flowTeaching} onFlowTeachingChange={setFlowTeaching}
-          onOrientationChange={setOrientation} onPauseBetweenChange={setPauseBetween} />
-        <h1><T zh="F2L 教程" en="F2L tutorial" /></h1>
-      </div>
-    </header>
+    <CourseHeader title={tr({ zh: 'F2L 教程', en: 'F2L tutorial' })} catalogHref="/tutorial?puzzle=3x3"
+      action={<TutorialSettings orientation={orientation} pauseBetween={pauseBetween} flowTeaching={flowTeaching} onFlowTeachingChange={setFlowTeaching}
+        onOrientationChange={setOrientation} onPauseBetweenChange={setPauseBetween} />} />
     <JsonLd data={{ '@context': 'https://schema.org', '@type': 'Article', headline: tr({ zh: 'F2L 教程', en: 'F2L tutorial' }), description: tr({ zh: '从认识三步基态到顶面调整，逐步学习右前槽的棱角还原。', en: 'Recognize three-move cases, align the top layer and learn front-right pair insertions.' }) }} />
     {!isPractice && <TutorialToolbar stepId={stepId} onChapterChange={navigate} />}
     <article className="f2l-chapter">

@@ -97,7 +97,7 @@ export default function WalkthroughPane({
             <h3><T {...stage.title} /></h3>
             <ol role="list">
               {stage.steps.map(step => <li key={step.id}>
-                <button type="button" aria-current={currentStep === step.id ? 'step' : undefined} onClick={() => {
+                <button type="button" className="walkthrough-step-button" aria-current={currentStep === step.id ? 'step' : undefined} onClick={() => {
                   resume();
                   readingPane.current?.scrollTo({ top: 0, behavior: 'instant' });
                   onSeek(step.id);

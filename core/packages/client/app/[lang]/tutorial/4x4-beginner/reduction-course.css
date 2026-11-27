@@ -32,7 +32,7 @@
   list-style: none;
 }
 
-.four-reduction-overview-grid button {
+.four-reduction-overview-grid .four-reduction-button {
   box-sizing: border-box;
   display: grid;
   grid-template-rows: auto 1fr;
@@ -51,7 +51,7 @@
   cursor: pointer;
 }
 
-.four-reduction-overview-grid button:hover { border-color: var(--accent); }
+.four-reduction-overview-grid .four-reduction-button:hover { border-color: var(--accent); }
 .four-reduction-overview-cube { width: min(100%, 154px, 31cqh); }
 .four-reduction-overview-cube .puzzle-art,
 .four-reduction-transfer .puzzle-art,
@@ -71,8 +71,8 @@
   gap: 8px;
 }
 .four-reduction-overview-actions { justify-content: center; margin-block-start: 16px; }
-.four-reduction-overview-actions > :is(button, a),
-.four-reduction-quiz-actions button {
+.four-reduction-overview-actions > :is(.four-reduction-button, a),
+.four-reduction-quiz-actions .four-reduction-button {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -109,7 +109,7 @@
   background: var(--accent-soft);
 }
 .four-reduction-phase-jump,
-.four-reduction-moves button {
+.four-reduction-moves .four-reduction-button {
   border: 0;
   color: inherit;
   background: transparent;
@@ -127,10 +127,10 @@
   font-size: clamp(1.125rem, 3.4cqw, 1.5rem);
 }
 .four-reduction-phase-jump:disabled,
-.four-reduction-moves button:disabled { cursor: default; }
+.four-reduction-moves .four-reduction-button:disabled { cursor: default; }
 .four-reduction-phase-jump:not(:disabled):hover { color: var(--accent); }
 .four-reduction-moves { display: flex; flex-wrap: wrap; gap: 4px; margin-block: 3px 6px; }
-.four-reduction-moves button {
+.four-reduction-moves .four-reduction-button {
   min-width: 30px;
   min-height: 34px;
   padding: 2px 5px;
@@ -138,8 +138,8 @@
   background: var(--muted);
   font-size: clamp(1.125rem, 2.8cqw, 1.5rem);
 }
-.four-reduction-moves button:not(:disabled):hover,
-.four-reduction-moves button[data-active] { color: var(--accent-foreground); background: var(--accent); }
+.four-reduction-moves .four-reduction-button:not(:disabled):hover,
+.four-reduction-moves .four-reduction-button[data-active] { color: var(--accent-foreground); background: var(--accent); }
 .four-reduction-steps > li > p,
 .four-reduction-phases p.four-reduction-note { color: var(--muted-foreground); }
 .four-reduction-phases p.four-reduction-note { margin-block: 10px 5px; }
@@ -152,8 +152,8 @@
 .four-reduction-case .puzzle-art { max-width: min(100%, 310px, 82cqh); }
 .four-reduction-quiz-actions { flex-direction: column; align-items: start; }
 .four-reduction-choices { display: flex; flex-wrap: wrap; gap: 6px; }
-.four-reduction-choices button[aria-pressed='true'] { border-color: var(--accent); }
-.four-reduction-choices button[data-correct] { border-color: var(--signal-success); }
+.four-reduction-choices .four-reduction-button[aria-pressed='true'] { border-color: var(--accent); }
+.four-reduction-choices .four-reduction-button[data-correct] { border-color: var(--signal-success); }
 
 .four-reduction-reference dl { margin-block: 10px 18px; }
 .four-reduction-reference dl > div { padding: 8px 0; border-block-end: 1px solid var(--border-default); }
@@ -162,17 +162,17 @@
 .four-reduction-sources { display: flex; flex-wrap: wrap; gap: 6px 14px; margin-block-start: 16px; }
 .four-reduction-sources span { color: var(--muted-foreground); }
 
-.four-reduction-reading button:focus-visible,
+.four-reduction-reading .four-reduction-button:focus-visible,
 .four-reduction-phase-jump:focus-visible,
-.four-reduction-moves button:focus-visible,
-.four-reduction-choices button:focus-visible {
+.four-reduction-moves .four-reduction-button:focus-visible,
+.four-reduction-choices .four-reduction-button:focus-visible {
   outline: 2px solid var(--ring);
   outline-offset: 2px;
 }
 
 @container course-reading (max-width: 520px) {
   .four-reduction-overview-grid { grid-template-columns: minmax(0, 1fr); }
-  .four-reduction-overview-grid button { grid-template: auto / min(24%, 86px) minmax(0, 1fr); }
+  .four-reduction-overview-grid .four-reduction-button { grid-template: auto / min(24%, 86px) minmax(0, 1fr); }
   .four-reduction-overview-cube { width: 100%; }
   .four-reduction-overview-copy { align-self: center; }
 }
@@ -184,7 +184,7 @@
 }
 
 @media (pointer: coarse) {
-  .four-reduction-moves button { min-width: 44px; min-height: 44px; }
+  .four-reduction-moves .four-reduction-button { min-width: 44px; min-height: 44px; }
 }
 
 @media (max-width: 760px), (orientation: landscape) and (max-height: 500px) {

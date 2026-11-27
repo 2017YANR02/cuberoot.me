@@ -3,8 +3,7 @@
 import { useCallback, useEffect, useRef, useState, type MouseEvent } from 'react';
 import { NavigationMenu } from '@app-foundation/navigation-ui';
 import { parseAsString, useQueryState, useQueryStates } from 'nuqs';
-import { ArrowLeft, ArrowRight, ChevronLeft } from '@app-foundation/icons/lucide';
-import AppLink from '@/components/AppLink';
+import { ArrowLeft, ArrowRight } from '@app-foundation/icons/lucide';
 import { T, tr } from '@/i18n/tr';
 import { activeChapters, chapters as allChapters, lessonSourceChapter, practiceExampleOrder, practiceReviewLocation } from './curriculum';
 import LessonContent from './LessonContent';
@@ -15,6 +14,7 @@ import Walkthrough from './Walkthrough';
 import SectionMenu from '../components/SectionMenu';
 import TutorialNavigationShell, { sectionItems, sectionLink } from '../components/TutorialNavigationShell';
 import ChapterNavigation from '../components/ChapterNavigation';
+import CourseHeader from '../components/CourseHeader';
 import './lesson-support.css';
 import '@app-foundation/navigation-ui/navigation.css';
 import './lbl.css';
@@ -183,15 +183,7 @@ function LblLessonView({ archive }: { archive: boolean }) {
       onSelect={chooseChapter} onMouseDown={keepMouseNavigationUnfocused} />;
 
   return <main className="lbl-page">
-    <header className="lbl-header">
-      <AppLink href="/tutorial?puzzle=3x3" prefetch={false}>
-        <ChevronLeft size={17} aria-hidden="true" /><T zh="教程" en="Tutorials" />
-      </AppLink>
-      <div className="lbl-header-title">
-        {!archive && <AppLink href="/tutorial/lbl?view=walkthrough" prefetch={false}><T zh="完整示范" en="Full walkthrough" /></AppLink>}
-        <h1><T zh="层先法" en="LBL" /></h1>
-      </div>
-    </header>
+    <CourseHeader title={tr({ zh: '三阶魔方层先法', en: '3×3 LBL' })} catalogHref="/tutorial?puzzle=3x3" />
     {chapterNavigation}
     <TutorialNavigationShell className="lbl-body" sections={{ items }}>
       <div className="lbl-learning">

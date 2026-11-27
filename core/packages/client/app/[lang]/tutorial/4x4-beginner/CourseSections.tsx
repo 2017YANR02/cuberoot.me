@@ -70,11 +70,11 @@ export function Playback({ demo, checkpointPause = false }: {
       <ol className="four-reduction-steps" role="list">
         {phases.map(({ title, note, moves, start, end }) => <li key={start}
           aria-current={position >= start && (position < end || position === from && end === from) ? 'step' : undefined}>
-          <button type="button" className="four-reduction-phase-jump" onClick={() => playMove(start)} disabled={!ready}>
+          <button type="button" className="four-reduction-button four-reduction-phase-jump" onClick={() => playMove(start)} disabled={!ready}>
             <T {...title} />
           </button>
           <div className="four-reduction-moves">
-            {moves.map((move, index) => <button key={start + index} type="button" disabled={!ready}
+            {moves.map((move, index) => <button className="four-reduction-button" key={start + index} type="button" disabled={!ready}
               data-active={position === start + index + 1 || undefined} onClick={() => playMove(start + index)}
               aria-label={tr({ zh: `播放第 ${start + index + 1} 步 ${move}`, en: `Play move ${start + index + 1}, ${move}` })}>
               <code>{move}</code>
@@ -114,11 +114,11 @@ export function Recognition({ sectionId, questions, nextSection }: {
           <div className="four-reduction-choices" role="group"
             aria-label={tr({ zh: '选一个判断', en: 'Choose an answer' })}>
             {question.choices.map((choice, choiceIndex) => <button key={choice.en} type="button"
-              className="btn-secondary" aria-pressed={selection === choiceIndex}
+              className="four-reduction-button btn-secondary" aria-pressed={selection === choiceIndex}
               data-correct={correct && selection === choiceIndex || undefined} disabled={correct && selection !== choiceIndex}
               onClick={() => setSelection(choiceIndex)}><T {...choice} /></button>)}
           </div>
-          <button type="button" className="btn-primary" disabled={!correct} onClick={() => {
+          <button type="button" className="four-reduction-button btn-primary" disabled={!correct} onClick={() => {
             if (final) nextSection();
             else {
               setIndex(index + 1);
@@ -148,7 +148,7 @@ export function Overview({ select }: { select: (chapter: string, section?: strin
     </div>
     <ol className="four-reduction-overview-grid" role="list">
       {overview.map(({ id, setup, note, title }) => <li key={id}>
-        <button type="button" data-site-surface="panel" onClick={() => select(id)}>
+        <button className="four-reduction-button" type="button" data-site-surface="panel" onClick={() => select(id)}>
           <div className="four-reduction-overview-cube"><Diagram setup={setup} alt={title} size={192} /></div>
           <span className="four-reduction-overview-copy">
             <strong><T {...title} /><ArrowRight size={16} aria-hidden="true" /></strong>
@@ -158,10 +158,10 @@ export function Overview({ select }: { select: (chapter: string, section?: strin
       </li>)}
     </ol>
     <div className="four-reduction-overview-actions">
-      <button type="button" className="btn-primary" onClick={() => select('intro', 'notation')}>
+      <button type="button" className="four-reduction-button btn-primary" onClick={() => select('intro', 'notation')}>
         <T zh="从转动记号开始" en="Start with notation" /><ArrowRight size={16} aria-hidden="true" />
       </button>
-      <button type="button" className="btn-secondary" onClick={() => select('practice')}>
+      <button type="button" className="four-reduction-button btn-secondary" onClick={() => select('practice')}>
         <T zh="看完整还原" en="Watch the full solve" />
       </button>
     </div>
@@ -187,7 +187,7 @@ export function ThreeByThree({ select }: { select: (chapter: string, section?: s
         en="Layer-by-layer solvers can follow the bottom cross, bottom corners and middle edges. The next section shows how to recognize the edge-flip and edge-swap exceptions on the last layer." /></p>
     </div>
     <div className="four-reduction-overview-actions">
-      <button className="btn-primary" type="button" onClick={() => select('finish', 'oll')}>
+      <button className="four-reduction-button btn-primary" type="button" onClick={() => select('finish', 'oll')}>
         <T zh="辨认翻棱和换棱" en="Learn the two parity cases" /><ArrowRight size={16} aria-hidden="true" />
       </button>
       <AppLink className="btn-secondary" href="/tutorial/lbl" prefetch={false}><T zh="复习三阶层先法" en="Review 3×3 layer by layer" /></AppLink>
@@ -207,7 +207,7 @@ export function Reference({ select }: { select: (chapter: string, section?: stri
     <h2><T zh="复原时查公式" en="Quick reference while you solve" /></h2>
     <dl>
       {reference.map(({ chapter, section, alg, title }) => <div key={section}>
-        <dt><button type="button" className="four-reduction-phase-jump" onClick={() => select(chapter, section)}>
+        <dt><button type="button" className="four-reduction-button four-reduction-phase-jump" onClick={() => select(chapter, section)}>
           <T {...title} /><ArrowRight size={15} aria-hidden="true" />
         </button></dt>
         <dd><code>{alg}</code></dd>

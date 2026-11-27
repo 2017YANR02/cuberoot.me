@@ -76,7 +76,7 @@ const tutorialSamples = new Map([
     ['?step=structure', '.lbl-lesson-scroll [data-tutorial-layout]'],
     ['?step=corners&case=1', '.lbl-lesson-scroll [data-tutorial-mode]'],
     ['?view=practice&step=corners&case=1', '.lbl-exercise canvas'],
-    ['?view=walkthrough', '.lbl-complete-player'],
+    ['?step=lesson-10', '[data-course-section="walkthrough"]'],
   ]],
   ['f2l', [
     ['?step=lesson-1', '.f2l-lesson-scroll [data-tutorial-layout]'],

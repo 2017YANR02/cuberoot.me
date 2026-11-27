@@ -1,13 +1,6 @@
 /* Page shell and global toolbar. */
 .f2l-page { --f2l-sidebar-width: 230px; --f2l-layout-gap: 28px; box-sizing: border-box; max-width: 1180px; margin: 0 auto; padding: 12px 20px 56px; color: var(--foreground); }
-.f2l-header { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding-bottom: 6px; margin-bottom: 4px; }
-.f2l-header-links { display: flex; align-items: center; gap: 4px; }
-.f2l-header-links a { display: inline-flex; align-items: center; min-height: 32px; color: var(--muted-foreground); text-decoration: none; }
-.f2l-header-links a:hover { color: var(--foreground); }
-.f2l-header-title { display: flex; align-items: center; gap: 12px; }
-.f2l-header h1 { margin: 0; font-size: 1rem; white-space: nowrap; }
 .f2l-page a { color: inherit; }
-.f2l-toolbar { margin-top: 16px; }
 .f2l-settings-content { display: grid; gap: 16px; width: 240px; max-width: 100%; }
 .f2l-colors { display: grid; gap: 16px; }
 .f2l-playback-setting { width: 100%; }
@@ -335,7 +328,6 @@ body:has(.f2l-page) .visualcube-preview-body .puzzle-art svg { display: block; w
     height: 100dvh;
     padding-bottom: 12px;
   }
-  .f2l-page:not(.f2l-practice-page) .f2l-toolbar { margin-top: 8px; }
   .f2l-page:not(.f2l-practice-page) .f2l-chapter { min-height: 0; margin-top: 14px; }
   .f2l-page:not(.f2l-practice-page) .f2l-chapter-body { height: 100%; min-height: 0; padding-bottom: 64px; }
   .f2l-page:not(.f2l-practice-page) .f2l-lesson-scroll {

@@ -8,7 +8,6 @@
 .lbl-header a, .lbl-single-heading-back { display: inline-flex; align-items: center; gap: 4px; min-height: 32px; color: var(--muted-foreground); text-decoration: none; }
 .lbl-header a:hover, .lbl-single-heading-back:hover { color: var(--foreground); }
 .lbl-header h1 { margin: 0; font-size: 1rem; }
-.lbl-header-title { display: flex; align-items: center; gap: 12px; }
 .lbl-page :is(.lbl-section-button, .lbl-footer-button, .lbl-practice-button, .lbl-alg-move) { font: inherit; cursor: pointer; }
 .lbl-page :is(.lbl-section-button, .lbl-footer-button, .lbl-practice-button, .lbl-alg-move):focus-visible, .lbl-page summary:focus-visible { outline: 2px solid var(--ring); outline-offset: 4px; }
 .lbl-body { display: grid; grid-template-columns: 220px minmax(0, 1fr); min-height: 0; gap: 24px; padding-top: 14px; }
