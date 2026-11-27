@@ -72,7 +72,7 @@ export const THEME_BOOTSTRAP = `(() => {
     // without it dark mode leaks white at the screen edges. Set a pre-paint
     // guess here (ThemeColorSync refines it to the exact page bg after render).
     var tc = document.getElementById('app-theme-color');
-    if (tc) tc.setAttribute('content', eff === 'dark' ? '#171717' : '#fafafa');
+    if (tc) tc.setAttribute('content', eff === 'dark' ? '#000000' : '#fafafa');
   } catch (_) {}
 })();`;
 
