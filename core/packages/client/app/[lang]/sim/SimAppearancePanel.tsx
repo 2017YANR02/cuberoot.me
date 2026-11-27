@@ -1,5 +1,6 @@
 'use client';
 
+import SimMenuSelect from './SimMenuSelect';
 import { Tooltip } from '@/components/Tooltip';
 import MoreToggle from '@/components/MoreToggle';
 import { SlidersHorizontal } from '@app-foundation/icons/lucide';
@@ -532,18 +533,19 @@ export default function SimAppearancePanel({
               title={t('关闭后鼠标 / 手势只能转视角,不能拧动拼图(键盘和播放不受影响)', 'Off: mouse / touch only rotates the view — it cannot turn the puzzle (keyboard and playback still work)')}
             />
             {/* 「消步」开关已移到播放器工具行(逆 旁),此处不再重复。 */}
-            {caps.supports.dragEmpty && (<label className={`sim-toggle${caps.supports.dragEmpty ? '' : ' sim-toggle--disabled'}`} title={hint(caps.supports.dragEmpty)}>
+            {caps.supports.dragEmpty && <div className="sim-toggle">
               <span>{t('拖空白', 'Drag empty')}</span>
-              <select
+              <SimMenuSelect
+                ariaLabel={t('拖空白', 'Drag empty')}
                 value={settings.dragEmpty}
-                disabled={!caps.supports.dragEmpty}
-                onChange={(e) => set('dragEmpty', e.target.value as 'orbit' | 'rotate' | 'view')}
-              >
-                <option value="rotate">{t('整步转体', 'Snap rotate')}</option>
-                <option value="view">{t('视角', 'View')}</option>
-                <option value="orbit">{t('自动转体', 'Auto rotate')}</option>
-              </select>
-            </label>)}
+                items={[
+                  { value: 'rotate', label: t('整步转体', 'Snap rotate') },
+                  { value: 'view', label: t('视角', 'View') },
+                  { value: 'orbit', label: t('自动转体', 'Auto rotate') },
+                ]}
+                onChange={value => set('dragEmpty', value)}
+              />
+            </div>}
             {/* 播放动画开关:关 → 「播放」时瞬切每一步(不逐格转动);单步前进/后退本就瞬切。 */}
             {/* 方位字母常显:U/D/L/R/F/B(角/棱/面转拼图显对应标签),等同拖视角时浮现的标签但常驻。 */}
             {caps.supports.faceLabels && (<Toggle
@@ -561,13 +563,18 @@ export default function SimAppearancePanel({
             {/* 顶面 U 中心 logo:无 / 网站 / 自定义上传。仅 NxN 奇数阶有正中心块时实际显示
                 (偶数阶 / 非 NxN 引擎里 setLogo 自动隐藏)。选「自定义」开文件选择器。 */}
             {caps.supports.logo && (<div className="sim-logo-setting">
-              <label className={'sim-toggle' + (caps.supports.logo ? '' : ' sim-toggle--disabled')} title={hint(caps.supports.logo)}>
+              <div className="sim-toggle">
                 <span>logo</span>
-                <select
+                <SimMenuSelect
+                  ariaLabel="logo"
+                  items={[
+                    { value: 'none', label: t('无', 'None') },
+                    { value: 'site', label: t('魔方根', 'CubeRoot') },
+                    { value: 'custom', label: canUseCustomLogo ? t('自定义', 'Custom') : t('自定义（会员）', 'Custom (members)') },
+                  ]}
                   value={settings.logo === 'custom' && !canUseCustomLogo ? 'none' : settings.logo}
-                  disabled={!caps.supports.logo || logoBusy}
-                  onChange={(e) => {
-                    const v = e.target.value as SimSettings['logo'];
+                  disabled={logoBusy}
+                  onChange={v => {
                     setLogoError('');
                     if (v === 'custom') {
                       if (!requireMembership()) return;
@@ -577,13 +584,7 @@ export default function SimAppearancePanel({
                     }
                     set('logo', v);
                   }}
-                >
-                  <option value="none">{t('无', 'None')}</option>
-                  <option value="site">{t('魔方根', 'CubeRoot')}</option>
-                  <option value="custom">
-                    {canUseCustomLogo ? t('自定义', 'Custom') : t('自定义（会员）', 'Custom (members)')}
-                  </option>
-                </select>
+                />
                 <input
                   ref={logoFileRef}
                   type="file"
@@ -592,7 +593,7 @@ export default function SimAppearancePanel({
                   style={{ display: 'none' }}
                   onChange={handleLogoFile}
                 />
-              </label>
+              </div>
               {canUseCustomLogo && settings.logo === 'custom' && (
                 <button type="button" className="sim-logo-action" disabled={logoBusy} onClick={() => { setLogoError(''); logoFileRef.current?.click(); }}>
                   {t('更换图片', 'Change image')}
@@ -856,22 +857,21 @@ export default function SimAppearancePanel({
               t={t}
             />
           </ColorRow>)}
-          {caps.supports.faceColors && (<label className="sim-toggle">
+          {caps.supports.faceColors && <div className="sim-toggle">
             <span>{t('配色预设', 'Color preset')}</span>
-            <select
-              aria-label={t('配色预设', 'Color preset')}
-              disabled={!caps.supports.faceColors}
+            <SimMenuSelect
+              ariaLabel={t('配色预设', 'Color preset')}
               value={facePreset}
-              onChange={(event) => {
-                if (event.target.value === 'custom') return;
-                set(faceColorsKey, { ...(event.target.value === 'cuber' ? CUBER_FACE_COLORS : DEFAULT_FACE_COLORS) });
+              items={[
+                { value: 'wca', label: 'WCA' },
+                { value: 'cuber', label: t('柔和', 'Soft') },
+                { value: 'custom', label: t('自定义', 'Custom'), disabled: true },
+              ]}
+              onChange={value => {
+                if (value !== 'custom') set(faceColorsKey, { ...(value === 'cuber' ? CUBER_FACE_COLORS : DEFAULT_FACE_COLORS) });
               }}
-            >
-              <option value="wca">WCA</option>
-              <option value="cuber">{t('柔和', 'Soft')}</option>
-              <option value="custom" disabled>{t('自定义', 'Custom')}</option>
-            </select>
-          </label>)}
+            />
+          </div>}
           {caps.supports.faceColors && (<ColorRow
             label={t('面色', 'Face colors')}
             disabled={!caps.supports.faceColors}
@@ -899,14 +899,18 @@ export default function SimAppearancePanel({
             className={'sim-picture-setting' + (caps.supports.pictureCube ? '' : ' sim-picture-setting--disabled')}
             title={hint(caps.supports.pictureCube)}
           >
-            <label className="sim-toggle">
+            <div className="sim-toggle">
               <span>{t('图案魔方', 'Picture cube')}</span>
-              <select
-                aria-label={t('图案魔方主题', 'Picture cube theme')}
+              <SimMenuSelect
+                ariaLabel={t('图案魔方主题', 'Picture cube theme')}
                 value={roomsActive ? settings.roomTheme : settings.pictureCube ? 'pictures' : 'off'}
-                disabled={!caps.supports.pictureCube}
-                onChange={(event) => {
-                  const value = event.target.value;
+                items={[
+                  { value: 'off', label: t('普通色块', 'Classic colors') },
+                  { value: 'rooms-heading', disabled: true, label: <span className="sim-stage-group">{t('立体房间（二至七阶）', '3D rooms (2–7 layers)')}</span> },
+                  ...ROOM_THEMES.map(theme => ({ value: theme.id, label: t(theme.zh, theme.en), disabled: !caps.supports.roomCube })),
+                  { value: 'pictures', label: t('自选图片', 'Your pictures') },
+                ]}
+                onChange={value => {
                   if (value === 'pictures' && pictureFaceCount === 0) {
                     setPictureEditorOpen(true);
                     return;
@@ -915,15 +919,8 @@ export default function SimAppearancePanel({
                   onSettingsChange({ ...settings, roomTheme, pictureCube: value === 'pictures',
                     ...(roomTheme !== 'off' ? { viewMode: 'cube' as const } : {}) });
                 }}
-              >
-                <option value="off">{t('普通色块', 'Classic colors')}</option>
-                <optgroup label={t('立体房间（二至七阶）', '3D rooms (2–7 layers)')}>
-                  {ROOM_THEMES.map((theme) => <option key={theme.id} value={theme.id}
-                    disabled={!caps.supports.roomCube}>{t(theme.zh, theme.en)}</option>)}
-                </optgroup>
-                <option value="pictures">{t('自选图片', 'Your pictures')}</option>
-              </select>
-            </label>
+              />
+            </div>
             {settings.pictureCube && <button
               type="button"
               className="sim-picture-open"

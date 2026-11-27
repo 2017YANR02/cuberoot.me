@@ -24,6 +24,7 @@ import CollapsibleSection from './CollapsibleSection';
 import PageHeading from '@/components/PageHeading';
 import NxNOrderInput from '@/components/NxNOrderInput';
 import { useTranslation } from 'react-i18next';
+import SimMenuSelect from './SimMenuSelect';
 import { PuzzleTypeSelect } from './PuzzleTypeSelect';
 import { persistItem } from '@/lib/safe-storage';
 import { isTrackpadSwipe, trackpadPinchFactor } from '@/lib/cube-trackpad';
@@ -2519,7 +2520,9 @@ function SimEditor({ scope = '', active, seed, snapshotRef, onModeChange, onNew,
     if (drawMode) void setQuery({ tool: 'draw', drawPuzzle: String(puzzle) });
     else handlePuzzle(puzzle);
   };
+  const workspaceMode = animationMode ? 'sim' : 'draw';
   const changeTool = (tool: 'sim' | 'draw') => {
+    if (tool === workspaceMode) return;
     void setQuery({
       // Legacy creation links share puzzle/alg with animation until the first mode
       // change. Snapshot the departing document before animation can edit those keys.
@@ -2568,16 +2571,13 @@ function SimEditor({ scope = '', active, seed, snapshotRef, onModeChange, onNew,
             </label>
           )}
         </div>
-        <select
-          className="sim-tool-select"
-          value={animationMode ? 'sim' : 'draw'}
+        {active && <SimMenuSelect
+          ariaLabel={t('工作模式', 'Workspace mode')}
+          value={workspaceMode}
+          items={[{ value: 'sim', label: t('动画', 'Animation') }, { value: 'draw', label: t('绘图', 'Drawing') }]}
           disabled={busy}
-          onChange={(event) => changeTool(event.target.value as 'sim' | 'draw')}
-          aria-label={t('工作模式', 'Workspace mode')}
-        >
-          <option value="sim">{t('动画', 'Animation')}</option>
-          <option value="draw">{t('绘图', 'Drawing')}</option>
-        </select>
+          onChange={changeTool}
+        />}
         {!drawMode && (
           <MoreToggle type="button" className="sim-panel-toggle" expanded={panelExpanded} aria-controls={panelId}
             onClick={() => {
@@ -2615,15 +2615,15 @@ function SimEditor({ scope = '', active, seed, snapshotRef, onModeChange, onNew,
             return width;
           }} />
         {roomsActive && <div className="sim-room-toolbar">
-          <select
-            className="sim-tool-select"
-            aria-label={t('立体房间主题', '3D room theme')}
+          <SimMenuSelect
+            ariaLabel={t('立体房间主题', '3D room theme')}
             value={settings.roomTheme}
-            onChange={(event) => handleSettingsChange({ ...settings, roomTheme: normalizeRoomTheme(event.target.value) })}
-          >
-            {ROOM_THEMES.map((theme) => <option key={theme.id} value={theme.id}>{t(theme.zh, theme.en)}</option>)}
-            <option value="off">{t('普通色块', 'Classic colors')}</option>
-          </select>
+            items={[
+              ...ROOM_THEMES.map(theme => ({ value: theme.id, label: t(theme.zh, theme.en) })),
+              { value: 'off', label: t('普通色块', 'Classic colors') },
+            ]}
+            onChange={value => handleSettingsChange({ ...settings, roomTheme: normalizeRoomTheme(value) })}
+          />
         </div>}
         <div
           // puzzle-art:柔和度的统一钩子(见 globals.css)。挂在 wrap 而不是 3D canvas

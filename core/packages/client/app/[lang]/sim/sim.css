@@ -525,7 +525,6 @@
   gap: 8px;
   margin: 12px 16px 0;
 }
-.sim-room-toolbar .sim-tool-select { max-width: 100%; }
 
 /* 全屏模式:藏 header + side,canvas 占满 */
 .sim-page--fullscreen { top: 0; } /* 沉浸全屏:铺满,不为通知条让位 */
@@ -630,17 +629,21 @@
   display: none;
 }
 
-/* FTO EIF image tool lives in /sim so its URL, export helpers and puzzle
- * renderer stay on the same source of truth as the interactive simulator. */
-.sim-tool-select {
-  max-width: 150px;
+.compact-select.sim-menu-select { align-self: center; min-width: 0; max-width: 100%; }
+.sim-menu-select .compact-select-trigger {
+  max-width: 100%;
   height: 32px;
-  padding: 0 28px 0 10px;
-  color: var(--foreground);
-  background: var(--background);
-  border: 1px solid var(--border-default);
+  padding: 0 10px;
   border-radius: 7px;
-  font: inherit;
+  font-weight: 500;
+}
+.compact-select-popup.sim-select-menu { padding: 6px; }
+.sim-select-menu .compact-select-option {
+  padding-inline: 14px;
+  min-height: 34px;
+}
+@media (pointer: coarse) {
+  .sim-select-menu .compact-select-option { min-height: 44px; }
 }
 
 .fto-image-generator.sim-body { font-size: 14px; }
@@ -712,11 +715,6 @@
     height: 28px;
     padding: 0 6px;
   }
-  .sim-tool-select {
-    max-width: 118px;
-    padding-left: 7px;
-    font-size: 12px;
-  }
 
 }
 
@@ -778,7 +776,6 @@
   .sim-header { gap: 6px; padding: 8px; }
   .sim-drawing-toolbar { padding-inline: 8px; }
   .sim-stage { position: relative; }
-  .sim-header .sim-tool-select { max-width: 100%; }
   .sim-project-controls { flex: 0 1 auto; }
   .sim-panel-toggle { display: inline-flex; }
   .sim-page--panel-expanded:where(:not([data-finger-lesson])) .sim-stage { flex: 0 0 23%; }

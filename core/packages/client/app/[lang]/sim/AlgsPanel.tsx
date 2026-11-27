@@ -5,6 +5,7 @@
  */
 'use client';
 
+import SimMenuSelect from './SimMenuSelect';
 import { useEffect, useMemo, useState } from 'react';
 import { ALG_CATALOG, type AlgPuzzle, type AlgFile } from '@cuberoot/shared/alg';
 import { loadTrainingAlg as loadAlg } from '@/lib/alg_case_alignment';
@@ -88,7 +89,6 @@ export default function AlgsPanel({ onSelect, activePuzzle }: Props) {
       return c.name.toLowerCase().includes(needle) ? entries.slice(0, 1) : [];
     });
   }, [data, query]);
-  const selectedSet = sets.find(set => set.slug === setSlug);
 
   if (!puzzle) {
     return (
@@ -101,20 +101,12 @@ export default function AlgsPanel({ onSelect, activePuzzle }: Props) {
   return (
     <div className="sim-algs">
       <div className="sim-algs-sets">
-        <label className="sim-algs-set">
-        <span aria-hidden="true">{selectedSet ? tr(selectedSet) : ''}</span>
-        <select
-          aria-label={t('公式集', 'Algorithm set')}
+        <SimMenuSelect
+          ariaLabel={t('公式集', 'Algorithm set')}
           value={setSlug}
-          onChange={(e) => setSetSlug(e.target.value)}
-        >
-          {sets.map((s) => (
-            <option key={s.slug} value={s.slug}>
-              {tr(s)}
-            </option>
-          ))}
-        </select>
-        </label>
+          items={sets.map(set => ({ value: set.slug, label: tr(set) }))}
+          onChange={setSetSlug}
+        />
         <label className="sim-algs-search">
           <Search size={14} aria-hidden="true" />
           <input autoComplete="off" type="search" value={query} onChange={event => setQuery(event.target.value)}
