@@ -9,8 +9,8 @@
 }
 
 /* Filter behind the card so its border is painted after refraction. */
-:root:has(.landing-page) :is(.landing-card, .card, .rs-scard, .recon-card, .rc-card, .ongoing-comps-chip):not(:where(.af-glass-surface, .landing-calendar-link *)),
-:root:has(.landing-page) :is(.landing-card, .card, .rs-scard, .recon-card, .rc-card, .ongoing-comps-chip):not(:where(.af-glass-surface, .landing-calendar-link *)):hover,
+:root:has(.landing-page) :is(.landing-card, .card, .recon-card, .rc-card, .ongoing-comps-chip):not(:where(.af-glass-surface, .landing-calendar-link *)),
+:root:has(.landing-page) :is(.landing-card, .card, .recon-card, .rc-card, .ongoing-comps-chip):not(:where(.af-glass-surface, .landing-calendar-link *)):hover,
 :root .landing-page :is(.landing-card, .card).is-disabled,
 :root .landing-page :is(.landing-card, .card).is-disabled:hover {
   position: relative;

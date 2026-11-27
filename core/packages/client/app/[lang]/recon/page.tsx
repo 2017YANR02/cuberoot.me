@@ -227,7 +227,7 @@ export default function ReconListPage() {
   const pinnedIds = useMemo(() => new Set(pinnedRecons?.map(s => s.id)), [pinnedRecons]);
   const featuredIds = useMemo(() => new Set(featuredRecons?.map(s => s.id)), [featuredRecons]);
   const toggleCuration = async (solve: ReconSolve, kind: 'pin' | 'featured', selected: boolean) => {
-    const key = kind + ':' + solve.id;
+    const key = kind === 'pin' ? 'pin' : kind + ':' + solve.id;
     if (!isAdmin || pendingCuration.current.has(key)) return;
     pendingCuration.current.add(key);
     setSavingCuration(new Set(pendingCuration.current));
@@ -235,7 +235,11 @@ export default function ReconListPage() {
     try {
       await (kind === 'pin' ? setReconHomePin(solve.id, selected) : setReconFeatured(solve.id, selected));
       const update = kind === 'pin' ? setPinnedRecons : setFeaturedRecons;
-      update(prev => selected ? [solve, ...(prev ?? []).filter(s => s.id !== solve.id)] : (prev ?? []).filter(s => s.id !== solve.id));
+      update(prev => {
+        const others = (prev ?? []).filter(s => s.id !== solve.id);
+        if (!selected) return others;
+        return kind === 'pin' ? [solve] : [solve, ...others];
+      });
     } catch {
       setCurationError(tr({ zh: '设置未保存，请重试。', en: 'Could not save this change. Please try again.' }));
     } finally {
@@ -287,7 +291,7 @@ export default function ReconListPage() {
     if (!isAdmin || (solve.visibility && solve.visibility !== 'public') || solve.recordType === 'timing') return personal;
     return {
       ...personal,
-      pin: { active: pinnedIds.has(solve.id), disabled: pinnedRecons === null || savingCuration.has('pin:' + solve.id), onToggle: () => void toggleCuration(solve, 'pin', !pinnedIds.has(solve.id)) },
+      pin: { active: pinnedIds.has(solve.id), disabled: pinnedRecons === null || savingCuration.has('pin'), onToggle: () => void toggleCuration(solve, 'pin', !pinnedIds.has(solve.id)) },
       featured: { active: featuredIds.has(solve.id), disabled: featuredRecons === null || savingCuration.has('featured:' + solve.id), onToggle: () => void toggleCuration(solve, 'featured', !featuredIds.has(solve.id)) },
     };
   };

@@ -212,29 +212,66 @@ body:has(.landing-page) { --landing-content-max: 1100px; }
     max-width: 900px;
 }
 
-/* ── full-width hero 卡片(顶层入口,在 SECTIONS 之上) ── */
-/* hero 卡由同一个外壳统一排布。两个子分组不生成盒子，
-   卡片直接成为外壳的格子项。 */
-.landing-page .landing-training-grid {
+.landing-page .landing-home-hero {
     display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
     gap: 1rem;
+    align-items: start;
     width: 100%;
     max-width: var(--landing-content-max);
-    margin-bottom: 1rem;
-    align-items: start;
+    margin-bottom: 1.25rem;
 }
-.landing-page .landing-pinned-recons {
-    --home-pinned-recon-height: 14rem;
-    grid-column: span 2;
-    width: 100%;
-    max-width: 542px;
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    grid-auto-rows: max-content;
-    gap: 1rem;
-    min-height: 0;
+@media (min-width: 640px) {
+    .landing-page .landing-home-hero {
+        --landing-hero-column-gap: clamp(1rem, calc(5vw - 1.5rem), 1.75rem);
+        grid-template-columns: minmax(0, 22.25fr) minmax(0, 27fr);
+        column-gap: var(--landing-hero-column-gap);
+        max-width: calc(49.25rem + var(--landing-hero-column-gap));
+    }
+    .landing-page .tr-primary .recon-card-media {
+        height: auto;
+        aspect-ratio: 2 / 1;
+        max-height: clamp(7rem, calc(40vw - 10rem), 11.5rem);
+    }
+    /* The complete shortcut grid sets the column height, and the recent
+       list scrolls in the space left below the pinned card. */
+    .landing-home-hero:has(> .hero-grids .primary-hero-grid > :nth-child(6)):has(> .hero-grids .wca-hero-grid > :nth-child(3))
+        > .today-recon:has(.tr-content--pinned .tr-recent) {
+        align-self: stretch;
+        contain: size;
+        display: flex;
+        flex-direction: column;
+
+        > .tr-content--pinned {
+            flex: 1;
+            min-height: 0;
+            grid-template-rows: auto minmax(0, 1fr);
+            align-items: stretch;
+        }
+        .tr-recent {
+            display: flex;
+            flex-direction: column;
+            min-height: 0;
+        }
+        .tr-recent > .tr-recent-scroll {
+            min-height: 0;
+            max-height: none;
+        }
+    }
 }
+.landing-page .landing-home-hero > .hero-grids { margin-bottom: 0; }
+.landing-page .landing-home-hero > .hero-grids .landing-card-icon-text {
+    font-size: clamp(0.8rem, 3.5vw, 1.05rem);
+}
+.landing-page .tr-primary > .recent-scrambles { margin-bottom: 0; }
+.landing-page .tr-primary .rs-cards { grid-template-columns: minmax(0, 1fr); }
+body:is(:not([data-site-scenery]), [data-site-scenery=transparent]) .landing-page :is(.tr-recent, .rs-scard)[data-site-surface=panel] {
+    background-color: var(--background);
+}
+body:is(:not([data-site-scenery]), [data-site-scenery=transparent]) .landing-page .tr-primary .recon-card.af-glass-surface {
+    --af-glass-fill: var(--background);
+    --af-glass-tint: var(--background);
+}
+
 .landing-page .landing-training-links {
     display: flex;
     flex-wrap: wrap;
@@ -266,32 +303,18 @@ body:has(.landing-page) { --landing-content-max: 1100px; }
     background: none;
 }
 :is(.landing-page, .home-navigation-drawer) .landing-calendar-link .landing-card-name { display: none; }
-.landing-pinned-recons .recon-card,
-.landing-pinned-recons .recon-curated-card {
-    height: 100%;
-    min-width: 0;
-    box-sizing: border-box;
-}
-.landing-pinned-recons .recon-card-media { flex-shrink: 0; }
 .landing-slot-message { color: var(--muted-foreground); }
-.landing-pinned-recons > .landing-slot-message { grid-column: 1 / -1; align-self: center; }
 .skeleton-block.landing-widget-skeleton {
     height: 100%;
     border-radius: 12px;
 }
-.landing-pinned-recons > .skeleton-block.landing-widget-skeleton { height: var(--home-pinned-recon-height); }
-@media (max-width: 900px) {
-    .landing-page .landing-training-grid {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-        grid-template-rows: auto;
-    }
-}
 .landing-page .hero-grids {
     display: grid;
-    grid-template-columns: repeat(5, 1fr);
-    gap: 1rem;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.75rem;
     width: 100%;
-    max-width: var(--landing-content-max);
+    max-width: 27rem;
+    justify-self: center;
     margin-bottom: 1.25rem;
 }
 
@@ -355,14 +378,28 @@ body:has(.landing-page) { --landing-content-max: 1100px; }
     margin: 0 auto 2.5rem;
     padding-inline: 0;
 }
-.landing-page .landing-featured-notices {
-    display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
+.landing-page .landing-shortcuts-and-notices {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: center;
     gap: 0.75rem;
     width: 100%;
     max-width: var(--landing-content-max);
-    margin-bottom: 0.75rem;
 }
+.landing-page .landing-featured-notices {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.75rem;
+    width: max-content;
+    max-width: 100%;
+    min-width: 0;
+}
+.landing-page .landing-featured-notices:has(> :only-child) {
+    grid-template-columns: minmax(0, 1fr);
+}
+.landing-page .landing-featured-notices:has(> .landing-history-feature) { width: 100%; }
+.landing-page .landing-featured-notices > .landing-history-feature { grid-column: 1 / -1; }
 .landing-page .landing-featured-notices:empty { display: none; }
 .landing-page .landing-featured-notices > .landing-featured-news {
     min-width: 0;
@@ -408,6 +445,7 @@ body:has(.landing-page) { --landing-content-max: 1100px; }
 }
 .landing-page .landing-featured-news-body {
     min-width: 0;
+    overflow-wrap: anywhere;
     font-size: 0.86rem;
     color: var(--text-sub);
 }
@@ -465,6 +503,17 @@ body:has(.landing-page) { --landing-content-max: 1100px; }
 .landing-page .sortable-card > .landing-card {
     height: 100%;
 }
+/* Every homepage shortcut shares the same square grid track. */
+.landing-page .hero-grids .landing-card {
+    width: 100%;
+    height: auto;
+    aspect-ratio: 1;
+    padding: 0.45rem 0.25rem;
+}
+.landing-page .hero-grids .landing-card-name {
+    text-align: center;
+    overflow-wrap: anywhere;
+}
 .landing-page .landing-card,
 :is(.home-navigation, .home-navigation-drawer) .landing-auth :is(.landing-auth-icon, .landing-auth-btn.is-avatar, .landing-calendar-link .landing-card) {
     transition: border-color 0.18s ease, color 0.18s ease, transform 0.18s ease;
@@ -489,7 +538,7 @@ body:has(.landing-page) { --landing-content-max: 1100px; }
     outline: 2px solid var(--ring);
     outline-offset: 3px;
 }
-.landing-page :is(.landing-card, .rc-card, .rs-scard, .recon-card, .ongoing-comps-chip).af-glass-surface {
+.landing-page :is(.landing-card, .rc-card, .recon-card, .ongoing-comps-chip).af-glass-surface {
     --landing-card-light: 7%;
     --af-glass-tint: color-mix(in srgb, var(--glass-popover-bg), var(--foreground) var(--landing-card-light));
     position: relative;
@@ -497,12 +546,49 @@ body:has(.landing-page) { --landing-content-max: 1100px; }
     border-color: transparent;
     overflow: visible;
 }
-.landing-page :is(.landing-card, .rc-card, .rs-scard, .recon-card, .ongoing-comps-chip).af-glass-surface:hover {
+.landing-page :is(.landing-card, .rc-card, .recon-card, .ongoing-comps-chip).af-glass-surface:hover {
     --landing-card-light: 11%;
 }
 @media (prefers-reduced-motion: no-preference) {
-    .landing-page :is(.landing-card, .rc-card, .rs-scard, .recon-card, .ongoing-comps-chip).af-glass-surface::before { transition: background-color 180ms ease; }
+    .landing-page :is(.landing-card, .rc-card, .recon-card, .ongoing-comps-chip).af-glass-surface::before { transition: background-color 180ms ease; }
 }
+/* The hover palette follows the nine colored squares in the CubeRoot mark. */
+.landing-page .landing-home-hero > .hero-grids:has(> .primary-hero-grid > :nth-child(6)):has(> .wca-hero-grid > :nth-child(3)) {
+    --home-logo-red: #ff1212;
+    --home-logo-blue: #1481ef;
+
+    .sortable-card { --home-logo-tile: var(--home-logo-blue); }
+    .primary-hero-grid > :is(:nth-child(-n+3), :nth-child(5)),
+    .wca-hero-grid > :nth-child(2) { --home-logo-tile: var(--home-logo-red); }
+
+    @media (hover: hover) and (pointer: fine) {
+        &:is(:hover, :has(.landing-card:focus-visible)) .landing-card.af-glass-surface {
+            --af-glass-fill: color-mix(in srgb, var(--home-logo-tile) 76%, black);
+            --af-glass-tint: var(--af-glass-fill);
+            color: white;
+        }
+        &:is(:hover, :has(.landing-card:focus-visible)) .landing-card-icon { color: white; }
+    }
+
+    @media (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
+        .primary-hero-grid > :is(:nth-child(2), :nth-child(4)) { --home-logo-delay: 35ms; }
+        .primary-hero-grid > :is(:nth-child(3), :nth-child(5)),
+        .wca-hero-grid > :first-child { --home-logo-delay: 70ms; }
+        .primary-hero-grid > :nth-child(6),
+        .wca-hero-grid > :nth-child(2) { --home-logo-delay: 105ms; }
+        .wca-hero-grid > :nth-child(3) { --home-logo-delay: 140ms; }
+
+        .landing-card.af-glass-surface::before {
+            transition: background-color 420ms cubic-bezier(.22, .75, .24, 1);
+        }
+        .landing-card-icon { transition: color 320ms ease; }
+        &:is(:hover, :has(.landing-card:focus-visible)) {
+            .landing-card.af-glass-surface::before,
+            .landing-card-icon { transition-delay: var(--home-logo-delay, 0ms); }
+        }
+    }
+}
+
 .landing-page .landing-card-icon {
     display: flex;
     align-items: center;
@@ -542,16 +628,8 @@ body:has(.landing-page) { --landing-content-max: 1100px; }
     letter-spacing: -0.01em;
     line-height: 1.1;
 }
-@media (max-width: 820px) {
-    .landing-page .landing-featured-notices {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
-}
 @media (max-width: 640px) {
-    .landing-page .landing-featured-notices {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-        gap: 0.5rem;
-    }
+    .landing-page .landing-featured-notices { gap: 0.5rem; }
     .landing-page .landing-featured-news-target {
         gap: 0.35rem;
         padding: 0.65rem 0 0.65rem 0.5rem;
@@ -559,20 +637,12 @@ body:has(.landing-page) { --landing-content-max: 1100px; }
     .landing-page .landing-featured-news-body {
         font-size: 0.8125rem;
     }
-    .landing-page .landing-featured-notices > .landing-history-feature {
-        grid-column: 1 / -1;
-    }
     .landing-page .landing-featured-news-arrow {
         align-self: center;
     }
-    /* 手机端所有首页入口复用同一套三列网格。 */
     .landing-page .hero-grids,
     .landing-page .cards-section .cards-container {
-        grid-template-columns: repeat(3, minmax(0, 1fr));
         gap: 0.45rem;
-    }
-    .landing-page .hero-grids {
-        margin-bottom: 1.25rem;
     }
     .landing-page .landing-card {
         gap: 0.45rem;
@@ -582,13 +652,9 @@ body:has(.landing-page) { --landing-content-max: 1100px; }
         font-size: clamp(0.9375rem, 4vw, 1rem);
         text-align: center;
     }
-    .landing-page .hero-grids .landing-card-name {
-        white-space: nowrap;
-    }
 
     /* 首页信息区在手机端至少保持可读字号，极次要标注除外。 */
-    .landing-page .rs-title,
-    .landing-page .tr-title {
+    .landing-page .rs-title {
         font-size: 1rem;
     }
     .landing-page .rs-src-comp,
@@ -601,7 +667,6 @@ body:has(.landing-page) { --landing-content-max: 1100px; }
     .landing-page .rs-scard-scramble,
     .landing-page .rs-src-meta,
     .landing-page .rs-row-sub,
-    .landing-page .tr-all,
     .landing-page .recon-card-sub,
     .landing-page .recon-card-scramble,
     .landing-page .ongoing-comps-tab,
@@ -904,14 +969,12 @@ body:has(.landing-page) { --landing-content-max: 1100px; }
 }
 
 @media (min-width: 768px) and (max-width: 1023px) {
-    .landing-page .hero-grids,
     .landing-page .cards-section .cards-container {
         grid-template-columns: repeat(4, minmax(0, 1fr));
     }
 }
 
 @media (max-width: 767px) {
-    .landing-page .hero-grids,
     .landing-page .cards-section .cards-container {
         grid-template-columns: repeat(3, minmax(0, 1fr));
     }
@@ -1248,7 +1311,6 @@ body:has(.landing-page) { --landing-content-max: 1100px; }
     flex-shrink: 0;
     margin: 0 auto 1.25rem;
 }
-.landing-page .landing-widget--recons { --home-widget-placeholder-height: 128px; }
 .landing-page .landing-widget--comps { --home-widget-placeholder-height: 240px; }
 .landing-page .landing-widget--forum { --home-widget-placeholder-height: 160px; }
 .landing-page .landing-widget:empty {
@@ -1258,18 +1320,19 @@ body:has(.landing-page) { --landing-content-max: 1100px; }
     display: none;
 }
 .landing-widget > .landing-widget-skeleton,
-.landing-widget > :is(.recent-scrambles--loading, .today-recon--loading, .ongoing-comps--loading),
+.landing-widget > :is(.recent-scrambles--loading, .ongoing-comps--loading),
 .landing-widget > .forum-feed-preview[aria-busy="true"] {
     min-height: var(--home-widget-placeholder-height);
 }
 .landing-page .landing-personal-row {
     display: flex;
     flex-wrap: wrap;
+    justify-content: center;
     align-items: center;
     gap: 0.75rem;
-    width: 100%;
-    max-width: var(--landing-content-max);
-    margin-bottom: 0.75rem;
+    width: max-content;
+    max-width: 100%;
+    min-width: 0;
 }
 .landing-page .landing-personal-comps {
     flex: 0 1 auto;
@@ -1282,6 +1345,7 @@ body:has(.landing-page) { --landing-content-max: 1100px; }
 .landing-page .landing-personal-comps .reg-cards {
     display: flex;
     flex-wrap: wrap;
+    justify-content: center;
     width: 100%;
     gap: 8px;
 }
@@ -1322,14 +1386,14 @@ body:has(.landing-page) { --landing-content-max: 1100px; }
 }
 .landing-widget:empty,
 .landing-personal-comps:empty,
-.landing-widget :is(.recent-scrambles--loading, .today-recon--loading, .ongoing-comps--loading),
+.landing-widget :is(.recent-scrambles--loading, .ongoing-comps--loading),
 .landing-widget .forum-feed-preview[aria-busy="true"] {
     border-radius: 12px;
     background: var(--muted);
 }
 .landing-widget:empty,
 .landing-personal-comps:empty,
-.landing-widget :is(.recent-scrambles--loading, .today-recon--loading, .ongoing-comps--loading),
+.landing-widget :is(.recent-scrambles--loading, .ongoing-comps--loading),
 .landing-widget .forum-feed-preview[aria-busy="true"] {
     animation: home-placeholder-breathe 1.8s ease-in-out infinite;
 }
@@ -1342,11 +1406,10 @@ body:has(.landing-page) { --landing-content-max: 1100px; }
 .landing-page {
     --home-content-reveal: home-content-reveal 220ms ease-out;
 }
-.landing-page > :is(.brand-line, .landing-training-grid, .hero-grids, .cards-sections, .landing-featured-news, .footer, .beian),
-.landing-pinned-recons > :is(.recon-card, .recon-curated-card, .landing-slot-message),
+.landing-page > :is(.brand-line, .hero-grids, .cards-sections, .landing-featured-news, .footer, .beian),
+.landing-home-content > .landing-home-hero,
 .landing-personal-comps > *,
 .landing-widget > .recent-scrambles:not(.recent-scrambles--loading),
-.landing-widget > .today-recon:not(.today-recon--loading),
 .landing-widget > .ongoing-comps:not(.ongoing-comps--loading),
 .landing-widget > .forum-feed-preview:not([aria-busy="true"]),
 .landing-widget > .landing-slot-message {
@@ -1361,14 +1424,11 @@ body:has(.landing-page) { --landing-content-max: 1100px; }
     .landing-widget:empty,
     .landing-personal-comps:empty,
     .landing-widget-skeleton,
-    .landing-widget :is(.recent-scrambles--loading, .today-recon--loading, .ongoing-comps--loading),
+    .landing-widget :is(.recent-scrambles--loading, .ongoing-comps--loading),
     .landing-widget .forum-feed-preview[aria-busy="true"] { animation: none; }
 }
-.landing-widget > :is(.recent-scrambles, .today-recon, .ongoing-comps, .forum-feed-preview) {
+.landing-widget > :is(.recent-scrambles, .ongoing-comps, .forum-feed-preview) {
     margin: 0;
-}
-@media (max-width: 1080px) {
-    .landing-page .landing-widget--recons { --home-widget-placeholder-height: 240px; }
 }
 
 .landing-contact-details .contact-details-columns > section:first-child .contact-column-heading {

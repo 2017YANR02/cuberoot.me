@@ -79,8 +79,8 @@ html[data-theme=dark] {
   color: inherit;
   text-decoration: none;
 }
-.page-notice-target:is(:hover, :focus-visible) {
-  background: color-mix(in srgb, var(--pn-color) 10%, transparent);
+.page-notice:has(> .page-notice-target):is(:hover, :focus-within) {
+  background: color-mix(in srgb, var(--pn-color) 21%, transparent);
 }
 .page-notice-target:focus-visible { outline-offset: -2px; }
 .page-notice-icon, .page-notice-arrow { flex: none; color: var(--pn-color); }
@@ -120,6 +120,15 @@ html[data-theme=dark] {
 .page-notice-btn:hover {
   color: var(--foreground);
   background: color-mix(in srgb, var(--foreground) 8%, transparent);
+}
+.page-notice > .page-notice-actions > .page-notice-btn:hover { background: transparent; }
+
+@media (hover: hover) and (pointer: fine) {
+  :is(.page-notice-wrap[data-home] .page-notice, .landing-featured-news):not(:hover, :focus-within)
+    > .page-notice-actions > .page-notice-btn {
+    opacity: 0;
+    pointer-events: none;
+  }
 }
 
 .settings-dialog:has(.page-notice-editor) { width: min(100%, 720px); }

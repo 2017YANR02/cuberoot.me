@@ -25,7 +25,6 @@ body[data-site-scenery] :is(
   .chx-panel,
   .chx-chain,
   .chx-tabs,
-  .rs-scard:not(.af-glass-surface),
   .recon-card:not(.af-glass-surface),
   .recon-player-backview,
   .rc-card:not(.af-glass-surface),

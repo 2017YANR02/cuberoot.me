@@ -4,6 +4,7 @@
 // 整张卡是一个 <a>(AppLink,支持中键新开),故内部名字/比赛只渲染纯文本,禁套 <a>。
 // 从 app/[lang]/recon/page.tsx 提取,样式见 ./recon_card.css。
 import { WcaPersonTeamBadge } from '@/components/WcaPersonTeamBadge';
+import { WcaPersonIdentity } from '@/components/WcaPersonIdentity';
 import { useEffect, useMemo, useState } from 'react';
 import Link from '@/components/AppLink';
 import { Video, Link2, Lock } from '@app-foundation/icons/lucide';
@@ -101,14 +102,40 @@ function ReconCardMediaSource({ solve, isZh, showScrambleFallback }: ReconCardMe
   );
 }
 
-export function ReconCard({ solve, isZh, href, horizontal = false, showScrambleFallback = true }: {
-  solve: ReconSolve; isZh: boolean; href: string; horizontal?: boolean; showScrambleFallback?: boolean;
+export function ReconCard({ solve, isZh, href, horizontal = false, showScrambleFallback = true, compact = false }: {
+  solve: ReconSolve; isZh: boolean; href: string; horizontal?: boolean; showScrambleFallback?: boolean; compact?: boolean;
 }) {
   const cubers = [
     { name: solve.person || '', id: solve.personId, country: solve.personCountry },
     ...(solve.coPersons ?? []).map(c => ({ name: c.name, id: c.id, country: c.country })),
   ].filter(c => c.name);
   const single = formatReconSingle(solve.event, solve.value, solve.rawTime);
+  const competition = solve.comp
+    ? <CompCell compId={solve.compWcaId ?? ''} compName={solve.comp} country={solve.country} isZh={isZh} date={null} noFlag={compact} />
+    : tr({ zh: '非官方', en: 'Unofficial' });
+
+  if (compact) {
+    return (
+      <Link href={href} prefetch={false} className="recon-list-link">
+        <span className="recon-list-score">{single}</span>
+        <span className="recon-list-details">
+          {cubers.length > 0 && (
+            <span className="recon-list-solver">
+              {cubers.map((c, i) => (
+                <span key={i}>
+                  {i > 0 && ' & '}
+                  <WcaPersonIdentity linked={false} showTeam={false} flag={c.country ? <><Flag iso2={c.country} className="recon-inline-flag" />{' '}</> : null}>
+                    {displayCuberName(c.name, isZh)}
+                  </WcaPersonIdentity>
+                </span>
+              ))}
+            </span>
+          )}
+          <span className="recon-list-comp">{competition}</span>
+        </span>
+      </Link>
+    );
+  }
 
   return (
     <Link href={href} prefetch={false} className={`recon-card af-glass-surface${horizontal ? ' recon-card--row' : ''}`}>
@@ -154,7 +181,7 @@ export function ReconCard({ solve, isZh, href, horizontal = false, showScrambleF
             </span>
           )}
           <span className="recon-card-foot">
-            <span className="recon-card-comp">{solve.comp ? <CompCell compId={solve.compWcaId ?? ''} compName={solve.comp} country={solve.country} isZh={isZh} date={null} /> : tr({ zh: '非官方', en: 'Unofficial' })}</span>
+            <span className="recon-card-comp">{competition}</span>
           </span>
         </div>
       </div>

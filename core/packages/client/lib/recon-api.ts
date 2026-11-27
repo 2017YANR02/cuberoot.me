@@ -122,7 +122,7 @@ export async function getTodayRecons(): Promise<ReconSolve[]> {
 }
 
 export async function getPinnedRecons(): Promise<ReconSolve[]> {
-  return apiGet<ReconSolve[]>('/pinned');
+  return (await apiGet<ReconSolve[]>('/pinned')).slice(0, 1);
 }
 
 export async function setReconHomePin(id: number, pinned: boolean): Promise<{ ok: boolean }> {

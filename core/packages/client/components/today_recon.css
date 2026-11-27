@@ -1,61 +1,93 @@
-/* TodayRecon —「今日复盘」首页 WCA 入口上方:/recon 最新一天的预览卡。
-   单卡复用 components/ReconCard(.recon-card,样式在 recon_card.css);
-   这里只管区块容器 + 标题 + 卡片网格。双主题,走 :root token。 */
-
 .today-recon {
-  width: 100%;
-  max-width: 1100px;
-  margin: 0 auto 2.5rem;
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
+  min-width: 0;
 }
-
-.today-recon--loading {
-  min-height: 360px;
-}
-
-.tr-head {
-  display: flex;
-  align-items: center;
-  gap: 0.6rem;
-}
-.tr-title {
-  font-size: 0.95rem;
-  font-weight: 700;
-  letter-spacing: 0.02em;
-  color: var(--foreground);
-}
-.tr-all {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 28px;
-  height: 28px;
-  color: var(--muted-foreground);
-  text-decoration: none;
-  transition: color 0.12s;
-}
-.tr-all:hover { color: var(--accent); }
-
-/* 卡片网格:宽屏一行四卡(1100px 容器 → 每卡约 260px),≤1080px 三卡、
-   ≤900px 退回两卡(手机端沿用两卡,见 issue #41)。第三行起走右侧滚动条
-   (.scroll-panel)。minmax(0,…) 让列缩到容器、不被卡片内容顶宽。 */
-.tr-cards {
+.tr-content {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  grid-auto-rows: max-content;
-  align-content: start;
   gap: 0.75rem;
+  align-items: start;
 }
-@media (max-width: 1080px) {
-  .tr-cards { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.tr-content--pinned {
+  width: 100%;
+  max-width: 22.25rem;
+  margin-inline: auto;
 }
-@media (max-width: 900px) {
-  .tr-cards { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.tr-primary,
+.tr-recent { min-width: 0; }
+.tr-primary > .skeleton-block.landing-widget-skeleton,
+.tr-recent-loading.skeleton-block { min-height: 13rem; }
+.tr-recent {
+  position: relative;
+  padding: 0.25rem 0.65rem;
+  padding-inline-end: 2.6rem;
+  background: var(--card);
+  border: 1px solid var(--border-strong);
+  border-radius: 0.8rem;
 }
-/* Let up to two rows expand naturally. TodayRecon caps longer grids. */
-.tr-cards.scroll-panel {
-  max-height: none;
-  padding-bottom: 0.4rem;
+.tr-recent .tr-recent-scroll {
+  max-height: calc(11.5rem - 2px);
+  padding: 0;
+  scrollbar-width: none;
+}
+.tr-recent-scroll::-webkit-scrollbar { display: none; }
+@media (prefers-reduced-motion: no-preference) {
+  .tr-recent-scroll { scroll-behavior: smooth; }
+}
+.tr-recent .tr-scroll-arrow {
+  --tr-arrow-size: 2.25rem;
+  --tr-arrow-offset: 0.2rem;
+  position: absolute;
+  inset-inline-end: var(--tr-arrow-offset);
+  inset-block-start: calc(100% - var(--tr-arrow-size) - var(--tr-arrow-offset));
+  display: grid;
+  place-items: center;
+  width: var(--tr-arrow-size);
+  height: var(--tr-arrow-size);
+  padding: 0;
+  border: 0;
+  border-radius: 0.4rem;
+  background: transparent;
+  color: var(--muted-foreground);
+  cursor: pointer;
+}
+.tr-recent .tr-scroll-arrow:hover { color: var(--foreground); }
+.tr-recent .tr-scroll-arrow[data-direction=up] { inset-block-start: var(--tr-arrow-offset); }
+.tr-scroll-arrow[data-direction=up] > svg { transform: rotate(0.5turn); }
+@media (prefers-reduced-motion: no-preference) {
+  .tr-recent .tr-scroll-arrow { transition: inset-block-start 240ms ease-in-out; }
+  .tr-scroll-arrow > svg { transition: transform 240ms ease-in-out; }
+}
+.tr-recent-rows > * + * { border-block-start: 1px solid var(--border-default); }
+.tr-recent .recon-list-link {
+  min-width: 0;
+  min-height: 3.5rem;
+  display: grid;
+  grid-template-columns: minmax(4.25ch, max-content) minmax(0, 1fr);
+  align-items: center;
+  gap: 0.65rem;
+  padding-block: 0.5rem;
+  color: var(--foreground);
+  text-decoration: none;
+}
+.tr-recent .recon-list-link:hover .recon-list-solver { color: var(--accent); }
+.tr-recent .recon-list-score {
+  font-weight: 750;
+  font-variant-numeric: tabular-nums;
+}
+.tr-recent .recon-list-details {
+  display: grid;
+  gap: 0.1rem;
+  min-width: 0;
+  overflow-wrap: anywhere;
+  line-height: 1.35;
+}
+.tr-recent .recon-list-solver { font-weight: 600; }
+.tr-recent .recon-list-comp {
+  color: var(--muted-foreground);
+  font-size: 0.875rem;
+}
+.tr-recent .recon-curated-card > .recon-list-link { padding-inline-end: 2rem; }
+.tr-recent .recon-curated-card > .recon-curation-actions {
+  top: 50%;
+  right: 0;
+  transform: translateY(-50%);
 }
