@@ -37,7 +37,7 @@ export interface FittedPose {
   startup_reference_core?: [number, number] | null;
   startup_motion_allowance?: number;
   fittingConfig?: { segment: number; fps: number; turningStartFrame: number | null;
-    sourceFps?:number;frameClock?:'camera_milliseconds';
+    sourceFps?:number;frameClock?:'camera_milliseconds'|'video_milliseconds';
     centers: { axis: number; side: number; color: string }[] };
 }
 

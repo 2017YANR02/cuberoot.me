@@ -175,7 +175,7 @@ export class DetectionRecording {
         "result.fittedPose.startup_reference_core": "Screen-plane core of the latest eligible finalized pose with reliable geometry; color-only flags retain geometry eligibility; null during reference warmup",
         "result.fittedPose.startup_motion_allowance": "Pixels of normal core motion allowed for the finalized reference's lag, estimated from its last two unflagged cores",
         "result.fittedPose.fittingConfig": "Frame sequence configuration and buffered fitting segment for standalone replay",
-        "result.fittedPose.sourceFrame": "Frame-clock tick; divide by fittingConfig.fps for source seconds. Cameras use millisecond ticks, videos use source-frame indices",
+        "result.fittedPose.sourceFrame": "Frame-clock tick; divide by fittingConfig.fps for source seconds. See fittingConfig.frameClock for timestamp-based recordings",
         "moveSearches[].config.source_fps": "Nominal camera capture FPS; config.fps is the numerical frame-clock rate when frame_clock is camera_milliseconds",
         "result.fittedPose.bank[].score": "Geometry cost, or recovery cost when recovery_score_components is present; lower is better, not detector confidence",
         "result.fittedPose.bank[].recovery_score_components": "Capped reprojection loss, pose-prior loss, active-layer count and projection weight used to rank sparse depth-recovery proposals",

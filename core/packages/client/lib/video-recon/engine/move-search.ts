@@ -54,11 +54,14 @@ export class MoveSearch {
   submit(timestamp:number,frame:FrameResult,fitting:Promise<FittedPose>){
     if(this.closed||this.ended||this.solutionFound)return;
     const identity=videoFrameIdentity(timestamp,this.config),sourceFrame=identity.sourceFrame;
-    const denseVideo=this.video&&this.config.infer_scramble;
+    const timestampedVideo = this.video && this.config.frame_clock === 'video_milliseconds';
+    const denseVideo = this.video && (timestampedVideo || this.config.infer_scramble);
     if(denseVideo){
       // A VFR source can skip buckets. Keep motion timing in sourceFrame and
       // give each accepted observation a queue ordinal with no gaps.
-      if(identity.sequence<=this.lastVideoBucket||sourceFrame<=this.lastVideoFrame)return;
+      // Timestamped files have already been sampled by FrameSelector. Adjacent
+      // decoded frames can share a nominal bucket while having distinct ticks.
+      if(sourceFrame<=this.lastVideoFrame || (!timestampedVideo && identity.sequence<=this.lastVideoBucket))return;
       this.lastVideoBucket=identity.sequence;
       this.lastVideoFrame=sourceFrame;
     }

@@ -195,7 +195,7 @@ export function VideoReconWorkspace({ mode, handoff, submission, onModeChange, o
   const hasMoves = searchSteps.some(step => step.state_moves.length);
   const lastMove = reviewing && !view.cubeSolved && view.sourceFps > 0
     ? searchSteps.findLast(step => step.state_moves.length > 0) : undefined;
-  const lastMoveTime = lastMove && view ? timecode(lastMove.frame_index / view.sourceFps) : undefined;
+  const lastMoveTime = lastMove && view ? timecode(lastMove.frame_index / view.clockFps) : undefined;
   const shownSteps = pendingResult ? liveResult?.steps ?? NO_MOVES : searchSteps;
   const measured = view?.measuredCubeTimeline;
   const modelDownload = view?.modelDownload;
@@ -331,7 +331,7 @@ export function VideoReconWorkspace({ mode, handoff, submission, onModeChange, o
             {view.searchError}
           </details>}
         </div>}
-        {mediaError && <div className="video-recon-error" role="alert">
+        {mediaError && !(reviewing && view.searchError === mediaError) && <div className="video-recon-error" role="alert">
           <strong>{t('无法处理当前画面。', 'Could not process the current source.')}</strong>
           <details><summary>{t('技术详情', 'Technical details')}</summary>{mediaError}</details>
         </div>}
@@ -346,16 +346,16 @@ export function VideoReconWorkspace({ mode, handoff, submission, onModeChange, o
         pose={pendingResult ? liveResult?.cube?.pose : view.coloredProjection} sourceTimestamp={resultTime}
         solved={view.cubeSolved} steps={shownSteps}
         timeline={view.projectedTimeline}
-        sourceFrame={liveResult?.cube?.frame ?? (reviewing ? view.result?.fittedPose?.sourceFrame : undefined) ?? Math.round(resultTime * view.sourceFps)}
-        sourceFps={view.sourceFps} playbackSpeed={view.running ? view.playbackSpeed : 1}
+        sourceFrame={liveResult?.cube?.frame ?? (reviewing ? view.result?.fittedPose?.sourceFrame : undefined) ?? Math.round(resultTime * view.clockFps)}
+        sourceFps={view.sourceFps} clockFps={view.clockFps} playbackSpeed={view.running ? view.playbackSpeed : 1}
         analysis={reviewing && workspace && view.reconstructedScramble && measured && hasMoves && (!submission || view.cubeSolved)
           ? { scramble:view.reconstructedScramble, steps:searchSteps, measured,
-            fps:view.sourceFps, start:view.solveStart, end:view.solveEnd, position:view.presentedTimestamp,
+            fps:view.sourceFps, clockFps:view.clockFps, start:view.solveStart, end:view.solveEnd, position:view.presentedTimestamp,
             onSeek:timestamp => void workspace.requestReview(timestamp), draftTarget: submission,
             inferredScramble: !!view.searchResult?.inferred_scramble }
           : undefined} />}
       {workspace && view && reviewing && <TpsGraph compact steps={searchSteps}
-        fps={view.sourceFps} start={view.solveStart} end={view.solveEnd} cursor={resultTime} complete={view.cubeSolved}
+        fps={view.clockFps} start={view.solveStart} end={view.solveEnd} cursor={resultTime} complete={view.cubeSolved}
         onSeek={timestamp => void workspace.requestReview(timestamp)} />}
       {filming && workspace && view && <CameraRecordingControls
         phase={view.cameraRecordingPhase} scramble={view.initialScramble}

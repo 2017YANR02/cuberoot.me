@@ -29,6 +29,7 @@ interface Props {
   timeline: readonly ProjectedCubeFrame[];
   sourceFrame: number;
   sourceFps: number;
+  clockFps?: number;
   playbackSpeed: number;
   live?: boolean;
   analysis?: Omit<VideoSolveAnalysisProps, 'onOpeningView'>;
@@ -36,7 +37,7 @@ interface Props {
 
 type Drag = { id: number; kind: CubeDragKind; start: DragPoint; view: Quaternion; x: number; y: number; radius: number };
 
-export function ProjectedCube({ pose, sourceTimestamp, solved, steps, timeline, sourceFrame, sourceFps, playbackSpeed, live, analysis }: Props) {
+export function ProjectedCube({ pose, sourceTimestamp, solved, steps, timeline, sourceFrame, sourceFps, clockFps = sourceFps, playbackSpeed, live, analysis }: Props) {
   const t = useT();
   const resetLabel = t('重置视角', 'Reset view');
   const engineHost = useRef<HTMLDivElement>(null);
@@ -59,9 +60,9 @@ export function ProjectedCube({ pose, sourceTimestamp, solved, steps, timeline, 
   const [copy, setCopy] = useState<{ algorithm: string; ok: boolean }>();
   const notationView = analysis ? CAMERA_ORIENTATION : orientation;
   const tokens = useMemo(() => displayMoveTokens(timeline.length
-    ? reorientedMoveTimeline(timeline, steps, notationView, { fps: sourceFps })
+    ? reorientedMoveTimeline(timeline, steps, notationView, { fps: clockFps })
     : steps.map(step => ({ frame: step.frame_index, moves: step.state_moves, rotation: false }))),
-  [timeline, steps, notationView, sourceFps]);
+  [timeline, steps, notationView, clockFps]);
   const setup = useMemo(() => initialGripMoves(timeline, notationView), [timeline, notationView]);
   const algorithm = [...setup, ...tokens.map(token => token.move)].join(' ');
   const activeFrame = tokens.findLast(token => token.frame <= sourceFrame)?.frame;

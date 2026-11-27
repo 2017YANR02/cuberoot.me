@@ -1,8 +1,10 @@
+import { MEDIA_CLOCK_HZ } from '../pose-fitter/runtime/reconstruction-policy.mjs';
 import type {CameraCaptureMetrics} from './camera-metrics';
 /** Source-time sampling is independent of inference speed. */
 export class FrameSelector {
   private origin: number | undefined;
   private lastBucket = -1;
+  private lastTick = -Infinity;
   constructor(
     readonly sourceFps: number,
     readonly targetFps = 30,
@@ -11,8 +13,12 @@ export class FrameSelector {
 
   accept(timestamp: number): boolean {
     if (!Number.isFinite(timestamp) || timestamp < this.minimumTimestamp - 0.0000001) return false;
-    if (this.sourceFps > 0 && this.sourceFps <= this.targetFps + 0.001)
+    const tick = Math.round(timestamp * MEDIA_CLOCK_HZ);
+    if (tick <= this.lastTick) return false;
+    if (this.sourceFps > 0 && this.sourceFps <= this.targetFps + 0.001) {
+      this.lastTick = tick;
       return true;
+    }
     this.origin ??= timestamp;
     // Tolerance covers timestamp quantization, e.g. WebCodecs' integer microseconds.
     const bucket = Math.floor(
@@ -20,6 +26,7 @@ export class FrameSelector {
     );
     if (bucket <= this.lastBucket) return false;
     this.lastBucket = bucket;
+    this.lastTick = tick;
     return true;
   }
 }
