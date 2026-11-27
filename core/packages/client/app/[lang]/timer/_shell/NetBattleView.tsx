@@ -80,7 +80,7 @@ import {
   timerRoomPlayerName,
 } from '@cuberoot/timer-ui';
 import { useVideoRoom } from '../_battle/VideoStrip';
-import BluetoothModal from '../_components/BluetoothModal';
+import BluetoothModal from '@/components/BluetoothModal';
 import LiveCubeState from '../_components/LiveCubeState';
 import { useBluetoothCube } from '../_lib/bluetooth';
 import { useAutoReady } from '../_lib/bluetooth/auto_ready';

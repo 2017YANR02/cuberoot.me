@@ -45,9 +45,9 @@ export async function competitionHostOverview(db: PlatformDb, actor: PlatformAct
       JOIN organizations org ON org.id=c.organization_id AND org.status='active'
       LEFT JOIN platform_event_registrations r ON r.event_id=c.event_id
       ${COMPETITION_SETTLEMENT_REGISTRATION_JOINS}
-      WHERE $2 OR EXISTS (SELECT 1 FROM organization_members member
+      WHERE NOT c.is_test AND ($2 OR EXISTS (SELECT 1 FROM organization_members member
         WHERE member.organization_id=org.id AND member.user_id=$1
-          AND member.status='active' AND member.role IN ('owner','admin'))
+          AND member.status='active' AND member.role IN ('owner','admin')))
       GROUP BY c.event_id,e.id,org.id
     )
     SELECT id::text, title_zh AS "titleZh", title_en AS "titleEn", organization_name AS "organizationName",status,
@@ -87,7 +87,7 @@ export async function competitionSettlement(db: PlatformDb, eventId: string) {
       AND NOT EXISTS(SELECT 1 FROM platform_refunds f JOIN platform_order_items oi ON oi.order_id=f.order_id JOIN platform_event_registrations fr ON fr.order_item_id=oi.id WHERE fr.event_id=c.event_id AND f.status IN ('requested','pending'))) AS eligible
     FROM platform_competitions c JOIN platform_events e ON e.id=c.event_id LEFT JOIN platform_event_registrations r ON r.event_id=c.event_id
     ${COMPETITION_SETTLEMENT_REGISTRATION_JOINS}
-    WHERE c.event_id=$1::uuid GROUP BY c.event_id,e.ends_at`, [eventId]);
+    WHERE c.event_id=$1::uuid AND NOT c.is_test GROUP BY c.event_id,e.ends_at`, [eventId]);
   if (!row) notFound('Competition');
   const transfers = await platformQuery(db, `SELECT id::text,entry_type AS "entryType",amount_minor::text AS "amountMinor",transferred_at AS "transferredAt",created_at AS "createdAt",statement_snapshot AS "statementSnapshot"
     FROM platform_competition_settlement_ledger WHERE event_id=$1::uuid ORDER BY entry_number`, [eventId]);

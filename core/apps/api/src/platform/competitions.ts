@@ -21,11 +21,11 @@ export function competitionResultSummary(raw:unknown){
 }
 
 export async function requireCompetitionManager(db: PlatformDb, actor: PlatformActor, eventId: string) {
-  const rows = await platformQuery<{ organization_id: string; status: string; review_status: string; supervision_mode: string; competition_format: string | null }>(db, `
-    SELECT c.organization_id::text,e.status,c.review_status,c.supervision_mode,c.competition_format FROM platform_competitions c JOIN platform_events e ON e.id=c.event_id
+  const rows = await platformQuery<{ organization_id: string; status: string; review_status: string; supervision_mode: string; competition_format: string | null; is_test: boolean }>(db, `
+    SELECT c.organization_id::text,e.status,c.review_status,c.supervision_mode,c.competition_format,c.is_test FROM platform_competitions c JOIN platform_events e ON e.id=c.event_id
     JOIN organizations o ON o.id=c.organization_id AND o.status='active'
-    WHERE c.event_id=$1::uuid AND ($3 OR EXISTS (SELECT 1 FROM organization_members m
-      WHERE m.organization_id=c.organization_id AND m.user_id=$2 AND m.status='active' AND m.role IN ('owner','admin')))
+    WHERE c.event_id=$1::uuid AND ($3 OR (NOT c.is_test AND EXISTS (SELECT 1 FROM organization_members m
+      WHERE m.organization_id=c.organization_id AND m.user_id=$2 AND m.status='active' AND m.role IN ('owner','admin'))))
     FOR UPDATE OF c
   `, [eventId, actor.userId, actor.isAdmin]);
   if (!rows[0]) forbidden('Competition organizer access required');
@@ -52,8 +52,8 @@ export function validateCompetitionAttempt(item: unknown): { centiseconds: numbe
 export async function competitionOrderContext(db: PlatformDb, input: {
   eventId: string; ticketId: string; quantity: number; userId: number; sessionId?: string; device?: string;
 }): Promise<Record<string, unknown> | null> {
-  const configs = await platformQuery<{ event_id: string; commission_bps: number | null; settlement_days: number | null; settlement_anchor: string | null; refund_policy: string; recording_policy: string; open: boolean; project: string; device: string; organization_id: string; supervision_mode: string }>(db, `
-    SELECT c.*, t.competition_project AS project,t.competition_device AS device,
+  const configs = await platformQuery<{ event_id: string; commission_bps: number | null; settlement_days: number | null; settlement_anchor: string | null; refund_policy: string; recording_policy: string; open: boolean; project: string; device: string; organization_id: string; supervision_mode: string; is_test: boolean; amount_minor: string | number }>(db, `
+    SELECT c.*, t.competition_project AS project,t.competition_device AS device,t.amount_minor,
       (NOW()>=c.registration_opens_at AND NOW()<c.registration_closes_at AND EXISTS(SELECT 1 FROM organizations o WHERE o.id=c.organization_id AND o.status='active')) AS open
     FROM platform_competitions c JOIN platform_event_ticket_types t ON t.event_id=c.event_id
     WHERE c.event_id=$1::uuid AND t.id=$2::uuid FOR SHARE OF c
@@ -64,6 +64,13 @@ export async function competitionOrderContext(db: PlatformDb, input: {
     return null;
   }
   if (!config.open) conflict('Competition registration is closed');
+  if (config.is_test) {
+    if (Number(config.amount_minor) !== 0) conflict('Test competition tickets must be free');
+    // Re-read after taking the competition lock so cleanup and early starts cannot race a checkout.
+    const [open] = await platformQuery(db, `SELECT c.event_id FROM platform_competitions c JOIN platform_events e ON e.id=c.event_id
+      WHERE c.event_id=$1::uuid AND e.status='published' AND clock_timestamp()<c.registration_closes_at`, [input.eventId]);
+    if (!open) conflict('Competition registration is closed');
+  }
   if (input.quantity !== 1) badRequest('Competition registration quantity must be one');
   if (!config.project || input.device !== config.device || (config.supervision_mode === 'supervised' && !input.sessionId)) badRequest('Select a valid competition project, device and session');
   if (input.sessionId && !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(input.sessionId)) badRequest('Invalid competition session id');
@@ -90,7 +97,7 @@ export async function competitionOrderContext(db: PlatformDb, input: {
 
 export async function requireCompetitionRegistration(db: PlatformDb, id: string, lock = true) {
   const rows = await platformQuery<{ id: string; user_id: number; status: string; event_id: string; session_id: string; competition_project: (typeof WCA_TIMED_EVENT_ORDER)[number]; competition_video_generation: string; supervisor_user_id: number | null; session_kind: string; competition_format: string | null; device: string; in_window: boolean; checked_in_at: string | null }>(db, `
-    SELECT r.id::text,r.user_id,r.status,r.event_id::text,s.id::text AS session_id,r.checked_in_at,r.competition_project,r.competition_video_generation::text,s.supervisor_user_id,s.session_kind,c.competition_format,t.competition_device AS device,
+    SELECT r.id::text,r.user_id,r.status,r.event_id::text,s.id::text AS session_id,r.checked_in_at,r.competition_project,r.competition_video_generation::text,s.supervisor_user_id,s.session_kind,c.competition_format,t.competition_device AS device,t.amount_minor,
       (NOW()>=s.starts_at AND NOW()<s.ends_at) AS in_window
     FROM platform_event_registrations r JOIN platform_competition_sessions s ON s.id=r.competition_session_id
     JOIN platform_events e ON e.id=r.event_id AND e.status='published'

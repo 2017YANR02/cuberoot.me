@@ -1,5 +1,5 @@
 import type { Context } from 'hono';
-import { ORDER_CASH_FLOW_SQL } from '../platform/cash_flow.js';
+import { NON_TEST_COMPETITION_ORDER_SQL, ORDER_CASH_FLOW_SQL } from '../platform/cash_flow.js';
 import { requirePlatformAdmin } from '../platform/auth.js';
 import {
   isPostgresConflict,
@@ -64,6 +64,7 @@ platformContentRoutes.get('/platform/search', async (c) => {
       SELECT 'event', e.id::text, e.slug, e.title_zh, e.title_en, e.description_zh, e.description_en,
         '/platform/events/' || e.slug, e.published_at
       FROM platform_events e WHERE e.status='published'
+        AND NOT EXISTS(SELECT 1 FROM platform_competitions cc WHERE cc.event_id=e.id AND cc.is_test)
         AND (e.title_zh ILIKE '%'||$1||'%' OR e.title_en ILIKE '%'||$1||'%'
           OR e.description_zh ILIKE '%'||$1||'%' OR e.description_en ILIKE '%'||$1||'%')
       UNION ALL
@@ -95,7 +96,8 @@ async function publicContentList(c: Context, kind: ContentKind): Promise<Respons
   const table = CONTENT_TABLES[kind];
   const status = kind === 'products' ? 'active' : 'published';
   const searchable = kind === 'news' ? "x.title_zh || ' ' || x.title_en || ' ' || x.excerpt_zh || ' ' || x.excerpt_en || ' ' || x.body_zh::text || ' ' || x.body_en::text" : "x.title_zh || ' ' || x.title_en || ' ' || x.description_zh || ' ' || x.description_en";
-  const where = `x.status=$1 AND ($2='' OR ${searchable} ILIKE '%'||$2||'%') AND ($3='' OR x.category=$3)`;
+  const testFilter = kind === 'events' ? ' AND NOT EXISTS(SELECT 1 FROM platform_competitions cc WHERE cc.event_id=x.id AND cc.is_test)' : '';
+  const where = `x.status=$1 AND ($2='' OR ${searchable} ILIKE '%'||$2||'%') AND ($3='' OR x.category=$3)${testFilter}`;
   const order = c.req.query('sort') === 'title' ? 'x.title_zh,x.title_en,x.id' : 'x.updated_at DESC,x.id';
   const extra = kind === 'products' ? `x.product_type AS "productType", x.description_zh AS "descriptionZh", x.description_en AS "descriptionEn", x.member_only AS "memberOnly", x.presentation,
     (SELECT MIN(v.amount_minor) FROM platform_product_variants v WHERE v.product_id=x.id AND v.status='active') AS "fromAmountMinor",
@@ -106,7 +108,7 @@ async function publicContentList(c: Context, kind: ContentKind): Promise<Respons
   const [rows, count, categories] = await Promise.all([
     platformQuery(platformDb(),`SELECT x.id::text AS id,x.slug,x.title_zh AS "titleZh",x.title_en AS "titleEn",x.category,x.status,x.updated_at AS "updatedAt",${extra} FROM ${table} x WHERE ${where} ORDER BY ${order} LIMIT $4 OFFSET $5`,[status,q,category,pageSize,offset]),
     platformQuery<{total:number}>(platformDb(),`SELECT COUNT(*)::int AS total FROM ${table} x WHERE ${where}`,[status,q,category]),
-    platformQuery<{category:string}>(platformDb(),`SELECT DISTINCT category FROM ${table} WHERE status=$1 AND category<>'' ORDER BY category`,[status]),
+    platformQuery<{category:string}>(platformDb(),`SELECT DISTINCT x.category FROM ${table} x WHERE x.status=$1 AND x.category<>''${testFilter} ORDER BY x.category`,[status]),
   ]);
   publicCache(c,rows.length>0);
   return c.json({[kind === 'news' ? 'articles' : kind]:rows,total:count[0]?.total??0,page,pageSize,categories:categories.map(row=>row.category)});
@@ -126,6 +128,7 @@ platformContentRoutes.get('/platform/events/:id', async (c) => {
         'salesStartAt',t.sales_start_at,'salesEndAt',t.sales_end_at
       ) ORDER BY t.amount_minor,t.id) FROM platform_event_ticket_types t WHERE t.event_id=e.id), '[]'::jsonb) AS tickets
     FROM platform_events e WHERE (e.id::text=$1 OR e.slug=$1) AND e.status='published'
+      AND NOT EXISTS(SELECT 1 FROM platform_competitions cc WHERE cc.event_id=e.id AND cc.is_test)
   `, [key]);
   if (!rows[0]) notFound('Event');
   publicCache(c);
@@ -404,18 +407,18 @@ platformContentRoutes.get('/platform/admin/analytics', async (c) => {
       (SELECT COUNT(*)::int FROM platform_instructor_payouts WHERE status IN ('draft','approved','processing','failed')) AS "pendingPayouts",
       (SELECT COUNT(*)::int FROM platform_reconciliation_records WHERE resolved_at IS NULL AND status NOT IN ('matched','ignored')) AS "unresolvedReconciliation",
       (SELECT COUNT(*)::int FROM platform_course_entitlements WHERE status='active') AS "activeEntitlements",
-      (SELECT COUNT(*)::int FROM platform_orders WHERE created_at>=NOW()-make_interval(days=>$1)) AS orders,
-      (SELECT COUNT(*)::int FROM platform_orders WHERE paid_at>=NOW()-make_interval(days=>$1)) AS "paidOrders"`,[days]),
+      (SELECT COUNT(*)::int FROM platform_orders WHERE ${NON_TEST_COMPETITION_ORDER_SQL} AND created_at>=NOW()-make_interval(days=>$1)) AS orders,
+      (SELECT COUNT(*)::int FROM platform_orders WHERE ${NON_TEST_COMPETITION_ORDER_SQL} AND paid_at>=NOW()-make_interval(days=>$1)) AS "paidOrders"`,[days]),
     platformQuery(platformDb(),`SELECT to_char(created_at AT TIME ZONE 'UTC','YYYY-MM-DD') AS date,currency,
       COUNT(*)::int AS orders,COUNT(*) FILTER(WHERE paid_at IS NOT NULL)::int AS "paidOrders",
       COALESCE(SUM(total_amount_minor) FILTER(WHERE paid_at IS NOT NULL),0)::text AS "paidAmountMinor"
-      FROM platform_orders WHERE created_at>=NOW()-make_interval(days=>$1)
+      FROM platform_orders WHERE ${NON_TEST_COMPETITION_ORDER_SQL} AND created_at>=NOW()-make_interval(days=>$1)
       GROUP BY date,currency ORDER BY date,currency`,[days]),
     platformQuery(platformDb(),`WITH bounds AS (SELECT NOW()-make_interval(days=>$1) AS start_at, 'infinity'::timestamptz AS end_at)
       SELECT currency,SUM(paid)::text AS "paidAmountMinor",SUM(refunded)::text AS "refundedAmountMinor"
       FROM (${ORDER_CASH_FLOW_SQL}) flow GROUP BY currency ORDER BY currency`,[days]),
-    platformQuery(platformDb(),`SELECT id::text AS id,order_number AS "orderNumber",status,currency,total_amount_minor AS "totalAmountMinor",created_at AS "createdAt" FROM platform_orders ORDER BY created_at DESC LIMIT 10`),
-    platformQuery(platformDb(),`SELECT status,COUNT(*)::int AS count FROM platform_orders WHERE created_at>=NOW()-make_interval(days=>$1) GROUP BY status ORDER BY status`,[days]),
+    platformQuery(platformDb(),`SELECT id::text AS id,order_number AS "orderNumber",status,currency,total_amount_minor AS "totalAmountMinor",created_at AS "createdAt" FROM platform_orders WHERE ${NON_TEST_COMPETITION_ORDER_SQL} ORDER BY created_at DESC LIMIT 10`),
+    platformQuery(platformDb(),`SELECT status,COUNT(*)::int AS count FROM platform_orders WHERE ${NON_TEST_COMPETITION_ORDER_SQL} AND created_at>=NOW()-make_interval(days=>$1) GROUP BY status ORDER BY status`,[days]),
   ]);
   privateNoStore(c);
   return c.json({item:{id:'overview',titleZh:'经营概览',titleEn:'Business overview',summary:summary[0]??{},daily,money,recent,statuses,days,timezone:'UTC'}});

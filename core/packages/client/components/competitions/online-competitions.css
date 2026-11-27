@@ -358,3 +358,20 @@ button.competition-match-player { cursor: pointer; }
   .competition-mobile-registration > .competition-primary { max-width: 52vw; }
   .competition-mobile-registration-error { grid-column: 1 / -1; margin: 0 0 6px; }
 }
+
+.competition-test-dialog { width: min(100% - 24px, 460px); }
+.competition-test-form { display: grid; gap: 16px; }
+.competition-test-fields {
+  min-inline-size: 0;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  border: 0;
+  margin: 0;
+  padding: 0;
+}
+.competition-test-fields select { width: 100%; }
+.competition-test-wide { grid-column: 1 / -1; min-width: 0; }
+.competition-test-wide p { margin-block: 6px 0; }
+.competition-test-form .competition-toolbar { margin: 0; gap: 8px; }
+.competition-host-page-heading > .competition-toolbar { margin: 0; }

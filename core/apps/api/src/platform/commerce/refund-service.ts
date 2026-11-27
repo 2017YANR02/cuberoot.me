@@ -8,7 +8,7 @@ import { type OrderRow, type FulfillmentType } from './types.js';
 /** Caller supplies an authenticated successful provider refund or external-payment evidence. */
 export async function completePlatformFullRefund(db: PlatformDb, actor: PlatformActor, id: string, refundId: string, evidenceReferenceHash: string): Promise<void> {
   const evidenceReason = `evidence_sha256:${evidenceReferenceHash}`;
-    const competitionEvents=await platformQuery<{event_id:string}>(db,`SELECT c.event_id::text FROM platform_competitions c WHERE EXISTS(SELECT 1 FROM platform_event_registrations r JOIN platform_order_items i ON i.id=r.order_item_id WHERE r.event_id=c.event_id AND i.order_id=$1::uuid) ORDER BY c.event_id FOR UPDATE OF c`,[id]);
+    const competitionEvents=await platformQuery<{event_id:string}>(db,`SELECT c.event_id::text FROM platform_competitions c WHERE NOT c.is_test AND EXISTS(SELECT 1 FROM platform_event_registrations r JOIN platform_order_items i ON i.id=r.order_item_id WHERE r.event_id=c.event_id AND i.order_id=$1::uuid) ORDER BY c.event_id FOR UPDATE OF c`,[id]);
     const orders = await platformQuery<OrderRow>(db, `SELECT id::text, order_number, buyer_user_id, status, currency, total_amount_minor FROM platform_orders WHERE id = $1::uuid FOR UPDATE`, [id]);
     const order = orders[0];
     if (!order) notFound('Order');

@@ -1888,6 +1888,13 @@ export const CATALOG: ComponentEntry[] = [
     en: 'The smart-cube status and recovery modal shared by Web and all five installed clients. Device name, battery, protocol, connected/solved state, reset/state refresh, gyro calibration, disconnect, focus trapping, and dismissal live in one implementation. Hosts inject only BLE transport actions; Web may add browser environment advice, failure detail, and MAC entry.',
   },
   {
+    name: 'BluetoothModal',
+    import: "import BluetoothModal from '@/components/BluetoothModal';",
+    category: 'more',
+    zh: 'Web 计时器和线上赛场共用的智能魔方连接弹窗。提供浏览器指引、连接错误和 MAC 地址查询。赛场禁用设备状态重置。',
+    en: 'Smart-cube connection dialog shared by the Web timer and competition arenas. It provides browser guidance, connection errors and MAC lookup instructions. Competition seats disable device state reset.',
+  },
+  {
     name: 'BluetoothTimerModal / StackmatModal',
     import: "import { BluetoothTimerModal, StackmatModal } from '@cuberoot/timer-ui/external';",
     category: 'more',

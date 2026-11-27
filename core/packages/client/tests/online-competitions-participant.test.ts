@@ -4,13 +4,14 @@ import { createRoot } from 'react-dom/client';
 import { SOLVED_SMART_CUBE_FACELETS } from '@cuberoot/shared/smart-cube/cubie';
 import { NuqsTestingAdapter } from 'nuqs/adapters/testing';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { CompetitionDuelArena } from '@/components/competitions/CompetitionArena';
+import { CompetitionAo5Arena, CompetitionDuelArena } from '@/components/competitions/CompetitionArena';
 import { OnlineCompetitions } from '@/components/competitions/OnlineCompetitions';
 import { CompetitionReportShare } from '@/components/competitions/CompetitionReport';
+import type { CompetitionCameraState } from '@/components/competitions/CompetitionVideoRoom';
 import CompetitionCenter from '@/app/[lang]/competitions/page';
 import { CompetitionHostShell } from '@/app/[lang]/competitions/workspace/_components/CompetitionHostShell';
 import { CompetitionHostOverview } from '@/app/[lang]/competitions/workspace/_components/CompetitionHostOverview';
-import type { CompetitionBracketMatch, CompetitionRegistration, MyCompetitionEntry, OnlineCompetition, OrganizerApplication } from '@/lib/online-competition-api';
+import type { CompetitionArenaSnapshot, CompetitionBracketMatch, CompetitionRegistration, MyCompetitionEntry, OnlineCompetition, OrganizerApplication } from '@/lib/online-competition-api';
 import { matchCompetitionHostRoute, matchCompetitionRoute } from '@/lib/competition-links';
 
 const api = vi.hoisted(() => ({
@@ -27,6 +28,10 @@ const api = vi.hoisted(() => ({
   listMyCompetitionEntries: vi.fn(),
   checkInCompetition: vi.fn(),
   push: vi.fn(),
+  createCompetitionTest: vi.fn(),
+  getCompetitionTestOptions: vi.fn(),
+  startCompetitionTest: vi.fn(),
+  cleanupCompetitionTest: vi.fn(),
   getOnlineCompetition: vi.fn(),
   listCompetitionRegistrations: vi.fn(),
   getCompetitionBrackets: vi.fn(),
@@ -68,6 +73,15 @@ vi.mock('@/app/[lang]/competitions/_components/CompetitionHeader', () => ({
 vi.mock('@/hooks/useEntryRouter', () => ({ useEntryRouter: () => ({ push: api.push }) }));
 vi.mock('next/navigation', async original => ({ ...await original<object>(), usePathname: () => api.pathname }));
 vi.mock('@/components/HeaderToggles', () => ({ default: () => null }));
+vi.mock('@/components/competitions/CompetitionVideoRoom', async importOriginal => ({
+  ...await importOriginal<typeof import('@/components/competitions/CompetitionVideoRoom')>(),
+  CompetitionVideoRoom: ({ onCameraState }: { onCameraState?: (state: CompetitionCameraState) => void }) =>
+    createElement('div', null,
+      createElement('button', { onClick: () => onCameraState?.('camera_off') }, 'Join video'),
+      createElement('button', { onClick: () => onCameraState?.('waiting_for_supervisor') }, 'Camera on'),
+      createElement('button', { onClick: () => onCameraState?.('ready') }, 'Judge camera on')),
+}));
+
 vi.mock('@/components/PageBackLink', () => ({ default: ({ fallback }: { fallback: string }) => createElement('a', { href: fallback }, '返回') }));
 vi.mock('@/components/CompactSelect', () => ({
   CompactSelect: ({ value, onChange, items, ariaLabel }: {
@@ -75,17 +89,22 @@ vi.mock('@/components/CompactSelect', () => ({
   }) => createElement('select', { value, 'aria-label': ariaLabel, onChange: (event: React.ChangeEvent<HTMLSelectElement>) => onChange(event.target.value) },
     items.map(item => createElement('option', { key: item.value, value: item.value }, item.label))),
 }));
-vi.mock('@/components/PuzzlePicker/PuzzlePicker', () => ({
-  default: ({ selectedEvent, wcaEvents, onSelect, placeholderLabel }: {
-    selectedEvent?: string; wcaEvents: ReadonlySet<string>; onSelect: (value: string) => void; placeholderLabel?: string;
-  }) => createElement('select', {
-    value: selectedEvent ?? '', 'aria-label': placeholderLabel,
-    onChange: (event: React.ChangeEvent<HTMLSelectElement>) => onSelect(event.target.value),
-  }, [
-    createElement('option', { key: '', value: '' }, placeholderLabel),
-    ...[...wcaEvents].map(value => createElement('option', { key: value, value }, value)),
-  ]),
-}));
+vi.mock('@/components/PuzzlePicker/PuzzlePicker', async importOriginal => {
+  const { default: Picker } = await importOriginal<typeof import('@/components/PuzzlePicker/PuzzlePicker')>();
+  return {
+    default: (props: ComponentProps<typeof Picker>) => {
+      if (props.triggerVariant === 'pill') return createElement(Picker, props);
+      const { selectedEvent, wcaEvents, onSelect, placeholderLabel } = props;
+      return createElement('select', {
+        value: selectedEvent ?? '', 'aria-label': placeholderLabel,
+        onChange: (event: React.ChangeEvent<HTMLSelectElement>) => onSelect?.(event.target.value),
+      }, [
+        createElement('option', { key: '', value: '' }, placeholderLabel),
+        ...[...wcaEvents ?? []].map(value => createElement('option', { key: value, value }, value)),
+      ]);
+    },
+  };
+});
 vi.mock('@/hooks/useT', () => ({ useT: () => translate }));
 vi.mock('@/i18n/tr', () => ({ useLang: () => 'zh', tr: ({ zh }: { zh: string }) => zh, T: ({ zh }: { zh: string }) => zh }));
 vi.mock('@/lib/use-web-reconstruct-host', () => ({ useWebReconstructHost: () => ({ localize: ({ zh }: { zh: string }) => zh }) }));
@@ -116,7 +135,7 @@ vi.mock('@/components/competitions/useCompetitionCube', () => ({
         status: { connected: cubeFixture.connected, brand: 'gan', deviceName: 'GAN 16 test', battery: null },
         facelets: cubeFixture.facelets,
       },
-      connect: cubeFixture.connect,
+      openDevice: cubeFixture.connect,
       anchor: { moves: [], algAnchored: false },
       guidance: { correctionActive: false }, phase: null, moves: 0, recap: null, live: { players: {} },
     };
@@ -155,10 +174,14 @@ describe('online competition views', () => {
   let host: HTMLDivElement;
   let root: ReturnType<typeof createRoot>;
   beforeEach(() => {
+    vi.stubGlobal('matchMedia', (media: string) => ({
+      media, matches: false, addEventListener() {}, removeEventListener() {},
+    }));
     host = document.createElement('div');
     document.body.append(host);
     root = createRoot(host);
     api.user = null;
+    api.push.mockReset();
     cubeFixture.connected = false;
     cubeFixture.facelets = null;
     cubeFixture.connect.mockReset().mockResolvedValue(undefined);
@@ -200,6 +223,7 @@ describe('online competition views', () => {
     await act(async () => root.unmount());
     host.remove();
     vi.useRealTimers();
+    vi.unstubAllGlobals();
   });
 
   async function render(id?: string) {
@@ -265,11 +289,89 @@ describe('online competition views', () => {
     expect(host.querySelector('a[href="/competitions/workspace/manage/draft"]')).not.toBeNull();
   });
 
-  it.each([['manage', false], ['supervise', true]] as const)('keeps the %s assignment guard', async (mode, isAdmin) => {
+  it.each([['smart', '333'], ['ordinary', '222']] as const)('creates a direct-entry test Ao5 with %s equipment', async (device, project) => {
+    api.user = { uid: 7, isAdmin: true };
+    const showModal = Object.getOwnPropertyDescriptor(HTMLDialogElement.prototype, 'showModal');
+    const close = Object.getOwnPropertyDescriptor(HTMLDialogElement.prototype, 'close');
+    Object.defineProperties(HTMLDialogElement.prototype, {
+      showModal: { configurable: true, value(this: HTMLDialogElement) { this.open = true; } },
+      close: { configurable: true, value(this: HTMLDialogElement) { this.open = false; } },
+    });
+    try {
+      api.createCompetitionTest.mockReset().mockResolvedValue({ id: 'id', slug: 'test-fixture', registrationId: 'entry' });
+      await act(async () => root.render(createElement(NuqsTestingAdapter, null, createElement(OnlineCompetitions, { mode: 'manage' }))));
+      await act(async () => button('一键测试赛').click());
+      expect(host.querySelector('dialog')?.open).toBe(true);
+      expect(host.textContent).toContain('创建后直接进入赛场');
+      if (device === 'ordinary') {
+        const equipment = [...host.querySelectorAll('dialog select')].find(select => select.querySelector('option[value="ordinary"]')) as HTMLSelectElement;
+        expect(equipment.value).toBe('smart');
+        await act(async () => {
+          equipment.value = 'ordinary';
+          equipment.dispatchEvent(new Event('change', { bubbles: true }));
+        });
+        const trigger = host.querySelector<HTMLButtonElement>('dialog .pp--pill button')!;
+        expect(trigger.querySelector('.compact-select-current')?.textContent).toBe('三阶');
+        expect(trigger.querySelector('.pp-trigger-icon')).not.toBeNull();
+        expect(trigger.querySelector('.compact-select-arrow')).not.toBeNull();
+        await act(async () => trigger.click());
+        const menu = host.querySelector('dialog [role="menu"][popover="manual"]')!;
+        const option = [...menu.querySelectorAll<HTMLButtonElement>('[role="menuitem"]')].find(item => item.textContent?.trim() === '二阶')!;
+        await act(async () => option.click());
+        expect(trigger.querySelector('.compact-select-current')?.textContent).toBe('二阶');
+      }
+      await act(async () => button('创建测试赛').click());
+      expect(api.createCompetitionTest).toHaveBeenCalledWith({
+        format: 'average', supervisionMode: 'self_service', device, project, autoEnter: true,
+      }, expect.any(String));
+      expect(api.push).toHaveBeenCalledWith('/zh/competitions/test-fixture?entry=entry');
+    } finally {
+      for (const [name, original] of [['showModal', showModal], ['close', close]] as const) {
+        if (original) Object.defineProperty(HTMLDialogElement.prototype, name, original);
+        else Reflect.deleteProperty(HTMLDialogElement.prototype, name);
+      }
+    }
+  });
+
+  it('shows test controls only to site admins and requires a second cleanup action', async () => {
+    api.user = { uid: 7, isAdmin: true };
+    api.getOnlineCompetition.mockResolvedValue({ competition: fixture('test', { isTest: true, canManage: true }) });
+    api.cleanupCompetitionTest.mockReset().mockResolvedValue({ status: 'cancelled' });
+    await act(async () => root.render(createElement(NuqsTestingAdapter, null, createElement(OnlineCompetitions, { mode: 'manage', id: 'test' }))));
+    expect(host.textContent).toContain('测试赛');
+    expect(host.textContent).not.toContain('结算账单');
+    expect(button('立即开赛')).toBeDefined();
+    await act(async () => button('清理测试赛').click());
+    expect(api.cleanupCompetitionTest).not.toHaveBeenCalled();
+    await act(async () => button('确认清理').click());
+    expect(api.cleanupCompetitionTest).toHaveBeenCalledExactlyOnceWith('test', expect.any(String));
+    expect(api.push).toHaveBeenCalledWith('/zh/competitions/workspace/manage');
+
+    api.user = { uid: 8 };
+    api.listOrganizerApplications.mockResolvedValue({ applications: [], eligibleOrganizationIds: ['org'] });
+    await act(async () => root.render(createElement(NuqsTestingAdapter, null, createElement(OnlineCompetitions, { mode: 'manage' }))));
+    expect(button('一键测试赛')).toBeUndefined();
+  });
+
+  it.each([['manage', false], ['supervise', false]] as const)('keeps the %s assignment guard', async (mode, isAdmin) => {
     api.user = { uid: 7, isAdmin };
     await act(async () => root.render(createElement(OnlineCompetitions, { mode })));
     expect(host.textContent).toContain('当前账号没有此赛事工作台的权限');
     expect(api.listOnlineCompetitions).not.toHaveBeenCalled();
+  });
+
+  it('allows admins to see an empty supervision list while keeping the event assignment guard', async () => {
+    api.user = { uid: 7, isAdmin: true };
+    await act(async () => root.render(createElement(NuqsTestingAdapter, null, createElement(OnlineCompetitions, { mode: 'supervise' }))));
+    expect(host.textContent).toContain('当前没有分配给你的执场赛事');
+    expect(api.listSupervisedCompetitions).toHaveBeenCalledOnce();
+
+    api.listSupervisedCompetitions.mockResolvedValue({ competitions: [fixture('assigned')] });
+    api.getOnlineCompetition.mockResolvedValue({ competition: fixture('unassigned', { canSupervise: false }) });
+    await act(async () => root.render(createElement(NuqsTestingAdapter, null, createElement(OnlineCompetitions, {
+      mode: 'supervise', id: 'unassigned',
+    }))));
+    expect(host.textContent).toContain('当前账号没有此赛事的管理权限');
   });
 
   it.each([
@@ -726,6 +828,85 @@ describe('online competition views', () => {
     expect(host.querySelector('.competition-arena-hud')?.textContent).toContain('G2');
   });
 
+  it('shows the video gate and keeps the server camera rejection visible for a supervised seat', async () => {
+    const competition = fixture('supervised');
+    const registration = {
+      ...smartEntry('seat'), device: 'ordinary' as const, sessionKind: 'supervised' as const,
+      checkedInAt: competition.startsAt, canCheckIn: false,
+    };
+    api.getCompetitionArena.mockResolvedValue({
+      serverNow: new Date().toISOString(), checkedIn: true, seated: false, completed: false,
+      roomId: null, roundNumber: null, startsAt: null, scramble: null, players: [],
+    });
+    api.readyCompetitionArena.mockRejectedValue(new Error('The entrant and supervisor must both be connected with their cameras on'));
+    await act(async () => root.render(createElement(CompetitionAo5Arena, { competition, registration, legacySeat: null })));
+    await vi.waitFor(() => expect(button('Join video')).toBeTruthy());
+    expect(host.querySelector('.competition-arena-support details[open]')?.contains(button('Join video'))).toBe(true);
+    await act(async () => { button('Join video').click(); });
+    expect(host.textContent).toContain('请在监督视频中开启摄像头');
+    await act(async () => { button('Camera on').click(); });
+    expect(host.textContent).toContain('等待裁判进入监督视频并开启摄像头');
+    expect(api.readyCompetitionArena).not.toHaveBeenCalled();
+    await act(async () => { button('Judge camera on').click(); });
+    expect(api.readyCompetitionArena).toHaveBeenCalledTimes(1);
+    expect(host.textContent).toContain('正在确认双方摄像头已开启');
+  });
+
+  it('keeps the smart-cube arena for an already issued legacy supervised attempt', async () => {
+    const competition = fixture('legacy-smart');
+    const registration = { ...smartEntry('seat'), sessionKind: 'supervised' as const,
+      checkedInAt: competition.startsAt, canCheckIn: false };
+    api.getCompetitionArena.mockResolvedValue({
+      serverNow: new Date().toISOString(), checkedIn: true, seated: true, legacy: true, completed: false,
+      roomId: null, roundNumber: 2, startsAt: new Date(Date.now() - 2000).toISOString(), scramble: 'R U', players: [],
+    });
+    await act(async () => root.render(createElement(CompetitionAo5Arena, { competition, registration, legacySeat: 'Legacy form' })));
+    expect(host.querySelector('.competition-arena-scramble')?.textContent?.replace(/\s+/g, '')).toContain('RU');
+    expect(host.textContent).not.toContain('Legacy form');
+  });
+
+  it('keeps the larger Ao5 result through intermission and refreshes the entry before the settlement', async () => {
+    vi.useFakeTimers();
+    const onFinished = vi.fn();
+    const competition = fixture('session');
+    const registration = { ...smartEntry('seat'), checkedInAt: competition.startsAt, canCheckIn: false };
+    const attempts = [837, 1140, 1030, 1050, 831].map((centiseconds, index) => ({
+      centiseconds, attemptNumber: index + 1, penalty: 'none' as const, replay: false, inspectAt: null, solveAt: null, dnfReason: null,
+    }));
+    const snapshot = (number: number, waiting = false, completed = false): CompetitionArenaSnapshot => ({
+      serverNow: new Date().toISOString(), checkedIn: true, seated: true, completed, roomId: 'arena', credentials: null,
+      roundNumber: number, startsAt: new Date(Date.now() + (waiting ? 7000 : -1000)).toISOString(), scramble: waiting ? null : 'R U',
+      inspectAt: null, solveAt: null, players: [{ id: registration.id, name: registration.displayName, wcaId: null, countryCode: null,
+        attempts: attempts.slice(0, completed || number === 1 ? number : number - 1) }],
+    });
+    api.getCompetitionArena.mockResolvedValue(snapshot(1));
+    await act(async () => root.render(createElement(CompetitionAo5Arena, {
+      competition, registration, legacySeat: 'Legacy seat', onFinished,
+    })));
+    const time = () => host.querySelector('.competition-arena-time')?.textContent;
+    expect(time()).toContain('8.37');
+    api.getCompetitionArena.mockResolvedValue(snapshot(2, true));
+    await act(async () => { await vi.advanceTimersByTimeAsync(1200); });
+    expect(time()).toContain('8.37');
+    expect(host.querySelector('.competition-arena-best')?.textContent).toBe('本场最佳');
+    expect(host.querySelector('.competition-arena-countdown')?.textContent).toContain('第 2 把即将开始打乱');
+    expect(host.querySelector('.competition-arena-scramble')?.textContent).toBe('');
+
+    api.getCompetitionArena.mockResolvedValue(snapshot(5));
+    await act(async () => { await vi.advanceTimersByTimeAsync(1200); });
+    api.getCompetitionArena.mockResolvedValue(snapshot(5, false, true));
+    await act(async () => { await vi.advanceTimersByTimeAsync(1200); });
+    expect(onFinished).toHaveBeenCalledOnce();
+    expect(time()).toContain('8.31');
+    expect(host.querySelector('.competition-report')).toBeNull();
+
+    await act(async () => { await vi.advanceTimersByTimeAsync(1800); });
+    expect(host.querySelector('.competition-report-attempts')?.textContent).toContain('(8.31)');
+    expect(host.querySelector('.competition-arena-board')).not.toBeNull();
+    expect(host.querySelector('.competition-arena-dock')).toBeNull();
+    expect(host.textContent).not.toContain('Legacy seat');
+  });
+
   it('renders a semantic scoreboard and loads a published replay without participant access', async () => {
     const finalizedAt = new Date().toISOString();
     api.getOnlineCompetition.mockResolvedValue({ competition: fixture('final', { status: 'completed', finalizedAt }) });
@@ -832,9 +1013,16 @@ describe('online competition views', () => {
     api.getOnlineCompetition.mockResolvedValue({ competition: fixture('report') });
     api.listCompetitionRegistrations.mockResolvedValue({ registrations: [entry] });
     api.listCompetitionResults.mockResolvedValue({ results: [{ ...entry, rank: 2, recordedAt, finalizedAt: null }] });
+    let releaseSnapshot!: (snapshot: Partial<CompetitionArenaSnapshot>) => void;
+    api.getCompetitionArena.mockReturnValueOnce(new Promise(resolve => { releaseSnapshot = resolve; }));
     await act(async () => root.render(createElement(NuqsTestingAdapter, { searchParams: '?entry=finished-entry',
       children: createElement(OnlineCompetitions, { id: 'report' }) })));
-    await act(async () => { await vi.waitFor(() => expect(host.querySelector('.competition-report')).toBeTruthy()); });
+    await vi.waitFor(() => expect(api.getCompetitionArena).toHaveBeenCalled());
+    expect(host.textContent).toContain('正在打开赛场');
+    expect(host.querySelector('.competition-participation, .competition-report')).toBeNull();
+    await act(async () => {
+      releaseSnapshot({ serverNow: recordedAt, roomId: null, players: [], completed: true, legacy: true });
+    });
     const report = host.querySelector('.competition-report');
     expect(report?.querySelector('.competition-report-metrics')?.textContent).toContain('7.37');
     expect(report?.querySelector('.competition-report-attempts')?.textContent).toContain('(5.82)');

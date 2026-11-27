@@ -31,6 +31,7 @@ describe.skipIf(!databaseUrl)('competition settlement on isolated PostgreSQL',()
       INSERT INTO platform_order_items VALUES('${item}','${order}',1001);
       INSERT INTO platform_event_registrations VALUES('${registration}','${event}','${item}');`);
     await db.unsafe(readFileSync(new URL('../migrations/0226_competition_settlement_ledger.sql',import.meta.url),'utf8'));
+    await db.unsafe(readFileSync(new URL('../migrations/0365_competition_test_mode.sql',import.meta.url),'utf8'));
   });
   afterAll(async()=>{await db?.end();if(admin){await admin.unsafe(`DROP SCHEMA "${schema}" CASCADE`);await admin.end();}});
   const statement=()=>competitionSettlement(db as unknown as PlatformDb,event);

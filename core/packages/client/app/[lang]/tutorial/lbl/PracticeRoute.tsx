@@ -9,7 +9,7 @@ import Practice from './Practice';
 import { activeChapters, practiceExampleOrder } from './curriculum';
 import type { PracticeCubeMove } from './usePracticeSmartCube';
 
-const BluetoothModal = dynamic(() => import('../../timer/_components/BluetoothModal'), { ssr: false });
+const BluetoothModal = dynamic(() => import('@/components/BluetoothModal'), { ssr: false });
 
 export default function PracticeRoute() {
   const t = useT();

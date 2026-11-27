@@ -103,8 +103,9 @@ const menuLabel = (label: string): string => label.replaceAll('魔方', '').repl
 
 export default function PuzzlePicker({
   isZh = false, selectedEvent, selectedEvents, wcaEvents, availableEvents, onSelect, onToggle, linkFor,
-  discovery, groups: suppliedGroups, additionalGroups, leadingGroups, placeholderLabel, showArrow = false, showTriggerIcon = true, showTriggerLabel = false, triggerVariant, openSubmenuOnHover, showItemIcons = true, popupFooter, itemAction, dataNoTimer,
+  discovery, groups: suppliedGroups, additionalGroups, leadingGroups, placeholderLabel, showArrow = false, showTriggerIcon: triggerIcon, showTriggerLabel = false, triggerVariant, openSubmenuOnHover, showItemIcons = true, popupFooter, itemAction, dataNoTimer,
 }: Props) {
+  const showTriggerIcon = triggerIcon ?? true;
   const params = useParams();
   const prefix = params?.lang === 'zh' ? '/zh' : '';
   const [open, setOpen] = useState(false);
@@ -208,6 +209,7 @@ export default function PuzzlePicker({
         })),
       }))}
       showArrow={showArrow}
+      showTriggerIcon={triggerIcon}
       triggerVariant={triggerVariant}
       openSubmenuOnHover={openSubmenuOnHover}
       selectedEvent={selectedEvent ?? ''}

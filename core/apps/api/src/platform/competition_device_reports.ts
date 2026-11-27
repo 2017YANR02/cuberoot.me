@@ -1,4 +1,4 @@
-import { COMPETITION_INSPECTION_MS, COMPETITION_STAGE_LIMIT_MS } from '@cuberoot/shared/timer';
+import { COMPETITION_OBSERVATION_WINDOW_MS, COMPETITION_STAGE_LIMIT_MS } from '@cuberoot/shared/timer';
 import { applyCubieAlg, cubieStateFromFacelets, cubieToFacelets, smartCubeTargetFacelets, SOLVED_SMART_CUBE_FACELETS } from '@cuberoot/shared/smart-cube/cubie';
 import { badRequest } from './errors.js';
 import { arrayField, booleanField, integerField, isObject, stringField, type JsonObject } from './validation.js';
@@ -22,7 +22,7 @@ export function validateCompetitionDeviceReport(body: JsonObject) {
   if (!Number.isFinite(Date.parse(serverIssuedAt))) badRequest('serverIssuedAt must be a valid timestamp');
   const scramble=stringField(body,'scramble',{required:true,max:2000})!;
   const durationMs=integerField(body,'durationMs',{required:true,min:0,max:86_400_000})!;
-  const inspectionMs = integerField(body, 'inspectionMs', { min: 0, max: COMPETITION_INSPECTION_MS });
+  const inspectionMs = integerField(body, 'inspectionMs', { min: 0, max: COMPETITION_OBSERVATION_WINDOW_MS });
   const disconnected=booleanField(body,'disconnected');
   if(disconnected===undefined)badRequest('disconnected is required');
   if(!disconnected&&durationMs===0)badRequest('A completed device report requires a positive duration');

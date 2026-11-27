@@ -2,7 +2,7 @@
 
 import type { ReactNode } from 'react';
 import { usePathname } from 'next/navigation';
-import { CalendarDays, LayoutDashboard, ListChecks, Plus } from '@app-foundation/icons/lucide';
+import { CalendarDays, LayoutDashboard, ListChecks, Plus, ShieldCheck, Video } from '@app-foundation/icons/lucide';
 import { NavigationShell } from '@app-foundation/navigation-ui';
 import '@app-foundation/navigation-ui/navigation.css';
 import AppLink from '@/components/AppLink';
@@ -20,6 +20,7 @@ export function CompetitionHostShell({ children }: { children: ReactNode }) {
   const user = useAuthUser();
   const owner = useOwnerKey();
   const admin = hasAdminAccess(user);
+  const supervisor = useCompetitionRole(admin ? null : 'supervisor');
   const organizer = useCompetitionRole(admin ? null : 'organizer');
   const allowed = Boolean(user) && (admin || organizer.allowed);
   const path = pathname.replace(/^\/(?:en|zh)(?=\/|$)/, '');
@@ -28,11 +29,16 @@ export function CompetitionHostShell({ children }: { children: ReactNode }) {
   let fallback = COMPETITION_HOST_PATH;
   if (active === 'overview') fallback = COMPETITIONS_PATH;
   if (route?.id) fallback = active === 'activities' ? COMPETITION_ACTIVITIES_PATH : competitionWorkspaceHref('manage');
+  const supervise = COMPETITION_WORKSPACES.supervise.title;
+  const review = COMPETITION_WORKSPACES.review.title;
+  const supervisionItem = { id: 'supervise', href: competitionWorkspaceHref('supervise'), label: t(supervise.zh, supervise.en), icon: <Video size={19} /> };
   const items = [
+    ...(admin || supervisor.allowed ? [supervisionItem] : []),
     { id: 'overview', href: COMPETITION_HOST_PATH, label: t('概览', 'Overview'), icon: <LayoutDashboard size={19} /> },
     { id: 'manage', href: competitionWorkspaceHref('manage'), label: t(COMPETITION_WORKSPACES.manage.title.zh, COMPETITION_WORKSPACES.manage.title.en), icon: <ListChecks size={19} /> },
     { id: 'create', href: competitionWorkspaceHref('create'), label: t(COMPETITION_WORKSPACES.create.title.zh, COMPETITION_WORKSPACES.create.title.en), icon: <Plus size={19} /> },
     ...(admin ? [
+      { id: 'review', href: competitionWorkspaceHref('review'), label: t(review.zh, review.en), icon: <ShieldCheck size={19} /> },
       { id: 'activities', href: COMPETITION_ACTIVITIES_PATH, label: t(COMPETITION_ACTIVITIES_TITLE.zh, COMPETITION_ACTIVITIES_TITLE.en), icon: <CalendarDays size={19} /> },
     ] : []),
   ];
@@ -49,7 +55,7 @@ export function CompetitionHostShell({ children }: { children: ReactNode }) {
           : <CompetitionHostAccessContext key={owner} value>{children}</CompetitionHostAccessContext>;
 
   return <NavigationShell className="competition-host" mainClassName="competition-host-main competition-center" contentAs="main"
-    showNavigation={allowed} items={allowed ? items.map(item => ({ ...item, active: item.id === active })) : []}
+    showNavigation={allowed || supervisor.allowed} items={allowed ? items.map(item => ({ ...item, active: item.id === active })) : supervisor.allowed ? [supervisionItem] : []}
     labels={{
       navigation: t('办赛工作台导航', 'Competition workspace navigation'),
       show: t('展开侧栏', 'Expand sidebar'), hide: t('收起侧栏', 'Collapse sidebar'),

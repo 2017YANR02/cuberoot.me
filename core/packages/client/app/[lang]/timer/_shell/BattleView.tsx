@@ -6,7 +6,7 @@ import TimerReadout from '../_components/TimerReadout';
 import TimerDisplayModeSetting from '../_components/TimerDisplayModeSetting';
 import { LOCAL_BATTLE_SCRAMBLE_COPY, timerSupportsLocalBattleSmartCube } from '@cuberoot/shared/timer';
 import { useBattleCubes, type BattleCubes, type BattleCubeHandle } from '../_battle/useBattleCubes';
-import BluetoothModal from '../_components/BluetoothModal';
+import BluetoothModal from '@/components/BluetoothModal';
 import LiveCubeState from '../_components/LiveCubeState';
 import { mirrorForBrand, sensorBasisForBrand } from '../_lib/bluetooth/orientation';
 import {

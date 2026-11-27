@@ -64,7 +64,7 @@ platformCompetitionDeviceReportRoutes.get('/platform/competitions/registrations/
     report: ReturnType<typeof validateCompetitionDeviceReport> | null; runId: string; startedAt: Date; reportedAt: Date | null;
     user_id: string; supervisor_user_id: string | null; public_replay: boolean; arena_round_id: string | null; penalty: string | null;
   }>(platformDb(),`SELECT d.report,d.run_id AS "runId",d.started_at AS "startedAt",d.reported_at AS "reportedAt",r.user_id,s.supervisor_user_id,a.arena_round_id,a.penalty,
-    (r.status='attended' AND c.finalized_at IS NOT NULL AND t.competition_device='smart') AS public_replay
+    (r.status='attended' AND c.finalized_at IS NOT NULL AND NOT c.is_test AND t.competition_device='smart') AS public_replay
     FROM platform_competition_device_reports d JOIN platform_event_registrations r ON r.id=d.registration_id
     JOIN platform_competition_sessions s ON s.id=r.competition_session_id
     JOIN platform_competitions c ON c.event_id=r.event_id JOIN platform_event_ticket_types t ON t.id=r.ticket_type_id
@@ -120,6 +120,7 @@ platformCompetitionDeviceReportRoutes.post('/platform/competitions/registrations
     const rows=await platformQuery(db,`INSERT INTO platform_competition_device_reports(registration_id,attempt_number,reported_by,started_at)
       VALUES($1::uuid,$2,$3,$4) ON CONFLICT DO NOTHING RETURNING run_id AS "runId",started_at AS "startedAt"`,[id,number,actor.userId,attempt.now]);
     if(!rows.length)conflict('This attempt already has a device run. Ask the supervisor to handle an interrupted run');
+    // The smart-cube clock starts at alignment and includes scramble confirmation.
     if (attempt.arena_round_id) await platformQuery(db, 'UPDATE platform_competition_attempts SET inspect_at=$3 WHERE registration_id=$1::uuid AND attempt_number=$2', [id, number, attempt.now]);
     return {status:201,body:{status:'started',...rows[0]},resourceType:'competition_device_report',resourceId:id};
   }));

@@ -1,4 +1,5 @@
 /** Navigation and destination groups shared by the admin shell and overview. */
+import { competitionWorkspaceHref } from '@/lib/competition-links';
 import { ADMIN_USERS_TITLE } from '@cuberoot/shared/page-catalog';
 
 export const ADMIN_SECTIONS = ['overview', 'users', 'content', 'commerce', 'system'] as const;
@@ -34,6 +35,8 @@ export const DESTINATION_SECTIONS: Record<string, Exclude<AdminSection, 'overvie
   '/sim': 'content', '/alg': 'content', '/account': 'content', '/recon': 'content',
   '/teachers': 'commerce', '/wiki': 'content', '/ruimin-yan': 'content',
   '/org#enterprise-admin': 'commerce', '/docs': 'system',
+  [competitionWorkspaceHref('manage')]: 'commerce', [competitionWorkspaceHref('review')]: 'commerce',
+  [competitionWorkspaceHref('supervise')]: 'commerce',
   '/courses': 'commerce', '/regulation/post': 'content',
 };
 

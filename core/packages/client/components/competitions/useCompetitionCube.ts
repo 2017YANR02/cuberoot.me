@@ -11,7 +11,7 @@ import { smartCubeTargetFacelets } from '@cuberoot/shared/smart-cube/cubie';
 import { createSmartCubeGuidanceController, type SmartCubeGuidanceState } from '@cuberoot/shared/smart-cube/scramble-guidance';
 import { mirrorForBrand, sensorBasisForBrand, type Quat } from '@cuberoot/shared/smart-cube/orientation';
 import { useNetBattleLiveCube } from '@cuberoot/timer-ui';
-import { mayUseMiniProgramBridge, useBluetoothCube } from '@/lib/bluetooth';
+import { mayUseMiniProgramBridge, useBluetoothCube, type ConnectPickOptions } from '@/lib/bluetooth';
 import { installedBleAvailable } from '@/lib/installed-ble-bridge';
 import { websocketApiUrl } from '@/lib/api-base';
 import { persistItem } from '@/lib/safe-storage';
@@ -46,9 +46,10 @@ export function useCompetitionCube({ id, duel, smart, roomId, credentials, round
   const [recap, setRecap] = useState<ReturnType<typeof replaySolve>>(null);
   const [moves, setMoves] = useState(0);
   const [calibration, setCalibration] = useState(0);
-  const [macPrompt, setMacPrompt] = useState<string | null>(null);
-  const [connectionError, setConnectionError] = useState(false);
-  const [bluetoothUnavailable, setBluetoothUnavailable] = useState(false);
+  const [macPrompt, setMacPrompt] = useState<{ deviceName: string; isWrongKey?: boolean } | null>(null);
+  const [deviceOpen, setDeviceOpen] = useState(false);
+  const [connectAttempt, setConnectAttempt] = useState<Promise<void> | null>(null);
+  const connectingRef = useRef(false);
   const [syncError, setSyncError] = useState(false);
   const [connecting, setConnecting] = useState(false);
   const [hasGyro, setHasGyro] = useState(false);
@@ -80,10 +81,11 @@ export function useCompetitionCube({ id, duel, smart, roomId, credentials, round
     onGyro: smart ? pose => latest.current.onGyro(pose) : undefined,
     onConnectionEvent: event => {
       if (event.kind === 'disconnected') latest.current.onDisconnect();
-      if (event.kind === 'reconnected') setConnectionError(false);
-      if (event.kind === 'reconnect-failed') setConnectionError(true);
     },
-    onNeedMac: deviceName => new Promise(resolve => { macResolver.current = resolve; setMacPrompt(deviceName); }),
+    onNeedMac: (deviceName, isWrongKey) => new Promise(resolve => {
+      macResolver.current = resolve;
+      setMacPrompt({ deviceName, isWrongKey });
+    }),
   });
 
   const anchor = useLiveCubeAnchor(cube.status.connected ? cube.status.deviceId || cube.status.deviceName || 'cube' : null, cube.facelets);
@@ -176,7 +178,7 @@ export function useCompetitionCube({ id, duel, smart, roomId, credentials, round
   const retry = useEffectEvent(() => {
     const current = active.current?.machine.phase;
     if (current?.kind === 'finished' && !current.reason && !pending.current) return;
-    if (current?.kind === 'inspecting' && run.current?.runId) return;
+    if ((current?.kind === 'confirming' || current?.kind === 'inspecting') && run.current?.runId) return;
     if (current?.kind === 'running' && run.current?.solveSent) return;
     void flush();
   });
@@ -201,9 +203,11 @@ export function useCompetitionCube({ id, duel, smart, roomId, credentials, round
     active.current = null;
     pending.current = null;
     run.current = null;
-    setRecap(null);
+    if (round) {
+      setRecap(null);
+      setMoves(0);
+    }
     setSyncError(false);
-    setMoves(0);
     beep.current = 0;
     gripRef.current = null;
     controller.setRunning(false);
@@ -216,9 +220,10 @@ export function useCompetitionCube({ id, duel, smart, roomId, credentials, round
     const machine = new CompetitionCubeAttempt(issued, target, {
       change(next) {
         setPhase({ id: roundId, phase: next });
-        if (next.kind === 'inspecting') { gripRef.current = quatRef.current; play('inspection-start'); }
+        if (next.kind === 'confirming') gripRef.current = quatRef.current;
+        if (next.kind === 'inspecting') play('inspection-start');
         if (next.kind === 'running') controller.setRunning(true);
-        if (next.kind !== 'finished') void flush();
+        if (next.kind === 'confirming' || next.kind === 'running') void flush();
       },
       device() {
         const sample = quatRef.current;
@@ -311,20 +316,37 @@ export function useCompetitionCube({ id, duel, smart, roomId, credentials, round
     macResolver.current = null;
     setMacPrompt(null);
   }
-  async function connect() {
-    const unavailable = !navigator.bluetooth?.requestDevice && !installedBleAvailable() && !mayUseMiniProgramBridge();
-    setBluetoothUnavailable(unavailable);
-    if (unavailable) return;
+  async function connectDevice(pick?: ConnectPickOptions) {
+    if (connectingRef.current) return;
+    connectingRef.current = true;
     warmupSound();
-    setConnectionError(false);
     setConnecting(true);
-    try { await cube.connect(); }
-    catch { setConnectionError(true); }
-    finally { setConnecting(false); }
+    try { await cube.connect(pick); }
+    finally {
+      connectingRef.current = false;
+      setConnecting(false);
+    }
+  }
+
+  function openDevice(pair = false) {
+    setDeviceOpen(true);
+    if (!pair || connectingRef.current || cube.status.connected) return;
+    if (!navigator.bluetooth?.requestDevice && !installedBleAvailable() && !mayUseMiniProgramBridge()) return;
+    const attempt = connectDevice();
+    // The shared modal observes the original rejection and displays its details.
+    void attempt.catch(() => {});
+    setConnectAttempt(attempt);
+  }
+
+  function closeDevice() {
+    resolveMac(null);
+    if (connectingRef.current && !cube.status.connected) cube.disconnect();
+    setDeviceOpen(false);
+    setConnectAttempt(null);
   }
   return {
     cube, anchor, quatRef, calibration, hasGyro, guidance, phase, moves, recap, live, connecting,
-    macPrompt, resolveMac, connect, connectionError, bluetoothUnavailable, syncError,
+    macPrompt, resolveMac, deviceOpen, connectAttempt, connectDevice, openDevice, closeDevice, syncError,
     resetView: () => { calibrationRef.current = quatRef.current; setCalibration(value => value + 1); },
     inspectionMs: COMPETITION_INSPECTION_MS,
   };

@@ -4,7 +4,7 @@ import { act, createElement } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { readFileSync } from 'node:fs';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import BluetoothModal from '@/app/[lang]/timer/_components/BluetoothModal';
+import BluetoothModal from '@/components/BluetoothModal';
 import { BluetoothConnectError, type BluetoothCubeHandle } from '@/app/[lang]/timer/_lib/bluetooth';
 
 const disconnectedCube = {
@@ -74,8 +74,8 @@ describe('BluetoothModal direct connection attempt', () => {
     const props = {
       isZh: false, cube: connected, onClose: vi.fn(), onConnect: vi.fn(async () => {}),
       connections: [
-        { id: 'first', name: 'GAN A', battery: 100, status: 'connected' as const },
-        { id: 'second', name: 'GAN B', battery: 90, status: 'connected' as const },
+        { id: 'first', name: 'GAN A', battery: 100, status: 'connected', statusLabel: 'Connected' },
+        { id: 'second', name: 'GAN B', battery: 90, status: 'connected', statusLabel: 'Connected' },
       ],
       selectedConnectionId: 'first',
     };
@@ -93,6 +93,9 @@ describe('BluetoothModal direct connection attempt', () => {
 
     await act(async () => root.render(createElement(BluetoothModal, { ...props, selectedConnectionId: 'second' })));
     expect(modal().querySelector('.bt-cube-option .lucide-badge-check')).toBeNull();
+    await act(async () => root.render(createElement(BluetoothModal, { ...props, allowDeviceCalibration: false })));
+    expect(find('Reset')).toBeUndefined();
+
   });
 
   it('offers the native bridge on iOS WeChat instead of sending the user to Bluefy', async () => {
@@ -363,13 +366,16 @@ describe('BluetoothModal direct connection attempt', () => {
     const props = { isZh: false, cube: disconnectedCube, onClose: vi.fn(), onConnect: vi.fn(async () => {}) };
     await act(async () => root.render(createElement(BluetoothModal, props)));
     await act(async () => root.render(createElement(BluetoothModal, {
-      ...props, macPrompt: { deviceName: 'WCU_MY32_A1B2' },
+      ...props, allowDeviceCalibration: false, macPrompt: { deviceName: 'WCU_MY32_A1B2', isWrongKey: true },
     })));
     expect(modal().textContent).toContain('WCU_MY32_A1B2');
     expect(modal().textContent).toContain('chrome://bluetooth-internals/#devices');
     expect(modal().textContent).toContain('edge://bluetooth-internals/#devices');
     expect(modal().textContent).toContain('Name column');
     expect(modal().textContent).toContain('Address');
+    expect(modal().textContent).toContain('That MAC looked wrong');
+    expect(modal().textContent).toContain('chrome://bluetooth-internals/#devices');
+    expect(modal().textContent).toContain('edge://bluetooth-internals/#devices');
     expect(modal().textContent).not.toContain('Cube Station');
     expect(modal().querySelector('.bt-connect-btn')).toBeNull();
     expect(document.activeElement).toBe(modal().querySelector('[data-mac-input]'));

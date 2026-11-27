@@ -1,8 +1,8 @@
 'use client';
 
 import { useEffect, useEffectEvent, useRef, useState } from 'react';
-import { LiveKitRoom, useLocalParticipant } from '@livekit/components-react';
-import { Track } from 'livekit-client';
+import { LiveKitRoom, useConnectionState, useLocalParticipant, useTracks } from '@livekit/components-react';
+import { ConnectionState, Track } from 'livekit-client';
 import { Video } from '@app-foundation/icons/lucide';
 import VideoTiles from '@/components/video/VideoTiles';
 import { LIVEKIT_ROOM_OPTIONS, denyMessage, disconnectMessage } from '@/components/video/video-call';
@@ -10,7 +10,7 @@ import { getCompetitionVideoToken, VideoDeniedError, type VideoToken } from '@/l
 import { useT } from '@/hooks/useT';
 import { tr } from '@/i18n/tr';
 
-function LocalRecording({ getStream, onRecordingChange, ownsStream = false }: { getStream: () => Promise<MediaStream>; onRecordingChange?: (active: boolean) => void; ownsStream?: boolean }) {
+function LocalRecording({ getStream, onRecordingChange, ownsStream = false, primaryStart = false }: { getStream: () => Promise<MediaStream>; onRecordingChange?: (active: boolean) => void; ownsStream?: boolean; primaryStart?: boolean }) {
   const t = useT();
   const [preview, setPreview] = useState<MediaStream | null>(null);
   const [elapsed, setElapsed] = useState(0);
@@ -103,8 +103,8 @@ function LocalRecording({ getStream, onRecordingChange, ownsStream = false }: { 
         {t('录制中', 'Recording')} <time>{Math.floor(elapsed / 60)}:{String(elapsed % 60).padStart(2, '0')}</time>
       </span>
     </div>}
-    <button type="button" className="competition-secondary" onClick={() => recording ? recorder.current?.stop() : void start()}>
-      {recording ? tr({zh:'停止并保存录像',en:'Stop and save recording'}) : tr({zh:'录制我的画面',en:'Record my camera'})}
+    <button type="button" className={primaryStart && !recording ? 'competition-primary' : 'competition-secondary'} onClick={() => recording ? recorder.current?.stop() : void start()}>
+      {recording ? tr({zh:'停止并保存录像',en:'Stop and save recording'}) : primaryStart ? t('开始本机录制', 'Start local recording') : tr({zh:'录制我的画面',en:'Record my camera'})}
     </button>
     <p className="competition-hint">{tr({zh:'仅保存自己的画面和麦克风到本机，每段最多 10 分钟；离开前请保存。争议时再上传。',en:'Saves your own camera and microphone locally, up to 10 minutes per segment. Save before leaving; upload only for a dispute.'})}</p>
     {message && <p role="status">{message}</p>}
@@ -121,13 +121,32 @@ function SupervisionRecording() {
   }} />;
 }
 
-export function CompetitionSelfRecording({ onRecordingChange }: { onRecordingChange: (active: boolean) => void }) {
-  return <LocalRecording ownsStream onRecordingChange={onRecordingChange} getStream={() => navigator.mediaDevices.getUserMedia({ video: true })} />;
+export function CompetitionSelfRecording({ onRecordingChange, primaryStart }: {
+  onRecordingChange: (active: boolean) => void; primaryStart?: boolean;
+}) {
+  return <LocalRecording ownsStream primaryStart={primaryStart} onRecordingChange={onRecordingChange} getStream={() => navigator.mediaDevices.getUserMedia({ video: true })} />;
+}
+
+export type CompetitionCameraState = 'disconnected' | 'connecting' | 'camera_off' | 'waiting_for_supervisor' | 'ready';
+
+const CAMERA_SOURCES = [Track.Source.Camera];
+
+function SupervisionCameraState({ onChange }: { onChange: (state: CompetitionCameraState) => void }) {
+  const connection = useConnectionState();
+  const { localParticipant } = useLocalParticipant();
+  const cameras = useTracks(CAMERA_SOURCES).filter(({ publication }) => !publication.isMuted);
+  const state = connection !== ConnectionState.Connected ? 'connecting'
+    : !cameras.some(({ participant }) => participant === localParticipant) ? 'camera_off'
+      : cameras.some(({ participant }) => participant !== localParticipant) ? 'ready' : 'waiting_for_supervisor';
+  useEffect(() => onChange(state), [state, onChange]);
+  useEffect(() => () => onChange('disconnected'), [onChange]);
+  return null;
 }
 
 /** A registration-scoped call. Leaving this component always disconnects its media tracks. */
-export function CompetitionVideoRoom({ registrationId, autoJoin = false, onJoin, onLeave }: {
+export function CompetitionVideoRoom({ registrationId, autoJoin = false, onJoin, onLeave, onCameraState, prominent = false }: {
   registrationId: string; autoJoin?: boolean; onJoin?: () => void; onLeave?: () => void;
+  onCameraState?: (state: CompetitionCameraState) => void; prominent?: boolean;
 }) {
   const [token, setToken] = useState<VideoToken | null>(null);
   const [joining, setJoining] = useState(false);
@@ -150,13 +169,17 @@ export function CompetitionVideoRoom({ registrationId, autoJoin = false, onJoin,
     const current = ++request.current;
     setJoining(true);
     setError(null);
+    onCameraState?.('connecting');
     try {
       const next = await getCompetitionVideoToken(registrationId);
       if (request.current === current) { setToken(next); onJoin?.(); }
     } catch (cause) {
-      if (request.current === current) setError(cause instanceof VideoDeniedError && cause.reason === 'not in room'
-        ? tr({ zh: '完成签到后，选手和指定监督员可在场次时间内进入。', en: 'After check-in, the entrant and assigned supervisor can join during the session.' })
-        : denyMessage(cause instanceof VideoDeniedError ? cause.reason : 'connect', 2));
+      if (request.current === current) {
+        onCameraState?.('disconnected');
+        setError(cause instanceof VideoDeniedError && cause.reason === 'not in room'
+          ? tr({ zh: '完成检录后，选手和指定监督员可在场次时间内进入。', en: 'After check-in, the entrant and assigned supervisor can join during the session.' })
+          : denyMessage(cause instanceof VideoDeniedError ? cause.reason : 'connect', 2));
+      }
     } finally {
       if (request.current === current) setJoining(false);
     }
@@ -169,10 +192,12 @@ export function CompetitionVideoRoom({ registrationId, autoJoin = false, onJoin,
       onDisconnected={reason => { setToken(null); setError(disconnectMessage(reason)); }}
       onError={() => { setToken(null); setError(denyMessage('connect', 2)); }}
       onMediaDeviceFailure={() => setError(denyMessage('media', 2))}>
+      {onCameraState && <SupervisionCameraState onChange={onCameraState} />}
       <VideoTiles onLeave={() => { setToken(null); onLeave?.(); }} onCameraError={() => setError(denyMessage('camera', 2))} />
       <SupervisionRecording />
-    </LiveKitRoom> : <button type="button" className="competition-secondary" disabled={joining} onClick={() => void join()}>
-      <Video size={16} aria-hidden /> {joining ? tr({ zh: '连接中…', en: 'Connecting…' }) : tr({ zh: '进入监督视频', en: 'Join supervision video' })}
+    </LiveKitRoom> : <button type="button" className={prominent ? 'competition-primary' : 'competition-secondary'} disabled={joining} onClick={() => void join()}>
+      <Video size={16} aria-hidden /> {joining ? tr({ zh: '连接中…', en: 'Connecting…' }) : prominent ? tr({ zh: '进入监督视频并开启摄像头', en: 'Join supervision video and turn on camera' })
+        : tr({ zh: '进入监督视频', en: 'Join supervision video' })}
     </button>}
   </section>;
 }

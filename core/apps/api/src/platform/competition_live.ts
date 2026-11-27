@@ -30,8 +30,8 @@ export async function authorizeCompetitionLive(roomId: string, credentials: NetB
   if (!match || Number(match[1]) < Date.now() / 1000) return false;
   if (!timingSafeEqual(Buffer.from(match[2]), Buffer.from(sign(roomId, playerId, Number(match[1]))))) return false;
   const seats = await platformQuery<{ user_id: string }>(platformDb(), `SELECT r.user_id::text
-    FROM platform_event_registrations r
-    WHERE r.status IN ('confirmed','attended') AND (
+    FROM platform_event_registrations r JOIN platform_events e ON e.id=r.event_id
+    WHERE e.status IN ('published','completed') AND r.status IN ('confirmed','attended') AND (
       EXISTS(SELECT 1 FROM platform_competition_matches m WHERE m.id=$1::uuid
         AND r.id IN (m.player_a_registration_id,m.player_b_registration_id))
       OR (r.checked_in_at IS NOT NULL AND EXISTS(SELECT 1 FROM platform_competition_attempts a

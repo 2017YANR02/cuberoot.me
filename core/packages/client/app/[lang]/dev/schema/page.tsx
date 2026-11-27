@@ -104,7 +104,7 @@ const TABLES: Table[] = [
   { name: 'record_notification_events', domain: 'comp', origin: '0238', purpose: { zh: '跨成绩来源去重的纪录事件及待投递状态', en: 'Source-independent record event deduplication and pending delivery' } },
   { name: 'auth_identity_pending', domain: 'account', origin: '0232', purpose: { zh: '首次身份认证的 15 分钟尝试；票据只存摘要，另存已验证身份资料及必要加密凭据，明确创建或绑定后单次核销，不提前创建账号', en: '15-minute first-time identity attempts; tickets are hashed, with verified identity data and required encrypted credentials stored separately; consumed once after explicit creation or linking without creating an account in advance' } },
   { name: 'platform_organizer_applications', domain: 'platform', origin: '0229', purpose: { zh: '主办方申请、关联组织与平台审批记录', en: 'Organizer applications, linked organizations and platform reviews' } },
-  { name: 'platform_competitions', domain: 'platform', origin: '0224 / 0354 / 0355 / 0356', purpose: { zh: '主办组织、赛制、赛型、审核、报名窗口与结算配置', en: 'Organizer, format, supervision mode, review, registration window and settlement terms' } },
+  { name: 'platform_competitions', domain: 'platform', origin: '0224 / 0354 / 0355 / 0356', evolved: [365], purpose: { zh: '赛制、审核、报名窗口、结算与测试赛隔离', en: 'Format, review, registration window, settlement and test competition isolation' } },
   { name: 'platform_competition_matches', domain: 'platform', origin: '0357', purpose: { zh: '项目分组的双败对阵、比分与胜败晋级指向', en: 'Per-division double-elimination match scores and winner and loser paths' } },
   { name: 'platform_competition_match_games', domain: 'platform', origin: '0357', evolved: [358], purpose: { zh: '双败小局的双方准备、同步打乱、观察限时、起表、比赛成绩和设备证据', en: 'Game readiness, shared scramble, inspection deadlines, solve starts, results and device evidence' } },
   { name: 'platform_competition_sessions', domain: 'platform', origin: '0224 / 0356', purpose: { zh: '线上监督排班和自助、线下赛事的默认场次', en: 'Supervised slots and default sessions for self-service and in-person competitions' } },
@@ -617,8 +617,9 @@ const TABLES: Table[] = [
 ];
 
 const MIGRATIONS: { n: number; slug: string; desc: Bi }[] = [
-  { n: 363, slug: 'competition_arena', desc: { zh: '记录统一发乱、阶段时间、DNF 原因与实时轮次通知。', en: 'Persist shared rounds, stage clocks, DNF reasons and live round notifications.' } },
+  { n: 365, slug: 'competition_test_mode', desc: { zh: '标记测试赛，将其排除在公开目录与正式统计之外。', en: 'Mark test competitions for exclusion from public directories and official statistics.' } },
   { n: 364, slug: 'single_home_recon_pin', desc: { zh: '保留最近一条可展示的首页置顶复盘，限制同时置顶一条。', en: 'Keep the newest eligible homepage reconstruction pin and enforce a single pin.' } },
+  { n: 363, slug: 'competition_arena', desc: { zh: '记录统一发乱、阶段时间、DNF 原因与实时轮次通知。', en: 'Persist shared rounds, stage clocks, DNF reasons and live round notifications.' } },
   { n: 362, slug: 'platform_quiz_content_reviews', desc: { zh: '增加测验发布审核，并校验所属课时及前后修订。', en: 'Add quiz publication reviews and validate lesson ownership and both revisions.' } },
   { n: 361, slug: 'platform_course_presentation_defaults', desc: { zh: '增加课程展示默认值字段，保留已封存的历史修订。', en: 'Store course display defaults while preserving sealed historical revisions.' } },
   { n: 360, slug: 'platform_lesson_type_and_order', desc: { zh: '新增显式课时类型并支持原子交换课时顺序。', en: 'Add explicit lesson types and support atomic lesson reordering.' } },

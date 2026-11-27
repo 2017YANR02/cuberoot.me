@@ -1,3 +1,4 @@
+import { COMPETITION_OBSERVATION_WINDOW_MS } from '@cuberoot/shared/timer';
 import { requirePlatformActor } from '../platform/auth.js';
 import { platformDb, platformQuery, platformTransaction, sendMutation, withIdempotency, type PlatformDb } from '../platform/db.js';
 import { badRequest, conflict, forbidden, notFound } from '../platform/errors.js';
@@ -6,7 +7,7 @@ import { booleanField, enumField, integerField, readJsonObject, stringField } fr
 import type { WCA_TIMED_EVENT_ORDER } from '@cuberoot/shared/wca-events';
 import { finishCompetitionSelfAttempt, requireCompetitionManager, requireCompetitionRegistration, validateCompetitionAttempts, validateCompetitionAttempt } from '../platform/competitions.js';
 import { competitionScramble } from '../platform/competition_workflow.js';
-import { advanceCompetitionArena, arenaDnfReason, arenaEntry, arenaSolveAt, competitionArenaSnapshot, lockArenaRound, recordArenaDnf, startCompetitionArena } from '../platform/competition_arena.js';
+import { advanceCompetitionArena, arenaDnfReason, arenaEntry, arenaSolveAt, competitionArenaSnapshot, lockArenaRound, ORDINARY_ARENA_OBSERVATION_WINDOW_MS, recordArenaDnf, startCompetitionArena } from '../platform/competition_arena.js';
 import { competitionLiveCredentials } from '../platform/competition_live.js';
 import { competitionSupervisionReady } from './video_rooms.js';
 
@@ -47,7 +48,8 @@ const ATTEMPTS = `SELECT a.attempt_number AS "attemptNumber",a.scramble,a.issued
   (SELECT jsonb_build_object('runId',d.run_id,'status',CASE WHEN d.report IS NULL THEN 'started' ELSE 'device_reported' END,
     'startedAt',d.started_at,'reportedAt',d.reported_at,'durationMs',d.report->'durationMs','disconnected',d.report->'disconnected',
     'deviceBrand',d.report->'deviceBrand','moveCount',jsonb_array_length(d.report->'moves'))
-   FROM platform_competition_device_reports d WHERE d.registration_id=a.registration_id AND d.attempt_number=a.attempt_number) AS telemetry
+   FROM platform_competition_device_reports d WHERE d.registration_id=a.registration_id AND d.attempt_number=a.attempt_number) AS telemetry,
+  a.arena_round_id IS NOT NULL AS synchronized
   FROM platform_competition_attempts a WHERE a.registration_id=$1::uuid AND a.issued_at<=clock_timestamp() ORDER BY a.attempt_number`;
 
 platformCompetitionAttemptRoutes.get('/platform/competitions/registrations/:id/arena', async c => {
@@ -90,7 +92,7 @@ platformCompetitionAttemptRoutes.post('/platform/competitions/registrations/:id/
   const body = await readJsonObject(c);
   const number = integerField(body, 'attemptNumber', { required: true, min: 1, max: 5 })!;
   const phase = enumField(body, 'phase', ['inspecting', 'solving', 'timeout', 'disconnected'], { required: true })!;
-  const inspectionMs = integerField(body, 'inspectionMs', { min: 0, max: 16000 });
+  const inspectionMs = integerField(body, 'inspectionMs', { min: 0, max: COMPETITION_OBSERVATION_WINDOW_MS });
   return sendMutation(c, await withIdempotency(c, actor, `competition.arena.phase:${id}:${number}`, body, async db => {
     const entry = await arenaEntry(db, id, actor.userId);
     await requireCompetitionRegistration(db, id);
@@ -100,8 +102,9 @@ platformCompetitionAttemptRoutes.post('/platform/competitions/registrations/:id/
       WHERE a.registration_id=$1::uuid AND a.attempt_number=$2`, [id, number]);
     if (!attempt || attempt.issued_at > attempt.now) conflict('The round has not started');
     if (attempt.recorded_at) return { status: 200, body: { dnfReason: attempt.dnf_reason } };
-    const reason = arenaDnfReason(attempt.issued_at, attempt.inspect_at, attempt.solve_at, attempt.now)
-      ?? (phase === 'disconnected' && entry.device === 'smart' ? 'disconnected' : null);
+    const smart = entry.device === 'smart';
+    const reason = arenaDnfReason(attempt.issued_at, attempt.inspect_at, attempt.solve_at, attempt.now, smart)
+      ?? (phase === 'disconnected' && smart ? 'disconnected' : null);
     if (reason) {
       await recordArenaDnf(db, id, number, reason);
       return { status: 200, body: { dnfReason: reason } };
@@ -110,7 +113,8 @@ platformCompetitionAttemptRoutes.post('/platform/competitions/registrations/:id/
       await platformQuery(db, 'UPDATE platform_competition_attempts SET inspect_at=$3 WHERE registration_id=$1::uuid AND attempt_number=$2', [id, number, attempt.now]);
     }
     if (phase === 'solving' && attempt.inspect_at && !attempt.solve_at) {
-      const solve = arenaSolveAt(attempt.inspect_at, attempt.now, inspectionMs);
+      if (!smart && inspectionMs !== undefined && inspectionMs > ORDINARY_ARENA_OBSERVATION_WINDOW_MS) badRequest('Invalid inspection duration');
+      const solve = arenaSolveAt(attempt.inspect_at, attempt.now, inspectionMs, smart);
       if (+solve > +attempt.now + 1000) badRequest('The inspection duration exceeds the server clock');
       await platformQuery(db, 'UPDATE platform_competition_attempts SET solve_at=$3 WHERE registration_id=$1::uuid AND attempt_number=$2', [id, number, solve]);
     }
@@ -174,7 +178,7 @@ platformCompetitionAttemptRoutes.post('/platform/competitions/registrations/:id/
       WHERE a.registration_id=$1::uuid AND a.attempt_number=$2 AND a.arena_round_id IS NOT NULL AND a.recorded_at IS NULL`, [id, Number(number)]);
     if (arena) {
       if (arena.issued_at > arena.now) conflict('This arena seat requires its active timing flow');
-      const reason = arenaDnfReason(arena.issued_at, arena.inspect_at, arena.solve_at, arena.now);
+      const reason = arenaDnfReason(arena.issued_at, arena.inspect_at, arena.solve_at, arena.now, false);
       if (reason) await recordArenaDnf(db, id, Number(number), reason);
       else await finishCompetitionSelfAttempt(db, id, Number(number), actor.userId, result, false);
       return { status: 200, body: { attempts: await platformQuery(db, ATTEMPTS, [id]) } };
@@ -241,7 +245,7 @@ platformCompetitionAttemptRoutes.post('/platform/competitions/registrations/:id/
     }
     if (attempt.issued_at > attempt.now) conflict('The round has not started');
     if (attempt.arena_round_id) {
-      const reason = arenaDnfReason(attempt.issued_at, attempt.inspect_at, attempt.solve_at, attempt.now);
+      const reason = arenaDnfReason(attempt.issued_at, attempt.inspect_at, attempt.solve_at, attempt.now, false);
       if (reason) {
         await recordArenaDnf(db, id, attemptNumber, reason);
         return { status: 200, body: { finished: attemptNumber === 5, dnfReason: reason } };

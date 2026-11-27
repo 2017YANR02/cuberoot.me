@@ -41,6 +41,7 @@ async function readContent(db: PlatformDb, refs: PlatformHomeReference[] | null)
       UNION ALL
       SELECT 'event', e.id::text, e.title_zh, e.title_en, LEFT(e.description_zh, 480), LEFT(e.description_en, 480), NULL::text, NULL::text
       FROM platform_events e WHERE e.status='published' AND e.ends_at>NOW()
+        AND NOT EXISTS(SELECT 1 FROM platform_competitions c WHERE c.event_id=e.id AND c.is_test)
     )
     SELECT content.* FROM content
     WHERE $1::jsonb IS NULL OR EXISTS (SELECT 1 FROM requested WHERE requested.type=content.type AND requested.id=content.id)
@@ -71,7 +72,8 @@ async function readRankedContent(db: PlatformDb): Promise<RankedContent[]> {
     UNION ALL
     (SELECT 'organization', 'organization', id::text FROM teacher_directory_entries WHERE is_visible AND is_curated AND kind='organization' ORDER BY updated_at DESC, id LIMIT 1)
     UNION ALL
-    (SELECT 'event', 'event', id::text FROM platform_events WHERE status='published' AND ends_at>NOW() ORDER BY starts_at, id LIMIT 1)
+    (SELECT 'event', 'event', e.id::text FROM platform_events e WHERE e.status='published' AND e.ends_at>NOW()
+      AND NOT EXISTS(SELECT 1 FROM platform_competitions c WHERE c.event_id=e.id AND c.is_test) ORDER BY e.starts_at,e.id LIMIT 1)
   `);
 }
 

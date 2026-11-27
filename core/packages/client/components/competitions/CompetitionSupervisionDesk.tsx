@@ -27,7 +27,7 @@ export function CompetitionSupervisionDesk({ entries, activeId, onSelect, render
   const mobile = useIsMobile(859);
   const stage = useRef<HTMLElement>(null);
   const origin = useRef<HTMLButtonElement>(null);
-  const labels = [t('已检录待发题', 'Checked in · waiting for scramble'), t('进行中', 'In progress'),
+  const labels = [t('已检录待开赛', 'Checked in · waiting to start'), t('进行中', 'In progress'),
     t('未检录', 'Awaiting check-in'), t('已完赛', 'Finished')];
   const groups = phases.map((match, index) => ({ label: labels[index], entries: entries.filter(match) }));
   const selected = entries.find(entry => entry.id === activeId) ??

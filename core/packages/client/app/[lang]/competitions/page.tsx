@@ -1,6 +1,6 @@
 'use client';
 
-import { LayoutDashboard } from '@app-foundation/icons/lucide';
+import { LayoutDashboard, Video } from '@app-foundation/icons/lucide';
 import AppLink from '@/components/AppLink';
 import { OnlineCompetitions } from '@/components/competitions/OnlineCompetitions';
 import { useCompetitionRole } from '@/hooks/useCompetitionRole';
@@ -32,7 +32,8 @@ export default function CompetitionCenter() {
   return <main className="competition-center">
     <CompetitionHeader title={t('线上比赛与线下合作赛', 'Online and in-person partner competitions')} actions={hostAction} />
     {links.length > 0 && <nav className="competition-workspace-links" aria-label={t('赛事工作台', 'Competition workspaces')}>
-      {links.map(mode => <AppLink key={mode} href={competitionWorkspaceHref(mode)} prefetch={false}>
+      {links.map(mode => <AppLink key={mode} href={competitionWorkspaceHref(mode)} className={mode === 'supervise' ? 'competition-primary' : undefined} prefetch={false}>
+        {mode === 'supervise' && <Video size={16} aria-hidden />}
         {t(COMPETITION_WORKSPACES[mode].title.zh, COMPETITION_WORKSPACES[mode].title.en)}
       </AppLink>)}
     </nav>}

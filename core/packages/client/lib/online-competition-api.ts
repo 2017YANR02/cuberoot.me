@@ -58,6 +58,7 @@ export interface CompetitionSession {
   kind?: CompetitionMode;
 }
 export interface OnlineCompetitionSummary {
+  isTest?: boolean;
   id: string;
   slug: string;
   titleZh: string;
@@ -116,6 +117,7 @@ export interface CompetitionRegistration {
 }
 
 export interface MyCompetitionEntry {
+  isTest?: boolean;
   registrationId: string;
   competitionId: string;
   titleZh: string;
@@ -156,6 +158,7 @@ export interface CompetitionAttempt {
   penalty: 'none' | '+2' | 'DNF' | 'DNS' | null;
   recordedAt: string | null;
   reviewRequired?: boolean;
+  synchronized?: boolean;
   telemetry?: { status: 'started' | 'device_reported'; moveCount?: number } | null;
 }
 export type CompetitionAttemptResult = { centiseconds: number | null; penalty: 'none' | '+2' | 'DNF' | 'DNS' };
@@ -190,19 +193,37 @@ function publicGet<T>(url: string): Promise<T> {
 }
 
 export const listOnlineCompetitions = (managed = false) => managed
-  ? request<{ competitions: OnlineCompetitionSummary[] }>(`${base}/manage?v=3`)
-  : publicGet<{ competitions: OnlineCompetitionSummary[] }>(`${base}?v=3`);
-export const listSupervisedCompetitions = () => request<{ competitions: OnlineCompetitionSummary[] }>(`${base}/me/supervised?v=3`);
+  ? request<{ competitions: OnlineCompetitionSummary[] }>(`${base}/manage?v=4`)
+  : publicGet<{ competitions: OnlineCompetitionSummary[] }>(`${base}?v=4`);
+export const listSupervisedCompetitions = () => request<{ competitions: OnlineCompetitionSummary[] }>(`${base}/me/supervised?v=4`);
 export const getCompetitionHostOverview = () => request<CompetitionHostOverview>(`${base}/host/overview`);
 export async function listMyCompetitionEntries() {
-  const response = await sessionFetch(apiUrl(`${base}/me/entries?v=2`), { headers: authHeaders(false), cache: 'no-store' });
+  const response = await sessionFetch(apiUrl(`${base}/me/entries?v=3`), { headers: authHeaders(false), cache: 'no-store' });
   // The website can reach an older API revision during independent rollouts.
   if (response.status === 404) return { entries: [] };
   return handleApi<{ entries: MyCompetitionEntry[] }>(response);
 }
-export const getOnlineCompetition = (id: string) => optionalSessionGet(apiUrl(`${path(id)}?v=3`), {
-  headers: authHeaders(false), cache: 'no-store',
-}).then(handleApi<{ competition: OnlineCompetition }>);
+function viewerGet<T>(url: string): Promise<T> {
+  return optionalSessionGet(apiUrl(url), { headers: authHeaders(false), cache: 'no-store' }).then(handleApi<T>);
+}
+export const getOnlineCompetition = (id: string) => viewerGet<{ competition: OnlineCompetition }>(`${path(id)}?v=4`);
+
+export type CompetitionTestSettings = {
+  format: CompetitionSetup['format'];
+  supervisionMode: Exclude<CompetitionMode, 'offline'>;
+  device: CompetitionDevice;
+  project: CompetitionDraftProject;
+  autoEnter: boolean;
+  organizationId?: string;
+  supervisorUserId?: number;
+};
+export const getCompetitionTestOptions = () => request<{ organizationId: string; supervisors: CompetitionSupervisor[] }>(`${base}/test/options`);
+export const createCompetitionTest = (body: CompetitionTestSettings, key: string) =>
+  request<{ id: string; slug: string; registrationId: string | null }>(`${base}/test`, 'POST', body, key);
+export const startCompetitionTest = (id: string, key: string) =>
+  request<{ id: string; started: true; bracketsGenerated?: boolean }>(`${path(id)}/test/start-now`, 'POST', {}, key);
+export const cleanupCompetitionTest = (id: string, key: string) =>
+  request<{ id: string; status: 'cancelled' }>(`${path(id)}/test/cleanup`, 'POST', {}, key);
 export const createOnlineCompetition = (body: CompetitionDraftSettings & { organizationId: string; slug: string }, idempotencyKey: string) =>
   request<{ id: string; status: 'draft' }>(`${base}/drafts`, 'POST', body, idempotencyKey);
 export const updateCompetitionDraft = (id: string, body: CompetitionDraftSettings, idempotencyKey: string) =>
@@ -224,7 +245,7 @@ const registrationPath = (id: string) => `${base}/registrations/${encodeURICompo
 export type CompetitionCheckInDevice = { deviceBrand: string; deviceName: string; facelets: string };
 export const checkInCompetition = (registrationId: string, device?: CompetitionCheckInDevice) =>
   request(`${registrationPath(registrationId)}/check-in`, 'POST', device ?? {});
-export const getCompetitionAttempts = (id: string) => request<{ attempts: CompetitionAttempt[] }>(`${registrationPath(id)}/attempts`);
+export const getCompetitionAttempts = (id: string) => request<{ attempts: CompetitionAttempt[] }>(`${registrationPath(id)}/attempts?v=2`);
 export const nextCompetitionAttempt = (id: string) => request(`${registrationPath(id)}/attempts/next`, 'POST', {});
 export const nextCompetitionSelfAttempt = (id: string) => request(`${registrationPath(id)}/self-attempts/next`, 'POST', {});
 export const completeCompetitionSelfAttempt = (id: string, attempt: number, body: CompetitionSelfResult, key: string) =>
@@ -233,7 +254,7 @@ export const reviewCompetitionSelfAttempt = (id: string, attemptNumber: number, 
   request(`${registrationPath(id)}/review-clear`, 'POST', { attemptNumber, decision });
 export const recordCompetitionAttempt = (id: string, attempt: number, body: { centiseconds: number | null; penalty: 'none' | '+2' | 'DNF' | 'DNS' }) => request(`${registrationPath(id)}/attempts/${attempt}/result`, 'POST', body);
 export const finalizeCompetitionRegistration = (id: string) => request(`${registrationPath(id)}/result`, 'POST', {});
-export const listCompetitionResults = (id: string) => publicGet<{ results: CompetitionResult[] }>(`${path(id)}/results`);
+export const listCompetitionResults = (id: string) => viewerGet<{ results: CompetitionResult[] }>(`${path(id)}/results`);
 export const raiseCompetitionDispute = (id: string, reason: string) => request(`${registrationPath(id)}/disputes`, 'POST', { reason });
 export interface CompetitionDispute { id: string; registrationId: string; reason: string; resolution: string | null; createdAt: string; resolvedAt: string | null }
 export interface CompetitionSettlement { commissionBps: number | null; settlementDays: number | null; settlementAnchor: string | null; finalizedAt: string | null; eligibleAt: string | null; netCollectedMinor: string; platformFeeMinor: string; organizerAmountMinor: string; refundedMinor: string; eligible: boolean; currency: string; transferStatus: string; transferredMinor?: string; outstandingMinor?: string; reconciliationRequired?: boolean; transfers?: Array<{id: string; amountMinor: number; transferredAt: string | null; createdAt: string; entryType: 'payout' | 'recovery' | 'adjustment'}> }
@@ -241,7 +262,7 @@ export const listCompetitionDisputes = (id: string) => request<{ disputes: Compe
 export const resolveCompetitionDispute = (id: string, resolution: string, correctedAttempts?: CompetitionResult['attempts']) => request(`${base}/disputes/${encodeURIComponent(id)}/resolve`, 'POST', { resolution, ...(correctedAttempts ? { correctedAttempts } : {}) });
 export const finalizeCompetition = (id: string) => request(`${path(id)}/finalize`, 'POST', {});
 export const closeCompetitionSessions = (id: string) => request(`${path(id)}/close-sessions`, 'POST', {});
-export const getCompetitionSettlement = (id: string) => request<{ settlement: CompetitionSettlement }>(`${path(id)}/settlement`);
+export const getCompetitionSettlement = (id: string) => request<{ settlement: CompetitionSettlement | null }>(`${path(id)}/settlement`);
 export const recordCompetitionSettlement = (id: string, body: { amountMinor: number; providerReference: string; transferredAt: string; direction?: 'payout' | 'recovery' }) => request(`${path(id)}/settlement-record`, 'POST', body);
 export interface CompetitionEvidence { attemptNumber?: number | null; id: string; mime: string; sizeBytes: number; createdAt: string; expiresAt: string }
 export interface OrganizerApplication {
@@ -355,7 +376,7 @@ export type CompetitionDuel = {
   history?: CompetitionDuelGame[];
 };
 const matchPath = (id: string) => `${base}/matches/${encodeURIComponent(id)}`;
-export const getCompetitionBrackets = (id: string) => publicGet<{ generated: boolean; matches: CompetitionBracketMatch[]; standings: CompetitionBracketStanding[] }>(`${path(id)}/brackets`);
+export const getCompetitionBrackets = (id: string) => viewerGet<{ generated: boolean; matches: CompetitionBracketMatch[]; standings: CompetitionBracketStanding[] }>(`${path(id)}/brackets`);
 export const generateCompetitionBrackets = (id: string) => request(`${path(id)}/brackets/generate`, 'POST', {});
 export const getCompetitionDuel = (id: string) => request<CompetitionDuel>(matchPath(id));
 export const readyCompetitionDuel = (id: string, gameNumber: number, key?: string) =>

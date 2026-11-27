@@ -30,11 +30,11 @@ beforeEach(()=>{
   });
 });
 describe('device evidence input',()=>{
-  it('verifies a solve that started automatically at 16 seconds without an inspection penalty', () => {
-    const afterObservation = validateCompetitionDeviceReport({ ...report, inspectionMs: 16000 });
+  it('verifies a solve that started automatically after the confirmation and observation window without an inspection penalty', () => {
+    const afterObservation = validateCompetitionDeviceReport({ ...report, inspectionMs: 16300 });
     expect(() => verifyCompletedCompetitionDeviceReport(afterObservation)).not.toThrow();
     expect(competitionDeviceResult(afterObservation)).toEqual({ centiseconds: 100, penalty: 'none' });
-    expect(() => validateCompetitionDeviceReport({ ...report, inspectionMs: 16001 })).toThrow();
+    expect(() => validateCompetitionDeviceReport({ ...report, inspectionMs: 16301 })).toThrow();
     const tooSlow = validateCompetitionDeviceReport({ ...report, durationMs: 120000, moves: [{ move: "U'", elapsedMs: 1000 }, { move: "R'", elapsedMs: 120000 }] });
     expect(() => verifyCompletedCompetitionDeviceReport(tooSlow)).toThrow('time limit');
   });
