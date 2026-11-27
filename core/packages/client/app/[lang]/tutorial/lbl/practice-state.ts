@@ -11,17 +11,26 @@ const lowerLayerSlots = Array.from({ length: 54 }, (_, i) => i).filter(i =>
   Math.floor(i / 9) === 3 || (Math.floor(i / 9) !== 0 && i % 9 >= 3));
 const identityState = (alg: string): string[] => (JSON.parse(practiceState(stickerIds, alg)) as string[][]).flat();
 
-const normalizedState = (alg: string): string[] => {
+export const practiceCenterAlignment = (alg: string): string => {
   for (const { value } of CUBE_ORIENTATIONS) {
     const state = identityState(`${alg} ${value}`);
-    if ([4, 13, 22, 31, 40, 49].every(i => state[i] === stickerIds[i])) return state;
+    if ([4, 13, 22, 31, 40, 49].every(i => state[i] === stickerIds[i])) return value;
   }
   throw new Error('Cube centers could not be aligned');
 };
 
+type PracticePosition = string | readonly string[];
+const normalizedState = (position: PracticePosition): readonly string[] =>
+  typeof position === 'string' ? identityState(`${position} ${practiceCenterAlignment(position)}`) : position;
+
+export function practiceStickerState(colors: string[], position: readonly string[]): string {
+  const stickers = position.map(id => colors[Number(id)]);
+  return JSON.stringify(Array.from({ length: 6 }, (_, face) => stickers.slice(face * 9, (face + 1) * 9)));
+}
+
 /** Either Sune handedness, with the yellow cross and solved first two layers. */
-export function isFishWithSolvedLowerLayers(alg: string): boolean {
-  const state = normalizedState(alg);
+export function isFishWithSolvedLowerLayers(position: PracticePosition): boolean {
+  const state = normalizedState(position);
   const topCornerStickers = [0, 2, 6, 8];
   const topEdgeStickers = [1, 3, 5, 7];
   return lowerLayerSlots.every(i => state[i] === stickerIds[i])
@@ -41,8 +50,8 @@ export function bottomCornerGoal(setup: string, target: string, colors: string[]
     ...bottomCorners.filter(corner => corner.every(i => initial[i] === stickerIds[i])).flat()];
   return {
     targetColors: colors.map((color, i) => targetIds.includes(String(i)) ? '#a855f7' : color),
-    matches(alg: string): boolean {
-      const state = normalizedState(alg);
+    matches(position: PracticePosition): boolean {
+      const state = normalizedState(position);
       return targetIds.every(id => upper.some(i => state[i] === id))
         && protectedSlots.every(i => state[i] === stickerIds[i]);
     },
@@ -53,8 +62,8 @@ const middleEdges = [[23, 12], [21, 41], [50, 39], [48, 14]];
 const topEdges = [[1, 46], [3, 37], [5, 10], [7, 19]];
 
 /** A wall with either remaining edge-cycle direction; keep F2L and top corners solved. */
-export function isWallWithSolvedLowerLayers(alg: string): boolean {
-  const state = normalizedState(alg);
+export function isWallWithSolvedLowerLayers(position: PracticePosition): boolean {
+  const state = normalizedState(position);
   const upperStickers = topEdges.map(edge => edge[0]);
   return lowerLayerSlots.every(i => state[i] === stickerIds[i])
     && topCorners.flat().every(i => state[i] === stickerIds[i])
@@ -80,8 +89,8 @@ export function middleEdgeGoal(setup: string, target: string, colors: string[]) 
     hiddenStickers: hiddenIds.map(id => `${faces[Math.floor(Number(id) / 9)]}${Number(id) % 9}`),
     targetColors: colors.map((color, i) => targetIds.includes(String(i)) ? '#a855f7'
       : hiddenIds.includes(String(i)) ? FM_FIXED_COLOR[FM_IGNORED]! : color),
-    matches(alg: string): boolean {
-      const state = normalizedState(alg);
+    matches(position: PracticePosition): boolean {
+      const state = normalizedState(position);
       return targetIds.every(id => upper.some(i => state[i] === id))
         && bottomSlots.every(i => state[i] === initial[i]);
     },

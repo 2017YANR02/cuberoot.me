@@ -22,6 +22,7 @@
 import { forwardRef, useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState, type CSSProperties, type ReactNode } from 'react';
 import { Lock } from '@app-foundation/icons/lucide';
 import { invertMoveString } from '@cuberoot/shared/alg-notation';
+import { planLiveSimUpdate, type SimLogState } from '@cuberoot/shared/timer/sim-log';
 import SimStage, { afterFirstPaint } from '@/components/sim-embed/SimStage';
 import { useT } from '@/hooks/useT';
 import type { SimMount } from '@/components/sim-embed/mountSimWorld';
@@ -58,6 +59,7 @@ import { attachCornerSlotHint } from './corner-slot-hint';
 
 const LOOP_PAUSE_MS = 900;
 const ALIGNMENT_PAUSE_MS = 1200;
+const LIVE_TURN_FRAMES = resolvePreviewTiming(100).frames;
 
 export const NXN_ORDER: Partial<Record<AlgPlayerPuzzle, number>> = {
   '2x2': 2, '3x3': 3, '4x4': 4, '5x5': 5, '6x6': 6,
@@ -118,6 +120,7 @@ const AlgSimPlayer = forwardRef<AlgPlayerHandle, {
   moveHintStyle?: 'orbit';
   stickerColorOverrides?: Readonly<Record<string, string>>;
   setup?: string;
+  livePosition?: SimLogState;
   orientation?: string;
   sceneRot?: { x: number; y: number; z: number };
   hintFacelets?: boolean;
@@ -156,7 +159,7 @@ const AlgSimPlayer = forwardRef<AlgPlayerHandle, {
   fillPane?: boolean;
 }>(function AlgSimPlayer({
   alg, puzzle, puzzleOrder, set, additionalStickering, hiddenStickers, outlinedStickers, highlightedStickers, frontFaceArrow, moveHint, moveHintRecovery = false, stickerColorOverrides, setup, orientation = '', sceneRot, startSolved = false, autoPlay = false, playRequest = 0, loop = false, resetAfterPlayback = false, controlMode = 'full', stepMarkers, hideResetView = false, interactionMode = 'view', lockView = false, wholeCubeDrag, onUserMove, onCubeletTap, orbitSnapDegrees, orbitSnapLocked, pauseAfterSteps, sectionPauseMs, onStepChange, onReady, stickeringAtStep, highlightDaisyAlignment = false, showHands = false, moveDurationMs, size = 260, fillPane = false,
-  stageOverlay, daisyAlignmentFace, hintFacelets = false, maxFramingEdge, allowUserLayerTurn, onBlockedUserLayerTurn, cornerSlotHint, handsVisible = true, holdReferenceThumb = false, moveHintStyle,
+  stageOverlay, daisyAlignmentFace, hintFacelets = false, maxFramingEdge, allowUserLayerTurn, onBlockedUserLayerTurn, cornerSlotHint, handsVisible = true, holdReferenceThumb = false, moveHintStyle, livePosition,
 }, ref) {
   const t = useT();
   const [handsUnavailable, setHandsUnavailable] = useState(false);
@@ -437,6 +440,7 @@ const AlgSimPlayer = forwardRef<AlgPlayerHandle, {
   orientationRef.current = orientation;
   /** 上一帧同步到引擎的状态 —— 用来判断「是不是刚好往前一步」。 */
   const lastRef = useRef<{ sequenceKey: string; setupAlg: string; step: number } | null>(null);
+  const lastLivePosition = useRef<SimLogState | null>(null);
 
   // 换公式 = 从头开始。
   useEffect(() => { jumpToStep(0); setPlaying(false); }, [sequenceKey, jumpToStep]);
@@ -619,6 +623,7 @@ const AlgSimPlayer = forwardRef<AlgPlayerHandle, {
       mountRef.current = null;
       resetViewRef.current = null;
       lastRef.current = null;
+      lastLivePosition.current = null;
       instantStepRef.current = null;
     };
   }, [puzzleKind, puzzle, set, additionalStickering, hiddenStickers, outlinedStickers, previewTiming.frames, sceneRot, maxFramingEdge, highlightDaisyAlignment, handsEnabled, loadedHands, reportUserMove]);
@@ -764,6 +769,22 @@ const AlgSimPlayer = forwardRef<AlgPlayerHandle, {
   useEffect(() => {
     const m = mountRef.current;
     if (!m || !ready) return;
+    if (livePosition && typeof puzzleKind === 'number') {
+      const cube = m.world.cube as Cube;
+      const { twister } = cube;
+      const previous = lastLivePosition.current;
+      const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      const plan = planLiveSimUpdate(previous ?? livePosition, livePosition, !reducedMotion, twister.backlog, previous !== null);
+      lastLivePosition.current = livePosition;
+      lastRef.current = null;
+      if (stickeringAtStep) cube.instancedRenderer.setStickering(stickeringAtStep(0));
+      if (plan.mode === 'push') twister.push(plan.exp, false, 1, LIVE_TURN_FRAMES, 'linear');
+      else if (plan.mode === 'catch-up') twister.catchUpRealtime(plan.exp, plan.fallbackExp, LIVE_TURN_FRAMES, 'linear');
+      else twister.setup(plan.exp);
+      m.invalidate();
+      return;
+    }
+    lastLivePosition.current = null;
     const twister = m.world.cube.twister as PreviewTwister;
     const last = lastRef.current;
     const requestedMove = requestedMoveRef.current;
@@ -812,7 +833,7 @@ const AlgSimPlayer = forwardRef<AlgPlayerHandle, {
       restoreGripsRef.current?.(moves.slice(0, syncStep));
     }
     m.invalidate();
-  }, [sequenceKey, setupAlg, moves, puzzle, puzzleKind, step, ready, moveRequest, stickeringAtStep]);
+  }, [sequenceKey, setupAlg, livePosition, moves, puzzle, puzzleKind, step, ready, moveRequest, stickeringAtStep]);
 
   const togglePlayback = useCallback(() => {
     if (playing) {

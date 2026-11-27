@@ -24,6 +24,35 @@
 .lbl-support-page.lbl-practice-page { box-sizing: border-box; max-width: 1180px; height: 100dvh; display: grid; grid-template-rows: 40px minmax(0, 1fr); padding: 12px 20px 16px; }
 .lbl-practice-page .lbl-exercise { box-sizing: border-box; min-height: 0; margin-top: 0; display: grid; grid-template-rows: 64px minmax(0, 1fr) auto; }
 .lbl-practice-page .lbl-exercise-heading { min-height: 0; overflow: auto; }
+.lbl-practice-heading-actions { display: flex; flex: none; align-items: center; gap: 6px; }
+.lbl-practice-device {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  min-block-size: 36px;
+  padding-inline: 9px;
+  border: 1px solid var(--border-default);
+  border-radius: 8px;
+  background: var(--card);
+  color: var(--foreground);
+  font: inherit;
+  font-size: .8rem;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.lbl-practice-device-compact { display: none; }
+.lbl-practice-device:hover,
+.lbl-practice-device:focus-visible { border-color: var(--border-strong); }
+.lbl-practice-device[data-connected='true'] { color: var(--accent); }
+.lbl-practice-page .lbl-exercise[data-single-heading] .lbl-exercise-heading { gap: 8px; }
+.lbl-exercise[data-single-heading] .lbl-practice-device { min-block-size: 44px; padding-inline: 6px; }
+.lbl-exercise[data-single-heading] .lbl-practice-device-label { display: none; }
+.lbl-exercise[data-single-heading] .lbl-practice-device-compact { display: inline; }
+.lbl-practice-cube-setup { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; font-size: .85rem; }
+.lbl-practice-page .lbl-cube[data-live-fallback] > .alg-sim-player { visibility: hidden; }
+.lbl-practice-live-fallback { position: absolute; inset: 0; pointer-events: none; }
+.lbl-practice-live-fallback svg { display: block; width: 100%; height: 100%; }
 .lbl-practice-page .lbl-exercise .lbl-basic-content { min-height: 0; overflow: auto; overscroll-behavior: contain; align-items: start; }
 .lbl-practice-page .lbl-exercise .lbl-basic-copy { align-self: start; padding-top: 16px; }
 .lbl-practice-page .lbl-exercise-reference { display: grid; }

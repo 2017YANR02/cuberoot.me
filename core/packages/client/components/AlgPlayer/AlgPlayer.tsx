@@ -15,6 +15,7 @@ import { mountTwistyPlayer, type MountedTwistyPlayer } from '@cuberoot/timer-ui/
 import { normalizeAlgForTwisty } from '@/lib/alg_normalize';
 import type { BlockedLayerTurnHandler, CubeletTap, EmbeddedWholeCubeDrag } from '@/components/sim-embed/attachEmbeddedSimInteraction';
 import type { CubeFace } from '@/lib/cube-colors';
+import type { SimLogState } from '@cuberoot/shared/timer/sim-log';
 import { pickStickering } from './stickering';
 import AlgSimPlayer from './AlgSimPlayer';
 import FtoEifAlgPlayer from './FtoEifAlgPlayer';
@@ -111,6 +112,8 @@ interface Props {
   /** Display-only colors by home sticker ID, following the pieces. */
   stickerColorOverrides?: Readonly<Record<string, string>>;
   setup?: string;
+  /** Sim NxN: mirror a verified live position instead of lesson playback. */
+  livePosition?: SimLogState;
   /** NxN 预览的整体拿方；只重贴颜色，不改公式状态。 */
   orientation?: string;
   /** Initial scene angles in radians for the sim engine; also used by reset view. */
@@ -239,6 +242,7 @@ const AlgPlayer = forwardRef<AlgPlayerHandle, Props>(function AlgPlayer(props, r
         key={simInstanceKey}
         ref={ref}
         alg={props.alg} puzzle={props.puzzle} set={props.set} setup={props.setup}
+        livePosition={props.livePosition}
         puzzleOrder={props.puzzleOrder}
         orientation={props.orientation}
         sceneRot={props.sceneRot}
