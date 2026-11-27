@@ -264,9 +264,6 @@ body:has(.landing-page) { --landing-content-max: 1100px; }
 }
 .landing-page .tr-primary > .recent-scrambles { margin-bottom: 0; }
 .landing-page .tr-primary .rs-cards { grid-template-columns: minmax(0, 1fr); }
-body:is(:not([data-site-scenery]), [data-site-scenery=transparent]) .landing-page :is(.tr-recent, .rs-scard)[data-site-surface=panel] {
-    background-color: var(--background);
-}
 body:is(:not([data-site-scenery]), [data-site-scenery=transparent]) .landing-page .tr-primary .recon-card.af-glass-surface {
     --af-glass-fill: var(--background);
     --af-glass-tint: var(--background);
