@@ -245,8 +245,8 @@ body:has(.deskpet-search-workspace:not([inert])) .chat-route-placeholder { displ
   .assistant-section-nav summary { padding-inline:12px; border-radius:999px; background:var(--popover); color:var(--foreground); }
   .assistant-section-nav .tutorial-section-popover { top:calc(100% + 4px); bottom:auto; left:0; transform:none; max-height:min(240px, 32dvh, var(--section-menu-room, 100dvh)); background:var(--popover); }
   .assistant-section-nav [data-side="above"] .tutorial-section-popover { top:auto; bottom:calc(100% + 4px); }
-  .assistant-section-nav button { display:block; width:100%; min-height:44px; padding:6px 10px; border:0; border-radius:8px; background:transparent; color:var(--foreground); font:inherit; text-align:start; overflow-wrap:anywhere; }
-  .assistant-section-nav button:is(:hover,:focus-visible) { background:var(--muted); }
+  .assistant-section-link { display:block; width:100%; min-height:44px; padding:6px 10px; border:0; border-radius:8px; background:transparent; color:var(--foreground); font:inherit; text-align:start; overflow-wrap:anywhere; }
+  .assistant-section-link:is(:hover,:focus-visible) { background:var(--muted); }
 
   .site-assistant-embedded .site-assistant-messages { padding:16px 14px; }
   .site-assistant-embedded .site-assistant-compose { flex:none; padding:8px max(10px,env(safe-area-inset-right)) max(8px,env(safe-area-inset-bottom)) max(10px,env(safe-area-inset-left)); }

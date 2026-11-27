@@ -94,7 +94,7 @@ export default function AssistantAnswerBody({ turn, enabled, report, onNavigate,
         menu.querySelector('summary')?.focus({ preventScroll: true });
       }}>
       <SectionMenu label={label}>{sections.map(({ target, label: title }, index) =>
-        <button type="button" key={index} onClick={() => jump(target)}>{title}</button>)}</SectionMenu>
+        <button className="assistant-section-link" type="button" key={index} onClick={() => jump(target)}>{title}</button>)}</SectionMenu>
     </nav>}
     <div ref={content} className="site-assistant-response" data-assistant-message="assistant" data-turn={turn}>{children}</div>
   </div>;
