@@ -52,7 +52,7 @@ describe.skipIf(!databaseUrl)('competition migration and concurrent registration
     `);
     await db.unsafe(readFileSync(new URL('../migrations/0224_online_competitions.sql',import.meta.url),'utf8'));
     await db.unsafe(readFileSync(new URL('../migrations/0227_competition_device_reports.sql',import.meta.url),'utf8'));
-    for (const migration of ['0354_competition_draft_setup.sql', '0355_competition_draft_project_fee.sql', '0356_competition_unified_workflow.sql']) {
+    for (const migration of ['0354_competition_draft_setup.sql', '0355_competition_draft_project_fee.sql', '0356_competition_unified_workflow.sql', '0365_competition_test_mode.sql']) {
       await db.unsafe(readFileSync(new URL('../migrations/' + migration, import.meta.url), 'utf8'));
     }
     await db.unsafe(`INSERT INTO app_users(id) VALUES(1),(2),(3),(4),(5),(6),(99);
