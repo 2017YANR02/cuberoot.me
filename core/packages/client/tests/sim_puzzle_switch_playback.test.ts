@@ -108,7 +108,7 @@ describe('sim playback across active cube changes', () => {
   }
 
   function button(label: string) {
-    const button = host.querySelector<HTMLButtonElement>(`button[title="${label}"]`);
+    const button = host.querySelector<HTMLButtonElement>(`button[aria-label="${label}"], button[title="${label}"]`);
     expect(button, label).not.toBeNull();
     return button!;
   }
@@ -353,7 +353,7 @@ describe('sim playback across active cube changes', () => {
     await act(async () => setActive(false));
     await act(async () => { await vi.advanceTimersByTimeAsync(1000); });
     expectState('R U');
-    expect(host.querySelector('button[title="Play"]')).toBeNull();
+    expect(host.querySelector('button[aria-label="Play"]')).toBeNull();
     expectTextPreserved();
     await act(async () => setActive(true));
     expect(world.cube).toBe(cube);
