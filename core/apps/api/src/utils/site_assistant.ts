@@ -609,6 +609,11 @@ export async function answerSiteQuestion(
       : {...result,sources,actions:result.actions?.filter(action=>sources.some(source=>source.id===action.id && source.href===action.href))};
     return rememberAssistantConversation(rememberAssistantContext(safe,observations,priorContext),question,history,priorContext);
   };
+  const plainDirectAnswer = !skipDirectAnswers && !hasImages && !presentation.json && !presentation.sentences && !presentation.localTail;
+  if (plainDirectAnswer && requestedEvidence === 'auto') {
+    const window=recentChampionWindow(question,timeContext.today);
+    if(window)return withContext(await runRecentChampionQuery(window,lang,signal,emit));
+  }
   let unresolvedExample: { title:string; href:string } | undefined;
   let officialRules:Promise<string>|undefined;
   let officialRulesSource=WCA_REGULATIONS_URL;
@@ -966,7 +971,6 @@ export async function answerSiteQuestion(
       !presentation.json && !presentation.sentences && !presentation.localTail &&
       !assistantAnswerRequirements(question).length && resolvesOriginalReport(issue,question)) return withContext(issueFact);
   if (issueFact) await emit?.({type:'answer',...issueFact,answer:attributed ? attributed.answer.split('\n\n')[0] : issueFact.answer});
-  const plainDirectAnswer = !skipDirectAnswers && !hasImages && !presentation.json && !presentation.sentences && !presentation.localTail;
   if (learning.course && plainDirectAnswer) {
     await emit?.({ type: 'status', status: { phase: 'querying' } });
     const answer = await answerPersonalLearningRequest(learning.combined, lang, signal, requestedLimit, experiment.viewerUserId, viewerWcaId);
@@ -1084,8 +1088,6 @@ export async function answerSiteQuestion(
       const readCity=(url:string)=>read(url,AbortSignal.any([signal,AbortSignal.timeout(4500)]));
       return withContext(await assistantStage('tool',()=>personalCityAnswer(visit,viewerWcaId,lang,readCity,signal),0,'person_competitions'));
     }
-    const window=recentChampionWindow(question,timeContext.today);
-    if(window)return withContext(await runRecentChampionQuery(window,lang,signal,emit));
   }
   if (!usesExplicitContext && !hasImages && !presentation.localTail && !presentation.json && !replayDraft) {
     if (!presentation.sentences || presentation.sentences===1) {
