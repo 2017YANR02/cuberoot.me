@@ -11,6 +11,7 @@
  * huazhechen/cuber WebGL engine in cuber/.
  */
 
+import { Tooltip } from '@/components/Tooltip';
 import MoreToggle from '@/components/MoreToggle';
 import { ResizeDivider } from '@app-foundation/navigation-ui/resize-divider';
 import '@app-foundation/navigation-ui/resize-divider.css';
@@ -2829,20 +2830,19 @@ function SimEditor({ scope = '', active, seed, snapshotRef, onModeChange, onNew,
             onAppearanceToggle={() => setOpenPanel(panel => panel === 'appearance' ? null : 'appearance')}
             bgSlot={bgSlot}
             fullscreenButton={
-              <button
+              <Tooltip content={fullscreen ? t('退出全屏', 'Exit fullscreen') : t('全屏魔方', 'Fullscreen cube')}>{tip => <button {...tip}
                 type="button"
                 className="playback-bar-btn"
                 onClick={() => runPlayerFullscreenTransition(() => setFullscreen(value => !value))}
-                title={fullscreen ? t('退出全屏', 'Exit fullscreen') : t('全屏魔方', 'Fullscreen cube')}
                 aria-label={fullscreen ? t('退出全屏', 'Exit fullscreen') : t('全屏魔方', 'Fullscreen cube')}
               >
                 {fullscreen ? <Minimize2 size={14} /> : <Maximize2 size={14} />}
-              </button>
+              </button>}</Tooltip>
             }
             backViewButton={!flatMode ? (
               <PlaybackBackViewButton buttonRef={backViewButtonRef} visible={settings.backView} toggle
                 onClick={() => setSettings(prev => resolveBackViewOptions({ ...prev, backView: !prev.backView }))}
-                showLabel={t('显示小窗', 'Show back view')} hideLabel={t('关闭小窗', 'Hide back view')} />
+                showLabel={t('显示背面视图', 'Show back view')} hideLabel={t('关闭背面视图', 'Hide back view')} />
             ) : null}
             stickering={query.stickering}
             onStickeringChange={onStickeringChange}

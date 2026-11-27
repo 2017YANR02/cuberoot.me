@@ -1,5 +1,6 @@
 'use client';
 
+import { Tooltip } from '@/components/Tooltip';
 import MoreToggle from '@/components/MoreToggle';
 import { SlidersHorizontal } from '@app-foundation/icons/lucide';
 import CollapsibleSection from './CollapsibleSection';
@@ -453,17 +454,15 @@ export default function SimAppearancePanel({
             ['checkerDark', t('深色棋盘', 'Dark grid')],
             ['checkerLight', t('浅色棋盘', 'Light grid')],
           ] as [SimBoardBg, string][]).map(([value, label]) => (
-            <button
-              key={value}
+            <Tooltip key={value} content={label}>{tip => <button {...tip}
               type="button"
               className={'sim-swatch' + (settings.boardBg === value ? ' active' : '')}
-              title={label}
               aria-label={label}
               aria-pressed={settings.boardBg === value}
               onClick={() => { set('boardBg', value); close(); }}
             >
               <span className={`sim-swatch-box sim-bg-box--${value}`} />
-            </button>
+            </button>}</Tooltip>
           ))
         }
       </SwatchPopup>

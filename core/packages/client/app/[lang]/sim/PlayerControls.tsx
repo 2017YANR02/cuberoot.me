@@ -1,4 +1,5 @@
 'use client';
+import { Tooltip } from '@/components/Tooltip';
 import { RIGHT_PINCH_MOVES } from './engine/hands/rightCornerPinch';
 import { trackFeatureUse } from '@/lib/analytics-signal';
 
@@ -2796,6 +2797,7 @@ export default function PlayerControls({
       ]}
       disabled={corner?.endAnchor === false}
       ariaLabel={t('锚定起点或终点', 'Anchor: keep the scramble start or the solve end fixed')}
+      triggerTooltip={t('选择将公式的起点或终点固定为指定状态', 'Keep the start or end of the algorithm at the specified state')}
       triggerClassName="sim-anchor-trigger"
       popupClassName="sim-anchor-menu"
       showArrow
@@ -2866,13 +2868,13 @@ export default function PlayerControls({
     const viewTools = (
       <div className="sim-view-tools" role="toolbar" aria-label={t('画布工具', 'Canvas tools')}>
         {backViewButton}
-        {!resolveCaps(puzzleKind, renderer).flat && <button type="button" className="playback-bar-btn" onClick={onResetView ?? (() => {
+        {!resolveCaps(puzzleKind, renderer).flat && <Tooltip content={t('恢复默认视角和缩放', 'Restore the default view and zoom')}>{tip => <button {...tip} type="button" className="playback-bar-btn" onClick={onResetView ?? (() => {
           const { scale, viewAngle, viewGradient } = DEFAULT_SETTINGS;
           const next = { ...settings, scale, viewAngle, viewGradient };
           onSettingsChange(next);
           getNativePgSoftwareView(twistyPlayerRef?.current)?.resetView?.();
           if (world) resetWorldView(world, next);
-        })}>{t('重置视角', 'Reset view')}</button>}
+        })}>{t('重置视角', 'Reset view')}</button>}</Tooltip>}
         {canvasTools}
       </div>
     );
@@ -2899,6 +2901,7 @@ export default function PlayerControls({
             label={t('播放设置', 'Playback settings')}
             className="sim-playback-settings"
             panelClassName="sim-playback-settings-panel"
+            align="end"
             triggerRef={playbackSettingsButtonRef}
             triggerSuffix={fullscreenButton}
             iconSize={14}
@@ -2908,7 +2911,7 @@ export default function PlayerControls({
             {!lessonTransport && viewTools}
             {!lessonTransport && <div className="sim-playback-options">
               {anchorSelect}
-              <Toggle label={t('动画', 'Animation')} value={settings.animatePlayback !== false} onChange={animatePlayback => onSettingsChange({ ...settings, animatePlayback })} />
+              <Toggle tooltip={t('切换逐步转动动画', 'Toggle animated turns during playback')} label={t('动画', 'Animation')} value={settings.animatePlayback !== false} onChange={animatePlayback => onSettingsChange({ ...settings, animatePlayback })} />
             </div>}
           </SettingsPopover>}
           labels={{

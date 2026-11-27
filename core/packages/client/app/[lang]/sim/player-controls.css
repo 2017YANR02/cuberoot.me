@@ -1495,6 +1495,14 @@
   align-items: flex-start;
   gap: 8px;
 }
+/* Expand swatches in the settings panel's own flow so its scrollport includes every option. */
+.sim-playback-settings-panel :is(.sim-bg-overlay, .sim-stage-color-select) .sim-color-select-panel {
+  position: static;
+  inset: auto;
+  width: fit-content;
+  flex-flow: row wrap;
+  margin-block-start: 4px;
+}
 .sim-view-tools > select {
   font: inherit;
   color: var(--foreground);
@@ -1511,6 +1519,7 @@
 .sim-playback-speed > .sim-slider { width: 100%; min-width: 0; }
 .sim-stage-controls .playback-bar-controls > .sim-playback-settings {
   justify-self: end;
+  align-items: center;
   gap: 4px;
 }
 .sim-stage-controls .playback-bar--balanced .playback-bar-controls {

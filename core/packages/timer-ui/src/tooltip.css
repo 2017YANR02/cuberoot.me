@@ -14,3 +14,5 @@
   overflow-wrap: anywhere;
   pointer-events: auto;
 }
+
+.site-tooltip[popover] { inset: auto; margin: 0; }

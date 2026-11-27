@@ -1,3 +1,4 @@
+import { Tooltip } from '@/components/Tooltip';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { Pipette } from '@app-foundation/icons/lucide';
 import { usePanelClamp } from '@/hooks/usePanelClamp';
@@ -25,16 +26,15 @@ export function SwatchPopup({
   }, [open]);
   return (
     <div className={`sim-color-select${className ? ` ${className}` : ''}`} ref={ref}>
-      <button
+      <Tooltip content={title} disabled={open}>{tip => <button {...tip}
         type="button"
         className="sim-color-select-trigger"
-        title={title}
         aria-label={title}
         aria-expanded={open}
         onClick={() => setOpen((value) => !value)}
       >
         {trigger}
-      </button>
+      </button>}</Tooltip>
       {open && <div ref={panelRef} className="sim-color-select-panel">{children(() => setOpen(false))}</div>}
     </div>
   );
