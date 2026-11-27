@@ -18,7 +18,7 @@ description: "Use for CubeRoot installed-client work across Android, iOS, Harmon
   `docs/product/apps/mobile-timer-source-adversarial-audit.md`。这些文件仍标记 `NOT COMPLETE` 时，
   不得根据局部截图、一个项目或一条 happy path 声称“完全一致”。
 - 修改底部导航、工具页或账号页：必须读取 `docs/product/apps/mobile-three-tab-contract.md`；
-  三栏固定为“计时 / 工具 / 我的”。「工具」和「我的」首页以及第一方登录由共享 App 提供。工具目录和匹配逻辑复用网站的共享实现，工具子页、全站搜索与账号管理子页沿用网站路由。原生壳负责导航、安全区和系统能力。
+  三栏固定为“计时 / 工具 / 我的”。「我的」首页和第一方登录由共享 App 提供，账号管理子页与工具沿用网站路由。原生壳负责导航、安全区和系统能力。
 - 账号、上架或进度：再读 `docs/product/apps/mobile-app-roadmap.md` 与 `docs/compliance/mobile-store-submission.md`。
 - 修改共享契约：再读 `core/packages/shared` 中相关入口与消费者。
 - iOS 首次接入、签名或 TestFlight：读 [references/ios-release.md](references/ios-release.md)。

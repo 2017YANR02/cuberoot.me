@@ -12,7 +12,6 @@ import {
 } from '@app-foundation/icons/lucide';
 import {
   SITE_DIRECTORY_GROUPS,
-  SITE_DIRECTORY_SEARCH_CARDS,
   SITE_DIRECTORY_TEXTS,
   type SiteDirectoryEntry,
 } from '@cuberoot/shared/site-directory';
@@ -247,7 +246,17 @@ const CATALOG_SEARCH_CARDS: LandingSearchCard[] = [
     keywords: puzzle.value,
   })),
   // WCA and footer entries also belong in search, even without a grid card.
-  ...SITE_DIRECTORY_SEARCH_CARDS,
+  ...SITE_DIRECTORY_GROUPS.flatMap(group => group.entries.map(entry => ({
+    id: entry.id,
+    href: entry.href,
+    internal: entry.internal,
+    adminOnly: 'adminOnly' in entry && entry.adminOnly === true,
+    lockedForNonAdmin: 'lockedForNonAdmin' in entry && entry.lockedForNonAdmin === true,
+    nameEn: TEXTS[entry.nameKey].en,
+    nameZh: TEXTS[entry.nameKey].zh,
+    sectionTitleEn: group.eyebrow.en,
+    sectionTitleZh: group.eyebrow.zh,
+  }))),
   ...TOC.map(section => ({
     id: `group:${section.id}`,
     href: `/math/group/${section.id}`,

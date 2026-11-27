@@ -27,7 +27,7 @@
 ## 2. 唯一允许的代码分层
 
 ```text
-网站 canonical 内容、账号管理子页、工具与全站搜索子路由
+网站 canonical 内容、账号管理子页、工具子路由
                   core/packages/client
                             │
 共享 React 产品层 ──────────┼────────── 计时器共享 UI（目标唯一实现）
@@ -51,7 +51,7 @@
 - `core/apps/mobile`、`core/apps/harmony`、`core/apps/desktop` 只能是宿主，不得互相 import 源码、CSS、生成物或私有配置。
 - 平台差异保持小而明确，例如 BLE、安全存储、认证、文件、分享、打印、保亮和生命周期 adapter。现有单宿主接口留在所属 app；只有第二个真实消费者出现时，才在同一变更中逐项提取运行时中性 capability contract 到共享层；系统调用始终留在宿主。
 - 网站的 Next 路由、SEO、Server Component 和服务端代理仍留在 `core/packages/client`；不得为了五端复用把这些依赖拖进 App UI。
-- 工具与账号管理子页复用网站 canonical 页面。五端「工具」和「我的」首页由 App 产品层提供，网站和 App 通过 `@cuberoot/app-ui/account-forms` 共用第一方表单。窗口、外链、文件、OAuth、权限与安全区仍由宿主适配。
+- 工具与账号管理子页复用网站 canonical 页面。五端「我的」首页由 App 产品层提供，网站和 App 通过 `@cuberoot/app-ui/account-forms` 共用第一方表单。窗口、外链、文件、OAuth、权限与安全区仍由宿主适配。
 - 好友聊天复用 canonical `/friends?view=chats` surface；`@cuberoot/shared/chat` 提供运行时中性的契约、传输和账号级状态机，`@cuberoot/app-ui/chat` 提供独立 React 面板，网站只适配鉴权、导航和身份展示。该子入口不得加载 App/计时器根入口，五端不得建立私有聊天副本。实施与验收边界见 [friend-chat-design.md](../collaboration/friend-chat-design.md)。
 
 ## 3. 五端产品一致性
@@ -59,7 +59,7 @@
 五端共享“计时 / 工具 / 我的”三个产品 surface、相同账号、相同数据、相同功能和相同可达状态。窗口尺寸、鼠标/键盘、触摸、系统返回和安全区可以有响应式表现，但不得因此删除、替换或另写功能。
 
 - 计时：继续以网站 `/timer` 的完整可达行为为事实源，按 [mobile-timer-parity-tracker.md](./mobile-timer-parity-tracker.md) 的零遗漏矩阵实施；目标是五端最终消费同一个完整 `@cuberoot/timer-ui`，当前迁移状态以路线图为准。
-- 工具：五端打包共享 React 首页，复用网站目录、可见性与排序配置和匹配逻辑。全站搜索和工具子页使用网站原有路由。
+- 工具：继续使用网站 `/`、`/zh` 及其全部真实子路由，不建立客户端卡片清单或子页面副本。
 - 我的：随 App 打包首页与登录，复用唯一账号后端；个人资料、账号与安全和会员通过现有网站子页提供。各平台消费同一份登录和会话逻辑。
 - 本地数据与同步：schema、迁移、冲突、outbox、删除和账号合并规则只有一份；不同系统只替换持久化 adapter。
 - 智能魔方：GAN 等协议解析、加解密、补帧、时钟和状态跟踪只有一份；Web Bluetooth、Capacitor BLE、Harmony BLE、Windows BLE 和 macOS Core Bluetooth 都只是 transport。

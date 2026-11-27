@@ -179,35 +179,35 @@ describe('installed App GAN lifecycle integration', () => {
     expect(saved()).toHaveLength(1);
   });
 
-  it('opens Tools locally, loads a detail frame on demand, and rejects foreign or hidden navigation', async () => {
+  it('preloads tools behind the timer, reuses its frame, and rejects foreign or hidden navigation', async () => {
+    expect(container.querySelector('iframe')).toBeNull();
     const onlineHost = { ...host, getNetworkStatus: async () => true };
     await act(async () => root.render(<App host={onlineHost} />));
-    await settle();
-    expect(container.querySelector('iframe')).toBeNull();
+    await act(async () => { await new Promise((done) => setTimeout(done, 300)); });
+    const frame = container.querySelector<HTMLIFrameElement>('iframe')!;
+    expect(frame.src).toBe('https://cuberoot.me/en');
+    expect(frame.closest('section')?.hidden).toBe(true);
     expect(container.querySelector('.primary-nav [aria-current="page"]')?.getAttribute('aria-label')).toBe('Timer');
     const tabs = [...container.querySelectorAll<HTMLButtonElement>('.primary-nav button')];
     expect(tabs.map(tab => tab.getAttribute('aria-label'))).toEqual(['Timer', 'Tools', 'Me']);
     expect(tabs.map(tab => tab.textContent)).toEqual(['', '', '']);
     const select = async (name: string) => {
-      await act(async () => tabs.find(tab => tab.getAttribute('aria-label') === name)!.click());
+      const button = [...container.querySelectorAll<HTMLButtonElement>('.primary-nav button')]
+        .find(item => item.getAttribute('aria-label') === name)!;
+      await act(async () => button.click());
     };
     await select('Tools');
-    expect(container.querySelector('.installed-tools-home')?.hasAttribute('hidden')).toBe(false);
-    expect(container.querySelector('iframe')).toBeNull();
-
-    await act(async () => container.querySelector<HTMLButtonElement>('.installed-tools-site-search')!.click());
-    const frame = container.querySelector<HTMLIFrameElement>('.web-surface--tools iframe')!;
-    expect(new URL(frame.src).pathname).toBe('/en/search');
-    expect(container.querySelector('.installed-tools-home')?.hasAttribute('hidden')).toBe(true);
+    expect(container.querySelector('iframe')).toBe(frame);
     const loading = container.querySelector('.web-surface [role="status"]')!;
     expect(loading.querySelector('.loading-brand-colours')).not.toBeNull();
     expect(loading.querySelector('p')).toBeNull();
-    await act(async () => window.dispatchEvent(new MessageEvent('message', {
-      origin: 'https://cuberoot.me', source: frame.contentWindow,
-      data: { type: 'cuberoot:mobile:navigation', surface: 'tools', href: frame.src, depth: 0 },
-    })));
+    await act(async () => {
+      window.dispatchEvent(new MessageEvent('message', {
+        origin: 'https://cuberoot.me', source: frame.contentWindow,
+        data: { type: 'cuberoot:mobile:navigation', surface: 'tools', href: frame.src, depth: 0 },
+      }));
+    });
     expect(container.querySelector('.web-surface-state')).toBeNull();
-
     const message = { type: 'cuberoot:mobile:select-tab', surface: 'tools', tab: 'timer' };
     const send = async (origin: string, source: MessageEventSource | null) => {
       await act(async () => window.dispatchEvent(new MessageEvent('message', { origin, source, data: message })));
@@ -219,7 +219,7 @@ describe('installed App GAN lifecycle integration', () => {
     await send('https://cuberoot.me', frame.contentWindow);
     expect(frame.closest<HTMLElement>('.web-surface')?.hidden).toBe(true);
     expect(container.querySelector('.primary-nav [aria-current="page"]')?.getAttribute('aria-label')).toBe('Timer');
-    expect(container.querySelector('iframe')).toBe(frame);
+    expect(container.querySelectorAll('iframe')).toHaveLength(1);
     await select('Me');
     await send('https://cuberoot.me', frame.contentWindow);
     expect(container.querySelector('.primary-nav [aria-current="page"]')?.getAttribute('aria-label')).toBe('Me');

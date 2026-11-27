@@ -1,5 +1,3 @@
-import type { SiteSearchCard } from './site_directory_search';
-
 export type SiteDirectoryPlacement = 'primary' | 'wca' | 'section' | 'footer';
 export type SiteDirectoryTier = 'medium' | 'standard' | 'utility';
 
@@ -279,20 +277,3 @@ export type SiteDirectoryEntryId = SiteDirectoryEntry['id'];
 export function listSiteDirectoryEntries(): SiteDirectoryEntry[] {
   return SITE_DIRECTORY_GROUPS.flatMap((group) => [...group.entries]);
 }
-
-export const SITE_DIRECTORY_SEARCH_CARDS: readonly SiteSearchCard[] = SITE_DIRECTORY_GROUPS.flatMap(group =>
-  group.entries.map(entry => ({
-    id: entry.id,
-    href: entry.href,
-    internal: entry.internal,
-    adminOnly: 'adminOnly' in entry && entry.adminOnly === true,
-    lockedForNonAdmin: 'lockedForNonAdmin' in entry && entry.lockedForNonAdmin === true,
-    nameEn: SITE_DIRECTORY_TEXTS[entry.nameKey].en,
-    nameZh: SITE_DIRECTORY_TEXTS[entry.nameKey].zh,
-    sectionTitleEn: group.eyebrow.en,
-    sectionTitleZh: group.eyebrow.zh,
-  })),
-);
-
-export { applyCardOrder, applyHomeSectionOrder, parseHomeLocks, parseHomeOrders, type HomeLayoutSnapshot } from './home_directory_layout';
-export { allSiteSearchTokensIn, searchSiteCards, tokenizeSiteSearch, type SiteSearchCard } from './site_directory_search';

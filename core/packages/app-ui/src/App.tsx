@@ -92,8 +92,6 @@ import {
 import { MOBILE_AUTH_PROVIDERS } from '@cuberoot/shared/auth/web-session';
 import { openInstalledAccountManagement } from './auth/account-management';
 import { AccountBack, AccountHome, type AccountPage } from './auth/AccountHome';
-import { isAdminWcaId } from '@cuberoot/shared/admin';
-import { ToolsHome } from './tools/ToolsHome';
 import { decodeWebMembershipRequest } from '@cuberoot/shared/mobile-embed';
 import { toLocalIsoDate } from '@cuberoot/shared/iso-date';
 import { formatScrambleForEvent } from '@cuberoot/shared/sq1-notation';
@@ -279,7 +277,6 @@ import {
   useAutoReady,
 } from '@cuberoot/timer-ui';
 import {
-  ChevronLeft,
   Clock3,
   Grid2X2,
   Settings as SettingsIcon,
@@ -388,6 +385,7 @@ function isEmbeddedTopBarRoute(surface: MobileEmbedSurface, pathname: string) {
 const MOBILE_EMBED_INIT_RETRY_MS = 400;
 const MOBILE_EMBED_INIT_RETRIES = 25;
 const MOBILE_EMBED_AUTH_TIMEOUT_MS = 10_000;
+const TOOLS_PRELOAD_DELAY_MS = 250;
 const repository = new TimerRepository(new IndexedDbTimerStoreDriver());
 const netRecordingOutbox = new NetRecordingOutbox(({ context, solve }) => repository.saveNetSolve(context.sessionId, solve), createNetOutboxStorage());
 
@@ -536,10 +534,6 @@ export function App({ host, loadingMark }: { host: InstalledAppHost; loadingMark
   }, []);
   const [openedWebViews, setOpenedWebViews] = useState({ tools: false, account: false });
   const [toolsEntryRoute, setToolsEntryRoute] = useState<string | null>(null);
-  const toolsEntryRouteRef = useRef<string | null>(null);
-  const [toolsHomeOpened, setToolsHomeOpened] = useState(false);
-  const [toolsHomeRefresh, setToolsHomeRefresh] = useState(0);
-  const toolsSearchInput = useRef<HTMLInputElement>(null);
   const [webSurfaceStatus, setWebSurfaceStatus] = useState<Record<MobileEmbedSurface, WebSurfaceStatus>>({
     account: 'loading',
     tools: 'loading',
@@ -557,6 +551,7 @@ export function App({ host, loadingMark }: { host: InstalledAppHost; loadingMark
   const [primaryNavBottomInset, setPrimaryNavBottomInset] = useState(0);
   const primaryNavRef = useRef<HTMLElement>(null);
   const toolsSearchRef = useRef<HTMLButtonElement>(null);
+  const [toolsSearchReady, setToolsSearchReady] = useState(false);
   const [toolsSearchOpen, setToolsSearchOpen] = useState(false);
   const [dockedKeyboardTop, setDockedKeyboardTop] = useState<number | null>(null);
   const [searchViewportTop, setSearchViewportTop] = useState(0);
@@ -1998,6 +1993,15 @@ export function App({ host, loadingMark }: { host: InstalledAppHost; loadingMark
   }, [accountWebUrl, clearAccountSyncTimeout, clearWebSurfaceHandshake, toolsWebUrl]);
 
   useEffect(() => {
+    if (!storeLoaded || connection !== 'online' || openedWebViews.tools) return;
+    // Give the local timer its first paint before starting the online homepage.
+    const timeout = window.setTimeout(() => {
+      setOpenedWebViews((current) => current.tools ? current : { ...current, tools: true });
+    }, TOOLS_PRELOAD_DELAY_MS);
+    return () => window.clearTimeout(timeout);
+  }, [storeLoaded, connection, openedWebViews.tools]);
+
+  useEffect(() => {
     for (const surface of MOBILE_EMBED_SURFACES) {
       if (connection === 'online'
         && openedWebViews[surface]
@@ -2144,7 +2148,13 @@ export function App({ host, loadingMark }: { host: InstalledAppHost; loadingMark
       announce(copy.finishAttemptFirst);
       return false;
     }
-    if (next === 'tools') setToolsHomeOpened(true);
+    if (next === 'tools') {
+      setOpenedWebViews((current) => {
+        if (current[next]) return current;
+        webDepthRef.current[next] = 0;
+        return { ...current, [next]: true };
+      });
+    }
     if (next === 'account' && viewRef.current === 'account') navigateAccount('home');
     setView(next);
     return true;
@@ -2173,43 +2183,10 @@ export function App({ host, loadingMark }: { host: InstalledAppHost; loadingMark
     return () => window.removeEventListener('keydown', onKeyDown);
   }, [view, closeAppAppearance]);
 
-  const closeToolsPage = useCallback(() => {
-    toolsEntryRouteRef.current = null;
-    webDepthRef.current.tools = 0;
-    clearWebSurfaceHandshake('tools');
-    webBridgeReadyRef.current.tools = false;
-    webSurfaceLoadedRef.current.tools = false;
-    desktopToolsHistory.current = [];
-    setToolsEntryRoute(null);
-    setOpenedWebViews(current => current.tools ? { ...current, tools: false } : current);
-    setWebSurfaceReloadUrl(current => ({ ...current, tools: null }));
-    setWebSurfaceStatus(current => ({ ...current, tools: 'loading' }));
-  }, [clearWebSurfaceHandshake]);
-
-  const backFromToolsPage = useCallback(() => {
-    if (webBridgeReadyRef.current.tools && webDepthRef.current.tools > 0) {
-      webFrameRefs.current.tools?.contentWindow?.postMessage(mobileEmbedBackMessage('tools'), SITE_ORIGIN);
-      return;
-    }
-    const history = desktopToolsHistory.current;
-    if (history.length > 1) {
-      history.pop();
-      setWebSurfaceReloadUrl(current => ({ ...current, tools: history[history.length - 1]! }));
-      setWebSurfaceRevision(current => ({ ...current, tools: current.tools + 1 }));
-      return;
-    }
-    closeToolsPage();
-  }, [closeToolsPage]);
-
-  const canOpenTool = useCallback((href: string) => {
-    const url = new URL(href, SITE_ORIGIN);
-    return !installedContentUnavailable(url.href, host.generativeAiDisabled)
-      && (communityAvailable || !isInstalledCommunityHref(url.href));
-  }, [communityAvailable, host.generativeAiDisabled]);
-
   const openToolsRoute = useCallback((route: string) => {
     const destination = new URL(route, SITE_ORIGIN);
-    if (destination.origin !== SITE_ORIGIN || !canOpenTool(destination.href)) {
+    if (destination.origin !== SITE_ORIGIN || installedContentUnavailable(destination.href, host.generativeAiDisabled)
+      || (!communityAvailableRef.current && isInstalledCommunityHref(destination.href))) {
       announce(copy.actionFailed);
       return;
     }
@@ -2221,31 +2198,14 @@ export function App({ host, loadingMark }: { host: InstalledAppHost; loadingMark
     if (!selectPrimaryView('tools')) return;
     const path = destination.pathname.replace(/^\/(en|zh)(?=\/|$)/, '') || '/';
     const entry = path + destination.search + destination.hash;
-    if (entry === '/') {
-      closeToolsPage();
-      return;
-    }
     const href = installedWebEntryUrl(siteRouteUrl(language, entry), language);
-    if (toolsEntryRouteRef.current !== entry) {
-      webDepthRef.current.tools = 0;
-      setWebSurfaceReloadUrl(current => ({ ...current, tools: null }));
-    }
-    toolsEntryRouteRef.current = entry;
     setToolsEntryRoute(entry);
-    setOpenedWebViews(current => current.tools ? current : { ...current, tools: true });
     if (href === toolsWebUrl && webLastHrefRef.current.tools !== href) {
       webDepthRef.current.tools = 0;
       setWebSurfaceReloadUrl(current => ({ ...current, tools: null }));
       setWebSurfaceRevision(current => ({ ...current, tools: current.tools + 1 }));
     }
-  }, [announce, canOpenTool, closeToolsPage, copy.actionFailed, language, selectPrimaryView, toolsWebUrl]);
-
-  const openDirectoryEntry = (href: string, internal: boolean) => {
-    if (internal) openToolsRoute(href);
-    else if (canOpenTool(href)) {
-      void host.openExternal(new URL(href, SITE_ORIGIN).href).catch(() => announce(copy.actionFailed));
-    }
-  };
+  }, [announce, copy.actionFailed, host.generativeAiDisabled, language, selectPrimaryView, toolsWebUrl]);
 
   const remoteReturnRef = useRef(0);
   useEffect(() => {
@@ -2321,6 +2281,7 @@ export function App({ host, loadingMark }: { host: InstalledAppHost; loadingMark
           const top = event.data.top === true;
           if (frame && event.source === frame) {
             setNativeTopBars(current => current[surface] === top ? current : { ...current, [surface]: top });
+            if (surface === 'tools') setToolsSearchReady(event.data.search === true);
           }
         }
         return;
@@ -2331,9 +2292,7 @@ export function App({ host, loadingMark }: { host: InstalledAppHost; loadingMark
       if (shellAction) {
         const frame = webFrameRefs.current[shellAction.surface];
         if (!frame || event.source !== frame.contentWindow || viewRef.current !== shellAction.surface) return;
-      if (selectTab) {
-        if (selectPrimaryView(selectTab.tab) && selectTab.surface === 'tools' && selectTab.tab === 'tools') closeToolsPage();
-      }
+        if (selectTab) selectPrimaryView(selectTab.tab);
         else openAppAppearance();
         return;
       }
@@ -2425,12 +2384,6 @@ export function App({ host, loadingMark }: { host: InstalledAppHost; loadingMark
       } catch {
         return;
       }
-      if (navigation.surface === 'tools' && !destination.hash
-        && isEmbeddedTopBarRoute('tools', destination.pathname)
-        && [...destination.searchParams.keys()].every(key => key === 'lang')) {
-        closeToolsPage();
-        return;
-      }
       const previousHref = webLastHrefRef.current[navigation.surface];
       webLastHrefRef.current[navigation.surface] = navigation.href;
       if (host.listenDesktopNavigation && navigation.surface === 'tools') {
@@ -2441,6 +2394,10 @@ export function App({ host, loadingMark }: { host: InstalledAppHost; loadingMark
       }
       if (!isEmbeddedTopBarRoute(navigation.surface, destination.pathname)) {
         setNativeTopBars(current => current[navigation.surface] ? { ...current, [navigation.surface]: false } : current);
+        if (navigation.surface === 'tools') {
+          setToolsSearchReady(false);
+          setToolsSearchOpen(false);
+        }
       } else if (floatingNavigation && previousHref !== navigation.href &&
         (!previousHref || !isEmbeddedTopBarRoute(navigation.surface, new URL(previousHref, SITE_ORIGIN).pathname))) {
         postWebSurfaceInit(navigation.surface);
@@ -2463,7 +2420,6 @@ export function App({ host, loadingMark }: { host: InstalledAppHost; loadingMark
     auth.login,
     auth.logout,
     clearAccountSyncTimeout,
-    closeToolsPage,
     copy.actionFailed,
     copy.authError,
     finishWebSurfaceHandshake,
@@ -2574,8 +2530,7 @@ export function App({ host, loadingMark }: { host: InstalledAppHost; loadingMark
         return;
       }
       if (action === 'close-subview') {
-        if (current === 'tools' && toolsEntryRouteRef.current) closeToolsPage();
-        else setView('timer');
+        setView('timer');
         return;
       }
       if (action === 'embedded-back' && (current === 'tools' || current === 'account')) {
@@ -2597,7 +2552,7 @@ export function App({ host, loadingMark }: { host: InstalledAppHost; loadingMark
       active = false;
       void removeListener?.();
     };
-  }, [announce, closeHistorySolveDetail, closeToolsPage, copy.finishAttemptFirst, host, navigateAccount]);
+  }, [announce, closeHistorySolveDetail, copy.finishAttemptFirst, host, navigateAccount]);
 
   useEffect(() => {
     const onFullscreenChange = () => setFullscreen(document.fullscreenElement !== null);
@@ -3191,8 +3146,8 @@ export function App({ host, loadingMark }: { host: InstalledAppHost; loadingMark
   }, [announce, copy, smartCube, external.timer, external.stackmat]);
 
   useEffect(() => {
-    if (view !== 'tools' || !toolsEntryRoute) void revokeToolsBle();
-  }, [view, toolsEntryRoute, revokeToolsBle]);
+    if (view !== 'tools') void revokeToolsBle();
+  }, [view, revokeToolsBle]);
 
   const prepareToolsBleRef = useRef(async () => {});
   prepareToolsBleRef.current = async () => {
@@ -4303,8 +4258,8 @@ export function App({ host, loadingMark }: { host: InstalledAppHost; loadingMark
   const hideRunningChrome = timerMode === 1 && store && timerHidesRunningUi(timer.machine.phase, store.settings);
   const canShowNavigation = Boolean(store && !fullscreen && !hideRunningChrome && (!floatingNavigation
     || (view !== 'settings' && !timerOverlayBlocking && !manualEntryOpen && !toolsBlePicker)));
-  const toolsHomeVisible = view === 'tools' && toolsEntryRoute === null;
-  const canShowToolsSearch = floatingNavigation && canShowNavigation && toolsHomeVisible;
+  const canShowToolsSearch = Boolean(floatingNavigation && (toolsSearchReady || webChrome.tools) && canShowNavigation && view === 'tools'
+    && connection === 'online' && webSurfaceStatus.tools === 'ready');
   const toolsSearchExpanded = canShowToolsSearch && toolsSearchOpen;
   const searchKeyboardVisible = toolsSearchExpanded && dockedKeyboardTop !== null;
   const navVisible = canShowNavigation && !searchKeyboardVisible;
@@ -4315,7 +4270,7 @@ export function App({ host, loadingMark }: { host: InstalledAppHost; loadingMark
       return;
     }
     const viewport = window.visualViewport;
-    // WebKit can pan its visible viewport to reveal the focused search field.
+    // WebKit can pan its visible viewport to reveal the focused iframe field.
     let contracted = false;
     const update = () => {
       setSearchViewportTop(Math.max(0, viewport?.pageTop ?? window.scrollY));
@@ -4376,15 +4331,28 @@ export function App({ host, loadingMark }: { host: InstalledAppHost; loadingMark
       }
       if (view !== 'tools') return;
       if (command === 'refresh') {
-        if (toolsHomeVisible) setToolsHomeRefresh(current => current + 1);
-        else if (webSurfaceStatus.tools === 'ready') {
+        if (webSurfaceStatus.tools === 'ready') {
           webFrameRefs.current.tools?.contentWindow?.postMessage({ type: 'cuberoot:desktop:reload-tool' }, SITE_ORIGIN);
         } else retryWebSurface('tools');
-      } else if (command === 'back' && !toolsHomeVisible) {
-        backFromToolsPage();
-      } else if (command === 'search' && toolsHomeVisible) {
+      } else if (command === 'back') {
+        if (webDepthRef.current.tools > 0) {
+          webFrameRefs.current.tools?.contentWindow?.postMessage(mobileEmbedBackMessage('tools'), SITE_ORIGIN);
+        } else if (desktopToolsHistory.current.length > 1) {
+          const history = desktopToolsHistory.current;
+          history.pop();
+          const previous = history[history.length - 1]!;
+          setWebSurfaceReloadUrl(current => ({ ...current, tools: previous }));
+          setWebSurfaceRevision(current => ({ ...current, tools: current.tools + 1 }));
+        } else if (toolsEntryRoute || !isEmbeddedTopBarRoute('tools', new URL(webLastHrefRef.current.tools || toolsWebUrl, SITE_ORIGIN).pathname)) {
+          setToolsEntryRoute(null);
+          setWebSurfaceReloadUrl(current => ({ ...current, tools: installedWebEntryUrl(siteUrl(language), language) }));
+          setWebSurfaceRevision(current => ({ ...current, tools: current.tools + 1 }));
+        }
+      } else if (command === 'search' && showToolsSearch) {
+        const frame = webFrameRefs.current.tools;
+        frame?.focus();
+        if (toolsSearchExpanded) frame?.contentWindow?.postMessage({ type: 'cuberoot:desktop:focus-search' }, SITE_ORIGIN);
         setToolsSearchOpen(true);
-        requestAnimationFrame(() => toolsSearchInput.current?.focus());
       } else if (command === 'escape' && toolsSearchExpanded) {
         setToolsSearchOpen(false);
         toolsSearchRef.current?.focus();
@@ -4529,7 +4497,7 @@ export function App({ host, loadingMark }: { host: InstalledAppHost; loadingMark
     />
   );
   const contentRect = hostViewport?.content;
-  const frameUsesTopBar = view === 'tools' && !toolsHomeVisible && (webChrome.tools || nativeTopBars.tools);
+  const frameUsesTopBar = view === 'tools' && (webChrome.tools || nativeTopBars.tools);
   const webTop = embeddedTopBar && frameUsesTopBar ? nativeTopBar?.y : undefined;
   const shellTop = webTop ?? contentRect?.y ?? 0;
   const trackSearchViewport = toolsSearchExpanded && (searchKeyboardVisible || searchViewportTop > 0);
@@ -5202,16 +5170,6 @@ children: <>
           </div>
         )}
 
-        {toolsHomeOpened && (
-          <ToolsHome language={language} active={toolsHomeVisible} hidden={!toolsHomeVisible}
-            online={connection === 'online'} checking={connection === 'checking'} refreshKey={toolsHomeRefresh}
-            searchVisible={!floatingNavigation || toolsSearchOpen} searchInput={toolsSearchInput}
-            isAdmin={Boolean(auth.session?.user.isAdmin || isAdminWcaId(auth.session?.user.wcaId))}
-            canOpen={canOpenTool} onOpen={openDirectoryEntry} bottomInset={embeddedBottom}
-            rightInset={sideNavigation && contentRect && hostViewport?.bar
-              ? Math.max(24, contentRect.x + contentRect.width - hostViewport.bar.x + 12) : 24} />
-        )}
-
         {MOBILE_EMBED_SURFACES.map((surface) => {
           if (!openedWebViews[surface]) return null;
           const status = webSurfaceStatus[surface];
@@ -5226,17 +5184,10 @@ children: <>
           return (
             <section
               aria-label={title}
-              className={`web-surface web-surface--${surface}`}
-              hidden={view !== surface || (surface === 'tools' ? toolsHomeVisible : !accountDetails)}
+              className={`web-surface${surface === 'account' ? ' web-surface--account' : ''}`}
+              hidden={view !== surface || (surface === 'account' && !accountDetails)}
               key={surface}
             >
-              {surface === 'tools' && (
-                <header className="installed-tools-detail-header">
-                  <button type="button" className="installed-account-back" aria-label={copy.backToTools} onClick={backFromToolsPage}>
-                    <ChevronLeft size={22} aria-hidden="true" />
-                  </button>
-                </header>
-              )}
               {surface === 'account' && (
                 <header className="installed-account-detail-header">
                   <AccountBack language={language} onBack={() => navigateAccount('home')} />
@@ -5281,6 +5232,8 @@ children: <>
                 onLoad={() => {
                   if (surface === 'tools') {
                     void revokeToolsBle();
+                    setToolsSearchReady(false);
+                    setToolsSearchOpen(false);
                   } else {
                     accountInlineSettingsRef.current = false;
                   }
@@ -5682,7 +5635,10 @@ children: <>
             <div className="settings-section">
               <h2>{copy.fullSite}</h2>
               <p>{copy.fullSiteDetail}</p>
-              <a className="site-link" href={siteUrl(language)} onClick={openExternal}>
+              <a className="site-link" href={siteUrl(language)} onClick={event => {
+                event.preventDefault();
+                openToolsRoute('/');
+              }}>
                 {copy.openFullSite}
               </a>
             </div>
