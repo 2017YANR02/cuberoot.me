@@ -15,7 +15,7 @@ let maps=readFileSync(process.argv[2] || 'ops/nginx/01-traffic-limits.conf','utf
   .replace('include /etc/nginx/cuberoot-comp-verification-state.conf;', 'default 1; scoped 0; expired 0;')
   .replace('map $host $cuberoot_comp_only_until', 'map $http_x_test_mode $cuberoot_comp_only_until')
   .replace('include /etc/nginx/cuberoot-comp-only-until.conf;', 'default 0; scoped 4102444800; expired 1;')
-  .replace('include /etc/nginx/cuberoot-permanent-comp-bans/*.conf;', '198.51.100.8 1;');
+  .replace('include /etc/nginx/cuberoot-permanent-comp-bans.conf;', '198.51.100.8 1;');
 let inc=readFileSync(process.argv[3] || 'ops/nginx/competition-access.inc','utf8').replace('http://127.0.0.1:3001/v1/competition-access/check', `http://127.0.0.1:${authPort}/check`);
 writeFileSync(dir+'/nginx.conf',`daemon off; pid ${dir}/nginx.pid; error_log ${dir}/error.log; events {} http { lua_package_path "/www/server/nginx/lib/lua/?.lua;;"; access_log off; set_real_ip_from 127.0.0.1; real_ip_header X-Test-IP; map $http_x_test_cn $cuberoot_cn_exempt { default 0; 1 1; } ${maps} server { listen 127.0.0.1:${port}; server_name cuberoot.me; if ($cuberoot_lightpanda_denied) { return 403; } ${inc} location / { content_by_lua_block { ngx.say('mock page') } } } }`);
 execFileSync('nginx',['-t','-p',dir+'/','-c',dir+'/nginx.conf']);const child=spawn('nginx',['-p',dir+'/','-c',dir+'/nginx.conf']);

@@ -15,6 +15,8 @@ const limits = readFileSync(process.argv[2] || 'ops/nginx/01-traffic-limits.conf
   .replace('map $host $cuberoot_comp_verification_enabled', 'map $http_x_test_mode $cuberoot_comp_verification_enabled')
   .replace('include /etc/nginx/cuberoot-comp-verification-state.conf;', 'default 1; open 0;')
   .replace('include /etc/nginx/cuberoot-comp-only-until.conf;', 'default 0;')
+  .replace('include /etc/nginx/cuberoot-permanent-comp-bans.conf;', '')
+  .replace('$cuberoot_comp_gate_target', '$request_uri')
   .replace('include /etc/nginx/cuberoot-cn-ranges.conf;', '198.51.100.2 1;');
 const maintenance = readFileSync(process.argv[3] || 'ops/nginx/00-maintenance.conf', 'utf8').split('# Preserve combined-log')[0]
   .replace('include /etc/nginx/cuberoot-maintenance-state.conf;', 'default 1;');
