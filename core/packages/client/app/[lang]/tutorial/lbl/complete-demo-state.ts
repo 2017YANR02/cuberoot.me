@@ -546,9 +546,9 @@ export function buildCompleteDemo(stage: CompleteDemoStage, setup: string): Comp
       const caseIndex = index === 2 ? 2 : left ? 0 : 1;
       phases.push(...wallScanPhases(base, moves.length, caseIndex));
       if (y) {
-        action(y, index === 2 ? t('沿当前朝向起手，先造墙', 'Start from this orientation and create a wall.') : t('把墙直接放到后面', 'Move the wall directly to the back.'), caseIndex, undefined, false);
+        action(y, index === 2 ? t('转体，摆好造墙的起手朝向', 'Rotate the cube into the starting grip for making a wall.') : t('把墙直接放到后面', 'Move the wall directly to the back.'), caseIndex, undefined, false);
         phases[phases.length - 1].moveView = 'home';
-      } else add('', { text: t('把墙直接放到后面', 'Move the wall directly to the back.'), caseIndex }, undefined, 'home');
+      } else add('', { text: t('同色的墙已经在后面', 'The matching row is already at the back.'), caseIndex }, undefined, 'home');
       if (index !== 2) {
         // A separate observation explains the direction only after the wall is actually at the back.
         add('', { text: left ? t('前棱颜色对齐左侧，先右鱼再左鱼', 'The front edge matches the left: right Sune first.') : t('前棱颜色对齐右侧，先左鱼再右鱼', 'The front edge matches the right: left Sune first.'), caseIndex });
@@ -626,19 +626,23 @@ export function buildWalkthroughDemo(scramble: string): CompleteDemo {
     const demo = stage === 'cross' ? buildWalkthroughCrossDemo(setup) : buildCompleteDemo(stage, setup);
     const offset = moves.length;
     const title = LBL_STEPS.find(step => step.id === stage)!.title;
-    const first = demo.phases[0];
-    const edgePreparation = stage === 'edge-position' && first?.act.text === edgeCornerAlignment ? first : undefined;
-    phases.push({ start: offset, end: offset + (edgePreparation?.end ?? 0), stage, holdMs: 2000,
-      act: { text: t(`下面开始${title.zh}`, `Next: ${title.en}`) } });
-    const section = edgePreparation ? demo.phases.slice(1) : demo.phases;
-    phases.push(...section.map(phase => ({ ...phase, stage, start: phase.start + offset, end: phase.end + offset })));
+    phases.push({ start: offset, end: offset, stage, holdMs: 2000,
+      act: { text: demo.alg ? t(`下面开始${title.zh}`, `Next: ${title.en}`) : demo.done } });
+    phases.push(...demo.phases.map(phase => {
+      const act = phase.act.text === edgeCornerAlignment
+        ? { text: t('对齐顶层', 'Align the top layer'),
+          detail: t('转顶层，让四个顶角的侧色与各面的中心对齐，再判断棱的位置。',
+            'Turn the top until the four corner side stickers match their centers, then check the edge positions.') }
+        : phase.act;
+      return { ...phase, act, stage, start: phase.start + offset, end: phase.end + offset };
+    }));
     moves.push(...movesOf(demo.alg));
     setup = join(setup, demo.alg);
     if (!demoGoalReached(stage, setup)) throw new Error(`Walkthrough did not complete ${stage}`);
     if (stage === 'edge-position') break;
     const end = moves.length;
     if (end > 0 && stageMarkers.at(-1) !== end) stageMarkers.push(end);
-    phases.push({ start: end, end, stage, act: { text: demo.done, outlines: walkthroughCompletionStickers(stage, setup) } });
+    if (demo.alg) phases.push({ start: end, end, stage, act: { text: demo.done, outlines: walkthroughCompletionStickers(stage, setup) } });
   }
   return { setup: scramble, alg: moves.join(' '), phases, done: done['edge-position'], stageMarkers: stageMarkers.filter(step => step < moves.length) };
 }

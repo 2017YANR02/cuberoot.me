@@ -585,8 +585,7 @@
   .lbl-lesson-scroll :is(.lbl-demonstration, .lbl-complete .lbl-cube) .alg-sim-player.is-fill { height: auto; flex: none; padding: 0; }
 }
 
-.tutorial-course.lbl-walkthrough-page { grid-template-rows: auto minmax(0, 1fr); }
-.lbl-walkthrough-page .lbl-walkthrough-example { margin-inline-start: auto; }
+.lbl-page.lbl-walkthrough-page { grid-template-rows: auto auto minmax(0, 1fr) auto; }
 .lbl-walkthrough-playback {
   display: grid;
   grid-template-rows: minmax(0, 1fr) auto;

@@ -77,7 +77,8 @@ export default function WalkthroughPane({
           </div>
         </div>
         <button type="button" className="btn-secondary walkthrough-random-case" disabled={loading} aria-busy={loading} onClick={onRandomCase}>
-          <Dice5 size={16} aria-hidden="true" /><T zh="随机换例" en="Random case" />
+          <Dice5 size={16} aria-hidden="true" />
+          {loading ? <T zh="生成中…" en="Generating…" /> : <T zh="随机换例" en="Random case" />}
         </button>
       </div>
       <section className="walkthrough-current-step" {...readingProps} ref={bindReadingPane} aria-labelledby={titleId}>
