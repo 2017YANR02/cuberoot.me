@@ -1,6 +1,6 @@
 /* Shared roles consume one material; host adapters retain their own geometry. */
 [data-site-surface='panel']:not(:where(.af-glass-surface)) { background: var(--card); }
-:is([data-site-surface='popover'], [data-site-surface='heading']):not(:where(.af-glass-surface)) {
+:is([data-site-surface='dialog'], [data-site-surface='popover'], [data-site-surface='heading']):not(:where(.af-glass-surface)) {
   background: var(--popover);
 }
 

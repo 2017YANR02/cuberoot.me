@@ -1,8 +1,8 @@
 import { invertMoveString } from '@cuberoot/shared/alg-notation';
-import { simplifyAlg } from '@cuberoot/shared/recon/cube3';
 import { Face } from '@cuberoot/visualcube';
 import { twoByTwoState } from '../lib/2x2-state';
 import { EG_CASE_ALGS } from './case-algs';
+import type { EgColorName as ColorName } from './orientation';
 
 export const EG_SETS = [
   { id: 'cll', name: 'CLL' },
@@ -12,23 +12,29 @@ export const EG_SETS = [
 
 export type EgSet = typeof EG_SETS[number]['id'];
 
+export const EG_BOTTOM_ROW_LABELS = {
+  cll: { zh: '4 个同色底排', en: '4 matching bottom rows' },
+  eg1: { zh: '1 个同色底排', en: '1 matching bottom row' },
+  eg2: { zh: '0 个同色底排', en: '0 matching bottom rows' },
+} satisfies Record<EgSet, { zh: string; en: string }>;
+
 export const EG_SHAPES = [
-  { id: 'o', name: { zh: 'O · 全黄', en: 'O · All yellow' }, count: 4, example: 'O-adjacent',
-    clue: { zh: '顶面四格全黄。接着看侧面的顶排有几组同色。', en: 'All four top stickers are yellow. Check which upper side rows match.' } },
-  { id: 'sune', name: { zh: 'S+ · 右鱼', en: 'S+ · Sune' }, count: 1, example: 'S+U',
-    clue: { zh: '只有一个黄格朝上。看三片侧面的鱼鳍，它们都在各自侧面的右格。', en: 'One yellow sticker faces up. Each of the three yellow side stickers sits on the right of its face.' } },
-  { id: 'antisune', name: { zh: 'S− · 左鱼', en: 'S− · Anti-Sune' }, count: 1, example: 'S-U',
-    clue: { zh: '只有一个黄格朝上，三个侧面的鱼鳍都在各自侧面的左格。', en: 'One yellow sticker faces up. Each of the three yellow side stickers sits on the left of its face.' } },
+  { id: 'o', name: { zh: 'O', en: 'O' }, count: 4, example: 'O-adjacent',
+    clue: (top: ColorName) => ({ zh: `顶面四格都是${top.zh}色。接着看侧面的顶排有几组同色。`, en: `All four top stickers are ${top.en}. Check which upper side rows match.` }) },
+  { id: 'sune', name: { zh: 'S+', en: 'S+' }, count: 1, example: 'S+U',
+    clue: (top: ColorName) => ({ zh: `只有一个${top.zh}格朝上。看三片侧面的鱼鳍，它们都在各自侧面的右格。`, en: `One ${top.en} sticker faces up. Each of the three ${top.en} side stickers sits on the right of its face.` }) },
+  { id: 'antisune', name: { zh: 'S−', en: 'S−' }, count: 1, example: 'S-U',
+    clue: (top: ColorName) => ({ zh: `只有一个${top.zh}格朝上，三个侧面的鱼鳍都在各自侧面的左格。`, en: `One ${top.en} sticker faces up. Each of the three ${top.en} side stickers sits on the left of its face.` }) },
   { id: 'u', name: { zh: 'U', en: 'U' }, count: 2, example: 'UD',
-    clue: { zh: '顶面两黄相邻，另外两黄在同一个侧面。', en: 'The two top yellows are adjacent, and the other two share one side face.' } },
+    clue: (top: ColorName) => ({ zh: `顶面两个${top.zh}格相邻，另外两个在同一个侧面。`, en: `The two ${top.en} stickers on top are adjacent. The other two share one side face.` }) },
   { id: 't', name: { zh: 'T', en: 'T' }, count: 2, example: 'TL',
-    clue: { zh: '顶面两黄相邻，另外两黄分在相对的侧面。', en: 'The two top yellows are adjacent, and the other two are on opposite side faces.' } },
+    clue: (top: ColorName) => ({ zh: `顶面两个${top.zh}格相邻，另外两个分在相对的侧面。`, en: `The two ${top.en} stickers on top are adjacent. The other two are on opposite side faces.` }) },
   { id: 'l', name: { zh: 'L', en: 'L' }, count: 2, example: 'LR',
-    clue: { zh: '顶面两黄在对角，另外两黄在相邻的侧面。', en: 'The two top yellows are diagonal, and the other two are on neighboring side faces.' } },
+    clue: (top: ColorName) => ({ zh: `顶面两个${top.zh}格在对角，另外两个在相邻的侧面。`, en: `The two ${top.en} stickers on top are diagonal. The other two are on neighboring side faces.` }) },
   { id: 'h', name: { zh: 'H', en: 'H' }, count: 0, example: 'HU',
-    clue: { zh: '顶面没有黄格。侧面有两组并排的黄格。', en: 'No yellow faces up. Two side faces each have a pair of yellow stickers.' } },
+    clue: (top: ColorName) => ({ zh: `顶面没有${top.zh}格。侧面有两组并排的${top.zh}格。`, en: `No ${top.en} faces up. Two side faces each have a pair of ${top.en} stickers.` }) },
   { id: 'pi', name: { zh: 'Pi', en: 'Pi' }, count: 0, example: 'PiU',
-    clue: { zh: '顶面没有黄格。侧面只有一组并排的黄格。', en: 'No yellow faces up. Only one side face has a pair of yellow stickers.' } },
+    clue: (top: ColorName) => ({ zh: `顶面没有${top.zh}格。侧面只有一组并排的${top.zh}格。`, en: `No ${top.en} faces up. Only one side face has a pair of ${top.en} stickers.` }) },
 ] as const;
 
 export type EgShape = typeof EG_SHAPES[number]['id'];
@@ -68,12 +74,12 @@ export function egCaseName(id: string) {
 }
 
 export const EG_BOTTOM = {
-  cll: { zh: '四条棒。底面全白，四个侧面的底排也分别同色。',
-    en: 'Four bars. The four side rows match as well as the white bottom face.' },
-  eg1: { zh: '一条棒。白底已经做好，底层还差一组相邻角交换。本站公式统一把棒放到后面。',
-    en: 'One bar. The white face is complete and two adjacent bottom corners still need to swap. Hold the bar at the back for every EG-1 alg here.' },
-  eg2: { zh: '没有棒。白底已经做好，底层还差一组对角交换。',
-    en: 'No bars. The white face is complete and two diagonal bottom corners still need to swap.' },
+  cll: { zh: '底面已经拼好，四个侧面的底排也都对齐，第一层已经复原。',
+    en: 'The bottom face and all four bottom side rows are solved, completing the first layer.' },
+  eg1: { zh: '底面已经拼好，底层还差两个相邻角互换。做公式时，把唯一的同色棒放在后面。',
+    en: 'The bottom face is complete and two adjacent bottom corners still need to swap. Hold the only bar at the back to start the algorithm.' },
+  eg2: { zh: '底面已经拼好，四个侧面的底排都是对色，底层还差两个对角互换。',
+    en: 'The bottom face is complete. Each bottom side row shows opposite colors, with two diagonal corners left to swap.' },
 } satisfies Record<EgSet, { zh: string; en: string }>;
 
 export function egBottomRows(setup: string) {
@@ -88,35 +94,4 @@ export function egTopKey(setup: string) {
   // A cyclic change of side colors shifts the final U alignment and keeps the same case.
   return [0, 1, 2, 3].map(n => top.replace(/[RGOB]/g, color =>
     sideColors[(sideColors.indexOf(color) + n) % 4])).sort()[0];
-}
-
-export type EgWalkthrough = {
-  entry: EgCase;
-  start: string;
-  face: string;
-  regrip: string;
-  align: string;
-  finish: string;
-};
-
-function buildEgWalkthrough(entry: EgCase, face: string, regrip: string, align: string, finish: string): EgWalkthrough {
-  const start = simplifyAlg(egMoves(invertEg(finish), entry.setup, invertEg(align), invertEg(regrip), invertEg(face)));
-  return { start, face, regrip, align, finish, entry };
-}
-
-export const EG_WALKTHROUGH = buildEgWalkthrough(egCase('eg1', 'S+U'), "R U R'", "y'", 'U', 'U');
-
-const faceOpenings = ["R U R'", "L' U' L", "F2 U' R U R'", "R2 U2 L' U' L", "L U F U' F'", "R U F U' F'"];
-const regrips = ['y', 'y2', "y'"];
-const topTurns = ['U', 'U2', "U'"];
-const finishingTurns = ['', ...topTurns];
-
-export function randomEgWalkthrough(previous: EgCase, randomBelow = (limit: number) => Math.floor(Math.random() * limit)): EgWalkthrough {
-  const cases = EG_CASES.filter(entry => entry.set !== previous.set || entry.id !== previous.id);
-  const entry = cases[randomBelow(cases.length)];
-  const face = faceOpenings[randomBelow(faceOpenings.length)];
-  const regrip = entry.set === 'eg1' ? regrips[randomBelow(regrips.length)] : '';
-  const align = topTurns[randomBelow(topTurns.length)];
-  const finish = finishingTurns[randomBelow(finishingTurns.length)];
-  return buildEgWalkthrough(entry, face, regrip, align, finish);
 }

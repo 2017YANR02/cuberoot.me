@@ -136,7 +136,7 @@ export default function SolveComparison() {
       <MoreToggle as="summary"><T zh="计算口径" en="How the comparison is calculated" /></MoreToggle>
       <p><T zh="模拟在每个阶段取一条最短解，逐角拼层从参考角开始，FL 先做左角对，再同时解决另两角。收尾按是否先翻顶面分成两段或一段。允许多个底色时，每个状态选模拟总步数最少的那条路线。面转 90° 或 180° 都记一步，转体不计，阶段之间不消步。总数与分项独立取到一位小数。结果反映这些阶段目标，不是照抄教程公式或选手的实测成绩。"
         en="The simulation takes one shortest path at each checkpoint. Corner-by-corner starts with a reference corner. FL builds the left pair, then finishes the other two corners together. Finishes either orient the top separately or solve in one stage. With multiple colors, each state uses the shortest of the simulated routes. Quarter and half turns each count as one move. Rotations are free, and moves aren’t canceled between stages. Totals and subtotals are rounded separately. The results model these checkpoints, not tutorial algorithms or timed solves." /></p>
-      <p><T zh="公式量按底层和收尾所教的公式合计。逐角拼层计左右两种手法，层先收尾计左右鱼和一条换角公式。成套公式每个需公式的案例计一条，摆位、对齐和备选公式不计。"
+      <p><T zh="公式量按底层和收尾所教的公式合计。逐角拼层计左右两种手法，层先收尾计左右鱼和一条换角公式。成套公式中，每个需要做公式的 case 计一条，摆位、对齐和备选公式不计。"
         en="Algorithm counts add the opening and finish. Corner by corner uses a left and right trigger. The LBL finish uses two Sunes and one corner permutation. Full sets count one algorithm per case that needs one. Setup moves, alignment, and alternative algorithms are excluded." /></p>
     </details>
   </section>;

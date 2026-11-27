@@ -7,6 +7,7 @@ import { CUBE_FRAMING_EDGE } from '../components/InteractiveTutorial';
 import useTeachingFollow from '../components/useTeachingFollow';
 import { TWO_BY_TWO_ORIENTATION } from '../lib/2x2-state';
 import { BottomDiagram } from './diagrams';
+import { EgOrientationContext } from './orientation';
 
 type Example = (typeof import('./solve-comparison-examples.json'))[number];
 type Selection = {
@@ -51,7 +52,11 @@ function ExamplePlayback({ setup, path, faceOnly }: { setup: string; path: strin
     <div className="eg-comparison-cube" {...playbackProps}>
       {path ? <AlgPlayer puzzle="2x2" set="" engine="sim" orientation={TWO_BY_TWO_ORIENTATION} fillPane
         setup={setup} alg={alg} maxFramingEdge={CUBE_FRAMING_EDGE} stepMarkers={markers} moveDurationMs={480} onStepChange={setStep} />
-        : <div className="eg-comparison-demo-preview"><BottomDiagram setup="" size={112} decorative /></div>}
+        : <div className="eg-comparison-demo-preview">
+          <EgOrientationContext.Provider value={TWO_BY_TWO_ORIENTATION}>
+            <BottomDiagram setup="" size={112} decorative />
+          </EgOrientationContext.Provider>
+        </div>}
     </div>
     <div className="eg-comparison-demo-info" {...paneProps} tabIndex={path ? 0 : undefined}>
       {path && <>

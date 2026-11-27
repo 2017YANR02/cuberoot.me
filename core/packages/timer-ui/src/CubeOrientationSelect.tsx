@@ -40,9 +40,9 @@ export default function CubeOrientationSelect({
   className?: string;
   title?: string;
   ariaLabel?: string;
-  layout?: 'list' | 'grid' | 'bottom-front';
+  layout?: 'list' | 'grid' | 'bottom' | 'bottom-front';
 }) {
-  if (layout === 'bottom-front') {
+  if (layout === 'bottom' || layout === 'bottom-front') {
     const { D: bottom, F: front } = orientedFaceColors(value);
     const colorOption = (face: CubeFace) => ({
       label: <CubeColorChip localize={tr} colors={CUBE_COLOR_LETTER_FOR_FACE[face]} />,
@@ -63,14 +63,14 @@ export default function CubeOrientationSelect({
             if (next) onChange(next.value);
           }} />
       </div>
-      <div>
+      {layout === 'bottom-front' && <div>
         <span>{tr({ zh: '前色', en: 'Front' })}</span>
         <CompactSelect ariaLabel={tr({ zh: '选择前色', en: 'Choose front color' })}
           value={value} label={frontOption.label} valueText={frontOption.tooltip}
           items={ORIENTATIONS.filter(option => option.colors.D === bottom)
             .map(option => ({ value: option.value, ...colorOption(option.colors.F) }))}
           onChange={onChange} />
-      </div>
+      </div>}
     </div>;
   }
   const grid = layout === 'grid';

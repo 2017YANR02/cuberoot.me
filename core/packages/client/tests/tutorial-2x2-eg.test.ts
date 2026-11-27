@@ -1,10 +1,17 @@
 import { describe, expect, it } from 'vitest';
 import { AllFaces, Face } from '@cuberoot/visualcube';
-import { twoByTwoState } from '@/app/[lang]/tutorial/lib/2x2-state';
+import { CUBE_ORIENTATIONS, isWcaPocketScramble, orientationForBottomFace, orientedFaceColors, wcaPocketScramble } from '@cuberoot/shared/timer';
+import { CUBE_COLOR_LETTER_FOR_FACE, type CubeColorLetter } from '@/lib/cube-colors';
+import { TWO_BY_TWO_ORIENTATION, twoByTwoState } from '@/app/[lang]/tutorial/lib/2x2-state';
 import { alternateEgRecognition, compareEgCases, getEgRecognition, recognitionExamples, recognitionKey } from '@/app/[lang]/tutorial/2x2-eg/case-comparison';
 import {
-  EG_CASES, EG_RECOGNITION_CASES, EG_SETS, EG_SHAPES, EG_WALKTHROUGH, egBottomRows, egMoves, egTopKey, randomEgWalkthrough,
+  EG_CASES, EG_RECOGNITION_CASES, EG_SETS, EG_SHAPES, egBottomRows, egMoves, egTopKey,
 } from '@/app/[lang]/tutorial/2x2-eg/lesson-data';
+import { egPalette } from '@/app/[lang]/tutorial/2x2-eg/orientation';
+import {
+  EG_SCRAMBLE_ORIENTATION, EG_WALKTHROUGH, inTeachingColors, loadEgWalkthrough, planEgWalkthrough,
+  randomEgWalkthrough,
+} from '@/app/[lang]/tutorial/2x2-eg/walkthrough-data';
 
 const topTurns = ['', 'U', 'U2', "U'"];
 const bodyTurns = ['', 'y', 'y2', "y'"];
@@ -18,6 +25,17 @@ const yellowMask = (setup: string) => AllFaces.flatMap(face =>
   twoByTwoState(setup)[face].map(color => color === 'Y'));
 
 describe('2×2 EG course cases', () => {
+  it('keeps the physical scramble colors fixed for every teaching grip', () => {
+    expect(orientedFaceColors(EG_SCRAMBLE_ORIENTATION)).toMatchObject({ U: 'U', F: 'F' });
+    const standard = twoByTwoState(inTeachingColors(EG_WALKTHROUGH.start, TWO_BY_TWO_ORIENTATION));
+    for (const { value, label } of CUBE_ORIENTATIONS) {
+      const { sticker } = egPalette(value);
+      const normalized = twoByTwoState(inTeachingColors(EG_WALKTHROUGH.start, value));
+      expect(AllFaces.map(face => normalized[face].map(color => sticker(color as CubeColorLetter))), label)
+        .toEqual(AllFaces.map(face => standard[face]));
+    }
+  });
+
   it('uses one rule per shape across all three sets and all matching U turns', () => {
     for (const { id: shape } of EG_SHAPES) {
       const method = getEgRecognition(shape);
@@ -136,54 +154,49 @@ describe('2×2 EG course cases', () => {
     }
   });
 
-  it('constructs new teaching cases with accurate opening, grip and finish checkpoints', () => {
-    const previous = EG_WALKTHROUGH.entry;
-    const pool = EG_CASES.filter(entry => entry !== previous);
-    const openingCounts = new Set<number>();
-    const hasFinish = new Set<boolean>();
-    for (const [index, candidate] of pool.entries()) {
-      let draw = 0;
-      const { start, face, regrip, align, finish, entry } = randomEgWalkthrough(previous,
-        limit => draw++ === 0 ? index : (index + draw) % limit);
-      expect(entry).toBe(candidate);
-      const whiteDown = (alg: string) => twoByTwoState(alg)[Face.D].filter(color => color === 'W').length;
-      openingCounts.add(whiteDown(start));
-      const opening = face.split(' ');
-      for (let prefix = 0; prefix < opening.length; prefix++) {
-        expect(whiteDown(egMoves(start, ...opening.slice(0, prefix)))).toBeLessThan(4);
-      }
-      const firstFace = egMoves(start, face);
-      expect(whiteDown(firstFace)).toBe(4);
-      expect(egBottomRows(firstFace).filter(isBar)).toHaveLength({ cll: 4, eg1: 1, eg2: 0 }[entry.set]);
-      const held = egMoves(firstFace, regrip, align);
-      if (entry.set === 'eg1') {
-        expect(regrip).not.toBe('');
-        expect(isBar(egBottomRows(firstFace)[2])).toBe(false);
-        expect(isBar(egBottomRows(held)[2])).toBe(true);
-      } else {
-        expect(regrip).toBe('');
-      }
-      expect(egTopKey(held)).toBe(egTopKey(entry.setup));
-      const afterAlg = egMoves(held, entry.alg);
-      hasFinish.add(Boolean(finish));
-      expect(solved(afterAlg)).toBe(!finish);
-      expect(solved(egMoves(afterAlg, finish))).toBe(true);
-    }
-    expect(openingCounts).toEqual(new Set([1, 2, 3]));
-    expect(hasFinish).toEqual(new Set([true, false]));
-  });
+  it('solves regular WCA scrambles forward from the white-up green-front grip', async () => {
+    let state = 0x2e6128;
+    const rng = () => (state = (Math.imul(1664525, state) + 1013904223) >>> 0) / 2 ** 32;
+    const grip = twoByTwoState(inTeachingColors('', TWO_BY_TWO_ORIENTATION));
+    expect(grip[Face.U].join('')).toBe('WWWW');
+    expect(grip[Face.F].join('')).toBe('GGGG');
+    expect(EG_WALKTHROUGH.start).toBe(wcaPocketScramble(rng));
 
-  it('walks from a missing white corner through a right bar, a back bar and the final U', () => {
-    const { start, face, regrip, align, entry, finish } = EG_WALKTHROUGH;
-    expect(twoByTwoState(start)[Face.D].filter(color => color === 'W')).toHaveLength(3);
-    const firstFace = egMoves(start, face);
-    expect(twoByTwoState(firstFace)[Face.D].join('')).toBe('WWWW');
-    expect(egBottomRows(firstFace).map(isBar)).toEqual([false, true, false, false]);
-    const held = egMoves(firstFace, regrip, align);
-    expect(egBottomRows(held).map(isBar)).toEqual([false, false, true, false]);
-    expect(egTopKey(held)).toBe(egTopKey(entry.setup));
-    const beforeAuf = egMoves(held, entry.alg);
-    expect(solved(beforeAuf)).toBe(false);
-    expect(solved(egMoves(beforeAuf, finish))).toBe(true);
+    function check(scramble: typeof EG_WALKTHROUGH, orientation: string) {
+      const route = planEgWalkthrough(scramble, orientation);
+      if (!route) throw new Error(`No walkthrough for ${scramble.start} at ${orientation}`);
+      const { start, face, hold, regrip, align, entry, finish } = route;
+      expect(start).toBe(scramble.start);
+      const firstFace = inTeachingColors(egMoves(start, face), orientation);
+      const firstState = twoByTwoState(firstFace);
+      expect(AllFaces.some(side => firstState[side].every(sticker => sticker === 'W'))).toBe(true);
+      const bottom = egMoves(firstFace, hold);
+      expect(twoByTwoState(bottom)[Face.D].join('')).toBe('WWWW');
+      const physicalBottom = twoByTwoState(inTeachingColors(egMoves(start, face, hold), TWO_BY_TWO_ORIENTATION));
+      expect(physicalBottom[Face.D].join('')).toBe(CUBE_COLOR_LETTER_FOR_FACE[orientedFaceColors(orientation).D].repeat(4));
+      expect(egBottomRows(bottom).filter(isBar)).toHaveLength({ cll: 4, eg1: 1, eg2: 0 }[entry.set]);
+      const held = egMoves(bottom, regrip, align);
+      if (entry.set === 'eg1') expect(isBar(egBottomRows(held)[2])).toBe(true);
+      else expect(regrip).toBe('');
+      expect(egTopKey(held)).toBe(egTopKey(entry.setup));
+      expect(solved(egMoves(held, entry.alg, finish))).toBe(true);
+      return entry.set;
+    }
+
+    expect(isWcaPocketScramble(EG_WALKTHROUGH.start)).toBe(true);
+    const seen = new Set([check(EG_WALKTHROUGH, TWO_BY_TWO_ORIENTATION)]);
+    const initial = await loadEgWalkthrough(EG_WALKTHROUGH.start);
+    for (const { value } of CUBE_ORIENTATIONS) seen.add(check(initial, value));
+
+    const colorGrips = (['U', 'R', 'F', 'D', 'L', 'B'] as const).map(orientationForBottomFace);
+    let example = EG_WALKTHROUGH;
+    for (let i = 0; i < 16; i++) {
+      const next = await randomEgWalkthrough(example.start, rng);
+      expect(next.start).not.toBe(example.start);
+      expect(isWcaPocketScramble(next.start)).toBe(true);
+      for (const grip of colorGrips) seen.add(check(next, grip));
+      example = next;
+    }
+    expect(seen).toEqual(new Set(EG_SETS.map(set => set.id)));
   });
 });
