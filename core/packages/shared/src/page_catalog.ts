@@ -852,6 +852,13 @@ export const PAGE_META: Record<string, PageMetaEntry> = {
     title: { zh: '魔方空间', en: 'Cube Space' },
     description: { zh: '在开放的三维空间中摆放、移动和旋转魔方，自由切换视角并保存布局。', en: 'Arrange, move and rotate puzzles in an open 3D space. Explore every angle and save your layout.' },
   },
+  'sim/finger-annotations': {
+    title: { zh: '进阶指法注解', en: 'Advanced Finger Annotations' },
+    description: {
+      zh: '从一个右层转动读懂指法注解，对照贴纸位置图，学习手指编号、接触路径、接力时机和技法后缀。',
+      en: 'Read a right-turn annotation, locate its stickers on a cube net, and learn finger numbers, contact paths, relay timing and technique suffixes.',
+    },
+  },
   'sim/grips': {
     title: { zh: '握姿与手法', en: 'Grip & Turn Atlas' },
     description: { zh: '逐项回放二阶至四阶在不同双手握姿下的转动，观察换握、发力手指和双指接力。', en: 'Replay 2×2, 3×3 and 4×4 turns from each pair of starting grips and inspect regrips, driving fingers and relays.' },
