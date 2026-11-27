@@ -1,15 +1,15 @@
 {
   "version": 1,
-  "updatedAt": "2026-10-29T06:25:15.941Z",
-  "snapshot": "snapshots/2026-10-29.json",
+  "updatedAt": "2026-11-27T07:49:21.616Z",
+  "snapshot": "snapshots/2026-11-27T07-49-21-437Z.json",
   "counts": {
-    "total": 497,
+    "total": 499,
     "linkedDisciplinary": 44,
-    "translated": 453,
+    "translated": 455,
     "pending": 0,
     "independentlyReviewed": 446,
     "pendingSourceVerification": 5,
-    "pendingIndependentReview": 2
+    "pendingIndependentReview": 4
   },
   "entries": [
     {
@@ -2977,13 +2977,13 @@
       "key": "posts:/posts/expression-of-interest-for-2028-wca-continental-championships-2029-wca-world-championship",
       "sourceId": 14270,
       "url": "https://www.worldcubeassociation.org/posts/expression-of-interest-for-2028-wca-continental-championships-2029-wca-world-championship",
-      "sourceHash": "a7b6567f5100a4bbbda1e77bb9673606382ed8e1b219f62f64ae18ea3c5ad3b8",
+      "sourceHash": "24a8ae3fe2e83e0fd5dee267d1eabfacea1dda37a4cf78b54f83bcf30b5acada",
       "title": "Expression of Interest for 2028 WCA Continental Championships & 2029 WCA World Championship",
       "date": "2026-10-28T22:19:44.000Z",
       "status": "translated",
       "path": "entries/expression-of-interest-for-2028-wca-continental-championships-2029-wca-world-championship.json",
-      "translationVersion": 1,
-      "translationHash": "994a2ca9b2bab8879ff0366e001dd90998e117dd86baad5f87ca96f1f6e75cbc",
+      "translationVersion": 2,
+      "translationHash": "75de39cfe528d7c555daa34b7f6f1c035e5ed66e3c4f8fe7533e961cee575ae2",
       "reviewStatus": "pending_independent_review"
     },
     {
@@ -6384,6 +6384,32 @@
       "translationVersion": 2,
       "translationHash": "9855638c96d4aac0db5651f81a1d35f7dd6910ed2ba7bb57c7d1a7496b35ae21",
       "reviewStatus": "independently_verified"
+    },
+    {
+      "key": "posts:/posts/wca-lead-organizer-overview-pilot-november-2026",
+      "sourceId": 14272,
+      "url": "https://www.worldcubeassociation.org/posts/wca-lead-organizer-overview-pilot-november-2026",
+      "sourceHash": "d932f889393157099162c2d2e476378ea856aa0ea7befa33bd614113d349346a",
+      "title": "WCA Lead Organizer Overview & Pilot (November 2026)",
+      "date": "2026-11-04T01:18:33.000Z",
+      "status": "translated",
+      "path": "entries/wca-lead-organizer-overview-pilot-november-2026.json",
+      "translationVersion": 1,
+      "translationHash": "208d53b788d88514854f480f3a9228be6944254d7306fa368c0d6064918c6a97",
+      "reviewStatus": "pending_independent_review"
+    },
+    {
+      "key": "posts:/posts/wst-leader-announcement-november-2026",
+      "sourceId": 14271,
+      "url": "https://www.worldcubeassociation.org/posts/wst-leader-announcement-november-2026",
+      "sourceHash": "45a91e318e459389724b9ebf054fc3fe91cb7a358ad4c7faff943e28336a83d0",
+      "title": "WST Leader Announcement (November 2026)",
+      "date": "2026-11-01T18:17:54.000Z",
+      "status": "translated",
+      "path": "entries/wst-leader-announcement-november-2026.json",
+      "translationVersion": 1,
+      "translationHash": "dc5be7f8df63b382a7e2fca4e55a74168ce8114e1ae270e9cf73dd43b1613fce",
+      "reviewStatus": "pending_independent_review"
     }
   ],
   "permission": {
