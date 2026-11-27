@@ -3,7 +3,7 @@
 // 新建 / 编辑日程的弹窗。字段顺序照 Google:标题 → 时间 → 重复 → 日历+颜色 →
 // 地点 → 提醒 → 参与者 → 说明。
 //
-// 日期复用 DateInput，时间通过小时和分钟选择。墙上时间 ↔ 绝对时刻的换算
+// 日期复用 DateInput，时间可滚动选择或输入四位数字。墙上时间 ↔ 绝对时刻的换算
 // 全走事件自己的时区(@cuberoot/shared/tz),
 // 所以「北京时间 21:00 的会」在洛杉矶的人改起来也不会漂。
 
@@ -96,11 +96,14 @@ function twoDigits(value: number): string {
   return String(value).padStart(2, '0');
 }
 
-function renderMinute(value: number): string {
-  return value >= 0 && value <= 59 ? twoDigits(value) : '';
-}
-
 const TIME_WHEEL_PIXELS_PER_STEP = 48;
+const MINUTE_STEP = 5;
+const MAX_PICKER_MINUTE = 60 - MINUTE_STEP;
+const TIME_DIGITS_PATTERN = /^([01]\d|2[0-3])([0-5][05])$/;
+
+function renderMinute(value: number): string {
+  return value >= 0 && value <= MAX_PICKER_MINUTE ? twoDigits(value) : '';
+}
 
 function EventTimePicker({ label, displayValue, value, hourFormat, readOnly, onChange }: {
   label: string;
@@ -111,54 +114,107 @@ function EventTimePicker({ label, displayValue, value, hourFormat, readOnly, onC
   onChange: (time: string) => void;
 }) {
   const [draft, setDraft] = useState<{ hour: number; minute: number } | null>(null);
+  const [typedTime, setTypedTime] = useState<string | null>(null);
+  const parsedTime = typedTime?.match(TIME_DIGITS_PATTERN);
   const open = draft !== null && !readOnly;
   const panelId = useId();
-  const triggerRef = useRef<HTMLButtonElement>(null);
+  const triggerRef = useRef<HTMLInputElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
   const panelStyle = usePopoverPosition({ open, triggerRef, panelRef, align: 'center', contentKey: label });
-  const positioned = panelStyle?.visibility === 'visible';
   const renderHour = useCallback((value: number) => {
     if (value < 0 || value > 23) return '';
     return hourFormat ? hourFormat.format(Date.UTC(2000, 0, 1, value)) : twoDigits(value);
   }, [hourFormat]);
 
-  usePopoverDismiss(open, () => setDraft(null), panelRef, triggerRef);
-  useEffect(() => {
-    if (positioned) panelRef.current?.querySelector<HTMLElement>('[role="slider"]')?.focus({ preventScroll: true });
-  }, [positioned]);
-
-  const close = () => {
+  usePopoverDismiss(open, (reason) => {
     setDraft(null);
+    if (reason === 'escape') setTypedTime(null);
+  }, panelRef, triggerRef);
+
+  const openPicker = () => {
+    const [hour, minute] = (parsedTime ? `${parsedTime[1]}:${parsedTime[2]}` : value).split(':').map(Number);
+    const pickerMinute = Math.min(MAX_PICKER_MINUTE, Math.round(minute / MINUTE_STEP) * MINUTE_STEP);
+    setDraft({ hour, minute: pickerMinute });
+  };
+  const cancel = (event: KeyboardEvent) => {
+    if (event.key !== 'Escape' || (!open && typedTime === null)) return;
+    event.preventDefault();
+    event.stopPropagation();
+    setDraft(null);
+    setTypedTime(null);
     triggerRef.current?.focus({ preventScroll: true });
   };
-  const onKeyDown = (event: KeyboardEvent) => {
-    if (event.key !== 'Escape' || !open) return;
-    event.stopPropagation();
-    close();
+  const applyTime = (nextTime: string) => {
+    setDraft(null);
+    setTypedTime(null);
+    if (nextTime !== value) onChange(nextTime);
   };
 
   if (readOnly) return <span className="cal-event-time">{displayValue}</span>;
   return (
     <>
-      <button
-        type="button"
+      <input
         ref={triggerRef}
         className="cal-event-time"
-        aria-label={`${label} ${displayValue}`}
+        type="text"
+        role="combobox"
+        size={displayValue.length}
+        inputMode="numeric"
+        autoComplete="off"
+        enterKeyHint="done"
+        aria-label={label}
         aria-haspopup="dialog"
         aria-expanded={open}
         aria-controls={open ? panelId : undefined}
-        onClick={() => {
-          const [hour, minute] = value.split(':').map(Number);
-          setDraft(open ? null : { hour, minute });
+        aria-description={tr({
+          zh: '输入四位数字，24 小时制，分钟以 0 或 5 结尾',
+          en: 'Enter four digits in 24-hour format, with minutes ending in 0 or 5',
+        })}
+        aria-invalid={typedTime !== null && !parsedTime || undefined}
+        value={typedTime ?? displayValue}
+        onFocus={(event) => event.currentTarget.select()}
+        onClick={(event) => {
+          if (typedTime === null) event.currentTarget.select();
+          if (!open) openPicker();
         }}
-        onKeyDown={onKeyDown}
-      >
-        {displayValue}
-      </button>
+        onChange={(event) => {
+          const digits = event.currentTarget.value.replace(/\D/g, '').slice(0, 4);
+          setTypedTime(digits);
+          const time = digits.match(TIME_DIGITS_PATTERN);
+          if (open && time) setDraft({ hour: Number(time[1]), minute: Number(time[2]) });
+        }}
+        onBlur={(event) => {
+          if (panelRef.current?.contains(event.relatedTarget)) return;
+          setTypedTime(null);
+          if (parsedTime) {
+            const nextTime = `${parsedTime[1]}:${parsedTime[2]}`;
+            if (nextTime !== value) onChange(nextTime);
+          }
+          // A touch on a non-focusable part of the wheel can blur the input.
+          // Pointer dismissal already handles taps outside the popover.
+          if (event.relatedTarget) setDraft(null);
+        }}
+        onKeyDown={(event) => {
+          if (event.nativeEvent.isComposing) return;
+          if (event.key === 'Enter') {
+            event.preventDefault();
+            event.stopPropagation();
+            if (parsedTime || typedTime === null) {
+              event.currentTarget.blur();
+              setDraft(null);
+            }
+          } else if (event.key === 'ArrowDown') {
+            event.preventDefault();
+            if (open) panelRef.current?.querySelector<HTMLElement>('[role="slider"]')?.focus({ preventScroll: true });
+            else openPicker();
+          } else {
+            cancel(event);
+          }
+        }}
+      />
       {open && createPortal(
         <div id={panelId} ref={panelRef} className="cal-event-time-picker" data-site-surface="popover"
-          role="dialog" aria-label={label} style={panelStyle} onKeyDown={onKeyDown}
+          role="dialog" aria-label={label} style={panelStyle} onKeyDown={cancel}
         >
           <div className="cal-event-time-columns">
             <WheelPicker
@@ -168,7 +224,10 @@ function EventTimePicker({ label, displayValue, value, hourFormat, readOnly, onC
               minValue={0}
               maxValue={23}
               renderSlot={renderHour}
-              onChange={(hour) => setDraft((current) => current && { ...current, hour })}
+              onChange={(hour) => {
+                setTypedTime(null);
+                setDraft((current) => current && { ...current, hour });
+              }}
               tick={false}
               keyboard
               wheelPixelsPerStep={TIME_WHEEL_PIXELS_PER_STEP}
@@ -179,20 +238,25 @@ function EventTimePicker({ label, displayValue, value, hourFormat, readOnly, onC
               width="100%"
               value={draft.minute}
               minValue={0}
-              maxValue={59}
+              maxValue={MAX_PICKER_MINUTE}
+              step={MINUTE_STEP}
               renderSlot={renderMinute}
-              onChange={(minute) => setDraft((current) => current && { ...current, minute })}
+              onChange={(minute) => {
+                setTypedTime(null);
+                setDraft((current) => current && { ...current, minute });
+              }}
               tick={false}
               keyboard
               wheelPixelsPerStep={TIME_WHEEL_PIXELS_PER_STEP}
               ariaLabel={tr({ zh: '分钟', en: 'Minute' })}
             />
           </div>
-          <button type="button" className="cal-btn is-primary" onClick={() => {
-            const nextTime = `${twoDigits(draft.hour)}:${twoDigits(draft.minute)}`;
-            if (nextTime !== value) onChange(nextTime);
-            close();
-          }}>
+          <button type="button" className="cal-btn is-primary" disabled={typedTime !== null && !parsedTime}
+            onClick={(event) => {
+              applyTime(`${twoDigits(draft.hour)}:${twoDigits(draft.minute)}`);
+              if (event.detail === 0) triggerRef.current?.focus({ preventScroll: true });
+            }}
+          >
             {tr({ zh: '确定', en: 'Apply' })}
           </button>
         </div>, document.body,
@@ -257,6 +321,14 @@ export default function EventDialog(props: Props) {
 
   const setEnd = (ms: number): void => {
     patch({ end: Math.max(ms, d.start + 60_000) });
+  };
+
+  const setEndTime = (time: string): void => {
+    const end = fromInputs(endIn.date, time, clockZone, d.end);
+    const { mi, s } = wallPartsIn(clockZone, new Date(d.start));
+    const secondsToNextStep = (MINUTE_STEP - mi % MINUTE_STEP) * 60 - s;
+    const earliestEnd = (Math.floor(d.start / 1000) + secondsToNextStep) * 1000;
+    patch({ end: Math.max(end, earliestEnd) });
   };
 
   const zoneItems = useMemo(() => calendarZoneSelectItems(isZh, new Date(d.start)), [d.start, isZh]);
@@ -371,7 +443,7 @@ export default function EventDialog(props: Props) {
                     value={endIn.time}
                     hourFormat={hourFormat}
                     readOnly={readOnly}
-                    onChange={(time) => setEnd(fromInputs(endIn.date, time, clockZone, d.end))}
+                    onChange={setEndTime}
                   />
                 )}
               </div>

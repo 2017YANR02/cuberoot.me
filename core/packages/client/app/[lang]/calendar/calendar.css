@@ -52,7 +52,7 @@ html:root:has(.cal-page) {
 @media (prefers-color-scheme: dark) {
   html:root:not([data-theme=light]):has(.cal-page) {
     color-scheme: dark;
-    --background: #131314;
+    --background: var(--classic-dark-background);
     --card: #1e1f20;
     --card-foreground: #e3e3e3;
     --popover: #282a2c;
@@ -80,7 +80,7 @@ html:root:has(.cal-page) {
 
 html:root[data-theme=dark]:has(.cal-page) {
   color-scheme: dark;
-  --background: #131314;
+  --background: var(--classic-dark-background);
   --card: #1e1f20;
   --card-foreground: #e3e3e3;
   --popover: #282a2c;
@@ -726,16 +726,19 @@ html:root[data-theme=dark]:has(.cal-page) {
   text-align: right;
   white-space: nowrap;
 }
-button.cal-event-time {
+input.cal-event-time {
+  field-sizing: content;
+  min-width: 5ch;
   border: none;
   border-radius: 6px;
   background: transparent;
   color: inherit;
   font: inherit;
-  cursor: pointer;
+  font-variant-numeric: tabular-nums;
 }
-button.cal-event-time:is(:hover, [aria-expanded=true]) { color: var(--accent); }
-.cal-event-time:focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }
+input.cal-event-time:is(:hover, :focus, [aria-expanded=true]) { color: var(--accent); }
+input.cal-event-time:focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }
+input.cal-event-time[aria-invalid=true] { outline-color: var(--destructive); }
 .cal-event-time-picker {
   /* anchored-panel: clamped (body portal and usePopoverPosition) */
   position: fixed;
@@ -1202,7 +1205,7 @@ button.cal-event-time:is(:hover, [aria-expanded=true]) { color: var(--accent); }
   }
   html:root[data-theme=dark]:has(.cal-page) {
     --cal-mobile-chrome: #303034;
-    --cal-mobile-canvas: #202124;
+    --cal-mobile-canvas: var(--background);
     --cal-mobile-selection: #004c73;
     --cal-mobile-selection-ink: #c2e7ff;
     --cal-mobile-today: #8ab4f8;
@@ -1213,7 +1216,7 @@ button.cal-event-time:is(:hover, [aria-expanded=true]) { color: var(--accent); }
 @media (max-width: 900px) and (prefers-color-scheme: dark) {
   html:root:not([data-theme=light]):has(.cal-page) {
     --cal-mobile-chrome: #303034;
-    --cal-mobile-canvas: #202124;
+    --cal-mobile-canvas: var(--background);
     --cal-mobile-selection: #004c73;
     --cal-mobile-selection-ink: #c2e7ff;
     --cal-mobile-today: #8ab4f8;
@@ -1492,9 +1495,12 @@ button.cal-event-time:is(:hover, [aria-expanded=true]) { color: var(--accent); }
 /* Shared App Foundation corner and toggle; calendar owns its content and drawer. */
 .cal-page { --af-nav-text: var(--foreground); --af-nav-hover: var(--muted); --af-nav-active: var(--accent); --af-nav-outline: transparent; font-size: 16px; }
 .cal-desktop-topbar .af-nav-toggle { margin: 0; flex-shrink: 0; }
-.cal-sidebar-corner { position: absolute; top: 0; left: 0; z-index: 1; pointer-events: none; color: var(--muted); }
+.cal-sidebar-corner { position: absolute; top: 0; left: 0; z-index: 1; pointer-events: none; color: var(--cal-desktop-shell, var(--muted)); }
 @media (min-width: 901px) {
-  .cal-page { background: var(--muted); }
+  .cal-page {
+    --cal-desktop-shell: light-dark(var(--muted), var(--background));
+    background: var(--cal-desktop-shell);
+  }
   .cal-main { background: var(--background); }
   .cal-page .cal-grid .fc .fc-scrollgrid { border: 0; }
   .cal-page .cal-grid .fc-scrollgrid > :is(thead, tbody) > tr > :is(td, th) { border-right: 0; }
