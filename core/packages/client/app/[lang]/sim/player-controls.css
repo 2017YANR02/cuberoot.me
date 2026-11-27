@@ -1869,7 +1869,7 @@
   font-size: 13px;
 }
 .finger-guide-move-heading strong { font-size: 1rem; }
-.finger-guide-move-heading label { color: var(--muted-foreground); }
+.finger-guide-move-heading .bool-toggle { color: var(--muted-foreground); }
 .finger-guide-move-table {
   width: 100%;
   table-layout: fixed;
@@ -1907,9 +1907,8 @@
   .finger-guide .skewb-guide-label:has(+ .skewb-guide-chips),
   .finger-guide .skewb-guide-grid > .skewb-guide-chips { grid-column: 1 / -1; }
 }
-.finger-guide-moves label, .finger-guide .skewb-guide-chips label {
-  display: inline-flex;
-  align-items: center;
+.finger-guide .bool-toggle {
+  align-self: center;
   gap: 4px;
   font-size: 12px;
 }
