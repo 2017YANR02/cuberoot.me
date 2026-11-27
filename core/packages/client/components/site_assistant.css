@@ -115,7 +115,7 @@
 .compact-select-popup.site-assistant-menu { z-index:100031; scrollbar-width:none; }
 body:has(.site-assistant-compose [aria-describedby]) > .site-tooltip { z-index:100032; }
 .site-assistant-input-actions .site-assistant-thinking { width:auto; min-width:0; flex:none; align-self:center; }
-.compact-select.site-assistant-thinking .compact-select-trigger:hover:not(:disabled) { text-decoration:none; }
+.compact-select:is(.site-assistant-thinking, .site-assistant-mobile-settings) .compact-select-trigger:hover:not(:disabled) { text-decoration:none; }
 .compact-select:is(.site-assistant-provider, .site-assistant-thinking-mode) .compact-select-trigger { min-height:36px; border-radius:999px; padding-inline:10px; }
 @media (hover:hover) {
   .compact-select:is(.site-assistant-provider, .site-assistant-thinking-mode) .compact-select-trigger:hover:not(:disabled) { background:color-mix(in srgb, var(--foreground) 10%, transparent); color:var(--foreground); }
