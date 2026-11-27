@@ -251,6 +251,8 @@ export function createAssistantModel(config: AssistantConfig, fetcher: typeof fe
       checklist?: boolean;
       sentenceReplies?: { items:number; sentences:number; separator:string };
       scenarioProse?: boolean;
+      // Internal interpreters validate their own decision schema before executing it.
+      acceptsDecisionText?: (text:string)=>boolean;
       decisionToolsOnly?: boolean;
       followUp?: string;
       requiredTool?: 'lookup_cube_photo';
@@ -430,7 +432,7 @@ export function createAssistantModel(config: AssistantConfig, fetcher: typeof fe
           const sections = sentenceGroups.map(group => group.map(key => parsed.data[key]).join(format.separator));
           return {calls:[] as unknown[],...answerSchema.parse({answerKind:'general',answer:sections.join(format.separator),sourceIds:[],requirementChecks:sentenceGroups.map(group => parsed.data[group[0]])})};
         }
-        if (options.scenarioProse && !/^(?:\{|```json)/i.test(text)) {
+        if (options.scenarioProse && (!/^(?:\{|```json)/i.test(text) || options.acceptsDecisionText?.(text))) {
           if (!text) throw new AssistantOutputError('empty_output', result.finishReason);
           if (text.length > SITE_ASSISTANT_ANSWER_MAX_LENGTH) throw new AssistantOutputError('output_truncated', result.finishReason);
           return { calls: [] as unknown[], ...answerSchema.parse({ answerKind: 'general', answer: text, sourceIds: [] }) };

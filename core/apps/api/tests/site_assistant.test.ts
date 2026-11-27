@@ -873,7 +873,7 @@ describe('site assistant grounding', () => {
   it('keeps tabular statistics factual when the final model prose contradicts the actual value',async()=>{
     const model=vi.fn().mockResolvedValueOnce(modelResponse({calls:[{tool:'statistics',id:'example',limit:5}]})).mockResolvedValueOnce(modelResponse({answer:'占据前三席',sourceIds:['stat:example']}))
       .mockResolvedValueOnce(modelResponse({answer:'占据前三席',sourceIds:['stat:example']}));
-    const fetcher:typeof fetch=async url=>String(url).endsWith('/index.json')?Response.json({categories:[{stats:[{id:'example',titleZh:'屠榜',titleEn:'Dominance'}]}]}):String(url).endsWith('/example.json')?Response.json({titleZh:'屠榜',header:[{key:'count',label:'Count',labelZh:'次数'}],rows:[[1]]}):model();
+    const fetcher:typeof fetch=async url=>String(url).endsWith('/assistant/pages.json')?Response.json({pages:[]}):String(url).endsWith('/index.json')?Response.json({categories:[{stats:[{id:'example',titleZh:'屠榜',titleEn:'Dominance'}]}]}):String(url).endsWith('/example.json')?Response.json({titleZh:'屠榜',header:[{key:'count',label:'Count',labelZh:'次数'}],rows:[[1]]}):model();
     const result=await answerSiteQuestion('查询屠榜前五项','zh',config,AbortSignal.timeout(5000),fetcher);
     expect(result.answer).toBe('已列出“屠榜”的 1 项查询结果。 [[stat:example]]');
     expect(result.artifacts?.[0]).toMatchObject({rows:[['1']]});

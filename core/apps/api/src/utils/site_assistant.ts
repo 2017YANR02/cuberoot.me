@@ -1,3 +1,11 @@
+import { attendanceBucketAnswer, monthBadgeAnswer, regionDaysAnswer } from './site_assistant_guide_attendance.js';
+import { rememberScenarioLog } from './site_assistant_context.js';
+import { suppliedGuideCorrection } from './site_assistant_scenario_edits.js';
+import { scenarioTableReader } from './site_assistant_scenario_table.js';
+import { measuredGuideAnswer, medalGuideAnswer } from './site_assistant_guide_measurements.js';
+import { offPodiumAnswer, groupComparisonAnswer, guideGroupOperands } from './site_assistant_guide_groups.js';
+import { guideSeriesOperands } from './site_assistant_guide_series.js';
+import { verifiedRankingSelection, answerRanking, isRankingOperation, cumulativeRanking, isRankingQuestion, rankingExplanationLink } from './site_assistant_rankings.js';
 import {pythonMoveDispatch, competitionPythonWalk, pythonRuntimeDiagnostic, repairedPythonFaceWalk, pythonScrambleListAnswer, invertedScrambleLoop, checkedScrambleExample, scrambleCodeGuidance, selfContainedScrambleCode} from './site_assistant_scramble_code.js';
 import {halfTurnConstruction} from './site_assistant_cube_constructions.js';
 import { requestedOrderWitnesses, legacySliceDirections, checkedStateExplanation, correctCycleExamples, checkSolutionWitness, perFaceColourProof } from './site_assistant_state_questions.js';
@@ -6,7 +14,12 @@ import { questionProduct, reportedProduct, asksToCheckReportMoves, misattributed
 import { generalSolveCommutator, singleCommutatorSolve, threeFaceBlindSolve, functionOrderExamples, closedMechanicalQuestion, contradictsMechanicsProof, communityMechanicsEvidence, conflictingCubePeriod, checksPocketColourWitness, invalidPocketColourWitness, invalidJPermClaim, directCommunityProof, directOrderAnswer } from './site_assistant_mechanics.js';
 import { glossaryWritingRequest, explicitNotationLookup, glossaryGroupingSubject } from './site_assistant_glossary_aliases.js';
 import { checkedPassageOpening, createAssistantCoverageCheck, coachingAnswerSections, createRequirementPreview, assistantAnswerRequirements, missingAssistantRequirements, assistantClaimPassages, assistantClaimIssue } from './site_assistant_answer_check.js';
-import { publishedFactAnswer, publishedFactIntent } from './site_assistant_page_facts.js';
+import { distinctDatesExample } from './site_assistant_guide_dates.js';
+import {
+  attemptCountAnswer, badgeCountScenario, consecutivePrExample, dimensionOrSpeedAnswer, frameRateComparison,
+  guideComparisonScenario, guideScenarioCalculations, podiumScenario, rankSumExample, recordTierExample, revisedPersonalBest,
+} from './site_assistant_guide_examples.js';
+import { publishedFactAnswer, publishedFactIntent, guideForQuestion, guideEvidence, derivedGuideFact, guideLookupRequested, previousGuideTurns, rankedGuideContinuation, guideReplyInstructions, guideScenarioInstructions, guideQuestionParts, multipartGuideInstructions, readMultipartGuideReply, readGuideReply } from './site_assistant_page_facts.js';
 import { assistantNavigationRequest } from './site_assistant_navigation.js';
 import { attendanceLocationFollowUp, attendanceCountryPrompt, personalCountriesRequest } from './site_assistant_locations.js';
 import { personalCityRequest, personalCityAnswer } from './site_assistant_city.js';
@@ -35,7 +48,7 @@ import { asksToShareCost, twoGroupTimePlan, scheduleReviewRules, scheduleAuditRe
 import { ASSISTANT_ANSWER_POLICY, ASSISTANT_EVIDENCE_REVIEW, ASSISTANT_OUTPUT_BUDGET, DEEP_ANALYSIS_GUIDE, VOUCHER_CHOICE_GUIDE, automaticTrainingGuidance, trainingDecisionGuidance, trainingComparisonIssue, requiresNeutralPracticeMix, reversesPracticeMix, inventsScrambleDifficulty, inventsPracticeSplit, isTrainingDecision, scenarioDecisionGuidance, sharedVoucherBalance, asksForScenarioJudgment, exclusiveUseClauses, fixedScenarioReservation, scenarioRequestedParts, SCENARIO_COUNT_GUIDE, SCENARIO_REVIEW_GUIDE, ASSISTANT_SITE_NAMES, assistantReasoningPolicy, assistantToolKey } from './site_assistant_policy.js';
 import { assistantSearchProtectedTerms, assistantWebAvailable, assistantWebRequestScope, searchAssistantWeb } from './site_assistant_web.js';
 import { WCA_NEWS_URL, parseAssistantNews } from './site_assistant_news.js';
-import {cornerTwistContestQuestion,cornerTwistContestVerdict,inspectionScenario,inspectionVerdicts,fewestMovesQuestion,fewestMovesVerdict,multiBlindTimeCount,multiBlindTimeVerdict,WCA_REGULATIONS_URL,WCA_REGULATIONS_MIRROR_URL,regulationExcerptArticles,regulationChapterHref,officialRegulationPassages,regulationFollowUpRead,savedRegulationChapter} from './site_assistant_regulations.js';
+import {scrambleMinimumComparison,timedSingleAndAverage,scenarioRuleIds,scenarioRulePage,procedureQuestion,procedureVerdict,cornerTwistContestQuestion,cornerTwistContestVerdict,inspectionScenario,inspectionVerdicts,fewestMovesQuestion,fewestMovesVerdict,multiBlindTimeCount,multiBlindTimeVerdict,WCA_REGULATIONS_URL,WCA_REGULATIONS_MIRROR_URL,regulationExcerptArticles,regulationChapterHref,officialRegulationPassages,regulationFollowUpRead,savedRegulationChapter} from './site_assistant_regulations.js';
 import {suppliedAverageAnswer, suppliedTrainingComparison, suppliedTargetMean} from './site_assistant_calculation.js';
 import { parseHTML } from 'linkedom';
 import { z } from 'zod';
@@ -77,6 +90,7 @@ const contentOrigin = 'https://next.cuberoot.me';
 const pendingRoundFiles = new Map<string, Promise<unknown>>();
 const worldsFiles = new Map<string, ReturnType<typeof publicReadCache<unknown>>>();
 const competitionGroupFiles = new Map<string, ReturnType<typeof publicReadCache<unknown>>>();
+const readRankingIndex = publicReadCache<unknown>(60_000);
 const readPublicPages = publicReadCache<Record<string, unknown>>(60_000);
 const readPublicPll = publicReadCache<unknown>(60_000);
 const chinaFaqCache = publicReadCache<ReturnType<typeof chinaFaqEntries>>(300_000);
@@ -147,7 +161,7 @@ function pairedPersonalBests(question:string) {
 export function canReadPublicResult(input:Pick<import('@cuberoot/shared/site-assistant').AssistantDurableInput,'question'|'history'|'images'|'references'|'provider'> & {timeZone?:string}) {
   if (!input.images?.length && !input.references?.length && !input.history.some(message=>message.images?.length) && publicCountRequest(resolveAssistantTime(input.question,new Date(),input.timeZone).normalizedQuestion,input.history)) return true;
   if (input.provider==='openai' || input.images?.length || input.references?.length || input.history.some(message=>message.images?.length)) return false;
-  if (!input.history.length && (publishedFactIntent(input.question) || fewestMovesQuestion(input.question) ||
+  if (!input.history.length && (publishedFactIntent(input.question) || procedureQuestion(input.question) || fewestMovesQuestion(input.question) ||
       multiBlindTimeCount(input.question)!==undefined || inspectionScenario(input.question) || suppliedAverageAnswer(input.question,'zh'))) return true;
   if (assistantNavigationRequest(input.question,input.history,'en')) return true;
   if (competitionScheduleRequest(input.question) || weekendCompetitionRequest(input.question) || fullCubeHandoff(input.question, false, 'en')) return true;
@@ -341,7 +355,7 @@ export function requestedAssistantEvidence(question: string): 'pages'|'statistic
     && !/(?:不要|别|不能)(?:只|仅)|\bnot (?:only|just)\b/i.test(question);
   if(linkOnly) return 'navigation';
   // Mixed UI operation requests keep the page obligation.
-  if(requestsStatisticsMetadata(question) && !/怎么用|如何使用|操作步骤|如何操作|点击|\b(?:how to use|click|operating steps)\b/i.test(question)) return 'statistics_metadata';
+  if(requestsStatisticsMetadata(question) && publishedFactIntent(question)?.href!=='/alg/double-zbll-about' && !/怎么用|如何使用|操作步骤|如何操作|点击|\b(?:how to use|click|operating steps)\b/i.test(question)) return 'statistics_metadata';
   // Separate independent clauses: "有资料的部分先答；查不到的部分说明状态"
   // describes partial availability, not a request for website page evidence.
   // A glossary definition is verified by the glossary tool, not by a page
@@ -527,6 +541,11 @@ export async function answerSiteQuestion(
           const result=shared;
           return assistantDeadline(()=>result,signal);
         }
+        if(url==='https://static.cuberoot.me/stats/index.json') return assistantDeadline(()=>readRankingIndex(async()=>{
+          const index=await readWithRetry(AbortSignal.timeout(8000));
+          if(!Array.isArray(index?.categories))throw new AssistantFailure('source_unavailable');
+          return index;
+        }),readSignal);
         if(url===fourthsUrl) return assistantDeadline(()=>cachedFourths(()=>readWithRetry(AbortSignal.timeout(8000))),signal);
         if(url==='https://api.cuberoot.me/v1/alg/sets/3x3/pll') return assistantDeadline(()=>readPublicPll(async()=>{
           const file=await readWithRetry(AbortSignal.timeout(8000));
@@ -590,6 +609,7 @@ export async function answerSiteQuestion(
       : {...result,sources,actions:result.actions?.filter(action=>sources.some(source=>source.id===action.id && source.href===action.href))};
     return rememberAssistantConversation(rememberAssistantContext(safe,observations,priorContext),question,history,priorContext);
   };
+  let unresolvedExample: { title:string; href:string } | undefined;
   let officialRules:Promise<string>|undefined;
   let officialRulesSource=WCA_REGULATIONS_URL;
   const readOfficialRules=()=>officialRules??=assistantStage('page',async()=>{
@@ -619,13 +639,126 @@ export async function answerSiteQuestion(
       } catch { signal.throwIfAborted(); }
     }
   }
+  const previousGuide=lang==='zh' && !skipDirectAnswers && !hasImages ? previousGuideTurns(question,history) : undefined;
+  const previousRounding=lang==='zh' && /刚才.{0,8}(?:两种|单次|平均)/.test(question) &&
+    /\d+分\d+(?:\.\d+)?秒/.test(question) && history.at(-1)?.role==='assistant' && history.at(-2)?.role==='user' &&
+    scenarioRuleIds(history.at(-2)!.content).includes('9f1') ? history.at(-2)!.content : undefined;
+  const singleTurn=!history.length && !priorContext;
+  const ruleIds=previousRounding ? ['9f1','9f2'] : lang==='zh' && singleTurn && !procedureQuestion(question) &&
+    !fewestMovesQuestion(question) && multiBlindTimeCount(question)===undefined ? scenarioRuleIds(question) : [];
+  if(config && lang==='zh' && !skipDirectAnswers && !hasImages && (singleTurn || previousGuide || previousRounding) && !presentationInstruction &&
+      (!entryOnlyRequest || /入口.{0,6}(?:叫什么|叫什麼)|符合.{0,4}入口/.test(question)) && !presentation.localTail && !presentation.sentences && !presentation.json &&
+      (requestedEvidence==='auto' || requestedEvidence==='pages') && (ruleIds.length || previousGuide || guideLookupRequested(question))) {
+    try {
+      const rulePage=ruleIds.length
+        ? await readOfficialRules().then(html=>scenarioRulePage(html,officialRulesSource,ruleIds)).catch(()=>{signal.throwIfAborted();return undefined;})
+        : undefined;
+      const selected=ruleIds.length ? rulePage : await read(contentOrigin+'/assistant/pages.json').then(index=>{
+          if(!Array.isArray(index?.pages))return;
+          const current=guideForQuestion(question,index.pages);
+          const priorPages=(previousGuide ?? []).map(turn=>guideForQuestion(turn,index.pages)).filter(page=>!!page);
+          if(new Set(priorPages.map(page=>page.href)).size>1)return;
+          const prior=priorPages.at(-1);
+          // A newly named guide is a topic switch, so the ordinary contextual
+          // planner decides whether both references are needed.
+          if(prior && current && current.href!==prior.href)return;
+          return current || prior;
+        })
+          .catch(()=>{signal.throwIfAborted();return undefined;});
+      const guide=selected && guideEvidence([...(previousGuide ?? []),question].join('\n'),selected);
+      if(guide) {
+        const direct=rulePage
+          ? scrambleMinimumComparison(question,rulePage) ?? timedSingleAndAverage(question,rulePage,!!previousRounding)
+          : previousGuide ? (previousGuide.length===1 ? rankedGuideContinuation(question,previousGuide[0],guide) : undefined) : derivedGuideFact(question,guide);
+        if(direct)return withContext(direct);
+        const earlier=previousGuide ?? (previousRounding?[previousRounding]:[]);
+        const turns=[...earlier,question];
+        const counted=suppliedGuideCorrection(guide,turns) ?? monthBadgeAnswer(turns,guide) ?? medalGuideAnswer(turns,guide) ?? offPodiumAnswer(turns,guide) ??
+          regionDaysAnswer(turns,guide) ?? measuredGuideAnswer(turns,guide) ?? groupComparisonAnswer(turns,guide) ??
+          attendanceBucketAnswer(turns,guide) ?? recordTierExample(turns,guide) ?? consecutivePrExample(turns,guide) ?? revisedPersonalBest(turns,guide) ??
+          dimensionOrSpeedAnswer(turns,guide) ?? frameRateComparison(turns,guide) ?? distinctDatesExample(turns,guide) ??
+          rankSumExample(turns,guide) ?? attemptCountAnswer(turns,guide) ?? badgeCountScenario(turns,guide) ??
+          guideComparisonScenario(turns,guide) ?? podiumScenario(turns,guide);
+        if(counted){
+          const id='page:'+guide.href;
+          return withContext({answer:counted+' [['+id+']]',sources:[{id,title:guide.title,href:guide.href,read:true}]});
+        }
+        await assistantExecutionBoundary();
+        const model=createAssistantModel(config,fetcher,signal,'');
+        const parts=guideQuestionParts(question);
+        const checkedOperands=guideSeriesOperands(turns,guide) ?? guideGroupOperands(turns,guide) ?? guideScenarioCalculations(turns,guide);
+        const tableReader=thinkingMode==='auto' && !rulePage && scenarioTableReader(guide,turns,priorContext?.scenario);
+        if(tableReader && (!checkedOperands || tableReader.direct())){
+          if(guide.href.startsWith('/wca/about/') && !/(?:公开榜|世界排名|真实排名|帮我查|前[三五十0-9]+名选手)/.test(question)) unresolvedExample=guide;
+          const directTable=tableReader.direct();
+          const extracted=directTable?undefined:await assistantStage('model',()=>model.complete({
+            system:tableReader.system,context:tableReader.context,isolated:true,allowTools:false,scenarioProse:true,
+            acceptsDecisionText:()=>true,finalOnly:true,thinking:false,effort:'low',maxTokens:1400,
+          }),0).catch(error=>{signal.throwIfAborted();if(!(error instanceof AssistantOutputError))throw error;return undefined;});
+          const answer=directTable ?? (extracted && tableReader.answer(extracted.answer));
+          if(answer){
+            const id='page:'+guide.href;
+            const result=withContext({answer:answer+' [['+id+']]',sources:[{id,title:guide.title,href:guide.href,read:true}]});
+            const snapshot=tableReader.snapshot();
+            return snapshot ? rememberScenarioLog(result,snapshot) : result;
+          }
+        }
+        // Preserve displayed referents ("the two figures"), not their authority.
+        // Conditions come from user turns, rules from the source just read.
+        const refersToDisplay=/你(?:说|提到|列出|给出)|你刚才|刚才那(?:两|几)个|上条回答|你算的|前面列的/.test(question);
+        const lastAnswer=earlier.length && refersToDisplay ? history.at(-1)?.content.split('Referenced destinations:')[0].slice(0,1200) : undefined;
+        // Counting examples with a revision need enough reasoning to replay the
+        // edits once. Keep fast mode and already computed scenarios on the short path.
+        const badges=guide.href==='/wca/achievements' ? guide.sections?.filter(section=>
+          section.title!=='荣誉徽章' && turns.some(turn=>turn.includes(section.title)) && guide.text.includes(section.text)) : undefined;
+        const focus=badges?.length && (!/别的徽章|其他徽章|还有哪|顺带/.test(question) && (badges.length>1 || !/另一枚|另外一枚/.test(question))) ? badges.map(section=>section.text).join('\n\n') : guide.text;
+        const resolveChanges=thinkingMode!=='fast' && !checkedOperands && !rulePage &&
+          (earlier.length>0 || /(?:样本|一条|两条|全对|门槛)/.test(question)) &&
+          (guide.href.startsWith('/wca/about/') && !guide.href.endsWith('/shortest_time_to_reach_milestone_in_comps_count') || guide.href==='/wca/achievements' ||
+            ['/mosaic-about','/frame-count-about','/scramble/batch-solver'].includes(guide.href));
+        const parse=(raw:string)=>parts.length ? readMultipartGuideReply(raw,guide,parts.length) : readGuideReply(raw,guide);
+        const readScenario=(think:boolean)=>assistantStage('model',()=>model.complete({
+          system:(parts.length?multipartGuideInstructions:guideReplyInstructions)+guideScenarioInstructions,context:{title:guide.title,text:focus,earlierUserTurns:earlier.length?earlier:undefined,previousDisplayForReferences:lastAnswer,checkedOperands,question,parts:parts.length?parts:undefined},isolated:true,allowTools:false,
+          scenarioProse:true,acceptsDecisionText:raw=>!!parse(raw),finalOnly:true,thinking:think,effort:'low',maxTokens:think?2000:parts.length?900:650,
+        }),0);
+        const step=await readScenario(resolveChanges).catch(error=>{
+          if(!resolveChanges || !(error instanceof AssistantOutputError) || error.diagnostic?.finishReason!=='length')throw error;
+          return readScenario(false);
+        });
+        const answer=parse(step.answer);
+        if(answer && rulePage) {
+          // Attach the clauses actually quoted, including exceptions relied on
+          // by the second part. A link to the first clause alone can miscite it.
+          const raw=JSON.parse(step.answer.trim().replace(/^```(?:json)?\s*|\s*```$/gi,''));
+          const quotes:string[]=(parts.length?raw.items.flat(1):[raw]).flatMap((item:{quotes:string[]})=>item.quotes);
+          const compact=(value:string)=>value.normalize('NFKC').replace(/\s+/g,'');
+          const clauses=rulePage.clauses.filter(c=>quotes.some(quote=>compact(c.text).includes(compact(quote))));
+          if(clauses.length && quotes.every(quote=>clauses.some(c=>compact(c.text).includes(compact(quote))))) {
+            const sources=clauses.map(c=>({id:'wca:clause:'+c.id,title:'WCA '+c.id,href:c.href,read:true}));
+            const citations=sources.map(c=>'[['+c.id+']]').join(' ');
+            const edition=rulePage.version?'\n\n'+(officialRulesSource===WCA_REGULATIONS_MIRROR_URL?'规则快照版本 ':'WCA 规则版本 ')+rulePage.version:'';
+            return withContext({answer:answer.answer.replace('[['+answer.sources[0].id+']]',citations)+edition,sources});
+          }
+        } else if(answer)return withContext(answer);
+      }
+    } catch(error) {
+      signal.throwIfAborted();
+      if(!(error instanceof AssistantOutputError) && !(error instanceof AssistantFailure && error.code==='source_unavailable'))throw error;
+    }
+  }
+  if(unresolvedExample) {
+    const {title,href}=unresolvedExample;
+    const id='page:'+href;
+    return withContext({answer:'我在按你给的记录计算。还不能确定这一步对应哪条记录，请指出原来的那一项和更正后的值。 [['+id+']]',sources:[{id,title,href,read:true}]});
+  }
   if(!history.length && !priorContext && !skipDirectAnswers && !hasImages && !presentationInstruction &&
-      !presentation.localTail && !presentation.sentences && !presentation.json && requestedEvidence==='auto') {
+      !presentation.localTail && !presentation.sentences && !presentation.json && (requestedEvidence==='auto' || requestedEvidence==='pages')) {
     const fmc=fewestMovesQuestion(question);
     const count=multiBlindTimeCount(question);
-    if(fmc || count!==undefined) {
+    const procedure=lang==='zh'?procedureQuestion(question):undefined;
+    if(fmc || count!==undefined || procedure) {
       const html=await readOfficialRules().catch(()=>{signal.throwIfAborted(); return '';});
-      const answer=html && (fmc ? fewestMovesVerdict(html,officialRulesSource,fmc,lang)
+      const answer=html && (procedure ? procedureVerdict(html,officialRulesSource,procedure) : fmc ? fewestMovesVerdict(html,officialRulesSource,fmc,lang)
         : multiBlindTimeVerdict(html,officialRulesSource,count!,lang));
       if(answer) return withContext(answer);
     }
@@ -640,6 +773,42 @@ export async function answerSiteQuestion(
         result:{sources:verdicts.sources,artifacts:[],evidence:{clauseIds:verdicts.sources.map(s=>s.id)}}});
       return withContext(verdicts);
     }
+  }
+  if(lang==='zh' && !skipDirectAnswers && !hasImages && !history.length && !priorContext && requestedEvidence==='auto' &&
+      !presentationInstruction && !presentation.json && !presentation.localTail && !presentation.sentences) {
+    const call=cumulativeRanking(question,requestedLimit,Number(timeContext.today.slice(0,4)));
+    if(call) {
+      await emit?.({type:'status',status:{phase:'querying',tool:'rankings'}});
+      const result=await assistantStage('tool',()=>runDataTool(call,lang,read),0,'rankings',undefined,call)
+        .catch(()=>{signal.throwIfAborted();return undefined;});
+      const table=result?.artifacts?.find((item):item is AssistantTable=>item.kind==='table');
+      if(result && table?.rows.length && result.sources.some(s=>s.id==='rankings' && s.read)) {
+        observations.push({call,result});
+        const scope=call.year===Number(timeContext.today.slice(0,4))?'按最近导入的成绩':'截至 '+call.year+' 年底';
+        return withContext({answer:scope+'，'+(call.type==='single'?'单次':'平均')+'排名如下。 [[rankings]]',sources:result.sources,artifacts:[table]});
+      }
+    }
+  }
+  // A global published leaderboard with an existing deterministic route keeps
+  // that route. A question about how to count a hypothetical result needs the
+  // methodology, even if its wording includes the name of a table.
+  if (config && lang==='zh' && !skipDirectAnswers && !hasImages &&
+      !presentationInstruction && !presentation.json && !presentation.localTail && !presentation.sentences &&
+      (requestedEvidence==='auto' || ((requestedEvidence==='pages' || requestedEvidence==='navigation') && rankingExplanationLink(question))) && (!publicLeaderboard(question) || rankingExplanationLink(question)) && isRankingQuestion(question,history)) {
+    const ranked=await answerRanking(question,history,read,contentOrigin+'/assistant/pages.json',async(system,context)=>{
+      await assistantExecutionBoundary();
+      const model=createAssistantModel(config,fetcher,signal,'');
+      const step=await assistantStage('model',()=>model.complete({
+        system,context,isolated:true,allowTools:false,finalOnly:true,scenarioProse:true,acceptsDecisionText:isRankingOperation,thinking:false,effort:'low',maxTokens:550,
+      }),0);
+      return step.answer;
+    }).catch(error=>{
+      signal.throwIfAborted();
+      if (assistantFailureCode(error)!=='source_unavailable') throw error;
+      return undefined;
+    });
+    signal.throwIfAborted();
+    if(ranked)return withContext(ranked);
   }
   const practiceWalk=!skipDirectAnswers && !hasImages && !history.length && !priorContext && !entryOnlyRequest && (requestedEvidence==='auto' || requestedEvidence==='pages') && !presentationInstruction && !presentation.sentences && !presentation.json && !presentation.localTail ? competitionPythonWalk(question,lang) : undefined;
   if (practiceWalk && assistantAnswerRequirements(question).every(item=>/rules|competitions?|scrambl|double moves|比赛|打乱/i.test(item))) {
@@ -2305,6 +2474,10 @@ export async function answerSiteQuestion(
       // Retrieval makes evidence available; only an explicit valid selection
       // associates it with an answer. Never lend unrelated sources to a draft.
       const cited=championIntro ? reviewed : selected;
+      if(lang==='zh' && !hasImages && !history.length && !references.length && !presentationInstruction && !presentation.json && !presentation.sentences && !presentation.localTail && requestedEvidence==='auto' && cited.length===1 && cited[0].read && cited[0].id.startsWith('stat:')) {
+        const computed=await verifiedRankingSelection(question,cited[0].id.slice(5),read).catch(()=>undefined);
+        if(computed)return withContext(computed);
+      }
       const citedIds=new Set(cited.map(source=>source.id));
       // Navigation and formula tools have distinct IDs for the same canonical
       // library. Selecting that library must not silently discard its cards.
