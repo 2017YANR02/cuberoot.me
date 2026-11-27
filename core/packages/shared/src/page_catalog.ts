@@ -955,6 +955,11 @@ export const PAGE_META: Record<string, PageMetaEntry> = {
     title: { zh: '三阶魔方 F2L 教程', en: '3×3 F2L Tutorial' },
     description: { zh: '从层先法走向 F2L：认识四种三步基态，理解顶面调整，逐步学习右前槽角棱对的还原。', en: 'Move from LBL to F2L: recognize four three-move cases, understand top-layer alignment and learn front-right pair insertions step by step.' },
   },
+  'tutorial/4x4-beginner': {
+    title: { zh: '四阶魔方入门教程', en: '4×4 Cube Beginner Tutorial' },
+    description: { zh: '用降阶法学习四阶复原。跟随动画拼中心、配棱，练习辨识翻棱和换棱特殊情况，再跟完一次完整还原。',
+      en: 'Learn 4×4 reduction with step-by-step animations for centers and edge pairing, parity recognition practice, and a full walkthrough.' },
+  },
   'tutorial': {
     title: { zh: '魔方教程', en: 'Cubing Tutorials' },
   },

@@ -295,6 +295,13 @@ export default function TutorialPage() {
           title={<T zh="F2L" en="F2L" />}
           sub={<T zh="从四种三步基态开始" en="Start with four three-move cases" />} />
       </div>}
+      {puzzle === '4x4' && <div className="tutorial-methods">
+        <AlgCard href="/tutorial/4x4-beginner" prefetch={false}
+          thumb={<VisualCube setup="2R U R U' F2" view="iso" puzzleSize={4} size={112} local
+            alt={tr({ zh: '四阶魔方', en: '4×4 cube' })} />}
+          title={<T zh="入门降阶法" en="Beginner Reduction" />}
+          sub={<T zh="拼中心、配棱，再用三阶解法收尾" en="Build centers, pair edges, then finish with your 3×3 method" />} />
+      </div>}
     </main>
   );
 }

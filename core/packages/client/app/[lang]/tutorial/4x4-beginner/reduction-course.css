@@ -1,0 +1,194 @@
+.four-reduction-reading {
+  width: min(100%, 850px);
+  margin: auto;
+  padding: clamp(12px, 3cqw, 28px);
+}
+
+.four-reduction-intro {
+  max-width: 40rem;
+  margin-inline: auto;
+  text-align: center;
+}
+
+.four-reduction-reading h2 {
+  margin: 0 0 .5rem;
+  font-size: clamp(1.3rem, 4.5cqw, 2.1rem);
+  line-height: 1.2;
+}
+
+.four-reduction-reading p {
+  margin: 0;
+  color: var(--muted-foreground);
+  font-size: clamp(1rem, 2.8cqw, 1.15rem);
+  line-height: 1.5;
+}
+
+.four-reduction-overview-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: clamp(8px, 2cqw, 16px);
+  margin: clamp(12px, 5cqh, 26px) 0;
+  padding: 0;
+  list-style: none;
+}
+
+.four-reduction-overview-grid button {
+  box-sizing: border-box;
+  display: grid;
+  grid-template-rows: auto 1fr;
+  justify-items: center;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  height: 100%;
+  padding: clamp(9px, 2cqw, 16px);
+  border: 1px solid var(--border-default);
+  border-radius: 12px;
+  background: var(--card);
+  color: var(--foreground);
+  text-align: start;
+  font: inherit;
+  cursor: pointer;
+}
+
+.four-reduction-overview-grid button:hover { border-color: var(--accent); }
+.four-reduction-overview-cube { width: min(100%, 154px, 31cqh); }
+.four-reduction-overview-cube .puzzle-art,
+.four-reduction-transfer .puzzle-art,
+.four-reduction-case .puzzle-art { width: 100% !important; height: auto !important; }
+.four-reduction-overview-cube svg,
+.four-reduction-transfer svg,
+.four-reduction-case svg { display: block; width: 100%; height: auto; }
+.four-reduction-overview-copy { display: grid; justify-self: stretch; gap: 3px; }
+.four-reduction-overview-copy strong { display: flex; align-items: center; justify-content: space-between; gap: 4px; }
+.four-reduction-overview-copy strong svg { flex: none; color: var(--accent); }
+.four-reduction-overview-copy > span { color: var(--muted-foreground); font-size: .9rem; line-height: 1.4; }
+
+.four-reduction-overview-actions,
+.four-reduction-quiz-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.four-reduction-overview-actions { justify-content: center; margin-block-start: 16px; }
+.four-reduction-overview-actions > :is(button, a),
+.four-reduction-quiz-actions button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 44px;
+}
+
+.four-reduction-transfer {
+  display: grid;
+  grid-template-columns: minmax(0, 168px) 22px minmax(0, 168px);
+  justify-content: center;
+  align-items: center;
+  gap: clamp(8px, 3cqw, 24px);
+  margin-block: 12px;
+}
+.four-reduction-transfer > svg { color: var(--muted-foreground); }
+
+.course-caption.four-reduction-caption { justify-content: flex-start; }
+.four-reduction-phases { margin-block: auto; }
+.four-reduction-steps {
+  display: grid;
+  gap: 6px;
+  margin: 12px 0 0;
+  padding: 0;
+  list-style: none;
+}
+.four-reduction-steps > li {
+  padding: 7px 10px;
+  border-inline-start: 2px solid var(--border-default);
+}
+.four-reduction-steps > li[aria-current='step'] {
+  border-inline-start-color: var(--accent);
+  border-radius: 0 8px 8px 0;
+  background: var(--accent-soft);
+}
+.four-reduction-phase-jump,
+.four-reduction-moves button {
+  border: 0;
+  color: inherit;
+  background: transparent;
+  font: inherit;
+  cursor: pointer;
+}
+.four-reduction-phase-jump {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  min-height: 32px;
+  padding: 0;
+  text-align: start;
+  font-weight: 650;
+  font-size: clamp(1.125rem, 3.4cqw, 1.5rem);
+}
+.four-reduction-phase-jump:disabled,
+.four-reduction-moves button:disabled { cursor: default; }
+.four-reduction-phase-jump:not(:disabled):hover { color: var(--accent); }
+.four-reduction-moves { display: flex; flex-wrap: wrap; gap: 4px; margin-block: 3px 6px; }
+.four-reduction-moves button {
+  min-width: 30px;
+  min-height: 34px;
+  padding: 2px 5px;
+  border-radius: 5px;
+  background: var(--muted);
+  font-size: clamp(1.125rem, 2.8cqw, 1.5rem);
+}
+.four-reduction-moves button:not(:disabled):hover,
+.four-reduction-moves button[data-active] { color: var(--accent-foreground); background: var(--accent); }
+.four-reduction-steps > li > p,
+.four-reduction-phases p.four-reduction-note { color: var(--muted-foreground); }
+.four-reduction-phases p.four-reduction-note { margin-block: 10px 5px; }
+
+.four-reduction-case {
+  display: grid;
+  place-items: center;
+  padding: clamp(4px, 2cqh, 12px);
+}
+.four-reduction-case .puzzle-art { max-width: min(100%, 310px, 82cqh); }
+.four-reduction-quiz-actions { flex-direction: column; align-items: start; }
+.four-reduction-choices { display: flex; flex-wrap: wrap; gap: 6px; }
+.four-reduction-choices button[aria-pressed='true'] { border-color: var(--accent); }
+.four-reduction-choices button[data-correct] { border-color: var(--signal-success); }
+
+.four-reduction-reference dl { margin-block: 10px 18px; }
+.four-reduction-reference dl > div { padding: 8px 0; border-block-end: 1px solid var(--border-default); }
+.four-reduction-reference dd { margin: 2px 0 0; line-height: 1.6; overflow-wrap: anywhere; }
+.four-reduction-reference code { font-size: 1.1rem; }
+.four-reduction-sources { display: flex; flex-wrap: wrap; gap: 6px 14px; margin-block-start: 16px; }
+.four-reduction-sources span { color: var(--muted-foreground); }
+
+.four-reduction-reading button:focus-visible,
+.four-reduction-phase-jump:focus-visible,
+.four-reduction-moves button:focus-visible,
+.four-reduction-choices button:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+
+@container course-reading (max-width: 520px) {
+  .four-reduction-overview-grid { grid-template-columns: minmax(0, 1fr); }
+  .four-reduction-overview-grid button { grid-template: auto / min(24%, 86px) minmax(0, 1fr); }
+  .four-reduction-overview-cube { width: 100%; }
+  .four-reduction-overview-copy { align-self: center; }
+}
+
+@container course-reading (max-height: 345px) and (min-width: 521px) {
+  .four-reduction-overview-cube { width: min(100%, 81px); }
+  .four-reduction-overview-grid { margin-block: 8px; }
+  .four-reduction-transfer { grid-template-columns: minmax(0, 92px) 22px minmax(0, 92px); }
+}
+
+@media (pointer: coarse) {
+  .four-reduction-moves button { min-width: 44px; min-height: 44px; }
+}
+
+@media (max-width: 760px), (orientation: landscape) and (max-height: 500px) {
+  body:has(.tutorial-course[data-course-puzzle='4x4']) :is(.clawd-deskpet, .deskpet-compact) {
+    display: none;
+  }
+}
