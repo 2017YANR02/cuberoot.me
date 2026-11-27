@@ -3,8 +3,7 @@
 import { useEffect, useState, type ComponentType } from 'react';
 import { useEntryRouter as useRouter } from '@/hooks/useEntryRouter';
 import { parseAsStringEnum, useQueryState } from 'nuqs';
-import { BadgeCheck, BellRing, BookOpen, Clapperboard, Compass, Gift, GraduationCap, Grid3X3, HardDrive, HeartHandshake, History, Images, Inbox, Layers, Library, ListChecks, MessageSquare, Music, Pin, Presentation, ScanSearch, ShieldCheck, ShoppingBag, Users, Video, Wrench } from '@app-foundation/icons/lucide';
-import { COMPETITION_WORKSPACES, competitionWorkspaceHref } from '@/lib/competition-links';
+import { BadgeCheck, BellRing, BookOpen, Clapperboard, Compass, Gift, GraduationCap, Grid3X3, HardDrive, HeartHandshake, History, Images, Inbox, Layers, Library, ListChecks, MessageSquare, Music, Pin, Presentation, ScanSearch, ShieldCheck, ShoppingBag, Users, Wrench } from '@app-foundation/icons/lucide';
 import AppLink from '@/components/AppLink';
 import { useT } from '@/hooks/useT';
 import { loginHref, useIsAdmin, useAuthUser } from '@/lib/auth-store';
@@ -14,13 +13,13 @@ import UsersManagement from './users/UsersManagement';
 import DiskManagement from './disk/DiskManagement';
 import WorkResources from './WorkResources';
 import AssistantMonitoring from './AssistantMonitoring';
-import { ADMIN_SECTIONS, ADMIN_SECTION_LABELS, DESTINATION_SECTIONS, SYSTEM_DESTINATION_VIEWS, SYSTEM_VIEWS, SYSTEM_VIEW_LABELS } from './sections';
+import { ADMIN_SECTIONS, ADMIN_SECTION_LABELS, COMPETITION_ADMIN_DESTINATIONS, DESTINATION_SECTIONS, SYSTEM_DESTINATION_VIEWS, SYSTEM_VIEWS, SYSTEM_VIEW_LABELS } from './sections';
 import './admin.css';
 
 interface AdminDestination {
   href: string;
   Icon: ComponentType<{ size?: number; 'aria-hidden'?: boolean }>;
-  title: [string, string];
+  title: readonly [string, string];
 }
 
 // Order snapshot: product analytics, 28 days / public audience, read 2026-11-09 (Pacific).
@@ -56,12 +55,7 @@ const DESTINATIONS: AdminDestination[] = [
   { href: '/wca/result-watch', Icon: History, title: ['成绩变更', 'Result changes'] },
   { href: '/platform/admin/invites', Icon: Gift, title: ['课程兑换码', 'Course redemption codes'] },
   { href: '/docs', Icon: Wrench, title: ['协作文档', 'Collaborative Docs'] },
-  ...([
-    ['manage', ListChecks], ['review', ShieldCheck], ['supervise', Video],
-  ] as const).map(([mode, Icon]): AdminDestination => {
-    const { zh, en } = COMPETITION_WORKSPACES[mode].title;
-    return { href: competitionWorkspaceHref(mode), Icon, title: [zh, en] };
-  }),
+  ...COMPETITION_ADMIN_DESTINATIONS,
   { href: '/courses', Icon: Presentation, title: ['教学课程内容', 'Teaching course content'] },
   { href: '/account', Icon: BellRing, title: ['页面通知与公式校验', 'Page notices and algorithm validation'] },
 ];

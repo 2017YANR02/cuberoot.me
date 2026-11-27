@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { readFileSync } from 'node:fs';
-import { ADMIN_SECTIONS, DESTINATION_SECTIONS, SYSTEM_DESTINATION_VIEWS, SYSTEM_VIEWS, adminSectionForPath } from '../app/[lang]/admin/sections';
+import { ADMIN_SECTIONS, COMPETITION_ADMIN_DESTINATIONS, DESTINATION_SECTIONS, SYSTEM_DESTINATION_VIEWS, SYSTEM_VIEWS, adminSectionForPath } from '../app/[lang]/admin/sections';
 
 describe('admin navigation sections', () => {
   it('selects the current section for both languages and existing detail pages', () => {
@@ -16,7 +16,11 @@ describe('admin navigation sections', () => {
     expect(Object.values(DESTINATION_SECTIONS).every(section => ADMIN_SECTIONS.includes(section))).toBe(true);
     expect(new Set(Object.values(DESTINATION_SECTIONS)).size).toBe(4);
     const page = readFileSync(new URL('../app/[lang]/admin/page.tsx', import.meta.url), 'utf8');
-    const destinations = [...page.matchAll(/\{ href: '([^']+)', Icon:/g)].map(match => match[1]).sort();
+    expect(page).toContain('...COMPETITION_ADMIN_DESTINATIONS,');
+    const destinations = [
+      ...[...page.matchAll(/\{ href: '([^']+)', Icon:/g)].map(match => match[1]),
+      ...COMPETITION_ADMIN_DESTINATIONS.map(({ href }) => href),
+    ].sort();
     expect(destinations).toEqual(Object.keys(DESTINATION_SECTIONS).sort());
     expect(Object.keys(SYSTEM_DESTINATION_VIEWS).sort()).toEqual(Object.keys(DESTINATION_SECTIONS).filter(href => DESTINATION_SECTIONS[href] === 'system').sort());
     expect(Object.values(SYSTEM_DESTINATION_VIEWS).every(view => SYSTEM_VIEWS.includes(view))).toBe(true);

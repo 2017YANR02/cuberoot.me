@@ -132,17 +132,17 @@ function CreateTestDialog({ userId, onClose }: { userId?: number; onClose: () =>
       <header><h3 id={titleId}>{t('一键测试赛', 'Quick test competition')}</h3></header>
       <fieldset className="competition-test-fields" disabled={busy}>
         <label className="competition-field">{t('赛制', 'Format')}
-          <select className="platform-field-control" value={format} onChange={event => setFormat(event.target.value as typeof format)}>
+          <select className="platform-field-control competition-test-select" value={format} onChange={event => setFormat(event.target.value as typeof format)}>
             {(['average', 'advancement'] as const).map(value => <option key={value} value={value}>{competitionFormatName(value, t)}</option>)}
           </select>
         </label>
         <label className="competition-field">{t('形态', 'Mode')}
-          <select className="platform-field-control" value={mode} onChange={event => setMode(event.target.value as typeof mode)}>
+          <select className="platform-field-control competition-test-select" value={mode} onChange={event => setMode(event.target.value as typeof mode)}>
             {(['self_service', 'supervised'] as const).map(value => <option key={value} value={value}>{competitionModeName(value, t)}</option>)}
           </select>
         </label>
         <label className="competition-field">{t('设备', 'Equipment')}
-          <select className="platform-field-control" value={device} onChange={event => setDevice(event.target.value as typeof device)}>
+          <select className="platform-field-control competition-test-select" value={device} onChange={event => setDevice(event.target.value as typeof device)}>
             <option value="smart">{t('智能三阶', 'Smart 3x3')}</option>
             <option value="ordinary">{t('普通魔方', 'Standard cube')}</option>
           </select>
@@ -155,7 +155,7 @@ function CreateTestDialog({ userId, onClose }: { userId?: number; onClose: () =>
         </div>}
         {supervised && <div className="competition-test-wide">
           <label className="competition-field">{t('监督员', 'Supervisor')}
-            <select className="platform-field-control" value={supervisor ?? ''} disabled={!options}
+            <select className="platform-field-control competition-test-select" value={supervisor ?? ''} disabled={!options}
               onChange={event => setSupervisor(Number(event.target.value))}>
               {!options && <option value="">{optionsError ? t('加载失败', 'Loading failed') : t('正在加载…', 'Loading…')}</option>}
               {options?.supervisors.map(user => <option key={user.id} value={user.id}>{user.name || user.id}</option>)}
