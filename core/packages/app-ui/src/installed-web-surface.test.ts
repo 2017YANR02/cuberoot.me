@@ -14,7 +14,7 @@ describe('installed website surfaces', () => {
     expect(app.match(/<iframe/g)).toHaveLength(1);
     expect(app).toContain('MOBILE_EMBED_SURFACES.map((surface) =>');
     expect(app).toContain('<AccountHome auth={auth}');
-    expect(app).toContain("hidden={view !== surface || (surface === 'tools' ? toolsHomeVisible : !accountDetails)}");
+    expect(app).toContain("hidden={view !== surface || (surface === 'account' && !accountDetails)}");
   });
 
   it('bounds init retries, lets a trusted acknowledgement stop early, and exposes recovery', () => {
