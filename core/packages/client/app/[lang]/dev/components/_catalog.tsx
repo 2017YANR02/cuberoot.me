@@ -1097,6 +1097,14 @@ export const CATALOG: ComponentEntry[] = [
     en: 'On-demand paginated feed replies with collapse, retry and a link to the full discussion.',
   },
   {
+    name: 'LoadMoreSentinel',
+    import: "import { LoadMoreSentinel } from '@/components/LoadMoreSentinel';",
+    category: 'more',
+    usage: '<LoadMoreSentinel onLoadMore={loadMore} />',
+    zh: '放在列表底部，接近视口时自动加载下一批内容。',
+    en: 'Place at the end of a list to load the next batch as it approaches the viewport.',
+  },
+  {
     name: 'ContentSkeleton',
     import: "import { ContentSkeleton } from '@/components/ContentSkeleton';",
     category: 'more',
