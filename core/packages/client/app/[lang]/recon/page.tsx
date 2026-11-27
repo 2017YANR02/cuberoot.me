@@ -47,6 +47,7 @@ import { useIsAdmin, useAuthUser, authActions } from '@/lib/auth-store';
 import { CompactSelect } from '@/components/CompactSelect';
 import { ReconCompletionBadge } from '@/components/recon/ReconCompletionBadge';
 import { ContentSkeleton } from '@/components/ContentSkeleton';
+import { LoadMoreSentinel } from '@/components/LoadMoreSentinel';
 
 // ── 视图模式 ──
 type ViewMode = 'list' | 'grid';
@@ -226,7 +227,7 @@ export default function ReconListPage() {
   const pinnedIds = useMemo(() => new Set(pinnedRecons?.map(s => s.id)), [pinnedRecons]);
   const featuredIds = useMemo(() => new Set(featuredRecons?.map(s => s.id)), [featuredRecons]);
   const toggleCuration = async (solve: ReconSolve, kind: 'pin' | 'featured', selected: boolean) => {
-    const key = kind + ':' + solve.id;
+    const key = kind === 'pin' ? 'pin' : kind + ':' + solve.id;
     if (!isAdmin || pendingCuration.current.has(key)) return;
     pendingCuration.current.add(key);
     setSavingCuration(new Set(pendingCuration.current));
@@ -234,7 +235,11 @@ export default function ReconListPage() {
     try {
       await (kind === 'pin' ? setReconHomePin(solve.id, selected) : setReconFeatured(solve.id, selected));
       const update = kind === 'pin' ? setPinnedRecons : setFeaturedRecons;
-      update(prev => selected ? [solve, ...(prev ?? []).filter(s => s.id !== solve.id)] : (prev ?? []).filter(s => s.id !== solve.id));
+      update(prev => {
+        const others = (prev ?? []).filter(s => s.id !== solve.id);
+        if (!selected) return others;
+        return kind === 'pin' ? [solve] : [solve, ...others];
+      });
     } catch {
       setCurationError(tr({ zh: '设置未保存，请重试。', en: 'Could not save this change. Please try again.' }));
     } finally {
@@ -286,7 +291,7 @@ export default function ReconListPage() {
     if (!isAdmin || (solve.visibility && solve.visibility !== 'public') || solve.recordType === 'timing') return personal;
     return {
       ...personal,
-      pin: { active: pinnedIds.has(solve.id), disabled: pinnedRecons === null || savingCuration.has('pin:' + solve.id), onToggle: () => void toggleCuration(solve, 'pin', !pinnedIds.has(solve.id)) },
+      pin: { active: pinnedIds.has(solve.id), disabled: pinnedRecons === null || savingCuration.has('pin'), onToggle: () => void toggleCuration(solve, 'pin', !pinnedIds.has(solve.id)) },
       featured: { active: featuredIds.has(solve.id), disabled: featuredRecons === null || savingCuration.has('featured:' + solve.id), onToggle: () => void toggleCuration(solve, 'featured', !featuredIds.has(solve.id)) },
     };
   };
@@ -464,29 +469,6 @@ export default function ReconListPage() {
 
   const displayed = filtered.slice(0, displayCount);
   const hasMore = filtered.length > displayCount;
-
-  // ── 无限滚动（callback ref 确保条件渲染时 observer 正确绑定） ──
-
-  const observerRef = useRef<IntersectionObserver | null>(null);
-
-  const sentinelRef = useCallback((el: HTMLDivElement | null) => {
-    if (observerRef.current) {
-      observerRef.current.disconnect();
-      observerRef.current = null;
-    }
-    if (!el) return;
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (entries[0].isIntersecting) {
-          // NOTE: 直接从 store 读取最新状态，避免闭包陈旧
-          useReconStore.getState().loadMore();
-        }
-      },
-      { rootMargin: '200px' },
-    );
-    observer.observe(el);
-    observerRef.current = observer;
-  }, []);
 
   // ── 行点击（支持 Ctrl/Meta + 中键） ──
 
@@ -1209,7 +1191,7 @@ export default function ReconListPage() {
               </span>
             )}
           </div>
-          {hasMore && <div ref={sentinelRef} style={{ height: 1 }} />}
+          {hasMore && <LoadMoreSentinel onLoadMore={() => useReconStore.getState().loadMore()} />}
         </>
       )}
     </div>

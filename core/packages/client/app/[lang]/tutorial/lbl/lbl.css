@@ -8,7 +8,6 @@
 .lbl-header a, .lbl-single-heading-back { display: inline-flex; align-items: center; gap: 4px; min-height: 32px; color: var(--muted-foreground); text-decoration: none; }
 .lbl-header a:hover, .lbl-single-heading-back:hover { color: var(--foreground); }
 .lbl-header h1 { margin: 0; font-size: 1rem; }
-.lbl-header-title { display: flex; align-items: center; gap: 12px; }
 .lbl-page :is(.lbl-section-button, .lbl-footer-button, .lbl-practice-button, .lbl-alg-move) { font: inherit; cursor: pointer; }
 .lbl-page :is(.lbl-section-button, .lbl-footer-button, .lbl-practice-button, .lbl-alg-move):focus-visible, .lbl-page summary:focus-visible { outline: 2px solid var(--ring); outline-offset: 4px; }
 .lbl-body { display: grid; grid-template-columns: 220px minmax(0, 1fr); min-height: 0; gap: 24px; padding-top: 14px; }
@@ -25,6 +24,7 @@
 .lbl-practice-page .lbl-exercise { box-sizing: border-box; min-height: 0; margin-top: 0; display: grid; grid-template-rows: 64px minmax(0, 1fr) auto; }
 .lbl-practice-page .lbl-exercise-heading { min-height: 0; overflow: auto; }
 .lbl-practice-heading-actions { display: flex; flex: none; align-items: center; gap: 6px; }
+.lbl-practice-heading-actions .lbl-smart-practice-link { display: inline-flex; align-items: center; min-height: 44px; font-size: .85rem; white-space: nowrap; }
 .lbl-practice-device {
   display: inline-flex;
   align-items: center;
@@ -46,13 +46,6 @@
 .lbl-practice-device:focus-visible { border-color: var(--border-strong); }
 .lbl-practice-device[data-connected='true'] { color: var(--accent); }
 .lbl-practice-page .lbl-exercise[data-single-heading] .lbl-exercise-heading { gap: 8px; }
-.lbl-exercise[data-single-heading] .lbl-practice-device { min-block-size: 44px; padding-inline: 6px; }
-.lbl-exercise[data-single-heading] .lbl-practice-device-label { display: none; }
-.lbl-exercise[data-single-heading] .lbl-practice-device-compact { display: inline; }
-.lbl-practice-cube-setup { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; font-size: .85rem; }
-.lbl-practice-page .lbl-cube[data-live-fallback] > .alg-sim-player { visibility: hidden; }
-.lbl-practice-live-fallback { position: absolute; inset: 0; pointer-events: none; }
-.lbl-practice-live-fallback svg { display: block; width: 100%; height: 100%; }
 .lbl-practice-page .lbl-exercise .lbl-basic-content { min-height: 0; overflow: auto; overscroll-behavior: contain; align-items: start; }
 .lbl-practice-page .lbl-exercise .lbl-basic-copy { align-self: start; padding-top: 16px; }
 .lbl-practice-page .lbl-exercise-reference { display: grid; }
@@ -592,8 +585,7 @@
   .lbl-lesson-scroll :is(.lbl-demonstration, .lbl-complete .lbl-cube) .alg-sim-player.is-fill { height: auto; flex: none; padding: 0; }
 }
 
-.tutorial-course.lbl-walkthrough-page { grid-template-rows: auto minmax(0, 1fr); }
-.lbl-walkthrough-page .lbl-walkthrough-example { margin-inline-start: auto; }
+.lbl-page.lbl-walkthrough-page { grid-template-rows: auto auto minmax(0, 1fr) auto; }
 .lbl-walkthrough-playback {
   display: grid;
   grid-template-rows: minmax(0, 1fr) auto;

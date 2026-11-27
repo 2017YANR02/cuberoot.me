@@ -1,125 +1,116 @@
 'use client';
 
+import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { ChevronDown } from '@app-foundation/icons/lucide';
+import type { ReconSolve } from '@cuberoot/shared';
+import { SkeletonBlock } from '@/components/ContentSkeleton';
+import { CuratedReconCard } from '@/components/ReconCard/CuratedReconCard';
 import { useRetainedState } from '@/hooks/useRetainedState';
 import { useContentRefreshKey } from '@/hooks/useContentRefreshKey';
-
-// Landing「今日复盘」— /recon 最新录入那天的全部复盘。每次加载自动取最新一天。
-// 宽屏一行四卡、≤1080px 三卡、≤900px 两卡(复用 /recon?view=grid 的 ReconCard 竖排卡,
-// 但不显示打乱公式:showScrambleFallback={false},只有视频封面才出媒体区);
-// 从第三行起使用右侧滚动条(.scroll-panel,与「比赛中心」同一套)。点卡进 /recon/[id] 看完整回放。
-// 数据:lib/recon-api getTodayRecons()(主用 /v1/recon/today,回退 /latest 单条)。
-import { useEffect, useLayoutEffect, useMemo, useRef } from 'react';
-import Link from '@/components/AppLink';
-import { ArrowRight } from 'lucide-react';
-import type { ReconSolve } from '@cuberoot/shared';
 import { getTodayRecons } from '@/lib/recon-api';
-import { CuratedReconCard } from '@/components/ReconCard/CuratedReconCard';
 import { reconPathSeg } from '@/lib/recon-seo';
-import './today_recon.css';
-import './scroll_panel.css';
 import { tr } from '@/i18n/tr';
+import './scroll_panel.css';
+import './today_recon.css';
 
 interface Props {
   lang: 'zh' | 'en';
   pinnedRecons: ReconSolve[] | null;
-  pinnedOnly?: boolean;
+  savingPin: boolean;
   isAdmin: boolean;
-  savingPins: ReadonlySet<number>;
+  canEditPins: boolean;
   pinError: string | null;
+  emptyPin: ReactNode;
   onPin: (solve: ReconSolve, pinned: boolean) => Promise<void>;
 }
 
-export default function TodayRecon({ lang, pinnedRecons, pinnedOnly = false, isAdmin, savingPins, pinError, onPin }: Props) {
-  const isZh = lang === 'zh';
-  const refreshKey = useContentRefreshKey(!pinnedOnly);
+export default function TodayRecon({ lang, pinnedRecons, savingPin, isAdmin, canEditPins, pinError, emptyPin, onPin }: Props) {
+  const refreshKey = useContentRefreshKey();
   const [recons, setRecons] = useRetainedState<ReconSolve[] | null>('home:todayRecons', null);
-  const cardsRef = useRef<HTMLDivElement>(null);
 
-  // idle-defer fetch(同 RecentScrambles / OngoingComps,不阻塞首屏)
   useEffect(() => {
-    if (pinnedOnly) return;
-    let on = true;
-    const kick = () => {
-      if (!on) return;
+    let active = true;
+    const load = () => {
       getTodayRecons()
-        .then((list) => { if (on) setRecons(list.filter(s => s.recordType !== 'timing')); })
-        .catch(() => { if (on) setRecons(previous => previous ?? []); });
+        .then(rows => { if (active) setRecons(rows.filter(solve => solve.recordType !== 'timing')); })
+        .catch(() => { if (active) setRecons(previous => previous ?? []); });
     };
-    type RIC = (cb: () => void, opts?: { timeout?: number }) => number;
-    const w = window as Window & { requestIdleCallback?: RIC; cancelIdleCallback?: (id: number) => void };
-    let idleId: number | null = null;
-    let timeoutId: ReturnType<typeof setTimeout> | null = null;
-    if (w.requestIdleCallback) idleId = w.requestIdleCallback(kick, { timeout: 2000 });
-    else timeoutId = setTimeout(kick, 200);
+    const idleId = window.requestIdleCallback?.(load, { timeout: 1000 });
+    const timeoutId = idleId === undefined ? setTimeout(load, 200) : undefined;
     return () => {
-      on = false;
-      if (idleId !== null) w.cancelIdleCallback?.(idleId);
-      if (timeoutId !== null) clearTimeout(timeoutId);
+      active = false;
+      if (idleId !== undefined) window.cancelIdleCallback(idleId);
+      if (timeoutId !== undefined) clearTimeout(timeoutId);
     };
-  }, [pinnedOnly, refreshKey, setRecons]);
+  }, [refreshKey, setRecons]);
 
-  const pinnedIds = useMemo(() => new Set(pinnedRecons?.map(solve => solve.id)), [pinnedRecons]);
-  const visibleRecons = useMemo(
-    () => pinnedOnly ? pinnedRecons : recons?.filter(solve => !pinnedIds.has(solve.id)) ?? null,
-    [pinnedOnly, pinnedRecons, recons, pinnedIds],
-  );
-  useLayoutEffect(() => {
-    const panel = cardsRef.current;
-    if (!panel) return;
-    const cards = Array.from(panel.children);
+  const pinned = pinnedRecons?.[0];
+  const loadingPin = pinnedRecons === null && !pinError;
+  const recent = recons?.filter(solve => solve.id !== pinned?.id);
+  const hasRecent = Boolean(recent?.length);
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const [scrollEdges, setScrollEdges] = useState({ up: false, down: false });
 
-    const measure = () => {
-      if (!panel.clientWidth) return;
-      // Resolved grid tracks include the implicit rows and their actual heights.
-      const { gridTemplateRows, rowGap, paddingTop, paddingBottom } = getComputedStyle(panel);
-      const rows = gridTemplateRows.split(' ').map(Number.parseFloat);
-      let maxHeight = '';
-      if (rows.length > 2) {
-        const firstTwo = rows[0] + rows[1] + Number.parseFloat(rowGap);
-        const padding = Number.parseFloat(paddingTop) + Number.parseFloat(paddingBottom);
-        maxHeight = `${Math.ceil(Math.max(firstTwo, ...rows) + padding)}px`;
-      }
-      if (panel.style.maxHeight !== maxHeight) panel.style.maxHeight = maxHeight;
-      if (maxHeight) {
-        if (panel.tabIndex !== 0) panel.tabIndex = 0;
-      } else {
-        panel.removeAttribute('tabindex');
-      }
+  useEffect(() => {
+    const viewport = scrollRef.current;
+    if (!viewport) return;
+    const updateEdges = () => {
+      const up = viewport.scrollTop > 1;
+      const down = viewport.scrollHeight - viewport.clientHeight - viewport.scrollTop > 1;
+      setScrollEdges(previous => previous.up === up && previous.down === down ? previous : { up, down });
     };
-    measure();
-    const observer = new ResizeObserver(measure);
-    observer.observe(panel);
-    cards.forEach(card => observer.observe(card));
-    return () => observer.disconnect();
-  }, [isAdmin, visibleRecons]);
+    updateEdges();
+    const observer = new ResizeObserver(updateEdges);
+    observer.observe(viewport);
+    if (viewport.firstElementChild) observer.observe(viewport.firstElementChild);
+    viewport.addEventListener('scroll', updateEdges, { passive: true });
+    return () => {
+      observer.disconnect();
+      viewport.removeEventListener('scroll', updateEdges);
+    };
+  }, [hasRecent]);
 
-  if (pinnedOnly && !visibleRecons?.length) return null;
-  if (visibleRecons === null) return <div className="today-recon today-recon--loading" data-tour="today-replay" aria-hidden="true" />;
-  if (recons?.length === 0 && !pinnedOnly) return <p className="landing-slot-message">{tr({ zh: '暂无复盘', en: 'No recons available' })}</p>;
-
-  const renderCard = (s: ReconSolve) => {
-    const pinned = pinnedIds.has(s.id);
+  const canScroll = scrollEdges.up || scrollEdges.down;
+  const arrowUp = scrollEdges.up && !scrollEdges.down;
+  const scrollRecent = () => {
+    const viewport = scrollRef.current;
+    if (!viewport) return;
+    viewport.scrollBy({ top: arrowUp ? -viewport.clientHeight : viewport.clientHeight });
+  };
+  const renderCard = (solve: ReconSolve, compact = false) => {
+    const active = pinned?.id === solve.id;
     return (
-      <CuratedReconCard key={s.id} solve={s} isZh={isZh} href={`/recon/${reconPathSeg(s)}`} showScrambleFallback={false}
-        pin={isAdmin ? { active: pinned, disabled: pinnedRecons === null || savingPins.has(s.id), onToggle: () => void onPin(s, !pinned) } : undefined} />
+      <CuratedReconCard key={solve.id} solve={solve} isZh={lang === 'zh'} href={`/recon/${reconPathSeg(solve)}`}
+        compact={compact} showScrambleFallback={false}
+        pin={canEditPins ? { active, disabled: pinnedRecons === null || savingPin, onToggle: () => void onPin(solve, !active) } : undefined} />
     );
   };
-  if (pinnedOnly) return <>{visibleRecons.map(renderCard)}{isAdmin && pinError && <p role="alert">{pinError}</p>}</>;
 
   return (
-    <div className="today-recon" data-tour="today-replay">
-      <div className="tr-head">
-        <span className="tr-title">{tr({ zh: '复盘', en: 'Reconstructions' })}</span>
-        <Link href="/recon" prefetch={false} className="tr-all" aria-label={tr({ zh: '查看全部复盘', en: 'View all reconstructions' })}><ArrowRight size={18} aria-hidden="true" /></Link>
-      </div>
-
-      {isAdmin && pinError && <p role="alert">{pinError}</p>}
-      {visibleRecons.length > 0 && (
-        <div ref={cardsRef} className="tr-cards scroll-panel scroll-panel--hover-lift"
-          role="region" aria-label={tr({ zh: '复盘', en: 'Reconstructions' })}>
-          {visibleRecons.map(renderCard)}
+    <section className="today-recon" data-tour="today-replay"
+      aria-label={pinned ? tr({ zh: '置顶复盘', en: 'Pinned reconstruction' }) : tr({ zh: '复盘', en: 'Reconstructions' })}>
+      {isAdmin && pinError && <p className="landing-slot-message" role="alert">{pinError}</p>}
+      <div className={`tr-content${pinned || loadingPin ? ' tr-content--pinned' : ''}`}>
+        <div className="tr-primary" aria-busy={loadingPin}>
+          {pinned ? renderCard(pinned) : loadingPin ? <SkeletonBlock className="landing-widget-skeleton" /> : emptyPin}
         </div>
-      )}
-    </div>
+        {recent === undefined ? <SkeletonBlock className="tr-recent-loading" /> : recent.length > 0 && (
+          <div className="tr-recent" data-site-surface="panel">
+            <div ref={scrollRef} className="tr-recent-scroll scroll-panel" role="region"
+              tabIndex={canScroll ? 0 : undefined} aria-label={tr({ zh: '近期复盘', en: 'Recent reconstructions' })}>
+              <div className="tr-recent-rows">{recent.map(solve => renderCard(solve, true))}</div>
+            </div>
+            {canScroll && (
+              <button type="button" className="tr-scroll-arrow" data-direction={arrowUp ? 'up' : 'down'} onClick={scrollRecent}
+                aria-label={arrowUp
+                  ? tr({ zh: '向上滚动复盘列表', en: 'Scroll reconstructions up' })
+                  : tr({ zh: '向下滚动复盘列表', en: 'Scroll reconstructions down' })}>
+                <ChevronDown size={18} aria-hidden />
+              </button>
+            )}
+          </div>
+        )}
+      </div>
+    </section>
   );
 }

@@ -47,7 +47,7 @@ export const atlasCatalog = {
 };
 
 export const demoPhases = {
-  loading: ['加载手模中…', 'Loading hands…'], start: ['起手', 'Starting grip'],
+  loading: ['加载手模中…', 'Loading hands…'], pose: ['起手状态', 'Starting grip'], start: ['起手', 'Starting grip'],
   regrip: ['换握中', 'Regripping'], gripped: ['换握就位', 'Grip in place'], prepare: ['准备发力', 'Preparing'], turn: ['转动中', 'Turning'],
   handoff: ['90° · 中指就位', '90° · middle finger ready'],
   settle: ['收手', 'Recovering'], end: ['转动结束', 'Finished'],

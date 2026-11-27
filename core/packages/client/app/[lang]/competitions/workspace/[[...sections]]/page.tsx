@@ -1,6 +1,7 @@
 import { notFound } from 'next/navigation';
 import { Plus } from '@app-foundation/icons/lucide';
 import AppLink from '@/components/AppLink';
+import { CompetitionTestCreateButton } from '@/components/competitions/CompetitionTestActions';
 import { OnlineCompetitions } from '@/components/competitions/OnlineCompetitions';
 import { PlatformRouteView } from '@/components/platform/PlatformRouteView';
 import { COMPETITION_ACTIVITIES_PATH, COMPETITION_HOST_TITLE, COMPETITION_WORKSPACES, competitionWorkspaceHref, matchCompetitionHostRoute } from '@/lib/competition-links';
@@ -40,9 +41,12 @@ export default async function CompetitionHostPage({ params }: RouteParams) {
   if (match.mode === 'overview') return <>
     <header className="competition-host-page-heading">
       <h1>{overview[locale]}</h1>
-      <AppLink className="competition-primary" href={competitionWorkspaceHref('create')} prefetch={false}>
-        <Plus size={16} aria-hidden />{COMPETITION_WORKSPACES.create.title[locale]}
-      </AppLink>
+      <div className="competition-toolbar">
+        <AppLink className="competition-primary" href={competitionWorkspaceHref('create')} prefetch={false}>
+          <Plus size={16} aria-hidden />{COMPETITION_WORKSPACES.create.title[locale]}
+        </AppLink>
+        <CompetitionTestCreateButton />
+      </div>
     </header>
     <CompetitionHostOverview />
   </>;

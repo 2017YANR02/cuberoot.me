@@ -2,6 +2,7 @@
 
 import { useLayoutEffect, useRef, type ReactNode, type RefObject } from 'react';
 import { Play, Pause, SkipBack, SkipForward, ChevronLeft, ChevronRight, PictureInPicture2 } from 'lucide-react';
+import { Tooltip } from './Tooltip';
 import PlaybackScrubber from './PlaybackScrubber';
 import './PlaybackBar.css';
 
@@ -70,12 +71,13 @@ export function PlaybackBackViewButton({ visible, toggle = true, onClick, showLa
   visible: boolean; toggle?: boolean; onClick(): void; showLabel: string; hideLabel: string;
   buttonRef?: RefObject<HTMLButtonElement | null>;
 }) {
-  return <button ref={buttonRef} type="button" className="playback-bar-btn playback-bar-backview-btn" aria-pressed={toggle ? visible : undefined}
-    onClick={onClick} aria-label={visible ? hideLabel : showLabel}>
+  const label = visible ? hideLabel : showLabel;
+  return <Tooltip content={label}>{tip => <button {...tip} ref={buttonRef} type="button" className="playback-bar-btn playback-bar-backview-btn" aria-pressed={toggle ? visible : undefined}
+    onClick={onClick} aria-label={label}>
     <PictureInPicture2 size={14} aria-hidden="true">
       {visible && <path d="m2 2 20 20" />}
     </PictureInPicture2>
-  </button>;
+  </button>}</Tooltip>;
 }
 
 export function resolveBackViewOptions<T extends { backView: boolean; hint: boolean }>(
@@ -198,11 +200,18 @@ export default function PlaybackBar({
       </div>
       <div className="playback-bar-controls" part="controls">
         {leading}
-        <button type="button" className="playback-bar-btn" part="start" onClick={onSkipStart} disabled={atStart} title={L.skipStart} aria-label={L.skipStart}><SkipBack size={14} /></button>
-        <button type="button" className="playback-bar-btn" part="previous" onClick={onStepBack} disabled={atStart} title={L.stepBack} aria-label={L.stepBack}><ChevronLeft size={14} /></button>
-        <button type="button" className="playback-bar-btn" part="play" onClick={onTogglePlay} disabled={empty} title={playing ? L.pause : L.play} aria-label={playing ? L.pause : L.play}>{playing ? <Pause size={14} /> : <Play size={14} />}</button>
-        <button type="button" className="playback-bar-btn" part="next" onClick={onStepForward} disabled={atEnd} title={L.stepForward} aria-label={L.stepForward}><ChevronRight size={14} /></button>
-        <button type="button" className="playback-bar-btn" part="end" onClick={onSkipEnd} disabled={atEnd} title={L.skipEnd} aria-label={L.skipEnd}><SkipForward size={14} /></button>
+        {([
+          ['start', L.skipStart, SkipBack, onSkipStart, atStart],
+          ['previous', L.stepBack, ChevronLeft, onStepBack, atStart],
+          ['play', playing ? L.pause : L.play, playing ? Pause : Play, onTogglePlay, empty],
+          ['next', L.stepForward, ChevronRight, onStepForward, atEnd],
+          ['end', L.skipEnd, SkipForward, onSkipEnd, atEnd],
+        ] as const).map(([part, label, Icon, onClick, inactive]) => (
+          <Tooltip key={part} content={label}>{tip => (
+            <button {...tip} type="button" className="playback-bar-btn" part={part}
+              onClick={onClick} disabled={inactive} aria-label={label}><Icon size={14} /></button>
+          )}</Tooltip>
+        ))}
         {trailing}
       </div>
     </div>

@@ -155,11 +155,21 @@ function activePage() { return host.querySelector<HTMLElement>('.sim-page:not([h
 // Compare the full geometry and paint, ignoring only that resource namespace.
 function previewContent() { return preview()?.outerHTML.replace(/grad-svg\d+-/g, 'grad-'); }
 
+function workspaceButton() {
+  return activePage().querySelector<HTMLButtonElement>('button[aria-label="Workspace mode"]')!;
+}
+
+async function workspaceOptions() {
+  const trigger = workspaceButton();
+  if (trigger.getAttribute('aria-expanded') !== 'true') await act(async () => trigger.click());
+  return [...document.querySelectorAll<HTMLButtonElement>('[role="listbox"][aria-label="Workspace mode"] [role="option"]')];
+}
+
 async function setWorkspace(value: 'sim' | 'draw') {
+  const label = value === 'sim' ? 'Animation' : 'Drawing';
+  const option = (await workspaceOptions()).find(button => button.textContent === label)!;
   await act(async () => {
-    const select = activePage().querySelector<HTMLSelectElement>('select[aria-label="Workspace mode"]')!;
-    select.value = value;
-    select.dispatchEvent(new Event('change', { bubbles: true }));
+    option.click();
     await vi.dynamicImportSettled();
   });
 }
@@ -204,12 +214,11 @@ it('keeps independent drawing content across animation edits, new drawings and u
     searchParams: '?puzzle=dogic&renderer=cubing', ...memoryAdapter,
     children: [createElement(RouteControls, { key: 'routes' }), createElement(SimPage, { key: 'sim' })],
   })));
-  const workspace = host.querySelector<HTMLSelectElement>('select[aria-label="Workspace mode"]')!;
-  expect([...workspace.options].map(option => [option.value, option.text])).toEqual([
-    ['sim', 'Animation'], ['draw', 'Drawing'],
+  expect((await workspaceOptions()).map(option => [option.textContent, option.getAttribute('aria-selected')])).toEqual([
+    ['Animation', 'true'], ['Drawing', 'false'],
   ]);
   await setWorkspace('draw');
-  expect(activePage().querySelector<HTMLSelectElement>('select[aria-label="Workspace mode"]')?.value).toBe('draw');
+  expect(workspaceButton().textContent).toBe('Drawing');
   expect(host.querySelector('[aria-label="Drawing source"]')).toBeNull();
   expect(activePage().querySelector<HTMLElement>('.sim-capture-controls')?.hidden).toBe(false);
   await vi.waitFor(async () => {
@@ -343,7 +352,7 @@ it.each(['?tool=capture', '?tool=draw&drawSource=state'])('clears stale previews
     ...memoryAdapter,
     children: [createElement(RouteControls, { key: 'routes' }), createElement(SimPage, { key: 'sim' })],
   })));
-  expect(activePage().querySelector<HTMLSelectElement>('select[aria-label="Workspace mode"]')?.value).toBe('draw');
+  expect(workspaceButton().textContent).toBe('Drawing');
   await vi.waitFor(async () => {
     await sampleFrames();
     expect(preview()?.querySelectorAll('polygon')).toHaveLength(120);

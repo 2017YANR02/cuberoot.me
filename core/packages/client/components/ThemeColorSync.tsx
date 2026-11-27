@@ -3,8 +3,7 @@
 // Keeps <meta name="theme-color"> in sync with the page's real background so
 // iOS Safari paints its top/bottom chrome to match — dark mode no longer leaks
 // white at the screen edges. Reading the resolved <html> background-color is
-// correct for every page kind: dual-theme (token flips), dark-locked (/wca/*,
-// always #171717) and light-locked (/calc) alike, and it matches whatever the
+// correct for dual-theme and theme-locked pages, and it matches whatever the
 // overscroll rubber-band shows. The pre-paint bootstrap sets a first guess from
 // the stored/OS theme; this corrects it after CSS resolves and on every change.
 

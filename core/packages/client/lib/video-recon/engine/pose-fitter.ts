@@ -3,7 +3,7 @@ import type { FittedPose, PoseObservations } from "./pose-types";
 import { BufferedPosePipeline, type PipelineFrame } from "../pose-fitter/runtime/buffered-pipeline.mjs";
 import { PoseWorkerPool } from "./pose-worker-pool";
 import { centerColorsForScramble } from "./cube-colors";
-import {videoFrameIdentity,CAMERA_CLOCK_HZ} from '../pose-fitter/runtime/reconstruction-policy.mjs';
+import {videoFrameIdentity,MEDIA_CLOCK_HZ} from '../pose-fitter/runtime/reconstruction-policy.mjs';
 
 export function poseObservations(frame: FrameResult): PoseObservations {
   const landmarks = frame.detections.filter(point => point.classId < 3);
@@ -15,7 +15,7 @@ export function poseObservations(frame: FrameResult): PoseObservations {
   };
 }
 const COLORS = ["corner", "corner-edge", "corner-edge-center", "white", "yellow", "orange", "red", "blue", "green"];
-export interface PoseFittingOptions {scramble:string;turningStartFrame:number|null;originSeconds?:number;endSeconds?:number;camera?:boolean}
+export interface PoseFittingOptions {scramble:string;turningStartFrame:number|null;originSeconds?:number;endSeconds?:number;camera?:boolean;video?:boolean}
 export function pipelineFrame(frame: FrameResult, frameIndex: number): PipelineFrame {
   return { ...poseObservations(frame), frame: frameIndex,
     pixel_scale: Math.max(Math.max(frame.transform.cropWidth, frame.transform.cropHeight) / 400, 0.3),
@@ -38,7 +38,8 @@ export class PoseFitter {
   fit(frame: FrameResult, reset: boolean, timestamp = 0, sourceFps = 30,
       options:PoseFittingOptions={scramble:"",turningStartFrame:null}): Promise<FittedPose> {
     const fps = sourceFps > 0 ? sourceFps : 30;
-    const clockFps = options.camera ? CAMERA_CLOCK_HZ : fps;
+    const frameClock = options.camera ? 'camera_milliseconds' : options.video ? 'video_milliseconds' : undefined;
+    const clockFps = frameClock ? MEDIA_CLOCK_HZ : fps;
     const dimensions = frame.transform.sourceWidth + "x" + frame.transform.sourceHeight;
     const configKey=JSON.stringify(options);
     if (reset || !this.stream || this.stream.ended || dimensions !== this.dimensions || Math.abs(fps - this.fps) > 0.001 || configKey!==this.configKey) {
@@ -50,7 +51,7 @@ export class PoseFitter {
       this.segment++;
     }
     const sourceFrame = videoFrameIdentity(timestamp,{fps:clockFps}).sourceFrame, segment = this.segment,
-      fittingConfig={segment,fps:clockFps,...(options.camera?{sourceFps:fps,frameClock:'camera_milliseconds' as const}:{}),...this.activeConfig};
+      fittingConfig: NonNullable<FittedPose['fittingConfig']>={segment,fps:clockFps,...(frameClock?{sourceFps:fps,frameClock}:{}),...this.activeConfig};
     return this.stream.push(pipelineFrame(frame, sourceFrame)).then(value => ({ ...value, sourceFrame,
       fittingConfig }));
   }
@@ -60,7 +61,7 @@ export class PoseFitter {
     for (const segment of segments) this.segments.delete(segment);
     if(this.stream&&segments.includes(this.stream)&&this.stream.ended)this.stream=undefined;
   }
-  dispose() {
-    for (const segment of this.segments) segment.cancel(); this.segments.clear(); this.pool.dispose();
+  dispose(cause?: Error) {
+    for (const segment of this.segments) segment.cancel(cause); this.segments.clear(); this.pool.dispose();
   }
 }

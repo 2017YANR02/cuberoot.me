@@ -1,9 +1,11 @@
 import { Alg } from 'cubing/alg';
+import { puzzles } from 'cubing/puzzles';
+import { scramble333 } from '@cuberoot/shared/timer/seeded/nxnxn';
 import { AllFaces, CubeData, Face, parseAlgorithm } from '@cuberoot/visualcube';
 import { describe, expect, it } from 'vitest';
 import { buildWalkthroughDemo, buildWhiteUpWalkthrough, completeDemoPool, demoGoalReached } from '@/app/[lang]/tutorial/lbl/complete-demo-state';
 import { LBL_LESSON_RUNS, LBL_LESSON_STAGE_IDS } from '@/app/[lang]/tutorial/lbl/lesson-runs';
-import { CORNER_ALIGNMENT_COPY, J_ALG, LBL_STEPS, RIGHT } from '@/app/[lang]/tutorial/lbl/content';
+import { CORNER_ALIGNMENT_COPY, J_ALG, LBL_STEPS, LEFT_SUNE, RIGHT, RIGHT_SUNE } from '@/app/[lang]/tutorial/lbl/content';
 
 const demos = completeDemoPool('corners');
 const state = (alg: string) => {
@@ -93,9 +95,73 @@ describe('LBL bottom-corner complete demos', () => {
       if (lastCornerTurn) {
         expect(moves.slice(lastCornerTurn.start, lastCornerTurn.end).join(' ')).toBe(J_ALG);
       }
-      expect(demo.phases.some(phase => phase.act.text.zh === '转顶层，让顶角先对齐侧面中心')).toBe(false);
+      expect(starts.every(phase => phase.start === phase.end)).toBe(true);
     }
   });
+
+  it('plays new scrambles through the taught stage goals and explains the alignment turn', async () => {
+    const model = await puzzles['3x3x3'].kpuzzle();
+    const sides = [Face.F, Face.R, Face.B, Face.L];
+    const aligned = (alg: string) => {
+      const faces = state(alg);
+      return sides.every(face => [0, 2].every(i => faces[face][i][0] === faces[face][4][0]));
+    };
+    let seed = 0x1b1;
+    const rng = () => ((seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0) / 2 ** 32);
+    let alignments = 0;
+    const recognized = new Set<string>();
+    for (let i = 0; i < 24; i++) {
+      const { demo, scramble } = buildWhiteUpWalkthrough(scramble333(rng));
+      expect(state(scramble)).toEqual(state(`z2 ${demo.setup}`));
+      const moves = demo.alg.split(' ');
+      const at = (end: number) => `${demo.setup} ${moves.slice(0, end).join(' ')}`;
+      const intro = demo.phases.filter(phase => phase.holdMs === 2000);
+      for (const [index, stage] of LBL_LESSON_STAGE_IDS.entries()) {
+        expect(demoGoalReached(stage, at(intro[index + 1]?.start ?? moves.length)), stage).toBe(true);
+      }
+      let cursor = 0;
+      for (const phase of demo.phases) {
+        expect(phase.start, phase.act.text.zh).toBe(cursor);
+        cursor = phase.end;
+        const turns = moves.slice(phase.start, phase.end).join(' ');
+        if (phase.act.alg) expect(new Alg(phase.act.alg).expand().toString()).toBe(turns);
+        const recognition = phase.recognize?.text.zh;
+        if (recognition && ['yellow-cross', 'yellow-face', 'corner-position', 'edge-position'].includes(phase.stage ?? '')) {
+          const faces = state(at(phase.start));
+          const yellow = (face: Face, index: number) => faces[face][index][0] === 'U';
+          if (recognition === '两条黄棱成直线' || recognition === '两条黄棱相邻' || recognition === '没有黄棱朝上') {
+            const up = [1, 3, 5, 7].filter(index => yellow(Face.U, index));
+            expect(up.length).toBe(recognition === '没有黄棱朝上' ? 0 : 2);
+            if (up.length) expect(up[0] + up[1] === 8).toBe(recognition === '两条黄棱成直线');
+            recognized.add('cross');
+          }
+          if (/^[234]个非黄格/.test(recognition)) {
+            expect([0, 2, 6, 8].filter(index => !yellow(Face.U, index))).toHaveLength(Number(recognition[0]));
+            recognized.add('face');
+          }
+          if (recognition.startsWith('找到一对眼') || recognition === '四面都没有眼') {
+            expect(sides.filter(face => faces[face][0][0] === faces[face][2][0])).toHaveLength(recognition.startsWith('找到') ? 1 : 0);
+            recognized.add('corners');
+          }
+          if (recognition.startsWith('找到墙') || recognition.startsWith('四面都没有墙')) {
+            expect(sides.filter(face => [0, 1, 2].every(index => faces[face][index][0] === faces[face][4][0]))).toHaveLength(recognition.startsWith('找到') ? 1 : 0);
+            recognized.add('edges');
+          }
+        }
+        if (phase.act.text.zh === '做左鱼公式') expect(turns).toBe(LEFT_SUNE);
+        if (phase.act.text.zh === '做右鱼公式') expect(turns).toBe(RIGHT_SUNE);
+        if (phase.stage !== 'edge-position' || phase.act.text.zh !== '对齐顶层') continue;
+        alignments++;
+        expect(phase.act.detail?.zh).toContain('四个顶角的侧色');
+        expect(aligned(at(phase.start))).toBe(false);
+        expect(aligned(at(phase.end))).toBe(true);
+      }
+      expect(cursor).toBe(moves.length);
+      expect(model.defaultPattern().applyAlg(new Alg(at(moves.length))).experimentalIsSolved({ ignorePuzzleOrientation: true, ignoreCenterOrientation: true })).toBe(true);
+    }
+    expect(alignments).toBeGreaterThan(0);
+    expect(recognized).toEqual(new Set(['cross', 'face', 'corners', 'edges']));
+  }, 30000);
 });
 
 describe('LBL top-corner placement', () => {

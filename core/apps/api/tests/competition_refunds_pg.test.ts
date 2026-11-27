@@ -59,6 +59,7 @@ describe.skipIf(!databaseUrl)('paid competition refund with real PostgreSQL fulf
       INSERT INTO platform_event_ticket_types(id,event_id,code,title_zh,title_en,amount_minor,currency,capacity,competition_project,competition_device) VALUES('${ticket}','${event}','333','三阶','3x3',1000,'CNY',1,'333','ordinary');
       INSERT INTO platform_competition_sessions(id,event_id,starts_at,ends_at,capacity,supervisor_user_id) VALUES('${session}','${event}',NOW()+INTERVAL '1 hour',NOW()+INTERVAL '2 hours',1,2);`);
     await db.unsafe(migration('0356_competition_unified_workflow.sql'));
+    await db.unsafe(migration('0365_competition_test_mode.sql'));
   }, 60_000);
   afterAll(async () => {
     vi.unstubAllEnvs(); await db?.end();

@@ -73,7 +73,7 @@ describe('Pyraminx Duo player controls', () => {
   }
 
   function button(label: string) {
-    const element = host.querySelector<HTMLButtonElement>(`button[title="${label}"]`);
+    const element = host.querySelector<HTMLButtonElement>(`button[aria-label="${label}"], button[title="${label}"]`);
     expect(element, label).not.toBeNull();
     return element!;
   }

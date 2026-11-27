@@ -175,6 +175,68 @@ it.each([null, 8])('opens local video reconstruction without membership for visi
   expect(uploadReconVideo).not.toHaveBeenCalled();
 });
 
+async function openVideoLinkEntry() {
+  const opener = [...host.querySelectorAll('button')].find(button => button.textContent === 'Reconstruct from a link')!;
+  await act(async () => opener.click());
+  return host.querySelector<HTMLInputElement>('.submit-video-link-entry input')!;
+}
+
+async function pasteVideoLink(url: string) {
+  const field = await openVideoLinkEntry();
+  const event = new Event('paste', { bubbles: true, cancelable: true });
+  Object.defineProperty(event, 'clipboardData', { value: { getData: () => url } });
+  await act(async () => field.dispatchEvent(event));
+  expect(event.defaultPrevented).toBe(true);
+}
+
+it('runs the same review for a direct link without replacing the attached URLs or uploading it', async () => {
+  fixture.user = { uid: 7, wcaId: '', name: 'Editor' };
+  const existingLink = 'https://example.com/existing.mp4';
+  vi.mocked(getRecon).mockResolvedValue({ ...fixture.solve, videoUrl: existingLink } as Awaited<ReturnType<typeof getRecon>>);
+  await render();
+  await selectMemberVideo();
+  const checkbox = host.querySelector<HTMLInputElement>('.submit-video-save input')!;
+  await act(async () => checkbox.click());
+
+  const fetchSpy = vi.spyOn(globalThis, 'fetch').mockResolvedValueOnce(new Response('video bytes', {
+    headers: { 'Content-Type': 'video/mp4' },
+  }));
+  try {
+    const url = 'https://api.cuberoot.me/v1/recon/video/1';
+    await pasteVideoLink(url);
+    await act(async () => vi.waitFor(() => expect(document.querySelector('[data-video-review]')?.textContent).toBe('1')));
+    expect(fetchSpy).toHaveBeenCalledWith(new URL(url), expect.objectContaining({ credentials: 'omit' }));
+    expect(checkbox.disabled).toBe(true);
+    expect(checkbox.checked).toBe(false);
+    expect(host.querySelector<HTMLTextAreaElement>('#recon-video-urls')?.value).toBe(existingLink);
+
+    await act(async () => document.querySelector<HTMLButtonElement>('[role="dialog"] button[aria-label="Close"]')!.click());
+    await act(async () => host.querySelector<HTMLButtonElement>('.submit-btn-primary')!.click());
+    expect(updateRecon).toHaveBeenCalledExactlyOnceWith(2795, expect.objectContaining({ videoUrl: existingLink }));
+    expect(uploadReconVideo).not.toHaveBeenCalled();
+  } finally {
+    fetchSpy.mockRestore();
+  }
+});
+
+it('cancels a pending link read without opening a stale video', async () => {
+  await render(null);
+  let finish!: (response: Response) => void;
+  const fetchSpy = vi.spyOn(globalThis, 'fetch').mockImplementationOnce(() => new Promise(resolve => { finish = resolve; }));
+  try {
+    await pasteVideoLink('https://files.example/solve.mp4');
+    const signal = fetchSpy.mock.calls[0]?.[1]?.signal;
+    expect(signal?.aborted).toBe(false);
+    const cancel = [...host.querySelectorAll<HTMLButtonElement>('.submit-video-link-entry button')].find(button => button.textContent === 'Cancel')!;
+    await act(async () => cancel.click());
+    expect(signal?.aborted).toBe(true);
+    await act(async () => finish(new Response('video bytes', { headers: { 'Content-Type': 'video/mp4' } })));
+    expect(document.querySelector('[data-video-review]')).toBeNull();
+  } finally {
+    fetchSpy.mockRestore();
+  }
+});
+
 async function openVideoReview() {
   const file = new File(['local video'], 'solve.mp4', { type: 'video/mp4' });
   const input = host.querySelector<HTMLInputElement>('#recon-video-local')!;

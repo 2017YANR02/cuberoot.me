@@ -96,6 +96,7 @@ export async function validateCompetitionSupervisor(db: PlatformDb, supervisor: 
       AND m.status='active' AND m.role IN ('owner','admin','teacher','assistant')))`, [supervisor, organizationId, allowPlatform]);
   if (!eligible) forbidden('Assign an active member of your organization; CubeRoot administrators can assign assistance');
   const [overlap] = await platformQuery(db, `SELECT s.id FROM platform_competition_sessions s JOIN platform_events e ON e.id=s.event_id
+    JOIN platform_competitions c ON c.event_id=s.event_id AND NOT c.is_test
     WHERE s.supervisor_user_id=$1 AND s.starts_at<$3 AND s.ends_at>$2 AND e.status IN ('draft','published')
       AND ($4::uuid IS NULL OR s.id<>$4::uuid) LIMIT 1`, [supervisor, starts, ends, sessionId]);
   if (overlap) conflict('Supervisor already has an overlapping session');

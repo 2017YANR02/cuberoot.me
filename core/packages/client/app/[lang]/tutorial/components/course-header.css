@@ -1,0 +1,37 @@
+:is(.tutorial-course, .lbl-page, .f2l-page) { --course-navigation-gap: 8px; }
+@media (max-width: 760px), (orientation: landscape) and (max-height: 500px) {
+  :is(.tutorial-course, .lbl-page, .f2l-page) { --course-navigation-gap: 4px; }
+}
+@media (max-height: 400px) {
+  :is(.tutorial-course, .lbl-page, .f2l-page) { --course-navigation-gap: 0px; }
+}
+
+.course-header {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.course-header h1 { margin: 0; font-size: clamp(1.2rem, 3vw, 1.85rem); line-height: 1.25; }
+.course-header .course-back-link {
+  position: relative;
+  isolation: isolate;
+  flex: none;
+  display: grid;
+  place-items: center;
+  inline-size: 44px;
+  block-size: 44px;
+  border-radius: 50%;
+}
+.course-header .course-back-link::before {
+  content: '';
+  position: absolute;
+  inset: 4px;
+  z-index: -1;
+  border-radius: inherit;
+  background: var(--muted);
+}
+.course-header .course-back-link:is(:hover, :focus-visible) { color: var(--accent); }
+.course-header .course-back-link:is(:hover, :focus-visible)::before { background: var(--accent-soft); }
+.course-header .course-back-link:focus-visible { outline: 2px solid var(--ring); outline-offset: -2px; }
+.course-header-action { margin-inline-start: auto; flex: none; }

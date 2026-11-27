@@ -119,7 +119,7 @@ type DemoFrame = {
 
 export function Demonstration({ stage, demo, onCaseCueChange, walkthroughCase }: {
   stage: CompleteDemoStage | 'cross' | 'walkthrough'; demo: Demo;
-  walkthroughCase?: { scramble: string; onRandomCase: () => void };
+  walkthroughCase?: { scramble: string; onRandomCase: () => void; loading: boolean; failed: boolean };
 } & CueProps) {
   const walkthrough = stage === 'walkthrough';
   const [recognitionOutlines, setRecognitionOutlines] = useState<string[]>(NO_OUTLINES);

@@ -1,5 +1,6 @@
 'use client';
 
+import { Tooltip } from '@/components/Tooltip';
 import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore, type ReactNode, type RefObject } from 'react';
 import { createPortal } from 'react-dom';
 import { Settings } from '@app-foundation/icons/lucide';
@@ -71,6 +72,7 @@ export function SettingsPopover({
   triggerClassName,
   triggerRef: externalTriggerRef,
   panelClassName,
+  align,
   triggerPrefix,
   triggerSuffix,
   iconSize = 18,
@@ -86,6 +88,7 @@ export function SettingsPopover({
   triggerClassName?: string;
   triggerRef?: RefObject<HTMLButtonElement | null>;
   panelClassName?: string;
+  align?: 'start' | 'end';
   triggerPrefix?: ReactNode;
   triggerSuffix?: ReactNode;
   iconSize?: number;
@@ -109,7 +112,7 @@ export function SettingsPopover({
   const internalTriggerRef = useRef<HTMLButtonElement>(null);
   const triggerRef = externalTriggerRef ?? internalTriggerRef;
   const panelRef = useRef<HTMLDivElement>(null);
-  const panelStyle = usePopoverPosition({ open: open && !modal, panelRef, triggerRef, contentKey: label });
+  const panelStyle = usePopoverPosition({ open: open && !modal, panelRef, triggerRef, align, contentKey: label });
   usePopoverDismiss(open && !modal, () => setOpen(false), rootRef, triggerRef);
   const close = useCallback(() => setOpen(false), [setOpen]);
 
@@ -120,7 +123,7 @@ export function SettingsPopover({
       data-no-timer={ignoreTimer || undefined}
     >
       {!settingsHost && triggerPrefix}
-      <button
+      <Tooltip content={label} disabled={open}>{tip => <button {...tip}
         ref={triggerRef}
         type="button"
         className={`settings-popover-trigger${triggerClassName ? ` ${triggerClassName}` : ''}`}
@@ -130,7 +133,7 @@ export function SettingsPopover({
         onClick={() => setOpen(!open)}
       >
         <Settings size={iconSize} aria-hidden="true" />
-      </button>
+      </button>}</Tooltip>
       {!settingsHost && triggerSuffix}
       {modal && open && <SettingsDialog label={label} panelClassName={panelClassName} onClose={close}>{children}</SettingsDialog>}
       {open && !modal && (

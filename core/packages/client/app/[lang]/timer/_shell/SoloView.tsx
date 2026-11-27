@@ -79,7 +79,7 @@ import type { LiveSmartCubeAnchor } from '@cuberoot/shared/smart-cube/anchor';
 import { useLiveCubeAnchor } from '../_shared/useLiveCubeAnchor';
 import TrainingCubePreview from '../_components/TrainingCubePreview';
 import '../_components/training-cubes.css';
-import type { TrainingCubeStatus } from '../_lib/training-cube-status';
+import { trainingCubeStatusLabel, type TrainingCubeStatus } from '../_lib/training-cube-status';
 import {
   peekWcaRow,
   startWcaScrambleRetry,
@@ -316,7 +316,7 @@ const SettingsPanel = dynamic(() => import('../_components/SettingsPanel'), { ss
 const TimerReplayImportModal = dynamic(() => import('@cuberoot/timer-ui').then(m => m.TimerReplayImportModal), { ssr: false });
 const TimerStatisticsWorkspace = dynamic(() => import('@cuberoot/timer-ui').then(m => m.TimerStatisticsWorkspace), { ssr: false });
 const ReconstructModal = dynamic(() => import('../_components/ReconstructModal'), { ssr: false });
-const BluetoothModal = dynamic(() => import('../_components/BluetoothModal'), { ssr: false });
+const BluetoothModal = dynamic(() => import('@/components/BluetoothModal'), { ssr: false });
 const BluetoothTimerModal = dynamic(() => import('../_components/BluetoothTimerModal'), { ssr: false });
 const StackmatModal = dynamic(() => import('../_components/StackmatModal'), { ssr: false });
 
@@ -3403,9 +3403,10 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
   const displayedGuidance = multiEnabled ? preparingCube?.guidance : scrambleGuidance;
   const bluetoothDialog = supportsSmartCube && bluetoothOpen && (
     <BluetoothModal anchorRef={bluetoothButtonRef} isZh={isZh} cube={panelCube} connectAttempt={bluetoothConnectAttempt}
-      connections={multiEligible && listedCubes.length ? listedCubes.map(({ id, cube, deviceName }) => ({
-        id, name: deviceName, battery: cube.status.battery, status: cubeDisplayStatus(id, cube.status.connected),
-      })) : undefined}
+      connections={multiEligible && listedCubes.length ? listedCubes.map(({ id, cube, deviceName }) => {
+        const status = cubeDisplayStatus(id, cube.status.connected);
+        return { id, name: deviceName, battery: cube.status.battery, status, statusLabel: tr(trainingCubeStatusLabel(status)) };
+      }) : undefined}
       selectedConnectionId={bluetoothPanelCubeId} onSelectConnection={setBluetoothPanelCubeId}
       onConnectNext={multiEligible && connectedCubes.length > 0 ? trainingCubes.connectNext : undefined}
       connectingNext={trainingCubes.connecting}

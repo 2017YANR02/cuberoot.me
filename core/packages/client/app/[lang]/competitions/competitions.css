@@ -25,7 +25,8 @@
 }
 .competition-center .competition-primary, .competition-center .competition-secondary { min-height: 44px; }
 .competition-workspace-links { display: flex; flex-wrap: wrap; gap: 4px 20px; margin-top: 8px; }
-.competition-workspace-links a { display: inline-flex; min-height: 44px; align-items: center; font-size: .88rem; color: var(--muted-foreground); }
+.competition-workspace-links { align-items: center; }
+.competition-workspace-links a:not(.competition-primary) { display: inline-flex; min-height: 44px; align-items: center; font-size: .88rem; color: var(--muted-foreground); }
 .competition-center .platform-state { display: flex; align-items: flex-start; gap: 12px; margin-block: 22px; }
 .competition-center .platform-state > svg { flex: none; width: 20px; height: 20px; }
 .competition-center .platform-state p { margin: 4px 0; color: var(--muted-foreground); }

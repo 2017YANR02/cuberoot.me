@@ -25,17 +25,19 @@ import {
   detectClientEnvironment,
   envAdvice,
   mayUseMiniProgramBridge,
-} from '../_lib/bluetooth';
-import type { BluetoothCubeHandle, ConnectStage, ConnectPickOptions } from '../_lib/bluetooth';
+} from '@/lib/bluetooth';
+import type { BluetoothCubeHandle, ConnectStage, ConnectPickOptions } from '@/lib/bluetooth';
 import { BadgeCheck, Check, ExternalLink, LoaderCircle, Plus } from '@app-foundation/icons/lucide';
+import { copyClipboardText } from '@/lib/clipboard';
 import { tr } from '@/i18n/tr';
-import { trainingCubeStatusLabel, type TrainingCubeStatus } from '../_lib/training-cube-status';
+import '@cuberoot/timer-ui/external';
 
 interface CubeConnectionItem {
   id: string;
   name: string;
   battery: number | null;
-  status: TrainingCubeStatus;
+  status: string;
+  statusLabel: string;
 }
 
 interface Props {
@@ -136,6 +138,7 @@ export default function BluetoothModal({ title, anchorRef, isZh, cube, onClose, 
   useSyncExternalStore(subscribeInstalledBleBridge, installedBleAvailable, () => false);
   const [connecting, setConnecting] = useState(Boolean(connectAttempt) && !cube.status.connected);
   const [connectError, setConnectError] = useState<{ stage: ConnectStage | null; detail: string } | null>(null);
+  const [macAddressCopied, setMacAddressCopied] = useState(false);
   const [nextError, setNextError] = useState<string | null>(null);
 
   const runConnect = async (pick?: ConnectPickOptions): Promise<void> => {
@@ -202,11 +205,20 @@ export default function BluetoothModal({ title, anchorRef, isZh, cube, onClose, 
         {tr({ zh: '未能自动获取魔方的蓝牙 MAC 地址（不是电脑地址）。部分 App 内置浏览器未开放读取蓝牙广播的接口。', en: 'The cube’s Bluetooth MAC address (not your computer’s address) could not be obtained automatically. Some in-app browsers do not expose the Bluetooth advertisement API.' })}
       </p>
       <p>{tr({ zh: '可继续用已能连接的 Chrome，或在这里填写一次；成功读取转动后会记住。记录不跨浏览器或网站地址共享。', en: 'Keep using Chrome where the connection works, or enter the address here once; it will be remembered after a turn is decoded. Saved addresses are separate for each browser and site address.' })}</p>
-      <p>{tr({ zh: '查找地址：在独立 Chrome / Edge 中打开（内置浏览器可能无法打开）：', en: 'Find the address in standalone Chrome / Edge (these URLs may not open in an in-app browser):' })}</p>
+      <p>{tr({ zh: '在 Chrome 或 Edge 的新标签页地址栏粘贴并打开对应地址：', en: 'Paste the matching address into a new Chrome or Edge tab and open it:' })}</p>
       <ul style={{ paddingLeft: 20, overflowWrap: 'anywhere' }}>
-        <li>Chrome: <code>chrome://bluetooth-internals/#devices</code></li>
-        <li>Edge: <code>edge://bluetooth-internals/#devices</code></li>
+        {[
+          ['Chrome', 'chrome://bluetooth-internals/#devices'],
+          ['Edge', 'edge://bluetooth-internals/#devices'],
+        ].map(([browser, address]) => <li key={browser}>
+          {browser} <code>{address}</code>{' '}
+          <button type="button" className="bt-install-btn" aria-label={tr({ zh: `复制 ${browser} 地址`, en: `Copy ${browser} address` })}
+            onClick={async () => setMacAddressCopied(await copyClipboardText(address))}>
+            {tr({ zh: '复制地址', en: 'Copy address' })}
+          </button>
+        </li>)}
       </ul>
+      {macAddressCopied && <p role="status">{tr({ zh: '已复制，请粘贴到新标签页的地址栏。', en: 'Copied. Paste it into the address bar of a new tab.' })}</p>}
       <p>{tr({ zh: '在 Name 列找到自己的智能魔方，复制同一行的 Address，粘贴到下方。', en: 'Find your cube in the Name column, copy the Address from that row, and paste it below.' })}</p>
 
     </div>
@@ -275,7 +287,7 @@ export default function BluetoothModal({ title, anchorRef, isZh, cube, onClose, 
               <span className="bt-cube-meta">
                 <span className="training-cube-status" data-status={connection.status}>
                   {connecting && selectedConnectionId === connection.id
-                    ? tr({ zh: '连接中…', en: 'Connecting…' }) : tr(trainingCubeStatusLabel(connection.status))}
+                    ? tr({ zh: '连接中…', en: 'Connecting…' }) : connection.statusLabel}
                 </span>
                 {connection.status !== 'disconnected' && connection.battery !== null && <span className="bt-cube-battery"
                   data-low={connection.battery <= 20} aria-label={tr({ zh: `电量 ${connection.battery}%`, en: `Battery ${connection.battery}%` })}>
@@ -303,7 +315,7 @@ export default function BluetoothModal({ title, anchorRef, isZh, cube, onClose, 
       onConnect={!macPrompt && canConnect && !onConnectNext ? () => runConnect() : undefined}
       onDisconnect={() => cube.disconnect()}
       onResetGyro={onResetGyro}
-      onResetState={resetCube}
+      onResetState={allowDeviceCalibration ? resetCube : undefined}
       macPrompt={macPrompt ? {
         deviceName: macPrompt.deviceName,
         instructions: macBody,

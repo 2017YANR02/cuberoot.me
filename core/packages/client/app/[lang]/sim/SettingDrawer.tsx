@@ -4,6 +4,7 @@
  */
 'use client';
 
+import { Tooltip } from '@/components/Tooltip';
 import BoolToggle from '@/components/BoolToggle';
 import '@cuberoot/timer-ui/compact-select.css';
 import { ClearButton } from '@/components/ClearButton';
@@ -841,12 +842,11 @@ export function OrbitPad({
   );
 }
 
-export function Toggle({ label, value, onChange, disabled, title }: { label: string; value: boolean; onChange: (v: boolean) => void; disabled?: boolean; title?: string }) {
-  return (
-    <span className="sim-toggle" title={title}>
-      <BoolToggle label={label} value={value} onChange={onChange} disabled={disabled} />
-    </span>
-  );
+export function Toggle({ label, value, onChange, disabled, title, tooltip }: { label: string; value: boolean; onChange: (v: boolean) => void; disabled?: boolean; title?: string; tooltip?: string }) {
+  const control = <BoolToggle label={label} value={value} onChange={onChange} disabled={disabled} />;
+  return tooltip
+    ? <Tooltip content={tooltip}>{tip => <span {...tip} className="sim-toggle">{control}</span>}</Tooltip>
+    : <span className="sim-toggle" title={title}>{control}</span>;
 }
 
 interface KeymapModalProps {

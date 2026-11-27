@@ -285,7 +285,7 @@ export function Walkthrough() {
       <div className="eg-walkthrough-stages" {...paneProps}>
         <ol className="eg-demo-stages">
           {stages.map((stage, index) => <li key={stage.from}>
-            <button type="button" aria-current={index === current ? 'step' : undefined}
+            <button type="button" className="eg-demo-stage-button" aria-current={index === current ? 'step' : undefined}
               onClick={() => syncPlayerToMoveCount(player.current?.getPlayer(), stage.from)}>
               <span className="eg-demo-stage-title"><T {...stage.title} /></span>
               <code>{stage.alg}</code>

@@ -1,5 +1,7 @@
 /* Content types: A caption, B stages, C complete reference, D comparison,
    E reading, F practice, G standalone flowchart. Playback mode is independent of content type. */
+.lbl-page:not(.tutorial-course) > .course-header,
+.f2l-page:not(.f2l-practice-page) > .course-header { margin-block-end: var(--course-navigation-gap); }
 .lbl-page, .f2l-page {
   --tutorial-footer-button-height: 44px;
   --tutorial-cube-target: 350px;
@@ -470,7 +472,7 @@
     grid-template-columns: minmax(0, 1fr); grid-template-rows: auto auto minmax(0, 1fr);
   }
   .f2l-page .f2l-chapter { min-height: 0; }
-  .f2l-page :is(.f2l-toolbar, .f2l-chapter) { margin-top: 0; }
+  .f2l-page .f2l-chapter { margin-top: 0; }
   .f2l-page .f2l-chapter .f2l-chapter-body:has(.f2l-study-dock) {
     display: grid; grid-template-rows: minmax(0, 1fr) auto;
     height: 100%; min-height: 0; padding: 0;
@@ -695,11 +697,10 @@
     grid-template-columns: auto minmax(0, 1fr);
     grid-template-rows: auto minmax(0, 1fr);
   }
-  .f2l-page:not(.f2l-practice-page) > .f2l-header {
+  .f2l-page:not(.f2l-practice-page) > .course-header {
     padding: 0 12px 0 0; margin: 0;
   }
   .f2l-page:not(.f2l-practice-page) > .f2l-toolbar { min-width: 0; align-self: center; }
-  .f2l-page:not(.f2l-practice-page) .tutorial-chapter-track > .tutorial-chapter-button { padding-bottom: 4px; }
   .f2l-page:not(.f2l-practice-page) .tutorial-chapter-line { margin-bottom: 4px; }
   .f2l-page:not(.f2l-practice-page) > .f2l-chapter { grid-column: 1 / -1; }
 }

@@ -1,3 +1,5 @@
+import { CHAMPIONSHIP_RE, localizeChampionshipNameZh } from './comp_championship_localize';
+
 const CJK_RE = /[㐀-鿿豈-﫿]/;
 
 export function stripWcaPrefix(value: string): string {
@@ -64,9 +66,9 @@ export function resolveCompName(
     }
     return name;
   }
-  if (opts?.explicitNameZh) return opts.explicitNameZh;
-  const upcomingName = opts?.upcomingNameZhById?.get(id);
-  if (upcomingName) return upcomingName;
+  const suppliedName = opts?.explicitNameZh || opts?.upcomingNameZhById?.get(id);
+  const isChampionship = CHAMPIONSHIP_RE.test(name);
+  if (suppliedName && (!isChampionship || suppliedName.includes('锦标赛'))) return suppliedName;
   // WCA Worlds share an ID format even when sponsors change the English title.
   const worldChampionship = /^WC(\d{4})$/i.exec(id);
   if (worldChampionship) {
@@ -76,9 +78,13 @@ export function resolveCompName(
     else if (/\brubik['’]s\b/i.test(name)) sponsor = '鲁比克';
     return `${sponsor}世界锦标赛${year}`;
   }
+  // A few legacy result rows can supply just this series ID as the label.
+  const hongKongChampionship = /^HongKongChampionship(\d{4})$/i.exec(id);
+  if (hongKongChampionship && !isChampionship) return `香港锦标赛${hongKongChampionship[1]}`;
+
   const mappedName = opts?.resolveNameZh?.(name);
-  if (mappedName) return mappedName;
-  return name;
+  if (isChampionship && !mappedName?.includes('锦标赛')) return localizeChampionshipNameZh(name);
+  return mappedName || name;
 }
 
 export function localizeCompName(

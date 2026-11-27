@@ -872,6 +872,13 @@ export const CATALOG: ComponentEntry[] = [
     en: 'Shared mobile section menu for LBL and F2L tutorial footers.',
   },
   {
+    name: 'CourseHeader',
+    import: "import CourseHeader from '@/app/[lang]/tutorial/components/CourseHeader';",
+    category: 'more',
+    zh: '教程页头，统一返回按钮、课程标题和可选的右侧操作入口。',
+    en: 'Shared tutorial header with a back button, course title, and optional right-side action.',
+  },
+  {
     name: 'ChapterNavigation',
     import: "import ChapterNavigation from '@/app/[lang]/tutorial/components/ChapterNavigation';",
     category: 'more',
@@ -1095,6 +1102,14 @@ export const CATALOG: ComponentEntry[] = [
     category: 'more',
     zh: '按需加载、分页展开的动态回复，支持收起、重试与查看完整讨论。',
     en: 'On-demand paginated feed replies with collapse, retry and a link to the full discussion.',
+  },
+  {
+    name: 'LoadMoreSentinel',
+    import: "import { LoadMoreSentinel } from '@/components/LoadMoreSentinel';",
+    category: 'more',
+    usage: '<LoadMoreSentinel onLoadMore={loadMore} />',
+    zh: '放在列表底部，接近视口时自动加载下一批内容。',
+    en: 'Place at the end of a list to load the next batch as it approaches the viewport.',
   },
   {
     name: 'ContentSkeleton',
@@ -1878,6 +1893,13 @@ export const CATALOG: ComponentEntry[] = [
     category: 'more',
     zh: 'Web 与五端 App 共用的智能魔方状态和恢复弹层；设备名、电量、协议、连接/还原状态、重置/状态回读、陀螺仪校准、断开、焦点圈定与统一关闭只维护这一份。宿主只注入 BLE transport 动作，Web 可额外插入浏览器环境、失败详情和 MAC 输入。',
     en: 'The smart-cube status and recovery modal shared by Web and all five installed clients. Device name, battery, protocol, connected/solved state, reset/state refresh, gyro calibration, disconnect, focus trapping, and dismissal live in one implementation. Hosts inject only BLE transport actions; Web may add browser environment advice, failure detail, and MAC entry.',
+  },
+  {
+    name: 'BluetoothModal',
+    import: "import BluetoothModal from '@/components/BluetoothModal';",
+    category: 'more',
+    zh: 'Web 计时器和线上赛场共用的智能魔方连接弹窗。提供浏览器指引、连接错误和 MAC 地址查询。赛场禁用设备状态重置。',
+    en: 'Smart-cube connection dialog shared by the Web timer and competition arenas. It provides browser guidance, connection errors and MAC lookup instructions. Competition seats disable device state reset.',
   },
   {
     name: 'BluetoothTimerModal / StackmatModal',

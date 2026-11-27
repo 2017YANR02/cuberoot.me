@@ -11,8 +11,6 @@ import AppLink from '@/components/AppLink';
 import BoolToggle from '@/components/BoolToggle';
 import ChatBubble from '@/components/ChatBubble';
 import { ClearButton } from '@/components/ClearButton';
-import PageBackLink from '@/components/PageBackLink';
-import { Tooltip } from '@/components/Tooltip';
 import TrainingFeedbackOverlay from '@/components/TrainingFeedbackOverlay';
 import type { BlockedLayerTurnHandler, CubeletTap } from '@/components/sim-embed/attachEmbeddedSimInteraction';
 import { orientedCubeFaceColors } from '@/lib/cube-orientation';
@@ -22,6 +20,7 @@ import { useT } from '@/hooks/useT';
 import { invertMoveString } from '@cuberoot/shared/alg-notation';
 import { tr } from '@/i18n/tr';
 import ChapterNavigation from './ChapterNavigation';
+import CourseHeader from './CourseHeader';
 import CornerAnswerBubble from './CornerAnswerBubble';
 import InteractiveQuestionCopy, {
   InteractiveQuestionHeading, InteractiveQuestionHelpButton, InteractiveQuestionProgress,
@@ -193,7 +192,6 @@ const labels = {
   review: { zh: '回看本节教程', en: 'Review this section' },
   completed: { zh: '已完成', en: 'Complete' },
   chapters: { zh: '章节', en: 'Chapters' },
-  catalog: { zh: '返回教程选择', en: 'Back to tutorial selection' },
   basics: { zh: '魔方基础与转动记号', en: 'Cube basics and notation' },
   restart: { zh: '重来', en: 'Restart' },
 };
@@ -1334,16 +1332,8 @@ export default function InteractiveTutorial({ title, centerContent, headerAction
     {skipRequest === selection.request && <UnfinishedQuizDialog onDismiss={() => setSkipRequest(null)} onSkip={() => turnPage(1)} />}
   </div>;
 
-  const catalogLabel = t(labels.catalog.zh, labels.catalog.en);
   return <main className="tutorial-course" data-course-puzzle={puzzle} data-practice={practice} data-center-content={centerContent || undefined}>
-    <header className="course-header" data-course-header>
-      {catalogHref && <Tooltip content={catalogLabel}>{trigger =>
-        <PageBackLink {...trigger} className="course-back-link" fallback={catalogHref} label={catalogLabel}
-          acceptEntry={entry => entry.replace(/^\/(?:en|zh)(?=\/)/, '') === catalogHref} />
-      }</Tooltip>}
-      <h1>{tr(title)}</h1>
-      {headerAction}
-    </header>
+    <CourseHeader title={t(title.zh, title.en)} catalogHref={catalogHref} action={headerAction} />
     {!practice && <ChapterNavigation items={chapters.map(item => ({ id: item.id, title: tr(item.title) }))}
       selected={chapterIndex} label={tr(labels.chapters)} onSelect={index => select(index)} />}
     {practice ? learning : <TutorialNavigationShell className="course-navigation" sections={{ items: navigation }}>

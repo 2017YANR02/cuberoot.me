@@ -13,7 +13,7 @@ import { applyHomeSectionOrder } from '@/lib/home-section-order';
 import { SkeletonBlock } from '@/components/ContentSkeleton';
 
 /** Site entrypoint — Landing page. */
-import { Suspense, useCallback, useEffect, useMemo, useState, type CSSProperties } from 'react';
+import { Suspense, useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
 import dynamic from 'next/dynamic';
 import { usePathname } from 'next/navigation';
 import { parseAsBoolean, useQueryState } from 'nuqs';
@@ -42,6 +42,7 @@ import PersonUpcomingComps from '@/components/persons/sections/PersonUpcomingCom
 import { useCompFollows } from '@/components/CompFollow';
 import SearchInput from '@/components/SearchInput';
 import LazyVisible from '@/components/LazyVisible';
+import { RecentWorldRecords, useRecentRecords } from '@/components/RecentRecords';
 import {
   FOOTER_ENTRIES,
   PRIMARY_CARDS,
@@ -174,6 +175,7 @@ export default function LandingPage({ initialLayout = null }: { initialLayout?: 
   }, []);
 
   const lang: 'zh' | 'en' = (i18n.language.startsWith('zh') ? 'zh' : 'en');
+  const { filled: recentRecords } = useRecentRecords(lang === 'zh');
   const user = useAuthUser();
   const compFollows = useCompFollows();
   const personalKey = user ? `${user.uid ?? ''}:${user.wcaId}` : null;
@@ -240,31 +242,37 @@ export default function LandingPage({ initialLayout = null }: { initialLayout?: 
   const [editingCards, setEditingCards] = useState(false);
   const canEditCards = isAdmin && editingCards;
   const [pinnedRecons, setPinnedRecons] = useRetainedState<ReconSolve[] | null>('home:pinnedRecons', null);
-  const [savingPins, setSavingPins] = useState<Set<number>>(new Set());
+  const [savingPin, setSavingPin] = useState(false);
+  const pendingPin = useRef(false);
+  const pinRevision = useRef(0);
   const [pinError, setPinError] = useState<string | null>(null);
   useEffect(() => {
     let active = true;
-    getPinnedRecons().then(rows => { if (active) setPinnedRecons(rows); }).catch(() => {
-      if (active) setPinError(tr({ zh: '置顶复盘加载失败，请刷新重试。', en: 'Could not load pinned recons. Please refresh to retry.' }));
+    const revision = pinRevision.current;
+    getPinnedRecons().then(rows => { if (active && pinRevision.current === revision) setPinnedRecons(rows); }).catch(() => {
+      if (active && pinRevision.current === revision) setPinError(tr({ zh: '置顶复盘加载失败，请刷新重试。', en: 'Could not load pinned recons. Please refresh to retry.' }));
     });
     return () => { active = false; };
   }, [setPinnedRecons]);
   const onPin = async (solve: ReconSolve, pinned: boolean) => {
-    if (!isAdmin || savingPins.has(solve.id)) return;
-    setSavingPins(prev => new Set(prev).add(solve.id));
+    if (!canEditCards || pendingPin.current) return;
+    pendingPin.current = true;
+    setSavingPin(true);
     setPinError(null);
     try {
       await setReconHomePin(solve.id, pinned);
+      pinRevision.current++;
+      setPinError(null);
       setPinnedRecons(prev => pinned
-        ? [solve, ...(prev ?? []).filter(item => item.id !== solve.id)]
+        ? [solve]
         : (prev ?? []).filter(item => item.id !== solve.id));
     } catch {
       setPinError(tr({ zh: '置顶设置未保存，请重试。', en: 'Could not save the pin. Please try again.' }));
     } finally {
-      setSavingPins(prev => { const next = new Set(prev); next.delete(solve.id); return next; });
+      pendingPin.current = false;
+      setSavingPin(false);
     }
   };
-  const reconProps = { lang, pinnedRecons, isAdmin, savingPins, pinError, onPin };
   const [homeLayout, setHomeLayout] = useState(initialLayout);
   const cardOrders = homeLayout?.orders ?? {};
   const cardLocks = homeLayout?.locks ?? {};
@@ -584,90 +592,85 @@ export default function LandingPage({ initialLayout = null }: { initialLayout?: 
       <PageNoticeBar />
       <LandingSearch cards={searchCards} lang={lang} workspaceEntry showChatLink />
       <div className="landing-home-content" hidden={activeSection !== 'home'}>
-      <div className="landing-personal-row">
-      {user && compFollows.loaded && <div className="landing-personal-comps">
-        <PersonUpcomingComps key={personalKey} wcaId={user.wcaId || undefined} isZh={lang === 'zh'}
-          onReady={onPersonalReady}
-          compactDetails
-          hideHomeCountryFlag
-          title={null}
-          followedIds={compFollows.follows} />
-      </div>}
-        <div className="landing-training-links">
-          <Link href="/alg/3x3/zbll/run" className="landing-card af-glass-surface" prefetch={false}>
-            <LandingCardContent label={tr({ zh: 'ZBLL 训练', en: 'ZBLL Training' })} />
-          </Link>
-          <Link href="/alg/3x3/lsll/run" className="landing-card af-glass-surface" prefetch={false}>
-            <LandingCardContent label={tr({ zh: 'LSLL 训练', en: 'LSLL Training' })} />
-          </Link>
-        </div>
-      </div>
-      <div className="landing-featured-notices">
-      {featuredNotices.map((featuredNotice) => {
-        const { href } = featuredNotice;
-        if (!href || dismissed[featuredNotice.id] === featuredNotice.updatedAt) return null;
-        const body = tr(homepageNoticeTitle(featuredNotice));
-        if (featuredNotice === HISTORY_HOME_FEATURE) {
-          return (
-            <Link key={featuredNotice.id} href={href} className="landing-featured-news landing-history-feature" prefetch={false}>
-              <img className="landing-history-preview" src="/assets/history-home-v1.webp" width={1080} height={293} alt="" decoding="async" />
-              <span className="landing-featured-news-body">
-                <span className="landing-history-label">{tr({ zh: '新功能：交互历史画卷', en: 'New: an interactive history scroll' })}</span>
-                <span className="landing-history-title">{body}</span>
-                <span className="landing-history-invitation">{tr({ zh: '进入画卷，沿途看看 CubeRoot 的每一次更新。', en: 'Explore CubeRoot’s story, one day at a time.' })}</span>
-              </span>
-              <ArrowRight className="landing-featured-news-arrow" size={16} aria-hidden="true" />
-            </Link>
+      <div className="landing-shortcuts-and-notices">
+        <RecentWorldRecords records={recentRecords} isZh={lang === 'zh'} />
+        <div className="landing-featured-notices">
+        {featuredNotices.map((featuredNotice) => {
+          const { href } = featuredNotice;
+          if (!href || dismissed[featuredNotice.id] === featuredNotice.updatedAt) return null;
+          const body = tr(homepageNoticeTitle(featuredNotice));
+          if (featuredNotice === HISTORY_HOME_FEATURE) {
+            return (
+              <Link key={featuredNotice.id} href={href} className="landing-featured-news landing-history-feature" prefetch={false}>
+                <img className="landing-history-preview" src="/assets/history-home-v1.webp" width={1080} height={293} alt="" decoding="async" />
+                <span className="landing-featured-news-body">
+                  <span className="landing-history-label">{tr({ zh: '新功能：交互历史画卷', en: 'New: an interactive history scroll' })}</span>
+                  <span className="landing-history-title">{body}</span>
+                  <span className="landing-history-invitation">{tr({ zh: '进入画卷，沿途看看 CubeRoot 的每一次更新。', en: 'Explore CubeRoot’s story, one day at a time.' })}</span>
+                </span>
+                <ArrowRight className="landing-featured-news-arrow" size={16} aria-hidden="true" />
+              </Link>
+            );
+          }
+          const FeaturedIcon = iconFor(featuredNotice);
+          const inner = (
+            <>
+              <FeaturedIcon className="landing-featured-news-icon" size={15} aria-hidden="true" />
+              <span className="landing-featured-news-body">{body}</span>
+            </>
           );
-        }
-        const FeaturedIcon = iconFor(featuredNotice);
-        const inner = (
-          <>
-            <FeaturedIcon className="landing-featured-news-icon" size={15} aria-hidden="true" />
-            <span className="landing-featured-news-body">{body}</span>
-          </>
-        );
-        return (
-          <div key={featuredNotice.id} className="landing-featured-news"
-            style={{ '--home-news-color': colorFor(featuredNotice) } as CSSProperties}>
-            {href.startsWith('/') && !href.startsWith('//')
-              ? <Link href={href} className="landing-featured-news-target" prefetch={false}>{inner}</Link>
-              : <a href={href} className="landing-featured-news-target" target="_blank" rel="noopener noreferrer">{inner}</a>}
-            <div className="page-notice-actions">
-              <ClearButton variant="standalone" className="page-notice-btn" onClick={() => dismiss(featuredNotice)}
-                ariaLabel={tr({ en: `Dismiss ${body}`, zh: `关闭${body}` })} />
+          return (
+            <div key={featuredNotice.id} className="landing-featured-news"
+              style={{ '--home-news-color': colorFor(featuredNotice) } as CSSProperties}>
+              {href.startsWith('/') && !href.startsWith('//')
+                ? <Link href={href} className="landing-featured-news-target" prefetch={false}>{inner}</Link>
+                : <a href={href} className="landing-featured-news-target" target="_blank" rel="noopener noreferrer">{inner}</a>}
+              <div className="page-notice-actions">
+                <ClearButton variant="standalone" className="page-notice-btn" onClick={() => dismiss(featuredNotice)}
+                  ariaLabel={tr({ en: `Dismiss ${body}`, zh: `关闭${body}` })} />
+              </div>
             </div>
+          );
+        })}
+        </div>
+        <div className="landing-personal-row">
+        {user && compFollows.loaded && <div className="landing-personal-comps">
+          <PersonUpcomingComps key={personalKey} wcaId={user.wcaId || undefined} isZh={lang === 'zh'}
+            onReady={onPersonalReady}
+            compactDetails
+            hideHomeCountryFlag
+            title={null}
+            followedIds={compFollows.follows} />
+        </div>}
+          <div className="landing-training-links">
+            <Link href="/alg/3x3/zbll/run" className="landing-card af-glass-surface" prefetch={false}>
+              <LandingCardContent label={tr({ zh: 'ZBLL 训练', en: 'ZBLL Training' })} />
+            </Link>
+            <Link href="/alg/3x3/lsll/run" className="landing-card af-glass-surface" prefetch={false}>
+              <LandingCardContent label={tr({ zh: 'LSLL 训练', en: 'LSLL Training' })} />
+            </Link>
           </div>
-        );
-      })}
-      </div>
-
-      <div className="landing-training-grid">
-        <div className="landing-pinned-recons" aria-busy={pinnedRecons === null && !pinError}>
-          {pinnedRecons === null && !pinError
-            ? <><SkeletonBlock className="landing-widget-skeleton" /><SkeletonBlock className="landing-widget-skeleton" /></>
-            : pinnedRecons?.length
-              ? <TodayRecon {...reconProps} pinnedOnly />
-              : pinError ? <p className="landing-slot-message" role="status">{pinError}</p> : null}
         </div>
       </div>
 
       {entryStatus}
-      <div className="hero-grids">
-        {renderCardGrid('main', PRIMARY_CARDS, 'primary-hero-grid')}
-
-        {renderCardGrid('wca', WCA_CARDS, 'wca-hero-grid')}
+      <div className="landing-home-hero">
+        <TodayRecon lang={lang} pinnedRecons={pinnedRecons} isAdmin={isAdmin} canEditPins={canEditCards} savingPin={savingPin}
+          pinError={pinError} onPin={onPin} emptyPin={<RecentScrambles lang={lang} />} />
+        <div className="hero-grids">
+          {renderCardGrid('main', PRIMARY_CARDS, 'primary-hero-grid')}
+          {renderCardGrid('wca', WCA_CARDS, 'wca-hero-grid')}
+        </div>
       </div>
 
-      <LazyVisible className="landing-widget landing-widget--scrambles" minHeight={0} rootMargin="120px 0px" initiallyVisible={visibleWidgets.scrambles} onVisible={() => rememberWidget('scrambles')}>
-        <RecentScrambles lang={lang} />
-      </LazyVisible>
-      <LazyVisible className="landing-widget landing-widget--recons" minHeight={0} rootMargin="120px 0px" initiallyVisible={visibleWidgets.recons} onVisible={() => rememberWidget('recons')}>
-        <TodayRecon {...reconProps} />
-      </LazyVisible>
+      {!!pinnedRecons?.length && (
+        <LazyVisible className="landing-widget landing-widget--scrambles" minHeight={0} rootMargin="120px 0px" initiallyVisible={visibleWidgets.scrambles} onVisible={() => rememberWidget('scrambles')}>
+          <RecentScrambles lang={lang} />
+        </LazyVisible>
+      )}
 
       <LazyVisible className="landing-widget landing-widget--comps" minHeight={0} rootMargin="120px 0px" initiallyVisible={visibleWidgets.comps} onVisible={() => rememberWidget('comps')}>
-        <OngoingComps lang={lang} compFollows={compFollows} />
+        <OngoingComps lang={lang} compFollows={compFollows} records={recentRecords} />
       </LazyVisible>
 
       </div>

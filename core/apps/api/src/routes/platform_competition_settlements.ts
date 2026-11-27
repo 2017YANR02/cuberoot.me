@@ -17,7 +17,8 @@ platformCompetitionSettlementRoutes.get('/platform/competitions/:id/settlement',
   privateNoStore(c);
   const actor = await requirePlatformActor(c);
   const id = eventId(c.req.param('id'));
-  await requireCompetitionManager(platformDb(),actor,id);
+  const competition = await requireCompetitionManager(platformDb(),actor,id);
+  if (competition.is_test) return c.json({ settlement: null });
   return c.json({ settlement: await competitionSettlement(platformDb(),id) });
 });
 
@@ -33,7 +34,8 @@ platformCompetitionSettlementRoutes.post('/platform/competitions/:id/settlement-
   if (!transferredAt || Date.parse(transferredAt)>Date.now()) badRequest('A completed transfer timestamp is required');
   const hash = createHash('sha256').update(reference).digest('hex');
   return sendMutation(c,await withIdempotency(c,actor,`competition.settlement.record:${id}`,body,async db => {
-    await requireCompetitionManager(db,actor,id);
+    const competition = await requireCompetitionManager(db,actor,id);
+    if (competition.is_test) conflict('Test competitions do not have settlements');
     const statement = await competitionSettlement(db,id);
     const remaining = BigInt(statement.outstandingMinor);
     const expected = direction === 'payout' ? remaining : -remaining;

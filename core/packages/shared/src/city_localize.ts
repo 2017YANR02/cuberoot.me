@@ -51,6 +51,7 @@ const CITY_ZH: Record<string, string> = {
   'Seoul': '首尔', 'Busan': '釜山', 'Incheon': '仁川',
   'Singapore': '新加坡', 'Bangkok': '曼谷', 'Kuala Lumpur': '吉隆坡',
   'New York': '纽约', 'Los Angeles': '洛杉矶', 'San Francisco': '旧金山',
+  'Long Island City': '长岛市', 'Urbandale': '厄班代尔',
   'Chicago': '芝加哥', 'Boston': '波士顿', 'Seattle': '西雅图',
   'London': '伦敦', 'Paris': '巴黎', 'Berlin': '柏林', 'Munich': '慕尼黑',
   'Rome': '罗马', 'Madrid': '马德里', 'Barcelona': '巴塞罗那',
@@ -133,7 +134,14 @@ function translateSeg(seg: string, idx: number, I: string): string {
     ? PLACE_CITY_ZH[key]
     : (PLACE_ADMIN_ZH[key] ?? PLACE_CITY_ZH[key]);
   const gen = lookup(k) ?? (bareKey !== k ? lookup(bareKey) : undefined);
-  return gen ?? CITY_ZH[normalizeCityKey(seg)] ?? seg;
+  return gen ?? CITY_ZH[seg] ?? CITY_ZH[normalizeCityKey(seg)] ?? seg;
+}
+
+/** Translate a place in a title, preferring the administrative region over a namesake city. */
+export function localizePlaceName(place: string, iso2: string): string {
+  const country = iso2.toUpperCase();
+  const greaterChinaName = GREATER_CN.has(country) ? CN_PLACE_ZH[cnNorm(place)] : undefined;
+  return greaterChinaName ?? translateSeg(place, 1, country);
 }
 
 // 中文模式下把整个城市串逐段译成简体(逗号分隔)。

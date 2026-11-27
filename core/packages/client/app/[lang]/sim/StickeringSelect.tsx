@@ -188,7 +188,7 @@ export default function StickeringSelect({
         label={label(value)}
         value={value}
         onChange={onChange}
-        title={t('按阶段展示色块:所选阶段相关的贴纸保持彩色,其余变暗或置灰', 'Stage stickering: keep the stickers of the chosen stage colored, dim or gray out the rest')}
+        triggerTooltip={t('按阶段展示色块:所选阶段相关的贴纸保持彩色,其余变暗或置灰', 'Stage stickering: keep the stickers of the chosen stage colored, dim or gray out the rest')}
         ariaLabel={adminOpen ? t('遮罩清单管理', 'Manage mask list') : t('按阶段展示色块', 'Stage stickering')}
         footer={isAdmin && order > 0 && !adminOpen ? () => (
           <div className="sim-stage-menu-heading">

@@ -1,4 +1,4 @@
-import { COMPETITION_INSPECTION_MS, COMPETITION_STAGE_LIMIT_MS, inspectionPenalty } from '@cuberoot/shared/timer';
+import { COMPETITION_INSPECTION_MS, COMPETITION_OBSERVATION_WINDOW_MS, COMPETITION_INTERMISSION_MS, COMPETITION_STAGE_LIMIT_MS, COMPETITION_START_BUFFER_MS, inspectionPenalty } from '@cuberoot/shared/timer';
 import type { Context } from 'hono';
 import { randomUUID } from 'node:crypto';
 import { requirePlatformActor } from '../platform/auth.js';
@@ -140,9 +140,11 @@ platformCompetitionBracketRoutes.post('/platform/competitions/:id/brackets/gener
 platformCompetitionBracketRoutes.get('/platform/competitions/:id/brackets', async c => {
   privateNoStore(c);
   const eventId = competitionId(c.req.param('id'));
+  const actor = c.req.header('Authorization') ? await requirePlatformActor(c) : null;
   const [event] = await platformQuery<{ generated: boolean }>(platformDb(), `SELECT c.brackets_generated_at IS NOT NULL AS generated
     FROM platform_competitions c JOIN platform_events e ON e.id=c.event_id
-    WHERE c.event_id=$1::uuid AND c.competition_format='advancement' AND e.status IN ('published','completed')`, [eventId]);
+    WHERE c.event_id=$1::uuid AND c.competition_format='advancement' AND e.status IN ('published','completed')
+      AND (NOT c.is_test OR $2::bigint IS NOT NULL)`, [eventId, actor?.userId ?? null]);
   if (!event) notFound('Competition bracket');
   const [matches, standings] = await Promise.all([
     platformQuery(platformDb(), `SELECT m.id::text,m.ticket_type_id::text AS "ticketId",
@@ -236,7 +238,7 @@ platformCompetitionBracketRoutes.get('/platform/competitions/matches/:id', async
     if (solve) return iso(solve);
     const inspect = game?.[`inspect_${seat}_at`] ?? game?.[`run_${seat}_at`];
     if (!inspect || match.device !== 'smart') return null;
-    const automatic = new Date(+new Date(inspect) + COMPETITION_INSPECTION_MS);
+    const automatic = new Date(+new Date(inspect) + COMPETITION_OBSERVATION_WINDOW_MS);
     return automatic <= now ? iso(automatic) : null;
   };
   const activeGame = game ? {
@@ -307,7 +309,8 @@ platformCompetitionBracketRoutes.post('/platform/competitions/matches/:id/ready'
     } else if (!game[`ready_${side}_at`]) {
       const scramble = await competitionScramble(match.project);
       await platformQuery(db, `UPDATE platform_competition_match_games SET ready_${side}_at=clock_timestamp(),
-        start_at=clock_timestamp()+INTERVAL '3 seconds',scramble=$3 WHERE match_id=$1::uuid AND game_number=$2`, [id, number, scramble]);
+        start_at=clock_timestamp()+$4*INTERVAL '1 millisecond',scramble=$3 WHERE match_id=$1::uuid AND game_number=$2`,
+      [id, number, scramble, number === 1 ? COMPETITION_START_BUFFER_MS : COMPETITION_INTERMISSION_MS]);
       await platformQuery(db, `UPDATE platform_competition_matches SET status='in_progress' WHERE id=$1::uuid`, [id]);
     }
     return { status: 200, body: { ready: true } };
@@ -341,7 +344,7 @@ platformCompetitionBracketRoutes.post('/platform/competitions/matches/:id/phase'
   const body = await readJsonObject(c);
   const number = integerField(body, 'gameNumber', { required: true, min: 1 })!;
   const phase = enumField(body, 'phase', ['inspecting', 'solving', 'timeout', 'disconnected'], { required: true })!;
-  const inspectionMs = integerField(body, 'inspectionMs', { min: 0, max: COMPETITION_INSPECTION_MS });
+  const inspectionMs = integerField(body, 'inspectionMs', { min: 0, max: COMPETITION_OBSERVATION_WINDOW_MS });
   return sendMutation(c, await withIdempotency(c, actor, `competition.match.phase:${id}:${number}`, body, async db => {
     const { match, side, game, now } = await playableGame(db, id, actor.userId, number, phase !== 'disconnected' && phase !== 'timeout');
     const inspectAt = game[`inspect_${side}_at`];
@@ -511,7 +514,7 @@ export async function closeExpiredCompetitionGames(db: PlatformDb) {
     ELSE COALESCE(g.solve_${side}_at+$1*INTERVAL '1 millisecond',g.inspect_${side}_at+INTERVAL '17 seconds',g.start_at+$1*INTERVAL '1 millisecond') END`;
   const expired = `(g.result_a IS NULL AND ${deadline('a')}<=clock_timestamp())
     OR (g.result_b IS NULL AND ${deadline('b')}<=clock_timestamp())`;
-  const limits = [COMPETITION_STAGE_LIMIT_MS, COMPETITION_INSPECTION_MS];
+  const limits = [COMPETITION_STAGE_LIMIT_MS, COMPETITION_OBSERVATION_WINDOW_MS];
   const [event] = await platformQuery<{ id: string }>(db, `SELECT c.event_id::text AS id FROM platform_competitions c
     JOIN platform_events e ON e.id=c.event_id
     WHERE c.competition_format='advancement' AND e.status='published' AND e.ends_at>clock_timestamp() AND EXISTS(

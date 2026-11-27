@@ -60,6 +60,8 @@ export interface TimerPuzzlePickerProps extends TimerOverlayControlProps {
   /** Text-only trigger for directories such as training. */
   triggerLabel?: string;
   triggerVariant?: 'icon' | 'pill';
+  /** Include the selected puzzle icon beside the text in a pill trigger. */
+  showTriggerIcon?: boolean;
   showArrow?: boolean;
   showItemIcons?: boolean;
   showMenuHeadings?: boolean;
@@ -93,6 +95,7 @@ export function TimerPuzzlePicker({
   combineScrambleTypes = false,
   triggerLabel,
   triggerVariant = 'icon',
+  showTriggerIcon = false,
   showArrow = false,
   showItemIcons = true,
   showMenuHeadings = true,
@@ -273,7 +276,10 @@ export function TimerPuzzlePicker({
     return <span className={`${className} pp-item-tag`}>{item.textLabel ?? item.id}</span>;
   };
 
-  const triggerContent = pill ? <span className="compact-select-current">{triggerText ?? selectedChoice?.label ?? puzzleLabel}</span>
+  const triggerContent = pill ? <>
+    {showTriggerIcon && selectedChoice && renderIcon(selectedChoice, true)}
+    <span className="compact-select-current">{triggerText ?? selectedChoice?.label ?? puzzleLabel}</span>
+  </>
     : triggerText ? <span className="pp-trigger-label">{triggerText}</span> : <>
     {selectedChoice ? renderIcon(selectedChoice, true) : <Boxes className="pp-trigger-icon" size={15} />}
     {!selectedChoice && <span className="pp-trigger-label">{puzzleLabel}</span>}

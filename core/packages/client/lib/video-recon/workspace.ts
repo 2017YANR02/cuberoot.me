@@ -29,7 +29,7 @@ import { buildCubeReplayTimelines, measuredCubeFrame, projectedCubeAtFrame } fro
 import { reviewIndex, steppedTimestamp, frameArrow } from "./engine/frame-review";
 import { PLAYBACK_SPEEDS, playbackTiming } from "./engine/playback-timing";
 import type { PlaybackSpeed } from "./engine/playback-timing";
-import {createSearchConfig,ADMISSION_CAPACITY,poseWorkerCount,POLICY_VERSION,CAMERA_CLOCK_HZ} from "./pose-fitter/runtime/reconstruction-policy.mjs";
+import {createSearchConfig,ADMISSION_CAPACITY,poseWorkerCount,POLICY_VERSION,MEDIA_CLOCK_HZ} from "./pose-fitter/runtime/reconstruction-policy.mjs";
 import { TimerReconstruction } from './engine/timer-reconstruction';
 import { TIMER_CAMERA_END_VIEW_SECONDS, type TimerReconstructionResult } from './engine/cube-timer';
 import { TimerDiagnostics } from './engine/timer-diagnostics';
@@ -378,7 +378,7 @@ export function createVideoWorkspace(stage: HTMLCanvasElement, initialTab: Works
     const rows = derived.reviewRows;
     if (!error && derived.cubeSolved && result && rows.length && result.steps.some(step => step.state_moves.length)) {
       const clip = recordedFileReplay(attempt.id, rows, result, {
-        scramble: reconstructedScramble(), fps: state.sourceFps, source_fps: state.sourceFps,
+        scramble: reconstructedScramble(), fps: clockFps(), source_fps: state.sourceFps, frame_clock: moveSearch?.config.frame_clock,
         turning_start_frame: moveSearch?.config.turning_start_frame, requested_start_seconds: state.solveStart,
         source_origin_seconds: searchOriginTimestamp, source_end_seconds: state.solveEnd,
       });
@@ -499,6 +499,7 @@ export function createVideoWorkspace(stage: HTMLCanvasElement, initialTab: Works
 
 
   let fileEnded = false;
+  let decodedRange: { key: string; timestamps: number[]; complete: boolean } | undefined;
   type CameraEnd={timerEnd:true;id:string;timestamp:number;close():void};
   type CameraFrame=SourceFrame&{close():void;timerReset?:boolean;timerPose?:PoseFittingOptions};
   const cameraQueue = new FrameQueue<CameraFrame|CameraEnd>();
@@ -566,9 +567,10 @@ export function createVideoWorkspace(stage: HTMLCanvasElement, initialTab: Works
   const needsPose = () => state.timerCamera || state.activeTab === 'timer' || showPose || state.searchEnabled;
   const inferenceAllowed = () => (state.timerCamera || !moveSearch?.solved) && !(state.sourceKind === "video" && state.videoInputComplete);
   const displayPose = () => showPose && (state.sourceKind !== "video" || !state.trimming);
+  const clockFps = () => state.sourceKind === 'video' || state.sourceKind === 'camera' ? MEDIA_CLOCK_HZ : state.sourceFps || 30;
   const poseFittingOptions = () => state.timerCamera ? {scramble:'',turningStartFrame:null,originSeconds:0,camera:true} : ({scramble:moveSearch?.config.scramble ?? state.initialScramble.trim(),
-    camera:state.sourceKind==='camera',
-    turningStartFrame:moveSearch ? moveSearch.config.turning_start_frame : state.openingHoldSeconds>0 ? Math.floor((searchOriginTimestamp+state.openingHoldSeconds)*(state.sourceKind==='camera'?CAMERA_CLOCK_HZ:state.sourceFps||30)) : null,
+    camera:state.sourceKind==='camera',video:state.sourceKind==='video',
+    turningStartFrame:moveSearch ? moveSearch.config.turning_start_frame : state.openingHoldSeconds>0 ? Math.floor((searchOriginTimestamp+state.openingHoldSeconds)*clockFps()) : null,
     originSeconds:moveSearch?.config.source_origin_seconds??searchOriginTimestamp,
     endSeconds:state.sourceKind==="video"?(moveSearch?.config.source_end_seconds??state.solveEnd):undefined});
   const currentCacheKey = (fitPose = needsPose()) => videoResultKey(size, backend, settings(), fitPose, poseFittingOptions());
@@ -586,7 +588,7 @@ export function createVideoWorkspace(stage: HTMLCanvasElement, initialTab: Works
       state.searchError="Cleanup color tolerance must be between 0 and 1.";return;
     }
     const token = generation;
-    const config = createSearchConfig({scramble:state.initialScramble,fps:state.sourceFps||30,camera:state.sourceKind==='camera',
+    const config = createSearchConfig({scramble:state.initialScramble,fps:state.sourceFps||30,camera:state.sourceKind==='camera',video:state.sourceKind==='video',
       openingHoldSeconds: state.openingHoldSeconds,diagnostics:!state.recordingReview && state.searchDiagnostics,bidirectional:state.searchBidirectional&&state.sourceKind==="video",originSeconds:state.sourceKind==="video"?searchOriginTimestamp:0,
       postprocessIdentityLoops:state.searchCleanup,postprocessColorTolerance:state.searchCleanup?state.searchCleanupTolerance:0.08,inferScramble,
       startSeconds:state.sourceKind==="video"?state.solveStart:undefined,endSeconds:state.sourceKind==="video"?state.solveEnd:undefined});
@@ -630,20 +632,23 @@ export function createVideoWorkspace(stage: HTMLCanvasElement, initialTab: Works
     if (state.sourceKind === "video") state.videoInputComplete = true;
     try { await activeSearch?.end(); } catch (cause) { if (token === generation) state.searchError = cause instanceof Error ? cause.message : String(cause); }
   }
+  function submitCachedFrame(row: SavedVideoResult) {
+    if (!row.result.fittedPose || !moveSearch || state.videoInputComplete) return;
+    if (activeRunId) recording.linkCachedFrame(activeRunId, row.timestamp, row.result);
+    moveSearch.submit(row.timestamp, row.result, Promise.resolve(row.result.fittedPose));
+  }
+  // Only a completed decode establishes which timestamps a variable-rate range contains.
   function seedCachedSearch() {
-    const rows = videoResults.entries(currentCacheKey(true));
-    const target = Math.min(30, state.sourceFps || 30), origin = searchOriginTimestamp;
-    let count = 0, last: SavedVideoResult | undefined;
-    for (const row of rows) {
-      if (row.timestamp < origin - 0.00001 || row.timestamp >= state.solveEnd) continue;
-      const offset = state.sourceFps > 30.001 ? Math.ceil(count * state.sourceFps / target - 0.0001) : count;
-      const expected = origin + offset / (state.sourceFps || 30);
-      if (row.timestamp < expected - 0.00001) continue;
-      if (row.timestamp > expected + 0.00001 || !row.result.fittedPose) break;
-      if(activeRunId)recording.linkCachedFrame(activeRunId,row.timestamp,row.result);
-      moveSearch?.submit(row.timestamp, row.result, Promise.resolve(row.result.fittedPose)); count++; last = row;
+    const key = currentCacheKey(true);
+    if (decodedRange?.key === key && decodedRange.complete) {
+      const rows = decodedRange.timestamps.map(time => videoResults.get(key, time));
+      if (rows.length && rows.every((row): row is SavedVideoResult => !!row?.result.fittedPose)) {
+        for (const row of rows) submitCachedFrame(row);
+        return true;
+      }
     }
-    return { last, complete: count >= Math.ceil((state.solveEnd - origin) * target - 0.00001) };
+    decodedRange = { key, timestamps: [], complete: false };
+    return false;
   }
   function inputCrop(source: HTMLImageElement | ImageBitmap | OffscreenCanvas) {
     if (state.sourceKind === 'camera') return;
@@ -767,15 +772,12 @@ export function createVideoWorkspace(stage: HTMLCanvasElement, initialTab: Works
       if (token !== generation || disposed) { frame.bitmap.close(); return; }
       if (frame.timestamp >= state.solveEnd) { frame.bitmap.close(); throw new Error("There are no video frames in this solve range."); }
       searchOriginTimestamp = frame.timestamp; startMoveSearch();
-      // Existing completed fits can be prepared immediately, even while the
-      // viewer has not yet presented those cached frames again.
-      const cached = seedCachedSearch();
       state.trimming = false; state.videoInputComplete = false; fileEnded = false; state.running = true;
       state.reviewInitialized = false;
       resetTracking = true; resetPose = true; seekVersion++; state.processedFrames = 0; state.fps = 0;
       lastResultTime = 0; previousFrameStart = 0; lastStarted = performance.now(); acquireMs = 0; pacingMs = 0;
       const firstSaved = findSavedResult(frame.timestamp);
-      if (cached.complete && firstSaved?.result.fittedPose) {
+      if (seedCachedSearch() && firstSaved?.result.fittedPose) {
         presentSavedFrame(frame.bitmap, firstSaved); markIdle(); state.running = false; fileEnded = true;
         void finishMoveSearch(); return;
       }
@@ -848,7 +850,7 @@ export function createVideoWorkspace(stage: HTMLCanvasElement, initialTab: Works
           packet.result.fittingError = state.poseError;
           // Old queued rejections must not dispose a newly recovered fitter.
           if (poseFitter === packet.fitter) {
-            poseFitter?.dispose();
+            poseFitter?.dispose(cause instanceof Error ? cause : new Error(state.poseError));
             poseFitter = undefined;
             resetPose = true;
           }
@@ -1089,6 +1091,7 @@ export function createVideoWorkspace(stage: HTMLCanvasElement, initialTab: Works
     fileSource?.close();
     fileSource = undefined;
     videoResults.clear();
+    decodedRange = undefined;
     state.presentedTimestamp=0;requestedReviewTimestamp=undefined;reviewInProgress=false;
     state.videoInputComplete = false;
     state.reviewInitialized = false;
@@ -1368,6 +1371,8 @@ export function createVideoWorkspace(stage: HTMLCanvasElement, initialTab: Works
       if(!state.running&&!inferenceAllowed()){
         frame?.bitmap.close();markIdle();return;
       }
+      if (state.sourceKind === "video" && !state.videoInputComplete && decodedRange && (!frame || frame.timestamp >= state.solveEnd))
+        decodedRange.complete = true;
       if (frame && state.sourceKind === "video" && frame.timestamp >= state.solveEnd) {
         frame.bitmap.close(); markIdle(); fileEnded = true; state.running = false; void finishMoveSearch(); return;
       }
@@ -1392,10 +1397,12 @@ export function createVideoWorkspace(stage: HTMLCanvasElement, initialTab: Works
     }
   }
   function admitFrame(frame: SourceFrame & Pick<CameraFrame,'timerPose'>) {
+      if (state.sourceKind === 'video' && !state.videoInputComplete && decodedRange)
+        decodedRange.timestamps.push(frame.timestamp);
       const crop = inputCrop(frame.bitmap);
       const saved = state.sourceKind === "video" ? findSavedResult(frame.timestamp) : undefined;
       if (saved) {
-        if (saved.result.fittedPose) moveSearch?.submit(saved.timestamp, saved.result, Promise.resolve(saved.result.fittedPose));
+        submitCachedFrame(saved);
         // A cached island closes the preceding numerical segment. Present it
         // through the same queue so it cannot overtake an earlier pending fit.
         void flushPose(); resetTracking = true; resetPose = true;
@@ -1463,7 +1470,7 @@ export function createVideoWorkspace(stage: HTMLCanvasElement, initialTab: Works
 
   function projectionForFrame(frame?: FrameResult): [number, number][][] {
     if (!frame?.fittedPose?.pose) return [];
-    const sourceFrame = frame.fittedPose.sourceFrame ?? Math.round(state.position * state.sourceFps);
+    const sourceFrame = frame.fittedPose.sourceFrame ?? Math.round(state.position * clockFps());
     if (poseIsFlagged(frame.fittedPose,derived.reconstructionFlags.get(sourceFrame))) return [];
     const staticEnd = moveSearch?.config.turning_start_frame;
     return projectedWireframe(frame.fittedPose, derived.reconstructionChoices.get(sourceFrame),
@@ -1592,7 +1599,7 @@ export function createVideoWorkspace(stage: HTMLCanvasElement, initialTab: Works
         const frame = await fileSource.next();
         if (token !== generation || request !== seekVersion || !fileSource) { frame?.bitmap.close(); return; }
         if (frame && Math.abs(frame.timestamp - saved.timestamp) < 0.00001) {
-          if (saved.result.fittedPose) moveSearch?.submit(saved.timestamp, saved.result, Promise.resolve(saved.result.fittedPose));
+          submitCachedFrame(saved);
           presentSavedFrame(frame.bitmap, saved);
         }
         else {
@@ -1735,7 +1742,7 @@ export function createVideoWorkspace(stage: HTMLCanvasElement, initialTab: Works
     },
     get displayedPoseFlagged() {
       return poseIsFlagged(state.result?.fittedPose, derived.reconstructionFlags.get(
-        state.result?.fittedPose?.sourceFrame ?? Math.round(state.presentedTimestamp * state.sourceFps)));
+        state.result?.fittedPose?.sourceFrame ?? Math.round(state.presentedTimestamp * clockFps())));
     },
     get cubeSolved() { return state.searchResult?.status === "solved" || state.searchResult?.status === "already_solved"; },
     get reviewRows() {
@@ -1747,12 +1754,12 @@ export function createVideoWorkspace(stage: HTMLCanvasElement, initialTab: Works
     get cubeReplayTimelines() {
       if (!derived.reconstructionComplete || state.trimming || state.sourceKind !== 'video') return undefined;
       return projection(derived.reviewRows, searchMetadata(state.searchResult, reconstructedScramble()).colors,
-        state.sourceFps, derived.cubeSolved, state.searchResult, moveSearch?.config.turning_start_frame);
+        clockFps(), derived.cubeSolved, state.searchResult, moveSearch?.config.turning_start_frame);
     },
     get projectedTimeline() { return derived.cubeReplayTimelines?.projected ?? []; },
     get coloredProjection() {
       return projectedCubeAtFrame(derived.projectedTimeline,
-        state.result?.fittedPose?.sourceFrame ?? Math.round(state.presentedTimestamp * state.sourceFps));
+        state.result?.fittedPose?.sourceFrame ?? Math.round(state.presentedTimestamp * clockFps()));
     },
     get showCameraPreview() {
       return state.sourceKind === 'camera' && state.timerCamera && !state.captureStopped &&
@@ -1790,6 +1797,7 @@ export function createVideoWorkspace(stage: HTMLCanvasElement, initialTab: Works
       running: state.running,
       playbackSpeed: state.playbackSpeed,
       sourceFps: state.sourceFps,
+      clockFps: clockFps(),
       searchError: state.searchError,
       searchResult: state.searchResult,
       poseError: state.poseError,

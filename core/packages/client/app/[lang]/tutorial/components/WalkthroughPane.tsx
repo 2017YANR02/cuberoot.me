@@ -77,7 +77,8 @@ export default function WalkthroughPane({
           </div>
         </div>
         <button type="button" className="btn-secondary walkthrough-random-case" disabled={loading} aria-busy={loading} onClick={onRandomCase}>
-          <Dice5 size={16} aria-hidden="true" /><T zh="随机换例" en="Random case" />
+          <Dice5 size={16} aria-hidden="true" />
+          {loading ? <T zh="生成中…" en="Generating…" /> : <T zh="随机换例" en="Random case" />}
         </button>
       </div>
       <section className="walkthrough-current-step" {...readingProps} ref={bindReadingPane} aria-labelledby={titleId}>
@@ -97,7 +98,7 @@ export default function WalkthroughPane({
             <h3><T {...stage.title} /></h3>
             <ol role="list">
               {stage.steps.map(step => <li key={step.id}>
-                <button type="button" aria-current={currentStep === step.id ? 'step' : undefined} onClick={() => {
+                <button type="button" className="walkthrough-step-button" aria-current={currentStep === step.id ? 'step' : undefined} onClick={() => {
                   resume();
                   readingPane.current?.scrollTo({ top: 0, behavior: 'instant' });
                   onSeek(step.id);

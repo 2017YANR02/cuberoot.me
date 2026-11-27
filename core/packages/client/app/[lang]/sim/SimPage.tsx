@@ -11,6 +11,7 @@
  * huazhechen/cuber WebGL engine in cuber/.
  */
 
+import { Tooltip } from '@/components/Tooltip';
 import MoreToggle from '@/components/MoreToggle';
 import { ResizeDivider } from '@app-foundation/navigation-ui/resize-divider';
 import '@app-foundation/navigation-ui/resize-divider.css';
@@ -23,6 +24,7 @@ import CollapsibleSection from './CollapsibleSection';
 import PageHeading from '@/components/PageHeading';
 import NxNOrderInput from '@/components/NxNOrderInput';
 import { useTranslation } from 'react-i18next';
+import SimMenuSelect from './SimMenuSelect';
 import { PuzzleTypeSelect } from './PuzzleTypeSelect';
 import { persistItem } from '@/lib/safe-storage';
 import { isTrackpadSwipe, trackpadPinchFactor } from '@/lib/cube-trackpad';
@@ -34,6 +36,7 @@ import { NXN_ORDER_DEFAULT, NXN_ORDER_MAX, NXN_ORDER_MIN } from '@/lib/nxn-order
 import type * as THREE from 'three';
 import { BookOpen, Maximize2, Minimize2, ArrowLeftRight, ArrowRight, X } from '@app-foundation/icons/lucide';
 import World, { type PuzzleKind } from './engine/world';
+import type { GripDemoMount } from './grips/gripDemo';
 import { attachInteraction } from './worldInteraction';
 import HandsRig from './engine/hands/handsRig';
 import { loadSmplxFullBody } from './engine/hands/handModelMano';
@@ -135,10 +138,6 @@ import { engineHistoryAlgorithm } from './engineHistory';
 import './sim.css';
 
 import { useT } from "@/hooks/useT";
-
-/** Gap (px) between the back-view window and the canvas top-right corner.
- *  Must match the `top`/`right` in `.sim-backview` (sim.css). */
-const BACKVIEW_MARGIN = 8;
 
 const PuzzleDrawWorkspace = dynamic(() => import('./PuzzleDrawWorkspace'), { ssr: false });
 
@@ -501,13 +500,66 @@ function SimEditor({ scope = '', active, seed, snapshotRef, onModeChange, onNew,
   const [bgSlot, setBgSlot] = useState<HTMLDivElement | null>(null);
   const worldRef = useRef<World | null>(null);
   const rendererRef = useRef<THREE.WebGLRenderer | null>(null);
+  const [lessonSlot, setLessonSlot] = useState<HTMLDivElement | null>(null);
+  const [showLesson, setShowLesson] = useState(false);
+  const lessonFrame = useRef<((dt: number) => void) | null>(null);
+  // The practice scene stays at its playback position. Both teaching variants
+  // draw into the existing stage renderer and share its canvas and resize loop.
+  const mountLesson = useCallback<GripDemoMount>(({ host, puzzle, onFrame, onRendered }) => {
+    const renderer = rendererRef.current;
+    const practice = worldRef.current;
+    const practiceCube = practice && asNxN(practice);
+    if (!renderer || !practice || !practiceCube) throw new Error('Simulator stage unavailable');
+    const lesson = new World();
+    if (puzzle && puzzle !== 3) lesson.setPuzzle(puzzle);
+    attachInteraction(lesson);
+    lesson.faceHints.hide();
+    const draw = (dt: number) => {
+      if (lesson.width !== practice.width || lesson.height !== practice.height) {
+        lesson.width = practice.width;
+        lesson.height = practice.height;
+        lesson.resize();
+      }
+      if (onFrame?.(lesson, dt)) lesson.dirty = true;
+      if (!lesson.dirty && !lesson.cube.dirty) return;
+      renderer.clear();
+      renderer.render(lesson.scene, lesson.camera);
+      onRendered?.(lesson);
+      lesson.dirty = false;
+      lesson.cube.dirty = false;
+    };
+    const zoom = (event: WheelEvent) => {
+      event.preventDefault();
+      const pinch = trackpadPinchFactor(event);
+      if (pinch === null && isTrackpadSwipe(event)) {
+        lesson.controller.onOrbit?.(-event.deltaX, -event.deltaY);
+        return;
+      }
+      const factor = pinch ?? (event.deltaY > 0 ? 0.92 : 1.08);
+      lesson.scale = Math.max(0.5, Math.min(1.5, lesson.scale * factor));
+      lesson.resize();
+    };
+    host.addEventListener('wheel', zoom, { passive: false });
+    practiceCube.twister.setAnimationPaused(true);
+    lessonFrame.current = draw;
+    return {
+      world: lesson, interactionTarget: host, invalidate() { lesson.dirty = true; },
+      dispose() {
+        if (lessonFrame.current === draw) {
+          lessonFrame.current = null;
+          practice.dirty = true;
+        }
+        host.removeEventListener('wheel', zoom);
+        practiceCube.twister.setAnimationPaused(false);
+        lesson.controller.stop();
+        lesson.disposeNxnCubes();
+      },
+    };
+  }, []);
   const toucherRef = useRef<Toucher | null>(null);
   // Back-view mini window (NxN / SQ1 only — twisty puzzles use cubing.js native
   // backView). Second renderer shares world.scene with a camera mirrored 180°
   // about Y, rendered into an overlay canvas so snapshots/exports stay clean.
-  // Swap button (main view ↔ back-view mini window). Anchored over the back-view
-  // window's bottom-right corner via layoutBackView; only mounted when backView on.
-  const swapButtonRef = useRef<HTMLButtonElement>(null);
   const swapTweenRef = useRef<Tween | null>(null);
   const backFrameRef = useRef<HTMLDivElement>(null);
   const backViewButtonRef = useRef<HTMLButtonElement>(null);
@@ -586,7 +638,7 @@ function SimEditor({ scope = '', active, seed, snapshotRef, onModeChange, onNew,
     return { ...saved, playbackMode: query.anchor === 'end' ? 'algorithm' : 'moves' };
   });
   const roomsActive = !twisty && roomCubeActive(puzzleParam, settings.roomTheme);
-  const netMode = !roomsActive && settings.viewMode === 'net' && typeof puzzleParam === 'number';
+  const netMode = !showLesson && !roomsActive && settings.viewMode === 'net' && typeof puzzleParam === 'number';
   const clockMode = puzzleParam === 'clock';
   const flatMode = netMode || clockMode;
   const showBackViewFrame = animationMode && !twisty && !flatMode;
@@ -756,12 +808,6 @@ function SimEditor({ scope = '', active, seed, snapshotRef, onModeChange, onNew,
     if (backSizeRef.current !== size) {
       backSizeRef.current = size;
       backViewRef.current?.setSize(size);
-    }
-    // Pin the swap button to the back-view window's bottom-right inner corner.
-    const swapBtn = swapButtonRef.current;
-    if (swapBtn) {
-      swapBtn.style.top = `${BACKVIEW_MARGIN + size - 34}px`;
-      swapBtn.style.right = `${BACKVIEW_MARGIN + 6}px`;
     }
   }, []);
 
@@ -1422,6 +1468,11 @@ function SimEditor({ scope = '', active, seed, snapshotRef, onModeChange, onNew,
       const dt = now - lastFrameAt;
       lastFrameAt = now;
       if (!activeRef.current) { raf = requestAnimationFrame(loop); return; }
+      if (lessonFrame.current) {
+        lessonFrame.current(dt);
+        raf = requestAnimationFrame(loop);
+        return;
+      }
       // Corner-turners (Ivy/Dino/Redi) surface their own twist-axis labels at the
       // corners instead of the 6-face U/D/L/R/F/B letters (those don't describe a
       // corner turn — skill pitfall #10); each puzzle picks its set by puzzleKind.
@@ -1703,7 +1754,7 @@ function SimEditor({ scope = '', active, seed, snapshotRef, onModeChange, onNew,
     prevSettingsRef.current = renderSettings;
   }, [settings, renderSettings, clearPartialFreeze, scope, seed, worldTick]);
 
-  // Re-layout the back-view window (size + fullscreen-button offset) and force a
+  // Re-layout the back-view window and force a
   // repaint when the toggle flips, the puzzle engine changes, or the world is
   // (re)created. applySettings already marks world.dirty, but layout depends on
   // the DOM frame which only the component owns.
@@ -1799,6 +1850,7 @@ function SimEditor({ scope = '', active, seed, snapshotRef, onModeChange, onNew,
   useEffect(() => {
     if (!active || !animationMode) return;
     const onKey = (e: KeyboardEvent) => {
+      if (lessonFrame.current) return;
       const target = e.target as HTMLElement | null;
       // 菜单内编辑与键盘拖拽只操作菜单，不能同时转动魔方。
       if (target?.closest('[role="dialog"], [role="listbox"], [role="menu"]')) return;
@@ -2457,7 +2509,7 @@ function SimEditor({ scope = '', active, seed, snapshotRef, onModeChange, onNew,
 
   // 主图 ↔ 伴图交换态生效条件(与画布 wrap 的 --imgswap class 同一判据):把它写进
   // resize 闭包读的 ref,再触发一次重排,渲染器在全幅 ↔ 左上小框之间切换。
-  const imgSwapActive = captureMode || (imageOpen && imgSwap && !flatMode);
+  const imgSwapActive = captureMode || (!showLesson && imageOpen && imgSwap && !flatMode);
   useEffect(() => {
     imgSwapRef.current = imgSwapActive;
     resizeMainViewRef.current?.();
@@ -2468,7 +2520,9 @@ function SimEditor({ scope = '', active, seed, snapshotRef, onModeChange, onNew,
     if (drawMode) void setQuery({ tool: 'draw', drawPuzzle: String(puzzle) });
     else handlePuzzle(puzzle);
   };
+  const workspaceMode = animationMode ? 'sim' : 'draw';
   const changeTool = (tool: 'sim' | 'draw') => {
+    if (tool === workspaceMode) return;
     void setQuery({
       // Legacy creation links share puzzle/alg with animation until the first mode
       // change. Snapshot the departing document before animation can edit those keys.
@@ -2493,7 +2547,7 @@ function SimEditor({ scope = '', active, seed, snapshotRef, onModeChange, onNew,
   );
 
   return (
-    <div ref={pageRef} hidden={!active} className={`sim-page${fullscreen && animationMode ? ' sim-page--fullscreen' : ''}${panelExpanded ? ' sim-page--panel-expanded' : ''}`} data-board-bg={settings.boardBg} data-workspace={animationMode ? 'sim' : 'draw'} data-draw-source={captureMode ? 'state' : undefined}>
+    <div ref={pageRef} hidden={!active} className={`sim-page${fullscreen && animationMode ? ' sim-page--fullscreen' : ''}${panelExpanded ? ' sim-page--panel-expanded' : ''}`} data-finger-lesson={showLesson || undefined} data-board-bg={settings.boardBg} data-workspace={animationMode ? 'sim' : 'draw'} data-draw-source={captureMode ? 'state' : undefined}>
       <header className="sim-header">
         <PageHeading titleClassName="sim-title">{t('模拟', 'Sim')}</PageHeading>
         <div className="sim-project-controls">
@@ -2517,16 +2571,13 @@ function SimEditor({ scope = '', active, seed, snapshotRef, onModeChange, onNew,
             </label>
           )}
         </div>
-        <select
-          className="sim-tool-select"
-          value={animationMode ? 'sim' : 'draw'}
+        {active && <SimMenuSelect
+          ariaLabel={t('工作模式', 'Workspace mode')}
+          value={workspaceMode}
+          items={[{ value: 'sim', label: t('动画', 'Animation') }, { value: 'draw', label: t('绘图', 'Drawing') }]}
           disabled={busy}
-          onChange={(event) => changeTool(event.target.value as 'sim' | 'draw')}
-          aria-label={t('工作模式', 'Workspace mode')}
-        >
-          <option value="sim">{t('动画', 'Animation')}</option>
-          <option value="draw">{t('绘图', 'Drawing')}</option>
-        </select>
+          onChange={changeTool}
+        />}
         {!drawMode && (
           <MoreToggle type="button" className="sim-panel-toggle" expanded={panelExpanded} aria-controls={panelId}
             onClick={() => {
@@ -2541,7 +2592,7 @@ function SimEditor({ scope = '', active, seed, snapshotRef, onModeChange, onNew,
           {t('握姿与手法', 'Grip & turn atlas')}
         </AppLink>}
         <div className="sim-spacer" />
-        <div className="sim-header-recon">{reconLink}</div>
+        {reconLink}
       </header>
 
       {!animationMode && (
@@ -2563,17 +2614,16 @@ function SimEditor({ scope = '', active, seed, snapshotRef, onModeChange, onNew,
             body.style.setProperty('--sim-side-width', `${width / body.clientWidth * 100}%`);
             return width;
           }} />
-        <div className="sim-stage-recon">{reconLink}</div>
         {roomsActive && <div className="sim-room-toolbar">
-          <select
-            className="sim-tool-select"
-            aria-label={t('立体房间主题', '3D room theme')}
+          <SimMenuSelect
+            ariaLabel={t('立体房间主题', '3D room theme')}
             value={settings.roomTheme}
-            onChange={(event) => handleSettingsChange({ ...settings, roomTheme: normalizeRoomTheme(event.target.value) })}
-          >
-            {ROOM_THEMES.map((theme) => <option key={theme.id} value={theme.id}>{t(theme.zh, theme.en)}</option>)}
-            <option value="off">{t('普通色块', 'Classic colors')}</option>
-          </select>
+            items={[
+              ...ROOM_THEMES.map(theme => ({ value: theme.id, label: t(theme.zh, theme.en) })),
+              { value: 'off', label: t('普通色块', 'Classic colors') },
+            ]}
+            onChange={value => handleSettingsChange({ ...settings, roomTheme: normalizeRoomTheme(value) })}
+          />
         </div>}
         <div
           // puzzle-art:柔和度的统一钩子(见 globals.css)。挂在 wrap 而不是 3D canvas
@@ -2585,6 +2635,7 @@ function SimEditor({ scope = '', active, seed, snapshotRef, onModeChange, onNew,
           }}
           onDoubleClick={resetOnBlankDoubleClick}
         >
+          <div className="sim-finger-lesson-slot" ref={setLessonSlot} />
           {netMode && (
             <SimCubeNet
               getWorld={getWorld}
@@ -2646,22 +2697,21 @@ function SimEditor({ scope = '', active, seed, snapshotRef, onModeChange, onNew,
               portal 内容),所以关闭钮挂在外层、host 是里面那层。 */}
           {/* 常挂:studio 常驻侧栏,预览总要有个 portal 落点。关掉只是 display:none
               (若卸载,previewHost 变 null → studio 会把预览渲回侧栏里)。 */}
-          <div className="sim-image-overlay" style={{ display: imageOpen ? 'block' : 'none' }}>
+          <div className="sim-image-overlay" style={{ display: imageOpen && !showLesson ? 'block' : 'none' }}>
             <div className="sim-image-overlay-host" ref={setImageHost} />
             {/* 交换主图 ↔ 伴图:与背面小窗右下角的交换钮同款。开着时伴图铺满画布、
                 实时 3D 缩进左上小框(纯 CSS 换位,见 .sim-canvas-wrap--imgswap)。
                 net 视图没有可缩的主 3D → 不给按钮。 */}
             {!flatMode && (
-              <button
+              <Tooltip placement="bottom" content={t('交换主图与伴图', 'Swap main view / companion image')}>{tip => <button {...tip}
                 type="button"
                 className="sim-backview-swap sim-image-swap"
                 onClick={() => setImgSwap((v) => !v)}
                 aria-pressed={imgSwap}
-                title={t('交换主图与伴图', 'Swap main view / companion image')}
                 aria-label={t('交换主图与伴图', 'Swap main view / companion image')}
               >
                 <ArrowLeftRight size={14} />
-              </button>
+              </button>}</Tooltip>
             )}
           </div>
           {/* Back-view window for the cuber engine (NxN / SQ1). Always mounted
@@ -2672,36 +2722,34 @@ function SimEditor({ scope = '', active, seed, snapshotRef, onModeChange, onNew,
             <div
               ref={backFrameRef}
               className="sim-backview"
-              style={{ display: showBackViewFrame ? 'block' : 'none', visibility: settings.backView ? undefined : 'hidden' }}
+              style={{ display: showBackViewFrame && !showLesson ? 'block' : 'none', visibility: settings.backView ? undefined : 'hidden' }}
               aria-hidden
             />
           )}
           {/* Swap main view ↔ back-view mini window. Only while the cuber engine
               back-view is on (NxN / SQ1); twisty puzzles use cubing.js native
               back-view and aren't covered here. */}
-          {animationMode && !twisty && !flatMode && settings.backView && (
-            <button
-              ref={swapButtonRef}
+          {animationMode && !showLesson && !twisty && !flatMode && settings.backView && (
+            <Tooltip placement="bottom" content={t('交换主视图与背面视图', 'Swap main / back view')}>{tip => <button {...tip}
               type="button"
               className="sim-backview-swap"
               onClick={handleSwapView}
-              title={t('交换主视图与背面视图', 'Swap main / back view')}
               aria-label={t('交换主视图与背面视图', 'Swap main / back view')}
             >
               <ArrowLeftRight size={14} />
-            </button>
+            </button>}</Tooltip>
           )}
           {/* 背面小窗的关闭钮 —— 与图像浮层那个同款,钉在小窗右上内角。小窗自身
               pointer-events:none,按钮在 .sim-float-close 里自带 auto。 */}
-          {animationMode && !twisty && !flatMode && settings.backView && (
-            <button
+          {animationMode && !showLesson && !twisty && !flatMode && settings.backView && (
+            <Tooltip content={t('关闭背面视图', 'Hide back view')}>{tip => <button {...tip}
               type="button"
               className="sim-float-close sim-float-close--backview"
               onClick={() => setSettings((prev) => ({ ...prev, backView: false }))}
-              aria-label={t('关闭小窗', 'Hide back view')}
+              aria-label={t('关闭背面视图', 'Hide back view')}
             >
               <X size={12} />
-            </button>
+            </button>}</Tooltip>
           )}
         </div>
           {/* Shared adjustment row below the canvas. */}
@@ -2750,6 +2798,10 @@ function SimEditor({ scope = '', active, seed, snapshotRef, onModeChange, onNew,
             onCopyLink={copySimLink}
             renderer={query.renderer}
             onRendererChange={handleRendererChange}
+            showLesson={showLesson}
+            onLessonActive={setShowLesson}
+            lessonSlot={lessonSlot}
+            mountLesson={mountLesson}
             playbackSlot={playbackSlot}
             playbackSettingsButtonRef={playbackSettingsButtonRef}
             canvasTools={<div className="sim-canvas-tools">
@@ -2761,20 +2813,19 @@ function SimEditor({ scope = '', active, seed, snapshotRef, onModeChange, onNew,
             onAppearanceToggle={() => setOpenPanel(panel => panel === 'appearance' ? null : 'appearance')}
             bgSlot={bgSlot}
             fullscreenButton={
-              <button
+              <Tooltip content={fullscreen ? t('退出全屏', 'Exit fullscreen') : t('全屏魔方', 'Fullscreen cube')}>{tip => <button {...tip}
                 type="button"
                 className="playback-bar-btn"
                 onClick={() => runPlayerFullscreenTransition(() => setFullscreen(value => !value))}
-                title={fullscreen ? t('退出全屏', 'Exit fullscreen') : t('全屏魔方', 'Fullscreen cube')}
                 aria-label={fullscreen ? t('退出全屏', 'Exit fullscreen') : t('全屏魔方', 'Fullscreen cube')}
               >
                 {fullscreen ? <Minimize2 size={14} /> : <Maximize2 size={14} />}
-              </button>
+              </button>}</Tooltip>
             }
             backViewButton={!flatMode ? (
               <PlaybackBackViewButton buttonRef={backViewButtonRef} visible={settings.backView} toggle
                 onClick={() => setSettings(prev => resolveBackViewOptions({ ...prev, backView: !prev.backView }))}
-                showLabel={t('显示小窗', 'Show back view')} hideLabel={t('关闭小窗', 'Hide back view')} />
+                showLabel={t('显示背面视图', 'Show back view')} hideLabel={t('关闭背面视图', 'Hide back view')} />
             ) : null}
             stickering={query.stickering}
             onStickeringChange={onStickeringChange}

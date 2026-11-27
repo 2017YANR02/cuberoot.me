@@ -1,3 +1,7 @@
+import { randomUUID } from 'node:crypto';
+import { WCA_TIMED_EVENT_ORDER } from '@cuberoot/shared/wca-events';
+import { placePlatformOrder } from '../platform/commerce/order-create.js';
+import { retireCompetitionVideoGeneration } from './video_rooms.js';
 import { ownerKey } from '../utils/account.js';
 import type { Context } from 'hono';
 import { requirePlatformActor, requirePlatformAdmin, type PlatformActor } from '../platform/auth.js';
@@ -22,7 +26,7 @@ const LIST = `SELECT e.id::text,e.slug,e.title_zh AS "titleZh",e.title_en AS "ti
   e.starts_at AS "startsAt",e.ends_at AS "endsAt",o.name AS "organizationName",o.id::text AS "organizationId",
   c.submitted_at AS "submittedAt",c.registration_opens_at AS "registrationOpensAt",c.registration_closes_at AS "registrationClosesAt",
   COALESCE(c.competition_format,'average') AS format,c.supervision_mode AS "supervisionMode",
-  c.review_status AS "reviewStatus",c.finalized_at AS "finalizedAt",
+  c.review_status AS "reviewStatus",c.finalized_at AS "finalizedAt",c.is_test AS "isTest",
   ${DRAFT_SETUP},
   COALESCE((SELECT jsonb_agg(jsonb_build_object('id',t.id::text,'project',t.competition_project,'device',t.competition_device,
     'amountMinor',t.amount_minor,'currency',t.currency,'capacity',t.capacity) ORDER BY t.competition_project,t.competition_device)
@@ -36,14 +40,14 @@ async function optionalActor(c: Context): Promise<PlatformActor | null> {
 
 platformCompetitionRoutes.get('/platform/competitions', async (c) => {
   privateNoStore(c);
-  const competitions = await platformQuery(platformDb(), `${LIST} WHERE e.status IN ('published','completed') AND o.status='active' ORDER BY e.starts_at DESC LIMIT 100`);
+  const competitions = await platformQuery(platformDb(), `${LIST} WHERE NOT c.is_test AND e.status IN ('published','completed') AND o.status='active' ORDER BY e.starts_at DESC LIMIT 100`);
   return c.json({ competitions });
 });
 platformCompetitionRoutes.get('/platform/competitions/manage', async (c) => {
   const actor = await requirePlatformActor(c);
   privateNoStore(c);
-  const competitions = await platformQuery(platformDb(), `${LIST} WHERE $2 OR EXISTS (SELECT 1 FROM organization_members m
-    WHERE m.organization_id=o.id AND m.user_id=$1 AND m.status='active' AND m.role IN ('owner','admin')) ORDER BY e.created_at DESC LIMIT 100`, [actor.userId,actor.isAdmin]);
+  const competitions = await platformQuery(platformDb(), `${LIST} WHERE NOT (c.is_test AND e.status='cancelled') AND ($2 OR (NOT c.is_test AND EXISTS (SELECT 1 FROM organization_members m
+    WHERE m.organization_id=o.id AND m.user_id=$1 AND m.status='active' AND m.role IN ('owner','admin')))) ORDER BY e.created_at DESC LIMIT 100`, [actor.userId,actor.isAdmin]);
   return c.json({ competitions });
 });
 platformCompetitionRoutes.get('/platform/competitions/host/overview', async (c) => {
@@ -67,7 +71,7 @@ platformCompetitionRoutes.get('/platform/competitions/me/entries', async (c) => 
   const entries = await platformQuery(platformDb(), `
     WITH own_entries AS (
       SELECT r.id::text AS "registrationId", e.id::text AS "competitionId",
-        e.title_zh AS "titleZh", e.title_en AS "titleEn", r.status, t.competition_device AS device,
+        e.title_zh AS "titleZh", e.title_en AS "titleEn", r.status, t.competition_device AS device,cc.is_test AS "isTest",
         i.order_id::text AS "orderId", s.starts_at AS "sessionStartsAt",
         CASE WHEN r.status='reserved' AND o.status='pending_payment' THEN r.reservation_expires_at END AS "reservationExpiresAt",
         CASE
@@ -124,6 +128,177 @@ platformCompetitionRoutes.get('/platform/competitions/review-queue', async c => 
   return c.json({ competitions, supervisors: supervisors.map(user => ({ ...user, id: competitionInteger(user.id) })) });
 });
 
+async function testOrganizer(db: PlatformDb, organizationId?: string) {
+  const [organization] = await platformQuery<{ id: string }>(db, `
+    SELECT id::text FROM organizations
+    WHERE status='active' AND competition_organizer_approved_at IS NOT NULL AND ($1::uuid IS NULL OR id=$1::uuid)
+    ORDER BY created_at,id LIMIT 1 FOR SHARE`, [organizationId ?? null]);
+  if (!organization) conflict('No approved competition organizer is available');
+  return organization.id;
+}
+
+const TEST_SUPERVISORS = `
+  FROM app_users u WHERE u.merged_into_user_id IS NULL AND (
+    u.is_admin OR u.id=$2 OR EXISTS (
+      SELECT 1 FROM organization_members m WHERE m.organization_id=$1::uuid AND m.user_id=u.id
+        AND m.status='active' AND m.role IN ('owner','admin','teacher','assistant')
+    )
+  )`;
+
+platformCompetitionRoutes.get('/platform/competitions/test/options', async c => {
+  const actor = await requirePlatformAdmin(c);
+  const requested = c.req.query('organizationId');
+  const organizationId = await testOrganizer(platformDb(), requested ? uuid(requested) : undefined);
+  const supervisors = await platformQuery<{ id: number | string; name: string }>(platformDb(), `
+    SELECT u.id,u.display_name AS name ${TEST_SUPERVISORS} ORDER BY u.display_name,u.id`, [organizationId, actor.userId]);
+  privateNoStore(c);
+  return c.json({ organizationId, supervisors: supervisors.map(user => ({ ...user, id: competitionInteger(user.id) })) });
+});
+
+platformCompetitionRoutes.post('/platform/competitions/test', async c => {
+  const actor = await requirePlatformAdmin(c);
+  const body = await readJsonObject(c);
+  const format = enumField(body, 'format', ['average', 'advancement']) ?? 'average';
+  const mode = enumField(body, 'supervisionMode', ['self_service', 'supervised']) ?? 'self_service';
+  const device = enumField(body, 'device', ['smart', 'ordinary']) ?? 'smart';
+  const project = enumField(body, 'project', WCA_TIMED_EVENT_ORDER) ?? '333';
+  if (device === 'smart' && project !== '333') badRequest('Smart cube competitions require 3x3');
+  const autoEnter = booleanField(body, 'autoEnter') ?? false;
+  if (autoEnter && (format !== 'average' || mode !== 'self_service')) badRequest('Direct entry requires a self-service Ao5');
+  if (autoEnter && actor.userId === null) forbidden('Direct entry requires a site administrator account');
+  const supervisor = integerField(body, 'supervisorUserId', { min: 1 }) ?? actor.userId;
+  const requested = stringField(body, 'organizationId', { max: 36 });
+  return sendMutation(c, await withIdempotency(c, actor, 'competition.test.create', body, async db => {
+    const organizationId = await testOrganizer(db, requested ? uuid(requested) : undefined);
+    if (mode === 'supervised') {
+      if (supervisor === null) badRequest('Choose a supervisor for video supervision');
+      const [eligible] = await platformQuery(db, `SELECT u.id ${TEST_SUPERVISORS} AND u.id=$3`, [organizationId, actor.userId, supervisor]);
+      if (!eligible) badRequest('Choose an active organization supervisor or site administrator');
+    }
+    const [clock] = await platformQuery<{ now: Date; label: string }>(db,
+      "SELECT NOW() AS now,to_char(NOW() AT TIME ZONE 'Asia/Shanghai','HH24:MI') AS label");
+    const timestamp = +clock.now;
+    const scheduled = timestamp + 15 * 60_000;
+    const dates = {
+      opens: new Date(timestamp - (autoEnter ? 120_000 : 60_000)).toISOString(),
+      closes: new Date(scheduled).toISOString(),
+      startsAt: new Date(autoEnter ? timestamp : scheduled).toISOString(),
+      endsAt: new Date((autoEnter ? timestamp : scheduled) + 120 * 60_000).toISOString(),
+    };
+    const eventId = randomUUID();
+    const slug = `test-${eventId}`;
+    const formatLabel = format === 'average' ? 'Ao5' : '1v1';
+    const zh = `测试赛 · ${device === 'smart' ? '智能' : '普通'} ${project} ${formatLabel} · ${clock.label}`;
+    const en = `Test · ${device === 'smart' ? 'Smart' : 'Standard'} ${project} ${formatLabel} · ${clock.label}`;
+    const capacity = autoEnter ? 1 : 16;
+    await platformQuery(db, `INSERT INTO platform_events (id,slug,title_zh,title_en,status,starts_at,ends_at,timezone,created_by_user_id,published_at)
+      VALUES($1::uuid,$2,$3,$4,'published',$5,$6,'Asia/Shanghai',$7,NOW())`,
+    [eventId, slug, zh, en, dates.startsAt, dates.endsAt, actor.userId]);
+    await platformQuery(db, `INSERT INTO platform_competitions
+      (event_id,organization_id,is_test,review_status,reviewed_by,reviewed_at,registration_opens_at,registration_closes_at,
+        competition_format,supervision_mode,competition_device,competition_project,registration_fee_minor,participant_limit,
+        refund_template,refund_policy,recording_policy)
+      VALUES($1::uuid,$2::uuid,TRUE,'approved',$3,NOW(),$4,$5,$6,$7,$8,$9,0,$10,'custom',$11,$12)`,
+    [eventId, organizationId, actor.userId, dates.opens, dates.closes, format, mode, device, project, capacity,
+      '测试报名免费。 / Test entry is free.', '录像仅用于本场测试。 / Recordings are used for this test only.']);
+    const [session] = await platformQuery<{ id: string }>(db, `INSERT INTO platform_competition_sessions
+      (event_id,starts_at,ends_at,capacity,session_kind,supervisor_user_id) VALUES($1::uuid,$2,$3,$4,$5,$6) RETURNING id::text`,
+    [eventId, dates.startsAt, dates.endsAt, capacity, mode, mode === 'supervised' ? supervisor : null]);
+    await saveCompetitionProjects(db, eventId, dates, [{ project, device, capacity, amountMinor: 0 }]);
+
+    let registrationId: string | null = null;
+    if (autoEnter) {
+      const [ticket] = await platformQuery<{ id: string }>(db, 'SELECT id::text FROM platform_event_ticket_types WHERE event_id=$1::uuid', [eventId]);
+      const order = await placePlatformOrder(db, actor, [{
+        sellableType: 'event_ticket', eventTicketTypeId: ticket.id, competitionSessionId: session.id, device,
+      }], slug);
+      const [registration] = await platformQuery<{ id: string }>(db, `UPDATE platform_event_registrations r
+        SET checked_in_at=CASE WHEN $3 THEN NOW() ELSE NULL END
+        FROM platform_order_items i
+        WHERE r.event_id=$1::uuid AND r.order_item_id=i.id AND i.order_id=$2::uuid AND r.status='confirmed'
+        RETURNING r.id::text`, [eventId, order.resourceId, device === 'ordinary']);
+      if (!registration) throw new Error('Test competition order did not fulfill its registration');
+      registrationId = registration.id;
+      await platformQuery(db, 'UPDATE platform_competitions SET registration_closes_at=NOW() WHERE event_id=$1::uuid', [eventId]);
+      await platformQuery(db, 'UPDATE platform_event_ticket_types SET sales_end_at=NOW() WHERE event_id=$1::uuid', [eventId]);
+    }
+
+    return { status: 201, body: { id: eventId, slug, registrationId }, resourceType: 'competition', resourceId: eventId };
+  }));
+});
+
+async function lockTestCompetition(db: PlatformDb, eventId: string) {
+  const [competition] = await platformQuery<{ is_test: boolean; status: string; competition_format: string; brackets_generated_at: Date | null }>(db, `
+    SELECT c.is_test,e.status,c.competition_format,c.brackets_generated_at FROM platform_competitions c
+    JOIN platform_events e ON e.id=c.event_id WHERE c.event_id=$1::uuid FOR UPDATE OF c,e`, [eventId]);
+  if (!competition) notFound('Competition');
+  if (!competition.is_test) conflict('This action is only available for test competitions');
+  return competition;
+}
+
+platformCompetitionRoutes.post('/platform/competitions/:id/test/start-now', async c => {
+  const actor = await requirePlatformAdmin(c);
+  const eventId = id(c);
+  const body = await readJsonObject(c);
+  return sendMutation(c, await withIdempotency(c, actor, `competition.test.start:${eventId}`, body, async db => {
+    // Checkout locks tickets before the competition, so use that order here as well.
+    await platformQuery(db, `SELECT t.id FROM platform_event_ticket_types t
+      JOIN platform_competitions c ON c.event_id=t.event_id AND c.is_test
+      WHERE t.event_id=$1::uuid ORDER BY t.id FOR UPDATE OF t`, [eventId]);
+    const competition = await lockTestCompetition(db, eventId);
+    if (competition.status !== 'published') conflict('Only a published test competition can be started');
+    let bracketsGenerated = !!competition.brackets_generated_at;
+    if (competition.competition_format === 'advancement' && !bracketsGenerated) {
+      const [entries] = await platformQuery<{ confirmed: number; held: boolean }>(db, `
+        SELECT COUNT(*) FILTER(WHERE status='confirmed')::int AS confirmed,
+          COALESCE(BOOL_OR(status='reserved' AND reservation_expires_at>NOW()),FALSE) AS held
+        FROM platform_event_registrations WHERE event_id=$1::uuid`, [eventId]);
+      if (entries.held) conflict('Wait for held registrations to be resolved before starting');
+      if (entries.confirmed < 2) conflict('At least two confirmed competitors are required to start a duel');
+      bracketsGenerated = await generateCompetitionBrackets(db, eventId);
+    }
+    await platformQuery(db, 'UPDATE platform_competitions SET registration_closes_at=LEAST(registration_closes_at,NOW()) WHERE event_id=$1::uuid', [eventId]);
+    await platformQuery(db, `UPDATE platform_event_ticket_types SET sales_end_at=LEAST(COALESCE(sales_end_at,NOW()),NOW())
+      WHERE event_id=$1::uuid`, [eventId]);
+    await platformQuery(db, `UPDATE platform_events SET starts_at=LEAST(starts_at,NOW()),ends_at=GREATEST(ends_at,NOW()+INTERVAL '2 hours') WHERE id=$1::uuid`, [eventId]);
+    await platformQuery(db, `UPDATE platform_competition_sessions SET starts_at=LEAST(starts_at,NOW()),ends_at=GREATEST(ends_at,NOW()+INTERVAL '2 hours') WHERE event_id=$1::uuid`, [eventId]);
+    return { status: 200, body: { id: eventId, started: true, ...(competition.competition_format === 'advancement' ? { bracketsGenerated } : {}) } };
+  }));
+});
+
+type RetiredRoom = { id: string; generation: string };
+
+platformCompetitionRoutes.post('/platform/competitions/:id/test/cleanup', async c => {
+  const actor = await requirePlatformAdmin(c);
+  const eventId = id(c);
+  const body = await readJsonObject(c);
+  const result = await withIdempotency(c, actor, `competition.test.cleanup:${eventId}`, body, async db => {
+    const competition = await lockTestCompetition(db, eventId);
+    const [nonzero] = await platformQuery(db, `SELECT o.id FROM platform_order_items i JOIN platform_orders o ON o.id=i.order_id
+      JOIN platform_event_ticket_types t ON t.id=i.event_ticket_type_id
+      WHERE t.event_id=$1::uuid AND (o.total_amount_minor>0 OR i.line_total_amount_minor>0) LIMIT 1`, [eventId]);
+    if (nonzero) conflict('A test competition with a non-zero order cannot be cleaned up');
+    let rooms: RetiredRoom[] = [];
+    if (competition.status !== 'cancelled') {
+      await platformQuery(db, 'UPDATE platform_competitions SET registration_closes_at=LEAST(registration_closes_at,NOW()) WHERE event_id=$1::uuid', [eventId]);
+      await platformQuery(db, "UPDATE platform_events SET status='cancelled' WHERE id=$1::uuid", [eventId]);
+      rooms = await platformQuery<RetiredRoom>(db, `WITH prior AS MATERIALIZED (
+        SELECT id,competition_video_generation AS generation FROM platform_event_registrations WHERE event_id=$1::uuid FOR UPDATE
+      )
+      UPDATE platform_event_registrations r SET
+        status=CASE WHEN r.status IN ('reserved','confirmed') THEN 'cancelled' ELSE r.status END,
+        cancelled_at=CASE WHEN r.status IN ('reserved','confirmed') THEN NOW() ELSE r.cancelled_at END,
+        competition_video_generation=gen_random_uuid()
+      FROM prior WHERE r.id=prior.id RETURNING r.id::text,prior.generation::text`, [eventId]);
+    }
+    return { status: 200, body: { id: eventId, status: 'cancelled', rooms } };
+  });
+  // Store the retired generations with the idempotent result for safe retries after commit.
+  const { rooms, ...response } = result.body as { id: string; status: string; rooms: RetiredRoom[] };
+  await Promise.all(rooms.map(room => retireCompetitionVideoGeneration(room.id, room.generation)));
+  return sendMutation(c, { ...result, body: response });
+});
+
 platformCompetitionRoutes.get('/platform/competitions/:id', async (c) => {
   const key = c.req.param('id');
   const actor = await optionalActor(c);
@@ -134,18 +309,21 @@ platformCompetitionRoutes.get('/platform/competitions/:id', async (c) => {
     c.commission_bps AS "commissionBps",c.settlement_days AS "settlementDays",c.settlement_anchor AS "settlementAnchor",
     c.refund_policy AS "refundPolicy",c.recording_policy AS "recordingPolicy",c.submitted_at AS "submittedAt",
     COALESCE(c.competition_format,'average') AS format,c.supervision_mode AS "supervisionMode",
-    c.review_status AS "reviewStatus",c.finalized_at AS "finalizedAt",
+    c.review_status AS "reviewStatus",c.finalized_at AS "finalizedAt",c.is_test AS "isTest",
     c.refund_template AS "refundTemplate",c.offline_venue AS "offlineVenue",
     CASE WHEN $3 OR EXISTS (SELECT 1 FROM organization_members m WHERE m.organization_id=o.id
       AND m.user_id=$2 AND m.status='active' AND m.role IN ('owner','admin')) THEN c.review_note ELSE '' END AS "reviewNote",
     ${DRAFT_SETUP},
-    ($3 OR EXISTS (SELECT 1 FROM organization_members m WHERE m.organization_id=o.id AND m.user_id=$2 AND m.status='active' AND m.role IN ('owner','admin'))) AS "canManage",
+    ($3 OR (NOT c.is_test AND EXISTS (SELECT 1 FROM organization_members m WHERE m.organization_id=o.id AND m.user_id=$2 AND m.status='active' AND m.role IN ('owner','admin')))) AS "canManage",
     EXISTS (SELECT 1 FROM platform_competition_sessions s WHERE s.event_id=e.id AND s.supervisor_user_id=$2) AS "canSupervise"
     FROM platform_competitions c JOIN platform_events e ON e.id=c.event_id JOIN organizations o ON o.id=c.organization_id
-    WHERE (e.id::text=$1 OR e.slug=$1) AND o.status='active' AND (e.status IN ('published','completed') OR $3 OR EXISTS (SELECT 1 FROM organization_members m
+    WHERE (e.id::text=$1 OR e.slug=$1) AND o.status='active'
+      AND (NOT c.is_test OR ($2::bigint IS NOT NULL AND e.status IN ('published','completed')))
+      AND (e.status IN ('published','completed') OR $3 OR EXISTS (SELECT 1 FROM organization_members m
       WHERE m.organization_id=o.id AND m.user_id=$2 AND m.status='active' AND m.role IN ('owner','admin')))`, [key,actor?.userId ?? null,actor?.isAdmin ?? false]);
   const competition = rows[0];
   if (!competition) notFound('Competition');
+  if (competition.isTest) c.header('X-Robots-Tag', 'noindex, nofollow');
   const projects = await platformQuery(platformDb(), `SELECT t.id::text,t.competition_project AS project,t.competition_device AS device,t.amount_minor AS "amountMinor",t.currency,t.capacity,
     GREATEST(t.capacity-t.sold_quantity-COALESCE((SELECT SUM(r.quantity) FROM platform_event_registrations r
       WHERE r.event_id=t.event_id AND r.ticket_type_id=t.id AND r.status='reserved' AND r.reservation_expires_at>NOW()),0),0)::integer AS available
@@ -440,7 +618,7 @@ platformCompetitionRoutes.get('/platform/competitions/:id/registrations',async(c
     FROM platform_event_registrations r JOIN platform_order_items i ON i.id=r.order_item_id JOIN platform_orders o ON o.id=i.order_id
     JOIN platform_event_ticket_types t ON t.id=r.ticket_type_id JOIN platform_competition_sessions s ON s.id=r.competition_session_id
     JOIN platform_competitions c ON c.event_id=r.event_id WHERE r.event_id=$1::uuid AND (r.user_id=$2 OR s.supervisor_user_id=$2 OR $3
-      OR EXISTS(SELECT 1 FROM organization_members m WHERE m.organization_id=c.organization_id AND m.user_id=$2 AND m.status='active' AND m.role IN ('owner','admin'))) ORDER BY r.created_at LIMIT 1000`,[eventId,actor.userId,actor.isAdmin]);
+      OR (NOT c.is_test AND EXISTS(SELECT 1 FROM organization_members m WHERE m.organization_id=c.organization_id AND m.user_id=$2 AND m.status='active' AND m.role IN ('owner','admin')))) ORDER BY r.created_at LIMIT 1000`,[eventId,actor.userId,actor.isAdmin]);
   return c.json({registrations:registrations.map(r=>({...r,userId:competitionInteger(r.userId)}))});
 });
 platformCompetitionRoutes.post('/platform/competitions/registrations/:id/check-in',async(c)=>{
@@ -509,10 +687,11 @@ platformCompetitionRoutes.post('/platform/competitions/registrations/:id/dispute
 });
 platformCompetitionRoutes.get('/platform/competitions/:id/results',async(c)=>{
   privateNoStore(c);const eventId=id(c);
+  const actor = await optionalActor(c);
   const results=await platformQuery<{id:string;project:string;device:string;attempts:unknown;displayName:string}>(platformDb(),`SELECT r.id::text,o.buyer_display_name_snapshot AS "displayName",r.competition_project AS project,t.competition_device AS device,u.wca_id AS "wcaId",CASE WHEN u.wca_id IS NOT NULL THEN u.country_iso2 END AS "countryCode",
     r.competition_attempts AS attempts,
     EXISTS(SELECT 1 FROM platform_competition_attempts a WHERE a.registration_id=r.id AND a.review_required) AS "reviewRequired",
-    CASE WHEN c.finalized_at IS NOT NULL AND t.competition_device='smart' THEN ARRAY(
+    CASE WHEN c.finalized_at IS NOT NULL AND NOT c.is_test AND t.competition_device='smart' THEN ARRAY(
       SELECT d.attempt_number FROM platform_competition_device_reports d WHERE d.registration_id=r.id
         AND d.report IS NOT NULL AND d.report->>'disconnected'='false'
         AND jsonb_array_length(d.report->'moves')>0 ORDER BY d.attempt_number
@@ -522,8 +701,9 @@ platformCompetitionRoutes.get('/platform/competitions/:id/results',async(c)=>{
     JOIN platform_event_ticket_types t ON t.id=r.ticket_type_id JOIN platform_competitions c ON c.event_id=r.event_id JOIN platform_events e ON e.id=r.event_id
     LEFT JOIN app_users u ON u.id=r.user_id
     WHERE r.event_id=$1::uuid AND e.status IN ('published','completed') AND r.status='attended' AND r.competition_attempts IS NOT NULL
+      AND (NOT c.is_test OR $2::bigint IS NOT NULL)
       AND NOT EXISTS(SELECT 1 FROM platform_competition_disputes d WHERE d.registration_id=r.id AND d.resolved_at IS NULL)
-    ORDER BY r.competition_project,r.result_recorded_at`,[eventId]);
+    ORDER BY r.competition_project,r.result_recorded_at`,[eventId,actor?.userId ?? null]);
   const ranked=results.map(row=>({...row,...competitionResultSummary(row.attempts)})).sort((a,b)=>String(a.project).localeCompare(String(b.project))||String(a.device).localeCompare(String(b.device))||(a.averageCentiseconds??Infinity)-(b.averageCentiseconds??Infinity)||(a.bestCentiseconds??Infinity)-(b.bestCentiseconds??Infinity));
   let place=0,rank=0,previous:typeof ranked[number]|undefined;
   return c.json({results:ranked.map(row=>{
@@ -537,7 +717,7 @@ platformCompetitionRoutes.get('/platform/competitions/:id/disputes',async(c)=>{
   const actor=await requirePlatformActor(c);const eventId=id(c);privateNoStore(c);
   const disputes=await platformQuery(platformDb(),`SELECT d.id::text,d.registration_id::text AS "registrationId",d.reason,d.resolution,d.original_attempts AS "originalAttempts",d.corrected_attempts AS "correctedAttempts",d.created_at AS "createdAt",d.resolved_at AS "resolvedAt"
     FROM platform_competition_disputes d JOIN platform_event_registrations r ON r.id=d.registration_id JOIN platform_competitions c ON c.event_id=r.event_id
-    WHERE r.event_id=$1::uuid AND (d.user_id=$2 OR $3 OR EXISTS(SELECT 1 FROM organization_members m WHERE m.organization_id=c.organization_id AND m.user_id=$2 AND m.status='active' AND m.role IN ('owner','admin'))) ORDER BY d.created_at DESC LIMIT 1000`,[eventId,actor.userId,actor.isAdmin]);
+    WHERE r.event_id=$1::uuid AND (d.user_id=$2 OR $3 OR (NOT c.is_test AND EXISTS(SELECT 1 FROM organization_members m WHERE m.organization_id=c.organization_id AND m.user_id=$2 AND m.status='active' AND m.role IN ('owner','admin')))) ORDER BY d.created_at DESC LIMIT 1000`,[eventId,actor.userId,actor.isAdmin]);
   return c.json({disputes});
 });
 platformCompetitionRoutes.post('/platform/competitions/disputes/:id/resolve',async(c)=>{

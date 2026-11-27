@@ -6,7 +6,7 @@ export const COMPETITION_HOST_TITLE = { zh: '办赛工作台', en: 'Competition 
 export const COMPETITION_WORKSPACES = {
   create: { slug: 'create', title: { zh: '创建比赛', en: 'Create a competition' } },
   manage: { slug: 'manage', title: { zh: '赛事管理', en: 'Competition management' }, detailTitle: { zh: '管理赛事', en: 'Manage competition' } },
-  supervise: { slug: 'supervise', title: { zh: '我的执场', en: 'My judging assignments' }, detailTitle: { zh: '执场赛事', en: 'Judge a competition' } },
+  supervise: { slug: 'supervise', title: { zh: '执场监考', en: 'My judging assignments' }, detailTitle: { zh: '执场赛事', en: 'Judge a competition' } },
   apply: { slug: 'apply', title: { zh: '主办方申请', en: 'Organizer application' } },
   review: { slug: 'review', title: { zh: '赛事审核台', en: 'Competition reviews' } },
 } as const;
@@ -49,3 +49,6 @@ export function matchCompetitionHostRoute(segments: readonly string[]): Competit
   if (!mode || (id && mode !== 'manage')) return null;
   return { mode, id };
 }
+
+export const isCompetitionTestSlug = (slug: string) =>
+  /^test-[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/.test(slug);

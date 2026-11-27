@@ -48,9 +48,9 @@ export function validateRun(recording:any,run:any,options:{diagnostic?:boolean;e
     if(meta&&row.result.profile?.pose?.preprocessing&&row.result.profile.pose.preprocessing!==meta.detector.preprocessing)
       throw Error('Preprocessing differs from saved run configuration');
     const identity=videoFrameIdentity(row.timestampSeconds,config);
-    if(config.frame_clock==='camera_milliseconds') {
+    if(config.frame_clock==='camera_milliseconds' || config.frame_clock==='video_milliseconds') {
       if(index&&identity.sourceFrame<=videoFrameIdentity(rows[index-1].timestampSeconds,config).sourceFrame)
-        throw Error(`Camera source timestamps do not increase at ordinal ${index}`);
+        throw Error(`Source timestamps do not increase at ordinal ${index}`);
     } else if(config.infer_scramble) {
       if(index&&row.timestampSeconds<=rows[index-1].timestampSeconds)
         throw Error(`Video source timestamps do not increase at ordinal ${index}`);

@@ -1,8 +1,16 @@
+import type { ReactNode } from 'react';
 import { useEffect, useId, useRef, useState } from 'react';
 import { Download, Medal } from '@app-foundation/icons/lucide';
 import { ClearButton } from '@/components/ClearButton';
 import { useModalBackdrop } from '@/hooks/useModalDismiss';
 import { useT } from '@/hooks/useT';
+import { competitionDateTime } from '@/lib/competition-date';
+import { displayCuberName } from '@/lib/cuber-name-display';
+import { listCompetitionResults, type CompetitionResult, type OnlineCompetition } from '@/lib/online-competition-api';
+import { formatWcaResult } from '@/lib/wca-format-result';
+import { eventDisplayName } from '@/lib/wca-events';
+import { competitionDeviceName } from './CompetitionDraftForm';
+import { competitionAo5 } from './competition-results';
 
 export type ReportData = {
   competition: string;
@@ -16,6 +24,36 @@ export type ReportData = {
   attempts?: string[];
 };
 
+export function ao5ReportData(competition: OnlineCompetition, row: CompetitionResult, t: ReturnType<typeof useT>, lang: 'zh' | 'en'): ReportData {
+  const score = competitionAo5(row.attempts, row.project);
+  return {
+    competition: t(competition.titleZh || competition.titleEn, competition.titleEn || competition.titleZh),
+    organizer: competition.organizationName,
+    division: `${eventDisplayName(row.project, lang === 'zh')} · ${competitionDeviceName(row.device, t)}`,
+    name: displayCuberName(row.displayName, lang === 'zh'),
+    date: competitionDateTime(row.recordedAt ?? competition.endsAt).slice(0, 10),
+    rank: row.rank, final: !!row.finalizedAt, attempts: score.times,
+    metrics: [
+      { label: t('Ao5 平均', 'Ao5 average'), value: formatWcaResult(score.average, row.project, 'average') },
+      { label: t('最佳单次', 'Best single'), value: formatWcaResult(score.best, row.project, 'single') },
+    ],
+  };
+}
+
+export function useCompetitionResults(id: string, revision: number, enabled = true) {
+  const t = useT();
+  const [results, setResults] = useState<CompetitionResult[]>([]);
+  const [error, setError] = useState('');
+  useEffect(() => {
+    if (!enabled) return;
+    let active = true;
+    void listCompetitionResults(id).then(result => { if (active) { setResults(result.results); setError(''); } })
+      .catch(error => { if (active) setError(error instanceof Error ? error.message : t('成绩加载失败。', 'Could not load results.')); });
+    return () => { active = false; };
+  }, [enabled, id, revision, t]);
+  return { results, error };
+}
+
 const width = 760;
 const height = 520;
 const scale = 2;
@@ -26,7 +64,7 @@ export function CompetitionRank({ rank, final, podium = final }: { rank: number 
   return <span className="competition-podium-rank" data-place={rank}>{rank}</span>;
 }
 
-export function CompetitionReport({ data, share }: { data: ReportData; share: boolean }) {
+export function CompetitionReport({ data, share, renderAttempt }: { data: ReportData; share: boolean; renderAttempt?: (value: string, number: number) => ReactNode }) {
   const t = useT();
   return <section className="competition-report" data-site-surface="panel">
     <div className="competition-report-heading">
@@ -36,7 +74,7 @@ export function CompetitionReport({ data, share }: { data: ReportData; share: bo
     </div>
     <dl className="competition-report-metrics">{data.metrics.map(metric => <div key={metric.label}><dt>{metric.label}</dt><dd>{metric.value}</dd></div>)}</dl>
     {data.attempts && <ol className="competition-report-attempts" aria-label={t('五次成绩', 'All attempts')}>
-      {data.attempts.map((value, index) => <li key={index}><span>{t(`第 ${index + 1} 把`, `Attempt ${index + 1}`)}</span><strong>{value}</strong></li>)}
+      {data.attempts.map((value, index) => <li key={index}><span>{t(`第 ${index + 1} 把`, `Attempt ${index + 1}`)}</span><strong>{renderAttempt ? renderAttempt(value, index + 1) : value}</strong></li>)}
     </ol>}
     {share && <CompetitionReportShare data={data} />}
   </section>;

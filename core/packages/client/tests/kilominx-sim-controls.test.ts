@@ -154,7 +154,7 @@ describe('Kilominx simulator controls', () => {
   }
 
   function button(title: string) {
-    const element = host.querySelector<HTMLButtonElement>(`button[title="${title}"]`);
+    const element = host.querySelector<HTMLButtonElement>(`button[aria-label="${title}"], button[title="${title}"]`);
     expect(element, title).not.toBeNull();
     return element!;
   }

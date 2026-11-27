@@ -430,6 +430,13 @@ export default class World<HandsRig extends WorldHands = WorldHands> {
     this.dirty = true;
   }
 
+  /** A full editor can visit several orders and mirror variants in one mount. */
+  disposeNxnCubes(): void {
+    for (const cube of [...Object.values(this.cubes), ...Object.values(this.mirrorCubes)]) cube.dispose();
+    this.cubes = [];
+    this.mirrorCubes = {};
+  }
+
   /** Release only the SQ2/SQ4 resources owned by this World instance. */
   disposeSquareFamilyCubes(): void {
     for (const cube of Object.values(this.squareFamilyCubes)) cube?.dispose();

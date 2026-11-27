@@ -87,19 +87,17 @@ function clearanceKey(axis: Axis, layers: readonly number[], grip: THREE.Quatern
 /** Filter mechanically eligible gestures, then choose from the current hands.
  * No algorithm name, token index, or formatting tag participates in selection.
  */
-export function chooseMarkedFingerPlan(
+export function* eligibleMarkedFingerPlans(
   request: MarkedTurnRequest, profiles: readonly MarkedFingerProfile[],
-  grips: Record<Side, THREE.Quaternion>, bearings: Record<Side, Record<FingerName, FingerBearing>>,
-): MarkedFingerPlan | null {
+  grips: Record<Side, THREE.Quaternion>,
+): Generator<Omit<MarkedFingerPlan, 'candidates'>> {
   const singleUpper = request.axis === 'y' && request.layers.length === 1 && request.layers[0] === 2;
   if (singleUpper && (request.automatic || request.annotation.finger !== 'middle'
-    || [grips.L, grips.R].some(q => Math.abs(q.y) + Math.abs(q.z) > .01 || Math.abs(q.w) < .70))) return null;
-  if (request.quarters !== 1 || !singleUpper && (request.layers.length !== 2 || request.layers.includes(0) === request.layers.includes(2))) return null;
+    || [grips.L, grips.R].some(q => Math.abs(q.y) + Math.abs(q.z) > .01 || Math.abs(q.w) < .70))) return;
+  if (request.quarters !== 1 || !singleUpper && (request.layers.length !== 2 || request.layers.includes(0) === request.layers.includes(2))) return;
   const keys = { L: clearanceKey(request.axis, request.layers, grips.L), R: clearanceKey(request.axis, request.layers, grips.R) };
-  if (!keys.L || !keys.R) return null;
+  if (!keys.L || !keys.R) return;
   const contact = request.annotation.contact ?? (request.automatic ? undefined : 'pad');
-  const candidates: CandidateCost[] = [];
-  let best: { plan: MarkedFingerPlan; cost: number } | undefined;
   for (const profile of profiles) {
     // The pose program must cover the full visual turn, including any release.
     if (!!profile.singleUpper !== singleUpper || profile.handTurn.at(-1)![0] < 90) continue;
@@ -133,12 +131,22 @@ export function chooseMarkedFingerPlan(
       // reversing an existing pad gesture does not establish this condition.
       const tangent = strokeTangent(request.axis, request.dir, start);
       if (tangent.dot(destination) <= 0 || (profile.contact === 'nail' && Math.abs(normal.dot(destination)) > .01)) continue;
-      const cost = approachCost(bearings[hand][profile.finger], start, normal, profile.contact, tangent);
-      candidates.push({ profile: profile.id, hand, finger: profile.finger, surface: profile.contact, cost });
-      const plan: MarkedFingerPlan = { candidates, profile, request, hand, rotation, mirrored, start, normal, destination,
-        clearance: { L: keys.L, R: keys.R } };
-      if (!best || cost < best.cost) best = { plan, cost };
+      yield { profile, request, hand, rotation, mirrored, start, normal, destination, clearance: { L: keys.L, R: keys.R } };
     }
+  }
+}
+
+export function chooseMarkedFingerPlan(
+  request: MarkedTurnRequest, profiles: readonly MarkedFingerProfile[],
+  grips: Record<Side, THREE.Quaternion>, bearings: Record<Side, Record<FingerName, FingerBearing>>,
+): MarkedFingerPlan | null {
+  const candidates: CandidateCost[] = [];
+  let best: { plan: MarkedFingerPlan; cost: number } | undefined;
+  for (const plan of eligibleMarkedFingerPlans(request, profiles, grips)) {
+    const { profile, hand, start, normal } = plan;
+    const cost = approachCost(bearings[hand][profile.finger], start, normal, profile.contact, strokeTangent(request.axis, request.dir, start));
+    candidates.push({ profile: profile.id, hand, finger: profile.finger, surface: profile.contact, cost });
+    if (!best || cost < best.cost) best = { cost, plan: { ...plan, candidates } };
   }
   return best?.plan ?? null;
 }

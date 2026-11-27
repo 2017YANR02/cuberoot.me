@@ -1,3 +1,5 @@
+import { techniqueMoves, type LessonMethod } from '@/app/[lang]/sim/grips/techniqueLessons';
+import { fingerAnnotation } from '@/lib/alg-finger-marks';
 import { describe, expect, it, vi } from 'vitest';
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import * as THREE from 'three';
@@ -390,6 +392,56 @@ describe.runIf(haveBothHands)('R U anticipation with real MANO skin', () => {
       }
     } finally { rig.dispose(); cube.dispose(); }
   });
+
+  it.each([2, 3, 4] as const)('plays every order-%i finger lesson with its advertised driving hand and sequence', async order => {
+    const rig = new HandsRig(), cube = new Cube(order), expected = new Cube(order);
+    try {
+      const { x, y, z } = cube.table.groups;
+      rig.attachCube({ order, table: { groups: { x, y, z } }, twister: cube.twister });
+      rig.setEnabled(true);
+      await vi.waitFor(() => expect(rig.getLoadState().hands).toBe('ready'));
+      const catalog = new Map<string, LessonMethod>();
+      for (const L of gripNames) for (const R of gripNames) {
+        for (const technique of ['middle', 'thumb', 'nail', 'push'] as const) {
+          const moves = techniqueMoves(order, technique, false, { L, R }, false);
+          expect(new Set(moves.map(m => m.move)).size).toBe(moves.length);
+          if (technique === 'push') expect(moves.map(m => m.move).sort()).toEqual(["D'p", 'Dp', "U'p", 'Up']);
+          for (const { methods } of moves) for (const method of methods) {
+            const key = [method.move, method.id, method.marks, method.pose.L, method.pose.R].join('/');
+            catalog.set(key, method);
+          }
+        }
+      }
+      for (const [label, method] of catalog) {
+        cube.reset(); expected.reset();
+        const pose = simulateGrips([{ side: 'L', grip: method.pose.L }, { side: 'R', grip: method.pose.R }], order);
+        rig.setGrips(pose.R, pose.L, pose.wristAngles, !!method.push);
+        rig.tick(0);
+        const action = new TwistAction(method.move.replace(/p$/, ''));
+        const turns = cube.table.convert(action), { group, twist } = turns[0];
+        const annotation = method.marks && fingerAnnotation(method.marks.map(tag => '<' + tag + '>'));
+        const prepare = () => rig.prepareTwist(group.axis as Axis, turns.map(t => t.group.layer),
+          twist > 0 ? 1 : -1, Math.abs(twist), method.push, undefined, false, annotation);
+        for (let i = 0; i < 125 && prepare() && !rig.getMarkedMotionProblem(); i++) rig.tick(32);
+        expect(prepare(), label).toBe(false);
+        expect(rig.gripNames(), label).toEqual(method.pose);
+        expected.twister.twist(action, true, false);
+        expect(cube.twister.twist(action, false, false, 20), label).toBe(true);
+        let gesture: HandGesture | null = null;
+        let direction = 0;
+        for (let i = 0; i < 90 && cube.busy; i++) {
+          tweener.update(1);
+          rig.tick(16);
+          gesture = rig.activeGesture ?? gesture;
+          if (Math.abs(group.angle) > .01) direction = Math.sign(group.angle);
+        }
+        expect(direction, label).toBe(Math.sign(twist));
+        expect(gesture, label).toMatchObject({ kind: 'flick', hand: method.hand, finger: method.finger });
+        expect(gesture?.kind === 'flick' && gesture.finger2, label).toBe(method.second);
+        expect(cube.serializePictureFacelets(), label).toEqual(expected.serializePictureFacelets());
+      }
+    } finally { rig.dispose(); cube.dispose(); expected.dispose(); }
+  }, 180000);
 
   it.each([2, 4] as const)('replays the order-%i atlas with physical sticker identities', async order => {
     const rig = new HandsRig(), cube = new Cube(order), reference = new Cube(order);

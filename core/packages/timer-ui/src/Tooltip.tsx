@@ -8,13 +8,14 @@ import './tooltip.css';
 const HOVER_DELAY_MS = 500; // Chromium Aura's default tooltip delay.
 
 /** Short, non-interactive hover/focus labels. Spread trigger props onto the actual button/link. */
-export function Tooltip({ content, children, disabled = false, onlyWhenOverflow = false, openOnClick = false }: {
+export function Tooltip({ content, children, disabled = false, onlyWhenOverflow = false, openOnClick = false, placement = 'top' }: {
   content: string;
   disabled?: boolean;
   /** Truncated table cells keep their existing overflow-only behavior. */
   onlyWhenOverflow?: boolean;
   /** Help buttons also toggle on touch/click, with outside-press dismissal. */
   openOnClick?: boolean;
+  placement?: 'top' | 'bottom';
   children: (props: HTMLAttributes<HTMLElement>) => ReactNode;
 }) {
   const id = useId();
@@ -86,6 +87,7 @@ export function Tooltip({ content, children, disabled = false, onlyWhenOverflow 
   useLayoutEffect(() => {
     const tip = panel.current;
     if (!anchor || !tip) return;
+    if (tip.hasAttribute('popover')) tip.showPopover?.();
     const position = () => {
       const rect = anchor.getBoundingClientRect();
       const viewport = getUsableViewport(rect);
@@ -94,8 +96,12 @@ export function Tooltip({ content, children, disabled = false, onlyWhenOverflow 
       const width = viewport.offsetLeft + viewport.width;
       const height = viewport.offsetTop + viewport.height;
       const top = rect.top - tip.offsetHeight - 6;
+      const below = rect.bottom + 6;
+      const fitsAbove = top >= viewport.offsetTop + 8;
+      const fitsBelow = below + tip.offsetHeight <= height - 8;
+      const useBelow = placement === 'bottom' ? fitsBelow || !fitsAbove : !fitsAbove;
       tip.style.left = `${Math.max(viewport.offsetLeft + 8, Math.min(rect.left + (rect.width - tip.offsetWidth) / 2, width - tip.offsetWidth - 8))}px`;
-      tip.style.top = `${Math.max(viewport.offsetTop + 8, Math.min(top >= viewport.offsetTop + 8 ? top : rect.bottom + 6, height - tip.offsetHeight - 8))}px`;
+      tip.style.top = `${Math.max(viewport.offsetTop + 8, Math.min(useBelow ? below : top, height - tip.offsetHeight - 8))}px`;
     };
     position();
     const observer = typeof ResizeObserver === 'undefined' ? null : new ResizeObserver(position);
@@ -108,7 +114,7 @@ export function Tooltip({ content, children, disabled = false, onlyWhenOverflow 
       window.removeEventListener('resize', position);
       window.removeEventListener('scroll', position, true);
     };
-  }, [anchor, content]);
+  }, [anchor, content, placement]);
   return <>
     {children({
       'aria-describedby': anchor ? id : undefined,
@@ -121,7 +127,7 @@ export function Tooltip({ content, children, disabled = false, onlyWhenOverflow 
           pinned.current = !pinned.current;
           setAnchor(pinned.current ? event.currentTarget : null);
         },
-      } : {}),
+      } : { onClickCapture: close }),
       onPointerEnter: (event) => {
         if (event.pointerType === 'touch' || !canOpen(event.currentTarget)) return;
         hovered.current = true;
@@ -143,9 +149,10 @@ export function Tooltip({ content, children, disabled = false, onlyWhenOverflow 
       onBlur: () => { focused.current = false; leave(); },
     })}
     {anchor && createPortal(<div
+      popover={anchor.closest('[popover]:popover-open') ? 'manual' : undefined}
       ref={panel} id={id} role="tooltip" className="site-tooltip"
       onPointerEnter={() => { hovered.current = true; clearLeave(); }}
       onPointerLeave={() => { hovered.current = false; leave(); }}
-    >{content}</div>, anchor.closest('dialog[open]') ?? (document.fullscreenElement?.contains(anchor) ? document.fullscreenElement : document.body))}
+    >{content}</div>, anchor.closest('dialog[open], [popover]:popover-open') ?? (document.fullscreenElement?.contains(anchor) ? document.fullscreenElement : document.body))}
   </>;
 }

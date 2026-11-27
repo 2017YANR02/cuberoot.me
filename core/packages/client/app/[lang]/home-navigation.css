@@ -31,7 +31,8 @@ body .landing-page.landing-page--navigation {
   transition: top 220ms ease, width 220ms ease, padding-inline 220ms ease;
 }
 .home-navigation:has(+ .page-notice-wrap[data-home]) { margin-bottom: 8px; }
-.landing-page--navigation > .page-notice-wrap[data-home] { margin-bottom: 20px; }
+.landing-page--navigation > .page-notice-wrap[data-home],
+.landing-page--navigation .landing-shortcuts-and-notices { margin-bottom: 20px; }
 .home-navigation[data-floating] {
   width: min(calc(100% - 16px), calc(var(--landing-content-max) - 40px));
   padding-inline: 16px;

@@ -8,6 +8,9 @@ const topTurns = ['', 'U', 'U2', "U'"];
 const edgeIndices = [1, 3, 5, 7];
 const expand = (alg: string) => new Alg(alg).expand().toString();
 const movesOf = (alg: string) => expand(alg).split(/\s+/).filter(Boolean);
+// The first two examples include an AUF before the taught action.
+export const YELLOW_CROSS_ACTIONS = examples.map((example, index) =>
+  movesOf(example.alg).slice(index < 2 ? 1 : 0).join(' '));
 
 function cubeAfter(alg: string) {
   const cube = new CubeData(3, Object.fromEntries(AllFaces.map(face => [face, Array(9).fill(face)])));
@@ -48,6 +51,11 @@ const LINE_FIRST_DOT_SETUP = expand(`${allSetups.find(setup => yellowCrossPatter
 export const YELLOW_CROSS_DEMO_SETUPS = [...selectedSetups, LINE_FIRST_DOT_SETUP];
 
 export type YellowCrossCase = 'dot' | 'line' | 'elbow';
+export function yellowCrossCaseForPattern(pattern: string): YellowCrossCase | undefined {
+  if (pattern === '0000') return 'dot';
+  if (isLine(pattern)) return 'line';
+  if (pattern.split('1').length === 3) return 'elbow';
+}
 export type YellowCrossPhase = {
   kind: YellowCrossCase;
   actionKind: 'line' | 'elbow';
@@ -60,14 +68,12 @@ export type YellowCrossPhase = {
 export function buildYellowCrossDemo(setup: string) {
   const phases: YellowCrossPhase[] = [];
   const moves: string[] = [];
-  // Removing the existing examples' leading U leaves their taught action.
-  const actions = examples.map((example, i) => movesOf(example.alg).slice(i < 2 ? 1 : 0).join(' '));
+  const actions = YELLOW_CROSS_ACTIONS;
   const expected = actions.map(action => yellowCrossPattern(new Alg(action).invert().toString()));
   let pattern = yellowCrossPattern(setup);
   for (let round = 0; pattern !== '1111' && round < 2; round++) {
-    const yellow = edgeIndices.filter((_, i) => pattern[i] === '1');
-    const kind: YellowCrossCase = yellow.length === 0 ? 'dot'
-      : yellow.length === 2 && yellow[0] + yellow[1] === 8 ? 'line' : 'elbow';
+    const kind = yellowCrossCaseForPattern(pattern);
+    if (!kind) throw new Error('Invalid yellow-cross demonstration state');
     const index = kind === 'dot' ? (expand(setup) === LINE_FIRST_DOT_SETUP ? 0 : 1) : kind === 'line' ? 0 : 1;
     const turn = kind === 'dot' ? '' : topTurns.find(turn =>
       yellowCrossPattern(`${setup} ${moves.join(' ')} ${turn}`) === expected[index]);

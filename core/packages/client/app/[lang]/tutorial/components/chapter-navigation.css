@@ -1,5 +1,11 @@
-.tutorial-chapters { overflow: hidden; padding: 0; }
-.tutorial-chapter-track { position: relative; display: grid; grid-template-columns: repeat(var(--chapter-count), minmax(0, 1fr)); }
+.tutorial-chapters { min-width: 0; overflow-x: auto; overflow-y: hidden; padding: 0; scrollbar-width: none; overscroll-behavior-x: contain; }
+.tutorial-chapters::-webkit-scrollbar { display: none; }
+.tutorial-chapter-track {
+  position: relative;
+  display: grid;
+  min-width: calc(var(--chapter-count) * 86px);
+  grid-template-columns: repeat(var(--chapter-count), minmax(0, 1fr));
+}
 .tutorial-chapter-track > .tutorial-chapter-button { position: relative; display: flex; flex-direction: column; align-items: stretch; justify-content: flex-start; border: 0; background: transparent; padding: 0 4px 12px; color: var(--muted-foreground); font: inherit; font-size: .8rem; line-height: 1.5; cursor: pointer; }
 .tutorial-chapter-button:focus-visible { outline: 2px solid var(--ring); outline-offset: 4px; }
 .tutorial-chapter-track > .tutorial-chapter-button[aria-current] { color: var(--accent); }
@@ -8,8 +14,9 @@
 .tutorial-chapter-indicator { position: absolute; z-index: 1; top: 0; left: 0; width: calc(100% / var(--chapter-count)); height: 4px; transform: translateX(calc(var(--chapter) * 100%)); transition: transform 680ms cubic-bezier(.22, 1.85, .36, 1); pointer-events: none; }
 .tutorial-chapter-indicator::after { content: ''; position: absolute; inset: 0 4px; border-radius: 999px; background: var(--accent); }
 @media (max-width: 760px) {
-  .tutorial-chapters { overflow-x: auto; overflow-y: hidden; scrollbar-width: none; overscroll-behavior-x: contain; }
-  .tutorial-chapters::-webkit-scrollbar { display: none; }
-  .tutorial-chapter-track { width: calc(var(--chapter-count) * 112px); }
+  .tutorial-chapter-track { min-width: calc(var(--chapter-count) * 112px); }
+}
+@media (max-height: 400px) {
+  .tutorial-chapter-track > .tutorial-chapter-button { padding-bottom: 3px; }
 }
 @media (prefers-reduced-motion: reduce) { .tutorial-chapter-indicator { transition: none; } }

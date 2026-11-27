@@ -1,0 +1,46 @@
+.ftn-guide {
+  max-width: 52rem;
+  margin-inline: auto;
+  padding: clamp(1rem, 4vw, 3rem) clamp(1rem, 4vw, 2rem) 5rem;
+  line-height: 1.65;
+}
+.ftn-guide section { margin-top: 2.5rem; }
+.ftn-guide h2 { font-size: 1.4rem; line-height: 1.35; margin-bottom: .75rem; }
+.ftn-guide h3 { margin: 1.75rem 0 .5rem; font-size: 1.1rem; }
+.ftn-guide p, .ftn-guide dl { margin-block: .75rem; }
+.ftn-guide code { font-family: var(--font-mono); overflow-wrap: anywhere; }
+.ftn-guide section > code {
+  display: inline-block;
+  padding: .35rem .8rem;
+  background: var(--accent-soft);
+  border-inline-start: 3px solid var(--accent);
+  font-size: 1.3rem;
+}
+.ftn-guide dl {
+  display: grid;
+  grid-template-columns: fit-content(40%) minmax(0, 1fr);
+  gap: .65rem 1.2rem;
+}
+.ftn-guide dt { font-weight: 600; }
+.ftn-guide dt code { display: inline-block; max-width: 100%; }
+.ftn-guide dt code + code { margin-inline-start: .55em; }
+.ftn-guide dd { margin: 0; }
+.ftn-guide figure { margin: 0; }
+.ftn-guide figure svg { display: block; width: min(100%, 28rem); margin: 1.25rem auto; }
+.ftn-guide figcaption { color: var(--muted-foreground); }
+.ftn-demo-link {
+  display: inline-flex;
+  align-items: center;
+  gap: .45rem;
+  padding: .5rem .85rem;
+  background: var(--accent);
+  color: var(--accent-foreground);
+  border-radius: .4rem;
+  font-weight: 600;
+}
+.ftn-demo-link:hover { text-decoration: underline; }
+.ftn-demo-link:focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }
+@media (max-width: 36rem) {
+  .ftn-guide section:has(h3) dl { grid-template-columns: 1fr; gap: .1rem; }
+  .ftn-guide section:has(h3) dd + dt { margin-top: .65rem; }
+}

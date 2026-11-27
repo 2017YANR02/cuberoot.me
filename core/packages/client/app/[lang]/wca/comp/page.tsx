@@ -49,8 +49,8 @@ import {
   type RecordEntry,
 } from '@/lib/comp-records';
 import { formatWcaResult } from '@/lib/wca-format-result';
-import { loadFlagData, personFlagIso2, compNameZh, countryToIso2, compFlagIso2 } from '@/lib/country-flags';
-import { localizeCompName } from '@/lib/comp-localize';
+import { loadFlagData, personFlagIso2, countryToIso2, compFlagIso2 } from '@/lib/country-flags';
+import { localizeCompName, resolveCompName } from '@/lib/comp-localize';
 import { compLinkProps } from '@/lib/comp-link';
 import { defaultCancelledCutoffIso, isCancelledComp, compNameMatches } from '@/lib/comp-search';
 import { localizeCity } from '@/lib/city-localize';
@@ -1778,7 +1778,8 @@ function CalendarPageInner() {
       const compQRaw = compQuery.trim();
       if (compQRaw) {
         const cityZh = comp.city ? localizeCity(comp.city, true, comp.country) : '';
-        const text = `${comp.name} ${comp.name_zh || ''} ${compNameZh(comp.name)} ${comp.city} ${comp.city_zh || ''} ${cityZh}`.toLowerCase();
+        const nameZh = resolveCompName(comp.id, comp.name, true, { explicitNameZh: comp.name_zh });
+        const text = `${comp.name} ${comp.name_zh || ''} ${nameZh} ${comp.city} ${comp.city_zh || ''} ${cityZh}`.toLowerCase();
         if (!compNameMatches(text, compQRaw)) return false;
       }
       if (selectedCuber && selectedCuberCompIds) {

@@ -116,7 +116,7 @@ export async function generateCompetitionBrackets(db: PlatformDb, eventId: strin
     ORDER BY r.updated_at,r.id`, [eventId]);
   const history = registrations.length ? await platformQuery<{ user_id: string; project: string; device: string; attempts: unknown }>(db, `
     SELECT r.user_id::text,t.competition_project AS project,t.competition_device AS device,r.competition_attempts AS attempts
-    FROM platform_event_registrations r JOIN platform_competitions c ON c.event_id=r.event_id AND c.finalized_at IS NOT NULL
+    FROM platform_event_registrations r JOIN platform_competitions c ON c.event_id=r.event_id AND c.finalized_at IS NOT NULL AND NOT c.is_test
     JOIN platform_event_ticket_types t ON t.id=r.ticket_type_id
     WHERE r.user_id=ANY($1::bigint[]) AND r.status='attended' AND r.competition_attempts IS NOT NULL`,
   [[...new Set(registrations.map(r => r.user_id))]]) : [];

@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import { CompetitionTestBadge } from '@/components/competitions/CompetitionTestActions';
 import AppLink from '@/components/AppLink';
 import MoreToggle from '@/components/MoreToggle';
 import { useEntryRouter } from '@/hooks/useEntryRouter';
@@ -99,6 +100,7 @@ export function MyCompetitions() {
     const remaining = seconds === null ? null : `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, '0')}`;
     return <div className="my-competition-row" key={entry.registrationId}>
       <div>
+        {entry.isTest && <CompetitionTestBadge />}
         <h3><AppLink href={detail} prefetch={false}>{t(entry.titleZh || entry.titleEn, entry.titleEn || entry.titleZh)}</AppLink></h3>
         <p><time dateTime={entry.sessionStartsAt}>{competitionDateTime(entry.sessionStartsAt)}</time> {t('北京时间', 'UTC+8')}{entry.status === 'refunded' && <> · {t('已退款', 'Refunded')}</>}</p>
         {remaining !== null && <p className="competition-reservation-remaining" data-status={seconds === 0 ? 'expired' : (seconds ?? Infinity) <= 300 ? 'expiring' : undefined}>

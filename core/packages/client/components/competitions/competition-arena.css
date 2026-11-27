@@ -47,7 +47,7 @@ body:has(.competition-arena) .clawd-deskpet { display: none; }
   border-radius: 10px;
   padding: 4px 7px;
 }
-.competition-arena-hardware { justify-self: end; min-width: 0; }
+.competition-arena-hardware { grid-column: 3; justify-self: end; min-width: 0; }
 .competition-arena-hardware > .competition-arena-device { width: max-content; max-width: 100%; }
 .competition-arena-hardware > .competition-arena-device > svg { flex: none; width: 20px; height: 14px; }
 .competition-arena-connected,
@@ -78,7 +78,8 @@ body:has(.competition-arena) .clawd-deskpet { display: none; }
 .competition-arena progress::-moz-progress-bar { background: var(--muted-foreground); }
 .competition-arena-status progress { width: 28px; }
 
-.competition-arena-grid { display: grid; grid-template-columns: 320px minmax(0,1fr); gap: 20px; flex: 1; }
+.competition-arena-grid { display: grid; grid-template-columns: minmax(0,1fr); gap: 20px; flex: 1; }
+.competition-arena-grid[data-board] { grid-template-columns: 320px minmax(0,1fr); }
 .competition-arena-stage, .competition-arena-seat, .competition-arena-board,
 .competition-arena-score, .competition-arena-history, .competition-arena-recap, .competition-arena-board-toggle {
   min-width: 0;
@@ -127,6 +128,7 @@ body:has(.competition-arena) .clawd-deskpet { display: none; }
 }
 .competition-arena-scramble { min-width: 0; min-height: 32px; transition: opacity var(--arena-ease); }
 .competition-arena-scramble[data-stage='running'] { opacity: .64; }
+.competition-arena-scramble[data-smart]:is([data-stage='confirming'], [data-stage='inspecting']) { opacity: .48; }
 .competition-arena-scramble .timer-scramble-strip { animation: competition-arena-enter var(--arena-ease); }
 .competition-arena-cube {
   --timer-cube-h: var(--cube-h);
@@ -135,12 +137,39 @@ body:has(.competition-arena) .clawd-deskpet { display: none; }
   place-items: center;
   min-width: 0;
 }
+.competition-arena-cube-model { display: grid; place-items: center; height: 100%; grid-area: 1 / 1; transition: filter var(--arena-ease), opacity var(--arena-ease); }
+.competition-arena-cube[data-disconnected] .competition-arena-cube-model {
+  filter: blur(2px) saturate(.55);
+  opacity: .6;
+}
+.competition-arena-cube-status {
+  grid-area: 1 / 1;
+  align-self: end;
+  z-index: 1;
+  padding: 2px 8px;
+  border-radius: 8px;
+  background: var(--muted);
+  color: var(--muted-foreground);
+  font-size: .75rem;
+}
 .competition-arena-cube :is(.timer-live-net, .timer-live-net svg) { width: auto; height: auto; max-width: 100%; max-height: var(--cube-h); }
 .competition-arena-cube-tools { position: absolute; inset-inline-end: 10px; display: flex; flex-direction: column; gap: 4px; }
 .competition-arena-cube-tools .competition-icon-button:hover { background: var(--muted); }
 .competition-arena .competition-replay-button { min-height: 26px; padding: 2px 5px; font: inherit; white-space: nowrap; }
 .competition-arena-reading { text-align: center; min-width: 0; }
 .competition-arena-time { display: block; font-size: clamp(56px,6.5vw,88px); line-height: 1.06; letter-spacing: .025em; font-family: 'Segment7Standard', var(--font-mono), monospace; color: var(--timer-idle, var(--foreground)); }
+.competition-arena-reading[data-smart] .competition-arena-clock {
+  display: grid;
+  min-block-size: clamp(64px, 7.2vw, 96px);
+  place-content: center;
+  gap: 4px;
+}
+.competition-arena-phase-note { color: var(--muted-foreground); font-size: .8125rem; }
+.competition-arena-reading[data-smart][data-stage='inspecting'] .competition-arena-time {
+  font: 500 clamp(30px, 4vw, 44px)/1.05 var(--font-mono), monospace;
+  transition: color var(--arena-ease);
+}
+.competition-arena-reading[data-smart][data-stage='running'] .competition-arena-time { animation: competition-arena-enter var(--arena-ease); }
 .competition-arena-time[data-color='warn8'] { color: var(--timer-warn8, var(--signal-warning)); }
 .competition-arena-time[data-color='warn12'] { color: var(--timer-warn12, var(--signal-warning)); }
 .competition-arena-time[data-color='dnf'] { color: var(--timer-dnf, var(--destructive)); }
@@ -170,8 +199,34 @@ body:has(.competition-arena) .clawd-deskpet { display: none; }
 .competition-arena-dock li strong { font-size: clamp(12px,1.55vw,18px); }
 .competition-arena-summary { display: grid; align-content: center; gap: 1px; text-align: start; padding: 0 6px; flex: none; }
 .competition-arena-summary strong { color: var(--foreground); }
-.competition-arena-support { display: flex; flex-wrap: wrap; align-items: center; gap: 7px; font-size: 12px; color: var(--muted-foreground); }
-.competition-arena-support details[open] { width: 100%; }
+.competition-arena-support { display: grid; gap: 6px; min-width: 0; }
+.competition-arena-support:empty { display: none; }
+.competition-arena-support:not([data-preparing]) { order: 1; }
+.competition-arena-support[data-preparing] { width: min(100%, 720px); align-self: center; }
+.competition-arena-support[data-preparing] > details > summary { display: none; }
+.competition-arena-readiness-message { margin: 0 0 8px; color: var(--muted-foreground); }
+.competition-arena-check-in { display: grid; gap: 10px; justify-items: center; margin: 16px auto; max-width: 36ch; }
+.competition-arena-check-in p { margin: 0; }
+.competition-arena-countdown { display: grid; justify-items: center; gap: 8px; padding: 16px 8px; }
+.competition-arena-countdown > strong { font-size: clamp(36px, 6vw, 64px); line-height: 1; }
+.competition-arena-countdown > progress { width: min(100%, 240px); }
+.competition-arena-finish { margin-block: 8px; color: var(--muted-foreground); }
+.competition-arena-duel-wait { flex: 1; }
+.competition-arena-duel-wait .competition-arena-game strong { font-size: clamp(20px, 5vw, 38px); }
+.competition-arena-settlement {
+  display: grid;
+  grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr);
+  align-items: start;
+  width: min(100%, 1060px);
+  gap: 20px;
+  margin: 14px auto;
+  animation: competition-arena-enter var(--arena-ease);
+}
+.competition-arena-settlement-summary { min-width: 0; display: grid; gap: 12px; }
+.competition-arena-settlement .competition-report { min-width: 0; margin: 0; }
+.competition-arena-settlement .competition-arena-board { max-height: min(65dvh, 650px); }
+.competition-arena-settlement .competition-arena-board tr[data-own] > * { top: auto; bottom: auto; }
+.competition-arena-settlement .competition-report-attempts .competition-replay-button { white-space: normal; }
 .competition-arena-recap { margin: 16px 0 0; border-top: 1px solid var(--border-default); padding: 10px clamp(10px,2vw,24px); animation: competition-arena-enter var(--arena-ease); }
 
 .competition-arena-score {
@@ -190,7 +245,7 @@ body:has(.competition-arena) .clawd-deskpet { display: none; }
 .competition-arena-points i { background: var(--border-strong); transition: background var(--arena-ease); }
 .competition-arena-points i[data-scored] { background: var(--foreground); }
 .competition-arena-duel-grid { display: grid; grid-template-columns: minmax(0,1.08fr) minmax(0,.92fr); gap: 12px 16px; flex: 1; }
-.competition-arena-duel-grid > .competition-arena-scramble { grid-column: 1 / -1; text-align: center; }
+.competition-arena-duel-grid > :is(.competition-arena-check-in, .competition-arena-scramble) { grid-column: 1 / -1; text-align: center; }
 .competition-arena-seat { justify-content: start; }
 .competition-arena-seat--opponent { border-inline-start: 1px solid var(--border-default); }
 .competition-arena-seat > header { display: flex; align-items: center; gap: 8px; min-width: 0; min-height: 21px; text-align: start; }
@@ -209,7 +264,8 @@ body:has(.competition-arena) .clawd-deskpet { display: none; }
 @keyframes competition-arena-stop { from { transform: scale(1.04); } }
 
 @media (width < 1024px) {
-  .competition-arena-grid { grid-template-columns: minmax(0,1fr); grid-template-rows: auto 1fr; gap: 8px; }
+  .competition-arena-grid { gap: 8px; }
+  .competition-arena-grid[data-board] { grid-template-columns: minmax(0,1fr); grid-template-rows: auto 1fr; }
   .competition-arena-desktop-board { display: none; }
   .competition-arena-board-toggle { display: block; position: relative; font-size: 12px; border-bottom: 1px solid var(--border-default); }
   .competition-arena-board-toggle > .more-toggle-summary {
@@ -245,6 +301,8 @@ body:has(.competition-arena) .clawd-deskpet { display: none; }
   .competition-arena-seat--own { justify-content: center; }
 }
 @media (width < 768px) {
+  .competition-arena-settlement { grid-template-columns: minmax(0,1fr); gap: 14px; }
+  .competition-arena-settlement .competition-report-heading { flex-wrap: wrap; }
   .competition-arena { padding: 4px 8px 8px; }
   .competition-arena-shell { gap: 6px; min-height: min(760px, calc(100dvh - 18px)); }
   .competition-arena-hud { min-height: 44px; gap: 4px; grid-template-columns: minmax(0,1fr) auto auto; }

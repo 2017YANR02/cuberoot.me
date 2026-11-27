@@ -13,7 +13,7 @@ export const GROUPS: Group[] = [
   {
     id: 'surfaces', zh: '背景与表面', en: 'Surfaces',
     tokens: [
-      { name: '--background', kind: 'surface', light: { css: '#fafafa', txt: '#fafafa' }, dark: { css: '#171717', txt: '#171717' }, zh: '页面主背景', en: 'Page background' },
+      { name: '--background', kind: 'surface', light: { css: '#fafafa', txt: '#fafafa' }, dark: { css: '#000000', txt: '#000000' }, zh: '页面主背景', en: 'Page background' },
       { name: '--card', kind: 'surface', light: { css: '#FFFFFF', txt: '#FFFFFF' }, dark: { css: '#1f1f1f', txt: '#1f1f1f' }, zh: '卡片 / 面板背景', en: 'Card / panel surface' },
       { name: '--popover', kind: 'surface', light: { css: '#FFFFFF', txt: '#FFFFFF' }, dark: { css: '#262626', txt: '#262626' }, zh: '浮层 / 下拉 / 弹窗', en: 'Popover / dropdown / dialog' },
       { name: '--muted', kind: 'surface', light: { css: '#f5f5f5', txt: '#f5f5f5' }, dark: { css: '#262626', txt: '#262626' }, zh: '弱化区块背景', en: 'Muted block surface' },

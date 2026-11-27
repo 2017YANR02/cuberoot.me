@@ -1,5 +1,5 @@
 import {
-  COMPETITION_INSPECTION_MS, COMPETITION_INTERMISSION_MS, COMPETITION_STAGE_LIMIT_MS,
+  COMPETITION_OBSERVATION_WINDOW_MS, COMPETITION_INTERMISSION_MS, COMPETITION_START_BUFFER_MS, COMPETITION_STAGE_LIMIT_MS,
   competitionDeadline, competitionSolveStart, type CompetitionDnfReason,
 } from '@cuberoot/shared/timer';
 import { platformQuery, type PlatformDb } from './db.js';
@@ -79,7 +79,7 @@ export async function startCompetitionArena(db: PlatformDb, entry: Entry) {
   const scramble = await competitionScramble(entry.project);
   const [round] = await platformQuery<Round>(db, `INSERT INTO platform_competition_arena_rounds(session_id,project,device,number,scramble,starts_at)
     VALUES($1::uuid,$2,$3,1,$4,clock_timestamp()+$5*INTERVAL '1 millisecond')
-    RETURNING id,starts_at`, [entry.session_id, entry.project, entry.device, scramble, COMPETITION_INTERMISSION_MS]);
+    RETURNING id,starts_at`, [entry.session_id, entry.project, entry.device, scramble, COMPETITION_START_BUFFER_MS]);
   // Seed only checked-in entrants. The locked arena can admit later check-ins.
   await platformQuery(db, `INSERT INTO platform_competition_attempts(registration_id,attempt_number,scramble,issued_at,arena_round_id)
     SELECT r.id,1,$4,$5,$6::uuid FROM platform_event_registrations r
@@ -96,13 +96,19 @@ export async function recordArenaDnf(db: PlatformDb, id: string, number: number,
   await finishCompetitionSelfAttempt(db, id, number, null, COMPETITION_DNF, false);
 }
 
-export function arenaDnfReason(issued: Date, inspected: Date | null, solved: Date | null, now: Date): CompetitionDnfReason | null {
-  if (+now < competitionDeadline(+issued, inspected?.getTime(), solved?.getTime())) return null;
+export const ORDINARY_ARENA_OBSERVATION_WINDOW_MS = 16_000;
+
+function arenaObservationWindow(smart: boolean) {
+  return smart ? COMPETITION_OBSERVATION_WINDOW_MS : ORDINARY_ARENA_OBSERVATION_WINDOW_MS;
+}
+
+export function arenaDnfReason(issued: Date, inspected: Date | null, solved: Date | null, now: Date, smart = true): CompetitionDnfReason | null {
+  if (+now < competitionDeadline(+issued, inspected?.getTime(), solved?.getTime(), arenaObservationWindow(smart))) return null;
   return inspected ? 'solve_timeout' : 'scramble_timeout';
 }
 
-export function arenaSolveAt(inspectAt: Date, now: Date, inspectionMs?: number) {
-  return new Date(competitionSolveStart(+inspectAt, inspectionMs === undefined ? +now : +inspectAt + inspectionMs));
+export function arenaSolveAt(inspectAt: Date, now: Date, inspectionMs?: number, smart = true) {
+  return new Date(competitionSolveStart(+inspectAt, inspectionMs === undefined ? +now : +inspectAt + inspectionMs, arenaObservationWindow(smart)));
 }
 
 export async function advanceCompetitionArena(db: PlatformDb, round: Round) {
@@ -117,7 +123,7 @@ export async function advanceCompetitionArena(db: PlatformDb, round: Round) {
     ORDER BY r.id FOR UPDATE OF r`, [round.id, round.number]);
   for (const attempt of attempts) {
     if (attempt.recorded_at) continue;
-    const reason = arenaDnfReason(round.starts_at, attempt.inspect_at, attempt.solve_at, clock.now);
+    const reason = arenaDnfReason(round.starts_at, attempt.inspect_at, attempt.solve_at, clock.now, round.device === 'smart');
     if (!reason) continue;
     await recordArenaDnf(db, attempt.id, round.number, reason);
     attempt.recorded_at = clock.now;
@@ -143,8 +149,8 @@ export async function sweepCompetitionArenas(db: PlatformDb) {
         WHERE a.arena_round_id=ar.id AND a.attempt_number=ar.number AND a.recorded_at IS NULL AND r.checked_in_at IS NOT NULL AND r.status IN ('confirmed','attended'))
       OR EXISTS (SELECT 1 FROM platform_competition_attempts a JOIN platform_event_registrations r ON r.id=a.registration_id
         WHERE a.arena_round_id=ar.id AND a.attempt_number=ar.number AND a.recorded_at IS NULL AND r.checked_in_at IS NOT NULL AND r.status IN ('confirmed','attended')
-          AND COALESCE(a.solve_at,a.inspect_at+$2*INTERVAL '1 millisecond',a.issued_at)+$1*INTERVAL '1 millisecond'<=clock_timestamp()))
-    ORDER BY ar.starts_at LIMIT 16 FOR UPDATE OF ar SKIP LOCKED`, [COMPETITION_STAGE_LIMIT_MS, COMPETITION_INSPECTION_MS]);
+          AND COALESCE(a.solve_at,a.inspect_at+(CASE WHEN ar.device='smart' THEN $2::int ELSE $3::int END)*INTERVAL '1 millisecond',a.issued_at)+$1*INTERVAL '1 millisecond'<=clock_timestamp()))
+    ORDER BY ar.starts_at LIMIT 16 FOR UPDATE OF ar SKIP LOCKED`, [COMPETITION_STAGE_LIMIT_MS, COMPETITION_OBSERVATION_WINDOW_MS, ORDINARY_ARENA_OBSERVATION_WINDOW_MS]);
   for (const round of rounds) await advanceCompetitionArena(db, round);
 }
 
@@ -156,14 +162,14 @@ export async function competitionArenaSnapshot(db: PlatformDb, entry: Entry) {
     arena.completed_at IS NOT NULL AS completed,
     CASE WHEN arena.starts_at<=clock.now THEN arena.scramble END AS scramble,
     (SELECT a.inspect_at FROM platform_competition_attempts a WHERE a.registration_id=$4::uuid AND a.attempt_number=arena.number) AS "inspectAt",
-    (SELECT COALESCE(a.solve_at,CASE WHEN arena.device='smart' AND a.inspect_at+INTERVAL '16 seconds'<=clock.now
-      THEN a.inspect_at+INTERVAL '16 seconds' END) FROM platform_competition_attempts a WHERE a.registration_id=$4::uuid AND a.attempt_number=arena.number) AS "solveAt",
+    (SELECT COALESCE(a.solve_at,CASE WHEN arena.device='smart' AND a.inspect_at+$5*INTERVAL '1 millisecond'<=clock.now
+      THEN a.inspect_at+$5*INTERVAL '1 millisecond' END) FROM platform_competition_attempts a WHERE a.registration_id=$4::uuid AND a.attempt_number=arena.number) AS "solveAt",
     EXISTS(SELECT 1 FROM platform_competition_attempts a WHERE a.registration_id=$4::uuid AND a.arena_round_id=arena.id) AS seated,
     COALESCE((SELECT jsonb_agg(player) FROM (
       SELECT r.id,o.buyer_display_name_snapshot AS name,u.wca_id AS "wcaId",u.country_iso2 AS "countryCode",
         jsonb_agg(jsonb_build_object('attemptNumber',a.attempt_number,'centiseconds',a.centiseconds,'penalty',a.penalty,
           'inspectAt',a.inspect_at,'solveAt',COALESCE(a.solve_at,CASE WHEN arena.device='smart'
-            AND a.inspect_at+INTERVAL '16 seconds'<=clock.now THEN a.inspect_at+INTERVAL '16 seconds' END),'dnfReason',a.dnf_reason,
+            AND a.inspect_at+$5*INTERVAL '1 millisecond'<=clock.now THEN a.inspect_at+$5*INTERVAL '1 millisecond' END),'dnfReason',a.dnf_reason,
           'replay',d.reported_at IS NOT NULL AND a.penalty IN ('none','+2')) ORDER BY a.attempt_number) AS attempts
       FROM platform_competition_attempts a JOIN platform_event_registrations r ON r.id=a.registration_id
       JOIN platform_order_items i ON i.id=r.order_item_id JOIN platform_orders o ON o.id=i.order_id
@@ -172,7 +178,7 @@ export async function competitionArenaSnapshot(db: PlatformDb, entry: Entry) {
       WHERE a.arena_round_id=arena.id AND a.issued_at<=clock.now AND r.checked_in_at IS NOT NULL AND r.status IN ('confirmed','attended')
       GROUP BY r.id,o.buyer_display_name_snapshot,u.wca_id,u.country_iso2
     ) player),'[]'::jsonb) AS players
-  FROM clock LEFT JOIN arena ON TRUE`, [entry.session_id, entry.project, entry.device, entry.id]);
+  FROM clock LEFT JOIN arena ON TRUE`, [entry.session_id, entry.project, entry.device, entry.id, COMPETITION_OBSERVATION_WINDOW_MS]);
   if (snapshot?.seated !== true) {
     const legacy = await platformQuery<{
       attemptNumber: number; scramble: string; issuedAt: Date; centiseconds: number | null;

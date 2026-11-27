@@ -1,13 +1,6 @@
 /* Page shell and global toolbar. */
 .f2l-page { --f2l-sidebar-width: 230px; --f2l-layout-gap: 28px; box-sizing: border-box; max-width: 1180px; margin: 0 auto; padding: 12px 20px 56px; color: var(--foreground); }
-.f2l-header { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding-bottom: 6px; margin-bottom: 4px; }
-.f2l-header-links { display: flex; align-items: center; gap: 4px; }
-.f2l-header-links a { display: inline-flex; align-items: center; min-height: 32px; color: var(--muted-foreground); text-decoration: none; }
-.f2l-header-links a:hover { color: var(--foreground); }
-.f2l-header-title { display: flex; align-items: center; gap: 12px; }
-.f2l-header h1 { margin: 0; font-size: 1rem; white-space: nowrap; }
 .f2l-page a { color: inherit; }
-.f2l-toolbar { margin-top: 16px; }
 .f2l-settings-content { display: grid; gap: 16px; width: 240px; max-width: 100%; }
 .f2l-colors { display: grid; gap: 16px; }
 .f2l-playback-setting { width: 100%; }
@@ -106,6 +99,26 @@
 .f2l-recognition { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; margin: 28px 0; }
 .f2l-recognition figure { margin: 0; min-width: 0; text-align: center; }
 .f2l-teaching-cases > .f2l-section-button { display: flex; flex-direction: column; align-items: center; gap: 8px; text-align: center; }
+/* E: case index; the existing B/C teaching composition opens in a dialog. */
+.f2l-alg-card-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 220px), 1fr)); gap: 10px; padding: 0; margin: 0; list-style: none; }
+.f2l-alg-card-grid > li { position: relative; display: flex; flex-direction: column; gap: 16px; min-width: 0; padding: 12px; border: 1px solid var(--border-default); border-radius: 10px; }
+.f2l-alg-card-preview { display: grid; justify-items: center; gap: 6px; width: 100%; padding: 0; border: 0; background: transparent; color: inherit; font: inherit; cursor: pointer; }
+.f2l-alg-card-preview::after { content: ''; position: absolute; inset: 0; border-radius: inherit; }
+.f2l-alg-card-grid > li:has(button:hover) { border-color: var(--border-strong); }
+.f2l-alg-card-grid > li:has(button:focus-visible) { outline: 2px solid var(--ring); outline-offset: 2px; }
+.f2l-alg-card-grid .alg-formula-row { min-width: 0; margin-top: auto; align-items: center; }
+.f2l-alg-card-grid code { font-size: .85rem; line-height: 1.5; overflow-wrap: anywhere; }
+.f2l-alg-card-play { position: relative; display: grid; place-items: center; width: 44px; height: 44px; border: 0; background: transparent; color: var(--accent); cursor: pointer; }
+.f2l-alg-dialog-host { display: contents; }
+.f2l-page .settings-dialog:has(> .f2l-alg-dialog) { width: min(1120px, 100%); }
+.f2l-page .settings-dialog .settings-dialog-panel.f2l-alg-dialog.f2l-study-layout { display: flex; flex: none; flex-direction: column; gap: 12px; height: min(760px, calc(100dvh - 32px)); padding: 20px; }
+.f2l-page .f2l-alg-dialog > .f2l-alg-dialog-content { display: flex; flex: 1; flex-direction: column; min-height: 0; width: 100%; overflow: clip; }
+.f2l-alg-dialog-actions { display: flex; justify-content: flex-end; flex-shrink: 0; }
+@media (max-width: 760px) {
+  .f2l-alg-card-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .f2l-alg-card-grid > li { padding: 8px; gap: 8px; }
+  .f2l-page .settings-dialog .f2l-alg-dialog { padding: 12px; }
+}
 .f2l-teaching-flow { width: 140px; max-width: 100%; justify-self: center; }
 .f2l-teaching-flow > svg { display: block; width: 100%; height: auto; }
 .f2l-flow-graph.f2l-teaching-flow { --flow-signal: var(--accent); }
@@ -335,7 +348,6 @@ body:has(.f2l-page) .visualcube-preview-body .puzzle-art svg { display: block; w
     height: 100dvh;
     padding-bottom: 12px;
   }
-  .f2l-page:not(.f2l-practice-page) .f2l-toolbar { margin-top: 8px; }
   .f2l-page:not(.f2l-practice-page) .f2l-chapter { min-height: 0; margin-top: 14px; }
   .f2l-page:not(.f2l-practice-page) .f2l-chapter-body { height: 100%; min-height: 0; padding-bottom: 64px; }
   .f2l-page:not(.f2l-practice-page) .f2l-lesson-scroll {

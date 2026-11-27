@@ -159,7 +159,7 @@ describe('native PG simulator controls', () => {
   }
 
   function button(title: string) {
-    const element = host.querySelector<HTMLButtonElement>(`button[title="${title}"]`);
+    const element = host.querySelector<HTMLButtonElement>(`button[aria-label="${title}"], button[title="${title}"]`);
     expect(element, title).not.toBeNull();
     return element!;
   }
@@ -527,7 +527,7 @@ describe('native scramble preview with the real detached Twisty model', () => {
   });
 
   function button(title: string) {
-    const element = host.querySelector<HTMLButtonElement>(`button[title="${title}"]`);
+    const element = host.querySelector<HTMLButtonElement>(`button[aria-label="${title}"], button[title="${title}"]`);
     expect(element, title).not.toBeNull();
     return element!;
   }

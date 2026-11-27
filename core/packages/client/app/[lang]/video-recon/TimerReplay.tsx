@@ -182,7 +182,7 @@ export function TimerReplay({ clip, reconstruction, disabled, seekRequest, onPos
         {drawError && <p role="status">{t('无法显示此帧的相机画面。', 'The camera image is unavailable for this frame.')}</p>}
       </div>}
       {!sourceOnly && <ProjectedCube pose={pose} sourceTimestamp={current?.timestamp ?? position}
-        solved={solved} steps={steps} timeline={timeline} sourceFrame={frame} sourceFps={sourceFps} playbackSpeed={playing ? speed : 1}
+        solved={solved} steps={steps} timeline={timeline} sourceFrame={frame} sourceFps={sourceFps} clockFps={clip.clockFps} playbackSpeed={playing ? speed : 1}
         analysis={showAnalysis ? { scramble, steps, measured, fps:sourceFps, clockFps:clip.clockFps,
           start:solveStart, end:stop, position, onSeek:seek, inferredScramble: !!reconstruction.result?.inferred_scramble } : undefined} />}
     </div>

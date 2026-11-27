@@ -112,12 +112,12 @@
 }
 .walkthrough-all-steps:hover { color: var(--accent); }
 .walkthrough-copy :is(.walkthrough-current-step, .walkthrough-all-steps):focus-visible,
-.walkthrough-step-index button:focus-visible { outline: 2px solid var(--ring); outline-offset: -2px; }
+.walkthrough-step-index .walkthrough-step-button:focus-visible { outline: 2px solid var(--ring); outline-offset: -2px; }
 
 .walkthrough-step-index section + section { margin-block-start: .9rem; }
 .walkthrough-step-index h3 { margin: 0 0 .2rem; color: var(--muted-foreground); font-size: .85rem; font-weight: 600; }
 .walkthrough-step-index ol { margin: 0; padding: 0; list-style: none; }
-.walkthrough-step-index button {
+.walkthrough-step-index .walkthrough-step-button {
   inline-size: 100%;
   min-block-size: 44px;
   padding: .45rem .65rem;
@@ -128,8 +128,8 @@
   text-align: start;
   cursor: pointer;
 }
-.walkthrough-step-index button:hover { background: var(--muted); }
-.walkthrough-step-index button[aria-current='step'] { background: var(--accent-soft); font-weight: 600; }
+.walkthrough-step-index .walkthrough-step-button:hover { background: var(--muted); }
+.walkthrough-step-index .walkthrough-step-button[aria-current='step'] { background: var(--accent-soft); font-weight: 600; }
 
 @container course-stage (max-height: 260px) {
   .walkthrough-scramble { padding-block-end: .35rem; }

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, type CSSProperties, type ReactNode, type MouseEvent } from 'react';
+import { useLayoutEffect, useRef, type CSSProperties, type ReactNode, type MouseEvent } from 'react';
 import './chapter-navigation.css';
 
 export default function ChapterNavigation({ items, selected, label, onSelect, onMouseDown }: {
@@ -11,7 +11,7 @@ export default function ChapterNavigation({ items, selected, label, onSelect, on
   onMouseDown?: (event: MouseEvent<HTMLButtonElement>) => void;
 }) {
   const navRef = useRef<HTMLElement>(null);
-  useEffect(() => {
+  useLayoutEffect(() => {
     const nav = navRef.current;
     if (!nav) return;
     const centerChapter = () => {
@@ -21,7 +21,7 @@ export default function ChapterNavigation({ items, selected, label, onSelect, on
       const buttonRect = button.getBoundingClientRect();
       nav.scrollTo({
         left: nav.scrollLeft + buttonRect.left - navRect.left - (nav.clientWidth - buttonRect.width) / 2,
-        behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth',
+        behavior: 'instant',
       });
     };
     centerChapter();

@@ -1,4 +1,6 @@
 /** Navigation and destination groups shared by the admin shell and overview. */
+import { ListChecks, ShieldCheck, Video } from '@app-foundation/icons/lucide';
+import { COMPETITION_WORKSPACES, competitionWorkspaceHref } from '@/lib/competition-links';
 import { ADMIN_USERS_TITLE } from '@cuberoot/shared/page-catalog';
 
 export const ADMIN_SECTIONS = ['overview', 'users', 'content', 'commerce', 'system'] as const;
@@ -24,6 +26,13 @@ export const ADMIN_SECTION_LABELS: Record<AdminSection, [string, string]> = {
   system: ['运营与系统', 'Operations and system'],
 };
 
+export const COMPETITION_ADMIN_DESTINATIONS = ([
+  ['manage', ListChecks], ['review', ShieldCheck], ['supervise', Video],
+] as const).map(([mode, Icon]) => {
+  const { zh, en } = COMPETITION_WORKSPACES[mode].title;
+  return { href: competitionWorkspaceHref(mode), Icon, title: [zh, en] as const };
+});
+
 export const DESTINATION_SECTIONS: Record<string, Exclude<AdminSection, 'overview'>> = {
   '/admin/careers': 'system', '/admin/interview': 'system', '/admin/disk': 'system', '/admin/users': 'users',
   '/admin/releases': 'system', '/platform/admin': 'commerce', '/platform/admin/invites': 'commerce',
@@ -34,6 +43,7 @@ export const DESTINATION_SECTIONS: Record<string, Exclude<AdminSection, 'overvie
   '/sim': 'content', '/alg': 'content', '/account': 'content', '/recon': 'content',
   '/teachers': 'commerce', '/wiki': 'content', '/ruimin-yan': 'content',
   '/org#enterprise-admin': 'commerce', '/docs': 'system',
+  ...Object.fromEntries(COMPETITION_ADMIN_DESTINATIONS.map(({ href }) => [href, 'commerce' as const])),
   '/courses': 'commerce', '/regulation/post': 'content',
 };
 

@@ -334,6 +334,15 @@
   margin-bottom: 0;
 }
 
+.submit-video-link-entry {
+  text-align: start;
+}
+
+.submit-video-link-entry .submit-field-input {
+  flex: 1 1 16rem;
+  min-width: 0;
+}
+
 .submit-video-file {
   display: none;
 }

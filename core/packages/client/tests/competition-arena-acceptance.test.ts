@@ -3,6 +3,7 @@ import { act, createElement, Fragment } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ArenaBoardToggle, ArenaLocalCube, ArenaRemoteCube, type ArenaCube } from '@/components/competitions/CompetitionArenaParts';
+import { SOLVED_SMART_CUBE_FACELETS } from '@cuberoot/shared/smart-cube/cubie';
 import { rankArena } from '@/components/competitions/competition-results';
 import { useCompetitionCube } from '@/components/competitions/useCompetitionCube';
 import { setInstalledBleBridge } from '@/lib/installed-ble-bridge';
@@ -18,6 +19,10 @@ vi.mock('@cuberoot/timer-ui', () => ({
   TimerCubePreview: ({ event, scramble, visualization }: { event: string; scramble: string; visualization: string }) =>
     createElement('div', { 'data-preview': visualization, 'data-event': event }, scramble || 'solved'),
   useNetBattleLiveCube: () => ({ players: {}, ready: false, publishMove: mock.publishMove, publishGyro: mock.publishGyro }),
+}));
+vi.mock('@cuberoot/timer-ui/LiveCubeState', () => ({
+  default: ({ mode, facelets }: { mode: string; facelets: string }) =>
+    createElement('div', { 'data-preview': mode, 'data-facelets': facelets }),
 }));
 vi.mock('@/lib/online-competition-api', () => ({
   setCompetitionArenaPhase: mock.arenaPhase,
@@ -107,28 +112,31 @@ describe('competition arena acceptance', () => {
         id: 'seat', duel: false, smart: true, roomId: null, credentials: null, roundNumber: 1,
         round: null, offset: 0, settled: true, refresh: mock.refresh,
       });
-      return createElement('button', { onClick: () => void cube.connect() },
-        cube.bluetoothUnavailable ? 'Bluetooth unavailable' : 'Connect');
+      return createElement('button', { onClick: () => cube.openDevice(true) },
+        cube.deviceOpen ? 'Connection panel' : 'Connect');
     }
     await act(async () => root.render(createElement(Connect)));
     await act(async () => host.querySelector('button')!.click());
-    expect(host.textContent).toBe(installed ? 'Connect' : 'Bluetooth unavailable');
+    expect(host.textContent).toBe('Connection panel');
     expect(mock.connect).toHaveBeenCalledTimes(expectedCalls);
     expect(mock.arenaPhase).not.toHaveBeenCalled();
   });
 
-  it('uses 2D for ordinary cubes and disconnected smart seats, including before the scramble', async () => {
+  it('keeps ordinary seats in 2D and shows a solved 3D placeholder for disconnected smart seats', async () => {
     const disconnected = { cube: { status: { connected: false } } } as ArenaCube;
     await act(async () => root.render(createElement(Fragment, null,
       createElement(ArenaLocalCube, { project: '444', scramble: 'Rw U' }),
       createElement(ArenaLocalCube, { cube: disconnected, project: '333', scramble: 'R U' }),
-      createElement(ArenaRemoteCube, { project: '333', scramble: '' }),
+      createElement(ArenaRemoteCube, { project: '333', scramble: 'U F', smart: true }),
       createElement(ArenaRemoteCube, { project: '333', scramble: 'F R',
         remote: { playerId: 'peer', round: 1, connected: true, smart: false,
           syncing: false, seq: 0, facelets: null, moves: [], algAnchored: false, updatedAt: 0 } }),
     )));
     expect([...host.querySelectorAll('[data-preview="2D"]')].map(net => [net.getAttribute('data-event'), net.textContent]))
-      .toEqual([['444', 'Rw U'], ['333', 'R U'], ['333', 'solved'], ['333', 'F R']]);
+      .toEqual([['444', 'Rw U'], ['333', 'F R']]);
+    await vi.waitFor(() => expect(host.querySelectorAll('[data-disconnected="true"] [data-preview="3d"]')).toHaveLength(2));
+    expect([...host.querySelectorAll('[data-preview="3d"]')].map(cube => cube.getAttribute('data-facelets')))
+      .toEqual([SOLVED_SMART_CUBE_FACELETS, SOLVED_SMART_CUBE_FACELETS]);
     expect(host.querySelector('.competition-arena-cube-tools')).toBeNull();
     expect(host.querySelector('canvas')).toBeNull();
   });

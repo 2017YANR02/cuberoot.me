@@ -222,6 +222,9 @@ jobs:
             printf 'default 0;\n' > /etc/nginx/cuberoot-comp-only-until.conf
             chmod 0600 /etc/nginx/cuberoot-comp-only-until.conf
           fi
+          if [ ! -f /etc/nginx/cuberoot-permanent-comp-bans.conf ]; then
+            install -m 0600 /dev/null /etc/nginx/cuberoot-permanent-comp-bans.conf
+          fi
           # Snapshot every confs that will be (re)written, so a single failure
           # rolls back the whole batch — atomic apply across all conf files.
           declare -a CHANGED=()

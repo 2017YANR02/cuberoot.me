@@ -50,7 +50,8 @@ export function rankArena(players: CompetitionArenaPlayer[], number: number, pro
     return {
       player, metrics, count: attempts.length, current,
       currentRank: number === 5 ? sortable(metrics.average) : current ? sortable(attemptValue(current)) : Infinity,
-      historyRank: history.length >= 3 ? sortable(historicalMetrics.bpa) : mean,
+      historyRank: number === 5 && attempts.length === 5 ? sortable(metrics.best)
+        : history.length >= 3 ? sortable(historicalMetrics.bpa) : mean,
       historyBest: sortable(historicalMetrics.best),
     };
   }).sort((a, b) => a.currentRank - b.currentRank || a.historyRank - b.historyRank

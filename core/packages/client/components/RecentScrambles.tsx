@@ -42,6 +42,7 @@ import { tr } from '@/i18n/tr';
 import { parseAsInteger, parseAsString, parseAsStringEnum, useQueryStates } from 'nuqs';
 import { useUrlSubsetSelection } from '@/components/SubsetColorPicker/SubsetColorPicker';
 import LazyVisible from '@/components/LazyVisible';
+import { LoadMoreSentinel } from '@/components/LoadMoreSentinel';
 import { diversifyRecentScrambles, matchesRecentMoves } from '@/lib/recent-scramble-selection';
 import { fetchByDifficulty, type ByDifficultyResult } from '@/lib/scramble-by-difficulty';
 import { usePageScrollRestoration } from '@/hooks/usePageScrollRestoration';
@@ -373,7 +374,7 @@ function ScrambleCard({ event, scramble, m, lp, isZh, ssTarget, color, dotColors
     practice: true, optimal, competition: m, sourceColors: dotList.join(''), sourceEn: describeSource('en'), sourceZh: describeSource('zh'),
   });
   return (
-    <div className="rs-scard af-glass-surface">
+    <div className={browse ? 'rs-scard af-glass-surface' : 'rs-scard'} data-site-surface={browse ? undefined : 'panel'}>
       <div className="rs-scard-cube">
         <div className="rs-scard-actions">
         {dotList.length > 0 && (
@@ -700,8 +701,10 @@ function RecentScramblesBrowser({ data, dist, eventsJson, isZh, lp, groups, date
     </div>}
     {!archive && shown.length > 0 && <div className="rs-browser-pagination">
       <span>{tr({ zh: `已显示 ${shown.length} / ${entries.length}`, en: `Showing ${shown.length} of ${entries.length}` })}</span>
-      {count < entries.length && <button type="button" className="rs-browser-more" onClick={() => { void setQuery({ count: count + 24 }); }}>{tr({ zh: '加载更多', en: 'Load more' })}</button>}
     </div>}
+    {!archive && !loadingEvent && count < entries.length && (
+      <LoadMoreSentinel onLoadMore={() => { void setQuery({ count: count + 24 }); }} />
+    )}
   </section>;
 }
 

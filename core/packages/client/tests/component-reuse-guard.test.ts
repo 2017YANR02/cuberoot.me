@@ -223,7 +223,7 @@ describe('component reuse rule registry', () => {
     const triggerRule = css.match(/\.pp-trigger\s*\{([\s\S]*?)\}/)?.[1] ?? '';
     const activeRule = css.match(/\.pp-trigger--active\s*\{([\s\S]*?)\}/)?.[1] ?? '';
 
-    expect(source).toContain('showTriggerIcon = true');
+    expect(source).toContain('const showTriggerIcon = triggerIcon ?? true');
     expect(source).toContain('const showSelectedIcons = showTriggerIcon && showItemIcons && hasSelection');
     expect(source).toContain('{showSelectedIcons ? (');
     expect(source).toContain('{selectedItems.map(item => (');

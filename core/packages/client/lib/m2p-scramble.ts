@@ -44,9 +44,9 @@ export async function m2pScramble333(): Promise<string> {
  * Used by the cross-trainer source, which picks the state first and needs a scramble
  * that reproduces it exactly.
  */
-export async function m2pScrambleForFacelets(facelets: string): Promise<string> {
+export async function m2pScrambleForFacelets(facelets: string, { maxDepth = 21, probeMax = 100_000 } = {}): Promise<string> {
   const m = await getInstance();
-  const out = m.solveEx(facelets, 21, 100_000, 0, INVERSE_SOLUTION).trim();
+  const out = m.solveEx(facelets, maxDepth, probeMax, 0, INVERSE_SOLUTION).trim();
   // min2phase reports failures as "Error N" rather than throwing.
   if (!out || /^Error/i.test(out)) throw new Error(`min2phase: ${out || 'empty'}`);
   return out;

@@ -28,7 +28,7 @@ describe.each([
     for (const pinned of [1, 'true', undefined]) expect((await pin('1', { [field]: pinned })).status).toBe(400);
     expect(mocks.query).not.toHaveBeenCalled();
   });
-  it('pins independently, only from public reconstructions, and removes only the selected pin', async () => {
+  it('uses the collection conflict key and only accepts public reconstructions', async () => {
     mocks.query.mockResolvedValue([{ recon_id: 1 }]);
     expect((await pin('1', { [field]: true })).status).toBe(200);
     expect((await pin('2', { [field]: true })).status).toBe(200);
@@ -37,6 +37,7 @@ describe.each([
       expect(sql).toContain("record_type IS DISTINCT FROM 'timing'");
       expect(sql).not.toContain('DELETE');
       expect(sql).toContain(`INSERT INTO ${table}`);
+      expect(sql).toContain(list === 'pinned' ? 'ON CONFLICT ((true))' : 'ON CONFLICT (recon_id)');
     }
     expect((await pin('1', { [field]: false })).status).toBe(200);
     expect(mocks.query.mock.lastCall).toEqual([`DELETE FROM ${table} WHERE recon_id = ?`, [1]]);

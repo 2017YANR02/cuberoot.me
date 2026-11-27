@@ -1,38 +1,72 @@
 'use client';
 
-import { useMemo, useState } from 'react';
-import { ChevronLeft } from '@app-foundation/icons/lucide';
-import AppLink from '@/components/AppLink';
-import { CompactSelect } from '@/components/CompactSelect';
-import { T, tr } from '@/i18n/tr';
+import { useEffect, useRef, useState } from 'react';
+import { ArrowLeft, ArrowRight } from '@app-foundation/icons/lucide';
+import { tr } from '@/i18n/tr';
 import { Demonstration } from './CompleteDemo';
 import { buildWhiteUpWalkthrough } from './complete-demo-state';
 import { LBL_LESSON_RUNS } from './lesson-runs';
+import type { RandomWalkthrough, WalkthroughWorkerReply, WalkthroughWorkerRequest } from './random-walkthrough.worker';
 
 const IGNORE_CASE_CUE = () => {};
-export default function Walkthrough() {
-  const [runIndex, setRunIndex] = useState(0);
-  const scramble = LBL_LESSON_RUNS[runIndex].scramble;
-  const { demo, scramble: displayScramble } = useMemo(() => buildWhiteUpWalkthrough(scramble), [scramble]);
-  const examples = LBL_LESSON_RUNS.map((_, index) => ({
-    value: String(index),
-    label: tr({ zh: `示例 ${index + 1}`, en: `Example ${index + 1}` }),
-  }));
+export default function Walkthrough({ onPrevious }: { onPrevious: () => void }) {
+  const [{ demo, scramble }, setWalkthrough] = useState(() => buildWhiteUpWalkthrough(LBL_LESSON_RUNS[0].scramble));
+  const [loading, setLoading] = useState(false);
+  const [failed, setFailed] = useState(false);
+  const worker = useRef<Worker | null>(null);
+  const pending = useRef<number | null>(null);
+  const seen = useRef(new Set<string>());
+  useEffect(() => () => {
+    if (pending.current !== null) window.clearTimeout(pending.current);
+    pending.current = null;
+    worker.current?.terminate();
+    worker.current = null;
+  }, []);
+
   const nextRandomCase = () => {
-    const offset = 1 + Math.floor(Math.random() * (LBL_LESSON_RUNS.length - 1));
-    setRunIndex(current => (current + offset) % LBL_LESSON_RUNS.length);
+    if (pending.current !== null) return;
+    setLoading(true);
+    setFailed(false);
+    seen.current.add(scramble);
+    const finish = (walkthrough?: RandomWalkthrough) => {
+      if (pending.current !== null) window.clearTimeout(pending.current);
+      pending.current = null;
+      setLoading(false);
+      if (walkthrough) {
+        seen.current.add(walkthrough.scramble);
+        setWalkthrough(walkthrough);
+      } else {
+        setFailed(true);
+      }
+    };
+    const workerFailed = () => {
+      worker.current?.terminate();
+      worker.current = null;
+      finish();
+    };
+    try {
+      const instance = worker.current ??= new Worker(new URL('./random-walkthrough.worker.ts', import.meta.url), { type: 'module' });
+      instance.onmessage = ({ data }: MessageEvent<WalkthroughWorkerReply>) => {
+        if (worker.current !== instance || pending.current === null) return;
+        if ('walkthrough' in data) finish(data.walkthrough);
+        else workerFailed();
+      };
+      instance.onerror = instance.onmessageerror = () => { if (worker.current === instance) workerFailed(); };
+      pending.current = window.setTimeout(workerFailed, 30000);
+      instance.postMessage({ exclude: [...seen.current] } satisfies WalkthroughWorkerRequest);
+    } catch {
+      workerFailed();
+    }
   };
 
-  return <main className="tutorial-course lbl-walkthrough-page" data-center-content>
-    <header className="course-header">
-      <AppLink className="course-back-link" href="/tutorial/lbl" prefetch={false} aria-label={tr({ zh: '返回层先法教程', en: 'Back to the LBL tutorial' })}>
-        <ChevronLeft size={18} aria-hidden="true" />
-      </AppLink>
-      <h1><T zh="完整示范" en="Full walkthrough" /></h1>
-      <CompactSelect className="lbl-walkthrough-example" ariaLabel={tr({ zh: '选择示例', en: 'Choose example' })} label={examples[runIndex].label}
-        showArrow items={examples} value={String(runIndex)} onChange={value => setRunIndex(Number(value))} />
-    </header>
-    <Demonstration key={runIndex} stage="walkthrough" demo={demo} onCaseCueChange={IGNORE_CASE_CUE}
-      walkthroughCase={{ scramble: displayScramble, onRandomCase: nextRandomCase }} />
-  </main>;
+  return <>
+    <Demonstration key={scramble} stage="walkthrough" demo={demo} onCaseCueChange={IGNORE_CASE_CUE}
+      walkthroughCase={{ scramble, onRandomCase: nextRandomCase, loading, failed }} />
+    <footer className="course-footer">
+      <button className="course-control" type="button" onClick={onPrevious}
+        aria-label={tr({ zh: '上一节', en: 'Previous section' })}><ArrowLeft size={17} aria-hidden="true" /></button>
+      <button className="course-control" type="button" disabled
+        aria-label={tr({ zh: '下一节', en: 'Next section' })}><ArrowRight size={17} aria-hidden="true" /></button>
+    </footer>
+  </>;
 }

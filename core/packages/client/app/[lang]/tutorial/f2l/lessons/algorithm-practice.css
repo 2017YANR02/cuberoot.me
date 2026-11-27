@@ -78,13 +78,13 @@
   padding: max(8px, env(safe-area-inset-top)) max(12px, env(safe-area-inset-right))
     max(12px, env(safe-area-inset-bottom)) max(12px, env(safe-area-inset-left));
 }
-.f2l-practice-page:has(.f2l-alg-practice[data-practice-layout]) > .f2l-header {
+.f2l-practice-page:has(.f2l-alg-practice[data-practice-layout]) > .course-header {
   position: absolute; z-index: 2;
   inset-block-start: max(4px, env(safe-area-inset-top));
   inset-inline-end: max(12px, env(safe-area-inset-right));
   padding: 0; margin: 0;
 }
-.f2l-practice-page:has(.f2l-alg-practice[data-practice-layout]) > .f2l-header :is(.f2l-header-links, h1) { display: none; }
+.f2l-practice-page:has(.f2l-alg-practice[data-practice-layout]) > .course-header > :is(.course-back-link, h1) { display: none; }
 .f2l-practice-page:has(.f2l-alg-practice[data-practice-layout]) .f2l-chapter { margin-top: 0; }
 .f2l-practice-page:has(.f2l-alg-practice[data-practice-layout]) :is(.f2l-chapter-body, .f2l-lesson-scroll) { height: 100%; min-height: 0; }
 .f2l-alg-practice[data-practice-layout] { height: 100%; grid-template-rows: 44px minmax(0, 1fr) auto; gap: 0; }

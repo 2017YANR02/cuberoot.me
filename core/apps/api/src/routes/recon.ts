@@ -229,10 +229,13 @@ for (const collection of [
       return c.json({ error: 'Invalid curation request' }, 400);
     }
     if (body[collection.field]) {
+      const conflict = collection.list === 'pinned'
+        ? 'ON CONFLICT ((true)) DO UPDATE SET recon_id = EXCLUDED.recon_id, pinned_at = EXCLUDED.pinned_at'
+        : 'ON CONFLICT (recon_id) DO UPDATE SET recon_id = EXCLUDED.recon_id';
       const rows = await query(
         `INSERT INTO ${collection.table} (recon_id)
          SELECT id FROM recons WHERE id = ? AND visibility = 'public' AND record_type IS DISTINCT FROM 'timing'
-         ON CONFLICT (recon_id) DO UPDATE SET recon_id = EXCLUDED.recon_id
+         ${conflict}
          RETURNING recon_id`, [id],
       );
       if (!rows.length) return c.json({ error: 'Public reconstruction not found' }, 404);

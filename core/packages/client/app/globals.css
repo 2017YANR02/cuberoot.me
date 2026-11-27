@@ -46,7 +46,7 @@ html:root:not([data-palette-scheme=dark]):has(.comp-sim-page),
 html:root:not([data-palette-scheme=dark]):has(.comp-sim-live) {
   color-scheme: dark;
   --site-color-scheme: dark;
-  --background: #171717;
+  --background: var(--classic-dark-background);
   --foreground: #ededed;
   --card: #1f1f1f;
   --card-foreground: #ededed;

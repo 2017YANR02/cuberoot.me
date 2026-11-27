@@ -5,7 +5,7 @@ import { COMPLETE_DEMO_STAGES, type CompleteDemoStage } from './complete-demo-st
 type Text = { zh: string; en: string };
 export type Lesson = {
   id: string; title: Text;
-  kind: 'overview' | 'facelet' | 'layers' | 'notation' | 'terms' | 'example' | 'complete' | 'recognition' | 'flowchart';
+  kind: 'overview' | 'facelet' | 'layers' | 'notation' | 'terms' | 'example' | 'complete' | 'recognition' | 'flowchart' | 'walkthrough';
   example?: LblExample;
   mask?: string;
   paragraphs?: Text[];
@@ -92,6 +92,13 @@ export const activeChapters = chapters.flatMap((chapter, index) => {
     return [{ ...chapter, lessons: [overview, ...(terms ? [terms] : []), ...formulaLessons, ...remainingLessons.filter(lesson => lesson !== terms)] }];
   }
   return [{ ...chapter, lessons: [overview, ...formulaLessons, ...remainingLessons] }];
+}).concat({
+  id: 'walkthrough',
+  title: { zh: '完整示范', en: 'Full walkthrough' },
+  goal: { zh: '从打乱到复原', en: 'From scramble to solved' },
+  paragraphs: [],
+  examples: [],
+  lessons: [{ id: 'walkthrough', title: { zh: '从打乱到复原', en: 'From scramble to solved' }, kind: 'walkthrough' }],
 });
 
 export function lessonSourceChapter(chapter: Chapter, lesson: Lesson): Chapter {

@@ -20,7 +20,7 @@ const styles: Partial<Record<FlickStyle, readonly [string, string]>> = {
   topPush: ['下压', 'press'], downPush: ['下拨', 'downward stroke'], upPush: ['上推', 'push'],
   thumbLift: ['上顶', 'upward push'], sliceNail: ['指甲上顶', 'nail push'],
   sliceNailDouble: ['指甲连拨两次', 'two nail strokes'],
-  middleSlicePad: ['指腹拨动', 'pad stroke'], middleSliceNail: ['指腹转指甲', 'pad to nail'],
+  middleSlicePad: ['指腹拨动', 'pad stroke'],
 } as const;
 const fingers = {
   thumb: ['拇指', 'thumb'], index: ['食指', 'index'], middle: ['中指', 'middle'],

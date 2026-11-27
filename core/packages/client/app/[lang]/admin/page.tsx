@@ -13,13 +13,13 @@ import UsersManagement from './users/UsersManagement';
 import DiskManagement from './disk/DiskManagement';
 import WorkResources from './WorkResources';
 import AssistantMonitoring from './AssistantMonitoring';
-import { ADMIN_SECTIONS, ADMIN_SECTION_LABELS, DESTINATION_SECTIONS, SYSTEM_DESTINATION_VIEWS, SYSTEM_VIEWS, SYSTEM_VIEW_LABELS } from './sections';
+import { ADMIN_SECTIONS, ADMIN_SECTION_LABELS, COMPETITION_ADMIN_DESTINATIONS, DESTINATION_SECTIONS, SYSTEM_DESTINATION_VIEWS, SYSTEM_VIEWS, SYSTEM_VIEW_LABELS } from './sections';
 import './admin.css';
 
 interface AdminDestination {
   href: string;
   Icon: ComponentType<{ size?: number; 'aria-hidden'?: boolean }>;
-  title: [string, string];
+  title: readonly [string, string];
 }
 
 // Order snapshot: product analytics, 28 days / public audience, read 2026-11-09 (Pacific).
@@ -55,6 +55,7 @@ const DESTINATIONS: AdminDestination[] = [
   { href: '/wca/result-watch', Icon: History, title: ['成绩变更', 'Result changes'] },
   { href: '/platform/admin/invites', Icon: Gift, title: ['课程兑换码', 'Course redemption codes'] },
   { href: '/docs', Icon: Wrench, title: ['协作文档', 'Collaborative Docs'] },
+  ...COMPETITION_ADMIN_DESTINATIONS,
   { href: '/courses', Icon: Presentation, title: ['教学课程内容', 'Teaching course content'] },
   { href: '/account', Icon: BellRing, title: ['页面通知与公式校验', 'Page notices and algorithm validation'] },
 ];
