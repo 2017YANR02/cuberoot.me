@@ -109,7 +109,7 @@ export default function ReplayReplyCard({report,recordedAction,retestAction,chil
     }}/>}
     <ReplayTransferComparison summary={summary} origin={report.origin}/>
     {view==='analysis' ? <>
-      {evidence?.wholeSolve && <section className="rr-panel" data-site-surface="panel">
+      {evidence?.wholeSolve && <section className="rr-panel" data-site-surface="panel" data-report-section={t('分段总览','Stage overview')}>
         {coach && <>
           {coach.strength && <p><strong>{t('做得好','Strength')} · </strong>{coach.strength}</p>}{coach.timing && <p>{coach.timing}</p>}</>}
         {summary.stm != null && summary.tps != null && <p>{summary.stm} STM · {summary.tps.toFixed(2)} TPS</p>}
@@ -126,7 +126,7 @@ export default function ReplayReplyCard({report,recordedAction,retestAction,chil
         {obs ? <><Bars rows={[[t('本局','This solve'),obs.current],[t('同类基线','Baseline'),obs.baseline]]}/><p>{obs.note}</p></>
         : <><strong>{stage[goal]!=null && (goal==='turns' ? stage.turns+' HTM' : seconds(stage[goal]!)+' '+t('秒','s'))}</strong>
           <p>{evidence?.observationNote}</p></>}</article>}
-        <article className="rr-panel" data-site-surface="panel"><small>{t('长期重点','Recurring target')}</small>
+        <article className="rr-panel" data-site-surface="panel"><small data-report-section="">{t('长期重点','Recurring target')}</small>
           {priority ? <><h4>{priority.name} · {priority.metric}</h4><Bars neutral rows={[[t(`近期 ${priority.recentCount} 局`,`Recent ${priority.recentCount}`),priority.recent],
             [t(`以往 ${priority.earlierCount} 局`,`Earlier ${priority.earlierCount}`),priority.earlier]]}/>
             <p>{t(`近期有 ${priority.slowerCount}/${priority.recentCount} 局超过慢速门槛。`,`${priority.slowerCount} of the last ${priority.recentCount} exceeded the slowdown threshold.`)}</p><p>{priority.instruction}</p></>
@@ -139,12 +139,12 @@ export default function ReplayReplyCard({report,recordedAction,retestAction,chil
       {pair && stage ? <Pair stage={stage} rotation={rotation} action={recordedAction} target={cases?.recorded}/> : !stage?.zbll && recordedAction}
     </> : <>
       <div className="rr-grid">{(training?.drills.length || recordedAction) ? <article className="rr-panel" data-site-surface="panel">
-        <small>{t('本局专项','This solve’s drill')} · {focus}</small><LibraryCase target={cases?.recorded} fallback={training?.drills[0]?.name}/>
+        <small data-report-section="">{t('本局专项','This solve’s drill')} · {focus}</small><LibraryCase target={cases?.recorded} fallback={training?.drills[0]?.name}/>
         {training?.drills.length ? training.drills.map((d,i)=><div key={i}><small>{training.drills.length > 1 ? d.name+' · ' : ''}{d.clock}</small><p>{t('专项总用时中位数','Median drill time')}</p>
           <strong className="rr-number">{d.medianMs!=null ? seconds(d.medianMs)+' '+t('秒','s') : '—'}</strong>
           <p>{t(`有效 ${d.valid}/${d.total} 次`,`${d.valid}/${d.total} valid attempts`)}</p></div>) : <p>{t('尚无从本局入口记录的专项成绩。','No drills recorded from this solve yet.')}</p>}
         <div className="rr-actions">{recordedAction}</div></article> : null}
-        {(retest || retestAction) && <article className="rr-panel" data-site-surface="panel"><small>{t('训练复测','Practice retest')}{retest && ' · '+retest.metric}</small><LibraryCase target={cases?.retest} fallback={retest?.name}/>
+        {(retest || retestAction) && <article className="rr-panel" data-site-surface="panel"><small data-report-section="">{t('训练复测','Practice retest')}{retest && ' · '+retest.metric}</small><LibraryCase target={cases?.retest} fallback={retest?.name}/>
           {retest && <><div className="rr-median"><div><small>{t('练前中位数','Before')}</small><strong>{retest.beforeMs!=null ? seconds(retest.beforeMs) : '—'}</strong></div>
             <span>→</span><div><small>{t('练后中位数','After')}</small><strong>{retest.afterMs!=null ? seconds(retest.afterMs) : '—'}</strong></div><small>{t('秒','s')}</small></div>
             <p>{t(`练前 ${retest.before.length}/5，练后 ${retest.after.length}/5`,`Before ${retest.before.length}/5, after ${retest.after.length}/5`)}</p>

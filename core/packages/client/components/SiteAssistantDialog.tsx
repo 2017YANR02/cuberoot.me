@@ -18,7 +18,7 @@ const WrHistoryChart = lazy(() => import('@/components/wca-stats/WrHistoryChart'
 import { useCopy } from '@/hooks/useCopy';
 import { createPortal } from 'react-dom';
 import { ArrowUp, ArrowDown, ArrowRight, Check, Copy, Pencil, Maximize2, Minimize2, MessageSquarePlus, Image as ImageIcon, Plus, Mic, Square, Quote, X } from '@app-foundation/icons/lucide';
-import { CHAT_PROVIDERS, SITE_ASSISTANT_MAX_IMAGES, SITE_ASSISTANT_QUESTION_MAX_LENGTH, isAssistantSourceHref, type AssistantImage, type AssistantAnswer, type AssistantChart, type AssistantStatus, type AssistantErrorCode, type ChatProvider, type AssistantThinkingMode } from '@cuberoot/shared/site-assistant';
+import { SITE_ASSISTANT_MAX_IMAGES, SITE_ASSISTANT_QUESTION_MAX_LENGTH, isAssistantSourceHref, type AssistantImage, type AssistantAnswer, type AssistantChart, type AssistantStatus, type AssistantErrorCode, type ChatProvider, type AssistantThinkingMode } from '@cuberoot/shared/site-assistant';
 import { ASSISTANT_ERROR_TEXT } from '@/lib/site-assistant-errors';
 import { authActions } from '@/lib/auth-store';
 import { formatWcaResult } from '@/lib/wca-format-result';
@@ -37,6 +37,8 @@ import type { AssistantProgress } from '@cuberoot/shared/site-assistant';
 import { prepareAssistantImage } from '@/lib/site-assistant-images';
 import { ClearButton } from '@/components/ClearButton';
 import { CompactSelect } from '@/components/CompactSelect';
+import AssistantComposerSettings from './AssistantComposerSettings';
+import AssistantAnswerBody from './AssistantAnswerBody';
 import Link from '@/components/AppLink';
 import { Flag } from '@/components/Flag';
 import { CompCell } from '@/components/CompCell/CompCell';
@@ -289,7 +291,6 @@ export function SiteAssistantResult({artifact: a, lang}: {artifact: NonNullable<
 
 export default function SiteAssistantDialog({practiceChatId,onAuthSend,authSendLabel,authPlaceholder,authNotice,onAlgorithmChange,onAnswerRevealed,turns,draft,images,onImagesChange:setImages,onDraftChange:setDraft,provider,openaiAvailable=false,onProviderChange,thinking,onThinkingChange,status={phase:'planning'},busy,paused=false,recovering=false,activeMessageId,onResume,stopping=false,stopUnconfirmed=false,error,lang,onAsk,onStop,onClose:onClosed,onNew,onFeedback,embedded=false,active=true,searchResults,onBranch}:Props) {
   useEffect(()=>{if(active && !readyMarkdown)void loadMarkdown();},[active]);
-  const modelNames = {openai:'GPT-6 Luna',bailian:'Qwen-3.8 Flash',deepseek:'DeepSeek Flash'};
   const [deliveryMode,setDeliveryMode]=useState<'steer'|'queue'|'parallel'>('steer');
   const isRunning=(turn:AssistantTurn,index:number)=>busy && (activeMessageId?turn.messageId===activeMessageId:index===turns.length-1);
   const { motionRef, close: onClose } = useDialogMotion(onClosed, { enabled: !embedded });
@@ -298,15 +299,6 @@ export default function SiteAssistantDialog({practiceChatId,onAuthSend,authSendL
     onAnswerRevealed?.(id, text);
   }, [onAnswerRevealed]);
   const titleId=useId();
-  const thinkingItems=[
-    {value:'auto' as const,label:tr({zh:'自动',en:'Auto thinking'})},
-    {value:'fast' as const,label:tr({zh:'快速',en:'Quick answer'})},
-    {value:'deep' as const,label:tr({zh:'深入',en:'Deep thinking'})},
-  ];
-  const providerItems=CHAT_PROVIDERS.filter(value=>value!=='openai' || openaiAvailable).map(value=>({value,label:modelNames[value]}));
-  const providerLabel=modelNames[provider];
-  const thinkingLabel=thinkingItems.find(item=>item.value===thinking)!.label;
-  const mobileSettingsLabel=providerLabel+' · '+thinkingLabel;
   const [imageError,setImageError]=useState<string|null>(null);
   const [processingImages,setProcessingImages]=useState(false);
   const imageInput=useRef<HTMLInputElement>(null);
@@ -587,11 +579,11 @@ export default function SiteAssistantDialog({practiceChatId,onAuthSend,authSendL
               : {zh:'正在开始',en:'Starting'})}</p>}
           {turn.deliveryState==='error' && turn.deliveryError && (turn!==recoveryTurn || recoveryError!==turn.deliveryError) && <p className="site-assistant-note" role="alert">{tr(ASSISTANT_ERROR_TEXT[turn.deliveryError])}</p>}
           {((isRunning(turn,i)) || !!turn.progress?.length || !!turn.endState) && <AssistantExecutionProgress key={turn.createdAt ?? turn.requestId ?? i} turn={turn} busy={isRunning(turn,i)} stopping={stopping && isRunning(turn,i)} status={status} lang={lang}/>}
-          {turn.result && (revealDone || hasPartialContent) && <div className="site-assistant-response" data-assistant-message="assistant" data-turn={i}>{report ? <Suspense fallback={<p role="status">{tr({zh:'正在打开复盘报告…',en:'Opening solve report…'})}</p>}><ReplayReplyCard report={report}
+          {turn.result && (revealDone || hasPartialContent) && <AssistantAnswerBody turn={i} enabled={active && revealDone} report={!!report} onNavigate={()=>{follow.current=false;}}>{report ? <Suspense fallback={<p role="status">{tr({zh:'正在打开复盘报告…',en:'Opening solve report…'})}</p>}><ReplayReplyCard report={report}
             recordedAction={recorded && actionLink(recorded)} retestAction={retest && actionLink(retest)}>{answerText}</ReplayReplyCard></Suspense> : answerText}
           {revealDone && !!remainingActions.length && <div className="site-assistant-response-actions site-assistant-navigation">{remainingActions.map(actionLink)}</div>}
           {turn.result.artifacts?.map((a,j)=>!revealDone && a.kind!=='algorithms' ? null : a.kind==='algorithms'?<AssistantAlgorithmCards key={j} result={a} onAsk={busy ? undefined : question=>onAsk(question)} onChange={onAlgorithmChange && !turn.partial ? (card,expected,next)=>changeAlgorithm(i,j,card,expected,next) : undefined}/>:<SiteAssistantResult key={j} artifact={a} lang={lang}/>)}
-        </div>}
+        </AssistantAnswerBody>}
           {turn.result && revealDone && !(isRunning(turn,i)) && <AssistantAnswerActions key={turn.requestId ?? i} turn={turn} lang={lang} active={active} onFeedback={onFeedback} onQuote={()=>useQuote(quote(turn,i,'assistant'))} onRetry={i===turns.length-1 && !error && !paused && !busy && editing===null ? ()=>turn.references?.length ? onAsk(turn.question,true,turn.images,turn.references) : onAsk(turn.question,true,turn.images) : undefined} onBranch={onBranch && !turn.partial && !busy ? ()=>onBranch(i) : undefined} preview={<><SiteAssistantAnswerText result={turn.result}/>{turn.result.artifacts?.filter(a=>a.kind==='algorithms').map((a,j)=><AssistantAlgorithmCards key={j} result={a}/>)}</>}/>}
           {turn.partial && hasPartialContent && !(isRunning(turn,i)) && <p className="site-assistant-incomplete">{tr({zh:'回答未完成',en:'Answer incomplete'})}</p>}
           {turn===recoveryTurn && recovery}
@@ -623,15 +615,9 @@ export default function SiteAssistantDialog({practiceChatId,onAuthSend,authSendL
             onChange={()=>{pickerQuestion.current=null;imageInput.current?.click();}} disabled={submitting||editing!==null||processingImages||images.length>=SITE_ASSISTANT_MAX_IMAGES}/>
           <textarea autoComplete="off" className="site-assistant-draft" onPaste={event=>{const files=Array.from(event.clipboardData.files);if(files.length){event.preventDefault();void addImages(files);}}} ref={input} aria-label={tr({zh:'继续提问',en:'Ask a follow-up'})} placeholder={authPlaceholder ?? tr(paused ? {zh:'提问将开启新对话',en:'Ask to start a new chat'} : {zh:'随心输入',en:'Type anything'})} maxLength={SITE_ASSISTANT_QUESTION_MAX_LENGTH} rows={1} disabled={editing!==null} value={draft} onChange={e=>setDraft(e.target.value)} onKeyDown={e=>{if(e.key==='Enter'&&!e.shiftKey&&!e.nativeEvent.isComposing&&!window.matchMedia?.('(pointer: coarse)').matches){e.preventDefault();submit();}}}/>
           <div className="site-assistant-input-actions">
-            {!busy && <CompactSelect<ChatProvider> className="site-assistant-thinking site-assistant-provider" popupClassName="site-assistant-menu"
-              items={providerItems} label={providerLabel} value={provider} onChange={onProviderChange} ariaLabel={tr({zh:'聊天模型',en:'Chat model'})} variant="plain" preserveFocus/>}
-            {!busy && <CompactSelect className="site-assistant-thinking site-assistant-thinking-mode" popupClassName="site-assistant-menu" items={thinkingItems} value={thinking} onChange={onThinkingChange} label={thinkingLabel} ariaLabel={tr({zh:'思考模式',en:'Thinking mode'})} variant="plain" preserveFocus/>}
-            {!busy && <CompactSelect<ChatProvider|AssistantThinkingMode> className="site-assistant-mobile-settings" popupClassName="site-assistant-menu"
-              label={mobileSettingsLabel} valueText={mobileSettingsLabel} ariaLabel={tr({zh:'模型和思考模式',en:'Model and thinking mode'})}
-              items={[...providerItems,...thinkingItems]} selectedValues={[provider,thinking]}
-              onChange={value=>{if(value==='openai' || value==='bailian' || value==='deepseek')onProviderChange?.(value);else onThinkingChange(value);}}
-              side="top" variant="plain" preserveFocus keyboardListNavigation/>}
-            <Tooltip content={micLabel}>{tip => <button {...tip} className="site-assistant-action site-assistant-mic" type="button"
+            {!busy && <AssistantComposerSettings provider={provider} thinking={thinking} openaiAvailable={openaiAvailable}
+              onProviderChange={onProviderChange} onThinkingChange={onThinkingChange} />}
+            <Tooltip content={listening ? micLabel : tr({zh:'用语音输入',en:'Use voice input'})}>{tip => <button {...tip} className="site-assistant-action site-assistant-mic" type="button"
               disabled={editing !== null || micStatus === 'stopping'} onClick={listening ? stop : start}
               aria-label={micLabel} aria-pressed={listening}><Mic size={19}/></button>}</Tooltip>
             {busy && <CompactSelect className="site-assistant-thinking" popupClassName="site-assistant-menu" items={[{value:'steer' as const,label:tr({zh:'调整当前任务',en:'Adjust current task'})},{value:'queue' as const,label:tr({zh:'加入队列',en:'Add to queue'})},{value:'parallel' as const,label:tr({zh:'在新对话并行处理',en:'Send in a new chat'})}]} value={deliveryMode} onChange={setDeliveryMode} label={modeLabel} ariaLabel={tr({zh:'发送方式',en:'Delivery mode'})} variant="plain" preserveFocus/>}

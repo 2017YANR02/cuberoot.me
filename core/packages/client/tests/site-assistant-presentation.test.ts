@@ -47,6 +47,26 @@ async function render(answer:AssistantAnswer,overrides:Partial<ComponentProps<ty
   return props;
 }
 
+it('indexes rendered sections per completed mobile answer, including repeated headings', async () => {
+  vi.stubGlobal('matchMedia', vi.fn(() => ({ matches: true, addEventListener: vi.fn(), removeEventListener: vi.fn() })));
+  const answer = { sources: [], answer: '## 第一步\n\n### 练习\n\n### 练习\n\n```md\n## 示例代码\n```' };
+  try {
+    const props = await render(answer, { turns: [
+      { question: '短回答', result: { sources: [], answer: '一句话' } },
+      { question: '长回答', result: answer },
+      { question: '正在生成', result: answer, partial: true },
+    ] });
+    await act(async () => { await vi.dynamicImportSettled(); });
+    const menus = () => [...document.querySelectorAll('.assistant-section-nav')];
+    expect(menus()).toHaveLength(1);
+    expect([...menus()[0].querySelectorAll('button')].map(button => button.textContent)).toEqual(['第一步', '练习', '练习']);
+    await act(async () => roots.at(-1)!.render(createElement(SiteAssistantDialog, {
+      ...props, turns: props.turns.map(turn => ({ ...turn, partial: false })),
+    })));
+    expect(menus()).toHaveLength(2);
+  } finally { vi.unstubAllGlobals(); }
+});
+
 it('opens the real 2×2 diagram on a saved text-only EG1 formula card',async()=>{
   const answer:AssistantAnswer={answer:'EG1',sources:[],artifacts:[{
     kind:'algorithms',version:1,title:'2x2 EG1',puzzle:'2x2',set:'eg1',display:'text',offset:0,total:40,nextOffset:1,cards:[{
@@ -221,6 +241,22 @@ describe('assistant general conversation controls',()=>{
     expect(options.map(option=>option.textContent)).toEqual(['Qwen-3.8 Flash','DeepSeek Flash']);
     await act(async()=>options[1].click());
     expect(props.onProviderChange).toHaveBeenCalledWith('deepseek');
+  });
+  it('keeps model and thinking choices independent in the combined composer menu', async () => {
+    const props = await render({ answer: '', sources: [] }, { turns: [], embedded: true, openaiAvailable: true });
+    const trigger = document.querySelector<HTMLButtonElement>('button[aria-label="模型和思考模式"]')!;
+    await act(async () => trigger.click());
+    const panel = document.querySelector('.site-assistant-settings-menu')!;
+    const [models, modes] = panel.querySelectorAll('.lg-chips[role="listbox"]');
+    const choices = (group: Element) => Array.from(group.querySelectorAll<HTMLButtonElement>('[role="option"]'));
+    expect(choices(models).map(item => item.textContent)).toEqual(['GPT-6 Luna', 'Qwen-3.8 Flash', 'DeepSeek Flash']);
+    await act(async () => choices(models)[2].click());
+    await act(async () => choices(modes)[1].click());
+    expect(props.onProviderChange).toHaveBeenCalledWith('deepseek');
+    expect(props.onThinkingChange).toHaveBeenCalledWith('fast');
+    expect(models.querySelector('[aria-selected="true"]')?.textContent).toBe('DeepSeek Flash');
+    expect(modes.querySelector('[aria-selected="true"]')?.textContent).toBe('快速');
+    expect(trigger.getAttribute('aria-expanded')).toBe('true');
   });
   it('shows actual execution states and collapses them after completion while revealing a complete answer and table immediately',async()=>{
     const createdAt=Date.now()-2000;

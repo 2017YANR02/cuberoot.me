@@ -13,6 +13,7 @@ import '@app-foundation/navigation-ui/navigation.css';
 import { Check, Lock, LockOpen, ArrowLeft, ArrowRight, Pencil, Trash2, RotateCcw, Maximize2, Coffee, Sun, Heart, Home, Sparkles, Shuffle, ClipboardList, Music, MessageSquare, SquarePen, Pin, Search, AudioLines, Settings, PawPrint, Bell, Ellipsis, X } from '@app-foundation/icons/lucide';
 import type { DeskPetEntry } from '@cuberoot/shared/deskpet';
 import { CompactSelect } from '@/components/CompactSelect';
+import { SearchInput } from '@/components/SearchInput';
 import BoolToggle from '@/components/BoolToggle';
 import { useDeskPetVisible } from '@/hooks/useDeskPetVisible';
 import { useIsMobile } from '@/hooks/useIsMobile';
@@ -132,7 +133,7 @@ body:has(.deskpet-navigation .appearance-menu) .accent-color-menu{z-index:100030
 .deskpet-chat-name-field input{width:100%;min-width:0;padding:8px;border:0;outline:0;background:transparent;color:var(--foreground);font:inherit;}
 .deskpet-chat-name-field .clear-btn{flex:none;}
 .deskpet-chat-rename button:disabled{opacity:.4;cursor:default;}
-.deskpet-chat-search{width:100%;box-sizing:border-box;margin:0 0 8px;padding:8px;border:1px solid var(--border-default);border-radius:8px;background:var(--background);color:var(--foreground);font:inherit;}
+.deskpet-chat-search{width:100%;margin-bottom:8px;}
 .deskpet-search-box:has(.landing-search-plus-menu){z-index:1;}
 .deskpet-search-box .landing-search{margin:0;}
 /* Results open above the bottom-anchored search. */
@@ -383,7 +384,7 @@ export default function DeskPetSearch({
         setEditingChat(null);
         return;
       }
-      if (e.key === 'Escape' && document.querySelector('.deskpet-reply-menu, .deskpet-chat-menu')) return;
+      if (e.key === 'Escape' && document.querySelector('.deskpet-reply-menu, .deskpet-chat-menu, .site-assistant-settings-menu, .assistant-section-nav details[open], .site-assistant-compose [aria-describedby]')) return;
       // Check before the shared menu's document handler dismisses it.
       if (e.key === 'Escape' && activePanel && !donateOpen && !feedbackOpen) {
         setActivePanel(null);
@@ -641,7 +642,7 @@ export default function DeskPetSearch({
               <span className="sr-only" role="status">{unreadReplies.length > 0 ? tr({ zh: `有 ${unreadReplies.length} 个聊天的回答已完成`, en: `${unreadReplies.length} conversations have new replies` }) : ''}</span>
               <button type="button" className="deskpet-chat-action" aria-label={t('搜索聊天', 'Search conversations')} aria-expanded={chatSearchOpen} onClick={() => { setChatSearchOpen(value => !value); setChatSearch(''); }}><Search size={18}/></button>
             </div>
-            {chatSearchOpen && <input autoComplete="off" className="deskpet-chat-search" value={chatSearch} onChange={event => setChatSearch(event.target.value)} placeholder={t('搜索聊天', 'Search conversations')} aria-label={t('搜索聊天', 'Search conversations')} />}
+            {chatSearchOpen && <SearchInput className="deskpet-chat-search" value={chatSearch} onChange={setChatSearch} placeholder={t('搜索聊天', 'Search conversations')} />}
             <button type="button" className="af-nav-link" onClick={newChat}>
               <span className="af-nav-icon" aria-hidden="true"><SquarePen size={18}/></span><span>{t('新聊天', 'New chat')}</span>
             </button>
