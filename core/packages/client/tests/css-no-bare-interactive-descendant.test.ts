@@ -32,6 +32,9 @@ const eg = `${tutorial}/2x2-eg/eg-course.css`;
 const reduction = `${tutorial}/4x4-beginner/reduction-course.css`;
 const walkthrough = `${tutorial}/components/walkthrough-pane.css`;
 const ALLOWLIST = new Set<string>([
+  // Temporary release exception: the EG header sets a 36px minimum on the shared
+  // ClearButton. Remove this entry when the rule targets the close button by class.
+  `${eg} → .eg-recognition-dialog .settings-dialog-heading > button`,
   // Both EG recognition dialogs render their own answer buttons as direct children.
   `${eg} → .eg-recognition-choices > button`,
   // The EG demo maps stages to one seek button per list item.
