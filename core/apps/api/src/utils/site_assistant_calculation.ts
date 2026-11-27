@@ -1,6 +1,14 @@
 import {averageOfN,meanOfN} from '@cuberoot/shared/timer/stats';
 import type {Solve} from '@cuberoot/shared/timer/types';
 
+function suppliedAverage(tokens:string[],n:3|5) {
+  const solves:Solve[]=tokens.map((text,i)=>({id:String(i),ts:i,event:'333',scramble:'',
+    penalty:/^DNF$/i.test(text)?'DNF':/^DNS$/i.test(text)?'DNS':'ok',
+    timeMs:/^DN[FS]$/i.test(text)?0:Math.round(parseFloat(text)*1000)}));
+  if(solves.some(s=>s.penalty==='ok'&&(!Number.isSafeInteger(s.timeMs)||s.timeMs<=0||s.timeMs>86_400_000)))return;
+  return n===5?averageOfN(solves,n):meanOfN(solves,n);
+}
+
 /** Four completed solves and a target trimmed mean, all measured in hundredths. */
 function lastAo5Limit(question:string,lang:'zh'|'en') {
   const seconds=String.raw`(\d{1,4}(?:\.\d{1,2})?)`;
@@ -26,6 +34,19 @@ export function suppliedAverageAnswer(question:string,lang:'zh'|'en'):string|und
   if(last) return last;
   const token=String.raw`(?:\d+(?:\.\d{1,3})?\s*(?:秒|seconds?|s)?|DNF|DNS)`;
   const list=String.raw`(${token}(?:\s*(?:[,，、]|和|及|and)\s*${token}){2,4})`;
+  const replaceSlowest=new RegExp(String.raw`^(?:练习)?成绩(?:是|为)?\s*${list}\s*[,，。]\s*(?:如果|若)?只?把最慢的?(?:一把)?改成\s*(\d+(?:\.\d{1,3})?)\s*秒[,，。]\s*Ao5\s*(?:会不会变|会变吗)[,，。]\s*(?:还是|现在是|变成)几秒[？?。]?$`,'i').exec(question.trim());
+  if(replaceSlowest) {
+    const times=replaceSlowest[1].split(/\s*(?:[,，、]|和|及|and)\s*/i);
+    if(times.length!==5 || times.some(t=>!Number.isFinite(parseFloat(t))))return;
+    const before=suppliedAverage(times,5);
+    const worst=Math.max(...times.map(t=>parseFloat(t)));
+    times[times.findIndex(t=>parseFloat(t)===worst)]=replaceSlowest[2];
+    const after=suppliedAverage(times,5);
+    if(before==null || after==null)return;
+    const original=(before/1000).toFixed(2),updated=(after/1000).toFixed(2);
+    if(lang==='en')return 'The Ao5 '+(original===updated?'stays the same':'changes')+'. Before: '+original+' s. After: '+updated+' s. Both discard the fastest and slowest solve.';
+    return (original===updated?'不会变。':'会变。')+'两组都去掉最快和最慢各一把，原 Ao5 为 '+original+' 秒，替换后为 '+updated+' 秒。';
+  }
   // An explicit change to one named attempt is two independent Ao5 calculations.
   const change=new RegExp(String.raw`^(?:三阶|3x3)\s*(?:一轮)?(?:五|5)(?:把|次)(?:成绩)?(?:依次)?(?:是|为|[:：])\s*${list}[。；;，,]\s*(?:WCA\s*)?(?:平均|ao5)(?:成绩)?是多少[？?。]\s*如果把\s*(\d+(?:\.\d{1,3})?)\s*(?:秒)?\s*(?:也)?改成\s*(DNF|DNS)\s*[，,]?\s*(?:平均|ao5)(?:又)?是多少[？?。](?:请说明怎么算[。.]?)?$`,'i').exec(question.trim());
   if(change) {
@@ -52,11 +73,7 @@ export function suppliedAverageAnswer(question:string,lang:'zh'|'en'):string|und
   if(!/(?:秒|seconds?|s\b)/i.test(raw.replace(/DNS/gi,'')))return;
   const tokens=raw.split(/\s*(?:[,，、]|和|及|and)\s*/i);
   if(tokens.length!==n)return;
-  const solves:Solve[]=tokens.map((text,i)=>({id:String(i),ts:i,event:'333',scramble:'',
-    penalty:/^DNF$/i.test(text)?'DNF':/^DNS$/i.test(text)?'DNS':'ok',
-    timeMs:/^DN[FS]$/i.test(text)?0:Math.round(parseFloat(text)*1000)}));
-  if(solves.some(s=>s.penalty==='ok'&&(!Number.isSafeInteger(s.timeMs)||s.timeMs<=0||s.timeMs>86_400_000)))return;
-  const value=format==='ao5'?averageOfN(solves,n):meanOfN(solves,n);
+  const value=suppliedAverage(tokens,n);
   if(value==null)return;
   const result=Number.isFinite(value)?(value/1000).toFixed(value>=600_000?0:2):'DNF';
   const unit=Number.isFinite(value)?{zh:' 秒',en:' seconds'}[lang]:'';

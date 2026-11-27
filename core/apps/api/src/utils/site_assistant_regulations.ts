@@ -190,6 +190,7 @@ export function inspectionScenario(question:string):InspectionScenario|undefined
 
 function readVerdictClauses(html:string, sourceUrl:string, lang:'zh'|'en') {
   const {document}=parseHTML(html);
+  if(!document.documentElement)return;
   const clause=(id:string)=>{
     const element=document.getElementById(id);
     const node=element?.cloneNode(true) as typeof element;
@@ -204,7 +205,70 @@ function readVerdictClauses(html:string, sourceUrl:string, lang:'zh'|'en') {
     answer:answer+(version?'\n\n'+versionLabel[lang]+version:''),
     sources:ids.map(id=>({id:'wca:clause:'+id,title:'WCA '+id,href:sourceUrl+'#'+id,read:true})),
   });
-  return {clause,cite,result};
+  return {clause,cite,result,version};
+}
+
+/** A scenario selects clause families. Individual outcomes still depend on
+ * the user's facts and the text of the version actually read. */
+export function scenarioRuleIds(q:string):string[] {
+  if(!/[?？]|怎么|如何|能否|是否|多少|可否/.test(q) || /打开|带我去|报名入口|世界纪录|查一下|查我的|谁|徽章|荣誉|成就|训练|模拟器|榜单|统计里|非官方|往年|历史版本/.test(q))return [];
+  if(/(?:官方打乱|打乱规则)/.test(q) && /(?:最短解|下限)/.test(q) && /二阶/.test(q) && /斜转/.test(q))return ['4b3','4b3b','4b3c'];
+  if(/观察/.test(q) && /开始/.test(q) && /秒/.test(q) && /加罚|加几秒|加2|DNF/i.test(q))return ['A4d1','A4d1+','A4d2','A4d2+'];
+  if(/多盲/.test(q) && /(?:报|提交|保密|时限|单层|叠成)/.test(q))return ['H1a','H1a1','H1a2','H1a3','H1b','H1b1','H1b1+'];
+  if(/三盲|盲拧/.test(q) && /眼罩|挡板|遮挡盒/.test(q))return ['B2c','B2d','B2d1','B4a','B4a1','B4b','B4c','B4c1','B4c2','B4d'];
+  if(/单次/.test(q) && /平均/.test(q) && /分别怎么记|未取整|各记多少/.test(q))return ['9f1','9f2'];
+  if(/及格线/.test(q) && /不含/.test(q) && /继续/.test(q))return ['9g'];
+  if(/DNF/i.test(q) && /DNS/i.test(q) && /有资格|具备资格/.test(q) && /开始/.test(q))return ['9f4','9f4+','9f5'];
+  if(/最少步/.test(q) && /识别信息|报名号/.test(q))return ['E2a1','E2c','E2c1'];
+  return [];
+}
+export function scenarioRulePage(html:string,url:string,ids:string[]) {
+  const read=readVerdictClauses(html,url,'zh');
+  if(!read || !ids.length)return;
+  const text=ids.map(id=>read.clause(id).trim());
+  if(text.some(value=>!value))return;
+  return {href:url+'#'+ids[0],title:'WCA '+ids.join(' / '),text:text.join('\n'),
+    clauses:ids.map((id,i)=>({id,text:text[i],href:url+'#'+id})),version:read.version};
+}
+
+export function scrambleMinimumComparison(q:string,page:NonNullable<ReturnType<typeof scenarioRulePage>>) {
+  const input=q.normalize('NFKC').replace(/\s/g,'');
+  const moves=input.match(/(?:都只需|最短解都是)(\d{1,2})步/);
+  if(!moves || !/二阶[、,和与]斜转/.test(input))return;
+  const rest=input.replace(moves[0],'').replace(/官方打乱|假设|二阶|斜转|就可解|仅检查|最短解下限|这两个状态|都合格吗|[\p{P}]/gu,'');
+  if(rest)return;
+  const clauses=['4b3b','4b3c'].map(id=>page.clauses.find(c=>c.id===id));
+  const limits=clauses.map(c=>c?.text.match(/at least (\d+) moves to solve/i)?.[1]);
+  if(limits.some(n=>!n))return;
+  const n=Number(moves[1]);
+  const sources=clauses.map(c=>({id:'wca:clause:'+c!.id,title:'WCA '+c!.id,href:c!.href,read:true}));
+  const lines=limits.map((limit,i)=>(i===0?'二阶':'斜转')+'要求最短解至少 '+limit+' 步。给定 '+n+' 步'+(n>=Number(limit)?'满足':'不满足')+'该下限。 [['+sources[i].id+']]');
+  const edition=page.version?'\n\n'+(page.href.startsWith(WCA_REGULATIONS_MIRROR_URL)?'规则快照版本 ':'WCA 规则版本 ')+page.version:'';
+  return {answer:lines.join('\n')+edition,sources};
+}
+
+/** Compare the recording rules on the same elapsed time. Decimal digits
+ * are kept as integers so an exact half-unit cannot round down in binary. */
+export function timedSingleAndAverage(q:string,rulePage:NonNullable<ReturnType<typeof scenarioRulePage>>,continuation:boolean) {
+  const normalized=q.normalize('NFKC').replace(/\s/g,'');
+  if(!continuation && !(/单次/.test(q) && /平均/.test(q)))return;
+  const elapsed=normalized.match(/(?:原始值|原始用时|换成(?:超过十分钟的)?)(?:(\d{1,3})分)?(\d{1,3})\.(\d{1,6})秒/);
+  if(!elapsed || (elapsed[1] && +elapsed[2]>=60))return;
+  const residual=normalized.replace(elapsed[0],'').replace(/一把|计时|如果|是|单次|要进到\d+(?:\.\d+)?|同一个数|平均|未取整值|又怎样登记|刚才|两种结果|各怎样写|小数部分|还能保留|吗|[\p{P}]/gu,'');
+  if(residual)return;
+  const seconds=Number(elapsed[1]??0)*60+Number(elapsed[2]);
+  const short=seconds<600;
+  const id=short?'9f1':'9f2',clause=rulePage.clauses.find(c=>c.id===id);
+  if(!clause || !/truncated/i.test(clause.text) || !/rounded to the nearest/i.test(clause.text) ||
+    !(short?/hundredth of a second/i:/nearest second/i).test(clause.text))return;
+  const fraction=elapsed[3].padEnd(3,'0');
+  const base=short?seconds*100+Number(fraction.slice(0,2)):seconds;
+  const nearest=base+Number(Number(fraction[short?2:0])>=5);
+  const format=(n:number)=>short?(n/100).toFixed(2)+' 秒':Math.floor(n/60)+':'+String(n%60).padStart(2,'0');
+  const sourceId='wca:clause:'+id;
+  const edition=rulePage.version?'\n\n'+(clause.href.startsWith(WCA_REGULATIONS_MIRROR_URL)?'规则快照版本 ':'WCA 规则版本 ')+rulePage.version:'';
+  return {answer:'单次向下截断，记 '+format(base)+'。平均按最近的'+(short?'百分之一秒':'整秒')+'四舍五入，记 '+format(nearest)+'。 [['+sourceId+']]'+edition,
+    sources:[{id:sourceId,title:'WCA '+id,href:clause.href,read:true}]};
 }
 
 export function cornerTwistContestQuestion(question:string) {
@@ -309,4 +373,124 @@ export function inspectionVerdicts(html:string, sourceUrl:string, scenario:Inspe
   const intro=lang==='zh'?'裁判揭罩时开始观察计时，以选手启动速拧计时器为开始还原的时刻。':'Inspection begins when the judge uncovers the puzzle. The solve starts when the competitor starts the speedsolving timer.';
   const callouts = calls.map((m,i)=>m![1]+(lang==='zh'?' 秒喊':' s: call ')+'“'+m![2]+' SECONDS” '+ref(i===0?'A3b3':'A3b4')).join(lang==='zh'?'，':', ');
   return result([intro+' '+ref('A3b2')+' '+ref('A4d'),lines.join('\n'),callouts].join('\n\n'),[...ids]);
+}
+
+// Only these single procedural issues have unconditional clause-backed answers.
+// Other incidents and mixed requests are handled by the general rule reader.
+export function procedureQuestion(q:string) {
+  // Scope direct rulings by subject and vocabulary so that a second incident
+  // (or a different event such as 4BLD) still gets a complete investigation.
+  const only=(terms:RegExp)=>!q.replace(terms,'').replace(/能不能|可不可以|能否|可以|允许|如果|是否|什么|哪种|为什么|但是|可是|规则|规定|请问|一下|什么|多少|吗|呢|我|就|但|的|能|用|有|在|了|到|几|是|会|又|还|也|说|给|后|都|对|不|[\s\p{P}]/gu,'');
+  if(/最少步|FMC/i.test(q) && /55/.test(q) && /60/.test(q) && /提示|报时|喊/.test(q) &&
+    only(/按|WCA|三阶|最少步|FMC|开赛|时限|一小时|裁判|第|55|60|分钟|和|分别|怎么|提示|报时|喊/gi))return 'fmcCallouts';
+  if(/最少步|FMC/i.test(q) && /提前/.test(q) && /交|提交/.test(q) &&
+    only(/最少步|FMC|选手|已经|写完|等|60|分钟|提前|提交|交|解法|结束|这次|尝试/gi))return 'fmcEarly';
+  const pocket=/^(?:抽到一个)?只差([一二三四五六七八九]|\d{1,2})步就还原的二阶状态[，,]按官方随机打乱的下限能直接采用吗[？?。]?$/u.exec(q.trim());
+  if(pocket)return {pocketMoves:Number(pocket[1]) || '一二三四五六七八九'.indexOf(pocket[1])+1};
+  if(/四盲|五盲/.test(q) && /Mo3/i.test(q) && /单次|Best of 3/i.test(q) &&
+    only(/四盲|五盲|一个人|另一个人|人|单次|最快|Mo3|正式|Best of 3|轮里|该|优先|看|哪项|纪录|取消/gi))return 'bigBlindRanking';
+  if(/娱乐项目|非官方项目/.test(q) && /正式成绩/.test(q) &&
+    only(/官方比赛|顺便|办|一个|项目表里|娱乐项目|非官方项目|它|成绩|进入|正式/g))return 'unofficialEvent';
+  if(/一对一|对抗赛/.test(q) && /四阶/.test(q) && /决赛/.test(q) &&
+    only(/一对一|对抗赛|赛制|安排|放|四阶(?:速拧|魔方)?|半决赛|决赛|项目|本身|举办|采用/g))return 'fourHeadToHead';
+  if(/六阶|七阶/.test(q) && /及格/.test(q) && /尝试|平均/.test(q) &&
+    only(/六阶|七阶|及格线|及格阶段|轮次|阶段|次|尝试|成功|整轮|平均|过线|方式|怎么算|机会/g))return 'bigCubeCutoff';
+  if(/尽力|尽全力/.test(q) && /慢|成绩差/.test(q) && /取消.*资格/.test(q) &&
+    only(/尽全力|尽力|还原|确实|很慢|速度慢|只因|仅因|成绩差|单凭|代表|取消|资格/g))return 'poorPerformance';
+  if(/盲拧|盲解/.test(q) && /摸|触感/.test(q) && /朝向|方向/.test(q) &&
+    only(/盲拧|盲解|贴片|贴纸|纹理|手|一摸|摸|触感|分得出|辨别|分辨|朝向|方向|保证|看|这样的/g))return 'texturedBlind';
+  // Answer only the sight/clock question. Incidents and other requested
+  // decisions need the general rule reader, even if they mention a first move.
+  const firstMoveQuestion=q.length<=100 && /三盲|三阶盲拧/.test(q) && /眼罩/.test(q) &&
+    /摘|揭|取下/.test(q) && /看|记忆/.test(q) &&
+    !q.replace(/三阶盲拧|三盲|我|已经|戴上|戴|揭开|揭|摘下(?:来)?|摘|取下|眼罩|后|突然|忘了|忘记|最后|一组|字母|还少记|一个角|才想起|还没|没有|尚未|转过|转动|动了|转了|转|第?一[步眼]|可以|可不可以|此时|能不能|能|重新|再|回到|记忆阶段|看|一下|还要|要|计时器|暂停|停表|表|吗|呢|[\s\p{P}]/gu,'');
+  if(firstMoveQuestion && /(?:还没|没有|尚未)(?:转过|转动|转)第一步/.test(q))return 'beforeFirstMove';
+  if(firstMoveQuestion && /已经(?:动了|转了|转过)一步/.test(q))return 'afterFirstMove';
+  const singleOffset=/^三阶(?:结束时|停表后)(?:只有|仅有)一层(?:正好)?(?:错位|偏了)\s*(\d+(?:\.\d+)?)\s*度[，,、](?:补一步就复原|静止后没有其他问题)[，,]该(?:记原成绩[、,]加二还是\s*DNF|不该加二)[？?。]?$/i.exec(q.trim());
+  if(singleOffset && Number(singleOffset[1])<=90)return {angle:Number(singleOffset[1])};
+  const mat=/^(?:比赛用的?)?(?:全|整)尺寸计时垫(?:只有|尺寸为|是)?\s*(\d+(?:\.\d+)?)\s*[×xX*]\s*(\d+(?:\.\d+)?)\s*(?:厘米|cm)(?:能满足要求吗|够大吗|达标吗)[？?，,]\s*(?:最低|最小)尺寸是多少[？?。]?$/i.exec(q.trim());
+  if(mat)return {width:Number(mat[1]),depth:Number(mat[2])};
+  if(q.length>130 || /另外|同时|还有|顺便|申诉|举例|特殊|残障|练习计划|两个问题|以及|[；;\n]/.test(q) ||
+      (q.match(/[？?]/g)?.length??0)>1)return;
+  if(/录入员/.test(q) && /(?:已(?:经)?录入|成绩单).{0,10}(?:写错|错误|改错|改动)/.test(q) &&
+     /自己.{0,4}改|谁.{0,4}(?:同意|批准)/.test(q) && !/赛后|公示|已公布|截止|时限|过了/.test(q))return 'changeScore';
+  if(/魔方.{0,6}(?:掉块|弹块)/.test(q) && /计时器.{0,4}(?:坏|故障)/.test(q) && /同一章|哪一章|分别.{0,4}章/.test(q) &&
+     !/判|重赛|额外|赔偿/.test(q))return 'equipmentChapters';
+  const counts=/^(?:我)?(?:三阶)?多盲(?:报(?:名)?|挑战)\s*(\d{1,3})\s*个(?:魔方)?[，,]\s*(?:规定时间内)?(?:成功|还原)\s*(\d{1,3})\s*个[，,]\s*(?:失手|失败|未还原)\s*(\d{1,3})\s*个[，,]\s*(?:净得分|净分|得分)(?:算)?(?:多少|几分)[？?。]?$/.exec(q.trim());
+  if(counts) {
+    const [total,solved,missed]=counts.slice(1).map(Number);
+    if(total>=2 && total===solved+missed)return {solved,missed};
+  }
+  if(/多盲/.test(q) && /记忆/.test(q) && /停表|暂停计时/.test(q) && /开表|重新计时|继续计时/.test(q) &&
+      /还原/.test(q) && !/故障|坏|意外|裁判|掉落|罚|额外/.test(q))return 'continuousClock';
+  if(/三盲|盲拧/.test(q) && /记忆/.test(q) && /写.{0,8}(?:纸|笔记)|纸.{0,6}(?:记录|写)|做笔记/.test(q) &&
+      !/裁判|指南|颜色|清单|多盲|标签/.test(q))return 'notes';
+  if(/单手/.test(q) && /观察/.test(q) && /双手|两只手/.test(q) && !/掉|坏|故障|中途换手|另一只手|另一手|借助|换手操作/.test(q))return 'inspectionHands';
+  if(/最少步|FMC/i.test(q) && /80\s*步/.test(q) && /整体转体|旋转|计步口径|计步标准/.test(q) && !/图|符号|哪些记号|提交几份/.test(q))return 'moveMetrics';
+}
+
+export function procedureVerdict(html:string,url:string,kind:NonNullable<ReturnType<typeof procedureQuestion>>) {
+  const rules=readVerdictClauses(html,url,'zh');
+  if(!rules)return;
+  const {clause,cite,result}=rules;
+  if(kind==='fmcCallouts' && /should call .5 MINUTES REMAINING. at 55 minutes.*must call .STOP. at 60 minutes/i.test(clause('E2b1')))
+    return result('第 55 分钟，裁判应提示“还剩 5 分钟”；第 60 分钟必须喊“停”。 '+cite('E2b1'),['E2b1']);
+  if(kind==='fmcEarly' && /may choose to stop an attempt early by handing in a solution before the time limit/i.test(clause('E2b+')))
+    return result('可以。选手可在时限前交解法，结束本次尝试。 '+cite('E2b+'),['E2b+']);
+  if(typeof kind==='object' && 'pocketMoves' in kind && typeof kind.pocketMoves==='number') {
+    const limit=clause('4b3b').match(/2x2x2 Cube.*require at least (\d+) moves to solve/i);
+    if(limit)return result('二阶随机打乱的状态至少需要 '+limit[1]+' 步才能还原。'+kind.pocketMoves+' 步'+(kind.pocketMoves<Number(limit[1])?'低于下限，不能采用。':'满足这一项步数下限。')+' '+cite('4b3b'),['4b3b']);
+  }
+  if(kind==='bigBlindRanking' && /4x4x4 Blindfolded and 5x5x5 Blindfolded/i.test(clause('9b6')) && /Mean of 3.*outside of the competition format.*based on the best result/i.test(clause('9b6b')))
+    return result('四盲和五盲的 Best of 3 轮按最好单次排名。WCA 另承认 Mo3 排名和纪录，Mo3 不影响当轮名次。 '+cite('9b6')+' '+cite('9b6b'),['9b6','9b6b']);
+  if(kind==='unofficialEvent' && /may be held.*considered unofficial.*not be included in the official results/i.test(clause('9b++')))
+    return result('可以举办娱乐项目。规则项目表以外的项目属于非官方项目，成绩不计入比赛的正式成绩。 '+cite('9b++'),['9b++']);
+  if(kind==='fourHeadToHead' && /4x4x4 Cube/i.test(clause('9b7a')) && /only be used for the final round/i.test(clause('9b7b')))
+    return result('四阶属于允许采用一对一赛制的项目，但只限项目决赛，不能安排在项目半决赛。 '+cite('9b7a')+' '+cite('9b7b'),['9b7a','9b7b']);
+  if(kind==='bigCubeCutoff' && /6x6x6 Cube and 7x7x7 Cube/i.test(clause('9b2')) && /Best of 1.*cutoff phase for.*Mean of 3/i.test(clause('9b2b')))
+    return result('六阶和七阶的及格阶段只有 1 次尝试。过线后整轮按三次的算术平均（Mo3）计成绩。 '+cite('9b2')+' '+cite('9b2b'),['9b2','9b2b']);
+  if(kind==='poorPerformance' && /should not be disqualified.*poor.*best of their abilities/i.test(clause('2k6+')))
+    return result('选手尽力参赛时，代表不应仅因成绩差而取消资格。 '+cite('2k6+'),['2k6+']);
+  if(kind==='texturedBlind' && /orientation of pieces to be distinguished by feel.*not permitted for blindfolded events/i.test(clause('3j3')))
+    return result('盲拧禁止使用可凭触感分辨块朝向的纹理贴片。是否看贴片不改变这项器材要求。 '+cite('3j3'),['3j3']);
+  if(kind==='beforeFirstMove' && /until the competitor applies the first move.*remove the blindfold to return to the memorization phase/i.test(clause('B4a1')) &&
+      /starts the attempt and the solve by starting the timer/i.test(clause('B2d')))
+    return result('可以。只要还没有转动第一步，就可以摘下眼罩回到记忆阶段再看，同一次尝试继续计时，不要停表。 '+cite('B4a1')+' '+cite('B2d'),['B4a1','B2d']);
+  if(kind==='afterFirstMove' && /until the competitor applies the first move/i.test(clause('B4a1')) &&
+      /must not look at the puzzle.*DNF/i.test(clause('B4d')))
+    return result('不能。可以返回记忆阶段的期限是转第一步之前。已经转过一步，再揭开眼罩看魔方，本次判 DNF。 '+cite('B4a1')+' '+cite('B4d'),['B4a1','B4d']);
+  if(kind==='changeScore' && /changes to the result on a score sheet are only permitted at the discretion of the WCA Delegate/i.test(clause('1g2')))
+    return result('要更改成绩单上的成绩须由 WCA 代表同意，录入员应把错误提交给代表核实。 '+cite('1g2'),['1g2']);
+  if(kind==='equipmentChapters' && /popped parts/i.test(clause('5a')) && /equipment malfunction/i.test(clause('11a3')))
+    return result('分属两章。魔方掉块属于第 5 章的魔方故障；官方计时器故障属于第 11 章的比赛设备故障。 '+cite('5a')+' '+cite('11a3'),['5a','11a3']);
+  if(typeof kind==='object' && 'angle' in kind && typeof kind.angle==='number') {
+    const limit=clause('10f1').match(/NxNxN Cubes: at most (\d+) degrees/i);
+    if(!limit || !/more than the limit/i.test(clause('10e1')) || !/without penalty/i.test(clause('10e2')) || !/one move.*\+2 seconds/i.test(clause('10e3')))return;
+    const over=kind.angle>Number(limit[1]);
+    const verdict=over?'超过限度且只需再转一步，成绩加 2 秒。':'在容许范围内，按题述静止状态没有其他问题，成绩不加罚。';
+    const rule=over?'10e3':'10e2';
+    return result('三阶相邻层错位限度是 '+limit[1]+' 度。'+kind.angle+' 度'+verdict+' '+cite('10f1')+' '+cite(rule),['10f1',rule]);
+  }
+  if(typeof kind==='object' && 'width' in kind && typeof kind.width==='number' && typeof kind.depth==='number') {
+    const size=clause('7f1b+').match(/minimum dimensions of (\d+)\s*cm \(left to right\) by (\d+)\s*cm \(front to back\)/i);
+    if(!size)return;
+    const meets=kind.width>=Number(size[1]) && kind.depth>=Number(size[2]);
+    return result((meets?'符合':'不符合')+'全尺寸计时垫的建议最小尺寸：左右宽 '+size[1]+' 厘米、前后深 '+size[2]+' 厘米。 '+cite('7f1b+'),['7f1b+']);
+  }
+  if(typeof kind==='object' && 'solved' in kind && typeof kind.solved==='number' && typeof kind.missed==='number' && /number of puzzles solved minus the number of puzzles not solved/i.test(clause('9f12c')) &&
+      /less than 0, or if only 1 puzzle is solved/i.test(clause('9f12c'))) {
+    const points=kind.solved-kind.missed;
+    const score=kind.solved<=1 || points<0?'这次成绩为 DNF。':'本次净得分为 '+points+' 分。';
+    return result('成功 '+kind.solved+' 个减去未还原 '+kind.missed+' 个，差值为 '+points+'。'+score+' '+cite('9f12c'),['9f12c']);
+  }
+  if(kind==='continuousClock' && /standard blindfolded solving procedures/i.test(clause('H1')) &&
+      /signal the end of the solve at any time/i.test(clause('H1b1')) && /starts the attempt and the solve by starting the timer/i.test(clause('B2d')))
+    return result('不能暂停再开表。多盲从开始记忆到结束还原属于同一次连续计时的尝试。你可以休息，但这段时间也计入总用时。示意结束就结束了本次尝试。 '+cite('H1')+' '+cite('B2d')+' '+cite('H1b1'),['H1','B2d','H1b1']);
+  if(kind==='notes' && /must not make physical notes.*DNF/i.test(clause('B3b')))
+    return result('三盲记忆阶段也禁止做实体笔记。写在纸上已经违反 B3b，即使随后丢掉纸，本次尝试仍判 DNF。 '+cite('B3b'),['B3b']);
+  if(kind==='inspectionHands' && /both hands during inspection/i.test(clause('C1b+')) && /only one hand to operate the puzzle/i.test(clause('C1b')))
+    return result('单手项目的观察阶段可以用双手。只要还原过程中始终只用同一只手操作，观察时双手持方不会因此被判罚。 '+cite('C1b+')+' '+cite('C1b'),['C1b+','C1b']);
+  if(kind==='moveMetrics' && /Outer Block Turn Metric/i.test(clause('E2d')) &&
+      /80 moves \(including rotations\).*Execution Turn Metric/i.test(clause('E2d1')))
+    return result('两种口径不同。正式成绩按 OBTM（外块转动度量）计步，整体转体不增加成绩步数。80 步上限按 ETM（执行转动度量）检查，包含整体转体，超过上限判 DNF。 '+cite('E2d')+' '+cite('E2d1'),['E2d','E2d1']);
 }
