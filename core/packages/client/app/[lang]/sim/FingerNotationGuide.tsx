@@ -1,18 +1,22 @@
 'use client';
 
-import { Fragment, useEffect, useId, useMemo, useRef, useState } from 'react';
-import { BookOpen, Columns2, Play } from 'lucide-react';
+import { useMemo, useEffect, useId, useCallback, useLayoutEffect, useRef, useState, type ComponentProps, type ReactNode } from 'react';
+import { createPortal } from 'react-dom';
+import AppLink from '@/components/AppLink';
+import FingerAnnotationExample, { pinExampleHref } from './FingerAnnotationExample';
+import type PlaybackBar from '@/components/PlaybackBar';
+import { BookOpen, ExternalLink, Play } from 'lucide-react';
+import { CompactSelect } from '@/components/CompactSelect';
 import MoreToggle, { MoreTogglePanel } from '@/components/MoreToggle';
 import { useT } from '@/hooks/useT';
+import { gripMarkNamesZh } from '@/lib/grip-mark-labels';
 import { pushRules, pushRule } from '@/lib/push-notation';
 import type { FingerMark } from '@/lib/alg-finger-marks';
-import { findGripMarks, stripGripMarks } from '@cuberoot/shared/alg-notation';
-import { evenFingerExamples } from './evenFingerNotation';
+import { techniqueMoves, homePose, type Technique, type LessonMethod, type Pose } from './grips/techniqueLessons';
 import { nailComparisons, thumbComparisons, type ContactComparison } from './grips/contactComparisons';
-import { regripComparison, type RegripComparison } from './grips/regripComparison';
-import { demoPhases, grips, type AtlasOrder } from './grips/catalog';
-import type { DemoPhase, mountGripDemo } from './grips/gripDemo';
-import type { GripName } from './engine/hands/handsRig';
+import { atlasCatalog, grips, demoPhases, type AtlasOrder } from './grips/catalog';
+import type { DemoPhase, GripDemoMount, mountGripDemo } from './grips/gripDemo';
+import HandsRig, { type GripName } from './engine/hands/handsRig';
 
 type Label = readonly [string, string];
 interface Entry {
@@ -21,97 +25,55 @@ interface Entry {
   description: Label;
   examples: string[];
   mark?: FingerMark;
-  rightStart?: GripName;
+  grip?: GripName;
   compareIndexSingles?: boolean;
-  compareRegrip?: boolean;
-  input?: Label;
 }
 const pushEntry: Entry = { key: 'p', name: ['推', 'Push'], examples: pushRules.map(rule => rule.token),
-      description: ["双手中握时，U'p 指定右食指推顶层。Up 用左食指，Dp 用右无名指，D'p 用左无名指。", "From home grip, U'p calls for a right index push. Up uses the left index, Dp the right ring finger, and D'p the left ring finger."],
-      input: ["选中或高亮 U、U'、D 或 D'，在虚拟键盘的记号菜单点 p，再点一次取消。手动输入时把 p 紧接在转动后，例如 U'p。", "Select or highlight U, U', D or D' and choose p in the keyboard’s marks menu. Choose it again to remove it. When typing, attach p directly to the move, as in U'p."] };
-const regripEntries: Entry[] = [
-  { key: '↑', name: ['上握', 'Up'], examples: ['↑U', '↑ U'],
-    description: ['↑U 先让右手上握，↑ U 先让左手上握。两例都是换握完成后再转 U。', 'In ↑U the right hand regrips up. In ↑ U the left hand does. Both then turn U.'] },
-  { key: '↓', name: ['下握', 'Down'], examples: ['↓F', '↓ F'],
-    description: ['↓F 先让右手下握，↓ F 先让左手下握，然后转 F。', 'In ↓F the right hand regrips down. In ↓ F the left hand does. Both then turn F.'] },
-  { key: '·', name: ['中握', 'Home'], examples: ['·U'], rightStart: 'up',
-    description: ['回到中握。此例从右手上握开始，右手先回中握，再转 U。', 'Return to the home grip. Here the right hand starts up, returns home, then turns U.'] },
-  { key: '↑↑', name: ['向上半转握', 'Half via up'], examples: ['↑↑U'],
-    description: ['右手经上握绕到半转握姿，换握占一步，魔方保持原位。接着转 U。', 'The right hand moves through the up grip into a half-turn grip. The cube stays still during this step, then U turns.'] },
-  { key: '↓↓', name: ['向下半转握', 'Half via down'], examples: ['↓↓U'],
-    description: ['右手经下握绕到半转握姿，接着转 U。与 ↑↑ 对照时，留意手腕绕行的方向。', 'The right hand moves through the down grip into a half-turn grip, then U turns. Compare the wrist path with ↑↑.'] },
-  { key: '↑｜↑', name: ['双手上握', 'Both up'], examples: ['↑｜↑ U'],
-    description: ['先右手上握，再左手上握，最后转 U。竖线两边各占一步。', 'Regrip up with the right hand, then the left, then turn U. Each side of the bar takes one step.'] },
-  { key: '↓｜↓', name: ['双手下握', 'Both down'], examples: ['↓｜↓ U'],
-    description: ['先右手下握，再左手下握，最后转 U。也可以混合方向，如 ↑｜↓。', 'Regrip down with the right hand, then the left, then turn U. The directions can differ, as in ↑｜↓.'] },
-];
-const evenRegrips: Entry[] = regripEntries.map(entry => ({
-  ...entry, compareRegrip: true,
-  examples: entry.key.includes('｜') ? [entry.key + ' R'] : [entry.key + 'R', entry.key + ' R'],
-}));
-
-const groups: { name: Label; entries: Entry[] }[] = [
-  { name: ['用指与接触', 'Finger & contact'], entries: [
-    { key: 'middle', name: ['中指', 'Middle finger'], mark: 's', examples: ['U'],
-      description: ['删除线指定中指。做这个 U 时，右中指从背面拨动顶层，左手稳住魔方。', 'Strikethrough selects the middle finger. For this U, the right middle finger flicks the top layer from the back while the left hand steadies the cube.'] },
-    { key: 'thumb', name: ['拇指', 'Thumb'], mark: 'em', examples: ['F'],
-      description: ['斜体指定拇指。做这个 F 时，左拇指从下方向上拨动前层。', 'Italics select the thumb. For this F, the left thumb pushes the front layer upward from below.'] },
-    { key: 'nail', name: ['指甲', 'Fingernail'], mark: 'u', examples: ['S'],
-      description: ['下划线指定用指甲接触贴纸。做这个 S 时，左食指用甲尖顶动中层。叠加删除线表示中指甲，叠加斜体表示拇指甲。', 'An underline marks fingernail contact. For this S, the left index nail pushes the standing slice. Combine underline with strikethrough for the middle fingernail, or italics for the thumbnail.'] },
-  ] },
-  { name: ['换握', 'Regrip'], entries: regripEntries },
-  { name: ['推法', 'Push'], entries: [
-    pushEntry,
-  ] },
+      description: ["双手中起手时，U'p 指定右食指推顶层。Up 用左食指，Dp 用右无名指，D'p 用左无名指。", "From home grip, U'p calls for a right index push. Up uses the left index, Dp the right ring finger, and D'p the left ring finger."],
+};
+const gripEntries: Entry[] = [
+  { key: '↑', name: [gripMarkNamesZh['↑'], 'Up'], grip: 'up', examples: ['R', 'L'],
+    description: ['拇指在顶面，食指、中指和无名指在底面。', 'The thumb rests on the top face. The index, middle and ring fingers rest on the bottom face.'] },
+  { key: '↓', name: [gripMarkNamesZh['↓'], 'Down'], grip: 'down', examples: ['R', 'L'],
+    description: ['拇指在底面，食指、中指和无名指在顶面。', 'The thumb rests on the bottom face. The index, middle and ring fingers rest on the top face.'] },
+  { key: '·', name: [gripMarkNamesZh['·'], 'Home'], grip: 'home', examples: ['both'],
+    description: ['双手拇指在前面，食指、中指和无名指在背面。', 'Both thumbs rest on the front face. The index, middle and ring fingers rest on the back face.'] },
+  { key: '↑↑', name: [gripMarkNamesZh['↑↑'], 'Half via up'], grip: 'half', examples: ['R', 'L'],
+    description: ['拇指在背面，食指、中指和无名指在前面。从正面看，掌心露出较多。', 'The thumb rests on the back face and the index, middle and ring fingers on the front. More of the palm is visible from the front.'] },
+  { key: '↓↓', name: [gripMarkNamesZh['↓↓'], 'Half via down'], grip: 'halfDown', examples: ['R', 'L'],
+    description: ['拇指在背面，食指、中指和无名指在前面。从正面看，手背露出较多。', 'The thumb rests on the back face and the index, middle and ring fingers on the front. More of the back of the hand is visible from the front.'] },
+  { key: '↑｜↑', name: [gripMarkNamesZh['↑｜↑'], 'Both up'], grip: 'up', examples: ['both'],
+    description: ['双手拇指都在顶面，其余手指从两侧托住底面。', 'Both thumbs rest on the top face, with the fingers supporting the bottom face from either side.'] },
+  { key: '↓｜↓', name: [gripMarkNamesZh['↓｜↓'], 'Both down'], grip: 'down', examples: ['both'],
+    description: ['双手拇指都在底面，两手的食指、中指和无名指搭在顶面。', 'Both thumbs rest on the bottom face. The index, middle and ring fingers of both hands rest on the top face.'] },
 ];
 
-const evenThumb: Entry = {
-  key: 'thumb', name: ['拇指', 'Thumb'], mark: 'em', examples: evenFingerExamples[2].em,
-  description: ['双手中握起手。斜体转动时，发力手先换下握，用拇指指腹上拨。普通转动时，另一只手的食指越过顶面向下拨。',
-    'Start with both hands in home grip. For the italic turn, the driving hand regrips down and pushes up with the thumb pad. For the plain turn, the other index reaches over the top and pushes down.'],
+const techniques: Record<Technique, Entry> = {
+  middle: { key: 'middle', name: ['中指', 'Middle finger'], mark: 's', examples: ['U'], description: ['中指直接拨动，或在半转时接第二拨。', 'The middle finger drives the turn or takes the second flick of a half turn.'] },
+  thumb: { key: 'thumb', name: ['拇指', 'Thumb'], mark: 'em', examples: ['F'], description: ['用拇指拨动转层。', 'Drive the layer with the thumb.'] },
+  nail: { key: 'nail', name: ['指甲', 'Fingernail'], mark: 'u', examples: ['S'], description: ['用指甲接触活动贴纸。', 'Use the nail to drive a moving sticker.'] },
+  push: pushEntry,
 };
-const evenContacts: Record<2 | 4, Entry[]> = {
-  2: [
-    { key: 'middle', name: ['中指', 'Middle finger'], mark: 's', examples: evenFingerExamples[2].s,
-      description: ['从双手中握开始，U2 用右手，U2′ 用左手。发力手先上握，食指先拨 90°，中指接第二个 90°，随后恢复原握姿。以还原态为例，右手从 B0 接到 L0，左手从 B1 接到 R1。',
-        'From home grip, use the right hand for U2 or the left for U2′. The driving hand regrips up. The index turns the first 90° and the middle finger takes the next 90°, then the wrist returns. From solved, the right hand goes from B0 to L0 and the left from B1 to R1.'] },
-    evenThumb,
-    { key: 'nail', name: ['指甲', 'Fingernail'], mark: 'u', examples: evenFingerExamples[2].u,
-      description: ['双手中握时，普通 U 和 U′ 也会在约 65° 从指腹滚到指甲。对照的推法转动同一层、方向相同，在 45° 至 60° 从指甲滚到指腹。',
-        'From home grip, plain U and U′ also roll from pad to nail around 65°. The comparison push turns the same layer in the same direction and rolls from nail to pad between 45° and 60°.'] },
-  ],
-  4: [
-    { key: 'middle', name: ['中指', 'Middle finger'], mark: 's', examples: evenFingerExamples[4].s, compareIndexSingles: true,
-      description: ['双手中握时，普通 2U2 也用食指起拨、中指接力。删除线明确指定第二拨用中指。对比时看 90° 处：连续半转由中指接住下一张贴纸；把同一层分两次各拨 90°，则由食指收回再拨。',
-        'From home grip, a plain 2U2 already uses the index then the middle finger. Strikethrough specifies the middle finger for the second stroke. Watch the 90° handoff: in the half turn the middle finger takes the next sticker. In two separate quarter turns the index returns to flick again.'] },
-    evenThumb,
-    { key: 'nail', name: ['指甲', 'Fingernail'], mark: 'u', examples: evenFingerExamples[4].u,
-      description: ['双手中握时，普通 2R2′ 和 2L2 也用指甲接力。对照动作沿相反方向转同一内层 180°，由同手的无名指和小指用指腹接力。两边终态相同。',
-        'From home grip, plain 2R2′ and 2L2 already use a nail relay. The comparison turns the same inner slice 180° the other way, using the pads of the same ring and little fingers. Both end in the same cube state.'] },
-  ],
-};
-
-function inputHint(entry: Entry, t: ReturnType<typeof useT>) {
-  if (entry.input) return t(...entry.input);
-  if (entry.mark) return t(
-    `选中完整转动，打开虚拟键盘 Tab 左侧的记号菜单，点「${entry.name[0]}」。再点一次可取消。`,
-    `Select a whole move, open the marks menu to the left of Tab on the virtual keyboard, and choose ${entry.name[1]}. Select it again to remove it.`);
-  if (entry.key.includes('｜')) return t('在记号菜单中选双手记号，或用 ｜ 或 | 连接右手和左手的记号。', 'Choose a two-hand mark in the menu, or join the right and left marks with ｜ or |.');
-  const half = entry.key === '↑↑' || entry.key === '↓↓';
-  return t('从记号菜单选取，或直接输入。紧贴后续转动指定右手，留空格指定左手。', 'Choose the mark in the menu or type it. Touching the next move selects the right hand. A space selects the left.') + ' ' +
-    (half ? t('写在末尾时，无空格为右手，有空格为左手。', 'At the end, no space means right and a trailing space means left.')
-      : t('单独写在末尾时指定左手。', 'At the end it selects the left hand.'));
+const fingerNames = {
+  index: ['食指', 'index'], middle: ['中指', 'middle'], thumb: ['拇指', 'thumb'], ring: ['无名指', 'ring'], pinky: ['小指', 'little finger'],
+} as const;
+function methodLabel(method: LessonMethod, t: ReturnType<typeof useT>) {
+  const hand = method.hand === 'R' ? t('右手', 'Right hand') : t('左手', 'Left hand');
+  const first = t(fingerNames[method.finger][0], fingerNames[method.finger][1]);
+  const second = method.second ? t(fingerNames[method.second][0], fingerNames[method.second][1]) : '';
+  let action = t(`${first}拨动`, `${first} flick`);
+  if (second) action = t(`${first}起拨，${second}接第二拨`, `${first} first, then ${second}`);
+  else if (method.push) action = t(`${first}推`, `${first} push`);
+  else if (method.style === 'sliceNailDouble') action = t(`${first}甲连拨两次`, `two flicks with the ${first} nail`);
+  else if (method.nail && !method.rollsToNail) action = t(`${first}甲拨动`, `${first} nail flick`);
+  const surface = second && method.nail && !method.rollsToNail ? t('指甲接力', 'nail relay') : '';
+  return [hand, action, surface].filter(Boolean).join(' · ');
 }
-
-function pushContactHint(order: AtlasOrder, rule: typeof pushRules[number], t: ReturnType<typeof useT>) {
-  const upper = rule.layer === 'high';
-  const row = upper ? t('上排', 'top row') : t('下排', 'bottom row');
-  if (order === 2) return t(`用指甲抵住 ${rule.hand} 面${row}靠前的角块贴纸，向背面推转。`,
-    `Push the front corner sticker in the ${row} of the ${rule.hand} face toward the back with your nail.`);
-  if (order === 4) return t(`在 ${rule.hand} 面${row}中间两张翼棱贴纸中，用指甲抵住靠前的一张，向背面推转。`,
-    `Use your nail on the front one of the two wing stickers in the ${row} of the ${rule.hand} face and push toward the back.`);
-  return t(`用指甲抵住 ${rule.hand} 面${row}中间的贴纸，向背面推转。`,
-    `Push the middle sticker in the ${row} of the ${rule.hand} face toward the back with your nail.`);
+function setupLabel(method: LessonMethod, t: ReturnType<typeof useT>) {
+  return method.setup.map(({ side, grip }) => {
+    const [zh, en] = grips[grip];
+    return side === 'R' ? t(`右手先换到${zh}`, `Regrip right to ${en}`) : t(`左手先换到${zh}`, `Regrip left to ${en}`);
+  }).join(' · ') || t('可直接做', 'Direct');
 }
 
 function Example({ entry, text }: { entry: Entry; text: string }) {
@@ -120,97 +82,110 @@ function Example({ entry, text }: { entry: Entry; text: string }) {
 }
 
 type Demo = ReturnType<typeof mountGripDemo>;
-function Preview({ order, entry, example, contact, regrip, compare, onCompare, onExample }: {
-  order: AtlasOrder; entry: Entry; example: string; contact?: ContactComparison; regrip?: RegripComparison; compare: boolean; onCompare: () => void; onExample: (move: string) => void;
+export type LessonTransport = Pick<ComponentProps<typeof PlaybackBar>, 'disabled' | 'step' | 'total' | 'playing'
+  | 'segmentEnds' | 'scrubValueText' | 'onScrub' | 'onTogglePlay' | 'onSkipStart' | 'onSkipEnd' | 'onStepBack' | 'onStepForward'>;
+interface StageProps {
+  stage: HTMLElement; mountView: GripDemoMount; rate: number;
+  onActive: (active: boolean) => void;
+  renderPlaybackBar: (transport: LessonTransport) => ReactNode;
+}
+function Preview({ actionSlot, hands, startPose, method, playRequest, order, entry, example, contact, compare, onCompare, onExample, stage, mountView, rate, onActive, renderPlaybackBar }: StageProps & {
+  actionSlot: HTMLDivElement | null; hands: HandsRig; startPose: Pose; method?: LessonMethod; playRequest: number; order: AtlasOrder; entry: Entry; example: string; contact?: ContactComparison; compare: boolean; onCompare: () => void; onExample: (move: string) => void;
 }) {
   const t = useT();
-  const primary = useRef<HTMLDivElement>(null);
-  const ordinary = useRef<HTMLDivElement>(null);
-  const players = useRef<Demo[]>([]);
-  const waiting = useRef<((atMs: number) => void) | null>(null);
-  const [run, setRun] = useState(0);
-  const [phases, setPhases] = useState<DemoPhase[]>(['loading', 'loading']);
+  const host = useRef<HTMLDivElement>(null);
+  const player = useRef<Demo | null>(null);
+  const [loadAttempt, setLoadAttempt] = useState(0);
+  useLayoutEffect(() => {
+    onActive(true);
+    return () => onActive(false);
+  }, [onActive]);
+  const speed = useRef(rate);
+  speed.current = rate;
+  const [phase, setPhase] = useState<DemoPhase>(() => hands.getLoadState().hands === 'ready' ? 'start' : 'loading');
+  const [reference, setReference] = useState(false);
+  const [percent, setPercent] = useState(0);
   const [paused, setPaused] = useState(false);
-  const [gripStep, setGripStep] = useState(0);
-  const indexComparison = compare && !!entry.compareIndexSingles;
   const [secondStroke, setSecondStroke] = useState(false);
-  const [cueIndices, setCueIndices] = useState([0, 0]);
+  const [cueIndex, setCueIndex] = useState(0);
+  const indexComparison = compare && !!entry.compareIndexSingles;
   const quarter = example.endsWith("'") ? "2U'" : '2U';
-  const plain = contact ? contact.reference : indexComparison ? quarter : entry.key === 'p' ? example.slice(0, -1) : stripGripMarks(example).trim();
+  const plain = contact ? contact.reference : indexComparison ? quarter : method?.push ? example.slice(0, -1) : example;
+  const playClip = useCallback((ordinary: boolean, seek?: number) => {
+    const demo = player.current;
+    if (!demo) return;
+    setReference(ordinary);
+    setPaused(seek !== undefined);
+    setPercent(0);
+    setCueIndex(0);
+    setSecondStroke(false);
+    const markedHtml = method?.marks?.reduce((html, tag) => `<${tag}>${html}</${tag}>`, example);
+    if (hands.getLoadState().hands === 'error') hands.retryLoad();
+    if (entry.grip) {
+      const left = example === 'R' ? 'home' : entry.grip;
+      const right = example === 'L' ? 'home' : entry.grip;
+      demo.play(left, right, null);
+      return;
+    }
+    // The even-order thumb comparison was authored against a plain turn from two home grips.
+    // The marked Fw driver owns its temporary down grip, including the return after withdrawal.
+    const frontMiddle = method?.style === 'middle-nail-front-wide' || method?.style === 'middle-pad-front-wide';
+    const setup = ordinary && contact && method?.marks?.includes('em')
+      ? (['L', 'R'] as const).filter(side => startPose[side] !== 'home').map(side => ({ side, grip: 'home' as const }))
+      : frontMiddle && !ordinary ? method.setup.filter(step => step.side !== method.hand) : method?.setup;
+    demo.play(startPose.L, startPose.R, ordinary ? plain : example, ordinary ? undefined : markedHtml,
+      ordinary ? contact?.ordinary : contact?.marked,
+      { setup, keepView: ordinary, comparePush: method?.push, relay: indexComparison ? ordinary ? 'two-singles' : 'relay' : undefined });
+    if (seek !== undefined) demo.seek(seek);
+  }, [hands, startPose, method, entry, example, plain, contact, indexComparison]);
 
-  useEffect(() => () => {
-    waiting.current = null;
-    players.current.forEach(player => player.dispose());
-    players.current = [];
-  }, []);
-
+  const start = useRef(playClip);
+  start.current = playClip;
   useEffect(() => {
     let cancelled = false;
-    waiting.current = null;
-    setPaused(false);
-    setSecondStroke(false);
-    setGripStep(0);
-    const whenBothReady = (advance: (atMs: number) => void) => {
-      const first = waiting.current;
-      if (!first) { waiting.current = advance; return; }
-      waiting.current = null;
-      const atMs = performance.now();
-      first(atMs);
-      advance(atMs);
-    };
     void import('./grips/gripDemo').then(({ mountGripDemo }) => {
-      if (cancelled || !primary.current || (compare && !ordinary.current)) return;
-      if (!players.current.length) {
-        const hosts = compare ? [primary.current, ordinary.current!] : [primary.current];
-        hosts.forEach((host, i) => {
-          const player = mountGripDemo(host, phase => {
-            setPhases(previous => previous.map((value, slot) => slot === i ? phase : value));
-            if (phase === 'error' || phase === 'unavailable') players.current.forEach(p => p.pause(true));
-          }, {
-            regripDemo: entry.compareRegrip, onGripStep: entry.compareRegrip && i === 0 ? setGripStep : undefined,
-            order, comparePush: entry.key === 'p',
-            upperRelayComparison: indexComparison ? (i === 0 ? 'relay' : 'two-singles') : undefined,
-            onSecondStroke: indexComparison && i === 0 ? () => setSecondStroke(true) : undefined,
-            whenBothReady: compare ? whenBothReady : undefined,
-            onOrbit: compare ? (dx, dy) => players.current[1 - i]?.orbitBy(dx, dy) : undefined,
-            onContactCue: index => setCueIndices(previous => previous[i] === index ? previous
-              : previous.map((value, slot) => slot === i ? index : value)),
-          });
-          players.current.push(player);
-        });
-      }
-      const tag = entry.mark;
-      const left = regrip?.start.L ?? 'home';
-      const right = regrip?.start.R ?? entry.rightStart ?? 'home';
-      players.current[0].play(left, right, example, tag ? `<${tag}>${example}</${tag}>` : undefined, contact?.marked);
-      players.current[1]?.play(left, right, plain, undefined, contact?.ordinary);
-    }).catch(() => {
-      if (cancelled) return;
-      players.current.forEach(player => player.dispose());
-      players.current = [];
-      setPhases(['error', 'error']);
-    });
-    return () => { cancelled = true; };
-  }, [order, entry, example, plain, compare, indexComparison, contact, regrip, run]);
+      if (cancelled || !host.current) return;
+      player.current = mountGripDemo(host.current, setPhase, {
+        mountView, order, hands,
+        onContactCue: setCueIndex, onSecondStroke: () => setSecondStroke(true),
+        lessonClock: { rate: () => speed.current, progress: setPercent },
+      });
+      start.current(false);
+    }).catch(() => { if (!cancelled) setPhase('error'); });
+    return () => { cancelled = true; player.current?.dispose(); player.current = null; };
+  }, [mountView, order, stage, hands, loadAttempt]);
 
-  const visiblePhases = compare ? phases : phases.slice(0, 1);
-  const canPause = visiblePhases.every(p => !['loading', 'error', 'unavailable'].includes(p))
-    && visiblePhases.some(p => p !== 'end');
+  useLayoutEffect(() => { playClip(false); }, [playClip, compare, playRequest]);
+  useEffect(() => {
+    if (phase !== 'end' || reference || !compare || paused) return;
+    const timer = window.setTimeout(() => playClip(true), 350);
+    return () => window.clearTimeout(timer);
+  }, [phase, reference, compare, paused, playClip]);
+
+  const step = (reference ? 100 : 0) + percent;
+  const total = compare ? 200 : 100;
+  const seek = useCallback((value: number) => {
+    const ordinary = compare && value >= 100;
+    playClip(ordinary, ordinary ? value - 100 : value);
+  }, [compare, playClip]);
+  const ended = phase === 'end' && (!compare || reference);
+  const controls = !entry.grip && renderPlaybackBar({
+    disabled: phase === 'loading' || phase === 'error' || phase === 'unavailable',
+    step, total, playing: !paused && !ended,
+    segmentEnds: compare ? [100, 200] : undefined,
+    scrubValueText: reference ? t(`对照动作 ${percent}%`, `Comparison move ${percent}%`)
+      : t(`标记动作 ${percent}%`, `Marked move ${percent}%`),
+    onTogglePlay() {
+      if (ended) { playClip(false); return; }
+      player.current?.pause(!paused);
+      setPaused(!paused);
+    },
+    onScrub: seek, onSkipStart: () => seek(0), onSkipEnd: () => seek(total),
+    onStepBack: () => seek(Math.max(0, step - 25)), onStepForward: () => seek(Math.min(total, step + 25)),
+  });
   function phaseLabel(phase: DemoPhase, marked: boolean) {
-    if (regrip) {
-      const step = regrip.steps[gripStep];
-      let cue: Label | undefined;
-      if (phase === 'start' || (!marked && phase === 'prepare')) cue = regrip.startLabel;
-      if (step && marked && phase === 'regrip') cue = step.moving;
-      if (step && marked && phase === 'gripped') cue = step.seated;
-      if (phase === 'turn') {
-        const support = grips[(marked ? regrip.after : regrip.start).L];
-        cue = [`右手转 R · 左手${support[0]}`, `Right turns R · left stays ${support[1].toLowerCase()}`];
-      }
-      if (cue) return (paused ? t('已暂停 · ', 'Paused · ') : '') + t(...cue);
-    }
     if (contact && phase === 'turn') {
-      const cue = marked ? contact.marked.cues[cueIndices[0]] : contact.ordinary.cues[cueIndices[1]];
+      const cue = marked ? contact.marked.cues[cueIndex] : contact.ordinary.cues[cueIndex];
       if (cue) return (paused ? t('已暂停 · ', 'Paused · ') : '') + t(...cue.finger) + ' · ' + cue.sticker;
     }
     if (paused) return t('已暂停', 'Paused');
@@ -218,21 +193,21 @@ function Preview({ order, entry, example, contact, regrip, compare, onCompare, o
       if (!secondStroke) return t('第一拨 · 食指', 'First flick · index');
       return marked ? t('第二拨 · 中指', 'Second flick · middle') : t('第二拨 · 食指', 'Second flick · index');
     }
+    if (marked && method?.second && phase === 'turn') {
+      const finger = fingerNames[percent < 50 ? method.finger : method.second];
+      return percent < 50 ? t(`第一拨 · ${finger[0]}`, `First flick · ${finger[1]}`) : t(`第二拨 · ${finger[0]}`, `Second flick · ${finger[1]}`);
+    }
     return t(demoPhases[phase][0], demoPhases[phase][1]);
   }
-  let primaryTitle = t(...entry.name);
+  let primaryTitle = method ? methodLabel(method, t) : t(...entry.name);
   let referenceTitle = t('普通转动', 'Plain turn');
   let compareTitle = t('对比普通转动', 'Compare with plain turn');
-  if (regrip) {
-    primaryTitle = t('换握后', 'After regrip');
-    referenceTitle = t('原握姿', 'Original grip');
-    compareTitle = t('对比换握前后', 'Compare before and after');
-  } else if (contact && entry.mark === 'em') {
+  if (contact && entry.mark === 'em') {
     primaryTitle = t('拇指上拨', 'Thumb pushes up');
     referenceTitle = t('普通 · 食指下拨', 'Plain · index pushes down');
     compareTitle = t('对比拇指与食指', 'Compare thumb and index');
   } else if (contact) {
-    primaryTitle = order === 2 ? t('指腹转指甲', 'Pad to nail') : t('指甲接力', 'Nail relay');
+    if (order !== 2) primaryTitle = t('指甲接力', 'Nail relay');
     referenceTitle = order === 2 ? t('指甲转指腹', 'Nail to pad') : t('指腹接力', 'Pad relay');
     compareTitle = t('对比指甲与指腹', 'Compare nail and pad');
   } else if (entry.compareIndexSingles) {
@@ -242,107 +217,198 @@ function Preview({ order, entry, example, contact, regrip, compare, onCompare, o
     }
     compareTitle = t('对比食指分两拨', 'Compare two index flicks');
   }
+  function exampleLabel(move: string) {
+    if (!entry.grip) return move;
+    if (move === 'both') return t('双手', 'Both hands');
+    return move === 'R' ? t('右手', 'Right hand') : t('左手', 'Left hand');
+  }
+  function restart() {
+    if (player.current) playClip(false);
+    else setLoadAttempt(n => n + 1);
+  }
+  const hasChoices = !!entry.grip && entry.examples.length > 1;
+  const showGripControls = hasChoices || (entry.grip && phase === 'error');
+  const captionMove = entry.grip ? entry.key : reference ? (indexComparison ? plain + ' ' + plain : plain) : example;
   return <div className="finger-guide-preview">
-    <div className="finger-guide-examples">
-      {entry.examples.length > 1 && <select className="sim-puzzle-select sim-preset-select finger-guide-select" aria-label={t('演示动作', 'Example move')} value={example}
-        onChange={event => onExample(event.target.value)}>
-        {entry.examples.map(move => <option key={move} value={move}>{move}{entry.compareRegrip &&
-          (findGripMarks(move)[0].side === 'R' ? t(' · 右手', ' · right hand') : t(' · 左手', ' · left hand'))}</option>)}
-      </select>}
-      <button type="button" className="skewb-guide-restore" onClick={() => setRun(n => n + 1)}>
-        <Play size={12} />{t('重播', 'Replay')}</button>
-      {canPause && <button type="button" className="skewb-guide-restore" onClick={() => {
-        const atMs = performance.now();
-        players.current.forEach(player => player.pause(!paused, atMs));
-        setPaused(!paused);
-      }}>{paused ? t('继续', 'Resume') : t('暂停', 'Pause')}</button>}
-      <button type="button" className="skewb-guide-restore" aria-pressed={compare} onClick={onCompare}>
-        <Columns2 size={13} />{compare ? t('退出对比', 'Close comparison') : compareTitle}</button>
-    </div>
-    <div className="finger-guide-views">
-      {visiblePhases.map((phase, i) => <figure key={i}>
-        <figcaption><span>{i === 0 ? <><Example entry={entry} text={example} /> · {primaryTitle}</>
-          : <><code>{indexComparison ? plain + ' ' + plain : plain}</code> · {referenceTitle}</>}</span>
-          <span className="skewb-guide-caption" role="status">{phaseLabel(phase, i === 0)}</span>
-        </figcaption>
-        <div ref={i === 0 ? primary : ordinary} className="finger-guide-canvas" role="img"
-          aria-label={i === 0 ? t('指法演示', 'Marked turn animation') : t(`${referenceTitle}演示`, `${referenceTitle} animation`)} />
-      </figure>)}
-    </div>
+    {showGripControls && <div className="finger-guide-examples">
+      {hasChoices && <CompactSelect ariaLabel={entry.grip ? t('演示用手', 'Demonstration hand') : t('演示动作', 'Example move')}
+        value={example} label={exampleLabel(example)} keyboardListNavigation showArrow triggerClassName="finger-guide-select"
+        items={entry.examples.map(move => ({ value: move, label: exampleLabel(move) }))}
+        onChange={onExample} />}
+      {entry.grip && phase === 'error' && <button type="button" className="skewb-guide-restore" onClick={restart}>
+        {t('重新加载', 'Reload')}</button>}
+    </div>}
+    {!entry.grip && actionSlot && createPortal(<>
+      <button type="button" className="skewb-guide-restore" onClick={restart}>
+        <Play size={12} />{compare ? t('重播对比', 'Replay comparison') : t('重播', 'Replay')}</button>
+      {(method?.marks?.length || method?.push || contact) ? <button type="button" className="skewb-guide-restore" aria-pressed={compare} onClick={onCompare}>
+        {compare ? t('退出对比', 'Close comparison') : compareTitle}</button> : null}
+    </>, actionSlot)}
+    {controls}
+    {createPortal(<div className="finger-guide-stage" ref={host} role="group" aria-label={t('指法演示', 'Finger demonstration')}>
+      <div className="finger-guide-stage-caption" role="status" data-phase={paused ? 'paused' : phase}>
+        <span className="finger-guide-move" data-compact={captionMove.length > 2 || undefined}>
+          {entry.grip || reference ? <code>{captionMove}</code> : <code>{method?.marks?.reduce<ReactNode>((text, Tag) => <Tag>{text}</Tag>, captionMove) ?? captionMove}</code>}
+        </span>
+        <div className="finger-guide-caption-text">
+          <strong>{reference && !entry.grip ? referenceTitle : primaryTitle}{entry.grip && hasChoices && ' · ' + exampleLabel(example)}</strong>
+          {phase !== 'pose' && <span>{phaseLabel(phase, !reference)}</span>}
+        </div>
+      </div>
+    </div>, stage)}
   </div>;
 }
 
-export default function FingerNotationGuide({ order, onOpen, selectedPush }: { order: AtlasOrder; onOpen: () => void; selectedPush?: string }) {
+export default function FingerNotationGuide({ order, onOpen, selectedPush, ...stageProps }: StageProps & { order: AtlasOrder; onOpen: () => void; selectedPush?: string }) {
   const t = useT();
   const id = useId();
+  const [actionSlot, setActionSlot] = useState<HTMLDivElement | null>(null);
+  // Keep the prepared meshes, skeletons and skin textures across teaching sessions.
+  const [hands, setHands] = useState<HandsRig | null>(null);
+  useEffect(() => () => hands?.dispose(), [hands]);
   const [open, setOpen] = useState(false);
-  const [entry, setEntry] = useState(order === 3 ? groups[0].entries[0] : evenThumb);
-  const [pushToken, setPushToken] = useState<string>(pushRules[0].token);
-  const rule = pushRule(pushToken)!;
-  const [example, setExample] = useState<string | null>(null);
+  const [technique, setTechnique] = useState<Technique | null>(null);
+  const [nailOnly, setNailOnly] = useState(false);
+  const [directOnly, setDirectOnly] = useState(false);
+  const [grip, setGrip] = useState(gripEntries[2]);
+  const [side, setSide] = useState('both');
+  const [showPose, setShowPose] = useState(false);
+  const [move, setMove] = useState('');
+  const [variant, setVariant] = useState('');
+  const [playing, setPlaying] = useState(false);
+  const [playRequest, setPlayRequest] = useState(0);
   const [compare, setCompare] = useState(false);
-  const sample = entry.key === 'p' ? rule.token : entry.examples[0];
-  const selectedMove = example ?? sample;
-  const regrip = useMemo(() => entry.compareRegrip ? regripComparison(selectedMove) : undefined, [entry, selectedMove]);
-  let contact: ContactComparison | undefined;
-  if (order !== 3) {
-    if (entry.mark === 'em') contact = thumbComparisons[order][selectedMove];
-    if (entry.mark === 'u') contact = nailComparisons[selectedMove];
+  const startPose = useMemo(() => ({
+    L: side === 'R' ? homePose.L : grip.grip!, R: side === 'L' ? homePose.R : grip.grip!,
+  }), [grip, side]);
+  const choices = useMemo(() => technique ? techniqueMoves(order, technique, nailOnly, startPose, directOnly) : [],
+    [order, technique, nailOnly, startPose, directOnly]);
+  const methods = choices.find(choice => choice.move === move)?.methods;
+  const method = methods?.find(m => m.id === variant) ?? methods?.[0];
+  const selectedLabel = method && methodLabel(method, t);
+  const methodOptions = new Map<string, LessonMethod>();
+  for (const candidate of methods ?? []) {
+    const label = methodLabel(candidate, t);
+    // The catalog orders grip variants by the fewest regrips from the selected pose.
+    if (!methodOptions.has(label)) methodOptions.set(label, candidate);
   }
+  const contact = method && order !== 3 ? method.marks?.includes('em') ? thumbComparisons[order][method.move]
+    : method.marks?.includes('u') ? nailComparisons[method.move] : undefined : undefined;
+  const lesson = useMemo(() => {
+    if (!technique) return grip;
+    return { ...techniques[technique], compareIndexSingles: order === 4 && method?.marks?.includes('s') && /^2U2/.test(move) };
+  }, [technique, grip, order, method, move]);
+  function stop() { setPlaying(false); setCompare(false); }
+  function chooseTechnique(next: Technique) {
+    stop(); setMove(''); setVariant(''); setNailOnly(false); setTechnique(next);
+  }
+  function chip(label: ReactNode, selected: boolean, click: () => void, key: string, title?: string) {
+    return <button type="button" key={key} className={'skewb-guide-chip' + (selected ? ' is-active' : '')}
+      aria-pressed={selected} onClick={click} title={title}>{label}</button>;
+  }
+  function playMove(nextMove: string, nextVariant: string) {
+    onOpen();
+    setMove(nextMove);
+    setVariant(nextVariant);
+    setCompare(false);
+    setPlaying(true);
+    setPlayRequest(n => n + 1);
+  }
+  function moveButton(choice: typeof choices[number]) {
+    const selected = choice.move === move;
+    const target = selected && method ? method : choice.methods[0];
+    return chip(<code>{choice.move.replace("'", '′')}</code>, selected, () => playMove(choice.move, target.id),
+      choice.move, methodLabel(target, t) + ' · ' + setupLabel(target, t));
+  }
+  const columns = [
+    { label: t('可直接做', 'Direct'), items: choices.filter(c => !c.methods[0].setup.length) },
+    { label: t('需换握', 'Regrip first'), items: choices.filter(c => c.methods[0].setup.length) },
+  ].filter(column => column.items.length);
+  const groupByLayer = choices.length > 8;
+  const rows = (groupByLayer ? atlasCatalog[order].groups : [null]).map(group => ({
+    label: group && t(group.zh, group.en),
+    cells: columns.map(({ items }) => items.filter(c => !group || group.bases.includes(c.move.replace(/p$/, '').replace(/2'?$|'$/, '')))),
+  })).filter(row => row.cells.some(cell => cell.length));
+  const halfTurns = choices.filter(c => /2'?$/.test(c.move));
+  const middleRelay = technique === 'middle' && halfTurns.length > 0 && halfTurns.every(c => c.methods.every(m => m.second === 'middle'));
   return <div className="skewb-guide finger-guide">
     <MoreToggle className="skewb-guide-toggle" expanded={open} aria-controls={id} onToggle={() => {
-      setCompare(false);
-      if (open) setExample(null);
-      else {
+      stop();
+      if (!open) {
+        if (!hands) setHands(new HandsRig());
         onOpen();
-        if (selectedPush) {
-          setEntry(pushEntry);
-          setPushToken(selectedPush);
-        }
+        if (selectedPush && pushRule(selectedPush)) { chooseTechnique('push'); setMove(selectedPush); }
       }
       setOpen(!open);
     }}><BookOpen size={13} />{t('指法记号', 'Finger notation')}</MoreToggle>
     <MoreTogglePanel id={id} expanded={open}>
       <div className="skewb-guide-body">
-        <div className="skewb-guide-grid">{groups.map(group => <Fragment key={group.name[1]}>
-          <span className="skewb-guide-label">{t(...group.name)}</span>
-          <div className="skewb-guide-chips" role="group" aria-label={t(...group.name)}>{(order !== 3 && group.entries[0].mark ? evenContacts[order] : order !== 3 && group.entries === regripEntries ? evenRegrips : group.entries).map(item =>
-            <button type="button" key={item.key} className={'skewb-guide-chip' + (entry === item ? ' is-active' : '')}
-              aria-pressed={entry === item} onClick={() => {
-                setEntry(item);
-                setExample(item.key === 'p' ? rule.token : item.examples[0]);
-                setCompare(false);
-              }}>
-              <Example entry={item} text={item.mark ? item.examples[0] : item.key} /> {t(...item.name)}
-            </button>)}</div>
-        </Fragment>)}</div>
-        {!example && <div className="finger-guide-examples"><button type="button" className="skewb-guide-restore"
-          onClick={() => setExample(sample)}><Play size={12} />{t('播放', 'Play')} <Example entry={entry} text={sample} /></button></div>}
-        <p className="finger-guide-meaning">{entry.key === 'p'
-          ? <><code>{rule.token}</code> · {t(rule.label[0], rule.label[1])}{t('。', '. ')}{pushContactHint(order, rule, t)}{t('双腕和左右中指保持中握，转到 45° 至 60° 时逐渐换用指腹，继续推同一张贴纸。', ' Keep both wrists and middle fingers in their home positions. Between 45° and 60°, roll onto the finger pad and finish pushing the same sticker.')}</>
-          : regrip ? regrip.steps.map(step => t(...step.watch)).join(' ') : t(...entry.description)}</p>
-        {regrip && <p className="skewb-guide-caption">{t('换握时魔方静止。对比中，原握姿一栏等候就位，两栏再同时由右手转 R，左手稳住魔方。', 'The cube stays still during the regrip. The original-grip view waits, then both right hands turn R together while the left hands support the cube.')}</p>}
-        {contact && <p className="skewb-guide-caption">{t(...contact.watch)}{entry.mark === 'u' && ' ' + t('描边标出当前发力的贴纸。', 'The outline follows the driving sticker.')}</p>}
-        {entry.compareIndexSingles && <p className="skewb-guide-caption">{(example ?? sample).endsWith("'")
-          ? t('2U2′ 用左手。从还原态起拨，左食指拨 B7，左中指接 R7。', 'For 2U2′ use the left hand. From solved, the index starts on B7 and the middle takes R7.')
-          : t('2U2 用右手。从还原态起拨，右食指拨 B4，右中指接 L4。', 'For 2U2 use the right hand. From solved, the index starts on B4 and the middle takes L4.')}</p>}
-        <p className="skewb-guide-caption">{inputHint(entry, t)}</p>
-        {open && example && <Preview key={entry.key + compare} order={order} entry={entry} example={example} contact={contact} regrip={regrip} compare={compare}
-          onCompare={() => setCompare(value => !value)} onExample={move => {
-            if (entry.key === 'p') setPushToken(move);
-            setExample(move);
-          }} />}
+        <div className="skewb-guide-grid">
+          <span className="skewb-guide-label">{t('指法', 'Technique')}</span>
+          <div className="finger-guide-technique-row">
+            <div className="skewb-guide-chips" role="group" aria-label={t('指法', 'Technique')}>
+              {(Object.keys(techniques) as Technique[]).map(key => {
+                const item = techniques[key];
+                return chip(<><Example entry={item} text={item.mark ? item.examples[0] : 'p'} /> {key === 'push' ? t('推法', 'Push') : t(...item.name)}</>,
+                  technique === key, () => chooseTechnique(key), key);
+              })}
+              {(technique === 'middle' || technique === 'thumb') && <label><input type="checkbox" checked={nailOnly}
+                onChange={e => { stop(); setNailOnly(e.target.checked); setMove(''); setVariant(''); }} />{t('叠加指甲', 'With fingernail')}</label>}
+            </div>
+            <div className="finger-guide-actions" ref={setActionSlot} />
+          </div>
+          {technique && <div className="finger-guide-moves" role="group" aria-label={t('可演示转动', 'Available moves')}>
+            <div className="finger-guide-move-heading">
+              <strong>{t('可演示转动', 'Available moves')}</strong>
+              <label><input type="checkbox" checked={directOnly} onChange={e => { stop(); setDirectOnly(e.target.checked); }} />
+                {t('只看当前起手可直接做', 'Only moves available without regripping')}</label>
+            </div>
+            {!choices.length ? <p className="skewb-guide-caption">{t('此条件下暂无可演示转动。', 'No demonstrations match this selection.')}</p>
+              : !groupByLayer && columns.length === 1 ? <div className="skewb-guide-chips">{choices.map(moveButton)}</div>
+              : <table className="finger-guide-move-table" aria-label={t('按握姿排列的转动', 'Moves by grip requirement')}>
+                <thead><tr>
+                  {groupByLayer && <th scope="col">{t('转层', 'Layer')}</th>}
+                  {columns.map(column => <th scope="col" key={column.label}>{column.label}</th>)}
+                </tr></thead>
+                <tbody>{rows.map(row => <tr key={row.label ?? 'all'}>
+                  {row.label && <th scope="row">{row.label}</th>}
+                  {row.cells.map((cell, i) => <td key={columns[i].label}>
+                    <div className="skewb-guide-chips">{cell.map(moveButton)}</div>
+                  </td>)}
+                </tr>)}</tbody>
+              </table>}
+            {middleRelay && <small className="skewb-guide-caption">{t('第二步转动用中指做第二拨', 'On the second step, use your middle finger for the second flick.')}</small>}
+          </div>}
+          <span className="skewb-guide-label">{t('起手', 'Starting grips')}</span>
+          <div className="skewb-guide-chips" role="group" aria-label={t('起手', 'Starting grips')}>
+            {gripEntries.map(item => chip(<><code>{item.key}</code> {t(...item.name)}</>, item === grip, () => {
+              stop(); setGrip(item); setSide(item.examples.includes(side) ? side : item.examples[0]); setShowPose(true); onOpen();
+            }, item.key))}
+          </div>
+        </div>
+        {showPose && !playing && <p className="finger-guide-meaning">{t(...grip.description)}</p>}
+        {method && <>
+          {methodOptions.size > 1 && <div className="skewb-guide-chips" role="group" aria-label={t('具体做法', 'Method')}>
+            {Array.from(methodOptions, ([label, candidate]) =>
+              chip(label, label === selectedLabel, () => playMove(move, candidate.id), candidate.id))}
+          </div>}
+          <p className="finger-guide-meaning"><strong>{method.move.replace("'", '′')} · {selectedLabel}</strong></p>
+        </>}
+        {open && hands && (playing && method || showPose) && <Preview {...stageProps} actionSlot={actionSlot} hands={hands} playRequest={playRequest} order={order}
+          entry={playing ? lesson : grip} example={playing && method ? method.move : side} method={playing ? method : undefined}
+          startPose={startPose} contact={playing ? contact : undefined} compare={compare}
+          onCompare={() => setCompare(value => !value)} onExample={setSide} />}
         {order === 3 && <details><MoreToggle as="summary" className="skewb-guide-toggle">{t('进阶指法注解', 'Advanced finger annotations')}</MoreToggle>
           <div className="finger-guide-annotation">
-            <p>{t('转动右层时，右手食指一直贴着同一张贴纸。', 'Keep your right index finger on the same sticker as you turn the right face.')}</p>
-            <code>{'R[R2:@C>Q]'}</code>
-            <dl>
-              <dt><code>R</code></dt><dd>{t('右层顺时针转四分之一圈。', 'Turn the right face a quarter turn clockwise.')}</dd>
-              <dt><code>R2:</code></dt><dd>{t('方括号内的 R2 指右手食指，冒号后写它的接触位置。', 'Inside the brackets, R2 means the right index finger. Its contact position follows the colon.')}</dd>
-              <dt><code>@C</code></dt><dd>{t('指尖贴住 C，也就是右前上角块朝上的贴纸。', 'Place the fingertip on C, the top sticker of the upper front right corner.')}</dd>
-              <dt><code>{'>Q'}</code></dt><dd>{t('跟着这张贴纸转到 Q。', 'Follow that sticker to position Q.')}</dd>
-            </dl>
-            <p>{t('省略终点可写作', 'With the endpoint omitted, write')} <code>{'R[R2:@C]'}</code>{t('。输入时整条记号连写。', '. Type the notation without spaces.')}</p>
+            <FingerAnnotationExample />
+            <div className="finger-guide-annotation-links">
+              <AppLink className="skewb-guide-restore finger-guide-example-link" href={pinExampleHref} target="_blank" rel="noopener">
+                {t('在模拟器中打开示例', 'Open example in simulator')}<ExternalLink size={14} aria-hidden />
+              </AppLink>
+              <AppLink className="skewb-guide-restore" href="/sim/finger-annotations" target="_blank" rel="noopener">
+                {t('阅读进阶指法注解', 'Read the advanced annotation guide')}<ExternalLink size={14} aria-hidden />
+              </AppLink>
+            </div>
           </div>
         </details>}
       </div>

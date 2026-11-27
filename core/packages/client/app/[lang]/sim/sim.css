@@ -787,8 +787,8 @@
   .sim-header .sim-tool-select { max-width: 100%; }
   .sim-project-controls { flex: 0 1 auto; }
   .sim-panel-toggle { display: inline-flex; }
-  .sim-page--panel-expanded .sim-stage { flex: 0 0 23%; }
-  .sim-page--panel-expanded .sim-playback-under { display: none; }
+  .sim-page--panel-expanded:where(:not([data-finger-lesson])) .sim-stage { flex: 0 0 23%; }
+  .sim-page--panel-expanded:where(:not([data-finger-lesson])) .sim-playback-under { display: none; }
   .sim-page--panel-expanded .sim-image-overlay,
   .sim-page--panel-expanded .sim-backview,
   .sim-page--panel-expanded .sim-backview-swap,

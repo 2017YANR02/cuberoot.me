@@ -98,7 +98,8 @@ import { cloudOptimalScramble } from '@/lib/cloud-optimal-scramble';
 import { useAuthUser, authActions } from '@/lib/auth-store';
 import { formatScrambleForEvent, canonicalSq1Alg, compactSq1Alg, simplifySq1Alg, invertSq1Alg } from '@cuberoot/shared/sq1-notation';
 import { toWca as toWcaSkewb, type SkewbNotation } from '@cuberoot/shared/skewb-notation';
-import FingerNotationGuide from './FingerNotationGuide';
+import FingerNotationGuide, { type LessonTransport } from './FingerNotationGuide';
+import type { GripDemoMount } from './grips/gripDemo';
 import SkewbNotationGuide from './SkewbNotationGuide';
 import { Slider, Toggle, KeymapModal, resetWorldView, mapFrames, DEFAULT_SETTINGS, type SimSettings, type SliderUnit } from './SettingDrawer';
 
@@ -947,6 +948,10 @@ interface Props {
   onRendererChange?: (r: 'cubing' | 'engine' | 'group') => void;
   /** DOM node below the cube canvas to portal the playback control row into
    *  (twizzle-style bar under the puzzle). Falls back to inline when absent. */
+  showLesson?: boolean;
+  onLessonActive?: (active: boolean) => void;
+  lessonSlot?: HTMLElement | null;
+  mountLesson?: GripDemoMount;
   playbackSlot?: HTMLElement | null;
   onResetView?: () => void;
   canvasTools?: ReactNode;
@@ -1009,7 +1014,7 @@ export default function PlayerControls({
   onCopyLink,
   renderer = 'cubing', onRendererChange,
   appearanceOpen, onAppearanceToggle,
-  playbackSlot, onResetView, canvasTools, captureStickeringSlot, bgSlot, fullscreenButton, playbackSettingsButtonRef, backViewButton,
+  showLesson, onLessonActive, lessonSlot, mountLesson, playbackSlot, onResetView, canvasTools, captureStickeringSlot, bgSlot, fullscreenButton, playbackSettingsButtonRef, backViewButton,
   stickering = 'full', onStickeringChange,
   stickeringRot = '', onStickeringRotChange,
   stickeringMask = '', onStickeringMaskClear,
@@ -2054,10 +2059,10 @@ export default function PlayerControls({
 
   // A single step may need several frames of finger preparation.
   useEffect(() => {
-    if (!active || playing || !pendingHandStep) return;
+    if (!active || showLesson || playing || !pendingHandStep) return;
     const timer = window.setInterval(pendingHandStep === 'back' ? stepBack : stepForward, 16);
     return () => window.clearInterval(timer);
-  }, [active, playing, pendingHandStep, stepForward, stepBack]);
+  }, [active, showLesson, playing, pendingHandStep, stepForward, stepBack]);
 
   // Play/pause toggle for the shared PlaybackBar. Pausing is instant; starting
   // from the end first复位到第 0 步(并同步 stepRef,否则播放轮询读到 step≥total
@@ -2083,7 +2088,7 @@ export default function PlayerControls({
   }, [activeCube, engineReady, world, playing, step, totalSteps, jumpToStep, clearFrozen, isTwistyMode]);
 
   useEffect(() => {
-    if (!active || !playing || !engineReady) {
+    if (!active || showLesson || !playing || !engineReady) {
       if (playTimerRef.current) { window.clearInterval(playTimerRef.current); playTimerRef.current = null; }
       return;
     }
@@ -2181,7 +2186,7 @@ export default function PlayerControls({
       if (playTimerRef.current) { window.clearInterval(playTimerRef.current); playTimerRef.current = null; }
       timing.frames = mapFrames(settings.speed);
     };
-  }, [active, activeCube, engineReady, puzzleKind, playing, nxnItems, squareActions, ivyActions, cornerActions, corner, world, clearFrozen, playbackFrames, isSquarePuzzle, isIvy, settings.animatePlayback, settings.speed, hasWidePair, rightPinch]);
+  }, [active, showLesson, activeCube, engineReady, puzzleKind, playing, nxnItems, squareActions, ivyActions, cornerActions, corner, world, clearFrozen, playbackFrames, isSquarePuzzle, isIvy, settings.animatePlayback, settings.speed, hasWidePair, rightPinch]);
 
   const replaceDrafts = async (nextSetup: string, nextAlg: string, restoreStep = 0) => {
     await restoreScramblePreview();
@@ -2444,6 +2449,7 @@ export default function PlayerControls({
   useEffect(() => {
     if (!active || kbVariant !== 'qwerty' || isTwistyMode) return;
     const onKey = (e: KeyboardEvent) => {
+      if (showLesson) return;
       if (e.ctrlKey || e.metaKey || e.altKey) return;
       const target = e.target as HTMLElement | null;
       if (target?.closest('[role="dialog"], [role="listbox"], [role="menu"]')) return;
@@ -2461,7 +2467,7 @@ export default function PlayerControls({
     };
     window.addEventListener('keydown', onKey, true);
     return () => window.removeEventListener('keydown', onKey, true);
-  }, [active, kbVariant, keymap, playbackKeymap, applyMove, isTwistyMode]);
+  }, [active, showLesson, kbVariant, keymap, playbackKeymap, applyMove, isTwistyMode]);
 
   const handleScramble = useCallback(async () => {
     // A new setup may replace an invalid setup draft, but keep the last valid
@@ -2856,6 +2862,70 @@ export default function PlayerControls({
     </button>
   </>;
 
+  function renderPlaybackBar(lessonTransport?: LessonTransport) {
+    const viewTools = (
+      <div className="sim-view-tools" role="toolbar" aria-label={t('画布工具', 'Canvas tools')}>
+        {backViewButton}
+        {!resolveCaps(puzzleKind, renderer).flat && <button type="button" className="playback-bar-btn" onClick={onResetView ?? (() => {
+          const { scale, viewAngle, viewGradient } = DEFAULT_SETTINGS;
+          const next = { ...settings, scale, viewAngle, viewGradient };
+          onSettingsChange(next);
+          getNativePgSoftwareView(twistyPlayerRef?.current)?.resetView?.();
+          if (world) resetWorldView(world, next);
+        })}>{t('重置视角', 'Reset view')}</button>}
+        {canvasTools}
+      </div>
+    );
+    const speedControl = <div className="sim-playback-speed">
+      <Slider label="TPS" value={settings.speed} onChange={speed => onSettingsChange({ ...settings, speed })} unit={UNIT_TPS} title={t('每秒转动步数', 'Turns per second')} />
+    </div>;
+    const waitForHandStep = (pocket || puzzleKind === 4 || rightPinch) && settings.hands && settings.animatePlayback !== false;
+    const playbackBar = (
+      <div className="sim-stage-controls">
+        <PlaybackBar layout={compactPlayback ? 'wide' : 'balanced'}
+          disabled={!isTwistyMode && (!engineReady || replayPending)}
+          step={isTwistyMode ? (totalSteps > 0 ? twistyPlayback.step : 0) : step}
+          total={totalSteps}
+          playing={isTwistyMode ? totalSteps > 0 && twistyPlayback.playing : playing}
+          onScrub={(n) => { setCaretChar(null); jumpToStep(n); }}
+          onSkipStart={() => { setCaretChar(null); jumpToStep(0); }}
+          onStepBack={waitForHandStep ? () => setPendingHandStep('back') : stepBack}
+          onTogglePlay={handleTogglePlay}
+          onStepForward={waitForHandStep ? () => setPendingHandStep('forward') : stepForward}
+          onSkipEnd={() => { setCaretChar(null); jumpToStep(totalSteps); }}
+          {...(lessonTransport ?? {})}
+          leading={compactPlayback ? undefined : speedControl}
+          trailing={lessonTransport && !compactPlayback ? fullscreenButton : <SettingsPopover
+            label={t('播放设置', 'Playback settings')}
+            className="sim-playback-settings"
+            panelClassName="sim-playback-settings-panel"
+            triggerRef={playbackSettingsButtonRef}
+            triggerSuffix={fullscreenButton}
+            iconSize={14}
+            modal={compactPlayback}
+          >
+            {compactPlayback && speedControl}
+            {!lessonTransport && viewTools}
+            {!lessonTransport && <div className="sim-playback-options">
+              {anchorSelect}
+              <Toggle label={t('动画', 'Animation')} value={settings.animatePlayback !== false} onChange={animatePlayback => onSettingsChange({ ...settings, animatePlayback })} />
+            </div>}
+          </SettingsPopover>}
+          labels={{
+            skipStart: t('回到起点', 'Skip to start'),
+            stepBack: t('上一步', 'Step back'),
+            play: t('播放', 'Play'),
+            pause: t('暂停', 'Pause'),
+            stepForward: t('下一步', 'Step forward'),
+            skipEnd: t('跳到末尾', 'Skip to end'),
+            scrub: t('拖动播放进度', 'Scrub playback'),
+          }}
+        />
+      </div>
+    );
+    return playbackSlot ? createPortal(playbackBar, playbackSlot) : playbackBar;
+  }
+
   return (
     <div className="sim-player">
       {stickeringSelect && captureStickeringSlot && createPortal(
@@ -3075,72 +3145,16 @@ export default function PlayerControls({
               onRestore={restoreFromDemo}
             />
           )}
-          {active && handMarkup && isPushOrder(puzzleKind) && <FingerNotationGuide key={puzzleKind} order={puzzleKind} selectedPush={stoppedPush?.token ?? selectedPush} onOpen={() => setPlaying(false)} />}
+          {active && engineReady && lessonSlot && mountLesson && onLessonActive && handMarkup && isPushOrder(puzzleKind) && (
+            <FingerNotationGuide key={puzzleKind} order={puzzleKind} selectedPush={stoppedPush?.token ?? selectedPush}
+              stage={lessonSlot} mountView={mountLesson} rate={simSpeedToTps(settings.speed)}
+              renderPlaybackBar={renderPlaybackBar} onActive={onLessonActive}
+              onOpen={() => { setPendingHandStep(null); setPlaying(false); }} />
+          )}
         </>}
       />
 
-      {active && (() => {
-      const viewTools = (
-      <div className="sim-view-tools" role="toolbar" aria-label={t('画布工具', 'Canvas tools')}>
-        {backViewButton}
-        {!resolveCaps(puzzleKind, renderer).flat && <button type="button" className="playback-bar-btn" onClick={onResetView ?? (() => {
-          const { scale, viewAngle, viewGradient } = DEFAULT_SETTINGS;
-          const next = { ...settings, scale, viewAngle, viewGradient };
-          onSettingsChange(next);
-          getNativePgSoftwareView(twistyPlayerRef?.current)?.resetView?.();
-          if (world) resetWorldView(world, next);
-        })}>{t('重置视角', 'Reset view')}</button>}
-        {canvasTools}
-      </div>
-      );
-      const speedControl = <div className="sim-playback-speed">
-        <Slider label="TPS" value={settings.speed} onChange={speed => onSettingsChange({ ...settings, speed })} unit={UNIT_TPS} title={t('每秒转动步数', 'Turns per second')} />
-      </div>;
-      const waitForHandStep = (pocket || puzzleKind === 4 || rightPinch) && settings.hands && settings.animatePlayback !== false;
-      const playbackBar = (
-      <div className="sim-stage-controls">
-      <PlaybackBar layout={compactPlayback ? 'wide' : 'balanced'}
-        disabled={!isTwistyMode && (!engineReady || replayPending)}
-        step={isTwistyMode ? (totalSteps > 0 ? twistyPlayback.step : 0) : step}
-        total={totalSteps}
-        playing={isTwistyMode ? totalSteps > 0 && twistyPlayback.playing : playing}
-        onScrub={(n) => { setCaretChar(null); jumpToStep(n); }}
-        onSkipStart={() => { setCaretChar(null); jumpToStep(0); }}
-        onStepBack={waitForHandStep ? () => setPendingHandStep('back') : stepBack}
-        onTogglePlay={handleTogglePlay}
-        onStepForward={waitForHandStep ? () => setPendingHandStep('forward') : stepForward}
-        onSkipEnd={() => { setCaretChar(null); jumpToStep(totalSteps); }}
-        leading={compactPlayback ? undefined : speedControl}
-        trailing={<SettingsPopover
-          label={t('播放设置', 'Playback settings')}
-          className="sim-playback-settings"
-          panelClassName="sim-playback-settings-panel"
-          triggerRef={playbackSettingsButtonRef}
-          triggerSuffix={fullscreenButton}
-          iconSize={14}
-          modal={compactPlayback}
-        >
-          {compactPlayback && speedControl}
-          {viewTools}
-          <div className="sim-playback-options">
-            {anchorSelect}
-            <Toggle label={t('动画', 'Animation')} value={settings.animatePlayback !== false} onChange={animatePlayback => onSettingsChange({ ...settings, animatePlayback })} />
-          </div>
-        </SettingsPopover>}
-        labels={{
-          skipStart: t('回到起点', 'Skip to start'),
-          stepBack: t('上一步', 'Step back'),
-          play: t('播放', 'Play'),
-          pause: t('暂停', 'Pause'),
-          stepForward: t('下一步', 'Step forward'),
-          skipEnd: t('跳到末尾', 'Skip to end'),
-          scrub: t('拖动播放进度', 'Scrub playback'),
-        }}
-      />
-      </div>
-      );
-      return playbackSlot ? createPortal(playbackBar, playbackSlot) : playbackBar;
-      })()}
+      {active && !showLesson && renderPlaybackBar()}
 
       {/* 键盘行:左 = 两个虚拟键盘开关(toggle,点亮 = 展开),右 = 「快捷键」「恢复默认设置」
           动作按钮(带文字,免得和左侧键盘图标混淆)。竖线分隔两组。twisty 拼图无虚拟键盘,

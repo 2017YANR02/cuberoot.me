@@ -260,6 +260,15 @@ export default class CubeGroup extends THREE.Group {
     this.tween?.setPaused(paused, atMs);
   }
 
+  /** Advance a paused slice on the teaching timeline without advancing any other cube. */
+  advancePausedAnimation(ticks: number): void {
+    const tween = this.tween;
+    if (!this.animationPaused || !tween) return;
+    tween.setPaused(false);
+    if (tween.update(ticks)) tweener.cancel(tween);
+    else tween.setPaused(true);
+  }
+
   accelerateRealtime(ticks: number): void { this.tween?.shortenRemaining(ticks); }
 
   twist(
