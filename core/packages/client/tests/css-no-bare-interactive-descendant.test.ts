@@ -27,7 +27,35 @@ const ALLOWLIST_FILES = new Set<string>([
 ]);
 
 // 单条选择器豁免:`文件相对路径 → 选择器`(确属封闭容器、不会塞共享组件)
-const ALLOWLIST = new Set<string>([]);
+const tutorial = 'app/[lang]/tutorial';
+const eg = `${tutorial}/2x2-eg/eg-course.css`;
+const reduction = `${tutorial}/4x4-beginner/reduction-course.css`;
+const walkthrough = `${tutorial}/components/walkthrough-pane.css`;
+const ALLOWLIST = new Set<string>([
+  // Both EG recognition dialogs render their own answer buttons as direct children.
+  `${eg} → .eg-recognition-choices > button`,
+  // The EG demo maps stages to one seek button per list item.
+  `${eg} → .eg-demo-stages button`,
+  `${eg} → .eg-demo-stages button:hover`,
+  `${eg} → .eg-demo-stages button:focus-visible`,
+  // Overview maps the three reduction phases to native chapter buttons.
+  `${reduction} → .four-reduction-overview-grid button`,
+  `${reduction} → .four-reduction-overview-grid button:hover`,
+  // Recognition owns both the answer choices and its Continue button.
+  `${reduction} → .four-reduction-quiz-actions button`,
+  `${reduction} → .four-reduction-choices button:focus-visible`,
+  // Playback renders a native seek button for each move in the phase.
+  `${reduction} → .four-reduction-moves button`,
+  `${reduction} → .four-reduction-moves button:disabled`,
+  `${reduction} → .four-reduction-moves button:not(:disabled):hover`,
+  `${reduction} → .four-reduction-moves button:focus-visible`,
+  // Overview, ThreeByThree and Reference own their reading content and chapter buttons.
+  `${reduction} → .four-reduction-reading button:focus-visible`,
+  // WalkthroughPane builds the entire step index from titles and native seek buttons.
+  `${walkthrough} → .walkthrough-step-index button`,
+  `${walkthrough} → .walkthrough-step-index button:hover`,
+  `${walkthrough} → .walkthrough-step-index button:focus-visible`,
+]);
 
 // 容器(class/id) + 后代或子组合 + 裸交互标签结尾(可带伪类)
 const BARE_INTERACTIVE_DESCENDANT =
