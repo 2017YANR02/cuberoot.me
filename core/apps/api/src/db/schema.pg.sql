@@ -8729,6 +8729,7 @@ CREATE INDEX IF NOT EXISTS idx_drive_compressions_pending ON drive_compressions 
 
 -- Online competition configuration, sessions and supervised evidence.
 CREATE TABLE platform_competitions (
+  is_test BOOLEAN NOT NULL DEFAULT FALSE,
   event_id UUID PRIMARY KEY REFERENCES platform_events(id) ON DELETE RESTRICT,
   organization_id UUID NOT NULL REFERENCES organizations(id) ON DELETE RESTRICT,
   registration_opens_at TIMESTAMPTZ NOT NULL,
