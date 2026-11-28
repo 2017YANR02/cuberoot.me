@@ -107,7 +107,7 @@ export const CSTIMER_EVENTS: ReadonlyArray<CstimerEvent> = [
   { id: 'mpyrso',  key: 'mpyrso',  zh: '大金字塔(随态)',   en: 'Master Pyra (RS)',  iconClass: 'puzzle-masterpyraminx', family: 'twist',  solvable: true
 },
   { id: '223',     key: '223',     zh: '223',            en: '223',             iconClass: 'puzzle-223', family: 'cuboid', solvable: true },
-  { id: '133',     key: '133',     zh: '133 花型',       en: '133 Floppy',      iconClass: 'puzzle-133', family: 'cuboid', solvable: true },
+  { id: '133',     key: '133',     zh: '133',       en: '133 Floppy',      iconClass: 'puzzle-133', family: 'cuboid', solvable: true },
   { id: '15p',     key: '15prp',   zh: '数字华容道',       en: '15-Puzzle',         iconClass: 'puzzle-15p', family: 'slide',  solvable: true },
   { id: '8p',      key: '8prp',    zh: '八数码',           en: '8-Puzzle',          iconClass: 'puzzle-8p', family: 'slide',  solvable: true },
 
@@ -118,7 +118,7 @@ export const CSTIMER_EVENTS: ReadonlyArray<CstimerEvent> = [
 },
   { id: 'sq2',     key: 'sq2',     length: 10, zh: '方块二',           en: 'Square-2',          iconClass: 'unofficial-sq2', family: 'sq', solvable: true
 },
-  { id: 'ssq1',    key: 'ssq1t',   length: 10, zh: '超 Sq-1',          en: 'Super Sq-1',        iconClass: 'unofficial-super_sq1', family: 'sq', solvable: true },
+  { id: 'ssq1',    key: 'ssq1t',   length: 10, zh: '四层 SSQ1',          en: 'Super Sq-1',        iconClass: 'unofficial-super_sq1', family: 'sq', solvable: true },
   { id: 'bsq',     key: 'bsq',     length: 10, zh: '受限 Sq-1',        en: 'Bandaged Sq-1',     iconClass: 'puzzle-bsq', family: 'sq', solvable: true },
   { id: 'giga',    key: 'giga',    length: 30, zh: '五阶五魔',         en: 'Gigaminx',          iconClass: 'puzzle-gigaminx', family: 'twist'
 },
@@ -129,7 +129,7 @@ export const CSTIMER_EVENTS: ReadonlyArray<CstimerEvent> = [
   { id: '335',     key: '335',     length: 50, zh: '335',            en: '335',             iconClass: 'puzzle-335', family: 'cuboid', solvable: true },
   { id: '336',     key: '336',     length: 50, zh: '336',            en: '336',             iconClass: 'puzzle-336', family: 'cuboid', solvable: true },
   { id: '337',     key: '337',     length: 60, zh: '337',            en: '337',             iconClass: 'puzzle-337', family: 'cuboid', solvable: true },
-  { id: 'sfl',     key: 'sfl',     length: 25, zh: '超薄花型',         en: 'Super Floppy',      iconClass: 'puzzle-sfl', family: 'cuboid', solvable: true },
+  { id: 'sfl',     key: 'sfl',     length: 25, zh: '超级133',         en: 'Super Floppy',      iconClass: 'puzzle-sfl', family: 'cuboid', solvable: true },
   { id: 'ufo',     key: 'ufo',     length: 25, zh: 'UFO',              en: 'UFO',               iconClass: 'unofficial-ufo', family: 'twist',  solvable: true },
   { id: 'ctico',   key: 'ctico',   length: 25, zh: '二十面体',         en: 'Icosamate',         iconClass: 'puzzle-icosamate', family: 'twist', solvable: true
 },

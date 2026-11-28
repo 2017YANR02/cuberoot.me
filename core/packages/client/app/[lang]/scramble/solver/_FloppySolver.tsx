@@ -17,13 +17,13 @@ const FLOPPY_TOKEN_RE = /^[RLFB]$/i;
 
 const SPEC: SolverSpec<FloppySolution> = {
   event: '133',
-  titleZh: '1×3×3 花型求解器',
+  titleZh: '133求解器',
   titleEn: '1×3×3 Floppy Cube Solver',
   previewSize: 64,
   invocation: { async: false, solve: solveFloppy },
   prewarm: () => { solveFloppy(''); },
   leadText: {
-    zh: '1×3×3 花型在线求解:任意打乱的整解最优解(全空间 192 态精确表,每转一面 180° = 一步,上帝之数 8)。记号 R L F B,与 cstimer 一致。',
+    zh: '133在线求解:任意打乱的整解最优解(全空间 192 态精确表,每转一面 180° = 一步,上帝之数 8)。记号 R L F B,与 cstimer 一致。',
     en: "1×3×3 Floppy Cube online solver: the exact optimal solution for any scramble (full-space table over 192 states; one 180° face turn = one move, God's number is 8). Notation R L F B, matching cstimer.",
   },
   placeholder: {
@@ -36,7 +36,7 @@ const SPEC: SolverSpec<FloppySolution> = {
   badge: badgeGodsNumber(FLOPPY_GODS_NUMBER),
   caveatTitle: CAVEAT_TITLE_OPTIMAL,
   caveatBody: {
-    zh: '1×3×3 花型只有 192 个状态(4 角排列与 4 面翻转绑定),整张图可在浏览器里一次性 BFS,所以这里给出的是真正的最短解,不是近似。任何打乱最多 8 步可还原,平均约 4.4 步。',
+    zh: '133只有 192 个状态(4 角排列与 4 面翻转绑定),整张图可在浏览器里一次性 BFS,所以这里给出的是真正的最短解,不是近似。任何打乱最多 8 步可还原,平均约 4.4 步。',
     en: 'The 1×3×3 Floppy Cube has only 192 states (4 corner permutations bound to 4 face flips), so the whole graph is BFS-ed in the browser and every solution here is a true shortest path, not an approximation. Any scramble solves in at most 8 moves, ~4.4 on average.',
   },
   validate: (line) => {

@@ -22,13 +22,13 @@ const HAS_TOKENS = /[\d/]/;
 
 const SPEC: SolverSpec<Ssq1Solution> = {
   event: 'ssq1',
-  titleZh: '超级方块一求解器',
+  titleZh: '四层 SSQ1求解器',
   titleEn: 'Super Square-1 Solver',
   previewSize: 96,
   invocation: { async: false, solve: solveSsq1 },
   hasTokensGate: true,
   leadText: {
-    zh: 'Super Square-1(超级方块一)在线求解:两阶段形状+排列约简,给出一条有效且有界的解(非最优),长度随打乱难度变化。记号 (a,b,c,d)/(a=外顶,b=内顶,c=内底,d=外底,/ 同切两层),每个元组计 1 步。',
+    zh: 'Super Square-1(四层 SSQ1)在线求解:两阶段形状+排列约简,给出一条有效且有界的解(非最优),长度随打乱难度变化。记号 (a,b,c,d)/(a=外顶,b=内顶,c=内底,d=外底,/ 同切两层),每个元组计 1 步。',
     en: 'Super Square-1 online solver: a two-phase shape+permutation reduction returns a valid, bounded solution (not optimal); its length varies with the scramble. Notation (a,b,c,d)/ (a=outer top, b=inner top, c=inner bottom, d=outer bottom, / slices both); each tuple counts as one move.',
   },
   placeholder: {
