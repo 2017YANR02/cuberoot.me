@@ -73,28 +73,8 @@
   align-items: center;
 }
 
-.wiki-search-icon {
-  position: absolute;
-  left: 12px;
-  color: var(--muted-foreground);
-  pointer-events: none;
-}
-
-.wiki-search-input {
+.wiki-search-wrap > .search-input {
   flex: 1;
-  background: var(--card);
-  color: var(--foreground);
-  border: 1px solid var(--border-default);
-  border-radius: 8px;
-  padding: 9px 36px 9px 36px;
-  font-size: 0.92rem;
-  outline: none;
-  transition: border-color 0.15s;
-  font-family: inherit;
-}
-
-.wiki-search-input:focus {
-  border-color: var(--accent);
 }
 
 .wiki-search-meta {
@@ -602,20 +582,16 @@
 
 /* Site scenery: preserve the original surface when scenery is disabled. */
 @media screen {
-  body[data-site-scenery] .wiki-page {
+  body[data-site-scenery] .wiki-page,
+  body[data-site-scenery] .wiki-search-wrap {
     background: transparent;
-  }
-
-  body[data-site-scenery] .wiki-search-wrap,
-  body[data-site-scenery] .wiki-modal {
-    background: var(--glass-surface-bg);
-    border-color: var(--glass-border);
-    box-shadow: var(--glass-shadow);
-    -webkit-backdrop-filter: var(--glass-filter);
-    backdrop-filter: var(--glass-filter);
   }
 
   body[data-site-scenery] .wiki-modal {
     background: var(--glass-popover-bg);
+    border-color: var(--glass-border);
+    box-shadow: var(--glass-shadow);
+    -webkit-backdrop-filter: var(--glass-filter);
+    backdrop-filter: var(--glass-filter);
   }
 }

@@ -36,3 +36,20 @@
   cursor: not-allowed;
   opacity: 0.55;
 }
+
+.search-input--icon {
+  border-radius: 8px;
+}
+
+.search-input--icon > .search-control {
+  padding-inline-start: 36px;
+  border-radius: inherit;
+  background: transparent;
+}
+
+.search-input__icon {
+  position: absolute;
+  inset-inline-start: 12px;
+  color: var(--muted-foreground);
+  pointer-events: none;
+}

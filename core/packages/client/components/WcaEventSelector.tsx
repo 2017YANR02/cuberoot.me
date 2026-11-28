@@ -6,12 +6,12 @@ import MoreToggle from '@/components/MoreToggle';
 import { Tooltip } from '@/components/Tooltip';
 import { useMemo, useState, type ReactNode } from 'react';
 import { useParams } from 'next/navigation';
-import { X, Search } from '@app-foundation/icons/lucide';
+import { X } from '@app-foundation/icons/lucide';
 import { ALL_EVENT_IDS, CANCELLED_EVENT_IDS, EVENT_ZH, EVENT_EN } from '@/lib/event-constants';
 import { eventDisplayName } from '@/lib/wca-events';
 import { CubingIcon } from './EventIcon/EventIcon';
 import AppLink from './AppLink';
-import { ClearButton } from './ClearButton';
+import { SearchInput } from './SearchInput';
 import PuzzlePicker, { type PuzzlePickerItem } from './PuzzlePicker/PuzzlePicker';
 import './WcaEventSelector.css';
 import { tr } from '@/i18n/tr';
@@ -304,21 +304,14 @@ export default function WcaEventSelector({
 
   return (
     <div className="wca-evsel-with-search">
-      <div className="wca-evsel-search">
-        <Search size={14} className="wca-evsel-search-icon" />
-        <input
-          autoComplete="off"
-          type="text"
-          className="wca-evsel-search-input"
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          placeholder={tr({ zh: '搜索项目…', en: 'Search puzzles…' })}
-          aria-label={tr({ zh: '搜索项目', en: 'Search puzzles' })}
-        />
-        {query && (
-          <ClearButton variant="inline" isZh={isZh} preserveFocus onClick={() => setQuery('')} />
-        )}
-      </div>
+      <SearchInput
+        withSearchIcon
+        className="wca-evsel-search"
+        value={query}
+        onChange={setQuery}
+        placeholder={tr({ zh: '搜索项目…', en: 'Search puzzles…' })}
+        ariaLabel={tr({ zh: '搜索项目', en: 'Search puzzles' })}
+      />
       {noResults ? (
         <div className="wca-evsel-no-results">{tr({ zh: '无匹配项目', en: 'No matching puzzles' })}</div>
       ) : grid}

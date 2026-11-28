@@ -14,8 +14,8 @@ import PageBackLink from '@/components/PageBackLink';
  */
 import { useMemo, useState, useEffect, useRef, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Search, Pencil, MessageSquarePlus, Plus, Trash2, Link2 } from '@app-foundation/icons/lucide';
-import { ClearButton } from '@/components/ClearButton';
+import { Pencil, MessageSquarePlus, Plus, Trash2, Link2 } from '@app-foundation/icons/lucide';
+import { SearchInput } from '@/components/SearchInput';
 import { hasAdminAccess, useAuthUser } from '@/lib/auth-store';
 import { ownerKey as computeOwnerKey } from '@cuberoot/shared/account';
 import {
@@ -273,16 +273,14 @@ export default function WikiPage() {
         <h1 className="wiki-title">{tr({ zh: '魔方百科', en: 'Cubing Wiki' })}</h1>
 
         <div className="wiki-search-wrap">
-          <Search size={16} className="wiki-search-icon" aria-hidden="true" />
-          <input
+          <SearchInput
+            withSearchIcon
             type="search"
-            className="wiki-search-input"
             value={query}
-            onChange={e => setQuery(e.target.value)}
-            autoComplete="off"
+            onChange={setQuery}
+            placeholder={tr({ zh: '搜索术语', en: 'Search terms' })}
             spellCheck={false}
           />
-          {query && <ClearButton onClick={() => setQuery('')} isZh={isZh} preserveFocus />}
         </div>
 
         <div className="wiki-search-meta">

@@ -6,12 +6,15 @@
 // (compositionend)再提交一次。任何写 nuqs / 节流 store 的自由文本输入都该用它,别再裸写
 // <input value={q} onChange={e => setQ(e.target.value)} />。CI 守卫:tests/ime-safe-search-input.test.ts。
 import { useEffect, useRef, useState, type KeyboardEventHandler } from 'react';
+import { Search } from 'lucide-react';
 import { ClearButton } from './ClearButton';
 import './date-input.css';
 import './search-input.css';
 
 export interface SearchInputProps {
   clearLabel: string;
+  /** Draw the magnifier on the same surface as the text and clear button. */
+  withSearchIcon?: boolean;
   disabled?: boolean;
   value: string;
   /** 已提交的值(IME 合成结束后才回调);直接喂给 setQ / 节流 setter 即可。 */
@@ -41,7 +44,7 @@ export interface SearchInputProps {
 
 export function SearchInput({
   value, onChange, clearLabel, disabled, placeholder, ariaLabel, className, inputClassName,
-  clearable = true, type = 'text', autoFocus, name,
+  withSearchIcon = false, clearable = true, type = 'text', autoFocus, name,
   onFocus, onKeyDown, maxLength, spellCheck, autoComplete = 'off', autoCapitalize, debounceMs = 0,
 }: SearchInputProps) {
   // 本地显示态:合成途中外部 value 的回灌不覆盖它(否则打断 IME)。
@@ -70,7 +73,8 @@ export function SearchInput({
   };
   return (
     <span
-      className={['search-input', className].filter(Boolean).join(' ')}
+      className={['search-input', withSearchIcon && 'search-input--icon', className].filter(Boolean).join(' ')}
+      data-site-surface={withSearchIcon ? 'panel' : undefined}
       style={{ position: 'relative', display: 'inline-flex', alignItems: 'center' }}
     >
       <input
@@ -98,8 +102,9 @@ export function SearchInput({
         autoComplete={autoComplete}
         autoCapitalize={autoCapitalize}
       />
+      {withSearchIcon && <Search className="search-input__icon" size={16} aria-hidden="true" />}
       {clearable && text && (
-        <ClearButton ariaLabel={clearLabel} onClick={() => { composing.current = false; commit(''); }} variant="inline" />
+        <ClearButton ariaLabel={clearLabel} onClick={() => { composing.current = false; commit(''); }} variant="inline" preserveFocus={withSearchIcon} />
       )}
     </span>
   );

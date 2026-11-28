@@ -359,7 +359,7 @@ function SearchInputDemo() {
         value={q}
         onChange={setQ}
         placeholder={tr({ zh: '试试中文输入法', en: 'Try an IME' })}
-        inputClassName="cg-input"
+        withSearchIcon
       />
       <span style={{ fontFamily: 'var(--cg-mono)', color: 'var(--muted-foreground)' }}>{q || '—'}</span>
     </div>
@@ -1490,7 +1490,7 @@ export const CATALOG: ComponentEntry[] = [
     category: 'input',
     zh: 'IME 安全的受控文本搜索框:中文 / 日文输入法合成途中不写回外部 store,合成结束才提交,避免 nuqs / 节流 store 的重渲染打断拼音(把 bei 拼成乱码)。内置行内清除 ×。',
     en: 'IME-safe controlled text search box: during CJK composition it holds value locally and only commits on compositionend, so a nuqs / throttled-store re-render can’t corrupt the in-progress pinyin. Built-in inline clear ×.',
-    usage: '<SearchInput value={q} onChange={setQ} debounceMs={300} placeholder="搜索" />',
+    usage: '<SearchInput withSearchIcon value={q} onChange={setQ} debounceMs={300} placeholder="搜索" />',
     Demo: SearchInputDemo,
     note: { zh: '任何写 nuqs / 节流 store 的自由文本输入都走它,别裸写 <input value onChange=setQuery>。CI 守卫 tests/ime-safe-search-input。', en: 'Use it for any free-text input that writes to nuqs / a throttled store — never hand-roll <input value onChange=setQuery>. Guarded by tests/ime-safe-search-input.' },
   },

@@ -483,6 +483,7 @@ body[data-site-scenery] .site-assistant-dialog[data-site-surface="panel"]::befor
 
 /* Composite controls paint their visual surface on a sibling or parent layer. */
 body[data-site-scenery] :is(
+  .search-input--icon > .search-control,
   .landing-search-input .landing-search-field,
   .cal-search-bar .cal-search-field,
   .region-picker-search .region-picker-search-input,

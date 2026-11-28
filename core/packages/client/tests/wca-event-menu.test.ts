@@ -139,6 +139,22 @@ describe('WCA event menus', () => {
     expect(items.every(item => item.querySelector('svg'))).toBe(true);
   });
 
+  it('filters and clears the searchable inline event strip', () => {
+    act(() => root.render(createElement(WcaEventSelector, {
+      presentation: 'inline', searchable: true, availableEvents: new Set(['333', '222']),
+      onlyAvailable: true, isZh: false,
+    })));
+    const input = host.querySelector<HTMLInputElement>('input[aria-label="Search puzzles"]')!;
+    act(() => {
+      Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')!.set!.call(input, '222');
+      input.dispatchEvent(new Event('input', { bubbles: true }));
+    });
+    expect(host.querySelectorAll('.event-btn')).toHaveLength(1);
+    act(() => button('Clear').click());
+    expect(input.value).toBe('');
+    expect(host.querySelectorAll('.event-btn')).toHaveLength(2);
+  });
+
   it('preserves inline editing and real hard-navigation links', () => {
     const common = { availableEvents: new Set(['333', '222']), selectedEvent: '333', isZh: false, onlyAvailable: true };
     act(() => root.render(createElement(WcaEventSelector, { ...common, presentation: 'inline' })));
