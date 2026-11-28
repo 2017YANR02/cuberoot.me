@@ -17,7 +17,7 @@ ssh cuberoot 'node /opt/cuberoot-vercel-bans/traffic-defense.ts competition-off 
 
 按正常流量和数据库余量确认容量后，可在 API 设置 `COMPETITION_WCA_REBUILD_CONCURRENCY`，限制单个 API 进程内不同比赛的 WCA 数据重算。相同比赛共用重算，快照直接服务，后台预热有余量才重算。重算满额时，HTTP 通过 `429` 和 `Retry-After` 返回等待时间，SSE 通过事件传递等待时间。前端按等待时间重试一次。该配置缺省时沿用原有重算策略。
 
-## 2026-11-27 本地待发布的比赛成绩防护
+## 2026-11-27 比赛成绩防护
 
 成绩 JSON、历史快照和实时流在读取或命中缓存前检查权限。普通页面延用现有索引策略。浏览器停留在比赛链接上不预取完整成绩；正常查看同一场比赛的不同轮次、切换网络或刷新共用一个比赛标识。
 
