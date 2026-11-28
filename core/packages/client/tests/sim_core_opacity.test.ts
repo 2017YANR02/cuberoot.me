@@ -4,7 +4,7 @@ import { applyCoreOpacity, applyPuzzleTransparency } from '@/app/[lang]/sim/engi
 import { resolveCaps } from '@/app/[lang]/sim/simCaps';
 import { PG_PUZZLES } from '@/app/[lang]/sim/pgCatalog';
 import type { SimPuzzle } from '@/app/[lang]/sim/PlayerControls';
-import { applyTwistyCoreOpacity } from '@/components/twistyCoreOpacity';
+import { applyTwistyCoreOpacity, applyTwistyPuzzleCoreOpacity } from '@/components/twistyCoreOpacity';
 
 afterEach(() => vi.unstubAllGlobals());
 
@@ -116,4 +116,20 @@ describe('sim core opacity', () => {
     await applyTwistyCoreOpacity(player, 50);
     expect(holder.material.opacity).toBe(0.5);
   });
+  it('keeps each player’s plastic opacity independent when they share the original material', () => {
+    const base = new THREE.MeshBasicMaterial({ opacity: 0.3, transparent: true });
+    const first = { material: base };
+    const second = { material: base };
+    const firstCube = { experimentalFoundationMeshes: [first] };
+    const secondCube = { experimentalFoundationMeshes: [second] };
+    applyTwistyPuzzleCoreOpacity(firstCube, 1);
+    applyTwistyPuzzleCoreOpacity(secondCube, 0.5);
+    expect(first.material.opacity).toBe(1);
+    expect(first.material.transparent).toBe(false);
+    expect(second.material.opacity).toBe(0.5);
+    applyTwistyPuzzleCoreOpacity(firstCube, 0.3);
+    expect(first.material).toBe(base);
+    expect(second.material.opacity).toBe(0.5);
+  });
+
 });

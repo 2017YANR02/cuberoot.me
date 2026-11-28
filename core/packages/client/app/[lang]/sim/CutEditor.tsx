@@ -10,6 +10,7 @@
 // shape ∈ c/t/o/d/i, cutType ∈ f/v/e. Cut order is geometry-irrelevant (all cut
 // planes are collected then applied), so we group them by type for the UI.
 
+import { copyClipboardText } from '@/lib/clipboard';
 import { useMemo, useCallback } from 'react';
 import { X, Plus, Copy } from '@app-foundation/icons/lucide';
 import { useT } from '@/hooks/useT';
@@ -78,7 +79,7 @@ export default function CutEditor({
   const removeCut = (idx: number) => emit(shape, cuts.filter((_, i) => i !== idx));
   const addCut = (type: CutType, def: number) => emit(shape, [...cuts, { type, d: def }]);
 
-  const copyDesc = () => { try { void navigator.clipboard?.writeText(value); } catch { /* */ } };
+  const copyDesc = () => copyClipboardText(value);
 
   return (
     <div className="cut-editor">
