@@ -136,6 +136,7 @@ export function isAuthDocSource(path) {
     || normalized.startsWith('packages/client/app/api/web-session/')
     || normalized.startsWith('packages/client/app/api/identity-choice/')
     || normalized.startsWith('apps/miniprogram/src/pages/account/')
+    || normalized.startsWith('apps/miniprogram/src/pages/account-detail/')
     || normalized.startsWith('apps/miniprogram/src/pages/account-link/')
     || normalized.startsWith('apps/miniprogram/src/pages/account-delete/')
     || normalized.startsWith('apps/miniprogram/src/pages/account-settings/')

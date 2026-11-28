@@ -156,7 +156,7 @@ describe('mini program app structure', () => {
   it('keeps web-backed pages on the shared controller and account sharing native', () => {
     const timerPage = pageFiles['../src/pages/timer/index.ts'];
     const toolsPage = pageFiles['../src/pages/tools/index.ts'];
-    const accountPage = pageFiles['../src/pages/account/index.ts'];
+    const accountPage = pageFiles['../src/pages/account/page.ts'];
     const genericWebPage = pageFiles['../src/pages/web/index.ts'];
     const timerTemplate = pageFiles['../src/pages/timer/index.wxml'];
     const toolsTemplate = pageFiles['../src/pages/tools/index.wxml'];
@@ -227,7 +227,7 @@ describe('mini program app structure', () => {
 
   it('keeps timeline sharing on the native account tab outside every web view', () => {
     const controller = sourceFiles['../src/lib/web-view-page.ts'];
-    const accountPage = pageFiles['../src/pages/account/index.ts'];
+    const accountPage = pageFiles['../src/pages/account/page.ts'];
     const accountTemplate = pageFiles['../src/pages/account/index.wxml'];
 
     expect(controller).toContain('showFriendShareMenu');

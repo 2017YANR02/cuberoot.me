@@ -11,6 +11,9 @@
   padding-top: 72rpx;
 }
 
+.account-native--detail .account-scroll { height: 100vh; }
+.account-native--detail .account-user-page { padding-top: 40rpx; }
+
 .account-entry-page {
   align-items: center;
   display: flex;

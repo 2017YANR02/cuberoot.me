@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { readFileSync } from 'node:fs';
 
 import accountConfig from '../src/pages/account/index.json';
+import appConfig from '../src/app.json';
 
 interface AccountPageData {
   showFullSpace?: boolean;
@@ -80,6 +81,7 @@ interface AccountPage {
 async function loadPage(
   api: Record<string, unknown>,
   target: 'wechat' | 'douyin' = 'wechat',
+  detail = false,
 ): Promise<AccountPage> {
   let page: AccountPage | undefined;
   vi.stubGlobal('__MINI_PROGRAM_TARGET__', target);
@@ -87,7 +89,8 @@ async function loadPage(
   vi.stubGlobal('Page', (options: AccountPage) => {
     page = options;
   });
-  await import('../src/pages/account/index');
+  if (detail) await import('../src/pages/account-detail/index');
+  else await import('../src/pages/account/index');
   if (!page) throw new Error('account page was not registered');
   page.setData = function setData(data) {
     this.data = { ...this.data, ...data };
@@ -100,7 +103,7 @@ function normalLaunchOptions() {
 }
 
 describe('mini program account page', () => {
-  it.each(['wechat', 'douyin'] as const)('opens the same account sections in %s and keeps Settings available signed out', async (target) => {
+  it('keeps the Douyin account sections inline and Settings available signed out', async () => {
     const storage = new Map();
     const navigateTo = vi.fn((options: { complete?(): void }) => options.complete?.());
     const page = await loadPage({
@@ -109,7 +112,7 @@ describe('mini program account page', () => {
       setStorageSync: (key: string, value: unknown) => storage.set(key, value),
       getLaunchOptionsSync: normalLaunchOptions,
       navigateTo,
-    }, target);
+    }, 'douyin');
     page.onLoad();
     const select = (section: string) => page.selectAccountSection({ currentTarget: { dataset: { section } } });
     select('security');
@@ -139,14 +142,61 @@ describe('mini program account page', () => {
     select('space');
     expect(page.data.accountSection).toBe('space');
     expect(navigateTo).not.toHaveBeenCalled();
-    expect(page.data.showFullSpace).toBe(target === 'wechat');
-    if (target === 'wechat') {
-      page.openAccount();
-      expect(navigateTo).toHaveBeenCalledWith(expect.objectContaining({ url: '/pages/web/index?key=account' }));
-    }
+    expect(page.data.showFullSpace).toBe(false);
     select('security');
     expect(page.data.accountSection).toBe('security');
   });
+
+  it('keeps the WeChat tab at home and pushes only allowed sections onto the native page stack', async () => {
+    const storage = new Map();
+    const navigateTo = vi.fn((options: { complete?(): void }) => options.complete?.());
+    const page = await loadPage({
+      getStorageInfoSync: () => ({ keys: [...storage.keys()] }),
+      getStorageSync: (key: string) => storage.get(key),
+      getLaunchOptionsSync: normalLaunchOptions,
+      navigateTo,
+    });
+    page.onLoad();
+    const select = (section: string) => page.selectAccountSection({ currentTarget: { dataset: { section } } });
+    select('security');
+    select('anything');
+    expect(navigateTo).not.toHaveBeenCalled();
+    select('settings');
+    expect(navigateTo).toHaveBeenLastCalledWith(expect.objectContaining({ url: '/pages/account-detail/index?section=settings' }));
+    storage.set('cuberoot:session', { token: 's'.repeat(20), user: { uid: 42, name: 'Member', wcaId: null, avatar: '' } });
+    page.onShow();
+    select('space');
+    expect(navigateTo).toHaveBeenLastCalledWith(expect.objectContaining({ url: '/pages/account-detail/index?section=space' }));
+    select('security');
+    expect(navigateTo).toHaveBeenLastCalledWith(expect.objectContaining({ url: '/pages/account-detail/index?section=security' }));
+    expect(page.data.accountSection).toBe('home');
+    expect(appConfig.pages).toContain('pages/account-detail/index');
+    expect(appConfig.tabBar.list.map(tab => tab.pagePath)).not.toContain('pages/account-detail/index');
+  });
+
+  it.each([['space', '我的空间'], ['security', '账号与安全'], ['settings', '外观']])(
+    'sets the WeChat native title for %s and renders the requested section', async (section, title) => {
+      const setNavigationBarTitle = vi.fn();
+      const navigateTo = vi.fn((options: { complete?(): void }) => options.complete?.());
+      const page = await loadPage({
+        getStorageInfoSync: () => ({ keys: ['cuberoot:session'] }),
+        getStorageSync: (key: string) => key === 'cuberoot:session'
+          ? { token: 's'.repeat(20), user: { uid: 42, name: 'Member', avatar: '', wcaId: null } } : undefined,
+        getLaunchOptionsSync: normalLaunchOptions,
+        setNavigationBarTitle, navigateTo,
+      }, 'wechat', true);
+      page.onLoad({ section });
+      page.onShow();
+      expect(page.data.accountSection).toBe(section);
+      expect(setNavigationBarTitle).toHaveBeenLastCalledWith({ title });
+      expect(page.data.loginRequired).toBe(false);
+      if (section === 'space') {
+        expect(page.data.showFullSpace).toBe(true);
+        page.openAccount();
+        expect(navigateTo).toHaveBeenCalledWith(expect.objectContaining({ url: '/pages/web/index?key=account' }));
+      }
+    },
+  );
 
   it('does not open or copy a legacy WCA browser authorization in Douyin', async () => {
     const openUrl = vi.fn(), setClipboardData = vi.fn(), request = vi.fn();
@@ -268,7 +318,7 @@ describe('mini program account page', () => {
   });
 
   it('keeps existing-account sign-in in plain user language and shows the website step first', () => {
-    const source = readFileSync(new URL('../src/pages/account/index.ts', import.meta.url), 'utf8');
+    const source = readFileSync(new URL('../src/pages/account/page.ts', import.meta.url), 'utf8');
     const template = readFileSync(new URL('../src/pages/account/index.wxml', import.meta.url), 'utf8');
     expect(source).toContain("zh: '登录已有 CubeRoot 账号'");
     expect(source).toContain("zh: '去网站登录'");

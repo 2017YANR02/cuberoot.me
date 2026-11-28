@@ -20,7 +20,7 @@
     </view>
   </view>
 </template>
-<view class="native-tab-surface account-native" style="{{appearanceStyle}}">
+<view class="native-tab-surface account-native {{isAccountDetail ? 'account-native--detail' : ''}}" style="{{appearanceStyle}}">
 <template is="native-scenery" wx:if="{{!isTimelineEntry}}" />
 <scroll-view class="account-scroll" scroll-y="{{true}}" scroll-x="{{false}}" enhanced="{{true}}" show-scrollbar="{{false}}" scroll-into-view="{{'account-' + accountSection}}">
 <view id="account-{{accountSection}}" />
@@ -142,7 +142,7 @@
       <template is="account-icon" data="{{icon: 'chevron-right', scheme: appearanceScheme}}" />
     </button>
   </block>
-  <view wx:else class="account-detail-header">
+  <view wx:elif="{{!isAccountDetail}}" class="account-detail-header">
     <button class="account-back" hover-class="press-feedback" aria-label="{{copy.backLabel}}" data-section="home" bindtap="selectAccountSection">
       <template is="account-icon" data="{{icon: accountSection === 'settings' ? 'arrow-left' : 'chevron-left', scheme: appearanceScheme}}" />
     </button>

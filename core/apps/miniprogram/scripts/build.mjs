@@ -49,7 +49,7 @@ const douyinTimerWorker = `${douyinWorkersDirectory}/timer.js`;
 const converterLogRoot = join(packageRoot, '.tmp', 'wx-to-tt-log');
 const backupRoot = join(packageRoot, '.tmp', douyin ? 'dist-douyin-previous' : 'dist-previous');
 const projectConfigPath = join(packageRoot, douyin ? 'project.douyin.config.json' : 'project.config.json');
-const douyinExcludedPages = new Set(['assistant', 'membership', 'training']);
+const douyinExcludedPages = new Set(['account-detail', 'assistant', 'membership', 'training']);
 const isDouyinExcludedPage = (path) => path.startsWith('pages/') && douyinExcludedPages.has(path.split('/')[1]);
 const douyinUnsupportedAppConfigKeys = [
   'darkmode',

@@ -163,6 +163,7 @@ export const EXPECTED_APP_PAGES = [
   'pages/tools/index',
   'pages/training/index',
   'pages/account/index',
+  'pages/account-detail/index',
   'pages/privacy/index',
   'pages/contact/index',
   'pages/account-link/index',
