@@ -303,11 +303,13 @@ function LoginFormFields({
   const [recovering, setRecovering] = useState(false);
   useEffect(() => {
     const restore = () => setRecovering(window.history.state?.accountPasswordRecovery === recoveryId);
+    // eslint-disable-next-line no-restricted-syntax, no-restricted-globals -- The form's Back entry keeps the current URL.
     window.addEventListener('popstate', restore);
     return () => window.removeEventListener('popstate', restore);
   }, [recoveryId]);
   const changeRecovery = (open: boolean) => {
     if (open) {
+      // eslint-disable-next-line no-restricted-syntax, no-restricted-globals -- Recovery state belongs to this history entry only.
       window.history.pushState({ ...window.history.state, accountPasswordRecovery: recoveryId }, '');
       setRecovering(true);
     } else {

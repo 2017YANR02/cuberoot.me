@@ -20,6 +20,8 @@ const SCAN_DIRS = ['app', 'components', 'lib', 'hooks', 'i18n'];
 // 相对 client 根的 posix 路径 → 豁免(各文件内已带 eslint-disable + 理由注释)
 const ALLOWLIST = new Set([
   'lib/entry-navigation.ts',                         // 全站返回来源只存 history.state；单一桥接处理历史恢复与旧参数清理
+  'components/AuthPanel.tsx',                        // 找回密码的返回记录只使用 history.state，URL 保持原样
+  'lib/miniprogram-tab-session.ts',                  // 在兑换前清除一次性票据片段，保留原文档和历史状态
   'i18n/i18n-client.ts',                              // 全局 i18n infra:非 React、无 hook,改语言在 render 之外跑
   'components/teaching/TeachingAccountBindingPage.tsx', // 一次性秘密放在 fragment；消费后无请求、无导航地清除
   'app/[lang]/membership/checkout/page.tsx',          // 一次性收银台 fragment；跳转前同步清除，不是页内 query 状态

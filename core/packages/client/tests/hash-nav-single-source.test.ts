@@ -22,6 +22,7 @@ const SCAN_DIRS = ['app', 'components', 'lib', 'hooks'];
 const ALLOWLIST = new Set([
   'hooks/useHashHighlight.ts', // 唯一合法处:全站 hash 锚点滚动+高亮的单一实现
   'components/WeChatShareSync.tsx', // 全局分享元数据同步，不滚动也不高亮
+  'lib/miniprogram-tab-session.ts', // 接收原生小程序的会话票据，不执行锚点导航
   'lib/entry-navigation.ts', // Global per-entry provenance notification; no anchor scrolling or highlighting.
   'app/[lang]/timer/watch/page.tsx', // Capability credential rotation in the fragment; no anchor scrolling or highlighting.
 ]);

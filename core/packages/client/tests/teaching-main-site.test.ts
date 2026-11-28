@@ -48,8 +48,8 @@ describe('main-site teaching architecture', () => {
     expect(overview).not.toContain('packages/platform');
   });
 
-  it('exposes the workspace from the existing account page and supports narrow screens', () => {
-    expect(readClient('components/account/AccountSettings.tsx')).toContain("href: '/org'");
+  it('offers the learning center from the account page and supports narrow teaching screens', () => {
+    expect(readClient('components/account/AccountSettings.tsx')).toMatch(/cardAccess\.learning[\s\S]*?href: '\/learn'/);
     const orgCss = readClient('app/[lang]/org/org.css');
     expect(orgCss).toContain("@import '../../../components/teaching/teaching.css';");
     const css = readClient('components/teaching/teaching.css');

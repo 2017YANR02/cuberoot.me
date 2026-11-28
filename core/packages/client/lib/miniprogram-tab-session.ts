@@ -19,11 +19,13 @@ export function listenForMiniProgramTabSession(tab: 'tools' | 'timer') {
     if (!await bridge.isConfirmedMiniProgramWebView() || !current() || window.location.hash !== hash) return;
     const url = new URL(window.location.href);
     url.hash = hash.slice(0, match.index);
+    // eslint-disable-next-line no-restricted-syntax, no-restricted-globals -- Remove the one-time ticket before exchanging it.
     window.history.replaceState(window.history.state, '', url);
     const session = await handoff.exchangeMiniProgramWebSession(match[1]!);
     if (current()) await auth.applySession(session.token, session.user, current);
   }
   const consume = () => { void syncSession().catch(() => { /* Public pages remain usable if account services are unavailable. */ }); };
+  // The native tab delivers fresh session tickets in the fragment while retaining the document.
   window.addEventListener('hashchange', consume);
   consume();
   return () => {
