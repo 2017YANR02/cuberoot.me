@@ -2,6 +2,7 @@
 
 import MoreToggle from '@/components/MoreToggle';
 import { useRef } from 'react';
+import { CopySuccessIcon } from '@/components/CopySuccessIcon';
 import { Check, Copy } from '@app-foundation/icons/lucide';
 import { useCopy } from '@/hooks/useCopy';
 import { useHashHighlight } from '@/hooks/useHashHighlight';
@@ -52,7 +53,7 @@ export default function SalesScript() {
           ? stage.beats.map(beat => `${beat.kind}：${beat.text}`)
           : stage.questions.flatMap(question => [question.title, question.answer, question.interaction]))].join('\n\n')).join('\n\n');
         copy(text);
-      }}>{copied ? <Check size={16} aria-hidden /> : <Copy size={16} aria-hidden />}<span aria-live="polite">{copied ? '已复制九段口播' : '复制九段口播'}</span></button>
+      }}>{copied ? <CopySuccessIcon size={16} /> : <Copy size={16} aria-hidden />}<span aria-live="polite">{copied ? '已复制九段口播' : '复制九段口播'}</span></button>
     </div>
 
     <details id="sales-setup" className="sales-script-section">

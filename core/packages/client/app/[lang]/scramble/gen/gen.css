@@ -997,12 +997,10 @@
     width: 100%;
     max-width: 560px;       /* matches the ~550pt scramble column on A4 */
 }
-/* 点击复制成功后的绿勾:临时覆盖左侧序号(1.2s 后随 copiedIdx 清空自然复原)。
-   复用全局 --signal-success,和 StageSolver 的 .stsv-sol-copied 同色。 */
+/* 复制成功后，对勾暂时替换左侧序号。 */
 .gen-tn-num-copied {
     display: inline-block;
     vertical-align: middle;
-    color: var(--signal-success);
     pointer-events: none;
 }
 /* 含步数徽标的 333 系列 scramble cell:在 PDF 560 cap 基础上再留出徽标(~80px)的宽,

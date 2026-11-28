@@ -1,4 +1,6 @@
 'use client';
+import { writeClipboardText } from '@/lib/clipboard';
+import { useCopy } from '@/hooks/useCopy';
 import MoreToggle from '@/components/MoreToggle';
 import '@cuberoot/timer-ui/compact-select.css';
 
@@ -17,6 +19,7 @@ import '@cuberoot/timer-ui/compact-select.css';
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
+import { CopySuccessIcon } from '@/components/CopySuccessIcon';
 import { Code2, Copy, Check, Download, ChevronDown, MousePointerClick, RotateCcw, Plus, Trash2 } from '@app-foundation/icons/lucide';
 import SimCaptureGroup, { type SimBridge } from '@/components/puzzle-image/SimCaptureGroup';
 import BoolToggle from '@/components/BoolToggle';
@@ -92,19 +95,15 @@ function ColorRow({
 function CopyButton({
   getValue, label, disabled = false,
 }: { getValue: () => string; label: string; disabled?: boolean }) {
-  const [copied, setCopied] = useState(false);
+  const { copied, copy } = useCopy();
   return (
     <button
       type="button"
       className="vc-btn"
       disabled={disabled}
-      onClick={() => {
-        navigator.clipboard.writeText(getValue());
-        setCopied(true);
-        setTimeout(() => setCopied(false), 1200);
-      }}
+      onClick={() => copy(getValue())}
     >
-      {copied ? <Check size={14} /> : <Copy size={14} />} {label}
+      {copied ? <CopySuccessIcon size={14} /> : <Copy size={14} />} {label}
     </button>
   );
 }
@@ -117,7 +116,9 @@ export function ImageExportMenu({ kind, formats, disabled }: {
 }) {
   const t = useT();
   const [open, setOpen] = useState(false);
-  const [state, setState] = useState<'idle' | 'busy' | 'done' | 'fail'>('idle');
+  const [busy, setBusy] = useState(false);
+  const [downloadState, setDownloadState] = useState<'idle' | 'done' | 'fail'>('idle');
+  const { copyWith, copied, feedback, reset: resetCopy } = useCopy({ failureDurationMs: 1600 });
   const [pngSupported, setPngSupported] = useState(true);
   const panelRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
@@ -125,23 +126,29 @@ export function ImageExportMenu({ kind, formats, disabled }: {
   usePopoverDismiss(open, () => setOpen(false), panelRef, triggerRef);
   useEffect(() => { setPngSupported(clipboardImageSupported()); }, []);
   useEffect(() => {
-    if (state !== 'done' && state !== 'fail') return;
-    const timer = setTimeout(() => setState('idle'), 1600);
+    if (downloadState === 'idle') return;
+    const timer = setTimeout(() => setDownloadState('idle'), 1600);
     return () => clearTimeout(timer);
-  }, [state]);
+  }, [downloadState]);
 
   const label = kind === 'copy' ? t('复制', 'Copy') : t('下载', 'Download');
   const run = async (action: () => void | Promise<void>) => {
     setOpen(false);
-    setState('busy');
+    setBusy(true);
+    setDownloadState('idle');
     triggerRef.current?.focus();
     try {
       // Start synchronously in the menu click: Safari requires ClipboardItem
       // construction during the gesture, before awaiting PNG rasterization.
-      await action();
-      setState('done');
+      if (kind === 'copy') {
+        resetCopy();
+        await copyWith(async () => { await action(); });
+      }
+      else { await action(); setDownloadState('done'); }
     } catch {
-      setState('fail');
+      setDownloadState('fail');
+    } finally {
+      setBusy(false);
     }
   };
 
@@ -151,13 +158,15 @@ export function ImageExportMenu({ kind, formats, disabled }: {
         ref={triggerRef}
         type="button"
         className="vc-btn"
-        disabled={disabled || state === 'busy'}
+        disabled={disabled || busy}
         aria-expanded={open}
         aria-haspopup="dialog"
         onClick={() => setOpen(value => !value)}
       >
-        {state === 'done' ? <Check size={14} /> : kind === 'copy' ? <Copy size={14} /> : <Download size={14} />}
-        {state === 'fail' ? t('操作失败', 'Failed') : label}
+        {kind === 'copy'
+          ? (copied ? <CopySuccessIcon /> : <Copy size={14} />)
+          : (downloadState === 'done' ? <Check size={14} /> : <Download size={14} />)}
+        {(kind === 'copy' ? feedback?.copied === false : downloadState === 'fail') ? t('操作失败', 'Failed') : label}
         <ChevronDown size={12} />
       </button>
       {open && (
@@ -905,7 +914,7 @@ export default function PuzzleImageStudio({
             { label: 'PNG', run: () => copyPngToClipboard(externalImage
               ? svgToRasterBlob(getCurrentSvg(), { width: exportWidth, height: exportHeight, format: 'png' })
               : svgToPngBlob(getCurrentSvg(), s.imageSize)) },
-            { label: 'SVG', run: () => navigator.clipboard.writeText(getCurrentSvg()) },
+            { label: 'SVG', run: () => writeClipboardText(getCurrentSvg()) },
           ]}
         />
         <ImageExportMenu

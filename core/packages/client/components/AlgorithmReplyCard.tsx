@@ -3,7 +3,8 @@ import type { ReactNode } from 'react';
 import type { AssistantAlgorithmCard } from '@cuberoot/shared/site-assistant';
 import { CaseThumb } from './CaseThumb';
 import ReconCaseLink from './ReconCaseLink';
-import { Check, Copy } from '@app-foundation/icons/lucide';
+import { CopySuccessIcon } from '@/components/CopySuccessIcon';
+import { Copy } from '@app-foundation/icons/lucide';
 import { useCopy } from '@/hooks/useCopy';
 import { Tooltip } from './Tooltip';
 import { tr } from '@/i18n/tr';
@@ -21,7 +22,7 @@ export function AlgorithmReplyCard({card, display = 'both', title, suffix, thumb
     {...assistantAlgorithmDiagramOptions(card.puzzle)} size={compact ? 52 : card.puzzle === 'sq1' ? 112 : 72} alt={card.name}/>;
   const copyButton = display !== 'image' && <Tooltip content={tr({zh:'复制公式',en:'Copy algorithm'})}>{tip => <button {...tip} type="button" className="cube-photo-copy"
     aria-label={tr({zh:`复制 ${card.name} 公式`,en:`Copy ${card.name} algorithm`})}
-    onClick={() => copy(card.alg, card.alg)}>{copiedKey === card.alg ? <Check size={16}/> : <Copy size={16}/>}</button>}</Tooltip>;
+    onClick={() => copy(card.alg, card.alg)}>{copiedKey === card.alg ? <CopySuccessIcon size={16} /> : <Copy size={16}/>}</button>}</Tooltip>;
   const sequence = display !== 'image' && <div className="cube-photo-sequence"><code>{card.alg}</code>{suffix}</div>;
   if (compact) return <div className="cfop-formula-summary">
     <ReconCaseLink href={card.href} className="cube-photo-formula-title">{diagram}<strong>{title ?? card.name}</strong></ReconCaseLink>

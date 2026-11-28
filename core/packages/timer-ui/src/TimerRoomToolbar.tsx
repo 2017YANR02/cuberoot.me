@@ -1,6 +1,7 @@
 import { isNetOnline, TIMER_ROOM_TOOLBAR_COPY, type NetRoomState } from '@cuberoot/shared/timer/net-battle';
 import { useEffect, useState, type ReactNode } from 'react';
-import { Check, Copy, History, LogOut, QrCode, Settings, ShieldCheck } from 'lucide-react';
+import { CopySuccessIcon } from './CopySuccessIcon';
+import { Copy, History, LogOut, QrCode, Settings, ShieldCheck } from 'lucide-react';
 
 export interface TimerRoomToolbarProps {
   language: 'en' | 'zh';
@@ -66,7 +67,7 @@ export function TimerRoomToolbar({ language, room, copied, copyKind, disabled, h
     {syncStart && <span>{copy.sync}</span>}
     <div className="timer-room-actions">
       <button type="button" title={copy[copyKind]} aria-label={copy[copyKind]} onClick={onCopy}>
-        <span>{copy.room}: <strong>{code}</strong></span>{copied ? <Check size={16} /> : <Copy size={16} />}
+        <span>{copy.room}: <strong>{code}</strong></span>{copied ? <CopySuccessIcon size={16} /> : <Copy size={16} />}
       </button>
       <span className="timer-room-copy-status" role="status">{copied ? copy[copyKind === 'code' ? 'copiedCode' : 'copiedInvite'] : ''}</span>
       <button type="button" title={copy.qr} aria-label={copy.qr} onClick={onQr}><QrCode size={16} /></button>

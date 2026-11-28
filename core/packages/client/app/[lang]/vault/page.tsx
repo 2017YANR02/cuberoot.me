@@ -2,7 +2,8 @@
 
 import { sessionFetch } from '@/lib/session-fetch';
 import { useCallback, useEffect, useId, useMemo, useRef, useState, type ComponentPropsWithoutRef, type FormEvent, type ReactNode } from 'react';
-import { Check, Copy, Download, Ellipsis, KeyRound, Loader2, Pencil, Plus, RotateCcw, Save, Trash2, X } from '@app-foundation/icons/lucide';
+import { CopySuccessIcon } from '@/components/CopySuccessIcon';
+import { Copy, Download, Ellipsis, KeyRound, Loader2, Pencil, Plus, RotateCcw, Save, Trash2, X } from '@app-foundation/icons/lucide';
 import { FilledStatusMark } from '@cuberoot/app-ui/filled-status-mark';
 import { DndContext, KeyboardSensor, PointerSensor, closestCenter, useSensor, useSensors } from '@dnd-kit/core';
 import { SortableContext, arrayMove, sortableKeyboardCoordinates, verticalListSortingStrategy } from '@dnd-kit/sortable';
@@ -708,7 +709,7 @@ export default function VaultPage() {
         <label htmlFor="vault-recovery-display">{tr({ zh: '恢复密钥', en: 'Recovery key' })}</label>
         <input id="vault-recovery-display" className="vault-unlock-input" value={recoveryCode} readOnly />
         <div className="vault-actions">
-          <button type="button" className="vault-button" onClick={() => copy(recoveryCode, 'vault-recovery')}>{copiedKey === 'vault-recovery' ? <Check /> : <Copy />}{tr({ zh: '复制', en: 'Copy' })}</button>
+          <button type="button" className="vault-button" onClick={() => copy(recoveryCode, 'vault-recovery')}>{copiedKey === 'vault-recovery' ? <CopySuccessIcon size={24} /> : <Copy />}{tr({ zh: '复制', en: 'Copy' })}</button>
           <button type="button" className="vault-button" onClick={downloadRecoveryCode}><Download />{tr({ zh: '下载', en: 'Download' })}</button>
           <button type="button" className="vault-button is-primary" onClick={() => { setMustSaveRecoveryCode(false); setRecoveryCode(''); }}>{tr({ zh: '我已保存，进入资料库', en: 'Saved, open the vault' })}</button>
         </div>

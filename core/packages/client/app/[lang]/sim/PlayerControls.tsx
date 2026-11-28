@@ -1,5 +1,6 @@
 'use client';
 import { Tooltip } from '@/components/Tooltip';
+import { useCopy } from '@/hooks/useCopy';
 import { RIGHT_PINCH_MOVES } from './engine/hands/rightCornerPinch';
 import { trackFeatureUse } from '@/lib/analytics-signal';
 
@@ -28,7 +29,8 @@ import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 import { useT } from '@/hooks/useT';
 import { SettingsPopover } from '@/components/TrainingSettings';
-import { FlipHorizontal2, FlipVertical2, Eraser, Link2, Check, Keyboard, Grid3x3 } from '@app-foundation/icons/lucide';
+import { CopySuccessIcon } from '@/components/CopySuccessIcon';
+import { FlipHorizontal2, FlipVertical2, Eraser, Link2, Keyboard, Grid3x3 } from '@app-foundation/icons/lucide';
 import { Alg, Commutator, Conjugate, Grouping, Move, Pause } from 'cubing/alg';
 import type { TwistyPlayer } from 'cubing/twisty';
 import World from './engine/world';
@@ -1175,7 +1177,7 @@ export default function PlayerControls({
   // Null = highlight follows playback position (`step`) instead; cleared whenever
   // a non-caret action (play / step / reset) moves the timeline.
   const [caretChar, setCaretChar] = useState<number | null>(null);
-  const [linkCopied, setLinkCopied] = useState(false);
+  const { copied: linkCopied, copy, copyWith } = useCopy();
   const [moveEditing, setMoveEditing] = useState(false);
   const [moveEditorSlot, setMoveEditorSlot] = useState<HTMLDivElement | null>(null);
   useEffect(() => { setMoveEditing(false); }, [puzzleKind, active]);
@@ -2294,23 +2296,18 @@ export default function PlayerControls({
 
   // Copy the current page URL (puzzle + scramble + solution params) so the exact
   // sim state can be shared. Works for any puzzle — the URL always carries state.
-  const copyTimerRef = useRef<number | null>(null);
-  useEffect(() => () => { if (copyTimerRef.current) window.clearTimeout(copyTimerRef.current); }, []);
   const handleCopyLink = useCallback(() => {
-    if (typeof window === 'undefined' || !navigator.clipboard?.writeText) return;
     flushAlgCommit(); // request persistence; the owner copies the immediate drafts below
     const currentSetup = setupElRef.current?.value ?? setupDraft;
     const currentAlg = algElRef.current?.value ?? algDraft;
-    let copied: Promise<void>;
-    if (!onCopyLink) copied = navigator.clipboard.writeText(window.location.href);
-    else if (marked) copied = onCopyLink(currentSetup, currentAlg, htmlDraft);
-    else copied = onCopyLink(currentSetup, currentAlg);
-    copied.then(() => {
-      setLinkCopied(true);
-      if (copyTimerRef.current) window.clearTimeout(copyTimerRef.current);
-      copyTimerRef.current = window.setTimeout(() => setLinkCopied(false), 1500);
-    }).catch(() => { /* clipboard denied */ });
-  }, [flushAlgCommit, onCopyLink, setupDraft, algDraft, marked, htmlDraft]);
+    if (!onCopyLink) {
+      void copy(window.location.href);
+      return;
+    }
+    void copyWith(() => marked
+      ? onCopyLink(currentSetup, currentAlg, htmlDraft)
+      : onCopyLink(currentSetup, currentAlg));
+  }, [copy, copyWith, flushAlgCommit, onCopyLink, setupDraft, algDraft, marked, htmlDraft]);
 
   const appendUserMove = useCallback((action: TwistAction | string, anchoredSetup?: { setup: string }) => {
     if (restorePreviewRef.current) {
@@ -2859,7 +2856,7 @@ export default function PlayerControls({
       className={linkCopied ? 'sim-link-copied' : undefined}
       title={t('复制本页链接(含打乱 / 解法)', 'Copy this page link (with scramble / solution)')}
     >
-      {linkCopied ? <Check size={13} /> : <Link2 size={13} />}
+      {linkCopied ? <CopySuccessIcon size={13} /> : <Link2 size={13} />}
       {linkCopied ? t('已复制', 'Copied') : t('复制链接', 'Copy link')}
     </button>
   </>;

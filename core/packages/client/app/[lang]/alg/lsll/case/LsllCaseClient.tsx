@@ -8,6 +8,7 @@
  * 最优解来自本地管道 `solver/lsll`,解的是**展示相位**那个代表元(语料生成时就钉死了),
  * 所以贴到页面上的图直接能用,不用再补 AUF。
  */
+import { copyClipboardText } from '@/lib/clipboard';
 import PageHeading from '@/components/PageHeading';
 import { useEffect, useMemo, useState } from 'react';
 import { parseAsString } from 'nuqs';
@@ -188,7 +189,7 @@ export default function LsllCaseClient() {
         {setup && (
           <div className="lsll-alg-line">
             <span>{setup}</span>
-            <button type="button" className="lsll-copy-btn" onClick={() => { void navigator.clipboard?.writeText(setup); }}>
+            <button type="button" className="lsll-copy-btn" onClick={() => { void copyClipboardText(setup); }}>
               {tr({ zh: '复制', en: 'Copy' })}
             </button>
           </div>
@@ -225,7 +226,7 @@ export default function LsllCaseClient() {
                 <div className="lsll-alg-line" key={a}>
                   <span>{a}</span>
                   <span className="lsll-opt-metric">{getSTM(a, true)} STM</span>
-                  <button type="button" className="lsll-copy-btn" onClick={() => { void navigator.clipboard?.writeText(a); }}>
+                  <button type="button" className="lsll-copy-btn" onClick={() => { void copyClipboardText(a); }}>
                     {tr({ zh: '复制', en: 'Copy' })}
                   </button>
                 </div>

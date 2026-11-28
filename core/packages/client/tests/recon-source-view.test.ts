@@ -3,7 +3,7 @@ import { act, createElement } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 import ReconDetailClient from '@/app/[lang]/recon/[id]/ReconDetailClient';
-import { exportReconImages } from '@/app/[lang]/recon/[id]/export-recon-image';
+import { exportReconImages } from '@/lib/export-recon-image';
 import { toBlob } from 'html-to-image';
 
 const fixture = vi.hoisted(() => ({
@@ -85,9 +85,18 @@ it('does not expose source through the existing private-recon error gate', async
 it('exports the formatted notation while the source view is active', async () => {
   await render(); await choose(1);
   const notation = host.querySelector<HTMLElement>('.detail-scramble-solution')!;
+  const scrambleLine = document.createElement('div');
+  scrambleLine.className = 'detail-scramble-line';
+  const copyButton = document.createElement('button');
+  copyButton.className = 'recon-case-line-text recon-scramble-copy';
+  copyButton.textContent = fixture.scramble;
+  scrambleLine.append(copyButton);
+  notation.prepend(scrambleLine);
   vi.mocked(toBlob).mockImplementationOnce(async snapshot => {
     expect(snapshot.hidden).toBe(false);
     expect(snapshot.querySelector('.detail-source-text')).toBeNull();
+    expect(snapshot.querySelector('.detail-scramble-line .recon-case-line-text')?.textContent).toContain(fixture.scramble);
+    expect(snapshot.querySelector('.recon-scramble-copy')).toBeNull();
     expect(snapshot.textContent).toContain('psxcross');
     return new Blob(['image']);
   });

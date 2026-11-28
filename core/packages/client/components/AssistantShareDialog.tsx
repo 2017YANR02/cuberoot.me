@@ -1,8 +1,10 @@
 'use client';
 
+import { useCopy } from '@/hooks/useCopy';
 import { useEffect, useId, useRef, useState, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
-import { Globe, Link as LinkIcon, Check } from '@app-foundation/icons/lucide';
+import { CopySuccessIcon } from '@/components/CopySuccessIcon';
+import { Globe, Link as LinkIcon } from '@app-foundation/icons/lucide';
 import { SiX, SiReddit } from 'react-icons/si';
 import { FaLinkedin } from 'react-icons/fa6';
 import { ClearButton } from '@/components/ClearButton';
@@ -27,8 +29,9 @@ export function AssistantShareDialog({ turn, lang, preview, text, shareId, onSha
   }, []);
   const { motionRef, close: onClose } = useDialogMotion(onClosed);
   const backdrop = useModalDismiss(onClose);
-  const [pending, setPending] = useState(false), [error, setError] = useState(''), [copied, setCopied] = useState(false);
-  useEffect(() => { setCopied(false); setError(''); }, [turn.result]);
+  const [pending, setPending] = useState(false), [error, setError] = useState('');
+  const { copied, copy, reset: resetCopy } = useCopy();
+  useEffect(() => { resetCopy(); setError(''); }, [turn.result, resetCopy]);
   const createLink = async () => {
     const id = shareId ?? (await handleApi<{ id: string }>(await sessionFetch(apiUrl('/v1/site-assistant/shares'), {
       method: 'POST', headers: authHeaders(), body: JSON.stringify({ requestId: turn.requestId, question: turn.question, answer: turn.result ? assistantAnswerText({...turn.result,artifacts:turn.result.artifacts?.filter(a=>a.kind!=='algorithms')},window.location.origin) : text, algorithms:turn.result?.artifacts?.filter(a=>a.kind==='algorithms') }),
@@ -43,7 +46,9 @@ export function AssistantShareDialog({ turn, lang, preview, text, shareId, onSha
     if (tab) tab.opener = null;
     try {
       const url = await createLink();
-      if (target === 'copy') { await navigator.clipboard.writeText(url); setCopied(true); }
+      if (target === 'copy') {
+        if (!await copy(url)) throw new Error('Clipboard write failed');
+      }
       else {
         const link = target === 'x' ? `https://twitter.com/intent/tweet?url=${encodeURIComponent(url)}`
           : target === 'linkedin' ? `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(url)}`
@@ -57,7 +62,7 @@ export function AssistantShareDialog({ turn, lang, preview, text, shareId, onSha
   const revoke = async () => {
     if (!shareId || pending) return;
     setPending(true); setError('');
-    try { await handleApi(await sessionFetch(apiUrl(`/v1/site-assistant/shares/${shareId}`), { method: 'DELETE', headers: authHeaders() })); onShareId(null); setCopied(false); }
+    try { await handleApi(await sessionFetch(apiUrl(`/v1/site-assistant/shares/${shareId}`), { method: 'DELETE', headers: authHeaders() })); onShareId(null); resetCopy(); }
     catch { setError(tr({ zh: '取消分享失败，请重试。', en: 'Could not revoke this link. Please retry.' })); }
     finally { setPending(false); }
   };
@@ -74,7 +79,7 @@ export function AssistantShareDialog({ turn, lang, preview, text, shareId, onSha
       <div className="assistant-share-preview">{preview}</div>
       <div className="assistant-share-disclosure"><strong><Globe size={20}/>{tr({ zh: '分享这条消息的公开链接', en: 'Share a public link to this message' })}</strong><p>{tr({ zh: '任何拥有此链接的人都可以访问这条消息。分享本条回答与公式状态图，不包含上传的照片和其他对话。', en: 'Anyone with the link can read this message. This answer and algorithm diagrams are shared, without uploaded photos or other messages.' })}</p></div>
       <div className="assistant-share-destinations">
-        {([{ id: 'copy', icon: copied ? <Check/> : <LinkIcon/>, label: tr(copied ? { zh: '已复制', en: 'Copied' } : { zh: '复制链接', en: 'Copy link' }) }, { id: 'x', icon: <SiX size={22}/>, label: 'X' }, { id: 'linkedin', icon: <FaLinkedin size={22}/>, label: tr({ zh: '领英', en: 'LinkedIn' }) }, { id: 'reddit', icon: <SiReddit size={26}/>, label: 'Reddit' }] as const).map(item => <button className="assistant-share-destination" key={item.id} type="button" disabled={pending} onClick={() => void share(item.id)}><span>{item.icon}</span>{item.label}</button>)}
+        {([{ id: 'copy', icon: copied ? <CopySuccessIcon size={24} /> : <LinkIcon/>, label: tr(copied ? { zh: '已复制', en: 'Copied' } : { zh: '复制链接', en: 'Copy link' }) }, { id: 'x', icon: <SiX size={22}/>, label: 'X' }, { id: 'linkedin', icon: <FaLinkedin size={22}/>, label: tr({ zh: '领英', en: 'LinkedIn' }) }, { id: 'reddit', icon: <SiReddit size={26}/>, label: 'Reddit' }] as const).map(item => <button className="assistant-share-destination" key={item.id} type="button" disabled={pending} onClick={() => void share(item.id)}><span>{item.icon}</span>{item.label}</button>)}
       </div>
       {shareId && <button type="button" className="assistant-share-revoke" disabled={pending} onClick={() => void revoke()}>{tr({ zh: '取消公开分享', en: 'Revoke public link' })}</button>}
       {error && <p className="site-assistant-voice-error" role="status">{error}</p>}

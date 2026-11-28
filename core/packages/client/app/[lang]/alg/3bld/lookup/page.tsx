@@ -24,7 +24,8 @@ import { useCallback, useEffect, useMemo, useState, type JSX } from 'react';
 import { parseAsStringEnum } from 'nuqs';
 import { useTrainingQueryState as useQueryState } from '@/lib/training-host';
 import { useTranslation } from 'react-i18next';
-import { Check, Copy, ExternalLink, Users, Video } from '@app-foundation/icons/lucide';
+import { CopySuccessIcon } from '@/components/CopySuccessIcon';
+import { Copy, ExternalLink, Users, Video } from '@app-foundation/icons/lucide';
 import Link from '@/components/AppLink';
 import { SearchInput } from '@/components/SearchInput';
 import { Spinner } from '@/components/Spinner/Spinner';
@@ -186,7 +187,7 @@ function AlgLine({
         onClick={() => copy(alg)}
         title={tr({ zh: '复制公式', en: 'Copy alg' })} aria-label={tr({ zh: '复制公式', en: 'Copy alg' })}
       >
-        {copied ? <Check size={14} /> : <Copy size={14} className="alg-alg-copy-icon" />}
+        {copied ? <CopySuccessIcon size={14} /> : <Copy size={14} className="alg-alg-copy-icon" />}
       </button>
       {hasVideo && (
         <button

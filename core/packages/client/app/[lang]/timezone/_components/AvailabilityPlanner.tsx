@@ -9,7 +9,8 @@ import timeGridPlugin from '@fullcalendar/timegrid';
 import interactionPlugin from '@fullcalendar/interaction';
 import luxonPlugin from '@fullcalendar/luxon3';
 import zhCn from '@fullcalendar/core/locales/zh-cn';
-import { ArrowRight, Check, ChevronLeft, ChevronRight, Copy, X } from '@app-foundation/icons/lucide';
+import { CopySuccessIcon } from '@/components/CopySuccessIcon';
+import { ArrowRight, ChevronLeft, ChevronRight, Copy, X } from '@app-foundation/icons/lucide';
 import { dateKey, isValidZone, timeKey, wallPartsIn } from '@cuberoot/shared/tz';
 import { DateInput } from '@/components/DateInput';
 import { ListSelect, type ListSelectItem } from '@/components/ListSelect';
@@ -218,7 +219,7 @@ function AvailabilityPlanner({ today, zoneItems }: { today: string; zoneItems: L
             <button className="tz-now-btn" disabled={converted} type="submit">{tr({ zh: '添加时段', en: 'Add range' })}</button>
           </form>
         </details>
-        {ranges.length > 0 && <button type="button" className="tz-copy-btn" disabled={invalid} onClick={() => copy(summary)}>{copied ? <Check size={14} /> : <Copy size={14} />}{copied ? tr({ zh: '已复制', en: 'Copied' }) : tr({ zh: '复制两地时段', en: 'Copy both time zones' })}</button>}
+        {ranges.length > 0 && <button type="button" className="tz-copy-btn" disabled={invalid} onClick={() => copy(summary)}>{copied ? <CopySuccessIcon size={14} /> : <Copy size={14} />}{copied ? tr({ zh: '已复制', en: 'Copied' }) : tr({ zh: '复制两地时段', en: 'Copy both time zones' })}</button>}
       </div>
       <ul className="tz-planner-results" aria-live="polite">
         {resolved.map(({ range, instant }, index) => <li key={`${range.start}-${range.end}`}>

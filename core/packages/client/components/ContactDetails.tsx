@@ -115,7 +115,7 @@ function ContactDetailDialog({ title, icon, count, children, onClose }: {
 }
 
 function CopyValueButton({ copyKey, value }: { copyKey: string; value: string }) {
-  const { copiedKey, copy } = useCopy(1500);
+  const { copiedKey, copy } = useCopy();
   const copied = copiedKey === copyKey;
   const label = copied
     ? tr({ zh: '已复制', en: 'Copied' })

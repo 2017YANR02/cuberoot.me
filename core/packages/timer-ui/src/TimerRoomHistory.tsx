@@ -1,7 +1,8 @@
 import { TIMER_ROOM_HISTORY_COPY, TIMER_NET_SCRAMBLE_COPY, formatNetHistoryStat, formatNetHistoryResult, formatNetRoomStandings, netRoomStandings } from '@cuberoot/shared/timer/net-battle';
 import { effectiveNetMs, roundViews, type NetRoomState, type NetBattleEventId } from '@cuberoot/shared/timer';
 import { formatScrambleForEvent } from '@cuberoot/shared/sq1-notation';
-import { Check, Copy, Trophy } from 'lucide-react';
+import { CopySuccessIcon } from './CopySuccessIcon';
+import { Copy, Trophy } from 'lucide-react';
 import { useClipboardFeedback } from './browser-clipboard';
 import { Flag } from './CountryFlag';
 import { TimerCubePreview } from './TimerCubePreview';
@@ -28,7 +29,7 @@ export function TimerRoomHistory({ room, currentPlayerId, language, precision, o
   const headerControls = writeClipboardText && <>
     <button type="button" className="timer-room-copy-standings" aria-label={copy.copy}
       onClick={() => void clipboard.copy(formatNetRoomStandings(room, language, precision, standings))}>
-      {clipboard.feedback?.copied ? <Check size={16} aria-hidden /> : <Copy size={16} aria-hidden />}{copy.copy}
+      {clipboard.feedback?.copied ? <CopySuccessIcon size={16} /> : <Copy size={16} aria-hidden />}{copy.copy}
     </button>
     <span className="sr-only" role="status">
       {clipboard.feedback && (clipboard.feedback.copied ? copy.copied : TIMER_NET_SCRAMBLE_COPY[language].failed)}

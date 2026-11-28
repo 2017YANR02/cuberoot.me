@@ -110,6 +110,29 @@
   word-break: normal;
   overflow-wrap: normal;
 }
+.recon-scramble-copy {
+  position: relative;
+  appearance: none;
+  padding: 0;
+  padding-inline-end: 1.35em;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
+}
+.recon-scramble-copy:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+.recon-scramble-copy-check {
+  position: absolute;
+  inset-inline-end: 0;
+  bottom: .35em;
+  width: 1em;
+  height: 1em;
+}
 .detail-scramble-solution .detail-solution-text {
   background: transparent;
   border: none;

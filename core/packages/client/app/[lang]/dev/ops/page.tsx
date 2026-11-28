@@ -1,5 +1,6 @@
 'use client';
 
+import { useCopy } from '@/hooks/useCopy';
 import PageBackLink from '@/components/PageBackLink';
 import MoreToggle from '@/components/MoreToggle';
 import { useContentRefreshKey } from '@/hooks/useContentRefreshKey';
@@ -9,7 +10,8 @@ import { useContentRefreshKey } from '@/hooks/useContentRefreshKey';
 import { useEffect, useMemo, useState } from 'react';
 import Link from '@/components/AppLink';
 import { useTranslation } from 'react-i18next';
-import { Check, Copy, Database, Hammer, UploadCloud, Archive, Terminal, Sparkles, Plus, Pencil, Trash2, X } from '@app-foundation/icons/lucide';
+import { CopySuccessIcon } from '@/components/CopySuccessIcon';
+import { Copy, Database, Hammer, UploadCloud, Archive, Terminal, Sparkles, Plus, Pencil, Trash2, X } from '@app-foundation/icons/lucide';
 import { useIsAdmin } from '@/lib/auth-store';
 import { createCommand, updateCommand, deleteCommand, listCommands, type OpsCommandInput } from '@/lib/ops-api';
 import './ops.css';
@@ -62,16 +64,8 @@ interface OpCommand {
 
 
 function CodeBlock({ cmd, idx, mode = 'shell' }: { cmd: string; idx: string; mode?: 'shell' | 'prompt' }) {
-  const [copied, setCopied] = useState(false);
-  const onCopy = async () => {
-    try {
-      await navigator.clipboard.writeText(cmd);
-      setCopied(true);
-      window.setTimeout(() => setCopied(false), 1400);
-    } catch {
-      /* ignore */
-    }
-  };
+  const { copied, copy } = useCopy();
+  const onCopy = () => copy(cmd);
   return (
     <div className="ops-code" data-idx={idx} data-mode={mode}>
       <button
@@ -80,7 +74,7 @@ function CodeBlock({ cmd, idx, mode = 'shell' }: { cmd: string; idx: string; mod
         onClick={onCopy}
         aria-label={copied ? 'Copied' : 'Copy'}
       >
-        {copied ? <Check size={14} /> : <Copy size={14} />}
+        {copied ? <CopySuccessIcon size={14} /> : <Copy size={14} />}
         <span>{copied ? 'copied' : 'copy'}</span>
       </button>
       <pre className="ops-code-pre">

@@ -9,6 +9,7 @@
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAlgTextField } from '@/hooks/useAlgTextField';
+import { CopySuccessIcon } from '@/components/CopySuccessIcon';
 import { Plus, Trash2, Pencil, Check, X, Tags, Pin, Copy, AlertTriangle } from '@app-foundation/icons/lucide';
 import { is3x3TopLayerSet, type AlgEntry, type AlgPuzzle, type AlgSticker, type AlgTag } from '@cuberoot/shared/alg';
 import { alignCaseEntry, caseAlgIssue, sourceCaseEntry } from '@/lib/alg_case_alignment';
@@ -91,7 +92,7 @@ function CompactCommunityAlgRow({ text, issue, preferred, onPreferredToggle }: {
         disabled={!!issue}
         title={tr({ zh: '复制', en: 'Copy' })} aria-label={tr({ zh: '复制', en: 'Copy' })}
       >
-        {copied ? <Check size={14} /> : <Copy size={14} className="alg-alg-copy-icon" />}
+        {copied ? <CopySuccessIcon size={14} /> : <Copy size={14} className="alg-alg-copy-icon" />}
       </button>
     </div>
   );

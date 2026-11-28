@@ -12,6 +12,7 @@
  */
 
 import { Tooltip } from '@/components/Tooltip';
+import { writeClipboardText } from '@/lib/clipboard';
 import MoreToggle from '@/components/MoreToggle';
 import { ResizeDivider } from '@app-foundation/navigation-ui/resize-divider';
 import '@app-foundation/navigation-ui/resize-divider.css';
@@ -1918,7 +1919,7 @@ function SimEditor({ scope = '', active, seed, snapshotRef, onModeChange, onNew,
       if (value == null || value === '') url.searchParams.delete(key);
       else url.searchParams.set(key, value);
     }
-    await navigator.clipboard.writeText(url.toString());
+    await writeClipboardText(url.toString());
   }, [query]);
 
   const onStickeringChange = useCallback((stickering: string) => {

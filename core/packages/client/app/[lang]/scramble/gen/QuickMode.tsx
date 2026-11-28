@@ -1,4 +1,5 @@
 'use client';
+import { useCopy } from '@/hooks/useCopy';
 import { trackFeatureUse } from '@/lib/analytics-signal';
 /**
  * /scramble/gen — "Practice" mode. Pick one OR MORE events, then either
@@ -8,7 +9,8 @@ import { trackFeatureUse } from '@/lib/analytics-signal';
  */
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { RefreshCw, Download, Image as ImageIcon, ImageOff, ChevronDown, Check } from '@app-foundation/icons/lucide';
+import { CopySuccessIcon } from '@/components/CopySuccessIcon';
+import { RefreshCw, Download, Image as ImageIcon, ImageOff, ChevronDown } from '@app-foundation/icons/lucide';
 import PuzzlePicker from '@/components/PuzzlePicker/PuzzlePicker';
 import EventScrambleOptions from './EventScrambleOptions';
 import NumberCommitInput from '@/components/NumberCommitInput';
@@ -79,7 +81,7 @@ export default function QuickMode({ t, subMode, showPreview, onTogglePreview, sq
   const [failedEvents, setFailedEvents] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
   const [genProgress, setGenProgress] = useState<{ done: number; total: number } | null>(null);
-  const [copiedKey, setCopiedKey] = useState<string | null>(null);
+  const { copiedKey, copy, reset: resetCopy } = useCopy();
   const [pdfBuilding, setPdfBuilding] = useState(false);
   const [pdfProgress, setPdfProgress] = useState<{ done: number; total: number } | null>(null);
   /** 每个 event 的批次计时 — wall = 该 event 第一个 scramble 开始到最后一个完成的实际墙钟。 */
@@ -212,7 +214,7 @@ export default function QuickMode({ t, subMode, showPreview, onTogglePreview, sq
     const myId = ++reqIdRef.current;
     setLoading(true);
     setFailedEvents((prev) => prev.filter((ev) => toKeep.has(ev)));
-    setCopiedKey(null);
+    resetCopy();
     if (fullRegen) {
       setGenerated({});
       setTiming({});
@@ -385,14 +387,9 @@ export default function QuickMode({ t, subMode, showPreview, onTogglePreview, sq
     }
   };
 
-  const copyOne = async (ev: string, idx: number, scramble: string) => {
-    try {
-      await navigator.clipboard.writeText(scrambleClipboardText(scramble));
-      const key = `${ev}|${idx}`;
-      setCopiedKey(key);
-      setTimeout(() => setCopiedKey((curr) => (curr === key ? null : curr)), 1200);
-    } catch { /* swallow */ }
-  };
+  const copyOne = (ev: string, idx: number, scramble: string) =>
+    copy(scrambleClipboardText(scramble), `${ev}|${idx}`);
+
 
   return (
     <>
@@ -607,7 +604,7 @@ export default function QuickMode({ t, subMode, showPreview, onTogglePreview, sq
                         <td className="gen-tn-attempt-scramble">
                           <ScrambleLines scramble={s} className="gen-tn-attempt-line" />
                           {copiedKey === key && (
-                            <Check size={14} className="gen-tn-scr-copied" aria-label={t('已复制', 'Copied')} />
+                            <CopySuccessIcon size={14} className="gen-tn-scr-copied" aria-label={t('已复制', 'Copied')} />
                           )}
                         </td>
                         {showPreview && (

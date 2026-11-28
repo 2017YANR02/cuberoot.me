@@ -1,4 +1,5 @@
 'use client';
+import { useCopy } from '@/hooks/useCopy';
 import PageHeading from '@/components/PageHeading';
 import MoreToggle from '@/components/MoreToggle';
 import '@cuberoot/timer-ui/compact-select.css';
@@ -18,7 +19,8 @@ import '@cuberoot/timer-ui/compact-select.css';
 
 import { useCallback, useEffect, useMemo, useRef, useState, memo } from 'react';
 import { useQueryState, parseAsStringEnum, parseAsInteger } from 'nuqs';
-import { Search, Square as StopIcon, Copy, Check, Eraser, ArrowRight } from '@app-foundation/icons/lucide';
+import { CopySuccessIcon } from '@/components/CopySuccessIcon';
+import { Search, Square as StopIcon, Copy, Eraser, ArrowRight } from '@app-foundation/icons/lucide';
 import { renderCubeSVG } from '@cuberoot/visualcube';
 import Link from '@/components/AppLink';
 import BoolToggle from '@/components/BoolToggle';
@@ -93,20 +95,14 @@ function CubeThumb({ facelet, size = 84 }: { facelet: string; size?: number }) {
 }
 
 function CopyButton({ text, label }: { text: string; label: string }) {
-  const [done, setDone] = useState(false);
+  const { copied: done, copy } = useCopy();
   return (
     <button
       type="button"
       className="sym-copy"
-      onClick={async () => {
-        try {
-          await navigator.clipboard.writeText(text);
-          setDone(true);
-          setTimeout(() => setDone(false), 1200);
-        } catch { /* swallow */ }
-      }}
+      onClick={() => copy(text)}
     >
-      {done ? <Check size={13} /> : <Copy size={13} />}
+      {done ? <CopySuccessIcon size={13} /> : <Copy size={13} />}
       <span>{label}</span>
     </button>
   );

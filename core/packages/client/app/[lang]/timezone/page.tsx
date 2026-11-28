@@ -23,7 +23,8 @@
 import MoreToggle from '@/components/MoreToggle';
 import { Suspense, useCallback, useEffect, useMemo, useState } from 'react';
 import { useQueryState, parseAsString, parseAsInteger } from 'nuqs';
-import { Check, Copy, Plus, RotateCcw, X } from '@app-foundation/icons/lucide';
+import { CopySuccessIcon } from '@/components/CopySuccessIcon';
+import { Copy, Plus, RotateCcw, X } from '@app-foundation/icons/lucide';
 import BackHome from '@/components/BackHome';
 import { DateInput } from '@/components/DateInput';
 import { Flag } from '@/components/Flag';
@@ -329,7 +330,7 @@ function TimezonePage() {
           </div>
         )}
         <button type="button" className="tz-copy-btn" onClick={copyText}>
-          {copied ? <Check size={14} aria-hidden="true" /> : <Copy size={14} aria-hidden="true" />}
+          {copied ? <CopySuccessIcon size={14} /> : <Copy size={14} aria-hidden="true" />}
           {copied ? tr({ zh: '已复制', en: 'Copied' }) : tr({ zh: '复制各地时间', en: 'Copy all times' })}
         </button>
       </div>

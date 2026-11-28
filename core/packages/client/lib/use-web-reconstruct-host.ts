@@ -1,3 +1,4 @@
+import { writeClipboardText } from '@/lib/clipboard';
 import { reviewAlg, reviewCamera } from '@cuberoot/timer-ui/reconstruct/replay-view';
 import type { ReconstructHost } from '@cuberoot/timer-ui/reconstruct-report';
 import AppLink from '@/components/AppLink';
@@ -51,7 +52,7 @@ export function useWebReconstructHost(): ReconstructHost {
     wasteBrackets: reconWasteBrackets,
     // Keep the timer mounted so visiting a case does not dispose its Bluetooth session.
     renderCaseLink: (href, label, className) => createElement(ReconCaseLink, { href, className, children: label }),
-    writeClipboardText: (text) => navigator.clipboard.writeText(text),
+    writeClipboardText,
     replayUrl: communityDisabled ? undefined : async (solve) => {
       if (installedCommunityDisabled()) return null;
       const id = await createServerReplayShare(solve);

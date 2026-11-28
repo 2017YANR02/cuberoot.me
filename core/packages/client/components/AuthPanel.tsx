@@ -1,4 +1,5 @@
 'use client';
+import { useCopy } from '@/hooks/useCopy';
 import RegistrationConsent from '@/components/account/RegistrationConsent';
 import MoreToggle from '@/components/MoreToggle';
 import '@cuberoot/timer-ui/compact-select.css';
@@ -10,7 +11,8 @@ import '@cuberoot/timer-ui/compact-select.css';
 // 两者共用同一套表单原语(CodeFlow / 密码表单 / 错误文案),故同处一文件。
 
 import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
-import { Check, Copy, Loader2, Mail, Smartphone, KeyRound, Merge } from '@app-foundation/icons/lucide';
+import { CopySuccessIcon } from '@/components/CopySuccessIcon';
+import { Copy, Loader2, Mail, Smartphone, KeyRound, Merge } from '@app-foundation/icons/lucide';
 import { SiApple, SiWechat, SiQq, SiAlipay, SiTiktok } from 'react-icons/si';
 import { primaryHandle, visibleAccountIdentities, ACCOUNT_PROVIDER_LABELS as PROVIDER_LABEL } from '@cuberoot/shared/account';
 import type { MobileAuthProvider } from '@cuberoot/shared/auth/web-session';
@@ -497,21 +499,21 @@ function MiniProgramLinkCodePanel({ emphasized = false }: { emphasized?: boolean
   const [result, setResult] = useState<{ linkCode: string; expiresAt: number; uid: number } | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
-  const [copied, setCopied] = useState(false);
+  const { copied, copy, reset: resetCopy } = useCopy();
   const request = useRef<AbortController | null>(null);
   useEffect(() => {
-    setResult(null); setError(''); setCopied(false); setBusy(false);
+    setResult(null); setError(''); resetCopy(); setBusy(false);
     return () => { request.current?.abort(); request.current = null; };
-  }, [uid]);
+  }, [uid, resetCopy]);
   useEffect(() => {
     if (!result) return;
-    const timer = setTimeout(() => { setResult(null); setCopied(false); }, Math.max(0, result.expiresAt - Date.now()));
+    const timer = setTimeout(() => { setResult(null); resetCopy(); }, Math.max(0, result.expiresAt - Date.now()));
     return () => clearTimeout(timer);
-  }, [result]);
+  }, [result, resetCopy]);
   const generate = async () => {
     if (!uid || request.current) return;
     const controller = new AbortController(); request.current = controller;
-    setBusy(true); setError(''); setResult(null); setCopied(false);
+    setBusy(true); setError(''); setResult(null); resetCopy();
     try {
       const issued = await issueIdentityLinkCode(uid, controller.signal);
       if (controller.signal.aborted || getAuthUser()?.uid !== uid) return;
@@ -530,9 +532,8 @@ function MiniProgramLinkCodePanel({ emphasized = false }: { emphasized?: boolean
       <input className="auth-input auth-mini-link-code" inputMode="numeric" readOnly value={result.linkCode} aria-label={t('小程序登录码', 'Mini Program sign-in code')} />
       <button type="button" className="auth-textbtn" aria-label={copied ? t('已复制', 'Copied') : t('复制登录码', 'Copy sign-in code')} title={copied ? t('已复制', 'Copied') : t('复制登录码', 'Copy sign-in code')} onClick={async () => {
         setError('');
-        try { await navigator.clipboard.writeText(result.linkCode); setCopied(true); }
-        catch { setError(t('无法复制，请选中登录码手动复制。', 'Could not copy. Select the sign-in code and copy it manually.')); }
-      }}>{copied ? <Check size={ICON} aria-hidden="true" /> : <Copy size={ICON} aria-hidden="true" />}</button>
+        if (!await copy(result.linkCode)) { setError(t('无法复制，请选中登录码手动复制。', 'Could not copy. Select the sign-in code and copy it manually.')); }
+      }}>{copied ? <CopySuccessIcon size={ICON} /> : <Copy size={ICON} aria-hidden="true" />}</button>
     </>}
     <button type="button" className="auth-primary" disabled={busy || !uid} onClick={() => void generate()}>{busy ? <Loader2 size={ICON} className="auth-spin" /> : t('生成 6 位登录码', 'Generate 6-digit sign-in code')}</button>
     {error && <p className="auth-error" role="alert">{error}</p>}

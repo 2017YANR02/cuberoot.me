@@ -1,6 +1,7 @@
 'use client';
 
-import { Check, Copy } from '@app-foundation/icons/lucide';
+import { CopySuccessIcon } from '@/components/CopySuccessIcon';
+import { Copy } from '@app-foundation/icons/lucide';
 import { useCopy } from '@/hooks/useCopy';
 
 interface Props {
@@ -33,7 +34,7 @@ export default function CopyAllScramblesButton({ text, t }: Props) {
       title={label}
       aria-label={label}
     >
-      {copied ? <Check size={14} /> : <Copy size={14} />}
+      {copied ? <CopySuccessIcon size={14} /> : <Copy size={14} />}
     </button>
   );
 }

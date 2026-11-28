@@ -1,8 +1,10 @@
 'use client';
+import { useCopy } from '@/hooks/useCopy';
 import { installedPetAvailable } from '@/lib/installed-content';
 
 import { useEffect, useState } from 'react';
 import { useQueryState, parseAsString } from 'nuqs';
+import { CopySuccessIcon } from '@/components/CopySuccessIcon';
 import { Heart, Sparkles, Share2, Check, Lock, ArrowUpRight } from '@app-foundation/icons/lucide';
 import AppLink from '@/components/AppLink';
 import PageBackLink from '@/components/PageBackLink';
@@ -27,7 +29,8 @@ export default function PetsPage({ gallery = false }: { gallery?: boolean }) {
   const [catalog,setCatalog] = useState<DeskPetCatalog | null>(null);
   const [failed,setFailed] = useState(false);
   const [retry,setRetry] = useState(0);
-  const [shareState,setShareState] = useState<'idle'|'copied'|'failed'>('idle');
+  const [shareFailed, setShareFailed] = useState(false);
+  const { copied, copy } = useCopy({ scope: JSON.stringify([petId, scene, collection]) });
   useEffect(()=>{
     let active=true;
     const load=()=>{
@@ -52,22 +55,22 @@ export default function PetsPage({ gallery = false }: { gallery?: boolean }) {
   const share=async()=>{
     try {
       if(navigator.share)await navigator.share({title:gallery && sharedScene?.character===pet?.id && sharedScene ? tr(sharedScene) : tr({zh:'来认识我的小伙伴',en:'Meet my little companion'}),url:shareUrl});
-      else {await navigator.clipboard.writeText(shareUrl);setShareState('copied');}
-    } catch(error){if(!(error instanceof DOMException && error.name==='AbortError'))setShareState('failed');}
+      else setShareFailed(!await copy(shareUrl));
+    } catch(error){if(!(error instanceof DOMException && error.name==='AbortError'))setShareFailed(true);}
   };
-  useEffect(()=>{setShareState('idle');},[petId,scene,collection]);
+  useEffect(()=>{setShareFailed(false);},[petId,scene,collection]);
   return <main className="pets-page">
     <header className="pets-header">
       <PageBackLink />
       <nav aria-label={tr({zh:'宠物导航',en:'Pet navigation'})}>
         <AppLink className="pets-nav-action" href={`/pets?pet=${pet?.id ?? 'rootbeast'}`} prefetch={false} aria-current={!gallery?'page':undefined}><Heart size={15}/>{tr({zh:'领养与陪伴',en:'Adopt & care'})}</AppLink>
         <AppLink className="pets-nav-action" href={`/pets/gallery?pet=${pet?.id ?? 'rootbeast'}`} prefetch={false} aria-current={gallery?'page':undefined}><Sparkles size={15}/>{tr({zh:'宠物图鉴',en:'Gallery'})}</AppLink>
-        <button className="pets-nav-action" type="button" aria-label={tr({zh:'分享',en:'Share'})} onClick={()=>void share()} disabled={!pet}>{shareState==='copied'?<Check size={16}/>:<Share2 size={16}/>}<span role="status">{shareState==='copied'?tr({zh:'已复制',en:'Copied'}):tr({zh:'分享',en:'Share'})}</span></button>
+        <button className="pets-nav-action" type="button" aria-label={tr({zh:'分享',en:'Share'})} onClick={()=>void share()} disabled={!pet}>{copied?<CopySuccessIcon size={16} />:<Share2 size={16}/>}<span role="status">{copied?tr({zh:'已复制',en:'Copied'}):tr({zh:'分享',en:'Share'})}</span></button>
       </nav>
     </header>
     <div className="pets-heading"><span>{gallery?tr({zh:'每个小动作，都值得收藏',en:'THE LITTLE THINGS'}):tr({zh:'陪伴，是每天的小事',en:'A FRIEND, EVERY DAY'})}</span><h1>{gallery?tr({zh:'每一个小表情，都有故事。',en:'A little expression. A little story.'}):tr({zh:'让日常，多一点陪伴。',en:'A little friend for everyday life.'})}</h1>
       <p>{gallery?tr({zh:'挑一段喜欢的，送给今天想起的人。',en:'Find a favorite moment. Share it with someone on your mind.'}):tr({zh:'领养、互动、一起长大。',en:'Adopt. Play. Grow together.'})}</p></div>
-    {shareState==='failed' && <label className="pets-share-fallback">{tr({zh:'复制这个链接分享',en:'Copy this link to share'})}<input className="pets-share-url" readOnly value={shareUrl} onFocus={e=>e.currentTarget.select()}/></label>}
+    {shareFailed && <label className="pets-share-fallback">{tr({zh:'复制这个链接分享',en:'Copy this link to share'})}<input className="pets-share-url" readOnly value={shareUrl} onFocus={e=>e.currentTarget.select()}/></label>}
     {failed && !catalog ? <div className="pets-empty" role="alert"><p>{tr({zh:'宠物加载失败，请重试。',en:'Could not load the pets. Please try again.'})}</p><button className="pet-primary pets-retry-action" onClick={()=>setRetry(v=>v+1)} type="button">{tr({zh:'再试一次',en:'Try again'})}</button></div>
       : !catalog ? <div className="pets-loading" role="status"><Spinner/>{tr({zh:'正在加载宠物…',en:'Loading pets…'})}</div>
       : !pet ? <p className="pets-empty">{tr({zh:'新的小伙伴还在准备中。',en:'New companions are on their way.'})}</p>

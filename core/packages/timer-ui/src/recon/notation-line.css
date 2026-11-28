@@ -34,6 +34,9 @@
 /* Semantic chip size belongs to the row, never to the host page. */
 .recon-annotation-badge {
   display: inline-block;
+  box-sizing: content-box;
+  min-inline-size: 1em;
+  text-align: center;
   padding: 0.05em 0.4em;
   border: 1px solid var(--border-strong);
   border-radius: 5px;

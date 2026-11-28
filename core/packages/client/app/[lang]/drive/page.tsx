@@ -13,8 +13,8 @@ import {
   type ChangeEvent,
   type DragEvent,
 } from 'react';
+import { CopySuccessIcon } from '@/components/CopySuccessIcon';
 import {
-  Check,
   Copy,
   Download,
   Eye,
@@ -173,7 +173,7 @@ function DriveShareDialog({ node, url, busy, onVisibilityChange, onClose }: Driv
             <div className="drive-share-link">
               <input className="drive-text-control" value={url} readOnly aria-label={t('公开下载链接', 'Public download link')} />
               <button type="button" className="drive-control" disabled={busy} onClick={() => copy(url)}>
-                {copied ? <Check aria-hidden="true" /> : <Copy aria-hidden="true" />}
+                {copied ? <CopySuccessIcon size={24} /> : <Copy aria-hidden="true" />}
                 {copied ? t('已复制', 'Copied') : t('复制链接', 'Copy link')}
               </button>
             </div>

@@ -26,7 +26,8 @@ import {
   type JSX,
 } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Search, Lightbulb, Boxes, Square, Pencil, Copy, Check, AlertTriangle } from '@app-foundation/icons/lucide';
+import { CopySuccessIcon } from '@/components/CopySuccessIcon';
+import { Search, Lightbulb, Boxes, Square, Pencil, Copy, AlertTriangle } from '@app-foundation/icons/lucide';
 import { DndContext, closestCenter, PointerSensor, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core';
 import { SortableContext, arrayMove, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import type { AlgCase, AlgEntry, AlgFile } from '@cuberoot/shared/alg';
@@ -71,7 +72,7 @@ function CommAlgRow({ entry, invalid }: { entry: AlgEntry; invalid?: string }): 
         onClick={() => copy(entry.alg)}
         title={tr({ zh: '复制公式', en: 'Copy alg' })} aria-label={tr({ zh: '复制公式', en: 'Copy alg' })}
       >
-        {copied ? <Check size={14} /> : <Copy size={14} className="alg-alg-copy-icon" />}
+        {copied ? <CopySuccessIcon size={14} /> : <Copy size={14} className="alg-alg-copy-icon" />}
       </button>
     </div>
   );

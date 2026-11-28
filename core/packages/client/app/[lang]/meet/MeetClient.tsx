@@ -27,12 +27,14 @@
  * 接到本站的 token 上,所以它跟着全站主题走。
  */
 
+import { useCopy } from '@/hooks/useCopy';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { usePathname } from 'next/navigation';
 import { useQueryState } from 'nuqs';
 import { LiveKitRoom, PreJoin, type LocalUserChoices } from '@livekit/components-react';
 import type { DisconnectReason } from 'livekit-client';
-import { Check, Copy, QrCode } from '@app-foundation/icons/lucide';
+import { CopySuccessIcon } from '@/components/CopySuccessIcon';
+import { Copy, QrCode } from '@app-foundation/icons/lucide';
 
 import BoolToggle from '@/components/BoolToggle';
 import { RoomQrModal } from '@/components/RoomQrModal';
@@ -66,7 +68,7 @@ export default function MeetClient({ user, cfg }: { user: WcaUser; cfg: VideoCon
   const [busy, setBusy] = useState(false);
   const joining = useRef<AbortController | null>(null);
   const [err, setErr] = useState<string | null>(null);
-  const [copied, setCopied] = useState(false);
+  const { copied, copy } = useCopy();
   const [qrOpen, setQrOpen] = useState(false);
 
   // 返回、换会议码或卸载时，旧请求不能再把用户拉进已离开的会议。
@@ -158,11 +160,8 @@ export default function MeetClient({ user, cfg }: { user: WcaUser; cfg: VideoCon
 
   const copyInvite = useCallback(() => {
     // 同理,链接从会议码拼,不读 window.location —— 后者可能已经被返回键弹掉了 room。
-    void navigator.clipboard?.writeText(inviteUrl).then(() => {
-      setCopied(true);
-      setTimeout(() => setCopied(false), 1600);
-    }).catch(() => { /* 剪贴板被拒:链接就在地址栏里,不值得报错打断 */ });
-  }, [inviteUrl]);
+    void copy(inviteUrl);
+  }, [copy, inviteUrl]);
 
   // 入会前那一屏挑的设备要真的用上,否则「选了摄像头却开了另一个」。
   const roomOptions = useMemo(() => ({
@@ -187,7 +186,7 @@ export default function MeetClient({ user, cfg }: { user: WcaUser; cfg: VideoCon
         <header className="meet-bar">
           <span className="meet-code">{code}</span>
           <button type="button" className="meet-copy" onClick={copyInvite}>
-            {copied ? <Check size={14} /> : <Copy size={14} />}
+            {copied ? <CopySuccessIcon size={14} /> : <Copy size={14} />}
             {copied ? tr({ zh: '已复制', en: 'Copied' }) : tr({ zh: '复制邀请链接', en: 'Copy invite link' })}
           </button>
           <button

@@ -1,21 +1,23 @@
 'use client';
 import type { ComponentProps } from 'react';
-import { Check, Copy } from 'lucide-react';
 import { useCopy } from '@/hooks/useCopy';
 import { tr } from '@/i18n/tr';
+import { CopySuccessIcon } from './CopySuccessIcon';
 import { ScramblePreview2D } from './ScramblePreview2D';
 import SolutionView from './SolutionView';
 
-export function ReconNotationBlock({ captionHeader, scramble, scrambleCubeOrder, displayScramble, optimalScrambleTag = '', solutionText, displayText, rawDisplayText, solve, playerRef, playback, canToggle = false, crossLineIdx = -1, crossNormalized = false, setCrossNormalized, canRemoveWaste = false, wasteRemoved = false, setWasteRemoved = () => {}, cancellationLines, expandedCancellationLine, onToggleCancellation }: {
+export function ReconNotationBlock({ captionHeader, scramble, scrambleCubeOrder, displayScramble, optimalScrambleTag = '', solutionText, displayText, rawDisplayText, solve, playerRef, playback, openingOrientation, canToggle = false, crossLineIdx = -1, crossNormalized = false, setCrossNormalized, canRemoveWaste = false, wasteRemoved = false, setWasteRemoved = () => {}, cancellationLines, expandedCancellationLine, onToggleCancellation }: {
   captionHeader: string; scramble: string; scrambleCubeOrder: number | null; displayScramble: string; optimalScrambleTag?: string;
   solutionText: string; displayText: string; rawDisplayText: string; solve: { solutionHtml?: string; event: string; pickupTime?: number | null; putdownTime?: number | null };
   playerRef?: ComponentProps<typeof SolutionView>['playerRef']; playback?: ComponentProps<typeof SolutionView>['playback'];
+  openingOrientation?: ComponentProps<typeof SolutionView>['openingOrientation'];
   canToggle?: boolean; crossLineIdx?: number; crossNormalized?: boolean;
   setCrossNormalized?: (update: (value: boolean) => boolean) => void;
   canRemoveWaste?: boolean; wasteRemoved?: boolean; setWasteRemoved?: (update: (value: boolean) => boolean) => void;
   cancellationLines?: ReadonlySet<number>; expandedCancellationLine?: number | null; onToggleCancellation?: (line: number) => void;
 }) {
-  const { copied: scrambleCopied, copy: copyScramble } = useCopy();
+  const { copiedKey, copy: copyScramble } = useCopy();
+  const scrambleCopied = copiedKey === scramble;
   const hasTiming = solve.pickupTime != null || solve.putdownTime != null;
   return <>
             {(captionHeader || hasTiming) && (
@@ -37,19 +39,16 @@ export function ReconNotationBlock({ captionHeader, scramble, scrambleCubeOrder,
                 <ScramblePreview2D event={String(scrambleCubeOrder).repeat(3)} scramble={scramble}
                   size={14} enlargeable />
               </span>}
-              <span className="recon-case-line-text">
-              {scramble ? <>{displayScramble}{optimalScrambleTag}</> : tr({ zh: '暂无打乱', en: 'No scramble available' })}
-              {scramble && <> <button
-                type="button"
-                className="normalized-cross-copy"
-                aria-label={scrambleCopied ? tr({ zh: '已复制', en: 'Copied' }) : tr({ zh: '复制打乱', en: 'Copy scramble' })}
-                title={scrambleCopied ? tr({ zh: '已复制', en: 'Copied' }) : tr({ zh: '复制打乱', en: 'Copy scramble' })}
-                onClick={() => copyScramble(scramble)}
-              >
-                {scrambleCopied ? <Check size={14} /> : <Copy size={14} />}
-              </button></>}
+              {scramble ? (
+                <button type="button" className="recon-case-line-text recon-scramble-copy"
+                  aria-label={`${tr({ zh: '复制打乱', en: 'Copy scramble' })} ${displayScramble}${optimalScrambleTag}`}
+                  onClick={() => copyScramble(scramble, scramble)}>
+                  {displayScramble}{optimalScrambleTag}
+                  {scrambleCopied && <CopySuccessIcon className="recon-scramble-copy-check" />}
+                </button>
+              ) : <span className="recon-case-line-text">{tr({ zh: '暂无打乱', en: 'No scramble available' })}</span>}
               </span>
-              </span>
+              <span className="sr-only" role="status">{scrambleCopied ? tr({ zh: '已复制', en: 'Copied' }) : ''}</span>
             </div>
             {solutionText && (
               <SolutionView
@@ -62,6 +61,7 @@ export function ReconNotationBlock({ captionHeader, scramble, scrambleCubeOrder,
                 sourceText={rawDisplayText}
                 playerRef={playerRef}
                 playback={playback}
+                openingOrientation={openingOrientation}
                 crossLineIdx={canToggle && setCrossNormalized ? crossLineIdx : -1}
                 crossNormalized={crossNormalized}
                 onToggleCross={setCrossNormalized ? () => setCrossNormalized(v => !v) : undefined}

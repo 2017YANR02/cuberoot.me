@@ -1,11 +1,11 @@
 'use client';
 
+import { useCopy } from '@/hooks/useCopy';
 import PageBackLink from '@/components/PageBackLink';
 // /dev/fonts — single reference for every self-hosted font on the site.
 // Each font shows a live specimen rendered in its actual family, plus role,
 // weights, coverage, where it's used, the token to prefer, files and license.
 // Data lives in _fonts.ts (mirrors app/fonts.css + page-local @font-face blocks).
-import { useState } from 'react';
 import Link from '@/components/AppLink';
 import { useTranslation } from 'react-i18next';
 import { tr } from '@/i18n/tr';
@@ -13,15 +13,9 @@ import './fonts.css';
 import { FONT_GROUPS, type FontSpec } from './_fonts';
 
 function CopyToken({ token }: { token: string }) {
-  const [copied, setCopied] = useState(false);
-  const copy = () => {
-    navigator.clipboard?.writeText(`var(${token})`).then(() => {
-      setCopied(true);
-      window.setTimeout(() => setCopied(false), 1100);
-    }).catch(() => {});
-  };
+  const { copied, copy } = useCopy();
   return (
-    <button type="button" className="fn-token" onClick={copy} title={`var(${token})`}>
+    <button type="button" className="fn-token" onClick={() => copy(`var(${token})`)} title={`var(${token})`}>
       <code>var({token})</code>
       <span className="fn-token-copy">{copied ? tr({ zh: '已复制', en: 'copied'
     }) : tr({ zh: '复制', en: 'copy'

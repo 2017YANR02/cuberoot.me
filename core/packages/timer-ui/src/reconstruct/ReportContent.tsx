@@ -1,7 +1,8 @@
 'use client';
 import MoreToggle from '../MoreToggle';
 import { createElement, type ReactNode } from 'react';
-import { Check, Copy, Forward, ThumbsUp, ThumbsDown, ChevronRight, SkipBack, SkipForward, ChevronLeft, Play, Pause, ArrowRightLeft } from 'lucide-react';
+import { Copy, Forward, ThumbsUp, ThumbsDown, ChevronRight, SkipBack, SkipForward, ChevronLeft, Play, Pause, ArrowRightLeft } from 'lucide-react';
+import { CopySuccessIcon } from '../CopySuccessIcon';
 import '../recon/recon-cross-toggle.css';
 import BoolToggle from '../BoolToggle';
 import { TimerDifficultyHelp } from '../TimerDifficultyHelp';
@@ -12,7 +13,7 @@ import NotationLine from '../recon/NotationLine';
 import { notationHit } from './report-notation';
 import type { ReportNode, ReportAction } from './report-content';
 
-const icons={swap:ArrowRightLeft,check:Check,copy:Copy,share:Forward,'thumb-up':ThumbsUp,'thumb-down':ThumbsDown,start:SkipBack,end:SkipForward,back:ChevronLeft,next:ChevronRight,play:Play,pause:Pause};
+const icons={swap:ArrowRightLeft,check:CopySuccessIcon,copy:Copy,share:Forward,'thumb-up':ThumbsUp,'thumb-down':ThumbsDown,start:SkipBack,end:SkipForward,back:ChevronLeft,next:ChevronRight,play:Play,pause:Pause};
 /** DOM-only adapter. Content and decisions belong to report-content. */
 export default function ReportContent({node,dispatch,slots={}}:{node:ReportNode|null;dispatch:(action:ReportAction)=>void;slots?:Record<string,ReactNode>}) {
   const host=useReconstructHost();

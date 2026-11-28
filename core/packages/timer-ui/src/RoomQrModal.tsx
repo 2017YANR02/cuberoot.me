@@ -1,4 +1,5 @@
-import { Check, Copy } from 'lucide-react';
+import { CopySuccessIcon } from './CopySuccessIcon';
+import { Copy } from 'lucide-react';
 import { useMemo } from 'react';
 import { useClipboardFeedback } from './browser-clipboard';
 import { timerRoomQrSvg } from './room-qr';
@@ -36,10 +37,10 @@ export function RoomQrModal({ code, labels, language, onClose, url, writeClipboa
     <RoomQrCode url={url} />
     <button type="button" className="room-qr-code-text" aria-label={`${labels.copyCode}: ${code}`}
       onClick={() => void copy(code, 'code')}>
-      {code}{codeCopied ? <Check size={16} aria-hidden /> : <Copy size={16} aria-hidden />}
+      {code}{codeCopied ? <CopySuccessIcon size={16} /> : <Copy size={16} aria-hidden />}
     </button>
     <button type="button" className="room-qr-link" aria-label={labels.copyInvite} onClick={() => void copy(url, 'invite')}>
-      {inviteCopied ? <Check size={13} aria-hidden /> : <Copy size={13} aria-hidden />}
+      {inviteCopied ? <CopySuccessIcon size={13} /> : <Copy size={13} aria-hidden />}
       <span className="room-qr-link-text">{url}</span>
     </button>
     <div className="room-qr-status" role="status">{feedback && (

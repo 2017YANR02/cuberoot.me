@@ -2,7 +2,8 @@
 
 import MoreToggle from '@/components/MoreToggle';
 import { useState } from 'react';
-import { Check, Copy, Terminal } from '@app-foundation/icons/lucide';
+import { CopySuccessIcon } from '@/components/CopySuccessIcon';
+import { Copy, Terminal } from '@app-foundation/icons/lucide';
 import { useCopy } from '@/hooks/useCopy';
 import { useT } from '@/hooks/useT';
 
@@ -44,7 +45,7 @@ ${executable} init --memory ${tiers[variant - 1]}`;
             </select>
           </label>
           <button type="button" className="solv-start-copy" onClick={() => copy(commands)}>
-            {copied ? <Check size={15} aria-hidden="true" /> : <Copy size={15} aria-hidden="true" />}
+            {copied ? <CopySuccessIcon size={15} /> : <Copy size={15} aria-hidden="true" />}
             {copied ? t('已复制', 'Copied') : t('复制命令', 'Copy commands')}
           </button>
         </div>

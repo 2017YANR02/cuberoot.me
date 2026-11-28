@@ -1,7 +1,8 @@
 'use client';
 import { useEffect, useRef, useState, useSyncExternalStore, type ReactNode } from 'react';
 import dynamic from 'next/dynamic';
-import { Check, Copy, ThumbsUp, ThumbsDown, Volume2, Square, Share, RefreshCw, Ellipsis, GitBranch, ChevronRight, FileText, Quote, SlidersHorizontal } from '@app-foundation/icons/lucide';
+import { CopySuccessIcon } from '@/components/CopySuccessIcon';
+import { Copy, ThumbsUp, ThumbsDown, Volume2, Square, Share, RefreshCw, Ellipsis, GitBranch, ChevronRight, FileText, Quote, SlidersHorizontal } from '@app-foundation/icons/lucide';
 import { CompactSelect } from '@/components/CompactSelect';
 import { Tooltip } from '@/components/Tooltip';
 import { useCopy } from '@/hooks/useCopy';
@@ -119,7 +120,7 @@ export default function AssistantAnswerActions({ turn, lang, active, onRetry, on
   return <>
     <div className="site-assistant-response-actions assistant-answer-toolbar">
       {onQuote && <Action label={tr({zh:'引用回答',en:'Quote answer'})} onClick={onQuote}><Quote size={18}/></Action>}
-      <Action label={tr(copied ? { zh: '已复制', en: 'Copied' } : { zh: '复制', en: 'Copy' })} onClick={() => copy(exportText())}>{copied ? <Check size={18}/> : <Copy size={18}/>}</Action>
+      <Action label={tr(copied ? { zh: '已复制', en: 'Copied' } : { zh: '复制', en: 'Copy' })} onClick={() => copy(exportText())}>{copied ? <CopySuccessIcon size={18} /> : <Copy size={18}/>}</Action>
       {turn.requestId && !turn.partial && <CompactSelect side="top" unstyledTrigger triggerClassName="site-assistant-action" popupClassName="assistant-action-menu" className="assistant-toolbar-menu" ariaLabel={tr({ zh: '评价回答', en: 'Rate response' })} label={feedback ? feedback === 'helpful' ? <ThumbsUp size={18}/> : <ThumbsDown size={18}/> : <span className="assistant-feedback-symbol"><ThumbsUp size={12}/><ThumbsDown size={12}/></span>} disabled={pending} value={feedback === 'helpful' ? 'helpful' : feedback ? 'other' : undefined} onChange={value => void saveFeedback(value)} items={[
         { value: 'helpful' as const, label: <span className="assistant-menu-label"><ThumbsUp size={19}/>{tr({ zh: '回复优秀', en: 'Good response' })}</span> },
         { value: 'other' as const, label: <span className="assistant-menu-label"><ThumbsDown size={19}/>{tr({ zh: '回复不佳', en: 'Bad response' })}</span> },

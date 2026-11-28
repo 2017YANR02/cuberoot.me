@@ -31,7 +31,7 @@ function orientationItems(tr: (copy: TimerSettingCopy) => string, grid: boolean)
 }
 
 export default function CubeOrientationSelect({
-  value, onChange, className, title, ariaLabel, layout = 'list', localize: tr,
+  value, onChange, className, title, ariaLabel, triggerColors, variant, layout = 'list', localize: tr,
 }: {
   /** 整体转前缀,'' = 不转(UF)。 */
   value: string;
@@ -40,6 +40,8 @@ export default function CubeOrientationSelect({
   className?: string;
   title?: string;
   ariaLabel?: string;
+  triggerColors?: string;
+  variant?: 'plain' | 'pill';
   layout?: 'list' | 'grid' | 'bottom' | 'bottom-front';
 }) {
   if (layout === 'bottom' || layout === 'bottom-front') {
@@ -80,11 +82,12 @@ export default function CubeOrientationSelect({
   return (
     <CompactSelect
       className="cube-orientation-select"
+      variant={variant}
       popupClassName={grid ? 'cube-orientation-grid' : undefined}
       items={items}
       value={value}
       onChange={onChange}
-      label={current?.triggerLabel ?? value}
+      label={triggerColors ? <CubeColorChip localize={tr} className="cube-orientation-chip" colors={triggerColors} /> : current?.triggerLabel ?? value}
       ariaLabel={ariaLabel ?? title ?? tr({ en: 'Cube orientation', zh: '魔方朝向' })}
       valueText={current?.textValue ?? value}
       title={title}

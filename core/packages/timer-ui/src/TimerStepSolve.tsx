@@ -5,6 +5,7 @@
  * 阶段边界只用于定位；回放始终使用原始打乱与完整动作序列。
  */
 
+import { browserClipboardTransport } from './browser-clipboard';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   METHOD_REGISTRY,
@@ -54,7 +55,7 @@ export default function TimerStepSolve({ scramble, isZh, onDismissChange, onBloc
   const notationHost = useMemo(() => ({
     ...host,
     localize: <T,>(text: { en: T; zh: T }) => text[isZh ? 'zh' : 'en'],
-    writeClipboardText: async (text: string) => navigator.clipboard.writeText(text),
+    writeClipboardText: browserClipboardTransport,
   }), [host, isZh]);
   const [methodId, setMethodId] = useState<MethodId>('cfop');
   const [cache, setCache] = useState<{ scramble: string; values: typeof EMPTY }>({ scramble, values: { ...EMPTY } });

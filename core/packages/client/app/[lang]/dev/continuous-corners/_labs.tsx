@@ -1,5 +1,6 @@
 'use client';
 
+import { useCopy } from '@/hooks/useCopy';
 import MoreToggle from '@/components/MoreToggle';
 import { useId, useState, type ReactNode } from 'react';
 import { continuousCorners, concentricCornerRadii, continuousCornerRadii } from '@2017yanr02/continuous-corners';
@@ -26,18 +27,13 @@ export function CornerLab() {
   const [radius, setRadius] = useState(48);
   const [view, setView] = useState('overlay');
   const shape = continuousCorners({ width, height, radius });
-  const [message, setMessage] = useState('');
+  const { copied, copy, feedback } = useCopy({ persist: 'all' });
   const id = useId();
   const code = `continuousCorners({ width: ${width}, height: ${height}, radius: ${radius} })`;
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}"><path d="${shape.d}" fill="currentColor"/></svg>`;
-  async function copy() {
-    try {
-      await navigator.clipboard.writeText(svg);
-      setMessage(t('SVG 已复制', 'SVG copied'));
-    } catch {
-      setMessage(t('复制不可用，可展开下方 SVG 手动复制。', 'Copy unavailable. Expand the SVG below to copy it manually.'));
-    }
-  }
+  const copySvg = () => copy(svg);
+  const message = feedback ? copied ? t('SVG 已复制', 'SVG copied')
+    : t('复制不可用，可展开下方 SVG 手动复制。', 'Copy unavailable. Expand the SVG below to copy it manually.') : '';
   return <div className="cc-lab" data-site-surface="panel">
     <div className="cc-stage">
       <svg viewBox="-40 -36 440 322" role="img" aria-label={t('实线是库的导出路径重建，虚线是圆弧圆角', 'Solid: reconstructed exported path. Dashed: circular corners.')}>
@@ -65,7 +61,7 @@ export function CornerLab() {
       </select></label>
       <p className="cc-caption">{t('有效半径', 'Effective radius')} = {shape.effectiveRadius} · {t('逻辑单位', 'logical units')}</p>
       <code className="cc-inline-code">{code}</code>
-      <button className="cc-button cc-button-secondary" onClick={copy}>{t('复制当前 SVG', 'Copy SVG')}</button>
+      <button className="cc-button cc-button-secondary" onClick={copySvg}>{t('复制当前 SVG', 'Copy SVG')}</button>
       <span className="cc-feedback" role="status">{message}</span>
     </div>
     <details className="cc-code-details"><MoreToggle as="summary">{t('查看当前 SVG 路径', 'Inspect the current SVG path')}</MoreToggle><pre><code>{svg}</code></pre></details>

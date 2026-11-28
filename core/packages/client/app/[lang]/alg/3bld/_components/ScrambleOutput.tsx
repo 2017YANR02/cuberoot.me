@@ -2,11 +2,13 @@
 
 // Numbered read-only list of generated scrambles + copy-all + stats line + busy spinner.
 
+import { useCopy } from '@/hooks/useCopy';
 import { useEffect, useRef, useState, type JSX } from 'react';
 import { useTrainingPathname as usePathname } from '@/lib/training-host';
 import TrainingStatsPanel, { TrainingSelfCheck } from '@/components/TrainingStatsPanel';
 import { useTrainingStats } from '@/hooks/useTrainingStats';
-import { Copy, Check } from '@app-foundation/icons/lucide';
+import { CopySuccessIcon } from '@/components/CopySuccessIcon';
+import { Copy } from '@app-foundation/icons/lucide';
 import { Spinner } from '@/components/Spinner/Spinner';
 import { tr } from '@/i18n/tr';
 
@@ -17,7 +19,7 @@ interface ScrambleOutputProps {
 }
 
 export function ScrambleOutput({ scrambles, info, busy }: ScrambleOutputProps): JSX.Element {
-  const [copied, setCopied] = useState(false);
+  const { copied, copy } = useCopy();
   const path = usePathname().replace(/^\/(?:en|zh)(?=\/)/, '');
   const group = `bld-drill:${path}`;
   const { record } = useTrainingStats(group);
@@ -27,14 +29,8 @@ export function ScrambleOutput({ scrambles, info, busy }: ScrambleOutputProps): 
 
   const copyAll = async () => {
     const text = scrambles.join('\n');
-    try {
-      await navigator.clipboard.writeText(text);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 1500);
-    } catch {
-      // clipboard unavailable (insecure context / permission) — surface the text.
-      window.prompt(tr({ zh: '复制下面的打乱:', en: 'Copy the scrambles below:'
-    }), text);
+    if (!await copy(text)) {
+      window.prompt(tr({ zh: '复制下面的打乱:', en: 'Copy the scrambles below:' }), text);
     }
   };
 
@@ -58,7 +54,7 @@ export function ScrambleOutput({ scrambles, info, busy }: ScrambleOutputProps): 
           onClick={copyAll}
           disabled={busy || scrambles.length === 0}
         >
-          {copied ? <Check size={15} /> : <Copy size={15} />}
+          {copied ? <CopySuccessIcon size={15} /> : <Copy size={15} />}
           {copied ? tr({ zh: '已复制', en: 'Copied'
                           }) : tr({ zh: '复制全部', en: 'Copy all'
                               })}

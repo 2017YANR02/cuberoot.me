@@ -1,8 +1,10 @@
 'use client';
 
+import { useCopy } from '@/hooks/useCopy';
 import MoreToggle from '@/components/MoreToggle';
 import { useEffect, useState } from 'react';
-import { Check, Copy, ExternalLink } from '@app-foundation/icons/lucide';
+import { CopySuccessIcon } from '@/components/CopySuccessIcon';
+import { Copy, ExternalLink } from '@app-foundation/icons/lucide';
 import AppLink from '@/components/AppLink';
 import { useT } from '@/hooks/useT';
 import { assembleQrArtPrompt, composeQrArtPrompt, FALLBACK_QR_PROMPT_LIBRARY, getQrPromptLibrary, QR_PROMPT_DIMENSIONS, type QrPromptDimension, type QrPromptLibrary } from '@/lib/platform-qr-prompt';
@@ -19,7 +21,7 @@ export function PromptComposer({
   const [library, setLibrary] = useState<QrPromptLibrary>(FALLBACK_QR_PROMPT_LIBRARY);
   const [libraryError, setLibraryError] = useState('');
   const [selected, setSelected] = useState<Partial<Record<QrPromptDimension, string>>>({});
-  const [copied, setCopied] = useState(false);
+  const { copied, copy } = useCopy();
 
   useEffect(() => {
     const controller = new AbortController();
@@ -41,20 +43,7 @@ export function PromptComposer({
   const copyPrompt = async () => {
     const prompt = value.trim();
     if (!prompt) return;
-    try {
-      await navigator.clipboard.writeText(prompt);
-    } catch {
-      const area = document.createElement('textarea');
-      area.value = prompt;
-      area.style.position = 'fixed';
-      area.style.opacity = '0';
-      document.body.appendChild(area);
-      area.select();
-      document.execCommand('copy');
-      area.remove();
-    }
-    setCopied(true);
-    window.setTimeout(() => setCopied(false), 1500);
+    await copy(prompt);
   };
 
   return (
@@ -120,7 +109,7 @@ export function PromptComposer({
           </label>
           <div className={styles.promptActions}>
             <button type="button" className="platform-button platform-button-primary" disabled={!value.trim()} onClick={() => { void copyPrompt(); }}>
-              {copied ? <Check aria-hidden /> : <Copy aria-hidden />}{copied ? t('已复制', 'Copied') : t('复制提示词', 'Copy prompt')}
+              {copied ? <CopySuccessIcon size={24} /> : <Copy aria-hidden />}{copied ? t('已复制', 'Copied') : t('复制提示词', 'Copy prompt')}
             </button>
             {value.trim() ? <button type="button" className={styles.textButton} onClick={() => { setSelected({}); onChange(''); }}>{t('清空', 'Clear')}</button> : null}
           </div>

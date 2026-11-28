@@ -1,4 +1,5 @@
 'use client';
+import { copyClipboardText } from '@/lib/clipboard';
 import PageHeading from '@/components/PageHeading';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { parseAsStringEnum, useQueryState } from 'nuqs';
@@ -102,8 +103,9 @@ export default function MeetLobby({ maxParticipants, busy, error, onCreate, onJo
             {!past && <button type="button" className="meet-go" onClick={() => onJoin(plan.code)}>{tr({ zh: '进入', en: 'Join' })}</button>}
             <button type="button" className="meet-icon-button" aria-label={tr({ zh: `复制邀请：${plan.title}`, en: `Copy invite: ${plan.title}` })} onClick={async () => {
               const invite = new URL(window.location.href); invite.search = ''; invite.searchParams.set('room', plan.code);
-              try { await navigator.clipboard.writeText(`${plan.title}\n${new Date(start).toLocaleString()} (${Intl.DateTimeFormat().resolvedOptions().timeZone})\n${invite}`); setActionMessage(tr({ zh: '邀请已复制', en: 'Invite copied' })); }
-              catch { setActionMessage(tr({ zh: '复制失败，请重试。', en: 'Could not copy. Please retry.' })); }
+              const copied = await copyClipboardText(`${plan.title}\n${new Date(start).toLocaleString()} (${Intl.DateTimeFormat().resolvedOptions().timeZone})\n${invite}`);
+              setActionMessage(tr(copied ? { zh: '邀请已复制', en: 'Invite copied' }
+                : { zh: '复制失败，请重试。', en: 'Could not copy. Please retry.' }));
             }}><Copy size={17} /></button>
             <button type="button" className="meet-icon-button" aria-label={tr({ zh: `编辑预约：${plan.title}`, en: `Edit meeting: ${plan.title}` })} onClick={() => { setEditing(plan); void setView('schedule'); }}><Pencil size={17} /></button>
             <button type="button" className="meet-icon-button" aria-label={tr({ zh: `取消预约：${plan.title}`, en: `Cancel meeting: ${plan.title}` })} onClick={() => setConfirmCancel(`${plan.id}:${start}`)}><CalendarX size={17} /></button>

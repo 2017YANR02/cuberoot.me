@@ -1,11 +1,9 @@
 'use client';
 
+import { useCopy } from '@/hooks/useCopy';
 import PageHeading from '@/components/PageHeading';
 import PageBackLink from '@/components/PageBackLink';
 import MoreToggle from '@/components/MoreToggle';
-import dynamic from 'next/dynamic';
-import LiquidGlassChips from '@/components/LiquidGlassChips';
-import { useCopy } from '@/hooks/useCopy';
 import { reconVideoGroups } from '@/lib/recon-video-url';
 import { loadBiliVideo, loadVideoTitle } from '@/lib/recon-video-cover';
 import { WcaPersonTeamBadge } from '@/components/WcaPersonTeamBadge';
@@ -20,12 +18,12 @@ import { runPlayerFullscreenTransition } from '@/lib/view-transition';
 import { useEffect, useState, useCallback, useMemo, useRef, Fragment, type ReactNode } from 'react';
 import Link from '@/components/AppLink';
 import { createPortal } from 'react-dom';
-import { copyPageLink } from '@/lib/page-share';
 import { useInstalledCommunityDisabled } from '@/lib/installed-content';
 import { useParams } from 'next/navigation';
 import { useEntryRouter as useRouter } from '@/hooks/useEntryRouter';
 import { useTranslation } from 'react-i18next';
-import { Box, PenLine, Calendar, UserPlus, StickyNote, Video, TriangleAlert, Pencil, Trash2, Pin, PinOff, Plus, Key, Copy, Check, Maximize2, Minimize2, Lock, Link2, LogIn, ExternalLink, Share2, Download } from '@app-foundation/icons/lucide';
+import { CopySuccessIcon } from '@/components/CopySuccessIcon';
+import { Box, PenLine, Calendar, UserPlus, StickyNote, Video, TriangleAlert, Pencil, Trash2, Pin, PinOff, Plus, Key, Maximize2, Minimize2, Lock, Link2, LogIn, ExternalLink, Share2 } from '@app-foundation/icons/lucide';
 import type { ReconSolve, ReconComment, ReconAlternative } from '@cuberoot/shared';
 import { cleanFtoReconAlgForPlayer, getReconScramble } from '@cuberoot/shared/recon-completion';
 import { ReconCompletionBadge } from '@/components/recon/ReconCompletionBadge';
@@ -74,6 +72,7 @@ import { RecordBadge } from '@/components/RecordBadge';
 import ReconPlayerCanvas from '@/components/recon/ReconPlayerCanvas';
 import { getPuzzleId } from '@/lib/recon-utils';
 import { ReconNotationBlock } from '@/components/ReconNotationBlock';
+import { ReconNotationToolbar, ReconSourceText, ReconStageSolver, type NotationView } from '@/components/recon/ReconNotationToolbar';
 import { expandReconCancellation } from '@/lib/recon-f2l-links';
 import { canonicalSq1Alg, formatScrambleForEvent, compactSq1Solution } from '@cuberoot/shared/sq1-notation';
 import {
@@ -93,16 +92,8 @@ import { AvgDec } from '@/components/wca-results/AvgDec';
 import { tr } from '@/i18n/tr';
 import { loadIpCountry } from '@/lib/ip-country';
 import { CompactSelect } from '@/components/CompactSelect';
-import { saveBlob } from '@/lib/puzzle-image/image-export';
-import { exportReconImages, type ReconImageFont, type ReconImageStyle } from './export-recon-image';
 import { buildSimQuery, simPuzzleForReconEvent } from '@/lib/sim-recon-link';
 import { ContentSkeleton } from '@/components/ContentSkeleton';
-
-const StageSolver = dynamic(() => import('@/components/StageSolver'), { ssr: false });
-
-const NOTATION_VIEWS = ['recon', 'source'] as const;
-const SOLVER_NOTATION_VIEWS = ['recon', 'source', 'solver'] as const;
-type NotationView = typeof SOLVER_NOTATION_VIEWS[number];
 
 const YOUTUBE_LOGO = '/assets/youtube_logo.svg';
 const BILIBILI_LOGO = '/assets/bilibili_logo.svg';
@@ -339,13 +330,7 @@ function ReconDetailBody({ scramble, solutionText, solve, comments, onUpdate, in
   const sourceView = notationView === 'source';
   const solverView = notationView === 'solver';
   const sourceText = [scramble, solutionText].filter(Boolean).join('\n');
-  const { copiedKey, copy: copySource } = useCopy();
   const imageRef = useRef<HTMLDivElement>(null);
-  const downloadImage = async (style: ReconImageStyle | 'both', font: ReconImageFont) => {
-    if (!imageRef.current) throw new Error('Reconstruction image unavailable');
-    const images = await exportReconImages(imageRef.current, style === 'both' ? ['black', 'white'] : [style], font);
-    for (const { color, blob } of images) saveBlob(blob, `recon-${solve.id}-${color}${font === 'original' ? '' : '-roboto-condensed'}.png`);
-  };
   const [alts, setAlts] = useState<ReconAlternative[]>(solve.alternatives ?? []);
 
   const canToggle = useMemo(
@@ -411,9 +396,6 @@ function ReconDetailBody({ scramble, solutionText, solve, comments, onUpdate, in
     const body = [scrambleLine, displayText].filter(Boolean).join('\n');
     return [captionHeader, body].filter(Boolean).join('\n');
   }, [solutionText, scramble, displayScramble, optimalScrambleTag, displayText, captionHeader]);
-  const notationCopyKey = `${solve.id}:${sourceView ? 'source' : 'recon'}`;
-  const notationCopyLabel = sourceView ? tr({ zh: '复制原文', en: 'Copy raw text' }) : tr({ zh: '复制复盘', en: 'Copy reconstruction' });
-
   // 复盘者与提交者常是同一人——同一人时合并成一行,名字只显示一次(双图标)
   const sameContributor =
     !!solve.reconer && !!solve.addedBy &&
@@ -430,17 +412,11 @@ function ReconDetailBody({ scramble, solutionText, solve, comments, onUpdate, in
 
   return (
     <>
-            {solve.recordType !== 'timing' && (solutionText || canSolveScramble) && <div className="detail-header-block detail-notation-toolbar">
-              <LiquidGlassChips items={canSolveScramble ? SOLVER_NOTATION_VIEWS : NOTATION_VIEWS} value={notationView}
+            {solve.recordType !== 'timing' && (solutionText || canSolveScramble) &&
+              <ReconNotationToolbar className="detail-header-block" view={notationView} canSolve={canSolveScramble}
                 onChange={view => setSelectedView({ id: solve.id, view })}
-                getLabel={view => view === 'solver' ? tr({ zh: '求解', en: 'Solve' }) : view === 'source' ? tr({ zh: '原始', en: 'Raw' }) : tr({ zh: '复盘', en: 'Recon' })}
-                ariaLabel={tr({ zh: '复盘展示方式', en: 'Reconstruction view' })} />
-              {!solverView && <><button type="button" className="detail-source-copy" title={notationCopyLabel} onClick={() => copySource(sourceView ? sourceText : fullCopyText, notationCopyKey)}>
-                {copiedKey === notationCopyKey ? <Check size={14} aria-hidden="true" /> : <Copy size={14} aria-hidden="true" />}
-                <span className="sr-only" aria-live="polite">{copiedKey === notationCopyKey ? tr({ zh: '已复制', en: 'Copied' }) : notationCopyLabel}</span>
-              </button>
-              <ReconImageDownload onDownload={downloadImage} /></>}
-            </div>}
+                formattedText={fullCopyText} sourceText={sourceText} copyKey={String(solve.id)}
+                imageRef={imageRef} imageName={`recon-${solve.id}`} />}
     <div className="detail-layout">
       {solve.recordType !== 'timing' && !solverView && <div className="detail-player-pane" data-player-fullscreen-surface>
         {/* 有解法 → 播放复盘;无解法(只录了 WCA 成绩 + 打乱)→ alg 为空,
@@ -464,8 +440,8 @@ function ReconDetailBody({ scramble, solutionText, solve, comments, onUpdate, in
 
         {solve.recordType !== 'timing' && (scramble || solutionText) && (
           <div className="detail-section">
-            {solverView && canSolveScramble && <StageSolver key={solve.id} scramble={scramble} lang={isZh ? 'zh' : 'en'} compact />}
-            {sourceView && <pre className="detail-source-text" tabIndex={0} aria-label={tr({ zh: '复盘原文', en: 'Reconstruction source' })}><code>{sourceText}</code></pre>}
+            {solverView && canSolveScramble && <ReconStageSolver key={solve.id} scramble={scramble} lang={isZh ? 'zh' : 'en'} />}
+            {sourceView && <ReconSourceText text={sourceText} />}
             <div className="detail-scramble-solution" ref={imageRef} hidden={sourceView || solverView}>
             <ReconNotationBlock captionHeader={captionHeader} scramble={scramble} scrambleCubeOrder={scrambleCubeOrder}
               cancellationLines={cancellationLines} expandedCancellationLine={expandedCancellationLine}
@@ -576,55 +552,6 @@ function ReconDetailBody({ scramble, solutionText, solve, comments, onUpdate, in
   );
 }
 
-function ReconImageDownload({ onDownload }: {
-  onDownload: (style: ReconImageStyle | 'both', font: ReconImageFont) => Promise<void>;
-}) {
-  const [imageStatus, setImageStatus] = useState<'idle' | 'busy' | 'error'>('idle');
-  const [imageFont, setImageFont] = useState<ReconImageFont>('original');
-  const download = async (imageStyle: ReconImageStyle | 'both') => {
-    if (imageStatus === 'busy') return;
-    setImageStatus('busy');
-    try {
-      await onDownload(imageStyle, imageFont);
-      setImageStatus('idle');
-    } catch {
-      setImageStatus('error');
-    }
-  };
-
-  return (
-    <CompactSelect<ReconImageStyle | 'both'>
-      triggerClassName="detail-source-copy"
-      unstyledTrigger
-      showArrow={false}
-      ariaLabel={tr({ zh: '下载 PNG', en: 'Download PNG' })}
-      title={tr({ zh: '下载 PNG', en: 'Download PNG' })}
-      disabled={imageStatus === 'busy'}
-      label={<span className="recon-png-label"><Download size={14} aria-hidden="true" />
-        <span className="sr-only" aria-live="polite">{imageStatus === 'busy'
-          ? tr({ zh: '正在生成…', en: 'Generating…' })
-          : imageStatus === 'error'
-            ? tr({ zh: '下载失败，点击重试', en: 'Download failed, retry' })
-            : 'PNG'}</span>
-      </span>}
-      items={[
-        { value: 'both', label: tr({ zh: '黑白两版', en: 'Black & white versions' }) },
-        { value: 'black', label: tr({ zh: '黑字', en: 'Black text' }) },
-        { value: 'white', label: tr({ zh: '白字', en: 'White text' }) },
-        { value: 'white-outline', label: tr({ zh: '白字黑边', en: 'White text, black outline' }) },
-      ]}
-      onChange={style => { void download(style); }}
-      footer={() => <label className="recon-image-font">
-        <span>{tr({ zh: '字体', en: 'Font' })}</span>
-        <select className="recon-image-font-select" value={imageFont} onChange={e => setImageFont(e.target.value as ReconImageFont)}>
-          <option value="original">{tr({ zh: '原始字体', en: 'Original font' })}</option>
-          <option value="roboto-condensed">Roboto Condensed Regular</option>
-        </select>
-      </label>}
-    />
-  );
-}
-
 function ExternalLinks({ event, scramble, alg, solveId, shareTarget }: {
   event: string; scramble: string; alg: string; solveId: number;
   shareTarget: HTMLSpanElement | null;
@@ -636,20 +563,11 @@ function ExternalLinks({ event, scramble, alg, solveId, shareTarget }: {
   const { algUrl, algSiteName, cubedbUrl } = buildExternalLinks(event, scramble, playerAlg);
   const simPuzzle = simPuzzleForReconEvent(event);
   const simHref = simPuzzle ? `/sim?${buildSimQuery(simPuzzle, scramble, alg)}` : null;
-  const [copyResult, setCopyResult] = useState<{ success: boolean } | null>(null);
-  const copyResetRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  useEffect(() => () => { if (copyResetRef.current) clearTimeout(copyResetRef.current); }, []);
-
-  const copy = async () => {
-    const text = `${window.location.origin}/recon/${solveId}`;
-    const success = await copyPageLink(text);
-    if (copyResetRef.current) clearTimeout(copyResetRef.current);
-    setCopyResult({ success });
-    copyResetRef.current = setTimeout(() => setCopyResult(null), 2000);
-  };
+  const { copied, copy, feedback } = useCopy({ scope: String(solveId), failureDurationMs: 2000 });
+  const copyLink = () => copy(`${window.location.origin}/recon/${solveId}`);
   const copyLabel = () => {
-    if (copyResult) {
-      return copyResult.success ? t('recon.copied') : tr({ zh: '复制失败，请重试', en: 'Copy failed, retry' });
+    if (feedback) {
+      return copied ? t('recon.copied') : tr({ zh: '复制失败，请重试', en: 'Copy failed, retry' });
     }
     return tr({ zh: '链接', en: 'Link' });
   };
@@ -678,8 +596,8 @@ function ExternalLinks({ event, scramble, alg, solveId, shareTarget }: {
           </div>
         )}
         <div className="recon-copy-actions">
-          <button type="button" className="recon-copy-action" onClick={() => { void copy(); }}>
-            {copyResult?.success ? <Check size={15} aria-hidden="true" /> : <Link2 size={15} aria-hidden="true" />}
+          <button type="button" className="recon-copy-action" onClick={() => { void copyLink(); }}>
+            {copied ? <CopySuccessIcon size={15} /> : <Link2 size={15} aria-hidden="true" />}
             <span aria-live="polite">{copyLabel()}</span>
           </button>
 

@@ -22,12 +22,13 @@ import { usePathname } from 'next/navigation';
 import { useEntryRouter as useRouter } from '@/hooks/useEntryRouter';
 import { useQueryState, parseAsString, parseAsStringEnum } from 'nuqs';
 import { useTranslation } from 'react-i18next';
-import { X as XIcon, RefreshCw, Info, Copy, Check, Radio, ArrowUp, ArrowDown, Ban, Download, Calculator } from '@app-foundation/icons/lucide';
+import { X as XIcon, RefreshCw, Info, Copy, Radio, ArrowUp, ArrowDown, Ban, Download, Calculator } from '@app-foundation/icons/lucide';
 import { Flag } from '@/components/Flag';
 import { RecordBadge } from '@/components/RecordBadge';
 import { RecentRecordsList } from '@/components/RecentRecords';
 import { summarizeCompRecords } from '@/lib/comp-records';
 import { SearchInput } from '@/components/SearchInput';
+import { CopySuccessIcon } from '@/components/CopySuccessIcon';
 import { useModalBackdrop } from '@/hooks/useModalDismiss';
 import { useCopy } from '@/hooks/useCopy';
 import { Tooltip } from '@/components/Tooltip';
@@ -69,7 +70,6 @@ import { formatWcaResult } from '@/lib/wca-format-result';
 import { summarizeAoxr } from '@/lib/wca-aoxr';
 import { isMbldEvent, computeMbfMo3 } from '@/lib/mbf-average';
 import { UnofficialMark } from '@/components/UnofficialMark';
-import { rememberRecent } from '@/lib/comp-recent';
 import { useLiveStream, applyResultPatch, mergeLiveRoundRows, type LivePatch, type WsStatus } from '@/hooks/useLiveStream';
 import { useWcaLiveStream, type WcaLiveRoundUpdate } from '@/hooks/useWcaLiveStream';
 import { InfoTooltip } from '@/components/InfoTooltip/InfoTooltip';
@@ -865,16 +865,13 @@ export default function CompDetailPage() {
   const groupAwards = useGroupAwards('competitions', slug, data?.cubingSlug);
   const compNameTitle = data ? localizeCompName(slug, decodeEntities(data.name), isZh, { explicitNameZh: cubingZh?.nameZh }) : slug;
   useDocumentTitle(compNameTitle, compNameTitle);
-  const [nameCopied, setNameCopied] = useState(false);
+  const { copied: nameCopied, copy: copyName } = useCopy({ scope: slug });
   const copyCompName = useCallback(() => {
     if (!data) return;
     // 复制原始全名(中文不剥 WCA 前缀):2026WCA黄冈魔方公开赛
     const full = resolveCompName(slug, decodeEntities(data.name), isZh, { explicitNameZh: cubingZh?.nameZh });
-    navigator.clipboard.writeText(full).then(
-      () => { setNameCopied(true); setTimeout(() => setNameCopied(false), 1500); },
-      e => console.error('[comp copy name] failed:', e),
-    );
-  }, [data, slug, isZh, cubingZh]);
+    void copyName(full).then(ok => { if (!ok) console.error('[comp copy name] failed'); });
+  }, [copyName, data, slug, isZh, cubingZh]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -951,14 +948,6 @@ export default function CompDetailPage() {
     fetchCubingZh(slug).then(meta => { if (!cancel) setCubingZh(meta); }).catch(() => {});
     return () => { cancel = true; };
   }, [slug, isZh, compInfo]);
-
-  // 记入"最近浏览":带上实时解析的中文名(cubingZh.nameZh)和国家 iso2(compInfo),这样比赛页的
-  // 最近浏览不依赖日更的 comp_names_zh.json / comp_countries.json 也能显示新比赛中文名 + 国旗。
-  // cubingZh / compInfo 异步到达时再补写(rememberRecent 缺省值会保留旧记录)。
-  useEffect(() => {
-    if (!data) return;
-    rememberRecent(data.slug, data.name, cubingZh?.nameZh ?? undefined, compInfo?.country_iso2 ?? undefined);
-  }, [data, cubingZh, compInfo]);
 
   // URL 用数字轮号(1,2,3,4),内部仍以 round_type_id 当 key。读时数字→round_type_id,
   // 并兼容老的字母 round_type_id 直链(?round=d 等)。
@@ -1172,6 +1161,23 @@ export default function CompDetailPage() {
       apiAbort.signal.addEventListener('abort', () => clearTimeout(timer), { once: true });
     };
 
+    const handleLimit = async (response: Response, retry: () => void) => {
+      const reason = await response.json().catch(() => null);
+      const seconds = Number(response.headers.get('retry-after'));
+      if (reason?.code === 'competition_session_limited') {
+        const minutes = Math.ceil(seconds / 60);
+        failWith(minutes > 0 ? tr({
+          zh: `短时间内查看了较多场比赛。请在 ${minutes} 分钟后再试。`,
+          en: `You've opened several competitions in a short time. Try again in ${minutes} min.`,
+        }) : tr({
+          zh: '短时间内查看了较多场比赛，请稍后再试。',
+          en: "You've opened several competitions in a short time. Please try again later.",
+        }));
+        return;
+      }
+      retryBusy(seconds, retry);
+    };
+
     const startSse = async () => {
       try { await ensureCompetitionAccess(); } catch (error) {
         if (!(error instanceof CompetitionVerificationRequired)) failWith((error as Error).message);
@@ -1188,7 +1194,7 @@ export default function CompDetailPage() {
           .then(async r => {
             if (!r.ok) {
               if (r.status === 429) {
-                retryBusy(Number(r.headers.get('retry-after')), fallback);
+                await handleLimit(r, fallback);
                 return;
               }
               const j = await r.json().catch(() => ({ error: `HTTP ${r.status}` }));
@@ -1229,10 +1235,8 @@ export default function CompDetailPage() {
       });
     };
 
-    // 默认走 Vercel 边缘缓存代理 (/api/comp/:slug):离用户近,命中即秒返,s-maxage=30 + SWR
-    // 让跨洋 RTT / 上游现拉成本全落后台.初始数据只是引导,WS 实时层 (useLiveStream / useWcaLiveStream)
-    // 随后几秒内补丁到最新,所以最多 30s 旧的缓存完全安全.
-    // source 覆盖 / 手动刷新 (fresh) / 边缘代理失败 → 直连 SSE 兜底 (带进度).
+    // Results normally start at the same-origin proxy. Use the direct stream for
+    // explicit refreshes or upstream data failures, after checking access.
     if (sourceParam || fresh) {
       startSse();
     } else {
@@ -1241,10 +1245,18 @@ export default function CompDetailPage() {
       const fetchResults = async () => {
         try {
           const response = await competitionFetch(
-            `/api/comp/${competition}${onlyQs}`, { signal: apiAbort.signal }, statsUrl(`/stats/comp/${competition}.json`),
+            `/api/comp/${competition}${onlyQs}`, { signal: apiAbort.signal }, true,
           );
           if (response.status === 429) {
-            retryBusy(Number(response.headers.get('retry-after')), fetchResults);
+            await handleLimit(response, fetchResults);
+            return;
+          }
+          if (response.status === 403) {
+            failWith(tr({ zh: '当前请求受限，无法查看比赛成绩。', en: 'Access to these competition results is restricted.' }));
+            return;
+          }
+          if (response.status === 503 && (await response.json().catch(() => null))?.code === 'verification_unavailable') {
+            failWith(tr({ zh: '验证暂时不可用，请稍后重试。', en: 'Verification is temporarily unavailable. Please try again later.' }));
             return;
           }
           if (!response.ok) throw new Error(`HTTP ${response.status}`);
@@ -1863,7 +1875,7 @@ export default function CompDetailPage() {
                           复制走 resolveCompName 的原始全名、tab 标题走 compNameTitle,两处都仍带年号。 */}
                       {localizeCompName(slug, decodeEntities(data.name), isZh, { explicitNameZh: cubingZh?.nameZh, date: compInfo?.start_date })}
                     </button>
-                    {nameCopied && <Check size={18} className="comp-title-name-check" />}
+                    {nameCopied && <CopySuccessIcon size={18} className="comp-title-name-check" />}
                   </span>
                   <a href={wcaUrl} target="_blank" rel="noopener noreferrer" className="comp-title-icon" title="WCA">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -2105,7 +2117,7 @@ export default function CompDetailPage() {
                     title={tr({ zh: '复制全部纪录快讯', en: 'Copy all record news' })}
                     aria-label={tr({ zh: '复制全部纪录快讯', en: 'Copy all record news' })}
                   >
-                    {newsCopy.copiedKey === slug ? <Check size={14} /> : <Copy size={14} />}
+                    {newsCopy.copiedKey === slug ? <CopySuccessIcon size={14} /> : <Copy size={14} />}
                   </button>
                 </div>
                 <RecentRecordsList
@@ -2389,10 +2401,10 @@ function CompAddress({ address, isZh, countryIso2 }: { address: string; isZh: bo
   const [accountCountry, setAccountCountry] = useState<{ user: typeof user; country: string } | null>(null);
   const [open, setOpen] = useState(false);
   const { copied, copy } = useCopy();
-  const triggerRef = useRef<HTMLDivElement>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
   const firstOptionRef = useRef<HTMLAnchorElement>(null);
-  usePanelClamp(open, panelRef);
+  usePanelClamp(open, panelRef, triggerRef);
   usePopoverDismiss(open, () => setOpen(false), panelRef, triggerRef);
   useEffect(() => {
     if (open) firstOptionRef.current?.focus({ preventScroll: true });
@@ -2417,23 +2429,27 @@ function CompAddress({ address, isZh, countryIso2 }: { address: string; isZh: bo
     baidu: { label: tr({ zh: '百度地图', en: 'Baidu Maps' }), url: 'https://api.map.baidu.com/geocoder?address=' + encoded + '&output=html&src=webapp.cuberoot.web' },
     google: { label: tr({ zh: '谷歌地图', en: 'Google Maps' }), url: 'https://www.google.com/maps/search/?api=1&query=' + encoded },
   };
+  const copyLabel = tr({ zh: '复制地址', en: 'Copy address' });
+  const copiedLabel = tr({ zh: '已复制', en: 'Copied' });
+  const menuLabel = tr({ zh: '地址选项', en: 'Address options' });
   return (
     <div className="comp-address-row">
-      {/* An inline role-button lets the separate copy button follow the final line of a wrapped address. */}
-      <div ref={triggerRef} className="comp-address-trigger" role="button" tabIndex={0}
-        aria-label={tr({ zh: '地址选项', en: 'Address options' }) + ': ' + text}
-        aria-expanded={open} aria-haspopup="dialog" onClick={() => setOpen(value => !value)}
-        onKeyDown={event => {
-          if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); setOpen(value => !value); }
-        }}>{text}</div>
-      <div className="comp-address-actions">
-      <Tooltip content={copied ? tr({ zh: '已复制', en: 'Copied' }) : tr({ zh: '复制地址', en: 'Copy address' })}>
-        {tip => <button {...tip} type="button" className="comp-address-copy" onClick={() => copy(text)} aria-label={tr({ zh: '复制地址', en: 'Copy address' })}>
-          {copied ? <Check size={14} aria-hidden /> : <Copy size={14} aria-hidden />}
-        </button>}
+      <Tooltip content={copied ? copiedLabel : copyLabel} disabled={open}>
+        {tip => (
+          <button {...tip} ref={triggerRef} type="button" className="comp-address-trigger"
+            aria-label={`${text} (${copyLabel})`} aria-expanded={open} aria-haspopup="dialog"
+            onClick={() => {
+              copy(text);
+              setOpen(value => !value);
+            }}>
+            {text}<span className="comp-address-icon" aria-hidden="true">
+              {copied && <CopySuccessIcon />}
+            </span>
+          </button>
+        )}
       </Tooltip>
       {open && <div ref={panelRef} className="compact-select-popup comp-address-menu" data-site-surface="popover"
-        role="dialog" aria-label={tr({ zh: '地址选项', en: 'Address options' })}>
+        role="dialog" aria-label={menuLabel}>
           {providers.map((provider, index) => <a key={provider} ref={index === 0 ? firstOptionRef : undefined}
             className="compact-select-option comp-address-option" href={maps[provider].url} target="_blank" rel="noopener noreferrer"
             onClick={event => {
@@ -2457,8 +2473,7 @@ function CompAddress({ address, isZh, countryIso2 }: { address: string; isZh: bo
             {maps[provider].label}
           </a>)}
       </div>}
-      </div>
-      <span className="sr-only" role="status">{copied ? tr({ zh: '已复制', en: 'Copied' }) : ''}</span>
+      <span className="sr-only" role="status">{copied ? copiedLabel : ''}</span>
     </div>
   );
 }
@@ -3985,7 +4000,8 @@ interface RoundResultModalProps {
 
 function RoundResultModal({ number, eventId, roundId, data, compName, compStartDate, compIso2, isZh, pbMap, changeMap, onShowAll, onClose }: RoundResultModalProps) {
   const backdropProps = useModalBackdrop(onClose);
-  const [copyState, setCopyState] = useState<'idle' | 'copying' | 'done' | 'nothing' | 'error'>('idle');
+  const { copied, copy } = useCopy();
+  const [copying, setCopying] = useState(false);
   const [downloadState, setDownloadState] = useState<'idle' | 'busy' | 'error'>('idle');
   const cardRef = useRef<HTMLDivElement>(null);
   // 破 PR 时显示「这成绩在 WCA 历史能排第几」(NR/WR)。渲染期同步读 rank-client 模块缓存 →
@@ -4186,23 +4202,17 @@ function RoundResultModal({ number, eventId, roundId, data, compName, compStartD
   };
 
   async function handleCopy() {
-    if (!hasEventsRef.current || !prefetchRef.current) {
-      setCopyState('nothing');
-      setTimeout(() => setCopyState('idle'), 1500);
-      return;
-    }
-    setCopyState('copying');
+    if (!hasEventsRef.current || !prefetchRef.current) return;
+    setCopying(true);
     try {
       const json = await prefetchRef.current;
       if (!json) throw new Error('prefetch failed');
       const text = `${isZh ? json.cn : json.en}\n${json.url}`;
-      await navigator.clipboard.writeText(text);
-      setCopyState('done');
-      setTimeout(() => setCopyState('idle'), 2000);
-    } catch (e) {
-      console.error('[comp copy] failed:', e);
-      setCopyState('error');
-      setTimeout(() => setCopyState('idle'), 2000);
+      if (!await copy(text)) console.error('[comp copy] clipboard write failed');
+    } catch (error) {
+      console.error('[comp copy] failed:', error);
+    } finally {
+      setCopying(false);
     }
   }
 
@@ -4358,12 +4368,12 @@ function RoundResultModal({ number, eventId, roundId, data, compName, compStartD
               type="button"
               className="comp-modal-copy-btn"
               onClick={handleCopy}
-              disabled={copyState === 'copying'}
+              disabled={copying}
               title={tr({ zh: '复制为推送文案', en: 'Copy as push text'
             })} aria-label={tr({ zh: '复制为推送文案', en: 'Copy as push text'
             })}
             >
-              {copyState === 'done' ? <Check size={14} /> : <Copy size={14} />}
+              {copied ? <CopySuccessIcon size={14} /> : <Copy size={14} />}
             </button>
           )}
           <LangToggle soft variant="inline" />

@@ -1,7 +1,8 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { ArrowRight, ArrowUpRight, BookOpen, Boxes, Check, CheckCheck, ChevronDown, Code2, Copy, Download, GitBranch, GitPullRequest, ShieldCheck, Terminal } from '@app-foundation/icons/lucide';
+import { CopySuccessIcon } from '@/components/CopySuccessIcon';
+import { ArrowRight, ArrowUpRight, BookOpen, Boxes, CheckCheck, ChevronDown, Code2, Copy, Download, GitBranch, GitPullRequest, ShieldCheck, Terminal } from '@app-foundation/icons/lucide';
 import AppLink from '@/components/AppLink';
 import PageBackLink from '@/components/PageBackLink';
 import HeaderToggles from '@/components/HeaderToggles';
@@ -61,7 +62,7 @@ function CodeBlock({ text, title }: {text: string; title: string}) {
   return <div className={s.code}>
     <div className={s.codeHead}><span><Terminal size={15} />{title}</span>
       <button className={s.codeCopy} type="button" onClick={() => copy(text)} aria-label={t('复制代码', 'Copy code')}>
-        {copied ? <Check size={15} /> : <Copy size={15} />}<span aria-live="polite">{copied ? t('已复制', 'Copied') : t('复制', 'Copy')}</span>
+        {copied ? <CopySuccessIcon size={15} /> : <Copy size={15} />}<span aria-live="polite">{copied ? t('已复制', 'Copied') : t('复制', 'Copy')}</span>
       </button>
     </div>
     <pre dir="ltr" tabIndex={0} aria-label={title}><code>{text}</code></pre>

@@ -10,7 +10,7 @@
  * (PlayerControls 的 highlightRange):优先高亮光标所在行的招式 —— 行内光标前的招式,
  * 否则该行第一个招式(光标落在行首 `(` 等分隔符前时,高亮本行首招而非上一行末招)。
  */
-import { useCallback, useEffect, useMemo, useRef, useState, type MutableRefObject } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type MutableRefObject, type ReactNode } from 'react';
 import { ReconCrossToggle } from '@cuberoot/timer-ui';
 import { useTranslation } from 'react-i18next';
 import { useReconLineDiagrams } from './ReconLineDiagrams';
@@ -51,13 +51,14 @@ function computeHighlightRange(plainText: string, offset: number): [number, numb
   return [p.start, p.end];
 }
 
-export default function SolutionView({ text, html, event, scramble = '', sourceText = text, playerRef, playback, crossLineIdx = -1, crossNormalized = false, onToggleCross, autoWaste = false, cancellationLines, expandedCancellationLine, onToggleCancellation }: {
+export default function SolutionView({ text, html, event, scramble = '', sourceText = text, playerRef, playback, openingOrientation, crossLineIdx = -1, crossNormalized = false, onToggleCross, autoWaste = false, cancellationLines, expandedCancellationLine, onToggleCancellation }: {
   text: string;
   html?: string;
   event?: string;
   scramble?: string;
   sourceText?: string;
   autoWaste?: boolean;
+  openingOrientation?: (colors?: string) => ReactNode;
   cancellationLines?: ReadonlySet<number>;
   expandedCancellationLine?: number | null;
   onToggleCancellation?: (line: number) => void;
@@ -243,12 +244,15 @@ export default function SolutionView({ text, html, event, scramble = '', sourceT
           const href = f2lLinks.get(i)?.get('F2L');
           return href ? [{ ...link, href }] : [];
         }) : [];
-        return <span key={i}>{nl}<NotationLine annotations={annotations} line={line} lineStart={lineStart} className="recon-counted-line"
+        const orientation = i === 0 ? openingOrientation : undefined;
+        const notation = <NotationLine annotations={annotations} line={line} lineStart={lineStart} className="recon-counted-line"
           onToggleCancellation={cancellationLines?.has(i) && onToggleCancellation ? () => onToggleCancellation(i) : undefined}
           cancellationExpanded={expandedCancellationLine === i}
           cursorOffset={activeOffset} hlRange={activeRange} wasteBrackets={wasteBrackets}
           crossColor={crossColor} links={links} colorHref={colors => linkComments ? f2lLinks.get(i)?.get(colors) : undefined}
-          inspectionColors={inspectionColors.get(i)} diagram={diagramAt(i)} trailing={<>{toggle}
+          inspectionColors={orientation ? undefined : inspectionColors.get(i)} diagram={diagramAt(i)} trailing={<>
+            {orientation && <span data-recon-text-length="0">{orientation(inspectionColors.get(i))}</span>}
+            {toggle}
             {freePairLines.has(i) && <span className="recon-annotation-badge recon-line-free-pair" data-recon-text-length="0"
               data-label={tr({ zh: '基', en: 'free' })} aria-label={tr({ zh: '基态', en: 'Free pair' })} />}
             {(lineMoveCounts[i] ?? 0) > 0 && <span className="recon-line-move-count" data-recon-text-length="0"
@@ -256,7 +260,8 @@ export default function SolutionView({ text, html, event, scramble = '', sourceT
               aria-label={tr({ zh: `${lineMoveCounts[i]} 步`, en: `${lineMoveCounts[i]} moves` })} />}
           </>}
           localize={tr} renderLink={(href, children) => <Link href={href} prefetch={false} className="recon-comment-link">{children}</Link>}
-        /></span>;
+        />;
+        return <span key={i}>{nl}{notation}</span>;
       })}
     </pre>
   );

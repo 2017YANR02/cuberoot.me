@@ -3,6 +3,7 @@
 import MoreToggle from '@/components/MoreToggle';
 import { Suspense, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { useQueryState, useQueryStates, parseAsString, parseAsStringEnum, parseAsArrayOf, parseAsBoolean } from 'nuqs';
+import { CopySuccessIcon } from '@/components/CopySuccessIcon';
 import { ArrowUpRight, BookOpen, Check, ChevronDown, Columns3, Crown, Download, History, ImageOff, Link2, Plus, Search, SlidersHorizontal, X } from '@app-foundation/icons/lucide';
 import HomeLink from '@/components/HomeLink';
 import BackHome from '@/components/BackHome';
@@ -241,7 +242,7 @@ function CubeDetails({ cube, selected, full, onToggle, onClose, onOpen }: {
     </div>
     <div className="ch-detail-actions"><span className={`ch-status ch-status--${cube.status}`}>{tr(STATUS_LABELS[cube.status])}</span>
       <AddToCompare cube={cube} selected={selected} full={full} onToggle={onToggle} />
-      <button type="button" className="ch-button" onClick={() => copy(window.location.href)}>{copied ? <Check size={15} /> : <Link2 size={15} />}{tr(copied ? { zh: '已复制', en: 'Copied' } : { zh: '复制型号链接', en: 'Copy model link' })}</button>
+      <button type="button" className="ch-button" onClick={() => copy(window.location.href)}>{copied ? <CopySuccessIcon size={15} /> : <Link2 size={15} />}{tr(copied ? { zh: '已复制', en: 'Copied' } : { zh: '复制型号链接', en: 'Copy model link' })}</button>
     </div>
     <div className="ch-detail-photo-row">
       <CubePhoto key={cube.id} cube={cube} />
@@ -495,7 +496,7 @@ function Explorer() {
     {model && !activeCube && <div role="status" className="ch-empty" data-site-surface="panel"><p>{tr({ zh: '该型号链接未匹配到当前资料。', en: 'This model link does not match the current archive.' })}</p><button type="button" className="ch-button" onClick={closeModel}>{tr({ zh: '关闭', en: 'Close' })}</button></div>}
     {view === 'timeline' && <Timeline onOpen={openModel} onPeriod={selectPeriod} />}
     {view === 'catalog' && <section aria-labelledby="ch-catalog-heading">
-      <div className="ch-section-heading"><h2 id="ch-catalog-heading">{tr({ zh: '型号图鉴', en: 'Model catalog' })}</h2><div className="ch-catalog-actions"><button type="button" className="ch-button" onClick={download}><Download size={15} />{tr({ zh: '下载当前资料', en: 'Export results' })}</button><button type="button" className="ch-button" onClick={() => copy(window.location.href)}>{copied ? <Check size={15} /> : <Link2 size={15} />}{tr(copied ? { zh: '已复制', en: 'Copied' } : { zh: '分享筛选', en: 'Share filters' })}</button></div></div>
+      <div className="ch-section-heading"><h2 id="ch-catalog-heading">{tr({ zh: '型号图鉴', en: 'Model catalog' })}</h2><div className="ch-catalog-actions"><button type="button" className="ch-button" onClick={download}><Download size={15} />{tr({ zh: '下载当前资料', en: 'Export results' })}</button><button type="button" className="ch-button" onClick={() => copy(window.location.href)}>{copied ? <CopySuccessIcon size={15} /> : <Link2 size={15} />}{tr(copied ? { zh: '已复制', en: 'Copied' } : { zh: '分享筛选', en: 'Share filters' })}</button></div></div>
       <div className="ch-filter-panel" data-site-surface="panel" ref={searchArea}>
         <div className="ch-search-heading"><strong>{tr({ zh: '找到你想了解的那一款', en: 'Find the model you have in mind' })}</strong><span>{tr({ zh: '中文 · 英文 · 型号别名', en: 'Chinese · English · Model aliases' })}</span></div>
         <div className="ch-search-field"><Search size={21} aria-hidden="true" /><SearchInput value={filters.q} onChange={value => setFilter('q', value)} debounceMs={150} maxLength={160} type="search" ariaLabel={tr({ zh: '搜索魔方型号、品牌或别名', en: 'Search cube models, brands or aliases' })} placeholder={tr({ zh: '搜索型号、品牌或别名', en: 'Search a model, brand or alias' })} className="ch-search" inputClassName="ch-model-search-input" autoComplete="off" spellCheck={false} /></div>

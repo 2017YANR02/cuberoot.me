@@ -9,9 +9,11 @@
  * row's current step (per-row badge); the badge ("C 767665") is independently
  * click-to-cycle through Cross → XC → XXC → XXXC → XXXXC; the index cell copies.
  */
+import { useCopy } from '@/hooks/useCopy';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import dynamic from 'next/dynamic';
-import { Check, ExternalLink } from '@app-foundation/icons/lucide';
+import { CopySuccessIcon } from '@/components/CopySuccessIcon';
+import { ExternalLink } from '@app-foundation/icons/lucide';
 import { useParams } from 'next/navigation';
 import { useEntryRouter as useRouter } from '@/hooks/useEntryRouter';
 import { EventIcon } from '@/components/EventIcon';
@@ -158,7 +160,7 @@ export default function SheetView({ sheet, compId, isZh, t, clockColors, sq1Colo
   const roundLabel = roundIdx === 3
     ? t('决赛', 'Final')
     : `${t('第', 'Round')} ${roundIdx + 1}${t('轮', '')}`;
-  const [copiedIdx, setCopiedIdx] = useState<number | null>(null);
+  const { copiedKey, copy } = useCopy({ scope: JSON.stringify([compId, event, roundIdx, groupIdx, attemptNumber]) });
   // 行内展开:一次只展开一条(手风琴),按 scramble 字符串记忆(过滤/重排都稳)。
   const [expanded, setExpanded] = useState<string | null>(null);
   // 顶部「分析」关掉时收起已展开的解法器,别留残面板。
@@ -186,13 +188,8 @@ export default function SheetView({ sheet, compId, isZh, t, clockColors, sq1Colo
       return m;
     });
   };
-  const copyAttempt = async (idx: number, scramble: string) => {
-    if (!scramble) return;
-    try {
-      await navigator.clipboard.writeText(scrambleClipboardText(scramble));
-      setCopiedIdx(idx);
-      setTimeout(() => setCopiedIdx((cur) => (cur === idx ? null : cur)), 1200);
-    } catch { /* swallow */ }
+  const copyAttempt = (idx: number, scramble: string) => {
+    if (scramble) void copy(scrambleClipboardText(scramble), String(idx));
   };
   // 单击打乱:copyOnClick 时先复制该行打乱(末尾浮现绿勾),再叠加既有的选中/展开。
   // 选中会写 URL group+attempt + 高亮 + 滚动,与「分析」开关无关 —— 选中/深链定位不算「分析」。
@@ -237,7 +234,7 @@ export default function SheetView({ sheet, compId, isZh, t, clockColors, sq1Colo
     const isSelected = selectedLabel != null && selectedLabel === a.label;
     const rowCls = [
       a.isExtra ? 'is-extra' : '',
-      copiedIdx === i ? 'is-copied' : '',
+      copiedKey === String(i) ? 'is-copied' : '',
       isExpanded ? 'is-expanded' : '',
       isSelected ? 'is-selected' : '',
     ].filter(Boolean).join(' ');
@@ -263,9 +260,9 @@ export default function SheetView({ sheet, compId, isZh, t, clockColors, sq1Colo
         style={{ cursor: rowInteractive ? 'pointer' : 'default' }}
       >
         <td className="gen-tn-attempt-num">
-          {/* 复制成功后短暂(1.2s)用绿勾临时覆盖序号,随 copiedIdx 清空自然复原。 */}
-          {copiedIdx === i
-            ? <Check size={14} className="gen-tn-num-copied" aria-label={t('已复制', 'Copied')} />
+          {/* 复制成功时用绿勾临时替换序号。 */}
+          {copiedKey === String(i)
+            ? <CopySuccessIcon size={14} className="gen-tn-num-copied" aria-label={t('已复制', 'Copied')} />
             : <span className="gen-tn-attempt-label">{a.label}</span>}
         </td>
         <td className="gen-tn-attempt-scramble">

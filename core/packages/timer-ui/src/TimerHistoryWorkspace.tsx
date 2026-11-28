@@ -1,4 +1,5 @@
 'use client';
+import { browserClipboardTransport } from './browser-clipboard';
 import MoreToggle from './MoreToggle';
 import type { TimerOverlayControlProps } from './timer-overlay-control';
 
@@ -220,7 +221,7 @@ export function TimerHistoryWorkspace({
       onComment: onQuickComment,
       onCopyResult: desktopCommands && onCopyText ? solve => onCopyText(formatSolveResult(solve)) : undefined,
       onCopyScramble: async solve => {
-        try { await (onCopyText ? onCopyText(timerHistoryCopyText(solve)) : navigator.clipboard.writeText(timerHistoryCopyText(solve))); } catch { /* ignore */ }
+        try { await (onCopyText ?? browserClipboardTransport)(timerHistoryCopyText(solve)); } catch { /* ignore */ }
       },
       onDelete: onQuickDelete ? solve => onQuickDelete(solve.id) : undefined,
       viewportBottomInset,

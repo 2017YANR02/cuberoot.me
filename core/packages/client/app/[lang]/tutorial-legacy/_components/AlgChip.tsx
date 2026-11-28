@@ -1,8 +1,10 @@
 /**
  * AlgChip — 可点击复制的公式 chip
  */
-import { useState, useCallback } from 'react';
-import { Copy, Check } from '@app-foundation/icons/lucide';
+import { useCopy } from '@/hooks/useCopy';
+import { useCallback } from 'react';
+import { CopySuccessIcon } from '@/components/CopySuccessIcon';
+import { Copy } from '@app-foundation/icons/lucide';
 import { tr } from '@/i18n/tr';
 
 interface AlgChipProps {
@@ -17,32 +19,14 @@ interface AlgChipProps {
 }
 
 export function AlgChip({ alg, algHtml, title }: AlgChipProps) {
-  const [copied, setCopied] = useState(false);
+  const { copied, copy } = useCopy();
 
   const handleClick = useCallback(
-    async (e: React.MouseEvent) => {
+    (e: React.MouseEvent) => {
       e.stopPropagation();
-      try {
-        await navigator.clipboard.writeText(alg);
-      } catch {
-        // 老浏览器 fallback: 创建临时 textarea
-        const ta = document.createElement('textarea');
-        ta.value = alg;
-        ta.style.position = 'fixed';
-        ta.style.left = '-9999px';
-        document.body.appendChild(ta);
-        ta.select();
-        try {
-          document.execCommand('copy');
-        } catch {
-          // 彻底失败 — 无反馈
-        }
-        document.body.removeChild(ta);
-      }
-      setCopied(true);
-      setTimeout(() => setCopied(false), 1200);
+      void copy(alg);
     },
-    [alg],
+    [alg, copy],
   );
 
   const handleKey = useCallback(
@@ -72,7 +56,7 @@ export function AlgChip({ alg, algHtml, title }: AlgChipProps) {
         <code>{alg}</code>
       )}
       {copied ? (
-        <Check className="tutorial-chip-icon" aria-label="copied" />
+        <CopySuccessIcon size={24} className="tutorial-chip-icon" aria-label="copied" />
       ) : (
         <Copy className="tutorial-chip-icon" aria-hidden />
       )}

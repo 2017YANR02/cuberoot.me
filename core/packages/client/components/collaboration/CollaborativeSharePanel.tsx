@@ -1,5 +1,6 @@
 'use client';
 
+import { useCopy } from '@/hooks/useCopy';
 import { useEffect, useState } from 'react';
 import { ArrowLeft, Globe, Link2, LockKeyhole, Settings, Trash2, UserRound, Users } from '@app-foundation/icons/lucide';
 import BoolToggle from '@/components/BoolToggle';
@@ -32,7 +33,7 @@ export function CollaborativeSharePanel({ id, kind, details, reload, close }: {
   const [settings, setSettings] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
-  const [notice, setNotice] = useState('');
+  const { copied, copy, reset: resetCopy } = useCopy({ scope: id, persist: 'all' });
   const backdrop = useModalDismiss(close);
   const owner = details.document.role === 'owner';
   const dirty = JSON.stringify(sharing) !== JSON.stringify(details.sharing ?? DEFAULT_DOCUMENT_SHARING);
@@ -46,7 +47,7 @@ export function CollaborativeSharePanel({ id, kind, details, reload, close }: {
     return () => { active = false; window.clearTimeout(timer); };
   }, [query, person]);
   const mutate = async (action: () => Promise<void>) => {
-    setBusy(true); setError(''); setNotice('');
+    setBusy(true); setError(''); resetCopy();
     try { await action(); await reload(); }
     catch (cause) { setError((cause as Error).message); }
     finally { setBusy(false); }
@@ -65,8 +66,7 @@ export function CollaborativeSharePanel({ id, kind, details, reload, close }: {
       const url = new URL(window.location.href);
       url.pathname = url.pathname.replace(/\/(docs|sheets)\/edit$/, `/${kind === 'document' ? 'docs' : 'sheets'}/edit`);
       url.search = new URLSearchParams({ id }).toString(); url.hash = '';
-      await navigator.clipboard.writeText(url.href);
-      setNotice(tr({ zh: '链接已复制', en: 'Link copied' }));
+      if (!await copy(url.href)) throw new Error('Clipboard write failed');
     } catch { setError(tr({ zh: '复制失败，请复制浏览器地址栏中的链接', en: 'Copy failed. Copy the link from your address bar.' })); }
   };
   const AccessIcon = sharing.access === 'anyone' ? Globe : sharing.access === 'admins' ? Users : LockKeyhole;
@@ -115,7 +115,7 @@ export function CollaborativeSharePanel({ id, kind, details, reload, close }: {
         </div>
       </>}
       {error && <p className="collab-error" role="alert">{error}</p>}
-      {notice && <p className="collab-member-role" role="status">{notice}</p>}
+      {copied && <p className="collab-member-role" role="status">{tr({ zh: '链接已复制', en: 'Link copied' })}</p>}
       <div className="collab-share-footer">
         {(!communityDisabled || (sharing.access !== 'anyone' && details.sharing?.access !== 'anyone')) && <button className="collab-button" type="button" onClick={() => void copyLink()}><Link2 size={17} /><T zh="复制链接" en="Copy link" /></button>}
         <button className="collab-button collab-primary" type="button" disabled={busy || (communityDisabled && dirty && sharing.access === 'anyone')} onClick={() => void finish()}>{busy ? tr({ zh: '正在保存…', en: 'Saving…' }) : dirty ? tr({ zh: '保存', en: 'Save' }) : tr({ zh: '完成', en: 'Done' })}</button>

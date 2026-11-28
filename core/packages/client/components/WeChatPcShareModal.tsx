@@ -1,12 +1,13 @@
 'use client';
 
+import { useCopy } from '@/hooks/useCopy';
 import { useEffect, useId, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { Check, Copy, Images, LoaderCircle, MessageCircle, Share2 } from '@app-foundation/icons/lucide';
+import { CopySuccessIcon } from '@/components/CopySuccessIcon';
+import { Copy, Images, LoaderCircle, MessageCircle, Share2 } from '@app-foundation/icons/lucide';
 import { ClearButton } from '@/components/ClearButton';
 import { tr } from '@/i18n/tr';
 import { useDialogMotion, useModalDismiss } from '@/hooks/useModalDismiss';
-import { copyPageLink } from '@/lib/page-share';
 import { isInWeChat } from '@/lib/wechat-share';
 import { isMiniProgramWebView } from '@/lib/miniprogram-bridge';
 import {
@@ -61,7 +62,7 @@ export function PageShareModal({ share: page, onClose: onClosed }: { share: { ur
   const [activeScene, setActiveScene] = useState<WeChatShareScene | null>(null);
   const [message, setMessage] = useState('');
   const mountedRef = useRef(true);
-  const [copyState, setCopyState] = useState<'idle' | 'success' | 'error'>('idle');
+  const { copied, copy, feedback } = useCopy({ scope: page.url, persist: 'failure' });
   const { motionRef, close: onClose } = useDialogMotion(onClosed);
   const backdropProps = useModalDismiss(onClose, state === 'loading');
   const titleId = useId();
@@ -76,10 +77,7 @@ export function PageShareModal({ share: page, onClose: onClosed }: { share: { ur
     };
   }, []);
 
-  const copyLink = async () => {
-    const copied = await copyPageLink(page.url);
-    if (mountedRef.current) setCopyState(copied ? 'success' : 'error');
-  };
+  const copyLink = () => copy(page.url);
 
   const systemShare = async () => {
     try { await navigator.share(page); }
@@ -132,15 +130,15 @@ export function PageShareModal({ share: page, onClose: onClosed }: { share: { ur
         <h2 id={titleId}>{tr({ zh: '分享当前页面', en: 'Share this page' })}</h2>
         <p>{page.title}</p>
         <button className="wechat-pc-share-action wechat-mobile-share-copy" type="button" onClick={copyLink}>
-          {copyState === 'success' ? <Check aria-hidden /> : <Copy aria-hidden />}
-          <span>{copyState === 'success' ? tr({ zh: '链接已复制', en: 'Link copied' }) : tr({ zh: '复制链接', en: 'Copy link' })}</span>
+          {copied ? <CopySuccessIcon size={24} /> : <Copy aria-hidden />}
+          <span>{copied ? tr({ zh: '链接已复制', en: 'Link copied' }) : tr({ zh: '复制链接', en: 'Copy link' })}</span>
         </button>
-        {copyState === 'error' && <>
+        {feedback?.copied === false && <>
           <p className="wechat-pc-share-status is-error" role="alert">{tr({ zh: '复制失败，请长按或选中下方链接复制。', en: 'Copy failed. Select or press and hold the link below to copy it.' })}</p>
           <input className="page-share-url" readOnly value={page.url} onFocus={event => event.target.select()}
             aria-label={tr({ zh: '页面链接', en: 'Page link' })} />
         </>}
-        {copyState === 'success' && <span className="sr-only" role="status">{tr({ zh: '链接已复制', en: 'Link copied' })}</span>}
+        {copied && <span className="sr-only" role="status">{tr({ zh: '链接已复制', en: 'Link copied' })}</span>}
         {inContainer && <ol className="wechat-mobile-share-steps">
           <li>{tr({ zh: '点右上角“…”', en: 'Tap “…” in the top-right corner' })}</li>
           <li>{tr({ zh: '选择“转发”或“发送给朋友”', en: 'Choose “Share” or “Send to a friend”' })}</li>

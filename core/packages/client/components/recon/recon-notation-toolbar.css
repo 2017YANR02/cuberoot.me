@@ -1,0 +1,81 @@
+.detail-notation-toolbar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+.detail-notation-toolbar > .compact-select {
+  align-self: center;
+}
+.detail-source-copy .compact-select-current {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.detail-source-copy {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--muted-foreground);
+  font-size: 0.8rem;
+  cursor: pointer;
+}
+.detail-source-copy:hover {
+  color: var(--foreground);
+}
+.detail-source-text {
+  margin: 0;
+  color: var(--foreground);
+  font-family: 'Roboto Mono', monospace;
+  font-size: 0.9rem;
+  line-height: 1.8;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  tab-size: 4;
+  user-select: text;
+  -webkit-user-select: text;
+}
+.detail-source-text code {
+  font: inherit;
+}
+.detail-source-copy:focus-visible,
+.detail-source-text:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 4px;
+  border-radius: 4px;
+}
+
+.recon-png-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* Fontsource Roboto Condensed 5.3.0, OFL-1.1; loaded only when selected for export. */
+@font-face {
+  font-family: 'Roboto Condensed';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('/fonts/roboto-condensed-latin-400-normal.woff2') format('woff2');
+}
+
+.recon-image-font {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px;
+  font-size: 0.85rem;
+}
+
+.recon-image-font-select {
+  width: fit-content;
+  max-width: 100%;
+  font: inherit;
+}

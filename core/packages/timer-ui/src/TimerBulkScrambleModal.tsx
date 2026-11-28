@@ -1,4 +1,5 @@
 'use client';
+import { useClipboardFeedback } from './browser-clipboard';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   TIMER_BULK_SCRAMBLE_COPY, TIMER_BULK_SCRAMBLE_COUNTS, TIMER_EVENT_PICKER_GROUPS, TIMER_MORE_ACTION_COPY,
@@ -23,7 +24,8 @@ export default function TimerBulkScrambleModal({ defaultEvent, language, onClose
   const [generating, setGenerating] = useState(false);
   const [failed, setFailed] = useState(false);
   const [exportFailed, setExportFailed] = useState(false);
-  const [copied, setCopied] = useState(false);
+  const { copyWith, feedback, reset: resetCopy } = useClipboardFeedback('', undefined, { persist: 'all' });
+  const copied = feedback?.copied;
   const exportRevision = useRef(0);
   const [pickerOpen, setPickerOpen] = useState(false);
   const pickerRef = useRef(false); pickerRef.current = pickerOpen;
@@ -39,9 +41,9 @@ export default function TimerBulkScrambleModal({ defaultEvent, language, onClose
   useEffect(() => {
     exportRevision.current++;
     request.current?.abort(); request.current = null; client.reset();
-    setGenerating(false); setScrambles([]); setFailed(false); setCopied(false); setExportFailed(false);
+    setGenerating(false); setScrambles([]); setFailed(false); resetCopy(); setExportFailed(false);
     return () => { exportRevision.current++; request.current?.abort(); client.reset(); };
-  }, [event, count, randomOptions.cnMode, randomOptions.scramble222Mode, client]);
+  }, [event, count, randomOptions.cnMode, randomOptions.scramble222Mode, client, resetCopy]);
   const groups = TIMER_EVENT_PICKER_GROUPS.map(group => ({
     id: group.id, label: tr({ zh: group.nameZh, en: group.nameEn }),
     items: group.items.filter(item => isTimerBulkScrambleEvent(item.id)).map(item => ({
@@ -52,7 +54,7 @@ export default function TimerBulkScrambleModal({ defaultEvent, language, onClose
     if (request.current) return;
     const controller = new AbortController(); request.current = controller;
     exportRevision.current++;
-    setGenerating(true); setFailed(false); setCopied(false); setExportFailed(false); setScrambles([]);
+    setGenerating(true); setFailed(false); resetCopy(); setExportFailed(false); setScrambles([]);
     try {
       const out: string[] = [];
       for (let i = 0; i < count; i++) {
@@ -70,9 +72,12 @@ export default function TimerBulkScrambleModal({ defaultEvent, language, onClose
     const revision = exportRevision.current;
     setExportFailed(false);
     try {
-      if (copy) await transport.copy(batch.text);
-      else await transport.download(batch.text, batch.filename);
-      if (revision === exportRevision.current && copy) setCopied(true);
+      if (copy) {
+        await copyWith(() => transport.copy(batch.text).catch(error => {
+          if (!(error instanceof DOMException && error.name === 'AbortError') && revision === exportRevision.current) setExportFailed(true);
+          throw error;
+        }));
+      } else await transport.download(batch.text, batch.filename);
     } catch (error) { if (!(error instanceof DOMException && error.name === 'AbortError') && revision === exportRevision.current) setExportFailed(true); }
   };
   return <TimerRoomDialog title={tr(TIMER_MORE_ACTION_COPY['more.bulk'])} className="timer-tool-dialog bulk-scramble-modal" language={language} onClose={dismiss}>

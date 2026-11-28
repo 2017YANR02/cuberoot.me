@@ -1,5 +1,6 @@
 'use client';
 
+import { useCopy } from '@/hooks/useCopy';
 import MoreToggle from '@/components/MoreToggle';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Copy, ExternalLink, Search, Settings2 } from '@app-foundation/icons/lucide';
@@ -82,7 +83,7 @@ export default function TwoToolsPage() {
   const [colors, setColors] = useState<Record<PocketFace, boolean>>(() =>
     Object.fromEntries(COLOR_ORDER.map((face) => [face, true])) as Record<PocketFace, boolean>,
   );
-  const [copied, setCopied] = useState<string | null>(null);
+  const { copiedKey: copied, copy } = useCopy();
   const workerRef = useRef<Worker | null>(null);
   const requestRef = useRef(0);
 
@@ -181,9 +182,7 @@ export default function TwoToolsPage() {
       `${solution.face || '-'}\t// ${solution.method === 'CLL' ? t('做层', 'layer') : t('做面', 'face')}`,
       `${solution.alg}\t// ${solution.method}`,
     ].join('\n');
-    await navigator.clipboard.writeText(text);
-    setCopied(solution.solution);
-    setTimeout(() => setCopied(null), 900);
+    await copy(text, solution.solution);
   };
 
   return (

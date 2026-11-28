@@ -1,8 +1,8 @@
 'use client';
 
-import { useState } from 'react';
+import { useClipboardFeedback } from '../browser-clipboard';
 import ReportContent from './ReportContent';
-import { reportActions, initialReportUI, reduceReportUI } from './report-content';
+import { reportActions, initialReportUI } from './report-content';
 import type { Solve } from '@cuberoot/shared/timer';
 import type { ReconstructHost } from './ReconstructHost';
 import type { ReconSnapshot } from '@cuberoot/shared/recon-ground-truth';
@@ -19,7 +19,8 @@ interface ReconstructActionsProps {
 export default function ReconstructActions({
   host, solve, onUseScramble, placement, snapshot = null,
 }: ReconstructActionsProps) {
-  const [ui,setUI]=useState(initialReportUI);
+  const { copy, feedback } = useClipboardFeedback(solve.id, host.writeClipboardText);
+  const ui = { ...initialReportUI(), copied: feedback?.copied ? feedback.target : null };
   const actions = reportActions(solve, host.localize, ui, Boolean(onUseScramble), placement, 'copy', Boolean(host.replayUrl));
   const intakeActions = host.renderIntakeAction?.(solve, snapshot);
   if (placement === 'report' && intakeActions) {
@@ -31,9 +32,7 @@ export default function ReconstructActions({
       try {
         const url = await host.replayUrl?.(solve);
         if (!url) return;
-        await host.writeClipboardText(url);
-        setUI(state=>reduceReportUI(state,{type:'copied',key:'share'}));
-        setTimeout(()=>setUI(state=>reduceReportUI(state,{type:'copied'})),1500);
+        if (!await copy(url, 'share')) console.warn('[reconstruct] copy share link failed');
       }catch(err){console.warn('[reconstruct] copy share link failed:',err);}
     })();
   }}/>{placement !== 'report' && intakeActions}</>;

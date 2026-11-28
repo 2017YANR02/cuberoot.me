@@ -1,4 +1,5 @@
 'use client';
+import { browserClipboardTransport } from './browser-clipboard';
 import { lazy, Suspense, useCallback, useEffect, useRef } from 'react';
 import type { EventId, TimerScrambleRequest } from '@cuberoot/shared/timer';
 import { TimerRoomDialog } from './TimerRoomDialog';
@@ -12,7 +13,7 @@ export interface TimerToolTransport {
   download(text: string, filename: string): Promise<void>;
 }
 export const browserTimerToolTransport: TimerToolTransport = {
-  copy: text => navigator.clipboard.writeText(text),
+  copy: browserClipboardTransport,
   async download(text, filename) {
     const url = URL.createObjectURL(new Blob([text], { type: 'text/plain' }));
     const link = document.createElement('a'); link.href = url; link.download = filename; link.click();

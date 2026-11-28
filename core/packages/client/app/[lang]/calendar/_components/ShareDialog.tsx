@@ -11,7 +11,8 @@ import '@cuberoot/timer-ui/compact-select.css';
 // 同一个 token 还提供 .ics 订阅源,Google / Apple 日历能直接订上。
 
 import { useId, useState } from 'react';
-import { Check, Copy, Link2, RefreshCw, ExternalLink } from '@app-foundation/icons/lucide';
+import { CopySuccessIcon } from '@/components/CopySuccessIcon';
+import { Copy, Link2, RefreshCw, ExternalLink } from '@app-foundation/icons/lucide';
 import { ClearButton } from '@cuberoot/timer-ui/clear-button';
 import { useDialogMotion, useModalDismiss } from '@/hooks/useModalDismiss';
 import BoolToggle from '@/components/BoolToggle';
@@ -144,7 +145,7 @@ export default function ShareDialog({ share, calendars, lang, onSave, onRotate, 
               <Link2 size={14} aria-hidden />
               <code>{pageUrl}</code>
               <button type="button" className="cal-icon-btn" onClick={() => link.copy(pageUrl)} aria-label={tr({ zh: '复制', en: 'Copy' })}>
-                {link.copied ? <Check size={15} aria-hidden /> : <Copy size={15} aria-hidden />}
+                {link.copied ? <CopySuccessIcon size={15} /> : <Copy size={15} aria-hidden />}
               </button>
               <a className="cal-icon-btn" href={pageUrl} target="_blank" rel="noopener noreferrer" aria-label={tr({ zh: '打开', en: 'Open' })}>
                 <ExternalLink size={15} aria-hidden />
@@ -162,7 +163,7 @@ export default function ShareDialog({ share, calendars, lang, onSave, onRotate, 
                 aria-label={tr({ zh: '复制', en: 'Copy' })}
                 onClick={() => feed.copy(feedUrl)}
               >
-                {feed.copied ? <Check size={15} aria-hidden /> : <Copy size={15} aria-hidden />}
+                {feed.copied ? <CopySuccessIcon size={15} /> : <Copy size={15} aria-hidden />}
               </button>
             </div>
             <p className="cal-hint">

@@ -1,4 +1,5 @@
 'use client';
+import { browserClipboardTransport, useClipboardFeedback } from '../browser-clipboard';
 import MoreToggle from '../MoreToggle';
 import { TimerRoomDialog } from '../TimerRoomDialog';
 
@@ -48,7 +49,6 @@ type StatsTab = 'overview' | 'daily' | 'charts' | 'cases';
 
 export default function StatsModal({ event, solves: rawSolves, isZh, onClose, onCopyText }: Props) {
   const tr = useWorkspaceText();
-  const [copied, setCopied] = useState(false);
   const [range, setRange] = useState<TimerStatsDateRange>('all');
   const [tab, setTab] = useState<StatsTab>('overview');
   const [metricsExpanded, setMetricsExpanded] = useState(false);
@@ -167,15 +167,9 @@ export default function StatsModal({ event, solves: rawSolves, isZh, onClose, on
     periods,
   ]);
 
-  const onCopy = async () => {
-    try {
-      await (onCopyText ? onCopyText(textVersion) : navigator.clipboard.writeText(textVersion));
-      setCopied(true);
-      setTimeout(() => setCopied(false), 1500);
-    } catch {
-      // ignore
-    }
-  };
+  const { copy, feedback } = useClipboardFeedback(textVersion, onCopyText ?? browserClipboardTransport);
+  const copied = feedback?.copied;
+  const onCopy = () => copy(textVersion);
 
   // Delta on time stats: lower is better (so cur < prev → improvement).
   // Returns null when either side lacks the metric (no comparison possible).

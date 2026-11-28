@@ -11,11 +11,13 @@
  * 全灰图案视为空。搜索结果按魔方 48 对称做 isomorphic 去重,上限 MAX_RESULTS。
  */
 
+import { useCopy } from '@/hooks/useCopy';
 import PageHeading from '@/components/PageHeading';
 import { useCallback, useEffect, useMemo, useRef, useState, memo } from 'react';
 import { useQueryState } from 'nuqs';
+import { CopySuccessIcon } from '@/components/CopySuccessIcon';
 import {
-  Search, Square as StopIcon, Eraser, Copy, Check,
+  Search, Square as StopIcon, Eraser, Copy,
   Plus, Pencil, Trash2, ChevronLeft, ChevronRight,
 } from '@app-foundation/icons/lucide';
 import { renderCubeSVG } from '@cuberoot/visualcube';
@@ -56,19 +58,12 @@ const ResultCard = memo(function ResultCard({ item, index, t }: {
   index: number;
   t: (zh: string, en: string) => string;
 }) {
-  const [copied, setCopied] = useState(false);
+  const { copied, copy } = useCopy();
   const svg = useMemo(
     () => renderCubeSVG({ facelets: item.facelet.toLowerCase().split(''), width: 96, height: 96 }),
     [item.facelet],
   );
-  const copy = async () => {
-    if (!item.generator) return;
-    try {
-      await navigator.clipboard.writeText(item.generator);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 1200);
-    } catch { /* swallow */ }
-  };
+  const copyGenerator = () => { if (item.generator) void copy(item.generator); };
   const moveCount = item.generator ? item.generator.split(/\s+/).filter(Boolean).length : 0;
   return (
     <li className="psc-result">
@@ -80,8 +75,8 @@ const ResultCard = memo(function ResultCard({ item, index, t }: {
             <code className="psc-result-alg">{item.generator}</code>
             <div className="psc-result-foot">
               <span className="psc-result-count">{moveCount} {t('步', 'moves')}</span>
-              <button type="button" className="psc-copy" onClick={copy} aria-label={t('复制', 'Copy')}>
-                {copied ? <Check size={13} /> : <Copy size={13} />}
+              <button type="button" className="psc-copy" onClick={copyGenerator} aria-label={t('复制', 'Copy')}>
+                {copied ? <CopySuccessIcon size={13} /> : <Copy size={13} />}
                 <span>{copied ? t('已复制', 'Copied') : t('复制', 'Copy')}</span>
               </button>
             </div>

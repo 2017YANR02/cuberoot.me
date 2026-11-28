@@ -15,7 +15,7 @@ import { localizeCompName } from '@/lib/comp-localize';
 import { localizeCity } from '@/lib/city-localize';
 import { Flag } from '@/components/Flag';
 import { translateCellText, translatePersonLink, stripChineseParens } from '@/lib/wca-translations';
-import { rewriteWcaCompUrl, prefetchComp } from '@/lib/comp-link';
+import { rewriteWcaCompUrl } from '@/lib/comp-link';
 import { EventIcon } from '@/components/EventIcon/EventIcon';
 import { isWcaEvent, eventDisplayName } from '@/lib/wca-events';
 import { EVENT_NAME_TO_ID } from '@/lib/event-constants';
@@ -151,10 +151,9 @@ function renderLinkedSegment(segment: string, segIdx: number, isZh: boolean | un
       continue;
     }
     const internalHref = compId ? rewriteWcaCompUrl(url) : null;
-    const prefetch = compId ? () => prefetchComp(compId) : undefined;
     parts.push(
       compId && internalHref
-        ? <Link key={`${segIdx}-${match.index}`} href={internalHref} onMouseEnter={prefetch} onFocus={prefetch} onTouchStart={prefetch}>{displayText}</Link>
+        ? <Link key={`${segIdx}-${match.index}`} href={internalHref} prefetch={false}>{displayText}</Link>
         : <a key={`${segIdx}-${match.index}`} href={url} target="_blank" rel="noopener noreferrer">{displayText}</a>
     );
     lastIndex = match.index + match[0].length;

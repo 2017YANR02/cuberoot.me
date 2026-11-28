@@ -9,10 +9,12 @@
  * and the clock SVG helper from sibling /scramble/gen.
  */
 
+import { useCopy } from '@/hooks/useCopy';
 import PageHeading from '@/components/PageHeading';
 import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Sparkles, X, Copy, Check, Search } from '@app-foundation/icons/lucide';
+import { CopySuccessIcon } from '@/components/CopySuccessIcon';
+import { Sparkles, X, Copy, Search } from '@app-foundation/icons/lucide';
 import AppLink from '@/components/AppLink';
 import { Alg } from 'cubing/alg';
 import WcaEventSelector from '@/components/WcaEventSelector';
@@ -228,15 +230,9 @@ function PatternModal({
   t: (zh: string, en: string) => string;
   onClose: () => void;
 }) {
-  const [copied, setCopied] = useState(false);
+  const { copied, copy } = useCopy();
 
-  const copy = async () => {
-    try {
-      await navigator.clipboard.writeText(pattern.alg);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 1200);
-    } catch { /* swallow */ }
-  };
+  const copyAlgorithm = () => copy(pattern.alg);
 
   const moveCount = pattern.alg.split(/\s+/).filter(Boolean).length;
   const puzzleId = twistyPuzzleId(patternPuzzle(pattern));
@@ -259,8 +255,8 @@ function PatternModal({
         </div>
         <div className="pat-modal-alg-row">
           <code className="pat-modal-alg">{pattern.alg}</code>
-          <button type="button" className="pat-modal-copy" onClick={copy} aria-label="copy">
-            {copied ? <Check size={14} /> : <Copy size={14} />}
+          <button type="button" className="pat-modal-copy" onClick={copyAlgorithm} aria-label="copy">
+            {copied ? <CopySuccessIcon size={14} /> : <Copy size={14} />}
             <span>{copied ? t('已复制', 'Copied') : t('复制', 'Copy')}</span>
           </button>
         </div>

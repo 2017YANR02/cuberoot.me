@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import { CopySuccessIcon } from '@/components/CopySuccessIcon';
 import { ArrowRight, Boxes, Check, Coffee, Copy, GitBranch, Monitor, Move, PackageCheck, Search, ShieldCheck, Sparkles, Target, UserRound, X } from 'lucide-react';
 import { useT } from '@/hooks/useT';
 import { useCopy } from '@/hooks/useCopy';
@@ -84,7 +85,7 @@ export default function WorkflowGuide({ area }: { area: 'workflow' | 'collaborat
   return <section className="staff-sop sop-guide" data-area={area}>
     <header className="sop-guide-intro">
       <button type="button" className="sop-guide-copy" onClick={() => copy(prompt, 'sop')}>
-        {copiedKey === 'sop' ? <Check size={16} aria-hidden="true" /> : <Copy size={16} aria-hidden="true" />}
+        {copiedKey === 'sop' ? <CopySuccessIcon size={16} /> : <Copy size={16} aria-hidden="true" />}
         {copiedKey === 'sop' ? t('已复制', 'Copied') : t('复制给 AI', 'Copy for AI')}
       </button>
     </header>
@@ -143,7 +144,7 @@ export default function WorkflowGuide({ area }: { area: 'workflow' | 'collaborat
         <p className="sop-guide-description">{t('交接后，接手的人应当能直接继续。', 'The next person should have enough context to continue.')}</p>
         <dl className="sop-guide-handoff">{handoffFields.map(([title, text], index) => <div key={title}><span aria-hidden="true">0{index + 1}</span><div><dt>{title}</dt><dd>{text}</dd></div></div>)}</dl>
         <button type="button" className="sop-guide-copy sop-guide-copy-small" onClick={() => copy(handoff, 'handoff')}>
-          {copiedKey === 'handoff' ? <Check size={15} aria-hidden="true" /> : <Copy size={15} aria-hidden="true" />}{copiedKey === 'handoff' ? t('已复制', 'Copied') : t('复制交接提纲', 'Copy handoff outline')}
+          {copiedKey === 'handoff' ? <CopySuccessIcon size={15} /> : <Copy size={15} aria-hidden="true" />}{copiedKey === 'handoff' ? t('已复制', 'Copied') : t('复制交接提纲', 'Copy handoff outline')}
         </button>
       </article>
     </div>}

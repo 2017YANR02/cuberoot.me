@@ -1,4 +1,5 @@
 'use client';
+import { useClipboardFeedback } from './browser-clipboard';
 import { useEffect, useRef, useState } from 'react';
 import { TimerRoomDialog } from './TimerRoomDialog';
 import { ClearButton } from './ClearButton';
@@ -14,35 +15,27 @@ export default function TimerGeneralSolverModal({ language, onClose, transport }
   const [busy, setBusy] = useState(false);
   const [answer, setAnswer] = useState<{ solution: string; inverse: string } | null>(null);
   const [error, setError] = useState(false);
-  const [copied, setCopied] = useState(false);
-  const [exportFailed, setExportFailed] = useState(false);
-  const exportRevision = useRef(0);
+  const { copy, feedback, reset: resetCopy } = useClipboardFeedback('', text => transport.copy(text), { persist: 'all' });
+  const copied = feedback?.copied;
+  const exportFailed = feedback?.copied === false;
   const [solver] = useState(createGeneralSolver);
   const request = useRef<AbortController | null>(null);
-  useEffect(() => () => { exportRevision.current++; request.current?.abort(); solver.reset(); }, [solver]);
+  useEffect(() => () => { request.current?.abort(); solver.reset(); }, [solver]);
   const changeInput = (value: string) => {
-    exportRevision.current++; setExportFailed(false);
     request.current?.abort(); request.current = null;
-    setInput(value); setBusy(false); setAnswer(null); setError(false); setCopied(false);
+    setInput(value); setBusy(false); setAnswer(null); setError(false); resetCopy();
   };
   const solve = async () => {
     if (!input.trim() || request.current) return;
     const controller = new AbortController(); request.current = controller;
-    exportRevision.current++; setExportFailed(false);
-    setBusy(true); setAnswer(null); setError(false); setCopied(false);
+    setBusy(true); setAnswer(null); setError(false); resetCopy();
     try {
       const result = await solver.solve(input.trim(), controller.signal);
       if (!controller.signal.aborted) setAnswer(result);
     } catch { if (!controller.signal.aborted) setError(true); }
     finally { if (request.current === controller) { request.current = null; setBusy(false); } }
   };
-  const copyAnswer = async () => {
-    if (!answer) return;
-    const revision = exportRevision.current;
-    setExportFailed(false);
-    try { await transport.copy(answer.solution); if (revision === exportRevision.current) setCopied(true); }
-    catch { if (revision === exportRevision.current) setExportFailed(true); }
-  };
+  const copyAnswer = () => { if (answer) void copy(answer.solution); };
   return <TimerRoomDialog title={tr({ zh: '通用求解器', en: 'Solver' })} className="timer-tool-dialog solver-modal" language={language} onClose={onClose}>
     <label className="timer-tool-field">{tr({ zh: '输入打乱', en: 'Enter a scramble' })}
       <textarea autoComplete="off" value={input} rows={3} onChange={e => changeInput(e.target.value)} placeholder="R U R' U' F2 L D" />

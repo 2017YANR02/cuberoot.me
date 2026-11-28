@@ -1,5 +1,6 @@
 'use client';
 
+import { copyClipboardText } from '@/lib/clipboard';
 import PageBackLink from '@/components/PageBackLink';
 import { restrictDocumentOutput } from '@/lib/document-output';
 import { getWebAccessToken } from '@/lib/web-session';
@@ -229,8 +230,7 @@ function SpreadsheetGrid({ session, readOnly, canExport, activeSheetId, onActive
       payload.notes.push(noteRow); payload.links.push(linkRow); payload.validations.push(validationRow);
     }
     clipboardRef.current = payload;
-    try { await navigator.clipboard.writeText(payload.values.map((row) => row.join('\t')).join('\n')); }
-    catch { onError(tr({ zh: '浏览器未允许访问剪贴板，请使用 Ctrl/Cmd+C。', en: 'Clipboard access was denied. Use Ctrl/Cmd+C.' })); }
+    if (!await copyClipboardText(payload.values.map((row) => row.join('\t')).join('\n'))) { onError(tr({ zh: '浏览器未允许访问剪贴板，请使用 Ctrl/Cmd+C。', en: 'Clipboard access was denied. Use Ctrl/Cmd+C.' })); }
     if (cut && !readOnly) {
       session.ydoc.transact(() => rangeAddresses(selection).forEach((address) => {
         cellsMap(active).delete(address); stylesMap(active).delete(address);

@@ -1,4 +1,5 @@
 'use client';
+import { useCopy } from '@/hooks/useCopy';
 import MoreToggle from '@/components/MoreToggle';
 import { SettingsPopover } from '@/components/TrainingSettings';
 import '@cuberoot/timer-ui/compact-select.css';
@@ -19,7 +20,8 @@ import { useCallback, useEffect, useMemo, useRef, useState, Suspense } from 'rea
 import { useQueryState, useQueryStates, parseAsString, parseAsInteger, parseAsStringEnum } from 'nuqs';
 import Link from '@/components/AppLink';
 import { useTranslation } from 'react-i18next';
-import { Copy, Check, Clapperboard } from '@app-foundation/icons/lucide';
+import { CopySuccessIcon } from '@/components/CopySuccessIcon';
+import { Copy, Clapperboard } from '@app-foundation/icons/lucide';
 import { buildReconSubmitQuery, type ReconScrambleSource } from '@/lib/sim-recon-link';
 import { wcaToReconEvent } from '@/lib/wca-events';
 import { Spinner } from '@/components/Spinner/Spinner';
@@ -350,7 +352,7 @@ function AnalyzePageInner() {
   const [analyzedScramble, setAnalyzedScramble] = useState('');
   const [filter, setFilter] = useState<FilterMode>('all');
   const [openIdx, setOpenIdx] = useState<Set<number>>(new Set());
-  const [copiedIdx, setCopiedIdx] = useState<number | null>(null);
+  const { copiedKey, copy } = useCopy();
   const [elapsedMs, setElapsedMs] = useState<number | null>(null);
   const [xcrossFallback, setXcrossFallback] = useState<boolean>(false);
   const [variantUnsupported, setVariantUnsupported] = useState<boolean>(false);
@@ -449,10 +451,7 @@ function AnalyzePageInner() {
   function copyAlg(i: number, sol: Solution, e: React.MouseEvent) {
     e.stopPropagation();
     const text = `${analyzedScramble}\n\n\n${sol[1]}\n\n\n${sol[0]}HTM`;
-    navigator.clipboard?.writeText(text).then(() => {
-      setCopiedIdx(i);
-      setTimeout(() => setCopiedIdx((c) => (c === i ? null : c)), 1200);
-    }).catch(() => { /* clipboard blocked */ });
+    void copy(text, String(i));
   }
 
   async function fillRandom() {
@@ -780,7 +779,7 @@ function AnalyzePageInner() {
                         aria-label={t('复制', 'Copy')}
                         title={t('复制完整解法', 'Copy full solution')}
                       >
-                        {copiedIdx === idx ? <Check size={13} /> : <Copy size={13} />}
+                        {copiedKey === String(idx) ? <CopySuccessIcon size={13} /> : <Copy size={13} />}
                       </span>
                     </span>
                   </MoreToggle>

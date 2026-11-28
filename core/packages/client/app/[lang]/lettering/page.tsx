@@ -1,7 +1,9 @@
 'use client';
 
-import { useEffect, useMemo, useRef, useState } from 'react';
-import { Check, Copy } from '@app-foundation/icons/lucide';
+import { useCopy } from '@/hooks/useCopy';
+import { useMemo, useRef, useState } from 'react';
+import { CopySuccessIcon } from '@/components/CopySuccessIcon';
+import { Copy } from '@app-foundation/icons/lucide';
 import BackHome from '@/components/BackHome';
 import AlgPlayer from '@/components/AlgPlayer';
 import { ClearButton } from '@/components/ClearButton';
@@ -35,8 +37,7 @@ export default function LetteringPage() {
   const [custom, setCustom] = useState<CharacterPlan | null>(null);
   const [error, setError] = useState<CharacterError | null>(null);
   const [pending, setPending] = useState(false);
-  const [copied, setCopied] = useState(false);
-  const copyTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const { copied, copy, reset } = useCopy();
   const glyphOptions = useMemo(() => availableLetteringGlyphs(order), [order]);
   const pattern = useMemo(
     () => custom?.pattern ?? (word ? getLetteringWordPattern(word, order) : getLetteringPattern(glyph, order)),
@@ -55,7 +56,7 @@ export default function LetteringPage() {
   const generate = () => {
     if (composing.current) return;
     setInputLimit(false);
-    setCopied(false);
+    reset();
     try {
       const next = createCharacterPlan(input, order);
       if ('code' in next) { setError(next); setPending(true); return; }
@@ -78,16 +79,7 @@ export default function LetteringPage() {
     setError(null);
   };
 
-  useEffect(() => () => {
-    if (copyTimer.current) clearTimeout(copyTimer.current);
-  }, []);
-
-  const copyAlg = async () => {
-    await navigator.clipboard.writeText(alg);
-    setCopied(true);
-    if (copyTimer.current) clearTimeout(copyTimer.current);
-    copyTimer.current = setTimeout(() => setCopied(false), 1600);
-  };
+  const copyAlg = () => copy(alg);
 
   const selectOrder = (nextOrder: LetteringOrder) => {
     setCustom(null);
@@ -246,7 +238,7 @@ export default function LetteringPage() {
             <div className="lettering-alg-heading">
               <h3>{tr({ zh: '拼字公式', en: 'Lettering alg' })}</h3>
               <button type="button" className="lettering-copy-button" onClick={() => void copyAlg()}>
-                {copied ? <Check size={16} aria-hidden /> : <Copy size={16} aria-hidden />}
+                {copied ? <CopySuccessIcon size={16} /> : <Copy size={16} aria-hidden />}
                 {copied ? tr({ zh: '已复制', en: 'Copied' }) : tr({ zh: '复制公式', en: 'Copy alg' })}
               </button>
             </div>

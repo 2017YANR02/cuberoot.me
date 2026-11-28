@@ -17,6 +17,7 @@
 // m2pSolve / mover2scr are ASYNC (WASM Kociemba) -> busy state + prewarm() on mount.
 // Upstream emoji ⏰/📝 + spinner replaced with lucide icons + a clean loading state.
 
+import { useCopy } from '@/hooks/useCopy';
 import PageHeading from '@/components/PageHeading';
 import {
   useCallback,
@@ -28,7 +29,8 @@ import {
   type JSX,
 } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Copy, Check, Shuffle, GripVertical, Wand2 } from '@app-foundation/icons/lucide';
+import { CopySuccessIcon } from '@/components/CopySuccessIcon';
+import { Copy, Shuffle, GripVertical, Wand2 } from '@app-foundation/icons/lucide';
 import AlgPlayer from '@/components/AlgPlayer';
 import { ClearButton } from '@/components/ClearButton';
 import { Spinner } from '@/components/Spinner/Spinner';
@@ -265,7 +267,7 @@ export default function HelperPage(): JSX.Element {
   // generated scramble-from-state output
   const [genScramble, setGenScramble] = useState('');
   const [genBusy, setGenBusy] = useState(false);
-  const [copied, setCopied] = useState(false);
+  const { copied, copy } = useCopy();
 
   // Warm the WASM tables (m2pSolve / mover2scr are async).
   useEffect(() => {
@@ -360,15 +362,10 @@ export default function HelperPage(): JSX.Element {
 
   const copyGen = useCallback(async () => {
     if (!genScramble) return;
-    try {
-      await navigator.clipboard.writeText(genScramble);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 1500);
-    } catch {
-      window.prompt(tr({ zh: '复制下面的打乱:', en: 'Copy the scramble below:'
-    }), genScramble);
+    if (!await copy(genScramble)) {
+      window.prompt(tr({ zh: '复制下面的打乱:', en: 'Copy the scramble below:' }), genScramble);
     }
-  }, [genScramble, isZh]);
+  }, [copy, genScramble, isZh]);
 
   // ── drag reorder (HTML5 draggable, swap on drop — matches upstream drop())
   const dragId = useRef<RowId | null>(null);
@@ -588,7 +585,7 @@ export default function HelperPage(): JSX.Element {
               </button>
               {genScramble && (
                 <button type="button" className="bld-copy-btn" onClick={copyGen}>
-                  {copied ? <Check size={15} /> : <Copy size={15} />}
+                  {copied ? <CopySuccessIcon size={15} /> : <Copy size={15} />}
                   {copied ? tr({ zh: '已复制', en: 'Copied'
                                                   }) : tr({ zh: '复制', en: 'Copy'
                                                       })}

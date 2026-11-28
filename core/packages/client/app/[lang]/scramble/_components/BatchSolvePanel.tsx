@@ -1,4 +1,5 @@
 'use client';
+import { useCopy } from '@/hooks/useCopy';
 import { trackFeatureUse } from '@/lib/analytics-signal';
 
 /**
@@ -17,7 +18,8 @@ import { trackFeatureUse } from '@/lib/analytics-signal';
  * 同步引擎(concurrency=1,solveOne 内 setTimeout 让出主线程)。两者同一套 UI。
  */
 import { useMemo, useRef, useState, type ReactNode } from 'react';
-import { Trash2, Copy, Download, Check } from '@app-foundation/icons/lucide';
+import { CopySuccessIcon } from '@/components/CopySuccessIcon';
+import { Trash2, Copy, Download } from '@app-foundation/icons/lucide';
 import { tr } from '@/i18n/tr';
 import './batch_solve.css';
 
@@ -67,7 +69,7 @@ export function SolvePanel({
   const [generating, setGenerating] = useState(false);
   const [progress, setProgress] = useState({ done: 0, total: 0 });
   const [genN, setGenN] = useState(1);
-  const [copied, setCopied] = useState(false);
+  const { copied, copy } = useCopy();
   const cancelRef = useRef(false);
 
   const lines = useMemo(
@@ -181,13 +183,7 @@ export function SolvePanel({
     return [head, ...body].join('\n');
   }, [rows]);
 
-  async function copyCsv() {
-    try {
-      await navigator.clipboard.writeText(csv);
-      setCopied(true);
-      window.setTimeout(() => setCopied(false), 1400);
-    } catch { /* clipboard 不可用时静默 */ }
-  }
+  const copyCsv = () => copy(csv);
 
   function downloadCsv() {
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
@@ -314,7 +310,7 @@ export function SolvePanel({
 
           <div className="bsp-export">
             <button type="button" className="bsp-btn bsp-btn-ghost" onClick={() => void copyCsv()}>
-              {copied ? <Check size={15} aria-hidden /> : <Copy size={15} aria-hidden />}
+              {copied ? <CopySuccessIcon size={15} /> : <Copy size={15} aria-hidden />}
               {copied ? tr({ zh: '已复制', en: 'Copied' }) : tr({ zh: '复制 CSV', en: 'Copy CSV' })}
             </button>
             <button type="button" className="bsp-btn bsp-btn-ghost" onClick={downloadCsv}>

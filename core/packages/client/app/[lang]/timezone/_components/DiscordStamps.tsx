@@ -18,7 +18,8 @@
  */
 
 import { useMemo } from 'react';
-import { Check, Copy } from '@app-foundation/icons/lucide';
+import { CopySuccessIcon } from '@/components/CopySuccessIcon';
+import { Copy } from '@app-foundation/icons/lucide';
 import { useCopy } from '@/hooks/useCopy';
 import { tr, useLang } from '@/i18n/tr';
 import { localZone, zoneOffsetMinutes } from '@cuberoot/shared/tz';
@@ -151,7 +152,7 @@ export default function DiscordStamps({ at, now, homeTz }: {
               </span>
               <code className="tz-stamp-code">{r.text}</code>
               <span className={`tz-stamp-icon${copiedKey === r.code ? ' is-copied' : ''}`} aria-hidden="true">
-                {copiedKey === r.code ? <Check size={15} /> : <Copy size={15} />}
+                {copiedKey === r.code ? <CopySuccessIcon size={15} /> : <Copy size={15} />}
               </span>
             </button>
           </li>
@@ -166,7 +167,7 @@ export default function DiscordStamps({ at, now, homeTz }: {
           onClick={() => copy(String(unix), 'unix')}
         >
           <code>{unix}</code>
-          {copiedKey === 'unix' ? <Check size={13} aria-hidden="true" /> : <Copy size={13} aria-hidden="true" />}
+          {copiedKey === 'unix' ? <CopySuccessIcon size={13} /> : <Copy size={13} aria-hidden="true" />}
         </button>
       </p>
     </section>

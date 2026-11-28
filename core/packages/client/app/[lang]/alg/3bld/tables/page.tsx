@@ -16,7 +16,7 @@ import PageHeading from '@/components/PageHeading';
 import { useEffect, useMemo, useState, type JSX } from 'react';
 import { parseAsStringEnum } from 'nuqs';
 import { useTrainingQueryState as useQueryState } from '@/lib/training-host';
-import { Check } from '@app-foundation/icons/lucide';
+import { CopySuccessIcon } from '@/components/CopySuccessIcon';
 import Link from '@/components/AppLink';
 import { Spinner } from '@/components/Spinner/Spinner';
 import { EventIcon } from '@/components/EventIcon/EventIcon';
@@ -63,7 +63,7 @@ function AlgCell({ alg }: { alg: string }): JSX.Element {
   return (
     <button type="button" className="bld-tb-alg" onClick={() => copy(alg)} title={tr({ zh: '复制', en: 'Copy' })}>
       {alg}
-      {copied && <Check size={12} />}
+      {copied && <CopySuccessIcon size={12} />}
     </button>
   );
 }

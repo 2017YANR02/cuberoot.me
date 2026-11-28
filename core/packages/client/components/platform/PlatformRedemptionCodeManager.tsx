@@ -1,5 +1,6 @@
 'use client';
 
+import { useCopy } from '@/hooks/useCopy';
 import MoreToggle from '@/components/MoreToggle';
 import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { toLocalIsoDate } from '@cuberoot/shared/iso-date';
@@ -62,7 +63,7 @@ export function PlatformRedemptionCodeManager({ definition, entities = [], busy,
   const [courses, setCourses] = useState<PlatformEntity[] | null>(null);
   const [courseError, setCourseError] = useState<Error | null>(null);
   const [generated, setGenerated] = useState<GeneratedRedemptionCodes | null>(null);
-  const [copyMessage, setCopyMessage] = useState<string | null>(null);
+  const { copied, copy, feedback, reset: resetCopy } = useCopy({ persist: 'all' });
   const [courseId, setCourseId] = useState('');
   const [scope, setScope] = useState('core');
   const [expiresAt, setExpiresAt] = useState('');
@@ -123,7 +124,7 @@ export function PlatformRedemptionCodeManager({ definition, entities = [], busy,
         batchReference: current?.batchReference,
         codes: [...(current?.codes ?? []), { id: response.id ?? '', code: generatedCode, courseId }],
       }));
-      setCopyMessage(null);
+      resetCopy();
     }
   };
 
@@ -157,14 +158,7 @@ export function PlatformRedemptionCodeManager({ definition, entities = [], busy,
     anchor.click();
     URL.revokeObjectURL(url);
   };
-  const copyCodes = async () => {
-    try {
-      await navigator.clipboard.writeText(shareText);
-      setCopyMessage(t('兑换码和课程链接已复制。', 'Redemption codes and course links copied.'));
-    } catch {
-      setCopyMessage(t('复制失败，请手动选择文本。', 'Copy failed; select the text manually.'));
-    }
-  };
+  const copyCodes = () => copy(shareText);
 
   const courseOptions = (courses ?? []).map((course) => ({ value: course.id, label: text(course.title, course.title) }));
   return (
@@ -216,7 +210,9 @@ export function PlatformRedemptionCodeManager({ definition, entities = [], busy,
             <button type="button" className="platform-button platform-button-primary" onClick={() => void copyCodes()}>{t('复制', 'Copy')}</button>
             <button type="button" className="platform-button" onClick={downloadCsv}>{t('下载', 'Download')}</button>
           </div>
-          {copyMessage ? <p className="platform-domain-note" role="status">{copyMessage}</p> : null}
+          {feedback ? <p className="platform-domain-note" role="status">{copied
+            ? t('兑换码和课程链接已复制。', 'Redemption codes and course links copied.')
+            : t('复制失败，请手动选择文本。', 'Copy failed; select the text manually.')}</p> : null}
         </section>
       ) : null}
       {courseOptions.length ? <details className="platform-invite-options">
@@ -232,7 +228,7 @@ export function PlatformRedemptionCodeManager({ definition, entities = [], busy,
                 batchReference: result.batchReference ?? current?.batchReference,
                 codes: [...(current?.codes ?? []), ...result.codes!.map(item => ({ ...item, courseId: batchCourseId }))],
               }));
-              setCopyMessage(null);
+              resetCopy();
             }
             return result;
           }}

@@ -2,7 +2,7 @@
 
 import './scramble-hint.css';
 
-import { Check } from 'lucide-react';
+import { CopySuccessIcon } from './CopySuccessIcon';
 import {
   projectSmartCubeScrambleDisplay,
   type SmartCubeScrambleHint,
@@ -177,7 +177,7 @@ export function TimerScrambleStrip({
   const liveHint = hint && !hint.complete ? hint : completedHint;
   const moves = useHintMoves(liveHint, scramble);
   const copiedCheck = copied && !correctionActive
-    ? <Check className="scramble-copied-check" aria-label={copiedLabel} />
+    ? <CopySuccessIcon size={24} className="scramble-copied-check" aria-label={copiedLabel} />
     : null;
   // Preserve the user's preferred size for short scrambles; reduce long ones
   // smoothly instead of making the move list an independently scrolling view.

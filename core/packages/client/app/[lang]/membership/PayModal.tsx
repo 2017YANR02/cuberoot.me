@@ -6,6 +6,7 @@
  * 付完经 return_url 回 /membership?paid= 由页面自动确认;
  * 返回二维码(微信 Native / 虎皮椒 PC)→ 弹窗内扫码 + 轮询查单,成功 onPaid()。
  */
+import { useCopy } from '@/hooks/useCopy';
 import { useEffect, useRef, useState } from 'react';
 import { Smartphone, Check, CreditCard } from '@app-foundation/icons/lucide';
 import { ClearButton } from '@/components/ClearButton';
@@ -30,7 +31,6 @@ import { installedMembershipStore } from '@/lib/store-membership-bridge';
 import { requestWebMembership, useWebMembershipAvailable } from '@/lib/web-membership-bridge';
 import { useAuthUser, getAuthUser } from '@/lib/auth-store';
 import { isInWeChat } from '@/lib/wechat-share';
-import { copyPageLink } from '@/lib/page-share';
 import AppLink from '@/components/AppLink';
 
 interface Props {
@@ -58,7 +58,7 @@ export default function PayModal({ plan, channels, isZh, onClose, onPaid, renewa
   const [creating, setCreating] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const [needsExternalBrowser, setNeedsExternalBrowser] = useState(false);
-  const [linkCopied, setLinkCopied] = useState(false);
+  const { copied: linkCopied, copy } = useCopy({ persist: 'all' });
   const [agreed, setAgreed] = useState(false);
   const [renewalResult, setRenewalResult] = useState<MembershipCheckoutStatus | null>(null);
   const paymentReported = useRef(false);
@@ -177,8 +177,7 @@ export default function PayModal({ plan, channels, isZh, onClose, onPaid, renewa
   async function copyMembershipLink() {
     // Open the same site in the external browser, without payment/query tokens.
     const url = new URL(isZh ? '/zh/membership' : '/membership', window.location.origin).href;
-    const copied = await copyPageLink(url);
-    setLinkCopied(copied);
+    const copied = await copy(url);
     setErr(copied ? null : tr({ zh: '复制失败，请使用右上角菜单在浏览器中打开。', en: 'Could not copy the link. Use the top-right menu to open this page in your browser.' }));
   }
 

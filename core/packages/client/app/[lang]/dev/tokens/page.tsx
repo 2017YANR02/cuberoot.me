@@ -1,9 +1,9 @@
 'use client';
 
+import { useCopy } from '@/hooks/useCopy';
 import PageBackLink from '@/components/PageBackLink';
 // /dev/tokens — single-source color-token reference for the whole site.
 // Light + dark value of every token shown side by side; derivation via color-mix.
-import { useState } from 'react';
 import type { ReactNode } from 'react';
 import Link from '@/components/AppLink';
 import { useTranslation } from 'react-i18next';
@@ -41,15 +41,9 @@ function Chip({ theme, sw, kind }: { theme: 'light' | 'dark'; sw: Swatch; kind: 
 }
 
 function TokenCard({ t, lang }: { t: Token; lang: 'zh' | 'en' }) {
-  const [copied, setCopied] = useState(false);
-  const copy = () => {
-    navigator.clipboard?.writeText(`var(${t.name})`).then(() => {
-      setCopied(true);
-      window.setTimeout(() => setCopied(false), 1100);
-    }).catch(() => {});
-  };
+  const { copied, copy } = useCopy();
   return (
-    <button type="button" className="tk-card" onClick={copy} title={`var(${t.name})`}>
+    <button type="button" className="tk-card" onClick={() => copy(`var(${t.name})`)} title={`var(${t.name})`}>
       <div className="tk-chips">
         <Chip theme="light" sw={t.light} kind={t.kind} />
         <Chip theme="dark" sw={t.dark} kind={t.kind} />

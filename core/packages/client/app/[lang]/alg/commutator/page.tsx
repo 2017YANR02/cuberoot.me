@@ -8,12 +8,14 @@
  * Source / About) inside one React page. Persistence via localStorage replaces
  * upstream's cookie.js.
  */
+import { useCopy } from '@/hooks/useCopy';
 import PageHeading from '@/components/PageHeading';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useQueryState, parseAsStringEnum } from 'nuqs';
 
 import BoolToggle from '@/components/BoolToggle';
-import { ExternalLink, HelpCircle, Copy, Check } from '@app-foundation/icons/lucide';
+import { CopySuccessIcon } from '@/components/CopySuccessIcon';
+import { ExternalLink, HelpCircle, Copy } from '@app-foundation/icons/lucide';
 import * as XLSX from 'xlsx';
 import { search as cmtSearch, expand as cmtExpand } from './engine';
 import { persistItem } from '@/lib/safe-storage';
@@ -346,7 +348,7 @@ function DecomposeTab({
     const [alg, setAlg] = useState('');
     const [output, setOutput] = useState('');
     const [working, setWorking] = useState(false);
-    const [copied, setCopied] = useState(false);
+    const { copied, copy } = useCopy();
 
     const onDecompose = useCallback(() => {
         if (alg.trim() === '') { setOutput(''); return; }
@@ -372,14 +374,7 @@ function DecomposeTab({
         }
     }, [alg, settings]);
 
-    const copy = async () => {
-        if (!output) return;
-        try {
-            await navigator.clipboard.writeText(output);
-            setCopied(true);
-            setTimeout(() => setCopied(false), 1200);
-        } catch { /* swallow */ }
-    };
+    const copyOutput = () => { if (output) void copy(output); };
 
     const outRows = useMemo(() => Math.max(1, output.split('\n').length), [output]);
 
@@ -420,8 +415,8 @@ function DecomposeTab({
                         spellCheck={false}
                     />
                     <div className="cmt-output-actions">
-                        <button type="button" className="cmt-copy-btn" onClick={copy} disabled={!output}>
-                            {copied ? <Check size={12} /> : <Copy size={12} />}
+                        <button type="button" className="cmt-copy-btn" onClick={copyOutput} disabled={!output}>
+                            {copied ? <CopySuccessIcon size={12} /> : <Copy size={12} />}
                             {copied ? t('已复制', 'Copied') : t('复制', 'Copy')}
                         </button>
                     </div>

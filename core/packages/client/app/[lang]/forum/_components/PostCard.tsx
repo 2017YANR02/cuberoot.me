@@ -4,7 +4,8 @@
 // markdown body, meta line (#N permalink, edited mark), footer actions
 // (react / quote / edit / delete).
 
-import { useState } from 'react';
+import { useCopy } from '@/hooks/useCopy';
+import { CopySuccessIcon } from '@/components/CopySuccessIcon';
 import { Link2, Quote, Pencil, Trash2, Check, Flag, ShieldCheck, Hourglass, CircleX, UserRoundX, UserRoundCheck } from '@app-foundation/icons/lucide';
 import PersonLink from '@/components/PersonLink';
 import { tr, useLang } from '@/i18n/tr';
@@ -44,17 +45,11 @@ export function PostCard({
 }) {
   const lang = useLang();
   const zh = lang === 'zh';
-  const [copied, setCopied] = useState(false);
+  const { copied, copy } = useCopy();
   const name = ownerDisplayName(post.authorId, author?.name || post.authorName, zh);
   const avatar = resolveAccountAvatar(author?.avatarUrl, author?.avatarPreset);
 
-  const copyPermalink = async () => {
-    try {
-      await navigator.clipboard.writeText(permalink);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 1500);
-    } catch { /* clipboard unavailable — ignore */ }
-  };
+  const copyPermalink = () => copy(permalink);
 
   const placeholder = forumPostPlaceholder(post);
   if (placeholder) {
@@ -129,7 +124,7 @@ export function PostCard({
             onClick={copyPermalink}
           >
             {copied
-              ? <Check size={12} aria-hidden="true" />
+              ? <CopySuccessIcon size={12} />
               : <Link2 size={12} aria-hidden="true" />}
             #{post.postNo}
           </button>

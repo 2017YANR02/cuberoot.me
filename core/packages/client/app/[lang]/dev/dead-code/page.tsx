@@ -1,30 +1,23 @@
 'use client';
 
+import { useCopy } from '@/hooks/useCopy';
 import PageBackLink from '@/components/PageBackLink';
 // /dev/dead-code — 介绍 knip + 本站三层死代码守卫。自包含静态内容,跟 /dev 系其他页独立设计(art-directed dark)。
 
-import { useState } from 'react';
 import Link from '@/components/AppLink';
-import { Check, Copy, FileX2, PackageX, FunctionSquare, Terminal, ShieldCheck, Layers } from '@app-foundation/icons/lucide';
+import { CopySuccessIcon } from '@/components/CopySuccessIcon';
+import { Copy, FileX2, PackageX, FunctionSquare, Terminal, ShieldCheck, Layers } from '@app-foundation/icons/lucide';
 import './dead-code.css';
 import { tr, useLang } from '@/i18n/tr';
 
 function CodeBlock({ code, label }: { code: string; label?: string }) {
-  const [copied, setCopied] = useState(false);
-  const onCopy = async () => {
-    try {
-      await navigator.clipboard.writeText(code);
-      setCopied(true);
-      window.setTimeout(() => setCopied(false), 1400);
-    } catch {
-      /* ignore */
-    }
-  };
+  const { copied, copy } = useCopy();
+  const onCopy = () => copy(code);
   return (
     <div className="dc-code">
       {label && <div className="dc-code-label">{label}</div>}
       <button type="button" className="dc-code-copy" onClick={onCopy} aria-label={copied ? 'Copied' : 'Copy'}>
-        {copied ? <Check size={13} /> : <Copy size={13} />}
+        {copied ? <CopySuccessIcon size={13} /> : <Copy size={13} />}
         <span>{copied ? 'copied' : 'copy'}</span>
       </button>
       <pre className="dc-code-pre"><code>{code}</code></pre>

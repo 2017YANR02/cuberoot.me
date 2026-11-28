@@ -1,29 +1,13 @@
 'use client';
 
-import { copyClipboardText } from '@/lib/clipboard';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { writeClipboardText } from '@/lib/clipboard';
+import { useClipboardFeedback, type ClipboardFeedbackOptions } from '@cuberoot/timer-ui/clipboard-feedback';
+import { useCallback } from 'react';
 
-/**
- * 「复制 → 打勾 → 复位」。全站好几处各写各的 `navigator.clipboard + setTimeout`,
- * 都漏了同一件事:组件在 1.2s 内卸载,那个 setTimeout 还会 setState(React 警告 + 泄漏)。
- *
- * 一屏有多个复制按钮时(如 /timezone 的 9 种 Discord 样式),`copy(text, key)` 带上 key,
- * 读 `copiedKey` 就知道该给哪一个打勾 —— 否则一个布尔会让九个按钮一起打勾。
- */
-export function useCopy(resetMs = 1200) {
-  const [copiedKey, setCopiedKey] = useState<string | null>(null);
-  const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  useEffect(() => () => { if (timer.current) clearTimeout(timer.current); }, []);
-
-  const copy = useCallback((text: string, key = '') => {
-    copyClipboardText(text).then(ok => {
-      if (!ok) return;
-      setCopiedKey(key);
-      if (timer.current) clearTimeout(timer.current);
-      timer.current = setTimeout(() => setCopiedKey(null), resetMs);
-    }).catch(() => { /* 剪贴板被拒(无 https / 无权限)—— 不打勾就是了 */ });
-  }, [resetMs]);
-
-  return { copied: copiedKey !== null, copiedKey, copy };
+/** Pass a key for per-item feedback. Copy checkmarks use the shared one-second duration. */
+export function useCopy({ scope = '', ...options }: ClipboardFeedbackOptions & { scope?: string } = {}) {
+  const { copy: write, copyWith, feedback, reset } = useClipboardFeedback(scope, writeClipboardText, options);
+  const copy = useCallback((text: string, key = '') => write(text, key), [write]);
+  const copiedKey = feedback?.copied ? feedback.target : null;
+  return { copied: copiedKey !== null, copiedKey, feedback, copy, copyWith, reset };
 }

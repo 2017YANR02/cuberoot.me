@@ -380,7 +380,6 @@ html[data-theme=dark] { --scramble-fg: #fff; }
   width: 0.8em;
   height: 0.8em;
   margin-left: 0.25em;
-  color: var(--signal-success);
 }
 
 @media (max-width: 540px) {

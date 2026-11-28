@@ -10,7 +10,8 @@ import {
   type ChangeEvent,
 } from 'react';
 import type { AlgSticker } from '@cuberoot/shared';
-import { Check, Copy } from '@app-foundation/icons/lucide';
+import { CopySuccessIcon } from '@/components/CopySuccessIcon';
+import { Copy } from '@app-foundation/icons/lucide';
 import { parseAsString } from 'nuqs';
 import { useTrainingQueryState as useQueryState } from '@/lib/training-host';
 import AlgPlayer from '@/components/AlgPlayer';
@@ -542,7 +543,7 @@ export default function Sq1PblFinder() {
                       ? tr({ zh: '公式已复制', en: 'Algorithm copied' })
                       : tr({ zh: '复制所选公式', en: 'Copy selected algorithm' })}
                   >
-                    {solutionCopied ? <Check size={15} aria-hidden="true" /> : <Copy size={15} aria-hidden="true" />}
+                    {solutionCopied ? <CopySuccessIcon size={15} /> : <Copy size={15} aria-hidden="true" />}
                   </button>
                   <span className={styles.srOnly} aria-live="polite">
                     {solutionCopied ? tr({ zh: '公式已复制', en: 'Algorithm copied' }) : ''}

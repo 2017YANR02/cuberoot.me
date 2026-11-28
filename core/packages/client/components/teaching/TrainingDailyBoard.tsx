@@ -1,4 +1,5 @@
 'use client';
+import { useCopy } from '@/hooks/useCopy';
 import { useEffect, useState } from 'react';
 import { parseAsInteger, parseAsString, useQueryState } from 'nuqs';
 import AppLink from '@/components/AppLink';
@@ -17,8 +18,7 @@ export default function TrainingDailyBoard({ orgSlug, assignmentId, learner = fa
   const [date, setDate] = useQueryState('trainingDate', parseAsString);
   const [page, setPage] = useQueryState('trainingPage', parseAsInteger.withDefault(1));
   const [rankEvent, setRankEvent] = useQueryState('trainingRankEvent', parseAsString);
-  const [copied, setCopied] = useState(false);
-  const [copyFailed, setCopyFailed] = useState(false);
+  const { copied, copy, feedback } = useCopy({ persist: 'all' });
   const [board, setBoard] = useState<TeachingDailyBoard | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -44,8 +44,7 @@ export default function TrainingDailyBoard({ orgSlug, assignmentId, learner = fa
   async function copyRoom() {
     const url = new URL(`${isZh ? '/zh' : ''}/training/${encodeURIComponent(orgSlug)}`, window.location.origin);
     url.searchParams.set('assignment', assignmentId);
-    try { await navigator.clipboard.writeText(url.href); setCopied(true); setCopyFailed(false); }
-    catch { setCopyFailed(true); }
+    await copy(url.href);
   }
   return <section className="org-section training-daily-board">
     <h2>{t('每日训练打卡', 'Daily training check-in')}</h2>
@@ -56,7 +55,7 @@ export default function TrainingDailyBoard({ orgSlug, assignmentId, learner = fa
       <button type="button" className="org-secondary-button" onClick={reload}>{t('刷新', 'Refresh')}</button>
       <button type="button" className="org-secondary-button" onClick={() => void copyRoom()}>{copied ? t('已复制固定入口', 'Room link copied') : t('复制固定打卡入口', 'Copy room link')}</button>
     </div>
-    {copyFailed && <p role="alert">{t('复制失败，请重试。', 'Copy failed. Please retry.')}</p>}
+    {feedback?.copied === false && <p role="alert">{t('复制失败，请重试。', 'Copy failed. Please retry.')}</p>}
     {loading ? <p aria-busy="true"><LoadingIndicator>{t('正在加载…', 'Loading…')}</LoadingIndicator></p> : error ? <p role="alert">{error}</p> : board && <>
       <h3>{board.assignment.title}</h3><p>{board.assignment.instructions}</p>
       {!!pending && <p role="status">{t(`有 ${pending} 条训练记录尚未同步，联网后点击刷新重试；若持续失败，请联系老师核对账号和任务。`, `${pending} training records have not synced. Refresh when online; if this persists, ask your teacher to check your account and assignment.`)}</p>}

@@ -1,6 +1,7 @@
 'use client';
 import { useId, useState } from 'react';
-import { Check, ChevronDown, Copy } from 'lucide-react';
+import { CopySuccessIcon } from '@/components/CopySuccessIcon';
+import { ChevronDown, Copy } from 'lucide-react';
 import { AlgorithmReplyCard } from '@/components/AlgorithmReplyCard';
 import { useCopy } from '@/hooks/useCopy';
 import { tr } from '@/i18n/tr';
@@ -49,7 +50,7 @@ export default function PhotoAlgorithmCards({ stateKey, sets, results, error = f
                     return <li key={alternative.alg}>
                       <div className="cube-photo-sequence"><code>{alternative.alg}</code><small>{alternative.turns} STM</small></div>
                       <button className="cube-photo-copy" aria-label={tr({ zh: `复制 ${label} 其他公式 ${index + 1}`, en: `Copy ${label} alternative ${index + 1}` })} onClick={() => copy(alternative.alg, copyKey)}>
-                        {copiedKey === copyKey ? <Check size={16} /> : <Copy size={16} />}
+                        {copiedKey === copyKey ? <CopySuccessIcon size={16} /> : <Copy size={16} />}
                       </button>
                     </li>;
                   })}</ul>

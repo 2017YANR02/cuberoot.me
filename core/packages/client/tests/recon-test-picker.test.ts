@@ -75,7 +75,7 @@ it('localizes the competition with its flag and previews normalized cross withou
   const reference = document.querySelector('.recon-test-reference');
   expect(reference?.querySelector('pre')?.textContent).toBe("x R' L // cross\nU // F2L");
   expect(reference?.querySelector('.detail-caption-header')?.textContent).toContain('TPS');
-  expect(reference?.querySelector('.normalized-cross-copy')).not.toBeNull();
+  expect(reference?.querySelector('button.recon-scramble-copy')?.textContent).toBe(`${original.scramble} (1h*)`);
   const handle = reference!.querySelector<HTMLElement>('.recon-test-reference-drag')!;
   handle.setPointerCapture = vi.fn();
   const pointer = (type: string, x: number, y: number) => {

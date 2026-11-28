@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useCopy } from '@/hooks/useCopy';
 import { ArrowRight, Copy } from '@app-foundation/icons/lucide';
 import PageBackLink from '@/components/PageBackLink';
 import MoreToggle from '@/components/MoreToggle';
@@ -1309,15 +1309,8 @@ const QUICK_START_COMMAND = `curl 'https://${BASE}/v1/alg/sets'`;
 
 function ApiQuickStart({ open }: { open: (entry: ApiEntry) => void }) {
   const t = useT();
-  const [copyState, setCopyState] = useState<'idle' | 'copied' | 'failed'>('idle');
-  async function copyCommand() {
-    try {
-      await navigator.clipboard.writeText(QUICK_START_COMMAND);
-      setCopyState('copied');
-    } catch {
-      setCopyState('failed');
-    }
-  }
+  const { copied, copy, feedback } = useCopy({ persist: 'all' });
+  const copyCommand = () => copy(QUICK_START_COMMAND);
 
   return <>
     <p>{t('用 CubeRoot API 查询 WCA 数据、获取打乱和读取公式集。公开接口无需登录。', 'Use the CubeRoot API to look up WCA data, retrieve scrambles, and read algorithm sets. Public endpoints require no sign-in.')}</p>
@@ -1329,7 +1322,7 @@ function ApiQuickStart({ open }: { open: (entry: ApiEntry) => void }) {
           <button type="button" className="api-reference-copy-command" onClick={() => void copyCommand()}><Copy size={14} aria-hidden />{t('复制命令', 'Copy command')}</button>
         </div>
         <pre><code>{QUICK_START_COMMAND}</code></pre>
-        {copyState !== 'idle' && <p className="api-reference-copy-status" role="status">{copyState === 'copied'
+        {feedback && <p className="api-reference-copy-status" role="status">{copied
           ? t('命令已复制。', 'Command copied.')
           : t('复制失败，可手动选中命令复制。', 'Couldn’t copy. Select and copy the command manually.')}</p>}
       </div>

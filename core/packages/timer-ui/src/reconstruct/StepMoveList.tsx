@@ -28,6 +28,7 @@
  * 点某一步的标题跳到那一步开头。
  */
 
+import { useClipboardFeedback } from '../browser-clipboard';
 import ReportContent from './ReportContent';
 import { reportHasLibraryNotation } from './report-presentation';
 import { reportNotation, prepareReportNotation } from './report-notation';
@@ -75,9 +76,11 @@ export default function StepMoveList({method='cfop',recon,currentIdx,onSeek,noti
   const commentCases=useNotationCases((recon?.lines??[]).map(line=>'// '+(line.label??'')).join('\n'),libraryNotation);
   const prepared=useMemo(()=>prepareReportNotation(recon,method,ui.simplified,host.wasteBrackets),[recon,method,ui.simplified,host.wasteBrackets]);
   const projection=prepared.projection;
+  const copyScope = JSON.stringify([recon?.scramble, clipboardText ?? projection.displayText]);
+  const { copy, feedback: copyFeedback } = useClipboardFeedback(copyScope, host.writeClipboardText);
   if(!recon)return null;
   return <LineDiagramProvider scramble={recon.scramble} text={projection.displayText} enabled={libraryNotation}>{(diagramAt,caseHrefAt)=>{
-    const content=reportNotation(recon,method,ui,host.localize,{prepared,currentIdx,canSeek:Boolean(onSeek),cases:commentCases,caseHref:caseHrefAt,inspectionColors:host.inspectionColors,wasteBrackets:host.wasteBrackets,
+    const content=reportNotation(recon,method,{...ui,copied:copyFeedback?.copied ? copyFeedback.target : null},host.localize,{prepared,currentIdx,canSeek:Boolean(onSeek),cases:commentCases,caseHref:caseHrefAt,inspectionColors:host.inspectionColors,wasteBrackets:host.wasteBrackets,
       notice:notice?{id:'notice',kind:'slot'}:null,feedback:feedback?{id:'feedback',kind:'slot'}:null});
     const slots:Record<string,React.ReactNode>={notice,feedback,
       'diagram:scramble':host.renderScrambleDiagram?.(recon.scramble)};
@@ -88,10 +91,9 @@ export default function StepMoveList({method='cfop',recon,currentIdx,onSeek,noti
     const dispatch = (action: ReportAction) => {
       if(action.copyText)void host.writeClipboardText(action.copyText).catch(err=>console.warn('[step-move-list] copy failed:',err));
       if(action.type==='play-from')onSeek?.(Number(action.value),action.timeMs);
-      if(action.type==='copy-notation')void host.writeClipboardText(clipboardText ?? content.clipboard).then(()=>{
-        setUI(state=>reduceReportUI(state,{type:'copied',key:'notation'}));
-        setTimeout(()=>setUI(state=>reduceReportUI(state,{type:'copied'})),1500);
-      }).catch(err=>console.warn('[step-move-list] copy failed:',err));
+      if(action.type==='copy-notation')void copy(clipboardText ?? content.clipboard, 'notation').then(ok => {
+        if (!ok) console.warn('[step-move-list] copy failed');
+      });
       setUI(state=>reduceReportUI(state,action));
     };
     const head = toolbar ? content.node?.children?.find(node => node.id === 'head') : null;

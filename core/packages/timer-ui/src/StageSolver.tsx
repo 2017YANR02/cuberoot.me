@@ -18,6 +18,7 @@
  *      XCross 及以上才补 pt_cross_C4E0(gz 20MB,见 ensureXCrossTables)。
  */
 
+import { browserClipboardTransport } from './browser-clipboard';
 import MoreToggle from './MoreToggle';
 import BoolToggle from './BoolToggle';
 import { useCallback, useEffect, useId, useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from 'react';
@@ -966,7 +967,7 @@ export default function StageSolver({ scramble, lang, initialMethod = 'std', ini
   }, []);
 
   const copySol = useCallback((sol: string) => {
-    navigator.clipboard?.writeText(sol).catch(() => { /* clipboard blocked */ });
+    void browserClipboardTransport(sol).catch(() => { /* clipboard blocked */ });
   }, []);
 
   // 选中解法:都把动画重置到开头(切换解法不该停在上一条的进度);play=true 再从头播放。

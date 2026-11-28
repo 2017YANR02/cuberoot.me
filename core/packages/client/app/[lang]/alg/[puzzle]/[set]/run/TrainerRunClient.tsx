@@ -17,7 +17,8 @@ import {
   useTrainingSearchParams, trainingQueryKey,
 } from '@/lib/training-host';
 import { useTranslation } from 'react-i18next';
-import { LayoutTemplate, Copy, Check, HelpCircle, QrCode, RotateCcw, X } from '@app-foundation/icons/lucide';
+import { CopySuccessIcon } from '@/components/CopySuccessIcon';
+import { LayoutTemplate, Copy, HelpCircle, QrCode, RotateCcw, X } from '@app-foundation/icons/lucide';
 import { Tooltip } from '@/components/Tooltip';
 import { ALG_CATALOG, getAlgSetMeta, type AlgCase } from '@cuberoot/shared/alg';
 import { loadTrainingAlg as loadAlg } from '@/lib/alg_case_alignment';
@@ -848,7 +849,7 @@ function StandardTrainer() {
 
   // ── Radial gesture wheel (shared with /timer) ───────────────────
   const stageRef = useRef<HTMLDivElement | null>(null);
-  const [copied, setCopied] = useState(false);
+  const { copied, copy: copyTrainerScramble } = useCopy();
   const [joinCode, setJoinCode] = useState('');
 
   // 邀请链接 = 当前页 URL + ?room=CODE(队友粘到浏览器 / 扫码打开即自动加入本房间)。
@@ -956,12 +957,7 @@ function StandardTrainer() {
           // 复制的是**屏幕上那一份**:开了纯打乱就复制剥净后的文本。
           const raw = st.currentScramble;
           const scr = raw && st.pureScramble ? purifyScramble(puzzle, raw) : raw;
-          if (scr && typeof navigator !== 'undefined' && navigator.clipboard) {
-            navigator.clipboard.writeText(scr).then(() => {
-              setCopied(true);
-              window.setTimeout(() => setCopied(false), 1200);
-            }).catch(() => {});
-          }
+          if (scr) void copyTrainerScramble(scr);
           break;
         }
       }
@@ -1865,7 +1861,7 @@ function StandardTrainer() {
                         >
                           <span className="trainer-room-badge-label">{tr({ zh: '房间', en: 'Room' })}</span>
                           <span className="trainer-room-badge-code">{room.code}</span>
-                          {codeCopied ? <Check size={13} /> : <Copy size={13} className="trainer-room-badge-copy" />}
+                          {codeCopied ? <CopySuccessIcon size={13} /> : <Copy size={13} className="trainer-room-badge-copy" />}
                         </button>
                         <button
                           type="button"

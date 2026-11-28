@@ -626,23 +626,6 @@ img.recon-inline-flag {
   letter-spacing: 0.02em;
 }
 
-.normalized-cross-copy {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  background: transparent;
-  border: none;
-  color: var(--muted-foreground);
-  cursor: pointer;
-  padding: 2px 4px;
-  border-radius: 4px;
-}
-
-.normalized-cross-copy:hover {
-  color: var(--accent);
-  background: color-mix(in srgb, var(--foreground) 6%, transparent);
-}
-
 .normalized-cross-body {
   padding: 10px 14px;
   font-family: 'Roboto Mono', monospace;

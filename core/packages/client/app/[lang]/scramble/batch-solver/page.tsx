@@ -6,6 +6,7 @@
  * 与上游节奏一致)。UI 重设计:示例预设一键填表、内联错误横幅取代 alert、
  * CSV 导出取代 ExcelJS、图像走站内 VisualCube / sr-puzzlegen。
  */
+import { useCopy } from '@/hooks/useCopy';
 import PageHeading from '@/components/PageHeading';
 import MoreToggle from '@/components/MoreToggle';
 import { useEffect, useMemo, useRef, useState } from 'react';
@@ -197,7 +198,7 @@ export default function BatchSolverPage() {
   const [total, setTotal] = useState<number | string>(0);
   const [depth, setDepth] = useState(0);
   const [stats, setStats] = useState<StatsView | null>(null);
-  const [copiedFails, setCopiedFails] = useState(false);
+  const { copied: copiedFails, copy, reset: resetCopy } = useCopy({ persist: 'all' });
 
   const workerRef = useRef<Worker | null>(null);
   const flushTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -265,7 +266,7 @@ export default function BatchSolverPage() {
     setStats(null);
     setTotal(0);
     setDepth(0);
-    setCopiedFails(false);
+    resetCopy();
     casesRef.current = [];
     bufRef.current = [];
     renderCases();
@@ -376,8 +377,7 @@ export default function BatchSolverPage() {
 
   const copyFails = () => {
     if (!stats || stats.failed.length === 0) return;
-    void navigator.clipboard.writeText('#' + stats.failed.join(', '));
-    setCopiedFails(true);
+    void copy('#' + stats.failed.join(', '));
   };
 
   const metricItems = useMemo(() => SORT_METRICS.map((m) => ({ value: m, label: m })), []);

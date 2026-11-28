@@ -22,6 +22,7 @@ import TrainingNavButton from '@/components/TrainingNavButton';
 import TrainingSettings from '@/components/TrainingSettings';
 import AlgViewModeToggle, { type AlgViewMode } from '@/components/AlgViewModeToggle';
 import { SortArrow } from '@/components/SortArrow';
+import { CopySuccessIcon } from '@/components/CopySuccessIcon';
 import { ClearButton } from '@/components/ClearButton';
 import { SearchInput } from '@/components/SearchInput';
 import { ListSelect } from '@/components/ListSelect';
@@ -1029,6 +1030,27 @@ export const CATALOG: ComponentEntry[] = [
     en: 'Original SVG animation with delayed navigation feedback, fade-out, reduced-motion support and chunk timeout/retry.',
   },
   {
+    name: 'VideoContextMenu',
+    import: "import { VideoContextMenu } from '@/components/video/VideoContextMenu';",
+    category: 'more',
+    zh: '在视频内的右键位置打开菜单，支持方向键导航、Esc 和点外部关闭。',
+    en: 'Positions a context menu inside the player with keyboard navigation, Escape and outside dismissal.',
+  },
+  {
+    name: 'VideoPlaybackControls',
+    import: "import { VideoPlaybackControls, useVideoControlsVisibility } from '@/components/video/VideoPlaybackControls';",
+    category: 'more',
+    zh: '课程与视频复盘共用的画面内播放条。调用方提供时间或帧索引、播放操作和附加按钮。',
+    en: 'Overlay controls shared by lessons and reconstructions. The player supplies time or frame indices, playback actions and extra buttons.',
+  },
+  {
+    name: 'VideoFrameStepButtons',
+    import: "import { VideoFrameStepButtons } from '@/components/video/VideoFrameStepButtons';",
+    category: 'more',
+    zh: '数帧与视频复盘共用的逐帧按钮，支持前进或后退 1 帧、10 帧及长按连跳。',
+    en: 'Frame navigation shared by frame counting and video reconstruction, with one- and ten-frame steps and press-to-repeat.',
+  },
+  {
     name: 'LessonVideoPlayer',
     import: "import { LessonVideoPlayer } from '@/components/video/LessonVideoPlayer'",
     category: 'more',
@@ -1802,6 +1824,34 @@ export const CATALOG: ComponentEntry[] = [
     en: 'Competition card (flag + name + date/city + registration-status pill + event icons). Shared by the landing "Registration" tab and the /wca/comp card view. Presentational only — the caller computes the reg pill (milestone semantics differ per page) and passes it in.',
   },
   {
+    name: 'CompetitionSearchFilters',
+    import: "import { CompetitionSearchFilters } from '@/components/competitions/CompetitionSearchFilters';",
+    category: 'more',
+    zh: '首页和 WCA 比赛页共用的比赛与选手搜索、国家筛选。',
+    en: 'Competition and cuber search and country filters shared by the homepage and WCA competitions page.',
+  },
+  {
+    name: 'CompetitionViewToggle',
+    import: "import { CompetitionViewToggle } from '@/components/competitions/CompetitionViewToggle';",
+    category: 'more',
+    zh: '首页与比赛页共用的日历、卡片、列表和地球视图切换。',
+    en: 'Shared Calendar, Cards, List, and Globe view switcher for competition navigation.',
+  },
+  {
+    name: 'usePersonCompetitionIds',
+    import: "import { usePersonCompetitionIds } from '@/hooks/usePersonCompetitionIds';",
+    category: 'more',
+    zh: '合并选手历史参赛和近期报名数据，供比赛页按选手筛选。',
+    en: 'Combines official competition history and upcoming registrations for competition filtering by cuber.',
+  },
+  {
+    name: 'CompetitionList',
+    import: "import { CompetitionList } from '@/components/competitions/CompetitionList';",
+    category: 'more',
+    zh: '首页与 WCA 比赛页共用的虚拟列表，支持报名节点排序、项目轮次和比赛详情入口。',
+    en: 'Virtualized competition list shared by the homepage and WCA competitions page, with registration sorting, event rounds, and competition details.',
+  },
+  {
     name: 'CompCardWithRounds',
     import: "import { CompCardWithRounds } from '@/components/CompCardWithRounds';",
     category: 'more',
@@ -2525,6 +2575,15 @@ export const CATALOG: ComponentEntry[] = [
 
   // ── 徽章与图标 ──────────────────────────────────────────────────────────
   {
+    name: 'CopySuccessIcon',
+    import: "import { CopySuccessIcon } from '@/components/CopySuccessIcon';",
+    category: 'display',
+    zh: '复制成功后显示的绿色对勾，可与 useCopy 搭配。',
+    en: 'Green checkmark shown after copying succeeds. Pairs with useCopy.',
+    usage: '{copied && <CopySuccessIcon />}',
+    Demo: () => <CopySuccessIcon />,
+  },
+  {
     name: 'SortArrow',
     import: "import { SortArrow } from '@/components/SortArrow';",
     category: 'display',
@@ -2990,9 +3049,8 @@ export const CATALOG: ComponentEntry[] = [
     name: 'RecentScrambles',
     import: "import RecentScrambles from '@/components/RecentScrambles';",
     category: 'more',
-    zh: `首页「近期打乱」面板:顶部项目选择器,333 提供 变体 / 类型 / 底色 / 步数 富控件并显示该难度出现概率,其余项目按打乱长度(222 / 金字塔 / 斜转另有整解难度模式),每条带 2D 展开图与比赛来源。`,
-    en: `Landing Recent Scrambles panel: an event picker where 333 offers a rich variant/type/bottom-color/move widget with difficulty probability, while other events bucket by scramble length (222/pyraminx/skewb also have a whole-solve difficulty mode).`,
-    note: { zh: `靠 stats/scramble/*.json 数据,无可展示项目时返回 null。`, en: `Driven by stats/scramble/*.json; returns null when no event has data.` },
+    zh: `首页固定展示近期比赛中最稀有的两条三阶打乱。打乱页复用卡片，并提供项目、阶段、底色与步数筛选。`,
+    en: `Shows the two rarest recent 3×3 scrambles on the homepage. The Scramble page reuses the cards and adds event, stage, color, and move-count filters.`,
   },
   {
     name: 'CuratedReconCard',
@@ -3373,6 +3431,13 @@ export const CATALOG: ComponentEntry[] = [
     category: 'more',
     zh: `单条视频链接 → 小封面缩略图(可点开外链)。YouTube 直链取图,B 站 / 抖音走后端代理(lib/recon-video-cover,与复盘卡片同一份),无封面(b23 短链 / 其他平台)回退播放图标;可叠「待审核」角标。成绩弹窗「比赛视频」区用。`,
     en: `A single video link → small cover thumbnail (opens the external link). YouTube uses a direct image, Bilibili/Douyin go through a backend proxy (lib/recon-video-cover, shared with the recon card); no-cover links (b23 short links / other platforms) fall back to a play icon, with an optional "pending review" badge. Used in the solve popup's video section.`,
+  },
+  {
+    name: 'ReconNotationToolbar',
+    import: "import { ReconNotationToolbar } from '@/components/recon/ReconNotationToolbar';",
+    category: 'more',
+    zh: '复盘详情和视频复盘共用的工具栏，支持切换复盘、原始和求解视图，以及复制文本、下载复盘 PNG。',
+    en: 'Shared toolbar for reconstruction details and video review, with view switching, text copying, and reconstruction PNG downloads.',
   },
   {
     name: 'ReconPlayerCanvas',

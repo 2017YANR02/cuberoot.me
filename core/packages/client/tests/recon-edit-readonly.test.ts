@@ -5,6 +5,7 @@ import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 import ReconSubmitForm from '@/app/[lang]/recon/submit/ReconSubmitForm';
 import { getRecon, listRecons, updateRecon, deleteRecon, uploadReconVideo, RECON_VIDEO_MAX_BYTES } from '@/lib/recon-api';
 import { checkReconCompletion, type ReconCompletionResult } from '@cuberoot/shared/recon-completion';
+import type { VideoReviewSurface } from '@/app/[lang]/video-recon/VideoReconClient';
 import type { VerifiedVideoDraft } from '@/app/[lang]/video-recon/VideoSolveAnalysis';
 
 const fixture = vi.hoisted(() => ({
@@ -47,9 +48,15 @@ vi.mock('@/lib/wca-results-api', async original => ({
   fetchScrambles: vi.fn(async () => null), fetchOptimalScrambles: vi.fn(async () => null),
 }));
 vi.mock('@/components/ReconPlayerPane', () => ({ default: () => null }));
+vi.mock('@/app/[lang]/recon/submit/ReconCaptionDialog', () => ({
+  default: ({ onUse }: { onUse?: (file: File) => void }) => onUse && createElement('button', {
+    type: 'button', 'data-attach-caption': true,
+    onClick: () => onUse(new File(['rendered video'], 'solve-captioned.mp4', { type: 'video/mp4' })),
+  }, 'Use for this submission'),
+}));
 vi.mock('@/app/[lang]/video-recon/VideoReconClient', () => ({
-  VideoReconWorkspace: ({ submission }: { submission: { file: File; onApply?: (draft: VerifiedVideoDraft) => void } }) =>
-    createElement('div', null,
+  VideoReconWorkspace: ({ submission }: { submission: { file: File; captions: (review?: VideoReviewSurface) => import('react').ReactNode; onApply?: (draft: VerifiedVideoDraft) => void } }) =>
+    createElement('div', null, submission.captions({ verifiedDraft: { solution: "R' // verified" } } as VideoReviewSurface),
       createElement('output', { 'data-video-review': true, 'data-can-apply': !!submission.onApply }, submission.file.name),
       submission.onApply && createElement('button', {
         type: 'button', 'data-use-video-solution': true, onClick: () => submission.onApply!({ solution: "R' // verified" }),
@@ -159,19 +166,24 @@ it('lets an editor review an existing explanation after submitting', async () =>
   expect(updateRecon).toHaveBeenCalledWith(2795, expect.objectContaining({ unsolvedReason: 'Old reason' }));
 });
 
+function attachmentAction(label: string) {
+  return [...host.querySelectorAll<HTMLButtonElement>('.submit-video-upload button')].find(button => button.textContent === label);
+}
+
 it.each([null, 8])('opens local video reconstruction without membership for visitor %s', async uid => {
   fixture.member = false;
   fixture.user = uid === null ? null : { uid, wcaId: '', name: 'Editor' };
   await render(null);
   const input = host.querySelector<HTMLInputElement>('#recon-video-local')!;
   expect(input.disabled).toBe(false);
-  expect(host.querySelector('.submit-video-save input')).toBeNull();
   const file = new File(['local video'], 'solve.mp4', { type: 'video/mp4' });
   Object.defineProperty(file, 'size', { value: RECON_VIDEO_MAX_BYTES + 1 });
   Object.defineProperty(input, 'files', { value: [file] });
   await act(async () => input.dispatchEvent(new Event('change', { bubbles: true })));
   await act(async () => vi.waitFor(() => expect(document.querySelector('[data-video-review="true"]')?.textContent).toBe(file.name)));
   expect(document.querySelector('[data-video-review]')?.getAttribute('data-can-apply')).toBe(String(uid !== null));
+  expect(attachmentAction('Use for this submission')).toBeUndefined();
+  expect(document.querySelector('[data-attach-caption]')).toBeNull();
   expect(uploadReconVideo).not.toHaveBeenCalled();
 });
 
@@ -195,8 +207,7 @@ it('runs the same review for a direct link without replacing the attached URLs o
   vi.mocked(getRecon).mockResolvedValue({ ...fixture.solve, videoUrl: existingLink } as Awaited<ReturnType<typeof getRecon>>);
   await render();
   await selectMemberVideo();
-  const checkbox = host.querySelector<HTMLInputElement>('.submit-video-save input')!;
-  await act(async () => checkbox.click());
+  await act(async () => attachmentAction('Use for this submission')!.click());
 
   const fetchSpy = vi.spyOn(globalThis, 'fetch').mockResolvedValueOnce(new Response('video bytes', {
     headers: { 'Content-Type': 'video/mp4' },
@@ -204,10 +215,13 @@ it('runs the same review for a direct link without replacing the attached URLs o
   try {
     const url = 'https://api.cuberoot.me/v1/recon/video/1';
     await pasteVideoLink(url);
-    await act(async () => vi.waitFor(() => expect(document.querySelector('[data-video-review]')?.textContent).toBe('1')));
+    await vi.waitFor(async () => {
+      await act(async () => {});
+      expect(document.querySelector('[data-video-review]')?.textContent).toBe('1');
+    });
     expect(fetchSpy).toHaveBeenCalledWith(new URL(url), expect.objectContaining({ credentials: 'omit' }));
-    expect(checkbox.disabled).toBe(true);
-    expect(checkbox.checked).toBe(false);
+    expect(attachmentAction('Use for this submission')).toBeUndefined();
+    expect(attachmentAction('Remove from submission')).toBeUndefined();
     expect(host.querySelector<HTMLTextAreaElement>('#recon-video-urls')?.value).toBe(existingLink);
 
     await act(async () => document.querySelector<HTMLButtonElement>('[role="dialog"] button[aria-label="Close"]')!.click());
@@ -278,14 +292,12 @@ it.each([false, true])('uploads on submit only when the member opts in (%s)', as
   const url = 'https://example.com/recon/video/7';
   vi.mocked(uploadReconVideo).mockResolvedValue({ id: 7, url });
   await render();
-  const checkbox = host.querySelector<HTMLInputElement>('.submit-video-save input')!;
-  expect(checkbox.checked).toBe(false);
-  expect(checkbox.disabled).toBe(true);
+  expect(attachmentAction('Use for this submission')).toBeUndefined();
   const file = await selectMemberVideo();
-  expect(checkbox.checked).toBe(false);
-  expect(checkbox.disabled).toBe(false);
-  if (checked) await act(async () => checkbox.click());
-  expect(checkbox.checked).toBe(checked);
+  expect(attachmentAction('Remove from submission')).toBeUndefined();
+  expect(attachmentAction('Use for this submission')).toBeDefined();
+  if (checked) await act(async () => attachmentAction('Use for this submission')!.click());
+  expect(!!attachmentAction('Remove from submission')).toBe(checked);
   expect(uploadReconVideo).not.toHaveBeenCalled();
   const submit = host.querySelector<HTMLButtonElement>('.submit-btn-primary')!;
   await act(async () => submit.click());
@@ -303,7 +315,7 @@ it('reuses the uploaded URL if saving the reconstruction needs a retry', async (
   vi.mocked(updateRecon).mockRejectedValueOnce(new Error('temporarily unavailable'));
   await render();
   const file = await selectMemberVideo();
-  await act(async () => host.querySelector<HTMLInputElement>('.submit-video-save input')!.click());
+  await act(async () => attachmentAction('Use for this submission')!.click());
   const submit = host.querySelector<HTMLButtonElement>('.submit-btn-primary')!;
   await act(async () => submit.click());
   expect(host.textContent).toContain('temporarily unavailable');
@@ -318,15 +330,31 @@ it('keeps the form open on upload failure and allows submitting after opting out
   vi.mocked(uploadReconVideo).mockRejectedValueOnce(new Error('upload unavailable'));
   await render();
   const file = await selectMemberVideo();
-  const checkbox = host.querySelector<HTMLInputElement>('.submit-video-save input')!;
   const submit = host.querySelector<HTMLButtonElement>('.submit-btn-primary')!;
-  await act(async () => checkbox.click());
+  await act(async () => attachmentAction('Use for this submission')!.click());
   await act(async () => submit.click());
   expect(host.textContent).toContain('upload unavailable');
-  expect(checkbox.checked).toBe(true);
+  expect(attachmentAction('Remove from submission')).toBeDefined();
   expect(updateRecon).not.toHaveBeenCalled();
-  await act(async () => checkbox.click());
+  await act(async () => attachmentAction('Remove from submission')!.click());
   await act(async () => submit.click());
   expect(uploadReconVideo).toHaveBeenCalledExactlyOnceWith(file);
   expect(updateRecon).toHaveBeenCalledExactlyOnceWith(2795, expect.objectContaining({ videoUrl: '' }));
+});
+
+it('fills the verified solution and attaches its captioned video in one action', async () => {
+  fixture.user = { uid: 7, wcaId: '', name: 'Editor' };
+  const url = 'https://example.com/recon/video/8';
+  vi.mocked(uploadReconVideo).mockResolvedValue({ id: 8, url });
+  await render();
+  await openVideoReview();
+  await act(async () => document.querySelector<HTMLButtonElement>('[data-attach-caption]')!.click());
+  expect(host.querySelector<HTMLTextAreaElement>('[data-editor]')?.value).toBe("R' // verified");
+  expect(document.querySelector('[data-video-review]')).toBeNull();
+  expect(host.querySelector('.submit-video-filename')?.textContent).toContain('solve-captioned.mp4');
+  expect(attachmentAction('Remove from submission')).toBeDefined();
+  expect(uploadReconVideo).not.toHaveBeenCalled();
+  await act(async () => host.querySelector<HTMLButtonElement>('.submit-btn-primary')!.click());
+  expect(uploadReconVideo).toHaveBeenCalledExactlyOnceWith(expect.objectContaining({ name: 'solve-captioned.mp4' }));
+  expect(updateRecon).toHaveBeenCalledExactlyOnceWith(2795, expect.objectContaining({ videoUrl: url }));
 });

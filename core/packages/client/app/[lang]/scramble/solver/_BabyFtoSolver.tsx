@@ -7,7 +7,8 @@
  * it neither imports the older Diamond solver nor reverses the input path.
  */
 import { useEffect, useState } from 'react';
-import { Check, Copy } from '@app-foundation/icons/lucide';
+import { CopySuccessIcon } from '@/components/CopySuccessIcon';
+import { Copy } from '@app-foundation/icons/lucide';
 import {
   BABY_FTO_GODS_NUMBER, BABY_FTO_TOTAL_STATES, classifyBabyFtoTokens, solveBabyFto,
 } from '@cuberoot/puzzle-solvers/baby-fto';
@@ -46,7 +47,7 @@ function BabyFtoPlayback({ result, scramble }: { result: BabyFtoSolution; scramb
       <div className="ivy-solbox">{result.solution}</div>
       <div className="baby-fto-solution-tools">
         <button type="button" className="bsp-btn" onClick={() => copy(result.solution)}>
-          {copied ? <Check size={15} aria-hidden /> : <Copy size={15} aria-hidden />}
+          {copied ? <CopySuccessIcon size={15} /> : <Copy size={15} aria-hidden />}
           {tr(copied ? { zh: '已复制', en: 'Copied' } : { zh: '复制解法', en: 'Copy solution' })}
         </button>
         {view && (

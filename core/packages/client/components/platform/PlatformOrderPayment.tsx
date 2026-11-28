@@ -1,12 +1,12 @@
 'use client';
 
+import { useCopy } from '@/hooks/useCopy';
 import { useEffect, useRef, useState } from 'react';
 import { ArrowRight, LockKeyhole } from '@app-foundation/icons/lucide';
 import { useT } from '@/hooks/useT';
 import { useLang } from '@/i18n/tr';
 import { isMiniProgramCommerceRestricted, openMiniProgramOrderPayment } from '@/lib/miniprogram-bridge';
 import { isInWeChat } from '@/lib/wechat-share';
-import { copyPageLink } from '@/lib/page-share';
 import { commerceMoney } from '@/lib/platform-commerce-format';
 import { isPlatformPaymentAttemptResult, type PlatformActionId, type PlatformActionResult, type PlatformEntity, type PlatformPaymentAttemptResult } from '@/lib/platform-types';
 import './platform-order-payment.css';
@@ -26,7 +26,7 @@ export function PlatformOrderPayment({ entity, busy, runAction, message }: {
   const [attempt, setAttempt] = useState<PlatformPaymentAttemptResult | null>(null);
   const [starting, setStarting] = useState(false);
   const [error, setError] = useState('');
-  const [copied, setCopied] = useState(false);
+  const { copied, copy } = useCopy({ persist: 'all' });
   const inFlight = useRef(false);
   useEffect(() => {
     let cancelled = false;
@@ -55,8 +55,7 @@ export function PlatformOrderPayment({ entity, busy, runAction, message }: {
     if (!pending || !provider || !environment || busy || inFlight.current) return;
     if (externalBrowser) {
       const url = new URL(`${lang === 'zh' ? '/zh' : ''}/platform/orders/${encodeURIComponent(entity.id)}`, window.location.origin);
-      const ok = await copyPageLink(url.href);
-      setCopied(ok);
+      const ok = await copy(url.href);
       setError(ok ? '' : t('复制失败，请使用右上角菜单在浏览器中打开。', 'Could not copy the link. Open this page in your browser from the top-right menu.'));
       return;
     }

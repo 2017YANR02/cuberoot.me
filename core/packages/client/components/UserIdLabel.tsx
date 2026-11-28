@@ -1,7 +1,9 @@
 'use client';
 
-import { Check, Copy } from '@app-foundation/icons/lucide';
-import { useState, type ReactNode } from 'react';
+import { useCopy } from '@/hooks/useCopy';
+import { CopySuccessIcon } from '@/components/CopySuccessIcon';
+import { Copy } from '@app-foundation/icons/lucide';
+import { type ReactNode } from 'react';
 import AppLink from '@/components/AppLink';
 import { useAuthUser } from '@/lib/auth-store';
 import { tr } from '@/i18n/tr';
@@ -33,7 +35,7 @@ export function UserIdLabel({
   contact?: boolean;
   className?: string;
 }) {
-  const [copied, setCopied] = useState(false);
+  const { copied, copy } = useCopy();
   if (!Number.isSafeInteger(userId) || (userId ?? 0) <= 0) return null;
 
   const text = `${full ? 'CubeRoot ID' : 'ID'} ${userId}`;
@@ -42,27 +44,19 @@ export function UserIdLabel({
     ? <UserContactLink userId={userId} className={classes}>{text}</UserContactLink>
     : <span className={classes}>{text}</span>;
 
-  const copy = async () => {
-    try {
-      await navigator.clipboard.writeText(String(userId));
-      setCopied(true);
-      window.setTimeout(() => setCopied(false), 1500);
-    } catch {
-      // Clipboard can be unavailable in restricted browser contexts.
-    }
-  };
+  const copyId = () => copy(String(userId));
 
   return (
     <button
       type="button"
       className={`${classes} is-copyable`}
-      onClick={copy}
+      onClick={copyId}
       title={copied
         ? tr({ zh: '已复制', en: 'Copied' })
         : tr({ zh: '复制账号 ID', en: 'Copy account ID' })}
     >
       <span>{text}</span>
-      {copied ? <Check size={12} aria-hidden="true" /> : <Copy size={12} aria-hidden="true" />}
+      {copied ? <CopySuccessIcon size={12} /> : <Copy size={12} aria-hidden="true" />}
     </button>
   );
 }
