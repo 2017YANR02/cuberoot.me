@@ -34,7 +34,7 @@ export default function Checklists() {
   const newId = useRef('');
   const lists = resource.error || loadedPath !== path ? [] : checklists.filter(list => status === 'all' || list.active);
   return <>
-    <div className="staff-actions workspace-toolbar">
+    <div className="staff-actions workspace-toolbar workspace-checklist-toolbar">
       <CompactSelect ariaLabel={t('筛选', 'Filters')} label={status !== 'active' || itemStatus !== 'active' || completionStatus !== 'all' ? t('筛选 · 已启用', 'Filters · Active') : t('筛选', 'Filters')} items={[]} onChange={() => {}} panelContent={<div className="workspace-check-filters">
         <div className="workspace-check-filter-group"><span>{t('清单', 'Checklists')}</span><LiquidGlassChips ariaLabel={t('清单', 'Checklists')} items={['active', 'all'] as const} value={status} onChange={next => { void setStatus(next); void setPage(1); setEditing(false); }} getLabel={item => item === 'active' ? t('未归档', 'Not archived') : t('含已归档', 'Include archived')} /></div>
         <div className="workspace-check-filter-group"><span>{t('事项归档', 'Task archive')}</span><LiquidGlassChips ariaLabel={t('事项归档', 'Task archive')} items={['active', 'archived', 'all'] as const} value={itemStatus} onChange={setItemStatus} getLabel={item => item === 'active' ? t('未归档', 'Not archived') : item === 'archived' ? t('已归档', 'Archived') : t('全部', 'All')} /></div>

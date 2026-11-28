@@ -21,7 +21,7 @@ function adjacentMonth(month: string, offset: number) {
   return toLocalIsoDate(monthDate(month, 1, offset)).slice(0, 7);
 }
 
-export default function Payroll({ projectRevision = 0 }: { projectRevision?: number }) {
+export default function Payroll({ projectRevision = 0, userId }: { projectRevision?: number; userId?: number }) {
   const t = useT();
   const lang = useLang();
   const heading = useId();
@@ -30,28 +30,30 @@ export default function Payroll({ projectRevision = 0 }: { projectRevision?: num
   const [month, setMonth] = useState(currentMonth);
   const [employeeId, setEmployeeId] = useState<number>();
   const { formatName = name => name } = useWorkspace();
-  const { data, loading, error, reload } = useResource<PayrollMonth>(`payroll?month=${month}`);
+  const { data, loading, error, reload } = useResource<PayrollMonth>(`payroll?month=${month}${userId == null ? '' : `&userId=${userId}`}`);
   useEffect(() => { if (projectRevision) reload(); }, [projectRevision, reload]);
   const employee = data?.rows.find(row => row.userId === employeeId)
     ?? data?.rows.find(row => row.totalCents > 0 || row.attendance.length > 0 || row.canReport)
     ?? data?.rows[0];
   const monthLabel = new Intl.DateTimeFormat(lang === 'zh' ? 'zh-CN' : 'en', { year: 'numeric', month: 'long' }).format(monthDate(month));
-  return <section className="staff-panel" aria-labelledby={heading}>
-    <h2 id={heading}>{t('月度报酬', 'Monthly pay')}</h2>
-    <div className="staff-actions">
-      <Button action="previous" variant="secondary" disabled={month <= '1900-01'} onClick={() => setMonth(adjacentMonth(month, -1))}>
-        {t('上个月', 'Previous month')}
-      </Button>
-      <span aria-live="polite">{monthLabel}</span>
-      <Button action="next" variant="secondary" disabled={month >= currentMonth} onClick={() => setMonth(adjacentMonth(month, 1))}>
-        {t('下个月', 'Next month')}
-      </Button>
-      {data?.canManage && !error && employee && <Field label={t('员工', 'Employee')} width="medium">
+  return <section className="staff-panel workspace-payroll" aria-labelledby={heading}>
+    <header className="workspace-mine-heading">
+      <h2 id={heading}>{userId == null ? t('月度报酬', 'Monthly pay') : t('我的月度报酬', 'My monthly pay')}</h2>
+      <div className="staff-actions">
+        <Button action="previous" variant="secondary" disabled={month <= '1900-01'} onClick={() => setMonth(adjacentMonth(month, -1))}>
+          {t('上个月', 'Previous month')}
+        </Button>
+        <span aria-live="polite">{monthLabel}</span>
+        <Button action="next" variant="secondary" disabled={month >= currentMonth} onClick={() => setMonth(adjacentMonth(month, 1))}>
+          {t('下个月', 'Next month')}
+        </Button>
+      </div>
+      {userId == null && data?.canManage && !error && employee && <Field label={t('员工', 'Employee')} width="medium">
         <select value={employee.userId} onChange={event => setEmployeeId(Number(event.target.value))}>
           {data.rows.map(row => <option key={row.userId} value={row.userId}>{formatName(row.name)}</option>)}
         </select>
       </Field>}
-    </div>
+    </header>
     <ErrorNotice error={error} retry={reload} />
     {loading && <p role="status">{t('正在加载…', 'Loading…')}</p>}
     {!loading && !error && !employee && <p className="staff-empty">{t('暂无员工报酬记录', 'No employee pay records')}</p>}
@@ -78,9 +80,10 @@ function PayrollStatement({ employee, month, today, loading, reload }: {
   const hasActivity = employee.attendance.length > 0 || employee.projects.length > 0;
   const saved = () => { setEditing(null); reload(); };
   return <>
-    <div className="staff-actions">
-      <p>{t('发放日', 'Pay date')} <time dateTime={month.payDate}>{month.payDate}</time></p>
+    <div className="staff-actions workspace-pay-summary">
       <p>{t('应发金额', 'Amount due')} <strong>{money(employee.totalCents)}</strong></p>
+      <p>{t('发放日', 'Pay date')} <time dateTime={month.payDate}>{month.payDate}</time></p>
+      {employee.attendance.length > 0 && <p>{t('已确认出勤（天）', 'Approved days worked')} <b>{employee.attendance.reduce((days, row) => days + (row.approved ? row.halfDays / 2 : 0), 0)}</b></p>}
       {employee.paidAt && <p>{t('已登记付款', 'Payment recorded')} <time dateTime={employee.paidAt}>
         {new Intl.DateTimeFormat(lang === 'zh' ? 'zh-CN' : 'en', { dateStyle: 'medium' }).format(new Date(employee.paidAt))}
       </time></p>}

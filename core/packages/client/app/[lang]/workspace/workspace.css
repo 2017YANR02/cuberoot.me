@@ -321,6 +321,8 @@
   .staff-workspace .staff-form-row { flex-direction: row; }
   .staff-workspace .staff-filters .staff-field-medium { width: min(100%, 20rem); }
   .staff-toolbar-actions { margin-left: 0; }
+  .staff-workspace .workspace-member-search .staff-field-medium { flex: 1 1 10rem; min-width: 0; }
+  .staff-workspace .staff-filters .staff-field-medium { flex: 1 1 12rem; }
   .workspace-dialog-heading { padding: 16px 16px 0; }
   .workspace-dialog-body { padding: 20px 16px; }
   .workspace-dialog .staff-field-medium, .workspace-dialog .staff-field-wide { flex-basis: 100%; width: 100%; }
@@ -377,6 +379,8 @@
 .workspace-task-list .workspace-add-item:focus-within { outline: none; border-color: var(--ring); }
 .workspace-task-list .workspace-add-input { flex: 1; min-width: 0; border: 0; background: transparent; }
 .workspace-check-bulk { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; margin: 8px 0; }
+.workspace-checklist-toolbar { align-items: center; }
+.workspace-checklist-toolbar > .compact-select { align-self: center; }
 .workspace-check-filters { display: flex; flex-direction: column; gap: 16px; padding: 8px; width: min(320px, calc(100vw - 64px)); }
 .workspace-check-filter-group { display: flex; flex-direction: column; gap: 8px; }
 .workspace-check-filter-group > span { font-size: .85rem; color: var(--muted-foreground); }
@@ -393,3 +397,45 @@
 .workspace-category-heading > .more-toggle { color: var(--foreground); }
 
 .workspace-software-group > .more-toggle { min-height: 44px; font-size: 16px; }
+
+.workspace-profile-fields { display: flex; flex-wrap: wrap; gap: 12px 40px; margin: 12px 0 0; }
+.workspace-profile-fields dt { color: var(--muted-foreground); font-size: .875rem; }
+.workspace-profile-fields dd { margin: 4px 0 0; font-weight: 600; }
+
+.workspace-mine {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 22rem), 1fr));
+  align-items: start;
+  gap: 20px clamp(20px, 3vw, 44px);
+}
+.workspace-mine > .staff-panel { margin: 0; min-width: 0; }
+.staff-workspace .workspace-mine > .workspace-profile {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px clamp(20px, 3vw, 44px);
+  padding-block: 4px 16px;
+  border-bottom: 1px solid var(--border-default);
+}
+.workspace-profile h2, .workspace-profile .workspace-profile-fields { margin: 0; }
+.workspace-profile > a { margin-inline-start: auto; }
+.workspace-mine-heading {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+  min-height: var(--workspace-control-height);
+}
+.workspace-mine-heading h2 { margin: 0; }
+.workspace-payroll > .workspace-mine-heading { align-items: flex-end; }
+.workspace-payroll > .workspace-mine-heading h2 { display: flex; align-items: center; min-height: var(--workspace-control-height); }
+.workspace-payroll .workspace-mine-heading > .staff-actions { flex-wrap: nowrap; }
+.staff-workspace .staff-actions > :is(h2, h3) { margin-block: 0; }
+.workspace-mine .workspace-mine-heading > .staff-actions { gap: 2px; }
+.workspace-mine .workspace-mine-heading ~ .staff-empty { margin-top: 12px; padding-top: 0; }
+.workspace-mine .workspace-pay-summary { margin: 12px 0; align-items: flex-start; column-gap: 24px; }
+.workspace-mine .workspace-pay-summary p { display: grid; gap: 2px; margin: 0; font-size: .875rem; color: var(--muted-foreground); }
+.workspace-mine .workspace-pay-summary :is(strong, time, b) { color: var(--foreground); font-variant-numeric: tabular-nums; }
+.workspace-mine .workspace-pay-summary strong { font-size: 1.65rem; line-height: 1.2; }
+.workspace-mine .staff-empty { margin: 8px 0 0; padding: 4px 0; }

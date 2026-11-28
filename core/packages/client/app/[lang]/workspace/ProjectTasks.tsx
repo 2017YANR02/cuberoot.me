@@ -25,12 +25,12 @@ export default function ProjectTasks({ onAccepted }: { onAccepted?: () => void }
     accepted: t('已验收', 'Accepted'),
   };
   return <section className="staff-panel">
-    <div className="staff-actions">
+    <header className="staff-actions workspace-mine-heading">
       <h2>{t('项目任务', 'Project tasks')}</h2>
       {data?.canManage && !error && <Button action="add" iconOnly={false} onClick={() => setEditing({ id: crypto.randomUUID() })}>
         {t('新建项目任务', 'New project task')}
       </Button>}
-    </div>
+    </header>
     <ErrorNotice error={error} retry={reload} />
     {loading && <p role="status">{t('正在加载…', 'Loading…')}</p>}
     {!loading && !error && data?.tasks.length === 0 && <p className="staff-empty">{t('暂无项目任务', 'No project tasks')}</p>}
