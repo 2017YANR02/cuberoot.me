@@ -794,7 +794,7 @@ export default function LandingPage({ initialLayout = null }: { initialLayout?: 
         <section id="landing-admin-content" hidden={activeSection !== 'admin'} className="cards-sections" aria-label={tr({ zh: '管理', en: 'Admin' })}>
           <div className="cards-section">
             <div className="cards-container">
-              <Link href="/admin" id="card-admin" className="landing-card tier-utility" prefetch={false}>
+              <Link href="/admin" id="card-admin" className="landing-card tier-utility af-glass-surface" prefetch={false}>
                 <LandingCardContent label={tr({ zh: '管理后台', en: 'Admin dashboard' })} Icon={LayoutDashboard} />
               </Link>
               {renderCardGrid('main', PRIMARY_CARDS, 'landing-admin-card-group', true)}
