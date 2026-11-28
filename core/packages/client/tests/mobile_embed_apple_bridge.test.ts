@@ -85,7 +85,7 @@ describe('session ticket lifecycle under Apple bridge reuse', () => {
     mocks.post.mockClear();
     await act(async () => send(mobileEmbedWebSessionMessage(ticketA, 'request-A')));
     expect(mocks.post).toHaveBeenCalledExactlyOnceWith({
-      type: 'cuberoot:mobile:web-session-result', surface: 'account', requestId: 'request-A', ok: true,
+      type: 'cuberoot:mobile:web-session-result', surface: 'account', requestId: 'request-A', ok: true, keepsDocument: true,
     }, origin);
   });
 

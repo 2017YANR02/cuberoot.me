@@ -5,6 +5,7 @@ import { startWebSurfaceHandshake } from './web-surface-handshake';
 
 const app = readFileSync(new URL('./App.tsx', import.meta.url), 'utf8');
 const css = readFileSync(new URL('./app.css', import.meta.url), 'utf8');
+const embeddedCss = readFileSync(new URL('./embedded-layout.css', import.meta.url), 'utf8');
 
 describe('installed website surfaces', () => {
   afterEach(() => vi.useRealTimers());
@@ -15,6 +16,11 @@ describe('installed website surfaces', () => {
     expect(app).toContain('MOBILE_EMBED_SURFACES.map((surface) =>');
     expect(app).toContain('<AccountHome auth={auth}');
     expect(app).toContain("hidden={view !== surface || (surface === 'account' && !accountDetails)}");
+  });
+
+  it('hides the pending Account frame and the legacy in-frame sign-in form visually', () => {
+    expect(css).toMatch(/\.web-surface--account iframe\[aria-hidden="true"\] \{ visibility: hidden; \}/);
+    expect(embeddedCss).toMatch(/:root\[data-native-account-detail-frame\] \.settings-panel-page \[data-mobile-auth-entry\] \{\s*display: none;/);
   });
 
   it('bounds init retries, lets a trusted acknowledgement stop early, and exposes recovery', () => {

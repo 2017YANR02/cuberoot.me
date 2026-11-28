@@ -655,7 +655,11 @@ export function App({ host, loadingMark }: { host: InstalledAppHost; loadingMark
     tools: false,
   });
   const accountManagementRequestRef = useRef<string | null>(null);
-  const accountSyncInFlightRef = useRef<{ requestId: string; token: string; ticket: string | null; sent: boolean } | null>(null);
+  const accountDocumentRef = useRef<{ frame: Window; id: string; contentReady: boolean } | null>(null);
+  const accountSyncInFlightRef = useRef<{
+    requestId: string; token: string; ticket: string | null; sent: boolean;
+    entryDocument: string | null; confirmed: boolean; keepsDocument: boolean;
+  } | null>(null);
   const accountSyncTimeoutRef = useRef<number | null>(null);
   const accountHandoffRetriedRef = useRef(false);
   const accountSyncedTokenRef = useRef<string | null>(null);
@@ -2121,7 +2125,10 @@ export function App({ host, loadingMark }: { host: InstalledAppHost; loadingMark
     let pending = accountSyncInFlightRef.current;
     if (pending?.token !== token) {
       clearAccountSyncTimeout();
-      pending = { requestId: crypto.randomUUID(), token, ticket: null, sent: false };
+      pending = {
+        requestId: crypto.randomUUID(), token, ticket: null, sent: false,
+        entryDocument: null, confirmed: false, keepsDocument: false,
+      };
       accountSyncInFlightRef.current = pending;
       try {
         const envelope = await auth.issueWebSessionTicket();
@@ -2137,6 +2144,8 @@ export function App({ host, loadingMark }: { host: InstalledAppHost; loadingMark
     if (!pending.ticket || pending.sent || !webBridgeReadyRef.current.account
       || webFrameRefs.current.account?.contentWindow !== frame) return;
     pending.sent = true;
+    const accountDocument = accountDocumentRef.current;
+    pending.entryDocument = accountDocument?.frame === frame ? accountDocument.id : null;
     const requestId = pending.requestId;
     accountSyncTimeoutRef.current = window.setTimeout(() => {
       if (accountSyncInFlightRef.current?.requestId !== requestId) return;
@@ -2146,6 +2155,19 @@ export function App({ host, loadingMark }: { host: InstalledAppHost; loadingMark
     }, MOBILE_EMBED_WEB_SESSION_ACK_TIMEOUT_MS);
     frame.postMessage(mobileEmbedWebSessionMessage(pending.ticket, requestId), SITE_ORIGIN);
   }, [announce, auth.issueWebSessionTicket, auth.session?.token, clearAccountSyncTimeout, connection, copy.authError]);
+
+  const revealAccountWebSession = useCallback(() => {
+    const pending = accountSyncInFlightRef.current;
+    if (!pending?.confirmed) return;
+    const accountDocument = accountDocumentRef.current;
+    if (pending.entryDocument && (!accountDocument?.contentReady
+      || (!pending.keepsDocument && accountDocument.id === pending.entryDocument))) return;
+    clearAccountSyncTimeout();
+    accountSyncInFlightRef.current = null;
+    accountSyncedTokenRef.current = pending.token;
+    setAccountDetailsReady(true);
+    setWebSurfaceStatus(current => current.account === 'ready' ? current : { ...current, account: 'ready' });
+  }, [clearAccountSyncTimeout]);
 
   const logoutEverywhere = useCallback(async () => {
     clearAccountSyncTimeout();
@@ -2297,8 +2319,24 @@ export function App({ host, loadingMark }: { host: InstalledAppHost; loadingMark
         if (event.source === webFrameRefs.current.tools?.contentWindow) setDockedKeyboardTop(null);
         return;
       }
+      if (accountSource && event.data?.type === 'cuberoot:mobile:embedded-account-content-ready') {
+        const accountDocument = accountDocumentRef.current;
+        if (accountDocument && accountDocument.frame === event.source && accountDocument.id === event.data.documentId) {
+          accountDocument.contentReady = true;
+          revealAccountWebSession();
+        }
+        return;
+      }
       if (event.data?.type === 'cuberoot:mobile:embedded-top-ready') {
         const surface: unknown = event.data.surface;
+        const accountDocumentId: unknown = event.data.accountDocumentId;
+        if (accountSource && surface === 'account' && accountFrame?.contentWindow
+          && typeof accountDocumentId === 'string' && accountDocumentId.length === 36) {
+          const frame = accountFrame.contentWindow;
+          if (accountDocumentRef.current?.frame !== frame || accountDocumentRef.current.id !== accountDocumentId) {
+            accountDocumentRef.current = { frame, id: accountDocumentId, contentReady: false };
+          }
+        }
         if (floatingNavigation && (surface === 'account' || surface === 'tools')) {
           const frame = webFrameRefs.current[surface]?.contentWindow;
           const top = event.data.top === true;
@@ -2385,14 +2423,12 @@ export function App({ host, loadingMark }: { host: InstalledAppHost; loadingMark
       if (accountSource && webSessionResult) {
         const pending = accountSyncInFlightRef.current;
         if (!pending?.sent || pending.requestId !== webSessionResult.requestId) return;
-        clearAccountSyncTimeout();
         if (webSessionResult.ok) {
-          accountSyncInFlightRef.current = null;
-          accountSyncedTokenRef.current = pending.token;
-          setAccountDetailsReady(true);
-          setWebSurfaceStatus(current => current.account === 'ready' ? current : { ...current, account: 'ready' });
-        }
-        else if (!recoverAccountHandoff()) {
+          pending.confirmed = true;
+          pending.keepsDocument = webSessionResult.keepsDocument === true;
+          revealAccountWebSession();
+        } else if (!recoverAccountHandoff()) {
+          clearAccountSyncTimeout();
           setWebSurfaceStatus((current) => ({ ...current, account: 'error' }));
           announce(copy.authError);
         }
@@ -2463,6 +2499,7 @@ export function App({ host, loadingMark }: { host: InstalledAppHost; loadingMark
     navigateAccount,
     postWebSurfaceInit,
     recoverAccountHandoff,
+    revealAccountWebSession,
     selectPrimaryView,
     openAppAppearance,
     host,

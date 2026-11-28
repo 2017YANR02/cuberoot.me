@@ -374,7 +374,7 @@ export default function MobileEmbedBridge() {
         const persisted = await applySession(session.token, session.user, current);
         if (!current()) return;
         const ok = persisted && current() && Boolean(getSessionToken());
-        postToParent(mobileEmbedWebSessionResultMessage(ok, webSession.requestId));
+        postToParent(mobileEmbedWebSessionResultMessage(ok, webSession.requestId, true));
       }).catch(() => {
         if (current()) postToParent(mobileEmbedWebSessionResultMessage(false, webSession.requestId));
       }).finally(() => {

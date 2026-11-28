@@ -236,6 +236,11 @@
   display: none;
 }
 
+/* Older website builds may render their login form while restoring an embedded session. */
+:root[data-native-account-detail-frame] .settings-panel-page [data-mobile-auth-entry] {
+  display: none;
+}
+
 :root .settings-panel-page.settings-panel-account-detail > .settings-panel-content,
 :root[data-native-account-detail-frame] .settings-panel-page > .settings-panel-content {
   grid-area: 1 / 1;

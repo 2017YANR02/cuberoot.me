@@ -54,10 +54,16 @@ describe('mobile embed navigation contract', () => {
     expect(decodeMobileEmbedAuthRequest(firstPartyAuth)).toEqual(firstPartyAuth);
     const clear = mobileEmbedAuthClearMessage();
     expect(decodeMobileEmbedAuthClear(clear)).toEqual(clear);
+    const explicit = mobileEmbedAuthClearMessage('user-action');
+    expect(decodeMobileEmbedAuthClear(explicit)).toEqual(explicit);
+    expect(decodeMobileEmbedAuthClear({ ...explicit, reason: 'restore-failed' })).toBeNull();
     const session = mobileEmbedWebSessionMessage(TICKET, REQUEST_ID);
     expect(decodeMobileEmbedWebSession(session)).toEqual(session);
     const result = mobileEmbedWebSessionResultMessage(true, REQUEST_ID);
     expect(decodeMobileEmbedWebSessionResult(result)).toEqual(result);
+    expect(decodeMobileEmbedWebSessionResult(mobileEmbedWebSessionResultMessage(true, REQUEST_ID, true)))
+      .toEqual({ ...result, keepsDocument: true });
+    expect(decodeMobileEmbedWebSessionResult({ ...result, ok: false, keepsDocument: true })).toBeNull();
     expect(decodeMobileEmbedWebSession({
       surface: 'account',
       ticket: TICKET,

@@ -151,6 +151,7 @@ export interface MobileEmbedWebSessionMessage {
 
 export interface MobileEmbedWebSessionResultMessage {
   ok: boolean;
+  keepsDocument?: true;
   requestId?: string;
   surface: 'account';
   type: 'cuberoot:mobile:web-session-result';
@@ -231,10 +232,13 @@ export function mobileEmbedWebSessionMessage(
 export function mobileEmbedWebSessionResultMessage(
   ok: boolean,
   requestId: string | undefined,
+  keepsDocument = false,
 ): MobileEmbedWebSessionResultMessage {
-  return requestId
-    ? { ok, requestId, surface: 'account', type: 'cuberoot:mobile:web-session-result' }
-    : { ok, surface: 'account', type: 'cuberoot:mobile:web-session-result' };
+  return {
+    ok, surface: 'account', type: 'cuberoot:mobile:web-session-result',
+    ...(requestId ? { requestId } : {}),
+    ...(ok && keepsDocument ? { keepsDocument: true } : {}),
+  };
 }
 
 export function mobileEmbedExternalMessage(
@@ -374,7 +378,8 @@ export function decodeMobileEmbedWebSessionResult(
   if (candidate.type !== 'cuberoot:mobile:web-session-result'
     || candidate.surface !== 'account'
     || (candidate.requestId !== undefined && !isMobileEmbedRequestId(candidate.requestId))
-    || typeof candidate.ok !== 'boolean') {
+    || typeof candidate.ok !== 'boolean'
+    || (candidate.keepsDocument !== undefined && (candidate.keepsDocument !== true || !candidate.ok))) {
     return null;
   }
   return candidate as MobileEmbedWebSessionResultMessage;
