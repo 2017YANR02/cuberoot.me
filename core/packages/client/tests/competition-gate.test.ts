@@ -6,6 +6,7 @@ import { competitionOnlyVerificationEnabled, trafficDefenseEnabled } from '@/lib
 vi.mock('@/lib/traffic-defense', () => ({
   trafficDefenseEnabled: vi.fn(async () => true),
   competitionOnlyVerificationEnabled: vi.fn(async () => false),
+  competitionVerificationOpen: async () => !await trafficDefenseEnabled() && !await competitionOnlyVerificationEnabled(),
 }));
 import { safeCompetitionReturn } from '@/lib/competition-return';
 import { COMPETITION_ACCESS_COOKIE, COMPETITION_SERVICE_HEADER, createCompetitionProof, verifyCompetitionProof } from '@cuberoot/shared/competition-access';
@@ -41,13 +42,30 @@ it('keeps pages open and verifies competition data globally with one browser pro
       expect(await competitionGate(req(path, { 'user-agent': 'mobile-browser', cookie: `${COMPETITION_ACCESS_COOKIE}=${proof}` }))).toBeNull();
     }
     const ipHeader = vercel ? 'x-vercel-forwarded-for' : 'x-real-ip';
-    expect(await competitionGate(req('/api/comp/A', { 'user-agent': 'Googlebot', [ipHeader]: '2001:db8::1' }))).toBeNull();
+    for (const userAgent of ['Googlebot', 'Google-InspectionTool/1.0']) {
+      expect(await competitionGate(req('/api/comp/A', { 'user-agent': userAgent, [ipHeader]: '2001:db8::1' }))).toBeNull();
+      vi.mocked(trafficDefenseEnabled).mockResolvedValue(true);
+      expect(await competitionGate(req('/zh/math', { 'user-agent': userAgent, [ipHeader]: '192.0.2.3' }))).toBeNull();
+      vi.mocked(trafficDefenseEnabled).mockResolvedValue(false);
+    }
     expect((await competitionGate(req('/api/comp/A', {
       'user-agent': 'Googlebot', 'x-forwarded-for': '192.0.2.1', [ipHeader]: '203.0.113.1',
     })))?.status).toBe(403);
   }
   expect(fetchRanges).toHaveBeenCalledTimes(1);
 });
+it('keeps global results protected when site mode is also active and preserves public regional pages', async () => {
+  vi.stubEnv('VERCEL', '1');
+  vi.stubEnv('COMPETITION_ACCESS_SECRET', secret);
+  vi.mocked(trafficDefenseEnabled).mockResolvedValue(true);
+  vi.mocked(competitionOnlyVerificationEnabled).mockResolvedValue(true);
+  const req = (path: string) => new NextRequest('https://cuberoot.me' + path, { headers: { 'x-vercel-ip-country': 'CN' } });
+  expect(await competitionGate(req('/zh/timer'))).toBeNull();
+  const denied = await competitionGate(req('/api/comp/Test'));
+  expect(denied?.status).toBe(403);
+  expect(await denied?.json()).toMatchObject({ scope: 'competition' });
+});
+
 it('redirects old verification links on the server in open mode with a safe uncached destination', async () => {
   vi.mocked(trafficDefenseEnabled).mockResolvedValue(false);
   for (const prefix of ['', '/zh', '/en']) {

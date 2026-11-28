@@ -1,4 +1,5 @@
 import { apiUrl } from './api-base';
+import { statsUrl } from './stats-base';
 import { tr } from '@/i18n/tr';
 
 let pending: Promise<void> | undefined;
@@ -24,19 +25,26 @@ export function ensureCompetitionAccess(): Promise<void> {
   return pending;
 }
 
-export async function competitionFetch(url: string, init?: RequestInit, snapshotUrl?: string): Promise<Response> {
+export async function competitionFetch(url: string, init?: RequestInit, allowPublishedSnapshot = false): Promise<Response> {
   const options = { ...init, credentials: 'include' as const };
   const response = await fetch(url, options);
-  const body = response.status === 403 ? await response.clone().json().catch(() => null) : null;
-  if (snapshotUrl && (body?.scope === 'competition' || response.status === 429)) {
+  if (response.status !== 403 && response.status !== 429) return response;
+  const body = await response.clone().json().catch(() => null);
+  // Only a rebuild-capacity error can use an existing snapshot. The caller's
+  // URL cannot select a different credentialed origin or competition.
+  const slug = allowPublishedSnapshot && /^\/api\/comp\/([A-Za-z0-9_-]{1,128})\/?(?:\?|$)/.exec(url)?.[1];
+  if (slug && response.status === 429 && body?.code === 'competition_rebuild_busy') {
     const timeout = AbortSignal.timeout(4000);
     const signal = init?.signal && typeof AbortSignal.any === 'function'
       ? AbortSignal.any([init.signal, timeout]) : init?.signal ?? timeout;
-    const snapshot = await fetch(snapshotUrl, { cache: 'force-cache', signal }).catch(() => null);
+    const snapshot = await fetch(statsUrl(`/stats/comp/${slug}.json`), {
+      credentials: 'include', cache: 'no-store', redirect: 'error', signal,
+    }).catch(() => null);
     if (snapshot?.ok && snapshot.headers.get('content-type')?.includes('application/json')) return snapshot;
+    if (snapshot?.status === 429) return snapshot;
     if (init?.signal?.aborted) throw init.signal.reason;
   }
-  if (body?.code !== 'competition_verification_required') return response;
+  if (response.status !== 403 || body?.code !== 'competition_verification_required') return response;
   validUntil = 0;
   await ensureCompetitionAccess();
   if (init?.signal?.aborted) throw init.signal.reason;

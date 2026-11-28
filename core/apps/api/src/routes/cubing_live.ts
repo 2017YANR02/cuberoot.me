@@ -2221,7 +2221,7 @@ cubingLiveRoutes.get('/cubing-live/:slug', async (c) => {
     if (e instanceof RateLimitError) {
       c.header('Retry-After', String(e.retryAfterSeconds));
       c.header('Cache-Control', 'private, no-store');
-      return c.json({ error: e.message }, 429);
+      return c.json({ code: 'competition_rebuild_busy', error: e.message }, 429);
     }
     const msg = (e as Error).message;
     return c.json({ error: msg }, 502);

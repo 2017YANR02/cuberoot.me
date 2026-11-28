@@ -617,6 +617,7 @@ const TABLES: Table[] = [
 ];
 
 const MIGRATIONS: { n: number; slug: string; desc: Bi }[] = [
+  { n: 366, slug: 'competition_result_sessions', desc: { zh: '按匿名验证会话记录不同比赛的成绩读取次数。', en: 'Count distinct competitions read by each anonymous verification session.' } },
   { n: 365, slug: 'competition_test_mode', desc: { zh: '标记测试赛，将其排除在公开目录与正式统计之外。', en: 'Mark test competitions for exclusion from public directories and official statistics.' } },
   { n: 364, slug: 'single_home_recon_pin', desc: { zh: '保留最近一条可展示的首页置顶复盘，限制同时置顶一条。', en: 'Keep the newest eligible homepage reconstruction pin and enforce a single pin.' } },
   { n: 363, slug: 'competition_arena', desc: { zh: '记录统一发乱、阶段时间、DNF 原因与实时轮次通知。', en: 'Persist shared rounds, stage clocks, DNF reasons and live round notifications.' } },

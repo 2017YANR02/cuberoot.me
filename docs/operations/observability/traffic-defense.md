@@ -1,10 +1,12 @@
 # 网络异常流量防护与费用止损
 
-## 比赛成绩临时验证（本地实现）
+## 比赛成绩验证
 
-异常批量回源已持续挤压数据库时，可以单独开启比赛成绩验证。默认关闭，由值班人员在确认异常后启用，一小时后自动失效。Vercel 和阿里云读取同一到期时间，所有地区均适用。首页、计时器、比赛页面和已发布的公开成绩快照可直接访问。浏览器遇到受保护的成绩请求时先尝试已有历史快照，必要时再跳到验证码页。输入正确后回到原比赛，同一浏览器的签名凭证按现有设置通行 7 天。Googlebot 按可信入口提供的连接 IP 与 Google 官方网段验证。
+2026-11-27 对 03:53–04:08（洛杉矶时间）日志中确认要封的 425 个来源，阿里云按连接 IP 加入 `/etc/nginx/cuberoot-permanent-comp-bans.conf`。Vercel 原有 WAF 名单接近容量上限，这批地址另外存放在项目 CDN 的三条 `Competition source denial 2026-11-27` 路由中。路由在成绩回源规则前按平台写入的客户端地址精确匹配，拒绝比赛详情和成绩相关路径并返回 403。核对两端名单时，Vercel 侧合并 WAF 与已发布的 CDN 路由后去重。两端各覆盖 20,587 个地址，当中 5 个在本批追加前已封。
 
-API、nginx 与两条 Next 线路都部署后，在全站开放模式下操作：
+2026-11-27 已在生产启用长期验证。轮换 IP 的请求曾在一小时验证到期后继续取走成绩。Vercel 和阿里云共用到期时间，所有地区的动态成绩、实时成绩流和历史成绩 JSON 均校验凭证。首页、计时器、比赛介绍页仍公开。普通浏览器验证一次后可查看不同比赛，签名凭证有效 7 天。Googlebot 按可信入口提供的连接 IP 与 Google 官方网段验证。
+
+运行期文件 `/etc/nginx/cuberoot-comp-only-until.conf` 当前设为 `default 9999999999;`，对应 2286-11-20 UTC。部署流程保留已有文件。公网 `/v1/traffic-defense` 应返回 `enabled: 0` 和该 `competitionOnlyUntil`。下列操作会替换长期设置，分别改为一小时验证和立即关闭：
 
 ```bash
 ssh cuberoot 'node /opt/cuberoot-vercel-bans/traffic-defense.ts competition-on --apply'
@@ -14,6 +16,39 @@ ssh cuberoot 'node /opt/cuberoot-vercel-bans/traffic-defense.ts competition-off 
 可先省略 `--apply` 查看计划。公开状态接口 `/v1/traffic-defense` 的 `competitionOnlyUntil` 为 Unix 秒数，超过该时间自动放行。`enabled` 仍代表原有全站防护。启用后的验收覆盖两条线路、不同地区、手机浏览器、已验证的 Googlebot、同一凭证跨比赛访问，以及关闭后的旧验证链接。监测成绩回源、数据库慢查询及正常浏览器的验证比例，使用现有日志。
 
 按正常流量和数据库余量确认容量后，可在 API 设置 `COMPETITION_WCA_REBUILD_CONCURRENCY`，限制单个 API 进程内不同比赛的 WCA 数据重算。相同比赛共用重算，快照直接服务，后台预热有余量才重算。重算满额时，HTTP 通过 `429` 和 `Retry-After` 返回等待时间，SSE 通过事件传递等待时间。前端按等待时间重试一次。该配置缺省时沿用原有重算策略。
+
+## 2026-11-27 本地待发布的比赛成绩防护
+
+成绩 JSON、历史快照和实时流在读取或命中缓存前检查权限。普通页面延用现有索引策略。浏览器停留在比赛链接上不预取完整成绩；正常查看同一场比赛的不同轮次、切换网络或刷新共用一个比赛标识。
+
+验证码签发的新凭证带独立随机会话编号，有效期最长 7 天。一个会话在滚动 60 秒内可请求 30 场不同比赛，滚动 24 小时内可请求 240 场。超过额度的请求返回 `429` 和 `Retry-After`；验证服务不可用时成绩接口返回可重试的 `503`。在到期前，旧 v2 浏览器凭证继续按原有签名校验，不按共享的浏览器标识合并计数。操作系统和国家均不单独触发这套额度。即使同时开启全站应急开关，只要比赛验证时限仍有效，成绩入口继续在所有地区验证，其他页面沿用原有地区策略。Googlebot 和 Google-InspectionTool 须同时匹配 Google 官方来源。
+
+### 上线顺序与回滚
+
+1. 先应用会话表迁移，在 API 临时设置 `COMPETITION_ACCESS_ISSUE_LEGACY=1`。发布能同时验证 v2/v3 的 API、Next 两条线路和 Nginx；新 API 与旧网关混跑期间不要开启新凭证签发。旧网关传递服务签名与新网关传递内部请求标记的差异须单独验收。
+2. 两条线路均就绪后，移除兼容开关并重新加载 API。用同一新凭证跨两条线路、跨缓存命中、历史快照和实时流验证额度。验证独立凭证彼此隔离，Google 的测试工具和普通的 Linux 浏览器可访问公开页面。
+3. Vercel 的原有桌面 Linux 条件存储在项目防火墙。服务器运行 `node /opt/cuberoot-vercel-bans/traffic-defense.ts public-browser-policy` 可预览，另加 `--apply` 才修改生效规则。此操作移除桌面 Linux 条件，保留 Lightpanda 和精确来源名单，增加明确自报 Scrapy 或 HTTrack 的全站拒绝。CDN 中三个比赛来源拒绝规则须保留在成绩回源规则之前。现有成绩外部重写会让阿里云看到 Vercel 出口；若要恢复 Vercel 自身识别 Google 的成绩请求，先在候选部署验证已加固的 Next 成绩处理程序，再移除该单条外部重写。不要让公开请求头声明 Google 身份。
+4. 核对普通无凭证访问、持证成功、超额、已撤销凭证、身份检查故障、公开页面与搜索资源。验证代理返回的成绩对下游为 `private, no-store`，原站内部共享缓存前仍执行身份检查。如需回退签发，恢复兼容开关，保留已有会话表与 v3 验签能力，直到最后一批 v3 过期。
+
+### 撤销已核实的滥用会话
+
+按最近受限时间排查。单次达到配额也可能来自正常观众，须结合其他行为证据核实归属。只在数据库内操作随机编号；整个 Cookie 属于持有者凭证，不应写入日志或通知。
+
+```sql
+SELECT session_id, last_limited_at, expires_at
+FROM competition_result_sessions
+WHERE last_limited_at IS NOT NULL AND expires_at > now()
+ORDER BY last_limited_at DESC
+LIMIT 30;
+```
+
+在 psql 中把已核实的随机会话编号赋给变量 `sid`，执行下列语句。已有记录沿用签名的到期时间；尚无记录的编号按签名最长有效期处理。撤销后，原凭证不能再读取成绩，访客可以重新完成人工验证。
+
+```sql
+INSERT INTO competition_result_sessions (session_id, expires_at, reads, revoked)
+VALUES (:'sid'::uuid, now() + interval '7 days', '{}'::jsonb, true)
+ON CONFLICT (session_id) DO UPDATE SET revoked = true;
+```
 
 ## 2026-11-22 全站 Lightpanda 拒绝
 

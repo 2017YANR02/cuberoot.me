@@ -111,7 +111,7 @@ export async function submitCompetitionCaptcha(c: Context) {
   const configuredTtl = Number(process.env.COMPETITION_ACCESS_ISSUE_TTL_SECONDS ?? COMPETITION_ACCESS_TTL);
   const issueTtl = Number.isSafeInteger(configuredTtl) && configuredTtl > 0 && configuredTtl <= COMPETITION_ACCESS_TTL
     ? configuredTtl : COMPETITION_ACCESS_TTL;
-  const proof = await createCompetitionProof(process.env.COMPETITION_ACCESS_SECRET!, 'browser', c.req.header('user-agent') ?? '', Date.now(), issueTtl);
+  const proof = await createCompetitionProof(process.env.COMPETITION_ACCESS_SECRET!, 'browser', c.req.header('user-agent') ?? '', Date.now(), issueTtl, process.env.COMPETITION_ACCESS_ISSUE_LEGACY !== '1');
   // Installed clients embed the site below a local App origin. Lax cookies
   // cannot round-trip there; partition the proof under that App's top-level
   // site instead. This only selects storage policy, never grants access: the

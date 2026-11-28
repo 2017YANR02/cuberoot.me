@@ -1,5 +1,5 @@
 // Run on the existing server as root; credentials never leave this host.
-// node traffic-defense.ts status|open|protect|competition-on|competition-off [--apply]
+// node traffic-defense.ts status|open|protect|competition-on|competition-off|public-browser-policy [--apply]
 import { readFileSync, writeFileSync, renameSync, mkdirSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
 import { pathToFileURL } from 'node:url';
@@ -18,13 +18,46 @@ type FirewallRule = {
   description?: string;
   active: boolean;
   valid: boolean;
-  conditionGroup: unknown;
+  conditionGroup: { conditions: { type: string; op: string; value?: unknown; neg?: boolean }[] }[];
   action: unknown;
 };
 
 function ruleValue(rule: FirewallRule, active: boolean) {
   const { name, description, conditionGroup, action } = rule;
   return { name, description, active, conditionGroup, action };
+}
+
+const scrapingToolUA = String.raw`\b(?:[Ss][Cc][Rr][Aa][Pp][Yy]|[Hh][Tt][Tt][Rr][Aa][Cc][Kk])(?:/|\s+[0-9])`;
+
+/** The top rule also holds exact competition bans. Preserve every unrelated OR branch. */
+export function publicBrowserRule(rule: FirewallRule) {
+  if (rule.id !== LIGHTPANDA_DENY_RULE_ID || !rule.active || !rule.valid ||
+      (rule.action as { mitigate?: { action?: string } })?.mitigate?.action !== 'deny') {
+    throw new Error('Unexpected primary WAF rule');
+  }
+  const ua = (value: string, neg = false) =>
+    (c: FirewallRule['conditionGroup'][number]['conditions'][number]) =>
+      c.type === 'user_agent' && c.op === 'sub' && c.value === value && Boolean(c.neg) === neg;
+  if (!rule.conditionGroup.some(g => g.conditions.length === 1 && g.conditions.some(ua('Lightpanda')))) {
+    throw new Error('Missing standalone Lightpanda denial');
+  }
+  const conditionGroup = rule.conditionGroup.filter(({ conditions }) => {
+    if (!conditions.some(ua('Linux'))) return true;
+    if (!conditions.some(ua('Android', true)) || !conditions.every(c =>
+      ua('Linux')(c) || ua('Android', true)(c) || (c.type === 'ip_address' && c.op === 'inc' && c.neg))) {
+      throw new Error('Review the changed Linux condition before updating the firewall');
+    }
+    return false;
+  });
+  const toolsPresent = conditionGroup.some(g => g.conditions.length === 1 && g.conditions.some(c =>
+    c.type === 'user_agent' && c.op === 're' && c.value === scrapingToolUA && !c.neg));
+  if (toolsPresent && conditionGroup.length === rule.conditionGroup.length) return null;
+  if (!toolsPresent) conditionGroup.push({ conditions: [{ type: 'user_agent', op: 're', value: scrapingToolUA }] });
+  return {
+    ...ruleValue(rule, true), conditionGroup,
+    name: 'Deny named scraping tools and listed competition sources',
+    description: 'Block Lightpanda, Scrapy and HTTrack globally. Keep exact competition source denials.',
+  };
 }
 
 function command(name: string, args: string[]) {
@@ -85,7 +118,7 @@ async function competitionOnly(mode: string, apply: boolean) {
 
 export async function run(mode: string, apply: boolean) {
   if (mode === 'competition-on' || mode === 'competition-off') return competitionOnly(mode, apply);
-  if (!['status', 'open', 'protect'].includes(mode)) throw new Error('Use status, open or protect');
+  if (!['status', 'open', 'protect', 'public-browser-policy'].includes(mode)) throw new Error('Unrecognized traffic defense command');
   const config = JSON.parse(readFileSync('/etc/cuberoot-vercel-bans.json', 'utf8'));
   const query = new URLSearchParams({ projectId: config.projectId, teamId: config.teamId });
   async function api(path: string, body?: unknown) {
@@ -98,6 +131,26 @@ export async function run(mode: string, apply: boolean) {
     return response.json();
   }
   const before = await api('config/active');
+  if (mode === 'public-browser-policy') {
+    const first: FirewallRule = before.rules[0];
+    const value = publicBrowserRule(first);
+    if (value && apply) {
+      mkdirSync(ROOT, { recursive: true, mode: 0o700 });
+      writeFileSync(`${ROOT}/${Date.now()}-linux-before.json`, JSON.stringify(before), { mode: 0o600 });
+      if ((await api('config/active')).version !== before.version) throw new Error('WAF changed; read a new plan');
+      await api('config', { action: 'rules.update', id: first.id, value });
+      const after = await api('config/active');
+      const updated: FirewallRule = after.rules[0];
+      if (updated.id !== first.id || !updated.valid || !updated.active ||
+          JSON.stringify(updated.conditionGroup) !== JSON.stringify(value.conditionGroup) ||
+          JSON.stringify(updated.action) !== JSON.stringify(first.action) ||
+          JSON.stringify(after.rules.slice(1)) !== JSON.stringify(before.rules.slice(1))) {
+        throw new Error('WAF readback mismatch; inspect the saved snapshot');
+      }
+    }
+    console.log(JSON.stringify({ requested: mode, needed: Boolean(value), applied: Boolean(value && apply) }));
+    return;
+  }
   const previous = readFileSync(MODE, 'utf8');
   const previousMaintenance = readFileSync(MAINTENANCE, 'utf8');
   if (!['default 0;', 'default 1;'].includes(previous.trim())) throw new Error('Unrecognized local mode');

@@ -1,5 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
+import { publicBrowserRule } from './traffic-defense.ts';
 import { absorb, collectEvents, incidentRuleLayout, LIGHTPANDA_DENY_RULE_ID, managedRule, OPEN_MODE_BYPASS_RULE_ID, SOURCES } from './relay.ts';
 const now = Date.parse('2026-09-26T07:00:00Z');
 const event = { startTime: '2026-09-26 06:55:00.000', public_ip: '198.51.100.1', ruleId: [...SOURCES][0], action: 'deny' };
@@ -136,4 +137,21 @@ test('owner IP is removed from persisted bans and ignored in new events', () => 
  const s = absorb({cursor: now, bans: {'154.44.14.212': now + 86400000}}, [{...event, public_ip:'154.44.14.212'}, event], now);
  assert.equal(s.bans['154.44.14.212'], undefined);
  assert.ok(s.bans[event.public_ip] > now);
+});
+
+test('remove only the desktop OS branch while preserving bot and exact-source denials', () => {
+  const condition = (type, op, value, neg = false) => ({ type, op, value, ...(neg && { neg }) });
+  const bot = { conditions: [condition('user_agent', 'sub', 'Lightpanda')] };
+  const linux = { conditions: [condition('user_agent', 'sub', 'Linux'), condition('user_agent', 'sub', 'Android', true),
+    condition('ip_address', 'inc', ['192.0.2.10'], true)] };
+  const listed = { conditions: [condition('ip_address', 'inc', ['192.0.2.20']), condition('path', 'pre', '/api/comp/')] };
+  const primary = { id: LIGHTPANDA_DENY_RULE_ID, active: true, valid: true, action: { mitigate: { action: 'deny' } },
+    conditionGroup: [bot, linux, listed] };
+  const next = publicBrowserRule(primary);
+  assert.deepEqual(next.conditionGroup.slice(0, -1), [bot, listed]);
+  const tool = new RegExp(next.conditionGroup.at(-1).conditions[0].value);
+  for (const agent of ['Scrapy/2.13', 'Mozilla/4.5 (compatible; HTTrack 3.0x; Windows 98)']) assert.ok(tool.test(agent));
+  for (const agent of ['UnexpectedScrapy/2', 'Linux; Android', 'Googlebot/2.1', 'Google-InspectionTool/1.0']) assert.ok(!tool.test(agent));
+  assert.equal(publicBrowserRule({ ...primary, ...next }), null);
+  assert.throws(() => publicBrowserRule({ ...primary, conditionGroup: [bot, { conditions: [...linux.conditions, ...listed.conditions] }] }));
 });

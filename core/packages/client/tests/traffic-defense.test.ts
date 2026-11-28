@@ -39,8 +39,9 @@ it.each(['offline', 'http-error', 'invalid-json', 'missing-mode', 'null-mode'])(
       return Response.json(failure === 'null-mode' ? null : {});
     });
     vi.stubGlobal('fetch', fetcher);
-    const { trafficDefenseEnabled } = await import('@/lib/traffic-defense');
+    const { trafficDefenseEnabled, competitionVerificationOpen } = await import('@/lib/traffic-defense');
     expect(await trafficDefenseEnabled()).toBe(false);
+    expect(await competitionVerificationOpen()).toBe(false);
     await vi.advanceTimersByTimeAsync(5001);
     fetcher.mockResolvedValueOnce(Response.json({ enabled: 1 }));
     expect(await trafficDefenseEnabled()).toBe(true);
@@ -49,5 +50,6 @@ it.each(['offline', 'http-error', 'invalid-json', 'missing-mode', 'null-mode'])(
     await vi.advanceTimersByTimeAsync(5001);
     fetcher.mockResolvedValueOnce(Response.json({ enabled: 0 }));
     expect(await trafficDefenseEnabled()).toBe(false);
+    expect(await competitionVerificationOpen()).toBe(true);
   },
 );

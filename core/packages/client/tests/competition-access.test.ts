@@ -75,33 +75,43 @@ describe('competition access proof', () => {
   });
   it('requires manual verification instead of retrying after an automatic grant', async () => {
     const request = vi.fn()
-      .mockResolvedValueOnce(Response.json({ code: 'competition_verification_required' }, { status: 403 }))
+      .mockResolvedValueOnce(Response.json({ code: 'competition_verification_required', scope: 'competition' }, { status: 403 }))
       .mockResolvedValueOnce(new Response(null, { status: 403 }));
     vi.stubGlobal('fetch', request);
     vi.stubGlobal('window', { location: { pathname: '/zh/wca/comp/A', search: '', hash: '', assign: vi.fn() } });
     const { competitionFetch } = await import('@/lib/competition-access');
-    await expect(competitionFetch('https://api.cuberoot.me/v1/cubing-live/A')).rejects.toThrow();
+    await expect(competitionFetch('/api/comp/A', undefined, true)).rejects.toThrow();
     expect(request).toHaveBeenCalledTimes(2);
     expect(window.location.assign).toHaveBeenCalledWith('/zh/competition-verify?returnTo=%2Fzh%2Fwca%2Fcomp%2FA');
   });
-  it.each([403, 429])('serves a published snapshot after a scoped %s without challenging the browser', async (status) => {
+  it('loads only the requested competition from the configured stats origin on rebuild overload', async () => {
     const snapshot = { slug: 'A', source: 'wca_db' };
     const request = vi.fn()
-      .mockResolvedValueOnce(Response.json({ code: 'competition_verification_required', scope: 'competition' }, { status }))
+      .mockResolvedValueOnce(Response.json({ code: 'competition_rebuild_busy' }, { status: 429 }))
       .mockResolvedValueOnce(Response.json(snapshot));
     vi.stubGlobal('fetch', request);
     const { competitionFetch } = await import('@/lib/competition-access');
-    const response = await competitionFetch('/api/comp/A', undefined, '/stats/comp/A.json');
+    const response = await competitionFetch('/api/comp/A?v=4', undefined, true);
     expect(await response.json()).toEqual(snapshot);
-    expect(request.mock.calls.map(([url]) => url)).toEqual(['/api/comp/A', '/stats/comp/A.json']);
+    expect(request).toHaveBeenCalledTimes(2);
+    expect(request).toHaveBeenNthCalledWith(2, 'https://static.cuberoot.me/stats/comp/A.json',
+      expect.objectContaining({ credentials: 'include', redirect: 'error', cache: 'no-store' }));
+  });
+  it.each(['competition_session_limited', undefined])('honors a 429 with code %s without starting another fetch', async (code) => {
+    const limited = Response.json({ code }, { status: 429, headers: { 'retry-after': '60' } });
+    const request = vi.fn().mockResolvedValueOnce(limited);
+    vi.stubGlobal('fetch', request);
+    const { competitionFetch } = await import('@/lib/competition-access');
+    expect(await competitionFetch('/api/comp/A', undefined, true)).toBe(limited);
+    expect(request).toHaveBeenCalledTimes(1);
   });
   it('preserves Retry-After when no published snapshot exists', async () => {
     const request = vi.fn()
-      .mockResolvedValueOnce(new Response(null, { status: 429, headers: { 'retry-after': '5' } }))
+      .mockResolvedValueOnce(Response.json({ code: 'competition_rebuild_busy' }, { status: 429, headers: { 'retry-after': '5' } }))
       .mockResolvedValueOnce(new Response(null, { status: 404 }));
     vi.stubGlobal('fetch', request);
     const { competitionFetch } = await import('@/lib/competition-access');
-    const response = await competitionFetch('/api/comp/A', undefined, '/stats/comp/A.json');
+    const response = await competitionFetch('/api/comp/A', undefined, true);
     expect(response.status).toBe(429);
     expect(response.headers.get('retry-after')).toBe('5');
   });

@@ -93,6 +93,7 @@ const EXACT = new Set([
   'packages/client/lib/product-analytics.ts', 'apps/api/src/routes/product_analytics.ts',
   'apps/api/src/platform/product_analytics.ts',
   'packages/client/lib/competition-gate.ts', 'packages/client/lib/traffic-defense.ts', 'packages/shared/src/competition-access.ts',
+  'apps/api/src/utils/competition_access.ts', 'apps/api/src/utils/competition_captcha.ts', 'apps/api/src/utils/competition_result_quota.ts',
   'packages/client/app/v1/competition-access/check/route.ts',
   'packages/client/app/[lang]/competition-verify/page.tsx',
   'packages/client/app/v1/competition-access/verify/route.ts',

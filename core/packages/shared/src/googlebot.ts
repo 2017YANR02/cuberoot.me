@@ -33,7 +33,7 @@ async function refreshRanges() {
 
 /** The caller supplies the IP from its trusted ingress, never a visitor-supplied header. */
 export async function isVerifiedGooglebot(userAgent: string | null | undefined, address: string | null | undefined) {
-  if (!userAgent || !/\bGooglebot\b/i.test(userAgent) || !address) return false;
+  if (!userAgent || !/\b(?:Googlebot|Google-InspectionTool)\b/i.test(userAgent) || !address) return false;
   const ip = address.replace(/^::ffff:(?=\d)/i, '');
   const family = isIP(ip);
   if (!family) return false;
