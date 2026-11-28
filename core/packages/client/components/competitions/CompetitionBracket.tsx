@@ -60,7 +60,7 @@ export function CompetitionBracket({ competition, registrations, manage, allowGe
   const t = useT();
   const lang = useLang();
   const [division, setDivision] = useState('');
-  const [tab, setTab] = useQueryState('bracketTab', parseAsStringEnum(['bracket', 'live', 'standings']).withDefault('bracket').withOptions({ history: 'push' }));
+  const [tab, setTab] = useQueryState('bracketTab', parseAsStringEnum(['bracket', 'live', 'standings']).withDefault('bracket'));
   const [busy, setBusy] = useState(false);
   const [generationError, setGenerationError] = useState('');
   const { brackets, error, refresh } = bracket;
@@ -114,7 +114,8 @@ export function CompetitionBracket({ competition, registrations, manage, allowGe
   return <section id="competition-bracket" className="competition-bracket">
     <nav className="competition-section-tabs" aria-label={t('赛事分区', 'Competition sections')}>
       {([['bracket', t('对阵签表', 'Bracket')], ['live', t('进行中桌台', 'Live tables')], ['standings', t('最终名次', 'Final standings')]] as const)
-        .map(([key, label]) => <button type="button" key={key} aria-pressed={tab === key} onClick={() => { void setTab(key); }}>{label}</button>)}
+        .map(([key, label]) => <button type="button" key={key} className="competition-section-tab"
+          aria-pressed={tab === key} onClick={() => { void setTab(key); }}>{label}</button>)}
     </nav>
     {competition.projects.length > 1 && <select aria-label={t('对阵组别', 'Bracket division')} className="platform-field-control" value={primaryDivision} onChange={event => setDivision(event.target.value)}>
       {competition.projects.map(p => <option key={p.id} value={p.id}>{eventDisplayName(p.project, lang === 'zh')} · {competitionDeviceName(p.device, t)}</option>)}

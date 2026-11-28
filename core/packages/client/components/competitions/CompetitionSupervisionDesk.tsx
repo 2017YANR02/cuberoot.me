@@ -160,7 +160,8 @@ export function CompetitionDuelSupervisionDesk({ competitionId, matches, entries
       <div className="competition-section-tabs" aria-label={t('筛选桌台状态', 'Filter tables by status')}>
         {([['all', t('全部', 'All')], ['ready', t('候场', 'Ready seats')], ['waiting', t('待落位', 'Awaiting seats')],
           ['in_progress', t('监考中', 'In progress')], ['completed', t('已完成', 'Complete')]] as const).map(([key, label]) =>
-          <button key={key} type="button" aria-pressed={filter === key} onClick={() => { setFilter(key); onSelect(null); }}>{label}</button>)}
+          <button key={key} type="button" className="competition-section-tab" aria-pressed={filter === key}
+            onClick={() => { setFilter(key); onSelect(null); }}>{label}</button>)}
       </div>
       {!rows.length && <p className="competition-muted">{t('此状态下暂无已分配桌台。', 'No assigned tables with this status.')}</p>}
       <ul>{rows.map(match => <li key={match.id}>

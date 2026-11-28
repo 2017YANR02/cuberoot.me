@@ -81,7 +81,7 @@ body:has(.competition-arena) .clawd-deskpet { display: none; }
 .competition-arena-grid { display: grid; grid-template-columns: minmax(0,1fr); gap: 20px; flex: 1; }
 .competition-arena-grid[data-board] { grid-template-columns: 320px minmax(0,1fr); }
 .competition-arena-stage, .competition-arena-seat, .competition-arena-board,
-.competition-arena-score, .competition-arena-history, .competition-arena-recap, .competition-arena-board-toggle {
+.competition-arena-score, .competition-arena-recap, .competition-arena-board-toggle {
   min-width: 0;
 }
 .competition-arena-desktop-board { position: relative; min-width: 0; border-inline-end: 1px solid var(--border-default); }
@@ -255,10 +255,6 @@ body:has(.competition-arena) .clawd-deskpet { display: none; }
 .competition-arena-seat > header { display: flex; align-items: center; gap: 8px; min-width: 0; min-height: 21px; text-align: start; }
 .competition-arena-seat > header small { margin-inline-start: auto; color: var(--muted-foreground); white-space: nowrap; }
 .competition-arena-seat .competition-arena-time { font-size: clamp(48px,6vw,82px); }
-.competition-arena-history { list-style: none; margin: 0; padding: 8px 12px; }
-.competition-arena-history li { display: grid; grid-template-columns: minmax(0, 1fr) 36px; align-items: center; gap: 6px; }
-.competition-arena-history li + li { border-block-start: 1px solid var(--border-default); }
-.competition-arena-history li > button { justify-content: center; min-height: 36px; }
 .competition-arena-game { display: grid; grid-template-columns: auto repeat(3, minmax(0, 1fr)); align-items: center; text-align: center; gap: 6px; padding-block: 5px; font-size: 13px; font-variant-numeric: tabular-nums; white-space: nowrap; }
 .competition-arena-game span:nth-child(3) { color: var(--muted-foreground); }
 .competition-arena-game strong { font-weight: 400; }
@@ -341,7 +337,6 @@ body:has(.competition-arena) .clawd-deskpet { display: none; }
   .competition-arena-settlement .competition-arena-rank-column { width: 38px; }
   .competition-arena-settlement .competition-arena-board thead th:first-child { white-space: nowrap; font-size: .75rem; }
   .competition-arena-dock .competition-replay-button { gap: 2px; padding-inline: 2px; }
-  .competition-arena-history { padding-inline: 6px; }
 }
 @media (prefers-reduced-motion: reduce) {
   .competition-arena *, .competition-arena *::before, .competition-arena *::after { animation: none !important; transition: none !important; }
@@ -414,7 +409,7 @@ body:has(.competition-arena) .clawd-deskpet { display: none; }
 .competition-duel-recording h2 { font-size: 1.05rem; margin: 0 0 7px; }
 .competition-duel-recording [data-dock] { width: auto; margin: 0; }
 .competition-duel-recording [data-recording] { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 6px 8px; }
-.competition-duel-recording [data-recording] button, .competition-recording-disclosure > summary { min-height: 39px; }
+.competition-duel-recording .competition-recording-save, .competition-recording-disclosure > summary { min-height: 39px; }
 .competition-recording-disclosure { position: relative; }
 .competition-recording-disclosure > summary {
   display: flex; align-items: center; gap: 5px; padding: 4px 10px; border: 1px solid var(--border-default);

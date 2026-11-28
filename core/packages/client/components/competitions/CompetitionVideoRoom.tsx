@@ -124,7 +124,7 @@ function LocalRecording({ getStream, onRecordingChange, ownsStream = false, prim
         <MoreToggle as="summary">{clock} · {t('预览', 'Preview')}</MoreToggle>
         {previewVideo}
       </details>
-      <button type="button" className="competition-secondary" onClick={() => recorder.current?.stop()}>
+      <button type="button" className="competition-secondary competition-recording-save" onClick={() => recorder.current?.stop()}>
         <Download size={16} aria-hidden />{t('保存本场录像', 'Save match recording')}
       </button>
     </> : dock && finished ? (savedFile && <button type="button" className="competition-secondary" onClick={() => download(savedFile.file, savedFile.filename)}>

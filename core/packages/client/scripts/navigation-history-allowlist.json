@@ -265,7 +265,7 @@
     "reason": "选手详情主要标签导航"
   },
   {
-    "path": "components/competitions/CompetitionBracket.tsx",
+    "path": "components/competitions/OnlineCompetitions.tsx",
     "call": "useQueryState('match') history='push'",
     "reason": "双败签表与本人对战席之间的导航"
   },

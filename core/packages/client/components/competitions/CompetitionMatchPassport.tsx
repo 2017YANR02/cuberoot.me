@@ -16,7 +16,7 @@ export function CompetitionMatchPassport({ title, code, status, tone, children, 
 
 export function CompetitionMatchEnter({ onEnter }: { onEnter: () => void }) {
   const t = useT();
-  return <button type="button" className="competition-primary competition-focus-action" onClick={onEnter}>
+  return <button type="button" className="competition-primary competition-focus-action competition-passport-action" onClick={onEnter}>
     {t('进入对战席', 'Enter match')} <ArrowRight size={16} aria-hidden />
   </button>;
 }

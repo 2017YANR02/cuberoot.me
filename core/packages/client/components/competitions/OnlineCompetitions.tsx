@@ -289,7 +289,7 @@ function CompetitionDetail({ id, view, onNavigate }: {
   const bracket = useCompetitionBrackets(competition?.format === 'advancement'
     && ['published', 'completed'].includes(competition.status) ? competition.id : null, !!competition?.finalizedAt);
   const [activeMatch, setActiveMatch] = useQueryState('match', parseAsString.withDefault('').withOptions({ history: 'push' }));
-  const [hostTab, setHostTab] = useQueryState('hostTab', parseAsStringEnum(['roster', 'tables', 'results']).withDefault('roster').withOptions({ history: 'push' }));
+  const [hostTab, setHostTab] = useQueryState('hostTab', parseAsStringEnum(['roster', 'tables', 'results']).withDefault('roster'));
   const [rosterSearch, setRosterSearch] = useState('');
   const [rosterFilter, setRosterFilter] = useState<CompetitionDuelStatus | ''>('');
   const [activeRegistration, setActiveRegistration] = useQueryState('entry', parseAsString.withDefault('').withOptions({ history: 'push' }));
@@ -550,9 +550,9 @@ function CompetitionDetail({ id, view, onNavigate }: {
         <td><span className="competition-state" data-status={item.checkedInAt ? 'checked_in' : undefined}>
           {item.checkedInAt ? t('已检录', 'Checked in') : item.duelStatus ? rosterLabels[item.duelStatus] : statusLabel(item.status, t)}
         </span></td>
-        <td>{item.canJoinVideo && item.matchId ? <button className="competition-secondary" onClick={() => {
-          void setActiveMatch(item.matchId!); void setHostTab('tables');
-        }}>{t('进入监督视频', 'Join supervision video')}</button> : item.matchId ? <button className="competition-secondary" onClick={() => {
+        <td>{item.canJoinVideo && item.matchId ? <button type="button" className="competition-secondary competition-roster-action" onClick={() => {
+          void setHostTab('tables'); void setActiveMatch(item.matchId!);
+        }}>{t('进入监督视频', 'Join supervision video')}</button> : item.matchId ? <button type="button" className="competition-secondary competition-roster-action" onClick={() => {
           void setHostTab('tables');
         }}>{t('查看桌台', 'View tables')}</button> : '—'}</td>
       </tr>)}</tbody>
@@ -681,7 +681,8 @@ function CompetitionDetail({ id, view, onNavigate }: {
       </dl>
       <nav className="competition-section-tabs" aria-label={t('办赛工作台分区', 'Competition workspace sections')}>
         {([['roster', t('参赛名单', 'Competitors')], ['tables', t('桌台与签表', 'Tables and bracket')], ['results', t('赛后处理与结算', 'Results and settlement')]] as const)
-          .map(([key, label]) => <button type="button" key={key} aria-pressed={hostTab === key} onClick={() => { void setHostTab(key); }}>{label}</button>)}
+          .map(([key, label]) => <button type="button" key={key} className="competition-section-tab"
+            aria-pressed={hostTab === key} onClick={() => { void setHostTab(key); }}>{label}</button>)}
       </nav>
     </>}
     {view === 'manage' && !settingUp && <>{(!duelRoster || hostTab === 'roster') && entries}{(!duelRoster || hostTab === 'tables') && participation}</>}

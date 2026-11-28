@@ -383,18 +383,18 @@ button.competition-match-player { cursor: pointer; }
 .competitions .competition-passport h2 { margin: 0; font: inherit; font-weight: 650; }
 .competition-passport p { margin: 4px 0 0; }
 .competition-passport-body > div { min-width: 0; overflow-wrap: anywhere; }
-.competition-passport-body > button { white-space: nowrap; }
+.competition-passport-action { white-space: nowrap; }
 .competition-section-tabs { display: flex; flex-wrap: wrap; align-items: stretch; gap: 2px 16px; border-block-end: 1px solid var(--border-default); margin-block: 12px; }
-.competition-section-tabs button {
+.competition-section-tabs .competition-section-tab {
   font: inherit; font-weight: 620; font-size: .875rem; color: var(--muted-foreground); background: transparent;
   border: 0; border-block-end: 2px solid transparent; margin-block-end: -1px; padding: 9px 2px;
   min-height: 40px; cursor: pointer;
 }
-.competition-section-tabs button:hover, .competition-section-tabs button[aria-pressed='true'] { color: var(--foreground); }
-.competition-section-tabs button[aria-pressed='true'] { border-block-end-color: var(--foreground); }
+.competition-section-tabs .competition-section-tab:hover, .competition-section-tabs .competition-section-tab[aria-pressed='true'] { color: var(--foreground); }
+.competition-section-tabs .competition-section-tab[aria-pressed='true'] { border-block-end-color: var(--foreground); }
 .competition-bracket-nav .competition-section-tabs { margin: 0; }
 .competition-bracket-search { display: flex; align-items: center; gap: 7px; color: var(--muted-foreground); }
-.competition-bracket-search input { min-width: 0; max-width: 180px; }
+.competition-bracket-search-input { min-width: 0; max-width: 180px; }
 .competition-bracket-viewport { position: relative; isolation: isolate; }
 .competition-bracket-viewport::after {
   content: ''; position: absolute; inset-block: 0 12px; inset-inline-end: 0; width: 18px; pointer-events: none;
@@ -430,7 +430,7 @@ button.competition-match-player { cursor: pointer; }
 .competition-roster-table { width: 100%; border-collapse: collapse; font-size: .82rem; font-variant-numeric: tabular-nums; }
 .competition-roster-table :is(th, td) { padding: 7px 8px; border-block-end: 1px solid var(--border-default); text-align: start; }
 .competition-roster-table :is(td:nth-child(4), td:nth-child(6)) { white-space: nowrap; }
-.competition-roster-table td button { min-height: 34px; padding: 4px 8px; }
+.competition-roster-action { min-height: 34px; padding: 4px 8px; }
 .competition-finalized { display: flex; flex-wrap: wrap; gap: 8px 14px; align-items: center; padding-block: 10px; }
 .competition-finalized strong { display: inline-flex; align-items: center; gap: 5px; color: var(--signal-success); }
 .competition-workspace-crumb { font-weight: 650; }
@@ -449,7 +449,7 @@ button.competition-match-player { cursor: pointer; }
   }
   .competition-bracket-standings :is(th, td):is(:nth-child(4), :nth-child(5)),
   .competition-roster-table :is(th, td):is(:nth-child(3), :nth-child(4)) { display: none; }
-  .competition-roster-table :is(.competition-state, td button) { white-space: nowrap; }
+  .competition-roster-table :is(.competition-state, .competition-roster-action) { white-space: nowrap; }
   .competition-roster-table .competition-state { padding-inline: 6px; }
   .competition-duel-roster-summary > input[type='search'] { flex: 1 1 9rem; }
 }

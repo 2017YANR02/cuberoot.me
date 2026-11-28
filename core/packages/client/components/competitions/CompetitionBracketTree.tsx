@@ -150,13 +150,13 @@ export function CompetitionBracketTree({ matches, labels, ownMatch, registration
     {!activeOnly && <nav className="competition-bracket-nav" aria-label={t('签表跳转', 'Jump through bracket')}>
       <div className="competition-section-tabs">
         {(['winners', 'losers', 'grand_final', 'all'] as const).filter(side => side === 'all' || matches.some(match => match.side === side)).map(side =>
-          <button key={side} type="button" aria-pressed={section === side} onClick={() => {
+          <button key={side} type="button" className="competition-section-tab" aria-pressed={section === side} onClick={() => {
             setSection(side); setRound(1); setLocated(null); setSearch('');
             if (scroll.current) { scroll.current.scrollTop = 0; scroll.current.scrollLeft = 0; }
           }}>{navLabel[side]}</button>)}
       </div>
       <label className="competition-bracket-search"><Search size={16} aria-hidden />
-        <input className="platform-field-control" type="search" value={search} onChange={event => setSearch(event.target.value)}
+        <input className="platform-field-control competition-bracket-search-input" type="search" value={search} onChange={event => setSearch(event.target.value)}
           aria-label={t('搜索选手或桌号', 'Search player or table')} placeholder={t('选手或桌号', 'Player or table')} />
       </label>
       {ownMatch && <button className="competition-secondary" type="button" onClick={() => {
