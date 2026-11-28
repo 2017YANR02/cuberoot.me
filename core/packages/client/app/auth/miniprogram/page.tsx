@@ -1,8 +1,10 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import { publicPageSharePath } from '@cuberoot/shared/page-share';
 import { tr } from '@/i18n/tr';
 import { applySession, authActions } from '@/lib/auth-store';
+import { miniProgramTab, openMiniProgramTab } from '@/lib/miniprogram-bridge';
 import {
   MINIPROGRAM_HANDOFF_FALLBACK,
   exchangeMiniProgramWebSession,
@@ -68,8 +70,17 @@ export default function MiniProgramAuthPage() {
     return () => { active = false; };
   }, [retryNonce]);
 
-  const retry = () => {
+  const retry = async () => {
     setCanRetry(false);
+    // Only the native tab can issue a new ticket after an expired or consumed one.
+    // If exchange already succeeded, retry persisting the session we received.
+    if (!exchangedSession.current && miniProgramTab() === 'tools') {
+      const path = publicPageSharePath(next);
+      if (path && await openMiniProgramTab('tools', path).catch(() => false)) {
+        setCanRetry(true);
+        return;
+      }
+    }
     setError('');
     setRetryNonce((value) => value + 1);
   };
