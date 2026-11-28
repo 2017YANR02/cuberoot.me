@@ -807,8 +807,8 @@ importers:
         specifier: ^0.1.5
         version: 0.1.5
       csv-parse:
-        specifier: 6.1.0
-        version: 6.1.0
+        specifier: 7.0.3
+        version: 7.0.3
       cubing:
         specifier: ^0.63.3
         version: 0.63.3(patch_hash=026724bd89e53a602c720d772bbd4c11ebe3c4040d840ba0c7df469b5244c9f6)
@@ -4076,8 +4076,8 @@ packages:
   cstimer_module@0.1.5:
     resolution: {integrity: sha512-5vAYZEnMOjk6iExR9b8eY6XzDpJoKP4HKCD0FhBKpNIzQoxj3foGEVjmQCZsgFU3nuAewTlP6ULcZxvqFyCDJg==}
 
-  csv-parse@6.1.0:
-    resolution: {integrity: sha512-CEE+jwpgLn+MmtCpVcPtiCZpVtB6Z2OKPTr34pycYYoL7sxdOkXDdQ4lRiw6ioC0q6BLqhc6cKweCVvral8yhw==}
+  csv-parse@7.0.3:
+    resolution: {integrity: sha512-YFd3QM/yo17vH91L1IOZuvl09zM0zEEtdfTcOCKWcMdM++MNaQSyp09slXyFCLaPXvHstQFx/xC8myiFHSMUvw==}
 
   cubing@0.63.3:
     resolution: {integrity: sha512-151hSarw9sN06iohHClHQ3RaiI5MNpaIyyb1+I0cuRerHq3jfyhb2Eyif9YAEIbEJiiMc6AUsNFo00Rnti2JWw==}
@@ -9460,7 +9460,7 @@ snapshots:
 
   cstimer_module@0.1.5: {}
 
-  csv-parse@6.1.0: {}
+  csv-parse@7.0.3: {}
 
   cubing@0.63.3(patch_hash=026724bd89e53a602c720d772bbd4c11ebe3c4040d840ba0c7df469b5244c9f6):
     dependencies:

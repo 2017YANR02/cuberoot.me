@@ -107,7 +107,7 @@
     "comlink": "^4.4.2",
     "cropperjs": "^1.6.2",
     "cstimer_module": "^0.1.5",
-    "csv-parse": "6.1.0",
+    "csv-parse": "7.0.3",
     "cubing": "^0.63.3",
     "docx": "^9.7.1",
     "docx-preview": "^0.4.1",
