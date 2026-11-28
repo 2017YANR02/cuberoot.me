@@ -8862,7 +8862,7 @@ snapshots:
 
   '@types/ws@8.18.1':
     dependencies:
-      '@types/node': 22.19.15
+      '@types/node': 25.5.0
 
   '@typescript-eslint/parser@8.72.2(eslint@9.39.4(jiti@2.7.0)(supports-color@7.2.0))(supports-color@7.2.0)(typescript@5.9.3)':
     dependencies:
@@ -9258,7 +9258,7 @@ snapshots:
 
   buffer-image-size@0.6.4:
     dependencies:
-      '@types/node': 22.19.15
+      '@types/node': 25.5.0
 
   bytes@3.1.2: {}
 
@@ -10112,7 +10112,7 @@ snapshots:
 
   happy-dom@21.0.4:
     dependencies:
-      '@types/node': 22.19.15
+      '@types/node': 25.5.0
       '@types/whatwg-mimetype': 3.0.2
       '@types/ws': 8.18.1
       buffer-image-size: 0.6.4

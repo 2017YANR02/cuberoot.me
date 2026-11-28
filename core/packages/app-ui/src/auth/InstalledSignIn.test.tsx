@@ -65,6 +65,10 @@ describe('bundled Account sign-in', () => {
     const email = container.querySelector<HTMLInputElement>('input[type=email]')!;
     expect(document.activeElement).not.toBe(email);
     expect(email.inputMode).toBe('email');
+    expect(container.querySelector('.auth-registration-hint')?.textContent).toContain('create an account');
+    for (const provider of ['wca', 'apple']) {
+      expect(container.querySelector(`[data-mobile-auth-provider="${provider}"] :is(img,svg)`)).not.toBeNull();
+    }
     expect(email.getAttribute('autocapitalize')).toBe('none');
     expect(email.getAttribute('autocorrect')).toBe('off');
     expect(email.getAttribute('spellcheck')).toBe('false');
@@ -153,7 +157,7 @@ describe('bundled Account sign-in', () => {
     expect(request).toHaveBeenLastCalledWith('/v1/auth/email/verify', {
       email: 'existing@example.invalid', code: '123456', existingOnly: true,
     });
-    expect(container.textContent).toContain(session.user.name);
+    expect(container.textContent).toContain(`${session.user.name} · ID ${session.user.uid}`);
     expect(auth.installCredentialSession).not.toHaveBeenCalled();
     await act(async () => { button('Confirm linking').click(); });
     expect(request).toHaveBeenLastCalledWith('/v1/auth/identity/complete', {
