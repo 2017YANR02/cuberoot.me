@@ -377,7 +377,7 @@ body[data-site-scenery] :is(
 
 /* Connect the Foundation surface to CubeRoot's scenery and theme tokens.
    The results scroller stays outside the backdrop-root chain. */
-:is(.landing-search-input, .home-navigation-surface, .landing-search-item, .landing-search-plus-menu).af-glass-surface {
+:is(.landing-search-input, .landing-search-item, .landing-search-plus-menu).af-glass-surface {
   --af-glass-content: none;
 }
 
@@ -391,7 +391,6 @@ body:not([data-site-scenery]) .landing-search-results-surface {
 
 body[data-site-scenery] :is(
   .landing-search-input:not(.is-drag-over),
-  .home-navigation-surface,
   .landing-search-results-surface,
   .landing-search-results-surface .landing-search-item
 ) {
@@ -410,7 +409,6 @@ body[data-site-scenery] .landing-search-input:not(.is-drag-over) {
 
 body[data-site-scenery] :is(
   .landing-page > .landing-search .landing-search-input:not(.is-drag-over),
-  .home-navigation-surface,
   .landing-search-results-surface,
   .landing-search-results-surface .landing-search-item
 ) {
@@ -418,7 +416,7 @@ body[data-site-scenery] :is(
   border-color: transparent;
 }
 
-body[data-site-scenery] :is(.home-navigation-surface, .landing-search-results-surface) {
+body[data-site-scenery] .landing-search-results-surface {
   --af-glass-fill: var(--popover);
   --af-glass-tint: var(--glass-popover-bg);
 }

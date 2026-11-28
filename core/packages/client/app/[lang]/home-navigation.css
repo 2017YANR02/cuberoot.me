@@ -42,8 +42,7 @@ body .landing-page.landing-page--navigation {
 .home-navigation-surface {
   position: absolute;
   inset: 0;
-  background: var(--popover);
-  border: 1px solid var(--border-default);
+  background: transparent;
   border-radius: 999px;
   opacity: 0;
   pointer-events: none;

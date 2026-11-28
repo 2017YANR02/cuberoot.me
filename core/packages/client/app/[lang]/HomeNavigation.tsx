@@ -207,7 +207,7 @@ export default function HomeNavigation({ selected, onSelect, isAdmin, sections, 
       headerRef.current?.querySelector<HTMLButtonElement>(`#home-nav-${allowedFlyout}`)?.focus();
       closeFlyout();
     }}>
-    <span className="home-navigation-surface af-glass-surface" aria-hidden="true" />
+    <span className="home-navigation-surface af-glass-surface" data-af-glass-optics="lens" data-af-glass-role="popover" aria-hidden="true" />
     <button type="button" className="home-navigation-brand" aria-label={tr({ zh: '首页', en: 'Home' })}
       onPointerEnter={event => previewSection(null, event, true)}
       onPointerMove={event => previewSection(null, event, false)} onPointerLeave={cancelHoverTimer} onClick={() => selectOverview('home')}>{brand}</button>
