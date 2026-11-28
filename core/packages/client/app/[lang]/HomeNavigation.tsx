@@ -1,6 +1,6 @@
 'use client';
 
-import { Children, useCallback, useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react';
+import { Children, useCallback, useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type PointerEvent, type ReactNode } from 'react';
 import { NavigationMenu } from '@app-foundation/navigation-ui';
 import { CubeRootLogoImage } from '@/components/CubeRootLogo';
 import MoreToggle, { MoreTogglePanel } from '@/components/MoreToggle';
@@ -12,6 +12,16 @@ import '@/components/menu-toggle-icon.css';
 
 // Keep this complementary to the mobile breakpoint in home-navigation.css.
 const DESKTOP_NAV_QUERY = '(width > 900px)';
+
+type HoverPoint = { x: number; y: number };
+
+function insideFlyoutTriangle(origin: HoverPoint, point: HoverPoint, panel: DOMRect) {
+  if (point.y <= origin.y || point.y > panel.top) return false;
+  const progress = (point.y - origin.y) / (panel.top - origin.y);
+  const left = origin.x + (panel.left - origin.x) * progress;
+  const right = origin.x + (panel.right - origin.x) * progress;
+  return point.x >= left && point.x <= right;
+}
 
 /** Home sections deliberately keep the current URL, as requested by the maintainer. */
 export default function HomeNavigation({ selected, onSelect, isAdmin, sections, brand, actions, flyouts }: {
@@ -43,12 +53,13 @@ export default function HomeNavigation({ selected, onSelect, isAdmin, sections, 
   const headerRef = useRef<HTMLElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
   const hoverTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const hoverOrigin = useRef<HoverPoint | null>(null);
   const focusFrame = useRef<number | null>(null);
   const cancelHoverTimer = useCallback(() => {
     if (hoverTimer.current !== null) clearTimeout(hoverTimer.current);
     hoverTimer.current = null;
   }, []);
-  const closeFlyout = useCallback(() => { cancelHoverTimer(); setExpanded(false); }, [cancelHoverTimer]);
+  const closeFlyout = useCallback(() => { cancelHoverTimer(); hoverOrigin.current = null; setExpanded(false); }, [cancelHoverTimer]);
   const scheduleClose = () => {
     cancelHoverTimer();
     hoverTimer.current = setTimeout(closeFlyout, 120);
@@ -64,10 +75,31 @@ export default function HomeNavigation({ selected, onSelect, isAdmin, sections, 
     setFlyout(id);
     setExpanded(true);
   };
-  const previewSection = (id: string) => {
+  const previewSection = (id: string | null, event: PointerEvent<HTMLButtonElement>, entering: boolean) => {
+    if (event.pointerType !== 'mouse') return;
+    const point = { x: event.clientX, y: event.clientY };
+    if (!shown || id === allowedFlyout) {
+      hoverOrigin.current = point;
+      if (entering) {
+        cancelHoverTimer();
+        if (!shown && id) hoverTimer.current = setTimeout(() => showFlyout(id), 180);
+      }
+      return;
+    }
+
+    const activate = () => {
+      hoverOrigin.current = point;
+      if (id) showFlyout(id);
+      else closeFlyout();
+    };
     cancelHoverTimer();
-    if (shown) showFlyout(id);
-    else hoverTimer.current = setTimeout(() => showFlyout(id), 180);
+    const panel = contentRef.current;
+    if (panel && hoverOrigin.current && insideFlyoutTriangle(hoverOrigin.current, point, panel.getBoundingClientRect())) {
+      // Keep the original apex while crossing other triggers. A pause selects the hovered one.
+      hoverTimer.current = setTimeout(activate, 300);
+    } else {
+      activate();
+    }
   };
   const selectOverview = (id: string) => {
     closeFlyout();
@@ -148,7 +180,8 @@ export default function HomeNavigation({ selected, onSelect, isAdmin, sections, 
       aria-expanded={shown && allowedFlyout === href}
       aria-controls="home-navigation-flyout"
       data-home-section={href}
-      onPointerEnter={event => { if (event.pointerType === 'mouse') previewSection(href); }}
+      onPointerEnter={event => previewSection(href, event, true)}
+      onPointerMove={event => previewSection(href, event, false)}
       onPointerLeave={cancelHoverTimer}
       onPointerDown={cancelHoverTimer}
       onFocus={() => { if (shown) showFlyout(href); }}
@@ -176,7 +209,8 @@ export default function HomeNavigation({ selected, onSelect, isAdmin, sections, 
     }}>
     <span className="home-navigation-surface af-glass-surface" aria-hidden="true" />
     <button type="button" className="home-navigation-brand" aria-label={tr({ zh: '首页', en: 'Home' })}
-      onPointerEnter={closeFlyout} onClick={() => selectOverview('home')}>{brand}</button>
+      onPointerEnter={event => previewSection(null, event, true)}
+      onPointerMove={event => previewSection(null, event, false)} onPointerLeave={cancelHoverTimer} onClick={() => selectOverview('home')}>{brand}</button>
     <div className="home-navigation-desktop">{menu()}</div>
     {actions}
     <button ref={drawerToggleRef} type="button" className="home-navigation-toggle menu-toggle-icon" aria-label={label} aria-expanded={open}
@@ -191,7 +225,7 @@ export default function HomeNavigation({ selected, onSelect, isAdmin, sections, 
     <div className="home-navigation-curtain" aria-hidden="true" onPointerEnter={scheduleClose} onClick={closeFlyout} />
     <div id="home-navigation-flyout" className="home-navigation-flyout af-glass-surface" data-af-glass-theme="" data-af-glass-role="popover" role="region"
       aria-labelledby={allowedFlyout ? `home-nav-${allowedFlyout}` : undefined} aria-hidden={!shown} inert={!shown}
-      onPointerEnter={cancelHoverTimer}>
+      onPointerEnter={() => { cancelHoverTimer(); hoverOrigin.current = null; }}>
       <div ref={contentRef} className="home-navigation-flyout-content">
         <div key={allowedFlyout} className="home-navigation-flyout-grid" onClickCapture={event => {
           if ((event.target as Element).closest('a')) closeFlyout();
