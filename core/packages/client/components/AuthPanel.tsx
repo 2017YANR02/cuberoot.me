@@ -313,7 +313,7 @@ export function IdentityChoicePanel({ pending, firstPartyOnly = false, onDone, o
     </> : pending.stage === 'authenticate' ? <>
       <p className="auth-hint">{t(`请用原来的登录方式验证账号，再绑定${providerName}。不会创建新账号。`, `Sign in with a method already linked to your account, then link ${providerName}. No new account will be created.`)}</p>
       {pending.otherIdentityRejected && <p className="auth-error" role="alert">{t('这个登录方式尚未绑定账号，请使用原来绑定的方式。', 'This sign-in method is not linked to an account. Use one already linked to your account.')}</p>}
-      <LoginFormFields firstPartyOnly={firstPartyOnly} onDone={authenticated} />
+      <LoginFormFields existingOnly firstPartyOnly={firstPartyOnly} onDone={authenticated} />
     </> : <>
       <h2 className="auth-title">{t(`绑定 ${providerName}`, `Link ${providerName}`)}</h2>
       <p className="auth-hint">{matches ? `${user?.name || ''} · ID ${pending.expectedUid}` : t('当前账号已更改，请重新登录要绑定的账号。', 'Your account changed. Sign in to the account you want to link.')}</p>
@@ -326,11 +326,13 @@ export function IdentityChoicePanel({ pending, firstPartyOnly = false, onDone, o
 }
 
 function LoginFormFields({
+  existingOnly = false,
   firstPartyOnly = false,
   onDone,
 }: {
   firstPartyOnly?: boolean;
   onDone: OnSignedIn;
+  existingOnly?: boolean;
 }) {
   const lang = useLang();
   const t = (zh: string, en: string) => (lang === 'zh' ? zh : en);
@@ -423,7 +425,7 @@ function LoginFormFields({
     <>
       <h2 className="auth-title">{t('登录 / 注册', 'Sign in / up')}</h2>
 
-      <WebCredentialForms><FirstPartyLogin email={avail.email} phone={avail.phone} onDone={onDone} /></WebCredentialForms>
+      <WebCredentialForms><FirstPartyLogin existingOnly={existingOnly} email={avail.email} phone={avail.phone} onDone={onDone} /></WebCredentialForms>
 
       {hasCred && hasSso && <OrDivider />}
 

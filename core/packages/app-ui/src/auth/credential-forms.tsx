@@ -251,7 +251,8 @@ export function CodeFlow({ channel, mode, onDone }: { channel: Channel; mode: 'l
  * 邮箱验证码登录(受控 email,发码 → 输码 → 校验)。默认方式,passwordless(Vercel/Notion 风)。
  * reset=true 时是「忘记密码」进来的:同一套验证码,只是验完不关窗,交由上层引导设新密码。
  */
-function EmailCodeFlow({ email, setEmail, onDone, toPassword, reset }: {
+function EmailCodeFlow({ email, setEmail, onDone, toPassword, reset, alternatives }: {
+  alternatives?: ReactNode;
   email: string; setEmail: (v: string) => void; onDone: OnSignedIn; toPassword: () => void; reset?: boolean;
 }) {
   const { t, port, autoFocus } = useCredentialForms();
@@ -358,9 +359,12 @@ function EmailCodeFlow({ email, setEmail, onDone, toPassword, reset }: {
         {busy ? <Loader2 size={ICON} className="auth-spin" /> : null}
         {t('发送验证码', 'Send code')}
       </button>
-      <button className="auth-textbtn" onClick={toPassword}>
-        {reset ? t('返回密码登录', 'Back to password sign-in') : t('用密码登录', 'Sign in with a password')}
-      </button>
+      <div className="auth-method-actions">
+        <button className="auth-textbtn" onClick={toPassword}>
+          {reset ? t('返回密码登录', 'Back to password sign-in') : t('用密码登录', 'Sign in with a password')}
+        </button>
+        {!reset && alternatives}
+      </div>
     </div>
   );
 }
@@ -448,7 +452,7 @@ function EmailPasswordFlow({ email, setEmail, onDone, toCode, onForgot }: {
  * 直接落到「设置新密码」表单(免旧密码,后端认这个 grant)。等价于别家的重置邮件链接,
  * 但不必再发第二种邮件、也不必再造一个 /reset-password 页。
  */
-function EmailAuth({ onDone }: { onDone: OnSignedIn }) {
+function EmailAuth({ onDone, alternatives, existingOnly }: { onDone: OnSignedIn; alternatives: ReactNode; existingOnly: boolean }) {
   const { t } = useCredentialForms();
   const [email, setEmail] = useState('');
   useEffect(() => { setEmail(readRememberedLogin('email')); }, []);
@@ -466,20 +470,26 @@ function EmailAuth({ onDone }: { onDone: OnSignedIn }) {
   }
   if (mode === 'password') {
     return (
+      <>
       <EmailPasswordFlow
         email={email} setEmail={setEmail} onDone={onDone}
         toCode={() => setMode('code')}
         onForgot={() => setMode('reset')}
       />
+      {alternatives}
+      </>
     );
   }
   return (
-    <EmailCodeFlow
+    <>
+    {!existingOnly && mode === 'code' && <RegistrationHint />}
+    <EmailCodeFlow alternatives={alternatives}
       email={email} setEmail={setEmail}
       reset={mode === 'reset'}
       onDone={(info) => (mode === 'reset' ? setNewPw(true) : onDone(info))}
       toPassword={() => setMode('password')}
     />
+    </>
   );
 }
 
@@ -583,18 +593,31 @@ export function SetPasswordForm({ needCurrent, label, onDone }: {
 }
 
 
-export function FirstPartyLogin({ email, phone, onDone }: { email: boolean; phone: boolean; onDone: OnSignedIn }) {
+function RegistrationHint() {
+  const { t } = useCredentialForms();
+  return <p className="auth-registration-hint">{t(
+    '已有账号可直接登录。第一次来？用验证码验证后即可选择创建账号。',
+    'Already registered? Sign in below. New here? Verify with a code, then choose to create an account.',
+  )}</p>;
+}
+
+export function FirstPartyLogin({ email, phone, onDone, existingOnly = false }: {
+  email: boolean; phone: boolean; onDone: OnSignedIn; existingOnly?: boolean;
+}) {
   const { t } = useCredentialForms();
   const [preferred, setPreferred] = useState<Channel>('email');
   const channel = email && (!phone || preferred === 'email') ? 'email' : phone ? 'phone' : null;
-  return <>
-    {channel === 'email' && <EmailAuth onDone={onDone} />}
-    {channel === 'phone' && <PhoneAuth onDone={onDone} />}
-    {email && phone && (
-      <button type="button" className="auth-textbtn auth-cred-switch"
-        onClick={() => setPreferred(channel === 'email' ? 'phone' : 'email')}>
-        {channel === 'email' ? t('用手机号登录', 'Use phone number') : t('用邮箱登录', 'Use email')}
-      </button>
-    )}
+  const switchChannel = email && phone && (
+    <button type="button" className="auth-textbtn auth-cred-switch"
+      onClick={() => setPreferred(channel === 'email' ? 'phone' : 'email')}>
+      {channel === 'email' ? t('用手机号登录', 'Use phone number') : t('用邮箱登录', 'Use email')}
+    </button>
+  );
+  if (channel === 'email') return <EmailAuth existingOnly={existingOnly} onDone={onDone} alternatives={switchChannel} />;
+  if (channel === 'phone') return <>
+    {!existingOnly && <RegistrationHint />}
+    <PhoneAuth onDone={onDone} />
+    {switchChannel}
   </>;
+  return null;
 }

@@ -173,7 +173,7 @@ export function InstalledSignIn({ auth, language, onClose, openPolicy }: {
   };
 
   const forms = <CredentialFormsProvider t={t} port={port} autoFocus={false}>
-    <FirstPartyLogin key={verifyExisting ? 'existing' : 'sign-in'} email={providers.email} phone={providers.phone} onDone={completeCredentials} />
+    <FirstPartyLogin existingOnly={verifyExisting} key={verifyExisting ? 'existing' : 'sign-in'} email={providers.email} phone={providers.phone} onDone={completeCredentials} />
     {providers.social.length > 0 && (
       <>
         {(providers.email || providers.phone) && <div className="auth-divider"><span>{t('或', 'or')}</span></div>}
