@@ -179,6 +179,19 @@ function subsetDotTitle(colors: ColorLetter[], winner?: ColorLetter): string {
     : base;
 }
 
+function homeBaseLabel(colors: ColorLetter[], winner?: ColorLetter): string {
+  if (!colors.length) return '';
+  const base = winner ?? colors[0];
+  const label = tr({ zh: `${COLOR_NAME[base].zh}底`, en: `${COLOR_NAME[base].en} base` });
+  if (colors.length === 1) return label;
+  const pool = colors.length === 6 ? tr({ zh: '六色', en: 'All colors' }) : tr({
+    zh: colors.map(c => COLOR_NAME[c].zh).join('、'),
+    en: colors.map(c => COLOR_NAME[c].en).join('/'),
+  });
+  return winner ? tr({ zh: `${pool}中取优（${label}）`, en: `${pool} (best: ${label})` })
+    : tr({ zh: `${pool}中取优`, en: `Best of ${pool}` });
+}
+
 // 稀有卡顶标签:变体 + 类型(相同则合一)+ 步数,与下钻视图两个下拉口径一致。
 function rarityTag(uiVariant: string, metric: string, step: number, isZh: boolean): string {
   const vl = variantLabel(uiVariant, isZh);
@@ -308,7 +321,7 @@ function ScrambleCard({ event, scramble, m, lp, isZh, ssTarget, color, dotColors
       )}
       <div className="rs-scard-cube">
         <div className="rs-scard-actions">
-        {dotList.length > 0 && (
+        {browse && dotList.length > 0 && (
           <span className="rs-scard-dot" title={dotTitle} aria-label={dotTitle} aria-hidden={dotTitle ? undefined : true}>
             <SubsetSwatch colors={dotList} highlight={dotList.length > 1 ? color : undefined} />
           </span>
@@ -326,7 +339,7 @@ function ScrambleCard({ event, scramble, m, lp, isZh, ssTarget, color, dotColors
       <div className="rs-scard-body">
         {rarity && (
           <div className="rs-scard-rarity">
-            <span className="rs-scard-rtag">{rarity.tag}</span>
+            <span className="rs-scard-rtag">{[!browse && homeBaseLabel(dotList, color), rarity.tag].filter(Boolean).join(' · ')}</span>
             {rarity.prob && <span className="rs-scard-rprob">{rarity.prob}</span>}
           </div>
         )}
