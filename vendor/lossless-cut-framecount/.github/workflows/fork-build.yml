@@ -1,0 +1,89 @@
+name: Fork build
+
+# Builds Mac/Windows/Linux artifacts for this fork without requiring mifi's
+# code-signing / notarization / store secrets. Triggered on tags of the form
+# v*-frame-count.* or manually.
+#
+# Retained from the archived standalone fork. This nested file is inactive in CubeRoot.
+
+on:
+  push:
+    tags:
+      - 'v*-frame-count.*'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 60
+
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-latest, ubuntu-latest, windows-latest]
+
+    steps:
+      - run: git config --global core.autocrlf false
+
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: yarn
+
+      - run: yarn install --immutable --network-timeout 1000000
+
+      - name: Download ffmpeg (macOS)
+        if: runner.os == 'macOS'
+        run: |
+          yarn download-ffmpeg-darwin-x64
+          yarn download-ffmpeg-darwin-arm64
+
+      - name: Download ffmpeg (Windows)
+        if: runner.os == 'Windows'
+        run: yarn download-ffmpeg-win32-x64
+
+      - name: Download ffmpeg (Linux)
+        if: runner.os == 'Linux'
+        run: yarn download-ffmpeg-linux-x64
+
+      # CSC_IDENTITY_AUTO_DISCOVERY=false → produce an unsigned .app/.dmg
+      # since this fork has no Apple Developer certs.
+      - name: Build (macOS)
+        if: runner.os == 'macOS'
+        env:
+          CSC_IDENTITY_AUTO_DISCOVERY: 'false'
+        run: |
+          yarn build
+          yarn electron-builder --mac dmg --x64 --arm64
+
+      - name: Build (Windows)
+        if: runner.os == 'Windows'
+        run: |
+          yarn build
+          yarn electron-builder --win 7z --x64
+
+      - name: Build (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          yarn build
+          yarn electron-builder --linux tar.bz2 AppImage --x64
+
+      - name: List artifacts
+        shell: bash
+        run: ls -la dist/ || true
+
+      - name: Upload to GitHub Release
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            dist/*.dmg
+            dist/*.7z
+            dist/*.AppImage
+            dist/*.tar.bz2
+          fail_on_unmatched_files: false

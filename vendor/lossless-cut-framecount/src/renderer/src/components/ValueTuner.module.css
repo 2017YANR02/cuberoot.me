@@ -1,0 +1,17 @@
+.value-tuner {
+  min-width: 20em;
+  position: absolute;
+  bottom: 0;
+  padding: 1.2em;
+  margin: 1em;
+  border-radius: 1em;
+  color: var(--gray-12);
+  background: var(--white-a7);
+  box-shadow: 0 0 .3em .3em var(--white-a8);
+  backdrop-filter: blur(10px);
+}
+
+:global(.dark-theme) .value-tuner {
+  background: var(--black-a7);
+  box-shadow: 0 0 .3em .3em var(--black-a8);
+}

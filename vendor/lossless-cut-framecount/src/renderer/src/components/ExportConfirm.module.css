@@ -1,0 +1,20 @@
+table.options {
+  width: 100%;
+}
+
+table.options td:nth-child(2) {
+  text-align: right;
+}
+
+table.options td:last-child {
+  text-align: center;
+  width: 1.7em;
+}
+
+table.options td {
+  padding: .5em 0em;
+}
+
+table.options td {
+  vertical-align: top;
+}

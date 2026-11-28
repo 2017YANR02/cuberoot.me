@@ -1,0 +1,230 @@
+<!doctype html>
+<html lang="zh-CN">
+  <meta charset="utf-8" /><meta
+    name="viewport"
+    content="width=device-width,initial-scale=1"
+  /><title>魔方复盘字幕</title>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+    body {
+      margin: 0;
+      background: #f5f5f0;
+      color: #242a25;
+      font:
+        15px/1.55 Inter,
+        -apple-system,
+        BlinkMacSystemFont,
+        sans-serif;
+    }
+    main {
+      max-width: 1080px;
+      margin: auto;
+      padding: 42px 24px;
+    }
+    h1 {
+      font-size: 32px;
+      letter-spacing: -0.04em;
+      margin: 0 0 22px;
+    }
+    h2 {
+      font-size: 18px;
+      margin: 0 0 12px;
+    }
+    .layout {
+      display: grid;
+      grid-template-columns: 1.65fr 1fr;
+      gap: 18px;
+    }
+    section {
+      background: white;
+      border: 1px solid #dadfd7;
+      border-radius: 14px;
+      padding: 18px;
+    }
+    .screen {
+      background: #202622;
+      border-radius: 8px;
+      display: grid;
+      place-items: center;
+      position: relative;
+      overflow: hidden;
+      min-height: 220px;
+    }
+    .screen video {
+      display: block;
+      width: 100%;
+      max-height: 60vh;
+    }
+    .screen video:not([src]) {
+      visibility: hidden;
+    }
+    .screen #pick {
+      position: absolute;
+    }
+    .caption {
+      position: absolute;
+      bottom: 18%;
+      pointer-events: none;
+      text-align: center;
+      max-width: 90%;
+      white-space: pre-line;
+      color: white;
+      font-weight: 650;
+      text-shadow:
+        0 1px 3px black,
+        -1px -1px 2px black,
+        1px 1px 2px black;
+    }
+    button,
+    .button {
+      display: inline-block;
+      font: inherit;
+      font-weight: 550;
+      cursor: pointer;
+      padding: 7px 12px;
+      color: #264132;
+      background: #edf2eb;
+      border: 1px solid #c8d3c8;
+      border-radius: 7px;
+    }
+    button.primary {
+      background: #245c43;
+      color: white;
+      border-color: #245c43;
+    }
+    button:disabled {
+      opacity: 0.48;
+      cursor: default;
+    }
+    textarea,
+    input[type='number'],
+    select {
+      font: inherit;
+      border: 1px solid #bdc7bd;
+      border-radius: 6px;
+      padding: 6px;
+      max-width: 100%;
+    }
+    textarea {
+      display: block;
+      width: 100%;
+      resize: vertical;
+      min-height: 150px;
+      margin: 8px 0;
+    }
+    p {
+      margin: 8px 0;
+      color: #566055;
+    }
+    .actions {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      flex-wrap: wrap;
+      margin-top: 12px;
+    }
+    #rows {
+      margin-top: 14px;
+    }
+    .row {
+      display: grid;
+      grid-template-columns: 2em 1fr auto 1fr auto;
+      gap: 8px;
+      align-items: center;
+      margin: 6px 0;
+    }
+    .row input {
+      width: 100%;
+    }
+    .row button {
+      font-size: 13px;
+    }
+    #status {
+      min-height: 1.5em;
+    }
+    .wide {
+      margin-top: 18px;
+    }
+    [hidden] {
+      display: none !important;
+    }
+    @media (max-width: 760px) {
+      .layout {
+        grid-template-columns: 1fr;
+      }
+      main {
+        padding: 20px 12px;
+      }
+      .row {
+        gap: 4px;
+      }
+      .row button {
+        padding: 5px;
+      }
+    }
+  </style>
+  <main>
+    <h1>魔方复盘字幕</h1>
+    <div class="layout">
+      <section>
+        <h2>视频预览</h2>
+        <div class="screen" id="drop">
+          <video id="video" controls playsinline></video
+          ><button id="pick" class="primary">导入视频</button
+          ><span class="caption" id="caption"></span>
+        </div>
+        <input
+          hidden
+          type="file"
+          id="media"
+          accept="video/*,.mkv,.mov,.mp4,.m4v,.webm"
+        />
+        <div class="actions">
+          <button id="replace" hidden>更换视频</button
+          ><span id="filename">也可以把视频拖到这里</span>
+        </div>
+      </section>
+      <section>
+        <h2><label for="review">复盘文本</label></h2>
+        <p>每行一个阶段，按播放顺序填写。</p>
+        <textarea
+          id="review"
+          placeholder="R U R′　// Cross&#10;U R U′ R′　// F2L"
+        ></textarea>
+        <div class="actions">
+          <button id="load">导入分段</button
+          ><input id="segments" type="file" accept=".llc,.csv" hidden /><select
+            id="unit"
+            aria-label="CSV 时间单位"
+          >
+            <option value="seconds">CSV 秒数 / 时间码</option>
+            <option value="frames">CSV 帧号</option></select
+          ><input
+            hidden
+            type="number"
+            min="0.01"
+            step="any"
+            id="fps"
+            aria-label="帧率"
+            placeholder="帧率"
+          />
+        </div>
+        <p>支持 LosslessCut 的 .llc 和 .csv。也可以在下方手动标记时间。</p>
+      </section>
+    </div>
+    <section class="wide">
+      <h2>阶段时间</h2>
+      <div id="rows"></div>
+      <div class="actions">
+        <button id="save" disabled>导出 ASS 字幕</button
+        ><button id="burn" class="primary" disabled>导出带字幕 MP4</button>
+      </div>
+      <p id="status" role="status">请先导入视频。</p>
+    </section>
+  </main>
+  <script src="/vendor/json5.js"></script>
+  <script src="/vendor/csv.js"></script>
+  <script src="/review.js"></script>
+</html>

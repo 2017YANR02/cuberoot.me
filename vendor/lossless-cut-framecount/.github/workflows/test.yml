@@ -1,0 +1,43 @@
+name: Test
+
+on: [push, pull_request]
+
+jobs:
+  test:
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 60
+
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+
+    steps:
+      # Windows fix. See https://github.com/actions/checkout/issues/226
+      - run: git config --global core.autocrlf false
+
+      - uses: actions/checkout@v6
+
+      # todo remove once fixed https://github.com/actions/setup-node/issues/531
+      - run: corepack enable
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: 'yarn'
+
+      - run: yarn install --immutable
+      - run: yarn dedupe --check
+      - run: yarn test
+      - run: yarn tsc
+      - run: yarn lint
+      - run: yarn build
+      - name: Check docs
+        run: |
+          yarn generate-docs
+          git diff --quiet HEAD
+          git reset --hard HEAD
+      - run: yarn check-licenses
+      - name: Generate licenses
+        run: |
+          yarn generate-licenses
+          git reset --hard HEAD

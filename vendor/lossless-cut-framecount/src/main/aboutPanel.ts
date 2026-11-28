@@ -1,0 +1,38 @@
+import type { AboutPanelOptionsOptions } from 'electron';
+// eslint-disable-next-line import/no-extraneous-dependencies
+import { app } from 'electron';
+import { t } from 'i18next';
+
+import { appName, copyrightYear } from './common.js';
+import { isLinux } from './util.js';
+import isStoreBuild from './isStoreBuild.js';
+import { githubUrl, homepageUrl } from '../common/constants.js';
+
+
+// eslint-disable-next-line import/prefer-default-export
+export function getAboutPanelOptions() {
+  const appVersion = app.getVersion();
+
+  const aboutPanelLines = [
+    isStoreBuild ? homepageUrl : githubUrl,
+    '',
+    `${t('Copyright')} © 2016-${copyrightYear} Mikael Finstad ❤️ 🇳🇴`,
+  ];
+
+  const aboutPanelOptions: AboutPanelOptionsOptions = {
+    applicationName: appName,
+    copyright: aboutPanelLines.join('\n'),
+    version: '', // not very useful (supported on MacOS only, and same as applicationVersion)
+  };
+
+  // https://github.com/electron/electron/issues/18918
+  // https://github.com/mifi/lossless-cut/issues/1537
+  if (isLinux) {
+    aboutPanelOptions.applicationVersion = appVersion;
+  } else if (isStoreBuild) {
+    // https://github.com/mifi/lossless-cut/issues/1882
+    aboutPanelOptions.applicationVersion = t('{{appStoreType}} edition, based on GitHub v{{appVersion}}', { appStoreType: process.windowsStore ? 'Microsoft Store' : 'App Store', appVersion });
+  }
+
+  return aboutPanelOptions;
+}

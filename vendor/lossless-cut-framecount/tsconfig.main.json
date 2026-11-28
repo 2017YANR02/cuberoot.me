@@ -1,0 +1,29 @@
+{
+  "extends": ["@tsconfig/strictest"],
+  "compilerOptions": {
+    "composite": true,
+
+    "emitDeclarationOnly": true,
+    "outDir": "main-ts-dist",
+    "tsBuildInfoFile": "main-ts-dist/tsconfig.tsbuildinfo",
+
+    "lib": ["ES2024"],
+    "target": "ESNext",
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+
+    // https://nodejs.org/api/typescript.html
+    "allowImportingTsExtensions": true,
+    "rewriteRelativeImportExtensions": true,
+    "erasableSyntaxOnly": true,
+    "verbatimModuleSyntax": true,
+
+    "types": ["vite/client"],
+  },
+  "references": [
+    { "path": "./tsconfig.common.json" },
+  ],
+  "include": [
+    "src/main/**/*",
+  ],
+}

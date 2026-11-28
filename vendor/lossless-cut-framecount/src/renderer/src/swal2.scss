@@ -1,0 +1,59 @@
+$swal2-outline-color: var(--gray-5) !default;
+
+// see colors.ts primaryColor
+$swal2-confirm-button-background-color: var(--cyan-9);
+
+$myswal-background: var(--gray-1);
+$myswal-foreground: var(--gray-12);
+$swal2-outline-color: $swal2-outline-color;
+
+$swal2-border: .1em solid $swal2-outline-color;
+$swal2-background: $myswal-background;
+$swal2-html-container-color: $myswal-foreground;
+$swal2-title-color: $myswal-foreground;
+$swal2-backdrop: rgba(0, 0, 0, .75);
+
+// TOAST
+$swal2-toast-background: $myswal-background;
+$swal2-toast-button-focus-box-shadow: 0 0 0 1px $swal2-background, 0 0 0 3px $swal2-outline-color;
+
+$swal2-close-button-color: var(--gray-11);
+
+// FOOTER
+$swal2-footer-border-color: var(--gray-2);
+$swal2-footer-color: $myswal-background;
+
+// TIMER POGRESS BAR
+$swal2-timer-progress-bar-background: var(--gray-8);
+
+// INPUT
+$swal2-input-color: $myswal-foreground;
+$swal2-input-background: var(--gray-3);
+
+// VALIDATION MESSAGE
+$swal2-validation-message-background: var(--gray-3);
+$swal2-validation-message-color: $myswal-foreground;
+
+// QUEUE
+$swal2-progress-step-background: var(--gray-5);
+
+// COMMON VARIABLES FOR CONFIRM AND CANCEL BUTTONS
+$swal2-button-focus-box-shadow: 0 0 0 1px $swal2-background, 0 0 0 3px $swal2-outline-color;
+
+.swal2-textarea::placeholder {
+  color: var(--gray-8);
+}
+
+// Because radix-ui Dialog uses pointer-events: none on the whole app when a dialog is open, but we still want to interact with swal2 popups (which are on top)
+// Note that this is still kind of broken (clicks may go through the popup and scroll doesn't work), but better than nothing.
+// https://github.com/sweetalert2/sweetalert2/issues/665
+// https://github.com/radix-ui/primitives/issues/3353#issuecomment-2664085003
+// https://github.com/radix-ui/primitives/issues/3298
+// https://github.com/radix-ui/primitives/issues/2122
+// https://github.com/shadcn-ui/ui/issues/6988
+// TODO remove usage of sweetalert2 and use our own dialog component instead.
+.swal2-popup {
+  pointer-events: auto;
+}
+
+@import 'sweetalert2/src/sweetalert2.scss';
