@@ -23,7 +23,7 @@ const post = (suffix: string, body = {}) => app.request(path + suffix, {
 });
 beforeEach(() => {
   vi.clearAllMocks();
-  row = { id, user_id: 1, supervisor_user_id: 2, status: 'confirmed', event_status: 'published', checked_in_at: '2026-09-10T12:00:00Z', in_window: true, competition_video_generation: id, competition_project: '333', result_recorded_at: null };
+  row = { id, user_id: 1, supervisor_user_id: 2, supervisor_independent: true, status: 'confirmed', event_status: 'published', checked_in_at: '2026-09-10T12:00:00Z', in_check_in_window: true, has_started: true, competition_video_generation: id, competition_project: '333', result_recorded_at: null };
   attempts = []; busy = false;
   mocks.actor.mockResolvedValue({ userId: 2 });
   mocks.ready.mockResolvedValue(true);
@@ -59,7 +59,7 @@ describe('supervised attempts HTTP boundaries', () => {
     expect((await app.request(path)).status).toBe(403);
   });
   it.each([
-    { status: 'cancelled' }, { event_status: 'draft' }, { checked_in_at: null }, { in_window: false }, { result_recorded_at: '2026-09-10T12:00:00Z' },
+    { status: 'cancelled' }, { event_status: 'draft' }, { checked_in_at: null }, { in_check_in_window: false }, { result_recorded_at: '2026-09-10T12:00:00Z' },
   ])('rejects an inactive supervision state %j', async change => {
     Object.assign(row, change);
     expect((await post('/next')).status).toBe(409);

@@ -8,6 +8,7 @@ import MoreToggle from '@/components/MoreToggle';
 import BoolToggle from '@/components/BoolToggle';
 import PuzzlePicker from '@/components/PuzzlePicker/PuzzlePicker';
 import { useEntryRouter } from '@/hooks/useEntryRouter';
+import { COMPETITION_CHECK_IN_LEAD_MS } from '@cuberoot/shared/timer';
 import { useT } from '@/hooks/useT';
 import { useLang } from '@/i18n/tr';
 import { hasAdminAccess, useAuthUser } from '@/lib/auth-store';
@@ -69,10 +70,11 @@ export function parseCompetitionSettlementTerms(terms: { rate: string; days: str
   return { commissionBps: Math.round(Number(terms.rate) * 100), settlementDays: Number(terms.days), settlementAnchor: terms.anchor };
 }
 
-export function CompetitionDraftForm({ organizers = [], competition, onSaved }: {
+export function CompetitionDraftForm({ organizers = [], competition, onSaved, onCreated }: {
   organizers?: Array<{ id: string; name: string }>;
   competition?: OnlineCompetition;
   onSaved?: () => void;
+  onCreated?: (id: string) => void;
 }) {
   const t = useT();
   const lang = useLang();
@@ -175,7 +177,7 @@ export function CompetitionDraftForm({ organizers = [], competition, onSaved }: 
         : nextMonday + 19 * hour;
     const ends = starts + (preset === 'tonight' ? 2 * hour : preset === 'weekend' ? 32 * hour : 6 * day + 3 * hour);
     const input = (time: number) => competitionDateInput(new Date(time).toISOString());
-    const next = { registrationOpensAt: input(now), registrationClosesAt: input(starts - 15 * minute),
+    const next = { registrationOpensAt: input(now), registrationClosesAt: input(starts - Math.max(15 * minute, COMPETITION_CHECK_IN_LEAD_MS)),
       startsAt: input(starts), endsAt: input(ends) };
     setDates(next);
     setError('');
@@ -250,6 +252,7 @@ export function CompetitionDraftForm({ organizers = [], competition, onSaved }: 
       }
       setSaved(submit ? admin ? t('比赛已发布。', 'Competition published.') : t('已提交平台审核。', 'Submitted for review.') : t('草稿已保存。', 'Draft saved.'));
       if (competition) onSaved?.();
+      else if (onCreated) onCreated(draftId);
       else router.push((lang === 'zh' ? '/zh' : '') + competitionWorkspaceHref('manage', draftId));
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : t('保存或提交失败，请重试。', 'Could not save or submit. Try again.'));
@@ -388,6 +391,8 @@ export function CompetitionDraftForm({ organizers = [], competition, onSaved }: 
         </div>
       </fieldset>
     </form>
-    {!competition && savedDraftId && <AppLink href={competitionWorkspaceHref('manage', savedDraftId)}>{t('查看已保存赛事', 'View saved competition')}</AppLink>}
+    {!competition && savedDraftId && (onCreated
+      ? <button className="competition-secondary" type="button" onClick={() => onCreated(savedDraftId)}>{t('查看已保存赛事', 'View saved competition')}</button>
+      : <AppLink href={competitionWorkspaceHref('manage', savedDraftId)}>{t('查看已保存赛事', 'View saved competition')}</AppLink>)}
   </section>;
 }

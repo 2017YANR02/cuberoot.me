@@ -63,10 +63,12 @@ export function PlatformResourceRouteView({
   definition,
   params,
   activityManagementHref,
+  onActivityNavigate,
 }: {
   definition: PlatformRouteDefinition;
   params: Record<string, string>;
   activityManagementHref?: string;
+  onActivityNavigate?: (id: string) => void;
 }) {
   const t = useT();
   const lang = useLang();
@@ -303,8 +305,11 @@ export function PlatformResourceRouteView({
       if (action === 'archive-instructor') refreshInstructorAccess();
       if (!isCurrent()) return undefined;
       if (activityManagementHref && definition.id === 'admin-event-new' && action === 'admin-save' && response.event?.id) {
-        const path = (lang === 'zh' ? '/zh' : '') + activityManagementHref;
-        router.replace(`${path}/${encodeURIComponent(response.event.id)}`);
+        if (onActivityNavigate) onActivityNavigate(response.event.id);
+        else {
+          const path = (lang === 'zh' ? '/zh' : '') + activityManagementHref;
+          router.replace(`${path}/${encodeURIComponent(response.event.id)}`);
+        }
         return response;
       }
       if (definition.id === 'instructor-profile' && (action === 'initialize-instructor-profile' || action === 'link-instructor-profile')) {
@@ -451,7 +456,9 @@ export function PlatformResourceRouteView({
 
       {newRoute && (definition.id !== 'instructor-courses' || (result && !error)) ? <div className={`platform-route-actions${definition.id === 'instructor-courses' ? ' platform-instructor-course-create-actions' : ''}`}>
         {definition.id === 'instructor-courses' && <div className="platform-instructor-course-count"><span className="platform-instructor-course-count-icon"><BookOpen aria-hidden /></span><strong>{pageTotal === undefined ? t(`本页 ${sortedItems.length} 门课程`, `${sortedItems.length} courses on this page`) : t(query ? `找到 ${pageTotal} 门课程` : `共 ${pageTotal} 门课程`, query ? `${pageTotal} matching courses` : `${pageTotal} courses`)}</strong></div>}
-        <AppLink className="platform-button platform-button-primary" href={activityManagementHref ? `${activityManagementHref}/new` : `/platform/${newRoute.pattern}`} prefetch={false}>{titleFor(t, newRoute)}{(activityManagementHref || definition.id === 'instructor-courses') && <Plus aria-hidden />}</AppLink>
+        {onActivityNavigate
+          ? <button className="platform-button platform-button-primary" type="button" onClick={() => onActivityNavigate('new')}>{titleFor(t, newRoute)}<Plus aria-hidden /></button>
+          : <AppLink className="platform-button platform-button-primary" href={activityManagementHref ? `${activityManagementHref}/new` : `/platform/${newRoute.pattern}`} prefetch={false}>{titleFor(t, newRoute)}{(activityManagementHref || definition.id === 'instructor-courses') && <Plus aria-hidden />}</AppLink>}
       </div> : null}
       {['admin', 'admin-event-analytics'].includes(definition.id) && allowed ? <CompactSelect label={t('统计范围', 'Period')} ariaLabel={t('统计范围', 'Period')} value={String(days)} items={[{ value: '7', label: t('最近 7 天', 'Last 7 days') }, { value: '30', label: t('最近 30 天', 'Last 30 days') }, { value: '90', label: t('最近 90 天', 'Last 90 days') }]} onChange={value => { void setDays(Number(value)); }} /> : null}
 
@@ -593,6 +600,7 @@ export function PlatformResourceRouteView({
               definition={definition}
               items={sortedItems}
               detailBaseHref={activityManagementHref}
+              onOpenDetail={onActivityNavigate}
               redeemedCourseIds={visibleRedeemedCourseIds}
               actionBusy={actionBusy}
               onAction={(action, id, payload) => { void runAction(action, id, payload); }}

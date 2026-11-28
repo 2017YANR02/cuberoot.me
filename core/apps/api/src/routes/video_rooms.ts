@@ -1,5 +1,7 @@
+import { competitionEntrant } from '../platform/competitions.js';
+import { competitionCheckInWindow } from '../platform/competition_checkin.js';
 import { Hono } from 'hono';
-import { NET_BATTLE_TOKEN_HEADER } from '@cuberoot/shared/timer';
+import { COMPETITION_STREAM_MBPS, NET_BATTLE_TOKEN_HEADER } from '@cuberoot/shared/timer';
 import { RoomConfiguration } from '@livekit/protocol';
 import { AccessToken, RoomServiceClient, TrackSource } from 'livekit-server-sdk';
 import { getIp } from '../utils/analytics_helpers.js';
@@ -157,25 +159,52 @@ export async function retireBattleVideoGeneration(code: string, videoGeneration:
   });
 }
 
-/** Competition identities are account IDs; the generation is private and never a public meeting code. */
-function competitionRoom(id: string, generation: string): string {
-  return `competition-${id}-${generation}`;
+/** Competition identities are account IDs; room generations are private. */
+function competitionRoom(id: string, generation: string, duel = false): string {
+  return `competition-${duel ? 'match-' : ''}${id.toLowerCase()}-${generation}`;
 }
 
-export async function retireCompetitionVideoGeneration(id: string, generation: string): Promise<void> {
+export async function retireCompetitionVideoGeneration(id: string, generation: string, duel = false): Promise<void> {
   if (!videoEnabled()) return;
-  try { await svc().deleteRoom(competitionRoom(id, generation)); }
+  try { await svc().deleteRoom(competitionRoom(id, generation, duel)); }
   catch (error) { console.error('[video] competition room retirement failed', { id, error }); }
 }
 
-/** Live presence is checked by the attempt API, never inferred from a browser checkbox. */
-export async function competitionSupervisionReady(id: string, generation: string, entrantId: number, supervisorId: number): Promise<boolean> {
-  if (!videoEnabled() || entrantId === supervisorId) return false;
+async function competitionCamerasReady(room: string, userIds: readonly (number | string)[]) {
+  if (!videoEnabled()) return false;
   try {
-    const participants = await svc().listParticipants(competitionRoom(id, generation));
-    return [entrantId, supervisorId].every(userId => participants.some(participant =>
+    const participants = await svc().listParticipants(room);
+    return userIds.every(userId => participants.some(participant =>
       participant.identity === `u${userId}` && participant.tracks.some(track => track.source === TrackSource.CAMERA && !track.muted)));
   } catch { return false; }
+}
+
+/** Callers only supply generations for tables assigned to the current judge. */
+export async function competitionMatchCameraStatus(matches: readonly { id: string; generation: string; a: string; b: string }[]) {
+  if (!videoEnabled() || !matches.length) return {};
+  const names = matches.map(match => competitionRoom(match.id, match.generation, true));
+  try {
+    const rooms = await svc().listRooms(names);
+    const occupied = new Set(rooms.filter(room => room.numParticipants > 0).map(room => room.name));
+    const statuses = await Promise.allSettled(matches.map(async (match, index) => {
+      const name = names[index];
+      const participants = occupied.has(name) ? await svc().listParticipants(name) : [];
+      const cameras = new Set(participants.filter(participant =>
+        participant.tracks.some(track => track.source === TrackSource.CAMERA && !track.muted)).map(participant => participant.identity));
+      return [match.id, { a: cameras.has(`u${match.a}`), b: cameras.has(`u${match.b}`) }] as const;
+    }));
+    return Object.fromEntries(statuses.flatMap(result => result.status === 'fulfilled' ? [result.value] : []));
+  } catch { return {}; }
+}
+
+/** The caller validates admission before the RPC and rechecks it when committing. */
+export async function competitionSupervisionReady(id: string, generation: string, entrantId: number, supervisorId: number) {
+  return entrantId !== supervisorId
+    && competitionCamerasReady(competitionRoom(id, generation), [entrantId, supervisorId]);
+}
+
+export function matchSupervisionCamerasReady(id: string, generation: string, users: readonly string[]) {
+  return competitionCamerasReady(competitionRoom(id, generation, true), users);
 }
 
 type CompetitionVideoAdmission = {
@@ -186,9 +215,26 @@ const COMPETITION_VIDEO_ADMISSION = `
   FROM platform_event_registrations r
   JOIN platform_competition_sessions s ON s.id=r.competition_session_id
   JOIN platform_events e ON e.id=r.event_id
-  WHERE r.id=?::uuid AND r.status IN ('confirmed','attended') AND e.status='published'
+  JOIN platform_competitions c ON c.event_id=e.id
+  WHERE r.id=?::uuid AND c.competition_format IS DISTINCT FROM 'advancement' AND r.status IN ('confirmed','attended') AND e.status='published'
     AND r.checked_in_at IS NOT NULL AND r.result_recorded_at IS NULL
-    AND NOW()>=s.starts_at AND NOW()<s.ends_at AND s.supervisor_user_id<>r.user_id`;
+    AND ${competitionCheckInWindow('s')} AND s.supervisor_user_id<>r.user_id
+    AND NOT ${competitionEntrant('e.id','s.supervisor_user_id')}`;
+
+const COMPETITION_MATCH_VIDEO_ADMISSION = `
+  SELECT r.id::text,r.user_id,s.supervisor_user_id,m.video_generation::text AS competition_video_generation
+  FROM platform_competition_matches m JOIN platform_events e ON e.id=m.event_id
+  JOIN platform_competitions c ON c.event_id=e.id
+  JOIN platform_event_registrations a ON a.id=m.player_a_registration_id AND a.status='confirmed'
+  JOIN platform_event_registrations b ON b.id=m.player_b_registration_id AND b.status='confirmed'
+  JOIN platform_event_registrations r ON r.id IN (a.id,b.id)
+  JOIN platform_competition_sessions s ON s.id=r.competition_session_id
+  WHERE m.id=?::uuid AND m.status IN ('ready','in_progress') AND e.status='published'
+    AND c.competition_format='advancement' AND c.supervision_mode='supervised'
+    AND ${competitionCheckInWindow('e')} AND ${competitionCheckInWindow('s')}
+    AND r.checked_in_at IS NOT NULL AND s.supervisor_user_id<>r.user_id
+    AND NOT ${competitionEntrant('e.id','s.supervisor_user_id')}
+  ORDER BY r.id`;
 
 /** Expiry and failed post-transaction retirements are reconciled even if both browsers stay idle. */
 async function reconcileCompetitionVideoRooms(): Promise<void> {
@@ -196,10 +242,11 @@ async function reconcileCompetitionVideoRooms(): Promise<void> {
   try {
     const rooms = (await svc().listRooms()).filter(room => room.name.startsWith('competition-'));
     for (const room of rooms) {
-      const match = /^competition-([0-9a-f-]{36})-([0-9a-f-]{36})$/.exec(room.name);
+      const match = /^competition-(match-)?([0-9a-f-]{36})-([0-9a-f-]{36})$/.exec(room.name);
       if (!match) continue;
-      const [admission] = await query<CompetitionVideoAdmission>(COMPETITION_VIDEO_ADMISSION, [match[1]]);
-      if (!admission || admission.competition_video_generation !== match[2]) await svc().deleteRoom(room.name);
+      const [admission] = await query<CompetitionVideoAdmission>(
+        match[1] ? COMPETITION_MATCH_VIDEO_ADMISSION : COMPETITION_VIDEO_ADMISSION, [match[2]]);
+      if (!admission || admission.competition_video_generation !== match[3]) await svc().deleteRoom(room.name);
     }
   } catch (error) { console.error('[video] competition room reconciliation failed', { error }); }
 }
@@ -217,9 +264,9 @@ if (videoEnabled()) setInterval(() => {
  * 宫格里的小窗会自动订阅低分辨率层,实际占用通常只有三分之一到一半。故意按最坏算 ——
  * 少开一个房只是少一个房,超卖带宽是所有房间一起卡。
  */
-function roomEgressMbps(n: number, screenShares: number): number {
+function roomEgressMbps(room: string, n: number, screenShares: number): number {
   if (n <= 1) return 0;
-  const camera = n * (n - 1) * PER_STREAM_MBPS;
+  const camera = n * (n - 1) * streamMbps(room);
   // 屏幕共享每一路都要转发给其余 n-1 人。会议室**至少**按一路预留(随时可能有人开始讲),
   // 真开了更多路就照实算 —— 界面上已经限制同时只有一个人共享,但那是客户端的事,
   // 预算不能建立在「客户端不会乱来」上。
@@ -227,6 +274,10 @@ function roomEgressMbps(n: number, screenShares: number): number {
 }
 
 /** 房名前缀决定这间房有没有屏幕共享 —— 对战房没有这个功能,不该替它多留带宽。 */
+function streamMbps(room: string) {
+  return room.startsWith('competition-') ? COMPETITION_STREAM_MBPS : PER_STREAM_MBPS;
+}
+
 function isMeetRoom(name: string): boolean {
   return name.startsWith('meet-');
 }
@@ -275,10 +326,10 @@ async function capacityCheck(
   let total = 0;
   for (const r of rooms) {
     total += r.name === targetRoom
-      ? roomEgressMbps(nextCount, shares(r.name, targetShares))
-      : roomEgressMbps(r.numParticipants, shares(r.name));
+      ? roomEgressMbps(r.name, nextCount, shares(r.name, targetShares))
+      : roomEgressMbps(r.name, r.numParticipants, shares(r.name));
   }
-  if (!rooms.some(r => r.name === targetRoom)) total += roomEgressMbps(nextCount, shares(targetRoom));
+  if (!rooms.some(r => r.name === targetRoom)) total += roomEgressMbps(targetRoom, nextCount, shares(targetRoom));
 
   return total > BANDWIDTH_BUDGET_MBPS ? { ok: false, reason: 'bandwidth' } : { ok: true };
 }
@@ -337,7 +388,7 @@ async function mintToken(room: string, identity: string, name: string, maxPartic
     identity,
     room,
     maxParticipants,
-    maxBitrateMbps: PER_STREAM_MBPS,
+    maxBitrateMbps: streamMbps(room),
   };
 }
 
@@ -532,25 +583,36 @@ videoRoomsRoutes.post('/video/competition/token', async (c) => {
   checkRateLimit(getIp(c), RATE.token);
   const actor = await requirePlatformActor(c);
   if (!videoEnabled()) return c.json({ error: 'video not configured' }, 503);
-  const body = await c.req.json<{ registrationId?: unknown }>().catch(() => null);
-  const id = body?.registrationId;
-  if (typeof id !== 'string' || !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id)) {
-    return c.json({ error: 'invalid registration' }, 400);
+  const body = await c.req.json<{ registrationId?: unknown; matchId?: unknown }>().catch(() => null);
+  const duel = body?.matchId !== undefined;
+  const id = duel ? body?.matchId : body?.registrationId;
+  if (typeof id !== 'string' || !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id)
+    || (duel && body?.registrationId !== undefined)) {
+    return c.json({ error: 'invalid competition seat' }, 400);
   }
-  const allowed = (row: CompetitionVideoAdmission | undefined) => row &&
-    [Number(row.user_id), Number(row.supervisor_user_id)].includes(Number(actor.userId));
-  const [checked] = await query<CompetitionVideoAdmission>(COMPETITION_VIDEO_ADMISSION, [id]);
+  const admissionSql = duel ? COMPETITION_MATCH_VIDEO_ADMISSION : COMPETITION_VIDEO_ADMISSION;
+  const allowed = (rows: CompetitionVideoAdmission[]) => actor.userId != null && rows.some(row =>
+    [Number(row.user_id), Number(row.supervisor_user_id)].includes(Number(actor.userId)));
+  const checked = await query<CompetitionVideoAdmission>(admissionSql, [id]);
   if (!allowed(checked)) return c.json({ error: 'not in room' }, 403);
-  const name = competitionRoom(id, checked!.competition_video_generation);
+  const name = competitionRoom(id, checked[0].competition_video_generation, duel);
   const identity = `u${actor.userId}`;
-  const capacity = await capacityCheck(name, identity, 2);
-  // Lock both rows so a changed assignment/refund cannot reuse an earlier capacity decision.
-  return withTransaction(async (transactionQuery) => {
-    const [current] = await transactionQuery<CompetitionVideoAdmission>(`${COMPETITION_VIDEO_ADMISSION} FOR UPDATE OF r,s`, [id]);
+  const maxParticipants = duel ? 4 : 2;
+  const capacity = await capacityCheck(name, identity, maxParticipants);
+  return withTransaction(async tx => {
+    await tx(duel
+      ? `SELECT c.event_id FROM platform_competitions c JOIN platform_competition_matches m ON m.event_id=c.event_id
+        WHERE m.id=?::uuid FOR UPDATE OF c`
+      : `SELECT c.event_id FROM platform_competitions c JOIN platform_event_registrations r ON r.event_id=c.event_id
+        WHERE r.id=?::uuid FOR UPDATE OF c`, [id]);
+    const current = await tx<CompetitionVideoAdmission>(`${admissionSql} ${duel ? 'FOR UPDATE OF m,s,r' : 'FOR UPDATE OF s,r'}`, [id]);
     if (!allowed(current)) return c.json({ error: 'not in room' }, 403);
-    if (current!.competition_video_generation !== checked!.competition_video_generation ||
-      Number(current!.supervisor_user_id) !== Number(checked!.supervisor_user_id)) return c.json({ error: 'changed' }, 409);
+    if (current.length !== checked.length || current.some((row, index) => {
+      const prior = checked[index];
+      return row.id !== prior.id || row.competition_video_generation !== prior.competition_video_generation ||
+        Number(row.supervisor_user_id) !== Number(prior.supervisor_user_id) || Number(row.user_id) !== Number(prior.user_id);
+    })) return c.json({ error: 'changed' }, 409);
     if (!capacity.ok) return c.json({ error: capacity.reason }, capacity.reason === 'unavailable' ? 503 : 429);
-    return c.json(await mintToken(name, identity, actor.displayName || identity, 2));
+    return c.json(await mintToken(name, identity, actor.displayName || identity, maxParticipants));
   });
 });

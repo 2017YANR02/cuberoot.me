@@ -133,12 +133,32 @@ describe('competition arena acceptance', () => {
           syncing: false, seq: 0, facelets: null, moves: [], algAnchored: false, updatedAt: 0 } }),
     )));
     expect([...host.querySelectorAll('[data-preview="2D"]')].map(net => [net.getAttribute('data-event'), net.textContent]))
-      .toEqual([['444', 'Rw U'], ['333', 'F R']]);
+      .toEqual([['444', 'Rw U'], ['333', 'solved']]);
     await vi.waitFor(() => expect(host.querySelectorAll('[data-disconnected="true"] [data-preview="3d"]')).toHaveLength(2));
     expect([...host.querySelectorAll('[data-preview="3d"]')].map(cube => cube.getAttribute('data-facelets')))
       .toEqual([SOLVED_SMART_CUBE_FACELETS, SOLVED_SMART_CUBE_FACELETS]);
     expect(host.querySelector('.competition-arena-cube-tools')).toBeNull();
     expect(host.querySelector('canvas')).toBeNull();
+  });
+
+  it('keeps a live smart seat visible while the peer is anchoring and shows ordinary opponent phases', async () => {
+    const liveSource = { getSnapshot: () => ({ moves: ['R'], algAnchored: false }), subscribe: vi.fn(() => () => {}) };
+    const remote = { playerId: 'peer', round: 2, connected: true, smart: true, syncing: true, seq: 1,
+      facelets: SOLVED_SMART_CUBE_FACELETS, moves: ['R'], algAnchored: false, updatedAt: 0,
+      liveSource };
+    const draw = (stage: 'inspecting' | 'running' | 'finished') => act(async () => root.render(createElement(Fragment, null,
+      createElement(ArenaRemoteCube, { project: '333', scramble: 'R U', smart: true, remote }),
+      createElement(ArenaRemoteCube, { project: '333', scramble: 'R U', stage, hasPenalty: stage === 'finished' }),
+    )));
+    await draw('inspecting');
+    await vi.waitFor(() => expect(host.querySelector('[data-preview="3d"]')).not.toBeNull());
+    expect(host.querySelector('[data-disconnected]')).toBeNull();
+    expect(host.querySelector('[data-preview="2D"]')?.textContent).toBe('R U');
+    await draw('running');
+    expect(host.querySelector('[role="status"]')?.textContent).toMatch(/Solving|对手复原中/);
+    await draw('finished');
+    expect(host.querySelector('[role="status"]')?.textContent).toBe('DNF');
+    expect(host.querySelector('[data-preview="2D"]')?.textContent).toBe('solved');
   });
 
   it('closes the mobile leaderboard on outside pointer down and on both timing transitions', async () => {

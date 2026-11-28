@@ -24,9 +24,10 @@
   margin-inline-start: auto;
 }
 .competition-center .competition-primary, .competition-center .competition-secondary { min-height: 44px; }
-.competition-workspace-links { display: flex; flex-wrap: wrap; gap: 4px 20px; margin-top: 8px; }
-.competition-workspace-links { align-items: center; }
-.competition-workspace-links a:not(.competition-primary) { display: inline-flex; min-height: 44px; align-items: center; font-size: .88rem; color: var(--muted-foreground); }
+.competition-workspace-links { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-block: 8px; }
+.competition-inline-workspace { margin-block: 20px; overflow-wrap: anywhere; }
+.competition-inline-workspace > .competition-workspace-links { margin-block-end: 18px; }
+.competition-inline-back { margin-block-end: 12px; }
 .competition-center .platform-state { display: flex; align-items: flex-start; gap: 12px; margin-block: 22px; }
 .competition-center .platform-state > svg { flex: none; width: 20px; height: 20px; }
 .competition-center .platform-state p { margin: 4px 0; color: var(--muted-foreground); }
@@ -62,11 +63,10 @@
   font: inherit;
   color: var(--foreground);
 }
-.competition-center .competition-entry, .competition-center .competition-setup-panel {
+.competition-center .competition-setup-panel {
   border-radius: 14px;
   padding: clamp(16px, 3vw, 26px);
 }
-.competition-center .competition-detail-grid { grid-template-columns: minmax(0, 1fr) 250px; gap: clamp(20px, 5vw, 62px); }
 .competition-center .competition-setup { max-width: 760px; margin: 24px auto 0; }
 .competition-setup-progress {
   display: grid;
@@ -121,10 +121,6 @@
 .competition-setup-review dd { margin: 2px 0 0; overflow-wrap: anywhere; }
 .competition-setup-footer { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-top: 24px; }
 .competition-setup-footer .competition-primary { margin-inline-start: auto; }
-
-@media (max-width: 650px) {
-  .competition-center .competition-detail-grid { grid-template-columns: minmax(0, 1fr); gap: 18px; }
-}
 
 @media (max-width: 470px) {
   .competition-center { width: calc(100% - 28px); }

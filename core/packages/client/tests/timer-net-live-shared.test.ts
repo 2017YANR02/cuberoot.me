@@ -70,6 +70,27 @@ it('publishes ordered moves, reconstructs opponents, locks PK only after current
   expect(socket.sent.at(-1)).toMatchObject({ type: 'snapshot', round: 2, seq: 0 });
 });
 
+it('marks an early snapshot live and forwards physical moves through its anchor before presence catches up', async () => {
+  await act(async () => root.render(h(Probe)));
+  const socket = Socket.instances[0];
+  await act(async () => socket.message({ type: 'snapshot', playerId: 'player02', round: 1, seq: 0, facelets: SOLVED_3X3, updatedAt: 100 }));
+  const player = () => live.players.player02;
+  expect(player()).toMatchObject({ connected: true, smart: true, algAnchored: true });
+  const source = player().liveSource!;
+  const onTurn = vi.fn();
+  const unsub = source.subscribe(onTurn);
+  await act(async () => socket.message({ type: 'presence', players: [{ playerId: 'player02', connected: true, smart: true, round: 2 }] }));
+  expect(player()).toMatchObject({ facelets: SOLVED_3X3, round: 1 });
+  expect(player().liveSource).toBe(source);
+  await act(async () => socket.message({ type: 'move', playerId: 'player02', round: 1, seq: 1, move: 'R', updatedAt: 101 }));
+  expect(player()).toMatchObject({ connected: true, smart: true, seq: 1 });
+  expect(onTurn).toHaveBeenCalledWith(expect.objectContaining({ move: 'R' }));
+  unsub();
+  await act(async () => socket.message({ type: 'snapshot', playerId: 'player02', round: 2, seq: 0, facelets: SOLVED_3X3, updatedAt: 102 }));
+  expect(player().round).toBe(2);
+  expect(player().liveSource).not.toBe(source);
+});
+
 it('reconnects after a sequence gap and rejects late messages from the departed room', async () => {
   vi.useFakeTimers();
   await act(async () => root.render(h(Probe)));

@@ -1,19 +1,24 @@
 'use client';
 
-import MoreToggle from '@/components/MoreToggle';
+import MoreToggle, { MoreTogglePanel } from '@/components/MoreToggle';
 import { useCallback, useContext, useEffect, useEffectEvent, useId, useRef, useState } from 'react';
-import { parseAsString, useQueryState } from 'nuqs';
-import { Check, ChevronRight, Plus, RefreshCw, Video } from '@app-foundation/icons/lucide';
+import { parseAsString, parseAsStringEnum, useQueryState } from 'nuqs';
+import { ArrowLeft, ArrowUpRight, Check, ChevronDown, ChevronRight, Plus, RefreshCw } from '@app-foundation/icons/lucide';
 import AppLink from '@/components/AppLink';
 import { COMPETITIONS_PATH as ROOT, COMPETITION_WORKSPACES, competitionHref as href, competitionWorkspaceHref as workspaceHref, isCompetitionTestSlug, type CompetitionWorkspaceMode } from '@/lib/competition-links';
 import { competitionDateTime as dateText, competitionDateIso as isoDate } from '@/lib/competition-date';
-import { CompetitionDraftForm, competitionDeviceName, competitionFormatName, competitionModeName } from './CompetitionDraftForm';
+import { CompetitionDraftForm, competitionDeviceName, competitionFormatName, competitionModeName, parseCompetitionSettlementTerms } from './CompetitionDraftForm';
 import { createCompetitionSlug } from './competition-slug';
 import { CompetitionReviewQueue } from './CompetitionReviewQueue';
 import { CompetitionBracket, competitionMatchPlayable, useCompetitionBrackets } from './CompetitionBracket';
+import { CompetitionMatchEnter, CompetitionMatchFeeder, CompetitionMatchPassport } from './CompetitionMatchPassport';
 import { CompetitionReplayButton } from './CompetitionReconstruction';
-import { CompetitionPreflight } from './CompetitionPreflight';
+import { CompetitionEntryPass } from './CompetitionEntryPass';
+import { CompetitionRegistrationFacts, CompetitionRegistrationPanel, type CompetitionOrderReceipt } from './CompetitionRegistrationPanel';
+import { competitionMoney as money, competitionReservationDeadline, competitionReservationExpired, focusCompetitionElement, isCompetitionPaymentPending } from './competition-registration';
+import { downloadBlob } from '@/lib/scramble-dist/download';
 import { formatDateRangeIso } from '@cuberoot/shared/iso-date';
+import { COMPETITION_CHECK_IN_LEAD_MS } from '@cuberoot/shared/timer';
 import { WCA_TIMED_EVENT_ORDER } from '@cuberoot/shared/wca-events';
 import PersonLink from '@/components/PersonLink';
 import { Flag } from '@/components/Flag';
@@ -31,18 +36,18 @@ import { displayCuberName } from '@/lib/cuber-name-display';
 import { CompetitionScramble } from './CompetitionScramble';
 import { CompetitionSelfTimer } from './CompetitionSelfTimer';
 import { CompetitionTestBadge, CompetitionTestControls, CompetitionTestCreateButton } from './CompetitionTestActions';
-import { CompetitionSupervisionDesk } from './CompetitionSupervisionDesk';
+import { CompetitionDuelSupervisionDesk, CompetitionSupervisionDesk } from './CompetitionSupervisionDesk';
 import { ao5ReportData, CompetitionRank, CompetitionReport, CompetitionReportShare, useCompetitionResults } from './CompetitionReport';
-import { attemptValue, competitionAo5 } from './competition-results';
+import { attemptValue, competitionAo5, competitionBracketSeeds, competitionMatchCode, competitionMatchFeeder } from './competition-results';
 import { listTeachingOrganizations, type TeachingOrganizationAccess } from '@/lib/teaching-saas-api';
 import {
-  checkInCompetition, createCompetitionOrder, completeCompetitionSelfAttempt, reviewCompetitionSelfAttempt, nextCompetitionSelfAttempt, nextCompetitionAttempt, recordOfflineCompetitionResults,
+  checkInCompetition, completeCompetitionSelfAttempt, reviewCompetitionSelfAttempt, nextCompetitionSelfAttempt, nextCompetitionAttempt, recordOfflineCompetitionResults,
   getOnlineCompetition, listCompetitionRegistrations, listOnlineCompetitions, listSupervisedCompetitions,
   getCompetitionAttempts, recordCompetitionAttempt, finalizeCompetitionRegistration, raiseCompetitionDispute, type CompetitionAttempt, type CompetitionSelfResult, type CompetitionResult, type CompetitionProject, type CompetitionRegistration, type OnlineCompetition,
-  listCompetitionDisputes, resolveCompetitionDispute, finalizeCompetition, closeCompetitionSessions, getCompetitionSettlement, recordCompetitionSettlement, type CompetitionDispute, type CompetitionSettlement,
+  listCompetitionDisputes, resolveCompetitionDispute, finalizeCompetition, closeCompetitionSessions, getCompetitionSettlement, configureCompetitionSettlement, recordCompetitionSettlement, type CompetitionDispute, type CompetitionSettlement,
   listCompetitionEvidence, uploadCompetitionEvidence, downloadCompetitionEvidence, competitionEvidencePlayback, type CompetitionEvidence,
   listOrganizerApplications, listOrganizerReviewQueue, submitOrganizerApplication, reviewOrganizerApplication, type OrganizerAccess, type OrganizerApplication,
-  type OnlineCompetitionSummary,
+  type CompetitionDuelStatus, type CompetitionBracketMatch, type OnlineCompetitionSummary,
 } from '@/lib/online-competition-api';
 import dynamic from 'next/dynamic';
 import { PlatformState } from '@/components/platform/PlatformState';
@@ -59,7 +64,6 @@ const CompetitionSelfRecording = dynamic(() => import('./CompetitionVideoRoom').
 import './online-competitions.css';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
 
-const money = (minor: number, currency = 'CNY') => new Intl.NumberFormat('zh-CN', { style: 'currency', currency }).format(minor / 100);
 const message = (error: unknown, fallback: string) => error instanceof Error ? error.message : fallback;
 
 function statusLabel(status: string, t: ReturnType<typeof useT>) {
@@ -96,16 +100,17 @@ function competitionProjectSummary(projects: CompetitionProject[], lang: 'zh' | 
 }
 
 type CompetitionMode = 'browse' | CompetitionWorkspaceMode;
+type CompetitionNavigate = (mode: CompetitionWorkspaceMode, id?: string) => void;
 
-export function OnlineCompetitions({ id, mode = 'browse', initialReview = 'events' }: {
-  id?: string; mode?: CompetitionMode; initialReview?: 'events' | 'organizers';
+export function OnlineCompetitions({ id, mode = 'browse', initialReview = 'events', onNavigate }: {
+  id?: string; mode?: CompetitionMode; initialReview?: 'events' | 'organizers'; onNavigate?: CompetitionNavigate;
 }) {
   const t = useT();
   const lang = useLang();
   const user = useAuthUser();
   const admin = hasAdminAccess(user);
   const insideHost = useContext(CompetitionHostAccessContext);
-  const requiredRole = mode === 'supervise' && (id || !admin) ? 'supervisor' : mode === 'manage' && !admin && !insideHost ? 'organizer' : null;
+  const requiredRole = mode === 'supervise' && !id && !admin ? 'supervisor' : mode === 'manage' && !admin && !insideHost ? 'organizer' : null;
   const access = useCompetitionRole(requiredRole);
   if (mode !== 'browse' && !user) {
     return <PlatformState kind="permission" permissionHref={`/account${nextQuery((lang === 'zh' ? '/zh' : '') + workspaceHref(mode, id))}`} />;
@@ -124,12 +129,23 @@ export function OnlineCompetitions({ id, mode = 'browse', initialReview = 'event
       permissionHref={application ? workspaceHref('apply') : ROOT}
       permissionLabel={application ? t('查看主办资格申请', 'View organizer application') : t('查看公开比赛', 'View public competitions')} />;
   }
-  if (mode === 'create') return <div className="competitions"><CompetitionOrganizerEditor key={user?.uid ?? user?.wcaId} mode={mode} /></div>;
-  return id ? <CompetitionDetail key={`${mode}:${id}:${user?.uid ?? user?.wcaId ?? "guest"}`} id={id} view={mode === 'manage' || mode === 'supervise' ? mode : 'entry'} />
-    : <CompetitionList mode={mode} initialReview={initialReview} />;
+  if (mode === 'create') return <div className="competitions"><CompetitionOrganizerEditor key={user?.uid ?? user?.wcaId} mode={mode}
+    onCreated={onNavigate && (createdId => onNavigate('manage', createdId))} /></div>;
+  if (!id) return <CompetitionList mode={mode} initialReview={initialReview} onNavigate={onNavigate} />;
+  const view = mode === 'manage' || mode === 'supervise' ? mode : 'entry';
+  return <>
+    {onNavigate && view !== 'entry' && <button className="competition-secondary competition-inline-back" type="button"
+      onClick={() => onNavigate(view)}>
+      <ArrowLeft size={16} aria-hidden />
+      {view === 'manage' ? t('返回赛事管理列表', 'Back to competition management') : t('返回执场列表', 'Back to judging assignments')}
+    </button>}
+    <CompetitionDetail key={`${mode}:${id}:${user?.uid ?? user?.wcaId ?? 'guest'}`} id={id} view={view} onNavigate={onNavigate} />
+  </>;
 }
 
-function CompetitionList({ mode: view, initialReview }: { mode: Exclude<CompetitionMode, 'create'>; initialReview: 'events' | 'organizers' }) {
+function CompetitionList({ mode: view, initialReview, onNavigate }: {
+  mode: Exclude<CompetitionMode, 'create'>; initialReview: 'events' | 'organizers'; onNavigate?: CompetitionNavigate;
+}) {
   const t = useT();
   const lang = useLang();
   const user = useAuthUser();
@@ -174,26 +190,30 @@ function CompetitionList({ mode: view, initialReview }: { mode: Exclude<Competit
       ? workspaceHref(view, item.id) : href(item.id);
     const action = status === 'registration_open' ? t('报名', 'Register')
       : ['completed', 'provisional_results'].includes(status) ? t('查看成绩', 'View results') : t('查看比赛', 'View competition');
-    return (
-      <AppLink prefetch={false} className="competition-list-row" data-public={browsing || undefined} key={item.id} href={target}>
-        <div>
-          <div className="competition-labels">
+    const inline = Boolean(onNavigate && !browsing);
+    const Details = inline ? 'span' : 'div';
+    const Title = inline ? 'strong' : 'h2';
+    const content = <>
+        <Details className="competition-list-info">
+          <span className="competition-labels">
             <span className="competition-state" data-status={status}>{statusLabel(status, t)}</span>
             {item.isTest && <CompetitionTestBadge />}
             <span className="competition-meta">{competitionModeName(item.supervisionMode ?? 'supervised', t)} · {competitionFormatName(item.format ?? item.setup?.format ?? 'average', t)}</span>
-          </div>
-          <h2>{t(item.titleZh || item.titleEn, item.titleEn || item.titleZh)}</h2>
-          <p>{formatDateRangeIso(dateText(item.startsAt).slice(0, 10), dateText(item.endsAt).slice(0, 10))} · {item.organizationName}</p>
-          {item.projects.length > 0 && <div className="competition-list-events">
+          </span>
+          <Title className="competition-list-title">{t(item.titleZh || item.titleEn, item.titleEn || item.titleZh)}</Title>
+          <Details className="competition-list-description">{formatDateRangeIso(dateText(item.startsAt).slice(0, 10), dateText(item.endsAt).slice(0, 10))} · {item.organizationName}</Details>
+          {item.projects.length > 0 && <span className="competition-list-events">
             {item.projects.map(project => <span key={project.id}><EventIcon event={project.project} />
               {eventDisplayName(project.project, lang === 'zh')} · {competitionDeviceName(project.device, t)}
             </span>)}
             <span className="competition-list-fee">{item.projects.every(project => project.amountMinor === 0) ? t('免费参赛', 'Free entry') : <>{money(Math.min(...item.projects.map(project => project.amountMinor)), item.projects[0].currency)} {t('起', 'and up')}</>}</span>
-          </div>}
-        </div>
+          </span>}
+        </Details>
         {browsing ? <span className="competition-list-action">{action} <ChevronRight size={16} aria-hidden /></span> : <ChevronRight size={20} aria-hidden />}
-      </AppLink>
-    );
+    </>;
+    return onNavigate && (view === 'manage' || view === 'supervise')
+      ? <button type="button" className="competition-list-row" key={item.id} onClick={() => onNavigate(view, item.id)}>{content}</button>
+      : <AppLink prefetch={false} className="competition-list-row" data-public={browsing || undefined} key={item.id} href={target}>{content}</AppLink>;
   }
   return <div className="competitions">
     {browsing && <div className="competition-filters">
@@ -210,8 +230,10 @@ function CompetitionList({ mode: view, initialReview }: { mode: Exclude<Competit
     </div>}
     {browsing && !loading && items.length > 0 && !rows.length && <p className="competition-muted">{t('没有符合筛选条件的比赛。', 'No competitions match these filters.')}</p>}
     {view === 'manage' && <div className="competition-toolbar">
-      <AppLink href={workspaceHref('create')} className="competition-primary" prefetch={false}><Plus size={16} aria-hidden />{t('创建比赛', 'Create a competition')}</AppLink>
-      <CompetitionTestCreateButton />
+      {onNavigate
+        ? <button type="button" className="competition-primary" onClick={() => onNavigate('create')}><Plus size={16} aria-hidden />{t('创建比赛', 'Create a competition')}</button>
+        : <AppLink href={workspaceHref('create')} className="competition-primary" prefetch={false}><Plus size={16} aria-hidden />{t('创建比赛', 'Create a competition')}</AppLink>}
+      <CompetitionTestCreateButton onCreated={onNavigate && (id => onNavigate('manage', id))} />
     </div>}
     {error ? <div role="alert" className="competition-error"><p>{error}</p><button className="competition-secondary" type="button" onClick={() => setRevision(value => value + 1)}><RefreshCw size={15} />{t('重试', 'Retry')}</button></div> : null}
     {loading ? <p role="status" className="competition-muted"><LoadingIndicator>{t('正在加载比赛…', 'Loading competitions…')}</LoadingIndicator></p>
@@ -230,7 +252,9 @@ function CompetitionList({ mode: view, initialReview }: { mode: Exclude<Competit
   </div>;
 }
 
-function CompetitionDetail({ id, view }: { id: string; view: 'entry' | 'manage' | 'supervise' }) {
+function CompetitionDetail({ id, view, onNavigate }: {
+  id: string; view: 'entry' | 'manage' | 'supervise'; onNavigate?: CompetitionNavigate;
+}) {
   const t = useT();
   const lang = useLang();
   const user = useAuthUser();
@@ -244,42 +268,35 @@ function CompetitionDetail({ id, view }: { id: string; view: 'entry' | 'manage' 
   const [error, setError] = useState('');
   const [registrationLoadError, setRegistrationLoadError] = useState('');
   const [busy, setBusy] = useState(false);
-  const selection = JSON.stringify([ticketId, sessionId]);
-  type RegistrationForm = { selection: string; accepted: boolean; orderId: string; error: string };
-  const [form, setForm] = useState<RegistrationForm | null>(null);
-  const currentForm = form?.selection === selection ? form : null;
-  const accepted = currentForm?.accepted ?? false;
-  const orderId = currentForm?.orderId ?? '';
-  const registrationError = currentForm?.error ?? '';
-  function updateForm(patch: Partial<Omit<RegistrationForm, 'selection'>>) {
-    setForm(current => ({
-      ...(current?.selection === selection ? current : { selection, accepted: false, orderId: '', error: '' }),
-      ...patch,
-    }));
-  }
-  const registerPending = useRef(false);
-  const projectChoices = useRef<HTMLDivElement>(null);
-  const sessionChoices = useRef<HTMLDivElement>(null);
-  const rulesConsent = useRef<HTMLDivElement>(null);
-  const [mobileBar, setMobileBar] = useState<HTMLDivElement | null>(null);
-  const [mobileBarHeight, setMobileBarHeight] = useState(0);
+  const [checkInError, setCheckInError] = useState('');
+  const [receipts, setReceipts] = useState<CompetitionOrderReceipt[]>([]);
+  const recentOrderId = receipts.at(-1)?.orderId;
+  const [addMore, setAddMore] = useState(false);
+  const registrationRegion = useRef<HTMLDivElement>(null);
+  const focusProject = useCallback((projectId: string) => {
+    const options = registrationRegion.current?.querySelectorAll<HTMLButtonElement>('.competition-project:not(:disabled)');
+    const target = options && [...options].find(option => option.dataset.projectId === projectId);
+    focusCompetitionElement(target ?? options?.[0] ?? registrationRegion.current);
+  }, []);
+  const retryFocus = useRef('');
   useEffect(() => {
-    if (!mobileBar || typeof ResizeObserver === 'undefined') return;
-    const measure = () => setMobileBarHeight(Math.ceil(mobileBar.getBoundingClientRect().height));
-    const observer = new ResizeObserver(measure);
-    observer.observe(mobileBar);
-    measure();
-    return () => observer.disconnect();
-  }, [mobileBar]);
+    if (!addMore || !retryFocus.current) return;
+    focusProject(retryFocus.current);
+    retryFocus.current = '';
+  }, [addMore, focusProject]);
+
   const [autoJoinVideo, setAutoJoinVideo] = useState(false);
-  const bracket = useCompetitionBrackets(competition?.format === 'advancement' && view !== 'supervise'
+  const bracket = useCompetitionBrackets(competition?.format === 'advancement'
     && ['published', 'completed'].includes(competition.status) ? competition.id : null, !!competition?.finalizedAt);
-  const [activeMatch, setActiveMatch] = useQueryState('match', parseAsString.withDefault(''));
+  const [activeMatch, setActiveMatch] = useQueryState('match', parseAsString.withDefault('').withOptions({ history: 'push' }));
+  const [hostTab, setHostTab] = useQueryState('hostTab', parseAsStringEnum(['roster', 'tables', 'results']).withDefault('roster').withOptions({ history: 'push' }));
+  const [rosterSearch, setRosterSearch] = useState('');
+  const [rosterFilter, setRosterFilter] = useState<CompetitionDuelStatus | ''>('');
   const [activeRegistration, setActiveRegistration] = useQueryState('entry', parseAsString.withDefault('').withOptions({ history: 'push' }));
   const matchForRegistration = (registrationId: string) => bracket.brackets?.matches.find(match =>
     competitionMatchPlayable(match) && (match.playerA === registrationId || match.playerB === registrationId));
   const selectedMatchId = view === 'entry' && competition?.format === 'advancement' && activeRegistration
-    && registrations.some(item => item.id === activeRegistration && item.device === 'smart')
+    && registrations.some(item => item.id === activeRegistration && item.status === 'confirmed' && (item.checkedInAt || item.canCheckIn))
     ? matchForRegistration(activeRegistration)?.id : undefined;
   useEffect(() => {
     if (!activeMatch && selectedMatchId) void setActiveMatch(selectedMatchId);
@@ -287,9 +304,32 @@ function CompetitionDetail({ id, view }: { id: string; view: 'entry' | 'manage' 
   const [now, setNow] = useState(0);
   const [revision, setRevision] = useState(0);
   const refresh = useCallback(() => setRevision(value => value + 1), []);
-  useEffect(() => { setForm(current => current?.selection === selection ? current : null); }, [selection]);
-  useEffect(() => { setRegistrations([]); setForm(null); }, [id, user?.uid]);
+  const refreshBracket = bracket.refresh;
+  const refreshSeatProgress = useCallback(() => {
+    refresh();
+    refreshBracket();
+  }, [refresh, refreshBracket]);
+
   useEffect(() => { setCompetition(null); }, [id]);
+  const nextStatusChange = competition ? [
+    Date.parse(competition.registrationOpensAt),
+    Date.parse(competition.registrationClosesAt),
+    Date.parse(competition.startsAt) - COMPETITION_CHECK_IN_LEAD_MS,
+    Date.parse(competition.startsAt), Date.parse(competition.endsAt),
+    ...competition.sessions.flatMap(session => {
+      const startsAt = Date.parse(session.startsAt);
+      return [startsAt - COMPETITION_CHECK_IN_LEAD_MS, startsAt, Date.parse(session.endsAt)];
+    }),
+    ...registrations.filter(item => isCompetitionPaymentPending(item.status)).map(competitionReservationDeadline),
+    ...receipts.filter(item => !item.confirmed).map(competitionReservationDeadline),
+  ].reduce((next, at) => at > now ? Math.min(next, at) : next, Infinity) : Infinity;
+  const clockReady = now !== 0;
+  useEffect(() => {
+    if (!clockReady || !Number.isFinite(nextStatusChange)) return;
+    const timer = setTimeout(() => { setNow(Date.now()); refresh(); },
+      Math.min(2_147_483_647, Math.max(0, nextStatusChange - Date.now()) + 20));
+    return () => clearTimeout(timer);
+  }, [nextStatusChange, clockReady, refresh]);
   useEffect(() => { setNow(Date.now()); const timer = setInterval(() => setNow(Date.now()), 15000); return () => clearInterval(timer); }, []);
   useEffect(() => { if (!user) return; const timer = setInterval(() => { if (document.visibilityState === 'visible') refresh(); }, 15000); return () => clearInterval(timer); }, [refresh, user]);
   useEffect(() => {
@@ -306,67 +346,98 @@ function CompetitionDetail({ id, view }: { id: string; view: 'entry' | 'manage' 
       .finally(() => { if (active) setLoading(false); });
     return () => { active = false; };
   }, [id, user, revision, t, view]);
-  async function register(project: CompetitionProject, selectedSessionId: string) {
-    if (registerPending.current || busy || !accepted || !selectedSessionId) return;
-    registerPending.current = true;
-    setBusy(true); updateForm({ error: '' });
-    try {
-      const result = await createCompetitionOrder(project, selectedSessionId);
-      const createdId = result.order?.id ?? result.id ?? result.resourceId;
-      if (!createdId) throw new Error(t('订单已提交，请到我的订单查看付款状态。', 'Order submitted. Check My orders for payment status.'));
-      updateForm({ orderId: createdId }); refresh();
-    } catch (error) { updateForm({ error: message(error, t('报名未完成，请重试。', 'Registration did not complete. Try again.')) }); }
-    finally { registerPending.current = false; setBusy(false); }
+  const liveRosterId = view !== 'entry' && competition?.format === 'advancement' && competition.status === 'published' && user
+    ? competition.id : null;
+  useEffect(() => {
+    if (!liveRosterId) return;
+    let active = true;
+    let pending = false;
+    const timer = setInterval(async () => {
+      if (pending || document.visibilityState !== 'visible') return;
+      pending = true;
+      try {
+        const result = await listCompetitionRegistrations(liveRosterId);
+        if (active) setRegistrations(result.registrations);
+      } catch { /* Keep the last roster and retry on the next refresh. */ }
+      finally { pending = false; }
+    }, 5000);
+    return () => { active = false; clearInterval(timer); };
+  }, [liveRosterId, id, user?.uid, revision]);
+
+  function onOrdered(receipt: CompetitionOrderReceipt) {
+    setReceipts(items => [...items, receipt]);
+    setAddMore(false);
+    refresh();
   }
+
   async function checkIn(registrationId: string) {
-    setBusy(true); updateForm({ error: '' });
+    setBusy(true);
+    setCheckInError('');
     try {
       await checkInCompetition(registrationId);
       if (competition?.format !== 'advancement') void setActiveRegistration(registrationId);
+      setRegistrations(rows => rows.map(row => row.id === registrationId ? { ...row, checkedInAt: new Date().toISOString() } : row));
       refresh();
-    }
-    catch (error) { updateForm({ error: message(error, t('检录未完成，请重试。', 'Check-in did not complete. Try again.')) }); }
-    finally { setBusy(false); }
+    } catch (error) {
+      setCheckInError(message(error, t('检录未完成，请重试。', 'Check-in did not complete. Try again.')));
+    } finally { setBusy(false); }
   }
   if (loading && !competition) return <div className="competitions"><p role="status"><LoadingIndicator>{t('正在加载比赛…', 'Loading competition…')}</LoadingIndicator></p></div>;
   if (!competition) return <div className="competitions"><p role="alert">{error || t('没有找到这场比赛。', 'Competition not found.')}</p><button className="competition-secondary" type="button" onClick={refresh}>{t('重试', 'Retry')}</button></div>;
-  if ((view === 'manage' && !competition.canManage) || (view === 'supervise' && !competition.canSupervise)) return <PlatformState kind="permission" message={t('当前账号没有此赛事的管理权限。', 'This account does not have access to manage this competition.')} permissionHref={ROOT} permissionLabel={t('查看公开比赛', 'View public competitions')} />;
-  const project = competition.projects.find(item => item.id === ticketId) ?? (competition.projects.length === 1 ? competition.projects[0] : undefined);
+  const ownActiveEntry = loadedRegistrations.some(item => item.userId === user?.uid
+    && (item.status === 'confirmed' || item.status === 'attended'
+      || (item.status === 'reserved' && Date.parse(item.reservationExpiresAt ?? '') > now)));
+  if (view !== 'entry') {
+    const allowed = view === 'manage' ? competition.canManage : competition.canSupervise;
+    if (!allowed || competition.isEntrant || ownActiveEntry || (competition.isEntrant === undefined && registrationLoadError)) {
+      return <PlatformState kind="permission" message={t('当前账号没有此赛事的管理权限。', 'This account does not have access to manage this competition.')}
+        permissionHref={onNavigate ? undefined : ROOT} permissionLabel={t('查看公开比赛', 'View public competitions')} />;
+    }
+    if (competition.isEntrant === undefined && !registrationsLoaded) return <PlatformState kind="loading" />;
+  }
+  const participant = view === 'entry';
   const supervision = competition.supervisionMode ?? 'supervised';
-  const supervised = supervision === 'supervised';
-  const session = supervised ? competition.sessions.find(item => item.id === sessionId) : competition.sessions[0];
-  const reservationExpired = (entry: CompetitionRegistration) => ['reserved', 'pending_payment'].includes(entry.status)
-    && !!entry.reservationExpiresAt && Date.parse(entry.reservationExpiresAt) <= now;
-  const registrationFor = (ticket: CompetitionProject) => registrations.find(item => item.userId === user?.uid
-    && item.project === ticket.project && item.device === ticket.device
-    && ['reserved', 'pending_payment', 'confirmed', 'attended'].includes(item.status) && !reservationExpired(item));
-  const existingRegistration = project && registrationFor(project);
+  const participantRegistrations = [...registrations];
+  const receiptByOrder = new Map(receipts.map(receipt => [receipt.orderId, receipt]));
+  for (const receipt of receipts) {
+    if (user?.uid === undefined || registrations.some(item => item.orderId === receipt.orderId)) continue;
+    participantRegistrations.push({
+      id: '', userId: user.uid, displayName: '', project: receipt.project.project, device: receipt.project.device,
+      sessionId: receipt.sessionId, orderId: receipt.orderId, status: receipt.confirmed ? 'confirmed' : 'reserved',
+      createdAt: receipt.createdAt, canCheckIn: false, canRecordResult: false, resultRecordedAt: null,
+    });
+  }
+  const registrationFor = (ticket: CompetitionProject) => participantRegistrations.find(item =>
+    item.project === ticket.project && item.device === ticket.device && !competitionReservationExpired(item, now)
+    && (item.status === 'confirmed' || item.status === 'attended' || isCompetitionPaymentPending(item.status)));
+  const entryFor = (ticket: CompetitionProject) => {
+    const entry = registrationFor(ticket);
+    return entry ? isCompetitionPaymentPending(entry.status) ? 'payment' as const : 'registered' as const : undefined;
+  };
   const status = publicCompetitionStatus(competition, now);
   const registrationOpen = status === 'registration_open';
-  const draftPreview = view === 'entry' && competition.status === 'draft' && competition.canManage;
+  const draftPreview = participant && competition.status === 'draft' && competition.canManage;
   const reviewState = view === 'manage' && status === 'draft' ? competition.reviewStatus ?? status : status;
-  const sessionAvailable = !!session && session.available > 0 && (!supervised || (session.staffed && now < Date.parse(session.startsAt)));
-  const canRegister = registrationOpen && !existingRegistration && project && project.available !== 0 && sessionAvailable && accepted && !busy && !orderId;
-  const participant = view === 'entry';
+  const duelRoster = view === 'manage' && competition.format === 'advancement';
   if (participant && user && activeRegistration && !registrationsLoaded && !registrationLoadError) {
     return <PlatformState kind="loading" />;
   }
   const checkInEntry = competition.format === 'advancement' && participant ? registrations.find(item =>
-    item.id === activeRegistration && item.device === 'smart' && item.userId === user?.uid && item.status === 'confirmed'
+    item.id === activeRegistration && item.userId === user?.uid && item.status === 'confirmed'
     && (item.canCheckIn || item.checkedInAt)) : undefined;
   const selectedRegistration = competition.format === 'advancement' && participant ? undefined : registrations.find(item =>
-    item.id === activeRegistration && (item.checkedInAt || item.resultRecordedAt
-      || (participant && item.device === 'smart' && item.canCheckIn)) &&
+    (duelRoster && activeMatch ? item.matchId === activeMatch : item.id === activeRegistration)
+    && (item.checkedInAt || item.resultRecordedAt || (participant && item.device === 'smart' && item.canCheckIn)) &&
     (item.userId === user?.uid || item.canRecordResult || (!participant && item.canJoinVideo)));
   if (participant && competition.format === 'advancement' && (activeMatch || checkInEntry)) {
-    return <CompetitionDuelArena key={activeRegistration || activeMatch} id={activeMatch || selectedMatchId} checkInEntry={checkInEntry}
-      competition={competition} onCheckedIn={() => { refresh(); bracket.refresh(); }} />;
+    return <CompetitionDuelArena key={competition.id} id={activeMatch || selectedMatchId} checkInEntry={checkInEntry}
+      competition={competition} matches={bracket.brackets?.matches} standings={bracket.brackets?.standings}
+      reviewActions={registrationId => <details className="competition-rules">
+        <MoreToggle as="summary">{t('成绩异议申诉', 'Dispute a result')}</MoreToggle>
+        <CompetitionDisputeForm registrationId={registrationId} onSaved={refresh} />
+        <CompetitionEvidenceFiles registrationId={registrationId} canUpload />
+      </details>} onNextMatch={matchId => { void setActiveMatch(matchId); }} onCheckedIn={refreshSeatProgress} onMatchSettled={refreshSeatProgress} />;
   }
-  const testAdmin = !!competition.isTest && hasAdminAccess(user);
-  const superviseAction = competition.canSupervise && view !== 'supervise'
-    ? <AppLink className="competition-primary" href={workspaceHref('supervise', competition.id)} prefetch={false}>
-        <Video size={16} aria-hidden />{t('进入执场监考', 'Open judging desk')}
-      </AppLink> : null;
   if (participant && selectedRegistration && selectedRegistration.sessionKind !== 'offline') {
     return <CompetitionAo5Arena key={selectedRegistration.id} competition={competition} registration={selectedRegistration}
       onCheckedIn={refresh} onFinished={refresh} resultRevision={revision}
@@ -383,41 +454,135 @@ function CompetitionDetail({ id, view }: { id: string; view: 'entry' | 'manage' 
   const settingUp = view === 'manage' && ['draft', 'pending_approval'].includes(competition.status);
   const showRegistration = participant && (registrationOpen || draftPreview) && !selectedRegistration && (!user || registrationsLoaded)
     && competition.projects.some(ticket => !registrationFor(ticket));
+  const hasLivePass = competition.projects.some(ticket => !!entryFor(ticket));
+  function retryRegistration(projectId: string) {
+    void setTicketId(projectId);
+    if (hasLivePass && !addMore) {
+      retryFocus.current = projectId;
+      setAddMore(true);
+    } else focusProject(projectId);
+  }
   const assignedSessions = new Set(competition.sessions.filter(item => item.supervisorUserId === user?.uid).map(item => item.id));
-  const entries = user && (!participant || registrations.length > 0) ? <section className="competition-registrations">
-    <h2>{participant ? t('参赛安排', 'Your entries') : t('参赛名单', 'Competitors')}</h2>
-    {!registrations.length ? <p className="competition-muted">{t('还没有报名记录。', 'No registrations yet.')}</p> : registrations.map(item => {
+  const rosterLabels: Record<CompetitionDuelStatus, string> = {
+    not_checked_in: t('未检录', 'Awaiting check-in'),
+    checked_in: t('已检录', 'Checked in'),
+    waiting_opponent: t('等待对手', 'Waiting for opponent'),
+    match_ready: t('待就绪', 'Awaiting readiness'),
+    in_progress: t('进行中', 'In progress'),
+    eliminated: t('已淘汰', 'Eliminated'),
+    champion: t('冠军', 'Champion'),
+    runner_up: t('亚军', 'Runner-up'),
+  };
+  const ownDuelEntries = participant && competition.format === 'advancement'
+    ? registrations.filter(item => ['confirmed', 'attended'].includes(item.status)) : [];
+  const duelSelection = competition.projects.find(ticket => ticket.id === ticketId);
+  const ownDuelEntry = ownDuelEntries.find(item => item.project === duelSelection?.project && item.device === duelSelection.device) ?? ownDuelEntries[0];
+  const matches = bracket.brackets?.matches ?? [];
+  const passportMatch = ownDuelEntry ? matches.find(match => (match.playerA === ownDuelEntry.id || match.playerB === ownDuelEntry.id)
+    && (match.status === 'pending' || competitionMatchPlayable(match)))
+    ?? matches.find(match => match.id === ownDuelEntry.matchId && match.status === 'completed') : undefined;
+  const feeder = passportMatch?.status === 'pending' && ownDuelEntry
+    ? competitionMatchFeeder(matches, passportMatch.id, ownDuelEntry.id) : null;
+  const rival = passportMatch ? (passportMatch.playerA === ownDuelEntry?.id ? passportMatch.nameB : passportMatch.nameA) : null;
+  const myDuelDone = !!ownDuelEntry && (ownDuelEntry.status === 'attended' ||
+    ['champion', 'runner_up', 'eliminated'].includes(ownDuelEntry.duelStatus ?? ''));
+  const passportEnter = !!ownDuelEntry?.checkedInAt && !!passportMatch && competitionMatchPlayable(passportMatch)
+    && !!passportMatch.playerA && !!passportMatch.playerB && now < Date.parse(competition.endsAt);
+  const ownDuelTicket = competition.projects.find(ticket => ticket.project === ownDuelEntry?.project && ticket.device === ownDuelEntry.device);
+  const rosterSeeds = competitionBracketSeeds(matches);
+  const rosterQuery = rosterSearch.trim().toLowerCase();
+  const roster = duelRoster ? registrations.filter(item =>
+    (!rosterFilter || item.duelStatus === rosterFilter) && (!rosterQuery ||
+      item.displayName.toLowerCase().includes(rosterQuery) || String(rosterSeeds.get(item.id) ?? '') === rosterQuery))
+    .sort((a, b) => (rosterSeeds.get(a.id) ?? Infinity) - (rosterSeeds.get(b.id) ?? Infinity)
+      || (a.createdAt ?? '').localeCompare(b.createdAt ?? '') || a.id.localeCompare(b.id)) : registrations;
+  const tableCount = (status: CompetitionBracketMatch['status']) => bracket.brackets?.matches.filter(match => match.status === status).length ?? 0;
+  const supervisorsEntries = registrations.filter(item => assignedSessions.has(item.sessionId) && ['confirmed', 'attended'].includes(item.status));
+  const duelPassport = ownDuelEntry && <>
+    <div className="competition-registration-status">
+      {ownDuelEntries.length > 1 && <select className="platform-field-control" aria-label={t('我的参赛组别', 'My division')}
+        value={ownDuelTicket?.id ?? ''} onChange={event => { void setTicketId(event.target.value); }}>
+        {competition.projects.filter(ticket => ownDuelEntries.some(entry => entry.project === ticket.project && entry.device === ticket.device))
+          .map(ticket => <option key={ticket.id} value={ticket.id}>{eventDisplayName(ticket.project, lang === 'zh')} · {competitionDeviceName(ticket.device, t)}</option>)}
+      </select>}
+      <a href="#competition-rules" onClick={() => {
+        const details = document.getElementById('competition-rules');
+        if (details instanceof HTMLDetailsElement) details.open = true;
+      }}>{t('规则', 'Rules')}</a>
+    </div>
+    <CompetitionMatchPassport title={t('我的赛程', 'My match passport')} tone={myDuelDone ? 'done' : passportEnter ? 'ready' : 'waiting'}
+      code={passportMatch ? `${competitionMatchCode(passportMatch)} · BO${passportMatch.bestOf}` : undefined}
+      status={myDuelDone ? rosterLabels[ownDuelEntry.duelStatus ?? 'eliminated']
+        : !ownDuelEntry.checkedInAt ? (rival ? t('对阵已排定', 'Match scheduled') : t('等待对阵', 'Awaiting matchup'))
+          : passportEnter ? t('对手已就位', 'Opponent seated') : t('等待对手产生', 'Waiting for an opponent')}
+      action={passportEnter && passportMatch ? <CompetitionMatchEnter onEnter={() => { void setActiveMatch(passportMatch.id); }} /> : undefined}>
+      {rival && !myDuelDone && <p>{displayCuberName(ownDuelEntry.displayName, lang === 'zh')} · {displayCuberName(rival, lang === 'zh')}</p>}
+      {feeder && <CompetitionMatchFeeder feeder={feeder} />}
+    </CompetitionMatchPassport>
+  </>;
+  const isEntryPass = (item: CompetitionRegistration) => item.status === 'confirmed' || item.status === 'attended'
+    || isCompetitionPaymentPending(item.status) || competitionReservationExpired(item, now);
+  const passes = participantRegistrations.filter(isEntryPass);
+  const otherEntries = participant ? registrations.filter(item => !isEntryPass(item)) : roster;
+  const entries = user && (!participant || otherEntries.length > 0) ? <section className="competition-registrations">
+    <h2>{participant ? t('历史报名', 'Past entries') : t('参赛名单', 'Competitors')}</h2>
+    {duelRoster && <div className="competition-duel-roster-summary competition-toolbar">
+      <input type="search" className="platform-field-control" placeholder={t('搜索选手或种子号', 'Search name or seed')}
+        aria-label={t('搜索参赛名单', 'Search competitors')} value={rosterSearch} onChange={event => setRosterSearch(event.target.value)} />
+      <span className="competition-field-select">
+        <select className="platform-field-control" aria-label={t('筛选参赛状态', 'Filter competitor status')}
+          value={rosterFilter} onChange={event => setRosterFilter(event.target.value as typeof rosterFilter)}>
+          <option value="">{t('全部状态', 'All statuses')}</option>
+          {Object.entries(rosterLabels).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
+        </select>
+        <ChevronDown size={15} aria-hidden />
+      </span>
+    </div>}
+    {duelRoster ? <div className="competition-roster-scroll"><table className="competition-roster-table sticky-thead">
+      <thead><tr>{[t('种子', 'Seed'), t('选手', 'Competitor'), t('项目', 'Event'), t('报名时间', 'Registered'), t('检录', 'Check-in'), t('操作', 'Actions')].map((label, index) =>
+        <th key={label} scope="col" className={index === 1 ? 'wca-person-column' : undefined}>{label}</th>)}</tr></thead>
+      <tbody>{roster.map(item => <tr key={item.id}>
+        <td>{rosterSeeds.get(item.id) ?? '—'}</td>
+        <th scope="row"><PersonLink wcaId={item.wcaId ?? ''} name={item.displayName} isZh={lang === 'zh'}
+          flag={item.countryCode ? <Flag iso2={item.countryCode} spanClassName="country-flag" imgClassName="country-flag-ct" /> : <span className="competition-empty-flag" aria-hidden />} /></th>
+        <td>{eventDisplayName(item.project, lang === 'zh')} · {competitionDeviceName(item.device, t)}</td>
+        <td>{item.createdAt ? dateText(item.createdAt) : '—'}</td>
+        <td><span className="competition-state" data-status={item.checkedInAt ? 'checked_in' : undefined}>
+          {item.checkedInAt ? t('已检录', 'Checked in') : item.duelStatus ? rosterLabels[item.duelStatus] : statusLabel(item.status, t)}
+        </span></td>
+        <td>{item.canJoinVideo && item.matchId ? <button className="competition-secondary" onClick={() => {
+          void setActiveMatch(item.matchId!); void setHostTab('tables');
+        }}>{t('进入监督视频', 'Join supervision video')}</button> : item.matchId ? <button className="competition-secondary" onClick={() => {
+          void setHostTab('tables');
+        }}>{t('查看桌台', 'View tables')}</button> : '—'}</td>
+      </tr>)}</tbody>
+    </table>{!roster.length && <p className="competition-muted">{t('没有符合条件的选手。', 'No matching competitors.')}</p>}</div>
+    : !otherEntries.length ? <p className="competition-muted">{rosterFilter
+      ? t('此状态下没有选手。', 'No competitors with this status.') : t('还没有报名记录。', 'No registrations yet.')}</p> : otherEntries.map(item => {
       const own = item.userId === user.uid;
-      const expired = reservationExpired(item);
-      const pendingPayment = ['reserved', 'pending_payment'].includes(item.status) && !expired;
       const assignedSession = competition.sessions.find(session => session.id === item.sessionId);
       return <div className="competition-registration" key={item.id}>
         <div>
-          {!participant && <strong>{item.displayName}</strong>}
+          {!participant && <strong>{displayCuberName(item.displayName, lang === 'zh')}</strong>}
           {item.reviewRequired && <p>{t('待抽检', 'Review flagged')}</p>}
-          <p>{eventDisplayName(item.project, lang === 'zh')} {item.device === 'smart' ? t('智能魔方', 'Smart cube') : t('普通魔方', 'Standard cube')}</p>
+          <p>{eventDisplayName(item.project, lang === 'zh')} · {competitionDeviceName(item.device, t)}</p>
           {assignedSession && <p>{dateText(assignedSession.startsAt)} {t('北京时间', 'UTC+8')}</p>}
         </div>
-        <span>{statusLabel(expired ? 'expired' : item.status, t)}</span>
+        <span>{statusLabel(competitionReservationExpired(item, now) ? 'expired' : item.status, t)}</span>
         <div className="competition-toolbar">
-          {item.orderId && own && (
-            <AppLink className={participant && pendingPayment ? 'competition-primary' : undefined} href={`/platform/orders/${encodeURIComponent(item.orderId)}`} prefetch={false}>
-              {participant && pendingPayment ? t('继续付款', 'Continue to payment') : t('订单', 'Order')}
-            </AppLink>
-          )}
+          {item.orderId && own && <AppLink href={`/platform/orders/${encodeURIComponent(item.orderId)}`} prefetch={false}>{t('订单', 'Order')}</AppLink>}
           {item.canCheckIn && !item.checkedInAt && (item.device === 'smart'
-            ? participant
-              ? <button type="button" className="competition-primary" onClick={() => { void setActiveRegistration(item.id); }}>
-                {matchForRegistration(item.id) ? t('进入对战席检录', 'Enter match to check in') : t('连接魔方检录', 'Connect cube to check in')}
-              </button>
-              : <AppLink className="competition-secondary" href={`${href(competition.slug || competition.id)}?entry=${encodeURIComponent(item.id)}`}>
+            ? <AppLink className="competition-secondary" href={`${href(competition.slug || competition.id)}?entry=${encodeURIComponent(item.id)}`}>
                 {t('连接魔方检录', 'Connect cube to check in')}
               </AppLink>
-            : <button type="button" className={participant ? 'competition-primary' : 'competition-secondary'} disabled={busy}
+            : <button type="button" className="competition-secondary" disabled={busy}
               onClick={() => { void checkIn(item.id); }}>{t('检录', 'Check in')}</button>)}
-          {competition.format !== 'advancement' && (item.checkedInAt || item.resultRecordedAt) && (own || item.canRecordResult) && (!participant || item.resultRecordedAt || (assignedSession && now < Date.parse(assignedSession.endsAt))) && <button type="button" className={participant ? 'competition-primary' : 'competition-secondary'} onClick={() => { void setActiveRegistration(item.id); }}>{item.resultRecordedAt ? t('查看成绩', 'View result') : t('进入赛场', 'Enter session')}</button>}
-          {competition.format === 'advancement' && !participant && item.canJoinVideo && <button type="button" className="competition-secondary"
-            onClick={() => { void setActiveRegistration(item.id); }}>{t('进入监督视频', 'Join supervision video')}</button>}
+          {competition.format !== 'advancement' && (item.checkedInAt || item.resultRecordedAt) && (own || item.canRecordResult)
+            && (!participant || item.resultRecordedAt || (assignedSession && now < Date.parse(assignedSession.endsAt))) &&
+            <button type="button" className={participant ? 'competition-primary' : 'competition-secondary'}
+              onClick={() => { void setActiveRegistration(item.id); }}>
+              {item.resultRecordedAt ? t('查看成绩', 'View result') : t('进入赛场', 'Enter session')}
+            </button>}
         </div>
       </div>;
     })}
@@ -428,10 +593,10 @@ function CompetitionDetail({ id, view }: { id: string; view: 'entry' | 'manage' 
       autoJoin: autoJoinVideo, onJoin: () => setAutoJoinVideo(true), onLeave: () => setAutoJoinVideo(false),
     } : undefined;
     return event.format === 'advancement'
-      ? entry.canJoinVideo
-        ? <div key={entry.id}>
+      ? entry.canJoinVideo && entry.matchId
+        ? <div key={entry.matchId}>
             {supervising && <p className="competition-muted">{t('请保持摄像头开启。双方就绪后，系统自动发放打乱。', 'Keep your camera on. The scramble appears automatically when both seats are ready.')}</p>}
-            <CompetitionVideoRoom registrationId={entry.id} prominent={supervising} {...video} />
+            <CompetitionVideoRoom matchId={entry.matchId} prominent={supervising} supervising={supervising} {...video} />
           </div>
         : <p className="competition-muted">{t('监督视频在场次开放后可用。', 'Supervision video is available during the session.')}</p>
       : <CompetitionParticipation key={entry.id} competition={event} registration={entry}
@@ -440,119 +605,94 @@ function CompetitionDetail({ id, view }: { id: string; view: 'entry' | 'manage' 
   }
   const participation = selectedRegistration && renderParticipation(selectedRegistration);
 
-  function focusRegistration(target: HTMLDivElement | null, issue: string, selector = 'button:not(:disabled)') {
-    updateForm({ error: issue });
-    target?.scrollIntoView?.({ behavior: window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth', block: 'center' });
-    (target?.querySelector<HTMLElement>(selector) ?? target)?.focus({ preventScroll: true });
-  }
-
-  function confirmRegistration(mobile: boolean) {
-    if (project && session && canRegister) {
-      void register(project, session.id);
-      return;
-    }
-    if (!mobile || busy) return;
-    if (!project || project.available === 0) {
-      focusRegistration(projectChoices.current, t('请选择仍有余位的参赛项目。', 'Choose an event with an available place.'), '[data-ticket-available]');
-    } else if (!sessionAvailable) {
-      focusRegistration(sessionChoices.current ?? rulesConsent.current,
-        supervised ? t('请选择仍有余位的监督场次。', 'Choose a supervised session with an available place.')
-          : t('当前场次已满，请稍后查看。', 'This session is full. Check again later.'));
-    } else if (!accepted) {
-      focusRegistration(rulesConsent.current, t('请先同意参赛与退款规则。', 'Agree to the participation and refund policies first.'), '[role="switch"]');
-    }
-  }
-
-  const loginHref = `/account${nextQuery(`${lang === 'zh' ? '/zh' : ''}${href(id)}${ticketId || sessionId ? `?${new URLSearchParams({ ...(ticketId ? { project: ticketId } : {}), ...(sessionId ? { session: sessionId } : {}) })}` : ''}`)}`;
-  const registrationAction = (mobile: boolean) => !user
-    ? <AppLink className="competition-primary" href={loginHref}>{t('登录报名', 'Sign in to register')}</AppLink>
-    : (orderId || existingRegistration?.orderId)
-      ? <AppLink className="competition-primary" prefetch={false} href={`/platform/orders/${encodeURIComponent(orderId || existingRegistration!.orderId)}`}>{existingRegistration && !['reserved', 'pending_payment'].includes(existingRegistration.status) ? t('查看报名订单', 'View order') : t('查看订单与付款', 'View order and pay')}</AppLink>
-      : <button type="button" className="competition-primary" disabled={mobile ? busy : !canRegister} onClick={() => confirmRegistration(mobile)}>
-          {busy ? t('正在提交…', 'Submitting…') : t('确认报名', 'Register')}
-        </button>;
-
-  const rules = <details className="competition-rules"><MoreToggle as="summary">{t('参赛与退款规则', 'Participation and refund policies')}</MoreToggle><p>{t('普通魔方与智能魔方分别排名。', 'Standard and smart cubes are ranked separately.')}</p><h3>{t('退款政策', 'Refund policy')}</h3><p>{competition.refundPolicy || t('尚未公布', 'Not yet published')}</p><h3>{t('录像与争议处理', 'Recording and disputes')}</h3><p>{competition.recordingPolicy || t('尚未公布', 'Not yet published')}</p></details>;
-  return <div className="competitions" data-mobile-registration={showRegistration && registrationOpen || undefined}
-    style={showRegistration && registrationOpen && mobileBarHeight ? { paddingBlockEnd: mobileBarHeight } : undefined}>
+  const rules = <details id="competition-rules" className="competition-rules"><MoreToggle as="summary">{t('参赛与退款规则', 'Participation and refund policies')}</MoreToggle><p>{t('普通魔方与智能魔方分别排名。', 'Standard and smart cubes are ranked separately.')}</p><h3>{t('退款政策', 'Refund policy')}</h3><p>{competition.refundPolicy || t('尚未公布', 'Not yet published')}</p><h3>{t('录像与争议处理', 'Recording and disputes')}</h3><p>{competition.recordingPolicy || t('尚未公布', 'Not yet published')}</p></details>;
+  return <div className="competitions" data-competition-view={view} data-duel={competition.format === 'advancement' || undefined}>
     {error ? <p role="alert" className="competition-error">{error}</p> : null}
-    <header className="competition-heading competition-detail-heading"><span className="competition-state" data-status={reviewState}>{statusLabel(reviewState, t)}</span>{competition.isTest && <CompetitionTestBadge />}<span className="competition-meta">{competitionModeName(supervision, t)} · {competitionFormatName(competition.format ?? 'average', t)}</span><h1>{t(competition.titleZh || competition.titleEn, competition.titleEn || competition.titleZh)}</h1><p>{dateText(competition.startsAt)} — {dateText(competition.endsAt)} {t('北京时间', 'UTC+8')}</p><p>{competition.organizationName}</p>
-      {participant && status === 'registration_upcoming' && <>
-        {competition.projects.length > 0 && <p>{competitionProjectSummary(competition.projects, lang, t)}</p>}
-        <p>{t('报名开始', 'Registration opens')} {dateText(competition.registrationOpensAt)} {t('北京时间', 'UTC+8')}</p>
-      </>}
+    <header className="competition-heading competition-detail-heading">
+      {!participant && <p className="competition-workspace-crumb" aria-current="page">{t(COMPETITION_WORKSPACES[view].title.zh, COMPETITION_WORKSPACES[view].title.en)}</p>}
+      <span className="competition-state" data-status={reviewState}>{statusLabel(reviewState, t)}</span>{competition.isTest && <CompetitionTestBadge />}
+      {!participant && <span className="competition-meta">{competitionModeName(supervision, t)} · {competitionFormatName(competition.format ?? 'average', t)}</span>}
+      <h1>{t(competition.titleZh || competition.titleEn, competition.titleEn || competition.titleZh)}</h1>
+      <p>{dateText(competition.startsAt)} — {dateText(competition.endsAt)} {t('北京时间', 'UTC+8')}</p><p>{competition.organizationName}</p>
+      {participant && <CompetitionRegistrationFacts competition={competition} status={status} />}
+      {participant && status === 'registration_upcoming' && competition.projects.length > 0 &&
+        <p>{competitionProjectSummary(competition.projects, lang, t)}</p>}
     </header>
-    {participant && (superviseAction || testAdmin) && <div className="competition-toolbar">
-      {superviseAction}
-      {testAdmin && <AppLink className="competition-secondary" href={workspaceHref('manage', competition.id)} prefetch={false}>
-        {t('管理测试赛', 'Manage test competition')}
-      </AppLink>}
-    </div>}
-    {view === 'manage' && testAdmin && <CompetitionTestControls key={competition.id} competition={competition}
+    {view === 'manage' && competition.isTest && hasAdminAccess(user) && <CompetitionTestControls key={competition.id} competition={competition}
       canStart={competition.status === 'published' && now > 0 && now < Date.parse(competition.startsAt)}
-      onStarted={() => { setNow(Date.now()); refresh(); bracket.refresh(); }} />}
-    {!participant && <div className="competition-toolbar">{superviseAction}<AppLink href={workspaceHref(view)} prefetch={false}>{t(COMPETITION_WORKSPACES[view].title.zh, COMPETITION_WORKSPACES[view].title.en)}</AppLink>{view === 'manage' && <AppLink className="competition-secondary" href={href(competition.isTest ? competition.slug : id)} prefetch={false}>{t('查看报名页', 'View registration')}</AppLink>}{view === 'supervise' && <AppLink className="competition-secondary" href={href(competition.isTest ? competition.slug : id)} prefetch={false}>{competition.isTest ? t('参赛页', 'Entry page') : t('公开赛事页', 'Public competition page')}</AppLink>}<button type="button" className="competition-icon-button" aria-label={t('刷新赛事', 'Refresh competition')} onClick={refresh}><RefreshCw size={17} /></button></div>}
+      onStarted={() => { setNow(Date.now()); refresh(); bracket.refresh(); }}
+      onCleanedUp={onNavigate && (() => onNavigate('manage'))} />}
+    {!participant && <div className="competition-toolbar">
+      {!onNavigate && view !== 'supervise' && <AppLink href={workspaceHref(view)} prefetch={false}>{t(COMPETITION_WORKSPACES[view].title.zh, COMPETITION_WORKSPACES[view].title.en)}</AppLink>}
+      <AppLink className="competition-secondary" href={href(competition.isTest ? competition.slug : id)} prefetch={false}>
+        {t('公开赛事页', 'Public competition page')} <ArrowUpRight size={15} aria-hidden />
+      </AppLink>
+      <button type="button" className="competition-icon-button" aria-label={t('刷新赛事', 'Refresh competition')} onClick={refresh}><RefreshCw size={17} /></button>
+    </div>}
     {participant && (participation ? <>
       <button type="button" className="competition-secondary" onClick={() => { void setActiveRegistration(null); }}>{t('参赛安排', 'Your entries')}</button>
       {participation}
-    </> : entries)}
-    {registrationError && !showRegistration && <p className="competition-error" role="alert">{registrationError}</p>}
+    </> : <>
+      {passes.length > 0 && <div className="competition-entry-passes">
+        {passes.map(item => {
+          const receipt = receiptByOrder.get(item.orderId);
+          const project = receipt?.project
+            ?? competition.projects.find(ticket => ticket.project === item.project && ticket.device === item.device);
+          const session = competition.sessions.find(slot => slot.id === item.sessionId);
+          const canEnter = !!item.id && competition.format !== 'advancement' && (!!item.resultRecordedAt
+            || (!!item.checkedInAt && !!session && now < Date.parse(session.endsAt)));
+          return <CompetitionEntryPass key={item.orderId || item.id} entry={item} project={project} session={session}
+            mode={item.sessionKind ?? supervision} fresh={!!recentOrderId && recentOrderId === item.orderId} verified={receipt?.preflightVerified} busy={busy} now={now}
+            canEnter={canEnter} onEnter={() => { void setActiveRegistration(item.id); }} onCheckIn={() => { void checkIn(item.id); }}
+            onRetry={project && showRegistration && !entryFor(project) ? () => retryRegistration(project.id) : undefined} />;
+        })}
+      </div>}
+      {duelPassport}
+      {entries}
+    </>)}
+    {checkInError && <p className="competition-error" role="alert">{checkInError}</p>}
     {registrationLoadError && <div className="competition-error" role="alert">
       <p>{registrationLoadError}</p>
       <button type="button" onClick={refresh} className="competition-secondary">{t('重试', 'Retry')}</button>
     </div>}
     {settingUp && competition.canManage ? <CompetitionDraftForm key={competition.id} competition={competition} onSaved={refresh} />
-    : showRegistration ? <div className="competition-detail-grid">
-      <section>
-        <h2>{t('选择参赛项目', 'Choose an event')}</h2>
-        <div ref={projectChoices} className="competition-projects" tabIndex={-1}>{competition.projects.map(item =>
-          <button type="button" key={item.id} className="competition-project" aria-pressed={project?.id === item.id}
-            data-ticket-available={item.available !== 0 || undefined} disabled={busy} onClick={() => { void setTicketId(item.id); }}>
-            <EventIcon event={item.project} />
-            <span>{eventDisplayName(item.project, lang === 'zh')}<small>{competitionDeviceName(item.device, t)}</small></span>
-            <strong>{money(item.amountMinor, item.currency)}
-              {item.available !== undefined && <small data-low={item.available <= item.capacity * .2 || undefined}>{item.available
-                ? t(`余 ${item.available} 位`, `${item.available} places left`) : t('已满', 'Full')}</small>}
-            </strong>
-          </button>)}</div>
-        {!competition.projects.length && <p className="competition-muted">{t('项目尚未公布。', 'Events have not been announced.')}</p>}
-        {supervised ? <>
-        <h3>{t('选择监督场次', 'Choose a supervised session')}</h3>
-        <div ref={sessionChoices} className="competition-sessions" tabIndex={-1}>{competition.sessions.map(item => <button className="competition-session" type="button" key={item.id} aria-pressed={session?.id === item.id} disabled={busy || item.available <= 0 || !item.staffed || now >= Date.parse(item.startsAt)} onClick={() => { void setSessionId(item.id); }}><span><strong>{dateText(item.startsAt)}</strong><small>{t('至', 'Until')} {dateText(item.endsAt)}</small></span><span className="competition-session-availability" data-low={item.staffed && now < Date.parse(item.startsAt) && item.available <= item.capacity * .2 || undefined}>{now >= Date.parse(item.startsAt) ? t('已开始', 'Started') : !item.staffed ? t('待排班', 'Unassigned') : item.available <= 0 ? t('已满', 'Full') : t(`余 ${item.available} 位`, `${item.available} places`)}{session?.id === item.id ? <Check size={17} /> : null}</span></button>)}</div>
-        {!competition.sessions.length ? <p className="competition-muted">{t('监督场次尚未公布。', 'Sessions have not been announced.')}</p> : null}
-        </> : supervision === 'self_service'
-          ? <p className="competition-muted">{t('请在场次开放后及时检录。', 'Check in when the session opens.')}</p>
-          : competition.offlineVenue && <CompetitionVenue venue={competition.offlineVenue} />}
-        {rules}
-      </section>
-      <aside className="competition-entry" data-site-surface="panel"><h2>{t('确认报名', 'Registration')}</h2>
-        {project ? <p className="competition-fee">{money(project.amountMinor, project.currency)}<small>{project.amountMinor === 0 ? t('免费参赛', 'Free entry') : t('CubeRoot 统一收款', 'Collected by CubeRoot')}</small></p> : <p>{supervised ? t('请先选择项目和场次。', 'Choose an event and session first.') : t('请先选择参赛项目。', 'Choose an event first.')}</p>}
-
-        {project && !draftPreview && <CompetitionPreflight mode={supervision} device={project.device} />}
-        {draftPreview ? <p>{t('赛事预览', 'Competition preview')}</p> : <>
-          {user && !orderId && !existingRegistration?.orderId && <div ref={rulesConsent} tabIndex={-1}>
-            <BoolToggle value={accepted} onChange={value => updateForm({ accepted: value, error: '' })} label={t('同意参赛与退款规则', 'I agree to the participation and refund policies')} />
-          </div>}
-          <div className="competition-desktop-registration">{registrationAction(false)}</div>
-        </>}
-        {registrationError && <p className="competition-error competition-desktop-registration" role="alert">{registrationError}</p>}
-        <p className="competition-muted competition-deadline">{t('报名截止', 'Registration closes')} {dateText(competition.registrationClosesAt)}</p>
-      </aside>
+    : showRegistration ? <div ref={registrationRegion} className="competition-registration-region" tabIndex={-1}>
+      {hasLivePass && <MoreToggle className="competition-secondary" expanded={addMore}
+        aria-controls="competition-other-registration" onClick={() => setAddMore(open => !open)}>
+        {t('增报其他项目', 'Register for another event')}
+      </MoreToggle>}
+      <MoreTogglePanel id="competition-other-registration" expanded={!hasLivePass || addMore} animate={hasLivePass}>
+        <CompetitionRegistrationPanel competition={competition} routeId={id} ticketId={ticketId} sessionId={sessionId}
+          onProject={value => { void setTicketId(value); }} onSession={value => { void setSessionId(value); }}
+          entryFor={entryFor} now={now} signedIn={!!user} preview={!!draftPreview} expanded={!hasLivePass || addMore}
+          venue={competition.offlineVenue && <CompetitionVenue venue={competition.offlineVenue} />}
+          onOrdered={onOrdered} onRefresh={refresh} />
+      </MoreTogglePanel>
     </div> : null}
-    {showRegistration && registrationOpen && <div ref={setMobileBar} className="competition-mobile-registration" data-site-surface="panel">
-      {registrationError && <p className="competition-error competition-mobile-registration-error" role="alert">{registrationError}</p>}
-      <span>{project ? <><span>{eventDisplayName(project.project, lang === 'zh')}</span><strong>{money(project.amountMinor, project.currency)}</strong></>
-        : t('选择参赛项目', 'Choose an event')}</span>
-      {registrationAction(true)}
-    </div>}
     {participant && !showRegistration && !selectedRegistration && competition.offlineVenue && <CompetitionVenue venue={competition.offlineVenue} />}
-    {participant && !selectedRegistration && !showRegistration && rules}
-    {view === 'manage' && !settingUp && <>{entries}{participation}</>}
-    {view === 'supervise' && <CompetitionSupervisionDesk
-      entries={registrations.filter(item => assignedSessions.has(item.sessionId) && ['confirmed', 'attended'].includes(item.status))}
-      activeId={activeRegistration} onSelect={id => { void setActiveRegistration(id); }}
-      renderSeat={entry => renderParticipation(entry, true)} />}
-    {competition.format === 'advancement' && ['published', 'completed'].includes(competition.status) && !selectedRegistration && view !== 'supervise' &&
+    {participant && !selectedRegistration && rules}
+    {duelRoster && !settingUp && <>
+      <dl className="competition-host-kpis">
+        {[[t('已报名', 'Registered'), registrations.filter(item => ['confirmed', 'attended'].includes(item.status)).length],
+          [t('已检录', 'Checked in'), registrations.filter(item => item.checkedInAt).length],
+          [t('阻塞桌台', 'Blocked tables'), matches.filter(match => match.status === 'ready' && !(match.readyA && match.readyB)).length],
+          [t('已完成场次', 'Matches completed'), tableCount('completed')]].map(([label, value]) =>
+          <div key={label}><dt>{label}</dt><dd>{value}</dd></div>)}
+      </dl>
+      <nav className="competition-section-tabs" aria-label={t('办赛工作台分区', 'Competition workspace sections')}>
+        {([['roster', t('参赛名单', 'Competitors')], ['tables', t('桌台与签表', 'Tables and bracket')], ['results', t('赛后处理与结算', 'Results and settlement')]] as const)
+          .map(([key, label]) => <button type="button" key={key} aria-pressed={hostTab === key} onClick={() => { void setHostTab(key); }}>{label}</button>)}
+      </nav>
+    </>}
+    {view === 'manage' && !settingUp && <>{(!duelRoster || hostTab === 'roster') && entries}{(!duelRoster || hostTab === 'tables') && participation}</>}
+    {view === 'supervise' && (competition.format === 'advancement'
+      ? <CompetitionDuelSupervisionDesk competitionId={competition.id} onRuling={bracket.refresh} entries={supervisorsEntries} matches={bracket.brackets?.matches ?? []}
+        activeId={activeMatch} onSelect={matchId => { void setActiveMatch(matchId); }}
+        renderRoom={(match, cameraGrid) => <CompetitionVideoRoom key={match.id} matchId={match.id} cameraGrid={cameraGrid} prominent supervising />} />
+      : <CompetitionSupervisionDesk entries={supervisorsEntries}
+        activeId={activeRegistration} onSelect={id => { void setActiveRegistration(id); }}
+        renderSeat={entry => renderParticipation(entry, true)} />)}
+    {competition.format === 'advancement' && ['published', 'completed'].includes(competition.status) && !selectedRegistration && view !== 'supervise' && (!duelRoster || hostTab === 'tables') &&
       <CompetitionBracket competition={competition} bracket={bracket} registrations={participant ? registrations : []} manage={view === 'manage'}
         allowGeneration={competition.status === 'published' && now >= Date.parse(competition.registrationClosesAt)} />}
     {participant && competition.format === 'advancement' && status === 'provisional_results' && !competition.finalizedAt &&
@@ -563,7 +703,7 @@ function CompetitionDetail({ id, view }: { id: string; view: 'entry' | 'manage' 
       </div>)}
     {competition.format !== 'advancement' && view !== 'supervise' && ['published', 'completed'].includes(competition.status) && (!participant || (!selectedRegistration && (['completed', 'provisional_results'].includes(status) || now >= Date.parse(competition.startsAt))))
       ? <CompetitionResults competition={competition} revision={revision} ownEntries={participant ? registrations : []} /> : null}
-    {view === 'manage' && !settingUp && competition.canManage ? <CompetitionManagement competition={competition} registrations={registrations} revision={revision} onSaved={refresh} /> : null}
+    {view === 'manage' && !settingUp && competition.canManage && (!duelRoster || hostTab === 'results') ? <CompetitionManagement competition={competition} registrations={registrations} bracket={bracket.brackets} revision={revision} onSaved={refresh} /> : null}
   </div>;
 }
 
@@ -575,7 +715,7 @@ function CompetitionVenue({ venue }: { venue: NonNullable<OnlineCompetition['off
   </section>;
 }
 
-function CompetitionOrganizerEditor({ mode }: { mode: 'create' | 'apply' | 'review' }) {
+function CompetitionOrganizerEditor({ mode, onCreated }: { mode: 'create' | 'apply' | 'review'; onCreated?: (id: string) => void }) {
   const t = useT();
   const [organizations, setOrganizations] = useState<TeachingOrganizationAccess[]>([]);
   const [loadError, setLoadError] = useState('');
@@ -594,7 +734,7 @@ function CompetitionOrganizerEditor({ mode }: { mode: 'create' | 'apply' | 'revi
   }, [mode, approvedCount, t]);
 
   const approved = access?.eligibleOrganizations ?? organizations.filter(item => access?.eligibleOrganizationIds.includes(item.id));
-  if (mode === 'create' && approved.length) return <CompetitionDraftForm organizers={approved} />;
+  if (mode === 'create' && approved.length) return <CompetitionDraftForm organizers={approved} onCreated={onCreated} />;
   if (mode !== 'create') return <section className="competition-editor">
     <OrganizerOnboarding organizations={organizations} onLoaded={setAccess} reviewOnly={mode === 'review'} />
     {loadError && <p role="alert" className="competition-error">{loadError}</p>}
@@ -890,7 +1030,7 @@ function CompetitionParticipation({ competition, registration, endsAt, onSaved, 
     {!completed && registration.sessionKind !== 'offline' && (selfService
       ? ordinarySelf && <CompetitionSelfRecording onRecordingChange={setRecording} />
       : video || ownEntry || registration.canJoinVideo || registration.canRecordResult
-        ? <CompetitionVideoRoom registrationId={registration.id} prominent={supervising} {...video} />
+        ? <CompetitionVideoRoom registrationId={registration.id} prominent={supervising} supervising={supervising} {...video} />
         : <p className="competition-muted">{t('监督视频在场次开放后可用。', 'Supervision video is available during the session.')}</p>)}
     {!completed && !supervising && <p className="competition-muted">
       {selfService ? ordinarySelf ? t('保留录像以备抽检。', 'Keep the recording for spot checks.')
@@ -1009,7 +1149,7 @@ function CompetitionResults({ competition, revision, ownEntries }: {
             <caption>{event} · {finalizedAt ? t('最终成绩', 'Final') : t('公示中', 'Provisional')}</caption>
             <thead><tr>
               <th scope="col">{t('名次', 'Rank')}</th><th scope="col" className="wca-person-column">{t('选手', 'Entrant')}</th>
-              <th scope="col">Ao5</th><th scope="col">{t('最佳单次', 'Best')}</th>
+              <th scope="col">Ao5</th><th scope="col" aria-label={t('最佳单次', 'Best single')}>{t('最佳', 'Best')}</th>
             </tr></thead>
             {group.map(row => {
               const rank = row.rank === undefined ? group.findIndex(other => other.average === row.average && other.best === row.best) + 1 : row.rank;
@@ -1020,15 +1160,21 @@ function CompetitionResults({ competition, revision, ownEntries }: {
                     flag={row.countryCode ? <Flag iso2={row.countryCode} spanClassName="country-flag" imgClassName="country-flag-ct" /> : undefined} /></th>
                   <td>{formatWcaResult(row.average, project, 'average')}</td><td>{formatWcaResult(row.best, project, 'single')}</td>
                 </tr>
-                <tr className="competition-result-details"><td /><td colSpan={3}>
-                  <details className="competition-result-attempts"><MoreToggle as="summary">{t('五次成绩', 'All attempts')}</MoreToggle>
-                    <span>{row.times.map((time, i) => <span key={i}>
-                      {i > 0 && ' / '}
-                      {device === 'smart' && row.finalizedAt && row.replayAttempts?.includes(i + 1)
-                        ? <CompetitionReplayButton registrationId={row.id} number={i + 1} publicReplay>{time}</CompetitionReplayButton> : time}
-                    </span>)}</span>
-                  </details>
-                  {ownIds.has(row.id) && <CompetitionReportShare data={ao5ReportData(competition, { ...row, rank }, t, lang)} />}
+                <tr className="competition-result-details"><td colSpan={4}>
+                  <div className="competition-result-actions">
+                    <details className="competition-result-attempts"><MoreToggle as="summary">{t('五次成绩', 'All attempts')}</MoreToggle>
+                      <ol className="competition-result-solves">{row.times.map((time, i) => {
+                        const publicReplay = !!row.finalizedAt && !competition.isTest;
+                        const canReplay = row.replayAttempts?.includes(i + 1) && (publicReplay || ownIds.has(row.id));
+                        return <li key={i}><span>#{i + 1}</span>
+                          {device === 'smart' && canReplay
+                            ? <CompetitionReplayButton registrationId={row.id} number={i + 1} publicReplay={publicReplay}>{time}</CompetitionReplayButton>
+                            : <strong>{time}</strong>}
+                        </li>;
+                      })}</ol>
+                    </details>
+                    {ownIds.has(row.id) && <CompetitionReportShare data={ao5ReportData(competition, { ...row, rank }, t, lang)} />}
+                  </div>
                 </td></tr>
               </tbody>;
             })}
@@ -1038,9 +1184,12 @@ function CompetitionResults({ competition, revision, ownEntries }: {
   </section>;
 }
 
-function CompetitionManagement({ competition, registrations, revision, onSaved }: { competition: OnlineCompetition; registrations: CompetitionRegistration[]; revision: number; onSaved: () => void }) {
+function CompetitionManagement({ competition, registrations, bracket, revision, onSaved }: {
+  competition: OnlineCompetition; registrations: CompetitionRegistration[];
+  bracket: ReturnType<typeof useCompetitionBrackets>['brackets']; revision: number; onSaved: () => void;
+}) {
   const t = useT();
-  const [disputes, setDisputes] = useState<CompetitionDispute[]>([]);
+  const [disputes, setDisputes] = useState<CompetitionDispute[] | null>(null);
   const [settlement, setSettlement] = useState<CompetitionSettlement | null>(null);
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
@@ -1048,18 +1197,33 @@ function CompetitionManagement({ competition, registrations, revision, onSaved }
   const [providerReference, setProviderReference] = useState('');
   const [transferredAt, setTransferredAt] = useState('');
   const [transferConfirmed, setTransferConfirmed] = useState(false);
+  const [terms, setTerms] = useState({ rate: '', days: '', anchor: 'finalized' });
+  const missingTerms = !!settlement && (settlement.commissionBps == null || settlement.settlementDays == null || !settlement.settlementAnchor);
+  const settlementTerms = parseCompetitionSettlementTerms(terms);
   const outstanding = Number(settlement?.outstandingMinor ?? settlement?.organizerAmountMinor ?? 0);
   const recovery = outstanding < 0;
   const [now, setNow] = useState(0);
   useEffect(() => { setNow(Date.now()); const timer = setInterval(() => setNow(Date.now()), 15000); return () => clearInterval(timer); }, []);
   const ended = now >= Date.parse(competition.endsAt);
+  const duel = competition.format === 'advancement';
+  const allMatchesDecided = !!bracket?.generated && bracket.matches.every(match => ['completed', 'bye'].includes(match.status));
+  const unfinishedCount = duel ? (bracket?.matches.filter(match => !['completed', 'bye'].includes(match.status)).length ?? 0)
+    : registrations.filter(entry => entry.status === 'confirmed' && !entry.resultRecordedAt).length;
+  const unfinished = duel ? !allMatchesDecided : unfinishedCount > 0;
+  const free = competition.projects.length > 0 && competition.projects.every(project => project.amountMinor === 0);
+  const finalizedAt = competition.finalizedAt ?? settlement?.finalizedAt;
+  const unsettledDisputes = disputes?.filter(issue => !issue.resolvedAt).length ?? 0;
+  const stillOpen = duel
+    ? bracket?.generated ? t(`尚余 ${unfinishedCount} 场未结束。`, `${unfinishedCount} matches remain.`) : t('签表尚未生成。', 'The bracket has yet to be generated.')
+    : t(`尚余 ${unfinishedCount} 份成绩未提交。`, `${unfinishedCount} results remain.`);
+  const canFinalize = (duel ? allMatchesDecided : ended && !unfinished) && !!disputes && disputes.every(issue => !!issue.resolvedAt);
   useEffect(() => {
     let active = true;
     void Promise.all([listCompetitionDisputes(competition.id), getCompetitionSettlement(competition.id)])
       .then(([issues, statement]) => { if (active) { setDisputes(issues.disputes); setSettlement(statement.settlement); } })
       .catch(error => { if (active) setError(message(error, t('管理信息加载失败。', 'Could not load management information.'))); });
     return () => { active = false; };
-  }, [competition.id, revision, t]);
+  }, [competition.id, revision, t, allMatchesDecided]);
   async function act(action: () => Promise<unknown>) {
     if (busy) return;
     setBusy(true); setError(''); setSaved('');
@@ -1086,17 +1250,62 @@ function CompetitionManagement({ competition, registrations, revision, onSaved }
         </section>)}
       </section>}
     <h3>{t('成绩异议', 'Result disputes')}</h3>
-    {!disputes.length ? <p className="competition-muted">{t('暂无异议。', 'No disputes.')}</p> : disputes.map(issue => <div className="competition-dispute" key={issue.id}>
+    {!disputes?.length ? <p className="competition-muted">{t('暂无异议。', 'No disputes.')}</p> : disputes.map(issue => <div className="competition-dispute" key={issue.id}>
       <strong>{registrations.find(item => item.id === issue.registrationId)?.displayName ?? t('参赛选手', 'Competitor')}</strong><p className="competition-muted">{dateText(issue.createdAt)}</p><p>{issue.reason}</p>
       {competition.canPublish ? <CompetitionEvidenceFiles registrationId={issue.registrationId} canUpload={false} /> : null}
       {issue.resolvedAt ? <p>{t('处理结果：', 'Resolution: ')}{issue.resolution}</p> : competition.canPublish ? <DisputeResolutionForm canCorrect={competition.format !== 'advancement' && registrations.find(item => item.id === issue.registrationId)?.device === 'ordinary'} busy={busy} onResolve={(resolution, attempts) => act(() => resolveCompetitionDispute(issue.id, resolution, attempts))} /> : <p className="competition-muted">{t('等待 CubeRoot 处理。', 'Awaiting CubeRoot review.')}</p>}
     </div>)}
-    {competition.status === 'published' && !settlement?.finalizedAt ? <div className="competition-toolbar"><button type="button" className="competition-secondary" disabled={busy || !ended} onClick={() => { void act(() => closeCompetitionSessions(competition.id)); }}>{t('处理缺赛成绩', 'Close unfinished entries')}</button>{competition.canPublish ? <button type="button" className="competition-secondary" disabled={busy || !ended || disputes.some(issue => !issue.resolvedAt)} onClick={() => { void act(() => finalizeCompetition(competition.id)); }}>{t('定稿比赛成绩', 'Finalize results')}</button> : null}<span className="competition-muted">{competition.format === 'advancement'
-      ? t('赛期结束后，平分先比较对局内最佳单次，再比较种子顺序。双方均无有效成绩时不晋级。',
-        'At the deadline, tied matches use best single, then seed order. If neither entrant has a valid solve, neither advances.')
-      : t('已结束场次中，未完成的已发打乱记 DNF，未发打乱记 DNS。比赛结束且异议处理后可定稿。', 'For ended sessions, unfinished issued attempts receive DNF and unissued attempts receive DNS. Finalize after the competition and dispute review end.')}</span></div> : null}
-    {(!competition.isTest || settlement) && <h3>{t('结算账单', 'Settlement statement')}</h3>}
-    {settlement ? <><dl className="competition-statement"><div><dt>{t('净收款', 'Net collected')}</dt><dd>{money(Number(settlement.netCollectedMinor), settlement.currency)}</dd></div><div><dt>{t('已退款', 'Refunded')}</dt><dd>{money(Number(settlement.refundedMinor), settlement.currency)}</dd></div><div><dt>{t('平台费用', 'Platform fee')}</dt><dd>{settlement.commissionBps == null ? t('未配置', 'Not configured') : money(Number(settlement.platformFeeMinor), settlement.currency)}</dd></div><div><dt>{t('主办方应收', 'Organizer proceeds')}</dt><dd>{settlement.commissionBps == null ? t('未配置', 'Not configured') : money(Number(settlement.organizerAmountMinor), settlement.currency)}</dd></div><div><dt>{t('预计可结算时间', 'Eligible from')}</dt><dd>{settlement.eligibleAt ? dateText(settlement.eligibleAt) : t('待确认条款与成绩', 'Pending terms and final results')}</dd></div></dl><p className="competition-muted">{recovery ? t('退款后存在应追回款项，请完成对账。', 'Refunds require a recovery payment and reconciliation.') : outstanding === 0 && settlement.transferStatus === 'recorded' ? t('当前款项已登记结清。', 'The current balance has been settled and recorded.') : settlement.eligible ? t('已满足结算条件，等待 CubeRoot 确认付款。', 'Eligible for settlement; awaiting CubeRoot payment confirmation.') : t('达到约定结算时间且成绩定稿后，方可结算。', 'Settlement requires finalized results and the agreed settlement date.')} {settlement.transferStatus === 'recorded' ? t('转账已登记。', 'Transfer recorded.') : t('此账单不代表已经转账。', 'This statement does not confirm a transfer.')}</p></> : null}
+    {finalizedAt ? <div className="competition-finalized">
+      <strong><Check size={18} aria-hidden />{t('成绩已定稿', 'Results finalized')}</strong>
+      <time dateTime={finalizedAt}>{dateText(finalizedAt)}</time>
+      <button type="button" className="competition-secondary" disabled={duel && !bracket?.generated} onClick={() => {
+        const data = duel ? { standings: bracket?.standings, matches: bracket?.matches } : {
+          results: registrations.filter(entry => entry.resultRecordedAt).map(entry => ({
+            name: entry.displayName, project: entry.project, device: entry.device, attempts: entry.attempts,
+          })),
+        };
+        downloadBlob(`competition-${competition.id}-results.json`, new Blob([JSON.stringify({ finalizedAt, ...data }, null, 2)], { type: 'application/json' }));
+      }}>{t('导出成绩', 'Export results')}</button>
+      <details><MoreToggle as="summary">{t('审计记录', 'Audit record')}</MoreToggle>
+        <p>{t('成绩定稿', 'Results finalized')} · {dateText(finalizedAt)}</p>
+        {disputes?.filter(issue => issue.resolvedAt).map(issue => <p key={issue.id}>{dateText(issue.resolvedAt!)} · {issue.resolution}</p>)}
+        {settlement?.transfers?.map(transfer => <p key={transfer.id}>{dateText(transfer.transferredAt ?? transfer.createdAt)} · {money(transfer.amountMinor, settlement.currency)}</p>)}
+      </details>
+    </div> : competition.status === 'published' && <div className="competition-management-controls">
+      <div><button type="button" className="competition-secondary" disabled={busy || !ended || !unfinished} onClick={() => { void act(() => closeCompetitionSessions(competition.id)); }}>{t('处理缺赛成绩', 'Close unfinished entries')}</button>
+        <small className="competition-muted">{unfinished ? `${stillOpen} ${!ended ? t('赛期结束后解锁。', 'Available after the competition ends.') : ''}`
+          : t('所有场次均已完成。', 'All sessions are complete.')}</small></div>
+      {competition.canPublish && <div><button type="button" className="competition-secondary" disabled={busy || !canFinalize}
+        onClick={() => { void act(() => finalizeCompetition(competition.id)); }}>{t('定稿比赛成绩', 'Finalize results')}</button>
+        {!canFinalize && <small className="competition-muted">{unfinished ? stillOpen : unsettledDisputes
+          ? t(`还有 ${unsettledDisputes} 项异议待处理。`, `${unsettledDisputes} disputes remain.`)
+          : !disputes ? t('正在核对成绩异议。', 'Checking for result disputes.') : t('赛期结束后解锁。', 'Available after the competition ends.')}</small>}</div>}
+    </div>}
+    {(!competition.isTest || settlement || free) && <h3>{t('结算账单', 'Settlement statement')}</h3>}
+    {free ? <div className="competition-free-statement">
+      <p>{t('免费赛事 · 无需平台结算', 'Free event · no platform settlement')}</p>
+      <span>{t('净收款', 'Net collected')} <strong>{money(0, settlement?.currency)}</strong></span>
+    </div> : settlement && <><dl className="competition-statement"><div><dt>{t('净收款', 'Net collected')}</dt><dd>{money(Number(settlement.netCollectedMinor), settlement.currency)}</dd></div><div><dt>{t('已退款', 'Refunded')}</dt><dd>{money(Number(settlement.refundedMinor), settlement.currency)}</dd></div><div><dt>{t('平台费用', 'Platform fee')}</dt><dd>{settlement.commissionBps == null ? '—' : money(Number(settlement.platformFeeMinor), settlement.currency)}</dd></div><div><dt>{t('主办方应收', 'Organizer proceeds')}</dt><dd>{settlement.commissionBps == null ? '—' : money(Number(settlement.organizerAmountMinor), settlement.currency)}</dd></div><div><dt>{t('预计可结算时间', 'Eligible from')}</dt><dd>{settlement.eligibleAt ? dateText(settlement.eligibleAt) : '—'}</dd></div></dl>
+      {missingTerms ? (competition.canPublish ? <details className="competition-rules">
+        <MoreToggle as="summary">{t('配置结算条款', 'Configure settlement terms')}</MoreToggle>
+        <form onSubmit={event => {
+          event.preventDefault();
+          if (settlementTerms) void act(() => configureCompetitionSettlement(competition.id, settlementTerms));
+        }}>
+          <div className="competition-form-grid">
+            <label>{t('平台费率（%）', 'Platform fee (%)')}<input className="platform-field-control" type="number"
+              min={0} max={100} step=".01" required value={terms.rate} onChange={event => setTerms({ ...terms, rate: event.target.value })} /></label>
+            <label>{t('结算等待天数', 'Settlement delay (days)')}<input className="platform-field-control" type="number"
+              min={0} max={3650} step={1} required value={terms.days} onChange={event => setTerms({ ...terms, days: event.target.value })} /></label>
+            <label>{t('等待期起算时间', 'Delay starts at')}<select className="platform-field-control" value={terms.anchor} onChange={event => setTerms({ ...terms, anchor: event.target.value })}>
+              <option value="finalized">{t('成绩定稿', 'Results finalized')}</option><option value="ended">{t('比赛结束', 'Event ended')}</option>
+            </select></label>
+          </div>
+          <button type="submit" className="competition-secondary" disabled={busy || !settlementTerms}>{t('保存结算条款', 'Save settlement terms')}</button>
+        </form>
+      </details> : <p className="competition-muted">{t('等待 CubeRoot 配置结算条款。', 'Awaiting CubeRoot settlement configuration.')}</p>)
+        : <p className="competition-muted">{recovery ? t('退款后存在应追回款项，请完成对账。', 'Refunds require a recovery payment and reconciliation.') : outstanding === 0 && settlement.transferStatus === 'recorded' ? t('当前款项已登记结清。', 'The current balance has been settled and recorded.') : settlement.eligible ? t('已满足结算条件，等待 CubeRoot 确认付款。', 'Eligible for settlement; awaiting CubeRoot payment confirmation.') : t('达到约定结算时间且成绩定稿后，方可结算。', 'Settlement requires finalized results and the agreed settlement date.')}</p>}
+    </>}
     {settlement?.transfers?.length ? <><h3>{t('已登记的转账', 'Recorded transfers')}</h3>{settlement.transfers.map(transfer => <p className="competition-muted" key={transfer.id}>{dateText(transfer.transferredAt ?? transfer.createdAt)} {transfer.entryType === 'adjustment' ? t('退款调整', 'Refund adjustment') : transfer.entryType === 'recovery' ? t('已收回款项', 'Recovered funds') : t('已完成转账', 'Completed transfer')} {money(Number(transfer.amountMinor), settlement.currency)}</p>)}</> : null}
     {settlement?.reconciliationRequired ? <p role="alert" className="competition-error">{t('已登记转账与当前应结算金额不一致，请联系 CubeRoot 对账。', 'Recorded transfers differ from the current settlement amount. Contact CubeRoot for reconciliation.')}</p> : null}
     {competition.canPublish && settlement && outstanding !== 0 && (recovery || settlement.eligible) ? <details className="competition-rules"><MoreToggle as="summary">{recovery ? t('登记已收回款项', 'Record recovered funds') : t('登记已完成转账', 'Record a completed transfer')}</MoreToggle><p>{t('先在线下完成转账，再登记凭据。这项操作只记账。', 'Complete the transfer externally, then record its reference here. This action records the transfer only.')}</p><p>{recovery ? t('应收回金额：', 'Recovery amount: ') : t('应转账金额：', 'Transfer amount: ')}{money(Math.abs(outstanding), settlement.currency)}</p><div className="competition-form-grid"><label>{t('转账凭据编号', 'Transfer reference')}<input autoComplete="off" className="platform-field-control" maxLength={200} value={providerReference} onChange={event => setProviderReference(event.target.value)} /></label><label>{t('实际转账时间（北京时间）', 'Actual transfer time (UTC+8)')}<input className="platform-field-control" type="datetime-local" value={transferredAt} onChange={event => setTransferredAt(event.target.value)} /></label></div><BoolToggle value={transferConfirmed} onChange={setTransferConfirmed} label={t('我已核对收款方、金额与转账凭据', 'I verified the recipient, amount and transfer reference')} /><button type="button" className="competition-secondary" disabled={busy || !providerReference.trim() || !transferredAt || !Number.isFinite(Date.parse(`${transferredAt}:00+08:00`)) || Date.parse(`${transferredAt}:00+08:00`) > now || !transferConfirmed} onClick={() => { void act(() => recordCompetitionSettlement(competition.id, { amountMinor: Math.abs(outstanding), direction: recovery ? 'recovery' : 'payout', providerReference: providerReference.trim(), transferredAt: isoDate(transferredAt) })); }}>{t('确认登记', 'Record transfer')}</button></details> : null}

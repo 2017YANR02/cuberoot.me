@@ -95,6 +95,7 @@ const MAX = 3, BODY_SCALE = 0.33, SHADOW_STRETCH = 0.15, SHADOW_SHIFT = 0.3;
 const REACH = MAX * 40;
 const SLEEP_AFTER = 60000;
 const POS_KEY = 'clawd-deskpet-pos';
+const ANCHOR_BOTTOM = '--deskpet-anchor-bottom';
 const SIZE_KEY = 'clawd-deskpet-size';
 const COMPACT_KEY = 'clawd-deskpet-compact';
 const MINI_KEY = 'clawd-deskpet-mini'; // { edge, preRight, preBottom } — restore cling across reloads
@@ -170,7 +171,8 @@ const blockingOverlays = `[aria-modal="true"], dialog[open], .pp-popup,
   :is([data-site-surface="popover"], .settings-popover-layer, .contact-qr-popover):popover-open`;
 
 const CSS = `
-.clawd-deskpet{position:fixed;right:max(20px,var(--sar,0px));bottom:max(20px,var(--sab,0px));
+.clawd-deskpet{position:fixed;right:max(20px,var(--sar,0px));--deskpet-anchor-bottom:max(20px,var(--sab,0px));
+  bottom:max(var(--deskpet-anchor-bottom),var(--deskpet-min-bottom,var(--deskpet-anchor-bottom)));
   z-index:100000;pointer-events:none;--pet-scale:1; /* above every page modal so it stays draggable */
   -webkit-user-select:none;user-select:none;
   width:calc(var(--pet-base) * var(--pet-scale));height:calc(var(--pet-base) * var(--pet-scale));}
@@ -274,7 +276,7 @@ const CSS = `
   .clawd-deskpet[data-char=rootbeast].mini-turn>img,.clawd-deskpet[data-original=true].mini-turn>img{transition:none;}
 }
 @media (max-width:768px){
-  .clawd-deskpet{right:max(12px,var(--sar,0px));bottom:max(12px,var(--sab,0px));}
+  .clawd-deskpet{right:max(12px,var(--sar,0px));--deskpet-anchor-bottom:max(12px,var(--sab,0px));}
   .clawd-deskpet[data-size=s]{--pet-base:144px;}
   .clawd-deskpet[data-size=m]{--pet-base:186px;}
   .clawd-deskpet[data-size=l]{--pet-base:240px;}
@@ -684,12 +686,12 @@ function DeskPetOverlay() {
     const r = root.getBoundingClientRect();
     // While clinging, a size change must re-pin to the edge, not recenter.
     if (hangingRef.current && character === 'rootbeast') {
-      root.style.bottom = vpH() - (window.visualViewport?.offsetTop ?? 0) - r.height + r.height * HANG_HOOK_Y + 'px';
+      root.style.setProperty(ANCHOR_BOTTOM, vpH() - (window.visualViewport?.offsetTop ?? 0) - r.height + r.height * HANG_HOOK_Y + 'px');
       return;
     }
     if (miniRef.current.active) {
       root.style.right = miniRightPx(THEMES[character].mini.offsetRatio, miniRef.current.edge, r.width) + 'px';
-      root.style.bottom = clampAnchor(0, vpH() - r.bottom, r.width, r.height, ...VC[character], character === 'rootbeast').bottom + 'px';
+      root.style.setProperty(ANCHOR_BOTTOM, clampAnchor(0, vpH() - r.bottom, r.width, r.height, ...VC[character], character === 'rootbeast').bottom + 'px');
       return;
     }
     const [fx, fy] = VC[character];
@@ -697,7 +699,7 @@ function DeskPetOverlay() {
       vpW() - pt.x - r.width * (1 - fx), vpH() - pt.y - r.height * (1 - fy),
       r.width, r.height, fx, fy, character === 'rootbeast');
     root.style.right = c.right + 'px';
-    root.style.bottom = c.bottom + 'px';
+    root.style.setProperty(ANCHOR_BOTTOM, c.bottom + 'px');
     persistItem(POS_KEY, JSON.stringify({ right: c.right, bottom: c.bottom }));
     if (bottomPeekingRef.current) ctrlRef.current?.reposition();
   }, [size, character]);
@@ -734,7 +736,7 @@ function DeskPetOverlay() {
         const rb = root.getBoundingClientRect();
         const c = clampAnchor(p.right, p.bottom, rb.width, rb.height, VC[character][0], VC[character][1], character === 'rootbeast');
         root.style.right = c.right + 'px';
-        root.style.bottom = c.bottom + 'px';
+        root.style.setProperty(ANCHOR_BOTTOM, c.bottom + 'px');
       }
     } catch {}
 
@@ -1062,7 +1064,7 @@ function DeskPetOverlay() {
       const r = root.getBoundingClientRect();
       // Only the vertical anchor changes; the release's horizontal coordinate stays exact.
       root.style.transition = '';
-      root.style.bottom = vpH() - topLine() - r.height + r.height * HANG_HOOK_Y + 'px';
+      root.style.setProperty(ANCHOR_BOTTOM, vpH() - topLine() - r.height + r.height * HANG_HOOK_Y + 'px');
     };
     if (rootHang) hangRenderer = createHangRenderer({
       object: rootHang, reducedMotion,
@@ -1287,7 +1289,7 @@ function DeskPetOverlay() {
         onLift: pixels => { root.style.translate = `0 ${-pixels}px`; },
         onCommitLift: pixels => {
           const bottom = parseFloat(getComputedStyle(root).bottom) || 0;
-          root.style.bottom = `${bottom + pixels}px`; root.style.translate = '';
+          root.style.setProperty(ANCHOR_BOTTOM, `${bottom + pixels}px`); root.style.translate = '';
           persistItem(POS_KEY, JSON.stringify({ right: parseFloat(getComputedStyle(root).right) || 0, bottom: bottom + pixels }));
         },
         onDragRest: () => {
@@ -1500,7 +1502,7 @@ function DeskPetOverlay() {
         const rb = root.getBoundingClientRect();
         const c = clampAnchor(pr, pb, rb.width, rb.height, VC[character][0], VC[character][1], character === 'rootbeast');
         root.style.transition = 'right .2s ease-out, bottom .2s ease-out';
-        root.style.right = c.right + 'px'; root.style.bottom = c.bottom + 'px';
+        root.style.right = c.right + 'px'; root.style.setProperty(ANCHOR_BOTTOM, c.bottom + 'px');
         if (!dnd) resetIdle();
         return;
       }
@@ -1696,7 +1698,7 @@ function DeskPetOverlay() {
         c.bottom = Math.max(c.bottom, baseAnchorHeight - visibleBottom - baseH * (1 - VC[character][1] + PEEK));
       }
       root.style.right = c.right + 'px';
-      root.style.bottom = c.bottom + 'px';
+      root.style.setProperty(ANCHOR_BOTTOM, c.bottom + 'px');
       lastDragBox = { left: vpW() - c.right - baseW, top: baseAnchorHeight - c.bottom - baseH, width: baseW, height: baseH };
     };
     const onUp = (event?: PointerEvent) => {
@@ -1712,7 +1714,7 @@ function DeskPetOverlay() {
       releasePointer();
       if (natural?.active) {
         suppressClick = moved;
-        persistItem(POS_KEY, JSON.stringify({ right: parseFloat(root.style.right) || 0, bottom: parseFloat(root.style.bottom) || 0 }));
+        persistItem(POS_KEY, JSON.stringify({ right: parseFloat(root.style.right) || 0, bottom: parseFloat(root.style.getPropertyValue(ANCHOR_BOTTOM)) || 0 }));
         return;
       }
       // A very short grab may release before the 280ms joint handoff ends.
@@ -1741,7 +1743,7 @@ function DeskPetOverlay() {
         }
         persistItem(POS_KEY, JSON.stringify({
           right: parseInt(root.style.right || '20', 10),
-          bottom: parseInt(root.style.bottom || '20', 10),
+          bottom: parseInt(root.style.getPropertyValue(ANCHOR_BOTTOM) || '20', 10),
         }));
         if (character === 'rootbeast' && line !== undefined && bottomRenderer?.ready
           && !dnd && !mini && !miniTransitioning && shake.snapshot().phase === 'idle'
@@ -1791,7 +1793,7 @@ function DeskPetOverlay() {
         liftFromMini();
         const r = root.getBoundingClientRect();
         const c = clampAnchor(pr, pb, r.width, r.height, VC[character][0], VC[character][1], character === 'rootbeast');
-        root.style.right = c.right + 'px'; root.style.bottom = c.bottom + 'px';
+        root.style.right = c.right + 'px'; root.style.setProperty(ANCHOR_BOTTOM, c.bottom + 'px');
         persistItem(POS_KEY, JSON.stringify(c));
       }
       if (character !== scene.character) {
@@ -1879,7 +1881,7 @@ function DeskPetOverlay() {
       const rect = root.getBoundingClientRect();
       root.style.transition = '';
       root.style.right = vpW() - rect.right + 'px';
-      root.style.bottom = vpH() - rect.bottom + 'px';
+      root.style.setProperty(ANCHOR_BOTTOM, vpH() - rect.bottom + 'px');
       clearTimeout(autoTimer); clearTimeout(idleTimer); clearTimeout(randomTimer);
       clearTimeout(miniTimer); clearTimeout(clickTimer); clearTimeout(longPressTimer);
       setSearchOpen(false);
@@ -1921,7 +1923,7 @@ function DeskPetOverlay() {
         dismissBottom();
         if (mini) liftFromMini(dnd ? 'sleeping' : 'idle');
         root.style.right = '';
-        root.style.bottom = '';
+        root.style.removeProperty(ANCHOR_BOTTOM);
         root.style.transition = '';
         keepInViewport();
         try { localStorage.removeItem(POS_KEY); localStorage.removeItem(MINI_KEY); } catch {}
@@ -1965,7 +1967,7 @@ function DeskPetOverlay() {
         if (character === 'rootbeast' && !mayUseMiniProgramBridge()) {
           c.bottom = Math.max(c.bottom, anchorHeight - dragBottomEdge() - r.height * (1 - VC[character][1] + PEEK));
         }
-        root.style.right = c.right + 'px'; root.style.bottom = c.bottom + 'px';
+        root.style.right = c.right + 'px'; root.style.setProperty(ANCHOR_BOTTOM, c.bottom + 'px');
         rebaseDrag(); return;
       }
       if (hangRenderer?.hanging) { pinHang(); return; }
@@ -1977,7 +1979,10 @@ function DeskPetOverlay() {
       }
       const r = root.getBoundingClientRect();
       const anchor = readDeskPetAnchor(root, vpW(), vpH());
-      let bottom = anchor.bottom;
+      const bottomStyle = root.style.getPropertyValue(ANCHOR_BOTTOM);
+      const reservedBottom = getComputedStyle(root).getPropertyValue('--deskpet-min-bottom');
+      // A page overlay can lift the visual position without changing the saved anchor.
+      let bottom = reservedBottom && bottomStyle ? Number.parseFloat(bottomStyle) : anchor.bottom;
       const box = window.innerWidth <= 768 ? document.querySelector<HTMLElement>('.deskpet-search-box') : null;
       if (box?.parentElement) {
         // The search animates from the pet. Reserve its final layout position,
@@ -1996,9 +2001,11 @@ function DeskPetOverlay() {
       }
       const c = clampAnchor(anchor.right, bottom, r.width, r.height, ...VC[character], character === 'rootbeast');
       const rightStyle = (mini ? miniRight(false) : c.right) + 'px';
-      const bottomStyle = c.bottom + 'px';
+      const nextBottom = c.bottom + 'px';
       if (root.style.right !== rightStyle) root.style.right = rightStyle;
-      if (root.style.bottom !== bottomStyle) root.style.bottom = bottomStyle;
+      if ((!reservedBottom || bottomStyle || box) && bottomStyle !== nextBottom) {
+        root.style.setProperty(ANCHOR_BOTTOM, nextBottom);
+      }
       rebaseDrag();
     };
     keepInViewport();

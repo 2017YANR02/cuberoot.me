@@ -196,7 +196,8 @@ body:has(.competition-arena) .clawd-deskpet { display: none; }
 .competition-arena-dock li[data-current] { box-shadow: inset 0 0 0 1px var(--border-strong); }
 .competition-arena-dock li[data-recorded][data-current] { box-shadow: inset 0 -2px var(--foreground), inset 0 0 0 1px var(--border-strong); }
 .competition-arena-dock li > span, .competition-arena-summary { font-size: 11px; color: var(--muted-foreground); }
-.competition-arena-dock li strong { font-size: clamp(12px,1.55vw,18px); }
+.competition-arena-dock li strong { font-size: clamp(12px,1.55vw,18px); white-space: nowrap; }
+.competition-arena-dock li > small { color: var(--muted-foreground); font-size: 11px; }
 .competition-arena-summary { display: grid; align-content: center; gap: 1px; text-align: start; padding: 0 6px; flex: none; }
 .competition-arena-summary strong { color: var(--foreground); }
 .competition-arena-support { display: grid; gap: 6px; min-width: 0; }
@@ -226,7 +227,10 @@ body:has(.competition-arena) .clawd-deskpet { display: none; }
 .competition-arena-settlement .competition-report { min-width: 0; margin: 0; }
 .competition-arena-settlement .competition-arena-board { max-height: min(65dvh, 650px); }
 .competition-arena-settlement .competition-arena-board tr[data-own] > * { top: auto; bottom: auto; }
-.competition-arena-settlement .competition-report-attempts .competition-replay-button { white-space: normal; }
+.competition-arena-settlement-summary .competition-arena-settlement-actions { gap: 8px; margin: 0; }
+.competition-arena-settlement-summary > .competition-rules { margin-top: 0; }
+.competition-arena-settlement-actions > :is(a, button) { flex: 1 1 auto; justify-content: center; text-align: center; margin-block: 0; }
+.competition-arena-settlement .competition-report-attempts .competition-replay-button { min-height: 34px; }
 .competition-arena-recap { margin: 16px 0 0; border-top: 1px solid var(--border-default); padding: 10px clamp(10px,2vw,24px); animation: competition-arena-enter var(--arena-ease); }
 
 .competition-arena-score {
@@ -252,8 +256,10 @@ body:has(.competition-arena) .clawd-deskpet { display: none; }
 .competition-arena-seat > header small { margin-inline-start: auto; color: var(--muted-foreground); white-space: nowrap; }
 .competition-arena-seat .competition-arena-time { font-size: clamp(48px,6vw,82px); }
 .competition-arena-history { list-style: none; margin: 0; padding: 8px 12px; }
-.competition-arena-history li { display: flex; justify-content: center; align-items: center; gap: 10px; }
-.competition-arena-game { display: flex; align-items: center; justify-content: center; gap: 10px; font-size: 13px; }
+.competition-arena-history li { display: grid; grid-template-columns: minmax(0, 1fr) 36px; align-items: center; gap: 6px; }
+.competition-arena-history li + li { border-block-start: 1px solid var(--border-default); }
+.competition-arena-history li > button { justify-content: center; min-height: 36px; }
+.competition-arena-game { display: grid; grid-template-columns: auto repeat(3, minmax(0, 1fr)); align-items: center; text-align: center; gap: 6px; padding-block: 5px; font-size: 13px; font-variant-numeric: tabular-nums; white-space: nowrap; }
 .competition-arena-game span:nth-child(3) { color: var(--muted-foreground); }
 .competition-arena-game strong { font-weight: 400; }
 .competition-arena-game strong[data-winner] { font-weight: 700; }
@@ -323,6 +329,148 @@ body:has(.competition-arena) .clawd-deskpet { display: none; }
   .competition-arena-dock ol { gap: 3px; }
   .competition-arena-dock li { min-height: 39px; }
 }
+.competition-arena-lobby { display: grid; gap: 8px; padding: 8px; text-align: center; font-variant-numeric: tabular-nums; }
+.competition-arena-lobby p, .competition-arena-lobby ul { margin: 0; }
+.competition-arena-lobby ul { display: grid; gap: 4px; list-style: none; padding: 0; }
+.competition-arena-lobby li { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 4px 8px; text-align: start; }
+.competition-arena-lobby small { color: var(--muted-foreground); }
+@media (width < 640px) {
+  .competition-arena-dock { flex-direction: column; gap: 6px; }
+  .competition-arena-summary { grid-auto-flow: column; justify-content: space-evenly; gap: 4px; }
+  .competition-arena-settlement .competition-arena-board :is(th, td) { padding-inline: 4px; }
+  .competition-arena-settlement .competition-arena-rank-column { width: 38px; }
+  .competition-arena-settlement .competition-arena-board thead th:first-child { white-space: nowrap; font-size: .75rem; }
+  .competition-arena-dock .competition-replay-button { gap: 2px; padding-inline: 2px; }
+  .competition-arena-history { padding-inline: 6px; }
+}
 @media (prefers-reduced-motion: reduce) {
   .competition-arena *, .competition-arena *::before, .competition-arena *::after { animation: none !important; transition: none !important; }
+}
+
+.competition-arena--duel { width: min(100%, 1020px); }
+.competition-arena--duel .competition-arena-shell { min-height: min(790px, calc(100dvh - 34px)); }
+.competition-arena--duel .competition-arena-hud { border-block-end: 1px solid var(--border-default); }
+.competition-arena--duel .competition-arena-brand > .competition-state { font-family: var(--font-mono), monospace; white-space: nowrap; }
+.competition-duel-layout {
+  display: grid; flex: 1; grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: auto auto minmax(315px, 1fr) minmax(48px, auto) minmax(52px, auto);
+  grid-template-areas: 'score' 'opponent' 'stage' 'controls' 'recording';
+  align-content: stretch; column-gap: 10px; row-gap: 0;
+}
+.competition-duel-layout > .competition-arena-score { grid-area: score; }
+.competition-arena--duel .competition-arena-score {
+  background: var(--card); border-radius: 9px; padding: 8px clamp(8px, 3vw, 20px);
+  border-block: 1px solid var(--border-default);
+}
+.competition-arena--duel .competition-arena-score > strong { font-family: var(--font-mono), monospace; }
+.competition-arena--duel .competition-arena-score > div { flex-direction: column; align-items: start; gap: 5px; }
+.competition-arena--duel .competition-arena-score > div:last-child { align-items: end; }
+.competition-arena--duel .competition-arena-points i { width: 7px; height: 7px; border-radius: 50%; }
+.competition-arena--duel .competition-arena-score [data-leading] i[data-scored] { background: var(--accent); }
+.competition-opponent-strip {
+  grid-area: opponent; display: flex; justify-content: space-between; gap: 8px; align-items: center;
+  min-height: 34px; margin-inline: 6px; padding-inline: 4px; border-block-end: 1px solid var(--border-default);
+  font-size: .8rem; color: var(--muted-foreground);
+}
+.competition-opponent-strip > progress { width: clamp(42px, 14%, 110px); margin-inline-end: auto; }
+.competition-opponent-strip > div { display: flex; align-items: center; gap: 8px; }
+.competition-opponent-strip small { font: inherit; }
+.competition-opponent-strip .competition-arena-time { font-size: inherit; color: var(--foreground); }
+.competition-opponent-strip .competition-arena-metrics { display: none; }
+.competition-duel-stage {
+  display: grid; grid-area: stage; justify-items: stretch; align-content: center;
+  min-width: 0; text-align: center; padding: 8px 4px; gap: 9px;
+}
+.competition-duel-stage:has(.competition-duel-sequence) { align-content: start; }
+.competition-duel-sequence { min-width: 0; --cube-h: clamp(110px, 22dvh, 188px); }
+.competition-duel-sequence .competition-arena-cube { margin-block-start: 4px; }
+.competition-duel-layout[data-smart] { grid-template-rows: auto 34px minmax(315px, 1fr) minmax(48px, auto) minmax(52px, auto); }
+.competition-duel-layout[data-smart] .competition-arena-duel-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); grid-template-rows: auto; }
+.competition-duel-layout[data-smart] .competition-arena-seat {
+  display: flex; flex-direction: column; align-items: stretch; padding-inline: 5px; --cube-h: clamp(120px, 23dvh, 220px);
+}
+.competition-duel-layout[data-smart] .competition-arena-seat > header { justify-content: center; }
+.competition-duel-layout[data-smart] .competition-arena-seat > header small { margin: 0; }
+.competition-arena--duel .competition-arena-time, .competition-arena--duel .competition-duel-timer output {
+  font-family: var(--font-mono), monospace; font-variant-numeric: tabular-nums; letter-spacing: -.03em;
+}
+.competition-duel-timer { display: contents; }
+.competition-duel-clock { grid-area: stage; align-self: center; text-align: center; z-index: 1; min-width: 0; }
+.competition-arena--duel[data-duel-stage='scrambling'] .competition-duel-clock { align-self: end; }
+.competition-duel-clock p { margin: 4px 0 10px; font-size: .84rem; }
+.competition-arena--duel .competition-duel-timer output { font-size: clamp(48px, 11vw, 124px); font-weight: 660; line-height: 1; }
+.competition-arena--duel[data-duel-stage='scrambling'] .competition-duel-timer output { font-size: clamp(28px, 6vw, 42px); }
+.competition-timer-hotzone {
+  width: 100%; min-height: clamp(128px, 26dvh, 230px); border: 1px solid var(--border-default);
+  border-radius: 9px; background: var(--card); color: var(--foreground); cursor: pointer; touch-action: manipulation;
+}
+.competition-duel-actions { grid-area: controls; justify-content: center; align-self: center; margin: 0; }
+.competition-touch-hint { display: none; }
+.competition-duel-recording { grid-area: recording; min-width: 0; align-self: center; }
+.competition-duel-recording[data-gate] {
+  grid-area: stage; justify-self: center; width: min(100%, 510px); padding: 16px;
+  border: 1px solid var(--border-default); border-radius: 10px; background: var(--card); z-index: 1;
+}
+.competition-duel-recording h2 { font-size: 1.05rem; margin: 0 0 7px; }
+.competition-duel-recording [data-dock] { width: auto; margin: 0; }
+.competition-duel-recording [data-recording] { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 6px 8px; }
+.competition-duel-recording [data-recording] button, .competition-recording-disclosure > summary { min-height: 39px; }
+.competition-recording-disclosure { position: relative; }
+.competition-recording-disclosure > summary {
+  display: flex; align-items: center; gap: 5px; padding: 4px 10px; border: 1px solid var(--border-default);
+  border-radius: 999px; background: var(--card); font-size: .8rem;
+}
+.competition-recording-disclosure .competition-camera-preview {
+  position: absolute; bottom: calc(100% + 132px); inset-inline-start: 0; width: min(250px, 70vw);
+  z-index: 5; margin: 0; background: var(--card);
+}
+.competition-arena--duel .competition-live-dot { background: var(--accent); }
+.competition-duel-layout > .competition-arena-support { grid-column: 1; margin-block: 8px; }
+.competition-duel-wait { min-width: 0; width: min(100%, 620px); justify-self: center; }
+.competition-duel-games { width: min(100%, 680px); margin-inline: auto; text-align: center; border-collapse: collapse; }
+.competition-duel-games :is(th, td) { padding: 8px 5px; border-block-end: 1px solid var(--border-default); }
+.competition-duel-games thead th { font-size: .8rem; color: var(--muted-foreground); }
+.competition-duel-games td[data-winner] { color: var(--signal-success); font-weight: 700; }
+.competition-duel-games tr[data-winner='own'] td:last-child, .competition-duel-games tr[data-winner='opponent'] td:nth-child(2) { color: var(--destructive); }
+.competition-duel-games tr[data-winner='draw'] td:nth-child(3) { color: var(--muted-foreground); }
+.competition-duel-games .competition-replay-button { min-height: 28px; padding: 2px 5px; }
+.competition-arena--duel progress { height: 6px; accent-color: var(--accent); }
+.competition-duel-report { display: grid; align-content: start; gap: 16px; width: min(100%, 760px); margin-inline: auto; }
+.competition-duel-result { border-block-start: 3px solid var(--signal-success); padding-block: 12px; }
+.competition-duel-result[data-outcome='champion'] { border-color: var(--accent); }
+.competition-duel-result[data-outcome='lost'] { border-color: var(--destructive); }
+.competition-duel-result > div:first-child { display: flex; align-items: center; gap: 8px; color: var(--signal-success); }
+.competition-duel-result[data-outcome='champion'] > div:first-child { color: var(--accent); }
+.competition-duel-result[data-outcome='lost'] > div:first-child { color: var(--destructive); }
+.competition-duel-result h1 { margin: 0; font-size: clamp(1.6rem, 5vw, 2.6rem); }
+.competition-duel-result > p { margin-block: 5px 12px; }
+.competition-duel-report-dock { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.competition-duel-report-dock > details { width: 100%; margin-block: 0; }
+@media (pointer: coarse), (max-width: 700px) {
+  .competition-keyboard-hint { display: none; }
+  .competition-touch-hint { display: block; }
+}
+@media (max-width: 700px) {
+  .competition-arena--duel .competition-arena-brand > :is(strong, .competition-test-badge) { display: none; }
+  .competition-arena--duel .competition-arena-hud { grid-template-columns: minmax(0, 1fr) auto auto; }
+  .competition-arena--duel .competition-arena-hud .competition-arena-status > span { max-width: none; text-overflow: clip; }
+  .competition-duel-layout, .competition-duel-layout[data-smart] { grid-template-rows: auto 34px minmax(285px, 1fr) minmax(48px, auto) minmax(55px, auto); }
+  .competition-duel-sequence { --cube-h: clamp(100px, 18dvh, 145px); }
+  .competition-arena--duel .competition-arena-shell { min-height: calc(100dvh - 18px); padding-block-end: env(safe-area-inset-bottom); }
+  .competition-arena--duel .competition-arena-seat .competition-arena-time { font-size: clamp(25px, 8vw, 55px); }
+  .competition-duel-games { font-size: .85rem; }
+}
+
+.competition-duel-layout[data-report] {
+  align-content: start; gap: 8px; width: min(100%, 760px); margin-inline: auto;
+  grid-template-rows: auto auto; grid-template-areas: 'report' 'recording';
+}
+.competition-duel-report { grid-area: report; }
+.competition-duel-layout[data-report] .competition-duel-recording { justify-self: start; }
+.competition-recording-disclosure .competition-recording-indicator {
+  inset-block-start: auto; inset-block-end: 8px; inset-inline-start: auto; inset-inline-end: 8px;
+}
+
+@media (max-height: 670px) {
+  .competition-recording-disclosure .competition-camera-preview { bottom: calc(100% + 106px); }
 }

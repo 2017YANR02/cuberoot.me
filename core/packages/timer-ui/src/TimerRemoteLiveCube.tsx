@@ -21,6 +21,7 @@ export function TimerRemoteLiveCube({ playerId, live, ownerLabel, reconnecting =
             facelets={live.facelets}
             moves={[...live.moves]}
             algAnchored={live.algAnchored}
+            liveSource={live.liveSource}
             mode={mode} language={language}
             useGyro={Boolean(live.quatRef?.current)}
             quatRef={live.quatRef}

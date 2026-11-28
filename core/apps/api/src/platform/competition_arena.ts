@@ -3,6 +3,7 @@ import {
   competitionDeadline, competitionSolveStart, type CompetitionDnfReason,
 } from '@cuberoot/shared/timer';
 import { platformQuery, type PlatformDb } from './db.js';
+import { competitionCheckInWindow, COMPETITION_REGISTRATION_CLOSED } from './competition_checkin.js';
 import { conflict, forbidden, notFound } from './errors.js';
 import { competitionScramble } from './competition_workflow.js';
 import { finishCompetitionSelfAttempt } from './competitions.js';
@@ -12,7 +13,7 @@ export const COMPETITION_DNF = { centiseconds: null, penalty: 'DNF' } as const;
 type Project = Parameters<typeof competitionScramble>[0];
 type Entry = {
   id: string; user_id: number; session_id: string; project: Project; device: string;
-  in_window: boolean; status: string; checked: boolean; kind: string; format: string | null;
+  in_check_in_window: boolean; has_started: boolean; status: string; checked: boolean; kind: string; format: string | null;
 };
 type Round = { id: string; session_id: string; project: Project; device: string; number: number; starts_at: Date; completed_at: Date | null };
 
@@ -20,14 +21,15 @@ export async function arenaEntry(db: PlatformDb, id: string, userId: number | nu
   const [entry] = await platformQuery<Entry>(db, `SELECT r.id::text,r.user_id,s.id::text AS session_id,
     r.competition_project AS project,t.competition_device AS device,s.session_kind AS kind,c.competition_format AS format,
     r.status,r.checked_in_at IS NOT NULL AS checked,
-    (e.status='published' AND s.starts_at<=clock_timestamp() AND s.ends_at>clock_timestamp()) AS in_window
+    (s.starts_at<=clock_timestamp() AND clock_timestamp()<s.ends_at) AS has_started,
+    (e.status='published' AND ${competitionCheckInWindow('s')}) AS in_check_in_window
     FROM platform_event_registrations r JOIN platform_event_ticket_types t ON t.id=r.ticket_type_id
     JOIN platform_competition_sessions s ON s.id=r.competition_session_id
     JOIN platform_competitions c ON c.event_id=r.event_id JOIN platform_events e ON e.id=r.event_id
     WHERE r.id=$1::uuid`, [id]);
   if (!entry) notFound('Competition entry');
   if (userId == null || Number(entry.user_id) !== userId) forbidden('Only the participant can open this seat');
-  const pendingCheckIn = allowPendingCheckIn && entry.device === 'smart' && entry.status === 'confirmed' && entry.in_window;
+  const pendingCheckIn = allowPendingCheckIn && entry.device === 'smart' && entry.status === 'confirmed' && entry.in_check_in_window;
   if (!['confirmed', 'attended'].includes(entry.status) || (!entry.checked && !pendingCheckIn) || entry.kind === 'offline' || entry.format === 'advancement') {
     conflict('A checked-in online Ao5 entry is required');
   }
@@ -43,10 +45,10 @@ export async function lockArenaRound(db: PlatformDb, entry: Pick<Entry, 'session
 
 // The caller holds the round row lock, so admission and round advancement see the same field.
 async function admitCompetitionArenaEntry(db: PlatformDb, round: Round, entry: Entry) {
-  if (round.completed_at || !entry.in_window || entry.status !== 'confirmed') return;
+  if (round.completed_at) return;
   await platformQuery(db, `WITH entrant AS (
     SELECT r.id FROM platform_event_registrations r
-    WHERE r.id=$1::uuid AND r.status='confirmed' AND r.checked_in_at IS NOT NULL
+    WHERE r.id=$1::uuid AND r.status='confirmed' AND r.checked_in_at IS NOT NULL AND r.arena_ready_at IS NOT NULL
       AND NOT EXISTS (
         SELECT 1 FROM platform_competition_attempts a
         WHERE a.registration_id=r.id AND (a.arena_round_id IS DISTINCT FROM $2::uuid OR a.attempt_number=$3)
@@ -65,26 +67,76 @@ async function admitCompetitionArenaEntry(db: PlatformDb, round: Round, entry: E
   [entry.id, round.id, round.number]);
 }
 
-export async function startCompetitionArena(db: PlatformDb, entry: Entry) {
-  await platformQuery(db, 'SELECT id FROM platform_competition_sessions WHERE id=$1::uuid FOR UPDATE', [entry.session_id]);
+type ArenaGroup = Pick<Entry, 'session_id' | 'project' | 'device'>;
+
+export async function competitionArenaLobby(db: PlatformDb, group: ArenaGroup) {
+  const [lobby] = await platformQuery<{
+    sessionStartsAt: Date; hasStarted: boolean; registrationClosed: boolean; totalEntrants: number;
+    checkedInCount: number; readyCount: number; lobbyPlayers: Array<{ id: string; name: string; checkedIn: boolean; ready: boolean }>;
+  }>(db, `SELECT s.starts_at AS "sessionStartsAt",s.starts_at<=clock_timestamp() AS "hasStarted",
+    ${COMPETITION_REGISTRATION_CLOSED} AS "registrationClosed", roster.*
+    FROM platform_competition_sessions s JOIN platform_competitions c ON c.event_id=s.event_id
+    CROSS JOIN LATERAL (
+      SELECT COUNT(*)::int AS "totalEntrants",COUNT(*) FILTER(WHERE r.checked_in_at IS NOT NULL)::int AS "checkedInCount",
+        COUNT(*) FILTER(WHERE readiness.ready)::int AS "readyCount",
+        COALESCE(jsonb_agg(jsonb_build_object('id',r.id,'name',o.buyer_display_name_snapshot,
+          'checkedIn',r.checked_in_at IS NOT NULL,'ready',readiness.ready) ORDER BY r.created_at,r.id),'[]') AS "lobbyPlayers"
+      FROM platform_event_registrations r JOIN platform_event_ticket_types t ON t.id=r.ticket_type_id
+      JOIN platform_order_items i ON i.id=r.order_item_id JOIN platform_orders o ON o.id=i.order_id
+      CROSS JOIN LATERAL (SELECT r.status='confirmed' AND r.checked_in_at IS NOT NULL AND r.arena_ready_at IS NOT NULL AS ready) readiness
+      WHERE r.competition_session_id=s.id AND r.competition_project=$2 AND t.competition_device=$3 AND r.status IN ('confirmed','attended')
+    ) roster WHERE s.id=$1::uuid`, [group.session_id, group.project, group.device]);
+  return lobby;
+}
+
+export async function requireLegacyScrambleWindow(db: PlatformDb, group: ArenaGroup, hasStarted: boolean) {
+  if (hasStarted) return;
+  const lobby = await competitionArenaLobby(db, group);
+  if (!lobby?.hasStarted && !(lobby?.registrationClosed && lobby.totalEntrants >= 2 && lobby.checkedInCount === lobby.totalEntrants)) {
+    conflict('Wait for all competitors to check in or for the scheduled start');
+  }
+}
+
+// Serialize with checkout, which also locks the competition before selecting a session.
+export async function lockCompetitionArenaSession(db: PlatformDb, sessionId: string) {
+  await platformQuery(db, `SELECT c.event_id FROM platform_competitions c JOIN platform_competition_sessions s ON s.event_id=c.event_id
+    WHERE s.id=$1::uuid FOR UPDATE OF c,s`, [sessionId]);
+}
+
+export async function readyCompetitionArena(db: PlatformDb, entry: Entry) {
+  await lockCompetitionArenaSession(db, entry.session_id);
   const existing = await lockArenaRound(db, entry);
+  const [eligible] = await platformQuery(db, `UPDATE platform_event_registrations r
+    SET arena_ready_at=COALESCE(arena_ready_at,clock_timestamp())
+    FROM platform_competition_sessions s,platform_events e
+    WHERE r.id=$1::uuid AND s.id=r.competition_session_id AND e.id=r.event_id AND e.status='published'
+      AND r.status='confirmed' AND r.checked_in_at IS NOT NULL AND ${competitionCheckInWindow('s')}
+    RETURNING r.id`, [entry.id]);
+  if (!eligible) conflict('The session is closed');
   if (existing) {
     await admitCompetitionArenaEntry(db, existing, entry);
     await advanceCompetitionArena(db, existing);
     return existing.id;
   }
-  if (!entry.in_window || entry.status !== 'confirmed') conflict('The session is closed');
   const [alreadyIssued] = await platformQuery(db, 'SELECT 1 FROM platform_competition_attempts WHERE registration_id=$1::uuid', [entry.id]);
   if (alreadyIssued) conflict('This seat has an attempt from an earlier session format');
+  return startCompetitionArena(db, entry);
+}
+
+/** Caller holds the competition/session lock. */
+async function startCompetitionArena(db: PlatformDb, entry: ArenaGroup) {
+  const lobby = await competitionArenaLobby(db, entry);
+  if (!lobby || lobby.readyCount < 1
+    || (!lobby.hasStarted && !(lobby.registrationClosed && lobby.totalEntrants >= 2 && lobby.readyCount === lobby.totalEntrants))) return null;
   const scramble = await competitionScramble(entry.project);
   const [round] = await platformQuery<Round>(db, `INSERT INTO platform_competition_arena_rounds(session_id,project,device,number,scramble,starts_at)
     VALUES($1::uuid,$2,$3,1,$4,clock_timestamp()+$5*INTERVAL '1 millisecond')
     RETURNING id,starts_at`, [entry.session_id, entry.project, entry.device, scramble, COMPETITION_START_BUFFER_MS]);
-  // Seed only checked-in entrants. The locked arena can admit later check-ins.
+  // Entrants who were not ready can still take a seat after this round opens.
   await platformQuery(db, `INSERT INTO platform_competition_attempts(registration_id,attempt_number,scramble,issued_at,arena_round_id)
     SELECT r.id,1,$4,$5,$6::uuid FROM platform_event_registrations r
     JOIN platform_event_ticket_types t ON t.id=r.ticket_type_id
-    WHERE r.competition_session_id=$1::uuid AND r.competition_project=$2 AND t.competition_device=$3 AND r.status='confirmed' AND r.checked_in_at IS NOT NULL
+    WHERE r.competition_session_id=$1::uuid AND r.competition_project=$2 AND t.competition_device=$3 AND r.status='confirmed' AND r.checked_in_at IS NOT NULL AND r.arena_ready_at IS NOT NULL
       AND NOT EXISTS(SELECT 1 FROM platform_competition_attempts old WHERE old.registration_id=r.id)`,
   [entry.session_id, entry.project, entry.device, scramble, round.starts_at, round.id]);
   return round.id;
@@ -142,6 +194,25 @@ export async function advanceCompetitionArena(db: PlatformDb, round: Round) {
 }
 
 export async function sweepCompetitionArenas(db: PlatformDb) {
+  const waiting = await platformQuery<ArenaGroup>(db, `SELECT s.id::text AS session_id,division.project,division.device
+    FROM platform_competitions c JOIN platform_events e ON e.id=c.event_id
+    JOIN platform_competition_sessions s ON s.event_id=e.id
+    CROSS JOIN LATERAL (
+      SELECT DISTINCT r.competition_project AS project,t.competition_device AS device
+      FROM platform_event_registrations r JOIN platform_event_ticket_types t ON t.id=r.ticket_type_id
+      WHERE r.competition_session_id=s.id AND r.status='confirmed'
+        AND r.checked_in_at IS NOT NULL AND r.arena_ready_at IS NOT NULL
+        AND NOT EXISTS(SELECT 1 FROM platform_competition_attempts a WHERE a.registration_id=r.id)
+        AND NOT EXISTS(SELECT 1 FROM platform_competition_arena_rounds ar
+          WHERE ar.session_id=s.id AND ar.project=r.competition_project AND ar.device=t.competition_device)
+    ) division
+    WHERE e.status='published' AND COALESCE(c.competition_format,'average')='average' AND s.session_kind<>'offline'
+      AND s.starts_at<=clock_timestamp() AND clock_timestamp()<s.ends_at
+    ORDER BY c.event_id,s.id,division.project,division.device LIMIT 32 FOR UPDATE OF c,s SKIP LOCKED`);
+  for (const group of waiting) {
+    if (!await lockArenaRound(db, group)) await startCompetitionArena(db, group);
+  }
+
   const rounds = await platformQuery<Round>(db, `SELECT ar.id,ar.session_id,ar.project,ar.device,ar.number,ar.starts_at,ar.completed_at
     FROM platform_competition_arena_rounds ar JOIN platform_competition_sessions s ON s.id=ar.session_id
     JOIN platform_events e ON e.id=s.event_id WHERE e.status='published' AND ar.completed_at IS NULL AND ar.starts_at<=clock_timestamp()

@@ -46,6 +46,7 @@ export async function withIdempotency(
   scope: string,
   body: unknown,
   mutation: (db: PlatformDb) => Promise<PlatformMutationResult>,
+  authorizeReplay?: (db: PlatformDb) => Promise<unknown>,
 ): Promise<PlatformIdempotentResult> {
   const key = idempotencyKey(c);
   const hash = requestHash(scope, actor.userId, body);
@@ -86,6 +87,7 @@ export async function withIdempotency(
       );
     }
     if (request.state === 'completed' && request.response_status && request.response_body != null) {
+      await authorizeReplay?.(db);
       if (![200, 201, 202].includes(request.response_status)) {
         throw new Error('Unsupported stored Platform idempotency response status');
       }

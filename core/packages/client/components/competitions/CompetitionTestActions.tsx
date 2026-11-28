@@ -44,7 +44,7 @@ function testError(cause: unknown, t: ReturnType<typeof useT>) {
   }
 }
 
-export function CompetitionTestCreateButton() {
+export function CompetitionTestCreateButton({ onCreated }: { onCreated?: (id: string) => void }) {
   const t = useT();
   const user = useAuthUser();
   const [open, setOpen] = useState(false);
@@ -53,11 +53,11 @@ export function CompetitionTestCreateButton() {
     <button className="competition-secondary" type="button" onClick={() => setOpen(true)}>
       <FlaskConical size={16} aria-hidden />{t('一键测试赛', 'Quick test competition')}
     </button>
-    {open && <CreateTestDialog userId={user?.uid} onClose={() => setOpen(false)} />}
+    {open && <CreateTestDialog userId={user?.uid} onCreated={onCreated} onClose={() => setOpen(false)} />}
   </>;
 }
 
-function CreateTestDialog({ userId, onClose }: { userId?: number; onClose: () => void }) {
+function CreateTestDialog({ userId, onClose, onCreated }: { userId?: number; onClose: () => void; onCreated?: (id: string) => void }) {
   const t = useT();
   const lang = useLang();
   const router = useEntryRouter();
@@ -70,6 +70,7 @@ function CreateTestDialog({ userId, onClose }: { userId?: number; onClose: () =>
   const [device, setDevice] = useState<CompetitionTestSettings['device']>('smart');
   const [project, setProject] = useState<CompetitionTestSettings['project']>('333');
   const [autoEnter, setAutoEnter] = useState(true);
+  const [capacity, setCapacity] = useState(16);
   const [supervisor, setSupervisor] = useState<number | undefined>(userId);
   const [options, setOptions] = useState<Awaited<ReturnType<typeof getCompetitionTestOptions>> | null>(null);
   const [optionsError, setOptionsError] = useState('');
@@ -103,6 +104,7 @@ function CreateTestDialog({ userId, onClose }: { userId?: number; onClose: () =>
     if (pending.current || (supervised && (!options || supervisor === undefined))) return;
     const body: CompetitionTestSettings = {
       format, supervisionMode: mode, device, project: device === 'smart' ? '333' : project, autoEnter: directEntry && autoEnter,
+      ...(!directEntry || !autoEnter ? { capacity } : {}),
       ...(supervised ? { organizationId: options?.organizationId, supervisorUserId: supervisor } : {}),
     };
     const payload = JSON.stringify(body);
@@ -117,7 +119,8 @@ function CreateTestDialog({ userId, onClose }: { userId?: number; onClose: () =>
         : competitionWorkspaceHref('manage', result.id);
       pending.current = false;
       close();
-      router.push((lang === 'zh' ? '/zh' : '') + href);
+      if (onCreated && !result.registrationId) onCreated(result.id);
+      else router.push((lang === 'zh' ? '/zh' : '') + href);
     } catch (cause) {
       setError(testError(cause, t));
     } finally {
@@ -167,6 +170,11 @@ function CreateTestDialog({ userId, onClose }: { userId?: number; onClose: () =>
             <button type="button" className="competition-secondary" onClick={() => setOptionsRevision(value => value + 1)}>{t('重试', 'Retry')}</button>
           </div>}
         </div>}
+        {(!directEntry || !autoEnter) && <label className="competition-field">{t('人数上限', 'Capacity')}
+          <select className="platform-field-control competition-test-select" value={capacity} onChange={event => setCapacity(Number(event.target.value))}>
+            {[8, 16, 32, 64].map(limit => <option key={limit} value={limit}>{limit}</option>)}
+          </select>
+        </label>}
         {directEntry && <div className="competition-test-wide">
           <BoolToggle label={t('创建后直接进入赛场', 'Enter the arena after creating')} value={autoEnter} onChange={setAutoEnter} />
         </div>}
@@ -182,8 +190,8 @@ function CreateTestDialog({ userId, onClose }: { userId?: number; onClose: () =>
   </dialog>;
 }
 
-export function CompetitionTestControls({ competition, canStart, onStarted }: {
-  competition: OnlineCompetition; canStart: boolean; onStarted: () => void;
+export function CompetitionTestControls({ competition, canStart, onStarted, onCleanedUp }: {
+  competition: OnlineCompetition; canStart: boolean; onStarted: () => void; onCleanedUp?: () => void;
 }) {
   const t = useT();
   const lang = useLang();
@@ -215,7 +223,8 @@ export function CompetitionTestControls({ competition, canStart, onStarted }: {
         setNotice(t('测试赛已开始', 'Test competition started'));
       } else {
         await cleanupCompetitionTest(competition.id, key);
-        router.push((lang === 'zh' ? '/zh' : '') + competitionWorkspaceHref('manage'));
+        if (onCleanedUp) onCleanedUp();
+        else router.push((lang === 'zh' ? '/zh' : '') + competitionWorkspaceHref('manage'));
       }
     } catch (cause) {
       setError(testError(cause, t));

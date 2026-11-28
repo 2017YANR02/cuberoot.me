@@ -40,7 +40,7 @@ describe.skipIf(!databaseUrl)('competition migration and concurrent registration
       CREATE TABLE app_users(id BIGINT PRIMARY KEY);
       CREATE TABLE organizations(id UUID PRIMARY KEY,status TEXT NOT NULL);
       CREATE TABLE organization_members(organization_id UUID,user_id BIGINT,status TEXT,role TEXT);
-      CREATE TABLE platform_events(id UUID PRIMARY KEY,status TEXT,starts_at TIMESTAMPTZ,ends_at TIMESTAMPTZ);
+      CREATE TABLE platform_events(id UUID PRIMARY KEY,status TEXT,starts_at TIMESTAMPTZ,ends_at TIMESTAMPTZ,created_by_user_id BIGINT);
       CREATE TABLE platform_event_ticket_types(
         id UUID PRIMARY KEY DEFAULT gen_random_uuid(),event_id UUID NOT NULL REFERENCES platform_events(id),
         code TEXT NOT NULL,title_zh TEXT NOT NULL DEFAULT '',title_en TEXT NOT NULL DEFAULT '',
@@ -48,7 +48,7 @@ describe.skipIf(!databaseUrl)('competition migration and concurrent registration
         status TEXT DEFAULT 'active',sales_start_at TIMESTAMPTZ,sales_end_at TIMESTAMPTZ,UNIQUE(event_id,code)
       );
       CREATE TABLE platform_payment_attempts(id UUID PRIMARY KEY);
-      CREATE TABLE platform_event_registrations(id UUID PRIMARY KEY DEFAULT gen_random_uuid(),event_id UUID NOT NULL REFERENCES platform_events(id),ticket_type_id UUID NOT NULL REFERENCES platform_event_ticket_types(id),user_id BIGINT REFERENCES app_users(id),status TEXT NOT NULL,quantity INTEGER NOT NULL DEFAULT 1);
+      CREATE TABLE platform_event_registrations(id UUID PRIMARY KEY DEFAULT gen_random_uuid(),event_id UUID NOT NULL REFERENCES platform_events(id),ticket_type_id UUID NOT NULL REFERENCES platform_event_ticket_types(id),user_id BIGINT REFERENCES app_users(id),status TEXT NOT NULL,quantity INTEGER NOT NULL DEFAULT 1,reservation_expires_at TIMESTAMPTZ);
     `);
     await db.unsafe(readFileSync(new URL('../migrations/0224_online_competitions.sql',import.meta.url),'utf8'));
     await db.unsafe(readFileSync(new URL('../migrations/0227_competition_device_reports.sql',import.meta.url),'utf8'));
@@ -58,7 +58,7 @@ describe.skipIf(!databaseUrl)('competition migration and concurrent registration
     await db.unsafe(`INSERT INTO app_users(id) VALUES(1),(2),(3),(4),(5),(6),(99);
       INSERT INTO organizations VALUES('${org}','active'),('${otherOrg}','active');
       INSERT INTO organization_members VALUES('${org}',1,'active','owner'),('${otherOrg}',2,'active','owner');
-      INSERT INTO platform_events VALUES('${event}','published',NOW()+INTERVAL '1 hour',NOW()+INTERVAL '3 hours');
+      INSERT INTO platform_events VALUES('${event}','published',NOW()+INTERVAL '1 hour',NOW()+INTERVAL '3 hours',1);
       INSERT INTO platform_competitions(event_id,organization_id,registration_opens_at,registration_closes_at,commission_bps,settlement_days,settlement_anchor) VALUES('${event}','${org}',NOW()-INTERVAL '1 day',NOW()+INTERVAL '30 minutes',0,0,'finalized');
       INSERT INTO platform_event_ticket_types(id,event_id,code,competition_project,competition_device)
         VALUES('${ticket}','${event}','333-ordinary','333','ordinary'),('${smartTicket}','${event}','333-smart','333','smart');

@@ -1,5 +1,6 @@
 import type { PlatformActor } from './auth.js';
 import { platformQuery, type PlatformDb } from './db.js';
+import { competitionManagerAccess } from './competitions.js';
 import { notFound } from './errors.js';
 
 interface SettlementAmounts extends Record<string, unknown> {
@@ -45,9 +46,7 @@ export async function competitionHostOverview(db: PlatformDb, actor: PlatformAct
       JOIN organizations org ON org.id=c.organization_id AND org.status='active'
       LEFT JOIN platform_event_registrations r ON r.event_id=c.event_id
       ${COMPETITION_SETTLEMENT_REGISTRATION_JOINS}
-      WHERE NOT c.is_test AND ($2 OR EXISTS (SELECT 1 FROM organization_members member
-        WHERE member.organization_id=org.id AND member.user_id=$1
-          AND member.status='active' AND member.role IN ('owner','admin')))
+      WHERE NOT c.is_test AND ${competitionManagerAccess('$1','$2')}
       GROUP BY c.event_id,e.id,org.id
     )
     SELECT id::text, title_zh AS "titleZh", title_en AS "titleEn", organization_name AS "organizationName",status,

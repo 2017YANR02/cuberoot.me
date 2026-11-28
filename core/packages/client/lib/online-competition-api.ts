@@ -89,15 +89,21 @@ export interface OnlineCompetition extends OnlineCompetitionSummary {
   offlineVenue?: CompetitionVenue | null;
   reviewNote?: string;
   sessions: CompetitionSession[];
+  isEntrant?: boolean;
   canManage?: boolean;
   canSupervise?: boolean;
   canPublish?: boolean;
   finalizedAt?: string | null;
 }
+export type CompetitionDuelStatus = 'not_checked_in' | 'checked_in' | 'waiting_opponent' | 'match_ready' | 'in_progress' | 'eliminated' | 'champion' | 'runner_up';
+
 export interface CompetitionRegistration {
   id: string;
   userId: number;
   displayName: string;
+  createdAt?: string;
+  countryCode?: string | null;
+  wcaId?: string | null;
   project: string;
   device: CompetitionDevice;
   sessionId: string;
@@ -108,6 +114,14 @@ export interface CompetitionRegistration {
   canCheckIn: boolean;
   canRecordResult: boolean;
   canJoinVideo?: boolean;
+  duelStatus?: CompetitionDuelStatus | null;
+  duelReady?: boolean;
+  matchId?: string | null;
+  matchStatus?: CompetitionBracketMatch['status'] | null;
+  bracketSide?: CompetitionBracketMatch['side'] | null;
+  roundNumber?: number | null;
+  gameNumber?: number | null;
+  opponentName?: string | null;
   resultRecordedAt: string | null;
   attemptNumber?: number | null;
   reservationExpiresAt?: string | null;
@@ -126,6 +140,7 @@ export interface MyCompetitionEntry {
   device: CompetitionDevice | null;
   orderId: string;
   sessionStartsAt: string;
+  sessionKind?: CompetitionMode;
   reservationExpiresAt?: string | null;
   action: 'pay' | 'results' | 'enter' | 'enter_bracket' | 'check_in' | 'upcoming' | 'details';
 }
@@ -214,6 +229,7 @@ export type CompetitionTestSettings = {
   device: CompetitionDevice;
   project: CompetitionDraftProject;
   autoEnter: boolean;
+  capacity?: number;
   organizationId?: string;
   supervisorUserId?: number;
 };
@@ -262,6 +278,8 @@ export const listCompetitionDisputes = (id: string) => request<{ disputes: Compe
 export const resolveCompetitionDispute = (id: string, resolution: string, correctedAttempts?: CompetitionResult['attempts']) => request(`${base}/disputes/${encodeURIComponent(id)}/resolve`, 'POST', { resolution, ...(correctedAttempts ? { correctedAttempts } : {}) });
 export const finalizeCompetition = (id: string) => request(`${path(id)}/finalize`, 'POST', {});
 export const closeCompetitionSessions = (id: string) => request(`${path(id)}/close-sessions`, 'POST', {});
+export const configureCompetitionSettlement = (id: string, terms: CompetitionSettlementTerms) =>
+  request<{ settlement: CompetitionSettlement }>(`${path(id)}/settlement-terms`, 'POST', terms);
 export const getCompetitionSettlement = (id: string) => request<{ settlement: CompetitionSettlement | null }>(`${path(id)}/settlement`);
 export const recordCompetitionSettlement = (id: string, body: { amountMinor: number; providerReference: string; transferredAt: string; direction?: 'payout' | 'recovery' }) => request(`${path(id)}/settlement-record`, 'POST', body);
 export interface CompetitionEvidence { attemptNumber?: number | null; id: string; mime: string; sizeBytes: number; createdAt: string; expiresAt: string }
@@ -314,7 +332,7 @@ export async function downloadCompetitionEvidence(id: string) {
   if (!response.ok) { await handleApi(response); throw new Error('Download failed'); }
   return response.blob();
 }
-export const createCompetitionOrder = (project: CompetitionProject, sessionId: string) => request<{ order?: { id: string }; id?: string; resourceId?: string }>('/v1/platform/orders', 'POST', {
+export const createCompetitionOrder = (project: CompetitionProject, sessionId: string) => request<{ order?: { id: string }; id?: string; resourceId?: string; status?: string; totalAmountMinor?: number; currency?: string }>('/v1/platform/orders', 'POST', {
   items: [{ eventTicketTypeId: project.id, competitionSessionId: sessionId, device: project.device, quantity: 1 }],
 });
 
@@ -322,14 +340,20 @@ export type CompetitionBracketMatch = {
   id: string; ticketId: string; project: string; device: CompetitionDevice;
   side: 'winners' | 'losers' | 'grand_final'; round: number; number: number; bestOf: number;
   playerA: string | null; playerB: string | null; nameA: string | null; nameB: string | null;
+  code?: string; seedA?: number; seedB?: number; countryA?: string | null; countryB?: string | null;
+  readyAt?: string | null; noShowDeadlineAt?: string | null; gameStartsAt?: string | null;
+  penaltyA?: string | null; penaltyB?: string | null;
   scoreA: number; scoreB: number; winner: string | null;
   status: 'pending' | 'ready' | 'in_progress' | 'completed' | 'bye';
   gameNumber?: number | null;
+  checkedInA?: boolean; checkedInB?: boolean; readyA?: boolean; readyB?: boolean;
+  forfeitReason?: 'no_show' | 'double_no_show' | null;
   nextWin: string | null; nextLoss: string | null;
 };
 export type CompetitionBracketStanding = {
   id: string; ticketId: string; name: string; rank: number; wins: number; best: number | null;
   wcaId: string | null; countryCode: string | null; recordedAt?: string | null;
+  matchWins?: number; matchLosses?: number; eliminationSide?: 'winners' | 'losers' | null; eliminationRound?: number | null;
 };
 export type CompetitionReplay = {
   scramble: string; durationMs: number; moves: Array<{ move: string; elapsedMs: number }>;
@@ -343,6 +367,9 @@ export type CompetitionArenaAttempt = {
 };
 export type CompetitionArenaPlayer = CompetitionArenaIdentity & { id: string; attempts: CompetitionArenaAttempt[] };
 export type CompetitionArenaSnapshot = {
+  waitingForStart?: boolean; sessionStartsAt?: string; ownReady?: boolean;
+  totalEntrants?: number; checkedInCount?: number; readyCount?: number;
+  lobbyPlayers?: Array<{ id: string; name: string; checkedIn: boolean; ready: boolean }>;
   serverNow: string; checkedIn?: boolean; roundNumber: number | null; seated: boolean; completed: boolean; legacy?: boolean;
   roomId: string | null; startsAt: string | null; scramble: string | null; credentials: NetBattleCredentials | null;
   inspectAt: string | null; solveAt: string | null; players: CompetitionArenaPlayer[];
@@ -361,9 +388,18 @@ export type CompetitionDuel = {
   id: string; eventId: string; project: string; device: CompetitionDevice; status: CompetitionBracketMatch['status'];
   registrationId: string | null; supervisionMode: CompetitionMode; requiresSupervision: boolean; checkedIn: boolean;
   ownName: string; opponentName: string; ownScore: number; opponentScore: number;
-  bestOf?: number; bracketSide?: CompetitionBracketMatch['side']; credentials?: NetBattleCredentials | null;
+  bestOf?: number; bracketSide?: CompetitionBracketMatch['side']; bracketRound?: number; bracketNumber?: number; credentials?: NetBattleCredentials | null;
   ownIdentity?: CompetitionArenaIdentity; opponentIdentity?: CompetitionArenaIdentity; opponentPlayerId?: string | null;
-  serverNow: string; gameNumber: number; startAt: string | null; canPlay: boolean;
+  serverNow: string; sessionStartsAt?: string; gameNumber: number; startAt: string | null; canPlay: boolean;
+  noShowDeadlineAt?: string | null;
+  forfeitReason?: CompetitionBracketMatch['forfeitReason'];
+  supervisorVideoIdentity?: string | null;
+  nextStep?: {
+    outcome: 'advanced' | 'dropped_to_losers' | 'eliminated' | 'champion' | 'runner_up' | 'pending_reset';
+    nextMatchId: string | null; nextMatchSide: CompetitionBracketMatch['side'] | null;
+    nextMatchRound: number | null; nextMatchStatus: CompetitionBracketMatch['status'] | null;
+    nextOpponentName: string | null;
+  } | null;
   scramble: string | null; ownReady: boolean; opponentReady: boolean;
   ownResult: CompetitionDuelGame['ownResult']; opponentFinished: boolean; runId: string | null;
   opponentPhase: 'inspecting' | 'solving' | null;
@@ -377,6 +413,11 @@ export type CompetitionDuel = {
 };
 const matchPath = (id: string) => `${base}/matches/${encodeURIComponent(id)}`;
 export const getCompetitionBrackets = (id: string) => viewerGet<{ generated: boolean; matches: CompetitionBracketMatch[]; standings: CompetitionBracketStanding[] }>(`${path(id)}/brackets`);
+export type CompetitionJudgeAction = 'remind' | '+2' | 'DNF' | 'replay' | 'absence';
+export const getCompetitionSupervisionCameras = (id: string) =>
+  request<{ cameras: Record<string, { a: boolean; b: boolean }>; participants: Record<string, { a: string; b: string }>; dispatchBatchSize: number }>(`${path(id)}/supervision-cameras`);
+export const superviseCompetitionMatch = (id: string, action: CompetitionJudgeAction, side?: 'a' | 'b', gameNumber?: number) =>
+  request<{ applied: boolean }>(`${matchPath(id)}/supervision`, 'POST', { action, side, gameNumber });
 export const generateCompetitionBrackets = (id: string) => request(`${path(id)}/brackets/generate`, 'POST', {});
 export const getCompetitionDuel = (id: string) => request<CompetitionDuel>(matchPath(id));
 export const readyCompetitionDuel = (id: string, gameNumber: number, key?: string) =>

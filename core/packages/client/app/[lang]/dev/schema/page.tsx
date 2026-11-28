@@ -105,8 +105,9 @@ const TABLES: Table[] = [
   { name: 'auth_identity_pending', domain: 'account', origin: '0232', purpose: { zh: '首次身份认证的 15 分钟尝试；票据只存摘要，另存已验证身份资料及必要加密凭据，明确创建或绑定后单次核销，不提前创建账号', en: '15-minute first-time identity attempts; tickets are hashed, with verified identity data and required encrypted credentials stored separately; consumed once after explicit creation or linking without creating an account in advance' } },
   { name: 'platform_organizer_applications', domain: 'platform', origin: '0229', purpose: { zh: '主办方申请、关联组织与平台审批记录', en: 'Organizer applications, linked organizations and platform reviews' } },
   { name: 'platform_competitions', domain: 'platform', origin: '0224 / 0354 / 0355 / 0356', evolved: [365], purpose: { zh: '赛制、审核、报名窗口、结算与测试赛隔离', en: 'Format, review, registration window, settlement and test competition isolation' } },
+  { name: 'platform_event_registrations', domain: 'platform', origin: '0167', evolved: [224, 366], purpose: { zh: '活动报名、赛事检录与同步赛场就绪时间', en: 'Event registration, competition check-in and synchronized arena readiness' } },
   { name: 'platform_competition_matches', domain: 'platform', origin: '0357', purpose: { zh: '项目分组的双败对阵、比分与胜败晋级指向', en: 'Per-division double-elimination match scores and winner and loser paths' } },
-  { name: 'platform_competition_match_games', domain: 'platform', origin: '0357', evolved: [358], purpose: { zh: '双败小局的双方准备、同步打乱、观察限时、起表、比赛成绩和设备证据', en: 'Game readiness, shared scramble, inspection deadlines, solve starts, results and device evidence' } },
+  { name: 'platform_competition_match_games', domain: 'platform', origin: '0357', evolved: [358, 366], purpose: { zh: '双败小局的双方准备、同步打乱、观察限时、起表、比赛成绩和设备证据', en: 'Game readiness, shared scramble, inspection deadlines, solve starts, results and device evidence' } },
   { name: 'platform_competition_sessions', domain: 'platform', origin: '0224 / 0356', purpose: { zh: '线上监督排班和自助、线下赛事的默认场次', en: 'Supervised slots and default sessions for self-service and in-person competitions' } },
   { name: 'platform_competition_arena_rounds', domain: 'platform', origin: '0363', purpose: { zh: '统一发乱的赛场轮次及其起止时间', en: 'Arena rounds with a shared scramble and start and completion times' } },
   { name: 'platform_competition_attempts', domain: 'platform', origin: '0224', evolved: [363], purpose: { zh: '服务器逐把打乱与监督员成绩确认', en: 'Server-issued scrambles and supervisor-recorded attempts' } },
@@ -417,7 +418,7 @@ const TABLES: Table[] = [
     'platform_event_ticket_types', 'platform_news_articles', 'platform_membership_plans', 'platform_coupons',
     'platform_shipping_addresses', 'platform_orders', 'platform_order_items', 'platform_coupon_redemptions',
     'platform_payment_attempts', 'platform_provider_events', 'platform_refunds', 'platform_inventory_ledger',
-    'platform_fulfillment_ledger', 'platform_event_registrations', 'platform_course_entitlements',
+    'platform_fulfillment_ledger', 'platform_course_entitlements',
     'platform_entitlement_ledger', 'platform_memberships', 'platform_membership_ledger',
     'platform_lesson_progress', 'platform_lesson_notes', 'platform_favorites', 'platform_quiz_attempts',
     'platform_learning_stage_preferences', 'platform_course_reviews', 'platform_certificates', 'platform_checkins', 'platform_point_ledger',
@@ -617,6 +618,8 @@ const TABLES: Table[] = [
 ];
 
 const MIGRATIONS: { n: number; slug: string; desc: Bi }[] = [
+  { n: 369, slug: 'competition_duel_seats', desc: { zh: '记录对局报到时间、弃权原因和监考房版本。', en: 'Track duel readiness deadlines, forfeits and supervision room generations.' } },
+  { n: 368, slug: 'competition_checkin_gate', desc: { zh: '记录同步赛场就绪状态，扩大双败实况通知范围。', en: 'Persist arena readiness and notify live duel clients of more phase changes.' } },
   { n: 367, slug: 'smart_cube_last_device', desc: { zh: '保存账号上次成功连接的智能魔方浏览器设备 ID。', en: 'Save the browser device ID of the last smart cube successfully connected for an account.' } },
   { n: 366, slug: 'competition_result_sessions', desc: { zh: '按匿名验证会话记录不同比赛的成绩读取次数。', en: 'Count distinct competitions read by each anonymous verification session.' } },
   { n: 365, slug: 'competition_test_mode', desc: { zh: '标记测试赛，将其排除在公开目录与正式统计之外。', en: 'Mark test competitions for exclusion from public directories and official statistics.' } },

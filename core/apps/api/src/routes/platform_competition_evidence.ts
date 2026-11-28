@@ -1,6 +1,7 @@
 import { promises as fs } from 'node:fs';
 import path from 'node:path';
 import { requirePlatformActor, type PlatformActor } from '../platform/auth.js';
+import { competitionEntrant, competitionManagerAccess } from '../platform/competitions.js';
 import { platformDb, platformQuery, platformTransaction, type PlatformDb } from '../platform/db.js';
 import { badRequest, conflict, forbidden, notFound } from '../platform/errors.js';
 import { createPlatformMediaToken, verifyPlatformMediaToken } from '../platform/media_access.js';
@@ -21,15 +22,15 @@ function filePath(id: string): string { return path.join(DIRECTORY, uuid(id)); }
 
 async function access(db: PlatformDb, id: string, actor: PlatformActor, upload = false) {
   const [row] = await platformQuery(db, `SELECT r.user_id,r.status,s.supervisor_user_id,c.finalized_at,s.session_kind,
-    (s.session_kind='self_service' AND EXISTS (SELECT 1 FROM organization_members m JOIN organizations o ON o.id=m.organization_id
-      WHERE o.status='active' AND m.organization_id=c.organization_id AND m.user_id=$2
-        AND m.role IN ('owner','admin') AND m.status='active')) AS organizer,
+    (s.supervisor_user_id=$2 AND NOT ${competitionEntrant('e.id','$2')}) AS can_judge,
+    ((s.session_kind='self_service' OR c.is_test OR $3) AND ${competitionManagerAccess('$2','$3')}) AS can_review,
     EXISTS(SELECT 1 FROM platform_competition_disputes d WHERE d.registration_id=r.id AND d.resolved_at IS NULL) AS disputed
     FROM platform_event_registrations r JOIN platform_competition_sessions s ON s.id=r.competition_session_id
-    JOIN platform_competitions c ON c.event_id=r.event_id WHERE r.id=$1::uuid`, [id, actor.userId]);
+    JOIN platform_competitions c ON c.event_id=r.event_id JOIN platform_events e ON e.id=c.event_id
+    WHERE r.id=$1::uuid`, [id, actor.userId, actor.isAdmin]);
   if (!row) notFound('Registration');
-  const participant = actor.userId != null && [Number(row.user_id),Number(row.supervisor_user_id)].includes(actor.userId);
-  if (!participant && (upload || (!actor.isAdmin && !row.organizer))) forbidden('Competition evidence is restricted to authorized entrants and reviewers');
+  const participant = actor.userId === Number(row.user_id) || row.can_judge === true;
+  if (!participant && (upload || !row.can_review)) forbidden('Competition evidence is restricted to authorized entrants and reviewers');
   if (upload && (!participant || !['confirmed','attended'].includes(String(row.status)) || row.finalized_at)) {
     conflict('Evidence can only be uploaded for an active registration before results are finalized');
   }

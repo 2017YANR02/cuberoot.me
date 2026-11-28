@@ -38,9 +38,11 @@ export default function VideoTiles({
   onMediaError,
   language,
   autoStart = false,
+  showTiles = true,
 }: {
   language: 'en' | 'zh';
   autoStart?: boolean;
+  showTiles?: boolean;
   onLeave: () => void;
   /** 切换摄像头失败(设备被别的应用占着等)。文案由调用方给,这里不假定用的是哪套。 */
   onCameraError: () => void;
@@ -125,7 +127,7 @@ export default function VideoTiles({
       {/* 远端音频的实际播放者。没有它就是「有画面没声音」。 */}
       <RoomAudioRenderer />
 
-      <div className={`vc-tiles${spot ? ' is-spotlight' : ''}`} data-count={tracks.length}>
+      {showTiles && <div className={`vc-tiles${spot ? ' is-spotlight' : ''}`} data-count={tracks.length}>
         {tracks.map((t) => {
           const key = keyOf(t);
           const name = t.participant.name || t.participant.identity;
@@ -160,7 +162,7 @@ export default function VideoTiles({
             </button>
           );
         })}
-      </div>
+      </div>}
 
       <div className="vc-controls">
         <button

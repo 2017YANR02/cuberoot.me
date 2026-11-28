@@ -4,7 +4,7 @@ import { badRequest, conflict, forbidden, notFound } from '../platform/errors.js
 import { platformRouter, privateNoStore } from '../platform/http.js';
 import { readJsonObject, stringField } from '../platform/validation.js';
 import { competitionDeviceResult, competitionReplay, validateCompetitionDeviceReport, verifyCompletedCompetitionDeviceReport } from '../platform/competition_device_reports.js';
-import { finishCompetitionSelfAttempt, requireCompetitionRegistration } from '../platform/competitions.js';
+import { competitionEntrant, competitionManagerAccess, finishCompetitionSelfAttempt, requireCompetitionRegistration } from '../platform/competitions.js';
 import { arenaDnfReason, arenaSolveAt, recordArenaDnf } from '../platform/competition_arena.js';
 import { smartCubeTargetFacelets } from '@cuberoot/shared/smart-cube/cubie';
 import { competitionSupervisionReady } from './video_rooms.js';
@@ -20,7 +20,7 @@ platformCompetitionDeviceReportRoutes.post('/platform/competitions/registrations
   return sendMutation(c,await withIdempotency(c,actor,`competition.device-report:${id}:${number}`,body,async(db)=>{
     const registration=await requireCompetitionRegistration(db,id);
     if(Number(registration.user_id)!==actor.userId)forbidden('Only the entrant may submit their device report');
-    if(!['confirmed','attended'].includes(registration.status)||!registration.checked_in_at||!registration.in_window)conflict('An active checked-in registration is required');
+    if(!['confirmed','attended'].includes(registration.status)||!registration.checked_in_at||!registration.in_check_in_window)conflict('An active checked-in registration is required');
     if (registration.device !== 'smart') conflict('Only smart cube seats can upload device data');
     if(registration.competition_project!=='333')conflict('Connected cube reports currently support 3x3');
     const [attempt]=await platformQuery<{scramble:string;issued_at:string;recorded_at:string|null;elapsed_ms:number; arena_round_id:string|null; inspect_at:Date|null; solve_at:Date|null; now:Date}>(db,`SELECT scramble,issued_at,recorded_at,arena_round_id,inspect_at,solve_at,clock_timestamp() AS now,EXTRACT(EPOCH FROM NOW()-issued_at)*1000 AS elapsed_ms
@@ -77,7 +77,13 @@ platformCompetitionDeviceReportRoutes.get('/platform/competitions/registrations/
     return c.json({ report });
   }
   const actor = await requirePlatformActor(c);
-  if (!actor.isAdmin && ![Number(row.user_id), Number(row.supervisor_user_id)].includes(actor.userId!)) {
+  const [official] = actor.userId !== Number(row.user_id) ? await platformQuery(platformDb(), `
+    SELECT 1 FROM platform_event_registrations r JOIN platform_competition_sessions s ON s.id=r.competition_session_id
+    JOIN platform_competitions c ON c.event_id=r.event_id JOIN platform_events e ON e.id=c.event_id
+    WHERE r.id=$1::uuid
+      AND ((s.supervisor_user_id=$2 AND NOT ${competitionEntrant('e.id','$2')})
+        OR ((c.is_test OR $3) AND ${competitionManagerAccess('$2','$3')}))`, [id, actor.userId, actor.isAdmin]) : [];
+  if (actor.userId !== Number(row.user_id) && !official) {
     const [peer] = row.arena_round_id && row.penalty ? await platformQuery(platformDb(), `SELECT 1
       FROM platform_competition_attempts a JOIN platform_event_registrations r ON r.id=a.registration_id
       WHERE a.arena_round_id=$1::uuid AND r.user_id=$2 AND r.checked_in_at IS NOT NULL
@@ -99,7 +105,7 @@ platformCompetitionDeviceReportRoutes.post('/platform/competitions/registrations
   return sendMutation(c,await withIdempotency(c,actor,`competition.device-start:${id}:${number}`,body,async(db)=>{
     const registration=await requireCompetitionRegistration(db,id);
     if(Number(registration.user_id)!==actor.userId)forbidden('Only the entrant may start their device run');
-    if(!['confirmed','attended'].includes(registration.status)||!registration.checked_in_at||!registration.in_window||registration.competition_project!=='333')conflict('An active checked-in 3x3 registration is required');
+    if(!['confirmed','attended'].includes(registration.status)||!registration.checked_in_at||!registration.in_check_in_window||registration.competition_project!=='333')conflict('An active checked-in 3x3 registration is required');
     const [attempt]=await platformQuery<{scramble:string;issued_at:Date|string;recorded_at:Date|null;arena_round_id:string|null;now:Date;inspect_at:Date|null}>(db,`SELECT scramble,issued_at,recorded_at,arena_round_id,inspect_at,clock_timestamp() AS now FROM platform_competition_attempts WHERE registration_id=$1::uuid AND attempt_number=$2 FOR UPDATE`,[id,number]);
     if(!attempt)notFound('Issued attempt');
     if(attempt.recorded_at||attempt.scramble!==scramble||new Date(attempt.issued_at).toISOString()!==new Date(issuedAt).toISOString())conflict('The server-issued attempt is mismatched or already confirmed');

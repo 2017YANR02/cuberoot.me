@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 
-import { LiveSmartCubeAnchor, type Solve333, type LiveSmartCubeAnchorSnapshot } from '@cuberoot/shared/smart-cube/anchor';
+import { LiveSmartCubeAnchor, type Solve333, type LiveSmartCubeAnchorSnapshot, type LiveSmartCubeDisplaySource } from '@cuberoot/shared/smart-cube/anchor';
 import { SmartCubeStateTracker } from '@cuberoot/shared/smart-cube/cubie';
 import { applyOrientation, type Quat, type OrientationOptions } from '@cuberoot/shared/smart-cube/orientation';
 import {
@@ -23,6 +23,7 @@ export interface NetBattleLiveCubePlayer {
   facelets: string | null;
   moves: readonly string[];
   algAnchored: boolean;
+  liveSource?: LiveSmartCubeDisplaySource;
   updatedAt: number;
   /** Updated directly by the socket, read by the renderer's frame loop. */
   quatRef?: { current: Quat | null };
@@ -124,6 +125,7 @@ export function useNetBattleLiveCube({
   const ensureRuntime = useCallback((playerId: string, playerRound: number): RemoteRuntime => {
     const current = runtimesRef.current.get(playerId);
     if (current && current.round === playerRound) return current;
+    runtimesRef.current.delete(playerId);
     current?.anchor.setConnection(null);
     const runtime: RemoteRuntime = {
       round: playerRound,
@@ -132,16 +134,18 @@ export function useNetBattleLiveCube({
       anchor: new LiveSmartCubeAnchor({
         solve,
         onChange: (snapshot: LiveSmartCubeAnchorSnapshot) => {
+          if (runtimesRef.current.get(playerId) !== runtime) return;
           patchPlayer(playerId, (player) => ({
             ...player,
             moves: [...snapshot.moves],
             algAnchored: snapshot.algAnchored,
+            liveSource: runtime.anchor,
           }));
         },
       }),
     };
-    runtime.anchor.setConnection(`${code ?? 'room'}:${playerId}:${playerRound}`);
     runtimesRef.current.set(playerId, runtime);
+    runtime.anchor.setConnection(`${code ?? 'room'}:${playerId}:${playerRound}`);
     return runtime;
   }, [code, patchPlayer, solve]);
 
@@ -272,7 +276,7 @@ export function useNetBattleLiveCube({
               connected: status.connected,
               smart: status.smart,
               syncing: status.smart && state.round !== status.round,
-              round: status.round ?? state.round,
+              round: state.facelets ? state.round : status.round,
             }
           : { ...state, connected: false, smart: false };
       }
@@ -377,7 +381,8 @@ export function useNetBattleLiveCube({
             round: message.round,
             seq: message.seq,
             facelets: message.facelets,
-            smart: player.smart,
+            smart: true,
+            liveSource: runtime.anchor,
             syncing: false,
             updatedAt: message.updatedAt,
             quatRef: runtime.quatRef,
@@ -400,6 +405,9 @@ export function useNetBattleLiveCube({
         patchPlayer(message.playerId, (player) => ({
           ...player,
           seq: message.seq,
+          connected: true,
+          smart: true,
+          liveSource: runtime.anchor,
           facelets: runtime.tracker.getFacelets(),
           syncing: false,
           updatedAt: message.updatedAt,

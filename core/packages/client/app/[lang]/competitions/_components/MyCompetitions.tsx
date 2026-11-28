@@ -1,6 +1,8 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import { COMPETITION_CHECK_IN_LEAD_MS } from '@cuberoot/shared/timer';
+import { competitionCountdown } from '@/components/competitions/competition-registration';
 import { CompetitionTestBadge } from '@/components/competitions/CompetitionTestActions';
 import AppLink from '@/components/AppLink';
 import MoreToggle from '@/components/MoreToggle';
@@ -48,6 +50,15 @@ export function MyCompetitions() {
     const timer = setInterval(() => { if (document.visibilityState === 'visible') void load(); }, 30000);
     return () => { active = false; clearInterval(timer); };
   }, [revision]);
+
+  const nextCheckInAt = Math.min(...entries.filter(entry => entry.action === 'upcoming' && entry.sessionKind !== 'offline')
+    .map(entry => Date.parse(entry.sessionStartsAt) - COMPETITION_CHECK_IN_LEAD_MS)
+    .filter(at => at > Date.now()));
+  useEffect(() => {
+    if (!Number.isFinite(nextCheckInAt)) return;
+    const timer = setTimeout(() => setRevision(value => value + 1), Math.min(2_147_483_647, nextCheckInAt - Date.now() + 20));
+    return () => clearTimeout(timer);
+  }, [nextCheckInAt]);
 
   const hasReservations = entries.some(entry => entry.action === 'pay' && entry.reservationExpiresAt);
   useEffect(() => {
@@ -97,12 +108,14 @@ export function MyCompetitions() {
     const target = action === 'pay' ? `/platform/orders/${encodeURIComponent(entry.orderId)}`
       : action === 'enter' ? roomHref(entry) : action === 'enter_bracket' ? `${detail}#competition-bracket` : detail;
     const actionLabel = labels[action];
-    const remaining = seconds === null ? null : `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, '0')}`;
+    const remaining = seconds === null ? null : competitionCountdown(seconds);
     return <div className="my-competition-row" key={entry.registrationId}>
       <div>
         {entry.isTest && <CompetitionTestBadge />}
         <h3><AppLink href={detail} prefetch={false}>{t(entry.titleZh || entry.titleEn, entry.titleEn || entry.titleZh)}</AppLink></h3>
         <p><time dateTime={entry.sessionStartsAt}>{competitionDateTime(entry.sessionStartsAt)}</time> {t('北京时间', 'UTC+8')}{entry.status === 'refunded' && <> · {t('已退款', 'Refunded')}</>}</p>
+        {action === 'upcoming' && entry.sessionKind !== 'offline' && Date.now() < Date.parse(entry.sessionStartsAt) - COMPETITION_CHECK_IN_LEAD_MS &&
+          <p className="competition-muted">{t('开赛前 5 分钟开放检录', 'Check-in opens 5 minutes before start')}</p>}
         {remaining !== null && <p className="competition-reservation-remaining" data-status={seconds === 0 ? 'expired' : (seconds ?? Infinity) <= 300 ? 'expiring' : undefined}>
           {seconds === 0 ? t('锁位已到期', 'Reservation expired') : t(`锁位剩余 ${remaining}`, `Seat held for ${remaining}`)}
         </p>}

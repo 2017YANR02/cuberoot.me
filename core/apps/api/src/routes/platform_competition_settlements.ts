@@ -17,7 +17,7 @@ platformCompetitionSettlementRoutes.get('/platform/competitions/:id/settlement',
   privateNoStore(c);
   const actor = await requirePlatformActor(c);
   const id = eventId(c.req.param('id'));
-  const competition = await requireCompetitionManager(platformDb(),actor,id);
+  const competition = await requireCompetitionManager(platformDb(),actor,id,false);
   if (competition.is_test) return c.json({ settlement: null });
   return c.json({ settlement: await competitionSettlement(platformDb(),id) });
 });
@@ -50,5 +50,29 @@ platformCompetitionSettlementRoutes.post('/platform/competitions/:id/settlement-
     await platformQuery(db,`INSERT INTO platform_audit_events(actor_user_id,actor_key,action,resource_type,resource_id,outcome,metadata)
       VALUES($1,$2,'competition.settlement.external_transfer_recorded','competition_settlement',$3,'allowed',$4::jsonb)`,[actor.userId,actor.ownerKey,entry.id,{eventId:id,direction,amountMinor:amount,providerReferenceHash:hash,transferredAt}]);
     return {status:201,body:{id:entry.id,settlement:await competitionSettlement(db,id)},resourceType:'competition_settlement',resourceId:String(entry.id)};
-  }));
+  }, db => requireCompetitionManager(db, actor, id)));
+});
+
+platformCompetitionSettlementRoutes.post('/platform/competitions/:id/settlement-terms', async c => {
+  const actor = await requirePlatformAdmin(c);
+  const id = eventId(c.req.param('id'));
+  const body = await readJsonObject(c);
+  const commissionBps = integerField(body, 'commissionBps', { required: true, min: 0, max: 10_000 })!;
+  const settlementDays = integerField(body, 'settlementDays', { required: true, min: 0, max: 3650 })!;
+  const settlementAnchor = enumField(body, 'settlementAnchor', ['ended', 'finalized'], { required: true })!;
+  return sendMutation(c, await withIdempotency(c, actor, `competition.settlement.terms:${id}`, body, async db => {
+    const competition = await requireCompetitionManager(db, actor, id);
+    if (competition.is_test || !['published', 'completed'].includes(competition.status)) conflict('Settlement terms apply to a published paid competition');
+    const rows = await platformQuery(db, `UPDATE platform_competitions c
+      SET commission_bps=$2,settlement_days=$3,settlement_anchor=$4
+      WHERE c.event_id=$1 AND (c.commission_bps IS NULL OR c.settlement_days IS NULL OR c.settlement_anchor IS NULL)
+        AND EXISTS(SELECT 1 FROM platform_event_ticket_types t WHERE t.event_id=c.event_id AND t.amount_minor>0)
+        AND NOT EXISTS(SELECT 1 FROM platform_competition_settlement_ledger l WHERE l.event_id=c.event_id)
+      RETURNING c.event_id`, [id, commissionBps, settlementDays, settlementAnchor]);
+    if (!rows.length) conflict('Terms are already configured or the competition has no paid tickets');
+    await platformQuery(db, `INSERT INTO platform_audit_events(actor_user_id,actor_key,action,resource_type,resource_id,outcome,metadata)
+      VALUES($1,$2,'competition.settlement.terms','competition',$3,'allowed',$4::jsonb)`,
+    [actor.userId, actor.ownerKey, id, { commissionBps, settlementDays, settlementAnchor }]);
+    return { status: 200, body: { settlement: await competitionSettlement(db, id) } };
+  }, db => requireCompetitionManager(db, actor, id)));
 });

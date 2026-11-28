@@ -37,8 +37,8 @@ export async function getMeetToken(code: string, signal?: AbortSignal): Promise<
   return postToken('/v1/video/meet/token', { code }, true, {}, signal);
 }
 
-export async function getCompetitionVideoToken(registrationId: string): Promise<VideoToken> {
-  return postToken('/v1/video/competition/token', { registrationId }, true);
+export async function getCompetitionVideoToken(seat: { registrationId: string } | { matchId: string }): Promise<VideoToken> {
+  return postToken('/v1/video/competition/token', seat, true);
 }
 
 /**

@@ -109,6 +109,7 @@ export function PlatformEntityList({
   definition,
   items,
   detailBaseHref,
+  onOpenDetail,
   redeemedCourseIds,
   onAction,
   actionBusy,
@@ -116,6 +117,7 @@ export function PlatformEntityList({
   definition: PlatformRouteDefinition;
   items: PlatformEntity[];
   detailBaseHref?: string;
+  onOpenDetail?: (id: string) => void;
   redeemedCourseIds: ReadonlySet<string>;
   onAction: (action: PlatformActionId, id: string, payload?: Record<string, unknown>) => void;
   actionBusy: string | null;
@@ -220,7 +222,9 @@ export function PlatformEntityList({
             <div className="platform-entity-heading">
               <div>
                 {item.eyebrow ? <span>{item.eyebrow}</span> : null}
-                <h2>{href ? <AppLink href={href} prefetch={false}>{title}</AppLink> : title}</h2>
+                <h2>{onOpenDetail
+                  ? <button className="platform-button" type="button" onClick={() => onOpenDetail(item.id)}>{title}</button>
+                  : href ? <AppLink href={href} prefetch={false}>{title}</AppLink> : title}</h2>
               </div>
               {learnerCourses && redeemedCourseIds.has(item.id) ? <span className="platform-course-redeemed">{t('已兑换', 'Redeemed')}</span> : null}
               {!learnerContent && item.status ? <span className="platform-status">{orderContent ? orderStatuses[item.status] ?? t('等待确认', 'Awaiting confirmation') : platformStatusLabel(item.status, t)}</span> : null}

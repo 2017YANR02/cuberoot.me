@@ -34,12 +34,13 @@ vi.mock('../src/platform/auth.js',()=>({
   },
   requirePlatformAdmin:async(c:{req:{header:(name:string)=>string|undefined}})=>{
     if(c.req.header('Test-Admin')!=='1')forbidden('Admin access required');
-    return {userId:1,ownerKey:'user:1',displayName:'Test administrator',isAdmin:true,viaApiKey:false,wcaId:null};
+    const userId = Number(c.req.header('Test-User') ?? 1);
+    return {userId,ownerKey:`user:${userId}`,displayName:'Test administrator',isAdmin:true,viaApiKey:false,wcaId:null};
   },
 }));
 import { sql as db } from '../src/db/connection.js';
 import { smartCubeTargetFacelets, SOLVED_SMART_CUBE_FACELETS } from '@cuberoot/shared/smart-cube/cubie';
-import { TokenVerifier } from 'livekit-server-sdk';
+import { TokenVerifier, TrackSource } from 'livekit-server-sdk';
 const app=new Hono();
 const databaseUrl=process.env.COMPETITION_TEST_DATABASE_URL;
 const smartCheckIn = { deviceBrand: 'GAN', deviceName: 'GAN 16 test', facelets: SOLVED_SMART_CUBE_FACELETS };
@@ -84,7 +85,9 @@ describe.skipIf(!databaseUrl)('real competition order HTTP and PostgreSQL transa
     await db.unsafe(migration('0358_competition_timing_and_review.sql'));
     await db.unsafe(migration('0363_competition_arena.sql'));
     await db.unsafe(migration('0365_competition_test_mode.sql'));
-    await db.unsafe(`INSERT INTO app_users(id) VALUES(1),(2),(3),(4);
+    await db.unsafe(migration('0368_competition_checkin_gate.sql'));
+    await db.unsafe(migration('0369_competition_duel_seats.sql'));
+    await db.unsafe(`INSERT INTO app_users(id) VALUES(1),(2),(3),(4),(5);
       UPDATE app_users SET is_admin=true WHERE id=1;
       INSERT INTO organizations(id,slug,name,created_by_user_id,competition_organizer_approved_at) VALUES('${org}','order-test','Order test',1,NOW());
       INSERT INTO organization_members(organization_id,user_id,role,joined_at) VALUES('${org}',1,'owner',NOW()),('${org}',2,'teacher',NOW());
@@ -497,7 +500,7 @@ describe.skipIf(!databaseUrl)('real competition order HTTP and PostgreSQL transa
     }
   }, 30000);
 
-  async function createBracket(slug: string, users: number[], device: 'ordinary' | 'smart' = 'ordinary') {
+  async function createBracket(slug: string, users: number[], device: 'ordinary' | 'smart' = 'ordinary', lobby = false) {
     const base = '/v1/platform/competitions';
     const time = (hours: number) => new Date(Date.now() + hours * 3600000).toISOString();
     const post = (path: string, body: unknown, user: number, admin = false) => app.request(path, {
@@ -523,7 +526,15 @@ describe.skipIf(!databaseUrl)('real competition order HTTP and PostgreSQL transa
       expect(order.status, await order.text()).toBe(201);
     }
     await db.unsafe(`UPDATE platform_competitions SET registration_closes_at=NOW()-INTERVAL '2 minutes' WHERE event_id=$1`, [draft.id]);
-    await db.unsafe(`UPDATE platform_events SET starts_at=NOW()-INTERVAL '1 minute' WHERE id=$1`, [draft.id]);
+    const startOffset = lobby ? '3 minutes' : '-1 minute';
+    await db.unsafe("UPDATE platform_events SET starts_at=NOW()+$2::interval WHERE id=$1", [draft.id, startOffset]);
+    await db.unsafe("UPDATE platform_competition_sessions SET starts_at=NOW()+$2::interval WHERE event_id=$1", [draft.id, startOffset]);
+    if (!lobby && device === 'ordinary') {
+      const entrants = await db.unsafe('SELECT id,user_id FROM platform_event_registrations WHERE event_id=$1', [draft.id]);
+      for (const { id, user_id } of entrants) {
+        expect((await post(base + '/registrations/' + id + '/check-in', {}, Number(user_id))).status).toBe(200);
+      }
+    }
     const generations = await Promise.all([post(path + '/brackets/generate', {}, 1), post(path + '/brackets/generate', {}, 1)]);
     for (const response of generations) expect(response.status, await response.text()).toBe(200);
     const read = async () => {
@@ -533,6 +544,43 @@ describe.skipIf(!databaseUrl)('real competition order HTTP and PostgreSQL transa
     };
     return { base, eventId: draft.id, path, post, read };
   }
+
+  it.each(['division check-in', 'scheduled start'])('opens an early ready duel table at %s', async gate => {
+    const { base, eventId, post, read } = await createBracket(
+      gate === 'division check-in' ? 'check-in-bracket-early' : 'check-in-bracket-scheduled', [2, 3, 4, 5], 'smart', true,
+    );
+    const { matches } = await read();
+    const tables = matches.filter((match: { round: number; side: string }) => match.side === 'winners' && match.round === 1);
+    expect(tables).toHaveLength(2);
+    const registrations = await db.unsafe('SELECT id,user_id FROM platform_event_registrations WHERE event_id=$1', [eventId]);
+    const userFor = (id: string) => Number(registrations.find(row => row.id === id)?.user_id);
+    const checkIn = (id: string) => post(base + '/registrations/' + id + '/check-in', smartCheckIn, userFor(id));
+    const { id, playerA, playerB } = tables[0];
+    const seat = base + '/matches/' + id;
+    const get = () => app.request(seat, { headers: { 'Test-User': String(userFor(playerA)) } }).then(response => response.json());
+    expect(await get()).toMatchObject({ canPlay: true, checkedIn: false, credentials: null, scramble: null });
+    expect((await checkIn(playerA)).status).toBe(200);
+    const checked = await get();
+    expect(checked).toMatchObject({ checkedIn: true, credentials: expect.any(Object), scramble: null });
+    const { authorizeCompetitionLive } = await import('../src/platform/competition_live.js');
+    expect(await authorizeCompetitionLive(id, checked.credentials)).toBe(true);
+    expect((await checkIn(playerB)).status).toBe(200);
+    for (const player of [playerA, playerB]) {
+      expect((await post(seat + '/ready', { gameNumber: 1 }, userFor(player))).status).toBe(200);
+    }
+    expect(await get()).toMatchObject({ ownReady: true, opponentReady: true, startAt: null, scramble: null });
+    const { startReadyCompetitionGames } = await import('../src/routes/platform_competition_brackets.js');
+    await startReadyCompetitionGames();
+    expect((await get()).startAt).toBeNull();
+    if (gate === 'division check-in') {
+      for (const player of [tables[1].playerA, tables[1].playerB]) expect((await checkIn(player)).status).toBe(200);
+    } else {
+      await db.unsafe("UPDATE platform_events SET starts_at=NOW()-INTERVAL '1 second' WHERE id=$1", [eventId]);
+    }
+    await startReadyCompetitionGames();
+    expect(await get()).toMatchObject({ status: 'in_progress', startAt: expect.any(String), scramble: null });
+    expect((await db.unsafe('SELECT scramble FROM platform_competition_match_games WHERE match_id=$1', [id]))[0].scramble).toEqual(expect.any(String));
+  });
 
   it('runs a three-player double-elimination bracket through a bye, loser drop, draw and BO5 final', async () => {
     const { base, eventId, path, post, read } = await createBracket('bracket-test', [2, 3, 4]);
@@ -559,7 +607,10 @@ describe.skipIf(!databaseUrl)('real competition order HTTP and PostgreSQL transa
           db.unsafe(`SELECT start_at,GREATEST(ready_a_at,ready_b_at) AS ready_at FROM platform_competition_match_games WHERE match_id=$1 AND game_number=$2`, [match.id, gameNumber]),
           get(a),
         ]);
-        expect(Number(new Date(String(game.start_at))) - Number(new Date(String(game.ready_at)))).toBeCloseTo(gameNumber === 1 ? 5000 : 7000, -1);
+        const delay = +new Date(game.start_at as Date) - +new Date(game.ready_at as Date);
+        const buffer = gameNumber === 1 ? 5000 : 7000;
+        expect(delay).toBeGreaterThanOrEqual(buffer);
+        expect(delay).toBeLessThan(buffer + 1000);
         expect((await read()).matches.find((row: { id: string }) => row.id === match.id))
           .toMatchObject({ status: 'in_progress', gameNumber });
         expect(await before.json()).toMatchObject({ gameNumber, scramble: null, ownReady: true, opponentReady: true });
@@ -611,11 +662,21 @@ describe.skipIf(!databaseUrl)('real competition order HTTP and PostgreSQL transa
     expect(bracket.matches.find((match: { id: string }) => match.id === final.id)).toMatchObject({
       bestOf: 5, status: 'completed', winner: final.playerB, scoreA: 2, scoreB: 3,
     });
+    const reset = bracket.matches.find((match: { side: string; round: number }) => match.side === 'grand_final' && match.round === 2);
+    expect(reset).toMatchObject({ bestOf: 5, status: 'ready', playerA: final.playerA, playerB: final.playerB });
+    expect((await post(path + '/finalize', {}, 1, true)).status).toBe(409);
+    const priorFinal = await app.request(base + '/matches/' + final.id, { headers: { 'Test-User': String(await userFor(final.playerA)) } });
+    expect(await priorFinal.json()).toMatchObject({ nextStep: { outcome: 'pending_reset', nextMatchId: reset.id, nextMatchRound: 2, nextMatchStatus: 'ready' } });
+    await play(reset, ['a', 'a', 'a']);
+    bracket = await read();
     expect(bracket.standings.sort((a: { rank: number }, b: { rank: number }) => a.rank - b.rank)).toMatchObject([
-      { id: final.playerB, rank: 1, wins: 7 }, { id: final.playerA, rank: 2, wins: 4 }, { id: opener.playerB, rank: 3, wins: 0 },
+      { id: final.playerA, rank: 1, wins: 7, matchWins: 2 },
+      { id: final.playerB, rank: 2, wins: 7, matchWins: 3 },
+      { id: opener.playerB, rank: 3, wins: 0, eliminationSide: 'losers', eliminationRound: 2 },
     ]);
-    await db.unsafe(`UPDATE platform_events SET ends_at=NOW()-INTERVAL '1 second' WHERE id=$1`, [eventId]);
     expect((await post(path + '/finalize', {}, 1, true)).status).toBe(200);
+    expect((await db.unsafe('SELECT status,ends_at<=NOW() AS ended FROM platform_events WHERE id=$1', [eventId]))[0])
+      .toMatchObject({ status: 'completed', ended: true });
   }, 30000);
 
   it('keeps the first inspection timestamp, applies the official +2 and forces both timeout paths', async () => {
@@ -711,11 +772,70 @@ describe.skipIf(!databaseUrl)('real competition order HTTP and PostgreSQL transa
       ownResult: { dnfReason: 'scramble_timeout' }, opponentResult: { dnfReason: 'scramble_timeout' } } });
   }, 30_000);
 
+  it('settles single and double no-shows, propagates byes and finalizes before the scheduled end', async () => {
+    const { base, eventId, path, post, read } = await createBracket('walkover-bracket', [2, 3, 4, 5]);
+    const { matches } = await read();
+    const [first, second] = matches.filter((match: { status: string }) => match.status === 'ready');
+    const user = Number((await db.unsafe('SELECT user_id FROM platform_event_registrations WHERE id=$1', [first.playerA]))[0].user_id);
+    const seat = base + '/matches/' + first.id;
+    const readSeat = () => app.request(seat, { headers: { 'Test-User': String(user) } }).then(res => res.json());
+    expect((await post(seat + '/ready', { gameNumber: 1 }, user)).status).toBe(200);
+    const ageReady = () => db.unsafe("UPDATE platform_competition_matches SET ready_at=NOW()-INTERVAL '6 minutes' WHERE event_id=$1 AND status='ready'", [eventId]);
+    await ageReady();
+    expect(await readSeat()).toMatchObject({ status: 'ready', noShowDeadlineAt: expect.any(String), ownReady: true });
+    await db.unsafe("UPDATE platform_events SET starts_at=NOW()-INTERVAL '6 minutes' WHERE id=$1", [eventId]);
+    expect(await readSeat()).toMatchObject({ status: 'completed', forfeitReason: 'no_show',
+      nextStep: { outcome: 'advanced', nextMatchId: first.nextWin, nextMatchStatus: 'pending' } });
+    const { closeExpiredCompetitionGames } = await import('../src/routes/platform_competition_brackets.js');
+    const { platformTransaction } = await import('../src/platform/db.js');
+    await platformTransaction(closeExpiredCompetitionGames);
+    expect((await read()).matches.find((match: { id: string }) => match.id === second.id))
+      .toMatchObject({ status: 'completed', winner: null, forfeitReason: 'double_no_show' });
+    const current = (await read()).matches.filter((match: { status: string }) => match.status === 'ready');
+    const grand = current.find((match: { side: string }) => match.side === 'grand_final');
+    expect(grand).toMatchObject({ playerA: first.playerA, playerB: first.playerB });
+    expect((await post(base + '/matches/' + grand.id + '/ready', { gameNumber: 1 }, user)).status).toBe(200);
+    await ageReady();
+    await platformTransaction(closeExpiredCompetitionGames);
+    expect((await read()).matches.find((match: { id: string }) => match.id === grand.id))
+      .toMatchObject({ status: 'completed', winner: first.playerA });
+    expect((await post(path + '/finalize', {}, 1, true)).status).toBe(200);
+  });
+
+  it('keeps ordinary polling and timer phases responsive while the competition row is locked', async () => {
+    const { base, eventId, post, read } = await createBracket('duel-lock-scope', [2, 3]);
+    const { matches } = await read();
+    const table = matches.find((match: { status: string }) => match.status === 'ready');
+    const seat = base + '/matches/' + table.id;
+    for (const user of [2, 3]) {
+      expect((await post(seat + '/ready', { gameNumber: 1 }, user)).status).toBe(200);
+    }
+    await db.unsafe("UPDATE platform_competition_match_games SET start_at=clock_timestamp()-INTERVAL '1 second' WHERE match_id=$1", [table.id]);
+    const { platformQuery, platformTransaction } = await import('../src/platform/db.js');
+    await platformTransaction(async lock => {
+      await platformQuery(lock, 'SELECT event_id FROM platform_competitions WHERE event_id=$1 FOR UPDATE', [eventId]);
+      const requests = Promise.all([
+        app.request(seat, { headers: { 'Test-User': '2' } }),
+        post(seat + '/phase', { gameNumber: 1, phase: 'inspecting' }, 2),
+      ]);
+      let timeout: ReturnType<typeof setTimeout> | undefined;
+      try {
+        const responses = await Promise.race([requests, new Promise<never>((_, reject) => {
+          timeout = setTimeout(() => reject(new Error('Polling or a local phase waited on the competition lock')), 1000);
+        })]);
+        expect(responses.map(response => response.status)).toEqual([200, 200]);
+      } finally {
+        clearTimeout(timeout);
+      }
+    });
+  });
+
   it.each([
     { label: 'best-single', results: [[1200, 1500], [1400, 1000]], expectSlot: 'b' },
     { label: 'original-seed', results: [[1200, 1500], [1400, 1200]], expectSlot: 'a' },
     { label: 'no-valid-times', results: [[null, null]], expectSlot: null },
-  ])('resolves a tied bracket at event close by $label', async ({ label, results, expectSlot }) => {
+    { label: 'sole-checked-in-entrant', results: [[null, null]], expectSlot: 'a', absent: 'b' },
+  ])('resolves a tied bracket at event close by $label', async ({ label, results, expectSlot, absent }) => {
     const { eventId, path, post, read } = await createBracket('cutoff-' + label, [2, 3]);
     const match = (await read()).matches.find((row: { status: string }) => row.status === 'ready');
     for (const [index, [a, b]] of results.entries()) {
@@ -724,6 +844,7 @@ describe.skipIf(!databaseUrl)('real competition order HTTP and PostgreSQL transa
         { centiseconds: a, penalty: a === null ? 'DNF' : 'none' }, { centiseconds: b, penalty: b === null ? 'DNF' : 'none' },
         a === null || b === null ? null : a < b ? match.playerA : match.playerB]);
     }
+    if (absent === 'b') await db.unsafe('UPDATE platform_event_registrations SET checked_in_at=NULL WHERE id=$1', [match.playerB]);
     const score = results.length === 1 ? 0 : 1;
     await db.unsafe('UPDATE platform_competition_matches SET score_a=$2,score_b=$2 WHERE id=$1', [match.id, score]);
     await db.unsafe("UPDATE platform_events SET ends_at=NOW()-INTERVAL '1 second' WHERE id=$1", [eventId]);
@@ -743,6 +864,127 @@ describe.skipIf(!databaseUrl)('real competition order HTTP and PostgreSQL transa
     }, body: JSON.stringify(body) });
   }
 
+  it('creates a 32-seat test competition with one shared table video room and low-bitrate admission', async () => {
+    const created = await (await postTest(competitionBase + '/test', {
+      format: 'advancement', device: 'ordinary', supervisionMode: 'supervised', capacity: 32, supervisorUserId: 2,
+    })).json();
+    const path = competitionBase + '/' + created.id;
+    const { competition } = await (await app.request(path, { headers: testAdminHeaders })).json();
+    expect(competition.projects[0].capacity).toBe(32);
+    expect(competition.sessions[0].capacity).toBe(32);
+    expect((await db.unsafe('SELECT participant_limit FROM platform_competitions WHERE event_id=$1', [created.id]))[0].participant_limit).toBe(32);
+    const headers = (id: number) => ({ ...testMemberHeaders, 'Test-User': String(id) });
+    for (const id of [3, 4]) {
+      const ordered = await postTest('/v1/platform/orders', { items: [{
+        sellableType: 'event_ticket', eventTicketTypeId: competition.projects[0].id, quantity: 1,
+        competitionSessionId: competition.sessions[0].id, device: 'ordinary',
+      }] }, headers(id));
+      expect(ordered.status, await ordered.clone().text()).toBe(201);
+    }
+    expect((await postTest(path + '/test/start-now')).status).toBe(200);
+    const { matches } = await (await app.request(path + '/brackets', { headers: testAdminHeaders })).json();
+    const table = matches.find((match: { status: string }) => match.status === 'ready');
+    const token = (id: number, body: object = { matchId: table.id }) => postTest('/v1/video/competition/token', body, headers(id));
+    expect((await token(2)).status).toBe(403);
+    const registrations = await db.unsafe('SELECT id,user_id FROM platform_event_registrations WHERE event_id=$1', [created.id]);
+    for (const row of registrations) {
+      expect((await postTest(competitionBase + '/registrations/' + row.id + '/check-in', {}, headers(Number(row.user_id)))).status).toBe(200);
+    }
+    expect((await token(5)).status).toBe(403);
+    expect((await token(3, { registrationId: registrations[0].id })).status).toBe(403);
+    state.rooms.mockResolvedValueOnce(Array.from({ length: 15 }, (_, i) => ({ name: 'competition-match-test-' + i, numParticipants: 3 })));
+    const room = await token(2);
+    expect(room.status, await room.clone().text()).toBe(200);
+    const credentials = await room.json();
+    expect(credentials).toMatchObject({ room: expect.stringMatching('^competition-match-' + table.id), maxParticipants: 4, maxBitrateMbps: 0.75 });
+    expect(await (await token(2, { matchId: table.id.toUpperCase() })).json()).toMatchObject({ room: credentials.room });
+    for (const id of [3, 4]) {
+      expect(await (await token(id)).json()).toMatchObject({ room: credentials.room });
+      expect((await postTest(competitionBase + '/matches/' + table.id + '/ready', { gameNumber: 1 }, headers(id))).status).toBe(200);
+    }
+    const readStatus = async () => (await db.unsafe('SELECT status FROM platform_competition_matches WHERE id=$1', [table.id]))[0].status;
+    expect(await readStatus()).toBe('ready');
+    const [secondSession] = await db.unsafe(`INSERT INTO platform_competition_sessions(event_id,starts_at,ends_at,capacity,session_kind,supervisor_user_id)
+      SELECT event_id,starts_at,ends_at,capacity,session_kind,5 FROM platform_competition_sessions
+      WHERE event_id=$1 RETURNING id`, [created.id]);
+    await db.unsafe('UPDATE platform_event_registrations SET competition_session_id=$2 WHERE id=$1', [table.playerB, secondSession.id]);
+    expect(await (await token(5)).json()).toMatchObject({ room: credentials.room, maxParticipants: 4 });
+    const cameras = (users: number[]) => users.map(id => ({ identity: 'u' + id, tracks: [{ source: TrackSource.CAMERA, muted: false }] }));
+    const { startReadyCompetitionGames } = await import('../src/routes/platform_competition_brackets.js');
+    state.participants.mockResolvedValueOnce(cameras([2, 3, 4]));
+    await startReadyCompetitionGames();
+    expect(await readStatus()).toBe('ready');
+    state.participants.mockResolvedValueOnce(cameras([2, 3, 4, 5]));
+    await startReadyCompetitionGames();
+    expect(await readStatus()).toBe('in_progress');
+    expect((await postTest(path + '/test/cleanup')).status).toBe(200);
+    expect(state.retired).toHaveBeenCalledWith(credentials.room);
+  });
+
+  it.each([
+    { entrants: [3], ready: [3], early: false },
+    { entrants: [3, 4], ready: [3], early: false },
+    { entrants: [3, 4], ready: [3, 4], early: true },
+  ])('gates Ao5 with $entrants registered and $ready ready', async ({ entrants, ready, early }) => {
+    const created = await postTest(competitionBase + '/test', { device: 'ordinary', project: '222' });
+    expect(created.status).toBe(201);
+    const { id, slug } = await created.json();
+    const detailPath = competitionBase + '/' + slug;
+    const { competition } = await (await app.request(detailPath, { headers: testMemberHeaders })).json();
+    const [{ id: sessionId }] = competition.sessions;
+    const [{ id: ticketId }] = competition.projects;
+    expect(Date.parse(competition.startsAt) - Date.parse(competition.registrationClosesAt)).toBe(5 * 60_000);
+    const headers = (user: number) => ({ ...testMemberHeaders, 'Test-User': String(user) });
+    for (const user of entrants) {
+      const order = await postTest('/v1/platform/orders', { items: [{
+        sellableType: 'event_ticket', eventTicketTypeId: ticketId, competitionSessionId: sessionId, quantity: 1, device: 'ordinary',
+      }] }, headers(user));
+      expect(order.status, await order.clone().text()).toBe(201);
+    }
+    const seats = await db.unsafe('SELECT id,user_id FROM platform_event_registrations WHERE event_id=$1', [id]);
+    const seatPath = (user: number) => competitionBase + '/registrations/' + seats.find(seat => Number(seat.user_id) === user)?.id;
+    const snapshot = (user: number) => app.request(seatPath(user) + '/arena', { headers: headers(user) }).then(response => response.json());
+    const checkIn = (user: number) => postTest(seatPath(user) + '/check-in', {}, headers(user));
+    const setStart = (offset: string) => db.unsafe("UPDATE platform_competition_sessions SET starts_at=NOW()+$2::interval WHERE id=$1", [sessionId, offset]);
+    const rounds = () => db.unsafe('SELECT id FROM platform_competition_arena_rounds WHERE session_id=$1', [sessionId]);
+    await setStart('6 minutes');
+    expect((await checkIn(3)).status).toBe(409);
+    await setStart('4 minutes');
+    await db.unsafe("UPDATE platform_competitions SET registration_closes_at=NOW()-INTERVAL '1 minute' WHERE event_id=$1", [id]);
+    expect(await (await myEntries(3)).json()).toMatchObject({ entries: expect.arrayContaining([
+      expect.objectContaining({ competitionId: id, action: 'check_in' }),
+    ]) });
+    for (const user of entrants) expect((await checkIn(user)).status).toBe(200);
+    expect((await postTest(seatPath(3) + '/self-attempts/next', {}, headers(3))).status).toBe(409);
+    expect(await snapshot(3)).toMatchObject({ waitingForStart: true, startsAt: null, scramble: null, totalEntrants: entrants.length,
+      sessionStartsAt: expect.any(String), checkedInCount: entrants.length, readyCount: 0 });
+    for (const user of ready) {
+      const response = await postTest(seatPath(user) + '/arena', {}, headers(user));
+      expect(response.status).toBe(200);
+      if (user === 3) {
+        expect(await response.json()).toEqual({ roomId: null, waitingForStart: true });
+        expect(await rounds()).toHaveLength(0);
+        expect(await snapshot(user)).toMatchObject({ waitingForStart: true, ownReady: true, readyCount: 1,
+          startsAt: null, scramble: null, lobbyPlayers: expect.arrayContaining([expect.objectContaining({ ready: true })]) });
+      }
+    }
+    if (!early) {
+      expect(await rounds()).toHaveLength(0);
+      await setStart('-1 second');
+      const { sweepCompetitionArenas } = await import('../src/platform/competition_arena.js');
+      const { platformTransaction } = await import('../src/platform/db.js');
+      await platformTransaction(sweepCompetitionArenas);
+    }
+    const [round] = await rounds();
+    expect(round?.id).toBeDefined();
+    expect(await snapshot(3)).toMatchObject({ roundNumber: 1, waitingForStart: false, startsAt: expect.any(String), scramble: null });
+    const attempts = await db.unsafe(`SELECT r.user_id FROM platform_competition_attempts a
+      JOIN platform_event_registrations r ON r.id=a.registration_id WHERE a.arena_round_id=$1 ORDER BY r.user_id`, [round.id]);
+    expect(attempts.map(row => Number(row.user_id))).toEqual(ready);
+    await db.unsafe("UPDATE platform_competition_arena_rounds SET starts_at=NOW()-INTERVAL '1 second' WHERE id=$1", [round.id]);
+    expect(await snapshot(3)).toMatchObject({ scramble: expect.any(String) });
+  });
+
   it('guards test competition mutations and keeps formal competitions outside the workflow', async () => {
     for (const path of ['/test', `/${event}/test/start-now`, `/${event}/test/cleanup`]) {
       expect((await postTest(competitionBase + path, {}, testMemberHeaders)).status).toBe(403);
@@ -750,6 +992,109 @@ describe.skipIf(!databaseUrl)('real competition order HTTP and PostgreSQL transa
     for (const action of ['start-now', 'cleanup']) {
       expect((await postTest(`${competitionBase}/${event}/test/${action}`)).status).toBe(409);
     }
+  });
+
+  it.each(['test', 'formal'] as const)('denies management to admin and creator entrants in a %s competition', async kind => {
+    const creator = testAdminHeaders;
+    const otherAdmin = { ...testAdminHeaders, 'Test-User': '4' };
+    const get = (route: string, headers = creator) => app.request(competitionBase + route, { headers });
+    const date = (ms: number) => new Date(Date.now() + ms).toISOString();
+    const create = kind === 'test'
+      ? await postTest(competitionBase + '/test', { device: 'ordinary' }, creator)
+      : await postTest(competitionBase + '/drafts', {
+        organizationId: org, slug: 'entrant-role-regression', titleEn: 'Entrant role regression',
+        registrationOpensAt: date(-60_000), registrationClosesAt: date(600_000),
+        startsAt: date(900_000), endsAt: date(7_200_000), format: 'average', supervisionMode: 'self_service',
+        refundPolicy: 'Fixture refund policy', recordingPolicy: 'Fixture recording policy',
+        projects: [{ project: '333', device: 'ordinary', amountMinor: 0, capacity: 8 }],
+      }, creator);
+    expect(create.status, await create.clone().text()).toBe(201);
+    const created = await create.json();
+    const path = '/' + created.id;
+    if (kind === 'formal') expect((await postTest(competitionBase + path + '/submit', {}, creator)).status).toBe(200);
+    const { competition } = await (await get(path)).json();
+    await db.unsafe("UPDATE platform_competitions SET review_note='Private organizer note' WHERE event_id=$1", [created.id]);
+    expect(await (await get(path)).json()).toMatchObject({ competition: { canManage: true, isEntrant: false, reviewNote: 'Private organizer note' } });
+    if (kind === 'test') {
+      expect((await get(path, otherAdmin)).status).toBe(404);
+      expect(await (await get('/' + created.slug, otherAdmin)).json()).toMatchObject({
+        competition: { canManage: false, canSupervise: false, reviewNote: '' },
+      });
+      expect((await postTest(competitionBase + path + '/test/start-now', {}, otherAdmin)).status).toBe(403);
+      expect((await postTest(competitionBase + path + '/test/cleanup', {}, otherAdmin)).status).toBe(403);
+      expect(await (await get('/manage', otherAdmin)).json()).toMatchObject({
+        competitions: expect.not.arrayContaining([expect.objectContaining({ id: created.id })]),
+      });
+    }
+    const closePath = competitionBase + path + '/close-sessions';
+    const closeKey = randomUUID();
+    expect((await postTest(closePath, {}, creator, closeKey)).status).toBe(200);
+    for (const headers of [otherAdmin, creator]) {
+      const order = await postTest('/v1/platform/orders', {
+        items: [{ sellableType: 'event_ticket', eventTicketTypeId: competition.projects[0].id, device: 'ordinary', quantity: 1 }],
+      }, headers);
+      expect(order.status, await order.clone().text()).toBe(201);
+    }
+
+    expect((await postTest(closePath, {}, creator, closeKey)).status).toBe(403);
+    const seats = await db.unsafe('SELECT id::text,user_id FROM platform_event_registrations WHERE event_id=$1', [created.id]);
+    for (const [headers, userId] of [[otherAdmin, 4], [creator, 1]] as const) {
+      const seat = seats.find(row => Number(row.user_id) === userId)!;
+      const entry = '/registrations/' + seat.id;
+      // An old or conflicting assignment must not restore judging access.
+      await db.unsafe("UPDATE platform_competition_sessions SET session_kind='supervised',supervisor_user_id=$2 WHERE event_id=$1", [created.id, userId]);
+      expect(await (await get(path, headers)).json()).toMatchObject({
+        competition: { isEntrant: true, canManage: false, canSupervise: false, canPublish: false, reviewNote: '' },
+      });
+      for (const route of ['/manage', '/host/overview', '/me/supervised']) {
+        const response = await get(route, headers);
+        expect(response.status).toBe(200);
+        expect(await response.json()).toMatchObject({ competitions: expect.not.arrayContaining([expect.objectContaining({ id: created.id })]) });
+      }
+      expect(await (await get(path + '/registrations', headers)).json()).toMatchObject({ registrations: [expect.objectContaining({ id: seat.id })] });
+      const dispute = await postTest(competitionBase + entry + '/disputes', { reason: 'Fixture dispute' }, headers);
+      expect(dispute.status).toBe(201);
+      const issue = await dispute.json();
+      for (const [route, body] of [
+        [path + '/test/start-now', {}], [path + '/test/cleanup', {}],
+        [entry + '/review-clear', { attemptNumber: 1, decision: 'approve' }],
+        [path + '/brackets/generate', {}], [path + '/close-sessions', {}], [path + '/finalize', {}],
+        ['/disputes/' + issue.id + '/resolve', { resolution: 'Fixture resolution' }],
+        [path + '/offline-results', { results: [{ registrationId: seat.id, attempts: Array(5).fill({ centiseconds: 1000, penalty: 'none' }) }] }],
+      ] as const) {
+        const response = await postTest(competitionBase + route, body, headers);
+        expect(response.status, await response.clone().text()).toBe(403);
+      }
+      const otherSeat = seats.find(row => Number(row.user_id) !== userId)!;
+      for (const route of ['/attempts/next', '/result']) {
+        const response = await postTest(competitionBase + '/registrations/' + otherSeat.id + route, {}, headers);
+        expect(response.status, await response.clone().text()).toBe(403);
+      }
+    }
+  });
+
+  it('blocks management during an active reservation and restores it after expiry', async () => {
+    const created = await (await postTest(competitionBase + '/test', { device: 'ordinary' })).json();
+    const detail = () => app.request(competitionBase + '/' + created.id, { headers: testAdminHeaders }).then(res => res.json());
+    const { competition } = await detail();
+    await postTest('/v1/platform/orders', {
+      items: [{ sellableType: 'event_ticket', eventTicketTypeId: competition.projects[0].id, device: 'ordinary', quantity: 1 }],
+    });
+    const setHold = (offset: string) => db.unsafe(`UPDATE platform_event_registrations
+      SET status='reserved',reservation_expires_at=clock_timestamp()+$2::interval WHERE event_id=$1`, [created.id, offset]);
+    await setHold('2 minutes');
+    expect(await detail()).toMatchObject({ competition: { isEntrant: true, canManage: false } });
+    expect((await postTest(competitionBase + '/' + created.id + '/test/start-now')).status).toBe(403);
+    await setHold('-1 second');
+    expect(await detail()).toMatchObject({ competition: { isEntrant: false, canManage: true } });
+  });
+
+  it('allows only cleanup for the creator of a free solo direct-entry test', async () => {
+    const created = await (await postTest(competitionBase + '/test', { autoEnter: true })).json();
+    const path = competitionBase + '/' + created.id;
+    expect((await postTest(path + '/test/start-now')).status).toBe(403);
+    expect((await postTest(path + '/test/cleanup', {}, { ...testAdminHeaders, 'Test-User': '4' })).status).toBe(403);
+    expect((await postTest(path + '/test/cleanup')).status).toBe(200);
   });
 
   it('fulfills free direct entry using the real order graph and isolates test events from public and host statistics', async () => {
@@ -794,7 +1139,7 @@ describe.skipIf(!databaseUrl)('real competition order HTTP and PostgreSQL transa
     expect(response.status, JSON.stringify(created)).toBe(201);
     expect(created.registrationId).toBeNull();
     const path = competitionBase + '/' + created.id;
-    const detail = await (await app.request(path, { headers: testMemberHeaders })).json();
+    const detail = await (await app.request(competitionBase + '/' + created.slug, { headers: testMemberHeaders })).json();
     const register = (user: number) => postTest('/v1/platform/orders', { items: [{
       sellableType: 'event_ticket', eventTicketTypeId: detail.competition.projects[0].id,
       competitionSessionId: detail.competition.sessions[0].id, device: 'ordinary',
@@ -858,8 +1203,8 @@ describe.skipIf(!databaseUrl)('real competition order HTTP and PostgreSQL transa
       FROM platform_order_items i JOIN platform_event_registrations r ON r.order_item_id=i.id
       WHERE o.id=i.order_id AND r.id=$1`, [created.registrationId]);
     const cleanup = await postTest(`${competitionBase}/${created.id}/test/cleanup`);
-    expect(cleanup.status).toBe(409);
-    expect(await cleanup.json()).toMatchObject({ error: { message: expect.stringContaining('non-zero order') } });
+    expect(cleanup.status).toBe(403);
+    expect(await cleanup.json()).toMatchObject({ error: { message: expect.stringContaining('Competitors cannot manage') } });
     expect(await db.unsafe('SELECT status FROM platform_events WHERE id=$1', [created.id])).toEqual([{ status: 'published' }]);
 
     const open = await (await postTest(competitionBase + '/test')).json();

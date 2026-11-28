@@ -1,13 +1,14 @@
+import { competitionCheckInWindow } from '../platform/competition_checkin.js';
 import { COMPETITION_OBSERVATION_WINDOW_MS } from '@cuberoot/shared/timer';
-import { requirePlatformActor } from '../platform/auth.js';
+import { requirePlatformActor, type PlatformActor } from '../platform/auth.js';
 import { platformDb, platformQuery, platformTransaction, sendMutation, withIdempotency, type PlatformDb } from '../platform/db.js';
 import { badRequest, conflict, forbidden, notFound } from '../platform/errors.js';
 import { platformRouter, privateNoStore } from '../platform/http.js';
 import { booleanField, enumField, integerField, readJsonObject, stringField } from '../platform/validation.js';
 import type { WCA_TIMED_EVENT_ORDER } from '@cuberoot/shared/wca-events';
-import { finishCompetitionSelfAttempt, requireCompetitionManager, requireCompetitionRegistration, validateCompetitionAttempts, validateCompetitionAttempt } from '../platform/competitions.js';
+import { competitionEntrant, competitionManagerAccess, finishCompetitionSelfAttempt, requireCompetitionManager, requireCompetitionRegistration, validateCompetitionAttempts, validateCompetitionAttempt } from '../platform/competitions.js';
 import { competitionScramble } from '../platform/competition_workflow.js';
-import { advanceCompetitionArena, arenaDnfReason, arenaEntry, arenaSolveAt, competitionArenaSnapshot, lockArenaRound, ORDINARY_ARENA_OBSERVATION_WINDOW_MS, recordArenaDnf, startCompetitionArena } from '../platform/competition_arena.js';
+import { advanceCompetitionArena, arenaDnfReason, arenaEntry, arenaSolveAt, competitionArenaSnapshot, lockArenaRound, ORDINARY_ARENA_OBSERVATION_WINDOW_MS, recordArenaDnf, competitionArenaLobby, lockCompetitionArenaSession, readyCompetitionArena, requireLegacyScrambleWindow } from '../platform/competition_arena.js';
 import { competitionLiveCredentials } from '../platform/competition_live.js';
 import { competitionSupervisionReady } from './video_rooms.js';
 
@@ -20,28 +21,62 @@ function registrationId(value: string): string {
 
 type Registration = {
   id: string; user_id: number; supervisor_user_id: number; status: string; event_status: string;
-  checked_in_at: string | null; in_window: boolean; device: string; competition_video_generation: string;
+  checked_in_at: string | null; judge_entrant: boolean; supervisor_independent: boolean; can_manage: boolean; in_check_in_window: boolean; has_started: boolean; session_id: string; device: string; competition_video_generation: string;
   competition_project: (typeof WCA_TIMED_EVENT_ORDER)[number]; competition_format: string | null; result_recorded_at: string | null;
 };
-async function registration(db: PlatformDb, id: string, userId: number | null, lock = false, adminRead = false): Promise<Registration> {
+async function registration(db: PlatformDb, id: string, actor: PlatformActor, lock = false): Promise<Registration> {
+  if (lock) {
+    const [seat] = await platformQuery<{ session_id: string }>(db,
+      'SELECT competition_session_id::text AS session_id FROM platform_event_registrations WHERE id=$1::uuid', [id]);
+    if (seat?.session_id) await lockCompetitionArenaSession(db, seat.session_id);
+  }
   const [row] = await platformQuery<Registration>(db, `SELECT r.id::text,r.user_id,r.status,r.checked_in_at,t.competition_device AS device,
     r.competition_video_generation::text,r.competition_project,r.result_recorded_at,s.supervisor_user_id,e.status AS event_status,c.competition_format,
-    (NOW()>=s.starts_at AND NOW()<s.ends_at) AS in_window
+    NOT ${competitionEntrant('e.id','s.supervisor_user_id')} AS supervisor_independent,
+    ${competitionEntrant('e.id','$2')} AS judge_entrant,((c.is_test OR $3) AND ${competitionManagerAccess('$2','$3')}) AS can_manage,
+    s.id::text AS session_id,${competitionCheckInWindow('s')} AS in_check_in_window,
+    (s.starts_at<=clock_timestamp() AND clock_timestamp()<s.ends_at) AS has_started
     FROM platform_event_registrations r JOIN platform_competition_sessions s ON s.id=r.competition_session_id
     JOIN platform_event_ticket_types t ON t.id=r.ticket_type_id
-    JOIN platform_events e ON e.id=r.event_id JOIN platform_competitions c ON c.event_id=e.id WHERE r.id=$1::uuid ${lock ? 'FOR UPDATE OF r,s' : ''}`, [id]);
+    JOIN platform_events e ON e.id=r.event_id JOIN platform_competitions c ON c.event_id=e.id WHERE r.id=$1::uuid ${lock ? 'FOR UPDATE OF r' : ''}`, [id, actor.userId, actor.isAdmin === true]);
   if (!row) notFound('Registration');
-  if (!adminRead && (userId == null || ![Number(row.user_id),Number(row.supervisor_user_id)].includes(userId))) forbidden('Only the entrant and assigned supervisor can access attempts');
+  if (actor.userId !== Number(row.user_id) && !(actor.userId === Number(row.supervisor_user_id) && !row.judge_entrant)
+    && (lock || !row.can_manage)) forbidden('Only the entrant and authorized competition officials can access attempts');
   return row;
 }
-async function supervised(row: Registration, userId: number | null): Promise<void> {
-  if (Number(row.supervisor_user_id) !== userId || Number(row.user_id) === userId) forbidden('Only the assigned non-participating supervisor can release or record attempts');
-  if (row.competition_format === 'advancement' || !['confirmed','attended'].includes(row.status) || row.event_status !== 'published' || !row.in_window || !row.checked_in_at || row.result_recorded_at) {
+function requireIndependentSupervisor(row: Registration, userId: number | null) {
+  if (Number(row.supervisor_user_id) !== userId || Number(row.user_id) === userId || row.judge_entrant) {
+    forbidden('Only the assigned non-participating supervisor can release or record attempts');
+  }
+}
+type CameraAdmission = Pick<Registration, 'competition_video_generation' | 'checked_in_at' | 'user_id' | 'supervisor_user_id' | 'supervisor_independent' | 'status'>;
+function admissionKey(row: CameraAdmission) {
+  return JSON.stringify([row.competition_video_generation, row.checked_in_at, row.user_id, row.supervisor_user_id, row.status]);
+}
+
+function supervised(row: Registration, userId: number | null) {
+  requireIndependentSupervisor(row, userId);
+  if (row.competition_format === 'advancement' || !['confirmed','attended'].includes(row.status) || row.event_status !== 'published' || !row.in_check_in_window || !row.checked_in_at || row.result_recorded_at) {
     conflict('Check-in, an active session and an unfinished paid registration are required');
   }
-  if (!await competitionSupervisionReady(row.id,row.competition_video_generation,Number(row.user_id),Number(row.supervisor_user_id))) {
-    conflict('The entrant and supervisor must both be connected with their cameras on');
-  }
+}
+
+async function checkCameras(row: CameraAdmission & { id: string }) {
+  return row.supervisor_independent && await competitionSupervisionReady(row.id, row.competition_video_generation, Number(row.user_id), Number(row.supervisor_user_id))
+    ? admissionKey(row) : null;
+}
+
+function requireCameras(row: CameraAdmission, credential: string | null) {
+  if (!row.supervisor_independent || credential !== admissionKey(row)) conflict('The entrant and supervisor must both be connected with their cameras on');
+}
+
+async function supervisorCameras(id: string, actor: PlatformActor) {
+  const row = await registration(platformDb(), id, actor);
+  // Preserve idempotent replays after the session closes or the camera disconnects.
+  if (Number(row.supervisor_user_id) !== actor.userId) return null;
+  return row.checked_in_at && row.in_check_in_window && row.event_status === 'published'
+    && row.competition_format !== 'advancement' && !row.judge_entrant && !row.result_recorded_at
+    ? checkCameras(row) : null;
 }
 
 const ATTEMPTS = `SELECT a.attempt_number AS "attemptNumber",a.scramble,a.issued_at AS "issuedAt",a.centiseconds,a.penalty,a.recorded_at AS "recordedAt",a.review_required AS "reviewRequired",
@@ -58,7 +93,14 @@ platformCompetitionAttemptRoutes.get('/platform/competitions/registrations/:id/a
   const id = registrationId(c.req.param('id'));
   return c.json(await platformTransaction(async db => {
     const entry = await arenaEntry(db, id, actor.userId, true);
+    const lobby = entry.in_check_in_window ? await competitionArenaLobby(db, entry) : undefined;
+    const lobbyState = lobby ? {
+      sessionStartsAt: lobby.sessionStartsAt, totalEntrants: lobby.totalEntrants,
+      checkedInCount: lobby.checkedInCount, readyCount: lobby.readyCount, lobbyPlayers: lobby.lobbyPlayers,
+      ownReady: lobby.lobbyPlayers.some(player => player.id === id && player.ready),
+    } : {};
     if (!entry.checked) return {
+      ...lobbyState, waitingForStart: !!lobby,
       serverNow: new Date(), checkedIn: false, roomId: null, roundNumber: null, startsAt: null,
       seated: false, completed: false, scramble: null, credentials: null, inspectAt: null, solveAt: null, players: [],
     };
@@ -66,7 +108,7 @@ platformCompetitionAttemptRoutes.get('/platform/competitions/registrations/:id/a
     if (round) await advanceCompetitionArena(db, round);
     const snapshot = await competitionArenaSnapshot(db, entry);
     const roomId = typeof snapshot?.roomId === 'string' && snapshot.seated ? snapshot.roomId : null;
-    return { ...snapshot, checkedIn: true, credentials: roomId ? competitionLiveCredentials(roomId, actor.userId) : null };
+    return { ...lobbyState, ...snapshot, waitingForStart: !!lobby && !round && !snapshot?.legacy, checkedIn: true, credentials: roomId ? competitionLiveCredentials(roomId, actor.userId) : null };
   }));
 });
 
@@ -74,15 +116,22 @@ platformCompetitionAttemptRoutes.post('/platform/competitions/registrations/:id/
   const actor = await requirePlatformActor(c);
   const id = registrationId(c.req.param('id'));
   const body = await readJsonObject(c);
+  const previous = await arenaEntry(platformDb(), id, actor.userId);
+  const cameras = previous.kind === 'supervised' && previous.in_check_in_window
+    ? await checkCameras(await registration(platformDb(), id, actor)) : null;
   return sendMutation(c, await withIdempotency(c, actor, `competition.arena.ready:${id}`, body, async db => {
+    await lockCompetitionArenaSession(db, previous.session_id);
     const entry = await arenaEntry(db, id, actor.userId);
-    const registration = await requireCompetitionRegistration(db, id, false);
+    if (!entry.in_check_in_window || entry.session_id !== previous.session_id) conflict('The session is closed or has changed');
     if (entry.kind === 'supervised') {
-      if (!registration.supervisor_user_id || !await competitionSupervisionReady(id, registration.competition_video_generation, Number(registration.user_id), Number(registration.supervisor_user_id))) {
-        conflict('The entrant and supervisor must both be connected with their cameras on');
+      const row = await registration(db, id, actor, true);
+      if (!row.checked_in_at || row.result_recorded_at || !row.in_check_in_window || row.session_id !== entry.session_id) {
+        conflict('Check-in and an active unfinished registration are required');
       }
+      requireCameras(row, cameras);
     }
-    return { status: 200, body: { roomId: await startCompetitionArena(db, entry) } };
+    const roomId = await readyCompetitionArena(db, entry);
+    return { status: 200, body: { roomId, waitingForStart: roomId === null } };
   }));
 });
 
@@ -126,7 +175,7 @@ platformCompetitionAttemptRoutes.get('/platform/competitions/registrations/:id/a
   privateNoStore(c);
   const actor = await requirePlatformActor(c);
   const id = registrationId(c.req.param('id'));
-  const row = await registration(platformDb(),id,actor.userId,false,actor.isAdmin);
+  const row = await registration(platformDb(),id,actor);
   if (!['confirmed','attended'].includes(row.status) || (row.device === 'smart' && !row.checked_in_at)) forbidden('An active checked-in registration is required');
   return c.json({ attempts: await platformQuery(platformDb(),ATTEMPTS,[id]) });
 });
@@ -135,11 +184,13 @@ platformCompetitionAttemptRoutes.post('/platform/competitions/registrations/:id/
   const actor = await requirePlatformActor(c);
   const id = registrationId(c.req.param('id'));
   const body = await readJsonObject(c);
+  const cameras = await supervisorCameras(id, actor);
   return sendMutation(c,await withIdempotency(c,actor,`competition.attempt.next:${id}`,body,async(db) => {
     // One supervisor can actively supervise only one solve, even across competitions.
     await platformQuery(db,`SELECT pg_advisory_xact_lock(hashtextextended('competition-supervisor:' || $1::text,0))`,[actor.userId]);
-    const row = await registration(db,id,actor.userId,true);
-    await supervised(row,actor.userId);
+    const row = await registration(db,id,actor,true);
+    supervised(row,actor.userId);
+    requireCameras(row, cameras);
     const attempts = await platformQuery(db,ATTEMPTS,[id]);
     const pending = attempts.find(attempt => !attempt.recordedAt);
     if (pending) return { status:200,body:{attempt:pending} };
@@ -154,12 +205,13 @@ platformCompetitionAttemptRoutes.post('/platform/competitions/registrations/:id/
       WHERE s.supervisor_user_id=$1 AND a.recorded_at IS NULL AND a.registration_id<>$2::uuid
         AND r.status IN ('confirmed','attended') AND NOW()<s.ends_at LIMIT 1`,[actor.userId,id]);
     if (busy.length) conflict('Finish the currently supervised attempt before starting another entrant');
+    await requireLegacyScrambleWindow(db, { ...row, project: row.competition_project }, row.has_started);
     const scramble = await competitionScramble(row.competition_project);
     await platformQuery(db,`INSERT INTO platform_competition_attempts(registration_id,attempt_number,scramble,issued_at)
       VALUES($1::uuid,$2,$3,NOW())`,[id,attempts.length+1,scramble]);
     const fresh = await platformQuery(db,ATTEMPTS,[id]);
     return { status:201,body:{attempt:fresh[fresh.length-1]},resourceType:'competition_attempt',resourceId:id };
-  }));
+  }, async db => requireIndependentSupervisor(await registration(db, id, actor, true), actor.userId)));
 });
 
 platformCompetitionAttemptRoutes.post('/platform/competitions/registrations/:id/attempts/:number/result', async (c) => {
@@ -169,9 +221,11 @@ platformCompetitionAttemptRoutes.post('/platform/competitions/registrations/:id/
   if (!/^[1-5]$/.test(number)) badRequest('Attempt number must be between one and five');
   const body = await readJsonObject(c);
   const result = validateCompetitionAttempt(body);
+  const cameras = await supervisorCameras(id, actor);
   return sendMutation(c,await withIdempotency(c,actor,`competition.attempt.result:${id}:${number}`,body,async(db) => {
-    const row = await registration(db,id,actor.userId,true);
-    await supervised(row,actor.userId);
+    const row = await registration(db,id,actor,true);
+    supervised(row,actor.userId);
+    requireCameras(row, cameras);
     if (row.device === 'smart') conflict('Smart cube results require a verified device report');
     const [arena] = await platformQuery<{ issued_at: Date; inspect_at: Date | null; solve_at: Date | null; now: Date }>(db, `SELECT a.*,clock_timestamp() AS now
       FROM platform_competition_attempts a
@@ -187,13 +241,13 @@ platformCompetitionAttemptRoutes.post('/platform/competitions/registrations/:id/
       WHERE registration_id=$1::uuid AND attempt_number=$2 AND recorded_at IS NULL AND issued_at<=clock_timestamp() RETURNING attempt_number`,[id,Number(number),result.centiseconds,result.penalty,actor.userId]);
     if (!changed.length) conflict('The attempt has not been issued or was already recorded');
     return { status:200,body:{attempts:await platformQuery(db,ATTEMPTS,[id])},resourceType:'competition_attempt',resourceId:id };
-  }));
+  }, async db => requireIndependentSupervisor(await registration(db, id, actor, true), actor.userId)));
 });
 
 async function selfServiceRegistration(db: PlatformDb, id: string, userId: number | null) {
   const row = await requireCompetitionRegistration(db, id);
   if (Number(row.user_id) !== userId) forbidden('Only the participant can manage their attempts');
-  if (row.session_kind !== 'self_service' || row.competition_format === 'advancement' || !row.checked_in_at || !row.in_window) {
+  if (row.session_kind !== 'self_service' || row.competition_format === 'advancement' || !row.checked_in_at || !row.in_check_in_window) {
     conflict('An active checked-in self-service registration is required');
   }
   return row;
@@ -204,6 +258,9 @@ platformCompetitionAttemptRoutes.post('/platform/competitions/registrations/:id/
   const id = registrationId(c.req.param('id'));
   const body = await readJsonObject(c);
   return sendMutation(c, await withIdempotency(c, actor, `competition.self.next:${id}`, body, async db => {
+    const seat = await requireCompetitionRegistration(db, id, false);
+    if (Number(seat.user_id) !== actor.userId) forbidden('Only the participant can manage their attempts');
+    await lockCompetitionArenaSession(db, seat.session_id);
     const row = await selfServiceRegistration(db, id, actor.userId);
     if (row.status !== 'confirmed') conflict('This registration is no longer open for attempts');
     const attempts = await platformQuery(db, ATTEMPTS, [id]);
@@ -215,6 +272,7 @@ platformCompetitionAttemptRoutes.post('/platform/competitions/registrations/:id/
     [row.session_id, row.competition_project, row.device, id]);
     if (arena || !attempts.length) conflict('The arena releases the next scramble automatically');
     if (attempts.length >= 5) conflict('All attempts are recorded');
+    await requireLegacyScrambleWindow(db, { ...row, project: row.competition_project }, row.has_started);
     const scramble = await competitionScramble(row.competition_project);
     await platformQuery(db, `INSERT INTO platform_competition_attempts(registration_id,attempt_number,scramble)
       VALUES($1::uuid,$2,$3)`, [id, attempts.length + 1, scramble]);
@@ -274,11 +332,14 @@ platformCompetitionAttemptRoutes.post('/platform/competitions/registrations/:id/
   const number = integerField(body, 'attemptNumber', { required: true, min: 1, max: 5 })!;
   const decision = enumField(body, 'decision', ['approve', 'DNF'], { required: true })!;
   const note = stringField(body, 'note', { max: 1000 }) ?? '';
-  return sendMutation(c, await withIdempotency(c, actor, `competition.self.review:${id}:${number}`, body, async db => {
+  async function authorize(db: PlatformDb) {
     const [entry] = await platformQuery<{ event_id: string }>(db,
       'SELECT event_id::text FROM platform_event_registrations WHERE id=$1::uuid AND competition_session_id IS NOT NULL', [id]);
     if (!entry) notFound('Competition registration');
-    const event = await requireCompetitionManager(db, actor, entry.event_id);
+    return requireCompetitionManager(db, actor, entry.event_id);
+  }
+  return sendMutation(c, await withIdempotency(c, actor, `competition.self.review:${id}:${number}`, body, async db => {
+    const event = await authorize(db);
     if (event.status !== 'published' || event.supervision_mode !== 'self_service' || event.competition_format === 'advancement') {
       conflict('Only an active self-service competition result can be reviewed');
     }
@@ -303,5 +364,5 @@ platformCompetitionAttemptRoutes.post('/platform/competitions/registrations/:id/
       VALUES($1,$2,'competition.self_attempt_review','competition_registration',$3,'allowed',$4::jsonb)`,
     [actor.userId, actor.ownerKey, id, { attemptNumber: number, decision, note, previous, result }]);
     return { status: 200, body: { attemptNumber: number, reviewRequired: false, ...result } };
-  }));
+  }, authorize));
 });

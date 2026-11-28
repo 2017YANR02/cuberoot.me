@@ -73,7 +73,8 @@ export function CompetitionReplayButton({ registrationId, number, publicReplay, 
   }
   return <>
     <button className="competition-secondary competition-replay-button" type="button" disabled={busy} onClick={() => void open()}>
-      {children} <Play size={11} aria-label={t('复盘', 'Replay')} />
+      {children} <Play size={11} aria-hidden />
+      <span className="sr-only">{t(`查看第 ${number} 把复盘`, `Replay attempt ${number}`)}</span>
     </button>
     {error && <small role="alert">{t('复盘加载失败', 'Replay unavailable')}</small>}
     {solve && <CompetitionReplayDialog own={solve} onClose={() => setSolve(null)} />}

@@ -8,7 +8,7 @@ import { useT } from '@/hooks/useT';
 import { competitionWorkspaceHref } from '@/lib/competition-links';
 import { getCompetitionHostOverview, type CompetitionHostOverview as Overview } from '@/lib/online-competition-api';
 
-export function CompetitionHostOverview() {
+export function CompetitionHostOverview({ onManage }: { onManage?: (id?: string) => void }) {
   const t = useT();
   const [request, setRequest] = useState(0);
   const [overview, setOverview] = useState<Overview | 'error' | null>(null);
@@ -61,7 +61,9 @@ export function CompetitionHostOverview() {
     <section className="competition-host-breakdown" aria-labelledby="competition-host-breakdown-heading">
       <div className="competition-host-section-heading">
         <h2 id="competition-host-breakdown-heading">{t('赛事明细', 'Competition breakdown')}</h2>
-        <AppLink href={competitionWorkspaceHref('manage')} prefetch={false}>{t('赛事管理', 'Competition management')}<ArrowRight size={16} aria-hidden /></AppLink>
+        {onManage
+          ? <button type="button" className="competition-secondary" onClick={() => onManage()}>{t('赛事管理', 'Competition management')}<ArrowRight size={16} aria-hidden /></button>
+          : <AppLink href={competitionWorkspaceHref('manage')} prefetch={false}>{t('赛事管理', 'Competition management')}<ArrowRight size={16} aria-hidden /></AppLink>}
       </div>
       {overview.competitions.length ? <>
         {overview.competitionCount > overview.competitions.length && <p className="competition-host-overview-note">
@@ -78,7 +80,9 @@ export function CompetitionHostOverview() {
             </tr></thead>
             <tbody>{overview.competitions.map(row => <tr key={row.id}>
               <th scope="row">
-                <AppLink href={competitionWorkspaceHref('manage', row.id)} prefetch={false}>{t(row.titleZh || row.titleEn, row.titleEn || row.titleZh)}</AppLink>
+                {onManage
+                  ? <button type="button" className="competition-host-entity-button" onClick={() => onManage(row.id)}>{t(row.titleZh || row.titleEn, row.titleEn || row.titleZh)}</button>
+                  : <AppLink href={competitionWorkspaceHref('manage', row.id)} prefetch={false}>{t(row.titleZh || row.titleEn, row.titleEn || row.titleZh)}</AppLink>}
                 <span>{[row.organizationName, row.status ? statuses[row.status] : null].filter(Boolean).join(' · ')}</span>
               </th>
               <td>{integer.format(row.registered)}</td>

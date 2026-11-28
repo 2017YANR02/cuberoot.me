@@ -1833,6 +1833,7 @@ CREATE TABLE platform_fulfillment_ledger (
 CREATE INDEX idx_platform_fulfillment_ledger_item ON platform_fulfillment_ledger(order_item_id, created_at, id);
 
 CREATE TABLE platform_event_registrations (
+  arena_ready_at TIMESTAMPTZ,
   CONSTRAINT competition_registration_single CHECK ((competition_session_id IS NULL) = (competition_project IS NULL) AND (competition_session_id IS NULL OR quantity=1)),
   result_recorded_at TIMESTAMPTZ,
   result_recorded_by BIGINT REFERENCES app_users(id) ON DELETE SET NULL,
@@ -10140,6 +10141,9 @@ CREATE TABLE platform_competition_matches (
   next_loss_match_id UUID,
   next_loss_slot SMALLINT CHECK (next_loss_slot IN (1, 2)),
   status TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'ready', 'in_progress', 'completed', 'bye')),
+  ready_at TIMESTAMPTZ,
+  video_generation UUID NOT NULL DEFAULT gen_random_uuid(),
+  forfeit_reason TEXT CHECK (forfeit_reason IN ('no_show', 'double_no_show')),
   UNIQUE (ticket_type_id, bracket_side, round_number, match_number),
   UNIQUE (ticket_type_id, id),
   FOREIGN KEY (event_id, ticket_type_id) REFERENCES platform_event_ticket_types(event_id, id) ON DELETE RESTRICT,
@@ -10231,5 +10235,6 @@ CREATE TRIGGER competition_arena_attempt_changed
   FOR EACH ROW EXECUTE FUNCTION notify_competition_arena();
 
 CREATE TRIGGER competition_arena_game_changed
-  AFTER INSERT OR UPDATE OF start_at, inspect_a_at, inspect_b_at, solve_a_at, solve_b_at, result_a, result_b ON platform_competition_match_games
+  AFTER INSERT OR UPDATE OF start_at, inspect_a_at, inspect_b_at, solve_a_at, solve_b_at, result_a, result_b,
+    ready_a_at, ready_b_at, phase_a, phase_b, resolved_at ON platform_competition_match_games
   FOR EACH ROW EXECUTE FUNCTION notify_competition_arena();

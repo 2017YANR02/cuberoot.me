@@ -1,3 +1,4 @@
+import { competitionCheckInWindow } from './competition_checkin.js';
 import { createHmac, randomBytes, timingSafeEqual } from 'node:crypto';
 import { isCompetitionLiveRoom, type NetBattleCredentials } from '@cuberoot/shared/timer';
 import { BattleRoomLiveRelay } from '../battle_live_relay.js';
@@ -32,8 +33,10 @@ export async function authorizeCompetitionLive(roomId: string, credentials: NetB
   const seats = await platformQuery<{ user_id: string }>(platformDb(), `SELECT r.user_id::text
     FROM platform_event_registrations r JOIN platform_events e ON e.id=r.event_id
     WHERE e.status IN ('published','completed') AND r.status IN ('confirmed','attended') AND (
-      EXISTS(SELECT 1 FROM platform_competition_matches m WHERE m.id=$1::uuid
-        AND r.id IN (m.player_a_registration_id,m.player_b_registration_id))
+      EXISTS(SELECT 1 FROM platform_competition_matches m JOIN platform_competition_sessions s ON s.id=r.competition_session_id
+        WHERE m.id=$1::uuid AND m.status IN ('ready','in_progress') AND e.status='published'
+        AND ${competitionCheckInWindow('s')} AND ${competitionCheckInWindow('e')}
+        AND (r.checked_in_at IS NOT NULL OR s.session_kind='offline') AND r.id IN (m.player_a_registration_id,m.player_b_registration_id))
       OR (r.checked_in_at IS NOT NULL AND EXISTS(SELECT 1 FROM platform_competition_attempts a
         WHERE a.registration_id=r.id AND a.arena_round_id=$1::uuid)))`, [roomId]);
   return seats.some(seat => competitionLivePlayer(seat.user_id) === playerId);

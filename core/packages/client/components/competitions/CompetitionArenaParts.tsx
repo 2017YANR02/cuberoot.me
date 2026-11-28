@@ -16,6 +16,7 @@ import { Tooltip } from '@/components/Tooltip';
 import { useT } from '@/hooks/useT';
 import { useLang } from '@/i18n/tr';
 import MoreToggle from '@/components/MoreToggle';
+import { displayCuberName } from '@/lib/cuber-name-display';
 import { formatWcaResult } from '@/lib/wca-format-result';
 import type { CompetitionArenaIdentity, CompetitionAttemptResult, OnlineCompetition } from '@/lib/online-competition-api';
 import type { CompetitionDnfReason } from '@cuberoot/shared/timer';
@@ -33,7 +34,7 @@ export type Readout = { stage: 'scrambling' | 'confirming' | 'inspecting' | 'run
 export function ArenaIdentity({ person }: { person: CompetitionArenaIdentity }) {
   const lang = useLang();
   return <PersonLink wcaId={person.wcaId ?? ''} name={person.name} isZh={lang === 'zh'} className="competition-arena-name"
-    flag={person.wcaId && person.countryCode ? <Flag iso2={person.countryCode} spanClassName="country-flag" imgClassName="country-flag-ct" /> : undefined} />;
+    flag={person.countryCode ? <Flag iso2={person.countryCode} spanClassName="country-flag" imgClassName="country-flag-ct" /> : undefined} />;
 }
 
 export function arenaPersonReadout(entered: string | null, inspect: string | null | undefined, solve: string | null | undefined,
@@ -73,8 +74,8 @@ function useAnimationClock(active: boolean, interval: number) {
   return now;
 }
 
-export function ArenaReadout({ value, project, moves = 0, automatic = true, best = false, spectator = false }: {
-  value: Readout; project: string; moves?: number; automatic?: boolean; best?: boolean; spectator?: boolean;
+export function ArenaReadout({ value, project, moves = 0, automatic = true, best = false, spectator = false, plain = false }: {
+  value: Readout; project: string; moves?: number; automatic?: boolean; best?: boolean; spectator?: boolean; plain?: boolean;
 }) {
   const t = useT();
   const now = useAnimationClock(value.stage === 'running' || value.stage === 'inspecting' || value.stage === 'confirming', 28);
@@ -101,7 +102,7 @@ export function ArenaReadout({ value, project, moves = 0, automatic = true, best
     <div className="competition-arena-clock">
       {!confirming && <output aria-label={inspecting && automatic ? t('剩余观察秒数', 'Inspection seconds remaining') : t('计时', 'Timer')}
         className="competition-arena-time" data-color={color} aria-live="off">
-        {automatic && inspecting ? time : <SegmentTime text={time} />}
+        {plain || (automatic && inspecting) ? time : <SegmentTime text={time} />}
       </output>}
       {note && <span className="competition-arena-phase-note" role="status">{note}</span>}
     </div>
@@ -134,9 +135,9 @@ export function ArenaCountdown({ at, number, duel = false }: { at: number; numbe
   </div>;
 }
 
-export function ArenaStatus({ readout, countdownAt, finished, total, correction, completed, ready, cube }: {
+export function ArenaStatus({ readout, countdownAt, finished, total, correction, completed, ready, cube, matchOnly = false, showSolveLimit = true }: {
   readout: Readout; countdownAt: number | null; finished: number; total: number;
-  correction: boolean; completed: boolean; ready: boolean; cube?: ArenaCube;
+  correction: boolean; completed: boolean; ready: boolean; cube?: ArenaCube; matchOnly?: boolean; showSolveLimit?: boolean;
 }) {
   const t = useT();
   const now = useAnimationClock(countdownAt === null && ['scrambling', 'confirming', 'inspecting', 'running'].includes(readout.stage), 100);
@@ -146,7 +147,7 @@ export function ArenaStatus({ readout, countdownAt, finished, total, correction,
   let label: string;
   let clock: string | null = null;
   if (completed) {
-    label = t('比赛结束', 'Finished');
+    label = matchOnly ? t('本场结束', 'Match complete') : t('比赛结束', 'Competition complete');
   } else if (current.stage === 'finished') {
     label = current.reason === 'disconnected' && cube && !cube.cube.status.connected
       ? t('连接中断 · DNF', 'Disconnected · DNF')
@@ -157,8 +158,8 @@ export function ArenaStatus({ readout, countdownAt, finished, total, correction,
     label = t('观察中', 'Inspecting');
   } else if (current.stage === 'running') {
     label = current.inspectionMs === COMPETITION_OBSERVATION_WINDOW_MS && now - (current.at ?? now) < 2500
-      ? t('已自动起表', 'Timer started automatically') : t('复原中', 'Solving');
-    clock = remainingText(COMPETITION_STAGE_LIMIT_MS - (now - (current.at ?? now)));
+      ? t('已自动起表', 'Timer started automatically') : t('还原中', 'Solving');
+    if (showSolveLimit) clock = remainingText(COMPETITION_STAGE_LIMIT_MS - (now - (current.at ?? now)));
   } else if (current.stage === 'scrambling') {
     label = correction ? t('按高亮步纠错', 'Follow the highlighted correction') : t('打乱中', 'Scrambling');
     clock = remainingText(remaining);
@@ -240,18 +241,64 @@ export function ArenaLocalCube({ cube, project, scramble }: { cube?: ArenaCube; 
   </ArenaSmartCube>;
 }
 
-export function ArenaRemoteCube({ project, scramble, smart, remote }: {
+export function ArenaRemoteCube({ project, scramble, smart, remote, playerId, stage = 'idle', hasPenalty }: {
   project: string; scramble: string; smart?: boolean; remote?: NetBattleLiveCubePlayer;
+  playerId?: string | null; stage?: Readout['stage']; hasPenalty?: boolean;
 }) {
+  const t = useT();
   const language = useLang();
-  if (!smart) return <div className="competition-arena-cube"><ArenaPreview project={project} scramble={scramble} /></div>;
-  const live = remote?.connected && remote.smart && remote.facelets && remote.algAnchored ? remote : null;
+  if (!smart) {
+    const showScramble = stage === 'scrambling' || stage === 'confirming' || stage === 'inspecting';
+    const status = stage === 'running' ? t('对手复原中', 'Solving') : stage === 'finished' && hasPenalty ? 'DNF' : null;
+    return <div className="competition-arena-cube">
+      <div className="competition-arena-cube-model"><ArenaPreview project={project} scramble={showScramble ? scramble : ''} /></div>
+      {status && <span className="competition-arena-cube-status" role="status">{status}</span>}
+    </div>;
+  }
+  const live = remote?.connected && remote.smart && !!remote.facelets ? remote : null;
   return <ArenaSmartCube disconnected={!live} syncing={!!remote?.connected}>
-    <LiveCubeState facelets={live?.facelets ?? SOLVED_SMART_CUBE_FACELETS}
-      moves={live?.moves ?? NO_MOVES} algAnchored={true} mode="3d" language={language}
+    <LiveCubeState key={`${playerId ?? remote?.playerId ?? 'opponent'}:${live?.round ?? 0}`}
+      facelets={live?.facelets ?? SOLVED_SMART_CUBE_FACELETS}
+      moves={live?.moves ?? NO_MOVES} algAnchored={live?.algAnchored ?? true} liveSource={live?.liveSource} mode="3d" language={language}
       useGyro={!!live?.quatRef?.current} quatRef={live?.quatRef}
       sensorBasis="identity" mirror={false} orientationTauMs={20} />
   </ArenaSmartCube>;
+}
+
+export function ArenaReadinessDeadline({ at }: { at: number }) {
+  const t = useT();
+  const now = useAnimationClock(true, 250) || performance.now();
+  const seconds = Math.max(0, Math.ceil((at - now) / 1000));
+  return <p className="competition-arena-readiness-message">
+    {t('报到截止倒计时', 'Ready by')} <time>{Math.floor(seconds / 60)}:{String(seconds % 60).padStart(2, '0')}</time>
+  </p>;
+}
+
+export function ArenaLobby({ at, total = 0, ready = 0, players, duel }: {
+  at: number; total?: number; ready?: number; duel?: boolean;
+  players?: Array<{ id: string; name: string; checkedIn: boolean; ready: boolean }>;
+}) {
+  const t = useT();
+  const language = useLang();
+  const [seconds, setSeconds] = useState(() => Math.max(0, Math.ceil((at - performance.now()) / 1000)));
+  useEffect(() => {
+    const update = () => setSeconds(Math.max(0, Math.ceil((at - performance.now()) / 1000)));
+    update();
+    const timer = setInterval(update, 250);
+    return () => clearInterval(timer);
+  }, [at]);
+  const remaining = `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, '0')}`;
+  const status = duel ? t('双方已就绪 · 等待全员检录或开赛时间', 'Both ready · Waiting for division check-in or start time')
+    : total === 1 ? ready === 1 ? t('已检录就绪', 'Checked in and ready') : t('等待就绪', 'Waiting for readiness')
+      : t(`已检录就绪 ${ready} / ${total} · 全员到齐或到点自动发打乱`, `${ready} / ${total} ready · Scrambles after everyone is ready or at start time`);
+  return <section className="competition-arena-lobby" aria-label={t('赛前候场', 'Pre-start lobby')}>
+    <p role="status">{status}</p>
+    <div>{t('距离开赛', 'Starts in')} <strong>{remaining}</strong></div>
+    {players && players.length > 1 && <ul>{players.map(player => <li key={player.id}>
+      <span>{displayCuberName(player.name, language === 'zh')}</span>
+      <small>{player.ready ? t('已就绪', 'Ready') : player.checkedIn ? t('已检录，准备中', 'Checked in · Preparing') : t('待检录', 'Awaiting check-in')}</small>
+    </li>)}</ul>}
+  </section>;
 }
 
 export function ArenaBoardToggle({ children, summary, stage }: { children: ReactNode; summary: ReactNode; stage: Readout['stage'] }) {

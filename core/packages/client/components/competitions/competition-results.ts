@@ -1,7 +1,8 @@
 import { DEFAULT_ROUND_CONFIG, roundProjection, roundResult, type Solve } from '@cuberoot/shared/timer';
 import { isAo5Bracketed } from '@/lib/wca-ao5-brackets';
 import { formatWcaResult } from '@/lib/wca-format-result';
-import type { CompetitionArenaAttempt, CompetitionArenaPlayer, CompetitionAttemptResult, CompetitionResult } from '@/lib/online-competition-api';
+import type { useT } from '@/hooks/useT';
+import type { CompetitionBracketMatch, CompetitionArenaAttempt, CompetitionArenaPlayer, CompetitionAttemptResult, CompetitionResult } from '@/lib/online-competition-api';
 
 export function attemptValue(item: { centiseconds: number | null; penalty: string | null }) {
   if (item.penalty === 'DNF') return -1;
@@ -56,4 +57,34 @@ export function rankArena(players: CompetitionArenaPlayer[], number: number, pro
     };
   }).sort((a, b) => a.currentRank - b.currentRank || a.historyRank - b.historyRank
     || a.historyBest - b.historyBest || a.player.name.localeCompare(b.player.name) || a.player.id.localeCompare(b.player.id));
+}
+
+export function competitionBracketRound(side: CompetitionBracketMatch['side'], round: number, t: ReturnType<typeof useT>) {
+  if (side === 'grand_final') return round === 2 ? t('总决赛加赛', 'Grand final reset') : t('总决赛', 'Grand final');
+  return side === 'winners' ? t(`胜者组第 ${round} 轮`, `Winners round ${round}`) : t(`败者组第 ${round} 轮`, `Losers round ${round}`);
+}
+
+export function competitionMatchCode({ side, round, number, code }: Pick<CompetitionBracketMatch, 'side' | 'round' | 'number' | 'code'>) {
+  if (code) return code;
+  if (side === 'grand_final') return round === 1 ? 'GF' : 'GF2';
+  return `${side === 'winners' ? 'W' : 'L'}${round}-${number}`;
+}
+
+export function competitionMatchFeeder(matches: CompetitionBracketMatch[], targetId: string, ownId: string) {
+  for (const match of matches) {
+    if (match.playerA === ownId || match.playerB === ownId) continue;
+    if (match.status === 'completed' || match.status === 'bye') continue;
+    if (match.nextWin === targetId) return { match, winner: true };
+    if (match.nextLoss === targetId) return { match, winner: false };
+  }
+  return null;
+}
+
+export function competitionBracketSeeds(matches: CompetitionBracketMatch[]) {
+  const seeds = new Map<string, number>();
+  for (const match of matches) {
+    if (match.playerA && match.seedA != null) seeds.set(match.playerA, match.seedA);
+    if (match.playerB && match.seedB != null) seeds.set(match.playerB, match.seedB);
+  }
+  return seeds;
 }

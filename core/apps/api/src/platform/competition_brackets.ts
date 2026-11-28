@@ -13,7 +13,8 @@ type MatchDraft = {
   a: string | null; b: string | null; seeded: boolean; win?: Link; loss?: Link;
 };
 export type Match = {
-  id: string; event_id: string; ticket_type_id: string; bracket_side: Side; best_of: number;
+  id: string; event_id: string; ticket_type_id: string; bracket_side: Side; round_number: number; match_number: number; best_of: number;
+  ready_at: Date | null; video_generation: string; winner_registration_id: string | null;
   player_a_registration_id: string | null; player_b_registration_id: string | null;
   next_win_match_id: string | null; next_win_slot: Slot | null;
   next_loss_match_id: string | null; next_loss_slot: Slot | null;
@@ -21,7 +22,7 @@ export type Match = {
 };
 export type MatchResult = ReturnType<typeof validateCompetitionAttempt> & { dnfReason?: CompetitionDnfReason };
 
-function foldedSeedOrder(size: number) {
+export function foldedSeedOrder(size: number) {
   let order = [1, 2];
   for (let count = 4; count <= size; count *= 2) {
     order = order.flatMap(seed => [seed, count + 1 - seed]);
@@ -84,11 +85,33 @@ export async function advanceCompetitionMatch(db: PlatformDb, match: Match, winn
   await fillSlot(db, match.next_loss_match_id, match.next_loss_slot, loser);
 }
 
+/** Called with the competition lock, before resolving downstream slots. */
+export async function finishCompetitionMatch(
+  db: PlatformDb, match: Match, winner: string | null, allowReset = true,
+  forfeitReason: 'no_show' | 'double_no_show' | null = null,
+) {
+  const loser = !winner ? null : winner === match.player_a_registration_id ? match.player_b_registration_id : match.player_a_registration_id;
+  await platformQuery(db, `UPDATE platform_competition_matches SET status='completed',winner_registration_id=$2::uuid,
+    forfeit_reason=$3 WHERE id=$1::uuid`, [match.id, winner, forfeitReason]);
+  if (allowReset && match.bracket_side === 'grand_final' && match.round_number === 1
+    && winner && winner === match.player_b_registration_id) {
+    const [reset] = await platformQuery<{ id: string }>(db, `INSERT INTO platform_competition_matches
+      (event_id,ticket_type_id,bracket_side,round_number,match_number,best_of,player_a_registration_id,
+       player_b_registration_id,slot_a_resolved,slot_b_resolved,status,ready_at)
+      VALUES($1,$2,'grand_final',2,1,5,$3,$4,true,true,'ready',clock_timestamp()) RETURNING id::text`,
+    [match.event_id, match.ticket_type_id, match.player_a_registration_id, match.player_b_registration_id]);
+    await platformQuery(db, 'UPDATE platform_competition_matches SET next_win_match_id=$2,next_win_slot=2 WHERE id=$1', [match.id, reset.id]);
+  } else {
+    await advanceCompetitionMatch(db, match, winner, loser);
+  }
+}
+
 export async function resolveCompetitionBracketSlots(db: PlatformDb, eventId: string) {
   // A vacant slot can propagate down several levels. Unresolved upstream slots stay pending.
   for (;;) {
     const ready = await platformQuery<Match>(db, `UPDATE platform_competition_matches
       SET status=CASE WHEN player_a_registration_id IS NOT NULL AND player_b_registration_id IS NOT NULL THEN 'ready' ELSE 'bye' END,
+        ready_at=CASE WHEN player_a_registration_id IS NOT NULL AND player_b_registration_id IS NOT NULL THEN clock_timestamp() END,
         winner_registration_id=CASE WHEN player_a_registration_id IS NULL OR player_b_registration_id IS NULL
           THEN COALESCE(player_a_registration_id,player_b_registration_id) END
       WHERE event_id=$1::uuid AND status='pending' AND slot_a_resolved AND slot_b_resolved RETURNING *`, [eventId]);
@@ -171,8 +194,7 @@ export async function decideCompetitionGame(db: PlatformDb, match: Match, gameNu
   await platformQuery(db, `UPDATE platform_competition_matches SET score_a=$2,score_b=$3,
     status=$4,winner_registration_id=$5::uuid WHERE id=$1::uuid`, [match.id, scoreA, scoreB, done ? 'completed' : scheduleNext ? 'in_progress' : 'ready', done ? winner : null]);
   if (done) {
-    const loser = winner === match.player_a_registration_id ? match.player_b_registration_id : match.player_a_registration_id;
-    await advanceCompetitionMatch(db, match, winner, loser);
+    await finishCompetitionMatch(db, match, winner, scheduleNext);
     await resolveCompetitionBracketSlots(db, match.event_id);
   } else if (scheduleNext) {
     const [ticket] = await platformQuery<{ project: Parameters<typeof competitionScramble>[0] }>(db,
@@ -193,7 +215,20 @@ async function tiedMatchWinner(db: PlatformDb, match: Match) {
     if (game.result_a) bestA = Math.min(bestA, effectiveMatchTime(game.result_a));
     if (game.result_b) bestB = Math.min(bestB, effectiveMatchTime(game.result_b));
   }
-  if (!Number.isFinite(bestA) && !Number.isFinite(bestB)) return null;
+  if (!Number.isFinite(bestA) && !Number.isFinite(bestB)) {
+    const [presence] = await platformQuery<{ a_checked: boolean; b_checked: boolean; a_ready: boolean; b_ready: boolean }>(db, `
+      SELECT COALESCE(a.status='confirmed' AND a.checked_in_at IS NOT NULL,false) AS a_checked,
+        COALESCE(b.status='confirmed' AND b.checked_in_at IS NOT NULL,false) AS b_checked,
+        EXISTS(SELECT 1 FROM platform_competition_match_games WHERE match_id=$1 AND ready_a_at IS NOT NULL) AS a_ready,
+        EXISTS(SELECT 1 FROM platform_competition_match_games WHERE match_id=$1 AND ready_b_at IS NOT NULL) AS b_ready
+      FROM platform_competition_matches m LEFT JOIN platform_event_registrations a ON a.id=m.player_a_registration_id
+      LEFT JOIN platform_event_registrations b ON b.id=m.player_b_registration_id WHERE m.id=$1`, [match.id]);
+    const presentA = presence.a_checked || presence.a_ready;
+    const presentB = presence.b_checked || presence.b_ready;
+    if (presentA !== presentB) return presentA ? match.player_a_registration_id : match.player_b_registration_id;
+    if (presence.a_ready !== presence.b_ready) return presence.a_ready ? match.player_a_registration_id : match.player_b_registration_id;
+    return null;
+  }
   if (bestA !== bestB) return bestA < bestB ? match.player_a_registration_id : match.player_b_registration_id;
 
   // The immutable opening slots preserve the original seeds, including byes.
@@ -211,7 +246,7 @@ export async function closeEndedCompetitionBrackets(db: PlatformDb, eventId: str
   let closed = 0;
   for (;;) {
     const matches = await platformQuery<Match>(db, `SELECT * FROM platform_competition_matches
-      WHERE event_id=$1::uuid AND status IN ('ready','in_progress') ORDER BY bracket_side,round_number,match_number`, [eventId]);
+      WHERE event_id=$1::uuid AND status IN ('ready','in_progress') ORDER BY bracket_side,round_number,match_number FOR UPDATE`, [eventId]);
     if (!matches.length) return closed;
     for (const match of matches) {
       const [game] = await platformQuery<{ game_number: number; result_a: MatchResult | null; result_b: MatchResult | null }>(db,
@@ -225,9 +260,7 @@ export async function closeEndedCompetitionBrackets(db: PlatformDb, eventId: str
       const [current] = await platformQuery<Match>(db, 'SELECT * FROM platform_competition_matches WHERE id=$1::uuid', [match.id]);
       if (current.status !== 'completed') {
         const winner = current.score_a > current.score_b ? current.player_a_registration_id : current.score_b > current.score_a ? current.player_b_registration_id : await tiedMatchWinner(db, current);
-        const loser = !winner ? null : winner === current.player_a_registration_id ? current.player_b_registration_id : current.player_a_registration_id;
-        await platformQuery(db, `UPDATE platform_competition_matches SET status='completed',winner_registration_id=$2::uuid WHERE id=$1::uuid`, [current.id, winner]);
-        await advanceCompetitionMatch(db, current, winner, loser);
+        await finishCompetitionMatch(db, current, winner, false);
       }
       closed++;
     }

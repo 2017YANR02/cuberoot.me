@@ -27,7 +27,8 @@
   min-height: var(--af-nav-header-height);
   box-sizing: border-box;
   padding: 12px clamp(16px, 3vw, 28px);
-  background: var(--af-nav-sidebar-bg);
+  background: var(--background);
+  border-block-end: 1px solid var(--border-default);
 }
 .competition-host-header > div:first-child { display: flex; align-items: center; gap: 12px; min-width: 0; }
 .competition-host .competition-host-main.competition-center {
@@ -70,10 +71,20 @@
 .competition-host-table thead th { font-weight: 550; color: var(--muted-foreground); }
 .competition-host-table tbody tr { border-top: 1px solid var(--border-default); }
 .competition-host-table td { font-variant-numeric: tabular-nums; }
-.competition-host-table th a { color: inherit; text-decoration: underline; text-underline-offset: 3px; }
+.competition-host-entity-button {
+  border: 0;
+  background: none;
+  text-align: start;
+  font: inherit;
+  padding: 0;
+  cursor: pointer;
+}
+.competition-host-table th :is(a, button) { color: inherit; text-decoration: underline; text-underline-offset: 3px; }
 .competition-host-table th span { display: block; margin-top: 4px; font-weight: 400; color: var(--muted-foreground); }
 
 @media (max-width: 767px) {
   .competition-host .competition-host-main.competition-center { padding-block: 16px 48px; }
   .competition-host-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
+
+body:has(.competition-host) .clawd-deskpet { display: none; }

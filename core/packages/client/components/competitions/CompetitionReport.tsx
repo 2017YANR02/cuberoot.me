@@ -20,6 +20,7 @@ export type ReportData = {
   date: string;
   rank?: number | null;
   final: boolean;
+  matchOnly?: boolean;
   metrics: Array<{ label: string; value: string }>;
   attempts?: string[];
 };
@@ -69,7 +70,7 @@ export function CompetitionReport({ data, share, renderAttempt }: { data: Report
   return <section className="competition-report" data-site-surface="panel">
     <div className="competition-report-heading">
       <Medal size={23} aria-hidden />
-      <div><h3>{t('完赛战报', 'Competition report')}</h3><p>{data.division}</p></div>
+      <div><h3>{data.matchOnly ? t('本场战报', 'Match report') : t('完赛战报', 'Competition report')}</h3><p>{data.division}</p></div>
       {data.rank != null && <span className="competition-report-rank"><CompetitionRank rank={data.rank} final={data.final} /> {data.final ? t('最终名次', 'Final rank') : t('组内暂列', 'Provisional rank')}</span>}
     </div>
     <dl className="competition-report-metrics">{data.metrics.map(metric => <div key={metric.label}><dt>{metric.label}</dt><dd>{metric.value}</dd></div>)}</dl>
@@ -80,12 +81,12 @@ export function CompetitionReport({ data, share, renderAttempt }: { data: Report
   </section>;
 }
 
-export function CompetitionReportShare({ data }: { data: ReportData }) {
+export function CompetitionReportShare({ data, label }: { data: ReportData; label?: string }) {
   const t = useT();
   const [open, setOpen] = useState(false);
   return <>
     <button className="competition-secondary competition-report-share" type="button" onClick={() => setOpen(true)}>
-      <Download size={16} aria-hidden />{data.final ? t('完赛证书', 'Finisher certificate') : t('生成战报图', 'Share result image')}
+      <Download size={16} aria-hidden />{label ?? (data.final ? t('完赛证书', 'Finisher certificate') : t('生成战报图', 'Share result image'))}
     </button>
     {open && <ReportDialog data={data} onClose={() => setOpen(false)} />}
   </>;
@@ -102,8 +103,8 @@ function ReportDialog({ data, onClose: onDismiss }: { data: ReportData; onClose:
   const backdropProps = useModalBackdrop(onClose);
   const canvas = useRef<HTMLCanvasElement>(null);
   const [error, setError] = useState('');
-  const title = data.final ? t('完赛证书', 'Finisher certificate') : t('参赛战报', 'Competition report');
-  const status = data.final && data.rank
+  const title = data.matchOnly ? t('本场战报', 'Match report') : data.final ? t('完赛证书', 'Finisher certificate') : t('参赛战报', 'Competition report');
+  const status = data.matchOnly ? t('本场结束', 'Match complete') : data.final && data.rank
     ? t(`最终名次  #${data.rank}`, `Final rank  #${data.rank}`)
     : data.final ? t('最终成绩', 'Final result') : t('公示成绩', 'Provisional result');
 

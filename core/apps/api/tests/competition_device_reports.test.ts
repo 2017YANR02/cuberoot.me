@@ -16,7 +16,7 @@ const post=(suffix:string,body:unknown)=>app.request(path+suffix,{method:'POST',
 let registration:Record<string,unknown>,attempt:Record<string,unknown>,runExists:boolean,reported:boolean;
 beforeEach(()=>{
   vi.clearAllMocks();runExists=false;reported=false;
-  registration={id,user_id:1,supervisor_user_id:2,status:'confirmed',checked_in_at:issuedAt,in_window:true,competition_project:'333',device:'smart',competition_video_generation:id};
+  registration={id,user_id:1,supervisor_user_id:2,status:'confirmed',checked_in_at:issuedAt,in_check_in_window:true,competition_project:'333',device:'smart',competition_video_generation:id};
   attempt={scramble:'R U',issued_at:issuedAt,recorded_at:null,elapsed_ms:10000,now:new Date('2026-09-10T12:00:10.000Z')};
   mocks.actor.mockResolvedValue({userId:1,isAdmin:false});mocks.ready.mockResolvedValue(true);
   mocks.query.mockImplementation(async(_db,sql,values)=>{
@@ -26,6 +26,7 @@ beforeEach(()=>{
     if(sql.includes('UPDATE platform_competition_device_reports')){if(!runExists||reported||values[3]!==id)return [];reported=true;return [{reportedAt:issuedAt}];}
     if(sql.includes('UPDATE platform_competition_attempts SET centiseconds'))return [{attempt_number:1}];
     if(sql.includes('SELECT d.report'))return [{report,runId:id,reportedAt:issuedAt,user_id:1,supervisor_user_id:2}];
+    if(sql.includes('SELECT 1 FROM platform_event_registrations r') && (values[1] === 2 || values[2])) return [{ authorized: true }];
     return [];
   });
 });
@@ -57,7 +58,7 @@ describe('device run HTTP boundaries',()=>{
     expect(mocks.query.mock.calls.filter(call=>/UPDATE platform_competition_attempts SET centiseconds/.test(call[1])))
       .toMatchObject([[expect.anything(),expect.any(String),[id,1,100,'none',1,false]]]);
   });
-  it.each([{status:'cancelled'},{checked_in_at:null},{in_window:false},{competition_project:'444'}])('rejects inactive registration %j',async patch=>{
+  it.each([{status:'cancelled'},{checked_in_at:null},{in_check_in_window:false},{competition_project:'444'}])('rejects inactive registration %j',async patch=>{
     Object.assign(registration,patch);expect((await post('/start',report)).status).toBe(409);expect((await post('',report)).status).toBe(409);
   });
   it('allows only entrant mutations, never an administrator or supervisor override',async()=>{

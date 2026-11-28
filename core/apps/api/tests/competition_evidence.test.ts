@@ -28,7 +28,10 @@ beforeEach(() => {
   mocks.readdir.mockResolvedValue([]);
   mocks.response.mockImplementation(()=>new Response(null,{headers:{'Cache-Control':'public, max-age=300, s-maxage=31536000'}}));
   mocks.query.mockImplementation(async(_db,sql,params)=>{
-    if(sql.includes('SELECT r.user_id')) return [registration];
+    if(sql.includes('SELECT r.user_id')) return [{ ...registration,
+      can_judge: params[1] === registration.supervisor_user_id && !registration.judge_entrant,
+      can_review: (params[2] || registration.organizer) && !registration.judge_entrant,
+    }];
     if(sql.includes('SELECT registration_id::text')) return [{registration_id:id,mime:'video/webm',size_bytes:100}];
     if(sql.includes('SELECT id::text,registration_id::text')) return [{id:evidenceId,registration_id:id}];
     if(sql.includes('DELETE FROM platform_competition_evidence')) return registration.disputed ? [] : [{id:evidenceId}];

@@ -92,13 +92,13 @@ describe('competition video admission', () => {
     }
   });
   it('denies a registration cancelled during the capacity request', async () => {
-    mocks.query.mockResolvedValueOnce([row]).mockResolvedValueOnce([]);
+    mocks.query.mockResolvedValueOnce([row]).mockResolvedValueOnce([]).mockResolvedValueOnce([]);
     expect((await request()).status).toBe(403);
     expect(mocks.toJwt).not.toHaveBeenCalled();
   });
   it('denies a rotated generation or changed supervisor during admission', async () => {
     for (const change of [{ competition_video_generation: id }, { supervisor_user_id: 4 }]) {
-      mocks.query.mockResolvedValueOnce([row]).mockResolvedValueOnce([{ ...row, ...change }]);
+      mocks.query.mockResolvedValueOnce([row]).mockResolvedValueOnce([]).mockResolvedValueOnce([{ ...row, ...change }]);
       expect((await request()).status).toBe(409);
     }
     expect(mocks.toJwt).not.toHaveBeenCalled();

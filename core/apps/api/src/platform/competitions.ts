@@ -1,3 +1,4 @@
+import { competitionCheckInWindow } from './competition_checkin.js';
 import type { WCA_TIMED_EVENT_ORDER } from '@cuberoot/shared/wca-events';
 import type { PlatformActor } from './auth.js';
 import { platformQuery, type PlatformDb } from './db.js';
@@ -20,16 +21,51 @@ export function competitionResultSummary(raw:unknown){
     bestCentiseconds:result.best!=null&&Number.isFinite(result.best)?result.best/10:null};
 }
 
-export async function requireCompetitionManager(db: PlatformDb, actor: PlatformActor, eventId: string) {
-  const rows = await platformQuery<{ organization_id: string; status: string; review_status: string; supervision_mode: string; competition_format: string | null; is_test: boolean }>(db, `
-    SELECT c.organization_id::text,e.status,c.review_status,c.supervision_mode,c.competition_format,c.is_test FROM platform_competitions c JOIN platform_events e ON e.id=c.event_id
-    JOIN organizations o ON o.id=c.organization_id AND o.status='active'
-    WHERE c.event_id=$1::uuid AND ($3 OR (NOT c.is_test AND EXISTS (SELECT 1 FROM organization_members m
-      WHERE m.organization_id=c.organization_id AND m.user_id=$2 AND m.status='active' AND m.role IN ('owner','admin'))))
-    FOR UPDATE OF c
-  `, [eventId, actor.userId, actor.isAdmin]);
-  if (!rows[0]) forbidden('Competition organizer access required');
-  return rows[0];
+export function competitionEntrant(eventId: string, userId: string) {
+  return `EXISTS (SELECT 1 FROM platform_event_registrations entrant
+    WHERE entrant.event_id=${eventId} AND entrant.user_id=${userId}
+      AND (entrant.status IN ('confirmed','attended')
+        OR (entrant.status='reserved' AND entrant.reservation_expires_at>clock_timestamp())))`;
+}
+
+// Access predicates use c for the competition and e for its platform event.
+export function competitionManagerRole(userId: string, admin: string, apiKey = 'FALSE') {
+  return `(CASE WHEN c.is_test THEN (e.created_by_user_id=${userId} OR ${apiKey})
+    ELSE (${admin} OR EXISTS (SELECT 1 FROM organization_members member
+      JOIN organizations org ON org.id=member.organization_id AND org.status='active'
+      WHERE member.organization_id=c.organization_id AND member.user_id=${userId}
+        AND member.status='active' AND member.role IN ('owner','admin'))) END) IS TRUE`;
+}
+
+export function competitionManagerAccess(userId: string, admin: string, apiKey?: string) {
+  return `(NOT ${competitionEntrant('c.event_id', userId)} AND ${competitionManagerRole(userId, admin, apiKey)})`;
+}
+
+export function competitionSupervisorAccess(eventId: string, userId: string) {
+  return `(NOT ${competitionEntrant(eventId, userId)} AND EXISTS (SELECT 1 FROM platform_competition_sessions assigned
+    WHERE assigned.event_id=${eventId} AND assigned.supervisor_user_id=${userId}))`;
+}
+
+export function competitionTestAudience(userId: string) {
+  return `(e.created_by_user_id=${userId} OR ${competitionEntrant('e.id', userId)}
+    OR ${competitionSupervisorAccess('e.id', userId)})`;
+}
+
+export async function requireCompetitionManager(db: PlatformDb, actor: PlatformActor, eventId: string, lock = true) {
+  // Checkout takes a shared competition lock before writing the registration.
+  // Read permissions in a fresh statement after acquiring the exclusive lock.
+  if (lock) await platformQuery(db, 'SELECT event_id FROM platform_competitions WHERE event_id=$1::uuid FOR UPDATE', [eventId]);
+  const [event] = await platformQuery<{
+    organization_id: string; status: string; review_status: string; supervision_mode: string; competition_format: string | null;
+    is_test: boolean; is_entrant: boolean; has_manager_role: boolean;
+  }>(db, `SELECT c.organization_id::text,e.status,c.review_status,c.supervision_mode,c.competition_format,c.is_test,
+      ${competitionEntrant('e.id','$2')} AS is_entrant,${competitionManagerRole('$2','$3','$4')} AS has_manager_role
+    FROM platform_competitions c JOIN platform_events e ON e.id=c.event_id
+    JOIN organizations o ON o.id=c.organization_id AND o.status='active' WHERE c.event_id=$1::uuid`,
+  [eventId, actor.userId, actor.isAdmin, actor.viaApiKey === true]);
+  if (event?.is_entrant) forbidden('Competitors cannot manage a competition they entered');
+  if (!event?.has_manager_role) forbidden('Competition organizer access required');
+  return event;
 }
 
 export function validateCompetitionAttempts(raw: unknown): Array<{ centiseconds: number | null; penalty: 'none' | '+2' | 'DNF' | 'DNS' }> {
@@ -63,6 +99,8 @@ export async function competitionOrderContext(db: PlatformDb, input: {
     if (input.sessionId) badRequest('A competition session cannot be used with this ticket');
     return null;
   }
+  // Organizers may enter a different supervisor's session. A live registration
+  // then takes precedence over their management and judging roles for this event.
   if (!config.open) conflict('Competition registration is closed');
   if (config.is_test) {
     if (Number(config.amount_minor) !== 0) conflict('Test competition tickets must be free');
@@ -96,9 +134,10 @@ export async function competitionOrderContext(db: PlatformDb, input: {
 }
 
 export async function requireCompetitionRegistration(db: PlatformDb, id: string, lock = true) {
-  const rows = await platformQuery<{ id: string; user_id: number; status: string; event_id: string; session_id: string; competition_project: (typeof WCA_TIMED_EVENT_ORDER)[number]; competition_video_generation: string; supervisor_user_id: number | null; session_kind: string; competition_format: string | null; device: string; in_window: boolean; checked_in_at: string | null }>(db, `
+  const rows = await platformQuery<{ id: string; user_id: number; status: string; event_id: string; session_id: string; competition_project: (typeof WCA_TIMED_EVENT_ORDER)[number]; competition_video_generation: string; supervisor_user_id: number | null; session_kind: string; competition_format: string | null; device: string; in_check_in_window: boolean; has_started: boolean; checked_in_at: string | null }>(db, `
     SELECT r.id::text,r.user_id,r.status,r.event_id::text,s.id::text AS session_id,r.checked_in_at,r.competition_project,r.competition_video_generation::text,s.supervisor_user_id,s.session_kind,c.competition_format,t.competition_device AS device,t.amount_minor,
-      (NOW()>=s.starts_at AND NOW()<s.ends_at) AS in_window
+      ${competitionCheckInWindow('s')} AS in_check_in_window,
+      (clock_timestamp()>=s.starts_at AND clock_timestamp()<s.ends_at) AS has_started
     FROM platform_event_registrations r JOIN platform_competition_sessions s ON s.id=r.competition_session_id
     JOIN platform_events e ON e.id=r.event_id AND e.status='published'
     JOIN platform_competitions c ON c.event_id=r.event_id

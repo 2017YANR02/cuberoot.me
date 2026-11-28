@@ -63,7 +63,7 @@ export function CompetitionHostShell({ children }: { children: ReactNode }) {
     }}
     renderLink={props => <AppLink {...props} prefetch={false} />}
     togglePlacement="sidebar"
-    header={mobileToggle => <header className="competition-host-header" data-site-surface="heading">
+    header={mobileToggle => <header className="competition-host-header">
       <div>{mobileToggle}<PageBackLink fallback={fallback} acceptEntry={href => href.split(/[?#]/)[0].replace(/^\/(?:en|zh)(?=\/|$)/, '') === fallback} /><strong>{t(COMPETITION_HOST_TITLE.zh, COMPETITION_HOST_TITLE.en)}</strong></div>
       <HeaderToggles />
     </header>}>
