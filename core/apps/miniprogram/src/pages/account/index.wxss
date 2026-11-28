@@ -180,8 +180,8 @@
 
 .account-native .page {
   margin: 0 auto;
-  max-width: 640px;
-  padding-top: 32rpx;
+  max-width: 512px;
+  padding: 18px 16px calc(24px + env(safe-area-inset-bottom));
 }
 
 .account-native .page-title {
@@ -201,59 +201,55 @@
   padding-inline: 0;
 }
 
-.account-section-tabs {
-  background: var(--cr-surface);
-  border: 1px solid var(--cr-line);
-  border-radius: 24rpx;
+.account-profile {
   display: flex;
-  gap: 8rpx;
-  margin-bottom: 44rpx;
-  padding: 8rpx;
+  align-items: center;
+  gap: 12px;
+  padding: 4px 0 18px;
 }
 
-.account-section-tab {
+.account-avatar {
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 16rpx;
-  color: var(--cr-muted);
-  flex: 1;
-  font-size: 28rpx;
-  min-height: 84rpx;
-  min-width: 0;
-  padding: 8rpx;
-  line-height: 1.3;
-  text-align: center;
-}
-
-.account-section-tab--active {
-  background: var(--cr-accent-soft);
-  color: var(--cr-accent);
-  font-weight: 650;
-}
-
-.account-native .account-profile {
-  align-items: center;
-  display: flex;
-  gap: 24rpx;
-}
-
-.account-profile-initial {
-  align-items: center;
-  background: var(--cr-accent-soft);
-  border-radius: 50%;
-  color: var(--cr-accent);
-  display: flex;
   flex: none;
-  font-size: 38rpx;
+  width: 54px;
+  height: 54px;
+  border-radius: 50%;
+  background: var(--cr-surface);
+  color: var(--cr-muted);
+  font-size: 19px;
   font-weight: 650;
-  height: 104rpx;
-  justify-content: center;
-  width: 104rpx;
 }
 
-.account-profile-details { min-width: 0; }
-.account-profile-wca { display: block; }
+.account-profile-details { min-width: 0; overflow-wrap: anywhere; }
+.account-profile-name { font-size: 16px; font-weight: 650; }
+
+.account-home-row,
+.account-language {
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  min-height: 48px;
+  padding: 8px 4px;
+  border-bottom: 1px solid var(--cr-line);
+  color: var(--cr-text);
+  font-size: 16px;
+  text-align: left;
+}
+
+.account-home-row > text { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+.account-home-row[disabled] { opacity: 0.55; }
+.account-icon { flex: none; width: 19px; height: 19px; }
+.account-home-row > .account-icon:last-child { width: 16px; height: 16px; opacity: 0.7; }
+.account-guest-actions { margin-top: 14px; }
+.account-detail-header { display: flex; align-items: center; gap: 8px; margin-bottom: 18px; }
+.account-detail-header > .page-title { font-size: 21px; }
+.account-back { display: flex; align-items: center; justify-content: center; flex: 0 0 44px; height: 44px; margin-left: -8px; }
+.account-language { justify-content: space-between; }
+.account-language > text:last-child { color: var(--cr-muted); }
 
 .account-native .account-user-meta {
   font-size: 25rpx;

@@ -1,14 +1,34 @@
 <page-meta page-style="{{appearanceStyle}}" />
 <import src="../../templates/native-appearance.wxml" />
-<view class="native-tab-surface{{nativeAccountSections ? ' account-native' : ''}}" style="{{appearanceStyle}}">
+<template name="account-icon">
+  <image class="account-icon" src="/assets/tabbar/{{icon}}-{{scheme}}.png" aria-hidden="true" />
+</template>
+<template name="account-home-row">
+  <button class="account-home-row" hover-class="press-feedback" data-section="{{section}}" bindtap="selectAccountSection">
+    <template is="account-icon" data="{{icon: icon, scheme: scheme}}" />
+    <text>{{label}}</text>
+    <template is="account-icon" data="{{icon: 'chevron-right', scheme: scheme}}" />
+  </button>
+</template>
+<template name="account-profile">
+  <view class="account-profile">
+    <image wx:if="{{avatarUrl}}" class="account-avatar" src="{{avatarUrl}}" mode="aspectFill" aria-hidden="true" binderror="hideUnavailableAvatar" />
+    <text wx:else class="account-avatar" aria-hidden="true">{{profileInitial}}</text>
+    <view class="account-profile-details">
+      <text class="account-profile-name">{{displayName}}</text>
+      <text wx:if="{{uidText || wcaId}}" class="account-user-meta">{{wcaId || ('ID ' + uidText)}}</text>
+    </view>
+  </view>
+</template>
+<view class="native-tab-surface account-native" style="{{appearanceStyle}}">
 <template is="native-scenery" wx:if="{{!isTimelineEntry}}" />
-<scroll-view class="account-scroll" scroll-y="{{true}}" scroll-x="{{false}}" enhanced="{{true}}" show-scrollbar="{{false}}">
+<scroll-view class="account-scroll" scroll-y="{{true}}" scroll-x="{{false}}" enhanced="{{true}}" show-scrollbar="{{false}}" scroll-into-view="{{'account-' + accountSection}}">
+<view id="account-{{accountSection}}" />
 <view wx:if="{{isTimelineEntry}}" class="page account-entry-page">
   <text class="account-entry-copy" aria-role="status">{{copy.entryCopy}}</text>
 </view>
 
-<view wx:elif="{{loginRequired}}" class="page account-login-page">
-  <text wx:if="{{!nativeAccountSections}}" class="eyebrow">{{copy.accountEyebrow}}</text>
+<view wx:elif="{{loginRequired && accountSection !== 'settings'}}" class="page account-login-page">
   <text class="page-title">{{wechatPhoneRequired ? copy.phoneTitle : accountLinkCodeMode ? copy.linkExistingAccountLabel : phoneAccountFound ? copy.phoneFoundTitle : accountLinkRequired ? copy.accountChoiceTitle : copy.pageTitle}}</text>
   <text class="page-intro">{{wechatPhoneRequired ? copy.phoneHint : accountLinkCodeMode ? copy.linkCodeHint : phoneAccountFound ? copy.phoneFoundHint : accountLinkRequired ? copy.accountChoiceNote : loginIntro}}</text>
   <view wx:if="{{requiresAgreement}}" class="account-policy">
@@ -104,68 +124,65 @@
     aria-live="polite"
     aria-atomic="true"
   >{{loginError}}</text>
-  <text wx:if="{{!nativeAccountSections || (!accountLinkRequired && !loginStorageUnavailable)}}" class="account-note">{{loginNote}}</text>
+  <text wx:if="{{!accountLinkRequired && !loginStorageUnavailable}}" class="account-note">{{loginNote}}</text>
+  <view wx:if="{{!loginBusy && !accountLinkRequired && !wechatPhoneRequired && !browserLoginPending}}" class="account-guest-actions">
+    <template is="account-home-row" data="{{section: 'settings', icon: 'settings', label: copy.settingsLabel, scheme: appearanceScheme}}" />
+  </view>
 </view>
 
 <view wx:else class="page account-user-page">
-  <view wx:if="{{nativeAccountSections}}" class="account-section-tabs">
-    <button class="account-section-tab{{accountSection === 'space' ? ' account-section-tab--active' : ''}}" aria-pressed="{{accountSection === 'space'}}" data-section="space" hover-class="press-feedback" bindtap="selectAccountSection">{{copy.spaceLabel}}</button>
-    <button class="account-section-tab{{accountSection === 'security' ? ' account-section-tab--active' : ''}}" aria-pressed="{{accountSection === 'security'}}" data-section="security" hover-class="press-feedback" bindtap="selectAccountSection">{{copy.securityLabel}}</button>
+  <block wx:if="{{accountSection === 'home'}}">
+    <template is="account-profile" data="{{avatarUrl: avatarUrl, profileInitial: profileInitial, displayName: displayName, uidText: uidText, wcaId: wcaId}}" />
+    <template is="account-home-row" data="{{section: 'space', icon: 'user-round', label: copy.spaceLabel, scheme: appearanceScheme}}" />
+    <template is="account-home-row" data="{{section: 'security', icon: 'shield', label: copy.securityLabel, scheme: appearanceScheme}}" />
+    <template is="account-home-row" data="{{section: 'settings', icon: 'settings', label: copy.settingsLabel, scheme: appearanceScheme}}" />
+    <button class="account-home-row" hover-class="press-feedback" disabled="{{identityMutationBusy || nameBusy}}" bindtap="signOut">
+      <template is="account-icon" data="{{icon: 'log-out', scheme: appearanceScheme}}" />
+      <text>{{copy.signOut}}</text>
+      <template is="account-icon" data="{{icon: 'chevron-right', scheme: appearanceScheme}}" />
+    </button>
+  </block>
+  <view wx:else class="account-detail-header">
+    <button class="account-back" hover-class="press-feedback" aria-label="{{copy.backLabel}}" data-section="home" bindtap="selectAccountSection">
+      <template is="account-icon" data="{{icon: 'chevron-left', scheme: appearanceScheme}}" />
+    </button>
+    <text class="page-title">{{accountSection === 'space' ? copy.spaceLabel : accountSection === 'security' ? copy.securityLabel : copy.settingsLabel}}</text>
   </view>
-  <block wx:if="{{!nativeAccountSections || accountSection === 'space'}}">
-    <view class="account-profile">
-      <text wx:if="{{nativeAccountSections}}" class="account-profile-initial" aria-hidden="true">{{profileInitial}}</text>
-      <view class="account-profile-details">
-        <text wx:if="{{!nativeAccountSections}}" class="eyebrow">{{copy.accountEyebrow}}</text>
-        <text class="page-title">{{displayName}}</text>
-        <text wx:if="{{uidText || (nativeAccountSections && wcaId)}}" class="account-user-meta">
-          <text wx:if="{{uidText}}">CubeRoot ID {{uidText}}</text>
-          <text wx:if="{{nativeAccountSections && wcaId}}" class="account-profile-wca">{{wcaId}}</text>
-        </text>
+  <block wx:if="{{accountSection === 'space'}}">
+    <template is="account-profile" data="{{avatarUrl: avatarUrl, profileInitial: profileInitial, displayName: displayName, uidText: uidText, wcaId: wcaId}}" />
+    <view wx:if="{{editingName}}" class="account-name-editor">
+      <view class="account-link-code-row">
+        <input class="account-link-code-input" value="{{nameDraft}}" maxlength="100" aria-label="{{copy.editName}}" disabled="{{nameBusy}}" bindinput="inputDisplayName" />
+        <button hover-class="press-feedback" wx:if="{{nameDraft}}" class="text-button" aria-label="{{copy.clearName}}" disabled="{{nameBusy}}" bindtap="clearDisplayName">×</button>
+      </view>
+      <view class="account-name-actions">
+        <button hover-class="press-feedback" class="text-button" disabled="{{nameBusy}}" bindtap="cancelDisplayName">{{copy.cancelLabel}}</button>
+        <button hover-class="press-feedback" class="primary-button" disabled="{{nameBusy || !nameDraft}}" loading="{{nameBusy}}" bindtap="saveDisplayName">{{copy.saveName}}</button>
       </view>
     </view>
-  <view wx:if="{{editingName}}" class="account-name-editor">
-    <view class="account-link-code-row">
-      <input class="account-link-code-input" value="{{nameDraft}}" maxlength="100" aria-label="{{copy.editName}}" disabled="{{nameBusy}}" bindinput="inputDisplayName" />
-      <button hover-class="press-feedback" wx:if="{{nameDraft}}" class="text-button" aria-label="{{copy.clearName}}" disabled="{{nameBusy}}" bindtap="clearDisplayName">×</button>
-    </view>
-    <view class="account-name-actions">
-      <button hover-class="press-feedback" class="text-button" disabled="{{nameBusy}}" bindtap="cancelDisplayName">{{copy.cancelLabel}}</button>
-      <button hover-class="press-feedback" class="primary-button" disabled="{{nameBusy || !nameDraft}}" loading="{{nameBusy}}" bindtap="saveDisplayName">{{copy.saveName}}</button>
-    </view>
-  </view>
-  <button hover-class="press-feedback" wx:elif="{{!wcaId}}" class="text-button account-name-edit" bindtap="editDisplayName">{{copy.editName}}</button>
+    <button hover-class="press-feedback" wx:elif="{{!wcaId}}" class="text-button account-name-edit" bindtap="editDisplayName">{{copy.editName}}</button>
+    <button wx:if="{{hasWebsiteSettings}}" class="text-button account-security-row" hover-class="press-feedback" bindtap="openAccount">{{copy.accountButtonLabel}}</button>
+    <button wx:if="{{copy.payouts}}" class="text-button account-security-row" hover-class="press-feedback" bindtap="openPayouts">{{copy.payouts}}</button>
   </block>
-  <view wx:if="{{!nativeAccountSections || accountSection === 'security'}}" class="account-security">
-  <button hover-class="press-feedback" class="text-button account-name-edit account-security-row" loading="{{identitiesBusy}}" aria-expanded="{{identitiesOpen}}" bindtap="toggleIdentities">{{copy.identities}}</button>
-  <view wx:if="{{identitiesOpen}}" class="account-identities">
-    <view wx:for="{{identityRows}}" wx:key="key" class="account-identity">
-      <text>{{item.label}}</text>
-      <text wx:if="{{item.handle}}" class="account-user-meta" selectable="{{true}}">{{item.handle}}</text>
-      <button hover-class="press-feedback" class="text-button" data-index="{{index}}" disabled="{{identityMutationBusy || nameBusy}}" bindtap="unlinkIdentity">{{copy.unlink}}</button>
+  <view wx:if="{{accountSection === 'security'}}" class="account-security">
+    <button hover-class="press-feedback" class="text-button account-name-edit account-security-row" loading="{{identitiesBusy}}" aria-expanded="{{identitiesOpen}}" bindtap="toggleIdentities">{{copy.identities}}</button>
+    <view wx:if="{{identitiesOpen}}" class="account-identities">
+      <view wx:for="{{identityRows}}" wx:key="key" class="account-identity">
+        <text>{{item.label}}</text>
+        <text wx:if="{{item.handle}}" class="account-user-meta" selectable="{{true}}">{{item.handle}}</text>
+        <button hover-class="press-feedback" class="text-button" data-index="{{index}}" disabled="{{identityMutationBusy || nameBusy}}" bindtap="unlinkIdentity">{{copy.unlink}}</button>
+      </view>
+      <text wx:if="{{hasPassword}}" class="account-user-meta">{{copy.password}}</text>
+      <text wx:if="{{!identitiesBusy && !identitiesError && !identityRows.length && !hasPassword}}" class="account-user-meta">{{copy.identitiesEmpty}}</text>
+      <view wx:if="{{identitiesError}}">
+        <text class="status-text status-text--error" aria-role="status">{{identitiesError}}</text>
+        <button hover-class="press-feedback" class="text-button" bindtap="loadIdentities">{{copy.identitiesRetry}}</button>
+      </view>
     </view>
-    <text wx:if="{{hasPassword}}" class="account-user-meta">{{copy.password}}</text>
-    <text wx:if="{{!identitiesBusy && !identitiesError && !identityRows.length && !hasPassword}}" class="account-user-meta">{{copy.identitiesEmpty}}</text>
-    <view wx:if="{{identitiesError}}">
-      <text class="status-text status-text--error" aria-role="status">{{identitiesError}}</text>
-      <button hover-class="press-feedback" class="text-button" bindtap="loadIdentities">{{copy.identitiesRetry}}</button>
-    </view>
+    <button hover-class="press-feedback" class="text-button account-security-row" disabled="{{identityMutationBusy || nameBusy}}" bindtap="openSecuritySettings">{{copy.securitySettings}}</button>
+    <button hover-class="press-feedback" class="text-button account-name-edit account-security-row account-security-row--danger" disabled="{{identityMutationBusy || nameBusy}}" bindtap="openDeleteAccount">{{copy.deleteAccount}}</button>
   </view>
   <text wx:if="{{wcaLinkPending}}" class="status-text" aria-role="status" aria-live="polite">{{copy.wcaLinkHint}}</text>
-  <button
-    class="{{nativeAccountSections ? 'text-button account-security-row' : 'primary-button account-primary-button'}}"
-    aria-label="{{nativeAccountSections ? copy.securitySettings : copy.accountButtonAria}}"
-    hover-class="press-feedback"
-    bindtap="openAccount"
-  >
-    {{nativeAccountSections ? copy.securitySettings : copy.accountButtonLabel}}
-  </button>
-  <button wx:if="{{nativeAccountSections}}" hover-class="press-feedback" class="text-button account-security-row" bindtap="openPolicy">{{copy.privacyLabel}}</button>
-  <button wx:if="{{copy.payouts}}" hover-class="press-feedback" class="text-button account-name-edit" bindtap="openPayouts">{{copy.payouts}}</button>
-  <button hover-class="press-feedback" class="text-button account-name-edit account-security-row" disabled="{{identityMutationBusy || nameBusy}}" bindtap="signOut">{{copy.signOut}}</button>
-  <button hover-class="press-feedback" wx:if="{{!requiresAgreement}}" class="text-button account-name-edit" disabled="{{identityMutationBusy || nameBusy}}" bindtap="openSecuritySettings">{{copy.securitySettings}}</button>
-  <button hover-class="press-feedback" class="text-button account-name-edit account-security-row account-security-row--danger" disabled="{{identityMutationBusy || nameBusy}}" bindtap="openDeleteAccount">{{copy.deleteAccount}}</button>
-  </view>
   <text
     wx:if="{{accountError}}"
     class="status-text status-text--error"
@@ -173,26 +190,34 @@
     aria-live="polite"
     aria-atomic="true"
   >{{accountError}}</text>
-  <block wx:if="{{!nativeAccountSections || accountSection === 'space'}}">
-  <view class="account-release">
-    <view class="account-release-version">
-      <text class="account-release-label">{{release.versionLabel}}</text>
-      <text class="account-release-value">{{release.version}}</text>
-      <text wx:if="{{release.channel}}" class="account-release-channel">{{release.channel}}</text>
-    </view>
-    <text class="account-release-title">{{release.notesTitle}}</text>
-    <view class="account-release-notes">
-      <view
-        wx:for="{{release.notes}}"
-        wx:key="*this"
-        class="account-release-note"
-      >
-        <view class="account-release-dot" />
-        <text>{{item}}</text>
+  <block wx:if="{{accountSection === 'settings'}}">
+    <button wx:if="{{hasWebsiteSettings}}" class="text-button account-security-row" hover-class="press-feedback" bindtap="openAppearanceSettings">{{copy.appearanceLabel}}</button>
+    <picker wx:else range="{{['简体中文', 'English']}}" value="{{languageIndex}}" bindchange="changeSettingsLanguage" aria-label="{{copy.languageLabel}}">
+      <view class="account-language">
+        <text>{{copy.languageLabel}}</text>
+        <text>{{languageIndex === 1 ? 'English' : '简体中文'}}</text>
+      </view>
+    </picker>
+    <button class="text-button account-security-row" hover-class="press-feedback" bindtap="openPolicy">{{copy.privacyLabel}}</button>
+    <view class="account-release">
+      <view class="account-release-version">
+        <text class="account-release-label">{{release.versionLabel}}</text>
+        <text class="account-release-value">{{release.version}}</text>
+        <text wx:if="{{release.channel}}" class="account-release-channel">{{release.channel}}</text>
+      </view>
+      <text class="account-release-title">{{release.notesTitle}}</text>
+      <view class="account-release-notes">
+        <view
+          wx:for="{{release.notes}}"
+          wx:key="*this"
+          class="account-release-note"
+        >
+          <view class="account-release-dot" />
+          <text>{{item}}</text>
+        </view>
       </view>
     </view>
-  </view>
-  <include src="../../templates/native-contact.wxml" />
+    <include src="../../templates/native-contact.wxml" />
   </block>
 </view>
 </scroll-view>

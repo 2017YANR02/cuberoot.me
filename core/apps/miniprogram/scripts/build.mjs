@@ -9,7 +9,7 @@ import { build } from 'esbuild';
 import { BUILD_ASSETS, DOUYIN_TIMER_VOICE_ASSETS } from './build-assets.mjs';
 import { buildWechatBundle } from './build-wechat-bundle.mjs';
 import { nativePdfPlugin } from './build-pdf-runtime.mjs';
-import { buildDouyinTimerIcons, buildTabIcons, TIMER_PROJECT_ICONS } from './build-tab-icons.mjs';
+import { buildAccountIcons, buildDouyinTimerIcons, buildTabIcons, TIMER_PROJECT_ICONS } from './build-tab-icons.mjs';
 import { buildDouyinStageSolver } from './build-douyin-stage-solver.mjs';
 import { buildDouyinWcaScramble } from './build-douyin-wca-scramble.mjs';
 import { buildDouyinSq1Hint } from './build-douyin-sq1-hint.mjs';
@@ -218,6 +218,7 @@ async function buildProject() {
     await validateDouyinOutput();
   } else {
     await addWechatTabIcons();
+    await buildAccountIcons(stagingRoot);
   }
   await writeFile(projectConfigPath, `${JSON.stringify(config, null, 2)}\n`, 'utf8');
   await publishStagedDirectory({
@@ -305,6 +306,7 @@ async function normalizeDouyinAppConfig() {
   await rm(join(stagingRoot, 'templates/web-route-view.ttml'), { force: true });
   normalized.tabBar.list = await buildTabIcons(stagingRoot, normalized.tabBar);
   await buildDouyinTimerIcons(stagingRoot, normalized.tabBar.selectedColor);
+  await buildAccountIcons(stagingRoot);
   await writeFile(appConfigPath, `${JSON.stringify(normalized, null, 2)}\n`, 'utf8');
   await Promise.all([
     rm(themePath, { force: true }),

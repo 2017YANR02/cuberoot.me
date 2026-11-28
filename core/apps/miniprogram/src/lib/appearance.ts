@@ -32,6 +32,10 @@ function appearanceColors(appearance: NativeAppearance | null, scheme: 'light' |
   return appearance.systemColors?.[scheme] ?? null;
 }
 
+export function nativeAppearanceScheme(): 'light' | 'dark' {
+  return appearanceScheme(readAppearance());
+}
+
 export function nativeAppearanceStyle(): string {
   const appearance = readAppearance();
   const scheme = appearanceScheme(appearance);
@@ -67,7 +71,7 @@ export function applyNativeAppearance(): void {
   if (typeof getCurrentPages === 'function') {
     const appearanceStyle = styleForAppearance(appearance, scheme, colors);
     for (const page of getCurrentPages()) {
-      page.setData(page.data?.nativeTimerPage
+      page.setData(page.data?.nativeTimerPage || (page.data && 'appearanceScheme' in page.data)
         ? { appearanceStyle, appearanceScheme: scheme }
         : { appearanceStyle });
     }

@@ -6,6 +6,7 @@ import accountConfig from '../src/pages/account/index.json';
 
 interface AccountPageData {
   accountError: string;
+  accountSection: string;
   accountLinkPending: boolean;
   accountLinkRequired: boolean;
   accountLinkCodeMode: boolean;
@@ -90,6 +91,9 @@ interface AccountPage {
   onShow(): void;
   onUnload(): void;
   openAccount(): void;
+  selectAccountSection(event: { currentTarget: { dataset: { section: string } } }): void;
+  openAppearanceSettings(): void;
+  changeSettingsLanguage(event: { detail: { value: string } }): void;
   openContactWebsite(): void;
   openPolicy(): void;
   previewWechatQr(): void;
@@ -121,6 +125,40 @@ function normalLaunchOptions() {
 }
 
 describe('mini program account page', () => {
+  it.each(['wechat', 'douyin'] as const)('opens the same account sections in %s and keeps Settings available signed out', async (target) => {
+    const storage = new Map();
+    const navigateTo = vi.fn((options: { complete?(): void }) => options.complete?.());
+    const page = await loadPage({
+      getStorageInfoSync: () => ({ keys: [...storage.keys()] }),
+      getStorageSync: (key: string) => storage.get(key),
+      setStorageSync: (key: string, value: unknown) => storage.set(key, value),
+      getLaunchOptionsSync: normalLaunchOptions,
+      navigateTo,
+    }, target);
+    page.onLoad();
+    const select = (section: string) => page.selectAccountSection({ currentTarget: { dataset: { section } } });
+    select('security');
+    expect(page.data.accountSection).toBe('home');
+    select('settings');
+    expect(page.data.accountSection).toBe('settings');
+    page.openPolicy();
+    expect(navigateTo).toHaveBeenLastCalledWith(expect.objectContaining({ url: '/pages/privacy/index' }));
+    if (target === 'wechat') {
+      page.openAppearanceSettings();
+      expect(navigateTo).toHaveBeenLastCalledWith(expect.objectContaining({ url: '/pages/web/index?key=appearance-settings' }));
+    } else {
+      page.changeSettingsLanguage({ detail: { value: '1' } });
+      expect(storage.get('cuberoot.locale.v1')).toBe('en');
+    }
+    select('home');
+    storage.set('cuberoot:session', { token: 's'.repeat(20), user: { uid: 42, name: 'Member', wcaId: null, avatar: '' } });
+    page.onShow();
+    select('space');
+    expect(page.data.accountSection).toBe('space');
+    select('security');
+    expect(page.data.accountSection).toBe('security');
+  });
+
   it('does not open or copy a legacy WCA browser authorization in Douyin', async () => {
     const openUrl = vi.fn(), setClipboardData = vi.fn(), request = vi.fn();
     const page = await loadPage({
