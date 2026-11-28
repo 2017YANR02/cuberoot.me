@@ -570,16 +570,79 @@
   .wiki-section-title {
     font-size: 1.25rem;
   }
-  .wiki-alpha-bar {
-    overflow-x: auto;
-    flex-wrap: nowrap;
-    scrollbar-width: thin;
-  }
-  .wiki-alpha-btn {
-    flex-shrink: 0;
+}
+
+@media (min-width: 701px) {
+  .wiki-alpha-bar ~ .wiki-sections .wiki-section:last-child {
+    min-height: calc(100dvh - 100px);
   }
 }
 
+.wiki-alpha-canvas, .wiki-alpha-preview { display: none; }
+
+@media (max-width: 700px) {
+  .wiki-search-wrap {
+    margin-right: calc(34px + env(safe-area-inset-right));
+  }
+
+  .wiki-alpha-bar {
+    position: fixed;
+    z-index: 12;
+    inset: max(70px, calc(env(safe-area-inset-top) + 56px)) max(3px, env(safe-area-inset-right)) max(74px, calc(env(safe-area-inset-bottom) + 54px)) auto;
+    height: fit-content;
+    max-height: 100%;
+    margin: auto 0;
+    padding: 0;
+    width: 34px;
+    flex-flow: column nowrap;
+    gap: 0;
+    border: 0;
+    background: transparent;
+    touch-action: none;
+    user-select: none;
+    -webkit-user-select: none;
+  }
+
+  .wiki-alpha-btn {
+    position: relative;
+    width: 100%;
+    height: clamp(6px, calc((100dvh - 160px - env(safe-area-inset-top) - env(safe-area-inset-bottom)) / 27), 22px);
+    display: grid;
+    place-items: center;
+    padding: 0;
+    border: 0;
+    font-size: min(13px, 2.3dvh);
+    line-height: 1;
+  }
+  .wiki-alpha-btn:hover, .wiki-alpha-btn.is-active { background: transparent; }
+  .wiki-alpha-btn.is-active { font-weight: 750; }
+  .wiki-alpha-bar[data-dragging] .wiki-alpha-glyph { visibility: hidden; }
+  .wiki-alpha-bar[data-dragging] > .wiki-alpha-canvas {
+    display: block;
+    position: absolute;
+    top: -24px;
+    right: 0;
+    pointer-events: none;
+  }
+  .wiki-alpha-bar[data-dragging] + .wiki-alpha-preview {
+    position: fixed;
+    inset: calc(64px + var(--sat)) 0 0;
+    z-index: 8;
+    display: block;
+    overflow: hidden;
+    padding-inline: max(1.5rem, calc((100vw - 820px) / 2)) calc(1.5rem + 28px + env(safe-area-inset-right));
+    pointer-events: none;
+    background: var(--background);
+    contain: strict;
+  }
+  @media (max-width: 480px) {
+    .wiki-alpha-bar[data-dragging] + .wiki-alpha-preview { padding-inline: 1rem calc(1rem + 28px + env(safe-area-inset-right)); }
+  }
+  .wiki-alpha-preview .wiki-entry-body { white-space: pre-line; }
+  .wiki-alpha-bar ~ .wiki-sections { padding-right: calc(28px + env(safe-area-inset-right)); }
+  .wiki-section { scroll-margin-top: calc(64px + var(--sat)); }
+  .wiki-alpha-bar ~ .wiki-sections .wiki-section:last-child { min-height: calc(100dvh - 64px); }
+}
 /* Site scenery: preserve the original surface when scenery is disabled. */
 @media screen {
   body[data-site-scenery] .wiki-page,

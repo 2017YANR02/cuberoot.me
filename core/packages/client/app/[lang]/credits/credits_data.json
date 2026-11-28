@@ -14,6 +14,20 @@
     "section": "platform"
   },
   {
+    "name": "WaveSideBar / gjiazhe",
+    "url": "https://github.com/gjiazhe/WaveSideBar/blob/master/wavesidebar/src/main/java/com/gjiazhe/wavesidebar/WaveSideBar.java",
+    "zh": "移动端魔方百科的弧形字母索引参考了 WaveSideBar 的绘制方式：在同一块画布上绘制整列字母，根据手指位置调整每个字母的横向偏移。",
+    "en": "The mobile Cubing Wiki’s curved alphabet index draws on WaveSideBar. It paints the letters on a single canvas and shifts each letter sideways according to the finger’s position.",
+    "section": "platform"
+  },
+  {
+    "name": "Vant IndexBar / vant-ui",
+    "url": "https://github.com/vant-ui/vant/blob/main/packages/vant/src/index-bar/IndexBar.tsx",
+    "zh": "移动端魔方百科参考了 Vant IndexBar 对连续触摸的处理。手指滑入另一个字母时，左侧才切换到对应的词条预览。",
+    "en": "The mobile Cubing Wiki follows Vant IndexBar’s approach to tracking touch movement. The term preview switches groups only when the finger crosses into another letter.",
+    "section": "platform"
+  },
+  {
     "name": "AndroidLiquidGlass / Kyant0",
     "url": "https://github.com/Kyant0/AndroidLiquidGlass/blob/kmp/app/src/commonMain/kotlin/com/kyant/backdrop/catalog/components/LiquidBottomTabs.kt",
     "zh": "Android 悬浮导航栏参考该底栏示例中选中胶囊的按住放大、跟手拖动与松手切换交互。",

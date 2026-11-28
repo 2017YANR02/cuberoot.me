@@ -12,7 +12,7 @@ import PageBackLink from '@/components/PageBackLink';
  *
  * 1:1 port from packages/client-vite/src/pages/wiki/WikiPage.tsx (Vite SPA).
  */
-import { useMemo, useState, useEffect, useRef, useCallback } from 'react';
+import { useMemo, useState, useEffect, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pencil, MessageSquarePlus, Plus, Trash2, Link2 } from '@app-foundation/icons/lucide';
 import { SearchInput } from '@/components/SearchInput';
@@ -26,6 +26,7 @@ import {
 import { useHashHighlight } from '@/hooks/useHashHighlight';
 import { useQueryState, parseAsBoolean } from 'nuqs';
 import BoolToggle from '@/components/BoolToggle';
+import WikiAlphabet from './WikiAlphabet';
 import './wiki.css';
 import '@/components/hash-highlight.css';
 import { tr } from '@/i18n/tr';
@@ -189,34 +190,19 @@ export default function WikiPage() {
   const totalEntries = data?.sections.reduce((n, s) => n + s.entries.length, 0) ?? 0;
   const matchedEntries = filtered.reduce((n, s) => n + s.entries.length, 0);
 
-  const handleJump = (letter: string) => {
-    const el = document.getElementById(`wiki-section-${letter}`);
-    if (el) {
-      const y = el.getBoundingClientRect().top + window.scrollY - 80;
-      window.scrollTo({ top: y, behavior: 'smooth' });
+  const indexGroups = useMemo(() => {
+    function previewText(en: string | null, zh: string | null, fallback: string, separator: string) {
+      if (showBoth && en && zh) return en + separator + zh;
+      return (singleLang === 'zh' ? zh || en : en || zh) || fallback;
     }
-  };
-
-  const [activeLetter, setActiveLetter] = useState<string>('');
-  const sectionRefs = useRef<Record<string, HTMLElement | null>>({});
-
-  useEffect(() => {
-    if (q || !data) return;
-    const observer = new IntersectionObserver(
-      es => {
-        const visible = es
-          .filter(e => e.isIntersecting)
-          .sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top)[0];
-        if (visible) {
-          const letter = visible.target.getAttribute('data-letter');
-          if (letter) setActiveLetter(letter);
-        }
-      },
-      { rootMargin: '-80px 0px -60% 0px', threshold: 0 }
-    );
-    Object.values(sectionRefs.current).forEach(el => { if (el) observer.observe(el); });
-    return () => observer.disconnect();
-  }, [q, data]);
+    return (data?.sections ?? []).filter(group => group.entries.length).map(group => ({
+      letter: group.letter,
+      rows: group.entries.slice(0, 18).map(entry => ({
+        title: previewText(entry.headEn, entry.headZh, entry.head, ' · '),
+        body: previewText(entry.bodyEn, entry.bodyZh, entry.body, '\n'),
+      })),
+    }));
+  }, [data, showBoth, singleLang]);
 
   // 深链:URL hash 指向某个词条的 slug(如 #lsll-…,搜索跳转/分享链接/点标题都用它)。
   // 词条异步 fetch 后才渲染,故 deps:[data] —— 数据到位再定位;.wiki-entry 自带
@@ -289,21 +275,7 @@ export default function WikiPage() {
             : tr({ zh: `${totalEntries} 条术语`, en: `${totalEntries} terms` })}
         </div>
 
-        {!q && (
-          <nav className="wiki-alpha-bar" aria-label={tr({ zh: '按字母跳转', en: 'Jump by letter'
-        })}>
-            {LETTERS.map(letter => (
-              <button
-                key={letter}
-                type="button"
-                className={`wiki-alpha-btn${activeLetter === letter ? ' is-active' : ''}`}
-                onClick={() => handleJump(letter)}
-              >
-                {letter}
-              </button>
-            ))}
-          </nav>
-        )}
+        {!q && indexGroups.length > 0 && <WikiAlphabet groups={indexGroups} />}
 
         {loadErr && (
           <div className="wiki-empty wiki-empty-error">
@@ -330,7 +302,6 @@ export default function WikiPage() {
               key={sec.letter}
               id={`wiki-section-${sec.letter}`}
               data-letter={sec.letter}
-              ref={el => { sectionRefs.current[sec.letter] = el; }}
               className="wiki-section"
             >
               <h2 className="wiki-section-title">{sec.letter}</h2>
