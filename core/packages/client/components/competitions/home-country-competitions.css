@@ -21,14 +21,21 @@
     z-index: 1;
     min-width: 100%;
     min-height: 2.4rem;
-    background: var(--card);
-    border-inline: 1px solid transparent;
+    background: var(--background);
     border-bottom: 1px solid var(--border-default);
     color: var(--muted-foreground);
     font-size: 0.8rem;
 }
 .home-country-competitions .comp-list {
     overflow: visible;
+}
+.home-country-competitions .competition-list-layout .comp-list-row {
+    border: 0;
+    border-bottom: 1px solid var(--border-default);
+    border-radius: 0;
+}
+.home-country-competitions .comp-list-row:not(:hover) {
+    background: transparent;
 }
 .home-country-competitions button.home-competition-icon-sort {
     position: relative;
