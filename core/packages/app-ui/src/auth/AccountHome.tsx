@@ -44,6 +44,14 @@ export function AccountHome({ auth, language, page, onNavigate, onSettings, onLo
       <div className="installed-account-content">
         <header className="installed-account-header"><h1>{t('我的', 'My account')}</h1></header>
         {auth.loading ? <p className="auth-hint" role="status">{t('正在读取账号…', 'Loading account…')}</p>
+          : auth.accountReadError ? (
+            <div>
+              <p className="auth-error" role="alert">{t('暂时无法读取账号，请重试。', 'Could not read your account. Please retry.')}</p>
+              <button className="auth-primary installed-account-login" type="button" onClick={() => void auth.retryAccountRead()}>
+                {t('重试', 'Retry')}
+              </button>
+            </div>
+          )
           : user ? (
             <div className="installed-account-identity">
               {avatarUrl && /^https:\/\//i.test(avatarUrl)

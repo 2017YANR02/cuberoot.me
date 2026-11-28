@@ -15,13 +15,33 @@ export function useInstalledAuth(
   language: SupportedLanguage,
   port: InstalledAuthPort,
 ): InstalledAppAuth {
-  const [state, setState] = useState<Pick<InstalledAppAuth, 'busy' | 'error' | 'loading' | 'session'>>({
+  const [state, setState] = useState<Pick<InstalledAppAuth, 'busy' | 'error' | 'accountReadError' | 'loading' | 'session'>>({
     busy: false,
     error: false,
+    accountReadError: false,
     loading: true,
     session: null,
   });
   const sessionVersion = useRef(0);
+
+  const readAccount = useCallback(async (version: number) => {
+    try {
+      const session = await port.client.restore();
+      if (version === sessionVersion.current) {
+        setState((current) => ({ ...current, loading: false, accountReadError: false, session }));
+      }
+    } catch {
+      if (version === sessionVersion.current) {
+        setState((current) => ({ ...current, loading: false, accountReadError: true }));
+      }
+    }
+  }, [port]);
+
+  const retryAccountRead = useCallback(async () => {
+    const version = ++sessionVersion.current;
+    setState((current) => ({ ...current, loading: true, accountReadError: false }));
+    await readAccount(version);
+  }, [readAccount]);
 
   useEffect(() => {
     let active = true;
@@ -33,7 +53,7 @@ export function useInstalledAuth(
         const session = await port.client.finish(url);
         if (active && session) {
           sessionVersion.current++;
-          setState({ busy: false, error: false, loading: false, session });
+          setState({ busy: false, error: false, accountReadError: false, loading: false, session });
         }
       } catch {
         if (active) setState((current) => ({ ...current, busy: false, error: true, loading: false }));
@@ -44,25 +64,24 @@ export function useInstalledAuth(
       if (active) listener = handle;
       else void handle.remove();
     }).catch(() => {
-      if (active) setState((current) => ({ ...current, error: true, loading: false }));
+      if (active) setState((current) => ({ ...current, error: true }));
     });
 
     void (async () => {
-      for (const url of await port.getLaunchUrls()) await acceptCallback(url);
-      if (!active || startupVersion !== sessionVersion.current) return;
-      const session = await port.client.restore();
-      if (active && startupVersion === sessionVersion.current) setState((current) => ({ ...current, loading: false, session }));
-    })().catch(() => {
-      // A native callback can finish while startup storage/network work is pending.
-      // Its authenticated session is newer than the failed startup snapshot.
-      if (active && startupVersion === sessionVersion.current) setState((current) => ({ ...current, error: true, loading: false }));
-    });
+      try {
+        for (const url of await port.getLaunchUrls()) await acceptCallback(url);
+      } catch {
+        if (active && startupVersion === sessionVersion.current) setState((current) => ({ ...current, error: true }));
+      }
+      if (active && startupVersion === sessionVersion.current) await readAccount(startupVersion);
+    })();
 
     return () => {
       active = false;
+      sessionVersion.current++;
       void listener?.remove();
     };
-  }, [port]);
+  }, [port, readAccount]);
 
   const login = useCallback(async (provider: MobileAuthProvider | null = null) => {
     setState((current) => ({ ...current, busy: true, error: false }));
@@ -79,7 +98,7 @@ export function useInstalledAuth(
     setState((current) => ({ ...current, busy: true, error: false }));
     try {
       await port.client.logout();
-      setState({ busy: false, error: false, loading: false, session: null });
+      setState({ busy: false, error: false, accountReadError: false, loading: false, session: null });
     } catch {
       setState((current) => ({ ...current, busy: false, error: true }));
     }
@@ -93,7 +112,7 @@ export function useInstalledAuth(
     const session = await port.client.installCredentialSession(candidate, isCurrent);
     if (!session || !isCurrent()) return false;
     sessionVersion.current++;
-    setState({ busy: false, error: false, loading: false, session });
+    setState({ busy: false, error: false, accountReadError: false, loading: false, session });
     return true;
   }, [port]);
   const refreshAccountSession = useCallback(async () => {
@@ -108,6 +127,7 @@ export function useInstalledAuth(
     installCredentialSession,
     login,
     logout,
+    retryAccountRead,
     refreshAccountSession,
   };
 }

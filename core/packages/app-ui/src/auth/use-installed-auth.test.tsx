@@ -5,6 +5,7 @@ import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { InstalledAuthClient } from './installed-auth';
+import { AccountHome } from './AccountHome';
 import { useInstalledAuth, type InstalledAuthPort } from './use-installed-auth';
 
 describe('useInstalledAuth', () => {
@@ -95,4 +96,33 @@ describe('useInstalledAuth', () => {
     expect(container.textContent).toBe('false:42');
   });
 
+  it('shows an account read failure and recovers the signed-in home through Retry', async () => {
+    const session = { token: 'synthetic-session', user: { uid: 42, name: 'Test account' } };
+    const restore = vi.fn()
+      .mockRejectedValueOnce(new Error('storage unavailable'))
+      .mockRejectedValueOnce(new Error('storage still unavailable'))
+      .mockResolvedValueOnce(session);
+    const port: InstalledAuthPort = {
+      client: { restore } as unknown as InstalledAuthClient,
+      getLaunchUrls: async () => [],
+      listen: async () => ({ remove: async () => undefined }),
+    };
+    function Harness() {
+      const auth = useInstalledAuth('en', port);
+      return <AccountHome auth={auth} language="en" page="home" onNavigate={() => {}}
+        onSettings={() => {}} onLogout={() => {}} openPolicy={() => {}} />;
+    }
+    await act(async () => root.render(<Harness />));
+    expect(container.querySelector('[role="alert"]')?.textContent).toContain('Could not read your account');
+    expect(container.textContent).not.toContain('Sign in / up');
+    expect(container.textContent).toContain('Settings');
+    const clickRetry = () => Array.from(container.querySelectorAll('button')).find(button => button.textContent === 'Retry')!.click();
+    await act(async () => clickRetry());
+    expect(container.querySelector('[role="alert"]')).not.toBeNull();
+    await act(async () => clickRetry());
+    expect(restore).toHaveBeenCalledTimes(3);
+    expect(container.querySelector('[role="alert"]')).toBeNull();
+    expect(container.textContent).toContain('Test account');
+    expect(container.textContent).toContain('My space');
+  });
 });

@@ -51,8 +51,8 @@ async function render(handler: (path: string, body: Record<string, unknown>) => 
   const auth = {
     installCredentialSession: vi.fn(async () => true), issueWebSessionTicket: vi.fn(),
     login: vi.fn(async () => undefined), logout: vi.fn(async () => undefined),
-    refreshAccountSession: vi.fn(async () => undefined),
-    busy: false, error: false, loading: false, session: null,
+    refreshAccountSession: vi.fn(async () => undefined), retryAccountRead: vi.fn(async () => undefined),
+    busy: false, error: false, accountReadError: false, loading: false, session: null,
   };
   const onClose = vi.fn();
   function SignIn() {

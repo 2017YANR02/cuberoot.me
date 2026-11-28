@@ -14,7 +14,10 @@ function prepareSecureStorage(): Promise<void> {
       SecureStorage.setKeyPrefix('cuberoot_mobile_'),
       SecureStorage.setSynchronize(false),
       SecureStorage.setDefaultKeychainAccess(KeychainAccess.whenUnlockedThisDeviceOnly),
-    ]).then(() => undefined);
+    ]).then(() => undefined).catch((error: unknown) => {
+      secureStorageReady = null;
+      throw error;
+    });
   }
   return secureStorageReady;
 }

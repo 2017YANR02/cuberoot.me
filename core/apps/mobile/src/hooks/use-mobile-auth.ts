@@ -26,13 +26,13 @@ export function useMobileAuth(language: SupportedLanguage) {
   const auth = useInstalledAuth(language, mobileAuthPort);
   useEffect(() => {
     const push = recordPush;
-    if (!push || auth.loading) return;
+    if (!push || auth.loading || auth.accountReadError) return;
     const sync = () => { void push.sync(auth.session).catch(() => undefined); };
     sync();
     const timer = window.setInterval(sync, 30_000);
     const listener = CapacitorApp.addListener('appStateChange', ({ isActive }) => { if (isActive) sync(); });
     return () => { window.clearInterval(timer); void listener.then(handle => handle.remove()); };
-  }, [auth.loading, auth.session]);
+  }, [auth.loading, auth.accountReadError, auth.session]);
   useEffect(() => {
     const session = auth.session;
     if (Capacitor.getPlatform() !== 'ios' || !session?.user.uid || auth.loading) return;
