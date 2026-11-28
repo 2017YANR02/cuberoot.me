@@ -387,7 +387,7 @@ function isEmbeddedTopBarRoute(surface: MobileEmbedSurface, pathname: string) {
 }
 const MOBILE_EMBED_INIT_RETRY_MS = 400;
 const MOBILE_EMBED_INIT_RETRIES = 25;
-const MOBILE_EMBED_AUTH_TIMEOUT_MS = 10_000;
+const MOBILE_EMBED_WEB_SESSION_ACK_TIMEOUT_MS = 15_000;
 const TOOLS_PRELOAD_DELAY_MS = 250;
 const repository = new TimerRepository(new IndexedDbTimerStoreDriver());
 const netRecordingOutbox = new NetRecordingOutbox(({ context, solve }) => repository.saveNetSolve(context.sessionId, solve), createNetOutboxStorage());
@@ -655,8 +655,9 @@ export function App({ host, loadingMark }: { host: InstalledAppHost; loadingMark
     tools: false,
   });
   const accountManagementRequestRef = useRef<string | null>(null);
-  const accountSyncInFlightRef = useRef<{ requestId: string; token: string } | null>(null);
+  const accountSyncInFlightRef = useRef<{ requestId: string; token: string; ticket: string | null; sent: boolean } | null>(null);
   const accountSyncTimeoutRef = useRef<number | null>(null);
+  const accountHandoffRetriedRef = useRef(false);
   const accountSyncedTokenRef = useRef<string | null>(null);
   const viewRef = useRef(view);
   const previousTimerWorkViewRef = useRef(view);
@@ -1924,7 +1925,9 @@ export function App({ host, loadingMark }: { host: InstalledAppHost; loadingMark
       () => postWebSurfaceInit(surface),
       MOBILE_EMBED_INIT_RETRY_MS,
       MOBILE_EMBED_INIT_RETRIES,
-      host.generativeAiDisabled ? () => {
+      surface === 'account' || host.generativeAiDisabled ? () => {
+        if (webBridgeReadyRef.current[surface]
+          || (surface === 'account' && !isAccountDetailsPage(accountPageRef.current))) return;
         setWebSurfaceStatus((current) => current[surface] === 'loading'
           ? { ...current, [surface]: 'error' } : current);
       } : undefined,
@@ -1946,7 +1949,8 @@ export function App({ host, loadingMark }: { host: InstalledAppHost; loadingMark
     );
     webSurfaceLoadedRef.current[surface] = true;
     setWebSurfaceStatus((current) => (
-      current[surface] === 'ready' ? current : { ...current, [surface]: 'ready' }
+      current[surface] === 'ready' || (surface === 'account' && current.account === 'error')
+        ? current : { ...current, [surface]: 'ready' }
     ));
   }, [clearWebSurfaceHandshake]);
 
@@ -1967,6 +1971,7 @@ export function App({ host, loadingMark }: { host: InstalledAppHost; loadingMark
     accountSyncedTokenRef.current = null;
     // Keep the trusted account frame available for explicit web-session cleanup on sign-out.
     if (!isAccountDetailsPage(page)) return;
+    accountHandoffRetriedRef.current = false;
     setAccountFramePage(page);
     webBridgeReadyRef.current.account = false;
     setWebSurfaceStatus(current => ({ ...current, account: 'loading' }));
@@ -1980,11 +1985,12 @@ export function App({ host, loadingMark }: { host: InstalledAppHost; loadingMark
     if (accountDetails && !auth.loading && !auth.session) navigateAccount('home');
   }, [accountDetails, auth.loading, auth.session, navigateAccount]);
 
-  const retryWebSurface = useCallback((surface: MobileEmbedSurface) => {
+  const retryWebSurface = useCallback((surface: MobileEmbedSurface, automaticAccountRetry = false) => {
     clearWebSurfaceHandshake(surface);
     webBridgeReadyRef.current[surface] = false;
     webSurfaceLoadedRef.current[surface] = false;
     if (surface === 'account') {
+      accountHandoffRetriedRef.current = automaticAccountRetry;
       clearAccountSyncTimeout();
       accountSyncInFlightRef.current = null;
       accountSyncedTokenRef.current = null;
@@ -2001,6 +2007,12 @@ export function App({ host, loadingMark }: { host: InstalledAppHost; loadingMark
     setWebSurfaceReloadUrl((current) => ({ ...current, [surface]: nextUrl }));
     setWebSurfaceRevision((current) => ({ ...current, [surface]: current[surface] + 1 }));
   }, [accountWebUrl, clearAccountSyncTimeout, clearWebSurfaceHandshake, toolsWebUrl]);
+
+  const recoverAccountHandoff = useCallback(() => {
+    if (accountHandoffRetriedRef.current || !authSessionRef.current) return false;
+    retryWebSurface('account', true);
+    return true;
+  }, [retryWebSurface]);
 
   useEffect(() => {
     if (!storeLoaded || connection !== 'online' || openedWebViews.tools) return;
@@ -2103,37 +2115,37 @@ export function App({ host, loadingMark }: { host: InstalledAppHost; loadingMark
 
   const syncAccountWebSession = useCallback(async () => {
     const token = auth.session?.token;
-    const frame = webFrameRefs.current.account;
-    if (!isAccountDetailsPage(accountPageRef.current) || !token || !frame?.contentWindow || !webBridgeReadyRef.current.account) return;
-    if (accountSyncedTokenRef.current === token
-      || accountSyncInFlightRef.current?.token === token) return;
-    clearAccountSyncTimeout();
-    const requestId = crypto.randomUUID();
-    accountSyncInFlightRef.current = { requestId, token };
+    const frame = webFrameRefs.current.account?.contentWindow;
+    if (connection !== 'online' || !isAccountDetailsPage(accountPageRef.current)
+      || !token || !frame || accountSyncedTokenRef.current === token) return;
+    let pending = accountSyncInFlightRef.current;
+    if (pending?.token !== token) {
+      clearAccountSyncTimeout();
+      pending = { requestId: crypto.randomUUID(), token, ticket: null, sent: false };
+      accountSyncInFlightRef.current = pending;
+      try {
+        const envelope = await auth.issueWebSessionTicket();
+        if (accountSyncInFlightRef.current !== pending) return;
+        pending.ticket = envelope.ticket;
+      } catch {
+        if (accountSyncInFlightRef.current !== pending) return;
+        setWebSurfaceStatus(current => ({ ...current, account: 'error' }));
+        announce(copy.authError);
+        return;
+      }
+    }
+    if (!pending.ticket || pending.sent || !webBridgeReadyRef.current.account
+      || webFrameRefs.current.account?.contentWindow !== frame) return;
+    pending.sent = true;
+    const requestId = pending.requestId;
     accountSyncTimeoutRef.current = window.setTimeout(() => {
       if (accountSyncInFlightRef.current?.requestId !== requestId) return;
-      accountSyncInFlightRef.current = null;
       accountSyncTimeoutRef.current = null;
-      setWebSurfaceStatus((current) => ({ ...current, account: 'error' }));
+      setWebSurfaceStatus(current => ({ ...current, account: 'error' }));
       announce(copy.authError);
-    }, MOBILE_EMBED_AUTH_TIMEOUT_MS);
-    try {
-      const envelope = await auth.issueWebSessionTicket();
-      if (accountSyncInFlightRef.current?.requestId !== requestId
-        || webFrameRefs.current.account !== frame
-        || !webBridgeReadyRef.current.account) return;
-      frame.contentWindow.postMessage(
-        mobileEmbedWebSessionMessage(envelope.ticket, requestId),
-        SITE_ORIGIN,
-      );
-    } catch {
-      if (accountSyncInFlightRef.current?.requestId !== requestId) return;
-      clearAccountSyncTimeout();
-      accountSyncInFlightRef.current = null;
-      setWebSurfaceStatus((current) => ({ ...current, account: 'error' }));
-      announce(copy.authError);
-    }
-  }, [announce, auth.issueWebSessionTicket, auth.session?.token, clearAccountSyncTimeout, copy.authError]);
+    }, MOBILE_EMBED_WEB_SESSION_ACK_TIMEOUT_MS);
+    frame.postMessage(mobileEmbedWebSessionMessage(pending.ticket, requestId), SITE_ORIGIN);
+  }, [announce, auth.issueWebSessionTicket, auth.session?.token, clearAccountSyncTimeout, connection, copy.authError]);
 
   const logoutEverywhere = useCallback(async () => {
     clearAccountSyncTimeout();
@@ -2279,7 +2291,8 @@ export function App({ host, loadingMark }: { host: InstalledAppHost; loadingMark
       const accountFrame = webFrameRefs.current.account;
       const accountSource = Boolean(accountFrame && event.source === accountFrame.contentWindow);
       const authClear = decodeMobileEmbedAuthClear(event.data);
-      if (accountSource && !isAccountDetailsPage(accountPageRef.current) && !authClear) return;
+      const explicitAuthClear = authClear?.reason === 'user-action';
+      if (accountSource && !isAccountDetailsPage(accountPageRef.current) && !explicitAuthClear) return;
       if (event.data?.type === 'cuberoot:mobile:embedded-search-blur') {
         if (event.source === webFrameRefs.current.tools?.contentWindow) setDockedKeyboardTop(null);
         return;
@@ -2348,10 +2361,22 @@ export function App({ host, loadingMark }: { host: InstalledAppHost; loadingMark
       }
 
       if (accountSource && authClear) {
+        if (!explicitAuthClear) {
+          // Older websites can clear the marker before acknowledging the ticket.
+          // Ignore pre-handoff restore failures and restart a sent handoff once.
+          if ((accountSyncInFlightRef.current?.sent || accountSyncedTokenRef.current) && !recoverAccountHandoff()) {
+            clearAccountSyncTimeout();
+            setWebSurfaceStatus(current => ({ ...current, account: 'error' }));
+          }
+          return;
+        }
         clearAccountSyncTimeout();
         accountSyncInFlightRef.current = null;
         accountSyncedTokenRef.current = null;
-        if (authSessionRef.current) void auth.logout();
+        if (authSessionRef.current) {
+          authSessionRef.current = null;
+          void auth.logout();
+        }
         navigateAccount('home');
         return;
       }
@@ -2359,14 +2384,15 @@ export function App({ host, loadingMark }: { host: InstalledAppHost; loadingMark
       const webSessionResult = decodeMobileEmbedWebSessionResult(event.data);
       if (accountSource && webSessionResult) {
         const pending = accountSyncInFlightRef.current;
-        if (!pending || pending.requestId !== webSessionResult.requestId) return;
+        if (!pending?.sent || pending.requestId !== webSessionResult.requestId) return;
         clearAccountSyncTimeout();
-        accountSyncInFlightRef.current = null;
         if (webSessionResult.ok) {
+          accountSyncInFlightRef.current = null;
           accountSyncedTokenRef.current = pending.token;
           setAccountDetailsReady(true);
+          setWebSurfaceStatus(current => current.account === 'ready' ? current : { ...current, account: 'ready' });
         }
-        else {
+        else if (!recoverAccountHandoff()) {
           setWebSurfaceStatus((current) => ({ ...current, account: 'error' }));
           announce(copy.authError);
         }
@@ -2436,6 +2462,7 @@ export function App({ host, loadingMark }: { host: InstalledAppHost; loadingMark
     floatingNavigation,
     navigateAccount,
     postWebSurfaceInit,
+    recoverAccountHandoff,
     selectPrimaryView,
     openAppAppearance,
     host,
@@ -2460,7 +2487,7 @@ export function App({ host, loadingMark }: { host: InstalledAppHost; loadingMark
       return;
     }
     void syncAccountWebSession();
-  }, [auth.session?.token, clearAccountSyncTimeout, syncAccountWebSession]);
+  }, [accountDetails, auth.session?.token, clearAccountSyncTimeout, syncAccountWebSession, webSurfaceRevision.account]);
 
   useEffect(() => {
     if (!host.isInstalled() || !host.addBackButtonListener) return;
@@ -5224,7 +5251,7 @@ children: <>
           const showLoadingMark = connection !== 'offline' && status !== 'error';
           const stateLabel = connection === 'offline'
             ? copy.offline
-            : status === 'error' ? copy.actionFailed : copy.checking;
+            : status === 'error' ? (surface === 'account' ? copy.accountPageUnavailable : copy.actionFailed) : copy.checking;
           return (
             <section
               aria-label={title}
@@ -5274,23 +5301,26 @@ children: <>
                 key={`${surface}-${webSurfaceRevision[surface]}`}
                 name={(host.generativeAiDisabled ? MOBILE_EMBED_NO_GENERATIVE_AI_FRAME_NAMES : MOBILE_EMBED_FRAME_NAMES)[surface]}
                 onLoad={() => {
-                  if (surface === 'tools') {
-                    void revokeToolsBle();
-                    setToolsSearchReady(false);
-                    setToolsSearchOpen(false);
-                  } else {
-                    accountInlineSettingsRef.current = false;
+                  if (surface === 'account') {
+                    if (connection !== 'online' || !isAccountDetailsPage(accountPageRef.current)) return;
+                    // Frames can acknowledge init before all their resources finish loading.
+                    // Prompt the bridge again without discarding a prepared or sent ticket.
+                    if (webBridgeReadyRef.current.account || webHandshakeRetryRef.current.account) {
+                      postWebSurfaceInit('account');
+                    } else {
+                      beginWebSurfaceHandshake('account');
+                    }
+                    return;
                   }
+                  void revokeToolsBle();
+                  setToolsSearchReady(false);
+                  setToolsSearchOpen(false);
                   webBridgeReadyRef.current[surface] = false;
                   setNativeTopBars(current => current[surface] ? { ...current, [surface]: false } : current);
                   setWebChrome(current => current[surface] ? { ...current, [surface]: false } : current);
                   if (connection === 'offline') {
                     webSurfaceLoadedRef.current[surface] = false;
                     return;
-                  }
-                  if (surface === 'account') {
-                    clearAccountSyncTimeout();
-                    accountSyncInFlightRef.current = null;
                   }
                   if (host.generativeAiDisabled) {
                     webSurfaceLoadedRef.current[surface] = false;

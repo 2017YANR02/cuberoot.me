@@ -350,6 +350,19 @@ describe('mobile auth', () => {
     expect(closeBrowser).not.toHaveBeenCalled();
   });
 
+  it('retries an embedded ticket without losing the native session after a 401', async () => {
+    const fetcher = vi.fn<typeof fetch>()
+      .mockResolvedValueOnce(response({}, 401))
+      .mockResolvedValueOnce(response({ ticket: TICKET, expiresIn: 90 }));
+    const { client, storage } = setup(fetcher);
+    const session = JSON.stringify({ token: token(), user: USER });
+    storage.values.set('session', session);
+
+    await expect(client.issueWebSessionTicket()).rejects.toThrow('web session ticket request failed');
+    expect(storage.values.get('session')).toBe(session);
+    await expect(client.issueWebSessionTicket()).resolves.toEqual({ ticket: TICKET, expiresIn: 90 });
+  });
+
   it('issues a short-lived web ticket from the secure native session', async () => {
     const fetcher = vi.fn<typeof fetch>().mockResolvedValue(
       response({ ticket: TICKET, expiresIn: 90 }),

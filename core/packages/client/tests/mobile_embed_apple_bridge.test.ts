@@ -61,7 +61,7 @@ describe('session ticket lifecycle under Apple bridge reuse', () => {
     send(mobileEmbedWebSessionMessage(ticketA, 'request-A'));
     send(mobileEmbedAuthClearMessage());
     expect(mocks.logout).toHaveBeenCalledOnce();
-    expect(mocks.post).not.toHaveBeenCalledWith(mobileEmbedAuthClearMessage(), origin);
+    expect(mocks.post).not.toHaveBeenCalledWith(mobileEmbedAuthClearMessage('user-action'), origin);
     mocks.post.mockClear();
     await act(async () => pending.resolve(sessionA));
     expect(mocks.applySession).not.toHaveBeenCalled();
@@ -93,7 +93,7 @@ describe('session ticket lifecycle under Apple bridge reuse', () => {
     send(mobileEmbedInitMessage('account'));
     mocks.post.mockClear();
     for (const listener of mocks.logoutListeners) listener();
-    expect(mocks.post).toHaveBeenCalledExactlyOnceWith(mobileEmbedAuthClearMessage(), origin);
+    expect(mocks.post).toHaveBeenCalledExactlyOnceWith(mobileEmbedAuthClearMessage('user-action'), origin);
   });
 
   it('newer account ticket wins even if an older exchange finishes last', async () => {

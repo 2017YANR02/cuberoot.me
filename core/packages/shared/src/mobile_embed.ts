@@ -137,6 +137,7 @@ export interface MobileEmbedAuthRequestMessage {
 }
 
 export interface MobileEmbedAuthClearMessage {
+  reason?: 'user-action';
   surface: 'account';
   type: 'cuberoot:mobile:auth-clear';
 }
@@ -214,8 +215,8 @@ export function mobileEmbedAuthRequestMessage(
   return { provider, surface: 'account', type: 'cuberoot:mobile:auth-request' };
 }
 
-export function mobileEmbedAuthClearMessage(): MobileEmbedAuthClearMessage {
-  return { surface: 'account', type: 'cuberoot:mobile:auth-clear' };
+export function mobileEmbedAuthClearMessage(reason?: MobileEmbedAuthClearMessage['reason']): MobileEmbedAuthClearMessage {
+  return { surface: 'account', type: 'cuberoot:mobile:auth-clear', ...(reason ? { reason } : {}) };
 }
 
 export function mobileEmbedWebSessionMessage(
@@ -346,7 +347,8 @@ export function decodeMobileEmbedAuthRequest(value: unknown): MobileEmbedAuthReq
 export function decodeMobileEmbedAuthClear(value: unknown): MobileEmbedAuthClearMessage | null {
   if (!value || typeof value !== 'object') return null;
   const candidate = value as Partial<MobileEmbedAuthClearMessage>;
-  if (candidate.type !== 'cuberoot:mobile:auth-clear' || candidate.surface !== 'account') {
+  if (candidate.type !== 'cuberoot:mobile:auth-clear' || candidate.surface !== 'account'
+    || (candidate.reason !== undefined && candidate.reason !== 'user-action')) {
     return null;
   }
   return candidate as MobileEmbedAuthClearMessage;

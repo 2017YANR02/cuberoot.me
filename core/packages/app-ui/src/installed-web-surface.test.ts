@@ -50,7 +50,7 @@ describe('installed website surfaces', () => {
 
   it('correlates Account session handoff and exposes native login failures', () => {
     expect(app).toContain('pending.requestId !== webSessionResult.requestId');
-    expect(app).toContain('MOBILE_EMBED_AUTH_TIMEOUT_MS');
+    expect(app).toContain('MOBILE_EMBED_WEB_SESSION_ACK_TIMEOUT_MS');
     expect(app).toContain('if (authRequest.provider) void auth.login(authRequest.provider);');
     expect(app).toContain("else navigateAccount(authSessionRef.current ? 'home' : 'sign-in');");
     // Browser.open resolves before the callback: delayed login failures must
@@ -78,7 +78,7 @@ describe('installed website surfaces', () => {
     expect(app).toContain('tabIndex={showState ? -1 : undefined}');
     expect(app).toContain("if (previous === 'online' || connection !== 'online') return");
     const frameLoad = app.match(/onLoad=\{\(\) => \{([\s\S]*?)\n\s*onError=/)?.[1];
-    expect(frameLoad).toMatch(/if \(surface === 'tools'\) \{\s*void revokeToolsBle\(\);/);
+    expect(frameLoad).toMatch(/if \(surface === 'account'\) \{[\s\S]*?return;\s*\}\s*void revokeToolsBle\(\);/);
     expect(frameLoad).toMatch(/webBridgeReadyRef\.current\[surface\] = false;[\s\S]*?if \(connection === 'offline'\) \{\s*webSurfaceLoadedRef\.current\[surface\] = false;\s*return;/);
     expect(app).toMatch(/} else if \(connection !== 'online'\) \{\s*clearWebSurfaceHandshake\(surface\);\s*webBridgeReadyRef\.current\[surface\] = false;/);
     expect(app).toContain('webBridgeReadyRef.current[current] ? webDepthRef.current[current] : 0');

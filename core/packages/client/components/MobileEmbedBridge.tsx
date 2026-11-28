@@ -385,7 +385,7 @@ export default function MobileEmbedBridge() {
       ? subscribeExplicitAuthLogout(() => {
         if (clearingFromHost) return;
         invalidateWebSession();
-        postToParent(mobileEmbedAuthClearMessage());
+        postToParent(mobileEmbedAuthClearMessage('user-action'));
       })
       : () => undefined;
 

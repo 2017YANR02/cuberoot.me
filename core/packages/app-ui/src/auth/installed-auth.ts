@@ -268,7 +268,8 @@ export class InstalledAuthClient {
       },
     );
     if (revision !== this.sessionRevision) throw new Error('mobile auth session changed');
-    if (response.status === 401) await this.clearSession(revision);
+    // Ticket availability governs the embedded page. The native session is
+    // validated separately through restore() and the account endpoints.
     if (!response.ok) throw new Error('web session ticket request failed');
     const ticket = decodeWebSessionTicketEnvelope(await response.json());
     if (revision !== this.sessionRevision) throw new Error('mobile auth session changed');
