@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { loginWithMiniProgram } from '../src/lib/auth';
 
 import {
   createWebViewPageOptions,
@@ -94,6 +95,51 @@ describe('shared web-view page state', () => {
     expect(tools.data.src).toBe('https://cuberoot.me/zh#wechat_redirect');
     adapter.onLoad({ nativeTab: 'account' });
     expect(switchTab).toHaveBeenLastCalledWith({ url: '/pages/account/index' });
+  });
+
+  it('reopens the mounted WeChat Tools tab with a fresh ticket after native sign-in', async () => {
+    const storage = new Map<string, unknown>();
+    const token = 'native-session-token-for-wechat';
+    const ticket = 'B'.repeat(43);
+    const request = vi.fn((options: { url: string; success(result: { statusCode: number; data: unknown }): void }) => {
+      const data = options.url.endsWith('/auth/wechat/miniprogram')
+        ? { token, user: { uid: 42, name: 'Member', wcaId: null, avatar: '' } }
+        : { ticket, expiresIn: 90 };
+      options.success({ statusCode: 200, data });
+    });
+    Object.assign(wx, {
+      login: ({ success }: WechatMiniprogram.LoginOption) => success?.({ code: 'wechat-login', errMsg: 'login:ok' }),
+      getStorageSync: (key: string) => storage.get(key),
+      setStorageSync: (key: string, value: unknown) => storage.set(key, value),
+      request,
+    });
+    const tools = { ...createWebViewPageOptions('home'), ...createContext() } as WebViewPageContext & {
+      onLoad(options: Record<string, string>): void;
+      onShow(): void;
+      onHide(): void;
+      onUnload(): void;
+    };
+
+    tools.onLoad({});
+    tools.onShow();
+    expect(new URL(tools.data.src).pathname).toBe('/zh');
+    tools.onHide();
+
+    await loginWithMiniProgram();
+    tools.onShow();
+    await vi.waitFor(() => expect(tools.data.src).toContain('ticket='));
+    expect(request).toHaveBeenCalledTimes(2);
+    expect(request).toHaveBeenLastCalledWith(expect.objectContaining({
+      url: 'https://api.cuberoot.me/v1/auth/web-session/ticket',
+      header: expect.objectContaining({ Authorization: `Bearer ${token}` }),
+    }));
+    const callback = new URL(tools.data.src);
+    const handoff = new URLSearchParams(callback.hash.slice(1));
+    expect(callback.pathname).toBe('/auth/miniprogram');
+    expect(handoff.get('ticket')).toBe(ticket);
+    expect(handoff.get('next')).toBe('/zh');
+    expect(callback.href).not.toContain(token);
+    tools.onUnload();
   });
 
   it('retains a synchronized document until native sign-out, then clears the website session', async () => {
