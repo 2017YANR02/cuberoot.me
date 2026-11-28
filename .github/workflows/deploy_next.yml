@@ -179,7 +179,7 @@ jobs:
       # writes into LIVE. Checksums handle fresh build mtimes and interrupted stages.
       # Idle timeout alone cannot stop a continuously slow transfer; bound wall time.
       - name: rsync standalone + systemd unit
-        timeout-minutes: 19
+        timeout-minutes: 27
         env:
           DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
           DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
@@ -231,7 +231,8 @@ jobs:
             set -o pipefail
             for i in 1 2; do
               local started=$SECONDS
-              if timeout --kill-after=15s 300s rsync -az --checksum \
+              # The production link can take over five minutes per part on large releases.
+              if timeout --kill-after=15s 480s rsync -az --checksum \
                 --from0 --files-from="$1" --partial --timeout=60 --stats \
                 --copy-dest=/www/wwwroot/toolkit-next -e "$RSH" "$SOURCE" "$DEST" 2>&1 | tee "$1-attempt-$i.log"; then
                 echo "Wall time: $((SECONDS - started))s; exit 0" >> "$1-attempt-$i.log"
@@ -254,9 +255,9 @@ jobs:
           PARALLEL_SECONDS=$((SECONDS - PARALLEL_START))
           # Only after every part succeeds, reconcile the complete tree once.
           # This restores directory metadata and removes stale staged files safely.
-          # Budget for the full 29k-file checksum list over the slow SSH link too.
+          # Budget for the full standalone checksum list over the same link.
           RECONCILE_START=$SECONDS
-          timeout --kill-after=15s 360s rsync -az --checksum --delete-delay \
+          timeout --kill-after=15s 480s rsync -az --checksum --delete-delay \
             --partial --timeout=60 --stats --copy-dest=/www/wwwroot/toolkit-next \
             -e "$RSH" "$SOURCE" "$DEST" 2>&1 | tee "$LISTS/reconcile.log"
           RECONCILE_SECONDS=$((SECONDS - RECONCILE_START))
