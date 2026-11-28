@@ -4,11 +4,11 @@ import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { MembershipPlan } from '@/lib/membership-api';
 
-const mocks = vi.hoisted(() => ({ mobile: true, createOrder: vi.fn(), getOrderStatus: vi.fn(), copyPageLink: vi.fn() }));
+const mocks = vi.hoisted(() => ({ mobile: true, createOrder: vi.fn(), getOrderStatus: vi.fn(), writeClipboardText: vi.fn() }));
 vi.mock('@/hooks/useIsMobile', () => ({ useIsMobile: () => mocks.mobile }));
 vi.mock('@/i18n/tr', () => ({ tr: ({ zh }: { zh: string }) => zh }));
 vi.mock('@/lib/apple-membership-bridge', () => ({ isIosMembershipSurface: () => false }));
-vi.mock('@/lib/page-share', () => ({ copyPageLink: mocks.copyPageLink }));
+vi.mock('@/lib/clipboard', () => ({ writeClipboardText: mocks.writeClipboardText }));
 vi.mock('@/lib/membership-api', () => ({ createOrder: mocks.createOrder, getOrderStatus: mocks.getOrderStatus }));
 import PayModal from '@/app/[lang]/membership/PayModal';
 
@@ -30,7 +30,7 @@ describe('membership WeChat checkout environment', () => {
     mocks.mobile = true;
     mocks.createOrder.mockReset().mockResolvedValue({ outTradeNo: 'test-order', channel: 'wechat', qrcode: 'data:image/png;base64,test' });
     mocks.getOrderStatus.mockReset().mockResolvedValue({ status: 'pending' });
-    mocks.copyPageLink.mockReset().mockResolvedValue(true);
+    mocks.writeClipboardText.mockReset().mockResolvedValue(undefined);
     vi.spyOn(navigator, 'userAgent', 'get').mockReturnValue('Mozilla/5.0 (iPhone) MicroMessenger/8.0');
     host = document.createElement('div'); document.body.append(host); root = createRoot(host);
   });
@@ -45,13 +45,13 @@ describe('membership WeChat checkout environment', () => {
     await clickWechat();
     expect(mocks.createOrder).not.toHaveBeenCalled();
     expect(mocks.getOrderStatus).not.toHaveBeenCalled();
-    expect(mocks.copyPageLink).toHaveBeenCalledWith(`${window.location.origin}/zh/membership`);
+    expect(mocks.writeClipboardText).toHaveBeenCalledWith(`${window.location.origin}/zh/membership`);
     expect(host.querySelector('.mem-pay-ch-wechat')?.textContent).toContain('链接已复制');
     expect(host.querySelector('.mem-pay-ch-wechat')?.getAttribute('disabled')).toBeNull();
   });
 
   it('reports clipboard failure without pretending a link was copied or placing an order', async () => {
-    mocks.copyPageLink.mockResolvedValue(false);
+    mocks.writeClipboardText.mockRejectedValue(new Error('Clipboard unavailable'));
     await render(); await clickWechat();
     expect(host.querySelector('.mem-pay-err')?.textContent).toContain('复制失败');
     expect(host.textContent).not.toContain('链接已复制');
@@ -62,13 +62,13 @@ describe('membership WeChat checkout environment', () => {
     vi.spyOn(navigator, 'userAgent', 'get').mockReturnValue('Mozilla/5.0 (iPhone) Version/18.0 Mobile Safari/604.1');
     await render(); await clickWechat();
     expect(mocks.createOrder).toHaveBeenCalledWith('monthly', 'wechat', 'wap', 'zh');
-    expect(mocks.copyPageLink).not.toHaveBeenCalled();
+    expect(mocks.writeClipboardText).not.toHaveBeenCalled();
   });
 
   it('keeps Native QR checkout available in desktop WeChat', async () => {
     mocks.mobile = false;
     await render(); await clickWechat();
     expect(mocks.createOrder).toHaveBeenCalledWith('monthly', 'wechat', 'pc', 'zh');
-    expect(mocks.copyPageLink).not.toHaveBeenCalled();
+    expect(mocks.writeClipboardText).not.toHaveBeenCalled();
   });
 });
