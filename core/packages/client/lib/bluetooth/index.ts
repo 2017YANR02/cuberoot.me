@@ -205,6 +205,28 @@ export interface ConnectPickOptions {
    * see `pickerOptions`.
    */
   acceptAllDevices?: boolean;
+  onDeviceConnected?: (id: string) => void;
+}
+
+let lastBrowserCube: BluetoothDevice | undefined;
+
+export function canReconnectRememberedCube(deviceId: string): boolean {
+  return typeof navigator !== 'undefined' && !mayUseMiniProgramBridge() && !installedBleAvailable()
+    && (typeof navigator.bluetooth?.getDevices === 'function' || lastBrowserCube?.id === deviceId);
+}
+
+async function getGrantedDevices(rememberedId?: string): Promise<BluetoothDevice[]> {
+  const bluetooth = typeof navigator === 'undefined' ? undefined : navigator.bluetooth;
+  try {
+    if (bluetooth?.getDevices) return await bluetooth.getDevices();
+    return lastBrowserCube && lastBrowserCube.id === rememberedId ? [lastBrowserCube] : [];
+  } catch {
+    return [];
+  }
+}
+
+export async function listOtherGrantedSmartCubes(rememberedId: string): Promise<BluetoothDevice[]> {
+  return (await getGrantedDevices()).filter(device => device.id !== rememberedId && pickDriver(device));
 }
 
 /**
@@ -437,9 +459,9 @@ export interface BluetoothCubeHandle {
   /** Open the picker + connect. Rejects with a {@link BluetoothConnectError}. */
   connect(pick?: ConnectPickOptions): Promise<void>;
   /** Connect a device already returned by a shared Web Bluetooth chooser. */
-  connectDevice(device: BluetoothDevice): Promise<void>;
-  /** Reconnect one unambiguous, previously-authorised cube without a chooser. */
-  preconnectGrantedDevice(): Promise<boolean>;
+  connectDevice(device: BluetoothDevice, onDeviceConnected?: (id: string) => void): Promise<void>;
+  /** Reconnect an exact remembered device, or an unambiguous granted cube. */
+  preconnectGrantedDevice(deviceId?: string): Promise<boolean>;
   /** Disconnect + cleanup. */
   disconnect(): void;
   /** Reset internal cube state to "solved" (after the user resets the cube physically). */
@@ -598,11 +620,13 @@ function createBluetoothCubeConnection(shared: boolean) {
   let changingConsumer = false;
   let simulated = false;
   let established = false;
-  let pendingOwner: symbol | undefined;
+  let pendingConnection: { owner: symbol } | undefined;
   let cancelMacPrompt: (() => void) | undefined;
+  let cancelRememberedReconnect: (() => void) | undefined;
   const options = () => (activeConsumer && consumers.get(activeConsumer)?.()) || {};
 
   async function requestMac(name: string, wrongKey?: boolean): Promise<string | null> {
+    if (cancelRememberedReconnect && !snapshot.status.connected) return null;
     const prompt = options().onNeedMac;
     if (!prompt) return null;
     cancelMacPrompt?.();
@@ -925,9 +949,10 @@ function createBluetoothCubeConnection(shared: boolean) {
     options().onConnectionEvent?.({ kind: 'disconnected', reason });
   };
 
-  const disconnect = () => {
+  const disconnect = (cancelReconnect = true) => {
     connectionGeneration += 1;
     intentionalDisconnect = true;
+    if (cancelReconnect) cancelRememberedReconnect?.();
     cancelMacPrompt?.();
     internalDisconnect('manual');
   };
@@ -1253,9 +1278,17 @@ function createBluetoothCubeConnection(shared: boolean) {
     onPhase?.('connected', Math.max(0, Math.round(performance.now() - phaseStartedAt)));
   };
 
-  const connectDevice = async (device: BluetoothDevice): Promise<void> => {
-    if (shared && snapshot.status.connected && activeDevice?.id === device.id) return;
-    if (shared && (activeDevice || cleanup)) disconnect();
+  const connectDevice = async (device: BluetoothDevice, onDeviceConnected?: (id: string) => void): Promise<void> => {
+    const recordSelection = () => {
+      if (!onDeviceConnected || installedBleAvailable()) return;
+      lastBrowserCube = device;
+      onDeviceConnected(device.id);
+    };
+    if (shared && snapshot.status.connected && activeDevice?.id === device.id) {
+      recordSelection();
+      return;
+    }
+    if (shared && (activeDevice || cleanup)) disconnect(false);
     if (!shared && sharedCubeConnection?.ownsDevice(device.id)) {
       // Dedicated sessions (e.g. official online competition) can explicitly
       // select the same cube. Release its primary connection before opening GATT.
@@ -1352,6 +1385,9 @@ function createBluetoothCubeConnection(shared: boolean) {
       // or repeat advertisement/MAC recovery, and never loop indefinitely.
       cancelPendingReconnect();
       await attachToDevice(device, advMac, generation, reportPhase);
+    }
+    if (connectionGeneration === generation && snapshot.status.connected && activeDevice === device) {
+      recordSelection();
     }
   };
 
@@ -1457,29 +1493,46 @@ function createBluetoothCubeConnection(shared: boolean) {
       pickerOptions(pick?.acceptAllDevices === true, nameOnly));
     if (connectionGeneration !== pickerGeneration || (shared && activeConsumer !== owner)) return;
     if (!device) return;
-    await connectDevice(device);
+    await connectDevice(device, pick?.onDeviceConnected);
   };
 
-  const preconnectGrantedDevice = async (): Promise<boolean> => {
+  const preconnectGrantedDevice = async (deviceId?: string): Promise<boolean> => {
     if (shared && snapshot.status.connected) return true;
     if (typeof document !== 'undefined' && document.visibilityState !== 'visible') return false;
-    if (mayUseMiniProgramBridge()) return false;
-    const bluetooth = typeof navigator === 'undefined' ? undefined : navigator.bluetooth;
-    if (!bluetooth?.getDevices) return false;
-
+    if (mayUseMiniProgramBridge() || installedBleAvailable()) return false;
     const generation = connectionGeneration;
     const owner = activeConsumer;
-    let devices: BluetoothDevice[];
+    let device: BluetoothDevice | null = null;
+    const attempt = async () => {
+      const devices = await getGrantedDevices(deviceId);
+      if (generation !== connectionGeneration || (shared && activeConsumer !== owner)) return false;
+      device = deviceId ? devices.find(candidate => candidate.id === deviceId) ?? null : grantedCubeForPreconnect(devices);
+      if (!device) return false;
+      await connectDevice(device);
+      return snapshot.status.connected;
+    };
+    if (!deviceId) return attempt();
+
+    // Release the chooser immediately on a skip, even if the browser is
+    // still retrieving its grants or trying to open the GATT connection.
+    const pending = pendingConnection;
+    let cancel: () => void = () => {};
+    const cancelled = new Promise<false>(resolve => {
+      cancel = () => {
+        cancelRememberedReconnect = undefined;
+        if (pendingConnection === pending) pendingConnection = undefined;
+        try { device?.gatt?.disconnect(); } catch { /* already disconnected */ }
+        resolve(false);
+      };
+    });
+    cancelRememberedReconnect = cancel;
+    const timer = setTimeout(() => disconnect(), 10_000);
     try {
-      devices = await bluetooth.getDevices();
-    } catch {
-      return false;
+      return await Promise.race([attempt(), cancelled]);
+    } finally {
+      clearTimeout(timer);
+      if (cancelRememberedReconnect === cancel) cancelRememberedReconnect = undefined;
     }
-    if (generation !== connectionGeneration || (shared && activeConsumer !== owner)) return false;
-    const device = grantedCubeForPreconnect(devices);
-    if (!device) return false;
-    await connectDevice(device);
-    return true;
   };
 
   const getFaces = () => {
@@ -1516,7 +1569,7 @@ function createBluetoothCubeConnection(shared: boolean) {
     activeConsumer = undefined;
     cancelMacPrompt?.();
     if (shared && previous !== undefined
-      && (simulated || (pendingOwner === previous && !established))) {
+      && (simulated || (pendingConnection?.owner === previous && !established))) {
       disconnect();
     }
     activeConsumer = next;
@@ -1546,19 +1599,22 @@ function createBluetoothCubeConnection(shared: boolean) {
   async function connectFor<T>(owner: symbol, start: () => Promise<T>, inactive: T): Promise<T> {
     if (activeConsumer !== owner) return inactive;
     if (!shared) return start();
-    if (pendingOwner) return inactive;
+    if (pendingConnection) return inactive;
     // Register ownership before calling into the browser to retain the user gesture.
-    pendingOwner = owner;
+    const pending = { owner };
+    pendingConnection = pending;
     try { return await start(); }
-    finally { pendingOwner = undefined; }
+    finally { if (pendingConnection === pending) pendingConnection = undefined; }
   }
 
   function commands(owner: symbol) {
     const canControl = () => activeConsumer === owner;
     return {
       connect: (pick?: ConnectPickOptions) => connectFor(owner, () => connect(pick), undefined),
-      connectDevice: (device: BluetoothDevice) => connectFor(owner, () => connectDevice(device), undefined),
-      preconnectGrantedDevice: () => connectFor(owner, preconnectGrantedDevice, false),
+      connectDevice: (device: BluetoothDevice, onDeviceConnected?: (id: string) => void) =>
+        connectFor(owner, () => connectDevice(device, onDeviceConnected), undefined),
+      preconnectGrantedDevice: (deviceId?: string) =>
+        connectFor(owner, () => preconnectGrantedDevice(deviceId), false),
       disconnect: () => { if (canControl()) disconnect(); },
       resetState: () => { if (canControl()) resetState(); },
       resetDeviceState: async () => { if (canControl()) await resetDeviceState(); },

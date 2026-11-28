@@ -5,6 +5,7 @@ import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   grantedCubeForPreconnect,
+  listOtherGrantedSmartCubes,
   useBluetoothCube,
   type BluetoothConnectionEvent,
   type BluetoothCubeHandle,
@@ -507,6 +508,108 @@ describe('smart-cube reconnect ownership', () => {
     expect(connected).toBe(false);
     expect(first.connect).not.toHaveBeenCalled();
     expect(second.connect).not.toHaveBeenCalled();
+  });
+
+  it('matches the remembered device by ID even when authorised cubes share a name', async () => {
+    const first = fakeGattRig('first');
+    const remembered = fakeGattRig('remembered');
+    Object.defineProperty(remembered.device, 'name', { value: first.device.name });
+    Object.defineProperty(navigator, 'bluetooth', {
+      configurable: true,
+      value: { getDevices: vi.fn(async () => [first.device, remembered.device]) },
+    });
+    vi.spyOn(gocubeDriver, 'start').mockResolvedValue({ battery: async () => null, cleanup: vi.fn() });
+
+    await expect(listOtherGrantedSmartCubes(remembered.device.id)).resolves.toEqual([first.device]);
+    await act(async () => { await expect(cube.preconnectGrantedDevice('revoked')).resolves.toBe(false); });
+    expect(remembered.connect).not.toHaveBeenCalled();
+    await act(async () => { await expect(cube.preconnectGrantedDevice(remembered.device.id)).resolves.toBe(true); });
+
+    expect(first.connect).not.toHaveBeenCalled();
+    expect(remembered.connect).toHaveBeenCalledOnce();
+    expect(cube.status.deviceId).toBe(remembered.device.id);
+  });
+
+  it('uses a manually selected cube again in the same tab without getDevices', async () => {
+    const rig = fakeGattRig('same-tab');
+    const selected = vi.fn();
+    vi.spyOn(gocubeDriver, 'start').mockResolvedValue({ battery: async () => null, cleanup: vi.fn() });
+    await act(async () => { await cube.connectDevice(rig.device, selected); });
+    expect(selected).toHaveBeenCalledExactlyOnceWith(rig.device.id);
+
+    await act(async () => cube.disconnect());
+    await act(async () => { await expect(cube.preconnectGrantedDevice(rig.device.id)).resolves.toBe(true); });
+    expect(rig.connect).toHaveBeenCalledTimes(2);
+    expect(selected).toHaveBeenCalledOnce();
+  });
+
+  it('releases an unresponsive remembered cube and ignores its late connection', async () => {
+    const remembered = fakeGattRig('unresponsive');
+    const gate = deferred<void>();
+    remembered.reconnectThrough(gate);
+    Object.defineProperty(navigator, 'bluetooth', {
+      configurable: true,
+      value: { getDevices: vi.fn(async () => [remembered.device]) },
+    });
+    const start = vi.spyOn(gocubeDriver, 'start').mockResolvedValue({ battery: async () => null, cleanup: vi.fn() });
+
+    await act(async () => {
+      const attempt = cube.preconnectGrantedDevice(remembered.device.id);
+      await vi.advanceTimersByTimeAsync(10_000);
+      await expect(attempt).resolves.toBe(false);
+      gate.resolve();
+    });
+    expect(remembered.disconnect).toHaveBeenCalled();
+    expect(start).not.toHaveBeenCalled();
+    expect(cube.status.connected).toBe(false);
+  });
+
+  it('times out even if the browser never finishes enumerating its grants', async () => {
+    const grants = deferred<BluetoothDevice[]>();
+    Object.defineProperty(navigator, 'bluetooth', {
+      configurable: true, value: { getDevices: () => grants.promise },
+    });
+    const remembered = fakeGattRig('late-grant');
+    await act(async () => {
+      const attempt = cube.preconnectGrantedDevice(remembered.device.id);
+      await vi.advanceTimersByTimeAsync(10_000);
+      await expect(attempt).resolves.toBe(false);
+      grants.resolve([remembered.device]);
+    });
+    expect(remembered.connect).not.toHaveBeenCalled();
+  });
+
+  it('allows immediate manual selection when a shared remembered reconnect is skipped', async () => {
+    const grants = deferred<BluetoothDevice[]>();
+    const remembered = fakeGattRig('skipped');
+    const other = fakeGattRig('manual-choice');
+    const requestDevice = vi.fn(async () => other.device);
+    Object.defineProperty(navigator, 'bluetooth', {
+      configurable: true,
+      value: { getDevices: () => grants.promise, requestDevice },
+    });
+    vi.spyOn(gocubeDriver, 'start').mockResolvedValue({ battery: async () => null, cleanup: vi.fn() });
+    function SharedCube() {
+      cube = useBluetoothCube({ shareConnection: true });
+      return null;
+    }
+    await act(async () => root.render(createElement(SharedCube)));
+    try {
+      await act(async () => {
+        const reconnect = cube.preconnectGrantedDevice(remembered.device.id);
+        cube.disconnect();
+        const manual = cube.connect();
+        await expect(reconnect).resolves.toBe(false);
+        grants.resolve([remembered.device]);
+        await manual;
+        await vi.advanceTimersByTimeAsync(10_000);
+      });
+      expect(requestDevice).toHaveBeenCalledOnce();
+      expect(remembered.connect).not.toHaveBeenCalled();
+      expect(cube.status.deviceId).toBe(other.device.id);
+    } finally {
+      await act(async () => cube.disconnect());
+    }
   });
 
   it('requires a reusable MAC before preconnecting a GAN cube', () => {

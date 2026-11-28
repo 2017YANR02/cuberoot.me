@@ -29,9 +29,33 @@ it('derives the account from the session and merges only the supplied devices', 
   expect(response.status).toBe(200);
   expect(response.headers.get('cache-control')).toBe('no-store');
   expect(mocks.query.mock.calls[0][1]).toEqual([
-    12, { GAN: 'AA:BB:CC:DD:EE:FF', Old: null }, { GAN: 'AA:BB:CC:DD:EE:FF', Old: null },
+    12, { GAN: 'AA:BB:CC:DD:EE:FF', Old: null }, null, { GAN: 'AA:BB:CC:DD:EE:FF', Old: null },
   ]);
   expect(mocks.query.mock.calls[0][0]).toContain('smart_cube_macs.items ||');
+});
+
+it('saves and reads the remembered device through the authenticated account', async () => {
+  const lastDeviceId = 'browser-device-id';
+  const saved = await smartCubeMacRoutes.request('/smart-cube/macs', {
+    method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ items: {}, lastDeviceId }),
+  });
+  expect(await saved.json()).toEqual({ ok: true, lastDeviceId });
+  expect(mocks.query.mock.calls[0][1]).toEqual([12, {}, lastDeviceId, {}]);
+
+  mocks.query.mockResolvedValueOnce([{ items: {}, last_device_id: lastDeviceId }]);
+  const read = await smartCubeMacRoutes.request('/smart-cube/macs');
+  expect(await read.json()).toEqual({ items: {}, lastDeviceId });
+  expect(mocks.query.mock.calls[1][1]).toEqual([12]);
+});
+
+it('rejects malformed device IDs before writing', async () => {
+  const response = await smartCubeMacRoutes.request('/smart-cube/macs', {
+    method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ items: {}, lastDeviceId: { id: 'cube' } }),
+  });
+  expect(response.status).toBe(400);
+  expect(mocks.query).not.toHaveBeenCalled();
 });
 
 it('rejects malformed addresses before writing', async () => {

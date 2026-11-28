@@ -9604,7 +9604,8 @@ ALTER TABLE workspace_members ADD COLUMN admin_access BOOLEAN NOT NULL DEFAULT F
 
 CREATE TABLE IF NOT EXISTS smart_cube_macs (
   user_id BIGINT PRIMARY KEY REFERENCES app_users(id) ON DELETE CASCADE,
-  items JSONB NOT NULL DEFAULT '{}'::jsonb
+  items JSONB NOT NULL DEFAULT '{}'::jsonb,
+  last_device_id TEXT
 );
 
 -- Smart cube intake queue (0286).

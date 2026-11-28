@@ -157,6 +157,22 @@
   font-size: 12px;
   line-height: 1.55;
 }
+.bluetooth-modal .bt-reconnect-help {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 8px;
+}
+.bluetooth-modal .bt-reconnect-skip {
+  border: 0;
+  background: none;
+  padding: 0;
+  color: var(--signal-info);
+  font: inherit;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  cursor: pointer;
+}
 .bluetooth-modal .bt-label { color: var(--muted-foreground); font-size: 12px; text-transform: uppercase; letter-spacing: 0; }
 .bluetooth-modal .bt-value { color: var(--foreground); font-size: 13px; }
 .bluetooth-modal .bt-value.mono { font-family: 'PingFang SC', 'Microsoft YaHei', 'Hiragino Sans GB', monospace; }

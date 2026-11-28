@@ -38,6 +38,7 @@ export type TimerSmartCubeAvailableDevice = TimerDeviceAvailableDevice;
 export interface TimerSmartCubeDeviceModalProps {
   anchorRef?: RefObject<HTMLButtonElement | null>;
   availableDevices?: readonly TimerSmartCubeAvailableDevice[];
+  devicePickerLabels?: { scan: string; empty: string };
   capabilities?: TimerDeviceCapabilities;
   className?: string;
   connectionFailure?: ReactNode;
@@ -71,6 +72,7 @@ type DeviceAction = 'connect' | 'disconnect' | 'reset' | null;
 export function TimerSmartCubeDeviceModal({
   anchorRef,
   availableDevices,
+  devicePickerLabels,
   capabilities,
   className,
   connectionFailure,
@@ -383,7 +385,7 @@ export function TimerSmartCubeDeviceModal({
                       className={scanning ? 'is-scanning' : undefined}
                       size={14}
                     />
-                    {scanning ? copy.scanning : copy.scanAgain}
+                    {scanning ? copy.scanning : devicePickerLabels?.scan ?? copy.scanAgain}
                   </button>
                 </div>
                 {availableDevices.length > 0 ? (
@@ -413,7 +415,7 @@ export function TimerSmartCubeDeviceModal({
                   </ul>
                 ) : (
                   <p className="timer-smart-cube-device__empty" role="status">
-                    {scanning ? copy.scanning : copy.noDevices}
+                    {scanning ? copy.scanning : devicePickerLabels?.empty ?? copy.noDevices}
                   </p>
                 )}
               </section>

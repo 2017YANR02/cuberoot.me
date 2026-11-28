@@ -11,6 +11,7 @@
  */
 
 import { BatteryLevelIcon, TimerSmartCubeDeviceModal } from '@cuberoot/timer-ui';
+import type { TimerSmartCubeAvailableDevice } from '@cuberoot/timer-ui';
 import {
   createTimerDeviceRegistry,
   SMART_CUBE_TIMER_DEVICE_REGISTRATIONS,
@@ -46,12 +47,18 @@ interface Props {
   isZh: boolean;
   cube: BluetoothCubeHandle;
   onClose: () => void;
+  closeOnDisconnect?: boolean;
   /**
    * A connection already started by the icon's click handler. Web Bluetooth's
    * picker needs that direct user gesture, so the modal observes the promise
    * instead of starting it later from an effect.
    */
   connectAttempt?: Promise<void> | null;
+  onSkipRememberedReconnect?: () => void;
+  fallbackPicker?: {
+    devices: readonly TimerSmartCubeAvailableDevice[];
+    connect(deviceId?: string): Promise<void>;
+  };
   /**
    * Start a connection. Allowed — expected — to reject: this modal owns the
    * failure UI. It used to be each caller's job, and all three did it
@@ -134,18 +141,18 @@ function ConnectFailure({ detail }: { detail: string }) {
   );
 }
 
-export default function BluetoothModal({ title, anchorRef, isZh, cube, onClose, onConnect, connectAttempt, macPrompt, onSubmitMac, onCancelMac, onResetGyro, allowDeviceCalibration = true, connections, selectedConnectionId, onSelectConnection, onConnectNext, connectingNext }: Props) {
+export default function BluetoothModal({ title, anchorRef, isZh, cube, onClose, closeOnDisconnect, onConnect, connectAttempt, onSkipRememberedReconnect, fallbackPicker, macPrompt, onSubmitMac, onCancelMac, onResetGyro, allowDeviceCalibration = true, connections, selectedConnectionId, onSelectConnection, onConnectNext, connectingNext }: Props) {
   useSyncExternalStore(subscribeInstalledBleBridge, installedBleAvailable, () => false);
   const [connecting, setConnecting] = useState(Boolean(connectAttempt) && !cube.status.connected);
   const [connectError, setConnectError] = useState<{ stage: ConnectStage | null; detail: string } | null>(null);
   const [macAddressCopied, setMacAddressCopied] = useState(false);
   const [nextError, setNextError] = useState<string | null>(null);
 
-  const runConnect = async (pick?: ConnectPickOptions): Promise<void> => {
+  const runConnect = async (start: () => Promise<void>): Promise<void> => {
     setConnectError(null);
     setConnecting(true);
     try {
-      await onConnect(pick);
+      await start();
     } catch (err) {
       // NO_WEB_BLUETOOTH already has its own section above (envAdvice) — don't
       // say it twice.
@@ -265,9 +272,10 @@ export default function BluetoothModal({ title, anchorRef, isZh, cube, onClose, 
     <TimerSmartCubeDeviceModal
       key={selectedConnectionId}
       anchorRef={anchorRef}
-      closeOnDisconnect={!connections || connections.length < 2}
+      closeOnDisconnect={closeOnDisconnect ?? (!connections || connections.length < 2)}
       capabilities={{
         ...WEB_TIMER_DEVICE_REGISTRY.get('smart-cube')?.capabilities,
+        scan: Boolean(fallbackPicker),
         gyro: allowDeviceCalibration && Boolean(onResetGyro),
         reset: allowDeviceCalibration,
       }}
@@ -302,7 +310,20 @@ export default function BluetoothModal({ title, anchorRef, isZh, cube, onClose, 
         </li>)}
       </ol> : undefined}
       connectionFailure={connectError ? <ConnectFailure detail={connectError.detail} /> : undefined}
-      intro={intro}
+      intro={onSkipRememberedReconnect ? (
+        <p className="bt-connected-help bt-reconnect-help">
+          <span>{tr({ zh: '自动连接上一次使用的智能魔方，请保持唤醒', en: 'Reconnecting to your last smart cube. Keep it awake.' })}</span>
+          <button type="button" className="bt-reconnect-skip" onClick={onSkipRememberedReconnect}>
+            {tr({ zh: '先连接其他魔方', en: 'Connect another cube' })}
+          </button>
+        </p>
+      ) : intro}
+      availableDevices={fallbackPicker?.devices}
+      devicePickerLabels={fallbackPicker ? {
+        scan: tr({ zh: '查找新设备', en: 'Find new devices' }),
+        empty: tr({ zh: '没有其他已授权的智能魔方', en: 'No other smart cubes have been authorized' }),
+      } : undefined}
+      onScan={fallbackPicker ? () => runConnect(() => fallbackPicker.connect()) : undefined}
       actionsStart={onConnectNext ? <button type="button" className="timer-smart-cube-device__connect bt-connect-btn bt-cube-add" disabled={connectingNext || connecting} aria-busy={connectingNext}
           onClick={() => { setNextError(null); void onConnectNext().catch(error => setNextError(describeError(error))); }}>
           {connectingNext ? <LoaderCircle className="bt-cube-connecting" size={16} aria-hidden="true" /> : <Plus size={16} aria-hidden="true" />}
@@ -312,7 +333,9 @@ export default function BluetoothModal({ title, anchorRef, isZh, cube, onClose, 
       footer={nextError ? <p className="bt-cube-error" role="alert">{nextError}</p> : undefined}
       language={isZh ? 'zh' : 'en'}
       onClose={onClose}
-      onConnect={!macPrompt && canConnect && !onConnectNext ? () => runConnect() : undefined}
+      onConnect={!macPrompt && canConnect && !onConnectNext
+        ? deviceId => runConnect(() => fallbackPicker ? fallbackPicker.connect(deviceId) : onConnect())
+        : undefined}
       onDisconnect={() => cube.disconnect()}
       onResetGyro={onResetGyro}
       onResetState={allowDeviceCalibration ? resetCube : undefined}

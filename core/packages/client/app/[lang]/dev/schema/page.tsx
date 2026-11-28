@@ -468,7 +468,7 @@ const TABLES: Table[] = [
     { name: 'case_keys JSONB', note: { zh: '只存 canonical key 数组，不复制公式内容', en: 'canonical-key array only; algorithm content is not duplicated' } },
     { name: 'updated_at', note: { zh: '本地与云端合并的 LWW 版本号', en: 'LWW version for local/cloud merging' } },
   ] },
-  { name: 'smart_cube_macs', domain: 'studio', origin: '0285', naturalKey: true, purpose: { zh: '账号私有的智能魔方地址，按设备合并', en: 'Private smart cube addresses merged per device' }, cols: [{ name: 'user_id (PK, FK app_users)' }, { name: 'items JSONB' }] },
+  { name: 'smart_cube_macs', domain: 'studio', origin: '0285', evolved: [367], naturalKey: true, purpose: { zh: '账号私有的智能魔方地址和上次连接的设备 ID', en: 'Private smart cube addresses and last connected device ID' }, cols: [{ name: 'user_id (PK, FK app_users)' }, { name: 'items JSONB' }, { name: 'last_device_id TEXT' }] },
   { name: 'alg_preferred_algs', domain: 'studio', origin: '0131', naturalKey: true, purpose: { zh: '公式记忆按用户和公式集保存的主公式偏好', en: 'Per-user primary algorithm preferences for each algorithm set' }, cols: [
     { name: 'wca_id, puzzle, set_slug (PK)' },
     { name: 'items JSONB', note: { zh: 'case 与朝向到稳定公式引用的映射，不复制公式内容', en: 'case-and-orientation map to stable algorithm references; algorithm content is not duplicated' } },
@@ -617,6 +617,7 @@ const TABLES: Table[] = [
 ];
 
 const MIGRATIONS: { n: number; slug: string; desc: Bi }[] = [
+  { n: 367, slug: 'smart_cube_last_device', desc: { zh: '保存账号上次成功连接的智能魔方浏览器设备 ID。', en: 'Save the browser device ID of the last smart cube successfully connected for an account.' } },
   { n: 366, slug: 'competition_result_sessions', desc: { zh: '按匿名验证会话记录不同比赛的成绩读取次数。', en: 'Count distinct competitions read by each anonymous verification session.' } },
   { n: 365, slug: 'competition_test_mode', desc: { zh: '标记测试赛，将其排除在公开目录与正式统计之外。', en: 'Mark test competitions for exclusion from public directories and official statistics.' } },
   { n: 364, slug: 'single_home_recon_pin', desc: { zh: '保留最近一条可展示的首页置顶复盘，限制同时置顶一条。', en: 'Keep the newest eligible homepage reconstruction pin and enforce a single pin.' } },

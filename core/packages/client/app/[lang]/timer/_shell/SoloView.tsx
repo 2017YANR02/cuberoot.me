@@ -232,7 +232,8 @@ import { useSettings, getSettings, updateSettings } from '../_lib/settings';
 import { warmupSound } from '../_lib/sound';
 import { setMetronomeHold } from '@/lib/metronome';
 import { timerMetronomeActive } from '@cuberoot/shared/timer/metronome-settings';
-import { mayUseMiniProgramBridge, type ConnectPickOptions, type CubeMoveMetadata } from '../_lib/bluetooth';
+import { canReconnectRememberedCube, listOtherGrantedSmartCubes, mayUseMiniProgramBridge, type ConnectPickOptions, type CubeMoveMetadata } from '../_lib/bluetooth';
+import { readLastCubeDeviceId, rememberCubeSelection, syncAccountMacs } from '@/lib/bluetooth/mac-account';
 import {
   classifyUnifiedBluetoothDevice,
   requestUnifiedBluetoothDevice,
@@ -2700,6 +2701,9 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
   const [bluetoothOpen, setBluetoothOpen] = useState(false);
   const bluetoothButtonRef = useRef<HTMLButtonElement>(null);
   const [bluetoothConnectAttempt, setBluetoothConnectAttempt] = useState<Promise<void> | null>(null);
+  const [bluetoothReconnect, setBluetoothReconnect] = useState<
+    { phase: 'connecting'; deviceId: string } | { phase: 'picker'; devices: readonly BluetoothDevice[] } | null
+  >(null);
   const bluetoothRequestIdRef = useRef(0);
   useLayoutEffect(() => () => { bluetoothRequestIdRef.current++; }, []);
   const bluetoothConnectingRef = useRef(false);
@@ -2717,6 +2721,13 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
   const bldHelperOpen = tool === 'bld-helper';
 
 
+  const bluetoothAccountId = authUser?.uid;
+  useEffect(() => {
+    if (supportsSmartCube && bluetoothAccountId && navigator.bluetooth && !mayUseMiniProgramBridge()) {
+      void syncAccountMacs();
+    }
+  }, [supportsSmartCube, bluetoothAccountId]);
+
   const connectFromBluetoothModal = useCallback(async (pick?: ConnectPickOptions) => {
     if (multiEnabledRef.current || bluetoothPanelCubeId !== FIRST_TRAINING_CUBE) {
       await trainingCubes.connectSlot(bluetoothPanelCubeId);
@@ -2725,9 +2736,13 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
     if (bluetoothConnectingRef.current) return;
     bluetoothConnectingRef.current = true;
     const requestId = ++bluetoothRequestIdRef.current;
+    const remember = rememberCubeSelection();
+    const onDeviceConnected = (id: string) => {
+      if (requestId === bluetoothRequestIdRef.current) remember(id);
+    };
     try {
       if (pick?.acceptAllDevices) {
-        await trainingCubes.first.connect(pick);
+        await trainingCubes.first.connect({ ...pick, onDeviceConnected });
         return;
       }
       // Preserve the native mini-program bridge and unsupported-browser advice.
@@ -2754,12 +2769,38 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
         setBluetoothTimerConnectAttempt(attempt);
         await attempt;
       } else {
-        await trainingCubes.first.connectDevice(device);
+        await trainingCubes.first.connectDevice(device, onDeviceConnected);
       }
     } finally {
-      bluetoothConnectingRef.current = false;
+      if (requestId === bluetoothRequestIdRef.current) bluetoothConnectingRef.current = false;
     }
   }, [bluetoothPanelCubeId, trainingCubes, bluetoothTimer]);
+
+  const connectCubeManually = useCallback(async (device?: BluetoothDevice) => {
+    if (bluetoothConnectingRef.current) return;
+    bluetoothConnectingRef.current = true;
+    const requestId = ++bluetoothRequestIdRef.current;
+    const remember = rememberCubeSelection();
+    const onDeviceConnected = (id: string) => {
+      if (requestId !== bluetoothRequestIdRef.current) return;
+      remember(id);
+      setBluetoothReconnect(null);
+    };
+    try {
+      if (device) await bluetoothCube.connectDevice(device, onDeviceConnected);
+      else await bluetoothCube.connect({ onDeviceConnected });
+    } finally {
+      if (requestId === bluetoothRequestIdRef.current) bluetoothConnectingRef.current = false;
+    }
+  }, [bluetoothCube]);
+
+  const showOtherCubes = useCallback((rememberedId: string) => {
+    const picker = { phase: 'picker' as const, devices: [] };
+    setBluetoothReconnect(picker);
+    void listOtherGrantedSmartCubes(rememberedId).then(devices => {
+      setBluetoothReconnect(current => current === picker ? { ...picker, devices } : current);
+    });
+  }, []);
 
   // Preserve the user gesture: requestDevice starts in this click handler.
   const connectExternalBluetooth = useCallback(() => {
@@ -2785,10 +2826,43 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
     if (!supportsSmartCube) return;
     setBluetoothOpen(true);
     if (multiEnabledRef.current || bluetoothCube.status.connected || bluetoothConnectingRef.current) return;
-    const attempt = multiEnabledRef.current ? trainingCubes.connectSlot(bluetoothPanelCubeId) : bluetoothCube.connect();
+    const lastDeviceId = readLastCubeDeviceId();
+    let attempt: Promise<void>;
+    if (lastDeviceId && canReconnectRememberedCube(lastDeviceId)) {
+      const requestId = ++bluetoothRequestIdRef.current;
+      bluetoothConnectingRef.current = true;
+      setBluetoothReconnect({ phase: 'connecting', deviceId: lastDeviceId });
+      attempt = bluetoothCube.preconnectGrantedDevice(lastDeviceId).catch(() => false)
+        .then(connected => {
+          if (requestId !== bluetoothRequestIdRef.current) return;
+          if (connected) setBluetoothReconnect(null);
+          else {
+            if (macResolverRef.current) resolveMac(null);
+            showOtherCubes(lastDeviceId);
+          }
+        })
+        .finally(() => {
+          if (requestId === bluetoothRequestIdRef.current) bluetoothConnectingRef.current = false;
+        });
+    } else {
+      attempt = connectCubeManually();
+    }
     setBluetoothConnectAttempt(attempt);
     void attempt.catch(() => undefined);
-  }, [supportsSmartCube, bluetoothCube, trainingCubes, bluetoothPanelCubeId]);
+  }, [supportsSmartCube, bluetoothCube, connectCubeManually, resolveMac, showOtherCubes]);
+
+  const skipRememberedReconnect = useCallback(() => {
+    if (bluetoothReconnect?.phase !== 'connecting') return;
+    bluetoothRequestIdRef.current++;
+    bluetoothCube.disconnect();
+    bluetoothConnectingRef.current = false;
+    if (macResolverRef.current) resolveMac(null);
+    showOtherCubes(bluetoothReconnect.deviceId);
+    // Start the browser chooser from this click, while it has user activation.
+    const attempt = connectCubeManually();
+    setBluetoothConnectAttempt(attempt);
+    void attempt.catch(() => undefined);
+  }, [bluetoothReconnect, bluetoothCube, connectCubeManually, resolveMac, showOtherCubes]);
 
   useEffect(() => {
     if (supportsSmartCube) return;
@@ -3418,6 +3492,15 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
   const displayedGuidance = multiEnabled ? preparingCube?.guidance : scrambleGuidance;
   const bluetoothDialog = supportsSmartCube && bluetoothOpen && (
     <BluetoothModal anchorRef={bluetoothButtonRef} isZh={isZh} cube={panelCube} connectAttempt={bluetoothConnectAttempt}
+      closeOnDisconnect={false}
+      onSkipRememberedReconnect={bluetoothReconnect?.phase === 'connecting' ? skipRememberedReconnect : undefined}
+      fallbackPicker={bluetoothReconnect?.phase === 'picker' ? {
+        devices: bluetoothReconnect.devices.map(device => ({
+          id: device.id,
+          name: device.name?.trim() || tr(TIMER_DEVICE_CENTER_LABELS['smart-cube']),
+        })),
+        connect: deviceId => connectCubeManually(bluetoothReconnect.devices.find(device => device.id === deviceId)),
+      } : undefined}
       connections={multiEligible && listedCubes.length ? listedCubes.map(({ id, cube, deviceName }) => {
         const status = cubeDisplayStatus(id, cube.status.connected);
         return { id, name: deviceName, battery: cube.status.battery, status, statusLabel: tr(trainingCubeStatusLabel(status)) };
@@ -3433,7 +3516,9 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
         if (macResolverRef.current) resolveMac(null);
         trainingCubes.cancelConnect();
         if (bluetoothConnectingRef.current) bluetoothCube.disconnect();
+        bluetoothConnectingRef.current = false;
         setBluetoothOpen(false);
+        setBluetoothReconnect(null);
         setBluetoothConnectAttempt(null);
       }}
       onConnect={connectFromBluetoothModal} />

@@ -345,6 +345,49 @@ describe('BluetoothModal direct connection attempt', () => {
     expect(onConnect).toHaveBeenCalledOnce();
   });
 
+  it('allows manual device selection after disconnecting in the remembered-device dialog', async () => {
+    const onClose = vi.fn();
+    const onConnect = vi.fn(async () => {});
+    const props = { isZh: false, closeOnDisconnect: false, onClose, onConnect };
+    const disconnect = vi.fn(() => root.render(createElement(BluetoothModal, { ...props, cube: disconnectedCube })));
+    const cube = { ...disconnectedCube, status: { ...disconnectedCube.status, connected: true }, disconnect };
+    await act(async () => root.render(createElement(BluetoothModal, { ...props, cube })));
+    const button = [...modal().querySelectorAll('button')].find(button => button.textContent?.includes('Disconnect'))!;
+    await act(async () => button.click());
+    expect(disconnect).toHaveBeenCalledOnce();
+    expect(onClose).not.toHaveBeenCalled();
+    await act(async () => modal().querySelector<HTMLButtonElement>('.bt-connect-btn')!.click());
+    expect(onConnect).toHaveBeenCalledOnce();
+  });
+
+  it('keeps the skip action available while reconnecting and offers the fallback device list', async () => {
+    const skip = vi.fn();
+    const connect = vi.fn(async (_deviceId?: string) => {});
+    const props = { isZh: false, cube: disconnectedCube, onClose: vi.fn(), onConnect: vi.fn(async () => {}) };
+    let finishReconnect!: () => void;
+    const connectAttempt = new Promise<void>(resolve => { finishReconnect = resolve; });
+    await act(async () => root.render(createElement(BluetoothModal, {
+      ...props, connectAttempt, onSkipRememberedReconnect: skip,
+    })));
+    expect(modal().textContent).toContain('Reconnecting to your last smart cube. Keep it awake.');
+    const skipButton = modal().querySelector<HTMLButtonElement>('.bt-reconnect-skip')!;
+    expect(skipButton.disabled).toBe(false);
+    await act(async () => skipButton.click());
+    expect(skip).toHaveBeenCalledOnce();
+    await act(async () => {
+      finishReconnect();
+      root.render(createElement(BluetoothModal, {
+        ...props, fallbackPicker: { devices: [{ id: 'other', name: 'GoCube' }], connect },
+      }));
+    });
+    const list = modal().querySelector<HTMLElement>('.timer-smart-cube-device__picker')!;
+    expect(list.textContent).toContain('Find new devices');
+    await act(async () => list.querySelector<HTMLButtonElement>('[aria-label="Connect GoCube"]')!.click());
+    expect(connect).toHaveBeenLastCalledWith('other');
+    await act(async () => list.querySelector<HTMLButtonElement>('.timer-smart-cube-device__scan')!.click());
+    expect(connect).toHaveBeenLastCalledWith();
+  });
+
   it('adds the next-cube action inside the connected panel and keeps the first cube on failure', async () => {
     const disconnect = vi.fn();
     const onConnectNext = vi.fn(async () => { throw new Error('The second cube could not connect'); });

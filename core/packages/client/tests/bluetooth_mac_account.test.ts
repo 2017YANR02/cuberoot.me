@@ -14,7 +14,9 @@ vi.mock('@/lib/admin-api', () => ({
   handleApi: async (r: Response) => { if (!r.ok) throw new Error('offline'); return r.json(); },
 }));
 
-import { readAccountMac, writeAccountMac, syncAccountMacs } from '@/lib/bluetooth/mac-account';
+import {
+  readAccountMac, readLastCubeDeviceId, rememberCubeSelection, writeAccountMac, syncAccountMacs,
+} from '@/lib/bluetooth/mac-account';
 
 const mac = '11:22:33:44:55:66';
 const response = (items = {}) => new Response(JSON.stringify({ items }), { status: 200 });
@@ -80,4 +82,42 @@ it('preserves edits made while an upload is in flight', async () => {
   await syncAccountMacs();
   expect(JSON.parse(fetcher.mock.calls.at(-1)![1].body)).toEqual({ items: { GAN: null } });
   expect(readAccountMac('GAN')).toBeNull();
+});
+
+it('remembers anonymous selections in the browser and isolates them from signed-in accounts', () => {
+  auth.uid = 0;
+  rememberCubeSelection()('guest-cube');
+  expect(readLastCubeDeviceId()).toBe('guest-cube');
+  expect(fetcher).not.toHaveBeenCalled();
+
+  auth.uid = 1;
+  expect(readLastCubeDeviceId()).toBeUndefined();
+  auth.uid = 0;
+  expect(readLastCubeDeviceId()).toBe('guest-cube');
+});
+
+it('retries a signed-in selection and prefers the browser selection over another browser’s ID', async () => {
+  fetcher.mockImplementation(async () => response());
+  rememberCubeSelection()('local-cube');
+  await syncAccountMacs();
+  expect(fetcher).toHaveBeenCalledTimes(1);
+
+  fetcher.mockResolvedValueOnce(Response.json({ items: {}, lastDeviceId: 'other-browser-cube' }))
+    .mockResolvedValueOnce(Response.json({ ok: true, lastDeviceId: 'local-cube' }));
+  await syncAccountMacs();
+  expect(readLastCubeDeviceId()).toBe('local-cube');
+  expect(JSON.parse(fetcher.mock.calls.at(-1)![1].body)).toEqual({ items: {}, lastDeviceId: 'local-cube' });
+
+  localStorage.clear();
+  fetcher.mockResolvedValueOnce(Response.json({ items: {}, lastDeviceId: 'local-cube' }));
+  await syncAccountMacs();
+  expect(readLastCubeDeviceId()).toBe('local-cube');
+});
+
+it('ignores a chooser result after the user switches accounts', () => {
+  const remember = rememberCubeSelection();
+  auth.uid = 2;
+  remember('previous-account-cube');
+  expect(readLastCubeDeviceId()).toBeUndefined();
+  expect(fetcher).not.toHaveBeenCalled();
 });

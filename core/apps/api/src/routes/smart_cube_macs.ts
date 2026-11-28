@@ -17,10 +17,10 @@ smartCubeMacRoutes.get('/smart-cube/macs', async c => {
   const user = await requireAuth(c);
   const id = (await publicUserIdsForOwnerKeys([user.wcaId])).get(user.wcaId);
   if (!id) return c.json({ error: 'Account not found' }, 404);
-  const rows = await query<{ items: Record<string, string> }>(
-    'SELECT items FROM smart_cube_macs WHERE user_id = ?', [id],
+  const rows = await query<{ items: Record<string, string>; last_device_id: string | null }>(
+    'SELECT items, last_device_id FROM smart_cube_macs WHERE user_id = ?', [id],
   );
-  return c.json({ items: rows[0]?.items ?? {} });
+  return c.json({ items: rows[0]?.items ?? {}, lastDeviceId: rows[0]?.last_device_id ?? null });
 });
 
 // Merge individual devices atomically; null removes an invalidated address.
@@ -30,6 +30,11 @@ smartCubeMacRoutes.patch('/smart-cube/macs', async c => {
   if (!id) return c.json({ error: 'Account not found' }, 404);
   const body = await c.req.json().catch(() => null);
   const raw = body?.items;
+  const lastDeviceId: unknown = body?.lastDeviceId;
+  if (lastDeviceId !== undefined && (typeof lastDeviceId !== 'string'
+    || !lastDeviceId || lastDeviceId.length > 256 || /[\x00-\x1f\x7f]/.test(lastDeviceId))) {
+    return c.json({ error: 'Invalid last device ID' }, 400);
+  }
   if (!raw || typeof raw !== 'object' || Array.isArray(raw) || Object.keys(raw).length > 100) {
     return c.json({ error: 'Invalid device map' }, 400);
   }
@@ -41,8 +46,10 @@ smartCubeMacRoutes.patch('/smart-cube/macs', async c => {
     }
     items[name] = value === null ? null : normalizeMac(value as string);
   }
-  await query(`INSERT INTO smart_cube_macs (user_id, items) VALUES (?, jsonb_strip_nulls(?::jsonb))
+  await query(`INSERT INTO smart_cube_macs (user_id, items, last_device_id) VALUES (?, jsonb_strip_nulls(?::jsonb), ?)
     ON CONFLICT (user_id) DO UPDATE
-    SET items = jsonb_strip_nulls(smart_cube_macs.items || ?::jsonb)`, [id, items, items]);
-  return c.json({ ok: true });
+    SET items = jsonb_strip_nulls(smart_cube_macs.items || ?::jsonb),
+        last_device_id = COALESCE(EXCLUDED.last_device_id, smart_cube_macs.last_device_id)`,
+  [id, items, lastDeviceId ?? null, items]);
+  return c.json({ ok: true, lastDeviceId });
 });
