@@ -5,13 +5,22 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { mobileEmbedInitMessage, mobileEmbedAccountManageResultMessage, mobileEmbedAuthClearMessage, mobileEmbedWebSessionMessage } from '@cuberoot/shared/mobile-embed';
 
 const mocks = vi.hoisted(() => ({
+  logoutListeners: new Set<() => void>(),
   post: vi.fn(), alert: vi.fn(), token: vi.fn(() => 'iframe-session'),
   applySession: vi.fn((_token: string, _user: unknown, _isCurrent?: () => boolean) => false), logout: vi.fn(), exchange: vi.fn(),
 }));
 vi.mock('next/navigation', () => ({ usePathname: () => '/account' }));
 vi.mock('@/lib/auth-store', () => ({
   getSessionToken: mocks.token, applySession: mocks.applySession,
-  getAuthUser: () => ({ uid: 42 }), authActions: { logout: mocks.logout }, subscribeAuthUser: () => () => undefined,
+  getAuthUser: () => ({ uid: 42 }),
+  authActions: { logout: () => {
+    mocks.logout();
+    for (const listener of mocks.logoutListeners) listener();
+  } },
+  subscribeExplicitAuthLogout: (listener: () => void) => {
+    mocks.logoutListeners.add(listener);
+    return () => { mocks.logoutListeners.delete(listener); };
+  },
   useAuthStore: { getState: () => ({ user: { uid: 42 }, logout: mocks.logout }), subscribe: () => () => undefined },
 }));
 vi.mock('@/lib/web-session-handoff', () => ({ exchangeWebSessionTicket: mocks.exchange }));
@@ -52,10 +61,39 @@ describe('session ticket lifecycle under Apple bridge reuse', () => {
     send(mobileEmbedWebSessionMessage(ticketA, 'request-A'));
     send(mobileEmbedAuthClearMessage());
     expect(mocks.logout).toHaveBeenCalledOnce();
+    expect(mocks.post).not.toHaveBeenCalledWith(mobileEmbedAuthClearMessage(), origin);
     mocks.post.mockClear();
     await act(async () => pending.resolve(sessionA));
     expect(mocks.applySession).not.toHaveBeenCalled();
     expect(mocks.post).not.toHaveBeenCalled();
+  });
+
+  it('reports a failed handoff without signing out the App', async () => {
+    mocks.exchange.mockRejectedValueOnce(new Error('Session unavailable'));
+    send(mobileEmbedInitMessage('account'));
+    mocks.post.mockClear();
+    await act(async () => send(mobileEmbedWebSessionMessage(ticketA, 'request-A')));
+    expect(mocks.post).toHaveBeenCalledExactlyOnceWith({
+      type: 'cuberoot:mobile:web-session-result', surface: 'account', requestId: 'request-A', ok: false,
+    }, origin);
+  });
+
+  it('acknowledges a successful handoff', async () => {
+    mocks.exchange.mockResolvedValueOnce(sessionA);
+    mocks.applySession.mockReturnValueOnce(true);
+    send(mobileEmbedInitMessage('account'));
+    mocks.post.mockClear();
+    await act(async () => send(mobileEmbedWebSessionMessage(ticketA, 'request-A')));
+    expect(mocks.post).toHaveBeenCalledExactlyOnceWith({
+      type: 'cuberoot:mobile:web-session-result', surface: 'account', requestId: 'request-A', ok: true,
+    }, origin);
+  });
+
+  it('notifies the App when the account UI explicitly signs out', () => {
+    send(mobileEmbedInitMessage('account'));
+    mocks.post.mockClear();
+    for (const listener of mocks.logoutListeners) listener();
+    expect(mocks.post).toHaveBeenCalledExactlyOnceWith(mobileEmbedAuthClearMessage(), origin);
   });
 
   it('newer account ticket wins even if an older exchange finishes last', async () => {

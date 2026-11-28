@@ -362,11 +362,23 @@ export function isAdmin(): boolean {
 const authUserSnapshot = () => useAuthStore.getState().user;
 const authUserServerSnapshot = () => null;
 
+const logoutListeners = new Set<() => void>();
+
+/** Only commands from account UI can sign an installed App out. */
+export function subscribeExplicitAuthLogout(listener: () => void): () => void {
+  logoutListeners.add(listener);
+  return () => { logoutListeners.delete(listener); };
+}
+
 /** Commands never read browser state during render; resolve the current action when invoked. */
 export const authActions: AuthActions = {
   login: () => useAuthStore.getState().login(),
   loginWithWca: returnTo => useAuthStore.getState().loginWithWca(returnTo),
-  logout: () => useAuthStore.getState().logout(),
+  logout: () => {
+    const preview = getRolePreview();
+    useAuthStore.getState().logout();
+    if (!preview && typeof window !== 'undefined') for (const listener of logoutListeners) listener();
+  },
   refresh: () => useAuthStore.getState().refresh(),
 };
 

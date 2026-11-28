@@ -22,7 +22,7 @@ import {
   mobileEmbedWebSessionResultMessage,
   type MobileEmbedInitMessage,
 } from '@cuberoot/shared/mobile-embed';
-import { applySession, getSessionToken, authActions, getAuthUser, subscribeAuthUser } from '@/lib/auth-store';
+import { applySession, getSessionToken, authActions, getAuthUser, subscribeExplicitAuthLogout } from '@/lib/auth-store';
 import { blurMobileEmbedAuthEntry, isMobileEmbedAppleLink, mobileEmbedAccountAuthRequest, mobileEmbedSupportsApple } from '@/lib/mobile-embed-auth';
 import { exchangeWebSessionTicket } from '@/lib/web-session-handoff';
 import { tr } from '@/i18n/tr';
@@ -81,7 +81,7 @@ export default function MobileEmbedBridge() {
       webSessionGeneration++;
       pendingWebTicket = null;
     };
-    let hadWebsiteSession = Boolean(getSessionToken());
+    let clearingFromHost = false;
     let parentOrigin: string | null = null;
     let capabilities: MobileEmbedInitMessage | null = null;
     let hostAppearance: AppearancePreferences | null = null;
@@ -355,7 +355,9 @@ export default function MobileEmbedBridge() {
       const clear = decodeMobileEmbedAuthClear(event.data);
       if (surface === 'account' && clear) {
         invalidateWebSession();
-        authActions.logout();
+        clearingFromHost = true;
+        try { authActions.logout(); }
+        finally { clearingFromHost = false; }
         return;
       }
 
@@ -373,7 +375,6 @@ export default function MobileEmbedBridge() {
         if (!current()) return;
         const ok = persisted && current() && Boolean(getSessionToken());
         postToParent(mobileEmbedWebSessionResultMessage(ok, webSession.requestId));
-        if (ok) window.location.reload();
       }).catch(() => {
         if (current()) postToParent(mobileEmbedWebSessionResultMessage(false, webSession.requestId));
       }).finally(() => {
@@ -381,13 +382,10 @@ export default function MobileEmbedBridge() {
       });
     };
     const unsubscribeAuth = surface === 'account'
-      ? subscribeAuthUser((user) => {
-        const hasWebsiteSession = Boolean(user && getSessionToken());
-        if (hadWebsiteSession && !hasWebsiteSession) {
-          invalidateWebSession();
-          postToParent(mobileEmbedAuthClearMessage());
-        }
-        hadWebsiteSession = hasWebsiteSession;
+      ? subscribeExplicitAuthLogout(() => {
+        if (clearingFromHost) return;
+        invalidateWebSession();
+        postToParent(mobileEmbedAuthClearMessage());
       })
       : () => undefined;
 

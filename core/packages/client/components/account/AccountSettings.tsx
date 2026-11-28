@@ -65,6 +65,7 @@ import { prepareImageUpload, uploadImageBlob } from '@/lib/image-upload';
 import { toLocalIsoDate } from '@/lib/iso-date';
 import { applySession, hasAdminAccess, safeNext, takeWcaLinkPrompt, useAuthUser, authActions, getAuthUser } from '@/lib/auth-store';
 import { isMiniProgramCommerceRestricted, notifyMiniProgramLogout } from '@/lib/miniprogram-bridge';
+import { useInstalledShellSurface } from '@/lib/installed-shell-navigation';
 import { tr, useLang } from '@/i18n/tr';
 import PetAccountCard from '@/components/PetAccountCard';
 import AccountCardGrid from './AccountCardGrid';
@@ -765,7 +766,11 @@ export default function AccountSettings({ embedded = false }: { embedded?: boole
   // 'wait' = 还没判定(SSR / 正在跳走)—— auth-store 从 localStorage 同步初始化,服务端恒为
   // null,所以判定只能在挂载后做,渲染前固定空壳避免 hydration 错配。
   // 'onboard' = 刚注册完的那一步「你有 WCA ID 吗」,挡在回跳 next 之前。
-  const [mode, setMode] = useState<'wait' | 'login' | 'onboard' | 'me'>('wait');
+  const [standaloneMode, setMode] = useState<'wait' | 'login' | 'onboard' | 'me'>('wait');
+  const accountFrame = useInstalledShellSurface() === 'account';
+  // The host may finish its ticket exchange after mount. Render the supplied
+  // identity in this document so iOS need not restore a cookie on reload.
+  const mode = accountFrame && standaloneMode !== 'wait' ? (user ? 'me' : 'login') : standaloneMode;
   const [mobileAuth, setMobileAuth] = useState(false);
   const [mobileAuthProvider, setMobileAuthProvider] = useState<MobileAuthProvider | null>(null);
   const [commerceRestricted, setCommerceRestricted] = useState(true);

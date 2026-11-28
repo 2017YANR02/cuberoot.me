@@ -11,7 +11,7 @@ import { DEFAULT_APPEARANCE_PREFERENCES } from '@cuberoot/shared/appearance';
 const state = vi.hoisted(() => ({ path: '/en/account', back: null as string | null, post: vi.fn() }));
 vi.mock('next/navigation', () => ({ usePathname: () => state.path }));
 vi.mock('@/lib/auth-store', () => ({ getSessionToken: () => null, getAuthUser: () => null,
-  applySession: vi.fn(), authActions: { logout: vi.fn() }, subscribeAuthUser: () => () => undefined }));
+  applySession: vi.fn(), authActions: { logout: vi.fn() }, subscribeExplicitAuthLogout: () => () => undefined }));
 vi.mock('@/lib/web-session-handoff', () => ({ exchangeWebSessionTicket: vi.fn() }));
 vi.mock('@/i18n/tr', () => ({ tr: ({ en }: { en: string }) => en }));
 vi.mock('@/lib/entry-navigation', () => ({ readEntryNavigationBack: () => state.back, subscribeEntryNavigation: () => () => undefined }));

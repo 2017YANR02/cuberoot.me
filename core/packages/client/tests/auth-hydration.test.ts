@@ -4,7 +4,7 @@ import { createRoot, hydrateRoot, type Root } from 'react-dom/client';
 import { renderToString } from 'react-dom/server';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
-  authActions, getAuthUser, subscribeAuthUser, useAuthStore, useAuthUser, useIsAdmin, type WcaUser,
+  authActions, getAuthUser, subscribeAuthUser, subscribeExplicitAuthLogout, useAuthStore, useAuthUser, useIsAdmin, type WcaUser,
 } from '@/lib/auth-store';
 
 const member: WcaUser = {
@@ -75,6 +75,24 @@ describe('auth rendering across SSR, hydration and account changes', () => {
     function LaterControls() { firstRender.push(useAuthUser()); return null; }
     await act(async () => { root = createRoot(host); root.render(createElement(LaterControls)); });
     expect(firstRender[0]).toBe(admin);
+  });
+
+  it('only emits App sign-out for an explicit logout command', () => {
+    const listener = vi.fn();
+    const stop = subscribeExplicitAuthLogout(listener);
+    const logout = vi.fn(() => useAuthStore.setState({ user: null }));
+    try {
+      useAuthStore.setState({ user: member, logout });
+      useAuthStore.setState({ user: null });
+      useAuthStore.getState().logout();
+      expect(listener).not.toHaveBeenCalled();
+      useAuthStore.setState({ user: member });
+      authActions.logout();
+      expect(listener).toHaveBeenCalledOnce();
+      expect(getAuthUser()).toBeNull();
+    } finally {
+      stop();
+    }
   });
 
   it('keeps commands and async identity checks current and supports unsubscribe', () => {
