@@ -5,6 +5,7 @@ import { notFound } from 'next/navigation';
 import AppLink from '@/components/AppLink';
 import RegistrationConsent from '@/components/account/RegistrationConsent';
 import { useT } from '@/hooks/useT';
+import '@cuberoot/app-ui/account-forms.css';
 import '@/components/auth-panel.css';
 import '@/components/account/account.css';
 
