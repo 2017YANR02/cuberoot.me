@@ -606,17 +606,15 @@ body:is(:not([data-site-scenery]), [data-site-scenery=transparent]) .landing-pag
 /* The nine tiles follow the CubeRoot mark. Scroll controls the fill directly;
    hover can reveal more of the same color without interrupting that progress. */
 .landing-page .landing-home-hero > .hero-grids:has(> .primary-hero-grid > :nth-child(6)):has(> .wca-hero-grid > :nth-child(3)) {
-    --home-logo-red: #ff1212;
-    --home-logo-blue: #1481ef;
+    --home-logo-red: #a26361;
+    --home-logo-blue: #587998;
 
     .sortable-card {
         --home-logo-tile: var(--home-logo-blue);
-        --home-logo-light-switch: 82%;
     }
     .primary-hero-grid > :is(:nth-child(-n+3), :nth-child(5)),
     .wca-hero-grid > :nth-child(2) {
         --home-logo-tile: var(--home-logo-red);
-        --home-logo-light-switch: 73%;
     }
 
     .primary-hero-grid > :nth-child(-n+3) { --home-logo-scroll: var(--home-logo-row-1, 0%); }
@@ -632,37 +630,25 @@ body:is(:not([data-site-scenery]), [data-site-scenery=transparent]) .landing-pag
     .landing-card.af-glass-surface {
         --home-logo-hover: 0%;
         --home-logo-progress: max(var(--home-logo-scroll, 0%), var(--home-logo-hover));
-        --home-logo-color: color-mix(in srgb, var(--home-logo-tile) 76%, black);
-        --home-logo-base-progress: var(--home-logo-progress);
-        --af-glass-fill: color-mix(in srgb, var(--af-glass-card, Canvas), var(--home-logo-color) var(--home-logo-base-progress));
-        --af-glass-tint: color-mix(in srgb, var(--landing-card-tint), var(--home-logo-color) var(--home-logo-base-progress));
-        /* Light labels keep dark ink until the surface can support white. */
-        --home-logo-light-ink: clamp(0%, (var(--home-logo-progress) - var(--home-logo-light-switch)) * 100, 100%);
+        --home-logo-color: color-mix(in srgb, var(--home-logo-tile) 15%, var(--card));
+        --af-glass-fill: color-mix(in srgb, var(--af-glass-card, Canvas), var(--home-logo-color) var(--home-logo-progress));
+        --af-glass-tint: color-mix(in srgb, var(--landing-card-tint), var(--home-logo-color) var(--home-logo-progress));
+        color: var(--foreground);
     }
     .landing-card.af-glass-surface::before { transition: none; }
-    .landing-card .landing-card-icon { --home-logo-base-ink: var(--accent); }
-    .landing-card.af-glass-surface,
     .landing-card .landing-card-icon {
-        color: color-mix(in srgb, var(--home-logo-base-ink, var(--text)), white var(--home-logo-progress));
-        @supports (color: light-dark(black, white)) {
-            color: light-dark(
-                color-mix(in srgb, var(--home-logo-base-ink, var(--text)), white var(--home-logo-light-ink)),
-                color-mix(in srgb, var(--home-logo-base-ink, var(--text)), white var(--home-logo-progress))
-            );
-        }
+        color: color-mix(in srgb, var(--home-logo-tile) 58%, var(--foreground));
     }
 
     &:has(.landing-card:focus-visible) .landing-card.af-glass-surface { --home-logo-hover: 100%; }
-    @media (hover: hover) and (pointer: fine) {
+    @media (hover: hover) and (pointer: fine) and (prefers-reduced-motion: reduce) {
         &:hover .landing-card.af-glass-surface { --home-logo-hover: 100%; }
     }
     @media (prefers-reduced-motion: no-preference) {
-        &[data-turning] .landing-card.af-glass-surface {
-            --home-logo-base-progress: 0%;
-            --home-logo-hover: 100%;
-        }
         &[data-turning] .landing-card:hover { transform: none; }
-        &[data-turning] .home-turn-mask {
+        .home-turn-mask {
+            opacity: 0;
+            transition: opacity 360ms cubic-bezier(.22, .75, .24, 1) var(--home-logo-hover-delay, 0ms);
             display: block;
             position: absolute;
             inset: 0;
@@ -670,6 +656,10 @@ body:is(:not([data-site-scenery]), [data-site-scenery=transparent]) .landing-pag
             overflow: clip;
             border-radius: inherit;
             pointer-events: none;
+        }
+        &[data-turning] .home-turn-mask {
+            opacity: 1;
+            transition: none;
         }
         .home-turn-mask > span {
             display: block;

@@ -198,6 +198,16 @@ function turnShortcutLayers(event: PointerEvent<HTMLDivElement>) {
   });
 }
 
+function fadeShortcutLayers(event: PointerEvent<HTMLDivElement>) {
+  const grid = event.currentTarget;
+  if (!grid.hasAttribute('data-turning')) return;
+  // Fade unfinished flips from their visible angle as well.
+  grid.querySelectorAll('.home-turn-mask > span').forEach(layer => {
+    layer.getAnimations().forEach(animation => animation.pause());
+  });
+  delete grid.dataset.turning;
+}
+
 function useShortcutScrollColor(enabled: boolean) {
   const gridRef = useRef<HTMLDivElement>(null);
 
@@ -744,7 +754,7 @@ export default function LandingPage({ initialLayout = null }: { initialLayout?: 
         <TodayRecon lang={lang} pinnedRecons={pinnedRecons} isAdmin={isAdmin} canEditPins={canEditCards} savingPin={savingPin}
           pinError={pinError} onPin={onPin} emptyPin={<RecentScrambles lang={lang} />} />
         <div className="hero-grids" ref={shortcutGridRef} onPointerOver={turnShortcutLayers}
-          onPointerLeave={event => { delete event.currentTarget.dataset.turning; }}>
+          onPointerLeave={fadeShortcutLayers}>
           {renderCardGrid('main', PRIMARY_CARDS, 'primary-hero-grid')}
           {renderCardGrid('wca', WCA_CARDS, 'wca-hero-grid')}
         </div>
