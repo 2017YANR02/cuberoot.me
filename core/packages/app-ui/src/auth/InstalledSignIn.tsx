@@ -64,10 +64,11 @@ export function InstalledSignIn({ auth, language, onClose, openPolicy, recoverin
       externalChoice.current = false;
       candidate.current = null;
       setChoice(null);
+      if (recovering) onRecoveryChange(false);
       setError(({ zh: '登录验证已过期，请重新获取验证码。', en: 'Verification expired. Request a new code.' })[language]);
     }, Math.max(0, choiceExpiresAt - Date.now()));
     return () => window.clearTimeout(timer);
-  }, [choiceTicket, choiceExpiresAt, language, saving]);
+  }, [choiceTicket, choiceExpiresAt, language, saving, recovering, onRecoveryChange]);
 
   useEffect(() => {
     if (choice?.stage !== 'authenticate' || !auth.session || !externalChoice.current) return;
@@ -156,11 +157,13 @@ export function InstalledSignIn({ auth, language, onClose, openPolicy, recoverin
     if (choice?.stage === 'authenticate' && session) {
       externalChoice.current = false;
       setChoice({ ...choice, stage: 'confirm' });
+      if (recovering) onRecoveryChange(false);
       return;
     }
     void saveSession();
   };
   const clearChoice = () => {
+    if (recovering) onRecoveryChange(false);
     externalChoice.current = false;
     setChoice(null);
     setError('');
@@ -184,12 +187,12 @@ export function InstalledSignIn({ auth, language, onClose, openPolicy, recoverin
           {providers.social.map((provider) => {
             const Glyph = providerGlyphs[provider];
             return (
-            <button key={provider} data-mobile-auth-provider={provider} className="auth-sso" type="button"
-              disabled={auth.busy} onClick={() => signInWithProvider(provider)}>
-              <Glyph size={16} />
-              {provider === 'apple' ? t('通过 Apple 登录', 'Sign in with Apple')
-                : t(`用 ${PROVIDER_NAMES[provider][0]} 登录`, `Continue with ${PROVIDER_NAMES[provider][1]}`)}
-            </button>
+              <button key={provider} data-mobile-auth-provider={provider} className="auth-sso" type="button"
+                disabled={auth.busy} onClick={() => signInWithProvider(provider)}>
+                <Glyph size={16} />
+                {provider === 'apple' ? t('通过 Apple 登录', 'Sign in with Apple')
+                  : t(`用 ${PROVIDER_NAMES[provider][0]} 登录`, `Continue with ${PROVIDER_NAMES[provider][1]}`)}
+              </button>
             );
           })}
         </div>

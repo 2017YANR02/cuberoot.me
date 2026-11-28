@@ -328,6 +328,7 @@ function EmailCodeFlow({ email, setEmail, onDone, toPassword, reset, alternative
         <button className="auth-textbtn" disabled={busy} onClick={() => { setStep('input'); setCode(''); setError(null); }}>
           {t('换邮箱 / 重新发送', 'Change email / resend')}
         </button>
+        {!reset && alternatives}
       </div>
     );
   }
@@ -529,6 +530,15 @@ export function SetPasswordForm({ needCurrent, label, onDone }: {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [done, setDone] = useState(false);
+  const mounted = useRef(false);
+  const completionTimer = useRef<number | undefined>(undefined);
+  useEffect(() => {
+    mounted.current = true;
+    return () => {
+      mounted.current = false;
+      window.clearTimeout(completionTimer.current);
+    };
+  }, []);
 
   const submit = useCallback(async () => {
     setError(null);
@@ -537,9 +547,11 @@ export function SetPasswordForm({ needCurrent, label, onDone }: {
     setBusy(true);
     try {
       await port.apiSetPassword(next, needCurrent ? current : undefined);
+      if (!mounted.current) return;
       setDone(true);
-      window.setTimeout(onDone, 800);
+      completionTimer.current = window.setTimeout(onDone, 800);
     } catch (e) {
+      if (!mounted.current) return;
       setError(authErrorText(e instanceof Error ? e.message : String(e), t));
       setBusy(false);
     }
