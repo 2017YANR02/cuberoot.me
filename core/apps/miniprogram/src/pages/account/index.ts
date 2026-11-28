@@ -40,6 +40,8 @@ function createAccountCopy() {
     spaceLabel: tr({ en: 'My space', zh: '我的空间' }),
     securityLabel: tr({ en: 'Account & security', zh: '账号与安全' }),
     settingsLabel: tr({ en: 'Settings', zh: '设置' }),
+    aboutLabel: tr({ en: 'About', zh: '关于' }),
+    backToSettingsLabel: tr({ en: 'Back to Settings', zh: '返回设置' }),
     appearanceLabel: tr({ en: 'Appearance and language', zh: '外观与语言' }),
     languageLabel: tr({ en: 'Language', zh: '语言' }),
     backLabel: tr({ en: 'Back to Me', zh: '返回「我的」' }),
@@ -184,7 +186,7 @@ interface ContactCopyEvent {
   };
 }
 
-type AccountSection = 'home' | 'space' | 'security' | 'settings';
+type AccountSection = 'home' | 'space' | 'security' | 'settings' | 'about';
 
 interface AccountPageData {
   appearanceStyle: string;
@@ -976,7 +978,7 @@ Page<AccountPageData, WechatMiniprogram.Page.CustomOption>({
 
   selectAccountSection(event: WechatMiniprogram.TouchEvent) {
     const section: unknown = event.currentTarget.dataset.section;
-    if (section !== 'home' && section !== 'space' && section !== 'security' && section !== 'settings') return;
+    if (section !== 'home' && section !== 'space' && section !== 'security' && section !== 'settings' && section !== 'about') return;
     if (this.data.isTimelineEntry || this.data.nameBusy || this.data.identityMutationBusy) return;
     if (this.data.loginRequired && (section === 'space' || section === 'security')) return;
     this.setData({ accountSection: section, accountError: '', editingName: false, nameDraft: '' });
@@ -1022,7 +1024,7 @@ Page<AccountPageData, WechatMiniprogram.Page.CustomOption>({
   },
 
   openContactWebsite() {
-    if (this.data.isTimelineEntry || (this.data.loginRequired && this.data.accountSection !== 'settings')) return;
+    if (this.data.isTimelineEntry || (this.data.loginRequired && this.data.accountSection !== 'about')) return;
     this.setData({ accountError: '' });
     openWebsitePageOnce(this, 'contact', {
       failureMessage: ACCOUNT_COPY.contactPageFailure,
@@ -1032,7 +1034,7 @@ Page<AccountPageData, WechatMiniprogram.Page.CustomOption>({
 
   previewWechatQr() {
     if (this.data.contact.platformFeedback) return;
-    if (this.data.isTimelineEntry || (this.data.loginRequired && this.data.accountSection !== 'settings')) return;
+    if (this.data.isTimelineEntry || (this.data.loginRequired && this.data.accountSection !== 'about')) return;
     const path = CONTACT_VIEW.qrPath;
     try {
       const api = miniProgramApi();

@@ -150,6 +150,10 @@ describe('mini program account page', () => {
       page.changeSettingsLanguage({ detail: { value: '1' } });
       expect(storage.get('cuberoot.locale.v1')).toBe('en');
     }
+    select('about');
+    expect(page.data.accountSection).toBe('about');
+    select('settings');
+    expect(page.data.accountSection).toBe('settings');
     select('home');
     storage.set('cuberoot:session', { token: 's'.repeat(20), user: { uid: 42, name: 'Member', wcaId: null, avatar: '' } });
     page.onShow();

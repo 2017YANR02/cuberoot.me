@@ -28,7 +28,7 @@
   <text class="account-entry-copy" aria-role="status">{{copy.entryCopy}}</text>
 </view>
 
-<view wx:elif="{{loginRequired && accountSection !== 'settings'}}" class="page account-login-page">
+<view wx:elif="{{loginRequired && accountSection !== 'settings' && accountSection !== 'about'}}" class="page account-login-page">
   <text class="page-title">{{wechatPhoneRequired ? copy.phoneTitle : accountLinkCodeMode ? copy.linkExistingAccountLabel : phoneAccountFound ? copy.phoneFoundTitle : accountLinkRequired ? copy.accountChoiceTitle : copy.pageTitle}}</text>
   <text class="page-intro">{{wechatPhoneRequired ? copy.phoneHint : accountLinkCodeMode ? copy.linkCodeHint : phoneAccountFound ? copy.phoneFoundHint : accountLinkRequired ? copy.accountChoiceNote : loginIntro}}</text>
   <view wx:if="{{requiresAgreement}}" class="account-policy">
@@ -143,10 +143,10 @@
     </button>
   </block>
   <view wx:else class="account-detail-header">
-    <button class="account-back" hover-class="press-feedback" aria-label="{{copy.backLabel}}" data-section="home" bindtap="selectAccountSection">
+    <button class="account-back" hover-class="press-feedback" aria-label="{{accountSection === 'about' ? copy.backToSettingsLabel : copy.backLabel}}" data-section="{{accountSection === 'about' ? 'settings' : 'home'}}" bindtap="selectAccountSection">
       <template is="account-icon" data="{{icon: 'chevron-left', scheme: appearanceScheme}}" />
     </button>
-    <text class="page-title">{{accountSection === 'space' ? copy.spaceLabel : accountSection === 'security' ? copy.securityLabel : copy.settingsLabel}}</text>
+    <text class="page-title">{{accountSection === 'space' ? copy.spaceLabel : accountSection === 'security' ? copy.securityLabel : accountSection === 'about' ? copy.aboutLabel : copy.settingsLabel}}</text>
   </view>
   <block wx:if="{{accountSection === 'space'}}">
     <template is="account-profile" data="{{avatarUrl: avatarUrl, profileInitial: profileInitial, displayName: displayName, uidText: uidText, wcaId: wcaId}}" />
@@ -191,14 +191,26 @@
     aria-atomic="true"
   >{{accountError}}</text>
   <block wx:if="{{accountSection === 'settings'}}">
-    <button wx:if="{{hasWebsiteSettings}}" class="text-button account-security-row" hover-class="press-feedback" bindtap="openAppearanceSettings">{{copy.appearanceLabel}}</button>
+    <button wx:if="{{hasWebsiteSettings}}" class="account-settings-row" hover-class="press-feedback" bindtap="openAppearanceSettings">
+      <text>{{copy.appearanceLabel}}</text>
+      <template is="account-icon" data="{{icon: 'chevron-right', scheme: appearanceScheme}}" />
+    </button>
     <picker wx:else range="{{['简体中文', 'English']}}" value="{{languageIndex}}" bindchange="changeSettingsLanguage" aria-label="{{copy.languageLabel}}">
       <view class="account-language">
         <text>{{copy.languageLabel}}</text>
         <text>{{languageIndex === 1 ? 'English' : '简体中文'}}</text>
       </view>
     </picker>
-    <button class="text-button account-security-row" hover-class="press-feedback" bindtap="openPolicy">{{copy.privacyLabel}}</button>
+    <button class="account-settings-row" hover-class="press-feedback" bindtap="openPolicy">
+      <text>{{copy.privacyLabel}}</text>
+      <template is="account-icon" data="{{icon: 'chevron-right', scheme: appearanceScheme}}" />
+    </button>
+    <button class="account-settings-row" hover-class="press-feedback" data-section="about" bindtap="selectAccountSection">
+      <text>{{copy.aboutLabel}}</text>
+      <template is="account-icon" data="{{icon: 'chevron-right', scheme: appearanceScheme}}" />
+    </button>
+  </block>
+  <block wx:if="{{accountSection === 'about'}}">
     <view class="account-release">
       <view class="account-release-version">
         <text class="account-release-label">{{release.versionLabel}}</text>
