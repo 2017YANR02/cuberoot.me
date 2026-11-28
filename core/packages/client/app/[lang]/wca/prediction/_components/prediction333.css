@@ -1,3 +1,4 @@
+@reference "../../../../../components/glass-utilities.css";
 /* 3x3 深度页特定样式 — 长文章 + 大量 table + reconstruction grid + cuber card */
 
 .pred-333 .pred-article { max-width: 1020px; }
@@ -378,11 +379,7 @@
   body[data-site-scenery] .pred-cuber-card,
   body[data-site-scenery] .pred-forecast-col,
   body[data-site-scenery] .pred-333-pager-link {
-    background: var(--glass-surface-bg);
-    border-color: var(--glass-border);
-    box-shadow: var(--glass-shadow);
-    -webkit-backdrop-filter: var(--glass-filter);
-    backdrop-filter: var(--glass-filter);
+    @apply site-glass-panel;
   }
 
   body[data-site-scenery] .pred-333-pager-link:hover {

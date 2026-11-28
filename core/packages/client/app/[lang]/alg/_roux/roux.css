@@ -1,3 +1,4 @@
+@reference "../../../../components/glass-utilities.css";
 /* Roux trainer — SHARED styles only.
  * Shell layout, top bar, mode selector, modal, fav sidebar, and the selector
  * primitives (SingleSelect / MultiSelect / Slider). Each trainer VIEW gets its
@@ -357,11 +358,7 @@
 /* Site scenery: preserve the original surface when scenery is disabled. */
 @media screen {
   body[data-site-scenery] .roux-modal {
-    background: var(--glass-surface-bg);
-    border-color: var(--glass-border);
-    box-shadow: var(--glass-shadow);
-    -webkit-backdrop-filter: var(--glass-filter);
-    backdrop-filter: var(--glass-filter);
+    @apply site-glass-dialog;
   }
   body[data-site-scenery] .roux-modal {
     background: var(--glass-popover-bg);

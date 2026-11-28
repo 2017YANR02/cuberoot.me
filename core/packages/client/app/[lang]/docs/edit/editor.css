@@ -1,3 +1,4 @@
+@reference "../../../../components/glass-utilities.css";
 .doc-workspace { min-height: 100vh; overflow-x: clip; background: var(--muted); padding-bottom: 64px; }
 .doc-topbar {
   position: sticky; top: 0; z-index: 40; display: flex; align-items: center; gap: 10px; min-height: 58px;
@@ -203,13 +204,11 @@
     background: transparent;
   }
 
-  body[data-site-scenery] .doc-menu-panel,
+  body[data-site-scenery] .doc-menu-panel {
+    @apply site-glass-menu;
+  }
   body[data-site-scenery] .doc-toolbar {
-    background: var(--glass-surface-bg);
-    border-color: var(--glass-border);
-    box-shadow: var(--glass-shadow);
-    -webkit-backdrop-filter: var(--glass-filter);
-    backdrop-filter: var(--glass-filter);
+    @apply site-glass-panel;
   }
 
   body[data-site-scenery] .doc-menu-panel {

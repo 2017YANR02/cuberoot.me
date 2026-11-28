@@ -1,3 +1,4 @@
+@reference "../../../../components/glass-utilities.css";
 /* 3BLD trainer — shared styles for all /alg/3bld/* pages.
    Dual-theme: follows ThemeToggle (no longer dark-locked).
    All classes prefixed 'bld-'. Theme tokens only; no hard-coded greys.
@@ -1874,14 +1875,12 @@
 
 /* Site scenery: preserve the original surface when scenery is disabled. */
 @media screen {
-  body[data-site-scenery] .bld-modal,
+  body[data-site-scenery] .bld-modal {
+    @apply site-glass-dialog;
+  }
   body[data-site-scenery] .bld-comm-card,
   body[data-site-scenery] .bld-hub-card {
-    background: var(--glass-surface-bg);
-    border-color: var(--glass-border);
-    box-shadow: var(--glass-shadow);
-    -webkit-backdrop-filter: var(--glass-filter);
-    backdrop-filter: var(--glass-filter);
+    @apply site-glass-panel;
   }
   body[data-site-scenery] .bld-modal {
     background: var(--glass-popover-bg);

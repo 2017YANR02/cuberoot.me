@@ -1,3 +1,4 @@
+@reference "../../../../../components/glass-utilities.css";
 /* /dev/algorithms/gan-ble — BLE protocol + AES teardown. All colors via tokens. */
 
 .ganble-page {
@@ -402,10 +403,6 @@
   }
 
   body[data-site-scenery] .ganble-puzzle-card {
-    background: var(--glass-surface-bg);
-    border-color: var(--glass-border);
-    box-shadow: var(--glass-shadow);
-    -webkit-backdrop-filter: var(--glass-filter);
-    backdrop-filter: var(--glass-filter);
+    @apply site-glass-panel;
   }
 }

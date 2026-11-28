@@ -1,0 +1,25 @@
+/* Shared paint for legacy selectors. @reference keeps each adapter route-scoped. */
+@utility site-glass-panel {
+  background: var(--glass-surface-bg);
+  border-color: var(--glass-border);
+  box-shadow: var(--glass-shadow);
+  -webkit-backdrop-filter: var(--glass-filter);
+  backdrop-filter: var(--glass-filter);
+}
+
+@utility site-glass-menu {
+  @apply site-glass-panel;
+  background: var(--glass-menu-bg);
+}
+
+@utility site-glass-dialog {
+  @apply site-glass-panel;
+  background: var(--glass-dialog-bg);
+}
+
+@utility site-glass-heading {
+  @apply site-glass-panel;
+  background: var(--glass-popover-bg);
+  -webkit-backdrop-filter: var(--af-glass-frost);
+  backdrop-filter: var(--af-glass-frost);
+}

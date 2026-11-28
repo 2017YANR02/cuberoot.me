@@ -1,3 +1,4 @@
+@reference "../../../../components/glass-utilities.css";
 /* /math/unit-distance — visual companion to OpenAI 2026 disproof of
  * Erdős's planar unit-distance conjecture. Style borrows the dg-* token
  * scaffolding from /math/demigod, but uses a distinct purple accent.
@@ -981,7 +982,9 @@
     background: transparent;
   }
 
-  body[data-site-scenery] .ud-header,
+  body[data-site-scenery] .ud-header {
+    @apply site-glass-heading;
+  }
   body[data-site-scenery] .ud-num-card,
   body[data-site-scenery] .ud-compare-card,
   body[data-site-scenery] .ud-dual-card,
@@ -989,10 +992,6 @@
   body[data-site-scenery] .ud-evidence-card,
   body[data-site-scenery] .ud-open-card,
   body[data-site-scenery] .ud-flow-card {
-    background: var(--glass-surface-bg);
-    border-color: var(--glass-border);
-    box-shadow: var(--glass-shadow);
-    -webkit-backdrop-filter: var(--glass-filter);
-    backdrop-filter: var(--glass-filter);
+    @apply site-glass-panel;
   }
 }

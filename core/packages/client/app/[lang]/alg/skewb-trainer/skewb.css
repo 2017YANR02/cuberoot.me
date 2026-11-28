@@ -1,3 +1,4 @@
+@reference "../../../../components/glass-utilities.css";
 /* SkewbSkills trainer — page-scoped styles.
    Ported from annikastein.github.io/SkewbPage/SkewbSkills.
    Dual-theme (auto light/dark via tokens; NOT dark-locked): theme tokens +
@@ -592,11 +593,7 @@
 /* Site scenery: preserve the original surface when scenery is disabled. */
 @media screen {
   body[data-site-scenery] .sk-modal {
-    background: var(--glass-surface-bg);
-    border-color: var(--glass-border);
-    box-shadow: var(--glass-shadow);
-    -webkit-backdrop-filter: var(--glass-filter);
-    backdrop-filter: var(--glass-filter);
+    @apply site-glass-dialog;
   }
   body[data-site-scenery] .sk-modal {
     background: var(--glass-popover-bg);

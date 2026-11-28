@@ -1,3 +1,4 @@
+@reference "../../../../components/glass-utilities.css";
 /* /scramble/pattern — gallery (ported from packages/client-vite/src/pages/patterns/patterns.css) */
 
 .pat-page {
@@ -351,14 +352,14 @@ html[data-theme=dark] .pat-modal {
     background: transparent;
   }
 
-  body[data-site-scenery] .pat-header,
-  body[data-site-scenery] .pat-card,
+  body[data-site-scenery] .pat-header {
+    @apply site-glass-heading;
+  }
+  body[data-site-scenery] .pat-card {
+    @apply site-glass-panel;
+  }
   body[data-site-scenery] .pat-modal {
-    background: var(--glass-surface-bg);
-    border-color: var(--glass-border);
-    box-shadow: var(--glass-shadow);
-    -webkit-backdrop-filter: var(--glass-filter);
-    backdrop-filter: var(--glass-filter);
+    @apply site-glass-dialog;
   }
 
   body[data-site-scenery] .pat-modal {

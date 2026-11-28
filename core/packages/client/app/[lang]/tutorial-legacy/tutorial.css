@@ -1,3 +1,4 @@
+@reference "../../../components/glass-utilities.css";
 /* ──────────────────────────────────────────────────────────────
    /alg 模块样式
    设计依据: core/packages/tutorial-build/DESIGN.md
@@ -1333,14 +1334,12 @@ a.cfop-pillar-link:hover .cfop-pillar-label {
 
   body[data-site-scenery] .tutorial-card,
   body[data-site-scenery] .case-card,
-  body[data-site-scenery] .case-modal,
   body[data-site-scenery] .tutorial-landing .tutorial-bento-card,
   body[data-site-scenery] .cfop-pillar-link {
-    background: var(--glass-surface-bg);
-    border-color: var(--glass-border);
-    box-shadow: var(--glass-shadow);
-    -webkit-backdrop-filter: var(--glass-filter);
-    backdrop-filter: var(--glass-filter);
+    @apply site-glass-panel;
+  }
+  body[data-site-scenery] .case-modal {
+    @apply site-glass-dialog;
   }
 
   body[data-site-scenery] .case-modal {

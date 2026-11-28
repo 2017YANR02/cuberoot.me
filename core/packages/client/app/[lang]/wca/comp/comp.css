@@ -1,3 +1,4 @@
+@reference "../../../../components/glass-utilities.css";
 /* /comp + /comp/:slug 样式 */.comp-detail-page {
   max-width: 1280px;
   margin: 0 auto;
@@ -2167,14 +2168,12 @@ td.is-pr {
     background: transparent;
   }
 
-  body[data-site-scenery] .comp-info-past-panel,
+  body[data-site-scenery] .comp-info-past-panel {
+    @apply site-glass-menu;
+  }
   body[data-site-scenery] .comp-modal,
   body[data-site-scenery] .comp-round-modal {
-    background: var(--glass-surface-bg);
-    border-color: var(--glass-border);
-    box-shadow: var(--glass-shadow);
-    -webkit-backdrop-filter: var(--glass-filter);
-    backdrop-filter: var(--glass-filter);
+    @apply site-glass-dialog;
   }
 
   body[data-site-scenery] .comp-modal,

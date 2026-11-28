@@ -1,3 +1,4 @@
+@reference "../../../../../components/glass-utilities.css";
 .sql-intro-root {
   --bg: #0A1014;
   --bg-2: #0F1820;
@@ -1378,11 +1379,7 @@ main { position: relative; z-index: 1; }
   body[data-site-scenery] .sql-intro-root .future-card,
   body[data-site-scenery] .sql-intro-root .ts-card,
   body[data-site-scenery] .sql-intro-root .anti-card {
-    background: var(--glass-surface-bg);
-    border-color: var(--glass-border);
-    box-shadow: var(--glass-shadow);
-    -webkit-backdrop-filter: var(--glass-filter);
-    backdrop-filter: var(--glass-filter);
+    @apply site-glass-panel;
   }
 
   body[data-site-scenery] .sql-intro-root {

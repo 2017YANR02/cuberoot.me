@@ -1,3 +1,4 @@
+@reference "../../../../../components/glass-utilities.css";
 .pred-page {
   background: var(--background);
   color: var(--foreground);
@@ -1010,15 +1011,13 @@
     background: transparent;
   }
 
-  body[data-site-scenery] .pred-header,
+  body[data-site-scenery] .pred-header {
+    @apply site-glass-heading;
+  }
   body[data-site-scenery] .pred-card,
   body[data-site-scenery] .pred-overview-card,
   body[data-site-scenery] .pred-chart {
-    background: var(--glass-surface-bg);
-    border-color: var(--glass-border);
-    box-shadow: var(--glass-shadow);
-    -webkit-backdrop-filter: var(--glass-filter);
-    backdrop-filter: var(--glass-filter);
+    @apply site-glass-panel;
   }
 
   body[data-site-scenery] .pred-overview-card:hover {

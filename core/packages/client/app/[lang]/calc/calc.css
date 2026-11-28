@@ -1,3 +1,4 @@
+@reference "../../../components/glass-utilities.css";
 /* NOTE: HTH Grapher 全局样式
    从原 index.html <style> 提取 + 新增 DOM/SVG 布局样式 */.calc-page .calc-input,
 .calc-page .calc-btn {
@@ -1165,13 +1166,11 @@
     background: transparent;
   }
 
-  body[data-site-scenery] .calc-page .info-modal,
+  body[data-site-scenery] .calc-page .info-modal {
+    @apply site-glass-dialog;
+  }
   body[data-site-scenery] .calc-page .me-menu {
-    background: var(--glass-surface-bg);
-    border-color: var(--glass-border);
-    box-shadow: var(--glass-shadow);
-    -webkit-backdrop-filter: var(--glass-filter);
-    backdrop-filter: var(--glass-filter);
+    @apply site-glass-menu;
   }
 
   body[data-site-scenery] .calc-page .info-modal,

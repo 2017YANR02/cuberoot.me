@@ -1,3 +1,4 @@
+@reference "../../../../components/glass-utilities.css";
 /* /math/lsll — LSLL 情况计数长文。token 化写法沿用 /math/probability:
  * 全部走 theme token + color-mix,双主题自动跟随。 */
 
@@ -184,12 +185,10 @@
     background: transparent;
   }
 
-  body[data-site-scenery] .lmath-header,
+  body[data-site-scenery] .lmath-header {
+    @apply site-glass-heading;
+  }
   body[data-site-scenery] .lmath-num-card {
-    background: var(--glass-surface-bg);
-    border-color: var(--glass-border);
-    box-shadow: var(--glass-shadow);
-    -webkit-backdrop-filter: var(--glass-filter);
-    backdrop-filter: var(--glass-filter);
+    @apply site-glass-panel;
   }
 }

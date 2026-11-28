@@ -1,3 +1,4 @@
+@reference "../../../../components/glass-utilities.css";
 .sheet-workspace { height: 100dvh; display: flex; flex-direction: column; overflow: hidden; background: var(--background); color: var(--foreground); }
 .sheet-topbar { min-height: 56px; display: flex; align-items: center; gap: 8px; padding: 8px 12px; border-bottom: 1px solid var(--border-default); }
 .sheet-back { display: grid; place-items: center; width: 34px; height: 34px; color: inherit; border-radius: calc(var(--radius) - 5px); }
@@ -118,11 +119,7 @@
 
   body[data-site-scenery] .sheet-export-menu,
   body[data-site-scenery] .sheet-menu-panel {
-    background: var(--glass-surface-bg);
-    border-color: var(--glass-border);
-    box-shadow: var(--glass-shadow);
-    -webkit-backdrop-filter: var(--glass-filter);
-    backdrop-filter: var(--glass-filter);
+    @apply site-glass-menu;
   }
 
   body[data-site-scenery] .sheet-export-menu,

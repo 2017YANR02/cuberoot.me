@@ -1,3 +1,4 @@
+@reference "../../../components/glass-utilities.css";
 /* /calendar —— Google 日历那副样子。
  *
  * 三部分:
@@ -1163,11 +1164,7 @@ input.cal-event-time[aria-invalid=true] { outline-color: var(--destructive); }
   }
 
   body[data-site-scenery] .cal-modal {
-    background: var(--glass-surface-bg);
-    border-color: var(--glass-border);
-    box-shadow: var(--glass-shadow);
-    -webkit-backdrop-filter: var(--glass-filter);
-    backdrop-filter: var(--glass-filter);
+    @apply site-glass-dialog;
   }
 
   body[data-site-scenery] .cal-modal {
@@ -1230,7 +1227,7 @@ input.cal-event-time[aria-invalid=true] { outline-color: var(--destructive); }
     position: relative;
     background: var(--cal-mobile-canvas);
   }
-  body[data-site-scenery=transparent] .cal-page { background: var(--cal-mobile-canvas); }
+  body:not([data-site-scenery]) .cal-page { background: var(--cal-mobile-canvas); }
   .cal-desktop-topbar { display: none; }
   .cal-mobile-topbar {
     display: flex;
@@ -1427,7 +1424,7 @@ input.cal-event-time[aria-invalid=true] { outline-color: var(--destructive); }
     overflow: hidden;
     background: var(--cal-mobile-canvas);
   }
-  body[data-site-scenery=transparent] .cal-event-dialog { background: var(--cal-mobile-canvas); -webkit-backdrop-filter: none; backdrop-filter: none; }
+  body:not([data-site-scenery]) .cal-event-dialog { background: var(--cal-mobile-canvas); -webkit-backdrop-filter: none; backdrop-filter: none; }
   .cal-event-dialog .cal-modal-head { position: relative; flex: 0 0 auto; min-height: 76px; padding: 22px 18px 10px; }
   .cal-event-sheet-handle { position: absolute; inset: 0 0 auto; display: grid; place-items: center; margin-inline: auto; width: 60px; height: 22px; border: none; background: transparent; color: var(--muted-foreground); cursor: pointer; }
   .cal-event-dialog .cal-event-close { order: 0; width: 40px; height: 40px; border: 1px solid color-mix(in srgb, var(--foreground) 12%, transparent); background: color-mix(in srgb, var(--foreground) 9%, transparent); color: var(--foreground); }

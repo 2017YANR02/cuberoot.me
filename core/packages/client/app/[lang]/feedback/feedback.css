@@ -1,3 +1,4 @@
+@reference "../../../components/glass-utilities.css";
 /* /feedback — 公开反馈流。双主题走 :root token。 */
 .fbm-page { max-width: 760px; margin: 0 auto; padding: 24px 16px 64px; }
 
@@ -111,10 +112,6 @@
 /* Site scenery: preserve the original surface when scenery is disabled. */
 @media screen {
   body[data-site-scenery] .fbm-card {
-    background: var(--glass-surface-bg);
-    border-color: var(--glass-border);
-    box-shadow: var(--glass-shadow);
-    -webkit-backdrop-filter: var(--glass-filter);
-    backdrop-filter: var(--glass-filter);
+    @apply site-glass-panel;
   }
 }

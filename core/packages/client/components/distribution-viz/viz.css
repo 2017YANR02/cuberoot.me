@@ -1,3 +1,4 @@
+@reference "../glass-utilities.css";
 /* ─── 基础重置 ─── */
 .viz-page, .viz-page *, .viz-page *::before, .viz-page *::after {
   box-sizing: border-box;
@@ -102,11 +103,7 @@ html body[data-site-scenery] .viz-page.wp-distviz {
 body[data-site-scenery] .viz-page :is(
   .canvas-wrapper, .stats-bar, .controls, .ridgeline-wrapper
 ) {
-  background: var(--glass-surface-bg);
-  border-color: var(--glass-border);
-  -webkit-backdrop-filter: var(--glass-filter);
-  backdrop-filter: var(--glass-filter);
-  box-shadow: var(--glass-shadow);
+  @apply site-glass-panel;
 }
 
 body[data-site-scenery] .viz-page :is(

@@ -1,3 +1,4 @@
+@reference "../../../../components/glass-utilities.css";
 /* /math/kernel — group-theory kernel explainer. Theme-token driven (no hard-coded
  * greys); mirrors the scaffolding of /math/unit-distance. */
 
@@ -121,10 +122,6 @@
   }
 
   body[data-site-scenery] .kn-card {
-    background: var(--glass-surface-bg);
-    border-color: var(--glass-border);
-    box-shadow: var(--glass-shadow);
-    -webkit-backdrop-filter: var(--glass-filter);
-    backdrop-filter: var(--glass-filter);
+    @apply site-glass-panel;
   }
 }

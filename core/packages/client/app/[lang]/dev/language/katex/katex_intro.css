@@ -1,3 +1,4 @@
+@reference "../../../../../components/glass-utilities.css";
 .katex-intro-root {
   --bg: #0A1422;
   --bg-2: #0E1B2A;
@@ -1456,11 +1457,7 @@ main { position: relative; z-index: 1; }
   body[data-site-scenery] .katex-intro-root .future-card,
   body[data-site-scenery] .katex-intro-root .ts-card,
   body[data-site-scenery] .katex-intro-root .tag-card {
-    background: var(--glass-surface-bg);
-    border-color: var(--glass-border);
-    box-shadow: var(--glass-shadow);
-    -webkit-backdrop-filter: var(--glass-filter);
-    backdrop-filter: var(--glass-filter);
+    @apply site-glass-panel;
   }
 
   body[data-site-scenery] .katex-intro-root {

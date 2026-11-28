@@ -1,3 +1,4 @@
+@reference "../../../../../components/glass-utilities.css";
 .kotlin-intro-root {
   --bg: #0E0820;
   --bg-2: #160E2E;
@@ -1294,11 +1295,7 @@ main { position: relative; z-index: 1; }
   body[data-site-scenery] .kotlin-intro-root .logo-card,
   body[data-site-scenery] .kotlin-intro-root .future-card,
   body[data-site-scenery] .kotlin-intro-root .ts-card {
-    background: var(--glass-surface-bg);
-    border-color: var(--glass-border);
-    box-shadow: var(--glass-shadow);
-    -webkit-backdrop-filter: var(--glass-filter);
-    backdrop-filter: var(--glass-filter);
+    @apply site-glass-panel;
   }
 
   body[data-site-scenery] .kotlin-intro-root {

@@ -1,3 +1,4 @@
+@reference "../../../../components/glass-utilities.css";
 /* ─── /regulation/one-handed — Appendix C visuals ───
  * do / don't hand panels + inline list icons. Tokens come from .reg-page
  * (imported via regulation.css), so only the local pieces live here.
@@ -102,10 +103,6 @@
 /* Site scenery: preserve the original surface when scenery is disabled. */
 @media screen {
   body[data-site-scenery] .oh-panel {
-    background: var(--glass-surface-bg);
-    border-color: var(--glass-border);
-    box-shadow: var(--glass-shadow);
-    -webkit-backdrop-filter: var(--glass-filter);
-    backdrop-filter: var(--glass-filter);
+    @apply site-glass-panel;
   }
 }

@@ -1,4 +1,6 @@
 @import '../../../components/wca-stats/wca-stats-tabs.css';
+@reference "../../../components/glass-utilities.css";
+
 
 /* NOTE: WCA 统计页样式 — 全站主题 + 现代表格 */
 
@@ -833,10 +835,6 @@
 
   body[data-site-scenery] .wca-tool-card,
   body[data-site-scenery] .wca-stat-card {
-    background: var(--glass-surface-bg);
-    border-color: var(--glass-border);
-    box-shadow: var(--glass-shadow);
-    -webkit-backdrop-filter: var(--glass-filter);
-    backdrop-filter: var(--glass-filter);
+    @apply site-glass-panel;
   }
 }

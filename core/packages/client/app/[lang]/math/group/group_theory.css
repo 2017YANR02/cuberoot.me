@@ -1,3 +1,4 @@
+@reference "../../../../components/glass-utilities.css";
 /* ─── /math/group ───────────────────────────────────────────────────────────
  * Mathematical paper aesthetic. Inspired by arXiv typography + Edward Tufte.
  * Light & dark via global theme tokens, with a single warm accent.
@@ -5751,10 +5752,6 @@ html[data-theme=dark] .gt-coset-cell { --coset-l: 40%; }
   body[data-site-scenery] .gt-conj-card,
   body[data-site-scenery] .gt-prime-card,
   body[data-site-scenery] .gt-rot-zoo-card {
-    background: var(--glass-surface-bg);
-    border-color: var(--glass-border);
-    box-shadow: var(--glass-shadow);
-    -webkit-backdrop-filter: var(--glass-filter);
-    backdrop-filter: var(--glass-filter);
+    @apply site-glass-panel;
   }
 }

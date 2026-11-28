@@ -1,3 +1,4 @@
+@reference "../../../../../components/glass-utilities.css";
 .latex-intro-root {
   --bg: #1A1614;
   --bg-2: #221C19;
@@ -1378,11 +1379,7 @@ main { position: relative; z-index: 1; }
   body[data-site-scenery] .latex-intro-root .tag-card,
   body[data-site-scenery] .latex-intro-root .engine-card,
   body[data-site-scenery] .latex-intro-root .footgun-card {
-    background: var(--glass-surface-bg);
-    border-color: var(--glass-border);
-    box-shadow: var(--glass-shadow);
-    -webkit-backdrop-filter: var(--glass-filter);
-    backdrop-filter: var(--glass-filter);
+    @apply site-glass-panel;
   }
 
   body[data-site-scenery] .latex-intro-root {

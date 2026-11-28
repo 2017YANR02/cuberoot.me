@@ -1,3 +1,4 @@
+@reference "../../../../../components/glass-utilities.css";
 /* Fable 5 intro — palette intentionally locked to Anthropic's brand (ivory /
    ink / book-cloth coral), independent of site theme tokens per explicit
    request: this page mirrors anthropic.com's design language, not ours.
@@ -711,10 +712,6 @@
   body[data-site-scenery] .fable-bench-card,
   body[data-site-scenery] .fable-cap-card,
   body[data-site-scenery] .fable-safety-card {
-    background: var(--glass-surface-bg);
-    border-color: var(--glass-border);
-    box-shadow: var(--glass-shadow);
-    -webkit-backdrop-filter: var(--glass-filter);
-    backdrop-filter: var(--glass-filter);
+    @apply site-glass-panel;
   }
 }

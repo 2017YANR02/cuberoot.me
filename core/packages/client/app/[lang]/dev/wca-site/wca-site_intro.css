@@ -1,3 +1,4 @@
+@reference "../../../../components/glass-utilities.css";
 .wca-intro-root {
   --bg: #080B12;
   --bg-2: #111826;
@@ -1430,11 +1431,7 @@ main { position: relative; z-index: 1; }
   body[data-site-scenery] .wca-intro-root .logo-card,
   body[data-site-scenery] .wca-intro-root .future-card,
   body[data-site-scenery] .wca-intro-root .ts-card {
-    background: var(--glass-surface-bg);
-    border-color: var(--glass-border);
-    box-shadow: var(--glass-shadow);
-    -webkit-backdrop-filter: var(--glass-filter);
-    backdrop-filter: var(--glass-filter);
+    @apply site-glass-panel;
   }
 
   body[data-site-scenery] .wca-intro-root {

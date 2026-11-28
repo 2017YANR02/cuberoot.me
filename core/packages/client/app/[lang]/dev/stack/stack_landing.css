@@ -1,3 +1,4 @@
+@reference "../../../../components/glass-utilities.css";
 .stack-landing {
   --bg: #07101D;
   --bg-2: #0B1A2D;
@@ -330,11 +331,7 @@
   }
 
   body[data-site-scenery] .stack-landing .stack-card {
-    background: var(--glass-surface-bg);
-    border-color: var(--glass-border);
-    box-shadow: var(--glass-shadow);
-    -webkit-backdrop-filter: var(--glass-filter);
-    backdrop-filter: var(--glass-filter);
+    @apply site-glass-panel;
   }
 
   body[data-site-scenery] .stack-landing {

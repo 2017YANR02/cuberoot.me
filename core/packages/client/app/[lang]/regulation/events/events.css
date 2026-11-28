@@ -1,3 +1,4 @@
+@reference "../../../../components/glass-utilities.css";
 /* ─── /regulation/events — Article 9 (Events) chapter-specific styles ───
  * Reuses the shared .reg-* tokens (defined on .reg-page). Only the bits the
  * event table, format diagram, cutoff flow and limit cards need live here.
@@ -238,10 +239,6 @@
   body[data-site-scenery] .evt-fmt-card,
   body[data-site-scenery] .evt-limit-card,
   body[data-site-scenery] .evt-former-card {
-    background: var(--glass-surface-bg);
-    border-color: var(--glass-border);
-    box-shadow: var(--glass-shadow);
-    -webkit-backdrop-filter: var(--glass-filter);
-    backdrop-filter: var(--glass-filter);
+    @apply site-glass-panel;
   }
 }

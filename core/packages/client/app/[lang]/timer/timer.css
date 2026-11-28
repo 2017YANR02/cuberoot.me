@@ -1,3 +1,4 @@
+@reference "../../../components/glass-utilities.css";
 /* =============================================================
    /timer — 纯 TypeScript 计时器页面
    设计目标：单屏、无干扰、键盘/触摸两套交互无缝。
@@ -496,13 +497,11 @@
 
 /* Site scenery: preserve the original surface when scenery is disabled. */
 @media screen {
-  body[data-site-scenery] .timer-presence-panel,
+  body[data-site-scenery] .timer-presence-panel {
+    @apply site-glass-panel;
+  }
   body[data-site-scenery] .timer-modal:where(:not(.bt-timer-modal)) {
-    background: var(--glass-surface-bg);
-    border-color: var(--glass-border);
-    box-shadow: var(--glass-shadow);
-    -webkit-backdrop-filter: var(--glass-filter);
-    backdrop-filter: var(--glass-filter);
+    @apply site-glass-dialog;
   }
   body[data-site-scenery] .timer-presence-panel {
     background: var(--glass-popover-bg);

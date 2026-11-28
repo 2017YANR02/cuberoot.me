@@ -1,3 +1,4 @@
+@reference "../../../../../components/glass-utilities.css";
 /* Claude Sonnet 5 intro — palette intentionally locked to Anthropic's brand
    (ivory / ink / book-cloth coral), independent of site theme tokens, mirroring
    the sibling /dev/llm/fable page. Locked light like /calc (page-scope
@@ -649,10 +650,6 @@
   body[data-site-scenery] .s5-bench-card,
   body[data-site-scenery] .s5-cap-card,
   body[data-site-scenery] .s5-safety-card {
-    background: var(--glass-surface-bg);
-    border-color: var(--glass-border);
-    box-shadow: var(--glass-shadow);
-    -webkit-backdrop-filter: var(--glass-filter);
-    backdrop-filter: var(--glass-filter);
+    @apply site-glass-panel;
   }
 }

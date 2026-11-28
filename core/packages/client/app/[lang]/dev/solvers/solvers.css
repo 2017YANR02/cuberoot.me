@@ -1,3 +1,4 @@
+@reference "../../../../components/glass-utilities.css";
 .solv-page {
   position: relative;
   min-height: 100vh;
@@ -380,11 +381,7 @@ a.solv-mx-nm:hover { color: var(--accent); }
   }
 
   body[data-site-scenery] .solv-modal {
-    background: var(--glass-surface-bg);
-    border-color: var(--glass-border);
-    box-shadow: var(--glass-shadow);
-    -webkit-backdrop-filter: var(--glass-filter);
-    backdrop-filter: var(--glass-filter);
+    @apply site-glass-dialog;
   }
 
   body[data-site-scenery] .solv-modal {

@@ -1,3 +1,4 @@
+@reference "../../../../components/glass-utilities.css";
 /* /math/demigod — Merino & Subercaseaux 2024 "Demigod's Number" 详细介绍页。
  * 沿用 /math/god 的视觉 token,但本页色调更冷(强调"概率/统计")。 */
 
@@ -564,12 +565,10 @@
     background: transparent;
   }
 
-  body[data-site-scenery] .dg-header,
+  body[data-site-scenery] .dg-header {
+    @apply site-glass-heading;
+  }
   body[data-site-scenery] .dg-num-card {
-    background: var(--glass-surface-bg);
-    border-color: var(--glass-border);
-    box-shadow: var(--glass-shadow);
-    -webkit-backdrop-filter: var(--glass-filter);
-    backdrop-filter: var(--glass-filter);
+    @apply site-glass-panel;
   }
 }

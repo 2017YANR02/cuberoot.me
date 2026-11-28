@@ -57,6 +57,7 @@
 - **设备图**。`/dev/expenses`、`/dev/infrastructure` 新设备同次配齐准确型号、配色的产品图。`infrastructure-costs.ts` 的 `imageSrc` 保持必填。保留用户给出的完整型号（含屏幕版本，普通屏不可代替 PROLED XDR）。优先官方或用户素材，复用 `.infra-equipment-art` / `.infra-equipment-image` 的尺寸、比例、留白和对齐。禁通用图标及其他型号或空白占位。
 - **图片透明与缓存**。用真实透明抠图，禁烘焙底色（含棋盘格）。验产品外像素透明度并预览深浅背景。`next/image` 保留 `unoptimized`（曾输出白底 JPEG）。替换浏览过的同名图须换 URL。见[素材记录](../design/equipment-images.md)。
 - **玻璃**定义在 `@app-foundation/ui-controls/glass-surface.css`，经 `@cuberoot/app-ui/appearance.css` 接入。本站 `appearance-material.css` 绑定主题并兼容旧变量，`site-surfaces.css` 适配旧页面。新表面用 `data-site-surface="panel|popover|heading"`，独立绘制层用 `af-glass-surface`。页面负责布局和状态色，共享材质负责折射、反光边、无障碍回退。多余底框只约束已确认位置，候选不自动扩大范围，复用材质 Hook/CI。截图巡检按需，不作日常开发或提交门槛。见[玻璃回归](../design/glass/glass-menu-regression.md)。
+- 既有页面的玻璃选择器通过 `@reference` 引用 `components/glass-utilities.css`，按用途使用 `site-glass-panel/menu/dialog/heading`，保留页面作用域。分段选择器用 `LiquidGlassChips`，轨道用 Foundation 的 `frosted`，活动滑块用 `lens`。场景选择器只在有图片时生效，独立交互控件可在纯色主题继续显示材质。
 - **提示**。按钮或链接的短悬停提示用 `components/Tooltip`，如 `<Tooltip content={tr({zh,en})}>{(tip) => <button {...tip}>…</button>}</Tooltip>`。触发 props 挂实际元素，合并同名事件。组件处理 hover/focus、Escape、移入提示、Portal、视口钳制。页面禁自写气泡、blur/透明度或以原生 `title` 代替设计提示。Hook/CI 共用材质扫描器拦截 `content: attr(data-tooltip/data-tip/title)` 伪元素，范围不含任意 JSX 或动态样式。可交互内容避开 Tooltip。点击说明用 InfoTooltip。Portal 继承全站主题，局部配色预览单独核验。
 
 ## 项目菜单短名

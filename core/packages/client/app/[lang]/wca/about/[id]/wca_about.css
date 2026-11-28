@@ -1,3 +1,4 @@
+@reference "../../../../../components/glass-utilities.css";
 /* /wca/about/:id — WCA 统计算法解释页(全部 stats / lookup 共用)
  * 设计:浅色页面,自有 token,跟 5×5-about 一致的视觉语言但命名独立。
  */
@@ -356,13 +357,11 @@
     background: transparent;
   }
 
-  body[data-site-scenery] .wcaa-header,
+  body[data-site-scenery] .wcaa-header {
+    @apply site-glass-heading;
+  }
   body[data-site-scenery] .wcaa-related-card {
-    background: var(--glass-surface-bg);
-    border-color: var(--glass-border);
-    box-shadow: var(--glass-shadow);
-    -webkit-backdrop-filter: var(--glass-filter);
-    backdrop-filter: var(--glass-filter);
+    @apply site-glass-panel;
   }
 }
 

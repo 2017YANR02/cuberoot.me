@@ -1,3 +1,4 @@
+@reference "../../../../../components/glass-utilities.css";
 .cpp-intro-root {
   --bg: #061425;
   --bg-2: #0A1F38;
@@ -1280,11 +1281,7 @@ main { position: relative; z-index: 1; }
   body[data-site-scenery] .cpp-intro-root .logo-card,
   body[data-site-scenery] .cpp-intro-root .future-card,
   body[data-site-scenery] .cpp-intro-root .ts-card {
-    background: var(--glass-surface-bg);
-    border-color: var(--glass-border);
-    box-shadow: var(--glass-shadow);
-    -webkit-backdrop-filter: var(--glass-filter);
-    backdrop-filter: var(--glass-filter);
+    @apply site-glass-panel;
   }
 
   body[data-site-scenery] .cpp-intro-root {
