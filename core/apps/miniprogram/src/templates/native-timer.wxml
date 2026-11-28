@@ -171,6 +171,7 @@
   <button wx:if="{{showColors}}" class="nt-control nt-difficulty-palette" bindtap="toggleDifficultyMenu" data-field="colors" disabled="{{colorsDisabled}}" aria-label="{{copy.difficultyColors}}" aria-expanded="{{panel === 'colors'}}" hover-class="press-feedback"><view class="nt-difficulty-swatch" style="background: {{swatch}}"></view></button>
   <button class="nt-control nt-difficulty-method" bindtap="toggleDifficultyMenu" data-field="method" aria-label="{{copy.difficultyMethod}} · {{copy.difficultyStage}}" aria-expanded="{{panel === 'method'}}" hover-class="press-feedback">{{methodLabel}}</button>
 </template>
+<view class="native-tab-surface" style="{{appearanceStyle}}">
 <view data-timer-surface="page" bindtouchstart="pageTimerTouch" class="native-timer nt-theme-{{appearanceScheme}} {{!battle && !netMode ? 'native-timer--solo' : ''}} {{layoutEditing ? 'native-timer--layout-editing' : ''}}" style="{{appearanceStyle}}{{!battle && !netMode && soloViewportHeight ? ';height:' + soloViewportHeight + 'px' : ''}}">
   <view id="nt-navigation-palette" aria-hidden="true"></view>
   <block wx:if="{{!battle && !netMode}}">
@@ -1345,4 +1346,5 @@
     <view class="nt-settings-popover-dismiss" bindtap="closeBulkProjectMenu" />
     <scroll-view class="nt-bulk-project-menu" style="{{bulkProjectMenu}}" scroll-y="{{true}}" aria-role="menu"><template is="nt-project-list" data="{{groups: bulkProjectGroups, selected: bulkEvents[bulkEventIndex].id}}" /></scroll-view>
   </view>
+</view>
 </view>
