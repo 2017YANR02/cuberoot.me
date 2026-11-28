@@ -4264,7 +4264,31 @@ export function App({ host, loadingMark }: { host: InstalledAppHost; loadingMark
     && connection === 'online' && webSurfaceStatus.tools === 'ready');
   const toolsSearchExpanded = canShowToolsSearch && toolsSearchOpen;
   const searchKeyboardVisible = toolsSearchExpanded && dockedKeyboardTop !== null;
-  const navVisible = canShowNavigation && !searchKeyboardVisible;
+  const [accountInputViewport, setAccountInputViewport] = useState<number | null>(null);
+  const signingIn = view === 'account' && accountPage === 'sign-in';
+  useEffect(() => {
+    if (!signingIn || host.addDockedKeyboardListener) return;
+    const focused = () => {
+      if (document.activeElement?.matches('.installed-account-signin input')) {
+        setAccountInputViewport(previous => previous ?? visibleViewportHeight());
+      }
+    };
+    const blurred = (event: FocusEvent) => {
+      if (!(event.relatedTarget instanceof Element && event.relatedTarget.matches('.installed-account-signin input'))) {
+        setAccountInputViewport(null);
+      }
+    };
+    document.addEventListener('focusin', focused);
+    document.addEventListener('focusout', blurred);
+    return () => {
+      document.removeEventListener('focusin', focused);
+      document.removeEventListener('focusout', blurred);
+      setAccountInputViewport(null);
+    };
+  }, [signingIn, host]);
+  const accountKeyboardVisible = signingIn && (dockedKeyboardTop !== null
+    || (accountInputViewport !== null && accountInputViewport - viewportHeight > 80));
+  const navVisible = canShowNavigation && !searchKeyboardVisible && !accountKeyboardVisible;
   const showToolsSearch = canShowToolsSearch && !searchKeyboardVisible;
   useLayoutEffect(() => {
     if (!toolsSearchExpanded || !host.addDockedKeyboardListener) {
