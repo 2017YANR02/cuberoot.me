@@ -1,8 +1,10 @@
 import react from '@vitejs/plugin-react';
 import { defineConfig } from 'vite';
 
-export default defineConfig(({ command }) => ({
-  define: command === 'serve' ? { __CUBEROOT_DEV_API_ORIGIN__: 'window.location.origin' } : {},
+export default defineConfig(({ command, mode }) => ({
+  define: command === 'serve' && mode !== 'test'
+    ? { __CUBEROOT_DEV_API_ORIGIN__: 'window.location.origin' }
+    : {},
   clearScreen: false,
   plugins: [react()],
   worker: { format: 'es' },

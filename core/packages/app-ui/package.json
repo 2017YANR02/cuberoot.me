@@ -9,6 +9,7 @@
       "@app-foundation/ui-controls": "react-dom",
       "lucide-react": "react-dom",
       "react": "react-dom",
+      "react-icons": "react-dom",
       "@emoji-mart/data": "runtime-neutral",
       "@2017yanr02/continuous-corners": "react-dom",
       "react-colorful": "react-dom"
