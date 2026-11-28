@@ -14,6 +14,7 @@ import SiteBackground from '@/components/SiteBackground';
 import SiteChrome from '@/components/SiteChrome';
 import '@/components/glass-material.css';
 import '@/components/site-surfaces.css';
+import AccountSiteSettingsSync from "@/components/AccountSiteSettingsSync";
 import ThemeColorSync from "@/components/ThemeColorSync";
 import AuthTokenRefresher from "@/components/AuthTokenRefresher";
 import MembershipReminder from "@/components/MembershipReminder";
@@ -132,6 +133,7 @@ export default function RootLayout({
           <EntryNavigationBridge />
           <Suspense fallback={null}><ProductAnalytics /></Suspense>
           <ThemeColorSync />
+          <AccountSiteSettingsSync />
           <AuthTokenRefresher />
           <StickyScrollGuard />
           <SiteScrollbars />

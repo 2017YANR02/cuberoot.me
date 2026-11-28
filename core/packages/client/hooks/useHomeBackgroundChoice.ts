@@ -1,5 +1,6 @@
 'use client';
 
+import { siteSettingEdited } from '@/lib/site-setting-change';
 import { useEffect, useSyncExternalStore } from 'react';
 import { persistItem } from '@/lib/safe-storage';
 import { readEffective, type EffectiveTheme } from '@/lib/theme';
@@ -16,7 +17,7 @@ function rememberImage(theme: EffectiveTheme, choice: HomeBackgroundChoice) {
   else visitLastImage[theme] = choice;
 }
 
-function restoreImage(theme: EffectiveTheme): HomeBackgroundChoice {
+export function restoreImage(theme: EffectiveTheme): HomeBackgroundChoice {
   if (visitLastImage[theme] !== undefined) return visitLastImage[theme];
   try {
     const saved = localStorage.getItem(`${HOME_BACKGROUND_KEY}.last-image.${theme}`);
@@ -52,12 +53,15 @@ function subscribe(notify: () => void) {
   };
 }
 
-function setChoice(theme: EffectiveTheme, value: HomeBackgroundChoice) {
+function setChoice(theme: EffectiveTheme, value: HomeBackgroundChoice, edited = true) {
   if (!isHomeBackgroundChoice(value)) return;
   rememberImage(theme, readHomeBackgroundChoice(theme));
   rememberImage(theme, value);
   if (persistItem(`${HOME_BACKGROUND_KEY}.${theme}`, value)) delete visitChoice[theme];
   else visitChoice[theme] = value;
+  if (edited) siteSettingEdited(theme === 'light'
+    ? { lightBackground: value, lastLightBackground: restoreImage(theme) }
+    : { darkBackground: value, lastDarkBackground: restoreImage(theme) });
   window.dispatchEvent(new Event(HOME_BACKGROUND_CHANGE_EVENT));
 }
 
@@ -78,7 +82,7 @@ export function useHomeBackgroundChoice(theme: EffectiveTheme) {
       const saved = localStorage.getItem(HOME_BACKGROUND_KEY);
       if (isHomeBackgroundChoice(saved)) {
         const savedTheme = readEffective();
-        setChoice(savedTheme, saved);
+        setChoice(savedTheme, saved, false);
       }
     } catch { /* The default remains usable without storage. */ }
   }, []);
@@ -87,4 +91,17 @@ export function useHomeBackgroundChoice(theme: EffectiveTheme) {
       if (enabled === Boolean(resolveHomeBackground(readHomeBackgroundChoice(theme), theme))) return;
       setChoice(theme, enabled ? restoreImage(theme) : 'none');
     }] as const;
+}
+
+export function restoreHomeBackgroundChoices(settings: Pick<import('@cuberoot/shared/appearance').SiteSettings,
+  'lightBackground' | 'darkBackground' | 'lastLightBackground' | 'lastDarkBackground'>) {
+  for (const scheme of ['light', 'dark'] as const) {
+    const choice = scheme === 'light' ? settings.lightBackground : settings.darkBackground;
+    const last = scheme === 'light' ? settings.lastLightBackground : settings.lastDarkBackground;
+    if (persistItem(`${HOME_BACKGROUND_KEY}.${scheme}`, choice)) delete visitChoice[scheme];
+    else visitChoice[scheme] = choice;
+    if (persistItem(`${HOME_BACKGROUND_KEY}.last-image.${scheme}`, last)) delete visitLastImage[scheme];
+    else visitLastImage[scheme] = last;
+  }
+  window.dispatchEvent(new Event(HOME_BACKGROUND_CHANGE_EVENT));
 }

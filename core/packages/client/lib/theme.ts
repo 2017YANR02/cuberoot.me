@@ -5,6 +5,7 @@
 //   - Bootstrap is inlined into <head> as a beforeInteractive script (lib/theme-bootstrap-script.ts)
 //     so no FOUC between SSR document arrival and React hydration.
 
+import { siteSettingEdited } from './site-setting-change';
 import { useEffect, useState } from 'react';
 import { applyAppearanceThemeRoot, applyAppearancePaletteRoot, applyAppearanceContrastRoot } from '@cuberoot/app-ui/appearance';
 import { PALETTE_KEY, isPaletteId, paletteScheme, type PaletteId } from './palettes';
@@ -14,6 +15,7 @@ import { ACCENT_KEY, findAccentColor, setAccentRoot, type AccentId } from './acc
 
 export type Theme = 'system' | 'light' | 'dark';
 export type EffectiveTheme = 'light' | 'dark';
+
 export const THEME_KEY = 'theme';
 
 // 柔和度 — 正交于明暗 / 配色的一档「降低对比」偏好(护眼)。写 <html data-contrast=x>,
@@ -139,6 +141,7 @@ export function applyTheme(theme: Theme, animate = false, clearPalette = false) 
     applyThemeRoot(theme, clearPalette);
   };
   runTransition(commit, animate, 'appearance');
+  siteSettingEdited(clearPalette ? { theme, palette: null } : { theme });
 }
 
 // 选 / 清配色主题。id=null → 回到经典(移除 data-palette,恢复 theme 的 color-scheme)。
@@ -152,6 +155,7 @@ export function applyPalette(id: string | null, animate = false) {
     applyPaletteRoot(id);
   };
   runTransition(commit, animate, 'appearance');
+  siteSettingEdited({ palette: isPaletteId(id) ? id : null });
   window.dispatchEvent(new Event('theme-change'));
 }
 
@@ -163,6 +167,7 @@ export function applyContrast(level: ContrastLevel, animate = false) {
     persistItem(CONTRAST_KEY, level);
   }
   runTransition(() => applyContrastRoot(level), animate);
+  siteSettingEdited({ contrast: level });
   window.dispatchEvent(new Event('theme-change'));
 }
 
@@ -206,6 +211,7 @@ export function applyAccent(id: AccentId | null, animate = false) {
     try { localStorage.removeItem(ACCENT_KEY); } catch { /* Storage is optional. */ }
   }
   runTransition(() => setAccentRoot(document.documentElement, color), animate, 'appearance');
+  siteSettingEdited({ accent: color?.id ?? null });
   window.dispatchEvent(new Event('theme-change'));
 }
 

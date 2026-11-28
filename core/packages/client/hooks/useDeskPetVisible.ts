@@ -1,5 +1,6 @@
 'use client';
 
+import { siteSettingEdited } from '@/lib/site-setting-change';
 import { useSyncExternalStore } from 'react';
 import { usePathname } from 'next/navigation';
 import { persistItem } from '@/lib/safe-storage';
@@ -36,6 +37,10 @@ let visibleDuringExit: boolean | undefined;
 
 function readVisible() {
   if (visibleDuringExit !== undefined) return visibleDuringExit;
+  return readDeskPetPreference();
+}
+
+export function readDeskPetPreference() {
   if (visitChoice !== undefined) return visitChoice;
   try { return localStorage.getItem(STORAGE_KEY) !== 'false'; }
   catch { return true; }
@@ -69,6 +74,13 @@ function saveVisibility(visible: boolean) {
   visitChoice = persistItem(STORAGE_KEY, String(visible)) ? undefined : visible;
 }
 
+export function restoreDeskPetPreference(visible: boolean) {
+  cancelPendingExit();
+  pageChoices.clear();
+  saveVisibility(visible);
+  notifyVisibility();
+}
+
 function notifyVisibility() {
   window.dispatchEvent(new Event(CHANGE_EVENT));
 }
@@ -78,6 +90,7 @@ function hideDeskPet(wasVisible: boolean) {
   // Save before animating so a reload during the exit still remembers the choice.
   visibleDuringExit = readVisible();
   saveVisibility(false);
+  siteSettingEdited({ deskPetVisible: false });
   let pending = true;
   const done = () => {
     if (!pending) return;
@@ -118,7 +131,10 @@ export function useDeskPetVisible() {
     cancelPendingExit();
     // Opening on a quiet page applies only to that page.
     if (quietPage) pageChoices.set(quietPage, true);
-    else saveVisibility(true);
+    else {
+      saveVisibility(true);
+      siteSettingEdited({ deskPetVisible: true });
+    }
     notifyVisibility();
   };
   return [visible, setPageVisible] as const;
