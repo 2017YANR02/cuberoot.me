@@ -5,7 +5,7 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it, vi } from 'vitest';
 import { NuqsTestingAdapter } from 'nuqs/adapters/testing';
 import DownloadPage from '../app/[lang]/download/page';
-import { ANDROID_APK_URL } from '../lib/app-downloads';
+import { ANDROID_APK_URL, FRAME_COUNT_WINDOWS_ZIP } from '../lib/app-downloads';
 
 const locale = vi.hoisted(() => ({ language: 'zh' as 'zh' | 'en' }));
 vi.mock('@/i18n/tr', () => ({
@@ -35,7 +35,9 @@ describe('download availability', () => {
     try {
       await act(async () => root.render(createElement(NuqsTestingAdapter, { children: createElement(DownloadPage) })));
       expect(host.querySelector('.download-device-first > section h2')?.textContent ?? null).toBe(expected);
-      expect(host.querySelectorAll('.download-platform-section')).toHaveLength(4);
+      expect(host.querySelectorAll('.download-platform-section:not(#frame-count-desktop)')).toHaveLength(4);
+      const frameCount = host.querySelector('#frame-count-desktop');
+      expect(frameCount?.querySelector('a')?.getAttribute('href')).toBe(FRAME_COUNT_WINDOWS_ZIP);
       const mac = host.querySelector('section[aria-labelledby="download-macos-title"]')!;
       const web = 'https://apps.apple.com/cn/app/cuberoot/id6816632957?platform=mac';
       expect(mac.querySelector('.download-apple-badge')?.getAttribute('href')).toBe(
